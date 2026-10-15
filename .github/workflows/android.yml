@@ -1,0 +1,31 @@
+name: Android debug APK
+on: workflow_dispatch
+jobs:
+  apk:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - run: npm ci
+      - run: npm run tauri -- android init --ci
+        env:
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.2.12479018
+      - run: npm run tauri -- android build --ci --debug --apk --target aarch64
+        env:
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.2.12479018
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-Android-debug
+          path: src-tauri/gen/android/app/build/outputs/apk/**/**/*.apk
