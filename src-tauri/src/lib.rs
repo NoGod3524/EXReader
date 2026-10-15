@@ -1,6 +1,11 @@
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 mod converter;
 
+#[tauri::command]
+fn desktop_conversion_available() -> bool {
+    cfg!(not(any(target_os = "android", target_os = "ios")))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default().setup(|app| {
@@ -21,6 +26,8 @@ pub fn run() {
         Ok(())
     });
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    let builder = builder.invoke_handler(tauri::generate_handler![converter::convert_book]);
+    let builder = builder.invoke_handler(tauri::generate_handler![desktop_conversion_available, converter::convert_book]);
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    let builder = builder.invoke_handler(tauri::generate_handler![desktop_conversion_available]);
     builder.run(tauri::generate_context!()).expect("EXReader failed to start");
 }

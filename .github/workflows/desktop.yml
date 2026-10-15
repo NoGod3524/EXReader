@@ -3,12 +3,14 @@ on:
   workflow_dispatch:
   push:
     tags: ['v*']
+permissions:
+  contents: read
 jobs:
   package:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-22.04, macos-latest]
+        os: [windows-latest, ubuntu-22.04, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +19,9 @@ jobs:
           node-version: 24
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
+      - name: macOS universal targets
+        if: runner.os == 'macOS'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
@@ -29,12 +34,23 @@ jobs:
       - name: Windows portable
         if: runner.os == 'Windows'
         run: npm run portable
-      - name: Desktop bundles
-        if: runner.os != 'Windows'
-        run: npm run tauri -- build
+      - name: Linux packages
+        if: runner.os == 'Linux'
+        run: |
+          npm run tauri -- build --bundles appimage,deb
+          mkdir -p release
+          tar -czf release/EXReader-Linux-x64-portable.tar.gz -C src-tauri/target/release/bundle/appimage .
+          cp src-tauri/target/release/bundle/deb/*.deb release/
+      - name: macOS universal packages
+        if: runner.os == 'macOS'
+        run: |
+          npm run tauri -- build --target universal-apple-darwin --bundles app,dmg
+          mkdir -p release
+          ditto -c -k --sequesterRsrc --keepParent src-tauri/target/universal-apple-darwin/release/bundle/macos/EXReader.app release/EXReader-macOS-universal.app.zip
+          cp src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg release/
       - uses: actions/upload-artifact@v4
         with:
           name: EXReader-${{ runner.os }}
-          path: |
-            release/*.zip
-            src-tauri/target/release/bundle/**
+          path: release/*.*
+          if-no-files-found: error
+          retention-days: 30

@@ -31,6 +31,7 @@ const app = document.querySelector('#app');
 let books = [], notes = [], tab = 'all', query = '', sort = 'recent', layout = 'grid', active, reader, currentNotes = [], busy = false, persistTimer, toastTimer;
 const defaults = { size: 20, spacing: 1.8, font: 'serif', theme: 'paper', flow: 'paginated', columns: '1', justify: true, encoding: 'auto', zoom: 1 };
 let settings;
+let desktopConversion = false;
 try { settings = { ...defaults, ...JSON.parse(localStorage.getItem('exreader-settings') || '{}') }; } catch { settings = { ...defaults }; }
 function toast(message) { const el = document.querySelector('#toast'); el.textContent = message; el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 5000); }
 function error(e) { console.error(e); toast(e.message || String(e)); }
@@ -113,7 +114,7 @@ function manageBook(id) {
   };
 }
 function conversionDialog(b) {
-  const d = dialog('转换与导出', `<p>《${esc(b.title)}》</p><label>导出方式<select id="export-format"><option value="original">下载原文件（原始内容与元数据）</option>${!b.audio ? ['epub', 'txt', 'html', 'fb2', 'rtf', 'docx'].map(x => `<option value="${x}">${x.toUpperCase()} · 文字转换</option>`).join('') : ''}</select></label><p class="muted">内置转换保留文字和段落，EPUB 可写入新书名与封面；图片、表格布局和标注不会写入转换结果。</p>${!b.audio && window.__TAURI_INTERNALS__ ? `<div class="converter-section"><label>桌面 calibre 转换<select id="calibre-format"><option value="mobi">MOBI</option><option value="pdf">PDF</option><option value="epub">EPUB</option><option value="docx">DOCX</option><option value="rtf">RTF</option><option value="fb2">FB2</option><option value="txt">TXT</option></select></label><p class="muted">需另装 calibre 或将免安装 calibre 放在程序旁的 calibre 文件夹。转换结果取决于原书格式。</p><button id="calibre-convert" class="secondary">使用 calibre 转换</button></div>` : ''}<div class="dialog-actions"><button id="do-export" class="primary">${icon('download')}导出文件</button></div>`);
+  const d = dialog('转换与导出', `<p>《${esc(b.title)}》</p><label>导出方式<select id="export-format"><option value="original">下载原文件（原始内容与元数据）</option>${!b.audio ? ['epub', 'txt', 'html', 'fb2', 'rtf', 'docx'].map(x => `<option value="${x}">${x.toUpperCase()} · 文字转换</option>`).join('') : ''}</select></label><p class="muted">内置转换保留文字和段落，EPUB 可写入新书名与封面；图片、表格布局和标注不会写入转换结果。</p>${!b.audio && desktopConversion ? `<div class="converter-section"><label>桌面 calibre 转换<select id="calibre-format"><option value="mobi">MOBI</option><option value="pdf">PDF</option><option value="epub">EPUB</option><option value="docx">DOCX</option><option value="rtf">RTF</option><option value="fb2">FB2</option><option value="txt">TXT</option></select></label><p class="muted">需另装 calibre 或将免安装 calibre 放在程序旁的 calibre 文件夹。转换结果取决于原书格式。</p><button id="calibre-convert" class="secondary">使用 calibre 转换</button></div>` : ''}<div class="dialog-actions"><button id="do-export" class="primary">${icon('download')}导出文件</button></div>`);
   d.querySelector('#do-export').onclick = () => run(async () => {
     const button = d.querySelector('#do-export'); button.disabled = true; button.textContent = '正在导出…';
     try { const file = await store.getFile(b.id); await (await import('./transfer.js')).convert(file, b, d.querySelector('#export-format').value); toast('已生成导出文件'); d.close(); }
@@ -246,5 +247,11 @@ document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging'); if (active) toast('请先返回书库，再导入书籍'); else importFiles(e.dataTransfer.files); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && active) { clearTimeout(persistTimer); run(() => store.saveBook(active)); } });
 const sampleText = `给阅读留一点时间\n\n一\n\n窗外的风经过树梢，书页上的光慢慢移动。你不必急着读完，也不必记住每一句话。翻开一本书，本来就可以只为了眼前这一小段安静。\n\n这是 EXReader 的原创示例文章。试着选中这段文字，点击上方的“标注”，记下你的想法。下次再打开，它仍会留在这里。\n\n二\n\n我们常常把阅读想成一段需要完成的路：这个月读几本，今年读多少页。但真正留在心里的，也许只是某个清晨读到的一个比喻，或者旅途中偶然翻过的一页。\n\n一本书的价值，有时不在结尾，而在它让你停下来的那个瞬间。你开始注意到一棵树的影子，开始愿意听一个人把故事说完，开始重新理解某段熟悉的生活。\n\n三\n\n给阅读留一点时间，不需要安排一个完美的下午。可以是等车的十分钟，是睡前的小半个小时，是雨停之前的一点空隙。\n\n让字体大一点，让行距宽一点。白天读不完的，留给夜晚。没有读懂的地方，留给下次。阅读可以有自己的速度，生活也是。\n\n四\n\n你可以把这篇文章转换成 EPUB、TXT、FB2、RTF 或 DOCX，试试不同的阅读方式。也可以改一张封面，换一个书名，给它加上“想再读一次”的标签。\n\n书库不需要装得很多。几本真正喜欢的书，就足够让一个角落变得温暖。\n\n现在，合上这篇示例，把你喜欢的第一本书带进来吧。`;
-run(async () => { await reload(); shell(); });
+run(async () => {
+  if (window.__TAURI_INTERNALS__) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    desktopConversion = await invoke('desktop_conversion_available');
+  }
+  await reload(); shell();
+});
 if ('serviceWorker' in navigator && import.meta.env.PROD && !window.__TAURI_INTERNALS__) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(error));
