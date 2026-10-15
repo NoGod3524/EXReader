@@ -1,1 +1,1 @@
-{"identifier":"main","description":"Main reader window only; no general filesystem or shell access","windows":["main"],"permissions":["core:default"]}
+{"identifier":"main","description":"Main reader window; exports can write only to locations chosen in the system save dialog","windows":["main"],"permissions":["core:default","dialog:allow-save","fs:allow-write-file"]}

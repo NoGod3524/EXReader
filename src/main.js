@@ -117,7 +117,7 @@ function conversionDialog(b) {
   const d = dialog('转换与导出', `<p>《${esc(b.title)}》</p><label>导出方式<select id="export-format"><option value="original">下载原文件（原始内容与元数据）</option>${!b.audio ? ['epub', 'txt', 'html', 'fb2', 'rtf', 'docx'].map(x => `<option value="${x}">${x.toUpperCase()} · 文字转换</option>`).join('') : ''}</select></label><p class="muted">内置转换保留文字和段落，EPUB 可写入新书名与封面；图片、表格布局和标注不会写入转换结果。</p>${!b.audio && desktopConversion ? `<div class="converter-section"><label>桌面 calibre 转换<select id="calibre-format"><option value="mobi">MOBI</option><option value="pdf">PDF</option><option value="epub">EPUB</option><option value="docx">DOCX</option><option value="rtf">RTF</option><option value="fb2">FB2</option><option value="txt">TXT</option></select></label><p class="muted">需另装 calibre 或将免安装 calibre 放在程序旁的 calibre 文件夹。转换结果取决于原书格式。</p><button id="calibre-convert" class="secondary">使用 calibre 转换</button></div>` : ''}<div class="dialog-actions"><button id="do-export" class="primary">${icon('download')}导出文件</button></div>`);
   d.querySelector('#do-export').onclick = () => run(async () => {
     const button = d.querySelector('#do-export'); button.disabled = true; button.textContent = '正在导出…';
-    try { const file = await store.getFile(b.id); await (await import('./transfer.js')).convert(file, b, d.querySelector('#export-format').value); toast('已生成导出文件'); d.close(); }
+    try { const file = await store.getFile(b.id); const saved = await (await import('./transfer.js')).convert(file, b, d.querySelector('#export-format').value); if (saved !== false) { toast('已保存导出文件'); d.close(); } else toast('已取消导出'); }
     finally { button.disabled = false; button.textContent = '导出文件'; }
   });
   const calibre = d.querySelector('#calibre-convert');
@@ -128,7 +128,7 @@ function conversionDialog(b) {
       const file = await store.getFile(b.id), output = d.querySelector('#calibre-format').value;
       if (file.size > 100 * 1024 ** 2) throw new Error('桌面转换单文件上限为 100 MB');
       const data = await invoke('convert_book', { input: Array.from(new Uint8Array(await file.arrayBuffer())), from: b.format, to: output, title: b.title, author: b.author, cover: b.cover || null });
-      (await import('./transfer.js')).download(new Blob([new Uint8Array(data)]), `${b.title.replace(/[<>:"/\\|?*]/g, '_')}.${output}`); d.close(); toast('转换完成');
+      await (await import('./transfer.js')).download(new Blob([new Uint8Array(data)]), `${b.title.replace(/[<>:"/\\|?*]/g, '_')}.${output}`); d.close(); toast('转换完成');
     } finally { calibre.disabled = false; calibre.textContent = '使用 calibre 转换'; }
   });
 }
@@ -225,7 +225,7 @@ const actions = {
   settings: preferences, appearance, back: closeReader,
   prev: () => reader?.prev(), next: () => reader?.next(), toc: tocDialog,
   annotate: () => annotationDialog(), bookmark: () => annotationDialog(true), 'reader-search': searchDialog,
-  backup: async () => { toast('正在打包书库…'); await (await import('./transfer.js')).backup(); toast('书库备份已生成'); },
+  backup: async () => { toast('正在打包书库…'); const saved = await (await import('./transfer.js')).backup(); toast(saved === false ? '已取消备份' : '书库备份已保存'); },
   restore: () => document.querySelector('#restore-input').click(),
   'export-notes': async () => (await import('./transfer.js')).notesExport(notes, books),
   sample: () => importFiles([new File([sampleText], '给阅读留一点时间.txt', { type: 'text/plain' })]),

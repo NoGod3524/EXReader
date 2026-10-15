@@ -2,10 +2,19 @@ import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import * as store from './store.js';
 import { escapeHTML as esc, openReflow, BOOK_EXTENSIONS, AUDIO_EXTENSIONS } from './formats.js';
 
-export function download(blob, name) {
+export async function download(blob, name) {
+  if (window.__TAURI_INTERNALS__) {
+    const { save } = await import('@tauri-apps/plugin-dialog');
+    const { writeFile } = await import('@tauri-apps/plugin-fs');
+    const path = await save({ defaultPath: name });
+    if (!path) return false;
+    await writeFile(path, new Uint8Array(await blob.arrayBuffer()));
+    return true;
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 30000);
+  return true;
 }
 const safeName = name => name.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').slice(0, 160) || 'book';
 export async function backup() {
@@ -14,7 +23,7 @@ export async function backup() {
   if (books.reduce((sum, b) => sum + b.size, metadata.length) > 1024 ** 3 - 1024 ** 2) throw new Error('当前整体备份上限为 1 GB，请先导出大体积音频原文件');
   const files = { 'library.json': metadata };
   for (const book of books) files[`files/${book.id}`] = new Uint8Array(await (await store.getFile(book.id)).arrayBuffer());
-  download(new Blob([zipSync(files, { level: 0 })], { type: 'application/zip' }), `EXReader-${new Date().toISOString().slice(0, 10)}.zip`);
+  return download(new Blob([zipSync(files, { level: 0 })], { type: 'application/zip' }), `EXReader-${new Date().toISOString().slice(0, 10)}.zip`);
 }
 export async function restoreBackup(file) {
   if (file.size > 1024 ** 3) throw new Error('单次恢复上限为 1 GB');
@@ -44,7 +53,7 @@ export async function restoreBackup(file) {
 }
 export function notesExport(notes, books) {
   const text = notes.map(n => `## ${books.find(b => b.id === n.bookId)?.title || ''}\n\n> ${n.quote.replace(/\n/g, '\n> ')}\n\n${n.note}\n\n${new Date(n.created).toLocaleString()}\n`).join('\n');
-  download(new Blob([text], { type: 'text/markdown;charset=utf-8' }), 'EXReader-标注.md');
+  return download(new Blob([text], { type: 'text/markdown;charset=utf-8' }), 'EXReader-标注.md');
 }
 async function paragraphs(file, book) {
   if (book.audio) throw new Error('有声书不能转换为电子书');
@@ -75,7 +84,7 @@ async function paragraphs(file, book) {
   } finally { parsed.destroy?.(); }
 }
 export async function convert(file, book, format) {
-  if (format === 'original') { download(file, safeName(book.title) + '.' + book.format); return; }
+  if (format === 'original') return download(file, safeName(book.title) + '.' + book.format);
   const lines = await paragraphs(file, book);
   const body = `<h1>${esc(book.title)}</h1>` + lines.map(x => `<p>${esc(x)}</p>`).join('\n');
   let blob;
@@ -114,5 +123,5 @@ export async function convert(file, book, format) {
     files['OEBPS/book.opf'] = strToU8(`<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">urn:uuid:${book.id}</dc:identifier><dc:title>${esc(book.title)}</dc:title><dc:creator>${esc(book.author)}</dc:creator><dc:language>zh</dc:language><meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z$/, 'Z')}</meta>${coverMeta}</metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="text" href="text.xhtml" media-type="application/xhtml+xml"/>${coverItem}${coverPage}</manifest><spine>${coverSpine}<itemref idref="text"/></spine></package>`);
     blob = new Blob([zipSync(files)], { type: 'application/epub+zip' });
   } else throw new Error('请选择支持的导出格式');
-  download(blob, `${safeName(book.title)}.${format}`);
+  return download(blob, `${safeName(book.title)}.${format}`);
 }

@@ -8,7 +8,10 @@ fn desktop_conversion_available() -> bool {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default().setup(|app| {
+    let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
         let window = tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
             .title("EXReader · 悦读")
             .inner_size(1180.0, 820.0)

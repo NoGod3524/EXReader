@@ -2,8 +2,24 @@ import { chromium } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { unzipSync, strFromU8 } from 'fflate';
 const adb = (...args) => execFileSync('adb', args, { encoding: 'utf8' }).trim();
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function tapSave() {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    adb('shell', 'uiautomator', 'dump', '/sdcard/exreader-ui.xml');
+    const xml = adb('shell', 'cat', '/sdcard/exreader-ui.xml');
+    const nodes = Array.from(xml.matchAll(/<node\b[^>]*>/g), ([node]) => Object.fromEntries(Array.from(node.matchAll(/([\w:-]+)="([^"]*)"/g), m => [m[1], m[2]])));
+    const save = nodes.find(n => n.enabled === 'true' && (/action_menu_save/.test(n['resource-id'] || '') || /^save$/i.test(n.text || '')));
+    if (save) {
+      const bounds = Array.from(save.bounds.matchAll(/\d+/g), m => Number(m[0]));
+      adb('shell', 'input', 'tap', String(Math.floor((bounds[0] + bounds[2]) / 2)), String(Math.floor((bounds[1] + bounds[3]) / 2)));
+      return;
+    }
+    await wait(500);
+  }
+  throw new Error('System document Save button did not appear');
+}
 await mkdir('test-results/android', { recursive: true });
 async function apks(folder) {
   const entries = await readdir(folder, { withFileTypes: true });
@@ -47,6 +63,18 @@ try {
         await page.locator('#convert-book').click();
         assert.equal(await page.locator('#calibre-convert').count(), 0, 'Desktop-only conversion must not appear on Android');
         await page.locator('[data-dismiss]').click();
+        await page.locator('.topbar [data-action="settings"]').click();
+        await page.getByRole('button', { name: '导出整个书库', exact: true }).click();
+        await tapSave();
+        await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('书库备份已保存'));
+        const saved = adb('shell', 'find', '/sdcard/Download', '-maxdepth', '1', '-name', 'EXReader-*.zip').split('\n').filter(Boolean)[0];
+        assert.ok(saved, 'Native export must create a file in Downloads');
+        adb('pull', saved, 'test-results/android/backup.zip');
+        const { readFile } = await import('node:fs/promises');
+        const archive = unzipSync(new Uint8Array(await readFile('test-results/android/backup.zip')));
+        const metadata = JSON.parse(strFromU8(archive['library.json']));
+        assert.equal(metadata.books.length, 1);
+        assert.equal(metadata.notes.length, 1);
       }
       console.log(`Android native round ${round + 1}: passed`);
     } finally { await browser.close(); }
