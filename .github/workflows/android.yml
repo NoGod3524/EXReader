@@ -3,12 +3,12 @@ on:
   workflow_dispatch:
     inputs:
       package_type:
-        description: Optimized signed preview or debug package for WebView tests
+        description: Optimized signed preview or debug package
         type: choice
         options: [preview, debug]
         default: preview
       existing_debug_run:
-        description: Optional prior run ID to test its debug APK without rebuilding
+        description: Optional prior run ID to test its APK without rebuilding
         default: ''
 permissions:
   actions: read
@@ -91,7 +91,7 @@ jobs:
   emulator:
     timeout-minutes: 20
     needs: apk
-    if: always() && inputs.package_type == 'debug' && (needs.apk.result == 'success' || inputs.existing_debug_run != '')
+    if: always() && (needs.apk.result == 'success' || inputs.existing_debug_run != '')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -107,7 +107,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           run-id: ${{ inputs.existing_debug_run || github.run_id }}
-          name: EXReader-Android-debug
+          name: EXReader-Android-${{ inputs.package_type }}
           path: android-apks
       - run: npm ci
       - name: Enable KVM
