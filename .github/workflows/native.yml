@@ -24,7 +24,7 @@ jobs:
         run: ctest --test-dir build/native -C Release --output-on-failure
       - name: Install portable SDK with license notices
         run: cmake --install build/native --config Release --prefix stage
-      - name: Build host construction example against the installed SDK
+      - name: Build host examples against the installed SDK
         run: |
           cmake -S stage/examples -B build/sdk-example -DEXR_SDK="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release
           cmake --build build/sdk-example --config Release --parallel 4
@@ -33,16 +33,19 @@ jobs:
         run: |
           ./stage/bin/exreader-render.exe tests/fixtures/sample.txt C:/Windows/Fonts/arial.ttf stage-page.png
           ./build/sdk-example/Release/exreader-construct-example.exe C:/Windows/Fonts/arial.ttf host-page.png
+          ./build/sdk-example/Release/exreader-anchor-example.exe
       - name: Run the installed Linux SDK
         if: runner.os == 'Linux'
         run: |
           ./stage/bin/exreader-render tests/fixtures/sample.txt /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf stage-page.png
           ./build/sdk-example/exreader-construct-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf host-page.png
+          ./build/sdk-example/exreader-anchor-example
       - name: Run the installed macOS SDK
         if: runner.os == 'macOS'
         run: |
           ./stage/bin/exreader-render tests/fixtures/sample.txt /System/Library/Fonts/Supplemental/Arial.ttf stage-page.png
           ./build/sdk-example/exreader-construct-example /System/Library/Fonts/Supplemental/Arial.ttf host-page.png
+          ./build/sdk-example/exreader-anchor-example
       - uses: actions/upload-artifact@v4
         with:
           name: EXReader-C-${{ runner.os }}

@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.6.0"
+#define EXR_VERSION "0.7.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -121,6 +121,24 @@ typedef struct {
   const exr_resource_input *resources;
   size_t resource_count;
 } exr_document_input;
+
+/* Portable text selectors. Offsets are UTF-8 bytes in normalized document text;
+   exact/prefix/suffix/chapter are owned strings from create(), or host inputs.
+   NULL exact denotes a legacy offset-only anchor. chapter is an optional path scope. */
+typedef struct {
+  size_t start, end;
+  char *exact, *prefix, *suffix, *chapter;
+} exr_anchor;
+typedef enum {
+  EXR_ANCHOR_MISSING = 0,
+  EXR_ANCHOR_FOUND,
+  EXR_ANCHOR_AMBIGUOUS,
+  EXR_ANCHOR_LEGACY
+} exr_anchor_state;
+typedef struct {
+  exr_anchor_state state;
+  size_t start, end; /* SIZE_MAX unless FOUND. */
+} exr_anchor_match;
 typedef struct {
   size_t start, end;
   uint32_t codepoint, glyph;
@@ -198,6 +216,15 @@ EXR_API exr_status exr_document_resolve(const exr_document *doc, size_t chapter,
 EXR_API exr_format exr_document_format(const exr_document *doc);
 EXR_API exr_status exr_document_find(const exr_document *doc, const char *query, size_t from,
                                      size_t *start, size_t *end, exr_error *error);
+/* Capture up to 64 KiB of selected text and 32 Unicode scalars of context per side.
+   Empty ranges capture point bookmarks. Output must be empty; failure clears it. */
+EXR_API exr_status exr_anchor_create(const exr_document *doc, size_t start, size_t end,
+                                     exr_anchor *out, exr_error *error);
+EXR_API void exr_anchor_free(exr_anchor *anchor);
+/* Read-only resolution; never falls back to the nearest old offset. EXR_OK may
+   report MISSING/AMBIGUOUS/LEGACY; only FOUND supplies a usable range. */
+EXR_API exr_status exr_anchor_resolve(const exr_document *doc, const exr_anchor *anchor,
+                                      exr_anchor_match *match, exr_error *error);
 EXR_API exr_status exr_document_export(const exr_document *doc, exr_format format, void **data,
                                        size_t *size, exr_error *error);
 EXR_API exr_status exr_font_open(const char *path, exr_font **out, exr_error *error);
@@ -243,6 +270,7 @@ typedef struct {
   int64_t id, book_id;
   size_t start, end;
   char *text;
+  exr_anchor anchor; /* Owned in query results; zero-initialize input notes. */
 } exr_note;
 EXR_API exr_status exr_library_open(const char *path, exr_library **out, exr_error *error);
 EXR_API void exr_library_close(exr_library *library);
@@ -257,6 +285,9 @@ EXR_API exr_status exr_library_document(exr_library *library, int64_t id, exr_do
                                         exr_error *error);
 EXR_API exr_status exr_library_cover(exr_library *library, int64_t id, const void *data,
                                      size_t size, exr_error *error);
+/* New/reranged notes capture a selector from the stored book. Updating only text
+   preserves the old selector (including legacy). A non-NULL anchor.exact explicitly
+   supplies a replacement selector, whose start/end must equal the note range. */
 EXR_API exr_status exr_library_note(exr_library *library, const exr_note *note, int64_t *id,
                                     exr_error *error);
 EXR_API exr_status exr_library_notes(exr_library *library, int64_t book_id, exr_note **notes,

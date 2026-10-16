@@ -41,9 +41,10 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
                        "CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY,book_id INTEGER "
                        "NOT NULL REFERENCES books(id) ON DELETE CASCADE,start INTEGER NOT NULL "
                        "CHECK(start>=0),end INTEGER NOT NULL CHECK(end>=start),text TEXT NOT "
-                       "NULL);"
+                       "NULL,anchor_exact TEXT,anchor_prefix TEXT,anchor_suffix TEXT,"
+                       "anchor_chapter TEXT);"
                        "CREATE INDEX IF NOT EXISTS notes_book ON notes(book_id);PRAGMA "
-                       "application_id=1163416131;PRAGMA user_version=1;COMMIT;";
+                       "application_id=1163416131;PRAGMA user_version=2;COMMIT;";
   if (!path || !out)
     return exr_fail(e, EXR_ARGUMENT, "Invalid library arguments");
   *out = NULL;
@@ -69,6 +70,22 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
     int app = scalar(l->db, "PRAGMA application_id"),
         version = scalar(l->db, "PRAGMA user_version");
     if (app == 1163416131 && version == 1) {
+      const char *migration =
+          "BEGIN IMMEDIATE;ALTER TABLE notes ADD COLUMN anchor_exact TEXT;"
+          "ALTER TABLE notes ADD COLUMN anchor_prefix TEXT;"
+          "ALTER TABLE notes ADD COLUMN anchor_suffix TEXT;"
+          "ALTER TABLE notes ADD COLUMN anchor_chapter TEXT;"
+          "PRAGMA user_version=2;COMMIT;";
+      if (sqlite3_exec(l->db, migration, NULL, NULL, NULL) != SQLITE_OK) {
+        database_error(l, e);
+        sqlite3_exec(l->db, "ROLLBACK", NULL, NULL, NULL);
+        exr_library_close(l);
+        return EXR_DATABASE;
+      }
+      *out = l;
+      return EXR_OK;
+    }
+    if (app == 1163416131 && version == 2) {
       *out = l;
       return EXR_OK;
     }
@@ -82,6 +99,7 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
   }
   if (sqlite3_exec(l->db, schema, NULL, NULL, NULL) != SQLITE_OK) {
     database_error(l, e);
+    sqlite3_exec(l->db, "ROLLBACK", NULL, NULL, NULL);
     exr_library_close(l);
     return EXR_DATABASE;
   }
@@ -301,47 +319,185 @@ exr_status exr_library_cover(exr_library *l, int64_t id, const void *data, size_
     return exr_fail(e, EXR_ARGUMENT, "Book missing");
   return result;
 }
+/* SQLite values are checked before casts so damaged databases cannot wrap offsets. */
+static int offset_column(sqlite3_stmt *s, int column, size_t *out) {
+  sqlite3_int64 value;
+  if (sqlite3_column_type(s, column) != SQLITE_INTEGER)
+    return 0;
+  value = sqlite3_column_int64(s, column);
+  if (value < 0 || (uint64_t)value > SIZE_MAX)
+    return 0;
+  *out = (size_t)value;
+  return 1;
+}
+static exr_status annotation_column(sqlite3_stmt *s, int column, int nullable, char **out,
+                                    exr_error *e) {
+  const char *text;
+  size_t limit = column == 5 ? 65536 : (column == 6 || column == 7) ? 128
+                                      : column == 8 ? 2046 : EXR_MAX_TEXT;
+  int bytes, type = sqlite3_column_type(s, column);
+  *out = NULL;
+  if (nullable && type == SQLITE_NULL)
+    return EXR_OK;
+  if (type != SQLITE_TEXT)
+    return exr_fail(e, EXR_DATABASE, "Invalid stored annotation text type");
+  text = (const char *)sqlite3_column_text(s, column);
+  bytes = sqlite3_column_bytes(s, column);
+  if (!text)
+    return exr_fail(e, EXR_MEMORY, "Annotation allocation failed");
+  if ((size_t)bytes > limit || memchr(text, 0, (size_t)bytes))
+    return exr_fail(e, EXR_DATABASE, "Invalid stored annotation text");
+  *out = exr_copy(text, (size_t)bytes);
+  return *out ? EXR_OK : exr_fail(e, EXR_MEMORY, "Annotation allocation failed");
+}
+/* Columns: id, book_id, start, end, text, four selectors, book text_size. */
+static exr_status read_note(sqlite3_stmt *s, exr_note *note, exr_error *e) {
+  exr_error validation;
+  exr_status result;
+  size_t text_size;
+  memset(note, 0, sizeof(*note));
+  if (sqlite3_column_type(s, 0) != SQLITE_INTEGER ||
+      sqlite3_column_type(s, 1) != SQLITE_INTEGER ||
+      (note->id = sqlite3_column_int64(s, 0)) <= 0 ||
+      (note->book_id = sqlite3_column_int64(s, 1)) <= 0 ||
+      !offset_column(s, 2, &note->start) || !offset_column(s, 3, &note->end) ||
+      !offset_column(s, 9, &text_size) || text_size > EXR_MAX_TEXT ||
+      note->start > note->end || note->end > text_size)
+    return exr_fail(e, EXR_DATABASE, "Invalid stored annotation range");
+  note->anchor.start = note->start;
+  note->anchor.end = note->end;
+  result = annotation_column(s, 4, 0, &note->text, e);
+  if (result == EXR_OK)
+    result = annotation_column(s, 5, 1, &note->anchor.exact, e);
+  if (result == EXR_OK)
+    result = annotation_column(s, 6, 1, &note->anchor.prefix, e);
+  if (result == EXR_OK)
+    result = annotation_column(s, 7, 1, &note->anchor.suffix, e);
+  if (result == EXR_OK)
+    result = annotation_column(s, 8, 1, &note->anchor.chapter, e);
+  if (result != EXR_OK)
+    return result;
+  if ((!note->anchor.exact &&
+       (note->anchor.prefix || note->anchor.suffix || note->anchor.chapter)) ||
+      exr_anchor_validate(&note->anchor, &validation) != EXR_OK)
+    return exr_fail(e, EXR_DATABASE, "Invalid stored annotation selector");
+  return EXR_OK;
+}
+static int bind_nullable_text(sqlite3_stmt *s, int column, const char *text) {
+  return text ? bind_text(s, column, text) : sqlite3_bind_null(s, column) == SQLITE_OK;
+}
 exr_status exr_library_note(exr_library *l, const exr_note *note, int64_t *id, exr_error *e) {
   sqlite3_stmt *s = NULL;
+  exr_document *doc = NULL;
+  exr_anchor captured = {0};
+  const exr_anchor *anchor;
   exr_status result;
-  if (!l || !note || !id || !note->text || note->book_id <= 0 || note->start > note->end ||
-      note->end > INT64_MAX)
+  size_t text_size;
+  int step, preserve = 0;
+  if (!l || !note || !id || !note->text || note->id < 0 || note->book_id <= 0 ||
+      note->start > note->end || (uint64_t)note->end > INT64_MAX)
     return exr_fail(e, EXR_ARGUMENT, "Invalid annotation");
+  anchor = &note->anchor;
   *id = 0;
+  if (anchor->exact) {
+    if (anchor->start != note->start || anchor->end != note->end)
+      return exr_fail(e, EXR_ARGUMENT, "Annotation selector and range differ");
+    result = exr_anchor_validate(anchor, e);
+    if (result != EXR_OK)
+      return result;
+  }
   if (!prepare(l, "SELECT text_size FROM books WHERE id=?1", &s))
     return database_error(l, e);
-  sqlite3_bind_int64(s, 1, note->book_id);
-  if (sqlite3_step(s) != SQLITE_ROW || note->end > (size_t)sqlite3_column_int64(s, 0)) {
+  if (sqlite3_bind_int64(s, 1, note->book_id) != SQLITE_OK)
+    goto database;
+  step = sqlite3_step(s);
+  if (step != SQLITE_ROW) {
+    if (step != SQLITE_DONE)
+      goto database;
     sqlite3_finalize(s);
-    return exr_fail(e, EXR_ARGUMENT, "Annotation is outside its book");
+    return exr_fail(e, EXR_ARGUMENT, "Book missing");
+  }
+  if (!offset_column(s, 0, &text_size) || text_size > EXR_MAX_TEXT) {
+    sqlite3_finalize(s);
+    return exr_fail(e, EXR_DATABASE, "Invalid stored book text size");
   }
   sqlite3_finalize(s);
   s = NULL;
+  if (note->end > text_size)
+    return exr_fail(e, EXR_ARGUMENT, "Annotation is outside its book");
   if (note->id > 0) {
+    exr_note previous = {0};
     if (!prepare(l,
-                 "UPDATE notes SET start=?1,end=?2,text=?3 WHERE book_id=?4 "
-                 "AND id=?5",
-                 &s))
+                 "SELECT n.id,n.book_id,n.start,n.end,n.text,n.anchor_exact,n.anchor_prefix,"
+                 "n.anchor_suffix,n.anchor_chapter,b.text_size FROM notes n "
+                 "JOIN books b ON b.id=n.book_id WHERE n.book_id=?1 AND n.id=?2", &s))
       return database_error(l, e);
-    sqlite3_bind_int64(s, 5, note->id);
-  } else if (!prepare(l, "INSERT INTO notes(start,end,text,book_id)VALUES(?1,?2,?3,?4)", &s))
-    return database_error(l, e);
-  sqlite3_bind_int64(s, 1, (sqlite3_int64)note->start);
-  sqlite3_bind_int64(s, 2, (sqlite3_int64)note->end);
-  bind_text(s, 3, note->text);
-  sqlite3_bind_int64(s, 4, note->book_id);
+    if (sqlite3_bind_int64(s, 1, note->book_id) != SQLITE_OK ||
+        sqlite3_bind_int64(s, 2, note->id) != SQLITE_OK)
+      goto database;
+    step = sqlite3_step(s);
+    if (step != SQLITE_ROW) {
+      if (step != SQLITE_DONE)
+        goto database;
+      sqlite3_finalize(s);
+      return exr_fail(e, EXR_ARGUMENT, "Annotation missing from book");
+    }
+    result = read_note(s, &previous, e);
+    preserve = !anchor->exact && previous.start == note->start && previous.end == note->end;
+    free(previous.text);
+    exr_anchor_free(&previous.anchor);
+    sqlite3_finalize(s);
+    s = NULL;
+    if (result != EXR_OK)
+      return result;
+  }
+  if (!preserve && !anchor->exact) {
+    result = exr_library_document(l, note->book_id, &doc, e);
+    if (result == EXR_OK)
+      result = exr_anchor_create(doc, note->start, note->end, &captured, e);
+    exr_document_free(doc);
+    if (result != EXR_OK)
+      return result;
+    anchor = &captured;
+  }
+  if (!prepare(l,
+               preserve ? "UPDATE notes SET text=?3 WHERE book_id=?4 AND id=?5"
+               : note->id > 0 ? "UPDATE notes SET start=?1,end=?2,text=?3,anchor_exact=?6,"
+                                "anchor_prefix=?7,anchor_suffix=?8,anchor_chapter=?9 "
+                                "WHERE book_id=?4 AND id=?5"
+                              : "INSERT INTO notes(start,end,text,book_id,anchor_exact,"
+                                "anchor_prefix,anchor_suffix,anchor_chapter)"
+                                "VALUES(?1,?2,?3,?4,?6,?7,?8,?9)", &s))
+    goto database;
+  if ((!preserve && (sqlite3_bind_int64(s, 1, (sqlite3_int64)note->start) != SQLITE_OK ||
+                     sqlite3_bind_int64(s, 2, (sqlite3_int64)note->end) != SQLITE_OK)) ||
+      !bind_text(s, 3, note->text) || sqlite3_bind_int64(s, 4, note->book_id) != SQLITE_OK ||
+      (note->id > 0 && sqlite3_bind_int64(s, 5, note->id) != SQLITE_OK) ||
+      (!preserve && (!bind_nullable_text(s, 6, anchor->exact) ||
+                     !bind_nullable_text(s, 7, anchor->prefix) ||
+                     !bind_nullable_text(s, 8, anchor->suffix) ||
+                     !bind_nullable_text(s, 9, anchor->chapter))))
+    goto database;
   result = done(l, s, e);
+  exr_anchor_free(&captured);
   if (result == EXR_OK) {
     if (!sqlite3_changes(l->db))
       return exr_fail(e, EXR_ARGUMENT, "Annotation missing from book");
     *id = note->id > 0 ? note->id : sqlite3_last_insert_rowid(l->db);
   }
   return result;
+database:
+  result = database_error(l, e);
+  sqlite3_finalize(s);
+  exr_anchor_free(&captured);
+  return result;
 }
 void exr_notes_free(exr_note *notes, size_t n) {
   size_t i;
-  for (i = 0; i < n; i++)
+  for (i = 0; i < n; i++) {
     free(notes[i].text);
+    exr_anchor_free(&notes[i].anchor);
+  }
   free(notes);
 }
 exr_status exr_library_notes(exr_library *l, int64_t book_id, exr_note **out, size_t *count,
@@ -349,44 +505,42 @@ exr_status exr_library_notes(exr_library *l, int64_t book_id, exr_note **out, si
   sqlite3_stmt *s = NULL;
   exr_note *notes = NULL;
   size_t n = 0, cap = 0;
-  int result;
+  int step;
+  exr_status result;
   if (!l || !out || !count || book_id <= 0)
     return exr_fail(e, EXR_ARGUMENT, "Invalid annotation query");
   *out = NULL;
   *count = 0;
   if (!prepare(l,
-               "SELECT id,book_id,start,end,text FROM notes WHERE book_id=?1 "
-               "ORDER BY start,id",
-               &s))
+               "SELECT n.id,n.book_id,n.start,n.end,n.text,n.anchor_exact,n.anchor_prefix,"
+               "n.anchor_suffix,n.anchor_chapter,b.text_size FROM notes n JOIN books b "
+               "ON b.id=n.book_id WHERE n.book_id=?1 ORDER BY n.start,n.id", &s))
     return database_error(l, e);
-  sqlite3_bind_int64(s, 1, book_id);
-  while ((result = sqlite3_step(s)) == SQLITE_ROW) {
-    exr_note *v;
-    if (n >= EXR_MAX_ITEMS || !exr_grow((void **)&notes, &cap, n + 1, sizeof(*v))) {
-      sqlite3_finalize(s);
-      exr_notes_free(notes, n);
-      return exr_fail(e, EXR_MEMORY, "Annotation allocation failed");
+  if (sqlite3_bind_int64(s, 1, book_id) != SQLITE_OK) {
+    result = database_error(l, e);
+    goto failure;
+  }
+  while ((step = sqlite3_step(s)) == SQLITE_ROW) {
+    if (n >= EXR_MAX_ITEMS || !exr_grow((void **)&notes, &cap, n + 1, sizeof(*notes))) {
+      result = exr_fail(e, EXR_MEMORY, "Annotation allocation failed");
+      goto failure;
     }
-    v = &notes[n++];
-    v->id = sqlite3_column_int64(s, 0);
-    v->book_id = sqlite3_column_int64(s, 1);
-    v->start = (size_t)sqlite3_column_int64(s, 2);
-    v->end = (size_t)sqlite3_column_int64(s, 3);
-    v->text = exr_copy((const char *)sqlite3_column_text(s, 4), (size_t)sqlite3_column_bytes(s, 4));
-    if (!v->text) {
-      sqlite3_finalize(s);
-      exr_notes_free(notes, n);
-      return exr_fail(e, EXR_MEMORY, "Annotation allocation failed");
-    }
+    result = read_note(s, &notes[n++], e);
+    if (result != EXR_OK)
+      goto failure;
+  }
+  if (step != SQLITE_DONE) {
+    result = database_error(l, e);
+    goto failure;
   }
   sqlite3_finalize(s);
-  if (result != SQLITE_DONE) {
-    exr_notes_free(notes, n);
-    return database_error(l, e);
-  }
   *out = notes;
   *count = n;
   return EXR_OK;
+failure:
+  sqlite3_finalize(s);
+  exr_notes_free(notes, n);
+  return result;
 }
 static exr_status remove_id(exr_library *l, int64_t id, int note, exr_error *e) {
   sqlite3_stmt *s = NULL;

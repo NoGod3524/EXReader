@@ -1,26 +1,62 @@
-# Native C API 0.6
+# Native C API 0.7
 
-公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构，宿主需要使用匹配版本的头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
+公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.7 新增稳定文本锚点接口，并在 `exr_note` 末尾添加 `anchor`；0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构。宿主需要使用匹配版本的头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
 ## 所有权与并发
 
 - `exr_document`、`exr_font`、`exr_layout`、`exr_library` 为不透明句柄，使用各自析构函数释放。
 - document 的 text / title / blocks / nodes / chapters / resources 和 layout 的 pages / lines / glyphs / boxes / image 为只读借用视图，所属对象释放后失效。树节点属性和文本也属于 document。借用的图片像素不可修改或释放。
 - 布局拥有位置、样式和已解码图片，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的字体；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不同句柄可独立使用。
-- `exr_books_free()` / `exr_notes_free()` 释放数组和其中字符串。修改元数据时复制结构并用自己的字符串设置输入字段，不替换结果数组中的库拥有指针。
+- `exr_books_free()` / `exr_notes_free()` 释放数组和其中字符串；后者也释放每条笔记的锚点字符串。修改元数据时复制结构并用自己的字符串设置输入字段，不替换结果数组中的库拥有指针。
+- `exr_anchor_create()` 输出独立拥有的选文、前后文和章节路径字符串，由 `exr_anchor_free()` 释放；输入文档随后可释放。宿主也可直接提供选择器字段供只读解析，但不能用库的释放函数释放宿主借用的字符串。
 - `exr_bitmap_free()` 释放像素。`exr_document_export()` / `exr_document_resource()` / `exr_library_blob()` 返回的字节用 `exr_free()` 释放。这些字节独立于原对象的生命周期。跨 DLL 调用时不要使用宿主 `free()` 释放库内存。
 - 输出参数需为空或已先释放。对输入的任意无效 C 指针不提供运行时保护。
 - `exr_document_create()` 在调用期间复制输入数组中的字符串、属性和资源字节；返回后可释放所有输入。失败时不交出部分文档，`*out` 为 NULL。
 
 ## 文档与排版
 
-`exr_document_open()` 根据扩展名选择解析器；内存入口显式指定 `exr_format`。文本模型使用规范化 UTF-8；进度和标注保存规范化文本的字节偏移，不使用页码作为永久位置。宿主通过 `exr_layout_page_at()` 在重新排版后查找该位置，通过 `exr_layout_hit_test()` 将坐标映射回文字。0.4 的 EPUB 正文投影会分隔表格单元格、排除 hidden 元素，偏移可能与 0.3 不同；旧偏移未提供自动迁移，书库现有标注仍只有偏移。跨版本稳定标注和旧 Foliate CFI 转换是后续工作。
+`exr_document_open()` 根据扩展名选择解析器；内存入口显式指定 `exr_format`。文本模型使用规范化 UTF-8；进度和标注范围使用规范化文本的字节偏移，不使用页码作为永久位置。宿主通过 `exr_layout_page_at()` 在重新排版后查找该位置，通过 `exr_layout_hit_test()` 将坐标映射回文字。0.7 的文本锚点可以在正文投影变化后重新寻找选文；阅读进度仍为偏移。0.4 的 EPUB 正文投影会分隔表格单元格、排除 hidden 元素，偏移可能与 0.3 不同；旧标注只有偏移，迁移后仍明确标为 legacy，不能把当前正文中的同一数字偏移当作历史选文。旧 Foliate CFI 转换尚未实现。
 
 输入上限 128 MiB、正文上限 64 MiB、布局上限约 400 万字形。文档树上限 262144 个节点、字符串累计 64 MiB、每个元素最多 256 个属性。ZIP 成员上限 32 MiB、条目上限 1 万、打开期间累计解压上限 128 MiB；后续每次资源读取单独应用 32 MiB 上限，由调用者释放返回的字节。XML 嵌套上限 256 层，不解析外部实体，拒绝实体声明；HTML 的脚本和样式不进入正文。所有正文排版仍在内存中完成，长书暂未实现按页懒排和页缓存。
 
 FreeType 提供真实字形 advance、kerning 和像素，不负责分页。EXReader 自己决定段落、换行、分页、基线和字形位置。当前字体只按 Unicode 标量取字形，复杂 OpenType shaping、双向文字和完整 grapheme / line break 算法仍需扩展。
 
 正文查找为区分大小写的 UTF-8 子串查询。元数据搜索使用绑定参数的 SQLite LIKE，并转义 `%` / `_`，其大小写折叠规则为 SQLite 默认规则。
+
+## 稳定文本锚点
+
+`exr_anchor` 由半开范围 `start/end`、精确选文 `exact`、前后文 `prefix/suffix` 和可选章节路径 `chapter` 组成。位置均为规范化正文的 UTF-8 字节偏移。`exr_anchor_create()` 从当前文档捕获最多 64 KiB 的选文，以及两侧各最多 32 个 Unicode 标量的上下文；输入范围必须位于 UTF-8 字符边界。`start == end` 捕获点书签，其 `exact` 是空字符串；`exact == NULL` 则表示没有文本选择器的旧偏移记录。
+
+```c
+exr_anchor anchor = {0};
+exr_anchor_match match;
+exr_error error = {0};
+if (exr_anchor_create(doc, selection_start, selection_end, &anchor, &error) == EXR_OK) {
+    /* Persist the fields; later resolve against a newly opened/constructed document. */
+    if (exr_anchor_resolve(updated_doc, &anchor, &match, &error) == EXR_OK &&
+        match.state == EXR_ANCHOR_FOUND) {
+        /* match.start/end are the usable UTF-8 range in updated_doc. */
+    }
+}
+exr_anchor_free(&anchor);
+```
+
+`exr_anchor_resolve()` 只读取文档和选择器，不修改原锚点。`EXR_OK` 表示完成匹配过程，宿主还必须检查 `match.state`：
+
+| 状态 | 含义 |
+| --- | --- |
+| `EXR_ANCHOR_FOUND` | 唯一最佳候选；`match.start/end` 为当前正文中的范围 |
+| `EXR_ANCHOR_MISSING` | 找不到有足够上下文佐证的候选，或指定章节路径已消失 |
+| `EXR_ANCHOR_AMBIGUOUS` | 多个候选取得相同最高匹配等级，拒绝按旧偏移猜测 |
+| `EXR_ANCHOR_LEGACY` | `exact == NULL`，只有旧偏移，无法验证原选文 |
+
+除 `FOUND` 外，输出 `start/end` 均为 `SIZE_MAX`，不能直接交给定位或排版接口。精确选文必须至少有一侧完整前后文匹配，或有文档 / 章节边界作为佐证；两侧都匹配的候选优先。点书签使用同样的上下文和边界规则。原偏移不是解决重复内容歧义的依据。
+
+捕获的范围完全位于同一章节时记录其路径，解析限制在对应章节范围内；跨章节范围不记录章节路径。路径消失时返回 `MISSING`，不自动搜索其他章节。宿主明确去掉 `chapter` 限制后可尝试全篇或跨格式匹配；这只是精确文本选择器的复用，不包含文档身份验证或格式标准间的映射。
+
+这些接口独立于 SQLite，适用于内置格式和 `exr_document_create()` 构造的文档；宿主可在自己的存储中保存全部字段。不支持模糊改字匹配、Unicode 规范化、grapheme 边界、文档指纹和 EPUB CFI；引文或上下文发生变化可能返回 `MISSING`。正文导出接口不序列化锚点。
+
+SDK 的 `examples/anchor.c` 提供无需字体的完整示例；与构造文档示例使用同一个 examples CMake 工程，生成 `exreader-anchor-example`。它在保存选文后释放原文档，再打开插入前言的版本并检查重新定位的结果。
 
 ## 通用文档构造
 
@@ -132,7 +168,9 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 ## 书库
 
-SQLite 数据库保存原文件 BLOB、封面 BLOB、元数据和 UTF-8 位置标注。书籍主键为库内整数。格式在导入时验证；正文大小用于检查进度和标注范围。书库使用 application_id 与 schema version 检查，拒绝不认识的现有数据库。单句修改使用 SQLite 事务语义，书籍删除通过外键清理笔记。
+SQLite 数据库保存原文件 BLOB、封面 BLOB、元数据和 UTF-8 位置标注。书籍主键为库内整数。格式在导入时验证；正文大小用于检查进度和标注范围。书库使用 application_id 与 schema version 检查，拒绝不认识的现有数据库。0.7 将 schema v1 事务迁移到 v2，原标注保留其偏移、备注和 ID，选择器保持 NULL，因此解析为 `LEGACY`；不从新版正文反推旧引文。单句修改使用 SQLite 事务语义，书籍删除通过外键清理笔记。
+
+宿主应零初始化输入 `exr_note`。保存新标注时，`exr_library_note()` 为当前书籍正文捕获文本选择器；修改同范围标注的备注保留已有选择器。宿主可以显式提供 `note.anchor` 重新锚定，锚点的 `start/end` 必须与笔记范围一致。查询的 `exr_note.anchor` 由结果数组拥有，使用 `exr_notes_free()` 一次释放全部内容。稳定锚点保存历史文本证据，实际显示前应调用 `exr_anchor_resolve()` 并检查其状态。
 
 `exr_library_backup()` 使用 SQLite VACUUM INTO 生成可直接打开的完整备份；目标数据库不能已有非空内容。封面作为受大小限制的 BLOB 存储；宿主可调用图片解码接口生成像素，封面不自动缩放。媒体大文件的流式导入尚未实现。现有 ZIP / IndexedDB 备份需要未来的迁移工具。
 

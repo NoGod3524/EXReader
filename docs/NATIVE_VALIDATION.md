@@ -1,5 +1,28 @@
 # Native C validation
 
+## 0.7 stable text anchors
+
+The anchor integration suite covers selection and point-bookmark capture, UTF-8 scalar
+boundaries, owned selector strings, context limits, text inserted or removed before a
+selection, chapter-scoped resolution and selections spanning chapters. Exact quote and
+context matching distinguish a unique result from missing and equally ranked repeated
+content; unresolved and legacy results must not expose a usable range. Chapter paths
+restrict resolution, and a missing chapter does not silently broaden the search.
+Host-constructed documents exercise the same API without the SQLite library.
+
+Library coverage includes capturing selectors for new notes, retaining selectors when
+only a note's text changes, explicit re-anchoring, persistence across close/reopen and
+backup, and transactional schema-v1 migration that preserves legacy notes without
+inventing historical quote evidence. Matching does not claim fuzzy edit recovery,
+Unicode normalization, CFI interoperability or document fingerprint validation.
+
+2026-10-16. Local Windows Release passes all seven CTest suites, including 256 anchor
+checks and 282 library-anchor checks. The earlier native-core, native-flow and
+native-construct suites retain 70073, 2553 and 349 checks respectively. The independent
+anchor example builds using only the installed SDK header and library and runs without
+a font, reporting relocation from byte 18 to byte 39 after inserting a preface.
+The current commit's workflow supplies cross-platform runtime, sanitizer and mobile build status.
+
 ## 0.6 host-constructed documents
 
 The native-construct integration suite supplies a document tree, reading-order and auxiliary
