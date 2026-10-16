@@ -1,5 +1,53 @@
 # Native C validation
 
+## 0.12.1 audit fixes
+
+Local Windows Release passes all 22 CTest suites: 295398 shaping, 34943 line-boundary,
+295 anchor, 74 note-limit, 1999 XML-export, 116 RTF-fallback and 120 HTML-raw checks.
+The existing pager snapshots, table layouts, byte budgets, Unicode conformance,
+bitmap validation and benchmark smoke tests also pass.
+
+The audit fixes seven behavior and resource-limit defects:
+
+1. Long mark attachment uses cached visible/base predecessors, and integrated
+   source-range mapping uses binary searches with repeated-cluster reuse.
+   `test_shaping.c` checks long combining runs alongside the existing attachment
+   and source-range assertions.
+2. Anchor resolution compares every chapter with the stored path. The deterministic
+   `repeated-spine.epub` fixture in `test_anchor.c` checks AMBIGUOUS for selections
+   and point bookmarks in repeated chapters, plus missing and unique scopes.
+3. Note text is limited to 64 MiB before any database write. `test_note_limit.c`
+   checks exact-limit insert/read/edit, rejected oversized inserts and updates,
+   unchanged prior selectors, and normal operations after reopening. Large accepted
+   notes use an in-memory database. The same suite checks that passing `&note.id`
+   as the output preserves the original ID through repeated updates without
+   inserting duplicates.
+4. XML exports reject characters forbidden by XML 1.0 with EXR_ENCODING and empty
+   output. `test_export_xml.c` covers C0 controls, U+FFFE/U+FFFF, allowed Unicode
+   boundaries and escaped entity-looking text. Only serialized fields are checked:
+   HTML/FB2/EPUB include title and body; DOCX includes body only. TXT/RTF retain
+   their representable control characters.
+5. Layout finalizes shaping at actual line boundaries rather than carrying pair,
+   cursive or Arabic joining context across lines. The shared raw/provisional/final
+   queue serves pager, complete layout and table cells. `test_line_boundary.c`
+   uses an original font with explicit pair/cursive/Arabic expectations, source
+   ranges and hit tests, then compares page continuation, cache replay and pixels.
+6. RTF Unicode fallback counts a whole control word, symbol or hex escape as one
+   item, and `\binN` plus its payload as one item. Group delimiters terminate
+   fallback; raw CR/LF do not consume it. `test_rtf_fallback.c` covers these cases,
+   nested groups, skipped destinations, surrogate pairs and ordinary controls.
+7. HTML script/style content is skipped as raw text until its matching end tag.
+   `test_html_raw.c` covers embedded less-than signs, quotes, misleading tag-name
+   prefixes, mixed-case endings, outer skipped regions and subsequent body text.
+
+The three resident line arrays have a combined 16 MiB capacity budget. Temporary
+shaping results and the shaper's own working memory are additional. Queue shaping
+input/output work is capped at 64 Mi records (67,108,864) per document layout;
+final line fitting permits at most 256 retreats, and an unfinished shaping segment
+at most 8192 scalars. Exceeding these bounds returns EXR_LIMIT. These workspaces,
+paragraph BiDi data, font tables and renderer bitmaps remain outside cache-byte
+budgets; the 16 MiB limit is not a process-RSS bound.
+
 ## 0.12 native shaping and bidirectional text
 
 The Unicode 17 UAX #9 run passes all 861948 official paragraph-direction cases:
