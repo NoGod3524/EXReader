@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { unzipSync, strFromU8 } from 'fflate';
-const adb = (...args) => execFileSync('adb', args, { encoding: 'utf8' }).trim();
+const adb = (...args) => execFileSync('adb', args, { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).trim();
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function tapSave() {
   for (let attempt = 0; attempt < 20; attempt++) {
@@ -81,6 +81,8 @@ try {
     await wait(1000);
   }
 } catch (error) {
+  console.error(error);
+  await writeFile('test-results/android/error.txt', String(error));
   await writeFile('test-results/android/failure.png', execFileSync('adb', ['exec-out', 'screencap', '-p']));
   await writeFile('test-results/android/logcat.txt', adb('logcat', '-d'));
   await writeFile('test-results/android/sockets.txt', adb('shell', 'cat', '/proc/net/unix'));
