@@ -65,6 +65,8 @@ cargo test --manifest-path integrations/calibre/Cargo.toml
 
 [验证记录](docs/FRAMEWORK_VALIDATION.md) · [API](docs/API.md) · [后续格式与架构方向](docs/FRAMEWORK.md) · [第三方许可](THIRD_PARTY_NOTICES.md) · [原版研究记录](docs/PROJECT_STUDY.md)
 
+默认分支中的桌面、Android、iOS 构建工作流会显式检出 `codex/reader-app`；框架本身不生成空白应用安装包。
+
 ## 许可
 
 Copyright (c) 2026 EXReader contributors。当前分支自有代码采用 **GPL-3.0-only**，见 [LICENSE](LICENSE)。允许商用；分发基于本框架的派生程序需按 GPLv3 提供对应源码及构建所需材料。第三方代码继续保留其原许可。0.1.1 及此前已授予的 MIT 许可不撤回。项目中的电子书文件不因导入而改变版权。
