@@ -9,13 +9,15 @@
 - Windows 原生 calibre 命令：格式白名单拒绝路径穿越输入，**通过**。Rust 单元测试 **1 通过**。
 - Windows 免安装包构建：Tauri release 构建成功。运行使用系统 WebView2。
 - 加入官方文件保存插件后的 Windows release：重新运行两轮原生阅读与重开检查，**通过**；EXE 6.3 MiB，含许可证的 ZIP 约 4.5 MiB。
-- Linux Ubuntu 22.04 x64：GitHub Actions 已生成 AppImage / deb；Chromium 功能检查通过。尚未进行 Linux 原生交互检查。
-- macOS 15：Intel / Apple Silicon universal app ZIP 和 dmg 构建通过，二进制包含两种架构；Chromium 功能检查通过。尚未完成 macOS 原生交互与公证。
+- Linux Ubuntu 22.04 x64：GitHub Actions 已生成 AppImage / deb；Chromium 功能检查通过。原生 AppImage 在 Xvfb + Openbox 中启动、出现可见窗口，人工检查截图，**通过**；这项原生检查未覆盖完整阅读和文件导出。
+- macOS 15：Intel / Apple Silicon universal app ZIP 和 dmg 构建通过，二进制包含两种架构；Chromium 功能检查通过。解压真实 app 并启动，人工检查截图，**通过**；未覆盖完整原生阅读与文件导出，未做 Apple 公证。
 - iOS / iPadOS：设备 ARM64 未签名 IPA、ARM64 模拟器 app 构建通过。安装并启动 iPhone 与 iPad 模拟器，人工检查截图，**通过**。修复了桌面窗口尺寸导致手机画面裁切的问题；当前截图在 `docs/screenshots/iphone-native.png` 和 `ipad-native.png`。这项检查覆盖启动与布局，未覆盖 Apple 上的完整阅读、音频、导出与真机兼容性。
 - 手机视口 WebKit 响应式检查在状态栏避让修复后再次通过。
 
 未验证：Apple 发布签名与真机兼容性；另装 calibre 后的完整真实转换；复杂商业出版物、压缩 MOBI/KF8、多 GB 书库、大型扫描 PDF、DRM / LCP、完整无障碍规范。原生移动项目由对应平台的 Tauri CLI 在 CI 中初始化。
 
-Apple 构建与模拟器截图：[Actions 38827406945](https://github.com/NoGod3524/EXReader/actions/runs/38827406945)。可发布原生代码版本：`b8ccffa`，后续文档提交不改变这些构建的应用代码。
+Apple 构建与模拟器截图：[Actions 38827406945](https://github.com/NoGod3524/EXReader/actions/runs/38827406945)。原生应用代码版本：`b8ccffa`，后续提交仅更新文档和工作流。
+
+桌面构建：[Actions 38827446686](https://github.com/NoGod3524/EXReader/actions/runs/38827446686)。Linux / macOS 原生启动检查：[Actions 38828633215](https://github.com/NoGod3524/EXReader/actions/runs/38828633215)，截图为 `linux-native.png` / `macos-native.png`。
 
 自动化样本均由 `tests/fixtures.js` 生成。界面截图位于 `docs/screenshots/`。测试命令参见 README。
