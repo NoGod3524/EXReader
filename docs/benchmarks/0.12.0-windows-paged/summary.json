@@ -5,7 +5,7 @@
   "processor": "Intel64 Family 6 Model 189 Stepping 1, GenuineIntel",
   "font": "C:\\Windows\\Fonts\\arial.ttf",
   "font_sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
-  "binary_sha256": "5b5fea96c54d0079e59c57992a2640d970a0f861d7b087fc95b53d6e79a39c1f",
+  "binary_sha256": "0fd87436bb54b41bbe82bf4fea73e3290ca7db422d01211849535dd82d933ccb",
   "disk_cache": "uncontrolled",
   "process_policy": "new process for every run",
   "layout_mode": "paged",
@@ -32,19 +32,19 @@
         "short-3.json"
       ],
       "median": {
-        "font_open_ms": 1.0241,
-        "publication_open_ms": 2.5293,
-        "first_layout_ms": 2.2232,
-        "first_paint_ms": 6.7617,
-        "first_visible_total_ms": 12.7079,
-        "turn_layout_p50_ms": 1.635,
-        "turn_layout_p95_ms": 3.1393,
-        "turn_render_p50_ms": 7.8279,
-        "turn_render_p95_ms": 9.2554,
-        "turn_total_p50_ms": 9.5224,
-        "turn_total_p95_ms": 11.3144,
-        "peak_rss_bytes": 10416128,
-        "incremental_peak_rss_bytes": 4513792
+        "font_open_ms": 1.5102,
+        "publication_open_ms": 3.0045,
+        "first_layout_ms": 2.8573,
+        "first_paint_ms": 7.8028,
+        "first_visible_total_ms": 15.4383,
+        "turn_layout_p50_ms": 1.8557,
+        "turn_layout_p95_ms": 2.1505,
+        "turn_render_p50_ms": 8.2904,
+        "turn_render_p95_ms": 11.7532,
+        "turn_total_p50_ms": 10.3779,
+        "turn_total_p95_ms": 15.4489,
+        "peak_rss_bytes": 10412032,
+        "incremental_peak_rss_bytes": 4538368
       }
     },
     "long-single-chapter": {
@@ -62,19 +62,19 @@
         "long-single-chapter-3.json"
       ],
       "median": {
-        "font_open_ms": 1.277,
-        "publication_open_ms": 3.172,
-        "first_layout_ms": 16.4068,
-        "first_paint_ms": 9.0497,
-        "first_visible_total_ms": 29.9026,
-        "turn_layout_p50_ms": 1.6111,
-        "turn_layout_p95_ms": 2.6198,
-        "turn_render_p50_ms": 8.6687,
-        "turn_render_p95_ms": 13.2125,
-        "turn_total_p50_ms": 10.4613,
-        "turn_total_p95_ms": 14.7944,
-        "peak_rss_bytes": 12742656,
-        "incremental_peak_rss_bytes": 6856704
+        "font_open_ms": 1.512,
+        "publication_open_ms": 4.2021,
+        "first_layout_ms": 18.5643,
+        "first_paint_ms": 12.9137,
+        "first_visible_total_ms": 36.9472,
+        "turn_layout_p50_ms": 1.8416,
+        "turn_layout_p95_ms": 4.9863,
+        "turn_render_p50_ms": 10.3904,
+        "turn_render_p95_ms": 16.3863,
+        "turn_total_p50_ms": 12.4339,
+        "turn_total_p95_ms": 19.8311,
+        "peak_rss_bytes": 12726272,
+        "incremental_peak_rss_bytes": 6844416
       }
     },
     "many-chapters": {
@@ -92,19 +92,19 @@
         "many-chapters-3.json"
       ],
       "median": {
-        "font_open_ms": 0.9823,
-        "publication_open_ms": 2.578,
-        "first_layout_ms": 2.2386,
-        "first_paint_ms": 7.2644,
-        "first_visible_total_ms": 12.9952,
-        "turn_layout_p50_ms": 1.3978,
-        "turn_layout_p95_ms": 2.7334,
-        "turn_render_p50_ms": 7.7952,
-        "turn_render_p95_ms": 10.6402,
-        "turn_total_p50_ms": 9.4438,
-        "turn_total_p95_ms": 11.9528,
-        "peak_rss_bytes": 10678272,
-        "incremental_peak_rss_bytes": 4771840
+        "font_open_ms": 1.4513,
+        "publication_open_ms": 3.191,
+        "first_layout_ms": 3.2272,
+        "first_paint_ms": 8.5003,
+        "first_visible_total_ms": 17.1456,
+        "turn_layout_p50_ms": 1.8564,
+        "turn_layout_p95_ms": 3.3493,
+        "turn_render_p50_ms": 10.1339,
+        "turn_render_p95_ms": 18.5718,
+        "turn_total_p50_ms": 12.1083,
+        "turn_total_p95_ms": 20.6496,
+        "peak_rss_bytes": 10604544,
+        "incremental_peak_rss_bytes": 4722688
       }
     }
   },

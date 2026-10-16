@@ -353,6 +353,16 @@ static void style_and_l1(void) {
   l = layout(doc, &c); lines = exr_layout_lines(l, NULL);
   CHECK(near(lines[0].x, c.page.margin));
   exr_layout_free(l); exr_document_free(doc);
+  scenario = "indent follows paragraph inline start";
+  doc = paragraph("\xd7\x90\xd7\x91", "text-align:start;text-indent:20px", NULL);
+  l = layout(doc, &c); lines = exr_layout_lines(l, NULL);
+  CHECK(near(lines[0].x + lines[0].width, c.page.width - c.page.margin - 20));
+  exr_layout_free(l); exr_document_free(doc);
+  c.direction = EXR_DIRECTION_LTR;
+  doc = paragraph("ab", "text-align:start;text-indent:20px", NULL);
+  l = layout(doc, &c); lines = exr_layout_lines(l, NULL);
+  CHECK(near(lines[0].x, c.page.margin + 20));
+  exr_layout_free(l); exr_document_free(doc);
 }
 static void pagination(exr_document *doc, const exr_layout_config *c, int oracle) {
   exr_layout *all = layout(doc, c), *page = NULL;
