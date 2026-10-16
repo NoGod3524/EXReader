@@ -59,6 +59,24 @@ jobs:
           pgrep -x exreader
           screencapture -x screenshots/macos-native.png
           pkill -x exreader
+      - name: Linux executable with system WebKit
+        if: runner.os == 'Linux'
+        run: |
+          dpkg-deb -x packages/*.deb packages/system
+          xvfb-run -a -s '-screen 0 1440x1000x24' dbus-run-session bash -c '
+            openbox >screenshots/system-window-manager.log 2>&1 &
+            packages/system/usr/bin/exreader >screenshots/linux-system.log 2>&1 &
+            reader_pid=$!
+            trap "kill $reader_pid 2>/dev/null || true" EXIT
+            for attempt in $(seq 1 30); do
+              xdotool search --onlyvisible --name "EXReader" >screenshots/system-windows.txt && break
+              sleep 1
+            done
+            test -s screenshots/system-windows.txt
+            sleep 8
+            kill -0 "$reader_pid"
+            import -window root screenshots/linux-system-native.png
+          '
       - uses: actions/upload-artifact@v4
         if: always()
         with:
