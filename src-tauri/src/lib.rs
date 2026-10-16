@@ -13,9 +13,9 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
         let window = tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
-            .title("EXReader · 悦读")
-            .inner_size(1180.0, 820.0)
-            .min_inner_size(360.0, 500.0);
+            .title("EXReader · 悦读");
+        #[cfg(not(any(target_os = "android", target_os = "ios")))]
+        let window = window.inner_size(1180.0, 820.0).min_inner_size(360.0, 500.0);
         #[cfg(target_os = "windows")]
         let window = {
             let exe_dir = std::env::current_exe()?.parent().unwrap().to_path_buf();

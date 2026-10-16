@@ -44,6 +44,9 @@ try {
     try {
       const page = browser.contexts()[0].pages()[0];
       await page.locator('.library-intro').waitFor();
+      const viewport = await page.evaluate(() => ({ width: innerWidth, content: document.documentElement.scrollWidth }));
+      assert.ok(viewport.width < 600, `Phone must use a mobile viewport: ${JSON.stringify(viewport)}`);
+      assert.ok(viewport.content <= viewport.width, 'Library must fit the screen without horizontal overflow');
       if (!round) {
         await page.getByRole('button', { name: '先读一篇示例文章 →' }).click();
         await page.locator('.book-card').waitFor();
