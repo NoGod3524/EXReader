@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.9.0"
+#define EXR_VERSION "0.10.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -166,7 +166,16 @@ enum {
   EXR_BOUNDARY_MANDATORY = 4,
   EXR_BOUNDARY_GLUE = 8 /* No emergency wrapping at this boundary. */
 };
-enum { EXR_GLYPH_BOLD = 1, EXR_GLYPH_ITALIC = 2, EXR_GLYPH_HIDDEN = 4 };
+enum {
+  EXR_GLYPH_BOLD = 1, EXR_GLYPH_ITALIC = 2, EXR_GLYPH_HIDDEN = 4,
+  EXR_GLYPH_MISSING = 8 /* No supplied face covers this visible scalar; glyph 0 is used. */
+};
+
+typedef struct {
+  const void *data; /* Encoded font bytes, copied during create(). */
+  size_t size;
+  unsigned face_index; /* Face within a font collection, otherwise zero. */
+} exr_font_input;
 typedef struct {
   size_t start, end;
   uint32_t codepoint, glyph;
@@ -179,6 +188,7 @@ typedef struct {
   float line_height;
   size_t cluster_start, cluster_end; /* Source UTF-8 range of this grapheme group. */
   unsigned boundaries; /* EXR_BOUNDARY_* before this scalar in the visible run. */
+  size_t font_index; /* Index in the ordered exr_font input list; glyph is face-local. */
 } exr_glyph;
 typedef struct {
   size_t start, end, glyph_start, glyph_count;
@@ -280,6 +290,13 @@ EXR_API const exr_part *exr_publication_parts(const exr_publication *publication
 EXR_API exr_status exr_publication_load(exr_publication *publication, size_t part,
                                         exr_document **out, exr_error *error);
 EXR_API exr_status exr_font_open(const char *path, exr_font **out, exr_error *error);
+/* Immutable ordered fallback list, 1..32 scalable Unicode faces, at most 128 MiB
+   of copied font bytes in total. Failure leaves *out NULL. No system font lookup. */
+EXR_API exr_status exr_font_create(const exr_font_input *inputs, size_t count,
+                                   exr_font **out, exr_error *error);
+EXR_API size_t exr_font_count(const exr_font *font);
+/* Scalar cmap coverage, not a shaping/sequence support test; invalid input returns 0. */
+EXR_API int exr_font_has_glyph(const exr_font *font, size_t font_index, uint32_t codepoint);
 EXR_API void exr_font_free(exr_font *font);
 EXR_API exr_layout_options exr_layout_defaults(void);
 EXR_API exr_layout_config exr_layout_config_defaults(void);

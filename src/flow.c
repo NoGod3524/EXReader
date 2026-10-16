@@ -47,9 +47,59 @@ static exr_status page(flow *f, float height, size_t offset) {
 }
 static float glyph_kern(flow *f, const exr_glyph *previous, const exr_glyph *g) {
   if (!previous || (previous->flags & EXR_GLYPH_HIDDEN) || (g->flags & EXR_GLYPH_HIDDEN) ||
-      previous->size != g->size || previous->flags != g->flags)
+      previous->font_index != g->font_index || previous->size != g->size ||
+      (previous->flags & 3) != (g->flags & 3))
     return 0;
-  return exr_kern(f->font, previous->glyph, g->glyph);
+  return exr_kern(&f->font->faces[g->font_index], previous->glyph, g->glyph);
+}
+static exr_status cluster(flow *f, size_t start, size_t end) {
+  exr_layout *l = f->layout;
+  size_t i, face, common = SIZE_MAX;
+  uint32_t candidates = f->font->count == 32 ? UINT32_MAX :
+                          (UINT32_C(1) << f->font->count) - 1;
+  /* Prefer a single face for the complete visible grapheme, across inline styles. */
+  for (i = start; i < end && candidates; i++) {
+    const exr_glyph *g = &l->glyphs[i];
+    uint32_t cp = g->codepoint == '\t' ? ' ' : g->codepoint;
+    if (g->flags & EXR_GLYPH_HIDDEN)
+      continue;
+    for (face = 0; face < f->font->count; face++)
+      if ((candidates & (UINT32_C(1) << face)) &&
+          !exr_font_has_glyph(f->font, face, cp))
+        candidates &= ~(UINT32_C(1) << face);
+  }
+  for (face = 0; face < f->font->count; face++)
+    if (candidates & (UINT32_C(1) << face)) {
+      common = face;
+      break;
+    }
+  for (i = start; i < end; i++) {
+    exr_glyph *g = &l->glyphs[i];
+    uint32_t cp = g->codepoint == '\t' ? ' ' : g->codepoint;
+    exr_face *selected;
+    g->cluster_start = l->glyphs[start].start;
+    g->cluster_end = l->glyphs[end - 1].end;
+    if (g->flags & EXR_GLYPH_HIDDEN)
+      continue;
+    face = common;
+    if (face == SIZE_MAX) {
+      for (face = 0; face < f->font->count; face++)
+        if (exr_font_has_glyph(f->font, face, cp))
+          break;
+      if (face == f->font->count) {
+        face = 0;
+        g->flags |= EXR_GLYPH_MISSING;
+      }
+    }
+    g->font_index = face;
+    selected = &f->font->faces[face];
+    g->glyph = FT_Get_Char_Index(selected->face, cp);
+    if (exr_font_size(selected, g->size) || exr_measure(selected, g->glyph, g->flags, &g->advance))
+      return fail(f, EXR_FONT, "Cannot measure selected font");
+    if (g->codepoint == '\t')
+      g->advance *= 4;
+  }
+  return EXR_OK;
 }
 static exr_status flush(flow *f) {
   exr_layout *l = f->layout;
@@ -61,17 +111,16 @@ static exr_status flush(flow *f) {
     exr_glyph *g = &l->glyphs[index];
     g->boundaries = exr_text_step(&state, g->codepoint);
     if (index > group && (g->boundaries & EXR_BOUNDARY_GRAPHEME)) {
-      size_t j;
-      for (j = group; j < index; j++) {
-        l->glyphs[j].cluster_start = l->glyphs[group].start;
-        l->glyphs[j].cluster_end = l->glyphs[index - 1].end;
-      }
+      exr_status s = cluster(f, group, index);
+      if (s != EXR_OK)
+        return s;
       group = index;
     }
   }
-  for (index = group; index < l->glyph_count; index++) {
-    l->glyphs[index].cluster_start = l->glyphs[group].start;
-    l->glyphs[index].cluster_end = l->glyphs[l->glyph_count - 1].end;
+  if (group < l->glyph_count) {
+    exr_status s = cluster(f, group, l->glyph_count);
+    if (s != EXR_OK)
+      return s;
   }
   while (start < l->glyph_count) {
     size_t i, split = SIZE_MAX, emergency = SIZE_MAX, end, spaces = 0;
@@ -84,7 +133,7 @@ static exr_status flush(flow *f) {
     for (i = start; i < l->glyph_count; i++) {
       exr_glyph *g = &l->glyphs[i];
       float advance;
-      if (exr_font_size(f->font, g->size))
+      if (exr_font_size(&f->font->faces[g->font_index], g->size))
         return fail(f, EXR_FONT, "Cannot size font");
       if (i > start && (g->boundaries & EXR_BOUNDARY_MANDATORY)) {
         forced = 1;
@@ -114,11 +163,12 @@ static exr_status flush(flow *f) {
     width = 0;
     for (i = start; i < end; i++) {
       exr_glyph *g = &l->glyphs[i];
-      if (exr_font_size(f->font, g->size))
+      exr_face *face = &f->font->faces[g->font_index];
+      if (exr_font_size(face, g->size))
         return EXR_FONT;
       width += g->advance + glyph_kern(f, i == start ? NULL : &l->glyphs[i - 1], g);
-      ascent = fmaxf(ascent, (float)f->font->face->size->metrics.ascender / 64);
-      descent = fmaxf(descent, -(float)f->font->face->size->metrics.descender / 64);
+      ascent = fmaxf(ascent, (float)face->face->size->metrics.ascender / 64);
+      descent = fmaxf(descent, -(float)face->face->size->metrics.descender / 64);
       height = fmaxf(height, g->line_height);
       if (g->codepoint == ' ')
         spaces++;
@@ -151,7 +201,7 @@ static exr_status flush(flow *f) {
     l->pages[line->page].end = line->end;
     for (i = start; i < end; i++) {
       exr_glyph *g = &l->glyphs[i];
-      if (exr_font_size(f->font, g->size))
+      if (exr_font_size(&f->font->faces[g->font_index], g->size))
         return EXR_FONT;
       x += glyph_kern(f, i == start ? NULL : &l->glyphs[i - 1], g);
       g->x = x;
@@ -177,8 +227,6 @@ static exr_status text(flow *f, size_t node) {
   size_t pos = n->start;
   if (pos == SIZE_MAX)
     return EXR_OK;
-  if (exr_font_size(f->font, s->font_size))
-    return EXR_FONT;
   while (pos < n->end) {
     exr_glyph *g;
     uint32_t cp;
@@ -200,13 +248,6 @@ static exr_status text(flow *f, size_t node) {
     g->line_height = s->leading_relative ? s->leading * s->font_size : s->leading;
     if (exr_text_hidden(cp))
       g->flags |= EXR_GLYPH_HIDDEN;
-    else {
-      g->glyph = FT_Get_Char_Index(f->font->face, cp == '\t' ? ' ' : cp);
-      if (exr_measure(f->font, g->glyph, g->flags, &g->advance))
-        return EXR_FONT;
-      if (cp == '\t')
-        g->advance *= 4;
-    }
   }
   return EXR_OK;
 }

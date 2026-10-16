@@ -1,55 +1,107 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "layout_internal.h"
 #include FT_SYNTHESIS_H
-exr_status exr_font_open(const char *path, exr_font **out, exr_error *e) {
+exr_status exr_font_create(const exr_font_input *inputs, size_t count, exr_font **out, exr_error *e) {
   exr_font *font;
-  exr_status s;
-  size_t n;
-  if (!path || !out)
-    return exr_fail(e, EXR_ARGUMENT, "Invalid font arguments");
+  size_t i, total = 0;
+  exr_status status = EXR_FONT;
+  const char *message = "Font must contain a scalable Unicode face";
+  if (!out)
+    return exr_fail(e, EXR_ARGUMENT, "Missing font output");
   *out = NULL;
+  if (!inputs || !count)
+    return exr_fail(e, EXR_ARGUMENT, "Missing font inputs");
+  if (count > 32)
+    return exr_fail(e, EXR_LIMIT, "Font list exceeds 32 faces");
+  for (i = 0; i < count; i++) {
+    if (!inputs[i].data || !inputs[i].size || inputs[i].face_index > INT_MAX)
+      return exr_fail(e, EXR_ARGUMENT, "Invalid font input");
+    if (inputs[i].size > EXR_MAX_INPUT - total)
+      return exr_fail(e, EXR_LIMIT, "Font bytes exceed 128 MiB");
+    total += inputs[i].size;
+  }
   font = calloc(1, sizeof(*font));
   if (!font)
     return exr_fail(e, EXR_MEMORY, "Font allocation failed");
-  s = exr_read(path, &font->bytes, &n, e);
-  if (s != EXR_OK) {
-    free(font);
-    return s;
+  font->faces = calloc(count, sizeof(*font->faces));
+  if (!font->faces) {
+    status = EXR_MEMORY;
+    message = "Font list allocation failed";
+    goto bad;
   }
-  if (FT_Init_FreeType(&font->library) ||
-      FT_New_Memory_Face(font->library, font->bytes, (FT_Long)n, 0, &font->face)) {
-    exr_font_free(font);
-    return exr_fail(e, EXR_FONT, "Font cannot be loaded");
-  }
-  if (!FT_IS_SCALABLE(font->face)) {
-    exr_font_free(font);
-    return exr_fail(e, EXR_FONT, "A scalable font is required");
-  }
-  if (font->face->num_glyphs > 0 && font->face->num_glyphs <= 65536) {
-    font->metric_count = (size_t)font->face->num_glyphs;
-    font->advances = calloc(font->metric_count, sizeof(*font->advances));
-    font->measured = calloc(font->metric_count, 1);
-    if (!font->advances || !font->measured) {
-      exr_font_free(font);
-      return exr_fail(e, EXR_MEMORY, "Font metrics allocation failed");
+  font->count = count;
+  if (FT_Init_FreeType(&font->library))
+    goto bad;
+  for (i = 0; i < count; i++) {
+    exr_face *face = &font->faces[i];
+    face->bytes = malloc(inputs[i].size);
+    if (!face->bytes) {
+      status = EXR_MEMORY;
+      message = "Font data allocation failed";
+      goto bad;
+    }
+    memcpy(face->bytes, inputs[i].data, inputs[i].size);
+    if (FT_New_Memory_Face(font->library, face->bytes, (FT_Long)inputs[i].size,
+                           (FT_Long)inputs[i].face_index, &face->face) ||
+        !FT_IS_SCALABLE(face->face) || FT_Select_Charmap(face->face, FT_ENCODING_UNICODE))
+      goto bad;
+    if (face->face->num_glyphs > 0 && face->face->num_glyphs <= 65536) {
+      face->metric_count = (size_t)face->face->num_glyphs;
+      face->advances = calloc(face->metric_count, sizeof(*face->advances));
+      face->measured = calloc(face->metric_count, 1);
+      if (!face->advances || !face->measured) {
+        status = EXR_MEMORY;
+        message = "Font metrics allocation failed";
+        goto bad;
+      }
     }
   }
   *out = font;
-  return EXR_OK;
+  return exr_fail(e, EXR_OK, "");
+bad:
+  exr_font_free(font);
+  return exr_fail(e, status, "%s", message);
+}
+exr_status exr_font_open(const char *path, exr_font **out, exr_error *e) {
+  unsigned char *bytes = NULL;
+  size_t size;
+  exr_status status;
+  if (!out)
+    return exr_fail(e, EXR_ARGUMENT, "Missing font output");
+  *out = NULL;
+  if (!path)
+    return exr_fail(e, EXR_ARGUMENT, "Missing font path");
+  status = exr_read(path, &bytes, &size, e);
+  if (status == EXR_OK) {
+    exr_font_input input = {bytes, size, 0};
+    status = exr_font_create(&input, 1, out, e);
+  }
+  free(bytes);
+  return status;
+}
+size_t exr_font_count(const exr_font *font) { return font ? font->count : 0; }
+int exr_font_has_glyph(const exr_font *font, size_t index, uint32_t cp) {
+  return font && index < font->count && cp <= 0x10ffff && !(cp >= 0xd800 && cp <= 0xdfff) &&
+         FT_Get_Char_Index(font->faces[index].face, cp) != 0;
 }
 void exr_font_free(exr_font *f) {
+  size_t i;
   if (f) {
-    if (f->face)
-      FT_Done_Face(f->face);
+    for (i = 0; i < f->count; i++) {
+      exr_face *face = &f->faces[i];
+      if (face->face)
+        FT_Done_Face(face->face);
+      free(face->advances);
+      free(face->measured);
+      free(face->bytes);
+    }
     if (f->library)
       FT_Done_FreeType(f->library);
-    free(f->advances);
-    free(f->measured);
-    free(f->bytes);
+    free(f->faces);
     free(f);
   }
 }
-int exr_font_size(exr_font *font, float pixels) {
+int exr_font_size(exr_face *font, float pixels) {
   FT_F26Dot6 size = (FT_F26Dot6)lroundf(pixels * 64);
   if (font->metric_size == size)
     return 0;
@@ -60,7 +112,8 @@ int exr_font_size(exr_font *font, float pixels) {
     memset(font->measured, 0, font->metric_count);
   return 0;
 }
-int exr_measure(exr_font *font, uint32_t glyph, unsigned flags, float *advance) {
+int exr_measure(exr_face *font, uint32_t glyph, unsigned flags, float *advance) {
+  flags &= EXR_GLYPH_BOLD | EXR_GLYPH_ITALIC;
   if (glyph < font->metric_count && font->measured[glyph] == flags + 1) {
     *advance = font->advances[glyph];
     return 0;
@@ -80,7 +133,7 @@ exr_layout_options exr_layout_defaults(void) {
   exr_layout_options o = {720, 1040, 48, 24, 1.6f, 12};
   return o;
 }
-float exr_kern(exr_font *f, uint32_t left, uint32_t right) {
+float exr_kern(exr_face *f, uint32_t left, uint32_t right) {
   FT_Vector v = {0};
   if (left && right && FT_HAS_KERNING(f->face))
     FT_Get_Kerning(f->face, left, right, FT_KERNING_DEFAULT, &v);

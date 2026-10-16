@@ -4,14 +4,18 @@
 #include "internal.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
-struct exr_font {
-  FT_Library library;
+typedef struct {
   FT_Face face;
   unsigned char *bytes;
   float *advances;
   unsigned char *measured;
   size_t metric_count;
   FT_F26Dot6 metric_size;
+} exr_face;
+struct exr_font {
+  FT_Library library;
+  exr_face *faces;
+  size_t count;
 };
 typedef struct {
   size_t resource;
@@ -32,9 +36,9 @@ struct exr_layout {
   exr_style *styles;
   size_t work_glyphs;
 };
-int exr_font_size(exr_font *font, float size);
-int exr_measure(exr_font *font, uint32_t glyph, unsigned flags, float *advance);
-float exr_kern(exr_font *font, uint32_t left, uint32_t right);
+int exr_font_size(exr_face *font, float size);
+int exr_measure(exr_face *font, uint32_t glyph, unsigned flags, float *advance);
+float exr_kern(exr_face *font, uint32_t left, uint32_t right);
 exr_status exr_layout_validate(const exr_layout_config *config, exr_error *error);
 exr_status exr_flow_create(const exr_document *doc, exr_font *font, const exr_layout_config *config,
                            exr_layout **out, exr_error *error);

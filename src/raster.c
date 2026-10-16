@@ -107,20 +107,26 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
   for (i = p->line_start; i < p->line_start + p->line_count; i++)
     for (j = l->lines[i].glyph_start; j < l->lines[i].glyph_start + l->lines[i].glyph_count; j++) {
       const exr_glyph *g = &l->glyphs[j];
+      exr_face *selected;
+      FT_Face face;
       FT_GlyphSlot slot;
       unsigned by, bx;
       int left, top;
       if (g->flags & EXR_GLYPH_HIDDEN)
         continue;
-      if (exr_font_size(f, g->size) || FT_Load_Glyph(f->face, g->glyph, FT_LOAD_DEFAULT))
+      if (g->font_index >= f->count)
+        goto font_error;
+      selected = &f->faces[g->font_index];
+      face = selected->face;
+      if (exr_font_size(selected, g->size) || FT_Load_Glyph(face, g->glyph, FT_LOAD_DEFAULT))
         goto font_error;
       if (g->flags & 1)
-        FT_GlyphSlot_Embolden(f->face->glyph);
+        FT_GlyphSlot_Embolden(face->glyph);
       if (g->flags & 2)
-        FT_GlyphSlot_Oblique(f->face->glyph);
-      if (FT_Render_Glyph(f->face->glyph, FT_RENDER_MODE_NORMAL))
+        FT_GlyphSlot_Oblique(face->glyph);
+      if (FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL))
         goto font_error;
-      slot = f->face->glyph;
+      slot = face->glyph;
       left = (int)lroundf(g->x) + slot->bitmap_left;
       top = (int)lroundf(g->baseline) - slot->bitmap_top;
       for (by = 0; by < slot->bitmap.rows; by++)

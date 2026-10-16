@@ -1,12 +1,12 @@
-# Native C API 0.9
+# Native C API 0.10
 
-公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.9 新增独立文字边界分析入口，并在 `exr_glyph` 末尾添加 `cluster_start/end` 和 `boundaries`；0.8 新增 publication / session 分段加载接口；0.7 新增稳定文本锚点接口，并在 `exr_note` 末尾添加 `anchor`；0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构。宿主需要使用匹配版本的头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
+公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.10 新增字体集构造、字体覆盖查询，并在 `exr_glyph` 末尾添加 `font_index`、增加 `EXR_GLYPH_MISSING` 标志；0.9 新增独立文字边界分析入口，并在 `exr_glyph` 末尾添加 `cluster_start/end` 和 `boundaries`；0.8 新增 publication / session 分段加载接口；0.7 新增稳定文本锚点接口，并在 `exr_note` 末尾添加 `anchor`；0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构。宿主需要使用匹配版本的头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
 ## 所有权与并发
 
 - `exr_document`、`exr_font`、`exr_layout`、`exr_library`、`exr_publication`、`exr_session` 为不透明句柄，使用各自析构函数释放。
 - document 的 text / title / blocks / nodes / chapters / resources 和 layout 的 pages / lines / glyphs / boxes / image 为只读借用视图，所属对象释放后失效。树节点属性和文本也属于 document。借用的图片像素不可修改或释放。
-- 布局拥有位置、样式和已解码图片，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的字体；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不共享对象的独立句柄可独立使用。共享 publication、session 或压缩 archive 的文档，其调用及生命周期变更也由宿主串行处理；引擎没有全局状态或内部线程锁。
+- 布局拥有位置、样式和已解码图片，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的同一个字体集句柄；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不共享对象的独立句柄可独立使用。共享 publication、session 或压缩 archive 的文档，其调用及生命周期变更也由宿主串行处理；引擎没有全局状态或内部线程锁。
 - `exr_books_free()` / `exr_notes_free()` 释放数组和其中字符串；后者也释放每条笔记的锚点字符串。修改元数据时复制结构并用自己的字符串设置输入字段，不替换结果数组中的库拥有指针。
 - `exr_anchor_create()` 输出独立拥有的选文、前后文和章节路径字符串，由 `exr_anchor_free()` 释放；输入文档随后可释放。宿主也可直接提供选择器字段供只读解析，但不能用库的释放函数释放宿主借用的字符串。
 - `exr_bitmap_free()` 释放像素。`exr_document_export()` / `exr_document_resource()` / `exr_library_blob()` 返回的字节，以及 `exr_text_analyze()` 返回的边界表，用 `exr_free()` 释放。这些字节独立于原对象或输入的生命周期。跨 DLL 调用时不要使用宿主 `free()` 释放库内存。
@@ -21,9 +21,33 @@
 
 输入上限 128 MiB、单文档正文上限 64 MiB、单布局上限约 400 万字形。文档树上限 262144 个节点、字符串累计 64 MiB、每个元素最多 256 个属性。ZIP 成员上限 32 MiB、条目上限 1 万、打开期间累计解压上限 128 MiB；后续每次资源读取单独应用 32 MiB 上限，由调用者释放返回的字节。XML 嵌套上限 256 层，不解析外部实体，拒绝实体声明；HTML 的脚本和样式不进入正文。单个文档仍完整解析并在内存中排版；0.8 可按需加载独立分段并缓存其布局，尚未实现页级续排和页缓存。
 
-FreeType 提供真实字形 advance、kerning 和像素，不负责分页。EXReader 自己决定段落、换行、分页、基线和字形位置。0.9 按 Unicode 17.0.0 扩展字素簇保护换行与命中位置；换行机会使用下述 UAX #14 子集。字体仍按 Unicode 标量逐个取字形，尚未实现 OpenType shaping / GPOS、字体覆盖验证、字体回退或双向重排；阿拉伯文、印度文字和 emoji 序列的正确视觉塑形仍需后续工作。
+FreeType 提供真实字形 advance、kerning 和像素，不负责分页。EXReader 自己决定段落、换行、分页、基线和字形位置。0.9 按 Unicode 17.0.0 扩展字素簇保护换行与命中位置；换行机会使用下述 UAX #14 子集。字体仍按 Unicode 标量逐个取字形，支持宿主字体集的 cmap 覆盖查询与回退，尚未实现 OpenType shaping / GPOS、CSS 字体族匹配或双向重排；阿拉伯文、印度文字和 emoji 序列的正确视觉塑形仍需后续工作。
 
 正文查找为区分大小写的 UTF-8 子串查询。元数据搜索使用绑定参数的 SQLite LIKE，并转义 `%` / `_`，其大小写折叠规则为 SQLite 默认规则。
+
+## 宿主字体集与缺字回退
+
+`exr_font_open(path, ...)` 保留单文件、集合首个 face 的入口。`exr_font_create(inputs, count, ...)` 接收有序 `exr_font_input` 数组，每项为编码字体字节 `data/size` 和集合内的 `face_index`（普通字体为 0）。成功时复制全部输入，宿主随后可以释放或修改字节。字体集不可变，用 `exr_font_free()` 释放；布局、渲染和 session 通过现有字体参数接入，无需额外平台后端。字体集需在布局计算、渲染及 session 生命周期内有效，相同句柄的访问由宿主串行处理。
+
+只接受 1–32 个可缩放、具有 Unicode cmap 的 face，累计输入字节上限 128 MiB。缺失输入、空字节或大于 `INT_MAX` 的 face index 返回 `EXR_ARGUMENT`；超限返回 `EXR_LIMIT`；损坏、不支持、没有 Unicode cmap 或不存在的 face 返回 `EXR_FONT`。复制失败返回 `EXR_MEMORY`。失败时清理已创建的部分，`*out = NULL`。文件入口仍支持 UTF-8 路径。
+
+```c
+exr_font_input sources[] = {
+    {primary_bytes, primary_size, 0},
+    {fallback_bytes, fallback_size, 0}
+};
+exr_font *fonts = NULL;
+exr_status status = exr_font_create(sources, 2, &fonts, &error);
+/* Font bytes can now be released. Use fonts for both layout and rendering. */
+```
+
+`exr_font_count(fonts)` 返回输入项数量，NULL 返回 0。`exr_font_has_glyph(fonts, index, scalar)` 查询指定 face 的 Unicode cmap 是否提供非零字形号；无效句柄、索引、Unicode 标量或缺字返回 0。这只代表标量覆盖，不代表 emoji 序列、连字、GSUB / GPOS 或变体序列支持。
+
+排版优先寻找能覆盖整个可见字素簇的首个 face，跨内联样式也保持该选择。HIDDEN 条目不参与覆盖要求；tab 按空格检查并保留四倍 advance。没有单一 face 能覆盖整个簇时，各可见标量分别选择首个有字形的 face，字素边界继续保持完整。所有 face 都缺失的标量使用输入 0 的 glyph 0，并设置 `EXR_GLYPH_MISSING = 8`；它仍被绘制为该字体的缺字字形。HIDDEN 条目不设置 MISSING。
+
+`exr_glyph.font_index` 是字体输入数组的索引，`glyph` 是该 face 内部的字形号。行高取实际所选 face 的最大 ascent/descent，跨 face、字号或粗斜体变化不计算 pair kerning。灰度与 RGBA 栅格器使用同一个 face 选择；自定义渲染器必须同时使用 `font_index` 和 `glyph`。隐藏条目的字体索引没有绘制意义。该索引仅属于当前字体集，不能保存为跨会话字体标识。
+
+框架不查找、下载或自带阅读字体，不实现 CSS `font-family` 匹配、自动读取 EPUB 字体、可变字体轴设置或彩色字形。整簇选字体依据 cmap，而非塑形结果。宿主负责提供字体字节、顺序、持久身份与许可。`examples/font.c` 演示读取两份字体、构造字体集、打印选择并渲染 PNG；支持 Windows Unicode 参数和文件路径。SDK 的 `examples/fonts` 是原创几何测试字形，不能用作正式阅读字体。
 
 ## 独立文字边界
 
