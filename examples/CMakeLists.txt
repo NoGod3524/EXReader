@@ -11,16 +11,21 @@ find_library(EXR_LIBRARY NAMES exreader libexreader PATHS "${EXR_SDK}/lib" NO_DE
 add_executable(exreader-construct-example construct.c)
 add_executable(exreader-anchor-example anchor.c)
 add_executable(exreader-lazy-example lazy.c)
+add_executable(exreader-text-example text.c)
 target_include_directories(exreader-construct-example PRIVATE "${EXR_INCLUDE}")
 target_include_directories(exreader-anchor-example PRIVATE "${EXR_INCLUDE}")
 target_include_directories(exreader-lazy-example PRIVATE "${EXR_INCLUDE}")
+target_include_directories(exreader-text-example PRIVATE "${EXR_INCLUDE}")
 target_link_libraries(exreader-construct-example PRIVATE "${EXR_LIBRARY}")
 target_link_libraries(exreader-anchor-example PRIVATE "${EXR_LIBRARY}")
 target_link_libraries(exreader-lazy-example PRIVATE "${EXR_LIBRARY}")
+target_link_libraries(exreader-text-example PRIVATE "${EXR_LIBRARY}")
 if(WIN32)
   target_link_libraries(exreader-construct-example PRIVATE shell32)
   target_link_libraries(exreader-lazy-example PRIVATE shell32)
   find_file(EXR_RUNTIME NAMES exreader.dll libexreader.dll PATHS "${EXR_SDK}/bin" NO_DEFAULT_PATH REQUIRED)
+  add_custom_command(TARGET exreader-text-example POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:exreader-text-example>")
   add_custom_command(TARGET exreader-lazy-example POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:exreader-lazy-example>")
   add_custom_command(TARGET exreader-anchor-example POST_BUILD

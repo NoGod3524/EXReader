@@ -34,6 +34,7 @@ jobs:
           ./stage/bin/exreader-render.exe tests/fixtures/sample.txt C:/Windows/Fonts/arial.ttf stage-page.png
           ./build/sdk-example/Release/exreader-construct-example.exe C:/Windows/Fonts/arial.ttf host-page.png
           ./build/sdk-example/Release/exreader-anchor-example.exe
+          ./build/sdk-example/Release/exreader-text-example.exe
           ./build/sdk-example/Release/exreader-lazy-example.exe C:/Windows/Fonts/arial.ttf lazy-host-page.png
           New-Item -ItemType Directory -Path 'build/中文 example' -Force | Out-Null
           Copy-Item -LiteralPath tests/fixtures/layout.epub -Destination 'build/中文 example/示例.epub'
@@ -45,6 +46,7 @@ jobs:
           ./stage/bin/exreader-render tests/fixtures/sample.txt /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf stage-page.png
           ./build/sdk-example/exreader-construct-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf host-page.png
           ./build/sdk-example/exreader-anchor-example
+          ./build/sdk-example/exreader-text-example
           ./build/sdk-example/exreader-lazy-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
       - name: Run the installed macOS SDK
@@ -53,6 +55,7 @@ jobs:
           ./stage/bin/exreader-render tests/fixtures/sample.txt /System/Library/Fonts/Supplemental/Arial.ttf stage-page.png
           ./build/sdk-example/exreader-construct-example /System/Library/Fonts/Supplemental/Arial.ttf host-page.png
           ./build/sdk-example/exreader-anchor-example
+          ./build/sdk-example/exreader-text-example
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
       - uses: actions/upload-artifact@v4

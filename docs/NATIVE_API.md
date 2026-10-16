@@ -1,6 +1,6 @@
-# Native C API 0.8
+# Native C API 0.9
 
-公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.8 新增 publication / session 分段加载接口；0.7 新增稳定文本锚点接口，并在 `exr_note` 末尾添加 `anchor`；0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构。宿主需要使用匹配版本的头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
+公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.9 新增独立文字边界分析入口，并在 `exr_glyph` 末尾添加 `cluster_start/end` 和 `boundaries`；0.8 新增 publication / session 分段加载接口；0.7 新增稳定文本锚点接口，并在 `exr_note` 末尾添加 `anchor`；0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构。宿主需要使用匹配版本的头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
 ## 所有权与并发
 
@@ -9,7 +9,7 @@
 - 布局拥有位置、样式和已解码图片，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的字体；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不共享对象的独立句柄可独立使用。共享 publication、session 或压缩 archive 的文档，其调用及生命周期变更也由宿主串行处理；引擎没有全局状态或内部线程锁。
 - `exr_books_free()` / `exr_notes_free()` 释放数组和其中字符串；后者也释放每条笔记的锚点字符串。修改元数据时复制结构并用自己的字符串设置输入字段，不替换结果数组中的库拥有指针。
 - `exr_anchor_create()` 输出独立拥有的选文、前后文和章节路径字符串，由 `exr_anchor_free()` 释放；输入文档随后可释放。宿主也可直接提供选择器字段供只读解析，但不能用库的释放函数释放宿主借用的字符串。
-- `exr_bitmap_free()` 释放像素。`exr_document_export()` / `exr_document_resource()` / `exr_library_blob()` 返回的字节用 `exr_free()` 释放。这些字节独立于原对象的生命周期。跨 DLL 调用时不要使用宿主 `free()` 释放库内存。
+- `exr_bitmap_free()` 释放像素。`exr_document_export()` / `exr_document_resource()` / `exr_library_blob()` 返回的字节，以及 `exr_text_analyze()` 返回的边界表，用 `exr_free()` 释放。这些字节独立于原对象或输入的生命周期。跨 DLL 调用时不要使用宿主 `free()` 释放库内存。
 - 输出参数需为空或已先释放。对输入的任意无效 C 指针不提供运行时保护。
 - `exr_document_create()` 在调用期间复制输入数组中的字符串、属性和资源字节；返回后可释放所有输入。失败时不交出部分文档，`*out` 为 NULL。
 - `exr_publication_create()` 复制标题和分段元数据，不复制 loader context。若提供 release 回调，创建成功后由 publication 在最后一个 publication / session 引用释放时恰好回调一次；创建失败时仍由宿主清理 context。release 为 NULL 时不自动释放 context，宿主必须使其在全部 publication / session 生命周期内有效。
@@ -21,9 +21,43 @@
 
 输入上限 128 MiB、单文档正文上限 64 MiB、单布局上限约 400 万字形。文档树上限 262144 个节点、字符串累计 64 MiB、每个元素最多 256 个属性。ZIP 成员上限 32 MiB、条目上限 1 万、打开期间累计解压上限 128 MiB；后续每次资源读取单独应用 32 MiB 上限，由调用者释放返回的字节。XML 嵌套上限 256 层，不解析外部实体，拒绝实体声明；HTML 的脚本和样式不进入正文。单个文档仍完整解析并在内存中排版；0.8 可按需加载独立分段并缓存其布局，尚未实现页级续排和页缓存。
 
-FreeType 提供真实字形 advance、kerning 和像素，不负责分页。EXReader 自己决定段落、换行、分页、基线和字形位置。当前字体只按 Unicode 标量取字形，复杂 OpenType shaping、双向文字和完整 grapheme / line break 算法仍需扩展。
+FreeType 提供真实字形 advance、kerning 和像素，不负责分页。EXReader 自己决定段落、换行、分页、基线和字形位置。0.9 按 Unicode 17.0.0 扩展字素簇保护换行与命中位置；换行机会使用下述 UAX #14 子集。字体仍按 Unicode 标量逐个取字形，尚未实现 OpenType shaping / GPOS、字体覆盖验证、字体回退或双向重排；阿拉伯文、印度文字和 emoji 序列的正确视觉塑形仍需后续工作。
 
 正文查找为区分大小写的 UTF-8 子串查询。元数据搜索使用绑定参数的 SQLite LIKE，并转义 `%` / `_`，其大小写折叠规则为 SQLite 默认规则。
+
+## 独立文字边界
+
+`exr_text_analyze(text, size, &boundaries, &error)` 只分析宿主提供的 UTF-8 字节，不依赖 document、字体、布局或 SQLite。`size` 为明确的输入字节数，不包含额外的 C 字符串终止字节；不要求输入以 NUL 终止。成功时分配恰好 `size + 1` 字节的边界表，以源 UTF-8 字节偏移索引，宿主使用 `exr_free()` 释放。输入可以在函数返回后修改或释放。
+
+| 标志 | 值 | 对应偏移前的边界含义 |
+| --- | --- | --- |
+| `EXR_BOUNDARY_GRAPHEME` | 1 | 扩展字素簇起点或文本末尾，可作为簇选择端点 |
+| `EXR_BOUNDARY_LINE` | 2 | 当前换行规则允许在此断行 |
+| `EXR_BOUNDARY_MANDATORY` | 4 | 必须在此断行，同时具有 `LINE` |
+| `EXR_BOUNDARY_GLUE` | 8 | 此处禁止紧急换行，适用于不换行硬组与标点约束 |
+
+`boundaries[0]` 与 `boundaries[size]` 均有 `GRAPHEME`；末尾恒为 `GRAPHEME | LINE | MANDATORY`。UTF-8 续字节和字素簇内部的标量起点全部为 0。没有 `LINE` 不等于 `GLUE`：布局可在普通长词的其他字素边界紧急换行；有 `GLUE` 时也不能这样拆开。
+
+```c
+const char text[] = "e\xCC\x81"; /* U+0065 + U+0301: one grapheme, three bytes. */
+unsigned char *boundaries = NULL;
+exr_error error = {0};
+exr_status status = exr_text_analyze(text, sizeof(text) - 1, &boundaries, &error);
+if (status == EXR_OK) {
+    /* boundaries[0] is GRAPHEME; [1] and [2] are zero; [3] is the end boundary. */
+}
+exr_free(boundaries);
+```
+
+空字符串配合 `size = 0` 成功，返回一个末尾边界字节；`text = NULL`（包括 size 为 0）或缺失输出指针返回 `EXR_ARGUMENT`。有效输入上限为 64 MiB，超限返回 `EXR_LIMIT`；非法 UTF-8 返回 `EXR_ENCODING`。失败时只要输出指针有效，`*boundaries` 均为 NULL。此独立 API 按明确长度接受嵌入的 U+0000，并将它作为 Control 标量分析；文档模型仍拒绝嵌入 NUL。
+
+扩展字素规则使用 Unicode 17.0.0 的 Grapheme_Cluster_Break、Extended_Pictographic 和 Indic_Conjunct_Break 属性，覆盖组合附标、Prepend / SpacingMark、Hangul、Indic 辅音连接边界、emoji ZWJ 与 Regional Indicator 配对。完整官方 `GraphemeBreakTest.txt` 的 766 个向量用于回归。
+
+换行实现是明确的 UAX #14 子集：强制换行与 CRLF、普通空格、ZWSP、NBSP / NNBSP / WJ、ZWJ 之后的保护、不把开标点留在行末或闭标点留在行首的约束、中日韩文字间的机会，以及连字符、软连字符等类之后的机会。软连字符本身隐藏，当前未在断行处生成可见连字符。尚不包含字典断词、完整数字串和上下文引号规则。
+
+属性表随 C 源码编译，普通构建不运行 Python 或下载 Unicode 数据。`python tools/generate_unicode.py --download --check` 使用固定官方来源和 SHA-256 重现验证；派生属性表与官方测试使用 Unicode-3.0 许可，全文随 SDK 安装。
+
+SDK 的 `examples/text.c` 与其他宿主示例一同编译为 `exreader-text-example`。直接运行，无需字体或参数；它验证 25 个 UTF-8 字节中的 4 个字素簇，范围为 `[0,3)`、`[3,14)`、`[14,22)`、`[22,25)`，并用 `exr_free()` 释放边界表。
 
 ## 分段 publication 与 session
 
@@ -95,7 +129,7 @@ exr_anchor_free(&anchor);
 
 捕获的范围完全位于同一章节时记录其路径，解析限制在对应章节范围内；跨章节范围不记录章节路径。路径消失时返回 `MISSING`，不自动搜索其他章节。宿主明确去掉 `chapter` 限制后可尝试全篇或跨格式匹配；这只是精确文本选择器的复用，不包含文档身份验证或格式标准间的映射。
 
-这些接口独立于 SQLite，适用于内置格式和 `exr_document_create()` 构造的文档；宿主可在自己的存储中保存全部字段。不支持模糊改字匹配、Unicode 规范化、grapheme 边界、文档指纹和 EPUB CFI；引文或上下文发生变化可能返回 `MISSING`。正文导出接口不序列化锚点。
+这些接口独立于 SQLite，适用于内置格式和 `exr_document_create()` 构造的文档；宿主可在自己的存储中保存全部字段。锚点捕获继续验证 Unicode 标量边界，不自动将选区扩展到字素簇；需要整簇选择时，宿主可先对规范化正文使用 `exr_text_analyze()` 选择端点。不支持模糊改字匹配、Unicode 规范化、文档指纹和 EPUB CFI；引文或上下文发生变化可能返回 `MISSING`。正文导出接口不序列化锚点。0.9 不改变文档归一化投影和 ASCII 空白处理。
 
 SDK 的 `examples/anchor.c` 提供无需字体的完整示例；与构造文档示例使用同一个 examples CMake 工程，生成 `exreader-anchor-example`。它在保存选文后释放原文档，再打开插入前言的版本并检查重新定位的结果。
 
@@ -193,7 +227,11 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 `rem` 当前以宿主页默认字号为基准。`inherit` 支持文字属性；缩进和边框宽度不支持百分比。所有负尺寸均忽略，外边距不折叠。未知属性、选择器和 at-rule 会被跳过；尚不支持 @import、@media、变量、伪类、属性选择器、字体族/嵌入字体、flex/grid、浮动、定位、完整空白规则和浏览器式盒模型分片。属性值和单位使用小写。样式表合计上限 1 MiB、4096 条规则、131072 项展开声明、每规则 256 项声明、2000 万次匹配工作；达到上限返回 `EXR_LIMIT`。
 
-`exr_layout_glyphs()` 输出字形编号、字号、颜色 `0xRRGGBBAA`、合成粗/斜体标志、基线、源节点和文字偏移。`clip_left/right` 指明水平裁切范围。`exr_layout_lines()` 输出行矩形与字形范围；表格一行可有多个并列文字行。`exr_layout_boxes()` 输出背景块、图片和单元格的页面坐标、边框与背景，按页及节点前序排列。page 的 line/box 范围可直接迭代。坐标单位为逻辑像素，原点在页面左上方。
+`exr_layout_glyphs()` 输出字形编号、字号、颜色 `0xRRGGBBAA`、合成粗/斜体标志、基线、源节点和文字偏移。0.9 的 `cluster_start/end` 是当前可见内联串中该字形所属字素簇的源 UTF-8 半开范围；同一簇中的字形共享范围，可以跨文本节点和样式边界。原有 `start/end` 仍保留每个标量的源范围，`boundaries` 为该标量之前的 `EXR_BOUNDARY_*` 标志。分段和文档使用各自局部偏移，簇索引不是永久标识。
+
+`EXR_GLYPH_HIDDEN = 4` 标记格式、换行控制、变体选择符等不应绘制的条目，内置栅格器跳过这些字形，自定义绘制也需跳过；它们仍保留源文本范围。普通字符的字体覆盖和标记定位取决于宿主字体及当前逐标量取字形方式，分组不会执行复杂塑形。布局不会拆开字素簇，也不会在 `GLUE` 边界紧急断行；不可拆的组超过内容宽度时保留整组，`clip_left/right` 指明水平裁切范围。
+
+`exr_layout_hit_test()` 按命中的字素簇整体宽度返回其起点或终点，不返回簇内部偏移；当前坐标和簇顺序仍按逻辑 LTR 排布，没有 BiDi 视觉重排。`exr_layout_lines()` 输出行矩形与字形范围；表格一行可有多个并列文字行。`exr_layout_boxes()` 输出背景块、图片和单元格的页面坐标、边框与背景，按页及节点前序排列。page 的 line/box 范围可直接迭代。坐标单位为逻辑像素，原点在页面左上方。
 
 宿主可先按 boxes 顺序绘制背景、图片和边框，再绘制文字。`exr_layout_image(layout, resource)` 返回对应资源的解码后 RGBA 借用视图；缺失时返回 NULL。这些输出可直接用于自定义渲染器，不需要创建内置页面位图。
 

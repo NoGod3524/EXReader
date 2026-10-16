@@ -1,5 +1,61 @@
 # Native C validation
 
+## 0.9 Unicode boundaries and cluster-safe flow
+
+2026-10-16. All nine local Windows Release CTest suites pass, including 335521
+`native-text` checks and all 766 vectors in Unicode 17.0.0's unmodified official
+`GraphemeBreakTest.txt`. Independent PNG/BMP checks also pass.
+The corpus supplies an independent boundary oracle; the
+test compares every byte position, including zero-valued UTF-8 continuation bytes,
+and checks start/end boundaries and that line flags occur only at grapheme boundaries.
+Cases cover controls and CRLF, combining marks, Prepend/SpacingMark, Hangul, Indic
+conjuncts, emoji ZWJ and Regional Indicator pairing. Additional long runs exercise
+60001 Regional Indicators and a long combining sequence inside an emoji ZWJ cluster.
+
+API checks cover explicit-length input, an empty string, embedded U+0000 treated as a
+control scalar, invalid UTF-8, missing pointers, the 64 MiB limit, failure output reset
+and freeing the independently owned boundary map. This does not change the document
+model's NUL rejection, normalized text projection or ASCII whitespace handling.
+
+Layout tests join clusters across inline nodes with different sizes, colors and weights.
+They verify source scalar/cluster ranges, line/page endpoints and hit-test results in
+wide and deliberately over-narrow layouts. Combining sequences, emoji ZWJ, flags, Indic
+conjuncts and Hangul remain on one line and page per cluster. NBSP, NNBSP, WJ and FEFF
+hard groups remain intact even when wider than their content box; ordinary long text
+still permits emergency wrapping. CJK punctuation, curly quotes, ZWJ followed by text
+and WJ followed by combining marks exercise protected boundaries. ZWSP permits wrapping,
+while NEL and Unicode line/paragraph separators force new lines. Hidden controls,
+Combining Grapheme Joiner and Mongolian variation selectors retain offsets with zero
+advance and the hidden flag; rendering these documents produces white pages.
+
+Line-break tests cover the documented UAX #14 subset: spaces, CJK opportunities and
+punctuation restrictions, hard spaces/joiners, zero-width space, soft-hyphen opportunities
+and mandatory breaks. Full numeric/quote context and dictionary segmentation are not
+implemented or covered by an official LineBreakTest conformance run. Soft hyphens remain
+hidden rather than generating a visible hyphen at a wrap.
+
+`tools/generate_unicode.py` reproduces the committed 85932-byte property header from
+fixed official URLs and SHA-256 pins. A fresh-cache `--download --check` run reproduced
+the header and official fixtures byte for byte; explicit checks reject modified source
+hashes and overlapping intervals. C builds consume the generated header without Python
+or Unicode network access. Unicode-3.0 licenses apply to the data and derived tables;
+the complete notice is included in the installed SDK.
+
+The installed-SDK `examples/text.c` builds as `exreader-text-example` without a font
+or command-line arguments. It validates four graphemes in 25 UTF-8 bytes and prints
+their ranges. Desktop workflows run it on Windows, Linux and macOS alongside the
+existing construction, anchor and lazy examples.
+All four examples compiled against a fresh installed Windows SDK and passed with
+PATH restricted to Windows system directories. Construction, custom/EPUB lazy loading
+and the installed renderer also passed with Chinese input/output paths containing spaces.
+
+This stage still renders one FreeType glyph per Unicode scalar and lays out logical
+LTR text. Cluster-safe boundaries do not provide OpenType shaping/GPOS, font fallback,
+BiDi or correct visual shaping of Arabic, Indic and emoji sequences. Stable-anchor
+capture remains scalar-based; hosts can use the boundary API to choose whole clusters.
+The earlier eight-suite regression results are recorded below; runtime and mobile-build
+results for later commits are available in their respective workflow runs.
+
 ## 0.8 indexed loading and bounded part cache
 
 The installed Windows construction and lazy examples use a shared Unicode command-line

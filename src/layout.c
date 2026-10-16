@@ -80,39 +80,11 @@ exr_layout_options exr_layout_defaults(void) {
   exr_layout_options o = {720, 1040, 48, 24, 1.6f, 12};
   return o;
 }
-static int cjk(uint32_t c) {
-  return (c >= 0x2e80 && c <= 0x9fff) || (c >= 0xac00 && c <= 0xd7af) ||
-         (c >= 0xf900 && c <= 0xfaff) || (c >= 0x20000 && c <= 0x323af);
-}
-static int mark(uint32_t c) {
-  return (c >= 0x300 && c <= 0x36f) || (c >= 0x1ab0 && c <= 0x1aff) ||
-         (c >= 0x1dc0 && c <= 0x1dff) || (c >= 0xfe00 && c <= 0xfe0f) ||
-         (c >= 0xfe20 && c <= 0xfe2f) || (c >= 0x1f3fb && c <= 0x1f3ff) ||
-         (c >= 0xe0100 && c <= 0xe01ef);
-}
-static int opening(uint32_t c) {
-  return c == '(' || c == '[' || c == '{' || c == 0x2018 || c == 0x201c || c == 0x3008 ||
-         c == 0x300a || c == 0x300c || c == 0x300e || c == 0x3010 || c == 0xff08;
-}
-static int closing(uint32_t c) {
-  return c == ')' || c == ']' || c == '}' || c == ',' || c == '.' || c == ';' || c == ':' ||
-         c == '!' || c == '?' || c == 0x2019 || c == 0x201d || c == 0x3001 || c == 0x3002 ||
-         c == 0x3009 || c == 0x300b || c == 0x300d || c == 0x300f || c == 0x3011 || c == 0xff09 ||
-         c == 0xff0c || c == 0xff01 || c == 0xff1f || c == 0xff1a || c == 0xff1b;
-}
-int exr_break_before(uint32_t previous, uint32_t next) {
-  if (mark(next) || next == 0x200d || previous == 0x200d || opening(previous) || closing(next))
-    return 0;
-  return previous == ' ' || previous == '\t' || previous == '-' || cjk(previous) || cjk(next);
-}
 float exr_kern(exr_font *f, uint32_t left, uint32_t right) {
   FT_Vector v = {0};
   if (left && right && FT_HAS_KERNING(f->face))
     FT_Get_Kerning(f->face, left, right, FT_KERNING_DEFAULT, &v);
   return (float)v.x / 64;
-}
-int exr_cluster_continuation(uint32_t previous, uint32_t next) {
-  return mark(next) || next == 0x200d || previous == 0x200d;
 }
 exr_layout_config exr_layout_config_defaults(void) {
   exr_layout_config config = {0};
@@ -195,10 +167,19 @@ size_t exr_layout_hit_test(const exr_layout *l, size_t p, float x, float y) {
   }
   if (!line)
     return page->start;
-  for (i = line->glyph_start; i < line->glyph_start + line->glyph_count; i++) {
+  for (i = line->glyph_start; i < line->glyph_start + line->glyph_count;) {
     const exr_glyph *g = &l->glyphs[i];
-    if (x < g->x + g->advance / 2)
-      return g->start;
+    size_t end = i + 1;
+    float left = g->x, right = g->x + g->advance;
+    while (end < line->glyph_start + line->glyph_count &&
+           l->glyphs[end].cluster_start == g->cluster_start) {
+      left = fminf(left, l->glyphs[end].x);
+      right = fmaxf(right, l->glyphs[end].x + l->glyphs[end].advance);
+      end++;
+    }
+    if (x <= right)
+      return x < (left + right) / 2 ? g->cluster_start : g->cluster_end;
+    i = end;
   }
   return line->end;
 }

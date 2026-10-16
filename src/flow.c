@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "layout_internal.h"
+#include "text_internal.h"
 
 typedef struct {
   exr_layout *layout, *assets;
@@ -45,15 +46,36 @@ static exr_status page(flow *f, float height, size_t offset) {
   return EXR_OK;
 }
 static float glyph_kern(flow *f, const exr_glyph *previous, const exr_glyph *g) {
-  if (!previous || previous->size != g->size || previous->flags != g->flags)
+  if (!previous || (previous->flags & EXR_GLYPH_HIDDEN) || (g->flags & EXR_GLYPH_HIDDEN) ||
+      previous->size != g->size || previous->flags != g->flags)
     return 0;
   return exr_kern(f->font, previous->glyph, g->glyph);
 }
 static exr_status flush(flow *f) {
   exr_layout *l = f->layout;
   size_t start = f->pending;
+  size_t group = start, index;
+  exr_text_state state = {0};
+  /* Analyze the complete visible inline run once, across node/style boundaries. */
+  for (index = start; index < l->glyph_count; index++) {
+    exr_glyph *g = &l->glyphs[index];
+    g->boundaries = exr_text_step(&state, g->codepoint);
+    if (index > group && (g->boundaries & EXR_BOUNDARY_GRAPHEME)) {
+      size_t j;
+      for (j = group; j < index; j++) {
+        l->glyphs[j].cluster_start = l->glyphs[group].start;
+        l->glyphs[j].cluster_end = l->glyphs[index - 1].end;
+      }
+      group = index;
+    }
+  }
+  for (index = group; index < l->glyph_count; index++) {
+    l->glyphs[index].cluster_start = l->glyphs[group].start;
+    l->glyphs[index].cluster_end = l->glyphs[l->glyph_count - 1].end;
+  }
   while (start < l->glyph_count) {
-    size_t i, split = SIZE_MAX, end, spaces = 0;
+    size_t i, split = SIZE_MAX, emergency = SIZE_MAX, end, spaces = 0;
+    int forced = 0;
     float indent = f->first_line ? f->paragraph->indent : 0;
     float available = fmaxf(1, f->width - indent), width = 0, ascent = 0, descent = 0, height = 0,
           x, extra = 0;
@@ -64,22 +86,25 @@ static exr_status flush(flow *f) {
       float advance;
       if (exr_font_size(f->font, g->size))
         return fail(f, EXR_FONT, "Cannot size font");
-      if (i > start && exr_break_before(l->glyphs[i - 1].codepoint, g->codepoint))
-        split = i;
+      if (i > start && (g->boundaries & EXR_BOUNDARY_MANDATORY)) {
+        forced = 1;
+        break;
+      }
+      if (i > start && (g->boundaries & EXR_BOUNDARY_GRAPHEME) &&
+          !(g->boundaries & EXR_BOUNDARY_GLUE)) {
+        emergency = i;
+        if (g->boundaries & EXR_BOUNDARY_LINE)
+          split = i;
+      }
       advance = g->advance + glyph_kern(f, i == start ? NULL : &l->glyphs[i - 1], g);
       if (i > start && width + advance > available) {
         if (split != SIZE_MAX)
           i = split;
+        else if (emergency != SIZE_MAX)
+          i = emergency;
         else {
-          size_t candidate = i;
-          while (candidate > start && exr_cluster_continuation(l->glyphs[candidate - 1].codepoint,
-                                                               l->glyphs[candidate].codepoint))
-            candidate--;
-          if (candidate == start) {
-            width += advance;
-            continue;
-          }
-          i = candidate;
+          width += advance;
+          continue;
         }
         break;
       }
@@ -109,7 +134,7 @@ static exr_status flush(flow *f) {
       x += fmaxf(0, available - width) / 2;
     if (f->paragraph->align == 2)
       x += fmaxf(0, available - width);
-    if (f->paragraph->align == 3 && end < l->glyph_count && spaces)
+    if (f->paragraph->align == 3 && end < l->glyph_count && !forced && spaces)
       extra = fmaxf(0, available - width) / (float)spaces;
     line = &l->lines[l->line_count++];
     *line = (exr_line){0};
@@ -173,11 +198,15 @@ static exr_status text(flow *f, size_t node) {
     g->color = s->color;
     g->flags = s->flags;
     g->line_height = s->leading_relative ? s->leading * s->font_size : s->leading;
-    g->glyph = FT_Get_Char_Index(f->font->face, cp == '\t' ? ' ' : cp);
-    if (exr_measure(f->font, g->glyph, g->flags, &g->advance))
-      return EXR_FONT;
-    if (cp == '\t')
-      g->advance *= 4;
+    if (exr_text_hidden(cp))
+      g->flags |= EXR_GLYPH_HIDDEN;
+    else {
+      g->glyph = FT_Get_Char_Index(f->font->face, cp == '\t' ? ' ' : cp);
+      if (exr_measure(f->font, g->glyph, g->flags, &g->advance))
+        return EXR_FONT;
+      if (cp == '\t')
+        g->advance *= 4;
+    }
   }
   return EXR_OK;
 }

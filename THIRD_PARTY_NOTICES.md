@@ -13,3 +13,21 @@ EXReader's own C sources are GPL-3.0-only. Third-party code keeps its original l
 CMake verifies every source archive using the SHA-256 values in cmake/deps.cmake. CSS matching, line breaking, pagination, image placement, table layout, pixel compositing, document positions, the document model and format extraction are EXReader C code. FreeType supplies glyph metrics and rasterization; stb_image supplies decoded image pixels. License texts are included in the installed SDK under share/exreader/licenses.
 
 The old JavaScript framework and reader are retained in Git history and their respective reader branches. They are not linked into this native engine.
+
+## Unicode data
+
+The compact C property tables in `src/unicode_data.h` are derived from the
+Unicode Character Database 17.0.0: `GraphemeBreakProperty.txt`, `emoji-data.txt`
+(`Extended_Pictographic`), `DerivedCoreProperties.txt` (`InCB`) and
+`LineBreak.txt`. The unmodified official `GraphemeBreakTest.txt` corpus is
+included in `tests/fixtures/unicode`. These data and their derived tables use
+the **Unicode-3.0** license, separate from EXReader's GPL-3.0-only code.
+The full copyright and permission notice is in
+`tests/fixtures/unicode/LICENSE.txt` and the installed SDK's licenses directory.
+
+Reproduce the tables with `python tools/generate_unicode.py --download`, or
+verify them with `python tools/generate_unicode.py --download --check`.
+The generator records the official source URLs and verifies fixed SHA-256
+hashes before using any downloaded bytes. Ordinary C builds use the committed
+header without Python or network access. The original property files remain
+in the ignored `build/unicode-cache` directory.

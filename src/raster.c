@@ -110,6 +110,8 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
       FT_GlyphSlot slot;
       unsigned by, bx;
       int left, top;
+      if (g->flags & EXR_GLYPH_HIDDEN)
+        continue;
       if (exr_font_size(f, g->size) || FT_Load_Glyph(f->face, g->glyph, FT_LOAD_DEFAULT))
         goto font_error;
       if (g->flags & 1)

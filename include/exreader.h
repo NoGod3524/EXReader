@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.8.0"
+#define EXR_VERSION "0.9.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -160,6 +160,13 @@ typedef struct {
   void *context;
   exr_context_release_fn release;
 } exr_publication_input;
+enum {
+  EXR_BOUNDARY_GRAPHEME = 1,
+  EXR_BOUNDARY_LINE = 2,
+  EXR_BOUNDARY_MANDATORY = 4,
+  EXR_BOUNDARY_GLUE = 8 /* No emergency wrapping at this boundary. */
+};
+enum { EXR_GLYPH_BOLD = 1, EXR_GLYPH_ITALIC = 2, EXR_GLYPH_HIDDEN = 4 };
 typedef struct {
   size_t start, end;
   uint32_t codepoint, glyph;
@@ -167,9 +174,11 @@ typedef struct {
   size_t page;
   size_t node;
   uint32_t color; /* 0xRRGGBBAA */
-  unsigned flags; /* 1: synthetic bold, 2: synthetic italic */
+  unsigned flags; /* EXR_GLYPH_*; HIDDEN glyphs must not be drawn. */
   float clip_left, clip_right;
   float line_height;
+  size_t cluster_start, cluster_end; /* Source UTF-8 range of this grapheme group. */
+  unsigned boundaries; /* EXR_BOUNDARY_* before this scalar in the visible run. */
 } exr_glyph;
 typedef struct {
   size_t start, end, glyph_start, glyph_count;
@@ -212,6 +221,12 @@ struct exr_bitmap {
 };
 /* All input/output strings are UTF-8. Returned views belong to their owner. */
 EXR_API const char *exr_version(void);
+/* Unicode 17 extended grapheme boundaries plus documented line-break rules.
+   Allocates size+1 bytes indexed by UTF-8 byte offset, freed with exr_free().
+   Non-boundary/continuation bytes are zero; end is GRAPHEME|LINE|MANDATORY.
+   Text must be valid UTF-8, at most 64 MiB. Embedded U+0000 is a control scalar. */
+EXR_API exr_status exr_text_analyze(const char *text, size_t size, unsigned char **boundaries,
+                                    exr_error *error);
 /* Copies every input string/attribute/blob during this call. Failure leaves *out NULL. */
 EXR_API exr_status exr_document_create(const exr_document_input *input, exr_document **out,
                                        exr_error *error);
