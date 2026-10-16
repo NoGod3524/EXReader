@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "machine": "AMD64",
+  "processor": "Intel64 Family 6 Model 189 Stepping 1, GenuineIntel",
+  "font": "C:\\Windows\\Fonts\\arial.ttf",
+  "font_sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+  "binary_sha256": "ef35700562e7f4e3fd252a0fcb36044ab493a12d94d603a730a3c1418d133f46",
+  "disk_cache": "uncontrolled",
+  "process_policy": "new process for every run",
+  "turn_render_scope": "already laid-out first part; grayscale render and bitmap free",
+  "percentile_method": "nearest rank",
+  "runs_per_case": 3,
+  "cases": {
+    "short": {
+      "input_bytes": 1302,
+      "part_count": 1,
+      "body_bytes_per_part": 16384,
+      "single_paragraph": false,
+      "input_sha256": "82fb76ba7b1ce344f2eb49323fda1b3ad71abd596ba036e1eaee101995a3aa54",
+      "runs": [
+        "short-1.json",
+        "short-2.json",
+        "short-3.json"
+      ],
+      "median": {
+        "font_open_ms": 1.5941,
+        "publication_open_ms": 4.3606,
+        "first_layout_ms": 6.3824,
+        "first_paint_ms": 10.4667,
+        "first_visible_total_ms": 23.1917,
+        "turn_render_p50_ms": 11.2465,
+        "turn_render_p95_ms": 19.2602,
+        "peak_rss_bytes": 12341248,
+        "incremental_peak_rss_bytes": 6475776
+      }
+    },
+    "long-single-chapter": {
+      "input_bytes": 4638,
+      "part_count": 1,
+      "body_bytes_per_part": 1048576,
+      "single_paragraph": true,
+      "input_sha256": "6c174a907daa8cc4825c2905b9dbfcb68ec1aa4173abdf7238d43333cdfbb182",
+      "runs": [
+        "long-single-chapter-1.json",
+        "long-single-chapter-2.json",
+        "long-single-chapter-3.json"
+      ],
+      "median": {
+        "font_open_ms": 1.7125,
+        "publication_open_ms": 4.7693,
+        "first_layout_ms": 518.1952,
+        "first_paint_ms": 18.1121,
+        "first_visible_total_ms": 544.5839,
+        "turn_render_p50_ms": 12.4452,
+        "turn_render_p95_ms": 24.2983,
+        "peak_rss_bytes": 131346432,
+        "incremental_peak_rss_bytes": 125472768
+      }
+    },
+    "many-chapters": {
+      "input_bytes": 25134,
+      "part_count": 32,
+      "body_bytes_per_part": 32768,
+      "single_paragraph": false,
+      "input_sha256": "26ab01a09715c399322e70f016ee7f5abf8493ea77404404e98428d092ebc69d",
+      "runs": [
+        "many-chapters-1.json",
+        "many-chapters-2.json",
+        "many-chapters-3.json"
+      ],
+      "median": {
+        "font_open_ms": 1.6179,
+        "publication_open_ms": 4.9438,
+        "first_layout_ms": 13.6595,
+        "first_paint_ms": 8.5098,
+        "first_visible_total_ms": 27.8839,
+        "turn_render_p50_ms": 11.5087,
+        "turn_render_p95_ms": 17.8388,
+        "peak_rss_bytes": 14319616,
+        "incremental_peak_rss_bytes": 8458240
+      }
+    }
+  },
+  "engine_version": "0.10.0"
+}
