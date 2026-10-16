@@ -213,6 +213,53 @@ static void chapter_scope(void) {
   clear_anchor(&whole);
 }
 
+static void repeated_chapter_paths(const char *fixtures) {
+  char path[4096];
+  exr_document *doc = NULL;
+  exr_anchor first = {0}, second = {0}, point = {0}, unique = {0}, host;
+  const exr_chapter *chapters;
+  const char *text, *target, *last;
+  size_t count, first_start, second_start, unique_start;
+  CHECK(snprintf(path, sizeof(path), "%s/repeated-spine.epub", fixtures) > 0);
+  OK(exr_document_open(path, &doc, &error));
+  chapters = exr_document_chapters(doc, &count);
+  CHECK(count == 3 && !strcmp(chapters[0].path, chapters[1].path));
+  text = exr_document_text(doc, NULL);
+  CHECK(!strcmp(text, "Before TARGET after.\nBefore TARGET after.\nUnique chapter text."));
+  target = strstr(text, "TARGET");
+  CHECK(target);
+  last = strstr(target + 6, "TARGET");
+  CHECK(last);
+  first_start = (size_t)(target - text);
+  second_start = (size_t)(last - text);
+  OK(exr_anchor_create(doc, first_start, first_start + 6, &first, &error));
+  OK(exr_anchor_create(doc, second_start, second_start + 6, &second, &error));
+  CHECK(first.chapter && second.chapter && !strcmp(first.chapter, second.chapter));
+  /* Neither saved offset may select one of two identical scoped occurrences. */
+  match(doc, &first, EXR_ANCHOR_AMBIGUOUS, 0);
+  match(doc, &second, EXR_ANCHOR_AMBIGUOUS, 0);
+  OK(exr_anchor_create(doc, second_start + 6, second_start + 6, &point, &error));
+  CHECK(point.chapter && !strcmp(point.chapter, second.chapter));
+  match(doc, &point, EXR_ANCHOR_AMBIGUOUS, 0);
+  /* Empty context at a chapter boundary also applies to every occurrence. */
+  clear_anchor(&point);
+  OK(exr_anchor_create(doc, second_start - first_start, second_start - first_start,
+                       &point, &error));
+  CHECK(point.chapter && point.prefix && !point.prefix[0]);
+  match(doc, &point, EXR_ANCHOR_AMBIGUOUS, 0);
+  unique_start = (size_t)(strstr(text, "Unique") - text);
+  OK(exr_anchor_create(doc, unique_start, unique_start + 6, &unique, &error));
+  match(doc, &unique, EXR_ANCHOR_FOUND, unique_start);
+  host = second;
+  host.chapter = "missing.xhtml";
+  match(doc, &host, EXR_ANCHOR_MISSING, 0);
+  exr_document_free(doc);
+  clear_anchor(&first);
+  clear_anchor(&second);
+  clear_anchor(&point);
+  clear_anchor(&unique);
+}
+
 static void different_formats(void) {
   const char plain[] = "Before the selected text after the selected text.";
   const char html[] = "<html><body><p>Before the selected text after the selected text.</p></body></html>";
@@ -366,10 +413,12 @@ static void selection_limit(void) {
   clear_anchor(&anchor);
 }
 
-int main(void) {
+int main(int argc, char **argv) {
+  CHECK(argc == 2);
   capture_and_relocate();
   repeated_text();
   chapter_scope();
+  repeated_chapter_paths(argv[1]);
   different_formats();
   point_bookmarks();
   unicode_and_validation();
