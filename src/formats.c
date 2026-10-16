@@ -1017,6 +1017,7 @@ static exr_status rtf(exr_document *d, const void *data, size_t n, exr_error *e)
   while (i < n) {
     unsigned c = s[i++];
     if (c == '{') {
+      fallback = 0; /* Group delimiters terminate the Unicode fallback sequence. */
       if (depth + 1 >= 256)
         goto done;
       states[depth + 1] = states[depth];
@@ -1024,6 +1025,7 @@ static exr_status rtf(exr_document *d, const void *data, size_t n, exr_error *e)
       continue;
     }
     if (c == '}') {
+      fallback = 0;
       if (!depth)
         goto done;
       depth--;
@@ -1037,16 +1039,15 @@ static exr_status rtf(exr_document *d, const void *data, size_t n, exr_error *e)
       if (i >= n)
         goto done;
       c = s[i++];
-      if (c == '*') {
-        states[depth].skip = 1;
-        continue;
-      }
-      if (c == '\\' || c == '{' || c == '}') {
+      if (!isalpha(c) && c != '\'') {
         if (fallback) {
           fallback--;
           continue;
         }
-        if (!states[depth].skip && !exr_codepoint(&out, c))
+        if (c == '*')
+          states[depth].skip = 1;
+        else if ((c == '\\' || c == '{' || c == '}') && !states[depth].skip &&
+                 !exr_codepoint(&out, c))
           goto done;
         continue;
       }
@@ -1066,8 +1067,6 @@ static exr_status rtf(exr_document *d, const void *data, size_t n, exr_error *e)
           goto done;
         continue;
       }
-      if (!isalpha(c))
-        continue;
       word[k++] = (char)c;
       while (i < n && isalpha(s[i])) {
         if (k < 39)
@@ -1088,16 +1087,23 @@ static exr_status rtf(exr_document *d, const void *data, size_t n, exr_error *e)
         value = -value;
       if (i < n && s[i] == ' ')
         i++;
-      if (!strcmp(word, "fonttbl") || !strcmp(word, "colortbl") || !strcmp(word, "stylesheet") ||
-          !strcmp(word, "info") || !strcmp(word, "pict") || !strcmp(word, "object") ||
-          !strcmp(word, "header") || !strcmp(word, "footer")) {
-        states[depth].skip = 1;
-        continue;
-      }
       if (!strcmp(word, "bin")) {
         if (!has || value < 0 || (size_t)value > n - i)
           goto done;
         i += (size_t)value;
+        if (fallback)
+          fallback--;
+        continue;
+      }
+      /* A whole control word counts as one fallback character, without executing it. */
+      if (fallback) {
+        fallback--;
+        continue;
+      }
+      if (!strcmp(word, "fonttbl") || !strcmp(word, "colortbl") || !strcmp(word, "stylesheet") ||
+          !strcmp(word, "info") || !strcmp(word, "pict") || !strcmp(word, "object") ||
+          !strcmp(word, "header") || !strcmp(word, "footer")) {
+        states[depth].skip = 1;
         continue;
       }
       if (states[depth].skip)
