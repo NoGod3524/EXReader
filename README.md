@@ -2,6 +2,8 @@
 
 一个本地优先的跨平台电子书阅读器。共享 JavaScript 阅读核心，Tauri 2 桌面 / 移动壳，浏览器 PWA。当前版本 **0.1.0**。
 
+[GitHub 仓库](https://github.com/NoGod3524/EXReader) · [预览版下载](https://github.com/NoGod3524/EXReader/releases) · [构建与测试](https://github.com/NoGod3524/EXReader/actions)
+
 ## 直接使用 Windows 免安装版
 
 解压 `release/EXReader-Windows-x64-portable.zip`，双击 `EXReader.exe`。Windows 10 / 11 需要系统 WebView2；当前 Windows 11 通常已自带。
@@ -54,15 +56,17 @@ npm run preview
 | 平台 | 当前交付 / 验证状态 | 原生构建 |
 | --- | --- | --- |
 | Windows | 本机生成 x64 免安装 EXE / ZIP；WebView2 需系统提供 | `npm run portable` |
-| Linux | 共享浏览器核心；原生包需在 Linux 构建与验证 | `npm run tauri -- build`，生成 AppImage / deb 等 |
-| macOS | 共享浏览器核心；原生包需在 macOS 构建与验证 | `npm run tauri -- build`，生成 app / dmg |
-| Android | 响应式浏览器 / PWA；原生 APK 尚未本机生成 | Android SDK / NDK + `tauri android init` / `build` |
-| iOS | 响应式浏览器 / PWA；原生包尚未构建或签名 | macOS + Xcode + `tauri ios init` / `build` |
-| iPadOS | 与 iOS 共用核心，支持宽屏与分栏；需真机验证 | 与 iOS 相同 |
+| Linux | GitHub Actions 已生成 x64 AppImage 免安装包 / deb | `npm run tauri -- build --bundles appimage,deb` |
+| macOS | 已生成 Intel + Apple Silicon 通用 app / dmg | `npm run tauri -- build --target universal-apple-darwin` |
+| Android | ARM64 手机 / x86_64 模拟器调试 APK；使用固定预览签名 | Android SDK / NDK + `tauri android init` / `build` |
+| iOS | 已生成模拟器 app 和未签名设备 IPA | macOS + Xcode + `tauri ios init` / `build` |
+| iPadOS | 与 iOS 共用原生包，单独进行 iPad 模拟器启动检查 | 与 iOS 相同 |
 
-WebKit 自动化和手机视口测试不等于 Apple / Android 真机测试。这里的“支持六个平台”首先通过共享浏览器核心实现；除 Windows 外的原生安装包仍需对应工具链完成构建、签名和验证。iOS / iPadOS 原生程序遵循系统分发规则，不能像 Windows EXE 一样解压直接运行。
+Linux 解压 `tar.gz` 后执行其中的 AppImage；Ubuntu 22.04 及以后版本为当前构建基线。macOS 解压 app ZIP 后移动到“应用程序”，当前预览包未做 Apple 公证。Android 选择 ARM64 APK，允许文件来源安装；后续预览包保留相同签名，可覆盖更新并保留书库。
 
-`.github/workflows/desktop.yml` 提供桌面构建工作流，`android.yml` 提供 Android 调试 APK 工作流；工作流尚未在远端运行。Apple 发布签名和商店分发需要开发者账号配置。
+iOS / iPadOS 的 `unsigned.ipa` 是供开发者签名的设备构建，不能直接安装；需要在 macOS 上配置自己的 Apple 开发者签名、设备或 TestFlight 分发。`simulator.app.zip` 只用于 Apple Silicon Mac 的 Xcode 模拟器。当前未完成 Apple 真机验证。
+
+`.github/workflows/desktop.yml`、`android.yml`、`ios.yml` 可手动触发并下载产物。具体已通过的检查见 [验证记录](docs/VALIDATION.md)。原生应用的导出使用系统保存对话框，移动端仅显示内置转换。
 
 ## 可选 calibre
 

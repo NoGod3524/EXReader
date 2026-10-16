@@ -1,6 +1,6 @@
 # 0.1.0 验证记录
 
-2026-10-15，Windows x64。
+2026-10-15，美国东部时间。Windows 本机检查与 GitHub Actions 多平台构建。
 
 - 浏览器功能测试：Chromium / Edge、WebKit、WebKit 手机视口，共 **31 通过、2 跳过**。覆盖 PDF、EPUB、FB2、TXT、RTF、MOBI、DOCX 的导入与重开，标注、书签、排版、书名编辑、封面替换、含封面的 EPUB 导出、收藏、备份恢复、转换往返和内容隔离。
 - 两个跳过项均为 Windows WebKit 端口的 PCM WAV 播放：该端口宣称支持但实际无法解码。相同音频在 Chromium 通过播放进度和重开恢复测试。不能以这些结果代替 Apple / Android 音频真机测试。
@@ -8,7 +8,14 @@
 - Windows 原生 EXE：启动、导入原创示例、阅读、保存书签、返回书库，退出进程；再次启动确认书库和书签保留，**通过**。使用独立测试目录，不向交付书库写入测试数据。
 - Windows 原生 calibre 命令：格式白名单拒绝路径穿越输入，**通过**。Rust 单元测试 **1 通过**。
 - Windows 免安装包构建：Tauri release 构建成功。运行使用系统 WebView2。
+- 加入官方文件保存插件后的 Windows release：重新运行两轮原生阅读与重开检查，**通过**；EXE 6.3 MiB，含许可证的 ZIP 约 4.5 MiB。
+- Linux Ubuntu 22.04 x64：GitHub Actions 已生成 AppImage / deb；Chromium 功能检查通过。尚未进行 Linux 原生交互检查。
+- macOS 15：Intel / Apple Silicon universal app ZIP 和 dmg 构建通过，二进制包含两种架构；Chromium 功能检查通过。尚未完成 macOS 原生交互与公证。
+- iOS / iPadOS：设备 ARM64 未签名 IPA、ARM64 模拟器 app 构建通过。安装并启动 iPhone 与 iPad 模拟器，人工检查截图，**通过**。修复了桌面窗口尺寸导致手机画面裁切的问题；当前截图在 `docs/screenshots/iphone-native.png` 和 `ipad-native.png`。这项检查覆盖启动与布局，未覆盖 Apple 上的完整阅读、音频、导出与真机兼容性。
+- 手机视口 WebKit 响应式检查在状态栏避让修复后再次通过。
 
-未验证：Linux / macOS 原生包、Android APK、iOS / iPadOS 原生签名与真机兼容性；另装 calibre 后的完整真实转换；复杂商业出版物、压缩 MOBI/KF8、多 GB 书库、大型扫描 PDF、DRM / LCP、完整无障碍规范。Android 本机初始化因缺少 Java / Android 工具链未能运行，原生移动项目由相应平台的 Tauri CLI 初始化。
+未验证：Apple 发布签名与真机兼容性；另装 calibre 后的完整真实转换；复杂商业出版物、压缩 MOBI/KF8、多 GB 书库、大型扫描 PDF、DRM / LCP、完整无障碍规范。原生移动项目由对应平台的 Tauri CLI 在 CI 中初始化。
+
+Apple 构建与模拟器截图：[Actions 38827406945](https://github.com/NoGod3524/EXReader/actions/runs/38827406945)。可发布原生代码版本：`b8ccffa`，后续文档提交不改变这些构建的应用代码。
 
 自动化样本均由 `tests/fixtures.js` 生成。界面截图位于 `docs/screenshots/`。测试命令参见 README。
