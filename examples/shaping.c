@@ -46,7 +46,7 @@ static int example_main(int argc, char **argv) {
   exr_status status;
   if (argc != 2) {
     fprintf(stderr, "usage: exreader-shaping-example font.ttf\n"
-                    "The SDK includes an original test font in examples/shaping/shaping.ttf.\n");
+                    "The SDK includes an original test font in examples/shaping-fonts/shaping.ttf.\n");
     return 2;
   }
   status = exr_font_open(argv[1], &font, &error);
