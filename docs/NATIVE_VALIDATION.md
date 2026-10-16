@@ -1,10 +1,72 @@
 # Native C validation
 
+## 0.12 native shaping and bidirectional text
+
+The Unicode 17 UAX #9 run passes all 861948 official paragraph-direction cases:
+770241 cases expanded from the 490846 property sequences in `BidiTest.txt`, plus
+91707 explicit-character cases in `BidiCharacterTest.txt`. Both files are complete,
+unmodified and verified by pinned SHA-256 values. Each case checks resolved levels
+and the visual scalar index order through L2. Additional checks cover UTF-8 ranges,
+embedded NUL, multiple paragraphs, per-line L1 resets, Unicode missing/default
+properties, embedding/isolate overflow, long mark sequences and input limits.
+
+`tools/generate_bidi.py` reproduces the class, bracket and mirroring tables;
+`tools/generate_shaping.py` reproduces Unicode joining types and Latin/Arabic script
+tables. Their normal C builds use the committed headers and require no Python or
+Unicode download. The additional data retain the Unicode-3.0 license.
+
+The independent shaping suite uses the original 1000-UPM font in
+`tests/fixtures/shaping`. Explicit assertions cover glyph IDs, advances, offsets and
+UTF-8 source-cluster ranges, including `ffi` / `fi`, feature disabling, one-based
+alternate selection, multiple substitution and Context/ChainContext formats 1/2/3.
+Extension and reverse substitution, glyph/class pair positioning, cursive anchors,
+mark-to-base, mark-to-ligature and mark-to-mark positioning have separate cases.
+Marks on the first versus last source component of a ligature check component
+provenance rather than always selecting the final component.
+
+Arabic checks cover isolated/initial/medial/final forms, lam-alef, transparent fatha,
+ZWJ/ZWNJ, adjacent nontransparent run context and logical-order RTL glyphs. Anchor
+expectations use logical-pen offsets; BiDi applies visual cluster order afterward.
+API tests cover owned output arrays, empty input, invalid UTF-8, fontsize/style/
+direction/feature limits and clearing both output pointer and count on failure.
+Two fonts retain valid outline/cmap tables while replacing the GSUB or GPOS
+LookupListOffset with an out-of-range value; shaping rejects them with EXR_FONT.
+
+Fixture values were independently checked with HarfBuzz 14.6.0 through the
+development-only uharfbuzz 0.56.3 package. The public API retains raw GPOS yAdvance;
+horizontal HarfBuzz suppresses that component. Supplemental smoke checks compare
+glyph multisets for Latin/Arabic samples in Arial, Tahoma, Times New Roman and
+Segoe UI. Those system fonts and the oracle library are not distributed in the SDK.
+
+The complex-layout suite uses the same original font to check Latin ligatures,
+Arabic forms and marks, Hebrew order, punctuation mirroring, paragraph direction,
+visual-cluster hit testing, source ranges and line-end L1 resets. Mixed style and
+table-cell paths exercise the integrated shaper; pager pages are compared with
+complete layout, including render output and page lifetime after source release.
+Legacy geometric fonts without GSUB/GPOS continue through the scalar path and
+retain the old pager snapshots. Fonts with OpenType output now expose shaped
+cluster ranges and visual glyph order instead of one glyph record per scalar.
+
+The implemented script preprocessing covers Latin and Arabic; the generic GSUB
+1–8 / GPOS 1–9 parser does not supply Indic / USE syllable analysis or prebase vowel
+reordering. Canonical normalization, AAT, variation selection, cmap 14, vertical
+layout, dotted-circle insertion and color glyphs remain outside this stage.
+Selected VariationIndex data return EXR_FONT. Same-size/font glyphs within one
+cluster use its first color/bold/italic style; a size change splits shaping and
+limits cross-size mark attachment. Inline isolation requires explicit Unicode
+text controls rather than inline dir/CSS creating new isolate scopes.
+
+Integrated no-break OpenType segments are limited to 8192 scalars. Paragraph BiDi
+metadata and OpenType/font working data are outside page-cache byte budgets, so
+cached payload totals do not represent peak RSS. The archived 0.10/0.11 performance
+measurements remain associated with their recorded engine versions in
+[PERFORMANCE.md](PERFORMANCE.md).
+
+## 0.11 resumable layout, cache budgets and performance baseline
+
 The 0.11 installed Windows SDK's six host examples compile using only its header
 and library and run with PATH restricted to system directories. The new page
 example reads an EPUB through a Chinese path and renders via the bounded page cache.
-
-## 0.11 resumable layout, cache budgets and performance baseline
 
 2026-10-16. All fourteen local Windows Release CTest suites pass. The new
 native-pager, native-page-cache and native-budget suites report 238749, 4887 and
@@ -290,3 +352,11 @@ GitHub workflow native.yml checks Windows, Linux, macOS, ASan/UBSan and mobile c
 ## Local performance sample
 
 Windows, MinGW GCC 16.2, Release build, system Microsoft YaHei font. A generated repetition-based Chinese text of 2,919,999 UTF-8 bytes (approximately one million characters) produced 2,223 pages and a native rasterized first page. Process CPU time reported by the CLI was 3.339 seconds before caching repeated font metrics, and 0.086 seconds after caching. This is a synthetic sample, not a general publication benchmark. Cold and reused-font layouts are compared after font-size changes to detect stale metrics.
+
+## 0.12.0 最终本地验证
+
+Windows GCC 16.2 C11 Release 的 17 个 CTest 项全部通过。新增双向测试包含完整 Unicode 17 的 861,948 条官方用例，共 24,401,500 项断言；原生塑形测试 450 项，复合布局测试 37,331 项。旧页级布局 238,749 项及页面缓存 4,887 项继续通过，0.10 记录的 89 页几何与像素快照保留。
+
+安装后的 7 个独立宿主示例均构建成功，并在 PATH 仅保留 Windows 系统目录的进程中运行，覆盖中文书籍、字体与输出路径。`tests/fixtures/complex-text.epub` 由同目录 `complex-text.html` 的原创文本与样式生成；[真实字体渲染样张](complex-text.png) 使用宿主 Arial，已检查阿拉伯文、希伯来文、附标和数字混排。字体文件没有打入项目。
+
+0.12.0 的九份新进程性能记录已归档至 `docs/benchmarks/0.12.0-windows-paged/`，口径与结果见 [性能记录](PERFORMANCE.md)。

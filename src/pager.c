@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "flow_internal.h"
+#include "opentype_internal.h"
 
 typedef struct {
   size_t node, child, position;
@@ -20,6 +21,8 @@ struct exr_pager {
   exr_layout *assets;
   exr_layout run; /* Current line/carry and the not-yet-closed grapheme only. */
   exr_text_state text;
+  exr_inline_bidi bidi;
+  uint32_t segment_before;
   frame frames[258];
   size_t depth, chapter, position, emitted;
   size_t cluster_start, ready, scan, soft, emergency, line_end;
@@ -45,7 +48,7 @@ static float kern(exr_pager *p, size_t index) {
   if (!index)
     return 0;
   before = g - 1;
-  if ((g->flags | before->flags) & EXR_GLYPH_HIDDEN ||
+  if ((g->flags | before->flags) & (EXR_GLYPH_HIDDEN | EXR_GLYPH_SHAPED) ||
       g->font_index != before->font_index || g->size != before->size ||
       (g->flags & 3) != (before->flags & 3))
     return 0;
@@ -59,7 +62,26 @@ static exr_status measure_cluster(exr_pager *p) {
   f.layout = &p->run;
   status = exr_flow_cluster(&f, p->cluster_start, p->run.glyph_count);
   if (status == EXR_OK)
+    p->cluster_start = p->run.glyph_count;
+  return status;
+}
+static exr_status shape_segment(exr_pager *p, uint32_t after) {
+  flow f = p->f;
+  exr_status status;
+  uint32_t last;
+  if (p->ready == p->run.glyph_count)
+    return EXR_OK;
+  {
+    size_t i = p->run.glyph_count;
+    while (i > p->ready && exr_ot_transparent(p->run.glyphs[i - 1].codepoint)) i--;
+    last = i > p->ready ? p->run.glyphs[i - 1].codepoint : p->segment_before;
+  }
+  f.layout = &p->run;
+  status = exr_inline_shape(&f, p->ready, p->segment_before, after);
+  if (status == EXR_OK) {
     p->ready = p->cluster_start = p->run.glyph_count;
+    p->segment_before = last;
+  }
   return status;
 }
 static exr_status drain(exr_pager *p) {
@@ -132,12 +154,17 @@ static exr_status finish_run(exr_pager *p) {
     status = measure_cluster(p);
     if (status != EXR_OK)
       return status;
+    status = shape_segment(p, 0);
+    if (status != EXR_OK)
+      return status;
     p->finishing = 1;
   }
   status = drain(p);
   if (status != EXR_OK)
     return status;
   memset(&p->text, 0, sizeof(p->text));
+  exr_inline_clear(&p->bidi);
+  p->segment_before = 0;
   p->finishing = 0;
   reset_scan(p);
   return EXR_OK;
@@ -149,6 +176,11 @@ static exr_status scalar(exr_pager *p, frame *current) {
   exr_status status;
   uint32_t cp;
   size_t start = current->position;
+  if (!p->text.started) {
+    status = exr_inline_prepare(&p->f, current->node, &p->bidi);
+    if (status != EXR_OK)
+      return status;
+  }
   if (!exr_next(p->f.doc->text, n->end, &current->position, &cp))
     return failure(p, EXR_ENCODING, "Invalid document text");
   g.boundaries = exr_text_step(&p->text, cp);
@@ -156,7 +188,15 @@ static exr_status scalar(exr_pager *p, frame *current) {
     status = measure_cluster(p);
     if (status != EXR_OK)
       return status;
+    if ((g.boundaries & (EXR_BOUNDARY_LINE | EXR_BOUNDARY_MANDATORY)) ||
+        !exr_ot_present(&p->f.font->faces[p->run.glyphs[p->cluster_start - 1].font_index])) {
+      status = shape_segment(p, cp);
+      if (status != EXR_OK)
+        return status;
+    }
   }
+  if (p->run.glyph_count - p->ready >= 8192)
+    return failure(p, EXR_LIMIT, "Shaping segment exceeds 8192 scalars without a break");
   if (++p->assets->work_glyphs > EXR_MAX_ITEMS ||
       !exr_grow((void **)&p->run.glyphs, &p->run.glyph_cap,
                   p->run.glyph_count + 1, sizeof(g)))
@@ -168,6 +208,9 @@ static exr_status scalar(exr_pager *p, frame *current) {
   g.size = s->font_size;
   g.color = s->color;
   g.flags = s->flags | (exr_text_hidden(cp) ? EXR_GLYPH_HIDDEN : 0);
+  g.bidi_level = exr_inline_level(&p->bidi, start);
+  if (g.bidi_level == UINT_MAX)
+    g.flags |= EXR_GLYPH_HIDDEN;
   g.line_height = s->leading_relative ? s->leading * s->font_size : s->leading;
   p->run.glyphs[p->run.glyph_count++] = g;
   p->position = current->position;
@@ -468,6 +511,7 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   p->f.font = font;
   p->f.config = &p->config;
   p->f.styles = p->styles;
+  p->f.bidi = &p->bidi;
   p->f.paragraph = &p->styles[0];
   p->f.paginate = p->f.page_limit = 1;
   p->f.x = p->f.y = config->page.margin;
@@ -537,12 +581,15 @@ static void reset_cursor(exr_pager *p) {
     exr_table_free(p->frames[i].table);
   memset(p->frames, 0, sizeof(p->frames));
   memset(&p->text, 0, sizeof(p->text));
+  exr_inline_clear(&p->bidi);
+  p->segment_before = 0;
   memset(&p->f, 0, sizeof(p->f));
   p->f.doc = doc;
   p->f.font = font;
   p->f.assets = p->assets;
   p->f.config = &p->config;
   p->f.styles = p->styles;
+  p->f.bidi = &p->bidi;
   p->f.paragraph = &p->styles[0];
   p->f.paginate = p->f.page_limit = 1;
   p->f.x = p->f.y = p->config.page.margin;
@@ -634,6 +681,7 @@ void exr_pager_free(exr_pager *p) {
   while (p->cache_count)
     evict_page(p);
   free(p->run.glyphs);
+  exr_inline_clear(&p->bidi);
   exr_layout_free(p->assets);
   free(p->styles);
   free((void *)p->config.user_css);

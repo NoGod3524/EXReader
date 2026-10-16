@@ -248,7 +248,11 @@ static void valid_clusters(const exr_document *doc, const exr_layout *lay) {
     while (end < size && !(map[end] & EXR_BOUNDARY_GRAPHEME))
       end++;
     CHECK(g->cluster_start == start && g->cluster_end == end);
-    CHECK(g->boundaries == map[g->start]);
+    if ((g->flags & EXR_GLYPH_SHAPED) && i &&
+        glyphs[i - 1].cluster_start == g->cluster_start)
+      CHECK(!g->boundaries);
+    else
+      CHECK(g->boundaries == map[g->start]);
     if (i && glyphs[i - 1].cluster_start == start)
       CHECK(g->page == glyphs[i - 1].page &&
             fabsf(g->baseline - glyphs[i - 1].baseline) < 0.01f);

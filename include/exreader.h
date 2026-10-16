@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.11.0"
+#define EXR_VERSION "0.12.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -49,6 +49,34 @@ typedef struct exr_library exr_library;
 typedef struct exr_publication exr_publication;
 typedef struct exr_session exr_session;
 typedef struct exr_pager exr_pager;
+
+typedef enum {
+  EXR_DIRECTION_AUTO = 0, EXR_DIRECTION_LTR = 1, EXR_DIRECTION_RTL = 2
+} exr_direction;
+typedef struct exr_bidi exr_bidi;
+typedef struct {
+  size_t start, end;
+  uint32_t codepoint;
+  unsigned level; /* UINT_MAX for X9-removed controls. */
+} exr_bidi_scalar;
+#define EXR_TAG(a, b, c, d) (((uint32_t)(a) << 24) | ((uint32_t)(b) << 16) | \
+                           ((uint32_t)(c) << 8) | (uint32_t)(d))
+typedef struct { uint32_t tag, value; } exr_shape_feature;
+typedef struct {
+  float font_size;
+  unsigned style_flags;
+  exr_direction direction;
+  uint32_t script, language; /* OpenType tags; zero selects automatic script/default language. */
+  const exr_shape_feature *features;
+  size_t feature_count;
+  uint32_t context_before, context_after; /* Nearest nontransparent adjacent scalar, 0 at boundary. */
+} exr_shape_options;
+typedef struct {
+  size_t start, end; /* UTF-8 cluster range; shared by ligatures and attached marks. */
+  uint32_t glyph;
+  float advance_x, advance_y, offset_x, offset_y; /* Pixels; x right, y up. */
+  unsigned flags;
+} exr_shaped_glyph;
 typedef struct {
   size_t start, end;
   unsigned heading;
@@ -169,7 +197,8 @@ enum {
 };
 enum {
   EXR_GLYPH_BOLD = 1, EXR_GLYPH_ITALIC = 2, EXR_GLYPH_HIDDEN = 4,
-  EXR_GLYPH_MISSING = 8 /* No supplied face covers this visible scalar; glyph 0 is used. */
+  EXR_GLYPH_MISSING = 8, /* No supplied face covers this visible scalar; glyph 0 is used. */
+  EXR_GLYPH_SHAPED = 16 /* Advances/offsets include OpenType positioning. */
 };
 
 typedef struct {
@@ -190,6 +219,8 @@ typedef struct {
   size_t cluster_start, cluster_end; /* Source UTF-8 range of this grapheme group. */
   unsigned boundaries; /* EXR_BOUNDARY_* before this scalar in the visible run. */
   size_t font_index; /* Index in the ordered exr_font input list; glyph is face-local. */
+  float offset_x, offset_y; /* Shaped glyph offset; y up relative to baseline. */
+  unsigned bidi_level; /* Resolved Unicode embedding level; odd means RTL. */
 } exr_glyph;
 typedef struct {
   size_t start, end, glyph_start, glyph_count;
@@ -224,6 +255,7 @@ typedef struct {
   exr_image_decode_fn decode_image;   /* Optional host decoder, returns RGBA. */
   exr_image_release_fn release_image; /* Required with decode_image; also called on failure. */
   void *image_context;
+  exr_direction direction; /* Paragraph base direction; AUTO uses first strong scalar. */
 } exr_layout_config;
 struct exr_bitmap {
   uint32_t width, height, stride;
@@ -238,6 +270,15 @@ EXR_API const char *exr_version(void);
    Text must be valid UTF-8, at most 64 MiB. Embedded U+0000 is a control scalar. */
 EXR_API exr_status exr_text_analyze(const char *text, size_t size, unsigned char **boundaries,
                                     exr_error *error);
+/* Unicode 17 UAX #9 paragraph analysis, at most 4M scalars. Scalar views are borrowed.
+   Reorder accepts scalar-index line slices and returns visual indices into this view,
+   excluding X9 controls. Free the returned order with exr_free(). */
+EXR_API exr_status exr_bidi_analyze(const char *text, size_t size, exr_direction direction,
+                                    exr_bidi **out, exr_error *error);
+EXR_API const exr_bidi_scalar *exr_bidi_scalars(const exr_bidi *bidi, size_t *count);
+EXR_API exr_status exr_bidi_reorder(const exr_bidi *bidi, size_t first, size_t count,
+                                    size_t **out_order, size_t *out_count, exr_error *error);
+EXR_API void exr_bidi_free(exr_bidi *bidi);
 /* Copies every input string/attribute/blob during this call. Failure leaves *out NULL. */
 EXR_API exr_status exr_document_create(const exr_document_input *input, exr_document **out,
                                        exr_error *error);
@@ -301,6 +342,13 @@ EXR_API size_t exr_font_count(const exr_font *font);
 /* Scalar cmap coverage, not a shaping/sequence support test; invalid input returns 0. */
 EXR_API int exr_font_has_glyph(const exr_font *font, size_t font_index, uint32_t codepoint);
 EXR_API void exr_font_free(exr_font *font);
+EXR_API exr_shape_options exr_shape_defaults(void);
+/* One font face, logical output order; caller splits directional/script/font runs.
+   Own the returned glyph array with exr_free(). Failure clears output/count.
+   The font must not be used concurrently with layout, shape or rendering calls. */
+EXR_API exr_status exr_shape(exr_font *font, size_t font_index, const char *utf8, size_t size,
+                             const exr_shape_options *options, exr_shaped_glyph **out,
+                             size_t *out_count, exr_error *error);
 EXR_API exr_layout_options exr_layout_defaults(void);
 EXR_API exr_layout_config exr_layout_config_defaults(void);
 EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,

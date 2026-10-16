@@ -77,6 +77,7 @@ typedef struct {
   float font_size, leading, indent, border_width;
   int leading_relative, align, display, before, after, border_style;
   unsigned flags;
+  exr_direction direction;
   uint32_t color, background, border_color;
   exr_length width, height, max_width, margin[4], padding[4];
 } exr_style;

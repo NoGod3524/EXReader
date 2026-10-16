@@ -127,8 +127,8 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
       if (FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL))
         goto font_error;
       slot = face->glyph;
-      left = (int)lroundf(g->x) + slot->bitmap_left;
-      top = (int)lroundf(g->baseline) - slot->bitmap_top;
+      left = (int)lroundf(g->x + g->offset_x) + slot->bitmap_left;
+      top = (int)lroundf(g->baseline - g->offset_y) - slot->bitmap_top;
       for (by = 0; by < slot->bitmap.rows; by++)
         for (bx = 0; bx < slot->bitmap.width; bx++) {
           int x = left + (int)bx, y = top + (int)by;

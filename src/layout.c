@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "layout_internal.h"
+#include "opentype_internal.h"
 #include FT_SYNTHESIS_H
 exr_status exr_font_create(const exr_font_input *inputs, size_t count, exr_font **out, exr_error *e) {
   exr_font *font;
@@ -89,6 +90,7 @@ void exr_font_free(exr_font *f) {
   if (f) {
     for (i = 0; i < f->count; i++) {
       exr_face *face = &f->faces[i];
+      exr_ot_free(face);
       if (face->face)
         FT_Done_Face(face->face);
       free(face->advances);
@@ -208,6 +210,7 @@ size_t exr_layout_page_at(const exr_layout *l, size_t offset) {
 size_t exr_layout_hit_test(const exr_layout *l, size_t p, float x, float y) {
   const exr_page *page;
   const exr_line *line = NULL;
+  const exr_glyph *last_visible = NULL;
   size_t i;
   float distance = INFINITY;
   if (!l || p >= l->page_count || !isfinite(x) || !isfinite(y))
@@ -228,16 +231,23 @@ size_t exr_layout_hit_test(const exr_layout *l, size_t p, float x, float y) {
   for (i = line->glyph_start; i < line->glyph_start + line->glyph_count;) {
     const exr_glyph *g = &l->glyphs[i];
     size_t end = i + 1;
+    int visible = !(g->flags & EXR_GLYPH_HIDDEN);
     float left = g->x, right = g->x + g->advance;
     while (end < line->glyph_start + line->glyph_count &&
            l->glyphs[end].cluster_start == g->cluster_start) {
       left = fminf(left, l->glyphs[end].x);
       right = fmaxf(right, l->glyphs[end].x + l->glyphs[end].advance);
+      visible |= !(l->glyphs[end].flags & EXR_GLYPH_HIDDEN);
       end++;
     }
-    if (x <= right)
-      return x < (left + right) / 2 ? g->cluster_start : g->cluster_end;
+    if (visible) last_visible = g;
+    if (visible && x <= right)
+      return (x < (left + right) / 2) != (g->bidi_level & 1) ?
+                 g->cluster_start : g->cluster_end;
     i = end;
+  }
+  if (last_visible) {
+    return last_visible->bidi_level & 1 ? last_visible->cluster_start : last_visible->cluster_end;
   }
   return line->end;
 }
