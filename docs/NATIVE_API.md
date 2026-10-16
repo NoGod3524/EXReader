@@ -1,6 +1,8 @@
-# Native C API 0.12
+# Native C API 0.12.1
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
+
+0.12.1 修复审计发现的长附标序列塑形开销、重复章节锚点、超限备注写入、XML 非法字符导出、跨行塑形上下文、RTF Unicode fallback 和 HTML script/style 原始文本处理；`exr_library_note()` 同时支持输出 ID 指向输入 `note.id`。回归覆盖见 [验证记录](NATIVE_VALIDATION.md#0121-audit-fixes)。
 
 ## 所有权与并发
 
@@ -22,6 +24,8 @@
 `exr_document_open()` 根据扩展名选择解析器；内存入口显式指定 `exr_format`。文本模型使用规范化 UTF-8；进度和标注范围使用规范化文本的字节偏移，不使用页码作为永久位置。宿主通过 `exr_layout_page_at()` 在重新排版后查找该位置，通过 `exr_layout_hit_test()` 将坐标映射回文字。0.7 的文本锚点可以在正文投影变化后重新寻找选文；阅读进度仍为偏移。0.4 的 EPUB 正文投影会分隔表格单元格、排除 hidden 元素，偏移可能与 0.3 不同；旧标注只有偏移，迁移后仍明确标为 legacy，不能把当前正文中的同一数字偏移当作历史选文。旧 Foliate CFI 转换尚未实现。
 
 输入上限 128 MiB、单文档正文上限 64 MiB、单次文档排版工作上限约 400 万字形。文档树上限 262144 个节点、字符串累计 64 MiB、每个元素最多 256 个属性。ZIP 成员上限 32 MiB、条目上限 1 万、打开期间累计解压上限 128 MiB；后续每次资源读取单独应用 32 MiB 上限，由调用者释放返回的字节。XML 嵌套上限 256 层，不解析外部实体，拒绝实体声明；HTML 的脚本和样式不进入正文。单个 document 仍完整解析；publication 可按章节加载，pager 在该 document 内按页续排。`exr_layout_create()` / `exr_layout_create_ex()` 使用同一续排引擎读到末尾并合并为完整布局。
+
+HTML 的 script/style 内容按原始文本跳过，内部的 `<`、引号和伪标签不会吞掉后续正文，只有完整匹配的结束标签终止该区域。RTF `\uN` 后的 fallback 按 `\ucN` 计数：控制词、控制符号和 hex escape 各计一项，`\binN` 连同其二进制数据计一项；未转义的组边界终止跳过，原始 CR/LF 不消耗计数。
 
 FreeType 提供字体、基础字形度量和像素，不负责分页。EXReader 自己决定字素边界、OpenType 替换与定位、双向级别、段落、换行、分页、基线和视觉位置。0.9 的 Unicode 17.0.0 扩展字素规则保护换行与命中位置；换行机会仍使用下述 UAX #14 子集。0.12 的原生 GSUB / GPOS 引擎支持拉丁连字与附标、阿拉伯连接形，Unicode UAX #9 决定逐行视觉次序；脚本范围和布局限制见下节。
 
@@ -101,7 +105,9 @@ exr_bidi_free(bidi);
 
 布局使用 `exr_layout_config.direction` 设置段落基础方向，默认为 AUTO；块级 `dir="ltr|rtl|auto"` 和 CSS `direction:ltr|rtl` 可以覆盖。`text-align:start/end` 随段落方向定位，left/right 保持物理方向。内联 dir / CSS direction 当前不自动建立嵌入或隔离，宿主需通过显式 Unicode LRE / RLE / LRI / RLI / FSI / PDI 等文本控制表达。
 
-集成排版先解析当前可见段落的双向级别，断行后按簇视觉重排，并在奇数级别查询镜像字形。同字体同字号的簇内颜色 / 粗斜体变化使用簇首样式；不同字号仍分开塑形，跨字号 mark 定位有限。带 OpenType 的无断点塑形段最多 8192 个标量，超过返回 `EXR_LIMIT`；独立 `exr_shape()` 另按上述输入 / 工作量上限处理。整个段落的双向标量与偏移元数据在页面缓存预算之外。
+集成排版先解析当前可见段落的双向级别，暂定塑形用于选择断点，再以真实行边界重新塑形并拟合宽度，最后按簇视觉重排；奇数级别查询镜像字形。carry 保留原始源记录，行首不继承上一行的 Arabic 连接形、cursive 或字偶定位。拟合保留连字、字素簇和 GLUE 边界，必要时回退到更早的合法断点；不可拆首簇继续使用裁剪规则。普通排版、页级续排和表格单元格使用同一行队列。
+
+同字体同字号的簇内颜色 / 粗斜体变化使用簇首样式；不同字号仍分开塑形，跨字号 mark 定位有限。未闭合塑形段最多 8192 个标量。行队列的原始、暂定、最终三个驻留字形数组按已分配容量合计限制为 16 MiB；临时塑形结果及 shaper 自身工作内存另计，不包含在这 16 MiB 内。每次文档排版的行队列累计塑形输入/输出记录上限为 64 Mi（67,108,864）项，最终行拟合最多回退 256 次；以上超限返回 `EXR_LIMIT`。独立 `exr_shape()` 另按上述输入 / 工作量上限处理。整个段落的双向标量与偏移元数据在页面缓存预算之外。
 
 ## 独立文字边界
 
@@ -261,6 +267,8 @@ exr_anchor_free(&anchor);
 
 捕获的范围完全位于同一章节时记录其路径，解析限制在对应章节范围内；跨章节范围不记录章节路径。路径消失时返回 `MISSING`，不自动搜索其他章节。宿主明确去掉 `chapter` 限制后可尝试全篇或跨格式匹配；这只是精确文本选择器的复用，不包含文档身份验证或格式标准间的映射。
 
+EPUB 重复 spine 项可能产生路径相同、正文范围不同的章节。解析会比较所有同路径范围；不同位置取得同样最高匹配等级时返回 `AMBIGUOUS`，包括点书签，不选择第一个章节或按旧偏移消除歧义。
+
 这些接口独立于 SQLite，适用于内置格式和 `exr_document_create()` 构造的文档；宿主可在自己的存储中保存全部字段。锚点捕获继续验证 Unicode 标量边界，不自动将选区扩展到字素簇；需要整簇选择时，宿主可先对规范化正文使用 `exr_text_analyze()` 选择端点。不支持模糊改字匹配、Unicode 规范化、文档指纹和 EPUB CFI；引文或上下文发生变化可能返回 `MISSING`。正文导出接口不序列化锚点。0.9 不改变文档归一化投影和 ASCII 空白处理。
 
 SDK 的 `examples/anchor.c` 提供无需字体的完整示例；与构造文档示例使用同一个 examples CMake 工程，生成 `exreader-anchor-example`。它在保存选文后释放原文档，再打开插入前言的版本并检查重新定位的结果。
@@ -302,6 +310,8 @@ path 是原始虚拟文件名，不是 URI：必须为非空、规范化的相�
 构造要求有效 UTF-8 字符串；资源字节为任意二进制。标题省略时为空字符串。上限为 262144 个节点、10000 个章节、10000 个资源、每节点 256 个属性、树深 256 层（包含文档根）、模型字符串累计 64 MiB、单资源 32 MiB、资源字节累计 128 MiB；正文仍有 64 MiB 上限。参数错误返回 `EXR_ARGUMENT`，非法 UTF-8 返回 `EXR_ENCODING`，超限返回 `EXR_LIMIT`。函数会复制输入并完成验证及正文投影后才返回文档。
 
 导出仍为六种格式的正文转换，不序列化完整文档树和资源。`EXR_CUSTOM` 不作为 `exr_document_open_memory()` 的输入文件格式，也不支持通过 `exr_library_import()` 直接保存；SQLite 书库当前持久化的是已有文件格式的原始字节。
+
+HTML、FB2、EPUB 和 DOCX 导出会预检实际写入 XML 的字段。正文均需符合 XML 1.0 字符范围；标题仅在 HTML、FB2、EPUB 中序列化，DOCX 只检查正文。非法 UTF-8 或 XML 1.0 禁止的字符返回 `EXR_ENCODING`，输出字节为 NULL、大小为 0。TXT / RTF 保持各自可表示的字符范围。
 
 ## 文档树与 EPUB 资源
 
@@ -383,6 +393,8 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 SQLite 数据库保存原文件 BLOB、封面 BLOB、元数据和 UTF-8 位置标注。书籍主键为库内整数。格式在导入时验证；正文大小用于检查进度和标注范围。书库使用 application_id 与 schema version 检查，拒绝不认识的现有数据库。0.7 将 schema v1 事务迁移到 v2，原标注保留其偏移、备注和 ID，选择器保持 NULL，因此解析为 `LEGACY`；不从新版正文反推旧引文。单句修改使用 SQLite 事务语义，书籍删除通过外键清理笔记。
 
 宿主应零初始化输入 `exr_note`。保存新标注时，`exr_library_note()` 为当前书籍正文捕获文本选择器；修改同范围标注的备注保留已有选择器。宿主可以显式提供 `note.anchor` 重新锚定，锚点的 `start/end` 必须与笔记范围一致。查询的 `exr_note.anchor` 由结果数组拥有，使用 `exr_notes_free()` 一次释放全部内容。稳定锚点保存历史文本证据，实际显示前应调用 `exr_anchor_resolve()` 并检查其状态。
+
+备注 `note.text` 最多 64 MiB，不含字符串终止字节；超限在写数据库前返回 `EXR_LIMIT`，输出 ID 为 0，已有笔记保持不变。恰好 64 MiB 的备注可以保存、读取和再次编辑。输出 ID 可传 `&note.id`：引擎在清零输出前保存输入值，因此更新仍使用原笔记 ID。
 
 `exr_library_backup()` 使用 SQLite VACUUM INTO 生成可直接打开的完整备份；目标数据库不能已有非空内容。封面作为受大小限制的 BLOB 存储；宿主可调用图片解码接口生成像素，封面不自动缩放。媒体大文件的流式导入尚未实现。现有 ZIP / IndexedDB 备份需要未来的迁移工具。
 
