@@ -1,5 +1,71 @@
 # Native C validation
 
+The 0.11 installed Windows SDK's six host examples compile using only its header
+and library and run with PATH restricted to system directories. The new page
+example reads an EPUB through a Chinese path and renders via the bounded page cache.
+
+## 0.11 resumable layout, cache budgets and performance baseline
+
+2026-10-16. All fourteen local Windows Release CTest suites pass. The new
+native-pager, native-page-cache and native-budget suites report 238749, 4887 and
+118 checks respectively; the ten earlier suites retain their 0.10 check counts.
+The remaining new suite checks the standalone benchmark and its JSON runner.
+Cross-platform results are tracked by the final source commit's workflow.
+
+The pager suite compares single-page output with the complete-layout API and with
+89 pages recorded using the installed 0.10.0 engine. These independent snapshots
+use the committed original primary/fallback geometric fonts. Canonical field hashes
+cover every glyph, line, box and page field after normalizing page-local indices;
+geometry is recorded at 1/64 px. Separate hashes cover every gray and RGBA pixel.
+The fixture covers styled EPUB, PNG/JPEG resources, nested margins/padding/backgrounds,
+rowspan/colspan groups, explicit page breaks, narrow cross-style grapheme clusters
+and one long text paragraph. New eager layout drains the same cursor to EOF, so the
+old-engine snapshots continue to provide an independent layout regression check.
+
+An additional 1 MiB single-paragraph test requests only the first page and requires
+the scanned UTF-8 position to stay below 1/64 of the complete normalized text. This
+exercises within-paragraph demand layout rather than collecting all glyphs before
+splitting them into pages. Tests also check repeated NULL EOF output, pure-table
+position progress, zero-width solid borders, complete cluster ranges at page edges
+and rendering retained pages after freeing both the document and pager.
+
+Page-cache checks cover the default one-page cache, incompatible owned/borrowed
+access modes, hits without more scanning, forward continuation, LRU eviction and
+replaying an evicted old page from the beginning. Count and payload-byte limits
+apply together. Exact fits, immediate eviction on lower limits, oversized-page
+rejection, out-of-range requests and retry after cache-miss failure exercise cache
+contents and LRU order. The previous borrowed layouts remain usable after a failed
+request. Host image decoder checks include reentrant access rejection and image
+reuse while replaying previously visited pages.
+
+The session-budget suite exercises the same count/byte rules for whole-part
+document-plus-layout entries: zero/unlimited and exact-fit budgets, LRU reduction,
+oversized new entries, failed loaders and failed layout while preserving the old
+cache. Loader reentry cannot change the active session's budget. Memory-accounting
+checks verify copied resource bytes, exact attribute/string allocation changes and
+repeatable document/layout payload totals.
+
+These counters measure owned allocation payload and allocated capacity, excluding
+allocator overhead and shared or borrowed sources. Shared archive storage, fonts,
+pager base/work state, pending loads and renderer bitmaps are outside cache budgets;
+shared image pixels are conservatively charged in full to each referencing page.
+A document is still parsed completely, and an indivisible large grapheme or rowspan
+group can require substantial temporary work. Cache budgets therefore bound resident
+cache payload, not the process peak RSS or every allocation during a page request.
+
+`examples/page.c` is the installed-SDK page host. It loads a requested EPUB part,
+sets a three-page / 8 MiB borrowed cache, requests one page and writes its PNG while
+reporting scan progress and resident payload. Command-line page and part indices are
+zero-based; the returned single-page layout is rendered with page index 0.
+
+The benchmark measures opening, first visible page, continuation, gray rendering,
+complete page requests and process peak RSS independently. Its smoke test covers
+JSON structure, counts, percentiles, Unicode paths, generated deterministic EPUBs,
+both layout modes, stopping at the requested page sample limit, EOF totals and bad
+parameters. No machine-specific timing threshold is used. Reproduction commands,
+measurement boundaries, raw JSON and the 0.10/0.11 Windows results are recorded in
+[PERFORMANCE.md](PERFORMANCE.md).
+
 ## 0.10 host-supplied font fallback
 
 2026-10-16. All ten local Windows Release CTest suites pass, including 152

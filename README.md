@@ -1,6 +1,6 @@
 # EXReader — native C ebook engine
 
-主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.10.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
+主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.11.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
 
 文本解码、格式解析、文档模型、CSS 子集、换行、分页、文字位置、命中测试、页面像素合成和书库都在本项目 C 代码中。底层使用 FreeType、Expat、miniz、SQLite 和 stb_image 五个 C 组件，分别处理字体、XML、ZIP、数据库和 PNG/JPEG 解码。
 
@@ -13,6 +13,8 @@
 | 文档输入 | TXT（UTF-8、带 BOM 的 UTF-16）、HTML、FB2、EPUB spine、DOCX 正文、RTF 正文、基础 MOBI / PalmDOC |
 | 宿主文档构造 | `exr_document_create()` 接收通用节点、章节和资源字节，复制输入并生成规范化正文；宿主解析器无需注册，可直接接入现有搜索、布局、渲染和正文导出 |
 | 分段按需加载 | 通用 publication / loader 接口；内置 EPUB 打开时只索引，访问某章时才解析和排版；session 以 LRU 保留 1–64 个分段 |
+| 页级续排 | `exr_pager` 在页边界暂停；长段落逐字素推进，表格逐 rowspan 连通组测量；输出独立单页布局 |
+| 缓存字节预算 | 页缓存与章节 session 均支持 LRU 数量/载荷字节双限制；超限的新页或章节保留旧缓存；可查询计量值 |
 | EPUB 文档结构 | XHTML 文档树保留章节、标题、内联元素、嵌套列表、图片、表格、脚注、全部属性与原始解码文本；保留 EPUB 3 导航树、非线性章节和辅助 XHTML |
 | EPUB 资源与链接 | manifest 资源清单、图片 / CSS / 字体等资源按需解压；支持章节相对路径、Unicode / 百分号转义与片段 ID 定位 |
 | 自有排版 | 字体实际 advance / kerning、段落、标题字号、自动换行、Unicode 字素簇保护、中文标点与不换行空格约束、分页；页面宽高、字号、行距、段间距、页边距可调 |
@@ -30,13 +32,15 @@
 
 0.7 提供稳定标注的文本锚点基础：精确选文至少需要一侧完整上下文或文档 / 章节边界佐证，同分候选返回歧义，不猜测旧偏移附近的位置。锚点仍按 Unicode 标量边界捕获，不自动扩展为字素簇；不提供模糊改字匹配、Unicode 规范化或文档指纹。旧书库标注保留为仅偏移的 legacy 记录，不自动认定已迁移。宿主可自行持久化选择器字段，正文格式转换不携带标注。
 
-0.8 新增分段加载和逐段排版。宿主可提供任意格式的独立分段文档；EPUB 内置 loader 共享一份压缩书籍，按需解析 XHTML。缓存容量按分段数量计算，单章仍完整解析和排版，临时加载可多占一个分段；尚无页级续排和内存字节硬上限。页号、节点索引和正文偏移均为分段局部值，整书页数需逐段排版后才能确定；现有 SQLite 书库仍使用全书文档模型。
+0.8 新增分段加载和逐段排版。宿主可提供任意格式的独立分段文档；EPUB 内置 loader 共享一份压缩书籍，按需解析 XHTML。原 `session_get` 完整解析和排版请求分段，临时加载可多占一个分段；0.11 增加页级续排和载荷字节预算。页号、节点索引和正文偏移均为分段局部值，整书页数需逐段排版后才能确定；现有 SQLite 书库仍使用全书文档模型。
 
 0.9 补上 Unicode 17.0.0 的 UAX #29 扩展字素规则，包括组合字符、Hangul、Indic 辅音连接边界、emoji ZWJ 和旗帜配对，完整官方 766 项字素测试通过。布局可跨内联样式节点识别同一字素簇，换行和命中测试使用簇边界。UAX #14 当前仅实现明确的换行子集，覆盖中日韩标点、NBSP / NNBSP / WJ、ZWSP、软连字符机会和强制换行；不包含字典断词和完整数字、引号上下文。禁止拆分的字素簇或硬组过宽时保留整组并裁剪。正文归一化和 ASCII 空白处理保持原有规则。
 
 0.10 新增不可变的有序字体集，宿主通过内存字节提供 1–32 个可缩放 Unicode 字体。引擎优先选择能覆盖整个可见字素簇的首个字体，缺少整簇覆盖时逐标量回退；所有字体均缺字时使用主字体的缺字字形并设置 `EXR_GLYPH_MISSING`。布局、行高、字距与栅格器使用同一字体选择，`font_index` 供自定义渲染器使用。框架不扫描系统字体，也不自动加载 EPUB 嵌入字体。
 
-接下来继续完善文字 shaping 与双向文字，再推进 PDF 和有声书；新增能力继续使用开放的文档与资源接口。大书后续仍需页级续排、单个超长章节处理和更细的内存预算。EPUB 正文使用严格 XHTML 解析，未实现 HTML5 错误恢复、EPUB 2 NCX 目录解析、远程资源和元素级 base URI；原始 NCX 可通过资源接口读取。当前转换器仍输出正文，不保留文档树结构。
+0.11 新增可暂停的页级状态机和双重缓存预算。顺序读取只为当前页和换行前瞻保存字形；已淘汰的旧页按需从章节开头重放。共享图片通过引用计数保留，返回页可在 pager 释放后独立渲染。章节文档仍完整解析，缓存预算计量常驻载荷，字体、源书和临时工作区另计。真实性能数据见 [性能记录](docs/PERFORMANCE.md)。
+
+接下来继续完善文字 shaping 与双向文字，再推进 PDF 和有声书；新增能力继续使用开放的文档与资源接口。大书后续继续优化章节解析与回放检查点。EPUB 正文使用严格 XHTML 解析，未实现 HTML5 错误恢复、EPUB 2 NCX 目录解析、远程资源和元素级 base URI；原始 NCX 可通过资源接口读取。当前转换器仍输出正文，不保留文档树结构。
 
 ## 构建
 
@@ -72,6 +76,17 @@ Windows 的示例：
 这是 C 引擎实际生成的页面：
 
 ![Native C styles, images and table rendering](docs/styled-page.png)
+
+## 性能基准
+
+默认工具构建同时生成 `exreader-benchmark`，输出打开、首章解析排版、首画、逐页实际灰度渲染 p50 / p95 和进程峰值 RSS 的 JSON；直接运行不需要 Python。
+
+```sh
+stage/bin/exreader-benchmark book.epub /path/to/font.ttf --max-pages 64
+python tools/run_benchmarks.py stage/bin/exreader-benchmark /path/to/font.ttf build/benchmarks --runs 3
+```
+
+Windows 使用 `stage/bin/exreader-benchmark.exe`。Python runner 生成固定的短书、单段长章和多章 EPUB，每轮启动新进程并保存明细与汇总。测量口径、复现方法和 0.10.0 实测基线见 [性能记录](docs/PERFORMANCE.md)。
 
 ## C 接入
 
@@ -136,6 +151,8 @@ exreader-lazy-example font.ttf epub-part.png book.epub 0
 `exreader-text-example` 无需参数或字体，演示独立文字边界 API。示例验证 25 字节的组合字符、emoji ZWJ、旗帜和中文输入，输出 4 个字素簇及其 UTF-8 范围。
 
 `exreader-font-example primary.ttf fallback.ttf output.png` 演示从宿主字节创建字体集、打印每个字符所选字体并输出页面。SDK 的 `examples/fonts` 附带小型测试字体，使用矩形字形验证回退；实际阅读字体由宿主提供。
+
+`exreader-page-example book.epub font.ttf output.png [page] [part]` 演示按章节索引加载、页级续排、三页 / 8 MiB 载荷预算以及独立绘制；页和章节索引从 0 开始。
 
 [公开头文件](include/exreader.h) · [接口与内存约定](docs/NATIVE_API.md) · [第三方许可](THIRD_PARTY_NOTICES.md)
 

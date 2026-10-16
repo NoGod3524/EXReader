@@ -165,8 +165,13 @@ void exr_layout_free(exr_layout *l) {
     free(l->pages);
     free(l->boxes);
     free(l->styles);
-    for (i = 0; i < l->image_count; i++)
-      exr_bitmap_free(&l->images[i].bitmap);
+    for (i = 0; i < l->image_count; i++) {
+      exr_cached_image *image = &l->images[i];
+      if (!image->refs || !--*image->refs) {
+        exr_bitmap_free(&image->bitmap);
+        free(image->refs);
+      }
+    }
     free(l->images);
     free(l);
   }

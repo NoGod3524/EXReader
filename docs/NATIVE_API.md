@@ -1,25 +1,27 @@
-# Native C API 0.10
+# Native C API 0.11
 
-公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.10 新增字体集构造、字体覆盖查询，并在 `exr_glyph` 末尾添加 `font_index`、增加 `EXR_GLYPH_MISSING` 标志；0.9 新增独立文字边界分析入口，并在 `exr_glyph` 末尾添加 `cluster_start/end` 和 `boundaries`；0.8 新增 publication / session 分段加载接口；0.7 新增稳定文本锚点接口，并在 `exr_note` 末尾添加 `anchor`；0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构。宿主需要使用匹配版本的头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
+公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.11 新增不透明的 `exr_pager`、页级续排与缓存、分段缓存字节预算，以及 document / layout 内存计量接口；已有 glyph、line、page 等公开结构未增加字段。0.10 新增字体集构造、字体覆盖查询，并在 `exr_glyph` 末尾添加 `font_index`、增加 `EXR_GLYPH_MISSING` 标志；0.9 新增独立文字边界分析入口，并在 `exr_glyph` 末尾添加 `cluster_start/end` 和 `boundaries`；0.8 新增 publication / session 分段加载接口；0.7 新增稳定文本锚点接口，并在 `exr_note` 末尾添加 `anchor`；0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构。宿主使用匹配版本的头文件和库。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
 ## 所有权与并发
 
-- `exr_document`、`exr_font`、`exr_layout`、`exr_library`、`exr_publication`、`exr_session` 为不透明句柄，使用各自析构函数释放。
+- `exr_document`、`exr_font`、`exr_layout`、`exr_library`、`exr_publication`、`exr_session`、`exr_pager` 为不透明句柄，使用各自析构函数释放。
 - document 的 text / title / blocks / nodes / chapters / resources 和 layout 的 pages / lines / glyphs / boxes / image 为只读借用视图，所属对象释放后失效。树节点属性和文本也属于 document。借用的图片像素不可修改或释放。
-- 布局拥有位置、样式和已解码图片，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的同一个字体集句柄；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不共享对象的独立句柄可独立使用。共享 publication、session 或压缩 archive 的文档，其调用及生命周期变更也由宿主串行处理；引擎没有全局状态或内部线程锁。
+- 布局拥有输出数据及所引用的图片像素，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的同一个字体集句柄；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不共享对象的独立句柄可独立使用。共享 publication、session、pager 或压缩 archive 的文档，其调用及生命周期变更也由宿主串行处理；引擎没有全局状态或内部线程锁。
 - `exr_books_free()` / `exr_notes_free()` 释放数组和其中字符串；后者也释放每条笔记的锚点字符串。修改元数据时复制结构并用自己的字符串设置输入字段，不替换结果数组中的库拥有指针。
 - `exr_anchor_create()` 输出独立拥有的选文、前后文和章节路径字符串，由 `exr_anchor_free()` 释放；输入文档随后可释放。宿主也可直接提供选择器字段供只读解析，但不能用库的释放函数释放宿主借用的字符串。
 - `exr_bitmap_free()` 释放像素。`exr_document_export()` / `exr_document_resource()` / `exr_library_blob()` 返回的字节，以及 `exr_text_analyze()` 返回的边界表，用 `exr_free()` 释放。这些字节独立于原对象或输入的生命周期。跨 DLL 调用时不要使用宿主 `free()` 释放库内存。
 - 输出参数需为空或已先释放。对输入的任意无效 C 指针不提供运行时保护。
+- 同一 pager 产生的独立页可以在 pager 和文档释放后使用；这些页会共享不可变图片，页的生命周期变更也由宿主串行处理。
 - `exr_document_create()` 在调用期间复制输入数组中的字符串、属性和资源字节；返回后可释放所有输入。失败时不交出部分文档，`*out` 为 NULL。
 - `exr_publication_create()` 复制标题和分段元数据，不复制 loader context。若提供 release 回调，创建成功后由 publication 在最后一个 publication / session 引用释放时恰好回调一次；创建失败时仍由宿主清理 context。release 为 NULL 时不自动释放 context，宿主必须使其在全部 publication / session 生命周期内有效。
-- `exr_publication_load()` 返回宿主拥有的独立文档，用 `exr_document_free()` 释放。`exr_session_get()` 返回借用文档和布局，契约有效期至下次 get / clear / free；宿主不得释放或长期保留这些指针。
+- `exr_publication_load()` 返回宿主拥有的独立文档，用 `exr_document_free()` 释放。`exr_session_get()` 返回借用文档和布局，契约有效期至下次 get / set_budget / clear / free；宿主不得释放这些指针。
+- `exr_pager_next()` 返回宿主拥有的独立单页布局，用 `exr_layout_free()` 释放；可在 pager 和 document 释放后继续绘制。`exr_pager_get()` 返回借用单页布局，有效期至下次 get / set_cache / free，不由宿主释放。一个 pager 只能选择其中一种访问模式。
 
 ## 文档与排版
 
 `exr_document_open()` 根据扩展名选择解析器；内存入口显式指定 `exr_format`。文本模型使用规范化 UTF-8；进度和标注范围使用规范化文本的字节偏移，不使用页码作为永久位置。宿主通过 `exr_layout_page_at()` 在重新排版后查找该位置，通过 `exr_layout_hit_test()` 将坐标映射回文字。0.7 的文本锚点可以在正文投影变化后重新寻找选文；阅读进度仍为偏移。0.4 的 EPUB 正文投影会分隔表格单元格、排除 hidden 元素，偏移可能与 0.3 不同；旧标注只有偏移，迁移后仍明确标为 legacy，不能把当前正文中的同一数字偏移当作历史选文。旧 Foliate CFI 转换尚未实现。
 
-输入上限 128 MiB、单文档正文上限 64 MiB、单布局上限约 400 万字形。文档树上限 262144 个节点、字符串累计 64 MiB、每个元素最多 256 个属性。ZIP 成员上限 32 MiB、条目上限 1 万、打开期间累计解压上限 128 MiB；后续每次资源读取单独应用 32 MiB 上限，由调用者释放返回的字节。XML 嵌套上限 256 层，不解析外部实体，拒绝实体声明；HTML 的脚本和样式不进入正文。单个文档仍完整解析并在内存中排版；0.8 可按需加载独立分段并缓存其布局，尚未实现页级续排和页缓存。
+输入上限 128 MiB、单文档正文上限 64 MiB、单次文档排版工作上限约 400 万字形。文档树上限 262144 个节点、字符串累计 64 MiB、每个元素最多 256 个属性。ZIP 成员上限 32 MiB、条目上限 1 万、打开期间累计解压上限 128 MiB；后续每次资源读取单独应用 32 MiB 上限，由调用者释放返回的字节。XML 嵌套上限 256 层，不解析外部实体，拒绝实体声明；HTML 的脚本和样式不进入正文。单个 document 仍完整解析；publication 可按章节加载，pager 在该 document 内按页续排。`exr_layout_create()` / `exr_layout_create_ex()` 使用同一续排引擎读到末尾并合并为完整布局。
 
 FreeType 提供真实字形 advance、kerning 和像素，不负责分页。EXReader 自己决定段落、换行、分页、基线和字形位置。0.9 按 Unicode 17.0.0 扩展字素簇保护换行与命中位置；换行机会使用下述 UAX #14 子集。字体仍按 Unicode 标量逐个取字形，支持宿主字体集的 cmap 覆盖查询与回退，尚未实现 OpenType shaping / GPOS、CSS 字体族匹配或双向重排；阿拉伯文、印度文字和 emoji 序列的正确视觉塑形仍需后续工作。
 
@@ -83,6 +85,58 @@ exr_free(boundaries);
 
 SDK 的 `examples/text.c` 与其他宿主示例一同编译为 `exreader-text-example`。直接运行，无需字体或参数；它验证 25 个 UTF-8 字节中的 4 个字素簇，范围为 `[0,3)`、`[3,14)`、`[14,22)`、`[22,25)`，并用 `exr_free()` 释放边界表。
 
+## 页级续排与页面缓存
+
+`exr_pager_create(doc, font, config, &pager, error)` 基于已解析的文档创建排版游标，计算样式但不预排全部正文。doc、font、图片回调及 context 由宿主持有，必须在 pager 生命周期内有效；config 和 user CSS 在创建期间复制，返回后可以释放或修改原配置。改变字体或版式时重新创建 pager。
+
+`exr_pager_next()` 每次继续排版并交出一个独立单页 `exr_layout`。单页内部的页索引恒为 0，源文字偏移、节点及资源索引仍属于输入 document；渲染时使用 `exr_render_page(page, font, 0, ...)`。宿主自行保存阅读页序号并释放不再需要的页。返回 `EXR_OK` 且 `*out == NULL` 表示 EOF，可以重复请求 EOF；排版失败时 `*out == NULL`，此顺序模式的游标需重新创建。
+
+```c
+exr_pager *pager = NULL;
+exr_status status = exr_pager_create(doc, font, NULL, &pager, &error);
+while (status == EXR_OK) {
+    exr_layout *page = NULL;
+    status = exr_pager_next(pager, &page, &error);
+    if (status != EXR_OK || !page)
+        break;
+    /* Read layout views or render page index 0 before releasing this owned page. */
+    exr_layout_free(page);
+}
+exr_pager_free(pager);
+```
+
+需要来回翻页时，使用借用模式 `exr_pager_get(pager, page_index, &page, error)`，page_index 从 0 开始。命中缓存直接返回布局并更新 LRU；向前请求只续排到目标页，中间经过的页不会自动加入缓存。请求已经淘汰的旧页时，从文档开头重放到目标页。请求超出 EOF 的页返回 `EXR_ARGUMENT`。缓存未命中的排版或预算检查失败保留已有缓存及其 LRU 顺序；后续命中仍可读取，后续未命中会从头重放。
+
+调用 `next()` 进入顺序拥有模式；调用 `get()` 或 `set_cache()` 进入借用缓存模式。同一 pager 不能混用这两种模式，否则返回 `EXR_ARGUMENT`。借用页不调用 `exr_layout_free()`，其契约有效期至下一次 get / set_cache / free。不同页需要长期同时持有时，可使用顺序模式自行管理 owned 布局。
+
+`exr_pager_set_cache(pager, capacity, byte_budget, error)` 同时设置 1–64 页的数量上限和字节预算，默认 1 页、0 字节预算（不限制字节数）。降低限制时立即从 LRU 尾部淘汰，直至同时满足两个条件。每页按 `exr_layout_memory_size()` 计入预算；新页本身超过非零预算时返回 `EXR_LIMIT`，不淘汰已有页。`exr_pager_cached_count()` / `exr_pager_cached_bytes()` 返回驻留页数及计量字节数。
+
+```c
+exr_pager *pager = NULL;
+const exr_layout *page = NULL;
+exr_status status = exr_pager_create(doc, font, NULL, &pager, &error);
+if (status == EXR_OK)
+    status = exr_pager_set_cache(pager, 3, (size_t)8 * 1024 * 1024, &error);
+if (status == EXR_OK)
+    status = exr_pager_get(pager, 12, &page, &error);
+/* Use borrowed page at index 0; do not free page. */
+exr_pager_free(pager);
+```
+
+`exr_pager_position()` 返回已扫描到的规范化正文 UTF-8 字节位置，包括断行、字素簇和表格组的前瞻，可能领先最后输出页。重放时可回退；它用于观察当前排版进度，不是可序列化的恢复令牌。布局中的源范围和稳定锚点继续用于保存阅读位置。
+
+续排保留当前行、断点后的 carry、尚未闭合的字素簇和文档遍历状态；同一字素簇可跨文本节点和样式，分页不重新切断其边界。表格先扫描轻量行列元数据，再逐个测量当前 rowspan 连通行组；可暂停的边界仍遵循现有 CSS、背景分片和表格分页规则。超长单段不会在第一页前生成全段字形。
+
+SDK 的 `examples/page.c` 编译为 `exreader-page-example`，用法为 `book.epub font.ttf output.png [page] [part]`，page / part 均从 0 开始，默认 0。它只加载指定 EPUB 分段，设置 3 页、8 MiB 的页面缓存，按需续排目标页并输出 PNG，同时打印扫描位置、缓存页数及计量字节数。支持 Windows Unicode 参数和路径。
+
+## 缓存内存计量
+
+`exr_document_memory_size()` 和 `exr_layout_memory_size()` 返回对象拥有的分配 payload 字节数，包含数组已分配容量，不包含分配器元数据；NULL 返回 0，无法用 size_t 表达的合计饱和为 `SIZE_MAX`。这是对象计量，不是进程 RSS。共享压缩 archive、借用字体和其他外部对象不计入；引用同一图片像素的每个页面按完整像素及引用计数字节数保守计量。
+
+页面预算只约束驻留页面的计量总量，分段预算只约束驻留 document 与完整 layout 的计量总量。publication 的共享压缩源、字体、pager 基础状态及当前行/字素簇/表格组工作区、图片资产池、正在加载的新对象和渲染临时 bitmap 都在该预算之外。文件仍完整解析为一个 document；单个超大字素簇或不可拆 rowspan 行组仍可能需要较大工作区。高于一页的不可拆表格组返回 `EXR_LIMIT`，页缓存预算不构成全程进程内存硬上限。
+
+打开耗时、首画、续排、渲染、完整翻页和进程峰值内存的独立基准及复现命令见 [性能基准](PERFORMANCE.md)。
+
 ## 分段 publication 与 session
 
 `exr_publication` 保存分段目录及 loader，不要求整书已解析为一个文档。每个 `exr_part` 提供用于定位的 `id/path`、显示标题 `title` 和 `in_reading_order`；分段可以是章节、固定页或宿主定义的独立排版单位。`exr_publication_title()` / `exr_publication_parts()` 返回属于 publication 的只读元数据，索引只在该 publication 内有效。
@@ -108,17 +162,19 @@ if (status == EXR_OK)
 exr_publication_free(publication);
 if (status == EXR_OK)
     status = exr_session_get(session, 0, &part_doc, &part_layout, &error);
-/* Use the borrowed document/layout before the next get/clear/free. */
+/* Use the borrowed document/layout before the next get/set_budget/clear/free. */
 exr_session_free(session);
 ```
 
-`exr_session_get()` 仅加载并排版所请求的分段；缓存命中直接复用文档和布局。达到容量后按 LRU 淘汰最久未访问的分段，同时释放其文档和布局；加载或排版失败保留原缓存。`exr_session_cached()` 返回当前驻留数量，`exr_session_clear()` 清空缓存，后续 get 会重新加载。新分段加载期间可临时多驻留一个分段；容量按分段数计算，不是内存字节硬上限。
+`exr_session_get()` 仅加载并完整排版所请求的分段；缓存命中直接复用文档和布局。达到 1–64 个分段的容量后按 LRU 淘汰最久未访问项，同时释放其文档和布局。`exr_session_set_budget(session, bytes, error)` 为同一缓存增加字节约束，0 表示不限制字节数；降低预算时立即淘汰 LRU 项，直至驻留总量不超预算。每项按 `exr_document_memory_size(doc) + exr_layout_memory_size(layout)` 计量。加载、排版失败或新项本身超过非零预算时保留已有缓存及 LRU 顺序；超出预算返回 `EXR_LIMIT`。
+
+`exr_session_cached()` / `exr_session_cached_bytes()` 分别返回驻留数量和计量总字节数；`exr_session_clear()` 清空缓存，后续 get 会重新加载。新分段先加载并计量，再淘汰旧项，因此加载期间可临时多驻留一个分段；预算范围遵循前述对象计量规则。
 
 分段的页号、节点 / 资源索引和规范化 UTF-8 偏移都是局部值，不能当作旧接口的全书偏移。宿主保存位置时需结合 part 索引或宿主唯一标识、id/path，以及局部偏移或 `exr_anchor`；不能仅靠可能重复的 id/path 区分分段。锚点只在所加载分段的正文内解析。整书总页数在各段排版完成前未知，本接口不预先排完整本书。
 
 loader 和图片解码回调不能销毁或重入当前正在执行的 publication / session。`exr_session_get()` 拒绝同一 session 的重入访问；这不替代宿主对共享 publication / source 对象及其生命周期的串行管理。
 
-这一层提供分段增量加载和排版，不提供单章内部的页级续排。每次仍完整解析并排版一个分段，超长段落和大表格仍整体处理；EPUB 压缩输入仍受 128 MiB、单 ZIP 成员仍受 32 MiB 上限约束。需要更细粒度时，宿主 loader 可以提供更小的独立分段。现有 `exr_document_open()`、书库导入、`exr_library_document()`、全书搜索和导出继续使用原文档模型，不自动变为懒加载。
+session 按完整分段缓存文档和布局；需要单章内部的页级续排时，通过 `exr_publication_load()` 取得独立文档，再创建 pager。EPUB 压缩输入仍受 128 MiB、单 ZIP 成员仍受 32 MiB 上限约束。现有 `exr_document_open()`、书库导入、`exr_library_document()`、全书搜索和导出继续使用原文档模型，不自动变为流式解析。
 
 SDK 的 `examples/lazy.c` 可编译为 `exreader-lazy-example`，用法为 `font.ttf output.png [book.epub part-index]`。不传书籍参数时，创建三个由宿主 loader 构造的分段，仅加载索引 1；传入 EPUB 和从 0 开始的 part 索引时，使用内置索引并只渲染该分段的第一页。两种路径均设置一个驻留分段，输出用于检查实际加载数量。
 
@@ -263,7 +319,7 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 内置 `exr_image_decode()` 接受 PNG/JPEG 字节并返回独立 RGBA 像素，用 `exr_bitmap_free()` 释放。布局按资源缓存图片；图片保持纵横比，限制在内容宽度和可用页高之内。width/height 同时存在时按容纳方式缩放，图片当前独占块。缺失、外部、损坏或不支持的图片显示带标志的占位框；资源/解码限制错误会中止布局。解码尺寸上限 8192×8192 且总像素不超过 16 Mi，编码输入上限 32 MiB，stb 临时分配上限 128 MiB，布局图片缓存上限 64 MiB。
 
-宿主设置 `decode_image`、`release_image` 和 `image_context` 可替换解码器。回调收到资源元数据及编码字节；返回 `channels=4`、非预乘 RGBA、有效 width/height/stride。引擎复制像素，然后无论成功或失败都调用配套 release 回调一次；不得在 release 中释放借用的编码输入。`EXR_FORMAT` 表示占位框，其余非成功状态中止布局。要保留内置 PNG/JPEG 支持，宿主回调可以调用 `exr_image_decode()` 并在 release 中使用 `exr_bitmap_free()`。回调及 context 只需在 layout create 调用期间有效，渲染不会再次调用它们。
+宿主设置 `decode_image`、`release_image` 和 `image_context` 可替换解码器。回调收到资源元数据及编码字节；返回 `channels=4`、非预乘 RGBA、有效 width/height/stride。引擎复制像素，然后无论成功或失败都调用配套 release 回调一次；不得在 release 中释放借用的编码输入。`EXR_FORMAT` 表示占位框，其余非成功状态中止布局。要保留内置 PNG/JPEG 支持，宿主回调可以调用 `exr_image_decode()` 并在 release 中使用 `exr_bitmap_free()`。直接创建完整 layout 时，回调及 context 只需在 create 调用期间有效；使用 pager / session 时需在相应句柄整个生命周期内有效。渲染已有布局不会再次调用它们。
 
 表格采用等宽列，支持单元格换行、colspan 和 rowspan。具有跨行单元格的相连行组一起分页；高于一页的行组返回 `EXR_LIMIT`。上限为 64 列、4096 行/单元格、8 层嵌套。尚不支持按内容自动分配列宽、跨页拆分单元格、重复表头、垂直对齐和 border-collapse。单元格的可见边框、背景和内边距由样式控制。
 

@@ -20,6 +20,7 @@ struct exr_font {
 typedef struct {
   size_t resource;
   exr_bitmap bitmap;
+  size_t *refs; /* Shared immutable decoded pixels across independent pages. */
 } exr_cached_image;
 struct exr_layout {
   exr_layout_options options;
@@ -34,6 +35,7 @@ struct exr_layout {
   exr_cached_image *images;
   size_t image_count, image_cap, image_bytes;
   exr_style *styles;
+  size_t style_count;
   size_t work_glyphs;
 };
 int exr_font_size(exr_face *font, float size);

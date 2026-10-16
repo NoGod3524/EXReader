@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.10.0"
+#define EXR_VERSION "0.11.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -48,6 +48,7 @@ typedef struct exr_layout exr_layout;
 typedef struct exr_library exr_library;
 typedef struct exr_publication exr_publication;
 typedef struct exr_session exr_session;
+typedef struct exr_pager exr_pager;
 typedef struct {
   size_t start, end;
   unsigned heading;
@@ -244,6 +245,8 @@ EXR_API exr_status exr_document_open(const char *path, exr_document **out, exr_e
 EXR_API exr_status exr_document_open_memory(exr_format format, const void *data, size_t size,
                                             exr_document **out, exr_error *error);
 EXR_API void exr_document_free(exr_document *doc);
+/* Owned allocation payload, excluding shared source archives and allocator overhead. */
+EXR_API size_t exr_document_memory_size(const exr_document *doc);
 EXR_API const char *exr_document_text(const exr_document *doc, size_t *size);
 EXR_API const char *exr_document_title(const exr_document *doc);
 EXR_API const exr_block *exr_document_blocks(const exr_document *doc, size_t *count);
@@ -306,6 +309,28 @@ EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,
 EXR_API exr_status exr_layout_create_ex(const exr_document *doc, exr_font *font,
                                         const exr_layout_config *config, exr_layout **out,
                                         exr_error *error);
+/* Resumable page layout. The document/font/callback context must outlive the pager.
+   Config/CSS are copied. next() transfers one independent single-page layout,
+   or returns EXR_OK with NULL at EOF. Pages share immutable images; serialize
+   their lifetime changes with other pages from the same pager.
+   After a next() error, recreate the pager. */
+EXR_API exr_status exr_pager_create(const exr_document *doc, exr_font *font,
+                                     const exr_layout_config *config, exr_pager **out,
+                                     exr_error *error);
+EXR_API exr_status exr_pager_next(exr_pager *pager, exr_layout **out, exr_error *error);
+/* Alternative borrowed-page mode; cannot be mixed with next(). Cache defaults to
+   one page/no byte limit. Older evicted pages are replayed from the beginning.
+   New oversize pages return EXR_LIMIT without evicting existing cached pages. */
+EXR_API exr_status exr_pager_set_cache(exr_pager *pager, size_t capacity, size_t byte_budget,
+                                       exr_error *error);
+EXR_API exr_status exr_pager_get(exr_pager *pager, size_t page, const exr_layout **out,
+                                 exr_error *error);
+EXR_API size_t exr_pager_cached_count(const exr_pager *pager);
+EXR_API size_t exr_pager_cached_bytes(const exr_pager *pager);
+/* Scanned UTF-8 source position, possibly ahead of the last page due to lookahead;
+   this is progress information, not a serializable resume token. */
+EXR_API size_t exr_pager_position(const exr_pager *pager);
+EXR_API void exr_pager_free(exr_pager *pager);
 /* Font and image callback context must outlive the session. Config/user CSS are
    copied; the publication is retained. Cache capacity is 1..64 resident parts. */
 EXR_API exr_status exr_session_create(exr_publication *publication, exr_font *font,
@@ -317,9 +342,15 @@ EXR_API exr_status exr_session_get(exr_session *session, size_t part,
                                    const exr_document **document, const exr_layout **layout,
                                    exr_error *error);
 EXR_API size_t exr_session_cached(const exr_session *session);
+/* Resident cache payload budget; zero is unlimited. Lowering evicts LRU entries.
+   A new entry larger than the budget returns EXR_LIMIT and preserves the old cache.
+   Shared sources, fonts, temporary loads and renderer bitmaps are outside this budget. */
+EXR_API exr_status exr_session_set_budget(exr_session *session, size_t bytes, exr_error *error);
+EXR_API size_t exr_session_cached_bytes(const exr_session *session);
 EXR_API void exr_session_clear(exr_session *session);
 EXR_API void exr_session_free(exr_session *session);
 EXR_API void exr_layout_free(exr_layout *layout);
+EXR_API size_t exr_layout_memory_size(const exr_layout *layout);
 EXR_API const exr_page *exr_layout_pages(const exr_layout *layout, size_t *count);
 EXR_API const exr_line *exr_layout_lines(const exr_layout *layout, size_t *count);
 EXR_API const exr_glyph *exr_layout_glyphs(const exr_layout *layout, size_t *count);

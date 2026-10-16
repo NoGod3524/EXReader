@@ -36,6 +36,7 @@ jobs:
           ./build/sdk-example/Release/exreader-anchor-example.exe
           ./build/sdk-example/Release/exreader-text-example.exe
           ./build/sdk-example/Release/exreader-font-example.exe stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
+          ./build/sdk-example/Release/exreader-page-example.exe tests/fixtures/layout.epub C:/Windows/Fonts/arial.ttf pager-host-page.png
           ./build/sdk-example/Release/exreader-lazy-example.exe C:/Windows/Fonts/arial.ttf lazy-host-page.png
           New-Item -ItemType Directory -Path 'build/中文 example' -Force | Out-Null
           Copy-Item -LiteralPath tests/fixtures/layout.epub -Destination 'build/中文 example/示例.epub'
@@ -44,6 +45,8 @@ jobs:
           Copy-Item -LiteralPath stage/examples/fonts/primary.ttf -Destination 'build/中文 example/主字体.ttf'
           Copy-Item -LiteralPath stage/examples/fonts/fallback.ttf -Destination 'build/中文 example/回退字体.ttf'
           ./build/sdk-example/Release/exreader-font-example.exe 'build/中文 example/主字体.ttf' 'build/中文 example/回退字体.ttf' 'build/中文 example/字体页面.png'
+          ./build/sdk-example/Release/exreader-page-example.exe 'build/中文 example/示例.epub' C:/Windows/Fonts/arial.ttf 'build/中文 example/续排页面.png'
+          python tools/run_benchmarks.py ./stage/bin/exreader-benchmark.exe C:/Windows/Fonts/arial.ttf build/performance --runs 1 --max-pages 8 --paging
       - name: Run the installed Linux SDK
         if: runner.os == 'Linux'
         run: |
@@ -52,8 +55,10 @@ jobs:
           ./build/sdk-example/exreader-anchor-example
           ./build/sdk-example/exreader-text-example
           ./build/sdk-example/exreader-font-example stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
+          ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf pager-host-page.png
           ./build/sdk-example/exreader-lazy-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
+          python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf build/performance --runs 1 --max-pages 8 --paging
       - name: Run the installed macOS SDK
         if: runner.os == 'macOS'
         run: |
@@ -62,8 +67,14 @@ jobs:
           ./build/sdk-example/exreader-anchor-example
           ./build/sdk-example/exreader-text-example
           ./build/sdk-example/exreader-font-example stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
+          ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /System/Library/Fonts/Supplemental/Arial.ttf pager-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
+          python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /System/Library/Fonts/Supplemental/Arial.ttf build/performance --runs 1 --max-pages 8 --paging
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-performance-${{ runner.os }}
+          path: build/performance/
       - uses: actions/upload-artifact@v4
         with:
           name: EXReader-C-${{ runner.os }}

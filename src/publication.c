@@ -10,7 +10,7 @@ struct exr_publication {
   exr_context_release_fn release;
 };
 typedef struct {
-  size_t part;
+  size_t part, bytes;
   exr_document *document;
   exr_layout *layout;
 } cached_part;
@@ -19,7 +19,7 @@ struct exr_session {
   exr_font *font;
   exr_layout_config config;
   cached_part *cache; /* Most recently used first, at most 64 entries. */
-  size_t count, capacity;
+  size_t count, capacity, bytes, budget;
   int busy;
 };
 
@@ -198,6 +198,7 @@ void exr_session_clear(exr_session *s) {
     exr_document_free(s->cache[i].document);
   }
   s->count = 0;
+  s->bytes = 0;
 }
 void exr_session_free(exr_session *s) {
   if (!s)
@@ -209,6 +210,22 @@ void exr_session_free(exr_session *s) {
   free(s);
 }
 size_t exr_session_cached(const exr_session *s) { return s ? s->count : 0; }
+size_t exr_session_cached_bytes(const exr_session *s) { return s ? s->bytes : 0; }
+
+static void evict_last(exr_session *s) {
+  cached_part *entry = &s->cache[--s->count];
+  s->bytes -= entry->bytes;
+  exr_layout_free(entry->layout);
+  exr_document_free(entry->document);
+}
+exr_status exr_session_set_budget(exr_session *s, size_t bytes, exr_error *e) {
+  if (!s || s->busy)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid or reentrant session access");
+  s->budget = bytes;
+  while (s->budget && s->bytes > s->budget)
+    evict_last(s);
+  return exr_fail(e, EXR_OK, "");
+}
 
 exr_status exr_session_create(exr_publication *p, exr_font *font,
                               const exr_layout_config *config, size_t capacity,
@@ -258,7 +275,7 @@ exr_status exr_session_get(exr_session *s, size_t part, const exr_document **doc
                            const exr_layout **layout, exr_error *e) {
   cached_part entry = {0};
   exr_status status;
-  size_t i;
+  size_t i, document_bytes, layout_bytes;
   if (document)
     *document = NULL;
   if (layout)
@@ -284,14 +301,25 @@ exr_status exr_session_get(exr_session *s, size_t part, const exr_document **doc
     exr_layout_free(entry.layout);
     return status;
   }
-  if (s->count == s->capacity) {
-    exr_layout_free(s->cache[s->count - 1].layout);
-    exr_document_free(s->cache[s->count - 1].document);
-  } else
-    s->count++;
+  document_bytes = exr_document_memory_size(entry.document);
+  layout_bytes = exr_layout_memory_size(entry.layout);
+  if (document_bytes == SIZE_MAX || layout_bytes >= SIZE_MAX - document_bytes ||
+      (s->budget && (document_bytes > s->budget || layout_bytes > s->budget - document_bytes))) {
+    exr_document_free(entry.document);
+    exr_layout_free(entry.layout);
+    return exr_fail(e, EXR_LIMIT, "Part exceeds the session cache byte budget");
+  }
+  entry.bytes = document_bytes + layout_bytes;
+  /* Finish loading and measuring before changing the resident cache. Failures
+     leave all previous borrowed pointers and their LRU order intact. */
+  while (s->count && (s->count == s->capacity || entry.bytes > SIZE_MAX - s->bytes ||
+                      (s->budget && entry.bytes > s->budget - s->bytes)))
+    evict_last(s);
+  s->count++;
   memmove(s->cache + 1, s->cache, (s->count - 1) * sizeof(*s->cache));
   entry.part = part;
   s->cache[0] = entry;
+  s->bytes += entry.bytes;
   *document = entry.document;
   *layout = entry.layout;
   return exr_fail(e, EXR_OK, "");
