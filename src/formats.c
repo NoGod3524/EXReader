@@ -345,14 +345,18 @@ static void *member(archive *z, const char *name, size_t *size, exr_error *e) {
   return p;
 }
 typedef struct {
-  char *id, *href;
+  char *id, *href, *media_type, *properties;
 } item;
+typedef struct {
+  char *id;
+  int linear;
+} spine_item;
 typedef struct {
   XML_Parser parser;
   char *root;
   item *items;
   size_t count, capacity;
-  char **spine;
+  spine_item *spine;
   size_t spine_count, spine_cap;
   exr_buffer title;
   int in_title, failed, depth;
@@ -380,23 +384,26 @@ static void XMLCALL package_start(void *user, const char *full, const char **att
       p->failed = 1;
     } else {
       item *v = &p->items[p->count++];
+      const char *media = attribute(attrs, "media-type");
+      const char *properties = attribute(attrs, "properties");
       v->id = exr_copy(a, strlen(a));
       v->href = exr_copy(b, strlen(b));
-      if (!v->id || !v->href)
+      v->media_type = exr_copy(media ? media : "", media ? strlen(media) : 0);
+      v->properties = exr_copy(properties ? properties : "", properties ? strlen(properties) : 0);
+      if (!v->id || !v->href || !v->media_type || !v->properties)
         p->failed = 1;
     }
   }
   if (!strcmp(tag, "itemref")) {
     a = attribute(attrs, "idref");
     b = attribute(attrs, "linear");
-    if (b && !strcmp(b, "no"))
-      return;
     if (!a || p->spine_count >= 10000 ||
-        !exr_grow((void **)&p->spine, &p->spine_cap, p->spine_count + 1, sizeof(char *))) {
+        !exr_grow((void **)&p->spine, &p->spine_cap, p->spine_count + 1, sizeof(spine_item))) {
       p->failed = 1;
     } else {
-      p->spine[p->spine_count] = exr_copy(a, strlen(a));
-      if (!p->spine[p->spine_count++])
+      p->spine[p->spine_count].id = exr_copy(a, strlen(a));
+      p->spine[p->spine_count].linear = !b || strcmp(b, "no");
+      if (!p->spine[p->spine_count++].id)
         p->failed = 1;
     }
   }
@@ -449,45 +456,59 @@ static int package_parse(package *p, const void *data, size_t n) {
   p->parser = NULL;
   return ok == XML_STATUS_OK && !p->failed;
 }
-static int resolve_path(const char *base, const char *href, char out[2048]) {
+static int uri_decode(const char *s, size_t n, char out[2048]) {
+  size_t i, used = 0, at = 0;
+  uint32_t cp;
+  if (n >= 2048)
+    return 0;
+  for (i = 0; i < n; i++) {
+    unsigned char c = (unsigned char)s[i];
+    if (c == '%') {
+      unsigned a, b;
+      if (n - i < 3 || !isxdigit((unsigned char)s[i + 1]) || !isxdigit((unsigned char)s[i + 2]))
+        return 0;
+      c = (unsigned char)s[++i];
+      a = (unsigned)(isdigit(c) ? c - '0' : tolower(c) - 'a' + 10);
+      c = (unsigned char)s[++i];
+      b = (unsigned)(isdigit(c) ? c - '0' : tolower(c) - 'a' + 10);
+      c = (unsigned char)(a * 16 + b);
+    }
+    if (c < 32 || c == 127)
+      return 0;
+    out[used++] = (char)c;
+  }
+  out[used] = 0;
+  while (at < used)
+    if (!exr_next(out, used, &at, &cp))
+      return 0;
+  return 1;
+}
+int exr_resolve_path(const char *base, const char *href, char out[2048]) {
   char joined[2048], decoded[2048];
-  size_t len = 0, i, j, used = 0, segments[256], depth = 0;
+  size_t len = 0, i, used = 0, segments[256], depth = 0;
+  size_t href_size = strcspn(href, "#");
   const char *slash = strrchr(base, '/');
-  if (slash)
+  if (memchr(href, '?', href_size) || !uri_decode(href, href_size, decoded) || decoded[0] == '/' ||
+      strchr(decoded, ':') || strchr(decoded, '\\'))
+    return 0;
+  if (!decoded[0])
+    len = strlen(base);
+  else if (slash)
     len = (size_t)(slash - base) + 1;
-  if (len + strlen(href) >= sizeof(joined) || href[0] == '/' || strchr(href, ':') ||
-      strchr(href, '\\'))
+  if (len + strlen(decoded) >= sizeof(joined))
     return 0;
   memcpy(joined, base, len);
-  strcpy(joined + len, href);
-  for (i = 0, j = 0; joined[i] && joined[i] != '#'; i++) {
-    if (joined[i] == '%') {
-      unsigned a, b;
-      char c = joined[++i];
-      if (!c)
-        return 0;
-      a = (unsigned)(isdigit((unsigned char)c) ? c - '0' : tolower((unsigned char)c) - 'a' + 10);
-      c = joined[++i];
-      if (!c)
-        return 0;
-      b = (unsigned)(isdigit((unsigned char)c) ? c - '0' : tolower((unsigned char)c) - 'a' + 10);
-      if (a > 15 || b > 15 || !(a * 16 + b))
-        return 0;
-      decoded[j++] = (char)(a * 16 + b);
-    } else
-      decoded[j++] = joined[i];
-  }
-  decoded[j] = 0;
-  for (i = 0; decoded[i];) {
+  strcpy(joined + len, decoded);
+  for (i = 0; joined[i];) {
     size_t start = i, n;
-    while (decoded[i] && decoded[i] != '/')
+    while (joined[i] && joined[i] != '/')
       i++;
     n = i - start;
-    if (decoded[i])
+    if (joined[i])
       i++;
-    if (!n || (n == 1 && decoded[start] == '.'))
+    if (!n || (n == 1 && joined[start] == '.'))
       continue;
-    if (n == 2 && decoded[start] == '.' && decoded[start + 1] == '.') {
+    if (n == 2 && joined[start] == '.' && joined[start + 1] == '.') {
       if (!depth)
         return 0;
       used = segments[--depth];
@@ -498,11 +519,80 @@ static int resolve_path(const char *base, const char *href, char out[2048]) {
     segments[depth++] = used;
     if (used)
       out[used++] = '/';
-    memcpy(out + used, decoded + start, n);
+    memcpy(out + used, joined + start, n);
     used += n;
   }
   out[used] = 0;
   return used > 0;
+}
+exr_status exr_document_resource(const exr_document *d, size_t resource, void **out, size_t *size,
+                                 exr_error *e) {
+  archive z = {0};
+  void *bytes;
+  if (!out || !size)
+    return exr_fail(e, EXR_ARGUMENT, "Missing resource output");
+  *out = NULL;
+  *size = 0;
+  if (!d || !d->archive || resource >= d->resource_count)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid resource index");
+  if (!mz_zip_reader_init_mem(&z.archive, d->archive, d->archive_size, 0))
+    return exr_fail(e, EXR_FORMAT, "Invalid resource archive");
+  bytes = member(&z, d->resources[resource].path, size, e);
+  if (bytes) {
+    *out = malloc(*size ? *size : 1);
+    if (*out)
+      memcpy(*out, bytes, *size);
+    else
+      z.status = exr_fail(e, EXR_MEMORY, "Resource allocation failed");
+    mz_free(bytes);
+  }
+  mz_zip_reader_end(&z.archive);
+  if (!*out)
+    *size = 0;
+  return z.status;
+}
+exr_status exr_document_resolve(const exr_document *d, size_t chapter, const char *uri,
+                                size_t *resource, size_t *node, exr_error *e) {
+  char path[2048], fragment[2048];
+  const char *hash;
+  size_t i, ch = SIZE_MAX;
+  if (!resource || !node)
+    return exr_fail(e, EXR_ARGUMENT, "Missing link output");
+  *resource = *node = SIZE_MAX;
+  if (!d || !uri || chapter >= d->chapter_count)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid link arguments");
+  hash = strchr(uri, '#');
+  if (!exr_resolve_path(d->chapters[chapter].path, uri, path) ||
+      (hash && !uri_decode(hash + 1, strlen(hash + 1), fragment)))
+    return exr_fail(e, EXR_ARGUMENT, "URI is external or invalid");
+  for (i = 0; i < d->resource_count; i++)
+    if (!strcmp(path, d->resources[i].path)) {
+      *resource = i;
+      break;
+    }
+  if (*resource == SIZE_MAX)
+    return EXR_OK;
+  for (i = 0; i < d->chapter_count; i++)
+    if (d->chapters[i].resource == *resource) {
+      ch = i;
+      break;
+    }
+  if (ch == SIZE_MAX)
+    return EXR_OK;
+  if (!hash || !fragment[0]) {
+    *node = d->chapters[ch].root;
+    return EXR_OK;
+  }
+  for (i = d->chapters[ch].root + 1; i < d->node_count && d->nodes[i].chapter == ch; i++) {
+    const char *id = exr_node_attribute(&d->nodes[i], "id");
+    if (!id)
+      id = exr_node_attribute(&d->nodes[i], "http://www.w3.org/XML/1998/namespace|id");
+    if (id && !strcmp(id, fragment)) {
+      *node = i;
+      break;
+    }
+  }
+  return EXR_OK;
 }
 static exr_status zip_document(exr_document *d, const void *data, size_t n, exr_error *e) {
   archive z = {0};
@@ -532,7 +622,7 @@ static exr_status zip_document(exr_document *d, const void *data, size_t n, exr_
   }
   mz_free(bytes);
   bytes = NULL;
-  if (!resolve_path("", p.root, path)) {
+  if (!exr_resolve_path("", p.root, path)) {
     exr_fail(e, EXR_FORMAT, "Unsafe EPUB root path");
     goto done;
   }
@@ -558,18 +648,74 @@ static exr_status zip_document(exr_document *d, const void *data, size_t n, exr_
       goto done;
     }
   }
-  for (i = 0; i < p.spine_count; i++) {
-    for (j = 0; j < p.count; j++)
-      if (!strcmp(p.spine[i], p.items[j].id))
-        break;
-    if (j == p.count || !resolve_path(p.root, p.items[j].href, path)) {
-      exr_fail(e, EXR_FORMAT, "EPUB spine reference is invalid");
+  d->archive = malloc(n);
+  if (!d->archive) {
+    result = EXR_MEMORY;
+    goto done;
+  }
+  memcpy(d->archive, data, n);
+  d->archive_size = n;
+  for (i = 0; i < p.count; i++) {
+    exr_resource *r;
+    if (!exr_resolve_path(p.root, p.items[i].href, path) || !p.items[i].id[0]) {
+      result = exr_fail(e, EXR_FORMAT, "Invalid EPUB manifest resource");
       goto done;
     }
-    bytes = member(&z, path, &size, e);
+    for (j = 0; j < i; j++)
+      if (!strcmp(d->resources[j].id, p.items[i].id) || !strcmp(d->resources[j].path, path)) {
+        result = exr_fail(e, EXR_FORMAT, "Duplicate EPUB manifest resource");
+        goto done;
+      }
+    if (!exr_grow((void **)&d->resources, &d->resource_capacity, d->resource_count + 1,
+                  sizeof(*d->resources))) {
+      result = EXR_MEMORY;
+      goto done;
+    }
+    r = &d->resources[d->resource_count++];
+    memset(r, 0, sizeof(*r));
+    r->id = exr_model_copy(d, p.items[i].id, strlen(p.items[i].id));
+    r->path = exr_model_copy(d, path, strlen(path));
+    r->media_type = exr_model_copy(d, p.items[i].media_type, strlen(p.items[i].media_type));
+    r->properties = exr_model_copy(d, p.items[i].properties, strlen(p.items[i].properties));
+    if (!r->id || !r->path || !r->media_type || !r->properties) {
+      result = EXR_LIMIT;
+      goto done;
+    }
+  }
+  for (i = 0; i < p.spine_count; i++) {
+    for (j = 0; j < p.count; j++)
+      if (!strcmp(p.spine[i].id, p.items[j].id))
+        break;
+    if (j == p.count ||
+        (p.items[j].media_type[0] && strcmp(p.items[j].media_type, "application/xhtml+xml"))) {
+      result = exr_fail(e, EXR_FORMAT, "EPUB spine must reference XHTML");
+      goto done;
+    }
+    bytes = member(&z, d->resources[j].path, &size, e);
     if (!bytes)
       goto done;
-    result = html(d, bytes, size, e);
+    result = exr_xhtml(d, bytes, size, j, 1, p.spine[i].linear, e);
+    mz_free(bytes);
+    bytes = NULL;
+    if (result != EXR_OK)
+      goto done;
+  }
+  /* Parse auxiliary XHTML as well: EPUB 3 navigation and out-of-spine notes retain
+     their structure and link targets without entering the main reading text. */
+  for (j = 0; j < p.count; j++) {
+    if (strcmp(p.items[j].media_type, "application/xhtml+xml"))
+      continue;
+    for (i = 0; i < d->chapter_count; i++)
+      if (d->chapters[i].resource == j)
+        break;
+    if (i != d->chapter_count)
+      continue;
+    bytes = member(&z, d->resources[j].path, &size, e);
+    if (!bytes) {
+      result = z.status;
+      goto done;
+    }
+    result = exr_xhtml(d, bytes, size, j, 0, 0, e);
     mz_free(bytes);
     bytes = NULL;
     if (result != EXR_OK)
@@ -579,15 +725,17 @@ static exr_status zip_document(exr_document *d, const void *data, size_t n, exr_
 done:
   if (bytes)
     mz_free(bytes);
-  if (result != EXR_OK && z.status != EXR_OK)
+  if (z.status != EXR_OK)
     result = z.status;
   mz_zip_reader_end(&z.archive);
   for (i = 0; i < p.count; i++) {
     free(p.items[i].id);
     free(p.items[i].href);
+    free(p.items[i].media_type);
+    free(p.items[i].properties);
   }
   for (i = 0; i < p.spine_count; i++)
-    free(p.spine[i]);
+    free(p.spine[i].id);
   free(p.items);
   free(p.spine);
   free(p.root);

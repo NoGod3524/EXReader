@@ -1,5 +1,21 @@
 # Native C validation
 
+## 0.4 structured EPUB model
+
+Local Windows Release tests cover the document tree, parent/sibling connectivity, UTF-8 ranges,
+spine ordering, non-linear and auxiliary chapters, nested lists, table cells, inline styles,
+embedded style text, EPUB 3 navigation, footnotes, source ownership, and PNG/CSS resource reads.
+Link tests include chapter-local fragments, cross-chapter targets, Chinese IDs and filenames,
+literal percent signs in paths, missing targets, unsafe traversal, external URIs and invalid encoding.
+Missing chapters, duplicate manifest entries, malformed XHTML, external entities and excessive
+nesting are rejected. Oversized non-text resources fail on demand without inflating them at open.
+Image-only publications retain structure even though the text renderer has no pages to produce.
+Original fixtures are reproducible with `python tests/make_structure_fixtures.py`.
+
+The existing format, layout, rasterization, conversion and SQLite integration tests also pass.
+Workflow runs for the current commit validate desktop runtime and mobile cross-compilation;
+historical run links below cover the earlier implementation.
+
 2026-10-15. Native engine 0.3.0 replaces the JavaScript source on the primary development line.
 
 Local Windows / MinGW GCC 16.2 / CMake 4.4 checks passed:

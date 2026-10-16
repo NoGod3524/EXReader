@@ -11,12 +11,23 @@
 #define EXR_MAX_INPUT ((size_t)128 * 1024 * 1024)
 #define EXR_MAX_TEXT ((size_t)64 * 1024 * 1024)
 #define EXR_MAX_ITEMS ((size_t)4 * 1024 * 1024)
+#define EXR_MAX_NODES ((size_t)262144)
 struct exr_document {
   char *text, *title;
   size_t size, text_capacity;
   exr_block *blocks;
   size_t count, capacity;
   exr_format format;
+  exr_node *nodes;
+  size_t node_count, node_capacity, model_bytes;
+  size_t *last_children;
+  size_t last_capacity;
+  exr_chapter *chapters;
+  size_t chapter_count, chapter_capacity;
+  exr_resource *resources;
+  size_t resource_count, resource_capacity;
+  unsigned char *archive;
+  size_t archive_size;
 };
 typedef struct {
   char *data;
@@ -33,4 +44,12 @@ exr_status exr_read(const char *path, unsigned char **data, size_t *size, exr_er
 exr_status exr_decode(const void *data, size_t size, exr_buffer *buf, exr_error *error);
 exr_status exr_parse(exr_document *doc, const void *data, size_t size, exr_error *error);
 int exr_add_block(exr_document *doc, const char *text, size_t size, unsigned heading);
+char *exr_model_copy(exr_document *doc, const char *text, size_t size);
+size_t exr_model_node(exr_document *doc, size_t parent, size_t chapter, exr_node_kind kind,
+                      const char *name, const char *text, size_t length);
+exr_status exr_xhtml(exr_document *doc, const void *data, size_t size, size_t resource,
+                     int in_spine, int linear, exr_error *error);
+exr_status exr_model_finish(exr_document *doc, exr_error *error);
+void exr_model_free(exr_document *doc);
+int exr_resolve_path(const char *base, const char *href, char out[2048]);
 #endif

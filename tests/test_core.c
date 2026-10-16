@@ -95,6 +95,183 @@ static void test_formats(void) {
   CHECK(exr_document_open_memory(EXR_TXT, "x", (size_t)128 * 1024 * 1024 + 1, &doc, &error) ==
         EXR_LIMIT);
 }
+static size_t node_with_id(const exr_node *nodes, size_t count, const char *id) {
+  size_t i;
+  for (i = 0; i < count; i++) {
+    const char *value = exr_node_attribute(&nodes[i], "id");
+    if (value && !strcmp(value, id))
+      return i;
+  }
+  CHECK(0);
+  return SIZE_MAX;
+}
+static void test_structure(void) {
+  exr_document *doc = NULL;
+  const exr_node *nodes;
+  const exr_chapter *chapters;
+  const exr_resource *resources;
+  const char *text;
+  size_t count, nc, nr, bytes, i, edges = 0, resource, target, paragraph, table, item;
+  unsigned char *input;
+  void *data = NULL;
+  input = read_bytes(path("structure.epub"), &bytes);
+  OK(exr_document_open_memory(EXR_EPUB, input, bytes, &doc, &error));
+  memset(input, 0, bytes);
+  free(input); /* The document owns the compressed source needed by resource reads. */
+  nodes = exr_document_nodes(doc, &count);
+  chapters = exr_document_chapters(doc, &nc);
+  resources = exr_document_resources(doc, &nr);
+  text = exr_document_text(doc, &bytes);
+  CHECK(nodes && count > 60 && nc == 4 && nr == 8);
+  CHECK(nodes[0].kind == EXR_NODE_DOCUMENT && nodes[0].parent == SIZE_MAX);
+  CHECK(!strcmp(chapters[0].id, "second") && !strcmp(chapters[1].id, "first"));
+  CHECK(chapters[2].in_spine && !chapters[2].linear);
+  CHECK(!chapters[3].in_spine && !chapters[3].linear);
+  CHECK(nodes[chapters[2].root].start == SIZE_MAX && nodes[chapters[3].root].start == SIZE_MAX);
+  CHECK(strstr(text, "Second in manifest") < strstr(text, "First in manifest"));
+  CHECK(strstr(text, "Alpha bold 中文 & tail."));
+  CHECK(!strstr(text, "SECRET") && !strstr(text, "Auxiliary note") && !strstr(text, "#123456"));
+  CHECK(!strcmp(resources[0].path, "OPS Book/text/100%-first.xhtml"));
+  CHECK(!strcmp(resources[5].properties, "cover-image"));
+  for (i = 0; i < count; i++) {
+    size_t child, last = 0;
+    if (i)
+      CHECK(nodes[i].parent < i && nodes[i].chapter < nc);
+    if (nodes[i].start != SIZE_MAX) {
+      CHECK(nodes[i].start <= nodes[i].end && nodes[i].end <= bytes);
+      CHECK(nodes[i].start == bytes || ((unsigned char)text[nodes[i].start] & 0xc0) != 0x80);
+      CHECK(nodes[i].end == bytes || ((unsigned char)text[nodes[i].end] & 0xc0) != 0x80);
+    }
+    for (child = nodes[i].first_child; child != SIZE_MAX; child = nodes[child].next_sibling) {
+      CHECK(child < count && child > i && child > last && nodes[child].parent == i);
+      last = child;
+      edges++;
+    }
+  }
+  CHECK(edges == count - 1);
+  paragraph = node_with_id(nodes, count, "local");
+  table = node_with_id(nodes, count, "table");
+  item = node_with_id(nodes, count, "item");
+  CHECK(nodes[paragraph].kind == EXR_NODE_PARAGRAPH);
+  CHECK(!strcmp(exr_node_attribute(&nodes[paragraph], "class"), "body"));
+  CHECK(!strcmp(exr_node_attribute(&nodes[paragraph], "style"), "text-indent: 2em"));
+  CHECK(nodes[paragraph].end - nodes[paragraph].start == strlen("Alpha bold 中文 & tail."));
+  CHECK(nodes[table].kind == EXR_NODE_TABLE);
+  CHECK(nodes[item].kind == EXR_NODE_LIST_ITEM && nodes[nodes[item].parent].kind == EXR_NODE_LIST);
+  {
+    int image = 0, cell = 0, style = 0, nav = 0, strong = 0;
+    for (i = 0; i < count; i++) {
+      if (nodes[i].kind == EXR_NODE_IMAGE) {
+        CHECK(!strcmp(exr_node_attribute(&nodes[i], "alt"), "Small & original"));
+        OK(exr_document_resolve(doc, nodes[i].chapter, exr_node_attribute(&nodes[i], "src"),
+                                &resource, &target, &error));
+        CHECK(resource == 5 && target == SIZE_MAX);
+        image++;
+      }
+      if (nodes[i].kind == EXR_NODE_CELL && exr_node_attribute(&nodes[i], "colspan")) {
+        CHECK(!strcmp(exr_node_attribute(&nodes[i], "colspan"), "2"));
+        cell++;
+      }
+      if (nodes[i].text && strstr(nodes[i].text, ".body { color:")) {
+        CHECK(nodes[i].start == SIZE_MAX);
+        style++;
+      }
+      if (nodes[i].name && !strcmp(nodes[i].name, "http://www.w3.org/1999/xhtml|strong"))
+        strong++;
+      if (nodes[i].name && !strcmp(nodes[i].name, "http://www.w3.org/1999/xhtml|nav")) {
+        CHECK(!strcmp(exr_node_attribute(&nodes[i], "http://www.idpf.org/2007/ops|type"), "toc"));
+        nav++;
+      }
+    }
+    CHECK(image == 1 && cell == 1 && style == 1 && nav == 1 && strong == 1);
+  }
+  OK(exr_document_resolve(doc, 0, "", &resource, &target, &error));
+  CHECK(resource == 1 && target == chapters[0].root);
+  OK(exr_document_resolve(doc, 0, "#local", &resource, &target, &error));
+  CHECK(target == paragraph);
+  OK(exr_document_resolve(doc, 0, "100%25-first.xhtml#anchor%20one", &resource, &target, &error));
+  CHECK(resource == 0 && target == node_with_id(nodes, count, "anchor one"));
+  OK(exr_document_resolve(doc, 1, "#anchor%20one", &resource, &target, &error));
+  CHECK(resource == 0 && target == node_with_id(nodes, count, "anchor one"));
+  OK(exr_document_resolve(doc, 0, "../notes.xhtml#%E6%B3%A8%E9%87%8A", &resource, &target, &error));
+  CHECK(resource == 2 && target == node_with_id(nodes, count, "注释"));
+  CHECK(nodes[target].kind == EXR_NODE_NOTE && nodes[target].start == SIZE_MAX);
+  OK(exr_document_resolve(doc, 3, "text/第二章.xhtml#local", &resource, &target, &error));
+  CHECK(target == paragraph);
+  OK(exr_document_resolve(doc, 0, "#absent", &resource, &target, &error));
+  CHECK(resource == 1 && target == SIZE_MAX);
+  OK(exr_document_resolve(doc, 0, "unknown.xhtml", &resource, &target, &error));
+  CHECK(resource == SIZE_MAX && target == SIZE_MAX);
+  {
+    const char *bad[] = {"https://example.org",
+                         "//example.org/a",
+                         "../../../escape",
+                         "%2fetc/passwd",
+                         "%43%3a/secret",
+                         "..%5csecret",
+                         "%00",
+                         "#%ff",
+                         "chapter.xhtml?query"};
+    for (i = 0; i < sizeof(bad) / sizeof(*bad); i++)
+      CHECK(exr_document_resolve(doc, 0, bad[i], &resource, &target, &error) == EXR_ARGUMENT);
+  }
+  OK(exr_document_resource(doc, 4, &data, &bytes, &error));
+  CHECK(bytes == strlen(".body { font-size: 1.2em; }\n") && !memcmp(data, ".body", 5));
+  exr_free(data);
+  data = NULL;
+  CHECK(exr_document_resource(doc, 6, &data, &bytes, &error) == EXR_FORMAT && !data && !bytes);
+  CHECK(exr_document_resource(doc, 7, &data, &bytes, &error) == EXR_LIMIT && !data && !bytes);
+  CHECK(exr_document_resource(doc, nr, &data, &bytes, &error) == EXR_ARGUMENT && !data);
+  OK(exr_document_resource(doc, 5, &data, &bytes, &error));
+  exr_document_free(doc);
+  doc = NULL;
+  CHECK(bytes > 8 && !memcmp(data, "\x89PNG\r\n\x1a\n", 8));
+  exr_free(data);
+  data = NULL;
+  {
+    exr_library *library = NULL;
+    int64_t id;
+    char database[4096];
+    snprintf(database, sizeof(database), "%s/structure-library.sqlite", build_dir);
+    remove(database);
+    input = read_bytes(path("structure.epub"), &bytes);
+    OK(exr_library_open(database, &library, &error));
+    OK(exr_library_import(library, EXR_EPUB, input, bytes, NULL, &id, &error));
+    free(input);
+    exr_library_close(library);
+    OK(exr_library_open(database, &library, &error));
+    OK(exr_library_document(library, id, &doc, &error));
+    exr_document_chapters(doc, &nc);
+    CHECK(nc == 4);
+    OK(exr_document_resolve(doc, 0, "../notes.xhtml#注释", &resource, &target, &error));
+    CHECK(resource == 2 && target != SIZE_MAX);
+    OK(exr_document_resource(doc, 5, &data, &bytes, &error));
+    CHECK(bytes > 8 && !memcmp(data, "\x89PNG\r\n\x1a\n", 8));
+    exr_free(data);
+    exr_document_free(doc);
+    doc = NULL;
+    exr_library_close(library);
+  }
+  {
+    const char *bad[] = {"structure-missing.epub", "structure-duplicate.epub",
+                         "structure-entity.epub", "structure-deep.epub", "structure-broken.epub"};
+    for (i = 0; i < sizeof(bad) / sizeof(*bad); i++)
+      CHECK(exr_document_open(path(bad[i]), &doc, &error) != EXR_OK && !doc);
+  }
+  CHECK(exr_document_open(path("structure-attrs.epub"), &doc, &error) == EXR_LIMIT && !doc);
+  CHECK(exr_document_open(path("structure-nodes.epub"), &doc, &error) == EXR_LIMIT && !doc);
+  OK(exr_document_open(path("structure-image.epub"), &doc, &error));
+  CHECK(!exr_document_text(doc, &bytes)[0] && bytes == 0);
+  exr_document_nodes(doc, &count);
+  CHECK(count > 1);
+  exr_document_free(doc);
+  doc = NULL;
+  OK(exr_document_open_memory(EXR_TXT, "One\nTwo", 7, &doc, &error));
+  nodes = exr_document_nodes(doc, &count);
+  CHECK(count == 6 && nodes[2].kind == EXR_NODE_PARAGRAPH && nodes[3].kind == EXR_NODE_TEXT);
+  CHECK(!strcmp(nodes[3].text, "One") && nodes[3].start == 0 && nodes[3].end == 3);
+  exr_document_free(doc);
+}
 static void test_layout(const char *font_path) {
   exr_document *doc = NULL;
   exr_font *font = NULL;
@@ -311,6 +488,7 @@ int main(int argc, char **argv) {
     font = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
 #endif
   test_formats();
+  test_structure();
   test_layout(font);
   test_library();
   test_exports();

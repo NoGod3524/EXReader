@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.3.0"
+#define EXR_VERSION "0.4.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -49,6 +49,44 @@ typedef struct {
   size_t start, end;
   unsigned heading;
 } exr_block;
+/* Indices and ranges use SIZE_MAX for absent/unprojected values. */
+typedef enum {
+  EXR_NODE_DOCUMENT = 1,
+  EXR_NODE_CHAPTER,
+  EXR_NODE_ELEMENT,
+  EXR_NODE_TEXT,
+  EXR_NODE_SECTION,
+  EXR_NODE_PARAGRAPH,
+  EXR_NODE_HEADING,
+  EXR_NODE_LIST,
+  EXR_NODE_LIST_ITEM,
+  EXR_NODE_LINK,
+  EXR_NODE_IMAGE,
+  EXR_NODE_TABLE,
+  EXR_NODE_ROW,
+  EXR_NODE_CELL,
+  EXR_NODE_BREAK,
+  EXR_NODE_NOTE
+} exr_node_kind;
+typedef struct {
+  const char *name, *value;
+} exr_attribute;
+typedef struct {
+  exr_node_kind kind;
+  size_t parent, first_child, next_sibling, chapter;
+  size_t start, end;       /* Range in exr_document_text(), not source bytes. */
+  const char *name, *text; /* XML expanded name; decoded, uncollapsed text. */
+  const exr_attribute *attributes;
+  size_t attribute_count;
+} exr_node;
+typedef struct {
+  const char *id, *path;
+  size_t root, resource;
+  int in_spine, linear;
+} exr_chapter;
+typedef struct {
+  const char *id, *path, *media_type, *properties;
+} exr_resource;
 typedef struct {
   size_t start, end;
   uint32_t codepoint, glyph;
@@ -79,6 +117,18 @@ EXR_API void exr_document_free(exr_document *doc);
 EXR_API const char *exr_document_text(const exr_document *doc, size_t *size);
 EXR_API const char *exr_document_title(const exr_document *doc);
 EXR_API const exr_block *exr_document_blocks(const exr_document *doc, size_t *count);
+EXR_API const exr_node *exr_document_nodes(const exr_document *doc, size_t *count);
+EXR_API const exr_chapter *exr_document_chapters(const exr_document *doc, size_t *count);
+EXR_API const exr_resource *exr_document_resources(const exr_document *doc, size_t *count);
+/* Borrowed views last until document_free. Attribute names use URI|local for namespaces. */
+EXR_API const char *exr_node_attribute(const exr_node *node, const char *name);
+/* Copies an embedded ZIP resource; free the returned bytes with exr_free(). No network access. */
+EXR_API exr_status exr_document_resource(const exr_document *doc, size_t resource, void **data,
+                                         size_t *size, exr_error *error);
+/* Resolve a local chapter-relative URI to a resource and, if parsed, a node.
+   Missing targets return EXR_OK with SIZE_MAX; external/unsafe URIs return EXR_ARGUMENT. */
+EXR_API exr_status exr_document_resolve(const exr_document *doc, size_t chapter, const char *uri,
+                                        size_t *resource, size_t *node, exr_error *error);
 EXR_API exr_format exr_document_format(const exr_document *doc);
 EXR_API exr_status exr_document_find(const exr_document *doc, const char *query, size_t from,
                                      size_t *start, size_t *end, exr_error *error);

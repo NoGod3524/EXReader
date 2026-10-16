@@ -262,6 +262,7 @@ void exr_document_free(exr_document *d) {
     free(d->text);
     free(d->title);
     free(d->blocks);
+    exr_model_free(d);
     free(d);
   }
 }
@@ -281,6 +282,8 @@ exr_status exr_document_open_memory(exr_format f, const void *data, size_t n, ex
     return exr_fail(e, EXR_MEMORY, "Allocation failed");
   d->format = f;
   status = exr_parse(d, data, n, e);
+  if (status == EXR_OK)
+    status = exr_model_finish(d, e);
   if (status != EXR_OK) {
     if (e) {
       e->code = status;
@@ -290,7 +293,7 @@ exr_status exr_document_open_memory(exr_format f, const void *data, size_t n, ex
     exr_document_free(d);
     return status;
   }
-  if (!d->count) {
+  if (!d->count && !d->chapter_count) {
     exr_document_free(d);
     return exr_fail(e, EXR_FORMAT, "Document has no supported text content");
   }
