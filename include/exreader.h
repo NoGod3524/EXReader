@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.5.0"
+#define EXR_VERSION "0.6.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -28,6 +28,7 @@ typedef enum {
   EXR_FONT
 } exr_status;
 typedef enum {
+  EXR_CUSTOM = 0, /* Constructed through exr_document_create(), without a file decoder. */
   EXR_TXT = 1,
   EXR_HTML,
   EXR_FB2,
@@ -87,6 +88,39 @@ typedef struct {
 typedef struct {
   const char *id, *path, *media_type, *properties;
 } exr_resource;
+
+/* Construction inputs: node indices refer to this input's preorder node array.
+   Node 0 is DOCUMENT; each direct child is a CHAPTER listed exactly once below.
+   The engine computes children, siblings, chapter membership and UTF-8 ranges. */
+typedef struct {
+  exr_node_kind kind;
+  size_t parent;           /* SIZE_MAX for node 0; otherwise an earlier ancestor. */
+  const char *name, *text; /* text is required only for TEXT nodes. */
+  const exr_attribute *attributes;
+  size_t attribute_count;
+} exr_node_input;
+
+typedef struct {
+  const char *id, *path; /* path is a canonical, relative virtual path. */
+  size_t root;
+  int in_reading_order; /* Zero keeps an auxiliary chapter accessible by links. */
+} exr_chapter_input;
+
+typedef struct {
+  exr_resource info;
+  const void *data; /* NULL/0 declares metadata without encoded bytes. */
+  size_t size;
+} exr_resource_input;
+
+typedef struct {
+  const char *title;
+  const exr_node_input *nodes;
+  size_t node_count;
+  const exr_chapter_input *chapters;
+  size_t chapter_count;
+  const exr_resource_input *resources;
+  size_t resource_count;
+} exr_document_input;
 typedef struct {
   size_t start, end;
   uint32_t codepoint, glyph;
@@ -139,6 +173,9 @@ struct exr_bitmap {
 };
 /* All input/output strings are UTF-8. Returned views belong to their owner. */
 EXR_API const char *exr_version(void);
+/* Copies every input string/attribute/blob during this call. Failure leaves *out NULL. */
+EXR_API exr_status exr_document_create(const exr_document_input *input, exr_document **out,
+                                       exr_error *error);
 EXR_API exr_status exr_document_open(const char *path, exr_document **out, exr_error *error);
 EXR_API exr_status exr_document_open_memory(exr_format format, const void *data, size_t size,
                                             exr_document **out, exr_error *error);
@@ -151,7 +188,7 @@ EXR_API const exr_chapter *exr_document_chapters(const exr_document *doc, size_t
 EXR_API const exr_resource *exr_document_resources(const exr_document *doc, size_t *count);
 /* Borrowed views last until document_free. Attribute names use URI|local for namespaces. */
 EXR_API const char *exr_node_attribute(const exr_node *node, const char *name);
-/* Copies an embedded ZIP resource; free the returned bytes with exr_free(). No network access. */
+/* Copies an embedded resource; free the returned bytes with exr_free(). No network access. */
 EXR_API exr_status exr_document_resource(const exr_document *doc, size_t resource, void **data,
                                          size_t *size, exr_error *error);
 /* Resolve a local chapter-relative URI to a resource and, if parsed, a node.

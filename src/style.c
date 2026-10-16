@@ -138,7 +138,8 @@ static int selector_parse(const char *s, size_t n, selector_part parts[16], unsi
 static int part_matches(const exr_node *node, selector_part part) {
   size_t i = 0, start;
   const char *s = part.text, *value;
-  if (!node->name)
+  if (node->kind == EXR_NODE_TEXT ||
+      (!node->name && (node->kind == EXR_NODE_DOCUMENT || node->kind == EXR_NODE_CHAPTER)))
     return 0;
   if (s[0] == '*')
     i++;
@@ -715,13 +716,13 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
   if (config->document_css)
     for (i = 0; i < d->node_count; i++) {
       const exr_node *n = &d->nodes[i];
-      if (!strcmp(tag(n), "style")) {
+      if (!strcmp(exr_html_tag(d, n), "style")) {
         size_t child;
         for (child = n->first_child; child != SIZE_MAX; child = d->nodes[child].next_sibling)
           if (d->nodes[child].text &&
               !stylesheet(&c, d->nodes[child].text, strlen(d->nodes[child].text), n->chapter, 0))
             goto done;
-      } else if (!strcmp(tag(n), "link") &&
+      } else if (!strcmp(exr_html_tag(d, n), "link") &&
                  word_in(exr_node_attribute(n, "rel"), "stylesheet", 10)) {
         const char *href = exr_node_attribute(n, "href");
         size_t resource, target, size;
@@ -758,7 +759,7 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     winner w[PROPERTIES] = {{0}};
     declaration *inline_declarations = NULL;
     size_t inline_count = 0;
-    const char *name = tag(n), *attr;
+    const char *name = exr_html_tag(d, n), *attr;
     int p;
     *s = initial;
     s->font_size = parent->font_size;

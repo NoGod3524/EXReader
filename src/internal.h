@@ -12,6 +12,10 @@
 #define EXR_MAX_TEXT ((size_t)64 * 1024 * 1024)
 #define EXR_MAX_ITEMS ((size_t)4 * 1024 * 1024)
 #define EXR_MAX_NODES ((size_t)262144)
+typedef struct {
+  unsigned char *bytes;
+  size_t size;
+} exr_resource_data;
 struct exr_document {
   char *text, *title;
   size_t size, text_capacity;
@@ -26,6 +30,8 @@ struct exr_document {
   size_t chapter_count, chapter_capacity;
   exr_resource *resources;
   size_t resource_count, resource_capacity;
+  exr_resource_data *resource_data; /* Copied resources from public construction inputs. */
+  int owns_chapter_strings;
   unsigned char *archive;
   size_t archive_size;
 };
@@ -45,6 +51,7 @@ exr_status exr_decode(const void *data, size_t size, exr_buffer *buf, exr_error 
 exr_status exr_parse(exr_document *doc, const void *data, size_t size, exr_error *error);
 int exr_add_block(exr_document *doc, const char *text, size_t size, unsigned heading);
 char *exr_model_copy(exr_document *doc, const char *text, size_t size);
+const char *exr_html_tag(const exr_document *doc, const exr_node *node);
 size_t exr_model_node(exr_document *doc, size_t parent, size_t chapter, exr_node_kind kind,
                       const char *name, const char *text, size_t length);
 exr_status exr_xhtml(exr_document *doc, const void *data, size_t size, size_t resource,

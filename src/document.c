@@ -6,6 +6,14 @@ static const char *local_name(const char *name) {
   const char *p = strrchr(name, '|');
   return p ? p + 1 : name;
 }
+const char *exr_html_tag(const exr_document *d, const exr_node *node) {
+  const char prefix[] = "http://www.w3.org/1999/xhtml|";
+  if (!node->name)
+    return "";
+  if (d->format != EXR_CUSTOM)
+    return local_name(node->name);
+  return !strncmp(node->name, prefix, sizeof(prefix) - 1) ? node->name + sizeof(prefix) - 1 : "";
+}
 static int whitespace(unsigned char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r'; }
 static int token(const char *s, const char *word) {
   size_t n = strlen(word);
@@ -100,11 +108,19 @@ void exr_model_free(exr_document *d) {
     free((void *)d->resources[i].path);
     free((void *)d->resources[i].media_type);
     free((void *)d->resources[i].properties);
+    if (d->resource_data)
+      free(d->resource_data[i].bytes);
   }
+  if (d->owns_chapter_strings)
+    for (i = 0; i < d->chapter_count; i++) {
+      free((void *)d->chapters[i].id);
+      free((void *)d->chapters[i].path);
+    }
   free(d->nodes);
   free(d->last_children);
   free(d->chapters);
   free(d->resources);
+  free(d->resource_data);
   free(d->archive);
 }
 static exr_node_kind element_kind(const char *name) {
@@ -322,7 +338,7 @@ static int project_text(projection *p, exr_node *node, unsigned heading) {
 }
 static int project_node(projection *p, size_t index, unsigned heading) {
   exr_node *node = &p->doc->nodes[index];
-  const char *tag = node->name ? local_name(node->name) : "";
+  const char *tag = exr_html_tag(p->doc, node);
   size_t child, start = SIZE_MAX, end = 0;
   int boundary;
   if (node->kind == EXR_NODE_TEXT)
@@ -340,7 +356,8 @@ static int project_node(projection *p, size_t index, unsigned heading) {
   if (boundary)
     end_block(p);
   if (node->kind == EXR_NODE_HEADING)
-    heading = (unsigned)(tag[1] - '0');
+    heading =
+        tag[0] == 'h' && tag[1] >= '1' && tag[1] <= '6' && !tag[2] ? (unsigned)(tag[1] - '0') : 1;
   for (child = node->first_child; child != SIZE_MAX; child = p->doc->nodes[child].next_sibling) {
     exr_node *v = &p->doc->nodes[child];
     if (!project_node(p, child, heading))

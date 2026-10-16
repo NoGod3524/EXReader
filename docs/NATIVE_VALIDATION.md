@@ -1,5 +1,28 @@
 # Native C validation
 
+## 0.6 host-constructed documents
+
+The native-construct integration suite supplies a document tree, reading-order and auxiliary
+chapters, attributes, CSS and PNG bytes through `exr_document_create()`. It changes or releases
+the source arrays, strings and resource bytes after construction, then checks the independent
+document title, raw node text, normalized UTF-8 projection, ranges and parent/sibling links.
+Checks also exercise auxiliary links with encoded literal `%`, `#` and `?` path characters,
+resources without bytes, valid empty resources, search, TXT/EPUB text export, styled layout,
+image pixels and rendering after freeing the document.
+
+Invalid-input checks cover missing arrays, invalid roots and parent relationships, non-preorder
+nodes, nested chapters, leaf-node children, duplicate resource paths/IDs and attributes,
+invalid UTF-8, unsafe or noncanonical virtual paths, resource-size limits and excessive depth.
+Failure leaves the output document NULL. This API accepts host parser output directly;
+there is no parser registry or serialized custom-document storage in this version.
+
+2026-10-16. Local Windows Release passes all five CTest suites, including 349 construction
+checks. The independent host example compiles using only the installed SDK header and library,
+constructs a styled document and renders a PNG; the output was visually inspected.
+Name-based checks cover arbitrary vocabulary, XHTML opt-in and CSS on nameless semantic nodes.
+The workflow also builds and runs the installed host example on Windows, Linux and macOS;
+the current commit's workflow supplies cross-platform runtime, sanitizer and mobile build status.
+
 ## 0.5 CSS, images and table flow
 
 2026-10-16. Local Windows Release has four passing CTest tests: native-core, native-flow,

@@ -1,6 +1,6 @@
-# Native C API 0.5
+# Native C API 0.6
 
-公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.5 扩展了 glyph、line、page、bitmap 结构，宿主需要使用新头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
+公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构，宿主需要使用匹配版本的头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
 ## 所有权与并发
 
@@ -10,6 +10,7 @@
 - `exr_books_free()` / `exr_notes_free()` 释放数组和其中字符串。修改元数据时复制结构并用自己的字符串设置输入字段，不替换结果数组中的库拥有指针。
 - `exr_bitmap_free()` 释放像素。`exr_document_export()` / `exr_document_resource()` / `exr_library_blob()` 返回的字节用 `exr_free()` 释放。这些字节独立于原对象的生命周期。跨 DLL 调用时不要使用宿主 `free()` 释放库内存。
 - 输出参数需为空或已先释放。对输入的任意无效 C 指针不提供运行时保护。
+- `exr_document_create()` 在调用期间复制输入数组中的字符串、属性和资源字节；返回后可释放所有输入。失败时不交出部分文档，`*out` 为 NULL。
 
 ## 文档与排版
 
@@ -21,17 +22,55 @@ FreeType 提供真实字形 advance、kerning 和像素，不负责分页。EXRe
 
 正文查找为区分大小写的 UTF-8 子串查询。元数据搜索使用绑定参数的 SQLite LIKE，并转义 `%` / `_`，其大小写折叠规则为 SQLite 默认规则。
 
-## EPUB 文档树与资源
+## 通用文档构造
+
+`exr_document_create()` 接收宿主生成的 `exr_document_input`，不经过文件解码器。自定义格式的解析器可以直接调用此函数，得到供现有搜索、CSS、布局、渲染和正文导出使用的 `exr_document`。构造后的 `exr_document_format()` 返回 `EXR_CUSTOM`。此版本不引入全局状态或解析器注册表，也不提供已创建文档的原地修改接口。
+
+```c
+exr_attribute attrs[] = {{"id", "intro"}, {"class", "body"}};
+exr_node_input nodes[] = {
+    {EXR_NODE_DOCUMENT, SIZE_MAX, NULL, NULL, NULL, 0},
+    {EXR_NODE_CHAPTER, 0, NULL, NULL, NULL, 0},
+    {EXR_NODE_PARAGRAPH, 1, "p", NULL, attrs, 2},
+    {EXR_NODE_TEXT, 2, NULL, "Hello from a host parser.", NULL, 0}
+};
+exr_chapter_input chapter = {"main", "chapters/main.unit", 1, 1};
+exr_document_input input = {"Host document", nodes, 4, &chapter, 1, NULL, 0};
+exr_document *doc = NULL;
+exr_error error = {0};
+exr_status status = exr_document_create(&input, &doc, &error);
+if (status == EXR_OK) {
+    /* Arrays and strings above may now be released or changed. */
+    /* Use doc with exr_document_find(), exr_layout_create_ex(), etc. */
+}
+exr_document_free(doc);
+```
+
+`nodes` 必须按前序排列：索引 0 为唯一 `EXR_NODE_DOCUMENT`，其 parent 为 `SIZE_MAX`；每个后续节点的 parent 必须是仍处于当前祖先链上的较早索引。文档根的直接子节点必须为 `EXR_NODE_CHAPTER`，且每个章节在 `chapters` 数组中恰好列出一次。章节不得嵌套。`TEXT` 必须提供非 NULL 的 text，其余节点的 text 必须为 NULL；文本、图片和换行节点不能包含子节点。引擎计算 child/sibling、章节归属和正文范围，输入无需提供这些派生数据。name 可省略，节点 kind 提供段落、标题、表格等语义；name 和 attributes 可保留宿主的元素名称及扩展信息。
+
+自建文档中的普通名称只用于保留来源信息及匹配 CSS 标签选择器，不会因名为 `head`、`script`、`strong` 等而自动启用 HTML 行为。需要 HTML 标签行为时使用明确的 XHTML 展开名，例如 `http://www.w3.org/1999/xhtml|link` 引用书内样式表。无名称的段落、标题、图片等语义节点仍可通过 class、ID、通配选择器和内联 style 设置样式；文本节点和无名称的文档/章节包装节点不直接匹配选择器。class、id、style、hidden，以及图片的 src/width/height、单元格的 colspan/rowspan 是引擎识别的通用属性，其余属性按原值保留。
+
+`exr_chapter_input` 提供 id、path、root 和 `in_reading_order`。正文按章节数组顺序投影，只有 `in_reading_order != 0` 的章节进入正文及布局；输出章节的 `in_spine` 与 `linear` 均取此布尔值。辅助章节仍保留树和链接目标，其节点范围为 `SIZE_MAX`。章节资源按 path 自动匹配；没有同路径资源时，输出 `resource = SIZE_MAX`，章节仍可解析链接。
+
+`exr_resource_input` 提供资源元数据及编码字节。引擎复制字节，不要求章节同时提供源文件资源。`data = NULL, size = 0` 声明只有元数据的资源，之后读取返回 `EXR_FORMAT`；非 NULL 的 data 配合 size 为 0 表示有效空资源，读取成功并返回可用 `exr_free()` 释放的零长度缓冲区。NULL data 配合非零 size 无效。
+
+path 是原始虚拟文件名，不是 URI：必须为非空、规范化的相对路径，使用 `/`，不能包含空路径段、`.` / `..`、反斜杠、冒号或控制字符。路径最长 2046 字节、最多 256 段。字面的 `%`、`#` 和 `?` 可用于路径；链接引用它们时分别编码为 `%25`、`%23` 和 `%3F`。资源路径在资源数组内唯一，章节路径在章节数组内唯一；两组中同路径表示对应资源。每组内非空 ID 不能重复，同一节点内不能有重名属性。
+
+构造要求有效 UTF-8 字符串；资源字节为任意二进制。标题省略时为空字符串。上限为 262144 个节点、10000 个章节、10000 个资源、每节点 256 个属性、树深 256 层（包含文档根）、模型字符串累计 64 MiB、单资源 32 MiB、资源字节累计 128 MiB；正文仍有 64 MiB 上限。参数错误返回 `EXR_ARGUMENT`，非法 UTF-8 返回 `EXR_ENCODING`，超限返回 `EXR_LIMIT`。函数会复制输入并完成验证及正文投影后才返回文档。
+
+导出仍为六种格式的正文转换，不序列化完整文档树和资源。`EXR_CUSTOM` 不作为 `exr_document_open_memory()` 的输入文件格式，也不支持通过 `exr_library_import()` 直接保存；SQLite 书库当前持久化的是已有文件格式的原始字节。
+
+## 文档树与 EPUB 资源
 
 `exr_document_nodes()` 返回前序排列的节点数组；0 为文档根。通过 `parent`、`first_child`、`next_sibling` 遍历。缺失索引为 `SIZE_MAX`。节点的 `chapter` 指向章节数组；文档根没有章节。节点索引只在当前 document 生命周期内有效，不能用作持久书签。
 
-`exr_document_chapters()` 先按 spine 顺序返回章节，包括 `linear="no"`；再按 manifest 顺序追加尚未在 spine 中出现的 XHTML（例如 EPUB 3 nav）。`in_spine` 和 `linear` 标明阅读顺序属性。章节记录 manifest ID、规范化 ZIP 路径、根节点与资源索引。
+对于 EPUB，`exr_document_chapters()` 先按 spine 顺序返回章节，包括 `linear="no"`；再按 manifest 顺序追加尚未在 spine 中出现的 XHTML（例如 EPUB 3 nav）。`in_spine` 和 `linear` 标明阅读顺序属性。章节记录 manifest ID、规范化 ZIP 路径、根节点与资源索引。宿主构造文档保留输入的章节顺序与虚拟路径。
 
 文本节点的 `text` 保存 XML 解码后的原始空白和内容；元素的 `name` 与属性名采用 Expat 展开名 `namespace-URI|local-name`，无命名空间时为原名。`exr_node_attribute()` 精确匹配名称，例如 `class`、`style`、`href`、`src`、`id`、`colspan`、`http://www.idpf.org/2007/ops|type`。元素名、内联样式、内嵌 style 文本、未知元素及其属性均保留。
 
-节点 `start/end` 是规范化正文的半开 UTF-8 字节区间，与原始 XHTML 字节位置和 `strlen(node.text)` 不同。当前正文只包括线性 spine 章节；head、script、style、hidden 子树和辅助章节的范围均为 `SIZE_MAX`。没有文字的可见元素可以有零长度范围。辅助脚注和目录的树仍可访问，链接仍可指向它们。图片书可以打开、排版和绘制，图片本身的文字范围可以为零；纯图片书的文本位置不足以唯一标识页面。
+节点 `start/end` 是规范化正文的半开 UTF-8 字节区间，与原始 XHTML 字节位置和 `strlen(node.text)` 不同。正文只包括阅读顺序中的章节；HTML head/script/style、hidden 子树和辅助章节的范围均为 `SIZE_MAX`。自建文档的 HTML 标签规则需要显式 XHTML 命名空间。没有文字的可见元素可以有零长度范围。辅助脚注和目录的树仍可访问，链接仍可指向它们。图片书可以打开、排版和绘制，图片本身的文字范围可以为零；纯图片书的文本位置不足以唯一标识页面。
 
-EPUB 3 目录通过 nav 子树表达，层级由其中的 ol/li 保留。可用 `exr_node_attribute(node, "http://www.idpf.org/2007/ops|type")` 查找包含 `toc` 的标记。EPUB 2 NCX 暂只保留为原始资源。其他格式的树目前只提供原解析器已有的标题和段落，没有新增其结构解析。
+EPUB 3 目录通过 nav 子树表达，层级由其中的 ol/li 保留。可用 `exr_node_attribute(node, "http://www.idpf.org/2007/ops|type")` 查找包含 `toc` 的标记。EPUB 2 NCX 暂只保留为原始资源。其他内置格式的树目前只提供原解析器已有的标题和段落，没有新增其结构解析；宿主构造入口可以提供更完整的结构。
 
 `exr_document_resources()` 返回 manifest 清单，包含 ID、规范化路径、媒体类型和 properties（如 nav、cover-image）。document 保留一份压缩 EPUB；XHTML 在打开时解析，其他资源通过 `exr_document_resource()` 按需解压，不写临时文件、不请求网络。清单中的资源可能缺失或损坏，读取时返回错误。
 

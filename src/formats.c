@@ -533,8 +533,22 @@ exr_status exr_document_resource(const exr_document *d, size_t resource, void **
     return exr_fail(e, EXR_ARGUMENT, "Missing resource output");
   *out = NULL;
   *size = 0;
-  if (!d || !d->archive || resource >= d->resource_count)
+  if (!d || resource >= d->resource_count)
     return exr_fail(e, EXR_ARGUMENT, "Invalid resource index");
+  if (d->resource_data) {
+    const exr_resource_data *entry = &d->resource_data[resource];
+    if (!entry->bytes)
+      return exr_fail(e, EXR_FORMAT, "Resource has no encoded bytes");
+    *out = malloc(entry->size ? entry->size : 1);
+    if (!*out)
+      return exr_fail(e, EXR_MEMORY, "Resource allocation failed");
+    if (entry->size)
+      memcpy(*out, entry->bytes, entry->size);
+    *size = entry->size;
+    return EXR_OK;
+  }
+  if (!d->archive)
+    return exr_fail(e, EXR_FORMAT, "Resource has no backing data");
   if (!mz_zip_reader_init_mem(&z.archive, d->archive, d->archive_size, 0))
     return exr_fail(e, EXR_FORMAT, "Invalid resource archive");
   bytes = member(&z, d->resources[resource].path, size, e);
@@ -570,10 +584,8 @@ exr_status exr_document_resolve(const exr_document *d, size_t chapter, const cha
       *resource = i;
       break;
     }
-  if (*resource == SIZE_MAX)
-    return EXR_OK;
   for (i = 0; i < d->chapter_count; i++)
-    if (d->chapters[i].resource == *resource) {
+    if (!strcmp(d->chapters[i].path, path)) {
       ch = i;
       break;
     }
@@ -583,7 +595,7 @@ exr_status exr_document_resolve(const exr_document *d, size_t chapter, const cha
     *node = d->chapters[ch].root;
     return EXR_OK;
   }
-  for (i = d->chapters[ch].root + 1; i < d->node_count && d->nodes[i].chapter == ch; i++) {
+  for (i = d->chapters[ch].root; i < d->node_count && d->nodes[i].chapter == ch; i++) {
     const char *id = exr_node_attribute(&d->nodes[i], "id");
     if (!id)
       id = exr_node_attribute(&d->nodes[i], "http://www.w3.org/XML/1998/namespace|id");
