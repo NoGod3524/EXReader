@@ -49,6 +49,15 @@ range `[0,4)`. The corresponding HarfBuzz visual-order mark offset is `(300,600)
 The `ss08` test keeps the raw yAdvance of 50 font units, as required by the public
 coordinate API; horizontal HarfBuzz output suppresses that component.
 
+`line-boundary.ttf` is generated from the same original outlines and glyph order.
+Its default `kern` pair gives `A` an advance adjustment of -100 units and `V`
+placement `(120,80)` plus advance adjustment -50. At 20 px, an unbroken `AV`
+therefore advances `(10,11)` px and places `V` at offset `(2.4,1.6)` px; isolated
+`A` and `V` each advance 12 px with zero offset. A default `curs` feature connects
+`x/y` and Arabic beh forms, so layout tests verify that both outgoing and incoming
+pair/cursive adjustments and Arabic joining stop at actual line boundaries.
+The original `shaping.ttf` and damaged-table variants are unchanged.
+
 `broken-gsub.ttf` and `broken-gpos.ttf` change only the selected table header's
 LookupListOffset to `0xFFFF`, beyond that table's length. Their outline/cmap data
 remain usable by FreeType; shaping must reject the invalid OpenType offset with

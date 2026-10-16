@@ -172,75 +172,25 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count,
 }
 static exr_status flush_run(flow *f) {
   exr_layout *l = f->layout;
-  size_t start = f->pending;
-  size_t group = start, index;
-  exr_text_state state = {0};
-  /* Analyze the complete visible inline run once, across node/style boundaries. */
-  for (index = start; index < l->glyph_count; index++) {
-    exr_glyph *g = &l->glyphs[index];
-    g->bidi_level = exr_inline_level(f->bidi, g->start);
-    if (g->bidi_level == UINT_MAX) g->flags |= EXR_GLYPH_HIDDEN;
-    g->boundaries = exr_text_step(&state, g->codepoint);
-    if (index > group && (g->boundaries & EXR_BOUNDARY_GRAPHEME)) {
-      exr_status s = exr_flow_cluster(f, group, index);
-      if (s != EXR_OK)
-        return s;
-      group = index;
-    }
+  exr_line_buffer buffer = {0};
+  exr_glyph *raw;
+  size_t start = f->pending, count = l->glyph_count - start, i;
+  exr_status status = EXR_OK;
+  if (!count) return EXR_OK;
+  raw = malloc(count * sizeof(*raw));
+  if (!raw) return fail(f, EXR_MEMORY, "Inline input allocation failed");
+  memcpy(raw, l->glyphs + start, count * sizeof(*raw));
+  l->glyph_count = start;
+  for (i = 0; i < count && status == EXR_OK; i++) {
+    raw[i].bidi_level = exr_inline_level(f->bidi, raw[i].start);
+    if (raw[i].bidi_level == UINT_MAX) raw[i].flags |= EXR_GLYPH_HIDDEN;
+    status = exr_inline_feed(f, &buffer, raw[i]);
   }
-  if (group < l->glyph_count) {
-    exr_status s = exr_flow_cluster(f, group, l->glyph_count);
-    if (s != EXR_OK)
-      return s;
-  }
-  {
-    exr_status s = exr_inline_shape(f, start, 0, 0);
-    if (s != EXR_OK) return s;
-  }
-  while (start < l->glyph_count) {
-    size_t i, split = SIZE_MAX, emergency = SIZE_MAX, end;
-    int forced = 0;
-    float indent = f->first_line ? f->paragraph->indent : 0;
-    float available = fmaxf(1, f->width - indent), width = 0;
-    exr_status s;
-    for (i = start; i < l->glyph_count; i++) {
-      exr_glyph *g = &l->glyphs[i];
-      float advance;
-      if (exr_font_size(&f->font->faces[g->font_index], g->size))
-        return fail(f, EXR_FONT, "Cannot size font");
-      if (i > start && (g->boundaries & EXR_BOUNDARY_MANDATORY)) {
-        forced = 1;
-        break;
-      }
-      if (i > start && (g->boundaries & EXR_BOUNDARY_GRAPHEME) &&
-          !(g->boundaries & EXR_BOUNDARY_GLUE)) {
-        emergency = i;
-        if (g->boundaries & EXR_BOUNDARY_LINE)
-          split = i;
-      }
-      advance = g->advance + glyph_kern(f, i == start ? NULL : &l->glyphs[i - 1], g);
-      if (i > start && width + advance > available) {
-        if (split != SIZE_MAX)
-          i = split;
-        else if (emergency != SIZE_MAX)
-          i = emergency;
-        else {
-          width += advance;
-          continue;
-        }
-        break;
-      }
-      width += advance;
-    }
-    end = i;
-    s = exr_flow_emit_line(f, l->glyphs + start, end - start, start,
-                             forced, end == l->glyph_count);
-    if (s != EXR_OK)
-      return s;
-    start = end;
-  }
+  if (status == EXR_OK) status = exr_inline_finish(f, &buffer);
   f->pending = l->glyph_count;
-  return EXR_OK;
+  exr_inline_buffer_clear(&buffer);
+  free(raw);
+  return status;
 }
 static exr_status flush(flow *f) {
   exr_inline_bidi bidi = {0}, *old = f->bidi;
