@@ -9,3 +9,5 @@
 - `cargo check --manifest-path src-tauri/Cargo.toml --offline`: passed on Windows. Native conversion now delegates to `exreader-calibre`; the prior lockfile versions are retained with only the new path dependency added.
 
 These checks validate source integration. No new 0.2.0 native installers have been published or checked on the other five target platforms. Prior native-package validation is recorded separately in VALIDATION.md.
+
+The reader also includes the shared same-origin PDF worker change. Framework built-PDF checks and the reader PDF highlight/navigation regression are rerun for this integration.

@@ -159,3 +159,17 @@ test('built ESM entry imports and runs without the source entry', async ({ page 
   expect(result.text).toContain('Built entry text');
   expect(result.elements).toBe(0);
 });
+
+test('built PDF renderer loads a separate worker under a restrictive CSP', async ({ page }) => {
+  await page.evaluate(async bytes => {
+    const policy = document.createElement('meta'); policy.httpEquiv = 'Content-Security-Policy';
+    policy.content = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'";
+    document.head.append(policy);
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/framework-dist/exreader.css'; document.head.append(css);
+    const stage = document.createElement('div'); stage.style.cssText = 'width:800px;height:700px'; document.body.append(stage);
+    const built = await import('/framework-dist/exreader.js');
+    window.reader = await built.createReader(stage, new File([new Uint8Array(bytes)], 'built.pdf'), { format: 'pdf' });
+  }, [...pdf()]);
+  await expect(page.locator('.textLayer')).toContainText('EXReader PDF test');
+  await page.evaluate(() => reader.close());
+});
