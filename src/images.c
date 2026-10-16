@@ -2,7 +2,12 @@
 #include "internal.h"
 typedef union {
   size_t size;
+#ifdef _MSC_VER
+  /* MSVC's C headers omit max_align_t; preserve its 16-byte malloc alignment. */
+  __declspec(align(16)) unsigned char alignment[16];
+#else
   max_align_t alignment;
+#endif
 } allocation;
 #ifdef _MSC_VER
 #define IMAGE_TLS __declspec(thread)
