@@ -180,6 +180,25 @@ static exr_status search(anchor_search *s, const char *pattern, size_t n, int af
   return EXR_OK;
 }
 
+static exr_status search_scope(anchor_search *s, exr_error *e) {
+  exr_status status;
+  if (s->quote)
+    return search(s, s->anchor->exact, s->quote, 0, e);
+  /* A point can be recovered from either adjacent context; equal candidates
+     from the two searches are counted once. */
+  if (s->prefix && (status = search(s, s->anchor->prefix, s->prefix, 1, e)) != EXR_OK)
+    return status;
+  if (s->suffix && (status = search(s, s->anchor->suffix, s->suffix, 0, e)) != EXR_OK)
+    return status;
+  if (!s->prefix && s->suffix)
+    candidate(s, s->lo);
+  if (!s->suffix && s->prefix)
+    candidate(s, s->hi);
+  if (!s->prefix && !s->suffix && s->lo == s->hi)
+    candidate(s, s->lo);
+  return EXR_OK;
+}
+
 exr_status exr_anchor_resolve(const exr_document *d, const exr_anchor *a,
                               exr_anchor_match *match, exr_error *e) {
   anchor_search s = {0};
@@ -204,30 +223,15 @@ exr_status exr_anchor_resolve(const exr_document *d, const exr_anchor *a,
   s.prefix = a->prefix ? strlen(a->prefix) : 0;
   s.suffix = a->suffix ? strlen(a->suffix) : 0;
   if (a->chapter && a->chapter[0]) {
+    /* Repeated EPUB spine entries can share a path. Compare every occurrence,
+       preserving the best score and ties across their independent text ranges. */
     for (i = 0; i < d->chapter_count; i++)
       if (d->chapters[i].path && !strcmp(d->chapters[i].path, a->chapter) &&
-          chapter_range(d, i, &s.lo, &s.hi))
-        break;
-    if (i == d->chapter_count)
-      return EXR_OK;
-  }
-  if (s.quote) {
-    if ((status = search(&s, a->exact, s.quote, 0, e)) != EXR_OK)
-      return status;
-  } else {
-    /* A point can be recovered from either adjacent context; equal candidates
-       from the two searches are counted once. */
-    if (s.prefix && (status = search(&s, a->prefix, s.prefix, 1, e)) != EXR_OK)
-      return status;
-    if (s.suffix && (status = search(&s, a->suffix, s.suffix, 0, e)) != EXR_OK)
-      return status;
-    if (!s.prefix && s.suffix)
-      candidate(&s, s.lo);
-    if (!s.suffix && s.prefix)
-      candidate(&s, s.hi);
-    if (!s.prefix && !s.suffix && s.lo == s.hi)
-      candidate(&s, s.lo);
-  }
+          chapter_range(d, i, &s.lo, &s.hi) &&
+          (status = search_scope(&s, e)) != EXR_OK)
+        return status;
+  } else if ((status = search_scope(&s, e)) != EXR_OK)
+    return status;
   if (s.best_score) {
     match->state = s.tied ? EXR_ANCHOR_AMBIGUOUS : EXR_ANCHOR_FOUND;
     if (!s.tied) {
