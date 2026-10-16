@@ -11,6 +11,7 @@ typedef struct {
   unsigned char *measured;
   size_t metric_count;
   FT_F26Dot6 metric_size;
+  struct exr_ot_state *ot;
 } exr_face;
 struct exr_font {
   FT_Library library;

@@ -34,6 +34,7 @@ jobs:
           ./stage/bin/exreader-render.exe tests/fixtures/sample.txt C:/Windows/Fonts/arial.ttf stage-page.png
           ./build/sdk-example/Release/exreader-construct-example.exe C:/Windows/Fonts/arial.ttf host-page.png
           ./build/sdk-example/Release/exreader-anchor-example.exe
+          ./build/sdk-example/Release/exreader-shaping-example.exe stage/examples/shaping-fonts/shaping.ttf
           ./build/sdk-example/Release/exreader-text-example.exe
           ./build/sdk-example/Release/exreader-font-example.exe stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
           ./build/sdk-example/Release/exreader-page-example.exe tests/fixtures/layout.epub C:/Windows/Fonts/arial.ttf pager-host-page.png
@@ -53,6 +54,7 @@ jobs:
           ./stage/bin/exreader-render tests/fixtures/sample.txt /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf stage-page.png
           ./build/sdk-example/exreader-construct-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf host-page.png
           ./build/sdk-example/exreader-anchor-example
+          ./build/sdk-example/exreader-shaping-example stage/examples/shaping-fonts/shaping.ttf
           ./build/sdk-example/exreader-text-example
           ./build/sdk-example/exreader-font-example stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
           ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf pager-host-page.png
@@ -65,6 +67,7 @@ jobs:
           ./stage/bin/exreader-render tests/fixtures/sample.txt /System/Library/Fonts/Supplemental/Arial.ttf stage-page.png
           ./build/sdk-example/exreader-construct-example /System/Library/Fonts/Supplemental/Arial.ttf host-page.png
           ./build/sdk-example/exreader-anchor-example
+          ./build/sdk-example/exreader-shaping-example stage/examples/shaping-fonts/shaping.ttf
           ./build/sdk-example/exreader-text-example
           ./build/sdk-example/exreader-font-example stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
           ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /System/Library/Fonts/Supplemental/Arial.ttf pager-host-page.png

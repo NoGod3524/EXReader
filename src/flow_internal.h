@@ -5,6 +5,10 @@
 #include "text_internal.h"
 #define EXR_PAUSE ((exr_status)100)
 typedef struct {
+  exr_bidi *analysis;
+  size_t *offsets, count;
+} exr_inline_bidi;
+typedef struct {
   exr_layout *layout, *assets;
   const exr_document *doc;
   const exr_style *styles, *paragraph;
@@ -14,7 +18,14 @@ typedef struct {
   float x, width, y, bottom_inset;
   size_t pending;
   int first_line, paginate, force_break, table_depth, page_limit;
+  exr_inline_bidi *bidi;
 } flow;
+void exr_inline_clear(exr_inline_bidi *bidi);
+exr_status exr_inline_prepare(flow *f, size_t first_node, exr_inline_bidi *bidi);
+unsigned exr_inline_level(const exr_inline_bidi *bidi, size_t offset);
+unsigned exr_inline_base(const exr_inline_bidi *bidi, size_t offset);
+exr_status exr_inline_reorder(flow *f, exr_glyph *glyphs, size_t count);
+exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t after);
 float exr_flow_top(const flow *f);
 float exr_flow_bottom(const flow *f);
 float exr_flow_room(const flow *f);

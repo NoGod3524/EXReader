@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "flow_internal.h"
+#include "bidi_internal.h"
 
 static float used(exr_length l, float width) {
   return l.value < 0 ? 0 : l.percent ? l.value * width : l.value;
@@ -36,7 +37,7 @@ exr_status exr_flow_page(flow *f, float height, size_t offset) {
   return EXR_OK;
 }
 static float glyph_kern(flow *f, const exr_glyph *previous, const exr_glyph *g) {
-  if (!previous || (previous->flags & EXR_GLYPH_HIDDEN) || (g->flags & EXR_GLYPH_HIDDEN) ||
+  if (!previous || ((previous->flags | g->flags) & (EXR_GLYPH_HIDDEN | EXR_GLYPH_SHAPED)) ||
       previous->font_index != g->font_index || previous->size != g->size ||
       (previous->flags & 3) != (g->flags & 3))
     return 0;
@@ -51,6 +52,7 @@ exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
   for (i = start; i < end && candidates; i++) {
     const exr_glyph *g = &l->glyphs[i];
     uint32_t cp = g->codepoint == '\t' ? ' ' : g->codepoint;
+    if (g->bidi_level != UINT_MAX && (g->bidi_level & 1)) cp = exr_bidi_mirror(cp);
     if (g->flags & EXR_GLYPH_HIDDEN)
       continue;
     for (face = 0; face < f->font->count; face++)
@@ -67,6 +69,7 @@ exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
     exr_glyph *g = &l->glyphs[i];
     uint32_t cp = g->codepoint == '\t' ? ' ' : g->codepoint;
     exr_face *selected;
+    if (g->bidi_level != UINT_MAX && (g->bidi_level & 1)) cp = exr_bidi_mirror(cp);
     g->cluster_start = l->glyphs[start].start;
     g->cluster_end = l->glyphs[end - 1].end;
     if (g->flags & EXR_GLYPH_HIDDEN)
@@ -100,6 +103,11 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count,
         height = 0, x, extra = 0;
   exr_line *line;
   exr_status s;
+  size_t logical_start = glyphs[0].start, logical_end = glyphs[count - 1].end;
+  int align = f->paragraph->align;
+  unsigned base = exr_inline_base(f->bidi, logical_start);
+  if (align == 4) align = base & 1 ? 2 : 0;
+  if (align == 5) align = base & 1 ? 0 : 2;
   width = 0;
   for (i = 0; i < count; i++) {
     exr_glyph *g = &glyphs[i];
@@ -110,26 +118,30 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count,
     ascent = fmaxf(ascent, (float)face->face->size->metrics.ascender / 64);
     descent = fmaxf(descent, -(float)face->face->size->metrics.descender / 64);
     height = fmaxf(height, g->line_height);
-    if (g->codepoint == ' ')
+    if (g->codepoint == ' ' &&
+        (i + 1 == count || glyphs[i + 1].cluster_start != g->cluster_start))
       spaces++;
   }
   height = fmaxf(height, ascent + descent);
   s = exr_flow_page(f, height, glyphs[0].start);
   if (s != EXR_OK)
     return s;
+  s = exr_inline_reorder(f, glyphs, count);
+  if (s != EXR_OK)
+    return s;
   if (!exr_grow((void **)&l->lines, &l->line_cap, l->line_count + 1, sizeof(*l->lines)))
     return EXR_MEMORY;
   x = f->x + indent;
-  if (f->paragraph->align == 1)
+  if (align == 1)
     x += fmaxf(0, available - width) / 2;
-  if (f->paragraph->align == 2)
+  if (align == 2)
     x += fmaxf(0, available - width);
-  if (f->paragraph->align == 3 && !final && !forced && spaces)
+  if (align == 3 && !final && !forced && spaces)
     extra = fmaxf(0, available - width) / (float)spaces;
   line = &l->lines[l->line_count++];
   *line = (exr_line){0};
-  line->start = glyphs[0].start;
-  line->end = glyphs[count - 1].end;
+  line->start = logical_start;
+  line->end = logical_end;
   line->glyph_start = destination;
   line->glyph_count = count;
   line->page = l->page_count - 1;
@@ -150,14 +162,15 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count,
     g->clip_left = f->x;
     g->clip_right = f->x + f->width;
     x += g->advance;
-    if (g->codepoint == ' ')
+    if (g->codepoint == ' ' &&
+        (i + 1 == count || glyphs[i + 1].cluster_start != g->cluster_start))
       x += extra;
   }
   f->y += height;
   f->first_line = 0;
   return EXR_OK;
 }
-static exr_status flush(flow *f) {
+static exr_status flush_run(flow *f) {
   exr_layout *l = f->layout;
   size_t start = f->pending;
   size_t group = start, index;
@@ -165,6 +178,8 @@ static exr_status flush(flow *f) {
   /* Analyze the complete visible inline run once, across node/style boundaries. */
   for (index = start; index < l->glyph_count; index++) {
     exr_glyph *g = &l->glyphs[index];
+    g->bidi_level = exr_inline_level(f->bidi, g->start);
+    if (g->bidi_level == UINT_MAX) g->flags |= EXR_GLYPH_HIDDEN;
     g->boundaries = exr_text_step(&state, g->codepoint);
     if (index > group && (g->boundaries & EXR_BOUNDARY_GRAPHEME)) {
       exr_status s = exr_flow_cluster(f, group, index);
@@ -177,6 +192,10 @@ static exr_status flush(flow *f) {
     exr_status s = exr_flow_cluster(f, group, l->glyph_count);
     if (s != EXR_OK)
       return s;
+  }
+  {
+    exr_status s = exr_inline_shape(f, start, 0, 0);
+    if (s != EXR_OK) return s;
   }
   while (start < l->glyph_count) {
     size_t i, split = SIZE_MAX, emergency = SIZE_MAX, end;
@@ -222,6 +241,19 @@ static exr_status flush(flow *f) {
   }
   f->pending = l->glyph_count;
   return EXR_OK;
+}
+static exr_status flush(flow *f) {
+  exr_inline_bidi bidi = {0}, *old = f->bidi;
+  exr_status status;
+  if (f->pending == f->layout->glyph_count) return EXR_OK;
+  status = exr_inline_prepare(f, f->layout->glyphs[f->pending].node, &bidi);
+  if (status == EXR_OK) {
+    f->bidi = &bidi;
+    status = flush_run(f);
+  }
+  f->bidi = old;
+  exr_inline_clear(&bidi);
+  return status;
 }
 static exr_status text(flow *f, size_t node) {
   exr_layout *l = f->layout;
@@ -707,7 +739,8 @@ static exr_status node(flow *f, size_t index, float x, float width) {
 }
 exr_status exr_layout_validate(const exr_layout_config *config, exr_error *e) {
   exr_layout_options o = config->page;
-  if ((config->decode_image && !config->release_image) || !isfinite(o.width) ||
+  if (config->direction < EXR_DIRECTION_AUTO || config->direction > EXR_DIRECTION_RTL ||
+      (config->decode_image && !config->release_image) || !isfinite(o.width) ||
       !isfinite(o.height) || !isfinite(o.margin) || !isfinite(o.font_size) ||
       !isfinite(o.line_height) || !isfinite(o.paragraph_spacing) || o.width < 32 || o.height < 32 ||
       o.width > 16384 || o.height > 16384 || o.margin < 0 || o.font_size < 4 || o.font_size > 256 ||

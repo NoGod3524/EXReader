@@ -28,6 +28,7 @@ enum {
   BORDER_STYLE,
   BEFORE,
   AFTER,
+  DIRECTION,
   PROPERTIES
 };
 typedef struct {
@@ -212,7 +213,7 @@ static int property(const char *s, size_t n) {
       "text-align",   "text-indent",   "display",        "width",         "height",
       "max-width",    "margin-top",    "margin-right",   "margin-bottom", "margin-left",
       "padding-top",  "padding-right", "padding-bottom", "padding-left",  "background-color",
-      "border-width", "border-color",  "border-style",   "break-before",  "break-after"};
+      "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -558,13 +559,19 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->leading_relative = parent->leading_relative;
     } else if (prop == ALIGN)
       s->align = parent->align;
+    else if (prop == DIRECTION)
+      s->direction = parent->direction;
     else if (prop == INDENT)
       s->indent = parent->indent;
     else
       return 0;
     return 1;
   }
-  if (prop == COLOR || prop == BACKGROUND || prop == BORDER_COLOR) {
+  if (prop == DIRECTION) {
+    if (!strcmp(v, "ltr")) s->direction = EXR_DIRECTION_LTR;
+    else if (!strcmp(v, "rtl")) s->direction = EXR_DIRECTION_RTL;
+    else return 0;
+  } else if (prop == COLOR || prop == BACKGROUND || prop == BORDER_COLOR) {
     if (!color(v, &rgba))
       return 0;
     if (prop == COLOR)
@@ -618,12 +625,16 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     else
       return 0;
   } else if (prop == ALIGN) {
-    if (!strcmp(v, "left") || !strcmp(v, "start"))
+    if (!strcmp(v, "left"))
       s->align = 0;
     else if (!strcmp(v, "center"))
       s->align = 1;
-    else if (!strcmp(v, "right") || !strcmp(v, "end"))
+    else if (!strcmp(v, "right"))
       s->align = 2;
+    else if (!strcmp(v, "start"))
+      s->align = 4;
+    else if (!strcmp(v, "end"))
+      s->align = 5;
     else if (!strcmp(v, "justify"))
       s->align = 3;
     else
@@ -712,6 +723,8 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
   initial.border_width = 3;
   initial.width.value = initial.height.value = initial.max_width.value = -1;
   initial.display = EXR_CSS_BLOCK;
+  initial.direction = config->direction;
+  initial.align = 4;
   *out = NULL;
   if (config->document_css)
     for (i = 0; i < d->node_count; i++) {
@@ -768,8 +781,15 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     s->leading = parent->leading;
     s->leading_relative = parent->leading_relative;
     s->align = parent->align;
+    s->direction = parent->direction;
     s->indent = parent->indent;
     s->display = EXR_CSS_INLINE;
+    attr = exr_node_attribute(n, "dir");
+    if (attr) {
+      if (!strcmp(attr, "rtl")) s->direction = EXR_DIRECTION_RTL;
+      else if (!strcmp(attr, "ltr")) s->direction = EXR_DIRECTION_LTR;
+      else if (!strcmp(attr, "auto")) s->direction = EXR_DIRECTION_AUTO;
+    }
     if (n->kind == EXR_NODE_DOCUMENT || n->kind == EXR_NODE_CHAPTER ||
         n->kind == EXR_NODE_SECTION || n->kind == EXR_NODE_PARAGRAPH ||
         n->kind == EXR_NODE_HEADING || n->kind == EXR_NODE_LIST || n->kind == EXR_NODE_LIST_ITEM ||

@@ -1,8 +1,8 @@
 # EXReader — native C ebook engine
 
-主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.11.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
+主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.12.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
 
-文本解码、格式解析、文档模型、CSS 子集、换行、分页、文字位置、命中测试、页面像素合成和书库都在本项目 C 代码中。底层使用 FreeType、Expat、miniz、SQLite 和 stb_image 五个 C 组件，分别处理字体、XML、ZIP、数据库和 PNG/JPEG 解码。
+文本解码、格式解析、文档模型、CSS 子集、字素边界、双向文字、OpenType 替换与定位、换行、分页、文字位置、命中测试、页面像素合成和书库都在本项目 C 代码中。底层使用 FreeType、Expat、miniz、SQLite 和 stb_image 五个 C 组件，分别处理字体、XML、ZIP、数据库和 PNG/JPEG 解码。
 
 框架面向通用宿主：宿主可以直接构造文档树和资源，将自己的解析结果交给引擎；文档树、资源、字形、行、图片和单元格坐标均可读取。宿主可以覆盖样式、关闭书内 CSS、替换图片解码器，或直接使用布局数据自行绘制。文档构造、解析和排版可独立于 SQLite 书库使用，UI、账号、同步和平台事件由宿主决定。
 
@@ -19,7 +19,9 @@
 | EPUB 资源与链接 | manifest 资源清单、图片 / CSS / 字体等资源按需解压；支持章节相对路径、Unicode / 百分号转义与片段 ID 定位 |
 | 自有排版 | 字体实际 advance / kerning、段落、标题字号、自动换行、Unicode 字素簇保护、中文标点与不换行空格约束、分页；页面宽高、字号、行距、段间距、页边距可调 |
 | 开放文字边界 | `exr_text_analyze()` 输出按 UTF-8 字节索引的 Unicode 17.0 扩展字素边界、换行机会、强制换行和禁止紧急换行标志；无需文档、字体或书库 |
-| CSS 子集 | 章节样式表、内嵌和内联样式；元素 / 类 / ID / 后代 / 子选择器，优先级和继承；混合字号、粗斜体、颜色、对齐、缩进、边距、背景、实线边框和强制分页 |
+| 双向文字 | 原生 Unicode 17 UAX #9 分析与逐行视觉重排，支持嵌入、隔离、括号配对和镜像；完整 861,948 个官方方向用例回归；提供独立 bidi API |
+| OpenType 塑形 | 原生 GSUB 1–8 / GPOS 1–9 lookup 引擎，拉丁连字、阿拉伯连接形与 lam-alef、字偶距、附标与连写定位；开放 script / language / feature 和字形偏移 |
+| CSS 子集 | 章节样式表、内嵌和内联样式；元素 / 类 / ID / 后代 / 子选择器，优先级和继承；混合字号、粗斜体、颜色、段落方向、对齐、缩进、边距、背景、实线边框和强制分页 |
 | 图片与表格 | PNG/JPEG 解码、透明合成和等比缩放；等宽表格、单元格换行、colspan / rowspan、按行组跨页 |
 | 字体回退 | 宿主提供有序字体字节和集合 face index；优先整字素簇覆盖，必要时逐标量回退；可查询 cmap 覆盖，布局输出字体索引与缺字标记 |
 | 原生渲染 | FreeType 字形栅格化，C 合成灰度或 RGBA 像素；BMP / PNG 输出，无图形界面依赖 |
@@ -28,7 +30,7 @@
 | 原生书库 | SQLite 单文件保存原书、书名、作者、标签、收藏、已读状态、阅读位置、封面和笔记；删除书籍时级联删除标注；事务备份 |
 | 文字转换 | C 输出 TXT、HTML、FB2、RTF、EPUB、DOCX；覆盖 Unicode 与文本转义往返，不保留复杂排版和图片 |
 
-当前流式排版支持基础横排拉丁文字和中日韩文字。EPUB 和宿主构造的文档使用文档树进行样式、图片和表格布局；其他内置格式目前提供段落与标题。图片按块排版，表格采用等宽列，超过一页高度的行或 rowspan 行组返回 `EXR_LIMIT`。文字仍按 Unicode 标量逐个取 FreeType 字形；字素边界保护不会生成连字、组合附标定位、阿拉伯文 / 印度文字形连接或彩色 emoji。OpenType shaping / GPOS、CSS 字体族匹配、双向文字、完整 UAX #14 换行、竖排、自动连字符、完整 CSS、浮动绕排、EPUB CFI / 跨引擎标注迁移仍待实现。PDF 固定版面引擎、KF8 / Huffman MOBI、CBZ、音频播放和 OCR 也尚未完成；PDF 文件当前返回不支持。具体范围见 [接口文档](docs/NATIVE_API.md)。
+当前横排覆盖拉丁文字、中日韩文字和阿拉伯 / 希伯来双向混排。EPUB 和宿主构造的文档使用文档树进行样式、图片和表格布局；其他内置格式目前提供段落与标题。图片按块排版，表格采用等宽列，超过一页高度的行或 rowspan 行组返回 `EXR_LIMIT`。OpenType lookup 引擎已有拉丁与阿拉伯预处理；Indic 音节与前置元音重排、可变字体、彩色 emoji、CSS 字体族匹配、完整 UAX #14 换行、竖排、自动连字符、完整 CSS、浮动绕排和 EPUB CFI / 跨引擎标注迁移仍待实现。PDF 固定版面引擎、KF8 / Huffman MOBI、CBZ、音频播放和 OCR 也尚未完成；PDF 文件当前返回不支持。具体范围见 [接口文档](docs/NATIVE_API.md)。
 
 0.7 提供稳定标注的文本锚点基础：精确选文至少需要一侧完整上下文或文档 / 章节边界佐证，同分候选返回歧义，不猜测旧偏移附近的位置。锚点仍按 Unicode 标量边界捕获，不自动扩展为字素簇；不提供模糊改字匹配、Unicode 规范化或文档指纹。旧书库标注保留为仅偏移的 legacy 记录，不自动认定已迁移。宿主可自行持久化选择器字段，正文格式转换不携带标注。
 
@@ -40,7 +42,11 @@
 
 0.11 新增可暂停的页级状态机和双重缓存预算。顺序读取只为当前页和换行前瞻保存字形；已淘汰的旧页按需从章节开头重放。共享图片通过引用计数保留，返回页可在 pager 释放后独立渲染。章节文档仍完整解析，缓存预算计量常驻载荷，字体、源书和临时工作区另计。真实性能数据见 [性能记录](docs/PERFORMANCE.md)。
 
-接下来继续完善文字 shaping 与双向文字，再推进 PDF 和有声书；新增能力继续使用开放的文档与资源接口。大书后续继续优化章节解析与回放检查点。EPUB 正文使用严格 XHTML 解析，未实现 HTML5 错误恢复、EPUB 2 NCX 目录解析、远程资源和元素级 base URI；原始 NCX 可通过资源接口读取。当前转换器仍输出正文，不保留文档树结构。
+0.12 新增独立 `exr_shape()`、`exr_bidi_analyze()` / `exr_bidi_reorder()`，并接入页级布局。字形按视觉顺序输出，保留源簇范围、字体索引、双向级别及偏移；逐行命中按视觉簇映射回源文字。配置方向、段落 `dir` 和 CSS `direction` 决定段落方向；内联隔离目前通过文本中的显式 Unicode 控制字符表达。同字体同字号的簇内颜色 / 粗斜体变化使用簇首样式；不同字号仍分开塑形，跨字号附标定位有限。
+
+带 OpenType 的连续无断点塑形段当前最多 8192 个标量，超过返回 `EXR_LIMIT`。双向分析先读取整个可见段落，其元数据内存不在页面缓存预算内；页级续排减少布局驻留量，文件解析、双向分析和不可拆组仍有各自工作区。
+
+接下来继续完善脚本专用排版，再推进 PDF 和有声书；新增能力继续使用开放的文档与资源接口。大书后续继续优化章节解析与回放检查点。EPUB 正文使用严格 XHTML 解析，未实现 HTML5 错误恢复、EPUB 2 NCX 目录解析、远程资源和元素级 base URI；原始 NCX 可通过资源接口读取。当前转换器仍输出正文，不保留文档树结构。
 
 ## 构建
 
@@ -79,14 +85,15 @@ Windows 的示例：
 
 ## 性能基准
 
-默认工具构建同时生成 `exreader-benchmark`，输出打开、首章解析排版、首画、逐页实际灰度渲染 p50 / p95 和进程峰值 RSS 的 JSON；直接运行不需要 Python。
+默认工具构建同时生成 `exreader-benchmark`，输出打开、首章解析排版、首画、逐页续排 / 渲染 / 完整翻页 p50 / p95 和进程峰值 RSS 的 JSON；直接运行不需要 Python。
 
 ```sh
 stage/bin/exreader-benchmark book.epub /path/to/font.ttf --max-pages 64
+stage/bin/exreader-benchmark book.epub /path/to/font.ttf --max-pages 64 --paging
 python tools/run_benchmarks.py stage/bin/exreader-benchmark /path/to/font.ttf build/benchmarks --runs 3
 ```
 
-Windows 使用 `stage/bin/exreader-benchmark.exe`。Python runner 生成固定的短书、单段长章和多章 EPUB，每轮启动新进程并保存明细与汇总。测量口径、复现方法和 0.10.0 实测基线见 [性能记录](docs/PERFORMANCE.md)。
+Windows 使用 `stage/bin/exreader-benchmark.exe`。Python runner 生成固定的短书、单段长章和多章 EPUB，每轮启动新进程并保存明细与汇总。测量口径、复现方法和已归档的 0.10 / 0.11 / 0.12 实测结果见 [性能记录](docs/PERFORMANCE.md)。
 
 ## C 接入
 

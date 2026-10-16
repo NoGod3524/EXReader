@@ -1,15 +1,15 @@
-# Native C API 0.11
+# Native C API 0.12
 
-公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.11 新增不透明的 `exr_pager`、页级续排与缓存、分段缓存字节预算，以及 document / layout 内存计量接口；已有 glyph、line、page 等公开结构未增加字段。0.10 新增字体集构造、字体覆盖查询，并在 `exr_glyph` 末尾添加 `font_index`、增加 `EXR_GLYPH_MISSING` 标志；0.9 新增独立文字边界分析入口，并在 `exr_glyph` 末尾添加 `cluster_start/end` 和 `boundaries`；0.8 新增 publication / session 分段加载接口；0.7 新增稳定文本锚点接口，并在 `exr_note` 末尾添加 `anchor`；0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构。宿主使用匹配版本的头文件和库。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
+公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
 ## 所有权与并发
 
-- `exr_document`、`exr_font`、`exr_layout`、`exr_library`、`exr_publication`、`exr_session`、`exr_pager` 为不透明句柄，使用各自析构函数释放。
+- `exr_document`、`exr_font`、`exr_layout`、`exr_library`、`exr_publication`、`exr_session`、`exr_pager`、`exr_bidi` 为不透明句柄，使用各自析构函数释放。
 - document 的 text / title / blocks / nodes / chapters / resources 和 layout 的 pages / lines / glyphs / boxes / image 为只读借用视图，所属对象释放后失效。树节点属性和文本也属于 document。借用的图片像素不可修改或释放。
 - 布局拥有输出数据及所引用的图片像素，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的同一个字体集句柄；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不共享对象的独立句柄可独立使用。共享 publication、session、pager 或压缩 archive 的文档，其调用及生命周期变更也由宿主串行处理；引擎没有全局状态或内部线程锁。
 - `exr_books_free()` / `exr_notes_free()` 释放数组和其中字符串；后者也释放每条笔记的锚点字符串。修改元数据时复制结构并用自己的字符串设置输入字段，不替换结果数组中的库拥有指针。
 - `exr_anchor_create()` 输出独立拥有的选文、前后文和章节路径字符串，由 `exr_anchor_free()` 释放；输入文档随后可释放。宿主也可直接提供选择器字段供只读解析，但不能用库的释放函数释放宿主借用的字符串。
-- `exr_bitmap_free()` 释放像素。`exr_document_export()` / `exr_document_resource()` / `exr_library_blob()` 返回的字节，以及 `exr_text_analyze()` 返回的边界表，用 `exr_free()` 释放。这些字节独立于原对象或输入的生命周期。跨 DLL 调用时不要使用宿主 `free()` 释放库内存。
+- `exr_bitmap_free()` 释放像素。`exr_document_export()` / `exr_document_resource()` / `exr_library_blob()` 返回的字节、`exr_text_analyze()` 的边界表、`exr_shape()` 的字形数组和 `exr_bidi_reorder()` 的视觉索引数组，用 `exr_free()` 释放。它们独立于原对象或输入的生命周期。`exr_bidi_scalars()` 则是属于分析句柄的借用视图。跨 DLL 调用时不要使用宿主 `free()` 释放库内存。
 - 输出参数需为空或已先释放。对输入的任意无效 C 指针不提供运行时保护。
 - 同一 pager 产生的独立页可以在 pager 和文档释放后使用；这些页会共享不可变图片，页的生命周期变更也由宿主串行处理。
 - `exr_document_create()` 在调用期间复制输入数组中的字符串、属性和资源字节；返回后可释放所有输入。失败时不交出部分文档，`*out` 为 NULL。
@@ -23,7 +23,7 @@
 
 输入上限 128 MiB、单文档正文上限 64 MiB、单次文档排版工作上限约 400 万字形。文档树上限 262144 个节点、字符串累计 64 MiB、每个元素最多 256 个属性。ZIP 成员上限 32 MiB、条目上限 1 万、打开期间累计解压上限 128 MiB；后续每次资源读取单独应用 32 MiB 上限，由调用者释放返回的字节。XML 嵌套上限 256 层，不解析外部实体，拒绝实体声明；HTML 的脚本和样式不进入正文。单个 document 仍完整解析；publication 可按章节加载，pager 在该 document 内按页续排。`exr_layout_create()` / `exr_layout_create_ex()` 使用同一续排引擎读到末尾并合并为完整布局。
 
-FreeType 提供真实字形 advance、kerning 和像素，不负责分页。EXReader 自己决定段落、换行、分页、基线和字形位置。0.9 按 Unicode 17.0.0 扩展字素簇保护换行与命中位置；换行机会使用下述 UAX #14 子集。字体仍按 Unicode 标量逐个取字形，支持宿主字体集的 cmap 覆盖查询与回退，尚未实现 OpenType shaping / GPOS、CSS 字体族匹配或双向重排；阿拉伯文、印度文字和 emoji 序列的正确视觉塑形仍需后续工作。
+FreeType 提供字体、基础字形度量和像素，不负责分页。EXReader 自己决定字素边界、OpenType 替换与定位、双向级别、段落、换行、分页、基线和视觉位置。0.9 的 Unicode 17.0.0 扩展字素规则保护换行与命中位置；换行机会仍使用下述 UAX #14 子集。0.12 的原生 GSUB / GPOS 引擎支持拉丁连字与附标、阿拉伯连接形，Unicode UAX #9 决定逐行视觉次序；脚本范围和布局限制见下节。
 
 正文查找为区分大小写的 UTF-8 子串查询。元数据搜索使用绑定参数的 SQLite LIKE，并转义 `%` / `_`，其大小写折叠规则为 SQLite 默认规则。
 
@@ -47,9 +47,61 @@ exr_status status = exr_font_create(sources, 2, &fonts, &error);
 
 排版优先寻找能覆盖整个可见字素簇的首个 face，跨内联样式也保持该选择。HIDDEN 条目不参与覆盖要求；tab 按空格检查并保留四倍 advance。没有单一 face 能覆盖整个簇时，各可见标量分别选择首个有字形的 face，字素边界继续保持完整。所有 face 都缺失的标量使用输入 0 的 glyph 0，并设置 `EXR_GLYPH_MISSING = 8`；它仍被绘制为该字体的缺字字形。HIDDEN 条目不设置 MISSING。
 
-`exr_glyph.font_index` 是字体输入数组的索引，`glyph` 是该 face 内部的字形号。行高取实际所选 face 的最大 ascent/descent，跨 face、字号或粗斜体变化不计算 pair kerning。灰度与 RGBA 栅格器使用同一个 face 选择；自定义渲染器必须同时使用 `font_index` 和 `glyph`。隐藏条目的字体索引没有绘制意义。该索引仅属于当前字体集，不能保存为跨会话字体标识。
+`exr_glyph.font_index` 是字体输入数组的索引，`glyph` 是该 face 内部的字形号。行高取实际所选 face 的最大 ascent/descent；塑形片段使用自己的 GPOS / legacy kern 结果，不再重复计算字偶距。灰度与 RGBA 栅格器使用同一个 face 选择；自定义渲染器必须同时使用 `font_index` 和 `glyph`。隐藏条目的字体索引没有绘制意义。该索引仅属于当前字体集，不能保存为跨会话字体标识。
 
 框架不查找、下载或自带阅读字体，不实现 CSS `font-family` 匹配、自动读取 EPUB 字体、可变字体轴设置或彩色字形。整簇选字体依据 cmap，而非塑形结果。宿主负责提供字体字节、顺序、持久身份与许可。`examples/font.c` 演示读取两份字体、构造字体集、打印选择并渲染 PNG；支持 Windows Unicode 参数和文件路径。SDK 的 `examples/fonts` 是原创几何测试字形，不能用作正式阅读字体。
+
+## 独立 OpenType 塑形
+
+`exr_shape(font, font_index, utf8, size, options, &glyphs, &count, error)` 对一个字体 face 的单一方向 / 脚本片段进行塑形，输出逻辑次序的 `exr_shaped_glyph` 数组，使用 `exr_free()` 释放。调用者划分字体、脚本和方向片段；接口本身不执行双向视觉重排。输入字节和 options 只在调用期间借用。font 与 layout / shape / render 的访问需串行。
+
+`exr_shape_defaults()` 返回 24 px、AUTO 方向、无合成样式、自动脚本和默认语言。`font_size` 接受 4–256 px，`style_flags` 只接受 BOLD / ITALIC；direction 为 AUTO / LTR / RTL。`script`、`language` 和 feature tag 使用 `EXR_TAG('l','a','t','n')` 这样的四字节 OpenType 标记，language 不是 BCP 47 字符串。script 为 0 时根据 Unicode Latin / Arabic 属性选择，否则使用 DFLT；language 为 0 使用默认 LangSys。请求脚本或语言未提供时，使用字体可用的 DFLT / 默认语言记录。
+
+`features` 是最多 256 个 `{tag,value}` 的借用数组。value 为 0 禁用可选 feature，非零启用；Alternate lookup 的 value 是从 1 开始的替代项序号。默认替换阶段为 ccmp / locl、Arabic isol / fina / medi / init、rlig / rclt / calt / liga / clig；定位阶段为 curs / kern / mark / mkmk。字体的必需 feature 仍被执行；宿主还可请求字体提供的其他 feature。`context_before/after` 为片段两侧最近的非透明 Unicode 标量，0 表示边界，用于跨样式片段保留 Arabic 连接状态。
+
+```c
+exr_shape_options options = exr_shape_defaults();
+exr_shaped_glyph *glyphs = NULL;
+size_t count = 0;
+options.font_size = 20;
+options.script = EXR_TAG('l','a','t','n');
+options.direction = EXR_DIRECTION_LTR;
+exr_status status = exr_shape(font, 0, "ffi", 3, &options, &glyphs, &count, &error);
+/* A font with a matching liga rule can return one glyph for UTF-8 range [0,3). */
+exr_free(glyphs);
+```
+
+`start/end` 为输入 UTF-8 的源簇半开范围。连字可以合并多个字素，附着的 mark 与其所属簇共享范围；字形数不必等于标量数。`advance_x/advance_y` 和 `offset_x/offset_y` 均以 px 表示，x 向右、y 向上，offset 相对逻辑 pen；接口保留 GPOS 的两个 advance 分量。BOLD / ITALIC、HIDDEN / MISSING 使用现有 glyph 标志。缺字使用该 face 的 glyph 0；此入口不执行字体回退。隐藏格式字符保留源范围且不产生 advance。
+
+自有解析器处理 GSUB 1–8 和 GPOS 1–9，包括单字形 / 多字形 / 替代 / 连字、上下文及链式上下文、extension、reverse substitution、单字 / 字偶 / class-pair 定位、cursive 和 mark-to-base / ligature / mark。Context 和 ChainContext 支持 1 / 2 / 3 格式，GDEF 用于类别、lookup flags 和 mark 过滤；anchor 支持设计坐标、轮廓点和普通 Device 修正。Latin 和 Arabic 有对应预处理，Arabic 透明字符与 ZWJ / ZWNJ 影响连接形。
+
+输入上限 64 MiB、输出上限约 400 万字形，字体 OpenType 表累计上限 64 MiB；上下文最多 256 项，嵌套 lookup / attachment 有深度和工作量限制。空输入 `NULL,0` 成功，输出 NULL、count 为 0。无效 UTF-8 返回 `EXR_ENCODING`，参数错误返回 `EXR_ARGUMENT`，超限返回 `EXR_LIMIT`，损坏或不支持的 OpenType 数据返回 `EXR_FONT`；失败清空输出指针和 count。
+
+当前未实现 Unicode canonical normalization / 规范重排、Indic / USE 音节分析与前置元音重排、AAT / morx、字体 variation / FeatureVariations / ItemVariationStore、cmap 14 变体序列、孤立 mark 的 dotted-circle 补字、彩色字形和竖排。选中的 VariationIndex 定位数据明确返回 `EXR_FONT`。
+
+## 独立双向分析与段落方向
+
+`exr_bidi_analyze(utf8, size, direction, &bidi, error)` 实现 Unicode 17.0.0 UAX #9 段落分析，direction 为 AUTO（首个强字符决定）、LTR 或 RTL。结果复制标量与源偏移，不借用输入；`exr_bidi_scalars()` 返回按逻辑顺序排列的 `{start,end,codepoint,level}` 借用视图。level 为 `UINT_MAX` 表示 X9 移除的格式控制。
+
+`exr_bidi_reorder(bidi, first, count, &order, &out_count, error)` 对一个已选行片段应用 L1 / L2，输出视觉顺序的绝对标量索引，排除 X9 控制；first / count 是标量索引，不是 UTF-8 字节偏移。order 使用 `exr_free()` 释放，分析对象用 `exr_bidi_free()` 释放。空片段返回 NULL 和 0。该接口只返回次序，不改写输入、执行字形替换或绘制镜像。
+
+```c
+exr_bidi *bidi = NULL;
+size_t scalar_count = 0, visual_count = 0, *order = NULL;
+exr_status status = exr_bidi_analyze(text, text_bytes, EXR_DIRECTION_AUTO, &bidi, &error);
+if (status == EXR_OK) {
+    exr_bidi_scalars(bidi, &scalar_count);
+    status = exr_bidi_reorder(bidi, 0, scalar_count, &order, &visual_count, &error);
+}
+exr_free(order);
+exr_bidi_free(bidi);
+```
+
+输入需为有效 UTF-8，最多 64 MiB / 约 400 万标量；空字符串允许，NULL 输入返回 `EXR_ARGUMENT`。显式长度允许分析嵌入 NUL。非法编码返回 `EXR_ENCODING`，超限返回 `EXR_LIMIT`。完整 `BidiTest.txt` 和 `BidiCharacterTest.txt` 的 861,948 个段落方向用例检查级别与视觉索引；字体绘制由独立布局测试覆盖。
+
+布局使用 `exr_layout_config.direction` 设置段落基础方向，默认为 AUTO；块级 `dir="ltr|rtl|auto"` 和 CSS `direction:ltr|rtl` 可以覆盖。`text-align:start/end` 随段落方向定位，left/right 保持物理方向。内联 dir / CSS direction 当前不自动建立嵌入或隔离，宿主需通过显式 Unicode LRE / RLE / LRI / RLI / FSI / PDI 等文本控制表达。
+
+集成排版先解析当前可见段落的双向级别，断行后按簇视觉重排，并在奇数级别查询镜像字形。同字体同字号的簇内颜色 / 粗斜体变化使用簇首样式；不同字号仍分开塑形，跨字号 mark 定位有限。带 OpenType 的无断点塑形段最多 8192 个标量，超过返回 `EXR_LIMIT`；独立 `exr_shape()` 另按上述输入 / 工作量上限处理。整个段落的双向标量与偏移元数据在页面缓存预算之外。
 
 ## 独立文字边界
 
@@ -125,7 +177,7 @@ exr_pager_free(pager);
 
 `exr_pager_position()` 返回已扫描到的规范化正文 UTF-8 字节位置，包括断行、字素簇和表格组的前瞻，可能领先最后输出页。重放时可回退；它用于观察当前排版进度，不是可序列化的恢复令牌。布局中的源范围和稳定锚点继续用于保存阅读位置。
 
-续排保留当前行、断点后的 carry、尚未闭合的字素簇和文档遍历状态；同一字素簇可跨文本节点和样式，分页不重新切断其边界。表格先扫描轻量行列元数据，再逐个测量当前 rowspan 连通行组；可暂停的边界仍遵循现有 CSS、背景分片和表格分页规则。超长单段不会在第一页前生成全段字形。
+续排保留当前行、断点后的 carry、尚未闭合的字素簇 / 塑形片段和文档遍历状态；同一字素簇可跨文本节点和样式，分页不重新切断其边界。表格先扫描轻量行列元数据，再逐个测量当前 rowspan 连通行组；可暂停的边界仍遵循现有 CSS、背景分片和表格分页规则。普通长单段不会在第一页前生成全段字形；双向级别分析仍先扫描可见段落。
 
 SDK 的 `examples/page.c` 编译为 `exreader-page-example`，用法为 `book.epub font.ttf output.png [page] [part]`，page / part 均从 0 开始，默认 0。它只加载指定 EPUB 分段，设置 3 页、8 MiB 的页面缓存，按需续排目标页并输出 PNG，同时打印扫描位置、缓存页数及计量字节数。支持 Windows Unicode 参数和路径。
 
@@ -133,7 +185,7 @@ SDK 的 `examples/page.c` 编译为 `exreader-page-example`，用法为 `book.ep
 
 `exr_document_memory_size()` 和 `exr_layout_memory_size()` 返回对象拥有的分配 payload 字节数，包含数组已分配容量，不包含分配器元数据；NULL 返回 0，无法用 size_t 表达的合计饱和为 `SIZE_MAX`。这是对象计量，不是进程 RSS。共享压缩 archive、借用字体和其他外部对象不计入；引用同一图片像素的每个页面按完整像素及引用计数字节数保守计量。
 
-页面预算只约束驻留页面的计量总量，分段预算只约束驻留 document 与完整 layout 的计量总量。publication 的共享压缩源、字体、pager 基础状态及当前行/字素簇/表格组工作区、图片资产池、正在加载的新对象和渲染临时 bitmap 都在该预算之外。文件仍完整解析为一个 document；单个超大字素簇或不可拆 rowspan 行组仍可能需要较大工作区。高于一页的不可拆表格组返回 `EXR_LIMIT`，页缓存预算不构成全程进程内存硬上限。
+页面预算只约束驻留页面的计量总量，分段预算只约束驻留 document 与完整 layout 的计量总量。publication 的共享压缩源、字体及其 OpenType 表缓存、pager 基础状态及当前行/字素簇/塑形段/表格组工作区、整段双向标量与偏移、图片资产池、正在加载的新对象和渲染临时 bitmap 都在该预算之外。文件仍完整解析为一个 document；单个超大字素簇或不可拆 rowspan 行组仍可能需要较大工作区。高于一页的不可拆表格组返回 `EXR_LIMIT`，页缓存预算不构成全程进程内存硬上限。
 
 打开耗时、首画、续排、渲染、完整翻页和进程峰值内存的独立基准及复现命令见 [性能基准](PERFORMANCE.md)。
 
@@ -290,6 +342,7 @@ CSS `display:none` 只影响布局，不删除规范化正文；重新排版时�
 ```c
 exr_layout_config config = exr_layout_config_defaults();
 config.page.width = 600;
+config.direction = EXR_DIRECTION_AUTO;
 config.document_css = 0; /* Disable linked, embedded and inline book CSS. */
 config.user_css = "p {font-size:24px;line-height:1.6} img {max-width:100%}";
 status = exr_layout_create_ex(doc, font, &config, &layout, &error);
@@ -299,7 +352,7 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 | 范围 | 已实现 |
 | --- | --- |
-| 文字 | font-size（4–256）、font-weight（合成粗体）、font-style（合成斜体）、color、line-height、text-align（left/start/center/right/end/justify）、text-indent |
+| 文字 | font-size（4–256）、font-weight（合成粗体）、font-style（合成斜体）、color、line-height、direction（ltr/rtl）、text-align（left/start/center/right/end/justify）、text-indent |
 | 盒模型 | width / max-width、margin / padding 及四边长属性、background-color（background 仅接受颜色）、统一 border-width / border-color / border-style（solid/none）和 border 简写 |
 | 流布局 | display: none/block/inline/table/table-row/table-cell；break-before/after 和 page-break-before/after 的 page/always/auto |
 | 尺寸 | px、pt、em、rem、百分比和零值；margin 可 auto；图片支持 height，普通块的 height 尚未应用 |
@@ -307,11 +360,11 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 `rem` 当前以宿主页默认字号为基准。`inherit` 支持文字属性；缩进和边框宽度不支持百分比。所有负尺寸均忽略，外边距不折叠。未知属性、选择器和 at-rule 会被跳过；尚不支持 @import、@media、变量、伪类、属性选择器、字体族/嵌入字体、flex/grid、浮动、定位、完整空白规则和浏览器式盒模型分片。属性值和单位使用小写。样式表合计上限 1 MiB、4096 条规则、131072 项展开声明、每规则 256 项声明、2000 万次匹配工作；达到上限返回 `EXR_LIMIT`。
 
-`exr_layout_glyphs()` 输出字形编号、字号、颜色 `0xRRGGBBAA`、合成粗/斜体标志、基线、源节点和文字偏移。0.9 的 `cluster_start/end` 是当前可见内联串中该字形所属字素簇的源 UTF-8 半开范围；同一簇中的字形共享范围，可以跨文本节点和样式边界。原有 `start/end` 仍保留每个标量的源范围，`boundaries` 为该标量之前的 `EXR_BOUNDARY_*` 标志。分段和文档使用各自局部偏移，簇索引不是永久标识。
+`exr_layout_glyphs()` 按逐行视觉顺序输出字形编号、字号、颜色 `0xRRGGBBAA`、合成粗/斜体标志、基线、源范围和字体索引；混排时文字偏移可能不单调。`cluster_start/end` 为当前源簇的 UTF-8 半开范围，可以跨文本节点和样式，连字可合并多个原始字素。`EXR_GLYPH_SHAPED = 16` 表示 advance / offset 已包含塑形定位；这些条目的 `start/end` 也使用源簇范围，`codepoint/node` 代表簇首源标量 / 节点，不承诺一条 glyph 对应一个标量。未塑形路径仍保留原标量范围。`boundaries` 保留源簇首的 `EXR_BOUNDARY_*`，同簇后续字形为 0。分段和文档使用各自局部偏移，簇索引不是永久标识。
 
-`EXR_GLYPH_HIDDEN = 4` 标记格式、换行控制、变体选择符等不应绘制的条目，内置栅格器跳过这些字形，自定义绘制也需跳过；它们仍保留源文本范围。普通字符的字体覆盖和标记定位取决于宿主字体及当前逐标量取字形方式，分组不会执行复杂塑形。布局不会拆开字素簇，也不会在 `GLUE` 边界紧急断行；不可拆的组超过内容宽度时保留整组，`clip_left/right` 指明水平裁切范围。
+`EXR_GLYPH_HIDDEN = 4` 标记格式、换行控制、变体选择符等不应绘制的条目，内置栅格器跳过这些字形，自定义绘制也需跳过；它们仍保留源文本范围。`bidi_level` 是解析后的级别，奇数为 RTL，`UINT_MAX` 表示 X9 控制。`offset_x/offset_y` 以 px 表示，y 向上；绘制原点为 `(x + offset_x, baseline - offset_y)`。自定义绘制不再额外应用 GPOS 或 pair kerning。布局不会拆开源簇，也不会在 `GLUE` 边界紧急断行；不可拆的组超过内容宽度时保留整组，`clip_left/right` 指明水平裁切范围。
 
-`exr_layout_hit_test()` 按命中的字素簇整体宽度返回其起点或终点，不返回簇内部偏移；当前坐标和簇顺序仍按逻辑 LTR 排布，没有 BiDi 视觉重排。`exr_layout_lines()` 输出行矩形与字形范围；表格一行可有多个并列文字行。`exr_layout_boxes()` 输出背景块、图片和单元格的页面坐标、边框与背景，按页及节点前序排列。page 的 line/box 范围可直接迭代。坐标单位为逻辑像素，原点在页面左上方。
+`exr_layout_hit_test()` 按视觉簇整体宽度和方向返回源簇起点或终点，不返回连字或字素内部偏移。`exr_layout_lines()` 输出行矩形和视觉字形数组范围，其 start/end 仍是逻辑源范围；表格一行可有多个并列文字行。`exr_layout_boxes()` 输出背景块、图片和单元格的页面坐标、边框与背景，按页及节点前序排列。page 的 line/box 范围可直接迭代。坐标单位为逻辑像素，原点在页面左上方。
 
 宿主可先按 boxes 顺序绘制背景、图片和边框，再绘制文字。`exr_layout_image(layout, resource)` 返回对应资源的解码后 RGBA 借用视图；缺失时返回 NULL。这些输出可直接用于自定义渲染器，不需要创建内置页面位图。
 
