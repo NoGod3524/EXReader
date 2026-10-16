@@ -28,6 +28,10 @@ shutil.copytree("public/licenses", folder / "licenses", dirs_exist_ok=True)
     encoding="utf-8",
 )
 archive = pathlib.Path("release/EXReader-Linux-x64-system-webkit.tar.gz")
+def permissions(info):
+    info.mode = 0o755 if info.isdir() or info.name.endswith("/exreader") else 0o644
+    return info
+
 with tarfile.open(archive, "w:gz") as tar:
-    tar.add(folder, arcname=folder.name, filter=lambda info: info)
+    tar.add(folder, arcname=folder.name, filter=permissions)
 print(f"Linux system-WebKit package: {archive.stat().st_size / 1024 ** 2:.1f} MiB")
