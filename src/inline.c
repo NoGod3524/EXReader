@@ -185,7 +185,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     exr_shape_options options = exr_shape_defaults();
     exr_buffer text = {0};
     uint32_t tag = script(g->codepoint);
-    size_t n = 0;
+    size_t n = 0, finish = 0;
     end = i + 1;
     while (end < l->glyph_count) {
       const exr_glyph *v = &l->glyphs[end];
@@ -238,10 +238,16 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     }
     for (j = 0, k = 0; j < n; j++) {
       exr_glyph v;
-      size_t finish;
       while (k + 1 < end - i && positions[k + 1] <= shaped[j].start) k++;
-      finish = k + 1;
-      while (finish < end - i && positions[finish] < shaped[j].end) finish++;
+      if (!j || shaped[j].start != shaped[j - 1].start || shaped[j].end != shaped[j - 1].end) {
+        size_t low = k + 1, high = end - i;
+        while (low < high) {
+          size_t middle = low + (high - low) / 2;
+          if (positions[middle] < shaped[j].end) low = middle + 1;
+          else high = middle;
+        }
+        finish = low;
+      }
       v = l->glyphs[i + k];
       v.start = l->glyphs[i + k].start;
       v.end = l->glyphs[i + finish - 1].end;

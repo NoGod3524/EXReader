@@ -14,6 +14,7 @@ typedef struct {
   uint32_t cp;
   unsigned form, ligature, component;
   size_t parent;
+  size_t previous_visible, previous_base;
   float anchor_x, anchor_y;
   unsigned attach_axes, resolved;
 } ot_item;
@@ -596,17 +597,12 @@ static int position(ot_work *w, ot_view sub, unsigned type, size_t at,
   }
   if (type >= 4 && type <= 6) {
     unsigned classes = u16(sub, 6), marks, mark_class, base_count, component = 0;
-    size_t base = at, record;
+    size_t base = type == 6 ? w->items[at].previous_visible : w->items[at].previous_base, record;
     int base_index;
     ot_view mark_array = required16(sub, 8), base_array = required16(sub, 10), anchors;
     float mx, my, bx, by;
     if (format != 1 || !classes) { w->status = EXR_FONT; return 0; }
-    while (base) {
-      base--;
-      if (w->items[base].out.flags & EXR_GLYPH_HIDDEN) continue;
-      if (type == 6 || item_class(w, base) != 3) break;
-    }
-    if (base == at || (type != 6 && item_class(w, base) == 3)) return 0;
+    if (base == SIZE_MAX) return 0;
     base_index = coverage(required16(sub, 4), w->items[base].out.glyph);
     if (base_index < 0) return 0;
     marks = u16(mark_array, 0);
@@ -852,6 +848,7 @@ exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t
   unsigned char *boundaries = NULL;
   float *pens = NULL;
   size_t at = 0, cluster_start = 0, cluster_end = 0, i;
+  size_t previous_visible = SIZE_MAX, previous_base = SIZE_MAX;
   uint32_t cp, script;
   int has_kern = 0;
   exr_shaped_glyph *result = NULL;
@@ -914,6 +911,8 @@ exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t
   if (w.status != EXR_OK) goto done;
   if (exr_font_size(w.face, options->font_size)) { w.status = EXR_FONT; goto done; }
   for (i = 0; i < w.count; i++) {
+    unsigned cls;
+    if (!work(&w, 1)) goto done;
     w.items[i].out.flags &= ~EXR_GLYPH_MISSING;
     if (!w.items[i].out.glyph && !(w.items[i].out.flags & EXR_GLYPH_HIDDEN))
       w.items[i].out.flags |= EXR_GLYPH_MISSING;
@@ -921,7 +920,16 @@ exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t
         exr_measure(w.face, w.items[i].out.glyph, options->style_flags, &w.items[i].out.advance_x)) {
       w.status = EXR_FONT; goto done;
     }
-    if (item_class(&w, i) == 3) w.items[i].out.advance_x = 0;
+    cls = item_class(&w, i);
+    if (cls == 3) w.items[i].out.advance_x = 0;
+    /* GPOS cannot change glyph classes. Cache predecessors once, so a long
+       combining sequence does not rescan the same mark run for each glyph. */
+    w.items[i].previous_visible = previous_visible;
+    w.items[i].previous_base = previous_base;
+    if (!(w.items[i].out.flags & EXR_GLYPH_HIDDEN)) {
+      previous_visible = i;
+      if (cls != 3) previous_base = i;
+    }
   }
   apply_table(&w, &w.face->ot->gpos, script, 1, &has_kern);
   if (!has_kern && feature_value(options, EXR_TAG('k','e','r','n'), 1)) {
