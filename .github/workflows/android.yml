@@ -7,10 +7,15 @@ on:
         type: choice
         options: [preview, debug]
         default: preview
+      existing_debug_run:
+        description: Optional prior run ID to test its debug APK without rebuilding
+        default: ''
 permissions:
+  actions: read
   contents: read
 jobs:
   apk:
+    if: inputs.existing_debug_run == ''
     timeout-minutes: 30
     runs-on: ubuntu-22.04
     steps:
@@ -86,7 +91,7 @@ jobs:
   emulator:
     timeout-minutes: 20
     needs: apk
-    if: inputs.package_type == 'debug'
+    if: always() && inputs.package_type == 'debug' && (needs.apk.result == 'success' || inputs.existing_debug_run != '')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -100,6 +105,8 @@ jobs:
           java-version: 17
       - uses: actions/download-artifact@v4
         with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.existing_debug_run || github.run_id }}
           name: EXReader-Android-debug
           path: android-apks
       - run: npm ci

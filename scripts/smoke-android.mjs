@@ -32,15 +32,19 @@ try {
   for (let round = 0; round < 2; round++) {
     adb('shell', 'am', 'start', '-n', 'io.exreader.reader/.MainActivity');
     let browser;
+    let connectionError;
     for (let retry = 0; retry < 60; retry++) {
       try {
         const pid = adb('shell', 'pidof', 'io.exreader.reader');
-        adb('forward', 'tcp:9222', `localabstract:webview_devtools_remote_${pid}`);
+        const sockets = adb('shell', 'cat', '/proc/net/unix').split('\n').map(line => line.trim().split(/\s+/).at(-1)?.replace(/^@/, '')).filter(name => name?.startsWith('webview_devtools_remote'));
+        const socket = sockets.find(name => name.endsWith(`_${pid}`)) || (sockets.length === 1 ? sockets[0] : undefined);
+        assert.ok(socket, `No WebView socket for PID ${pid}; available: ${sockets.join(', ')}`);
+        adb('forward', 'tcp:9222', `localabstract:${socket}`);
         browser = await chromium.connectOverCDP('http://127.0.0.1:9222', { timeout: 2000 });
         break;
-      } catch { await wait(1000); }
+      } catch (error) { connectionError = error; await wait(1000); }
     }
-    assert.ok(browser, 'Android WebView debugging endpoint must be available');
+    assert.ok(browser, `Android WebView debugging endpoint must be available: ${connectionError}`);
     try {
       const page = browser.contexts()[0].pages()[0];
       await page.locator('.library-intro').waitFor();
@@ -86,6 +90,8 @@ try {
     await wait(1000);
   }
 } catch (error) {
-  await writeFile('test-results/android/logcat.txt', adb('logcat', '-d', '-t', '1500'));
+  await writeFile('test-results/android/failure.png', execFileSync('adb', ['exec-out', 'screencap', '-p']));
+  await writeFile('test-results/android/logcat.txt', adb('logcat', '-d'));
+  await writeFile('test-results/android/sockets.txt', adb('shell', 'cat', '/proc/net/unix'));
   throw error;
 }
