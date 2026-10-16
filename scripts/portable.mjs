@@ -4,7 +4,7 @@ if (process.platform !== 'win32') throw new Error('This packaging script produce
 const folder = 'release/EXReader-portable';
 await mkdir(folder, { recursive: true });
 const exe = await readFile('src-tauri/target/release/exreader.exe');
-const instructions = 'EXReader 0.1.0\r\n\r\n解压后双击 EXReader.exe。需要 Windows 10/11 与系统 WebView2 运行时。\r\n.portable 标记存在时，书库保存在程序旁 EXReader-data 文件夹。\r\n更新时保留该文件夹；迁移前请在设置中备份书库。\r\n复杂格式转换需另装 calibre，或将它放在程序旁的 calibre 文件夹。\r\n';
+const instructions = 'EXReader 0.1.1\r\n\r\n解压后双击 EXReader.exe。需要 Windows 10/11 与系统 WebView2 运行时。\r\n.portable 标记存在时，书库保存在程序旁 EXReader-data 文件夹。\r\n更新时保留该文件夹；迁移前请在设置中备份书库。\r\n复杂格式转换需另装 calibre，或将它放在程序旁的 calibre 文件夹。\r\n';
 await cp('src-tauri/target/release/exreader.exe', `${folder}/EXReader.exe`);
 await writeFile(`${folder}/.portable`, '');
 await writeFile(`${folder}/使用说明.txt`, '\ufeff' + instructions);

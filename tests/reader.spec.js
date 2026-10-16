@@ -126,8 +126,17 @@ test('every built-in conversion can be reopened', async ({ page }) => {
   }
 });
 
-test('responsive library has no horizontal overflow', async ({ page }) => {
+test('responsive library and reader use the available viewport', async ({ page }) => {
   await page.getByRole('button', { name: '先读一篇示例文章 →' }).click();
   await expect(page.locator('.book-card')).toHaveCount(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.locator('.book-open').click();
+  await page.waitForFunction(() => document.querySelector('foliate-view')?.renderer?.getContents().some(({ doc }) => doc.body?.textContent.includes('窗外的风')));
+  await expect.poll(() => page.evaluate(() => {
+    const stage = document.querySelector('#reading-stage').getBoundingClientRect();
+    const frame = document.querySelector('foliate-view').renderer.getContents()[0].doc.defaultView.frameElement.getBoundingClientRect();
+    return frame.height / stage.height;
+  })).toBeGreaterThan(0.75);
+  const top = await page.evaluate(() => document.querySelector('foliate-view').renderer.getContents()[0].doc.defaultView.frameElement.getBoundingClientRect().top - document.querySelector('#reading-stage').getBoundingClientRect().top);
+  expect(top).toBeLessThan(80);
 });

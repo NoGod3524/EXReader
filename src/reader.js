@@ -24,8 +24,8 @@ export async function createReader(stage, file, book, notes, callbacks) {
     const colors = { paper: ['#faf8f2', '#302f2a'], light: ['#ffffff', '#20251f'], dark: ['#202823', '#dddccf'] }[s.theme];
     view.renderer.setAttribute('flow', s.flow);
     view.renderer.setAttribute('max-column-count', s.columns);
-    view.renderer.setAttribute('max-inline-size', '800');
-    view.renderer.setAttribute('margin', '36');
+    view.renderer.setAttribute('max-inline-size', '800px');
+    view.renderer.setAttribute('margin', '36px');
     view.renderer.setStyles?.(`html{color-scheme:${s.theme === 'dark' ? 'dark' : 'light'};background:${colors[0]}!important;color:${colors[1]}!important}body{font-family:${s.font}!important;font-size:${s.size}px!important}p,li,blockquote{font-size:inherit!important;line-height:${s.spacing}!important;text-align:${s.justify ? 'justify' : 'start'}!important}img,svg{max-width:100%}pre{white-space:pre-wrap}a{color:#9b653d}`);
   }
   apply();

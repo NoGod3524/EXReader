@@ -18,7 +18,7 @@ for name in ("LICENSE", "THIRD_PARTY_NOTICES.md"):
     shutil.copyfile(name, folder / name)
 shutil.copytree("public/licenses", folder / "licenses", dirs_exist_ok=True)
 (folder / "README.txt").write_text(
-    "EXReader 0.1.0 — Linux x64\n\n"
+    "EXReader 0.1.1 — Linux x64\n\n"
     "Extract and run ./exreader. The app itself needs no installation.\n"
     "Requires system WebKitGTK 4.1 and GTK 3, tested on Ubuntu 22.04.\n"
     "Ubuntu runtime dependencies: sudo apt install libwebkit2gtk-4.1-0 libayatana-appindicator3-1\n"
