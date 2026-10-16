@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.4.0"
+#define EXR_VERSION "0.5.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -92,22 +92,51 @@ typedef struct {
   uint32_t codepoint, glyph;
   float x, baseline, advance, size;
   size_t page;
+  size_t node;
+  uint32_t color; /* 0xRRGGBBAA */
+  unsigned flags; /* 1: synthetic bold, 2: synthetic italic */
+  float clip_left, clip_right;
+  float line_height;
 } exr_glyph;
 typedef struct {
   size_t start, end, glyph_start, glyph_count;
   float y;
   size_t page;
+  float x, width, height;
 } exr_line;
 typedef struct {
   size_t start, end, line_start, line_count;
+  size_t box_start, box_count;
 } exr_page;
+typedef enum { EXR_BOX_BLOCK = 1, EXR_BOX_IMAGE, EXR_BOX_CELL } exr_box_kind;
+typedef struct {
+  exr_box_kind kind;
+  size_t node, page, resource, start, end;
+  float x, y, width, height, border_width;
+  uint32_t background, border_color; /* 0xRRGGBBAA */
+  unsigned flags;                    /* Image bit 1: missing/unsupported image placeholder. */
+} exr_box;
 typedef struct {
   float width, height, margin, font_size, line_height, paragraph_spacing;
 } exr_layout_options;
+typedef struct exr_bitmap exr_bitmap;
+typedef exr_status (*exr_image_decode_fn)(void *context, const exr_resource *resource,
+                                          const void *encoded, size_t size, exr_bitmap *rgba,
+                                          exr_error *error);
+typedef void (*exr_image_release_fn)(void *context, exr_bitmap *rgba);
 typedef struct {
+  exr_layout_options page;
+  const char *user_css; /* Optional UTF-8 override stylesheet; borrowed for the create call. */
+  int document_css;     /* Nonzero enables book stylesheets and inline styles. */
+  exr_image_decode_fn decode_image;   /* Optional host decoder, returns RGBA. */
+  exr_image_release_fn release_image; /* Required with decode_image; also called on failure. */
+  void *image_context;
+} exr_layout_config;
+struct exr_bitmap {
   uint32_t width, height, stride;
   unsigned char *pixels;
-} exr_bitmap;
+  uint32_t channels; /* 1 (gray) or 4 (RGBA); zero accepted as gray on write. */
+};
 /* All input/output strings are UTF-8. Returned views belong to their owner. */
 EXR_API const char *exr_version(void);
 EXR_API exr_status exr_document_open(const char *path, exr_document **out, exr_error *error);
@@ -137,17 +166,29 @@ EXR_API exr_status exr_document_export(const exr_document *doc, exr_format forma
 EXR_API exr_status exr_font_open(const char *path, exr_font **out, exr_error *error);
 EXR_API void exr_font_free(exr_font *font);
 EXR_API exr_layout_options exr_layout_defaults(void);
+EXR_API exr_layout_config exr_layout_config_defaults(void);
 EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,
                                      const exr_layout_options *options, exr_layout **out,
                                      exr_error *error);
+EXR_API exr_status exr_layout_create_ex(const exr_document *doc, exr_font *font,
+                                        const exr_layout_config *config, exr_layout **out,
+                                        exr_error *error);
 EXR_API void exr_layout_free(exr_layout *layout);
 EXR_API const exr_page *exr_layout_pages(const exr_layout *layout, size_t *count);
 EXR_API const exr_line *exr_layout_lines(const exr_layout *layout, size_t *count);
 EXR_API const exr_glyph *exr_layout_glyphs(const exr_layout *layout, size_t *count);
+EXR_API const exr_box *exr_layout_boxes(const exr_layout *layout, size_t *count);
+/* Borrowed decoded RGBA pixels, valid until layout_free; NULL for unavailable resources. */
+EXR_API const exr_bitmap *exr_layout_image(const exr_layout *layout, size_t resource);
 EXR_API size_t exr_layout_page_at(const exr_layout *layout, size_t utf8_offset);
 EXR_API size_t exr_layout_hit_test(const exr_layout *layout, size_t page, float x, float y);
 EXR_API exr_status exr_render_page(const exr_layout *layout, exr_font *font, size_t page,
                                    exr_bitmap *bitmap, exr_error *error);
+EXR_API exr_status exr_render_page_color(const exr_layout *layout, exr_font *font, size_t page,
+                                         exr_bitmap *bitmap, exr_error *error);
+/* Built-in PNG/JPEG decoder; owns its output pixels, freed with exr_bitmap_free(). */
+EXR_API exr_status exr_image_decode(const void *data, size_t size, exr_bitmap *rgba,
+                                    exr_error *error);
 EXR_API exr_status exr_bitmap_write_png(const exr_bitmap *bitmap, const char *path,
                                         exr_error *error);
 EXR_API void exr_bitmap_free(exr_bitmap *bitmap);

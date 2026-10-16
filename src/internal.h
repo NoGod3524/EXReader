@@ -52,4 +52,18 @@ exr_status exr_xhtml(exr_document *doc, const void *data, size_t size, size_t re
 exr_status exr_model_finish(exr_document *doc, exr_error *error);
 void exr_model_free(exr_document *doc);
 int exr_resolve_path(const char *base, const char *href, char out[2048]);
+typedef struct {
+  float value;
+  int percent;
+} exr_length; /* value < 0 means auto */
+enum { EXR_CSS_NONE, EXR_CSS_INLINE, EXR_CSS_BLOCK, EXR_CSS_TABLE, EXR_CSS_ROW, EXR_CSS_CELL };
+typedef struct {
+  float font_size, leading, indent, border_width;
+  int leading_relative, align, display, before, after, border_style;
+  unsigned flags;
+  uint32_t color, background, border_color;
+  exr_length width, height, max_width, margin[4], padding[4];
+} exr_style;
+exr_status exr_compute_styles(const exr_document *doc, const exr_layout_config *config,
+                              exr_style **styles, exr_error *error);
 #endif

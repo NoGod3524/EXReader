@@ -21,6 +21,8 @@ FetchContent_Declare(expat URL "https://codeload.github.com/libexpat/libexpat/ta
 FetchContent_Declare(miniz URL "https://codeload.github.com/richgel999/miniz/tar.gz/refs/tags/3.1.2" URL_HASH SHA256=98468f8924934b723276680f85238b6c78bf1f8b49b4459cc9b7214a20e2e9fb)
 FetchContent_Declare(sqlite URL "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip" URL_HASH SHA256=68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d)
 FetchContent_MakeAvailable(freetype expat miniz sqlite)
+FetchContent_Declare(stb URL "https://codeload.github.com/nothings/stb/tar.gz/2c980bb59875b0d32144a71867fbdebb2f77cd20" URL_HASH SHA256=9a955b1b49a4410088a2e0ee2a9c057c3c907d0c1d75454144cb980aca0ba515)
+FetchContent_MakeAvailable(stb)
 add_library(exr_sqlite STATIC ${sqlite_SOURCE_DIR}/sqlite3.c)
 target_include_directories(exr_sqlite PUBLIC ${sqlite_SOURCE_DIR})
 target_compile_definitions(exr_sqlite PRIVATE SQLITE_THREADSAFE=1 SQLITE_DQS=0 SQLITE_DEFAULT_FOREIGN_KEYS=1 SQLITE_OMIT_LOAD_EXTENSION)

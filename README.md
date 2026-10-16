@@ -1,8 +1,10 @@
 # EXReader — native C ebook engine
 
-主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.4.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
+主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.5.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
 
-文本解码、格式解析、文档模型、字体度量接入、换行、分页、文字位置、命中测试、页面像素输出和书库都在本项目 C 代码中。底层使用 FreeType、Expat、miniz 和 SQLite 四个 C 组件；不需要 Node、浏览器、DOM、WebView、Foliate 或 PDF.js。
+文本解码、格式解析、文档模型、CSS 子集、换行、分页、文字位置、命中测试、页面像素合成和书库都在本项目 C 代码中。底层使用 FreeType、Expat、miniz、SQLite 和 stb_image 五个 C 组件，分别处理字体、XML、ZIP、数据库和 PNG/JPEG 解码。
+
+框架面向通用宿主：文档树、资源、字形、行、图片和单元格坐标均可读取；宿主可以覆盖样式、关闭书内 CSS、替换图片解码器，或直接使用布局数据自行绘制。解析和排版可独立于 SQLite 书库使用，UI、账号、同步和平台事件由宿主决定。文档树目前为只读接口，自定义文档构造和解析器注册尚待补充。
 
 ## 当前实现
 
@@ -12,18 +14,20 @@
 | EPUB 文档结构 | XHTML 文档树保留章节、标题、内联元素、嵌套列表、图片、表格、脚注、全部属性与原始解码文本；保留 EPUB 3 导航树、非线性章节和辅助 XHTML |
 | EPUB 资源与链接 | manifest 资源清单、图片 / CSS / 字体等资源按需解压；支持章节相对路径、Unicode / 百分号转义与片段 ID 定位 |
 | 自有排版 | 字体实际 advance / kerning、段落、标题字号、自动换行、基础中文标点规则、分页；页面宽高、字号、行距、段间距、页边距可调 |
-| 原生渲染 | FreeType 字形栅格化，C 合成灰度像素；BMP / PNG 输出，无图形界面依赖 |
+| CSS 子集 | 章节样式表、内嵌和内联样式；元素 / 类 / ID / 后代 / 子选择器，优先级和继承；混合字号、粗斜体、颜色、对齐、缩进、边距、背景、实线边框和强制分页 |
+| 图片与表格 | PNG/JPEG 解码、透明合成和等比缩放；等宽表格、单元格换行、colspan / rowspan、按行组跨页 |
+| 原生渲染 | FreeType 字形栅格化，C 合成灰度或 RGBA 像素；BMP / PNG 输出，无图形界面依赖 |
 | 文字定位 | UTF-8 字节位置、全文查找、坐标命中测试、按位置查页；改变页宽和字号后可重新定位 |
 | 原生书库 | SQLite 单文件保存原书、书名、作者、标签、收藏、已读状态、阅读位置、封面和笔记；删除书籍时级联删除标注；事务备份 |
 | 文字转换 | C 输出 TXT、HTML、FB2、RTF、EPUB、DOCX；覆盖 Unicode 与文本转义往返，不保留复杂排版和图片 |
 
-当前流式排版支持基础横排拉丁文字和中日韩文字。EPUB 图片、表格和 CSS 已保存在文档模型中，视觉排版尚未接入；其他格式目前通过同一树接口提供段落与标题。完整 CSS、图片 / 表格布局、双向文字、复杂文字 shaping、UAX #14 / #29 的完整规则、竖排、连字符、EPUB CFI / 跨引擎标注迁移均待实现。PDF 固定版面引擎、KF8 / Huffman MOBI、CBZ、音频播放和 OCR 也尚未完成；PDF 文件当前会明确返回不支持。这里列出的格式能力是正文解析和基础原生排版，不等于完整出版物兼容性。
+当前流式排版支持基础横排拉丁文字和中日韩文字。EPUB 使用保留的 XHTML 树进行样式、图片和表格布局；其他格式目前提供段落与标题。图片按块排版，表格采用等宽列，超过一页高度的行或 rowspan 行组返回 `EXR_LIMIT`。完整 CSS、浮动绕排、字体族选择、双向文字、复杂文字 shaping、UAX #14 / #29 的完整规则、竖排、连字符、EPUB CFI / 跨引擎标注迁移均待实现。PDF 固定版面引擎、KF8 / Huffman MOBI、CBZ、音频播放和 OCR 也尚未完成；PDF 文件当前返回不支持。具体 CSS 支持范围见 [接口文档](docs/NATIVE_API.md)。
 
-接下来的实现顺序：基于文档树的样式与图片 / 表格排版 → 稳定标注 → 大书按需加载 → PDF。0.4 的 EPUB 正文使用严格 XHTML 解析，未实现 HTML5 错误恢复、EPUB 2 NCX 目录解析、远程资源和元素级 base URI；原始 NCX 可通过资源接口读取。当前转换器仍输出正文，不保留文档树结构。
+接下来的实现顺序：稳定标注 → 大书按需加载 → PDF；新增能力继续使用开放的文档与资源接口。EPUB 正文使用严格 XHTML 解析，未实现 HTML5 错误恢复、EPUB 2 NCX 目录解析、远程资源和元素级 base URI；原始 NCX 可通过资源接口读取。当前转换器仍输出正文，不保留文档树结构。
 
 ## 构建
 
-需要 C11 编译器与 CMake 3.24+。首次配置联网下载四个固定版本的 C 组件，并验证 SHA-256；后续复用构建缓存。
+需要 C11 编译器与 CMake 3.24+。首次配置联网下载五个固定版本的 C 组件，并验证 SHA-256；后续复用构建缓存。
 
 ```sh
 cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release
@@ -52,7 +56,7 @@ Windows 的示例：
 
 这是 C 引擎实际生成的页面：
 
-![Native C rendering](docs/native-page.png)
+![Native C styles, images and table rendering](docs/styled-page.png)
 
 ## C 接入
 
@@ -69,7 +73,7 @@ exr_status status;
 status = exr_document_open("book.epub", &doc, &error);
 if (status == EXR_OK) status = exr_font_open("font.ttf", &font, &error);
 if (status == EXR_OK) status = exr_layout_create(doc, font, NULL, &layout, &error);
-if (status == EXR_OK) status = exr_render_page(layout, font, 0, &image, &error);
+if (status == EXR_OK) status = exr_render_page_color(layout, font, 0, &image, &error);
 if (status == EXR_OK) status = exr_bitmap_write_png(&image, "page.png", &error);
 
 exr_bitmap_free(&image);

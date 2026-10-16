@@ -253,14 +253,19 @@ static int chunk(FILE *f, const char *type, const void *data, size_t n) {
 }
 exr_status exr_bitmap_write_png(const exr_bitmap *b, const char *path, exr_error *e) {
   unsigned char ihdr[13] = {0}, *raw, *compressed;
-  size_t bytes, y;
+  size_t bytes, y, row;
+  unsigned channels;
   unsigned long capacity;
   FILE *f;
   int ok;
-  if (!b || !path || !b->pixels || !b->width || !b->height || b->width > 16384 ||
-      b->height > 16384 || b->stride < b->width || (size_t)b->width * b->height > 64 * 1024 * 1024)
+  if (!b)
+    return exr_fail(e, EXR_ARGUMENT, "Missing bitmap");
+  channels = b->channels ? b->channels : 1;
+  row = (size_t)b->width * channels;
+  if (!path || !b->pixels || !b->width || !b->height || b->width > 16384 || b->height > 16384 ||
+      (channels != 1 && channels != 4) || b->stride < row || row * b->height > 64 * 1024 * 1024)
     return exr_fail(e, EXR_ARGUMENT, "Invalid PNG bitmap");
-  bytes = ((size_t)b->width + 1) * b->height;
+  bytes = (row + 1) * b->height;
   capacity = mz_compressBound((mz_ulong)bytes);
   raw = malloc(bytes);
   compressed = malloc(capacity);
@@ -270,8 +275,8 @@ exr_status exr_bitmap_write_png(const exr_bitmap *b, const char *path, exr_error
     return exr_fail(e, EXR_MEMORY, "PNG allocation failed");
   }
   for (y = 0; y < b->height; y++) {
-    raw[y * ((size_t)b->width + 1)] = 0;
-    memcpy(raw + y * ((size_t)b->width + 1) + 1, b->pixels + y * b->stride, b->width);
+    raw[y * (row + 1)] = 0;
+    memcpy(raw + y * (row + 1) + 1, b->pixels + y * b->stride, row);
   }
   if (mz_compress2(compressed, &capacity, raw, (mz_ulong)bytes, 1) != MZ_OK) {
     free(raw);
@@ -282,6 +287,7 @@ exr_status exr_bitmap_write_png(const exr_bitmap *b, const char *path, exr_error
   big32(ihdr, b->width);
   big32(ihdr + 4, b->height);
   ihdr[8] = 8;
+  ihdr[9] = channels == 4 ? 6 : 0;
   f = exr_fopen(path, "wb");
   if (!f) {
     free(compressed);

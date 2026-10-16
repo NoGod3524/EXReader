@@ -392,10 +392,14 @@ static void le32(unsigned char *p, uint32_t v) {
 exr_status exr_bitmap_write_bmp(const exr_bitmap *b, const char *path, exr_error *e) {
   unsigned char head[54] = {0}, *row;
   uint32_t stride, y, x;
+  unsigned channels;
   FILE *f;
   int ok = 1;
-  if (!b || !b->pixels || !path || !b->width || !b->height || b->width > 16384 ||
-      b->height > 16384 || b->stride < b->width)
+  if (!b)
+    return exr_fail(e, EXR_ARGUMENT, "Missing bitmap");
+  channels = b->channels ? b->channels : 1;
+  if (!b->pixels || !path || !b->width || !b->height || b->width > 16384 || b->height > 16384 ||
+      (channels != 1 && channels != 4) || b->stride < b->width * channels)
     return exr_fail(e, EXR_ARGUMENT, "Invalid bitmap");
   stride = (b->width * 3 + 3) & ~3u;
   row = calloc(stride, 1);
@@ -418,8 +422,16 @@ exr_status exr_bitmap_write_bmp(const exr_bitmap *b, const char *path, exr_error
   if (fwrite(head, 1, 54, f) != 54)
     ok = 0;
   for (y = b->height; y > 0 && ok; y--) {
-    for (x = 0; x < b->width; x++)
-      row[x * 3] = row[x * 3 + 1] = row[x * 3 + 2] = b->pixels[(size_t)(y - 1) * b->stride + x];
+    for (x = 0; x < b->width; x++) {
+      const unsigned char *p = b->pixels + (size_t)(y - 1) * b->stride + x * channels;
+      if (channels == 1)
+        row[x * 3] = row[x * 3 + 1] = row[x * 3 + 2] = *p;
+      else {
+        row[x * 3] = (unsigned char)((p[2] * p[3] + 255 * (255 - p[3])) / 255);
+        row[x * 3 + 1] = (unsigned char)((p[1] * p[3] + 255 * (255 - p[3])) / 255);
+        row[x * 3 + 2] = (unsigned char)((p[0] * p[3] + 255 * (255 - p[3])) / 255);
+      }
+    }
     if (fwrite(row, 1, stride, f) != stride)
       ok = 0;
   }

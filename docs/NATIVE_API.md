@@ -1,12 +1,12 @@
-# Native C API 0.4
+# Native C API 0.5
 
-公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
+公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.5 扩展了 glyph、line、page、bitmap 结构，宿主需要使用新头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
 ## 所有权与并发
 
 - `exr_document`、`exr_font`、`exr_layout`、`exr_library` 为不透明句柄，使用各自析构函数释放。
-- document 的 text / title / blocks / nodes / chapters / resources 和 layout 的 pages / lines / glyphs 为只读借用视图，所属对象释放后失效。树节点属性和文本也属于 document。
-- 布局保存数值和位置，不保留文档指针。渲染时需传入生成该布局时使用的字体；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不同句柄可独立使用。
+- document 的 text / title / blocks / nodes / chapters / resources 和 layout 的 pages / lines / glyphs / boxes / image 为只读借用视图，所属对象释放后失效。树节点属性和文本也属于 document。借用的图片像素不可修改或释放。
+- 布局拥有位置、样式和已解码图片，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的字体；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不同句柄可独立使用。
 - `exr_books_free()` / `exr_notes_free()` 释放数组和其中字符串。修改元数据时复制结构并用自己的字符串设置输入字段，不替换结果数组中的库拥有指针。
 - `exr_bitmap_free()` 释放像素。`exr_document_export()` / `exr_document_resource()` / `exr_library_blob()` 返回的字节用 `exr_free()` 释放。这些字节独立于原对象的生命周期。跨 DLL 调用时不要使用宿主 `free()` 释放库内存。
 - 输出参数需为空或已先释放。对输入的任意无效 C 指针不提供运行时保护。
@@ -29,7 +29,7 @@ FreeType 提供真实字形 advance、kerning 和像素，不负责分页。EXRe
 
 文本节点的 `text` 保存 XML 解码后的原始空白和内容；元素的 `name` 与属性名采用 Expat 展开名 `namespace-URI|local-name`，无命名空间时为原名。`exr_node_attribute()` 精确匹配名称，例如 `class`、`style`、`href`、`src`、`id`、`colspan`、`http://www.idpf.org/2007/ops|type`。元素名、内联样式、内嵌 style 文本、未知元素及其属性均保留。
 
-节点 `start/end` 是规范化正文的半开 UTF-8 字节区间，与原始 XHTML 字节位置和 `strlen(node.text)` 不同。当前正文只包括线性 spine 章节；head、script、style、hidden 子树和辅助章节的范围均为 `SIZE_MAX`。没有文字的可见元素可以有零长度范围。辅助脚注和目录的树仍可访问，链接仍可指向它们。图片书可以成功打开并检查结构，但当前文字排版接口对没有正文的书返回 `EXR_FORMAT`。
+节点 `start/end` 是规范化正文的半开 UTF-8 字节区间，与原始 XHTML 字节位置和 `strlen(node.text)` 不同。当前正文只包括线性 spine 章节；head、script、style、hidden 子树和辅助章节的范围均为 `SIZE_MAX`。没有文字的可见元素可以有零长度范围。辅助脚注和目录的树仍可访问，链接仍可指向它们。图片书可以打开、排版和绘制，图片本身的文字范围可以为零；纯图片书的文本位置不足以唯一标识页面。
 
 EPUB 3 目录通过 nav 子树表达，层级由其中的 ol/li 保留。可用 `exr_node_attribute(node, "http://www.idpf.org/2007/ops|type")` 查找包含 `toc` 的标记。EPUB 2 NCX 暂只保留为原始资源。其他格式的树目前只提供原解析器已有的标题和段落，没有新增其结构解析。
 
@@ -51,14 +51,52 @@ if (count && exr_document_resolve(doc, 0, "../images/cover.png",
 
 `exr_document_resolve()` 以指定章节路径为基准，处理 `..`、UTF-8 和百分号转义，包括仅有 `#fragment` 的地址。成功返回资源索引；若目标 XHTML 已解析，还返回章节根或对应 id / xml:id 节点。找不到资源或片段时相应索引为 `SIZE_MAX`；外部 URI、越过 ZIP 根、非法编码等返回 `EXR_ARGUMENT`。解析基准是章节路径，尚不应用 HTML base 或 xml:base。
 
-CSS 目前保存供后续排版使用，正文投影尚不计算样式继承或 display。表格当前按单元格提取正文，图片尚未解码和绘制。现有导出接口仍为文本转换，会丢失图片、链接和样式。
+CSS `display:none` 只影响布局，不删除规范化正文；重新排版时原有文字位置保持不变。HTML `hidden` 属性在文档投影阶段排除，其行为与 CSS 隐藏不同。现有导出接口仍为文本转换，会丢失图片、链接和样式。
+
+## 宿主样式与布局输出
+
+`exr_layout_create()` 保留默认入口。通过 `exr_layout_create_ex()` 配置宿主样式和图片解码器；配置及 CSS 字符串只在创建调用期间借用。
+
+```c
+exr_layout_config config = exr_layout_config_defaults();
+config.page.width = 600;
+config.document_css = 0; /* Disable linked, embedded and inline book CSS. */
+config.user_css = "p {font-size:24px;line-height:1.6} img {max-width:100%}";
+status = exr_layout_create_ex(doc, font, &config, &layout, &error);
+```
+
+书内 link/style 按文档顺序读取并限制在对应章节；内联 style 使用更高优先级。元素、`*`、`.class`、`#id`、组合、逗号列表、后代和 `>` 子选择器可用。支持 specificity、源码顺序、`!important` 和文字属性继承。宿主 `user_css` 的优先级高于全部书内规则（包括书内 `!important`），便于调用方控制阅读样式。关闭书内 CSS 后仍保留标题、粗体、斜体等语义默认值；宿主可以覆盖它们。
+
+| 范围 | 已实现 |
+| --- | --- |
+| 文字 | font-size（4–256）、font-weight（合成粗体）、font-style（合成斜体）、color、line-height、text-align（left/start/center/right/end/justify）、text-indent |
+| 盒模型 | width / max-width、margin / padding 及四边长属性、background-color（background 仅接受颜色）、统一 border-width / border-color / border-style（solid/none）和 border 简写 |
+| 流布局 | display: none/block/inline/table/table-row/table-cell；break-before/after 和 page-break-before/after 的 page/always/auto |
+| 尺寸 | px、pt、em、rem、百分比和零值；margin 可 auto；图片支持 height，普通块的 height 尚未应用 |
+| 颜色 | #RGB、#RGBA、#RRGGBB、#RRGGBBAA；black/white/red/green/blue/gray/grey/transparent/navy/yellow/orange/purple |
+
+`rem` 当前以宿主页默认字号为基准。`inherit` 支持文字属性；缩进和边框宽度不支持百分比。所有负尺寸均忽略，外边距不折叠。未知属性、选择器和 at-rule 会被跳过；尚不支持 @import、@media、变量、伪类、属性选择器、字体族/嵌入字体、flex/grid、浮动、定位、完整空白规则和浏览器式盒模型分片。属性值和单位使用小写。样式表合计上限 1 MiB、4096 条规则、131072 项展开声明、每规则 256 项声明、2000 万次匹配工作；达到上限返回 `EXR_LIMIT`。
+
+`exr_layout_glyphs()` 输出字形编号、字号、颜色 `0xRRGGBBAA`、合成粗/斜体标志、基线、源节点和文字偏移。`clip_left/right` 指明水平裁切范围。`exr_layout_lines()` 输出行矩形与字形范围；表格一行可有多个并列文字行。`exr_layout_boxes()` 输出背景块、图片和单元格的页面坐标、边框与背景，按页及节点前序排列。page 的 line/box 范围可直接迭代。坐标单位为逻辑像素，原点在页面左上方。
+
+宿主可先按 boxes 顺序绘制背景、图片和边框，再绘制文字。`exr_layout_image(layout, resource)` 返回对应资源的解码后 RGBA 借用视图；缺失时返回 NULL。这些输出可直接用于自定义渲染器，不需要创建内置页面位图。
+
+## 图片、表格与像素
+
+内置 `exr_image_decode()` 接受 PNG/JPEG 字节并返回独立 RGBA 像素，用 `exr_bitmap_free()` 释放。布局按资源缓存图片；图片保持纵横比，限制在内容宽度和可用页高之内。width/height 同时存在时按容纳方式缩放，图片当前独占块。缺失、外部、损坏或不支持的图片显示带标志的占位框；资源/解码限制错误会中止布局。解码尺寸上限 8192×8192 且总像素不超过 16 Mi，编码输入上限 32 MiB，stb 临时分配上限 128 MiB，布局图片缓存上限 64 MiB。
+
+宿主设置 `decode_image`、`release_image` 和 `image_context` 可替换解码器。回调收到资源元数据及编码字节；返回 `channels=4`、非预乘 RGBA、有效 width/height/stride。引擎复制像素，然后无论成功或失败都调用配套 release 回调一次；不得在 release 中释放借用的编码输入。`EXR_FORMAT` 表示占位框，其余非成功状态中止布局。要保留内置 PNG/JPEG 支持，宿主回调可以调用 `exr_image_decode()` 并在 release 中使用 `exr_bitmap_free()`。回调及 context 只需在 layout create 调用期间有效，渲染不会再次调用它们。
+
+表格采用等宽列，支持单元格换行、colspan 和 rowspan。具有跨行单元格的相连行组一起分页；高于一页的行组返回 `EXR_LIMIT`。上限为 64 列、4096 行/单元格、8 层嵌套。尚不支持按内容自动分配列宽、跨页拆分单元格、重复表头、垂直对齐和 border-collapse。单元格的可见边框、背景和内边距由样式控制。
+
+`exr_render_page()` 输出 1 通道灰度；`exr_render_page_color()` 输出 4 通道 RGBA。内置渲染器使用白底、双线性图片缩放、透明合成和 FreeType 字形，整页位图不超过 64 MiB。`stride` 是每行字节数。PNG 支持两种通道并保留输入 alpha；BMP 写为 24 位并将 alpha 合成到白底。写入时 `channels=0` 兼容灰度输入。框架不提供窗口、GPU 或事件循环。
 
 ## 书库
 
 SQLite 数据库保存原文件 BLOB、封面 BLOB、元数据和 UTF-8 位置标注。书籍主键为库内整数。格式在导入时验证；正文大小用于检查进度和标注范围。书库使用 application_id 与 schema version 检查，拒绝不认识的现有数据库。单句修改使用 SQLite 事务语义，书籍删除通过外键清理笔记。
 
-`exr_library_backup()` 使用 SQLite VACUUM INTO 生成可直接打开的完整备份；目标数据库不能已有非空内容。封面目前作为受大小限制的 BLOB 存储，框架尚不解析或缩放封面图片。媒体大文件的流式导入尚未实现。现有 ZIP / IndexedDB 备份需要未来的迁移工具。
+`exr_library_backup()` 使用 SQLite VACUUM INTO 生成可直接打开的完整备份；目标数据库不能已有非空内容。封面作为受大小限制的 BLOB 存储；宿主可调用图片解码接口生成像素，封面不自动缩放。媒体大文件的流式导入尚未实现。现有 ZIP / IndexedDB 备份需要未来的迁移工具。
 
 ## 嵌入平台
 
-宿主负责文件选择、字体提供、页面纹理显示、触摸 / 鼠标 / 键盘事件和系统生命周期。像素输出为 8 位灰度，可转为纹理或原生绘图缓冲。Android 可经 JNI 调用 C，Apple 平台可经 Objective-C / Swift 导入 C 头文件；当前尚未提供这些宿主适配器。
+宿主负责文件选择、字体提供、页面纹理显示、触摸 / 鼠标 / 键盘事件和系统生命周期。像素或布局数据可转为纹理或原生绘图命令。Android 可经 JNI 调用 C，Apple 平台可经 Objective-C / Swift 导入 C 头文件；当前尚未提供这些宿主适配器。
