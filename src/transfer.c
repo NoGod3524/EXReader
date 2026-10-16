@@ -5,6 +5,21 @@
 #include "internal.h"
 #include <miniz.h>
 #include <time.h>
+static exr_status xml_text(const char *text, size_t size, const char *field, exr_error *e) {
+  size_t at = 0;
+  while (at < size) {
+    size_t start = at;
+    uint32_t cp;
+    if (!exr_next(text, size, &at, &cp))
+      return exr_fail(e, EXR_ENCODING, "Invalid UTF-8 in XML %s at byte %zu", field, start);
+    if (cp != 9 && cp != 10 && cp != 13 &&
+        !(cp >= 0x20 && cp <= 0xd7ff) && !(cp >= 0xe000 && cp <= 0xfffd) &&
+        !(cp >= 0x10000 && cp <= 0x10ffff))
+      return exr_fail(e, EXR_ENCODING, "XML 1.0 cannot represent U+%04lX in %s at byte %zu",
+                      (unsigned long)cp, field, start);
+  }
+  return EXR_OK;
+}
 static int escaped(exr_buffer *b, const char *text, size_t n) {
   size_t i;
   for (i = 0; i < n; i++) {
@@ -73,6 +88,13 @@ exr_status exr_document_export(const exr_document *d, exr_format f, void **out, 
   if (!strftime(modified, sizeof(modified), "%Y-%m-%dT%H:%M:%SZ", &utc))
     return exr_fail(e, EXR_IO, "Cannot format UTC time");
   title = d->title && d->title[0] ? d->title : "Untitled";
+  if (f == EXR_HTML || f == EXR_FB2 || f == EXR_EPUB || f == EXR_DOCX) {
+    exr_status status = f == EXR_DOCX ? EXR_OK : xml_text(title, strlen(title), "title", e);
+    if (status == EXR_OK)
+      status = xml_text(d->text, d->size, "document text", e);
+    if (status != EXR_OK)
+      return status;
+  }
   if (f == EXR_TXT) {
     bytes = exr_copy(d->text, d->size);
     if (!bytes)
