@@ -7,6 +7,11 @@ Local Windows Release passes all 22 CTest suites: 295398 shaping, 34943 line-bou
 The existing pager snapshots, table layouts, byte budgets, Unicode conformance,
 bitmap validation and benchmark smoke tests also pass.
 
+All seven installed SDK host examples and the renderer pass with only Windows
+system directories on PATH, including Chinese book/font/output paths. Same-session
+0.12.0/0.12.1 measurements use matching EPUB/font hashes; raw results and line-boundary
+reshaping costs are recorded in [PERFORMANCE.md](PERFORMANCE.md).
+
 The audit fixes seven behavior and resource-limit defects:
 
 1. Long mark attachment uses cached visible/base predecessors, and integrated
