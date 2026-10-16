@@ -19,7 +19,12 @@ async function nodes() {
 async function find(pattern, clickable = false) {
   let latest = [];
   for (let attempt = 0; attempt < 25; attempt++) {
-    latest = await nodes();
+    try { latest = await nodes(); }
+    catch (error) {
+      if (error.status === undefined) throw error;
+      await wait(500);
+      continue;
+    }
     // Cold emulator boots can show a launcher ANR over the foreground app.
     if (latest.some(n => n.text === "Pixel Launcher isn't responding")) {
       const close = latest.find(n => n.text === 'Close app');
