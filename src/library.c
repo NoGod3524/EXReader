@@ -390,15 +390,26 @@ exr_status exr_library_note(exr_library *l, const exr_note *note, int64_t *id, e
   sqlite3_stmt *s = NULL;
   exr_document *doc = NULL;
   exr_anchor captured = {0};
+  exr_note snapshot;
   const exr_anchor *anchor;
   exr_status result;
-  size_t text_size;
+  size_t text_size, note_size = 0;
   int step, preserve = 0;
+  /* The output commonly aliases note->id; retain the input before clearing it. */
+  if (note) {
+    snapshot = *note;
+    note = &snapshot;
+  }
+  if (id)
+    *id = 0;
   if (!l || !note || !id || !note->text || note->id < 0 || note->book_id <= 0 ||
       note->start > note->end || (uint64_t)note->end > INT64_MAX)
     return exr_fail(e, EXR_ARGUMENT, "Invalid annotation");
+  while (note_size <= EXR_MAX_TEXT && note->text[note_size])
+    note_size++;
+  if (note_size > EXR_MAX_TEXT)
+    return exr_fail(e, EXR_LIMIT, "Annotation text exceeds 64 MiB");
   anchor = &note->anchor;
-  *id = 0;
   if (anchor->exact) {
     if (anchor->start != note->start || anchor->end != note->end)
       return exr_fail(e, EXR_ARGUMENT, "Annotation selector and range differ");
