@@ -16,6 +16,10 @@ typedef struct {
   unsigned char *bytes;
   size_t size;
 } exr_resource_data;
+typedef struct {
+  unsigned char *bytes;
+  size_t size, refs;
+} exr_archive_store;
 struct exr_document {
   char *text, *title;
   size_t size, text_capacity;
@@ -34,6 +38,7 @@ struct exr_document {
   int owns_chapter_strings;
   unsigned char *archive;
   size_t archive_size;
+  exr_archive_store *shared_archive;
 };
 typedef struct {
   char *data;
@@ -50,6 +55,9 @@ exr_status exr_read(const char *path, unsigned char **data, size_t *size, exr_er
 exr_status exr_decode(const void *data, size_t size, exr_buffer *buf, exr_error *error);
 exr_status exr_anchor_validate(const exr_anchor *anchor, exr_error *error);
 exr_status exr_parse(exr_document *doc, const void *data, size_t size, exr_error *error);
+exr_status exr_epub_index(const void *data, size_t size, exr_document **out, exr_error *error);
+exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **out,
+                        exr_error *error);
 int exr_add_block(exr_document *doc, const char *text, size_t size, unsigned heading);
 char *exr_model_copy(exr_document *doc, const char *text, size_t size);
 const char *exr_html_tag(const exr_document *doc, const exr_node *node);

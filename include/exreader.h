@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.7.0"
+#define EXR_VERSION "0.8.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -46,6 +46,8 @@ typedef struct exr_document exr_document;
 typedef struct exr_font exr_font;
 typedef struct exr_layout exr_layout;
 typedef struct exr_library exr_library;
+typedef struct exr_publication exr_publication;
+typedef struct exr_session exr_session;
 typedef struct {
   size_t start, end;
   unsigned heading;
@@ -139,6 +141,25 @@ typedef struct {
   exr_anchor_state state;
   size_t start, end; /* SIZE_MAX unless FOUND. */
 } exr_anchor_match;
+
+/* A part may be a chapter, page, or a host-defined independently laid-out unit.
+   Identifiers and paths are stable metadata, not whole-book text offsets. */
+typedef struct {
+  const char *id, *path, *title;
+  int in_reading_order;
+} exr_part;
+/* A successful loader transfers an independent document to the engine. */
+typedef exr_status (*exr_part_load_fn)(void *context, size_t part, exr_document **out,
+                                       exr_error *error);
+typedef void (*exr_context_release_fn)(void *context);
+typedef struct {
+  const char *title;
+  const exr_part *parts;
+  size_t part_count;
+  exr_part_load_fn load;
+  void *context;
+  exr_context_release_fn release;
+} exr_publication_input;
 typedef struct {
   size_t start, end;
   uint32_t codepoint, glyph;
@@ -227,6 +248,22 @@ EXR_API exr_status exr_anchor_resolve(const exr_document *doc, const exr_anchor 
                                       exr_anchor_match *match, exr_error *error);
 EXR_API exr_status exr_document_export(const exr_document *doc, exr_format format, void **data,
                                        size_t *size, exr_error *error);
+/* Metadata is copied. On success, release (if provided) runs once after the last
+   publication/session reference is freed. Without release, keep context alive.
+   Callbacks must not destroy/reenter the active publication or session. */
+EXR_API exr_status exr_publication_create(const exr_publication_input *input,
+                                          exr_publication **out, exr_error *error);
+/* Built-in indexed loading currently accepts EPUB. No XHTML is parsed at open. */
+EXR_API exr_status exr_publication_open(const char *path, exr_publication **out,
+                                        exr_error *error);
+EXR_API exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size,
+                                               exr_publication **out, exr_error *error);
+EXR_API void exr_publication_free(exr_publication *publication);
+EXR_API const char *exr_publication_title(const exr_publication *publication);
+EXR_API const exr_part *exr_publication_parts(const exr_publication *publication, size_t *count);
+/* Own the returned document with document_free(); offsets/indices are part-local. */
+EXR_API exr_status exr_publication_load(exr_publication *publication, size_t part,
+                                        exr_document **out, exr_error *error);
 EXR_API exr_status exr_font_open(const char *path, exr_font **out, exr_error *error);
 EXR_API void exr_font_free(exr_font *font);
 EXR_API exr_layout_options exr_layout_defaults(void);
@@ -237,6 +274,19 @@ EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,
 EXR_API exr_status exr_layout_create_ex(const exr_document *doc, exr_font *font,
                                         const exr_layout_config *config, exr_layout **out,
                                         exr_error *error);
+/* Font and image callback context must outlive the session. Config/user CSS are
+   copied; the publication is retained. Cache capacity is 1..64 resident parts. */
+EXR_API exr_status exr_session_create(exr_publication *publication, exr_font *font,
+                                      const exr_layout_config *config, size_t capacity,
+                                      exr_session **out, exr_error *error);
+/* Loads/layouts only this part. Borrowed views last until the next get/clear/free.
+   Cache hits reuse layout; failure keeps existing cached entries. */
+EXR_API exr_status exr_session_get(exr_session *session, size_t part,
+                                   const exr_document **document, const exr_layout **layout,
+                                   exr_error *error);
+EXR_API size_t exr_session_cached(const exr_session *session);
+EXR_API void exr_session_clear(exr_session *session);
+EXR_API void exr_session_free(exr_session *session);
 EXR_API void exr_layout_free(exr_layout *layout);
 EXR_API const exr_page *exr_layout_pages(const exr_layout *layout, size_t *count);
 EXR_API const exr_line *exr_layout_lines(const exr_layout *layout, size_t *count);

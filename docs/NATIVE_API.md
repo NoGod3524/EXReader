@@ -1,27 +1,68 @@
-# Native C API 0.7
+# Native C API 0.8
 
-公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.7 新增稳定文本锚点接口，并在 `exr_note` 末尾添加 `anchor`；0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构。宿主需要使用匹配版本的头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
+公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.8 新增 publication / session 分段加载接口；0.7 新增稳定文本锚点接口，并在 `exr_note` 末尾添加 `anchor`；0.6 新增通用文档构造入口及 `EXR_CUSTOM = 0`；0.5 扩展了 glyph、line、page、bitmap 结构。宿主需要使用匹配版本的头文件重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
 ## 所有权与并发
 
-- `exr_document`、`exr_font`、`exr_layout`、`exr_library` 为不透明句柄，使用各自析构函数释放。
+- `exr_document`、`exr_font`、`exr_layout`、`exr_library`、`exr_publication`、`exr_session` 为不透明句柄，使用各自析构函数释放。
 - document 的 text / title / blocks / nodes / chapters / resources 和 layout 的 pages / lines / glyphs / boxes / image 为只读借用视图，所属对象释放后失效。树节点属性和文本也属于 document。借用的图片像素不可修改或释放。
-- 布局拥有位置、样式和已解码图片，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的字体；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不同句柄可独立使用。
+- 布局拥有位置、样式和已解码图片，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的字体；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不共享对象的独立句柄可独立使用。共享 publication、session 或压缩 archive 的文档，其调用及生命周期变更也由宿主串行处理；引擎没有全局状态或内部线程锁。
 - `exr_books_free()` / `exr_notes_free()` 释放数组和其中字符串；后者也释放每条笔记的锚点字符串。修改元数据时复制结构并用自己的字符串设置输入字段，不替换结果数组中的库拥有指针。
 - `exr_anchor_create()` 输出独立拥有的选文、前后文和章节路径字符串，由 `exr_anchor_free()` 释放；输入文档随后可释放。宿主也可直接提供选择器字段供只读解析，但不能用库的释放函数释放宿主借用的字符串。
 - `exr_bitmap_free()` 释放像素。`exr_document_export()` / `exr_document_resource()` / `exr_library_blob()` 返回的字节用 `exr_free()` 释放。这些字节独立于原对象的生命周期。跨 DLL 调用时不要使用宿主 `free()` 释放库内存。
 - 输出参数需为空或已先释放。对输入的任意无效 C 指针不提供运行时保护。
 - `exr_document_create()` 在调用期间复制输入数组中的字符串、属性和资源字节；返回后可释放所有输入。失败时不交出部分文档，`*out` 为 NULL。
+- `exr_publication_create()` 复制标题和分段元数据，不复制 loader context。若提供 release 回调，创建成功后由 publication 在最后一个 publication / session 引用释放时恰好回调一次；创建失败时仍由宿主清理 context。release 为 NULL 时不自动释放 context，宿主必须使其在全部 publication / session 生命周期内有效。
+- `exr_publication_load()` 返回宿主拥有的独立文档，用 `exr_document_free()` 释放。`exr_session_get()` 返回借用文档和布局，契约有效期至下次 get / clear / free；宿主不得释放或长期保留这些指针。
 
 ## 文档与排版
 
 `exr_document_open()` 根据扩展名选择解析器；内存入口显式指定 `exr_format`。文本模型使用规范化 UTF-8；进度和标注范围使用规范化文本的字节偏移，不使用页码作为永久位置。宿主通过 `exr_layout_page_at()` 在重新排版后查找该位置，通过 `exr_layout_hit_test()` 将坐标映射回文字。0.7 的文本锚点可以在正文投影变化后重新寻找选文；阅读进度仍为偏移。0.4 的 EPUB 正文投影会分隔表格单元格、排除 hidden 元素，偏移可能与 0.3 不同；旧标注只有偏移，迁移后仍明确标为 legacy，不能把当前正文中的同一数字偏移当作历史选文。旧 Foliate CFI 转换尚未实现。
 
-输入上限 128 MiB、正文上限 64 MiB、布局上限约 400 万字形。文档树上限 262144 个节点、字符串累计 64 MiB、每个元素最多 256 个属性。ZIP 成员上限 32 MiB、条目上限 1 万、打开期间累计解压上限 128 MiB；后续每次资源读取单独应用 32 MiB 上限，由调用者释放返回的字节。XML 嵌套上限 256 层，不解析外部实体，拒绝实体声明；HTML 的脚本和样式不进入正文。所有正文排版仍在内存中完成，长书暂未实现按页懒排和页缓存。
+输入上限 128 MiB、单文档正文上限 64 MiB、单布局上限约 400 万字形。文档树上限 262144 个节点、字符串累计 64 MiB、每个元素最多 256 个属性。ZIP 成员上限 32 MiB、条目上限 1 万、打开期间累计解压上限 128 MiB；后续每次资源读取单独应用 32 MiB 上限，由调用者释放返回的字节。XML 嵌套上限 256 层，不解析外部实体，拒绝实体声明；HTML 的脚本和样式不进入正文。单个文档仍完整解析并在内存中排版；0.8 可按需加载独立分段并缓存其布局，尚未实现页级续排和页缓存。
 
 FreeType 提供真实字形 advance、kerning 和像素，不负责分页。EXReader 自己决定段落、换行、分页、基线和字形位置。当前字体只按 Unicode 标量取字形，复杂 OpenType shaping、双向文字和完整 grapheme / line break 算法仍需扩展。
 
 正文查找为区分大小写的 UTF-8 子串查询。元数据搜索使用绑定参数的 SQLite LIKE，并转义 `%` / `_`，其大小写折叠规则为 SQLite 默认规则。
+
+## 分段 publication 与 session
+
+`exr_publication` 保存分段目录及 loader，不要求整书已解析为一个文档。每个 `exr_part` 提供用于定位的 `id/path`、显示标题 `title` 和 `in_reading_order`；分段可以是章节、固定页或宿主定义的独立排版单位。`exr_publication_title()` / `exr_publication_parts()` 返回属于 publication 的只读元数据，索引只在该 publication 内有效。
+
+`exr_publication_create()` 接收 `exr_publication_input`，复制标题及 parts 数组中的字符串。`load(context, part, out, error)` 在成功时交出一个独立、由引擎接管的 `exr_document`；可使用任意内置格式解析器或 `exr_document_create()` 构造，不需要全局注册。每次成功加载都应返回可独立释放的文档，不能交出宿主正在复用的借用句柄。若提供 release 回调，context 仅在 create 成功后交由 publication 在最后一个引用释放时回调清理；release 为 NULL 时仍由宿主管理其生命周期，不会默认调用 free。
+
+publication 必须提供 1–10000 个分段。标题、分段 ID 和分段标题的单字符串上限为 64 KiB，分段 path 上限为 2046 字节，元数据累计上限为 64 MiB（含字符串终止字节）；字符串必须为有效 UTF-8。可选字符串为 NULL 时复制为空串。ID 和 path 允许为空或重复，例如 EPUB spine 可以重复引用同一资源；它们不是唯一键。
+
+内置 `exr_publication_open()` / `exr_publication_open_memory()` 目前只接受 EPUB。打开时读取 container、OPF、manifest 和 spine，既不解压也不解析任何 XHTML；parts 先按 spine 顺序排列（包括 `linear="no"`），再追加辅助 XHTML。`in_reading_order` 保留原书阅读顺序属性；独立请求非线性章节或导航章节时，也会将该章作为独立文档投影和排版。请求一个 part 才解析对应 XHTML，完整资源清单仍可访问，所有分段共享同一份压缩 archive。跨章链接可以解析到资源；目标章节未解析时，目标节点返回 `SIZE_MAX`。
+
+直接调用 `exr_publication_load()` 得到宿主拥有的文档，不进入 session 缓存。需要自动管理逐段排版时，调用 `exr_session_create(publication, font, config, capacity, ...)`，capacity 为 1–64 个驻留分段。session 保留 publication，因此创建成功后可以先释放宿主的 publication 句柄。config 和 user CSS 被复制；user CSS 必须为有效 UTF-8，大小不超过 1 MiB。font、图片解码回调及其 context 仍由宿主提供，必须在 session 生命周期内保持有效。改变字体或版式时，应创建使用新配置的 session。
+
+```c
+exr_publication *publication = NULL;
+exr_session *session = NULL;
+const exr_document *part_doc = NULL;
+const exr_layout *part_layout = NULL;
+exr_error error = {0};
+exr_status status = exr_publication_open("book.epub", &publication, &error);
+/* font is an open exr_font that will outlive session. */
+if (status == EXR_OK)
+    status = exr_session_create(publication, font, NULL, 2, &session, &error);
+exr_publication_free(publication);
+if (status == EXR_OK)
+    status = exr_session_get(session, 0, &part_doc, &part_layout, &error);
+/* Use the borrowed document/layout before the next get/clear/free. */
+exr_session_free(session);
+```
+
+`exr_session_get()` 仅加载并排版所请求的分段；缓存命中直接复用文档和布局。达到容量后按 LRU 淘汰最久未访问的分段，同时释放其文档和布局；加载或排版失败保留原缓存。`exr_session_cached()` 返回当前驻留数量，`exr_session_clear()` 清空缓存，后续 get 会重新加载。新分段加载期间可临时多驻留一个分段；容量按分段数计算，不是内存字节硬上限。
+
+分段的页号、节点 / 资源索引和规范化 UTF-8 偏移都是局部值，不能当作旧接口的全书偏移。宿主保存位置时需结合 part 索引或宿主唯一标识、id/path，以及局部偏移或 `exr_anchor`；不能仅靠可能重复的 id/path 区分分段。锚点只在所加载分段的正文内解析。整书总页数在各段排版完成前未知，本接口不预先排完整本书。
+
+loader 和图片解码回调不能销毁或重入当前正在执行的 publication / session。`exr_session_get()` 拒绝同一 session 的重入访问；这不替代宿主对共享 publication / source 对象及其生命周期的串行管理。
+
+这一层提供分段增量加载和排版，不提供单章内部的页级续排。每次仍完整解析并排版一个分段，超长段落和大表格仍整体处理；EPUB 压缩输入仍受 128 MiB、单 ZIP 成员仍受 32 MiB 上限约束。需要更细粒度时，宿主 loader 可以提供更小的独立分段。现有 `exr_document_open()`、书库导入、`exr_library_document()`、全书搜索和导出继续使用原文档模型，不自动变为懒加载。
+
+SDK 的 `examples/lazy.c` 可编译为 `exreader-lazy-example`，用法为 `font.ttf output.png [book.epub part-index]`。不传书籍参数时，创建三个由宿主 loader 构造的分段，仅加载索引 1；传入 EPUB 和从 0 开始的 part 索引时，使用内置索引并只渲染该分段的第一页。两种路径均设置一个驻留分段，输出用于检查实际加载数量。
 
 ## 稳定文本锚点
 
@@ -108,7 +149,7 @@ path 是原始虚拟文件名，不是 URI：必须为非空、规范化的相�
 
 EPUB 3 目录通过 nav 子树表达，层级由其中的 ol/li 保留。可用 `exr_node_attribute(node, "http://www.idpf.org/2007/ops|type")` 查找包含 `toc` 的标记。EPUB 2 NCX 暂只保留为原始资源。其他内置格式的树目前只提供原解析器已有的标题和段落，没有新增其结构解析；宿主构造入口可以提供更完整的结构。
 
-`exr_document_resources()` 返回 manifest 清单，包含 ID、规范化路径、媒体类型和 properties（如 nav、cover-image）。document 保留一份压缩 EPUB；XHTML 在打开时解析，其他资源通过 `exr_document_resource()` 按需解压，不写临时文件、不请求网络。清单中的资源可能缺失或损坏，读取时返回错误。
+`exr_document_resources()` 返回 manifest 清单，包含 ID、规范化路径、媒体类型和 properties（如 nav、cover-image）。全书 document 保留一份压缩 EPUB；XHTML 在打开时解析，其他资源通过 `exr_document_resource()` 按需解压，不写临时文件、不请求网络。publication 分段文档则只解析所请求章节，并共享压缩 archive。清单中的资源可能缺失或损坏，读取时返回错误。
 
 ```c
 size_t count, resource, target, size;

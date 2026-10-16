@@ -121,7 +121,14 @@ void exr_model_free(exr_document *d) {
   free(d->chapters);
   free(d->resources);
   free(d->resource_data);
-  free(d->archive);
+  if (d->shared_archive) {
+    if (!--d->shared_archive->refs) {
+      free(d->shared_archive->bytes);
+      free(d->shared_archive);
+    }
+  } else {
+    free(d->archive);
+  }
 }
 static exr_node_kind element_kind(const char *name) {
   const char *s = local_name(name);

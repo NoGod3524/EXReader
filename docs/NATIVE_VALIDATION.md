@@ -1,5 +1,28 @@
 # Native C validation
 
+## 0.8 indexed loading and bounded part cache
+
+Validation for this stage covers metadata-only EPUB opening, loading one XHTML part at a
+time, spine and auxiliary-part ordering, non-linear/nav loading, resource access through
+shared archive storage and links to unparsed chapters. Custom loader checks exercise
+copied metadata, independently owned documents, context release, session retention of
+the publication, copied configuration, LRU hits/eviction, cache clear and failure paths
+that retain existing entries. Part-local ranges and stable anchors are checked separately
+from the existing whole-book library offsets.
+
+The cache bounds resident part count, not bytes; a new load can temporarily add one part.
+Each part is still parsed and laid out in full. Tests in this stage do not establish
+page-level layout resumption, a hard memory budget or handling of arbitrarily large
+single chapters.
+
+2026-10-16. Local Windows Release passes all eight CTest suites, including 39215
+native-lazy checks. All three independent host examples compile using only the
+installed SDK header and library. The lazy example runs both a custom loader and the
+indexed EPUB path: the custom publication reports part 1 of 3, one resident part and
+one loader call; `layout.epub` reports part 1 of 2 and one resident part. Part indices
+are zero-based. The current commit's workflow supplies cross-platform runtime,
+sanitizer and mobile build status.
+
 ## 0.7 stable text anchors
 
 The anchor integration suite covers selection and point-bookmark capture, UTF-8 scalar

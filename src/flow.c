@@ -634,6 +634,18 @@ static int box_order(const void *a, const void *b) {
     return x->node < y->node ? -1 : 1;
   return (int)x->kind - (int)y->kind;
 }
+exr_status exr_layout_validate(const exr_layout_config *config, exr_error *e) {
+  exr_layout_options o = config->page;
+  if ((config->decode_image && !config->release_image) || !isfinite(o.width) ||
+      !isfinite(o.height) || !isfinite(o.margin) || !isfinite(o.font_size) ||
+      !isfinite(o.line_height) || !isfinite(o.paragraph_spacing) || o.width < 32 || o.height < 32 ||
+      o.width > 16384 || o.height > 16384 || o.margin < 0 || o.font_size < 4 || o.font_size > 256 ||
+      o.line_height < 1 || o.line_height > 5 || o.paragraph_spacing < 0 ||
+      o.paragraph_spacing > 1024 || o.width - 2 * o.margin < o.font_size * 1.5f ||
+      o.height - 2 * o.margin < o.font_size * o.line_height)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid page geometry or document");
+  return EXR_OK;
+}
 exr_status exr_flow_create(const exr_document *d, exr_font *font, const exr_layout_config *config,
                            exr_layout **out, exr_error *e) {
   exr_layout *l;
@@ -646,14 +658,11 @@ exr_status exr_flow_create(const exr_document *d, exr_font *font, const exr_layo
   *out = NULL;
   if (e)
     memset(e, 0, sizeof(*e));
-  if (!d || !font || (config->decode_image && !config->release_image) || !isfinite(o.width) ||
-      !isfinite(o.height) || !isfinite(o.margin) || !isfinite(o.font_size) ||
-      !isfinite(o.line_height) || !isfinite(o.paragraph_spacing) || o.width < 32 || o.height < 32 ||
-      o.width > 16384 || o.height > 16384 || o.margin < 0 || o.font_size < 4 || o.font_size > 256 ||
-      o.line_height < 1 || o.line_height > 5 || o.paragraph_spacing < 0 ||
-      o.paragraph_spacing > 1024 || o.width - 2 * o.margin < o.font_size * 1.5f ||
-      o.height - 2 * o.margin < o.font_size * o.line_height)
-    return exr_fail(e, EXR_ARGUMENT, "Invalid page geometry or document");
+  if (!d || !font)
+    return exr_fail(e, EXR_ARGUMENT, "Missing document or font");
+  status = exr_layout_validate(config, e);
+  if (status != EXR_OK)
+    return status;
   l = calloc(1, sizeof(*l));
   if (!l)
     return EXR_MEMORY;

@@ -37,6 +37,7 @@ int exr_measure(exr_font *font, uint32_t glyph, unsigned flags, float *advance);
 float exr_kern(exr_font *font, uint32_t left, uint32_t right);
 int exr_break_before(uint32_t previous, uint32_t next);
 int exr_cluster_continuation(uint32_t previous, uint32_t next);
+exr_status exr_layout_validate(const exr_layout_config *config, exr_error *error);
 exr_status exr_flow_create(const exr_document *doc, exr_font *font, const exr_layout_config *config,
                            exr_layout **out, exr_error *error);
 #endif
