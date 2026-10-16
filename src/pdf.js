@@ -1,8 +1,16 @@
+// SPDX-License-Identifier: GPL-3.0-only
 import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 import worker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import './pdf-text-layer.css';
 pdfjs.GlobalWorkerOptions.workerSrc = worker;
-export const loadPDF = async file => pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), cMapUrl: '/pdf-assets/cmaps/', cMapPacked: true, standardFontDataUrl: '/pdf-assets/standard_fonts/', wasmUrl: '/pdf-assets/wasm/', isEvalSupported: false }).promise;
+const assets = { cMapUrl: '/pdf-assets/cmaps/', standardFontDataUrl: '/pdf-assets/standard_fonts/', wasmUrl: '/pdf-assets/wasm/' };
+export function configurePDF(options = {}) {
+  for (const key of Object.keys(options)) {
+    if (!Object.hasOwn(assets, key) || typeof options[key] !== 'string') throw new TypeError('PDF 资源配置无效');
+  }
+  Object.assign(assets, options);
+}
+export const loadPDF = async file => pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), ...assets, cMapPacked: true, isEvalSupported: false }).promise;
 
 export async function pdfReader(stage, file, book, notes, callbacks) {
   const pdf = await loadPDF(file);
@@ -77,6 +85,6 @@ export async function pdfReader(stage, file, book, notes, callbacks) {
       }
       return result;
     },
-    async close() { closed = true; generation++; observer.disconnect(); clearTimeout(resizeTimer); renderTask?.cancel(); textLayer?.cancel(); await pdf.destroy(); },
+    async close() { closed = true; generation++; observer.disconnect(); clearTimeout(resizeTimer); renderTask?.cancel(); textLayer?.cancel(); await pdf.loadingTask.destroy(); },
   };
 }

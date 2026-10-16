@@ -1,21 +1,15 @@
 {
-  "name": "exreader",
+  "name": "exreader-framework",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "node scripts/assets.mjs && node scripts/licenses.mjs && vite build && node scripts/offline.mjs",
-    "preview": "vite preview --host 127.0.0.1",
+    "build": "node scripts/assets.mjs && node scripts/licenses.mjs && vite build && node scripts/framework-assets.mjs",
     "test": "playwright test",
-    "tauri": "tauri",
-    "desktop": "tauri dev",
-    "portable": "tauri build --no-bundle && node scripts/portable.mjs"
+    "test:node": "node --test tests/import.test.js"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.10.1",
-    "@tauri-apps/plugin-dialog": "^2.8.3",
-    "@tauri-apps/plugin-fs": "^2.7.1",
     "dompurify": "^3.3.3",
     "fflate": "^0.8.2",
     "mammoth": "^1.12.0",
@@ -24,7 +18,12 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "@tauri-apps/cli": "^2.10.1",
     "vite": "^7.3.1"
+  },
+  "description": "A local-first ebook framework with a headless library and optional browser renderers",
+  "license": "GPL-3.0-only",
+  "exports": {
+    ".": "./src/index.js",
+    "./render.css": "./src/render.css"
   }
 }

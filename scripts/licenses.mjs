@@ -2,6 +2,7 @@ import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 await mkdir('public/licenses', { recursive: true });
+await writeFile('public/licenses/EXREADER-GPL-3.0.txt', await readFile('LICENSE'));
 const lock = JSON.parse(await readFile('package-lock.json', 'utf8'));
 let js = '# JavaScript dependency licenses\n';
 for (const [dir, entry] of Object.entries(lock.packages)) {
@@ -20,7 +21,8 @@ for (const dir of ['cmaps', 'standard_fonts']) for (const filename of (await rea
 await writeFile('public/licenses/PDF-FONT-LICENSES.txt', fonts);
 const root = path.join(process.env.CARGO_HOME || path.join(homedir(), '.cargo'), 'registry', 'src');
 try {
-  const cargo = await readFile('src-tauri/Cargo.lock', 'utf8');
+  let cargo = await readFile('integrations/calibre/Cargo.lock', 'utf8');
+  try { cargo += '\n' + await readFile('src-tauri/Cargo.lock', 'utf8'); } catch { /* The framework has no application shell. */ }
   const registries = await readdir(root);
   let rust = '# Rust dependency licenses (includes build and target-specific crates)\n';
   for (const block of cargo.split('[[package]]').slice(1)) {

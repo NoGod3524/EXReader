@@ -1,6 +1,6 @@
 # Third-party notices
 
-EXReader's own code is MIT licensed. Full bundled dependency notices are in `licenses/` in the portable release and `public/licenses/` in source distributions. `Cargo.lock` and `package-lock.json` pin dependency versions.
+EXReader framework's own code is licensed under GPL-3.0-only. Existing releases through preview-0.1.1 retain their MIT license; the change does not revoke earlier grants. Third-party components retain the licenses below. Full bundled dependency notices are in `licenses/` in the portable release and `public/licenses/` in source distributions. `Cargo.lock` and `package-lock.json` pin dependency versions.
 
 | Component | Source | License | Role |
 | --- | --- | --- | --- |

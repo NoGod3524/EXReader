@@ -1,97 +1,70 @@
-# EXReader · 悦读
+# EXReader Framework
 
-一个本地优先的跨平台电子书阅读器。共享 JavaScript 阅读核心，Tauri 2 桌面 / 移动壳，浏览器 PWA。当前版本 **0.1.1**。
+GPLv3 电子书阅读框架：无应用 UI 的书库、格式解析、正文渲染、标注、备份与转换。当前框架版本 **0.2.0**，基于 EXReader 0.1.1 提取。
 
-[GitHub 仓库](https://github.com/NoGod3524/EXReader) · [预览版下载](https://github.com/NoGod3524/EXReader/releases) · [构建与测试](https://github.com/NoGod3524/EXReader/actions)
+## 三条版本线
 
-## 直接使用 Windows 免安装版
+- [`codex/framework`](https://github.com/NoGod3524/EXReader/tree/codex/framework)：GPL-3.0-only 框架，当前分支。
+- [`codex/reader-app`](https://github.com/NoGod3524/EXReader/tree/codex/reader-app)：基于同一框架 API 的完整阅读器，包含书架、设置和平台壳。
+- [`codex/reader-0.1.1`](https://github.com/NoGod3524/EXReader/tree/codex/reader-0.1.1)：冻结的原有 MIT 阅读器。[原版安装包](https://github.com/NoGod3524/EXReader/releases/tag/preview-0.1.1) 保持原许可。
 
-解压 `release/EXReader-Windows-x64-portable.zip`，双击 `EXReader.exe`。Windows 10 / 11 需要系统 WebView2；当前 Windows 11 通常已自带。
+## 使用
 
-保留 `.portable` 文件时，书库位于程序旁的 `EXReader-data/`。更新程序时保留这个目录。迁移之前使用应用的“偏好设置 → 导出整个书库”，退出程序后再移动文件夹。
+```js
+import { createLibrary, createReader } from './src/index.js';
+import './src/render.css'; // 需要正文渲染时由宿主引入
 
-## 开发运行
+const library = createLibrary({ name: 'my-library' });
+const { book, duplicate } = await library.importFile(file); // 浏览器 File
+await library.updateBook(book.id, { title: '新书名', tags: ['文学'] });
+const books = await library.listBooks({ query: '文学', sort: 'title' });
+const reader = await createReader(container, await library.getFile(book.id), book,
+  await library.listNotes(book.id), {
+    relocate: location => library.saveProgress(book.id, location),
+    error: error => console.error(error),
+  });
+await reader.next();
+await reader.close();
+const backup = await library.createBackup(); // Blob，保存方式由宿主决定
+await library.close();
+```
 
-要求 Node.js 22.12+（推荐 24）、npm。源码已包含固定版本的 Foliate 和 PWA 图标。
+应用自行提供按钮、弹窗、主题、文件选择与保存对话框。框架导入时不会创建 DOM、打开数据库、注册 Service Worker 或设置全局事件。按需调用正文渲染才会创建内容节点。
+
+## 能力与边界
+
+| 能力 | 当前状态 |
+| --- | --- |
+| 书库 | 导入、重复检测、按书名 / 作者 / 标签搜索、排序、收藏、阅读状态、修改元数据 / 封面、删除时清理文件与标注 |
+| 流式书籍 | EPUB、FB2、FB2.ZIP / FBZ、TXT、RTF、MOBI / AZW3、DOCX、HTML / HTM |
+| 固定页面 | PDF（PDF.js）；CBZ 图片漫画（Foliate 固定版面） |
+| 有声书 | MP3、M4A、M4B、OGG、OPUS、WAV、FLAC、AAC，实际解码依赖设备 |
+| 位置和标注 | CFI、PDF 页码 / 矩形、音频时间点、笔记、Markdown 导出 |
+| 格式输出 | EPUB、TXT、HTML、FB2、RTF、DOCX 和原文件；正文转换不保留复杂排版与图片 |
+| 迁移 | 原文件、元数据、封面、进度、标注的 ZIP 备份 / 合并恢复；兼容 0.1.1 备份 |
+| 可选桌面转换 | `integrations/calibre/` 独立 Rust crate，调用用户另装的 calibre；无 Tauri / UI 依赖 |
+
+当前实现是 JavaScript + 浏览器 WebView 框架，存储使用 IndexedDB；解析、排版、PDF 和媒体功能需要相应浏览器 API。入口可在 Node 导入和查询格式，但目前不是可在服务器执行所有格式解析的原生引擎。可用于 Windows、Linux、macOS、Android、iOS、iPadOS 的浏览器 / WebView 宿主；平台安装包属于阅读器分支。
+
+MOBI / AZW3 不支持 DRM；现有自动化样本主要验证基础 MOBI。CBZ 当前验证图片页解析；图像页不提供文字选区、文字转换或 CFI 高亮保证。PDF 标注存于书库，不写入 PDF。扫描 PDF 转换需要另行 OCR。大体积 ZIP 备份当前在内存中完成，上限 1 GB。未实现 OPDS、同步、OCR、DRM / LCP、有声书章节 / 后台播放服务。
+
+## 开发与验证
+
+Node.js 22.12+（推荐 24）。
 
 ```sh
 npm ci
-node scripts/assets.mjs
-npm run dev
-```
-
-打开 `http://127.0.0.1:1420`。导入本地书籍，或使用原创示例文章试读。开发模式不启用离线缓存。
-
-```sh
+npm run test:node
 npm run build
-npm run preview
-```
-
-生产 `dist/` 可部署至任意支持 HTTPS 的静态服务器。iOS / iPadOS 在 Safari 中选择“添加到主屏幕”，Android 使用浏览器安装入口。首次完成资源缓存后支持离线。不同地址、浏览器和原生应用拥有独立书库，通过 ZIP 备份迁移。
-
-## 功能状态
-
-| 功能 | 当前实现 |
-| --- | --- |
-| PDF | PDF.js 按页渲染、缩放、文字选择、高亮、页码书签、搜索、进度恢复 |
-| EPUB | Foliate 章节 / 分页、目录、搜索、CFI 标注、进度恢复 |
-| MOBI / AZW3 | Foliate MOBI / KF8 解析，共用阅读设置与标注；测试覆盖基础无压缩 MOBI |
-| FB2 | Foliate 解析，共用阅读设置与标注 |
-| TXT | UTF-8 / UTF-16 / GB18030 自动识别，可指定 GBK / Big5 等编码 |
-| RTF | rtf.js 转换为 HTML 后阅读，可调整正文排版 |
-| DOCX | Mammoth 转换为 HTML 后阅读，保留可转换的语义内容；不复刻 Word 分页 |
-| 有声书 | MP3 / M4A / M4B / OGG / OPUS / WAV / FLAC / AAC 文件入口、播放 / 暂停、倍速、跳转、进度恢复与时间书签；解码由设备提供 |
-| 书库 | 导入 / 拖放、搜索书名作者标签、排序、网格 / 列表、收藏、已读状态、删除 |
-| 元数据 | 改书名、作者、标签、封面；仅编辑书库副本 |
-| 排版 | 字号、字体、行距、对齐、单双栏、滚动 / 翻页、暖纸 / 明亮 / 夜读 |
-| 标注 | 流式书籍 CFI 高亮与笔记、PDF 文字范围高亮、书签、统一标注列表、Markdown 导出 |
-| 备份 | 原书、封面、进度、书库信息和标注打包 ZIP，事务式合并恢复 |
-| 内置转换 | 将电子书文字导出 EPUB、TXT、HTML、FB2、RTF、DOCX；EPUB 写入书库书名和封面 |
-| 桌面转换 | 可调用另行提供的 calibre，输出 MOBI、PDF、EPUB、DOCX、RTF、FB2、TXT |
-
-标注保存在书库中，不直接修改 PDF / EPUB。内置文字转换不保留图片、复杂表格、原排版和标注；扫描 PDF 需要额外 OCR。M4B 的内嵌章节、DRM / LCP、OCR、跨设备同步尚未实现。转换不能保证任意格式之间无损往返。
-
-## 六个平台的交付方式
-
-| 平台 | 当前交付 / 验证状态 | 原生构建 |
-| --- | --- | --- |
-| Windows | 本机生成 x64 免安装 EXE / ZIP；WebView2 需系统提供 | `npm run portable` |
-| Linux | x64 系统 WebKit 免安装包约 4.5 MiB，另有 AppImage / deb | `npm run tauri -- build --bundles appimage,deb` |
-| macOS | 已生成 Intel + Apple Silicon 通用 app / dmg | `npm run tauri -- build --target universal-apple-darwin` |
-| Android | ARM64 / x86_64 优化预览 APK，ARM64 约 8.9 MiB，固定预览签名 | Android SDK / NDK + `tauri android init` / `build` |
-| iOS | 已生成模拟器 app 和未签名设备 IPA | macOS + Xcode + `tauri ios init` / `build` |
-| iPadOS | 与 iOS 共用原生包，单独进行 iPad 模拟器启动检查 | 与 iOS 相同 |
-
-Linux 轻量版 `system-webkit.tar.gz` 解压后运行 `./exreader`，需要系统 WebKitGTK 4.1 与 GTK 3；Ubuntu 可用 `sudo apt install libwebkit2gtk-4.1-0 libayatana-appindicator3-1 fonts-noto-cjk` 安装运行库和中文字体。需要自带运行库时选择较大的 AppImage 包；不使用 FUSE 时可运行 `APPIMAGE_EXTRACT_AND_RUN=1 ./EXReader*.AppImage`。Linux 当前构建基线为 Ubuntu 22.04；书库使用系统用户数据目录，通过 ZIP 备份迁移。原生构建后运行 `python3 scripts/portable-linux.py` 可生成轻量包。
-
-macOS 解压 app ZIP 后移动到“应用程序”，当前预览包未做 Apple 公证。Android 选择 ARM64 APK，允许文件来源安装；后续预览包保留相同签名，可覆盖更新并保留书库。
-
-iOS / iPadOS 的 `unsigned.ipa` 是供开发者签名的设备构建，不能直接安装；需要在 macOS 上配置自己的 Apple 开发者签名、设备或 TestFlight 分发。`simulator.app.zip` 只用于 Apple Silicon Mac 的 Xcode 模拟器。当前未完成 Apple 真机验证。
-
-`.github/workflows/desktop.yml`、`android.yml`、`ios.yml` 可手动触发并下载产物。具体已通过的检查见 [验证记录](docs/VALIDATION.md)。原生应用的导出使用系统保存对话框，移动端仅显示内置转换。
-
-## 可选 calibre
-
-安装 calibre，或把免安装 calibre 的完整目录放在 EXReader 程序旁的 `calibre/`（内部需有 `ebook-convert.exe`）。也识别 `Calibre Portable/Calibre/`、Windows 标准安装目录、macOS 应用目录和系统 PATH。
-
-管理书籍 → 转换 / 导出 → 桌面 calibre 转换。格式白名单、输入 100 MB / 输出 200 MB 上限、3 分钟超时；无网络转换服务。calibre 需单独取得，本项目不附带。此桥接已实现，完整转换仍需安装 calibre 后验证。
-
-## 验证
-
-```sh
 npx playwright install chromium webkit
 npm test
-npm run build
-npx playwright test --config=playwright.production.config.js
-cargo test --manifest-path src-tauri/Cargo.toml --release --lib
+cargo test --manifest-path integrations/calibre/Cargo.toml
 ```
 
-测试使用项目自制的 EPUB、MOBI、FB2、RTF、DOCX、PDF 和 WAV 样本，覆盖导入、打开、重开、标注、书库编辑、备份恢复、转换往返、内容隔离与响应式布局。Windows WebKit 自动化端口宣称支持 WAV，但无法解码本地 PCM 样本，因此明确跳过该环境的音频测试；相同文件在 Chromium 验证。Apple 真机音频仍需验证。
+`dist/exreader.js` 是 ESM 入口，动态导入的分块与 `render.css` / `exreader.css`、`pdf-assets/`、`licenses/` 需一同部署。PDF 默认从站点根路径 `/pdf-assets/` 加载字体和解码器；已有资源路径的应用可用 `await configurePDF()` 指定。测试页面只提供空白宿主，不包含阅读器界面。
 
-当前整体书库 ZIP 备份 / 恢复上限为 1 GB，内存中打包。大体积有声书库需要后续实现流式备份。文件存储和恢复同样受设备可用空间与浏览器配额影响。
+[API](docs/API.md) · [后续格式与架构方向](docs/FRAMEWORK.md) · [第三方许可](THIRD_PARTY_NOTICES.md) · [原版研究记录](docs/PROJECT_STUDY.md)
 
-## 代码与来源
+## 许可
 
-`src/main.js` 为界面和交互；`store.js` 管理 IndexedDB 事务；`reader.js`、`pdf.js` 为阅读适配器；`formats.js` 负责解析入口与内容清理；`transfer.js` 负责导出和备份；`src-tauri/` 提供原生壳和 calibre 桥接。
-
-[三个开源项目的学习记录](docs/PROJECT_STUDY.md) · [依赖与许可证](THIRD_PARTY_NOTICES.md)。自己的代码采用 MIT；没有复制或捆绑 Thorium、SumatraPDF、calibre 的应用代码。
+Copyright (c) 2026 EXReader contributors。当前分支自有代码采用 **GPL-3.0-only**，见 [LICENSE](LICENSE)。允许商用；分发基于本框架的派生程序需按 GPLv3 提供对应源码及构建所需材料。第三方代码继续保留其原许可。0.1.1 及此前已授予的 MIT 许可不撤回。项目中的电子书文件不因导入而改变版权。

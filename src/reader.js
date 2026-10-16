@@ -1,5 +1,8 @@
-import { foliate, openReflow, escapeHTML as esc } from './formats.js';
-export async function createReader(stage, file, book, notes, callbacks) {
+// SPDX-License-Identifier: GPL-3.0-only
+import { foliate, openReflow } from './formats.js';
+import { DEFAULT_SETTINGS } from './registry.js';
+export async function createReader(stage, file, book, notes = [], options = {}) {
+  const callbacks = { relocate() {}, keydown() {}, error: error => console.error(error), ...options, settings: () => ({ ...DEFAULT_SETTINGS, ...options.settings?.() }) };
   if (book.audio) return audioReader(stage, file, book, callbacks);
   if (book.format === 'pdf') return (await import('./pdf.js')).pdfReader(stage, file, book, notes, callbacks);
   const parsed = await openReflow(file, callbacks.settings().encoding);
@@ -21,6 +24,7 @@ export async function createReader(stage, file, book, notes, callbacks) {
   await view.open(parsed);
   function apply() {
     const s = callbacks.settings();
+    if (view.isFixedLayout) return;
     const colors = { paper: ['#faf8f2', '#302f2a'], light: ['#ffffff', '#20251f'], dark: ['#202823', '#dddccf'] }[s.theme];
     view.renderer.setAttribute('flow', s.flow);
     view.renderer.setAttribute('max-column-count', s.columns);
@@ -62,20 +66,21 @@ export async function createReader(stage, file, book, notes, callbacks) {
 function audioReader(stage, file, book, callbacks) {
   const mime = { mp3: 'audio/mpeg', m4a: 'audio/mp4', m4b: 'audio/mp4', ogg: 'audio/ogg', opus: 'audio/ogg; codecs=opus', wav: 'audio/wav', flac: 'audio/flac', aac: 'audio/aac' }[book.format];
   const url = URL.createObjectURL(new Blob([file], { type: mime || file.type }));
-  stage.innerHTML = `<div class="audio-reader"><div class="audio-art">${book.cover ? `<img src="${esc(book.cover)}" alt="封面">` : '<span>♪</span>'}</div><p class="eyebrow">此刻，让文字有声音</p><h1>${esc(book.title)}</h1><p>${esc(book.author || '本地有声书')}</p><audio controls preload="metadata"></audio><div class="audio-actions"><button data-skip="-15">↶ 15 秒</button><label>播放速度 <select id="audio-rate"><option value="0.75">0.75×</option><option selected value="1">1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label><button data-skip="15">15 秒 ↷</button></div><p class="muted">支持格式取决于设备音频解码器。离开后保留播放进度。</p></div>`;
-  const audio = stage.querySelector('audio'); audio.src = url;
+  const audio = document.createElement('audio');
+  audio.preload = 'metadata';
+  stage.replaceChildren(audio);
+  audio.src = url;
   audio.addEventListener('loadedmetadata', () => { audio.currentTime = Math.min(book.seconds || 0, audio.duration || 0); });
-  audio.addEventListener('timeupdate', () => callbacks.relocate({ seconds: audio.currentTime, progress: audio.duration ? audio.currentTime / audio.duration : 0, label: `${Math.floor(audio.currentTime / 60)} 分 / ${Math.floor((audio.duration || 0) / 60)} 分` }));
+  audio.addEventListener('timeupdate', () => callbacks.relocate({ seconds: audio.currentTime, progress: audio.duration ? audio.currentTime / audio.duration : 0, label: String(audio.currentTime) }));
   audio.addEventListener('error', () => callbacks.error(new Error('设备无法解码此音频，请尝试 MP3 或 M4A')));
-  stage.querySelector('#audio-rate').onchange = e => { audio.playbackRate = Number(e.target.value); };
-  stage.querySelectorAll('[data-skip]').forEach(el => { el.onclick = () => { audio.currentTime = Math.max(0, Math.min(audio.duration || 0, audio.currentTime + Number(el.dataset.skip))); }; });
   return {
-    toc: [], next: () => { audio.currentTime += 30; }, prev: () => { audio.currentTime = Math.max(0, audio.currentTime - 30); },
+    media: audio,
+    toc: [], next: () => { audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 30); }, prev: () => { audio.currentTime = Math.max(0, audio.currentTime - 30); },
     seek: f => { if (Number.isFinite(audio.duration)) audio.currentTime = f * audio.duration; },
     goTo: seconds => { audio.currentTime = Number(seconds); },
     selected: () => null,
-    location: () => ({ seconds: audio.currentTime, quote: `${Math.floor(audio.currentTime / 60)}:${String(Math.floor(audio.currentTime % 60)).padStart(2, '0')} 声音书签` }),
+    location: () => ({ seconds: audio.currentTime, quote: String(audio.currentTime) }),
     addAnnotation() {}, removeAnnotation() {}, apply() {}, search: async () => [],
-    close() { audio.pause(); audio.removeAttribute('src'); audio.load(); URL.revokeObjectURL(url); },
+    close() { audio.pause(); audio.removeAttribute('src'); audio.load(); audio.remove(); URL.revokeObjectURL(url); },
   };
 }

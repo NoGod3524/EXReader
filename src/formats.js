@@ -1,11 +1,11 @@
+// SPDX-License-Identifier: GPL-3.0-only
 import DOMPurify from 'dompurify';
 DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
   const resource = ['src', 'poster', 'background', 'xlink:href'].includes(data.attrName) || data.attrName === 'href' && ['link', 'image', 'use'].includes(node.nodeName.toLowerCase());
   if (resource && /^(?:https?:|\/\/)/i.test(data.attrValue.trim())) data.keepAttr = false;
 });
-export const BOOK_EXTENSIONS = ['pdf', 'epub', 'fb2', 'txt', 'rtf', 'mobi', 'azw3', 'docx'];
-export const AUDIO_EXTENSIONS = ['mp3', 'm4a', 'm4b', 'ogg', 'opus', 'wav', 'flac', 'aac'];
-export const extension = name => name.split('.').pop().toLowerCase();
+import { BOOK_EXTENSIONS, AUDIO_EXTENSIONS, extension } from './registry.js';
+export { BOOK_EXTENSIONS, AUDIO_EXTENSIONS, extension } from './registry.js';
 export const escapeHTML = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const titleOf = value => typeof value === 'string' ? value : value?.name ? titleOf(value.name) : value ? Object.values(value)[0] || '' : '';
 export const authorOf = value => (Array.isArray(value) ? value : [value]).map(titleOf).filter(Boolean).join('、');
@@ -69,11 +69,12 @@ function htmlBook(html, title) {
 }
 export async function openReflow(file, encoding) {
   const ext = extension(file.name);
-  const title = file.name.replace(/\.[^.]+$/, '');
+  const title = file.name.slice(0, -ext.length - 1);
   if (ext === 'txt') {
     const text = await decodeText(file, encoding);
     return htmlBook(text.split(/\r?\n/).map(line => `<p>${escapeHTML(line) || '<br>'}</p>`).join(''), title);
   }
+  if (['html', 'htm'].includes(ext)) return htmlBook(await decodeText(file, encoding), title);
   if (ext === 'docx') {
     const mammoth = await import('mammoth/mammoth.browser');
     const result = await (mammoth.default || mammoth).convertToHtml({ arrayBuffer: await file.arrayBuffer() });
@@ -87,17 +88,20 @@ export async function openReflow(file, encoding) {
     return htmlBook((await doc.render()).map(el => el.outerHTML).join(''), titleOf(doc.metadata()?.title) || title);
   }
   const { makeBook } = await foliate();
-  return protectBook(await makeBook(file));
+  const normalized = file.name === file.name.toLowerCase() ? file : new File([file], file.name.toLowerCase(), { type: file.type, lastModified: file.lastModified });
+  return protectBook(await makeBook(normalized));
 }
 export async function readMetadata(file) {
   const ext = extension(file.name);
   const base = { title: file.name.replace(/\.[^.]+$/, ''), author: '', format: ext, audio: AUDIO_EXTENSIONS.includes(ext) };
-  if (base.audio || ['txt', 'rtf', 'docx', 'pdf'].includes(ext)) return base;
+  if (base.audio || ['txt', 'rtf', 'docx', 'pdf', 'html', 'htm'].includes(ext)) return base;
   const book = await openReflow(file);
   try {
-    const cover = await book.getCover?.();
     let thumbnail = '';
-    if (cover) { try { thumbnail = await coverImage(cover, true); } catch { /* A broken cover must not prevent importing the book. */ } }
+    try {
+      const cover = await book.getCover?.();
+      if (cover) thumbnail = await coverImage(cover, true);
+    } catch { /* A broken cover must not prevent importing the book. */ }
     return { ...base, title: titleOf(book.metadata?.title) || base.title, author: authorOf(book.metadata?.author), cover: thumbnail };
   } finally { book.destroy?.(); }
 }

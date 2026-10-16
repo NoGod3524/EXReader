@@ -1,0 +1,34 @@
+name: Framework
+on:
+  push:
+    branches: ['codex/framework', 'codex/reader-app']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:node
+      - run: npm run build:framework --if-present
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright test --config=playwright.framework.config.js
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: framework-test-results
+          path: test-results/
+  calibre:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --manifest-path integrations/calibre/Cargo.toml --locked
