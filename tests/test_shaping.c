@@ -104,6 +104,39 @@ static void marks(void) {
   o.direction = EXR_DIRECTION_RTL;
   expect("a\xcc\x81", &o, acute, 2); /* Offsets are relative to the logical pen. */
 }
+static void long_marks(void) {
+  static const struct {
+    const char *prefix;
+    unsigned glyph;
+    float advance, x, y;
+  } cases[] = {{"a", SMALL_A, 10, -4, 14}, {"fi", FI, 9, -1.4f, 13},
+               {"A", A, 12, -5, 16}};
+  const size_t marks = 16384;
+  exr_shape_options o = options();
+  size_t c;
+  for (c = 0; c < sizeof(cases)/sizeof(*cases); c++) {
+    size_t prefix = strlen(cases[c].prefix), size = prefix + marks*2 + 2, i, count;
+    char *text = malloc(size + 1);
+    exr_shaped_glyph *g = NULL;
+    CHECK(text);
+    memcpy(text, cases[c].prefix, prefix);
+    for (i = 0; i < marks; i++) memcpy(text + prefix + i*2, "\xcc\x81", 2);
+    memcpy(text + prefix + marks*2, "\xcc\x87", 3);
+    OK(exr_shape(font, 0, text, size, &o, &g, &count, &error));
+    CHECK(count == marks + 2 && g[0].glyph == cases[c].glyph);
+    CHECK(close_to(g[0].advance_x, cases[c].advance));
+    for (i = 0; i < count; i++) {
+      CHECK(g[i].start == 0 && g[i].end == size);
+      CHECK(!(g[i].flags & (EXR_GLYPH_HIDDEN | EXR_GLYPH_MISSING)));
+      if (!i) continue;
+      CHECK(g[i].glyph == (i <= marks ? ACUTE : DOT));
+      CHECK(close_to(g[i].advance_x, 0));
+      CHECK(close_to(g[i].offset_x, cases[c].x + (i <= marks ? 0 : 1.6f)));
+      CHECK(close_to(g[i].offset_y, cases[c].y + (i <= marks ? 0 : 3.8f)));
+    }
+    exr_free(g); free(text);
+  }
+}
 static void optional_lookups(void) {
   exr_shape_options o = options();
   exr_shape_feature feature = {TAG('s','s','0','1'), 1};
@@ -295,7 +328,7 @@ static void damaged_tables(void) {
 }
 int main(int argc, char **argv) {
   CHECK(argc == 2); directory = argv[1]; font = open_font("shaping.ttf");
-  validation(); latin(); marks(); optional_lookups(); context_formats();
+  validation(); latin(); marks(); long_marks(); optional_lookups(); context_formats();
   arabic(); controls_and_missing(); damaged_tables();
   exr_font_free(font);
   printf("EXReader shaping: %u checks passed\n", checks);
