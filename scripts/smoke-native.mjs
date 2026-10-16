@@ -8,7 +8,7 @@ if (process.platform !== 'win32') throw new Error('This smoke check targets the 
 const folder = path.resolve(`test-results/native-smoke-${Date.now()}`);
 await mkdir(folder, { recursive: true });
 const executable = path.join(folder, 'EXReader.exe');
-await cp('release/EXReader-portable/EXReader.exe', executable);
+await cp(process.argv[2] || 'release/EXReader-portable/EXReader.exe', executable);
 await writeFile(path.join(folder, '.portable'), '');
 for (let round = 0; round < 2; round++) {
   const port = 9137 + round;
@@ -27,6 +27,8 @@ for (let round = 0; round < 2; round++) {
       await page.locator('.book-card').waitFor();
       await page.locator('.book-open').click();
       await page.waitForFunction(() => document.querySelector('foliate-view')?.renderer?.getContents().some(({ doc }) => doc.body?.textContent.includes('窗外的风')));
+      await page.waitForFunction(() => getComputedStyle(document.querySelector('#toast')).opacity === '0');
+      await page.screenshot({ path: 'docs/screenshots/windows-reading.png' });
       await page.locator('[data-action="bookmark"]').click();
       await page.getByRole('button', { name: '保存书签', exact: true }).click();
       await page.locator('[data-action="back"]').click();

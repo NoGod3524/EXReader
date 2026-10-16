@@ -15,6 +15,7 @@ EXReader's own code is MIT licensed. Full bundled dependency notices are in `lic
 | js-codepage | https://github.com/SheetJS/js-codepage | Apache-2.0 | RTF text encodings |
 | Tauri / Wry / Tao | https://github.com/tauri-apps | MIT OR Apache-2.0 | Native shell and system WebView |
 | Tauri dialog / filesystem plugins | https://github.com/tauri-apps/plugins-workspace | MIT OR Apache-2.0 | Native save dialogs and writing user-selected files |
+| Linux AppImage runtime libraries | Upstream links in `usr/share/doc/*/copyright` inside the extracted AppImage | Component-specific, including LGPL, BSD and MIT | WebKitGTK, JavaScriptCore, GTK, GLib and supporting libraries |
 
 The PDF text-layer stylesheet is extracted without changing its rules. Foliate's local patches route PDF files to EXReader's own adapter and guard paginator layout / deferred font callbacks while an iframe loads or after it is destroyed. Reproduce using `python scripts/vendor.py`. The upstream revision and MIT license remain in `vendor/foliate/`.
 

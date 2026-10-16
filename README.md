@@ -62,7 +62,7 @@ npm run preview
 | iOS | 已生成模拟器 app 和未签名设备 IPA | macOS + Xcode + `tauri ios init` / `build` |
 | iPadOS | 与 iOS 共用原生包，单独进行 iPad 模拟器启动检查 | 与 iOS 相同 |
 
-Linux 轻量版 `system-webkit.tar.gz` 解压后运行 `./exreader`，需要系统 WebKitGTK 4.1 与 GTK 3；Ubuntu 可用 `sudo apt install libwebkit2gtk-4.1-0 libayatana-appindicator3-1` 安装运行库。需要自带运行库时选择较大的 AppImage 包。Linux 当前构建基线为 Ubuntu 22.04；书库使用系统用户数据目录，通过 ZIP 备份迁移。原生构建后运行 `python3 scripts/portable-linux.py` 可生成轻量包。
+Linux 轻量版 `system-webkit.tar.gz` 解压后运行 `./exreader`，需要系统 WebKitGTK 4.1 与 GTK 3；Ubuntu 可用 `sudo apt install libwebkit2gtk-4.1-0 libayatana-appindicator3-1 fonts-noto-cjk` 安装运行库和中文字体。需要自带运行库时选择较大的 AppImage 包；不使用 FUSE 时可运行 `APPIMAGE_EXTRACT_AND_RUN=1 ./EXReader*.AppImage`。Linux 当前构建基线为 Ubuntu 22.04；书库使用系统用户数据目录，通过 ZIP 备份迁移。原生构建后运行 `python3 scripts/portable-linux.py` 可生成轻量包。
 
 macOS 解压 app ZIP 后移动到“应用程序”，当前预览包未做 Apple 公证。Android 选择 ARM64 APK，允许文件来源安装；后续预览包保留相同签名，可覆盖更新并保留书库。
 
