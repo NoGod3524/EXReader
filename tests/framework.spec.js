@@ -148,7 +148,7 @@ test('audio exposes a controllable media element without player controls', async
 
 test('built ESM entry imports and runs without the source entry', async ({ page }) => {
   const result = await page.evaluate(async () => {
-    const built = await import('/dist/exreader.js');
+    const built = await import('/framework-dist/exreader.js');
     const db = built.createLibrary({ name: 'built-framework' });
     const { book } = await db.importFile(new File(['Built entry text'], 'built.txt'));
     const blob = await db.exportBook(book.id, 'txt');

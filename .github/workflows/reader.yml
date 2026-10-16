@@ -1,0 +1,27 @@
+name: Reader application
+on:
+  push:
+    branches: ['codex/reader-app']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm test
+      - run: npx playwright test --config=playwright.production.config.js
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: reader-test-results
+          path: test-results/

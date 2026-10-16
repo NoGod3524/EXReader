@@ -1,26 +1,36 @@
 {
-  "name": "exreader-framework",
+  "name": "exreader",
   "private": true,
   "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "node scripts/assets.mjs && node scripts/licenses.mjs && vite build && node scripts/framework-assets.mjs",
+    "build": "node scripts/assets.mjs && node scripts/licenses.mjs && vite build && node scripts/offline.mjs",
     "test": "playwright test",
-    "test:node": "node --test tests/import.test.js"
+    "test:node": "node --test tests/import.test.js",
+    "preview": "vite preview --host 127.0.0.1",
+    "tauri": "tauri",
+    "desktop": "tauri dev",
+    "portable": "tauri build --no-bundle && node scripts/portable.mjs",
+    "build:framework": "node scripts/assets.mjs && node scripts/licenses.mjs && vite build --config vite.framework.config.js --outDir framework-dist && node scripts/framework-assets.mjs framework-dist",
+    "test:framework": "playwright test --config playwright.framework.config.js"
   },
   "dependencies": {
     "dompurify": "^3.3.3",
     "fflate": "^0.8.2",
     "mammoth": "^1.12.0",
     "pdfjs-dist": "^6.4.299",
-    "rtf.js": "^3.0.9"
+    "rtf.js": "^3.0.9",
+    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-dialog": "^2.8.3",
+    "@tauri-apps/plugin-fs": "^2.7.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "@tauri-apps/cli": "^2.10.1"
   },
-  "description": "A local-first ebook framework with a headless library and optional browser renderers",
+  "description": "A GPLv3 ebook reader built on the EXReader framework",
   "license": "GPL-3.0-only",
   "exports": {
     ".": "./src/index.js",

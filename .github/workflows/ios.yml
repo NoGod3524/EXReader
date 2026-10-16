@@ -1,0 +1,58 @@
+name: iOS and iPadOS builds
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  apple-mobile:
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [aarch64-sim, aarch64]
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios-sim,aarch64-apple-ios
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: ios-${{ matrix.target }}
+      - run: npm ci
+      - run: npm run tauri -- ios init --ci --skip-targets-install
+      - run: npm run tauri -- ios build --ci --debug --no-sign --target ${{ matrix.target }}
+      - name: Package Apple build
+        env:
+          APPLE_BUILD_TARGET: ${{ matrix.target }}
+        run: |
+          mkdir -p release
+          if [ "$APPLE_BUILD_TARGET" = "aarch64-sim" ]; then
+            app_path=$(find src-tauri/gen/apple/build -type d -name 'EXReader.app' -print -quit)
+            test -n "$app_path"
+            codesign --force --deep --sign - "$app_path"
+            ditto -c -k --sequesterRsrc --keepParent "$app_path" release/EXReader-iOS-iPadOS-simulator.app.zip
+            for family in iPhone iPad; do
+              device_id=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; family=sys.argv[1]; print(next(d["udid"] for devices in json.load(sys.stdin)["devices"].values() for d in devices if d.get("isAvailable") and family in d["name"]))' "$family")
+              xcrun simctl boot "$device_id"
+              xcrun simctl bootstatus "$device_id" -b
+              xcrun simctl install "$device_id" "$app_path"
+              xcrun simctl launch "$device_id" io.exreader.reader
+              sleep 8
+              xcrun simctl io "$device_id" screenshot "release/EXReader-$family-simulator.png"
+              xcrun simctl shutdown "$device_id"
+            done
+          else
+            find src-tauri/gen/apple -name '*.ipa' -exec cp {} release/EXReader-iOS-iPadOS-unsigned.ipa \;
+            test -f release/EXReader-iOS-iPadOS-unsigned.ipa
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-Apple-mobile-${{ matrix.target }}
+          path: release/*
+          if-no-files-found: error
+          retention-days: 30
