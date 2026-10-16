@@ -51,8 +51,7 @@ char *exr_copy(const char *s, size_t n) {
   return p;
 }
 int exr_append(exr_buffer *b, const void *s, size_t n) {
-  if (n > EXR_MAX_TEXT - b->size ||
-      !exr_grow((void **)&b->data, &b->capacity, b->size + n + 1, 1))
+  if (n > EXR_MAX_TEXT - b->size || !exr_grow((void **)&b->data, &b->capacity, b->size + n + 1, 1))
     return 0;
   if (n)
     memcpy(b->data + b->size, s, n);
@@ -150,8 +149,7 @@ FILE *exr_fopen(const char *path, const char *mode) {
   return fopen(path, mode);
 #endif
 }
-exr_status exr_read(const char *path, unsigned char **data, size_t *size,
-                    exr_error *e) {
+exr_status exr_read(const char *path, unsigned char **data, size_t *size, exr_error *e) {
   FILE *f;
   long n;
   unsigned char *p;
@@ -186,8 +184,7 @@ exr_status exr_read(const char *path, unsigned char **data, size_t *size,
   *size = (size_t)n;
   return EXR_OK;
 }
-exr_status exr_decode(const void *data, size_t n, exr_buffer *out,
-                      exr_error *e) {
+exr_status exr_decode(const void *data, size_t n, exr_buffer *out, exr_error *e) {
   const unsigned char *s = data;
   size_t i = 0;
   int endian = 0, cr = 0;
@@ -204,15 +201,13 @@ exr_status exr_decode(const void *data, size_t n, exr_buffer *out,
     if (endian) {
       if (n - i < 2)
         return exr_fail(e, EXR_ENCODING, "Truncated UTF-16");
-      cp = endian == 1 ? (uint32_t)(s[i] | (s[i + 1] << 8))
-                       : (uint32_t)((s[i] << 8) | s[i + 1]);
+      cp = endian == 1 ? (uint32_t)(s[i] | (s[i + 1] << 8)) : (uint32_t)((s[i] << 8) | s[i + 1]);
       i += 2;
       if (cp >= 0xd800 && cp <= 0xdbff) {
         uint32_t lo;
         if (n - i < 2)
           return exr_fail(e, EXR_ENCODING, "Unpaired UTF-16 surrogate");
-        lo = endian == 1 ? (uint32_t)(s[i] | (s[i + 1] << 8))
-                         : (uint32_t)((s[i] << 8) | s[i + 1]);
+        lo = endian == 1 ? (uint32_t)(s[i] | (s[i + 1] << 8)) : (uint32_t)((s[i] << 8) | s[i + 1]);
         i += 2;
         if (lo < 0xdc00 || lo > 0xdfff)
           return exr_fail(e, EXR_ENCODING, "Unpaired UTF-16 surrogate");
@@ -220,8 +215,7 @@ exr_status exr_decode(const void *data, size_t n, exr_buffer *out,
       } else if (cp >= 0xdc00 && cp <= 0xdfff)
         return exr_fail(e, EXR_ENCODING, "Unpaired UTF-16 surrogate");
     } else if (!exr_next((const char *)s, n, &i, &cp))
-      return exr_fail(e, EXR_ENCODING,
-                      "Invalid UTF-8; use UTF-8 or BOM-marked UTF-16");
+      return exr_fail(e, EXR_ENCODING, "Invalid UTF-8; use UTF-8 or BOM-marked UTF-16");
     if (cp == 0)
       return exr_fail(e, EXR_ENCODING, "NUL is not text");
     if (cp == '\n' && cr) {
@@ -236,24 +230,21 @@ exr_status exr_decode(const void *data, size_t n, exr_buffer *out,
   }
   return EXR_OK;
 }
-int exr_add_block(exr_document *d, const char *text, size_t n,
-                  unsigned heading) {
+int exr_add_block(exr_document *d, const char *text, size_t n, unsigned heading) {
   exr_block *b;
-  while (n && (text[0] == ' ' || text[0] == '\t' || text[0] == '\n' ||
-               text[0] == '\r')) {
+  while (n && (text[0] == ' ' || text[0] == '\t' || text[0] == '\n' || text[0] == '\r')) {
     text++;
     n--;
   }
-  while (n && (text[n - 1] == ' ' || text[n - 1] == '\t' ||
-               text[n - 1] == '\n' || text[n - 1] == '\r'))
+  while (n &&
+         (text[n - 1] == ' ' || text[n - 1] == '\t' || text[n - 1] == '\n' || text[n - 1] == '\r'))
     n--;
   if (!n)
     return 1;
   if (d->count >= EXR_MAX_ITEMS || n > EXR_MAX_TEXT - d->size - 1)
     return 0;
   if (!exr_grow((void **)&d->text, &d->text_capacity, d->size + n + 2, 1) ||
-      !exr_grow((void **)&d->blocks, &d->capacity, d->count + 1,
-                sizeof(*d->blocks)))
+      !exr_grow((void **)&d->blocks, &d->capacity, d->count + 1, sizeof(*d->blocks)))
     return 0;
   if (d->size)
     d->text[d->size++] = '\n';
@@ -274,8 +265,8 @@ void exr_document_free(exr_document *d) {
     free(d);
   }
 }
-exr_status exr_document_open_memory(exr_format f, const void *data, size_t n,
-                                    exr_document **out, exr_error *e) {
+exr_status exr_document_open_memory(exr_format f, const void *data, size_t n, exr_document **out,
+                                    exr_error *e) {
   exr_document *d;
   exr_status status;
   if (!out)
@@ -284,8 +275,7 @@ exr_status exr_document_open_memory(exr_format f, const void *data, size_t n,
   if (e)
     memset(e, 0, sizeof(*e));
   if (!data || !n || n > EXR_MAX_INPUT)
-    return exr_fail(e, n > EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT,
-                    "Invalid document bytes");
+    return exr_fail(e, n > EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT, "Invalid document bytes");
   d = calloc(1, sizeof(*d));
   if (!d)
     return exr_fail(e, EXR_MEMORY, "Allocation failed");
@@ -295,8 +285,7 @@ exr_status exr_document_open_memory(exr_format f, const void *data, size_t n,
     if (e) {
       e->code = status;
       if (!e->message[0])
-        snprintf(e->message, sizeof(e->message), "Native parser failed (%d)",
-                 (int)status);
+        snprintf(e->message, sizeof(e->message), "Native parser failed (%d)", (int)status);
     }
     exr_document_free(d);
     return status;
@@ -308,8 +297,7 @@ exr_status exr_document_open_memory(exr_format f, const void *data, size_t n,
   *out = d;
   return exr_fail(e, EXR_OK, "");
 }
-exr_status exr_document_open(const char *path, exr_document **out,
-                             exr_error *e) {
+exr_status exr_document_open(const char *path, exr_document **out, exr_error *e) {
   const char *ext;
   unsigned char *data;
   size_t n;
@@ -357,19 +345,15 @@ const char *exr_document_text(const exr_document *d, size_t *n) {
     *n = d ? d->size : 0;
   return d ? d->text : NULL;
 }
-const char *exr_document_title(const exr_document *d) {
-  return d && d->title ? d->title : "";
-}
+const char *exr_document_title(const exr_document *d) { return d && d->title ? d->title : ""; }
 const exr_block *exr_document_blocks(const exr_document *d, size_t *n) {
   if (n)
     *n = d ? d->count : 0;
   return d ? d->blocks : NULL;
 }
-exr_format exr_document_format(const exr_document *d) {
-  return d ? d->format : 0;
-}
-exr_status exr_document_find(const exr_document *d, const char *q, size_t from,
-                             size_t *start, size_t *end, exr_error *e) {
+exr_format exr_document_format(const exr_document *d) { return d ? d->format : 0; }
+exr_status exr_document_find(const exr_document *d, const char *q, size_t from, size_t *start,
+                             size_t *end, exr_error *e) {
   size_t n, at = 0;
   uint32_t cp;
   const char *p;
@@ -402,14 +386,13 @@ static void le32(unsigned char *p, uint32_t v) {
   p[2] = (unsigned char)(v >> 16);
   p[3] = (unsigned char)(v >> 24);
 }
-exr_status exr_bitmap_write_bmp(const exr_bitmap *b, const char *path,
-                                exr_error *e) {
+exr_status exr_bitmap_write_bmp(const exr_bitmap *b, const char *path, exr_error *e) {
   unsigned char head[54] = {0}, *row;
   uint32_t stride, y, x;
   FILE *f;
   int ok = 1;
-  if (!b || !b->pixels || !path || !b->width || !b->height ||
-      b->width > 16384 || b->height > 16384 || b->stride < b->width)
+  if (!b || !b->pixels || !path || !b->width || !b->height || b->width > 16384 ||
+      b->height > 16384 || b->stride < b->width)
     return exr_fail(e, EXR_ARGUMENT, "Invalid bitmap");
   stride = (b->width * 3 + 3) & ~3u;
   row = calloc(stride, 1);
@@ -433,8 +416,7 @@ exr_status exr_bitmap_write_bmp(const exr_bitmap *b, const char *path,
     ok = 0;
   for (y = b->height; y > 0 && ok; y--) {
     for (x = 0; x < b->width; x++)
-      row[x * 3] = row[x * 3 + 1] = row[x * 3 + 2] =
-          b->pixels[(size_t)(y - 1) * b->stride + x];
+      row[x * 3] = row[x * 3 + 1] = row[x * 3 + 2] = b->pixels[(size_t)(y - 1) * b->stride + x];
     if (fwrite(row, 1, stride, f) != stride)
       ok = 0;
   }

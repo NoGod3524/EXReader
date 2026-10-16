@@ -24,6 +24,15 @@ jobs:
         run: ctest --test-dir build/native -C Release --output-on-failure
       - name: Install portable SDK with license notices
         run: cmake --install build/native --config Release --prefix stage
+      - name: Run the installed Windows SDK
+        if: runner.os == 'Windows'
+        run: ./stage/bin/exreader-render.exe tests/fixtures/sample.txt C:/Windows/Fonts/arial.ttf stage-page.png
+      - name: Run the installed Linux SDK
+        if: runner.os == 'Linux'
+        run: ./stage/bin/exreader-render tests/fixtures/sample.txt /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf stage-page.png
+      - name: Run the installed macOS SDK
+        if: runner.os == 'macOS'
+        run: ./stage/bin/exreader-render tests/fixtures/sample.txt /System/Library/Fonts/Supplemental/Arial.ttf stage-page.png
       - uses: actions/upload-artifact@v4
         with:
           name: EXReader-C-${{ runner.os }}

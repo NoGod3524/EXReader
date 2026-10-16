@@ -75,6 +75,7 @@ static void test_formats(void) {
     doc = NULL;
   }
   CHECK(exr_document_open(path("entity.fb2"), &doc, &error) != EXR_OK && !doc);
+  CHECK(exr_document_open(path("deep.fb2"), &doc, &error) != EXR_OK && !doc);
   CHECK(exr_document_open(path("unsafe.epub"), &doc, &error) != EXR_OK && !doc);
   CHECK(exr_document_open(path("bomb.epub"), &doc, &error) != EXR_OK && !doc);
   {
@@ -151,6 +152,28 @@ static void test_layout(const char *font_path) {
     exr_layout *bad = NULL;
     CHECK(exr_layout_create(doc, font, &o, &bad, &error) == EXR_ARGUMENT && !bad);
   }
+  {
+    exr_font *fresh = NULL;
+    exr_layout *warm_layout = NULL, *cold_layout = NULL;
+    const exr_glyph *warm, *cold;
+    size_t nw, nc, j;
+    o = exr_layout_defaults();
+    o.font_size = 32;
+    OK(exr_layout_create(doc, font, &o, &warm_layout, &error));
+    OK(exr_font_open(font_path, &fresh, &error));
+    OK(exr_layout_create(doc, fresh, &o, &cold_layout, &error));
+    warm = exr_layout_glyphs(warm_layout, &nw);
+    cold = exr_layout_glyphs(cold_layout, &nc);
+    CHECK(nw == nc);
+    for (j = 0; j < nw; j++) {
+      CHECK(warm[j].advance == cold[j].advance);
+      CHECK(warm[j].page == cold[j].page);
+      CHECK(warm[j].x == cold[j].x);
+    }
+    exr_layout_free(warm_layout);
+    exr_layout_free(cold_layout);
+    exr_font_free(fresh);
+  }
   exr_layout_free(wide);
   exr_layout_free(narrow);
   exr_font_free(font);
@@ -171,8 +194,8 @@ static void test_library(void) {
   remove(db);
   remove(backup);
   bytes = read_bytes(path("sample.epub"), &n);
-  CHECK(exr_library_open(path("foreign.sqlite"),&l,&error)==EXR_DATABASE && l==NULL);
-  CHECK(exr_library_open(path("future.sqlite"),&l,&error)==EXR_DATABASE && l==NULL);
+  CHECK(exr_library_open(path("foreign.sqlite"), &l, &error) == EXR_DATABASE && l == NULL);
+  CHECK(exr_library_open(path("future.sqlite"), &l, &error) == EXR_DATABASE && l == NULL);
   OK(exr_library_open(db, &l, &error));
   OK(exr_library_import(l, EXR_EPUB, bytes, n, NULL, &id, &error));
   CHECK(id > 0);

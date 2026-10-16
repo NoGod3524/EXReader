@@ -62,3 +62,6 @@ install(FILES LICENSE THIRD_PARTY_NOTICES.md DESTINATION share/exreader)
 install(FILES ${freetype_SOURCE_DIR}/docs/FTL.TXT ${freetype_SOURCE_DIR}/LICENSE.TXT DESTINATION share/exreader/licenses/freetype)
 install(FILES ${expat_SOURCE_DIR}/expat/COPYING DESTINATION share/exreader/licenses/expat)
 install(FILES ${miniz_SOURCE_DIR}/LICENSE DESTINATION share/exreader/licenses/miniz)
+
+install(FILES README.md LICENSE THIRD_PARTY_NOTICES.md DESTINATION .)
+install(FILES docs/NATIVE_API.md docs/NATIVE_VALIDATION.md docs/native-page.png DESTINATION docs)

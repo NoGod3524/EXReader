@@ -4,16 +4,13 @@
 #include <expat.h>
 #include <miniz.h>
 static uint32_t windows1252(unsigned char c) {
-  static const uint16_t map[32] = {
-      0x20ac, 0x81,   0x201a, 0x192,  0x201e, 0x2026, 0x2020, 0x2021,
-      0x2c6,  0x2030, 0x160,  0x2039, 0x152,  0x8d,   0x17d,  0x8f,
-      0x90,   0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
-      0x2dc,  0x2122, 0x161,  0x203a, 0x153,  0x9d,   0x17e,  0x178};
+  static const uint16_t map[32] = {0x20ac, 0x81,   0x201a, 0x192,  0x201e, 0x2026, 0x2020, 0x2021,
+                                   0x2c6,  0x2030, 0x160,  0x2039, 0x152,  0x8d,   0x17d,  0x8f,
+                                   0x90,   0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
+                                   0x2dc,  0x2122, 0x161,  0x203a, 0x153,  0x9d,   0x17e,  0x178};
   return c >= 128 && c < 160 ? map[c - 128] : c;
 }
-static int space(unsigned char c) {
-  return c == ' ' || c == '\r' || c == '\n' || c == '\t';
-}
+static int space(unsigned char c) { return c == ' ' || c == '\r' || c == '\n' || c == '\t'; }
 static const char *local(const char *name) {
   const char *p = strrchr(name, '|');
   return p ? p + 1 : name;
@@ -32,8 +29,7 @@ static int flush(exr_document *d, exr_buffer *b, unsigned heading) {
     b->data[0] = 0;
   return ok;
 }
-static exr_status plain(exr_document *d, const void *data, size_t n,
-                        exr_error *e) {
+static exr_status plain(exr_document *d, const void *data, size_t n, exr_error *e) {
   exr_buffer b = {0};
   size_t i = 0, start = 0;
   exr_status s = exr_decode(data, n, &b, e);
@@ -51,13 +47,12 @@ static exr_status plain(exr_document *d, const void *data, size_t n,
   return s;
 }
 static int block_tag(const char *s) {
-  return !strcmp(s, "p") || !strcmp(s, "div") || !strcmp(s, "li") ||
-         !strcmp(s, "br") || !strcmp(s, "tr") || !strcmp(s, "blockquote") ||
-         !strcmp(s, "section") || !strcmp(s, "article") || !strcmp(s, "body") ||
+  return !strcmp(s, "p") || !strcmp(s, "div") || !strcmp(s, "li") || !strcmp(s, "br") ||
+         !strcmp(s, "tr") || !strcmp(s, "blockquote") || !strcmp(s, "section") ||
+         !strcmp(s, "article") || !strcmp(s, "body") ||
          (s[0] == 'h' && s[1] >= '1' && s[1] <= '6' && !s[2]);
 }
-static exr_status html(exr_document *d, const void *data, size_t n,
-                       exr_error *e) {
+static exr_status html(exr_document *d, const void *data, size_t n, exr_error *e) {
   exr_buffer input = {0}, out = {0};
   exr_status result;
   size_t i = 0;
@@ -68,8 +63,7 @@ static exr_status html(exr_document *d, const void *data, size_t n,
     goto done;
   while (i < input.size) {
     if (input.data[i] == '<' && i + 1 < input.size &&
-        (isalpha((unsigned char)input.data[i + 1]) ||
-         strchr("/!?", input.data[i + 1]))) {
+        (isalpha((unsigned char)input.data[i + 1]) || strchr("/!?", input.data[i + 1]))) {
       size_t j = i + 1, k = 0;
       char tag[32] = {0};
       int closing = 0, quote = 0;
@@ -86,8 +80,8 @@ static exr_status html(exr_document *d, const void *data, size_t n,
         closing = 1;
         j++;
       }
-      while (j < input.size && (isalnum((unsigned char)input.data[j]) ||
-                                input.data[j] == ':' || input.data[j] == '-')) {
+      while (j < input.size && (isalnum((unsigned char)input.data[j]) || input.data[j] == ':' ||
+                                input.data[j] == '-')) {
         if (k < 31)
           tag[k++] = (char)tolower((unsigned char)input.data[j]);
         j++;
@@ -112,8 +106,8 @@ static exr_status html(exr_document *d, const void *data, size_t n,
           skip[0] = 0;
         continue;
       }
-      if (!closing && (!strcmp(tag, "head") || !strcmp(tag, "script") ||
-                       !strcmp(tag, "style") || !strcmp(tag, "object"))) {
+      if (!closing && (!strcmp(tag, "head") || !strcmp(tag, "script") || !strcmp(tag, "style") ||
+                       !strcmp(tag, "object"))) {
         snprintf(skip, sizeof(skip), "%s", tag);
         continue;
       }
@@ -194,8 +188,7 @@ static exr_status html(exr_document *d, const void *data, size_t n,
       }
     }
     if (space((unsigned char)input.data[i])) {
-      if (out.size && out.data[out.size - 1] != ' ' &&
-          !exr_append(&out, " ", 1)) {
+      if (out.size && out.data[out.size - 1] != ' ' && !exr_append(&out, " ", 1)) {
         result = EXR_LIMIT;
         goto done;
       }
@@ -222,17 +215,20 @@ typedef struct {
   int depth, body, paragraph, title_depth, docx, failed;
   unsigned heading;
 } flow_xml;
-static void XMLCALL flow_start(void *user, const char *full,
-                               const char **attrs) {
+static void XMLCALL flow_start(void *user, const char *full, const char **attrs) {
   flow_xml *x = user;
   const char *tag = local(full);
   x->depth++;
+  if (x->depth > 256) {
+    x->failed = 1;
+    XML_StopParser(x->parser, XML_FALSE);
+    return;
+  }
   if (!strcmp(tag, "body"))
     x->body = x->depth;
   if (!strcmp(tag, "book-title") && !x->docx)
     x->title_depth = x->depth;
-  if (x->body &&
-      (!strcmp(tag, "p") || !strcmp(tag, "v") || !strcmp(tag, "subtitle"))) {
+  if (x->body && (!strcmp(tag, "p") || !strcmp(tag, "v") || !strcmp(tag, "subtitle"))) {
     if (!flush(x->doc, &x->text, x->heading))
       x->failed = 1;
     x->paragraph = x->depth;
@@ -282,11 +278,9 @@ static void XMLCALL flow_text(void *user, const XML_Char *s, int n) {
   if (x->failed)
     XML_StopParser(x->parser, XML_FALSE);
 }
-static void XMLCALL reject_entity(void *user, const XML_Char *name,
-                                  int parameter, const XML_Char *value,
-                                  int length, const XML_Char *base,
-                                  const XML_Char *system,
-                                  const XML_Char *public_id,
+static void XMLCALL reject_entity(void *user, const XML_Char *name, int parameter,
+                                  const XML_Char *value, int length, const XML_Char *base,
+                                  const XML_Char *system, const XML_Char *public_id,
                                   const XML_Char *notation) {
   flow_xml *x = user;
   (void)name;
@@ -300,8 +294,7 @@ static void XMLCALL reject_entity(void *user, const XML_Char *name,
   x->failed = 1;
   XML_StopParser(x->parser, XML_FALSE);
 }
-static exr_status xml_flow(exr_document *doc, const void *data, size_t n,
-                           int docx, exr_error *e) {
+static exr_status xml_flow(exr_document *doc, const void *data, size_t n, int docx, exr_error *e) {
   flow_xml x = {0};
   enum XML_Status result;
   x.doc = doc;
@@ -316,8 +309,7 @@ static exr_status xml_flow(exr_document *doc, const void *data, size_t n,
   XML_SetParamEntityParsing(x.parser, XML_PARAM_ENTITY_PARSING_NEVER);
   result = XML_Parse(x.parser, data, (int)n, XML_TRUE);
   if (result == XML_STATUS_ERROR || x.failed)
-    exr_fail(e, EXR_FORMAT, "XML rejected: %s",
-             XML_ErrorString(XML_GetErrorCode(x.parser)));
+    exr_fail(e, EXR_FORMAT, "XML rejected: %s", XML_ErrorString(XML_GetErrorCode(x.parser)));
   XML_ParserFree(x.parser);
   free(x.text.data);
   free(x.title.data);
@@ -329,21 +321,18 @@ typedef struct {
   exr_status status;
 } archive;
 static void *member(archive *z, const char *name, size_t *size, exr_error *e) {
-  int index = mz_zip_reader_locate_file(&z->archive, name, NULL,
-                                        MZ_ZIP_FLAG_CASE_SENSITIVE);
+  int index = mz_zip_reader_locate_file(&z->archive, name, NULL, MZ_ZIP_FLAG_CASE_SENSITIVE);
   mz_zip_archive_file_stat stat;
   void *p;
-  if (index < 0 ||
-      !mz_zip_reader_file_stat(&z->archive, (mz_uint)index, &stat)) {
+  if (index < 0 || !mz_zip_reader_file_stat(&z->archive, (mz_uint)index, &stat)) {
     z->status = EXR_FORMAT;
     exr_fail(e, EXR_FORMAT, "ZIP member missing: %s", name);
     return NULL;
   }
-  if (stat.m_uncomp_size > 32 * 1024 * 1024 ||
-      stat.m_uncomp_size > EXR_MAX_INPUT - z->expanded || stat.m_is_encrypted) {
+  if (stat.m_uncomp_size > 32 * 1024 * 1024 || stat.m_uncomp_size > EXR_MAX_INPUT - z->expanded ||
+      stat.m_is_encrypted) {
     z->status = EXR_LIMIT;
-    exr_fail(e, EXR_LIMIT,
-             "ZIP member is encrypted or exceeds extraction limit");
+    exr_fail(e, EXR_LIMIT, "ZIP member is encrypted or exceeds extraction limit");
     return NULL;
   }
   p = mz_zip_reader_extract_to_heap(&z->archive, (mz_uint)index, size, 0);
@@ -366,12 +355,16 @@ typedef struct {
   char **spine;
   size_t spine_count, spine_cap;
   exr_buffer title;
-  int in_title, failed;
+  int in_title, failed, depth;
 } package;
-static void XMLCALL package_start(void *user, const char *full,
-                                  const char **attrs) {
+static void XMLCALL package_start(void *user, const char *full, const char **attrs) {
   package *p = user;
   const char *tag = local(full), *a, *b;
+  if (++p->depth > 256) {
+    p->failed = 1;
+    XML_StopParser(p->parser, XML_FALSE);
+    return;
+  }
   if (!strcmp(tag, "rootfile") && !p->root) {
     a = attribute(attrs, "full-path");
     if (a)
@@ -383,8 +376,7 @@ static void XMLCALL package_start(void *user, const char *full,
     a = attribute(attrs, "id");
     b = attribute(attrs, "href");
     if (!a || !b || p->count >= 10000 ||
-        !exr_grow((void **)&p->items, &p->capacity, p->count + 1,
-                  sizeof(item))) {
+        !exr_grow((void **)&p->items, &p->capacity, p->count + 1, sizeof(item))) {
       p->failed = 1;
     } else {
       item *v = &p->items[p->count++];
@@ -400,8 +392,7 @@ static void XMLCALL package_start(void *user, const char *full,
     if (b && !strcmp(b, "no"))
       return;
     if (!a || p->spine_count >= 10000 ||
-        !exr_grow((void **)&p->spine, &p->spine_cap, p->spine_count + 1,
-                  sizeof(char *))) {
+        !exr_grow((void **)&p->spine, &p->spine_cap, p->spine_count + 1, sizeof(char *))) {
       p->failed = 1;
     } else {
       p->spine[p->spine_count] = exr_copy(a, strlen(a));
@@ -418,6 +409,7 @@ static void XMLCALL package_end(void *user, const char *tag) {
   package *p = user;
   if (!strcmp(local(tag), "title"))
     p->in_title = 0;
+  p->depth--;
 }
 static void XMLCALL package_text(void *user, const XML_Char *s, int n) {
   package *p = user;
@@ -426,11 +418,9 @@ static void XMLCALL package_text(void *user, const XML_Char *s, int n) {
     XML_StopParser(p->parser, XML_FALSE);
   }
 }
-static void XMLCALL package_entity(void *user, const XML_Char *name,
-                                   int parameter, const XML_Char *value,
-                                   int length, const XML_Char *base,
-                                   const XML_Char *system,
-                                   const XML_Char *public_id,
+static void XMLCALL package_entity(void *user, const XML_Char *name, int parameter,
+                                   const XML_Char *value, int length, const XML_Char *base,
+                                   const XML_Char *system, const XML_Char *public_id,
                                    const XML_Char *notation) {
   package *p = user;
   (void)name;
@@ -465,8 +455,8 @@ static int resolve_path(const char *base, const char *href, char out[2048]) {
   const char *slash = strrchr(base, '/');
   if (slash)
     len = (size_t)(slash - base) + 1;
-  if (len + strlen(href) >= sizeof(joined) || href[0] == '/' ||
-      strchr(href, ':') || strchr(href, '\\'))
+  if (len + strlen(href) >= sizeof(joined) || href[0] == '/' || strchr(href, ':') ||
+      strchr(href, '\\'))
     return 0;
   memcpy(joined, base, len);
   strcpy(joined + len, href);
@@ -476,15 +466,11 @@ static int resolve_path(const char *base, const char *href, char out[2048]) {
       char c = joined[++i];
       if (!c)
         return 0;
-      a = (unsigned)(isdigit((unsigned char)c)
-                         ? c - '0'
-                         : tolower((unsigned char)c) - 'a' + 10);
+      a = (unsigned)(isdigit((unsigned char)c) ? c - '0' : tolower((unsigned char)c) - 'a' + 10);
       c = joined[++i];
       if (!c)
         return 0;
-      b = (unsigned)(isdigit((unsigned char)c)
-                         ? c - '0'
-                         : tolower((unsigned char)c) - 'a' + 10);
+      b = (unsigned)(isdigit((unsigned char)c) ? c - '0' : tolower((unsigned char)c) - 'a' + 10);
       if (a > 15 || b > 15 || !(a * 16 + b))
         return 0;
       decoded[j++] = (char)(a * 16 + b);
@@ -518,8 +504,7 @@ static int resolve_path(const char *base, const char *href, char out[2048]) {
   out[used] = 0;
   return used > 0;
 }
-static exr_status zip_document(exr_document *d, const void *data, size_t n,
-                               exr_error *e) {
+static exr_status zip_document(exr_document *d, const void *data, size_t n, exr_error *e) {
   archive z = {0};
   package p = {0};
   void *bytes = NULL;
@@ -609,15 +594,11 @@ done:
   free(p.title.data);
   return result;
 }
-static uint16_t be16(const unsigned char *p) {
-  return (uint16_t)((p[0] << 8) | p[1]);
-}
+static uint16_t be16(const unsigned char *p) { return (uint16_t)((p[0] << 8) | p[1]); }
 static uint32_t be32(const unsigned char *p) {
-  return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
-         ((uint32_t)p[2] << 8) | p[3];
+  return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) | ((uint32_t)p[2] << 8) | p[3];
 }
-static exr_status mobi(exr_document *d, const void *data, size_t n,
-                       exr_error *e) {
+static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e) {
   const unsigned char *s = data, *h;
   size_t records, start, stop, i, j, text_records;
   unsigned compression, encoding;
@@ -640,8 +621,8 @@ static exr_status mobi(exr_document *d, const void *data, size_t n,
   encoding = be32(h + 28);
   if (be32(h + 36) >= 8)
     return exr_fail(e, EXR_FORMAT, "KF8 reconstruction is not implemented");
-  if ((compression != 1 && compression != 2) || !text_records ||
-      text_records >= records || (encoding != 65001 && encoding != 1252))
+  if ((compression != 1 && compression != 2) || !text_records || text_records >= records ||
+      (encoding != 65001 && encoding != 1252))
     return exr_fail(e, EXR_FORMAT, "Unsupported MOBI compression or encoding");
   for (i = 1; i <= text_records; i++) {
     start = be32(s + 78 + i * 8);
@@ -704,8 +685,7 @@ done:
 typedef struct {
   int skip, uc;
 } rtf_state;
-static exr_status rtf(exr_document *d, const void *data, size_t n,
-                      exr_error *e) {
+static exr_status rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
   const unsigned char *s = data;
   rtf_state states[256] = {{0, 1}};
   size_t depth = 0, i = 0;
@@ -714,10 +694,9 @@ static exr_status rtf(exr_document *d, const void *data, size_t n,
   exr_buffer out = {0};
   exr_status result = EXR_FORMAT;
   static const uint16_t cp1252[32] = {
-      0x20ac, 0x81,   0x201a, 0x192,  0x201e, 0x2026, 0x2020, 0x2021,
-      0x2c6,  0x2030, 0x160,  0x2039, 0x152,  0x8d,   0x17d,  0x8f,
-      0x90,   0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
-      0x2dc,  0x2122, 0x161,  0x203a, 0x153,  0x9d,   0x17e,  0x178};
+      0x20ac, 0x81,   0x201a, 0x192,  0x201e, 0x2026, 0x2020, 0x2021, 0x2c6,  0x2030, 0x160,
+      0x2039, 0x152,  0x8d,   0x17d,  0x8f,   0x90,   0x2018, 0x2019, 0x201c, 0x201d, 0x2022,
+      0x2013, 0x2014, 0x2dc,  0x2122, 0x161,  0x203a, 0x153,  0x9d,   0x17e,  0x178};
   if (n < 5 || memcmp(s, "{\\rtf", 5))
     return exr_fail(e, EXR_FORMAT, "Invalid RTF header");
   while (i < n) {
@@ -761,16 +740,14 @@ static exr_status rtf(exr_document *d, const void *data, size_t n,
         if (n - i < 2 || !isxdigit(s[i]) || !isxdigit(s[i + 1]))
           goto done;
         a = (unsigned)(isdigit(s[i]) ? s[i] - '0' : tolower(s[i]) - 'a' + 10);
-        b = (unsigned)(isdigit(s[i + 1]) ? s[i + 1] - '0'
-                                         : tolower(s[i + 1]) - 'a' + 10);
+        b = (unsigned)(isdigit(s[i + 1]) ? s[i + 1] - '0' : tolower(s[i + 1]) - 'a' + 10);
         c = a * 16 + b;
         i += 2;
         if (fallback) {
           fallback--;
           continue;
         }
-        if (!states[depth].skip &&
-            !exr_codepoint(&out, c >= 128 && c < 160 ? cp1252[c - 128] : c))
+        if (!states[depth].skip && !exr_codepoint(&out, c >= 128 && c < 160 ? cp1252[c - 128] : c))
           goto done;
         continue;
       }
@@ -796,9 +773,8 @@ static exr_status rtf(exr_document *d, const void *data, size_t n,
         value = -value;
       if (i < n && s[i] == ' ')
         i++;
-      if (!strcmp(word, "fonttbl") || !strcmp(word, "colortbl") ||
-          !strcmp(word, "stylesheet") || !strcmp(word, "info") ||
-          !strcmp(word, "pict") || !strcmp(word, "object") ||
+      if (!strcmp(word, "fonttbl") || !strcmp(word, "colortbl") || !strcmp(word, "stylesheet") ||
+          !strcmp(word, "info") || !strcmp(word, "pict") || !strcmp(word, "object") ||
           !strcmp(word, "header") || !strcmp(word, "footer")) {
         states[depth].skip = 1;
         continue;
@@ -853,8 +829,7 @@ static exr_status rtf(exr_document *d, const void *data, size_t n,
       fallback--;
       continue;
     }
-    if (high || !c ||
-        !exr_codepoint(&out, c >= 128 && c < 160 ? cp1252[c - 128] : c))
+    if (high || !c || !exr_codepoint(&out, c >= 128 && c < 160 ? cp1252[c - 128] : c))
       goto done;
   }
   if (depth || high || !flush(d, &out, 0))
@@ -862,12 +837,9 @@ static exr_status rtf(exr_document *d, const void *data, size_t n,
   result = EXR_OK;
 done:
   free(out.data);
-  return result == EXR_OK
-             ? EXR_OK
-             : exr_fail(e, EXR_FORMAT, "Invalid or unsupported RTF stream");
+  return result == EXR_OK ? EXR_OK : exr_fail(e, EXR_FORMAT, "Invalid or unsupported RTF stream");
 }
-exr_status exr_parse(exr_document *d, const void *data, size_t n,
-                     exr_error *e) {
+exr_status exr_parse(exr_document *d, const void *data, size_t n, exr_error *e) {
   switch (d->format) {
   case EXR_TXT:
     return plain(d, data, n, e);

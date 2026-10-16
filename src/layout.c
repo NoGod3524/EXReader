@@ -6,6 +6,10 @@ struct exr_font {
   FT_Library library;
   FT_Face face;
   unsigned char *bytes;
+  float *advances;
+  unsigned char *measured;
+  size_t metric_count;
+  FT_F26Dot6 metric_size;
 };
 struct exr_layout {
   exr_layout_options options;
@@ -32,14 +36,22 @@ exr_status exr_font_open(const char *path, exr_font **out, exr_error *e) {
     return s;
   }
   if (FT_Init_FreeType(&font->library) ||
-      FT_New_Memory_Face(font->library, font->bytes, (FT_Long)n, 0,
-                         &font->face)) {
+      FT_New_Memory_Face(font->library, font->bytes, (FT_Long)n, 0, &font->face)) {
     exr_font_free(font);
     return exr_fail(e, EXR_FONT, "Font cannot be loaded");
   }
   if (!FT_IS_SCALABLE(font->face)) {
     exr_font_free(font);
     return exr_fail(e, EXR_FONT, "A scalable font is required");
+  }
+  if (font->face->num_glyphs > 0 && font->face->num_glyphs <= 65536) {
+    font->metric_count = (size_t)font->face->num_glyphs;
+    font->advances = calloc(font->metric_count, sizeof(*font->advances));
+    font->measured = calloc(font->metric_count, 1);
+    if (!font->advances || !font->measured) {
+      exr_font_free(font);
+      return exr_fail(e, EXR_MEMORY, "Font metrics allocation failed");
+    }
   }
   *out = font;
   return EXR_OK;
@@ -50,9 +62,36 @@ void exr_font_free(exr_font *f) {
       FT_Done_Face(f->face);
     if (f->library)
       FT_Done_FreeType(f->library);
+    free(f->advances);
+    free(f->measured);
     free(f->bytes);
     free(f);
   }
+}
+static int font_size(exr_font *font, float pixels) {
+  FT_F26Dot6 size = (FT_F26Dot6)lroundf(pixels * 64);
+  if (font->metric_size == size)
+    return 0;
+  if (FT_Set_Char_Size(font->face, 0, size, 72, 72))
+    return 1;
+  font->metric_size = size;
+  if (font->measured)
+    memset(font->measured, 0, font->metric_count);
+  return 0;
+}
+static int measure(exr_font *font, uint32_t glyph, float *advance) {
+  if (glyph < font->metric_count && font->measured[glyph]) {
+    *advance = font->advances[glyph];
+    return 0;
+  }
+  if (FT_Load_Glyph(font->face, glyph, FT_LOAD_DEFAULT))
+    return 1;
+  *advance = (float)font->face->glyph->advance.x / 64;
+  if (glyph < font->metric_count) {
+    font->advances[glyph] = *advance;
+    font->measured[glyph] = 1;
+  }
+  return 0;
 }
 exr_layout_options exr_layout_defaults(void) {
   exr_layout_options o = {720, 1040, 48, 24, 1.6f, 12};
@@ -69,24 +108,19 @@ static int mark(uint32_t c) {
          (c >= 0xe0100 && c <= 0xe01ef);
 }
 static int opening(uint32_t c) {
-  return c == '(' || c == '[' || c == '{' || c == 0x2018 || c == 0x201c ||
-         c == 0x3008 || c == 0x300a || c == 0x300c || c == 0x300e ||
-         c == 0x3010 || c == 0xff08;
+  return c == '(' || c == '[' || c == '{' || c == 0x2018 || c == 0x201c || c == 0x3008 ||
+         c == 0x300a || c == 0x300c || c == 0x300e || c == 0x3010 || c == 0xff08;
 }
 static int closing(uint32_t c) {
-  return c == ')' || c == ']' || c == '}' || c == ',' || c == '.' || c == ';' ||
-         c == ':' || c == '!' || c == '?' || c == 0x2019 || c == 0x201d ||
-         c == 0x3001 || c == 0x3002 || c == 0x3009 || c == 0x300b ||
-         c == 0x300d || c == 0x300f || c == 0x3011 || c == 0xff09 ||
-         c == 0xff0c || c == 0xff01 || c == 0xff1f || c == 0xff1a ||
-         c == 0xff1b;
+  return c == ')' || c == ']' || c == '}' || c == ',' || c == '.' || c == ';' || c == ':' ||
+         c == '!' || c == '?' || c == 0x2019 || c == 0x201d || c == 0x3001 || c == 0x3002 ||
+         c == 0x3009 || c == 0x300b || c == 0x300d || c == 0x300f || c == 0x3011 || c == 0xff09 ||
+         c == 0xff0c || c == 0xff01 || c == 0xff1f || c == 0xff1a || c == 0xff1b;
 }
 static int break_before(uint32_t previous, uint32_t next) {
-  if (mark(next) || next == 0x200d || previous == 0x200d || opening(previous) ||
-      closing(next))
+  if (mark(next) || next == 0x200d || previous == 0x200d || opening(previous) || closing(next))
     return 0;
-  return previous == ' ' || previous == '\t' || previous == '-' ||
-         cjk(previous) || cjk(next);
+  return previous == ' ' || previous == '\t' || previous == '-' || cjk(previous) || cjk(next);
 }
 static float kern(exr_font *f, uint32_t left, uint32_t right) {
   FT_Vector v = {0};
@@ -96,8 +130,7 @@ static float kern(exr_font *f, uint32_t left, uint32_t right) {
 }
 static int add_page(exr_layout *l, size_t start) {
   exr_page *p;
-  if (!exr_grow((void **)&l->pages, &l->page_cap, l->page_count + 1,
-                sizeof(*p)))
+  if (!exr_grow((void **)&l->pages, &l->page_cap, l->page_count + 1, sizeof(*p)))
     return 0;
   p = &l->pages[l->page_count++];
   p->start = p->end = start;
@@ -105,8 +138,8 @@ static int add_page(exr_layout *l, size_t start) {
   p->line_count = 0;
   return 1;
 }
-static exr_status emit_line(exr_layout *l, exr_font *f, size_t start,
-                            size_t end, float *y, float height, exr_error *e) {
+static exr_status emit_line(exr_layout *l, exr_font *f, size_t start, size_t end, float *y,
+                            float height, exr_error *e) {
   exr_line *line;
   exr_page *page;
   size_t i;
@@ -119,8 +152,7 @@ static exr_status emit_line(exr_layout *l, exr_font *f, size_t start,
       return exr_fail(e, EXR_MEMORY, "Page allocation failed");
     *y = l->options.margin;
   }
-  if (!exr_grow((void **)&l->lines, &l->line_cap, l->line_count + 1,
-                sizeof(*line)))
+  if (!exr_grow((void **)&l->lines, &l->line_cap, l->line_count + 1, sizeof(*line)))
     return exr_fail(e, EXR_MEMORY, "Line allocation failed");
   baseline = *y + (float)f->face->size->metrics.ascender / 64;
   line = &l->lines[l->line_count++];
@@ -146,8 +178,7 @@ static exr_status emit_line(exr_layout *l, exr_font *f, size_t start,
   return EXR_OK;
 }
 exr_status exr_layout_create(const exr_document *doc, exr_font *font,
-                             const exr_layout_options *options,
-                             exr_layout **out, exr_error *e) {
+                             const exr_layout_options *options, exr_layout **out, exr_error *e) {
   exr_layout *l;
   exr_layout_options o;
   size_t b;
@@ -157,13 +188,11 @@ exr_status exr_layout_create(const exr_document *doc, exr_font *font,
     return exr_fail(e, EXR_ARGUMENT, "Invalid layout arguments");
   *out = NULL;
   o = options ? *options : exr_layout_defaults();
-  if (!isfinite(o.width) || !isfinite(o.height) || !isfinite(o.margin) ||
-      !isfinite(o.font_size) || !isfinite(o.line_height) ||
-      !isfinite(o.paragraph_spacing) || o.width < 32 || o.height < 32 ||
-      o.width > 16384 || o.height > 16384 || o.margin < 0 || o.font_size < 4 ||
-      o.font_size > 256 || o.line_height < 1 || o.line_height > 5 ||
-      o.paragraph_spacing < 0 || o.paragraph_spacing > 1024 ||
-      o.width - 2 * o.margin < o.font_size * 1.5f ||
+  if (!isfinite(o.width) || !isfinite(o.height) || !isfinite(o.margin) || !isfinite(o.font_size) ||
+      !isfinite(o.line_height) || !isfinite(o.paragraph_spacing) || o.width < 32 || o.height < 32 ||
+      o.width > 16384 || o.height > 16384 || o.margin < 0 || o.font_size < 4 || o.font_size > 256 ||
+      o.line_height < 1 || o.line_height > 5 || o.paragraph_spacing < 0 ||
+      o.paragraph_spacing > 1024 || o.width - 2 * o.margin < o.font_size * 1.5f ||
       o.height - 2 * o.margin < o.font_size * o.line_height)
     return exr_fail(e, EXR_ARGUMENT, "Invalid page geometry");
   l = calloc(1, sizeof(*l));
@@ -172,18 +201,16 @@ exr_status exr_layout_create(const exr_document *doc, exr_font *font,
   l->options = o;
   y = o.margin;
   for (b = 0; b < doc->count; b++) {
-    size_t pos = doc->blocks[b].start, end = doc->blocks[b].end,
-           first = l->glyph_count, start, i, last_break;
+    size_t pos = doc->blocks[b].start, end = doc->blocks[b].end, first = l->glyph_count, start, i,
+           last_break;
     float size = o.font_size * (doc->blocks[b].heading ? 1.35f : 1), height;
-    if (FT_Set_Char_Size(font->face, 0, (FT_F26Dot6)lroundf(size * 64), 72,
-                         72)) {
+    if (font_size(font, size)) {
       status = exr_fail(e, EXR_FONT, "Cannot size font");
       goto bad;
     }
-    height = fmaxf(size * o.line_height,
-                   (float)(font->face->size->metrics.ascender -
-                           font->face->size->metrics.descender) /
-                       64);
+    height = fmaxf(
+        size * o.line_height,
+        (float)(font->face->size->metrics.ascender - font->face->size->metrics.descender) / 64);
     while (pos < end) {
       uint32_t cp;
       size_t at = pos;
@@ -193,8 +220,7 @@ exr_status exr_layout_create(const exr_document *doc, exr_font *font,
         goto bad;
       }
       if (l->glyph_count >= EXR_MAX_ITEMS ||
-          !exr_grow((void **)&l->glyphs, &l->glyph_cap, l->glyph_count + 1,
-                    sizeof(*g))) {
+          !exr_grow((void **)&l->glyphs, &l->glyph_cap, l->glyph_count + 1, sizeof(*g))) {
         status = exr_fail(e, EXR_LIMIT, "Glyph limit exceeded");
         goto bad;
       }
@@ -205,12 +231,12 @@ exr_status exr_layout_create(const exr_document *doc, exr_font *font,
       g->codepoint = cp;
       g->size = size;
       g->glyph = FT_Get_Char_Index(font->face, cp == '\t' ? ' ' : cp);
-      if (FT_Load_Glyph(font->face, g->glyph, FT_LOAD_DEFAULT)) {
+      if (measure(font, g->glyph, &g->advance)) {
         status = exr_fail(e, EXR_FONT, "Cannot measure glyph");
         goto bad;
       }
-      g->advance =
-          (float)font->face->glyph->advance.x / 64 * (cp == '\t' ? 4 : 1);
+      if (cp == '\t')
+        g->advance *= 4;
     }
     start = first;
     while (start < l->glyph_count) {
@@ -225,9 +251,9 @@ exr_status exr_layout_create(const exr_document *doc, exr_font *font,
         if (i > start && width + advance > o.width - 2 * o.margin) {
           size_t split = last_break != SIZE_MAX ? last_break : i;
           if (last_break == SIZE_MAX) {
-            while (split > start && (mark(l->glyphs[split].codepoint) ||
-                                     l->glyphs[split].codepoint == 0x200d ||
-                                     l->glyphs[split - 1].codepoint == 0x200d))
+            while (split > start &&
+                   (mark(l->glyphs[split].codepoint) || l->glyphs[split].codepoint == 0x200d ||
+                    l->glyphs[split - 1].codepoint == 0x200d))
               split--;
             if (split == start) {
               width += advance;
@@ -325,8 +351,8 @@ size_t exr_layout_hit_test(const exr_layout *l, size_t p, float x, float y) {
   }
   return line->end;
 }
-exr_status exr_render_page(const exr_layout *l, exr_font *f, size_t page,
-                           exr_bitmap *out, exr_error *e) {
+exr_status exr_render_page(const exr_layout *l, exr_font *f, size_t page, exr_bitmap *out,
+                           exr_error *e) {
   size_t i, j;
   uint32_t width, height;
   float last_size = 0;
@@ -347,15 +373,13 @@ exr_status exr_render_page(const exr_layout *l, exr_font *f, size_t page,
   memset(out->pixels, 255, (size_t)width * height);
   p = &l->pages[page];
   for (i = p->line_start; i < p->line_start + p->line_count; i++)
-    for (j = l->lines[i].glyph_start;
-         j < l->lines[i].glyph_start + l->lines[i].glyph_count; j++) {
+    for (j = l->lines[i].glyph_start; j < l->lines[i].glyph_start + l->lines[i].glyph_count; j++) {
       const exr_glyph *g = &l->glyphs[j];
       FT_GlyphSlot slot;
       unsigned int by, bx;
       int left, top;
       if (last_size != g->size) {
-        if (FT_Set_Char_Size(f->face, 0, (FT_F26Dot6)lroundf(g->size * 64), 72,
-                             72))
+        if (font_size(f, g->size))
           goto font_error;
         last_size = g->size;
       }
@@ -380,9 +404,8 @@ exr_status exr_render_page(const exr_layout *l, exr_font *f, size_t page,
           else
             continue;
           out->pixels[(size_t)y * width + (size_t)x] =
-              (unsigned char)((unsigned)
-                                  out->pixels[(size_t)y * width + (size_t)x] *
-                              (255 - a) / 255);
+              (unsigned char)((unsigned)out->pixels[(size_t)y * width + (size_t)x] * (255 - a) /
+                              255);
         }
     }
   return EXR_OK;

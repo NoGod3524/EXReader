@@ -29,12 +29,8 @@ int exr_append(exr_buffer *buf, const void *data, size_t size);
 int exr_codepoint(exr_buffer *buf, uint32_t cp);
 int exr_next(const char *text, size_t size, size_t *offset, uint32_t *cp);
 FILE *exr_fopen(const char *path, const char *mode);
-exr_status exr_read(const char *path, unsigned char **data, size_t *size,
-                    exr_error *error);
-exr_status exr_decode(const void *data, size_t size, exr_buffer *buf,
-                      exr_error *error);
-exr_status exr_parse(exr_document *doc, const void *data, size_t size,
-                     exr_error *error);
-int exr_add_block(exr_document *doc, const char *text, size_t size,
-                  unsigned heading);
+exr_status exr_read(const char *path, unsigned char **data, size_t *size, exr_error *error);
+exr_status exr_decode(const void *data, size_t size, exr_buffer *buf, exr_error *error);
+exr_status exr_parse(exr_document *doc, const void *data, size_t size, exr_error *error);
+int exr_add_block(exr_document *doc, const char *text, size_t size, unsigned heading);
 #endif

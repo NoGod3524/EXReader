@@ -1,0 +1,9 @@
+* text=auto eol=lf
+*.png binary
+*.bmp binary
+*.epub binary
+*.docx binary
+*.mobi binary
+*.sqlite binary
+*.ttf binary
+*.ttc binary

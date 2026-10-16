@@ -34,14 +34,12 @@ static int render_main(int argc, char **argv) {
   exr_document_text(doc, &bytes);
   exr_layout_pages(layout, &pages);
   if (exr_render_page(layout, font, page, &bitmap, &error) != EXR_OK ||
-      (strstr(argv[3], ".png")
-           ? exr_bitmap_write_png(&bitmap, argv[3], &error)
-           : exr_bitmap_write_bmp(&bitmap, argv[3], &error)) != EXR_OK)
+      (strstr(argv[3], ".png") ? exr_bitmap_write_png(&bitmap, argv[3], &error)
+                               : exr_bitmap_write_bmp(&bitmap, argv[3], &error)) != EXR_OK)
     goto done;
   printf("EXReader C %s: %zu UTF-8 bytes, %zu pages, rendered page %zu, %.3f "
          "CPU seconds\n",
-         exr_version(), bytes, pages, page,
-         (double)(clock() - start) / CLOCKS_PER_SEC);
+         exr_version(), bytes, pages, page, (double)(clock() - start) / CLOCKS_PER_SEC);
   result = 0;
 done:
   if (result)
