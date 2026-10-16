@@ -52,16 +52,35 @@ static int block_tag(const char *s) {
          !strcmp(s, "article") || !strcmp(s, "body") ||
          (s[0] == 'h' && s[1] >= '1' && s[1] <= '6' && !s[2]);
 }
+static int raw_end(const char *text, size_t size, const char *tag) {
+  size_t i, length = strlen(tag);
+  unsigned char next;
+  if (size < length + 3 || text[0] != '<' || text[1] != '/')
+    return 0;
+  for (i = 0; i < length; i++)
+    if (tolower((unsigned char)text[i + 2]) != tag[i])
+      return 0;
+  next = (unsigned char)text[length + 2];
+  return space(next) || next == '\f' || next == '/' || next == '>';
+}
 static exr_status html(exr_document *d, const void *data, size_t n, exr_error *e) {
   exr_buffer input = {0}, out = {0};
   exr_status result;
   size_t i = 0;
   unsigned heading = 0;
   char skip[32] = {0};
+  const char *raw = NULL;
   result = exr_decode(data, n, &input, e);
   if (result != EXR_OK)
     goto done;
   while (i < input.size) {
+    if (raw) {
+      if (!raw_end(input.data + i, input.size - i, raw)) {
+        i++;
+        continue;
+      }
+      raw = NULL;
+    }
     if (input.data[i] == '<' && i + 1 < input.size &&
         (isalpha((unsigned char)input.data[i + 1]) || strchr("/!?", input.data[i + 1]))) {
       size_t j = i + 1, k = 0;
@@ -101,6 +120,8 @@ static exr_status html(exr_document *d, const void *data, size_t n, exr_error *e
         goto done;
       }
       i = j + 1;
+      if (!closing && (!strcmp(tag, "script") || !strcmp(tag, "style")))
+        raw = !strcmp(tag, "script") ? "script" : "style";
       if (skip[0]) {
         if (closing && !strcmp(tag, skip))
           skip[0] = 0;
