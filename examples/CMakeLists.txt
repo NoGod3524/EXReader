@@ -36,18 +36,11 @@ if(WIN32)
   target_link_libraries(exreader-font-example PRIVATE shell32)
   target_link_libraries(exreader-page-example PRIVATE shell32)
   find_file(EXR_RUNTIME NAMES exreader.dll libexreader.dll PATHS "${EXR_SDK}/bin" NO_DEFAULT_PATH REQUIRED)
-  add_custom_command(TARGET exreader-shaping-example POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:exreader-shaping-example>")
-  add_custom_command(TARGET exreader-page-example POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:exreader-page-example>")
-  add_custom_command(TARGET exreader-font-example POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:exreader-font-example>")
-  add_custom_command(TARGET exreader-text-example POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:exreader-text-example>")
-  add_custom_command(TARGET exreader-lazy-example POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:exreader-lazy-example>")
-  add_custom_command(TARGET exreader-anchor-example POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:exreader-anchor-example>")
-  add_custom_command(TARGET exreader-construct-example POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:exreader-construct-example>")
+  add_custom_target(exreader-example-runtime
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:exreader-construct-example>"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:exreader-construct-example>"
+    VERBATIM)
+  foreach(example construct anchor lazy text font page shaping)
+    add_dependencies(exreader-${example}-example exreader-example-runtime)
+  endforeach()
 endif()
