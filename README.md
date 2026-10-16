@@ -63,7 +63,7 @@ cargo test --manifest-path integrations/calibre/Cargo.toml
 
 `dist/exreader.js` 是 ESM 入口，动态导入的分块与 `render.css` / `exreader.css`、`pdf-assets/`、`licenses/` 需一同部署。PDF 默认从站点根路径 `/pdf-assets/` 加载字体和解码器；已有资源路径的应用可用 `await configurePDF()` 指定。测试页面只提供空白宿主，不包含阅读器界面。
 
-[API](docs/API.md) · [后续格式与架构方向](docs/FRAMEWORK.md) · [第三方许可](THIRD_PARTY_NOTICES.md) · [原版研究记录](docs/PROJECT_STUDY.md)
+[验证记录](docs/FRAMEWORK_VALIDATION.md) · [API](docs/API.md) · [后续格式与架构方向](docs/FRAMEWORK.md) · [第三方许可](THIRD_PARTY_NOTICES.md) · [原版研究记录](docs/PROJECT_STUDY.md)
 
 ## 许可
 
