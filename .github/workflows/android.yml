@@ -64,7 +64,7 @@ jobs:
           for arch in arm64 x86_64; do
             apk_path=$(find src-tauri/gen/android/app/build/outputs/apk -name "*$arch*release*unsigned.apk" -print -quit)
             test -n "$apk_path"
-            "$ANDROID_HOME/build-tools/36.0.0/zipalign" -p -f 4 "$apk_path" "release/$arch-aligned.apk"
+            "$ANDROID_HOME/build-tools/36.0.0/zipalign" -P 16 -f 4 "$apk_path" "release/$arch-aligned.apk"
             "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign --ks "$HOME/.android/debug.keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out "release/EXReader-Android-$arch-preview.apk" "release/$arch-aligned.apk"
             "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "release/EXReader-Android-$arch-preview.apk"
             rm "release/$arch-aligned.apk"
