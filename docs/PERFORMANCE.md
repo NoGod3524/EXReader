@@ -146,7 +146,7 @@ Windows、Arial、相同固定 EPUB，三轮独立进程，每轮最多 64 个�
 
 0.12.1 被测源码为 `5eb289fb112c553017c2b3fe0b8821673c5868cb`，基准程序 SHA-256 为 `21be2895a5273a52c249a6f12b23c97eb5820ee3c65013b68af8348845f35dda`。保留的 0.12.0 SDK 对应源码 `ada8f090a38d9449d3c88be0eda26f9dfef56feb`，基准程序 SHA-256 为 `27bc47475a4470f6c1847e0cc11cd631180ae01810a2d42a061dffe75a245196`。原始数据：[0.12.1 九份明细与汇总](benchmarks/0.12.1-windows-paged/summary.json)、[同会话 0.12.0 基线](benchmarks/0.12.1-audit-baseline-windows-paged/summary.json)。
 
-原始、暂定、最终行三个驻留队列按容量合计限制为 16 MiB；塑形临时结果、字体、段落双向元数据与位图另计。工作量和重试上限见 [API 文档](NATIVE_API.md#原生文字塑形)。
+原始、暂定、最终行三个驻留队列按容量合计限制为 16 MiB；塑形临时结果、字体、段落双向元数据与位图另计。工作量和重试上限见 [API 文档](NATIVE_API.md#独立双向分析与段落方向)。
 
 ## 验证
 
