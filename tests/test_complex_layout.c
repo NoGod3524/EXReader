@@ -185,6 +185,17 @@ static void directions(void) {
   CHECK(count == 1 && g[0].glyph == LAMALEF && near(g[0].advance, 14));
   CHECK(!g[0].start && g[0].end == 4 && !g[0].cluster_start && g[0].cluster_end == 4);
   exr_layout_free(l); exr_document_free(doc);
+  scenario = "Arabic ligature across an X9-removed joiner";
+  doc = paragraph("\xd9\x84\xe2\x80\x8d\xd8\xa7", NULL, NULL);
+  l = layout(doc, &c); g = exr_layout_glyphs(l, &count);
+  {
+    size_t visible = 0;
+    for (i = 0; i < count; i++)
+      if (!(g[i].flags & EXR_GLYPH_HIDDEN)) { visible++; CHECK(g[i].glyph == LAMALEF); }
+    CHECK(visible == 1);
+  }
+  ranges(l, 7);
+  exr_layout_free(l); exr_document_free(doc);
 }
 static unsigned ink(const exr_bitmap *b, int left, int top, int right, int bottom) {
   int x, y;

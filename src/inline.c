@@ -190,10 +190,12 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     while (end < l->glyph_count) {
       const exr_glyph *v = &l->glyphs[end];
       uint32_t next_tag = script(v->codepoint);
-      if (v->font_index != g->font_index || v->size != g->size ||
+      int removed = (v->flags & EXR_GLYPH_HIDDEN) && v->bidi_level == UINT_MAX;
+      /* X9 removes controls from visual ordering, not from shaping context. */
+      if ((!removed && (v->font_index != g->font_index || v->size != g->size ||
           (((v->flags & 3) != (g->flags & 3) || v->color != g->color) &&
            v->cluster_start != g->cluster_start) ||
-          v->bidi_level != g->bidi_level || (tag && next_tag && tag != next_tag) ||
+          v->bidi_level != g->bidi_level)) || (tag && next_tag && tag != next_tag) ||
           (v->boundaries & (EXR_BOUNDARY_LINE | EXR_BOUNDARY_MANDATORY)) ||
           v->codepoint == '\t' || g->codepoint == '\t') break;
       if (!tag) tag = next_tag;
