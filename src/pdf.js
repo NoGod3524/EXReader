@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-only
 import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
-import worker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import './pdf-text-layer.css';
-pdfjs.GlobalWorkerOptions.workerSrc = worker;
-const assets = { cMapUrl: '/pdf-assets/cmaps/', standardFontDataUrl: '/pdf-assets/standard_fonts/', wasmUrl: '/pdf-assets/wasm/' };
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf-assets/pdf.worker.mjs';
+const assets = { workerSrc: '/pdf-assets/pdf.worker.mjs', cMapUrl: '/pdf-assets/cmaps/', standardFontDataUrl: '/pdf-assets/standard_fonts/', wasmUrl: '/pdf-assets/wasm/' };
 export function configurePDF(options = {}) {
   for (const key of Object.keys(options)) {
     if (!Object.hasOwn(assets, key) || typeof options[key] !== 'string') throw new TypeError('PDF 资源配置无效');
   }
   Object.assign(assets, options);
+  pdfjs.GlobalWorkerOptions.workerSrc = assets.workerSrc;
 }
-export const loadPDF = async file => pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), ...assets, cMapPacked: true, isEvalSupported: false }).promise;
+export const loadPDF = async file => pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), cMapUrl: assets.cMapUrl, standardFontDataUrl: assets.standardFontDataUrl, wasmUrl: assets.wasmUrl, cMapPacked: true, isEvalSupported: false }).promise;
 
 export async function pdfReader(stage, file, book, notes, callbacks) {
   const pdf = await loadPDF(file);

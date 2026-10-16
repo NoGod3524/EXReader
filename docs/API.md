@@ -37,7 +37,7 @@ Book 字段兼容旧版：id / filename / size / modified / added / format / aud
 
 标注新增 / 删除后，宿主需要同步更新传给渲染器的 notes 数组，再调用 addAnnotation / removeAnnotation。进度持久化由 relocate 回调完成。宿主关闭渲染器前应等待自己的持久化任务。
 
-`await configurePDF({ cMapUrl, standardFontDataUrl, wasmUrl })` 配置资源位置（目录 URL 以 `/` 结束）。`convert(file, book, format)`、`notesExport(notes, books)` 返回 Blob，可独立于书库使用。
+`await configurePDF({ workerSrc, cMapUrl, standardFontDataUrl, wasmUrl })` 配置资源位置（目录 URL 以 `/` 结束，workerSrc 指向独立的 worker 文件）。`convert(file, book, format)`、`notesExport(notes, books)` 返回 Blob，可独立于书库使用。
 
 ## 内容安全
 
