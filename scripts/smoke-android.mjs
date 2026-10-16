@@ -20,17 +20,22 @@ async function find(pattern, clickable = false) {
   let latest = [];
   for (let attempt = 0; attempt < 25; attempt++) {
     latest = await nodes();
+    // Cold emulator boots can show a launcher ANR over the foreground app.
+    if (latest.some(n => n.text === "Pixel Launcher isn't responding")) {
+      const close = latest.find(n => n.text === 'Close app');
+      if (close) { tapNode(close); await wait(1000); continue; }
+    }
     const matches = latest.filter(n => pattern.test(n.text || '') || pattern.test(n['content-desc'] || ''));
     if (matches.length) return (clickable && matches.find(n => n.clickable === 'true')) || matches[0];
     await wait(500);
   }
   throw new Error(`Android UI did not show ${pattern}; visible: ${latest.map(n => n.text || n['content-desc']).filter(Boolean).join(' | ')}`);
 }
-async function tap(pattern) {
-  const n = await find(pattern, true);
+function tapNode(n) {
   const [left, top, right, bottom] = n.rect;
   adb('shell', 'input', 'tap', String(Math.floor((left + right) / 2)), String(Math.floor((top + bottom) / 2)));
 }
+async function tap(pattern) { tapNode(await find(pattern, true)); }
 async function apks(path) {
   return (await Promise.all((await readdir(path, { withFileTypes: true })).map(e => e.isDirectory() ? apks(`${path}/${e.name}`) : `${path}/${e.name}`))).flat();
 }
