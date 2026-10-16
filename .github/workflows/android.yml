@@ -1,5 +1,12 @@
 name: Android APK and emulator check
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      package_type:
+        description: Optimized signed preview or debug package for WebView tests
+        type: choice
+        options: [preview, debug]
+        default: preview
 permissions:
   contents: read
 jobs:
@@ -41,16 +48,45 @@ jobs:
           mkdir -p "$HOME/.android"
           echo "$ANDROID_PREVIEW_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
       - run: npm run tauri -- android init --ci --skip-targets-install
-      - run: npm run tauri -- android build --ci --debug --apk --split-per-abi --target aarch64 x86_64
+      - name: Build APKs
+        env:
+          PACKAGE_TYPE: ${{ inputs.package_type }}
+        run: |
+          if [ "$PACKAGE_TYPE" = "preview" ]; then
+            npm run tauri -- android build --ci --apk --split-per-abi --target aarch64 x86_64
+          else
+            npm run tauri -- android build --ci --debug --apk --split-per-abi --target aarch64 x86_64
+          fi
+      - name: Sign optimized preview APKs
+        if: inputs.package_type == 'preview'
+        run: |
+          mkdir -p release
+          for arch in arm64 x86_64; do
+            apk_path=$(find src-tauri/gen/android/app/build/outputs/apk -name "*$arch*release*unsigned.apk" -print -quit)
+            test -n "$apk_path"
+            "$ANDROID_HOME/build-tools/36.0.0/zipalign" -p -f 4 "$apk_path" "release/$arch-aligned.apk"
+            "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign --ks "$HOME/.android/debug.keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out "release/EXReader-Android-$arch-preview.apk" "release/$arch-aligned.apk"
+            "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "release/EXReader-Android-$arch-preview.apk"
+            rm "release/$arch-aligned.apk"
+          done
       - uses: actions/upload-artifact@v4
+        if: inputs.package_type == 'debug'
         with:
           name: EXReader-Android-debug
           path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: inputs.package_type == 'preview'
+        with:
+          name: EXReader-Android-preview
+          path: release/*preview.apk
+          if-no-files-found: error
+          retention-days: 30
   emulator:
     timeout-minutes: 20
     needs: apk
+    if: inputs.package_type == 'debug'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
