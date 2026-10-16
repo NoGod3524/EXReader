@@ -131,7 +131,7 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count,
     return s;
   if (!exr_grow((void **)&l->lines, &l->line_cap, l->line_count + 1, sizeof(*l->lines)))
     return EXR_MEMORY;
-  x = f->x + indent;
+  x = f->x + (base & 1 ? 0 : indent);
   if (align == 1)
     x += fmaxf(0, available - width) / 2;
   if (align == 2)

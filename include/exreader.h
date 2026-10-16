@@ -217,7 +217,7 @@ typedef struct {
   float clip_left, clip_right;
   float line_height;
   size_t cluster_start, cluster_end; /* Source UTF-8 range of this grapheme group. */
-  unsigned boundaries; /* EXR_BOUNDARY_* before this scalar in the visible run. */
+  unsigned boundaries; /* Source EXR_BOUNDARY_*; zero after the first shaped glyph in a cluster. */
   size_t font_index; /* Index in the ordered exr_font input list; glyph is face-local. */
   float offset_x, offset_y; /* Shaped glyph offset; y up relative to baseline. */
   unsigned bidi_level; /* Resolved Unicode embedding level; odd means RTL. */
