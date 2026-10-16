@@ -1,4 +1,4 @@
-import { chromium } from '@playwright/test';
+import { _android as android } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -28,25 +28,16 @@ async function apks(folder) {
 const apk = (await apks('android-apks')).find(p => p.endsWith('.apk') && /x86_64/.test(p));
 assert.ok(apk, 'x86_64 emulator APK must exist');
 adb('install', '-r', apk);
+const [device] = await android.devices({ omitDriverInstall: true });
+assert.ok(device, 'Android emulator must be available through ADB');
+device.setDefaultTimeout(60000);
 try {
   for (let round = 0; round < 2; round++) {
     adb('shell', 'am', 'start', '-n', 'io.exreader.reader/.MainActivity');
-    let browser;
-    let connectionError;
-    for (let retry = 0; retry < 60; retry++) {
-      try {
-        const pid = adb('shell', 'pidof', 'io.exreader.reader');
-        const sockets = adb('shell', 'cat', '/proc/net/unix').split('\n').map(line => line.trim().split(/\s+/).at(-1)?.replace(/^@/, '')).filter(name => name?.startsWith('webview_devtools_remote'));
-        const socket = sockets.find(name => name.endsWith(`_${pid}`)) || (sockets.length === 1 ? sockets[0] : undefined);
-        assert.ok(socket, `No WebView socket for PID ${pid}; available: ${sockets.join(', ')}`);
-        adb('forward', 'tcp:9222', `localabstract:${socket}`);
-        browser = await chromium.connectOverCDP('http://127.0.0.1:9222', { timeout: 2000 });
-        break;
-      } catch (error) { connectionError = error; await wait(1000); }
-    }
-    assert.ok(browser, `Android WebView debugging endpoint must be available: ${connectionError}`);
+    const webview = await device.webView({ pkg: 'io.exreader.reader' });
+    const page = await webview.page();
+    const browser = page.context().browser();
     try {
-      const page = browser.contexts()[0].pages()[0];
       await page.locator('.library-intro').waitFor();
       const viewport = await page.evaluate(() => ({ width: innerWidth, content: document.documentElement.scrollWidth }));
       assert.ok(viewport.width < 600, `Phone must use a mobile viewport: ${JSON.stringify(viewport)}`);
@@ -84,7 +75,7 @@ try {
         assert.equal(metadata.notes.length, 1);
       }
       console.log(`Android native round ${round + 1}: passed`);
-    } finally { await browser.close(); }
+    } finally { await browser?.close(); }
     await writeFile(`test-results/android/round-${round + 1}.png`, execFileSync('adb', ['exec-out', 'screencap', '-p']));
     adb('shell', 'am', 'force-stop', 'io.exreader.reader');
     await wait(1000);
@@ -94,4 +85,4 @@ try {
   await writeFile('test-results/android/logcat.txt', adb('logcat', '-d'));
   await writeFile('test-results/android/sockets.txt', adb('shell', 'cat', '/proc/net/unix'));
   throw error;
-}
+} finally { await device.close(); }
