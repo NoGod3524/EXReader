@@ -123,7 +123,7 @@ feature ss12 {
 '''
 
 
-def build():
+def build(features=FEATURES):
     builder = FontBuilder(1000, isTTF=True)
     builder.setupGlyphOrder(ORDER)
     glyphs = {}
@@ -151,7 +151,7 @@ def build():
                      usWinAscent=800, usWinDescent=200)
     builder.setupPost()
     builder.setupMaxp()
-    addOpenTypeFeaturesFromString(builder.font, FEATURES)
+    addOpenTypeFeaturesFromString(builder.font, features)
     context_formats(builder.font)
     builder.font['head'].created = builder.font['head'].modified = 3800000000
     builder.font.recalcTimestamp = False
@@ -283,6 +283,16 @@ def main():
     original = path.read_bytes()
     for tag in ('GSUB', 'GPOS'):
         (ROOT / ('broken-' + tag.lower() + '.ttf')).write_bytes(broken_lookup(original, tag))
+    boundary_features = FEATURES.replace('feature kern { pos A V -100; } kern;', r'''
+feature kern { pos A <0 0 -100 0> V <120 80 -50 0>; } kern;
+feature curs {
+    pos cursive x <anchor 0 0> <anchor 450 100>;
+    pos cursive y <anchor 50 20> <anchor 480 120>;
+    pos cursive [beh.isol beh.init beh.medi beh.fina]
+        <anchor 20 30> <anchor 550 100>;
+} curs;
+''')
+    build(boundary_features).save(ROOT / 'line-boundary.ttf')
     lookups = {}
     for tag in ('GSUB', 'GPOS'):
         lookups[tag] = [{'type': lookup.LookupType,
@@ -294,7 +304,7 @@ def main():
                 'sha256': {file.name: hashlib.sha256(file.read_bytes()).hexdigest()
                            for file in sorted(ROOT.glob('*.ttf'))}}
     (ROOT / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
-    print('Generated original shaping font and two invalid lookup-offset variants.')
+    print('Generated original shaping fonts, line-boundary variant and invalid lookup variants.')
 
 
 if __name__ == '__main__':

@@ -174,11 +174,26 @@ static uint32_t script(uint32_t cp) {
       (cp >= 0xc0 && cp <= 0x2ff)) return EXR_TAG('l','a','t','n');
   return 0;
 }
+static int inline_grow(exr_layout *l, size_t count) {
+  size_t capacity;
+  exr_glyph *glyphs;
+  if (l->glyph_limit && count > l->glyph_limit) return 0;
+  if (!l->glyph_limit || count <= l->glyph_cap)
+    return exr_grow((void **)&l->glyphs, &l->glyph_cap, count, sizeof(*l->glyphs));
+  capacity = l->glyph_cap ? l->glyph_cap : 64;
+  while (capacity < count && capacity <= l->glyph_limit / 2) capacity *= 2;
+  if (capacity < count || capacity > l->glyph_limit) capacity = count;
+  glyphs = realloc(l->glyphs, capacity * sizeof(*glyphs));
+  if (!glyphs) return 0;
+  l->glyphs = glyphs; l->glyph_cap = capacity;
+  return 1;
+}
 exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t after) {
   exr_layout *l = f->layout;
   exr_layout result = {0};
   size_t i, end, j, k, *positions = NULL;
   exr_status status = EXR_OK;
+  result.glyph_limit = l->glyph_limit ? l->glyph_limit - start : 0;
   for (i = start; i < l->glyph_count; i = end) {
     exr_glyph *g = &l->glyphs[i];
     exr_shaped_glyph *shaped = NULL;
@@ -202,8 +217,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
       end++;
     }
     if (!exr_ot_present(&f->font->faces[g->font_index]) || g->codepoint == '\t') {
-      if (!exr_grow((void **)&result.glyphs, &result.glyph_cap,
-                       result.glyph_count + end - i, sizeof(*g))) { status = EXR_MEMORY; goto done; }
+      if (!inline_grow(&result, result.glyph_count + end - i)) { status = EXR_LIMIT; goto done; }
       memcpy(result.glyphs + result.glyph_count, g, (end - i) * sizeof(*g));
       result.glyph_count += end - i;
       continue;
@@ -233,7 +247,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     free(text.data);
     if (status != EXR_OK) goto done;
     if (n > EXR_MAX_ITEMS - result.glyph_count ||
-        !exr_grow((void **)&result.glyphs, &result.glyph_cap, result.glyph_count + n, sizeof(*g))) {
+        !inline_grow(&result, result.glyph_count + n)) {
       free(shaped); status = EXR_LIMIT; goto done;
     }
     for (j = 0, k = 0; j < n; j++) {
@@ -268,7 +282,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     free(shaped); free(positions); positions = NULL;
   }
   if (result.glyph_count > EXR_MAX_ITEMS - start ||
-      !exr_grow((void **)&l->glyphs, &l->glyph_cap, start + result.glyph_count, sizeof(*l->glyphs))) {
+      !inline_grow(l, start + result.glyph_count)) {
     status = EXR_LIMIT; goto done;
   }
   memcpy(l->glyphs + start, result.glyphs, result.glyph_count * sizeof(*l->glyphs));
@@ -276,4 +290,283 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
 done:
   free(positions); free(result.glyphs);
   return status == EXR_OK ? EXR_OK : exr_fail(f->error, status, "Inline shaping failed");
+}
+
+static void reset_line_scan(exr_line_buffer *b) {
+  b->scan = b->line_end = 0;
+  b->soft = b->emergency = SIZE_MAX;
+  b->scan_width = 0;
+  b->initialized = 1;
+}
+static exr_status line_work(flow *f, size_t count) {
+  const size_t limit = 64 * 1024 * 1024;
+  if (count > limit - f->assets->shape_work)
+    return exr_fail(f->error, EXR_LIMIT, "Line shaping work limit exceeded");
+  f->assets->shape_work += count;
+  return EXR_OK;
+}
+static exr_status line_reserve(flow *f, exr_line_buffer *b, exr_layout *target, size_t count) {
+  const size_t limit = 16 * 1024 * 1024 / sizeof(exr_glyph);
+  size_t other = b->run.glyph_cap + b->raw.glyph_cap + b->line.glyph_cap - target->glyph_cap;
+  if (other >= limit || count > limit - other)
+    return exr_fail(f->error, EXR_LIMIT, "Line buffer exceeds 16 MiB");
+  target->glyph_limit = limit - other;
+  if (!inline_grow(target, count))
+    return exr_fail(f->error, EXR_LIMIT, "Line buffer allocation limit exceeded");
+  return EXR_OK;
+}
+static float line_kern(flow *f, const exr_glyph *left, const exr_glyph *right) {
+  if (!left || ((left->flags | right->flags) & (EXR_GLYPH_HIDDEN | EXR_GLYPH_SHAPED)) ||
+      left->font_index != right->font_index || left->size != right->size ||
+      (left->flags & 3) != (right->flags & 3)) return 0;
+  return exr_kern(&f->font->faces[right->font_index], left->glyph, right->glyph);
+}
+static exr_status copy_glyphs(flow *f, exr_line_buffer *b, exr_layout *to,
+                               const exr_glyph *from, size_t count) {
+  exr_status status = line_reserve(f, b, to, count);
+  if (status != EXR_OK) return status;
+  if (count) memcpy(to->glyphs, from, count * sizeof(*from));
+  to->glyph_count = count;
+  return EXR_OK;
+}
+static exr_status shape_line_copy(flow *f, exr_line_buffer *b, exr_layout *to, const exr_glyph *from,
+                                   size_t count, uint32_t before, uint32_t after) {
+  flow child = *f;
+  exr_status status = line_work(f, count);
+  if (status == EXR_OK) status = copy_glyphs(f, b, to, from, count);
+  if (status != EXR_OK) return status;
+  child.layout = to;
+  status = exr_inline_shape(&child, 0, before, after);
+  return status == EXR_OK ? line_work(f, to->glyph_count) : status;
+}
+static exr_status measure_line_cluster(flow *f, exr_line_buffer *b) {
+  flow child = *f;
+  exr_status status;
+  if (b->cluster_start == b->run.glyph_count) return EXR_OK;
+  child.layout = &b->run;
+  status = exr_flow_cluster(&child, b->cluster_start, b->run.glyph_count);
+  if (status == EXR_OK) b->cluster_start = b->run.glyph_count;
+  return status;
+}
+static exr_status shape_line_segment(flow *f, exr_line_buffer *b, uint32_t after) {
+  flow child = *f;
+  exr_status status;
+  size_t count = b->run.glyph_count - b->ready, i;
+  uint32_t last = b->before;
+  if (!count) return EXR_OK;
+  status = line_reserve(f, b, &b->raw, b->raw.glyph_count + count);
+  if (status != EXR_OK) return status;
+  memcpy(b->raw.glyphs + b->raw.glyph_count, b->run.glyphs + b->ready,
+          count * sizeof(*b->raw.glyphs));
+  b->raw.glyph_count += count;
+  for (i = b->run.glyph_count; i > b->ready; i--)
+    if (!exr_ot_transparent(b->run.glyphs[i - 1].codepoint)) {
+      last = b->run.glyphs[i - 1].codepoint;
+      break;
+    }
+  status = line_work(f, count);
+  if (status == EXR_OK) status = line_reserve(f, b, &b->run, b->run.glyph_count);
+  if (status != EXR_OK) return status;
+  child.layout = &b->run;
+  status = exr_inline_shape(&child, b->ready, b->before, after);
+  if (status == EXR_OK) status = line_work(f, b->run.glyph_count - b->ready);
+  if (status == EXR_OK) {
+    b->ready = b->cluster_start = b->run.glyph_count;
+    b->before = last;
+    b->after = after;
+  }
+  return status;
+}
+/* A provisional ligature is one protected cluster. Final fitting can retreat
+   across its start, never through it or a GLUE boundary. */
+static exr_status fit_line(flow *f, exr_line_buffer *b) {
+  float indent = f->first_line ? f->paragraph->indent : 0;
+  float available = fmaxf(1, f->width - indent);
+  size_t tries = 0;
+  for (;;) {
+    size_t i, source_end = b->run.glyphs[b->line_end - 1].cluster_end;
+    size_t low = 0, high = b->raw.glyph_count;
+    float width = 0;
+    exr_status status;
+    while (low < high) {
+      size_t middle = low + (high - low) / 2;
+      if (b->raw.glyphs[middle].start < source_end) low = middle + 1;
+      else high = middle;
+    }
+    b->raw_end = low;
+    status = shape_line_copy(f, b, &b->line, b->raw.glyphs, low, 0, 0);
+    if (status != EXR_OK) return status;
+    for (i = 0; i < b->line.glyph_count; i++) {
+      exr_glyph *g = &b->line.glyphs[i];
+      if (exr_font_size(&f->font->faces[g->font_index], g->size))
+        return exr_fail(f->error, EXR_FONT, "Cannot size final line font");
+      width += g->advance + line_kern(f, i ? g - 1 : NULL, g);
+    }
+    if (width <= available + 0.001f) break;
+    {
+      size_t emergency = 0;
+      i = b->line_end;
+      while (--i) {
+        unsigned boundaries = b->run.glyphs[i].boundaries;
+        if ((boundaries & EXR_BOUNDARY_GRAPHEME) && !(boundaries & EXR_BOUNDARY_GLUE)) {
+          if (!emergency) emergency = i;
+          if (boundaries & EXR_BOUNDARY_LINE) break;
+        }
+      }
+      if (!i) i = emergency;
+    }
+    if (!i) break; /* An indivisible first cluster keeps its clipping contract. */
+    if (++tries > 256)
+      return exr_fail(f->error, EXR_LIMIT, "Final line fitting retry limit exceeded");
+    b->line_end = i;
+    b->forced = b->final = 0;
+  }
+  b->line_ready = 1;
+  return EXR_OK;
+}
+/* Only the leading carry segment can retain context from the committed line.
+   Other segments are separated by an existing line opportunity. */
+static exr_status reshape_carry(flow *f, exr_line_buffer *b) {
+  size_t prefix = 1, old = 0, i, old_ready = b->ready, old_cluster = b->cluster_start;
+  uint32_t after = b->after;
+  exr_status status;
+  b->before = 0;
+  for (i = b->raw.glyph_count; i; i--)
+    if (!exr_ot_transparent(b->raw.glyphs[i - 1].codepoint)) {
+      b->before = b->raw.glyphs[i - 1].codepoint;
+      break;
+    }
+  if (!b->raw.glyph_count) return EXR_OK;
+  while (prefix < b->raw.glyph_count &&
+         !(b->raw.glyphs[prefix].boundaries & (EXR_BOUNDARY_LINE | EXR_BOUNDARY_MANDATORY))) prefix++;
+  while (old < b->ready && b->run.glyphs[old].start < b->raw.glyphs[prefix - 1].end) old++;
+  for (i = prefix; i < b->raw.glyph_count; i++)
+    if (!exr_ot_transparent(b->raw.glyphs[i].codepoint)) {
+      after = b->raw.glyphs[i].codepoint;
+      break;
+    }
+  if (i == b->raw.glyph_count)
+    for (i = b->ready; i < b->run.glyph_count; i++)
+      if (!exr_ot_transparent(b->run.glyphs[i].codepoint)) {
+        after = b->run.glyphs[i].codepoint;
+        break;
+      }
+  status = shape_line_copy(f, b, &b->line, b->raw.glyphs, prefix, 0, after);
+  if (status != EXR_OK) return status;
+  status = line_reserve(f, b, &b->run, b->run.glyph_count - old + b->line.glyph_count);
+  if (status != EXR_OK) return status;
+  memmove(b->run.glyphs + b->line.glyph_count, b->run.glyphs + old,
+           (b->run.glyph_count - old) * sizeof(*b->run.glyphs));
+  if (b->line.glyph_count)
+    memcpy(b->run.glyphs, b->line.glyphs, b->line.glyph_count * sizeof(*b->run.glyphs));
+  b->run.glyph_count += b->line.glyph_count;
+  b->run.glyph_count -= old;
+  b->ready = old_ready - old + b->line.glyph_count;
+  b->cluster_start = b->ready + old_cluster - old_ready;
+  b->line.glyph_count = 0;
+  return EXR_OK;
+}
+exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
+  exr_layout *l = f->layout;
+  if (!b->initialized) reset_line_scan(b);
+  for (;;) {
+    if (!b->line_end) {
+      float indent = f->first_line ? f->paragraph->indent : 0;
+      float available = fmaxf(1, f->width - indent);
+      while (b->scan < b->ready) {
+        size_t i = b->scan;
+        exr_glyph *g = &b->run.glyphs[i];
+        float advance;
+        if (exr_font_size(&f->font->faces[g->font_index], g->size))
+          return exr_fail(f->error, EXR_FONT, "Cannot size line font");
+        if (i && (g->boundaries & EXR_BOUNDARY_MANDATORY)) {
+          b->line_end = i; b->forced = 1; b->final = 0; break;
+        }
+        if (i && (g->boundaries & EXR_BOUNDARY_GRAPHEME) && !(g->boundaries & EXR_BOUNDARY_GLUE)) {
+          b->emergency = i;
+          if (g->boundaries & EXR_BOUNDARY_LINE) b->soft = i;
+        }
+        advance = g->advance + line_kern(f, i ? g - 1 : NULL, g);
+        if (i && b->scan_width + advance > available &&
+            (b->soft != SIZE_MAX || b->emergency != SIZE_MAX)) {
+          b->line_end = b->soft != SIZE_MAX ? b->soft : b->emergency;
+          b->forced = b->final = 0; break;
+        }
+        b->scan_width += advance;
+        b->scan++;
+      }
+      if (!b->line_end && b->finishing && b->ready) {
+        b->line_end = b->ready; b->forced = 0; b->final = 1;
+      }
+    }
+    if (!b->line_end) return EXR_OK;
+    {
+      size_t destination = l->glyph_count, end;
+      exr_status status;
+      if (!b->line_ready) {
+        status = fit_line(f, b);
+        if (status != EXR_OK) return status;
+      }
+      end = b->line.glyph_count;
+      if (end > EXR_MAX_ITEMS - destination ||
+          !exr_grow((void **)&l->glyphs, &l->glyph_cap, destination + end, sizeof(*l->glyphs)))
+        return exr_fail(f->error, EXR_LIMIT, "Page glyph allocation limit exceeded");
+      if (end) {
+        memcpy(l->glyphs + destination, b->line.glyphs, end * sizeof(*l->glyphs));
+        status = exr_flow_emit_line(f, l->glyphs + destination, end, destination, b->forced, b->final);
+        if (status != EXR_OK) return status;
+      }
+      l->glyph_count += end;
+      end = b->line_end;
+      memmove(b->run.glyphs, b->run.glyphs + end,
+                (b->run.glyph_count - end) * sizeof(*b->run.glyphs));
+      b->run.glyph_count -= end; b->ready -= end; b->cluster_start -= end;
+      memmove(b->raw.glyphs, b->raw.glyphs + b->raw_end,
+                (b->raw.glyph_count - b->raw_end) * sizeof(*b->raw.glyphs));
+      b->raw.glyph_count -= b->raw_end;
+      b->line.glyph_count = 0; b->line_ready = 0;
+      reset_line_scan(b);
+      status = reshape_carry(f, b);
+      if (status != EXR_OK) return status;
+    }
+  }
+}
+exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
+  exr_status status;
+  if (!b->initialized) reset_line_scan(b);
+  g.boundaries = exr_text_step(&b->text, g.codepoint);
+  if ((g.boundaries & EXR_BOUNDARY_GRAPHEME) && b->cluster_start < b->run.glyph_count) {
+    status = measure_line_cluster(f, b);
+    if (status != EXR_OK) return status;
+    if ((g.boundaries & (EXR_BOUNDARY_LINE | EXR_BOUNDARY_MANDATORY)) ||
+        !exr_ot_present(&f->font->faces[b->run.glyphs[b->cluster_start - 1].font_index])) {
+      status = shape_line_segment(f, b, g.codepoint);
+      if (status != EXR_OK) return status;
+    }
+  }
+  if (b->run.glyph_count - b->ready >= 8192)
+    return exr_fail(f->error, EXR_LIMIT, "Shaping segment exceeds 8192 scalars without a break");
+  status = line_reserve(f, b, &b->run, b->run.glyph_count + 1);
+  if (status != EXR_OK) return status;
+  b->run.glyphs[b->run.glyph_count++] = g;
+  return exr_inline_drain(f, b);
+}
+exr_status exr_inline_finish(flow *f, exr_line_buffer *b) {
+  exr_status status;
+  if (!b->finishing) {
+    status = measure_line_cluster(f, b);
+    if (status == EXR_OK) status = shape_line_segment(f, b, 0);
+    if (status != EXR_OK) return status;
+    b->finishing = 1;
+  }
+  status = exr_inline_drain(f, b);
+  if (status != EXR_OK) return status;
+  memset(&b->text, 0, sizeof(b->text));
+  b->raw.glyph_count = 0; b->before = b->after = 0; b->finishing = 0;
+  reset_line_scan(b);
+  return EXR_OK;
+}
+void exr_inline_buffer_clear(exr_line_buffer *b) {
+  free(b->run.glyphs); free(b->raw.glyphs); free(b->line.glyphs);
+  memset(b, 0, sizeof(*b));
 }

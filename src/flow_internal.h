@@ -20,12 +20,24 @@ typedef struct {
   int first_line, paginate, force_break, table_depth, page_limit;
   exr_inline_bidi *bidi;
 } flow;
+typedef struct {
+  exr_layout run, raw, line;
+  exr_text_state text;
+  uint32_t before, after;
+  size_t cluster_start, ready, scan, soft, emergency, line_end, raw_end;
+  float scan_width;
+  int initialized, finishing, forced, final, line_ready;
+} exr_line_buffer;
 void exr_inline_clear(exr_inline_bidi *bidi);
 exr_status exr_inline_prepare(flow *f, size_t first_node, exr_inline_bidi *bidi);
 unsigned exr_inline_level(const exr_inline_bidi *bidi, size_t offset);
 unsigned exr_inline_base(const exr_inline_bidi *bidi, size_t offset);
 exr_status exr_inline_reorder(flow *f, exr_glyph *glyphs, size_t count);
 exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t after);
+exr_status exr_inline_feed(flow *f, exr_line_buffer *buffer, exr_glyph glyph);
+exr_status exr_inline_drain(flow *f, exr_line_buffer *buffer);
+exr_status exr_inline_finish(flow *f, exr_line_buffer *buffer);
+void exr_inline_buffer_clear(exr_line_buffer *buffer);
 float exr_flow_top(const flow *f);
 float exr_flow_bottom(const flow *f);
 float exr_flow_room(const flow *f);

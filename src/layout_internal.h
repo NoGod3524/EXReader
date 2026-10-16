@@ -38,6 +38,8 @@ struct exr_layout {
   exr_style *styles;
   size_t style_count;
   size_t work_glyphs;
+  size_t shape_work;
+  size_t glyph_limit; /* Internal queue allocation limit; zero for ordinary layouts. */
 };
 int exr_font_size(exr_face *font, float size);
 int exr_measure(exr_face *font, uint32_t glyph, unsigned flags, float *advance);
