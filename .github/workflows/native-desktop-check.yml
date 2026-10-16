@@ -1,0 +1,61 @@
+name: Native Linux and macOS launch check
+on:
+  workflow_dispatch:
+    inputs:
+      build_run:
+        description: Desktop packages workflow run ID
+        required: true
+        default: '38827446686'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  native:
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            artifact: EXReader-Linux
+          - os: macos-15
+            artifact: EXReader-macOS
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.build_run }}
+          name: ${{ matrix.artifact }}
+          path: packages
+      - name: Linux native launch and screenshot
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb imagemagick libwebkit2gtk-4.1-0 libayatana-appindicator3-1
+          tar -xzf packages/EXReader-Linux-x64-portable.tar.gz -C packages
+          mkdir -p screenshots
+          xvfb-run -a -s '-screen 0 1440x1000x24' bash -c '
+            APPIMAGE_EXTRACT_AND_RUN=1 packages/*.AppImage >screenshots/linux.log 2>&1 &
+            reader_pid=$!
+            trap "kill $reader_pid 2>/dev/null || true" EXIT
+            sleep 12
+            kill -0 "$reader_pid"
+            import -window root screenshots/linux-native.png
+          '
+      - name: macOS native launch and screenshot
+        if: runner.os == 'macOS'
+        run: |
+          ditto -x -k packages/EXReader-macOS-universal.app.zip packages
+          mkdir -p screenshots
+          open -n packages/EXReader.app
+          sleep 12
+          pgrep -x exreader
+          screencapture -x screenshots/macos-native.png
+          pkill -x exreader
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: EXReader-native-${{ runner.os }}
+          path: screenshots/
+          retention-days: 30
