@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 /* A host parser produces semantic nodes. Names and attributes can retain its own vocabulary. */
-int main(int argc, char **argv) {
+static int example_main(int argc, char **argv) {
   const char css[] =
       ".body {font-size:24px;line-height:1.5;color:#214565} emphasis {font-weight:bold}";
   const exr_attribute body[] = {{"class", "body"}, {"source-line", "12"}};
@@ -55,3 +55,4 @@ int main(int argc, char **argv) {
   printf("EXReader C %s: constructed and rendered a host document\n", exr_version());
   return 0;
 }
+#include "entry.h"

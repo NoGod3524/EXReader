@@ -2,6 +2,11 @@
 
 ## 0.8 indexed loading and bounded part cache
 
+The installed Windows construction and lazy examples use a shared Unicode command-line
+entry and pass UTF-8 paths to the SDK. Native tests exercised Chinese input/output paths;
+the Windows workflow repeats this with an EPUB and PNGs inside a path containing Chinese
+characters and a space.
+
 Validation for this stage covers metadata-only EPUB opening, loading one XHTML part at a
 time, spine and auxiliary-part ordering, non-linear/nav loading, resource access through
 shared archive storage and links to unparsed chapters. Custom loader checks exercise

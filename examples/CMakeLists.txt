@@ -18,6 +18,8 @@ target_link_libraries(exreader-construct-example PRIVATE "${EXR_LIBRARY}")
 target_link_libraries(exreader-anchor-example PRIVATE "${EXR_LIBRARY}")
 target_link_libraries(exreader-lazy-example PRIVATE "${EXR_LIBRARY}")
 if(WIN32)
+  target_link_libraries(exreader-construct-example PRIVATE shell32)
+  target_link_libraries(exreader-lazy-example PRIVATE shell32)
   find_file(EXR_RUNTIME NAMES exreader.dll libexreader.dll PATHS "${EXR_SDK}/bin" NO_DEFAULT_PATH REQUIRED)
   add_custom_command(TARGET exreader-lazy-example POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:exreader-lazy-example>")

@@ -20,7 +20,7 @@ static exr_status load(void *context, size_t part, exr_document **out, exr_error
   (*(size_t *)context)++;
   return exr_document_create(&input, out, error);
 }
-int main(int argc, char **argv) {
+static int example_main(int argc, char **argv) {
   exr_publication *publication = NULL;
   exr_session *session = NULL;
   exr_font *font = NULL;
@@ -67,3 +67,4 @@ int main(int argc, char **argv) {
   exr_font_free(font);
   return status == EXR_OK ? 0 : 1;
 }
+#include "entry.h"
