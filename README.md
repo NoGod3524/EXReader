@@ -1,72 +1,83 @@
-# EXReader Framework
+# EXReader — native C ebook engine
 
-GPLv3 电子书阅读框架：无应用 UI 的书库、格式解析、正文渲染、标注、备份与转换。当前框架版本 **0.2.0**，基于 EXReader 0.1.1 提取。
+主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.3.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
 
-## 三条版本线
+文本解码、格式解析、文档模型、字体度量接入、换行、分页、文字位置、命中测试、页面像素输出和书库都在本项目 C 代码中。底层使用 FreeType、Expat、miniz 和 SQLite 四个 C 组件；不需要 Node、浏览器、DOM、WebView、Foliate 或 PDF.js。
 
-- [`codex/framework`](https://github.com/NoGod3524/EXReader/tree/codex/framework)：GPL-3.0-only 框架，当前分支。
-- [`codex/reader-app`](https://github.com/NoGod3524/EXReader/tree/codex/reader-app)：基于同一框架 API 的完整阅读器，包含书架、设置和平台壳。
-- [`codex/reader-0.1.1`](https://github.com/NoGod3524/EXReader/tree/codex/reader-0.1.1)：冻结的原有 MIT 阅读器。[原版安装包](https://github.com/NoGod3524/EXReader/releases/tag/preview-0.1.1) 保持原许可。
+## 当前实现
 
-## 使用
-
-```js
-import { createLibrary, createReader } from './src/index.js';
-import './src/render.css'; // 需要正文渲染时由宿主引入
-
-const library = createLibrary({ name: 'my-library' });
-const { book, duplicate } = await library.importFile(file); // 浏览器 File
-await library.updateBook(book.id, { title: '新书名', tags: ['文学'] });
-const books = await library.listBooks({ query: '文学', sort: 'title' });
-const reader = await createReader(container, await library.getFile(book.id), book,
-  await library.listNotes(book.id), {
-    relocate: location => library.saveProgress(book.id, location),
-    error: error => console.error(error),
-  });
-await reader.next();
-await reader.close();
-const backup = await library.createBackup(); // Blob，保存方式由宿主决定
-await library.close();
-```
-
-应用自行提供按钮、弹窗、主题、文件选择与保存对话框。框架导入时不会创建 DOM、打开数据库、注册 Service Worker 或设置全局事件。按需调用正文渲染才会创建内容节点。
-
-## 能力与边界
-
-| 能力 | 当前状态 |
+| 模块 | 当前能力 |
 | --- | --- |
-| 书库 | 导入、重复检测、按书名 / 作者 / 标签搜索、排序、收藏、阅读状态、修改元数据 / 封面、删除时清理文件与标注 |
-| 流式书籍 | EPUB、FB2、FB2.ZIP / FBZ、TXT、RTF、MOBI / AZW3、DOCX、HTML / HTM |
-| 固定页面 | PDF（PDF.js）；CBZ 图片漫画（Foliate 固定版面） |
-| 有声书 | MP3、M4A、M4B、OGG、OPUS、WAV、FLAC、AAC，实际解码依赖设备 |
-| 位置和标注 | CFI、PDF 页码 / 矩形、音频时间点、笔记、Markdown 导出 |
-| 格式输出 | EPUB、TXT、HTML、FB2、RTF、DOCX 和原文件；正文转换不保留复杂排版与图片 |
-| 迁移 | 原文件、元数据、封面、进度、标注的 ZIP 备份 / 合并恢复；兼容 0.1.1 备份 |
-| 可选桌面转换 | `integrations/calibre/` 独立 Rust crate，调用用户另装的 calibre；无 Tauri / UI 依赖 |
+| 文档输入 | TXT（UTF-8、带 BOM 的 UTF-16）、HTML、FB2、EPUB spine、DOCX 正文、RTF 正文、基础 MOBI / PalmDOC |
+| 自有排版 | 字体实际 advance / kerning、段落、标题字号、自动换行、基础中文标点规则、分页；页面宽高、字号、行距、段间距、页边距可调 |
+| 原生渲染 | FreeType 字形栅格化，C 合成灰度像素；BMP / PNG 输出，无图形界面依赖 |
+| 文字定位 | UTF-8 字节位置、全文查找、坐标命中测试、按位置查页；改变页宽和字号后可重新定位 |
+| 原生书库 | SQLite 单文件保存原书、书名、作者、标签、收藏、已读状态、阅读位置、封面和笔记；删除书籍时级联删除标注；事务备份 |
+| 文字转换 | C 输出 TXT、HTML、FB2、RTF、EPUB、DOCX；覆盖 Unicode 与文本转义往返，不保留复杂排版和图片 |
 
-当前实现是 JavaScript + 浏览器 WebView 框架，存储使用 IndexedDB；解析、排版、PDF 和媒体功能需要相应浏览器 API。入口可在 Node 导入和查询格式，但目前不是可在服务器执行所有格式解析的原生引擎。可用于 Windows、Linux、macOS、Android、iOS、iPadOS 的浏览器 / WebView 宿主；平台安装包属于阅读器分支。
+当前流式排版支持基础横排拉丁文字和中日韩文字。完整 CSS、图片 / 表格、双向文字、复杂文字 shaping、UAX #14 / #29 的完整规则、竖排、连字符、EPUB CFI / 跨引擎标注迁移均待实现。PDF 固定版面引擎、KF8 / Huffman MOBI、CBZ、音频播放和 OCR 也尚未完成；PDF 文件当前会明确返回不支持。这里列出的格式能力是正文解析和基础原生排版，不等于完整出版物兼容性。
 
-MOBI / AZW3 不支持 DRM；现有自动化样本主要验证基础 MOBI。CBZ 当前验证图片页解析；图像页不提供文字选区、文字转换或 CFI 高亮保证。PDF 标注存于书库，不写入 PDF。扫描 PDF 转换需要另行 OCR。大体积 ZIP 备份当前在内存中完成，上限 1 GB。未实现 OPDS、同步、OCR、DRM / LCP、有声书章节 / 后台播放服务。
+## 构建
 
-## 开发与验证
-
-Node.js 22.12+（推荐 24）。
+需要 C11 编译器与 CMake 3.24+。首次配置联网下载四个固定版本的 C 组件，并验证 SHA-256；后续复用构建缓存。
 
 ```sh
-npm ci
-npm run test:node
-npm run build
-npx playwright install chromium webkit
-npm test
-cargo test --manifest-path integrations/calibre/Cargo.toml
+cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release
+cmake --build build/native --config Release --parallel 4
+ctest --test-dir build/native -C Release --output-on-failure
+cmake --install build/native --config Release --prefix stage
 ```
 
-`dist/exreader.js` 是 ESM 入口，动态导入的分块与 `render.css` / `exreader.css`、`pdf-assets/`、`licenses/` 需一同部署。PDF 默认从站点根路径 `/pdf-assets/` 加载字体和解码器；已有资源路径的应用可用 `await configurePDF()` 指定。测试页面只提供空白宿主，不包含阅读器界面。
+Windows 推荐 Visual Studio C 工具链；MinGW 的部分 Ninja 发行版无法处理中文构建路径，需要通过 ASCII 路径的目录联接配置工程。MSVC 使用静态 CRT；所有库分配的内存由对应的 `exr_*_free()` 释放。
 
-[验证记录](docs/FRAMEWORK_VALIDATION.md) · [API](docs/API.md) · [后续格式与架构方向](docs/FRAMEWORK.md) · [第三方许可](THIRD_PARTY_NOTICES.md) · [原版研究记录](docs/PROJECT_STUDY.md)
+配置 `-DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF` 只构建库。Linux 可用 `-DEXR_SANITIZE=ON` 启用 AddressSanitizer / UndefinedBehaviorSanitizer。Android、iOS 和 iPadOS 使用 CMake 对应工具链编译；该工程输出引擎库，不输出手机阅读器安装包。跨平台验证状态见 [验证记录](docs/NATIVE_VALIDATION.md)。
 
-默认分支中的桌面、Android、iOS 构建工作流会显式检出 `codex/reader-app`；框架本身不生成空白应用安装包。
+## 直接运行
 
-## 许可
+```sh
+exreader-render book.epub /path/to/font.ttf page.png 0 720 1040
+```
 
-Copyright (c) 2026 EXReader contributors。当前分支自有代码采用 **GPL-3.0-only**，见 [LICENSE](LICENSE)。允许商用；分发基于本框架的派生程序需按 GPLv3 提供对应源码及构建所需材料。第三方代码继续保留其原许可。0.1.1 及此前已授予的 MIT 许可不撤回。项目中的电子书文件不因导入而改变版权。
+Windows 的示例：
+
+```powershell
+.\stage\bin\exreader-render.exe tests/fixtures/sample.txt C:/Windows/Fonts/msyh.ttc page.png
+```
+
+字体由宿主或用户提供，系统字体文件不随项目分发。命令行可使用 UTF-8 / Unicode 路径；Windows 参数通过宽字符入口转换。
+
+这是 C 引擎实际生成的页面：
+
+![Native C rendering](docs/native-page.png)
+
+## C 接入
+
+```c
+#include <exreader.h>
+
+exr_document *doc = NULL;
+exr_font *font = NULL;
+exr_layout *layout = NULL;
+exr_bitmap image = {0};
+exr_error error = {0};
+exr_status status;
+
+status = exr_document_open("book.epub", &doc, &error);
+if (status == EXR_OK) status = exr_font_open("font.ttf", &font, &error);
+if (status == EXR_OK) status = exr_layout_create(doc, font, NULL, &layout, &error);
+if (status == EXR_OK) status = exr_render_page(layout, font, 0, &image, &error);
+if (status == EXR_OK) status = exr_bitmap_write_png(&image, "page.png", &error);
+
+exr_bitmap_free(&image);
+exr_layout_free(layout);
+exr_font_free(font);
+exr_document_free(doc);
+```
+
+[公开头文件](include/exreader.h) · [接口与内存约定](docs/NATIVE_API.md) · [第三方许可](THIRD_PARTY_NOTICES.md)
+
+## 版本保留
+
+当前默认开发线直接使用 C 工程。此前的 [JavaScript 框架](https://github.com/NoGod3524/EXReader/commit/4533185)、[带 UI 的阅读器](https://github.com/NoGod3524/EXReader/tree/codex/reader-app) 和 [MIT 版 0.1.1](https://github.com/NoGod3524/EXReader/tree/codex/reader-0.1.1) 保留为历史版本。现有下载页仍是 0.1.1 阅读器；原生引擎目前与旧 UI、IndexedDB 书库和旧标注尚未接通。
+
+Copyright (c) 2026 EXReader contributors. 自有代码为 GPL-3.0-only，第三方组件保留原许可；既有版本的 MIT 授权不撤回。

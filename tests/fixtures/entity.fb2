@@ -1,0 +1,1 @@
+<!DOCTYPE FictionBook [<!ENTITY leak SYSTEM "file:///etc/passwd">]><FictionBook><body><p>&leak;</p></body></FictionBook>

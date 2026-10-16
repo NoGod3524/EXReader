@@ -1,0 +1,445 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+#include "internal.h"
+#include <sqlite3.h>
+struct exr_library {
+  sqlite3 *db;
+};
+void exr_free(void *p) { free(p); }
+static exr_status database_error(exr_library *l, exr_error *e) {
+  return exr_fail(e, EXR_DATABASE, "%s", sqlite3_errmsg(l->db));
+}
+static int prepare(exr_library *l, const char *sql, sqlite3_stmt **s) {
+  return sqlite3_prepare_v2(l->db, sql, -1, s, NULL) == SQLITE_OK;
+}
+static int bind_text(sqlite3_stmt *s, int index, const char *text) {
+  return sqlite3_bind_text(s, index, text ? text : "", -1, SQLITE_TRANSIENT) ==
+         SQLITE_OK;
+}
+static exr_status done(exr_library *l, sqlite3_stmt *s, exr_error *e) {
+  int result = sqlite3_step(s);
+  sqlite3_finalize(s);
+  return result == SQLITE_DONE ? EXR_OK : database_error(l, e);
+}
+static int scalar(sqlite3 *db, const char *sql) {
+  sqlite3_stmt *s = NULL;
+  int value = -1;
+  if (sqlite3_prepare_v2(db, sql, -1, &s, NULL) == SQLITE_OK &&
+      sqlite3_step(s) == SQLITE_ROW)
+    value = sqlite3_column_int(s, 0);
+  sqlite3_finalize(s);
+  return value;
+}
+exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
+  exr_library *l;
+  int result;
+  const char *schema =
+      "BEGIN IMMEDIATE;"
+      "CREATE TABLE IF NOT EXISTS books(id INTEGER PRIMARY KEY,format INTEGER "
+      "NOT NULL,title TEXT NOT NULL,author TEXT NOT NULL DEFAULT '',tags TEXT "
+      "NOT NULL DEFAULT '',favorite INTEGER NOT NULL DEFAULT 0 CHECK(favorite "
+      "IN(0,1)),status INTEGER NOT NULL DEFAULT 0 CHECK(status BETWEEN 0 AND "
+      "2),position INTEGER NOT NULL DEFAULT 0 CHECK(position>=0 AND "
+      "position<=text_size),text_size INTEGER NOT NULL,source BLOB NOT "
+      "NULL,cover BLOB);"
+      "CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY,book_id INTEGER "
+      "NOT NULL REFERENCES books(id) ON DELETE CASCADE,start INTEGER NOT NULL "
+      "CHECK(start>=0),end INTEGER NOT NULL CHECK(end>=start),text TEXT NOT "
+      "NULL);"
+      "CREATE INDEX IF NOT EXISTS notes_book ON notes(book_id);PRAGMA "
+      "application_id=1163416131;PRAGMA user_version=1;COMMIT;";
+  if (!path || !out)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid library arguments");
+  *out = NULL;
+  l = calloc(1, sizeof(*l));
+  if (!l)
+    return exr_fail(e, EXR_MEMORY, "Library allocation failed");
+  result = sqlite3_open_v2(
+      path, &l->db,
+      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
+  if (result != SQLITE_OK) {
+    exr_fail(e, EXR_DATABASE, "%s",
+             l->db ? sqlite3_errmsg(l->db) : "Cannot open library");
+    exr_library_close(l);
+    return EXR_DATABASE;
+  }
+  sqlite3_busy_timeout(l->db, 3000);
+  sqlite3_db_config(l->db, SQLITE_DBCONFIG_DEFENSIVE, 1, NULL);
+  if (sqlite3_exec(l->db, "PRAGMA foreign_keys=ON;PRAGMA trusted_schema=OFF;",
+                   NULL, NULL, NULL) != SQLITE_OK) {
+    database_error(l, e);
+    exr_library_close(l);
+    return EXR_DATABASE;
+  }
+  {
+    int app = scalar(l->db, "PRAGMA application_id"),
+        version = scalar(l->db, "PRAGMA user_version");
+    if (app == 1163416131 && version == 1) {
+      *out = l;
+      return EXR_OK;
+    }
+    if (app != 0 || version != 0 ||
+        scalar(l->db, "SELECT count(*) FROM sqlite_master WHERE name NOT LIKE "
+                      "'sqlite_%'") != 0) {
+      exr_fail(e, EXR_DATABASE,
+               "Not an EXReader library or unsupported schema version");
+      exr_library_close(l);
+      return EXR_DATABASE;
+    }
+  }
+  if (sqlite3_exec(l->db, schema, NULL, NULL, NULL) != SQLITE_OK) {
+    database_error(l, e);
+    exr_library_close(l);
+    return EXR_DATABASE;
+  }
+  *out = l;
+  return EXR_OK;
+}
+void exr_library_close(exr_library *l) {
+  if (l) {
+    if (l->db)
+      sqlite3_close_v2(l->db);
+    free(l);
+  }
+}
+exr_status exr_library_import(exr_library *l, exr_format format,
+                              const void *data, size_t n, const char *title,
+                              int64_t *id, exr_error *e) {
+  sqlite3_stmt *s = NULL;
+  exr_document *d = NULL;
+  exr_status result;
+  if (!l || !id)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid import arguments");
+  *id = 0;
+  result = exr_document_open_memory(format, data, n, &d, e);
+  if (result != EXR_OK)
+    return result;
+  if (!prepare(
+          l,
+          "INSERT INTO books(format,title,text_size,source)VALUES(?1,?2,?3,?4)",
+          &s)) {
+    exr_document_free(d);
+    return database_error(l, e);
+  }
+  sqlite3_bind_int(s, 1, format);
+  bind_text(
+      s, 2,
+      title && title[0]
+          ? title
+          : (exr_document_title(d)[0] ? exr_document_title(d) : "Untitled"));
+  sqlite3_bind_int64(s, 3, (sqlite3_int64)d->size);
+  sqlite3_bind_blob(s, 4, data, (int)n, SQLITE_TRANSIENT);
+  result = done(l, s, e);
+  if (result == EXR_OK)
+    *id = sqlite3_last_insert_rowid(l->db);
+  exr_document_free(d);
+  return result;
+}
+void exr_books_free(exr_book *books, size_t n) {
+  size_t i;
+  for (i = 0; i < n; i++) {
+    free(books[i].title);
+    free(books[i].author);
+    free(books[i].tags);
+  }
+  free(books);
+}
+exr_status exr_library_books(exr_library *l, const char *query, exr_book **out,
+                             size_t *count, exr_error *e) {
+  sqlite3_stmt *s = NULL;
+  exr_book *books = NULL;
+  size_t n = 0, cap = 0, i;
+  int result;
+  exr_buffer pattern = {0};
+  if (!l || !out || !count)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid query arguments");
+  *out = NULL;
+  *count = 0;
+  if (!query)
+    query = "";
+  if (strlen(query) > 4096)
+    return exr_fail(e, EXR_LIMIT, "Search query too long");
+  if (!exr_append(&pattern, "%", 1))
+    goto memory;
+  for (i = 0; query[i]; i++) {
+    if (strchr("%_!", query[i]) && !exr_append(&pattern, "!", 1))
+      goto memory;
+    if (!exr_append(&pattern, query + i, 1))
+      goto memory;
+  }
+  if (!exr_append(&pattern, "%", 1))
+    goto memory;
+  if (!prepare(l,
+               "SELECT id,format,title,author,tags,favorite,status,position "
+               "FROM books WHERE title LIKE ?1 ESCAPE '!' OR author LIKE ?1 "
+               "ESCAPE '!' OR tags LIKE ?1 ESCAPE '!' ORDER BY id DESC",
+               &s))
+    goto database;
+  bind_text(s, 1, pattern.data);
+  free(pattern.data);
+  pattern.data = NULL;
+  while ((result = sqlite3_step(s)) == SQLITE_ROW) {
+    exr_book *b;
+    if (n >= EXR_MAX_ITEMS ||
+        !exr_grow((void **)&books, &cap, n + 1, sizeof(*b)))
+      goto memory;
+    b = &books[n++];
+    memset(b, 0, sizeof(*b));
+    b->id = sqlite3_column_int64(s, 0);
+    b->format = (exr_format)sqlite3_column_int(s, 1);
+    b->title = exr_copy((const char *)sqlite3_column_text(s, 2),
+                        (size_t)sqlite3_column_bytes(s, 2));
+    b->author = exr_copy((const char *)sqlite3_column_text(s, 3),
+                         (size_t)sqlite3_column_bytes(s, 3));
+    b->tags = exr_copy((const char *)sqlite3_column_text(s, 4),
+                       (size_t)sqlite3_column_bytes(s, 4));
+    b->favorite = sqlite3_column_int(s, 5);
+    b->status = sqlite3_column_int(s, 6);
+    b->position = (size_t)sqlite3_column_int64(s, 7);
+    if (!b->title || !b->author || !b->tags)
+      goto memory;
+  }
+  if (result != SQLITE_DONE)
+    goto database;
+  sqlite3_finalize(s);
+  *out = books;
+  *count = n;
+  return EXR_OK;
+memory:
+  if (s)
+    sqlite3_finalize(s);
+  free(pattern.data);
+  exr_books_free(books, n);
+  return exr_fail(e, EXR_MEMORY, "Library result allocation failed");
+database:
+  if (s)
+    sqlite3_finalize(s);
+  free(pattern.data);
+  exr_books_free(books, n);
+  return database_error(l, e);
+}
+exr_status exr_library_update(exr_library *l, const exr_book *b, exr_error *e) {
+  sqlite3_stmt *s = NULL;
+  exr_status result;
+  if (!l || !b || b->id <= 0 || !b->title || !b->title[0] ||
+      b->position > INT64_MAX || (b->favorite != 0 && b->favorite != 1) ||
+      b->status < 0 || b->status > 2)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid metadata or position");
+  if (!prepare(l,
+               "UPDATE books SET "
+               "title=?1,author=?2,tags=?3,favorite=?4,status=?5,position=?6 "
+               "WHERE id=?7 AND ?6<=text_size",
+               &s))
+    return database_error(l, e);
+  bind_text(s, 1, b->title);
+  bind_text(s, 2, b->author);
+  bind_text(s, 3, b->tags);
+  sqlite3_bind_int(s, 4, b->favorite);
+  sqlite3_bind_int(s, 5, b->status);
+  sqlite3_bind_int64(s, 6, (sqlite3_int64)b->position);
+  sqlite3_bind_int64(s, 7, b->id);
+  result = done(l, s, e);
+  if (result == EXR_OK && !sqlite3_changes(l->db))
+    return exr_fail(e, EXR_ARGUMENT, "Book missing or position outside text");
+  return result;
+}
+exr_status exr_library_blob(exr_library *l, int64_t id, int cover, void **data,
+                            size_t *n, exr_error *e) {
+  sqlite3_stmt *s = NULL;
+  const void *p;
+  size_t size;
+  void *copy;
+  int result;
+  if (!l || id <= 0 || !data || !n)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid blob arguments");
+  *data = NULL;
+  *n = 0;
+  if (!prepare(l,
+               cover ? "SELECT cover FROM books WHERE id=?1"
+                     : "SELECT source FROM books WHERE id=?1",
+               &s))
+    return database_error(l, e);
+  sqlite3_bind_int64(s, 1, id);
+  result = sqlite3_step(s);
+  if (result != SQLITE_ROW) {
+    sqlite3_finalize(s);
+    return result == SQLITE_DONE ? exr_fail(e, EXR_ARGUMENT, "Book missing")
+                                 : database_error(l, e);
+  }
+  p = sqlite3_column_blob(s, 0);
+  size = (size_t)sqlite3_column_bytes(s, 0);
+  if (!size) {
+    sqlite3_finalize(s);
+    return EXR_OK;
+  }
+  if (size > EXR_MAX_INPUT) {
+    sqlite3_finalize(s);
+    return exr_fail(e, EXR_LIMIT, "Stored blob exceeds limit");
+  }
+  copy = malloc(size);
+  if (!copy) {
+    sqlite3_finalize(s);
+    return exr_fail(e, EXR_MEMORY, "Blob allocation failed");
+  }
+  memcpy(copy, p, size);
+  sqlite3_finalize(s);
+  *data = copy;
+  *n = size;
+  return EXR_OK;
+}
+exr_status exr_library_document(exr_library *l, int64_t id, exr_document **doc,
+                                exr_error *e) {
+  sqlite3_stmt *s = NULL;
+  exr_status result;
+  if (!l || id <= 0 || !doc)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid document lookup");
+  *doc = NULL;
+  if (!prepare(l, "SELECT format,source FROM books WHERE id=?1", &s))
+    return database_error(l, e);
+  sqlite3_bind_int64(s, 1, id);
+  if (sqlite3_step(s) != SQLITE_ROW) {
+    sqlite3_finalize(s);
+    return exr_fail(e, EXR_ARGUMENT, "Book missing");
+  }
+  result = exr_document_open_memory((exr_format)sqlite3_column_int(s, 0),
+                                    sqlite3_column_blob(s, 1),
+                                    (size_t)sqlite3_column_bytes(s, 1), doc, e);
+  sqlite3_finalize(s);
+  return result;
+}
+exr_status exr_library_cover(exr_library *l, int64_t id, const void *data,
+                             size_t n, exr_error *e) {
+  sqlite3_stmt *s = NULL;
+  exr_status result;
+  if (!l || id <= 0 || (!data && n) || n > 8 * 1024 * 1024)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid cover or cover exceeds 8 MiB");
+  if (!prepare(l, "UPDATE books SET cover=?1 WHERE id=?2", &s))
+    return database_error(l, e);
+  sqlite3_bind_blob(s, 1, data, (int)n, SQLITE_TRANSIENT);
+  sqlite3_bind_int64(s, 2, id);
+  result = done(l, s, e);
+  if (result == EXR_OK && !sqlite3_changes(l->db))
+    return exr_fail(e, EXR_ARGUMENT, "Book missing");
+  return result;
+}
+exr_status exr_library_note(exr_library *l, const exr_note *note, int64_t *id,
+                            exr_error *e) {
+  sqlite3_stmt *s = NULL;
+  exr_status result;
+  if (!l || !note || !id || !note->text || note->book_id <= 0 ||
+      note->start > note->end || note->end > INT64_MAX)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid annotation");
+  *id = 0;
+  if (!prepare(l, "SELECT text_size FROM books WHERE id=?1", &s))
+    return database_error(l, e);
+  sqlite3_bind_int64(s, 1, note->book_id);
+  if (sqlite3_step(s) != SQLITE_ROW ||
+      note->end > (size_t)sqlite3_column_int64(s, 0)) {
+    sqlite3_finalize(s);
+    return exr_fail(e, EXR_ARGUMENT, "Annotation is outside its book");
+  }
+  sqlite3_finalize(s);
+  s = NULL;
+  if (note->id > 0) {
+    if (!prepare(l,
+                 "UPDATE notes SET start=?1,end=?2,text=?3 WHERE book_id=?4 "
+                 "AND id=?5",
+                 &s))
+      return database_error(l, e);
+    sqlite3_bind_int64(s, 5, note->id);
+  } else if (!prepare(
+                 l,
+                 "INSERT INTO notes(start,end,text,book_id)VALUES(?1,?2,?3,?4)",
+                 &s))
+    return database_error(l, e);
+  sqlite3_bind_int64(s, 1, (sqlite3_int64)note->start);
+  sqlite3_bind_int64(s, 2, (sqlite3_int64)note->end);
+  bind_text(s, 3, note->text);
+  sqlite3_bind_int64(s, 4, note->book_id);
+  result = done(l, s, e);
+  if (result == EXR_OK) {
+    if (!sqlite3_changes(l->db))
+      return exr_fail(e, EXR_ARGUMENT, "Annotation missing from book");
+    *id = note->id > 0 ? note->id : sqlite3_last_insert_rowid(l->db);
+  }
+  return result;
+}
+void exr_notes_free(exr_note *notes, size_t n) {
+  size_t i;
+  for (i = 0; i < n; i++)
+    free(notes[i].text);
+  free(notes);
+}
+exr_status exr_library_notes(exr_library *l, int64_t book_id, exr_note **out,
+                             size_t *count, exr_error *e) {
+  sqlite3_stmt *s = NULL;
+  exr_note *notes = NULL;
+  size_t n = 0, cap = 0;
+  int result;
+  if (!l || !out || !count || book_id <= 0)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid annotation query");
+  *out = NULL;
+  *count = 0;
+  if (!prepare(l,
+               "SELECT id,book_id,start,end,text FROM notes WHERE book_id=?1 "
+               "ORDER BY start,id",
+               &s))
+    return database_error(l, e);
+  sqlite3_bind_int64(s, 1, book_id);
+  while ((result = sqlite3_step(s)) == SQLITE_ROW) {
+    exr_note *v;
+    if (n >= EXR_MAX_ITEMS ||
+        !exr_grow((void **)&notes, &cap, n + 1, sizeof(*v))) {
+      sqlite3_finalize(s);
+      exr_notes_free(notes, n);
+      return exr_fail(e, EXR_MEMORY, "Annotation allocation failed");
+    }
+    v = &notes[n++];
+    v->id = sqlite3_column_int64(s, 0);
+    v->book_id = sqlite3_column_int64(s, 1);
+    v->start = (size_t)sqlite3_column_int64(s, 2);
+    v->end = (size_t)sqlite3_column_int64(s, 3);
+    v->text = exr_copy((const char *)sqlite3_column_text(s, 4),
+                       (size_t)sqlite3_column_bytes(s, 4));
+    if (!v->text) {
+      sqlite3_finalize(s);
+      exr_notes_free(notes, n);
+      return exr_fail(e, EXR_MEMORY, "Annotation allocation failed");
+    }
+  }
+  sqlite3_finalize(s);
+  if (result != SQLITE_DONE) {
+    exr_notes_free(notes, n);
+    return database_error(l, e);
+  }
+  *out = notes;
+  *count = n;
+  return EXR_OK;
+}
+static exr_status remove_id(exr_library *l, int64_t id, int note,
+                            exr_error *e) {
+  sqlite3_stmt *s = NULL;
+  if (!l || id <= 0)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid deletion");
+  if (!prepare(l,
+               note ? "DELETE FROM notes WHERE id=?1"
+                    : "DELETE FROM books WHERE id=?1",
+               &s))
+    return database_error(l, e);
+  sqlite3_bind_int64(s, 1, id);
+  return done(l, s, e);
+}
+exr_status exr_library_delete(exr_library *l, int64_t id, exr_error *e) {
+  return remove_id(l, id, 0, e);
+}
+exr_status exr_library_remove_note(exr_library *l, int64_t id, exr_error *e) {
+  return remove_id(l, id, 1, e);
+}
+exr_status exr_library_backup(exr_library *l, const char *path, exr_error *e) {
+  sqlite3_stmt *s = NULL;
+  if (!l || !path || !path[0])
+    return exr_fail(e, EXR_ARGUMENT, "Invalid backup path");
+  if (!prepare(l, "VACUUM INTO ?1", &s))
+    return database_error(l, e);
+  bind_text(s, 1, path);
+  return done(l, s, e);
+}
