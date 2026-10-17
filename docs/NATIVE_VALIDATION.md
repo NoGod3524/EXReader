@@ -2105,5 +2105,18 @@ One [0,100) and Two [100,200) ms, matching ffprobe independently. No new binary
 fixture or runtime tool dependency is needed. AAC and metadata inspection now
 share the same bounded private BMFF sample-table helpers. The AAC-enabled M4B,
 AAC and inspection suites pass alongside the default native regression suite.
-The default Windows DLL is 4,433,734 bytes. This batch awaits its own CI; version,
-ABI and schema remain 0.18.0/1/6, and no runtime dependency was added.
+The calculator batch (847de68) and QuickTime chapter batch (98ab5f2) pass all six
+CI jobs: desktop Windows/Linux/macOS, Android, Apple mobile and sanitizers.
+
+## Milestone 0.18 development: open named audiobook metadata
+
+The ISO-BMFF suite now has 9559 checks, including keys/mdta and iTunes freeform
+text, known-field aliases, unknown names, reversible percent escaping, duplicate
+values/order, UTF-16 surrogate pairs and owned snapshots after input destruction.
+Unknown raw ilst text retains its four-byte key; implicit binary/numeric values
+and other keys namespaces are skipped. Invalid indices, key sizes/encoding,
+versions, absent/empty mean/name, key/text limits and every named-book truncation
+are covered. A separate real FFmpeg file made with use_metadata_tags exposes the
+same title, author and custom string as ffprobe. Existing chapter and audio paths
+remain available with AAC either enabled or disabled. No public ABI or runtime
+dependency was added.

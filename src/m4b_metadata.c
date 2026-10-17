@@ -86,22 +86,131 @@ static exr_status metadata_value(exr_bmff_reader *io,exr_m4b_inspection *m,const
   if(!owned_key || !exr_grow((void **)&m->entries,&m->capacity,m->count+1,sizeof(*m->entries))) { free(owned_key); free(text); return exr_fail(io->error,EXR_MEMORY,"ISO-BMFF metadata entry allocation failed"); }
   m->text_bytes+=strlen(text)+strlen(name)+2; m->entries[m->count++]=(exr_metadata_entry){owned_key,text}; return EXR_OK;
 }
+static const char *named_key(const char *name,int quicktime) {
+  static const struct { const char *mdta,*freeform,*plain,*uri; } names[]={
+    {"com.apple.quicktime.title","TITLE","title",DC "title"},
+    {"com.apple.quicktime.author","AUTHOR","author",DC "creator"},
+    {"com.apple.quicktime.artist","ARTIST","artist",DC "creator"},
+    {"com.apple.quicktime.description","DESCRIPTION","description",DC "description"},
+    {"com.apple.quicktime.comment","COMMENT","comment",DC "description"},
+    {"com.apple.quicktime.copyright","COPYRIGHT","copyright",DC "rights"},
+    {"com.apple.quicktime.creationdate","DATE","date",DC "date"},
+    {"com.apple.quicktime.genre","GENRE","genre","http://ns.adobe.com/xmp/1.0/DynamicMedia/genre"},
+    {"com.apple.quicktime.album","ALBUM","album","http://ns.adobe.com/xmp/1.0/DynamicMedia/album"}
+  };
+  size_t i; for(i=0;i<sizeof(names)/sizeof(*names);i++) if(!strcmp(name,quicktime ? names[i].mdta : names[i].freeform) || (quicktime && !strcmp(name,names[i].plain))) return names[i].uri;
+  return NULL;
+}
+static exr_status text_box(exr_bmff_reader *io,const exr_bmff_box *box,char **out) {
+  unsigned char header[4],*bytes; uint64_t size; exr_status status;
+  *out=NULL; status=exr_bmff_header(io,box,header,4); if(status!=EXR_OK) return status;
+  if(exr_bmff_be32(header)) return exr_bmff_fail(io,"Unsupported freeform metadata text version/flags");
+  size=box->end-box->data-4;
+  if(size>65536) return exr_fail(io->error,EXR_LIMIT,"Freeform metadata name exceeds 64 KiB");
+  bytes=malloc((size_t)size+1); if(!bytes) return exr_fail(io->error,EXR_MEMORY,"Freeform metadata allocation failed");
+  status=exr_bmff_read(io,box->data+4,bytes,(size_t)size);
+  if(status==EXR_OK) status=string_value(io,bytes,(size_t)size,1,out);
+  free(bytes); return status;
+}
+static int key_part(exr_buffer *out,const void *text,size_t size) {
+  const unsigned char *p=text; static const char hex[]="0123456789ABCDEF"; size_t i;
+  for(i=0;i<size;i++) {
+    unsigned c=p[i];
+    if((c>='a' && c<='z') || (c>='A' && c<='Z') || (c>='0' && c<='9') || (c && strchr("-._~",c))) { if(!exr_append(out,(const char *)p+i,1)) return 0; }
+    else { char escaped[3]={'%',hex[c>>4],hex[c&15]}; if(!exr_append(out,escaped,3)) return 0; }
+  }
+  return 1;
+}
+static exr_status freeform_key(exr_bmff_reader *io,const exr_bmff_box *item,char **out) {
+  exr_bmff_box mean,name; char *space=NULL,*text=NULL; const char *standard; exr_buffer result={0}; exr_status status;
+  *out=NULL;
+  status=exr_bmff_child(io,item,BOX('m','e','a','n'),1,&mean); if(status!=EXR_OK) goto done;
+  status=exr_bmff_child(io,item,BOX('n','a','m','e'),1,&name); if(status!=EXR_OK) goto done;
+  status=text_box(io,&mean,&space); if(status!=EXR_OK) goto done;
+  status=text_box(io,&name,&text); if(status!=EXR_OK) goto done;
+  if(!*space || !*text) { status=exr_bmff_fail(io,"Empty freeform metadata mean/name"); goto done; }
+  standard=!strcmp(space,"com.apple.iTunes") ? named_key(text,0) : NULL;
+  if(standard) { result.data=exr_copy(standard,strlen(standard)); if(!result.data) goto memory; }
+  else if(!exr_append(&result,"----:",5) || !key_part(&result,space,strlen(space)) || !exr_append(&result,":",1) || !key_part(&result,text,strlen(text))) goto memory;
+  if(strlen(result.data)>65536) { status=exr_fail(io->error,EXR_LIMIT,"Freeform metadata key exceeds 64 KiB"); goto done; }
+  *out=result.data; result.data=NULL; status=EXR_OK; goto done;
+memory:
+  status=exr_fail(io->error,EXR_MEMORY,"Freeform metadata key allocation failed");
+done:
+  free(space); free(text); free(result.data); return status;
+}
+static exr_status metadata_keys(exr_bmff_reader *io,const exr_bmff_box *box,char *keys[256],size_t *count) {
+  unsigned char b[8],*bytes=NULL; uint64_t at; size_t i,total=0; exr_status status;
+  *count=0; status=exr_bmff_header(io,box,b,8); if(status!=EXR_OK) return status;
+  if(exr_bmff_be32(b)) return exr_bmff_fail(io,"Unsupported metadata keys version/flags");
+  *count=exr_bmff_be32(b+4); if(*count>256) { *count=0; return exr_fail(io->error,EXR_LIMIT,"ISO-BMFF metadata exceeds 256 keys"); }
+  at=box->data+8;
+  for(i=0;i<*count;i++) {
+    uint32_t size,type; char *text=NULL; const char *standard;
+    if(box->end-at<8) return exr_bmff_fail(io,"Truncated metadata key entry");
+    status=exr_bmff_read(io,at,b,8); if(status!=EXR_OK) return status;
+    size=exr_bmff_be32(b); type=exr_bmff_be32(b+4);
+    if(size<8 || size>box->end-at) return exr_bmff_fail(io,"Invalid metadata key entry size");
+    if(size-8>65536 || size-8>(size_t)1024*1024-total) return exr_fail(io->error,EXR_LIMIT,"Metadata key text exceeds budget");
+    total+=size-8;
+    if(type==BOX('m','d','t','a')) {
+      bytes=malloc(size-8+1); if(!bytes) return exr_fail(io->error,EXR_MEMORY,"Metadata key allocation failed");
+      status=exr_bmff_read(io,at+8,bytes,size-8);
+      if(status==EXR_OK) status=string_value(io,bytes,size-8,1,&text);
+      free(bytes); bytes=NULL; if(status!=EXR_OK) return status;
+      if(!*text) { free(text); return exr_bmff_fail(io,"Empty mdta metadata key"); }
+      standard=named_key(text,1);
+      if(standard) { keys[i]=exr_copy(standard,strlen(standard)); free(text); }
+      else {
+        exr_buffer key_name={0}; int copied=exr_append(&key_name,"mdta:",5) && exr_append(&key_name,text,strlen(text)); free(text);
+        if(!copied) { free(key_name.data); return exr_fail(io->error,EXR_MEMORY,"Metadata key allocation failed"); }
+        keys[i]=key_name.data;
+      }
+      if(!keys[i]) return exr_fail(io->error,EXR_MEMORY,"Metadata key allocation failed");
+      if(strlen(keys[i])>65536) return exr_fail(io->error,EXR_LIMIT,"Metadata key exceeds 64 KiB");
+    }
+    at+=size;
+  }
+  return at==box->end ? EXR_OK : exr_bmff_fail(io,"Trailing metadata key entries");
+}
 static exr_status meta(exr_bmff_reader *io,exr_m4b_inspection *m,const exr_bmff_box *box) {
-  exr_bmff_box children=*box,items,item,data; unsigned char header[4]; uint64_t at,next; exr_status status=exr_bmff_header(io,box,header,4);
+  exr_bmff_box children=*box,items,item,data,table; unsigned char header[8]; uint64_t at,next;
+  char *keys[256]={0},*owned=NULL; size_t count=0,i; exr_status status=exr_bmff_header(io,box,header,4);
   if(status!=EXR_OK) return status;
   if(exr_bmff_be32(header)) return exr_bmff_fail(io,"Unsupported ISO-BMFF meta version/flags");
   children.data+=4; status=exr_bmff_child(io,&children,BOX('i','l','s','t'),0,&items); if(status!=EXR_OK || !items.end) return status;
+  status=exr_bmff_child(io,&children,BOX('k','e','y','s'),0,&table); if(status!=EXR_OK) return status;
+  if(table.end) { status=metadata_keys(io,&table,keys,&count); if(status!=EXR_OK) goto done; }
   for(at=items.data;at<items.end;at=item.end) {
-    const char *name; int cover;
-    status=exr_bmff_at(io,at,items.end,&item); if(status!=EXR_OK) return status;
-    name=key(item.type); cover=item.type==BOX('c','o','v','r'); if(!name && !cover) continue;
+    const char *name; int cover,named=0;
+    free(owned); owned=NULL;
+    status=exr_bmff_at(io,at,items.end,&item); if(status!=EXR_OK) goto done;
+    name=key(item.type); cover=item.type==BOX('c','o','v','r');
+    if(item.type==BOX('-','-','-','-')) { status=freeform_key(io,&item,&owned); if(status!=EXR_OK) goto done; name=owned; named=1; }
+    else if(table.end && !name && !cover) {
+      if(!item.type || item.type>count) { status=exr_bmff_fail(io,"Metadata key index exceeds keys table"); goto done; }
+      name=keys[item.type-1]; named=1;
+    } else if(!name && !cover) {
+      unsigned char type[4]={(unsigned char)(item.type>>24),(unsigned char)(item.type>>16),(unsigned char)(item.type>>8),(unsigned char)item.type};
+      exr_buffer native={0};
+      if(!exr_append(&native,"ilst:",5) || !key_part(&native,type,4)) { free(native.data); status=exr_fail(io->error,EXR_MEMORY,"Metadata key allocation failed"); goto done; }
+      owned=native.data; name=owned; named=2;
+    }
+    if(!name && !cover) continue;
     for(next=item.data;next<item.end;next=data.end) {
-      status=exr_bmff_at(io,next,item.end,&data); if(status!=EXR_OK) return status;
+      status=exr_bmff_at(io,next,item.end,&data); if(status!=EXR_OK) goto done;
       if(data.type!=BOX('d','a','t','a')) continue;
-      status=metadata_value(io,m,&data,name,cover); if(status!=EXR_OK) return status;
+      if(named) {
+        status=exr_bmff_header(io,&data,header,8); if(status!=EXR_OK) goto done;
+        if(header[0]) { status=exr_bmff_fail(io,"Unsupported metadata data version"); goto done; }
+        if(exr_bmff_be32(header)>2 || (named==2 && !exr_bmff_be32(header))) continue; /* Unknown implicit/binary tags are not text. */
+      }
+      status=metadata_value(io,m,&data,name,cover); if(status!=EXR_OK) goto done;
     }
   }
-  return EXR_OK;
+  status=EXR_OK;
+done:
+  free(owned); for(i=0;i<count;i++) free(keys[i]); return status;
 }
 static exr_status chapter_list(exr_bmff_reader *io,exr_m4b_inspection *m,const exr_bmff_box *box) {
   unsigned char header[9]; uint64_t at; unsigned i,count; exr_status status=exr_bmff_header(io,box,header,5);
