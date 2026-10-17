@@ -2256,3 +2256,26 @@ The reference discrepancy is isolated from ordinary spot-color conversions.
 No new dependency, public ABI or product-version change is involved.
 All 100 local Windows suites pass. The preceding Unicode-variation commit
 9f52053 passes all six desktop/mobile/sanitizer CI jobs.
+
+## Milestone 0.18 development: multi-input Type 4 and DeviceN
+
+The shared calculator accepts 1–32 ordered inputs in its existing 100-item
+stack. Function Domain/Range clipping is per component, with the same graph,
+program, work and cancellation budgets. Scalar wrappers retain the old call
+paths. DeviceN uses the multi-input transform for fixed RGB output; single
+input also reuses Type 0/2/3. Optional NChannel dictionaries do not enable
+physical ink simulation. Mixed None names still use the authored alternate
+transform; all-None spaces suppress painting.
+
+C regressions cover 2/3/32 inputs, 64 Decode/Mask entries including a mismatch
+only in the last mask component, NChannel attributes, default tints, state
+restoration, per-component clamps, scalar reuse and all-None transparency.
+Malformed names, duplicates, All, empty lists, a 33rd component, invalid
+attributes, invalid multi-input Type 2 and calculator stack overflow fail.
+MuPDF's three solid path/XObject/inline-image interiors match the 2/3/32-input
+fixtures within one byte per RGB channel. Multi-input Type 0 and Order 3
+remain outside this batch; Type 2/3 are inherently single-input functions.
+All-registration commit 7e2b55c passes all six platform/sanitizer CI jobs.
+All 100 local Windows suites and the installed C++17 SDK consumer pass. The
+PDF-color suite has 1753 checks. The default release DLL is 4,500,361 bytes;
+runtime dependencies, ABI epoch 1, schema 6 and version 0.18.0 stay unchanged.

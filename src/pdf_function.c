@@ -2,8 +2,8 @@
 #include "pdf_function_internal.h"
 #include "pdf_calculator_internal.h"
 struct exr_pdf_function {
-  unsigned type,outputs,count,has_range,bits;
-  double domain[2],range[8],exponent,first[4],last[4];
+  unsigned type,inputs,outputs,count,has_range,bits;
+  double domain[2*EXR_PDF_MAX_COLORANTS],range[8],exponent,first[4],last[4];
   double *bounds,*encode;
   struct exr_pdf_function **children;
   unsigned char *samples; size_t sample_count;
@@ -50,7 +50,7 @@ void exr_pdf_function_free(exr_pdf_function *f) {
   if(f->children) for(i=0;i<f->count;i++) exr_pdf_function_free(f->children[i]);
   free(f->children); free(f->bounds); free(f->encode); free(f->samples); exr_pdf_calculator_free(f->calculator); free(f);
 }
-static exr_status open_function(function_reader *r,uint32_t id,unsigned outputs,unsigned depth,exr_pdf_function **out) {
+static exr_status open_function(function_reader *r,uint32_t id,unsigned inputs,unsigned outputs,unsigned depth,exr_pdf_function **out) {
   exr_pdf_function *f=NULL; const exr_pdf_value *value; uint32_t ids[64],field; size_t i,count; int stream; exr_status status=EXR_FORMAT;
   *out=NULL;
   if(depth==16 || ++r->nodes>1024) return exr_fail(r->error,EXR_LIMIT,"PDF function exceeds 16 levels or 1024 nodes");
@@ -64,8 +64,10 @@ static exr_status open_function(function_reader *r,uint32_t id,unsigned outputs,
   if(!value || value->kind!=EXR_PDF_INT || (value->u.integer!=0 && value->u.integer!=2 && value->u.integer!=3 && value->u.integer!=4)) goto bad;
   if(sizeof(*f)>(size_t)1024*1024-r->bytes) return exr_fail(r->error,EXR_LIMIT,"PDF function payload exceeds 1 MiB");
   f=calloc(1,sizeof(*f)); if(!f) goto memory;
-  f->type=(unsigned)value->u.integer; f->outputs=outputs; f->bytes=sizeof(*f); r->bytes+=sizeof(*f);
-  if(!numbers(r,get(r,id,"Domain"),f->domain,2) || f->domain[0]>f->domain[1]) goto bad;
+  f->type=(unsigned)value->u.integer; f->inputs=inputs; f->outputs=outputs; f->bytes=sizeof(*f); r->bytes+=sizeof(*f);
+  if(!numbers(r,get(r,id,"Domain"),f->domain,2*inputs)) goto bad;
+  for(i=0;i<inputs;i++) if(f->domain[2*i]>f->domain[2*i+1]) goto bad;
+  if(inputs!=1 && f->type!=4) { status=exr_fail(r->error,EXR_FORMAT,"Multi-input PDF functions currently require Type 4"); goto done; }
   field=get(r,id,"Range");
   if(field!=EXR_PDF_NONE) {
     f->has_range=1; if(!numbers(r,field,f->range,2*outputs)) goto bad;
@@ -78,7 +80,7 @@ static exr_status open_function(function_reader *r,uint32_t id,unsigned outputs,
     status=exr_pdf_calculator_open(source,size,r->control,&f->calculator,r->error); if(status!=EXR_OK) goto done;
     extra=exr_pdf_calculator_memory(f->calculator);
     if(extra>(size_t)1024*1024-r->bytes) { status=exr_fail(r->error,EXR_LIMIT,"PDF function payload exceeds 1 MiB"); goto done; }
-    f->bytes+=extra; r->bytes+=extra; f->cost=exr_pdf_calculator_cost(f->calculator)+2*outputs+2;
+    f->bytes+=extra; r->bytes+=extra; f->cost=exr_pdf_calculator_cost(f->calculator)+2*outputs+2*inputs;
   } else if(f->type==0) {
     const unsigned char *samples; size_t size,needed; uint64_t packed;
     if(!stream || !f->has_range || !array(r,get(r,id,"Size"),ids,64,&count) || count!=1) goto bad;
@@ -131,7 +133,7 @@ static exr_status open_function(function_reader *r,uint32_t id,unsigned outputs,
     if(!numbers(r,get(r,id,"Bounds"),f->bounds,count-1) || !numbers(r,get(r,id,"Encode"),f->encode,2*count)) goto bad;
     for(i=0;i+1<count;i++) if(f->bounds[i]<f->domain[0] || f->bounds[i]>f->domain[1] || (i && f->bounds[i]<=f->bounds[i-1])) goto bad;
     for(i=0;i<count;i++) {
-      status=open_function(r,ids[i],outputs,depth+1,&f->children[i]); if(status!=EXR_OK) goto done;
+      status=open_function(r,ids[i],1,outputs,depth+1,&f->children[i]); if(status!=EXR_OK) goto done;
       f->bytes+=f->children[i]->bytes; if(f->children[i]->cost>f->cost) f->cost=f->children[i]->cost;
     }
     f->cost+=10;
@@ -142,17 +144,20 @@ static exr_status open_function(function_reader *r,uint32_t id,unsigned outputs,
 memory:
   status=exr_fail(r->error,EXR_MEMORY,"PDF function allocation failed"); goto done;
 bad:
-  if(r->error->code==EXR_OK) exr_fail(r->error,EXR_FORMAT,"Unsupported or invalid PDF scalar function");
+  if(r->error->code==EXR_OK) exr_fail(r->error,EXR_FORMAT,"Unsupported or invalid PDF function");
   status=r->error->code;
 done:
   exr_pdf_function_free(f); return status;
 }
-exr_status exr_pdf_function_open(exr_pdf_file *file,uint32_t value,unsigned outputs,const exr_control *control,exr_pdf_function **out,exr_error *error) {
+exr_status exr_pdf_function_open_inputs(exr_pdf_file *file,uint32_t value,unsigned inputs,unsigned outputs,const exr_control *control,exr_pdf_function **out,exr_error *error) {
   exr_error local={0}; function_reader r={0};
   if(out) *out=NULL;
-  if(!file || !out || !outputs || outputs>4) return exr_fail(error,EXR_ARGUMENT,"Invalid PDF function input/output");
+  if(!file || !out || !inputs || inputs>EXR_PDF_MAX_COLORANTS || !outputs || outputs>4) return exr_fail(error,EXR_ARGUMENT,"Invalid PDF function input/output");
   r.file=file; r.control=control; r.error=error ? error : &local; memset(r.error,0,sizeof(*r.error));
-  return open_function(&r,value,outputs,0,out);
+  return open_function(&r,value,inputs,outputs,0,out);
+}
+exr_status exr_pdf_function_open(exr_pdf_file *file,uint32_t value,unsigned outputs,const exr_control *control,exr_pdf_function **out,exr_error *error) {
+  return exr_pdf_function_open_inputs(file,value,1,outputs,control,out,error);
 }
 static double sample_value(const exr_pdf_function *f,size_t index) {
   uint64_t bit=(uint64_t)index*f->bits,value=0,mask=(UINT64_C(1)<<f->bits)-1;
@@ -160,10 +165,13 @@ static double sample_value(const exr_pdf_function *f,size_t index) {
   for(i=0;i<count;i++) value=(value<<8)|f->samples[(size_t)(bit>>3)+i];
   value=(value>>(count*8-skip-f->bits))&mask; return (double)value/(double)mask;
 }
-exr_status exr_pdf_function_eval(const exr_pdf_function *f,double input,double out[4],exr_error *error) {
-  double x=fmax(f->domain[0],fmin(f->domain[1],input)); size_t i;
+exr_status exr_pdf_function_eval_inputs(const exr_pdf_function *f,const double *input,double out[4],exr_error *error) {
+  double values[EXR_PDF_MAX_COLORANTS],x; size_t i;
+  if(!f || !input || !out) return exr_fail(error,EXR_ARGUMENT,"Invalid PDF function evaluation");
+  for(i=0;i<f->inputs;i++) { if(!isfinite(input[i])) return exr_fail(error,EXR_FORMAT,"Nonfinite PDF function input"); values[i]=fmax(f->domain[2*i],fmin(f->domain[2*i+1],input[i])); }
+  x=values[0];
   if(f->type==4) {
-    exr_status status=exr_pdf_calculator_eval(f->calculator,x,f->outputs,out,error); if(status!=EXR_OK) return status;
+    exr_status status=exr_pdf_calculator_eval_inputs(f->calculator,values,f->inputs,f->outputs,out,error); if(status!=EXR_OK) return status;
   } else if(f->type==0) {
     double encoded=f->encode[0],fraction; size_t first,last;
     if(f->domain[1]!=f->domain[0]) encoded+=(x-f->domain[0])/(f->domain[1]-f->domain[0])*(f->encode[1]-f->encode[0]);
@@ -188,6 +196,10 @@ exr_status exr_pdf_function_eval(const exr_pdf_function *f,double input,double o
     if(f->has_range) out[i]=fmax(f->range[2*i],fmin(f->range[2*i+1],out[i]));
   }
   return EXR_OK;
+}
+exr_status exr_pdf_function_eval(const exr_pdf_function *f,double input,double out[4],exr_error *error) {
+  if(!f || f->inputs!=1) return exr_fail(error,EXR_ARGUMENT,"PDF scalar evaluation requires one input");
+  return exr_pdf_function_eval_inputs(f,&input,out,error);
 }
 size_t exr_pdf_function_memory(const exr_pdf_function *f) { return f ? f->bytes : 0; }
 size_t exr_pdf_function_cost(const exr_pdf_function *f) { return f ? f->cost : 0; }

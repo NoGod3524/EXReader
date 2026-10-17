@@ -121,9 +121,10 @@ size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *space);
 unsigned exr_pdf_colorspace_components(const exr_pdf_colorspace *space);
 exr_pdf_color_space exr_pdf_colorspace_device(const exr_pdf_colorspace *space);
 int exr_pdf_colorspace_indexed(const exr_pdf_colorspace *space);
-void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *space,double ranges[8]);
-void exr_pdf_colorspace_initial(const exr_pdf_colorspace *space,double values[4]);
-exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *space,const double values[4],double rgb[3],exr_error *error);
+#define EXR_PDF_MAX_COLORANTS 32u
+void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *space,double *ranges);
+void exr_pdf_colorspace_initial(const exr_pdf_colorspace *space,double *values);
+exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *space,const double *values,double rgb[3],exr_error *error);
 int exr_pdf_colorspace_no_paint(const exr_pdf_colorspace *space);
 size_t exr_pdf_colorspace_cost(const exr_pdf_colorspace *space);
 typedef struct {

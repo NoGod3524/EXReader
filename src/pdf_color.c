@@ -4,7 +4,7 @@
 typedef enum { SPACE_GRAY,SPACE_RGB,SPACE_CMYK,SPACE_CALGRAY,SPACE_CALRGB,SPACE_LAB,SPACE_INDEXED,SPACE_ICC,SPACE_TINT,SPACE_ALL } space_kind;
 struct exr_pdf_colorspace {
   space_kind kind; unsigned components,high; int no_paint;
-  double ranges[8],gamma[3],matrix[9],transform[9],offset[3];
+  double ranges[2*EXR_PDF_MAX_COLORANTS],gamma[3],matrix[9],transform[9],offset[3];
   unsigned char palette[1024];
   struct exr_pdf_colorspace *alternate;
   exr_pdf_function *function;
@@ -55,8 +55,8 @@ static double transfer(double linear) {
   return linear<=0.0031308 ? 12.92*linear : 1.055*pow(linear,1/2.4)-0.055;
 }
 static double lab_inverse(double value) { return value>=6.0/29 ? value*value*value : (108.0/841)*(value-4.0/29); }
-exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double values[4],double rgb[3],exr_error *error) {
-  double v[4]={0},xyz[3]={0}; unsigned i,j;
+exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double *values,double rgb[3],exr_error *error) {
+  double v[EXR_PDF_MAX_COLORANTS],xyz[3]={0}; unsigned i,j;
   if(exr_pdf_colorspace_no_paint(s)) { memset(rgb,0,3*sizeof(double)); return EXR_OK; }
   for(i=0;i<s->components;i++) v[i]=clamp(values[i],s->ranges[2*i],s->ranges[2*i+1]);
   if(s->kind==SPACE_GRAY) { rgb[0]=rgb[1]=rgb[2]=v[0]; return EXR_OK; }
@@ -69,7 +69,7 @@ exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double value
   }
   if(s->kind==SPACE_ICC) return exr_pdf_colorspace_rgb(s->alternate,v,rgb,error);
   if(s->kind==SPACE_TINT) {
-    double alternate[4]={0}; exr_status status=exr_pdf_function_eval(s->function,v[0],alternate,error);
+    double alternate[4]={0}; exr_status status=exr_pdf_function_eval_inputs(s->function,v,alternate,error);
     return status==EXR_OK ? exr_pdf_colorspace_rgb(s->alternate,alternate,rgb,error) : status;
   }
   if(s->kind==SPACE_CALGRAY) {
@@ -121,7 +121,7 @@ static exr_pdf_colorspace *device(space_kind kind,unsigned components) {
   return s;
 }
 static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsigned depth,exr_pdf_colorspace **out) {
-  exr_pdf_colorspace *s=NULL; const exr_pdf_value *v; uint32_t ids[4],dict,value; size_t i; unsigned channels;
+  exr_pdf_colorspace *s=NULL; const exr_pdf_value *v; uint32_t ids[5],dict,value; size_t i; unsigned channels;
   double white[3]={0},black[3]={0}; exr_status status=EXR_FORMAT;
   *out=NULL;
   if(depth==16) return exr_fail(r->error,EXR_LIMIT,"PDF color space nesting exceeds 16");
@@ -156,7 +156,7 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
     else { exr_pdf_colorspace_free(base); goto bad; }
     if(length!=((size_t)s->high+1)*base->components) { exr_pdf_colorspace_free(base); goto bad; }
     for(i=0;i<=s->high;i++) {
-      double values[4]={0},rgb[3]; unsigned k;
+      double values[EXR_PDF_MAX_COLORANTS],rgb[3]; unsigned k;
       if(!(i&63) && exr_control_cancel(r->control,r->error)!=EXR_OK) { exr_pdf_colorspace_free(base); status=EXR_CANCELLED; goto done; }
       for(k=0;k<base->components;k++) values[k]=base->ranges[2*k]+lookup[i*base->components+k]/255.0*(base->ranges[2*k+1]-base->ranges[2*k]);
       status=exr_pdf_colorspace_rgb(base,values,rgb,r->error);
@@ -166,6 +166,35 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
     }
     s->no_paint=exr_pdf_colorspace_no_paint(base);
     exr_pdf_colorspace_free(base); *out=s; return EXR_OK;
+  }
+  if(name_is(file,value,"DeviceN")) {
+    uint32_t at,names[EXR_PDF_MAX_COLORANTS]; size_t lengths[EXR_PDF_MAX_COLORANTS]; const unsigned char *labels[EXR_PDF_MAX_COLORANTS];
+    unsigned n=0,j,all_none=1;
+    if(!array(r,file,id,ids,4)) {
+      if(!array(r,file,id,ids,5)) goto bad;
+      v=exr_pdf_value_at(file,ids[4]); if(!v || (v->kind!=EXR_PDF_DICT && v->kind!=EXR_PDF_NULL)) goto bad;
+    }
+    v=exr_pdf_value_at(file,ids[1]); if(!v || v->kind!=EXR_PDF_ARRAY) goto bad;
+    for(at=v->first;at!=EXR_PDF_NONE;) {
+      uint32_t next; const exr_pdf_value *entry=exr_pdf_value_at(file,at); if(!entry) goto bad; next=entry->next;
+      if(n==EXR_PDF_MAX_COLORANTS) { status=exr_fail(r->error,EXR_LIMIT,"DeviceN exceeds 32 colorants"); goto done; }
+      if(!resolve(r,file,at,&names[n])) goto bad;
+      v=exr_pdf_value_at(file,names[n]); labels[n]=exr_pdf_bytes(file,names[n],&lengths[n]);
+      if(!v || v->kind!=EXR_PDF_NAME || !labels[n] || !lengths[n] || memchr(labels[n],0,lengths[n]) || name_is(file,names[n],"All")) goto bad;
+      if(lengths[n]>127) { status=exr_fail(r->error,EXR_LIMIT,"DeviceN colorant name exceeds 127 bytes"); goto done; }
+      if(!name_is(file,names[n],"None")) {
+        all_none=0;
+        for(j=0;j<n;j++) if(lengths[j]==lengths[n] && !memcmp(labels[j],labels[n],lengths[n])) goto bad;
+      }
+      n++; at=next;
+    }
+    if(!n) goto bad;
+    s=device(SPACE_TINT,n); if(!s) goto memory; s->no_paint=all_none;
+    if(all_none) { *out=s; return EXR_OK; }
+    status=open_space(r,file,ids[2],depth+1,&s->alternate); if(status!=EXR_OK) goto done;
+    if(s->alternate->kind==SPACE_INDEXED || s->alternate->kind==SPACE_TINT || s->alternate->kind==SPACE_ALL) goto bad;
+    status=exr_pdf_function_open_inputs(file,ids[3],n,s->alternate->components,r->control,&s->function,r->error); if(status!=EXR_OK) goto done;
+    *out=s; return EXR_OK;
   }
   if(name_is(file,value,"Separation")) {
     const unsigned char *name; size_t length;
@@ -245,8 +274,8 @@ exr_pdf_color_space exr_pdf_colorspace_device(const exr_pdf_colorspace *s) {
   return !s ? 0 : s->kind==SPACE_GRAY ? EXR_PDF_DEVICE_GRAY : s->kind==SPACE_RGB ? EXR_PDF_DEVICE_RGB : s->kind==SPACE_CMYK ? EXR_PDF_DEVICE_CMYK : 0;
 }
 int exr_pdf_colorspace_indexed(const exr_pdf_colorspace *s) { return s && s->kind==SPACE_INDEXED; }
-void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *s,double ranges[8]) { memcpy(ranges,s->ranges,8*sizeof(double)); }
-void exr_pdf_colorspace_initial(const exr_pdf_colorspace *s,double values[4]) {
-  unsigned i; memset(values,0,4*sizeof(double));
+void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *s,double *ranges) { memcpy(ranges,s->ranges,2*s->components*sizeof(double)); }
+void exr_pdf_colorspace_initial(const exr_pdf_colorspace *s,double *values) {
+  unsigned i; memset(values,0,s->components*sizeof(double));
   for(i=0;i<s->components;i++) values[i]=clamp((s->kind==SPACE_CMYK && i==3) || s->kind==SPACE_TINT || s->kind==SPACE_ALL ? 1 : 0,s->ranges[i*2],s->ranges[i*2+1]);
 }

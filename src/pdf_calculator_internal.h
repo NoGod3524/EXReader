@@ -10,4 +10,5 @@ void exr_pdf_calculator_free(exr_pdf_calculator *program);
 size_t exr_pdf_calculator_memory(const exr_pdf_calculator *program);
 size_t exr_pdf_calculator_cost(const exr_pdf_calculator *program);
 exr_status exr_pdf_calculator_eval(const exr_pdf_calculator *program,double input,unsigned outputs,double out[4],exr_error *error);
+exr_status exr_pdf_calculator_eval_inputs(const exr_pdf_calculator *program,const double *inputs,unsigned count,unsigned outputs,double out[4],exr_error *error);
 #endif
