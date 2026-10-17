@@ -41,6 +41,9 @@ import CEXReader
             precondition(code == Int(EXR_FORMAT.rawValue))
         }
         let retainedFontDocument: EXReaderFixedDocument
+        let glyphOnlyFont = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/glyph-only.ttf")))
+        let glyphOnlyDocument = try EXReaderFixedDocument(data: pdf, fallbackFont: glyphOnlyFont)
+        precondition(glyphOnlyDocument.pageCount == 5)
         do {
             let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/collection.ttc")), faceIndex: 1)
             retainedFontDocument = try EXReaderFixedDocument(data: pdf, fallbackFont: font)
