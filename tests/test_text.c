@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "exreader.h"
+#include "../src/text_line.h"
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -106,6 +107,77 @@ static void grapheme_conformance(const char *directory) {
   printf("%u Unicode grapheme conformance cases passed\n", cases);
 }
 
+typedef struct { const uint32_t *points; size_t at, count; } line_cursor;
+static int next_line_scalar(void *context, uint32_t *cp) {
+  line_cursor *c = context;
+  if (c->at == c->count) return 0;
+  *cp = c->points[c->at++];
+  return 1;
+}
+static void line_conformance(const char *directory) {
+  char path[4096], line[32768], text[8192];
+  uint32_t points[sizeof(text)];
+  size_t offsets[sizeof(text)];
+  unsigned char expected[sizeof(text) + 1];
+  unsigned cases = 0, source_line = 0, grapheme_suppressed = 0;
+  FILE *file;
+  snprintf(path, sizeof(path), "%s/LineBreakTest.txt", directory);
+  file = fopen(path, "rb");
+  CHECK(file);
+  while (fgets(line, sizeof(line), file)) {
+    exr_line_state state = {0};
+    char *p = line;
+    size_t size = 0, count = 0, i;
+    unsigned char *actual = NULL;
+    source_line++;
+    memset(expected, 0, sizeof(expected));
+    while (*p && *p != '#') {
+      char *end;
+      unsigned long cp;
+      while (isspace((unsigned char)*p)) p++;
+      if (!*p || *p == '#') break;
+      if ((unsigned char)p[0] == 0xc3 &&
+          ((unsigned char)p[1] == 0xb7 || (unsigned char)p[1] == 0x97)) {
+        expected[size] = (unsigned char)p[1] == 0xb7;
+        p += 2;
+        continue;
+      }
+      cp = strtoul(p, &end, 16);
+      CHECK(end != p && cp <= 0x10ffff && !(cp >= 0xd800 && cp <= 0xdfff));
+      CHECK(size + 4 < sizeof(text) && count < sizeof(points) / sizeof(*points));
+      offsets[count] = size;
+      points[count++] = (uint32_t)cp;
+      size += encode(text + size, (uint32_t)cp);
+      p = end;
+    }
+    if (!count) continue;
+    text[size] = 0;
+    OK(exr_text_analyze(text, size, &actual, &error));
+    for (i = 0; i < count; i++) {
+      line_cursor cursor = {points, i + 1, count};
+      unsigned raw = exr_line_step(&state, points[i], next_line_scalar, &cursor);
+      if (!!(raw & EXR_BOUNDARY_LINE) != !!expected[offsets[i]]) {
+        fprintf(stderr, "LineBreakTest.txt:%u scalar %zu: expected %u, flags %u\n",
+                source_line, i, expected[offsets[i]], raw);
+        CHECK(0);
+      }
+      if (expected[offsets[i]] && !(actual[offsets[i]] & EXR_BOUNDARY_GRAPHEME))
+        grapheme_suppressed++;
+    }
+    /* Public/layout boundaries additionally preserve extended grapheme clusters. */
+    for (i = 0; i <= size; i++)
+      CHECK(!!(actual[i] & EXR_BOUNDARY_LINE) ==
+            !!(expected[i] && (actual[i] & EXR_BOUNDARY_GRAPHEME)));
+    CHECK(expected[size] && (actual[size] & EXR_BOUNDARY_MANDATORY));
+    exr_free(actual);
+    cases++;
+  }
+  CHECK(!ferror(file) && fclose(file) == 0);
+  CHECK(cases == 19338);
+  printf("%u Unicode line conformance cases passed; %u breaks suppressed inside graphemes\n",
+         cases, grapheme_suppressed);
+}
+
 static unsigned char *analyze(const char *text) {
   unsigned char *map = NULL;
   OK(exr_text_analyze(text, strlen(text), &map, &error));
@@ -146,7 +218,7 @@ static void validation(void) {
   exr_free(map);
 }
 
-/* The line-break contract is deliberately a subset, independently of UAX #29 conformance. */
+/* Structural no-breaks also protect the layout's emergency wrapping. */
 static void line_opportunities(void) {
   static const char *const glue[] = {"\xc2\xa0", "\xe2\x80\xaf", "\xe2\x81\xa0",
                                      "\xef\xbb\xbf"};
@@ -291,6 +363,44 @@ static void inline_clusters(void) {
   CHECK(n > 1);
   exr_layout_free(wide);
   exr_layout_free(narrow);
+  exr_document_free(doc);
+}
+
+static void contextual_lines(void) {
+  /* Numeric, quote and Brahmic lookahead crosses differently styled nodes. */
+  const char *parts[] = {"A $", "(", ".", "5", ") ", "\xe7\x94\xb2",
+                         "\xe2\x80\x9d", "\xe7\x94\xb2", " B ", "\xe1\xac\x85",
+                         "\xe1\xad\x85", "\xe1\xac\x85", " C $", "(", ".", "5", ") D"};
+  exr_document *doc = document(parts, sizeof(parts) / sizeof(*parts));
+  exr_layout *whole = layout(doc, 1, 64), *page = NULL;
+  exr_layout_config config = exr_layout_config_defaults();
+  exr_pager *pager = NULL;
+  size_t pages, i, seen = 0;
+  const exr_page *all = exr_layout_pages(whole, &pages);
+  valid_clusters(doc, whole);
+  config.page.width = 80;
+  config.page.height = 64;
+  config.page.margin = 8;
+  config.page.font_size = 16;
+  config.page.line_height = 1.25f;
+  config.page.paragraph_spacing = 0;
+  config.user_css = "#body {width:1px}";
+  OK(exr_pager_create(doc, font, &config, &pager, &error));
+  for (i = 0; i < pages; i++) {
+    const exr_page *one;
+    size_t count;
+    OK(exr_pager_next(pager, &page, &error));
+    CHECK(page);
+    valid_clusters(doc, page);
+    one = exr_layout_pages(page, &count);
+    CHECK(count == 1 && one[0].start == all[i].start && one[0].end == all[i].end);
+    seen += one[0].line_count;
+    exr_layout_free(page);
+  }
+  OK(exr_pager_next(pager, &page, &error));
+  CHECK(!page && seen > 2);
+  exr_pager_free(pager);
+  exr_layout_free(whole);
   exr_document_free(doc);
 }
 
@@ -472,10 +582,12 @@ int main(int argc, char **argv) {
 #endif
   validation();
   grapheme_conformance(argv[1]);
+  line_conformance(argv[1]);
   line_opportunities();
   long_runs();
   OK(exr_font_open(font_path, &font, &error));
   inline_clusters();
+  contextual_lines();
   single_cluster_hit();
   protected_groups();
   protected_marks_and_quotes();

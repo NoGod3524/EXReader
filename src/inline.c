@@ -536,10 +536,25 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
     }
   }
 }
+typedef struct { flow *f; size_t node, at; } inline_text_cursor;
+static int following_inline_scalar(void *context, uint32_t *cp) {
+  inline_text_cursor *c = context;
+  while (c->node != SIZE_MAX) {
+    const exr_node *n = &c->f->doc->nodes[c->node];
+    if (c->at < n->end)
+      return exr_next(c->f->doc->text, n->end, &c->at, cp);
+    c->node = next_text(c->f, following(c->f, c->node));
+    if (c->node != SIZE_MAX) c->at = c->f->doc->nodes[c->node].start;
+  }
+  return 0;
+}
 exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
   exr_status status;
   if (!b->initialized) reset_line_scan(b);
-  g.boundaries = exr_text_step(&b->text, g.codepoint);
+  {
+    inline_text_cursor cursor = {f, g.node, g.end};
+    g.boundaries = exr_text_step(&b->text, g.codepoint, following_inline_scalar, &cursor);
+  }
   if ((g.boundaries & EXR_BOUNDARY_GRAPHEME) && b->cluster_start < b->run.glyph_count) {
     status = measure_line_cluster(f, b);
     if (status != EXR_OK) return status;
