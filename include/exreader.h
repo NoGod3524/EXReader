@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.93.0"
+#define EXR_VERSION "0.94.0"
 #define EXR_ABI_VERSION 1u
 typedef enum {
   EXR_OK = 0,
@@ -972,6 +972,14 @@ EXR_API exr_status exr_library_notes(exr_library *library, int64_t book_id, exr_
                                      size_t *count, exr_error *error);
 EXR_API void exr_notes_free(exr_note *notes, size_t count);
 EXR_API void exr_free(void *memory);
+/* Fast reflow progress persistence: host captures a point with anchor_create()
+   from its current document. The SDK validates it and updates position/selector
+   atomically without reparsing source. Getter owns strings (anchor_free), or
+   returns LEGACY and the numeric position when no selector has been saved. */
+EXR_API exr_status exr_library_progress(exr_library *library,int64_t book_id,const exr_anchor *point,exr_error *error);
+EXR_API exr_status exr_library_progress_get(exr_library *library,int64_t book_id,exr_anchor *point,exr_anchor_state *state,exr_error *error);
+/* Removes the selector, retaining the numeric book position. */
+EXR_API exr_status exr_library_clear_progress(exr_library *library,int64_t book_id,exr_error *error);
 EXR_API exr_status exr_library_blob(exr_library *library, int64_t id, int cover, void **data,
                                     size_t *size, exr_error *error);
 EXR_API exr_status exr_library_remove_note(exr_library *library, int64_t id, exr_error *error);

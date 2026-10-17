@@ -1685,3 +1685,17 @@ replacement before any provider calls. The installed SDK's new search example
 loads one EPUB chapter at a time and streams matches; all eleven C consumers build
 independently, and the search host returned 20 bounded matches from layout.epub.
 All 70 local Windows suites pass. The 0.92 891f818 CI passed all six jobs.
+
+
+## 0.94 Stored reading-position selectors and schema 5
+
+A host-captured point selector and numeric position commit atomically without
+reparsing the source on each update. Tests resolve saved context after reopen and
+backup, preserve it across metadata-only edits and unique-source reuse, and clear
+it after legacy numeric-position changes. INSERT and deferred-COMMIT failures
+restore both old position and selector. Invalid input, malformed stored UTF-8,
+inconsistent saved positions, missing books and fixed-page unit mismatches fail
+without partial outputs. Source deletion cascades saved selectors. A conflicting
+v4 migration trigger rolls back the newly created table and version; successful
+v1/v2/v3/v4 upgrades preserve old rows and expose unanchored progress as LEGACY.
+All 71 local Windows suites pass. The 0.93 1d30b03 CI passed all six jobs.
