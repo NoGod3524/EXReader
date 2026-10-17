@@ -724,3 +724,14 @@ play/pause/seek/rate 控制请求状态，倍速范围为 (0,16]，后端可按�
 命令失败时保留最后确认的位置和倍速、清除请求播放状态并标为 needs_reload，同时尝试暂停后端。下一次操作从 LOAD 恢复，不把部分成功当成完成。后端无诊断的错误会补充信息。
 
 通过 get 的 track_id/offset_ms/rate 保存书签或续播点，再调用 restore 恢复为暂停；在原书前面插入其他轨道也可依照稳定 ID 找回位置。宿主负责持久化这些字段和备注。audio_time 提供轨道本地时间到全局时间的 O(1) 映射。此阶段测试使用可控后端，平台声音设备适配和实际音频解码尚未交付。
+
+
+## C 原生 WAV 按需解码（0.74）
+
+`exr_wave_open` 从 UTF-8 路径打开 RIFF/WAVE，`exr_wave_open_source` 接受宿主随机读取源。源上下文只在成功打开后接管；source.control 仅用于打开，此后各次 read 使用自己的 control。打开只扫描 chunk 头和必要的 fmt 字段，跳过音频载荷；不常驻复制整段音频。文件读取支持 64 位偏移，原电子书文件源仍保留 128 MiB 上限。
+
+支持 little-endian 整数 PCM 8/16/24/32 位、IEEE 浮点 32/64 位，以及 WAVEFORMATEXTENSIBLE 的 PCM/float GUID、有效位和声道掩码。最多 32 声道，采样率 1–768000 Hz，检查块对齐、字节率、RIFF/chunk 长度和填充。format getter 返回采样率、声道、容器/有效位、掩码及总帧数。
+
+`exr_wave_read` 按帧定位，输出交错 float 样本；调用方准备 frames*channels 容量，每次最多 65536 帧。内部只用 4 KiB 读取缓冲，源短读取会重试。整数样本归一化，float 超幅裁切至 [-1,1]，NaN/Inf 拒绝；取消或运行时错误将整个请求输出清零并返回 read=0。EOF 返回剩余帧数，尾部输出为零。同一 reader 拒绝重入读取。
+
+当前不解码压缩 WAV、RF64、RIFX 或多个 data 块；MP3/AAC/M4B 解码、变速处理和操作系统声音输出继续接入。

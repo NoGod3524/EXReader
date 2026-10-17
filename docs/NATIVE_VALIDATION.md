@@ -1388,3 +1388,21 @@ track-ID resume survives inserting an earlier track and remains paused. Backend
 release ownership and close behavior are checked. These are controlled-backend
 tests, not actual operating-system audio playback validation.
 All 56 local suites pass. The 0.72 b6b31d7 CI run passed all six jobs.
+
+
+## 0.74 Native bounded random-access WAVE PCM decoding
+
+The C RIFF reader scans headers, skips payloads and reads samples with a 4 KiB
+buffer. Public tests verify unsigned 8-bit, signed 16/24/32-bit, float 32/64-bit,
+extensible valid bits/channel masks, normalization and clipping. A sparse virtual
+source larger than 4 GiB opens with fewer than 32 short reads and seeks directly
+to its final sample. Other cases cover file opening, source ownership, short-read
+retries, overreported/failed source reads, UTF-8 file API reuse, malformed format/
+RIFF/alignment, non-finite samples, EOF zeros, cancellation and reentry rejection.
+The common file-source reader now uses native 64-bit seeks; publication opens
+retain their original byte limit. No compression codec or device playback is
+claimed by these tests.
+Additional cases verify data-before-format, unknown odd-sized chunk padding,
+duplicate formats, invalid extensible GUIDs and cancellation after PCM output
+has already begun. All 57 local suites pass, including the expanded WAVE checks.
+The 0.73 de65c24 CI run passed all six jobs.
