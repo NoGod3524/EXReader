@@ -51,7 +51,7 @@ typedef struct exr_pdf_font exr_pdf_font;
 typedef enum { EXR_PDF_TYPE1,EXR_PDF_TRUETYPE,EXR_PDF_CID_TYPE0,EXR_PDF_CID_TYPE2 } exr_pdf_font_kind;
 typedef struct {
   exr_pdf_font_kind kind; const char *base_name,*encoding_name,*program_type;
-  const unsigned char *program; size_t program_size; unsigned composite,vertical;
+  const unsigned char *program; size_t program_size; unsigned composite,vertical,flags;
 } exr_pdf_font_info;
 typedef struct {
   exr_pdf_mapping text; uint32_t cid,glyph; unsigned glyph_known;
@@ -66,6 +66,12 @@ exr_status exr_pdf_font_next(const exr_pdf_font *font,const unsigned char *data,
                              exr_pdf_character *out,exr_error *error);
 size_t exr_pdf_cmap_memory(const exr_pdf_cmap *map);
 size_t exr_pdf_font_memory(const exr_pdf_font *font);
+/* Immutable normative facts; glyph names and encoded byte values are distinct
+   from ToUnicode's semantic text. Unknown names/metrics return no mapping. */
+const char *exr_pdf_encoding_glyph(const char *encoding,unsigned code);
+size_t exr_pdf_glyph_unicode(const char *name,int dingbats,char out[256]);
+int exr_pdf_standard_font(const char *name);
+int exr_pdf_standard_width(const char *font,const char *glyph,double *width);
 typedef enum { EXR_PDF_DEVICE_GRAY=1,EXR_PDF_DEVICE_RGB=3,EXR_PDF_DEVICE_CMYK=4 } exr_pdf_color_space;
 typedef struct { exr_pdf_color_space space; double values[4],alpha; } exr_pdf_color;
 typedef struct {

@@ -4,6 +4,7 @@ typedef struct { uint32_t first,last; size_t offset; unsigned constant; } width_
 typedef struct { width_range *ranges; size_t count,capacity; double *values; size_t value_count,value_capacity; unsigned dimension; } width_table;
 struct exr_pdf_font {
   exr_pdf_font_info info; exr_pdf_cmap *unicode;
+  const char *base_encoding;
   char *names[256]; double simple[256],default_width,default_vertical[2];
   width_table widths,vertical;
   const unsigned char *cid_glyphs; size_t cid_glyph_size;
@@ -106,7 +107,16 @@ static int simple_encoding(font_reader *r,uint32_t id,exr_pdf_font *font) {
   uint32_t differences=EXR_PDF_NONE; const exr_pdf_value *v=exr_pdf_value_at(r->file,id);
   if(v && v->kind==EXR_PDF_DICT) { differences=get(r,id,"Differences"); id=get(r,id,"BaseEncoding"); }
   else if(v && v->kind!=EXR_PDF_NAME) return bad(r,"Invalid PDF simple font Encoding");
-  if(id!=EXR_PDF_NONE) { font->info.encoding_name=copy_name(r,id); if(!font->info.encoding_name) return 0; }
+  if(id!=EXR_PDF_NONE) {
+    font->info.encoding_name=copy_name(r,id); if(!font->info.encoding_name) return 0;
+    if(strcmp(font->info.encoding_name,"WinAnsiEncoding") && strcmp(font->info.encoding_name,"MacRomanEncoding") &&
+       strcmp(font->info.encoding_name,"MacExpertEncoding") && strcmp(font->info.encoding_name,"StandardEncoding"))
+      return bad(r,"Unknown PDF simple font encoding");
+    font->base_encoding=font->info.encoding_name;
+  } else if(font->info.kind==EXR_PDF_TYPE1 && exr_pdf_standard_font(font->info.base_name)) {
+    font->base_encoding=!strcmp(font->info.base_name,"Symbol") ? "SymbolSetEncoding" :
+      !strcmp(font->info.base_name,"ZapfDingbats") ? "ZapfDingbatsEncoding" : "StandardEncoding";
+  }
   if(differences!=EXR_PDF_NONE) {
     uint32_t at; unsigned code=256;
     v=exr_pdf_value_at(r->file,differences); if(v->kind!=EXR_PDF_ARRAY) return bad(r,"PDF font Differences are not an array");
@@ -168,6 +178,10 @@ exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control 
   if(id!=EXR_PDF_NONE) { font->info.base_name=copy_name(&r,id); if(!font->info.base_name) goto done; }
   descriptor=get(&r,metrics,"FontDescriptor"); v=exr_pdf_value_at(file,descriptor);
   if(v && v->kind!=EXR_PDF_DICT) goto invalid;
+  id=get(&r,descriptor,"Flags");
+  if(id!=EXR_PDF_NONE) {
+    uint32_t flags; if(!integer(&r,id,UINT32_MAX,&flags)) goto invalid; font->info.flags=flags;
+  }
   if(font->info.composite) {
     font->default_width=1000; font->default_vertical[0]=880; font->default_vertical[1]=-1000;
     id=get(&r,metrics,"DW"); if(id!=EXR_PDF_NONE && !number(&r,id,&font->default_width)) goto invalid;
@@ -186,12 +200,21 @@ exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control 
     uint32_t first,last,at;
     id=get(&r,descriptor,"MissingWidth"); if(id!=EXR_PDF_NONE && !number(&r,id,&font->default_width)) goto invalid;
     for(i=0;i<256;i++) font->simple[i]=font->default_width;
+    if(!simple_encoding(&r,encoding,font)) goto done;
     id=get(&r,metrics,"Widths"); v=exr_pdf_value_at(file,id);
-    if(!v || v->kind!=EXR_PDF_ARRAY) { bad(&r,"PDF standard-font fallback widths are not implemented yet"); goto done; }
-    at=v->first;
-    if(!integer(&r,get(&r,metrics,"FirstChar"),255,&first) || !integer(&r,get(&r,metrics,"LastChar"),255,&last) || first>last) goto invalid;
-    for(i=first;i<=last;i++) { if(!number(&r,at,&font->simple[i])) goto invalid; at=next(file,at); }
-    if(at!=EXR_PDF_NONE || !simple_encoding(&r,encoding,font)) goto invalid;
+    if(!v) {
+      if(font->info.kind!=EXR_PDF_TYPE1 || !exr_pdf_standard_font(font->info.base_name)) {
+        bad(&r,"PDF nonstandard simple font requires Widths"); goto done;
+      }
+      for(i=0;i<256;i++) exr_pdf_standard_width(font->info.base_name,
+        font->names[i] ? font->names[i] : exr_pdf_encoding_glyph(font->base_encoding,(unsigned)i),&font->simple[i]);
+    } else {
+      if(v->kind!=EXR_PDF_ARRAY) goto invalid;
+      at=v->first;
+      if(!integer(&r,get(&r,metrics,"FirstChar"),255,&first) || !integer(&r,get(&r,metrics,"LastChar"),255,&last) || first>last) goto invalid;
+      for(i=first;i<=last;i++) { if(!number(&r,at,&font->simple[i])) goto invalid; at=next(file,at); }
+      if(at!=EXR_PDF_NONE) goto invalid;
+    }
   }
   { const char *keys[]={"FontFile","FontFile2","FontFile3"}; unsigned found=0;
     for(i=0;i<3;i++) {
@@ -227,18 +250,23 @@ exr_status exr_pdf_font_next(const exr_pdf_font *font,const unsigned char *data,
   bytes=font->info.composite ? 2 : 1;
   if(bytes>size-*at) return exr_fail(error,EXR_FORMAT,"Truncated PDF composite character code");
   code=bytes==2 ? ((uint32_t)data[*at]<<8)|data[*at+1] : data[*at];
+  if(!font->info.composite) out->glyph_name=font->names[code] ? font->names[code] : exr_pdf_encoding_glyph(font->base_encoding,code);
   if(font->unicode) {
     exr_status status=exr_pdf_cmap_next(font->unicode,data+*at,bytes,&used,&out->text,error);
     if(status!=EXR_OK) return status;
     if(used!=bytes) { memset(out,0,sizeof(*out)); return exr_fail(error,EXR_FORMAT,"PDF ToUnicode and font code widths disagree"); }
-  } else { out->text.code=code; out->text.code_bytes=(unsigned)bytes; memcpy(out->text.utf8,"\xef\xbf\xbd",4); out->text.size=3; }
+  } else {
+    out->text.code=code; out->text.code_bytes=(unsigned)bytes;
+    out->text.size=exr_pdf_glyph_unicode(out->glyph_name,font->info.base_name && !strcmp(font->info.base_name,"ZapfDingbats"),out->text.utf8);
+    if(!out->text.size) { memcpy(out->text.utf8,"\xef\xbf\xbd",4); out->text.size=3; }
+  }
   out->cid=code; out->width=font->default_width;
   if(font->info.composite) {
     metric=lookup_width(&font->widths,code); if(metric) out->width=metric[0];
     if(font->info.kind==EXR_PDF_CID_TYPE2) {
       out->glyph_known=1; out->glyph=font->cid_glyphs ? (code<font->cid_glyph_size/2 ? ((uint32_t)font->cid_glyphs[2*code]<<8)|font->cid_glyphs[2*code+1] : 0) : code;
     }
-  } else { out->width=font->simple[code]; out->glyph_name=font->names[code]; }
+  } else out->width=font->simple[code];
   out->vertical_advance=font->default_vertical[1]; out->vertical_x=out->width/2; out->vertical_y=font->default_vertical[0];
   metric=lookup_width(&font->vertical,code);
   if(metric) { out->vertical_advance=metric[0]; out->vertical_x=metric[1]; out->vertical_y=metric[2]; }

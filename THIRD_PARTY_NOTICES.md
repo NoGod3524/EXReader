@@ -87,3 +87,23 @@ Declared hybrid EXTH 121 boundaries and header-relative section indexes were che
 [`lib/mobi_split.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_split.py)
 and `lib/mobi_header.py` at the same revision. Shared resources are borrowed from the original
 record directory; EXReader does not call the reference splitter or create an intermediate book.
+
+
+## PDF font facts
+
+`src/pdf_font_data.h` contains static encoding, glyph-name/Unicode and standard
+14 width facts. Adobe Glyph List and ITC Zapf Dingbats Glyph List are from
+[adobe-type-tools/agl-aglfn](https://github.com/adobe-type-tools/agl-aglfn/tree/4036a9ca80a62f64f9de4f7321a9a045ad0ecfd6),
+Copyright 2002-2019 Adobe, BSD-3-Clause. Their complete notice is retained in
+`licenses/adobe-glyph-list.txt`.
+
+Encoding vectors and standard-font metric facts are extracted from
+[PDF.js encodings.js and metrics.js](https://github.com/mozilla/pdf.js/tree/81525fd446779f0a29003cf06e3ba33751954826/src/core),
+Copyright 2012 Mozilla Foundation, Apache-2.0. The full license is retained in
+`licenses/pdfjs.txt`. Both notices are installed in the SDK license directory.
+
+`python tools/generate_pdf_fonts.py --download --check` verifies the pinned
+source SHA-256 hashes and reproduces the committed tables and notices. It parses
+only static facts; downloaded JavaScript is never executed. Normal C builds
+require neither Python nor network access. PDF interpretation, font mapping and
+raster algorithms remain EXReader's own C implementation.
