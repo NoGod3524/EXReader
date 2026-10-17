@@ -14,10 +14,6 @@ static int overlaps(const exr_bitmap *a,const exr_bitmap *b) {
   uintptr_t first=(uintptr_t)a->pixels,second=(uintptr_t)b->pixels;
   return first<=second ? second-first<(size_t)a->stride*a->height : first-second<(size_t)b->stride*b->height;
 }
-static int charge(size_t *work,size_t amount) {
-  if(*work>(size_t)256*1024*1024 || amount>(size_t)256*1024*1024-*work) return 0;
-  *work+=amount; return 1;
-}
 static void span(float *coverage,uint32_t width,double left,double right) {
   int x,end;
   left=fmax(0,left); right=fmin(width,right); if(right<=left) return;
@@ -35,7 +31,7 @@ exr_status exr_vector_fill(exr_bitmap *bitmap,const exr_vector_edge *edges,size_
     return exr_fail(error,EXR_ARGUMENT,"Invalid vector edges, fill rule or clip bitmap");
   if(count>1048576) return exr_fail(error,EXR_LIMIT,"Vector edge count exceeds one million");
   if(!work) work=&local_work;
-  if(!charge(work,count)) goto limit;
+  if(!exr_vector_work(work,count)) goto limit;
   for(i=0;i<count;i++) {
     const exr_vector_edge *edge=&edges[i];
     if(!isfinite(edge->x0) || !isfinite(edge->y0) || !isfinite(edge->x1) || !isfinite(edge->y1) ||
@@ -54,14 +50,14 @@ exr_status exr_vector_fill(exr_bitmap *bitmap,const exr_vector_edge *edges,size_
     memset(coverage,0,(size_t)bitmap->width*sizeof(*coverage));
     for(sample=0;sample<4;sample++) {
       double scan=y+(sample+.5)/4,previous=0; size_t n=0,at=0,sorting=0,levels=0; int winding=0;
-      if(!charge(work,count)) goto limit;
+      if(!exr_vector_work(work,count)) goto limit;
       for(i=0;i<count;i++) {
         const exr_vector_edge *edge=&edges[i]; double minimum=fmin(edge->y0,edge->y1),maximum=fmax(edge->y0,edge->y1);
         if(scan>=minimum && scan<maximum) crossings[n++]=(crossing){edge->x0+(scan-edge->y0)/(edge->y1-edge->y0)*(edge->x1-edge->x0),edge->y1>edge->y0 ? 1 : -1};
       }
       for(i=n;i>1;i=(i+1)/2) levels++;
       sorting=n*(levels+1);
-      if(!charge(work,sorting) || !charge(work,bitmap->width)) goto limit;
+      if(!exr_vector_work(work,sorting) || !exr_vector_work(work,bitmap->width)) goto limit;
       if(n) qsort(crossings,n,sizeof(*crossings),compare_crossing);
       while(at<n) {
         double current=crossings[at].x; int delta=0;
@@ -71,7 +67,7 @@ exr_status exr_vector_fill(exr_bitmap *bitmap,const exr_vector_edge *edges,size_
         previous=current;
       }
     }
-    if(!charge(work,bitmap->width)) goto limit;
+    if(!exr_vector_work(work,bitmap->width)) goto limit;
     for(x=0;x<bitmap->width;x++) {
       unsigned alpha=(unsigned)fmin(255,floor(coverage[x]*255/4+.5));
       if(clip) alpha=(alpha*clip->pixels[(size_t)y*clip->stride+x]+127)/255;

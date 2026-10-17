@@ -918,3 +918,19 @@ fill, shared triangle edges, clip opacity, cancellation, aliasing and work/input
 The shared raster pixel helper retains exact opaque-target arithmetic and adds correct
 straight-alpha source-over for transparent targets, including very low destination alpha.
 Existing positioned/image/PNG suites pass. The 0.49 commit 47c50b9 passed all six CI jobs.
+
+
+## 0.51 native path flattening
+
+The format-neutral path model adds move/line/quadratic/cubic/close commands and owned
+polylines with explicit contour boundaries/closure. Curves are transformed first and split
+adaptively by De Casteljau subdivision using a pixel tolerance. Flatness measures distance
+to the finite chord, preserving collinear overshoot/return curves. Vertex, subdivision and
+shared-work budgets and cancellation are enforced. Edge construction preserves explicit
+closure or optionally closes open contours for fill; errors return no partial output.
+
+The vector suite samples independent Bernstein polynomials against the flattened geometry,
+checks transformed quadratic and collinear cubic curves, closure/current-point behavior,
+curved-region raster pixels, ownership/free, invalid coordinates/tolerances and cancellation
+/work limits. Stroke construction and display-list/PDF integration remain pending. The 0.50
+commit cf835bb passed all six platform and sanitizer CI jobs.
