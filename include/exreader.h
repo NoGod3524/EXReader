@@ -592,6 +592,32 @@ EXR_API void exr_metadata_free(exr_metadata_entry *entries,size_t count);
 EXR_API exr_status exr_fixed_load_annotations(exr_fixed_document *document,size_t page,const exr_control *control,
   exr_page_annotation **annotations,size_t *count,exr_error *error);
 EXR_API void exr_page_annotations_free(exr_page_annotation *annotations,size_t count);
+typedef struct {
+  size_t struct_size;
+  uint32_t color; /* 0xRRGGBB */
+  double opacity; /* [0,1], including fully transparent. */
+  exr_control control;
+} exr_pdf_annotation_write_options;
+EXR_API exr_pdf_annotation_write_options exr_pdf_annotation_write_defaults(void);
+/* Zero-based page. Upserts a Text or Highlight annotation by nonempty UTF-8 NM
+   on that page; duplicate matching IDs are an error. Text has no quads;
+   Highlight requires 1-32768 convex four-point quads within its positive-area
+   bounds; coordinate magnitudes and local dimensions cannot exceed 1e7.
+   Five text properties match load_annotations: description, creator, subject,
+   CreateDate and ModifyDate (use their full metadata URIs). Other keys fail.
+   NULL options use yellow/0.35 for both create and update. An update replaces
+   the supported fields and appearance, preserving other dictionary entries.
+   Appends a revision, preserving every original byte. Input is borrowed only
+   during this call; free the independent complete PDF with exr_free().
+   Writing requires PDF 1.4 or newer. Encrypted PDFs and catalog permission
+   constraints are unsupported. UTF-8 and encoded UTF-16 text each cap at 64 KiB. */
+EXR_API exr_status exr_pdf_annotation_write(const void *data,size_t size,size_t page,
+  const exr_page_annotation *annotation,const exr_pdf_annotation_write_options *options,
+  void **out,size_t *out_size,exr_error *error);
+/* Removes the matching annotation and its same-page Popup. A missing ID returns
+   an independent byte-for-byte copy. Failures clear both outputs. */
+EXR_API exr_status exr_pdf_annotation_remove(const void *data,size_t size,size_t page,const char *id,
+  const exr_control *control,void **out,size_t *out_size,exr_error *error);
 /* Read document-subject XMP simple literals, Seq/Bag values and preferred Alt. */
 EXR_API exr_status exr_metadata_read_xmp(const void *data,size_t size,const exr_control *control,
   exr_metadata_entry **entries,size_t *count,exr_error *error);

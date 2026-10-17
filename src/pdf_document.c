@@ -40,7 +40,7 @@ static exr_status draw(void *context,size_t page,const double matrix[6],const ex
   if(page>=d->count) return exr_fail(e,EXR_ARGUMENT,"PDF page is out of range");
   status=exr_control_cancel(control,e);
   if(status==EXR_OK) status=exr_pdf_content(d->file,d->pages[page].contents,&content,e);
-  if(status==EXR_OK) status=exr_pdf_paint_content(d->file,d->pages[page].resources,content.data,content.size,matrix,sink,program,d,NULL,control,e);
+  if(status==EXR_OK) status=exr_pdf_paint_page(d->file,&d->pages[page],content.data,content.size,matrix,sink,program,d,NULL,control,e);
   free(content.data);
   /* Failed lazy resolution/decoding can leave a sticky parser error. Rebuild
      the reader on the next request, so another page remains independently usable. */

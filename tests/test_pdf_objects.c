@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "../src/pdf_internal.h"
+#include <float.h>
+#include <locale.h>
 static exr_error error; static unsigned checks;
+static int cancelled(void *context);
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
 static unsigned char *read_fixture(const char *dir,const char *name,size_t *size) {
@@ -19,7 +22,27 @@ static void basic(const char *dir,const char *name) {
   size_t size,n,again; unsigned char *data=read_fixture(dir,name,&size); const unsigned char *stream,*same;
   exr_pdf_file *file=NULL; uint32_t root,dict,value,array; const exr_pdf_value *v;
   OK(exr_pdf_open(data,size,&file,&error)); root=exr_pdf_root(file); CHECK(root!=EXR_PDF_NONE);
+  { exr_pdf_revision_info revision; exr_buffer out={0}; uint32_t object,generation;
+    exr_pdf_revision(file,&revision); CHECK(revision.size>0 && revision.startxref<size);
+    v=exr_pdf_value_at(file,revision.root); CHECK(v && v->kind==EXR_PDF_REF);
+    OK(exr_pdf_object_identity(file,root,&object,&generation,&error));
+    CHECK(object==v->u.ref.object && generation==v->u.ref.generation && object<revision.size);
+    OK(exr_pdf_serialize(file,revision.root,NULL,0,&out,NULL,&error));
+    CHECK(strstr(out.data," R") && !strstr(out.data,"Catalog")); free(out.data);
+    CHECK(exr_pdf_object_identity(file,EXR_PDF_NONE,&object,&generation,&error)==EXR_ARGUMENT && object==EXR_PDF_NONE);
+  }
   dict=get(file,root,"Data"); CHECK(exr_pdf_value_at(file,dict)->kind==EXR_PDF_DICT);
+  { exr_buffer out={0}; const char *skip[]={"Duplicate"}; size_t saved,stop=1; exr_control control={0};
+    OK(exr_pdf_serialize(file,dict,skip,1,&out,NULL,&error)); saved=out.size;
+    CHECK(!strstr(out.data,"/Duplicate ") && strstr(out.data,"/EscapedName /A#20B") && strstr(out.data,"<FEFF4E8C>"));
+    CHECK(strstr(out.data,"9223372036854775807") && strstr(out.data,"-9223372036854775808") && strstr(out.data," R"));
+    value=get(file,root,"Raw"); CHECK(exr_pdf_serialize(file,value,NULL,0,&out,NULL,&error)==EXR_FORMAT);
+    CHECK(out.size==saved && out.data[saved]==0);
+    control.context=&stop; control.cancelled=cancelled;
+    CHECK(exr_pdf_serialize(file,dict,NULL,0,&out,&control,&error)==EXR_CANCELLED && out.size==saved);
+    CHECK(exr_pdf_serialize(file,dict,NULL,1,&out,NULL,&error)==EXR_ARGUMENT && out.size==saved);
+    free(out.data);
+  }
   bytes(file,get(file,dict,"EscapedName"),"A B",3);
   bytes(file,get(file,dict,"Text"),"a(b)A\nlinecontinued\nend",sizeof("a(b)A\nlinecontinued\nend")-1);
   bytes(file,get(file,dict,"Nested"),"nested (inner)",14);
@@ -124,6 +147,31 @@ static exr_status stop_operation(void *context,exr_pdf_file *arena,const char *n
   (void)context; (void)arena; (void)name; (void)values; (void)count; (void)e; return EXR_CANCELLED;
 }
 static int cancelled(void *context) { return *(size_t *)context>0; }
+static exr_status serialize_operand(void *context,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,exr_error *e) {
+  (void)name; CHECK(count==1); return exr_pdf_serialize(arena,values[0],NULL,0,context,NULL,e);
+}
+static void serialization(void) {
+  const char input[]="<< /Bin <00FF2380> /Name /A#00#23#2F /Values [null true false -9223372036854775808 9223372036854775807 0.00000000125 1000000000000000000000000000000000000000000000000000000000000.0] /Nested << /Annots /Keep >> >> Check";
+  const double reals[]={0.0,-0.0,1.25,1e-9,1e60,1e-300,DBL_MIN,DBL_MAX};
+  const char *locales[]={"de_DE.UTF-8","de-DE","German_Germany.1252","fr_FR.UTF-8"};
+  exr_buffer first={0},second={0},real={0}; char *saved; size_t size,i;
+  OK(exr_pdf_content_ops(input,sizeof(input)-1,serialize_operand,&first,NULL,&error)); size=first.size;
+  CHECK(strstr(first.data,"/Bin <00FF2380>") && strstr(first.data,"/Name /A#00#23#2F") && strstr(first.data,"/Annots /Keep"));
+  CHECK(exr_append(&first," Check",6));
+  OK(exr_pdf_content_ops(first.data,first.size,serialize_operand,&second,NULL,&error));
+  CHECK(size==second.size && !memcmp(first.data,second.data,size));
+  for(i=0;i<sizeof(reals)/sizeof(*reals);i++) {
+    real.size=0; OK(exr_pdf_real(&real,reals[i],&error)); CHECK(strchr(real.data,'.') && !strchr(real.data,'e') && !strchr(real.data,'E'));
+    CHECK(strtod(real.data,NULL)==reals[i]);
+  }
+  saved=exr_copy(setlocale(LC_NUMERIC,NULL),strlen(setlocale(LC_NUMERIC,NULL))); CHECK(saved);
+  for(i=0;i<sizeof(locales)/sizeof(*locales);i++) if(setlocale(LC_NUMERIC,locales[i])) {
+    real.size=0; OK(exr_pdf_real(&real,1.25,&error)); CHECK(!strcmp(real.data,"1.25")); break;
+  }
+  CHECK(setlocale(LC_NUMERIC,saved)); free(saved);
+  CHECK(exr_pdf_real(&real,INFINITY,&error)==EXR_ARGUMENT && exr_pdf_real(&real,NAN,&error)==EXR_ARGUMENT);
+  free(first.data); free(second.data); free(real.data);
+}
 static void content_operations(void) {
   const char sample[]="% operators\nq 1 0 0 1 10 20 cm BT /F#31 12 Tf [(A\\053) -120 <42>] TJ true false null /tag << /K [1 2] >> DP ET Q";
   const char *bad[]={"1","1 0 R Do","[1 0 R] TJ","<< /Key 1 0 R >> DP","(open Tj","<GG> Tj","[1 2 TJ",">","/Name << DP","BI /W 1 ID x EI"};
@@ -145,7 +193,7 @@ static void content_operations(void) {
 int main(int argc,char **argv) {
   const char *bad[]={"object-header-duplicate","object-header-offset","object-header-order","object-header-tail","object-body","xref-indirect","xref-empty-index","xref-size","xref-nested-hybrid","xref-width","xref-overlap","xref-odd-index","xref-generation","object-stream-number","object-stream-index","object-stream-self","object-stream-missing","prev-cycle","prev-offset","encrypted","hybrid","xref-offset","header","eof","startxref","root-type","root-direct","size","token","root-reference","generation","string","key","hex"};
   const char *streams[]={"invalid-length","cycle-length","bad-flate","unsupported-filter","bad-parameters","unsupported-predictor","trailing"}; size_t i;
-  CHECK(argc==2); content_operations(); filter_cases(argv[1]); basic(argv[1],"pdf-objects.pdf"); basic(argv[1],"pdf-objects-predictor-one.pdf"); basic(argv[1],"pdf-stream-whitespace.pdf");
+  CHECK(argc==2); content_operations(); serialization(); filter_cases(argv[1]); basic(argv[1],"pdf-objects.pdf"); basic(argv[1],"pdf-objects-predictor-one.pdf"); basic(argv[1],"pdf-stream-whitespace.pdf");
   basic(argv[1],"pdf-stream-after-classic.pdf"); incremental(argv[1],"pdf-classic-after-stream.pdf");
   basic(argv[1],"pdf-xref-predictor.pdf"); basic(argv[1],"pdf-hybrid-predictor.pdf"); basic(argv[1],"pdf-xref-stream.pdf"); basic(argv[1],"pdf-object-stream.pdf"); basic(argv[1],"pdf-hybrid.pdf");
   basic(argv[1],"pdf-xref-index.pdf"); basic(argv[1],"pdf-xref-wide.pdf"); basic(argv[1],"pdf-xref-default-type.pdf");

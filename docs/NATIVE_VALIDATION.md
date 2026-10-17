@@ -1813,3 +1813,50 @@ ABI epoch or database schema changed. The native ABI check passes. All eleven
 installed C examples build, and installed C compatibility and independent C++17
 consumers report 0.18.0 / ABI 1. EXACT package selection rejects a preserved
 historical 0.99.0 SDK, preventing its larger old number from winning selection.
+
+
+## Milestone 0.18.0 development: PDF annotation editing and appearances
+
+The product version remains 0.18.0. The new `native-pdf-write` suite covers
+Text/Highlight creation, NM-based updates across multiple revisions, removal,
+independent no-match copies, Popup links, direct/indirect annotation dictionaries,
+nonzero generations, classic xrefs, xref streams and object streams. It checks
+byte-identical original prefixes, Root/Info/ID preservation, unchanged nested
+unknown fields, raw binary strings/names, multilingual text and supplementary
+characters, original QuadPoints order, rendered output and metadata after reopen.
+Unknown real-number spellings remain stable across repeated edits.
+
+Writer boundary cases cover duplicate NM, unsupported kinds/properties, invalid
+UTF-8, nonfinite/zero-area/oversized geometry, degenerate or out-of-bounds quads,
+invalid options, UTF-8 and encoded UTF-16BE string limits, cancellation and clear
+failure outputs. The writer limits encoded strings, including the BOM, to 64 KiB
+as well as limiting UTF-8 input to 64 KiB. Supported writes require a PDF header
+of 1.4 or newer; removal does not add that version restriction. Each annotation
+is limited to 32768 quads, matching the parser's 262144 array-item limit.
+Permission-constrained
+catalogs are rejected for actual edits. Incremental removal preserves historical
+bytes and is not secure erasure; SDK library notes are not automatically synced.
+
+The `native-pdf-appearance` suite covers direct and state-selected normal Forms,
+Rect/BBox/Matrix mapping, reversed rectangles, shear/rotation, bounding-box clips,
+nested Forms, own/inherited resources, visibility flags, missing appearances,
+page/annotation graphics-state isolation and generic drawing callbacks. Malformed
+geometry/resources/Form types, unsupported transparency groups, too many
+annotations, cancellation and recovery on another page are exercised. NoZoom,
+NoRotate and Form Group appearances remain unsupported.
+
+The object suite additionally checks active indirect identities, reference-preserving
+serialization, binary name/string escaping, top-level dictionary filtering,
+stream rejection, exact signed integer limits, failure rollback and decimal
+formatting across finite double boundaries and available numeric locales.
+
+All 77 local Windows suites pass, including the corrected annotation syntax
+regression and the final writer/appearance/object checks. The writer suite makes
+492 assertions. Independently installed pypdf (strict parsing with its numeric
+token limit raised for the deliberately huge retained REAL fixture) verifies
+the output dictionaries, generations, Unicode strings, binary ID and Form
+resources. PyMuPDF renders red/0.5 as (255,128,128) and yellow/0.35 as
+(255,255,166); overlapping highlight quads retain the same alpha as a single
+quad, matching EXReader pixels. These are development checks, not runtime
+dependencies. This change still requires its platform CI run; historical
+platform results above do not validate the new writer.
