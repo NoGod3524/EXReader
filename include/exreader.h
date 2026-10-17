@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.37.0"
+#define EXR_VERSION "0.38.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -275,6 +275,30 @@ typedef struct {
   uint32_t background, border_color; /* 0xRRGGBBAA */
   unsigned flags;                    /* Image bit 1: missing/unsupported image placeholder. */
 } exr_box;
+typedef enum { EXR_PAINT_GLYPH=1, EXR_PAINT_BOX=2 } exr_paint_kind;
+typedef struct {
+  exr_paint_kind kind;
+  unsigned flags; /* Reserved; initialize to zero. */
+  size_t index;   /* Index in the positioned glyph or box array. */
+} exr_paint;
+typedef struct {
+  float width,height; /* Native coordinates: origin top left, y down. */
+  exr_page content;
+  size_t paint_start,paint_count;
+} exr_positioned_page;
+typedef struct {
+  size_t struct_size; /* Set to sizeof(exr_positioned_input); zero-initialize all fields. */
+  const exr_positioned_page *pages;
+  size_t page_count;
+  const exr_glyph *glyphs;
+  size_t glyph_count;
+  const exr_line *lines;
+  size_t line_count;
+  const exr_box *boxes;
+  size_t box_count;
+  const exr_paint *paints;
+  size_t paint_count;
+} exr_positioned_input;
 typedef struct {
   float width, height, margin, font_size, line_height, paragraph_spacing;
 } exr_layout_options;
@@ -418,6 +442,13 @@ EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,
 EXR_API exr_status exr_layout_create_ex(const exr_document *doc, exr_font *font,
                                         const exr_layout_config *config, exr_layout **out,
                                         exr_error *error);
+/* Copies pre-positioned arrays and fits each page inside the configured viewport.
+   Glyph IDs/advances are supplied by the host; this path performs no shaping/reflow.
+   Font may be NULL only for inputs with no glyphs. */
+EXR_API exr_status exr_layout_create_positioned(const exr_document *doc, exr_font *font,
+                                                const exr_positioned_input *input,
+                                                const exr_layout_config *config,
+                                                exr_layout **out, exr_error *error);
 /* Resumable page layout. The document/font/callback context must outlive the pager.
    Config/CSS are copied. next() transfers one independent single-page layout,
    or returns EXR_OK with NULL at EOF. Pages share immutable images; serialize
@@ -477,6 +508,8 @@ EXR_API const exr_page *exr_layout_pages(const exr_layout *layout, size_t *count
 EXR_API const exr_line *exr_layout_lines(const exr_layout *layout, size_t *count);
 EXR_API const exr_glyph *exr_layout_glyphs(const exr_layout *layout, size_t *count);
 EXR_API const exr_box *exr_layout_boxes(const exr_layout *layout, size_t *count);
+/* Borrowed ordered paint commands for one positioned page; NULL for reflow layouts. */
+EXR_API const exr_paint *exr_layout_paints(const exr_layout *layout, size_t page, size_t *count);
 /* Borrowed decoded RGBA pixels, valid until layout_free; NULL for unavailable resources. */
 EXR_API const exr_bitmap *exr_layout_image(const exr_layout *layout, size_t resource);
 EXR_API size_t exr_layout_page_at(const exr_layout *layout, size_t utf8_offset);

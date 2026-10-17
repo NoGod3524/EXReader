@@ -54,6 +54,8 @@ size_t exr_layout_memory_size(const exr_layout *l) {
   total = array(total, l->lines, l->line_cap, sizeof(*l->lines));
   total = array(total, l->pages, l->page_cap, sizeof(*l->pages));
   total = array(total, l->boxes, l->box_cap, sizeof(*l->boxes));
+  total = array(total, l->paints, l->paint_count, sizeof(*l->paints));
+  total = array(total, l->positioned, l->page_count, sizeof(*l->positioned));
   total = array(total, l->images, l->image_cap, sizeof(*l->images));
   total = array(total, l->styles, l->style_count, sizeof(*l->styles));
   for (i = 0; i < l->style_count; i++)
