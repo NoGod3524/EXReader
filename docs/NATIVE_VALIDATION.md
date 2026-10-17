@@ -1858,5 +1858,12 @@ the output dictionaries, generations, Unicode strings, binary ID and Form
 resources. PyMuPDF renders red/0.5 as (255,128,128) and yellow/0.35 as
 (255,255,166); overlapping highlight quads retain the same alpha as a single
 quad, matching EXReader pixels. These are development checks, not runtime
-dependencies. This change still requires its platform CI run; historical
-platform results above do not validate the new writer.
+dependencies. The installed Windows SDK also passes an independent C++17 host.
+
+Commit `5ff51c3` passes all six jobs in
+[CI run 39055589599](https://github.com/NoGod3524/EXReader/actions/runs/39055589599):
+Windows, Linux and macOS runtime suites and installed host consumers;
+ASAN/UBSAN; Android ARM64 compilation; iOS/iPadOS device and simulator
+compilation with Swift type checking. Mobile compilation does not establish
+device runtime or application validation. Product version 0.18.0, ABI epoch 1
+and library schema 6 remain unchanged.
