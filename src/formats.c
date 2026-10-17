@@ -406,6 +406,7 @@ typedef struct {
 typedef struct {
   XML_Parser parser;
   char *root;
+  char *toc_id;
   item *items;
   size_t count, capacity;
   spine_item *spine;
@@ -458,6 +459,10 @@ static void XMLCALL package_start(void *user, const char *full, const char **att
       if (!p->spine[p->spine_count++].id)
         p->failed = 1;
     }
+  }
+  if (!strcmp(tag, "spine") && !p->toc_id) {
+    a = attribute(attrs, "toc");
+    if (a && !(p->toc_id = exr_copy(a, strlen(a)))) p->failed = 1;
   }
   if (!strcmp(tag, "title"))
     p->in_title = 1;
@@ -671,6 +676,7 @@ static void package_free(package *p) {
   free(p->items);
   free(p->spine);
   free(p->root);
+  free(p->toc_id);
   free(p->title.data);
 }
 static exr_status archive_open(archive *z, const void *data, size_t n, exr_error *e) {
@@ -745,6 +751,26 @@ static exr_status epub_chapter(exr_document *d, size_t resource, int in_spine, i
   chapter->linear = linear;
   return EXR_OK;
 }
+exr_status exr_xml_resource(const exr_document *index, size_t resource, const char *root_name,
+                             exr_document **out, exr_error *e) {
+  void *bytes = NULL;
+  size_t size = 0;
+  exr_document *doc;
+  exr_status status;
+  *out = NULL;
+  if (resource >= index->resource_count) return exr_fail(e, EXR_ARGUMENT, "Invalid XML resource");
+  status = exr_document_resource(index, resource, &bytes, &size, e);
+  if (status != EXR_OK) return status;
+  doc = calloc(1, sizeof(*doc));
+  if (!doc) { exr_free(bytes); return exr_fail(e, EXR_MEMORY, "XML tree allocation failed"); }
+  doc->format = EXR_EPUB;
+  status = resource_copy(doc, &index->resources[resource], e);
+  if (status == EXR_OK) status = exr_xml_tree(doc, bytes, size, 0, 0, 0, root_name, e);
+  exr_free(bytes);
+  if (status != EXR_OK) { exr_document_free(doc); return status; }
+  *out = doc;
+  return EXR_OK;
+}
 /* Build the reading order without extracting XHTML. Missing or damaged chapter
    members are reported only when that chapter is requested. */
 static exr_status epub_metadata(exr_document *d, archive *z, exr_error *e) {
@@ -806,6 +832,11 @@ static exr_status epub_metadata(exr_document *d, archive *z, exr_error *e) {
     result = resource_copy(d, &r, e);
     if (result != EXR_OK)
       goto done;
+  }
+  if (p.toc_id) {
+    d->has_ncx = 1; d->ncx_resource = SIZE_MAX;
+    for (i = 0; i < d->resource_count; i++)
+      if (!strcmp(d->resources[i].id, p.toc_id)) { d->ncx_resource = i; break; }
   }
   for (i = 0; i < p.spine_count; i++) {
     for (j = 0; j < p.count; j++)

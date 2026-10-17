@@ -42,7 +42,7 @@ static int example_main(int argc, char **argv) {
     part = (size_t)value;
     status = exr_publication_open(argv[3], &publication, &error);
   } else {
-    exr_publication_input input = {"Host lazy example", parts, 3, load, &loaded, NULL};
+    exr_publication_input input = {"Host lazy example", parts, 3, load, &loaded, NULL, NULL, 0};
     status = exr_publication_create(&input, &publication, &error);
   }
   if (status == EXR_OK)

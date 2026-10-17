@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.16.0"
+#define EXR_VERSION "0.17.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -206,6 +206,13 @@ typedef struct {
   void *context;
   exr_control control;
 } exr_source;
+/* Flat navigation tree. Parent must precede its child; SIZE_MAX denotes a root
+   or unresolved/ambiguous part. href is relative to base; arbitrary role labels
+   permit host-defined navigation categories (e.g. toc, page-list, landmarks). */
+typedef struct {
+  size_t parent, part;
+  const char *label, *href, *base, *role;
+} exr_navigation;
 typedef struct {
   const char *title;
   const exr_part *parts;
@@ -213,6 +220,8 @@ typedef struct {
   exr_part_load_fn load;
   void *context;
   exr_context_release_fn release;
+  const exr_navigation *navigation;
+  size_t navigation_count;
 } exr_publication_input;
 enum {
   EXR_BOUNDARY_GRAPHEME = 1,
@@ -365,6 +374,11 @@ EXR_API exr_status exr_publication_open_memory(exr_format format, const void *da
 EXR_API void exr_publication_free(exr_publication *publication);
 EXR_API const char *exr_publication_title(const exr_publication *publication);
 EXR_API const exr_part *exr_publication_parts(const exr_publication *publication, size_t *count);
+/* Borrowed until publication_free; EPUB navigation is decoded on first request.
+   Custom publications copy navigation through exr_publication_input. */
+EXR_API exr_status exr_publication_navigation(exr_publication *publication,
+                                               const exr_navigation **entries, size_t *count,
+                                               exr_error *error);
 /* Own the returned document with document_free(); offsets/indices are part-local. */
 EXR_API exr_status exr_publication_load(exr_publication *publication, size_t part,
                                         exr_document **out, exr_error *error);

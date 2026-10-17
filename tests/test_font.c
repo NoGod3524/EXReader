@@ -246,7 +246,7 @@ static void session_and_pages(void) {
   exr_font *font = create(sources, 2);
   exr_part part = {"one", "one.txt", "One", 1};
   unsigned calls = 0;
-  exr_publication_input input = {"Fonts", &part, 1, load_part, &calls, NULL};
+  exr_publication_input input = {"Fonts", &part, 1, load_part, &calls, NULL, NULL, 0};
   exr_publication *publication = NULL;
   exr_session *session = NULL;
   const exr_document *doc;

@@ -1,5 +1,19 @@
 # Native C validation
 
+## 0.17 generic navigation and NCX
+
+`native-navigation` passes 145 checks using seven original deterministic fixtures
+from `tests/make_navigation_fixtures.py`. Tests cover explicit NCX selection over
+an earlier manifest candidate, EPUB 3 preference, nested/group labels, Unicode and
+percent-encoded targets, separate navigation roles, external links and ambiguous
+repeated spine paths. Bad XML/entity declarations or missing NCX references fail
+only on navigation requests; chapter loading remains available. A seekable source
+checks lazy loading, cached reuse, cancellation/retry and rejected reentry. Custom
+navigation verifies deep copies, arbitrary roles/URIs, UTF-8, parent/part validation
+and failed-construction ownership. All 27 local CTest suites pass. The control
+milestone passed all six CI jobs at
+[d21f902](https://github.com/NoGod3524/EXReader/actions/runs/38998166360).
+
 ## 0.16 operation control
 
 `native-control` passes 3555 checks. It cancels style computation, lookup work in a

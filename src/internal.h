@@ -40,6 +40,8 @@ struct exr_document {
   unsigned char *archive;
   size_t archive_size;
   exr_archive_store *shared_archive;
+  size_t ncx_resource;
+  int has_ncx;
 };
 typedef struct {
   char *data;
@@ -62,6 +64,11 @@ exr_status exr_parse(exr_document *doc, const void *data, size_t size, exr_error
 exr_status exr_epub_index(const void *data, size_t size, exr_document **out, exr_error *error);
 exr_status exr_epub_index_source(const exr_source *source, exr_document **out, exr_error *error);
 exr_status exr_file_source(const char *path, exr_source *source, exr_error *error);
+exr_status exr_xml_resource(const exr_document *doc, size_t resource, const char *root_name,
+                             exr_document **out, exr_error *error);
+exr_status exr_epub_navigation(const exr_document *index, size_t metadata_bytes,
+                                exr_navigation **entries, size_t *count, exr_error *error);
+void exr_navigation_free(exr_navigation *entries, size_t count);
 exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **out,
                         exr_error *error);
 int exr_add_block(exr_document *doc, const char *text, size_t size, unsigned heading);
@@ -71,6 +78,8 @@ size_t exr_model_node(exr_document *doc, size_t parent, size_t chapter, exr_node
                       const char *name, const char *text, size_t length);
 exr_status exr_xhtml(exr_document *doc, const void *data, size_t size, size_t resource,
                      int in_spine, int linear, exr_error *error);
+exr_status exr_xml_tree(exr_document *doc, const void *data, size_t size, size_t resource,
+                         int in_spine, int linear, const char *root_name, exr_error *error);
 exr_status exr_model_finish(exr_document *doc, exr_error *error);
 void exr_model_free(exr_document *doc);
 int exr_resolve_path(const char *base, const char *href, char out[2048]);
