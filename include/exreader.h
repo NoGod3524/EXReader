@@ -997,6 +997,18 @@ EXR_API exr_status exr_font_axes(const exr_font *font,size_t font_index,
 EXR_API exr_status exr_font_create_variable(const exr_font_input *inputs,size_t count,
   const exr_font_coordinate *coordinates,size_t coordinate_count,exr_font **out,exr_error *error);
 EXR_API size_t exr_font_count(const exr_font *font);
+/* CPAL counts; fonts without CPAL return 0/0. Same font serialization rule as
+   shape. Palette/layer queries do not change the instance's default rendering. */
+EXR_API exr_status exr_font_color_palettes(const exr_font *font,size_t font_index,
+  size_t *palettes,size_t *entries,exr_error *error);
+typedef struct { uint32_t glyph,color; } exr_font_color_layer;
+/* Owned COLR v0 layers in back-to-front order, at most 256, freed with exr_free.
+   Colors are straight RRGGBBAA, with foreground alpha applied; CPAL
+   entry 0xffff uses foreground itself. No layers returns NULL/0. Glyph IDs remain
+   specific to this face; color/outline data can be drawn independently. */
+EXR_API exr_status exr_font_color_layers(exr_font *font,size_t font_index,uint32_t glyph,
+  size_t palette,uint32_t foreground,exr_font_color_layer **out,size_t *count,
+  const exr_control *control,exr_error *error);
 /* Scalar cmap coverage, not a shaping/sequence support test; invalid input returns 0. */
 EXR_API int exr_font_has_glyph(const exr_font *font, size_t font_index, uint32_t codepoint);
 EXR_API void exr_font_free(exr_font *font);

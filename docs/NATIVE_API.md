@@ -1120,3 +1120,11 @@ Separation 普通命名专色现支持文件声明的 device/CIE alternate 和�
 普通 Separation 的 tintTransform 现支持单输入、1–4 输出的 Type 4 stream，也可作为 Type 3 子函数。所有表 42 算术、关系、布尔/32 位位运算、栈操作和 if/ifelse 均有实现。语法采用 PDF 十进制数字与注释；花括号条件表达式编译成仅向前跳转的指令，没有变量、过程对象、循环或任意 PostScript 执行。整数溢出的 add/sub/mul/neg/abs 提升为实数，idiv/mod 严格要求整数；round 的半整数向较大整数舍入，包括 −6.5→−6。最终栈必须恰好包含声明的数值输出，Domain/Range 继续沿用共用函数路径。
 
 每程序最多 64 KiB 解码源码、4096 指令、32 层条件嵌套、100 操作数；实际指令内存计入整个函数图的 1 MiB 预算。长程序每 256 条执行指令检查取消。按指令和栈搬运成本收费，向量颜色选择/设置共享每次 content/Form 遍历的 256M 工作量上限，图片沿用既有 sample/function 工作预算。编译后的数据由颜色模型持有，取消上下文仅在当前同步 render 期间借用；无公开 ABI 变化。
+
+## COLR v0 彩色轮廓字形（0.18 开发补充）
+
+横排、竖排、侧转和 positioned 绘制均按 COLR v0 层序绘制轮廓，使用 CPAL 第 0 套调色板；前景条目 0xffff 使用字形文字颜色，其余条目保留调色板 RGB/alpha，并乘文字颜色的 alpha。沿用 straight RGBA source-over、灰度输出和行内裁切；粗斜体逐层处理，下划线/删除线按原字形前景色只绘制一次。字形和 UTF-8 语义仍为一个原始塑形结果，不把绘制图层加入文档树、命中区域或标注位置。
+
+`exr_font_color_palettes` 查询 CPAL 调色板和条目数，无 CPAL 返回 0/0；`exr_font_color_layers` 根据显式调色板序号与前景色，返回独立的 `exr_font_color_layer { glyph, color }` 数组，按从后到前排列，color 为 RRGGBBAA；用 exr_free 释放。没有 COLR v0 图层时返回 NULL/0，未知调色板/字形序号返回 EXR_ARGUMENT，支持取消和失败清空输出。快照可比字体活得更久，glyph ID 仍属于对应字体面；宿主可结合 glyph_outline 读取各层路径，自行绘制或选用其他调色板。查询其他调色板不会改变默认页面绘制。所有操作继续遵循同一字体实例串行访问规则。
+
+单字形最多 256 层，每层位图最多 8192×8192 且不超过 16M 像素。页面文字共用 256M 工作预算，计入图层遍历、必要的调色板复制和栅格像素；调色板按字体面缓存，避免每个字形重复复制。长位图按行检查取消，错误时释放整页输出。默认 API 未修改既有公开记录；新增查询函数和独立图层记录，ABI epoch 仍为 1。当前范围是 COLR v0 与 CPAL 颜色；COLR v1 渐变/合成、SVG 字体和 CBDT/sbix 位图 emoji 待实现。
