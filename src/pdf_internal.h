@@ -2,6 +2,7 @@
 #ifndef EXR_PDF_INTERNAL_H
 #define EXR_PDF_INTERNAL_H
 #include "internal.h"
+#include "vector_internal.h"
 #define EXR_PDF_NONE UINT32_MAX
 #define EXR_PDF_MAX_VALUES 1048576u
 typedef enum {
@@ -65,13 +66,35 @@ exr_status exr_pdf_font_next(const exr_pdf_font *font,const unsigned char *data,
                              exr_pdf_character *out,exr_error *error);
 size_t exr_pdf_cmap_memory(const exr_pdf_cmap *map);
 size_t exr_pdf_font_memory(const exr_pdf_font *font);
+typedef enum { EXR_PDF_DEVICE_GRAY=1,EXR_PDF_DEVICE_RGB=3,EXR_PDF_DEVICE_CMYK=4 } exr_pdf_color_space;
+typedef struct { exr_pdf_color_space space; double values[4],alpha; } exr_pdf_color;
+typedef struct {
+  exr_pdf_color fill,stroke; exr_vector_stroke_style line;
+  const double *dashes; size_t dash_count; double dash_phase,matrix[6];
+} exr_pdf_paint_state;
 typedef struct {
   const exr_pdf_font *font; exr_pdf_character character;
-  double transform[6]; /* glyph coordinates in 1000 units to PDF user space */
+  double transform[6]; /* glyph coordinates in 1000 units to output space */
   size_t sequence; unsigned rendering_mode;
+  exr_pdf_paint_state paint; /* Drawing walker only; text-only traversal skips paint state. */
 } exr_pdf_text_glyph;
 /* Glyph/font/name pointers are borrowed only during each streaming callback. */
 typedef exr_status (*exr_pdf_text_fn)(void *context,const exr_pdf_text_glyph *glyph,exr_error *error);
+enum { EXR_PDF_FILL=1,EXR_PDF_STROKE=2,EXR_PDF_CLIP=4 };
+typedef struct {
+  const exr_vector_segment *segments; size_t count; unsigned flags;
+  exr_vector_rule rule; exr_pdf_paint_state paint;
+} exr_pdf_path_paint;
+typedef enum { EXR_PDF_SAVE,EXR_PDF_RESTORE,EXR_PDF_BEGIN_TEXT,EXR_PDF_END_TEXT } exr_pdf_state_event;
+typedef exr_status (*exr_pdf_path_fn)(void *context,const exr_pdf_path_paint *path,exr_error *error);
+typedef exr_status (*exr_pdf_state_fn)(void *context,exr_pdf_state_event event,exr_error *error);
+typedef exr_status (*exr_pdf_image_fn)(void *context,exr_pdf_file *file,uint32_t image,const exr_pdf_paint_state *paint,exr_error *error);
+typedef struct { exr_pdf_text_fn glyph; exr_pdf_path_fn path; exr_pdf_state_fn state; exr_pdf_image_fn image; } exr_pdf_draw_callbacks;
 exr_status exr_pdf_text_ops(exr_pdf_file *file,uint32_t resources,const void *data,size_t size,
                             exr_pdf_text_fn glyph,void *context,const exr_control *control,exr_error *error);
+/* All event arrays/pointers are borrowed only during their callback. Path points
+   already include construction-time CTMs; paint.matrix is the painting-time CTM. */
+exr_status exr_pdf_draw_ops(exr_pdf_file *file,uint32_t resources,const void *data,size_t size,
+                            const double initial[6],const exr_pdf_draw_callbacks *callbacks,void *context,
+                            const exr_control *control,exr_error *error);
 #endif

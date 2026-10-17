@@ -968,3 +968,29 @@ Tests cover exact intervals, odd arrays, phase/reset behavior, zero gaps/dots, f
 wrapped joins with leading/trailing dots, independent solid copies, dash/stroke/fill raster
 pixels, invalid/all-zero patterns, tiny-length limits and cancellation. Display-list/PDF
 integration remains pending. The 0.52 commit ff33a4b passed all six CI jobs.
+
+
+## 0.54 PDF drawing events and vector integration
+
+The unified private content interpreter emits borrowed path/glyph/image/state events with
+an optional initial output transform. Paths capture construction-time CTMs; paint snapshots
+retain the painting-time CTM, device gray/RGB/CMYK components and alpha, line style and dash
+profiles. It supports m/l/c/v/y/h/re, all basic fill/stroke operators, deferred W/W* clipping,
+color-space aliases and basic ExtGState line/dash/alpha settings. q/Q restores paint parameters
+without restoring the current path. Forms isolate paths/state, emit implicit save/restore and
+BBox clips. Active path storage and immutable dash profiles have aggregate byte budgets.
+Unsupported non-device spaces, blend modes, soft masks, transparency groups, shadings and
+Type3 drawing fail explicitly; text-only traversal continues to skip paint operations.
+Image events preserve references but do not decode pixels yet. Text clip rasterization and
+actual glyph drawing remain pending. Public PDF document opening remains unconnected.
+
+`native-pdf-graphics` runs an original complete one-page vector PDF through the native object,
+page/content and drawing interpreters into the C flatten/dash/stroke/fill primitives. Exact
+pixels check colors/alpha, deferred stroke-before-clip, nested clip restoration, even-odd/empty
+clips, output scale/y-flip and Form BBox/state isolation. Other checks cover mixed construction
+CTMs, curve shorthand, line/dash metadata, glyph colors and image events, invalid/unsupported
+operations and callback failure. The RFC 9110 drawing visitor traverses 450,578 glyphs, 2,162
+path paint events and 2,004 clips over 194 pages; this remains event validation, not a rendered
+RFC comparison. Raster scanlines now use the actual horizontal shape bounds, with a work-size
+regression test preventing tiny glyphs from scanning a whole large page width. The 0.53 commit
+4b20178 passed all six CI jobs.
