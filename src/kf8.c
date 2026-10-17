@@ -325,6 +325,29 @@ static int embed(assets *a,uint32_t number,size_t *index) {
   if(a->status!=EXR_OK) return 0;
   a->mapped[record]=*index; a->bytes+=size; return 1;
 }
+exr_status exr_mobi_cover(exr_document *d,const exr_mobi_record *records,size_t count,
+                           const exr_mobi_record *shared,size_t shared_count,uint32_t cover,exr_error *e) {
+  assets a={0}; size_t index,i; char path[64]; char *properties;
+  if(cover==UINT32_MAX) return EXR_OK;
+  snprintf(path,sizeof(path),"embed%05u.bin",cover+1);
+  for(index=0;index<d->resource_count;index++) if(!strcmp(d->resources[index].path,path)) break;
+  if(index==d->resource_count) {
+    a.doc=d; a.records=records; a.count=count; a.first=u32(records[0].data+108);
+    a.shared=shared; a.shared_count=shared_count; a.error=e; a.status=EXR_OK;
+    for(i=0;i<d->resource_count;i++) a.bytes+=d->resource_data[i].size;
+    if(a.bytes>EXR_MAX_INPUT) return exr_fail(e,EXR_LIMIT,"MOBI resource budget exceeded");
+    a.mapped=malloc((count+shared_count)*sizeof(*a.mapped));
+    if(!a.mapped) return exr_fail(e,EXR_MEMORY,"MOBI cover map allocation failed");
+    for(i=0;i<count+shared_count;i++) a.mapped[i]=SIZE_MAX;
+    if(!embed(&a,cover+1,&index)) { free(a.mapped); return a.status; }
+    free(a.mapped);
+  }
+  if(strncmp(d->resources[index].media_type,"image/",6)) return exr_fail(e,EXR_FORMAT,"MOBI cover is not an image");
+  properties=exr_model_copy(d,"cover-image",11);
+  if(!properties) return exr_fail(e,EXR_LIMIT,"MOBI cover metadata budget exceeded");
+  free((void *)d->resources[index].properties); d->resources[index].properties=properties;
+  return EXR_OK;
+}
 /* Return a local path for an exact resource URI; an empty output means unchanged. */
 static int asset_uri(assets *a,const char *s,size_t size,char path[2048]) {
   size_t at,index,original_size=size; uint32_t number; int flow; const char *mime=NULL,*hash;

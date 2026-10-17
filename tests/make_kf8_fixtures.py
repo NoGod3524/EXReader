@@ -385,3 +385,41 @@ repeat_bad=indx(sk,repeated=True)
 assert repeat_bad[1][196]==0x81
 repeat_bad[1][196]^=1
 container('kf8-bad-skel-repeats.azw3',raw,repeat_bad+indx(fr,True))
+
+
+def metadata(record,title=b'',items=(),encoding=None):
+    size=16+struct.unpack_from('>I',record,20)[0]; base=bytearray(record[:size]); existing=[]
+    if struct.unpack_from('>I',record,128)[0]&64:
+        count=struct.unpack_from('>I',record,size+8)[0]; at=size+12
+        for _ in range(count):
+            tag,length=struct.unpack_from('>II',record,at); existing.append((tag,record[at+8:at+length])); at+=length
+    entries=existing+list(items)
+    if encoding is not None: base[28:32]=u32(encoding)
+    flags=struct.unpack_from('>I',base,128)[0]
+    if entries:
+        payload=b''.join(u32(tag)+u32(8+len(data))+data for tag,data in entries)
+        base[128:132]=u32(flags|64); base+=b'EXTH'+u32(12+len(payload))+u32(len(entries))+payload
+    else: base[128:132]=u32(flags&~64)
+    base+=bytes((-len(base))%4)
+    base[84:88]=u32(len(base)); base[88:92]=u32(len(title)); base+=title
+    return base
+r=read_records('kf8-assets.azw3'); r[0]=metadata(r[0],b'Fallback',[(503,('Book & '+chr(0x7532)).encode()),(201,u32(0))]); write_records('kf8-metadata.azw3',r)
+r=read_records('kf8-basic.azw3'); r[0][108:112]=u32(len(r)); r.append(bytearray(png)); r[0]=metadata(r[0],b'Unreferenced cover',[(201,u32(0))]); write_records('kf8-metadata-unreferenced.azw3',r)
+r=read_records('mobi-raw-trailers.mobi'); r[0][108:112]=u32(len(r)); r.append(bytearray(png)); r[0]=metadata(r[0],b'Caf\xe9\x00\x00',[(201,u32(0))],1252); write_records('kf8-metadata-legacy.azw3',r)
+for name,items in [('fallback',[]),('override',[(503,('Modern '+chr(0x7532)).encode()),(201,u32(1))]),('no-cover',[(201,u32(0xffffffff))])]:
+    r=read_records('kf8-hybrid-assets.azw3'); start=struct.unpack_from('>I',r[0],264)[0]
+    r[0]=metadata(r[0],b'Old Caf\xe9',[(201,u32(0))],1252)
+    if items: r[start]=metadata(r[start],items=items)
+    write_records('kf8-metadata-hybrid-'+name+'.azw3',r)
+for name,items,title in [
+    ('last-title',[(503,b'First'),(503,b'Last'),(201,u32(0)),(201,u32(0))],b'Fallback'),
+    ('empty-title',[(503,bytes(2))],b'Fallback')]:
+    r=read_records('kf8-assets.azw3');r[0]=metadata(r[0],title,items);write_records('kf8-metadata-'+name+'.azw3',r)
+for name,items in [('cover-range',[(201,u32(99999))]),('cover-font',[(201,u32(2))]),
+                   ('cover-duplicate',[(201,u32(0)),(201,u32(1))]),('cover-length',[(201,u16(0))])]:
+    r=read_records('kf8-assets.azw3');r[0]=metadata(r[0],b'Book',items);write_records('kf8-bad-'+name+'.azw3',r)
+for name,offset,length in [('title-pointer',99999,4),('title-header',0,4),('title-length',280,99999)]:
+    r=read_records('kf8-assets.azw3');r[0]=metadata(r[0],b'Book');r[0][84:88]=u32(offset);r[0][88:92]=u32(length);write_records('kf8-bad-'+name+'.azw3',r)
+for name,title in [('invalid',b'Bad\xff'),('nul',b'Bad\0Title')]:
+    r=read_records('kf8-assets.azw3');r[0]=metadata(r[0],title);write_records('kf8-encoding-title-'+name+'.azw3',r)
+r=read_records('kf8-assets.azw3');r[0]=metadata(r[0],items=[(503,b'X'*65537)]);write_records('kf8-limit-title.azw3',r)

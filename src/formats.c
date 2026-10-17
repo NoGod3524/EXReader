@@ -1011,10 +1011,18 @@ static int mobi_header(const exr_mobi_record *record,size_t *size) {
   *size=be32(h+20);
   return *size>=116 && *size<=record->size-16;
 }
-static exr_status mobi_boundary(const exr_mobi_record *record,size_t header_size,
-                                  size_t *start,exr_error *e) {
+typedef struct { size_t boundary,title_size; const unsigned char *title; uint32_t cover; int has_cover; } mobi_meta;
+static exr_status mobi_metadata(const exr_mobi_record *record,size_t header_size,
+                                  mobi_meta *meta,exr_error *e) {
   const unsigned char *h=record->data,*s; size_t offset=header_size+16,length,count,at=12,i; int found=0;
-  *start=UINT32_MAX;
+  size_t title=be32(h+84),title_size=be32(h+88);
+  memset(meta,0,sizeof(*meta)); meta->boundary=meta->cover=UINT32_MAX;
+  if(title_size) {
+    if(title<offset || title>record->size || title_size>record->size-title) goto bad;
+    if(title_size>65536) return exr_fail(e,EXR_LIMIT,"MOBI title exceeds 64 KiB");
+    while(title_size && !h[title+title_size-1]) title_size--;
+    meta->title=h+title; meta->title_size=title_size;
+  }
   if(!(be32(h+128)&64)) return EXR_OK;
   if(record->size-offset<12 || memcmp(h+offset,"EXTH",4)) goto bad;
   s=h+offset; length=be32(s+4); count=be32(s+8);
@@ -1025,19 +1033,47 @@ static exr_status mobi_boundary(const exr_mobi_record *record,size_t header_size
     if(length-at<8 || (item=be32(s+at+4))<8 || item>length-at) goto bad;
     if(be32(s+at)==121) {
       if(found++ || item!=12) goto bad;
-      *start=be32(s+at+8);
+      meta->boundary=be32(s+at+8);
+    } else if(be32(s+at)==201) {
+      uint32_t cover;
+      if(item!=12) goto bad;
+      cover=be32(s+at+8);
+      if(meta->has_cover && meta->cover!=cover) goto bad;
+      meta->cover=cover; meta->has_cover=1;
+    } else if(be32(s+at)==503) {
+      size_t size=item-8;
+      if(size>65536) return exr_fail(e,EXR_LIMIT,"MOBI updated title exceeds 64 KiB");
+      while(size && !s[at+8+size-1]) size--;
+      if(size) { meta->title=s+at+8; meta->title_size=size; }
     }
     at+=item;
   }
   while(at<length) if(s[at++]) goto bad;
   return EXR_OK;
 bad:
-  return exr_fail(e,EXR_FORMAT,"Invalid MOBI EXTH boundary metadata");
+  return exr_fail(e,EXR_FORMAT,"Invalid MOBI title or EXTH metadata");
+}
+static exr_status mobi_title(exr_document *d,const mobi_meta *meta,unsigned encoding,exr_error *e) {
+  exr_buffer title={0}; size_t i; exr_status status=EXR_OK;
+  if(!meta->title_size) return EXR_OK;
+  if(encoding==1252) {
+    for(i=0;i<meta->title_size;i++) if(!exr_codepoint(&title,exr_windows1252(meta->title[i]))) { status=EXR_LIMIT; goto done; }
+  } else if(encoding==65001) {
+    if(!exr_append(&title,meta->title,meta->title_size)) { status=EXR_LIMIT; goto done; }
+  } else { status=EXR_FORMAT; goto done; }
+  if(title.size>65536) { status=EXR_LIMIT; goto done; }
+  status=exr_xml_text(title.data,title.size,"MOBI title",e); if(status!=EXR_OK) goto done;
+  d->title=exr_model_copy(d,title.data,title.size); if(!d->title) status=EXR_LIMIT;
+done:
+  free(title.data);
+  if(status!=EXR_OK && (!e || !e->message[0])) exr_fail(e,status,"MOBI title decoding failed");
+  return status;
 }
 static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e) {
   const unsigned char *s=data,*h; exr_mobi_record *records=NULL;
   const exr_mobi_record *view=NULL,*shared=NULL;
-  size_t count,start,stop,i,text_count,header_size,shared_count=0; unsigned compression,encoding,flags=0;
+  size_t count,start,stop,i,text_count,header_size,shared_count=0; unsigned compression,encoding,flags=0,title_encoding;
+  mobi_meta metadata,prefix;
   exr_mobi_huff *huff=NULL; exr_buffer text={0},utf8={0}; exr_status status=EXR_FORMAT;
   if(n<94 || memcmp(s+60,"BOOKMOBI",8)) return exr_fail(e,EXR_FORMAT,"Not a MOBI container");
   count=be16(s+76);
@@ -1050,8 +1086,10 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
   }
   view=records; h=view[0].data;
   if(!mobi_header(&view[0],&header_size)) goto done;
+  status=mobi_metadata(&view[0],header_size,&metadata,e); if(status!=EXR_OK) goto done;
+  title_encoding=be32(h+28);
   if(be32(h+36)<8) {
-    status=mobi_boundary(&view[0],header_size,&start,e); if(status!=EXR_OK) goto done;
+    start=metadata.boundary;
     if(start!=UINT32_MAX) {
       size_t first=be32(h+108),old_count=be16(h+8);
       status=EXR_FORMAT;
@@ -1063,6 +1101,11 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
       }
       view=records+start; count-=start; h=view[0].data;
       if(!mobi_header(&view[0],&header_size) || be32(h+36)!=8) goto done;
+      prefix=metadata;
+      status=mobi_metadata(&view[0],header_size,&metadata,e); if(status!=EXR_OK) goto done;
+      if(!metadata.title_size) { metadata.title=prefix.title; metadata.title_size=prefix.title_size; }
+      else title_encoding=be32(h+28);
+      if(!metadata.has_cover) { metadata.cover=prefix.cover; metadata.has_cover=prefix.has_cover; }
     }
   }
   status=EXR_FORMAT;
@@ -1070,6 +1113,8 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
   if(be32(h+36)>8) { status=exr_fail(e,EXR_FORMAT,"Unsupported MOBI version"); goto done; }
   if(!text_count || text_count>=count || !be32(h+4) || (encoding!=65001 && encoding!=1252)) goto done;
   if(be32(h+4)>EXR_MAX_TEXT) { status=EXR_LIMIT; goto done; }
+  status=mobi_title(d,&metadata,title_encoding,e); if(status!=EXR_OK) goto done;
+  status=EXR_FORMAT;
   if(header_size>=228 && be32(h+104)>=5) flags=be16(h+242);
   if(compression==0x4448) {
     size_t first=be32(h+112),number=be32(h+116);
@@ -1093,6 +1138,8 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
     for(i=0;i<text.size;i++) if(!exr_codepoint(&utf8,exr_windows1252((unsigned char)text.data[i]))) { status=EXR_LIMIT; goto done; }
     status=html(d,utf8.data,utf8.size,e);
   } else status=html(d,text.data,text.size,e);
+  if(status==EXR_OK && metadata.cover!=UINT32_MAX)
+    status=exr_mobi_cover(d,view,count,shared,shared_count,metadata.cover,e);
 done:
   exr_mobi_huff_free(huff); free(records); free(text.data); free(utf8.data);
   if(status!=EXR_OK && (!e || !e->message[0])) exr_fail(e,status,"Invalid or unsupported MOBI stream");
