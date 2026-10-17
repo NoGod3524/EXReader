@@ -2,6 +2,22 @@
 #include "flow_internal.h"
 #include "bidi_internal.h"
 #include "opentype_internal.h"
+#include "vertical_data.h"
+
+unsigned exr_vertical_flags(uint32_t cp, exr_text_orientation orientation) {
+  size_t lo = 0, hi = EXR_VO_RANGE_COUNT;
+  int value = exr_vo_r;
+  if (orientation == EXR_ORIENTATION_UPRIGHT) return EXR_GLYPH_VERTICAL;
+  if (orientation == EXR_ORIENTATION_SIDEWAYS) return EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS;
+  while (lo < hi) {
+    size_t mid = lo + (hi - lo) / 2;
+    if (cp < exr_vo_ranges[mid].first) hi = mid;
+    else if (cp > exr_vo_ranges[mid].last) lo = mid + 1;
+    else { value = exr_vo_ranges[mid].value; break; }
+  }
+  return EXR_GLYPH_VERTICAL | ((value == exr_vo_r || value == exr_vo_tr) ? EXR_GLYPH_SIDEWAYS : 0) |
+         (value == exr_vo_tr ? EXR_GLYPH_TRY_VERTICAL : 0);
+}
 
 void exr_inline_clear(exr_inline_bidi *b) {
   exr_bidi_free(b->analysis);
@@ -192,6 +208,7 @@ static int inline_grow(exr_layout *l, size_t count) {
   l->glyphs = glyphs; l->glyph_cap = capacity;
   return 1;
 }
+static exr_status line_work(flow *f, size_t count);
 exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t after) {
   exr_layout *l = f->layout;
   exr_layout result = {0};
@@ -204,6 +221,9 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     exr_shape_options options = exr_shape_defaults();
     exr_buffer text = {0};
     uint32_t tag = script(g->codepoint);
+    unsigned orientation = g->flags & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL);
+    int vertical = (orientation & EXR_GLYPH_VERTICAL) &&
+                   (!(orientation & EXR_GLYPH_SIDEWAYS) || (orientation & EXR_GLYPH_TRY_VERTICAL));
     size_t n = 0, finish = 0;
     end = i + 1;
     while (end < l->glyph_count) {
@@ -212,10 +232,13 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
       int removed = (v->flags & EXR_GLYPH_HIDDEN) && v->bidi_level == UINT_MAX;
       /* X9 removes controls from visual ordering, not from shaping context. */
       if ((!removed && (v->font_index != g->font_index || v->size != g->size ||
+          (v->flags & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL)) != orientation ||
+          ((orientation & EXR_GLYPH_TRY_VERTICAL) && v->cluster_start != g->cluster_start) ||
           (((v->flags & (3|EXR_DECORATIONS)) != (g->flags & (3|EXR_DECORATIONS)) || v->color != g->color) &&
            v->cluster_start != g->cluster_start) ||
           v->bidi_level != g->bidi_level)) || (tag && next_tag && tag != next_tag) ||
-          (v->boundaries & (EXR_BOUNDARY_LINE | EXR_BOUNDARY_MANDATORY)) ||
+          (v->boundaries & EXR_BOUNDARY_MANDATORY) ||
+          (!vertical && (v->boundaries & EXR_BOUNDARY_LINE)) ||
           v->codepoint == '\t' || g->codepoint == '\t') break;
       if (!tag) tag = next_tag;
       end++;
@@ -223,6 +246,8 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     if (!exr_ot_present(&f->font->faces[g->font_index]) || g->codepoint == '\t') {
       if (!inline_grow(&result, result.glyph_count + end - i)) { status = EXR_LIMIT; goto done; }
       memcpy(result.glyphs + result.glyph_count, g, (end - i) * sizeof(*g));
+      for (j = result.glyph_count; j < result.glyph_count + end - i; j++)
+        result.glyphs[j].flags &= ~EXR_GLYPH_TRY_VERTICAL;
       result.glyph_count += end - i;
       continue;
     }
@@ -248,9 +273,24 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     j = end;
     while (j < l->glyph_count && exr_ot_transparent(l->glyphs[j].codepoint)) j++;
     options.context_after = j < l->glyph_count ? l->glyphs[j].codepoint : after;
-    status = exr_shape(f->font, g->font_index, text.data, text.size, &options, &shaped, &n, f->error);
+    status = vertical ? exr_shape_vertical(f->font, g->font_index, text.data, text.size, &options, &shaped, &n, f->error) :
+                        exr_shape(f->font, g->font_index, text.data, text.size, &options, &shaped, &n, f->error);
+    if (status == EXR_OK && (orientation & EXR_GLYPH_TRY_VERTICAL)) {
+      exr_shaped_glyph *horizontal = NULL;
+      size_t hn = 0;
+      int alternate = 0;
+      status = line_work(f, end - i);
+      if (status == EXR_OK)
+        status = exr_shape(f->font, g->font_index, text.data, text.size, &options, &horizontal, &hn, f->error);
+      if (status == EXR_OK) {
+        alternate = hn != n;
+        for (j = 0; !alternate && j < n; j++) alternate = shaped[j].glyph != horizontal[j].glyph;
+        if (alternate) { orientation &= ~EXR_GLYPH_SIDEWAYS; free(horizontal); }
+        else { free(shaped); shaped = horizontal; n = hn; vertical = 0; }
+      } else free(horizontal);
+    }
     free(text.data);
-    if (status != EXR_OK) goto done;
+    if (status != EXR_OK) { free(shaped); goto done; }
     if (n > EXR_MAX_ITEMS - result.glyph_count ||
         !inline_grow(&result, result.glyph_count + n)) {
       free(shaped); status = EXR_LIMIT; goto done;
@@ -274,10 +314,11 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
       v.cluster_end = l->glyphs[i + finish - 1].cluster_end;
       if (v.cluster_end < v.end) v.cluster_end = v.end;
       v.glyph = shaped[j].glyph;
-      v.advance = shaped[j].advance_x;
+      v.advance = vertical ? -shaped[j].advance_y : shaped[j].advance_x;
       v.offset_x = shaped[j].offset_x;
       v.offset_y = shaped[j].offset_y;
-      v.flags = shaped[j].flags | EXR_GLYPH_SHAPED | (v.flags & EXR_DECORATIONS);
+      v.flags = shaped[j].flags | EXR_GLYPH_SHAPED | (v.flags & EXR_DECORATIONS) |
+                (orientation & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS));
       if (v.bidi_level == UINT_MAX) v.flags |= EXR_GLYPH_HIDDEN;
       if (result.glyph_count &&
           result.glyphs[result.glyph_count - 1].cluster_start == v.cluster_start)
@@ -323,7 +364,8 @@ static exr_status line_reserve(flow *f, exr_line_buffer *b, exr_layout *target, 
 static float line_kern(flow *f, const exr_glyph *left, const exr_glyph *right) {
   if (!left || ((left->flags | right->flags) & (EXR_GLYPH_HIDDEN | EXR_GLYPH_SHAPED)) ||
       left->font_index != right->font_index || left->size != right->size ||
-      (left->flags & 3) != (right->flags & 3)) return 0;
+      (left->flags & 3) != (right->flags & 3) ||
+      ((right->flags & EXR_GLYPH_VERTICAL) && !(right->flags & EXR_GLYPH_SIDEWAYS))) return 0;
   return exr_kern(&f->font->faces[right->font_index], left->glyph, right->glyph);
 }
 static exr_status copy_glyphs(flow *f, exr_line_buffer *b, exr_layout *to,
@@ -579,6 +621,11 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
   {
     inline_text_cursor cursor = {f, g.node, g.end};
     g.boundaries = exr_text_step(&b->text, g.codepoint, following_inline_scalar, &cursor);
+  }
+  if (f->writing_mode != EXR_WRITING_HORIZONTAL_TB) {
+    if (g.boundaries & EXR_BOUNDARY_GRAPHEME)
+      b->vertical_flags = exr_vertical_flags(g.codepoint, f->styles[g.node].orientation);
+    g.flags |= b->vertical_flags;
   }
   if ((g.boundaries & EXR_BOUNDARY_GRAPHEME) && b->cluster_start < b->run.glyph_count) {
     status = measure_line_cluster(f, b);

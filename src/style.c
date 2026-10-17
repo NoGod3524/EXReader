@@ -31,6 +31,9 @@ enum {
   DIRECTION,
   FAMILY,
   DECORATION,
+  WRITING_MODE,
+  ORIENTATION,
+  MAX_HEIGHT,
   PROPERTIES
 };
 typedef struct {
@@ -218,7 +221,7 @@ static int property(const char *s, size_t n) {
       "max-width",    "margin-top",    "margin-right",   "margin-bottom", "margin-left",
       "padding-top",  "padding-right", "padding-bottom", "padding-left",  "background-color",
       "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction",
-      "font-family", "text-decoration-line"};
+      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -587,6 +590,10 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->align = parent->align;
     else if (prop == DIRECTION)
       s->direction = parent->direction;
+    else if (prop == WRITING_MODE)
+      s->writing_mode = parent->writing_mode;
+    else if (prop == ORIENTATION)
+      s->orientation = parent->orientation;
     else if (prop == INDENT)
       s->indent = parent->indent;
     else
@@ -600,6 +607,16 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     while ((result = exr_family_next(v, &at, family)) == 1) count++;
     if (!count || result < 0) return 0;
     s->family = v;
+  } else if (prop == WRITING_MODE) {
+    if (!strcmp(v, "horizontal-tb")) s->writing_mode = EXR_WRITING_HORIZONTAL_TB;
+    else if (!strcmp(v, "vertical-rl")) s->writing_mode = EXR_WRITING_VERTICAL_RL;
+    else if (!strcmp(v, "vertical-lr")) s->writing_mode = EXR_WRITING_VERTICAL_LR;
+    else return 0;
+  } else if (prop == ORIENTATION) {
+    if (!strcmp(v, "mixed")) s->orientation = EXR_ORIENTATION_MIXED;
+    else if (!strcmp(v, "upright")) s->orientation = EXR_ORIENTATION_UPRIGHT;
+    else if (!strcmp(v, "sideways")) s->orientation = EXR_ORIENTATION_SIDEWAYS;
+    else return 0;
   } else if (prop == DIRECTION) {
     if (!strcmp(v, "ltr")) s->direction = EXR_DIRECTION_LTR;
     else if (!strcmp(v, "rtl")) s->direction = EXR_DIRECTION_RTL;
@@ -726,6 +743,8 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->height = l;
     else if (prop == MAX_WIDTH)
       s->max_width = l;
+    else if (prop == MAX_HEIGHT)
+      s->max_height = l;
     else if (prop >= MT && prop <= ML)
       s->margin[prop - MT] = l;
     else if (prop >= PT && prop <= PL) {
@@ -770,7 +789,7 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
   initial.leading_relative = 1;
   initial.color = initial.border_color = 255;
   initial.border_width = 3;
-  initial.width.value = initial.height.value = initial.max_width.value = -1;
+  initial.width.value = initial.height.value = initial.max_width.value = initial.max_height.value = -1;
   initial.display = EXR_CSS_BLOCK;
   initial.direction = config->direction;
   initial.align = 4;
@@ -844,6 +863,8 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     s->leading_relative = parent->leading_relative;
     s->align = parent->align;
     s->direction = parent->direction;
+    s->writing_mode = parent->writing_mode;
+    s->orientation = parent->orientation;
     s->indent = parent->indent;
     s->display = EXR_CSS_INLINE;
     attr = exr_node_attribute(n, "dir");
@@ -923,6 +944,17 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     for (p = 0; p < PROPERTIES; p++)
       if (w[p].value)
         apply(s, parent, p, w[p].value, o->font_size);
+    if (s->writing_mode != EXR_WRITING_HORIZONTAL_TB) {
+      if ((n->kind == EXR_NODE_PARAGRAPH || n->kind == EXR_NODE_HEADING) && !w[MB].value) {
+        int end = s->writing_mode == EXR_WRITING_VERTICAL_RL ? ML : MR;
+        s->margin[2].value = 0;
+        if (!w[end].value) s->margin[end - MT].value = o->paragraph_spacing;
+      }
+      if (n->kind == EXR_NODE_LIST && !w[PL].value) {
+        s->padding[3].value = 0;
+        if (!w[PT].value) s->padding[0].value = s->font_size;
+      }
+    }
     s->flags |= parent->flags & EXR_DECORATIONS;
     if (s->family && s->family != parent->family) {
       if (parent->family && !strcmp(parent->family, s->family)) s->family = parent->family;

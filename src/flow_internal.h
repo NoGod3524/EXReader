@@ -4,6 +4,7 @@
 #include "layout_internal.h"
 #include "text_internal.h"
 #define EXR_PAUSE ((exr_status)100)
+#define EXR_GLYPH_TRY_VERTICAL 512u /* Internal UAX #50 Tr probe, cleared before output. */
 typedef struct {
   exr_bidi *analysis;
   size_t *offsets, count;
@@ -20,6 +21,7 @@ typedef struct {
   size_t pending;
   int first_line, paginate, force_break, table_depth, page_limit;
   exr_inline_bidi *bidi;
+  exr_writing_mode writing_mode;
 } flow;
 typedef struct {
   exr_layout run, raw, line;
@@ -28,8 +30,10 @@ typedef struct {
   size_t cluster_start, ready, scan, soft, emergency, line_end, raw_end;
   float scan_width;
   int initialized, finishing, forced, final, line_ready;
+  unsigned vertical_flags;
 } exr_line_buffer;
 void exr_inline_clear(exr_inline_bidi *bidi);
+unsigned exr_vertical_flags(uint32_t codepoint, exr_text_orientation orientation);
 exr_status exr_inline_prepare(flow *f, size_t first_node, exr_inline_bidi *bidi);
 unsigned exr_inline_level(const exr_inline_bidi *bidi, size_t offset);
 unsigned exr_inline_base(const exr_inline_bidi *bidi, size_t offset);

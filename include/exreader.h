@@ -334,6 +334,36 @@ EXR_API const exr_mp3_info *exr_mp3_format(const exr_mp3 *mp3);
 EXR_API exr_status exr_mp3_read(exr_mp3 *mp3,uint64_t first_frame,size_t frames,float *output,size_t *read,
   const exr_control *control,exr_error *error);
 
+/* Optional FAAD2 C codec, EXR_ENABLE_AAC=OFF by default. Supports ADTS with a
+   single raw block and channel_configuration 1..7; no ADIF/LATM or CRC checking.
+   Disabled builds retain symbols: available returns zero, opens EXR_FORMAT. */
+typedef struct exr_aac exr_aac;
+typedef struct { uint32_t sample_rate,channels; uint64_t frames; } exr_aac_info;
+EXR_API int exr_aac_available(void);
+EXR_API exr_status exr_aac_open(const char *path,const exr_control *control,exr_aac **out,exr_error *error);
+EXR_API exr_status exr_aac_open_source(const exr_source *source,exr_aac **out,exr_error *error);
+EXR_API void exr_aac_free(exr_aac *aac);
+EXR_API const exr_aac_info *exr_aac_format(const exr_aac *aac);
+/* Complete ADTS PCM timeline; frames may be UINT64_MAX until EOF. Backward
+   seeks replay from the start. Bounded scans return EXR_LIMIT and retain progress
+   for retrying the same target. Same request limit/output clearing as wave_read. */
+EXR_API exr_status exr_aac_read(exr_aac *aac,uint64_t first_frame,size_t frames,float *output,size_t *read,
+  const exr_control *control,exr_error *error);
+/* Ordinary unfragmented M4A/M4B mp4a AAC using the same optional codec gate.
+   Reads sample tables/packets on demand. Encrypted media, external data refs,
+   multiple sample descriptions and discontinuous/rate-changing edits are rejected. */
+typedef struct exr_m4b exr_m4b;
+typedef struct { uint32_t sample_rate,channels; uint64_t frames; } exr_m4b_info;
+EXR_API int exr_m4b_available(void);
+EXR_API exr_status exr_m4b_open(const char *path,const exr_control *control,exr_m4b **out,exr_error *error);
+EXR_API exr_status exr_m4b_open_source(const exr_source *source,exr_m4b **out,exr_error *error);
+EXR_API void exr_m4b_free(exr_m4b *m4b);
+EXR_API const exr_m4b_info *exr_m4b_format(const exr_m4b *m4b);
+/* Trims priming/tail via supported edit/sample durations, includes leading empty
+   edit silence. Accurate backward seeks use bounded replay as in aac_read. */
+EXR_API exr_status exr_m4b_read(exr_m4b *m4b,uint64_t first_frame,size_t frames,float *output,size_t *read,
+  const exr_control *control,exr_error *error);
+
 /* Format-independent PCM source. Channel ordering is declared by the provider;
    channel_mask==0 leaves it unspecified. frames==UINT64_MAX means unknown.
    Providers return requested frames or fewer only at EOF, with finite samples.
@@ -350,7 +380,7 @@ typedef struct {
   exr_context_release_fn release;
 } exr_pcm_input;
 EXR_API exr_status exr_pcm_create(const exr_pcm_input *input,exr_pcm **out,exr_error *error);
-/* Auto-detects WAV, raw FLAC or enabled MP3, with the same ownership rules. */
+/* Auto-detects WAV, FLAC, enabled MP3/ADTS AAC/M4A/M4B, with the same ownership rules. */
 EXR_API exr_status exr_pcm_open(const char *path,const exr_control *control,exr_pcm **out,exr_error *error);
 EXR_API exr_status exr_pcm_open_source(const exr_source *source,exr_pcm **out,exr_error *error);
 EXR_API void exr_pcm_free(exr_pcm *pcm);
@@ -402,8 +432,16 @@ enum {
   EXR_GLYPH_BOLD = 1, EXR_GLYPH_ITALIC = 2, EXR_GLYPH_HIDDEN = 4,
   EXR_GLYPH_MISSING = 8, /* No supplied face covers this visible scalar; glyph 0 is used. */
   EXR_GLYPH_SHAPED = 16, /* Advances/offsets include OpenType positioning. */
-  EXR_GLYPH_UNDERLINE = 32, EXR_GLYPH_STRIKE = 64
+  EXR_GLYPH_UNDERLINE = 32, EXR_GLYPH_STRIKE = 64,
+  EXR_GLYPH_VERTICAL = 128, /* advance and clipping follow the physical y axis. */
+  EXR_GLYPH_SIDEWAYS = 256  /* Clockwise 90-degree outline in vertical text. */
 };
+typedef enum {
+  EXR_WRITING_HORIZONTAL_TB=0, EXR_WRITING_VERTICAL_RL=1, EXR_WRITING_VERTICAL_LR=2
+} exr_writing_mode;
+typedef enum {
+  EXR_ORIENTATION_MIXED=0, EXR_ORIENTATION_UPRIGHT=1, EXR_ORIENTATION_SIDEWAYS=2
+} exr_text_orientation;
 
 typedef struct {
   const void *data; /* Encoded font bytes, copied during create(). */
@@ -707,6 +745,24 @@ EXR_API exr_status exr_pdf_metadata_write(const void *data,size_t size,const exr
 /* Read document-subject XMP simple literals, Seq/Bag values and preferred Alt. */
 EXR_API exr_status exr_metadata_read_xmp(const void *data,size_t size,const exr_control *control,
   exr_metadata_entry **entries,size_t *count,exr_error *error);
+
+/* EPUB package edits preserve chapter/resource bytes. A NULL cover leaves its
+   designation unchanged; a zero-data cover clears the designation, keeping the
+   old resource. Replacement accepts PNG/JPEG and preserves an existing cover URI. */
+typedef struct {
+  size_t struct_size;
+  const void *data; size_t size;
+  const char *media_type;
+} exr_epub_cover;
+/* Patches DC title/creator/subject/description/publisher/contributor/date/type/
+   format/source/language/relation/coverage/rights using dcterms URI keys. Each
+   key replaces all its values/refinements; NULL deletes optional properties,
+   empty string is a value. Required title/language cannot be empty or deleted.
+   Identifier edits, signed/rights-controlled packages and encrypted cover edits
+   are rejected. No-op returns an independent identical copy. Free with exr_free. */
+EXR_API exr_status exr_epub_metadata_write(const void *data,size_t size,
+  const exr_metadata_entry *changes,size_t count,const exr_epub_cover *cover,
+  const exr_control *control,void **out,size_t *out_size,exr_error *error);
 EXR_API const char *exr_fixed_title(const exr_fixed_document *document);
 EXR_API const exr_fixed_page *exr_fixed_pages(const exr_fixed_document *document,size_t *count);
 /* Owned directory/metadata bytes, excluding the provider's own payload. */
@@ -912,6 +968,14 @@ EXR_API exr_shape_options exr_shape_defaults(void);
 EXR_API exr_status exr_shape(exr_font *font, size_t font_index, const char *utf8, size_t size,
                              const exr_shape_options *options, exr_shaped_glyph **out,
                              size_t *out_count, exr_error *error);
+/* Same ownership and concurrency as shape(); uses vert/vrt2 and vertical metrics.
+   advance_y is negative for progression down the page in y-up font coordinates. */
+EXR_API exr_status exr_shape_vertical(exr_font *font, size_t font_index, const char *utf8, size_t size,
+                                      const exr_shape_options *options, exr_shaped_glyph **out,
+                                      size_t *out_count, exr_error *error);
+/* Maps the 1000-em, y-up outline to the glyph's physical page coordinates.
+   Affine order is [a,b,c,d,e,f]: (a*x+c*y+e,b*x+d*y+f). */
+EXR_API exr_status exr_glyph_matrix(const exr_glyph *glyph, double matrix[6], exr_error *error);
 EXR_API exr_layout_options exr_layout_defaults(void);
 EXR_API exr_layout_config exr_layout_config_defaults(void);
 EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,
@@ -982,6 +1046,7 @@ EXR_API void exr_session_clear(exr_session *session);
 EXR_API void exr_session_free(exr_session *session);
 EXR_API void exr_layout_free(exr_layout *layout);
 EXR_API size_t exr_layout_memory_size(const exr_layout *layout);
+EXR_API exr_writing_mode exr_layout_writing_mode(const exr_layout *layout);
 EXR_API const exr_page *exr_layout_pages(const exr_layout *layout, size_t *count);
 EXR_API const exr_line *exr_layout_lines(const exr_layout *layout, size_t *count);
 EXR_API const exr_glyph *exr_layout_glyphs(const exr_layout *layout, size_t *count);

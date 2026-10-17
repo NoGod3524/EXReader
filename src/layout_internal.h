@@ -49,6 +49,7 @@ struct exr_layout {
   exr_paint *paints;
   size_t paint_count;
   exr_positioned_page *positioned;
+  exr_writing_mode writing_mode;
 };
 exr_status exr_layout_image_asset(const exr_document *doc, exr_layout *assets,
                                     const exr_layout_config *config, size_t resource,
@@ -62,6 +63,7 @@ size_t exr_font_order(const exr_font *font, const char *family, unsigned flags,
                        size_t chapter, size_t order[32]);
 int exr_font_size(exr_face *font, float size);
 int exr_measure(exr_face *font, uint32_t glyph, unsigned flags, float *advance);
+int exr_measure_vertical(exr_face *font, uint32_t glyph, unsigned flags, float *advance);
 float exr_kern(exr_face *font, uint32_t left, uint32_t right);
 exr_status exr_layout_validate(const exr_layout_config *config, exr_error *error);
 exr_status exr_flow_create(const exr_document *doc, exr_font *font, const exr_layout_config *config,

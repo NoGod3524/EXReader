@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure native C
-        run: cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=ON
+        run: cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=ON -DEXR_ENABLE_AAC=ON
       - name: Build
         run: cmake --build build/native --config Release --parallel 4
       - name: Native parsing, pagination, rendering and bookshelf tests
@@ -129,7 +129,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - run: cmake -S . -B build/asan -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON
+      - run: cmake -S . -B build/asan -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_ENABLE_AAC=ON
       - run: cmake --build build/asan --parallel 4
       - run: ctest --test-dir build/asan --output-on-failure
         env:
@@ -144,7 +144,7 @@ jobs:
         shell: bash
         run: |
           ndk=$(ls -d "$ANDROID_HOME"/ndk/* | sort -V | tail -n1)
-          cmake -S . -B build/android -DCMAKE_TOOLCHAIN_FILE="$ndk/build/cmake/android.toolchain.cmake" -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-24 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF
+          cmake -S . -B build/android -DCMAKE_TOOLCHAIN_FILE="$ndk/build/cmake/android.toolchain.cmake" -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-24 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_AAC=ON
           cmake --build build/android --parallel 4
           cmake --install build/android --prefix stage
       - uses: actions/upload-artifact@v4
@@ -160,7 +160,7 @@ jobs:
         shell: bash
         run: |
           for sdk in iphoneos iphonesimulator; do
-            cmake -S . -B "build/$sdk" -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT="$sdk" -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+            cmake -S . -B "build/$sdk" -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT="$sdk" -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO -DEXR_ENABLE_AAC=ON
             cmake --build "build/$sdk" --parallel 4
             cmake --install "build/$sdk" --prefix "stage/$sdk"
             if [ "$sdk" = iphoneos ]; then target=arm64-apple-ios14.0; else target=arm64-apple-ios14.0-simulator; fi

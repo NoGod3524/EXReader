@@ -148,8 +148,10 @@ typedef struct {
   int leading_relative, align, display, before, after, border_style;
   unsigned flags;
   exr_direction direction;
+  exr_writing_mode writing_mode;
+  exr_text_orientation orientation;
   uint32_t color, background, border_color;
-  exr_length width, height, max_width, margin[4], padding[4];
+  exr_length width, height, max_width, max_height, margin[4], padding[4];
 } exr_style;
 exr_status exr_compute_styles(const exr_document *doc, const exr_layout_config *config,
                               exr_style **styles, exr_font_rule **fonts, size_t *font_count,

@@ -64,7 +64,8 @@ static exr_status collect_text(void *context,const exr_pdf_text_glyph *g,exr_err
     b->regions=copy; b->capacity=next;
   }
   r.start=b->bytes.size; r.end=r.start+n;
-  if(font->vertical) {
+  if(font->kind==EXR_PDF_TYPE3) memcpy(points,font->type3_quad,sizeof(points));
+  else if(font->vertical) {
     /* First edge follows vertical text advance; thickness is declared width. */
     double x=g->character.vertical_x,y=g->character.vertical_y,w=g->character.width,a=g->character.vertical_advance;
     double p[8]={x-w/2,y,x-w/2,y+a,x+w/2,y+a,x+w/2,y}; memcpy(points,p,sizeof(p)); r.flags|=EXR_REGION_VERTICAL;

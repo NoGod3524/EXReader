@@ -15,8 +15,8 @@ static exr_status scope_state(void *context,exr_draw_state state,exr_error *e) {
   if(status==EXR_OK) {
     if(state==EXR_DRAW_SAVE) s->depth++;
     else if(state==EXR_DRAW_RESTORE && s->depth) s->depth--;
-    else if(state==EXR_DRAW_BEGIN_CLIP) s->text=1;
-    else if(state==EXR_DRAW_END_CLIP) s->text=0;
+    else if(state==EXR_DRAW_BEGIN_CLIP) s->text++;
+    else if(state==EXR_DRAW_END_CLIP && s->text) s->text--;
   }
   return status;
 }
@@ -44,7 +44,7 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
   if(status==EXR_OK) status=exr_pdf_paint_content(file,resources,content,size,matrix,&consumer,program,context,work,control,e);
   if(sink->state) {
     exr_error cleanup={0}; exr_status restored; size_t restore_count=scope.depth+1;
-    if(scope.text) {
+    while(scope.text--) {
       restored=sink->state(sink->context,EXR_DRAW_END_CLIP,&cleanup);
       if(restored==EXR_OK && cleanup.code!=EXR_OK) restored=cleanup.code;
       if(status==EXR_OK && restored!=EXR_OK) { status=restored; if(e) *e=cleanup; }

@@ -17,6 +17,7 @@ typedef struct {
   content_state state,stack[128]; size_t depth,floor,sequence,font_count,font_bytes,operations,form_depth;
   uint32_t forms[32];
   double matrix[6],line[6]; unsigned inside,compatibility;
+  unsigned type3,declared,uncolored;
   cached_font fonts[128];
 } content_reader;
 static void identity(double matrix[6]) { memset(matrix,0,6*sizeof(double)); matrix[0]=matrix[3]=1; }
@@ -62,6 +63,7 @@ static exr_status event(content_reader *r,exr_pdf_state_event kind,exr_error *er
   exr_status status=r->callbacks.state ? r->callbacks.state(r->context,kind,error) : EXR_OK;
   return status==EXR_OK && error->code!=EXR_OK ? error->code : status;
 }
+static exr_status type3(content_reader *r,const exr_pdf_text_glyph *glyph,exr_error *error);
 static exr_status show(content_reader *r,exr_pdf_file *arena,uint32_t string,exr_error *error) {
   size_t n,at=0; const unsigned char *data=exr_pdf_bytes(arena,string,&n); const exr_pdf_font_info *font;
   if(!data || exr_pdf_value_at(arena,string)->kind!=EXR_PDF_STRING || !r->state.font) return exr_fail(error,EXR_FORMAT,"PDF text needs a string and selected font");
@@ -76,6 +78,9 @@ static exr_status show(content_reader *r,exr_pdf_file *arena,uint32_t string,exr
     if(!multiply(matrix,r->matrix,scale) || !multiply(glyph.transform,r->state.ctm,matrix)) return exr_fail(error,EXR_LIMIT,"PDF glyph transform exceeds coordinate budget");
     glyph.font=r->state.font; glyph.sequence=r->sequence++; glyph.rendering_mode=r->state.mode; glyph.paint=paint_state(r);
     { exr_status status=r->callbacks.glyph ? r->callbacks.glyph(r->context,&glyph,error) : EXR_OK; if(status!=EXR_OK) return status; if(error->code!=EXR_OK) return error->code; }
+    if(r->graphics && font->kind==EXR_PDF_TYPE3 && r->state.mode!=3 && r->state.mode!=7) {
+      exr_status status=type3(r,&glyph,error); if(status!=EXR_OK) return status;
+    }
     spacing=r->state.char_space+(glyph.character.text.code_bytes==1 && glyph.character.text.code==32 ? r->state.word_space : 0);
     advance=(font->vertical ? glyph.character.vertical_advance : glyph.character.width)*r->state.size/1000+spacing;
     if(!translate(r->matrix,font->vertical ? 0 : advance*r->state.scale,font->vertical ? advance : 0)) return exr_fail(error,EXR_LIMIT,"PDF text position exceeds coordinate budget");
@@ -250,7 +255,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     } else for(i=0;i<3;i++) if(!world_point(r,numbers[2*i],numbers[2*i+1],&points[i])) goto limit;
     return append_path(r,EXR_VECTOR_CUBIC,points,error);
   }
-  if(!strcmp(name,"sh") || !strcmp(name,"d0") || !strcmp(name,"d1")) return exr_fail(error,EXR_FORMAT,"PDF shading and Type3 drawing are not implemented yet");
+  if(!strcmp(name,"sh")) return exr_fail(error,EXR_FORMAT,"PDF shading is not implemented yet");
   *handled=0; return EXR_OK;
 invalid:
   if(error->code!=EXR_OK) return error->code;
@@ -259,14 +264,52 @@ limit:
   return exr_fail(error,EXR_LIMIT,"PDF path coordinate budget exceeded");
 }
 static exr_status content_operation(void *context,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,exr_error *error);
+static exr_status clip_bounds(content_reader *r,const double box[4],exr_error *error) {
+  exr_vector_segment boundary[5]={0}; size_t i; const double x[4]={box[0],box[2],box[2],box[0]},y[4]={box[1],box[1],box[3],box[3]};
+  for(i=0;i<4;i++) {
+    boundary[i].verb=i ? EXR_VECTOR_LINE : EXR_VECTOR_MOVE;
+    if(!world_point(r,x[i],y[i],&boundary[i].points[0])) return exr_fail(error,EXR_LIMIT,"PDF stream clip coordinates exceed budget");
+  }
+  boundary[4].verb=EXR_VECTOR_CLOSE;
+  return path_event(r,boundary,5,EXR_PDF_CLIP,EXR_VECTOR_NONZERO,error);
+}
+/* Forms and Type3 CharProcs share one interpreter, recursion guard and work
+   budget. A glyph may contain its own BT/ET while the caller stays inside BT. */
+static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,const double ctm[6],const double *box,unsigned glyph,exr_error *error) {
+  content_state saved=r->state; content_path saved_path; double saved_matrix[6],saved_line[6];
+  uint32_t saved_resources=r->resources; size_t saved_floor=r->floor,saved_depth=r->depth,i,n;
+  unsigned saved_inside=r->inside,saved_compatibility=r->compatibility,saved_type3=r->type3,saved_declared=r->declared,saved_uncolored=r->uncolored;
+  const unsigned char *data; exr_status status;
+  if(r->form_depth==32) return exr_fail(error,EXR_LIMIT,"PDF Form/Type3 stream depth exceeds 32");
+  for(i=0;i<r->form_depth;i++) if(r->forms[i]==id) return exr_fail(error,EXR_FORMAT,"Cyclic PDF Form/Type3 stream invocation");
+  if(exr_control_cancel(r->control,error)!=EXR_OK) return EXR_CANCELLED;
+  if(exr_pdf_stream_data(r->file,id,&data,&n,error)!=EXR_OK) return error->code;
+  status=event(r,EXR_PDF_SAVE,error); if(status!=EXR_OK) return status;
+  memcpy(saved_matrix,r->matrix,sizeof(saved_matrix)); memcpy(saved_line,r->line,sizeof(saved_line)); saved_path=r->path;
+  memcpy(r->state.ctm,ctm,sizeof(r->state.ctm)); if(resources!=EXR_PDF_NONE) r->resources=resources;
+  memset(&r->path,0,sizeof(r->path)); r->floor=r->depth; r->inside=0; r->compatibility=0; r->type3=glyph; r->declared=0;
+  identity(r->matrix); identity(r->line); r->forms[r->form_depth++]=id;
+  if(r->graphics && box) status=clip_bounds(r,box,error);
+  if(status==EXR_OK) status=exr_pdf_content_ops(data,n,content_operation,r,r->control,error);
+  if(status==EXR_OK && glyph && !r->declared) status=exr_fail(error,EXR_FORMAT,"PDF Type3 CharProc requires d0 or d1 metrics");
+  if(status==EXR_OK && (r->inside || r->depth!=saved_depth || r->compatibility)) status=exr_fail(error,EXR_FORMAT,"Unbalanced PDF Form/Type3 text/graphics state");
+  if(status==EXR_OK && r->graphics && (r->path.count || r->path.pending_clip)) status=exr_fail(error,EXR_FORMAT,"Unterminated PDF Form/Type3 path object");
+  /* Also balance consumer scopes on a failed stream, preserving its first
+     error. A raster canvas may already be failed, but custom sinks can recover. */
+  if(r->inside) { exr_error ignored={0}; (void)event(r,EXR_PDF_END_TEXT,&ignored); }
+  for(i=r->depth;i>saved_depth;i--) { exr_error ignored={0}; (void)event(r,EXR_PDF_RESTORE,&ignored); }
+  r->path_bytes-=r->path.capacity*sizeof(*r->path.segments); free(r->path.segments); r->path=saved_path;
+  r->form_depth--; r->state=saved; r->resources=saved_resources; r->floor=saved_floor; r->depth=saved_depth;
+  r->inside=saved_inside; r->compatibility=saved_compatibility; r->type3=saved_type3; r->declared=saved_declared; r->uncolored=saved_uncolored;
+  memcpy(r->matrix,saved_matrix,sizeof(saved_matrix)); memcpy(r->line,saved_line,sizeof(saved_line));
+  { exr_error restore_error={0}; exr_status restored=event(r,EXR_PDF_RESTORE,&restore_error);
+    if(status==EXR_OK && restored!=EXR_OK) { status=restored; *error=restore_error; }
+  }
+  return status;
+}
 static exr_status form(content_reader *r,uint32_t id,exr_error *error) {
-  content_state saved=r->state; content_path saved_path; double matrix[6],box[4],saved_matrix[6],saved_line[6];
-  uint32_t saved_resources=r->resources,value,at; size_t saved_floor=r->floor,saved_depth=r->depth,i,n;
-  unsigned saved_inside=r->inside,saved_compatibility=r->compatibility;
-  const exr_pdf_value *v; const unsigned char *data; exr_status status=EXR_OK;
+  double matrix[6],ctm[6],box[4]; uint32_t value,at,resources=EXR_PDF_NONE; size_t i; const exr_pdf_value *v;
   if(r->inside) return exr_fail(error,EXR_FORMAT,"PDF Form invoked inside a text object");
-  if(r->form_depth==32) return exr_fail(error,EXR_LIMIT,"PDF Form depth exceeds 32");
-  for(i=0;i<r->form_depth;i++) if(r->forms[i]==id) return exr_fail(error,EXR_FORMAT,"Cyclic PDF Form invocation");
   v=exr_pdf_value_at(r->file,id);
   if(!v || v->kind!=EXR_PDF_STREAM) return exr_fail(error,EXR_FORMAT,"PDF Form is not a stream");
   if(resolved(r->file,exr_pdf_get(r->file,id,"FormType"),&value,error)!=EXR_OK) return error->code;
@@ -279,7 +322,7 @@ static exr_status form(content_reader *r,uint32_t id,exr_error *error) {
     if(at==EXR_PDF_NONE || resolved(r->file,at,&number,error)!=EXR_OK || !numeric(r->file,number,&box[i])) goto invalid;
     at=exr_pdf_value_at(r->file,at)->next;
   }
-  if(at!=EXR_PDF_NONE) goto invalid;
+  if(at!=EXR_PDF_NONE || box[0]>box[2] || box[1]>box[3]) goto invalid;
   identity(matrix);
   if(resolved(r->file,exr_pdf_get(r->file,id,"Matrix"),&value,error)!=EXR_OK) return error->code;
   if(value!=EXR_PDF_NONE && exr_pdf_value_at(r->file,value)->kind!=EXR_PDF_NULL) {
@@ -298,43 +341,37 @@ static exr_status form(content_reader *r,uint32_t id,exr_error *error) {
   if(resolved(r->file,exr_pdf_get(r->file,id,"Resources"),&value,error)!=EXR_OK) return error->code;
   if(value!=EXR_PDF_NONE && exr_pdf_value_at(r->file,value)->kind!=EXR_PDF_NULL) {
     if(exr_pdf_value_at(r->file,value)->kind!=EXR_PDF_DICT) goto invalid;
-    r->resources=value;
+    resources=value;
   }
-  if(exr_pdf_stream_data(r->file,id,&data,&n,error)!=EXR_OK) { r->resources=saved_resources; return error->code; }
-  memcpy(saved_matrix,r->matrix,sizeof(saved_matrix)); memcpy(saved_line,r->line,sizeof(saved_line));
-  if(!multiply(r->state.ctm,saved.ctm,matrix)) { r->resources=saved_resources; return exr_fail(error,EXR_LIMIT,"PDF Form transform exceeds coordinate budget"); }
-  status=event(r,EXR_PDF_SAVE,error);
-  if(status!=EXR_OK) { r->state=saved; r->resources=saved_resources; return status; }
-  saved_path=r->path; memset(&r->path,0,sizeof(r->path));
-  r->floor=r->depth; r->inside=0; r->compatibility=0; identity(r->matrix); identity(r->line);
-  r->forms[r->form_depth++]=id;
-  if(r->graphics) {
-    exr_vector_segment boundary[5]={0}; const double x[4]={box[0],box[2],box[2],box[0]},y[4]={box[1],box[1],box[3],box[3]};
-    for(i=0;i<4;i++) {
-      boundary[i].verb=i ? EXR_VECTOR_LINE : EXR_VECTOR_MOVE;
-      if(!world_point(r,x[i],y[i],&boundary[i].points[0])) { status=exr_fail(error,EXR_LIMIT,"PDF Form clip coordinates exceed budget"); break; }
-    }
-    boundary[4].verb=EXR_VECTOR_CLOSE;
-    if(status==EXR_OK) status=path_event(r,boundary,5,EXR_PDF_CLIP,EXR_VECTOR_NONZERO,error);
-  }
-  if(status==EXR_OK) status=exr_pdf_content_ops(data,n,content_operation,r,r->control,error);
-  if(status==EXR_OK && (r->inside || r->depth!=saved_depth || r->compatibility)) status=exr_fail(error,EXR_FORMAT,"Unbalanced PDF Form text/graphics state");
-  if(status==EXR_OK && r->graphics && (r->path.count || r->path.pending_clip)) status=exr_fail(error,EXR_FORMAT,"Unterminated PDF Form path object");
-  r->path_bytes-=r->path.capacity*sizeof(*r->path.segments); free(r->path.segments); r->path=saved_path;
-  r->form_depth--; r->state=saved; r->resources=saved_resources; r->floor=saved_floor; r->depth=saved_depth;
-  r->inside=saved_inside; r->compatibility=saved_compatibility;
-  memcpy(r->matrix,saved_matrix,sizeof(saved_matrix)); memcpy(r->line,saved_line,sizeof(saved_line));
-  { exr_error restore_error={0}; exr_status restored=event(r,EXR_PDF_RESTORE,&restore_error);
-    if(status==EXR_OK && restored!=EXR_OK) { status=restored; *error=restore_error; }
-  }
-  return status;
+  if(!multiply(ctm,r->state.ctm,matrix)) return exr_fail(error,EXR_LIMIT,"PDF Form transform exceeds coordinate budget");
+  return stream_scope(r,id,resources,ctm,box,0,error);
 invalid:
   if(error->code!=EXR_OK) return error->code;
   return exr_fail(error,EXR_FORMAT,"Invalid PDF Form type, bounding box, matrix or resources");
 }
+static exr_status type3(content_reader *r,const exr_pdf_text_glyph *glyph,exr_error *error) {
+  uint32_t stream,resources; double matrix[6],ctm[6]; exr_status status;
+  status=exr_pdf_font_type3(r->file,glyph->font,glyph->character.cid,&stream,&resources,matrix,error); if(status!=EXR_OK) return status;
+  if(stream==EXR_PDF_NONE) return EXR_OK;
+  if(!multiply(ctm,glyph->transform,matrix)) return exr_fail(error,EXR_LIMIT,"PDF Type3 glyph transform exceeds coordinate budget");
+  return stream_scope(r,stream,resources,ctm,NULL,1,error);
+}
 static exr_status content_operation(void *context,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,exr_error *error) {
   content_reader *r=context; double numbers[6]; size_t i; uint32_t id;
   if(++r->operations>1048576) return exr_fail(error,EXR_LIMIT,"PDF content/Form operation budget exceeded");
+  if(!strcmp(name,"d0") || !strcmp(name,"d1")) {
+    int uncolored=!strcmp(name,"d1");
+    if(!r->type3 || r->declared || count!=(uncolored ? 6u : 2u)) goto invalid;
+    for(i=0;i<count;i++) if(!numeric(arena,values[i],numbers+i)) goto invalid;
+    if(numbers[1]!=0 || (uncolored && (numbers[2]>numbers[4] || numbers[3]>numbers[5]))) goto invalid;
+    r->declared=1; if(uncolored) r->uncolored=1;
+    return uncolored && r->graphics ? clip_bounds(r,numbers+2,error) : EXR_OK;
+  }
+  if(r->type3 && !r->declared) return exr_fail(error,EXR_FORMAT,"PDF Type3 CharProc must start with d0 or d1");
+  if(r->uncolored) {
+    const char *colors[]={"G","g","RG","rg","K","k","CS","cs","SC","sc","SCN","scn"};
+    for(i=0;i<sizeof(colors)/sizeof(*colors);i++) if(!strcmp(name,colors[i])) return exr_fail(error,EXR_FORMAT,"Uncolored PDF Type3 CharProc cannot set colors");
+  }
   if(r->graphics) {
     int handled; exr_status status=graphics_operation(r,arena,name,values,count,&handled,error);
     if(status!=EXR_OK || handled) return status;
@@ -372,6 +409,12 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
     if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==5 && !memcmp(type,"Image",5)) {
       exr_pdf_paint_state paint=paint_state(r);
       if(r->graphics && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_STREAM) return exr_fail(error,EXR_FORMAT,"PDF Image XObject is not a stream");
+      if(r->uncolored) {
+        uint32_t mask; const exr_pdf_value *v;
+        if(resolved(r->file,exr_pdf_get(r->file,id,"ImageMask"),&mask,error)!=EXR_OK) return error->code;
+        v=exr_pdf_value_at(r->file,mask);
+        if(!v || v->kind!=EXR_PDF_BOOL || !v->u.number) return exr_fail(error,EXR_FORMAT,"Uncolored PDF Type3 image must be a stencil mask");
+      }
       return r->callbacks.image ? r->callbacks.image(r->context,r->file,id,r->resources,&paint,error) : EXR_OK;
     }
     if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==4 && !memcmp(type,"Form",4)) return form(r,id,error);

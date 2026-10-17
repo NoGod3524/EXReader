@@ -8,6 +8,7 @@ struct exr_pdf_font {
   char *names[256]; double simple[256],default_width,default_vertical[2];
   width_table widths,vertical;
   const unsigned char *cid_glyphs; size_t cid_glyph_size;
+  uint32_t charprocs,resources; double matrix[6];
 };
 typedef struct { exr_pdf_file *file; const exr_control *control; exr_error error; } font_reader;
 static int bad(font_reader *r,const char *message) { if(r->error.code==EXR_OK) exr_fail(&r->error,EXR_FORMAT,"%s",message); return 0; }
@@ -134,6 +135,29 @@ static int simple_encoding(font_reader *r,uint32_t id,exr_pdf_font *font) {
   }
   return r->error.code==EXR_OK;
 }
+static int type3(font_reader *r,uint32_t dict,exr_pdf_font *font) {
+  uint32_t matrix=get(r,dict,"FontMatrix"),box=get(r,dict,"FontBBox"),at; const exr_pdf_value *v; double bounds[4]; size_t i;
+  font->charprocs=get(r,dict,"CharProcs"); font->resources=get(r,dict,"Resources");
+  v=exr_pdf_value_at(r->file,font->charprocs); if(!v || v->kind!=EXR_PDF_DICT) return bad(r,"PDF Type3 CharProcs is not a dictionary");
+  v=exr_pdf_value_at(r->file,font->resources); if(v && v->kind!=EXR_PDF_DICT) return bad(r,"PDF Type3 Resources is not a dictionary");
+  v=exr_pdf_value_at(r->file,matrix); if(!v || v->kind!=EXR_PDF_ARRAY) return bad(r,"PDF Type3 requires FontMatrix");
+  at=v->first;
+  for(i=0;i<6;i++) { uint32_t following=next(r->file,at); if(!number(r,at,font->matrix+i)) return bad(r,"Invalid PDF Type3 FontMatrix"); font->matrix[i]*=1000; at=following; }
+  if(at!=EXR_PDF_NONE) return bad(r,"Invalid PDF Type3 FontMatrix length");
+  v=exr_pdf_value_at(r->file,box); if(!v || v->kind!=EXR_PDF_ARRAY) return bad(r,"PDF Type3 requires FontBBox");
+  at=v->first;
+  for(i=0;i<4;i++) { uint32_t following=next(r->file,at); if(!number(r,at,bounds+i)) return bad(r,"Invalid PDF Type3 FontBBox"); at=following; }
+  if(at!=EXR_PDF_NONE || bounds[0]>bounds[2] || bounds[1]>bounds[3]) return bad(r,"Invalid PDF Type3 FontBBox dimensions");
+  font->info.ascent=-HUGE_VAL; font->info.descent=HUGE_VAL;
+  for(i=0;i<4;i++) {
+    double x=bounds[(i==1 || i==2) ? 2 : 0],y=bounds[i>=2 ? 3 : 1];
+    font->info.type3_quad[i*2]=font->matrix[0]*x+font->matrix[2]*y+font->matrix[4];
+    y=font->info.type3_quad[i*2+1]=font->matrix[1]*x+font->matrix[3]*y+font->matrix[5];
+    if(y>font->info.ascent) font->info.ascent=y;
+    if(y<font->info.descent) font->info.descent=y;
+  }
+  return 1;
+}
 void exr_pdf_font_close(exr_pdf_font *font) {
   size_t i; if(!font) return;
   free((void *)font->info.base_name); free((void *)font->info.encoding_name); free((void *)font->info.program_type);
@@ -171,6 +195,9 @@ exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control 
     if(name_is(&r,subtype,"CIDFontType2")) font->info.kind=EXR_PDF_CID_TYPE2;
     else if(name_is(&r,subtype,"CIDFontType0")) font->info.kind=EXR_PDF_CID_TYPE0;
     else goto invalid;
+  } else if(name_is(&r,subtype,"Type3")) {
+    font->info.kind=EXR_PDF_TYPE3;
+    if(encoding==EXR_PDF_NONE) { bad(&r,"PDF Type3 requires Encoding"); goto done; }
   } else if(name_is(&r,subtype,"TrueType")) font->info.kind=EXR_PDF_TRUETYPE;
   else if(name_is(&r,subtype,"Type1") || name_is(&r,subtype,"MMType1")) font->info.kind=EXR_PDF_TYPE1;
   else { bad(&r,"PDF font Subtype is not implemented yet"); goto done; }
@@ -196,6 +223,7 @@ exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control 
   if(id!=EXR_PDF_NONE) {
     uint32_t flags; if(!integer(&r,id,UINT32_MAX,&flags)) goto invalid; font->info.flags=flags;
   }
+  if(font->info.kind==EXR_PDF_TYPE3 && !type3(&r,dict,font)) goto done;
   if(font->info.composite) {
     font->default_width=1000; font->default_vertical[0]=880; font->default_vertical[1]=-1000;
     id=get(&r,metrics,"DW"); if(id!=EXR_PDF_NONE && !number(&r,id,&font->default_width)) goto invalid;
@@ -229,8 +257,11 @@ exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control 
       for(i=first;i<=last;i++) { if(!number(&r,at,&font->simple[i])) goto invalid; at=next(file,at); }
       if(at!=EXR_PDF_NONE) goto invalid;
     }
+    if(font->info.kind==EXR_PDF_TYPE3) for(i=0;i<256;i++) {
+      font->simple[i]*=font->matrix[0];
+    }
   }
-  { const char *keys[]={"FontFile","FontFile2","FontFile3"}; unsigned found=0;
+  if(font->info.kind!=EXR_PDF_TYPE3) { const char *keys[]={"FontFile","FontFile2","FontFile3"}; unsigned found=0;
     for(i=0;i<3;i++) {
       id=get(&r,descriptor,keys[i]); if(id==EXR_PDF_NONE) continue;
       if((i==0 && font->info.kind!=EXR_PDF_TYPE1) ||
@@ -290,4 +321,22 @@ exr_status exr_pdf_font_next(const exr_pdf_font *font,const unsigned char *data,
   *at+=bytes;
   if(error) memset(error,0,sizeof(*error));
   return EXR_OK;
+}
+exr_status exr_pdf_font_type3(exr_pdf_file *file,const exr_pdf_font *font,uint32_t code,
+  uint32_t *stream,uint32_t *resources,double matrix[6],exr_error *error) {
+  const char *name; uint32_t id; const exr_pdf_value *v; exr_status status;
+  if(!file || !font || font->info.kind!=EXR_PDF_TYPE3 || code>255 || !stream || !resources || !matrix)
+    return exr_fail(error,EXR_ARGUMENT,"Invalid PDF Type3 glyph lookup");
+  name=font->names[code] ? font->names[code] : exr_pdf_encoding_glyph(font->base_encoding,code);
+  id=name ? exr_pdf_get(file,font->charprocs,name) : EXR_PDF_NONE;
+  status=exr_pdf_resolve(file,id,&id,error); if(status!=EXR_OK) return status;
+  v=exr_pdf_value_at(file,id);
+  if(!v || v->kind==EXR_PDF_NULL) {
+    status=exr_pdf_resolve(file,exr_pdf_get(file,font->charprocs,".notdef"),&id,error); if(status!=EXR_OK) return status;
+    v=exr_pdf_value_at(file,id);
+  }
+  if(v && v->kind==EXR_PDF_NULL) id=EXR_PDF_NONE;
+  else if(v && v->kind!=EXR_PDF_STREAM) return exr_fail(error,EXR_FORMAT,"PDF Type3 CharProc is not a stream");
+  *stream=id; *resources=font->resources; memcpy(matrix,font->matrix,sizeof(font->matrix));
+  return exr_fail(error,EXR_OK,"");
 }

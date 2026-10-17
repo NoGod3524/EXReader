@@ -72,7 +72,10 @@ exr_status exr_canvas_create(const exr_canvas_config *config,exr_canvas **out,ex
 void exr_canvas_union_abort(exr_canvas *c) { if(c) { unref(c,c->group); c->group=NULL; } }
 void exr_canvas_free(exr_canvas *c) {
   if(!c) return;
-  unref(c,c->clip); exr_canvas_union_abort(c); while(c->depth) unref(c,c->saved[--c->depth]); free(c->bitmap.pixels); free(c);
+  unref(c,c->clip); exr_canvas_union_abort(c);
+  while(c->group_depth) unref(c,c->groups[--c->group_depth]);
+  while(c->depth) unref(c,c->saved[--c->depth]);
+  free(c->bitmap.pixels); free(c);
 }
 size_t exr_canvas_memory_size(const exr_canvas *c) {
   return c ? sizeof(*c)+(c->bitmap.pixels ? (size_t)c->bitmap.stride*c->bitmap.height : 0)+c->mask_bytes+c->mask_count*sizeof(exr_clip_mask) : 0;
@@ -170,10 +173,17 @@ static exr_status sink_state(void *context,exr_draw_state state,exr_error *e) {
   exr_canvas *c=context; exr_status status;
   if(state==EXR_DRAW_SAVE) return exr_canvas_save(c,e);
   if(state==EXR_DRAW_RESTORE) return exr_canvas_restore(c,e);
-  if(state==EXR_DRAW_END_CLIP) return exr_canvas_union_commit(c,e);
+  if(state==EXR_DRAW_END_CLIP) {
+    status=exr_canvas_union_commit(c,e); if(status!=EXR_OK) return status;
+    if(c->group_depth && --c->group_depth) { c->group=c->groups[c->group_depth-1]; c->groups[c->group_depth-1]=NULL; }
+    return exr_fail(e,EXR_OK,"");
+  }
   status=ready(c,e); if(status!=EXR_OK) return status;
   if(state!=EXR_DRAW_BEGIN_CLIP) return finish(c,exr_fail(e,EXR_ARGUMENT,"Unknown canvas drawing state"),e);
-  exr_canvas_union_abort(c); return exr_fail(e,EXR_OK,"");
+  if(c->group_depth==64) return finish(c,exr_fail(e,EXR_LIMIT,"Canvas nested clip unions exceed 64"),e);
+  if(c->group_depth) { c->groups[c->group_depth-1]=c->group; c->group=NULL; }
+  else exr_canvas_union_abort(c);
+  c->group_depth++; return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_canvas_get_sink(exr_canvas *c,exr_draw_sink *out,exr_error *e) {
   exr_status status;

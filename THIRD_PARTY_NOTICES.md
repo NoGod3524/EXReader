@@ -123,3 +123,18 @@ EXReader's source callbacks, tag bounds, Xing/LAME trimming, bounded decoder-sta
 checkpoints, ownership and cancellation are implemented in `src/mp3.c`; MP3
 synthesis itself uses minimp3. Disabling the component avoids its source download
 and codec footprint while retaining API symbols with availability reporting.
+
+## Optional AAC decoder
+
+`EXR_ENABLE_AAC=ON` builds FAAD2 from
+[knik0/faad2](https://github.com/knik0/faad2/tree/521d105979795b887ea11e1f36565e97a8fbfc53),
+commit `521d105979795b887ea11e1f36565e97a8fbfc53`, archive SHA-256
+`9284bd9c5ef998f636b233055f4d988aadf0d5a97acdb3109bcb9d4e3c7cfdd8`.
+FAAD2 is Copyright (C) 2003-2005 M. Bakker, Nero AG, licensed under GPL-2.0-or-later;
+EXReader distributes this combination under GPL-3.0-only.
+Code from FAAD2 is copyright (c) Nero AG, www.nero.com.
+The full upstream COPYING and copyright notice are installed under
+`share/exreader/licenses/faad2`. Only the floating-point codec is built, without
+the CLI, DRM or fixed-point variants. This component defaults to OFF and is not
+downloaded when disabled. ADTS source access, validation, ownership, cancellation
+and exact bounded replay are EXReader C code; AAC synthesis uses FAAD2.

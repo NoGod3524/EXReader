@@ -5,8 +5,8 @@
 typedef struct { exr_bitmap bitmap; size_t refs; } exr_clip_mask;
 struct exr_canvas {
   exr_bitmap bitmap; exr_control control; exr_error failure;
-  exr_clip_mask *clip,*saved[160],*group;
-  size_t depth,mask_bytes,mask_count,mask_budget,work;
+  exr_clip_mask *clip,*saved[160],*group,*groups[64];
+  size_t depth,group_depth,mask_bytes,mask_count,mask_budget,work;
 };
 /* Clip-union construction is internal until the generic scene API is settled. */
 void exr_canvas_union_abort(exr_canvas *canvas);
