@@ -39,11 +39,14 @@ static void label(buffer *b) { add(b," BT /F1 8 Tf 3 Tr (Z) Tj ET "); }
 static void text(exr_fixed_document *d) { exr_fixed_text *t=NULL; size_t n; OK(exr_fixed_load_text(d,0,NULL,&t,&error)); CHECK(!strcmp(exr_fixed_text_string(t,&n),"Z") && n==1); exr_fixed_text_free(t); }
 static void pixel(const exr_bitmap *image,unsigned x,unsigned y,const unsigned expected[3],unsigned tolerance) { const unsigned char *p=image->pixels+(image->height-y-1)*image->stride+x*4; unsigned i; for(i=0;i<3;i++) CHECK(abs((int)p[i]-(int)expected[i])<=(int)tolerance); CHECK(p[3]==255); }
 static void save(const buffer *b,const char *directory,const char *name) { char path[4096]; FILE *f; if(!directory || !name) return; snprintf(path,sizeof(path),"%s/%s",directory,name); f=fopen(path,"wb"); CHECK(f); CHECK(fwrite(b->data,1,b->size,f)==b->size); CHECK(!fclose(f)); }
-static void same_color(const char *definition,const char *components,const char *dict,const void *samples,size_t sample_size,const char *icc,const unsigned expected[3],const char *directory,const char *name) {
+static void same_color_extra(const char *definition,const char *components,const char *dict,const void *samples,size_t sample_size,const char *icc,const unsigned expected[3],const char *directory,const char *name,const char *extra) {
   buffer content={0},b; exr_fixed_document *d; exr_bitmap image;
   add(&content,"/S cs "); add(&content,components); add(&content," sc 0 0 8 8 re f q 8 0 0 8 10 0 cm /Im Do Q q 8 0 0 8 20 0 cm BI /W 1 /H 1 /BPC 8 /CS /S "); add(&content,dict ? dict : ""); add(&content," ID "); bytes(&content,samples,sample_size); add(&content,"\nEI Q"); label(&content);
-  b=book(definition,&content,dict,samples,sample_size,icc,NULL); d=opened(&b); image=rendered(d); pixel(&image,4,4,expected,1); pixel(&image,14,4,expected,1); pixel(&image,24,4,expected,1);
+  b=book_extra(definition,&content,dict,samples,sample_size,icc,NULL,extra); d=opened(&b); image=rendered(d); pixel(&image,4,4,expected,1); pixel(&image,14,4,expected,1); pixel(&image,24,4,expected,1);
   text(d); save(&b,directory,name); exr_bitmap_free(&image); exr_fixed_free(d); free(b.data); free(content.data);
+}
+static void same_color(const char *definition,const char *components,const char *dict,const void *samples,size_t sample_size,const char *icc,const unsigned expected[3],const char *directory,const char *name) {
+  same_color_extra(definition,components,dict,samples,sample_size,icc,expected,directory,name,NULL);
 }
 static void calibrated(const char *directory) {
   static const unsigned gray188[]={188,188,188},gray129[]={129,129,129},gray119[]={119,119,119},rgb[]={188,137,225},red[]={255,0,0},white[]={255,255,255},black[]={0,0,0};
@@ -173,4 +176,49 @@ static void function_graphs(void) {
   }
   exr_fixed_free(d);free(b.data);free(graph.data);free(c.data);
 }
-int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); bad_functions(); function_graphs(); printf("%u native PDF source colour-space checks passed\n",checks); return 0; }
+static void sampled(const char *directory) {
+  const unsigned depths[]={1,2,4,8,12,16,24,32}; size_t k,i,bit;
+  static const unsigned red127[]={255,127,127},gray191[]={191,191,191},white[]={255,255,255},gray138[]={138,138,138},gray76[]={76,76,76},gray62[]={62,62,62};
+  for(k=0;k<sizeof(depths)/sizeof(*depths);k++) {
+    unsigned bits=depths[k]; unsigned char packed[24]={0}; size_t size=(6*bits+7)/8; char stream[1024],hex[49],filename[80]; int n;
+    for(i=0;i<6;i++) if(i<4) for(bit=0;bit<bits;bit++) { size_t at=i*bits+bit; packed[at/8]|=(unsigned char)(1u<<(7-at%8)); }
+    for(i=0;i<size;i++) snprintf(hex+2*i,sizeof(hex)-2*i,"%02x",packed[i]);
+    n=snprintf(stream,sizeof(stream),"<< /FunctionType 0 /Domain [0 1] /Range [0 1 0 1 0 1] /Size [2] /BitsPerSample %u /Filter /ASCIIHexDecode /Length %zu >>\nstream\n%s>\nendstream",bits,2*size+1,hex); CHECK(n>0 && (size_t)n<sizeof(stream));
+    snprintf(filename,sizeof(filename),"pdf-color-sampled-%u.pdf",bits);scenario=filename;
+    same_color_extra("[/Separation /Spot /DeviceRGB 10 0 R]",".5019607843137255",NULL,"\x80",1,NULL,red127,directory,filename,stream);
+  }
+  scenario="Sample table Encode reverses input";
+  same_color_extra("[/Separation /Spot /DeviceGray 10 0 R]",".25","/Decode [.25 .25]","\x00",1,NULL,gray191,NULL,NULL,"<< /FunctionType 0 /Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 8 /Encode [1 0] /Filter /AHx /Length 5 >>\nstream\n00ff>\nendstream");
+  scenario="Sample table Decode reverses output";
+  same_color_extra("[/Separation /Spot /DeviceGray 10 0 R]",".25","/Decode [.25 .25]","\x00",1,NULL,gray191,NULL,NULL,"<< /FunctionType 0 /Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 8 /Decode [1 0] /Filter /AHx /Length 5 >>\nstream\n00ff>\nendstream");
+  scenario="Single sample and zero-width input domain";
+  same_color_extra("[/Separation /Spot /DeviceGray 10 0 R]",".5",NULL,"\x80",1,NULL,white,NULL,NULL,"<< /FunctionType 0 /Domain [.5 .5] /Range [0 1] /Size [1] /BitsPerSample 8 /Filter /AHx /Length 3 >>\nstream\nff>\nendstream");
+  scenario="32-bit samples preserve low bytes and table index";
+  same_color_extra("[/Separation /Spot /DeviceGray 10 0 R]",".6666666666666666","/Decode [.6666666666666666 .6666666666666666]","\x00",1,NULL,gray138,NULL,NULL,"<< /FunctionType 0 /Domain [0 1] /Range [0 1] /Size [4] /BitsPerSample 32 /Filter /AHx /Length 33 >>\nstream\n000000000123456789abcdefffffffff>\nendstream");
+  scenario="32-bit sample least significant byte remains observable";
+  same_color_extra("[/Separation /Spot /DeviceGray 10 0 R]","1","/Decode [1 1]","\x00",1,NULL,gray76,NULL,NULL,"<< /FunctionType 0 /Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 32 /Decode [0 10000000] /Filter /AHx /Length 17 >>\nstream\n0000000000000080>\nendstream");
+  scenario="12-bit sample low nibble crosses a byte boundary";
+  same_color_extra("[/Separation /Spot /DeviceGray 10 0 R]","1","/Decode [1 1]","\x00",1,NULL,gray62,NULL,NULL,"<< /FunctionType 0 /Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 12 /Decode [0 1000] /Filter /AHx /Length 7 >>\nstream\n000001>\nendstream");
+  scenario="Stitching retains and evaluates a sampled child";
+  same_color_extra("[/Separation /Spot /DeviceGray << /FunctionType 3 /Domain [0 1] /Functions [10 0 R] /Bounds [] /Encode [1 0] >>]",".25","/Decode [.25 .25]","\x00",1,NULL,gray191,NULL,NULL,"<< /FunctionType 0 /Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 8 /Filter /AHx /Length 5 >>\nstream\n00ff>\nendstream");
+}
+static void bad_samples(void) {
+  const char *invalid[]={
+    "/Domain [0 1] /Size [2] /BitsPerSample 8", "/Domain [0 1] /Range [0 1] /Size [0] /BitsPerSample 8",
+    "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 3", "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 8 /Order 3",
+    "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 8 /Encode [0]", "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 8 /Decode [0]",
+    "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 32", "/Domain [0 1] /Range [0 1] /Size [1] /BitsPerSample 8",
+    "/Domain [0 1] /Range [1 0] /Size [2] /BitsPerSample 8", "/Domain [0 1] /Range [0 1] /Size [1048576] /BitsPerSample 8",
+    "/Domain [0 1] /Range [0 1] /Size [4294967296] /BitsPerSample 1"
+  };
+  buffer c={0}; size_t i; add(&c,"/S cs .5 sc 0 0 8 8 re f");
+  for(i=0;i<sizeof(invalid)/sizeof(*invalid);i++) {
+    buffer b; char stream[2048]; exr_fixed_document *d; exr_bitmap image={0}; scenario=invalid[i];
+    snprintf(stream,sizeof(stream),"<< /FunctionType 0 %s /Filter /AHx /Length 5 >>\nstream\n00ff>\nendstream",invalid[i]);
+    b=book_extra("[/Separation /Spot /DeviceGray 10 0 R]",&c,NULL,"\x80",1,NULL,NULL,stream);d=opened(&b);
+    CHECK(exr_fixed_render(d,0,1,NULL,&image,&error)==(i>=9 ? EXR_LIMIT : EXR_FORMAT) && !image.pixels);
+    exr_fixed_free(d); free(b.data);
+  }
+  free(c.data);
+}
+int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); bad_functions(); function_graphs(); sampled(directory); bad_samples(); printf("%u native PDF source colour-space checks passed\n",checks); return 0; }

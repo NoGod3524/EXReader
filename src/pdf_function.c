@@ -1,10 +1,12 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "pdf_function_internal.h"
 struct exr_pdf_function {
-  unsigned type,outputs,count,has_range;
+  unsigned type,outputs,count,has_range,bits;
   double domain[2],range[8],exponent,first[4],last[4];
   double *bounds,*encode;
   struct exr_pdf_function **children;
+  unsigned char *samples; size_t sample_count;
+  double decode[8];
   size_t bytes,cost;
 };
 typedef struct {
@@ -44,10 +46,10 @@ static int numbers(function_reader *r,uint32_t id,double *out,size_t size) {
 void exr_pdf_function_free(exr_pdf_function *f) {
   size_t i; if(!f) return;
   if(f->children) for(i=0;i<f->count;i++) exr_pdf_function_free(f->children[i]);
-  free(f->children); free(f->bounds); free(f->encode); free(f);
+  free(f->children); free(f->bounds); free(f->encode); free(f->samples); free(f);
 }
 static exr_status open_function(function_reader *r,uint32_t id,unsigned outputs,unsigned depth,exr_pdf_function **out) {
-  exr_pdf_function *f=NULL; const exr_pdf_value *value; uint32_t ids[64],field; size_t i,count; exr_status status=EXR_FORMAT;
+  exr_pdf_function *f=NULL; const exr_pdf_value *value; uint32_t ids[64],field; size_t i,count; int stream; exr_status status=EXR_FORMAT;
   *out=NULL;
   if(depth==16 || ++r->nodes>1024) return exr_fail(r->error,EXR_LIMIT,"PDF function exceeds 16 levels or 1024 nodes");
   if(exr_control_cancel(r->control,r->error)!=EXR_OK) return EXR_CANCELLED;
@@ -55,8 +57,10 @@ static exr_status open_function(function_reader *r,uint32_t id,unsigned outputs,
   for(i=0;i<depth;i++) if(r->active[i]==id) return exr_fail(r->error,EXR_FORMAT,"Cyclic PDF function");
   r->active[depth]=id;
   value=exr_pdf_value_at(r->file,id); if(!value || (value->kind!=EXR_PDF_DICT && value->kind!=EXR_PDF_STREAM)) goto bad;
+  stream=value->kind==EXR_PDF_STREAM;
   field=get(r,id,"FunctionType"); value=exr_pdf_value_at(r->file,field);
-  if(!value || value->kind!=EXR_PDF_INT || (value->u.integer!=2 && value->u.integer!=3)) goto bad;
+  if(!value || value->kind!=EXR_PDF_INT || (value->u.integer!=0 && value->u.integer!=2 && value->u.integer!=3)) goto bad;
+  if(sizeof(*f)>(size_t)1024*1024-r->bytes) return exr_fail(r->error,EXR_LIMIT,"PDF function payload exceeds 1 MiB");
   f=calloc(1,sizeof(*f)); if(!f) goto memory;
   f->type=(unsigned)value->u.integer; f->outputs=outputs; f->bytes=sizeof(*f); r->bytes+=sizeof(*f);
   if(!numbers(r,get(r,id,"Domain"),f->domain,2) || f->domain[0]>f->domain[1]) goto bad;
@@ -65,7 +69,33 @@ static exr_status open_function(function_reader *r,uint32_t id,unsigned outputs,
     f->has_range=1; if(!numbers(r,field,f->range,2*outputs)) goto bad;
     for(i=0;i<outputs;i++) if(f->range[2*i]>f->range[2*i+1]) goto bad;
   }
-  if(f->type==2) {
+  if(f->type==0) {
+    const unsigned char *samples; size_t size,needed; uint64_t packed;
+    if(!stream || !f->has_range || !array(r,get(r,id,"Size"),ids,64,&count) || count!=1) goto bad;
+    value=exr_pdf_value_at(r->file,ids[0]);
+    if(!value || value->kind!=EXR_PDF_INT || value->u.integer<=0) goto bad;
+    if((uint64_t)value->u.integer>UINT32_MAX) { status=exr_fail(r->error,EXR_LIMIT,"PDF sample table exceeds size limit"); goto done; }
+    f->sample_count=(size_t)value->u.integer;
+    field=get(r,id,"BitsPerSample"); value=exr_pdf_value_at(r->file,field);
+    if(!value || value->kind!=EXR_PDF_INT ||
+       (value->u.integer!=1 && value->u.integer!=2 && value->u.integer!=4 && value->u.integer!=8 &&
+        value->u.integer!=12 && value->u.integer!=16 && value->u.integer!=24 && value->u.integer!=32)) goto bad;
+    f->bits=(unsigned)value->u.integer; packed=(uint64_t)f->sample_count*outputs*f->bits;
+    if(2*sizeof(double)>(size_t)1024*1024-r->bytes || (packed+7)/8>(size_t)1024*1024-r->bytes-2*sizeof(double)) { status=exr_fail(r->error,EXR_LIMIT,"PDF function payload exceeds 1 MiB"); goto done; }
+    needed=(size_t)((packed+7)/8);
+    field=get(r,id,"Order"); value=exr_pdf_value_at(r->file,field);
+    if(field!=EXR_PDF_NONE && (!value || value->kind!=EXR_PDF_INT || value->u.integer!=1)) goto bad;
+    f->encode=calloc(2,sizeof(double)); if(!f->encode) goto memory;
+    f->encode[1]=(double)(f->sample_count-1);
+    field=get(r,id,"Encode"); if(field!=EXR_PDF_NONE && !numbers(r,field,f->encode,2)) goto bad;
+    memcpy(f->decode,f->range,2*outputs*sizeof(double));
+    field=get(r,id,"Decode"); if(field!=EXR_PDF_NONE && !numbers(r,field,f->decode,2*outputs)) goto bad;
+    status=exr_pdf_stream_data(r->file,id,&samples,&size,r->error); if(status!=EXR_OK) goto done;
+    if(size!=needed) goto bad;
+    f->samples=malloc(needed); if(!f->samples) goto memory;
+    memcpy(f->samples,samples,needed); f->bytes+=needed+2*sizeof(double); r->bytes+=needed+2*sizeof(double);
+    f->cost=16+10*outputs;
+  } else if(f->type==2) {
     double endpoint[2];
     field=get(r,id,"C0"); if(field==EXR_PDF_NONE) { if(outputs!=1) goto bad; } else if(!numbers(r,field,f->first,outputs)) goto bad;
     field=get(r,id,"C1");
@@ -114,9 +144,24 @@ exr_status exr_pdf_function_open(exr_pdf_file *file,uint32_t value,unsigned outp
   r.file=file; r.control=control; r.error=error ? error : &local; memset(r.error,0,sizeof(*r.error));
   return open_function(&r,value,outputs,0,out);
 }
+static double sample_value(const exr_pdf_function *f,size_t index) {
+  uint64_t bit=(uint64_t)index*f->bits,value=0,mask=(UINT64_C(1)<<f->bits)-1;
+  unsigned skip=(unsigned)(bit&7),count=(skip+f->bits+7)/8,i;
+  for(i=0;i<count;i++) value=(value<<8)|f->samples[(size_t)(bit>>3)+i];
+  value=(value>>(count*8-skip-f->bits))&mask; return (double)value/(double)mask;
+}
 exr_status exr_pdf_function_eval(const exr_pdf_function *f,double input,double out[4],exr_error *error) {
   double x=fmax(f->domain[0],fmin(f->domain[1],input)); size_t i;
-  if(f->type==2) {
+  if(f->type==0) {
+    double encoded=f->encode[0],fraction; size_t first,last;
+    if(f->domain[1]!=f->domain[0]) encoded+=(x-f->domain[0])/(f->domain[1]-f->domain[0])*(f->encode[1]-f->encode[0]);
+    encoded=fmax(0,fmin((double)(f->sample_count-1),encoded)); first=(size_t)floor(encoded); last=first+1<f->sample_count ? first+1 : first;
+    fraction=encoded-(double)first;
+    for(i=0;i<f->outputs;i++) {
+      double unit=(1-fraction)*sample_value(f,first*f->outputs+i)+fraction*sample_value(f,last*f->outputs+i);
+      out[i]=f->decode[2*i]+unit*(f->decode[2*i+1]-f->decode[2*i]);
+    }
+  } else if(f->type==2) {
     double raised=pow(x,f->exponent);
     for(i=0;i<f->outputs;i++) out[i]=f->first[i]+raised*(f->last[i]-f->first[i]);
   } else {
