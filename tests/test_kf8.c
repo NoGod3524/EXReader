@@ -259,10 +259,10 @@ static void svg_case(const char *dir,const char *name) {
   exr_font_free(font); exr_document_free(doc); exr_document_free(copy);
 }
 int main(int argc,char **argv) {
-  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index","boundary-pointer","boundary-text","boundary-marker","boundary-version","boundary-encrypted","boundary-resource","exth-signature","exth-length","exth-count","exth-entry","exth-entry-size","exth-duplicate","exth-fallback-encoding","exth-fallback-compression","guide-label","guide-target","guide-kind","svg-xml","svg-root","svg-entity","svg-reference","svg-namespace","svg-fragment"};
+  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index","boundary-pointer","boundary-text","boundary-marker","boundary-version","boundary-encrypted","boundary-resource","exth-signature","exth-length","exth-count","exth-entry","exth-entry-size","exth-duplicate","exth-fallback-encoding","exth-fallback-compression","guide-label","guide-target","guide-kind","svg-xml","svg-root","svg-entity","svg-reference","svg-namespace","svg-fragment","ordt-count","ordt-entries","ordt-pointer","ordt-signature","ordt-value","ordt-overlap","ordt-label","ordt-missing","ordt-local-conflict","ordt-late-label","skel-repeats"};
   const char *text="Chapter one\nA bold passage.\nChapter two\nSecond passage."; size_t i;
   CHECK(argc==2);
-  valid(argv[1],"kf8-hybrid.azw3",text,2); valid(argv[1],"kf8-basic.azw3",text,2); valid(argv[1],"kf8-multirecord.azw3",text,2); valid(argv[1],"kf8-multicontrol.azw3",text,2);
+  valid(argv[1],"kf8-skel-repeats.azw3",text,2); valid(argv[1],"kf8-ordt-basic.azw3",text,2); valid(argv[1],"kf8-hybrid.azw3",text,2); valid(argv[1],"kf8-basic.azw3",text,2); valid(argv[1],"kf8-multirecord.azw3",text,2); valid(argv[1],"kf8-multicontrol.azw3",text,2);
   valid(argv[1],"kf8-flows.azw3",text,2);
   valid(argv[1],"kf8-unsplit.azw3","Chapter one\nA bold passage.",1);
   valid(argv[1],"kf8-two-inserts.azw3","One.\nTwo.",1);
@@ -273,6 +273,9 @@ int main(int argc,char **argv) {
     if(status!=EXR_FORMAT) fprintf(stderr,"fixture %s returned %d\n",bad[i],status);
     CHECK(status==EXR_FORMAT && !doc && error.code==EXR_FORMAT && error.message[0]);
   }
+  guide_case(argv[1],"kf8-ordt-guide.azw3",1,0); guide_case(argv[1],"kf8-ordt-local.azw3",1,0);
+  guide_case(argv[1],"kf8-ordt-utf8-header.azw3",1,0); guide_case(argv[1],"kf8-hybrid-ordt.azw3",1,0);
+  navigation_case(argv[1],"kf8-ordt-navigation.azw3");
   svg_case(argv[1],"kf8-svg.azw3"); svg_case(argv[1],"kf8-hybrid-svg.azw3");
   guide_case(argv[1],"kf8-guide.azw3",1,0); guide_case(argv[1],"kf8-guide-only.azw3",0,0);
   guide_case(argv[1],"kf8-guide-offset.azw3",1,1); guide_case(argv[1],"kf8-hybrid-guide.azw3",1,0);
