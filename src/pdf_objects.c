@@ -740,3 +740,44 @@ unsupported:
 done:
   free(current.data); return result(f,e);
 }
+/* Content operands reuse the object lexer in a short-lived arena. */
+exr_status exr_pdf_content_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
+                               const exr_control *control,exr_error *error) {
+  exr_pdf_file *arena; parser p; uint32_t operands[64]; size_t count=0,operations=0; exr_status status;
+  if((!data && size) || !operation) return exr_fail(error,EXR_ARGUMENT,"Missing PDF content bytes or callback");
+  if(size>EXR_MAX_TEXT) return exr_fail(error,EXR_LIMIT,"PDF content exceeds 64 MiB");
+  arena=calloc(1,sizeof(*arena)); if(!arena) return exr_fail(error,EXR_MEMORY,"PDF operand arena allocation failed");
+  arena->data=data; arena->size=size; arena->root=EXR_PDF_NONE; p=(parser){arena,data,size,0};
+  status=exr_control_poll(control,EXR_STAGE_READ,0,size,&arena->error);
+  while(status==EXR_OK && skip(&p) && p.at<p.size) {
+    unsigned c=p.data[p.at]; parser probe=p;
+    if(c=='/' || c=='(' || c=='<' || c=='[' || c=='+' || c=='-' || c=='.' || (c>='0' && c<='9') ||
+       word(&probe,"true") || word(&probe,"false") || word(&probe,"null")) {
+      uint32_t id;
+      if(count==64) { failed(arena,EXR_LIMIT,"PDF content operand stack exceeds 64"); break; }
+      id=parse_value(&p,0); if(id==EXR_PDF_NONE) break;
+      operands[count++]=id;
+    } else {
+      char name[128]; size_t start=p.at,i;
+      while(p.at<p.size && !delimiter(p.data[p.at])) {
+        if(p.at-start==sizeof(name)-1) { failed(arena,EXR_LIMIT,"PDF content operator name exceeds 127 bytes"); break; }
+        p.at++;
+      }
+      if(arena->error.code!=EXR_OK) break;
+      if(p.at==start) { failed(arena,EXR_FORMAT,"Unexpected PDF content delimiter"); break; }
+      memcpy(name,p.data+start,p.at-start); name[p.at-start]=0;
+      if(++operations>1048576) { failed(arena,EXR_LIMIT,"PDF content operation budget exceeded"); break; }
+      for(i=0;i<arena->value_count;i++) if(arena->values[i].kind==EXR_PDF_REF) { failed(arena,EXR_FORMAT,"Indirect reference in PDF content operands"); break; }
+      if(arena->error.code!=EXR_OK) break;
+      if(!strcmp(name,"BI")) { failed(arena,EXR_FORMAT,"Inline PDF images are not implemented yet"); break; }
+      status=operation(context,arena,name,operands,count,&arena->error);
+      if(status!=EXR_OK && arena->error.code==EXR_OK) failed(arena,status,"PDF content callback failed");
+      if(status!=EXR_OK || arena->error.code!=EXR_OK) break;
+      count=0; arena->value_count=0; arena->strings.size=0;
+      if(!(operations&255)) status=exr_control_poll(control,EXR_STAGE_READ,p.at,size,&arena->error);
+    }
+  }
+  if(arena->error.code==EXR_OK && count) failed(arena,EXR_FORMAT,"PDF content ends with operands but no operator");
+  if(arena->error.code==EXR_OK) exr_control_poll(control,EXR_STAGE_READ,size,size,&arena->error);
+  status=result(arena,error); exr_pdf_close(arena); return status;
+}
