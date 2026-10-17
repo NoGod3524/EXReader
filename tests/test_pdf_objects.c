@@ -77,14 +77,22 @@ static void filter_case(const char *dir,const char *name,const void *expected,si
   exr_pdf_close(file); free(data);
 }
 static void filter_cases(const char *dir) {
-  const char *plain[]={"hex","a85","runlength","chain","chain-hex","empty-array","tiff8"};
-  const char *bad[]={"png-short","png-bad-tag","tiff-short","bad-bits","bad-colors","bad-columns","bad-predictor","bad-hex","hex-tail","hex-end","a85-overflow","a85-z","a85-one","a85-tail","a85-end","rl-short","rl-repeat","rl-end","rl-tail","params-short","params-shape","filter-value","filter-depth"};
+  const char *plain[]={"lzw","hex","a85","runlength","chain","chain-hex","empty-array","tiff8"};
+  const char *bad[]={"lzw-bad-code","lzw-first-reference","lzw-no-clear","lzw-no-end","lzw-tail","lzw-bad-early","png-short","png-bad-tag","tiff-short","bad-bits","bad-colors","bad-columns","bad-predictor","bad-hex","hex-tail","hex-end","a85-overflow","a85-z","a85-one","a85-tail","a85-end","rl-short","rl-repeat","rl-end","rl-tail","params-short","params-shape","filter-value","filter-depth"};
   const char text[]="BT /F1 12 Tf (Hello native PDF.) Tj ET\n"; size_t i; char repeated[sizeof(text)*5],runs[128];
   for(i=0;i<sizeof(plain)/sizeof(*plain);i++) filter_case(dir,plain[i],text,sizeof(text)-1);
   filter_case(dir,"hex-odd","A@",2); filter_case(dir,"empty-hex","",0);
   for(i=1;i<=4;i++) { char name[64]; snprintf(name,sizeof(name),"a85-tail%u",(unsigned)i); filter_case(dir,name,"\0\0\0\0",i); }
   memset(runs,'X',sizeof(runs)); filter_case(dir,"repeat",runs,sizeof(runs));
   for(i=0;i<5;i++) memcpy(repeated+i*(sizeof(text)-1),text,sizeof(text)-1);
+  filter_case(dir,"lzw-png",repeated,5*(sizeof(text)-1)); filter_case(dir,"lzw-empty","",0);
+  { char *large=malloc(20000); unsigned early; CHECK(large); memset(large,'A',1000); filter_case(dir,"lzw-special",large,1000);
+    for(early=0;early<=1;early++) { char name[64];
+      for(i=0;i<10000;i++) large[i]=(char)(i%256); snprintf(name,sizeof(name),"lzw-wide%u",early); filter_case(dir,name,large,10000);
+      for(i=0;i<20000;i++) large[i]=(char)(i%251); snprintf(name,sizeof(name),"lzw-dictionary%u",early); filter_case(dir,name,large,20000);
+      for(i=0;i<2000;i++) large[i]=(char)((i%1000)%256); snprintf(name,sizeof(name),"lzw-reset%u",early); filter_case(dir,name,large,2000);
+    } free(large);
+  }
   filter_case(dir,"png",repeated,5*(sizeof(text)-1)); filter_case(dir,"png-chain",repeated,5*(sizeof(text)-1));
   filter_case(dir,"tiff1","\xb4",1); filter_case(dir,"tiff2","\x4d\x10",2);
   filter_case(dir,"tiff4","\x10\xf1\x01",3); filter_case(dir,"tiff16","\0\1\0\0\xff\xff\0\1\0\0\0\1",12);

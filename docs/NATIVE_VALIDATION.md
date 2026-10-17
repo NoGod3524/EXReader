@@ -750,3 +750,14 @@ empty streams, chained encodings, exact packed TIFF samples, all PNG row filters
 prediction inside normal/hybrid cross-reference streams. Invalid terminators, tails, tuples,
 row lengths, tags, parameter shapes/counts and unsupported values fail atomically. Public PDF
 page reading remains unconnected. The 0.40 commit 2ac097a passed all six CI jobs.
+
+
+## 0.42 native PDF LZW
+
+A bounded C LZW decoder adds clear/end codes, 9..12-bit widths, both EarlyChange modes,
+full-table handling and the code-equals-next case. Its output uses the same filter pipeline,
+TIFF/PNG predictors, temporary-memory accounting and work budgets. Original fixtures cover
+literal-only width boundaries through a full dictionary, dictionary references, long repeated
+runs, table resets, empty data, PNG prediction and malformed codes/terminators/parameters.
+The fixture compressor uses string dictionaries and emitted-code counts, independently of
+the reader's prefix/suffix representation. PDF page reading is still unconnected.
