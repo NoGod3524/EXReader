@@ -38,4 +38,12 @@ typedef exr_status (*exr_pdf_operator_fn)(void *context,exr_pdf_file *operands,c
                                          const uint32_t *values,size_t count,exr_error *error);
 exr_status exr_pdf_content_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
                                const exr_control *control,exr_error *error);
+exr_status exr_pdf_syntax_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
+                              size_t maximum_operands,const exr_control *control,exr_error *error);
+typedef struct exr_pdf_cmap exr_pdf_cmap;
+typedef struct { uint32_t code; unsigned code_bytes; char utf8[256]; size_t size; } exr_pdf_mapping;
+exr_status exr_pdf_cmap_parse(const void *data,size_t size,const exr_control *control,exr_pdf_cmap **out,exr_error *error);
+void exr_pdf_cmap_free(exr_pdf_cmap *map);
+exr_status exr_pdf_cmap_next(const exr_pdf_cmap *map,const unsigned char *data,size_t size,size_t *at,
+                            exr_pdf_mapping *out,exr_error *error);
 #endif
