@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<stylesheet type="text/css">p {color:#224466} .large {font-size:24px} img {width:24px;height:24px}</stylesheet>
+<description><title-info><book-title>Book &amp; 图</book-title><author><nickname>Metadata only</nickname></author><coverpage><image l:href="#封面"/></coverpage></title-info></description>
+<body><section id="main"><title><p>Heading</p></title>
+<p>Normal <strong>bold</strong> and <emphasis>italic</emphasis>, <a type="note" l:href="#note">note</a>.</p>
+<image l:href="#%E5%B0%81%E9%9D%A2"/>
+<table><tr><th>A</th><th>B</th></tr><tr><td colspan="2">Merged</td></tr></table>
+<poem><stanza><v>Verse one</v><v>Verse two</v></stanza></poem><p><style name="large">Large</style></p>
+</section></body><body name="notes"><section id="note"><p>Footnote text.</p></section></body>
+<binary id="封面" content-type="image/png">iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAE0lEQVR4nGP4z8DwHwwZGP6DAQBJyAn3FGMynQAAAABJRU5ErkJggg==</binary></FictionBook>

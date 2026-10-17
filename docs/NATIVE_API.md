@@ -1,4 +1,4 @@
-# Native C API 0.18
+# Native C API 0.19
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -443,3 +443,11 @@ SQLite 数据库保存原文件 BLOB、封面 BLOB、元数据和 UTF-8 位置�
 没有元素名字的语义节点映射为 XHTML 段落、标题、表格等；有名字的自定义元素保留 XML 名字与命名空间。序列化不保留原 XML 前缀拼写、注释、DTD 或字节排版。任意模型不一定能表示为有效 XML：非法名称、字符、命名空间、重复资源路径、保留路径和缺失资源明确失败。`META-INF/encryption.xml` / `rights.xml` 存在时拒绝导出，避免丢失解密或字体混淆信息。原 OPF 的作者、语言、标识符等尚未进入通用文档元数据模型；当前包重新生成 title/und language/identifier/modified，不承诺原 OPF 字段无损。
 
 与读取限制一致：最多 10000 ZIP 成员，单成员 32 MiB，累计未压缩成员和压缩输出各限 128 MiB。此接口输出完整内存包；不是流式写入。它保留模型已有结构，不会恢复 TXT、旧 DOCX/RTF 等解析时已经丢失的信息。
+
+## FB2 结构解析（0.19）
+
+FB2 通过原生 XML 树解析，正文转换到通用语义节点和 XHTML 名字：章节/标题/段落、粗体/斜体、图片、表格及跨列属性、诗行、链接和脚注。`notes` / `comments` 正文中的 section 标记为 NOTE，并保留 ID 与脚注链接。多个 body 按原顺序进入同一分段；当前脚注正文也在阅读流中。未知扩展元素保留源 expanded name 和属性。
+
+binary 使用严格 base64 解码，保留编码资源原字节；重复 ID、非法 padding 和缺失的本地图片/封面引用报错。图片 URI 的 Unicode 百分号转义可用。封面资源标记 `cover-image`。description 只提取书名与封面，不进入正文；binary 编码不进入正文。顶层 stylesheet 进入 head/style，命名 style 转成 class；CSS 选择器匹配转换后的元素名。嵌套深度和节点/字符串预算遵循现有模型限制，单 binary 最多 32 MiB。
+
+已有图片、样式、表格、强调文字和链接可通过 0.18 的结构接口转 EPUB；它不会补齐当前排版器不支持的上/下标、删除线或诗歌专有排版。FB2 仍整文件构建 XML 树，未实现章内流式处理。

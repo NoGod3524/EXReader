@@ -86,6 +86,8 @@ exr_status exr_xml_tree(exr_document *doc, const void *data, size_t size, size_t
 exr_status exr_model_finish(exr_document *doc, exr_error *error);
 void exr_model_free(exr_document *doc);
 int exr_canonical_path(const char *path);
+exr_status exr_fb2(exr_document *doc, const void *data, size_t size, exr_error *error);
+int exr_uri_decode(const char *text, size_t size, char out[2048]);
 int exr_resolve_path(const char *base, const char *href, char out[2048]);
 typedef struct {
   float value;
