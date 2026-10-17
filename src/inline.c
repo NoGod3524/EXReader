@@ -233,9 +233,10 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     while (end < l->glyph_count) {
       const exr_glyph *v = &l->glyphs[end];
       uint32_t next_tag = exr_ot_script(v->codepoint);
-      int removed = (v->flags & EXR_GLYPH_HIDDEN) && v->bidi_level == UINT_MAX;
-      /* X9 removes controls from visual ordering, not from shaping context. */
-      if ((v->flags & EXR_GLYPH_RUBY_ITEM) || (!removed && (v->font_index != g->font_index || v->size != g->size ||
+      int context_only = (v->flags & EXR_GLYPH_HIDDEN) && (v->bidi_level == UINT_MAX || v->cluster_start == g->cluster_start);
+      /* Hidden selectors share their base's shaping run across inline styles;
+         X9 controls also remain available to the surrounding shaping context. */
+      if ((v->flags & EXR_GLYPH_RUBY_ITEM) || (!context_only && (v->font_index != g->font_index || v->size != g->size ||
           (v->flags & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL)) != orientation ||
           ((orientation & EXR_GLYPH_TRY_VERTICAL) && v->cluster_start != g->cluster_start) ||
           (((v->flags & (3|EXR_DECORATIONS)) != (g->flags & (3|EXR_DECORATIONS)) || v->color != g->color) &&

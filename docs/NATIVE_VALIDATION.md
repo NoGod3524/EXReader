@@ -2219,3 +2219,19 @@ Hidden unconsumed API records are excluded from this reference comparison;
 the C regression suite checks their zero advances and cluster ownership.
 All 100 local Windows suites pass. CBDT commit 3f8547d passes all six
 platform/sanitizer CI jobs. Version/ABI/schema remain 0.18.0/1/6.
+
+## Milestone 0.18 development: Unicode variation sequences
+
+The 1440-byte original uvs.ttf has cmap 14 without GSUB/GPOS. C tests cover
+default/non-default BMP and supplementary mappings, a missing nominal base
+with a valid variant, unsupported/leading/repeated selectors, vertical shape,
+font fallback preference and selectors split across differently sized spans.
+Whole layout and paged output have identical pixels and intact four-byte
+clusters. Font and document lifetimes remain independent of retained pages.
+An independent HarfBuzz comparison of 28 base/selector combinations agrees
+on visible glyph IDs and advances within 0.02 pixels at 100px, including
+unknown and Mongolian selectors. Cmap decoding reuses the existing FreeType
+C mapper; no new runtime dependency or public ABI is introduced.
+All 100 Windows suites and the installed C++17 SDK consumer pass. The full
+4004-image/3944-emoji independent reference still passes. The preceding
+explicit-component commit 504e463 passes all six platform/sanitizer CI jobs.

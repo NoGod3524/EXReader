@@ -280,12 +280,57 @@ static void session_and_pages(void) {
   }
   exr_font_free(font);
 }
+static void variation_sequences(const char *dir) {
+  const char *texts[]={"A\xef\xb8\x8f","A\xef\xb8\x8e","a\xef\xb8\x8f","\xe7\x94\xb2\xf3\xa0\x84\x80","\xe7\x94\xb2\xf3\xa0\x84\x81","\xe4\xb8\x80\xf3\xa0\x84\x80"};
+  const uint32_t ids[]={3,2,4,6,3,6}; const float advances[]={70,90,50,110,70,110};
+  exr_font_input input={0}; exr_font *font; exr_shape_options options=exr_shape_defaults(); exr_shaped_glyph *shaped=NULL; size_t i,n;
+  load(dir,"uvs.ttf",&input); font=create(&input,1); free((void *)input.data); options.font_size=100;
+  CHECK(exr_font_has_glyph(font,0,'A') && !exr_font_has_glyph(font,0,0xfe0f));
+  for(i=0;i<6;i++) {
+    OK(exr_shape(font,0,texts[i],strlen(texts[i]),&options,&shaped,&n,&error));
+    CHECK(n==1 && shaped[0].glyph==ids[i] && !shaped[0].start && shaped[0].end==strlen(texts[i]) && fabsf(shaped[0].advance_x-advances[i])<.02f && !(shaped[0].flags&(EXR_GLYPH_HIDDEN|EXR_GLYPH_MISSING))); exr_free(shaped);
+  }
+  OK(exr_shape(font,0,"A\xef\xb8\x8d",4,&options,&shaped,&n,&error));
+  CHECK(n==2 && shaped[0].glyph==2 && (shaped[1].flags&EXR_GLYPH_HIDDEN) && !shaped[1].advance_x && shaped[0].end==4 && shaped[1].end==4); exr_free(shaped);
+  OK(exr_shape(font,0,"A\xef\xb8\x8f\xef\xb8\x8f",7,&options,&shaped,&n,&error));
+  CHECK(n==2 && shaped[0].glyph==3 && (shaped[1].flags&EXR_GLYPH_HIDDEN) && !shaped[1].advance_x && shaped[0].end==7); exr_free(shaped);
+  OK(exr_shape(font,0,"\xef\xb8\x8f",3,&options,&shaped,&n,&error)); CHECK(n==1 && (shaped[0].flags&EXR_GLYPH_HIDDEN)); exr_free(shaped);
+  OK(exr_shape_vertical(font,0,texts[3],strlen(texts[3]),&options,&shaped,&n,&error)); CHECK(n==1 && shaped[0].glyph==6 && shaped[0].advance_y==-100); exr_free(shaped);
+  { const char *parts[]={"A","\xef\xb8\x8f"}; exr_document *doc=document(parts,2,0); exr_layout *lay=layout(doc,font); const exr_glyph *g=exr_layout_glyphs(lay,&n); exr_bitmap image={0};
+    CHECK(n==1 && g[0].glyph==3 && g[0].cluster_start==0 && g[0].cluster_end==4);
+    exr_document_free(doc); exr_font_free(font); OK(exr_render_page_color(lay,NULL,0,&image,&error)); exr_bitmap_free(&image); exr_layout_free(lay);
+  }
+  { exr_document *doc=NULL; exr_pager *pager=NULL; exr_layout *whole=NULL; exr_layout_config config=exr_layout_config_defaults(); size_t count;
+    char text[121]; for(i=0;i<30;i++) memcpy(text+i*4,texts[0],4); text[120]=0;
+    load(dir,"uvs.ttf",&input); font=create(&input,1); free((void *)input.data);
+    OK(exr_document_open_memory(EXR_TXT,text,120,&doc,&error)); config.page=(exr_layout_options){80,80,0,20,1,0}; config.user_css="p {margin:0}";
+    OK(exr_layout_create_ex(doc,font,&config,&whole,&error)); exr_layout_pages(whole,&count); CHECK(count>=2);
+    OK(exr_pager_create(doc,font,&config,&pager,&error));
+    for(i=0;i<count;i++) { exr_layout *part=NULL; exr_bitmap a={0},b={0}; const exr_glyph *g;
+      OK(exr_pager_next(pager,&part,&error)); CHECK(part); g=exr_layout_glyphs(part,&n); CHECK(n);
+      for(size_t j=0;j<n;j++) CHECK(g[j].glyph==3 && g[j].cluster_end-g[j].cluster_start==4);
+      OK(exr_render_page_color(whole,NULL,i,&a,&error)); OK(exr_render_page_color(part,NULL,0,&b,&error));
+      CHECK(a.width==b.width && a.height==b.height && !memcmp(a.pixels,b.pixels,(size_t)a.stride*a.height)); exr_bitmap_free(&a); exr_bitmap_free(&b); exr_layout_free(part);
+    }
+    { exr_layout *part=NULL; OK(exr_pager_next(pager,&part,&error)); CHECK(!part); }
+    exr_pager_free(pager); exr_layout_free(whole); exr_document_free(doc); exr_font_free(font);
+  }
+  { exr_font_input inputs[2]={sources[0],{0}}; const char *parts[]={"A\xef\xb8\x8f A\xef\xb8\x8d A"}; exr_document *doc; exr_layout *lay; const exr_glyph *g;
+    load(dir,"uvs.ttf",&inputs[1]); font=create(inputs,2); free((void *)inputs[1].data);
+    doc=document(parts,1,0); lay=layout(doc,font); g=exr_layout_glyphs(lay,&n);
+    CHECK(n==6 && g[0].font_index==1 && g[0].glyph==3 && g[2].font_index==0 && g[2].glyph==2 && (g[3].flags&EXR_GLYPH_HIDDEN) && !g[5].font_index);
+    exr_layout_free(lay); exr_document_free(doc);
+    parts[0]=texts[5]; doc=document(parts,1,0); lay=layout(doc,font); g=exr_layout_glyphs(lay,&n);
+    CHECK(n==1 && g[0].font_index==1 && g[0].glyph==6 && !(g[0].flags&EXR_GLYPH_MISSING));
+    exr_layout_free(lay); exr_document_free(doc); exr_font_free(font);
+  }
+}
 int main(int argc, char **argv) {
   size_t i;
   if (argc != 2) return 2;
   load(argv[1], "primary.ttf", &sources[0]); load(argv[1], "fallback.ttf", &sources[1]);
   load(argv[1], "marks.ttf", &sources[2]); load(argv[1], "collection.ttc", &sources[3]);
-  validation(argv[1]); selection(); rendering(); copied_inputs(); session_and_pages();
+  validation(argv[1]); selection(); rendering(); copied_inputs(); session_and_pages(); variation_sequences(argv[1]);
   for (i = 0; i < 4; i++) free((void *)sources[i].data);
   printf("%u font fallback checks passed\n", checks);
   return 0;

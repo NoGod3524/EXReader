@@ -79,8 +79,18 @@ exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
     candidates &= allowed;
     for (face = 0; face < f->font->count; face++)
       if ((candidates & (UINT32_C(1) << face)) &&
-          !exr_font_has_glyph(f->font, face, cp))
+          !exr_font_has_glyph(f->font, face, cp) && !(i+1<end && exr_text_variation_selector(l->glyphs[i+1].codepoint) &&
+          FT_Face_GetCharVariantIndex(f->font->faces[face].face,cp,l->glyphs[i+1].codepoint)))
         candidates &= ~(UINT32_C(1) << face);
+  }
+  /* Prefer an explicit UVS mapping among faces that cover the whole grapheme.
+     Unsupported selectors retain the ordinary scalar fallback order. */
+  for(i=start+1;i<end && candidates;i++) {
+    uint32_t supported=0,cp=l->glyphs[i].codepoint,base=l->glyphs[i-1].codepoint;
+    if(!exr_text_variation_selector(cp) || exr_text_variation_selector(base)) continue;
+    if(l->glyphs[i-1].bidi_level!=UINT_MAX && (l->glyphs[i-1].bidi_level&1)) base=exr_bidi_mirror(base);
+    for(face=0;face<f->font->count;face++) if((candidates&(UINT32_C(1)<<face)) && FT_Face_GetCharVariantIndex(f->font->faces[face].face,base,cp)) supported|=UINT32_C(1)<<face;
+    if(supported) candidates=supported;
   }
   count = exr_font_order(f->font, f->styles[l->glyphs[start].node].family,
                           f->styles[l->glyphs[start].node].flags,
