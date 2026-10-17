@@ -2277,5 +2277,9 @@ fixtures within one byte per RGB channel. Multi-input Type 0 and Order 3
 remain outside this batch; Type 2/3 are inherently single-input functions.
 All-registration commit 7e2b55c passes all six platform/sanitizer CI jobs.
 All 100 local Windows suites and the installed C++17 SDK consumer pass. The
-PDF-color suite has 1753 checks. The default release DLL is 4,500,361 bytes;
+PDF-color suite has 1753 checks. The default release DLL is 4,500,873 bytes;
 runtime dependencies, ABI epoch 1, schema 6 and version 0.18.0 stay unchanged.
+Code commit f3727ea passes all six jobs in CI run 39078721295: Windows,
+Linux and macOS native tests/installed SDKs, Android ARM64, Apple device/simulator
+builds and ASan/UBSan. Mobile builds do not establish device application/runtime
+validation.
