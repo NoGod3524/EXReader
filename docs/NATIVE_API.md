@@ -657,3 +657,12 @@ options 可为 NULL；非空时清零并设置 struct_size。fallback_font 是�
 通过 `exr_fixed_pages` 读取页目录，使用 `exr_fixed_render` 绘制任意一页，或 `exr_fixed_draw` 接收通用路径/图片/裁切回调自行绘制。一个页面解析/编解码/绘制失败后会丢弃该次惰性解析缓存；下一次访问重新建立读取器，其他页面仍可继续使用。页面几何、源字节和宿主字体保持有效。options.control 只用于打开过程；绘制和取消由各次 draw/render 参数控制。
 
 `examples/fixed.c` 展示打开、可选字体、页查询、渲染和 PNG 输出；安装 SDK 的示例工程也构建它。Windows 示例通过统一 UTF-8 参数入口支持中文文件名。PDF 文字搜索/选择/标注接入、Info/XMP 元数据以及尚未实现的复杂绘制特性继续补齐。
+
+
+## 通用固定页文字快照（0.67）
+
+`exr_fixed_text_create` 复制显式长度的 UTF-8 和 `exr_text_region` 数组；文字允许内嵌 NUL。每个 region 保存 UTF-8 字节区间、源页面坐标四边形以及竖排/不可见标志。区间可重叠，一个区间可有多个四边形，数组顺序由提供者定义。接口不假定 PDF、DOM 或特定阅读顺序。四个点的排列由提供者说明，不能从 region 推断精确字形墨迹。
+
+`exr_fixed_input.text` 是可选尾字段，旧版 required prefix 仍可创建文档。`exr_fixed_load_text` 按需调用提供者，返回独立拥有的快照；文档释放后仍能读取快照。用 string/regions getter 读取，最终调用 `exr_fixed_text_free`。没有提供者时返回 EXR_FORMAT；失败或取消不会返回部分结果，回调重入被拒绝。
+
+文字最多 64 MiB、region 最多 4M、总载荷最多 128 MiB。创建校验 UTF-8、区间边界、有限坐标和标志，并支持取消。此阶段内置 PDF 尚未连接文字提供者。

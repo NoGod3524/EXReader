@@ -2,7 +2,7 @@
 #include "internal.h"
 struct exr_fixed_document {
   char *title; exr_fixed_page *pages; size_t count,bytes;
-  exr_fixed_draw_fn draw; void *context; exr_context_release_fn release; unsigned busy;
+  exr_fixed_draw_fn draw; exr_fixed_text_fn text; void *context; exr_context_release_fn release; unsigned busy;
 };
 static exr_status copy_string(const char *source,size_t *bytes,const char **out,exr_error *e) {
   size_t n=0,at=0; uint32_t cp;
@@ -38,6 +38,10 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
   if(!input || input->struct_size<minimum || input->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed input size");
   for(i=sizeof(snapshot);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Unsupported fixed input extension");
   memcpy(&snapshot,input,input->struct_size<sizeof(snapshot) ? input->struct_size : sizeof(snapshot)); input=&snapshot;
+  if(input->struct_size>offsetof(exr_fixed_input,text) && input->struct_size<offsetof(exr_fixed_input,text)+sizeof(input->text)) {
+    for(i=offsetof(exr_fixed_input,text);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Truncated fixed text provider field");
+    snapshot.text=NULL;
+  }
   if(!input->draw || !input->pages || !input->page_count) return exr_fail(e,EXR_ARGUMENT,"Missing fixed page directory/provider");
   if(input->page_count>10000) return exr_fail(e,EXR_LIMIT,"Fixed document exceeds 10000 pages");
   d=calloc(1,sizeof(*d)); if(!d) return exr_fail(e,EXR_MEMORY,"Fixed document allocation failed");
@@ -59,12 +63,31 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
 done:
   free(ids);
   if(status!=EXR_OK) { exr_fixed_free(d); return status; }
-  d->draw=input->draw; d->context=input->context; d->release=input->release; d->bytes=sizeof(*d)+d->count*sizeof(*d->pages)+strings;
+  d->draw=input->draw; d->text=input->text; d->context=input->context; d->release=input->release; d->bytes=sizeof(*d)+d->count*sizeof(*d->pages)+strings;
   *out=d; return exr_fail(e,EXR_OK,"");
 }
 const char *exr_fixed_title(const exr_fixed_document *d) { return d ? d->title : ""; }
 const exr_fixed_page *exr_fixed_pages(const exr_fixed_document *d,size_t *count) { if(count) *count=d ? d->count : 0; return d ? d->pages : NULL; }
 size_t exr_fixed_memory_size(const exr_fixed_document *d) { return d ? d->bytes : 0; }
+static exr_status provider_end(exr_fixed_document *d,exr_status status,exr_error *local,exr_error *e) {
+  d->busy=0;
+  if(status!=EXR_OK) { local->code=status; if(!local->message[0]) exr_fail(local,status,"Fixed page provider failed"); if(e) *e=*local; return status; }
+  return exr_fail(e,EXR_OK,"");
+}
+exr_status exr_fixed_load_text(exr_fixed_document *d,size_t page,const exr_control *control,exr_fixed_text **out,exr_error *e) {
+  exr_fixed_text *text=NULL; exr_error local={0}; exr_status status;
+  if(out) *out=NULL;
+  if(!d || !out || page>=d->count || d->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant fixed text load");
+  if(!d->text) return exr_fail(e,EXR_FORMAT,"Fixed document has no text provider");
+  d->busy=1; status=exr_control_poll(control,EXR_STAGE_READ,0,1,&local);
+  if(status==EXR_OK) status=d->text(d->context,page,control,&text,&local);
+  if(status==EXR_OK && local.code!=EXR_OK) status=local.code;
+  if(status==EXR_OK && !text) status=exr_fail(&local,EXR_FORMAT,"Fixed text provider returned no snapshot");
+  if(status==EXR_OK) status=exr_control_poll(control,EXR_STAGE_READ,1,1,&local);
+  status=provider_end(d,status,&local,e);
+  if(status==EXR_OK) *out=text; else exr_fixed_text_free(text);
+  return status;
+}
 exr_status exr_fixed_draw(exr_fixed_document *d,size_t page,const double matrix[6],const exr_draw_sink *sink,const exr_control *control,exr_error *e) {
   const double identity[6]={1,0,0,1,0,0}; double transform[6]; exr_draw_sink consumer; exr_error local={0}; exr_status status; size_t i;
   if(!d || page>=d->count || !sink || (!sink->path && !sink->image && !sink->clip && !sink->state) || d->busy)
@@ -75,11 +98,7 @@ exr_status exr_fixed_draw(exr_fixed_document *d,size_t page,const double matrix[
   if(status==EXR_OK) status=d->draw(d->context,page,transform,&consumer,control,&local);
   if(status==EXR_OK && local.code!=EXR_OK) status=local.code;
   if(status==EXR_OK) status=exr_control_poll(control,EXR_STAGE_RENDER,1,1,&local);
-  d->busy=0;
-  if(status!=EXR_OK) {
-    local.code=status; if(!local.message[0]) exr_fail(&local,status,"Fixed page provider failed"); if(e) *e=local; return status;
-  }
-  return exr_fail(e,EXR_OK,"");
+  return provider_end(d,status,&local,e);
 }
 exr_status exr_fixed_render(exr_fixed_document *d,size_t page,double scale,const exr_fixed_render_options *options,exr_bitmap *out,exr_error *e) {
   exr_canvas_config config={0}; exr_canvas *canvas=NULL; exr_draw_sink sink={0}; exr_viewport view; exr_path_segment clip[5]={0}; exr_status status;
