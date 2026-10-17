@@ -73,28 +73,12 @@ invalid:
   return exr_fail(f->error,EXR_FORMAT,"Invalid FB2 base64 encoding");
 }
 static size_t node(fb2 *f,size_t parent,exr_node_kind kind,const char *tag,const char *value) {
-  exr_buffer expanded={0}; size_t at;
-  if(tag) {
-    if(!exr_append(&expanded,"http://www.w3.org/1999/xhtml|",sizeof("http://www.w3.org/1999/xhtml|")-1) ||
-        !exr_append(&expanded,tag,strlen(tag))) { free(expanded.data); f->status=EXR_LIMIT; return SIZE_MAX; }
-    tag=expanded.data;
-  }
-  at=exr_model_node(f->out,parent,0,kind,tag,value,value ? strlen(value) : 0);
-  free(expanded.data);
+  size_t at=exr_model_html(f->out,parent,0,kind,tag,value);
   if(at==SIZE_MAX) f->status=exr_fail(f->error,EXR_LIMIT,"FB2 model exceeds limit");
   return at;
 }
 static int attribute(fb2 *f,size_t at,const char *key,const char *value) {
-  exr_node *v=&f->out->nodes[at];
-  exr_attribute *a=(exr_attribute *)v->attributes; size_t i;
-  for(i=0;i<v->attribute_count;i++) if(!strcmp(a[i].name,key)) break;
-  if(i==v->attribute_count) {
-    if(i>=256) { f->status=EXR_LIMIT; return 0; }
-    exr_attribute *grown=realloc(a,(i+1)*sizeof(*a)); if(!grown) return 0;
-    a=grown; v->attributes=a; a[i].name=a[i].value=NULL; v->attribute_count++;
-    a[i].name=exr_model_copy(f->out,key,strlen(key)); if(!a[i].name) return 0;
-  } else free((void *)a[i].value);
-  a[i].value=exr_model_copy(f->out,value,strlen(value)); return a[i].value!=NULL;
+  return exr_model_attribute(f->out,at,key,value);
 }
 static int copy(fb2 *f,size_t parent,size_t source,int heading,int notes,unsigned depth) {
   const exr_node *v=&f->xml->nodes[source]; const char *tag=local(v),*mapped=tag,*href;

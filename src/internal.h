@@ -83,10 +83,19 @@ exr_status exr_xhtml(exr_document *doc, const void *data, size_t size, size_t re
                      int in_spine, int linear, exr_error *error);
 exr_status exr_xml_tree(exr_document *doc, const void *data, size_t size, size_t resource,
                          int in_spine, int linear, const char *root_name, exr_error *error);
+size_t exr_model_html(exr_document *doc, size_t parent, size_t chapter, exr_node_kind kind,
+                       const char *tag, const char *text);
+int exr_model_attribute(exr_document *doc, size_t node, const char *name, const char *value);
+exr_status exr_xml_memory_tree(const void *data, size_t size, const char *root,
+                                exr_document **out, exr_error *error);
+typedef exr_status (*exr_member_read_fn)(void *context, const char *path, int optional,
+                                          void **data, size_t *size, exr_error *error);
+exr_status exr_docx(exr_document *doc, exr_member_read_fn read, void *context, exr_error *error);
 exr_status exr_model_finish(exr_document *doc, exr_error *error);
 void exr_model_free(exr_document *doc);
 int exr_canonical_path(const char *path);
 exr_status exr_fb2(exr_document *doc, const void *data, size_t size, exr_error *error);
+int exr_uri_path(exr_buffer *buffer, const char *path);
 int exr_uri_decode(const char *text, size_t size, char out[2048]);
 int exr_resolve_path(const char *base, const char *href, char out[2048]);
 typedef struct {

@@ -140,19 +140,6 @@ static int chapter(writer *w, exr_buffer *b, size_t index) {
     return valid;
   }
 }
-static int path_uri(exr_buffer *b, const char *s) {
-  const unsigned char *p; char hex[4];
-  for (p = (const unsigned char *)s; *p; p++) {
-    if ((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') ||
-        (*p >= '0' && *p <= '9') || strchr("/-._~", *p)) {
-      if (!exr_append(b, p, 1)) return 0;
-    } else {
-      snprintf(hex, sizeof(hex), "%%%02X", *p);
-      if (!put(b, hex)) return 0;
-    }
-  }
-  return 1;
-}
 static int compare(const void *a, const void *b) { return strcmp(((const member *)a)->path, ((const member *)b)->path); }
 static size_t find(const member *m, size_t count, const char *path) {
   size_t lo = 0, hi = count;
@@ -192,7 +179,7 @@ static int nav_item(writer *w, exr_buffer *b, const exr_navigation *entries,
   if (entry->href && *entry->href) {
     if (!put(b,"<a href=\"")) return 0;
     if (exr_resolve_path(entry->base,entry->href,path)) {
-      if (!path_uri(b,path)) return 0;
+      if (!exr_uri_path(b,path)) return 0;
       fragment=strchr(entry->href,'#');
       if (fragment && !escape(w,b,fragment)) return 0;
     } else if (!escape(w,b,entry->href)) return 0;
@@ -337,7 +324,7 @@ exr_status exr_document_export_epub(const exr_document *d, const exr_control *co
     if (m->chapter==SIZE_MAX) free(bytes);
     bytes=NULL;
     snprintf(value,sizeof(value),"<item id=\"r%zu\" href=\"",i);
-    if (!put(&opf,value) || !path_uri(&opf,m->path) || !put(&opf,"\" media-type=\"") ||
+    if (!put(&opf,value) || !exr_uri_path(&opf,m->path) || !put(&opf,"\" media-type=\"") ||
         !escape(&w,&opf,m->media) || !put(&opf,"\" properties=\"") ||
         !escape(&w,&opf,m->properties) || !put(&opf,"\"/>")) goto failed;
     if (property(m->properties,"nav")) has_nav=1;
@@ -348,7 +335,7 @@ exr_status exr_document_export_epub(const exr_document *d, const exr_control *co
     else {
     if (!put(&nav,"<nav epub:type=\"toc\"><ol>")) goto failed;
     for (i=0;i<d->chapter_count;i++) if (d->chapters[i].in_spine) {
-      if (!put(&nav,"<li><a href=\"") || !path_uri(&nav,paths[i]) || !put(&nav,"\">") ||
+      if (!put(&nav,"<li><a href=\"") || !exr_uri_path(&nav,paths[i]) || !put(&nav,"\">") ||
           !escape(&w,&nav,d->chapters[i].id && *d->chapters[i].id ? d->chapters[i].id : paths[i]) ||
           !put(&nav,"</a></li>")) goto failed;
     }
