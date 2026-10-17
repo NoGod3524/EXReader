@@ -935,3 +935,14 @@ source 由宿主指定，应标识准确的目标文档或章节。SDK 的 UTF-8
 导入输出必须为空，结果用 text_annotation_free 释放。导出字符串用 exr_free 释放，size 不含末尾 NUL。整个 JSON 最多 1 MiB，source/id 最多 4096 UTF-8 字节；选文和上下文沿用 anchor 的 64 KiB/每侧 32 标量限制。支持标准 JSON 转义与 UTF-16 surrogate pair，拒绝非法 UTF-8、孤立 surrogate、嵌入 NUL、已识别字段重复、尾随垃圾及超过 32 层的附加元数据。附加元数据仅验证并跳过，不建立通用 JSON DOM，也不在重新导出时保留。
 
 这是明确的单标注交换子集，不是任意 JSON-LD 处理器。context 改写、数组 body/target/selector、HTML 正文、TextPositionSelector、target scope/state、selector refinedBy 等返回错误，避免忽略额外目标约束。固定页坐标、媒体时间、集合批处理与第三方选择器转换尚未接通。
+
+
+## 按需固定页元数据与 PDF Info（0.97）
+
+`exr_fixed_load_metadata` 返回独立的 UTF-8 key/value 数组，用 metadata_free 释放，可比文档活得更久。允许重复 key，不绑定书籍 ID、格式或 UI。最多 4096 项、单字符串 64 KiB、总字符串 8 MiB。空结果 count=0/entries=NULL；错误或取消清空输出。自定义 fixed_input 可追加 metadata 回调，返回借用数组和字符串（到下次提供者操作前有效），SDK 立即深拷贝。回调错误详情、重入限制和最终取消规则与文本加载一致；未提供回调返回 EXR_FORMAT。原始和带 text 的旧 input 前缀继续兼容 ABI epoch 1。
+
+PDF 提供者按需读取有效修订的 Info 字典：Title、Author、Subject 映射到 Dublin Core terms 的 title/creator/description；Keywords、Producer 使用 Adobe PDF 1.3 命名空间；Creator、CreationDate、ModDate 使用 XMP 1.0 的 CreatorTool/CreateDate/ModifyDate。日期保留原 PDF 字符串，不转换为 ISO 时间，不据此推断时区。未设置或 null 项不返回，空字符串值保留。
+
+支持 PDFDocEncoding、带 BOM 的 UTF-16BE/UTF-8、间接字符串、classic/xref-stream 及增量修订中的 Info 继承；最新显式 null 不恢复旧字典。非法编码、非文本值和超限数据返回错误，失败后仍可绘制页面或重试元数据。解析只在请求时进行，不为每页常驻复制元数据。
+
+书库 PDF 导入取得 Info 标题/作者，调用方非空 title 优先；缺少标题仍回退 Untitled。导入时遇到损坏的元数据不会产生部分书籍记录；已有精确去重结果继续保留原用户元数据。fixed_title 的文件名/宿主标题规则保持独立，原文件字节不改写。XMP XML、额外自定义 Info 项与元数据回写尚未接通。

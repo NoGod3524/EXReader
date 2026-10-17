@@ -1728,3 +1728,17 @@ trailing data, nesting and output byte budgets. All 73 local Windows suites pass
 All eleven C consumers build against the independently installed 0.96 SDK; the
 anchor host exchanges JSON before relocating a quote after an insertion, and the
 compat host verifies ABI epoch 1. The 0.95 a0a50a1 CI passed all six jobs.
+
+
+## 0.97 Lazy generic fixed metadata and PDF Info
+
+An owned generic UTF-8 key/value snapshot preserves duplicate keys and survives
+provider/document release. Tests check legacy input prefixes, truncated callbacks,
+reentry, provider error detail, invalid counts/pointers/UTF-8, cancellation and the
+aggregate 8 MiB budget. Original in-memory PDFs exercise indirect Info strings,
+PDFDocEncoding special characters, UTF-16BE/surrogates, BOM UTF-8, explicit null,
+xref streams and inherited/replaced/removed Info across incremental revisions.
+Malformed metadata can fail repeatedly while page rendering still succeeds; field
+byte limits and null indirect references are covered. PDF library import obtains
+title/author, preserves host title precedence and creates no row on metadata
+failure. All 74 local Windows suites pass. The 0.96 17a826d CI passed all six jobs.

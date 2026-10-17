@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.96.0"
+#define EXR_VERSION "0.97.0"
 #define EXR_ABI_VERSION 1u
 typedef enum {
   EXR_OK = 0,
@@ -552,6 +552,11 @@ typedef exr_status (*exr_fixed_draw_fn)(void *context,size_t page,const double m
                                          const exr_draw_sink *sink,const exr_control *control,exr_error *error);
 typedef exr_status (*exr_fixed_text_fn)(void *context,size_t page,const exr_control *control,
                                          exr_fixed_text **out,exr_error *error);
+/* UTF-8 key/value metadata, independent of a file format. Provider values are
+   borrowed until its next operation; load_metadata returns owned copies. */
+typedef struct { const char *key,*value; } exr_metadata_entry;
+typedef exr_status (*exr_fixed_metadata_fn)(void *context,const exr_control *control,
+  const exr_metadata_entry **entries,size_t *count,exr_error *error);
 typedef struct {
   size_t struct_size;
   const char *title;
@@ -560,6 +565,7 @@ typedef struct {
   void *context;
   exr_context_release_fn release;
   exr_fixed_text_fn text; /* Optional; appended after the original required prefix. */
+  exr_fixed_metadata_fn metadata; /* Optional, lazy document metadata. */
 } exr_fixed_input;
 typedef struct {
   uint32_t channels,background; /* channels 0 -> RGBA */
@@ -570,6 +576,9 @@ typedef struct {
    Empty IDs become page-1, page-2, ...; effective IDs must be unique. */
 EXR_API exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **out,exr_error *error);
 EXR_API void exr_fixed_free(exr_fixed_document *document);
+EXR_API exr_status exr_fixed_load_metadata(exr_fixed_document *document,const exr_control *control,
+  exr_metadata_entry **entries,size_t *count,exr_error *error);
+EXR_API void exr_metadata_free(exr_metadata_entry *entries,size_t count);
 EXR_API const char *exr_fixed_title(const exr_fixed_document *document);
 EXR_API const exr_fixed_page *exr_fixed_pages(const exr_fixed_document *document,size_t *count);
 /* Owned directory/metadata bytes, excluding the provider's own payload. */
