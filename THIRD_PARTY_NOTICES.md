@@ -64,3 +64,9 @@ HUFF/CDIC field semantics were checked against the GPLv3 KindleUnpack project's
 [`lib/mobi_uncompress.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_uncompress.py),
 by the KindleUnpack developers. EXReader implements the decoding, bounded dictionary cache,
 cycle detection and record handling in C in `src/huff.c` and `src/formats.c`, under GPL-3.0-only.
+
+
+KF8 INDX/TAGX, FDST and skeleton/fragment semantics were checked against
+[`lib/mobi_index.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_index.py)
+and [`lib/mobi_k8proc.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_k8proc.py)
+of the same GPLv3 project. EXReader's bounded C reconstruction is in `src/kf8.c`.
