@@ -665,3 +665,17 @@ SKEL tuples exposed a compatibility gap and are covered by the original generate
 This check measures format fidelity, not a controlled performance baseline.
 
 The 0.34 commit 46750e0 passed all six platform and sanitizer CI jobs.
+
+
+## 0.36 MOBI/KF8 metadata
+
+Tests cover UTF-8 updated titles, Windows-1252 full names, NUL suffix padding, repeated/empty
+updated values, unreferenced and reused covers, legacy MOBI and modern/legacy hybrid fallback,
+modern metadata overrides and an explicit absent cover. Titles and cover image data remain
+usable after EPUB conversion; an in-memory library import adopts the parsed title. Invalid
+header title ranges/lengths, UTF-8/internal NUL, oversized titles, cover indexes/types/lengths
+and conflicting duplicate cover declarations fail atomically.
+
+The external Gutenberg file also opens and passes text/navigation/nonchapter-asset round-trip
+with its newly parsed title and cover metadata. Its EPUB output byte size changes as metadata
+is now included. The 0.35 commit fdcc9e4 passed all six CI jobs.

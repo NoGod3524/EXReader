@@ -258,8 +258,36 @@ static void svg_case(const char *dir,const char *name) {
   exr_layout_free(a); exr_layout_free(b); CHECK(state.decoded==2 && state.released==2);
   exr_font_free(font); exr_document_free(doc); exr_document_free(copy);
 }
+static void metadata_check(exr_document *doc,const char *title,const char *cover_type) {
+  const exr_resource *resources; size_t n,i,covers=0;
+  CHECK(!strcmp(exr_document_title(doc),title)); resources=exr_document_resources(doc,&n);
+  for(i=0;i<n;i++) if(!strcmp(resources[i].properties,"cover-image")) {
+    void *data=NULL; size_t size; exr_bitmap bitmap={0}; covers++;
+    CHECK(cover_type && !strcmp(resources[i].media_type,cover_type));
+    OK(exr_document_resource(doc,i,&data,&size,&error)); OK(exr_image_decode(data,size,&bitmap,&error));
+    CHECK(bitmap.width>0 && bitmap.height>0); exr_bitmap_free(&bitmap); exr_free(data);
+  }
+  CHECK(covers==(cover_type ? 1u : 0u));
+}
+static void metadata_case(const char *dir,const char *name,const char *title,const char *cover_type) {
+  char path[4096]; exr_document *doc=NULL,*copy=NULL; void *data=NULL; size_t size;
+  snprintf(path,sizeof(path),"%s/%s",dir,name); OK(exr_document_open(path,&doc,&error)); metadata_check(doc,title,cover_type);
+  OK(exr_document_export_epub(doc,NULL,&data,&size,&error));
+  OK(exr_document_open_memory(EXR_EPUB,data,size,&copy,&error)); exr_free(data); metadata_check(copy,title,cover_type);
+  CHECK(!strcmp(exr_document_text(doc,NULL),exr_document_text(copy,NULL)));
+  exr_document_free(doc); exr_document_free(copy);
+  if(!strcmp(name,"kf8-metadata.azw3")) {
+    FILE *file=fopen(path,"rb"); long length; exr_library *library=NULL; exr_book *books=NULL; size_t n; int64_t id;
+    CHECK(file && !fseek(file,0,SEEK_END)); length=ftell(file); CHECK(length>0); rewind(file);
+    data=malloc((size_t)length); CHECK(data && fread(data,1,(size_t)length,file)==(size_t)length); fclose(file);
+    OK(exr_library_open(":memory:",&library,&error));
+    OK(exr_library_import(library,EXR_MOBI,data,(size_t)length,NULL,&id,&error)); free(data);
+    OK(exr_library_books(library,"",&books,&n,&error)); CHECK(n==1 && !strcmp(books[0].title,title));
+    exr_books_free(books,n); exr_library_close(library);
+  }
+}
 int main(int argc,char **argv) {
-  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index","boundary-pointer","boundary-text","boundary-marker","boundary-version","boundary-encrypted","boundary-resource","exth-signature","exth-length","exth-count","exth-entry","exth-entry-size","exth-duplicate","exth-fallback-encoding","exth-fallback-compression","guide-label","guide-target","guide-kind","svg-xml","svg-root","svg-entity","svg-reference","svg-namespace","svg-fragment","ordt-count","ordt-entries","ordt-pointer","ordt-signature","ordt-value","ordt-overlap","ordt-label","ordt-missing","ordt-local-conflict","ordt-late-label","skel-repeats"};
+  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index","boundary-pointer","boundary-text","boundary-marker","boundary-version","boundary-encrypted","boundary-resource","exth-signature","exth-length","exth-count","exth-entry","exth-entry-size","exth-duplicate","exth-fallback-encoding","exth-fallback-compression","guide-label","guide-target","guide-kind","svg-xml","svg-root","svg-entity","svg-reference","svg-namespace","svg-fragment","ordt-count","ordt-entries","ordt-pointer","ordt-signature","ordt-value","ordt-overlap","ordt-label","ordt-missing","ordt-local-conflict","ordt-late-label","skel-repeats","cover-range","cover-font","cover-duplicate","cover-length","title-pointer","title-header","title-length"};
   const char *text="Chapter one\nA bold passage.\nChapter two\nSecond passage."; size_t i;
   CHECK(argc==2);
   valid(argv[1],"kf8-skel-repeats.azw3",text,2); valid(argv[1],"kf8-ordt-basic.azw3",text,2); valid(argv[1],"kf8-hybrid.azw3",text,2); valid(argv[1],"kf8-basic.azw3",text,2); valid(argv[1],"kf8-multirecord.azw3",text,2); valid(argv[1],"kf8-multicontrol.azw3",text,2);
@@ -273,6 +301,14 @@ int main(int argc,char **argv) {
     if(status!=EXR_FORMAT) fprintf(stderr,"fixture %s returned %d\n",bad[i],status);
     CHECK(status==EXR_FORMAT && !doc && error.code==EXR_FORMAT && error.message[0]);
   }
+  metadata_case(argv[1],"kf8-metadata.azw3","Book & \xe7\x94\xb2","image/png");
+  metadata_case(argv[1],"kf8-metadata-unreferenced.azw3","Unreferenced cover","image/png");
+  metadata_case(argv[1],"kf8-metadata-legacy.azw3","Caf\xc3\xa9","image/png");
+  metadata_case(argv[1],"kf8-metadata-hybrid-fallback.azw3","Old Caf\xc3\xa9","image/png");
+  metadata_case(argv[1],"kf8-metadata-hybrid-override.azw3","Modern \xe7\x94\xb2","image/jpeg");
+  metadata_case(argv[1],"kf8-metadata-hybrid-no-cover.azw3","Old Caf\xc3\xa9",NULL);
+  metadata_case(argv[1],"kf8-metadata-last-title.azw3","Last","image/png");
+  metadata_case(argv[1],"kf8-metadata-empty-title.azw3","Fallback",NULL);
   guide_case(argv[1],"kf8-ordt-guide.azw3",1,0); guide_case(argv[1],"kf8-ordt-local.azw3",1,0);
   guide_case(argv[1],"kf8-ordt-utf8-header.azw3",1,0); guide_case(argv[1],"kf8-hybrid-ordt.azw3",1,0);
   navigation_case(argv[1],"kf8-ordt-navigation.azw3");
@@ -293,6 +329,10 @@ int main(int argc,char **argv) {
     snprintf(path,sizeof(path),"%s/kf8-guide-budget.azw3",argv[1]); OK(exr_document_open(path,&doc,&error));
     OK(exr_document_navigation(doc,&nav,&n,&error)); CHECK(n==10000); exr_document_free(doc); exr_navigation_free(nav,n);
     snprintf(path,sizeof(path),"%s/kf8-limit-guide.azw3",argv[1]); CHECK(exr_document_open(path,&doc,&error)==EXR_LIMIT && !doc);
+  }
+  { const char *names[]={"invalid","nul"}; size_t k;
+    for(k=0;k<2;k++) { char path[4096]; exr_document *doc=NULL; snprintf(path,sizeof(path),"%s/kf8-encoding-title-%s.azw3",argv[1],names[k]); CHECK(exr_document_open(path,&doc,&error)==EXR_ENCODING && !doc); }
+    { char path[4096]; exr_document *doc=NULL; snprintf(path,sizeof(path),"%s/kf8-limit-title.azw3",argv[1]); CHECK(exr_document_open(path,&doc,&error)==EXR_LIMIT && !doc); }
   }
   printf("%u KF8 checks passed\n",checks); return 0;
 }

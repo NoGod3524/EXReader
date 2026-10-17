@@ -103,6 +103,9 @@ typedef struct { const unsigned char *data; size_t size; } exr_mobi_record;
 exr_status exr_kf8(exr_document *doc, const exr_mobi_record *records, size_t count,
                     const exr_mobi_record *shared, size_t shared_count,
                     const char *text, size_t size, exr_error *error);
+exr_status exr_mobi_cover(exr_document *doc, const exr_mobi_record *records, size_t count,
+                           const exr_mobi_record *shared, size_t shared_count,
+                           uint32_t cover, exr_error *error);
 typedef struct exr_mobi_huff exr_mobi_huff;
 exr_status exr_mobi_huff_open(const exr_mobi_record *records, size_t count,
                                exr_mobi_huff **out, exr_error *error);
