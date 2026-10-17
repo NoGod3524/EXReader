@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.69.0"
+#define EXR_VERSION "0.70.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -435,6 +435,19 @@ EXR_API exr_status exr_fixed_text_select(const exr_fixed_text *text,size_t start
    provider region. A miss returns SIZE_MAX; exclude_flags filters region flags. */
 EXR_API exr_status exr_fixed_text_hit(const exr_fixed_text *text,double x,double y,double max_distance,unsigned exclude_flags,
                                        const exr_control *control,size_t *region,exr_error *error);
+
+/* Owned from create, or explicit host inputs. Selector byte lengths preserve NUL;
+   page_id is a nonempty UTF-8 string. Old offsets never override ambiguity. */
+typedef struct {
+  size_t start,end;
+  char *page_id,*exact,*prefix,*suffix;
+  size_t exact_size,prefix_size,suffix_size;
+} exr_fixed_anchor;
+EXR_API exr_status exr_fixed_anchor_create(const char *page_id,const exr_fixed_text *text,size_t start,size_t end,
+                                            exr_fixed_anchor *out,exr_error *error);
+EXR_API void exr_fixed_anchor_free(exr_fixed_anchor *anchor);
+EXR_API exr_status exr_fixed_anchor_resolve(const char *page_id,const exr_fixed_text *text,const exr_fixed_anchor *anchor,
+                                             const exr_control *control,exr_anchor_match *match,exr_error *error);
 
 typedef struct {
   const char *id,*label;

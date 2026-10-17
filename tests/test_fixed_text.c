@@ -112,4 +112,53 @@ static void queries(void) {
   OK(exr_fixed_text_find(t,"x",1,0,NULL,&a,&b,&error)); CHECK(a==SIZE_MAX && b==SIZE_MAX);
   OK(exr_fixed_text_hit(t,0,0,0,0,NULL,&hit,&error)); CHECK(hit==SIZE_MAX); exr_fixed_text_free(t);
 }
-int main(void) { snapshots(); loaders(); queries(); printf("%u generic fixed text checks passed\n",checks); return 0; }
+static exr_fixed_text *snapshot(const char *bytes,size_t size) {
+  exr_fixed_text *t=NULL; OK(exr_fixed_text_create(bytes,size,NULL,0,NULL,&t,&error)); return t;
+}
+static void fixed_anchors(void) {
+  const char source[]="prefix\0target\0suffix",moved[]="new prefix\0target\0suffix more";
+  exr_fixed_text *t=snapshot(source,sizeof(source)-1),*next=snapshot(moved,sizeof(moved)-1);
+  exr_fixed_anchor a={0},point={0},bad; exr_anchor_match match; exr_control control={0}; int stopped=1;
+  OK(exr_fixed_anchor_create("page-1",t,6,14,&a,&error)); CHECK(a.exact_size==8 && a.exact[0]==0 && a.exact[7]==0 && a.prefix_size==6 && a.suffix_size==6);
+  OK(exr_fixed_anchor_create("page-1",t,7,7,&point,&error)); CHECK(!point.exact_size && point.exact);
+  exr_fixed_text_free(t); /* All selector bytes are owned. */
+  OK(exr_fixed_anchor_resolve("page-1",next,&a,NULL,&match,&error)); CHECK(match.state==EXR_ANCHOR_FOUND && match.start==10 && match.end==18);
+  OK(exr_fixed_anchor_resolve("page-1",next,&point,NULL,&match,&error)); CHECK(match.state==EXR_ANCHOR_FOUND && match.start==11 && match.end==11);
+  OK(exr_fixed_anchor_resolve("page-2",next,&a,NULL,&match,&error)); CHECK(match.state==EXR_ANCHOR_MISSING && match.start==SIZE_MAX && match.end==SIZE_MAX);
+  bad=a; bad.exact_size--; CHECK(exr_fixed_anchor_resolve("page-1",next,&bad,NULL,&match,&error)==EXR_ARGUMENT && match.start==SIZE_MAX);
+  bad=a; bad.prefix_size=129; CHECK(exr_fixed_anchor_resolve("page-1",next,&bad,NULL,&match,&error)==EXR_LIMIT);
+  bad=a; bad.prefix=NULL; CHECK(exr_fixed_anchor_resolve("page-1",next,&bad,NULL,&match,&error)==EXR_ARGUMENT);
+  bad=a; bad.prefix="\xc0"; bad.prefix_size=1; CHECK(exr_fixed_anchor_resolve("page-1",next,&bad,NULL,&match,&error)==EXR_ENCODING);
+  bad=a; bad.prefix="012345678901234567890123456789012"; bad.prefix_size=33; CHECK(exr_fixed_anchor_resolve("page-1",next,&bad,NULL,&match,&error)==EXR_LIMIT);
+  control.cancelled=cancel; control.context=&stopped;
+  CHECK(exr_fixed_anchor_resolve("page-1",next,&a,&control,&match,&error)==EXR_CANCELLED && match.start==SIZE_MAX);
+  exr_fixed_anchor_free(&a); exr_fixed_anchor_free(&point); exr_fixed_text_free(next);
+  { char original[81],twice[163]; unsigned calls=0;
+    memset(original,'a',40); original[40]='q'; memset(original+41,'b',40);
+    memcpy(twice,original,81); twice[81]='#'; memcpy(twice+82,original,81);
+    t=snapshot(original,81); next=snapshot(twice,163); OK(exr_fixed_anchor_create("p",t,40,41,&a,&error));
+    OK(exr_fixed_anchor_resolve("p",next,&a,NULL,&match,&error)); CHECK(match.state==EXR_ANCHOR_AMBIGUOUS && match.start==SIZE_MAX && match.end==SIZE_MAX);
+    control.cancelled=later; control.context=&calls;
+    /* Initial poll, then stream poll; cancellation can also be triggered on longer scans. */
+    OK(exr_fixed_anchor_resolve("p",next,&a,&control,&match,&error)); CHECK(match.state==EXR_ANCHOR_AMBIGUOUS);
+    exr_fixed_text_free(t); exr_fixed_text_free(next); exr_fixed_anchor_free(&a);
+  }
+  { char utf8[321]; size_t i;
+    for(i=0;i<40;i++) { memcpy(utf8+4*i,"\xf0\x9f\x98\x80",4); memcpy(utf8+161+4*i,"\xf0\x9f\x98\x80",4); } utf8[160]='x';
+    t=snapshot(utf8,sizeof(utf8)); OK(exr_fixed_anchor_create("p",t,160,161,&a,&error)); CHECK(a.prefix_size==128 && a.suffix_size==128);
+    OK(exr_fixed_anchor_resolve("p",t,&a,NULL,&match,&error)); CHECK(match.state==EXR_ANCHOR_FOUND && match.start==160);
+    CHECK(exr_fixed_anchor_create("p",t,1,4,&point,&error)==EXR_ARGUMENT && !point.exact);
+    exr_fixed_anchor_free(&a); exr_fixed_text_free(t);
+  }
+  { char *large=malloc(65537); unsigned calls=0; CHECK(large); memset(large,'a',65537); t=snapshot(large,65537);
+    CHECK(exr_fixed_anchor_create("p",t,0,65537,&point,&error)==EXR_LIMIT && !point.exact);
+    OK(exr_fixed_anchor_create("p",t,0,65536,&a,&error)); control.cancelled=later; control.context=&calls;
+    CHECK(exr_fixed_anchor_resolve("p",t,&a,&control,&match,&error)==EXR_CANCELLED && match.start==SIZE_MAX);
+    exr_fixed_anchor_free(&a); exr_fixed_text_free(t); free(large);
+  }
+  t=snapshot(NULL,0); OK(exr_fixed_anchor_create("p",t,0,0,&a,&error));
+  OK(exr_fixed_anchor_resolve("p",t,&a,NULL,&match,&error)); CHECK(match.state==EXR_ANCHOR_FOUND && !match.start && !match.end);
+  CHECK(exr_fixed_anchor_create("",t,0,0,&point,&error)==EXR_ARGUMENT && !point.page_id);
+  exr_fixed_anchor_free(&a); exr_fixed_text_free(t); exr_fixed_anchor_free(NULL);
+}
+int main(void) { snapshots(); loaders(); queries(); fixed_anchors(); printf("%u generic fixed text checks passed\n",checks); return 0; }

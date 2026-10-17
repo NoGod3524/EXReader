@@ -1329,3 +1329,17 @@ exact edges, tie order, distance limits, invisible filtering, skewed quads where
 bounding-box hits would be wrong, and zero-area line cells. Public PDF tests
 search a semantic ligature, select its one full quad and hit transformed text.
 All 53 local suites pass. The 0.68 CI run passed all six jobs.
+
+
+## 0.70 Page-scoped stable fixed text anchors
+
+The existing quote/context matcher now consumes a length-delimited text view,
+shared by reflow and fixed providers. New public selectors own page IDs and
+explicit-length UTF-8 quotes/contexts, including NUL. Tests capture across NUL,
+free the source snapshot, relocate ranges and point bookmarks, enforce page
+scope, preserve ambiguity despite a matching old offset, bound contexts at 32
+Unicode scalars, reject malformed host selectors, recover empty-page bookmarks
+and cancel both before and during search. Public PDF ligature anchors resolve
+back to the original range. Existing reflow anchor/library tests remain covered.
+All 53 local suites pass; the added long-search cancellation case also passes.
+The 0.69 dacd144 CI run passed all six jobs.

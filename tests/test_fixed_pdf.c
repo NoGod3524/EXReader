@@ -82,6 +82,10 @@ static void semantic_text(const char *dir) {
     OK(exr_fixed_text_find(t,"fi",2,0,NULL,&start,&end,&error)); CHECK(start==1 && end==3);
     OK(exr_fixed_text_select(t,start,end,NULL,&selected,&selected_count,&error)); CHECK(selected_count==1 && selected[0].start==1 && selected[0].end==3); exr_free(selected);
     OK(exr_fixed_text_hit(t,211,630,0,EXR_REGION_INVISIBLE,NULL,&hit,&error)); CHECK(hit==0);
+    { exr_fixed_anchor anchor={0}; exr_anchor_match match;
+      OK(exr_fixed_anchor_create("page-1",t,start,end,&anchor,&error));
+      OK(exr_fixed_anchor_resolve("page-1",t,&anchor,NULL,&match,&error)); CHECK(match.state==EXR_ANCHOR_FOUND && match.start==1 && match.end==3); exr_fixed_anchor_free(&anchor);
+    }
   }
   exr_fixed_text_free(t);
   /* Semantic extraction works without host or even usable embedded outlines. */

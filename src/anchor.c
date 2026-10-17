@@ -5,9 +5,10 @@
 #define ANCHOR_CONTEXT_BYTES ((size_t)128)
 #define ANCHOR_CONTEXT_SCALARS 32
 
-static int boundary(const exr_document *d, size_t at) {
-  return at <= d->size && (at == d->size || ((unsigned char)d->text[at] & 0xc0) != 0x80);
+static int text_boundary(const char *text,size_t size,size_t at) {
+  return at<=size && (at==size || ((unsigned char)text[at]&0xc0)!=0x80);
 }
+static int boundary(const exr_document *d,size_t at) { return text_boundary(d->text,d->size,at); }
 
 static exr_status selector_string(const char *s, size_t limit, size_t scalars, exr_error *e) {
   size_t n = 0, at = 0, count = 0;
@@ -115,28 +116,29 @@ exr_status exr_anchor_create(const exr_document *d, size_t start, size_t end,
 }
 
 typedef struct {
-  const exr_document *doc;
-  const exr_anchor *anchor;
+  const char *text,*exact,*prefix_text,*suffix_text;
+  size_t size;
+  const exr_control *control;
   size_t lo, hi, quote, prefix, suffix, best_start;
   unsigned best_score;
   int tied;
 } anchor_search;
 
 static void candidate(anchor_search *s, size_t at) {
-  const char *text = s->doc->text;
+  const char *text = s->text;
   size_t end;
   unsigned score = 0;
   if (at < s->lo || at > s->hi || s->quote > s->hi - at)
     return;
   end = at + s->quote;
-  if (!boundary(s->doc, at) || !boundary(s->doc, end))
+  if (!text_boundary(s->text,s->size,at) || !text_boundary(s->text,s->size,end))
     return;
   if (s->prefix ? s->prefix <= at - s->lo &&
-                     !memcmp(text + at - s->prefix, s->anchor->prefix, s->prefix)
+                     !memcmp(text + at - s->prefix, s->prefix_text, s->prefix)
                 : at == s->lo)
     score++;
   if (s->suffix ? s->suffix <= s->hi - end &&
-                     !memcmp(text + end, s->anchor->suffix, s->suffix)
+                     !memcmp(text + end, s->suffix_text, s->suffix)
                 : end == s->hi)
     score++;
   if (!score)
@@ -151,7 +153,7 @@ static void candidate(anchor_search *s, size_t at) {
 
 static exr_status search(anchor_search *s, const char *pattern, size_t n, int after,
                            exr_error *e) {
-  const char *text = s->doc->text;
+  const char *text = s->text;
   size_t i, j, *failure;
   if (n > s->hi - s->lo)
     return EXR_OK;
@@ -160,6 +162,7 @@ static exr_status search(anchor_search *s, const char *pattern, size_t n, int af
     return exr_fail(e, EXR_MEMORY, "Anchor search allocation failed");
   /* KMP keeps long/repetitive quote searches linear in the document size. */
   for (i = 1, j = 0; i < n; i++) {
+    if(!(i&4095) && exr_control_cancel(s->control,e)!=EXR_OK) { free(failure); return EXR_CANCELLED; }
     while (j && pattern[i] != pattern[j])
       j = failure[j - 1];
     if (pattern[i] == pattern[j])
@@ -167,6 +170,7 @@ static exr_status search(anchor_search *s, const char *pattern, size_t n, int af
     failure[i] = j;
   }
   for (i = s->lo, j = 0; i < s->hi; i++) {
+    if(!((i-s->lo)&4095) && exr_control_cancel(s->control,e)!=EXR_OK) { free(failure); return EXR_CANCELLED; }
     while (j && text[i] != pattern[j])
       j = failure[j - 1];
     if (text[i] == pattern[j])
@@ -183,12 +187,12 @@ static exr_status search(anchor_search *s, const char *pattern, size_t n, int af
 static exr_status search_scope(anchor_search *s, exr_error *e) {
   exr_status status;
   if (s->quote)
-    return search(s, s->anchor->exact, s->quote, 0, e);
+    return search(s, s->exact, s->quote, 0, e);
   /* A point can be recovered from either adjacent context; equal candidates
      from the two searches are counted once. */
-  if (s->prefix && (status = search(s, s->anchor->prefix, s->prefix, 1, e)) != EXR_OK)
+  if (s->prefix && (status = search(s, s->prefix_text, s->prefix, 1, e)) != EXR_OK)
     return status;
-  if (s->suffix && (status = search(s, s->anchor->suffix, s->suffix, 0, e)) != EXR_OK)
+  if (s->suffix && (status = search(s, s->suffix_text, s->suffix, 0, e)) != EXR_OK)
     return status;
   if (!s->prefix && s->suffix)
     candidate(s, s->lo);
@@ -216,8 +220,7 @@ exr_status exr_anchor_resolve(const exr_document *d, const exr_anchor *a,
     match->state = EXR_ANCHOR_LEGACY;
     return EXR_OK;
   }
-  s.doc = d;
-  s.anchor = a;
+  s.text=d->text; s.size=d->size; s.exact=a->exact; s.prefix_text=a->prefix; s.suffix_text=a->suffix;
   s.hi = d->size;
   s.quote = strlen(a->exact);
   s.prefix = a->prefix ? strlen(a->prefix) : 0;
@@ -240,4 +243,61 @@ exr_status exr_anchor_resolve(const exr_document *d, const exr_anchor *a,
     }
   }
   return EXR_OK;
+}
+
+void exr_fixed_anchor_free(exr_fixed_anchor *a) {
+  if(a) { free(a->page_id); free(a->exact); free(a->prefix); free(a->suffix); memset(a,0,sizeof(*a)); }
+}
+static exr_status fixed_selector(const char *text,size_t size,size_t limit,size_t maximum,exr_error *e) {
+  size_t at=0,count=0; uint32_t cp;
+  if((!text && size) || size>limit) return exr_fail(e,size>limit ? EXR_LIMIT : EXR_ARGUMENT,"Invalid fixed anchor selector size");
+  while(at<size) {
+    if(!exr_next(text,size,&at,&cp)) return exr_fail(e,EXR_ENCODING,"Invalid fixed anchor UTF-8");
+    if(++count>maximum) return exr_fail(e,EXR_LIMIT,"Fixed anchor context exceeds 32 Unicode scalars");
+  }
+  return EXR_OK;
+}
+static exr_status fixed_page_id(const char *id,exr_error *e) {
+  if(!id || !*id) return exr_fail(e,EXR_ARGUMENT,"Missing fixed anchor page ID");
+  return selector_string(id,65536,SIZE_MAX,e);
+}
+exr_status exr_fixed_anchor_create(const char *page_id,const exr_fixed_text *snapshot,size_t start,size_t end,
+                                    exr_fixed_anchor *out,exr_error *e) {
+  exr_fixed_anchor a={0}; const char *text; size_t size,left,right; unsigned count; uint32_t cp; exr_status status;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing fixed anchor output");
+  memset(out,0,sizeof(*out)); text=exr_fixed_text_string(snapshot,&size);
+  if(!text || start>end || !text_boundary(text,size,start) || !text_boundary(text,size,end)) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed anchor range");
+  if(end-start>ANCHOR_QUOTE_LIMIT) return exr_fail(e,EXR_LIMIT,"Fixed anchor quote exceeds 64 KiB");
+  status=fixed_page_id(page_id,e); if(status!=EXR_OK) return status;
+  left=start; right=end;
+  for(count=0;count<ANCHOR_CONTEXT_SCALARS && left;count++) { left--; while(left && ((unsigned char)text[left]&0xc0)==0x80) left--; }
+  for(count=0;count<ANCHOR_CONTEXT_SCALARS && right<size;count++) exr_next(text,size,&right,&cp);
+  a.start=start; a.end=end; a.exact_size=end-start; a.prefix_size=start-left; a.suffix_size=right-end;
+  a.page_id=exr_copy(page_id,strlen(page_id)); a.exact=exr_copy(text+start,a.exact_size);
+  a.prefix=exr_copy(text+left,a.prefix_size); a.suffix=exr_copy(text+end,a.suffix_size);
+  if(!a.page_id || !a.exact || !a.prefix || !a.suffix) { exr_fixed_anchor_free(&a); return exr_fail(e,EXR_MEMORY,"Fixed anchor allocation failed"); }
+  *out=a; return exr_fail(e,EXR_OK,"");
+}
+exr_status exr_fixed_anchor_resolve(const char *page_id,const exr_fixed_text *snapshot,const exr_fixed_anchor *a,
+                                     const exr_control *control,exr_anchor_match *match,exr_error *e) {
+  anchor_search s={0}; exr_status status;
+  if(!match) return exr_fail(e,EXR_ARGUMENT,"Missing fixed anchor match output");
+  match->state=EXR_ANCHOR_MISSING; match->start=match->end=SIZE_MAX;
+  if(!snapshot || !a || !a->exact || a->start>a->end || ((a->start==SIZE_MAX)!=(a->end==SIZE_MAX)) ||
+     (a->start!=SIZE_MAX && a->end-a->start!=a->exact_size)) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed anchor selector");
+  if((status=fixed_page_id(page_id,e))!=EXR_OK || (status=fixed_page_id(a->page_id,e))!=EXR_OK ||
+     (status=fixed_selector(a->exact,a->exact_size,ANCHOR_QUOTE_LIMIT,SIZE_MAX,e))!=EXR_OK ||
+     (status=fixed_selector(a->prefix,a->prefix_size,ANCHOR_CONTEXT_BYTES,ANCHOR_CONTEXT_SCALARS,e))!=EXR_OK ||
+     (status=fixed_selector(a->suffix,a->suffix_size,ANCHOR_CONTEXT_BYTES,ANCHOR_CONTEXT_SCALARS,e))!=EXR_OK) return status;
+  status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
+  if(strcmp(page_id,a->page_id)) return exr_fail(e,EXR_OK,"");
+  s.text=exr_fixed_text_string(snapshot,&s.size); s.hi=s.size; s.control=control;
+  s.exact=a->exact; s.prefix_text=a->prefix; s.suffix_text=a->suffix;
+  s.quote=a->exact_size; s.prefix=a->prefix_size; s.suffix=a->suffix_size;
+  status=search_scope(&s,e); if(status!=EXR_OK) return status;
+  if(s.best_score) {
+    match->state=s.tied ? EXR_ANCHOR_AMBIGUOUS : EXR_ANCHOR_FOUND;
+    if(!s.tied) { match->start=s.best_start; match->end=s.best_start+s.quote; }
+  }
+  return exr_fail(e,EXR_OK,"");
 }
