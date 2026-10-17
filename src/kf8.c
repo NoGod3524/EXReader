@@ -11,7 +11,8 @@ typedef struct {
   uint32_t title,level,parent,first,last,fid,offset;
   unsigned present;
 } nav_entry;
-typedef union { entry book; nav_entry nav; } index_entry;
+typedef struct { const char *kind; uint32_t size,title,fid,offset; unsigned present; } guide_entry;
+typedef union { entry book; nav_entry nav; guide_entry guide; } index_entry;
 typedef struct { index_entry *items; size_t count, capacity; } index_table;
 typedef struct { unsigned tag, width, mask, end; } tag;
 static uint16_t u16(const unsigned char *p) { return (uint16_t)((p[0]<<8)|p[1]); }
@@ -44,11 +45,12 @@ static int decimal(const unsigned char *s,size_t size,uint32_t *out) {
 }
 static int decode_entry(const unsigned char *s,size_t size,const tag *tags,size_t nt,
                          size_t controls,int kind,index_entry *output) {
-  entry *out=&output->book; nav_entry *nav=&output->nav;
+  entry *out=&output->book; nav_entry *nav=&output->nav; guide_entry *guide=&output->guide;
   size_t at,control=0,i,j; uint32_t counts[64]={0}; unsigned bytes[64]={0};
   unsigned seen[256]={0};
   if(!size || (size_t)s[0]+1>size) return 0;
   if(kind==1 && !decimal(s+1,s[0],&out->label)) return 0;
+  if(kind==3) { guide->kind=(const char *)s+1; guide->size=s[0]; }
   at=(size_t)s[0]+1;
   if(controls>size-at) return 0;
   /* Byte-length prefixes precede ALL value payloads, even for later tags. */
@@ -78,6 +80,17 @@ static int decode_entry(const unsigned char *s,size_t size,const tag *tags,size_
       n++;
     }
     if(n%tags[i].width) return 0;
+    if(kind==3) {
+      if(tags[i].tag==1) {
+        if(n!=1) return 0;
+        guide->title=values[0]; guide->present|=1;
+      } else if(tags[i].tag==3 || tags[i].tag==6) {
+        if(!n || n>2 || (tags[i].tag==3 && n!=1) || ((guide->present&2) && guide->fid!=values[0])) return 0;
+        guide->fid=values[0]; if(tags[i].tag==6) guide->offset=n==2 ? values[1] : 0;
+        guide->present|=2;
+      }
+      continue;
+    }
     if(kind==2) {
       if(tags[i].tag==6) {
         if(n!=2) return 0;
@@ -105,6 +118,7 @@ static int decode_entry(const unsigned char *s,size_t size,const tag *tags,size_
     }
   }
   while(at<size) if(s[at++]) return 0;
+  if(kind==3) return (guide->present&3)==3;
   if(kind==2) return (nav->present&35)==35;
   return (out->present&(kind==1 ? 14u : 9u))==(kind==1 ? 14u : 9u);
 }
@@ -135,7 +149,7 @@ static exr_status index_read(const exr_mobi_record *records,size_t nr,size_t fir
     n=u32(s+24); table=u32(s+20); previous=u32(s+4);
     if(table<previous || table>r->size || r->size-table<4 ||
        memcmp(s+table,"IDXT",4) || n>(r->size-table-4)/2) goto bad;
-    if(n>(kind==2 ? 10000u : EXR_MAX_NODES)-out->count) return exr_fail(e,EXR_LIMIT,"KF8 index entry limit exceeded");
+    if(n>(kind>=2 ? 10000u : EXR_MAX_NODES)-out->count) return exr_fail(e,EXR_LIMIT,"KF8 index entry limit exceeded");
     if(!exr_grow((void **)&out->items,&out->capacity,out->count+n,sizeof(*out->items)))
       return exr_fail(e,EXR_MEMORY,"KF8 index allocation failed");
     for(j=0;j<n;j++) {
@@ -516,12 +530,50 @@ static void to_base32(uint32_t value,char out[8]) {
   for(i=0;i<n;i++) out[i]=reversed[n-1-i];
   out[n]=0;
 }
+static exr_status append_guide(source_map *map,const index_table *fragments,
+                                 const exr_mobi_record *records,size_t nr,size_t first,
+                                 size_t base_count,exr_buffer *xml,exr_error *e) {
+  index_table table={0}; cncx_string *strings=NULL; size_t count=0,i,emitted=0; exr_status status;
+  if(first==UINT32_MAX) return EXR_OK;
+  status=index_read(records,nr,first,3,&table,e); if(status!=EXR_OK) goto done;
+  status=cncx_read(records,nr,first,&strings,&count,e); if(status!=EXR_OK) goto done;
+#define GPUT(s) do { if(!exr_append(xml,s,strlen(s))) { status=EXR_LIMIT; goto bad; } } while(0)
+  GPUT("<navList class=\"landmarks\"><navLabel><text>Landmarks</text></navLabel>");
+  for(i=0;i<table.count;i++) {
+    const guide_entry *v=&table.items[i].guide; const cncx_string *label=cncx_find(strings,count,v->title);
+    char uri[64],target[2048],fid[8],offset[8],value[64]; const char *kind=v->kind; size_t length=v->size;
+    if(!label || !length) { status=EXR_FORMAT; goto bad; }
+    status=exr_xml_text(kind,length,"KF8 guide type",e); if(status!=EXR_OK) goto done;
+    if(length==sizeof("thumbimagestandard")-1 && !memcmp(kind,"thumbimagestandard",length)) continue;
+    if(base_count>=10000 || emitted>=10000-base_count) { status=EXR_LIMIT; goto bad; }
+    emitted++;
+    if(length==5 && !memcmp(kind,"start",5)) { kind="text"; length=4; }
+    to_base32(v->fid,fid); to_base32(v->offset,offset);
+    snprintf(uri,sizeof(uri),"kindle:pos:fid:%s:off:%s",fid,offset);
+    status=position_uri(map,fragments,uri,target,e); if(status!=EXR_OK) goto done;
+    snprintf(value,sizeof(value),"<navTarget id=\"guide%u\" class=\"",(unsigned)i); GPUT(value);
+    if(!xml_escape(xml,kind,length)) { status=EXR_LIMIT; goto bad; }
+    GPUT("\"><navLabel><text>");
+    if(!xml_escape(xml,label->text,label->size)) { status=EXR_LIMIT; goto bad; }
+    GPUT("</text></navLabel><content src=\"");
+    if(!xml_escape(xml,target,strlen(target))) { status=EXR_LIMIT; goto bad; }
+    GPUT("\"/></navTarget>");
+  }
+  GPUT("</navList>"); status=EXR_OK; goto done;
+#undef GPUT
+bad:
+  exr_fail(e,status,"Invalid or oversized KF8 guide metadata");
+done:
+  free(table.items); free(strings); return status;
+}
 static exr_status build_navigation(source_map *map,const index_table *fragments,
-                                     const exr_mobi_record *records,size_t nr,size_t first,exr_error *e) {
+                                     const exr_mobi_record *records,size_t nr,size_t first,
+                                     size_t guide,exr_error *e) {
   index_table table={0}; cncx_string *strings=NULL; size_t string_count=0,i,depth=0,index;
   size_t stack[252],*parents=NULL,*first_child=NULL,*last_child=NULL,*ends=NULL;
-  exr_buffer xml={0}; exr_status status;
-  if(first==UINT32_MAX) return EXR_OK;
+  exr_buffer xml={0}; exr_status status=EXR_OK;
+  if(first==UINT32_MAX && guide==UINT32_MAX) return EXR_OK;
+  if(first!=UINT32_MAX) {
   status=index_read(records,nr,first,2,&table,e); if(status!=EXR_OK) goto done;
   if(!table.count) { status=EXR_FORMAT; goto bad; }
   status=cncx_read(records,nr,first,&strings,&string_count,e); if(status!=EXR_OK) goto done;
@@ -550,8 +602,17 @@ static exr_status build_navigation(source_map *map,const index_table *fragments,
       if(v->first!=UINT32_MAX || v->last!=UINT32_MAX) { status=EXR_FORMAT; goto bad; }
     } else if(v->first!=first_child[i] || v->last<last_child[i] || v->last>=ends[i]) { status=EXR_FORMAT; goto bad; }
   }
+  }
 #define PUT(s) do { if(!exr_append(&xml,s,strlen(s))) { status=EXR_LIMIT; goto bad; } } while(0)
   PUT("<ncx xmlns=\"http://www.daisy.org/z3986/2005/ncx/\" version=\"2005-1\"><head/><docTitle><text>Contents</text></docTitle><navMap>");
+  if(first==UINT32_MAX) for(i=0;i<map->doc->chapter_count;i++) {
+    const exr_chapter *p=&map->doc->chapters[i]; char value[64];
+    snprintf(value,sizeof(value),"<navPoint id=\"part%u\"><navLabel><text>",(unsigned)i); PUT(value);
+    if(!xml_escape(&xml,p->id,strlen(p->id))) { status=EXR_LIMIT; goto bad; }
+    PUT("</text></navLabel><content src=\"");
+    if(!xml_escape(&xml,p->path,strlen(p->path))) { status=EXR_LIMIT; goto bad; }
+    PUT("\"/></navPoint>");
+  }
   for(i=0;i<table.count;i++) {
     const nav_entry *v=&table.items[i].nav; const cncx_string *label=cncx_find(strings,string_count,v->title);
     char uri[64],target[2048],fid[8],offset[8],value[80];
@@ -568,7 +629,11 @@ static exr_status build_navigation(source_map *map,const index_table *fragments,
     PUT("\"/>"); depth++;
   }
   while(depth) { PUT("</navPoint>"); depth--; }
-  PUT("</navMap></ncx>");
+  PUT("</navMap>");
+  status=append_guide(map,fragments,records,nr,guide,
+                       first==UINT32_MAX ? map->doc->chapter_count : table.count,&xml,e);
+  if(status!=EXR_OK) goto done;
+  PUT("</ncx>");
 #undef PUT
   status=resource(map->doc,"kf8-navigation.ncx","application/x-dtbncx+xml",xml.data,xml.size,&index,e);
   if(status==EXR_OK) { map->doc->has_ncx=1; map->doc->ncx_resource=index; }
@@ -648,7 +713,7 @@ exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
   }
   if(frag!=fragments.count) goto bad;
   status=connect_positions(&map,&fragments,e); if(status!=EXR_OK) goto done;
-  status=build_navigation(&map,&fragments,records,nr,u32(h+244),e); if(status!=EXR_OK) goto done;
+  status=build_navigation(&map,&fragments,records,nr,u32(h+244),u32(h+260),e); if(status!=EXR_OK) goto done;
   status=connect_assets(d,records,nr,shared,shared_count,flows,e); goto done;
 bad:
   if(status==EXR_OK) status=EXR_FORMAT;

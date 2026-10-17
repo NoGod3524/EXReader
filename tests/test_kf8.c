@@ -152,8 +152,43 @@ static void navigation_api(void) {
   CHECK(exr_document_navigation(doc,&nav,NULL,&error)==EXR_ARGUMENT && !nav);
   exr_navigation_free(NULL,0); exr_document_free(doc);
 }
+static void guide_check(exr_document *doc,int authored,int offset) {
+  exr_navigation *nav=NULL; size_t n,i,count,landmarks=0,base=authored ? 5 : 2; const exr_node *nodes=exr_document_nodes(doc,&count);
+  const char *labels[]={"Cover","Read from here","Other & custom"};
+  OK(exr_document_navigation(doc,&nav,&n,&error)); CHECK(n==base+3);
+  for(i=0;i<n;i++) {
+    const exr_navigation *v=&nav[i]; size_t resource,target,index;
+    if(strcmp(v->role,"landmarks")) { CHECK(!strcmp(v->role,"toc")); continue; }
+    index=landmarks++; CHECK(index<3);
+    CHECK(v->parent==SIZE_MAX && !strcmp(v->label,labels[index]));
+    CHECK(v->part==(index==1 ? 1u : 0u));
+    OK(exr_document_resolve(doc,0,v->href,&resource,&target,&error)); CHECK(target<count);
+    if(authored) {
+      const char *id=exr_node_attribute(&nodes[target],"id");
+      CHECK(id && !strcmp(id,index==1 ? "chapter-b" : index==2 && offset ? "deep-a" : "chapter-a"));
+    } else CHECK(nodes[target].kind==EXR_NODE_CHAPTER);
+  }
+  CHECK(landmarks==3);
+  exr_navigation_free(nav,n);
+}
+static void guide_case(const char *dir,const char *name,int authored,int offset) {
+  char path[4096]; exr_document *doc=NULL,*copy=NULL; const exr_resource *resources;
+  void *data=NULL; size_t n,i,size; int found=0;
+  snprintf(path,sizeof(path),"%s/%s",dir,name); OK(exr_document_open(path,&doc,&error)); guide_check(doc,authored,offset);
+  resources=exr_document_resources(doc,&n);
+  for(i=0;i<n;i++) if(!strcmp(resources[i].media_type,"application/x-dtbncx+xml")) {
+    char *text; OK(exr_document_resource(doc,i,&data,&size,&error)); text=malloc(size+1); CHECK(text);
+    memcpy(text,data,size); text[size]=0; exr_free(data);
+    CHECK(strstr(text,"class=\"cover\"") && strstr(text,"class=\"text\"") && strstr(text,"class=\"other:preface\""));
+    CHECK(!strstr(text,"thumbimagestandard")); free(text); found++;
+  }
+  CHECK(found==1); OK(exr_document_export_epub(doc,NULL,&data,&size,&error));
+  OK(exr_document_open_memory(EXR_EPUB,data,size,&copy,&error)); exr_free(data); guide_check(copy,authored,offset);
+  CHECK(!strcmp(exr_document_text(doc,NULL),exr_document_text(copy,NULL)));
+  exr_document_free(doc); exr_document_free(copy);
+}
 int main(int argc,char **argv) {
-  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index","boundary-pointer","boundary-text","boundary-marker","boundary-version","boundary-encrypted","boundary-resource","exth-signature","exth-length","exth-count","exth-entry","exth-entry-size","exth-duplicate","exth-fallback-encoding","exth-fallback-compression"};
+  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index","boundary-pointer","boundary-text","boundary-marker","boundary-version","boundary-encrypted","boundary-resource","exth-signature","exth-length","exth-count","exth-entry","exth-entry-size","exth-duplicate","exth-fallback-encoding","exth-fallback-compression","guide-label","guide-target","guide-kind"};
   const char *text="Chapter one\nA bold passage.\nChapter two\nSecond passage."; size_t i;
   CHECK(argc==2);
   valid(argv[1],"kf8-hybrid.azw3",text,2); valid(argv[1],"kf8-basic.azw3",text,2); valid(argv[1],"kf8-multirecord.azw3",text,2); valid(argv[1],"kf8-multicontrol.azw3",text,2);
@@ -167,6 +202,8 @@ int main(int argc,char **argv) {
     if(status!=EXR_FORMAT) fprintf(stderr,"fixture %s returned %d\n",bad[i],status);
     CHECK(status==EXR_FORMAT && !doc && error.code==EXR_FORMAT && error.message[0]);
   }
+  guide_case(argv[1],"kf8-guide.azw3",1,0); guide_case(argv[1],"kf8-guide-only.azw3",0,0);
+  guide_case(argv[1],"kf8-guide-offset.azw3",1,1); guide_case(argv[1],"kf8-hybrid-guide.azw3",1,0);
   navigation_api(); navigation_case(argv[1],"kf8-navigation.azw3"); navigation_case(argv[1],"kf8-navigation-derived.azw3");
   navigation_case(argv[1],"kf8-hybrid-navigation.azw3");
   positions_case(argv[1]);
@@ -176,5 +213,11 @@ int main(int argc,char **argv) {
   assets_case(argv[1],"kf8-assets-font0.azw3"); assets_case(argv[1],"kf8-assets-font1.azw3"); assets_case(argv[1],"kf8-assets-font2.azw3");
   { char path[4096]; exr_document *doc=NULL; snprintf(path,sizeof(path),"%s/kf8-limit-font.azw3",argv[1]); CHECK(exr_document_open(path,&doc,&error)==EXR_LIMIT && !doc); }
   { char path[4096]; exr_document *doc=NULL; snprintf(path,sizeof(path),"%s/kf8-legacy-exth.azw3",argv[1]); OK(exr_document_open(path,&doc,&error)); CHECK(!strcmp(exr_document_text(doc,NULL),"Legacy fallback.")); exr_document_free(doc); }
+  { char path[4096]; exr_document *doc=NULL; snprintf(path,sizeof(path),"%s/kf8-encoding-guide.azw3",argv[1]); CHECK(exr_document_open(path,&doc,&error)==EXR_ENCODING && !doc); }
+  { char path[4096]; exr_document *doc=NULL; exr_navigation *nav=NULL; size_t n;
+    snprintf(path,sizeof(path),"%s/kf8-guide-budget.azw3",argv[1]); OK(exr_document_open(path,&doc,&error));
+    OK(exr_document_navigation(doc,&nav,&n,&error)); CHECK(n==10000); exr_document_free(doc); exr_navigation_free(nav,n);
+    snprintf(path,sizeof(path),"%s/kf8-limit-guide.azw3",argv[1]); CHECK(exr_document_open(path,&doc,&error)==EXR_LIMIT && !doc);
+  }
   printf("%u KF8 checks passed\n",checks); return 0;
 }

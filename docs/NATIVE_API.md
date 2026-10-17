@@ -550,3 +550,10 @@ KF8 的 NCX INDX/CNCX 转为标准 NCX 资源，使用标签偏移（含多 CNCX
 旧 MOBI 头通过 EXTH 121 声明 KF8 头记录时，验证前一条恰为 BOUNDARY，再按 KF8 头的相对记录索引读取正文、HUFF 字典、FDST、SKEL/FRAG 和 NCX。旧正文不重复加入阅读流。前半部首资源到边界之间的记录作为共享资源前缀，保持序号与占位记录；后半部本地资源接在共享前缀后。图片、字体可以全部共享、部分共享或全部本地存储。
 
 选择由 EXTH 121 明确驱动；不存在该字段或值为 0xffffffff 时保持旧 MOBI 解码，不扫描内容猜测边界。校验 EXTH 长度、计数、记录长度与重复边界字段、指针、标记、目标版本及共享资源起点。EXTH 最多 262144 项；两部分加密标志均须为零。解析器借用原输入的记录，不拼接或复制整份容器。
+
+
+## KF8 guide 地标（0.33）
+
+guide INDX/CNCX 保留类型、标签和片段目标，接入同一位置解析与导航快照。支持 tag 3 的片段序号、tag 6 的片段序号及可选偏移。输出 NCX navList class=landmarks；每个 navTarget 的 class 保存原始 guide 类型，start 规范化为 text。thumbimagestandard 是缩略图元数据，不作为阅读入口。NCX 解析器将 navList 的非空 class 暴露为导航 role，未声明时保持 nav-list。
+
+有原目录时合并地标；仅有 guide 时生成按章节顺序的目录。转换后的 EPUB 3 导航保留地标标签、分组和目标；原始类型继续保存在随书复制的 NCX 资源。目录和地标合计最多 10000 条，guide 字符串、索引与目标均沿用现有验证和字节预算。公开导航快照的不同 role 可在转换时重新分组，条目 parent 以当前数组为准。
