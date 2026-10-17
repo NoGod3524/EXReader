@@ -978,4 +978,25 @@ Java 的 `Pdf.metadata()` 和静态 `EXReader.readXMP(byte[])` 返回独立 Meta
 
 PDF 提供者读取页面 Annots 数组，跳过 null/失效间接引用，接受各种 Subtype 名称，返回 NM、Rect、可选 QuadPoints，以及 Contents、T、Subj、CreationDate、M。五项文字分别映射到 dc/terms description、creator、subject 与 XMP CreateDate、ModifyDate；复用 Info 的 PDFDocEncoding/UTF-16BE/UTF-8 解码。没有 NM 时 id 为空，不用数组序号伪造稳定身份。Rect 规范化端点，QuadPoints 保持原数组顺序；宿主依照类型解释点序并转换至视口。
 
-原生标注与 SDK 书库里的 fixed_notes 是不同数据来源，目前不会互相覆盖或自动同步。该接口提供读取与几何数据；原生外观绘制、颜色/边框/动作/关系、富文本、表单行为和 PDF 标注写回继续补齐。失败后其他页面操作仍可重试，单页缓存最多保留最近一次加载的原生标注。
+原生标注与 SDK 书库里的 fixed_notes 是不同数据来源，不会互相覆盖或自动同步。该接口提供读取与几何数据；Text/Highlight 编辑和 normal Form 外观绘制见下一节。颜色/边框/动作/关系的通用属性接口、富文本与表单行为继续补齐。失败后其他页面操作仍可重试，单页缓存最多保留最近一次加载的原生标注。
+
+
+## PDF 原生标注编辑与外观绘制（0.18 开发补充）
+
+`exr_pdf_annotation_write(data,size,page,annotation,options,out,out_size,error)` 接收 PDF 字节和零起始页号，以该页非空 UTF-8 `annotation.id` 匹配原生 NM。匹配项存在时更新，不存在时新增；同页出现多个相同 NM 返回 `EXR_FORMAT`。`annotation.kind` 目前只接受 `Text` 或 `Highlight`。写回要求 PDF 文件头版本至少 1.4；加密文件和非 null Catalog `Perms` 认证权限约束返回 `EXR_FORMAT`。
+
+`bounds` 为源页面坐标的正面积矩形，坐标须有限且绝对值不超过 1e7，宽高也各不超过 1e7。Text 不接受 quads；Highlight 要求至少一组四点，每组为矩形内四个不同凸角点。QuadPoints 保持宿主输入顺序，支持周界序和常见的 Z 序；生成的 AP 外观按凸包连接四点填充，不把 Z 序直接绘成自交路径。
+
+properties 最多五项，每个 key 只出现一次；支持读取接口使用的完整 URI：`http://purl.org/dc/terms/description`、`http://purl.org/dc/terms/creator`、`http://purl.org/dc/terms/subject`、`http://ns.adobe.com/xap/1.0/CreateDate` 和 `http://ns.adobe.com/xap/1.0/ModifyDate`，分别写入 Contents、T、Subj、CreationDate、M。更新替换支持的字段和外观，未提供的旧文字属性被清除，其他字典字段保留。生成新外观时清除旧富文本 RC 和旧外观状态 AS。
+
+ID 和属性值须为有效 UTF-8 C 字符串；UTF-8 载荷各最多 64 KiB，写入的 UTF-16BE 字节也各最多 64 KiB（包含 BOM），因此纯 ASCII 最多 32767 字符。日期保持原字符串。每项标注最多 32768 组 quads（262144 个数值，沿用 PDF 数组上限），每页最多 4096 项标注；单次追加修订最多 64 MiB，完整返回 PDF 最多 128 MiB。
+
+`exr_pdf_annotation_write_defaults()` 返回完整 options，包含 `struct_size`、`color=0xffff00`、`opacity=0.35` 和 control；color 是 0xRRGGBB，opacity 接受 [0,1]，0 表示完全透明。NULL options 在新增和更新时都使用这些默认值，会重设已有标注的颜色和透明度。希望更新时使用其他外观的宿主须显式传入选项。
+
+`exr_pdf_annotation_remove(data,size,page,id,control,out,out_size,error)` 移除指定 NM 的标注及同页关联的 Popup，可删除其他 Subtype；只将真实 Popup 当作关联弹窗。此入口没有 PDF 1.4 的写回版本限制。没有匹配项时返回原字节的独立副本；重复 NM 返回错误。删除实际修改同样拒绝认证 `Perms` 约束。
+
+两个入口只在调用期间借用输入，返回独立拥有的完整新 PDF，以 `exr_free()` 释放；不直接覆盖磁盘文件。失败或取消清空 out/out_size，最终进度回调仍可取消。编辑追加新的对象、xref 和 trailer，保留原文件每个字节、Root/Info/ID 的值与引用、未修改对象及未知字段；被重新输出的实数保留原始拼写。增量删除不是安全擦除，历史修订中的标注文字与外观仍可恢复。宿主负责保存新文件，以及显式同步 SDK 书库 fixed_notes；书库备注不会自动变成 PDF 原生标注。
+
+`exr_fixed_draw` / `exr_fixed_render` 在页面正文之后绘制原生标注的 `/AP/N` normal Form，既支持直接 Form，也支持按 `/AS` 选择状态字典中的 Form。使用 Rect、BBox、Matrix 和 Form 自有资源或页面资源，将外观裁切并映射到源页；每项外观与正文的绘制状态隔离。Invisible、Hidden、NoView 标注不绘制，没有可用 normal 外观时跳过。单页解码外观流合计最多 64 MiB，并共享工作预算和取消控制。
+
+带 NoZoom/NoRotate 的可见外观、Form `/Group`（包括透明度组）目前返回 `EXR_FORMAT`；其他尚未支持的 Form 内容仍沿用 PDF 绘制器的错误规则。此入口绘制既有外观，不为任意标注类型合成外观，也不执行表单交互、动作或脚本。

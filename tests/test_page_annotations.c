@@ -29,9 +29,15 @@ static void native(void) {
   CHECK(!strcmp(a[1].id,"") && !strcmp(a[1].kind,"Text") && !a[1].quad_count && !a[1].property_count);
   { exr_page_annotation *other=NULL; size_t count; CHECK(exr_fixed_load_annotations(d,0,&control,&other,&count,&error)==EXR_CANCELLED && !other && !count); }
   exr_fixed_free(d); CHECK(!strcmp(a[0].properties[1].value,"Author") && a[0].quads[1]==8); exr_page_annotations_free(a,n);
-  { const char *invalid[]={"<< /Rect [0 0 1 1] >>","<< /Subtype 1 /Rect [0 0 1 1] >>","<< /Subtype /Text /Rect [0 0 1] >>","<< /Subtype /Text /Rect [0 0 1 /bad] >>","<< /Subtype /Text /Rect [0 0 1 1e20] >>","<< /Subtype /Text /Rect [0 0 1 1] /QuadPoints [0 0] >>","<< /Subtype /Text /Rect [0 0 1 1] /Contents 4 >>"};
+  { const char *invalid[]={"<< /Rect [0 0 1 1] >>","<< /Subtype 1 /Rect [0 0 1 1] >>","<< /Subtype /Text /Rect [0 0 1] >>","<< /Subtype /Text /Rect [0 0 1 /bad] >>","<< /Subtype /Text /Rect [0 0 1 100000000.0] >>","<< /Subtype /Text /Rect [0 0 1 1] /QuadPoints [0 0] >>","<< /Subtype /Text /Rect [0 0 1 1] /Contents 4 >>"};
     for(i=0;i<sizeof(invalid)/sizeof(*invalid);i++) { build("[5 0 R]",invalid[i],UNICODE); OK(exr_fixed_open_memory(EXR_PDF,pdf,size,NULL,&d,&error)); CHECK(exr_fixed_load_annotations(d,0,NULL,&a,&n,&error)==EXR_FORMAT && !a && !n); OK(exr_fixed_render(d,0,1,NULL,&bitmap,&error)); exr_bitmap_free(&bitmap); CHECK(exr_fixed_load_annotations(d,0,NULL,&a,&n,&error)==EXR_FORMAT && !a); exr_fixed_free(d); }
   }
+  /* PDF numbers have no exponent syntax. The malformed object cannot be read
+     even to decide whether it contains an appearance stream. */
+  build("[5 0 R]","<< /Subtype /Text /Rect [0 0 1 1e20] >>",UNICODE); OK(exr_fixed_open_memory(EXR_PDF,pdf,size,NULL,&d,&error));
+  CHECK(exr_fixed_load_annotations(d,0,NULL,&a,&n,&error)==EXR_FORMAT && !a && !n);
+  CHECK(exr_fixed_render(d,0,1,NULL,&bitmap,&error)==EXR_FORMAT && !bitmap.pixels && !bitmap.width && !bitmap.height); exr_fixed_free(d);
+  build("[5 0 R]",NOTE,UNICODE); OK(exr_fixed_open_memory(EXR_PDF,pdf,size,NULL,&d,&error)); OK(exr_fixed_render(d,0,1,NULL,&bitmap,&error)); exr_bitmap_free(&bitmap); exr_fixed_free(d);
   build("42",NOTE,UNICODE); OK(exr_fixed_open_memory(EXR_PDF,pdf,size,NULL,&d,&error)); CHECK(exr_fixed_load_annotations(d,0,NULL,&a,&n,&error)==EXR_FORMAT && !a); exr_fixed_free(d);
   build("null",NOTE,UNICODE); OK(exr_fixed_open_memory(EXR_PDF,pdf,size,NULL,&d,&error)); OK(exr_fixed_load_annotations(d,0,NULL,&a,&n,&error)); CHECK(!a && !n); CHECK(exr_fixed_load_annotations(d,1,NULL,&a,&n,&error)==EXR_ARGUMENT && !a); exr_fixed_free(d);
   { char many[26000],*large=malloc(65539); size_t at=0; CHECK(large); many[at++]='['; for(i=0;i<4097;i++) { memcpy(many+at,"5 0 R ",6); at+=6; } strcpy(many+at,"]"); build(many,NOTE,UNICODE); OK(exr_fixed_open_memory(EXR_PDF,pdf,size,NULL,&d,&error)); CHECK(exr_fixed_load_annotations(d,0,NULL,&a,&n,&error)==EXR_LIMIT && !a); exr_fixed_free(d);

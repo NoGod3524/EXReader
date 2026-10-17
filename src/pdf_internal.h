@@ -11,6 +11,8 @@ typedef enum {
 } exr_pdf_kind;
 typedef struct {
   exr_pdf_kind kind;
+  /* REAL uses first for an internal retained number spelling; collections use
+     it for their first child. Other scalar kinds keep it EXR_PDF_NONE. */
   uint32_t next,first;
   union { double number; int64_t integer; struct { uint32_t offset,length; } bytes; struct { uint32_t object,generation; } ref; } u;
 } exr_pdf_value;
@@ -24,6 +26,19 @@ exr_status exr_pdf_page_annotations(exr_pdf_file *file,uint32_t id,const exr_con
   exr_page_annotation **out,size_t *count,exr_error *error);
 uint32_t exr_pdf_info(const exr_pdf_file *file);
 uint32_t exr_pdf_root(const exr_pdf_file *file);
+/* Effective latest trailer values are borrowed and deliberately not resolved.
+   Missing Info/ID are EXR_PDF_NONE. size is the latest declared /Size. */
+typedef struct { size_t startxref,size; uint32_t root,info,id; } exr_pdf_revision_info;
+void exr_pdf_revision(const exr_pdf_file *file,exr_pdf_revision_info *out);
+exr_status exr_pdf_object_identity(const exr_pdf_file *file,uint32_t value,
+  uint32_t *object,uint32_t *generation,exr_error *error);
+/* Appends a complete value without resolving references or copying streams.
+   Keys are filtered only in the outermost dictionary. Failure restores size. */
+exr_status exr_pdf_serialize(const exr_pdf_file *file,uint32_t value,
+  const char *const *skip_keys,size_t skip_count,exr_buffer *out,
+  const exr_control *control,exr_error *error);
+/* Locale independent, finite PDF real syntax without exponent notation. */
+exr_status exr_pdf_real(exr_buffer *out,double value,exr_error *error);
 const exr_pdf_value *exr_pdf_value_at(const exr_pdf_file *file,uint32_t value);
 const unsigned char *exr_pdf_bytes(const exr_pdf_file *file,uint32_t value,size_t *size);
 uint32_t exr_pdf_get(exr_pdf_file *file,uint32_t dict,const char *key);

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "pdf_internal.h"
 #include <miniz.h>
+#include <inttypes.h>
 #define PDF_MAX_OBJECTS 1048576u
 #define PDF_MAX_VALUES EXR_PDF_MAX_VALUES
 #define PDF_MAX_STRINGS ((size_t)32*1024*1024)
@@ -12,7 +13,8 @@ struct exr_pdf_file {
   exr_buffer strings;
   pdf_xref *xref; size_t xref_count,xref_capacity;
   pdf_stream *streams; size_t stream_count,stream_capacity;
-  uint32_t root,info,revision; unsigned resolving,loading_xref;
+  uint32_t root,info,revision,raw_root,trailer_id; size_t startxref;
+  unsigned resolving,loading_xref;
   exr_error error;
 };
 typedef struct { exr_pdf_file *file; const unsigned char *data; size_t size,at; } parser;
@@ -160,7 +162,7 @@ static uint32_t parse_value(parser *p,unsigned depth) {
     if(c<'0' || c>'9') break;
     if(real) { n+=(c-'0')*fraction; fraction*=0.1; } else n=n*10+(c-'0');
     digits++; p->at++;
-    if(p->at-first>64 || !isfinite(n)) { failed(f,EXR_LIMIT,"PDF number exceeds precision limit"); return EXR_PDF_NONE; }
+    if(p->at-first>384 || !isfinite(n)) { failed(f,EXR_LIMIT,"PDF number exceeds precision limit"); return EXR_PDF_NONE; }
   }
   if(!digits || (p->at<p->size && !delimiter(p->data[p->at]))) goto bad;
   end=p->at;
@@ -175,7 +177,14 @@ static uint32_t parse_value(parser *p,unsigned depth) {
   }
   id=value_new(f,real ? EXR_PDF_REAL : EXR_PDF_INT);
   if(id!=EXR_PDF_NONE) {
-    if(real) f->values[id].u.number=negative ? -n : n;
+    if(real) {
+      unsigned char length[2]={(unsigned char)(end-first),(unsigned char)((end-first)>>8)};
+      f->values[id].u.number=negative ? -n : n;
+      /* Retain the spelling: serializing the decoded double alone can change
+         unknown dictionary numbers after repeated incremental edits. */
+      f->values[id].first=(uint32_t)f->strings.size;
+      if(!append(f,&f->strings,length,2) || !append(f,&f->strings,p->data+first,end-first)) return EXR_PDF_NONE;
+    }
     else {
       uint64_t whole=0,maximum=negative ? (UINT64_C(1)<<63) : INT64_MAX; size_t at=first;
       if(p->data[at]=='+' || p->data[at]=='-') at++;
@@ -336,6 +345,7 @@ static int stream_xref(parser *p,size_t *previous,uint32_t *root,uint32_t *info,
   } while(id!=EXR_PDF_NONE && at!=EXR_PDF_NONE);
   if(pos!=length || (id!=EXR_PDF_NONE && !ranges)) goto bad;
   if(f->revision==1 && !hybrid) f->declared_size=(size_t)size;
+  if(!hybrid && f->trailer_id==EXR_PDF_NONE) f->trailer_id=exr_pdf_get(f,dict,"ID");
   ok=1; goto done;
 bad:
   failed(f,EXR_FORMAT,"Invalid PDF cross-reference stream");
@@ -421,6 +431,7 @@ static int classic_xref(parser *p,size_t *previous,uint32_t *root,uint32_t *info
   if(*root!=EXR_PDF_NONE && f->values[*root].kind!=EXR_PDF_REF) goto bad;
   id=exr_pdf_get(f,trailer,"Prev"); *previous=SIZE_MAX;
   if(id!=EXR_PDF_NONE) { if(!direct_integer(f,id,f->size-1,&size)) goto bad; *previous=(size_t)size; }
+  if(f->trailer_id==EXR_PDF_NONE) f->trailer_id=exr_pdf_get(f,trailer,"ID");
   return 1;
 bad:
   return failed(f,EXR_FORMAT,"Invalid PDF cross-reference table or trailer");
@@ -432,6 +443,164 @@ void exr_pdf_close(exr_pdf_file *f) {
 }
 uint32_t exr_pdf_info(const exr_pdf_file *f) { return f ? f->info : EXR_PDF_NONE; }
 uint32_t exr_pdf_root(const exr_pdf_file *f) { return f ? f->root : EXR_PDF_NONE; }
+void exr_pdf_revision(const exr_pdf_file *f,exr_pdf_revision_info *out) {
+  if(out) *out=f ? (exr_pdf_revision_info){f->startxref,f->declared_size,f->raw_root,f->info,f->trailer_id} :
+                  (exr_pdf_revision_info){0,0,EXR_PDF_NONE,EXR_PDF_NONE,EXR_PDF_NONE};
+}
+exr_status exr_pdf_object_identity(const exr_pdf_file *f,uint32_t value,
+  uint32_t *object,uint32_t *generation,exr_error *e) {
+  size_t i; const exr_pdf_value *v=exr_pdf_value_at(f,value);
+  if(object) *object=EXR_PDF_NONE;
+  if(generation) *generation=0;
+  if(!f || !v || !object || !generation) return exr_fail(e,EXR_ARGUMENT,"Missing PDF object identity input/output");
+  if(v->kind==EXR_PDF_REF) {
+    i=v->u.ref.object;
+    if(i<f->xref_count && f->xref[i].seen && f->xref[i].type && f->xref[i].generation==v->u.ref.generation) {
+      *object=(uint32_t)i; *generation=v->u.ref.generation; return exr_fail(e,EXR_OK,"");
+    }
+  } else for(i=0;i<f->xref_count;i++) if(f->xref[i].seen && f->xref[i].type &&
+      f->xref[i].state==2 && f->xref[i].value==value) {
+    *object=(uint32_t)i; *generation=f->xref[i].generation; return exr_fail(e,EXR_OK,"");
+  }
+  return exr_fail(e,EXR_FORMAT,"PDF value has no active indirect object identity");
+}
+exr_status exr_pdf_real(exr_buffer *out,double value,exr_error *e) {
+  char formatted[64],digits[32],text[384]; size_t count=0,point=SIZE_MAX,at=0,i=0;
+  int n,negative,exponent=0,place; const char *p;
+  if(!out || !isfinite(value)) return exr_fail(e,EXR_ARGUMENT,"PDF real must be finite");
+  n=snprintf(formatted,sizeof(formatted),"%.17g",value);
+  if(n<0 || (size_t)n>=sizeof(formatted)) return exr_fail(e,EXR_FORMAT,"PDF real formatting failed");
+  p=formatted; negative=*p=='-'; if(*p=='-' || *p=='+') p++;
+  while(*p && *p!='e' && *p!='E') {
+    if(*p>='0' && *p<='9') {
+      if(count==sizeof(digits)) return exr_fail(e,EXR_FORMAT,"PDF real precision exceeds output bounds");
+      digits[count++]=*p;
+    } else if(point==SIZE_MAX) point=count; /* The locale decimal separator may be multibyte. */
+    p++;
+  }
+  if(*p) exponent=(int)strtol(p+1,NULL,10);
+  if(!count || exponent < -350 || exponent > 350) return exr_fail(e,EXR_FORMAT,"Invalid formatted PDF real");
+  if(point==SIZE_MAX) point=count;
+  place=(int)point+exponent;
+  if(negative) text[at++]='-';
+  if(place<=0) {
+    text[at++]='0'; text[at++]='.';
+    while(place++<0) text[at++]='0';
+    memcpy(text+at,digits,count); at+=count;
+  } else {
+    for(i=0;i<(size_t)place;i++) text[at++]=i<count ? digits[i] : '0';
+    text[at++]='.';
+    if(i<count) { memcpy(text+at,digits+i,count-i); at+=count-i; }
+    else text[at++]='0';
+  }
+  if(out->size>EXR_MAX_TEXT || at>EXR_MAX_TEXT-out->size) return exr_fail(e,EXR_LIMIT,"PDF output exceeds 64 MiB");
+  if(!exr_append(out,text,at)) return exr_fail(e,EXR_MEMORY,"PDF real output allocation failed");
+  return exr_fail(e,EXR_OK,"");
+}
+typedef struct {
+  const exr_pdf_file *file; exr_buffer *out; const exr_control *control; exr_error *error;
+  const char *const *skip_keys; size_t skip_count,nodes;
+} pdf_serializer;
+static exr_status serialized(pdf_serializer *s,const void *data,size_t size) {
+  exr_status status=exr_control_cancel(s->control,s->error); if(status!=EXR_OK) return status;
+  if(s->out->size>EXR_MAX_TEXT || size>EXR_MAX_TEXT-s->out->size)
+    return exr_fail(s->error,EXR_LIMIT,"PDF serialized values exceed 64 MiB");
+  return exr_append(s->out,data,size) ? EXR_OK : exr_fail(s->error,EXR_MEMORY,"PDF value output allocation failed");
+}
+static exr_status serialize_bytes(pdf_serializer *s,uint32_t id,int name) {
+  static const char hex_digits[]="0123456789ABCDEF";
+  char chunk[1024]; size_t size,i,used=0; const unsigned char *bytes=exr_pdf_bytes(s->file,id,&size);
+  exr_status status=serialized(s,name ? "/" : "<",1); if(status!=EXR_OK) return status;
+  if(!bytes) return exr_fail(s->error,EXR_FORMAT,"Invalid PDF serialized string");
+  for(i=0;i<size;i++) {
+    unsigned c=bytes[i];
+    if(used+3>sizeof(chunk)) { status=serialized(s,chunk,used); if(status!=EXR_OK) return status; used=0; }
+    if(name && c>32 && c<127 && c!='#' && !delimiter(c)) chunk[used++]=(char)c;
+    else {
+      if(name) chunk[used++]='#';
+      chunk[used++]=hex_digits[c>>4]; chunk[used++]=hex_digits[c&15];
+    }
+  }
+  status=serialized(s,chunk,used); if(status!=EXR_OK || name) return status;
+  return serialized(s,">",1);
+}
+static int serialize_skip(const pdf_serializer *s,uint32_t key) {
+  const unsigned char *bytes; size_t size,i;
+  bytes=exr_pdf_bytes(s->file,key,&size);
+  for(i=0;bytes && i<s->skip_count;i++) if(strlen(s->skip_keys[i])==size && !memcmp(bytes,s->skip_keys[i],size)) return 1;
+  return 0;
+}
+static exr_status serialize_value(pdf_serializer *s,uint32_t id,unsigned depth) {
+  const exr_pdf_value *v=exr_pdf_value_at(s->file,id); exr_status status;
+  char number[64]; int length; uint32_t at;
+  if(!v) return exr_fail(s->error,EXR_FORMAT,"Invalid PDF serialized value");
+  if(depth>128 || ++s->nodes>EXR_PDF_MAX_VALUES) return exr_fail(s->error,EXR_LIMIT,"PDF serialization traversal exceeds limits");
+  switch(v->kind) {
+    case EXR_PDF_NULL: return serialized(s,"null",4);
+    case EXR_PDF_BOOL: return serialized(s,v->u.number ? "true" : "false",v->u.number ? 4 : 5);
+    case EXR_PDF_INT:
+      length=snprintf(number,sizeof(number),"%" PRId64,v->u.integer); break;
+    case EXR_PDF_REAL:
+      status=exr_control_cancel(s->control,s->error); if(status!=EXR_OK) return status;
+      if(v->first!=EXR_PDF_NONE) {
+        size_t size; const unsigned char *raw;
+        if(v->first>s->file->strings.size || s->file->strings.size-v->first<2)
+          return exr_fail(s->error,EXR_FORMAT,"Invalid retained PDF number");
+        raw=(const unsigned char *)s->file->strings.data+v->first; size=raw[0]+((size_t)raw[1]<<8);
+        if(size>s->file->strings.size-v->first-2) return exr_fail(s->error,EXR_FORMAT,"Invalid retained PDF number length");
+        return serialized(s,raw+2,size);
+      }
+      return exr_pdf_real(s->out,v->u.number,s->error);
+    case EXR_PDF_REF:
+      length=snprintf(number,sizeof(number),"%" PRIu32 " %" PRIu32 " R",v->u.ref.object,v->u.ref.generation); break;
+    case EXR_PDF_NAME: return serialize_bytes(s,id,1);
+    case EXR_PDF_STRING: return serialize_bytes(s,id,0);
+    case EXR_PDF_ARRAY:
+      status=serialized(s,"[",1); if(status!=EXR_OK) return status;
+      for(at=v->first;at!=EXR_PDF_NONE;) {
+        const exr_pdf_value *child=exr_pdf_value_at(s->file,at);
+        if(!child) return exr_fail(s->error,EXR_FORMAT,"Invalid PDF array member");
+        status=serialize_value(s,at,depth+1); if(status!=EXR_OK) return status;
+        at=child->next; if(at!=EXR_PDF_NONE && (status=serialized(s," ",1))!=EXR_OK) return status;
+      }
+      return serialized(s,"]",1);
+    case EXR_PDF_DICT:
+      status=serialized(s,"<<",2); if(status!=EXR_OK) return status;
+      for(at=v->first;at!=EXR_PDF_NONE;) {
+        const exr_pdf_value *key=exr_pdf_value_at(s->file,at),*child;
+        if(!(s->nodes&1023) && (status=exr_control_cancel(s->control,s->error))!=EXR_OK) return status;
+        if(!key || key->kind!=EXR_PDF_NAME || !(child=exr_pdf_value_at(s->file,key->next)))
+          return exr_fail(s->error,EXR_FORMAT,"Invalid PDF dictionary member");
+        if(!depth && serialize_skip(s,at)) {
+          if(++s->nodes>EXR_PDF_MAX_VALUES) return exr_fail(s->error,EXR_LIMIT,"PDF serialization traversal exceeds limits");
+        } else {
+          status=serialized(s," ",1); if(status!=EXR_OK) return status;
+          status=serialize_value(s,at,depth+1); if(status!=EXR_OK) return status;
+          status=serialized(s," ",1); if(status!=EXR_OK) return status;
+          status=serialize_value(s,key->next,depth+1); if(status!=EXR_OK) return status;
+        }
+        at=child->next;
+      }
+      return serialized(s," >>",3);
+    case EXR_PDF_STREAM: return exr_fail(s->error,EXR_FORMAT,"PDF streams cannot be serialized as ordinary values");
+    default: return exr_fail(s->error,EXR_FORMAT,"Unknown PDF serialized value kind");
+  }
+  if(length<0 || (size_t)length>=sizeof(number)) return exr_fail(s->error,EXR_FORMAT,"PDF integer formatting failed");
+  return serialized(s,number,(size_t)length);
+}
+exr_status exr_pdf_serialize(const exr_pdf_file *f,uint32_t value,const char *const *skip_keys,size_t skip_count,
+  exr_buffer *out,const exr_control *control,exr_error *e) {
+  pdf_serializer s={f,out,control,e,skip_keys,skip_count,0}; exr_status status; size_t original,i;
+  if(!f || !out || (skip_count && !skip_keys)) return exr_fail(e,EXR_ARGUMENT,"Missing PDF serialization input/output");
+  if(skip_count>64) return exr_fail(e,EXR_LIMIT,"PDF serialization filter exceeds 64 keys");
+  if(out->size>EXR_MAX_TEXT) return exr_fail(e,EXR_LIMIT,"PDF output exceeds 64 MiB");
+  for(i=0;i<skip_count;i++) if(!skip_keys[i]) return exr_fail(e,EXR_ARGUMENT,"Missing PDF dictionary filter key");
+  original=out->size; status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=serialize_value(&s,value,0);
+  if(status==EXR_OK) status=exr_control_cancel(control,e);
+  if(status!=EXR_OK) { out->size=original; if(out->data) out->data[original]=0; return status; }
+  return exr_fail(e,EXR_OK,"");
+}
 static exr_status result(exr_pdf_file *f,exr_error *e) { if(e) *e=f->error; return f->error.code; }
 exr_status exr_pdf_resolve(exr_pdf_file *f,uint32_t id,uint32_t *out,exr_error *e) {
   if(out) *out=EXR_PDF_NONE;
@@ -447,7 +616,7 @@ exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_erro
   if(memcmp(bytes,"%PDF-",5) || !((bytes[5]=='1' && bytes[6]=='.' && bytes[7]>='0' && bytes[7]<='7') ||
      (bytes[5]=='2' && bytes[6]=='.' && bytes[7]=='0'))) return exr_fail(e,EXR_FORMAT,"Invalid PDF header version");
   f=calloc(1,sizeof(*f)); if(!f) return exr_fail(e,EXR_MEMORY,"PDF file allocation failed");
-  f->data=bytes; f->size=size; f->root=f->info=EXR_PDF_NONE;
+  f->data=bytes; f->size=size; f->root=f->info=f->raw_root=f->trailer_id=EXR_PDF_NONE;
   while(end && whitespace(bytes[end-1])) end--;
   if(end<5 || memcmp(bytes+end-5,"%%EOF",5)) goto bad;
   at=end-5;
@@ -460,7 +629,7 @@ exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_erro
   if(!integer_token(&p,&offset) || offset>=size) goto bad;
   while(p.at<p.size && whitespace(bytes[p.at])) p.at++;
   if(p.at!=p.size) goto bad;
-  at=(size_t)offset;
+  at=f->startxref=(size_t)offset;
   while(at!=SIZE_MAX) {
     uint32_t candidate,info; size_t previous;
     for(i=0;i<count;i++) if(visited[i]==at) { failed(f,EXR_FORMAT,"Cyclic PDF Prev chain"); goto done; }
@@ -474,6 +643,7 @@ exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_erro
     at=previous;
   }
   if(root==EXR_PDF_NONE || f->declared_size<f->xref_count) goto bad;
+  f->raw_root=root;
   f->root=resolve(f,root);
   if(f->root==EXR_PDF_NONE || f->values[f->root].kind!=EXR_PDF_DICT) goto bad;
   root=resolve(f,exr_pdf_get(f,f->root,"Type"));

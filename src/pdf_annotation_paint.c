@@ -1,0 +1,179 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+#include "pdf_raster_internal.h"
+typedef struct { const exr_draw_sink *target; size_t depth; unsigned text; } paint_scope;
+static exr_status scope_path(void *context,const exr_path_segment *path,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
+  paint_scope *s=context; return s->target->path(s->target->context,path,count,matrix,style,e);
+}
+static exr_status scope_clip(void *context,const exr_path_segment *path,size_t count,const double matrix[6],exr_fill_rule rule,unsigned accumulate,exr_error *e) {
+  paint_scope *s=context; return s->target->clip(s->target->context,path,count,matrix,rule,accumulate,e);
+}
+static exr_status scope_image(void *context,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
+  paint_scope *s=context; return s->target->image(s->target->context,image,matrix,alpha,e);
+}
+static exr_status scope_state(void *context,exr_draw_state state,exr_error *e) {
+  paint_scope *s=context; exr_status status=s->target->state(s->target->context,state,e);
+  if(status==EXR_OK) {
+    if(state==EXR_DRAW_SAVE) s->depth++;
+    else if(state==EXR_DRAW_RESTORE && s->depth) s->depth--;
+    else if(state==EXR_DRAW_BEGIN_CLIP) s->text=1;
+    else if(state==EXR_DRAW_END_CLIP) s->text=0;
+  }
+  return status;
+}
+/* A page's final clipping path must not affect its annotations. Unwind even a
+   malformed stream's unmatched q/BT callbacks before leaving its outer scope. */
+static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,const double matrix[6],
+                             const double *box,const exr_draw_sink *sink,exr_pdf_program_fn program,void *context,
+                             size_t *work,const exr_control *control,exr_error *e) {
+  paint_scope scope={sink,0,0}; exr_draw_sink consumer=*sink; exr_status status=EXR_OK;
+  consumer.context=&scope; consumer.path=sink->path ? scope_path : NULL; consumer.clip=sink->clip ? scope_clip : NULL;
+  consumer.image=sink->image ? scope_image : NULL; consumer.state=sink->state ? scope_state : NULL;
+  if(sink->state) {
+    status=sink->state(sink->context,EXR_DRAW_SAVE,e);
+    if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
+    if(status!=EXR_OK) return status;
+  }
+  if(box && sink->clip) {
+    exr_path_segment boundary[5]={0}; size_t i;
+    const double x[4]={box[0],box[2],box[2],box[0]},y[4]={box[1],box[1],box[3],box[3]};
+    for(i=0;i<4;i++) { boundary[i].verb=i ? EXR_PATH_LINE : EXR_PATH_MOVE; boundary[i].points[0]=(exr_path_point){x[i],y[i]}; }
+    boundary[4].verb=EXR_PATH_CLOSE;
+    status=sink->clip(sink->context,boundary,5,matrix,EXR_FILL_NONZERO,0,e);
+    if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
+  }
+  if(status==EXR_OK) status=exr_pdf_paint_content(file,resources,content,size,matrix,&consumer,program,context,work,control,e);
+  if(sink->state) {
+    exr_error cleanup={0}; exr_status restored; size_t restore_count=scope.depth+1;
+    if(scope.text) {
+      restored=sink->state(sink->context,EXR_DRAW_END_CLIP,&cleanup);
+      if(restored==EXR_OK && cleanup.code!=EXR_OK) restored=cleanup.code;
+      if(status==EXR_OK && restored!=EXR_OK) { status=restored; if(e) *e=cleanup; }
+    }
+    while(restore_count--) {
+      memset(&cleanup,0,sizeof(cleanup));
+      restored=sink->state(sink->context,EXR_DRAW_RESTORE,&cleanup);
+      if(restored==EXR_OK && cleanup.code!=EXR_OK) restored=cleanup.code;
+      if(status==EXR_OK && restored!=EXR_OK) { status=restored; if(e) *e=cleanup; }
+    }
+  }
+  return status;
+}
+static int missing(const exr_pdf_file *file,uint32_t id) {
+  const exr_pdf_value *v=exr_pdf_value_at(file,id); return !v || v->kind==EXR_PDF_NULL;
+}
+static exr_status field(exr_pdf_file *file,uint32_t dict,const char *name,uint32_t *out,exr_error *e) {
+  return exr_pdf_resolve(file,exr_pdf_get(file,dict,name),out,e);
+}
+static int name_is(exr_pdf_file *file,uint32_t id,const char *name) {
+  const exr_pdf_value *v=exr_pdf_value_at(file,id); size_t n; const unsigned char *bytes=exr_pdf_bytes(file,id,&n);
+  return v && v->kind==EXR_PDF_NAME && bytes && n==strlen(name) && !memcmp(bytes,name,n);
+}
+static exr_status numbers(exr_pdf_file *file,uint32_t id,double *out,size_t count,exr_error *e) {
+  const exr_pdf_value *v=exr_pdf_value_at(file,id); uint32_t at; size_t i;
+  if(!v || v->kind!=EXR_PDF_ARRAY) return exr_fail(e,EXR_FORMAT,"PDF annotation rectangle/matrix is not an array");
+  at=v->first;
+  for(i=0;i<count;i++) {
+    uint32_t number,next; exr_status status;
+    if(at==EXR_PDF_NONE) break;
+    next=exr_pdf_value_at(file,at)->next; status=exr_pdf_resolve(file,at,&number,e); if(status!=EXR_OK) return status;
+    v=exr_pdf_value_at(file,number);
+    if(!v || (v->kind!=EXR_PDF_INT && v->kind!=EXR_PDF_REAL)) break;
+    out[i]=v->kind==EXR_PDF_INT ? (double)v->u.integer : v->u.number;
+    if(!isfinite(out[i]) || fabs(out[i])>1e7) return exr_fail(e,EXR_LIMIT,"PDF annotation coordinate exceeds budget");
+    at=next;
+  }
+  return i==count && at==EXR_PDF_NONE ? EXR_OK : exr_fail(e,EXR_FORMAT,"Invalid PDF annotation rectangle/matrix coordinates");
+}
+static int multiply(double out[6],const double left[6],const double right[6]) {
+  double m[6]; size_t i;
+  m[0]=left[0]*right[0]+left[2]*right[1]; m[1]=left[1]*right[0]+left[3]*right[1];
+  m[2]=left[0]*right[2]+left[2]*right[3]; m[3]=left[1]*right[2]+left[3]*right[3];
+  m[4]=left[0]*right[4]+left[2]*right[5]+left[4]; m[5]=left[1]*right[4]+left[3]*right[5]+left[5];
+  for(i=0;i<6;i++) if(!isfinite(m[i]) || fabs(m[i])>1e7) return 0;
+  memcpy(out,m,sizeof(m)); return 1;
+}
+static exr_status appearance(exr_pdf_file *file,uint32_t annotation,uint32_t resources,const double initial[6],
+                               const exr_draw_sink *sink,exr_pdf_program_fn program,void *context,size_t *bytes,
+                               size_t *work,const exr_control *control,exr_error *e) {
+  uint32_t id,normal,value,state; const exr_pdf_value *v; exr_status status; unsigned flags=0; size_t i,size;
+  double rect[4],box[4],matrix[6]={1,0,0,1,0,0},bounds[4]={0},fit[6]={0},transform[6]; const unsigned char *data;
+  status=field(file,annotation,"F",&id,e); if(status!=EXR_OK) return status;
+  if(!missing(file,id)) {
+    v=exr_pdf_value_at(file,id);
+    if(v->kind!=EXR_PDF_INT || v->u.integer<0 || (uint64_t)v->u.integer>UINT32_MAX) return exr_fail(e,EXR_FORMAT,"Invalid PDF annotation flags");
+    flags=(unsigned)v->u.integer;
+  }
+  if(flags&(1u|2u|32u)) return EXR_OK;
+  status=field(file,annotation,"AP",&id,e); if(status!=EXR_OK || missing(file,id)) return status;
+  if(exr_pdf_value_at(file,id)->kind!=EXR_PDF_DICT) return exr_fail(e,EXR_FORMAT,"PDF annotation AP is not a dictionary");
+  status=field(file,id,"N",&normal,e); if(status!=EXR_OK || missing(file,normal)) return status;
+  if(exr_pdf_value_at(file,normal)->kind==EXR_PDF_DICT) {
+    uint32_t at,selected=EXR_PDF_NONE; const unsigned char *name; size_t n,states=0;
+    status=field(file,annotation,"AS",&state,e); if(status!=EXR_OK || missing(file,state)) return status;
+    if(exr_pdf_value_at(file,state)->kind!=EXR_PDF_NAME) return exr_fail(e,EXR_FORMAT,"PDF annotation AS is not a name");
+    name=exr_pdf_bytes(file,state,&n); at=exr_pdf_value_at(file,normal)->first;
+    while(at!=EXR_PDF_NONE) {
+      uint32_t target=exr_pdf_value_at(file,at)->next; size_t length; const unsigned char *key=exr_pdf_bytes(file,at,&length);
+      if(!(states++&255) && exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+      if(target==EXR_PDF_NONE) return exr_fail(e,EXR_FORMAT,"Invalid PDF appearance state dictionary");
+      if(key && length==n && !memcmp(key,name,n)) { selected=target; break; }
+      at=exr_pdf_value_at(file,target)->next;
+    }
+    status=exr_pdf_resolve(file,selected,&normal,e); if(status!=EXR_OK || missing(file,normal)) return status;
+  }
+  if(exr_pdf_value_at(file,normal)->kind!=EXR_PDF_STREAM) return exr_fail(e,EXR_FORMAT,"PDF normal appearance is not a Form stream");
+  if(flags&(8u|16u)) return exr_fail(e,EXR_FORMAT,"PDF NoZoom/NoRotate annotation appearances are not implemented yet");
+  status=field(file,normal,"Subtype",&value,e); if(status!=EXR_OK) return status;
+  if(!missing(file,value) && !name_is(file,value,"Form")) return exr_fail(e,EXR_FORMAT,"PDF appearance subtype is not Form");
+  status=field(file,normal,"FormType",&value,e); if(status!=EXR_OK) return status;
+  if(!missing(file,value) && (exr_pdf_value_at(file,value)->kind!=EXR_PDF_INT || exr_pdf_value_at(file,value)->u.integer!=1)) return exr_fail(e,EXR_FORMAT,"Invalid PDF appearance FormType");
+  status=field(file,normal,"Group",&value,e); if(status!=EXR_OK) return status;
+  if(!missing(file,value)) return exr_fail(e,EXR_FORMAT,"PDF appearance transparency groups are not implemented yet");
+  status=field(file,annotation,"Rect",&value,e); if(status==EXR_OK) status=numbers(file,value,rect,4,e); if(status!=EXR_OK) return status;
+  for(i=0;i<2;i++) { double a=fmin(rect[i],rect[i+2]),b=fmax(rect[i],rect[i+2]); rect[i]=a; rect[i+2]=b; }
+  if(rect[0]==rect[2] || rect[1]==rect[3]) return EXR_OK;
+  status=field(file,normal,"BBox",&value,e); if(status==EXR_OK) status=numbers(file,value,box,4,e); if(status!=EXR_OK) return status;
+  status=field(file,normal,"Matrix",&value,e); if(status!=EXR_OK) return status;
+  if(!missing(file,value)) { status=numbers(file,value,matrix,6,e); if(status!=EXR_OK) return status; }
+  for(i=0;i<4;i++) {
+    double x=box[i&1 ? 2 : 0],y=box[i&2 ? 3 : 1],a=matrix[0]*x+matrix[2]*y+matrix[4],b=matrix[1]*x+matrix[3]*y+matrix[5];
+    if(!isfinite(a) || !isfinite(b) || fabs(a)>1e7 || fabs(b)>1e7) return exr_fail(e,EXR_LIMIT,"PDF appearance transformed bounds exceed budget");
+    if(!i) { bounds[0]=bounds[2]=a; bounds[1]=bounds[3]=b; }
+    else { bounds[0]=fmin(bounds[0],a); bounds[1]=fmin(bounds[1],b); bounds[2]=fmax(bounds[2],a); bounds[3]=fmax(bounds[3],b); }
+  }
+  if(bounds[0]==bounds[2] || bounds[1]==bounds[3]) return exr_fail(e,EXR_FORMAT,"PDF appearance has a degenerate bounding box");
+  fit[0]=(rect[2]-rect[0])/(bounds[2]-bounds[0]); fit[3]=(rect[3]-rect[1])/(bounds[3]-bounds[1]);
+  fit[4]=rect[0]-fit[0]*bounds[0]; fit[5]=rect[1]-fit[3]*bounds[1];
+  if(!multiply(transform,fit,matrix) || !multiply(transform,initial,transform)) return exr_fail(e,EXR_LIMIT,"PDF appearance transform exceeds budget");
+  status=field(file,normal,"Resources",&value,e); if(status!=EXR_OK) return status;
+  if(!missing(file,value)) {
+    if(exr_pdf_value_at(file,value)->kind!=EXR_PDF_DICT) return exr_fail(e,EXR_FORMAT,"PDF appearance Resources is not a dictionary");
+    resources=value;
+  }
+  status=exr_pdf_stream_data(file,normal,&data,&size,e); if(status!=EXR_OK) return status;
+  if(size>(size_t)64*1024*1024-*bytes) return exr_fail(e,EXR_LIMIT,"PDF page appearance streams exceed 64 MiB");
+  *bytes+=size;
+  return isolated(file,resources,data,size,transform,box,sink,program,context,work,control,e);
+}
+exr_status exr_pdf_paint_page(exr_pdf_file *file,const exr_pdf_page_info *page,const void *content,size_t size,
+                               const double initial[6],const exr_draw_sink *sink,exr_pdf_program_fn program,void *context,
+                               size_t *work,const exr_control *control,exr_error *e) {
+  const exr_pdf_value *v; uint32_t id,at; size_t count=0,bytes=0,local_work=0; exr_status status;
+  if(!work) work=&local_work;
+  status=isolated(file,page->resources,content,size,initial,NULL,sink,program,context,work,control,e); if(status!=EXR_OK) return status;
+  status=exr_pdf_resolve(file,page->annotations,&id,e); if(status!=EXR_OK || missing(file,id)) return status;
+  v=exr_pdf_value_at(file,id); if(v->kind!=EXR_PDF_ARRAY) return exr_fail(e,EXR_FORMAT,"PDF Annots is not an array");
+  at=v->first;
+  while(at!=EXR_PDF_NONE) {
+    uint32_t next=exr_pdf_value_at(file,at)->next,annotation;
+    if(count++==4096) return exr_fail(e,EXR_LIMIT,"PDF page exceeds 4096 annotations");
+    status=exr_control_poll(control,EXR_STAGE_RENDER,count,0,e); if(status!=EXR_OK) return status;
+    status=exr_pdf_resolve(file,at,&annotation,e); if(status!=EXR_OK) return status;
+    if(!missing(file,annotation)) {
+      if(exr_pdf_value_at(file,annotation)->kind!=EXR_PDF_DICT) return exr_fail(e,EXR_FORMAT,"PDF annotation is not a dictionary");
+      status=appearance(file,annotation,page->resources,initial,sink,program,context,&bytes,work,control,e); if(status!=EXR_OK) return status;
+    }
+    at=next;
+  }
+  return EXR_OK;
+}
