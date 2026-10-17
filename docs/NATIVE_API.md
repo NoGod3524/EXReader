@@ -900,3 +900,14 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 旧 FTS posting 和正文与新分段一并提交。provider 错误、错误详情中报告的失败、重复 ID、非法 found、UTF-8/字节限制、取消或提交失败均回滚，保留整个旧来源。最终进度回调仍可取消提交。回调不能重入当前 index；其他来源不受替换影响。现有 WAL 索引的打开不再申请写事务，只在初始化时加锁并再次核对 schema，因此独立连接可在重建期间打开并读取旧快照。
 
 安装后的 `exreader-search-example input.epub index.sqlite literal-query` 演示按阅读顺序逐章加载、回收上一章、原子重建与最多 20 条搜索结果。source 使用调用方文件路径，part 采用示例自选的序号；这是宿主选择，不是索引模型对标识的限制。原始 C 接口可接任意格式和宿主解析器。
+
+
+## 稳定阅读进度持久化（0.94）
+
+`exr_library_progress` 接收宿主从当前文档用 anchor_create(position,position) 捕获的点锚，原子保存 books.position 与前后文/章节作用域。exact 必须是空字符串、start=end 且位于存储正文 extent 内。宿主负责把锚点对应到正确的书籍；接口只验证范围与选择器编码，不为每次进度更新重新解析原文件。
+
+`exr_library_progress_get` 返回独立锚点和已保存的状态，锚点用 anchor_free 释放。没有选择器的旧记录返回 LEGACY、exact=NULL 和数值位置，不伪造为已恢复；保存的选择器可交给 anchor_resolve 在新文档中重新定位。输出必须为空，错误清空输出。PDF 的进度单位是页面，此文本锚点接口拒绝 PDF，现有 page position 继续使用。
+
+`exr_library_update` 仅修改元数据且位置不变时保留选择器；通过旧接口修改数值位置时自动清除旧选择器，避免把新位置与旧上下文混配。`clear_progress` 仅删除选择器，不改变数值位置。删除书籍级联删除进度选择器，备份包含它们，精确去重导入不会重置既有进度。
+
+书库升级为 schema 5。v1–v4 在事务中补齐所需表和触发器，失败完整回滚，旧数值进度保持为 LEGACY。ABI epoch 仍为 1，SQLite schema 兼容版本独立管理。本阶段持久化上下文；正文 extent 重新计算与旧标注/进度的批量重定位继续接入。
