@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.62.0"
+#define EXR_VERSION "0.63.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -494,6 +494,12 @@ EXR_API size_t exr_font_count(const exr_font *font);
 /* Scalar cmap coverage, not a shaping/sequence support test; invalid input returns 0. */
 EXR_API int exr_font_has_glyph(const exr_font *font, size_t font_index, uint32_t codepoint);
 EXR_API void exr_font_free(exr_font *font);
+/* Owned unhinted Bézier path in 1000-em units, origin on the baseline, y up.
+   Direct glyph IDs also work without a Unicode cmap. Free segments with
+   exr_free(); the path outlives its font. Same font concurrency rule as shape. */
+EXR_API exr_status exr_font_glyph_outline(exr_font *font,size_t font_index,uint32_t glyph,
+                                           exr_path_segment **out,size_t *count,
+                                           const exr_control *control,exr_error *error);
 EXR_API exr_shape_options exr_shape_defaults(void);
 /* One font face, logical output order; caller splits directional/script/font runs.
    Own the returned glyph array with exr_free(). Failure clears output/count.

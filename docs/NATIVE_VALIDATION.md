@@ -1201,3 +1201,20 @@ ownership after canvas destruction, clip save/restore and stable memory over
 first-error preservation and bitmap limits. Existing PDF/image/vector suites
 continue to exercise the same rendering through the refactored backend. The
 0.61 commit dd68de3 passed all six CI jobs.
+
+
+## 0.63 Public direct-glyph outline paths
+
+The SDK can read owned 1000-em unhinted Bézier paths from an existing font face
+and actual GID, including cmap-free faces. It reuses the same outline adapter
+as PDF and exposes no FreeType types. Paths survive font/input destruction and
+can be painted by the generic canvas or consumed by a host renderer.
+
+The public-DLL suite checks named/nameless TrueType, CFF, cmap-free fonts,
+normalization, stable repeated reads, independent path lifetime, actual canvas
+pixels, empty glyphs, quadratic curves, invalid indices/GIDs and cancellation.
+A shape-before/outline/shape-after check verifies that outline access preserves
+normal shape advances/offsets. No runtime dependency or parallel font wrapper
+was added.
+
+The 0.62 commit f080abd passed all six CI jobs.

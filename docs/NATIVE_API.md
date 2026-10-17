@@ -617,3 +617,10 @@ input 必须清零并填写 struct_size；较大的结构仅在未知尾字节�
 - `exr_canvas_bitmap` 返回当前借用图像，`exr_canvas_take` 转移像素所有权，随后用 `exr_bitmap_free` 释放；取走后画布不再接受绘制。`exr_canvas_memory_size` 报告画布、拥有的像素和裁切掩码载荷，不含瞬时曲线/边数组或宿主图片。
 
 输出最多 64 MiB、边长最多 16384，单路径命令/边数限制沿用 C 矢量核，全部绘制共享 256M 工作预算和取消控制。任何失败的绘制都将画布置为失败状态，后续 take 返回首个失败，避免交付半张图片。PDF 路径、字形轮廓、图片和裁切已调用相同的通用画布；其字体/格式读取留在解析器一侧。
+
+
+## 字形轮廓读取（0.63）
+
+`exr_font_glyph_outline(font, font_index, glyph_id, &segments, &count, control, error)` 返回独立拥有的 move/line/quad/cubic/close 路径，用 `exr_free` 释放。坐标归一化为 1000 em，基线原点为零、y 向上，不进行 hinting 或位图栅格化。读取后可释放字体，路径继续有效；空字形返回 NULL/0。该接口按实际 glyph ID 读取，也支持 `exr_font_create_glyphs` 创建的无 Unicode cmap 字体。
+
+例如将字号 `size` 的轮廓画到基线 `(x, baseline)`，可给 `exr_canvas_path` 传入 `[size/1000, 0, 0, -size/1000, x, baseline]`。宿主也可自行消费这些曲线，不使用引擎画布。无效字体/索引/字形返回 EXR_ARGUMENT，预算与取消控制沿用轮廓核；失败清空路径/count。与 shape/layout/render 一样，同一个字体对象不能并发参与这些操作。
