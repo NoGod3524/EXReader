@@ -24,7 +24,7 @@ static size_t read_at(void *context,uint64_t at,void *buffer,size_t size) {
 }
 static void release(void *context) { ((memory_source *)context)->released++; }
 static exr_source source(memory_source *memory) {
-  return (exr_source){memory->size,read_at,release,memory};
+  return (exr_source){memory->size,read_at,release,memory,{0}};
 }
 static void *padded_book(const char *directory,size_t *size) {
   char path[4096]; mz_zip_archive input={0},output={0}; mz_zip_archive_file_stat stat;

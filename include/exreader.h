@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.15.0"
+#define EXR_VERSION "0.16.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -25,7 +25,8 @@ typedef enum {
   EXR_FORMAT,
   EXR_LIMIT,
   EXR_DATABASE,
-  EXR_FONT
+  EXR_FONT,
+  EXR_CANCELLED
 } exr_status;
 typedef enum {
   EXR_CUSTOM = 0, /* Constructed through exr_document_create(), without a file decoder. */
@@ -42,6 +43,16 @@ typedef struct {
   exr_status code;
   char message[256];
 } exr_error;
+typedef enum {
+  EXR_STAGE_READ = 1, EXR_STAGE_STYLE, EXR_STAGE_LAYOUT, EXR_STAGE_SHAPE, EXR_STAGE_RENDER
+} exr_stage;
+/* Synchronous callbacks on the calling thread. total==0 means unknown work.
+   Callbacks must not destroy/reenter active objects. Context is borrowed. */
+typedef struct {
+  int (*cancelled)(void *context);
+  void (*progress)(void *context, exr_stage stage, uint64_t completed, uint64_t total);
+  void *context;
+} exr_control;
 typedef struct exr_document exr_document;
 typedef struct exr_font exr_font;
 typedef struct exr_layout exr_layout;
@@ -70,6 +81,7 @@ typedef struct {
   const exr_shape_feature *features;
   size_t feature_count;
   uint32_t context_before, context_after; /* Nearest nontransparent adjacent scalar, 0 at boundary. */
+  exr_control control;
 } exr_shape_options;
 typedef struct {
   size_t start, end; /* UTF-8 cluster range; shared by ligatures and attached marks. */
@@ -192,6 +204,7 @@ typedef struct {
   exr_read_at_fn read_at;
   exr_context_release_fn release;
   void *context;
+  exr_control control;
 } exr_source;
 typedef struct {
   const char *title;
@@ -269,6 +282,7 @@ typedef struct {
   void *image_context;
   exr_direction direction; /* Paragraph base direction; AUTO uses first strong scalar. */
   int embedded_fonts; /* Load used local @font-face resources; defaults to enabled. */
+  exr_control control; /* Layout creation / pager work; context must outlive that work. */
 } exr_layout_config;
 struct exr_bitmap {
   uint32_t width, height, stride;
@@ -387,6 +401,8 @@ EXR_API exr_status exr_pager_create(const exr_document *doc, exr_font *font,
                                      const exr_layout_config *config, exr_pager **out,
                                      exr_error *error);
 EXR_API exr_status exr_pager_next(exr_pager *pager, exr_layout **out, exr_error *error);
+EXR_API exr_status exr_pager_set_control(exr_pager *pager, const exr_control *control,
+                                         exr_error *error);
 /* Alternative borrowed-page mode; cannot be mixed with next(). Cache defaults to
    one page/no byte limit. Evicted pages resume from a retained checkpoint when
    available, otherwise from the beginning.
@@ -441,6 +457,10 @@ EXR_API size_t exr_layout_page_at(const exr_layout *layout, size_t utf8_offset);
 EXR_API size_t exr_layout_hit_test(const exr_layout *layout, size_t page, float x, float y);
 EXR_API exr_status exr_render_page(const exr_layout *layout, exr_font *font, size_t page,
                                    exr_bitmap *bitmap, exr_error *error);
+/* Controlled rendering; channels must be 1 or 4. Cancellation clears bitmap. */
+EXR_API exr_status exr_render_page_ex(const exr_layout *layout, exr_font *font, size_t page,
+                                       unsigned channels, const exr_control *control,
+                                       exr_bitmap *out, exr_error *error);
 EXR_API exr_status exr_render_page_color(const exr_layout *layout, exr_font *font, size_t page,
                                          exr_bitmap *bitmap, exr_error *error);
 /* Built-in PNG/JPEG decoder; owns its output pixels, freed with exr_bitmap_free(). */

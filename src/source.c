@@ -30,6 +30,6 @@ exr_status exr_file_source(const char *path, exr_source *source, exr_error *e) {
     fclose(file);
     return exr_fail(e, size < 0 ? EXR_IO : EXR_LIMIT, "Cannot size publication or input exceeds 128 MiB");
   }
-  *source = (exr_source){(uint64_t)size, file_read, file_release, file};
+  *source = (exr_source){(uint64_t)size, file_read, file_release, file, {0}};
   return EXR_OK;
 }

@@ -51,7 +51,7 @@ void exr_font_ref(exr_font *font);
 void exr_layout_ref(exr_layout *layout);
 exr_status exr_book_fonts(const exr_document *doc, exr_font *fallback,
                            const exr_style *styles, const exr_font_rule *rules, size_t count,
-                           exr_font **out, exr_error *error);
+                           const exr_control *control, exr_font **out, exr_error *error);
 size_t exr_font_order(const exr_font *font, const char *family, unsigned flags,
                        size_t chapter, size_t order[32]);
 int exr_font_size(exr_face *font, float size);

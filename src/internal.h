@@ -46,6 +46,9 @@ typedef struct {
   size_t size, capacity;
 } exr_buffer;
 exr_status exr_fail(exr_error *error, exr_status status, const char *fmt, ...);
+exr_status exr_control_cancel(const exr_control *control, exr_error *error);
+exr_status exr_control_poll(const exr_control *control, exr_stage stage,
+                             uint64_t completed, uint64_t total, exr_error *error);
 int exr_grow(void **data, size_t *capacity, size_t count, size_t element);
 char *exr_copy(const char *text, size_t size);
 int exr_append(exr_buffer *buf, const void *data, size_t size);

@@ -234,6 +234,11 @@ static exr_status text(flow *f, size_t node) {
     if (++f->assets->work_glyphs > EXR_MAX_ITEMS ||
         !exr_grow((void **)&l->glyphs, &l->glyph_cap, l->glyph_count + 1, sizeof(*g)))
       return EXR_LIMIT;
+    if (!(f->assets->work_glyphs & 255)) {
+      exr_status status = exr_control_poll(&f->config->control, EXR_STAGE_LAYOUT, pos,
+                                            f->doc->size, f->error);
+      if (status != EXR_OK) return status;
+    }
     g = &l->glyphs[l->glyph_count++];
     memset(g, 0, sizeof(*g));
     g->start = start;

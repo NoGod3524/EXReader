@@ -757,6 +757,8 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
   *out = NULL;
   *fonts = NULL;
   *font_count = 0;
+  c.failed = exr_control_poll(&config->control, EXR_STAGE_STYLE, 0, d->node_count, e);
+  if (c.failed) goto done;
   if (config->document_css)
     for (i = 0; i < d->node_count; i++) {
       const exr_node *n = &d->nodes[i];
@@ -802,6 +804,10 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
   }
   for (i = 0; i < d->node_count; i++) {
     const exr_node *n = &d->nodes[i];
+    if (!(i & 127)) {
+      c.failed = exr_control_poll(&config->control, EXR_STAGE_STYLE, i, d->node_count, e);
+      if (c.failed) goto done;
+    }
     const exr_style *parent = n->parent == SIZE_MAX ? &initial : &styles[n->parent];
     exr_style *s = &styles[i];
     winner w[PROPERTIES] = {{0}};
@@ -927,7 +933,8 @@ done:
   if (c.failed) {
     exr_styles_free(styles, d->node_count);
     free(c.fonts);
-    return exr_fail(e, c.failed, "Stylesheet decoding or complexity limit failed");
+    return exr_fail(e, c.failed, c.failed == EXR_CANCELLED ? "Operation cancelled" :
+                     "Stylesheet decoding or complexity limit failed");
   }
   *out = styles;
   *fonts = c.fonts;

@@ -157,7 +157,8 @@ static int requested(const exr_document *d, const exr_style *styles, const exr_f
   return 0;
 }
 static exr_status load_font(const exr_document *d, exr_font *font, const exr_font_rule *r,
-                              void **out, size_t *size, size_t *read_bytes, exr_error *e) {
+                              const exr_control *control, void **out, size_t *size,
+                              size_t *read_bytes, exr_error *e) {
   size_t at = 0, n = strlen(r->source), attempts = 0;
   *out = NULL; *size = 0;
   while (at < n) {
@@ -166,6 +167,8 @@ static exr_status load_font(const exr_document *d, exr_font *font, const exr_fon
     char uri[2048], path[2048];
     FT_Face probe = NULL;
     exr_status status;
+    status = exr_control_cancel(control, e);
+    if (status != EXR_OK) return status;
     at = end < n ? end + 1 : n;
     while (a < b && ws((unsigned char)r->source[a])) a++;
     if (b - a < 5 || !same(r->source + a, 3, "url") || r->source[a + 3] != '(') continue;
@@ -185,8 +188,10 @@ static exr_status load_font(const exr_document *d, exr_font *font, const exr_fon
     if (i == d->resource_count) continue;
     if (++attempts > 8) return exr_fail(e, EXR_LIMIT, "Font source retry limit exceeded");
     status = exr_document_resource(d, i, out, size, e);
-    if (status == EXR_MEMORY || status == EXR_LIMIT) return status;
+    if (status == EXR_MEMORY || status == EXR_LIMIT || status == EXR_CANCELLED) return status;
     if (status != EXR_OK) continue;
+    status = exr_control_cancel(control, e);
+    if (status != EXR_OK) { exr_free(*out); *out = NULL; *size = 0; return status; }
     if (*size > EXR_MAX_INPUT - *read_bytes) {
       exr_free(*out); *out = NULL;
       return exr_fail(e, EXR_LIMIT, "Embedded font reads exceed 128 MiB");
@@ -204,13 +209,15 @@ static exr_status load_font(const exr_document *d, exr_font *font, const exr_fon
 }
 exr_status exr_book_fonts(const exr_document *d, exr_font *fallback,
                            const exr_style *styles, const exr_font_rule *rules, size_t count,
-                           exr_font **out, exr_error *e) {
+                           const exr_control *control, exr_font **out, exr_error *e) {
   exr_font_input inputs[32];
   void *loaded[32] = {0};
   const exr_font_rule *selected[32] = {0};
   size_t i, used = fallback->count, total = 0, reads = 0;
   exr_status status = EXR_OK;
   *out = NULL;
+  status = exr_control_cancel(control, e);
+  if (status != EXR_OK) return status;
   for (i = 0; i < used; i++) {
     inputs[i] = (exr_font_input){fallback->faces[i].bytes, fallback->faces[i].bytes_size,
                                   (size_t)fallback->faces[i].face->face_index};
@@ -220,7 +227,7 @@ exr_status exr_book_fonts(const exr_document *d, exr_font *fallback,
     void *bytes = NULL;
     size_t size = 0;
     if (!requested(d, styles, &rules[i])) continue;
-    status = load_font(d, fallback, &rules[i], &bytes, &size, &reads, e);
+    status = load_font(d, fallback, &rules[i], control, &bytes, &size, &reads, e);
     if (status != EXR_OK) goto done;
     if (!bytes) continue;
     if (used == 32 || size > EXR_MAX_INPUT - total) {

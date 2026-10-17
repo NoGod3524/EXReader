@@ -32,6 +32,7 @@ struct ot_work {
   int positioning;
   int rtl;
   size_t next_scan;
+  size_t control_next;
 };
 
 static int bounds(ot_view v, size_t offset, size_t count, size_t unit) {
@@ -47,6 +48,10 @@ static int work(ot_work *w, size_t amount) {
     return 0;
   }
   w->work += amount;
+  if (w->status == EXR_OK && w->work >= w->control_next) {
+    w->status = exr_control_cancel(&w->options->control, NULL);
+    w->control_next = w->work + 1024;
+  }
   return w->status == EXR_OK;
 }
 static unsigned u16(ot_view v, size_t at) {
@@ -869,6 +874,8 @@ exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t
   for (i = 0; i < options->feature_count; i++)
     if (!options->features[i].tag) return exr_fail(error, EXR_ARGUMENT, "Invalid OpenType feature tag");
   if (size > EXR_MAX_TEXT) return exr_fail(error, EXR_LIMIT, "Shaping text exceeds 64 MiB");
+  w.status = exr_control_poll(&options->control, EXR_STAGE_SHAPE, 0, size, error);
+  if (w.status != EXR_OK) return w.status;
   if (!size) return exr_fail(error, EXR_OK, "");
   w.face = &font->faces[face_index]; w.options = options;
   w.work_limit = 64000000u;
@@ -876,6 +883,8 @@ exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t
     return exr_fail(error, EXR_FONT, "Font has no usable design-unit scale");
   w.scale = options->font_size/(float)w.face->face->units_per_EM;
   w.status = exr_text_analyze(text, size, &boundaries, error);
+  if (w.status != EXR_OK) goto done;
+  w.status = exr_control_cancel(&options->control, error);
   if (w.status != EXR_OK) goto done;
   w.status = tables(w.face);
   if (w.status != EXR_OK) goto done;
@@ -885,6 +894,10 @@ exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t
   while (at < size) {
     size_t start = at;
     ot_item *item;
+    if (!(w.count & 1023)) {
+      w.status = exr_control_poll(&options->control, EXR_STAGE_SHAPE, at, size, error);
+      if (w.status != EXR_OK) goto done;
+    }
     if (!exr_next(text, size, &at, &cp)) { w.status = EXR_ENCODING; goto done; }
     if (!resize_items(&w, w.count+1)) goto done;
     if (start >= cluster_end) {
@@ -950,15 +963,19 @@ exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t
       pens[w.count+i] = pens[w.count+i-1]+w.items[i-1].out.advance_y;
     }
     for (i = 0; i < w.count; i++) {
+      if (!work(&w, 1)) goto done;
       resolve_attachment(&w, i, 0, pens, pens+w.count);
       result[i] = w.items[i].out;
     }
   }
+  if (w.status == EXR_OK)
+    w.status = exr_control_poll(&options->control, EXR_STAGE_SHAPE, size, size, error);
   if (w.status == EXR_OK) { *out = result; *out_count = w.count; result = NULL; }
 done:
   free(boundaries); free(pens); free(w.items); free(result);
   if (w.status == EXR_OK) return exr_fail(error, EXR_OK, "");
   return exr_fail(error, w.status, w.status == EXR_FONT ? "Invalid or unsupported OpenType data" :
                                   w.status == EXR_LIMIT ? "OpenType shaping work limit exceeded" :
-                                  w.status == EXR_ENCODING ? "Shaping text is not UTF-8" : "Shaping allocation failed");
+                                  w.status == EXR_ENCODING ? "Shaping text is not UTF-8" :
+                                  w.status == EXR_CANCELLED ? "Operation cancelled" : "Shaping allocation failed");
 }
