@@ -44,15 +44,18 @@ exr_status exr_text_index_open(const char *path,exr_text_index **out,exr_error *
   sqlite3_busy_timeout(i->db,3000); sqlite3_db_config(i->db,SQLITE_DBCONFIG_DEFENSIVE,1,NULL);
   code=sqlite3_exec(i->db,"PRAGMA foreign_keys=ON;PRAGMA trusted_schema=OFF;",NULL,NULL,NULL);
   if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; }
-  code=sqlite3_exec(i->db,"BEGIN IMMEDIATE",NULL,NULL,NULL); if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; } transaction=1;
   app=scalar(i->db,"PRAGMA application_id"); version=scalar(i->db,"PRAGMA user_version");
-  if(!app && !version && scalar(i->db,"SELECT count(*) FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'")==0) {
-    code=sqlite3_exec(i->db,"CREATE TABLE text_items(id INTEGER PRIMARY KEY,source TEXT NOT NULL,part TEXT NOT NULL,body TEXT NOT NULL,has_zero INTEGER NOT NULL CHECK(has_zero IN(0,1)),UNIQUE(source,part));"
-      "CREATE VIRTUAL TABLE text_fts USING fts5(body,content='text_items',content_rowid='id',tokenize='trigram case_sensitive 1');"
-      "PRAGMA application_id=1163416137;PRAGMA user_version=1;",NULL,NULL,NULL);
-    if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; }
-  } else if(app!=1163416137 || version!=1) { status=exr_fail(e,EXR_DATABASE,"Not an EXReader text index or unsupported schema"); goto failed; }
-  code=sqlite3_exec(i->db,"COMMIT",NULL,NULL,NULL); if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; } transaction=0;
+  if(app!=1163416137 || version!=1) {
+    code=sqlite3_exec(i->db,"BEGIN IMMEDIATE",NULL,NULL,NULL); if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; } transaction=1;
+    app=scalar(i->db,"PRAGMA application_id"); version=scalar(i->db,"PRAGMA user_version");
+    if(!app && !version && scalar(i->db,"SELECT count(*) FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'")==0) {
+      code=sqlite3_exec(i->db,"CREATE TABLE text_items(id INTEGER PRIMARY KEY,source TEXT NOT NULL,part TEXT NOT NULL,body TEXT NOT NULL,has_zero INTEGER NOT NULL CHECK(has_zero IN(0,1)),UNIQUE(source,part));"
+        "CREATE VIRTUAL TABLE text_fts USING fts5(body,content='text_items',content_rowid='id',tokenize='trigram case_sensitive 1');"
+        "PRAGMA application_id=1163416137;PRAGMA user_version=1;",NULL,NULL,NULL);
+      if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; }
+    } else if(app!=1163416137 || version!=1) { status=exr_fail(e,EXR_DATABASE,"Not an EXReader text index or unsupported schema"); goto failed; }
+    code=sqlite3_exec(i->db,"COMMIT",NULL,NULL,NULL); if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; } transaction=0;
+  }
   code=sqlite3_exec(i->db,"PRAGMA journal_mode=WAL;",NULL,NULL,NULL);
   if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; }
   *out=i; return exr_fail(e,EXR_OK,"");
@@ -71,6 +74,13 @@ static exr_status execute(exr_text_index *i,const char *sql,const char *source,c
   if(code==SQLITE_OK) code=sqlite3_step(s);
   sqlite3_finalize(s); return code==SQLITE_DONE ? EXR_OK : db_error(i,code,e);
 }
+static exr_status transaction_end(exr_text_index *i,const exr_control *control,exr_status status,int transaction,exr_error *e) {
+  if(status==EXR_OK) status=exr_control_cancel(control,e);
+  if(status==EXR_OK) { int code=sqlite3_exec(i->db,"COMMIT",NULL,NULL,NULL); if(code==SQLITE_OK) transaction=0; else status=db_error(i,code,e); }
+  sqlite3_progress_handler(i->db,0,NULL,NULL);
+  if(transaction) sqlite3_exec(i->db,"ROLLBACK",NULL,NULL,NULL);
+  i->busy=0; return status==EXR_OK ? exr_fail(e,EXR_OK,"") : status;
+}
 static exr_status change(exr_text_index *i,const char *source,const char *part,const void *text,size_t size,int remove,const exr_control *control,exr_error *e) {
   exr_status status; int code,transaction=0;
   if(!i || i->busy || i->query || (!text && size) || (!remove && !part)) return exr_fail(e,EXR_ARGUMENT,"Invalid or active text index write");
@@ -88,18 +98,44 @@ static exr_status change(exr_text_index *i,const char *source,const char *part,c
       execute(i,"INSERT INTO text_items(source,part,body,has_zero) VALUES(?1,?2,?3,?4) ON CONFLICT(source,part) DO UPDATE SET body=excluded.body,has_zero=excluded.has_zero",source,part,text,size,e);
   }
   if(status==EXR_OK && !remove) status=execute(i,"INSERT INTO text_fts(rowid,body) SELECT id,body FROM text_items WHERE source=?1 AND part=?2",source,part,NULL,0,e);
-  if(status==EXR_OK) status=exr_control_cancel(control,e);
-  if(status==EXR_OK) { code=sqlite3_exec(i->db,"COMMIT",NULL,NULL,NULL); if(code==SQLITE_OK) transaction=0; else status=db_error(i,code,e); }
 done:
-  sqlite3_progress_handler(i->db,0,NULL,NULL);
-  if(transaction) sqlite3_exec(i->db,"ROLLBACK",NULL,NULL,NULL);
-  i->busy=0; return status==EXR_OK ? exr_fail(e,EXR_OK,"") : status;
+  return transaction_end(i,control,status,transaction,e);
 }
 exr_status exr_text_index_put(exr_text_index *i,const char *source,const char *part,const void *text,size_t size,const exr_control *control,exr_error *e) {
   return change(i,source,part,text,size,0,control,e);
 }
 exr_status exr_text_index_remove(exr_text_index *i,const char *source,const char *part,const exr_control *control,exr_error *e) {
   return change(i,source,part,NULL,0,1,control,e);
+}
+exr_status exr_text_index_replace(exr_text_index *i,const char *source,exr_text_part_fn provider,void *context,
+                                     const exr_control *control,exr_error *e) {
+  size_t at=0; int code,transaction=0; exr_status status;
+  if(!i || !provider || i->busy || i->query) return exr_fail(e,EXR_ARGUMENT,"Invalid or active text source replacement");
+  status=name(source,0,e); if(status!=EXR_OK) return status;
+  i->busy=1; status=exr_control_cancel(control,e); if(status!=EXR_OK) goto done;
+  sqlite3_progress_handler(i->db,1000,cancelled,(void *)control);
+  code=sqlite3_exec(i->db,"BEGIN IMMEDIATE",NULL,NULL,NULL); if(code!=SQLITE_OK) { status=db_error(i,code,e); goto done; } transaction=1;
+  status=execute(i,"INSERT INTO text_fts(text_fts,rowid,body) SELECT 'delete',id,body FROM text_items WHERE source=?1 AND (?2 IS NULL OR part=?2)",source,NULL,NULL,0,e);
+  if(status==EXR_OK) status=execute(i,"DELETE FROM text_items WHERE source=?1 AND (?2 IS NULL OR part=?2)",source,NULL,NULL,0,e);
+  if(status!=EXR_OK) goto done;
+  for(;;at++) {
+    exr_text_part part={0}; exr_error local={0}; int found=0;
+    status=exr_control_poll(control,EXR_STAGE_READ,at,0,e); if(status!=EXR_OK) goto done;
+    status=provider(context,at,&part,&found,&local);
+    if(status!=EXR_OK || local.code!=EXR_OK) { status=exr_fail(e,status!=EXR_OK ? status : local.code,"%.255s",local.message[0] ? local.message : "Index text provider failed"); goto done; }
+    if(found!=0 && found!=1) { status=exr_fail(e,EXR_ARGUMENT,"Index provider returned an invalid found flag"); goto done; }
+    if(!found) break;
+    if(at==100000 || part.size>=EXR_MAX_TEXT) { status=exr_fail(e,EXR_LIMIT,"Index source exceeds part/count limits"); goto done; }
+    if(!part.text && part.size) { status=exr_fail(e,EXR_ARGUMENT,"Index provider returned missing text"); goto done; }
+    status=name(part.id,1,e); if(status==EXR_OK) status=utf8(part.text,part.size,control,e); if(status!=EXR_OK) goto done;
+    status=execute(i,"INSERT INTO text_items(source,part,body,has_zero) VALUES(?1,?2,?3,?4)",source,part.id,part.text,part.size,e);
+    if(status!=EXR_OK && sqlite3_extended_errcode(i->db)==SQLITE_CONSTRAINT_UNIQUE) status=exr_fail(e,EXR_ARGUMENT,"Index provider returned duplicate part IDs");
+    if(status!=EXR_OK) goto done;
+    status=execute(i,"INSERT INTO text_fts(rowid,body) SELECT id,body FROM text_items WHERE source=?1 AND part=?2",source,part.id,NULL,0,e); if(status!=EXR_OK) goto done;
+  }
+  status=exr_control_poll(control,EXR_STAGE_READ,at,at,e);
+done:
+  return transaction_end(i,control,status,transaction,e);
 }
 void exr_text_query_free(exr_text_query *q) {
   if(!q) return;

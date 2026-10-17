@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.92.0"
+#define EXR_VERSION "0.93.0"
 #define EXR_ABI_VERSION 1u
 typedef enum {
   EXR_OK = 0,
@@ -885,6 +885,13 @@ EXR_API exr_status exr_text_index_put(exr_text_index *index,const char *source,c
 /* NULL part removes every part for this source, in one transaction. */
 EXR_API exr_status exr_text_index_remove(exr_text_index *index,const char *source,const char *part,
                                           const exr_control *control,exr_error *error);
+/* Streaming source replacement. Provider output borrows bytes until the next
+   callback or replace() return. found=0 ends the sequence; an empty sequence
+   clears this source. All parts replace atomically, including FTS postings. */
+typedef struct { const char *id; const void *text; size_t size; } exr_text_part;
+typedef exr_status (*exr_text_part_fn)(void *context,size_t index,exr_text_part *part,int *found,exr_error *error);
+EXR_API exr_status exr_text_index_replace(exr_text_index *index,const char *source,exr_text_part_fn provider,void *context,
+                                           const exr_control *control,exr_error *error);
 /* Literal substring query (1..4096 UTF-8 bytes), optionally limited to source.
    One live query per index handle; release it before writing. Query retains the
    index and can outlive close(). Control/context remain borrowed until free(). */
