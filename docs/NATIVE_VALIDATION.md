@@ -886,3 +886,19 @@ unbalanced nested states, invalid dictionaries and depth exhaustion. Public PDF 
 raster rendering remain pending.
 
 The 0.47 commit 325a7f0 passed all six platform and sanitizer CI jobs.
+
+
+## 0.49 glyph-only font input
+
+The additive public exr_font_create_glyphs constructor uses the existing copied font-input
+model and the same limits, while accepting scalable faces without Unicode charmaps. Those
+faces use no character mapping rather than treating an arbitrary encoding as Unicode. Direct
+glyph loading/rendering remains available; existing exr_font_create/open keep their Unicode
+requirement. This format-neutral capability supports embedded subsets and host glyph models.
+
+A new original primary-outline fixture removes cmap and PostScript glyph names (FreeType can
+otherwise synthesize a Unicode cmap from names). The positioned suite verifies ordinary
+constructor rejection, glyph-only acceptance, absent Unicode coverage, source/font release
+and exact RGBA raster equality for identical glyph IDs. Existing font/fallback suites pass.
+
+The 0.48 commit 9a35ebb passed all six platform and sanitizer CI jobs.

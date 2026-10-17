@@ -70,7 +70,11 @@ if __name__ == '__main__':
     oversize = font('EXR Test Oversize', {65: 'A'}, 32000, 32000, 0, 0)
     for filename, data in [('primary.ttf', primary), ('fallback.ttf', fallback), ('marks.ttf', marks), ('oversize.ttf', oversize)]:
         data.save(directory / filename)
+    glyph_only = font('EXR Test Primary', {}, 500, 800, 200, -100)
+    del glyph_only['cmap']
+    glyph_only['post'].formatType = 3.0
+    glyph_only.save(directory / 'glyph-only.ttf')
     collection = TTCollection()
     collection.fonts = [primary, fallback]
     collection.save(directory / 'collection.ttc')
-    print('Generated four original test fonts and a two-face collection.')
+    print('Generated five original test fonts and a two-face collection.')
