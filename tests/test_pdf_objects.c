@@ -67,9 +67,12 @@ static void bad_stream(const char *dir,const char *name,exr_status expected) {
   exr_pdf_close(file); free(data);
 }
 int main(int argc,char **argv) {
-  const char *bad[]={"prev-cycle","prev-offset","encrypted","hybrid","xref-offset","header","eof","startxref","root-type","root-direct","size","token","root-reference","generation","string","key","hex"};
+  const char *bad[]={"object-header-duplicate","object-header-offset","object-header-order","object-header-tail","object-body","xref-indirect","xref-empty-index","xref-size","xref-nested-hybrid","xref-width","xref-overlap","xref-odd-index","xref-generation","object-stream-number","object-stream-index","object-stream-self","object-stream-missing","prev-cycle","prev-offset","encrypted","hybrid","xref-offset","header","eof","startxref","root-type","root-direct","size","token","root-reference","generation","string","key","hex"};
   const char *streams[]={"invalid-length","cycle-length","bad-flate","unsupported-filter","bad-parameters","unsupported-predictor","trailing"}; size_t i;
   CHECK(argc==2); basic(argv[1],"pdf-objects.pdf"); basic(argv[1],"pdf-objects-predictor-one.pdf"); basic(argv[1],"pdf-stream-whitespace.pdf");
+  basic(argv[1],"pdf-stream-after-classic.pdf"); incremental(argv[1],"pdf-classic-after-stream.pdf");
+  basic(argv[1],"pdf-xref-stream.pdf"); basic(argv[1],"pdf-object-stream.pdf"); basic(argv[1],"pdf-hybrid.pdf");
+  basic(argv[1],"pdf-xref-index.pdf"); basic(argv[1],"pdf-xref-wide.pdf"); basic(argv[1],"pdf-xref-default-type.pdf");
   incremental(argv[1],"pdf-incremental.pdf"); incremental(argv[1],"pdf-incremental-inherit.pdf");
   for(i=0;i<sizeof(bad)/sizeof(*bad);i++) { char name[256]; snprintf(name,sizeof(name),"pdf-bad-%s.pdf",bad[i]); bad_open(argv[1],name,EXR_FORMAT); }
   bad_open(argv[1],"pdf-bad-nesting.pdf",EXR_LIMIT); bad_open(argv[1],"pdf-bad-string-depth.pdf",EXR_LIMIT);

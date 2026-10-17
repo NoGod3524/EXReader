@@ -23,15 +23,15 @@ def pdf(name,values=None,trailer=b'',mutate=None):
     if mutate: mutate(data,xref,offsets)
     (root/name).write_bytes(data); return data,xref
 base,base_xref=pdf('pdf-objects.pdf')
-def incremental(name,previous=None,rootref=True,deleted=True):
+def incremental(name,previous=None,rootref=True,deleted=True,size=12,extra=11):
     data=bytearray(base); offsets={}
-    for i,value in [(1,b'<< /Type /Catalog /Pages 2 0 R /Revision (Updated) /Deleted 9 0 R /Extra 11 0 R >>'),(11,b'(Extra object)')]:
+    for i,value in [(1,b'<< /Type /Catalog /Pages 2 0 R /Revision (Updated) /Deleted 9 0 R /Extra '+str(extra).encode()+b' 0 R >>'),(extra,b'(Extra object)')]:
         offsets[i]=len(data);data+=str(i).encode()+b' 0 obj\n'+value+b'\nendobj\n'
     xref=len(data);data+=b'xref\n1 1\n'+f'{offsets[1]:010d} 00000 n \n'.encode()
     if deleted: data+=b'9 1\n0000000000 00001 f \n'
-    data+=b'11 1\n'+f'{offsets[11]:010d} 00000 n \n'.encode()
+    data+=str(extra).encode()+b' 1\n'+f'{offsets[extra]:010d} 00000 n \n'.encode()
     prev=xref if previous=='self' else base_xref if previous is None else previous
-    data+=b'trailer\n<< /Size 12'+(b' /Root 1 0 R' if rootref else b'')+b' /Prev '+str(prev).encode()+b' >>\nstartxref\n'+str(xref).encode()+b'\n%%EOF\n'
+    data+=b'trailer\n<< /Size '+str(size).encode()+(b' /Root 1 0 R' if rootref else b'')+b' /Prev '+str(prev).encode()+b' >>\nstartxref\n'+str(xref).encode()+b'\n%%EOF\n'
     (root/name).write_bytes(data)
 incremental('pdf-incremental.pdf');incremental('pdf-incremental-inherit.pdf',rootref=False)
 incremental('pdf-bad-prev-cycle.pdf','self');incremental('pdf-bad-prev-offset.pdf',999999)
@@ -65,3 +65,76 @@ pdf('pdf-stream-whitespace.pdf',values=objects(data=zlib.compress(payload)+b'\n\
 pdf('pdf-stream-expansion.pdf',values=objects(data=zlib.compress(b'X'*(64*1024*1024+1),9)))
 
 pdf('pdf-bad-integer.pdf',values={**objects(),1:b'<< /Type /Catalog /Number 9223372036854775808 >>'})
+
+
+# Modern cross-reference streams and compressed objects. Reuse the scalar/stream
+# checks above so both container encodings must produce the same object graph.
+def modern(name, compressed=True, hybrid=False, widths=(1,4,2), index=None, damage=None, zipped=True, object_header=None, object_body=None, stream_extra=b'', append_to=None):
+    values=objects(); members=[1,2,3,5,8,9] if compressed else []
+    body=bytearray(); pairs=[]
+    for number in members:
+        pairs.append((number,len(body))); body+=values.pop(number)+b'\n'
+    header=b''.join(f'{number} {offset} '.encode() for number,offset in pairs)
+    if object_header is not None: header=object_header
+    if object_body is not None: body=object_body
+    if members:
+        packed=zlib.compress(header+body)
+        values[11]=b'<< /Type /ObjStm /N '+str(len(members)).encode()+b' /First '+str(len(header)).encode()+b' /Filter /FlateDecode /Length '+str(len(packed)).encode()+b' >>\nstream\n'+packed+b'\nendstream'
+    data=bytearray(b'%PDF-1.7\n%\x80\x81\x82\x83\n' if append_to is None else append_to[0]); offsets={}
+    for number,value in sorted(values.items()):
+        offsets[number]=len(data);data+=f'{number} 0 obj\n'.encode()+value+b'\nendobj\n'
+    xref=len(data);offsets[12]=xref
+    entries={0:(0,0,65535)}
+    for number in range(1,13):
+        entries[number]=(2,11,members.index(number)) if number in members else (1,offsets[number],0) if number in offsets else (0,0,0)
+    ranges=[0,13] if index is None else index
+    if damage: damage(entries)
+    stream=bytearray()
+    for at in range(0,len(ranges)-1,2):
+        for number in range(ranges[at],ranges[at]+ranges[at+1]):
+            for field,width in zip(entries.get(number,(0,0,0)),widths):
+                if width: stream+=field.to_bytes(width,'big')
+    encoded=zlib.compress(stream) if zipped else stream
+    dictionary=b'<< /Type /XRef /Size 13 /Root 1 0 R /W ['+b' '.join(str(w).encode() for w in widths)+b']'
+    if index is not None: dictionary+=b' /Index ['+b' '.join(str(x).encode() for x in index)+b']'
+    dictionary+=stream_extra
+    if append_to is not None: dictionary+=b' /Prev '+str(append_to[1]).encode()
+    dictionary+=(b' /Filter /FlateDecode' if zipped else b'')+b' /Length '+str(len(encoded)).encode()+b' >>'
+    data+=b'12 0 obj\n'+dictionary+b'\nstream\n'+encoded+b'\nendstream\nendobj\n'
+    if hybrid:
+        table=len(data); data+=b'xref\n0 13\n0000000000 65535 f \n'
+        for number in range(1,13): data+=f'{offsets[number]:010d} 00000 n \n'.encode() if number in offsets else b'0000000000 00000 f \n'
+        data+=b'trailer\n<< /Size 13 /Root 1 0 R /XRefStm '+str(xref).encode()+b' >>\n'
+        xref=table
+    data+=b'startxref\n'+str(xref).encode()+b'\n%%EOF\n'
+    (root/name).write_bytes(data)
+    return data,xref
+modern('pdf-xref-stream.pdf',compressed=False)
+modern('pdf-object-stream.pdf')
+modern('pdf-hybrid.pdf',hybrid=True)
+modern('pdf-xref-index.pdf',index=[0,4,4,9])
+modern('pdf-xref-wide.pdf',widths=(2,8,4),zipped=False)
+modern('pdf-xref-default-type.pdf',compressed=False,widths=(0,4,0),index=[1,10,12,1],zipped=False)
+modern('pdf-bad-xref-width.pdf',widths=(1,9,2))
+modern('pdf-bad-xref-overlap.pdf',index=[0,4,3,10])
+modern('pdf-bad-xref-odd-index.pdf',index=[0,4,4])
+modern('pdf-bad-xref-generation.pdf',damage=lambda e:e.__setitem__(1,(1,9,65536)),widths=(1,4,4))
+modern('pdf-bad-object-stream-number.pdf',damage=lambda e:e.__setitem__(1,(2,11,1)))
+modern('pdf-bad-object-stream-index.pdf',damage=lambda e:e.__setitem__(1,(2,11,99)))
+modern('pdf-bad-object-stream-self.pdf',damage=lambda e:e.__setitem__(11,(2,11,0)))
+modern('pdf-bad-object-stream-missing.pdf',damage=lambda e:e.__setitem__(1,(2,10,0)))
+
+modern('pdf-bad-object-header-duplicate.pdf',object_header=b'1 0 1 500 3 600 5 700 8 800 9 900 ')
+modern('pdf-bad-object-header-offset.pdf',object_header=b'1 999999 2 0 3 1 5 2 8 3 9 4 ')
+modern('pdf-bad-object-header-order.pdf',object_header=b'1 0 2 0 3 1 5 2 8 3 9 4 ')
+modern('pdf-bad-object-header-tail.pdf',object_header=b'1 0 2 1 3 2 5 3 8 4 9 5 junk')
+modern('pdf-bad-object-body.pdf',object_body=b'not-a-value')
+modern('pdf-bad-xref-indirect.pdf',stream_extra=b'/DecodeParms 9 0 R')
+modern('pdf-bad-xref-empty-index.pdf',index=[])
+modern('pdf-bad-xref-size.pdf',stream_extra=b'/Size 2')
+modern('pdf-bad-xref-nested-hybrid.pdf',stream_extra=b'/XRefStm 9')
+modern('pdf-stream-after-classic.pdf',append_to=(base,base_xref))
+saved_base,saved_xref=base,base_xref
+base,base_xref=modern('pdf-compressed-incremental-base.pdf')
+incremental('pdf-classic-after-stream.pdf',size=14,extra=13)
+base,base_xref=saved_base,saved_xref
