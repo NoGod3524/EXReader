@@ -1,0 +1,73 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+#include "../src/pdf_raster_internal.h"
+static exr_error error; static unsigned checks;
+#define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
+#define OK(x) CHECK((x)==EXR_OK)
+static unsigned char *load(const char *dir,const char *name,size_t *size) {
+  char path[4096]; FILE *f; long n; unsigned char *data;
+  snprintf(path,sizeof(path),"%s/%s",dir,name); f=fopen(path,"rb"); CHECK(f && !fseek(f,0,SEEK_END)); n=ftell(f); CHECK(n>0); rewind(f);
+  *size=(size_t)n; data=malloc(*size); CHECK(data && fread(data,1,*size,f)==*size); fclose(f); return data;
+}
+static uint32_t resources(exr_pdf_file *file) { uint32_t id; OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&id,&error)); return id; }
+static uint32_t image(exr_pdf_file *file,const char *name) { uint32_t dict; OK(exr_pdf_resolve(file,exr_pdf_get(file,resources(file),"XObject"),&dict,&error)); return exr_pdf_get(file,dict,name); }
+static void pixel(const exr_bitmap *b,unsigned x,unsigned y,unsigned red,unsigned green,unsigned blue,unsigned alpha) {
+  const unsigned char *p=b->pixels+(size_t)y*b->stride+x*4; CHECK(p[0]==red && p[1]==green && p[2]==blue && p[3]==alpha);
+}
+static exr_bitmap decode(exr_pdf_file *file,const char *name) {
+  exr_bitmap b={0}; int interpolate=0; OK(exr_pdf_image_decode(file,image(file,name),resources(file),0x0000ffff,&b,&interpolate,NULL,NULL,&error)); CHECK(!interpolate); return b;
+}
+static exr_bitmap render(exr_pdf_file *file,const char *content) {
+  exr_pdf_raster_config c={0}; exr_bitmap b={0}; c.width=c.height=8; c.channels=4; c.background=0xffffffff;
+  OK(exr_pdf_raster_content(file,resources(file),content,strlen(content),NULL,&c,NULL,&b,&error)); return b;
+}
+static void decoded(exr_pdf_file *file) {
+  exr_bitmap b=decode(file,"RGB"); CHECK(b.width==2 && b.height==2); pixel(&b,0,0,255,0,0,255); pixel(&b,1,0,0,255,0,255); pixel(&b,0,1,0,0,255,255); free(b.pixels);
+  b=decode(file,"Gray"); pixel(&b,0,0,255,255,255,255); pixel(&b,1,0,0,0,0,255); free(b.pixels);
+  b=decode(file,"Gray16"); pixel(&b,0,0,0,0,0,255); pixel(&b,1,0,255,255,255,255); free(b.pixels);
+  b=decode(file,"RGB4"); pixel(&b,0,0,255,0,136,255); free(b.pixels);
+  b=decode(file,"CMYK2"); pixel(&b,0,0,255,0,255,255); free(b.pixels);
+  b=decode(file,"Stencil"); pixel(&b,0,0,0,0,255,255); pixel(&b,1,0,0,0,255,0); free(b.pixels);
+  b=decode(file,"Rows1"); pixel(&b,0,0,255,255,255,255); pixel(&b,1,0,0,0,0,255); pixel(&b,1,1,255,255,255,255); pixel(&b,0,1,0,0,0,255); free(b.pixels);
+  b=decode(file,"Alias"); pixel(&b,0,0,255,0,0,255); free(b.pixels);
+}
+static void rasterized(exr_pdf_file *file) {
+  exr_bitmap b=render(file,"4 0 0 4 0 0 cm /RGB Do"); pixel(&b,0,3,255,0,0,255); pixel(&b,3,3,0,255,0,255); pixel(&b,0,0,0,0,255,255); pixel(&b,6,6,255,255,255,255); free(b.pixels);
+  b=render(file,"0 0 1 rg 4 0 0 2 0 0 cm /Stencil Do"); pixel(&b,0,0,0,0,255,255); pixel(&b,3,0,255,255,255,255); free(b.pixels);
+  b=render(file,"0 0 1 4 re W n 4 0 0 4 0 0 cm /RGB Do"); pixel(&b,0,3,255,0,0,255); pixel(&b,3,3,255,255,255,255); free(b.pixels);
+  b=render(file,"/Form Do"); pixel(&b,1,1,0,0,0,255); pixel(&b,5,5,255,255,255,255); free(b.pixels);
+}
+static int cancel(void *context) { (void)context; return 1; }
+static void affine(void) {
+  unsigned char pixels[16]={255,0,0,255,0,255,0,255,0,0,255,255,255,255,255,255},target[256],mask[64];
+  exr_bitmap src={0},dst={0},clip={0}; double matrix[6]={4,0,0,4,0,0}; size_t work=0;
+  src.width=src.height=2; src.channels=4; src.stride=8; src.pixels=pixels;
+  dst.width=dst.height=8; dst.channels=4; dst.stride=32; dst.pixels=target;
+  clip.width=clip.height=clip.stride=8; clip.channels=1; clip.pixels=mask; memset(mask,128,64);
+  memset(target,255,sizeof(target)); OK(exr_vector_image(&dst,&src,matrix,.5,0,&clip,&work,NULL,&error)); pixel(&dst,0,0,255,191,191,255);
+  memset(target,0,sizeof(target)); OK(exr_vector_image(&dst,&src,matrix,1,1,NULL,&work,NULL,&error)); pixel(&dst,0,0,255,0,0,255); CHECK(target[1*32+1*4]>target[1*32+1*4+1]);
+  matrix[0]=0; matrix[1]=4; matrix[2]=-4; matrix[3]=0; matrix[4]=4;
+  memset(target,255,sizeof(target)); OK(exr_vector_image(&dst,&src,matrix,1,0,NULL,&work,NULL,&error)); pixel(&dst,3,0,255,0,0,255); pixel(&dst,0,0,0,0,255,255);
+  CHECK(exr_vector_image(&dst,&dst,matrix,1,0,NULL,NULL,NULL,&error)==EXR_ARGUMENT);
+  matrix[0]=NAN; CHECK(exr_vector_image(&dst,&src,matrix,1,0,NULL,NULL,NULL,&error)==EXR_ARGUMENT); matrix[0]=0;
+  work=(size_t)256*1024*1024; CHECK(exr_vector_image(&dst,&src,matrix,1,0,NULL,&work,NULL,&error)==EXR_LIMIT);
+  { exr_control control={0}; control.cancelled=cancel; CHECK(exr_vector_image(&dst,&src,matrix,1,0,NULL,NULL,&control,&error)==EXR_CANCELLED); }
+  /* A transparent red neighbor must not tint bilinear sampling of blue. */
+  src.width=2; src.height=1; src.stride=8; pixels[3]=0; pixels[4]=0; pixels[5]=0; pixels[6]=255; pixels[7]=255;
+  matrix[0]=4; matrix[1]=matrix[2]=0; matrix[3]=4; matrix[4]=0; memset(target,0,sizeof(target));
+  OK(exr_vector_image(&dst,&src,matrix,1,1,NULL,NULL,NULL,&error)); CHECK(target[1*4]==0 && target[1*4+2]==255 && target[1*4+3]>0);
+}
+int main(int argc,char **argv) {
+  const char *bad[]={"short","extra","bits","decode-short","decode-extra","space","mask","soft","stencil-space","stencil-bits","stencil-decode","interpolate","zero"};
+  size_t size,i; unsigned char *data; exr_pdf_file *file=NULL;
+  CHECK(argc==2); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
+  { exr_control control={0}; exr_bitmap b; int interp=1; size_t work=(size_t)256*1024*1024; control.cancelled=cancel;
+    CHECK(exr_pdf_image_decode(file,image(file,"RGB"),resources(file),0,&b,&interp,NULL,&control,&error)==EXR_CANCELLED && !b.pixels && !interp);
+    CHECK(exr_pdf_image_decode(file,image(file,"RGB"),resources(file),0,&b,&interp,&work,NULL,&error)==EXR_LIMIT && !b.pixels);
+  }
+  exr_pdf_close(file); free(data);
+  for(i=0;i<sizeof(bad)/sizeof(*bad);i++) {
+    char name[128]; exr_bitmap b; int interp=1; snprintf(name,sizeof(name),"pdf-image-bad-%s.pdf",bad[i]); data=load(argv[1],name,&size); OK(exr_pdf_open(data,size,&file,&error));
+    CHECK(exr_pdf_image_decode(file,image(file,"RGB"),resources(file),0,&b,&interp,NULL,NULL,&error)==EXR_FORMAT && !b.pixels && !b.width && !interp); exr_pdf_close(file); free(data);
+  }
+  printf("%u native PDF image checks passed\n",checks); return 0;
+}

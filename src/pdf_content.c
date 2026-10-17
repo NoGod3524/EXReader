@@ -372,7 +372,7 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
     if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==5 && !memcmp(type,"Image",5)) {
       exr_pdf_paint_state paint=paint_state(r);
       if(r->graphics && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_STREAM) return exr_fail(error,EXR_FORMAT,"PDF Image XObject is not a stream");
-      return r->callbacks.image ? r->callbacks.image(r->context,r->file,id,&paint,error) : EXR_OK;
+      return r->callbacks.image ? r->callbacks.image(r->context,r->file,id,r->resources,&paint,error) : EXR_OK;
     }
     if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==4 && !memcmp(type,"Form",4)) return form(r,id,error);
     return exr_fail(error,EXR_FORMAT,"Unsupported PDF text XObject subtype");

@@ -42,4 +42,9 @@ exr_status exr_vector_dash(const exr_vector_polyline *path,const double *lengths
 exr_status exr_vector_fill(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
                             exr_vector_rule rule,uint32_t color,const exr_bitmap *clip,
                             size_t *work,const exr_control *control,exr_error *error);
+/* RGBA source normalized [0,1]^2 (first row at v=0) mapped to target pixels.
+   Nearest/bilinear sampling, subpixel edge coverage, straight alpha and clip. */
+exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const double matrix[6],
+                             double alpha,int interpolate,const exr_bitmap *clip,size_t *work,
+                             const exr_control *control,exr_error *error);
 #endif

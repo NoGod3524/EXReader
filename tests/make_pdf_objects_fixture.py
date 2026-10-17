@@ -395,3 +395,37 @@ outline_fonts[51]=b'<< /Subtype /TrueType /BaseFont /Bad /Encoding /WinAnsiEncod
 outline_fonts[52]=b'<< /FontFile2 53 0 R >>'
 outline_fonts[53]=compressed_stream(b'not a valid font program')
 pdf('pdf-outlines.pdf',values=outline_fonts)
+
+
+# Packed image samples, per-row padding, Decode maps and local resource aliases.
+def image_stream(samples,width,height,space=b'/DeviceRGB',bits=8,extra=b''):
+    return compressed_stream(samples,b'/Type /XObject /Subtype /Image /Width '+str(width).encode()+b' /Height '+str(height).encode()+b' /BitsPerComponent '+str(bits).encode()+(b' /ColorSpace '+space if space else b'')+b' '+extra)
+image_objects={
+ 1:b'<< /Type /Catalog /Resources << /ColorSpace << /Alias /DeviceRGB >> /XObject << /RGB 2 0 R /Gray 3 0 R /Gray16 4 0 R /RGB4 5 0 R /CMYK2 6 0 R /Stencil 7 0 R /Rows1 8 0 R /Alias 9 0 R /Form 10 0 R >> >> >>',
+ 2:image_stream(bytes([255,0,0,0,255,0,0,0,255,255,255,255]),2,2),
+ 3:image_stream(bytes([0,255]),2,1,b'/DeviceGray',extra=b'/Decode [1 0]'),
+ 4:image_stream(bytes([0,0,255,255]),2,1,b'/DeviceGray',16),
+ 5:image_stream(bytes([0xf0,0x80]),1,1,b'/DeviceRGB',4),
+ 6:image_stream(bytes([0x30]),1,1,b'/DeviceCMYK',2),
+ 7:image_stream(bytes([0x40]),2,1,None,1,b'/ImageMask true'),
+ 8:image_stream(bytes([0xa0,0x40]),3,2,b'/DeviceGray',1),
+ 9:image_stream(bytes([255,0,0]),1,1,b'/Alias'),
+ 10:compressed_stream(b'4 0 0 4 0 0 cm /Local Do',b'/Type /XObject /Subtype /Form /BBox [0 0 4 4] /Resources << /ColorSpace << /Alias /DeviceGray >> /XObject << /Local 11 0 R >> >>'),
+ 11:image_stream(bytes([0]),1,1,b'/Alias'),
+}
+pdf('pdf-images.pdf',values=image_objects)
+for name,value in [
+ ('short',image_stream(bytes([0]),2,1,b'/DeviceGray')),
+ ('extra',image_stream(bytes([0,1,2]),2,1,b'/DeviceGray')),
+ ('bits',image_stream(bytes([0]),1,1,b'/DeviceGray',3)),
+ ('decode-short',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/Decode [1]')),
+ ('decode-extra',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/Decode [0 1 0]')),
+ ('space',image_stream(bytes([0]),1,1,b'/Unsupported')),
+ ('mask',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/Mask [0 0]')),
+ ('soft',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/SMask 3 0 R')),
+ ('stencil-space',image_stream(bytes([0]),1,1,b'/DeviceGray',1,b'/ImageMask true')),
+ ('stencil-bits',image_stream(bytes([0]),1,1,None,8,b'/ImageMask true')),
+ ('stencil-decode',image_stream(bytes([0]),1,1,None,1,b'/ImageMask true /Decode [0.5 1]')),
+ ('interpolate',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/Interpolate 1')),
+ ('zero',image_stream(bytes([0]),0,1,b'/DeviceGray')),
+]: pdf('pdf-image-bad-'+name+'.pdf',values={**image_objects,2:value})

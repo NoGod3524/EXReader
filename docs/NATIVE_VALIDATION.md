@@ -1077,3 +1077,28 @@ compared with Poppler at the same 595 x 841 dimensions: positions, wrapping,
 colors and rules agree, with rasterizer antialiasing differences. Poppler remains
 an independent development oracle and is not linked or distributed. The 0.56
 commit e84c996 passed all six CI jobs.
+
+
+## 0.58 Packed PDF images and affine image painting
+
+A native image reader decodes raw or supported lossless-filter image streams
+with 1/2/4/8/16-bit DeviceGray/RGB/CMYK components, independent packed row padding,
+Decode arrays, resource color-space aliases and one-bit tinted stencil images.
+It validates exact sample sizes, dimensions, boolean values and decode ranges,
+with 16-million-pixel, work and cancellation limits. Image events now pass the
+current resource dictionary, so Forms use local aliases correctly.
+
+The reusable affine-image primitive maps normalized RGBA images with arbitrary
+rotation/shear/scale, nearest or bilinear sampling, subpixel edge coverage,
+nonstroking alpha and clip masks. Bilinear color is interpolated with premultiplied
+alpha before straight-alpha composition, avoiding transparent-edge color fringes.
+The PDF backend flips image rows into PDF user space and releases decoded pixels
+after each draw. Source/target aliasing, invalid transforms, storage and work
+exhaustion are checked. JPEG/DCT, inline images, indexed spaces and external/color
+key/soft image masks remain pending and fail explicitly.
+
+Tests check actual packed PDF sample bytes, row padding, inverted Decode,
+RGB/CMYK/16-bit gray, stencil tint/transparent bits, nested Form aliases, image
+orientation and clip pixels, rotation, interpolation, alpha, transparent-neighbor
+fringes, malformed dictionaries/data, cancellation and exhausted work. The 0.57
+commit d3435f9 passed all six CI jobs.
