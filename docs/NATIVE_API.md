@@ -675,3 +675,12 @@ options 可为 NULL；非空时清零并设置 struct_size。fallback_font 是�
 水平区域依次为左下、右下、右上、左上，经文字和 Form/CTM 变换。高度优先用 descriptor 的 Ascent/Descent，其次 FontBBox，缺失时估计为 -200 至 800 em/1000。竖排区域第一边沿文字推进方向，厚度使用声明的水平字宽。区域是逻辑字格，不是实际墨迹边界；连字对应整个语义范围。Tr 3/7 标为不可见；裁切、遮挡、alpha 和页面外文字不在语义层过滤。
 
 文字提供者每页最多 32 MiB - 1 字节、region 数组最多 64 MiB。图片无须解码，失败/取消丢弃部分结果且下一页可重试。此阶段保持内容顺序，不推断空格/换行，不重建 tagged PDF 阅读顺序或 ActualText。
+
+
+## 固定页搜索、选择和点击（0.69）
+
+`exr_fixed_text_find(text, query, query_size, from, control, &start, &end, error)` 按显式长度做精确、大小写敏感 UTF-8 搜索，包含 NUL；from 落在多字节内部时向后移动到下一边界。无结果时 start/end 为 SIZE_MAX，查询最多 1 MiB。KMP 时间为 O(正文+查询)，临时前缀表最多 4 MiB，可取消。重排正文 `exr_document_find` 也复用此实现，但保留原有 NUL 结尾 query 参数。
+
+`exr_fixed_text_select` 接受 UTF-8 字节范围，复制所有相交的非空文字 region，保持提供者顺序。空选择返回 NULL/0；多个 region 同范围时全部保留，部分连字也返回整个连字的原范围和字格。结果用 exr_free 释放。
+
+`exr_fixed_text_hit` 在源页面坐标中计算点到实际四边形的距离，max_distance 指定允许距离，exclude_flags 可过滤不可见或竖排区域；返回 region 索引，无命中为 SIZE_MAX。同距离选择数组中第一个 region。支持旋转、斜切和退化线段，不用包围盒代替字格；先用 viewport.inverse 把屏幕坐标映射回源坐标。它返回整个语义范围，宿主决定连字内部光标策略。选择和命中均线性遍历当前页并支持取消。

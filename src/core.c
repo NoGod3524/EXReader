@@ -238,25 +238,8 @@ const exr_block *exr_document_blocks(const exr_document *d, size_t *n) {
 exr_format exr_document_format(const exr_document *d) { return d ? d->format : 0; }
 exr_status exr_document_find(const exr_document *d, const char *q, size_t from, size_t *start,
                              size_t *end, exr_error *e) {
-  size_t n, at = 0;
-  uint32_t cp;
-  const char *p;
-  if (!d || !q || !start || !end || from > d->size || !q[0])
-    return exr_fail(e, EXR_ARGUMENT, "Invalid search");
-  n = strlen(q);
-  while (at < n)
-    if (!exr_next(q, n, &at, &cp))
-      return exr_fail(e, EXR_ENCODING, "Invalid query UTF-8");
-  while (from < d->size && ((unsigned char)d->text[from] & 0xc0) == 0x80)
-    from++;
-  p = strstr(d->text + from, q);
-  if (!p) {
-    *start = *end = SIZE_MAX;
-    return EXR_OK;
-  }
-  *start = (size_t)(p - d->text);
-  *end = *start + n;
-  return EXR_OK;
+  if(!d) { if(start) *start=SIZE_MAX; if(end) *end=SIZE_MAX; return exr_fail(e,EXR_ARGUMENT,"Missing search document"); }
+  return exr_find_bytes(d->text,d->size,q,q ? strlen(q) : 0,from,NULL,start,end,e);
 }
 void exr_bitmap_free(exr_bitmap *b) {
   if (b) {

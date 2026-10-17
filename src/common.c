@@ -131,3 +131,36 @@ int exr_next(const char *s, size_t n, size_t *at, uint32_t *cp) {
   *at = i;
   return 1;
 }
+
+/* KMP keeps adversarial repeated-prefix searches linear, with <=4 MiB scratch. */
+exr_status exr_find_bytes(const char *text,size_t size,const char *q,size_t n,size_t from,
+                            const exr_control *control,size_t *start,size_t *end,exr_error *e) {
+  uint32_t *prefix=NULL,cp; size_t at=0,i,j=0,steps=0; exr_status status;
+  if(start) *start=SIZE_MAX;
+  if(end) *end=SIZE_MAX;
+  if((!text && size) || !q || !n || !start || !end || from>size) return exr_fail(e,EXR_ARGUMENT,"Invalid text search");
+  if(n>(size_t)1024*1024) return exr_fail(e,EXR_LIMIT,"Search query exceeds 1 MiB");
+  status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
+  while(at<n) {
+    if(!(steps++&1023) && exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+    if(!exr_next(q,n,&at,&cp)) return exr_fail(e,EXR_ENCODING,"Invalid query UTF-8");
+  }
+  while(from<size && ((unsigned char)text[from]&0xc0)==0x80) from++;
+  if(n>size-from) return exr_fail(e,EXR_OK,"");
+  prefix=malloc(n*sizeof(*prefix)); if(!prefix) return exr_fail(e,EXR_MEMORY,"Search prefix allocation failed");
+  prefix[0]=0;
+  for(i=1;i<n;i++) {
+    if(!(i&4095) && exr_control_cancel(control,e)!=EXR_OK) { free(prefix); return EXR_CANCELLED; }
+    while(j && q[i]!=q[j]) j=prefix[j-1];
+    if(q[i]==q[j]) j++;
+    prefix[i]=(uint32_t)j;
+  }
+  j=0;
+  for(i=from;i<size;i++) {
+    if(!((i-from)&4095) && exr_control_cancel(control,e)!=EXR_OK) { free(prefix); return EXR_CANCELLED; }
+    while(j && text[i]!=q[j]) j=prefix[j-1];
+    if(text[i]==q[j]) j++;
+    if(j==n) { *end=i+1; *start=*end-n; break; }
+  }
+  free(prefix); return exr_fail(e,EXR_OK,"");
+}

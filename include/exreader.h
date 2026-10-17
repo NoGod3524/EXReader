@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.68.0"
+#define EXR_VERSION "0.69.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -423,6 +423,19 @@ EXR_API void exr_fixed_text_free(exr_fixed_text *text);
 EXR_API const char *exr_fixed_text_string(const exr_fixed_text *text,size_t *size);
 EXR_API const exr_text_region *exr_fixed_text_regions(const exr_fixed_text *text,size_t *count);
 EXR_API size_t exr_fixed_text_memory_size(const exr_fixed_text *text);
+/* Exact, case-sensitive UTF-8 byte search, including embedded NUL. A miss sets
+   start/end to SIZE_MAX. Queries are limited to 1 MiB; from rounds forward to UTF-8. */
+EXR_API exr_status exr_fixed_text_find(const exr_fixed_text *text,const char *query,size_t query_size,size_t from,
+                                        const exr_control *control,size_t *start,size_t *end,exr_error *error);
+/* Copies whole overlapping regions in provider order; no ligature subdivision.
+   UTF-8 range boundaries are required. Free returned regions with exr_free(). */
+EXR_API exr_status exr_fixed_text_select(const exr_fixed_text *text,size_t start,size_t end,const exr_control *control,
+                                          exr_text_region **regions,size_t *count,exr_error *error);
+/* Nearest source-space quad within max_distance. Equal distances keep the first
+   provider region. A miss returns SIZE_MAX; exclude_flags filters region flags. */
+EXR_API exr_status exr_fixed_text_hit(const exr_fixed_text *text,double x,double y,double max_distance,unsigned exclude_flags,
+                                       const exr_control *control,size_t *region,exr_error *error);
+
 typedef struct {
   const char *id,*label;
   exr_page_geometry geometry;
