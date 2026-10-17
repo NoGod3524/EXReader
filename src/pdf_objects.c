@@ -6,7 +6,7 @@
 #define PDF_MAX_VALUES EXR_PDF_MAX_VALUES
 #define PDF_MAX_STRINGS ((size_t)32*1024*1024)
 typedef struct { size_t offset; uint32_t value,revision; unsigned generation,type,state,seen; uint32_t compressed_index; } pdf_xref;
-typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; exr_pdf_stream_codec codec; uint32_t parameters; } pdf_stream;
+typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; exr_pdf_stream_codec codec; uint32_t parameters; unsigned inline_image; } pdf_stream;
 struct exr_pdf_file {
   const unsigned char *data; size_t size,work,decoded_bytes,decode_work,declared_size,index_bytes;
   exr_pdf_value *values; size_t value_count,value_capacity;
@@ -15,6 +15,8 @@ struct exr_pdf_file {
   pdf_stream *streams; size_t stream_count,stream_capacity;
   uint32_t root,info,revision,raw_root,trailer_id; size_t startxref;
   unsigned resolving,loading_xref;
+  const exr_control *control;
+  size_t *decode_budget;
   exr_error error;
 };
 typedef struct { exr_pdf_file *file; const unsigned char *data; size_t size,at; } parser;
@@ -659,8 +661,10 @@ done:
 }
 typedef struct { unsigned char *data; size_t size,capacity; } pdf_output;
 static int decode_work(exr_pdf_file *f,size_t amount) {
-  if(amount>(size_t)256*1024*1024-f->decode_work) return failed(f,EXR_LIMIT,"PDF decompression work budget exceeded");
-  f->decode_work+=amount; return 1;
+  size_t *work=f->decode_budget ? f->decode_budget : &f->decode_work;
+  if(amount>(size_t)256*1024*1024-*work) return failed(f,EXR_LIMIT,"PDF decompression work budget exceeded");
+  if(f->control && (*work>>16)!=((*work+amount)>>16) && exr_control_cancel(f->control,&f->error)!=EXR_OK) return 0;
+  *work+=amount; return 1;
 }
 static int output_room(exr_pdf_file *f,pdf_output *out,size_t extra,size_t temporary) {
   size_t capacity; unsigned char *data;
@@ -683,27 +687,29 @@ static int tail_whitespace(const unsigned char *data,size_t size,size_t at) {
   while(at<size && whitespace(data[at])) at++;
   return at==size;
 }
-static int decode_flate(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary) {
+static int decode_flate(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary,size_t *end) {
   size_t capacity;
   for(capacity=4096;capacity<=EXR_MAX_TEXT;capacity*=2) {
     mz_ulong produced=(mz_ulong)capacity,consumed=(mz_ulong)size; int status;
     if(!output_room(f,out,capacity,temporary) || !decode_work(f,capacity)) return 0;
     status=mz_uncompress2(out->data,&produced,data,&consumed);
     if(status==MZ_OK) {
-      if(!tail_whitespace(data,size,(size_t)consumed)) return failed(f,EXR_FORMAT,"Trailing bytes in PDF Flate stream");
+      if(end) *end=(size_t)consumed;
+      else if(!tail_whitespace(data,size,(size_t)consumed)) return failed(f,EXR_FORMAT,"Trailing bytes in PDF Flate stream");
       out->size=(size_t)produced; return 1;
     }
     if(status!=MZ_BUF_ERROR) return failed(f,EXR_FORMAT,"Invalid PDF Flate stream");
   }
   return failed(f,EXR_LIMIT,"PDF decoded stream exceeds 64 MiB");
 }
-static int decode_hex(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary) {
+static int decode_hex(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary,size_t *end) {
   size_t at; int high=-1;
   for(at=0;at<size;at++) {
     unsigned char byte; int digit;
     if(whitespace(data[at])) continue;
     if(data[at]=='>') {
       if(high>=0) { byte=(unsigned char)(high<<4); if(!output_bytes(f,out,&byte,1,temporary)) return 0; }
+      if(end) { *end=at+1; return 1; }
       if(tail_whitespace(data,size,at+1)) return 1;
       break;
     }
@@ -713,13 +719,14 @@ static int decode_hex(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_
   }
   return failed(f,EXR_FORMAT,"Invalid PDF ASCIIHex stream");
 }
-static int decode_ascii85(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary) {
+static int decode_ascii85(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary,size_t *end) {
   size_t at; uint64_t tuple=0; unsigned count=0;
   for(at=0;at<size;at++) {
     unsigned char bytes[4]; unsigned k;
     if(whitespace(data[at])) continue;
     if(data[at]=='~') {
-      if(at+1==size || data[at+1]!='>' || !tail_whitespace(data,size,at+2) || count==1) break;
+      if(at+1==size || data[at+1]!='>' || (!end && !tail_whitespace(data,size,at+2)) || count==1) break;
+      if(end) *end=at+2;
       if(!count) return 1;
       for(k=count;k<5;k++) tuple=tuple*85+84;
       if(tuple>UINT32_MAX) break;
@@ -742,11 +749,12 @@ static int decode_ascii85(exr_pdf_file *f,const unsigned char *data,size_t size,
   }
   return failed(f,EXR_FORMAT,"Invalid PDF ASCII85 stream");
 }
-static int decode_runlength(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary) {
+static int decode_runlength(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary,size_t *end) {
   size_t at=0;
   while(at<size) {
     unsigned run=data[at++]; size_t n;
     if(run==128) {
+      if(end) { *end=at; return 1; }
       if(tail_whitespace(data,size,at)) return 1;
       break;
     }
@@ -767,7 +775,7 @@ static int parameter(exr_pdf_file *f,uint32_t dict,const char *key,uint64_t maxi
   uint32_t id=exr_pdf_get(f,dict,key); *out=fallback;
   return id==EXR_PDF_NONE || direct_integer(f,resolve(f,id),maximum,out);
 }
-static int decode_lzw(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary,unsigned early) {
+static int decode_lzw(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary,unsigned early,size_t *end) {
   uint16_t prefix[4096]; unsigned char suffix[4096],stack[4096];
   size_t bit=0; unsigned width=9,next=258,previous=UINT_MAX; int started=0;
   while(size*8-bit>=width) {
@@ -777,6 +785,7 @@ static int decode_lzw(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_
     started=1;
     if(code==256) { width=9; next=258; previous=UINT_MAX; continue; }
     if(code==257) {
+      if(end) { *end=(bit+7)/8; return 1; }
       if(tail_whitespace(data,size,(bit+7)/8)) return 1;
       break;
     }
@@ -851,9 +860,35 @@ static int undo_predictor(exr_pdf_file *f,uint32_t parameters,pdf_output *out) {
 bad:
   return failed(f,EXR_FORMAT,"Invalid PDF predictor or row parameters");
 }
+/* Segment lengths, entropy byte stuffing and restart markers determine EOI;
+   a marker-looking byte sequence inside an APP segment is ordinary data. */
+static int jpeg_end(exr_pdf_file *f,const unsigned char *data,size_t size,size_t *end) {
+  size_t at=2,polled=0; unsigned scan=0,started=0;
+  if(size<4 || data[0]!=255 || data[1]!=216) goto bad;
+  while(at<size) {
+    unsigned marker,length;
+    if(at-polled>=65536) { if(!decode_work(f,at-polled)) return 0; polled=at; }
+    if(scan && data[at]!=255) { at++; continue; }
+    if(data[at++]!=255) goto bad;
+    while(at<size && data[at]==255) at++;
+    if(at==size) goto bad;
+    marker=data[at++];
+    if(scan && (!marker || (marker>=208 && marker<=215))) continue;
+    if(marker==217) { if(!started || !decode_work(f,at-polled)) goto bad; *end=at; return 1; }
+    if(marker==1) continue;
+    if(!marker || marker==216 || (marker>=208 && marker<=215) || size-at<2) goto bad;
+    length=((unsigned)data[at]<<8)|data[at+1];
+    if(length<2 || length>size-at) goto bad;
+    at+=length;
+    if(marker==218) { scan=started=1; }
+    else if(marker!=220) scan=0;
+  }
+bad:
+  return failed(f,EXR_FORMAT,"Invalid or unterminated PDF inline JPEG");
+}
 static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char **data,size_t *size,
                                    int allow_image,exr_pdf_stream_codec *codec,uint32_t *tail_parameters,exr_error *e) {
-  uint32_t filter,parameters,filters[16],parms[16],at; size_t index,count=0,n=0,i; pdf_stream source;
+  uint32_t filter,parameters,filters[16],parms[16],at; size_t index,count=0,n=0,i,encoded_size=0; pdf_stream source;
   exr_pdf_stream_codec terminal=EXR_PDF_STREAM_RAW; uint32_t terminal_parameters=EXR_PDF_NONE;
   const unsigned char *input; size_t input_size; pdf_output current={0};
   if(data) *data=NULL;
@@ -898,30 +933,33 @@ static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char
   for(i=0;i<count;i++) {
     pdf_output output={0}; int ok=0,is_flate=name_is(f,filters[i],"FlateDecode") || name_is(f,filters[i],"Fl");
     int is_lzw=name_is(f,filters[i],"LZWDecode") || name_is(f,filters[i],"LZW");
+    size_t *end=source.inline_image && !i ? &encoded_size : NULL;
     if(parms[i]!=EXR_PDF_NONE && f->values[parms[i]].kind!=EXR_PDF_NULL && f->values[parms[i]].kind!=EXR_PDF_DICT) goto unsupported;
     if(allow_image && (name_is(f,filters[i],"DCTDecode") || name_is(f,filters[i],"DCT"))) {
       if(i+1!=count) goto unsupported;
+      if(end) { if(!jpeg_end(f,input,input_size,end)) goto done; input_size=*end; }
       terminal=EXR_PDF_STREAM_JPEG; terminal_parameters=parms[i]; break;
     }
-    if(!decode_work(f,input_size)) goto done;
-    if(is_flate) ok=decode_flate(f,input,input_size,&output,current.capacity);
+    if(!end && !decode_work(f,input_size)) goto done;
+    if(is_flate) ok=decode_flate(f,input,input_size,&output,current.capacity,end);
     else if(is_lzw) {
       uint64_t early;
       if(!parameter(f,parms[i],"EarlyChange",1,1,&early)) { failed(f,EXR_FORMAT,"Invalid PDF LZW EarlyChange"); goto done; }
-      ok=decode_lzw(f,input,input_size,&output,current.capacity,(unsigned)early);
+      ok=decode_lzw(f,input,input_size,&output,current.capacity,(unsigned)early,end);
     }
-    else if(name_is(f,filters[i],"ASCIIHexDecode") || name_is(f,filters[i],"AHx")) ok=decode_hex(f,input,input_size,&output,current.capacity);
-    else if(name_is(f,filters[i],"ASCII85Decode") || name_is(f,filters[i],"A85")) ok=decode_ascii85(f,input,input_size,&output,current.capacity);
-    else if(name_is(f,filters[i],"RunLengthDecode") || name_is(f,filters[i],"RL")) ok=decode_runlength(f,input,input_size,&output,current.capacity);
+    else if(name_is(f,filters[i],"ASCIIHexDecode") || name_is(f,filters[i],"AHx")) ok=decode_hex(f,input,input_size,&output,current.capacity,end);
+    else if(name_is(f,filters[i],"ASCII85Decode") || name_is(f,filters[i],"A85")) ok=decode_ascii85(f,input,input_size,&output,current.capacity,end);
+    else if(name_is(f,filters[i],"RunLengthDecode") || name_is(f,filters[i],"RL")) ok=decode_runlength(f,input,input_size,&output,current.capacity,end);
     else { free(output.data); goto unsupported; }
     if(ok && (is_flate || is_lzw)) ok=undo_predictor(f,parms[i],&output);
-    if(!ok) { free(output.data); goto done; }
+    if(!ok || (end && !decode_work(f,encoded_size))) { free(output.data); goto done; }
     free(current.data); current=output; input=current.data; input_size=current.size;
   }
   if(f->error.code!=EXR_OK) goto done;
   if(current.capacity>EXR_MAX_INPUT-f->decoded_bytes) { failed(f,EXR_LIMIT,"PDF decoded stream cache budget exceeded"); goto done; }
   f->streams[index].decoded=current.data; f->streams[index].decoded_size=input_size; f->streams[index].ready=1;
   f->streams[index].codec=terminal; f->streams[index].parameters=terminal_parameters;
+  if(source.inline_image) f->streams[index].size=encoded_size;
   f->decoded_bytes+=current.capacity; *data=current.data ? current.data : f->data+source.offset; *size=input_size;
   if(codec) *codec=terminal;
   if(tail_parameters) *tail_parameters=terminal_parameters;
@@ -945,14 +983,114 @@ exr_status exr_pdf_image_payload(exr_pdf_file *f,uint32_t id,const unsigned char
   }
   return stream_payload(f,id,data,size,1,codec,parameters,e);
 }
+static int rename_inline(exr_pdf_file *f,uint32_t id,const char *name) {
+  size_t offset=f->strings.size,n=strlen(name);
+  if(!append(f,&f->strings,name,n)) return 0;
+  f->values[id].u.bytes.offset=(uint32_t)offset; f->values[id].u.bytes.length=(uint32_t)n; return 1;
+}
+static int inline_space_names(exr_pdf_file *f,uint32_t id) {
+  const char *long_name=name_is(f,id,"G") ? "DeviceGray" : name_is(f,id,"RGB") ? "DeviceRGB" :
+    name_is(f,id,"CMYK") ? "DeviceCMYK" : name_is(f,id,"I") ? "Indexed" : NULL;
+  uint32_t at;
+  if(long_name) return rename_inline(f,id,long_name);
+  if(f->values[id].kind==EXR_PDF_ARRAY) for(at=f->values[id].first;at!=EXR_PDF_NONE;at=f->values[at].next)
+    if(!inline_space_names(f,at)) return 0;
+  return 1;
+}
+/* Raw data has no sentinel. Resolve its sample cardinality before advancing;
+   named resources belong to the containing page/Form, not the operand arena. */
+static unsigned inline_components(exr_pdf_file *f,uint32_t id,exr_pdf_file *owner,uint32_t resources,unsigned depth) {
+  const exr_pdf_value *v; uint32_t at; uint64_t n; size_t length; const unsigned char *bytes; char key[128];
+  if(depth==16) return 0;
+  id=resolve(f,id); v=exr_pdf_value_at(f,id); if(!v) return 0;
+  if(name_is(f,id,"DeviceGray") || name_is(f,id,"CalGray")) return 1;
+  if(name_is(f,id,"DeviceRGB") || name_is(f,id,"CalRGB") || name_is(f,id,"Lab")) return 3;
+  if(name_is(f,id,"DeviceCMYK")) return 4;
+  if(v->kind==EXR_PDF_NAME) {
+    uint32_t spaces; if(!owner) return 0;
+    bytes=exr_pdf_bytes(f,id,&length); if(!length || length>=sizeof(key) || memchr(bytes,0,length)) return 0;
+    memcpy(key,bytes,length); key[length]=0;
+    spaces=resolve(owner,exr_pdf_get(owner,resources,"ColorSpace"));
+    return inline_components(owner,exr_pdf_get(owner,spaces,key),owner,resources,depth+1);
+  }
+  if(v->kind!=EXR_PDF_ARRAY || (at=v->first)==EXR_PDF_NONE) return 0;
+  id=resolve(f,at); at=f->values[at].next;
+  if(name_is(f,id,"Indexed") || name_is(f,id,"Separation") || name_is(f,id,"CalGray")) return 1;
+  if(name_is(f,id,"CalRGB") || name_is(f,id,"Lab")) return 3;
+  if(name_is(f,id,"ICCBased")) {
+    return at!=EXR_PDF_NONE && direct_integer(f,resolve(f,exr_pdf_get(f,resolve(f,at),"N")),4,&n) && (n==1 || n==3 || n==4) ? (unsigned)n : 0;
+  }
+  if(name_is(f,id,"DeviceN") && at!=EXR_PDF_NONE) {
+    v=exr_pdf_value_at(f,resolve(f,at)); if(!v || v->kind!=EXR_PDF_ARRAY) return 0;
+    n=0; for(at=v->first;at!=EXR_PDF_NONE;at=f->values[at].next) if(++n>32) return 0;
+    return (unsigned)n;
+  }
+  return 0;
+}
+static uint32_t parse_inline(parser *p,exr_pdf_file *owner,uint32_t resources) {
+  static const char *short_keys[]={"BPC","CS","D","DP","F","H","IM","I","W"};
+  static const char *long_keys[]={"BitsPerComponent","ColorSpace","Decode","DecodeParms","Filter","Height","ImageMask","Interpolate","Width"};
+  exr_pdf_file *f=p->file; uint32_t dict=value_new(f,EXR_PDF_DICT),previous=EXR_PDF_NONE,filter,id; size_t count=0,start,index,n,i;
+  uint64_t width,height,bits=1; unsigned channels; int stencil=0,filtered=0; const unsigned char *decoded; exr_pdf_stream_codec codec; uint32_t parameters;
+  if(dict==EXR_PDF_NONE) return dict;
+  while(skip(p) && p->at<p->size) {
+    uint32_t key,item; size_t length; const unsigned char *bytes; char spelling[128];
+    if(word(p,"ID")) break;
+    if(++count>128) { failed(f,EXR_LIMIT,"PDF inline dictionary exceeds 128 entries"); return EXR_PDF_NONE; }
+    if(p->data[p->at]!='/') goto bad;
+    key=parse_string(p,1,0); if(key==EXR_PDF_NONE) return key;
+    for(i=0;i<sizeof(short_keys)/sizeof(*short_keys);i++) if(name_is(f,key,short_keys[i]) && !rename_inline(f,key,long_keys[i])) return EXR_PDF_NONE;
+    bytes=exr_pdf_bytes(f,key,&length); if(!length || length>=sizeof(spelling) || memchr(bytes,0,length)) goto bad;
+    memcpy(spelling,bytes,length); spelling[length]=0;
+    if(exr_pdf_get(f,dict,spelling)!=EXR_PDF_NONE) goto bad;
+    item=parse_value(p,1); if(item==EXR_PDF_NONE) return item;
+    if(!strcmp(spelling,"ColorSpace") && !inline_space_names(f,item)) return EXR_PDF_NONE;
+    f->values[key].next=item;
+    if(previous==EXR_PDF_NONE) f->values[dict].first=key; else f->values[previous].next=key;
+    previous=item;
+  }
+  for(i=0;i<f->value_count;i++) if(f->values[i].kind==EXR_PDF_REF) goto bad;
+  if(p->at==p->size || !whitespace(p->data[p->at])) goto bad;
+  if(p->data[p->at++]==13 && p->at<p->size && p->data[p->at]==10) p->at++;
+  start=p->at;
+  if(!direct_integer(f,exr_pdf_get(f,dict,"Width"),UINT32_MAX,&width) || !width ||
+     !direct_integer(f,exr_pdf_get(f,dict,"Height"),UINT32_MAX,&height) || !height) goto bad;
+  if(width>8192 || height>8192 || width>16*1024*1024/height) { failed(f,EXR_LIMIT,"PDF inline image exceeds dimension or pixel limits"); return EXR_PDF_NONE; }
+  id=exr_pdf_get(f,dict,"ImageMask"); if(id!=EXR_PDF_NONE) { if(f->values[id].kind!=EXR_PDF_BOOL) goto bad; stencil=f->values[id].u.number!=0; }
+  id=exr_pdf_get(f,dict,"BitsPerComponent");
+  if((id==EXR_PDF_NONE && !stencil) || (id!=EXR_PDF_NONE && !direct_integer(f,id,16,&bits)) ||
+     (bits!=1 && bits!=2 && bits!=4 && bits!=8 && bits!=16) || (stencil && bits!=1)) goto bad;
+  filter=exr_pdf_get(f,dict,"Filter");
+  if(filter!=EXR_PDF_NONE && f->values[filter].kind!=EXR_PDF_NULL) {
+    if(f->values[filter].kind==EXR_PDF_ARRAY && f->values[filter].first==EXR_PDF_NONE) goto bad;
+    filtered=1;
+  }
+  if(filtered) n=p->size-start;
+  else {
+    channels=stencil ? 1 : inline_components(f,exr_pdf_get(f,dict,"ColorSpace"),owner,resources,0);
+    if(owner && owner->error.code!=EXR_OK) { f->error=owner->error; return EXR_PDF_NONE; }
+    if(!channels) goto bad;
+    n=(size_t)((width*channels*bits+7)/8*height); if(n>p->size-start) goto bad;
+  }
+  if(!exr_grow((void **)&f->streams,&f->stream_capacity,f->stream_count+1,sizeof(*f->streams))) { failed(f,EXR_MEMORY,"PDF inline stream allocation failed"); return EXR_PDF_NONE; }
+  index=f->stream_count++; f->streams[index]=(pdf_stream){.offset=start,.size=n,.dict=dict,.parameters=EXR_PDF_NONE,.inline_image=(unsigned)filtered};
+  f->values[dict].kind=EXR_PDF_STREAM; f->values[dict].u.ref.object=(uint32_t)index;
+  if(exr_pdf_image_payload(f,dict,&decoded,&n,&codec,&parameters,&f->error)!=EXR_OK) return EXR_PDF_NONE;
+  p->at=start+f->streams[index].size;
+  if(p->at==p->size || !whitespace(p->data[p->at]) || !word(p,"EI")) goto bad;
+  return dict;
+bad:
+  failed(f,EXR_FORMAT,"Invalid PDF inline image dictionary, bounds or EI terminator"); return EXR_PDF_NONE;
+}
 /* Content operands reuse the object lexer in a short-lived arena. */
-exr_status exr_pdf_syntax_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
-                              size_t maximum_operands,const exr_control *control,exr_error *error) {
+static exr_status syntax_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
+                              size_t maximum_operands,exr_pdf_file *owner,uint32_t resources,int inline_images,size_t *decode_budget,const exr_control *control,exr_error *error) {
   exr_pdf_file *arena; parser p; uint32_t operands[1024]; size_t count=0,operations=0; exr_status status;
   if((!data && size) || !operation || !maximum_operands || maximum_operands>1024) return exr_fail(error,EXR_ARGUMENT,"Missing PDF content bytes or callback");
   if(size>EXR_MAX_TEXT) return exr_fail(error,EXR_LIMIT,"PDF content exceeds 64 MiB");
   arena=calloc(1,sizeof(*arena)); if(!arena) return exr_fail(error,EXR_MEMORY,"PDF operand arena allocation failed");
-  arena->data=data; arena->size=size; arena->root=EXR_PDF_NONE; p=(parser){arena,data,size,0};
+  arena->data=data; arena->size=size; arena->root=EXR_PDF_NONE; arena->control=control; p=(parser){arena,data,size,0};
+  arena->decode_budget=decode_budget;
   status=exr_control_poll(control,EXR_STAGE_READ,0,size,&arena->error);
   while(status==EXR_OK && skip(&p) && p.at<p.size) {
     unsigned c=p.data[p.at]; parser probe=p;
@@ -974,10 +1112,15 @@ exr_status exr_pdf_syntax_ops(const void *data,size_t size,exr_pdf_operator_fn o
       if(++operations>1048576) { failed(arena,EXR_LIMIT,"PDF content operation budget exceeded"); break; }
       for(i=0;i<arena->value_count;i++) if(arena->values[i].kind==EXR_PDF_REF) { failed(arena,EXR_FORMAT,"Indirect reference in PDF content operands"); break; }
       if(arena->error.code!=EXR_OK) break;
-      if(!strcmp(name,"BI")) { failed(arena,EXR_FORMAT,"Inline PDF images are not implemented yet"); break; }
+      if(!strcmp(name,"BI")) {
+        if(!inline_images || count) { failed(arena,EXR_FORMAT,"Unexpected PDF inline image"); break; }
+        operands[0]=parse_inline(&p,owner,resources); if(operands[0]==EXR_PDF_NONE) break; count=1;
+      }
       status=operation(context,arena,name,operands,count,&arena->error);
       if(status!=EXR_OK && arena->error.code==EXR_OK) failed(arena,status,"PDF content callback failed");
       if(status!=EXR_OK || arena->error.code!=EXR_OK) break;
+      for(i=0;i<arena->stream_count;i++) free(arena->streams[i].decoded);
+      arena->stream_count=0; arena->decoded_bytes=0;
       count=0; arena->value_count=0; arena->strings.size=0;
       if(!(operations&255)) status=exr_control_poll(control,EXR_STAGE_READ,p.at,size,&arena->error);
     }
@@ -986,8 +1129,15 @@ exr_status exr_pdf_syntax_ops(const void *data,size_t size,exr_pdf_operator_fn o
   if(arena->error.code==EXR_OK) exr_control_poll(control,EXR_STAGE_READ,size,size,&arena->error);
   status=result(arena,error); exr_pdf_close(arena); return status;
 }
-
+exr_status exr_pdf_syntax_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
+                              size_t maximum_operands,const exr_control *control,exr_error *error) {
+  return syntax_ops(data,size,operation,context,maximum_operands,NULL,EXR_PDF_NONE,0,NULL,control,error);
+}
 exr_status exr_pdf_content_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
                                const exr_control *control,exr_error *error) {
-  return exr_pdf_syntax_ops(data,size,operation,context,64,control,error);
+  return syntax_ops(data,size,operation,context,64,NULL,EXR_PDF_NONE,1,NULL,control,error);
+}
+exr_status exr_pdf_content_ops_resources(exr_pdf_file *owner,uint32_t resources,const void *data,size_t size,
+  exr_pdf_operator_fn operation,void *context,size_t *decode_budget,const exr_control *control,exr_error *error) {
+  return syntax_ops(data,size,operation,context,64,owner,resources,1,decode_budget,control,error);
 }

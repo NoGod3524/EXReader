@@ -5,6 +5,20 @@
 static float used(exr_length l, float width) {
   return l.value < 0 ? 0 : l.percent ? l.value * width : l.value;
 }
+exr_style exr_flow_style(const exr_style *style, exr_writing_mode mode) {
+  exr_style result = *style;
+  if (mode != EXR_WRITING_HORIZONTAL_TB) {
+    size_t map[4] = {mode == EXR_WRITING_VERTICAL_RL ? 1u : 3u, 2u,
+                     mode == EXR_WRITING_VERTICAL_RL ? 3u : 1u, 0u}, j;
+    result.width = style->height; result.height = style->width;
+    result.max_width = style->max_height; result.max_height = style->max_width;
+    for (j = 0; j < 4; j++) {
+      result.margin[j] = style->margin[map[j]];
+      result.padding[j] = style->padding[map[j]];
+    }
+  }
+  return result;
+}
 float exr_flow_top(const flow *f) { return f->paginate ? f->layout->options.margin : 0; }
 float exr_flow_bottom(const flow *f) {
   return f->layout->options.height - f->layout->options.margin - f->bottom_inset;
@@ -111,6 +125,35 @@ exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
   }
   return EXR_OK;
 }
+static exr_status project_line(flow *f, exr_line *line) {
+  size_t j;
+  float start = line->y, height = line->height, x = line->x, width = line->width;
+  f->used_inline = fmaxf(f->used_inline, x + width + f->inline_end_inset);
+  if (f->writing_mode == EXR_WRITING_HORIZONTAL_TB) return EXR_OK;
+  for (j = line->glyph_start; j < line->glyph_start + line->glyph_count; j++) {
+    exr_glyph *g = &f->layout->glyphs[j];
+    float pen = g->x, baseline = g->baseline;
+    if (!(j & 255) && exr_control_cancel(&f->config->control, f->error) != EXR_OK) return EXR_CANCELLED;
+    if (g->flags & EXR_GLYPH_SIDEWAYS)
+      g->x = f->writing_mode == EXR_WRITING_VERTICAL_RL ? f->origin_x - baseline :
+                                                       2 * start + height - baseline;
+    else {
+      exr_face *face = &f->font->faces[g->font_index];
+      FT_Glyph_Metrics metrics;
+      if (exr_font_size(face, g->size) || FT_Load_Glyph(face->face, g->glyph, FT_LOAD_VERTICAL_LAYOUT))
+        return fail(f, EXR_FONT, "Cannot position vertical font glyph");
+      metrics = face->face->glyph->metrics;
+      g->x = f->writing_mode == EXR_WRITING_VERTICAL_RL ? f->origin_x - start - height / 2 :
+                                                       start + height / 2;
+      g->offset_x += (float)(metrics.vertBearingX - metrics.horiBearingX) / 64;
+      g->offset_y -= (float)(metrics.vertBearingY + metrics.horiBearingY) / 64;
+    }
+    g->baseline = pen;
+  }
+  line->x = f->writing_mode == EXR_WRITING_VERTICAL_RL ? f->origin_x - start - height : start;
+  line->y = x; line->width = height; line->height = width;
+  return EXR_OK;
+}
 exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count,
                                size_t destination, int forced, int final) {
   exr_layout *l = f->layout;
@@ -185,78 +228,7 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count,
   }
   f->y += height;
   f->first_line = 0;
-  return EXR_OK;
-}
-static exr_status flush_run(flow *f) {
-  exr_layout *l = f->layout;
-  exr_line_buffer buffer = {0};
-  exr_glyph *raw;
-  size_t start = f->pending, count = l->glyph_count - start, i;
-  exr_status status = EXR_OK;
-  if (!count) return EXR_OK;
-  raw = malloc(count * sizeof(*raw));
-  if (!raw) return fail(f, EXR_MEMORY, "Inline input allocation failed");
-  memcpy(raw, l->glyphs + start, count * sizeof(*raw));
-  l->glyph_count = start;
-  for (i = 0; i < count && status == EXR_OK; i++) {
-    raw[i].bidi_level = exr_inline_level(f->bidi, raw[i].start);
-    if (raw[i].bidi_level == UINT_MAX) raw[i].flags |= EXR_GLYPH_HIDDEN;
-    status = exr_inline_feed(f, &buffer, raw[i]);
-  }
-  if (status == EXR_OK) status = exr_inline_finish(f, &buffer);
-  f->pending = l->glyph_count;
-  exr_inline_buffer_clear(&buffer);
-  free(raw);
-  return status;
-}
-static exr_status flush(flow *f) {
-  exr_inline_bidi bidi = {0}, *old = f->bidi;
-  exr_status status;
-  if (f->pending == f->layout->glyph_count) return EXR_OK;
-  status = exr_inline_prepare(f, f->layout->glyphs[f->pending].node, &bidi);
-  if (status == EXR_OK) {
-    f->bidi = &bidi;
-    status = flush_run(f);
-  }
-  f->bidi = old;
-  exr_inline_clear(&bidi);
-  return status;
-}
-static exr_status text(flow *f, size_t node) {
-  exr_layout *l = f->layout;
-  const exr_node *n = &f->doc->nodes[node];
-  const exr_style *s = &f->styles[node];
-  size_t pos = n->start;
-  if (pos == SIZE_MAX)
-    return EXR_OK;
-  while (pos < n->end) {
-    exr_glyph *g;
-    uint32_t cp;
-    size_t start = pos;
-    if (!exr_next(f->doc->text, n->end, &pos, &cp))
-      return EXR_ENCODING;
-    if (++f->assets->work_glyphs > EXR_MAX_ITEMS ||
-        !exr_grow((void **)&l->glyphs, &l->glyph_cap, l->glyph_count + 1, sizeof(*g)))
-      return EXR_LIMIT;
-    if (!(f->assets->work_glyphs & 255)) {
-      exr_status status = exr_control_poll(&f->config->control, EXR_STAGE_LAYOUT, pos,
-                                            f->doc->size, f->error);
-      if (status != EXR_OK) return status;
-    }
-    g = &l->glyphs[l->glyph_count++];
-    memset(g, 0, sizeof(*g));
-    g->start = start;
-    g->end = pos;
-    g->node = node;
-    g->codepoint = cp;
-    g->size = s->font_size;
-    g->color = s->color;
-    g->flags = s->flags;
-    g->line_height = s->leading_relative ? s->leading * s->font_size : s->leading;
-    if (exr_text_hidden(cp))
-      g->flags |= EXR_GLYPH_HIDDEN;
-  }
-  return EXR_OK;
+  return project_line(f, line);
 }
 exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float width, float height,
                     exr_box_kind kind) {
@@ -278,6 +250,11 @@ exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float wi
   b->y = y;
   b->width = width;
   b->height = fmaxf(0, height);
+  f->used_inline = fmaxf(f->used_inline, x + width + (kind == EXR_BOX_IMAGE ? f->inline_end_inset : 0));
+  if (f->writing_mode != EXR_WRITING_HORIZONTAL_TB) {
+    b->x = f->writing_mode == EXR_WRITING_VERTICAL_RL ? f->origin_x - y - b->height : y;
+    b->y = x; b->width = b->height; b->height = width;
+  }
   b->background = s->background;
   b->border_color = s->border_color;
   b->border_width = s->border_style ? s->border_width : 0;
@@ -364,7 +341,8 @@ static exr_status image_asset(flow *f, size_t node, size_t *resource, const exr_
   return status==EXR_OK ? EXR_OK : fail(f,status,ignored.message[0] ? ignored.message : "Image decoding failed");
 }
 exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
-  const exr_style *s = &f->styles[node];
+  exr_style logical = exr_flow_style(&f->styles[node], f->writing_mode);
+  const exr_style *s = &logical;
   const exr_bitmap *bitmap;
   size_t resource;
   float w, h, scale;
@@ -416,41 +394,22 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
   f->layout->pages[f->layout->page_count - 1].end = f->doc->nodes[node].end;
   return EXR_OK;
 }
-static exr_status node(flow *f, size_t index, float x, float width);
 typedef struct {
-  size_t node, row, column, colspan, rowspan;
+  size_t node;
   exr_layout *layout;
-  float height;
 } cell;
-static size_t span(const exr_node *n, const char *attr, size_t limit) {
-  const char *s = exr_node_attribute(n, attr);
-  char *end;
-  unsigned long value;
-  if (!s)
-    return 1;
-  value = strtoul(s, &end, 10);
-  if (*end || end == s || !value)
-    return 1;
-  return value > limit ? limit : (size_t)value;
-}
-static int rows(flow *f, size_t parent, size_t **out, size_t *count, size_t *capacity) {
-  size_t child;
-  for (child = f->doc->nodes[parent].first_child; child != SIZE_MAX;
-       child = f->doc->nodes[child].next_sibling) {
-    if (f->styles[child].display == EXR_CSS_NONE)
-      continue;
-    if (f->styles[child].display == EXR_CSS_ROW) {
-      if (*count >= 4096 || !exr_grow((void **)out, capacity, *count + 1, sizeof(size_t)))
-        return 0;
-      (*out)[(*count)++] = child;
-    } else if (f->doc->nodes[child].kind != EXR_NODE_TABLE && !rows(f, child, out, count, capacity))
-      return 0;
-  }
-  return 1;
-}
 static exr_status copy_cell(flow *f, const cell *c, float x, float y, float height) {
   exr_layout *l = f->layout, *from = c->layout;
   size_t i, offset = l->glyph_count, p = l->page_count - 1;
+  int vertical = f->writing_mode != EXR_WRITING_HORIZONTAL_TB;
+  int from_vertical = from->writing_mode != EXR_WRITING_HORIZONTAL_TB;
+  float physical_width = from_vertical ? from->flow_block : from->flow_inline;
+  float physical_height = from_vertical ? from->flow_inline : from->flow_block;
+  float block = vertical ? physical_width : physical_height;
+  float dx = vertical ? (f->writing_mode == EXR_WRITING_VERTICAL_RL ? f->origin_x-y-block : y) : x;
+  float dy = vertical ? x : y;
+  if (from->writing_mode == EXR_WRITING_VERTICAL_RL) dx += from->flow_block;
+  f->used_inline = fmaxf(f->used_inline, x + (vertical ? physical_height : physical_width) + f->inline_end_inset);
   if (from->glyph_count > EXR_MAX_ITEMS - l->glyph_count ||
       !exr_grow((void **)&l->glyphs, &l->glyph_cap, l->glyph_count + from->glyph_count,
                 sizeof(exr_glyph)) ||
@@ -460,17 +419,17 @@ static exr_status copy_cell(flow *f, const cell *c, float x, float y, float heig
     return EXR_LIMIT;
   for (i = 0; i < from->glyph_count; i++) {
     exr_glyph v = from->glyphs[i];
-    v.x += x;
-    v.baseline += y;
-    v.clip_left += x;
-    v.clip_right += x;
+    v.x += dx;
+    v.baseline += dy;
+    v.clip_left += (v.flags & EXR_GLYPH_VERTICAL) ? dy : dx;
+    v.clip_right += (v.flags & EXR_GLYPH_VERTICAL) ? dy : dx;
     v.page = p;
     l->glyphs[l->glyph_count++] = v;
   }
   for (i = 0; i < from->line_count; i++) {
     exr_line v = from->lines[i];
-    v.x += x;
-    v.y += y;
+    v.x += dx;
+    v.y += dy;
     v.page = p;
     v.glyph_start += offset;
     l->lines[l->line_count++] = v;
@@ -480,243 +439,20 @@ static exr_status copy_cell(flow *f, const cell *c, float x, float y, float heig
   }
   for (i = 0; i < from->box_count; i++) {
     exr_box v = from->boxes[i];
-    v.x += x;
-    v.y += y;
+    v.x += dx;
+    v.y += dy;
     v.page = p;
-    if (v.node == c->node && v.kind == EXR_BOX_CELL)
-      v.height = height;
+    if (v.node == c->node && v.kind == EXR_BOX_CELL) {
+      if (vertical) {
+        if (f->writing_mode == EXR_WRITING_VERTICAL_RL) v.x -= height - v.width;
+        v.width = height;
+      } else v.height = height;
+    }
     l->boxes[l->box_count++] = v;
   }
   f->pending = l->glyph_count;
-  return EXR_OK;
-}
-static exr_status table(flow *f, size_t index, float x, float width) {
-  size_t *row = NULL, nrows = 0, rowcap = 0, occupied[64] = {0};
-  size_t i, j, ncols = 0, count = 0, capacity = 0;
-  cell *cells = NULL;
-  float *heights = NULL, *positions = NULL;
-  exr_status result = EXR_OK;
-  if (f->table_depth >= 8)
-    return fail(f, EXR_LIMIT, "Nested table limit exceeded");
-  if (!rows(f, index, &row, &nrows, &rowcap)) {
-    result = EXR_LIMIT;
-    goto done;
-  }
-  if (!nrows)
-    goto done;
-  for (i = 0; i < nrows; i++) {
-    size_t child, col = 0;
-    for (child = f->doc->nodes[row[i]].first_child; child != SIZE_MAX;
-         child = f->doc->nodes[child].next_sibling) {
-      size_t cs, rs, k;
-      cell *c;
-      if (f->styles[child].display != EXR_CSS_CELL)
-        continue;
-      cs = span(&f->doc->nodes[child], "colspan", 65);
-      rs = span(&f->doc->nodes[child], "rowspan", nrows - i);
-      for (;;) {
-        while (col < 64 && occupied[col] > i)
-          col++;
-        if (cs > 64 - col) {
-          result = EXR_LIMIT;
-          goto done;
-        }
-        for (k = 0; k < cs && occupied[col + k] <= i; k++) {
-        }
-        if (k == cs)
-          break;
-        col += k + 1;
-      }
-      if (count >= 4096 || !exr_grow((void **)&cells, &capacity, count + 1, sizeof(*cells))) {
-        result = EXR_LIMIT;
-        goto done;
-      }
-      c = &cells[count++];
-      *c = (cell){0};
-      c->node = child;
-      c->row = i;
-      c->column = col;
-      c->colspan = cs;
-      c->rowspan = rs;
-      for (k = 0; k < cs; k++)
-        occupied[col + k] = i + rs;
-      col += cs;
-      if (col > ncols)
-        ncols = col;
-    }
-  }
-  if (!ncols)
-    goto done;
-  heights = calloc(nrows, sizeof(float));
-  positions = calloc(nrows + 1, sizeof(float));
-  if (!heights || !positions) {
-    result = EXR_MEMORY;
-    goto done;
-  }
-  for (i = 0; i < count; i++) {
-    flow child = *f;
-    cell *c = &cells[i];
-    c->layout = calloc(1, sizeof(exr_layout));
-    if (!c->layout) {
-      result = EXR_MEMORY;
-      goto done;
-    }
-    c->layout->options = f->layout->options;
-    child.layout = c->layout;
-    child.y = 0;
-    child.pending = 0;
-    child.force_break = 0;
-    child.paginate = 0;
-    child.bottom_inset = 0;
-    child.table_depth++;
-    result = node(&child, c->node, 0, width * (float)c->colspan / (float)ncols);
-    if (result == EXR_OK)
-      result = flush(&child);
-    if (result != EXR_OK)
-      goto done;
-    c->height = child.y;
-    if (c->rowspan == 1)
-      heights[c->row] = fmaxf(heights[c->row], c->height);
-  }
-  for (i = 0; i < count; i++) {
-    cell *c = &cells[i];
-    float total = 0;
-    for (j = c->row; j < c->row + c->rowspan; j++)
-      total += heights[j];
-    if (total < c->height)
-      heights[c->row + c->rowspan - 1] += c->height - total;
-  }
-  for (i = 0; i < nrows; i++)
-    positions[i + 1] = positions[i] + heights[i];
-  for (i = 0; i < nrows;) {
-    size_t end = i + 1, old;
-    do {
-      old = end;
-      for (j = 0; j < count; j++)
-        if (cells[j].row >= i && cells[j].row < end && cells[j].row + cells[j].rowspan > end)
-          end = cells[j].row + cells[j].rowspan;
-    } while (old != end);
-    result = exr_flow_page(f, positions[end] - positions[i], f->doc->nodes[row[i]].start);
-    if (result != EXR_OK)
-      goto done;
-    for (j = 0; j < count; j++)
-      if (cells[j].row >= i && cells[j].row < end) {
-        cell *c = &cells[j];
-        result = copy_cell(f, c, x + width * (float)c->column / (float)ncols,
-                           f->y + positions[c->row] - positions[i],
-                           positions[c->row + c->rowspan] - positions[c->row]);
-        if (result != EXR_OK)
-          goto done;
-      }
-    f->y += positions[end] - positions[i];
-    i = end;
-  }
-done:
-  for (i = 0; i < count; i++)
-    exr_layout_free(cells[i].layout);
-  free(cells);
-  free(row);
-  free(heights);
-  free(positions);
-  if (result != EXR_OK && (!f->error || !f->error->message[0]))
-    return fail(f, result, "Table layout limit exceeded");
-  return result;
-}
-static exr_status node(flow *f, size_t index, float x, float width) {
-  const exr_node *n = &f->doc->nodes[index];
-  const exr_style *s = &f->styles[index], *old_paragraph = f->paragraph;
-  size_t child, first_page;
-  float outer_x, outer_width, content_width, first_y, old_x = f->x, old_width = f->width;
-  float ml, mr, pl, pr, pt, pb;
-  float border = s->border_style ? s->border_width : 0;
-  int is_block;
-  exr_status result;
-  if (s->display == EXR_CSS_NONE || n->start == SIZE_MAX)
-    return EXR_OK;
-  if (n->kind == EXR_NODE_TEXT)
-    return text(f, index);
-  if (n->kind == EXR_NODE_BREAK)
-    return flush(f);
-  is_block = s->display != EXR_CSS_INLINE || n->kind == EXR_NODE_IMAGE;
-  if (!is_block) {
-    for (child = n->first_child; child != SIZE_MAX; child = f->doc->nodes[child].next_sibling) {
-      result = node(f, child, x, width);
-      if (result != EXR_OK)
-        return result;
-    }
-    return EXR_OK;
-  }
-  result = flush(f);
-  if (result != EXR_OK)
-    return result;
-  if (s->before && f->layout->page_count && f->y > exr_flow_top(f))
-    f->force_break = 1;
-  ml = used(s->margin[3], width);
-  mr = used(s->margin[1], width);
-  pl = used(s->padding[3], width) + border;
-  pr = used(s->padding[1], width) + border;
-  pt = used(s->padding[0], width) + border;
-  pb = used(s->padding[2], width) + border;
-  content_width = width - ml - mr - pl - pr;
-  if (s->width.value >= 0 && n->kind != EXR_NODE_IMAGE)
-    content_width = fminf(content_width, used(s->width, width));
-  if (s->max_width.value >= 0 && n->kind != EXR_NODE_IMAGE)
-    content_width = fminf(content_width, used(s->max_width, width));
-  if (content_width < 1 || !isfinite(content_width))
-    return fail(f, EXR_ARGUMENT, "CSS leaves no content width");
-  outer_width = content_width + pl + pr;
-  outer_x = x + ml;
-  if (s->margin[3].value < 0)
-    outer_x += fmaxf(0, width - outer_width - mr) / (s->margin[1].value < 0 ? 2 : 1);
-  f->y += used(s->margin[0], width);
-  result = exr_flow_page(f, pt + pb, n->start);
-  if (result != EXR_OK)
-    return result;
-  first_page = f->layout->page_count - 1;
-  first_y = f->y;
-  if (f->paginate)
-    f->bottom_inset += pb;
-  f->y += pt;
-  f->x = outer_x + pl;
-  f->width = content_width;
-  f->paragraph = s;
-  f->first_line = 1;
-  if (n->kind == EXR_NODE_IMAGE)
-    result = exr_flow_image(f, index, f->x, content_width);
-  else if (s->display == EXR_CSS_TABLE)
-    result = table(f, index, f->x, content_width);
-  else {
-    result = EXR_OK;
-    for (child = n->first_child; child != SIZE_MAX && result == EXR_OK;
-         child = f->doc->nodes[child].next_sibling)
-      result = node(f, child, f->x, content_width);
-  }
-  if (result == EXR_OK)
-    result = flush(f);
-  if (result != EXR_OK)
-    return result;
-  if (f->paginate) {
-    f->y = fminf(f->y, exr_flow_bottom(f));
-    f->bottom_inset -= pb;
-  }
-  f->y += pb;
-  if ((s->background & 255) || border > 0 || s->display == EXR_CSS_CELL) {
-    size_t p;
-    for (p = first_page; p < f->layout->page_count; p++) {
-      float y = p == first_page ? first_y : exr_flow_top(f);
-      float end = p + 1 == f->layout->page_count ? f->y : exr_flow_bottom(f);
-      if (!exr_flow_box(f, index, p, outer_x, y, outer_width, end - y,
-               s->display == EXR_CSS_CELL ? EXR_BOX_CELL : EXR_BOX_BLOCK))
-        return EXR_MEMORY;
-    }
-  }
-  f->y += used(s->margin[2], width);
-  f->x = old_x;
-  f->width = old_width;
-  f->paragraph = old_paragraph;
-  f->first_line = 1;
-  if (s->after)
-    f->force_break = 1;
+  if (from->page_count && from->pages[from->page_count-1].end > l->pages[p].end)
+    l->pages[p].end = from->pages[from->page_count-1].end;
   return EXR_OK;
 }
 exr_status exr_layout_validate(const exr_layout_config *config, exr_error *e) {
@@ -733,32 +469,6 @@ exr_status exr_layout_validate(const exr_layout_config *config, exr_error *e) {
   return EXR_OK;
 }
 
-exr_status exr_flow_unit(flow *parent, size_t index, float width,
-                          exr_layout **out, float *height) {
-  flow child = *parent;
-  exr_layout *l = calloc(1, sizeof(*l));
-  exr_status status;
-  *out = NULL;
-  if (!l)
-    return exr_fail(parent->error, EXR_MEMORY, "Unit layout allocation failed");
-  l->options = parent->layout->options;
-  child.layout = l;
-  child.y = child.x = child.bottom_inset = 0;
-  child.width = width;
-  child.pending = 0;
-  child.force_break = child.paginate = child.page_limit = 0;
-  child.table_depth++;
-  status = node(&child, index, 0, width);
-  if (status == EXR_OK)
-    status = flush(&child);
-  if (status != EXR_OK) {
-    exr_layout_free(l);
-    return status;
-  }
-  *out = l;
-  *height = child.y;
-  return EXR_OK;
-}
 exr_status exr_flow_copy(flow *f, const exr_layout *from, size_t index,
                           float x, float y, float height) {
   cell c = {0};

@@ -226,9 +226,10 @@ static void clusters_and_modes(const char *directory) {
   nodes[5].kind=EXR_NODE_PARAGRAPH; nodes[5].name="p";
   nodes[5].attributes=&other; nodes[5].attribute_count=1;
   OK(exr_document_create(&input,&doc,&error));
-  CHECK(exr_layout_create_ex(doc,font,&c,&lay,&error)==EXR_FORMAT && !lay);
-  CHECK(strstr(error.message,"Orthogonal"));
-  exr_document_free(doc); exr_font_free(font);
+  OK(exr_layout_create_ex(doc,font,&c,&lay,&error));
+  g=exr_layout_glyphs(lay,&n); CHECK(n==3);
+  for(i=0;i<n;i++) CHECK(!!(g[i].flags&EXR_GLYPH_VERTICAL)==(g[i].node!=6));
+  exr_layout_free(lay); exr_document_free(doc); exr_font_free(font);
   {
     char path[4096]; exr_shaped_glyph *shaped=NULL; exr_shape_options options=exr_shape_defaults();
     snprintf(path,sizeof(path),"%s/primary.ttf",directory); OK(exr_font_open(path,&font,&error));

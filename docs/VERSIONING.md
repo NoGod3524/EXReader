@@ -20,7 +20,8 @@
 随后补入 Underline/StrikeOut/Squiggly、Unicode 17 默认 UAX #14、原生 FLAC、开放 PCM 和六平台声音输出适配。
 再补入可见软连字符、可选 MP3、Info/XMP 原文件元数据写回及 Swift/JNI PCM 接入。
 随后补入统一页面竖排、PDF Type3、可选 AAC/M4A/M4B 和 EPUB 原书元数据/封面写回。
-其余标注类型编辑、表单、Indic 塑形、异轴块/ruby、保音高变速、章内增量解析及手机真机验证等仍待完成。
+再补入横竖混排块的页级续排、可变字体轴与原生变化定位、WSOLA 保音高变速和 PDF 内联图片。
+其余标注类型编辑、表单、Indic 塑形、ruby、章内增量解析及手机真机验证等仍待完成。
 
 ## 历史记录
 

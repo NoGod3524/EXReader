@@ -13,7 +13,7 @@ typedef struct {
 typedef struct {
   exr_pdf_file *file; uint32_t resources; const exr_control *control;
   exr_pdf_draw_callbacks callbacks; void *context; unsigned graphics;
-  content_path path; dash_profile *profiles; size_t profile_bytes,path_bytes;
+  content_path path; dash_profile *profiles; size_t profile_bytes,path_bytes,inline_work;
   content_state state,stack[128]; size_t depth,floor,sequence,font_count,font_bytes,operations,form_depth;
   uint32_t forms[32];
   double matrix[6],line[6]; unsigned inside,compatibility;
@@ -290,7 +290,7 @@ static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,
   memset(&r->path,0,sizeof(r->path)); r->floor=r->depth; r->inside=0; r->compatibility=0; r->type3=glyph; r->declared=0;
   identity(r->matrix); identity(r->line); r->forms[r->form_depth++]=id;
   if(r->graphics && box) status=clip_bounds(r,box,error);
-  if(status==EXR_OK) status=exr_pdf_content_ops(data,n,content_operation,r,r->control,error);
+  if(status==EXR_OK) status=exr_pdf_content_ops_resources(r->file,r->resources,data,n,content_operation,r,&r->inline_work,r->control,error);
   if(status==EXR_OK && glyph && !r->declared) status=exr_fail(error,EXR_FORMAT,"PDF Type3 CharProc requires d0 or d1 metrics");
   if(status==EXR_OK && (r->inside || r->depth!=saved_depth || r->compatibility)) status=exr_fail(error,EXR_FORMAT,"Unbalanced PDF Form/Type3 text/graphics state");
   if(status==EXR_OK && r->graphics && (r->path.count || r->path.pending_clip)) status=exr_fail(error,EXR_FORMAT,"Unterminated PDF Form/Type3 path object");
@@ -376,6 +376,15 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
     int handled; exr_status status=graphics_operation(r,arena,name,values,count,&handled,error);
     if(status!=EXR_OK || handled) return status;
   }
+  if(!strcmp(name,"BI")) {
+    exr_pdf_paint_state paint=paint_state(r);
+    if(r->inside || count!=1 || exr_pdf_value_at(arena,values[0])->kind!=EXR_PDF_STREAM) goto invalid;
+    if(r->uncolored) {
+      const exr_pdf_value *mask=exr_pdf_value_at(arena,exr_pdf_get(arena,values[0],"ImageMask"));
+      if(!mask || mask->kind!=EXR_PDF_BOOL || !mask->u.number) return exr_fail(error,EXR_FORMAT,"Uncolored PDF Type3 inline image must be a stencil mask");
+    }
+    return r->callbacks.image ? r->callbacks.image(r->context,arena,values[0],r->file,r->resources,&paint,error) : EXR_OK;
+  }
   if(!strcmp(name,"q")) { if(count) goto invalid; if(r->depth==128) goto limit; r->stack[r->depth++]=r->state; return event(r,EXR_PDF_SAVE,error); }
   if(!strcmp(name,"Q")) { if(count || r->depth==r->floor) goto invalid; r->state=r->stack[--r->depth]; return event(r,EXR_PDF_RESTORE,error); }
   if(!strcmp(name,"BT")) { if(count || r->inside) goto invalid; r->inside=1; identity(r->matrix); identity(r->line); return event(r,EXR_PDF_BEGIN_TEXT,error); }
@@ -415,7 +424,7 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
         v=exr_pdf_value_at(r->file,mask);
         if(!v || v->kind!=EXR_PDF_BOOL || !v->u.number) return exr_fail(error,EXR_FORMAT,"Uncolored PDF Type3 image must be a stencil mask");
       }
-      return r->callbacks.image ? r->callbacks.image(r->context,r->file,id,r->resources,&paint,error) : EXR_OK;
+      return r->callbacks.image ? r->callbacks.image(r->context,r->file,id,r->file,r->resources,&paint,error) : EXR_OK;
     }
     if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==4 && !memcmp(type,"Form",4)) return form(r,id,error);
     return exr_fail(error,EXR_FORMAT,"Unsupported PDF text XObject subtype");
@@ -489,7 +498,7 @@ static exr_status walk_content(exr_pdf_file *file,uint32_t resources,const void 
   r->state.paint.fill.space=r->state.paint.stroke.space=EXR_PDF_DEVICE_GRAY; r->state.paint.fill.alpha=r->state.paint.stroke.alpha=1;
   r->state.paint.line=(exr_vector_stroke_style){1,10,EXR_VECTOR_BUTT,EXR_VECTOR_MITER};
   identity(r->state.ctm); if(initial) memcpy(r->state.ctm,initial,sizeof(r->state.ctm)); identity(r->matrix); identity(r->line);
-  status=exr_pdf_content_ops(data,size,content_operation,r,control,&local);
+  status=exr_pdf_content_ops_resources(r->file,r->resources,data,size,content_operation,r,&r->inline_work,control,&local);
   if(status==EXR_OK && (r->inside || r->depth || r->compatibility)) status=exr_fail(&local,EXR_FORMAT,"Unbalanced PDF text/graphics/compatibility state");
   if(status==EXR_OK && graphics && (r->path.count || r->path.pending_clip)) status=exr_fail(&local,EXR_FORMAT,"Unterminated PDF path object");
   for(i=0;i<r->font_count;i++) exr_pdf_font_close(r->fonts[i].font);

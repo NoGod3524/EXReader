@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "layout_internal.h"
+#include "variable_internal.h"
 #include <ctype.h>
 
 static int ws(unsigned char c) { return c == ' ' || (c >= 9 && c <= 13); }
@@ -253,6 +254,8 @@ exr_status exr_book_fonts(const exr_document *d, exr_font *fallback,
         face->style_flags = selected[i]->flags;
         face->scope = selected[i]->chapter;
       } else {
+        status=exr_font_copy_variations(*out,i,fallback,i,e);
+        if(status!=EXR_OK) { exr_font_free(*out); *out=NULL; goto done; }
         strcpy(face->family, fallback->faces[i].family);
         face->style_flags = fallback->faces[i].style_flags;
         face->scope = fallback->faces[i].scope;

@@ -30,3 +30,9 @@ The three `vertical-*` fonts are original rectangles/triangles from
 `tools/generate_vertical_test_fonts.py` (GPL-3.0-only). They distinguish native
 vmtx metrics, vert fallback, vrt2 priority and vertical kerning; the plain face
 omits vertical metrics/alternates to exercise em and orientation fallback.
+
+
+`variable.ttf` is an original two-axis rectangle/mark font from
+`tools/generate_variable_test_font.py` (GPL-3.0-only). Nine original masters
+produce avar, gvar, HVAR/VVAR, variable kern/mark and an rvrn condition; the hidden
+width axis and named heavy instance test public instance ownership and queries.

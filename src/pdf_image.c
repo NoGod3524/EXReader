@@ -28,14 +28,18 @@ static unsigned components(image_reader *r,uint32_t id) {
 static uint32_t resolve(image_reader *r,uint32_t id) {
   uint32_t out=EXR_PDF_NONE; if(r->error.code==EXR_OK) exr_pdf_resolve(r->file,id,&out,&r->error); return out;
 }
-static uint32_t space_alias(image_reader *r,uint32_t id,uint32_t resources) {
-  const exr_pdf_value *v=exr_pdf_value_at(r->file,id);
-  if(v && v->kind==EXR_PDF_NAME && !components(r,id)) {
-    uint32_t spaces=get(r,resources,"ColorSpace"); size_t n; const unsigned char *name=exr_pdf_bytes(r->file,id,&n); char key[128];
-    if(n>=sizeof(key) || memchr(name,0,n)) return EXR_PDF_NONE;
-    memcpy(key,name,n); key[n]=0; return get(r,spaces,key);
+static uint32_t space_alias(image_reader *r,uint32_t id,exr_pdf_file *resource_file,uint32_t resources) {
+  unsigned depth;
+  for(depth=0;depth<16;depth++) {
+    const exr_pdf_value *v=exr_pdf_value_at(r->file,id); size_t n; const unsigned char *name; char key[128]; uint32_t spaces;
+    if(!v || v->kind!=EXR_PDF_NAME || components(r,id)) return id;
+    name=exr_pdf_bytes(r->file,id,&n); if(!n || n>=sizeof(key) || memchr(name,0,n)) return EXR_PDF_NONE;
+    memcpy(key,name,n); key[n]=0; r->file=resource_file;
+    spaces=get(r,resources,"ColorSpace"); id=get(r,spaces,key);
+    if(r->error.code!=EXR_OK) return EXR_PDF_NONE;
   }
-  return id;
+  exr_fail(&r->error,EXR_FORMAT,"Cyclic or deeply nested PDF image color space alias");
+  return EXR_PDF_NONE;
 }
 static void rgb(const double values[4],unsigned channels,unsigned char *p) {
   unsigned k;
@@ -44,15 +48,16 @@ static void rgb(const double values[4],unsigned channels,unsigned char *p) {
   else for(k=0;k<3;k++) p[k]=(unsigned char)floor((1-fmin(1,values[k]+values[3]))*255+.5);
   p[3]=255;
 }
-static unsigned color_space(image_reader *r,uint32_t id,uint32_t resources,unsigned *indexed,uint32_t *hival,unsigned char palette[1024]) {
+static unsigned color_space_value(image_reader *r,uint32_t id,exr_pdf_file *resource_file,uint32_t resources,unsigned *indexed,uint32_t *hival,unsigned char palette[1024]) {
   const exr_pdf_value *v; uint32_t at,base,high,lookup; const unsigned char *data; size_t n,i; unsigned channels;
-  id=space_alias(r,id,resources); channels=components(r,id); if(channels) return channels;
+  id=space_alias(r,id,resource_file,resources); channels=components(r,id); if(channels) return channels;
   v=exr_pdf_value_at(r->file,id); if(!v || v->kind!=EXR_PDF_ARRAY) return 0; at=v->first;
   if(!name_is(r,resolve(r,at),"Indexed")) return 0;
   at=exr_pdf_value_at(r->file,at)->next; if(at==EXR_PDF_NONE) return 0; base=resolve(r,at);
   at=exr_pdf_value_at(r->file,at)->next; if(at==EXR_PDF_NONE) return 0; high=resolve(r,at);
   at=exr_pdf_value_at(r->file,at)->next; if(at==EXR_PDF_NONE || exr_pdf_value_at(r->file,at)->next!=EXR_PDF_NONE) return 0; lookup=resolve(r,at);
-  channels=components(r,space_alias(r,base,resources)); if(!channels || !integer(r,high,hival) || *hival>255) return 0;
+  { image_reader base_reader=*r; channels=components(&base_reader,space_alias(&base_reader,base,resource_file,resources)); r->error=base_reader.error; }
+  if(!channels || !integer(r,high,hival) || *hival>255) return 0;
   v=exr_pdf_value_at(r->file,lookup);
   if(v && v->kind==EXR_PDF_STRING) data=exr_pdf_bytes(r->file,lookup,&n);
   else if(v && v->kind==EXR_PDF_STREAM) { if(exr_pdf_stream_data(r->file,lookup,&data,&n,&r->error)!=EXR_OK) return 0; }
@@ -64,6 +69,9 @@ static unsigned color_space(image_reader *r,uint32_t id,uint32_t resources,unsig
     rgb(values,channels,palette+i*4);
   }
   *indexed=1; return 1;
+}
+static unsigned color_space(image_reader *r,uint32_t id,exr_pdf_file *resource_file,uint32_t resources,unsigned *indexed,uint32_t *hival,unsigned char palette[1024]) {
+  image_reader space=*r; unsigned result=color_space_value(&space,id,resource_file,resources,indexed,hival,palette); r->error=space.error; return result;
 }
 static unsigned sample(const unsigned char *bytes,size_t bit,unsigned bits) {
   unsigned i,v=0; for(i=0;i<bits;i++) v=(v<<1)|((bytes[(bit+i)/8]>>(7-(bit+i)%8))&1); return v;
@@ -97,7 +105,7 @@ static void release_texture(exr_vector_texture *texture,image_chain *chain) {
   free(texture->bitmap.pixels); free(texture);
 }
 void exr_pdf_image_release(exr_vector_texture *texture) { release_texture(texture,NULL); }
-static exr_status decode_image(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t color,
+static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
                                  exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e,
                                  image_chain *chain,unsigned *kind) {
   image_reader r={0}; uint32_t width,height,bits=1,id,hival=0,key[8]={0}; unsigned channels=1,k,indexed=0,color_key=0;
@@ -123,7 +131,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,uint32_t resour
   id=get(&r,image,"ColorSpace");
   if(stencil) { if(id!=EXR_PDF_NONE) goto invalid; }
   else {
-    channels=color_space(&r,id,resources,&indexed,&hival,palette);
+    channels=color_space(&r,id,resource_file,resources,&indexed,&hival,palette);
     if(!channels || (indexed && bits==16)) { if(r.error.code==EXR_OK) exr_fail(&r.error,EXR_FORMAT,"Unsupported or invalid PDF image color space"); goto done; }
     if(indexed) decode[1]=(1u<<bits)-1;
   }
@@ -222,7 +230,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,uint32_t resour
   }
   if(mask!=EXR_PDF_NONE) {
     unsigned mask_kind=0;
-    if(decode_image(file,mask,resources,0xffffffff,&mask_texture,work,control,&r.error,chain,&mask_kind)!=EXR_OK) goto done;
+    if(decode_image(file,mask,resource_file,resources,0xffffffff,&mask_texture,work,control,&r.error,chain,&mask_kind)!=EXR_OK) goto done;
     if((soft && mask_kind!=1) || (!soft && mask_kind!=0)) goto invalid;
   }
   if(r.error.code==EXR_OK && exr_control_cancel(control,&r.error)==EXR_OK) {
@@ -244,8 +252,12 @@ done:
 }
 exr_status exr_pdf_image_load(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t color,
                                exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e) {
+  return exr_pdf_image_load_from(file,image,file,resources,color,out,work,control,e);
+}
+exr_status exr_pdf_image_load_from(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
+                               exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e) {
   image_chain chain={0}; unsigned kind=0;
-  return decode_image(file,image,resources,color,out,work,control,e,&chain,&kind);
+  return decode_image(file,image,resource_file,resources,color,out,work,control,e,&chain,&kind);
 }
 exr_status exr_pdf_image_decode(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t color,
                                  exr_bitmap *out,int *interpolate,size_t *work,const exr_control *control,exr_error *e) {

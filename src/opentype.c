@@ -3,6 +3,7 @@
 #include "text_internal.h"
 #include "shaping_data.h"
 #include FT_TRUETYPE_TABLES_H
+#include FT_MULTIPLE_MASTERS_H
 
 #define OT_CONTEXT 256u
 #define OT_DEPTH 16u
@@ -29,6 +30,9 @@ struct ot_work {
   exr_status status;
   const exr_shape_options *options;
   ot_view gdef, table, lookups;
+  ot_view feature_substitutions;
+  FT_Fixed coordinates[64];
+  unsigned axis_count;
   int positioning;
   int rtl;
   int vertical;
@@ -75,6 +79,11 @@ static ot_view optional16(ot_view v, size_t at) {
 }
 static ot_view required16(ot_view v, size_t at) {
   unsigned offset = u16(v, at);
+  if (!offset && v.work->status == EXR_OK) v.work->status = EXR_FONT;
+  return relative(v, offset);
+}
+static ot_view required32(ot_view v, size_t at) {
+  uint32_t offset = u32(v, at);
   if (!offset && v.work->status == EXR_OK) v.work->status = EXR_FONT;
   return relative(v, offset);
 }
@@ -463,13 +472,74 @@ static unsigned value_size(unsigned format) {
   while (format) { n += format & 1; format >>= 1; }
   return n*2;
 }
+static double region_scalar(ot_work *w, ot_view regions, unsigned index) {
+  unsigned axes = u16(regions, 0), count = u16(regions, 2), i;
+  double scalar = 1;
+  if (axes != w->axis_count || index >= count ||
+      !bounds(regions, 4, count, (size_t)axes*6)) { w->status = EXR_FONT; return 0; }
+  for (i = 0; i < axes; i++) {
+    size_t at = 4+((size_t)index*axes+i)*6;
+    int start = s16(regions, at), peak = s16(regions, at+2), end = s16(regions, at+4);
+    double coordinate = (double)w->coordinates[i]/4; /* 16.16 to F2DOT14. */
+    if (!work(w, 1)) return 0;
+    if (start < -16384 || start > 16384 || peak < -16384 || peak > 16384 ||
+        end < -16384 || end > 16384) { w->status = EXR_FONT; return 0; }
+    /* The OpenType scalar algorithm ignores a malformed or cross-zero axis. */
+    if (!peak || start > peak || peak > end || (start < 0 && end > 0)) continue;
+    if (coordinate == peak) continue;
+    if (coordinate <= start || coordinate >= end) scalar = 0;
+    else if (coordinate < peak) scalar *= (coordinate-start)/(peak-start);
+    else scalar *= (end-coordinate)/(end-peak);
+  }
+  return scalar;
+}
+static float variation_delta(ot_work *w, unsigned outer, unsigned inner) {
+  ot_view store, data, regions;
+  unsigned data_count, items, words, region_count, long_words, i;
+  size_t width, row;
+  double delta = 0;
+  uint32_t store_offset;
+  if (outer == 0xffff && inner == 0xffff) return 0;
+  if (!w->gdef.p || u16(w->gdef, 2) < 3) { w->status = EXR_FONT; return 0; }
+  store_offset = u32(w->gdef, 14);
+  if (!store_offset) { w->status = EXR_FONT; return 0; }
+  store = relative(w->gdef, store_offset);
+  data_count = u16(store, 6);
+  if (u16(store, 0) != 1 || outer >= data_count || !bounds(store, 8, data_count, 4)) {
+    w->status = EXR_FONT; return 0;
+  }
+  regions = required32(store, 2);
+  data = required32(store, 8+(size_t)outer*4);
+  items = u16(data, 0); words = u16(data, 2); region_count = u16(data, 4);
+  long_words = words >> 15; words &= 0x7fff;
+  if (inner >= items || words > region_count || !bounds(data, 6, region_count, 2)) {
+    w->status = EXR_FONT; return 0;
+  }
+  width = (size_t)words*(long_words ? 4u : 2u)+(size_t)(region_count-words)*(long_words ? 2u : 1u);
+  row = 6+(size_t)region_count*2;
+  if (!bounds(data, row, items, width)) return 0;
+  row += (size_t)inner*width;
+  for (i = 0; i < region_count && w->status == EXR_OK; i++) {
+    unsigned bytes = i < words ? (long_words ? 4u : 2u) : (long_words ? 2u : 1u);
+    double value, scalar;
+    if (!work(w, 1)) return 0;
+    if (bytes == 4) {
+      uint32_t raw = u32(data, row);
+      value = raw < UINT32_C(0x80000000) ? (double)raw : (double)raw-4294967296.0;
+    } else if (bytes == 2) value = s16(data, row);
+    else value = (int)(int8_t)data.p[row];
+    scalar = region_scalar(w, regions, u16(data, 6+(size_t)i*2));
+    delta += value*scalar; row += bytes;
+  }
+  return (float)(delta*w->scale);
+}
 static float device(ot_view sub, unsigned offset, unsigned ppem) {
   ot_view v;
   unsigned first, last, format, bits, count, word, shift, raw;
   if (!offset) return 0;
   v = relative(sub, offset);
   first = u16(v, 0); last = u16(v, 2); format = u16(v, 4);
-  if (format == 0x8000) { v.work->status = EXR_FONT; return 0; }
+  if (format == 0x8000) return variation_delta(v.work, first, last);
   if (format < 1 || format > 3 || last < first) { v.work->status = EXR_FONT; return 0; }
   bits = 1u << format;
   count = ((last-first+1)*bits+15)/16;
@@ -548,6 +618,7 @@ static int position(ot_work *w, ot_view sub, unsigned type, size_t at,
   if (type == 2) {
     unsigned vf1 = u16(sub, 4), vf2 = u16(sub, 6);
     size_t other = next_item(w, at, 0, flags, filtering), record;
+    ot_view values_origin = sub;
     float first[4] = {0}, second[4] = {0};
     if (other == SIZE_MAX) return 0;
     if (format == 1) {
@@ -562,7 +633,8 @@ static int position(ot_work *w, ot_view sub, unsigned type, size_t at,
         if (candidate < w->items[other].out.glyph) lo = mid+1; else hi = mid;
       }
       if (lo == pairs || u16(set, 2+(size_t)lo*pair_size) != w->items[other].out.glyph) return 0;
-      record = (size_t)(set.p-sub.p)+4+(size_t)lo*pair_size;
+      values_origin = set;
+      record = 4+(size_t)lo*pair_size;
     } else if (format == 2) {
       unsigned a = glyph_class(required16(sub, 8), glyph);
       unsigned b = glyph_class(required16(sub, 10), w->items[other].out.glyph);
@@ -570,8 +642,8 @@ static int position(ot_work *w, ot_view sub, unsigned type, size_t at,
       if (a >= ac || b >= bc || !bounds(sub, 16, (size_t)ac*bc, width)) { w->status = EXR_FONT; return 0; }
       record = 16+((size_t)a*bc+b)*width;
     } else { w->status = EXR_FONT; return 0; }
-    record = value_record(w, sub, record, vf1, first);
-    value_record(w, sub, record, vf2, second);
+    record = value_record(w, values_origin, record, vf1, first);
+    value_record(w, values_origin, record, vf2, second);
     adjust(&w->items[at], first); adjust(&w->items[other], second);
     if (vf2) w->next_scan = other+1;
     return 1;
@@ -729,11 +801,78 @@ static ot_view language(ot_work *w, ot_view table, uint32_t script, uint32_t lan
   }
   return optional16(selected, 0);
 }
+static int variation_conditions(ot_work *w, ot_view conditions) {
+  unsigned count = u16(conditions, 0), i;
+  int matched = 1;
+  if (!bounds(conditions, 2, count, 4)) return 0;
+  for (i = 0; i < count && w->status == EXR_OK; i++) {
+    ot_view condition = required32(conditions, 2+(size_t)i*4);
+    unsigned axis;
+    int minimum, maximum;
+    if (!work(w, 1)) return 0;
+    /* An unrecognized condition format makes the whole condition set false. */
+    if (u16(condition, 0) != 1) { matched = 0; continue; }
+    axis = u16(condition, 2); minimum = s16(condition, 4); maximum = s16(condition, 6);
+    if (axis >= w->axis_count || minimum < -16384 || maximum > 16384 || minimum > maximum) {
+      w->status = EXR_FONT; return 0;
+    }
+    if (w->coordinates[axis] < (FT_Fixed)minimum*4 || w->coordinates[axis] > (FT_Fixed)maximum*4)
+      matched = 0;
+  }
+  return matched;
+}
+static void feature_variations(ot_work *w, ot_view table, ot_view features) {
+  ot_view variations;
+  uint32_t offset, count, i;
+  w->feature_substitutions = (ot_view){NULL,0,w};
+  if (u16(table, 2) < 1) return;
+  offset = u32(table, 10);
+  if (!offset || w->status != EXR_OK) return;
+  variations = relative(table, offset); count = u32(variations, 4);
+  if (u16(variations, 0) != 1 || u16(variations, 2) != 0 || !bounds(variations, 8, count, 8)) {
+    w->status = EXR_FONT; return;
+  }
+  for (i = 0; i < count && w->status == EXR_OK; i++) {
+    uint32_t conditions = u32(variations, 8+(size_t)i*8);
+    ot_view substitutions;
+    unsigned n, j, previous = 0;
+    if (!work(w, 1)) return;
+    if (conditions && !variation_conditions(w, relative(variations, conditions))) continue;
+    /* The first matching record wins, even when it has no substitutions. */
+    offset = u32(variations, 12+(size_t)i*8);
+    if (!offset || w->status != EXR_OK) return;
+    substitutions = relative(variations, offset); n = u16(substitutions, 4);
+    if (u16(substitutions, 0) != 1 || u16(substitutions, 2) != 0 || !bounds(substitutions, 6, n, 6)) {
+      w->status = EXR_FONT; return;
+    }
+    for (j = 0; j < n; j++) {
+      unsigned index = u16(substitutions, 6+(size_t)j*6);
+      if (!work(w, 1)) return;
+      if (index >= u16(features, 0) || (j && index <= previous)) { w->status = EXR_FONT; return; }
+      (void)required32(substitutions, 8+(size_t)j*6);
+      previous = index;
+    }
+    w->feature_substitutions = substitutions;
+    return;
+  }
+}
+static ot_view varied_feature(ot_work *w, ot_view original, unsigned index) {
+  ot_view substitutions = w->feature_substitutions;
+  unsigned lo = 0, hi = substitutions.p ? u16(substitutions, 4) : 0;
+  while (lo < hi && work(w, 1)) {
+    unsigned mid = lo+(hi-lo)/2, candidate = u16(substitutions, 6+(size_t)mid*6);
+    if (index < candidate) hi = mid;
+    else if (index > candidate) lo = mid+1;
+    else return required32(substitutions, 8+(size_t)mid*6);
+  }
+  return original;
+}
 static void feature_index(ot_work *w, ot_view features, unsigned index, unsigned mask, unsigned value) {
   unsigned count = u16(features, 0), n, i;
   ot_view feature;
   if (index >= count || !bounds(features, 2, count, 6)) { w->status = EXR_FONT; return; }
   feature = required16(features, 6+(size_t)index*6);
+  feature = varied_feature(w, feature, index);
   n = u16(feature, 2);
   if (!bounds(feature, 4, n, 2)) return;
   for (i = 0; i < n && w->status == EXR_OK; i++) {
@@ -788,12 +927,24 @@ static void apply_table(ot_work *w, ot_table *source, uint32_t script, int posit
   size_t count = positioning ? sizeof(position_tags)/sizeof(*position_tags) :
                                sizeof(substitution_tags)/sizeof(*substitution_tags), i, j;
   ot_view table = {source->data, source->size,w}, features, lang;
+  unsigned required;
+  int required_early = 0;
   if (!source->data) return;
   w->table = table; w->positioning = positioning;
   lang = language(w, table, script, w->options->language);
   features = required16(table, 6);
   if (!lang.p || w->status != EXR_OK) return;
-  if (u16(lang, 2) != 0xffff) feature_index(w, features, u16(lang, 2), 0, 1);
+  feature_variations(w, table, features);
+  if (w->status != EXR_OK) return;
+  required = u16(lang, 2);
+  if (!positioning) {
+    if (required != 0xffff && required < u16(features, 0) &&
+        u32(features, 2+(size_t)required*6) == EXR_TAG('r','v','r','n')) {
+      feature_index(w, features, required, 0, 1); required_early = 1;
+    } else feature_tag(w, features, lang, EXR_TAG('r','v','r','n'), 0,
+                       feature_value(w->options, EXR_TAG('r','v','r','n'), 1));
+  }
+  if (required != 0xffff && !required_early) feature_index(w, features, required, 0, 1);
   for (i = 0; i < count && w->status == EXR_OK; i++) {
     unsigned mask = 0, enabled;
     if (!positioning && i >= 2 && i <= 5) {
@@ -814,6 +965,7 @@ static void apply_table(ot_work *w, ot_table *source, uint32_t script, int posit
   }
   for (i = 0; i < w->options->feature_count && w->status == EXR_OK; i++) {
     uint32_t tag = w->options->features[i].tag;
+    if (!positioning && tag == EXR_TAG('r','v','r','n')) continue;
     if (w->vertical && (tag == EXR_TAG('v','r','t','2') || tag == EXR_TAG('v','e','r','t'))) continue;
     for (j = 0; j < count && tag != tags[j]; j++) {}
     if (j == count) feature_tag(w, features, lang, tag, 0, w->options->features[i].value);
@@ -855,6 +1007,25 @@ exr_shape_options exr_shape_defaults(void) {
   exr_shape_options options = {0};
   options.font_size = 24;
   return options;
+}
+static exr_status normalized_coordinates(ot_work *w, FT_Library library) {
+  FT_MM_Var *axes = NULL;
+  FT_Error code;
+  unsigned i;
+  if (!FT_HAS_MULTIPLE_MASTERS(w->face->face)) return EXR_OK;
+  code = FT_Get_MM_Var(w->face->face, &axes);
+  if (code || !axes) return EXR_FONT;
+  if (!axes->num_axis || axes->num_axis > 64) {
+    FT_Done_MM_Var(library, axes); return EXR_LIMIT;
+  }
+  w->axis_count = axes->num_axis;
+  FT_Done_MM_Var(library, axes);
+  /* FreeType applies avar before returning blend coordinates. Read these once
+     per shape; a named instance and an explicit instance share this path. */
+  if (FT_Get_Var_Blend_Coordinates(w->face->face, w->axis_count, w->coordinates)) return EXR_FONT;
+  for (i = 0; i < w->axis_count; i++)
+    if (w->coordinates[i] < -65536 || w->coordinates[i] > 65536) return EXR_FONT;
+  return EXR_OK;
 }
 static exr_status shape(exr_font *font, size_t face_index, const char *text, size_t size,
                        const exr_shape_options *options, exr_shaped_glyph **out,
@@ -898,6 +1069,8 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
   w.status = exr_control_cancel(&options->control, error);
   if (w.status != EXR_OK) goto done;
   w.status = tables(w.face);
+  if (w.status != EXR_OK) goto done;
+  w.status = normalized_coordinates(&w, font->library);
   if (w.status != EXR_OK) goto done;
   w.gdef = (ot_view){w.face->ot->gdef.data,w.face->ot->gdef.size,&w};
   if (w.gdef.p && (u16(w.gdef, 0) != 1 || u16(w.gdef, 2) > 3)) { w.status = EXR_FONT; goto done; }

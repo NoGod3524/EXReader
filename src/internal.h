@@ -145,7 +145,7 @@ typedef struct {
   float font_size, leading, indent, border_width;
   const char *family;
   int family_owned;
-  int leading_relative, align, display, before, after, border_style;
+  int leading_relative, align, display, before, after, border_style, writing_declared;
   unsigned flags;
   exr_direction direction;
   exr_writing_mode writing_mode;
