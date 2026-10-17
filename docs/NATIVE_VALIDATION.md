@@ -1605,3 +1605,17 @@ spine parts, returned-snapshot lifetime after publication disposal, rejection of
 snapshot from another archive instance, callback reentry, cancellation and custom
 providers without an EPUB package. Generic local paths remain independently usable.
 All 66 local Windows suites pass. The 0.87 27746e4 CI passed all six jobs.
+
+
+## 0.89 Simple CFI ranges and point-context range starts
+
+Range generation extracts a common sequence of complete steps and emits P,S,E.
+Tests cover same-text/zero-length/cross-spine ranges, literal canonical output,
+UTF-16 offsets, escaped assertion commas and numeric 2-before-10 ordering.
+Resolution corrects both endpoints through IDs before validating order, including
+an intentionally reversed-looking stale itemref pair. Biased endpoints, reversed
+ranges, offset-bearing parent paths, missing/extra separators and cancellation
+fail atomically. Full document and indexed-publication point resolvers accept a
+range's start; a range ending in a damaged unrelated chapter still resolves its
+valid start without loading the other chapter. All 66 local Windows suites pass.
+The 0.88 2135309 CI passed all six jobs.

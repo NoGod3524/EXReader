@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "internal.h"
 #define CFI_LIMIT 65536u
+static exr_status range_paths(const char *cfi,char **a,char **b,exr_error *e);
 static int put(exr_buffer *b,const char *s) { return exr_append(b,s,strlen(s)); }
 static exr_status invalid(exr_error *e) { return exr_fail(e,EXR_FORMAT,"Invalid or unsupported chapter-local CFI path"); }
 static const char *identifier(const exr_node *n) {
@@ -242,7 +243,12 @@ exr_status exr_cfi_route(const exr_document *d,const char *cfi,const exr_control
     if(cfi[i]=='[') bracket=1;
     else if(cfi[i]==']') bracket=0;
     else if(!bracket && cfi[i]=='!') { if(bang!=SIZE_MAX) return invalid(e); bang=i; }
-    else if(!bracket && cfi[i]==',') return invalid(e);
+    else if(!bracket && cfi[i]==',') {
+      char *start=NULL,*end=NULL;
+      status=range_paths(cfi,&start,&end,e);
+      if(status==EXR_OK) status=exr_cfi_route(d,start,control,chapter,local,e);
+      free(start); free(end); return status;
+    }
   }
   if(bang==SIZE_MAX || bracket) return invalid(e);
   prefix=exr_copy(cfi+8,bang-8); suffix=exr_copy(cfi+bang+1,n-bang-2);
@@ -269,4 +275,106 @@ exr_status exr_document_cfi_resolve(const exr_document *d,const char *cfi,const 
   if(status==EXR_OK) status=exr_document_cfi_path_resolve(d,mapped,local,control,&result,e);
   if(status==EXR_OK) { *chapter=mapped; *out=result; }
   free(local); return status;
+}
+
+/* Only canonical paths emitted by this file enter this comparator. Assertions
+   do not participate in CFI order; integers compare numerically, never as text. */
+static void token(const char **at,unsigned *kind,size_t *value) {
+  const char *p=*at; *kind=0; *value=0;
+  while(*p=='[') {
+    p++;
+    while(*p && *p!=']') { if(*p=='^' && p[1]) p++; p++; }
+    if(*p==']') p++;
+  }
+  if(*p==':' || *p=='/') { *kind=*p==':' ? 1u : 2u; p++; (void)integer(&p,value); }
+  else if(*p=='!') { *kind=3; p++; }
+  *at=p;
+}
+static int point_order(const char *a,const char *b) {
+  unsigned ka,kb; size_t va,vb; a+=8; b+=8;
+  do {
+    token(&a,&ka,&va); token(&b,&kb,&vb);
+    if(ka!=kb) return ka<kb ? -1 : 1;
+    if(va!=vb) return va<vb ? -1 : 1;
+  } while(ka);
+  return 0;
+}
+static const char *step_end(const char *p) {
+  size_t number;
+  if(*p=='!') return p+1;
+  if(*p!='/') return p;
+  p++; if(!integer(&p,&number)) return p;
+  if(*p=='[') {
+    p++; while(*p && *p!=']') { if(*p=='^' && p[1]) p++; p++; }
+    if(*p==']') p++;
+  }
+  return p;
+}
+exr_status exr_document_cfi_range_create(const exr_document *d,const exr_cfi_range *range,
+                                           const exr_control *control,char **out,exr_error *e) {
+  char *a=NULL,*b=NULL; const char *pa,*pb,*end_a,*end_b; size_t shared=0,na,nb; exr_buffer result={0}; exr_status status;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing CFI range output");
+  *out=NULL;
+  if(!range || range->start.side || range->end.side) return exr_fail(e,EXR_ARGUMENT,"CFI ranges cannot carry endpoint side bias");
+  status=exr_document_cfi_create(d,range->start_chapter,&range->start,control,&a,e);
+  if(status==EXR_OK) status=exr_document_cfi_create(d,range->end_chapter,&range->end,control,&b,e);
+  if(status!=EXR_OK) goto done;
+  if(point_order(a,b)>0) { status=exr_fail(e,EXR_ARGUMENT,"CFI range endpoints are reversed"); goto done; }
+  pa=a+8; pb=b+8; na=strlen(pa)-1; nb=strlen(pb)-1;
+  while((*pa=='/' || *pa=='!') && (*pb=='/' || *pb=='!')) {
+    end_a=step_end(pa); end_b=step_end(pb);
+    if(end_a-pa!=end_b-pb || memcmp(pa,pb,(size_t)(end_a-pa))) break;
+    shared+=(size_t)(end_a-pa); pa=end_a; pb=end_b;
+  }
+  if(!shared) { status=invalid(e); goto done; }
+  if(!put(&result,"epubcfi(") || !exr_append(&result,a+8,shared) || !put(&result,",") ||
+     !exr_append(&result,a+8+shared,na-shared) || !put(&result,",") || !exr_append(&result,b+8+shared,nb-shared) ||
+     !put(&result,")") || result.size>CFI_LIMIT) { status=exr_fail(e,EXR_LIMIT,"CFI range exceeds allocation or size limit"); goto done; }
+  status=exr_control_cancel(control,e); if(status==EXR_OK) { *out=result.data; result.data=NULL; status=exr_fail(e,EXR_OK,""); }
+done:
+  free(a); free(b); free(result.data); return status;
+}
+/* Split P,S,E without treating escaped/ID-assertion commas as separators. */
+static exr_status range_paths(const char *cfi,char **a,char **b,exr_error *e) {
+  size_t n=0,i,commas[2],count=0; int bracket=0; exr_buffer x={0},y={0}; exr_status status;
+  *a=*b=NULL;
+  if(!cfi) return exr_fail(e,EXR_ARGUMENT,"Missing CFI range");
+  while(n<=CFI_LIMIT && cfi[n]) n++;
+  if(n>CFI_LIMIT) return exr_fail(e,EXR_LIMIT,"CFI range exceeds size limit");
+  if(n<11 || strncmp(cfi,"epubcfi(",8) || cfi[n-1]!=')') return invalid(e);
+  for(i=8;i<n-1;i++) {
+    if(cfi[i]=='^') { if(++i==n-1) return invalid(e); continue; }
+    if(cfi[i]=='[') { if(bracket) return invalid(e); bracket=1; }
+    else if(cfi[i]==']') { if(!bracket) return invalid(e); bracket=0; }
+    else if(!bracket && cfi[i]==',') { if(count==2) return invalid(e); commas[count++]=i; }
+    else if(!bracket && !count && (cfi[i]==':' || cfi[i]=='~' || cfi[i]=='@')) return invalid(e);
+  }
+  if(bracket || count!=2 || commas[0]==8) return invalid(e);
+  if(!put(&x,"epubcfi(") || !exr_append(&x,cfi+8,commas[0]-8) ||
+     !put(&y,"epubcfi(") || !exr_append(&y,cfi+8,commas[0]-8) ||
+     !exr_append(&x,cfi+commas[0]+1,commas[1]-commas[0]-1) || !put(&x,")") ||
+     !exr_append(&y,cfi+commas[1]+1,n-commas[1]-2) || !put(&y,")")) { status=exr_fail(e,EXR_LIMIT,"CFI range path allocation failed"); goto done; }
+  *a=x.data; *b=y.data; x.data=y.data=NULL; status=EXR_OK;
+done:
+  free(x.data); free(y.data); return status;
+}
+exr_status exr_document_cfi_range_resolve(const exr_document *d,const char *cfi,const exr_control *control,
+                                            exr_cfi_range *out,exr_error *e) {
+  exr_cfi_range range; char *a=NULL,*b=NULL,*canonical_a=NULL,*canonical_b=NULL; exr_status status;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing CFI range output");
+  *out=(exr_cfi_range){SIZE_MAX,SIZE_MAX,{SIZE_MAX,SIZE_MAX,0},{SIZE_MAX,SIZE_MAX,0}};
+  status=range_paths(cfi,&a,&b,e); if(status!=EXR_OK) goto done;
+  status=exr_document_cfi_resolve(d,a,control,&range.start_chapter,&range.start,e);
+  if(status==EXR_OK) status=exr_document_cfi_resolve(d,b,control,&range.end_chapter,&range.end,e);
+  if(status!=EXR_OK) goto done;
+  if(range.start.side || range.end.side) { status=invalid(e); goto done; }
+  /* Recreate after ID correction before comparing order; stale original step
+     numbers must not reverse a successfully corrected document range. */
+  status=exr_document_cfi_create(d,range.start_chapter,&range.start,control,&canonical_a,e);
+  if(status==EXR_OK) status=exr_document_cfi_create(d,range.end_chapter,&range.end,control,&canonical_b,e);
+  if(status!=EXR_OK) goto done;
+  if(point_order(canonical_a,canonical_b)>0) { status=invalid(e); goto done; }
+  *out=range; status=exr_fail(e,EXR_OK,"");
+done:
+  free(a); free(b); free(canonical_a); free(canonical_b); return status;
 }
