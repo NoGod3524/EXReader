@@ -3,7 +3,8 @@
 #include <ctype.h>
 enum { BOLD, ITALIC, SIZE, COLOR, BACKGROUND, UNDERLINE, STRIKE, ALIGN, LEFT, RIGHT,
        INDENT, BEFORE, AFTER, LEADING, MULTIPLE, DIRECTION, RTF_PROPERTIES };
-typedef struct { int skip,uc,destination; int properties[RTF_PROPERTIES]; } rtf_state;
+typedef struct { int skip,uc,destination,picture,inherited_skip,star; int properties[RTF_PROPERTIES]; } rtf_state;
+typedef struct { exr_buffer bytes; int type,nibble,width,height,goal_width,goal_height,scale_x,scale_y; } rtf_picture;
 typedef struct {
   exr_document *doc;
   exr_buffer run;
@@ -12,6 +13,9 @@ typedef struct {
   uint32_t colors[4096];
   size_t color_count;
   unsigned red,green,blue,components;
+  rtf_picture *pictures;
+  size_t picture_count,picture_capacity;
+  int last_picture;
   exr_status status;
   exr_error *error;
 } rtf_context;
@@ -70,12 +74,27 @@ done:
 }
 static int emit(rtf_context *c,const rtf_state *s,uint32_t cp) {
   if(s->skip || s->destination) return 1;
+  if(cp!=32 && cp!=9 && cp!=10 && cp!=13) c->last_picture=0;
   if(c->run.size && memcmp(c->style.properties,s->properties,sizeof(s->properties)) && !run_flush(c)) return 0;
   if(!c->run.size) c->style=*s;
   if(!exr_codepoint(&c->run,cp)) { c->status=EXR_LIMIT; return 0; } return 1;
 }
+static int picture_bytes(rtf_context *c,int index,const void *data,size_t size) {
+  rtf_picture *p=&c->pictures[index];
+  if(size>32u*1024*1024-p->bytes.size || !exr_append(&p->bytes,data,size)) { c->status=EXR_LIMIT; return 0; }
+  return 1;
+}
 static int literal(rtf_context *c,const rtf_state *s,uint32_t cp) {
   if(s->skip) return 1;
+  if(s->destination==2 && s->picture>=0) {
+    rtf_picture *p=&c->pictures[s->picture]; unsigned char byte; int digit;
+    if(!p->type || cp==32 || cp==9 || cp==10 || cp==13) return 1;
+    if(cp<128 && isxdigit((unsigned char)cp)) digit=isdigit((unsigned char)cp) ? (int)cp-'0' : tolower((unsigned char)cp)-'a'+10;
+    else { c->status=EXR_FORMAT; return 0; }
+    if(p->nibble<0) p->nibble=digit;
+    else { byte=(unsigned char)(p->nibble*16+digit); p->nibble=-1; return picture_bytes(c,s->picture,&byte,1); }
+    return 1;
+  }
   if(s->destination==1) {
     if(cp==';') {
       if(c->color_count>=4096) { c->status=EXR_LIMIT; return 0; }
@@ -88,9 +107,62 @@ static int literal(rtf_context *c,const rtf_state *s,uint32_t cp) {
 }
 static int line_break(rtf_context *c,const rtf_state *s,int soft) {
   if(!run_flush(c)) return 0;
+  c->last_picture=0;
   if(soft) {
     if(!paragraph(c,s) || make(c,c->paragraph,EXR_NODE_BREAK,"br",NULL)==SIZE_MAX) return 0;
   } else c->paragraph=SIZE_MAX;
+  return 1;
+}
+static int picture_start(rtf_context *c,rtf_state *s) {
+  rtf_picture *p;
+  if(s->picture>=0) { c->status=EXR_FORMAT; return 0; }
+  if(c->picture_count>=9996 || !exr_grow((void **)&c->pictures,&c->picture_capacity,c->picture_count+1,sizeof(*c->pictures))) { c->status=EXR_LIMIT; return 0; }
+  s->picture=(int)c->picture_count++; s->destination=2; p=&c->pictures[s->picture]; memset(p,0,sizeof(*p));
+  p->nibble=-1; p->scale_x=p->scale_y=100; return run_flush(c);
+}
+static int picture_finish(rtf_context *c,const rtf_state *s) {
+  rtf_picture *p=&c->pictures[s->picture]; exr_resource *resources; exr_resource_data *encoded;
+  size_t i=c->doc->resource_count,node; char path[100],id[48],value[64];
+  const char *mime=p->type==1 ? "image/png" : p->type==2 ? "image/jpeg" : p->type==3 ? "image/wmf" : "image/emf";
+  if(!p->type) return 1;
+  if(p->nibble>=0 || !p->bytes.size || (p->type==1 && (p->bytes.size<8 || memcmp(p->bytes.data,"\x89PNG\r\n\x1a\n",8))) ||
+      (p->type==2 && (p->bytes.size<2 || (unsigned char)p->bytes.data[0]!=255 || (unsigned char)p->bytes.data[1]!=216))) { c->status=EXR_FORMAT; return 0; }
+  resources=realloc(c->doc->resources,(i+1)*sizeof(*resources)); if(!resources) { c->status=EXR_MEMORY; return 0; }
+  c->doc->resources=resources; encoded=realloc(c->doc->resource_data,(i+1)*sizeof(*encoded));
+  if(!encoded) { c->status=EXR_MEMORY; return 0; } c->doc->resource_data=encoded;
+  c->doc->resource_count=c->doc->resource_capacity=i+1; memset(&resources[i],0,sizeof(resources[i]));
+  encoded[i]=(exr_resource_data){(unsigned char *)p->bytes.data,p->bytes.size}; p->bytes.data=NULL; p->bytes.size=p->bytes.capacity=0;
+  snprintf(id,sizeof(id),"picture-%zu",i);
+  snprintf(path,sizeof(path),"assets/rtf-picture-%zu.%s",i,p->type==1 ? "png" : p->type==2 ? "jpg" : p->type==3 ? "wmf" : "emf");
+  resources[i].id=exr_model_copy(c->doc,id,strlen(id)); resources[i].path=exr_model_copy(c->doc,path,strlen(path));
+  resources[i].media_type=exr_model_copy(c->doc,mime,strlen(mime)); resources[i].properties=exr_model_copy(c->doc,"",0);
+  if(!resources[i].id || !resources[i].path || !resources[i].media_type || !resources[i].properties || !paragraph(c,s)) { c->status=EXR_LIMIT; return 0; }
+  node=make(c,c->paragraph,EXR_NODE_IMAGE,"img",NULL); if(node==SIZE_MAX || !set(c,node,"src",path)) return 0;
+  if(p->goal_width || p->width) {
+    snprintf(value,sizeof(value),"%.4f",(p->goal_width ? p->goal_width/15.0 : p->width)*p->scale_x/100.0);
+    if(!set(c,node,"width",value)) return 0;
+  }
+  if(p->goal_height || p->height) {
+    snprintf(value,sizeof(value),"%.4f",(p->goal_height ? p->goal_height/15.0 : p->height)*p->scale_y/100.0);
+    if(!set(c,node,"height",value)) return 0;
+  }
+  c->last_picture=p->type==1 || p->type==2; return 1;
+}
+static int picture_control(rtf_context *c,rtf_state *s,const char *word,long value,int has) {
+  rtf_picture *p=&c->pictures[s->picture]; int *dimension=NULL;
+  if(!strcmp(word,"pngblip")) p->type=1;
+  else if(!strcmp(word,"jpegblip")) p->type=2;
+  else if(!strcmp(word,"wmetafile")) p->type=3;
+  else if(!strcmp(word,"emfblip")) p->type=4;
+  else {
+    if(!strcmp(word,"picw")) dimension=&p->width;
+    else if(!strcmp(word,"pich")) dimension=&p->height;
+    else if(!strcmp(word,"picwgoal")) dimension=&p->goal_width;
+    else if(!strcmp(word,"pichgoal")) dimension=&p->goal_height;
+    else if(!strcmp(word,"picscalex")) dimension=&p->scale_x;
+    else if(!strcmp(word,"picscaley")) dimension=&p->scale_y;
+    if(dimension) { if(!has || value<0 || value>100000000) { c->status=EXR_FORMAT; return 0; } *dimension=(int)value; }
+  }
   return 1;
 }
 static int style_control(rtf_context *c,rtf_state *s,const char *word,long value,int has) {
@@ -135,7 +207,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
   exr_status result = EXR_FORMAT;
   if (n < 5 || memcmp(s, "{\\rtf", 5))
     return exr_fail(e, EXR_FORMAT, "Invalid RTF header");
-  context.doc=d; context.error=e; context.paragraph=SIZE_MAX; states[0].uc=1;
+  context.doc=d; context.error=e; context.paragraph=SIZE_MAX; states[0].uc=1; states[0].picture=-1;
   if(exr_model_node(d,SIZE_MAX,SIZE_MAX,EXR_NODE_DOCUMENT,NULL,NULL,0)==SIZE_MAX) return EXR_LIMIT;
   {
     size_t chapter=make(&context,0,EXR_NODE_CHAPTER,NULL,NULL),html,head,title;
@@ -154,7 +226,9 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       if(!run_flush(&context)) goto done;
       if (depth + 1 >= 256)
         goto done;
+      states[depth].star=0;
       states[depth + 1] = states[depth];
+      states[depth + 1].inherited_skip=states[depth].skip;
       depth++;
       continue;
     }
@@ -163,6 +237,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       if(!run_flush(&context)) goto done;
       if (!depth)
         goto done;
+      if(states[depth].picture>=0 && states[depth].picture!=states[depth-1].picture && !picture_finish(&context,&states[depth])) goto done;
       depth--;
       continue;
     }
@@ -170,7 +245,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       char word[40] = {0};
       size_t k = 0;
       long value = 0;
-      int negative = 0, has = 0;
+      int negative = 0, has = 0, optional = 0;
       if (i >= n)
         goto done;
       c = s[i++];
@@ -179,8 +254,8 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
           fallback--;
           continue;
         }
-        if (c == '*')
-          states[depth].skip = 1;
+        if(c!='*') states[depth].star=0;
+        if (c == '*') { states[depth].skip = 1; states[depth].star=1; }
         else if ((c == '\\' || c == '{' || c == '}') && !states[depth].skip &&
                  !literal(&context,&states[depth],c))
           goto done;
@@ -225,6 +300,9 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       if (!strcmp(word, "bin")) {
         if (!has || value < 0 || (size_t)value > n - i)
           goto done;
+        if(!fallback && !states[depth].skip && states[depth].destination==2 && states[depth].picture>=0) {
+          if(context.pictures[states[depth].picture].nibble>=0 || !picture_bytes(&context,states[depth].picture,s+i,(size_t)value)) goto done;
+        }
         i += (size_t)value;
         if (fallback)
           fallback--;
@@ -235,6 +313,11 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
         fallback--;
         continue;
       }
+      optional=states[depth].star; states[depth].star=0;
+      if(optional && !states[depth].inherited_skip && !strcmp(word,"shppict")) { states[depth].skip=0; continue; }
+      if(!states[depth].skip && !strcmp(word,"nonshppict") && context.last_picture) { states[depth].skip=1; continue; }
+      if(!states[depth].skip && !strcmp(word,"pict")) { if(!picture_start(&context,&states[depth])) goto done; continue; }
+      if(!states[depth].skip && states[depth].destination==2) { if(!picture_control(&context,&states[depth],word,value,has)) goto done; continue; }
       if(!states[depth].skip && !strcmp(word,"colortbl")) {
         states[depth].destination=1; context.color_count=0; context.red=context.green=context.blue=context.components=0; continue;
       }
@@ -249,7 +332,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
         continue;
       }
       if (!strcmp(word, "fonttbl") || !strcmp(word, "stylesheet") ||
-          !strcmp(word, "info") || !strcmp(word, "pict") || !strcmp(word, "object") ||
+          !strcmp(word, "info") || !strcmp(word, "object") ||
           !strcmp(word, "header") || !strcmp(word, "footer")) {
         states[depth].skip = 1;
         continue;
@@ -292,6 +375,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       } else if(!style_control(&context,&states[depth],word,value,has)) goto done;
       continue;
     }
+    if(states[depth].skip && c!=' ' && c!='\t' && c!='\r' && c!='\n') states[depth].star=0;
     if (c == '\r' || c == '\n' || states[depth].skip)
       continue;
     if (fallback) {
@@ -305,7 +389,8 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
     goto done;
   result = EXR_OK;
 done:
-  free(context.run.data);
+  for(i=0;i<context.picture_count;i++) free(context.pictures[i].bytes.data);
+  free(context.pictures); free(context.run.data);
   if(result==EXR_OK) return EXR_OK;
   result=context.status!=EXR_OK ? context.status : EXR_FORMAT;
   return exr_fail(e,result,"Invalid or unsupported RTF stream");
