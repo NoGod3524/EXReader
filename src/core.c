@@ -4,6 +4,7 @@
 #include <windows.h>
 #endif
 const char *exr_version(void) { return EXR_VERSION; }
+uint32_t exr_abi_version(void) { return EXR_ABI_VERSION; }
 FILE *exr_fopen(const char *path, const char *mode) {
 #ifdef _WIN32
   int n;

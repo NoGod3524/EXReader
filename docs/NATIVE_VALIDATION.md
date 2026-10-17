@@ -1635,3 +1635,18 @@ bare point CFIs continue to represent UTF-16 interiors. Cancellation occurs whil
 building the assertion view. No per-character position map or resident cache is
 created. Full CFI and ordinary/range regression suites remain passing.
 All 67 local Windows suites pass. The 0.89 ab8550e CI passed all six jobs.
+
+
+## 0.91 ABI epoch and relocatable installed CMake package
+
+ABI epoch 1 is exported at runtime and documented with fixed array strides,
+size-versioned prefixes, ownership, callback and synchronization rules. A C consumer
+compiled with the original fixed-provider input prefix still creates/reads a fixed
+document and observes no optional text provider. All 68 local Windows suites pass.
+The installed SDK config exports only the public shared target and include path;
+all ten C host examples build independently through find_package. Compat, PDF and
+WAV hosts run against that installed SDK. Copying the SDK to a different directory
+with spaces and configuring a new consumer still succeeds, and an independent
+C++17 consumer links the C ABI and exercises document ownership. Desktop CI now
+builds/runs the imported-target C and C++ consumers on all three systems.
+The 0.90 fb49403 CI passed all six jobs.

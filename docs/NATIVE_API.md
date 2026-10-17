@@ -1,6 +1,6 @@
 # Native C API 0.27
 
-公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
+公开入口为 `include/exreader.h`；0.91 起使用 ABI epoch 1，兼容规则见 [SDK 兼容约定](SDK_COMPATIBILITY.md)。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。较早的这些布局变化发生在 ABI epoch 建立之前。宿主按兼容约定选择头文件和库。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
 0.12.1 修复审计发现的长附标序列塑形开销、重复章节锚点、超限备注写入、XML 非法字符导出、跨行塑形上下文、RTF Unicode fallback 和 HTML script/style 原始文本处理；`exr_library_note()` 同时支持输出 ID 指向输入 `note.id`。回归覆盖见 [验证记录](NATIVE_VALIDATION.md#0121-audit-fixes)。
 
@@ -18,7 +18,7 @@
 
 - `exr_document`、`exr_font`、`exr_layout`、`exr_library`、`exr_publication`、`exr_session`、`exr_pager`、`exr_bidi` 为不透明句柄，使用各自析构函数释放。
 - document 的 text / title / blocks / nodes / chapters / resources 和 layout 的 pages / lines / glyphs / boxes / image 为只读借用视图，所属对象释放后失效。树节点属性和文本也属于 document。借用的图片像素不可修改或释放。
-- 布局拥有输出数据及所引用的图片像素，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的同一个字体集句柄；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不共享对象的独立句柄可独立使用。共享 publication、session、pager 或压缩 archive 的文档，其调用及生命周期变更也由宿主串行处理；引擎没有全局状态或内部线程锁。
+- 布局拥有输出数据及所引用的图片像素，不保留文档指针。文档释放后仍可绘制；需要源节点内容或资源名称时保留文档。渲染时需传入生成该布局时使用的同一个字体集句柄；字号变化由库设置。相同字体、布局或书库句柄的调用由宿主串行处理；不共享对象的独立句柄可独立使用。共享 publication、session、pager 或压缩 archive 的文档，其调用及生命周期变更也由宿主串行处理；引擎不创建工作线程；SQLite 自身的互斥不代替这些宿主串行约束。
 - `exr_books_free()` / `exr_notes_free()` 释放数组和其中字符串；后者也释放每条笔记的锚点字符串。修改元数据时复制结构并用自己的字符串设置输入字段，不替换结果数组中的库拥有指针。
 - `exr_anchor_create()` 输出独立拥有的选文、前后文和章节路径字符串，由 `exr_anchor_free()` 释放；输入文档随后可释放。宿主也可直接提供选择器字段供只读解析，但不能用库的释放函数释放宿主借用的字符串。
 - `exr_bitmap_free()` 释放像素。`exr_document_export()` / `exr_document_resource()` / `exr_library_blob()` 返回的字节、`exr_text_analyze()` 的边界表、`exr_shape()` 的字形数组和 `exr_bidi_reorder()` 的视觉索引数组，用 `exr_free()` 释放。它们独立于原对象或输入的生命周期。`exr_bidi_scalars()` 则是属于分析句柄的借用视图。跨 DLL 调用时不要使用宿主 `free()` 释放库内存。
@@ -869,3 +869,10 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 `exr_document_cfi_path_create_quoted`、`exr_document_cfi_create_quoted` 和 `exr_publication_cfi_create_quoted` 每侧捕获 1–32 个 Unicode 标量，并自动进行 CFI 字符转义；空文字不附加无意义的空断言。生成带断言的位置需要标量边界，拒绝 surrogate pair 中间的位置；普通不带断言的 CFI 仍允许 UTF-16 单元边界。修正与生成都保留 side bias。
 
 规范化视图是单次操作的临时缓冲，最多 64 MiB 减一字节，不常驻，不建立逐字符映射表；位置回查用第二遍遍历。查询最多两次线性 KMP 扫描，拒绝歧义，支持取消。现有路径断言每侧上限 4096 字节。完整文档、范围和按需单点入口共享这些规则。
+
+
+## SDK ABI 与安装包接入（0.91）
+
+`EXR_ABI_VERSION` / `exr_abi_version()` 提供从 0.91 起的 ABI epoch 1。版本字符串仍用 EXR_VERSION / exr_version。ABI 与库版本、SQLite schema 分别管理；同一 epoch 的数组记录不能追加字段改变步长，带 struct_size 的输入维持原始前缀。完整规则见 [SDK_COMPATIBILITY.md](SDK_COMPATIBILITY.md)。
+
+安装包新增可搬迁的 CMake config：`find_package(EXReader 0.91 CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
