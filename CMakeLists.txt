@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(EXReader VERSION 0.76.0 LANGUAGES C)
+project(EXReader VERSION 0.77.0 LANGUAGES C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
@@ -326,8 +326,11 @@ install(FILES licenses/adobe-glyph-list.txt licenses/pdfjs.txt DESTINATION share
 install(FILES README.md LICENSE THIRD_PARTY_NOTICES.md DESTINATION .)
 install(FILES docs/NATIVE_API.md docs/NATIVE_VALIDATION.md docs/PERFORMANCE.md docs/native-page.png docs/styled-page.png docs/complex-text.png DESTINATION docs)
 install(DIRECTORY examples DESTINATION .)
-install(FILES tests/fixtures/pdf-public.pdf DESTINATION examples/fixed-pages)
+install(FILES tests/fixtures/pdf-public.pdf tests/fixtures/pdf-public-text.pdf DESTINATION examples/fixed-pages)
 install(DIRECTORY tests/fixtures/fonts DESTINATION examples)
 install(FILES tests/fixtures/shaping/shaping.ttf tests/fixtures/shaping/README.md DESTINATION examples/shaping-fonts)
 
 install(FILES tests/fixtures/audio/pcm.wav DESTINATION examples/audio)
+
+install(FILES include/module.modulemap DESTINATION include)
+install(DIRECTORY bindings/swift DESTINATION bindings)

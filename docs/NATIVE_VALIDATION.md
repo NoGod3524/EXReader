@@ -1433,3 +1433,17 @@ All 59 local suites pass. An independent installed-SDK build compiles all host
 examples, decodes the Chinese-named WAVE fixture to the expected 3200 frames /
 0.5 peak, and runs the public PDF text/render example. The 0.75 c8f07c3 CI run
 passed all six jobs.
+
+
+## 0.77 Swift C module and owned host wrappers
+
+The installed C module exposes the full public API. ARC wrappers retain native
+PDF/font/text/WAVE handles and copy output data; mutable document and WAVE calls
+are serialized per object. The Swift smoke client checks PDF page/text/render
+results, native error propagation, embedded-NUL/Unicode snapshots, exact UTF-8
+ranges, host TTC lifetime and partial-EOF PCM reads. Desktop macOS CI builds and
+runs against the installed dylib; Apple mobile CI typechecks the wrapper against
+separate device and simulator SDK headers. Actual iOS device execution is not
+covered by typechecking.
+All 59 Windows-native suites pass. The 0.76 333f2e2 CI run passed all six jobs.
+Apple-specific Swift validation is performed by the new CI steps.
