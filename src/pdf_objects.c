@@ -741,10 +741,10 @@ done:
   free(current.data); return result(f,e);
 }
 /* Content operands reuse the object lexer in a short-lived arena. */
-exr_status exr_pdf_content_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
-                               const exr_control *control,exr_error *error) {
-  exr_pdf_file *arena; parser p; uint32_t operands[64]; size_t count=0,operations=0; exr_status status;
-  if((!data && size) || !operation) return exr_fail(error,EXR_ARGUMENT,"Missing PDF content bytes or callback");
+exr_status exr_pdf_syntax_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
+                              size_t maximum_operands,const exr_control *control,exr_error *error) {
+  exr_pdf_file *arena; parser p; uint32_t operands[1024]; size_t count=0,operations=0; exr_status status;
+  if((!data && size) || !operation || !maximum_operands || maximum_operands>1024) return exr_fail(error,EXR_ARGUMENT,"Missing PDF content bytes or callback");
   if(size>EXR_MAX_TEXT) return exr_fail(error,EXR_LIMIT,"PDF content exceeds 64 MiB");
   arena=calloc(1,sizeof(*arena)); if(!arena) return exr_fail(error,EXR_MEMORY,"PDF operand arena allocation failed");
   arena->data=data; arena->size=size; arena->root=EXR_PDF_NONE; p=(parser){arena,data,size,0};
@@ -754,7 +754,7 @@ exr_status exr_pdf_content_ops(const void *data,size_t size,exr_pdf_operator_fn 
     if(c=='/' || c=='(' || c=='<' || c=='[' || c=='+' || c=='-' || c=='.' || (c>='0' && c<='9') ||
        word(&probe,"true") || word(&probe,"false") || word(&probe,"null")) {
       uint32_t id;
-      if(count==64) { failed(arena,EXR_LIMIT,"PDF content operand stack exceeds 64"); break; }
+      if(count==maximum_operands) { failed(arena,EXR_LIMIT,"PDF operand stack exceeds its limit"); break; }
       id=parse_value(&p,0); if(id==EXR_PDF_NONE) break;
       operands[count++]=id;
     } else {
@@ -780,4 +780,9 @@ exr_status exr_pdf_content_ops(const void *data,size_t size,exr_pdf_operator_fn 
   if(arena->error.code==EXR_OK && count) failed(arena,EXR_FORMAT,"PDF content ends with operands but no operator");
   if(arena->error.code==EXR_OK) exr_control_poll(control,EXR_STAGE_READ,size,size,&arena->error);
   status=result(arena,error); exr_pdf_close(arena); return status;
+}
+
+exr_status exr_pdf_content_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
+                               const exr_control *control,exr_error *error) {
+  return exr_pdf_syntax_ops(data,size,operation,context,64,control,error);
 }

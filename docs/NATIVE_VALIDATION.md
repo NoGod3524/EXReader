@@ -807,3 +807,23 @@ same RFC 9110 PDF walked all 101,754 operators across its 194 pages without reta
 operands. This is syntax traversal, not execution or rendering.
 
 The 0.43 commit aaebfa0 passed all six platform and sanitizer CI jobs.
+
+
+## 0.45 PDF ToUnicode CMaps
+
+A private C ToUnicode reader supports 1..4-byte variable-length codespaces, bfchar mappings,
+bfrange string/array destinations, UTF-16BE surrogate pairs and multi-character mappings.
+Code ranges stay compact and are looked up with binary search. Unmapped valid codes yield
+U+FFFD. Overlapping/ambiguous codespaces, overlapping mappings, malformed blocks/UTF-16,
+range overflow and unsupported inherited/cid/notdef maps fail explicitly. A lookup that would
+increment a range into invalid UTF-16 fails without consuming source bytes. Limits cover
+codespaces, records, destination sizes and total payload; parsing supports cancellation.
+The shared syntax walker allows larger CMap operand groups while page content retains its
+64-operand limit. No PostScript is executed.
+
+`native-pdf-cmap` covers mixed code widths, surrogate pairs, ligatures, array/compact ranges,
+byte carry, null/empty destinations, missing codes, adjacent codespaces, UINT32_MAX source
+codes, 100-record blocks, malformed input and cancellation. The external RFC 9110 verification
+also parsed all nine distinct page-font ToUnicode streams. Public PDF document creation,
+font selection/metrics, operator execution and raster drawing remain pending. The 0.44
+commit 03778cc passed all six CI jobs.
