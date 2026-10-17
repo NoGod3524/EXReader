@@ -1290,3 +1290,14 @@ A manual public-only client opens RFC 9110 and renders all 194 pages, with
 renders its 595 x 841 first page. Public search/selection/annotation data and
 remaining unsupported PDF features are not claimed complete. The 0.65 commit
 ed66563 passed all six CI jobs.
+
+
+## 0.67 Format-independent fixed text snapshots
+
+Owned explicit-length UTF-8 snapshots preserve embedded NUL, overlapping ranges,
+multiple quads per range, source coordinates and vertical/invisible flags. The
+optional provider is lazy and shares the draw reentry guard; partial failures and
+cancellation discard output. Previous fixed-input prefixes remain accepted.
+Tests verify copied lifetimes, UTF-8/range/coordinate/byte limits, cancellation,
+provider failures, old prefixes and truncated optional function pointers.
+All 53 local suites pass. The 0.66 b167c58 CI run passed all jobs.

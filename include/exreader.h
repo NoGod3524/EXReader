@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.66.0"
+#define EXR_VERSION "0.67.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -408,12 +408,29 @@ typedef struct {
 /* The returned sink borrows the canvas until canvas_free. */
 EXR_API exr_status exr_canvas_get_sink(exr_canvas *canvas,exr_draw_sink *out,exr_error *error);
 typedef struct exr_fixed_document exr_fixed_document;
+typedef struct exr_fixed_text exr_fixed_text;
+enum { EXR_REGION_VERTICAL=1,EXR_REGION_INVISIBLE=2 };
+typedef struct {
+  size_t start,end; /* UTF-8 byte range; multiple regions may share a range. */
+  double quad[8];  /* Four ordered corners in native page coordinates. */
+  unsigned flags;
+} exr_text_region;
+/* Copies length-delimited UTF-8 and independent text quads, without imposing
+   visual/reading order or one-glyph-per-character assumptions. */
+EXR_API exr_status exr_fixed_text_create(const char *utf8,size_t size,const exr_text_region *regions,size_t count,
+                                          const exr_control *control,exr_fixed_text **out,exr_error *error);
+EXR_API void exr_fixed_text_free(exr_fixed_text *text);
+EXR_API const char *exr_fixed_text_string(const exr_fixed_text *text,size_t *size);
+EXR_API const exr_text_region *exr_fixed_text_regions(const exr_fixed_text *text,size_t *count);
+EXR_API size_t exr_fixed_text_memory_size(const exr_fixed_text *text);
 typedef struct {
   const char *id,*label;
   exr_page_geometry geometry;
 } exr_fixed_page;
 typedef exr_status (*exr_fixed_draw_fn)(void *context,size_t page,const double matrix[6],
                                          const exr_draw_sink *sink,const exr_control *control,exr_error *error);
+typedef exr_status (*exr_fixed_text_fn)(void *context,size_t page,const exr_control *control,
+                                         exr_fixed_text **out,exr_error *error);
 typedef struct {
   size_t struct_size;
   const char *title;
@@ -421,6 +438,7 @@ typedef struct {
   exr_fixed_draw_fn draw;
   void *context;
   exr_context_release_fn release;
+  exr_fixed_text_fn text; /* Optional; appended after the original required prefix. */
 } exr_fixed_input;
 typedef struct {
   uint32_t channels,background; /* channels 0 -> RGBA */
@@ -435,6 +453,10 @@ EXR_API const char *exr_fixed_title(const exr_fixed_document *document);
 EXR_API const exr_fixed_page *exr_fixed_pages(const exr_fixed_document *document,size_t *count);
 /* Owned directory/metadata bytes, excluding the provider's own payload. */
 EXR_API size_t exr_fixed_memory_size(const exr_fixed_document *document);
+/* Loads an independent owned text snapshot only when requested. The same
+   nonconcurrent/nonreentrant provider rule as draw applies. */
+EXR_API exr_status exr_fixed_load_text(exr_fixed_document *document,size_t page,const exr_control *control,
+                                        exr_fixed_text **out,exr_error *error);
 /* Streams one page in source coordinates through matrix (NULL -> identity).
    No implicit clip/state changes. The provider must skip absent callbacks.
    One document cannot be drawn concurrently or reentered from a callback. */

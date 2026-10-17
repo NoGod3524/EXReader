@@ -55,7 +55,7 @@ static void construction_failures(void) {
   input=input_for(&p,pages); input.title="\xff"; CHECK(exr_fixed_create(&input,&d,&error)==EXR_ENCODING && !d && !p.releases);
   input=input_for(&p,pages); pages[0].geometry.unit_scale=0; CHECK(exr_fixed_create(&input,&d,&error)==EXR_ARGUMENT && !d);
   input=input_for(&p,pages); input.page_count=10001; CHECK(exr_fixed_create(&input,&d,&error)==EXR_LIMIT && !d);
-  input=input_for(&p,pages); input.struct_size--; CHECK(exr_fixed_create(&input,&d,&error)==EXR_ARGUMENT && !d);
+  input=input_for(&p,pages); input.struct_size=offsetof(exr_fixed_input,release)+sizeof(input.release)-1; CHECK(exr_fixed_create(&input,&d,&error)==EXR_ARGUMENT && !d);
   input=input_for(&p,pages);
   { struct { exr_fixed_input input; unsigned char extension[8]; } extended={0}; extended.input=input; extended.input.struct_size=sizeof(extended); extended.extension[0]=1;
     CHECK(exr_fixed_create(&extended.input,&d,&error)==EXR_ARGUMENT && !d && !p.releases); extended.extension[0]=0;
