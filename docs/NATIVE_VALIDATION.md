@@ -703,3 +703,20 @@ checks oversized glyph bitmap rejection before raster allocation. All existing r
 rendering suites continue to pass after sharing the image and raster primitives.
 
 The 0.37 commit 10d81b3 passed all six platform and sanitizer CI jobs.
+
+
+## 0.39 PDF object foundation
+
+The private native parser reads bounded PDF scalar/collection values, exact signed 64-bit
+integers, escaped names/literal/hex strings, indirect objects, traditional cross-reference
+tables, incremental revisions and raw/single-Flate streams. Object loading is lazy; newest
+revision entries and free tombstones take precedence. Undefined or generation-mismatched
+references resolve to null, while reference/length/Prev cycles fail. Encrypted files and
+unsupported filters fail explicitly. Limits cover input, syntax depth, values, string bytes,
+stream expansion, cache capacity and parsing/decompression work.
+
+`native-pdf-objects` uses deterministic original fixtures for values, generations, revision
+inheritance/deletion, stream lengths/cache reuse, checksum/tail errors, unsupported parameters,
+expansion limits and every truncated prefix. All 37 suites pass. Public PDF document opening
+is still unconnected: this milestone supplies internal object parsing, not page rendering.
+The 0.38 commit 12f12cf passed all six platform and sanitizer CI jobs.
