@@ -1,6 +1,7 @@
 # EXReader SDK compatibility
 
-ABI epoch **1** starts with **0.91.0**. `EXR_ABI_VERSION` identifies the header's epoch;
+ABI epoch **1** was introduced in development step **S091** (original build
+**0.91.0**, commit `7dc8d8a`), now part of milestone **0.18.0**. `EXR_ABI_VERSION` identifies the header's epoch;
 `exr_abi_version()` identifies the loaded library's epoch. `EXR_VERSION` and
 `exr_version()` identify the release. Epoch 1 does not retroactively classify older
 SDK binaries that did not export the ABI query.
@@ -30,7 +31,7 @@ New array layouts require new types and entry points. Inputs explicitly carrying
 set the size of the header's actual type and leave unused fields zero. A library
 rejects unsupported nonzero extensions instead of silently interpreting them.
 The original fixed-provider prefix remains a tested consumer even though later
-headers append the optional text callback.
+headers append optional text, metadata and annotation callbacks.
 
 ## Ownership and execution
 
@@ -59,9 +60,16 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 0.91 CONFIG REQUIRED)
+find_package(EXReader 0.18.0 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
+
+The version renumbering keeps ABI epoch 1 and SQLite schema 6 unchanged. Update
+old CMake requirements such as 0.91/0.96 to the new milestone number. Use EXACT
+when selecting this SDK: older development packages numbered 0.91–0.100 sort
+above 0.18 and must not be selected as supposedly newer compatible packages.
+Historical versions are compared through the [version map](VERSIONING.md) and
+commit IDs, rather than numeric ordering across the renumbering.
 
 Set `CMAKE_PREFIX_PATH` or `EXReader_DIR` to the selected platform SDK. The imported
 target carries its include path and actual platform import/shared-library path;
