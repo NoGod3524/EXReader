@@ -373,7 +373,7 @@ pdf('pdf-graphics.pdf',values=graphics)
 
 
 # Original embedded TrueType, name-free, symbolic, cubic and CID-keyed programs.
-outline_fonts={1:b'<< /Type /Catalog /Resources << /Font << /Names 2 0 R /Unicode 3 0 R /Symbol 4 0 R /Cubic 5 0 R /CID 6 0 R /GlyphOnly 7 0 R >> >> >>'}
+outline_fonts={1:b'<< /Type /Catalog /Resources << /Font << /Names 2 0 R /Unicode 3 0 R /Symbol 4 0 R /Cubic 5 0 R /CID 6 0 R /GlyphOnly 7 0 R /Fallback 50 0 R /BadEmbedded 51 0 R >> >> >>'}
 for obj,filename in ((2,'pdf-names.ttf'),(3,'pdf-unicode.ttf'),(4,'pdf-symbol.ttf'),(5,'pdf-cubic.otf')):
     program_id,descriptor_id=20+obj,30+obj
     subtype=b'Type1' if obj==5 else b'TrueType'
@@ -390,4 +390,8 @@ outline_fonts[11]=b'<< /Subtype /CIDFontType2 /FontDescriptor 12 0 R >>'
 outline_fonts[12]=b'<< /FontFile2 13 0 R >>'
 outline_fonts[13]=compressed_stream((root/'fonts'/'glyph-only.ttf').read_bytes())
 outline_fonts[40]=compressed_stream(simple_map)
+outline_fonts[50]=b'<< /Subtype /Type1 /BaseFont /Helvetica >>'
+outline_fonts[51]=b'<< /Subtype /TrueType /BaseFont /Bad /Encoding /WinAnsiEncoding /FirstChar 65 /LastChar 65 /Widths [500] /FontDescriptor 52 0 R >>'
+outline_fonts[52]=b'<< /FontFile2 53 0 R >>'
+outline_fonts[53]=compressed_stream(b'not a valid font program')
 pdf('pdf-outlines.pdf',values=outline_fonts)

@@ -1048,3 +1048,32 @@ A manual RFC 9110 pass visits all 194 pages and selects/loads outlines for
 segments. This verifies the nine real embedded fonts and the outline pipeline;
 it is not yet a full-page pixel comparison. The 0.55 commit 79c8cd3 passed all
 six CI jobs.
+
+
+## 0.57 Native PDF text/vector page raster backend
+
+The private content raster backend now combines the PDF interpreter, cached
+font faces, native outline/curve/dash/stroke/fill code, straight RGBA or gray
+pixels, and device-color/alpha paint. Text modes 0..7 include glyph-outline
+clipping: glyph paths accumulate as a text-object union and intersect the current
+clip at ET. Path clips and Form BBox clips are immutable reference-counted masks;
+q/Q shares them instead of copying a page bitmap. A configurable mask byte budget
+(default 64 MiB), shared vector work budget, bounded face/CID caches, cancellation
+and failed-output disposal apply. Unembedded simple fonts have an explicit host
+program callback; bad embedded programs are not silently substituted.
+
+The raster suite checks mixed text/path color, fill/stroke/invisible/text-clip
+modes, glyph-clip union, empty glyph clips, nested masks, restore, even-odd holes,
+deferred clip after painting, Form isolation, transparent targets, grayscale
+backgrounds, callback/cache behavior, cancellation and mask exhaustion. A chain
+of 120 q saves succeeds with exactly one 144-byte clip budget. Singular stroke
+CTMs, image drawing, non-device spaces and unsupported transparency still fail
+explicitly. Public PDF opening/page models remain pending.
+
+The manual RFC 9110 renderer produces all 194 pages (388,306,520 aggregate RGBA
+output bytes, freed page by page). A local 72-dpi pass took 18.784 seconds; this
+is a single development run, not the benchmark suite. Its first page was visually
+compared with Poppler at the same 595 x 841 dimensions: positions, wrapping,
+colors and rules agree, with rasterizer antialiasing differences. Poppler remains
+an independent development oracle and is not linked or distributed. The 0.56
+commit e84c996 passed all six CI jobs.
