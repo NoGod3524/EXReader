@@ -27,10 +27,33 @@ static unsigned components(image_reader *r,uint32_t id) {
 static unsigned sample(const unsigned char *bytes,size_t bit,unsigned bits) {
   unsigned i,v=0; for(i=0;i<bits;i++) v=(v<<1)|((bytes[(bit+i)/8]>>(7-(bit+i)%8))&1); return v;
 }
+static int jpeg_frame(const unsigned char *data,size_t size,uint32_t width,uint32_t height,unsigned channels) {
+  size_t at=2;
+  if(size<4 || data[0]!=0xff || data[1]!=0xd8) return 0;
+  while(at<size) {
+    unsigned marker,length;
+    if(data[at++]!=0xff) return 0;
+    while(at<size && data[at]==0xff) at++;
+    if(at==size) return 0;
+    marker=data[at++];
+    if(marker==0xd9 || marker==0xda || !marker) return 0;
+    if(marker==1 || (marker>=0xd0 && marker<=0xd8)) continue;
+    if(size-at<2) return 0;
+    length=((unsigned)data[at]<<8)|data[at+1];
+    if(length<2 || length>size-at) return 0;
+    if(marker==0xc0 || marker==0xc1 || marker==0xc2) {
+      return length==8+3*channels && data[at+2]==8 && data[at+7]==channels &&
+        (((unsigned)data[at+3]<<8)|data[at+4])==height && (((unsigned)data[at+5]<<8)|data[at+6])==width;
+    }
+    at+=length;
+  }
+  return 0;
+}
 exr_status exr_pdf_image_decode(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t color,
                                  exr_bitmap *out,int *interpolate,size_t *work,const exr_control *control,exr_error *e) {
   image_reader r={0}; uint32_t width,height,bits=1,id; unsigned channels=1,k; int stencil=0; double decode[8]={0,1,0,1,0,1,0,1};
   const unsigned char *bytes; size_t size,row,y,x,local_work=0; exr_bitmap bitmap={0}; const exr_pdf_value *v;
+  exr_pdf_stream_codec codec=EXR_PDF_STREAM_RAW; uint32_t parameters=EXR_PDF_NONE;
   if(out) memset(out,0,sizeof(*out));
   if(interpolate) *interpolate=0;
   if(!file || !out || !interpolate) return exr_fail(e,EXR_ARGUMENT,"Missing PDF image input/output");
@@ -71,18 +94,30 @@ exr_status exr_pdf_image_decode(exr_pdf_file *file,uint32_t image,uint32_t resou
     if(at!=EXR_PDF_NONE) goto invalid;
   }
   if(stencil && !((decode[0]==0 && decode[1]==1) || (decode[0]==1 && decode[1]==0))) goto invalid;
-  if(r.error.code!=EXR_OK || exr_pdf_stream_data(file,image,&bytes,&size,&r.error)!=EXR_OK) goto done;
+  if(r.error.code!=EXR_OK || exr_pdf_image_payload(file,image,&bytes,&size,&codec,&parameters,&r.error)!=EXR_OK) goto done;
   row=((size_t)width*channels*bits+7)/8;
-  if(row>SIZE_MAX/height || row*height!=size) goto invalid;
-  bitmap.width=width; bitmap.height=height; bitmap.channels=4; bitmap.stride=width*4; bitmap.pixels=malloc((size_t)bitmap.stride*height);
-  if(!bitmap.pixels) { exr_fail(&r.error,EXR_MEMORY,"PDF image pixel allocation failed"); goto done; }
+  if(codec==EXR_PDF_STREAM_JPEG) {
+    exr_status status;
+    id=get(&r,parameters,"ColorTransform"); if(r.error.code!=EXR_OK) goto done;
+    if(stencil || bits!=8 || channels==4 || id!=EXR_PDF_NONE) {
+      exr_fail(&r.error,EXR_FORMAT,"PDF JPEG stencil/CMYK/ColorTransform override is unsupported"); goto done;
+    }
+    if(!jpeg_frame(bytes,size,width,height,channels)) goto invalid;
+    status=exr_image_decode(bytes,size,&bitmap,&r.error);
+    if(status!=EXR_OK) { if(r.error.code==EXR_OK) r.error.code=status; goto done; }
+    if(bitmap.width!=width || bitmap.height!=height) goto invalid;
+  } else {
+    if(row>SIZE_MAX/height || row*height!=size) goto invalid;
+    bitmap.width=width; bitmap.height=height; bitmap.channels=4; bitmap.stride=width*4; bitmap.pixels=malloc((size_t)bitmap.stride*height);
+    if(!bitmap.pixels) { exr_fail(&r.error,EXR_MEMORY,"PDF image pixel allocation failed"); goto done; }
+  }
   for(y=0;y<height;y++) {
     if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
     if(!exr_vector_work(work,(size_t)width*channels)) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample work exceeds budget"); goto done; }
     for(x=0;x<width;x++) {
       double values[4]={0}; unsigned char *p=bitmap.pixels+y*bitmap.stride+x*4;
       for(k=0;k<channels;k++) {
-        double unit=(double)sample(bytes+y*row,(x*channels+k)*bits,bits)/((1u<<bits)-1);
+        double unit=codec==EXR_PDF_STREAM_JPEG ? p[k]/255.0 : (double)sample(bytes+y*row,(x*channels+k)*bits,bits)/((1u<<bits)-1);
         values[k]=fmax(0,fmin(1,decode[2*k]+unit*(decode[2*k+1]-decode[2*k])));
       }
       if(stencil) { p[0]=(unsigned char)(color>>24); p[1]=(unsigned char)(color>>16); p[2]=(unsigned char)(color>>8); p[3]=(unsigned char)floor((1-values[0])*255+.5); }
@@ -94,7 +129,7 @@ exr_status exr_pdf_image_decode(exr_pdf_file *file,uint32_t image,uint32_t resou
       }
     }
   }
-  if(exr_control_cancel(control,&r.error)==EXR_OK) { *out=bitmap; memset(&bitmap,0,sizeof(bitmap)); } goto done;
+  if(r.error.code==EXR_OK && exr_control_cancel(control,&r.error)==EXR_OK) { *out=bitmap; memset(&bitmap,0,sizeof(bitmap)); } goto done;
 invalid:
   if(r.error.code==EXR_OK) exr_fail(&r.error,EXR_FORMAT,"Invalid PDF image dictionary, samples or Decode array");
 done:
