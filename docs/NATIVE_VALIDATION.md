@@ -827,3 +827,23 @@ codes, 100-record blocks, malformed input and cancellation. The external RFC 911
 also parsed all nine distinct page-font ToUnicode streams. Public PDF document creation,
 font selection/metrics, operator execution and raster drawing remain pending. The 0.44
 commit 03778cc passed all six CI jobs.
+
+
+## 0.46 PDF font descriptions and declared metrics
+
+A private font reader preserves simple Type1/TrueType descriptions, Differences glyph names,
+embedded Type1/TrueType/CFF/OpenType programs, ToUnicode maps and Identity-H/V composite
+fonts. CID metrics use compact sorted W/W2 ranges with array/constant forms, DW/DW2 defaults
+and binary lookup. CIDFontType2 maps declared CIDs to glyph IDs through Identity or a decoded
+CIDToGIDMap; CIDFontType0 retains the CID for later native CFF glyph resolution. Program bytes
+borrow the file while names, metrics and Unicode maps are owned by the font record.
+
+`native-pdf-font` checks exact horizontal/vertical metrics, default metrics, CID glyph maps,
+Unicode ligatures/surrogate pairs, original embedded TTF data, Differences names, unembedded
+CFF descriptions, cancellation and malformed font arrays/ranges/program declarations.
+The external RFC 9110 file opens all nine distinct page-font records, including embedded
+simple TrueType, CID TrueType and CID CFF programs. Simple fonts without declared Widths,
+custom composite Encoding CMaps, Type3 execution, base-encoding Unicode fallback and actual
+font-face/glyph selection remain pending; missing ToUnicode yields U+FFFD rather than guessed
+text. This is internal font data preparation, not public PDF rendering. The 0.45 commit
+477d357 passed all six CI jobs.
