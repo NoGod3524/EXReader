@@ -769,3 +769,10 @@ macOS 可用 `swiftc -I SDK/include -L SDK/lib -lexreader -Xlinker -rpath -Xlink
 Pdf/Wave 实现 AutoCloseable；使用 try-with-resources 或显式 close，重复关闭安全，关闭后操作抛出 IllegalStateException。每个 Java 对象同步串行调用 C 句柄，输入在 native 创建期间复制，输出数组不借用 C 生命周期。Native 错误转换为带 code 的 EXReaderException；参数和 OOM 异常保留 JVM 状态，所有失败路径释放已创建的 native 数据。
 
 桌面 CI 用真实 JVM 和 `-Xcheck:jni` 运行安装后绑定，Android CI 交叉编译 JNI 库。此阶段封装 PDF 和 WAV 常用调用；其余完整 C 接口可从 Android NDK 直接接入，Android 应用生命周期、内容 URI 授权、声音输出及真机运行继续补齐。
+
+
+## RTF 表格结构（0.79）
+
+RTF 的 trowd/cell/row 现在构造通用 table/tr/td 文档树。单元格保留多段落、空单元格、既有内联样式、链接和图片；连续行组成同一表，正文恢复后下一行开始新表。cellx 定义可位于内容前或内容后，坐标作为 data-rtf-cellx 属性保留；没有 cellx 时按实际单元格构造。
+
+接入现有表格换行、跨页、宿主布局查询和结构化 EPUB 导出。内置布局仍使用等宽列，不将原始 twip 边界当作已实现的精确列宽。每行最多 256 列，检查缺失 cell/row、定义数量不符、重复行开始及非递增边界。此阶段拒绝嵌套表与合并标记，随后补合并结构。跳过的目的地和 Unicode fallback 不会意外执行表格控制字。

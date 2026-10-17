@@ -1464,3 +1464,17 @@ JNI on three desktops, runs the installed adapter with -Xcheck:jni and builds th
 Android ARM64 adapter. Android device execution is a separate pending check.
 All 59 Windows core suites pass with the optional JNI dependency disabled.
 Desktop JVM and Android JNI checks run in the newly enabled CI configuration.
+The 0.78 2aa97a9 CI run passed all six jobs. JNI smoke tests ran on Windows,
+Linux and macOS with -Xcheck:jni, and the Android JNI library compiled.
+
+
+## 0.79 RTF row and cell document structure
+
+RTF row/cell controls produce generic table nodes, retaining empty cells, multiple
+paragraphs, inline styling and declared cell boundaries. Tests inspect two
+separate tables, trailing row definitions and a 20-row paginated document;
+structured EPUB roundtrips compare text and every rendered page. Malformed row
+sequences, definition counts/order, nested/merge controls and the 256-column
+limit are checked. Optional destinations and Unicode fallback must not execute
+table controls. Complex merged/nested tables remain explicitly unsupported.
+All 60 local suites pass. The 0.78 JNI/Swift/desktop/mobile CI run passed all six jobs.
