@@ -47,4 +47,15 @@ exr_status exr_vector_fill(exr_bitmap *bitmap,const exr_vector_edge *edges,size_
 exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const double matrix[6],
                              double alpha,int interpolate,const exr_bitmap *clip,size_t *work,
                              const exr_control *control,exr_error *error);
+typedef struct exr_vector_texture {
+  exr_bitmap bitmap;
+  struct exr_vector_texture *mask;
+  unsigned interpolate,mask_mode,has_matte; /* 1: mask gray*alpha, 2: mask alpha */
+  double matte[3]; /* Optional preblended RGB to remove using the mask alpha. */
+} exr_vector_texture;
+/* All layers are borrowed; independent resolutions/filters sample in the same
+   normalized space. No image-resolution reduction of an opacity mask. */
+exr_status exr_vector_texture_paint(exr_bitmap *target,const exr_vector_texture *source,const double matrix[6],
+                                     double alpha,const exr_bitmap *clip,size_t *work,
+                                     const exr_control *control,exr_error *error);
 #endif

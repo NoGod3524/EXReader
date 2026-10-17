@@ -18,4 +18,7 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
 exr_status exr_pdf_image_decode(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t stencil_color,
                                  exr_bitmap *out,int *interpolate,size_t *work,
                                  const exr_control *control,exr_error *error);
+exr_status exr_pdf_image_load(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t stencil_color,
+                               exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *error);
+void exr_pdf_image_release(exr_vector_texture *texture);
 #endif

@@ -26,12 +26,33 @@ static void sample(const exr_bitmap *b,double u,double v,int interpolate,double 
     for(i=0;i<4;i++) { double a=p[i][3]*weights[i]; out[3]+=a; for(k=0;k<3;k++) out[k]+=p[i][k]*a; }
   }
 }
-exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const double m[6],double alpha,
-                             int interpolate,const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *e) {
+static void texture_sample(const exr_vector_texture *texture,double u,double v,double out[4]) {
+  unsigned k; sample(&texture->bitmap,u,v,(int)texture->interpolate,out);
+  if(texture->mask) {
+    double mask[4],a; texture_sample(texture->mask,u,v,mask);
+    a=(texture->mask_mode==1 ? mask[0]/255 : mask[3])/255;
+    if(texture->has_matte && out[3]) {
+      for(k=0;k<3;k++) out[k]=a ? fmax(0,fmin(255,(out[k]/out[3]-(1-a)*texture->matte[k]*255)/a))*out[3]*a : 0;
+    } else for(k=0;k<3;k++) out[k]*=a;
+    out[3]*=a;
+  }
+}
+exr_status exr_vector_texture_paint(exr_bitmap *target,const exr_vector_texture *source,const double m[6],double alpha,
+                                     const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *e) {
   size_t local_work=0,i; double det,inv[6],left=1e7,top=1e7,right=-1e7,bottom=-1e7; int x0,y0,x1,y1,x,y;
-  if(!storage(target) || !storage(source) || source->channels!=4 || !m || !isfinite(alpha) || alpha<0 || alpha>1 || overlap(target,source) ||
+  const exr_vector_texture *layers[16],*layer=source; size_t depth=0,cost=0;
+  if(!storage(target) || !source || !m || !isfinite(alpha) || alpha<0 || alpha>1 ||
      (clip && (!storage(clip) || clip->channels!=1 || clip->width!=target->width || clip->height!=target->height || overlap(target,clip))))
     return exr_fail(e,EXR_ARGUMENT,"Invalid affine image bitmap, alpha or clip");
+  while(layer) {
+    if(depth==16) return exr_fail(e,EXR_LIMIT,"Affine image mask depth exceeds 16");
+    for(i=0;i<depth;i++) if(layers[i]==layer) return exr_fail(e,EXR_ARGUMENT,"Cyclic affine image mask");
+    if(!storage(&layer->bitmap) || layer->bitmap.channels!=4 || overlap(target,&layer->bitmap) ||
+       (layer->mask && layer->mask_mode!=1 && layer->mask_mode!=2)) return exr_fail(e,EXR_ARGUMENT,"Invalid affine image layer");
+    if(layer->has_matte) for(i=0;i<3;i++) if(!isfinite(layer->matte[i]) || layer->matte[i]<0 || layer->matte[i]>1)
+      return exr_fail(e,EXR_ARGUMENT,"Invalid affine image matte");
+    cost+=layer->interpolate ? 24 : 12; layers[depth++]=layer; layer=layer->mask;
+  }
   for(i=0;i<6;i++) if(!isfinite(m[i]) || fabs(m[i])>1e7) return exr_fail(e,EXR_ARGUMENT,"Invalid affine image transform");
   if(!work) work=&local_work;
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
@@ -48,7 +69,7 @@ exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const do
   x0=(int)fmax(0,floor(left)); x1=(int)fmin(target->width,ceil(right)); y0=(int)fmax(0,floor(top)); y1=(int)fmin(target->height,ceil(bottom));
   for(y=y0;y<y1;y++) {
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
-    if(!exr_vector_work(work,(size_t)(x1>x0 ? x1-x0 : 0)*(interpolate ? 20 : 8))) return exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");
+    if(!exr_vector_work(work,(size_t)(x1>x0 ? x1-x0 : 0)*cost)) return exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");
     for(x=x0;x<x1;x++) {
       double sums[4]={0}; unsigned sx,sy,k,coverage=clip ? clip->pixels[(size_t)y*clip->stride+(unsigned)x] : 255; uint32_t color=0;
       if(!coverage) continue;
@@ -56,7 +77,7 @@ exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const do
         double px=x+.25+.5*sx,py=y+.25+.5*sy,u=inv[0]*px+inv[2]*py+inv[4],v=inv[1]*px+inv[3]*py+inv[5],s[4];
         if(!isfinite(u) || !isfinite(v)) return exr_fail(e,EXR_LIMIT,"Affine image sample exceeds precision");
         if(u<0 || u>=1 || v<0 || v>=1) continue;
-        sample(source,u,v,interpolate,s); for(k=0;k<4;k++) sums[k]+=s[k];
+        texture_sample(source,u,v,s); for(k=0;k<4;k++) sums[k]+=s[k];
       }
       if(!sums[3]) continue;
       for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(sums[k]/sums[3]+.5))<<(24-8*k);
@@ -64,4 +85,9 @@ exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const do
     }
   }
   return exr_fail(e,EXR_OK,"");
+}
+exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const double m[6],double alpha,
+                             int interpolate,const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *e) {
+  exr_vector_texture texture={0}; if(source) texture.bitmap=*source; texture.interpolate=interpolate!=0;
+  return exr_vector_texture_paint(target,&texture,m,alpha,clip,work,control,e);
 }

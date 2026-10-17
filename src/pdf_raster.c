@@ -123,11 +123,11 @@ static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_erro
   free(segments); return status;
 }
 static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *e) {
-  pdf_raster *r=context; exr_bitmap image={0}; int interpolate=0; double matrix[6]; const double flip[6]={1,0,0,-1,0,1};
-  exr_status status=exr_pdf_image_decode(file,id,resources,rgba(&paint->fill),&image,&interpolate,&r->work,r->control,e);
+  pdf_raster *r=context; exr_vector_texture *image=NULL; double matrix[6]; const double flip[6]={1,0,0,-1,0,1};
+  exr_status status=exr_pdf_image_load(file,id,resources,rgba(&paint->fill),&image,&r->work,r->control,e);
   multiply(paint->matrix,flip,matrix);
-  if(status==EXR_OK) status=exr_vector_image(&r->bitmap,&image,matrix,paint->fill.alpha,interpolate,r->clip ? &r->clip->bitmap : NULL,&r->work,r->control,e);
-  free(image.pixels); return status;
+  if(status==EXR_OK) status=exr_vector_texture_paint(&r->bitmap,image,matrix,paint->fill.alpha,r->clip ? &r->clip->bitmap : NULL,&r->work,r->control,e);
+  exr_pdf_image_release(image); return status;
 }
 exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
                                    const double initial[6],const exr_pdf_raster_config *config,
