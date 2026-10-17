@@ -276,3 +276,37 @@ hybrid('kf8-legacy-exth.azw3',mutate=lambda r,k:r[0].__setitem__(slice(-4,None),
 
 hybrid('kf8-bad-exth-fallback-encoding.azw3',mutate=lambda r,k:(r[0].__setitem__(slice(-4,None),u32(0xffffffff)),r[0].__setitem__(slice(28,32),u32(65002))))
 hybrid('kf8-bad-exth-fallback-compression.azw3',mutate=lambda r,k:(r[0].__setitem__(slice(-4,None),u32(0xffffffff)),r[0].__setitem__(slice(0,2),u16(999))))
+
+
+def guide_index(rows,extended=False):
+    tags=[(1,1,1,0),(6 if extended else 3,2 if extended else 1,2,0)]
+    master=bytearray(192); master[:4]=b'INDX'; master[4:8]=u32(192)
+    master[24:28]=u32(1); master[28:32]=u32(65001); master[36:40]=u32(len(rows)); master[52:56]=u32(1)
+    master+=b'TAGX'+u32(12+4*len(tags))+u32(1)+b''.join(bytes(t) for t in tags)
+    data=bytearray(192); data[:4]=b'INDX'; data[4:8]=u32(192); data[24:28]=u32(len(rows)); offsets=[]
+    for kind,title,fid,off in rows:
+        offsets.append(len(data)); label=kind.encode()
+        data+=bytes([len(label)])+label+b'\x03'+vwi(title)+vwi(fid)+(vwi(off) if extended else b'')
+    data+=bytes(2); data[20:24]=u32(len(data)); data+=b'IDXT'+b''.join(map(u16,offsets))
+    return [master,data]
+guide_text=bytearray(); guide_keys=[]
+for t in [b'Cover',b'Read from here',b'Other & custom',b'Thumbnail']:
+    guide_keys.append(len(guide_text)); guide_text+=vwi(len(t))+t
+rows=[('cover',guide_keys[0],0,0),('start',guide_keys[1],1,0),('other:preface',guide_keys[2],0,0),('thumbimagestandard',guide_keys[3],0xffffffff,0)]
+def guide_fixture(name='kf8-guide.azw3',with_ncx=True,extended=False,values=None):
+    records=read_records('kf8-navigation.azw3' if with_ncx else 'kf8-basic.azw3')
+    records[0][260:264]=u32(len(records))
+    records+=guide_index(rows if values is None else values,extended)+[guide_text]
+    write_records(name,records)
+guide_fixture(); guide_fixture('kf8-guide-only.azw3',with_ncx=False)
+extra=[list(r) for r in rows]; extra[2][3]=navbody.index(b'<h3')
+guide_fixture('kf8-guide-offset.azw3',extended=True,values=extra)
+hybrid('kf8-hybrid-guide.azw3','kf8-guide.azw3')
+for name,column,value in [('guide-label',1,9999),('guide-target',2,9),('guide-kind',0,'')]:
+    badrows=[list(r) for r in rows]; badrows[0][column]=value
+    guide_fixture('kf8-bad-'+name+'.azw3',values=badrows)
+badrows=[list(r) for r in rows]; badrows[0][0]='bad'+chr(1)
+guide_fixture('kf8-encoding-guide.azw3',values=badrows)
+
+guide_fixture('kf8-guide-budget.azw3',with_ncx=False,values=[('x',0,0,0)]*9998)
+guide_fixture('kf8-limit-guide.azw3',with_ncx=False,values=[('x',0,0,0)]*10000)

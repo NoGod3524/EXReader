@@ -148,7 +148,10 @@ static exr_status walk(navigation *n, const exr_document *d, size_t node, size_t
   if (ncx) {
     if (!strcmp(tag, "navMap")) role = "toc";
     else if (!strcmp(tag, "pageList")) role = "page-list";
-    else if (!strcmp(tag, "navList")) role = "nav-list";
+    else if (!strcmp(tag, "navList")) {
+      const char *type=exr_node_attribute(&d->nodes[node],"class");
+      role=type && *type ? type : "nav-list";
+    }
   }
   if ((!ncx && !strcmp(tag, "li")) || (ncx && (!strcmp(tag, "navPoint") ||
        !strcmp(tag, "pageTarget") || !strcmp(tag, "navTarget")))) {

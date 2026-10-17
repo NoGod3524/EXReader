@@ -617,3 +617,15 @@ remain unchanged; legacy text is excluded. Explicit absent boundaries retain leg
 Malformed EXTH signatures/lengths/counts/entries/duplicates, boundary pointers/markers,
 target versions/encryption and shared-resource starts fail atomically. Legacy fallback rejects
 unsupported encoding/compression even after successful optional EXTH parsing.
+
+
+## 0.33 KF8 guide landmarks
+
+Fixtures cover combined TOC/landmarks, guide-only chapter fallback, tag 3 and tag 6 offset
+forms, shared hybrid containers, thumbnail suppression, normalized start types and preserved
+custom type metadata. Navigation roles/labels/targets survive EPUB conversion independently of
+role grouping order. Missing strings, invalid targets/types and invalid XML characters fail;
+a 9998-guide + 2-chapter book reaches exactly 10000 navigation entries, while 10000 guides plus
+chapters returns EXR_LIMIT.
+
+The 0.32 commit e8aa242 passed all six CI jobs, including sanitizers and Apple/Android builds.
