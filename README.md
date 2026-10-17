@@ -20,7 +20,7 @@
 | JNI 接入 | 可选 Java/Android 桥接库，提供串行 AutoCloseable 重排文档、EPUB 分章加载、分页、PDF/WAV/PCM 句柄；开放节点、字形/行/框、字体与图片快照 |
 | Swift 接入 | SDK 内置 C 模块映射，提供 ARC 通用文档、EPUB 分章加载、分页、字体、PDF 和 WAV/PCM 封装；布局记录、字体与图片可独立复制 |
 | 有声书模型 | 宿主轨道、毫秒时间线、嵌套章节、双向图文同步；可接宿主播放/倍速/跨轨后端并按稳定 ID 续播，WAV/FLAC/MP3 按需解码，开放 PCM 提供者；原生 waveOut/AudioQueue/OpenSL ES/ALSA 声音输出，续播与时间书签可保存、备份 |
-| M4B 容器信息 | 无需 AAC 解码器即可按需读取 iTunes 文本元数据、PNG/JPEG 封面与 Nero chpl 章节；返回独立快照，可接通用有声书时间线，附 Swift/Java 包装 |
+| M4B 容器信息 | 无需 AAC 解码器即可按需读取 iTunes 文本元数据、PNG/JPEG 封面、Nero chpl 与 QuickTime 文本章节；返回独立快照，可接通用有声书时间线，附 Swift/Java 包装 |
 | PDF 书库 | 保存原书、Info/XMP 标题/作者、页进度与固定页备注，支持 NUL 引用、稳定锚点、备份恢复和旧库事务迁移 |
 | 固定页交互 | 语义文字快照、线性精确搜索、字格选择、源坐标命中、PDF 原生标注数据读取、页 ID 与引用/上下文稳定标注锚点，支持宿主固定格式 |
 | PDF 标注编辑 | 按页和 NM 新增、更新 Text/Highlight/Underline/StrikeOut/Squiggly，删除标注及同页 Popup；追加修订并返回完整 PDF，保留原字节；绘制已有与新写入的 normal Form 外观，SDK 书库备注由宿主显式同步 |

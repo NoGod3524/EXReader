@@ -2084,5 +2084,26 @@ CMYK conversion, independently of the function evaluator. Additional cases
 check stitching, Domain/Range, invalid outputs and the shared vector colour-work
 budget. There are now 99 native test suites. Version remains 0.18.0, ABI epoch 1
 and library schema 6.
+
+## Milestone 0.18 development: referenced QuickTime audiobook chapters
+
+The ISO-BMFF inspection suite now has 8385 checks. Original text/tx3g tracks
+exercise multi-run stsc/stts, fixed and variable stsz, stz2 4/8/16-bit sizes,
+stco/co64, tkhd/mdhd and elst v0/v1, UTF-8 and BOM-marked UTF-16BE/LE,
+leading empty edits, trimming through an active chapter and mixed-clock rounding.
+One virtual 5 GiB mdat stores chapter text near its end; inspection reads fewer
+than 20 KiB. Chapters remain usable through exr_audio_create after inspection
+is freed. Tests include every synthetic-file truncation, cancellation at multiple
+read positions, external data references, missing/duplicate track IDs, malformed
+sample boundaries, incomplete time/chunk coverage, invalid Unicode, collapsed
+millisecond timestamps, sample/table limits and overflowing edit durations.
+
+The existing original FFmpeg metadata.m4b fixture has both Nero and QuickTime
+chapters. Tests retain the nonempty chpl preference, then rename only chpl to a
+free box without moving offsets. The resulting QuickTime-only book exposes
+One [0,100) and Two [100,200) ms, matching ffprobe independently. No new binary
+fixture or runtime tool dependency is needed. AAC and metadata inspection now
+share the same bounded private BMFF sample-table helpers. The AAC-enabled M4B,
+AAC and inspection suites pass alongside the default native regression suite.
 The default Windows DLL is 4,433,734 bytes. This batch awaits its own CI; version,
 ABI and schema remain 0.18.0/1/6, and no runtime dependency was added.

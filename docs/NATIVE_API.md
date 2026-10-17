@@ -1089,7 +1089,11 @@ exr_m4b_inspect / exr_m4b_inspect_source 只读取 ISO-BMFF 目录和选中的�
 
 支持 moov/meta、moov/udta/meta 的 iTunes ilst：title/creator/contributor/date/description/rights 使用 dcterms URI，album/genre 使用 XMP DynamicMedia URI；aART 和 ©ART 都归一为 creator；同一键多值保留。data 类型支持 UTF-8 与 UTF-16BE（含 surrogate），拒绝嵌入 NUL 和错误编码；最多移除一个末尾终止符。covr 选第一张支持的 JPEG/PNG，检查 data 类型和文件签名，返回原始编码字节；完整图片验证由 image decoder 负责。最大 256 值/1 MiB 文本、每值 64 KiB、封面 16 MiB；全调用最多读 32 MiB/扫描 65536 个 box，支持 source.control 取消。
 
-读取 mvhd v0/v1 的电影时长和 Nero chpl v0/v1 章节；100 ns 章节时刻向下转换为毫秒，必须在已知时长内严格递增。稳定章节 ID 从原时间戳生成，parent 为 SIZE_MAX；每章 end 为下一章 start，最后一章 end 为电影时长。未知时长/end 使用 UINT64_MAX；无 mvhd 可返回未知时长，缺省元数据/封面/章节返回空。毫秒精度下重复的章节时刻不接受。当前不读取 QuickTime chapter text track、mdta/freeform 标签，不进行音轨/DRM 可播放性验证，也不自动修改书库。
+读取 mvhd v0/v1 的电影时长和 Nero chpl v0/v1 章节；100 ns 章节时刻向下转换为毫秒，必须在已知时长内严格递增。稳定章节 ID 从原时间戳生成，parent 为 SIZE_MAX；每章 end 为下一章 start，最后一章 end 为电影时长。未知时长/end 使用 UINT64_MAX；无 mvhd 可返回未知时长，缺省元数据/封面/章节返回空。毫秒精度下重复的章节时刻不接受。当前不读取 mdta/freeform 标签，不进行音轨/DRM 可播放性验证，也不自动修改书库。
+
+没有非空 chpl 时，读取首个 tref/chap 引用的 QuickTime text/tx3g 章节轨道。要求本文件内的自包含数据引用、单样本描述，支持 stsz 固定/可变长度、stz2 4/8/16 位、stco/co64 和多段 stsc/stts；容器样本表解析与 AAC 解码共用。只定位并读取章节样本，不扫描音频 mdat；所有样本必须位于 mdat 内。标题支持 UTF-8、带 BOM 的 UTF-16BE/LE，忽略样式修饰但检查其容器边界。tkhd/mdhd 与 elst 均支持 v0/v1；可有前导空编辑和一个速率为 1 的向前媒体段，保留裁剪点仍在显示的章节，末章结束时间取轨道、编辑段与电影有效末端的最小值。不同时间刻度相加后只取整一次，防止毫秒偏移。
+
+QuickTime 章节 ID 使用轨道 ID 与原始解码时刻，parent 为 SIZE_MAX，数据仍为独立快照。最多 256 轨道/章节引用/mdat、4096 章节样本；每样本 64 KiB，章节与标签共同受 1 MiB 文本预算约束。全调用沿用 32 MiB 读取和 65536 box 上限、取消与借用 source 语义。非空 Nero chpl 优先，不重复合并目录。多媒体编辑、变速/倒放、ctts 重排、片段化章节、外部数据引用与多语言轨道选择尚未提供。
 
 inspection_metadata、inspection_chapters、inspection_cover、inspection_duration 返回只读快照视图。宿主可将 exr_audio_chapter 和时长交给 exr_audio_create，指定自己的轨道 URI；audio_create 会再复制输入，因此可立即释放 inspection。Swift EXReaderMetadata.readM4B 和 Java EXReader.readM4b 返回独立 AudioBookMetadata（entries/chapters/duration/encoded cover），没有原生句柄需要保留。Swift 未知时间用 nil，Java 用 -1；无法放入 Java signed long 的已知时间返回 EXR_LIMIT。
 
@@ -1114,4 +1118,3 @@ Separation 普通命名专色现支持文件声明的 device/CIE alternate 和�
 普通 Separation 的 tintTransform 现支持单输入、1–4 输出的 Type 4 stream，也可作为 Type 3 子函数。所有表 42 算术、关系、布尔/32 位位运算、栈操作和 if/ifelse 均有实现。语法采用 PDF 十进制数字与注释；花括号条件表达式编译成仅向前跳转的指令，没有变量、过程对象、循环或任意 PostScript 执行。整数溢出的 add/sub/mul/neg/abs 提升为实数，idiv/mod 严格要求整数；round 的半整数向较大整数舍入，包括 −6.5→−6。最终栈必须恰好包含声明的数值输出，Domain/Range 继续沿用共用函数路径。
 
 每程序最多 64 KiB 解码源码、4096 指令、32 层条件嵌套、100 操作数；实际指令内存计入整个函数图的 1 MiB 预算。长程序每 256 条执行指令检查取消。按指令和栈搬运成本收费，向量颜色选择/设置共享每次 content/Form 遍历的 256M 工作量上限，图片沿用既有 sample/function 工作预算。编译后的数据由颜色模型持有，取消上下文仅在当前同步 render 期间借用；无公开 ABI 变化。
-

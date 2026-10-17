@@ -49,3 +49,62 @@ exr_status exr_bmff_time(exr_bmff_reader *io,const exr_bmff_box *box,uint32_t *s
   if(b[0]) { *scale=exr_bmff_be32(b+20); *duration=exr_bmff_be64(b+24); } else { *scale=exr_bmff_be32(b+12); *duration=exr_bmff_be32(b+16); }
   return *scale ? EXR_OK : exr_bmff_fail(io,"Zero ISO-BMFF timescale");
 }
+exr_status exr_bmff_table_box(exr_bmff_reader *io,const exr_bmff_box *box,exr_bmff_table *table,unsigned width,int bounded) {
+  unsigned char b[8]; uint64_t bytes; exr_status status=exr_bmff_header(io,box,b,8); if(status!=EXR_OK) return status;
+  if(exr_bmff_be32(b)) return exr_bmff_fail(io,"Unsupported ISO-BMFF table version/flags");
+  table->count=exr_bmff_be32(b+4); table->at=box->data+8; table->width=width;
+  if(!table->count) return exr_bmff_fail(io,"Empty ISO-BMFF sample table");
+  if(bounded && table->count>65536u) return exr_fail(io->error,EXR_LIMIT,"ISO-BMFF table exceeds 65536 runs");
+  bytes=(uint64_t)table->count*width;
+  return bytes<=box->end-table->at ? EXR_OK : exr_bmff_fail(io,"Truncated ISO-BMFF table entries");
+}
+exr_status exr_bmff_size_box(exr_bmff_reader *io,const exr_bmff_box *box,exr_bmff_table *table) {
+  unsigned char b[12]; uint64_t n; exr_status status=exr_bmff_header(io,box,b,12); if(status!=EXR_OK) return status;
+  if(exr_bmff_be32(b)) return exr_bmff_fail(io,"Unsupported ISO-BMFF sample-size version/flags");
+  table->count=exr_bmff_be32(b+8); table->at=box->data+12;
+  if(box->type==EXR_BMFF_TYPE('s','t','s','z')) { table->constant=exr_bmff_be32(b+4); table->width=32; }
+  else {
+    if(b[4] || b[5] || b[6] || (b[7]!=4 && b[7]!=8 && b[7]!=16)) return exr_bmff_fail(io,"Invalid compact ISO-BMFF sample sizes");
+    table->width=b[7];
+  }
+  if(!table->count || table->constant>65536) return exr_bmff_fail(io,"Empty/oversized ISO-BMFF media samples");
+  n=table->constant ? 0 : ((uint64_t)table->count*table->width+7)/8;
+  return n<=box->end-table->at ? EXR_OK : exr_bmff_fail(io,"Truncated ISO-BMFF sample-size table");
+}
+exr_status exr_bmff_sample_size(exr_bmff_reader *io,const exr_bmff_table *table,uint32_t sample,uint32_t *size) {
+  unsigned char b[4]; exr_status status;
+  if(sample>=table->count) return exr_bmff_fail(io,"ISO-BMFF sample index exceeds table");
+  if(table->constant) *size=table->constant;
+  else {
+    unsigned width=table->width; size_t bytes=width==4 ? 1 : width/8;
+    status=exr_bmff_read(io,table->at+(uint64_t)sample*width/8,b,bytes); if(status!=EXR_OK) return status;
+    *size=width==4 ? ((sample&1) ? b[0]&15 : b[0]>>4) : width==8 ? b[0] : width==16 ? exr_bmff_be16(b) : exr_bmff_be32(b);
+  }
+  return *size && *size<=65536 ? EXR_OK : exr_bmff_fail(io,"ISO-BMFF media sample exceeds 64 KiB or is empty");
+}
+exr_status exr_bmff_sc_entry(exr_bmff_reader *io,const exr_bmff_table *table,uint32_t index,uint32_t values[3]) {
+  unsigned char b[12]; exr_status status;
+  if(index>=table->count) return exr_bmff_fail(io,"ISO-BMFF sample-to-chunk index exceeds table");
+  status=exr_bmff_read(io,table->at+(uint64_t)index*12,b,12); if(status!=EXR_OK) return status;
+  values[0]=exr_bmff_be32(b); values[1]=exr_bmff_be32(b+4); values[2]=exr_bmff_be32(b+8);
+  return EXR_OK;
+}
+exr_status exr_bmff_validate_sc(exr_bmff_reader *io,const exr_bmff_table *sizes,const exr_bmff_table *chunks,const exr_bmff_table *sc) {
+  uint32_t i,current[3]={0},next[3]={0}; uint64_t samples=0; exr_status status=exr_bmff_sc_entry(io,sc,0,current); if(status!=EXR_OK) return status;
+  if(current[0]!=1) return exr_bmff_fail(io,"ISO-BMFF first sample-to-chunk entry must start at chunk 1");
+  for(i=0;i<sc->count;i++) {
+    uint64_t end=(uint64_t)chunks->count+1,count;
+    if(i+1<sc->count) { status=exr_bmff_sc_entry(io,sc,i+1,next); if(status!=EXR_OK) return status; end=next[0]; }
+    if(!current[0] || current[0]>chunks->count || end<=current[0] || end>(uint64_t)chunks->count+1 || !current[1] || current[2]!=1) return exr_bmff_fail(io,"Invalid ISO-BMFF sample-to-chunk run");
+    count=(end-current[0])*current[1];
+    if(count>sizes->count-samples) return exr_bmff_fail(io,"ISO-BMFF chunk sample counts exceed size table");
+    samples+=count; if(i+1<sc->count) memcpy(current,next,sizeof(current));
+  }
+  return samples==sizes->count ? EXR_OK : exr_bmff_fail(io,"ISO-BMFF sample-to-chunk coverage is incomplete");
+}
+exr_status exr_bmff_chunk_offset(exr_bmff_reader *io,const exr_bmff_table *table,uint32_t chunk,uint64_t *offset) {
+  unsigned char b[8]; exr_status status;
+  if(chunk>=table->count) return exr_bmff_fail(io,"ISO-BMFF chunk index exceeds offset table");
+  status=exr_bmff_read(io,table->at+(uint64_t)chunk*table->width,b,table->width); if(status!=EXR_OK) return status;
+  *offset=table->width==8 ? exr_bmff_be64(b) : exr_bmff_be32(b); return EXR_OK;
+}

@@ -4,14 +4,13 @@
 #include <neaacdec.h>
 #define M4B_TABLE_LIMIT 65536u
 #define M4B_WORK_SAMPLES UINT64_C(16777216)
-typedef struct { uint64_t at; uint32_t count,constant; unsigned width; } m4b_table;
 typedef struct { uint64_t offset; uint32_t packet,chunk,within,per_chunk,sc; } m4b_cursor;
 struct exr_m4b {
   exr_source source;
   exr_m4b_info info;
   NeAACDecHandle decoder;
   exr_bmff_box media[256]; size_t media_count;
-  m4b_table sizes,chunks,sc,times;
+  exr_bmff_table sizes,chunks,sc,times;
   uint32_t media_scale,movie_scale,block;
   uint64_t media_duration,raw_frames,trim,leading;
   uint64_t edit_start,edit_duration,empty_duration;
@@ -23,71 +22,12 @@ struct exr_m4b {
   m4b_cursor cursor;
   int busy,dirty;
 };
-static exr_status m4b_table_box(exr_bmff_reader *io,const exr_bmff_box *box,m4b_table *table,unsigned width,int bounded) {
-  unsigned char b[8]; uint64_t bytes; exr_status status=exr_bmff_header(io,box,b,8); if(status!=EXR_OK) return status;
-  if(exr_bmff_be32(b)) return exr_bmff_fail(io,"Unsupported ISO-BMFF table version/flags");
-  table->count=exr_bmff_be32(b+4); table->at=box->data+8; table->width=width;
-  if(!table->count) return exr_bmff_fail(io,"Empty ISO-BMFF audio table");
-  if(bounded && table->count>M4B_TABLE_LIMIT) return exr_fail(io->error,EXR_LIMIT,"ISO-BMFF table exceeds 65536 runs");
-  bytes=(uint64_t)table->count*width;
-  return bytes<=box->end-table->at ? EXR_OK : exr_bmff_fail(io,"Truncated ISO-BMFF table entries");
-}
-static exr_status m4b_size_box(exr_bmff_reader *io,const exr_bmff_box *box,m4b_table *table) {
-  unsigned char b[12]; uint64_t n; exr_status status=exr_bmff_header(io,box,b,12); if(status!=EXR_OK) return status;
-  if(exr_bmff_be32(b)) return exr_bmff_fail(io,"Unsupported ISO-BMFF sample-size version/flags");
-  table->count=exr_bmff_be32(b+8); table->at=box->data+12;
-  if(box->type==EXR_BMFF_TYPE('s','t','s','z')) { table->constant=exr_bmff_be32(b+4); table->width=32; }
-  else {
-    if(b[4] || b[5] || b[6] || (b[7]!=4 && b[7]!=8 && b[7]!=16)) return exr_bmff_fail(io,"Invalid compact ISO-BMFF sample sizes");
-    table->width=b[7];
-  }
-  if(!table->count || table->constant>65536) return exr_bmff_fail(io,"Empty/oversized ISO-BMFF audio samples");
-  n=table->constant ? 0 : ((uint64_t)table->count*table->width+7)/8;
-  return n<=box->end-table->at ? EXR_OK : exr_bmff_fail(io,"Truncated ISO-BMFF sample-size table");
-}
-static exr_status m4b_sample_size(exr_bmff_reader *io,const exr_m4b *m,uint32_t sample,uint32_t *size) {
-  unsigned char b[4]; exr_status status;
-  if(sample>=m->sizes.count) return exr_bmff_fail(io,"ISO-BMFF sample index exceeds table");
-  if(m->sizes.constant) *size=m->sizes.constant;
-  else {
-    unsigned width=m->sizes.width; size_t bytes=width==4 ? 1 : width/8;
-    status=exr_bmff_read(io,m->sizes.at+(uint64_t)sample*width/8,b,bytes); if(status!=EXR_OK) return status;
-    *size=width==4 ? ((sample&1) ? b[0]&15 : b[0]>>4) : width==8 ? b[0] : width==16 ? exr_bmff_be16(b) : exr_bmff_be32(b);
-  }
-  return *size && *size<=65536 ? EXR_OK : exr_bmff_fail(io,"ISO-BMFF AAC packet exceeds 64 KiB or is empty");
-}
-static exr_status m4b_sc_entry(exr_bmff_reader *io,const exr_m4b *m,uint32_t index,uint32_t values[3]) {
-  unsigned char b[12]; exr_status status;
-  if(index>=m->sc.count) return exr_bmff_fail(io,"ISO-BMFF sample-to-chunk index exceeds table");
-  status=exr_bmff_read(io,m->sc.at+(uint64_t)index*12,b,12); if(status!=EXR_OK) return status;
-  values[0]=exr_bmff_be32(b); values[1]=exr_bmff_be32(b+4); values[2]=exr_bmff_be32(b+8);
-  return EXR_OK;
-}
-static exr_status m4b_validate_sc(exr_bmff_reader *io,const exr_m4b *m) {
-  uint32_t i,current[3]={0},next[3]={0}; uint64_t samples=0; exr_status status=m4b_sc_entry(io,m,0,current); if(status!=EXR_OK) return status;
-  if(current[0]!=1) return exr_bmff_fail(io,"ISO-BMFF first sample-to-chunk entry must start at chunk 1");
-  for(i=0;i<m->sc.count;i++) {
-    uint64_t end=(uint64_t)m->chunks.count+1,count;
-    if(i+1<m->sc.count) { status=m4b_sc_entry(io,m,i+1,next); if(status!=EXR_OK) return status; end=next[0]; }
-    if(!current[0] || current[0]>m->chunks.count || end<=current[0] || end>(uint64_t)m->chunks.count+1 || !current[1] || current[2]!=1) return exr_bmff_fail(io,"Invalid ISO-BMFF sample-to-chunk run");
-    count=(end-current[0])*current[1];
-    if(count>m->sizes.count-samples) return exr_bmff_fail(io,"ISO-BMFF chunk sample counts exceed size table");
-    samples+=count; if(i+1<m->sc.count) memcpy(current,next,sizeof(current));
-  }
-  return samples==m->sizes.count ? EXR_OK : exr_bmff_fail(io,"ISO-BMFF sample-to-chunk coverage is incomplete");
-}
-static exr_status m4b_chunk_offset(exr_bmff_reader *io,const exr_m4b *m,uint32_t chunk,uint64_t *offset) {
-  unsigned char b[8]; exr_status status;
-  if(chunk>=m->chunks.count) return exr_bmff_fail(io,"ISO-BMFF chunk index exceeds offset table");
-  status=exr_bmff_read(io,m->chunks.at+(uint64_t)chunk*m->chunks.width,b,m->chunks.width); if(status!=EXR_OK) return status;
-  *offset=m->chunks.width==8 ? exr_bmff_be64(b) : exr_bmff_be32(b); return EXR_OK;
-}
 static exr_status m4b_initial_cursor(exr_bmff_reader *io,const exr_m4b *m,m4b_cursor *cursor) {
-  uint32_t sc[3]={0}; exr_status status=m4b_sc_entry(io,m,0,sc); if(status!=EXR_OK) return status;
-  memset(cursor,0,sizeof(*cursor)); cursor->per_chunk=sc[1]; return m4b_chunk_offset(io,m,0,&cursor->offset);
+  uint32_t sc[3]={0}; exr_status status=exr_bmff_sc_entry(io,&m->sc,0,sc); if(status!=EXR_OK) return status;
+  memset(cursor,0,sizeof(*cursor)); cursor->per_chunk=sc[1]; return exr_bmff_chunk_offset(io,&m->chunks,0,&cursor->offset);
 }
 static exr_status m4b_packet(exr_bmff_reader *io,exr_m4b *m,const m4b_cursor *cursor,m4b_cursor *next,uint32_t *size) {
-  size_t i; exr_status status=m4b_sample_size(io,m,cursor->packet,size); if(status!=EXR_OK) return status;
+  size_t i; exr_status status=exr_bmff_sample_size(io,&m->sizes,cursor->packet,size); if(status!=EXR_OK) return status;
   for(i=0;i<m->media_count;i++) if(cursor->offset>=m->media[i].data && cursor->offset<=m->media[i].end && *size<=m->media[i].end-cursor->offset) break;
   if(i==m->media_count) return exr_bmff_fail(io,"ISO-BMFF audio packet lies outside mdat payload");
   if(!exr_grow((void **)&m->packet,&m->packet_capacity,*size,1)) return exr_fail(io->error,EXR_MEMORY,"ISO-BMFF AAC packet allocation failed");
@@ -95,8 +35,8 @@ static exr_status m4b_packet(exr_bmff_reader *io,exr_m4b *m,const m4b_cursor *cu
   *next=*cursor; next->packet++; next->within++; next->offset+=*size;
   if(next->packet<m->sizes.count && next->within==next->per_chunk) {
     uint32_t sc[3]={0}; next->chunk++; next->within=0;
-    if(next->sc+1<m->sc.count) { status=m4b_sc_entry(io,m,next->sc+1,sc); if(status!=EXR_OK) return status; if(sc[0]==next->chunk+1) { next->sc++; next->per_chunk=sc[1]; } }
-    status=m4b_chunk_offset(io,m,next->chunk,&next->offset); if(status!=EXR_OK) return status;
+    if(next->sc+1<m->sc.count) { status=exr_bmff_sc_entry(io,&m->sc,next->sc+1,sc); if(status!=EXR_OK) return status; if(sc[0]==next->chunk+1) { next->sc++; next->per_chunk=sc[1]; } }
+    status=exr_bmff_chunk_offset(io,&m->chunks,next->chunk,&next->offset); if(status!=EXR_OK) return status;
   }
   return EXR_OK;
 }
@@ -210,21 +150,21 @@ static exr_status m4b_track(exr_bmff_reader *io,exr_m4b *m,const exr_bmff_box *t
   status=exr_bmff_child(io,&stbl,EXR_BMFF_TYPE('s','t','s','d'),1,&stsd); if(status!=EXR_OK) return status;
   status=m4b_sample_description(io,m,&stsd); if(status!=EXR_OK) return status;
   status=exr_bmff_child(io,&stbl,EXR_BMFF_TYPE('s','t','t','s'),1,&box); if(status!=EXR_OK) return status;
-  status=m4b_table_box(io,&box,&m->times,8,1); if(status!=EXR_OK) return status;
+  status=exr_bmff_table_box(io,&box,&m->times,8,1); if(status!=EXR_OK) return status;
   status=exr_bmff_child(io,&stbl,EXR_BMFF_TYPE('s','t','s','c'),1,&box); if(status!=EXR_OK) return status;
-  status=m4b_table_box(io,&box,&m->sc,12,1); if(status!=EXR_OK) return status;
+  status=exr_bmff_table_box(io,&box,&m->sc,12,1); if(status!=EXR_OK) return status;
   status=exr_bmff_child(io,&stbl,EXR_BMFF_TYPE('s','t','s','z'),0,&box); if(status!=EXR_OK) return status;
   status=exr_bmff_child(io,&stbl,EXR_BMFF_TYPE('s','t','z','2'),0,&alternative); if(status!=EXR_OK) return status;
   if((box.end!=0)==(alternative.end!=0)) return exr_bmff_fail(io,"ISO-BMFF requires exactly one sample-size table");
   if(!box.end) box=alternative;
-  status=m4b_size_box(io,&box,&m->sizes); if(status!=EXR_OK) return status;
+  status=exr_bmff_size_box(io,&box,&m->sizes); if(status!=EXR_OK) return status;
   status=m4b_composition(io,m,&stbl); if(status!=EXR_OK) return status;
   status=exr_bmff_child(io,&stbl,EXR_BMFF_TYPE('s','t','c','o'),0,&box); if(status!=EXR_OK) return status;
   status=exr_bmff_child(io,&stbl,EXR_BMFF_TYPE('c','o','6','4'),0,&alternative); if(status!=EXR_OK) return status;
   if((box.end!=0)==(alternative.end!=0)) return exr_bmff_fail(io,"ISO-BMFF requires exactly one chunk-offset table");
   if(!box.end) box=alternative;
-  status=m4b_table_box(io,&box,&m->chunks,box.type==EXR_BMFF_TYPE('c','o','6','4') ? 8 : 4,0); if(status!=EXR_OK) return status;
-  status=m4b_validate_sc(io,m); if(status!=EXR_OK) return status;
+  status=exr_bmff_table_box(io,&box,&m->chunks,box.type==EXR_BMFF_TYPE('c','o','6','4') ? 8 : 4,0); if(status!=EXR_OK) return status;
+  status=exr_bmff_validate_sc(io,&m->sizes,&m->chunks,&m->sc); if(status!=EXR_OK) return status;
   return m4b_edits(io,m,trak);
 }
 static exr_status m4b_top(exr_bmff_reader *io,exr_m4b *m) {

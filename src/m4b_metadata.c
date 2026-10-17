@@ -129,9 +129,184 @@ static exr_status chapter_list(exr_bmff_reader *io,exr_m4b_inspection *m,const e
   }
   return at==box->end ? EXR_OK : exr_bmff_fail(io,"Trailing Nero chapter data");
 }
+static exr_status milliseconds(exr_bmff_reader *io,uint64_t time,uint32_t scale,uint64_t *out) {
+  uint64_t whole=time/scale,fraction=time%scale;
+  if(whole>UINT64_MAX/1000 || fraction*1000/scale>UINT64_MAX-whole*1000) return exr_fail(io->error,EXR_LIMIT,"ISO-BMFF millisecond time overflows");
+  *out=whole*1000+fraction*1000/scale; return EXR_OK;
+}
+/* Floor once after adding rational times from two different clocks. */
+static exr_status chapter_time(exr_bmff_reader *io,uint64_t leading,uint32_t movie_scale,uint64_t delta,uint32_t media_scale,uint64_t *out) {
+  uint64_t a=0,b=0,ra=(leading%movie_scale*1000)%movie_scale,rb=(delta%media_scale*1000)%media_scale;
+  unsigned carry=ra*media_scale>=((uint64_t)media_scale-rb)*movie_scale; exr_status status;
+  status=milliseconds(io,leading,movie_scale,&a); if(status!=EXR_OK) return status;
+  status=milliseconds(io,delta,media_scale,&b); if(status!=EXR_OK) return status;
+  if(b>UINT64_MAX-a || carry>UINT64_MAX-a-b) return exr_fail(io->error,EXR_LIMIT,"QuickTime chapter time overflows");
+  *out=a+b+carry; return EXR_OK;
+}
+typedef struct { uint64_t start,leading,duration; int present; } chapter_edit;
+static exr_status chapter_edits(exr_bmff_reader *io,const exr_bmff_box *track,chapter_edit *edit) {
+  exr_bmff_box edts,list; unsigned char b[20]; uint32_t count,i; unsigned width; exr_status status;
+  status=exr_bmff_child(io,track,BOX('e','d','t','s'),0,&edts); if(status!=EXR_OK || !edts.end) return status;
+  status=exr_bmff_child(io,&edts,BOX('e','l','s','t'),1,&list); if(status!=EXR_OK) return status;
+  status=exr_bmff_header(io,&list,b,8); if(status!=EXR_OK) return status;
+  if(b[0]>1 || b[1] || b[2] || b[3]) return exr_bmff_fail(io,"Unsupported chapter edit-list version/flags");
+  width=b[0] ? 20 : 12; count=exr_bmff_be32(b+4);
+  if(count>64) return exr_fail(io->error,EXR_LIMIT,"Chapter edit list exceeds 64 entries");
+  if(!count || (uint64_t)count*width!=list.end-list.data-8) return exr_bmff_fail(io,"Invalid chapter edit list");
+  for(i=0;i<count;i++) {
+    uint64_t duration,time;
+    status=exr_bmff_read(io,list.data+8+(uint64_t)i*width,b,width); if(status!=EXR_OK) return status;
+    duration=width==20 ? exr_bmff_be64(b) : exr_bmff_be32(b); time=width==20 ? exr_bmff_be64(b+8) : exr_bmff_be32(b+4);
+    if(exr_bmff_be32(b+(width==20 ? 16 : 8))!=65536) return exr_bmff_fail(io,"Chapter edit rate must be one");
+    if(time==(width==20 ? UINT64_MAX : UINT32_MAX)) {
+      if(edit->present || duration>UINT64_MAX-edit->leading) return exr_bmff_fail(io,"Only leading empty chapter edits are supported");
+      edit->leading+=duration;
+    } else {
+      if(edit->present || time>(width==20 ? INT64_MAX : INT32_MAX)) return exr_bmff_fail(io,"Only one forward chapter edit is supported");
+      edit->present=1; edit->start=time; edit->duration=duration;
+    }
+  }
+  return edit->present ? EXR_OK : exr_bmff_fail(io,"Chapter edit list has no media segment");
+}
+static exr_status chapter_table(exr_bmff_reader *io,const exr_bmff_box *stbl,uint32_t type,unsigned width,exr_bmff_table *table) {
+  exr_bmff_box box; exr_status status=exr_bmff_child(io,stbl,type,1,&box);
+  return status!=EXR_OK ? status : exr_bmff_table_box(io,&box,table,width,1);
+}
+static exr_status chapter_track(exr_bmff_reader *io,exr_m4b_inspection *m,const exr_bmff_box *track,uint32_t id,
+                                 const exr_bmff_box *media,size_t media_count,uint32_t movie_scale) {
+  exr_bmff_box mdia,box,minf,stbl,entry,other,dref; exr_bmff_table sizes={0},chunks={0},sc={0},times={0};
+  unsigned char b[32],*sample=NULL; uint32_t scale,i,j,sc_index=0,chunk_index=0,in_chunk=0,current[3]={0},next[3]={0};
+  uint64_t duration,*starts=NULL,total=0,offset=0,window=UINT64_MAX,final_end; unsigned version; chapter_edit edit={0}; exr_status status;
+#define TRY(x) do { status=(x); if(status!=EXR_OK) goto done; } while(0)
+  TRY(exr_bmff_child(io,track,BOX('m','d','i','a'),1,&mdia));
+  TRY(exr_bmff_child(io,&mdia,BOX('h','d','l','r'),1,&box)); TRY(exr_bmff_header(io,&box,b,12));
+  if(exr_bmff_be32(b) || (exr_bmff_be32(b+8)!=BOX('t','e','x','t') && exr_bmff_be32(b+8)!=BOX('s','b','t','l'))) goto bad;
+  TRY(exr_bmff_child(io,&mdia,BOX('m','d','h','d'),1,&box)); TRY(exr_bmff_time(io,&box,&scale,&duration));
+  TRY(exr_bmff_header(io,&box,b,1)); version=b[0];
+  TRY(exr_bmff_child(io,&mdia,BOX('m','i','n','f'),1,&minf));
+  TRY(exr_bmff_child(io,&minf,BOX('d','i','n','f'),1,&box)); TRY(exr_bmff_child(io,&box,BOX('d','r','e','f'),1,&dref));
+  TRY(exr_bmff_header(io,&dref,b,8)); if(exr_bmff_be32(b) || exr_bmff_be32(b+4)!=1) goto bad;
+  TRY(exr_bmff_at(io,dref.data+8,dref.end,&entry)); TRY(exr_bmff_header(io,&entry,b,4));
+  if(entry.type!=BOX('u','r','l',' ') || entry.end!=dref.end || exr_bmff_be32(b)!=1) goto bad;
+  TRY(exr_bmff_child(io,&minf,BOX('s','t','b','l'),1,&stbl));
+  TRY(exr_bmff_child(io,&stbl,BOX('s','t','s','d'),1,&box)); TRY(exr_bmff_header(io,&box,b,8));
+  if(exr_bmff_be32(b) || exr_bmff_be32(b+4)!=1) goto bad;
+  TRY(exr_bmff_at(io,box.data+8,box.end,&entry));
+  if(entry.end!=box.end || (entry.type!=BOX('t','e','x','t') && entry.type!=BOX('t','x','3','g'))) goto bad;
+  TRY(exr_bmff_header(io,&entry,b,8));
+  if(memcmp(b,"\0\0\0\0\0\0",6) || exr_bmff_be16(b+6)!=1 || entry.end-entry.data<(entry.type==BOX('t','e','x','t') ? 43u : 38u)) goto bad;
+  TRY(chapter_table(io,&stbl,BOX('s','t','t','s'),8,&times));
+  TRY(chapter_table(io,&stbl,BOX('s','t','s','c'),12,&sc));
+  TRY(exr_bmff_child(io,&stbl,BOX('s','t','s','z'),0,&box)); TRY(exr_bmff_child(io,&stbl,BOX('s','t','z','2'),0,&other));
+  if((box.end!=0)==(other.end!=0)) goto bad;
+  TRY(exr_bmff_size_box(io,box.end ? &box : &other,&sizes));
+  if(sizes.count>4096) { status=exr_fail(io->error,EXR_LIMIT,"QuickTime chapters exceed 4096 samples"); goto done; }
+  TRY(exr_bmff_child(io,&stbl,BOX('s','t','c','o'),0,&box)); TRY(exr_bmff_child(io,&stbl,BOX('c','o','6','4'),0,&other));
+  if((box.end!=0)==(other.end!=0)) goto bad;
+  TRY(exr_bmff_table_box(io,box.end ? &box : &other,&chunks,box.end ? 4 : 8,1));
+  TRY(exr_bmff_validate_sc(io,&sizes,&chunks,&sc));
+  /* Text chapters use decode times; reordered composition is unsupported. */
+  TRY(exr_bmff_child(io,&stbl,BOX('c','t','t','s'),0,&box)); if(box.end) goto bad;
+  TRY(chapter_edits(io,track,&edit));
+  if(edit.present) {
+    if(!movie_scale) goto bad;
+    if(edit.duration>UINT64_MAX-edit.leading) { status=exr_fail(io->error,EXR_LIMIT,"QuickTime chapter edit time overflows"); goto done; }
+    TRY(milliseconds(io,edit.leading+edit.duration,movie_scale,&window));
+  }
+  starts=calloc((size_t)sizes.count+1,sizeof(*starts)); sample=malloc(65536);
+  m->chapters=calloc(sizes.count,sizeof(*m->chapters));
+  if(!starts || !sample || !m->chapters) { status=exr_fail(io->error,EXR_MEMORY,"QuickTime chapter allocation failed"); goto done; }
+  j=0;
+  for(i=0;i<times.count;i++) {
+    uint32_t count,delta;
+    TRY(exr_bmff_read(io,times.at+(uint64_t)i*8,b,8)); count=exr_bmff_be32(b); delta=exr_bmff_be32(b+4);
+    if(!count || !delta || count>sizes.count-j) goto bad;
+    while(count--) { starts[j++]=total; total+=delta; }
+  }
+  starts[j]=total;
+  if(j!=sizes.count || (duration!=(version ? UINT64_MAX : UINT32_MAX) && duration!=total)) goto bad;
+  if(edit.present && edit.start>=total) goto bad;
+  TRY(chapter_time(io,edit.leading,edit.present ? movie_scale : 1,total-edit.start,scale,&final_end));
+  if(edit.present && final_end>window) final_end=window;
+  if(m->duration<final_end) final_end=m->duration;
+  TRY(exr_bmff_sc_entry(io,&sc,0,current));
+  if(sc.count>1) TRY(exr_bmff_sc_entry(io,&sc,1,next));
+  TRY(exr_bmff_chunk_offset(io,&chunks,0,&offset));
+  for(i=0;i<sizes.count;i++) {
+    uint32_t size,length; uint64_t time,tail; size_t k; char *title=NULL,id_text[64];
+    TRY(exr_bmff_sample_size(io,&sizes,i,&size));
+    for(k=0;k<media_count;k++) if(offset>=media[k].data && offset<=media[k].end && size<=media[k].end-offset) break;
+    if(k==media_count || size<2) goto bad;
+    tail=offset+size;
+    if(starts[i+1]>edit.start) {
+      TRY(chapter_time(io,edit.leading,edit.present ? movie_scale : 1,starts[i]>edit.start ? starts[i]-edit.start : 0,scale,&time));
+      if(time<final_end) {
+        TRY(exr_bmff_read(io,offset,sample,size)); length=exr_bmff_be16(sample); if(length>size-2) goto bad;
+        /* Modifiers remain uninterpreted, but cannot escape the sample. */
+        for(uint64_t at=offset+2+length;at<tail;at=box.end) TRY(exr_bmff_at(io,at,tail,&box));
+        if(length>=2 && sample[2]==0xff && sample[3]==0xfe) {
+          if(length&1) { status=exr_fail(io->error,EXR_ENCODING,"Odd UTF-16LE chapter text"); goto done; }
+          for(k=2;k<2+length;k+=2) { unsigned char c=sample[k]; sample[k]=sample[k+1]; sample[k+1]=c; }
+        }
+        status=string_value(io,sample+2,length,length>=2 && sample[2]==0xfe && sample[3]==0xff ? 2 : 1,&title); if(status!=EXR_OK) goto done;
+        if(strlen(title)+1>(size_t)1024*1024-m->text_bytes) { free(title); status=exr_fail(io->error,EXR_LIMIT,"QuickTime chapter text exceeds 1 MiB"); goto done; }
+        m->text_bytes+=strlen(title)+1;
+        if(m->chapter_count && time<=m->chapters[m->chapter_count-1].start_ms) { free(title); goto bad; }
+        snprintf(id_text,sizeof(id_text),"qt-%08x-%016llx",id,(unsigned long long)starts[i]);
+        m->chapters[m->chapter_count]=(exr_audio_chapter){exr_copy(id_text,strlen(id_text)),title,SIZE_MAX,time,final_end};
+        if(m->chapter_count) m->chapters[m->chapter_count-1].end_ms=time;
+        m->chapter_count++; if(!m->chapters[m->chapter_count-1].id) { status=exr_fail(io->error,EXR_MEMORY,"QuickTime chapter ID allocation failed"); goto done; }
+      }
+    }
+    offset=tail; in_chunk++;
+    if(i+1<sizes.count && in_chunk==current[1]) {
+      in_chunk=0; chunk_index++;
+      if(sc_index+1<sc.count && next[0]==chunk_index+1) { sc_index++; memcpy(current,next,sizeof(current)); if(sc_index+1<sc.count) TRY(exr_bmff_sc_entry(io,&sc,sc_index+1,next)); }
+      TRY(exr_bmff_chunk_offset(io,&chunks,chunk_index,&offset));
+    }
+  }
+  status=EXR_OK; goto done;
+bad:
+  status=exr_bmff_fail(io,"Invalid or unsupported QuickTime chapter track");
+done:
+  free(starts); free(sample); return status;
+#undef TRY
+}
+static exr_status quicktime_chapters(exr_bmff_reader *io,exr_m4b_inspection *m,const exr_bmff_box *moov,
+                                      const exr_bmff_box *media,size_t media_count,uint32_t movie_scale) {
+  exr_bmff_box tracks[256],box,tref,chap,tkhd; uint32_t ids[256],references[256]; size_t count=0,refs=0,i,j; uint64_t at; unsigned char b[24]; exr_status status;
+  for(at=moov->data;at<moov->end;at=box.end) {
+    status=exr_bmff_at(io,at,moov->end,&box); if(status!=EXR_OK) return status;
+    if(box.type!=BOX('t','r','a','k')) continue;
+    if(count==256) return exr_fail(io->error,EXR_LIMIT,"QuickTime inspection exceeds 256 tracks");
+    tracks[count++]=box;
+    status=exr_bmff_child(io,&box,BOX('t','r','e','f'),0,&tref); if(status!=EXR_OK) return status;
+    if(!tref.end) continue;
+    status=exr_bmff_child(io,&tref,BOX('c','h','a','p'),0,&chap); if(status!=EXR_OK) return status;
+    if(!chap.end) continue;
+    if((chap.end-chap.data)%4) return exr_bmff_fail(io,"Invalid QuickTime chapter references");
+    if((chap.end-chap.data)/4>256-refs) return exr_fail(io->error,EXR_LIMIT,"QuickTime inspection exceeds 256 chapter references");
+    for(uint64_t next=chap.data;next<chap.end;next+=4) {
+      status=exr_bmff_read(io,next,b,4); if(status!=EXR_OK) return status; references[refs++]=exr_bmff_be32(b);
+    }
+  }
+  if(!refs) return EXR_OK;
+  for(i=0;i<count;i++) {
+    status=exr_bmff_child(io,tracks+i,BOX('t','k','h','d'),1,&tkhd); if(status!=EXR_OK) return status;
+    status=exr_bmff_header(io,&tkhd,b,4); if(status!=EXR_OK) return status;
+    if(b[0]>1) return exr_bmff_fail(io,"Unsupported QuickTime track header");
+    unsigned index=b[0] ? 20 : 12;
+    status=exr_bmff_header(io,&tkhd,b,index+4); if(status!=EXR_OK) return status; ids[i]=exr_bmff_be32(b+index);
+    if(!ids[i]) return exr_bmff_fail(io,"Zero QuickTime track ID");
+    for(j=0;j<i;j++) if(ids[i]==ids[j]) return exr_bmff_fail(io,"Duplicate QuickTime track ID");
+  }
+  for(i=0;i<count;i++) if(ids[i]==references[0]) return chapter_track(io,m,tracks+i,ids[i],media,media_count,movie_scale);
+  return exr_bmff_fail(io,"Missing referenced QuickTime chapter track");
+}
 exr_status exr_m4b_inspect_source(const exr_source *source,exr_m4b_inspection **out,exr_error *error) {
   exr_m4b_inspection *m; exr_error local={0}; exr_bmff_reader io; exr_bmff_box moov={0},box,mvhd,udta,child,chpl={0};
-  uint64_t at=0,duration; uint32_t scale; int ftyp=0; unsigned char version; exr_status status=EXR_OK;
+  exr_bmff_box media[256]; size_t media_count=0;
+  uint64_t at=0,duration; uint32_t scale=0; int ftyp=0; unsigned char version; exr_status status=EXR_OK;
   if(out) *out=NULL;
   if(!source || !source->read_at || source->size<8 || !out) return exr_fail(error,EXR_ARGUMENT,"Invalid ISO-BMFF inspection source");
   if(!error) error=&local;
@@ -142,6 +317,10 @@ exr_status exr_m4b_inspect_source(const exr_source *source,exr_m4b_inspection **
     status=exr_bmff_at(&io,at,source->size,&box); if(status!=EXR_OK) goto done;
     if(box.type==BOX('f','t','y','p')) { if(ftyp++ || box.end-box.data<8) { status=exr_bmff_fail(&io,"Invalid ISO-BMFF file type"); goto done; } }
     if(box.type==BOX('m','o','o','v')) { if(moov.end) { status=exr_bmff_fail(&io,"Duplicate ISO-BMFF movie"); goto done; } moov=box; }
+    if(box.type==BOX('m','d','a','t')) {
+      if(media_count==256) { status=exr_fail(error,EXR_LIMIT,"ISO-BMFF inspection exceeds 256 media boxes"); goto done; }
+      media[media_count++]=box;
+    }
     at=box.end;
   }
   if(!ftyp || !moov.end) { status=exr_bmff_fail(&io,"ISO-BMFF metadata requires ftyp and moov"); goto done; }
@@ -164,6 +343,10 @@ exr_status exr_m4b_inspect_source(const exr_source *source,exr_m4b_inspection **
     status=exr_bmff_child(&io,&udta,BOX('c','h','p','l'),0,&chpl); if(status!=EXR_OK) goto done;
   }
   if(chpl.end) { status=chapter_list(&io,m,&chpl); if(status!=EXR_OK) goto done; }
+  if(!m->chapter_count) {
+    free(m->chapters); m->chapters=NULL;
+    status=quicktime_chapters(&io,m,&moov,media,media_count,scale); if(status!=EXR_OK) goto done;
+  }
   status=exr_control_poll(&source->control,EXR_STAGE_READ,io.bytes,source->size,error);
 done:
   if(status==EXR_OK) { *out=m; return exr_fail(error,EXR_OK,""); }
