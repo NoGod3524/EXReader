@@ -952,3 +952,19 @@ hairlines, short round joins, zero-length round dots, single-application stroke 
 component overlaps, invalid styles, output aliasing, cancellation and work exhaustion. Dashed
 paths and display-list/PDF integration remain pending. The 0.51 commit 2a72314 passed all six
 platform and sanitizer CI jobs.
+
+
+## 0.53 native dash geometry
+
+The vector core splits source-coordinate polylines by even/odd dash arrays and positive or
+negative wrapped phase, restarting the pattern per source contour. It preserves zero-length
+on entries as dot contours, retains joins across unbroken source vertices, copies solid paths
+independently and merges visible runs across closed seams. Dot contours before/after the seam
+remain intact with contiguous spans. Tiny lengths that cannot advance a coordinate fail with
+a precision limit rather than looping. Pattern, vertex, source, shared-work and cancellation
+budgets apply; failures return no partial owned path.
+
+Tests cover exact intervals, odd arrays, phase/reset behavior, zero gaps/dots, full closed runs,
+wrapped joins with leading/trailing dots, independent solid copies, dash/stroke/fill raster
+pixels, invalid/all-zero patterns, tiny-length limits and cancellation. Display-list/PDF
+integration remains pending. The 0.52 commit ff33a4b passed all six CI jobs.
