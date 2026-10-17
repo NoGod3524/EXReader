@@ -503,3 +503,15 @@ alternate-content selection and revision/field text. Structured EPUB round-trip 
 and exact rendered pixels. Regressions reject missing relationships/resources, traversal targets,
 relationship ID collisions, invalid namespaces, style cycles and orphan merge continuations;
 external image URIs remain metadata without network reads.
+
+## 0.21 DOCX notes
+
+The DOCX fixture adds repeated footnote references, an endnote, backlinks, a non-default notes
+part path, separator/orphan exclusion, and an image relation that reuses a main-part ID for a
+different asset. Every generated fragment resolves, resources have unique IDs, and text/rendering
+survive EPUB round-trip. Missing notes, missing bodies and duplicate note IDs are rejected.
+Structured export also rejects chapter/non-XHTML resource path collisions with empty outputs.
+
+The 0.20 sanitizer job stopped at a GCC debug-build format-truncation diagnostic in relationship
+path construction (before running tests). 0.21 checks the length before copying fixed path
+segments, shared by main/notes parts, with no formatted truncation path.

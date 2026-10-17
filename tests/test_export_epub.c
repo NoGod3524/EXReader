@@ -108,6 +108,10 @@ static void custom(void) {
     input.resources=&resource; input.resource_count=1;
     OK(exr_document_create(&input,&d,&error));
     CHECK(exr_document_export_epub(d,NULL,&bytes,&size,&error)!=EXR_OK); CHECK(!bytes && !size);
+    exr_document_free(d);
+    resource.info.path=chapter.path; resource.data="x"; resource.size=1;
+    OK(exr_document_create(&input,&d,&error));
+    CHECK(exr_document_export_epub(d,NULL,&bytes,&size,&error)==EXR_FORMAT); CHECK(!bytes && !size);
     exr_document_free(d); input.resources=NULL; input.resource_count=0;
   }
   chapter.path="mimetype"; OK(exr_document_create(&input,&d,&error));

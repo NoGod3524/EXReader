@@ -1,4 +1,4 @@
-# Native C API 0.20
+# Native C API 0.21
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -458,4 +458,12 @@ DOCX 读取 package 主文档关系，支持非默认主文档路径；解析 Wo
 
 DrawingML/VML 图片按关系读取，原编码字节进入 resources；可读取尺寸，重复引用共享资源。路径与 Unicode/百分号编码经过解析，外部图片只保留 URI，框架不访问网络。表格的 gridSpan/vMerge 转成 colspan/rowspan；gridBefore/gridAfter 用空单元格保留列位置，最多 256 列。插入修订与字段结果可见，删除修订和字段指令排除；AlternateContent 优先使用 Fallback，没有 Fallback 时取首个 Choice，不重复输出两支。
 
-当前表格采用引擎的等宽列，尚未实现 Word 专有列宽、表格样式、边框与浮动锚点；图片仍按块排版。编号列表、脚注/尾注、页眉页脚、嵌入字体、主题字体/颜色、完整 Word 样式算法及元数据仍待补齐。它是流式阅读模型，未复刻 Word 的打印页面。旧文字导出保持原行为；结构接口可把当前已解析的图片、样式、表格和链接转成 EPUB。
+当前表格采用引擎的等宽列，尚未实现 Word 专有列宽、表格样式、边框与浮动锚点；图片仍按块排版。编号列表、页眉页脚、嵌入字体、主题字体/颜色、完整 Word 样式算法及元数据仍待补齐。它是流式阅读模型，未复刻 Word 的打印页面。旧文字导出保持原行为；结构接口可把当前已解析的图片、样式、表格和链接转成 EPUB。
+
+## DOCX 脚注与尾注（0.21）
+
+正文 footnoteReference/endnoteReference 生成 LINK 与 `doc-noteref`，注释正文生成 NOTE 与 `doc-footnote` / `doc-endnote`，其中的引用标记生成 `doc-backlink`。重复引用共享同一注释正文，保留唯一引用 ID；脚注与尾注各按首次引用次序显示阿拉伯序号。正文书签加 `bookmark-` 前缀，避免与生成的注释 ID 冲突，内部链接同步转换。
+
+注释分段按主文档关系读取，拥有自己的图片关系与路径基准，可复用主文档图片，也可携带不同图片。生成的图片资源 ID 在整书内唯一。正文中没有引用的注释和 separator/continuationSeparator 不进入阅读流；被引用却缺少正文、重复的普通注释 ID、嵌套注释引用会拒绝解析。普通注释最多 10000 个。当前统一追加在正文后；不按打印页面排脚注，也未实现分节重编号、罗马数字与自定义序号。
+
+结构 EPUB 导出保留上述链接与注释语义。本次同时修正章节路径与非 XHTML 资源冲突的情况，导出会失败并保持空输出，不再覆盖资源。

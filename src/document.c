@@ -226,7 +226,8 @@ static void XMLCALL tree_start(void *user, const char *name, const char **attrs)
   }
   if (token(exr_node_attribute(node, "http://www.idpf.org/2007/ops|type"), "footnote") ||
       token(exr_node_attribute(node, "http://www.idpf.org/2007/ops|type"), "endnote") ||
-      token(exr_node_attribute(node, "role"), "doc-footnote"))
+      token(exr_node_attribute(node, "role"), "doc-footnote") ||
+      token(exr_node_attribute(node, "role"), "doc-endnote"))
     node->kind = EXR_NODE_NOTE;
 }
 static void XMLCALL tree_end(void *user, const char *name) {
