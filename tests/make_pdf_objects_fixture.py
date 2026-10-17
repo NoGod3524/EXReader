@@ -401,7 +401,7 @@ pdf('pdf-outlines.pdf',values=outline_fonts)
 def image_stream(samples,width,height,space=b'/DeviceRGB',bits=8,extra=b''):
     return compressed_stream(samples,b'/Type /XObject /Subtype /Image /Width '+str(width).encode()+b' /Height '+str(height).encode()+b' /BitsPerComponent '+str(bits).encode()+(b' /ColorSpace '+space if space else b'')+b' '+extra)
 image_objects={
- 1:b'<< /Type /Catalog /Resources << /ColorSpace << /Alias /DeviceRGB >> /XObject << /RGB 2 0 R /Gray 3 0 R /Gray16 4 0 R /RGB4 5 0 R /CMYK2 6 0 R /Stencil 7 0 R /Rows1 8 0 R /Alias 9 0 R /Form 10 0 R >> >> >>',
+ 1:b'<< /Type /Catalog /Resources << /ColorSpace << /Alias /DeviceRGB >> /XObject << /RGB 2 0 R /Gray 3 0 R /Gray16 4 0 R /RGB4 5 0 R /CMYK2 6 0 R /Stencil 7 0 R /Rows1 8 0 R /Alias 9 0 R /Form 10 0 R /Indexed 12 0 R /IndexedReverse 13 0 R /PaletteStream 14 0 R /Key 16 0 R /IndexKey 17 0 R /Explicit 18 0 R /Soft 19 0 R /SoftInterp 20 0 R /Matte 21 0 R /SoftInvert 22 0 R /GrayMatte 23 0 R /HighMask 24 0 R >> >> >>',
  2:image_stream(bytes([255,0,0,0,255,0,0,0,255,255,255,255]),2,2),
  3:image_stream(bytes([0,255]),2,1,b'/DeviceGray',extra=b'/Decode [1 0]'),
  4:image_stream(bytes([0,0,255,255]),2,1,b'/DeviceGray',16),
@@ -413,16 +413,42 @@ image_objects={
  10:compressed_stream(b'4 0 0 4 0 0 cm /Local Do',b'/Type /XObject /Subtype /Form /BBox [0 0 4 4] /Resources << /ColorSpace << /Alias /DeviceGray >> /XObject << /Local 11 0 R >> >>'),
  11:image_stream(bytes([0]),1,1,b'/Alias'),
 }
+image_objects[12]=image_stream(bytes([0x1b]),4,1,b'[/Indexed /DeviceRGB 2 <ff000000ff000000ff>]',2)
+image_objects[13]=image_stream(bytes([0x1b]),4,1,b'[/Indexed /DeviceRGB 2 <ff000000ff000000ff>]',2,b'/Decode [3 0]')
+image_objects[14]=image_stream(bytes([0x40]),2,1,b'[/Indexed /DeviceGray 1 15 0 R]',1)
+image_objects[15]=compressed_stream(bytes([0,255]))
+image_objects[16]=image_stream(bytes([255,0,0,0,255,0]),2,1,extra=b'/Mask [250 255 0 5 0 5]')
+image_objects[17]=image_stream(bytes([0x1b]),4,1,b'[/Indexed /DeviceRGB 2 <ff000000ff000000ff>]',2,b'/Mask [1 1] /Decode [3 0]')
+image_objects[18]=image_stream(bytes([255,0,0,0,255,0,0,0,255,255,255,255]),2,2,extra=b'/Mask 7 0 R')
+image_objects[19]=image_stream(bytes([255,0,0,0,255,0,0,0,255,255,255,255]),2,2,extra=b'/SMask 30 0 R /Mask [0 255 0 255 0 255]')
+image_objects[20]=image_stream(bytes([255,0,0])*4,4,1,extra=b'/SMask 31 0 R')
+image_objects[21]=image_stream(bytes([255,127,127]),1,1,extra=b'/SMask 32 0 R')
+image_objects[22]=image_stream(bytes([255,0,0,0,255,0]),2,1,extra=b'/SMask 33 0 R')
+image_objects[23]=image_stream(bytes([128]),1,1,b'/DeviceGray',extra=b'/SMask 34 0 R')
+image_objects[24]=image_stream(bytes([255,0,0]),1,1,extra=b'/SMask 40 0 R')
+image_objects[40]=image_stream(bytes([0,85,170,255]),4,1,b'/DeviceGray')
+image_objects[30]=image_stream(bytes([128]),1,1,b'/DeviceGray')
+image_objects[31]=image_stream(bytes([0,255]),2,1,b'/DeviceGray',extra=b'/Interpolate true')
+image_objects[32]=image_stream(bytes([128]),1,1,b'/DeviceGray',extra=b'/Matte [1 1 1]')
+image_objects[33]=image_stream(bytes([0,255]),2,1,b'/DeviceGray',extra=b'/Decode [1 0]')
+image_objects[34]=image_stream(bytes([128]),1,1,b'/DeviceGray',extra=b'/Matte [0]')
+image_objects[35]=image_stream(bytes([128]),1,1,b'/DeviceGray',extra=b'/Matte [1]')
 pdf('pdf-images.pdf',values=image_objects)
 for name,value in [
+ ('soft-color',image_stream(bytes([0,0,0]),1,1,extra=b'/SMask 9 0 R')),
+ ('explicit-type',image_stream(bytes([0,0,0]),1,1,extra=b'/Mask 3 0 R')),
+ ('matte-short',image_stream(bytes([0,0,0]),1,1,extra=b'/SMask 35 0 R')),
+ ('palette-short',image_stream(bytes([0]),1,1,b'[/Indexed /DeviceRGB 1 <ff0000>]',1)),
+ ('palette-high',image_stream(bytes([0]),1,1,b'[/Indexed /DeviceGray 256 <00>]',1)),
+ ('key-range',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/Mask [0 256]')),
  ('short',image_stream(bytes([0]),2,1,b'/DeviceGray')),
  ('extra',image_stream(bytes([0,1,2]),2,1,b'/DeviceGray')),
  ('bits',image_stream(bytes([0]),1,1,b'/DeviceGray',3)),
  ('decode-short',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/Decode [1]')),
  ('decode-extra',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/Decode [0 1 0]')),
  ('space',image_stream(bytes([0]),1,1,b'/Unsupported')),
- ('mask',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/Mask [0 0]')),
- ('soft',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/SMask 3 0 R')),
+ ('mask',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/Mask [1 0]')),
+ ('soft',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/SMask 2 0 R')),
  ('stencil-space',image_stream(bytes([0]),1,1,b'/DeviceGray',1,b'/ImageMask true')),
  ('stencil-bits',image_stream(bytes([0]),1,1,None,8,b'/ImageMask true')),
  ('stencil-decode',image_stream(bytes([0]),1,1,None,1,b'/ImageMask true /Decode [0.5 1]')),
@@ -451,3 +477,11 @@ for name,value in [
  ('color-transform',jpeg_stream(baseline,extra=b'/DecodeParms << /ColorTransform 0 >>')),
  ('middle',jpeg_stream(baseline,filters=b'[/DCTDecode /FlateDecode]')),
 ]: pdf('pdf-jpeg-bad-'+name+'.pdf',values={**jpeg_objects,2:value})
+
+mask_depth={**image_objects,2:image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/SMask 60 0 R')}
+for number in range(60,78): mask_depth[number]=image_stream(bytes([128]),1,1,b'/DeviceGray',extra=f'/SMask {number+1} 0 R'.encode() if number<77 else b'')
+pdf('pdf-image-mask-depth.pdf',values=mask_depth)
+mask_bytes={**image_objects,2:image_stream(bytes(4096*4096*3),4096,4096,extra=b'/SMask 60 0 R')}
+mask_bytes[60]=image_stream(bytes(4096*4096),4096,4096,b'/DeviceGray',extra=b'/SMask 61 0 R')
+mask_bytes[61]=image_stream(bytes([128]),1,1,b'/DeviceGray')
+pdf('pdf-image-mask-bytes.pdf',values=mask_bytes)

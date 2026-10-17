@@ -29,12 +29,26 @@ static void decoded(exr_pdf_file *file) {
   b=decode(file,"Stencil"); pixel(&b,0,0,0,0,255,255); pixel(&b,1,0,0,0,255,0); free(b.pixels);
   b=decode(file,"Rows1"); pixel(&b,0,0,255,255,255,255); pixel(&b,1,0,0,0,0,255); pixel(&b,1,1,255,255,255,255); pixel(&b,0,1,0,0,0,255); free(b.pixels);
   b=decode(file,"Alias"); pixel(&b,0,0,255,0,0,255); free(b.pixels);
+  b=decode(file,"Indexed"); pixel(&b,0,0,255,0,0,255); pixel(&b,1,0,0,255,0,255); pixel(&b,2,0,0,0,255,255); pixel(&b,3,0,0,0,255,255); free(b.pixels);
+  b=decode(file,"IndexedReverse"); pixel(&b,0,0,0,0,255,255); pixel(&b,2,0,0,255,0,255); pixel(&b,3,0,255,0,0,255); free(b.pixels);
+  b=decode(file,"PaletteStream"); pixel(&b,0,0,0,0,0,255); pixel(&b,1,0,255,255,255,255); free(b.pixels);
+  b=decode(file,"Key"); pixel(&b,0,0,255,0,0,0); pixel(&b,1,0,0,255,0,255); free(b.pixels);
+  b=decode(file,"IndexKey"); pixel(&b,0,0,0,0,255,255); pixel(&b,1,0,0,0,255,0); pixel(&b,3,0,255,0,0,255); free(b.pixels);
+  b=decode(file,"Explicit"); pixel(&b,0,0,255,0,0,255); pixel(&b,1,0,0,0,0,0); pixel(&b,0,1,0,0,255,255); free(b.pixels);
+  b=decode(file,"Soft"); pixel(&b,0,0,255,0,0,128); pixel(&b,1,0,0,255,0,128); free(b.pixels);
+  b=decode(file,"SoftInterp"); pixel(&b,0,0,0,0,0,0); pixel(&b,1,0,255,0,0,64); pixel(&b,2,0,255,0,0,191); pixel(&b,3,0,255,0,0,255); free(b.pixels);
+  b=decode(file,"Matte"); pixel(&b,0,0,255,0,0,128); free(b.pixels);
+  b=decode(file,"SoftInvert"); pixel(&b,0,0,255,0,0,255); pixel(&b,1,0,0,0,0,0); free(b.pixels);
+  b=decode(file,"GrayMatte"); pixel(&b,0,0,255,255,255,128); free(b.pixels);
 }
 static void rasterized(exr_pdf_file *file) {
   exr_bitmap b=render(file,"4 0 0 4 0 0 cm /RGB Do"); pixel(&b,0,3,255,0,0,255); pixel(&b,3,3,0,255,0,255); pixel(&b,0,0,0,0,255,255); pixel(&b,6,6,255,255,255,255); free(b.pixels);
   b=render(file,"0 0 1 rg 4 0 0 2 0 0 cm /Stencil Do"); pixel(&b,0,0,0,0,255,255); pixel(&b,3,0,255,255,255,255); free(b.pixels);
   b=render(file,"0 0 1 4 re W n 4 0 0 4 0 0 cm /RGB Do"); pixel(&b,0,3,255,0,0,255); pixel(&b,3,3,255,255,255,255); free(b.pixels);
   b=render(file,"/Form Do"); pixel(&b,1,1,0,0,0,255); pixel(&b,5,5,255,255,255,255); free(b.pixels);
+  b=render(file,"4 0 0 4 0 0 cm /Soft Do"); pixel(&b,0,3,255,127,127,255); pixel(&b,3,3,127,255,127,255); free(b.pixels);
+  b=render(file,"4 0 0 4 0 0 cm /Explicit Do"); pixel(&b,0,3,255,0,0,255); pixel(&b,3,3,255,255,255,255); free(b.pixels);
+  b=render(file,"8 0 0 2 0 0 cm /HighMask Do"); pixel(&b,0,0,255,255,255,255); pixel(&b,2,0,255,170,170,255); pixel(&b,4,0,255,85,85,255); pixel(&b,6,0,255,0,0,255); free(b.pixels);
 }
 static int cancel(void *context) { (void)context; return 1; }
 static void affine(void) {
@@ -55,6 +69,16 @@ static void affine(void) {
   src.width=2; src.height=1; src.stride=8; pixels[3]=0; pixels[4]=0; pixels[5]=0; pixels[6]=255; pixels[7]=255;
   matrix[0]=4; matrix[1]=matrix[2]=0; matrix[3]=4; matrix[4]=0; memset(target,0,sizeof(target));
   OK(exr_vector_image(&dst,&src,matrix,1,1,NULL,NULL,NULL,&error)); CHECK(target[1*4]==0 && target[1*4+2]==255 && target[1*4+3]>0);
+  { unsigned char red[4]={255,0,0,255},alphas[16]={0,0,0,255,85,85,85,255,170,170,170,255,255,255,255,255};
+    exr_vector_texture color={0},opacity={0};
+    color.bitmap.width=color.bitmap.height=1; color.bitmap.channels=color.bitmap.stride=4; color.bitmap.pixels=red;
+    opacity.bitmap.width=4; opacity.bitmap.height=1; opacity.bitmap.channels=4; opacity.bitmap.stride=16; opacity.bitmap.pixels=alphas;
+    color.mask=&opacity; color.mask_mode=1; matrix[0]=8; matrix[3]=2; memset(target,255,sizeof(target));
+    OK(exr_vector_texture_paint(&dst,&color,matrix,1,NULL,NULL,NULL,&error)); pixel(&dst,2,0,255,170,170,255); pixel(&dst,6,0,255,0,0,255);
+    color.has_matte=1; color.matte[0]=NAN; CHECK(exr_vector_texture_paint(&dst,&color,matrix,1,NULL,NULL,NULL,&error)==EXR_ARGUMENT);
+    color.has_matte=0; color.mask=&color; CHECK(exr_vector_texture_paint(&dst,&color,matrix,1,NULL,NULL,NULL,&error)==EXR_ARGUMENT);
+    color.mask=&opacity; opacity.bitmap=dst; CHECK(exr_vector_texture_paint(&dst,&color,matrix,1,NULL,NULL,NULL,&error)==EXR_ARGUMENT);
+  }
 }
 static void jpeg_cases(const char *dir) {
   const char *bad[]={"dimensions","channels","not-jpeg","truncated","color-transform","middle"};
@@ -81,9 +105,12 @@ static void jpeg_cases(const char *dir) {
   }
 }
 int main(int argc,char **argv) {
-  const char *bad[]={"short","extra","bits","decode-short","decode-extra","space","mask","soft","stencil-space","stencil-bits","stencil-decode","interpolate","zero"};
+  const char *bad[]={"soft-color","explicit-type","matte-short","palette-short","palette-high","key-range","short","extra","bits","decode-short","decode-extra","space","mask","soft","stencil-space","stencil-bits","stencil-decode","interpolate","zero"};
   size_t size,i; unsigned char *data; exr_pdf_file *file=NULL;
   CHECK(argc==2); jpeg_cases(argv[1]); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
+  { exr_vector_texture *texture=NULL; OK(exr_pdf_image_load(file,image(file,"HighMask"),resources(file),0,&texture,NULL,NULL,&error));
+    CHECK(texture && texture->bitmap.width==1 && texture->mask && texture->mask->bitmap.width==4); exr_pdf_image_release(texture); exr_pdf_image_release(NULL);
+  }
   { exr_control control={0}; exr_bitmap b; int interp=1; size_t work=(size_t)256*1024*1024; control.cancelled=cancel;
     CHECK(exr_pdf_image_decode(file,image(file,"RGB"),resources(file),0,&b,&interp,NULL,&control,&error)==EXR_CANCELLED && !b.pixels && !interp);
     CHECK(exr_pdf_image_decode(file,image(file,"RGB"),resources(file),0,&b,&interp,&work,NULL,&error)==EXR_LIMIT && !b.pixels);
@@ -92,6 +119,10 @@ int main(int argc,char **argv) {
   for(i=0;i<sizeof(bad)/sizeof(*bad);i++) {
     char name[128]; exr_bitmap b; int interp=1; snprintf(name,sizeof(name),"pdf-image-bad-%s.pdf",bad[i]); data=load(argv[1],name,&size); OK(exr_pdf_open(data,size,&file,&error));
     CHECK(exr_pdf_image_decode(file,image(file,"RGB"),resources(file),0,&b,&interp,NULL,NULL,&error)==EXR_FORMAT && !b.pixels && !b.width && !interp); exr_pdf_close(file); free(data);
+  }
+  for(i=0;i<2;i++) {
+    exr_bitmap b; int interp=1; data=load(argv[1],i ? "pdf-image-mask-bytes.pdf" : "pdf-image-mask-depth.pdf",&size); OK(exr_pdf_open(data,size,&file,&error));
+    CHECK(exr_pdf_image_decode(file,image(file,"RGB"),resources(file),0,&b,&interp,NULL,NULL,&error)==EXR_LIMIT && !b.pixels && !b.width && !interp); exr_pdf_close(file); free(data);
   }
   printf("%u native PDF image checks passed\n",checks); return 0;
 }

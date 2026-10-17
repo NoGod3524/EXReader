@@ -1125,3 +1125,32 @@ helper now also supplies an error diagnostic on final pixel allocation failure.
 The source image generator requires Pillow only during development; builds use
 committed original bytes. No decoder dependency was added. The 0.58 commit
 b536469 passed all six CI jobs.
+
+
+## 0.60 Indexed images, independent opacity layers and image mattes
+
+The PDF image reader supports Indexed palettes over device spaces, literal or
+stream lookup tables, hival clamping, index Decode maps and pre-Decode color-key
+ranges. It also loads explicit stencil masks and grayscale soft masks, supports
+soft-mask Decode/interpolation and removes RGB/gray preblended Matte colors.
+SMask overrides Mask as specified. Unsupported indexed/CMYK Matte combinations
+fail explicitly. Image/mask cycles, more than 16 layers and more than 128 MiB of
+simultaneously owned image pixels fail without leaking partial output.
+
+The generic affine texture primitive retains color and opacity as independent
+layers, with their own resolutions and interpolation choices. It samples all
+layers in normalized coordinates at target pixel samples, then performs matte
+removal and alpha composition. Masks are not reduced to the parent color-image
+resolution. This is checked by painting a one-pixel red image with a four-pixel
+opacity mask: all four opacity levels survive magnification. The private bitmap
+decoder can flatten a texture when explicitly requested; page rendering keeps
+its independent layers until painting.
+
+Tests cover literal/stream palettes, inverse Decode, pre-Decode color keys,
+stencil/soft masks of different sizes, interpolation, matte reconstruction,
+SMask precedence, final page pixels, independent texture dimensions, invalid
+mask types/ranges/palettes/mattes, texture alias/cycle errors, mask cycles,
+16-layer depth and a real 128-MiB aggregate pixel budget failure. A manually
+assembled image page was also compared with Poppler; opaque and constant-mask
+interiors agree, while image boundary antialiasing/interpolation differs.
+The 0.59 commit 99ee06d passed all six CI jobs.
