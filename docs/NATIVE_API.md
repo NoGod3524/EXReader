@@ -924,3 +924,14 @@ report 返回新旧正文长度、进度位置、进度匹配及逐条 note_id/�
 `exr_library_note_text(library,note_id,text,...)` 只修改备注，不改变范围与选择器，适用于未定位标注。普通 library_note 可在宿主选定新范围后重新捕获选择器。备注须为有效 UTF-8，最长 64 MiB；损坏的存储备注读取返回 EXR_DATABASE。
 
 schema 6 为标注保存定位状态，并允许进度保留 LEGACY 历史位置。v1–v5 事务迁移到最新结构；v5 的旧进度表重建与标注列添加一起提交。原书字节不改写，ABI epoch 仍为 1。
+
+
+## 通用文本标注交换（0.96）
+
+`exr_text_annotation_export` / import 使用 W3C Web Annotation 的紧凑 JSON-LD 子集：固定 `http://www.w3.org/ns/anno.jsonld` context，单个 Annotation、单个 TextualBody（纯文本）及单个 SpecificResource/TextQuoteSelector。结构保留可选 id、source、备注、exact、prefix、suffix。独立于书库和格式；不分配书籍 ID、不访问网络、不把第三方资源自动映射到本地文件。
+
+source 由宿主指定，应标识准确的目标文档或章节。SDK 的 UTF-8 字节范围与内部 chapter 路径不输出为标准字符位置；导入 anchor.start/end=SIZE_MAX、chapter=NULL。宿主先依据 source 选定目标文档/章节，再使用 anchor_resolve 得到当前范围；找不到或歧义时保留原 JSON/选择器等待处理。章节作用域由 source 与宿主映射维护，不应把章内选文当成整书全局选择器。
+
+导入输出必须为空，结果用 text_annotation_free 释放。导出字符串用 exr_free 释放，size 不含末尾 NUL。整个 JSON 最多 1 MiB，source/id 最多 4096 UTF-8 字节；选文和上下文沿用 anchor 的 64 KiB/每侧 32 标量限制。支持标准 JSON 转义与 UTF-16 surrogate pair，拒绝非法 UTF-8、孤立 surrogate、嵌入 NUL、已识别字段重复、尾随垃圾及超过 32 层的附加元数据。附加元数据仅验证并跳过，不建立通用 JSON DOM，也不在重新导出时保留。
+
+这是明确的单标注交换子集，不是任意 JSON-LD 处理器。context 改写、数组 body/target/selector、HTML 正文、TextPositionSelector、target scope/state、selector refinedBy 等返回错误，避免忽略额外目标约束。固定页坐标、媒体时间、集合批处理与第三方选择器转换尚未接通。

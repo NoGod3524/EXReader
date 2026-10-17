@@ -1714,3 +1714,17 @@ cancellation restore all old notes and progress. A conflicting v5 migration tabl
 rolls back table/trigger/version changes; retry preserves progress and upgrades to
 schema 6. Existing v1-v4 migrations continue passing. All 72 local Windows suites
 pass. The 0.94 695d092 CI passed all six jobs.
+
+
+## 0.96 Text annotation interchange
+
+The new native-annotation suite round-trips quoted UTF-8 selection, plain-text
+comments, optional identifiers and context through compact Web Annotation JSON,
+then resolves the imported unpositioned selector in a document. Tests cover all
+truncated prefixes, reordered/escaped keys, surrogate pairs, control escapes,
+unknown metadata, JSON number grammar, duplicate recognized fields, altered
+contexts, unsupported target constraints/types, invalid UTF-8, NUL/lone surrogate,
+trailing data, nesting and output byte budgets. All 73 local Windows suites pass.
+All eleven C consumers build against the independently installed 0.96 SDK; the
+anchor host exchanges JSON before relocating a quote after an insertion, and the
+compat host verifies ABI epoch 1. The 0.95 a0a50a1 CI passed all six jobs.

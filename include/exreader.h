@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.95.0"
+#define EXR_VERSION "0.96.0"
 #define EXR_ABI_VERSION 1u
 typedef enum {
   EXR_OK = 0,
@@ -974,6 +974,14 @@ EXR_API exr_status exr_library_notes(exr_library *library, int64_t book_id, exr_
                                      size_t *count, exr_error *error);
 /* Edits only the comment, including notes whose current range is unresolved. */
 EXR_API exr_status exr_library_note_text(exr_library *library,int64_t note_id,const char *text,exr_error *error);
+/* Compact W3C Web Annotation JSON profile: one plain-text body and one
+   TextQuoteSelector. source identifies the exact target resource (host mapping).
+   JSON does not carry SDK byte offsets or chapter paths; imported anchor ranges
+   are SIZE_MAX and must be resolved in the host-selected document/part. */
+typedef struct { char *id,*source,*text; exr_anchor anchor; } exr_text_annotation;
+EXR_API exr_status exr_text_annotation_export(const exr_text_annotation *annotation,char **json,size_t *size,exr_error *error);
+EXR_API exr_status exr_text_annotation_import(const void *json,size_t size,exr_text_annotation *annotation,exr_error *error);
+EXR_API void exr_text_annotation_free(exr_text_annotation *annotation);
 EXR_API void exr_notes_free(exr_note *notes, size_t count);
 EXR_API void exr_free(void *memory);
 /* Fast reflow progress persistence: host captures a point with anchor_create()
