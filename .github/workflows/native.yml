@@ -84,6 +84,12 @@ jobs:
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
           python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /System/Library/Fonts/Supplemental/Arial.ttf build/performance --runs 1 --max-pages 8 --paging
+      - name: Build and run Swift host against installed SDK
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          swiftc -I stage/include -L stage/lib -lexreader -Xlinker -rpath -Xlinker "$PWD/stage/lib" bindings/swift/EXReader.swift bindings/swift/Smoke.swift -o build/swift-sdk-example
+          ./build/swift-sdk-example stage/examples
       - uses: actions/upload-artifact@v4
         with:
           name: EXReader-performance-${{ runner.os }}
@@ -136,6 +142,8 @@ jobs:
             cmake -S . -B "build/$sdk" -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT="$sdk" -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
             cmake --build "build/$sdk" --parallel 4
             cmake --install "build/$sdk" --prefix "stage/$sdk"
+            if [ "$sdk" = iphoneos ]; then target=arm64-apple-ios14.0; else target=arm64-apple-ios14.0-simulator; fi
+            xcrun --sdk "$sdk" swiftc -target "$target" -sdk "$(xcrun --sdk "$sdk" --show-sdk-path)" -I "stage/$sdk/include" -typecheck bindings/swift/EXReader.swift
           done
       - uses: actions/upload-artifact@v4
         with:

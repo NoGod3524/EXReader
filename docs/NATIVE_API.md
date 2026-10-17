@@ -749,3 +749,12 @@ play/pause/seek/rate 控制请求状态，倍速范围为 (0,16]，后端可按�
 ## 安装后的 WAV 宿主示例（0.76）
 
 `examples/wave.c` 只依赖公开头文件和 SDK 动态库，按 1024 帧读取 WAV 并打印采样率、声道、总帧数和峰值。它提供交错 float 数据接入宿主声音设备的入口，不打开设备。安装包包含可用标准库脚本重新生成的原创 400 Hz PCM 样本。命令为 `exreader-wave-example input.wav`，Windows 入口支持 UTF-8 路径。三桌面 CI 在独立安装 SDK 后构建并运行此示例，Windows 还覆盖中文文件名。
+
+
+## Swift 接入（0.77）
+
+安装后的 include/module.modulemap 提供 `import CEXReader`，直接开放全部 C 接口。`bindings/swift/EXReader.swift` 提供 ARC 管理的字体、固定文档、独立文字快照和 WAV 封装；返回的图像 Data、文字 Data 和 region 数组具有独立生命周期。字体字节在 C 内复制，PDF 持有字体引用；同一固定文档/WAV 的可变操作由封装锁串行执行。Swift 类不声明 Sendable，宿主负责对象跨并发域的安排。
+
+文字区间保持 UTF-8 字节范围，不能直接当作 Swift String 的字符索引。find 接受 Data，保留 NUL 和多字节语义；Bitmap 返回原始像素、stride 和 channels，宿主自行接显示后端。WAV 返回交错 float 样本，文件权限和声音设备仍由应用管理。Swift 不替换 C 的通用构造、绘制回调或音频后端模型，这些接口可直接通过 CEXReader 使用。
+
+macOS 可用 `swiftc -I SDK/include -L SDK/lib -lexreader -Xlinker -rpath -Xlinker SDK/lib bindings/swift/EXReader.swift bindings/swift/Smoke.swift -o swift-example` 构建示例，传入 SDK/examples 目录运行。Apple CI 运行独立安装 SDK 的 Swift 示例，并对 iOS/iPadOS arm64 设备与模拟器目标分别检查封装。
