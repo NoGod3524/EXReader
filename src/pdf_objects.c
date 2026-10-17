@@ -593,6 +593,40 @@ static int parameter(exr_pdf_file *f,uint32_t dict,const char *key,uint64_t maxi
   uint32_t id=exr_pdf_get(f,dict,key); *out=fallback;
   return id==EXR_PDF_NONE || direct_integer(f,resolve(f,id),maximum,out);
 }
+static int decode_lzw(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary,unsigned early) {
+  uint16_t prefix[4096]; unsigned char suffix[4096],stack[4096];
+  size_t bit=0; unsigned width=9,next=258,previous=UINT_MAX; int started=0;
+  while(size*8-bit>=width) {
+    unsigned code=0,current,k,first; size_t count=0; int special;
+    for(k=0;k<width;k++,bit++) code=(code<<1)|((data[bit/8]>>(7-bit%8))&1);
+    if(!started && code!=256) break;
+    started=1;
+    if(code==256) { width=9; next=258; previous=UINT_MAX; continue; }
+    if(code==257) {
+      if(tail_whitespace(data,size,(bit+7)/8)) return 1;
+      break;
+    }
+    special=code==next && previous!=UINT_MAX;
+    if(code>next || (code==next && !special)) break;
+    current=special ? previous : code;
+    while(current>=258) {
+      if(current>=next || count==sizeof(stack)-1) goto bad;
+      stack[count++]=suffix[current]; current=prefix[current];
+    }
+    if(current>=256) break;
+    first=current; stack[count++]=(unsigned char)first;
+    if(!decode_work(f,count+(size_t)special) || !output_room(f,out,count+(size_t)special,temporary)) return 0;
+    for(k=0;k<count;k++) out->data[out->size++]=stack[count-1-k];
+    if(special) out->data[out->size++]=(unsigned char)first;
+    if(previous!=UINT_MAX && next<4096) {
+      prefix[next]=(uint16_t)previous; suffix[next++]=(unsigned char)first;
+      if(width<12 && next+early==(1u<<width)) width++;
+    }
+    previous=code;
+  }
+bad:
+  return failed(f,EXR_FORMAT,"Invalid PDF LZW codes or terminator");
+}
 static unsigned sample_get(const unsigned char *data,size_t bit,unsigned bits) {
   unsigned value=0,i;
   for(i=0;i<bits;i++) value=(value<<1)|((data[(bit+i)/8]>>(7-(bit+i)%8))&1);
@@ -679,14 +713,20 @@ exr_status exr_pdf_stream_data(exr_pdf_file *f,uint32_t id,const unsigned char *
   input=f->data+source.offset; input_size=source.size;
   for(i=0;i<count;i++) {
     pdf_output output={0}; int ok=0,is_flate=name_is(f,filters[i],"FlateDecode") || name_is(f,filters[i],"Fl");
+    int is_lzw=name_is(f,filters[i],"LZWDecode") || name_is(f,filters[i],"LZW");
     if(parms[i]!=EXR_PDF_NONE && f->values[parms[i]].kind!=EXR_PDF_NULL && f->values[parms[i]].kind!=EXR_PDF_DICT) goto unsupported;
     if(!decode_work(f,input_size)) goto done;
     if(is_flate) ok=decode_flate(f,input,input_size,&output,current.capacity);
+    else if(is_lzw) {
+      uint64_t early;
+      if(!parameter(f,parms[i],"EarlyChange",1,1,&early)) { failed(f,EXR_FORMAT,"Invalid PDF LZW EarlyChange"); goto done; }
+      ok=decode_lzw(f,input,input_size,&output,current.capacity,(unsigned)early);
+    }
     else if(name_is(f,filters[i],"ASCIIHexDecode") || name_is(f,filters[i],"AHx")) ok=decode_hex(f,input,input_size,&output,current.capacity);
     else if(name_is(f,filters[i],"ASCII85Decode") || name_is(f,filters[i],"A85")) ok=decode_ascii85(f,input,input_size,&output,current.capacity);
     else if(name_is(f,filters[i],"RunLengthDecode") || name_is(f,filters[i],"RL")) ok=decode_runlength(f,input,input_size,&output,current.capacity);
     else { free(output.data); goto unsupported; }
-    if(ok && is_flate) ok=undo_predictor(f,parms[i],&output);
+    if(ok && (is_flate || is_lzw)) ok=undo_predictor(f,parms[i],&output);
     if(!ok) { free(output.data); goto done; }
     free(current.data); current=output; input=current.data; input_size=current.size;
   }

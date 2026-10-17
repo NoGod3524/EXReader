@@ -195,3 +195,44 @@ for name,data,filter,params in [('bad-hex',b'GG>',b'/AHx',b''),('hex-tail',b'41>
 
 modern('pdf-xref-predictor.pdf',predictor=True)
 modern('pdf-hybrid-predictor.pdf',hybrid=True,predictor=True)
+
+
+# Original LZW encoder; bit widths follow the emitted-data-code count, separately
+# from the reader's prefix/suffix dictionary growth.
+def lzw_codes(codes,early=1):
+    buffer=0; bitcount=0; output=bytearray(); emitted=0
+    for code in codes:
+        width=next((w for w in range(9,12) if emitted<(1<<w)-257-early),12)
+        buffer=(buffer<<width)|code;bitcount+=width
+        while bitcount>=8:
+            bitcount-=8;output.append((buffer>>bitcount)&255)
+        if code==256: emitted=0
+        elif code!=257: emitted+=1
+    if bitcount: output.append((buffer<<(8-bitcount))&255)
+    return bytes(output)
+def lzw_encode(data,early=1):
+    table={bytes([i]):i for i in range(256)};codes=[256];word=b''
+    for byte in data:
+        candidate=word+bytes([byte])
+        if candidate in table: word=candidate
+        else:
+            codes.append(table[word])
+            if len(table)<4094: table[candidate]=len(table)+2
+            word=bytes([byte])
+    if word:codes.append(table[word])
+    return lzw_codes(codes+[257],early)
+encoded_stream('lzw',lzw_encode(payload),b'/LZWDecode')
+encoded_stream('lzw-special',lzw_encode(b'A'*1000),b'/LZW')
+for early in [0,1]:
+    params=f'<< /EarlyChange {early} >>'.encode()
+    encoded_stream('lzw-wide'+str(early),lzw_codes([256]+[i%256 for i in range(10000)]+[257],early),b'/LZW',params)
+    encoded_stream('lzw-dictionary'+str(early),lzw_encode(bytes(i%251 for i in range(20000)),early),b'/LZW',params)
+    encoded_stream('lzw-reset'+str(early),lzw_codes([256]+[i%256 for i in range(1000)]+[256]+[i%256 for i in range(1000)]+[257],early),b'/LZW',params)
+encoded_stream('lzw-png',lzw_encode(png_encode([payload]*5)),b'/LZW',b'<< /Predictor 15 /Columns '+str(len(payload)).encode()+b' >>')
+encoded_stream('lzw-empty',lzw_codes([256,257]),b'/LZW')
+encoded_stream('lzw-bad-code',lzw_codes([256,65,300,257]),b'/LZW')
+encoded_stream('lzw-first-reference',lzw_codes([256,258,257]),b'/LZW')
+encoded_stream('lzw-no-clear',lzw_codes([65,257]),b'/LZW')
+encoded_stream('lzw-no-end',lzw_codes([256,65]),b'/LZW')
+encoded_stream('lzw-tail',lzw_encode(payload)+b'junk',b'/LZW')
+encoded_stream('lzw-bad-early',lzw_encode(payload),b'/LZW',b'<< /EarlyChange 2 >>')
