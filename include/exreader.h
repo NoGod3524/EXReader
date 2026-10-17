@@ -44,7 +44,7 @@ typedef struct {
   char message[256];
 } exr_error;
 typedef enum {
-  EXR_STAGE_READ = 1, EXR_STAGE_STYLE, EXR_STAGE_LAYOUT, EXR_STAGE_SHAPE, EXR_STAGE_RENDER
+  EXR_STAGE_READ = 1, EXR_STAGE_STYLE, EXR_STAGE_LAYOUT, EXR_STAGE_SHAPE, EXR_STAGE_RENDER, EXR_STAGE_EXPORT
 } exr_stage;
 /* Synchronous callbacks on the calling thread. total==0 means unknown work.
    Callbacks must not destroy/reenter active objects. Context is borrowed. */
@@ -357,6 +357,12 @@ EXR_API void exr_anchor_free(exr_anchor *anchor);
    report MISSING/AMBIGUOUS/LEGACY; only FOUND supplies a usable range. */
 EXR_API exr_status exr_anchor_resolve(const exr_document *doc, const exr_anchor *anchor,
                                       exr_anchor_match *match, exr_error *error);
+/* Structure-preserving EPUB: serializes the tree and copies all declared resources.
+   Chapter paths, attributes and resource bytes are retained. Missing resources,
+   non-XML names and conflicting/reserved paths fail atomically. No network access.
+   The legacy export() below remains a text-only conversion. */
+EXR_API exr_status exr_document_export_epub(const exr_document *doc, const exr_control *control,
+                                            void **data, size_t *size, exr_error *error);
 EXR_API exr_status exr_document_export(const exr_document *doc, exr_format format, void **data,
                                        size_t *size, exr_error *error);
 /* Metadata is copied. On success, release (if provided) runs once after the last

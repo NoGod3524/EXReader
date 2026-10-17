@@ -703,6 +703,17 @@ static exr_status archive_backing(archive *z, const exr_document *d, exr_error *
   }
   return EXR_OK;
 }
+/* Package encryption metadata cannot be dropped while copying encoded resources. */
+exr_status exr_epub_export_check(const exr_document *d, exr_error *e) {
+  archive z = {0}; exr_status status;
+  if (!d->archive && !(d->shared_archive && d->shared_archive->source.read_at)) return EXR_OK;
+  status = archive_backing(&z, d, e);
+  if (status != EXR_OK) return status;
+  if (mz_zip_reader_locate_file(&z.archive, "META-INF/encryption.xml", NULL, 0) >= 0 ||
+      mz_zip_reader_locate_file(&z.archive, "META-INF/rights.xml", NULL, 0) >= 0)
+    status = exr_fail(e, EXR_FORMAT, "Structured export requires unencrypted, unobfuscated resources");
+  mz_zip_reader_end(&z.archive); return status;
+}
 static exr_status archive_copy(exr_document *d, const void *data, size_t n, exr_error *e) {
   exr_archive_store *store = calloc(1, sizeof(*store));
   if (!store)
