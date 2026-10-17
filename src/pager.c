@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "flow_internal.h"
 #include "opentype_internal.h"
+#include "ruby_internal.h"
 
 typedef struct {
   size_t node, child, position;
@@ -386,7 +387,9 @@ static exr_status advance(exr_pager *p) {
         v->phase = 30;
         break;
       }
-      if (n->kind == EXR_NODE_TEXT) {
+      if (exr_ruby_node(f->doc,v->node)) {
+        v->position=0; v->phase=40;
+      } else if (n->kind == EXR_NODE_TEXT) {
         v->position = n->start;
         v->phase = 10;
       } else if (n->kind == EXR_NODE_BREAK)
@@ -563,6 +566,22 @@ static exr_status advance(exr_pager *p) {
       f->y += height; f->first_line = 1;
       if (v->context->position > p->position) p->position = v->context->position;
       exr_layout_free(v->fragment); v->fragment = NULL;
+      break;
+    }
+    case 40: {
+      exr_glyph item={0}; int done=0;
+      if (!p->line.text.started) {
+        status=exr_inline_prepare(f,v->node,&p->bidi);
+        if(status!=EXR_OK) return status;
+      }
+      status=exr_ruby_item(f,v->node,v->position,&item,&done);
+      if(status!=EXR_OK) return status;
+      if(done) { p->depth--; break; }
+      v->position++; item.bidi_level=exr_inline_level(&p->bidi,item.start);
+      if(++p->assets->work_glyphs>EXR_MAX_ITEMS) return failure(p,EXR_LIMIT,"Text work limit exceeded");
+      p->position=item.end;
+      status=exr_inline_feed(f,&p->line,item);
+      if(status!=EXR_OK) return status;
       break;
     }
     default:

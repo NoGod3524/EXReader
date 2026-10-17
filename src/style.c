@@ -34,6 +34,8 @@ enum {
   WRITING_MODE,
   ORIENTATION,
   MAX_HEIGHT,
+  RUBY_POSITION,
+  RUBY_ALIGN,
   PROPERTIES
 };
 typedef struct {
@@ -221,7 +223,7 @@ static int property(const char *s, size_t n) {
       "max-width",    "margin-top",    "margin-right",   "margin-bottom", "margin-left",
       "padding-top",  "padding-right", "padding-bottom", "padding-left",  "background-color",
       "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction",
-      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height"};
+      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -594,6 +596,10 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->writing_mode = parent->writing_mode;
     else if (prop == ORIENTATION)
       s->orientation = parent->orientation;
+    else if (prop == RUBY_POSITION)
+      s->ruby_position = parent->ruby_position;
+    else if (prop == RUBY_ALIGN)
+      s->ruby_align = parent->ruby_align;
     else if (prop == INDENT)
       s->indent = parent->indent;
     else
@@ -616,6 +622,16 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     if (!strcmp(v, "mixed")) s->orientation = EXR_ORIENTATION_MIXED;
     else if (!strcmp(v, "upright")) s->orientation = EXR_ORIENTATION_UPRIGHT;
     else if (!strcmp(v, "sideways")) s->orientation = EXR_ORIENTATION_SIDEWAYS;
+    else return 0;
+  } else if (prop == RUBY_POSITION) {
+    if (!strcmp(v,"over")) s->ruby_position=0;
+    else if (!strcmp(v,"under")) s->ruby_position=1;
+    else return 0;
+  } else if (prop == RUBY_ALIGN) {
+    if (!strcmp(v,"center")) s->ruby_align=0;
+    else if (!strcmp(v,"start")) s->ruby_align=1;
+    else if (!strcmp(v,"space-between")) s->ruby_align=2;
+    else if (!strcmp(v,"space-around")) s->ruby_align=3;
     else return 0;
   } else if (prop == DIRECTION) {
     if (!strcmp(v, "ltr")) s->direction = EXR_DIRECTION_LTR;
@@ -865,8 +881,14 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     s->direction = parent->direction;
     s->writing_mode = parent->writing_mode;
     s->orientation = parent->orientation;
+    s->ruby_position = parent->ruby_position;
+    s->ruby_align = parent->ruby_align;
     s->indent = parent->indent;
     s->display = EXR_CSS_INLINE;
+    if (!strcmp(name,"rtc") || (!strcmp(name,"rt") &&
+        (n->parent==SIZE_MAX || strcmp(exr_html_tag(d,&d->nodes[n->parent]),"rtc"))))
+      s->font_size=fmaxf(4,parent->font_size*.5f);
+    if (!strcmp(name,"rp")) s->display=EXR_CSS_NONE;
     attr = exr_node_attribute(n, "dir");
     if (attr) {
       if (!strcmp(attr, "rtl")) s->direction = EXR_DIRECTION_RTL;

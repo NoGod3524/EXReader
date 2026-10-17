@@ -1068,3 +1068,16 @@ FreeType 处理可变轮廓、HVAR/VVAR 度量及 avar 归一化；C OpenType �
 exr_stretch_* 是不持有 decoder、文件、设备或 player 的流式 WSOLA 处理器。7350–192000 Hz、1–8 声道、0.5–2 倍固定速度；浮点样本交错排列。push/pull 每次最多 65536 帧，push 只接受环形缓冲可用空间，pull 最多一个输出 hop；反复拉取输出后重试输入。不同块切分输出逐样本相同，1 倍速为 bit-exact 旁路。finish 结束输入，再 pull 到 drained；最终样本数按 round(input/reported_rate) 精确计算，reported_rate 是 Q32 实际值。reset 丢弃当前流并更改速度，格式不变。创建后处理路径不再分配，最高配置内存小于 1 MiB；约 20 ms 窗/10 ms hop/±5 ms 搜索，所有声道共享匹配偏移。取消不提交新输出并保留待取样本供重试。短输入/EOF 零延伸；这是低延迟语音/阅读用途算法，瞬态音乐保真不在当前验收范围。宿主可把 PCM、stretch、audio output 串联。
 
 PDF BI/ID/EI 现支持 RAW、DCT JPEG 与现有 Flate/LZW/ASCII85/ASCIIHex/RunLength/predictor 能力及短键/色空间缩写。RAW 按 W/H/BPC/通道精确算行字节；滤镜使用自己的真实终止位置后再验证 EI，不用像素子串搜索。JPEG 按 marker/entropy/FF00/restart 跳到真实 EOI，APP 内的伪 EOI 不结束数据。Form/Type3 资源作用域、Indexed 别名和 stencil 复用现有图片路径，临时 synthetic stream 的解码缓存每张释放；图片无需改变公开 draw ABI。边长 8192、16 Mi 像素、每图 decoded 64 MiB、临时缓存 128 MiB、同页及嵌套 Form/CharProc 累计解压工作 256 MiB。未知首滤镜无法安全定位结束时明确报错。JPEG 像素仍只接受已支持的 gray/RGB8 路径；文字提取可安全跳过 CMYK/ColorTransform override 的 JPEG，像素绘制不支持。
+
+
+## Devanagari、ruby、PDF 色彩与平台分页接口（0.18 开发补充）
+
+C OpenType 路径现在对 Devanagari 的 deva/dev2 script 进行音节分类、组合顺序整理、排除合成字的 base+nukta 分解、缺基字符的破折圈补入、reph/pre-base matra 重排以及按阶段启用的基本字形特性；使用已有 GSUB/GPOS 解析器和工作/取消预算。ZWJ/ZWNJ 参与字体规则并控制 half/reph。音节内重排后的 glyph 共享完整音节 UTF-8 范围，音节间保持逻辑范围单调；公开结构大小不变。其它脚本获得 Unicode 17 script tag，但尚无各自的 Indic 专用音节重排实现。
+
+EPUB/结构文档的 ruby/rb/rt/rp/rtc 使用不可拆的内部 inline 项参与原换行与续排；提交页面时展开为正文和注音各自的真实 glyph/line，内部标记不出现在公开数组。支持横排、vertical-rl/lr、默认半字号、over/under、center/start/space-between/space-around、rbspan 与最多 8 层注音。隐式 base→rt 对可逐组分页；显式 rb 或 rtc 的交错源码组保持整体，避免同页单区间模型丢失源归属。正文与注音各自可命中、选择、定位、导出 positioned 布局并恢复 checkpoint。嵌套 ruby 不支持；每个 ruby 最多 256 个正文/注音分段、每个当前组最多 8192 shaped glyph，超出页宽的不可拆组返回 EXR_LIMIT。树中图片等非文本内容不具备 ruby 内的布局语义。
+
+PDF vector、XObject 与 inline image 通过同一个私有颜色模型处理 Device、Indexed、CalGray、CalRGB、Lab 和 ICCBased Alternate。图形状态保留输入色空间，绘制回调接收转换后的 DeviceRGB；q/Q、Form 和 Type3 作用域沿用原状态栈。固定输出策略是 Bradford 白点适配至 D65、XYZ 黑点补偿、线性 sRGB 转换及最终色域裁剪。ICCBased 不读取 ICC LUT/AToB，按 N/Range/Alternate 回退；完整 ICC、OutputIntent、Separation/DeviceN、Pattern 和非设备颜色图像的 SMask Matte 尚未实现。模型嵌套最多 16，页面颜色缓存最多 128 个/32 MiB，支持取消与失败清理。
+
+Swift EXReaderDocument/Publication/Pager/ReflowPage 和 Java EXReader.Document/Publication/Pager/ReflowPage 提供内存/本地文档、EPUB manifest/spine 按章加载和逐页排版。next 返回独立页面，EOF 返回 nil/null；排版错误后分页器失效。所有文本索引为章内规范化 UTF-8 字节，缺省 node/resource 索引为 -1。Swift 复制无指针 C glyph/line/box 记录，Java 返回类型化 LayoutSnapshot；节点名称、属性和原始文本为独立字符串。fontSource 提供实际字体 bytes、face index 和可变轴坐标，image 提供独立 RGBA 数据；宿主可以使用这些快照自行绘制。
+
+同一 publication 及其加载的 document/pager/page 共用串行 gate，保护共享 archive/image 的引用和访问。Swift 另串行访问共享 EXReaderFont，锁顺序为文档再字体，PDF fallback 字体使用同一个字体 gate。Java 对原生文档使用内部引用计数，关闭 publication/document/pager 后已取得的子对象仍有效；各 AutoCloseable 对象需显式 close。Swift 使用 ARC；页面保留 document/font，可独立于分页器存活。快照和位图可在对应页面释放后继续使用。平台包装未接入取消回调和随机缓存配置，C 接口保留这些能力。HTML 的既有导入路径仍为正文提取；保留结构的路径使用 EPUB/FB2/DOCX/RTF/宿主文档。

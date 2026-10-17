@@ -118,6 +118,189 @@ public final class EXReader {
             if(handle!=0) { nativePcmClose(handle); handle=0; }
         }
     }
+    public enum Format {
+        TXT(1),HTML(2),FB2(3),EPUB(4),DOCX(5),RTF(6),MOBI(7);
+        final int code; Format(int code) { this.code=code; }
+    }
+    public static final class LayoutConfig {
+        public float width=720,height=1040,margin=48,fontSize=24,lineHeight=1.6f,paragraphSpacing=12;
+        public String userCSS;
+        public boolean documentCSS=true,embeddedFonts=true;
+        public int direction=0; // 0 auto, 1 LTR, 2 RTL.
+        private float[] page() { return new float[]{width,height,margin,fontSize,lineHeight,paragraphSpacing}; }
+    }
+    /** All ranges are UTF-8 byte offsets in Document.utf8(), absent indices are -1. */
+    public static final class Node {
+        public final int kind;
+        public final long parent,firstChild,nextSibling,chapter,start,end;
+        public final String name,text;
+        public final MetadataEntry[] attributes;
+        private Node(int kind,long[] indices,byte[][] values) {
+            this.kind=kind; parent=indices[0]; firstChild=indices[1]; nextSibling=indices[2]; chapter=indices[3]; start=indices[4]; end=indices[5];
+            name=utf8String(values[0]); text=utf8String(values[1]);
+            attributes=new MetadataEntry[(values.length-2)/2];
+            for(int i=0;i<attributes.length;i++) attributes[i]=new MetadataEntry(values[2+i*2],values[3+i*2]);
+        }
+    }
+    private static String utf8String(byte[] bytes) { return bytes==null ? null : new String(bytes,StandardCharsets.UTF_8); }
+    public static final class Part {
+        public final String id,path,title;
+        public final boolean inReadingOrder;
+        private Part(byte[] id,byte[] path,byte[] title,boolean reading) {
+            this.id=utf8String(id); this.path=utf8String(path); this.title=utf8String(title); inReadingOrder=reading;
+        }
+    }
+    public static final class Publication implements AutoCloseable {
+        private final Object gate=new Object();
+        private long handle;
+        public Publication(String path) { handle=nativePublicationOpen(pathBytes(path),false); }
+        public Publication(byte[] epub) { handle=nativePublicationOpen(Objects.requireNonNull(epub),true); }
+        private long checked() { if(handle==0) throw new IllegalStateException("Publication is closed"); return handle; }
+        public String title() { synchronized(gate) { return utf8String(nativePublicationTitle(checked())); } }
+        public Part[] parts() { synchronized(gate) { return nativePublicationParts(checked()); } }
+        public Document load(int part) {
+            if(part<0) throw new IllegalArgumentException("Negative part");
+            synchronized(gate) {
+                Document result=new Document(gate);
+                result.handle=nativePublicationLoad(checked(),part); return result;
+            }
+        }
+        @Override public void close() { synchronized(gate) { if(handle!=0) { nativePublicationClose(handle); handle=0; } } }
+    }
+    public static final class Document implements AutoCloseable {
+        private final Object gate;
+        private long handle;
+        private Document(Object gate) { this.gate=gate; }
+        public Document(String path) { gate=new Object(); handle=nativeDocumentOpen(pathBytes(path),0); }
+        public Document(byte[] bytes,Format format) {
+            gate=new Object(); handle=nativeDocumentOpen(Objects.requireNonNull(bytes),Objects.requireNonNull(format).code);
+        }
+        private long checked() { if(handle==0) throw new IllegalStateException("Document is closed"); return handle; }
+        public String title() { synchronized(gate) { return utf8String(nativeDocumentTitle(checked())); } }
+        public byte[] utf8() { synchronized(gate) { return nativeDocumentText(checked()); } }
+        public Node[] nodes() { synchronized(gate) { return nativeDocumentNodes(checked()); } }
+        public Pager pager(byte[] font,int faceIndex,LayoutConfig config) {
+            Objects.requireNonNull(font); Objects.requireNonNull(config);
+            if(faceIndex<0) throw new IllegalArgumentException("Negative face index");
+            byte[] css=config.userCSS==null ? null : pathBytes(config.userCSS);
+            synchronized(gate) {
+                Pager result=new Pager(gate);
+                result.handle=nativePagerCreate(checked(),font,faceIndex,config.page(),css,config.documentCSS,config.embeddedFonts,config.direction);
+                return result;
+            }
+        }
+        @Override public void close() { synchronized(gate) { if(handle!=0) { nativeDocumentClose(handle); handle=0; } } }
+    }
+    public static final class Pager implements AutoCloseable {
+        private final Object gate;
+        private long handle;
+        private Pager(Object gate) { this.gate=gate; }
+        /** null at EOF; an engine error invalidates the pager. */
+        public ReflowPage next() {
+            synchronized(gate) {
+                if(handle==0) throw new IllegalStateException("Pager is closed");
+                ReflowPage page=new ReflowPage(gate);
+                try { page.handle=nativePagerNext(handle); }
+                catch(EXReaderException e) { close(); throw e; }
+                return page.handle==0 ? null : page;
+            }
+        }
+        @Override public void close() { synchronized(gate) { if(handle!=0) { nativePagerClose(handle); handle=0; } } }
+    }
+    public static final class Glyph {
+        public final long start,end,node,clusterStart,clusterEnd,fontIndex;
+        public final int codepoint,glyph,color,flags,boundaries,bidiLevel;
+        public final float x,baseline,advance,size,clipLeft,clipRight,lineHeight,offsetX,offsetY;
+        private Glyph(long[] d,float[] p,int i) {
+            int a=i*12,b=i*9;
+            start=d[a]; end=d[a+1]; codepoint=(int)d[a+2]; glyph=(int)d[a+3]; node=d[a+4]; color=(int)d[a+5]; flags=(int)d[a+6];
+            clusterStart=d[a+7]; clusterEnd=d[a+8]; boundaries=(int)d[a+9]; fontIndex=d[a+10]; bidiLevel=(int)d[a+11];
+            x=p[b]; baseline=p[b+1]; advance=p[b+2]; size=p[b+3]; clipLeft=p[b+4]; clipRight=p[b+5]; lineHeight=p[b+6]; offsetX=p[b+7]; offsetY=p[b+8];
+        }
+    }
+    public static final class Line {
+        public final long start,end,glyphStart,glyphCount;
+        public final float x,y,width,height;
+        private Line(long[] d,float[] p,int i) {
+            int a=i*4; start=d[a]; end=d[a+1]; glyphStart=d[a+2]; glyphCount=d[a+3];
+            x=p[a]; y=p[a+1]; width=p[a+2]; height=p[a+3];
+        }
+    }
+    public static final class Box {
+        public final int kind,background,borderColor,flags;
+        public final long node,resource,start,end;
+        public final float x,y,width,height,borderWidth;
+        private Box(long[] d,float[] p,int i) {
+            int a=i*8,b=i*5;
+            kind=(int)d[a]; node=d[a+1]; resource=d[a+2]; start=d[a+3]; end=d[a+4]; background=(int)d[a+5]; borderColor=(int)d[a+6]; flags=(int)d[a+7];
+            x=p[b]; y=p[b+1]; width=p[b+2]; height=p[b+3]; borderWidth=p[b+4];
+        }
+    }
+    public static final class LayoutSnapshot {
+        public final long start,end;
+        public final int writingMode; // 0 horizontal-tb, 1 vertical-rl, 2 vertical-lr.
+        public final Glyph[] glyphs;
+        public final Line[] lines;
+        public final Box[] boxes;
+        private LayoutSnapshot(long start,long end,int mode,long[] gd,float[] gp,long[] ld,float[] lp,long[] bd,float[] bp) {
+            this.start=start; this.end=end; writingMode=mode;
+            glyphs=new Glyph[gd.length/12]; for(int i=0;i<glyphs.length;i++) glyphs[i]=new Glyph(gd,gp,i);
+            lines=new Line[ld.length/4]; for(int i=0;i<lines.length;i++) lines[i]=new Line(ld,lp,i);
+            boxes=new Box[bd.length/8]; for(int i=0;i<boxes.length;i++) boxes[i]=new Box(bd,bp,i);
+        }
+    }
+    public static final class FontAxis {
+        public final int tag,flags;
+        public final double minimum,initial,maximum,value;
+        private FontAxis(double[] a,int i) { i*=6; tag=(int)(long)a[i]; flags=(int)a[i+1]; minimum=a[i+2]; initial=a[i+3]; maximum=a[i+4]; value=a[i+5]; }
+    }
+    public static final class FontSource {
+        public final byte[] data;
+        public final int faceIndex;
+        public final FontAxis[] axes;
+        private FontSource(byte[] data,int face,double[] axes) {
+            this.data=data; faceIndex=face; this.axes=new FontAxis[axes.length/6];
+            for(int i=0;i<this.axes.length;i++) this.axes[i]=new FontAxis(axes,i);
+        }
+    }
+    /** Owned native page; close after use. Snapshots/bitmaps survive close(). */
+    public static final class ReflowPage implements AutoCloseable {
+        private final Object gate;
+        private long handle;
+        private ReflowPage(Object gate) { this.gate=gate; }
+        private long checked() { if(handle==0) throw new IllegalStateException("Page is closed"); return handle; }
+        public LayoutSnapshot snapshot() { synchronized(gate) { return nativePageSnapshot(checked()); } }
+        public FontSource fontSource(int index) {
+            if(index<0) throw new IllegalArgumentException("Negative font index");
+            synchronized(gate) { return nativePageFont(checked(),index); }
+        }
+        public Bitmap image(int resource) {
+            if(resource<0) throw new IllegalArgumentException("Negative resource index");
+            synchronized(gate) { return nativePageImage(checked(),resource); }
+        }
+        public long hitTest(float x,float y) { synchronized(gate) { return nativePageHit(checked(),x,y); } }
+        public Bitmap render() { synchronized(gate) { return nativePageRender(checked()); } }
+        @Override public void close() { synchronized(gate) { if(handle!=0) { nativePageClose(handle); handle=0; } } }
+    }
+    private static native long nativePublicationOpen(byte[] bytes,boolean memory);
+    private static native byte[] nativePublicationTitle(long handle);
+    private static native Part[] nativePublicationParts(long handle);
+    private static native long nativePublicationLoad(long handle,int part);
+    private static native void nativePublicationClose(long handle);
+    private static native long nativeDocumentOpen(byte[] bytes,int format);
+    private static native byte[] nativeDocumentTitle(long handle);
+    private static native byte[] nativeDocumentText(long handle);
+    private static native Node[] nativeDocumentNodes(long handle);
+    private static native void nativeDocumentClose(long handle);
+    private static native long nativePagerCreate(long handle,byte[] font,int face,float[] page,byte[] css,boolean documentCSS,boolean embeddedFonts,int direction);
+    private static native long nativePagerNext(long handle);
+    private static native void nativePagerClose(long handle);
+    private static native LayoutSnapshot nativePageSnapshot(long handle);
+    private static native FontSource nativePageFont(long handle,int index);
+    private static native Bitmap nativePageImage(long handle,int resource);
+    private static native long nativePageHit(long handle,float x,float y);
+    private static native Bitmap nativePageRender(long handle);
+    private static native void nativePageClose(long handle);
     private static native String nativeVersion();
     private static native byte[][] nativeReadXMP(byte[] packet);
     private static native byte[][] nativePdfMetadata(long handle);

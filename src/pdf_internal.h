@@ -111,6 +111,19 @@ int exr_pdf_standard_font(const char *name);
 int exr_pdf_standard_width(const char *font,const char *glyph,double *width);
 typedef enum { EXR_PDF_DEVICE_GRAY=1,EXR_PDF_DEVICE_RGB=3,EXR_PDF_DEVICE_CMYK=4 } exr_pdf_color_space;
 typedef struct { exr_pdf_color_space space; double values[4],alpha; } exr_pdf_color;
+/* Immutable source spaces shared by vector colours and image samples. CIE
+   conversion targets fixed sRGB/D65; ICCBased uses its Alternate, not LUTs. */
+typedef struct exr_pdf_colorspace exr_pdf_colorspace;
+exr_status exr_pdf_colorspace_open(exr_pdf_file *file,uint32_t value,exr_pdf_file *resource_file,
+  uint32_t resources,const exr_control *control,exr_pdf_colorspace **out,exr_error *error);
+void exr_pdf_colorspace_free(exr_pdf_colorspace *space);
+size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *space);
+unsigned exr_pdf_colorspace_components(const exr_pdf_colorspace *space);
+exr_pdf_color_space exr_pdf_colorspace_device(const exr_pdf_colorspace *space);
+int exr_pdf_colorspace_indexed(const exr_pdf_colorspace *space);
+void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *space,double ranges[8]);
+void exr_pdf_colorspace_initial(const exr_pdf_colorspace *space,double values[4]);
+void exr_pdf_colorspace_rgb(const exr_pdf_colorspace *space,const double values[4],double rgb[3]);
 typedef struct {
   exr_pdf_color fill,stroke; exr_vector_stroke_style line;
   const double *dashes; size_t dash_count; double dash_phase,matrix[6];

@@ -46,9 +46,16 @@ hashes and reproduces the committed header. All these additional Unicode files
 and derived tables use the same **Unicode-3.0** license, whose full notice is
 `tests/fixtures/unicode/LICENSE.txt` and is installed with the SDK.
 
+`src/indic_data.h` additionally derives full script tags, Indic syllabic/positional
+categories and canonical combining classes from pinned Unicode 17
+`Scripts.txt`, `PropertyValueAliases.txt`, `IndicSyllabicCategory.txt`,
+`IndicPositionalCategory.txt` and `UnicodeData.txt`. Reproduce and check using
+`python tools/generate_indic.py --download --check`; the same Unicode-3.0
+notice applies.
+
 ## Original font fixtures and development tools
 
-`tests/fixtures/fonts` and `tests/fixtures/shaping` contain original geometric
+`tests/fixtures/fonts`, `tests/fixtures/shaping` and `tests/fixtures/indic` contain original geometric
 glyphs and OpenType rules, GPL-3.0-only, copyright 2026 EXReader contributors.
 Their generators use fontTools during development. The committed fonts require
 neither fontTools nor Python at build or runtime.

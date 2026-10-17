@@ -213,3 +213,246 @@ JNIEXPORT jfloatArray JNICALL Java_org_exreader_EXReader_nativePcmRead(JNIEnv *e
   free(samples); return (*env)->ExceptionCheck(env) ? NULL : out;
 }
 JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePcmClose(JNIEnv *env,jclass cls,jlong handle) { (void)cls; exr_pcm_free(pointer(env,handle)); }
+
+/* Java serializes each publication and its descendants through one shared gate.
+   These references let close(parent) precede close(child) without dangling C data. */
+typedef struct { exr_document *document; size_t refs; } jni_document;
+typedef struct { jni_document *owner; exr_font *font; exr_pager *pager; } jni_pager;
+typedef struct { jni_document *owner; exr_layout *layout; } jni_page;
+static jobject bitmap_value(JNIEnv *env,const exr_bitmap *b) {
+  jbyteArray pixels; jclass type; jmethodID ctor; jobject out;
+  if(!b || !b->pixels) return NULL;
+  pixels=byte_array(env,b->pixels,(size_t)b->stride*b->height); if(!pixels) return NULL;
+  type=(*env)->FindClass(env,"org/exreader/EXReader$Bitmap"); if(!type) return NULL;
+  ctor=(*env)->GetMethodID(env,type,"<init>","(IIII[B)V"); if(!ctor) return NULL;
+  out=(*env)->NewObject(env,type,ctor,(jint)b->width,(jint)b->height,(jint)b->stride,(jint)b->channels,pixels);
+  return (*env)->ExceptionCheck(env) ? NULL : out;
+}
+static void document_release(jni_document *d) { if(d && !--d->refs) { exr_document_free(d->document); free(d); } }
+static void *input_copy(JNIEnv *env,jbyteArray bytes,size_t limit,size_t *size) {
+  jsize n; char *out; exr_error error={0};
+  if(!bytes) { argument(env,"Missing input bytes"); return NULL; }
+  n=(*env)->GetArrayLength(env,bytes);
+  if((size_t)n>limit) { argument(env,"Input exceeds adapter limit"); return NULL; }
+  out=malloc((size_t)n+1);
+  if(!out) { engine_error(env,EXR_MEMORY,&error); return NULL; }
+  if(n) (*env)->GetByteArrayRegion(env,bytes,0,n,(jbyte *)out);
+  if((*env)->ExceptionCheck(env)) { free(out); return NULL; }
+  out[n]=0; *size=(size_t)n; return out;
+}
+static jbyteArray string_bytes(JNIEnv *env,const char *s) { return s ? byte_array(env,s,strlen(s)) : NULL; }
+JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePublicationOpen(JNIEnv *env,jclass cls,jbyteArray bytes,jboolean memory) {
+  size_t size=0; void *input=input_copy(env,bytes,128*1024*1024,&size); exr_publication *p=NULL; exr_error error={0}; exr_status status; (void)cls;
+  if(!input) return 0;
+  if(!memory && (!size || memchr(input,0,size))) { free(input); argument(env,"Invalid publication path"); return 0; }
+  status=memory ? exr_publication_open_memory(EXR_EPUB,input,size,&p,&error) : exr_publication_open(input,&p,&error);
+  free(input); if(status!=EXR_OK) engine_error(env,status,&error); return (jlong)(intptr_t)p;
+}
+JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePublicationClose(JNIEnv *env,jclass cls,jlong handle) { (void)cls; exr_publication_free(pointer(env,handle)); }
+JNIEXPORT jbyteArray JNICALL Java_org_exreader_EXReader_nativePublicationTitle(JNIEnv *env,jclass cls,jlong handle) {
+  exr_publication *p=pointer(env,handle); (void)cls; return p ? string_bytes(env,exr_publication_title(p)) : NULL;
+}
+JNIEXPORT jobjectArray JNICALL Java_org_exreader_EXReader_nativePublicationParts(JNIEnv *env,jclass cls,jlong handle) {
+  exr_publication *p=pointer(env,handle); const exr_part *parts; size_t count=0,i; jobjectArray out; jclass type; jmethodID ctor; (void)cls;
+  if(!p) return NULL;
+  parts=exr_publication_parts(p,&count);
+  if(count>INT_MAX) { argument(env,"Too many parts"); return NULL; }
+  type=(*env)->FindClass(env,"org/exreader/EXReader$Part"); if(!type) return NULL;
+  ctor=(*env)->GetMethodID(env,type,"<init>","([B[B[BZ)V"); if(!ctor) return NULL;
+  out=(*env)->NewObjectArray(env,(jsize)count,type,NULL); if(!out) return NULL;
+  for(i=0;i<count;i++) {
+    jbyteArray id,path,title; jobject part;
+    if((*env)->PushLocalFrame(env,8)<0) return NULL;
+    id=string_bytes(env,parts[i].id); if((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env,NULL); return NULL; }
+    path=string_bytes(env,parts[i].path); if((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env,NULL); return NULL; }
+    title=string_bytes(env,parts[i].title); if((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env,NULL); return NULL; }
+    part=(*env)->NewObject(env,type,ctor,id,path,title,(jboolean)(parts[i].in_reading_order!=0));
+    if((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env,NULL); return NULL; }
+    (*env)->SetObjectArrayElement(env,out,(jsize)i,part); (*env)->PopLocalFrame(env,NULL);
+    if((*env)->ExceptionCheck(env)) return NULL;
+  }
+  return out;
+}
+JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePublicationLoad(JNIEnv *env,jclass cls,jlong handle,jint part) {
+  exr_publication *p=pointer(env,handle); jni_document *d; exr_status status; exr_error error={0}; (void)cls;
+  if(!p) return 0;
+  if(part<0) { argument(env,"Negative part"); return 0; }
+  d=calloc(1,sizeof(*d)); if(!d) { engine_error(env,EXR_MEMORY,&error); return 0; }
+  status=exr_publication_load(p,(size_t)part,&d->document,&error);
+  if(status!=EXR_OK) { free(d); engine_error(env,status,&error); return 0; }
+  d->refs=1; return (jlong)(intptr_t)d;
+}
+JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativeDocumentOpen(JNIEnv *env,jclass cls,jbyteArray bytes,jint format) {
+  size_t size=0; void *input=input_copy(env,bytes,128*1024*1024,&size); jni_document *d; exr_status status; exr_error error={0}; (void)cls;
+  if(!input) return 0;
+  if(format<0 || format>EXR_MOBI || (!format && (!size || memchr(input,0,size)))) { free(input); argument(env,"Invalid document format or path"); return 0; }
+  d=calloc(1,sizeof(*d)); if(!d) { free(input); engine_error(env,EXR_MEMORY,&error); return 0; }
+  status=format ? exr_document_open_memory((exr_format)format,input,size,&d->document,&error) : exr_document_open(input,&d->document,&error);
+  free(input); if(status!=EXR_OK) { free(d); engine_error(env,status,&error); return 0; }
+  d->refs=1; return (jlong)(intptr_t)d;
+}
+JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativeDocumentClose(JNIEnv *env,jclass cls,jlong handle) { (void)cls; document_release(pointer(env,handle)); }
+JNIEXPORT jbyteArray JNICALL Java_org_exreader_EXReader_nativeDocumentTitle(JNIEnv *env,jclass cls,jlong handle) {
+  jni_document *d=pointer(env,handle); (void)cls; return d ? string_bytes(env,exr_document_title(d->document)) : NULL;
+}
+JNIEXPORT jbyteArray JNICALL Java_org_exreader_EXReader_nativeDocumentText(JNIEnv *env,jclass cls,jlong handle) {
+  jni_document *d=pointer(env,handle); const char *text; size_t size=0; (void)cls;
+  if(!d) return NULL;
+  text=exr_document_text(d->document,&size); return byte_array(env,text,size);
+}
+static jlong index_value(size_t value) { return value==SIZE_MAX ? -1 : (jlong)value; }
+JNIEXPORT jobjectArray JNICALL Java_org_exreader_EXReader_nativeDocumentNodes(JNIEnv *env,jclass cls,jlong handle) {
+  jni_document *d=pointer(env,handle); const exr_node *nodes; size_t count=0,i,j; jobjectArray out; jclass type,bytes_type; jmethodID ctor; (void)cls;
+  if(!d) return NULL;
+  nodes=exr_document_nodes(d->document,&count); if(count>INT_MAX) { argument(env,"Too many nodes"); return NULL; }
+  type=(*env)->FindClass(env,"org/exreader/EXReader$Node"); if(!type) return NULL;
+  ctor=(*env)->GetMethodID(env,type,"<init>","(I[J[[B)V"); if(!ctor) return NULL;
+  bytes_type=(*env)->FindClass(env,"[B"); if(!bytes_type) return NULL;
+  out=(*env)->NewObjectArray(env,(jsize)count,type,NULL); if(!out) return NULL;
+  for(i=0;i<count;i++) {
+    const exr_node *n=&nodes[i]; jlong indices[6]; jlongArray ranges; jobjectArray strings; jobject node;
+    if(n->attribute_count>(size_t)(INT_MAX-2)/2) { argument(env,"Too many node attributes"); return NULL; }
+    if((*env)->PushLocalFrame(env,8)<0) return NULL;
+    indices[0]=index_value(n->parent); indices[1]=index_value(n->first_child); indices[2]=index_value(n->next_sibling);
+    indices[3]=index_value(n->chapter); indices[4]=index_value(n->start); indices[5]=index_value(n->end);
+    ranges=(*env)->NewLongArray(env,6); if(!ranges) { (*env)->PopLocalFrame(env,NULL); return NULL; }
+    (*env)->SetLongArrayRegion(env,ranges,0,6,indices);
+    if((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env,NULL); return NULL; }
+    strings=(*env)->NewObjectArray(env,(jsize)(2+2*n->attribute_count),bytes_type,NULL);
+    if(!strings) { (*env)->PopLocalFrame(env,NULL); return NULL; }
+    for(j=0;j<2+n->attribute_count*2;j++) {
+      const char *value=j==0 ? n->name : j==1 ? n->text : (j&1) ? n->attributes[(j-2)/2].value : n->attributes[(j-2)/2].name;
+      jbyteArray text=string_bytes(env,value);
+      if((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env,NULL); return NULL; }
+      (*env)->SetObjectArrayElement(env,strings,(jsize)j,text); if(text) (*env)->DeleteLocalRef(env,text);
+      if((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env,NULL); return NULL; }
+    }
+    node=(*env)->NewObject(env,type,ctor,(jint)n->kind,ranges,strings);
+    if((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env,NULL); return NULL; }
+    (*env)->SetObjectArrayElement(env,out,(jsize)i,node); (*env)->PopLocalFrame(env,NULL);
+    if((*env)->ExceptionCheck(env)) return NULL;
+  }
+  return out;
+}
+JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePagerCreate(JNIEnv *env,jclass cls,jlong handle,jbyteArray font,jint face,jfloatArray page,jbyteArray css,jboolean styles,jboolean embedded,jint direction) {
+  jni_document *d=pointer(env,handle); jni_pager *p=NULL; void *program=NULL; char *sheet=NULL; size_t font_size=0,css_size=0;
+  exr_font_input input={0}; exr_layout_config config=exr_layout_config_defaults(); exr_error error={0}; exr_status status=EXR_OK; jfloat values[6]; (void)cls;
+  if(!d) return 0;
+  if(face<0 || !page || (*env)->GetArrayLength(env,page)!=6 || direction<0 || direction>2) { argument(env,"Invalid layout config"); return 0; }
+  (*env)->GetFloatArrayRegion(env,page,0,6,values); if((*env)->ExceptionCheck(env)) return 0;
+  config.page.width=values[0]; config.page.height=values[1]; config.page.margin=values[2]; config.page.font_size=values[3]; config.page.line_height=values[4]; config.page.paragraph_spacing=values[5];
+  config.document_css=styles!=0; config.embedded_fonts=embedded!=0; config.direction=(exr_direction)direction;
+  program=input_copy(env,font,128*1024*1024,&font_size); if(!program) return 0;
+  if(css) {
+    sheet=input_copy(env,css,4*1024*1024,&css_size); if(!sheet) goto finish;
+    if(memchr(sheet,0,css_size)) { argument(env,"NUL in stylesheet"); goto finish; }
+    config.user_css=sheet;
+  }
+  p=calloc(1,sizeof(*p)); if(!p) { status=EXR_MEMORY; goto finish; }
+  input.data=program; input.size=font_size; input.face_index=(unsigned)face;
+  status=exr_font_create(&input,1,&p->font,&error); if(status!=EXR_OK) goto finish;
+  status=exr_pager_create(d->document,p->font,&config,&p->pager,&error);
+finish:
+  free(program); free(sheet);
+  if(status!=EXR_OK) engine_error(env,status,&error);
+  if(status!=EXR_OK || (*env)->ExceptionCheck(env)) { if(p) { exr_pager_free(p->pager); exr_font_free(p->font); free(p); } return 0; }
+  p->owner=d; d->refs++; return (jlong)(intptr_t)p;
+}
+JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePagerClose(JNIEnv *env,jclass cls,jlong handle) {
+  jni_pager *p=pointer(env,handle); (void)cls;
+  if(p) { exr_pager_free(p->pager); exr_font_free(p->font); document_release(p->owner); free(p); }
+}
+JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePagerNext(JNIEnv *env,jclass cls,jlong handle) {
+  jni_pager *p=pointer(env,handle); jni_page *page; exr_status status; exr_error error={0}; (void)cls;
+  if(!p) return 0;
+  page=calloc(1,sizeof(*page)); if(!page) { engine_error(env,EXR_MEMORY,&error); return 0; }
+  status=exr_pager_next(p->pager,&page->layout,&error);
+  if(status!=EXR_OK || !page->layout) { exr_layout_free(page->layout); free(page); if(status!=EXR_OK) engine_error(env,status,&error); return 0; }
+  page->owner=p->owner; page->owner->refs++; return (jlong)(intptr_t)page;
+}
+JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePageClose(JNIEnv *env,jclass cls,jlong handle) {
+  jni_page *p=pointer(env,handle); (void)cls; if(p) { exr_layout_free(p->layout); document_release(p->owner); free(p); }
+}
+JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePageHit(JNIEnv *env,jclass cls,jlong handle,jfloat x,jfloat y) {
+  jni_page *p=pointer(env,handle); (void)cls; return p ? index_value(exr_layout_hit_test(p->layout,0,x,y)) : -1;
+}
+JNIEXPORT jobject JNICALL Java_org_exreader_EXReader_nativePageRender(JNIEnv *env,jclass cls,jlong handle) {
+  jni_page *p=pointer(env,handle); exr_bitmap bitmap={0}; exr_error error={0}; exr_status status; jobject out; (void)cls;
+  if(!p) return NULL;
+  status=exr_render_page_color(p->layout,exr_layout_font(p->layout),0,&bitmap,&error);
+  if(status!=EXR_OK) { engine_error(env,status,&error); return NULL; }
+  out=bitmap_value(env,&bitmap);
+  exr_bitmap_free(&bitmap); return out;
+}
+JNIEXPORT jobject JNICALL Java_org_exreader_EXReader_nativePageImage(JNIEnv *env,jclass cls,jlong handle,jint resource) {
+  jni_page *p=pointer(env,handle); (void)cls;
+  if(resource<0) { argument(env,"Negative resource index"); return NULL; }
+  return p ? bitmap_value(env,exr_layout_image(p->layout,(size_t)resource)) : NULL;
+}
+JNIEXPORT jobject JNICALL Java_org_exreader_EXReader_nativePageFont(JNIEnv *env,jclass cls,jlong handle,jint index) {
+  jni_page *p=pointer(env,handle); exr_font_input input={0}; exr_font_axis *axes=NULL; size_t count=0,i;
+  exr_font *font; exr_error error={0}; exr_status status; jobject out=NULL; jbyteArray bytes; jdoubleArray coordinates; jclass type; jmethodID ctor; jdouble values[64*6]; (void)cls;
+  if(!p) return NULL;
+  if(index<0) { argument(env,"Negative font index"); return NULL; }
+  font=exr_layout_font(p->layout); status=exr_font_source(font,(size_t)index,&input,&error);
+  if(status!=EXR_OK) { engine_error(env,status,&error); return NULL; }
+  status=exr_font_axes(font,(size_t)index,&axes,&count,&error);
+  if(status!=EXR_OK) { engine_error(env,status,&error); return NULL; }
+  if(count>64) { exr_free(axes); argument(env,"Too many font axes"); return NULL; }
+  for(i=0;i<count;i++) { size_t at=i*6; values[at]=axes[i].tag; values[at+1]=axes[i].flags; values[at+2]=axes[i].minimum; values[at+3]=axes[i].initial; values[at+4]=axes[i].maximum; values[at+5]=axes[i].value; }
+  exr_free(axes);
+  bytes=byte_array(env,input.data,input.size); if(!bytes) return NULL;
+  coordinates=(*env)->NewDoubleArray(env,(jsize)(count*6)); if(!coordinates) return NULL;
+  if(count) (*env)->SetDoubleArrayRegion(env,coordinates,0,(jsize)(count*6),values);
+  if((*env)->ExceptionCheck(env)) return NULL;
+  type=(*env)->FindClass(env,"org/exreader/EXReader$FontSource"); if(!type) return NULL;
+  ctor=(*env)->GetMethodID(env,type,"<init>","([BI[D)V"); if(!ctor) return NULL;
+  out=(*env)->NewObject(env,type,ctor,bytes,(jint)input.face_index,coordinates);
+  return (*env)->ExceptionCheck(env) ? NULL : out;
+}
+JNIEXPORT jobject JNICALL Java_org_exreader_EXReader_nativePageSnapshot(JNIEnv *env,jclass cls,jlong handle) {
+  jni_page *p=pointer(env,handle); size_t ng=0,nl=0,nb=0,at; const exr_glyph *g; const exr_line *l; const exr_box *b; const exr_page *page;
+  jlongArray gd,ld,bd; jfloatArray gp,lp,bp; jclass type; jmethodID ctor; jobject out; (void)cls;
+  if(!p) return NULL;
+  page=exr_layout_pages(p->layout,NULL); g=exr_layout_glyphs(p->layout,&ng); l=exr_layout_lines(p->layout,&nl); b=exr_layout_boxes(p->layout,&nb);
+  if(ng>INT_MAX/12 || nl>INT_MAX/4 || nb>INT_MAX/8) { argument(env,"Layout snapshot is too large"); return NULL; }
+  gd=(*env)->NewLongArray(env,(jsize)(ng*12)); if(!gd) return NULL;
+  gp=(*env)->NewFloatArray(env,(jsize)(ng*9)); if(!gp) return NULL;
+  ld=(*env)->NewLongArray(env,(jsize)(nl*4)); if(!ld) return NULL;
+  lp=(*env)->NewFloatArray(env,(jsize)(nl*4)); if(!lp) return NULL;
+  bd=(*env)->NewLongArray(env,(jsize)(nb*8)); if(!bd) return NULL;
+  bp=(*env)->NewFloatArray(env,(jsize)(nb*5)); if(!bp) return NULL;
+  for(at=0;at<ng;at+=128) {
+    jlong d[128*12]; jfloat f[128*9]; size_t i,n=ng-at; if(n>128) n=128;
+    for(i=0;i<n;i++) {
+      const exr_glyph *v=&g[at+i]; size_t a=i*12,c=i*9;
+      d[a]=index_value(v->start); d[a+1]=index_value(v->end); d[a+2]=v->codepoint; d[a+3]=v->glyph; d[a+4]=index_value(v->node); d[a+5]=v->color; d[a+6]=v->flags;
+      d[a+7]=index_value(v->cluster_start); d[a+8]=index_value(v->cluster_end); d[a+9]=v->boundaries; d[a+10]=index_value(v->font_index); d[a+11]=v->bidi_level;
+      f[c]=v->x; f[c+1]=v->baseline; f[c+2]=v->advance; f[c+3]=v->size; f[c+4]=v->clip_left; f[c+5]=v->clip_right; f[c+6]=v->line_height; f[c+7]=v->offset_x; f[c+8]=v->offset_y;
+    }
+    (*env)->SetLongArrayRegion(env,gd,(jsize)(at*12),(jsize)(n*12),d); if((*env)->ExceptionCheck(env)) return NULL;
+    (*env)->SetFloatArrayRegion(env,gp,(jsize)(at*9),(jsize)(n*9),f); if((*env)->ExceptionCheck(env)) return NULL;
+  }
+  for(at=0;at<nl;at+=128) {
+    jlong d[128*4]; jfloat f[128*4]; size_t i,n=nl-at; if(n>128) n=128;
+    for(i=0;i<n;i++) { const exr_line *v=&l[at+i]; size_t a=i*4;
+      d[a]=index_value(v->start); d[a+1]=index_value(v->end); d[a+2]=index_value(v->glyph_start); d[a+3]=(jlong)v->glyph_count;
+      f[a]=v->x; f[a+1]=v->y; f[a+2]=v->width; f[a+3]=v->height;
+    }
+    (*env)->SetLongArrayRegion(env,ld,(jsize)(at*4),(jsize)(n*4),d); if((*env)->ExceptionCheck(env)) return NULL;
+    (*env)->SetFloatArrayRegion(env,lp,(jsize)(at*4),(jsize)(n*4),f); if((*env)->ExceptionCheck(env)) return NULL;
+  }
+  for(at=0;at<nb;at+=128) {
+    jlong d[128*8]; jfloat f[128*5]; size_t i,n=nb-at; if(n>128) n=128;
+    for(i=0;i<n;i++) { const exr_box *v=&b[at+i]; size_t a=i*8,c=i*5;
+      d[a]=v->kind; d[a+1]=index_value(v->node); d[a+2]=index_value(v->resource); d[a+3]=index_value(v->start); d[a+4]=index_value(v->end); d[a+5]=v->background; d[a+6]=v->border_color; d[a+7]=v->flags;
+      f[c]=v->x; f[c+1]=v->y; f[c+2]=v->width; f[c+3]=v->height; f[c+4]=v->border_width;
+    }
+    (*env)->SetLongArrayRegion(env,bd,(jsize)(at*8),(jsize)(n*8),d); if((*env)->ExceptionCheck(env)) return NULL;
+    (*env)->SetFloatArrayRegion(env,bp,(jsize)(at*5),(jsize)(n*5),f); if((*env)->ExceptionCheck(env)) return NULL;
+  }
+  type=(*env)->FindClass(env,"org/exreader/EXReader$LayoutSnapshot"); if(!type) return NULL;
+  ctor=(*env)->GetMethodID(env,type,"<init>","(JJI[J[F[J[F[J[F)V"); if(!ctor) return NULL;
+  out=(*env)->NewObject(env,type,ctor,(jlong)page->start,(jlong)page->end,(jint)exr_layout_writing_mode(p->layout),gd,gp,ld,lp,bd,bp);
+  return (*env)->ExceptionCheck(env) ? NULL : out;
+}

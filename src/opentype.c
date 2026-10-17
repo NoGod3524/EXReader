@@ -2,6 +2,7 @@
 #include "opentype_internal.h"
 #include "text_internal.h"
 #include "shaping_data.h"
+#include "indic_data.h"
 #include FT_TRUETYPE_TABLES_H
 #include FT_MULTIPLE_MASTERS_H
 
@@ -14,6 +15,7 @@ typedef struct {
   exr_shaped_glyph out;
   uint32_t cp;
   unsigned form, ligature, component;
+  unsigned syllable, category, position, indic_flags;
   size_t parent;
   size_t previous_visible, previous_base;
   float anchor_x, anchor_y;
@@ -34,6 +36,7 @@ struct ot_work {
   FT_Fixed coordinates[64];
   unsigned axis_count;
   int positioning;
+  int indic, indic_old, per_syllable, probing;
   int rtl;
   int vertical;
   size_t next_scan;
@@ -140,17 +143,33 @@ static unsigned property(const exr_shape_range *ranges, size_t count, uint32_t c
 static unsigned joining(uint32_t cp) {
   return property(exr_shape_joining, sizeof(exr_shape_joining)/sizeof(*exr_shape_joining), cp);
 }
+static unsigned indic_property(const exr_indic_range *ranges, size_t count, uint32_t cp) {
+  size_t lo = 0, hi = count;
+  while (lo < hi) {
+    size_t mid = lo+(hi-lo)/2;
+    if (cp < ranges[mid].first) hi = mid;
+    else if (cp > ranges[mid].last) lo = mid+1;
+    else return ranges[mid].value;
+  }
+  return 0;
+}
+#define INDIC_PROPERTY(name, cp) indic_property(exr_indic_##name, sizeof(exr_indic_##name)/sizeof(*exr_indic_##name), cp)
+uint32_t exr_ot_script(uint32_t codepoint) {
+  unsigned fast = property(exr_shape_script, sizeof(exr_shape_script)/sizeof(*exr_shape_script), codepoint);
+  if (fast) return fast == 1 ? EXR_TAG('l','a','t','n') : EXR_TAG('a','r','a','b');
+  return exr_indic_script_tags[INDIC_PROPERTY(script, codepoint)];
+}
 int exr_ot_transparent(uint32_t codepoint) { return joining(codepoint) == 5; }
 static unsigned item_class(ot_work *w, size_t at) {
   unsigned cls = 0;
   if (w->gdef.p) cls = glyph_class(optional16(w->gdef, 4), w->items[at].out.glyph);
-  if (!cls && joining(w->items[at].cp) == 5) cls = 3;
+  if (!cls && !w->indic && joining(w->items[at].cp) == 5) cls = 3;
   return cls;
 }
 static int ignored(ot_work *w, size_t at, unsigned flags, unsigned filtering) {
   unsigned cls;
   if (w->items[at].out.flags & EXR_GLYPH_HIDDEN)
-    return w->items[at].cp != 0x200c; /* ZWNJ is a ligature/context barrier. */
+    return w->items[at].cp != 0x200c && !(w->indic && !w->positioning && w->items[at].cp == 0x200d);
   cls = item_class(w, at);
   if ((cls == 1 && (flags & 2)) || (cls == 2 && (flags & 4)) ||
       (cls == 3 && (flags & 8))) return 1;
@@ -174,15 +193,17 @@ static int ignored(ot_work *w, size_t at, unsigned flags, unsigned filtering) {
   return 0;
 }
 static size_t next_item(ot_work *w, size_t at, int backwards, unsigned flags, unsigned filtering) {
+  unsigned syllable = w->items[at].syllable;
   while (work(w, 1)) {
     if (backwards) { if (!at) return SIZE_MAX; at--; }
     else { if (++at >= w->count) return SIZE_MAX; }
+    if (w->per_syllable && w->items[at].syllable != syllable) return SIZE_MAX;
     if (!ignored(w, at, flags, filtering)) return at;
   }
   return SIZE_MAX;
 }
 static int resize_items(ot_work *w, size_t count) {
-  if (count > EXR_MAX_ITEMS) { w->status = EXR_LIMIT; return 0; }
+  if (count > EXR_MAX_ITEMS || (w->probing && count > OT_CONTEXT)) { w->status = EXR_LIMIT; return 0; }
   if (!exr_grow((void **)&w->items, &w->capacity, count, sizeof(*w->items))) {
     w->status = EXR_MEMORY; return 0;
   }
@@ -357,6 +378,7 @@ static int substitute(ot_work *w, ot_view sub, unsigned type, size_t at,
     } else { w->status = EXR_FONT; return 0; }
     if (!valid_glyph(w, replacement)) return 0;
     w->items[at].out.glyph = replacement;
+    w->items[at].indic_flags |= 1;
     return 1;
   }
   if (type == 2 || type == 3) {
@@ -375,6 +397,7 @@ static int substitute(ot_work *w, ot_view sub, unsigned type, size_t at,
       replacement = u16(sequence, 2+(size_t)(value-1)*2);
       if (!valid_glyph(w, replacement)) return 0;
       w->items[at].out.glyph = replacement;
+      w->items[at].indic_flags |= 1;
       return 1;
     }
     if (!work(w, n) || !work(w, w->count-at-1) || !resize_items(w, w->count-1+n)) return 0;
@@ -386,6 +409,7 @@ static int substitute(ot_work *w, ot_view sub, unsigned type, size_t at,
       if (!valid_glyph(w, replacement)) return 0;
       w->items[at+i] = original;
       w->items[at+i].out.glyph = replacement;
+      w->items[at+i].indic_flags = (original.indic_flags | 1u | 4u) & ~2u;
     }
     return 1;
   }
@@ -415,6 +439,10 @@ static int substitute(ot_work *w, ot_view sub, unsigned type, size_t at,
       if (!work(w, w->count-at)) return 0;
       end = w->items[cursor].out.end;
       w->items[at].out.glyph = replacement;
+      w->items[at].indic_flags = (w->items[at].indic_flags | 1u | 2u) & ~4u;
+      if (w->indic) for (i = 1; i < components; i++)
+        if (w->items[positions[i]].position > w->items[at].position)
+          w->items[at].position = w->items[positions[i]].position;
       w->items[at].out.end = end;
       w->items[at].ligature = ++w->next_ligature;
       w->items[at].component = components;
@@ -461,6 +489,7 @@ static int substitute(ot_work *w, ot_view sub, unsigned type, size_t at,
     glyph = u16(sub, field+(size_t)covered*2);
     if (!valid_glyph(w, glyph)) return 0;
     w->items[at].out.glyph = glyph;
+    w->items[at].indic_flags |= 1;
     return 1;
   }
   w->status = EXR_FONT;
@@ -792,7 +821,13 @@ static ot_view language(ot_work *w, ot_view table, uint32_t script, uint32_t lan
     w->status = EXR_FONT; return empty;
   }
   if (!bounds(w->lookups, 2, u16(w->lookups, 0), 2)) return empty;
-  selected = tag_table(scripts, 0, script);
+  if (w->indic) {
+    selected = tag_table(scripts, 0, EXR_TAG('d','e','v','2'));
+    if (!selected.p) {
+      selected = tag_table(scripts, 0, EXR_TAG('d','e','v','a'));
+      if (!w->positioning) w->indic_old = selected.p != NULL;
+    }
+  } else selected = tag_table(scripts, 0, script);
   if (!selected.p) selected = tag_table(scripts, 0, EXR_TAG('D','F','L','T'));
   if (!selected.p) return empty;
   if (lang) {
@@ -914,6 +949,327 @@ static int feature_tag(ot_work *w, ot_view features, ot_view lang, uint32_t tag,
   }
   return found;
 }
+
+enum { IC_OTHER, IC_C, IC_V, IC_N, IC_H, IC_M, IC_SM, IC_VD, IC_ZWJ, IC_ZWNJ, IC_CIRCLE, IC_PLACE };
+enum { IP_REPH, IP_PRE_M, IP_PRE_C, IP_BASE, IP_MAIN, IP_BELOW, IP_SUB, IP_BEFORE_POST, IP_POST, IP_AFTER_POST, IP_SMVD };
+enum { IM_RPHF=16, IM_PREF=32, IM_BLWF=64, IM_ABVF=128, IM_HALF=256, IM_PSTF=512, IM_INIT=1024 };
+enum { IF_SUBSTITUTED=1, IF_LIGATED=2, IF_MULTIPLIED=4 };
+static unsigned indic_category(uint32_t cp) {
+  if (cp == 0x25cc) return IC_CIRCLE;
+  if (cp == 0xa0 || cp == 0xd7) return IC_PLACE;
+  switch (INDIC_PROPERTY(isc, cp)) {
+    case EXR_ISC_CONSONANT: case EXR_ISC_CONSONANT_WITH_STACKER: return IC_C;
+    case EXR_ISC_VOWEL_INDEPENDENT: return IC_V;
+    case EXR_ISC_NUKTA: return IC_N;
+    case EXR_ISC_VIRAMA: return IC_H;
+    case EXR_ISC_VOWEL_DEPENDENT: return IC_M;
+    case EXR_ISC_BINDU: case EXR_ISC_VISARGA: return IC_SM;
+    case EXR_ISC_CANTILLATION_MARK: case EXR_ISC_TONE_MARK: case EXR_ISC_SYLLABLE_MODIFIER: return IC_VD;
+    case EXR_ISC_JOINER: return IC_ZWJ;
+    case EXR_ISC_NON_JOINER: return IC_ZWNJ;
+    case EXR_ISC_CONSONANT_PLACEHOLDER: return IC_PLACE;
+    default: return IC_OTHER;
+  }
+}
+static int indic_consonant(const ot_item *item) {
+  return item->category == IC_C || item->category == IC_V || item->category == IC_CIRCLE || item->category == IC_PLACE;
+}
+static int indic_joiner(const ot_item *item) { return item->category == IC_ZWJ || item->category == IC_ZWNJ; }
+static int indic_halant(const ot_item *item) { return item->category == IC_H && !(item->indic_flags & IF_LIGATED); }
+static void indic_move(ot_work *w, size_t from, size_t to) {
+  ot_item item;
+  size_t length = from > to ? from-to : to-from;
+  if (!length || !work(w, length)) return;
+  item = w->items[from];
+  if (from < to) memmove(w->items+from, w->items+from+1, length*sizeof(item));
+  else memmove(w->items+to+1, w->items+to, length*sizeof(item));
+  w->items[to] = item;
+}
+static void indic_setup(ot_work *w) {
+  static const uint32_t nukta_bases[] = {0x915,0x916,0x917,0x91c,0x921,0x922,0x92b,0x92f};
+  size_t i, start;
+  unsigned serial = 0;
+  /* The eight Devanagari composition exclusions must remain base+nukta.
+     Their original byte range is retained by both replacement scalars. */
+  for (i = 0; i < w->count && w->status == EXR_OK; i++) {
+    uint32_t cp = w->items[i].cp;
+    if (!work(w, 1)) return;
+    if (cp >= 0x958 && cp <= 0x95f) {
+      ot_item original = w->items[i];
+      if (!work(w, w->count-i) || !resize_items(w, w->count+1)) return;
+      memmove(w->items+i+2, w->items+i+1, (w->count-i-1)*sizeof(*w->items));
+      w->items[i].cp = nukta_bases[cp-0x958];
+      w->items[i].out.glyph = FT_Get_Char_Index(w->face->face, w->items[i].cp);
+      w->items[i+1] = original; w->items[i+1].cp = 0x93c;
+      w->items[i+1].out.glyph = FT_Get_Char_Index(w->face->face, 0x93c);
+      w->count++; i++;
+    }
+  }
+  /* Canonical combining order includes nukta before halant and Vedic accents.
+     Stable insertion is linear for already ordered text; moves share the
+     ordinary shaping budget, including malformed long combining runs. */
+  for (i = 1; i < w->count && w->status == EXR_OK; i++) {
+    unsigned current = INDIC_PROPERTY(ccc, w->items[i].cp);
+    size_t target = i;
+    if (!work(w, 1)) return;
+    while (current && target) {
+      unsigned previous = INDIC_PROPERTY(ccc, w->items[target-1].cp);
+      if (!previous || previous <= current) break;
+      if (!work(w, 1)) return;
+      target--;
+    }
+    indic_move(w, i, target);
+  }
+  for (i = 0; i < w->count; i++) w->items[i].category = indic_category(w->items[i].cp);
+  for (start = 0; start < w->count && w->status == EXR_OK;) {
+    size_t end = start+1, j, source_start = w->items[start].out.start, source_end = w->items[start].out.end;
+    unsigned first = w->items[start].category;
+    int pending = first == IC_H, broken = first == IC_N || first == IC_H || first == IC_M || first == IC_SM || first == IC_VD;
+    if (first != IC_OTHER && first != IC_ZWJ && first != IC_ZWNJ) {
+      while (end < w->count && work(w, 1)) {
+        unsigned category = w->items[end].category;
+        if (indic_consonant(&w->items[end])) { if (!pending) break; pending = 0; }
+        else if (category == IC_H) pending = 1;
+        else if (category == IC_M || category == IC_SM || category == IC_VD) pending = 0;
+        else if (category == IC_ZWNJ && pending) { end++; break; }
+        else if (category != IC_N && category != IC_ZWJ && category != IC_ZWNJ) break;
+        end++;
+      }
+    }
+    if (broken) {
+      unsigned circle = FT_Get_Char_Index(w->face->face, 0x25cc);
+      if (circle) {
+        ot_item item = w->items[start];
+        if (!work(w, w->count-start) || !resize_items(w, w->count+1)) return;
+        memmove(w->items+start+1, w->items+start, (w->count-start)*sizeof(*w->items));
+        item.cp = 0x25cc; item.out.glyph = circle; item.category = IC_CIRCLE;
+        item.out.flags &= ~(EXR_GLYPH_HIDDEN|EXR_GLYPH_MISSING);
+        w->items[start] = item; w->count++; end++;
+      }
+    }
+    for (j = start; j < end; j++) {
+      if (w->items[j].out.start < source_start) source_start = w->items[j].out.start;
+      if (w->items[j].out.end > source_end) source_end = w->items[j].out.end;
+    }
+    serial++;
+    for (j = start; j < end; j++) {
+      w->items[j].syllable = serial;
+      w->items[j].out.start = source_start; w->items[j].out.end = source_end;
+    }
+    start = end;
+  }
+}
+/* Probe the actual GSUB implementation on a private two-glyph buffer. No
+   font mutation or second lookup parser is needed; work/cancellation charges
+   remain on the original operation. Only a two-to-one substitution is a
+   positional-form candidate, not an unrelated single-glyph substitution. */
+static int indic_pair(ot_work *w, ot_view features, ot_view lang, uint32_t tag, unsigned first, unsigned second) {
+  ot_item *saved_items = w->items, *probe;
+  size_t saved_count = w->count, saved_capacity = w->capacity, saved_scan = w->next_scan;
+  unsigned saved_ligature = w->next_ligature;
+  int result, saved_probing = w->probing;
+  if (!feature_value(w->options, tag, 1)) return 0;
+  probe = calloc(2, sizeof(*probe));
+  if (!probe) { w->status = EXR_MEMORY; return 0; }
+  probe[0].out.glyph = first; probe[1].out.glyph = second;
+  probe[0].syllable = probe[1].syllable = 1;
+  probe[0].parent = probe[1].parent = SIZE_MAX;
+  probe[0].out.end = probe[1].out.end = 1;
+  w->items = probe; w->count = w->capacity = 2; w->probing = 1;
+  feature_tag(w, features, lang, tag, 0, 1);
+  result = w->status == EXR_OK && w->count == 1 && (w->items[0].indic_flags & IF_LIGATED);
+  free(w->items); w->items = saved_items; w->count = saved_count; w->capacity = saved_capacity;
+  w->next_scan = saved_scan; w->next_ligature = saved_ligature; w->probing = saved_probing;
+  return result;
+}
+static int indic_form_pair(ot_work *w, ot_view features, ot_view lang, uint32_t tag, unsigned glyph, unsigned virama) {
+  return indic_pair(w, features, lang, tag, virama, glyph) || indic_pair(w, features, lang, tag, glyph, virama);
+}
+static void indic_initial(ot_work *w, ot_view features, ot_view lang) {
+  size_t start;
+  unsigned virama = FT_Get_Char_Index(w->face->face, 0x94d);
+  for (start = 0; start < w->count && w->status == EXR_OK;) {
+    size_t end = start+1, i, base = SIZE_MAX, limit = start;
+    int reph = 0, seen_below = 0;
+    while (end < w->count && w->items[end].syllable == w->items[start].syllable) end++;
+    if (!work(w, end-start)) return;
+    if (end-start >= 3 && w->items[start].cp == 0x930 && w->items[start+1].category == IC_H &&
+        !indic_joiner(&w->items[start+2]) &&
+        indic_pair(w, features, lang, EXR_TAG('r','p','h','f'), w->items[start].out.glyph, w->items[start+1].out.glyph)) {
+      reph = 1; limit += 2;
+    }
+    for (i = start; i < end && w->status == EXR_OK; i++) {
+      ot_item *item = &w->items[i];
+      item->position = IP_BASE; item->form &= 15;
+      if (item->category == IC_SM || item->category == IC_VD) item->position = IP_SMVD;
+      else if (item->category == IC_M) {
+        unsigned position = INDIC_PROPERTY(ipc, item->cp);
+        item->position = position == EXR_IPC_LEFT ? IP_PRE_M : position == EXR_IPC_BOTTOM ? IP_SUB : IP_AFTER_POST;
+      } else if (item->category == IC_C && virama) {
+        unsigned glyph = item->out.glyph;
+        if (indic_form_pair(w, features, lang, EXR_TAG('b','l','w','f'), glyph, virama) ||
+            indic_form_pair(w, features, lang, EXR_TAG('v','a','t','u'), glyph, virama)) item->position = IP_BELOW;
+        else if (indic_form_pair(w, features, lang, EXR_TAG('p','s','t','f'), glyph, virama) ||
+                 indic_form_pair(w, features, lang, EXR_TAG('p','r','e','f'), glyph, virama)) item->position = IP_POST;
+      }
+    }
+    for (i = end; i > limit;) {
+      ot_item *item = &w->items[--i];
+      if (indic_consonant(item)) {
+        base = i;
+        if (item->position != IP_BELOW && (item->position != IP_POST || seen_below)) break;
+        if (item->position == IP_BELOW) seen_below = 1;
+      } else if (item->category == IC_ZWJ && i > start && w->items[i-1].category == IC_H) break;
+    }
+    if (base == SIZE_MAX) { reph = 0; base = start; }
+    for (i = start; i < base; i++) if (w->items[i].position > IP_PRE_C) w->items[i].position = IP_PRE_C;
+    w->items[base].position = IP_BASE;
+    if (reph) w->items[start].position = w->items[start+1].position = IP_REPH;
+    if (w->indic_old) {
+      for (i = base+1; i < end; i++) if (w->items[i].category == IC_H) {
+        size_t last = end;
+        while (last > i+1 && !indic_consonant(&w->items[last-1])) last--;
+        if (last > i+1) indic_move(w, i, last-1);
+        break;
+      }
+    }
+    /* Virama/nukta/joiners travel with their owner. A post-base consonant
+       instead owns its preceding virama so H+Ra remains available to rkrf. */
+    {
+      unsigned previous = IP_BASE;
+      size_t last = base;
+      for (i = start; i < end; i++) {
+        ot_item *item = &w->items[i];
+        if (item->category == IC_N || item->category == IC_H || indic_joiner(item)) {
+          item->position = previous == IP_PRE_M && item->category == IC_H ? IP_BASE : previous;
+        } else if (item->position != IP_SMVD) previous = item->position;
+      }
+      for (i = base+1; i < end; i++) {
+        if (indic_consonant(&w->items[i])) {
+          size_t j;
+          for (j = last+1; j < i; j++) if (w->items[j].position < IP_SMVD) w->items[j].position = w->items[i].position;
+          last = i;
+        } else if (w->items[i].category == IC_M) last = i;
+      }
+    }
+    /* At most eleven position buckets; this stable counting sort is linear
+       even for a deliberately long repeated-mark syllable. */
+    {
+      ot_item *sorted = malloc((end-start)*sizeof(*sorted));
+      size_t counts[IP_SMVD+1] = {0}, positions[IP_SMVD+1], j, cursor = 0;
+      if (!sorted) { w->status = EXR_MEMORY; return; }
+      for (i = start; i < end; i++) counts[w->items[i].position]++;
+      for (j = 0; j <= IP_SMVD; j++) { positions[j] = cursor; cursor += counts[j]; }
+      for (i = start; i < end; i++) sorted[positions[w->items[i].position]++] = w->items[i];
+      memcpy(w->items+start, sorted, (end-start)*sizeof(*sorted)); free(sorted);
+    }
+    base = end;
+    for (i = start; i < end; i++) if (w->items[i].position == IP_BASE) { base = i; break; }
+    for (i = start; i < end; i++) {
+      ot_item *item = &w->items[i];
+      if (item->position == IP_REPH) item->form |= IM_RPHF;
+      if (i < base) item->form |= IM_HALF | (w->indic_old ? 0u : IM_BLWF);
+      else if (i > base) item->form |= IM_BLWF | IM_ABVF | IM_PSTF;
+    }
+    for (i = base+1; i+1 < end && w->status == EXR_OK; i++)
+      if (indic_pair(w, features, lang, EXR_TAG('p','r','e','f'), w->items[i].out.glyph, w->items[i+1].out.glyph)) {
+        w->items[i].form |= IM_PREF; w->items[i+1].form |= IM_PREF; break;
+      }
+    if (w->indic_old) for (i = start; i+1 < base; i++)
+      if (w->items[i].cp == 0x930 && w->items[i+1].category == IC_H &&
+          (i+2 == base || w->items[i+2].category != IC_ZWJ))
+        w->items[i].form |= IM_BLWF, w->items[i+1].form |= IM_BLWF;
+    for (i = start; i < end; i++) if (w->items[i].category == IC_ZWNJ) {
+      size_t j = i;
+      while (j > start) { j--; w->items[j].form &= ~IM_HALF; if (indic_consonant(&w->items[j])) break; }
+    }
+    start = end;
+  }
+}
+static size_t indic_base(ot_work *w, size_t start, size_t end) {
+  size_t base;
+  for (base = start; base < end; base++) if (w->items[base].position >= IP_BASE) return base;
+  return end;
+}
+static void indic_final(ot_work *w) {
+  size_t start;
+  for (start = 0; start < w->count && w->status == EXR_OK;) {
+    size_t end = start+1, base, i, target;
+    while (end < w->count && w->items[end].syllable == w->items[start].syllable) end++;
+    base = indic_base(w, start, end);
+    /* Unsubstituted explicit viramas delimit the last half-form group. A ZWJ
+       requests the half form and keeps the matra to the left of that group. */
+    target = start;
+    for (i = start; i < base; i++) if (indic_halant(&w->items[i]) && w->items[i].position != IP_PRE_M &&
+        (i+1 >= end || w->items[i+1].category != IC_ZWJ)) target = i;
+    for (i = target; i > start; i--) if (w->items[i-1].position == IP_PRE_M) {
+      indic_move(w, i-1, target); target--;
+    }
+    base = indic_base(w, start, end);
+    if (w->items[start].position == IP_REPH &&
+        (w->items[start].indic_flags & (IF_LIGATED|IF_MULTIPLIED)) == IF_LIGATED) {
+      target = SIZE_MAX;
+      for (i = start+1; i < base; i++) if (indic_halant(&w->items[i])) {
+        target = i; if (i+1 < base && indic_joiner(&w->items[i+1])) target++; break;
+      }
+      if (target == SIZE_MAX) {
+        target = end-1;
+        while (target > start && w->items[target].position == IP_SMVD) target--;
+        if (indic_halant(&w->items[target])) {
+          for (i = base+1; i < target; i++) if (w->items[i].category == IC_M) { target--; break; }
+        }
+      }
+      indic_move(w, start, target);
+    }
+    base = indic_base(w, start, end);
+    for (i = base < end ? base+1 : end; i < end; i++) if (w->items[i].form & IM_PREF) {
+      if ((w->items[i].indic_flags & (IF_LIGATED|IF_MULTIPLIED)) == IF_LIGATED) {
+        target = base;
+        while (target > start && w->items[target-1].category != IC_M && !indic_halant(&w->items[target-1])) target--;
+        if (target > start && indic_halant(&w->items[target-1]) && target < end && indic_joiner(&w->items[target])) target++;
+        indic_move(w, i, target);
+      }
+      break;
+    }
+    if (w->items[start].position == IP_PRE_M &&
+        (!start || w->items[start-1].category == IC_OTHER)) w->items[start].form |= IM_INIT;
+    start = end;
+  }
+}
+static void indic_stage(ot_work *w, ot_view features, ot_view lang, uint32_t tag, unsigned mask) {
+  feature_tag(w, features, lang, tag, mask, feature_value(w->options, tag, 1));
+}
+static void indic_substitution(ot_work *w, ot_view features, ot_view lang) {
+  static const struct { uint32_t tag; unsigned mask; } stages[] = {
+    {EXR_TAG('n','u','k','t'),0}, {EXR_TAG('a','k','h','n'),0}, {EXR_TAG('r','p','h','f'),IM_RPHF},
+    {EXR_TAG('r','k','r','f'),0}, {EXR_TAG('p','r','e','f'),IM_PREF}, {EXR_TAG('b','l','w','f'),IM_BLWF},
+    {EXR_TAG('a','b','v','f'),IM_ABVF}, {EXR_TAG('h','a','l','f'),IM_HALF}, {EXR_TAG('p','s','t','f'),IM_PSTF},
+    {EXR_TAG('v','a','t','u'),0}, {EXR_TAG('c','j','c','t'),0}};
+  static const uint32_t late[] = {EXR_TAG('i','n','i','t'),EXR_TAG('p','r','e','s'),EXR_TAG('a','b','v','s'),
+    EXR_TAG('b','l','w','s'),EXR_TAG('p','s','t','s'),EXR_TAG('h','a','l','n'),EXR_TAG('r','l','i','g'),
+    EXR_TAG('c','a','l','t'),EXR_TAG('c','l','i','g')};
+  size_t i;
+  w->per_syllable = 1;
+  indic_stage(w, features, lang, EXR_TAG('l','o','c','l'), 0);
+  indic_stage(w, features, lang, EXR_TAG('c','c','m','p'), 0);
+  indic_initial(w, features, lang);
+  for (i = 0; i < sizeof(stages)/sizeof(*stages) && w->status == EXR_OK; i++)
+    indic_stage(w, features, lang, stages[i].tag, stages[i].mask);
+  indic_final(w);
+  for (i = 0; i < sizeof(late)/sizeof(*late) && w->status == EXR_OK; i++)
+    indic_stage(w, features, lang, late[i], i ? 0u : IM_INIT);
+  if (feature_value(w->options, EXR_TAG('l','i','g','a'), 0)) indic_stage(w, features, lang, EXR_TAG('l','i','g','a'), 0);
+  for (i = 0; i < w->options->feature_count && w->status == EXR_OK; i++) {
+    size_t j;
+    uint32_t tag = w->options->features[i].tag;
+    if (tag == EXR_TAG('r','v','r','n') || tag == EXR_TAG('l','o','c','l') || tag == EXR_TAG('c','c','m','p') || tag == EXR_TAG('l','i','g','a')) continue;
+    for (j = 0; j < sizeof(stages)/sizeof(*stages) && tag != stages[j].tag; j++) {}
+    if (j < sizeof(stages)/sizeof(*stages)) continue;
+    for (j = 0; j < sizeof(late)/sizeof(*late) && tag != late[j]; j++) {}
+    if (j == sizeof(late)/sizeof(*late)) indic_stage(w, features, lang, tag, 0);
+  }
+  w->per_syllable = 0;
+}
 static void apply_table(ot_work *w, ot_table *source, uint32_t script, int positioning, int *has_kern) {
   static const uint32_t substitution_tags[] = {
     EXR_TAG('c','c','m','p'), EXR_TAG('l','o','c','l'), EXR_TAG('i','s','o','l'),
@@ -921,7 +1277,8 @@ static void apply_table(ot_work *w, ot_table *source, uint32_t script, int posit
     EXR_TAG('r','l','i','g'), EXR_TAG('r','c','l','t'), EXR_TAG('c','a','l','t'),
     EXR_TAG('l','i','g','a'), EXR_TAG('c','l','i','g')};
   static const uint32_t position_tags[] = {
-    EXR_TAG('c','u','r','s'), EXR_TAG('k','e','r','n'), EXR_TAG('m','a','r','k'), EXR_TAG('m','k','m','k'),
+    EXR_TAG('c','u','r','s'), EXR_TAG('k','e','r','n'), EXR_TAG('d','i','s','t'),
+    EXR_TAG('a','b','v','m'), EXR_TAG('b','l','w','m'), EXR_TAG('m','a','r','k'), EXR_TAG('m','k','m','k'),
     EXR_TAG('v','k','r','n')};
   const uint32_t *tags = positioning ? position_tags : substitution_tags;
   size_t count = positioning ? sizeof(position_tags)/sizeof(*position_tags) :
@@ -945,6 +1302,7 @@ static void apply_table(ot_work *w, ot_table *source, uint32_t script, int posit
                        feature_value(w->options, EXR_TAG('r','v','r','n'), 1));
   }
   if (required != 0xffff && !required_early) feature_index(w, features, required, 0, 1);
+  if (!positioning && w->indic) { indic_substitution(w, features, lang); return; }
   for (i = 0; i < count && w->status == EXR_OK; i++) {
     unsigned mask = 0, enabled;
     if (!positioning && i >= 2 && i <= 5) {
@@ -1096,15 +1454,13 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
     if (exr_text_hidden(cp)) item->out.flags |= EXR_GLYPH_HIDDEN;
     else if (!item->out.glyph) item->out.flags |= EXR_GLYPH_MISSING;
     if (!script) {
-      unsigned sc = property(exr_shape_script, sizeof(exr_shape_script)/sizeof(*exr_shape_script), cp);
-      if (sc) script = sc == 1 ? EXR_TAG('l','a','t','n') : EXR_TAG('a','r','a','b');
-      else if (vertical && ((cp >= 0x3400 && cp <= 0x9fff) || (cp >= 0x20000 && cp <= 0x3ffff)))
-        script = EXR_TAG('h','a','n','i');
-      else if (vertical && cp >= 0x3040 && cp <= 0x30ff) script = EXR_TAG('k','a','n','a');
-      else if (vertical && cp >= 0xac00 && cp <= 0xd7af) script = EXR_TAG('h','a','n','g');
+      script = exr_ot_script(cp);
     }
   }
   if (!script) script = EXR_TAG('D','F','L','T');
+  w.indic = script == EXR_TAG('d','e','v','a') || script == EXR_TAG('d','e','v','2');
+  if (w.indic) indic_setup(&w);
+  if (w.status != EXR_OK) goto done;
   w.rtl = options->direction == EXR_DIRECTION_RTL ||
           (options->direction == EXR_DIRECTION_AUTO &&
            (script == EXR_TAG('a','r','a','b') || script == EXR_TAG('h','e','b','r')));
@@ -1127,7 +1483,7 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
       else w.items[i].out.advance_x = advance;
     }
     cls = item_class(&w, i);
-    if (cls == 3) w.items[i].out.advance_x = w.items[i].out.advance_y = 0;
+    if (cls == 3 && !w.indic) w.items[i].out.advance_x = w.items[i].out.advance_y = 0;
     /* GPOS cannot change glyph classes. Cache predecessors once, so a long
        combining sequence does not rescan the same mark run for each glyph. */
     w.items[i].previous_visible = previous_visible;
