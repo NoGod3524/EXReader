@@ -1085,11 +1085,13 @@ Swift EXReaderDocument/Publication/Pager/ReflowPage 和 Java EXReader.Document/P
 
 ## M4B 元数据、封面与章节快照（0.18 开发补充）
 
+命名文本标签同时支持 QuickTime keys/mdta 与 iTunes freeform。mdta 的常见小写键（如 title/artist）和 com.apple.quicktime.* 键，以及 com.apple.iTunes 的大写 freeform 名称，归一为相同标准属性。未知 mdta 键保留为 `mdta:<原名>`；未知 freeform 键为 `----:<mean>:<name>`，两段按 UTF-8 字节做 RFC 3986 percent-encoding；其他未知 ilst 文本键为 `ilst:<四字节类型>`，同样编码。保留重复值和原始顺序；其他 keys namespace、非文本数字/二进制数据和未知隐式 data 类型跳过。keys 表最多 256 项/1 MiB 原始名字，每个名字及最终键最多 64 KiB；解析结果继续计入已有值数和文本预算。
+
 exr_m4b_inspect / exr_m4b_inspect_source 只读取 ISO-BMFF 目录和选中的元数据 payload，不打开 AAC decoder，也不扫描 mdat。AAC=OFF 时同样可用。inspect_source 在调用期间借用 source，不接管 context、不调用 release；结果独立拥有字符串、章节和原始封面，inspection_free 后释放。文件入口支持大文件与 UTF-8 路径，始终关闭临时文件。
 
 支持 moov/meta、moov/udta/meta 的 iTunes ilst：title/creator/contributor/date/description/rights 使用 dcterms URI，album/genre 使用 XMP DynamicMedia URI；aART 和 ©ART 都归一为 creator；同一键多值保留。data 类型支持 UTF-8 与 UTF-16BE（含 surrogate），拒绝嵌入 NUL 和错误编码；最多移除一个末尾终止符。covr 选第一张支持的 JPEG/PNG，检查 data 类型和文件签名，返回原始编码字节；完整图片验证由 image decoder 负责。最大 256 值/1 MiB 文本、每值 64 KiB、封面 16 MiB；全调用最多读 32 MiB/扫描 65536 个 box，支持 source.control 取消。
 
-读取 mvhd v0/v1 的电影时长和 Nero chpl v0/v1 章节；100 ns 章节时刻向下转换为毫秒，必须在已知时长内严格递增。稳定章节 ID 从原时间戳生成，parent 为 SIZE_MAX；每章 end 为下一章 start，最后一章 end 为电影时长。未知时长/end 使用 UINT64_MAX；无 mvhd 可返回未知时长，缺省元数据/封面/章节返回空。毫秒精度下重复的章节时刻不接受。当前不读取 mdta/freeform 标签，不进行音轨/DRM 可播放性验证，也不自动修改书库。
+读取 mvhd v0/v1 的电影时长和 Nero chpl v0/v1 章节；100 ns 章节时刻向下转换为毫秒，必须在已知时长内严格递增。稳定章节 ID 从原时间戳生成，parent 为 SIZE_MAX；每章 end 为下一章 start，最后一章 end 为电影时长。未知时长/end 使用 UINT64_MAX；无 mvhd 可返回未知时长，缺省元数据/封面/章节返回空。毫秒精度下重复的章节时刻不接受。不进行音轨/DRM 可播放性验证，也不自动修改书库。
 
 没有非空 chpl 时，读取首个 tref/chap 引用的 QuickTime text/tx3g 章节轨道。要求本文件内的自包含数据引用、单样本描述，支持 stsz 固定/可变长度、stz2 4/8/16 位、stco/co64 和多段 stsc/stts；容器样本表解析与 AAC 解码共用。只定位并读取章节样本，不扫描音频 mdat；所有样本必须位于 mdat 内。标题支持 UTF-8、带 BOM 的 UTF-16BE/LE，忽略样式修饰但检查其容器边界。tkhd/mdhd 与 elst 均支持 v0/v1；可有前导空编辑和一个速率为 1 的向前媒体段，保留裁剪点仍在显示的章节，末章结束时间取轨道、编辑段与电影有效末端的最小值。不同时间刻度相加后只取整一次，防止毫秒偏移。
 

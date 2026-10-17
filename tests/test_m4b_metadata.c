@@ -218,4 +218,69 @@ static void qt_tests(const char *fixtures,const char *directory) {
   }
   clear(&b);
 }
-int main(int argc,char **argv) { CHECK(argc==3); valid(argv[1],argv[2]); invalids(); large(); qt_tests(argv[1],argv[2]); printf("%u ISO-BMFF metadata, chapters, ownership and large-source checks passed\n",checks); return 0; }
+static void key_entry(buffer *keys,const char *space,const char *name) { integer(keys,strlen(name)+8,4); bytes(keys,space,4); bytes(keys,name,strlen(name)); }
+static void numbered_item(buffer *items,unsigned number,unsigned encoding,const void *value,size_t size) {
+  char type[4]={(char)(number>>24),(char)(number>>16),(char)(number>>8),(char)number}; item(items,type,encoding,value,size);
+}
+static void freeform_item(buffer *items,const char *space,const char *name,const char *value) {
+  buffer payload={0},field={0},data={0};
+  if(space) { integer(&field,0,4); bytes(&field,space,strlen(space)); box(&payload,"mean",&field); clear(&field); }
+  integer(&field,0,4); bytes(&field,name,strlen(name)); box(&payload,"name",&field); clear(&field);
+  integer(&data,1,4); integer(&data,0,4); bytes(&data,value,strlen(value)); box(&payload,"data",&data); clear(&data);
+  box(items,"----",&payload); clear(&payload);
+}
+static buffer named_book(const buffer *keys,const buffer *items) {
+  buffer meta={0},content={0},moov={0},b; integer(&meta,0,4); if(keys) box(&meta,"keys",keys); box(&meta,"ilst",items);
+  box(&content,"meta",&meta); box(&moov,"moov",&content); b=book(&moov); clear(&meta); clear(&content); clear(&moov); return b;
+}
+static void named_tests(void) {
+  buffer keys={0},items={0},b; source_state state={0}; exr_source input; exr_m4b_inspection *m=NULL; const exr_metadata_entry *view; size_t n,i;
+  integer(&keys,0,4); integer(&keys,4,4);
+  key_entry(&keys,"mdta","com.apple.quicktime.title"); key_entry(&keys,"mdta","org.example.chapter");
+  key_entry(&keys,"abcd","skip"); key_entry(&keys,"mdta","artist");
+  numbered_item(&items,1,1,"Title",5); numbered_item(&items,1,1,"Other",5);
+  numbered_item(&items,2,2,"\x4e\x2d\xd8\x3d\xde\x00",6); numbered_item(&items,3,1,"\xff",1);
+  numbered_item(&items,4,21,"\0\0\0\x01",4); numbered_item(&items,4,1,"Author",6);
+  freeform_item(&items,"com.apple.iTunes","TITLE","Book"); freeform_item(&items,"org:foo%","tag:name","Value"); freeform_item(&items,"org:foo%","tag:name","Second");
+  b=named_book(&keys,&items); state.first=&b; state.short_reads=1; input=source(&state);
+  for(i=0;i<b.n;i++) { input.size=i; CHECK(exr_m4b_inspect_source(&input,&m,&error)!=EXR_OK && !m && !state.released); }
+  input.size=b.n;
+  OK(exr_m4b_inspect_source(&input,&m,&error)); CHECK(!state.released); memset(b.p,0,b.n);
+  view=exr_m4b_inspection_metadata(m,&n); CHECK(n==7);
+  CHECK(!strcmp(view[0].key,DC "title") && !strcmp(view[1].key,DC "title") && !strcmp(view[1].value,"Other"));
+  CHECK(!strcmp(view[2].key,"mdta:org.example.chapter") && !strcmp(view[2].value,"\xe4\xb8\xad\xf0\x9f\x98\x80"));
+  CHECK(!strcmp(view[3].key,DC "creator") && !strcmp(view[3].value,"Author"));
+  CHECK(!strcmp(view[4].key,DC "title") && !strcmp(view[4].value,"Book"));
+  CHECK(!strcmp(view[5].key,"----:org%3Afoo%25:tag%3Aname") && !strcmp(view[6].key,view[5].key) && !strcmp(view[6].value,"Second"));
+  exr_m4b_inspection_free(m); clear(&b); clear(&keys); clear(&items);
+  item(&items,"T\0X:",1,"Custom",6); item(&items,"\xa9new",1,"Other",5); item(&items,"trkn",0,"\0\0\0\0",4); item(&items,"rate",21,"\0",1);
+  b=named_book(NULL,&items); state.first=&b; input=source(&state); OK(exr_m4b_inspect_source(&input,&m,&error)); view=exr_m4b_inspection_metadata(m,&n);
+  CHECK(n==2 && !strcmp(view[0].key,"ilst:T%00X%3A") && !strcmp(view[1].key,"ilst:%A9new")); exr_m4b_inspection_free(m); clear(&b); clear(&items);
+  for(i=0;i<9;i++) {
+    integer(&keys,0,4); integer(&keys,1,4); key_entry(&keys,"mdta","x"); numbered_item(&items,1,1,"v",1); b=named_book(&keys,&items);
+    switch(i) {
+      case 0: put(&b,type_at(&b,"keys",0),1,4); break;
+      case 1: put(&b,type_at(&b,"keys",0)+4,257,4); break;
+      case 2: put(&b,type_at(&b,"keys",0)+8,7,4); break;
+      case 3: put(&b,type_at(&b,"keys",0)+8,65537,4); break;
+      case 4: put(&b,type_at(&b,"keys",0)+16,0xff,1); break;
+      case 5: put(&b,type_at(&b,"keys",0)+16,0,1); break;
+      case 6: put(&b,type_at(&b,"ilst",0)+4,0,4); break;
+      case 7: put(&b,type_at(&b,"ilst",0)+4,2,4); break;
+      default: put(&b,type_at(&b,"data",0),UINT64_C(1)<<24,4); break;
+    }
+    state.first=&b; input=source(&state);
+    CHECK(exr_m4b_inspect_source(&input,&m,&error)==(i==1 ? EXR_LIMIT : i==4 ? EXR_ENCODING : EXR_FORMAT) && !m && !state.released);
+    clear(&b); clear(&keys); clear(&items);
+  }
+  for(i=0;i<3;i++) {
+    freeform_item(&items,i==0 ? NULL : i==1 ? "" : "a","name","text"); b=named_book(NULL,&items);
+    if(i==2) put(&b,type_at(&b,"name",0),1,4);
+    state.first=&b; input=source(&state); CHECK(exr_m4b_inspect_source(&input,&m,&error)==EXR_FORMAT && !m && !state.released); clear(&b); clear(&items);
+  }
+  integer(&keys,0,4); integer(&keys,1,4);
+  { char *long_name=malloc(65538); CHECK(long_name); memset(long_name,'a',65537); long_name[65537]=0; key_entry(&keys,"mdta",long_name); free(long_name); }
+  numbered_item(&items,1,1,"v",1); b=named_book(&keys,&items); state.first=&b; input=source(&state);
+  CHECK(exr_m4b_inspect_source(&input,&m,&error)==EXR_LIMIT && !m && !state.released); clear(&b); clear(&keys); clear(&items);
+}
+int main(int argc,char **argv) { CHECK(argc==3); valid(argv[1],argv[2]); invalids(); large(); qt_tests(argv[1],argv[2]); named_tests(); printf("%u ISO-BMFF metadata, chapters, ownership and large-source checks passed\n",checks); return 0; }
