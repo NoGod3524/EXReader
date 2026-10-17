@@ -10,7 +10,8 @@ typedef struct {
   exr_document *doc;
   exr_buffer run;
   rtf_state style;
-  size_t paragraph,body;
+  size_t paragraph,body,table,row,cell,cell_count,definition_count;
+  size_t cells[256]; long boundaries[256];
   uint32_t colors[4096];
   size_t color_count;
   unsigned red,green,blue,components;
@@ -51,7 +52,16 @@ static int paragraph_style(rtf_context *c,const rtf_state *s) {
 }
 static int paragraph(rtf_context *c,const rtf_state *s) {
   if(c->paragraph==SIZE_MAX) {
-    c->paragraph=make(c,c->body,EXR_NODE_PARAGRAPH,"p",NULL); if(c->paragraph==SIZE_MAX) return 0;
+    size_t parent=c->body;
+    if(c->row!=SIZE_MAX) {
+      if(c->cell==SIZE_MAX) {
+        if(c->cell_count>=256) { c->status=EXR_LIMIT; return 0; }
+        c->cell=make(c,c->row,EXR_NODE_CELL,"td",NULL); if(c->cell==SIZE_MAX) return 0;
+        c->cells[c->cell_count]=c->cell;
+      }
+      parent=c->cell;
+    } else c->table=SIZE_MAX;
+    c->paragraph=make(c,parent,EXR_NODE_PARAGRAPH,"p",NULL); if(c->paragraph==SIZE_MAX) return 0;
   }
   return paragraph_style(c,s);
 }
@@ -93,6 +103,40 @@ static int run_flush(rtf_context *c) {
   c->run.size=0; if(c->run.data) c->run.data[0]=0; ok=1;
 done:
   free(css.data); if(!ok && c->status==EXR_OK) c->status=EXR_LIMIT; return ok;
+}
+static int table_control(rtf_context *c,const rtf_state *state,const char *word,long value,int has,int *handled) {
+  *handled=1;
+  if(!strcmp(word,"trowd")) {
+    if(c->row!=SIZE_MAX) { c->status=EXR_FORMAT; return 0; }
+    if(!run_flush(c)) return 0;
+    c->paragraph=SIZE_MAX; c->last_picture=0;
+    if(c->table==SIZE_MAX) { c->table=make(c,c->body,EXR_NODE_TABLE,"table",NULL); if(c->table==SIZE_MAX) return 0; }
+    c->row=make(c,c->table,EXR_NODE_ROW,"tr",NULL); c->cell=SIZE_MAX; c->cell_count=c->definition_count=0;
+    return c->row!=SIZE_MAX;
+  }
+  if(!strcmp(word,"cellx")) {
+    if(c->row==SIZE_MAX || !has || value< -10000000 || value>10000000 ||
+       (c->definition_count && value<=c->boundaries[c->definition_count-1])) { c->status=EXR_FORMAT; return 0; }
+    if(c->definition_count==256) { c->status=EXR_LIMIT; return 0; }
+    c->boundaries[c->definition_count++]=value; return 1;
+  }
+  if(!strcmp(word,"cell")) {
+    if(c->row==SIZE_MAX) { c->status=EXR_FORMAT; return 0; }
+    if(!run_flush(c)) return 0;
+    if(c->cell==SIZE_MAX && !paragraph(c,state)) return 0;
+    c->cell=SIZE_MAX; c->paragraph=SIZE_MAX; c->last_picture=0; c->cell_count++; return 1;
+  }
+  if(!strcmp(word,"row")) {
+    size_t i;
+    if(c->row==SIZE_MAX || !run_flush(c)) { if(c->status==EXR_OK) c->status=EXR_FORMAT; return 0; }
+    if(c->cell!=SIZE_MAX || !c->cell_count || (c->definition_count && c->definition_count!=c->cell_count)) { c->status=EXR_FORMAT; return 0; }
+    for(i=0;i<c->definition_count;i++) { char number[48]; snprintf(number,sizeof(number),"%ld",c->boundaries[i]); if(!set(c,c->cells[i],"data-rtf-cellx",number)) return 0; }
+    c->row=c->cell=c->paragraph=SIZE_MAX; c->last_picture=0; return 1;
+  }
+  if(!strcmp(word,"intbl")) return 1;
+  if(!strcmp(word,"itap")) { if(!has || value<0 || value>1) { c->status=EXR_FORMAT; return 0; } return 1; }
+  if(!strcmp(word,"nestcell") || !strcmp(word,"nestrow") || !strcmp(word,"clmgf") || !strcmp(word,"clmrg") || !strcmp(word,"clvmgf") || !strcmp(word,"clvmrg")) { c->status=EXR_FORMAT; return 0; }
+  *handled=0; return 1;
 }
 static int emit(rtf_context *c,const rtf_state *s,uint32_t cp) {
   if(s->skip || s->destination) return 1;
@@ -329,7 +373,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
   exr_status result = EXR_FORMAT;
   if (n < 5 || memcmp(s, "{\\rtf", 5))
     return exr_fail(e, EXR_FORMAT, "Invalid RTF header");
-  context.doc=d; context.error=e; context.paragraph=SIZE_MAX; states[0].uc=1; states[0].picture=states[0].font=states[0].field=-1;
+  context.doc=d; context.error=e; context.paragraph=context.table=context.row=context.cell=SIZE_MAX; states[0].uc=1; states[0].picture=states[0].font=states[0].field=-1;
   if(exr_model_node(d,SIZE_MAX,SIZE_MAX,EXR_NODE_DOCUMENT,NULL,NULL,0)==SIZE_MAX) return EXR_LIMIT;
   {
     size_t chapter=make(&context,0,EXR_NODE_CHAPTER,NULL,NULL),html,head,title;
@@ -491,6 +535,9 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
         if(!literal(&context,&states[depth],' ')) goto done;
         continue;
       }
+      if(!states[depth].destination) {
+        int handled; if(!table_control(&context,&states[depth],word,value,has,&handled)) goto done; if(handled) continue;
+      }
       if (!strcmp(word, "ansicpg") && value != 1252)
         goto done;
       if (!strcmp(word, "uc")) {
@@ -537,7 +584,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
     if (high || !c || !literal(&context,&states[depth],exr_windows1252((unsigned char)c)))
       goto done;
   }
-  if (depth || high || !run_flush(&context))
+  if (depth || high || !run_flush(&context) || context.row!=SIZE_MAX)
     goto done;
   result = EXR_OK;
 done:
