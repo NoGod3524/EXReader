@@ -544,3 +544,11 @@ RTF tests cover Unicode font/title metadata, default/explicit font names, scoped
 external hyperlinks, internal bookmark resolution and a non-hyperlink field's visible result.
 Titles, links, style requests and pixels survive EPUB conversion. Empty font names and skipped
 metadata with later known destinations remain valid without leaking metadata into body text.
+
+## 0.26 text decorations
+
+`native-decoration` checks semantic/CSS defaults, ancestor propagation, user overrides,
+combined lines, visible raster output, preserved OpenType flags, Latin ligature boundaries and
+Arabic joining forms. Eager pages match borrowed paged/replayed output exactly. DOCX tests
+verify inherited underline, direct removal and strike, then compare EPUB round-trip pixels;
+RTF regressions now assert underline/strike glyph flags as well as semantic nodes.

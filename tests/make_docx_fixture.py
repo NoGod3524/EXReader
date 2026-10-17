@@ -30,6 +30,8 @@ listing+='<w:p><w:pPr><w:pStyle w:val="NumberStyle"/></w:pPr><w:r><w:t>Styled li
 listing+=item(5,0,'Never parent')+item(5,1,'Never first')+item(5,0,'Never parent two')+item(5,1,'Never second')
 main=main.replace('</w:body>',listing+'</w:body>')
 styles=styles.replace('</w:styles>','<w:style w:type="paragraph" w:styleId="NumberStyle"><w:basedOn w:val="Normal"/><w:pPr><w:numPr><w:numId w:val="1"/></w:numPr></w:pPr></w:style></w:styles>')
+main=main.replace('<w:t>Styled</w:t></w:r></w:p>','<w:t>Styled</w:t></w:r><w:r><w:t> </w:t></w:r><w:r><w:rPr><w:rStyle w:val="Child"/><w:u w:val="none"/></w:rPr><w:t>Clear</w:t></w:r><w:r><w:t> </w:t></w:r><w:r><w:rPr><w:strike/></w:rPr><w:t>Struck</w:t></w:r></w:p>')
+styles=styles.replace('<w:color w:val="122334"/>','<w:color w:val="122334"/><w:u w:val="single"/>')
 entries={
 '_rels/.rels':f'<Relationships xmlns="{rel}"><Relationship Id="Main" Type="{r}/officeDocument" Target="Content/main.xml"/></Relationships>',
 'Content/main.xml':main,

@@ -30,6 +30,7 @@ enum {
   AFTER,
   DIRECTION,
   FAMILY,
+  DECORATION,
   PROPERTIES
 };
 typedef struct {
@@ -217,11 +218,13 @@ static int property(const char *s, size_t n) {
       "max-width",    "margin-top",    "margin-right",   "margin-bottom", "margin-left",
       "padding-top",  "padding-right", "padding-bottom", "padding-left",  "background-color",
       "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction",
-      "font-family"};
+      "font-family", "text-decoration-line"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
       return i;
+  if (equal(s, n, "text-decoration"))
+    return DECORATION;
   if (equal(s, n, "page-break-before"))
     return BEFORE;
   if (equal(s, n, "page-break-after"))
@@ -573,6 +576,8 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->flags = (s->flags & ~1u) | (parent->flags & 1u);
     else if (prop == ITALIC)
       s->flags = (s->flags & ~2u) | (parent->flags & 2u);
+    else if (prop == DECORATION)
+      s->flags=(s->flags & ~EXR_DECORATIONS) | (parent->flags & EXR_DECORATIONS);
     else if (prop == COLOR)
       s->color = parent->color;
     else if (prop == LEADING) {
@@ -652,6 +657,21 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->flags &= ~2u;
     else
       return 0;
+  } else if (prop == DECORATION) {
+    unsigned flags=0; size_t at=0;
+    if(strcmp(v,"none")) {
+      while(v[at]) {
+        size_t start;
+        while(ws(v[at])) at++;
+        start=at; while(v[at] && !ws(v[at])) at++;
+        if(at==start) break;
+        if(equal(v+start,at-start,"underline")) flags|=EXR_GLYPH_UNDERLINE;
+        else if(equal(v+start,at-start,"line-through")) flags|=EXR_GLYPH_STRIKE;
+        else return 0;
+      }
+      if(!flags) return 0;
+    }
+    s->flags=(s->flags & ~EXR_DECORATIONS)|flags;
   } else if (prop == ALIGN) {
     if (!strcmp(v, "left"))
       s->align = 0;
@@ -849,6 +869,8 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
       s->flags |= 1;
     if (!strcmp(name, "em") || !strcmp(name, "i"))
       s->flags |= 2;
+    if (!strcmp(name,"u")) s->flags|=EXR_GLYPH_UNDERLINE;
+    if (!strcmp(name,"s") || !strcmp(name,"strike") || !strcmp(name,"del")) s->flags|=EXR_GLYPH_STRIKE;
     if (n->kind == EXR_NODE_LIST)
       s->padding[3].value = s->font_size;
     if (n->kind == EXR_NODE_TABLE)
@@ -901,6 +923,7 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     for (p = 0; p < PROPERTIES; p++)
       if (w[p].value)
         apply(s, parent, p, w[p].value, o->font_size);
+    s->flags |= parent->flags & EXR_DECORATIONS;
     if (s->family && s->family != parent->family) {
       if (parent->family && !strcmp(parent->family, s->family)) s->family = parent->family;
       else {

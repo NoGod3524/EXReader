@@ -11,7 +11,7 @@ static void rich(const char *dir) {
   exr_document *doc=NULL,*copy=NULL; exr_font *font=NULL; exr_layout *a=NULL,*b=NULL;
   exr_layout_config config=exr_layout_config_defaults(); exr_bitmap ba={0},bb={0};
   const exr_node *nodes; const exr_glyph *glyphs; char path[4096];
-  size_t count,i,bold=0,italic=0,colored=0,under=0,strike=0,pa,pb,paragraphs=0,breaks=0; void *zip=NULL; size_t size;
+  size_t count,i,bold=0,italic=0,colored=0,under=0,strike=0,underlined=0,struck=0,pa,pb,paragraphs=0,breaks=0; void *zip=NULL; size_t size;
   OK(exr_document_open_memory(EXR_RTF,input,strlen(input),&doc,&error));
   CHECK(!strcmp(exr_document_text(doc,NULL),"Normal bold italic color normal understrike\nSecond\nthird"));
   nodes=exr_document_nodes(doc,&count);
@@ -27,11 +27,13 @@ static void rich(const char *dir) {
   OK(exr_layout_create_ex(doc,font,&config,&a,&error)); glyphs=exr_layout_glyphs(a,&count);
   for(i=0;i<count;i++) {
     if(glyphs[i].codepoint==' ') continue;
+    if(glyphs[i].flags&EXR_GLYPH_UNDERLINE) underlined++;
+    if(glyphs[i].flags&EXR_GLYPH_STRIKE) struck++;
     if(glyphs[i].flags&EXR_GLYPH_BOLD) bold++;
     if(glyphs[i].flags&EXR_GLYPH_ITALIC) italic++;
     if(glyphs[i].color==0x123456ff) { CHECK(glyphs[i].size==24); colored++; }
   }
-  CHECK(bold==4 && italic==6 && colored==5);
+  CHECK(bold==4 && italic==6 && colored==5 && underlined==5 && struck==6);
   OK(exr_document_export_epub(doc,NULL,&zip,&size,&error)); OK(exr_document_open_memory(EXR_EPUB,zip,size,&copy,&error)); exr_free(zip);
   CHECK(!strcmp(exr_document_text(doc,NULL),exr_document_text(copy,NULL)));
   OK(exr_layout_create_ex(copy,font,&config,&b,&error)); exr_layout_pages(a,&pa); exr_layout_pages(b,&pb); CHECK(pa==pb);

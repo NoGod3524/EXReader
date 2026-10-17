@@ -1,4 +1,4 @@
-# Native C API 0.25
+# Native C API 0.26
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -478,7 +478,7 @@ DrawingML/VML 图片按关系读取，原编码字节进入 resources；可读�
 
 ## RTF 字符与段落结构（0.23）
 
-RTF 使用同一文档树保存分组作用域内的粗体/斜体、半点字号、颜色表引用、段落对齐、缩进、段前后距、行距与文字方向。plain/pard 恢复相应属性；par 创建段落，line 保留为段内换行。u/s 元素保留下划线与删除线语义，当前栅格器尚未绘制这两种修饰；inline highlight 也尚未绘制背景。
+RTF 使用同一文档树保存分组作用域内的粗体/斜体、半点字号、颜色表引用、段落对齐、缩进、段前后距、行距与文字方向。plain/pard 恢复相应属性；par 创建段落，line 保留为段内换行。u/s 元素保留下划线与删除线语义，0.26 已加入绘制；inline highlight 尚未绘制背景。
 
 词法器保留 0.12.1 的 Unicode fallback 规则：整条控制词、转义符号、十六进制字节和 bin 段各按一个 fallback 字符消费，fallback 内不执行格式或 destination；分组边界终止 fallback。支持 Windows-1252 与 Unicode 转义；其他 ansicpg 编码仍拒绝。表格、编号列表、脚注和样式表继承仍待后续接入。颜色表最多 4096 项，分组深度上限仍为 255。
 
@@ -497,3 +497,11 @@ fonttbl 的名称（包括 Unicode 转义）转为 font-family，保留 deff 默
 field/fldinst/fldrslt 保留字段的可见结果。HYPERLINK 支持引用 URL、`\l` 内部书签、`\o` 提示与 `\t` 目标框架参数；不会执行字段或访问链接。bkmkstart 生成 `bookmark-` 前缀的定位节点，内部链接同步编码。未知字段作为普通可见结果保留；忽略的未知 destination 不能被其中的 field/fonttbl 等词激活。
 
 info/title 提取 UTF-8 书名并同步 XHTML head/title，其他 info 内容不进入正文。字体名、字段指令、书签名和书名各有 64 KiB 临时限制；字体名称和字段元数据累计限制为 64 MiB，已解析的字段指令立即释放。最多 10000 个字段。结构 EPUB 导出保留字体名称、链接、定位节点和书名。
+
+## 通用文字饰线（0.26）
+
+u 元素默认下划线，s/strike/del 默认删除线；CSS text-decoration-line 和简单 text-decoration 支持 none、underline、line-through 或两者组合。祖先饰线传播到文字后代，后代的 none 不移除祖先饰线；在饰线源元素上设置 none 可关闭该元素的默认修饰。宿主 user_css 可覆盖这些默认值。
+
+布局字形输出 EXR_GLYPH_UNDERLINE / EXR_GLYPH_STRIKE 标志，普通及页级布局、检查点回放和表格复制均保留。灰度/RGBA 绘制按 FreeType 下划线度量和 OS/2 删除线度量绘制单实线，并遵守文字裁剪。文字 shaping 参数仍只接受粗体/斜体；饰线由布局/绘制层处理。OpenType 分段保留饰线标志，在跨饰线边界时保留 Arabic 相邻字符连接上下文。
+
+DOCX 的默认、继承与直接 rPr 下划线/删除线在 run 层解析，允许直接关闭继承修饰，不把 Word 规则放进 CSS 引擎。RTF/FB2 与宿主模型使用同一饰线输出。当前没有双线、波浪线、跳过字形墨迹或独立饰线颜色；饰线使用当前文字颜色和字形字号。RTL、字体变化和其他样式边界仍遵循已有塑形范围限制。
