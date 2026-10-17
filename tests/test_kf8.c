@@ -28,8 +28,60 @@ static void valid(const char *dir,const char *name,const char *expected,size_t c
   OK(exr_document_open_memory(EXR_EPUB,data,n,&copy,&error)); exr_free(data);
   CHECK(!strcmp(exr_document_text(copy,NULL),expected)); exr_document_free(copy); exr_document_free(doc);
 }
+static void assets_case(const char *dir,const char *name) {
+  char path[4096]; exr_document *doc=NULL,*copy=NULL; exr_font *font=NULL; exr_layout *a=NULL,*b=NULL;
+  exr_layout_config config=exr_layout_config_defaults(); exr_bitmap ba={0},bb={0};
+  const exr_resource *resources; const exr_node *nodes; const exr_glyph *glyphs;
+  size_t n,i,images=0,embedded=0,pages,other; void *data=NULL,*original=NULL; size_t size;
+  snprintf(path,sizeof(path),"%s/%s",dir,name); OK(exr_document_open(path,&doc,&error));
+  CHECK(strstr(exr_document_text(doc,NULL),"Literal kindle:embed:ZZZZ"));
+  resources=exr_document_resources(doc,&n); CHECK(n==6);
+  for(i=0;i<n;i++) {
+    if(!strcmp(resources[i].media_type,"text/css")) {
+      OK(exr_document_resource(doc,i,&data,&size,&error));
+      CHECK(!strstr((char *)data,"background:url(kindle:") && !strstr((char *)data,"URL(\"kindle:"));
+      if(strstr((char *)data,"font-face")) {
+        CHECK(strstr((char *)data,"embed00003.bin") && strstr((char *)data,"flow0002.bin"));
+        CHECK(strstr((char *)data,"content:\"kindle:embed:FFFF\"") && strstr((char *)data,"/* url(kindle:embed:ZZZZ) */"));
+      }
+      exr_free(data);
+    }
+    if(!strcmp(resources[i].media_type,"font/ttf")) {
+      FILE *f; long length;
+      OK(exr_document_resource(doc,i,&data,&size,&error));
+      snprintf(path,sizeof(path),"%s/fonts/fallback.ttf",dir); f=fopen(path,"rb"); CHECK(f);
+      CHECK(!fseek(f,0,SEEK_END)); length=ftell(f); CHECK(length>0 && (size_t)length==size);
+      rewind(f); original=malloc(size); CHECK(original); CHECK(fread(original,1,size,f)==size); fclose(f);
+      CHECK(!memcmp(data,original,size)); free(original); exr_free(data);
+    }
+  }
+  nodes=exr_document_nodes(doc,&n);
+  for(i=0;i<n;i++) if(nodes[i].kind==EXR_NODE_IMAGE) {
+    size_t resource,target; const char *src=exr_node_attribute(&nodes[i],"src");
+    CHECK(src && !strncmp(src,"embed",5));
+    OK(exr_document_resolve(doc,0,src,&resource,&target,&error)); CHECK(resource!=SIZE_MAX); images++;
+  }
+  CHECK(images==3);
+  snprintf(path,sizeof(path),"%s/fonts/primary.ttf",dir); OK(exr_font_open(path,&font,&error));
+  config.page=(exr_layout_options){240,160,8,20,1.2f,4};
+  OK(exr_layout_create_ex(doc,font,&config,&a,&error));
+  CHECK(exr_font_count(exr_layout_font(a))==2); glyphs=exr_layout_glyphs(a,&n);
+  for(i=0;i<n;i++) if(glyphs[i].font_index==1) { embedded++; CHECK(glyphs[i].color==0x123456ff); }
+  CHECK(embedded==1); resources=exr_document_resources(doc,&n);
+  for(i=0;i<n;i++) if(!strncmp(resources[i].media_type,"image/",6)) CHECK(exr_layout_image(a,i));
+  OK(exr_document_export_epub(doc,NULL,&data,&size,&error));
+  OK(exr_document_open_memory(EXR_EPUB,data,size,&copy,&error)); exr_free(data);
+  CHECK(!strcmp(exr_document_text(copy,NULL),exr_document_text(doc,NULL)));
+  OK(exr_layout_create_ex(copy,font,&config,&b,&error)); exr_layout_pages(a,&pages); exr_layout_pages(b,&other); CHECK(pages==other);
+  for(i=0;i<pages;i++) {
+    OK(exr_render_page(a,NULL,i,&ba,&error)); OK(exr_render_page(b,NULL,i,&bb,&error));
+    CHECK(ba.stride==bb.stride && ba.height==bb.height && !memcmp(ba.pixels,bb.pixels,(size_t)ba.stride*ba.height));
+    exr_bitmap_free(&ba); exr_bitmap_free(&bb);
+  }
+  exr_layout_free(a); exr_layout_free(b); exr_font_free(font); exr_document_free(doc); exr_document_free(copy);
+}
 int main(int argc,char **argv) {
-  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt"};
+  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed"};
   const char *text="Chapter one\nA bold passage.\nChapter two\nSecond passage."; size_t i;
   CHECK(argc==2);
   valid(argv[1],"kf8-basic.azw3",text,2); valid(argv[1],"kf8-multirecord.azw3",text,2); valid(argv[1],"kf8-multicontrol.azw3",text,2);
@@ -43,5 +95,8 @@ int main(int argc,char **argv) {
     if(status!=EXR_FORMAT) fprintf(stderr,"fixture %s returned %d\n",bad[i],status);
     CHECK(status==EXR_FORMAT && !doc && error.code==EXR_FORMAT && error.message[0]);
   }
+  assets_case(argv[1],"kf8-assets.azw3");
+  assets_case(argv[1],"kf8-assets-font0.azw3"); assets_case(argv[1],"kf8-assets-font1.azw3"); assets_case(argv[1],"kf8-assets-font2.azw3");
+  { char path[4096]; exr_document *doc=NULL; snprintf(path,sizeof(path),"%s/kf8-limit-font.azw3",argv[1]); CHECK(exr_document_open(path,&doc,&error)==EXR_LIMIT && !doc); }
   printf("%u KF8 checks passed\n",checks); return 0;
 }

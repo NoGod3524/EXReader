@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "internal.h"
+#include <miniz.h>
+#include <ctype.h>
 
 typedef struct {
   uint32_t label, fragments, start, length, file, sequence;
@@ -144,6 +146,205 @@ static exr_status resource(exr_document *d,const char *path,const char *type,
 memory:
   return exr_fail(e,EXR_MEMORY,"KF8 resource allocation failed");
 }
+typedef struct {
+  exr_document *doc;
+  const exr_mobi_record *records;
+  size_t count,first,flows,bytes,*mapped;
+  size_t queue[10000],queued,head;
+  exr_error *error;
+  exr_status status;
+} assets;
+static int asset_error(assets *a,exr_status status,const char *message) {
+  a->status=exr_fail(a->error,status,"%s",message); return 0;
+}
+static int base32(const char *s,size_t size,size_t *at,uint32_t *out) {
+  uint32_t value=0; size_t start=*at;
+  while(*at<size) {
+    unsigned c=(unsigned char)s[*at],digit;
+    if(c>='0' && c<='9') digit=c-'0';
+    else if(c>='A' && c<='V') digit=c-'A'+10;
+    else if(c>='a' && c<='v') digit=c-'a'+10;
+    else break;
+    if(value>(UINT32_MAX-digit)/32) return 0;
+    value=value*32+digit; (*at)++;
+  }
+  *out=value; return *at>start;
+}
+static const char *font_type(const unsigned char *s,size_t size) {
+  if(size<4) return NULL;
+  if(!memcmp(s,"\0\1\0\0",4) || !memcmp(s,"true",4)) return "font/ttf";
+  if(!memcmp(s,"OTTO",4)) return "font/otf";
+  if(!memcmp(s,"ttcf",4)) return "font/collection";
+  if(!memcmp(s,"wOFF",4)) return "font/woff";
+  if(!memcmp(s,"wOF2",4)) return "font/woff2";
+  return NULL;
+}
+static int unpack_font(assets *a,const exr_mobi_record *r,unsigned char **data,
+                         size_t *size,const char **type) {
+  size_t length,offset,key_length,key_start,i; unsigned flags;
+  unsigned char *packed=NULL,*out=NULL;
+  if(r->size<24) goto bad;
+  *size=u32(r->data+4); flags=u32(r->data+8); offset=u32(r->data+12);
+  key_length=u32(r->data+16); key_start=u32(r->data+20);
+  if(!*size || (flags&~3u) || offset<24 || offset>r->size) goto bad;
+  length=r->size-offset;
+  if(*size>32*1024*1024 || length>32*1024*1024 || *size>EXR_MAX_INPUT-a->bytes)
+    return asset_error(a,EXR_LIMIT,"KF8 font or total asset byte budget exceeded");
+  if((flags&2) && (!key_length || key_start<24 || key_start>offset || key_length>offset-key_start)) goto bad;
+  packed=malloc(length ? length : 1); out=malloc(*size);
+  if(!packed || !out) { free(packed); free(out); return asset_error(a,EXR_MEMORY,"KF8 font allocation failed"); }
+  memcpy(packed,r->data+offset,length);
+  if(flags&2) for(i=0;i<length && i<1040;i++) packed[i]^=r->data[key_start+i%key_length];
+  if(flags&1) {
+    mz_ulong output=(mz_ulong)*size,input=(mz_ulong)length;
+    if(mz_uncompress2(out,&output,packed,&input)!=MZ_OK || output!=*size || input!=length) goto bad;
+  } else {
+    if(length!=*size) goto bad;
+    memcpy(out,packed,length);
+  }
+  *type=font_type(out,*size); if(!*type) goto bad;
+  free(packed); *data=out; return 1;
+bad:
+  free(packed); free(out); return asset_error(a,EXR_FORMAT,"Invalid or unsupported KF8 FONT record");
+}
+static int embed(assets *a,uint32_t number,size_t *index) {
+  const exr_mobi_record *r; const unsigned char *s; const char *type=NULL;
+  unsigned char *font=NULL; size_t size,record; char path[64];
+  if(!number || a->first<=u16(a->records[0].data+8) || a->first>=a->count || number>a->count-a->first)
+    return asset_error(a,EXR_FORMAT,"KF8 embedded resource index is out of range");
+  record=a->first+number-1;
+  if(a->mapped[record]!=SIZE_MAX) { *index=a->mapped[record]; return 1; }
+  r=&a->records[record]; s=r->data; size=r->size;
+  if(size>=4 && !memcmp(s,"FONT",4)) {
+    if(!unpack_font(a,r,&font,&size,&type)) return 0;
+    s=font;
+  } else if(size>=8 && !memcmp(s,"\x89PNG\r\n\x1a\n",8)) type="image/png";
+  else if(size>=3 && s[0]==255 && s[1]==216 && s[2]==255) type="image/jpeg";
+  else if(size>=6 && (!memcmp(s,"GIF87a",6) || !memcmp(s,"GIF89a",6))) type="image/gif";
+  else if(size>=12 && !memcmp(s,"RIFF",4) && !memcmp(s+8,"WEBP",4)) type="image/webp";
+  else type=font_type(s,size);
+  if(!type) return asset_error(a,EXR_FORMAT,"Unknown KF8 embedded resource signature");
+  if(size>32*1024*1024 || size>EXR_MAX_INPUT-a->bytes) {
+    free(font); return asset_error(a,EXR_LIMIT,"KF8 asset byte budget exceeded");
+  }
+  snprintf(path,sizeof(path),"embed%05u.bin",number);
+  a->status=resource(a->doc,path,type,s,size,index,a->error); free(font);
+  if(a->status!=EXR_OK) return 0;
+  a->mapped[record]=*index; a->bytes+=size; return 1;
+}
+/* Return a local path for an exact resource URI; an empty output means unchanged. */
+static int asset_uri(assets *a,const char *s,size_t size,char path[2048]) {
+  size_t at,index; uint32_t number; int flow; const char *mime=NULL;
+  path[0]=0;
+  if(size>=12 && !memcmp(s,"kindle:flow:",12)) { at=12; flow=1; }
+  else if(size>=13 && !memcmp(s,"kindle:embed:",13)) { at=13; flow=0; }
+  else return 1;
+  if(!base32(s,size,&at,&number)) goto bad;
+  if(at<size) {
+    if(size-at<=6 || memcmp(s+at,"?mime=",6) || size-at-6>=128) goto bad;
+    mime=s+at+6;
+  }
+  if(flow) {
+    exr_resource *r; const char *type=NULL; size_t length=mime ? size-(size_t)(mime-s) : 0;
+    if(!number || number>=a->flows) goto bad;
+    if(length==8 && !memcmp(mime,"text/css",8)) type="text/css";
+    else if(length==13 && !memcmp(mime,"image/svg+xml",13)) type="image/svg+xml";
+    else goto bad;
+    index=number-1; r=&a->doc->resources[index];
+    if(!strcmp(r->media_type,"application/octet-stream")) {
+      char *copy=exr_model_copy(a->doc,type,strlen(type));
+      if(!copy) return asset_error(a,EXR_LIMIT,"KF8 resource metadata limit exceeded");
+      free((void *)r->media_type); r->media_type=copy;
+      if(!strcmp(type,"text/css")) a->queue[a->queued++]=index;
+    } else if(strcmp(r->media_type,type)) goto bad;
+  } else if(!embed(a,number,&index)) return 0;
+  strcpy(path,a->doc->resources[index].path); return 1;
+bad:
+  return asset_error(a,EXR_FORMAT,"Invalid or unsupported KF8 resource URI");
+}
+static int css_space(unsigned c) { return c==' ' || c=='\t' || c=='\r' || c=='\n' || c=='\f'; }
+static int css_rewrite(assets *a,const char *s,size_t size,exr_buffer *out) {
+  size_t at=0,copy=0;
+  while(at<size) {
+    unsigned c=(unsigned char)s[at];
+    if(c=='/' && at+1<size && s[at+1]=='*') {
+      at+=2; while(at+1<size && (s[at]!='*' || s[at+1]!='/')) at++;
+      at=at+1<size ? at+2 : size;
+    } else if(c=='\'' || c=='"') {
+      at++; while(at<size) { if(s[at]=='\\') { at+=at+1<size ? 2 : 1; continue; } if(s[at++]==(char)c) break; }
+    } else if((c=='u' || c=='U') && size-at>=4 &&
+                tolower((unsigned char)s[at+1])=='r' && tolower((unsigned char)s[at+2])=='l' &&
+                s[at+3]=='(' && (!at || !(isalnum((unsigned char)s[at-1]) || s[at-1]=='_' || s[at-1]=='-'))) {
+      size_t start,end,tail; unsigned quote=0; char path[2048];
+      at+=4; while(at<size && css_space((unsigned char)s[at])) at++;
+      if(at<size && (s[at]=='\'' || s[at]=='"')) quote=(unsigned char)s[at++];
+      start=at;
+      while(at<size && (quote ? (unsigned char)s[at]!=quote : s[at]!=')' && !css_space((unsigned char)s[at]))) {
+        if(s[at]=='\\') at+=at+1<size ? 2 : 1; else at++;
+      }
+      end=at; tail=at;
+      if(quote) { if(tail>=size || (unsigned char)s[tail]!=quote) continue; tail++; }
+      while(tail<size && css_space((unsigned char)s[tail])) tail++;
+      if(tail>=size || s[tail]!=')') continue;
+      if(!asset_uri(a,s+start,end-start,path)) return 0;
+      if(path[0]) {
+        if(!exr_append(out,s+copy,start-copy) || !exr_append(out,path,strlen(path))) goto limit;
+        copy=end;
+      }
+      at=tail+1;
+    } else if(c=='\\') at+=at+1<size ? 2 : 1;
+    else at++;
+  }
+  if(!exr_append(out,s+copy,size-copy)) goto limit;
+  return 1;
+limit:
+  return asset_error(a,EXR_LIMIT,"KF8 rewritten CSS exceeds buffer limit");
+}
+static exr_status connect_assets(exr_document *d,const exr_mobi_record *records,size_t count,
+                                   size_t flows,exr_error *e) {
+  assets a={0}; size_t i,j; exr_buffer css={0};
+  a.doc=d; a.records=records; a.count=count; a.first=u32(records[0].data+108);
+  a.flows=flows; a.error=e; a.status=EXR_OK;
+  a.mapped=malloc(count*sizeof(*a.mapped)); if(!a.mapped) return exr_fail(e,EXR_MEMORY,"KF8 asset map allocation failed");
+  for(i=0;i<count;i++) a.mapped[i]=SIZE_MAX;
+  for(i=0;i<d->resource_count;i++) a.bytes+=d->resource_data[i].size;
+  if(a.bytes>EXR_MAX_INPUT) { asset_error(&a,EXR_LIMIT,"KF8 total resource byte budget exceeded"); goto done; }
+  for(i=0;i<d->node_count;i++) {
+    exr_node *v=&d->nodes[i];
+    for(j=0;j<v->attribute_count;j++) {
+      const char *key=v->attributes[j].name,*value=v->attributes[j].value,*local=strrchr(key,'|');
+      char path[2048]; local=local ? local+1 : key;
+      if(!strcmp(local,"src") || !strcmp(local,"href") || !strcmp(local,"poster") || !strcmp(local,"data")) {
+        if(!asset_uri(&a,value,strlen(value),path)) goto done;
+        if(path[0] && !exr_model_attribute(d,i,key,path)) goto limit;
+      } else if(!strcmp(local,"style")) {
+        css.size=0; if(!css_rewrite(&a,value,strlen(value),&css)) goto done;
+        if(!exr_model_attribute(d,i,key,css.data)) goto limit;
+      }
+    }
+    if(v->text && v->parent!=SIZE_MAX && !strcmp(exr_html_tag(d,&d->nodes[v->parent]),"style")) {
+      char *copy;
+      css.size=0; if(!css_rewrite(&a,v->text,strlen(v->text),&css)) goto done;
+      if(!strcmp(css.data,v->text)) continue;
+      copy=exr_model_copy(d,css.data,css.size); if(!copy) goto limit;
+      free((void *)v->text); v->text=copy;
+    }
+  }
+  while(a.head<a.queued) {
+    size_t index=a.queue[a.head++],old=d->resource_data[index].size;
+    css.size=0;
+    if(!css_rewrite(&a,(const char *)d->resource_data[index].bytes,old,&css)) goto done;
+    if(css.size>EXR_MAX_INPUT-(a.bytes-old)) goto limit;
+    a.bytes=a.bytes-old+css.size;
+    free(d->resource_data[index].bytes); d->resource_data[index].bytes=(unsigned char *)css.data;
+    d->resource_data[index].size=css.size; memset(&css,0,sizeof(css));
+  }
+  goto done;
+limit:
+  asset_error(&a,EXR_LIMIT,"KF8 rewritten model or resource byte budget exceeded");
+done:
+  free(css.data); free(a.mapped); return a.status;
+}
 exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
                     const char *text,size_t size,exr_error *e) {
   const unsigned char *h=records[0].data; size_t flow_size=size,flows,fdst,i,frag=0,work=0;
@@ -207,7 +408,7 @@ exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
     status=exr_xhtml(d,part.data,part.size,index,1,1,e); if(status!=EXR_OK) goto done;
   }
   if(frag!=fragments.count) goto bad;
-  status=EXR_OK; goto done;
+  status=connect_assets(d,records,nr,flows,e); goto done;
 bad:
   if(status==EXR_OK) status=EXR_FORMAT;
   exr_fail(e,status,"Invalid or unsupported KF8 reconstruction data");
