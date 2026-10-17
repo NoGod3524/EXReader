@@ -478,8 +478,11 @@ int exr_model_attribute(exr_document *d, size_t index, const char *key, const ch
     grown = realloc(a,(i+1)*sizeof(*a)); if (!grown) return 0;
     a=grown; v->attributes=a; a[i].name=a[i].value=NULL; v->attribute_count++;
     a[i].name=exr_model_copy(d,key,strlen(key)); if (!a[i].name) return 0;
-  } else free((void *)a[i].value);
-  a[i].value=exr_model_copy(d,value,strlen(value)); return a[i].value!=NULL;
+  }
+  {
+    char *copy=exr_model_copy(d,value,strlen(value)); if(!copy) return 0;
+    free((void *)a[i].value); a[i].value=copy; return 1;
+  }
 }
 exr_status exr_xml_memory_tree(const void *data, size_t size, const char *root,
                                 exr_document **out, exr_error *e) {

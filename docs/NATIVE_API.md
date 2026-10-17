@@ -1,4 +1,4 @@
-# Native C API 0.21
+# Native C API 0.22
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -458,7 +458,7 @@ DOCX 读取 package 主文档关系，支持非默认主文档路径；解析 Wo
 
 DrawingML/VML 图片按关系读取，原编码字节进入 resources；可读取尺寸，重复引用共享资源。路径与 Unicode/百分号编码经过解析，外部图片只保留 URI，框架不访问网络。表格的 gridSpan/vMerge 转成 colspan/rowspan；gridBefore/gridAfter 用空单元格保留列位置，最多 256 列。插入修订与字段结果可见，删除修订和字段指令排除；AlternateContent 优先使用 Fallback，没有 Fallback 时取首个 Choice，不重复输出两支。
 
-当前表格采用引擎的等宽列，尚未实现 Word 专有列宽、表格样式、边框与浮动锚点；图片仍按块排版。编号列表、页眉页脚、嵌入字体、主题字体/颜色、完整 Word 样式算法及元数据仍待补齐。它是流式阅读模型，未复刻 Word 的打印页面。旧文字导出保持原行为；结构接口可把当前已解析的图片、样式、表格和链接转成 EPUB。
+当前表格采用引擎的等宽列，尚未实现 Word 专有列宽、表格样式、边框与浮动锚点；图片仍按块排版。页眉页脚、嵌入字体、主题字体/颜色、完整 Word 样式算法及元数据仍待补齐。它是流式阅读模型，未复刻 Word 的打印页面。旧文字导出保持原行为；结构接口可把当前已解析的图片、样式、表格和链接转成 EPUB。
 
 ## DOCX 脚注与尾注（0.21）
 
@@ -467,3 +467,11 @@ DrawingML/VML 图片按关系读取，原编码字节进入 resources；可读�
 注释分段按主文档关系读取，拥有自己的图片关系与路径基准，可复用主文档图片，也可携带不同图片。生成的图片资源 ID 在整书内唯一。正文中没有引用的注释和 separator/continuationSeparator 不进入阅读流；被引用却缺少正文、重复的普通注释 ID、嵌套注释引用会拒绝解析。普通注释最多 10000 个。当前统一追加在正文后；不按打印页面排脚注，也未实现分节重编号、罗马数字与自定义序号。
 
 结构 EPUB 导出保留上述链接与注释语义。本次同时修正章节路径与非 XHTML 资源冲突的情况，导出会失败并保持空输出，不再覆盖资源。
+
+## DOCX 编号列表（0.22）
+
+首次遇到编号段落才读取 numbering 部件。支持 abstractNum/num、9 层 ilvl、样式继承的 numPr、直接关闭编号、start/startOverride、lvlOverride、lvlRestart、isLgl、lvlText 的 `%1`–`%9` 引用与 suff。每个 numId 保存独立计数，跨普通段落后续号；可生成嵌套 OL/UL/LI，段落、单元格和注释使用同一路径。
+
+当前支持 decimal、decimalZero、lowerLetter/upperLetter、lowerRoman/upperRoman、bullet、none；字母和罗马数字的非正值、罗马数字大于 3999 时回退十进制。其他编号制返回 EXR_FORMAT，尚未实现语言相关计数、图片项目符号和 numStyleLink。定义 ID 重复、层级越界、缺失定义、失配引用会拒绝解析。每类定义最多 10000 个，引用的层级配置按需分配。
+
+可见编号保存为段落开头的呈现性 span（role=presentation、aria-hidden=true），其字号/字体等可取自层级 rPr；原序号文本也进入规范化正文与搜索。列表设置 `list-style-type:none`，确保在外部 EPUB 阅读器中不会重复生成编号。此版本没有向核心排版器加入 Word 专用计数规则，也没有为一般 HTML/EPUB 的无文本 LI 自动绘制标记。布局仍使用现有列表缩进，未实现 Word 的精确悬挂缩进和编号制表位。

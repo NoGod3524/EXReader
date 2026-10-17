@@ -12,6 +12,12 @@ typedef struct {
   size_t resource;
 } relationship;
 typedef struct { const char *id; size_t node; } word_style;
+typedef struct { int start,restart,legal; const char *format,*pattern,*suffix; size_t properties; } number_level;
+typedef struct { int id; size_t node; } number_abstract;
+typedef struct {
+  int id,abstract_id,counter[9]; unsigned started,valid;
+  size_t node; number_level *levels;
+} number_instance;
 typedef struct { int id,endnote; size_t ordinal,first_reference; } note_entry;
 typedef struct {
   exr_document *out,*xml,*rels_xml,*styles_xml;
@@ -24,6 +30,12 @@ typedef struct {
   const char *default_paragraph,*default_character;
   note_entry *notes;
   size_t note_count,note_capacity,*note_slots,footnote_count,endnote_count,reference_count,current_note;
+  exr_document *numbering_xml;
+  number_abstract *abstracts;
+  number_instance *numbers;
+  size_t abstract_count,number_count;
+  char numbering_path[2048];
+  const char *marker,*marker_css;
   char main[2048];
   exr_status status;
   exr_error *error;
@@ -329,7 +341,211 @@ static int relationship_path(const char *part,char path[2048]) {
   memcpy(path+directory+6,part+directory,length-directory); memcpy(path+length+6,".rels",6);
   return 1;
 }
+static int abstract_order(const void *a,const void *b) {
+  int x=((const number_abstract *)a)->id,y=((const number_abstract *)b)->id; return x<y ? -1 : x>y;
+}
+static int instance_order(const void *a,const void *b) {
+  int x=((const number_instance *)a)->id,y=((const number_instance *)b)->id; return x<y ? -1 : x>y;
+}
+static int numbering_read(docx *x) {
+  size_t i; exr_document *d;
+  if(x->numbering_xml) return 1;
+  if(!x->numbering_path[0]) { x->status=exr_fail(x->error,EXR_FORMAT,"DOCX numbering relationship is missing"); return 0; }
+  x->status=xml_read(x,x->numbering_path,"numbering",0,&x->numbering_xml); if(x->status!=EXR_OK) return 0;
+  d=x->numbering_xml;
+  if(!word(&d->nodes[root(d)],"numbering")) { x->status=EXR_FORMAT; return 0; }
+  for(i=d->nodes[root(d)].first_child;i!=SIZE_MAX;i=d->nodes[i].next_sibling) {
+    if(word(&d->nodes[i],"abstractNum")) x->abstract_count++;
+    else if(word(&d->nodes[i],"num")) x->number_count++;
+  }
+  if(x->abstract_count>10000 || x->number_count>10000) { x->status=EXR_LIMIT; return 0; }
+  x->abstracts=calloc(x->abstract_count ? x->abstract_count : 1,sizeof(*x->abstracts));
+  x->numbers=calloc(x->number_count ? x->number_count : 1,sizeof(*x->numbers));
+  if(!x->abstracts || !x->numbers) { x->status=EXR_MEMORY; return 0; }
+  x->abstract_count=x->number_count=0;
+  for(i=d->nodes[root(d)].first_child;i!=SIZE_MAX;i=d->nodes[i].next_sibling) {
+    int id,abstract_id;
+    if(word(&d->nodes[i],"abstractNum")) {
+      if(!number(attr(&d->nodes[i],"abstractNumId"),&id) || id<0) goto invalid;
+      x->abstracts[x->abstract_count++]=(number_abstract){id,i};
+    } else if(word(&d->nodes[i],"num")) {
+      number_instance *v=&x->numbers[x->number_count++];
+      if(!number(attr(&d->nodes[i],"numId"),&id) || id<=0 || !number(value(d,i,"abstractNumId"),&abstract_id) || abstract_id<0) goto invalid;
+      v->id=id; v->abstract_id=abstract_id; v->node=i;
+    }
+  }
+  if(x->abstract_count>1) qsort(x->abstracts,x->abstract_count,sizeof(*x->abstracts),abstract_order);
+  if(x->number_count>1) qsort(x->numbers,x->number_count,sizeof(*x->numbers),instance_order);
+  for(i=1;i<x->abstract_count;i++) if(x->abstracts[i-1].id==x->abstracts[i].id) goto invalid;
+  for(i=1;i<x->number_count;i++) if(x->numbers[i-1].id==x->numbers[i].id) goto invalid;
+  return 1;
+invalid:
+  x->status=exr_fail(x->error,EXR_FORMAT,"Invalid or duplicate DOCX numbering ID"); return 0;
+}
+static int level_read(docx *x,size_t node,int level,number_level *out) {
+  const exr_document *d=x->numbering_xml; const char *s; int n;
+  *out=(number_level){1,level-1,0,"decimal",NULL,"tab",SIZE_MAX};
+  if((s=value(d,node,"start"))) { if(!number(s,&out->start)) goto invalid; }
+  if((s=value(d,node,"lvlRestart"))) {
+    if(!number(s,&n) || n<0 || n>level) goto invalid;
+    out->restart=n-1;
+  }
+  if((s=value(d,node,"numFmt"))) out->format=s;
+  if((s=value(d,node,"lvlText"))) out->pattern=s;
+  if((s=value(d,node,"suff"))) out->suffix=s;
+  node=child(d,node,"isLgl");
+  if(node!=SIZE_MAX) out->legal=on(attr(&d->nodes[node],"val"));
+  return 1;
+invalid:
+  x->status=exr_fail(x->error,EXR_FORMAT,"Invalid DOCX numbering level"); return 0;
+}
+static number_instance *number_prepare(docx *x,int id) {
+  size_t lo=0,hi,i,node; number_instance *out; unsigned seen=0; const exr_document *d;
+  if(!numbering_read(x)) return NULL;
+  hi=x->number_count;
+  while(lo<hi) { size_t mid=lo+(hi-lo)/2; if(x->numbers[mid].id<id) lo=mid+1; else hi=mid; }
+  if(lo==x->number_count || x->numbers[lo].id!=id) goto invalid;
+  out=&x->numbers[lo]; if(out->levels) return out;
+  lo=0; hi=x->abstract_count;
+  while(lo<hi) { size_t mid=lo+(hi-lo)/2; if(x->abstracts[mid].id<out->abstract_id) lo=mid+1; else hi=mid; }
+  if(lo==x->abstract_count || x->abstracts[lo].id!=out->abstract_id) goto invalid;
+  out->levels=calloc(9,sizeof(*out->levels)); if(!out->levels) { x->status=EXR_MEMORY; return NULL; }
+  d=x->numbering_xml; node=x->abstracts[lo].node;
+  for(i=d->nodes[node].first_child;i!=SIZE_MAX;i=d->nodes[i].next_sibling) {
+    int level;
+    if(++x->work>20000000) { x->status=EXR_LIMIT; return NULL; }
+    if(!word(&d->nodes[i],"lvl")) continue;
+    if(!number(attr(&d->nodes[i],"ilvl"),&level) || level<0 || level>8 || (out->valid&(1u<<level))) goto invalid;
+    if(!level_read(x,i,level,&out->levels[level])) return NULL;
+    out->levels[level].properties=child(d,i,"rPr"); out->valid|=1u<<level;
+  }
+  for(i=d->nodes[out->node].first_child;i!=SIZE_MAX;i=d->nodes[i].next_sibling) {
+    int level,start; size_t definition; const char *s;
+    if(!word(&d->nodes[i],"lvlOverride")) continue;
+    if(!number(attr(&d->nodes[i],"ilvl"),&level) || level<0 || level>8 || (seen&(1u<<level))) goto invalid;
+    seen|=1u<<level; definition=child(d,i,"lvl");
+    if(definition!=SIZE_MAX) {
+      if(!level_read(x,definition,level,&out->levels[level])) return NULL;
+      out->levels[level].properties=child(d,definition,"rPr"); out->valid|=1u<<level;
+    }
+    s=value(d,i,"startOverride");
+    if(s) { if(!number(s,&start)) goto invalid; out->levels[level].start=start; }
+  }
+  return out;
+invalid:
+  x->status=exr_fail(x->error,EXR_FORMAT,"DOCX numbering instance or level is missing/invalid"); return NULL;
+}
+static int number_properties(docx *x,const exr_document *d,size_t props,int *id,int *level) {
+  const char *s; int n;
+  props=child(d,props,"numPr"); if(props==SIZE_MAX) return 1;
+  if((s=value(d,props,"numId"))) { if(!number(s,&n) || n<0) goto invalid; *id=n; }
+  if((s=value(d,props,"ilvl"))) { if(!number(s,&n) || n<0 || n>8) goto invalid; *level=n; }
+  return 1;
+invalid:
+  x->status=EXR_FORMAT; return 0;
+}
+static int number_style(docx *x,const char *id,int *num,int *level,unsigned depth) {
+  size_t node=style_find(x,id); const char *base;
+  if(node==SIZE_MAX) return 1;
+  if(depth>64) { x->status=EXR_FORMAT; return 0; }
+  if(++x->work>20000000) { x->status=EXR_LIMIT; return 0; }
+  base=value(x->styles_xml,node,"basedOn");
+  return (!base || number_style(x,base,num,level,depth+1)) &&
+      number_properties(x,x->styles_xml,child(x->styles_xml,node,"pPr"),num,level);
+}
+static int paragraph_number(docx *x,size_t node,int *id,int *level) {
+  size_t props; const char *style;
+  *id=*level=0;
+  if(!word(&x->xml->nodes[node],"p")) return 1;
+  props=child(x->xml,node,"pPr"); style=value(x->xml,props,"pStyle");
+  if(!style) style=x->default_paragraph;
+  return (!style || number_style(x,style,id,level,0)) && number_properties(x,x->xml,props,id,level);
+}
+static int counter_text(docx *x,exr_buffer *out,int number_value,const char *format) {
+  char text[100]; int n=number_value;
+  if(!strcmp(format,"decimal") || !strcmp(format,"decimalZero") ||
+      (n<=0 && (!strcmp(format,"lowerLetter") || !strcmp(format,"upperLetter") || !strcmp(format,"lowerRoman") || !strcmp(format,"upperRoman")))) {
+    snprintf(text,sizeof(text),!strcmp(format,"decimalZero") ? "%02d" : "%d",n); return put(out,text);
+  }
+  if(!strcmp(format,"lowerLetter") || !strcmp(format,"upperLetter")) {
+    size_t used=0; int upper=!strcmp(format,"upperLetter");
+    while(n>0) { text[used++]=(char)((upper ? 'A' : 'a')+(n-1)%26); n=(n-1)/26; }
+    while(used) if(!exr_append(out,&text[--used],1)) return 0;
+    return 1;
+  }
+  if(!strcmp(format,"lowerRoman") || !strcmp(format,"upperRoman")) {
+    const int values[]={1000,900,500,400,100,90,50,40,10,9,5,4,1};
+    const char *labels[]={"M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"};
+    size_t i;
+    if(n>3999) { snprintf(text,sizeof(text),"%d",n); return put(out,text); }
+    for(i=0;i<13;i++) while(n>=values[i]) {
+      const char *p=labels[i]; n-=values[i];
+      while(*p) { char c=!strcmp(format,"lowerRoman") ? (char)tolower((unsigned char)*p) : *p; if(!exr_append(out,&c,1)) return 0; p++; }
+    }
+    return 1;
+  }
+  x->status=exr_fail(x->error,EXR_FORMAT,"Unsupported DOCX numbering format: %.80s",format); return 0;
+}
+static int number_label(docx *x,number_instance *instance,int level,exr_buffer *text,exr_buffer *css) {
+  number_level *definition=&instance->levels[level]; const char *p=definition->pattern; size_t i; int dummy=0;
+  if(!(instance->valid&(1u<<level))) { x->status=EXR_FORMAT; return 0; }
+  if(instance->started&(1u<<level)) instance->counter[level]++;
+  else { instance->counter[level]=definition->start; instance->started|=1u<<level; }
+  for(i=(size_t)level+1;i<9;i++) if(instance->levels[i].restart>=level) instance->started&=~(1u<<i);
+  if(!strcmp(definition->format,"none")) return 1;
+  if(p) {
+    if(strlen(p)>4096) { x->status=EXR_LIMIT; return 0; }
+    for(i=0;p[i];i++) {
+      if(p[i]=='%' && p[i+1]>='1' && p[i+1]<='9') {
+        unsigned reference=(unsigned)(p[++i]-'1'); number_level *ref=&instance->levels[reference];
+        if(!(instance->valid&(1u<<reference))) { x->status=EXR_FORMAT; return 0; }
+        if(!counter_text(x,text,instance->started&(1u<<reference) ? instance->counter[reference] : ref->start,definition->legal ? "decimal" : ref->format)) return 0;
+      } else if(!exr_append(text,p+i,1)) return 0;
+    }
+  } else if(!strcmp(definition->format,"bullet")) { if(!put(text,"\xe2\x80\xa2")) return 0; }
+  else if(!counter_text(x,text,instance->counter[level],definition->format) || !put(text,".")) return 0;
+  if(text->size && strcmp(definition->suffix,"nothing") && !put(text,!strcmp(definition->suffix,"space") ? " " : "\t")) return 0;
+  return properties(x,x->numbering_xml,definition->properties,css,&dummy);
+}
 static int content(docx *x,size_t parent,size_t source,unsigned depth);
+static int children(docx *x,size_t parent,size_t source,unsigned depth) {
+  struct { size_t list,item; int id; } stack[9];
+  size_t active=0,i; int id,level;
+  for(i=x->xml->nodes[source].first_child;i!=SIZE_MAX;i=x->xml->nodes[i].next_sibling) {
+    exr_buffer label={0},css={0}; size_t destination=parent,k; int ok;
+    if(!paragraph_number(x,i,&id,&level)) return 0;
+    if(id) {
+      number_instance *instance=number_prepare(x,id);
+      if(!instance || !number_label(x,instance,level,&label,&css)) { free(label.data); free(css.data); if(x->status==EXR_OK) x->status=EXR_LIMIT; return 0; }
+      for(k=0;k<=(size_t)level;k++) {
+        if(k>=active || stack[k].id!=id) {
+          int ordered=strcmp(instance->levels[k].format ? instance->levels[k].format : "decimal","bullet") &&
+              strcmp(instance->levels[k].format ? instance->levels[k].format : "decimal","none");
+          char value[48];
+          stack[k].list=make(x,k ? stack[k-1].item : parent,EXR_NODE_LIST,ordered ? "ol" : "ul",NULL);
+          if(stack[k].list==SIZE_MAX || !set(x,stack[k].list,"style","list-style-type:none")) goto failed;
+          if(ordered) {
+            snprintf(value,sizeof(value),"%d",instance->started&(1u<<k) ? instance->counter[k] : instance->levels[k].start);
+            if(!set(x,stack[k].list,"start",value)) goto failed;
+          }
+          stack[k].id=id; stack[k].item=SIZE_MAX; active=k+1;
+        }
+        if(k<(size_t)level && stack[k].item==SIZE_MAX) {
+          stack[k].item=make(x,stack[k].list,EXR_NODE_LIST_ITEM,"li",NULL); if(stack[k].item==SIZE_MAX) goto failed;
+        }
+      }
+      stack[level].item=make(x,stack[level].list,EXR_NODE_LIST_ITEM,"li",NULL); if(stack[level].item==SIZE_MAX) goto failed;
+      active=(size_t)level+1; destination=stack[level].item;
+      x->marker=label.data; x->marker_css=css.data;
+    } else active=0;
+    ok=content(x,destination,i,depth); x->marker=x->marker_css=NULL;
+    free(label.data); free(css.data); if(!ok) return 0;
+    continue;
+failed:
+    free(label.data); free(css.data); if(x->status==EXR_OK) x->status=EXR_LIMIT; return 0;
+  }
+  return 1;
+}
 static size_t alternate(const exr_document *d,size_t source) {
   size_t i,choice=SIZE_MAX;
   if(!d->nodes[source].name || strcmp(d->nodes[source].name,"http://schemas.openxmlformats.org/markup-compatibility/2006|AlternateContent")) return SIZE_MAX;
@@ -403,8 +619,7 @@ static int table(docx *x,size_t parent,size_t source,unsigned depth) {
         for(k=column;k<column+(size_t)columns;k++) { owner[k]=merge==SIZE_MAX ? SIZE_MAX : td; span[k]=(size_t)columns; rows[k]=1; }
       }
       for(k=column;k<column+(size_t)columns;k++) touched[k]=1;
-      for(k=x->xml->nodes[cell].first_child;k!=SIZE_MAX;k=x->xml->nodes[k].next_sibling)
-        if(!content(x,td,k,depth+1)) return 0;
+      if(!children(x,td,cell,depth+1)) return 0;
       column+=(size_t)columns;
     }
     {
@@ -454,6 +669,12 @@ static int content(docx *x,size_t parent,size_t source,unsigned depth) {
       at=make(x,parent,heading ? EXR_NODE_HEADING : EXR_NODE_PARAGRAPH,tag,NULL);
     } else at=make(x,parent,EXR_NODE_ELEMENT,"span",NULL);
     if(at==SIZE_MAX || (css.size && !set(x,at,"style",css.data))) goto done;
+    if(paragraph && x->marker) {
+      size_t marker=make(x,at,EXR_NODE_ELEMENT,"span",NULL);
+      if(marker==SIZE_MAX || !set(x,marker,"role","presentation") || !set(x,marker,"aria-hidden","true") ||
+          (x->marker_css && !set(x,marker,"style",x->marker_css)) || make(x,marker,EXR_NODE_TEXT,NULL,x->marker)==SIZE_MAX) goto done;
+      x->marker=x->marker_css=NULL;
+    }
   } else if(word(v,"hyperlink")) {
     const char *id=rattr(v,"id"),*anchor=attr(v,"anchor"); relationship *r=rel(x,id); char path[2048]; exr_buffer href={0};
     at=make(x,parent,EXR_NODE_LINK,"a",NULL); if(at==SIZE_MAX) goto done;
@@ -483,8 +704,7 @@ static int content(docx *x,size_t parent,size_t source,unsigned depth) {
     at=make(x,parent,page ? EXR_NODE_SECTION : EXR_NODE_BREAK,page ? "div" : "br",NULL);
     return at!=SIZE_MAX && (!page || set(x,at,"style","break-before:page"));
   }
-  for(i=v->first_child;i!=SIZE_MAX;i=x->xml->nodes[i].next_sibling)
-    if(!content(x,at,i,depth+1)) goto done;
+  if(!children(x,at,source,depth+1)) goto done;
   ok=1;
 done:
   free(css.data);
@@ -499,7 +719,7 @@ static int note_order(const void *a,const void *b) {
 static int append_notes(docx *x,size_t body,int endnote) {
   exr_document *source=NULL,*rels_xml=NULL,*old_xml=x->xml,*old_rels_xml=x->rels_xml;
   relationship *rels=NULL,*old_rels=x->rels; source_note *entries=NULL;
-  size_t count=0,rel_count=0,old_rel_count=x->rel_count,i,j,section=SIZE_MAX;
+  size_t count=0,rel_count=0,old_rel_count=x->rel_count,i,section=SIZE_MAX;
   char path[2048],relpath[2048],old_main[2048]; const relationship *part=NULL; int ok=0;
   if(!(endnote ? x->endnote_count : x->footnote_count)) return 1;
   for(i=0;i<x->rel_count;i++) if(rel_type(x->rels[i].type,endnote ? "endnotes" : "footnotes")) { part=&x->rels[i]; break; }
@@ -535,8 +755,7 @@ static int append_notes(docx *x,size_t body,int endnote) {
     snprintf(id,sizeof(id),"%s-%d",endnote ? "endnote" : "footnote",x->notes[i].id);
     if(!set(x,note,"id",id) || !set(x,note,"role",endnote ? "doc-endnote" : "doc-footnote")) goto restore;
     x->current_note=i;
-    for(j=source->nodes[entries[lo].node].first_child;j!=SIZE_MAX;j=source->nodes[j].next_sibling)
-      if(!content(x,note,j,0)) { if(x->status==EXR_OK) x->status=EXR_LIMIT; goto restore; }
+    if(!children(x,note,entries[lo].node,0)) { if(x->status==EXR_OK) x->status=EXR_LIMIT; goto restore; }
   }
   ok=1;
 restore:
@@ -562,6 +781,10 @@ exr_status exr_docx(exr_document *d,exr_member_read_fn read,void *context,exr_er
   if(!relationship_path(x.main,relpath)) { x.status=EXR_LIMIT; goto done; }
   x.status=relations(&x,relpath,&x.rels_xml,&x.rels,&x.rel_count); if(x.status!=EXR_OK) goto done;
   x.status=styles(&x); if(x.status!=EXR_OK) goto done;
+  for(i=0;i<x.rel_count;i++) if(rel_type(x.rels[i].type,"numbering")) {
+    if(x.rels[i].external || !target(&x,&x.rels[i],x.numbering_path)) { x.status=EXR_FORMAT; goto done; }
+    break;
+  }
   if(exr_model_node(d,SIZE_MAX,SIZE_MAX,EXR_NODE_DOCUMENT,NULL,NULL,0)==SIZE_MAX) { x.status=EXR_LIMIT; goto done; }
   chapter=make(&x,0,EXR_NODE_CHAPTER,NULL,NULL); if(chapter==SIZE_MAX) goto done;
   d->chapters=calloc(1,sizeof(*d->chapters)); if(!d->chapters) { x.status=EXR_MEMORY; goto done; }
@@ -573,10 +796,11 @@ exr_status exr_docx(exr_document *d,exr_member_read_fn read,void *context,exr_er
   title=make(&x,head,EXR_NODE_ELEMENT,"title",NULL); if(title==SIZE_MAX) goto done;
   if(make(&x,title,EXR_NODE_TEXT,NULL,d->title ? d->title : "Untitled")==SIZE_MAX) goto done;
   out_body=make(&x,html,EXR_NODE_ELEMENT,"body",NULL); if(out_body==SIZE_MAX) goto done;
-  for(i=x.xml->nodes[body].first_child;i!=SIZE_MAX;i=x.xml->nodes[i].next_sibling)
-    if(!content(&x,out_body,i,0)) { if(x.status==EXR_OK) x.status=EXR_LIMIT; break; }
+  if(!children(&x,out_body,body,0) && x.status==EXR_OK) x.status=EXR_LIMIT;
   if(x.status==EXR_OK && (!append_notes(&x,out_body,0) || !append_notes(&x,out_body,1)) && x.status==EXR_OK) x.status=EXR_LIMIT;
 done:
+  for(i=0;i<x.number_count;i++) free(x.numbers ? x.numbers[i].levels : NULL);
+  free(x.numbers); free(x.abstracts); exr_document_free(x.numbering_xml);
   free(x.notes); free(x.note_slots);
   free(package_rels); exr_document_free(package); free(x.rels); free(x.styles);
   exr_document_free(x.xml); exr_document_free(x.rels_xml); exr_document_free(x.styles_xml);

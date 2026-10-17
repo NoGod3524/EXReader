@@ -515,3 +515,11 @@ Structured export also rejects chapter/non-XHTML resource path collisions with e
 The 0.20 sanitizer job stopped at a GCC debug-build format-truncation diagnostic in relationship
 path construction (before running tests). 0.21 checks the length before copying fixed path
 segments, shared by main/notes parts, with no formatted truncation path.
+
+## 0.22 DOCX numbering
+
+The generated fixture verifies multilevel references, independent numId counters, continuation,
+start overrides, style-derived numbering and never-restart levels. Visible labels and list nodes
+survive structured EPUB round-trip with identical rendering. Additional cases cover zero,
+zero-padded decimals, alphabetic rollover, subtractive Roman numerals, large-value fallback,
+bullets, suppressed labels, missing definitions and unsupported numbering formats.
