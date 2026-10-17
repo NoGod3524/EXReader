@@ -2162,3 +2162,14 @@ C; PNG/JPEG decode reuses the existing decoder with no new runtime dependency.
 Only validated strike directories are cached; decoded snapshots are caller-owned.
 The preceding COLR v0 batch (f07af93) passes all six platform/sanitizer CI jobs.
 Version, ABI epoch and library schema remain 0.18.0/1/6.
+
+## Milestone 0.18 development: embedded sbix font selection
+
+The common face opener is now used by both host font creation and embedded-font
+probing. The original 3778-byte color-fonts.epub embeds sbix and COLR v0 fonts
+under separate CSS aliases. Its two emoji resolve to distinct embedded font faces
+and both still render after the document and host fallback are released. The
+color-font suite now has 80408 checks. This closes the old embedded-only probe
+that discarded sbix as non-scalable. The preceding sbix batch (77bfa02) passes
+all six desktop/mobile/sanitizer CI jobs. No public ABI, dependency or version
+change is involved.

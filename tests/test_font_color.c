@@ -203,9 +203,23 @@ static void bitmap_raster(const char *directory,const char *output) {
   }
   bitmap_bad(directory);
 }
+static void embedded(const char *directory) {
+  char path[4096]; exr_document *doc=NULL; exr_font *host=open_font(directory,"primary.ttf"); exr_layout *layout=NULL;
+  exr_layout_config config=exr_layout_config_defaults(); const exr_glyph *glyphs; size_t n,i,np,red=0,green=0;
+  snprintf(path,sizeof(path),"%s/../color-fonts.epub",directory); OK(exr_document_open(path,&doc,&error));
+  config.page=(exr_layout_options){200,400,0,100,1,0}; OK(exr_layout_create_ex(doc,host,&config,&layout,&error));
+  CHECK(exr_font_count(exr_layout_font(layout))==3); glyphs=exr_layout_glyphs(layout,&n); CHECK(n==2);
+  CHECK(glyphs[0].font_index==1 && glyphs[1].font_index==2 && glyphs[0].glyph==2 && glyphs[1].glyph==2);
+  exr_layout_pages(layout,&np); exr_document_free(doc); exr_font_free(host);
+  for(i=0;i<np;i++) { exr_bitmap image={0}; size_t k; OK(exr_render_page_color(layout,NULL,i,&image,&error));
+    for(k=0;k<(size_t)image.width*image.height;k++) { const unsigned char *p=image.pixels+k*4; if(!p[0] && p[1]==255 && !p[2]) green++; if(p[0]==255 && !p[1] && !p[2]) red++; }
+    exr_bitmap_free(&image);
+  }
+  CHECK(red>100 && green>100); exr_layout_free(layout);
+}
 int main(int argc,char **argv) {
   exr_font *font; exr_font_color_layer *owned=NULL; size_t n; CHECK(argc==3); font=open_font(argv[1],"color.ttf"); queries(font,argv[1]); raster(font,argv[2]);
   OK(exr_font_color_layers(font,0,2,1,0x00ff00ff,&owned,&n,NULL,&error)); exr_font_free(font);
   CHECK(n==3 && owned[0].color==0xffff00ff && owned[2].color==0x00ff00ff); exr_free(owned);
-  fallback(argv[1],"color.ttf"); fallback(argv[1],"bitmap.ttf"); bitmap_raster(argv[1],argv[2]); printf("%u color-font palette, layers and raster checks passed\n",checks); return 0;
+  fallback(argv[1],"color.ttf"); fallback(argv[1],"bitmap.ttf"); bitmap_raster(argv[1],argv[2]); embedded(argv[1]); printf("%u color-font palette, layers and raster checks passed\n",checks); return 0;
 }

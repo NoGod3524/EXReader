@@ -198,7 +198,7 @@ static exr_status load_font(const exr_document *d, exr_font *font, const exr_fon
       return exr_fail(e, EXR_LIMIT, "Embedded font reads exceed 128 MiB");
     }
     *read_bytes += *size;
-    if (!FT_New_Memory_Face(font->library, *out, (FT_Long)*size, 0, &probe) &&
+    if (!exr_font_face_open(font->library, *out, *size, 0, &probe) &&
         FT_IS_SCALABLE(probe) && !FT_Select_Charmap(probe, FT_ENCODING_UNICODE)) {
       FT_Done_Face(probe);
       return EXR_OK;

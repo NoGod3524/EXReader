@@ -1133,6 +1133,8 @@ Separation 普通命名专色现支持文件声明的 device/CIE alternate 和�
 
 原生读取 sbix v1 的 PNG/JPEG 与 dupe 引用，复用图片解码器。字体以忽略 FreeType sbix 绘制的方式打开，保持 hmtx/vmtx 的连续排版度量，也能打开 glyf 为空的 sbix 字体。字形可在不同 strike 中缺省：选覆盖该字形的最小较大/相等 ppem，否则选最大的较小 ppem，相同 ppem 取源目录最先一项；PPI 不影响当前以像素为单位的选择。dupe 继承目标图像记录的位置偏移，沿用当前字形的设计原点。
 
+宿主字体输入和 EPUB `@font-face` 的字体探测共用同一打开入口；内嵌 sbix 不再被旧的 FreeType scalable 检查跳过。书内字体仍按原 CSS 家族别名和章节作用域选择，页对象保留有效字体的所有权。
+
 `exr_font_glyph_image` 按像素字号返回独立 `exr_glyph_image`：bitmap 是原始 strike 的 straight RGBA 像素，scale 为缩放比例，left/top 是相对字形原点的最终像素偏移（右/下为正）。有轮廓时，按 sbix 规则叠加字形包围盒左下原点。没有图像返回全零记录；像素用 exr_bitmap_free 释放，可比字体与源数据活得更久。image 不含文字透明度或合成粗斜体，advance 独立保留在塑形/排版模型。宿主可保存这些快照并自行缓存或绘制。
 
 默认页面绘制优先 sbix，其次 COLR v0，再用普通字形；图片保留原色并乘文字 alpha，双线性缩放、灰度、竖排侧转和行内裁切复用共用像素合成。flags 中 EXR_GLYPH_IMAGE_OUTLINE_OVERLAY 表示先画位图再覆盖轮廓，轮廓合成粗斜体照常，位图不做合成变形；装饰线仍绘制一次。每面最多 256 strike，缓存的只是已验证目录；dupe 最多遍历 16 条记录，拒绝循环/越界。编码图像最多 32 MiB，解码和缩放后各受 8192 边长/16M 像素限制；目录读取、解码与绘制费用计入文字页 256M 预算，支持取消与失败清空结果。
