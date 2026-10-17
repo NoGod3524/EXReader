@@ -52,6 +52,8 @@ exr_status exr_fail(exr_error *error, exr_status status, const char *fmt, ...);
 exr_status exr_control_cancel(const exr_control *control, exr_error *error);
 exr_status exr_control_poll(const exr_control *control, exr_stage stage,
                              uint64_t completed, uint64_t total, exr_error *error);
+exr_status exr_find_bytes(const char *text,size_t size,const char *query,size_t query_size,size_t from,
+                            const exr_control *control,size_t *start,size_t *end,exr_error *error);
 int exr_grow(void **data, size_t *capacity, size_t count, size_t element);
 char *exr_copy(const char *text, size_t size);
 exr_status exr_export_time(char modified[32], exr_error *error);

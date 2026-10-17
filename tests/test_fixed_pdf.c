@@ -78,6 +78,11 @@ static void semantic_text(const char *dir) {
   CHECK(!r[0].flags && r[4].flags==EXR_REGION_INVISIBLE && r[6].flags==EXR_REGION_VERTICAL && r[7].flags==EXR_REGION_VERTICAL);
   NEAR(r[5].quad[0],15); NEAR(r[5].quad[1],21.6); NEAR(r[5].quad[5],48.6); /* Nested Form transforms. */
   NEAR(r[6].quad[0],94.9); NEAR(r[6].quad[1],200); NEAR(r[6].quad[3],179.98); NEAR(r[6].quad[4],105.1);
+  { size_t start,end,hit,selected_count; exr_text_region *selected=NULL;
+    OK(exr_fixed_text_find(t,"fi",2,0,NULL,&start,&end,&error)); CHECK(start==1 && end==3);
+    OK(exr_fixed_text_select(t,start,end,NULL,&selected,&selected_count,&error)); CHECK(selected_count==1 && selected[0].start==1 && selected[0].end==3); exr_free(selected);
+    OK(exr_fixed_text_hit(t,211,630,0,EXR_REGION_INVISIBLE,NULL,&hit,&error)); CHECK(hit==0);
+  }
   exr_fixed_text_free(t);
   /* Semantic extraction works without host or even usable embedded outlines. */
   bytes=load(dir,"pdf-public.pdf",&size); OK(exr_fixed_open_memory(EXR_PDF,bytes,size,NULL,&d,&error)); free(bytes);

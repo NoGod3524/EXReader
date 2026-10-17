@@ -1316,3 +1316,16 @@ snapshot, recovery and snapshots outliving documents. All 53 local suites pass.
 A public-only RFC 9110 client extracts all 194 pages: 456,338 UTF-8 bytes and
 450,578 regions in one 0.159-second development pass (not a controlled benchmark).
 The installed host example now exercises the text entry point before rendering.
+
+
+## 0.69 Fixed text search, selection and geometric hits
+
+A bounded linear KMP helper serves explicit-length fixed snapshots and existing
+reflow document search. Tests cover embedded NUL, UTF-8 continuation starts,
+malformed queries, empty text, 1 MiB query limits, cancellation and a repeated
+1 MiB source with 64 KiB near-match queries. Selection preserves duplicate and
+whole-ligature regions and discards cancelled copy output. Hit tests exercise
+exact edges, tie order, distance limits, invisible filtering, skewed quads where
+bounding-box hits would be wrong, and zero-area line cells. Public PDF tests
+search a semantic ligature, select its one full quad and hit transformed text.
+All 53 local suites pass. The 0.68 CI run passed all six jobs.

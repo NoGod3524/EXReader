@@ -61,4 +61,55 @@ static void loaders(void) {
   input.struct_size=offsetof(exr_fixed_input,text)+1; ((unsigned char *)&input)[offsetof(exr_fixed_input,text)]=1;
   CHECK(exr_fixed_create(&input,&d,&error)==EXR_ARGUMENT && !d);
 }
-int main(void) { snapshots(); loaders(); printf("%u generic fixed text checks passed\n",checks); return 0; }
+static void queries(void) {
+  const char bytes[]="A\xe4\xb8\xad\0Bfi"; exr_fixed_text *t=NULL; exr_text_region r[6],*selected=NULL; size_t a,b,n,hit;
+  exr_control control={0}; int stopped=1; unsigned calls=0;
+  r[0]=region(0,1,0); r[1]=region(1,4,2); r[2]=region(1,4,-5); r[2].flags=EXR_REGION_INVISIBLE;
+  r[3]=region(5,6,8); r[4]=region(6,8,10); r[5]=region(0,1,20); r[5].quad[2]=r[5].quad[4]=20;
+  { const double diamond[8]={10,0,11,1,10,2,9,1}; memcpy(r[4].quad,diamond,sizeof(diamond)); }
+  OK(exr_fixed_text_create(bytes,8,r,6,NULL,&t,&error));
+  OK(exr_fixed_text_find(t,"Bfi",3,0,NULL,&a,&b,&error)); CHECK(a==5 && b==8);
+  OK(exr_fixed_text_find(t,"\0B",2,0,NULL,&a,&b,&error)); CHECK(a==4 && b==6);
+  OK(exr_fixed_text_find(t,bytes+1,3,2,NULL,&a,&b,&error)); CHECK(a==SIZE_MAX && b==SIZE_MAX);
+  OK(exr_fixed_text_find(t,"i",1,8,NULL,&a,&b,&error)); CHECK(a==SIZE_MAX && b==SIZE_MAX);
+  CHECK(exr_fixed_text_find(t,"\xc0",1,0,NULL,&a,&b,&error)==EXR_ENCODING && a==SIZE_MAX && b==SIZE_MAX);
+  CHECK(exr_fixed_text_find(t,"x",(size_t)1024*1024+1,0,NULL,&a,&b,&error)==EXR_LIMIT && a==SIZE_MAX);
+  CHECK(exr_fixed_text_find(t,"",0,0,NULL,&a,&b,&error)==EXR_ARGUMENT);
+  CHECK(exr_fixed_text_find(t,"x",1,9,NULL,&a,&b,&error)==EXR_ARGUMENT);
+  OK(exr_fixed_text_select(t,1,4,NULL,&selected,&n,&error)); CHECK(n==2 && selected[0].quad[0]==2 && selected[1].quad[0]==-5); exr_free(selected);
+  OK(exr_fixed_text_select(t,6,7,NULL,&selected,&n,&error)); CHECK(n==1 && selected[0].start==6 && selected[0].end==8); exr_free(selected);
+  OK(exr_fixed_text_select(t,4,4,NULL,&selected,&n,&error)); CHECK(!selected && !n);
+  OK(exr_fixed_text_select(t,4,5,NULL,&selected,&n,&error)); CHECK(!selected && !n);
+  CHECK(exr_fixed_text_select(t,2,4,NULL,&selected,&n,&error)==EXR_ARGUMENT && !selected && !n);
+  CHECK(exr_fixed_text_select(t,0,9,NULL,&selected,&n,&error)==EXR_ARGUMENT && !selected && !n);
+  OK(exr_fixed_text_hit(t,2,1,0,0,NULL,&hit,&error)); CHECK(hit==1);
+  OK(exr_fixed_text_hit(t,-4.5,1,0,0,NULL,&hit,&error)); CHECK(hit==2);
+  OK(exr_fixed_text_hit(t,-4.5,1,0,EXR_REGION_INVISIBLE,NULL,&hit,&error)); CHECK(hit==SIZE_MAX);
+  OK(exr_fixed_text_hit(t,1.5,1,.5,0,NULL,&hit,&error)); CHECK(hit==0);
+  OK(exr_fixed_text_hit(t,1.5,1,.49,0,NULL,&hit,&error)); CHECK(hit==SIZE_MAX);
+  OK(exr_fixed_text_hit(t,9.1,.1,0,0,NULL,&hit,&error)); CHECK(hit==SIZE_MAX); /* Quad, not bounding box. */
+  OK(exr_fixed_text_hit(t,9.5,.5,0,0,NULL,&hit,&error)); CHECK(hit==4);
+  OK(exr_fixed_text_hit(t,20,1,0,0,NULL,&hit,&error)); CHECK(hit==5); /* Zero-area line cell. */
+  CHECK(exr_fixed_text_hit(t,NAN,0,0,0,NULL,&hit,&error)==EXR_ARGUMENT && hit==SIZE_MAX);
+  CHECK(exr_fixed_text_hit(t,0,0,-1,0,NULL,&hit,&error)==EXR_ARGUMENT);
+  CHECK(exr_fixed_text_hit(t,0,0,0,4,NULL,&hit,&error)==EXR_ARGUMENT);
+  control.cancelled=cancel; control.context=&stopped;
+  CHECK(exr_fixed_text_find(t,"A",1,0,&control,&a,&b,&error)==EXR_CANCELLED && a==SIZE_MAX && b==SIZE_MAX);
+  CHECK(exr_fixed_text_select(t,0,8,&control,&selected,&n,&error)==EXR_CANCELLED && !selected && !n);
+  CHECK(exr_fixed_text_hit(t,0,0,1,0,&control,&hit,&error)==EXR_CANCELLED && hit==SIZE_MAX);
+  control.cancelled=later; control.context=&calls;
+  CHECK(exr_fixed_text_select(t,0,8,&control,&selected,&n,&error)==EXR_CANCELLED && !selected && !n); /* During copy pass. */
+  exr_fixed_text_free(t);
+  { size_t length=(size_t)1024*1024; char *large=malloc(length),*query=malloc(65536); CHECK(large && query);
+    memset(large,'a',length); large[length-1]='b'; memset(query,'a',65536); query[65535]='b';
+    OK(exr_fixed_text_create(large,length,NULL,0,NULL,&t,&error));
+    OK(exr_fixed_text_find(t,query,65536,0,NULL,&a,&b,&error)); CHECK(a==length-65536 && b==length);
+    query[65535]='c'; OK(exr_fixed_text_find(t,query,65536,0,NULL,&a,&b,&error)); CHECK(a==SIZE_MAX && b==SIZE_MAX);
+    calls=0; CHECK(exr_fixed_text_find(t,query,65536,0,&control,&a,&b,&error)==EXR_CANCELLED && a==SIZE_MAX && b==SIZE_MAX);
+    free(large); free(query); exr_fixed_text_free(t);
+  }
+  OK(exr_fixed_text_create(NULL,0,NULL,0,NULL,&t,&error));
+  OK(exr_fixed_text_find(t,"x",1,0,NULL,&a,&b,&error)); CHECK(a==SIZE_MAX && b==SIZE_MAX);
+  OK(exr_fixed_text_hit(t,0,0,0,0,NULL,&hit,&error)); CHECK(hit==SIZE_MAX); exr_fixed_text_free(t);
+}
+int main(void) { snapshots(); loaders(); queries(); printf("%u generic fixed text checks passed\n",checks); return 0; }
