@@ -2140,3 +2140,25 @@ All 100 local native suites pass. A C++17 host builds and runs against the newly
 installed SDK and links both new public color-font queries. The default Windows
 DLL is 4,468,475 bytes. No runtime dependency was added; version/ABI/schema remain
 0.18.0/1/6. The preceding named-metadata batch (58e907f) passes all six CI jobs.
+
+## Milestone 0.18 development: native sbix bitmap glyphs
+
+The color-font suite now has 80400 checks. The original 3652-byte bitmap.ttf
+adds two sbix strikes, per-strike glyph coverage, two-color PNGs, a solid JPEG,
+dupe chains and a deliberate cycle. Tests cover native/above/below strike sizes,
+intrinsic RGBA, outline-relative origin, Unicode fallback and preserved advances,
+empty-outline fonts, horizontal/vertical clipping, sideways painting, text
+opacity, decorations and optional outline overlay. Snapshots outlive their font.
+Malformed versions/flags, oversized strike lists, invalid offsets/duplicates,
+missing target images, wrong encodings/signatures, decoded/scaled dimension
+limits and cancellation clear their output. Repeated individually valid enlarged
+bitmaps hit the shared page work limit without allocating enlarged images.
+
+Pillow's independent FreeType sbix renderer agrees at the two colored interiors
+and the outline-free background of the scaled exported fixture. All 100 native
+suites pass; the installed C++17 SDK consumer also links and calls the new image
+query. The default Windows DLL is 4,478,838 bytes. Parsing and scaling are native
+C; PNG/JPEG decode reuses the existing decoder with no new runtime dependency.
+Only validated strike directories are cached; decoded snapshots are caller-owned.
+The preceding COLR v0 batch (f07af93) passes all six platform/sanitizer CI jobs.
+Version, ABI epoch and library schema remain 0.18.0/1/6.
