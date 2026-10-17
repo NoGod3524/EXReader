@@ -1,10 +1,20 @@
-# Native C API 0.15
+# Native C API 0.16
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
 0.12.1 修复审计发现的长附标序列塑形开销、重复章节锚点、超限备注写入、XML 非法字符导出、跨行塑形上下文、RTF Unicode fallback 和 HTML script/style 原始文本处理；`exr_library_note()` 同时支持输出 ID 指向输入 `note.id`。回归覆盖见 [验证记录](NATIVE_VALIDATION.md#0121-audit-fixes)。
 
 ## 所有权与并发
+
+### 取消和进度
+
+0.16 提供 `exr_control`：可选 `cancelled(context)`、`progress(context,stage,completed,total)` 和借用的 context。回调同步运行在调用线程，引擎不创建后台线程，也不调度 UI；宿主负责选择工作线程。stage 区分随机读取、样式、分页、塑形和绘制，total 为 0 表示未知；嵌套塑形片段或新的资源操作会重新开始自己的局部计数。回调不能销毁或重入正在访问的对象。
+
+通过 `exr_layout_config.control` 控制布局/分页，通过 `exr_shape_options.control` 控制独立塑形，通过 `exr_source.control` 控制读取。`exr_pager_set_control(pager,&control,error)` 可在非忙碌状态替换回调，传 NULL 关闭。取消是协作式的，在阶段边界、文本/lookup 工作批次和图片绘制行批次检查。分页的整段双向分析及依赖库调用会在其相邻检查点响应取消。
+
+取消返回 `EXR_CANCELLED`，失败输出保持 NULL/0。借用分页模式保留之前的页缓存，命中缓存不运行取消回调；解除取消后，下次未命中可从检查点恢复。顺序 `next()` 在任何错误后仍需重建 pager。`exr_render_page_ex(layout,font,page,channels,&control,&bitmap,error)` 接受 channels 为 1 或 4，取消释放并清空部分位图。原来的绘制函数等价于不传 control；绘制调用的 context 只需在这次调用期间有效。
+
+随机读取回调的 control 随源描述符复制，context 必须与保留的源同寿命；布局/分页的 control 随配置复制，context 必须维持到相应工作结束。返回的独立页面不持有布局时的控制回调，之后可用不同的 control 绘制。配置、塑形参数和源描述符在 0.16 扩展了字段，需重新编译宿主。
 
 - `exr_document`、`exr_font`、`exr_layout`、`exr_library`、`exr_publication`、`exr_session`、`exr_pager`、`exr_bidi` 为不透明句柄，使用各自析构函数释放。
 - document 的 text / title / blocks / nodes / chapters / resources 和 layout 的 pages / lines / glyphs / boxes / image 为只读借用视图，所属对象释放后失效。树节点属性和文本也属于 document。借用的图片像素不可修改或释放。

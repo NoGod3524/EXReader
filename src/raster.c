@@ -25,14 +25,16 @@ static void rectangle(exr_bitmap *b, float x, float y, float w, float h, uint32_
     for (xx = left; xx < right; xx++)
       pixel(b, xx, yy, color, 255);
 }
-static void picture(exr_bitmap *out, const exr_box *box, const exr_bitmap *src) {
+static exr_status picture(exr_bitmap *out, const exr_box *box, const exr_bitmap *src,
+                             const exr_control *control, exr_error *error) {
   int left = (int)fmaxf(0, ceilf(box->x)), top = (int)fmaxf(0, ceilf(box->y));
   int right = (int)fminf((float)out->width, ceilf(box->x + box->width));
   int bottom = (int)fminf((float)out->height, ceilf(box->y + box->height));
   int x, y;
   if (box->width <= 0 || box->height <= 0)
-    return;
-  for (y = top; y < bottom; y++)
+    return EXR_OK;
+  for (y = top; y < bottom; y++) {
+    if (!(y & 63) && exr_control_cancel(control, error) != EXR_OK) return EXR_CANCELLED;
     for (x = left; x < right; x++) {
       float sx =
           fmaxf(0, fminf((float)src->width - 1,
@@ -64,16 +66,21 @@ static void picture(exr_bitmap *out, const exr_box *box, const exr_bitmap *src) 
       color = (color << 8) | (uint32_t)lroundf(alpha);
       pixel(out, x, y, color, 255);
     }
+  }
+  return EXR_OK;
 }
 static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned channels,
-                         exr_bitmap *out, exr_error *e) {
+                         const exr_control *control, exr_bitmap *out, exr_error *e) {
   size_t i, j;
   uint32_t width, height;
   const exr_page *p;
   if (l && l->font && (!f || f == l->font || f == l->font->fallback)) f = l->font;
-  if (!l || !f || !out || page >= l->page_count)
+  if (!l || !f || !out || page >= l->page_count || (channels != 1 && channels != 4))
     return exr_fail(e, EXR_ARGUMENT, "Invalid render arguments");
   memset(out, 0, sizeof(*out));
+  if (exr_control_poll(control, EXR_STAGE_RENDER, 0,
+                         l->pages[page].box_count + l->pages[page].line_count, e) != EXR_OK)
+    return EXR_CANCELLED;
   width = (uint32_t)ceilf(l->options.width);
   height = (uint32_t)ceilf(l->options.height);
   if ((size_t)width * height * channels > 64 * 1024 * 1024)
@@ -90,11 +97,13 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
   for (i = p->box_start; i < p->box_start + p->box_count; i++) {
     const exr_box *b = &l->boxes[i];
     float bw = fminf(b->border_width, fminf(b->width, b->height) / 2);
+    if (exr_control_poll(control, EXR_STAGE_RENDER, i - p->box_start,
+                           p->box_count + p->line_count, e) != EXR_OK) goto cancelled;
     rectangle(out, b->x, b->y, b->width, b->height, b->background);
     if (b->kind == EXR_BOX_IMAGE && !b->flags) {
       for (j = 0; j < l->image_count; j++)
         if (l->images[j].resource == b->resource) {
-          picture(out, b, &l->images[j].bitmap);
+          if (picture(out, b, &l->images[j].bitmap, control, e) != EXR_OK) goto cancelled;
           break;
         }
     }
@@ -113,6 +122,10 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
       FT_GlyphSlot slot;
       unsigned by, bx;
       int left, top;
+      if (j == l->lines[i].glyph_start &&
+          exr_control_poll(control, EXR_STAGE_RENDER, p->box_count + i - p->line_start,
+                             p->box_count + p->line_count, e) != EXR_OK) goto cancelled;
+      if (!(j & 31) && exr_control_cancel(control, e) != EXR_OK) goto cancelled;
       if (g->flags & EXR_GLYPH_HIDDEN)
         continue;
       if (g->font_index >= f->count)
@@ -148,16 +161,25 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
           pixel(out, x, y, g->color, a);
         }
     }
-  return EXR_OK;
+  if (exr_control_poll(control, EXR_STAGE_RENDER, p->box_count + p->line_count,
+                         p->box_count + p->line_count, e) != EXR_OK) goto cancelled;
+  return exr_fail(e, EXR_OK, "");
+cancelled:
+  exr_bitmap_free(out);
+  return exr_fail(e, EXR_CANCELLED, "Operation cancelled");
 font_error:
   exr_bitmap_free(out);
   return exr_fail(e, EXR_FONT, "Glyph rasterization failed");
 }
 exr_status exr_render_page(const exr_layout *l, exr_font *f, size_t page, exr_bitmap *out,
                            exr_error *e) {
-  return render(l, f, page, 1, out, e);
+  return render(l, f, page, 1, NULL, out, e);
 }
 exr_status exr_render_page_color(const exr_layout *l, exr_font *f, size_t page, exr_bitmap *out,
                                  exr_error *e) {
-  return render(l, f, page, 4, out, e);
+  return render(l, f, page, 4, NULL, out, e);
+}
+exr_status exr_render_page_ex(const exr_layout *l, exr_font *f, size_t page, unsigned channels,
+                               const exr_control *control, exr_bitmap *out, exr_error *e) {
+  return render(l, f, page, channels, control, out, e);
 }

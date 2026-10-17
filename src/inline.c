@@ -54,6 +54,8 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
       complex |= exr_bidi_complex(cp);
       if (++count > EXR_MAX_ITEMS)
         return exr_fail(f->error, EXR_LIMIT, "Inline scalar limit exceeded");
+      if (!(count & 1023) && exr_control_cancel(&f->config->control, f->error) != EXR_OK)
+        return EXR_CANCELLED;
     }
   }
   if (!complex)
@@ -239,6 +241,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     options.direction = g->bidi_level != UINT_MAX && (g->bidi_level & 1) ?
                           EXR_DIRECTION_RTL : EXR_DIRECTION_LTR;
     options.script = tag;
+    options.control = f->config->control;
     j = i;
     while (j > start && exr_ot_transparent(l->glyphs[j - 1].codepoint)) j--;
     options.context_before = j > start ? l->glyphs[j - 1].codepoint : before;

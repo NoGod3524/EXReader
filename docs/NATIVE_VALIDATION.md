@@ -1,5 +1,16 @@
 # Native C validation
 
+## 0.16 operation control
+
+`native-control` passes 3555 checks. It cancels style computation, lookup work in a
+long mark run, partial rendering and seekable reading, verifies cleared outputs,
+then repeats successfully. A cancelled cache miss retains the prior borrowed page;
+after clearing control it restores a checkpoint and matches an uncancelled pager's
+pixels. Progress callbacks validate stage/count bounds and rejected pager reentry.
+Source cancellation preserves failed-open ownership and permits later load retry.
+All 26 local Windows CTest suites pass. The source milestone passed all six jobs at
+[83a18ac](https://github.com/NoGod3524/EXReader/actions/runs/38997470863).
+
 ## 0.15 seekable sources
 
 `native-source` passes 463 local Windows checks. An EPUB is generated in memory

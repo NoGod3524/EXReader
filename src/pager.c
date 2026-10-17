@@ -172,6 +172,11 @@ static exr_status scalar(exr_pager *p, frame *current) {
     return failure(p, EXR_ENCODING, "Invalid document text");
   if (++p->assets->work_glyphs > EXR_MAX_ITEMS)
     return failure(p, EXR_LIMIT, "Text work limit exceeded");
+  if (!(p->assets->work_glyphs & 255)) {
+    status = exr_control_poll(&p->config.control, EXR_STAGE_LAYOUT, current->position,
+                                p->f.doc->size, p->f.error);
+    if (status != EXR_OK) return status;
+  }
   g.start = start;
   g.end = current->position;
   g.node = current->node;
@@ -199,13 +204,21 @@ static exr_status push(exr_pager *p, size_t index, float x, float width) {
 }
 static exr_status advance(exr_pager *p) {
   flow *f = &p->f;
-  exr_status status = exr_inline_drain(f, &p->line);
+  exr_status status = exr_control_poll(&p->config.control, EXR_STAGE_LAYOUT, p->position,
+                                       p->f.doc->size, p->f.error);
+  if (status != EXR_OK) return status;
+  status = exr_inline_drain(f, &p->line);
   if (status != EXR_OK)
     return status;
   while (!p->finished) {
     frame *v;
     const exr_node *n;
     const exr_style *s;
+    if (!(p->assets->work_glyphs & 255)) {
+      status = exr_control_poll(&p->config.control, EXR_STAGE_LAYOUT, p->position,
+                                  p->f.doc->size, p->f.error);
+      if (status != EXR_OK) return status;
+    }
     if (!p->depth) {
       while (p->chapter < f->doc->chapter_count &&
              (!f->doc->chapters[p->chapter].in_spine || !f->doc->chapters[p->chapter].linear))
@@ -480,7 +493,8 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
     return exr_fail(e, EXR_MEMORY, "Pager asset allocation failed");
   }
   p->assets->options = config->page;
-  status = exr_book_fonts(doc, font, p->styles, font_rules, font_count, &p->assets->font, e);
+  status = exr_book_fonts(doc, font, p->styles, font_rules, font_count, &p->config.control,
+                           &p->assets->font, e);
   free(font_rules);
   if (status != EXR_OK) { exr_pager_free(p); return status; }
   p->f.assets = p->assets;
@@ -668,6 +682,12 @@ exr_status exr_pager_set_checkpoints(exr_pager *p, size_t capacity, size_t budge
   p->interval = interval;
   while (p->checkpoint_count && (p->checkpoint_count > capacity ||
          p->checkpoint_bytes > budget)) evict_checkpoint(p);
+  return exr_fail(e, EXR_OK, "");
+}
+exr_status exr_pager_set_control(exr_pager *p, const exr_control *control, exr_error *e) {
+  if (!p || p->busy) return exr_fail(e, EXR_ARGUMENT, "Invalid or reentrant pager control");
+  if (control) p->config.control = *control;
+  else memset(&p->config.control, 0, sizeof(p->config.control));
   return exr_fail(e, EXR_OK, "");
 }
 exr_pager_stats exr_pager_statistics(const exr_pager *p) {

@@ -14,6 +14,18 @@ exr_status exr_fail(exr_error *e, exr_status code, const char *fmt, ...) {
   }
   return code;
 }
+exr_status exr_control_cancel(const exr_control *control, exr_error *e) {
+  if (control && control->cancelled && control->cancelled(control->context))
+    return exr_fail(e, EXR_CANCELLED, "Operation cancelled");
+  return EXR_OK;
+}
+exr_status exr_control_poll(const exr_control *control, exr_stage stage,
+                             uint64_t completed, uint64_t total, exr_error *e) {
+  exr_status status = exr_control_cancel(control, e);
+  if (status != EXR_OK) return status;
+  if (control && control->progress) control->progress(control->context, stage, completed, total);
+  return exr_control_cancel(control, e);
+}
 int exr_grow(void **p, size_t *cap, size_t n, size_t unit) {
   size_t next;
   void *q;

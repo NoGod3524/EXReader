@@ -357,6 +357,9 @@ static size_t source_read(void *context, mz_uint64 offset, void *buffer, size_t 
     return 0;
   }
   while (done < size) {
+    z->status = exr_control_poll(&z->source->control, EXR_STAGE_READ, z->read_bytes + done, 0,
+                                  z->error);
+    if (z->status != EXR_OK) return 0;
     size_t got = z->source->read_at(z->source->context, offset + done,
                                     (unsigned char *)buffer + done, size - done);
     if (!got || got > size - done) {
@@ -366,6 +369,8 @@ static size_t source_read(void *context, mz_uint64 offset, void *buffer, size_t 
     done += got;
   }
   z->read_bytes += done;
+  z->status = exr_control_cancel(&z->source->control, z->error);
+  if (z->status != EXR_OK) return 0;
   return done;
 }
 static void *member(archive *z, const char *name, size_t *size, exr_error *e) {
