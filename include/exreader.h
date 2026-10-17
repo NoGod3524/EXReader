@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.70.0"
+#define EXR_VERSION "0.71.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -735,9 +735,15 @@ typedef struct {
   char *text;
   exr_anchor anchor; /* Owned in query results; zero-initialize input notes. */
 } exr_note;
+typedef struct {
+  int64_t id,book_id;
+  size_t page,start,end; /* Zero-based page; UTF-8 range within that page. */
+  char *text;
+  exr_fixed_anchor anchor; /* Query output; writes capture the stored source. */
+} exr_fixed_note;
 EXR_API exr_status exr_library_open(const char *path, exr_library **out, exr_error *error);
 EXR_API void exr_library_close(exr_library *library);
-/* Imports original bytes and the first declared cover-image up to 8 MiB.
+/* Imports original bytes (including PDF) and the first declared reflow cover-image up to 8 MiB.
    Larger covers remain in the original source; failed cover reads abort the insert. */
 EXR_API exr_status exr_library_import(exr_library *library, exr_format format, const void *data,
                                       size_t size, const char *title, int64_t *id,
@@ -748,6 +754,15 @@ EXR_API void exr_books_free(exr_book *books, size_t count);
 EXR_API exr_status exr_library_update(exr_library *library, const exr_book *book, exr_error *error);
 EXR_API exr_status exr_library_document(exr_library *library, int64_t id, exr_document **doc,
                                         exr_error *error);
+/* PDF books keep page-count extent and zero-based page progress. */
+EXR_API exr_status exr_library_fixed(exr_library *library,int64_t id,const exr_fixed_open_options *options,
+                                      exr_fixed_document **out,exr_error *error);
+EXR_API exr_status exr_library_fixed_note(exr_library *library,const exr_fixed_note *note,const exr_control *control,
+                                           int64_t *id,exr_error *error);
+EXR_API exr_status exr_library_fixed_notes(exr_library *library,int64_t book_id,exr_fixed_note **notes,
+                                            size_t *count,exr_error *error);
+EXR_API void exr_fixed_notes_free(exr_fixed_note *notes,size_t count);
+EXR_API exr_status exr_library_remove_fixed_note(exr_library *library,int64_t id,exr_error *error);
 EXR_API exr_status exr_library_cover(exr_library *library, int64_t id, const void *data,
                                      size_t size, exr_error *error);
 /* New/reranged notes capture a selector from the stored book. Updating only text

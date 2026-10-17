@@ -278,17 +278,23 @@ exr_status exr_fixed_anchor_create(const char *page_id,const exr_fixed_text *sna
   if(!a.page_id || !a.exact || !a.prefix || !a.suffix) { exr_fixed_anchor_free(&a); return exr_fail(e,EXR_MEMORY,"Fixed anchor allocation failed"); }
   *out=a; return exr_fail(e,EXR_OK,"");
 }
+exr_status exr_fixed_anchor_validate(const exr_fixed_anchor *a,exr_error *e) {
+  exr_status status;
+  if(!a || !a->exact || a->start>a->end || ((a->start==SIZE_MAX)!=(a->end==SIZE_MAX)) ||
+     (a->start!=SIZE_MAX && a->end-a->start!=a->exact_size)) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed anchor selector");
+  if((status=fixed_page_id(a->page_id,e))!=EXR_OK ||
+     (status=fixed_selector(a->exact,a->exact_size,ANCHOR_QUOTE_LIMIT,SIZE_MAX,e))!=EXR_OK ||
+     (status=fixed_selector(a->prefix,a->prefix_size,ANCHOR_CONTEXT_BYTES,ANCHOR_CONTEXT_SCALARS,e))!=EXR_OK ||
+     (status=fixed_selector(a->suffix,a->suffix_size,ANCHOR_CONTEXT_BYTES,ANCHOR_CONTEXT_SCALARS,e))!=EXR_OK) return status;
+  return exr_fail(e,EXR_OK,"");
+}
 exr_status exr_fixed_anchor_resolve(const char *page_id,const exr_fixed_text *snapshot,const exr_fixed_anchor *a,
                                      const exr_control *control,exr_anchor_match *match,exr_error *e) {
   anchor_search s={0}; exr_status status;
   if(!match) return exr_fail(e,EXR_ARGUMENT,"Missing fixed anchor match output");
   match->state=EXR_ANCHOR_MISSING; match->start=match->end=SIZE_MAX;
-  if(!snapshot || !a || !a->exact || a->start>a->end || ((a->start==SIZE_MAX)!=(a->end==SIZE_MAX)) ||
-     (a->start!=SIZE_MAX && a->end-a->start!=a->exact_size)) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed anchor selector");
-  if((status=fixed_page_id(page_id,e))!=EXR_OK || (status=fixed_page_id(a->page_id,e))!=EXR_OK ||
-     (status=fixed_selector(a->exact,a->exact_size,ANCHOR_QUOTE_LIMIT,SIZE_MAX,e))!=EXR_OK ||
-     (status=fixed_selector(a->prefix,a->prefix_size,ANCHOR_CONTEXT_BYTES,ANCHOR_CONTEXT_SCALARS,e))!=EXR_OK ||
-     (status=fixed_selector(a->suffix,a->suffix_size,ANCHOR_CONTEXT_BYTES,ANCHOR_CONTEXT_SCALARS,e))!=EXR_OK) return status;
+  if(!snapshot) return exr_fail(e,EXR_ARGUMENT,"Missing fixed text snapshot");
+  if((status=fixed_page_id(page_id,e))!=EXR_OK || (status=exr_fixed_anchor_validate(a,e))!=EXR_OK) return status;
   status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
   if(strcmp(page_id,a->page_id)) return exr_fail(e,EXR_OK,"");
   s.text=exr_fixed_text_string(snapshot,&s.size); s.hi=s.size; s.control=control;

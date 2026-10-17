@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "internal.h"
 #include <sqlite3.h>
+#define FIXED_SCHEMA "CREATE TABLE fixed_notes(id INTEGER PRIMARY KEY,book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE," \
+  "page INTEGER NOT NULL CHECK(page>=0),start INTEGER NOT NULL CHECK(start>=0),end INTEGER NOT NULL CHECK(end>=start)," \
+  "text TEXT NOT NULL,page_id TEXT NOT NULL,exact BLOB NOT NULL,prefix BLOB NOT NULL,suffix BLOB NOT NULL);" \
+  "CREATE INDEX fixed_notes_book ON fixed_notes(book_id,page,start);"
 struct exr_library {
   sqlite3 *db;
 };
@@ -44,7 +48,7 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
                        "NULL,anchor_exact TEXT,anchor_prefix TEXT,anchor_suffix TEXT,"
                        "anchor_chapter TEXT);"
                        "CREATE INDEX IF NOT EXISTS notes_book ON notes(book_id);PRAGMA "
-                       "application_id=1163416131;PRAGMA user_version=2;COMMIT;";
+                       "application_id=1163416131;" FIXED_SCHEMA "PRAGMA user_version=3;COMMIT;";
   if (!path || !out)
     return exr_fail(e, EXR_ARGUMENT, "Invalid library arguments");
   *out = NULL;
@@ -75,7 +79,7 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
           "ALTER TABLE notes ADD COLUMN anchor_prefix TEXT;"
           "ALTER TABLE notes ADD COLUMN anchor_suffix TEXT;"
           "ALTER TABLE notes ADD COLUMN anchor_chapter TEXT;"
-          "PRAGMA user_version=2;COMMIT;";
+          FIXED_SCHEMA "PRAGMA user_version=3;COMMIT;";
       if (sqlite3_exec(l->db, migration, NULL, NULL, NULL) != SQLITE_OK) {
         database_error(l, e);
         sqlite3_exec(l->db, "ROLLBACK", NULL, NULL, NULL);
@@ -85,7 +89,13 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
       *out = l;
       return EXR_OK;
     }
-    if (app == 1163416131 && version == 2) {
+    if(app==1163416131 && version==2) {
+      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" FIXED_SCHEMA "PRAGMA user_version=3;COMMIT;",NULL,NULL,NULL)!=SQLITE_OK) {
+        database_error(l,e); sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); exr_library_close(l); return EXR_DATABASE;
+      }
+      *out=l; return EXR_OK;
+    }
+    if (app == 1163416131 && version == 3) {
       *out = l;
       return EXR_OK;
     }
@@ -135,16 +145,19 @@ static exr_status import_cover(const exr_document *doc,void **data,size_t *size,
 exr_status exr_library_import(exr_library *l, exr_format format, const void *data, size_t n,
                               const char *title, int64_t *id, exr_error *e) {
   sqlite3_stmt *s = NULL;
-  exr_document *d = NULL;
+  exr_document *d = NULL; exr_fixed_document *fixed=NULL; size_t extent=0;
   exr_status result;
   void *cover=NULL; size_t cover_size=0;
   if (!l || !id)
     return exr_fail(e, EXR_ARGUMENT, "Invalid import arguments");
   *id = 0;
-  result = exr_document_open_memory(format, data, n, &d, e);
-  if (result != EXR_OK)
-    return result;
-  result=import_cover(d,&cover,&cover_size,e);
+  if(format==EXR_PDF) {
+    result=exr_fixed_open_memory(format,data,n,NULL,&fixed,e);
+    if(result==EXR_OK) exr_fixed_pages(fixed,&extent);
+  } else {
+    result=exr_document_open_memory(format,data,n,&d,e);
+    if(result==EXR_OK) { extent=d->size; result=import_cover(d,&cover,&cover_size,e); }
+  }
   if(result!=EXR_OK) goto cleanup;
   if (!prepare(l, "INSERT INTO books(format,title,text_size,source,cover)VALUES(?1,?2,?3,?4,?5)", &s)) {
     result=database_error(l,e); goto cleanup;
@@ -152,7 +165,7 @@ exr_status exr_library_import(exr_library *l, exr_format format, const void *dat
   if(sqlite3_bind_int(s, 1, format)!=SQLITE_OK || !bind_text(s, 2,
             title && title[0] ? title
                               : (exr_document_title(d)[0] ? exr_document_title(d) : "Untitled")) ||
-     sqlite3_bind_int64(s, 3, (sqlite3_int64)d->size)!=SQLITE_OK ||
+     sqlite3_bind_int64(s, 3, (sqlite3_int64)extent)!=SQLITE_OK ||
      sqlite3_bind_blob(s, 4, data, (int)n, SQLITE_TRANSIENT)!=SQLITE_OK ||
      (cover ? sqlite3_bind_blob(s,5,cover,(int)cover_size,SQLITE_STATIC) : sqlite3_bind_null(s,5))!=SQLITE_OK) {
     result=database_error(l,e); sqlite3_finalize(s); goto cleanup;
@@ -161,7 +174,7 @@ exr_status exr_library_import(exr_library *l, exr_format format, const void *dat
   if (result == EXR_OK)
     *id = sqlite3_last_insert_rowid(l->db);
 cleanup:
-  free(cover); exr_document_free(d);
+  free(cover); exr_document_free(d); exr_fixed_free(fixed);
   return result;
 }
 void exr_books_free(exr_book *books, size_t n) {
@@ -329,6 +342,18 @@ exr_status exr_library_document(exr_library *l, int64_t id, exr_document **doc, 
   sqlite3_finalize(s);
   return result;
 }
+exr_status exr_library_fixed(exr_library *l,int64_t id,const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e) {
+  sqlite3_stmt *s=NULL; exr_status status; int step;
+  if(out) *out=NULL;
+  if(!l || id<=0 || !out) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed document lookup");
+  if(!prepare(l,"SELECT format,source FROM books WHERE id=?1",&s)) return database_error(l,e);
+  if(sqlite3_bind_int64(s,1,id)!=SQLITE_OK) { sqlite3_finalize(s); return database_error(l,e); }
+  step=sqlite3_step(s);
+  if(step!=SQLITE_ROW) { sqlite3_finalize(s); return step==SQLITE_DONE ? exr_fail(e,EXR_ARGUMENT,"Book missing") : database_error(l,e); }
+  if(sqlite3_column_type(s,0)!=SQLITE_INTEGER || sqlite3_column_type(s,1)!=SQLITE_BLOB) status=exr_fail(e,EXR_DATABASE,"Invalid stored fixed document");
+  else status=exr_fixed_open_memory((exr_format)sqlite3_column_int(s,0),sqlite3_column_blob(s,1),(size_t)sqlite3_column_bytes(s,1),options,out,e);
+  sqlite3_finalize(s); return status;
+}
 exr_status exr_library_cover(exr_library *l, int64_t id, const void *data, size_t n, exr_error *e) {
   sqlite3_stmt *s = NULL;
   exr_status result;
@@ -441,7 +466,7 @@ exr_status exr_library_note(exr_library *l, const exr_note *note, int64_t *id, e
     if (result != EXR_OK)
       return result;
   }
-  if (!prepare(l, "SELECT text_size FROM books WHERE id=?1", &s))
+  if (!prepare(l, "SELECT text_size,format FROM books WHERE id=?1", &s))
     return database_error(l, e);
   if (sqlite3_bind_int64(s, 1, note->book_id) != SQLITE_OK)
     goto database;
@@ -452,6 +477,7 @@ exr_status exr_library_note(exr_library *l, const exr_note *note, int64_t *id, e
     sqlite3_finalize(s);
     return exr_fail(e, EXR_ARGUMENT, "Book missing");
   }
+  if(sqlite3_column_int(s,1)==EXR_PDF) { sqlite3_finalize(s); return exr_fail(e,EXR_FORMAT,"Use fixed-page notes for this book"); }
   if (!offset_column(s, 0, &text_size) || text_size > EXR_MAX_TEXT) {
     sqlite3_finalize(s);
     return exr_fail(e, EXR_DATABASE, "Invalid stored book text size");
@@ -600,4 +626,103 @@ exr_status exr_library_backup(exr_library *l, const char *path, exr_error *e) {
     return database_error(l, e);
   bind_text(s, 1, path);
   return done(l, s, e);
+}
+
+exr_status exr_library_fixed_note(exr_library *l,const exr_fixed_note *input,const exr_control *control,int64_t *id,exr_error *e) {
+  exr_fixed_note note; exr_fixed_document *doc=NULL; exr_fixed_text *text=NULL; exr_fixed_anchor anchor={0};
+  exr_fixed_open_options options={0}; sqlite3_stmt *s=NULL; exr_status status; size_t count,n=0,at=0; uint32_t cp; const exr_fixed_page *pages;
+  if(input) note=*input; else memset(&note,0,sizeof(note)); /* Output ID may alias input.id. */
+  if(id) *id=0;
+  if(!l || !input || !id || note.id<0 || note.book_id<=0 || !note.text || note.start>note.end || note.end>EXR_MAX_TEXT)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid fixed note input");
+  while(n<=(size_t)1024*1024 && note.text[n]) n++;
+  if(n>(size_t)1024*1024) return exr_fail(e,EXR_LIMIT,"Fixed note exceeds 1 MiB");
+  while(at<n) if(!exr_next(note.text,n,&at,&cp)) return exr_fail(e,EXR_ENCODING,"Fixed note is not UTF-8");
+  options.struct_size=sizeof(options); if(control) options.control=*control;
+  status=exr_library_fixed(l,note.book_id,&options,&doc,e); if(status!=EXR_OK) goto finish;
+  pages=exr_fixed_pages(doc,&count);
+  if(note.page>=count) { status=exr_fail(e,EXR_ARGUMENT,"Fixed note page is out of range"); goto finish; }
+  status=exr_fixed_load_text(doc,note.page,control,&text,e);
+  if(status==EXR_OK) status=exr_fixed_anchor_create(pages[note.page].id,text,note.start,note.end,&anchor,e);
+  if(status!=EXR_OK) goto finish;
+  if(!prepare(l,note.id ?
+      "UPDATE fixed_notes SET page=?2,start=?3,end=?4,text=?5,page_id=?6,exact=?7,prefix=?8,suffix=?9 WHERE book_id=?1 AND id=?10" :
+      "INSERT INTO fixed_notes(book_id,page,start,end,text,page_id,exact,prefix,suffix) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",&s)) { status=database_error(l,e); goto finish; }
+  if(sqlite3_bind_int64(s,1,note.book_id)!=SQLITE_OK || sqlite3_bind_int64(s,2,(sqlite3_int64)note.page)!=SQLITE_OK ||
+     sqlite3_bind_int64(s,3,(sqlite3_int64)note.start)!=SQLITE_OK || sqlite3_bind_int64(s,4,(sqlite3_int64)note.end)!=SQLITE_OK ||
+     !bind_text(s,5,note.text) || !bind_text(s,6,anchor.page_id) ||
+     sqlite3_bind_blob(s,7,anchor.exact,(int)anchor.exact_size,SQLITE_TRANSIENT)!=SQLITE_OK ||
+     sqlite3_bind_blob(s,8,anchor.prefix,(int)anchor.prefix_size,SQLITE_TRANSIENT)!=SQLITE_OK ||
+     sqlite3_bind_blob(s,9,anchor.suffix,(int)anchor.suffix_size,SQLITE_TRANSIENT)!=SQLITE_OK ||
+     (note.id && sqlite3_bind_int64(s,10,note.id)!=SQLITE_OK)) { status=database_error(l,e); goto finish; }
+  status=exr_control_cancel(control,e); if(status!=EXR_OK) goto finish;
+  status=done(l,s,e); s=NULL;
+  if(status==EXR_OK) {
+    if(note.id && !sqlite3_changes(l->db)) status=exr_fail(e,EXR_ARGUMENT,"Fixed note missing or belongs to another book");
+    else *id=note.id ? note.id : sqlite3_last_insert_rowid(l->db);
+  }
+finish:
+  sqlite3_finalize(s); exr_fixed_anchor_free(&anchor); exr_fixed_text_free(text); exr_fixed_free(doc); return status;
+}
+void exr_fixed_notes_free(exr_fixed_note *notes,size_t count) {
+  size_t i; if(!notes) return;
+  for(i=0;i<count;i++) { free(notes[i].text); exr_fixed_anchor_free(&notes[i].anchor); }
+  free(notes);
+}
+static exr_status fixed_column(sqlite3_stmt *s,int col,int type,size_t maximum,char **out,size_t *size,exr_error *e) {
+  int n; const void *bytes;
+  *out=NULL; *size=0;
+  if(sqlite3_column_type(s,col)!=type) return exr_fail(e,EXR_DATABASE,"Invalid stored fixed note value type");
+  bytes=type==SQLITE_TEXT ? (const void *)sqlite3_column_text(s,col) : sqlite3_column_blob(s,col); n=sqlite3_column_bytes(s,col);
+  if(n<0 || (size_t)n>maximum || (type==SQLITE_TEXT && n && bytes && memchr(bytes,0,(size_t)n)))
+    return exr_fail(e,EXR_DATABASE,"Invalid stored fixed note value size");
+  if(n && !bytes) return exr_fail(e,EXR_MEMORY,"Fixed note read allocation failed");
+  *out=exr_copy(bytes,(size_t)n); if(!*out) return exr_fail(e,EXR_MEMORY,"Fixed note copy allocation failed");
+  *size=(size_t)n; return EXR_OK;
+}
+static exr_status read_fixed_note(sqlite3_stmt *s,exr_fixed_note *note,size_t *bytes,exr_error *e) {
+  exr_status status; exr_error local={0}; size_t pages,comment,page_id,at=0; uint32_t cp; exr_fixed_anchor *a=&note->anchor;
+  memset(note,0,sizeof(*note));
+  if(sqlite3_column_type(s,0)!=SQLITE_INTEGER || (note->id=sqlite3_column_int64(s,0))<=0 ||
+     sqlite3_column_type(s,1)!=SQLITE_INTEGER || (note->book_id=sqlite3_column_int64(s,1))<=0 ||
+     !offset_column(s,2,&note->page) || !offset_column(s,3,&note->start) || !offset_column(s,4,&note->end) ||
+     !offset_column(s,10,&pages) || !pages || pages>10000 || note->page>=pages || note->start>note->end || note->end>EXR_MAX_TEXT ||
+     sqlite3_column_type(s,11)!=SQLITE_INTEGER || sqlite3_column_int(s,11)!=EXR_PDF) return exr_fail(e,EXR_DATABASE,"Invalid stored fixed note range/book");
+  a->start=note->start; a->end=note->end;
+  if((status=fixed_column(s,5,SQLITE_TEXT,(size_t)1024*1024,&note->text,&comment,e))!=EXR_OK ||
+     (status=fixed_column(s,6,SQLITE_TEXT,65536,&a->page_id,&page_id,e))!=EXR_OK ||
+     (status=fixed_column(s,7,SQLITE_BLOB,65536,&a->exact,&a->exact_size,e))!=EXR_OK ||
+     (status=fixed_column(s,8,SQLITE_BLOB,128,&a->prefix,&a->prefix_size,e))!=EXR_OK ||
+     (status=fixed_column(s,9,SQLITE_BLOB,128,&a->suffix,&a->suffix_size,e))!=EXR_OK) return status;
+  while(at<comment) if(!exr_next(note->text,comment,&at,&cp)) return exr_fail(e,EXR_DATABASE,"Invalid stored fixed note UTF-8");
+  if(exr_fixed_anchor_validate(a,&local)!=EXR_OK) return exr_fail(e,EXR_DATABASE,"Invalid stored fixed note selector");
+  *bytes=sizeof(*note)+comment+page_id+a->exact_size+a->prefix_size+a->suffix_size+5; return EXR_OK;
+}
+exr_status exr_library_fixed_notes(exr_library *l,int64_t book_id,exr_fixed_note **out,size_t *count,exr_error *e) {
+  sqlite3_stmt *s=NULL; exr_fixed_note *notes=NULL; size_t n=0,capacity=0,total=0; int step; exr_status status=EXR_OK;
+  if(out) *out=NULL;
+  if(count) *count=0;
+  if(!l || book_id<=0 || !out || !count) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed note query");
+  if(!prepare(l,"SELECT n.id,n.book_id,n.page,n.start,n.end,n.text,n.page_id,n.exact,n.prefix,n.suffix,b.text_size,b.format FROM fixed_notes n JOIN books b ON b.id=n.book_id WHERE n.book_id=?1 ORDER BY n.page,n.start,n.id",&s)) return database_error(l,e);
+  if(sqlite3_bind_int64(s,1,book_id)!=SQLITE_OK) { status=database_error(l,e); goto finish; }
+  while((step=sqlite3_step(s))==SQLITE_ROW) {
+    size_t bytes=0;
+    if(n>=100000 || total>=(size_t)64*1024*1024) { status=exr_fail(e,EXR_LIMIT,"Fixed note query exceeds result budget"); goto finish; }
+    if(!exr_grow((void **)&notes,&capacity,n+1,sizeof(*notes))) { status=exr_fail(e,EXR_MEMORY,"Fixed note results allocation failed"); goto finish; }
+    status=read_fixed_note(s,&notes[n++],&bytes,e); if(status!=EXR_OK) goto finish;
+    if(bytes>(size_t)64*1024*1024-total) { status=exr_fail(e,EXR_LIMIT,"Fixed note query exceeds result byte budget"); goto finish; }
+    total+=bytes;
+  }
+  if(step!=SQLITE_DONE) status=database_error(l,e);
+finish:
+  sqlite3_finalize(s);
+  if(status==EXR_OK) { *out=notes; *count=n; } else exr_fixed_notes_free(notes,n);
+  return status;
+}
+exr_status exr_library_remove_fixed_note(exr_library *l,int64_t id,exr_error *e) {
+  sqlite3_stmt *s=NULL;
+  if(!l || id<=0) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed note deletion");
+  if(!prepare(l,"DELETE FROM fixed_notes WHERE id=?1",&s)) return database_error(l,e);
+  if(sqlite3_bind_int64(s,1,id)!=SQLITE_OK) { sqlite3_finalize(s); return database_error(l,e); }
+  return done(l,s,e);
 }
