@@ -123,6 +123,8 @@ void exr_model_free(exr_document *d) {
   free(d->resource_data);
   if (d->shared_archive) {
     if (!--d->shared_archive->refs) {
+      if (d->shared_archive->source.release)
+        d->shared_archive->source.release(d->shared_archive->source.context);
       free(d->shared_archive->bytes);
       free(d->shared_archive);
     }

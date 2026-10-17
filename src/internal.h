@@ -19,6 +19,7 @@ typedef struct {
 typedef struct {
   unsigned char *bytes;
   size_t size, refs;
+  exr_source source;
 } exr_archive_store;
 struct exr_document {
   char *text, *title;
@@ -56,6 +57,8 @@ exr_status exr_decode(const void *data, size_t size, exr_buffer *buf, exr_error 
 exr_status exr_anchor_validate(const exr_anchor *anchor, exr_error *error);
 exr_status exr_parse(exr_document *doc, const void *data, size_t size, exr_error *error);
 exr_status exr_epub_index(const void *data, size_t size, exr_document **out, exr_error *error);
+exr_status exr_epub_index_source(const exr_source *source, exr_document **out, exr_error *error);
+exr_status exr_file_source(const char *path, exr_source *source, exr_error *error);
 exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **out,
                         exr_error *error);
 int exr_add_block(exr_document *doc, const char *text, size_t size, unsigned heading);

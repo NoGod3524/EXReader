@@ -1,5 +1,18 @@
 # Native C validation
 
+## 0.15 seekable sources
+
+`native-source` passes 463 local Windows checks. An EPUB is generated in memory
+from the original font fixture plus an 8 MiB stored, unused member. Indexed opening
+reads less than a quarter of its bytes; loading text and embedded fonts still reads
+less than half. The reader never supplies the unused member wholesale. Cases cover
+short reads, zero/oversized callback results, input limits, failed-open ownership,
+transient load failures and successful retry. A loaded chapter continues reading
+resources after publication release; its final release closes the source exactly
+once, and its retained page/fonts still render afterward. All 25 local CTest suites
+pass. The checkpoint milestone passed all six CI jobs at
+[bc27700](https://github.com/NoGod3524/EXReader/actions/runs/38997073291).
+
 ## 0.14 pagination checkpoints
 
 `native-checkpoints` passes 3922 checks. Uncached seeks compare glyph IDs, source

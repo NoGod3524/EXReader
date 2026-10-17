@@ -340,7 +340,34 @@ typedef struct {
   mz_zip_archive archive;
   size_t expanded;
   exr_status status;
+  const exr_source *source;
+  size_t read_bytes;
+  exr_error *error;
 } archive;
+static exr_status archive_backing(archive *z, const exr_document *d, exr_error *e);
+static size_t source_read(void *context, mz_uint64 offset, void *buffer, size_t size) {
+  archive *z = context;
+  size_t done = 0;
+  if (offset > z->source->size || size > z->source->size - offset) {
+    z->status = exr_fail(z->error, EXR_FORMAT, "ZIP read outside the source");
+    return 0;
+  }
+  if (size > EXR_MAX_INPUT - z->read_bytes) {
+    z->status = exr_fail(z->error, EXR_LIMIT, "ZIP source reads exceed 128 MiB");
+    return 0;
+  }
+  while (done < size) {
+    size_t got = z->source->read_at(z->source->context, offset + done,
+                                    (unsigned char *)buffer + done, size - done);
+    if (!got || got > size - done) {
+      z->status = exr_fail(z->error, EXR_IO, "Publication source returned an invalid or short read");
+      return 0;
+    }
+    done += got;
+  }
+  z->read_bytes += done;
+  return done;
+}
 static void *member(archive *z, const char *name, size_t *size, exr_error *e) {
   int index = mz_zip_reader_locate_file(&z->archive, name, NULL, MZ_ZIP_FLAG_CASE_SENSITIVE);
   mz_zip_archive_file_stat stat;
@@ -358,8 +385,7 @@ static void *member(archive *z, const char *name, size_t *size, exr_error *e) {
   }
   p = mz_zip_reader_extract_to_heap(&z->archive, (mz_uint)index, size, 0);
   if (!p) {
-    z->status = EXR_FORMAT;
-    exr_fail(e, EXR_FORMAT, "ZIP member decompression failed");
+    if (z->status == EXR_OK) z->status = exr_fail(e, EXR_FORMAT, "ZIP member decompression failed");
     return NULL;
   }
   z->expanded += *size;
@@ -568,10 +594,10 @@ exr_status exr_document_resource(const exr_document *d, size_t resource, void **
     *size = entry->size;
     return EXR_OK;
   }
-  if (!d->archive)
+  if (!d->archive && !(d->shared_archive && d->shared_archive->source.read_at))
     return exr_fail(e, EXR_FORMAT, "Resource has no backing data");
-  if (!mz_zip_reader_init_mem(&z.archive, d->archive, d->archive_size, 0))
-    return exr_fail(e, EXR_FORMAT, "Invalid resource archive");
+  z.status = archive_backing(&z, d, e);
+  if (z.status != EXR_OK) return z.status;
   bytes = member(&z, d->resources[resource].path, size, e);
   if (bytes) {
     *out = malloc(*size ? *size : 1);
@@ -645,6 +671,21 @@ static void package_free(package *p) {
 static exr_status archive_open(archive *z, const void *data, size_t n, exr_error *e) {
   if (!mz_zip_reader_init_mem(&z->archive, data, n, 0))
     return exr_fail(e, EXR_FORMAT, "Invalid ZIP container");
+  if (mz_zip_reader_get_num_files(&z->archive) > 10000) {
+    mz_zip_reader_end(&z->archive);
+    return exr_fail(e, EXR_LIMIT, "Too many ZIP members");
+  }
+  return EXR_OK;
+}
+static exr_status archive_backing(archive *z, const exr_document *d, exr_error *e) {
+  if (!d->shared_archive || !d->shared_archive->source.read_at)
+    return archive_open(z, d->archive, d->archive_size, e);
+  z->source = &d->shared_archive->source;
+  z->error = e;
+  z->archive.m_pRead = source_read;
+  z->archive.m_pIO_opaque = z;
+  if (!mz_zip_reader_init(&z->archive, z->source->size, 0))
+    return z->status != EXR_OK ? z->status : exr_fail(e, EXR_FORMAT, "Invalid ZIP source");
   if (mz_zip_reader_get_num_files(&z->archive) > 10000) {
     mz_zip_reader_end(&z->archive);
     return exr_fail(e, EXR_LIMIT, "Too many ZIP members");
@@ -839,6 +880,32 @@ exr_status exr_epub_index(const void *data, size_t n, exr_document **out, exr_er
   *out = d;
   return exr_fail(e, EXR_OK, "");
 }
+exr_status exr_epub_index_source(const exr_source *source, exr_document **out, exr_error *e) {
+  exr_document *d;
+  archive z = {0};
+  exr_status status;
+  *out = NULL;
+  if (!source || !source->read_at || !source->size || source->size > EXR_MAX_INPUT)
+    return exr_fail(e, source && source->size > EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT,
+                    "Invalid publication source or size exceeds 128 MiB");
+  d = calloc(1, sizeof(*d));
+  if (!d) return exr_fail(e, EXR_MEMORY, "Index allocation failed");
+  d->shared_archive = calloc(1, sizeof(*d->shared_archive));
+  if (!d->shared_archive) { free(d); return exr_fail(e, EXR_MEMORY, "Source allocation failed"); }
+  d->format = EXR_EPUB;
+  d->shared_archive->refs = 1;
+  d->shared_archive->source = *source;
+  d->shared_archive->source.release = NULL; /* Transfer only after public open succeeds. */
+  d->archive_size = (size_t)source->size;
+  status = archive_backing(&z, d, e);
+  if (status == EXR_OK) {
+    status = epub_metadata(d, &z, e);
+    mz_zip_reader_end(&z.archive);
+  }
+  if (status != EXR_OK) { exr_document_free(d); return status; }
+  *out = d;
+  return exr_fail(e, EXR_OK, "");
+}
 exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **out, exr_error *e) {
   archive z = {0};
   exr_document *d;
@@ -854,7 +921,7 @@ exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **
     return exr_fail(e, EXR_ARGUMENT, "Invalid EPUB chapter");
   if (index->shared_archive->refs == SIZE_MAX)
     return exr_fail(e, EXR_LIMIT, "Too many archive references");
-  result = archive_open(&z, index->archive, index->archive_size, e);
+  result = archive_backing(&z, index, e);
   if (result != EXR_OK)
     return result;
   d = calloc(1, sizeof(*d));

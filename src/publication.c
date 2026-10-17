@@ -111,21 +111,11 @@ static exr_status epub_load(void *context, size_t part, exr_document **out, exr_
 }
 static void epub_release(void *context) { exr_document_free(context); }
 
-exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size,
-                                       exr_publication **out, exr_error *e) {
-  exr_document *index = NULL;
+static exr_status publication_index(exr_document *index, exr_publication **out, exr_error *e) {
   exr_part *parts;
   exr_publication_input input = {0};
   exr_status status;
   size_t i;
-  if (!out)
-    return exr_fail(e, EXR_ARGUMENT, "Missing publication output");
-  *out = NULL;
-  if (format != EXR_EPUB)
-    return exr_fail(e, EXR_FORMAT, "Built-in indexed loading currently accepts EPUB");
-  status = exr_epub_index(data, size, &index, e);
-  if (status != EXR_OK)
-    return status;
   parts = calloc(index->chapter_count, sizeof(*parts));
   if (!parts) {
     exr_document_free(index);
@@ -148,20 +138,41 @@ exr_status exr_publication_open_memory(exr_format format, const void *data, size
     exr_document_free(index);
   return status;
 }
+exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size,
+                                       exr_publication **out, exr_error *e) {
+  exr_document *index = NULL;
+  exr_status status;
+  if (!out) return exr_fail(e, EXR_ARGUMENT, "Missing publication output");
+  *out = NULL;
+  if (format != EXR_EPUB)
+    return exr_fail(e, EXR_FORMAT, "Built-in indexed loading currently accepts EPUB");
+  status = exr_epub_index(data, size, &index, e);
+  return status == EXR_OK ? publication_index(index, out, e) : status;
+}
+exr_status exr_publication_open_source(const exr_source *source, exr_publication **out, exr_error *e) {
+  exr_document *index = NULL;
+  exr_status status;
+  if (!out) return exr_fail(e, EXR_ARGUMENT, "Missing publication output");
+  *out = NULL;
+  status = exr_epub_index_source(source, &index, e);
+  if (status != EXR_OK) return status;
+  status = publication_index(index, out, e);
+  if (status == EXR_OK) index->shared_archive->source.release = source->release;
+  return status;
+}
 
 exr_status exr_publication_open(const char *path, exr_publication **out, exr_error *e) {
-  unsigned char *bytes = NULL;
-  size_t size = 0;
+  exr_source source = {0};
   exr_status status;
   if (!out)
     return exr_fail(e, EXR_ARGUMENT, "Missing publication output");
   *out = NULL;
   if (!path)
     return exr_fail(e, EXR_ARGUMENT, "Missing publication path");
-  status = exr_read(path, &bytes, &size, e);
-  if (status == EXR_OK)
-    status = exr_publication_open_memory(EXR_EPUB, bytes, size, out, e);
-  free(bytes);
+  status = exr_file_source(path, &source, e);
+  if (status != EXR_OK) return status;
+  status = exr_publication_open_source(&source, out, e);
+  if (status != EXR_OK) source.release(source.context);
   return status;
 }
 const char *exr_publication_title(const exr_publication *p) { return p ? p->title : ""; }

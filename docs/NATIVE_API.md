@@ -1,4 +1,4 @@
-# Native C API 0.14
+# Native C API 0.15
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -206,6 +206,12 @@ SDK 的 `examples/page.c` 编译为 `exreader-page-example`，用法为 `book.ep
 打开耗时、首画、续排、渲染、完整翻页和进程峰值内存的独立基准及复现命令见 [性能基准](PERFORMANCE.md)。
 
 ## 分段 publication 与 session
+
+0.15 的 `exr_publication_open_source()` 接收通用随机读取源 `{size,read_at,release,context}`。描述符被复制，打开时只读取 ZIP 目录和 EPUB 元数据；读取某章、CSS、图片或字体时才请求对应字节，不把整个压缩源复制进内存。`exr_publication_open(path)` 使用持有文件句柄的同一路径；`open_memory()` 仍复制调用者的输入。
+
+`read_at(context,offset,buffer,size)` 返回实际字节数，允许短读并会继续补足，尚未读完便返回 0 或返回超过请求的数量会得到 `EXR_IO`。引擎检查所有区间；源大小与每次 ZIP 操作的累计读取量仍限制为 128 MiB，成员解压和 XML 限制不变。源字节必须保持不变，回调及同源对象的访问需串行，回调不能销毁或重入正在访问它的对象。引擎本身不联网，宿主可自行在回调后实现其他存储。
+
+仅在 open 成功时接管 context；打开失败不调用 release。若 release 非 NULL，在 publication、session 和所有已加载章节文档都不再引用源后调用一次；即使先关闭 publication，章节仍可读取资源。release 为 NULL 时由宿主维持 context 的整个有效期。文件源使用同样的共享寿命，因此不再把完整压缩 EPUB 作为常驻字节保存；单章正文仍完整解析。
 
 `exr_publication` 保存分段目录及 loader，不要求整书已解析为一个文档。每个 `exr_part` 提供用于定位的 `id/path`、显示标题 `title` 和 `in_reading_order`；分段可以是章节、固定页或宿主定义的独立排版单位。`exr_publication_title()` / `exr_publication_parts()` 返回属于 publication 的只读元数据，索引只在该 publication 内有效。
 
