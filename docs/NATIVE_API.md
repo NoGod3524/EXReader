@@ -605,3 +605,15 @@ input 必须清零并填写 struct_size；较大的结构仅在未知尾字节�
 `exr_viewport_create(&geometry, scale, &viewport, &error)` 为任意固定版面来源生成正向和逆向仿射矩阵，不分配内存。`geometry.bounds` 是原始坐标的 `[x0,y0,x1,y1]`，`unit_scale` 是正数单位倍率；`rotation` 为顺时针 0/90/180/270 度，`y_down` 表示原坐标是否向下增加。输出从左上开始、y 向下，包含实际宽高、绘制矩阵和命中测试所需的逆矩阵。`scale=1` 保留单位倍率后的自然尺寸，调用方可自行据此适配窗口或设备像素比。
 
 矩阵使用 `[a,b,c,d,e,f]`：`x'=a*x+c*y+e`，`y'=b*x+d*y+f`。输入/输出坐标和矩阵元素限绝对值 10000000；无面积、非法旋转或非有限参数返回 EXR_ARGUMENT，尺寸/逆矩阵超出预算返回 EXR_LIMIT，失败时输出清零。该函数与 PDF、字体、图像和 UI 都无绑定；它不打开 PDF 文件。
+
+
+## 通用 C 画布（0.62）
+
+`exr_canvas_create` 创建立即绘制的灰度/RGBA 画布；配置中的 width/height 必填，channels=0 默认 RGBA，background 为 0xRRGGBBAA，mask_budget=0 默认 64 MiB。它与 PDF、文档树、字体和 UI 无绑定。输入的路径、样式、矩阵、图片及遮罩仅在绘制调用期间借用，调用后即可释放或修改。
+
+- `exr_canvas_path` 接收 move/line/quad/cubic/close 段和仿射矩阵，支持 nonzero/evenodd 填充与虚线、端点、连接描边。用 `exr_draw_style_defaults()` 初始化样式；NULL 样式等同默认黑色填充。stroke_matrix 默认与路径矩阵相同；显式传入单位矩阵可形成不随路径缩放的描边。
+- `exr_canvas_clip` 与当前裁切区域相交。save/restore 保存裁切区域，样式按每次调用传入；最多 160 层，引用同一个不可变掩码时不复制像素。
+- `exr_canvas_image` 读取通用 exr_image_layer：RGBA 位图可拥有不同尺寸/插值方式的 opacity mask，mask_mode 使用 EXR_MASK_GRAY 或 EXR_MASK_ALPHA；支持预混合底色移除。图层最多 16 层，循环、目标别名和非法矩阵拒绝。
+- `exr_canvas_bitmap` 返回当前借用图像，`exr_canvas_take` 转移像素所有权，随后用 `exr_bitmap_free` 释放；取走后画布不再接受绘制。`exr_canvas_memory_size` 报告画布、拥有的像素和裁切掩码载荷，不含瞬时曲线/边数组或宿主图片。
+
+输出最多 64 MiB、边长最多 16384，单路径命令/边数限制沿用 C 矢量核，全部绘制共享 256M 工作预算和取消控制。任何失败的绘制都将画布置为失败状态，后续 take 返回首个失败，避免交付半张图片。PDF 路径、字形轮廓、图片和裁切已调用相同的通用画布；其字体/格式读取留在解析器一侧。
