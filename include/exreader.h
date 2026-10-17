@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.74.0"
+#define EXR_VERSION "0.75.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -835,6 +835,17 @@ typedef struct {
   char *text;
   exr_fixed_anchor anchor; /* Query output; writes capture the stored source. */
 } exr_fixed_note;
+/* Host-chosen audio_id keys are independent of source URIs and book row IDs. */
+typedef struct { char *track_id; uint64_t offset_ms; double rate; } exr_audio_checkpoint;
+typedef struct { int64_t id; char *label; exr_audio_checkpoint position; } exr_audio_bookmark;
+EXR_API void exr_audio_checkpoint_free(exr_audio_checkpoint *position);
+EXR_API exr_status exr_library_audio_resume(exr_library *library,const char *audio_id,const exr_audio_checkpoint *position,exr_error *error);
+EXR_API exr_status exr_library_audio_resume_get(exr_library *library,const char *audio_id,exr_audio_checkpoint *position,int *found,exr_error *error);
+EXR_API exr_status exr_library_audio_bookmark(exr_library *library,const char *audio_id,const exr_audio_bookmark *bookmark,int64_t *id,exr_error *error);
+EXR_API exr_status exr_library_audio_bookmarks(exr_library *library,const char *audio_id,exr_audio_bookmark **bookmarks,size_t *count,exr_error *error);
+EXR_API void exr_audio_bookmarks_free(exr_audio_bookmark *bookmarks,size_t count);
+EXR_API exr_status exr_library_remove_audio_bookmark(exr_library *library,int64_t id,exr_error *error);
+EXR_API exr_status exr_library_clear_audio(exr_library *library,const char *audio_id,exr_error *error);
 EXR_API exr_status exr_library_open(const char *path, exr_library **out, exr_error *error);
 EXR_API void exr_library_close(exr_library *library);
 /* Imports original bytes (including PDF) and the first declared reflow cover-image up to 8 MiB.

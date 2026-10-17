@@ -735,3 +735,12 @@ play/pause/seek/rate 控制请求状态，倍速范围为 (0,16]，后端可按�
 `exr_wave_read` 按帧定位，输出交错 float 样本；调用方准备 frames*channels 容量，每次最多 65536 帧。内部只用 4 KiB 读取缓冲，源短读取会重试。整数样本归一化，float 超幅裁切至 [-1,1]，NaN/Inf 拒绝；取消或运行时错误将整个请求输出清零并返回 read=0。EOF 返回剩余帧数，尾部输出为零。同一 reader 拒绝重入读取。
 
 当前不解码压缩 WAV、RF64、RIFX 或多个 data 块；MP3/AAC/M4B 解码、变速处理和操作系统声音输出继续接入。
+
+
+## 有声书续播与时间书签持久化（0.75）
+
+`exr_library_audio_resume` / resume_get 保存和读取 track_id、offset_ms、rate。宿主提供稳定 audio_id，不绑定文件 URI、书籍格式或 books 行 ID；可用于独立有声书或书籍的配音轨道。把 player_get 的相应字段写入 checkpoint，重开后通过 player_restore 恢复。没有保存记录时 get 返回 found=0、空 checkpoint；读取结果使用 exr_audio_checkpoint_free 释放。
+
+`exr_library_audio_bookmark` 新增/修改带标签的时间书签，id=0 表示新增，更新必须属于同一个 audio_id。bookmarks 按 id 返回独立列表，用 exr_audio_bookmarks_free 释放。remove_audio_bookmark 删除单项，clear_audio 在事务中同时删除该 key 的续播与全部书签。独立 key 由宿主管理生命周期，删除普通书籍不会隐式清理它。备份包含这些表。
+
+时间以 8 字节小端 BLOB 保留完整 uint64 范围；恢复到实际时间线时，player 仍校验轨道 ID 与本地时长。保存不自动读取声音文件。audio_id 最多 4096 字节，track_id/标签最多 64 KiB；标识非空且文本须为 UTF-8。查询最多 100000 项和 64 MiB 逻辑载荷，损坏记录不会返回部分结果。schema 4 从 v1/v2/v3 在事务内迁移；旧版二进制会拒绝新版本库。

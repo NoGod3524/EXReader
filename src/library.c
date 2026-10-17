@@ -5,6 +5,9 @@
   "page INTEGER NOT NULL CHECK(page>=0),start INTEGER NOT NULL CHECK(start>=0),end INTEGER NOT NULL CHECK(end>=start)," \
   "text TEXT NOT NULL,page_id TEXT NOT NULL,exact BLOB NOT NULL,prefix BLOB NOT NULL,suffix BLOB NOT NULL);" \
   "CREATE INDEX fixed_notes_book ON fixed_notes(book_id,page,start);"
+#define AUDIO_SCHEMA "CREATE TABLE audio_resume(audio_id TEXT PRIMARY KEY,track_id TEXT NOT NULL,offset BLOB NOT NULL CHECK(typeof(offset)='blob' AND length(offset)=8),rate REAL NOT NULL CHECK(rate>0 AND rate<=16));" \
+  "CREATE TABLE audio_marks(id INTEGER PRIMARY KEY,audio_id TEXT NOT NULL,track_id TEXT NOT NULL,offset BLOB NOT NULL CHECK(typeof(offset)='blob' AND length(offset)=8),rate REAL NOT NULL CHECK(rate>0 AND rate<=16),label TEXT NOT NULL);" \
+  "CREATE INDEX audio_marks_key ON audio_marks(audio_id,id);"
 struct exr_library {
   sqlite3 *db;
 };
@@ -48,7 +51,7 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
                        "NULL,anchor_exact TEXT,anchor_prefix TEXT,anchor_suffix TEXT,"
                        "anchor_chapter TEXT);"
                        "CREATE INDEX IF NOT EXISTS notes_book ON notes(book_id);PRAGMA "
-                       "application_id=1163416131;" FIXED_SCHEMA "PRAGMA user_version=3;COMMIT;";
+                       "application_id=1163416131;" FIXED_SCHEMA AUDIO_SCHEMA "PRAGMA user_version=4;COMMIT;";
   if (!path || !out)
     return exr_fail(e, EXR_ARGUMENT, "Invalid library arguments");
   *out = NULL;
@@ -79,7 +82,7 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
           "ALTER TABLE notes ADD COLUMN anchor_prefix TEXT;"
           "ALTER TABLE notes ADD COLUMN anchor_suffix TEXT;"
           "ALTER TABLE notes ADD COLUMN anchor_chapter TEXT;"
-          FIXED_SCHEMA "PRAGMA user_version=3;COMMIT;";
+          FIXED_SCHEMA AUDIO_SCHEMA "PRAGMA user_version=4;COMMIT;";
       if (sqlite3_exec(l->db, migration, NULL, NULL, NULL) != SQLITE_OK) {
         database_error(l, e);
         sqlite3_exec(l->db, "ROLLBACK", NULL, NULL, NULL);
@@ -90,12 +93,18 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
       return EXR_OK;
     }
     if(app==1163416131 && version==2) {
-      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" FIXED_SCHEMA "PRAGMA user_version=3;COMMIT;",NULL,NULL,NULL)!=SQLITE_OK) {
+      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" FIXED_SCHEMA AUDIO_SCHEMA "PRAGMA user_version=4;COMMIT;",NULL,NULL,NULL)!=SQLITE_OK) {
         database_error(l,e); sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); exr_library_close(l); return EXR_DATABASE;
       }
       *out=l; return EXR_OK;
     }
-    if (app == 1163416131 && version == 3) {
+    if(app==1163416131 && version==3) {
+      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" AUDIO_SCHEMA "PRAGMA user_version=4;COMMIT;",NULL,NULL,NULL)!=SQLITE_OK) {
+        database_error(l,e); sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); exr_library_close(l); return EXR_DATABASE;
+      }
+      *out=l; return EXR_OK;
+    }
+    if (app == 1163416131 && version == 4) {
       *out = l;
       return EXR_OK;
     }
@@ -725,4 +734,127 @@ exr_status exr_library_remove_fixed_note(exr_library *l,int64_t id,exr_error *e)
   if(!prepare(l,"DELETE FROM fixed_notes WHERE id=?1",&s)) return database_error(l,e);
   if(sqlite3_bind_int64(s,1,id)!=SQLITE_OK) { sqlite3_finalize(s); return database_error(l,e); }
   return done(l,s,e);
+}
+
+static exr_status audio_string(const char *text,size_t maximum,int required,size_t *size,exr_error *e) {
+  size_t n=0,at=0; uint32_t cp;
+  if(!text || (required && !*text)) return exr_fail(e,EXR_ARGUMENT,"Missing audio persistence identifier");
+  while(n<=maximum && text[n]) n++;
+  if(n>maximum) return exr_fail(e,EXR_LIMIT,"Audio persistence string exceeds budget");
+  while(at<n) if(!exr_next(text,n,&at,&cp)) return exr_fail(e,EXR_ENCODING,"Audio persistence string is not UTF-8");
+  if(size) *size=n;
+  return EXR_OK;
+}
+static exr_status checkpoint_valid(const exr_audio_checkpoint *p,exr_error *e) {
+  if(!p || !isfinite(p->rate) || p->rate<=0 || p->rate>16) return exr_fail(e,EXR_ARGUMENT,"Invalid audio checkpoint rate");
+  return audio_string(p->track_id,65536,1,NULL,e);
+}
+static int checkpoint_bind(sqlite3_stmt *s,int column,const exr_audio_checkpoint *p) {
+  unsigned char offset[8]; unsigned i;
+  for(i=0;i<8;i++) offset[i]=(unsigned char)(p->offset_ms>>(i*8));
+  return bind_text(s,column,p->track_id) && sqlite3_bind_blob(s,column+1,offset,8,SQLITE_TRANSIENT)==SQLITE_OK && sqlite3_bind_double(s,column+2,p->rate)==SQLITE_OK;
+}
+static exr_status checkpoint_read(sqlite3_stmt *s,int column,exr_audio_checkpoint *p,exr_error *e) {
+  exr_status status; exr_error local={0}; const unsigned char *offset; size_t bytes; unsigned i; int type;
+  memset(p,0,sizeof(*p));
+  status=fixed_column(s,column,SQLITE_TEXT,65536,&p->track_id,&bytes,e); if(status!=EXR_OK) return status;
+  type=sqlite3_column_type(s,column+2);
+  if(sqlite3_column_type(s,column+1)!=SQLITE_BLOB || sqlite3_column_bytes(s,column+1)!=8 || (type!=SQLITE_FLOAT && type!=SQLITE_INTEGER)) return exr_fail(e,EXR_DATABASE,"Invalid stored audio checkpoint types");
+  offset=sqlite3_column_blob(s,column+1); if(!offset) return exr_fail(e,EXR_MEMORY,"Audio checkpoint allocation failed");
+  for(i=0;i<8;i++) p->offset_ms|=(uint64_t)offset[i]<<(8*i);
+  p->rate=sqlite3_column_double(s,column+2);
+  if(checkpoint_valid(p,&local)!=EXR_OK) return exr_fail(e,EXR_DATABASE,"Invalid stored audio checkpoint");
+  return EXR_OK;
+}
+void exr_audio_checkpoint_free(exr_audio_checkpoint *p) { if(p) { free(p->track_id); memset(p,0,sizeof(*p)); } }
+exr_status exr_library_audio_resume(exr_library *l,const char *key,const exr_audio_checkpoint *p,exr_error *e) {
+  sqlite3_stmt *s=NULL; exr_status status;
+  if(!l) return exr_fail(e,EXR_ARGUMENT,"Missing audio library");
+  if((status=audio_string(key,4096,1,NULL,e))!=EXR_OK || (status=checkpoint_valid(p,e))!=EXR_OK) return status;
+  if(!prepare(l,"INSERT INTO audio_resume(audio_id,track_id,offset,rate) VALUES(?1,?2,?3,?4) ON CONFLICT(audio_id) DO UPDATE SET track_id=excluded.track_id,offset=excluded.offset,rate=excluded.rate",&s)) return database_error(l,e);
+  if(!bind_text(s,1,key) || !checkpoint_bind(s,2,p)) { sqlite3_finalize(s); return database_error(l,e); }
+  return done(l,s,e);
+}
+exr_status exr_library_audio_resume_get(exr_library *l,const char *key,exr_audio_checkpoint *out,int *found,exr_error *e) {
+  sqlite3_stmt *s=NULL; exr_audio_checkpoint p={0}; exr_status status; int step;
+  if(out) memset(out,0,sizeof(*out));
+  if(found) *found=0;
+  if(!l || !out || !found) return exr_fail(e,EXR_ARGUMENT,"Invalid audio resume query");
+  status=audio_string(key,4096,1,NULL,e); if(status!=EXR_OK) return status;
+  if(!prepare(l,"SELECT track_id,offset,rate FROM audio_resume WHERE audio_id=?1",&s)) return database_error(l,e);
+  if(!bind_text(s,1,key)) { sqlite3_finalize(s); return database_error(l,e); }
+  step=sqlite3_step(s);
+  if(step==SQLITE_ROW) { status=checkpoint_read(s,0,&p,e); if(status==EXR_OK) { *out=p; memset(&p,0,sizeof(p)); *found=1; } }
+  else status=step==SQLITE_DONE ? exr_fail(e,EXR_OK,"") : database_error(l,e);
+  sqlite3_finalize(s); exr_audio_checkpoint_free(&p); return status;
+}
+exr_status exr_library_audio_bookmark(exr_library *l,const char *key,const exr_audio_bookmark *input,int64_t *id,exr_error *e) {
+  sqlite3_stmt *s=NULL; exr_audio_bookmark b; exr_status status;
+  if(input) b=*input; else memset(&b,0,sizeof(b));
+  if(id) *id=0;
+  if(!l || !input || !id || b.id<0) return exr_fail(e,EXR_ARGUMENT,"Invalid audio bookmark input");
+  if(!b.label) b.label="";
+  if((status=audio_string(key,4096,1,NULL,e))!=EXR_OK || (status=audio_string(b.label,65536,0,NULL,e))!=EXR_OK || (status=checkpoint_valid(&b.position,e))!=EXR_OK) return status;
+  if(!prepare(l,b.id ? "UPDATE audio_marks SET track_id=?2,offset=?3,rate=?4,label=?5 WHERE audio_id=?1 AND id=?6" : "INSERT INTO audio_marks(audio_id,track_id,offset,rate,label) VALUES(?1,?2,?3,?4,?5)",&s)) return database_error(l,e);
+  if(!bind_text(s,1,key) || !checkpoint_bind(s,2,&b.position) || !bind_text(s,5,b.label) || (b.id && sqlite3_bind_int64(s,6,b.id)!=SQLITE_OK)) { sqlite3_finalize(s); return database_error(l,e); }
+  status=done(l,s,e);
+  if(status==EXR_OK) {
+    if(b.id && !sqlite3_changes(l->db)) return exr_fail(e,EXR_ARGUMENT,"Audio bookmark missing or belongs to another audio key");
+    *id=b.id ? b.id : sqlite3_last_insert_rowid(l->db);
+  }
+  return status;
+}
+void exr_audio_bookmarks_free(exr_audio_bookmark *marks,size_t count) {
+  size_t i; if(!marks) return;
+  for(i=0;i<count;i++) { free(marks[i].label); exr_audio_checkpoint_free(&marks[i].position); }
+  free(marks);
+}
+exr_status exr_library_audio_bookmarks(exr_library *l,const char *key,exr_audio_bookmark **out,size_t *count,exr_error *e) {
+  sqlite3_stmt *s=NULL; exr_audio_bookmark *marks=NULL; size_t n=0,capacity=0,total=0; int step; exr_status status;
+  if(out) *out=NULL;
+  if(count) *count=0;
+  if(!l || !out || !count) return exr_fail(e,EXR_ARGUMENT,"Invalid audio bookmark query");
+  status=audio_string(key,4096,1,NULL,e); if(status!=EXR_OK) return status;
+  if(!prepare(l,"SELECT id,track_id,offset,rate,label FROM audio_marks WHERE audio_id=?1 ORDER BY id",&s)) return database_error(l,e);
+  if(!bind_text(s,1,key)) { status=database_error(l,e); goto finish; }
+  while((step=sqlite3_step(s))==SQLITE_ROW) {
+    exr_audio_bookmark *b; size_t bytes; exr_error local={0};
+    if(n>=100000 || total>=(size_t)64*1024*1024) { status=exr_fail(e,EXR_LIMIT,"Audio bookmarks exceed result budget"); goto finish; }
+    if(!exr_grow((void **)&marks,&capacity,n+1,sizeof(*marks))) { status=exr_fail(e,EXR_MEMORY,"Audio bookmark allocation failed"); goto finish; }
+    b=&marks[n++]; memset(b,0,sizeof(*b));
+    if(sqlite3_column_type(s,0)!=SQLITE_INTEGER || (b->id=sqlite3_column_int64(s,0))<=0) { status=exr_fail(e,EXR_DATABASE,"Invalid stored audio bookmark ID"); goto finish; }
+    status=checkpoint_read(s,1,&b->position,e); if(status!=EXR_OK) goto finish;
+    status=fixed_column(s,4,SQLITE_TEXT,65536,&b->label,&bytes,e); if(status!=EXR_OK) goto finish;
+    if(audio_string(b->label,65536,0,NULL,&local)!=EXR_OK) { status=exr_fail(e,EXR_DATABASE,"Invalid stored audio bookmark label"); goto finish; }
+    bytes+=strlen(b->position.track_id)+2+sizeof(*b);
+    if(bytes>(size_t)64*1024*1024-total) { status=exr_fail(e,EXR_LIMIT,"Audio bookmarks exceed result byte budget"); goto finish; }
+    total+=bytes;
+  }
+  if(step!=SQLITE_DONE) status=database_error(l,e);
+finish:
+  sqlite3_finalize(s);
+  if(status==EXR_OK) { *out=marks; *count=n; } else exr_audio_bookmarks_free(marks,n);
+  return status;
+}
+exr_status exr_library_remove_audio_bookmark(exr_library *l,int64_t id,exr_error *e) {
+  sqlite3_stmt *s=NULL;
+  if(!l || id<=0) return exr_fail(e,EXR_ARGUMENT,"Invalid audio bookmark deletion");
+  if(!prepare(l,"DELETE FROM audio_marks WHERE id=?1",&s)) return database_error(l,e);
+  if(sqlite3_bind_int64(s,1,id)!=SQLITE_OK) { sqlite3_finalize(s); return database_error(l,e); }
+  return done(l,s,e);
+}
+exr_status exr_library_clear_audio(exr_library *l,const char *key,exr_error *e) {
+  sqlite3_stmt *s=NULL; exr_status status; unsigned i;
+  const char *queries[2]={"DELETE FROM audio_resume WHERE audio_id=?1","DELETE FROM audio_marks WHERE audio_id=?1"};
+  if(!l) return exr_fail(e,EXR_ARGUMENT,"Missing audio library");
+  status=audio_string(key,4096,1,NULL,e); if(status!=EXR_OK) return status;
+  if(sqlite3_exec(l->db,"BEGIN IMMEDIATE",NULL,NULL,NULL)!=SQLITE_OK) return database_error(l,e);
+  for(i=0;i<2;i++) {
+    if(!prepare(l,queries[i],&s) || !bind_text(s,1,key)) { status=database_error(l,e); sqlite3_finalize(s); goto rollback; }
+    status=done(l,s,e); if(status!=EXR_OK) goto rollback;
+  }
+  if(sqlite3_exec(l->db,"COMMIT",NULL,NULL,NULL)==SQLITE_OK) return exr_fail(e,EXR_OK,"");
+  status=database_error(l,e);
+rollback:
+  sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); return status;
 }
