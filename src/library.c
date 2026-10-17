@@ -113,31 +113,55 @@ void exr_library_close(exr_library *l) {
     free(l);
   }
 }
+static exr_status import_cover(const exr_document *doc,void **data,size_t *size,exr_error *e) {
+  size_t i; *data=NULL; *size=0;
+  for(i=0;i<doc->resource_count;i++) {
+    const char *p=doc->resources[i].properties;
+    while(p && *p) {
+      size_t length;
+      p+=strspn(p," \t\r\n"); length=strcspn(p," \t\r\n");
+      if(length==11 && !memcmp(p,"cover-image",11)) {
+        exr_status status=exr_document_resource(doc,i,data,size,e);
+        if(status!=EXR_OK) return status;
+        /* A large original stays in source; the quick-access cover column is bounded. */
+        if(*size>8*1024*1024) { free(*data); *data=NULL; *size=0; }
+        return EXR_OK;
+      }
+      p+=length;
+    }
+  }
+  return EXR_OK;
+}
 exr_status exr_library_import(exr_library *l, exr_format format, const void *data, size_t n,
                               const char *title, int64_t *id, exr_error *e) {
   sqlite3_stmt *s = NULL;
   exr_document *d = NULL;
   exr_status result;
+  void *cover=NULL; size_t cover_size=0;
   if (!l || !id)
     return exr_fail(e, EXR_ARGUMENT, "Invalid import arguments");
   *id = 0;
   result = exr_document_open_memory(format, data, n, &d, e);
   if (result != EXR_OK)
     return result;
-  if (!prepare(l, "INSERT INTO books(format,title,text_size,source)VALUES(?1,?2,?3,?4)", &s)) {
-    exr_document_free(d);
-    return database_error(l, e);
+  result=import_cover(d,&cover,&cover_size,e);
+  if(result!=EXR_OK) goto cleanup;
+  if (!prepare(l, "INSERT INTO books(format,title,text_size,source,cover)VALUES(?1,?2,?3,?4,?5)", &s)) {
+    result=database_error(l,e); goto cleanup;
   }
-  sqlite3_bind_int(s, 1, format);
-  bind_text(s, 2,
+  if(sqlite3_bind_int(s, 1, format)!=SQLITE_OK || !bind_text(s, 2,
             title && title[0] ? title
-                              : (exr_document_title(d)[0] ? exr_document_title(d) : "Untitled"));
-  sqlite3_bind_int64(s, 3, (sqlite3_int64)d->size);
-  sqlite3_bind_blob(s, 4, data, (int)n, SQLITE_TRANSIENT);
+                              : (exr_document_title(d)[0] ? exr_document_title(d) : "Untitled")) ||
+     sqlite3_bind_int64(s, 3, (sqlite3_int64)d->size)!=SQLITE_OK ||
+     sqlite3_bind_blob(s, 4, data, (int)n, SQLITE_TRANSIENT)!=SQLITE_OK ||
+     (cover ? sqlite3_bind_blob(s,5,cover,(int)cover_size,SQLITE_STATIC) : sqlite3_bind_null(s,5))!=SQLITE_OK) {
+    result=database_error(l,e); sqlite3_finalize(s); goto cleanup;
+  }
   result = done(l, s, e);
   if (result == EXR_OK)
     *id = sqlite3_last_insert_rowid(l->db);
-  exr_document_free(d);
+cleanup:
+  free(cover); exr_document_free(d);
   return result;
 }
 void exr_books_free(exr_book *books, size_t n) {
