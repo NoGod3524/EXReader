@@ -221,4 +221,43 @@ static void bad_samples(void) {
   }
   free(c.data);
 }
-int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); bad_functions(); function_graphs(); sampled(directory); bad_samples(); printf("%u native PDF source colour-space checks passed\n",checks); return 0; }
+static void calculator(const char *directory) {
+  static const struct { const char *program,*input,*decode,*range,*space,*name; unsigned rgb[3]; } cases[]={
+    {"{ dup mul 1 exch sub dup 1 exch 3 -1 roll }",".5","/Decode [.5 .5]","0 1 0 1 0 1","DeviceRGB","pdf-color-calculator-stack.pdf",{255,191,191}},
+    {"{ .5 lt { .25 } { .75 } ifelse }",".25","/Decode [.25 .25]","0 1","DeviceGray","pdf-color-calculator-if.pdf",{64,64,64}},
+    {"{ .5 lt { .25 } { .75 } ifelse }",".75","/Decode [.75 .75]","0 1","DeviceGray","pdf-color-calculator-else.pdf",{191,191,191}},
+    {"{ 180 mul sin }",".5","/Decode [.5 .5]","0 1","DeviceGray","pdf-color-calculator-trig.pdf",{255,255,255}},
+    {"{ pop 1 .5 0 0 }",".5",NULL,"0 1 0 1 0 1 0 1","DeviceCMYK","pdf-color-calculator-cmyk.pdf",{0,128,255}}
+  };
+  size_t i; char definition[256],stream_text[2048];
+  for(i=0;i<sizeof(cases)/sizeof(*cases);i++) {
+    scenario=cases[i].name;
+    snprintf(definition,sizeof(definition),"[/Separation /Spot /%s 10 0 R]",cases[i].space);
+    snprintf(stream_text,sizeof(stream_text),"<< /FunctionType 4 /Domain [0 1] /Range [%s] /Length %zu >>\nstream\n%s\nendstream",cases[i].range,strlen(cases[i].program),cases[i].program);
+    same_color_extra(definition,cases[i].input,cases[i].decode,"\x80",1,NULL,cases[i].rgb,directory,cases[i].name,stream_text);
+  }
+  { const unsigned rgb[]={128,128,128}; scenario="Calculator Domain/Range clipping and stitching child";
+    same_color_extra("[/Separation /Spot /DeviceGray << /FunctionType 3 /Domain [0 1] /Functions [10 0 R] /Bounds [] /Encode [1 0] >>]","1","/Decode [1 1]","\x00",1,NULL,rgb,NULL,NULL,
+      "<< /FunctionType 4 /Domain [.25 .75] /Range [0 .5] /Length 9 >>\nstream\n{ 3 mul }\nendstream");
+  }
+  { const char *bad[]={"{ pop true }","{ pop 1 0 div }","{ loop }","{ dup }","{ pop }","{ true 1 add }"}; buffer content={0};
+    add(&content,"/S cs .5 sc 0 0 8 8 re f");
+    for(i=0;i<sizeof(bad)/sizeof(*bad);i++) {
+      buffer b; exr_fixed_document *d; exr_bitmap image={0}; scenario=bad[i];
+      snprintf(stream_text,sizeof(stream_text),"<< /FunctionType 4 /Domain [0 1] /Range [0 1] /Length %zu >>\nstream\n%s\nendstream",strlen(bad[i]),bad[i]);
+      b=book_extra("[/Separation /Spot /DeviceGray 10 0 R]",&content,NULL,"\x80",1,NULL,NULL,stream_text);d=opened(&b);
+      CHECK(exr_fixed_render(d,0,1,NULL,&image,&error)==EXR_FORMAT && !image.pixels);exr_fixed_free(d);free(b.data);
+    }
+    free(content.data);
+  }
+  { buffer program={0},function={0},content={0},b; char head[256]; exr_fixed_document *d; exr_bitmap image={0};
+    scenario="Repeated vector calculator evaluations obey shared colour budget";
+    add(&program,"{");for(i=0;i<2000;i++) add(&program," 0 copy");add(&program," }");
+    snprintf(head,sizeof(head),"<< /FunctionType 4 /Domain [0 1] /Range [0 1] /Length %zu >>\nstream\n",program.size);add(&function,head);bytes(&function,program.data,program.size);add(&function,"\nendstream");bytes(&function,"",1);
+    add(&content,"/S cs "); for(i=0;i<2000;i++) add(&content,".5 sc "); add(&content,"0 0 8 8 re f");
+    b=book_extra("[/Separation /Spot /DeviceGray 10 0 R]",&content,NULL,"\x80",1,NULL,NULL,(const char *)function.data);d=opened(&b);
+    CHECK(exr_fixed_render(d,0,1,NULL,&image,&error)==EXR_LIMIT && !image.pixels);
+    CHECK(strstr(error.message,"colour computation budget"));exr_fixed_free(d);free(b.data);free(content.data);free(function.data);free(program.data);
+  }
+}
+int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); bad_functions(); function_graphs(); sampled(directory); bad_samples(); calculator(directory); printf("%u native PDF source colour-space checks passed\n",checks); return 0; }

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "pdf_function_internal.h"
+#include "pdf_calculator_internal.h"
 struct exr_pdf_function {
   unsigned type,outputs,count,has_range,bits;
   double domain[2],range[8],exponent,first[4],last[4];
@@ -7,6 +8,7 @@ struct exr_pdf_function {
   struct exr_pdf_function **children;
   unsigned char *samples; size_t sample_count;
   double decode[8];
+  exr_pdf_calculator *calculator;
   size_t bytes,cost;
 };
 typedef struct {
@@ -46,7 +48,7 @@ static int numbers(function_reader *r,uint32_t id,double *out,size_t size) {
 void exr_pdf_function_free(exr_pdf_function *f) {
   size_t i; if(!f) return;
   if(f->children) for(i=0;i<f->count;i++) exr_pdf_function_free(f->children[i]);
-  free(f->children); free(f->bounds); free(f->encode); free(f->samples); free(f);
+  free(f->children); free(f->bounds); free(f->encode); free(f->samples); exr_pdf_calculator_free(f->calculator); free(f);
 }
 static exr_status open_function(function_reader *r,uint32_t id,unsigned outputs,unsigned depth,exr_pdf_function **out) {
   exr_pdf_function *f=NULL; const exr_pdf_value *value; uint32_t ids[64],field; size_t i,count; int stream; exr_status status=EXR_FORMAT;
@@ -59,7 +61,7 @@ static exr_status open_function(function_reader *r,uint32_t id,unsigned outputs,
   value=exr_pdf_value_at(r->file,id); if(!value || (value->kind!=EXR_PDF_DICT && value->kind!=EXR_PDF_STREAM)) goto bad;
   stream=value->kind==EXR_PDF_STREAM;
   field=get(r,id,"FunctionType"); value=exr_pdf_value_at(r->file,field);
-  if(!value || value->kind!=EXR_PDF_INT || (value->u.integer!=0 && value->u.integer!=2 && value->u.integer!=3)) goto bad;
+  if(!value || value->kind!=EXR_PDF_INT || (value->u.integer!=0 && value->u.integer!=2 && value->u.integer!=3 && value->u.integer!=4)) goto bad;
   if(sizeof(*f)>(size_t)1024*1024-r->bytes) return exr_fail(r->error,EXR_LIMIT,"PDF function payload exceeds 1 MiB");
   f=calloc(1,sizeof(*f)); if(!f) goto memory;
   f->type=(unsigned)value->u.integer; f->outputs=outputs; f->bytes=sizeof(*f); r->bytes+=sizeof(*f);
@@ -69,7 +71,15 @@ static exr_status open_function(function_reader *r,uint32_t id,unsigned outputs,
     f->has_range=1; if(!numbers(r,field,f->range,2*outputs)) goto bad;
     for(i=0;i<outputs;i++) if(f->range[2*i]>f->range[2*i+1]) goto bad;
   }
-  if(f->type==0) {
+  if(f->type==4) {
+    const unsigned char *source; size_t size,extra;
+    if(!stream || !f->has_range) goto bad;
+    status=exr_pdf_stream_data(r->file,id,&source,&size,r->error); if(status!=EXR_OK) goto done;
+    status=exr_pdf_calculator_open(source,size,r->control,&f->calculator,r->error); if(status!=EXR_OK) goto done;
+    extra=exr_pdf_calculator_memory(f->calculator);
+    if(extra>(size_t)1024*1024-r->bytes) { status=exr_fail(r->error,EXR_LIMIT,"PDF function payload exceeds 1 MiB"); goto done; }
+    f->bytes+=extra; r->bytes+=extra; f->cost=exr_pdf_calculator_cost(f->calculator)+2*outputs+2;
+  } else if(f->type==0) {
     const unsigned char *samples; size_t size,needed; uint64_t packed;
     if(!stream || !f->has_range || !array(r,get(r,id,"Size"),ids,64,&count) || count!=1) goto bad;
     value=exr_pdf_value_at(r->file,ids[0]);
@@ -152,7 +162,9 @@ static double sample_value(const exr_pdf_function *f,size_t index) {
 }
 exr_status exr_pdf_function_eval(const exr_pdf_function *f,double input,double out[4],exr_error *error) {
   double x=fmax(f->domain[0],fmin(f->domain[1],input)); size_t i;
-  if(f->type==0) {
+  if(f->type==4) {
+    exr_status status=exr_pdf_calculator_eval(f->calculator,x,f->outputs,out,error); if(status!=EXR_OK) return status;
+  } else if(f->type==0) {
     double encoded=f->encode[0],fraction; size_t first,last;
     if(f->domain[1]!=f->domain[0]) encoded+=(x-f->domain[0])/(f->domain[1]-f->domain[0])*(f->encode[1]-f->encode[0]);
     encoded=fmax(0,fmin((double)(f->sample_count-1),encoded)); first=(size_t)floor(encoded); last=first+1<f->sample_count ? first+1 : first;
