@@ -1,5 +1,17 @@
 # Native C validation
 
+## 0.13 book fonts
+
+The original `font-book.epub` is reproduced by `tests/make_font_book.py` using only
+the repository's geometric font fixtures. `native-book-font` passes 136 checks:
+CSS-relative and percent-encoded Unicode URLs, corrupt-source fallback, unused
+declarations, family lists and CSS escapes, weight/style selection without double
+synthesis, chapter scope, table cells, indexed EPUB sessions, continuation and cache
+replay. Host overrides and disabled book fonts/styles retain host fallback behavior.
+Borrowed effective font bytes can be used by a host renderer; retained pages still
+render after document, pager and original host font release. The existing wrong-font
+rasterization validation remains in `native-font`.
+
 ## 0.12.1 audit fixes
 
 Local Windows Release passes all 22 CTest suites: 295398 shaping, 34943 line-boundary,

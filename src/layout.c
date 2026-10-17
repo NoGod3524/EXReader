@@ -24,13 +24,14 @@ exr_status exr_font_create(const exr_font_input *inputs, size_t count, exr_font 
   font = calloc(1, sizeof(*font));
   if (!font)
     return exr_fail(e, EXR_MEMORY, "Font allocation failed");
+  font->refs = 1;
   font->faces = calloc(count, sizeof(*font->faces));
   if (!font->faces) {
     status = EXR_MEMORY;
     message = "Font list allocation failed";
     goto bad;
   }
-  font->count = count;
+  font->count = font->base_count = count;
   if (FT_Init_FreeType(&font->library))
     goto bad;
   for (i = 0; i < count; i++) {
@@ -42,10 +43,16 @@ exr_status exr_font_create(const exr_font_input *inputs, size_t count, exr_font 
       goto bad;
     }
     memcpy(face->bytes, inputs[i].data, inputs[i].size);
+    face->bytes_size = inputs[i].size;
+    face->scope = SIZE_MAX;
     if (FT_New_Memory_Face(font->library, face->bytes, (FT_Long)inputs[i].size,
                            (FT_Long)inputs[i].face_index, &face->face) ||
         !FT_IS_SCALABLE(face->face) || FT_Select_Charmap(face->face, FT_ENCODING_UNICODE))
       goto bad;
+    if (face->face->family_name)
+      snprintf(face->family, sizeof(face->family), "%s", face->face->family_name);
+    face->style_flags = ((face->face->style_flags & FT_STYLE_FLAG_BOLD) ? 1u : 0u) |
+                         ((face->face->style_flags & FT_STYLE_FLAG_ITALIC) ? 2u : 0u);
     if (face->face->num_glyphs > 0 && face->face->num_glyphs <= 65536) {
       face->metric_count = (size_t)face->face->num_glyphs;
       face->advances = calloc(face->metric_count, sizeof(*face->advances));
@@ -87,6 +94,7 @@ int exr_font_has_glyph(const exr_font *font, size_t index, uint32_t cp) {
 }
 void exr_font_free(exr_font *f) {
   size_t i;
+  if (f && --f->refs) return;
   if (f) {
     for (i = 0; i < f->count; i++) {
       exr_face *face = &f->faces[i];
@@ -99,9 +107,20 @@ void exr_font_free(exr_font *f) {
     }
     if (f->library)
       FT_Done_FreeType(f->library);
+    exr_font_free(f->fallback);
     free(f->faces);
     free(f);
   }
+}
+void exr_font_ref(exr_font *f) { if (f) f->refs++; }
+exr_font *exr_layout_font(const exr_layout *l) { return l ? l->font : NULL; }
+exr_status exr_font_source(const exr_font *font, size_t index, exr_font_input *out, exr_error *e) {
+  if (!out) return exr_fail(e, EXR_ARGUMENT, "Missing font source output");
+  memset(out, 0, sizeof(*out));
+  if (!font || index >= font->count) return exr_fail(e, EXR_ARGUMENT, "Invalid font source index");
+  *out = (exr_font_input){font->faces[index].bytes, font->faces[index].bytes_size,
+                           (size_t)font->faces[index].face->face_index};
+  return exr_fail(e, EXR_OK, "");
 }
 int exr_font_size(exr_face *font, float pixels) {
   FT_F26Dot6 size = (FT_F26Dot6)lroundf(pixels * 64);
@@ -145,6 +164,7 @@ exr_layout_config exr_layout_config_defaults(void) {
   exr_layout_config config = {0};
   config.page = exr_layout_defaults();
   config.document_css = 1;
+  config.embedded_fonts = 1;
   return config;
 }
 exr_status exr_layout_create_ex(const exr_document *d, exr_font *f, const exr_layout_config *config,
@@ -166,7 +186,8 @@ void exr_layout_free(exr_layout *l) {
     size_t i;
     free(l->pages);
     free(l->boxes);
-    free(l->styles);
+    exr_styles_free(l->styles, l->style_count);
+    exr_font_free(l->font);
     for (i = 0; i < l->image_count; i++) {
       exr_cached_image *image = &l->images[i];
       if (!image->refs || !--*image->refs) {

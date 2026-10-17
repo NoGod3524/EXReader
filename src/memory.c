@@ -46,7 +46,7 @@ size_t exr_document_memory_size(const exr_document *d) {
 }
 
 size_t exr_layout_memory_size(const exr_layout *l) {
-  size_t total;
+  size_t total, i;
   if (!l)
     return 0;
   total = sizeof(*l);
@@ -56,6 +56,8 @@ size_t exr_layout_memory_size(const exr_layout *l) {
   total = array(total, l->boxes, l->box_cap, sizeof(*l->boxes));
   total = array(total, l->images, l->image_cap, sizeof(*l->images));
   total = array(total, l->styles, l->style_count, sizeof(*l->styles));
+  for (i = 0; i < l->style_count; i++)
+    if (l->styles[i].family_owned) total = add(total, strlen(l->styles[i].family) + 1);
   /* Image bytes and their reference counters are conservatively charged to each
      referencing page, even when another page shares the same immutable pixels. */
   total = array(total, l->images, l->image_count, sizeof(size_t));
