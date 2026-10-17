@@ -195,3 +195,46 @@ public final class EXReaderWave {
         return samples
     }
 }
+
+public struct EXReaderPCMFormat {
+    public let sampleRate: UInt32
+    public let channels: UInt32
+    public let channelMask: UInt32
+    public let frames: UInt64? // nil until an unspecified duration is discovered.
+}
+/** WAV, FLAC and enabled compressed codecs through the open PCM interface. */
+public final class EXReaderPCM {
+    private let handle: OpaquePointer
+    private let lock = NSLock()
+    public init(file: URL) throws {
+        guard file.isFileURL, !file.path.utf8.contains(0) else { throw EXReaderError.invalidInput }
+        var result: OpaquePointer?
+        var error = exr_error()
+        let status = file.path.withCString { exr_pcm_open($0, nil, &result, &error) }
+        try check(status, error)
+        guard let result else { throw EXReaderError.invalidResult }
+        handle = result
+    }
+    deinit { exr_pcm_free(handle) }
+    public var format: EXReaderPCMFormat {
+        lock.lock(); defer { lock.unlock() }
+        let info = exr_pcm_format(handle)!.pointee
+        return EXReaderPCMFormat(sampleRate: info.sample_rate, channels: info.channels,
+                                 channelMask: info.channel_mask,
+                                 frames: info.frames == UInt64.max ? nil : info.frames)
+    }
+    public func read(firstFrame: UInt64, count: Int) throws -> [Float] {
+        guard count >= 0, count <= 65536 else { throw EXReaderError.invalidInput }
+        lock.lock(); defer { lock.unlock() }
+        let channels = Int(exr_pcm_format(handle)!.pointee.channels)
+        var samples = [Float](repeating: 0, count: count * channels)
+        var read = 0
+        var error = exr_error()
+        let status = samples.withUnsafeMutableBufferPointer {
+            exr_pcm_read(handle, firstFrame, count, $0.baseAddress, &read, nil, &error)
+        }
+        try check(status, error)
+        samples.removeSubrange((read * channels)..<samples.count)
+        return samples
+    }
+}

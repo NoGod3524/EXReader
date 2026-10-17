@@ -273,13 +273,15 @@ static void page_object(pdf_writer *w,const exr_pdf_page_info *page,uint32_t obj
   if(!removing && match==SIZE_MAX) format(w,"%" PRIu32 " %" PRIu32 " R",annotation,annotation_generation);
   literal(w,"] >>\nendobj\n");
 }
-static void finish(pdf_writer *w,const exr_pdf_revision_info *revision,size_t new_size) {
+static void finish(pdf_writer *w,const exr_pdf_revision_info *revision,size_t new_size,uint32_t root,uint32_t info) {
   size_t i,j,start=w->input_size+w->bytes.size;
   for(i=1;i<w->count;i++) { revision_object o=w->objects[i]; j=i; while(j && w->objects[j-1].object>o.object) { w->objects[j]=w->objects[j-1]; j--; } w->objects[j]=o; }
   literal(w,"xref\n");
   for(i=0;i<w->count;i++) format(w,"%" PRIu32 " 1\n%010zu %05" PRIu32 " n \n",w->objects[i].object,w->objects[i].offset,w->objects[i].generation);
-  format(w,"trailer\n<< /Size %zu /Prev %zu /Root ",new_size,revision->startxref); serialized(w,revision->root,NULL,0);
-  if(revision->info!=EXR_PDF_NONE) { literal(w," /Info "); serialized(w,revision->info,NULL,0); }
+  format(w,"trailer\n<< /Size %zu /Prev %zu /Root ",new_size,revision->startxref);
+  if(root==EXR_PDF_NONE) serialized(w,revision->root,NULL,0); else format(w,"%" PRIu32 " 0 R",root);
+  if(info!=EXR_PDF_NONE) format(w," /Info %" PRIu32 " 0 R",info);
+  else if(revision->info!=EXR_PDF_NONE) { literal(w," /Info "); serialized(w,revision->info,NULL,0); }
   if(revision->id!=EXR_PDF_NONE) { literal(w," /ID "); serialized(w,revision->id,NULL,0); }
   format(w," >>\nstartxref\n%zu\n%%%%EOF\n",start);
 }
@@ -326,7 +328,7 @@ static exr_status edit(const void *data,size_t size,size_t page_index,const char
     literal(&w,"\n"); appearance(&w,ap,a,color,opacity);
     annotation_object(&w,annotation,generation,match==SIZE_MAX ? EXR_PDF_NONE : items[match].value,page_object_id,page_generation,ap,a,color,opacity);
     page_object(&w,&pages[page_index],page_object_id,page_generation,items,n,match,annotation,generation,0);
-    finish(&w,&revision,revision.size+needed);
+    finish(&w,&revision,revision.size+needed,EXR_PDF_NONE,EXR_PDF_NONE);
   } else {
     uint32_t popup; status=exr_pdf_resolve(w.file,exr_pdf_get(w.file,items[match].value,"Popup"),&popup,e); if(status!=EXR_OK) goto done;
     items[match].remove=1;
@@ -341,7 +343,7 @@ static exr_status edit(const void *data,size_t size,size_t page_index,const char
       status=exr_pdf_resolve(w.file,exr_pdf_get(w.file,items[i].value,"Parent"),&parent,e); if(status!=EXR_OK) goto done;
       if(parent==items[match].value) items[i].remove=1;
     }
-    literal(&w,"\n"); page_object(&w,&pages[page_index],page_object_id,page_generation,items,n,match,0,0,1); finish(&w,&revision,revision.size);
+    literal(&w,"\n"); page_object(&w,&pages[page_index],page_object_id,page_generation,items,n,match,0,0,1); finish(&w,&revision,revision.size,EXR_PDF_NONE,EXR_PDF_NONE);
   }
   status=output(&w,data,out,out_size);
 done:
@@ -376,4 +378,150 @@ exr_status exr_pdf_annotation_remove(const void *data,size_t size,size_t page,co
   status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
   status=text_valid(id,1,0,e); if(status!=EXR_OK) return status;
   return edit(data,size,page,id,NULL,0,0,control,out,out_size,e);
+}
+typedef struct { unsigned part[6],precision,zone,hours,minutes; } metadata_date;
+static int date_digits(const char **at,const char *end,unsigned digits,unsigned *out) {
+  unsigned i,value=0; const char *p=*at;
+  if((size_t)(end-p)<digits) return 0;
+  for(i=0;i<digits;i++) { if(p[i]<'0' || p[i]>'9') return 0; value=value*10+(unsigned)(p[i]-'0'); }
+  *at=p+digits; *out=value; return 1;
+}
+static exr_status date_convert(const char *text,char pdf[32],char xmp[32],exr_error *e) {
+  static const unsigned days[]={31,28,31,30,31,30,31,31,30,31,30,31};
+  metadata_date date={{0},0,0,0,0}; const char *at=text,*end=text+strlen(text); size_t a,b; unsigned i;
+  int native=(end-at>=2 && at[0]=='D' && at[1]==':');
+  if(native) at+=2;
+  if(!date_digits(&at,end,4,date.part)) goto invalid;
+  date.precision=1;
+  if(native) {
+    while(at<end && *at>='0' && *at<='9' && date.precision<6) {
+      if(!date_digits(&at,end,2,date.part+date.precision)) goto invalid;
+      date.precision++;
+    }
+    /* XMP date-time precision includes at least hours and minutes. */
+    if(date.precision==4) goto unsupported;
+  } else {
+    while(date.precision<3 && at<end && *at=='-') {
+      at++; if(!date_digits(&at,end,2,date.part+date.precision)) goto invalid;
+      date.precision++;
+    }
+    if(at<end && *at=='T') {
+      if(date.precision!=3) goto invalid;
+      at++; if(!date_digits(&at,end,2,date.part+3) || at==end || *at++!=':' || !date_digits(&at,end,2,date.part+4)) goto invalid;
+      date.precision=5;
+      if(at<end && *at==':') { at++; if(!date_digits(&at,end,2,date.part+5)) goto invalid; date.precision=6; }
+      if(at<end && *at=='.') {
+        const char *fraction=++at; int nonzero=0;
+        if(date.precision!=6) goto invalid;
+        while(at<end && *at>='0' && *at<='9') { if(*at!='0') nonzero=1; at++; }
+        if(at==fraction) goto invalid;
+        if(nonzero) goto unsupported;
+      }
+    }
+  }
+  if(at<end) {
+    if(date.precision<5) goto unsupported;
+    if(*at=='Z') { date.zone=1; at++; }
+    else if(*at=='+' || *at=='-') {
+      date.zone=*at++=='+' ? 2 : 3;
+      if(!date_digits(&at,end,2,&date.hours)) goto invalid;
+      if(at<end) {
+        int quote=native && *at=='\'';
+        if(*at==':' || quote) at++;
+        if(!date_digits(&at,end,2,&date.minutes)) goto invalid;
+        if(quote && at<end && *at=='\'') at++;
+      }
+    } else goto invalid;
+  }
+  if(at!=end || !date.part[0] || date.part[0]>9999 || (date.precision>=2 && (!date.part[1] || date.part[1]>12)) ||
+     date.part[3]>23 || date.part[4]>59 || date.part[5]>59 || date.hours>23 || date.minutes>59) goto invalid;
+  if(date.precision>=3) {
+    unsigned maximum=days[date.part[1]-1],year=date.part[0];
+    if(date.part[1]==2 && year%4==0 && (year%100!=0 || year%400==0)) maximum++;
+    if(!date.part[2] || date.part[2]>maximum) goto invalid;
+  }
+  a=(size_t)snprintf(pdf,32,"D:%04u",date.part[0]); b=(size_t)snprintf(xmp,32,"%04u",date.part[0]);
+  for(i=1;i<date.precision;i++) {
+    a+=(size_t)snprintf(pdf+a,32-a,"%02u",date.part[i]);
+    b+=(size_t)snprintf(xmp+b,32-b,"%c%02u",i<3 ? '-' : i==3 ? 'T' : ':',date.part[i]);
+  }
+  if(date.zone==1) { snprintf(pdf+a,32-a,"Z"); snprintf(xmp+b,32-b,"Z"); }
+  else if(date.zone) {
+    snprintf(pdf+a,32-a,"%c%02u'%02u'",date.zone==2 ? '+' : '-',date.hours,date.minutes);
+    snprintf(xmp+b,32-b,"%c%02u:%02u",date.zone==2 ? '+' : '-',date.hours,date.minutes);
+  }
+  return EXR_OK;
+unsupported:
+  return exr_fail(e,EXR_ARGUMENT,"PDF/XMP date precision cannot be represented without losing information");
+invalid:
+  return exr_fail(e,EXR_ARGUMENT,"Invalid PDF D: or ISO8601 metadata date");
+}
+exr_status exr_pdf_metadata_write(const void *data,size_t size,const exr_metadata_entry *changes,size_t count,
+  const exr_control *control,void **out,size_t *out_size,exr_error *e) {
+  static const char *const names[]={"Title","Author","Subject","Keywords","Creator","Producer","CreationDate","ModDate"};
+  static const char *const keys[]={"http://purl.org/dc/terms/title","http://purl.org/dc/terms/creator","http://purl.org/dc/terms/description",
+    "http://ns.adobe.com/pdf/1.3/Keywords","http://ns.adobe.com/xap/1.0/CreatorTool","http://ns.adobe.com/pdf/1.3/Producer",
+    "http://ns.adobe.com/xap/1.0/CreateDate","http://ns.adobe.com/xap/1.0/ModifyDate"};
+  static const char *const metadata_key[]={"Metadata"};
+  pdf_writer w={0}; exr_pdf_revision_info revision; exr_buffer packet={0}; const char *skip[8],*info_values[8];
+  exr_metadata_entry xmp_changes[8]; char info_dates[8][32],xmp_dates[8][32];
+  uint32_t info,xmp,form,xfa,new_info,new_xmp=EXR_PDF_NONE,new_root=EXR_PDF_NONE;
+  const exr_pdf_value *value; size_t i,j,needed=1; unsigned seen=0; exr_status status;
+  if(out) *out=NULL;
+  if(out_size) *out_size=0;
+  if(!out || !out_size || (count && !changes)) return exr_fail(e,EXR_ARGUMENT,"Missing PDF metadata changes or outputs");
+  if(count>8) return exr_fail(e,EXR_ARGUMENT,"PDF metadata writer supports eight distinct properties");
+  status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
+  for(i=0;i<count;i++) {
+    if(!changes[i].key) return exr_fail(e,EXR_ARGUMENT,"Missing PDF metadata property key");
+    for(j=0;j<8;j++) if(!strcmp(changes[i].key,keys[j])) break;
+    if(j==8 || (seen&(1u<<j))) return exr_fail(e,EXR_ARGUMENT,"Unsupported or duplicate PDF metadata property");
+    seen|=1u<<j; skip[i]=names[j]; info_values[i]=changes[i].value; xmp_changes[i]=changes[i];
+    if(changes[i].value) { status=text_valid(changes[i].value,0,1,e); if(status!=EXR_OK) return status; }
+    if(j>=6 && changes[i].value) {
+      status=date_convert(changes[i].value,info_dates[i],xmp_dates[i],e); if(status!=EXR_OK) return status;
+      info_values[i]=info_dates[i]; xmp_changes[i].value=xmp_dates[i];
+    }
+  }
+  w.status=EXR_OK; w.error=e; w.control=control; w.input_size=size;
+  status=exr_control_poll(control,EXR_STAGE_READ,0,size,e); if(status!=EXR_OK) return status;
+  status=exr_pdf_open(data,size,&w.file,e); if(status!=EXR_OK) return status;
+  if(!count) { status=output(&w,data,out,out_size); goto done; }
+  status=permission(w.file,e); if(status!=EXR_OK) goto done;
+  status=exr_pdf_resolve(w.file,exr_pdf_get(w.file,exr_pdf_root(w.file),"AcroForm"),&form,e); if(status!=EXR_OK) goto done;
+  value=exr_pdf_value_at(w.file,form);
+  if(value && value->kind!=EXR_PDF_NULL && value->kind!=EXR_PDF_DICT) { status=exr_fail(e,EXR_FORMAT,"PDF AcroForm is not a dictionary"); goto done; }
+  status=exr_pdf_resolve(w.file,exr_pdf_get(w.file,form,"XFA"),&xfa,e); if(status!=EXR_OK) goto done;
+  value=exr_pdf_value_at(w.file,xfa);
+  if(value && value->kind!=EXR_PDF_NULL) { status=exr_fail(e,EXR_FORMAT,"PDF XFA metadata synchronization is unsupported"); goto done; }
+  status=exr_pdf_resolve(w.file,exr_pdf_info(w.file),&info,e); if(status!=EXR_OK) goto done;
+  value=exr_pdf_value_at(w.file,info);
+  if(!value || value->kind==EXR_PDF_NULL) info=EXR_PDF_NONE;
+  else if(value->kind!=EXR_PDF_DICT) { status=exr_fail(e,EXR_FORMAT,"PDF Info is not a dictionary"); goto done; }
+  status=exr_pdf_resolve(w.file,exr_pdf_get(w.file,exr_pdf_root(w.file),"Metadata"),&xmp,e); if(status!=EXR_OK) goto done;
+  value=exr_pdf_value_at(w.file,xmp);
+  if(value && value->kind!=EXR_PDF_NULL) {
+    const unsigned char *bytes; size_t n;
+    if(value->kind!=EXR_PDF_STREAM) { status=exr_fail(e,EXR_FORMAT,"PDF Metadata is not a stream"); goto done; }
+    status=exr_pdf_stream_data(w.file,xmp,&bytes,&n,e); if(status!=EXR_OK) goto done;
+    status=exr_pdf_xmp_write(bytes,n,xmp_changes,count,control,&packet,e); if(status!=EXR_OK) goto done;
+    needed=3;
+  }
+  exr_pdf_revision(w.file,&revision);
+  if(revision.size>EXR_PDF_MAX_VALUES-needed) { status=exr_fail(e,EXR_LIMIT,"PDF metadata object limit exceeded"); goto done; }
+  new_info=(uint32_t)revision.size;
+  if(needed==3) { new_xmp=new_info+1; new_root=new_info+2; }
+  literal(&w,"\n"); begin_object(&w,new_info,0); dictionary(&w,info,skip,count);
+  for(i=0;i<count;i++) if(info_values[i]) { literal(&w," /"); literal(&w,skip[i]); literal(&w," "); string(&w,info_values[i]); }
+  literal(&w," >>\nendobj\n");
+  if(needed==3) {
+    begin_object(&w,new_xmp,0);
+    format(&w,"<< /Type /Metadata /Subtype /XML /Length %zu >>\nstream\n",packet.size);
+    add(&w,packet.data,packet.size); literal(&w,"\nendstream\nendobj\n");
+    begin_object(&w,new_root,0); dictionary(&w,exr_pdf_root(w.file),metadata_key,1);
+    format(&w," /Metadata %" PRIu32 " 0 R >>\nendobj\n",new_xmp);
+  }
+  finish(&w,&revision,revision.size+needed,new_root,new_info); status=output(&w,data,out,out_size);
+done:
+  free(packet.data); free(w.bytes.data); exr_pdf_close(w.file); return status;
 }

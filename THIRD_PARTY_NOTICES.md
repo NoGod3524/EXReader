@@ -107,3 +107,19 @@ source SHA-256 hashes and reproduces the committed tables and notices. It parses
 only static facts; downloaded JavaScript is never executed. Normal C builds
 require neither Python nor network access. PDF interpretation, font mapping and
 raster algorithms remain EXReader's own C implementation.
+
+
+## Optional MP3 decoder
+
+`EXR_ENABLE_MP3=ON` (default) builds the CC0-1.0 `minimp3.h` codec from
+[lieff/minimp3](https://github.com/lieff/minimp3/tree/ea99364f61c14656440e8d77e9c233ccf3124633),
+commit `ea99364f61c14656440e8d77e9c233ccf3124633`. The source archive is pinned
+to SHA-256 `5628166eb82a9bb581317918a334c317a2c0a30278bb14a20381307976768f34`.
+Only the core C header is compiled; the upstream test audio, player and
+`minimp3_ex` full-file index are not part of the SDK. The complete upstream CC0
+license is installed at `share/exreader/licenses/minimp3/LICENSE`.
+
+EXReader's source callbacks, tag bounds, Xing/LAME trimming, bounded decoder-state
+checkpoints, ownership and cancellation are implemented in `src/mp3.c`; MP3
+synthesis itself uses minimp3. Disabling the component avoids its source download
+and codec footprint while retaining API symbols with availability reporting.

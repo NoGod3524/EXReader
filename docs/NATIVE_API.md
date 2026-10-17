@@ -1019,3 +1019,20 @@ FLAC 元数据最多 64 MiB / 65536 块；SEEKTABLE 最多 65536 点、保留最
 `exr_audio_output_write` 复制交错有限 float 数据、裁切至 [-1,1]、转为 PCM16，非阻塞提交；每次最多 65536 帧。调用方总要处理 written，设备错误也可能发生在部分数据已提交后，不能重发已接受的数据。队列满或暂停时 written=0，宿主稍后重试；pause 保留队列，flush 丢弃待播数据并保留逻辑暂停状态。pending 是保守队列估算，不是精确播放时钟。Windows/Apple/Android 最多四个 4096 帧块；ALSA 使用有限设备缓冲，不能保留队列暂停的设备返回 EXR_FORMAT。
 
 声音输出由宿主串行调用并管理生命周期。移动应用的音频会话、前后台、路由和中断策略仍由宿主管理。普通测试不打开扬声器，显式 `exreader-audio-output-test --device` 只提交静音用于手动验证；编译通过不代表真机音频验收。
+
+
+## 软连字符、MP3 与原文件元数据（0.18 开发补充）
+
+软连字符 U+00AD 仅在选中该断点换行时显示，首选 U+2010，字体序列都缺失时尝试 ASCII 连字符。实际字形宽度、字号和字体回退参与最终拟合；放不下时退让，完整布局、页级续排和检查点使用同一路径。glyph.codepoint 仍为原 U+00AD，保留原 UTF-8 两字节范围，显示由 glyph ID 和 HIDDEN 标志决定；不向正文插入额外字符。
+
+`exr_mp3_open` / open_source / read 使用可选 minimp3 C codec。`EXR_ENABLE_MP3` 默认 ON；设为 OFF 不下载组件，保留所有 ABI 符号，available()=0、打开返回 EXR_FORMAT。支持普通比特率的 MPEG-1/2/2.5 Layer III、CBR/VBR、ID3v2/ID3v1/APEv2 边界与 Xing/LAME 无缝样本裁剪；不支持 free-format、Layer I/II 或 MP3 CRC 验证。原生合成由 minimp3 完成，不称为本项目自研算法。
+
+打开只读取标签和起始帧；无法可靠得知长度时 frames=UINT64_MAX，验证 EOF 后更新。随机读取保存完整 reservoir/overlap 解码状态，最多 128 个 checkpoint，整个工作区小于 1 MiB，首次只分配一个检查点。每次 read 最多 65536 帧，扫描最多 16M 帧或 256 MiB；EXR_LIMIT 后同一目标可续扫。首个合法帧头候选位置须小于 65536，跨边界的后续帧验证可以继续读取；标签最多 64 MiB / 64 项。错误和取消清空输出，先前验证的扫描进展保留。PCM 自动识别已接 MP3，并报告已知的 gapless 样本数。
+
+`exr_pdf_metadata_write` 对八个 Info URI 做 patch：title、creator、description、Keywords、CreatorTool、Producer、CreateDate、ModifyDate，URI 沿用读取接口。缺省 key 不改，NULL 删除整个 key，普通字符串空串保留；重复或不支持的 key 返回错误。Info 与已存在的 XMP 同步更新，保留未改 Info/Catalog 字典字段和复杂 RDF 结构；被修改的整个 XMP property（含语言/列表值）会替换。没有 XMP 时只更新 Info，因此可处理 PDF 1.3。
+
+日期为 typed 值：接受合法 PDF D: 或 ISO8601 的年、年月、日期、时分、时分秒及显式时区；分别生成 Info 与 XMP 所需格式。不虚构缺失时区或精度，不改未选中的旧日期；小时-only、非零小数秒、非法日期和日期空串返回 EXR_ARGUMENT。零小数秒可归为整秒，NULL 可删除日期。
+
+输出为独立完整 PDF，增量保留原字节，用 exr_free 释放。count=0 返回独立原样副本；认证权限、加密、XFA、命名/空白 RDF 主体、DTD 和无法同步的 XML 返回错误，不输出半个文件。XMP 流重建为 UTF-8，保留命名空间及未改结构的语义，不保留原 XML 词法拼写或旧 Metadata stream 的未知字典键。编辑要求 UTF-8 和编码后的 UTF-16 文本各最多 64 KiB，XMP 最多 1 MiB。
+
+Swift `EXReaderPCM` 和 Java `EXReader.Pcm` 统一读取启用的 PCM 解码器；句柄操作串行，返回独立 float 样本，时长 getter 可反映后续 EOF 发现。未知长度分别表示 nil 和 -1。`examples/pcm.c` 默认只检查音频；显式 --play 才打开系统设备，按 backpressure 提交并等待队列排空。

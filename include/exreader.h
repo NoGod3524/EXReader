@@ -318,6 +318,21 @@ EXR_API const exr_flac_info *exr_flac_format(const exr_flac *flac);
    Bounded scans may return EXR_LIMIT while retaining verified seek checkpoints. */
 EXR_API exr_status exr_flac_read(exr_flac *flac,uint64_t first_frame,size_t frames,float *output,size_t *read,
   const exr_control *control,exr_error *error);
+/* Optional minimp3 C codec, independently licensed CC0. Symbols remain present
+   with EXR_ENABLE_MP3=OFF; available returns zero and opens return EXR_FORMAT.
+   Supports MPEG-1/2/2.5 Layer III with ordinary bitrates, not free-format. */
+typedef struct exr_mp3 exr_mp3;
+typedef struct { uint32_t sample_rate,channels; uint64_t frames; } exr_mp3_info;
+EXR_API int exr_mp3_available(void);
+EXR_API exr_status exr_mp3_open(const char *path,const exr_control *control,exr_mp3 **out,exr_error *error);
+EXR_API exr_status exr_mp3_open_source(const exr_source *source,exr_mp3 **out,exr_error *error);
+EXR_API void exr_mp3_free(exr_mp3 *mp3);
+EXR_API const exr_mp3_info *exr_mp3_format(const exr_mp3 *mp3);
+/* Gapless sample indices when valid Xing/LAME duration/delay metadata exists;
+   otherwise frames may be UINT64_MAX until verified EOF. Uses bounded seeking
+   with complete decoder-state checkpoints; runtime failures clear output. */
+EXR_API exr_status exr_mp3_read(exr_mp3 *mp3,uint64_t first_frame,size_t frames,float *output,size_t *read,
+  const exr_control *control,exr_error *error);
 
 /* Format-independent PCM source. Channel ordering is declared by the provider;
    channel_mask==0 leaves it unspecified. frames==UINT64_MAX means unknown.
@@ -335,7 +350,7 @@ typedef struct {
   exr_context_release_fn release;
 } exr_pcm_input;
 EXR_API exr_status exr_pcm_create(const exr_pcm_input *input,exr_pcm **out,exr_error *error);
-/* Auto-detects native WAV or raw FLAC, with the same source ownership rules. */
+/* Auto-detects WAV, raw FLAC or enabled MP3, with the same ownership rules. */
 EXR_API exr_status exr_pcm_open(const char *path,const exr_control *control,exr_pcm **out,exr_error *error);
 EXR_API exr_status exr_pcm_open_source(const exr_source *source,exr_pcm **out,exr_error *error);
 EXR_API void exr_pcm_free(exr_pcm *pcm);
@@ -679,6 +694,15 @@ EXR_API exr_status exr_pdf_annotation_write(const void *data,size_t size,size_t 
 /* Removes the matching annotation and its same-page Popup. A missing ID returns
    an independent byte-for-byte copy. Failures clear both outputs. */
 EXR_API exr_status exr_pdf_annotation_remove(const void *data,size_t size,size_t page,const char *id,
+  const exr_control *control,void **out,size_t *out_size,exr_error *error);
+/* Patches the eight supported PDF Info metadata URIs and, when present, XMP.
+   Missing keys stay unchanged; NULL values delete that whole property and empty
+   strings remain values except typed dates, which require a valid date or NULL.
+   Dates accept PDF D: or ISO8601 second precision and retain explicit timezones.
+   Updated localized/list XMP properties are replaced as
+   a whole; unrelated RDF structures survive. Uses incremental revisions and
+   the same owned-output/cancellation/permission rules as annotation editing. */
+EXR_API exr_status exr_pdf_metadata_write(const void *data,size_t size,const exr_metadata_entry *changes,size_t count,
   const exr_control *control,void **out,size_t *out_size,exr_error *error);
 /* Read document-subject XMP simple literals, Seq/Bag values and preferred Alt. */
 EXR_API exr_status exr_metadata_read_xmp(const void *data,size_t size,const exr_control *control,

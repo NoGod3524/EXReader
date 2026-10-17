@@ -54,9 +54,19 @@ public final class Smoke {
             wave.close(); wave.close();
             try { wave.format(); throw new AssertionError(); } catch(IllegalStateException expected) { }
         }
+        try(EXReader.Pcm pcm=new EXReader.Pcm(chinese.toString())) {
+            EXReader.PcmFormat format=pcm.format(); check(format.sampleRate==16000 && format.channels==1 && format.frames==3200);
+            float[] samples=pcm.read(0,1024); float peak=0; for(float v:samples) peak=Math.max(peak,Math.abs(v)); check(samples.length==1024 && peak==.5f);
+            check(pcm.read(3199,1024).length==1 && pcm.read(3200,1).length==0 && pcm.read(0,0).length==0);
+            try { pcm.read(0,65537); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
+            pcm.close(); pcm.close();
+            try { pcm.format(); throw new AssertionError(); } catch(IllegalStateException expected) { }
+        }
         Files.delete(chinese);
         try { new EXReader.Wave("bad\0name"); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
         try { new EXReader.Wave("bad\ud800name"); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
+        try { new EXReader.Pcm("bad\0name"); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
+        try { new EXReader.Pcm("bad\ud800name"); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
         System.out.println("JNI SDK: PDF text/render/font ownership, Unicode paths, owned multilingual metadata and WAVE samples passed");
     }
 }
