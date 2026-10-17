@@ -840,3 +840,12 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 完整验证 OPF itemref 与文档阅读顺序的对应关系，重复引用同一资源的条目分别定位，linear=no 仍占自己的 spine 位置。解析成功返回 chapter 和该章原始 DOM 的 point。原有 ID 断言可同时修正 package 与章节的过时索引；多次 `!` 或非 spine 引用拒绝。
 
 此接口要求仍持有原压缩包的完整 EPUB 文档，辅助非 spine 章节不能伪装为标准 spine CFI；从 publication_load 单独加载的章节也不能用自己的局部索引冒充整书顺序。宿主构造文档继续使用独立内容路径接口，输出结构 EPUB 后重新打开才有真实 package 坐标。输入为原始 CFI 字符串，不自动解析 URL 或百分号转义。范围、文本断言、iframe 等额外重定向和音视频空间/时间位置继续补齐。
+
+
+## 按需出版物 CFI（0.88）
+
+`exr_publication_cfi_create` 接受内置 EPUB publication、part、由它加载的独立章节文档与章节局部 point。创建前验证原始压缩源归属和章节路径；重复 spine 项仍由显式 part 区分。完整文档的 CFI 接口继续使用原有完整阅读顺序校验。
+
+`exr_publication_cfi_resolve` 先按原 OPF 定位 part，只加载那个章节，再解析内容路径。成功返回 part、独立文档和文档内 point；文档用 document_free 释放，可比 publication 活得更久。其他章节的 XHTML 损坏不会阻止访问正常目标；失败或取消返回 document=NULL、part/point.node/point.offset=SIZE_MAX。
+
+操作不创建 session、不预排版、不加入常驻缓存。内置 EPUB 提供者以外的宿主出版物返回 EXR_FORMAT，可继续使用通用局部路径接口。与 publication_load 一样拒绝重入；输入输出的 XML 文本位置仍使用原始 DOM / UTF-16 约定。

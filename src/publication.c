@@ -252,6 +252,30 @@ exr_status exr_publication_load(exr_publication *p, size_t part, exr_document **
   return exr_fail(e, EXR_OK, "");
 }
 
+exr_status exr_publication_cfi_create(exr_publication *p,size_t part,const exr_document *d,
+                                        const exr_cfi_point *point,const exr_control *control,char **out,exr_error *e) {
+  exr_status status;
+  if(out) *out=NULL;
+  if(!p || !out || !d || d->chapter_count!=1 || part>=p->count || p->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant publication CFI create");
+  if(p->load!=epub_load) return exr_fail(e,EXR_FORMAT,"Publication has no built-in EPUB CFI provider");
+  p->busy=1; status=exr_cfi_create_for_part(p->context,part,d,0,point,control,out,e); p->busy=0; return status;
+}
+exr_status exr_publication_cfi_resolve(exr_publication *p,const char *cfi,const exr_control *control,
+                                         size_t *part,exr_document **out,exr_cfi_point *point,exr_error *e) {
+  exr_status status; exr_document *doc=NULL; exr_cfi_point result; size_t mapped; char *local=NULL;
+  if(part) *part=SIZE_MAX;
+  if(out) *out=NULL;
+  if(point) *point=(exr_cfi_point){SIZE_MAX,SIZE_MAX,0};
+  if(!p || !part || !out || !point || p->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant publication CFI resolve");
+  if(p->load!=epub_load) return exr_fail(e,EXR_FORMAT,"Publication has no built-in EPUB CFI provider");
+  p->busy=1; status=exr_cfi_route(p->context,cfi,control,&mapped,&local,e);
+  if(status==EXR_OK) status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=p->load(p->context,mapped,&doc,e);
+  if(status==EXR_OK) status=exr_document_cfi_path_resolve(doc,0,local,control,&result,e);
+  if(status==EXR_OK) { *part=mapped; *out=doc; *point=result; doc=NULL; }
+  exr_document_free(doc); free(local); p->busy=0; return status;
+}
+
 void exr_session_clear(exr_session *s) {
   size_t i;
   if (!s)
