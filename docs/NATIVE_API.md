@@ -51,6 +51,8 @@ FreeType 提供字体、基础字形度量和像素，不负责分页。EXReader
 
 `exr_font_open(path, ...)` 保留单文件、集合首个 face 的入口。`exr_font_create(inputs, count, ...)` 接收有序 `exr_font_input` 数组，每项为编码字体字节 `data/size` 和集合内的 `face_index`（普通字体为 0）。成功时复制全部输入，宿主随后可以释放或修改字节。字体集不可变，用 `exr_font_free()` 释放；布局、渲染和 session 通过现有字体参数接入，无需额外平台后端。字体集需在布局计算、渲染及 session 生命周期内有效，相同句柄的访问由宿主串行处理。
 
+`exr_font_create_glyphs(inputs, count, ...)` 复用相同的输入、复制与预算规则，另外允许没有 Unicode cmap 的可缩放字体。用于宿主已确定字形编号的固定版面；这类 face 的 Unicode 字符查询返回未覆盖，定位字形仍能直接绘制。有 Unicode cmap 的 face 保留正常字符查询。它不猜测字形编号与字符的关系。
+
 只接受 1–32 个可缩放、具有 Unicode cmap 的 face，累计输入字节上限 128 MiB。缺失输入、空字节或大于 `INT_MAX` 的 face index 返回 `EXR_ARGUMENT`；超限返回 `EXR_LIMIT`；损坏、不支持、没有 Unicode cmap 或不存在的 face 返回 `EXR_FONT`。复制失败返回 `EXR_MEMORY`。失败时清理已创建的部分，`*out = NULL`。文件入口仍支持 UTF-8 路径。
 
 ```c

@@ -2,11 +2,11 @@
 #include "layout_internal.h"
 #include "opentype_internal.h"
 #include FT_SYNTHESIS_H
-exr_status exr_font_create(const exr_font_input *inputs, size_t count, exr_font **out, exr_error *e) {
+static exr_status create_font(const exr_font_input *inputs,size_t count,int unicode,exr_font **out,exr_error *e) {
   exr_font *font;
   size_t i, total = 0;
   exr_status status = EXR_FONT;
-  const char *message = "Font must contain a scalable Unicode face";
+  const char *message = unicode ? "Font must contain a scalable Unicode face" : "Font must contain a scalable face";
   if (!out)
     return exr_fail(e, EXR_ARGUMENT, "Missing font output");
   *out = NULL;
@@ -47,8 +47,13 @@ exr_status exr_font_create(const exr_font_input *inputs, size_t count, exr_font 
     face->scope = SIZE_MAX;
     if (FT_New_Memory_Face(font->library, face->bytes, (FT_Long)inputs[i].size,
                            (FT_Long)inputs[i].face_index, &face->face) ||
-        !FT_IS_SCALABLE(face->face) || FT_Select_Charmap(face->face, FT_ENCODING_UNICODE))
+        !FT_IS_SCALABLE(face->face))
       goto bad;
+    if (FT_Select_Charmap(face->face, FT_ENCODING_UNICODE)) {
+      if (unicode) goto bad;
+      /* Codepoint lookup must not mistake an arbitrary encoding for Unicode. */
+      face->face->charmap = NULL;
+    }
     if (face->face->family_name)
       snprintf(face->family, sizeof(face->family), "%s", face->face->family_name);
     face->style_flags = ((face->face->style_flags & FT_STYLE_FLAG_BOLD) ? 1u : 0u) |
@@ -69,6 +74,12 @@ exr_status exr_font_create(const exr_font_input *inputs, size_t count, exr_font 
 bad:
   exr_font_free(font);
   return exr_fail(e, status, "%s", message);
+}
+exr_status exr_font_create(const exr_font_input *inputs,size_t count,exr_font **out,exr_error *e) {
+  return create_font(inputs,count,1,out,e);
+}
+exr_status exr_font_create_glyphs(const exr_font_input *inputs,size_t count,exr_font **out,exr_error *e) {
+  return create_font(inputs,count,0,out,e);
 }
 exr_status exr_font_open(const char *path, exr_font **out, exr_error *e) {
   unsigned char *bytes = NULL;

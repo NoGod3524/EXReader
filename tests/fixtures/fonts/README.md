@@ -13,3 +13,6 @@ The collection contains primary at face 0 and fallback at face 1.
 
 The oversize font uses original 32000-unit rectangles at 1000 units per em. It verifies
 that glyph rasterization refuses huge temporary bitmaps before asking FreeType to render.
+
+The glyph-only font preserves the primary outlines and glyph order without a cmap table or PostScript glyph names.
+It tests direct glyph rendering independently of Unicode lookup.

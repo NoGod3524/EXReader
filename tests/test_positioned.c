@@ -38,6 +38,18 @@ static void text(const char *dir) {
   OK(exr_render_page_color(original,NULL,0,&a,&error)); OK(exr_render_page_color(fixed,NULL,0,&b,&error));
   CHECK(a.stride==b.stride && a.height==b.height && !memcmp(a.pixels,b.pixels,(size_t)a.stride*a.height));
   exr_bitmap_free(&a); exr_bitmap_free(&b);
+  { exr_font_input input={0}; exr_font *raw=(exr_font *)(uintptr_t)1; exr_layout *native=NULL; FILE *file; long length; void *data;
+    snprintf(path,sizeof(path),"%s/fonts/glyph-only.ttf",dir); file=fopen(path,"rb"); CHECK(file && !fseek(file,0,SEEK_END));
+    length=ftell(file); CHECK(length>0); rewind(file); data=malloc((size_t)length);
+    CHECK(data && fread(data,1,(size_t)length,file)==(size_t)length); fclose(file); input=(exr_font_input){data,(size_t)length,0};
+    CHECK(exr_font_create(&input,1,&raw,&error)==EXR_FONT && !raw);
+    OK(exr_font_create_glyphs(&input,1,&raw,&error)); CHECK(exr_font_count(raw)==1 && !exr_font_has_glyph(raw,0,'A'));
+    free(data); OK(exr_layout_create_positioned(doc,raw,&in,&c,&native,&error)); exr_font_free(raw);
+    OK(exr_render_page_color(original,NULL,0,&a,&error)); OK(exr_render_page_color(native,NULL,0,&b,&error));
+    CHECK(a.stride==b.stride && a.height==b.height && !memcmp(a.pixels,b.pixels,(size_t)a.stride*a.height));
+    exr_bitmap_free(&a); exr_bitmap_free(&b); exr_layout_free(native);
+    CHECK(exr_font_create_glyphs(NULL,1,&raw,&error)==EXR_ARGUMENT && !raw);
+  }
   c=config(360,200); OK(exr_layout_create_positioned(doc,font,&in,&c,&scaled,&error));
   source=exr_layout_glyphs(scaled,&n); CHECK(n==ng && near(source[0].x,glyphs[0].x*2) && near(source[0].size,glyphs[0].size*2));
   CHECK(exr_layout_hit_test(scaled,0,source[0].x+source[0].advance*0.25f,source[0].baseline)==source[0].cluster_start);

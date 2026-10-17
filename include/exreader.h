@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.48.0"
+#define EXR_VERSION "0.49.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -423,6 +423,10 @@ EXR_API exr_status exr_font_open(const char *path, exr_font **out, exr_error *er
    of copied font bytes in total. Failure leaves *out NULL. No system font lookup. */
 EXR_API exr_status exr_font_create(const exr_font_input *inputs, size_t count,
                                    exr_font **out, exr_error *error);
+/* Also accepts scalable faces without Unicode charmaps, for direct glyph IDs.
+   Such faces do not participate in Unicode character lookup. Inputs are copied. */
+EXR_API exr_status exr_font_create_glyphs(const exr_font_input *inputs, size_t count,
+                                          exr_font **out, exr_error *error);
 EXR_API size_t exr_font_count(const exr_font *font);
 /* Scalar cmap coverage, not a shaping/sequence support test; invalid input returns 0. */
 EXR_API int exr_font_has_glyph(const exr_font *font, size_t font_index, uint32_t codepoint);
