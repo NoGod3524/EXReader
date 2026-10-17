@@ -735,3 +735,18 @@ Original fixtures cover compressed catalogs, stream lengths stored in object str
 index reuse, wide fields, optional fields, split ranges, hybrid precedence, both incremental
 container transitions and invalid widths/ranges/generations/headers/indexes/object bodies.
 Public PDF page reading remains unconnected. The 0.39 commit 3301cf3 passed all six CI jobs.
+
+
+## 0.41 PDF filter pipelines and predictors
+
+PDF streams now support up to 16 ordered filters with matching DecodeParms arrays:
+Flate, ASCIIHex, ASCII85 and RunLength (including their PDF abbreviations). TIFF horizontal
+prediction supports 1/2/4/8/16-bit samples and multiple components. PNG prediction restores
+all five per-row filters and strips row tags in place. Cache accounting includes allocated
+capacities and the previous filter's temporary buffer; output and decompression work are bounded.
+
+Original fixtures check odd hex nibbles, ASCII85 z/partial tuples, literal/repeated runs,
+empty streams, chained encodings, exact packed TIFF samples, all PNG row filters and PNG
+prediction inside normal/hybrid cross-reference streams. Invalid terminators, tails, tuples,
+row lengths, tags, parameter shapes/counts and unsupported values fail atomically. Public PDF
+page reading remains unconnected. The 0.40 commit 2ac097a passed all six CI jobs.

@@ -66,12 +66,36 @@ static void bad_stream(const char *dir,const char *name,exr_status expected) {
   CHECK(exr_pdf_stream_data(file,id,&stream,&n,&error)==expected && !stream && !n && error.code==expected);
   exr_pdf_close(file); free(data);
 }
+static void filter_case(const char *dir,const char *name,const void *expected,size_t length) {
+  char path[256]; unsigned char *data; size_t size,n,again; const unsigned char *decoded,*same;
+  exr_pdf_file *file=NULL; uint32_t id;
+  snprintf(path,sizeof(path),"pdf-filter-%s.pdf",name); data=read_fixture(dir,path,&size);
+  OK(exr_pdf_open(data,size,&file,&error)); id=exr_pdf_get(file,exr_pdf_root(file),"Flate");
+  if(exr_pdf_stream_data(file,id,&decoded,&n,&error)!=EXR_OK) { fprintf(stderr,"filter %s\n",name); CHECK(0); }
+  CHECK(n==length && (!n || !memcmp(decoded,expected,n)));
+  OK(exr_pdf_stream_data(file,id,&same,&again,&error)); CHECK(same==decoded && again==n);
+  exr_pdf_close(file); free(data);
+}
+static void filter_cases(const char *dir) {
+  const char *plain[]={"hex","a85","runlength","chain","chain-hex","empty-array","tiff8"};
+  const char *bad[]={"png-short","png-bad-tag","tiff-short","bad-bits","bad-colors","bad-columns","bad-predictor","bad-hex","hex-tail","hex-end","a85-overflow","a85-z","a85-one","a85-tail","a85-end","rl-short","rl-repeat","rl-end","rl-tail","params-short","params-shape","filter-value","filter-depth"};
+  const char text[]="BT /F1 12 Tf (Hello native PDF.) Tj ET\n"; size_t i; char repeated[sizeof(text)*5],runs[128];
+  for(i=0;i<sizeof(plain)/sizeof(*plain);i++) filter_case(dir,plain[i],text,sizeof(text)-1);
+  filter_case(dir,"hex-odd","A@",2); filter_case(dir,"empty-hex","",0);
+  for(i=1;i<=4;i++) { char name[64]; snprintf(name,sizeof(name),"a85-tail%u",(unsigned)i); filter_case(dir,name,"\0\0\0\0",i); }
+  memset(runs,'X',sizeof(runs)); filter_case(dir,"repeat",runs,sizeof(runs));
+  for(i=0;i<5;i++) memcpy(repeated+i*(sizeof(text)-1),text,sizeof(text)-1);
+  filter_case(dir,"png",repeated,5*(sizeof(text)-1)); filter_case(dir,"png-chain",repeated,5*(sizeof(text)-1));
+  filter_case(dir,"tiff1","\xb4",1); filter_case(dir,"tiff2","\x4d\x10",2);
+  filter_case(dir,"tiff4","\x10\xf1\x01",3); filter_case(dir,"tiff16","\0\1\0\0\xff\xff\0\1\0\0\0\1",12);
+  for(i=0;i<sizeof(bad)/sizeof(*bad);i++) { char name[256]; snprintf(name,sizeof(name),"pdf-filter-%s.pdf",bad[i]); bad_stream(dir,name,EXR_FORMAT); }
+}
 int main(int argc,char **argv) {
   const char *bad[]={"object-header-duplicate","object-header-offset","object-header-order","object-header-tail","object-body","xref-indirect","xref-empty-index","xref-size","xref-nested-hybrid","xref-width","xref-overlap","xref-odd-index","xref-generation","object-stream-number","object-stream-index","object-stream-self","object-stream-missing","prev-cycle","prev-offset","encrypted","hybrid","xref-offset","header","eof","startxref","root-type","root-direct","size","token","root-reference","generation","string","key","hex"};
   const char *streams[]={"invalid-length","cycle-length","bad-flate","unsupported-filter","bad-parameters","unsupported-predictor","trailing"}; size_t i;
-  CHECK(argc==2); basic(argv[1],"pdf-objects.pdf"); basic(argv[1],"pdf-objects-predictor-one.pdf"); basic(argv[1],"pdf-stream-whitespace.pdf");
+  CHECK(argc==2); filter_cases(argv[1]); basic(argv[1],"pdf-objects.pdf"); basic(argv[1],"pdf-objects-predictor-one.pdf"); basic(argv[1],"pdf-stream-whitespace.pdf");
   basic(argv[1],"pdf-stream-after-classic.pdf"); incremental(argv[1],"pdf-classic-after-stream.pdf");
-  basic(argv[1],"pdf-xref-stream.pdf"); basic(argv[1],"pdf-object-stream.pdf"); basic(argv[1],"pdf-hybrid.pdf");
+  basic(argv[1],"pdf-xref-predictor.pdf"); basic(argv[1],"pdf-hybrid-predictor.pdf"); basic(argv[1],"pdf-xref-stream.pdf"); basic(argv[1],"pdf-object-stream.pdf"); basic(argv[1],"pdf-hybrid.pdf");
   basic(argv[1],"pdf-xref-index.pdf"); basic(argv[1],"pdf-xref-wide.pdf"); basic(argv[1],"pdf-xref-default-type.pdf");
   incremental(argv[1],"pdf-incremental.pdf"); incremental(argv[1],"pdf-incremental-inherit.pdf");
   for(i=0;i<sizeof(bad)/sizeof(*bad);i++) { char name[256]; snprintf(name,sizeof(name),"pdf-bad-%s.pdf",bad[i]); bad_open(argv[1],name,EXR_FORMAT); }
