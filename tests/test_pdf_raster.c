@@ -70,10 +70,10 @@ static void drawing_inspection(exr_pdf_file *file,uint32_t resources) {
   i.stop=1; content="BT /Names 10 Tf (A) Tj ET"; CHECK(exr_pdf_paint_content(file,resources,content,strlen(content),NULL,&sink,NULL,NULL,NULL,NULL,&error)==EXR_CANCELLED);
 }
 typedef struct { const void *bytes; size_t size,calls; int fail; } fallback_context;
-static exr_status program(void *context,const exr_pdf_font_info *info,const void **bytes,size_t *size,exr_error *e) {
+static exr_status program(void *context,const exr_pdf_font_info *info,exr_font_input *source,exr_error *e) {
   fallback_context *c=context; (void)e; CHECK(!info->program && !strcmp(info->base_name,"Helvetica")); c->calls++;
   if(c->fail) return EXR_CANCELLED;
-  *bytes=c->bytes; *size=c->size; return EXR_OK;
+  source->data=c->bytes; source->size=c->size; source->face_index=0; return EXR_OK;
 }
 static void fallback_cases(const char *dir,exr_pdf_file *file,uint32_t resources) {
   fallback_context context={0}; exr_pdf_raster_config config={0}; exr_bitmap b; unsigned char *data; const char *content="BT /Fallback 10 Tf (AA) Tj ET";

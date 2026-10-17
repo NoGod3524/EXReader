@@ -4,7 +4,7 @@
 #include "pdf_internal.h"
 /* A host program is borrowed through the whole render; embedded fonts win. */
 typedef exr_status (*exr_pdf_program_fn)(void *context,const exr_pdf_font_info *font,
-                                         const void **bytes,size_t *size,exr_error *error);
+                                         exr_font_input *source,exr_error *error);
 exr_status exr_pdf_paint_content(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
                                   const double initial[6],const exr_draw_sink *sink,exr_pdf_program_fn program,void *program_context,
                                   size_t *work,const exr_control *control,exr_error *error);
