@@ -166,10 +166,8 @@ static unsigned item_class(ot_work *w, size_t at) {
   if (!cls && !w->indic && joining(w->items[at].cp) == 5) cls = 3;
   return cls;
 }
-static int ignored(ot_work *w, size_t at, unsigned flags, unsigned filtering) {
+static int ignored_properties(ot_work *w, size_t at, unsigned flags, unsigned filtering) {
   unsigned cls;
-  if (w->items[at].out.flags & EXR_GLYPH_HIDDEN)
-    return w->items[at].cp != 0x200c && !(w->indic && !w->positioning && w->items[at].cp == 0x200d);
   cls = item_class(w, at);
   if ((cls == 1 && (flags & 2)) || (cls == 2 && (flags & 4)) ||
       (cls == 3 && (flags & 8))) return 1;
@@ -192,6 +190,13 @@ static int ignored(ot_work *w, size_t at, unsigned flags, unsigned filtering) {
   }
   return 0;
 }
+static int ignored_hidden(ot_work *w,size_t at) {
+  return (w->items[at].out.flags&EXR_GLYPH_HIDDEN) && w->items[at].cp!=0x200c &&
+    !(w->indic && !w->positioning && w->items[at].cp==0x200d);
+}
+static int ignored(ot_work *w,size_t at,unsigned flags,unsigned filtering) {
+  return ignored_hidden(w,at) || ignored_properties(w,at,flags,filtering);
+}
 static size_t next_item(ot_work *w, size_t at, int backwards, unsigned flags, unsigned filtering) {
   unsigned syllable = w->items[at].syllable;
   while (work(w, 1)) {
@@ -199,6 +204,22 @@ static size_t next_item(ot_work *w, size_t at, int backwards, unsigned flags, un
     else { if (++at >= w->count) return SIZE_MAX; }
     if (w->per_syllable && w->items[at].syllable != syllable) return SIZE_MAX;
     if (!ignored(w, at, flags, filtering)) return at;
+  }
+  return SIZE_MAX;
+}
+/* A default-ignorable can be an explicit component (emoji ZWJ/tag sequences).
+   Lookup flags still win; only an unmatched ignorable may be skipped. */
+static size_t next_match(ot_work *w,size_t at,int backwards,unsigned flags,unsigned filtering,ot_view set,int expected) {
+  unsigned syllable=w->items[at].syllable;
+  while(work(w,1)) {
+    unsigned glyph; int matches;
+    if(backwards) { if(!at) return SIZE_MAX; at--; } else if(++at>=w->count) return SIZE_MAX;
+    if(w->per_syllable && w->items[at].syllable!=syllable) return SIZE_MAX;
+    if(ignored_properties(w,at,flags,filtering)) continue;
+    glyph=w->items[at].out.glyph;
+    matches=set.p ? (expected<0 ? coverage(set,glyph)>=0 : glyph_class(set,glyph)==(unsigned)expected) : glyph==(unsigned)expected;
+    if(matches && (!(w->items[at].out.flags&EXR_GLYPH_HIDDEN) || (!w->positioning && glyph))) return at;
+    if(!ignored_hidden(w,at)) return SIZE_MAX;
   }
   return SIZE_MAX;
 }
@@ -234,9 +255,8 @@ static int context(ot_work *w, ot_view sub, unsigned type, size_t at,
       unsigned count = u16(sub, field); field += 2;
       if (!bounds(sub, field, count, 2)) return 0;
       for (i = 0; i < count; i++) {
-        cursor = next_item(w, cursor, 1, flags, filtering);
-        if (cursor == SIZE_MAX || coverage(required16(sub, field+(size_t)i*2),
-                                            w->items[cursor].out.glyph) < 0) return 0;
+        cursor = next_match(w, cursor, 1, flags, filtering, required16(sub, field+(size_t)i*2), -1);
+        if (cursor == SIZE_MAX) return 0;
       }
       field += (size_t)count*2;
     }
@@ -246,7 +266,7 @@ static int context(ot_work *w, ot_view sub, unsigned type, size_t at,
     if (!bounds(sub, field, input_count, 2)) return 0;
     cursor = at;
     for (i = 0; i < input_count; i++) {
-      if (i) cursor = next_item(w, cursor, 0, flags, filtering);
+      if (i) cursor = next_match(w, cursor, 0, flags, filtering, required16(sub, field+(size_t)i*2), -1);
       if (cursor == SIZE_MAX || coverage(required16(sub, field+(size_t)i*2),
                                           w->items[cursor].out.glyph) < 0) return 0;
       positions[i] = cursor;
@@ -256,9 +276,8 @@ static int context(ot_work *w, ot_view sub, unsigned type, size_t at,
       unsigned count = u16(sub, field); field += 2;
       if (!bounds(sub, field, count, 2)) return 0;
       for (i = 0; i < count; i++) {
-        cursor = next_item(w, cursor, 0, flags, filtering);
-        if (cursor == SIZE_MAX || coverage(required16(sub, field+(size_t)i*2),
-                                            w->items[cursor].out.glyph) < 0) return 0;
+        cursor = next_match(w, cursor, 0, flags, filtering, required16(sub, field+(size_t)i*2), -1);
+        if (cursor == SIZE_MAX) return 0;
       }
       field += (size_t)count*2;
       actions = u16(sub, field); field += 2;
@@ -295,11 +314,9 @@ static int context(ot_work *w, ot_view sub, unsigned type, size_t at,
         unsigned count = u16(rule, field); field += 2;
         if (!bounds(rule, field, count, 2)) return 0;
         for (i = 0; i < count; i++) {
-          unsigned actual;
-          cursor = next_item(w, cursor, 1, flags, filtering);
+          cursor = next_match(w, cursor, 1, flags, filtering,
+                              format == 1 ? (ot_view){NULL,0,w} : back_classes, u16(rule, field+(size_t)i*2));
           if (cursor == SIZE_MAX) { matched = 0; break; }
-          actual = format == 1 ? w->items[cursor].out.glyph : glyph_class(back_classes, w->items[cursor].out.glyph);
-          if (actual != u16(rule, field+(size_t)i*2)) { matched = 0; break; }
         }
         field += (size_t)count*2;
       }
@@ -309,11 +326,9 @@ static int context(ot_work *w, ot_view sub, unsigned type, size_t at,
       if (!bounds(rule, field, input_count-1, 2)) return 0;
       cursor = at; positions[0] = at;
       for (i = 1; matched && i < input_count; i++) {
-        unsigned actual;
-        cursor = next_item(w, cursor, 0, flags, filtering);
+        cursor = next_match(w, cursor, 0, flags, filtering,
+                            format == 1 ? (ot_view){NULL,0,w} : input_classes, u16(rule, field+(size_t)(i-1)*2));
         if (cursor == SIZE_MAX) { matched = 0; break; }
-        actual = format == 1 ? w->items[cursor].out.glyph : glyph_class(input_classes, w->items[cursor].out.glyph);
-        if (actual != u16(rule, field+(size_t)(i-1)*2)) matched = 0;
         positions[i] = cursor;
       }
       field += (size_t)(input_count-1)*2;
@@ -321,11 +336,9 @@ static int context(ot_work *w, ot_view sub, unsigned type, size_t at,
         unsigned count = u16(rule, field); field += 2;
         if (!bounds(rule, field, count, 2)) return 0;
         for (i = 0; matched && i < count; i++) {
-          unsigned actual;
-          cursor = next_item(w, cursor, 0, flags, filtering);
+          cursor = next_match(w, cursor, 0, flags, filtering,
+                              format == 1 ? (ot_view){NULL,0,w} : look_classes, u16(rule, field+(size_t)i*2));
           if (cursor == SIZE_MAX) { matched = 0; break; }
-          actual = format == 1 ? w->items[cursor].out.glyph : glyph_class(look_classes, w->items[cursor].out.glyph);
-          if (actual != u16(rule, field+(size_t)i*2)) matched = 0;
         }
         field += (size_t)count*2;
         actions = u16(rule, field); field += 2;
@@ -430,8 +443,8 @@ static int substitute(ot_work *w, ot_view sub, unsigned type, size_t at,
       if (!bounds(lig, 4, components-1, 2)) return 0;
       positions[0] = at;
       for (i = 1; i < components; i++) {
-        cursor = next_item(w, cursor, 0, flags, filtering);
-        if (cursor == SIZE_MAX || w->items[cursor].out.glyph != u16(lig, 4+(size_t)(i-1)*2)) break;
+        cursor = next_match(w, cursor, 0, flags, filtering, (ot_view){NULL,0,w}, u16(lig, 4+(size_t)(i-1)*2));
+        if (cursor == SIZE_MAX) break;
         positions[i] = cursor;
       }
       if (i != components) continue;
@@ -439,6 +452,7 @@ static int substitute(ot_work *w, ot_view sub, unsigned type, size_t at,
       if (!work(w, w->count-at)) return 0;
       end = w->items[cursor].out.end;
       w->items[at].out.glyph = replacement;
+      for(i=1;i<components;i++) if(!(w->items[positions[i]].out.flags&EXR_GLYPH_HIDDEN)) w->items[at].out.flags&=~EXR_GLYPH_HIDDEN;
       w->items[at].indic_flags = (w->items[at].indic_flags | 1u | 2u) & ~4u;
       if (w->indic) for (i = 1; i < components; i++)
         if (w->items[positions[i]].position > w->items[at].position)
@@ -475,14 +489,14 @@ static int substitute(ot_work *w, ot_view sub, unsigned type, size_t at,
     unsigned count = u16(sub, field); field += 2;
     if (format != 1 || !bounds(sub, field, count, 2)) { w->status = EXR_FONT; return 0; }
     for (i = 0; i < count; i++) {
-      cursor = next_item(w, cursor, 1, flags, filtering);
-      if (cursor == SIZE_MAX || coverage(required16(sub, field+(size_t)i*2), w->items[cursor].out.glyph) < 0) return 0;
+      cursor = next_match(w, cursor, 1, flags, filtering, required16(sub, field+(size_t)i*2), -1);
+      if (cursor == SIZE_MAX) return 0;
     }
     field += (size_t)count*2; count = u16(sub, field); field += 2; cursor = at;
     if (!bounds(sub, field, count, 2)) return 0;
     for (i = 0; i < count; i++) {
-      cursor = next_item(w, cursor, 0, flags, filtering);
-      if (cursor == SIZE_MAX || coverage(required16(sub, field+(size_t)i*2), w->items[cursor].out.glyph) < 0) return 0;
+      cursor = next_match(w, cursor, 0, flags, filtering, required16(sub, field+(size_t)i*2), -1);
+      if (cursor == SIZE_MAX) return 0;
     }
     field += (size_t)count*2; count = u16(sub, field); field += 2;
     if (!bounds(sub, field, count, 2) || (unsigned)covered >= count) { w->status = EXR_FONT; return 0; }
@@ -750,13 +764,14 @@ static int lookup(ot_work *w, unsigned index, size_t at, unsigned mask, unsigned
   if (!work(w, 1) || depth >= OT_DEPTH) { if (w->status == EXR_OK) w->status = EXR_LIMIT; return 0; }
   if (index >= count || !bounds(w->lookups, 2, count, 2)) { w->status = EXR_FONT; return 0; }
   if (at >= w->count || (mask && !(w->items[at].form & mask)) ||
-      (w->items[at].out.flags & EXR_GLYPH_HIDDEN)) return 0;
+      ((w->items[at].out.flags & EXR_GLYPH_HIDDEN) && (w->positioning || !w->items[at].out.glyph))) return 0;
   table = required16(w->lookups, 2+(size_t)index*2);
   w->next_scan = at+1;
   type = u16(table, 0); flags = u16(table, 2); subtables = u16(table, 4);
   if (!type || type > (w->positioning ? 9u : 8u) || (flags & 0xe0) ||
       !bounds(table, 6, subtables, 2)) { w->status = EXR_FONT; return 0; }
   if (flags & 16) filtering = u16(table, 6+(size_t)subtables*2);
+  if(ignored_properties(w,at,flags,filtering)) return 0;
   for (i = 0; i < subtables && w->status == EXR_OK; i++) {
     ot_view sub = required16(table, 6+(size_t)i*2);
     int applied = w->positioning ? position(w, sub, type, at, flags, filtering, value, depth)
