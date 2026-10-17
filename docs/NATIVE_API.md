@@ -665,4 +665,13 @@ options 可为 NULL；非空时清零并设置 struct_size。fallback_font 是�
 
 `exr_fixed_input.text` 是可选尾字段，旧版 required prefix 仍可创建文档。`exr_fixed_load_text` 按需调用提供者，返回独立拥有的快照；文档释放后仍能读取快照。用 string/regions getter 读取，最终调用 `exr_fixed_text_free`。没有提供者时返回 EXR_FORMAT；失败或取消不会返回部分结果，回调重入被拒绝。
 
-文字最多 64 MiB、region 最多 4M、总载荷最多 128 MiB。创建校验 UTF-8、区间边界、有限坐标和标志，并支持取消。此阶段内置 PDF 尚未连接文字提供者。
+文字最多 64 MiB、region 最多 4M、总载荷最多 128 MiB。创建校验 UTF-8、区间边界、有限坐标和标志，并支持取消。0.68 起内置 PDF 也提供文字快照。
+
+
+## PDF 文字快照（0.68）
+
+`exr_fixed_load_text` 现在支持内置 PDF。结果按内容操作符顺序连接 ToUnicode / 已知编码语义映射，保留多字符连字、NUL、非 BMP 字符以及嵌套 Form 的完整变换。源坐标仍未应用页面 CropBox、Rotate 和 UserUnit；使用公开 viewport 矩阵映射到屏幕。无需宿主字体，也不需要可绘制的嵌入字体轮廓。
+
+水平区域依次为左下、右下、右上、左上，经文字和 Form/CTM 变换。高度优先用 descriptor 的 Ascent/Descent，其次 FontBBox，缺失时估计为 -200 至 800 em/1000。竖排区域第一边沿文字推进方向，厚度使用声明的水平字宽。区域是逻辑字格，不是实际墨迹边界；连字对应整个语义范围。Tr 3/7 标为不可见；裁切、遮挡、alpha 和页面外文字不在语义层过滤。
+
+文字提供者每页最多 32 MiB - 1 字节、region 数组最多 64 MiB。图片无须解码，失败/取消丢弃部分结果且下一页可重试。此阶段保持内容顺序，不推断空格/换行，不重建 tagged PDF 阅读顺序或 ActualText。

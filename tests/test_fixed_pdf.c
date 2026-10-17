@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+#define NEAR(a,b) CHECK(fabs((a)-(b))<1e-8)
 static exr_error error; static unsigned checks;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -59,9 +61,33 @@ static void fallback_and_options(const char *dir) {
     extended.tail[0]=0; OK(exr_fixed_open_memory(EXR_PDF,bytes,size,&extended.options,&d,&error)); free(bytes); exr_fixed_free(d);
   }
 }
+static void semantic_text(const char *dir) {
+  exr_fixed_document *d=NULL; exr_fixed_text *t=NULL; const exr_text_region *r; size_t size,count; unsigned char *bytes;
+  exr_control control={0}; int stopped=1; const char *utf8;
+  bytes=load(dir,"pdf-public-text.pdf",&size); OK(exr_fixed_open_memory(EXR_PDF,bytes,size,NULL,&d,&error)); free(bytes);
+  control.cancelled=cancel; control.context=&stopped;
+  CHECK(exr_fixed_load_text(d,0,&control,&t,&error)==EXR_CANCELLED && !t);
+  CHECK(exr_fixed_load_text(d,1,NULL,&t,&error)==EXR_FORMAT && !t); /* Partial content must not escape. */
+  CHECK(exr_fixed_load_text(d,2,NULL,&t,&error)==EXR_FORMAT && !t); /* Invalid font geometry. */
+  OK(exr_fixed_load_text(d,3,NULL,&t,&error)); CHECK(exr_fixed_text_string(t,&size) && !size); CHECK(!exr_fixed_text_regions(t,&count) && !count); exr_fixed_text_free(t); t=NULL;
+  OK(exr_fixed_load_text(d,0,NULL,&t,&error)); exr_fixed_free(d);
+  utf8=exr_fixed_text_string(t,&size); r=exr_fixed_text_regions(t,&count);
+  CHECK(size==14 && !memcmp(utf8,"Afi\xe4\xb8\x80\0AAA\xf0\x9f\x98\x80",14) && count==8);
+  CHECK(r[0].start==0 && r[0].end==1 && r[1].start==1 && r[1].end==3 && r[3].start==6 && r[3].end==7);
+  NEAR(r[0].quad[0],210); NEAR(r[0].quad[1],626.6); NEAR(r[0].quad[2],215); NEAR(r[0].quad[5],653.6);
+  CHECK(!r[0].flags && r[4].flags==EXR_REGION_INVISIBLE && r[6].flags==EXR_REGION_VERTICAL && r[7].flags==EXR_REGION_VERTICAL);
+  NEAR(r[5].quad[0],15); NEAR(r[5].quad[1],21.6); NEAR(r[5].quad[5],48.6); /* Nested Form transforms. */
+  NEAR(r[6].quad[0],94.9); NEAR(r[6].quad[1],200); NEAR(r[6].quad[3],179.98); NEAR(r[6].quad[4],105.1);
+  exr_fixed_text_free(t);
+  /* Semantic extraction works without host or even usable embedded outlines. */
+  bytes=load(dir,"pdf-public.pdf",&size); OK(exr_fixed_open_memory(EXR_PDF,bytes,size,NULL,&d,&error)); free(bytes);
+  OK(exr_fixed_load_text(d,1,NULL,&t,&error)); CHECK(exr_fixed_text_string(t,&size) && size==1); exr_fixed_text_free(t);
+  OK(exr_fixed_load_text(d,3,NULL,&t,&error)); CHECK(exr_fixed_text_string(t,&size) && size==1); exr_fixed_text_free(t);
+  OK(exr_fixed_load_text(d,2,NULL,&t,&error)); CHECK(exr_fixed_text_string(t,&size) && !size); exr_fixed_text_free(t); exr_fixed_free(d);
+}
 int main(int argc,char **argv) {
   char path[4096]; exr_fixed_document *d=NULL; exr_bitmap b;
-  CHECK(argc==2); public_pages(argv[1]); fallback_and_options(argv[1]);
+  CHECK(argc==2); semantic_text(argv[1]); public_pages(argv[1]); fallback_and_options(argv[1]);
   snprintf(path,sizeof(path),"%s/pdf-public.pdf",argv[1]); OK(exr_fixed_open(path,NULL,&d,&error)); CHECK(!strcmp(exr_fixed_title(d),"pdf-public.pdf")); OK(exr_fixed_render(d,0,1,NULL,&b,&error)); exr_bitmap_free(&b); exr_fixed_free(d);
   CHECK(exr_fixed_open_memory(EXR_EPUB,"x",1,NULL,&d,&error)==EXR_FORMAT && !d);
   CHECK(exr_fixed_open_memory(EXR_PDF,NULL,1,NULL,&d,&error)==EXR_ARGUMENT && !d);

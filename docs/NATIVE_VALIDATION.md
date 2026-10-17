@@ -1301,3 +1301,18 @@ cancellation discard output. Previous fixed-input prefixes remain accepted.
 Tests verify copied lifetimes, UTF-8/range/coordinate/byte limits, cancellation,
 provider failures, old prefixes and truncated optional function pointers.
 All 53 local suites pass. The 0.66 b167c58 CI run passed all jobs.
+
+
+## 0.68 Public PDF semantic text and source-space quads
+
+The built-in provider exposes independent owned snapshots using the existing
+text-only C walker. Descriptor heights (or documented estimates), declared
+widths, vertical advances and nested Form transforms define logical cells.
+No font rasterization or image decode is required. Content order and semantic
+mappings are preserved, including ligatures, embedded NUL and non-BMP scalars.
+Original public fixtures verify exact transformed corners, invisible/vertical
+flags, no eager extraction, malformed-font/content failure with no partial
+snapshot, recovery and snapshots outliving documents. All 53 local suites pass.
+A public-only RFC 9110 client extracts all 194 pages: 456,338 UTF-8 bytes and
+450,578 regions in one 0.159-second development pass (not a controlled benchmark).
+The installed host example now exercises the text entry point before rendering.

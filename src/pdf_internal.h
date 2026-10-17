@@ -57,6 +57,7 @@ typedef enum { EXR_PDF_TYPE1,EXR_PDF_TRUETYPE,EXR_PDF_CID_TYPE0,EXR_PDF_CID_TYPE
 typedef struct {
   exr_pdf_font_kind kind; const char *base_name,*encoding_name,*program_type;
   const unsigned char *program; size_t program_size; unsigned composite,vertical,flags;
+  double ascent,descent; /* Logical cell height in 1000-em units; descriptor or estimated. */
 } exr_pdf_font_info;
 typedef struct {
   exr_pdf_mapping text; uint32_t cid,glyph; unsigned glyph_known;
