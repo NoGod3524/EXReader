@@ -1373,3 +1373,18 @@ intervals, query point ranges, preserve UINT64_MAX duration, reject overflow,
 invalid parents/UTF-8/IDs/ranges/counts, exercise cancellation and extension tails.
 This is timeline/sync data, not an audio decoder or device playback backend.
 All 55 local suites pass. The 0.71 792076e CI run passed all six jobs.
+
+
+## 0.73 Host playback commands, generations and stable resume points
+
+A retained audio player lazily dispatches transport/rate commands to a host
+backend, preserving independence from codecs and devices. Tests verify no eager
+open, independent timeline lifetime, correct command sequences for seek/pause/
+speed/EOF, cross-track continuation, restart, snapshot reads during callbacks,
+mutating reentry rejection, no-op generation stability, stale/backwards report
+rejection and invalid restore/rates. A failed rate change triggers best-effort
+pause and a reload before recovery while preserving confirmed state. Stable
+track-ID resume survives inserting an earlier track and remains paused. Backend
+release ownership and close behavior are checked. These are controlled-backend
+tests, not actual operating-system audio playback validation.
+All 56 local suites pass. The 0.72 b6b31d7 CI run passed all six jobs.

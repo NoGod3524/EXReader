@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.72.0"
+#define EXR_VERSION "0.73.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -101,6 +101,44 @@ EXR_API exr_status exr_audio_locate(const exr_audio *audio,uint64_t time_ms,exr_
 EXR_API exr_status exr_audio_sync_at(const exr_audio *audio,uint64_t time_ms,size_t from,const exr_control *control,size_t *index,exr_error *error);
 EXR_API exr_status exr_audio_sync_text(const exr_audio *audio,const char *part_id,size_t start,size_t end,size_t from,
                                         const exr_control *control,size_t *index,exr_error *error);
+
+EXR_API exr_status exr_audio_time(const exr_audio *audio,size_t track,uint64_t offset_ms,uint64_t *time_ms,exr_error *error);
+typedef struct exr_audio_player exr_audio_player;
+typedef enum { EXR_AUDIO_LOAD,EXR_AUDIO_PLAY,EXR_AUDIO_PAUSE,EXR_AUDIO_SEEK,EXR_AUDIO_RATE,EXR_AUDIO_CLOSE } exr_audio_command_kind;
+typedef struct {
+  exr_audio_command_kind kind;
+  size_t track;
+  const exr_audio_track *source; /* Borrowed for callback duration. LOAD opens paused. */
+  uint64_t offset_ms,generation;
+  double rate;
+} exr_audio_command;
+typedef exr_status (*exr_audio_command_fn)(void *context,const exr_audio_command *command,exr_error *error);
+typedef struct {
+  size_t struct_size;
+  exr_audio_command_fn command;
+  void *context;
+  void (*release)(void *context);
+} exr_audio_backend;
+typedef struct {
+  uint64_t time_ms,generation;
+  exr_audio_position position;
+  const char *track_id; /* Borrowed until player_free. */
+  double rate;
+  int playing,needs_reload;
+} exr_audio_playback;
+/* Retains audio. Backend context ownership transfers only on success. */
+EXR_API exr_status exr_audio_player_create(exr_audio *audio,const exr_audio_backend *backend,exr_audio_player **out,exr_error *error);
+EXR_API void exr_audio_player_free(exr_audio_player *player);
+EXR_API exr_status exr_audio_player_get(const exr_audio_player *player,exr_audio_playback *out,exr_error *error);
+EXR_API exr_status exr_audio_player_play(exr_audio_player *player,exr_error *error);
+EXR_API exr_status exr_audio_player_pause(exr_audio_player *player,exr_error *error);
+EXR_API exr_status exr_audio_player_seek(exr_audio_player *player,uint64_t time_ms,exr_error *error);
+EXR_API exr_status exr_audio_player_rate(exr_audio_player *player,double rate,exr_error *error);
+/* Restores paused by stable track ID, so inserting earlier tracks is harmless. */
+EXR_API exr_status exr_audio_player_restore(exr_audio_player *player,const char *track_id,uint64_t offset_ms,double rate,exr_error *error);
+/* Reports actual backend progress; stale generations and backwards reports are
+   rejected. A matching ended report advances tracks or finishes playback. */
+EXR_API exr_status exr_audio_player_report(exr_audio_player *player,uint64_t generation,size_t track,uint64_t offset_ms,int ended,exr_error *error);
 
 typedef enum {
   EXR_DIRECTION_AUTO = 0, EXR_DIRECTION_LTR = 1, EXR_DIRECTION_RTL = 2

@@ -713,3 +713,14 @@ SQLite schema 升至 3，v1/v2 自动在事务内迁移；迁移失败完整回�
 `exr_audio_locate` 二分定位轨道和本地时间；轨道边界归下一轨，总结束时间归末轨 EOF。`exr_audio_sync_at` 枚举当前时间覆盖的片段；`exr_audio_sync_text` 从文字范围或点位置反查同步片段。通过 from=index+1 继续枚举，未命中为 SIZE_MAX。查询保持宿主顺序，支持取消。getters 返回 audio 拥有的不可变表，memory_size 统计拥有的表与字符串。
 
 输入结构设 struct_size，未知尾部只接受全零。最多 10000 轨、100000 章、1000000 同步片段；单字符串最多 64 KiB、全部字符串最多 16 MiB，表载荷最多 128 MiB。该阶段交付时间线与同步模型，解码、声音输出、倍速与播放会话继续接入。
+
+
+## 有声书播放后端与续播（0.73）
+
+`exr_audio_player_create` 保留 audio，接管成功创建后的 backend context。创建、首次播放前跳转/恢复/改倍速均不打开设备；最后释放 player 时若访问过后端则发送 CLOSE，再调用 release。callback 同步接收 LOAD/PLAY/PAUSE/SEEK/RATE/CLOSE、轨道元数据、本地时间、倍速及 generation。LOAD 替换当前源并停在暂停状态，SEEK/RATE 保持播放状态，CLOSE 关闭当前后端，不依赖命令中的来源描述选择设备。具体编解码、变速算法与声音设备由宿主后端实现。
+
+play/pause/seek/rate 控制请求状态，倍速范围为 (0,16]，后端可按实际能力拒绝。已完成时 play 从头开始；在非末轨 EOF 开始播放会进入下一轨。get 返回轨道、全局/本地位置、倍速和请求播放状态。宿主通过 report 上报真实本地位置及 EOF；EOF 自动切换下一轨或结束。每组改变状态的命令使用新的 generation，过期、回退和不同轨道回报不改变当前状态。读状态可在 callback 内使用，重入修改会被拒绝；同一 player 不支持并发访问。
+
+命令失败时保留最后确认的位置和倍速、清除请求播放状态并标为 needs_reload，同时尝试暂停后端。下一次操作从 LOAD 恢复，不把部分成功当成完成。后端无诊断的错误会补充信息。
+
+通过 get 的 track_id/offset_ms/rate 保存书签或续播点，再调用 restore 恢复为暂停；在原书前面插入其他轨道也可依照稳定 ID 找回位置。宿主负责持久化这些字段和备注。audio_time 提供轨道本地时间到全局时间的 O(1) 映射。此阶段测试使用可控后端，平台声音设备适配和实际音频解码尚未交付。
