@@ -684,3 +684,10 @@ options 可为 NULL；非空时清零并设置 struct_size。fallback_font 是�
 `exr_fixed_text_select` 接受 UTF-8 字节范围，复制所有相交的非空文字 region，保持提供者顺序。空选择返回 NULL/0；多个 region 同范围时全部保留，部分连字也返回整个连字的原范围和字格。结果用 exr_free 释放。
 
 `exr_fixed_text_hit` 在源页面坐标中计算点到实际四边形的距离，max_distance 指定允许距离，exclude_flags 可过滤不可见或竖排区域；返回 region 索引，无命中为 SIZE_MAX。同距离选择数组中第一个 region。支持旋转、斜切和退化线段，不用包围盒代替字格；先用 viewport.inverse 把屏幕坐标映射回源坐标。它返回整个语义范围，宿主决定连字内部光标策略。选择和命中均线性遍历当前页并支持取消。
+
+
+## 固定页稳定标注锚点（0.70）
+
+`exr_fixed_anchor_create(page_id, text, start, end, &anchor, error)` 保存页 ID、原字节范围、最多 64 KiB 的精确引用及两侧各 32 个 Unicode 标量上下文。exact/prefix/suffix 带显式长度，可包含 NUL；输出须为空，创建成功后独立拥有所有字节，使用 exr_fixed_anchor_free 释放。宿主可直接序列化这些公开字段，备注、颜色和分类由宿主管理。
+
+`exr_fixed_anchor_resolve` 在指定页快照内比较引用与上下文，返回 FOUND/MISSING/AMBIGUOUS。只有 FOUND 提供新范围，可再次交给 exr_fixed_text_select 获取当前字格。页 ID 不匹配不会跨页猜测；原偏移不用于打破重复内容的平局。支持空范围书签与可取消线性搜索；与重排正文锚点共用匹配实现。此接口定位宿主创建的标注，不读取或改写 PDF 内置 annotation 对象，也尚未连接 SQLite 固定页备注表。
