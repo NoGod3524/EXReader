@@ -220,3 +220,59 @@ for name,row,col,value in [('nav-title',0,0,999),('nav-level',1,1,3),('nav-paren
 nav_fixture('kf8-bad-cncx-truncated.azw3',mutate=lambda r:r.__setitem__(8,bytearray(b'\x7f')))
 nav_fixture('kf8-bad-cncx-padding.azw3',mutate=lambda r:r[8].__setitem__(-1,1))
 nav_fixture('kf8-bad-cncx-index.azw3',mutate=lambda r:r[6].__setitem__(slice(52,56),u32(99)))
+
+
+# Hybrid containers retain resource records before the BOUNDARY marker.
+def read_records(name):
+    data=(root/name).read_bytes(); n=struct.unpack_from('>H',data,76)[0]
+    starts=[struct.unpack_from('>I',data,78+i*8)[0] for i in range(n)]+[len(data)]
+    return [bytearray(data[starts[i]:starts[i+1]]) for i in range(n)]
+def write_records(name,records):
+    pdb=bytearray(78); pdb[:11]=b'KF8 fixture'; pdb[60:68]=b'BOOKMOBI'; pdb[76:78]=u16(len(records))
+    offset=78+8*len(records); directory=bytearray()
+    for i,r in enumerate(records): directory+=u32(offset)+u32(i); offset+=len(r)
+    (root/name).write_bytes(pdb+directory+b''.join(records))
+legacy=b'<p>Legacy fallback.</p>'
+def hybrid(name,source='kf8-basic.azw3',shared=0,huff=False,mutate=None):
+    modern=read_records(source); resources=[]
+    if shared:
+        resources=modern[3:3+shared]; del modern[3:3+shared]
+    if huff:
+        dictionary=read_records('mobi-huff.mobi')[3:]
+        modern[0][0:2]=u16(0x4448); modern[0][112:116]=u32(len(modern)); modern[0][116:120]=u32(len(dictionary)); modern+=dictionary
+    start=3+len(resources)
+    old=bytearray(244); struct.pack_into('>HHIHHHH',old,0,1,0,len(legacy),1,4096,0,0)
+    old[16:20]=b'MOBI'; old[20:24]=u32(228); old[28:32]=u32(65001); old[36:40]=u32(6)
+    old[104:108]=u32(6); old[108:112]=u32(2 if resources else 0xffffffff); old[128:132]=u32(64)
+    old+=b'EXTH'+u32(24)+u32(1)+u32(121)+u32(12)+u32(start)
+    records=[old,bytearray(legacy)]+resources+[bytearray(b'BOUNDARY')]+modern
+    if mutate: mutate(records,start)
+    write_records(name,records)
+hybrid('kf8-hybrid.azw3')
+hybrid('kf8-hybrid-navigation.azw3','kf8-navigation.azw3')
+hybrid('kf8-hybrid-assets.azw3','kf8-assets.azw3',shared=2)
+hybrid('kf8-hybrid-all-shared.azw3','kf8-assets.azw3',shared=3)
+hybrid('kf8-hybrid-local-assets.azw3','kf8-assets.azw3')
+hybrid('kf8-hybrid-huff.azw3','kf8-assets.azw3',shared=2,huff=True)
+for name,mutate in [
+    ('boundary-pointer',lambda r,k:r[0].__setitem__(slice(-4,None),u32(9999))),
+    ('boundary-text',lambda r,k:r[0].__setitem__(slice(-4,None),u32(1))),
+    ('boundary-marker',lambda r,k:r[k-1].__setitem__(slice(0,8),b'INVALID!')),
+    ('boundary-version',lambda r,k:r[k].__setitem__(slice(36,40),u32(6))),
+    ('boundary-encrypted',lambda r,k:r[k].__setitem__(slice(12,14),u16(1))),
+    ('boundary-resource',lambda r,k:r[0].__setitem__(slice(108,112),u32(1))),
+    ('exth-signature',lambda r,k:r[0].__setitem__(slice(244,248),b'NOPE')),
+    ('exth-length',lambda r,k:r[0].__setitem__(slice(248,252),u32(9999))),
+    ('exth-count',lambda r,k:r[0].__setitem__(slice(252,256),u32(99))),
+    ('exth-entry',lambda r,k:r[0].__setitem__(slice(260,264),u32(7))),
+    ('exth-entry-size',lambda r,k:r[0].__setitem__(slice(260,264),u32(11)))]:
+    hybrid('kf8-bad-'+name+'.azw3',mutate=mutate)
+def duplicate_exth(records,start):
+    records[0][248:252]=u32(36); records[0][252:256]=u32(2)
+    records[0]+=u32(121)+u32(12)+u32(start)
+hybrid('kf8-bad-exth-duplicate.azw3',mutate=duplicate_exth)
+# Explicit absent boundary keeps the ordinary MOBI decoder.
+hybrid('kf8-legacy-exth.azw3',mutate=lambda r,k:r[0].__setitem__(slice(-4,None),u32(0xffffffff)))
+
+hybrid('kf8-bad-exth-fallback-encoding.azw3',mutate=lambda r,k:(r[0].__setitem__(slice(-4,None),u32(0xffffffff)),r[0].__setitem__(slice(28,32),u32(65002))))
+hybrid('kf8-bad-exth-fallback-compression.azw3',mutate=lambda r,k:(r[0].__setitem__(slice(-4,None),u32(0xffffffff)),r[0].__setitem__(slice(0,2),u16(999))))

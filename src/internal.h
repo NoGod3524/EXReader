@@ -99,6 +99,7 @@ void exr_model_free(exr_document *doc);
 int exr_canonical_path(const char *path);
 typedef struct { const unsigned char *data; size_t size; } exr_mobi_record;
 exr_status exr_kf8(exr_document *doc, const exr_mobi_record *records, size_t count,
+                    const exr_mobi_record *shared, size_t shared_count,
                     const char *text, size_t size, exr_error *error);
 typedef struct exr_mobi_huff exr_mobi_huff;
 exr_status exr_mobi_huff_open(const exr_mobi_record *records, size_t count,

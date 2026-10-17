@@ -175,7 +175,8 @@ memory:
 typedef struct {
   exr_document *doc;
   const exr_mobi_record *records;
-  size_t count,first,flows,bytes,*mapped;
+  const exr_mobi_record *shared;
+  size_t count,first,flows,bytes,*mapped,shared_count;
   size_t queue[10000],queued,head;
   exr_error *error;
   exr_status status;
@@ -236,11 +237,18 @@ bad:
 static int embed(assets *a,uint32_t number,size_t *index) {
   const exr_mobi_record *r; const unsigned char *s; const char *type=NULL;
   unsigned char *font=NULL; size_t size,record; char path[64];
-  if(!number || a->first<=u16(a->records[0].data+8) || a->first>=a->count || number>a->count-a->first)
+  if(!number) return asset_error(a,EXR_FORMAT,"KF8 embedded resource index is zero");
+  if(number<=a->shared_count) { record=number-1; r=&a->shared[record]; }
+  else {
+    size_t own=number-a->shared_count;
+    if(a->first<=u16(a->records[0].data+8) || a->first>=a->count || own>a->count-a->first)
+      return asset_error(a,EXR_FORMAT,"KF8 embedded resource index is out of range");
+    record=a->shared_count+a->first+own-1; r=&a->records[a->first+own-1];
+  }
+  if(record>=a->count+a->shared_count)
     return asset_error(a,EXR_FORMAT,"KF8 embedded resource index is out of range");
-  record=a->first+number-1;
   if(a->mapped[record]!=SIZE_MAX) { *index=a->mapped[record]; return 1; }
-  r=&a->records[record]; s=r->data; size=r->size;
+  s=r->data; size=r->size;
   if(size>=4 && !memcmp(s,"FONT",4)) {
     if(!unpack_font(a,r,&font,&size,&type)) return 0;
     s=font;
@@ -327,12 +335,13 @@ limit:
   return asset_error(a,EXR_LIMIT,"KF8 rewritten CSS exceeds buffer limit");
 }
 static exr_status connect_assets(exr_document *d,const exr_mobi_record *records,size_t count,
-                                   size_t flows,exr_error *e) {
+                                   const exr_mobi_record *shared,size_t shared_count,size_t flows,exr_error *e) {
   assets a={0}; size_t i,j; exr_buffer css={0};
   a.doc=d; a.records=records; a.count=count; a.first=u32(records[0].data+108);
+  a.shared=shared; a.shared_count=shared_count;
   a.flows=flows; a.error=e; a.status=EXR_OK;
-  a.mapped=malloc(count*sizeof(*a.mapped)); if(!a.mapped) return exr_fail(e,EXR_MEMORY,"KF8 asset map allocation failed");
-  for(i=0;i<count;i++) a.mapped[i]=SIZE_MAX;
+  a.mapped=malloc((count+shared_count)*sizeof(*a.mapped)); if(!a.mapped) return exr_fail(e,EXR_MEMORY,"KF8 asset map allocation failed");
+  for(i=0;i<count+shared_count;i++) a.mapped[i]=SIZE_MAX;
   for(i=0;i<d->resource_count;i++) a.bytes+=d->resource_data[i].size;
   if(a.bytes>EXR_MAX_INPUT) { asset_error(&a,EXR_LIMIT,"KF8 total resource byte budget exceeded"); goto done; }
   for(i=0;i<d->node_count;i++) {
@@ -571,7 +580,7 @@ done:
   return status;
 }
 exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
-                    const char *text,size_t size,exr_error *e) {
+                    const exr_mobi_record *shared,size_t shared_count,const char *text,size_t size,exr_error *e) {
   const unsigned char *h=records[0].data; size_t flow_size=size,flows,fdst,i,frag=0,work=0;
   index_table skeletons={0},fragments={0}; exr_status status=EXR_FORMAT;
   size_t skel,frags; exr_buffer part={0};
@@ -640,7 +649,7 @@ exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
   if(frag!=fragments.count) goto bad;
   status=connect_positions(&map,&fragments,e); if(status!=EXR_OK) goto done;
   status=build_navigation(&map,&fragments,records,nr,u32(h+244),e); if(status!=EXR_OK) goto done;
-  status=connect_assets(d,records,nr,flows,e); goto done;
+  status=connect_assets(d,records,nr,shared,shared_count,flows,e); goto done;
 bad:
   if(status==EXR_OK) status=EXR_FORMAT;
   exr_fail(e,status,"Invalid or unsupported KF8 reconstruction data");

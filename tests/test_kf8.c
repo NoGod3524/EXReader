@@ -153,10 +153,10 @@ static void navigation_api(void) {
   exr_navigation_free(NULL,0); exr_document_free(doc);
 }
 int main(int argc,char **argv) {
-  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index"};
+  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index","boundary-pointer","boundary-text","boundary-marker","boundary-version","boundary-encrypted","boundary-resource","exth-signature","exth-length","exth-count","exth-entry","exth-entry-size","exth-duplicate","exth-fallback-encoding","exth-fallback-compression"};
   const char *text="Chapter one\nA bold passage.\nChapter two\nSecond passage."; size_t i;
   CHECK(argc==2);
-  valid(argv[1],"kf8-basic.azw3",text,2); valid(argv[1],"kf8-multirecord.azw3",text,2); valid(argv[1],"kf8-multicontrol.azw3",text,2);
+  valid(argv[1],"kf8-hybrid.azw3",text,2); valid(argv[1],"kf8-basic.azw3",text,2); valid(argv[1],"kf8-multirecord.azw3",text,2); valid(argv[1],"kf8-multicontrol.azw3",text,2);
   valid(argv[1],"kf8-flows.azw3",text,2);
   valid(argv[1],"kf8-unsplit.azw3","Chapter one\nA bold passage.",1);
   valid(argv[1],"kf8-two-inserts.azw3","One.\nTwo.",1);
@@ -168,9 +168,13 @@ int main(int argc,char **argv) {
     CHECK(status==EXR_FORMAT && !doc && error.code==EXR_FORMAT && error.message[0]);
   }
   navigation_api(); navigation_case(argv[1],"kf8-navigation.azw3"); navigation_case(argv[1],"kf8-navigation-derived.azw3");
+  navigation_case(argv[1],"kf8-hybrid-navigation.azw3");
   positions_case(argv[1]);
+  assets_case(argv[1],"kf8-hybrid-assets.azw3"); assets_case(argv[1],"kf8-hybrid-all-shared.azw3");
+  assets_case(argv[1],"kf8-hybrid-local-assets.azw3"); assets_case(argv[1],"kf8-hybrid-huff.azw3");
   assets_case(argv[1],"kf8-assets.azw3");
   assets_case(argv[1],"kf8-assets-font0.azw3"); assets_case(argv[1],"kf8-assets-font1.azw3"); assets_case(argv[1],"kf8-assets-font2.azw3");
   { char path[4096]; exr_document *doc=NULL; snprintf(path,sizeof(path),"%s/kf8-limit-font.azw3",argv[1]); CHECK(exr_document_open(path,&doc,&error)==EXR_LIMIT && !doc); }
+  { char path[4096]; exr_document *doc=NULL; snprintf(path,sizeof(path),"%s/kf8-legacy-exth.azw3",argv[1]); OK(exr_document_open(path,&doc,&error)); CHECK(!strcmp(exr_document_text(doc,NULL),"Legacy fallback.")); exr_document_free(doc); }
   printf("%u KF8 checks passed\n",checks); return 0;
 }
