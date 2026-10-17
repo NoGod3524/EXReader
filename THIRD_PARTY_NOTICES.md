@@ -81,3 +81,9 @@ FONT zlib streams use the existing miniz dependency; all resource handling remai
 KF8 NCX tag meanings and hierarchy fields were checked against
 [`lib/mobi_ncx.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_ncx.py).
 NCX/CNCX validation, hierarchy checks and resource construction are implemented in C.
+
+
+Declared hybrid EXTH 121 boundaries and header-relative section indexes were checked against
+[`lib/mobi_split.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_split.py)
+and `lib/mobi_header.py` at the same revision. Shared resources are borrowed from the original
+record directory; EXReader does not call the reference splitter or create an intermediate book.

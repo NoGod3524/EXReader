@@ -543,3 +543,10 @@ kindle:pos:fid:BASE32:off:BASE32 按片段序号及片段内字节偏移，映�
 `exr_document_navigation(doc, &entries, &count, error)` 从文档声明的 nav/NCX 资源读取导航，返回独立拥有的 exr_navigation 数组；使用 `exr_navigation_free(entries, count)` 释放。快照可在文档释放后继续读取；没有作者目录时返回 NULL/0。该接口沿用 EPUB 和自定义资源的通用解析，条目包含 parent、part、label、href、base 和 role。publication_navigation 的借用语义保持原样，不要释放它返回的借用数组。
 
 KF8 的 NCX INDX/CNCX 转为标准 NCX 资源，使用标签偏移（含多 CNCX 记录的 65536 基数）、级别、可选父子关系和 fid/off 定位，连接已有章内锚点。父子关系省略时从层级推导；显式关系必须与层级一致。目录元数据不加入正文；结构 EPUB 转换保留目录层级与目标。最多 10000 条目录、250 层嵌套；CNCX 单记录最多 65536 字节，总字符串数最多 262144、总字节最多 64 MiB。拒绝缺失标签、非完整 VWI、非法尾填充、级别跳跃、矛盾父子关系及无效目标。当前未接入 KF8 guide、混合 MOBI/KF8 头与 ORDT 特殊采样本编码。
+
+
+## MOBI/KF8 混合容器（0.32）
+
+旧 MOBI 头通过 EXTH 121 声明 KF8 头记录时，验证前一条恰为 BOUNDARY，再按 KF8 头的相对记录索引读取正文、HUFF 字典、FDST、SKEL/FRAG 和 NCX。旧正文不重复加入阅读流。前半部首资源到边界之间的记录作为共享资源前缀，保持序号与占位记录；后半部本地资源接在共享前缀后。图片、字体可以全部共享、部分共享或全部本地存储。
+
+选择由 EXTH 121 明确驱动；不存在该字段或值为 0xffffffff 时保持旧 MOBI 解码，不扫描内容猜测边界。校验 EXTH 长度、计数、记录长度与重复边界字段、指针、标记、目标版本及共享资源起点。EXTH 最多 262144 项；两部分加密标志均须为零。解析器借用原输入的记录，不拼接或复制整份容器。

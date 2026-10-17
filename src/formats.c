@@ -1005,9 +1005,39 @@ static exr_status mobi_palmdoc(const exr_mobi_record *record,exr_buffer *out,exr
 limit:
   return exr_fail(e,EXR_LIMIT,"PalmDOC text exceeds allocation or size limit");
 }
+static int mobi_header(const exr_mobi_record *record,size_t *size) {
+  const unsigned char *h=record->data;
+  if(record->size<132 || memcmp(h+16,"MOBI",4) || be16(h+12)) return 0;
+  *size=be32(h+20);
+  return *size>=116 && *size<=record->size-16;
+}
+static exr_status mobi_boundary(const exr_mobi_record *record,size_t header_size,
+                                  size_t *start,exr_error *e) {
+  const unsigned char *h=record->data,*s; size_t offset=header_size+16,length,count,at=12,i; int found=0;
+  *start=UINT32_MAX;
+  if(!(be32(h+128)&64)) return EXR_OK;
+  if(record->size-offset<12 || memcmp(h+offset,"EXTH",4)) goto bad;
+  s=h+offset; length=be32(s+4); count=be32(s+8);
+  if(length<12 || length>record->size-offset || count>(length-12)/8) goto bad;
+  if(count>EXR_MAX_NODES) return exr_fail(e,EXR_LIMIT,"MOBI EXTH item limit exceeded");
+  for(i=0;i<count;i++) {
+    size_t item;
+    if(length-at<8 || (item=be32(s+at+4))<8 || item>length-at) goto bad;
+    if(be32(s+at)==121) {
+      if(found++ || item!=12) goto bad;
+      *start=be32(s+at+8);
+    }
+    at+=item;
+  }
+  while(at<length) if(s[at++]) goto bad;
+  return EXR_OK;
+bad:
+  return exr_fail(e,EXR_FORMAT,"Invalid MOBI EXTH boundary metadata");
+}
 static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e) {
   const unsigned char *s=data,*h; exr_mobi_record *records=NULL;
-  size_t count,start,stop,i,text_count,header_size; unsigned compression,encoding,flags=0;
+  const exr_mobi_record *view=NULL,*shared=NULL;
+  size_t count,start,stop,i,text_count,header_size,shared_count=0; unsigned compression,encoding,flags=0;
   exr_mobi_huff *huff=NULL; exr_buffer text={0},utf8={0}; exr_status status=EXR_FORMAT;
   if(n<94 || memcmp(s+60,"BOOKMOBI",8)) return exr_fail(e,EXR_FORMAT,"Not a MOBI container");
   count=be16(s+76);
@@ -1018,10 +1048,24 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
     if(start<78+count*8 || start>stop || stop>n) goto done;
     records[i]=(exr_mobi_record){s+start,stop-start};
   }
-  h=records[0].data;
-  if(records[0].size<132 || memcmp(h+16,"MOBI",4) || be16(h+12)) goto done;
-  header_size=be32(h+20);
-  if(header_size<116 || header_size>records[0].size-16) goto done;
+  view=records; h=view[0].data;
+  if(!mobi_header(&view[0],&header_size)) goto done;
+  if(be32(h+36)<8) {
+    status=mobi_boundary(&view[0],header_size,&start,e); if(status!=EXR_OK) goto done;
+    if(start!=UINT32_MAX) {
+      size_t first=be32(h+108),old_count=be16(h+8);
+      status=EXR_FORMAT;
+      if(!old_count || old_count>=count || start<=old_count+1 || start>=count ||
+         records[start-1].size!=8 || memcmp(records[start-1].data,"BOUNDARY",8)) goto done;
+      if(first!=UINT32_MAX) {
+        if(first<=old_count || first>start-1) goto done;
+        shared=records+first; shared_count=start-1-first;
+      }
+      view=records+start; count-=start; h=view[0].data;
+      if(!mobi_header(&view[0],&header_size) || be32(h+36)!=8) goto done;
+    }
+  }
+  status=EXR_FORMAT;
   compression=be16(h); text_count=be16(h+8); encoding=be32(h+28);
   if(be32(h+36)>8) { status=exr_fail(e,EXR_FORMAT,"Unsupported MOBI version"); goto done; }
   if(!text_count || text_count>=count || !be32(h+4) || (encoding!=65001 && encoding!=1252)) goto done;
@@ -1030,10 +1074,10 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
   if(compression==0x4448) {
     size_t first=be32(h+112),number=be32(h+116);
     if(first<=text_count || first>=count || number<2 || number>count-first) goto done;
-    status=exr_mobi_huff_open(records+first,number,&huff,e); if(status!=EXR_OK) goto done;
+    status=exr_mobi_huff_open(view+first,number,&huff,e); if(status!=EXR_OK) goto done;
   } else if(compression!=1 && compression!=2) goto done;
   for(i=1;i<=text_count;i++) {
-    exr_mobi_record record=records[i]; status=mobi_trailer(&record,flags,e); if(status!=EXR_OK) goto done;
+    exr_mobi_record record=view[i]; status=mobi_trailer(&record,flags,e); if(status!=EXR_OK) goto done;
     if(compression==0x4448) status=exr_mobi_huff_decode(huff,record.data,record.size,&text,e);
     else if(compression==2) status=mobi_palmdoc(&record,&text,e);
     else if(!exr_append(&text,record.data,record.size)) status=exr_fail(e,EXR_LIMIT,"MOBI text exceeds allocation or size limit");
@@ -1044,7 +1088,7 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
   text.size=be32(h+4); text.data[text.size]=0;
   if(be32(h+36)==8) {
     if(encoding!=65001) { status=exr_fail(e,EXR_FORMAT,"KF8 requires UTF-8 encoding"); goto done; }
-    status=exr_kf8(d,records,count,text.data,text.size,e);
+    status=exr_kf8(d,view,count,shared,shared_count,text.data,text.size,e);
   } else if(encoding==1252) {
     for(i=0;i<text.size;i++) if(!exr_codepoint(&utf8,exr_windows1252((unsigned char)text.data[i]))) { status=EXR_LIMIT; goto done; }
     status=html(d,utf8.data,utf8.size,e);

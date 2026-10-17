@@ -607,3 +607,13 @@ leaf declarations, targets, CNCX lengths/padding/counts fail atomically.
 
 Both the sanitizer repair (a1ab85a) and the 0.30 feature commit (42e362f) passed all six CI jobs,
 including AddressSanitizer/UndefinedBehaviorSanitizer.
+
+
+## 0.32 hybrid MOBI/KF8
+
+Tests read declared hybrid boundaries with chapter reconstruction, authored navigation,
+all/partial/no shared assets and HUFF text records. Font bytes, image reuse and EPUB rendering
+remain unchanged; legacy text is excluded. Explicit absent boundaries retain legacy decoding.
+Malformed EXTH signatures/lengths/counts/entries/duplicates, boundary pointers/markers,
+target versions/encryption and shared-resource starts fail atomically. Legacy fallback rejects
+unsupported encoding/compression even after successful optional EXTH parsing.
