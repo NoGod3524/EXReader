@@ -486,30 +486,8 @@ static int paragraph_number(docx *x,size_t node,int *id,int *level) {
   if(!style) style=x->default_paragraph;
   return (!style || number_style(x,style,id,level,0)) && number_properties(x,x->xml,props,id,level);
 }
-static int counter_text(docx *x,exr_buffer *out,int number_value,const char *format) {
-  char text[100]; int n=number_value;
-  if(!strcmp(format,"decimal") || !strcmp(format,"decimalZero") ||
-      (n<=0 && (!strcmp(format,"lowerLetter") || !strcmp(format,"upperLetter") || !strcmp(format,"lowerRoman") || !strcmp(format,"upperRoman")))) {
-    snprintf(text,sizeof(text),!strcmp(format,"decimalZero") ? "%02d" : "%d",n); return put(out,text);
-  }
-  if(!strcmp(format,"lowerLetter") || !strcmp(format,"upperLetter")) {
-    size_t used=0; int upper=!strcmp(format,"upperLetter");
-    while(n>0) { text[used++]=(char)((upper ? 'A' : 'a')+(n-1)%26); n=(n-1)/26; }
-    while(used) if(!exr_append(out,&text[--used],1)) return 0;
-    return 1;
-  }
-  if(!strcmp(format,"lowerRoman") || !strcmp(format,"upperRoman")) {
-    const int values[]={1000,900,500,400,100,90,50,40,10,9,5,4,1};
-    const char *labels[]={"M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"};
-    size_t i;
-    if(n>3999) { snprintf(text,sizeof(text),"%d",n); return put(out,text); }
-    for(i=0;i<13;i++) while(n>=values[i]) {
-      const char *p=labels[i]; n-=values[i];
-      while(*p) { char c=!strcmp(format,"lowerRoman") ? (char)tolower((unsigned char)*p) : *p; if(!exr_append(out,&c,1)) return 0; p++; }
-    }
-    return 1;
-  }
-  x->status=exr_fail(x->error,EXR_FORMAT,"Unsupported DOCX numbering format: %.80s",format); return 0;
+static int counter_text(docx *x,exr_buffer *out,int value,const char *format) {
+  exr_status status=exr_number_text(out,value,format,x->error); if(status!=EXR_OK) { x->status=status; return 0; } return 1;
 }
 static int number_label(docx *x,number_instance *instance,int level,exr_buffer *text,exr_buffer *css) {
   number_level *definition=&instance->levels[level]; const char *p=definition->pattern; size_t i; int dummy=0;

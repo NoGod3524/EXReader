@@ -1516,3 +1516,19 @@ after a footnote. Cell-local lists remain independent. Structured EPUB roundtrip
 compare normalized text and every rendered page; malformed IDs/levels are rejected.
 Counter/listoverride definitions without supplied display labels remain pending.
 All 62 local suites pass. The 0.81 fd411e4 CI run passed all six jobs.
+
+
+## 0.83 RTF numbering definitions and automatic labels
+
+Tests cover independent overrides, decimal continuation, supplied labels without
+regeneration, Roman/letter/zero-padded formats, nfcn priority, multi-level legal
+references and higher-level reset/norestart. Start-only and format-only overrides,
+bullets, absent numbering, literal semicolons, signed minimum IDs/negative starts,
+and 59/128/255-byte leveltext positions exercise metadata decoding. Mixed list
+level types retain correct ol/ul containers even when entering at a deeper level.
+Marker bold/size is independent of body styling; explicit zero indentation wins
+over list defaults. EPUB roundtrips compare normalized text and every page pixel.
+Malformed templates, duplicate metadata, missing override values, excessive levels,
+unsupported formats without labels, int32 lexer overflow, hex NUL in body and
+counter overflow are rejected. Shared numbering code also passes DOCX regression.
+All 63 local Windows suites pass. The 0.82 0c311d8 CI passed all six jobs.
