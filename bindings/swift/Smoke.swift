@@ -9,6 +9,8 @@ import CEXReader
         let pdf = try Data(contentsOf: root.appendingPathComponent("fixed-pages/pdf-public.pdf"))
         let document = try EXReaderFixedDocument(data: pdf)
         precondition(document.pageCount == 5)
+        let emptyMetadata = try document.metadata()
+        precondition(emptyMetadata.isEmpty)
         let text = try document.text(page: 0)
         precondition(text.string == "A" && text.regions.count == 1)
         let match = try text.find(Data("A".utf8))
@@ -41,12 +43,27 @@ import CEXReader
         }
         let fallbackBitmap = try retainedFontDocument.render(page: 1)
         precondition(fallbackBitmap.width == 12)
+        let head = "<r:RDF xmlns:r='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><r:Description xmlns:dc='http://purl.org/dc/elements/1.1/'>"
+        let tail = "</r:Description></r:RDF>"
+        var packet = Data((head + "<dc:title>中文😀</dc:title><dc:creator><r:Seq><r:li>Alice</r:li><r:li>Bob</r:li></r:Seq></dc:creator>" + tail).utf8)
+        let metadata = try EXReaderMetadata.readXMP(packet)
+        packet.resetBytes(in: 0..<packet.count)
+        precondition(metadata.count == 3 && metadata[0].key == "http://purl.org/dc/terms/title" && metadata[0].value == "中文😀" && metadata[1].value == "Alice" && metadata[2].value == "Bob")
+        let many = head + String(repeating: "<dc:subject>词😀</dc:subject>", count: 4096) + tail
+        let manyMetadata = try EXReaderMetadata.readXMP(Data(many.utf8))
+        precondition(manyMetadata.count == 4096)
+        do {
+            _ = try EXReaderMetadata.readXMP(Data("<bad/>".utf8))
+            preconditionFailure("bad XMP should fail")
+        } catch EXReaderError.engine(let code, _) {
+            precondition(code == Int(EXR_FORMAT.rawValue))
+        }
         let wave = try EXReaderWave(file: root.appendingPathComponent("audio/pcm.wav"))
         precondition(wave.format.sampleRate == 16000 && wave.format.channels == 1 && wave.format.frames == 3200)
         let samples = try wave.read(firstFrame: 0, count: 1024)
         precondition(samples.count == 1024 && samples.map { abs($0) }.max() == 0.5)
         let tail = try wave.read(firstFrame: 3199, count: 1024)
         precondition(tail.count == 1)
-        print("Swift SDK: PDF text/render/font ownership and WAVE samples passed")
+        print("Swift SDK: PDF text/render/font ownership owned multilingual metadata and WAVE samples passed")
     }
 }

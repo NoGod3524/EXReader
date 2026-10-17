@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.98.0"
+#define EXR_VERSION "0.99.0"
 #define EXR_ABI_VERSION 1u
 typedef enum {
   EXR_OK = 0,

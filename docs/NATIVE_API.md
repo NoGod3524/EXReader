@@ -957,3 +957,12 @@ PDF 提供者按需读取有效修订的 Info 字典：Title、Author、Subject 
 packet 最多 1 MiB，嵌套最多 64 层，输出最多 4096 值，key 最多 4096 字节、value 最多 64 KiB、总字符串最多 8 MiB。DTD/实体声明被拒绝；不读取网络或外部实体。损坏 XML、超限、取消均清空输出，最终进度回调仍可取消。
 
 PDF Catalog Metadata stream（含已有解码器支持的 Flate 等 lossless filter）接入同一解析器。XMP 的已提取属性替换同 key 的 Info 值，其余 Info 项保留；多值不压平。书库选择首个非空标题，并把多个非空作者用 `; ` 合并到既有 author 字符串；元数据接口仍返回独立作者。宿主非空 title 继续优先。失败不会阻止独立页面绘制，也不生成部分书库记录。元数据写回仍待实现。
+
+
+## Swift / JNI 元数据适配（0.99）
+
+Swift 的 `EXReaderFixedDocument.metadata()` 与 `EXReaderMetadata.readXMP(Data)` 返回独立 `[EXReaderMetadataEntry]`，每项包含 key/value String。PDF 操作用现有对象锁串行执行；读取后不保留 C 指针，结果可比原文档与输入 Data 活得更久。
+
+Java 的 `Pdf.metadata()` 和静态 `EXReader.readXMP(byte[])` 返回独立 MetadataEntry[]，保留重复 key 与原始顺序。JNI 使用标准 UTF-8 byte[] 传输并在 Java 解码 String，保留中文和非 BMP 字符；批量转换逐项释放局部引用，避免大量属性耗尽 JNI 局部引用表。PDF 关闭后 metadata() 与其他操作一样抛 IllegalStateException。
+
+两个封装沿用 C 的资源限制和解析错误。新增宿主验证覆盖输入缓冲清零后的字符串存活、多作者、中文/emoji、4096 个重复属性、无元数据 PDF 和错误传递。手机端的设备运行验证仍须连接真机完成。

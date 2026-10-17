@@ -8,6 +8,22 @@ public final class EXReader {
     private EXReader() {}
     static { System.loadLibrary("exreader_jni"); }
     public static String version() { return nativeVersion(); }
+    public static final class MetadataEntry {
+        public final String key,value;
+        private MetadataEntry(byte[] key,byte[] value) {
+            this.key=new String(key,StandardCharsets.UTF_8);
+            this.value=new String(value,StandardCharsets.UTF_8);
+        }
+    }
+    private static MetadataEntry[] metadataValues(byte[][] bytes) {
+        MetadataEntry[] values=new MetadataEntry[bytes.length/2];
+        for(int i=0;i<values.length;i++) values[i]=new MetadataEntry(bytes[i*2],bytes[i*2+1]);
+        return values;
+    }
+    public static MetadataEntry[] readXMP(byte[] packet) {
+        Objects.requireNonNull(packet);
+        return metadataValues(nativeReadXMP(packet));
+    }
     public static final class Bitmap {
         public final int width, height, stride, channels;
         public final byte[] pixels;
@@ -35,6 +51,7 @@ public final class EXReader {
         }
         private long checked() { if(handle==0) throw new IllegalStateException("PDF is closed"); return handle; }
         public synchronized int pageCount() { return nativePdfCount(checked()); }
+        public synchronized MetadataEntry[] metadata() { return metadataValues(nativePdfMetadata(checked())); }
         public synchronized TextPage text(int page) {
             if(page<0) throw new IllegalArgumentException("Negative page");
             return nativePdfText(checked(),page);
@@ -79,6 +96,8 @@ public final class EXReader {
         }
     }
     private static native String nativeVersion();
+    private static native byte[][] nativeReadXMP(byte[] packet);
+    private static native byte[][] nativePdfMetadata(long handle);
     private static native long nativePdfOpen(byte[] bytes,byte[] font,int faceIndex);
     private static native int nativePdfCount(long handle);
     private static native TextPage nativePdfText(long handle,int page);

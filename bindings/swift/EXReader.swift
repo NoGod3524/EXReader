@@ -7,6 +7,31 @@ public enum EXReaderError: Error {
     case invalidInput
     case invalidResult
 }
+public struct EXReaderMetadataEntry {
+    public let key: String
+    public let value: String
+}
+private func metadataValues(_ entries: UnsafeMutablePointer<exr_metadata_entry>?, _ count: Int) throws -> [EXReaderMetadataEntry] {
+    guard count > 0 else { return [] }
+    guard let entries else { throw EXReaderError.invalidResult }
+    return try (0..<count).map { index in
+        guard let key = entries[index].key, let value = entries[index].value else { throw EXReaderError.invalidResult }
+        return EXReaderMetadataEntry(key: String(cString: key), value: String(cString: value))
+    }
+}
+public enum EXReaderMetadata {
+    public static func readXMP(_ packet: Data) throws -> [EXReaderMetadataEntry] {
+        var entries: UnsafeMutablePointer<exr_metadata_entry>?
+        var count = 0
+        var error = exr_error()
+        let status = packet.withUnsafeBytes { bytes in
+            exr_metadata_read_xmp(bytes.baseAddress, bytes.count, nil, &entries, &count, &error)
+        }
+        defer { exr_metadata_free(entries, count) }
+        try check(status, error)
+        return try metadataValues(entries, count)
+    }
+}
 private func check(_ status: exr_status, _ error: exr_error) throws {
     guard status != EXR_OK else { return }
     var copy = error
@@ -100,6 +125,16 @@ public final class EXReaderFixedDocument {
         var count = 0
         _ = exr_fixed_pages(handle, &count)
         return count
+    }
+    public func metadata() throws -> [EXReaderMetadataEntry] {
+        lock.lock(); defer { lock.unlock() }
+        var entries: UnsafeMutablePointer<exr_metadata_entry>?
+        var count = 0
+        var error = exr_error()
+        let status = exr_fixed_load_metadata(handle, nil, &entries, &count, &error)
+        defer { exr_metadata_free(entries, count) }
+        try check(status, error)
+        return try metadataValues(entries, count)
     }
     public func text(page: Int) throws -> EXReaderPageText {
         guard page >= 0 else { throw EXReaderError.invalidInput }
