@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.83.0"
+#define EXR_VERSION "0.84.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -668,6 +668,12 @@ EXR_API exr_status exr_anchor_resolve(const exr_document *doc, const exr_anchor 
    The legacy export() below remains a text-only conversion. */
 EXR_API exr_status exr_document_export_epub(const exr_document *doc, const exr_control *control,
                                             void **data, size_t *size, exr_error *error);
+/* Structure-preserving HTML directory in a ZIP, with a collision-free XHTML
+   entrypoint/reading order. Retains chapter/asset paths, styles, fonts and links.
+   Extract together before opening entry_path. Both allocations are owned;
+   release data and entry_path with exr_free. Failure clears every output. */
+EXR_API exr_status exr_document_export_html_bundle(const exr_document *doc,const exr_control *control,
+                                                   void **data,size_t *size,char **entry_path,exr_error *error);
 EXR_API exr_status exr_document_export(const exr_document *doc, exr_format format, void **data,
                                        size_t *size, exr_error *error);
 /* Metadata is copied. On success, release (if provided) runs once after the last

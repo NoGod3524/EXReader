@@ -804,3 +804,12 @@ ls/ilvl 现在构造通用 ol/ul 与 li，保留列表实例 ID 和 0–8 级层
 解析 listtable / listoverridetable，在没有 listtext 时生成编号；已有显示标签原样保留，同时推进计数。支持 decimal、大小写 Roman / Letter、补零、项目符号和无编号，保留 leveltext 模板、多级引用、legal 前级十进制化、norestart、follow 和独立实例的起始值/格式覆盖。编号字符格式与正文独立，列表缩进只补正文未显式指定的值。通用 ol 的 start/type 和 data-rtf-number-format 保留语义。
 
 最多 2000 个定义和覆盖实例、每个 9 层、模板 255 个标量，计入既有元数据字节预算；计数溢出返回 EXR_LIMIT。未实现的编号制式在缺少原标签时返回 EXR_FORMAT。控制参数严格限制为 signed int32；正文 hex NUL 拒绝，模板内编号占位符允许零值。Roman 超过 3999 和非正 Roman/字母值使用十进制回退。
+
+
+## 结构化 HTML 资源包（0.84）
+
+`exr_document_export_html_bundle` 输出 ZIP 字节和独立的 entry_path 字符串，两者分别用 exr_free 释放。解压整个包，再打开 entry_path 指定的 XHTML 文件；这是带资源的目录包，不是单文件 HTML。入口提供阅读顺序、NCX 层级目录与原 EPUB nav 的入口链接，名称遇到原文件时自动避让。
+
+章节使用既有 XML 文档树序列化器，保留元素、属性、表格、列表、样式和章节相对链接；图片、字体、CSS、封面等声明资源按原路径与字节复制，辅助 XHTML 一并保留。不合并章节、不内联资源，不改写原始链接。EPUB 原有特殊 URI 和浏览器不支持的资源也原样保留；浏览器最终显示由浏览器自己的样式与格式能力决定。
+
+复用结构 EPUB 导出的路径冲突、缺失资源、XML、加密/字体混淆校验和字节预算。失败或取消清空 data/size/entry_path，不写文件、不联网。旧 exr_document_export(EXR_HTML) 继续提供纯正文转换。

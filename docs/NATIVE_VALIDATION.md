@@ -1532,3 +1532,18 @@ Malformed templates, duplicate metadata, missing override values, excessive leve
 unsupported formats without labels, int32 lexer overflow, hex NUL in body and
 counter overflow are rejected. Shared numbering code also passes DOCX regression.
 All 63 local Windows suites pass. The 0.82 0c311d8 CI passed all six jobs.
+
+
+## 0.84 Structured HTML directory archives
+
+The HTML exporter shares chapter serialization and path/resource validation with
+EPUB, writes all chapters and assets into an ordinary ZIP, and returns an owned,
+collision-free XHTML entry path. The entry includes reading order, nested NCX
+navigation and links to authored EPUB navigation. Tests validate XHTML with Expat,
+compare all chapter/member bytes against structured EPUB, and additionally compare
+non-XHTML assets directly against source resource bytes. Fixtures include images,
+embedded fonts, CSS, EPUB 2/3 navigation and repeated chapter paths. Custom models
+cover XML escaping, entry-path collision, generated chapter paths, invalid names,
+missing resources and early/final-progress cancellation. Encrypted/obfuscated
+package export fails with empty outputs. All 64 local Windows suites pass.
+The 0.83 4973ea6 CI passed all six jobs.

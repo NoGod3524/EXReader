@@ -236,8 +236,45 @@ static int ncx_navigation(writer *w, exr_buffer *b) {
 done:
   free(first); free(next); free(roots); exr_navigation_free(entries,count); return ok;
 }
-exr_status exr_document_export_epub(const exr_document *d, const exr_control *control,
-                                     void **out, size_t *size, exr_error *e) {
+/* HTML uses the same XML serializer and untouched relative resource paths as
+   EPUB. The archive is a directory transport; the caller extracts it. */
+static exr_status html_archive(writer *w,const member *members,size_t count,char **paths,
+                                  void **out,size_t *size,char **entry) {
+  const exr_document *d=w->doc; mz_zip_archive zip={0}; exr_buffer xml={0},nav={0};
+  char path[80]; size_t i,total=0,n=0; void *archive=NULL,*data=NULL; int opened=0;
+  for(i=0;;i++) { snprintf(path,sizeof(path),"exreader-index-%zu.xhtml",i); if(find(members,count,path)==SIZE_MAX) break; }
+  if(!put(&nav,"<?xml version=\"1.0\" encoding=\"UTF-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\"><head><title>") ||
+     !escape(w,&nav,d->title) || !put(&nav,"</title></head><body><h1>") || !escape(w,&nav,d->title) || !put(&nav,"</h1><nav aria-label=\"Reading order\"><ol>")) goto done;
+  for(i=0;i<d->chapter_count;i++) if(d->chapters[i].in_spine) {
+    if(!put(&nav,"<li><a href=\"") || !exr_uri_path(&nav,paths[i]) || !put(&nav,"\">") ||
+       !escape(w,&nav,d->chapters[i].id && *d->chapters[i].id ? d->chapters[i].id : paths[i]) || !put(&nav,"</a></li>")) goto done;
+  }
+  if(!put(&nav,"</ol></nav>")) goto done;
+  if(d->has_ncx && !ncx_navigation(w,&nav)) goto done;
+  for(i=0;i<count;i++) if(property(members[i].properties,"nav")) {
+    if(!put(&nav,"<p><a rel=\"contents\" href=\"") || !exr_uri_path(&nav,members[i].path) || !put(&nav,"\">Contents</a></p>")) goto done;
+  }
+  if(!put(&nav,"</body></html>") || !mz_zip_writer_init_heap(&zip,0,0)) goto done;
+  opened=1;
+  for(i=0;i<count;i++) {
+    const member *m=&members[i];
+    w->status=exr_control_poll(w->control,EXR_STAGE_EXPORT,i,count,w->error); if(w->status!=EXR_OK) goto done;
+    if(m->chapter!=SIZE_MAX) { xml.size=0; if(!chapter(w,&xml,m->chapter)) goto done; data=xml.data; n=xml.size; }
+    else { w->status=exr_document_resource(d,m->resource,&data,&n,w->error); if(w->status!=EXR_OK) goto done; }
+    { int ok=zip_add(w,&zip,m->path,data,n,&total,6); if(m->chapter==SIZE_MAX) free(data); data=NULL; if(!ok) goto done; }
+  }
+  if(!zip_add(w,&zip,path,nav.data,nav.size,&total,6) || !mz_zip_writer_finalize_heap_archive(&zip,&archive,&n) || n>EXR_MAX_INPUT) goto done;
+  w->status=exr_control_poll(w->control,EXR_STAGE_EXPORT,count,count,w->error); if(w->status!=EXR_OK) goto done;
+  *entry=exr_copy(path,strlen(path)); if(!*entry) goto done;
+  *out=malloc(n); if(!*out) { free(*entry); *entry=NULL; goto done; }
+  memcpy(*out,archive,n); *size=n;
+done:
+  if(opened) mz_zip_writer_end(&zip);
+  mz_free(archive); free(xml.data); free(nav.data);
+  return *out ? EXR_OK : w->status!=EXR_OK ? w->status : exr_fail(w->error,EXR_LIMIT,"HTML bundle allocation or size limit exceeded");
+}
+static exr_status export_package(const exr_document *d, const exr_control *control,
+                                     void **out, size_t *size, char **html_entry, exr_error *e) {
   writer w={d,control,e,EXR_OK,0}; member *members=NULL;
   exr_buffer xml={0}, opf={0}, nav={0}, container={0};
   mz_zip_archive zip={0}; int opened=0, has_nav=0;
@@ -245,11 +282,12 @@ exr_status exr_document_export_epub(const exr_document *d, const exr_control *co
   char package_path[80], nav_path[80], value[128], modified[32]; char **paths=NULL;
   if (out) *out=NULL;
   if (size) *size=0;
+  if (html_entry) *html_entry=NULL;
   if (!d || !out || !size) return exr_fail(e,EXR_ARGUMENT,"Invalid structured export arguments");
   if (!d->chapter_count || d->chapter_count+d->resource_count>9996)
     return exr_fail(e,EXR_LIMIT,"Structured export requires 1..9996 members");
   w.status=exr_control_cancel(control,e); if(w.status!=EXR_OK) return w.status;
-  w.status=exr_export_time(modified,e); if(w.status!=EXR_OK) return w.status;
+  if(!html_entry) { w.status=exr_export_time(modified,e); if(w.status!=EXR_OK) return w.status; }
   w.status=exr_epub_export_check(d,e); if(w.status!=EXR_OK) return w.status;
   for(i=0;i<d->chapter_count;i++) if(d->chapters[i].in_spine) spine++;
   if(!spine) return exr_fail(e,EXR_FORMAT,"EPUB requires a reading order");
@@ -312,6 +350,7 @@ exr_status exr_document_export_epub(const exr_document *d, const exr_control *co
     } else members[j++]=members[i];
   }
   count=j;
+  if(html_entry) { w.status=html_archive(&w,members,count,paths,out,size,html_entry); goto failed; }
   for (i=0;;i++) {
     snprintf(package_path,sizeof(package_path),"exreader-package-%zu.opf",i);
     if (find(members,count,package_path)==SIZE_MAX) break;
@@ -391,4 +430,14 @@ failed:
   free(paths); free(members); free(xml.data); free(opf.data); free(nav.data); free(container.data);
   if (*out) return exr_fail(e,EXR_OK,"");
   return w.status!=EXR_OK ? w.status : exr_fail(e,EXR_LIMIT,"Structured EPUB export allocation or size limit exceeded");
+}
+
+exr_status exr_document_export_epub(const exr_document *d,const exr_control *control,
+                                     void **out,size_t *size,exr_error *e) {
+  return export_package(d,control,out,size,NULL,e);
+}
+exr_status exr_document_export_html_bundle(const exr_document *d,const exr_control *control,
+                                            void **out,size_t *size,char **entry,exr_error *e) {
+  if(!entry) { if(out) *out=NULL; if(size) *size=0; return exr_fail(e,EXR_ARGUMENT,"Missing HTML entry path output"); }
+  return export_package(d,control,out,size,entry,e);
 }
