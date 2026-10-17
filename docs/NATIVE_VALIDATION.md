@@ -1406,3 +1406,17 @@ Additional cases verify data-before-format, unknown odd-sized chunk padding,
 duplicate formats, invalid extensible GUIDs and cancellation after PCM output
 has already begun. All 57 local suites pass, including the expanded WAVE checks.
 The 0.73 de65c24 CI run passed all six jobs.
+
+
+## 0.75 Persistent audio resume points and time bookmarks
+
+Independent host audio keys persist stable track IDs, uint64 offsets and rates.
+Offset BLOBs retain UINT64_MAX without signed-integer truncation. Tests save,
+update, reopen and backup/restore data; verify ID aliasing, per-key update scopes,
+labels, empty results and invalid input; reject damaged offset/UTF-8 records
+without partial output. A failing delete trigger proves clear_audio rolls back
+the already-deleted resume row together with bookmarks. Schema 4 upgrades v1/v2
+through existing migration tests; v3 tests verify successful upgrade and rollback
+after the first new table was created. Saved time is validated against a concrete
+timeline when restoring the player, rather than opening files during persistence.
+All 58 local suites pass. The 0.74 a0ddece CI run passed all six jobs.

@@ -68,8 +68,8 @@ int main(int argc,char **argv) {
   OK(exr_library_delete(l,book,&error)); OK(exr_library_fixed_notes(l,book,&notes,&count,&error)); CHECK(!count && !notes); exr_library_close(l);
   /* Upgrade v2, preserve reflow rows, and roll back a conflicting migration. */
   OK(exr_library_open(migration,&l,&error)); OK(exr_library_import(l,EXR_TXT,"old",3,"Old",&id,&error)); exr_library_close(l);
-  sql(migration,"DROP TABLE fixed_notes; PRAGMA user_version=2"); OK(exr_library_open(migration,&l,&error)); schema_version(migration,3); OK(exr_library_books(l,"Old",&books,&count,&error)); CHECK(count==1); exr_books_free(books,count); exr_library_close(l);
-  sql(migration,"DROP TABLE fixed_notes; CREATE TABLE fixed_notes(conflict INTEGER); PRAGMA user_version=2"); CHECK(exr_library_open(migration,&l,&error)==EXR_DATABASE && !l); schema_version(migration,2);
+  sql(migration,"DROP TABLE fixed_notes; DROP TABLE audio_resume; DROP TABLE audio_marks; PRAGMA user_version=2"); OK(exr_library_open(migration,&l,&error)); schema_version(migration,4); OK(exr_library_books(l,"Old",&books,&count,&error)); CHECK(count==1); exr_books_free(books,count); exr_library_close(l);
+  sql(migration,"DROP TABLE fixed_notes; DROP TABLE audio_resume; DROP TABLE audio_marks; CREATE TABLE fixed_notes(conflict INTEGER); PRAGMA user_version=2"); CHECK(exr_library_open(migration,&l,&error)==EXR_DATABASE && !l); schema_version(migration,2);
   sql(migration,"DROP TABLE fixed_notes"); OK(exr_library_open(migration,&l,&error)); exr_library_close(l);
   remove(path); remove(backup); remove(migration); printf("%u fixed library checks passed\n",checks); return 0;
 }
