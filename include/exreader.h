@@ -1009,6 +1009,17 @@ typedef struct { uint32_t glyph,color; } exr_font_color_layer;
 EXR_API exr_status exr_font_color_layers(exr_font *font,size_t font_index,uint32_t glyph,
   size_t palette,uint32_t foreground,exr_font_color_layer **out,size_t *count,
   const exr_control *control,exr_error *error);
+enum { EXR_GLYPH_IMAGE_OUTLINE_OVERLAY=1 };
+typedef struct {
+  exr_bitmap bitmap;
+  float left,top,scale; /* Relative to glyph origin, x right/y down; bitmap pixels times scale. */
+  uint32_t flags;
+} exr_glyph_image;
+/* Owned intrinsic-color image at the best available strike for requested pixels.
+   No image returns a zero record. Free bitmap with exr_bitmap_free. The image
+   does not include text opacity or synthetic styles; glyph advances stay separate. */
+EXR_API exr_status exr_font_glyph_image(exr_font *font,size_t font_index,uint32_t glyph,float pixels,
+  exr_glyph_image *out,const exr_control *control,exr_error *error);
 /* Scalar cmap coverage, not a shaping/sequence support test; invalid input returns 0. */
 EXR_API int exr_font_has_glyph(const exr_font *font, size_t font_index, uint32_t codepoint);
 EXR_API void exr_font_free(exr_font *font);

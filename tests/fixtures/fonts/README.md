@@ -42,3 +42,9 @@ width axis and named heavy instance test public instance ownership and queries.
 opaque, translucent and transparent colors, plus the foreground entry. The
 font also exercises 256/257 layers and a deliberately oversized layer. Its
 SHA-256 is `86ca5558811aae81749d0057a348e9b7c453d1e6fe66f553d3fbb3bb38314c15`.
+
+`bitmap.ttf` derives only from these original outlines, under the same license.
+`tools/generate_bitmap_test_font.py` builds two sbix strikes with original
+two-color PNGs and a solid JPEG, partial glyph coverage, dupe chains and a
+deliberate cyclic reference. SHA-256 is
+`b197c58d0ed858a2134bad58d03decd912cb5dee2080284dc7ea0802a8b525b6`.

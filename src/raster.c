@@ -47,6 +47,31 @@ static void decoration(exr_bitmap *out,const exr_glyph *g,const exr_glyph *next,
     rectangle(out,left,g->baseline-position,right-left,strike_thickness,g->color);
   }
 }
+static uint32_t sample_rgba(const exr_bitmap *src,float sx,float sy) {
+uint32_t x0 = (uint32_t)sx, y0 = (uint32_t)sy;
+uint32_t x1 = x0 + 1 < src->width ? x0 + 1 : x0, y1 = y0 + 1 < src->height ? y0 + 1 : y0;
+float fx = sx - (float)x0, fy = sy - (float)y0;
+float weights[4] = {(1 - fx) * (1 - fy), fx * (1 - fy), (1 - fx) * fy, fx * fy};
+const unsigned char *samples[4] = {src->pixels + (size_t)y0 * src->stride + x0 * 4,
+                                   src->pixels + (size_t)y0 * src->stride + x1 * 4,
+                                   src->pixels + (size_t)y1 * src->stride + x0 * 4,
+                                   src->pixels + (size_t)y1 * src->stride + x1 * 4};
+float alpha = 0, colors[3] = {0};
+unsigned k, channel;
+uint32_t color = 0;
+for (k = 0; k < 4; k++) {
+  float a = weights[k] * (float)samples[k][3];
+  alpha += a;
+  for (channel = 0; channel < 3; channel++)
+    colors[channel] += a * (float)samples[k][channel];
+}
+if (alpha <= 0)
+  return 0;
+for (channel = 0; channel < 3; channel++)
+  color = (color << 8) | (uint32_t)lroundf(colors[channel] / alpha);
+color = (color << 8) | (uint32_t)lroundf(alpha);
+  return color;
+}
 static exr_status picture(exr_bitmap *out, const exr_box *box, const exr_bitmap *src,
                              const exr_control *control, exr_error *error) {
   int left = (int)fmaxf(0, ceilf(box->x)), top = (int)fmaxf(0, ceilf(box->y));
@@ -64,29 +89,7 @@ static exr_status picture(exr_bitmap *out, const exr_box *box, const exr_bitmap 
       float sy =
           fmaxf(0, fminf((float)src->height - 1,
                          ((float)y + 0.5f - box->y) / box->height * (float)src->height - 0.5f));
-      uint32_t x0 = (uint32_t)sx, y0 = (uint32_t)sy;
-      uint32_t x1 = x0 + 1 < src->width ? x0 + 1 : x0, y1 = y0 + 1 < src->height ? y0 + 1 : y0;
-      float fx = sx - (float)x0, fy = sy - (float)y0;
-      float weights[4] = {(1 - fx) * (1 - fy), fx * (1 - fy), (1 - fx) * fy, fx * fy};
-      const unsigned char *samples[4] = {src->pixels + (size_t)y0 * src->stride + x0 * 4,
-                                         src->pixels + (size_t)y0 * src->stride + x1 * 4,
-                                         src->pixels + (size_t)y1 * src->stride + x0 * 4,
-                                         src->pixels + (size_t)y1 * src->stride + x1 * 4};
-      float alpha = 0, colors[3] = {0};
-      unsigned k, channel;
-      uint32_t color = 0;
-      for (k = 0; k < 4; k++) {
-        float a = weights[k] * (float)samples[k][3];
-        alpha += a;
-        for (channel = 0; channel < 3; channel++)
-          colors[channel] += a * (float)samples[k][channel];
-      }
-      if (alpha <= 0)
-        continue;
-      for (channel = 0; channel < 3; channel++)
-        color = (color << 8) | (uint32_t)lroundf(colors[channel] / alpha);
-      color = (color << 8) | (uint32_t)lroundf(alpha);
-      exr_pixel(out, x, y, color, 255);
+      exr_pixel(out, x, y, sample_rgba(src,sx,sy), 255);
     }
   }
   return EXR_OK;
@@ -158,17 +161,47 @@ static exr_status draw_single_glyph(exr_bitmap *out,exr_font *font,const exr_gly
   }
   return EXR_OK;
 }
+static exr_status draw_bitmap_glyph(exr_bitmap *out,const exr_glyph *g,const exr_glyph_image *image,size_t *work,
+                                    const exr_control *control,exr_error *error) {
+  const exr_bitmap *src=&image->bitmap; double width=src->width*image->scale,height=src->height*image->scale;
+  int sideways=!!(g->flags&EXR_GLYPH_SIDEWAYS),x,y,left,top,right,bottom; double x0,y0;
+  if(!exr_vector_work(work,(size_t)ceil(width)*(size_t)ceil(height))) return exr_fail(error,EXR_LIMIT,"Font bitmap paint work exceeds budget");
+  if(sideways) { x0=g->x+g->offset_y-image->top-height; y0=g->baseline+g->offset_x+image->left; }
+  else { x0=g->x+g->offset_x+image->left; y0=g->baseline-g->offset_y+image->top; }
+  left=(int)fmax(0,ceil(x0)); top=(int)fmax(0,ceil(y0));
+  right=(int)fmin(out->width,ceil(x0+(sideways ? height : width))); bottom=(int)fmin(out->height,ceil(y0+(sideways ? width : height)));
+  for(y=top;y<bottom;y++) {
+    if(!(y&63) && exr_control_cancel(control,error)!=EXR_OK) return EXR_CANCELLED;
+    for(x=left;x<right;x++) {
+      float inline_position=(float)((g->flags&EXR_GLYPH_VERTICAL) ? y : x),sx,sy; uint32_t color;
+      if(inline_position<g->clip_left || inline_position>=g->clip_right) continue;
+      if(sideways) { sx=(float)(((y+.5-y0)/width)*src->width-.5); sy=(float)((1-(x+.5-x0)/height)*src->height-.5); }
+      else { sx=(float)(((x+.5-x0)/width)*src->width-.5); sy=(float)(((y+.5-y0)/height)*src->height-.5); }
+      sx=fmaxf(0,fminf((float)src->width-1,sx)); sy=fmaxf(0,fminf((float)src->height-1,sy));
+      color=sample_rgba(src,sx,sy); color=(color&UINT32_C(0xffffff00))|(((color&255)*(g->color&255)+127)/255);
+      exr_pixel(out,x,y,color,255);
+    }
+  }
+  return EXR_OK;
+}
 static exr_status draw_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,const exr_glyph *next,const exr_line *line,
                              size_t *work,const exr_control *control,exr_error *error) {
-  exr_font_color_layer layers[256]; size_t n=0,i; exr_status status;
-  if((g->flags&EXR_GLYPH_HIDDEN) || g->size<1.0f/64) return EXR_OK;
+  exr_font_color_layer layers[256]; exr_glyph_image image={0}; size_t n=0,i; exr_status status;
+  if((g->flags&EXR_GLYPH_HIDDEN) || g->size<1.0f/64 || !(g->color&255)) return EXR_OK;
   if(g->font_index>=font->count) return EXR_FONT;
+  status=exr_font_sbix_image(font->faces+g->font_index,g->glyph,g->size,&image,work,control,error); if(status!=EXR_OK) return status;
+  if(image.bitmap.pixels) {
+    status=draw_bitmap_glyph(out,g,&image,work,control,error); exr_bitmap_free(&image.bitmap); if(status!=EXR_OK) return status;
+    if(image.flags&EXR_GLYPH_IMAGE_OUTLINE_OVERLAY) { status=draw_single_glyph(out,font,g,1,work,control,error); if(status!=EXR_OK) return status; }
+    goto decorations;
+  }
   status=exr_font_colr(font->faces+g->font_index,g->glyph,0,g->color,layers,&n,work); if(status!=EXR_OK) return status;
   if(n) for(i=0;i<n;i++) {
     exr_glyph layer=*g; layer.glyph=layers[i].glyph; layer.color=layers[i].color;
     if(!(layer.color&255)) continue;
     status=draw_single_glyph(out,font,&layer,1,work,control,error); if(status!=EXR_OK) return status;
   } else { status=draw_single_glyph(out,font,g,0,work,control,error); if(status!=EXR_OK) return status; }
+decorations:
   if(g->flags&EXR_DECORATIONS) {
     exr_face *face=font->faces+g->font_index;
     if(exr_font_size(face,g->size)) return EXR_FONT;

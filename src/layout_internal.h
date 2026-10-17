@@ -17,6 +17,7 @@ typedef struct {
   FT_F26Dot6 metric_size;
   struct exr_ot_state *ot;
   FT_Color *color_palette; unsigned palette_index,palette_ready;
+  struct exr_sbix *sbix; unsigned sbix_checked;
 } exr_face;
 struct exr_font {
   FT_Library library;
@@ -67,6 +68,9 @@ size_t exr_font_order(const exr_font *font, const char *family, unsigned flags,
 int exr_font_size(exr_face *font, float size);
 exr_status exr_font_colr(exr_face *face,uint32_t glyph,size_t palette,uint32_t foreground,
                          exr_font_color_layer layers[256],size_t *count,size_t *work);
+void exr_font_sbix_free(exr_face *face);
+exr_status exr_font_sbix_image(exr_face *face,uint32_t glyph,float pixels,exr_glyph_image *out,
+                               size_t *work,const exr_control *control,exr_error *error);
 int exr_measure(exr_face *font, uint32_t glyph, unsigned flags, float *advance);
 int exr_measure_vertical(exr_face *font, uint32_t glyph, unsigned flags, float *advance);
 float exr_kern(exr_face *font, uint32_t left, uint32_t right);

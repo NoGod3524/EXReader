@@ -16,5 +16,7 @@ int main() {
   std::size_t palettes=1,entries=1,count=1; exr_font_color_layer *layers=nullptr;
   if(exr_font_color_palettes(nullptr,0,&palettes,&entries,&error)!=EXR_ARGUMENT || palettes || entries) return 4;
   if(exr_font_color_layers(nullptr,0,0,0,0,&layers,&count,nullptr,&error)!=EXR_ARGUMENT || layers || count) return 5;
+  exr_glyph_image image{};
+  if(exr_font_glyph_image(nullptr,0,0,20,&image,nullptr,&error)!=EXR_ARGUMENT || image.bitmap.pixels || image.scale) return 6;
   std::printf("C++ consumer: %s ABI %u\n",exr_version(),unsigned(exr_abi_version())); return 0;
 }
