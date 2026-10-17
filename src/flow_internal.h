@@ -7,6 +7,7 @@
 typedef struct {
   exr_bidi *analysis;
   size_t *offsets, count;
+  size_t first_node;
 } exr_inline_bidi;
 typedef struct {
   exr_layout *layout, *assets;
@@ -56,5 +57,7 @@ typedef struct exr_table_cursor exr_table_cursor;
 exr_status exr_table_create(flow *f, size_t node, float x, float width, exr_table_cursor **out);
 exr_status exr_table_step(flow *f, exr_table_cursor *cursor, int *done);
 void exr_table_free(exr_table_cursor *cursor);
+size_t exr_table_memory_size(const exr_table_cursor *cursor);
+exr_table_cursor *exr_table_clone(const exr_table_cursor *cursor);
 size_t exr_table_position(const exr_table_cursor *cursor);
 #endif

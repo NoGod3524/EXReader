@@ -14,6 +14,14 @@ typedef struct {
   size_t index, bytes;
   exr_layout *layout;
 } cached_page;
+typedef struct {
+  flow f;
+  exr_line_buffer line;
+  frame *frames;
+  size_t depth, chapter, position, emitted, work_glyphs, shape_work;
+  size_t bidi_first, bytes;
+  int bidi_active;
+} checkpoint;
 struct exr_pager {
   flow f;
   exr_layout_config config;
@@ -28,7 +36,115 @@ struct exr_pager {
   int mode; /* Owned sequential output or borrowed cached output. */
   cached_page cache[64]; /* Most recently used first. */
   size_t cache_count, cache_bytes, cache_capacity, cache_budget;
+  checkpoint *checkpoints[64]; /* Most recently recorded first. */
+  size_t checkpoint_count, checkpoint_bytes, checkpoint_capacity, checkpoint_budget, interval;
+  size_t generated_pages, restored_checkpoints;
 };
+static void checkpoint_free(checkpoint *c) {
+  size_t i;
+  if (!c) return;
+  if (c->frames)
+    for (i = 0; i < c->depth; i++) exr_table_free(c->frames[i].table);
+  free(c->frames);
+  exr_inline_buffer_clear(&c->line);
+  free(c);
+}
+static checkpoint *checkpoint_clone(const checkpoint *source) {
+  checkpoint *copy = malloc(sizeof(*copy));
+  exr_layout *destinations[3];
+  const exr_layout *sources[3] = {&source->line.run, &source->line.raw, &source->line.line};
+  size_t i;
+  if (!copy) return NULL;
+  *copy = *source;
+  copy->frames = NULL;
+  copy->line.run.glyphs = copy->line.raw.glyphs = copy->line.line.glyphs = NULL;
+  destinations[0] = &copy->line.run; destinations[1] = &copy->line.raw;
+  destinations[2] = &copy->line.line;
+  for (i = 0; i < 3; i++) {
+    size_t count = sources[i]->glyph_count;
+    destinations[i]->glyph_cap = count;
+    if (!count) continue;
+    destinations[i]->glyphs = malloc(count*sizeof(exr_glyph));
+    if (!destinations[i]->glyphs) goto bad;
+    memcpy(destinations[i]->glyphs, sources[i]->glyphs, count*sizeof(exr_glyph));
+  }
+  if (copy->depth) {
+    copy->frames = calloc(copy->depth, sizeof(*copy->frames));
+    if (!copy->frames) goto bad;
+    for (i = 0; i < copy->depth; i++) {
+      copy->frames[i] = source->frames[i]; copy->frames[i].table = NULL;
+      if (source->frames[i].table) {
+        copy->frames[i].table = exr_table_clone(source->frames[i].table);
+        if (!copy->frames[i].table) goto bad;
+      }
+    }
+  }
+  return copy;
+bad:
+  checkpoint_free(copy); return NULL;
+}
+static void evict_checkpoint(exr_pager *p) {
+  checkpoint *c = p->checkpoints[--p->checkpoint_count];
+  p->checkpoint_bytes -= c->bytes;
+  checkpoint_free(c);
+}
+static void save_checkpoint(exr_pager *p) {
+  checkpoint state = {0}, *copy;
+  size_t i, bytes = sizeof(state) + p->depth*sizeof(frame);
+  const exr_layout *queues[3] = {&p->line.run, &p->line.raw, &p->line.line};
+  if (p->mode != 2 || !p->checkpoint_capacity || p->finished || p->emitted % p->interval) return;
+  for (i = 0; i < p->checkpoint_count; i++)
+    if (p->checkpoints[i]->emitted == p->emitted) return;
+  for (i = 0; i < 3; i++) {
+    if (queues[i]->glyph_count > (SIZE_MAX - bytes)/sizeof(exr_glyph)) return;
+    bytes += queues[i]->glyph_count*sizeof(exr_glyph);
+  }
+  for (i = 0; i < p->depth; i++) {
+    size_t part = exr_table_memory_size(p->frames[i].table);
+    if (part > SIZE_MAX - bytes) return;
+    bytes += part;
+  }
+  if (bytes > p->checkpoint_budget) return;
+  state.f = p->f;
+  state.f.layout = NULL; state.f.error = NULL;
+  state.line = p->line; state.frames = p->frames; state.depth = p->depth;
+  state.chapter = p->chapter; state.position = p->position; state.emitted = p->emitted;
+  state.work_glyphs = p->assets->work_glyphs; state.shape_work = p->assets->shape_work;
+  state.bidi_first = p->bidi.first_node; state.bidi_active = p->line.text.started;
+  state.bytes = bytes;
+  copy = checkpoint_clone(&state);
+  if (!copy) return; /* Optional acceleration must not fail an otherwise valid page. */
+  while (p->checkpoint_count && (p->checkpoint_count >= p->checkpoint_capacity ||
+         bytes > p->checkpoint_budget - p->checkpoint_bytes)) evict_checkpoint(p);
+  memmove(p->checkpoints + 1, p->checkpoints, p->checkpoint_count*sizeof(*p->checkpoints));
+  p->checkpoints[0] = copy;
+  p->checkpoint_count++; p->checkpoint_bytes += bytes;
+}
+static void reset_cursor(exr_pager *p);
+static exr_status restore_checkpoint(exr_pager *p, const checkpoint *source, exr_error *e) {
+  checkpoint *copy = checkpoint_clone(source);
+  exr_status status = EXR_OK;
+  size_t i;
+  if (!copy) return exr_fail(e, EXR_MEMORY, "Cannot restore pagination checkpoint");
+  reset_cursor(p);
+  p->f = copy->f;
+  p->f.bidi = &p->bidi; p->f.error = e;
+  p->line = copy->line; memset(&copy->line, 0, sizeof(copy->line));
+  p->depth = copy->depth;
+  for (i = 0; i < copy->depth; i++) {
+    p->frames[i] = copy->frames[i]; copy->frames[i].table = NULL;
+  }
+  p->chapter = copy->chapter; p->position = copy->position; p->emitted = copy->emitted;
+  p->assets->work_glyphs = copy->work_glyphs; p->assets->shape_work = copy->shape_work;
+  if (copy->bidi_active)
+    status = exr_inline_prepare(&p->f, copy->bidi_first, &p->bidi);
+  p->f.error = NULL;
+  checkpoint_free(copy);
+  if (status == EXR_OK) {
+    if (p->restored_checkpoints < SIZE_MAX) p->restored_checkpoints++;
+  } else p->failed = 1;
+  return status;
+}
 static float used(exr_length l, float width) {
   return l.value < 0 ? 0 : l.percent ? l.value * width : l.value;
 }
@@ -378,6 +494,9 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   p->f.x = p->f.y = config->page.margin;
   p->f.width = config->page.width - 2 * config->page.margin;
   p->cache_capacity = 1;
+  p->checkpoint_capacity = 4;
+  p->checkpoint_budget = 2*1024*1024;
+  p->interval = 16;
   *out = p;
   return exr_fail(e, EXR_OK, "");
 }
@@ -420,6 +539,8 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
   }
   if (l->page_count) {
     p->emitted++;
+    if (p->generated_pages < SIZE_MAX) p->generated_pages++;
+    save_checkpoint(p);
     *out = l;
   } else
     exr_layout_free(l);
@@ -493,8 +614,17 @@ exr_status exr_pager_get(exr_pager *p, size_t index, const exr_layout **out, exr
       *out = entry.layout;
       return exr_fail(e, EXR_OK, "");
     }
-  if (p->failed || index < p->emitted)
-    reset_cursor(p);
+  {
+    checkpoint *best = NULL;
+    for (i = 0; i < p->checkpoint_count; i++) {
+      checkpoint *c = p->checkpoints[i];
+      if (c->emitted <= index && (!best || c->emitted > best->emitted)) best = c;
+    }
+    if (best && (p->failed || index < p->emitted || best->emitted > p->emitted)) {
+      status = restore_checkpoint(p, best, e);
+      if (status != EXR_OK) return status;
+    } else if (p->failed || index < p->emitted) reset_cursor(p);
+  }
   while (p->emitted <= index) {
     status = next_page(p, &page, e);
     if (status != EXR_OK) {
@@ -529,6 +659,23 @@ exr_status exr_pager_get(exr_pager *p, size_t index, const exr_layout **out, exr
 }
 size_t exr_pager_cached_count(const exr_pager *p) { return p ? p->cache_count : 0; }
 size_t exr_pager_cached_bytes(const exr_pager *p) { return p ? p->cache_bytes : 0; }
+exr_status exr_pager_set_checkpoints(exr_pager *p, size_t capacity, size_t budget,
+                                      size_t interval, exr_error *e) {
+  if (!p || p->busy || capacity > 64 || (capacity && (!budget || !interval)))
+    return exr_fail(e, EXR_ARGUMENT, "Invalid or reentrant pagination checkpoint settings");
+  p->checkpoint_capacity = capacity;
+  p->checkpoint_budget = budget;
+  p->interval = interval;
+  while (p->checkpoint_count && (p->checkpoint_count > capacity ||
+         p->checkpoint_bytes > budget)) evict_checkpoint(p);
+  return exr_fail(e, EXR_OK, "");
+}
+exr_pager_stats exr_pager_statistics(const exr_pager *p) {
+  exr_pager_stats out = {0};
+  if (p) out = (exr_pager_stats){p->generated_pages, p->checkpoint_count,
+                                 p->checkpoint_bytes, p->restored_checkpoints};
+  return out;
+}
 size_t exr_pager_position(const exr_pager *p) { return p ? p->position : 0; }
 void exr_pager_free(exr_pager *p) {
   size_t i;
@@ -538,6 +685,7 @@ void exr_pager_free(exr_pager *p) {
     exr_table_free(p->frames[i].table);
   while (p->cache_count)
     evict_page(p);
+  while (p->checkpoint_count) evict_checkpoint(p);
   exr_inline_buffer_clear(&p->line);
   exr_inline_clear(&p->bidi);
   exr_layout_free(p->assets);

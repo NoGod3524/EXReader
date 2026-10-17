@@ -180,6 +180,7 @@ exr_status exr_layout_create(const exr_document *d, exr_font *f, const exr_layou
   return exr_layout_create_ex(d, f, &config, out, e);
 }
 void exr_layout_free(exr_layout *l) {
+  if (l && l->refs > 1) { l->refs--; return; }
   if (l) {
     free(l->glyphs);
     free(l->lines);
@@ -199,6 +200,7 @@ void exr_layout_free(exr_layout *l) {
     free(l);
   }
 }
+void exr_layout_ref(exr_layout *l) { if (l) l->refs = l->refs ? l->refs + 1 : 2; }
 const exr_page *exr_layout_pages(const exr_layout *l, size_t *n) {
   if (n)
     *n = l ? l->page_count : 0;

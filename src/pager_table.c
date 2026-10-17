@@ -61,6 +61,51 @@ static exr_status failed(flow *f, exr_status status) {
     return exr_fail(f->error, status, "Table layout limit exceeded");
   return status;
 }
+size_t exr_table_memory_size(const exr_table_cursor *t) {
+  size_t total, i;
+  if (!t) return 0;
+  total = sizeof(*t) + t->row_count*sizeof(*t->rows) + t->cell_count*sizeof(*t->cells);
+  if (t->heights) total += (2*t->row_count + 1)*sizeof(float);
+  for (i = 0; i < t->cell_count; i++) {
+    size_t bytes = exr_layout_memory_size(t->cells[i].layout);
+    if (bytes > SIZE_MAX - total) return SIZE_MAX;
+    total += bytes;
+  }
+  return total;
+}
+exr_table_cursor *exr_table_clone(const exr_table_cursor *t) {
+  exr_table_cursor *copy;
+  size_t i;
+  if (!t) return NULL;
+  copy = malloc(sizeof(*copy));
+  if (!copy) return NULL;
+  *copy = *t;
+  copy->rows = NULL; copy->cells = NULL; copy->heights = copy->positions = NULL;
+  copy->cell_count = 0;
+  if (t->row_count) {
+    copy->rows = malloc(t->row_count*sizeof(*t->rows));
+    if (!copy->rows) goto bad;
+    memcpy(copy->rows, t->rows, t->row_count*sizeof(*t->rows));
+  }
+  if (t->cell_count) {
+    copy->cells = malloc(t->cell_count*sizeof(*t->cells));
+    if (!copy->cells) goto bad;
+    memcpy(copy->cells, t->cells, t->cell_count*sizeof(*t->cells));
+    copy->cell_count = t->cell_count;
+    for (i = 0; i < copy->cell_count; i++) exr_layout_ref(copy->cells[i].layout);
+  }
+  if (t->heights) {
+    copy->heights = malloc(t->row_count*sizeof(*t->heights));
+    copy->positions = malloc((t->row_count + 1)*sizeof(*t->positions));
+    if (!copy->heights || !copy->positions) goto bad;
+    memcpy(copy->heights, t->heights, t->row_count*sizeof(*t->heights));
+    memcpy(copy->positions, t->positions, (t->row_count + 1)*sizeof(*t->positions));
+  }
+  copy->row_capacity = copy->row_count; copy->cell_capacity = copy->cell_count;
+  return copy;
+bad:
+  exr_table_free(copy); return NULL;
+}
 exr_status exr_table_create(flow *f, size_t node, float x, float width,
                             exr_table_cursor **out) {
   exr_table_cursor *t;
