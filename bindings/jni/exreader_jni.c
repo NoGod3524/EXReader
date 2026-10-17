@@ -47,6 +47,39 @@ static jbyteArray byte_array(JNIEnv *env,const void *bytes,size_t size) {
   return out;
 }
 JNIEXPORT jstring JNICALL Java_org_exreader_EXReader_nativeVersion(JNIEnv *env,jclass cls) { (void)cls; return (*env)->NewStringUTF(env,exr_version()); }
+static jobjectArray metadata_values(JNIEnv *env,const exr_metadata_entry *entries,size_t count) {
+  jclass type; jobjectArray out; size_t i;
+  if(count>INT_MAX/2) { argument(env,"Metadata array is too large"); return NULL; }
+  type=(*env)->FindClass(env,"[B"); if(!type) return NULL;
+  out=(*env)->NewObjectArray(env,(jsize)(count*2),type,NULL); (*env)->DeleteLocalRef(env,type); if(!out) return NULL;
+  for(i=0;i<count;i++) {
+    jbyteArray key=byte_array(env,entries[i].key,strlen(entries[i].key)),value;
+    if(!key) return NULL;
+    (*env)->SetObjectArrayElement(env,out,(jsize)(i*2),key); (*env)->DeleteLocalRef(env,key);
+    if((*env)->ExceptionCheck(env)) return NULL;
+    value=byte_array(env,entries[i].value,strlen(entries[i].value)); if(!value) return NULL;
+    (*env)->SetObjectArrayElement(env,out,(jsize)(i*2+1),value); (*env)->DeleteLocalRef(env,value);
+    if((*env)->ExceptionCheck(env)) return NULL;
+  }
+  return out;
+}
+JNIEXPORT jobjectArray JNICALL Java_org_exreader_EXReader_nativeReadXMP(JNIEnv *env,jclass cls,jbyteArray packet) {
+  jsize size; jbyte *bytes; exr_metadata_entry *entries=NULL; size_t count=0; exr_error error={0}; exr_status status; jobjectArray out=NULL; (void)cls;
+  if(!packet) { argument(env,"Missing XMP packet"); return NULL; }
+  size=(*env)->GetArrayLength(env,packet); if(size<=0 || size>1024*1024) { argument(env,"Invalid XMP packet size"); return NULL; }
+  bytes=(*env)->GetByteArrayElements(env,packet,NULL); if(!bytes) return NULL;
+  status=exr_metadata_read_xmp(bytes,(size_t)size,NULL,&entries,&count,&error);
+  (*env)->ReleaseByteArrayElements(env,packet,bytes,JNI_ABORT);
+  if(status!=EXR_OK) engine_error(env,status,&error); else out=metadata_values(env,entries,count);
+  exr_metadata_free(entries,count); return out;
+}
+JNIEXPORT jobjectArray JNICALL Java_org_exreader_EXReader_nativePdfMetadata(JNIEnv *env,jclass cls,jlong handle) {
+  exr_fixed_document *d=pointer(env,handle); exr_metadata_entry *entries=NULL; size_t count=0; exr_error error={0}; exr_status status; jobjectArray out=NULL; (void)cls;
+  if(!d) return NULL;
+  status=exr_fixed_load_metadata(d,NULL,&entries,&count,&error);
+  if(status!=EXR_OK) engine_error(env,status,&error); else out=metadata_values(env,entries,count);
+  exr_metadata_free(entries,count); return out;
+}
 JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePdfOpen(JNIEnv *env,jclass cls,jbyteArray bytes,jbyteArray font,jint face) {
   jbyte *input=NULL,*program=NULL; jsize size,font_size=0; exr_fixed_document *document=NULL; exr_font *fallback=NULL; exr_font_input source={0}; exr_fixed_open_options options={0}; exr_error error={0}; exr_status status=EXR_OK; (void)cls;
   if(!bytes || face<0) { argument(env,"Missing PDF bytes or invalid face index"); return 0; }

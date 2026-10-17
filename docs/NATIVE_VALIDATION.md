@@ -1757,3 +1757,14 @@ streams overriding Info keys while retaining other Info fields; malformed packet
 leave page rendering available. Library import retains XMP title precedence and
 joins multiple authors. All 74 local Windows suites pass. The 0.97 07d952f CI
 passed all six jobs.
+
+
+## 0.99 Swift and Java metadata consumers
+
+Swift and JNI now copy metadata into owned language strings, preserving repeated
+keys and order. Expanded host checks exercise supplementary-plane Unicode,
+multilingual text, multiple authors, 4096 duplicate properties, invalid packets,
+cleared input buffers and closed PDF handles. JNI conversion releases per-entry
+local references and keeps standard UTF-8 transport. All 74 local Windows core
+suites pass; the new language-host cases are verified by the platform CI jobs.
+The 0.98 520db83 CI passed all six jobs.

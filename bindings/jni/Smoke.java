@@ -16,12 +16,13 @@ public final class Smoke {
         EXReader.Bitmap bitmap;
         EXReader.TextPage text;
         try(EXReader.Pdf document=new EXReader.Pdf(pdf)) {
-            check(document.pageCount()==5);
+            check(document.pageCount()==5 && document.metadata().length==0);
             text=document.text(0); check(text.text().equals("A") && text.ranges.length==2 && text.ranges[0]==0 && text.ranges[1]==1 && text.quads.length==8);
             bitmap=document.render(0,1); check(bitmap.width==12 && bitmap.height==12 && bitmap.stride==48 && bitmap.channels==4 && bitmap.pixels.length==576);
             try { document.render(3,1); throw new AssertionError(); } catch(EXReaderException e) { check(e.code==5 && !e.getMessage().isEmpty()); }
             document.close(); document.close();
             try { document.pageCount(); throw new AssertionError(); } catch(IllegalStateException expected) { }
+            try { document.metadata(); throw new AssertionError(); } catch(IllegalStateException expected) { }
         }
         check(bitmap.pixels[3]==(byte)255 && text.utf8[0]==65); // Snapshots outlive native handles.
         try(EXReader.Pdf semantic=new EXReader.Pdf(Files.readAllBytes(root.resolve("fixed-pages/pdf-public-text.pdf")))) {
@@ -29,6 +30,15 @@ public final class Smoke {
             check(page.utf8.length==14 && page.text().indexOf(0)>=0 && page.text().contains("一") && page.text().contains("😀") && page.flags.length==8);
             check(page.ranges[2]==1 && page.ranges[3]==3 && page.ranges[6]==6 && page.ranges[7]==7);
         }
+        String head="<r:RDF xmlns:r='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><r:Description xmlns:dc='http://purl.org/dc/elements/1.1/'>";
+        String tail="</r:Description></r:RDF>";
+        byte[] packet=(head+"<dc:title>中文😀</dc:title><dc:creator><r:Seq><r:li>Alice</r:li><r:li>Bob</r:li></r:Seq></dc:creator>"+tail).getBytes(StandardCharsets.UTF_8);
+        EXReader.MetadataEntry[] metadata=EXReader.readXMP(packet); Arrays.fill(packet,(byte)0);
+        check(metadata.length==3 && metadata[0].key.equals("http://purl.org/dc/terms/title") && metadata[0].value.equals("中文😀") && metadata[1].value.equals("Alice") && metadata[2].value.equals("Bob"));
+        StringBuilder many=new StringBuilder(head); for(int i=0;i<4096;i++) many.append("<dc:subject>词😀</dc:subject>"); many.append(tail);
+        check(EXReader.readXMP(many.toString().getBytes(StandardCharsets.UTF_8)).length==4096);
+        try { EXReader.readXMP("<bad/>".getBytes(StandardCharsets.UTF_8)); throw new AssertionError(); } catch(EXReaderException e) { check(e.code==5); }
+        try { EXReader.readXMP(new byte[0]); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
         byte[] font=Files.readAllBytes(root.resolve("fonts/collection.ttc"));
         try(EXReader.Pdf fallback=new EXReader.Pdf(pdf,font,1)) {
             Arrays.fill(font,(byte)0); Arrays.fill(pdf,(byte)0);
@@ -47,6 +57,6 @@ public final class Smoke {
         Files.delete(chinese);
         try { new EXReader.Wave("bad\0name"); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
         try { new EXReader.Wave("bad\ud800name"); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
-        System.out.println("JNI SDK: PDF text/render/font ownership, Unicode paths and WAVE samples passed");
+        System.out.println("JNI SDK: PDF text/render/font ownership, Unicode paths, owned multilingual metadata and WAVE samples passed");
     }
 }
