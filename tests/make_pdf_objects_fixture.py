@@ -280,3 +280,40 @@ for number in range(2,132):
     deep[number]=b'<< /Type /Pages /Count 1 /Kids ['+str(number+1).encode()+b' 0 R]'+(b' /Parent '+str(number-1).encode()+b' 0 R' if number>2 else b'')+b' >>'
 deep[132]=b'<< /Type /Page /Parent 131 0 R /MediaBox [0 0 1 1] >>'
 pdf('pdf-pages-bad-depth.pdf',values=deep)
+
+
+# PDF font dictionaries, owned text maps and declared glyph metrics.
+def compressed_stream(data,extra=b''):
+    encoded=zlib.compress(data)
+    return b'<< /Length '+str(len(encoded)).encode()+b' /Filter /Fl '+extra+b' >>\nstream\n'+encoded+b'\nendstream'
+cmap_prefix=b'begincmap /CMapType 2 def 1 begincodespacerange '
+simple_map=cmap_prefix+b'<00> <ff> endcodespacerange 3 beginbfchar <41> <0041> <42> <00660069> <43> <4E00> endbfchar endcmap'
+cid_map=cmap_prefix+b'<0000> <ffff> endcodespacerange 2 beginbfchar <0001> <0041> <0002> <D83DDE00> endbfchar 1 beginbfrange <000a> <000c> <0061> endbfrange endcmap'
+font_objects={
+ 1:b'<< /Type /Catalog /Fonts << /Simple 2 0 R /Composite 3 0 R /Vertical 10 0 R /CFF 11 0 R >> >>',
+ 2:b'<< /Type /Font /Subtype /TrueType /BaseFont /ABCDEF+Primary /FirstChar 65 /LastChar 67 /Widths [500 600 700] /FontDescriptor 5 0 R /Encoding << /BaseEncoding /WinAnsiEncoding /Differences [65 /A /B 67 /uni0043] >> /ToUnicode 7 0 R >>',
+ 3:b'<< /Type /Font /Subtype /Type0 /BaseFont /ABCDEF+Primary /Encoding /Identity-H /DescendantFonts [4 0 R] /ToUnicode 6 0 R >>',
+ 4:b'<< /Type /Font /Subtype /CIDFontType2 /BaseFont /Primary /FontDescriptor 5 0 R /DW 900 /DW2 [870 -990] /W [10 12 700 1 [510 520]] /W2 [1 [-1001 250 860 -1002 260 861] 10 12 -900 350 850] /CIDToGIDMap 9 0 R >>',
+ 5:b'<< /Type /FontDescriptor /FontName /Primary /MissingWidth 250 /FontFile2 8 0 R >>',
+ 6:compressed_stream(cid_map),7:compressed_stream(simple_map),8:compressed_stream((root/'fonts'/'primary.ttf').read_bytes()),
+ 9:compressed_stream(b'\0\0\0\3\0\7'),
+ 10:b'<< /Type /Font /Subtype /Type0 /BaseFont /Primary /Encoding /Identity-V /DescendantFonts [4 0 R] /ToUnicode 6 0 R >>',
+ 11:b'<< /Type /Font /Subtype /Type0 /Encoding /Identity-H /DescendantFonts [12 0 R] >>',
+ 12:b'<< /Type /Font /Subtype /CIDFontType0 /DW 1000 >>'
+}
+pdf('pdf-fonts.pdf',values=font_objects)
+font_bad=[('width-short',2,font_objects[2].replace(b'[500 600 700]',b'[500 600]')),('width-extra',2,font_objects[2].replace(b'[500 600 700]',b'[500 600 700 800]')),
+ ('first-char',2,font_objects[2].replace(b'/FirstChar 65',b'/FirstChar -1')),('differences',2,font_objects[2].replace(b'[65 /A /B 67 /uni0043]',b'[/A]')),
+ ('encoding',3,font_objects[3].replace(b'/Identity-H',b'/Other-Encoding')),('descendants',3,font_objects[3].replace(b'[4 0 R]',b'[4 0 R 4 0 R]')),
+ ('w-overlap',4,font_objects[4].replace(b'[10 12 700 1 [510 520]]',b'[1 3 700 2 [510 520]]')),
+ ('w-truncated',4,font_objects[4].replace(b'[10 12 700 1 [510 520]]',b'[1 3]')),
+ ('w-range',4,font_objects[4].replace(b'[10 12 700 1 [510 520]]',b'[65535 [1 2]]')),
+ ('w-type',4,font_objects[4].replace(b'[10 12 700 1 [510 520]]',b'[1 [/bad]]')),
+ ('w2-truncated',4,font_objects[4].replace(b'[1 [-1001 250 860 -1002 260 861] 10 12 -900 350 850]',b'[1 [1 2]]')),
+ ('dw2',4,font_objects[4].replace(b'[870 -990]',b'[870]')),
+ ('cid-map',9,compressed_stream(b'odd')),
+ ('program-type',5,font_objects[5].replace(b'/FontFile2',b'/FontFile')),
+ ('program-duplicate',5,font_objects[5].replace(b'/FontFile2 8 0 R',b'/FontFile2 8 0 R /FontFile3 8 0 R')),
+ ('subtype',2,font_objects[2].replace(b'/TrueType',b'/Type3')),
+ ('width-missing',2,font_objects[2].replace(b'/Widths [500 600 700]',b''))]
+for name,number,value in font_bad: pdf('pdf-font-bad-'+name+'.pdf',values={**font_objects,number:value})
