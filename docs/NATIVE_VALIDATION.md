@@ -902,3 +902,19 @@ constructor rejection, glyph-only acceptance, absent Unicode coverage, source/fo
 and exact RGBA raster equality for identical glyph IDs. Existing font/fallback suites pass.
 
 The 0.48 commit 9a35ebb passed all six platform and sanitizer CI jobs.
+
+
+## 0.50 native vector scan conversion
+
+A format-neutral private C raster primitive fills closed edge contours using nonzero/even-odd
+rules, four vertical subpixel samples and exact horizontal span coverage. It supports gray or
+straight RGBA targets and matching 8-bit clip masks. Half-open edge activation and grouped
+crossings handle shared vertices and winding holes. Input/bitmap/edge/work budgets are bounded;
+the work counter is shared across calls and cancellation is checked per row. No external path
+renderer is used. Curve flattening, strokes and display-list/PDF integration remain pending.
+
+`native-vector` checks integer/fractional rectangles, opposite/same-winding holes, even-odd
+fill, shared triangle edges, clip opacity, cancellation, aliasing and work/input limits.
+The shared raster pixel helper retains exact opaque-target arithmetic and adds correct
+straight-alpha source-over for transparent targets, including very low destination alpha.
+Existing positioned/image/PNG suites pass. The 0.49 commit 47c50b9 passed all six CI jobs.

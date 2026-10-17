@@ -1,21 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "layout_internal.h"
+#include "pixels_internal.h"
 #include FT_SYNTHESIS_H
 #include FT_TRUETYPE_TABLES_H
 #include FT_OUTLINE_H
-static void pixel(exr_bitmap *b, int x, int y, uint32_t color, unsigned coverage) {
-  unsigned alpha = (color & 255) * coverage / 255;
-  unsigned r = color >> 24, g = (color >> 16) & 255, blue = (color >> 8) & 255;
-  unsigned char *p = b->pixels + (size_t)y * b->stride + (size_t)x * b->channels;
-  if (b->channels == 1) {
-    unsigned gray = (r * 77 + g * 150 + blue * 29 + 128) >> 8;
-    *p = (unsigned char)((*p * (255 - alpha) + gray * alpha + 127) / 255);
-  } else {
-    p[0] = (unsigned char)((p[0] * (255 - alpha) + r * alpha + 127) / 255);
-    p[1] = (unsigned char)((p[1] * (255 - alpha) + g * alpha + 127) / 255);
-    p[2] = (unsigned char)((p[2] * (255 - alpha) + blue * alpha + 127) / 255);
-  }
-}
 static void rectangle(exr_bitmap *b, float x, float y, float w, float h, uint32_t color) {
   int left = (int)fmaxf(0, floorf(x)), top = (int)fmaxf(0, floorf(y));
   int right = (int)fminf((float)b->width, ceilf(x + w)),
@@ -25,7 +13,7 @@ static void rectangle(exr_bitmap *b, float x, float y, float w, float h, uint32_
     return;
   for (yy = top; yy < bottom; yy++)
     for (xx = left; xx < right; xx++)
-      pixel(b, xx, yy, color, 255);
+      exr_pixel(b, xx, yy, color, 255);
 }
 static void decoration(exr_bitmap *out,const exr_glyph *g,const exr_glyph *next,FT_Face face) {
   float thickness=fmaxf(1,fminf(g->size/6,(float)FT_MulFix(face->underline_thickness,face->size->metrics.y_scale)/64));
@@ -86,7 +74,7 @@ static exr_status picture(exr_bitmap *out, const exr_box *box, const exr_bitmap 
       for (channel = 0; channel < 3; channel++)
         color = (color << 8) | (uint32_t)lroundf(colors[channel] / alpha);
       color = (color << 8) | (uint32_t)lroundf(alpha);
-      pixel(out, x, y, color, 255);
+      exr_pixel(out, x, y, color, 255);
     }
   }
   return EXR_OK;
@@ -133,7 +121,7 @@ static exr_status draw_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,c
     if(slot->bitmap.pixel_mode==FT_PIXEL_MODE_GRAY) a=row[bx];
     else if(slot->bitmap.pixel_mode==FT_PIXEL_MODE_MONO) a=(row[bx/8]&(0x80>>(bx%8))) ? 255 : 0;
     else continue;
-    pixel(out,x,y,g->color,a);
+    exr_pixel(out,x,y,g->color,a);
   }
   if(g->flags&EXR_DECORATIONS) decoration(out,g,next,face);
   return EXR_OK;
