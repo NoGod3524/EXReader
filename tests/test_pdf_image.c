@@ -56,10 +56,34 @@ static void affine(void) {
   matrix[0]=4; matrix[1]=matrix[2]=0; matrix[3]=4; matrix[4]=0; memset(target,0,sizeof(target));
   OK(exr_vector_image(&dst,&src,matrix,1,1,NULL,NULL,NULL,&error)); CHECK(target[1*4]==0 && target[1*4+2]==255 && target[1*4+3]>0);
 }
+static void jpeg_cases(const char *dir) {
+  const char *bad[]={"dimensions","channels","not-jpeg","truncated","color-transform","middle"};
+  unsigned char *data; size_t size,i; exr_pdf_file *file=NULL; exr_bitmap b;
+  data=load(dir,"pdf-jpeg.pdf",&size); OK(exr_pdf_open(data,size,&file,&error));
+  for(i=0;i<3;i++) {
+    const char *names[]={"Baseline","Progressive","Wrapped"}; b=decode(file,names[i]); CHECK(b.width==16 && b.height==16);
+    CHECK(b.pixels[0]>250 && b.pixels[1]<5 && b.pixels[2]<5 && b.pixels[3]==255);
+    CHECK(b.pixels[15*4]<5 && b.pixels[15*4+1]>250); free(b.pixels);
+  }
+  b=decode(file,"Gray"); CHECK(b.width==8 && b.height==8); pixel(&b,0,0,64,64,64,255); free(b.pixels);
+  b=decode(file,"Inverted"); pixel(&b,0,0,191,191,191,255); free(b.pixels);
+  b=render(file,"4 0 0 4 0 0 cm /Baseline Do"); CHECK(b.pixels[3*b.stride]>250 && b.pixels[3*b.stride+1]<5 && b.pixels[0]<5 && b.pixels[2]>250); free(b.pixels);
+  { const unsigned char *plain,*wrapped,*again; size_t n,m,repeat; exr_pdf_stream_codec codec; uint32_t parameters;
+    OK(exr_pdf_image_payload(file,image(file,"Baseline"),&plain,&n,&codec,&parameters,&error)); CHECK(codec==EXR_PDF_STREAM_JPEG);
+    OK(exr_pdf_image_payload(file,image(file,"Wrapped"),&wrapped,&m,&codec,&parameters,&error)); CHECK(codec==EXR_PDF_STREAM_JPEG && n==m && !memcmp(plain,wrapped,n));
+    OK(exr_pdf_image_payload(file,image(file,"Wrapped"),&again,&repeat,&codec,&parameters,&error)); CHECK(again==wrapped && repeat==m);
+    CHECK(exr_pdf_stream_data(file,image(file,"Wrapped"),&again,&repeat,&error)==EXR_FORMAT && !again && !repeat);
+  }
+  exr_pdf_close(file); free(data);
+  for(i=0;i<sizeof(bad)/sizeof(*bad);i++) {
+    char name[128]; int interp=1; snprintf(name,sizeof(name),"pdf-jpeg-bad-%s.pdf",bad[i]); data=load(dir,name,&size); OK(exr_pdf_open(data,size,&file,&error));
+    CHECK(exr_pdf_image_decode(file,image(file,"Baseline"),resources(file),0,&b,&interp,NULL,NULL,&error)==EXR_FORMAT && !b.pixels && !interp); exr_pdf_close(file); free(data);
+  }
+}
 int main(int argc,char **argv) {
   const char *bad[]={"short","extra","bits","decode-short","decode-extra","space","mask","soft","stencil-space","stencil-bits","stencil-decode","interpolate","zero"};
   size_t size,i; unsigned char *data; exr_pdf_file *file=NULL;
-  CHECK(argc==2); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
+  CHECK(argc==2); jpeg_cases(argv[1]); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
   { exr_control control={0}; exr_bitmap b; int interp=1; size_t work=(size_t)256*1024*1024; control.cancelled=cancel;
     CHECK(exr_pdf_image_decode(file,image(file,"RGB"),resources(file),0,&b,&interp,NULL,&control,&error)==EXR_CANCELLED && !b.pixels && !interp);
     CHECK(exr_pdf_image_decode(file,image(file,"RGB"),resources(file),0,&b,&interp,&work,NULL,&error)==EXR_LIMIT && !b.pixels);

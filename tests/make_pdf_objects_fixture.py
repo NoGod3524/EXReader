@@ -429,3 +429,25 @@ for name,value in [
  ('interpolate',image_stream(bytes([0]),1,1,b'/DeviceGray',extra=b'/Interpolate 1')),
  ('zero',image_stream(bytes([0]),0,1,b'/DeviceGray')),
 ]: pdf('pdf-image-bad-'+name+'.pdf',values={**image_objects,2:value})
+
+
+# Terminal DCT bytes, lossless prefixes and baseline/progressive/gray images.
+import base64
+jpeg_objects={1:b'<< /Type /Catalog /Resources << /XObject << /Baseline 2 0 R /Progressive 3 0 R /Gray 4 0 R /Wrapped 5 0 R /Inverted 6 0 R >> >> >>'}
+def jpeg_stream(data,width=16,height=16,space=b'/DeviceRGB',filters=b'/DCTDecode',extra=b''):
+    return b'<< /Type /XObject /Subtype /Image /Width '+str(width).encode()+b' /Height '+str(height).encode()+b' /BitsPerComponent 8 /ColorSpace '+space+b' /Filter '+filters+b' /Length '+str(len(data)).encode()+b' '+extra+b' >>\nstream\n'+data+b'\nendstream'
+baseline=(root/'pdf-images'/'baseline.jpg').read_bytes()
+jpeg_objects[2]=jpeg_stream(baseline)
+jpeg_objects[3]=jpeg_stream((root/'pdf-images'/'progressive.jpg').read_bytes())
+jpeg_objects[4]=jpeg_stream((root/'pdf-images'/'gray.jpg').read_bytes(),8,8,b'/DeviceGray')
+jpeg_objects[5]=jpeg_stream(base64.a85encode(baseline)+b'~>',filters=b'[/ASCII85Decode /DCTDecode]',extra=b'/DecodeParms [null null]')
+jpeg_objects[6]=jpeg_stream((root/'pdf-images'/'gray.jpg').read_bytes(),8,8,b'/DeviceGray',extra=b'/Decode [1 0]')
+pdf('pdf-jpeg.pdf',values=jpeg_objects)
+for name,value in [
+ ('dimensions',jpeg_stream(baseline,15,16)),
+ ('channels',jpeg_stream(baseline,16,16,b'/DeviceGray')),
+ ('not-jpeg',jpeg_stream(b'not a JPEG')),
+ ('truncated',jpeg_stream(baseline[:100])),
+ ('color-transform',jpeg_stream(baseline,extra=b'/DecodeParms << /ColorTransform 0 >>')),
+ ('middle',jpeg_stream(baseline,filters=b'[/DCTDecode /FlateDecode]')),
+]: pdf('pdf-jpeg-bad-'+name+'.pdf',values={**jpeg_objects,2:value})

@@ -5,7 +5,7 @@
 #define PDF_MAX_VALUES EXR_PDF_MAX_VALUES
 #define PDF_MAX_STRINGS ((size_t)32*1024*1024)
 typedef struct { size_t offset; uint32_t value,revision; unsigned generation,type,state,seen; uint32_t compressed_index; } pdf_xref;
-typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; } pdf_stream;
+typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; exr_pdf_stream_codec codec; uint32_t parameters; } pdf_stream;
 struct exr_pdf_file {
   const unsigned char *data; size_t size,work,decoded_bytes,decode_work,declared_size,index_bytes;
   exr_pdf_value *values; size_t value_count,value_capacity;
@@ -256,7 +256,7 @@ static uint32_t indirect(parser *p,uint32_t object,unsigned generation) {
     if(!exr_grow((void **)&f->streams,&f->stream_capacity,f->stream_count+1,sizeof(*f->streams))) {
       failed(f,EXR_MEMORY,"PDF stream allocation failed"); return EXR_PDF_NONE;
     }
-    index=f->stream_count++; f->streams[index]=(pdf_stream){start,(size_t)length,NULL,0,id,0,NULL,NULL,0,0};
+    index=f->stream_count++; f->streams[index]=(pdf_stream){.offset=start,.size=(size_t)length,.dict=id,.parameters=EXR_PDF_NONE};
     f->values[id].kind=EXR_PDF_STREAM; f->values[id].u.ref.object=(uint32_t)index;
   }
   if(!word(p,"endobj")) goto bad;
@@ -677,16 +677,26 @@ static int undo_predictor(exr_pdf_file *f,uint32_t parameters,pdf_output *out) {
 bad:
   return failed(f,EXR_FORMAT,"Invalid PDF predictor or row parameters");
 }
-exr_status exr_pdf_stream_data(exr_pdf_file *f,uint32_t id,const unsigned char **data,size_t *size,exr_error *e) {
+static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char **data,size_t *size,
+                                   int allow_image,exr_pdf_stream_codec *codec,uint32_t *tail_parameters,exr_error *e) {
   uint32_t filter,parameters,filters[16],parms[16],at; size_t index,count=0,n=0,i; pdf_stream source;
+  exr_pdf_stream_codec terminal=EXR_PDF_STREAM_RAW; uint32_t terminal_parameters=EXR_PDF_NONE;
   const unsigned char *input; size_t input_size; pdf_output current={0};
   if(data) *data=NULL;
   if(size) *size=0;
+  if(codec) *codec=EXR_PDF_STREAM_RAW;
+  if(tail_parameters) *tail_parameters=EXR_PDF_NONE;
   if(!f || !data || !size) return exr_fail(e,EXR_ARGUMENT,"Missing PDF stream inputs/outputs");
   id=resolve(f,id);
   if(id==EXR_PDF_NONE || f->values[id].kind!=EXR_PDF_STREAM) { failed(f,EXR_FORMAT,"PDF value is not a stream"); return result(f,e); }
   index=f->values[id].u.ref.object; source=f->streams[index];
-  if(source.ready) { *data=source.decoded ? source.decoded : f->data+source.offset; *size=source.decoded_size; return result(f,e); }
+  if(source.ready) {
+    if(source.codec!=EXR_PDF_STREAM_RAW && !allow_image) goto unsupported;
+    *data=source.decoded ? source.decoded : f->data+source.offset; *size=source.decoded_size;
+    if(codec) *codec=source.codec;
+    if(tail_parameters) *tail_parameters=source.parameters;
+    return result(f,e);
+  }
   filter=resolve(f,exr_pdf_get(f,id,"Filter")); parameters=resolve(f,exr_pdf_get(f,id,"DecodeParms"));
   for(i=0;i<16;i++) parms[i]=EXR_PDF_NONE;
   if(filter!=EXR_PDF_NONE && f->values[filter].kind!=EXR_PDF_NULL) {
@@ -715,6 +725,10 @@ exr_status exr_pdf_stream_data(exr_pdf_file *f,uint32_t id,const unsigned char *
     pdf_output output={0}; int ok=0,is_flate=name_is(f,filters[i],"FlateDecode") || name_is(f,filters[i],"Fl");
     int is_lzw=name_is(f,filters[i],"LZWDecode") || name_is(f,filters[i],"LZW");
     if(parms[i]!=EXR_PDF_NONE && f->values[parms[i]].kind!=EXR_PDF_NULL && f->values[parms[i]].kind!=EXR_PDF_DICT) goto unsupported;
+    if(allow_image && (name_is(f,filters[i],"DCTDecode") || name_is(f,filters[i],"DCT"))) {
+      if(i+1!=count) goto unsupported;
+      terminal=EXR_PDF_STREAM_JPEG; terminal_parameters=parms[i]; break;
+    }
     if(!decode_work(f,input_size)) goto done;
     if(is_flate) ok=decode_flate(f,input,input_size,&output,current.capacity);
     else if(is_lzw) {
@@ -733,12 +747,29 @@ exr_status exr_pdf_stream_data(exr_pdf_file *f,uint32_t id,const unsigned char *
   if(f->error.code!=EXR_OK) goto done;
   if(current.capacity>EXR_MAX_INPUT-f->decoded_bytes) { failed(f,EXR_LIMIT,"PDF decoded stream cache budget exceeded"); goto done; }
   f->streams[index].decoded=current.data; f->streams[index].decoded_size=input_size; f->streams[index].ready=1;
+  f->streams[index].codec=terminal; f->streams[index].parameters=terminal_parameters;
   f->decoded_bytes+=current.capacity; *data=current.data ? current.data : f->data+source.offset; *size=input_size;
+  if(codec) *codec=terminal;
+  if(tail_parameters) *tail_parameters=terminal_parameters;
   return result(f,e);
 unsupported:
   failed(f,EXR_FORMAT,"PDF stream filter or parameter shape is not implemented");
 done:
   free(current.data); return result(f,e);
+}
+exr_status exr_pdf_stream_data(exr_pdf_file *f,uint32_t id,const unsigned char **data,size_t *size,exr_error *e) {
+  return stream_payload(f,id,data,size,0,NULL,NULL,e);
+}
+exr_status exr_pdf_image_payload(exr_pdf_file *f,uint32_t id,const unsigned char **data,size_t *size,
+                                  exr_pdf_stream_codec *codec,uint32_t *parameters,exr_error *e) {
+  if(!codec || !parameters) {
+    if(data) *data=NULL;
+    if(size) *size=0;
+    if(codec) *codec=EXR_PDF_STREAM_RAW;
+    if(parameters) *parameters=EXR_PDF_NONE;
+    return exr_fail(e,EXR_ARGUMENT,"Missing PDF image payload codec/parameters");
+  }
+  return stream_payload(f,id,data,size,1,codec,parameters,e);
 }
 /* Content operands reuse the object lexer in a short-lived arena. */
 exr_status exr_pdf_syntax_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,

@@ -1102,3 +1102,26 @@ RGB/CMYK/16-bit gray, stencil tint/transparent bits, nested Form aliases, image
 orientation and clip pixels, rotation, interpolation, alpha, transparent-neighbor
 fringes, malformed dictionaries/data, cancellation and exhausted work. The 0.57
 commit d3435f9 passed all six CI jobs.
+
+
+## 0.59 Terminal JPEG filters and PDF JPEG rendering
+
+The stream layer can explicitly preserve a final DCT codec after decoding its
+lossless prefixes. Cached entries retain the codec/parameter IDs; the ordinary
+stream API still rejects encoded image tails, including already cached ones.
+A DCT filter in the middle of a pipeline fails. Raw/object/content decoding
+retains its previous contract and limits.
+
+The image backend checks JPEG SOF dimensions, precision and component count
+against the PDF dictionary, then uses the existing bounded stb_image decoder
+for baseline/progressive RGB and grayscale JPEGs. Decode maps, affine painting,
+alpha and clips use the same path as raw samples. Original quadrant/gray fixtures
+cover bare/wrapped JPEGs, cache identity, inverted gray and real page pixels.
+Mismatch, truncation, non-JPEG bytes, explicit unsupported ColorTransform overrides
+and invalid pipeline order fail without exposing output. CMYK JPEG, explicit
+ColorTransform overrides and other image codecs remain pending. The shared image
+helper now also supplies an error diagnostic on final pixel allocation failure.
+
+The source image generator requires Pillow only during development; builds use
+committed original bytes. No decoder dependency was added. The 0.58 commit
+b536469 passed all six CI jobs.

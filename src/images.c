@@ -98,7 +98,7 @@ exr_status exr_image_decode(const void *data, size_t n, exr_bitmap *out, exr_err
   out->pixels = malloc((size_t)w * (size_t)h * 4);
   if (!out->pixels) {
     stbi_image_free(pixels);
-    return EXR_MEMORY;
+    return exr_fail(e, EXR_MEMORY, "Image pixel allocation failed");
   }
   memcpy(out->pixels, pixels, (size_t)w * (size_t)h * 4);
   stbi_image_free(pixels);
