@@ -1670,3 +1670,18 @@ passes availability/open checks and still opens a TXT document. Release DLL size
 for this local compiler configuration are 4,073,866 bytes enabled and 3,810,969
 bytes disabled; these are binary-size observations, not open/RSS benchmarks.
 The 0.91 7dc8d8a CI passed all six jobs.
+
+
+## 0.93 Atomic streaming source replacement
+
+The callback provider recycles and poisons its previous part buffer before loading
+the next part, exercising borrowed-input lifetime without retaining all chapters.
+Tests confirm all parts commit together while newly opened independent WAL readers
+continue seeing the old complete source. Reentry into the writer is rejected.
+Duplicate IDs, provider failure/error detail, invalid found flags, oversized text,
+invalid UTF-8, missing bytes and cancellation at final progress preserve the old
+source; empty replacement clears only its selected source. Active queries prevent
+replacement before any provider calls. The installed SDK's new search example
+loads one EPUB chapter at a time and streams matches; all eleven C consumers build
+independently, and the search host returned 20 bounded matches from layout.epub.
+All 70 local Windows suites pass. The 0.92 891f818 CI passed all six jobs.
