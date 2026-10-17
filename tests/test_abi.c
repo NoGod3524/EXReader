@@ -1,0 +1,25 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+#include "exreader.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+static exr_error error; static unsigned checks;
+#define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
+typedef struct {
+  size_t struct_size; const char *title; const exr_fixed_page *pages; size_t page_count;
+  exr_fixed_draw_fn draw; void *context; exr_context_release_fn release;
+} old_fixed_input;
+_Static_assert(sizeof(old_fixed_input)==offsetof(exr_fixed_input,text),"Original input prefix must retain its layout");
+static exr_status draw(void *context,size_t page,const double matrix[6],const exr_draw_sink *sink,const exr_control *control,exr_error *e) {
+  (void)context; (void)page; (void)matrix; (void)sink; (void)control; (void)e; return EXR_OK;
+}
+int main(void) {
+  old_fixed_input input={0}; exr_fixed_page page={0}; exr_fixed_document *d=NULL; const exr_fixed_page *pages; size_t count;
+  CHECK(exr_abi_version()==EXR_ABI_VERSION && EXR_ABI_VERSION==1); CHECK(!strcmp(exr_version(),EXR_VERSION));
+  page.id="original"; page.geometry.bounds[2]=100; page.geometry.bounds[3]=80; page.geometry.unit_scale=1;
+  input.struct_size=sizeof(input); input.title="Prefix consumer"; input.pages=&page; input.page_count=1; input.draw=draw;
+  CHECK(exr_fixed_create((const exr_fixed_input *)&input,&d,&error)==EXR_OK);
+  pages=exr_fixed_pages(d,&count); CHECK(count==1 && !strcmp(pages[0].id,"original") && !strcmp(exr_fixed_title(d),input.title));
+  { exr_fixed_text *text=(exr_fixed_text *)(uintptr_t)1; CHECK(exr_fixed_load_text(d,0,NULL,&text,&error)==EXR_FORMAT && !text); }
+  exr_fixed_free(d); printf("%u ABI compatibility checks passed\n",checks); return 0;
+}

@@ -1,0 +1,76 @@
+# EXReader SDK compatibility
+
+ABI epoch **1** starts with **0.91.0**. `EXR_ABI_VERSION` identifies the header's epoch;
+`exr_abi_version()` identifies the loaded library's epoch. `EXR_VERSION` and
+`exr_version()` identify the release. Epoch 1 does not retroactively classify older
+SDK binaries that did not export the ABI query.
+
+## Binary contract
+
+Within one epoch, existing exported C symbols, calling conventions, enum numeric
+values, public record sizes/alignment/member offsets, callback signatures and
+ownership contracts remain compatible on the same operating system, architecture
+and compiler ABI. Removing symbols or changing those layouts requires a new epoch.
+Adding functions does not. A host using new functions also requires the release
+that first provides them; an epoch alone does not imply that every later symbol
+exists in an older library.
+
+Use the platform's normal C calling convention, natural structure alignment and
+normal enum representation. Do not compile the public header under packing or
+short-enum options. C++ callers use the header's `extern "C"` declarations and keep
+exceptions inside their own callbacks. `size_t` and pointers are native-width;
+public structs are not an on-disk or network serialization format.
+
+Existing array-element records cannot gain fields within an epoch, including
+fields appended at the end: that would change their stride for older callers.
+New array layouts require new types and entry points. Inputs explicitly carrying
+`struct_size` may grow by preserving the original prefix. Zero-initialize them,
+set the size of the header's actual type and leave unused fields zero. A library
+rejects unsupported nonzero extensions instead of silently interpreting them.
+The original fixed-provider prefix remains a tested consumer even though later
+headers append the optional text callback.
+
+## Ownership and execution
+
+Opaque handles are released with their matching `*_free`/close function. Allocated
+arrays and nested records use their documented typed free routine. Plain returned
+allocations use `exr_free`; never free SDK allocations through a host CRT. Borrowed
+views expire with their owning handle. Copy a view when it must outlive its owner.
+The API documentation specifies retained font, publication/archive and layout
+relationships; those rules are part of the contract.
+
+The engine invokes callbacks synchronously and creates no worker threads. Serialize
+calls and lifetime changes for a shared mutable handle or shared archive graph.
+Callbacks must not free/reenter the active object. Independent object graphs can
+run independently. The atomic unique-import operation additionally protects its
+lookup/insert transaction; it does not establish unrestricted thread safety for
+all book-library operations.
+
+UTF-8 byte offsets in normalized text, raw XML UTF-16 CFI offsets and fixed-page
+coordinates are distinct units. Persist portable selectors/CFIs rather than raw
+public structs. Rendering and normalization algorithms may improve across releases;
+an ABI epoch describes the binary contract, not pixel-identical output. SQLite
+schema versions and supported input-format subsets are tracked separately.
+
+## CMake consumers
+
+An installed SDK contains a relocatable config package:
+
+```cmake
+find_package(EXReader 0.91 CONFIG REQUIRED)
+target_link_libraries(my_host PRIVATE EXReader::exreader)
+```
+
+Set `CMAKE_PREFIX_PATH` or `EXReader_DIR` to the selected platform SDK. The imported
+target carries its include path and actual platform import/shared-library path;
+FreeType, Expat, miniz, SQLite and image decoder build directories are not required
+by the consumer. `EXReader_VERSION` and `EXReader_ABI_VERSION` describe that package.
+The host bundles the corresponding shared library using its platform's loader
+rules. Keep SDK/runtime releases paired unless the host deliberately checks its
+required release and ABI at startup.
+
+`examples/compat.c` compares package, header and loaded runtime values. All installed
+host examples now use the imported target; desktop CI configures, builds and runs
+them independently from the engine source build. Windows copies the installed DLL
+next to the examples. Swift and JNI remain separate optional adapters over the
+same C contract.

@@ -28,11 +28,15 @@ jobs:
         run: |
           cmake -S stage/examples -B build/sdk-example -DEXR_SDK="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release
           cmake --build build/sdk-example --config Release --parallel 4
+          cmake -S tests/sdk_cpp -B build/sdk-cpp -DEXR_SDK="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/sdk-cpp --config Release --parallel 4
       - name: Run the installed Windows SDK
         if: runner.os == 'Windows'
         run: |
           ./stage/bin/exreader-render.exe tests/fixtures/sample.txt C:/Windows/Fonts/arial.ttf stage-page.png
           ./build/sdk-example/Release/exreader-construct-example.exe C:/Windows/Fonts/arial.ttf host-page.png
+          ./build/sdk-cpp/Release/exreader-cpp-test.exe
+          ./build/sdk-example/Release/exreader-compat-example.exe
           ./build/sdk-example/Release/exreader-anchor-example.exe
           ./build/sdk-example/Release/exreader-shaping-example.exe stage/examples/shaping-fonts/shaping.ttf
           ./build/sdk-example/Release/exreader-fixed-example.exe stage/examples/fixed-pages/pdf-public.pdf fixed-host-page.png
@@ -59,6 +63,8 @@ jobs:
         run: |
           ./stage/bin/exreader-render tests/fixtures/sample.txt /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf stage-page.png
           ./build/sdk-example/exreader-construct-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf host-page.png
+          ./build/sdk-cpp/exreader-cpp-test
+          ./build/sdk-example/exreader-compat-example
           ./build/sdk-example/exreader-anchor-example
           ./build/sdk-example/exreader-shaping-example stage/examples/shaping-fonts/shaping.ttf
           ./build/sdk-example/exreader-fixed-example stage/examples/fixed-pages/pdf-public.pdf fixed-host-page.png
@@ -74,6 +80,8 @@ jobs:
         run: |
           ./stage/bin/exreader-render tests/fixtures/sample.txt /System/Library/Fonts/Supplemental/Arial.ttf stage-page.png
           ./build/sdk-example/exreader-construct-example /System/Library/Fonts/Supplemental/Arial.ttf host-page.png
+          ./build/sdk-cpp/exreader-cpp-test
+          ./build/sdk-example/exreader-compat-example
           ./build/sdk-example/exreader-anchor-example
           ./build/sdk-example/exreader-shaping-example stage/examples/shaping-fonts/shaping.ttf
           ./build/sdk-example/exreader-fixed-example stage/examples/fixed-pages/pdf-public.pdf fixed-host-page.png

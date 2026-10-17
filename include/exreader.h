@@ -15,7 +15,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.90.0"
+#define EXR_VERSION "0.91.0"
+#define EXR_ABI_VERSION 1u
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -600,6 +601,8 @@ EXR_API exr_status exr_fixed_open(const char *path,const exr_fixed_open_options 
                                    exr_fixed_document **out,exr_error *error);
 /* All input/output strings are UTF-8. Returned views belong to their owner. */
 EXR_API const char *exr_version(void);
+/* Binary layout/calling-contract epoch, independent from release/schema versions. */
+EXR_API uint32_t exr_abi_version(void);
 /* Unicode 17 extended grapheme boundaries plus documented line-break rules.
    Allocates size+1 bytes indexed by UTF-8 byte offset, freed with exr_free().
    Non-boundary/continuation bytes are zero; end is GRAPHEME|LINE|MANDATORY.
