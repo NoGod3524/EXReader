@@ -849,3 +849,12 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 `exr_publication_cfi_resolve` 先按原 OPF 定位 part，只加载那个章节，再解析内容路径。成功返回 part、独立文档和文档内 point；文档用 document_free 释放，可比 publication 活得更久。其他章节的 XHTML 损坏不会阻止访问正常目标；失败或取消返回 document=NULL、part/point.node/point.offset=SIZE_MAX。
 
 操作不创建 session、不预排版、不加入常驻缓存。内置 EPUB 提供者以外的宿主出版物返回 EXR_FORMAT，可继续使用通用局部路径接口。与 publication_load 一样拒绝重入；输入输出的 XML 文本位置仍使用原始 DOM / UTF-16 约定。
+
+
+## EPUB CFI 选区范围（0.89）
+
+`exr_document_cfi_range_create` / range_resolve 使用标准 `epubcfi(P,S,E)` 三段形式，支持同一文本块、元素与跨 spine 章节范围；共同路径按完整步骤提取，不按数字字符串的前几个字符截断。`exr_cfi_range` 分别保存起止 chapter 与原始 DOM point，零长度范围可用，端点不得指定 side bias。
+
+解析在完成两端 ID 修正后，重新生成规范路径并按 CFI 的自然数字顺序验证起点不晚于终点。偏移 2 正确位于 10 之前；旧索引表面倒置但 ID 修正后顺序正确的范围可恢复。断言内转义逗号不分割范围。错误或取消清空全部端点。
+
+完整文档和按需出版物的单点 resolve 现在按规范取范围的起点；它们只处理起点的语义目标，不验证另一端是否存在。需要两端有效性与顺序检查时使用 range_resolve，该接口目前要求完整 EPUB 文档。原始文本 UTF-16 单元、未折叠空白和章节作用域规则保持一致。文本位置断言、额外文档嵌入、时间和空间偏移仍待实现。

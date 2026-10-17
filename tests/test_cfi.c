@@ -70,12 +70,41 @@ static void full_fixtures(const char *dir) {
     exr_document_free(d);
   }
 }
+static void range_roundtrip(exr_document *d,exr_cfi_range input) {
+  exr_cfi_range output; char *a=NULL,*b=NULL; size_t chapter; exr_cfi_point first;
+  OK(exr_document_cfi_range_create(d,&input,NULL,&a,&error)); CHECK(a);
+  OK(exr_document_cfi_range_resolve(d,a,NULL,&output,&error)); CHECK(output.start_chapter==input.start_chapter && output.end_chapter==input.end_chapter);
+  OK(exr_document_cfi_range_create(d,&output,NULL,&b,&error)); CHECK(!strcmp(a,b));
+  OK(exr_document_cfi_resolve(d,a,NULL,&chapter,&first,&error)); CHECK(chapter==output.start_chapter && first.node==output.start.node && first.offset==output.start.offset);
+  exr_free(a); exr_free(b);
+}
+static void escaped_range(void) {
+  exr_document *input=custom(0),*doc=NULL; void *zip=NULL; size_t size,count,i; const exr_node *nodes; exr_cfi_range range;
+  OK(exr_document_export_epub(input,NULL,&zip,&size,&error)); OK(exr_document_open_memory(EXR_EPUB,zip,size,&doc,&error)); exr_free(zip); exr_document_free(input);
+  nodes=exr_document_nodes(doc,&count); for(i=0;i<count;i++) if(nodes[i].kind==EXR_NODE_TEXT && nodes[i].text && !strcmp(nodes[i].text,"A😀B")) break; CHECK(i<count);
+  range=(exr_cfi_range){0,0,{i,1,0},{i,3,0}}; range_roundtrip(doc,range); exr_document_free(doc);
+}
+static void range_tests(exr_document *d) {
+  const exr_node *nodes; size_t count,i,a=SIZE_MAX,b=SIZE_MAX; exr_cfi_range range,out; char *cfi=NULL; exr_control control={0};
+  nodes=exr_document_nodes(d,&count); for(i=0;i<count;i++) if(nodes[i].kind==EXR_NODE_TEXT) { if(nodes[i].chapter==0 && a==SIZE_MAX) a=i; if(nodes[i].chapter==1 && b==SIZE_MAX) b=i; }
+  CHECK(a!=SIZE_MAX && b!=SIZE_MAX); range=(exr_cfi_range){0,0,{a,2,0},{a,10,0}}; range_roundtrip(d,range);
+  OK(exr_document_cfi_range_create(d,&range,NULL,&cfi,&error)); CHECK(!strcmp(cfi,"epubcfi(/10[sp]/4[s1]!/4[b]/2[p]/1,:2,:10)")); exr_free(cfi);
+  range.end.offset=2; range_roundtrip(d,range); range.end=(exr_cfi_point){b,3,0}; range.end_chapter=1; range_roundtrip(d,range);
+  { exr_cfi_point temp=range.start; range.start=range.end; range.end=temp; range.start_chapter=1; range.end_chapter=0; CHECK(exr_document_cfi_range_create(d,&range,NULL,&cfi,&error)==EXR_ARGUMENT && !cfi); }
+  range=(exr_cfi_range){0,0,{a,10,0},{a,2,0}}; CHECK(exr_document_cfi_range_create(d,&range,NULL,&cfi,&error)==EXR_ARGUMENT && !cfi);
+  range=(exr_cfi_range){0,0,{a,1,1},{a,2,0}}; CHECK(exr_document_cfi_range_create(d,&range,NULL,&cfi,&error)==EXR_ARGUMENT && !cfi);
+  OK(exr_document_cfi_range_resolve(d,"epubcfi(/10[sp],/6[s1]!/4[b]/2[p]/1:2,/4[s2]!/4[b]/2[p]/1:10)",NULL,&out,&error)); CHECK(out.start_chapter==0 && out.end_chapter==1);
+  { const char *bad[]={"epubcfi(/10[sp]/4[s1]!/4[b]/2[p]/1,:10,:2)","epubcfi(/10/4!/4/2/1:0,:1,:2)","epubcfi(/10/4!/4/2/1,:1[;s=b],:2)","epubcfi(,/10/4!/4,/10/6!/4)","epubcfi(/10/4!/4/2/1,:1,:2,:3)","epubcfi(/10/4!/4/2/1,:1)","epubcfi(/10/4!/4/2/1:1)"};
+    for(i=0;i<sizeof(bad)/sizeof(*bad);i++) CHECK(exr_document_cfi_range_resolve(d,bad[i],NULL,&out,&error)==EXR_FORMAT && out.start_chapter==SIZE_MAX && out.end_chapter==SIZE_MAX && out.start.node==SIZE_MAX && out.end.node==SIZE_MAX);
+  }
+  control.cancelled=cancel; CHECK(exr_document_cfi_range_resolve(d,"epubcfi(/10/4!/4/2/1,:0,:1)",&control,&out,&error)==EXR_CANCELLED && out.start.node==SIZE_MAX);
+}
 static void full_custom(void) {
   const char *container="<container><rootfiles><rootfile full-path='OPS/book.opf'/></rootfiles></container>";
   const char *opf="<package xmlns='http://www.idpf.org/2007/opf'><metadata/><extra/><manifest><item id='a' href='a.xhtml' media-type='application/xhtml+xml'/><item id='aux' href='aux.xhtml' media-type='application/xhtml+xml'/></manifest><more/><spine id='sp'><extension/><itemref id='s1' idref='a'/><itemref id='s2' idref='a' linear='no'/></spine></package>";
-  const char *html="<html xmlns='http://www.w3.org/1999/xhtml'><head/><body id='b'><p id='p'>A😀B</p></body></html>";
+  const char *html="<html xmlns='http://www.w3.org/1999/xhtml'><head/><body id='b'><p id='p'>A😀B0123456789</p></body></html>";
   mz_zip_archive zip={0}; void *archive=NULL; size_t size=0,i,count,mapped; exr_document *d=NULL; const exr_node *nodes; exr_cfi_point point,out; char *cfi=NULL; exr_control control={0};
-  const char *bad[]={"epubcfi(/10[sp]/4[s1]!/4[b]/2[p]/1:99)","epubcfi(/10/4[missing]!/4)","epubcfi(/10[sp]/4[s1; s=b]!/4)","epubcfi(/10[sp]/4[s1][;s=b]!/4)","epubcfi(/10/4[;s=b]!/4)","epubcfi(/6/2!/4)","epubcfi(/10/4!/4!/2)","epubcfi(/10/4!/4,/2,/4)","epubcfi(/10/4/1!/4)","epubcfi(/10/4/0!/4)","epubcfi(/10/4)","#epubcfi(/10/4!/4)"};
+  const char *bad[]={"epubcfi(/10[sp]/4[s1]!/4[b]/2[p]/1:99)","epubcfi(/10/4[missing]!/4)","epubcfi(/10[sp]/4[s1; s=b]!/4)","epubcfi(/10[sp]/4[s1][;s=b]!/4)","epubcfi(/10/4[;s=b]!/4)","epubcfi(/6/2!/4)","epubcfi(/10/4!/4!/2)","epubcfi(/10/4/1!/4)","epubcfi(/10/4/0!/4)","epubcfi(/10/4)","#epubcfi(/10/4!/4)"};
   CHECK(mz_zip_writer_init_heap(&zip,0,0)); CHECK(mz_zip_writer_add_mem(&zip,"META-INF/container.xml",container,strlen(container),0)); CHECK(mz_zip_writer_add_mem(&zip,"OPS/book.opf",opf,strlen(opf),0)); CHECK(mz_zip_writer_add_mem(&zip,"OPS/a.xhtml",html,strlen(html),0)); CHECK(mz_zip_writer_add_mem(&zip,"OPS/aux.xhtml",html,strlen(html),0)); CHECK(mz_zip_writer_finalize_heap_archive(&zip,&archive,&size)); mz_zip_writer_end(&zip);
   OK(exr_document_open_memory(EXR_EPUB,archive,size,&d,&error));
   { exr_publication *publication=NULL; exr_document *part=NULL; size_t nc;
@@ -90,7 +119,7 @@ static void full_custom(void) {
     }
     exr_document_free(part);
   }
-  mz_free(archive); nodes=exr_document_nodes(d,&count);
+  mz_free(archive); range_tests(d); nodes=exr_document_nodes(d,&count);
   for(i=0;i<count;i++) if(nodes[i].chapter==0 && nodes[i].kind==EXR_NODE_TEXT) break; CHECK(i<count); point=(exr_cfi_point){i,2,0};
   OK(exr_document_cfi_create(d,0,&point,NULL,&cfi,&error)); CHECK(!strcmp(cfi,"epubcfi(/10[sp]/4[s1]!/4[b]/2[p]/1:2)")); exr_free(cfi);
   OK(exr_document_cfi_resolve(d,"epubcfi(/6[sp]/2[s2]!/4[b]/2[p]/1:2)",NULL,&mapped,&out,&error)); CHECK(mapped==1 && nodes[out.node].chapter==1 && out.offset==2);
@@ -119,6 +148,7 @@ static void lazy_cfi(void) {
   OK(exr_publication_cfi_create(p,0,a,&point,NULL,&cfi,&error));
   attempt.publication=p; control.progress=reenter; control.context=&attempt;
   OK(exr_publication_cfi_resolve(p,cfi,&control,&part,&out,&result,&error)); CHECK(attempt.attempted && attempt.nested==EXR_ARGUMENT && part==0 && result.offset==3 && result.side==2); exr_document_free(out);
+  OK(exr_publication_cfi_resolve(p,"epubcfi(/6,/2!/4/2/1:1,/4!/4/2/1:2)",NULL,&part,&out,&result,&error)); CHECK(part==0 && result.offset==1); exr_document_free(out);
   CHECK(exr_publication_cfi_resolve(p,"epubcfi(/6/4!/4)",NULL,&part,&out,&result,&error)==EXR_FORMAT && !out && part==SIZE_MAX && result.node==SIZE_MAX);
   OK(exr_publication_open_memory(EXR_EPUB,bytes,n,&other,&error)); mz_free(bytes); OK(exr_publication_load(other,0,&foreign,&error));
   { char *invalid=NULL; CHECK(exr_publication_cfi_create(p,0,foreign,&point,NULL,&invalid,&error)==EXR_ARGUMENT && !invalid); }
@@ -152,5 +182,5 @@ int main(int argc,char **argv) {
   { char *large=malloc(65538); CHECK(large); memset(large,'/',65537); large[65537]=0; CHECK(exr_document_cfi_path_resolve(d,0,large,NULL,&out,&error)==EXR_LIMIT && out.node==SIZE_MAX); free(large); }
   CHECK(exr_document_cfi_path_resolve(d,1,"/4",NULL,&out,&error)==EXR_ARGUMENT && out.node==SIZE_MAX);
   CHECK(exr_document_cfi_path_create(d,0,NULL,NULL,&path,&error)==EXR_ARGUMENT && !path);
-  exr_document_free(d); fixtures(argv[1]); full_fixtures(argv[1]); full_custom(); lazy_cfi(); printf("%u chapter CFI checks passed\n",checks); return 0;
+  exr_document_free(d); fixtures(argv[1]); full_fixtures(argv[1]); full_custom(); lazy_cfi(); escaped_range(); printf("%u chapter CFI checks passed\n",checks); return 0;
 }

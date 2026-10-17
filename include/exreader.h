@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.88.0"
+#define EXR_VERSION "0.89.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -676,11 +676,19 @@ EXR_API exr_status exr_document_cfi_path_resolve(const exr_document *doc,size_t 
                                                  const exr_control *control,exr_cfi_point *point,exr_error *error);
 /* Full point CFI through the original package spine. Requires a complete EPUB
    document retaining its archive; auxiliary non-spine chapters are rejected.
-   Raw epubcfi(...) strings only; no URI percent decoding. Failure clears output. */
+   Raw epubcfi(...) strings only; no URI percent decoding. Range input resolves
+   to its start; use range_resolve to validate/obtain both ends. Failure clears output. */
 EXR_API exr_status exr_document_cfi_create(const exr_document *doc,size_t chapter,const exr_cfi_point *point,
                                            const exr_control *control,char **cfi,exr_error *error);
 EXR_API exr_status exr_document_cfi_resolve(const exr_document *doc,const char *cfi,const exr_control *control,
                                             size_t *chapter,exr_cfi_point *point,exr_error *error);
+/* EPUB CFI simple range across one or more spine chapters. Endpoint side bias
+   must be unspecified; the standard implies after-start/before-end attachment. */
+typedef struct { size_t start_chapter,end_chapter; exr_cfi_point start,end; } exr_cfi_range;
+EXR_API exr_status exr_document_cfi_range_create(const exr_document *doc,const exr_cfi_range *range,
+                                                 const exr_control *control,char **cfi,exr_error *error);
+EXR_API exr_status exr_document_cfi_range_resolve(const exr_document *doc,const char *cfi,const exr_control *control,
+                                                  exr_cfi_range *range,exr_error *error);
 /* Structure-preserving EPUB: serializes the tree and copies all declared resources.
    Chapter paths, attributes and resource bytes are retained. Missing resources,
    non-XML names and conflicting/reserved paths fail atomically. No network access.
