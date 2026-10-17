@@ -370,3 +370,24 @@ graphics[17]=compressed_stream(b'1 0 0 rg 1 1 6 6 re f 0 0 1 rg 2 2 2 2 re f')
 graphics[19]=b'<< /Font << /Simple 2 0 R /Composite 3 0 R >> /ColorSpace << /RgbAlias /DeviceRGB /Unsupported [/Lab << /WhitePoint [1 1 1] >>] >> /XObject << /Image 13 0 R /Filled 30 0 R >> /ExtGState << /A << /LW 2 /LC 2 /LJ 2 /ML 3 /D [[2 1] 0] /CA 0.25 /ca 0.5 >> /Blend << /BM /Multiply >> /Soft << /SMask << >> >> /G << /Font [3 0 R 20] >> >> >>'
 graphics[30]=compressed_stream(b'1 0 0 rg -10 -10 30 30 re f',b'/Subtype /Form /BBox [0 0 2 2] /Matrix [1 0 0 1 2 3] /Resources << >>')
 pdf('pdf-graphics.pdf',values=graphics)
+
+
+# Original embedded TrueType, name-free, symbolic, cubic and CID-keyed programs.
+outline_fonts={1:b'<< /Type /Catalog /Resources << /Font << /Names 2 0 R /Unicode 3 0 R /Symbol 4 0 R /Cubic 5 0 R /CID 6 0 R /GlyphOnly 7 0 R >> >> >>'}
+for obj,filename in ((2,'pdf-names.ttf'),(3,'pdf-unicode.ttf'),(4,'pdf-symbol.ttf'),(5,'pdf-cubic.otf')):
+    program_id,descriptor_id=20+obj,30+obj
+    subtype=b'Type1' if obj==5 else b'TrueType'
+    fontfile=b'FontFile3' if obj==5 else b'FontFile2'
+    outline_fonts[obj]=b'<< /Subtype /'+subtype+b' /BaseFont /EXRPDFTest /FirstChar 32 /LastChar 81 /Widths ['+b' '.join([b'500']*50)+b'] /Encoding << /BaseEncoding /WinAnsiEncoding /Differences [65 /fi] >> /ToUnicode 40 0 R /FontDescriptor '+str(descriptor_id).encode()+b' 0 R >>'
+    outline_fonts[descriptor_id]=b'<< /Flags '+(b'4' if obj==4 else b'32')+b' /'+fontfile+b' '+str(program_id).encode()+b' 0 R >>'
+    outline_fonts[program_id]=compressed_stream((root/'fonts'/filename).read_bytes(),b'/Subtype /OpenType' if obj==5 else b'')
+outline_fonts[6]=b'<< /Subtype /Type0 /Encoding /Identity-H /DescendantFonts [8 0 R] >>'
+outline_fonts[8]=b'<< /Subtype /CIDFontType0 /FontDescriptor 9 0 R >>'
+outline_fonts[9]=b'<< /FontFile3 10 0 R >>'
+outline_fonts[10]=compressed_stream((root/'fonts'/'pdf-cid.otf').read_bytes(),b'/Subtype /OpenType')
+outline_fonts[7]=b'<< /Subtype /Type0 /Encoding /Identity-H /DescendantFonts [11 0 R] >>'
+outline_fonts[11]=b'<< /Subtype /CIDFontType2 /FontDescriptor 12 0 R >>'
+outline_fonts[12]=b'<< /FontFile2 13 0 R >>'
+outline_fonts[13]=compressed_stream((root/'fonts'/'glyph-only.ttf').read_bytes())
+outline_fonts[40]=compressed_stream(simple_map)
+pdf('pdf-outlines.pdf',values=outline_fonts)
