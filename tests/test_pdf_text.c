@@ -14,10 +14,35 @@ static capture run(exr_pdf_file *file,uint32_t resources,const char *content) {
   capture out={0}; OK(exr_pdf_text_ops(file,resources,content,strlen(content),collect,&out,NULL,&error)); return out;
 }
 static void position(const capture *out,size_t index,double x,double y) { CHECK(index<out->count); NEAR(out->glyphs[index].transform[4],x); NEAR(out->glyphs[index].transform[5],y); }
+static void forms(const char *dir) {
+  const char *invalid[]={"cycle","pop","open","save","matrix","box","type","resources","depth"}; size_t i;
+  for(i=0;i<=sizeof(invalid)/sizeof(*invalid);i++) {
+    char path[4096]; FILE *input; unsigned char *data; long length; exr_pdf_file *file=NULL; uint32_t resources; capture out={0};
+    if(!i) snprintf(path,sizeof(path),"%s/pdf-text-forms.pdf",dir);
+    else snprintf(path,sizeof(path),"%s/pdf-form-bad-%s.pdf",dir,invalid[i-1]);
+    input=fopen(path,"rb"); CHECK(input && !fseek(input,0,SEEK_END)); length=ftell(input); CHECK(length>0); rewind(input); data=malloc((size_t)length);
+    CHECK(data && fread(data,1,(size_t)length,input)==(size_t)length); fclose(input); OK(exr_pdf_open(data,(size_t)length,&file,&error));
+    OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
+    if(!i) {
+      out=run(file,resources,"q 2 0 0 2 100 200 cm /Outer Do Q /Inner Do /Inherit Do /Local Do BT /Simple 10 Tf (C) Tj ET");
+      CHECK(out.count==5); position(&out,0,130,254); NEAR(out.glyphs[0].transform[0],.04); NEAR(out.glyphs[0].transform[3],.06);
+      position(&out,1,5,7); position(&out,2,0,0); CHECK(out.glyphs[2].character.text.size==2);
+      position(&out,3,0,0); NEAR(out.glyphs[3].transform[1],.01); NEAR(out.glyphs[3].transform[2],-.01);
+      position(&out,4,0,0); CHECK(out.glyphs[4].character.text.code==67);
+      out=run(file,resources,"/G gs /Inherit Do BT <0001> Tj ET"); CHECK(out.count==2 && out.glyphs[1].character.glyph==3); NEAR(out.glyphs[1].transform[0],.02);
+      out=run(file,resources,"/Inner Do /Inner Do"); CHECK(out.count==2); position(&out,0,5,7); position(&out,1,5,7);
+      out=run(file,resources,"/Form Do"); CHECK(!out.count);
+    } else {
+      const char content[]="q /Outer Do Q"; exr_status expected=!strcmp(invalid[i-1],"depth") ? EXR_LIMIT : EXR_FORMAT;
+      CHECK(exr_pdf_text_ops(file,resources,content,sizeof(content)-1,collect,&out,NULL,&error)==expected);
+    }
+    exr_pdf_close(file); free(data);
+  }
+}
 int main(int argc,char **argv) {
   char path[4096]; FILE *input; long length; unsigned char *data; exr_pdf_file *file=NULL; uint32_t resources; capture out; size_t i;
-  const char *bad[]={"Q","q","BT","ET","BT BT ET ET","BT (A) Tj ET","BT /Missing 10 Tf (A) Tj ET","BT /Simple /Size Tf ET","BT /Simple 10 Tf 2 3 Td 1 Tm ET","BT 8 Tr ET","BT /Simple 10 Tf [true] TJ ET","/Form Do","BI ID x EI","Unknown","BX","EX","1 cm","BT /Composite 10 Tf <00> Tj ET"};
-  CHECK(argc==2); snprintf(path,sizeof(path),"%s/pdf-fonts.pdf",argv[1]); input=fopen(path,"rb"); CHECK(input);
+  const char *bad[]={"Q","q","BT","ET","BT BT ET ET","BT (A) Tj ET","BT /Missing 10 Tf (A) Tj ET","BT /Simple /Size Tf ET","BT /Simple 10 Tf 2 3 Td 1 Tm ET","BT 8 Tr ET","BT /Simple 10 Tf [true] TJ ET","/MissingForm Do","BI ID x EI","Unknown","BX","EX","1 cm","BT /Composite 10 Tf <00> Tj ET"};
+  CHECK(argc==2); forms(argv[1]); snprintf(path,sizeof(path),"%s/pdf-fonts.pdf",argv[1]); input=fopen(path,"rb"); CHECK(input);
   CHECK(!fseek(input,0,SEEK_END)); length=ftell(input); CHECK(length>0); rewind(input); data=malloc((size_t)length);
   CHECK(data && fread(data,1,(size_t)length,input)==(size_t)length); fclose(input); OK(exr_pdf_open(data,(size_t)length,&file,&error));
   OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error)); CHECK(resources!=EXR_PDF_NONE);

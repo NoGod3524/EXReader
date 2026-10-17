@@ -8,7 +8,8 @@ typedef struct { uint32_t id; exr_pdf_font *font; } cached_font;
 typedef struct {
   exr_pdf_file *file; uint32_t resources; const exr_control *control;
   exr_pdf_text_fn glyph; void *context;
-  text_state state,stack[128]; size_t depth,sequence,font_count,font_bytes;
+  text_state state,stack[128]; size_t depth,floor,sequence,font_count,font_bytes,operations,form_depth;
+  uint32_t forms[32];
   double matrix[6],line[6]; unsigned inside,compatibility;
   cached_font fonts[128];
 } text_reader;
@@ -72,10 +73,63 @@ static int new_line(text_reader *r,double x,double y) {
   if(!translate(r->line,x,y)) return 0;
   memcpy(r->matrix,r->line,sizeof(r->matrix)); return 1;
 }
+static exr_status text_operation(void *context,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,exr_error *error);
+static exr_status form(text_reader *r,uint32_t id,exr_error *error) {
+  text_state saved=r->state; double matrix[6],saved_matrix[6],saved_line[6];
+  uint32_t saved_resources=r->resources,value,at; size_t saved_floor=r->floor,saved_depth=r->depth,i,n;
+  unsigned saved_inside=r->inside,saved_compatibility=r->compatibility;
+  const exr_pdf_value *v; const unsigned char *data; exr_status status=EXR_OK;
+  if(r->inside) return exr_fail(error,EXR_FORMAT,"PDF Form invoked inside a text object");
+  if(r->form_depth==32) return exr_fail(error,EXR_LIMIT,"PDF Form depth exceeds 32");
+  for(i=0;i<r->form_depth;i++) if(r->forms[i]==id) return exr_fail(error,EXR_FORMAT,"Cyclic PDF Form invocation");
+  v=exr_pdf_value_at(r->file,id);
+  if(!v || v->kind!=EXR_PDF_STREAM) return exr_fail(error,EXR_FORMAT,"PDF Form is not a stream");
+  if(resolved(r->file,exr_pdf_get(r->file,id,"FormType"),&value,error)!=EXR_OK) return error->code;
+  if(value!=EXR_PDF_NONE && exr_pdf_value_at(r->file,value)->kind!=EXR_PDF_NULL) { v=exr_pdf_value_at(r->file,value); if(v->kind!=EXR_PDF_INT || v->u.integer!=1) goto invalid; }
+  if(resolved(r->file,exr_pdf_get(r->file,id,"BBox"),&value,error)!=EXR_OK) return error->code;
+  v=exr_pdf_value_at(r->file,value); if(!v || v->kind!=EXR_PDF_ARRAY) goto invalid;
+  at=v->first;
+  for(i=0;i<4;i++) {
+    uint32_t number; double coordinate;
+    if(at==EXR_PDF_NONE || resolved(r->file,at,&number,error)!=EXR_OK || !numeric(r->file,number,&coordinate)) goto invalid;
+    at=exr_pdf_value_at(r->file,at)->next;
+  }
+  if(at!=EXR_PDF_NONE) goto invalid;
+  identity(matrix);
+  if(resolved(r->file,exr_pdf_get(r->file,id,"Matrix"),&value,error)!=EXR_OK) return error->code;
+  if(value!=EXR_PDF_NONE && exr_pdf_value_at(r->file,value)->kind!=EXR_PDF_NULL) {
+    v=exr_pdf_value_at(r->file,value); if(v->kind!=EXR_PDF_ARRAY) goto invalid; at=v->first;
+    for(i=0;i<6;i++) {
+      uint32_t number;
+      if(at==EXR_PDF_NONE || resolved(r->file,at,&number,error)!=EXR_OK || !numeric(r->file,number,&matrix[i])) goto invalid;
+      at=exr_pdf_value_at(r->file,at)->next;
+    }
+    if(at!=EXR_PDF_NONE) goto invalid;
+  }
+  if(resolved(r->file,exr_pdf_get(r->file,id,"Resources"),&value,error)!=EXR_OK) return error->code;
+  if(value!=EXR_PDF_NONE && exr_pdf_value_at(r->file,value)->kind!=EXR_PDF_NULL) {
+    if(exr_pdf_value_at(r->file,value)->kind!=EXR_PDF_DICT) goto invalid;
+    r->resources=value;
+  }
+  if(exr_pdf_stream_data(r->file,id,&data,&n,error)!=EXR_OK) { r->resources=saved_resources; return error->code; }
+  memcpy(saved_matrix,r->matrix,sizeof(saved_matrix)); memcpy(saved_line,r->line,sizeof(saved_line));
+  if(!multiply(r->state.ctm,saved.ctm,matrix)) { r->resources=saved_resources; return exr_fail(error,EXR_LIMIT,"PDF Form transform exceeds coordinate budget"); }
+  r->floor=r->depth; r->inside=0; r->compatibility=0; identity(r->matrix); identity(r->line);
+  r->forms[r->form_depth++]=id;
+  status=exr_pdf_content_ops(data,n,text_operation,r,r->control,error);
+  if(status==EXR_OK && (r->inside || r->depth!=saved_depth || r->compatibility)) status=exr_fail(error,EXR_FORMAT,"Unbalanced PDF Form text/graphics state");
+  r->form_depth--; r->state=saved; r->resources=saved_resources; r->floor=saved_floor; r->depth=saved_depth;
+  r->inside=saved_inside; r->compatibility=saved_compatibility;
+  memcpy(r->matrix,saved_matrix,sizeof(saved_matrix)); memcpy(r->line,saved_line,sizeof(saved_line)); return status;
+invalid:
+  if(error->code!=EXR_OK) return error->code;
+  return exr_fail(error,EXR_FORMAT,"Invalid PDF Form type, bounding box, matrix or resources");
+}
 static exr_status text_operation(void *context,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,exr_error *error) {
   text_reader *r=context; double numbers[6]; size_t i; uint32_t id;
+  if(++r->operations>1048576) return exr_fail(error,EXR_LIMIT,"PDF text/Form operation budget exceeded");
   if(!strcmp(name,"q")) { if(count) goto invalid; if(r->depth==128) goto limit; r->stack[r->depth++]=r->state; return EXR_OK; }
-  if(!strcmp(name,"Q")) { if(count || !r->depth) goto invalid; r->state=r->stack[--r->depth]; return EXR_OK; }
+  if(!strcmp(name,"Q")) { if(count || r->depth==r->floor) goto invalid; r->state=r->stack[--r->depth]; return EXR_OK; }
   if(!strcmp(name,"BT")) { if(count || r->inside) goto invalid; r->inside=1; identity(r->matrix); identity(r->line); return EXR_OK; }
   if(!strcmp(name,"ET")) { if(count || !r->inside) goto invalid; r->inside=0; return EXR_OK; }
   if(!strcmp(name,"BX")) { if(count) goto invalid; if(r->compatibility==128) goto limit; r->compatibility++; return EXR_OK; }
@@ -100,11 +154,12 @@ static exr_status text_operation(void *context,exr_pdf_file *arena,const char *n
   }
   if(!strcmp(name,"Do")) {
     uint32_t subtype; size_t n; const unsigned char *type;
-    if(count!=1 || resource(r,arena,values[0],"XObject",&id,error)!=EXR_OK) goto invalid;
+    if(r->inside || count!=1 || resource(r,arena,values[0],"XObject",&id,error)!=EXR_OK) goto invalid;
     if(resolved(r->file,exr_pdf_get(r->file,id,"Subtype"),&subtype,error)!=EXR_OK) return error->code;
     type=exr_pdf_bytes(r->file,subtype,&n);
     if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==5 && !memcmp(type,"Image",5)) return EXR_OK;
-    return exr_fail(error,EXR_FORMAT,"PDF Form text execution is not implemented yet");
+    if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==4 && !memcmp(type,"Form",4)) return form(r,id,error);
+    return exr_fail(error,EXR_FORMAT,"Unsupported PDF text XObject subtype");
   }
   if(!strcmp(name,"Tf")) {
     if(!r->inside || count!=2 || !numeric(arena,values[1],&numbers[0])) goto invalid;

@@ -868,3 +868,21 @@ stack/coordinate limits and a 129-font cache admission case. Manual verification
 all 194 pages of RFC 9110 and emits 450,578 glyph records with 456,338 UTF-8 bytes. This verifies
 content-order glyph geometry/Unicode, not reading-order reconstruction or visual rendering.
 Public PDF opening remains unconnected. The 0.46 commit 3255a25 passed all six CI jobs.
+
+
+## 0.48 recursive PDF Form text
+
+The text walker now executes Form XObjects with Matrix composition, local/inherited Resources,
+implicit graphics-state restoration, isolated text/line matrices and protected q/Q stack floors.
+A Form cannot consume its caller's saved state. Active-path cycle detection permits repeated
+reuse while rejecting recursion; nesting is bounded to 32 Forms and all nested streams share
+one operation/glyph/font-cache budget. FormType/BBox/Matrix/Resources and balanced nested
+states are validated. Image XObjects remain skipped by this text-only walker. BBox clipping,
+transparency, vector drawing and ActualText are still outside this geometry stage.
+
+Original fixtures check nested/local/inherited font resources, combined affine transforms,
+repeated reuse, parent font/matrix restoration, empty Forms, cycles, illegal caller-stack pops,
+unbalanced nested states, invalid dictionaries and depth exhaustion. Public PDF opening and
+raster rendering remain pending.
+
+The 0.47 commit 325a7f0 passed all six platform and sanitizer CI jobs.
