@@ -171,7 +171,7 @@ exr_status exr_library_import(exr_library *l, exr_format format, const void *dat
   sqlite3_stmt *s = NULL;
   exr_document *d = NULL; exr_fixed_document *fixed=NULL; size_t extent=0;
   exr_metadata_entry *metadata=NULL; size_t metadata_count=0,i;
-  const char *source_title="",*source_author="";
+  const char *source_title="",*source_author=""; exr_buffer authors={0};
   exr_status result;
   void *cover=NULL; size_t cover_size=0;
   if (!l || !id)
@@ -181,14 +181,17 @@ exr_status exr_library_import(exr_library *l, exr_format format, const void *dat
     result=exr_fixed_open_memory(format,data,n,NULL,&fixed,e);
     if(result==EXR_OK) { exr_fixed_pages(fixed,&extent); result=exr_fixed_load_metadata(fixed,NULL,&metadata,&metadata_count,e); }
     if(result==EXR_OK) for(i=0;i<metadata_count;i++) {
-      if(!strcmp(metadata[i].key,"http://purl.org/dc/terms/title")) source_title=metadata[i].value;
-      if(!strcmp(metadata[i].key,"http://purl.org/dc/terms/creator")) source_author=metadata[i].value;
+      if(!strcmp(metadata[i].key,"http://purl.org/dc/terms/title") && !source_title[0]) source_title=metadata[i].value;
+      if(!strcmp(metadata[i].key,"http://purl.org/dc/terms/creator") && metadata[i].value[0]) {
+        if((authors.size && !exr_append(&authors,"; ",2)) || !exr_append(&authors,metadata[i].value,strlen(metadata[i].value))) { result=exr_fail(e,EXR_MEMORY,"Book author allocation failed"); goto cleanup; }
+      }
     }
   } else {
     result=exr_document_open_memory(format,data,n,&d,e);
     if(result==EXR_OK) { extent=d->size; source_title=exr_document_title(d); result=import_cover(d,&cover,&cover_size,e); }
   }
   if(result!=EXR_OK) goto cleanup;
+  if(authors.data) source_author=authors.data;
   if (!prepare(l, "INSERT INTO books(format,title,text_size,source,cover,author)VALUES(?1,?2,?3,?4,?5,?6)", &s)) {
     result=database_error(l,e); goto cleanup;
   }
@@ -204,7 +207,7 @@ exr_status exr_library_import(exr_library *l, exr_format format, const void *dat
   if (result == EXR_OK)
     *id = sqlite3_last_insert_rowid(l->db);
 cleanup:
-  exr_metadata_free(metadata,metadata_count); free(cover); exr_document_free(d); exr_fixed_free(fixed);
+  free(authors.data); exr_metadata_free(metadata,metadata_count); free(cover); exr_document_free(d); exr_fixed_free(fixed);
   return result;
 }
 /* ponytail: exact-byte scan, bounded by stored sources of the same size/format.

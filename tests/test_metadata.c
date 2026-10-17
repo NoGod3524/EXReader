@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <miniz.h>
 static exr_error error; static unsigned checks;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -31,6 +32,59 @@ static void stream_xref(void) {
 static const char *value(exr_metadata_entry *entries,size_t count,const char *key) { size_t i; for(i=0;i<count;i++) if(!strcmp(entries[i].key,key)) return entries[i].value; return NULL; }
 #define TITLE "http://purl.org/dc/terms/title"
 #define AUTHOR "http://purl.org/dc/terms/creator"
+static int cancel(void *context);
+static void stop(void *context,exr_stage stage,uint64_t done,uint64_t total);
+#define XMP_HEAD "<x:xmpmeta xmlns:x='adobe:ns:meta/'><r:RDF xmlns:r='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><r:Description r:about='' xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:v='urn:custom:' "
+#define XMP_BODY ">"
+#define XMP_END "</r:Description></r:RDF></x:xmpmeta>"
+static void xmp_packet_data(const void *packet,size_t packet_size,const char *filter) {
+  char head[512]; size_t xref;
+  build("<< /Title (Info title) /Author (Info author) /Producer (Info tool) >>");
+  object(7,"<< /Type /Catalog /Pages 2 0 R /Metadata 8 0 R >>");
+  offsets[8]=length; snprintf(head,sizeof(head),"8 0 obj\n<< /Type /Metadata /Subtype /XML %s /Length %zu >>\nstream\n",filter,packet_size); add(head); CHECK(packet_size<sizeof(pdf)-length); memcpy(pdf+length,packet,packet_size); length+=packet_size; add("\nendstream\nendobj\n");
+  xref=length; snprintf(head,sizeof(head),"xref\n7 2\n%010zu 00000 n \n%010zu 00000 n \ntrailer\n<< /Size 9 /Root 7 0 R /Prev %zu >>\nstartxref\n%zu\n%%%%EOF\n",offsets[7],offsets[8],previous,xref); add(head);
+}
+static void xmp_packet(const char *packet) { xmp_packet_data(packet,strlen(packet),""); }
+static void xmp(void) {
+  const char packet[]=XMP_HEAD "v:attribute='Attribute &amp; value'" XMP_BODY
+    "<dc:title><r:Alt><r:li xml:lang='fr'>French title</r:li><r:li xml:lang='x-default'>Default title</r:li><r:li xml:lang='en'>English title</r:li></r:Alt></dc:title>"
+    "<dc:creator><r:Seq><r:li>Alice</r:li><r:li>Bob</r:li></r:Seq></dc:creator>"
+    "<dc:subject><r:Bag><r:li>One</r:li><r:li>One</r:li></r:Bag></dc:subject>"
+    "<dc:rights><r:Alt><r:li xml:lang='en'>First rights</r:li><r:li xml:lang='fr'>Other rights</r:li></r:Alt></dc:rights>"
+    "<v:empty/><v:literal>Literal &#x4e2d;</v:literal>"
+    "<v:structured><r:Seq><r:li>Must be discarded</r:li><r:li r:parseType='Resource'><v:field>nested</v:field></r:li></r:Seq></v:structured>"
+    XMP_END;
+  exr_metadata_entry *entries=NULL; size_t n,i,creators=0,subjects=0; exr_fixed_document *d=NULL; exr_bitmap bitmap;
+  exr_control control={0}; int stopped=0; char *large;
+  OK(exr_metadata_read_xmp(packet,sizeof(packet)-1,NULL,&entries,&n,&error)); CHECK(n==9 && !strcmp(value(entries,n,TITLE),"Default title"));
+  CHECK(!strcmp(value(entries,n,"urn:custom:attribute"),"Attribute & value") && !strcmp(value(entries,n,"urn:custom:empty"),"") && !strcmp(value(entries,n,"urn:custom:literal"),"Literal \xe4\xb8\xad"));
+  CHECK(!value(entries,n,"urn:custom:structured") && !strcmp(value(entries,n,"http://purl.org/dc/terms/rights"),"First rights"));
+  for(i=0;i<n;i++) { if(!strcmp(entries[i].key,AUTHOR)) { CHECK(!strcmp(entries[i].value,creators ? "Bob" : "Alice")); creators++; } if(!strcmp(entries[i].key,"http://purl.org/dc/terms/subject")) subjects++; }
+  CHECK(creators==2 && subjects==2); exr_metadata_free(entries,n);
+  xmp_packet(packet); OK(exr_fixed_open_memory(EXR_PDF,pdf,length,NULL,&d,&error)); OK(exr_fixed_load_metadata(d,NULL,&entries,&n,&error)); CHECK(n==10 && !strcmp(value(entries,n,TITLE),"Default title") && !strcmp(value(entries,n,AUTHOR),"Alice") && !strcmp(value(entries,n,"http://ns.adobe.com/pdf/1.3/Producer"),"Info tool")); exr_metadata_free(entries,n); exr_fixed_free(d);
+  { mz_ulong size=mz_compressBound(sizeof(packet)-1); unsigned char *compressed=malloc(size); CHECK(compressed && mz_compress(compressed,&size,(const unsigned char *)packet,sizeof(packet)-1)==MZ_OK);
+    xmp_packet_data(compressed,(size_t)size,"/Filter /FlateDecode"); free(compressed); OK(exr_fixed_open_memory(EXR_PDF,pdf,length,NULL,&d,&error)); OK(exr_fixed_load_metadata(d,NULL,&entries,&n,&error)); CHECK(!strcmp(value(entries,n,TITLE),"Default title")); exr_metadata_free(entries,n); exr_fixed_free(d);
+  }
+  { const char *bad[]={"<bad/>","<x:xmpmeta xmlns:x='adobe:ns:meta/'/>",XMP_HEAD XMP_BODY "<dc:title>broken" XMP_END,
+      "<!DOCTYPE x [<!ENTITY boom 'expanded'>]>" XMP_HEAD XMP_BODY "<dc:title>&boom;</dc:title>" XMP_END,
+      XMP_HEAD XMP_BODY "<dc:title><r:Alt><r:li xml:lang='x-default'>One</r:li><r:li xml:lang='x-default'>Two</r:li></r:Alt></dc:title>" XMP_END,
+      XMP_HEAD XMP_BODY "<dc:title><r:Seq><r:li>One</r:li>mixed</r:Seq></dc:title>" XMP_END,
+      "<r:RDF xmlns:r='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><r:Description r:about='urn:other'/></r:RDF>"};
+    for(i=0;i<sizeof(bad)/sizeof(*bad);i++) CHECK(exr_metadata_read_xmp(bad[i],strlen(bad[i]),NULL,&entries,&n,&error)==EXR_FORMAT && !entries && !n);
+    xmp_packet(bad[2]); OK(exr_fixed_open_memory(EXR_PDF,pdf,length,NULL,&d,&error)); CHECK(exr_fixed_load_metadata(d,NULL,&entries,&n,&error)==EXR_FORMAT && !entries && !n); OK(exr_fixed_render(d,0,1,NULL,&bitmap,&error)); exr_bitmap_free(&bitmap); exr_fixed_free(d);
+  }
+  control.cancelled=cancel; control.progress=stop; control.context=&stopped;
+  CHECK(exr_metadata_read_xmp(packet,sizeof(packet)-1,&control,&entries,&n,&error)==EXR_CANCELLED && !entries && !n); stopped=1;
+  CHECK(exr_metadata_read_xmp(packet,sizeof(packet)-1,&control,&entries,&n,&error)==EXR_CANCELLED && !entries); stopped=0;
+  { const char empty[]="<r:RDF xmlns:r='http://www.w3.org/1999/02/22-rdf-syntax-ns#'/>"; OK(exr_metadata_read_xmp(empty,sizeof(empty)-1,NULL,&entries,&n,&error)); CHECK(!n && !entries); }
+  large=malloc(1024*1024+1); CHECK(large); memset(large,'A',1024*1024+1); CHECK(exr_metadata_read_xmp(large,1024*1024+1,NULL,&entries,&n,&error)==EXR_LIMIT && !entries);
+  { size_t at=(size_t)sprintf(large,XMP_HEAD XMP_BODY "<dc:title>"); memset(large+at,'A',65537); at+=65537; strcpy(large+at,"</dc:title>" XMP_END); CHECK(exr_metadata_read_xmp(large,strlen(large),NULL,&entries,&n,&error)==EXR_LIMIT && !entries); }
+  { size_t at=(size_t)sprintf(large,XMP_HEAD XMP_BODY); for(i=0;i<4097;i++) { memcpy(large+at,"<v:a/>",6); at+=6; } strcpy(large+at,XMP_END); CHECK(exr_metadata_read_xmp(large,strlen(large),NULL,&entries,&n,&error)==EXR_LIMIT && !entries); }
+  { size_t at=(size_t)sprintf(large,XMP_HEAD XMP_BODY); for(i=0;i<65;i++) { memcpy(large+at,"<v:a>",5); at+=5; } for(i=0;i<65;i++) { memcpy(large+at,"</v:a>",6); at+=6; } strcpy(large+at,XMP_END); CHECK(exr_metadata_read_xmp(large,strlen(large),NULL,&entries,&n,&error)==EXR_LIMIT && !entries); }
+  { size_t at=(size_t)sprintf(large,"<r:RDF xmlns:r='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><r:Description xmlns:v='urn:"); memset(large+at,'A',3980); at+=3980; strcpy(large+at,":'>"); at+=3; for(i=0;i<2200;i++) { memcpy(large+at,"<v:a/>",6); at+=6; } strcpy(large+at,"</r:Description></r:RDF>"); CHECK(exr_metadata_read_xmp(large,strlen(large),NULL,&entries,&n,&error)==EXR_LIMIT && !entries); }
+  { unsigned char *utf16=(unsigned char *)large; size_t at=2; utf16[0]=0xff; utf16[1]=0xfe; for(i=0;i<sizeof(packet)-1;i++) { utf16[at++]=(unsigned char)packet[i]; utf16[at++]=0; } OK(exr_metadata_read_xmp(utf16,at,NULL,&entries,&n,&error)); CHECK(n==9 && !strcmp(value(entries,n,TITLE),"Default title")); exr_metadata_free(entries,n); }
+  free(large);
+}
 static void title(const char *expected) {
   exr_fixed_document *d=NULL; exr_metadata_entry *entries=NULL; size_t count;
   OK(exr_fixed_open_memory(EXR_PDF,pdf,length,NULL,&d,&error)); OK(exr_fixed_load_metadata(d,NULL,&entries,&count,&error)); exr_fixed_free(d);
@@ -96,6 +150,9 @@ static void library(const char *path) {
   exr_library *l=NULL; int64_t id; exr_book *books=NULL; size_t count; remove(path);
   build("<< /Title (PDF title) /Author 5 0 R >>"); OK(exr_library_open(path,&l,&error)); OK(exr_library_import(l,EXR_PDF,pdf,length,NULL,&id,&error)); OK(exr_library_books(l,NULL,&books,&count,&error)); CHECK(count==1 && !strcmp(books[0].title,"PDF title") && !strcmp(books[0].author,"An author")); exr_books_free(books,count);
   OK(exr_library_import(l,EXR_PDF,pdf,length,"Host title",&id,&error)); OK(exr_library_books(l,"Host title",&books,&count,&error)); CHECK(count==1 && !strcmp(books[0].title,"Host title") && !strcmp(books[0].author,"An author")); exr_books_free(books,count);
-  build("<< /Title 3 >>"); CHECK(exr_library_import(l,EXR_PDF,pdf,length,NULL,&id,&error)==EXR_FORMAT && !id); OK(exr_library_books(l,NULL,&books,&count,&error)); CHECK(count==2); exr_books_free(books,count); exr_library_close(l); remove(path);
+  build("<< /Title 3 >>"); CHECK(exr_library_import(l,EXR_PDF,pdf,length,NULL,&id,&error)==EXR_FORMAT && !id); OK(exr_library_books(l,NULL,&books,&count,&error)); CHECK(count==2); exr_books_free(books,count);
+  xmp_packet(XMP_HEAD XMP_BODY "<dc:title>XMP book</dc:title><dc:creator><r:Seq><r:li>Alice</r:li><r:li>Bob</r:li></r:Seq></dc:creator>" XMP_END);
+  OK(exr_library_import(l,EXR_PDF,pdf,length,NULL,&id,&error)); OK(exr_library_books(l,"XMP book",&books,&count,&error)); CHECK(count==1 && !strcmp(books[0].author,"Alice; Bob")); exr_books_free(books,count);
+  exr_library_close(l); remove(path);
 }
-int main(int argc,char **argv) { char path[4096]; CHECK(argc==2); snprintf(path,sizeof(path),"%s/metadata-library.sqlite",argv[1]); pdf_metadata(); generic(); library(path); printf("%u metadata checks passed\n",checks); return 0; }
+int main(int argc,char **argv) { char path[4096]; CHECK(argc==2); snprintf(path,sizeof(path),"%s/metadata-library.sqlite",argv[1]); pdf_metadata(); generic(); xmp(); library(path); printf("%u metadata checks passed\n",checks); return 0; }

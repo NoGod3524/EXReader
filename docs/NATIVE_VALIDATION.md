@@ -1742,3 +1742,18 @@ Malformed metadata can fail repeatedly while page rendering still succeeds; fiel
 byte limits and null indirect references are covered. PDF library import obtains
 title/author, preserves host title precedence and creates no row on metadata
 failure. All 74 local Windows suites pass. The 0.96 17a826d CI passed all six jobs.
+
+
+## 0.98 Shared XMP extraction and PDF metadata merge
+
+The metadata suite now parses independent UTF-8/UTF-16 XMP, namespace aliases,
+Description attributes, simple/empty literals, ordered duplicate Seq/Bag values,
+x-default preference and first-language fallback. Structured properties discard
+all partial values. Tests reject malformed XML, DTD/entity declarations, named
+subjects, mixed container text, duplicate defaults, excessive nesting/value count,
+large literals/packets and namespace-expanded aggregate allocation. Cancellation
+at start/final progress clears outputs. PDF fixtures cover both raw and Flate XMP
+streams overriding Info keys while retaining other Info fields; malformed packets
+leave page rendering available. Library import retains XMP title precedence and
+joins multiple authors. All 74 local Windows suites pass. The 0.97 07d952f CI
+passed all six jobs.

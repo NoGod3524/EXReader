@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.97.0"
+#define EXR_VERSION "0.98.0"
 #define EXR_ABI_VERSION 1u
 typedef enum {
   EXR_OK = 0,
@@ -579,6 +579,9 @@ EXR_API void exr_fixed_free(exr_fixed_document *document);
 EXR_API exr_status exr_fixed_load_metadata(exr_fixed_document *document,const exr_control *control,
   exr_metadata_entry **entries,size_t *count,exr_error *error);
 EXR_API void exr_metadata_free(exr_metadata_entry *entries,size_t count);
+/* Read document-subject XMP simple literals, Seq/Bag values and preferred Alt. */
+EXR_API exr_status exr_metadata_read_xmp(const void *data,size_t size,const exr_control *control,
+  exr_metadata_entry **entries,size_t *count,exr_error *error);
 EXR_API const char *exr_fixed_title(const exr_fixed_document *document);
 EXR_API const exr_fixed_page *exr_fixed_pages(const exr_fixed_document *document,size_t *count);
 /* Owned directory/metadata bytes, excluding the provider's own payload. */
