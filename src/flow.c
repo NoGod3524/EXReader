@@ -279,41 +279,30 @@ exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float wi
   b->border_width = s->border_style ? s->border_width : 0;
   return b;
 }
-static exr_status image_asset(flow *f, size_t node, size_t *resource, const exr_bitmap **bitmap) {
-  exr_layout *l = f->assets;
-  size_t target, i, size;
-  void *data = NULL;
-  exr_error ignored = {0};
-  exr_bitmap decoded = {0};
-  exr_status status;
-  const exr_node *n = &f->doc->nodes[node];
-  const char *src = exr_node_attribute(n, "src");
-  *bitmap = NULL;
-  *resource = SIZE_MAX;
-  if (!src)
-    src = exr_node_attribute(n, "http://www.w3.org/1999/xlink|href");
-  if (!src ||
-      exr_document_resolve(f->doc, n->chapter, src, resource, &target, &ignored) != EXR_OK ||
-      *resource == SIZE_MAX)
-    return EXR_OK;
+exr_status exr_layout_image_asset(const exr_document *doc,exr_layout *l,
+                                    const exr_layout_config *config,size_t resource,
+                                    const exr_bitmap **bitmap,exr_error *e) {
+  size_t i,size; void *data=NULL; exr_bitmap decoded={0}; exr_status status;
+  *bitmap=NULL;
+  if(resource>=doc->resource_count) return exr_fail(e,EXR_ARGUMENT,"Invalid image resource");
   for (i = 0; i < l->image_count; i++)
-    if (l->images[i].resource == *resource) {
+    if (l->images[i].resource == resource) {
       *bitmap = &l->images[i].bitmap;
       return EXR_OK;
     }
-  status = exr_document_resource(f->doc, *resource, &data, &size, &ignored);
-  if (status == EXR_OK && f->config->decode_image) {
+  status = exr_document_resource(doc, resource, &data, &size, e);
+  if (status == EXR_OK && config->decode_image) {
     exr_bitmap supplied = {0};
     size_t row;
-    status = f->config->decode_image(f->config->image_context, &f->doc->resources[*resource], data,
-                                     size, &supplied, &ignored);
+    status = config->decode_image(config->image_context, &doc->resources[resource], data,
+                                     size, &supplied, e);
     if (status == EXR_OK) {
       if (!supplied.pixels || supplied.channels != 4 || !supplied.width || !supplied.height ||
           supplied.width > 8192 || supplied.height > 8192 || supplied.stride < supplied.width * 4 ||
           (size_t)supplied.width * supplied.height > 16 * 1024 * 1024 ||
           (size_t)(supplied.height - 1) > (SIZE_MAX - supplied.width * 4) / supplied.stride)
         status =
-            exr_fail(&ignored, EXR_ARGUMENT, "Host image decoder returned an invalid RGBA bitmap");
+            exr_fail(e, EXR_ARGUMENT, "Host image decoder returned an invalid RGBA bitmap");
       else {
         decoded = supplied;
         decoded.stride = supplied.width * 4;
@@ -326,31 +315,49 @@ static exr_status image_asset(flow *f, size_t node, size_t *resource, const exr_
                    decoded.stride);
       }
     }
-    f->config->release_image(f->config->image_context, &supplied);
+    config->release_image(config->image_context, &supplied);
   } else if (status == EXR_OK)
-    status = exr_image_decode(data, size, &decoded, &ignored);
+    status = exr_image_decode(data, size, &decoded, e);
   exr_free(data);
-  if (status == EXR_FORMAT)
-    return EXR_OK;
-  if (status != EXR_OK)
-    return fail(f, status, ignored.message[0] ? ignored.message : "Image decoding failed");
+  if (status != EXR_OK) {
+    if(e && e->message[0]) { e->code=status; return status; }
+    return exr_fail(e,status,"Image decoding failed");
+  }
   size = (size_t)decoded.stride * decoded.height;
   if (size > 64 * 1024 * 1024 - l->image_bytes ||
       !exr_grow((void **)&l->images, &l->image_cap, l->image_count + 1, sizeof(*l->images))) {
     exr_bitmap_free(&decoded);
-    return fail(f, EXR_LIMIT, "Decoded image cache exceeds 64 MiB");
+    return exr_fail(e,EXR_LIMIT,"Decoded image cache exceeds 64 MiB");
   }
-  l->images[l->image_count].resource = *resource;
+  l->images[l->image_count].resource = resource;
   l->images[l->image_count].refs = malloc(sizeof(size_t));
   if (!l->images[l->image_count].refs) {
     exr_bitmap_free(&decoded);
-    return fail(f, EXR_MEMORY, "Image reference allocation failed");
+    return exr_fail(e,EXR_MEMORY,"Image reference allocation failed");
   }
   *l->images[l->image_count].refs = 1;
   l->images[l->image_count].bitmap = decoded;
   *bitmap = &l->images[l->image_count++].bitmap;
   l->image_bytes += size;
   return EXR_OK;
+}
+static exr_status image_asset(flow *f, size_t node, size_t *resource, const exr_bitmap **bitmap) {
+  size_t target;
+  exr_error ignored = {0};
+  exr_status status;
+  const exr_node *n = &f->doc->nodes[node];
+  const char *src = exr_node_attribute(n, "src");
+  *bitmap = NULL;
+  *resource = SIZE_MAX;
+  if (!src)
+    src = exr_node_attribute(n, "http://www.w3.org/1999/xlink|href");
+  if (!src ||
+      exr_document_resolve(f->doc, n->chapter, src, resource, &target, &ignored) != EXR_OK ||
+      *resource == SIZE_MAX)
+    return EXR_OK;
+  status=exr_layout_image_asset(f->doc,f->assets,f->config,*resource,bitmap,&ignored);
+  if(status==EXR_FORMAT) return EXR_OK;
+  return status==EXR_OK ? EXR_OK : fail(f,status,ignored.message[0] ? ignored.message : "Image decoding failed");
 }
 exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
   const exr_style *s = &f->styles[node];

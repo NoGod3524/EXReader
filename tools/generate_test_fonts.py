@@ -67,9 +67,10 @@ if __name__ == '__main__':
                      0x7532: 'V', 0x4e59: 'beta', 0x1f600: 'beta'},
                     900, 1200, 400, -300)
     marks = font('EXR Test Marks', {0x301: 'acute', 0x3b2: 'beta'}, 700, 1000, 300, 0)
-    for filename, data in [('primary.ttf', primary), ('fallback.ttf', fallback), ('marks.ttf', marks)]:
+    oversize = font('EXR Test Oversize', {65: 'A'}, 32000, 32000, 0, 0)
+    for filename, data in [('primary.ttf', primary), ('fallback.ttf', fallback), ('marks.ttf', marks), ('oversize.ttf', oversize)]:
         data.save(directory / filename)
     collection = TTCollection()
     collection.fonts = [primary, fallback]
     collection.save(directory / 'collection.ttc')
-    print('Generated three original test fonts and a two-face collection.')
+    print('Generated four original test fonts and a two-face collection.')

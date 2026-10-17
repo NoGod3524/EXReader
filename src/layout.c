@@ -187,6 +187,8 @@ void exr_layout_free(exr_layout *l) {
     size_t i;
     free(l->pages);
     free(l->boxes);
+    free(l->paints);
+    free(l->positioned);
     exr_styles_free(l->styles, l->style_count);
     exr_font_free(l->font);
     for (i = 0; i < l->image_count; i++) {
@@ -215,6 +217,12 @@ const exr_glyph *exr_layout_glyphs(const exr_layout *l, size_t *n) {
   if (n)
     *n = l ? l->glyph_count : 0;
   return l ? l->glyphs : NULL;
+}
+const exr_paint *exr_layout_paints(const exr_layout *l,size_t page,size_t *count) {
+  if(count) *count=0;
+  if(!l || !l->positioned || page>=l->page_count) return NULL;
+  if(count) *count=l->positioned[page].paint_count;
+  return l->positioned[page].paint_count ? l->paints+l->positioned[page].paint_start : NULL;
 }
 size_t exr_layout_page_at(const exr_layout *l, size_t offset) {
   size_t lo = 0, hi;

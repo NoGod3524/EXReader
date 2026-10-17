@@ -10,3 +10,6 @@ Fallback also covers U+0301, U+7532, U+4E59 and U+1F600, with 900-unit advances,
 1200/-400 metrics and A/V kern -300; U+7532 deliberately maps to the V glyph.
 The marks-only font covers U+0301 and U+03B2. Combining acute has zero advance.
 The collection contains primary at face 0 and fallback at face 1.
+
+The oversize font uses original 32000-unit rectangles at 1000 units per em. It verifies
+that glyph rasterization refuses huge temporary bitmaps before asking FreeType to render.

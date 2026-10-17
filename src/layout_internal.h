@@ -46,7 +46,13 @@ struct exr_layout {
   size_t shape_work;
   size_t glyph_limit; /* Internal queue allocation limit; zero for ordinary layouts. */
   exr_font *font; /* Retained effective font set, including selected book fonts. */
+  exr_paint *paints;
+  size_t paint_count;
+  exr_positioned_page *positioned;
 };
+exr_status exr_layout_image_asset(const exr_document *doc, exr_layout *assets,
+                                    const exr_layout_config *config, size_t resource,
+                                    const exr_bitmap **bitmap, exr_error *error);
 void exr_font_ref(exr_font *font);
 void exr_layout_ref(exr_layout *layout);
 exr_status exr_book_fonts(const exr_document *doc, exr_font *fallback,

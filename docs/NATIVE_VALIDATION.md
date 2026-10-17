@@ -690,3 +690,16 @@ A missing declared cover aborts without adding a database row or returning a boo
 The deterministic ZIP fixtures use the project's original PNG and fixed metadata.
 
 The 0.36 commit 82d4270 passed all six platform and sanitizer CI jobs.
+
+
+## 0.38 positioned layout foundation
+
+`native-positioned` checks exact raster equality when an existing text layout is reconstructed,
+paint-order occlusion, proportional scaling/letterboxing, hit tests, source-array/document/font
+release, image sharing and host release callbacks, fontless image/blank pages, multiple page
+ranges, cancellation, allocation accounting and input extension rules. Invalid spans, UTF-8
+boundaries, NaN/Inf, indexes and array budgets fail atomically. A new original geometric font
+checks oversized glyph bitmap rejection before raster allocation. All existing reflow/paged
+rendering suites continue to pass after sharing the image and raster primitives.
+
+The 0.37 commit 10d81b3 passed all six platform and sanitizer CI jobs.
