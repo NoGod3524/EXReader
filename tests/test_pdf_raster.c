@@ -48,6 +48,27 @@ static void clip_cases(exr_pdf_file *file,uint32_t resources) {
   { const char *s="0 0 12 12 re W n q 0 0 6 6 re W n Q"; CHECK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)==EXR_LIMIT && !b.pixels && !b.width); }
 }
 static int cancelled(void *ctx) { (void)ctx; return 1; }
+typedef struct { size_t paths,clips,states,images; int stop; } inspection;
+static exr_status inspect_path(void *ctx,const exr_path_segment *segments,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
+  inspection *i=ctx; (void)e; CHECK(count>=4 && segments && style->flags==EXR_DRAW_FILL);
+  if(matrix) CHECK(segments[0].points[0].x==500 && matrix[0]==.01);
+  i->paths++; return i->stop ? EXR_CANCELLED : EXR_OK;
+}
+static exr_status inspect_clip(void *ctx,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,unsigned accumulate,exr_error *e) {
+  inspection *i=ctx; (void)e; CHECK(segments && count>=4 && matrix && rule==EXR_FILL_NONZERO && accumulate==1); i->clips++; return EXR_OK;
+}
+static exr_status inspect_state(void *ctx,exr_draw_state state,exr_error *e) {
+  inspection *i=ctx; (void)e; CHECK(state==EXR_DRAW_BEGIN_CLIP || state==EXR_DRAW_END_CLIP); i->states++; return EXR_OK;
+}
+static void drawing_inspection(exr_pdf_file *file,uint32_t resources) {
+  inspection i={0}; exr_draw_sink sink={inspect_path,NULL,inspect_clip,inspect_state,&i}; const char *content="1 1 2 2 re f BT /Names 10 Tf (A) Tj ET";
+  OK(exr_pdf_paint_content(file,resources,content,strlen(content),NULL,&sink,NULL,NULL,NULL,NULL,&error)); CHECK(i.paths==2 && !i.clips && i.states==2);
+  memset(&i,0,sizeof(i)); content="BT /Names 10 Tf 7 Tr (A) Tj ET";
+  OK(exr_pdf_paint_content(file,resources,content,strlen(content),NULL,&sink,NULL,NULL,NULL,NULL,&error)); CHECK(!i.paths && i.clips==1 && i.states==2);
+  sink.clip=NULL; content="BT /Fallback 10 Tf 7 Tr (A) Tj ET";
+  OK(exr_pdf_paint_content(file,resources,content,strlen(content),NULL,&sink,NULL,NULL,NULL,NULL,&error)); /* Ignored clips need no host fallback font. */
+  i.stop=1; content="BT /Names 10 Tf (A) Tj ET"; CHECK(exr_pdf_paint_content(file,resources,content,strlen(content),NULL,&sink,NULL,NULL,NULL,NULL,&error)==EXR_CANCELLED);
+}
 typedef struct { const void *bytes; size_t size,calls; int fail; } fallback_context;
 static exr_status program(void *context,const exr_pdf_font_info *info,const void **bytes,size_t *size,exr_error *e) {
   fallback_context *c=context; (void)e; CHECK(!info->program && !strcmp(info->base_name,"Helvetica")); c->calls++;
@@ -85,7 +106,7 @@ static void page_cases(const char *dir) {
 int main(int argc,char **argv) {
   unsigned char *data; size_t size; exr_pdf_file *file=NULL; uint32_t resources; exr_bitmap b; exr_pdf_raster_config config={0}; exr_control control={0};
   CHECK(argc==2); page_cases(argv[1]); data=load(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
-  text_cases(file,resources); clip_cases(file,resources); fallback_cases(argv[1],file,resources);
+  text_cases(file,resources); clip_cases(file,resources); fallback_cases(argv[1],file,resources); drawing_inspection(file,resources);
   config.width=config.height=12; config.channels=4; config.background=0;
   { const char *s="1 0 0 rg 1 1 2 2 re f"; OK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)); CHECK(b.pixels[13*4]==255 && b.pixels[13*4+3]==255 && !b.pixels[3]); free(b.pixels); }
   config.width=0; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);

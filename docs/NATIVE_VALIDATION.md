@@ -1218,3 +1218,20 @@ normal shape advances/offsets. No runtime dependency or parallel font wrapper
 was added.
 
 The 0.62 commit f080abd passed all six CI jobs.
+
+
+## 0.64 Streaming draw sinks independent of pixel output
+
+The public draw sink carries borrowed path/style/matrix, layered images, clip
+operations and clip-state/group events. A canvas supplies this sink through a
+checked borrowed adapter. Partial consumers can inspect selected operations;
+callbacks can stop traversal. The PDF paint adapter now emits only this generic
+protocol. Raster output is a separate canvas consumer with a shared work counter.
+
+Public canvas sink tests check disjoint clip unions, empty/no-op groups, explicit
+empty clips, state save/restore, unknown state/accumulate values and poisoned
+sink access. Private PDF tests inspect real vector paths and loaded glyph outlines
+without creating a bitmap, verify glyph clip-group events, ignore unsupported
+clip painting without loading an unnecessary host font, and stop from a callback.
+Existing complete page/image pixel suites run through the same sink adapter.
+The 0.63 commit dcb66ab passed all six CI jobs.

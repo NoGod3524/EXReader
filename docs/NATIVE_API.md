@@ -624,3 +624,14 @@ input 必须清零并填写 struct_size；较大的结构仅在未知尾字节�
 `exr_font_glyph_outline(font, font_index, glyph_id, &segments, &count, control, error)` 返回独立拥有的 move/line/quad/cubic/close 路径，用 `exr_free` 释放。坐标归一化为 1000 em，基线原点为零、y 向上，不进行 hinting 或位图栅格化。读取后可释放字体，路径继续有效；空字形返回 NULL/0。该接口按实际 glyph ID 读取，也支持 `exr_font_create_glyphs` 创建的无 Unicode cmap 字体。
 
 例如将字号 `size` 的轮廓画到基线 `(x, baseline)`，可给 `exr_canvas_path` 传入 `[size/1000, 0, 0, -size/1000, x, baseline]`。宿主也可自行消费这些曲线，不使用引擎画布。无效字体/索引/字形返回 EXR_ARGUMENT，预算与取消控制沿用轮廓核；失败清空路径/count。与 shape/layout/render 一样，同一个字体对象不能并发参与这些操作。
+
+
+## 通用流式绘制回调（0.64）
+
+`exr_draw_sink` 提供 path、image、clip、state 四种回调及 context。解析器可以直接输出通用路径、样式、矩阵和分层图片；宿主可使用原生图形接口、记录器或检查工具消费这些数据。回调参数只在该次回调期间借用，需保存时自行复制。未提供的回调被跳过，回调返回非 EXR_OK 可终止遍历。
+
+`exr_canvas_get_sink(canvas, &sink, &error)` 将同一协议连接到内置 C 画布，无须另写适配绘制代码。sink 借用画布，不增加其生命周期。
+
+clip 的 accumulate=0 立即与当前裁切相交，accumulate=1 将路径加入待提交的并集。state 的 EXR_DRAW_BEGIN_CLIP 清理未提交并集，EXR_DRAW_END_CLIP 将已累计的并集与当前裁切相交；没有累计路径时不改变裁切，可通过累计一次空路径显式建立空裁切。EXR_DRAW_SAVE/RESTORE 继续保存/恢复当前裁切。渲染消费者需要处理全部四类事件；只提供部分回调适合内容检查。
+
+PDF 的私有格式适配器已改为输出这一协议：字体编号先转为通用字形路径，图片保留独立分辨率遮罩，裁切组不依赖位图后端。内置 PDF 栅格化只是通用回调的一个消费者，格式解析与像素输出已经分开。
