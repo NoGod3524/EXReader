@@ -689,7 +689,7 @@ typedef exr_status (*exr_fixed_text_fn)(void *context,size_t page,const exr_cont
 typedef struct { const char *key,*value; } exr_metadata_entry;
 /* Independent ISO-BMFF metadata snapshot, available even with AAC disabled.
    inspect_source borrows the source for this call and never calls release.
-   Reads iTunes ilst text/PNG/JPEG cover and Nero chpl (not QuickTime chapter tracks).
+   Reads iTunes ilst text/PNG/JPEG cover and Nero chpl or referenced QuickTime text chapters.
    Unknown duration/end is UINT64_MAX. Chapter timestamps use the audio ms model. */
 typedef struct exr_m4b_inspection exr_m4b_inspection;
 EXR_API exr_status exr_m4b_inspect(const char *path,const exr_control *control,exr_m4b_inspection **out,exr_error *error);

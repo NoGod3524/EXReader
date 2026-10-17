@@ -14,4 +14,11 @@ exr_status exr_bmff_at(exr_bmff_reader *io,uint64_t at,uint64_t end,exr_bmff_box
 exr_status exr_bmff_child(exr_bmff_reader *io,const exr_bmff_box *parent,uint32_t type,int required,exr_bmff_box *out);
 exr_status exr_bmff_header(exr_bmff_reader *io,const exr_bmff_box *box,void *bytes,size_t size);
 exr_status exr_bmff_time(exr_bmff_reader *io,const exr_bmff_box *box,uint32_t *scale,uint64_t *duration);
+typedef struct { uint64_t at; uint32_t count,constant; unsigned width; } exr_bmff_table;
+exr_status exr_bmff_table_box(exr_bmff_reader *io,const exr_bmff_box *box,exr_bmff_table *table,unsigned width,int bounded);
+exr_status exr_bmff_size_box(exr_bmff_reader *io,const exr_bmff_box *box,exr_bmff_table *table);
+exr_status exr_bmff_sample_size(exr_bmff_reader *io,const exr_bmff_table *table,uint32_t sample,uint32_t *size);
+exr_status exr_bmff_sc_entry(exr_bmff_reader *io,const exr_bmff_table *table,uint32_t index,uint32_t values[3]);
+exr_status exr_bmff_validate_sc(exr_bmff_reader *io,const exr_bmff_table *sizes,const exr_bmff_table *chunks,const exr_bmff_table *sc);
+exr_status exr_bmff_chunk_offset(exr_bmff_reader *io,const exr_bmff_table *table,uint32_t chunk,uint64_t *offset);
 #endif
