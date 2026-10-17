@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "pdf_internal.h"
 #include "pdf_function_internal.h"
-typedef enum { SPACE_GRAY,SPACE_RGB,SPACE_CMYK,SPACE_CALGRAY,SPACE_CALRGB,SPACE_LAB,SPACE_INDEXED,SPACE_ICC,SPACE_TINT } space_kind;
+typedef enum { SPACE_GRAY,SPACE_RGB,SPACE_CMYK,SPACE_CALGRAY,SPACE_CALRGB,SPACE_LAB,SPACE_INDEXED,SPACE_ICC,SPACE_TINT,SPACE_ALL } space_kind;
 struct exr_pdf_colorspace {
   space_kind kind; unsigned components,high; int no_paint;
   double ranges[8],gamma[3],matrix[9],transform[9],offset[3];
@@ -60,6 +60,8 @@ exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double value
   if(exr_pdf_colorspace_no_paint(s)) { memset(rgb,0,3*sizeof(double)); return EXR_OK; }
   for(i=0;i<s->components;i++) v[i]=clamp(values[i],s->ranges[2*i],s->ranges[2*i+1]);
   if(s->kind==SPACE_GRAY) { rgb[0]=rgb[1]=rgb[2]=v[0]; return EXR_OK; }
+  /* All is an ink tint on every output colorant; additive sRGB inverts it. */
+  if(s->kind==SPACE_ALL) { rgb[0]=rgb[1]=rgb[2]=1-v[0]; return EXR_OK; }
   if(s->kind==SPACE_RGB) { memcpy(rgb,v,3*sizeof(double)); return EXR_OK; }
   if(s->kind==SPACE_CMYK) { for(i=0;i<3;i++) rgb[i]=1-fmin(1,v[i]+v[3]); return EXR_OK; }
   if(s->kind==SPACE_INDEXED) {
@@ -169,12 +171,12 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
     const unsigned char *name; size_t length;
     if(!array(r,file,id,ids,4)) goto bad;
     v=exr_pdf_value_at(file,ids[1]); name=exr_pdf_bytes(file,ids[1],&length);
-    if(!v || v->kind!=EXR_PDF_NAME || !name || !length || memchr(name,0,length) || name_is(file,ids[1],"All")) goto bad;
-    s=device(SPACE_TINT,1); if(!s) goto memory;
+    if(!v || v->kind!=EXR_PDF_NAME || !name || !length || memchr(name,0,length)) goto bad;
+    s=device(name_is(file,ids[1],"All") ? SPACE_ALL : SPACE_TINT,1); if(!s) goto memory;
     s->no_paint=name_is(file,ids[1],"None");
-    if(s->no_paint) { *out=s; return EXR_OK; }
+    if(s->no_paint || s->kind==SPACE_ALL) { *out=s; return EXR_OK; }
     status=open_space(r,file,ids[2],depth+1,&s->alternate); if(status!=EXR_OK) goto done;
-    if(s->alternate->kind==SPACE_INDEXED || s->alternate->kind==SPACE_TINT) goto bad;
+    if(s->alternate->kind==SPACE_INDEXED || s->alternate->kind==SPACE_TINT || s->alternate->kind==SPACE_ALL) goto bad;
     status=exr_pdf_function_open(file,ids[3],s->alternate->components,r->control,&s->function,r->error);
     if(status!=EXR_OK) goto done;
     *out=s; return EXR_OK;
@@ -246,5 +248,5 @@ int exr_pdf_colorspace_indexed(const exr_pdf_colorspace *s) { return s && s->kin
 void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *s,double ranges[8]) { memcpy(ranges,s->ranges,8*sizeof(double)); }
 void exr_pdf_colorspace_initial(const exr_pdf_colorspace *s,double values[4]) {
   unsigned i; memset(values,0,4*sizeof(double));
-  for(i=0;i<s->components;i++) values[i]=clamp((s->kind==SPACE_CMYK && i==3) || s->kind==SPACE_TINT ? 1 : 0,s->ranges[i*2],s->ranges[i*2+1]);
+  for(i=0;i<s->components;i++) values[i]=clamp((s->kind==SPACE_CMYK && i==3) || s->kind==SPACE_TINT || s->kind==SPACE_ALL ? 1 : 0,s->ranges[i*2],s->ranges[i*2+1]);
 }
