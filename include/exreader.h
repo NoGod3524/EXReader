@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.12.1"
+#define EXR_VERSION "0.13.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -256,6 +256,7 @@ typedef struct {
   exr_image_release_fn release_image; /* Required with decode_image; also called on failure. */
   void *image_context;
   exr_direction direction; /* Paragraph base direction; AUTO uses first strong scalar. */
+  int embedded_fonts; /* Load used local @font-face resources; defaults to enabled. */
 } exr_layout_config;
 struct exr_bitmap {
   uint32_t width, height, stride;
@@ -290,6 +291,12 @@ EXR_API void exr_document_free(exr_document *doc);
 EXR_API size_t exr_document_memory_size(const exr_document *doc);
 EXR_API const char *exr_document_text(const exr_document *doc, size_t *size);
 EXR_API const char *exr_document_title(const exr_document *doc);
+/* Borrowed effective font set used by this layout, valid until layout_free.
+   Includes book fonts. Glyph font_index indexes this set; do not free this view. */
+EXR_API exr_font *exr_layout_font(const exr_layout *layout);
+/* Borrowed encoded font bytes for a host renderer; valid while font is alive. */
+EXR_API exr_status exr_font_source(const exr_font *font, size_t index, exr_font_input *source,
+                                   exr_error *error);
 EXR_API const exr_block *exr_document_blocks(const exr_document *doc, size_t *count);
 EXR_API const exr_node *exr_document_nodes(const exr_document *doc, size_t *count);
 EXR_API const exr_chapter *exr_document_chapters(const exr_document *doc, size_t *count);

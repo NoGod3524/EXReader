@@ -18,6 +18,7 @@ struct exr_pager {
   flow f;
   exr_layout_config config;
   exr_style *styles;
+  size_t style_count;
   exr_layout *assets;
   exr_line_buffer line; /* Raw source, provisional carry and finalized pending line. */
   exr_inline_bidi bidi;
@@ -320,6 +321,8 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   exr_pager *p;
   exr_status status;
   size_t size = 0;
+  exr_font_rule *font_rules = NULL;
+  size_t font_count = 0;
   if (!out)
     return exr_fail(e, EXR_ARGUMENT, "Missing pager output");
   *out = NULL;
@@ -334,6 +337,7 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   if (!p)
     return exr_fail(e, EXR_MEMORY, "Pager allocation failed");
   p->config = *config;
+  p->style_count = doc->node_count;
   p->config.user_css = NULL;
   if (config->user_css) {
     while (size <= 1024*1024 && config->user_css[size])
@@ -348,20 +352,24 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
       return exr_fail(e, EXR_MEMORY, "Pager CSS allocation failed");
     }
   }
-  status = exr_compute_styles(doc, &p->config, &p->styles, e);
+  status = exr_compute_styles(doc, &p->config, &p->styles, &font_rules, &font_count, e);
   if (status != EXR_OK) {
     exr_pager_free(p);
     return status;
   }
   p->assets = calloc(1, sizeof(*p->assets));
   if (!p->assets) {
+    free(font_rules);
     exr_pager_free(p);
     return exr_fail(e, EXR_MEMORY, "Pager asset allocation failed");
   }
   p->assets->options = config->page;
+  status = exr_book_fonts(doc, font, p->styles, font_rules, font_count, &p->assets->font, e);
+  free(font_rules);
+  if (status != EXR_OK) { exr_pager_free(p); return status; }
   p->f.assets = p->assets;
   p->f.doc = doc;
-  p->f.font = font;
+  p->f.font = p->assets->font;
   p->f.config = &p->config;
   p->f.styles = p->styles;
   p->f.bidi = &p->bidi;
@@ -387,6 +395,8 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
   if (!l)
     return exr_fail(e, EXR_MEMORY, "Page allocation failed");
   l->options = p->config.page;
+  l->font = p->assets->font;
+  exr_font_ref(l->font);
   if (e)
     memset(e, 0, sizeof(*e));
   p->f.layout = l;
@@ -531,7 +541,7 @@ void exr_pager_free(exr_pager *p) {
   exr_inline_buffer_clear(&p->line);
   exr_inline_clear(&p->bidi);
   exr_layout_free(p->assets);
-  free(p->styles);
+  exr_styles_free(p->styles, p->style_count);
   free((void *)p->config.user_css);
   free(p);
 }
@@ -598,6 +608,8 @@ exr_status exr_flow_create(const exr_document *doc, exr_font *font,
     return exr_fail(e, EXR_MEMORY, "Whole-document layout allocation failed");
   }
   all->options = pager->config.page;
+  all->font = pager->assets->font;
+  exr_font_ref(all->font);
   while ((status = exr_pager_next(pager, &page, e)) == EXR_OK && page) {
     status = append_page(all, page, e);
     exr_layout_free(page);

@@ -74,7 +74,14 @@ typedef struct {
 } exr_length; /* value < 0 means auto */
 enum { EXR_CSS_NONE, EXR_CSS_INLINE, EXR_CSS_BLOCK, EXR_CSS_TABLE, EXR_CSS_ROW, EXR_CSS_CELL };
 typedef struct {
+  char family[128], source[2048], base[2048];
+  size_t chapter;
+  unsigned flags;
+} exr_font_rule;
+typedef struct {
   float font_size, leading, indent, border_width;
+  const char *family;
+  int family_owned;
   int leading_relative, align, display, before, after, border_style;
   unsigned flags;
   exr_direction direction;
@@ -82,5 +89,12 @@ typedef struct {
   exr_length width, height, max_width, margin[4], padding[4];
 } exr_style;
 exr_status exr_compute_styles(const exr_document *doc, const exr_layout_config *config,
-                              exr_style **styles, exr_error *error);
+                              exr_style **styles, exr_font_rule **fonts, size_t *font_count,
+                              exr_error *error);
+void exr_styles_free(exr_style *styles, size_t count);
+int exr_family_next(const char *value, size_t *offset, char out[128]);
+int exr_family_equal(const char *a, const char *b);
+int exr_parse_font_rule(const char *body, size_t size, const char *base,
+                         size_t chapter, exr_font_rule *rule);
+size_t exr_css_delimiter(const char *text, size_t size, char delimiter);
 #endif

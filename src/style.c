@@ -29,6 +29,7 @@ enum {
   BEFORE,
   AFTER,
   DIRECTION,
+  FAMILY,
   PROPERTIES
 };
 typedef struct {
@@ -45,6 +46,8 @@ typedef struct {
   rule *rules;
   size_t count, capacity, bytes, declarations, work;
   exr_status failed;
+  exr_font_rule *fonts;
+  size_t font_count, font_capacity;
 } css;
 typedef struct {
   const char *value;
@@ -213,7 +216,8 @@ static int property(const char *s, size_t n) {
       "text-align",   "text-indent",   "display",        "width",         "height",
       "max-width",    "margin-top",    "margin-right",   "margin-bottom", "margin-left",
       "padding-top",  "padding-right", "padding-bottom", "padding-left",  "background-color",
-      "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction"};
+      "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction",
+      "font-family"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -233,7 +237,7 @@ static int property(const char *s, size_t n) {
   return -1;
 }
 /* Find a delimiter outside strings/functions. Unsupported constructs are skipped as units. */
-static size_t delimiter(const char *s, size_t n, char wanted) {
+size_t exr_css_delimiter(const char *s, size_t n, char wanted) {
   size_t i;
   int quote = 0, depth = 0;
   for (i = 0; i < n; i++) {
@@ -294,13 +298,13 @@ static int declarations(css *c, const char *s, size_t n, declaration **out, size
   *out = NULL;
   *count = 0;
   while (pos < n) {
-    size_t end = pos + delimiter(s + pos, n - pos, ';'), colon, a, b, k;
+    size_t end = pos + exr_css_delimiter(s + pos, n - pos, ';'), colon, a, b, k;
     int prop, important = 0, copies = 1;
     char values[4][128] = {{0}};
     a = pos;
     while (a < end && ws(s[a]))
       a++;
-    colon = a + delimiter(s + a, end - a, ':');
+    colon = a + exr_css_delimiter(s + a, end - a, ':');
     b = colon;
     while (b > a && ws(s[b - 1]))
       b--;
@@ -410,7 +414,8 @@ static int declarations(css *c, const char *s, size_t n, declaration **out, size
   }
   return 1;
 }
-static int stylesheet(css *c, const char *source, size_t n, size_t chapter, int user) {
+static int stylesheet(css *c, const char *source, size_t n, size_t chapter, int user,
+                         const char *base, int embedded_fonts) {
   char *s;
   size_t i = 0;
   if (n > 1024 * 1024 - c->bytes) {
@@ -431,8 +436,8 @@ static int stylesheet(css *c, const char *source, size_t n, size_t chapter, int 
     while (i < n && ws(s[i]))
       i++;
     start = i;
-    open = i + delimiter(s + i, n - i, '{');
-    end = i + delimiter(s + i, n - i, ';');
+    open = i + exr_css_delimiter(s + i, n - i, '{');
+    end = i + exr_css_delimiter(s + i, n - i, ';');
     if (s[i] == '@' && end < open) {
       i = end + 1;
       continue;
@@ -461,6 +466,20 @@ static int stylesheet(css *c, const char *source, size_t n, size_t chapter, int 
     if (close == n)
       break;
     i = close + 1;
+    end = open;
+    while (end > start && ws(s[end - 1])) end--;
+    if (embedded_fonts && equal(s + start, end - start, "@font-face")) {
+      exr_font_rule font;
+      if (exr_parse_font_rule(s + open + 1, close - open - 1, base, chapter, &font)) {
+        if (c->font_count >= 64 ||
+            !exr_grow((void **)&c->fonts, &c->font_capacity, c->font_count + 1, sizeof(font))) {
+          c->failed = EXR_LIMIT;
+          break;
+        }
+        c->fonts[c->font_count++] = font;
+      }
+      continue;
+    }
     if (s[start] == '@' || open - start > 512)
       continue;
     if (c->count >= 4096 ||
@@ -546,7 +565,9 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
   char *end;
   uint32_t rgba;
   if (!strcmp(v, "inherit")) {
-    if (prop == FONT_SIZE)
+    if (prop == FAMILY)
+      s->family = parent->family;
+    else if (prop == FONT_SIZE)
       s->font_size = parent->font_size;
     else if (prop == WEIGHT)
       s->flags = (s->flags & ~1u) | (parent->flags & 1u);
@@ -567,7 +588,14 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       return 0;
     return 1;
   }
-  if (prop == DIRECTION) {
+  if (prop == FAMILY) {
+    size_t at = 0;
+    char family[128];
+    int result, count = 0;
+    while ((result = exr_family_next(v, &at, family)) == 1) count++;
+    if (!count || result < 0) return 0;
+    s->family = v;
+  } else if (prop == DIRECTION) {
     if (!strcmp(v, "ltr")) s->direction = EXR_DIRECTION_LTR;
     else if (!strcmp(v, "rtl")) s->direction = EXR_DIRECTION_RTL;
     else return 0;
@@ -711,11 +739,12 @@ static void compete(winner *w, const declaration *a, size_t count, uint64_t base
   }
 }
 exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *config,
-                              exr_style **out, exr_error *e) {
+                              exr_style **out, exr_font_rule **fonts, size_t *font_count,
+                              exr_error *e) {
   css c = {0};
   exr_style *styles = NULL, initial = {0};
   const exr_layout_options *o = &config->page;
-  size_t i, r;
+  size_t i, r, family_bytes = 0;
   initial.font_size = o->font_size;
   initial.leading = o->line_height;
   initial.leading_relative = 1;
@@ -726,6 +755,8 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
   initial.direction = config->direction;
   initial.align = 4;
   *out = NULL;
+  *fonts = NULL;
+  *font_count = 0;
   if (config->document_css)
     for (i = 0; i < d->node_count; i++) {
       const exr_node *n = &d->nodes[i];
@@ -733,7 +764,9 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
         size_t child;
         for (child = n->first_child; child != SIZE_MAX; child = d->nodes[child].next_sibling)
           if (d->nodes[child].text &&
-              !stylesheet(&c, d->nodes[child].text, strlen(d->nodes[child].text), n->chapter, 0))
+              !stylesheet(&c, d->nodes[child].text, strlen(d->nodes[child].text), n->chapter, 0,
+                           n->chapter < d->chapter_count ? d->chapters[n->chapter].path : "",
+                           config->embedded_fonts))
             goto done;
       } else if (!strcmp(exr_html_tag(d, n), "link") &&
                  word_in(exr_node_attribute(n, "rel"), "stylesheet", 10)) {
@@ -752,13 +785,15 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
         c.failed = exr_decode(bytes, size, &decoded, e);
         exr_free(bytes);
         if (!c.failed)
-          stylesheet(&c, decoded.data ? decoded.data : "", decoded.size, n->chapter, 0);
+          stylesheet(&c, decoded.data ? decoded.data : "", decoded.size, n->chapter, 0,
+                       d->resources[resource].path, config->embedded_fonts);
         free(decoded.data);
         if (c.failed)
           goto done;
       }
     }
-  if (config->user_css && !stylesheet(&c, config->user_css, strlen(config->user_css), SIZE_MAX, 1))
+  if (config->user_css && !stylesheet(&c, config->user_css, strlen(config->user_css), SIZE_MAX, 1,
+                                      "", config->embedded_fonts))
     goto done;
   styles = calloc(d->node_count, sizeof(*styles));
   if (!styles) {
@@ -776,6 +811,7 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     int p;
     *s = initial;
     s->font_size = parent->font_size;
+    s->family = parent->family;
     s->flags = parent->flags;
     s->color = parent->color;
     s->leading = parent->leading;
@@ -859,6 +895,23 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     for (p = 0; p < PROPERTIES; p++)
       if (w[p].value)
         apply(s, parent, p, w[p].value, o->font_size);
+    if (s->family && s->family != parent->family) {
+      if (parent->family && !strcmp(parent->family, s->family)) s->family = parent->family;
+      else {
+        size_t length = strlen(s->family) + 1;
+        const char *copy = NULL;
+        if (length <= 1024 * 1024 - family_bytes) copy = exr_copy(s->family, length - 1);
+        if (!copy) {
+          s->family = NULL;
+          free(inline_declarations);
+          c.failed = length > 1024 * 1024 - family_bytes ? EXR_LIMIT : EXR_MEMORY;
+          goto done;
+        }
+        family_bytes += length;
+        s->family = copy;
+        s->family_owned = 1;
+      }
+    }
     free(inline_declarations);
     if ((n->parent != SIZE_MAX && parent->display == EXR_CSS_NONE) || !strcmp(name, "head") ||
         !strcmp(name, "script") || !strcmp(name, "style") || !strcmp(name, "template") ||
@@ -872,9 +925,19 @@ done:
   }
   free(c.rules);
   if (c.failed) {
-    free(styles);
+    exr_styles_free(styles, d->node_count);
+    free(c.fonts);
     return exr_fail(e, c.failed, "Stylesheet decoding or complexity limit failed");
   }
   *out = styles;
+  *fonts = c.fonts;
+  *font_count = c.font_count;
   return EXR_OK;
+}
+void exr_styles_free(exr_style *styles, size_t count) {
+  size_t i;
+  if (!styles) return;
+  for (i = 0; i < count; i++)
+    if (styles[i].family_owned) free((void *)styles[i].family);
+  free(styles);
 }

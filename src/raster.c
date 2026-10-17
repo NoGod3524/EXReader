@@ -70,6 +70,7 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
   size_t i, j;
   uint32_t width, height;
   const exr_page *p;
+  if (l && l->font && (!f || f == l->font || f == l->font->fallback)) f = l->font;
   if (!l || !f || !out || page >= l->page_count)
     return exr_fail(e, EXR_ARGUMENT, "Invalid render arguments");
   memset(out, 0, sizeof(*out));

@@ -45,24 +45,32 @@ static float glyph_kern(flow *f, const exr_glyph *previous, const exr_glyph *g) 
 }
 exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
   exr_layout *l = f->layout;
-  size_t i, face, common = SIZE_MAX;
+  size_t i, face, common = SIZE_MAX, order[32], count, at;
   uint32_t candidates = f->font->count == 32 ? UINT32_MAX :
                           (UINT32_C(1) << f->font->count) - 1;
   /* Prefer a single face for the complete visible grapheme, across inline styles. */
   for (i = start; i < end && candidates; i++) {
     const exr_glyph *g = &l->glyphs[i];
+    uint32_t allowed = 0;
     uint32_t cp = g->codepoint == '\t' ? ' ' : g->codepoint;
     if (g->bidi_level != UINT_MAX && (g->bidi_level & 1)) cp = exr_bidi_mirror(cp);
     if (g->flags & EXR_GLYPH_HIDDEN)
       continue;
+    count = exr_font_order(f->font, f->styles[g->node].family, f->styles[g->node].flags,
+                            f->doc->nodes[g->node].chapter, order);
+    for (at = 0; at < count; at++) allowed |= UINT32_C(1) << order[at];
+    candidates &= allowed;
     for (face = 0; face < f->font->count; face++)
       if ((candidates & (UINT32_C(1) << face)) &&
           !exr_font_has_glyph(f->font, face, cp))
         candidates &= ~(UINT32_C(1) << face);
   }
-  for (face = 0; face < f->font->count; face++)
-    if (candidates & (UINT32_C(1) << face)) {
-      common = face;
+  count = exr_font_order(f->font, f->styles[l->glyphs[start].node].family,
+                          f->styles[l->glyphs[start].node].flags,
+                          f->doc->nodes[l->glyphs[start].node].chapter, order);
+  for (at = 0; at < count; at++)
+    if (candidates & (UINT32_C(1) << order[at])) {
+      common = order[at];
       break;
     }
   for (i = start; i < end; i++) {
@@ -76,16 +84,21 @@ exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
       continue;
     face = common;
     if (face == SIZE_MAX) {
-      for (face = 0; face < f->font->count; face++)
+      count = exr_font_order(f->font, f->styles[g->node].family, f->styles[g->node].flags,
+                              f->doc->nodes[g->node].chapter, order);
+      for (at = 0; at < count; at++) {
+        face = order[at];
         if (exr_font_has_glyph(f->font, face, cp))
           break;
-      if (face == f->font->count) {
+      }
+      if (at == count) {
         face = 0;
         g->flags |= EXR_GLYPH_MISSING;
       }
     }
     g->font_index = face;
     selected = &f->font->faces[face];
+    g->flags &= ~selected->style_flags;
     g->glyph = FT_Get_Char_Index(selected->face, cp);
     if (exr_font_size(selected, g->size) || exr_measure(selected, g->glyph, g->flags, &g->advance))
       return fail(f, EXR_FONT, "Cannot measure selected font");

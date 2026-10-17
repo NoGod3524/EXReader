@@ -1,4 +1,4 @@
-# Native C API 0.12.1
+# Native C API 0.13
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -32,6 +32,12 @@ FreeType 提供字体、基础字形度量和像素，不负责分页。EXReader
 正文查找为区分大小写的 UTF-8 子串查询。元数据搜索使用绑定参数的 SQLite LIKE，并转义 `%` / `_`，其大小写折叠规则为 SQLite 默认规则。
 
 ## 宿主字体集与缺字回退
+
+0.13 支持 CSS `font-family` 列表、引号、CSS 转义、继承和宿主覆盖。指定名称先匹配书内字体，再匹配宿主字体的 FreeType family name，ASCII 字母不区分大小写；无匹配或缺字继续使用宿主的有序回退，不扫描系统字体。选脸按 family 顺序以及常规/粗体/斜体描述符匹配；整字素簇覆盖继续优先。字体已提供的粗斜体不重复合成。
+
+`exr_layout_config_defaults()` 默认开启 `embedded_fonts`。EPUB/宿主 XHTML 的链接或内嵌样式表可声明 `@font-face`，支持 TTF/OTF、相对于 CSS 自身路径的 `url()` 和多个候选来源；只加载可见样式实际引用的 family，书内声明限于所属章节。`local()`、远程 URL 和本机文件 URL 不会访问系统或网络；缺失/损坏字体继续尝试下一来源，最终回退到宿主字体。关闭 `embedded_fonts` 仍可使用宿主字体名称；关闭 `document_css` 不加载书内声明，宿主 `user_css` 仍有效。混合字体集最多 32 个 face、编码字节合计 128 MiB，单次布局字体资源读取合计 128 MiB；最多 64 条字体声明，每声明最多尝试 8 个存在的本地候选资源。压缩 WOFF/WOFF2、EPUB 字体混淆解码和可变字体选择尚未实现。
+
+`exr_layout_font(layout)` 返回有效字体集的借用句柄，`glyph.font_index` 索引该集合。`exr_font_source(font,index,&input,error)` 提供借用的编码字节与 face index，供宿主自行绘制；不要释放或修改借用数据。内置渲染器接受该有效集合、创建布局时的宿主字体，或 NULL（使用布局持有的字体）；传入其他集合仍按旧接口处理。页面持有字体引用，释放 document、pager 和原字体后仍可绘制。共享字体与字体表不计入页面缓存载荷预算。0.13 扩展了配置结构，宿主应使用同版本头文件重新编译。
 
 `exr_font_open(path, ...)` 保留单文件、集合首个 face 的入口。`exr_font_create(inputs, count, ...)` 接收有序 `exr_font_input` 数组，每项为编码字体字节 `data/size` 和集合内的 `face_index`（普通字体为 0）。成功时复制全部输入，宿主随后可以释放或修改字节。字体集不可变，用 `exr_font_free()` 释放；布局、渲染和 session 通过现有字体参数接入，无需额外平台后端。字体集需在布局计算、渲染及 session 生命周期内有效，相同句柄的访问由宿主串行处理。
 
@@ -362,13 +368,13 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 | 范围 | 已实现 |
 | --- | --- |
-| 文字 | font-size（4–256）、font-weight（合成粗体）、font-style（合成斜体）、color、line-height、direction（ltr/rtl）、text-align（left/start/center/right/end/justify）、text-indent |
+| 文字 | font-family、font-size（4–256）、font-weight（合成粗体）、font-style（合成斜体）、color、line-height、direction（ltr/rtl）、text-align（left/start/center/right/end/justify）、text-indent |
 | 盒模型 | width / max-width、margin / padding 及四边长属性、background-color（background 仅接受颜色）、统一 border-width / border-color / border-style（solid/none）和 border 简写 |
 | 流布局 | display: none/block/inline/table/table-row/table-cell；break-before/after 和 page-break-before/after 的 page/always/auto |
 | 尺寸 | px、pt、em、rem、百分比和零值；margin 可 auto；图片支持 height，普通块的 height 尚未应用 |
 | 颜色 | #RGB、#RGBA、#RRGGBB、#RRGGBBAA；black/white/red/green/blue/gray/grey/transparent/navy/yellow/orange/purple |
 
-`rem` 当前以宿主页默认字号为基准。`inherit` 支持文字属性；缩进和边框宽度不支持百分比。所有负尺寸均忽略，外边距不折叠。未知属性、选择器和 at-rule 会被跳过；尚不支持 @import、@media、变量、伪类、属性选择器、字体族/嵌入字体、flex/grid、浮动、定位、完整空白规则和浏览器式盒模型分片。属性值和单位使用小写。样式表合计上限 1 MiB、4096 条规则、131072 项展开声明、每规则 256 项声明、2000 万次匹配工作；达到上限返回 `EXR_LIMIT`。
+`rem` 当前以宿主页默认字号为基准。`inherit` 支持文字属性；缩进和边框宽度不支持百分比。所有负尺寸均忽略，外边距不折叠。未知属性、选择器和 at-rule 会被跳过；尚不支持 @import、@media、变量、伪类、属性选择器、flex/grid、浮动、定位、完整空白规则和浏览器式盒模型分片。属性值和单位使用小写。样式表合计上限 1 MiB、4096 条规则、131072 项展开声明、每规则 256 项声明、2000 万次匹配工作；达到上限返回 `EXR_LIMIT`。
 
 `exr_layout_glyphs()` 按逐行视觉顺序输出字形编号、字号、颜色 `0xRRGGBBAA`、合成粗/斜体标志、基线、源范围和字体索引；混排时文字偏移可能不单调。`cluster_start/end` 为当前源簇的 UTF-8 半开范围，可以跨文本节点和样式，连字可合并多个原始字素。`EXR_GLYPH_SHAPED = 16` 表示 advance / offset 已包含塑形定位；这些条目的 `start/end` 也使用源簇范围，`codepoint/node` 代表簇首源标量 / 节点，不承诺一条 glyph 对应一个标量。未塑形路径仍保留原标量范围。`boundaries` 保留源簇首的 `EXR_BOUNDARY_*`，同簇后续字形为 0。分段和文档使用各自局部偏移，簇索引不是永久标识。
 
