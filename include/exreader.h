@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.64.0"
+#define EXR_VERSION "0.65.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -407,6 +407,43 @@ typedef struct {
 } exr_draw_sink;
 /* The returned sink borrows the canvas until canvas_free. */
 EXR_API exr_status exr_canvas_get_sink(exr_canvas *canvas,exr_draw_sink *out,exr_error *error);
+typedef struct exr_fixed_document exr_fixed_document;
+typedef struct {
+  const char *id,*label;
+  exr_page_geometry geometry;
+} exr_fixed_page;
+typedef exr_status (*exr_fixed_draw_fn)(void *context,size_t page,const double matrix[6],
+                                         const exr_draw_sink *sink,const exr_control *control,exr_error *error);
+typedef struct {
+  size_t struct_size;
+  const char *title;
+  const exr_fixed_page *pages; size_t page_count;
+  exr_fixed_draw_fn draw;
+  void *context;
+  exr_context_release_fn release;
+} exr_fixed_input;
+typedef struct {
+  uint32_t channels,background; /* channels 0 -> RGBA */
+  size_t mask_budget;
+  exr_control control;
+} exr_fixed_render_options;
+/* Metadata is copied. Provider context ownership transfers only on success.
+   Empty IDs become page-1, page-2, ...; effective IDs must be unique. */
+EXR_API exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **out,exr_error *error);
+EXR_API void exr_fixed_free(exr_fixed_document *document);
+EXR_API const char *exr_fixed_title(const exr_fixed_document *document);
+EXR_API const exr_fixed_page *exr_fixed_pages(const exr_fixed_document *document,size_t *count);
+/* Owned directory/metadata bytes, excluding the provider's own payload. */
+EXR_API size_t exr_fixed_memory_size(const exr_fixed_document *document);
+/* Streams one page in source coordinates through matrix (NULL -> identity).
+   No implicit clip/state changes. The provider must skip absent callbacks.
+   One document cannot be drawn concurrently or reentered from a callback. */
+EXR_API exr_status exr_fixed_draw(exr_fixed_document *document,size_t page,const double matrix[6],
+                                   const exr_draw_sink *sink,const exr_control *control,exr_error *error);
+/* Creates a natural-size viewport, clips to it, then paints just this page.
+   NULL options default to white RGBA. Failure returns no partial bitmap. */
+EXR_API exr_status exr_fixed_render(exr_fixed_document *document,size_t page,double scale,
+                                     const exr_fixed_render_options *options,exr_bitmap *out,exr_error *error);
 /* All input/output strings are UTF-8. Returned views belong to their owner. */
 EXR_API const char *exr_version(void);
 /* Unicode 17 extended grapheme boundaries plus documented line-break rules.

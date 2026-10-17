@@ -1235,3 +1235,29 @@ without creating a bitmap, verify glyph clip-group events, ignore unsupported
 clip painting without loading an unnecessary host font, and stop from a callback.
 Existing complete page/image pixel suites run through the same sink adapter.
 The 0.63 commit dcb66ab passed all six CI jobs.
+
+
+## 0.65 Open fixed-page provider documents
+
+The public fixed-document model copies a bounded UTF-8 page directory and
+geometry, accepts custom stable IDs/labels and an on-demand drawing provider,
+and takes provider-context release ownership only after successful creation.
+Effective page IDs are checked for duplicates with a sorted temporary index.
+Geometry is validated at a representable scale so large unit multipliers do not
+force preallocation or reject pages that can be rendered at a smaller scale.
+
+Metadata queries never draw. Direct drawing emits the provider stream with a
+caller transform and no implicit clip. The render helper creates a viewport,
+exact page clip and generic canvas, and discards partial output after provider
+failure/cancellation. Reentry is rejected, progress callbacks are guarded, and
+provider errors without diagnostics are normalized. Owned-memory reporting
+explicitly excludes the opaque provider payload.
+
+A custom two-page provider test checks copied metadata lifetimes, source axes,
+units/rotation, actual pixels, inspection without rasterization, no eager draw,
+context release, first failed render followed by a successful retry, cancellation,
+reentry rejection, invalid matrices, duplicate/default IDs, UTF-8 and size limits,
+zero/nonzero unknown tails, large/tiny unit geometry and bitmap limits. No file
+format is required by this test.
+
+The 0.64 commit 8031631 passed all six CI jobs.
