@@ -48,3 +48,8 @@ SHA-256 is `86ca5558811aae81749d0057a348e9b7c453d1e6fe66f553d3fbb3bb38314c15`.
 two-color PNGs and a solid JPEG, partial glyph coverage, dupe chains and a
 deliberate cyclic reference. SHA-256 is
 `b197c58d0ed858a2134bad58d03decd912cb5dee2080284dc7ea0802a8b525b6`.
+
+The same generator creates `../color-fonts.epub`, embedding bitmap.ttf and
+color.ttf under distinct CSS family aliases. It tests both actual book fonts
+and their retained rendering lifetime, with no external assets. SHA-256:
+`84db7e3f37149a047d1220b385b287babee9e5e1f03880421adb2c5e8db55d8d`.

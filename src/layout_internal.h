@@ -59,6 +59,7 @@ exr_status exr_layout_image_asset(const exr_document *doc, exr_layout *assets,
                                     const exr_layout_config *config, size_t resource,
                                     const exr_bitmap **bitmap, exr_error *error);
 void exr_font_ref(exr_font *font);
+FT_Error exr_font_face_open(FT_Library library,const void *data,size_t size,unsigned face_index,FT_Face *out);
 void exr_layout_ref(exr_layout *layout);
 exr_status exr_book_fonts(const exr_document *doc, exr_font *fallback,
                            const exr_style *styles, const exr_font_rule *rules, size_t count,

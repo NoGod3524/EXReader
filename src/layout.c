@@ -3,6 +3,12 @@
 #include "opentype_internal.h"
 #include FT_SYNTHESIS_H
 #include FT_PARAMETER_TAGS_H
+FT_Error exr_font_face_open(FT_Library library,const void *data,size_t size,unsigned face_index,FT_Face *out) {
+  FT_Parameter parameter={FT_PARAM_TAG_IGNORE_SBIX,NULL}; FT_Open_Args open={0};
+  open.flags=FT_OPEN_MEMORY|FT_OPEN_PARAMS; open.memory_base=data; open.memory_size=(FT_Long)size;
+  open.num_params=1; open.params=&parameter;
+  return FT_Open_Face(library,&open,(FT_Long)face_index,out);
+}
 static exr_status create_font(const exr_font_input *inputs,size_t count,int unicode,exr_font **out,exr_error *e) {
   exr_font *font;
   size_t i, total = 0;
@@ -37,7 +43,6 @@ static exr_status create_font(const exr_font_input *inputs,size_t count,int unic
     goto bad;
   for (i = 0; i < count; i++) {
     exr_face *face = &font->faces[i];
-    FT_Parameter parameter={FT_PARAM_TAG_IGNORE_SBIX,NULL}; FT_Open_Args open={0};
     face->bytes = malloc(inputs[i].size);
     if (!face->bytes) {
       status = EXR_MEMORY;
@@ -48,9 +53,7 @@ static exr_status create_font(const exr_font_input *inputs,size_t count,int unic
     face->bytes_size = inputs[i].size;
     face->scope = SIZE_MAX;
     /* sbix images use the shared PNG/JPEG decoder; keep scalable text metrics. */
-    open.flags=FT_OPEN_MEMORY|FT_OPEN_PARAMS; open.memory_base=face->bytes; open.memory_size=(FT_Long)inputs[i].size;
-    open.num_params=1; open.params=&parameter;
-    if (FT_Open_Face(font->library,&open,(FT_Long)inputs[i].face_index,&face->face) ||
+    if (exr_font_face_open(font->library,face->bytes,inputs[i].size,inputs[i].face_index,&face->face) ||
         !FT_IS_SCALABLE(face->face))
       goto bad;
     if (FT_Select_Charmap(face->face, FT_ENCODING_UNICODE)) {
