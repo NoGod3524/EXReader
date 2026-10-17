@@ -45,7 +45,9 @@ static void *book(const void *package,size_t package_size,const char *extra,int 
 static void *member(const void *book_bytes,size_t book_size,const char *name,size_t *size,unsigned flags) {
   mz_zip_archive z={0}; void *bytes; int index; CHECK(mz_zip_reader_init_mem(&z,book_bytes,book_size,0));
   index=mz_zip_reader_locate_file(&z,name,NULL,MZ_ZIP_FLAG_CASE_SENSITIVE); CHECK(index>=0);
-  bytes=mz_zip_reader_extract_to_heap(&z,(mz_uint)index,size,flags); CHECK(bytes); mz_zip_reader_end(&z); return bytes;
+  bytes=mz_zip_reader_extract_to_heap(&z,(mz_uint)index,size,flags); CHECK(bytes); mz_zip_reader_end(&z);
+  { unsigned char *terminated=malloc(*size+1); CHECK(terminated); memcpy(terminated,bytes,*size); terminated[*size]=0; mz_free(bytes); bytes=terminated; }
+  return bytes;
 }
 static void preserved(const void *before,size_t before_size,const void *after,size_t after_size,const char *name) {
   size_t a,b; void *x=member(before,before_size,name,&a,MZ_ZIP_FLAG_COMPRESSED_DATA),*y=member(after,after_size,name,&b,MZ_ZIP_FLAG_COMPRESSED_DATA);
