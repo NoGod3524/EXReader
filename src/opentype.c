@@ -10,7 +10,7 @@
 #define OT_DEPTH 16u
 #define OT_TABLE_LIMIT ((size_t)64 * 1024 * 1024)
 typedef struct { unsigned char *data; size_t size; } ot_table;
-struct exr_ot_state { ot_table gsub, gpos, gdef; };
+struct exr_ot_state { ot_table gsub, gpos, gdef; unsigned variations; };
 typedef struct {
   exr_shaped_glyph out;
   uint32_t cp;
@@ -801,10 +801,11 @@ void exr_ot_free(exr_face *face) {
   free(face->ot); face->ot = NULL;
 }
 static exr_status tables(exr_face *face) {
-  int status;
+  int status,i;
   if (face->ot) return EXR_OK;
   face->ot = calloc(1, sizeof(*face->ot));
   if (!face->ot) return EXR_MEMORY;
+  for(i=0;i<face->face->num_charmaps;i++) if(FT_Get_CMap_Format(face->face->charmaps[i])==14) { face->ot->variations=1; break; }
   status = table_load(face, EXR_TAG('G','S','U','B'), &face->ot->gsub, OT_TABLE_LIMIT);
   if (!status) status = table_load(face, EXR_TAG('G','P','O','S'), &face->ot->gpos,
                                    OT_TABLE_LIMIT-face->ot->gsub.size);
@@ -817,7 +818,7 @@ int exr_ot_present(exr_face *face) {
   if (!face) return 0;
   /* Route invalid tables through shape() so callers receive the actual error. */
   if (tables(face) != EXR_OK) return 1;
-  return face->ot->gsub.data || face->ot->gpos.data;
+  return face->ot->gsub.data || face->ot->gpos.data || face->ot->variations;
 }
 static ot_view tag_table(ot_view records, size_t field, uint32_t tag) {
   unsigned count = u16(records, field), i;
@@ -1411,7 +1412,7 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
   float *pens = NULL;
   size_t at = 0, cluster_start = 0, cluster_end = 0, i;
   size_t previous_visible = SIZE_MAX, previous_base = SIZE_MAX;
-  uint32_t cp, script;
+  uint32_t cp, script,previous_scalar=0;
   int has_kern = 0;
   exr_shaped_glyph *result = NULL;
   if (out) *out = NULL;
@@ -1458,6 +1459,15 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
       if (w.status != EXR_OK) goto done;
     }
     if (!exr_next(text, size, &at, &cp)) { w.status = EXR_ENCODING; goto done; }
+    if(w.count && w.face->ot->variations && exr_text_variation_selector(cp) && !exr_text_variation_selector(previous_scalar) && w.items[w.count-1].cp==previous_scalar) {
+      unsigned variant=FT_Face_GetCharVariantIndex(w.face->face,previous_scalar,cp);
+      if(variant) {
+        if(!valid_glyph(&w,variant)) goto done;
+        w.items[w.count-1].out.glyph=variant; w.items[w.count-1].out.flags&=~EXR_GLYPH_MISSING;
+        previous_scalar=cp; continue;
+      }
+    }
+    previous_scalar=cp;
     if (!resize_items(&w, w.count+1)) goto done;
     if (start >= cluster_end) {
       cluster_start = start; cluster_end = at;

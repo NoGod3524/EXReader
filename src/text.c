@@ -64,9 +64,7 @@ unsigned exr_text_step(exr_text_state *s, uint32_t cp, exr_text_next next, void 
 
 int exr_text_hidden(uint32_t cp) {
   return (control(grapheme(cp)) && cp != '\t') || cp == 0x200c || cp == 0x200d ||
-         cp == 0x034f || (cp >= 0x180b && cp <= 0x180d) || cp == 0x180f ||
-         (cp >= 0xfe00 && cp <= 0xfe0f) || (cp >= 0xe0020 && cp <= 0xe007f) ||
-         (cp >= 0xe0100 && cp <= 0xe01ef);
+         cp == 0x034f || exr_text_variation_selector(cp) || (cp >= 0xe0020 && cp <= 0xe007f);
 }
 
 typedef struct { const char *text; size_t at, size; } text_cursor;

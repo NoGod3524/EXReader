@@ -1150,3 +1150,9 @@ Separation 普通命名专色现支持文件声明的 device/CIE alternate 和�
 第一次读取验证全部索引的边界、offset 单调性、稀疏 glyph ID 的严格递增和数据范围，分块读取且计入工作预算；只缓存目录。每面最多 256 个 strike，PNG 编码、解码、缩放和取消沿用 sbix 限额。当前支持 square ppem、bitDepth 32；format 17 接受横向 small metrics，非方形 strike、仅竖向 small metrics 和其他编码返回 EXR_FORMAT。规范见 [CBDT](https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt) 与 [CBLC](https://learn.microsoft.com/en-us/typography/opentype/spec/cblc)。
 
 GSUB 匹配允许字体明确引用隐藏字符的 glyph ID，包括 ZWJ、标签字符和变体选择符；只有没有匹配的可忽略字符才跳过，GDEF/lookup 的过滤规则优先。普通 ZWNJ 继续阻断连接，也可被字体明确列为组件。合字、上下文、链式上下文和反向替换共用该匹配规则，消费后的合字保留完整 UTF-8 字素范围；未消费的隐藏记录保留零宽和 HIDDEN 标志。字形选择来自字体表，不内置特定 emoji 列表。
+
+## Unicode 变体字形（0.18 开发补充）
+
+原生 shape 在 GSUB 之前读取 cmap 14 的默认和非默认变体映射，覆盖 BMP、补充平面和 Mongolian 变体选择符。支持的选择符被消费，字形保留完整 UTF-8 字素范围；未知或连续多余的选择符维持 HIDDEN/零宽。无基础字符普通 cmap 映射、但有明确非默认变体映射时，也能塑形该序列。`exr_font_has_glyph` 仍只报告单字符 cmap 覆盖。
+
+完整布局、页级续排和竖排使用同一路径。即使字体没有 GSUB/GPOS 表也会应用 cmap 14；同行内元素改变字号时，隐藏选择符继续与基础字符一起塑形。字体回退在覆盖整个字素的候选中优先选择提供该变体映射的字体；都不支持该序列时保留原来的单字符回退顺序。字体由宿主提供，未做系统字体查找。

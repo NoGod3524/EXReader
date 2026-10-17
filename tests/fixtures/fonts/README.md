@@ -69,3 +69,10 @@ Both are GPL-3.0-only, with no external assets. SHA-256:
 selector and ZWNJ components exercise ligature/context/reverse substitution,
 ignored-mark flags, control barriers and whole-layout cluster preservation.
 SHA-256: `8988a05d5260318364d19ac7507070f9206629377958641b8ef2bfadfa852bf7`.
+
+`uvs.ttf` derives from the original fallback outlines. Its cmap 14 includes
+default/non-default BMP and supplementary variation selectors, including a
+variant whose base is absent from the ordinary cmap. Different advances make
+selection measurable. It has no GSUB/GPOS, to exercise ordinary-layout dispatch.
+Generator: `tools/generate_uvs_test_font.py`; GPL-3.0-only. SHA-256:
+`db3c307cd65ed16181c47e05b8db0667a2660b62d48a2be175f6d8088edfd05b`.
