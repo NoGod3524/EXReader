@@ -38,13 +38,15 @@ static void assets_case(const char *dir,const char *name) {
   resources=exr_document_resources(doc,&n); CHECK(n==6);
   for(i=0;i<n;i++) {
     if(!strcmp(resources[i].media_type,"text/css")) {
+      char *text;
       OK(exr_document_resource(doc,i,&data,&size,&error));
-      CHECK(!strstr((char *)data,"background:url(kindle:") && !strstr((char *)data,"URL(\"kindle:"));
-      if(strstr((char *)data,"font-face")) {
-        CHECK(strstr((char *)data,"embed00003.bin") && strstr((char *)data,"flow0002.bin"));
-        CHECK(strstr((char *)data,"content:\"kindle:embed:FFFF\"") && strstr((char *)data,"/* url(kindle:embed:ZZZZ) */"));
+      text=malloc(size+1); CHECK(text); memcpy(text,data,size); text[size]=0;
+      CHECK(!strstr(text,"background:url(kindle:") && !strstr(text,"URL(\"kindle:"));
+      if(strstr(text,"font-face")) {
+        CHECK(strstr(text,"embed00003.bin") && strstr(text,"flow0002.bin"));
+        CHECK(strstr(text,"content:\"kindle:embed:FFFF\"") && strstr(text,"/* url(kindle:embed:ZZZZ) */"));
       }
-      exr_free(data);
+      free(text); exr_free(data);
     }
     if(!strcmp(resources[i].media_type,"font/ttf")) {
       FILE *f; long length;
