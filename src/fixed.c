@@ -1,0 +1,103 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+#include "internal.h"
+struct exr_fixed_document {
+  char *title; exr_fixed_page *pages; size_t count,bytes;
+  exr_fixed_draw_fn draw; void *context; exr_context_release_fn release; unsigned busy;
+};
+static exr_status copy_string(const char *source,size_t *bytes,const char **out,exr_error *e) {
+  size_t n=0,at=0; uint32_t cp;
+  *out=NULL; if(!source) source="";
+  while(n<=65536 && source[n]) n++;
+  if(n>65536 || n+1>(size_t)8*1024*1024-*bytes) return exr_fail(e,EXR_LIMIT,"Fixed page metadata exceeds limit");
+  while(at<n) if(!exr_next(source,n,&at,&cp)) return exr_fail(e,EXR_ENCODING,"Fixed page metadata is not UTF-8");
+  *out=exr_copy(source,n); if(!*out) return exr_fail(e,EXR_MEMORY,"Fixed page metadata allocation failed");
+  *bytes+=n+1; return EXR_OK;
+}
+static int compare_id(const void *a,const void *b) { return strcmp(*(const char *const *)a,*(const char *const *)b); }
+static exr_status geometry_valid(const exr_page_geometry *g,exr_error *e) {
+  exr_viewport view; exr_status status=exr_viewport_create(g,1,&view,e);
+  if(status==EXR_LIMIT) {
+    double extent=fmax(g->bounds[2]-g->bounds[0],g->bounds[3]-g->bounds[1]);
+    double scale=g->unit_scale<1e-7 ? 1e7 : 1/g->unit_scale,scaled=extent*g->unit_scale;
+    if(scaled>0 && scale*scaled>1e7) scale=1e7/scaled;
+    status=exr_viewport_create(g,scale,&view,e);
+  }
+  return status;
+}
+void exr_fixed_free(exr_fixed_document *d) {
+  size_t i; if(!d) return;
+  if(d->release) d->release(d->context);
+  for(i=0;i<d->count;i++) { free((void *)d->pages[i].id); free((void *)d->pages[i].label); }
+  free(d->pages); free(d->title); free(d);
+}
+exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **out,exr_error *e) {
+  exr_fixed_input snapshot={0}; exr_fixed_document *d; exr_status status; size_t i,strings=0; const char *title=NULL; const char **ids=NULL;
+  const size_t minimum=offsetof(exr_fixed_input,release)+sizeof(snapshot.release);
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output");
+  *out=NULL;
+  if(!input || input->struct_size<minimum || input->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed input size");
+  for(i=sizeof(snapshot);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Unsupported fixed input extension");
+  memcpy(&snapshot,input,input->struct_size<sizeof(snapshot) ? input->struct_size : sizeof(snapshot)); input=&snapshot;
+  if(!input->draw || !input->pages || !input->page_count) return exr_fail(e,EXR_ARGUMENT,"Missing fixed page directory/provider");
+  if(input->page_count>10000) return exr_fail(e,EXR_LIMIT,"Fixed document exceeds 10000 pages");
+  d=calloc(1,sizeof(*d)); if(!d) return exr_fail(e,EXR_MEMORY,"Fixed document allocation failed");
+  d->pages=calloc(input->page_count,sizeof(*d->pages)); ids=calloc(input->page_count,sizeof(*ids));
+  if(!d->pages || !ids) { status=exr_fail(e,EXR_MEMORY,"Fixed page directory allocation failed"); goto done; }
+  d->count=input->page_count; status=copy_string(input->title,&strings,&title,e); d->title=(char *)title;
+  for(i=0;status==EXR_OK && i<d->count;i++) {
+    char generated[32]; const exr_fixed_page *p=&input->pages[i]; exr_fixed_page *v=&d->pages[i];
+    const char *id=p->id; if(!id || !*id) { snprintf(generated,sizeof(generated),"page-%zu",i+1); id=generated; }
+    v->geometry=p->geometry; status=geometry_valid(&v->geometry,e);
+    if(status==EXR_OK) status=copy_string(id,&strings,&v->id,e);
+    if(status==EXR_OK) status=copy_string(p->label,&strings,&v->label,e);
+    ids[i]=v->id;
+  }
+  if(status==EXR_OK) {
+    qsort(ids,d->count,sizeof(*ids),compare_id);
+    for(i=1;i<d->count;i++) if(!strcmp(ids[i-1],ids[i])) { status=exr_fail(e,EXR_ARGUMENT,"Duplicate fixed page IDs"); break; }
+  }
+done:
+  free(ids);
+  if(status!=EXR_OK) { exr_fixed_free(d); return status; }
+  d->draw=input->draw; d->context=input->context; d->release=input->release; d->bytes=sizeof(*d)+d->count*sizeof(*d->pages)+strings;
+  *out=d; return exr_fail(e,EXR_OK,"");
+}
+const char *exr_fixed_title(const exr_fixed_document *d) { return d ? d->title : ""; }
+const exr_fixed_page *exr_fixed_pages(const exr_fixed_document *d,size_t *count) { if(count) *count=d ? d->count : 0; return d ? d->pages : NULL; }
+size_t exr_fixed_memory_size(const exr_fixed_document *d) { return d ? d->bytes : 0; }
+exr_status exr_fixed_draw(exr_fixed_document *d,size_t page,const double matrix[6],const exr_draw_sink *sink,const exr_control *control,exr_error *e) {
+  const double identity[6]={1,0,0,1,0,0}; double transform[6]; exr_draw_sink consumer; exr_error local={0}; exr_status status; size_t i;
+  if(!d || page>=d->count || !sink || (!sink->path && !sink->image && !sink->clip && !sink->state) || d->busy)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant fixed page draw");
+  memcpy(transform,matrix ? matrix : identity,sizeof(transform)); consumer=*sink;
+  for(i=0;i<6;i++) if(!isfinite(transform[i]) || fabs(transform[i])>1e7) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed page drawing matrix");
+  d->busy=1; status=exr_control_poll(control,EXR_STAGE_RENDER,0,1,&local);
+  if(status==EXR_OK) status=d->draw(d->context,page,transform,&consumer,control,&local);
+  if(status==EXR_OK && local.code!=EXR_OK) status=local.code;
+  if(status==EXR_OK) status=exr_control_poll(control,EXR_STAGE_RENDER,1,1,&local);
+  d->busy=0;
+  if(status!=EXR_OK) {
+    local.code=status; if(!local.message[0]) exr_fail(&local,status,"Fixed page provider failed"); if(e) *e=local; return status;
+  }
+  return exr_fail(e,EXR_OK,"");
+}
+exr_status exr_fixed_render(exr_fixed_document *d,size_t page,double scale,const exr_fixed_render_options *options,exr_bitmap *out,exr_error *e) {
+  exr_canvas_config config={0}; exr_canvas *canvas=NULL; exr_draw_sink sink={0}; exr_viewport view; exr_path_segment clip[5]={0}; exr_status status;
+  if(out) memset(out,0,sizeof(*out));
+  if(!d || page>=d->count || !out || d->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant fixed page render");
+  if(options) { config.channels=options->channels; config.background=options->background; config.mask_budget=options->mask_budget; config.control=options->control; }
+  else { config.channels=4; config.background=0xffffffff; }
+  if(exr_control_cancel(&config.control,e)!=EXR_OK) return EXR_CANCELLED;
+  status=exr_viewport_create(&d->pages[page].geometry,scale,&view,e); if(status!=EXR_OK) return status;
+  if(view.width>16384 || view.height>16384) return exr_fail(e,EXR_LIMIT,"Fixed page bitmap dimensions exceed 16384");
+  config.width=(uint32_t)ceil(view.width); config.height=(uint32_t)ceil(view.height);
+  status=exr_canvas_create(&config,&canvas,e); if(status!=EXR_OK) return status;
+  clip[0].verb=EXR_PATH_MOVE; clip[1].verb=EXR_PATH_LINE; clip[1].points[0]=(exr_path_point){view.width,0};
+  clip[2].verb=EXR_PATH_LINE; clip[2].points[0]=(exr_path_point){view.width,view.height};
+  clip[3].verb=EXR_PATH_LINE; clip[3].points[0]=(exr_path_point){0,view.height}; clip[4].verb=EXR_PATH_CLOSE;
+  status=exr_canvas_clip(canvas,clip,5,NULL,EXR_FILL_NONZERO,e);
+  if(status==EXR_OK) status=exr_canvas_get_sink(canvas,&sink,e);
+  if(status==EXR_OK) status=exr_fixed_draw(d,page,view.matrix,&sink,&config.control,e);
+  if(status==EXR_OK) status=exr_canvas_take(canvas,out,e);
+  exr_canvas_free(canvas); return status;
+}
