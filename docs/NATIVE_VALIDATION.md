@@ -530,3 +530,10 @@ bullets, suppressed labels, missing definitions and unsupported numbering format
 semantic underline/strike nodes, metadata exclusion, paragraph/soft breaks and exact pixels after
 EPUB conversion. Invalid palette components/references and font sizes fail atomically. All 29
 existing Unicode fallback cases remain unchanged and pass through the new tree adapter.
+
+## 0.24 RTF pictures
+
+PNG/JPEG cases exercise both hex and binary pict streams, twip dimensions, optional shppict,
+nonshppict suppression, exact encoded bytes and identical rendered pixels after EPUB round-trip.
+Malformed hex/signatures fail. A known word nested in an unknown optional destination cannot
+reactivate that skipped content. The existing Unicode fallback suite remains unchanged.
