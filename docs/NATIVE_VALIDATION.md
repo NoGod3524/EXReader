@@ -1505,3 +1505,14 @@ tables inside notes, dangling/repeated markers and skipped destinations are
 checked. Numbering uses source occurrence order; page-bottom placement and custom
 RTF numbering schemes are outside this stage.
 All 61 local suites pass. The 0.80 adfd228 CI run passed all six jobs.
+
+
+## 0.82 RTF semantic list hierarchy and retained display labels
+
+Modern ls/ilvl paragraphs and legacy pntext markers produce generic lists/items
+without duplicating source labels. Tests inspect nested levels, bullet and legacy
+markers, presentation-only labels, level-jump containers and list continuation
+after a footnote. Cell-local lists remain independent. Structured EPUB roundtrips
+compare normalized text and every rendered page; malformed IDs/levels are rejected.
+Counter/listoverride definitions without supplied display labels remain pending.
+All 62 local suites pass. The 0.81 fd411e4 CI run passed all six jobs.

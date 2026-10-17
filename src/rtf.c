@@ -3,8 +3,9 @@
 #include <ctype.h>
 enum { BOLD, ITALIC, SIZE, COLOR, BACKGROUND, UNDERLINE, STRIKE, ALIGN, LEFT, RIGHT,
        INDENT, BEFORE, AFTER, LEADING, MULTIPLE, DIRECTION, RTF_PROPERTIES };
-typedef struct { int skip,uc,destination,picture,inherited_skip,star,font,field,note; int properties[RTF_PROPERTIES]; } rtf_state;
+typedef struct { int skip,uc,destination,picture,inherited_skip,star,font,field,note,list_id,list_level,list_text; int properties[RTF_PROPERTIES]; } rtf_state;
 typedef struct { size_t node,paragraph; } rtf_note;
+typedef struct { size_t container,depth; struct { size_t list,item; int id; } levels[9]; } rtf_lists;
 
 typedef struct { exr_buffer instruction; char *href; int ready; } rtf_field;
 typedef struct { exr_buffer bytes; int type,nibble,width,height,goal_width,goal_height,scale_x,scale_y; } rtf_picture;
@@ -27,6 +28,7 @@ typedef struct {
   size_t field_count,field_capacity;
   rtf_picture *pictures;
   size_t picture_count,picture_capacity;
+  rtf_lists lists,note_lists;
   rtf_note *notes; size_t note_count,note_capacity,pending_note_ref; int active_note;
   int last_picture;
   exr_status status;
@@ -55,6 +57,30 @@ static int paragraph_style(rtf_context *c,const rtf_state *s) {
   if(ok && p[DIRECTION]) ok=put(&css,p[DIRECTION]==1 ? "direction:ltr;" : "direction:rtl;");
   ok=ok && set(c,c->paragraph,"style",css.data); free(css.data); return ok;
 }
+static int list_parent(rtf_context *c,const rtf_state *s,size_t container,size_t *parent) {
+  rtf_lists *lists=&c->lists; size_t level=(size_t)s->list_level,k; int bullet=0;
+  *parent=container;
+  if(lists->container!=container) { lists->container=container; lists->depth=0; }
+  if(!s->list_id) { lists->depth=0; return 1; }
+  if(level>=9) { c->status=EXR_FORMAT; return 0; }
+  if(s->list_text && c->run.data) {
+    size_t at=strspn(c->run.data," \t\r\n"); uint32_t cp;
+    if(at<c->run.size && exr_next(c->run.data,c->run.size,&at,&cp)) bullet=cp==0x2022 || cp==0xb7 || cp==0x25cf || cp==0x25cb || cp==0x25aa || cp=='*' || cp=='-';
+  }
+  if(lists->depth>level && (lists->levels[level].id!=s->list_id || (s->list_text && strcmp(exr_html_tag(c->doc,&c->doc->nodes[lists->levels[level].list]),bullet ? "ul" : "ol")))) lists->depth=level;
+  for(k=lists->depth;k<=level;k++) {
+    size_t owner=k ? lists->levels[k-1].item : container,list; char value[48];
+    list=make(c,owner,EXR_NODE_LIST,bullet ? "ul" : "ol",NULL); if(list==SIZE_MAX) return 0;
+    if(!set(c,list,"style","list-style-type:none;padding:0;margin:0;")) return 0;
+    snprintf(value,sizeof(value),"%d",s->list_id); if(!set(c,list,"data-rtf-list-id",value)) return 0;
+    snprintf(value,sizeof(value),"%zu",k); if(!set(c,list,"data-rtf-list-level",value)) return 0;
+    lists->levels[k].list=list; lists->levels[k].id=s->list_id; lists->levels[k].item=SIZE_MAX;
+    if(k<level) { lists->levels[k].item=make(c,list,EXR_NODE_LIST_ITEM,"li",NULL); if(lists->levels[k].item==SIZE_MAX || !set(c,lists->levels[k].item,"role","presentation")) return 0; }
+  }
+  lists->levels[level].item=make(c,lists->levels[level].list,EXR_NODE_LIST_ITEM,"li",NULL);
+  if(lists->levels[level].item==SIZE_MAX) return 0;
+  lists->depth=level+1; *parent=lists->levels[level].item; return 1;
+}
 static int paragraph(rtf_context *c,const rtf_state *s) {
   if(c->paragraph==SIZE_MAX) {
     size_t parent=c->body;
@@ -67,6 +93,7 @@ static int paragraph(rtf_context *c,const rtf_state *s) {
       }
       parent=c->cell;
     } else c->table=SIZE_MAX;
+    if(!list_parent(c,s,parent,&parent)) return 0;
     c->paragraph=make(c,parent,EXR_NODE_PARAGRAPH,"p",NULL); if(c->paragraph==SIZE_MAX) return 0;
   }
   return paragraph_style(c,s);
@@ -105,6 +132,7 @@ static int run_flush(rtf_context *c) {
   if(p[SIZE] && !css_number(&css,"font-size",p[SIZE]*2.0f/3,1)) goto done;
   if(!css_color(c,&css,"color",p[COLOR]) || !css_color(c,&css,"background-color",p[BACKGROUND])) goto done;
   span=make(c,parent,EXR_NODE_ELEMENT,"span",NULL);
+  if(span!=SIZE_MAX && c->style.list_text && (!set(c,span,"role","presentation") || !set(c,span,"aria-hidden","true"))) goto done;
   if(span==SIZE_MAX || (css.size && !set(c,span,"style",css.data)) || make(c,span,EXR_NODE_TEXT,NULL,c->run.data)==SIZE_MAX) goto done;
   c->run.size=0; if(c->run.data) c->run.data[0]=0; ok=1;
 done:
@@ -192,7 +220,8 @@ static int note_start(rtf_context *c,rtf_state *s) {
   snprintf(id,sizeof(id),"rtf-note-%zu",c->note_count+1);
   if(!set(c,node,"id",id) || !set(c,node,"role","doc-footnote")) return 0;
   note=&c->notes[c->note_count]; note->node=node; note->paragraph=c->paragraph;
-  s->note=c->active_note=(int)c->note_count++; s->field=-1; c->paragraph=SIZE_MAX; c->last_picture=0; return 1;
+  c->note_lists=c->lists;
+  s->note=c->active_note=(int)c->note_count++; s->field=-1; s->list_id=s->list_level=s->list_text=0; c->paragraph=SIZE_MAX; c->last_picture=0; return 1;
 }
 static int note_finish(rtf_context *c,const rtf_state *s) {
   size_t backlink; char href[64]; rtf_note *note;
@@ -200,7 +229,7 @@ static int note_finish(rtf_context *c,const rtf_state *s) {
   note=&c->notes[s->note]; snprintf(href,sizeof(href),"#rtf-ref-%d",s->note+1);
   backlink=make(c,c->paragraph,EXR_NODE_LINK,"a",NULL);
   if(backlink==SIZE_MAX || !set(c,backlink,"href",href) || !set(c,backlink,"role","doc-backlink") || make(c,backlink,EXR_NODE_TEXT,NULL,"\xe2\x86\xa9")==SIZE_MAX) return 0;
-  c->paragraph=note->paragraph; c->active_note=-1; c->last_picture=0; return 1;
+  c->paragraph=note->paragraph; c->lists=c->note_lists; c->active_note=-1; c->last_picture=0; return 1;
 }
 static int table_control(rtf_context *c,const rtf_state *state,const char *word,long value,int has,int *handled) {
   *handled=1;
@@ -208,7 +237,7 @@ static int table_control(rtf_context *c,const rtf_state *state,const char *word,
   if(!strcmp(word,"trowd")) {
     if(c->row!=SIZE_MAX) { c->status=EXR_FORMAT; return 0; }
     if(!run_flush(c)) return 0;
-    c->paragraph=SIZE_MAX; c->last_picture=0;
+    c->paragraph=SIZE_MAX; c->last_picture=0; c->lists.depth=0;
     if(c->table==SIZE_MAX) { size_t k; c->table=make(c,c->body,EXR_NODE_TABLE,"table",NULL); if(c->table==SIZE_MAX) return 0; for(k=0;k<256;k++) c->owner[k]=SIZE_MAX; }
     c->row=make(c,c->table,EXR_NODE_ROW,"tr",NULL); c->cell=SIZE_MAX; c->cell_count=c->definition_count=0; c->row_left=0; c->pending_horizontal=c->pending_vertical=0;
     return c->row!=SIZE_MAX;
@@ -458,7 +487,9 @@ static int style_control(rtf_context *c,rtf_state *s,const char *word,long value
   else if(!strcmp(word,"ltrpar")) s->properties[DIRECTION]=1;
   else if(!strcmp(word,"rtlpar")) s->properties[DIRECTION]=2;
   else if(!strcmp(word,"plain")) { memset(s->properties,0,ALIGN*sizeof(*s->properties)); s->font=-1; }
-  else if(!strcmp(word,"pard")) memset(s->properties+ALIGN,0,(RTF_PROPERTIES-ALIGN)*sizeof(*s->properties));
+  else if(!strcmp(word,"pard")) { memset(s->properties+ALIGN,0,(RTF_PROPERTIES-ALIGN)*sizeof(*s->properties)); if(!s->list_text) s->list_id=s->list_level=0; }
+  else if(!strcmp(word,"ls")) { if(!has || value<0 || value>INT_MAX) { c->status=EXR_FORMAT; return 0; } s->list_id=(int)value; }
+  else if(!strcmp(word,"ilvl")) { if(!has || value<0 || value>8) { c->status=EXR_FORMAT; return 0; } s->list_level=(int)value; }
   else {
     if(!strcmp(word,"li")) key=LEFT;
     else if(!strcmp(word,"ri")) key=RIGHT;
@@ -593,6 +624,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       }
       optional=states[depth].star; states[depth].star=0;
       if(!states[depth].inherited_skip && states[depth].destination==0 && (!states[depth].skip || optional)) {
+        if(!strcmp(word,"listtext") || !strcmp(word,"pntext")) { states[depth].skip=0; states[depth].list_text=1; if(!states[depth].list_id) states[depth].list_id=-1; continue; }
         if(!strcmp(word,"footnote")) { states[depth].skip=0; if(!note_start(&context,&states[depth])) goto done; continue; }
         if(!strcmp(word,"fonttbl")) {
           if(!context.fonts) { context.fonts=calloc(4096,sizeof(*context.fonts)); if(!context.fonts) { context.status=EXR_MEMORY; goto done; } }
