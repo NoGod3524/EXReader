@@ -71,7 +71,6 @@ exr_status exr_xml_resource(const exr_document *doc, size_t resource, const char
                              exr_document **out, exr_error *error);
 exr_status exr_epub_navigation(const exr_document *index, size_t metadata_bytes,
                                 exr_navigation **entries, size_t *count, exr_error *error);
-void exr_navigation_free(exr_navigation *entries, size_t count);
 exr_status exr_epub_export_check(const exr_document *doc, exr_error *error);
 exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **out,
                         exr_error *error);

@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.30.0"
+#define EXR_VERSION "0.31.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -337,6 +337,11 @@ EXR_API const exr_block *exr_document_blocks(const exr_document *doc, size_t *co
 EXR_API const exr_node *exr_document_nodes(const exr_document *doc, size_t *count);
 EXR_API const exr_chapter *exr_document_chapters(const exr_document *doc, size_t *count);
 EXR_API const exr_resource *exr_document_resources(const exr_document *doc, size_t *count);
+/* Owned navigation snapshot; valid after document_free. Release with navigation_free.
+   Returns authored nav/NCX resources, or an empty array when none are present. */
+EXR_API exr_status exr_document_navigation(const exr_document *doc, exr_navigation **entries,
+                                            size_t *count, exr_error *error);
+EXR_API void exr_navigation_free(exr_navigation *entries, size_t count);
 /* Borrowed views last until document_free. Attribute names use URI|local for namespaces. */
 EXR_API const char *exr_node_attribute(const exr_node *node, const char *name);
 /* Copies an embedded resource; free the returned bytes with exr_free(). No network access. */

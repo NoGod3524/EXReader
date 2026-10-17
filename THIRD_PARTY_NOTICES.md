@@ -76,3 +76,8 @@ KF8 resource URI and FONT field semantics were also checked against
 [`lib/mobi_html.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_html.py)
 and [`lib/kindleunpack.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/kindleunpack.py).
 FONT zlib streams use the existing miniz dependency; all resource handling remains native C.
+
+
+KF8 NCX tag meanings and hierarchy fields were checked against
+[`lib/mobi_ncx.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_ncx.py).
+NCX/CNCX validation, hierarchy checks and resource construction are implemented in C.

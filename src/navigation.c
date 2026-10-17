@@ -213,3 +213,10 @@ exr_status exr_epub_navigation(const exr_document *index, size_t metadata_bytes,
   *entries = n.entries; *count = n.count;
   return exr_fail(e, EXR_OK, "");
 }
+exr_status exr_document_navigation(const exr_document *doc,exr_navigation **entries,
+                                    size_t *count,exr_error *e) {
+  if(entries) *entries=NULL;
+  if(count) *count=0;
+  if(!doc || !entries || !count) return exr_fail(e,EXR_ARGUMENT,"Missing document or navigation outputs");
+  return exr_epub_navigation(doc,0,entries,count,e);
+}
