@@ -3,14 +3,16 @@
 #define EXR_VECTOR_INTERNAL_H
 #include "internal.h"
 typedef struct { double x0,y0,x1,y1; } exr_vector_edge;
-typedef enum { EXR_VECTOR_NONZERO,EXR_VECTOR_EVENODD } exr_vector_rule;
+typedef exr_fill_rule exr_vector_rule;
+#define EXR_VECTOR_NONZERO EXR_FILL_NONZERO
+#define EXR_VECTOR_EVENODD EXR_FILL_EVENODD
 static inline int exr_vector_work(size_t *work,size_t amount) {
   if(*work>(size_t)256*1024*1024 || amount>(size_t)256*1024*1024-*work) return 0;
   *work+=amount; return 1;
 }
-typedef struct { double x,y; } exr_vector_point;
-typedef enum { EXR_VECTOR_MOVE,EXR_VECTOR_LINE,EXR_VECTOR_QUAD,EXR_VECTOR_CUBIC,EXR_VECTOR_CLOSE } exr_vector_verb;
-typedef struct { exr_vector_verb verb; exr_vector_point points[3]; } exr_vector_segment;
+typedef exr_path_point exr_vector_point;
+typedef exr_path_verb exr_vector_verb;
+typedef exr_path_segment exr_vector_segment;
 typedef struct { size_t start,count; unsigned closed; } exr_vector_contour;
 typedef struct {
   exr_vector_point *points; size_t point_count,point_capacity;
@@ -23,9 +25,20 @@ exr_status exr_vector_flatten(const exr_vector_segment *segments,size_t count,co
                                const exr_control *control,exr_error *error);
 exr_status exr_vector_edges(const exr_vector_polyline *path,int close_open,exr_vector_edge **out,
                              size_t *count,size_t *work,const exr_control *control,exr_error *error);
-typedef enum { EXR_VECTOR_BUTT,EXR_VECTOR_ROUND_CAP,EXR_VECTOR_SQUARE } exr_vector_cap;
-typedef enum { EXR_VECTOR_MITER,EXR_VECTOR_ROUND_JOIN,EXR_VECTOR_BEVEL } exr_vector_join;
-typedef struct { double width,miter_limit; exr_vector_cap cap; exr_vector_join join; } exr_vector_stroke_style;
+typedef exr_line_cap exr_vector_cap;
+typedef exr_line_join exr_vector_join;
+typedef exr_path_stroke exr_vector_stroke_style;
+#define EXR_VECTOR_MOVE EXR_PATH_MOVE
+#define EXR_VECTOR_LINE EXR_PATH_LINE
+#define EXR_VECTOR_QUAD EXR_PATH_QUAD
+#define EXR_VECTOR_CUBIC EXR_PATH_CUBIC
+#define EXR_VECTOR_CLOSE EXR_PATH_CLOSE
+#define EXR_VECTOR_BUTT EXR_CAP_BUTT
+#define EXR_VECTOR_ROUND_CAP EXR_CAP_ROUND
+#define EXR_VECTOR_SQUARE EXR_CAP_SQUARE
+#define EXR_VECTOR_MITER EXR_JOIN_MITER
+#define EXR_VECTOR_ROUND_JOIN EXR_JOIN_ROUND
+#define EXR_VECTOR_BEVEL EXR_JOIN_BEVEL
 /* Positive width is in source units, then transformed. Width zero is a one-pixel
    hairline in target coordinates. Closed positive-winding polygons form a union. */
 exr_status exr_vector_stroke(const exr_vector_polyline *path,const exr_vector_stroke_style *style,
@@ -47,12 +60,7 @@ exr_status exr_vector_fill(exr_bitmap *bitmap,const exr_vector_edge *edges,size_
 exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const double matrix[6],
                              double alpha,int interpolate,const exr_bitmap *clip,size_t *work,
                              const exr_control *control,exr_error *error);
-typedef struct exr_vector_texture {
-  exr_bitmap bitmap;
-  struct exr_vector_texture *mask;
-  unsigned interpolate,mask_mode,has_matte; /* 1: mask gray*alpha, 2: mask alpha */
-  double matte[3]; /* Optional preblended RGB to remove using the mask alpha. */
-} exr_vector_texture;
+typedef exr_image_layer exr_vector_texture;
 /* All layers are borrowed; independent resolutions/filters sample in the same
    normalized space. No image-resolution reduction of an opacity mask. */
 exr_status exr_vector_texture_paint(exr_bitmap *target,const exr_vector_texture *source,const double matrix[6],

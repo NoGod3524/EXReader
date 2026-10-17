@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.61.0"
+#define EXR_VERSION "0.62.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -337,6 +337,55 @@ typedef struct {
    Both transforms are returned for painting and hit testing; no allocation. */
 EXR_API exr_status exr_viewport_create(const exr_page_geometry *page,double scale,
                                         exr_viewport *out,exr_error *error);
+typedef struct { double x,y; } exr_path_point;
+typedef enum { EXR_PATH_MOVE,EXR_PATH_LINE,EXR_PATH_QUAD,EXR_PATH_CUBIC,EXR_PATH_CLOSE } exr_path_verb;
+typedef struct { exr_path_verb verb; exr_path_point points[3]; } exr_path_segment;
+typedef enum { EXR_FILL_NONZERO,EXR_FILL_EVENODD } exr_fill_rule;
+typedef enum { EXR_CAP_BUTT,EXR_CAP_ROUND,EXR_CAP_SQUARE } exr_line_cap;
+typedef enum { EXR_JOIN_MITER,EXR_JOIN_ROUND,EXR_JOIN_BEVEL } exr_line_join;
+typedef struct { double width,miter_limit; exr_line_cap cap; exr_line_join join; } exr_path_stroke;
+enum { EXR_MASK_GRAY=1,EXR_MASK_ALPHA=2 };
+typedef struct exr_image_layer {
+  exr_bitmap bitmap;
+  struct exr_image_layer *mask;
+  unsigned interpolate,mask_mode,has_matte; /* mask_mode: 1 gray*alpha, 2 alpha */
+  double matte[3]; /* Optional normalized RGB preblend color to remove. */
+} exr_image_layer;
+enum { EXR_DRAW_FILL=1,EXR_DRAW_STROKE=2 };
+typedef struct {
+  uint32_t fill,stroke; /* 0xRRGGBBAA */
+  unsigned flags;
+  exr_fill_rule rule;
+  exr_path_stroke line;
+  const double *dashes; size_t dash_count; double dash_phase;
+  /* Coordinates defining stroke widths/dashes. NULL uses the path matrix.
+     Identity here gives a non-scaling stroke for a transformed path. */
+  const double *stroke_matrix;
+} exr_draw_style;
+typedef struct exr_canvas exr_canvas;
+typedef struct {
+  uint32_t width,height,channels,background; /* channels 0 -> RGBA */
+  size_t mask_budget; /* zero -> 64 MiB */
+  exr_control control; /* Context must remain valid until canvas_free. */
+} exr_canvas_config;
+EXR_API exr_draw_style exr_draw_style_defaults(void);
+/* Immediate drawing, independent of document format, fonts and UI. Path/image
+   inputs are borrowed only for a call. A failed draw poisons the canvas; take
+   then returns that failure instead of exposing partial output. */
+EXR_API exr_status exr_canvas_create(const exr_canvas_config *config,exr_canvas **out,exr_error *error);
+EXR_API void exr_canvas_free(exr_canvas *canvas);
+EXR_API size_t exr_canvas_memory_size(const exr_canvas *canvas);
+EXR_API const exr_bitmap *exr_canvas_bitmap(const exr_canvas *canvas);
+EXR_API exr_status exr_canvas_take(exr_canvas *canvas,exr_bitmap *out,exr_error *error);
+/* Save/restore the clipping region; paint styles are supplied per draw. */
+EXR_API exr_status exr_canvas_save(exr_canvas *canvas,exr_error *error);
+EXR_API exr_status exr_canvas_restore(exr_canvas *canvas,exr_error *error);
+EXR_API exr_status exr_canvas_path(exr_canvas *canvas,const exr_path_segment *segments,size_t count,
+                                    const double matrix[6],const exr_draw_style *style,exr_error *error);
+EXR_API exr_status exr_canvas_clip(exr_canvas *canvas,const exr_path_segment *segments,size_t count,
+                                    const double matrix[6],exr_fill_rule rule,exr_error *error);
+EXR_API exr_status exr_canvas_image(exr_canvas *canvas,const exr_image_layer *image,const double matrix[6],
+                                     double alpha,exr_error *error);
 /* All input/output strings are UTF-8. Returned views belong to their owner. */
 EXR_API const char *exr_version(void);
 /* Unicode 17 extended grapheme boundaries plus documented line-break rules.

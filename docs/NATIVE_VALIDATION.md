@@ -1177,3 +1177,27 @@ rotated colored quadrants, crop/media intersection, fractional clip pixel values
 empty intersection, initial clip validation/byte limits and oversized pages.
 Public PDF document opening is still pending. The 0.60 commit 154a2d9 passed
 all six CI jobs.
+
+
+## 0.62 Public immediate canvas shared by the PDF backend
+
+The generic path/point/fill/stroke and layered RGBA texture types are now public.
+The public canvas owns a bounded bitmap, immutable shared clips, a 160-entry clip
+stack, work/cancellation state and first-failure diagnostics. It supports path
+fill/stroke, independently defined stroke coordinates, affine masked images,
+clip intersection, memory queries, borrowed bitmap access and ownership transfer.
+Failed drawing poisons the canvas and prevents delivery of partial pixels.
+
+PDF rasterization now delegates geometry, images, clip references and internal
+text clip-union operations to this same canvas, removing its duplicate painter.
+Font selection/outlines and PDF color/state interpretation remain in the format
+adapter. Clip-union group construction remains private while the scene model is
+being developed; the public canvas can be used without any document or parser.
+
+The public-DLL canvas suite checks actual fill/dash/stroke pixels, non-scaling
+strokes, independent image/mask resolution, borrowed-input lifetimes, output
+ownership after canvas destruction, clip save/restore and stable memory over
+120 saves, mask byte limits, 160-level stack limits, cancellation, invalid paths,
+first-error preservation and bitmap limits. Existing PDF/image/vector suites
+continue to exercise the same rendering through the refactored backend. The
+0.61 commit dd68de3 passed all six CI jobs.
