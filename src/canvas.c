@@ -156,3 +156,29 @@ exr_status exr_canvas_image(exr_canvas *c,const exr_image_layer *image,const dou
   status=exr_vector_texture_paint(&c->bitmap,image,matrix,alpha,c->clip ? &c->clip->bitmap : NULL,&c->work,&c->control,e);
   return finish(c,status,e);
 }
+static exr_status sink_path(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
+  return exr_canvas_path(context,segments,count,matrix,style,e);
+}
+static exr_status sink_image(void *context,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
+  return exr_canvas_image(context,image,matrix,alpha,e);
+}
+static exr_status sink_clip(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,unsigned accumulate,exr_error *e) {
+  if(accumulate>1) return finish(context,exr_fail(e,EXR_ARGUMENT,"Invalid clip union operation"),e);
+  return clip_path(context,segments,count,matrix,rule,accumulate!=0,e);
+}
+static exr_status sink_state(void *context,exr_draw_state state,exr_error *e) {
+  exr_canvas *c=context; exr_status status;
+  if(state==EXR_DRAW_SAVE) return exr_canvas_save(c,e);
+  if(state==EXR_DRAW_RESTORE) return exr_canvas_restore(c,e);
+  if(state==EXR_DRAW_END_CLIP) return exr_canvas_union_commit(c,e);
+  status=ready(c,e); if(status!=EXR_OK) return status;
+  if(state!=EXR_DRAW_BEGIN_CLIP) return finish(c,exr_fail(e,EXR_ARGUMENT,"Unknown canvas drawing state"),e);
+  exr_canvas_union_abort(c); return exr_fail(e,EXR_OK,"");
+}
+exr_status exr_canvas_get_sink(exr_canvas *c,exr_draw_sink *out,exr_error *e) {
+  exr_status status;
+  if(out) memset(out,0,sizeof(*out));
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing canvas draw sink output");
+  status=ready(c,e); if(status!=EXR_OK) return status;
+  out->path=sink_path; out->image=sink_image; out->clip=sink_clip; out->state=sink_state; out->context=c; return exr_fail(e,EXR_OK,"");
+}

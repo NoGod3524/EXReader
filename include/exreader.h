@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.63.0"
+#define EXR_VERSION "0.64.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -386,6 +386,27 @@ EXR_API exr_status exr_canvas_clip(exr_canvas *canvas,const exr_path_segment *se
                                     const double matrix[6],exr_fill_rule rule,exr_error *error);
 EXR_API exr_status exr_canvas_image(exr_canvas *canvas,const exr_image_layer *image,const double matrix[6],
                                      double alpha,exr_error *error);
+typedef enum { EXR_DRAW_SAVE,EXR_DRAW_RESTORE,EXR_DRAW_BEGIN_CLIP,EXR_DRAW_END_CLIP } exr_draw_state;
+typedef exr_status (*exr_draw_path_fn)(void *context,const exr_path_segment *segments,size_t count,
+                                        const double matrix[6],const exr_draw_style *style,exr_error *error);
+typedef exr_status (*exr_draw_image_fn)(void *context,const exr_image_layer *image,const double matrix[6],
+                                         double alpha,exr_error *error);
+typedef exr_status (*exr_draw_clip_fn)(void *context,const exr_path_segment *segments,size_t count,
+                                        const double matrix[6],exr_fill_rule rule,unsigned accumulate,exr_error *error);
+typedef exr_status (*exr_draw_state_fn)(void *context,exr_draw_state state,exr_error *error);
+/* A streaming drawing consumer. All callback inputs are borrowed for that
+   callback. Absent callbacks are skipped for inspection-only consumers.
+   Clip accumulate=0 intersects now; accumulate=1 adds to the union applied at
+   END_CLIP. BEGIN_CLIP discards an unfinished union; an empty union is a no-op. */
+typedef struct {
+  exr_draw_path_fn path;
+  exr_draw_image_fn image;
+  exr_draw_clip_fn clip;
+  exr_draw_state_fn state;
+  void *context;
+} exr_draw_sink;
+/* The returned sink borrows the canvas until canvas_free. */
+EXR_API exr_status exr_canvas_get_sink(exr_canvas *canvas,exr_draw_sink *out,exr_error *error);
 /* All input/output strings are UTF-8. Returned views belong to their owner. */
 EXR_API const char *exr_version(void);
 /* Unicode 17 extended grapheme boundaries plus documented line-break rules.

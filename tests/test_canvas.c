@@ -49,6 +49,21 @@ static void stroke_and_images(void) {
   }
 }
 static int cancel(void *ctx) { return *(int *)ctx; }
+static void drawing_sink(void) {
+  exr_canvas *c=create(0); exr_draw_sink sink={0}; exr_path_segment p[5]; exr_draw_style style=exr_draw_style_defaults(); exr_bitmap out;
+  OK(exr_canvas_get_sink(c,&sink,&error)); CHECK(sink.context==c && sink.path && sink.image && sink.clip && sink.state);
+  OK(sink.state(sink.context,EXR_DRAW_BEGIN_CLIP,&error)); rectangle(p,1,1,1,1); OK(sink.clip(sink.context,p,5,NULL,EXR_FILL_NONZERO,1,&error));
+  rectangle(p,5,5,1,1); OK(sink.clip(sink.context,p,5,NULL,EXR_FILL_NONZERO,1,&error)); OK(sink.state(sink.context,EXR_DRAW_END_CLIP,&error));
+  rectangle(p,0,0,8,8); OK(sink.path(sink.context,p,5,NULL,&style,&error));
+  pixel(exr_canvas_bitmap(c),1,1,0,0,0); pixel(exr_canvas_bitmap(c),5,5,0,0,0); pixel(exr_canvas_bitmap(c),3,3,255,255,255);
+  OK(sink.state(sink.context,EXR_DRAW_SAVE,&error)); OK(sink.state(sink.context,EXR_DRAW_BEGIN_CLIP,&error)); OK(sink.state(sink.context,EXR_DRAW_END_CLIP,&error)); OK(sink.state(sink.context,EXR_DRAW_RESTORE,&error));
+  OK(sink.state(sink.context,EXR_DRAW_BEGIN_CLIP,&error)); OK(sink.clip(sink.context,NULL,0,NULL,EXR_FILL_NONZERO,1,&error)); OK(sink.state(sink.context,EXR_DRAW_END_CLIP,&error));
+  style.fill=0xff0000ff; OK(sink.path(sink.context,p,5,NULL,&style,&error)); pixel(exr_canvas_bitmap(c),1,1,0,0,0);
+  CHECK(sink.state(sink.context,(exr_draw_state)99,&error)==EXR_ARGUMENT); CHECK(exr_canvas_take(c,&out,&error)==EXR_ARGUMENT && !out.pixels); exr_canvas_free(c);
+  c=create(0); OK(exr_canvas_get_sink(c,&sink,&error)); CHECK(sink.clip(sink.context,p,5,NULL,EXR_FILL_NONZERO,2,&error)==EXR_ARGUMENT);
+  CHECK(exr_canvas_get_sink(c,&sink,&error)==EXR_ARGUMENT && !sink.path && !sink.context); exr_canvas_free(c);
+  CHECK(exr_canvas_get_sink(NULL,&sink,&error)==EXR_ARGUMENT && !sink.path && !sink.context);
+}
 static void failures(void) {
   exr_canvas *c=create(64); exr_path_segment rect[5]; exr_bitmap out; char message[256]; size_t i;
   rectangle(rect,0,0,8,8); OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error)); OK(exr_canvas_save(c,&error));
@@ -64,4 +79,4 @@ static void failures(void) {
   }
   CHECK(!exr_canvas_memory_size(NULL) && !exr_canvas_bitmap(NULL)); exr_canvas_free(NULL);
 }
-int main(void) { clip_and_ownership(); stroke_and_images(); failures(); printf("%u native canvas checks passed\n",checks); return 0; }
+int main(void) { clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); printf("%u native canvas checks passed\n",checks); return 0; }
