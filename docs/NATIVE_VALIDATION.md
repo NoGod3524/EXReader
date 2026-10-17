@@ -523,3 +523,10 @@ start overrides, style-derived numbering and never-restart levels. Visible label
 survive structured EPUB round-trip with identical rendering. Additional cases cover zero,
 zero-padded decimals, alphabetic rollover, subtractive Roman numerals, large-value fallback,
 bullets, suppressed labels, missing definitions and unsupported numbering formats.
+
+## 0.23 styled RTF
+
+`native-rtf` verifies group-scoped bold/italic, explicit size and color, paragraph properties,
+semantic underline/strike nodes, metadata exclusion, paragraph/soft breaks and exact pixels after
+EPUB conversion. Invalid palette components/references and font sizes fail atomically. All 29
+existing Unicode fallback cases remain unchanged and pass through the new tree adapter.

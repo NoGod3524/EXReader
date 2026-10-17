@@ -480,6 +480,7 @@ int exr_model_attribute(exr_document *d, size_t index, const char *key, const ch
     a[i].name=exr_model_copy(d,key,strlen(key)); if (!a[i].name) return 0;
   }
   {
+    if(a[i].value && !strcmp(a[i].value,value)) return 1;
     char *copy=exr_model_copy(d,value,strlen(value)); if(!copy) return 0;
     free((void *)a[i].value); a[i].value=copy; return 1;
   }

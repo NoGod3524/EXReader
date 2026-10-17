@@ -1,4 +1,4 @@
-# Native C API 0.22
+# Native C API 0.23
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -475,3 +475,11 @@ DrawingML/VML 图片按关系读取，原编码字节进入 resources；可读�
 当前支持 decimal、decimalZero、lowerLetter/upperLetter、lowerRoman/upperRoman、bullet、none；字母和罗马数字的非正值、罗马数字大于 3999 时回退十进制。其他编号制返回 EXR_FORMAT，尚未实现语言相关计数、图片项目符号和 numStyleLink。定义 ID 重复、层级越界、缺失定义、失配引用会拒绝解析。每类定义最多 10000 个，引用的层级配置按需分配。
 
 可见编号保存为段落开头的呈现性 span（role=presentation、aria-hidden=true），其字号/字体等可取自层级 rPr；原序号文本也进入规范化正文与搜索。列表设置 `list-style-type:none`，确保在外部 EPUB 阅读器中不会重复生成编号。此版本没有向核心排版器加入 Word 专用计数规则，也没有为一般 HTML/EPUB 的无文本 LI 自动绘制标记。布局仍使用现有列表缩进，未实现 Word 的精确悬挂缩进和编号制表位。
+
+## RTF 字符与段落结构（0.23）
+
+RTF 使用同一文档树保存分组作用域内的粗体/斜体、半点字号、颜色表引用、段落对齐、缩进、段前后距、行距与文字方向。plain/pard 恢复相应属性；par 创建段落，line 保留为段内换行。u/s 元素保留下划线与删除线语义，当前栅格器尚未绘制这两种修饰；inline highlight 也尚未绘制背景。
+
+词法器保留 0.12.1 的 Unicode fallback 规则：整条控制词、转义符号、十六进制字节和 bin 段各按一个 fallback 字符消费，fallback 内不执行格式或 destination；分组边界终止 fallback。支持 Windows-1252 与 Unicode 转义；其他 ansicpg 编码仍拒绝。字体表、图片、field 链接和其他结构仍待后续接入。颜色表最多 4096 项，分组深度上限仍为 255。
+
+RTF 已解析的文字、字号、颜色和段落结构可转成 EPUB；旧文字转换保持原行为。相同属性赋值复用现有字符串，避免逐段更新样式时重复计入模型预算。

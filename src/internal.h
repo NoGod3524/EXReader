@@ -94,6 +94,8 @@ exr_status exr_docx(exr_document *doc, exr_member_read_fn read, void *context, e
 exr_status exr_model_finish(exr_document *doc, exr_error *error);
 void exr_model_free(exr_document *doc);
 int exr_canonical_path(const char *path);
+uint32_t exr_windows1252(unsigned char byte);
+exr_status exr_rtf(exr_document *doc, const void *data, size_t size, exr_error *error);
 exr_status exr_fb2(exr_document *doc, const void *data, size_t size, exr_error *error);
 int exr_uri_path(exr_buffer *buffer, const char *path);
 int exr_uri_decode(const char *text, size_t size, char out[2048]);

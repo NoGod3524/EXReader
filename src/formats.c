@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <expat.h>
 #include <miniz.h>
-static uint32_t windows1252(unsigned char c) {
+uint32_t exr_windows1252(unsigned char c) {
   static const uint16_t map[32] = {0x20ac, 0x81,   0x201a, 0x192,  0x201e, 0x2026, 0x2020, 0x2021,
                                    0x2c6,  0x2030, 0x160,  0x2039, 0x152,  0x8d,   0x17d,  0x8f,
                                    0x90,   0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
@@ -1029,7 +1029,7 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
   text.data[text.size] = 0;
   if (encoding == 1252) {
     for (i = 0; i < text.size; i++)
-      if (!exr_codepoint(&utf8, windows1252((unsigned char)text.data[i])))
+      if (!exr_codepoint(&utf8, exr_windows1252((unsigned char)text.data[i])))
         goto done;
     result = html(d, utf8.data, utf8.size, e);
   } else
@@ -1040,169 +1040,6 @@ done:
   if (result != EXR_OK)
     exr_fail(e, result, "Invalid or unsupported MOBI text stream");
   return result;
-}
-typedef struct {
-  int skip, uc;
-} rtf_state;
-static exr_status rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
-  const unsigned char *s = data;
-  rtf_state states[256] = {{0, 1}};
-  size_t depth = 0, i = 0;
-  int fallback = 0;
-  uint32_t high = 0;
-  exr_buffer out = {0};
-  exr_status result = EXR_FORMAT;
-  static const uint16_t cp1252[32] = {
-      0x20ac, 0x81,   0x201a, 0x192,  0x201e, 0x2026, 0x2020, 0x2021, 0x2c6,  0x2030, 0x160,
-      0x2039, 0x152,  0x8d,   0x17d,  0x8f,   0x90,   0x2018, 0x2019, 0x201c, 0x201d, 0x2022,
-      0x2013, 0x2014, 0x2dc,  0x2122, 0x161,  0x203a, 0x153,  0x9d,   0x17e,  0x178};
-  if (n < 5 || memcmp(s, "{\\rtf", 5))
-    return exr_fail(e, EXR_FORMAT, "Invalid RTF header");
-  while (i < n) {
-    unsigned c = s[i++];
-    if (c == '{') {
-      fallback = 0; /* Group delimiters terminate the Unicode fallback sequence. */
-      if (depth + 1 >= 256)
-        goto done;
-      states[depth + 1] = states[depth];
-      depth++;
-      continue;
-    }
-    if (c == '}') {
-      fallback = 0;
-      if (!depth)
-        goto done;
-      depth--;
-      continue;
-    }
-    if (c == '\\') {
-      char word[40] = {0};
-      size_t k = 0;
-      long value = 0;
-      int negative = 0, has = 0;
-      if (i >= n)
-        goto done;
-      c = s[i++];
-      if (!isalpha(c) && c != '\'') {
-        if (fallback) {
-          fallback--;
-          continue;
-        }
-        if (c == '*')
-          states[depth].skip = 1;
-        else if ((c == '\\' || c == '{' || c == '}') && !states[depth].skip &&
-                 !exr_codepoint(&out, c))
-          goto done;
-        continue;
-      }
-      if (c == '\'') {
-        unsigned a, b;
-        if (n - i < 2 || !isxdigit(s[i]) || !isxdigit(s[i + 1]))
-          goto done;
-        a = (unsigned)(isdigit(s[i]) ? s[i] - '0' : tolower(s[i]) - 'a' + 10);
-        b = (unsigned)(isdigit(s[i + 1]) ? s[i + 1] - '0' : tolower(s[i + 1]) - 'a' + 10);
-        c = a * 16 + b;
-        i += 2;
-        if (fallback) {
-          fallback--;
-          continue;
-        }
-        if (!states[depth].skip && !exr_codepoint(&out, c >= 128 && c < 160 ? cp1252[c - 128] : c))
-          goto done;
-        continue;
-      }
-      word[k++] = (char)c;
-      while (i < n && isalpha(s[i])) {
-        if (k < 39)
-          word[k++] = (char)s[i];
-        i++;
-      }
-      if (i < n && s[i] == '-') {
-        negative = 1;
-        i++;
-      }
-      while (i < n && isdigit(s[i])) {
-        has = 1;
-        if (value > 100000000)
-          goto done;
-        value = value * 10 + s[i++] - '0';
-      }
-      if (negative)
-        value = -value;
-      if (i < n && s[i] == ' ')
-        i++;
-      if (!strcmp(word, "bin")) {
-        if (!has || value < 0 || (size_t)value > n - i)
-          goto done;
-        i += (size_t)value;
-        if (fallback)
-          fallback--;
-        continue;
-      }
-      /* A whole control word counts as one fallback character, without executing it. */
-      if (fallback) {
-        fallback--;
-        continue;
-      }
-      if (!strcmp(word, "fonttbl") || !strcmp(word, "colortbl") || !strcmp(word, "stylesheet") ||
-          !strcmp(word, "info") || !strcmp(word, "pict") || !strcmp(word, "object") ||
-          !strcmp(word, "header") || !strcmp(word, "footer")) {
-        states[depth].skip = 1;
-        continue;
-      }
-      if (states[depth].skip)
-        continue;
-      if (!strcmp(word, "ansicpg") && value != 1252)
-        goto done;
-      if (!strcmp(word, "uc")) {
-        if (!has || value < 0 || value > 16)
-          goto done;
-        states[depth].uc = (int)value;
-      } else if (!strcmp(word, "u")) {
-        uint32_t cp;
-        if (!has || value < -32768 || value > 65535)
-          goto done;
-        cp = (uint16_t)value;
-        if (cp >= 0xd800 && cp <= 0xdbff) {
-          if (high)
-            goto done;
-          high = cp;
-        } else {
-          if (cp >= 0xdc00 && cp <= 0xdfff) {
-            if (!high)
-              goto done;
-            cp = 0x10000 + ((high - 0xd800) << 10) + (cp - 0xdc00);
-            high = 0;
-          } else if (high)
-            goto done;
-          if (!cp || !exr_codepoint(&out, cp))
-            goto done;
-        }
-        fallback = states[depth].uc;
-      } else if (!strcmp(word, "par") || !strcmp(word, "line")) {
-        if (!flush(d, &out, 0))
-          goto done;
-      } else if (!strcmp(word, "tab")) {
-        if (!exr_append(&out, " ", 1))
-          goto done;
-      }
-      continue;
-    }
-    if (c == '\r' || c == '\n' || states[depth].skip)
-      continue;
-    if (fallback) {
-      fallback--;
-      continue;
-    }
-    if (high || !c || !exr_codepoint(&out, c >= 128 && c < 160 ? cp1252[c - 128] : c))
-      goto done;
-  }
-  if (depth || high || !flush(d, &out, 0))
-    goto done;
-  result = EXR_OK;
-done:
-  free(out.data);
-  return result == EXR_OK ? EXR_OK : exr_fail(e, EXR_FORMAT, "Invalid or unsupported RTF stream");
 }
 exr_status exr_parse(exr_document *d, const void *data, size_t n, exr_error *e) {
   switch (d->format) {
@@ -1216,7 +1053,7 @@ exr_status exr_parse(exr_document *d, const void *data, size_t n, exr_error *e) 
   case EXR_EPUB:
     return zip_document(d, data, n, e);
   case EXR_RTF:
-    return rtf(d, data, n, e);
+    return exr_rtf(d, data, n, e);
   case EXR_MOBI:
     return mobi(d, data, n, e);
   default:
