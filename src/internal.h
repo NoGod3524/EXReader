@@ -95,6 +95,14 @@ exr_status exr_docx(exr_document *doc, exr_member_read_fn read, void *context, e
 exr_status exr_model_finish(exr_document *doc, exr_error *error);
 void exr_model_free(exr_document *doc);
 int exr_canonical_path(const char *path);
+typedef struct { const unsigned char *data; size_t size; } exr_mobi_record;
+typedef struct exr_mobi_huff exr_mobi_huff;
+exr_status exr_mobi_huff_open(const exr_mobi_record *records, size_t count,
+                               exr_mobi_huff **out, exr_error *error);
+/* Append to one initially empty output buffer across text records. */
+exr_status exr_mobi_huff_decode(exr_mobi_huff *huff, const void *data, size_t size,
+                                 exr_buffer *out, exr_error *error);
+void exr_mobi_huff_free(exr_mobi_huff *huff);
 uint32_t exr_windows1252(unsigned char byte);
 exr_status exr_rtf(exr_document *doc, const void *data, size_t size, exr_error *error);
 exr_status exr_fb2(exr_document *doc, const void *data, size_t size, exr_error *error);

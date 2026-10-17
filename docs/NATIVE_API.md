@@ -1,4 +1,4 @@
-# Native C API 0.26
+# Native C API 0.27
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -505,3 +505,11 @@ u 元素默认下划线，s/strike/del 默认删除线；CSS text-decoration-lin
 布局字形输出 EXR_GLYPH_UNDERLINE / EXR_GLYPH_STRIKE 标志，普通及页级布局、检查点回放和表格复制均保留。灰度/RGBA 绘制按 FreeType 下划线度量和 OS/2 删除线度量绘制单实线，并遵守文字裁剪。文字 shaping 参数仍只接受粗体/斜体；饰线由布局/绘制层处理。OpenType 分段保留饰线标志，在跨饰线边界时保留 Arabic 相邻字符连接上下文。
 
 DOCX 的默认、继承与直接 rPr 下划线/删除线在 run 层解析，允许直接关闭继承修饰，不把 Word 规则放进 CSS 引擎。RTF/FB2 与宿主模型使用同一饰线输出。当前没有双线、波浪线、跳过字形墨迹或独立饰线颜色；饰线使用当前文字颜色和字形字号。RTL、字体变化和其他样式边界仍遵循已有塑形范围限制。
+
+## MOBI HUFF/CDIC 与记录边界（0.27）
+
+原生 C 解码器支持 compression=0x4448 的 HUFF/CDIC：短码缓存、长码表、多个 CDIC、递归压缩词条与已展开词条缓存。循环引用返回 EXR_FORMAT，超过 64 层返回 EXR_LIMIT。完成文本解码后立即释放字典缓存，再进入文档解析。
+
+MOBI 统一校验 PalmDB 记录目录、头长度与文本长度；三种压缩方式（无压缩、PalmDOC、HUFF）均移除记录尾附加项与多字节重叠尾。PalmDOC 回指限定在当前记录内，允许记录内重叠复制，拒绝跨记录回指。UTF-8 / Windows-1252 继续可用。
+
+HUFF 最多 1048576 个词条，整书解压正文与每个展开词条各限 64 MiB，解码缓冲区/缓存合计分配上限 128 MiB，累计复制工作量 256 MiB、码字工作量 134217728 次。该分配预算不包含原书、词条元数据与后续文档模型。目录字段先预检，词条缓存按引用展开。当前仍提供 MOBI 正文模型；KF8 结构重建、图像/链接与富排版仍待补齐，加密书籍不支持。
