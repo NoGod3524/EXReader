@@ -456,3 +456,42 @@ JNIEXPORT jobject JNICALL Java_org_exreader_EXReader_nativePageSnapshot(JNIEnv *
   out=(*env)->NewObject(env,type,ctor,(jlong)page->start,(jlong)page->end,(jint)exr_layout_writing_mode(p->layout),gd,gp,ld,lp,bd,bp);
   return (*env)->ExceptionCheck(env) ? NULL : out;
 }
+JNIEXPORT jobject JNICALL Java_org_exreader_EXReader_nativeReadM4b(JNIEnv *env,jclass cls,jbyteArray input) {
+  size_t path_size=0,count=0,n=0,i,size=0; uint64_t duration; char *path=input_copy(env,input,1024*1024,&path_size);
+  exr_m4b_inspection *m=NULL; exr_error error={0}; exr_status status; const exr_metadata_entry *metadata;
+  const exr_audio_chapter *chapters; const void *cover; const char *media_type; jobject out=NULL;
+  jclass chapter_type,type; jmethodID ctor,chapter_ctor; jobjectArray values,chapter_values; jbyteArray pixels=NULL,media=NULL; (void)cls;
+  if(!path) return NULL;
+  if(!path_size || memchr(path,0,path_size)) { free(path); argument(env,"Invalid M4B metadata path"); return NULL; }
+  status=exr_m4b_inspect(path,NULL,&m,&error); free(path);
+  if(status!=EXR_OK) { engine_error(env,status,&error); return NULL; }
+  metadata=exr_m4b_inspection_metadata(m,&count); chapters=exr_m4b_inspection_chapters(m,&n);
+  duration=exr_m4b_inspection_duration(m);
+  if(duration!=UINT64_MAX && duration>INT64_MAX) goto timestamp_limit;
+  for(i=0;i<n;i++) if(chapters[i].start_ms>INT64_MAX || (chapters[i].end_ms!=UINT64_MAX && chapters[i].end_ms>INT64_MAX)) goto timestamp_limit;
+  values=metadata_values(env,metadata,count); if(!values) goto finish;
+  chapter_type=(*env)->FindClass(env,"org/exreader/EXReader$AudioChapter"); if(!chapter_type) goto finish;
+  chapter_ctor=(*env)->GetMethodID(env,chapter_type,"<init>","([B[BJJJ)V"); if(!chapter_ctor) goto finish;
+  chapter_values=(*env)->NewObjectArray(env,(jsize)n,chapter_type,NULL); if(!chapter_values) goto finish;
+  for(i=0;i<n;i++) {
+    jbyteArray id,title; jobject chapter;
+    if((*env)->PushLocalFrame(env,8)<0) goto finish;
+    id=string_bytes(env,chapters[i].id); if((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env,NULL); goto finish; }
+    title=string_bytes(env,chapters[i].title); if((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env,NULL); goto finish; }
+    chapter=(*env)->NewObject(env,chapter_type,chapter_ctor,id,title,index_value(chapters[i].parent),(jlong)chapters[i].start_ms,(jlong)chapters[i].end_ms);
+    if((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env,NULL); goto finish; }
+    (*env)->SetObjectArrayElement(env,chapter_values,(jsize)i,chapter); (*env)->PopLocalFrame(env,NULL);
+    if((*env)->ExceptionCheck(env)) goto finish;
+  }
+  cover=exr_m4b_inspection_cover(m,&size,&media_type);
+  if(cover) { pixels=byte_array(env,cover,size); if(!pixels) goto finish; media=string_bytes(env,media_type); if((*env)->ExceptionCheck(env)) goto finish; }
+  type=(*env)->FindClass(env,"org/exreader/EXReader$AudioBookMetadata"); if(!type) goto finish;
+  ctor=(*env)->GetMethodID(env,type,"<init>","([[B[Lorg/exreader/EXReader$AudioChapter;J[B[B)V"); if(!ctor) goto finish;
+  out=(*env)->NewObject(env,type,ctor,values,chapter_values,duration==UINT64_MAX ? (jlong)-1 : (jlong)duration,pixels,media);
+  if((*env)->ExceptionCheck(env)) out=NULL;
+  goto finish;
+timestamp_limit:
+  error.code=EXR_LIMIT; strcpy(error.message,"M4B timestamps exceed Java signed range"); engine_error(env,EXR_LIMIT,&error);
+finish:
+  exr_m4b_inspection_free(m); return out;
+}

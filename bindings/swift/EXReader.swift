@@ -11,6 +11,19 @@ public struct EXReaderMetadataEntry {
     public let key: String
     public let value: String
 }
+public struct EXReaderAudioChapter {
+    public let id, title: String
+    public let parent: Int?
+    public let startMilliseconds: UInt64
+    public let endMilliseconds: UInt64?
+}
+public struct EXReaderAudioBookMetadata {
+    public let entries: [EXReaderMetadataEntry]
+    public let chapters: [EXReaderAudioChapter]
+    public let durationMilliseconds: UInt64?
+    public let cover: Data?
+    public let coverMediaType: String?
+}
 private func metadataValues(_ entries: UnsafeMutablePointer<exr_metadata_entry>?, _ count: Int) throws -> [EXReaderMetadataEntry] {
     guard count > 0 else { return [] }
     guard let entries else { throw EXReaderError.invalidResult }
@@ -20,6 +33,34 @@ private func metadataValues(_ entries: UnsafeMutablePointer<exr_metadata_entry>?
     }
 }
 public enum EXReaderMetadata {
+    public static func readM4B(file: URL) throws -> EXReaderAudioBookMetadata {
+        guard file.isFileURL, !file.path.utf8.contains(0) else { throw EXReaderError.invalidInput }
+        var result: OpaquePointer?
+        var error = exr_error()
+        let status = file.path.withCString { exr_m4b_inspect($0, nil, &result, &error) }
+        try check(status, error)
+        guard let result else { throw EXReaderError.invalidResult }
+        defer { exr_m4b_inspection_free(result) }
+        var count = 0, chapterCount = 0, coverSize = 0
+        let values = exr_m4b_inspection_metadata(result, &count)
+        let nativeChapters = exr_m4b_inspection_chapters(result, &chapterCount)
+        let entries = (0..<count).map {
+            EXReaderMetadataEntry(key: String(cString: values![$0].key), value: String(cString: values![$0].value))
+        }
+        let chapters = (0..<chapterCount).map { index -> EXReaderAudioChapter in
+            let c = nativeChapters![index]
+            return EXReaderAudioChapter(id: String(cString: c.id), title: String(cString: c.title),
+                                        parent: c.parent == -1 ? nil : c.parent, startMilliseconds: c.start_ms,
+                                        endMilliseconds: c.end_ms == UInt64.max ? nil : c.end_ms)
+        }
+        var mediaType: UnsafePointer<CChar>?
+        let cover = exr_m4b_inspection_cover(result, &coverSize, &mediaType)
+        let duration = exr_m4b_inspection_duration(result)
+        return EXReaderAudioBookMetadata(entries: entries, chapters: chapters,
+                                         durationMilliseconds: duration == UInt64.max ? nil : duration,
+                                         cover: cover.map { Data(bytes: $0, count: coverSize) },
+                                         coverMediaType: mediaType.map { String(cString: $0) })
+    }
     public static func readXMP(_ packet: Data) throws -> [EXReaderMetadataEntry] {
         var entries: UnsafeMutablePointer<exr_metadata_entry>?
         var count = 0
