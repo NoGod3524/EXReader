@@ -790,3 +790,10 @@ clmgf/clmrg 与 clvmgf/clvmrg 现在生成标准 colspan/rowspan。行结束时�
 footnote 组现在创建独立的通用 aside / EXR_NODE_NOTE；ftnalt 标为 doc-endnote，其余标为 doc-footnote。正文 chftn 位置生成 doc-noteref 链接，注释末尾有 doc-backlink，所有目标使用稳定的文档内 ID。没有显式标记时在注释位置补引用；编号暂按出现顺序生成。
 
 解析期间注释独立构造，完成后按出现顺序接到正文末尾，保持主文连续；注释里的段落、样式、链接和图片保留，父表格内的引用不会把注释正文写进单元格。通用 ID 解析和 EPUB 结构导出继续使用相同模型。此阶段是语义结构与文末注释，不承诺逐页页脚定位或原始自定义编号。最多 10000 条，拒绝嵌套注释、悬空引用及注释内嵌套表格。
+
+
+## RTF 列表层级与显示标签（0.82）
+
+ls/ilvl 现在构造通用 ol/ul 与 li，保留列表实例 ID 和 0–8 级层级。listtext/pntext 的实际编号或项目符号继续作为带样式的显示标签保留，避免重复生成；标记 span 使用 presentation/aria-hidden，语义列表项独立可读。普通段落、不同单元格、不同列表实例分别分组；脚注解析后恢复父列表状态。
+
+开始即跳到较深层级时生成 presentation 容器补齐树结构，原始层级仍可查询。列表容器不额外增加原段落已有的缩进。此阶段沿用原文件给出的显示标签；没有标签时只保留列表结构，完整 numbering/listoverride 计数定义继续补齐。
