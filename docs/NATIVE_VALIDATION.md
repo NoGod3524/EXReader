@@ -2024,3 +2024,25 @@ Version remains 0.18.0, ABI 1 and schema 6.
 Commit `7ea57fc` passes all six jobs in [CI run 39069835100](https://github.com/NoGod3524/EXReader/actions/runs/39069835100), including Swift/JNI audiobook snapshot consumers and mobile builds. A separate C++17 host compiled against the installed AAC-off SDK reads M4B metadata, creates the generic audio timeline and retains that timeline after freeing inspection.
 
 The Swift font adapter keeps its pre-existing glyph-only-font acceptance: both Unicode and non-Unicode scalable faces use exr_font_create_glyphs, which selects Unicode when present. Normal reflow fonts retain their Unicode cmap; direct-glyph PDF hosts can still supply cmap-less faces. A Swift smoke case exercises that constructor and PDF ownership.
+
+
+Commit `43ef9ac` passes all six jobs in [CI run 39070116417](https://github.com/NoGod3524/EXReader/actions/runs/39070116417), including the Swift cmap-less-font regression case.
+
+## Milestone 0.18 development: Separation and scalar PDF functions
+
+The PDF colour suite now has 840 checks. New cases compare paths, XObject and
+inline image tints for Type 2/3 functions, scalar and CMYK alternate spaces,
+default and null C0/C1/Range, domain/range clipping, fractional/negative exponents,
+reversed stitching, half-open boundaries and a zero-width final interval. None
+uses a valid but unneeded Type 4 stream to prove that ignored transforms need
+no calculator implementation. It preserves underlying fill/stroke/images, q/Q,
+subsequent RGB paint, and text semantics. Invalid function dimensions/domains,
+unsupported types, indirect cycles, depth/node budgets and mid-compilation
+cancellation all fail without returning partial pixels.
+
+Both exported original spot PDFs independently render in MuPDF with RGB samples
+within one byte of the C output at the path, image and inline-image interiors.
+All 98 native local suites pass; the final added cancellation assertion passes
+the colour suite. This batch awaits its own six-platform CI. Default AAC-off
+Windows DLL is 4,432,198 bytes, with no new dependencies, public ABI changes,
+version bump or schema change.

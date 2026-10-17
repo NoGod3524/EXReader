@@ -60,7 +60,10 @@ static exr_status select_font(content_reader *r,uint32_t id,double size,exr_erro
   r->fonts[r->font_count++]=(cached_font){id,font}; r->font_bytes+=bytes; r->state.font=font; r->state.size=size; return EXR_OK;
 }
 static exr_pdf_paint_state paint_state(const content_reader *r) {
-  exr_pdf_paint_state paint=r->state.paint; memcpy(paint.matrix,r->state.ctm,sizeof(paint.matrix)); return paint;
+  exr_pdf_paint_state paint=r->state.paint; memcpy(paint.matrix,r->state.ctm,sizeof(paint.matrix));
+  if(exr_pdf_colorspace_no_paint(r->state.fill_space)) paint.fill.alpha=0;
+  if(exr_pdf_colorspace_no_paint(r->state.stroke_space)) paint.stroke.alpha=0;
+  return paint;
 }
 static exr_status event(content_reader *r,exr_pdf_state_event kind,exr_error *error) {
   exr_status status=r->callbacks.state ? r->callbacks.state(r->context,kind,error) : EXR_OK;
@@ -219,7 +222,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     else if(!strcmp(name,"K") || !strcmp(name,"k")) { color->space=EXR_PDF_DEVICE_CMYK; *source=NULL; }
     if(count!=(*source ? exr_pdf_colorspace_components(*source) : (size_t)color->space)) goto invalid;
     for(i=0;i<count;i++) if(!numeric(arena,values[i],&numbers[i])) goto invalid;
-    if(*source) { exr_pdf_colorspace_rgb(*source,numbers,color->values); color->space=EXR_PDF_DEVICE_RGB; color->values[3]=0; }
+    if(*source) { if(exr_pdf_colorspace_rgb(*source,numbers,color->values,error)!=EXR_OK) return error->code; color->space=EXR_PDF_DEVICE_RGB; color->values[3]=0; }
     else { for(i=0;i<count;i++) color->values[i]=fmax(0,fmin(1,numbers[i])); for(;i<4;i++) color->values[i]=0; }
     return EXR_OK;
   }
@@ -235,7 +238,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
       if(device) { color->space=device; *source=NULL; }
     }
     memset(color->values,0,sizeof(color->values));
-    if(*source) { double initial[4]; exr_pdf_colorspace_initial(*source,initial); exr_pdf_colorspace_rgb(*source,initial,color->values); color->space=EXR_PDF_DEVICE_RGB; }
+    if(*source) { double initial[4]; exr_pdf_colorspace_initial(*source,initial); if(exr_pdf_colorspace_rgb(*source,initial,color->values,error)!=EXR_OK) return error->code; color->space=EXR_PDF_DEVICE_RGB; }
     else if(color->space==EXR_PDF_DEVICE_CMYK) color->values[3]=1;
     return EXR_OK;
   }

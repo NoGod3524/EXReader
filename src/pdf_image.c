@@ -164,7 +164,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   }
   for(y=0;y<height;y++) {
     if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
-    if(!exr_vector_work(work,(size_t)width*channels)) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample work exceeds budget"); goto done; }
+    if(!exr_vector_work(work,(size_t)width*(stencil ? 1 : exr_pdf_colorspace_cost(space)))) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
     for(x=0;x<width;x++) {
       double values[4]={0}; unsigned char *p=bitmap.pixels+y*bitmap.stride+x*4; unsigned transparent=color_key;
       for(k=0;k<channels;k++) {
@@ -175,9 +175,9 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
       }
       if(stencil) { p[0]=(unsigned char)(color>>24); p[1]=(unsigned char)(color>>16); p[2]=(unsigned char)(color>>8); p[3]=(unsigned char)floor((1-values[0])*255+.5); }
       else {
-        double rgb[3]; exr_pdf_colorspace_rgb(space,values,rgb);
+        double rgb[3]; if(exr_pdf_colorspace_rgb(space,values,rgb,&r.error)!=EXR_OK) goto done;
         for(k=0;k<3;k++) p[k]=(unsigned char)floor(rgb[k]*255+.5);
-        p[3]=255;
+        p[3]=exr_pdf_colorspace_no_paint(space) ? 0 : 255;
         if(transparent) p[3]=0;
       }
     }
