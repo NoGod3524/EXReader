@@ -2020,3 +2020,7 @@ currently consumes Nero chpl. Java's real -Xcheck:jni run reads the same fixture
 with AAC disabled. Swift has matching smoke assertions awaiting this batch's CI.
 The Windows default DLL is 4,421,644 bytes; no new production dependencies.
 Version remains 0.18.0, ABI 1 and schema 6.
+
+Commit `7ea57fc` passes all six jobs in [CI run 39069835100](https://github.com/NoGod3524/EXReader/actions/runs/39069835100), including Swift/JNI audiobook snapshot consumers and mobile builds. A separate C++17 host compiled against the installed AAC-off SDK reads M4B metadata, creates the generic audio timeline and retains that timeline after freeing inspection.
+
+The Swift font adapter keeps its pre-existing glyph-only-font acceptance: both Unicode and non-Unicode scalable faces use exr_font_create_glyphs, which selects Unicode when present. Normal reflow fonts retain their Unicode cmap; direct-glyph PDF hosts can still supply cmap-less faces. A Swift smoke case exercises that constructor and PDF ownership.

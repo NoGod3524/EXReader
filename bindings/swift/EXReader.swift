@@ -93,7 +93,7 @@ public final class EXReaderFont {
             input.data = bytes.baseAddress
             input.size = bytes.count
             input.face_index = faceIndex
-            return exr_font_create(&input, 1, &result, &error)
+            return exr_font_create_glyphs(&input, 1, &result, &error)
         }
         try check(status, error)
         guard let result else { throw EXReaderError.invalidResult }
