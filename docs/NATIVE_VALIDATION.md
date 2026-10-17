@@ -1447,3 +1447,20 @@ separate device and simulator SDK headers. Actual iOS device execution is not
 covered by typechecking.
 All 59 Windows-native suites pass. The 0.76 333f2e2 CI run passed all six jobs.
 Apple-specific Swift validation is performed by the new CI steps.
+The 0.77 f5e92f1 CI run passed all six jobs, including actual macOS Swift
+execution and device/simulator Swift typechecks.
+
+
+## 0.78 Optional JNI adapter and owned Java host API
+
+Java AutoCloseable handles serialize operations and prevent duplicate close/use
+after close. JNI copies PDF/font inputs into the C model and returns independent
+pixel/text/region/PCM arrays. Text remains standard UTF-8 bytes, preserving NUL
+and supplementary scalars; file paths use validated UTF-16 to standard UTF-8.
+The desktop JVM smoke client checks original-array disposal, font collection
+selection, post-close snapshot lifetime, native error codes, duplicate closes,
+Unicode/supplementary filename PCM reads and invalid ranges. CI enables optional
+JNI on three desktops, runs the installed adapter with -Xcheck:jni and builds the
+Android ARM64 adapter. Android device execution is a separate pending check.
+All 59 Windows core suites pass with the optional JNI dependency disabled.
+Desktop JVM and Android JNI checks run in the newly enabled CI configuration.

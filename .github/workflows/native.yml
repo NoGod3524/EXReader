@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure native C
-        run: cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=ON
       - name: Build
         run: cmake --build build/native --config Release --parallel 4
       - name: Native parsing, pagination, rendering and bookshelf tests
@@ -84,6 +84,13 @@ jobs:
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
           python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /System/Library/Fonts/Supplemental/Arial.ttf build/performance --runs 1 --max-pages 8 --paging
+      - name: Build and run JNI host against installed SDK
+        shell: bash
+        run: |
+          javac -encoding UTF-8 -d build/jni-java bindings/jni/EXReader.java bindings/jni/EXReaderException.java bindings/jni/Smoke.java
+          if [ "${{ runner.os }}" = Windows ]; then native_dir="$PWD/stage/bin"; else native_dir="$PWD/stage/lib"; fi
+          export PATH="$PWD/stage/bin:$PATH"
+          java -Xcheck:jni -Djava.library.path="$native_dir" -cp build/jni-java org.exreader.Smoke stage/examples build/jni-unicode
       - name: Build and run Swift host against installed SDK
         if: runner.os == 'macOS'
         shell: bash
