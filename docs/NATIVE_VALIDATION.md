@@ -1491,3 +1491,17 @@ roundtrips compare text and rendered pixels. Orphan continuations, conflicting
 flags, changed boundaries, omitted definitions, interrupted vertical chains and
 cross-table continuation are rejected.
 All 60 local suites pass. The 0.79 c0c9808 CI run passed all six jobs.
+
+
+## 0.81 RTF footnote/endnote structure and reference backlinks
+
+Detached note nodes collect styled paragraphs/images independently from body or
+parent table cells, then append after the main flow. Reference and backlink roles
+resolve to stable document IDs; endnotes retain their distinct semantic role.
+Tests inspect main-text order, note roles, parent ordering, links in both
+directions, cell restoration, images inside notes and the 10000-note budget.
+EPUB roundtrips compare normalized text and every rendered page. Nested notes,
+tables inside notes, dangling/repeated markers and skipped destinations are
+checked. Numbering uses source occurrence order; page-bottom placement and custom
+RTF numbering schemes are outside this stage.
+All 61 local suites pass. The 0.80 adfd228 CI run passed all six jobs.
