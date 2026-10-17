@@ -3,8 +3,10 @@
 typedef struct {
   double ctm[6],size,char_space,word_space,scale,leading,rise;
   exr_pdf_font *font; unsigned mode; exr_pdf_paint_state paint;
+  const exr_pdf_colorspace *fill_space,*stroke_space;
 } content_state;
 typedef struct { uint32_t id; exr_pdf_font *font; } cached_font;
+typedef struct { uint32_t id,resources; exr_pdf_colorspace *space; } cached_color;
 typedef struct dash_profile { struct dash_profile *next; size_t count; double phase; double values[]; } dash_profile;
 typedef struct {
   exr_vector_segment *segments; size_t count,capacity;
@@ -19,6 +21,7 @@ typedef struct {
   double matrix[6],line[6]; unsigned inside,compatibility;
   unsigned type3,declared,uncolored;
   cached_font fonts[128];
+  cached_color colors[128]; size_t color_count,color_bytes;
 } content_reader;
 static void identity(double matrix[6]) { memset(matrix,0,6*sizeof(double)); matrix[0]=matrix[3]=1; }
 static int multiply(double out[6],const double left[6],const double right[6]) {
@@ -101,6 +104,15 @@ static int device_space(exr_pdf_file *arena,uint32_t id,exr_pdf_color_space *spa
   else if(name_is(arena,id,"DeviceCMYK")) *space=EXR_PDF_DEVICE_CMYK;
   else return 0;
   return 1;
+}
+static exr_status color_model(content_reader *r,uint32_t id,const exr_pdf_colorspace **out,exr_error *error) {
+  size_t i,bytes; exr_pdf_colorspace *model=NULL;
+  for(i=0;i<r->color_count;i++) if(r->colors[i].id==id && r->colors[i].resources==r->resources) { *out=r->colors[i].space; return EXR_OK; }
+  if(i==128) return exr_fail(error,EXR_LIMIT,"PDF color space cache exceeds 128 entries");
+  if(exr_pdf_colorspace_open(r->file,id,r->file,r->resources,r->control,&model,error)!=EXR_OK) return error->code;
+  bytes=exr_pdf_colorspace_memory(model);
+  if(bytes>(size_t)32*1024*1024-r->color_bytes) { exr_pdf_colorspace_free(model); return exr_fail(error,EXR_LIMIT,"PDF color space cache exceeds 32 MiB"); }
+  r->colors[r->color_count++]=(cached_color){id,r->resources,model}; r->color_bytes+=bytes; *out=model; return EXR_OK;
 }
 static exr_status set_dash(content_reader *r,exr_pdf_file *arena,uint32_t array,uint32_t phase_id,exr_error *error) {
   double values[1024],phase,total=0; size_t count=0,bytes; uint32_t at,id; const exr_pdf_value *v; dash_profile *profile;
@@ -201,22 +213,31 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
   if(!strcmp(name,"G") || !strcmp(name,"g") || !strcmp(name,"RG") || !strcmp(name,"rg") || !strcmp(name,"K") || !strcmp(name,"k") ||
      !strcmp(name,"SC") || !strcmp(name,"sc") || !strcmp(name,"SCN") || !strcmp(name,"scn")) {
     int stroke=name[0]>='A' && name[0]<='Z'; exr_pdf_color *color=stroke ? &r->state.paint.stroke : &r->state.paint.fill;
-    if(!strcmp(name,"G") || !strcmp(name,"g")) color->space=EXR_PDF_DEVICE_GRAY;
-    else if(!strcmp(name,"RG") || !strcmp(name,"rg")) color->space=EXR_PDF_DEVICE_RGB;
-    else if(!strcmp(name,"K") || !strcmp(name,"k")) color->space=EXR_PDF_DEVICE_CMYK;
-    if(count!=(size_t)color->space) goto invalid;
-    for(i=0;i<count;i++) { if(!numeric(arena,values[i],&numbers[i])) goto invalid; color->values[i]=fmax(0,fmin(1,numbers[i])); }
-    for(;i<4;i++) color->values[i]=0;
+    const exr_pdf_colorspace **source=stroke ? &r->state.stroke_space : &r->state.fill_space;
+    if(!strcmp(name,"G") || !strcmp(name,"g")) { color->space=EXR_PDF_DEVICE_GRAY; *source=NULL; }
+    else if(!strcmp(name,"RG") || !strcmp(name,"rg")) { color->space=EXR_PDF_DEVICE_RGB; *source=NULL; }
+    else if(!strcmp(name,"K") || !strcmp(name,"k")) { color->space=EXR_PDF_DEVICE_CMYK; *source=NULL; }
+    if(count!=(*source ? exr_pdf_colorspace_components(*source) : (size_t)color->space)) goto invalid;
+    for(i=0;i<count;i++) if(!numeric(arena,values[i],&numbers[i])) goto invalid;
+    if(*source) { exr_pdf_colorspace_rgb(*source,numbers,color->values); color->space=EXR_PDF_DEVICE_RGB; color->values[3]=0; }
+    else { for(i=0;i<count;i++) color->values[i]=fmax(0,fmin(1,numbers[i])); for(;i<4;i++) color->values[i]=0; }
     return EXR_OK;
   }
   if(!strcmp(name,"CS") || !strcmp(name,"cs")) {
-    exr_pdf_color *color=!strcmp(name,"CS") ? &r->state.paint.stroke : &r->state.paint.fill;
+    int stroke=!strcmp(name,"CS"); exr_pdf_color *color=stroke ? &r->state.paint.stroke : &r->state.paint.fill;
+    const exr_pdf_colorspace **source=stroke ? &r->state.stroke_space : &r->state.fill_space;
     if(count!=1) goto invalid;
+    *source=NULL;
     if(!device_space(arena,values[0],&color->space)) {
-      if(resource(r,arena,values[0],"ColorSpace",&id,error)!=EXR_OK) return error->code;
-      if(!device_space(r->file,id,&color->space)) return exr_fail(error,EXR_FORMAT,"Non-device PDF color spaces are not implemented yet");
+      exr_pdf_color_space device;
+      if(resource(r,arena,values[0],"ColorSpace",&id,error)!=EXR_OK || color_model(r,id,source,error)!=EXR_OK) return error->code;
+      device=exr_pdf_colorspace_device(*source);
+      if(device) { color->space=device; *source=NULL; }
     }
-    memset(color->values,0,sizeof(color->values)); if(color->space==EXR_PDF_DEVICE_CMYK) color->values[3]=1; return EXR_OK;
+    memset(color->values,0,sizeof(color->values));
+    if(*source) { double initial[4]; exr_pdf_colorspace_initial(*source,initial); exr_pdf_colorspace_rgb(*source,initial,color->values); color->space=EXR_PDF_DEVICE_RGB; }
+    else if(color->space==EXR_PDF_DEVICE_CMYK) color->values[3]=1;
+    return EXR_OK;
   }
   if(!strcmp(name,"W") || !strcmp(name,"W*")) {
     if(count || r->inside) goto invalid;
@@ -502,6 +523,7 @@ static exr_status walk_content(exr_pdf_file *file,uint32_t resources,const void 
   if(status==EXR_OK && (r->inside || r->depth || r->compatibility)) status=exr_fail(&local,EXR_FORMAT,"Unbalanced PDF text/graphics/compatibility state");
   if(status==EXR_OK && graphics && (r->path.count || r->path.pending_clip)) status=exr_fail(&local,EXR_FORMAT,"Unterminated PDF path object");
   for(i=0;i<r->font_count;i++) exr_pdf_font_close(r->fonts[i].font);
+  for(i=0;i<r->color_count;i++) exr_pdf_colorspace_free(r->colors[i].space);
   while(r->profiles) { dash_profile *next=r->profiles->next; free(r->profiles); r->profiles=next; }
   free(r->path.segments); free(r); if(error) *error=local; return status;
 }

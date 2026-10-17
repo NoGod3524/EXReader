@@ -67,6 +67,68 @@ public final class Smoke {
         try { new EXReader.Wave("bad\ud800name"); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
         try { new EXReader.Pcm("bad\0name"); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
         try { new EXReader.Pcm("bad\ud800name"); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
-        System.out.println("JNI SDK: PDF text/render/font ownership, Unicode paths, owned multilingual metadata and WAVE samples passed");
+        EXReader.LayoutConfig config=new EXReader.LayoutConfig();
+        config.width=220; config.height=180; config.margin=10; config.fontSize=14; config.paragraphSpacing=4;
+        config.userCSS="p {background-color:#ff0000}";
+        String html="<html><head><title>书😀</title></head><body><p id='hello' style='background-color:#ff0000'>A 中文😀</p>";
+        StringBuilder book=new StringBuilder(html); for(int i=0;i<100;i++) book.append("<p>A paragraph with several words.</p>"); book.append("</body></html>");
+        byte[] input=book.toString().getBytes(StandardCharsets.UTF_8);
+        EXReader.Document reflow=new EXReader.Document(input,EXReader.Format.HTML); Arrays.fill(input,(byte)0);
+        check(reflow.title()!=null);
+        EXReader.Node[] nodes=reflow.nodes();
+        check(nodes.length>0 && nodes[0].parent==-1 && new String(reflow.utf8(),StandardCharsets.UTF_8).contains("中文😀"));
+        byte[] reflowFont=Files.readAllBytes(root.resolve("fonts/primary.ttf"));
+        EXReader.Pager pager=reflow.pager(reflowFont,0,config); Arrays.fill(reflowFont,(byte)0);
+        reflow.close(); reflow.close();
+        try { reflow.utf8(); throw new AssertionError(); } catch(IllegalStateException expected) { }
+        EXReader.ReflowPage first=pager.next(),second=pager.next(); check(first!=null && second!=null);
+        EXReader.LayoutSnapshot snapshot=first.snapshot();
+        EXReader.FontSource sourceFont=first.fontSource(0);
+        check(sourceFont.faceIndex==0 && sourceFont.data.length>0 && sourceFont.axes.length==0 && first.image(99999)==null);
+        check(snapshot.start<snapshot.end && snapshot.glyphs.length>0 && snapshot.lines.length>0 && snapshot.boxes.length>0);
+        check(second.snapshot().start==snapshot.end);
+        EXReader.Glyph glyph=snapshot.glyphs[0]; check(first.hitTest(glyph.x,glyph.baseline)>=snapshot.start);
+        int pageCount=2; EXReader.ReflowPage more;
+        while((more=pager.next())!=null) { pageCount++; more.close(); }
+        check(pageCount>2 && pager.next()==null); pager.close(); pager.close();
+        EXReader.Bitmap pageBitmap=first.render(); check(pageBitmap.width==220 && pageBitmap.height==180 && pageBitmap.channels==4);
+        first.close(); second.close(); first.close();
+        check(snapshot.glyphs.length>0 && pageBitmap.pixels.length==220*180*4 && nodes.length>0);
+        try { first.render(); throw new AssertionError(); } catch(IllegalStateException expected) { }
+        EXReader.Publication publication=new EXReader.Publication(root.resolve("books/layout.epub").toString());
+        EXReader.Part[] parts=publication.parts(); check(parts.length>0 && parts[0].path!=null);
+        EXReader.Document chapter=publication.load(0); publication.close();
+        check(chapter.utf8().length>0 && chapter.nodes().length>0);
+        boolean chapterAttribute=false;
+        for(EXReader.Node node:chapter.nodes()) for(EXReader.MetadataEntry attr:node.attributes) if(attr.key.equals("id") && attr.value.equals("intro")) chapterAttribute=true;
+        check(chapterAttribute);
+        EXReader.Pager chapterPager=chapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,config); chapter.close();
+        EXReader.ReflowPage chapterPage=chapterPager.next();
+        EXReader.Bitmap savedImage=null;
+        for(int i=0;i<30 && savedImage==null;i++) {
+            try(EXReader.ReflowPage candidate=chapterPager.next()) {
+                if(candidate==null) break;
+                for(EXReader.Box box:candidate.snapshot().boxes) if(box.kind==2 && box.resource>=0) {
+                    savedImage=candidate.image((int)box.resource); if(savedImage!=null) break;
+                }
+            }
+        }
+        check(savedImage!=null && savedImage.pixels.length>0); chapterPager.close();
+        check(chapterPage!=null && chapterPage.render().width==220); chapterPage.close();
+        try { new EXReader.Document(new byte[0],EXReader.Format.TXT); throw new AssertionError(); } catch(EXReaderException expected) { check(expected.code==1); }
+        try(EXReader.Document invalid=new EXReader.Document("hello".getBytes(StandardCharsets.UTF_8),EXReader.Format.TXT)) {
+            config.width=Float.NaN;
+            try { invalid.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,config); throw new AssertionError(); } catch(EXReaderException expected) { check(expected.code==1); }
+            config.width=220; config.userCSS="a\0b";
+            try { invalid.pager(new byte[1],0,config); throw new AssertionError(); } catch(IllegalArgumentException expected) { }
+        }
+        config.userCSS=null;
+        try(EXReader.Document variableDoc=new EXReader.Document("A".getBytes(StandardCharsets.UTF_8),EXReader.Format.TXT);
+            EXReader.Pager variablePager=variableDoc.pager(Files.readAllBytes(root.resolve("fonts/variable.ttf")),0,config);
+            EXReader.ReflowPage variablePage=variablePager.next()) {
+            EXReader.FontSource source=variablePage.fontSource(0);
+            check(source.axes.length==2 && source.axes[0].minimum<source.axes[0].maximum);
+        }
+        System.out.println("JNI SDK: PDF/audio/metadata and reflow nodes, lazy parts, page snapshots, UTF-8 and child lifetime passed");
     }
 }

@@ -1959,3 +1959,41 @@ Inline-image tests verify binary pixels containing EI/whitespace, CRLF ID, packe
 
 
 All 94 local Windows suites pass. After the final hidden/empty-chapter viewport fix, orthogonal/vertical/flow/pager were rebuilt and rerun successfully. The installed Windows SDK passes a separate C++17 consumer using ABI epoch 1. This batch still requires its own cross-platform CI run; product version 0.18.0 and library schema 6 remain unchanged.
+
+
+Commit `0f45262` passes all six jobs in [CI run 39060107810](https://github.com/NoGod3524/EXReader/actions/runs/39060107810), including installed C/C++/JNI/Swift consumers, sanitizer runs and mobile builds.
+
+## Milestone 0.18 development: Devanagari, ruby, PDF colour spaces and mobile reflow wrappers
+
+The new Indic suite uses 64 HarfBuzz 14.6.0 reference cases recorded from original
+3984/4008-byte modern/legacy Devanagari fonts, covering basic forms, nukta,
+reph/pre-base matras, conjuncts, join controls, broken syllables and positions.
+All glyph IDs and advances/offsets agree within 0.016 px at size 100. Independent
+Noto Sans Devanagari checks match glyph order on the same 32 sequences; existing
+FreeType hinting accounts for up to 0.3 px metric differences from unhinted HB.
+Tests also check monotone syllable source ranges, cancellation/error cleanup,
+paging and rendering. Unicode 17 source SHA-256 hashes and regeneration match.
+
+Ruby tests cover horizontal/vertical-rl/vertical-lr, over/under, source and anchor
+ranges, hit testing, multi-page implicit groups, explicit rb/rtc/rbspan, positioned
+round trips, sequential pagination and checkpoint restoration. The helper builds
+EPUB input so the real structure-preserving parser is exercised. Two test defects
+were corrected: using the HTML text-extraction path, and mutating a shared CSS
+buffer between reference and pager construction. Production groups share an
+8192-shaped-glyph limit across all their base and annotation fragments.
+
+524 PDF colour checks compare vector/XObject/inline output, calibrated and Lab
+ranges, Indexed lookup scaling, ICC Alternate/Range fallback, initial colours,
+q/Q/Form resource scopes, invalid/cyclic spaces, and cancellation. Independent
+MuPDF rendering of CalGray/CalRGB/Lab/Indexed fixtures agrees within one byte at
+the sampled vector and image interiors; the deliberately invalid ICC stream
+exercises Alternate fallback. The old graphics test now rejects a missing
+colour resource instead of treating valid Lab as unsupported.
+
+All 97 native local suites pass. A separately compiled JNI adapter passes real
+JDK 21 execution with -Xcheck:jni: Unicode input, node attributes, lazy EPUB parts,
+page snapshots, variable-font source axes, embedded images, hit/render, EOF,
+invalid inputs and closing parents before children. Swift smoke covers matching
+ARC ownership and record snapshots; this batch awaits its own real macOS runtime
+and iOS/iPadOS type checks in CI. Default AAC-off Windows DLL is 4,409,868 bytes;
+this batch adds no production dependencies. Version stays 0.18.0, ABI 1, schema 6.

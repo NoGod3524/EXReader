@@ -3,6 +3,7 @@
 #include "bidi_internal.h"
 #include "opentype_internal.h"
 #include "vertical_data.h"
+#include "ruby_internal.h"
 
 unsigned exr_vertical_flags(uint32_t cp, exr_text_orientation orientation) {
   size_t lo = 0, hi = EXR_VO_RANGE_COUNT;
@@ -41,7 +42,7 @@ static size_t next_text(flow *f, size_t node) {
     const exr_node *n = &f->doc->nodes[node];
     if (f->styles[node].display == EXR_CSS_NONE || n->start == SIZE_MAX)
       node = following(f, node);
-    else if (n->kind == EXR_NODE_TEXT)
+    else if (n->kind == EXR_NODE_TEXT || exr_ruby_node(f->doc,node))
       return node;
     else if (f->styles[node].display != EXR_CSS_INLINE ||
              n->kind == EXR_NODE_BREAK || n->kind == EXR_NODE_IMAGE)
@@ -63,6 +64,7 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
   b->first_node = first;
   for (node = first; node != SIZE_MAX; node = next_text(f, following(f, node))) {
     const exr_node *n = &f->doc->nodes[node];
+    if (exr_ruby_node(f->doc,node)) { bytes += 3; count++; continue; }
     bytes += n->end - n->start;
     for (at = n->start; at < n->end;) {
       if (!exr_next(f->doc->text, n->end, &at, &cp))
@@ -84,6 +86,11 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
   }
   for (node = first; node != SIZE_MAX; node = next_text(f, following(f, node))) {
     const exr_node *n = &f->doc->nodes[node];
+    if (exr_ruby_node(f->doc,node)) {
+      b->offsets[index++] = n->start;
+      memcpy(text.data + text.size,"\xef\xbf\xbc",3); text.size += 3;
+      continue;
+    }
     for (at = n->start; at < n->end;) {
       b->offsets[index++] = at;
       exr_next(f->doc->text, n->end, &at, &cp);
@@ -186,14 +193,6 @@ exr_status exr_inline_reorder(flow *f, exr_glyph *g, size_t count) {
   free(levels); free(clusters); free(copy);
   return EXR_OK;
 }
-static uint32_t script(uint32_t cp) {
-  if ((cp >= 0x600 && cp <= 0x8ff) || (cp >= 0xfb50 && cp <= 0xfeff))
-    return EXR_TAG('a','r','a','b');
-  if (cp >= 0x590 && cp <= 0x5ff) return EXR_TAG('h','e','b','r');
-  if ((cp >= 'A' && cp <= 'Z') || (cp >= 'a' && cp <= 'z') ||
-      (cp >= 0xc0 && cp <= 0x2ff)) return EXR_TAG('l','a','t','n');
-  return 0;
-}
 static int inline_grow(exr_layout *l, size_t count) {
   size_t capacity;
   exr_glyph *glyphs;
@@ -220,18 +219,23 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     exr_shaped_glyph *shaped = NULL;
     exr_shape_options options = exr_shape_defaults();
     exr_buffer text = {0};
-    uint32_t tag = script(g->codepoint);
+    uint32_t tag = exr_ot_script(g->codepoint);
     unsigned orientation = g->flags & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL);
     int vertical = (orientation & EXR_GLYPH_VERTICAL) &&
                    (!(orientation & EXR_GLYPH_SIDEWAYS) || (orientation & EXR_GLYPH_TRY_VERTICAL));
     size_t n = 0, finish = 0;
     end = i + 1;
+    if (g->flags & EXR_GLYPH_RUBY_ITEM) {
+      if (!inline_grow(&result,result.glyph_count+1)) { status=EXR_LIMIT; goto done; }
+      result.glyphs[result.glyph_count++]=*g;
+      continue;
+    }
     while (end < l->glyph_count) {
       const exr_glyph *v = &l->glyphs[end];
-      uint32_t next_tag = script(v->codepoint);
+      uint32_t next_tag = exr_ot_script(v->codepoint);
       int removed = (v->flags & EXR_GLYPH_HIDDEN) && v->bidi_level == UINT_MAX;
       /* X9 removes controls from visual ordering, not from shaping context. */
-      if ((!removed && (v->font_index != g->font_index || v->size != g->size ||
+      if ((v->flags & EXR_GLYPH_RUBY_ITEM) || (!removed && (v->font_index != g->font_index || v->size != g->size ||
           (v->flags & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL)) != orientation ||
           ((orientation & EXR_GLYPH_TRY_VERTICAL) && v->cluster_start != g->cluster_start) ||
           (((v->flags & (3|EXR_DECORATIONS)) != (g->flags & (3|EXR_DECORATIONS)) || v->color != g->color) &&
@@ -539,7 +543,6 @@ static exr_status reshape_carry(flow *f, exr_line_buffer *b) {
   return EXR_OK;
 }
 exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
-  exr_layout *l = f->layout;
   if (!b->initialized) reset_line_scan(b);
   for (;;) {
     if (!b->line_end) {
@@ -573,22 +576,17 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
     }
     if (!b->line_end) return EXR_OK;
     {
-      size_t destination = l->glyph_count, end;
+      size_t end;
       exr_status status;
       if (!b->line_ready) {
         status = fit_line(f, b);
         if (status != EXR_OK) return status;
       }
       end = b->line.glyph_count;
-      if (end > EXR_MAX_ITEMS - destination ||
-          !exr_grow((void **)&l->glyphs, &l->glyph_cap, destination + end, sizeof(*l->glyphs)))
-        return exr_fail(f->error, EXR_LIMIT, "Page glyph allocation limit exceeded");
       if (end) {
-        memcpy(l->glyphs + destination, b->line.glyphs, end * sizeof(*l->glyphs));
-        status = exr_flow_emit_line(f, l->glyphs + destination, end, destination, b->forced, b->final);
+        status = exr_flow_emit_line(f, b->line.glyphs, end, b->forced, b->final);
         if (status != EXR_OK) return status;
       }
-      l->glyph_count += end;
       end = b->line_end;
       memmove(b->run.glyphs, b->run.glyphs + end,
                 (b->run.glyph_count - end) * sizeof(*b->run.glyphs));
@@ -608,6 +606,7 @@ static int following_inline_scalar(void *context, uint32_t *cp) {
   inline_text_cursor *c = context;
   while (c->node != SIZE_MAX) {
     const exr_node *n = &c->f->doc->nodes[c->node];
+    if (c->at<n->end && exr_ruby_node(c->f->doc,c->node)) { c->at=n->end; *cp=0xfffc; return 1; }
     if (c->at < n->end)
       return exr_next(c->f->doc->text, n->end, &c->at, cp);
     c->node = next_text(c->f, following(c->f, c->node));
@@ -622,6 +621,9 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
     inline_text_cursor cursor = {f, g.node, g.end};
     g.boundaries = exr_text_step(&b->text, g.codepoint, following_inline_scalar, &cursor);
   }
+  if ((g.flags & EXR_GLYPH_RUBY_ITEM) ||
+      (b->run.glyph_count && (b->run.glyphs[b->run.glyph_count-1].flags & EXR_GLYPH_RUBY_ITEM)))
+    g.boundaries |= EXR_BOUNDARY_GRAPHEME;
   if (f->writing_mode != EXR_WRITING_HORIZONTAL_TB) {
     if (g.boundaries & EXR_BOUNDARY_GRAPHEME)
       b->vertical_flags = exr_vertical_flags(g.codepoint, f->styles[g.node].orientation);

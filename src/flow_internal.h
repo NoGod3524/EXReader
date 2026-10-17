@@ -5,6 +5,7 @@
 #include "text_internal.h"
 #define EXR_PAUSE ((exr_status)100)
 #define EXR_GLYPH_TRY_VERTICAL 512u /* Internal UAX #50 Tr probe, cleared before output. */
+#define EXR_GLYPH_RUBY_ITEM 1024u /* Internal atomic inline item, expanded before output. */
 typedef struct {
   exr_bidi *analysis;
   size_t *offsets, count;
@@ -53,7 +54,7 @@ exr_box *exr_flow_box(flow *f, size_t node, size_t page, float x, float y,
 exr_status exr_flow_cluster(flow *f, size_t start, size_t end);
 exr_status exr_flow_image(flow *f, size_t node, float x, float width);
 exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count,
-                               size_t destination, int forced, int final);
+                               int forced, int final);
 exr_status exr_flow_unit(flow *parent, size_t node, float width,
                           exr_layout **out, float *height);
 exr_status exr_flow_copy(flow *f, const exr_layout *from, size_t node,

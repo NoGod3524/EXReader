@@ -43,6 +43,7 @@ private func check(_ status: exr_status, _ error: exr_error) throws {
 
 public final class EXReaderFont {
     fileprivate let handle: OpaquePointer
+    fileprivate let gate = NSLock()
     public init(data: Data, faceIndex: UInt32 = 0) throws {
         var result: OpaquePointer?
         var error = exr_error()
@@ -51,7 +52,7 @@ public final class EXReaderFont {
             input.data = bytes.baseAddress
             input.size = bytes.count
             input.face_index = faceIndex
-            return exr_font_create_glyphs(&input, 1, &result, &error)
+            return exr_font_create(&input, 1, &result, &error)
         }
         try check(status, error)
         guard let result else { throw EXReaderError.invalidResult }
@@ -66,6 +67,11 @@ public struct EXReaderBitmap {
     public let stride: Int
     public let channels: Int
     public let pixels: Data
+}
+public struct EXReaderFontSource {
+    public let data: Data
+    public let faceIndex: UInt32
+    public let axes: [exr_font_axis]
 }
 public struct EXReaderTextRegion {
     public let range: Range<Int> // UTF-8 bytes, not Swift String character indices.
@@ -107,20 +113,26 @@ public final class EXReaderPageText {
 public final class EXReaderFixedDocument {
     private let handle: OpaquePointer
     private let lock = NSLock()
+    private let fallbackFont: EXReaderFont?
     public init(data: Data, fallbackFont: EXReaderFont? = nil) throws {
         var result: OpaquePointer?
         var error = exr_error()
         var options = exr_fixed_open_options()
         options.struct_size = MemoryLayout<exr_fixed_open_options>.size
         options.fallback_font = fallbackFont?.handle
+        fallbackFont?.gate.lock(); defer { fallbackFont?.gate.unlock() }
         let status = data.withUnsafeBytes { bytes in
             exr_fixed_open_memory(EXR_PDF, bytes.baseAddress, bytes.count, &options, &result, &error)
         }
         try check(status, error)
         guard let result else { throw EXReaderError.invalidResult }
         handle = result
+        self.fallbackFont = fallbackFont
     }
-    deinit { exr_fixed_free(handle) }
+    deinit {
+        fallbackFont?.gate.lock(); defer { fallbackFont?.gate.unlock() }
+        exr_fixed_free(handle)
+    }
     public var pageCount: Int {
         var count = 0
         _ = exr_fixed_pages(handle, &count)
@@ -139,6 +151,7 @@ public final class EXReaderFixedDocument {
     public func text(page: Int) throws -> EXReaderPageText {
         guard page >= 0 else { throw EXReaderError.invalidInput }
         lock.lock(); defer { lock.unlock() }
+        fallbackFont?.gate.lock(); defer { fallbackFont?.gate.unlock() }
         var result: OpaquePointer?
         var error = exr_error()
         try check(exr_fixed_load_text(handle, page, nil, &result, &error), error)
@@ -148,6 +161,7 @@ public final class EXReaderFixedDocument {
     public func render(page: Int, scale: Double = 1) throws -> EXReaderBitmap {
         guard page >= 0 else { throw EXReaderError.invalidInput }
         lock.lock(); defer { lock.unlock() }
+        fallbackFont?.gate.lock(); defer { fallbackFont?.gate.unlock() }
         var bitmap = exr_bitmap()
         var error = exr_error()
         let status = exr_fixed_render(handle, page, scale, nil, &bitmap, &error)
@@ -236,5 +250,259 @@ public final class EXReaderPCM {
         try check(status, error)
         samples.removeSubrange((read * channels)..<samples.count)
         return samples
+    }
+}
+
+/** Independent UTF-8 snapshots. Absent node indices import as -1 (C SIZE_MAX). */
+public struct EXReaderNode {
+    public let kind: exr_node_kind
+    public let parent, firstChild, nextSibling, chapter: Int
+    public let start, end: Int
+    public let name, text: String?
+    public let attributes: [EXReaderMetadataEntry]
+}
+public struct EXReaderPart {
+    public let id, path, title: String?
+    public let inReadingOrder: Bool
+}
+public struct EXReaderLayoutConfig {
+    public var page = exr_layout_defaults()
+    public var userCSS: String? = nil
+    public var documentCSS = true
+    public var embeddedFonts = true
+    public var direction = EXR_DIRECTION_AUTO
+    public init() {}
+}
+private func optionalString(_ value: UnsafePointer<CChar>?) -> String? {
+    value.map { String(cString: $0) }
+}
+public final class EXReaderDocument {
+    fileprivate let handle: OpaquePointer
+    fileprivate let gate: NSLock
+    fileprivate init(handle: OpaquePointer, gate: NSLock) { self.handle = handle; self.gate = gate }
+    public convenience init(data: Data, format: exr_format) throws {
+        var result: OpaquePointer?
+        var error = exr_error()
+        let status = data.withUnsafeBytes {
+            exr_document_open_memory(format, $0.baseAddress, $0.count, &result, &error)
+        }
+        try check(status, error)
+        guard let result else { throw EXReaderError.invalidResult }
+        self.init(handle: result, gate: NSLock())
+    }
+    public convenience init(file: URL) throws {
+        guard file.isFileURL, !file.path.utf8.contains(0) else { throw EXReaderError.invalidInput }
+        var result: OpaquePointer?
+        var error = exr_error()
+        let status = file.path.withCString { exr_document_open($0, &result, &error) }
+        try check(status, error)
+        guard let result else { throw EXReaderError.invalidResult }
+        self.init(handle: result, gate: NSLock())
+    }
+    deinit { gate.lock(); defer { gate.unlock() }; exr_document_free(handle) }
+    public var title: String? {
+        gate.lock(); defer { gate.unlock() }
+        return optionalString(exr_document_title(handle))
+    }
+    public var utf8: Data {
+        gate.lock(); defer { gate.unlock() }
+        var size = 0
+        guard let text = exr_document_text(handle, &size) else { return Data() }
+        return Data(bytes: text, count: size)
+    }
+    public var nodes: [EXReaderNode] {
+        gate.lock(); defer { gate.unlock() }
+        var count = 0
+        guard let nodes = exr_document_nodes(handle, &count) else { return [] }
+        return (0..<count).map { index in
+            let n = nodes[index]
+            let attributes: [EXReaderMetadataEntry] = (0..<n.attribute_count).map {
+                EXReaderMetadataEntry(key: String(cString: n.attributes![$0].name), value: String(cString: n.attributes![$0].value))
+            }
+            return EXReaderNode(kind: n.kind, parent: n.parent, firstChild: n.first_child,
+                                nextSibling: n.next_sibling, chapter: n.chapter, start: n.start, end: n.end,
+                                name: optionalString(n.name), text: optionalString(n.text), attributes: attributes)
+        }
+    }
+    public func pager(font: EXReaderFont, config: EXReaderLayoutConfig = EXReaderLayoutConfig()) throws -> EXReaderPager {
+        try EXReaderPager(document: self, font: font, config: config)
+    }
+}
+/** EPUB manifest/spine first; load() decodes only the requested part. */
+public final class EXReaderPublication {
+    private let handle: OpaquePointer
+    private let gate = NSLock()
+    public init(file: URL) throws {
+        guard file.isFileURL, !file.path.utf8.contains(0) else { throw EXReaderError.invalidInput }
+        var result: OpaquePointer?
+        var error = exr_error()
+        let status = file.path.withCString { exr_publication_open($0, &result, &error) }
+        try check(status, error)
+        guard let result else { throw EXReaderError.invalidResult }
+        handle = result
+    }
+    public init(data: Data, format: exr_format = EXR_EPUB) throws {
+        var result: OpaquePointer?
+        var error = exr_error()
+        let status = data.withUnsafeBytes {
+            exr_publication_open_memory(format, $0.baseAddress, $0.count, &result, &error)
+        }
+        try check(status, error)
+        guard let result else { throw EXReaderError.invalidResult }
+        handle = result
+    }
+    deinit { gate.lock(); defer { gate.unlock() }; exr_publication_free(handle) }
+    public var title: String? {
+        gate.lock(); defer { gate.unlock() }
+        return optionalString(exr_publication_title(handle))
+    }
+    public var parts: [EXReaderPart] {
+        gate.lock(); defer { gate.unlock() }
+        var count = 0
+        guard let parts = exr_publication_parts(handle, &count) else { return [] }
+        return (0..<count).map {
+            EXReaderPart(id: optionalString(parts[$0].id), path: optionalString(parts[$0].path),
+                         title: optionalString(parts[$0].title), inReadingOrder: parts[$0].in_reading_order != 0)
+        }
+    }
+    public func load(part: Int) throws -> EXReaderDocument {
+        guard part >= 0 else { throw EXReaderError.invalidInput }
+        gate.lock(); defer { gate.unlock() }
+        var result: OpaquePointer?
+        var error = exr_error()
+        let status = exr_publication_load(handle, part, &result, &error)
+        try check(status, error)
+        guard let result else { throw EXReaderError.invalidResult }
+        return EXReaderDocument(handle: result, gate: gate)
+    }
+}
+public final class EXReaderPager {
+    private var handle: OpaquePointer?
+    fileprivate let document: EXReaderDocument
+    fileprivate let font: EXReaderFont
+    fileprivate init(document: EXReaderDocument, font: EXReaderFont, config: EXReaderLayoutConfig) throws {
+        guard !(config.userCSS?.utf8.contains(0) ?? false) else { throw EXReaderError.invalidInput }
+        self.document = document; self.font = font
+        document.gate.lock(); defer { document.gate.unlock() }
+        font.gate.lock(); defer { font.gate.unlock() }
+        var native = exr_layout_config_defaults()
+        native.page = config.page; native.document_css = config.documentCSS ? 1 : 0
+        native.embedded_fonts = config.embeddedFonts ? 1 : 0; native.direction = config.direction
+        var result: OpaquePointer?
+        var error = exr_error()
+        let status: exr_status
+        if let css = config.userCSS {
+            status = css.withCString {
+                native.user_css = $0
+                return exr_pager_create(document.handle, font.handle, &native, &result, &error)
+            }
+        } else {
+            status = exr_pager_create(document.handle, font.handle, &native, &result, &error)
+        }
+        try check(status, error)
+        guard let result else { throw EXReaderError.invalidResult }
+        handle = result
+    }
+    deinit {
+        document.gate.lock(); defer { document.gate.unlock() }
+        font.gate.lock(); defer { font.gate.unlock() }
+        exr_pager_free(handle)
+    }
+    /** nil at EOF. An engine error invalidates this pager; construct another to retry. */
+    public func next() throws -> EXReaderReflowPage? {
+        document.gate.lock(); defer { document.gate.unlock() }
+        font.gate.lock(); defer { font.gate.unlock() }
+        guard let handle else { throw EXReaderError.invalidInput }
+        var result: OpaquePointer?
+        var error = exr_error()
+        let status = exr_pager_next(handle, &result, &error)
+        if status != EXR_OK { exr_pager_free(handle); self.handle = nil; try check(status, error) }
+        return result.map { EXReaderReflowPage(handle: $0, document: document, font: font) }
+    }
+}
+/** One owned page, independent of the pager. Record arrays contain no borrowed pointers. */
+public final class EXReaderReflowPage {
+    private let handle: OpaquePointer
+    private let document: EXReaderDocument
+    private let font: EXReaderFont
+    fileprivate init(handle: OpaquePointer, document: EXReaderDocument, font: EXReaderFont) {
+        self.handle = handle; self.document = document; self.font = font
+    }
+    deinit {
+        document.gate.lock(); defer { document.gate.unlock() }
+        font.gate.lock(); defer { font.gate.unlock() }
+        exr_layout_free(handle)
+    }
+    public var content: exr_page {
+        document.gate.lock(); defer { document.gate.unlock() }
+        return exr_layout_pages(handle, nil)!.pointee
+    }
+    public var writingMode: exr_writing_mode {
+        document.gate.lock(); defer { document.gate.unlock() }
+        return exr_layout_writing_mode(handle)
+    }
+    public var glyphs: [exr_glyph] {
+        document.gate.lock(); defer { document.gate.unlock() }
+        var count = 0
+        guard let data = exr_layout_glyphs(handle, &count) else { return [] }
+        return Array(UnsafeBufferPointer(start: data, count: count))
+    }
+    public var lines: [exr_line] {
+        document.gate.lock(); defer { document.gate.unlock() }
+        var count = 0
+        guard let data = exr_layout_lines(handle, &count) else { return [] }
+        return Array(UnsafeBufferPointer(start: data, count: count))
+    }
+    public var boxes: [exr_box] {
+        document.gate.lock(); defer { document.gate.unlock() }
+        var count = 0
+        guard let data = exr_layout_boxes(handle, &count) else { return [] }
+        return Array(UnsafeBufferPointer(start: data, count: count))
+    }
+    /** Effective font bytes and instance coordinates, including embedded book fonts. */
+    public func fontSource(index: Int) throws -> EXReaderFontSource {
+        guard index >= 0 else { throw EXReaderError.invalidInput }
+        document.gate.lock(); defer { document.gate.unlock() }
+        font.gate.lock(); defer { font.gate.unlock() }
+        var input = exr_font_input()
+        var axes: UnsafeMutablePointer<exr_font_axis>?
+        var count = 0
+        var error = exr_error()
+        let effective = exr_layout_font(handle)
+        var status = exr_font_source(effective, index, &input, &error)
+        try check(status, error)
+        status = exr_font_axes(effective, index, &axes, &count, &error)
+        defer { exr_free(axes) }
+        try check(status, error)
+        guard let data = input.data else { throw EXReaderError.invalidResult }
+        return EXReaderFontSource(data: Data(bytes: data, count: input.size), faceIndex: input.face_index,
+                                  axes: axes.map { Array(UnsafeBufferPointer(start: $0, count: count)) } ?? [])
+    }
+    public func image(resource: Int) throws -> EXReaderBitmap? {
+        guard resource >= 0 else { throw EXReaderError.invalidInput }
+        document.gate.lock(); defer { document.gate.unlock() }
+        guard let image = exr_layout_image(handle, resource), let pixels = image.pointee.pixels else { return nil }
+        let b = image.pointee
+        return EXReaderBitmap(width: Int(b.width), height: Int(b.height), stride: Int(b.stride), channels: Int(b.channels),
+                              pixels: Data(bytes: pixels, count: Int(b.stride) * Int(b.height)))
+    }
+    /** UTF-8 byte offset in the part document; nil for an empty page. */
+    public func hitTest(x: Float, y: Float) -> Int? {
+        document.gate.lock(); defer { document.gate.unlock() }
+        let offset = exr_layout_hit_test(handle, 0, x, y)
+        return offset == -1 ? nil : offset
+    }
+    public func render() throws -> EXReaderBitmap {
+        document.gate.lock(); defer { document.gate.unlock() }
+        font.gate.lock(); defer { font.gate.unlock() }
+        var bitmap = exr_bitmap()
+        var error = exr_error()
+        let status = exr_render_page_color(handle, exr_layout_font(handle), 0, &bitmap, &error)
+        defer { exr_bitmap_free(&bitmap) }
+        try check(status, error)
+        guard let pixels = bitmap.pixels else { throw EXReaderError.invalidResult }
+        return EXReaderBitmap(width: Int(bitmap.width), height: Int(bitmap.height),
+                              stride: Int(bitmap.stride), channels: Int(bitmap.channels),
+                              pixels: Data(bytes: pixels, count: Int(bitmap.stride) * Int(bitmap.height)))
     }
 }

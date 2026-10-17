@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "flow_internal.h"
 #include "bidi_internal.h"
+#include "ruby_internal.h"
 
 static float used(exr_length l, float width) {
   return l.value < 0 ? 0 : l.percent ? l.value * width : l.value;
@@ -63,6 +64,7 @@ exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
   size_t i, face, common = SIZE_MAX, order[32], count, at;
   uint32_t candidates = f->font->count == 32 ? UINT32_MAX :
                           (UINT32_C(1) << f->font->count) - 1;
+  if (l->glyphs[start].flags & EXR_GLYPH_RUBY_ITEM) return EXR_OK;
   /* Prefer a single face for the complete visible grapheme, across inline styles. */
   for (i = start; i < end && candidates; i++) {
     const exr_glyph *g = &l->glyphs[i];
@@ -154,81 +156,103 @@ static exr_status project_line(flow *f, exr_line *line) {
   line->y = x; line->width = height; line->height = width;
   return EXR_OK;
 }
-exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count,
-                               size_t destination, int forced, int final) {
-  exr_layout *l = f->layout;
-  size_t i, spaces = 0;
-  float indent = f->first_line ? f->paragraph->indent : 0;
-  float available = fmaxf(1, f->width - indent), width = 0, ascent = 0, descent = 0,
-        height = 0, x, extra = 0;
+static exr_status append_fragment(flow *f, const exr_line *source, const exr_glyph *glyphs,
+                                    float dx, float dy) {
+  exr_layout *l=f->layout;
+  size_t i, destination=l->glyph_count;
   exr_line *line;
-  exr_status s;
-  size_t logical_start = glyphs[0].start, logical_end = glyphs[count - 1].end;
-  int align = f->paragraph->align;
-  unsigned base = exr_inline_base(f->bidi, logical_start);
-  if (align == 4) align = base & 1 ? 2 : 0;
-  if (align == 5) align = base & 1 ? 0 : 2;
-  width = 0;
-  for (i = 0; i < count; i++) {
-    exr_glyph *g = &glyphs[i];
-    exr_face *face = &f->font->faces[g->font_index];
-    if (exr_font_size(face, g->size))
-      return EXR_FONT;
-    width += g->advance + glyph_kern(f, i == 0 ? NULL : &glyphs[i - 1], g);
-    ascent = fmaxf(ascent, (float)face->face->size->metrics.ascender / 64);
-    descent = fmaxf(descent, -(float)face->face->size->metrics.descender / 64);
-    height = fmaxf(height, g->line_height);
-    if (g->codepoint == ' ' &&
-        (i + 1 == count || glyphs[i + 1].cluster_start != g->cluster_start))
-      spaces++;
+  if (source->glyph_count > EXR_MAX_ITEMS-destination || l->line_count >= EXR_MAX_ITEMS ||
+      !exr_grow((void **)&l->glyphs,&l->glyph_cap,destination+source->glyph_count,sizeof(*l->glyphs)) ||
+      !exr_grow((void **)&l->lines,&l->line_cap,l->line_count+1,sizeof(*l->lines)))
+    return fail(f,EXR_LIMIT,"Inline fragment allocation limit exceeded");
+  line=&l->lines[l->line_count++]; *line=*source;
+  line->glyph_start=destination; line->page=l->page_count-1; line->x+=dx; line->y+=dy;
+  for(i=0;i<source->glyph_count;i++) {
+    exr_glyph g=glyphs[i]; g.x+=dx; g.baseline+=dy; g.clip_left+=dx; g.clip_right+=dx;
+    g.page=line->page; l->glyphs[l->glyph_count++]=g;
   }
-  height = fmaxf(height, ascent + descent);
-  s = exr_flow_page(f, height, glyphs[0].start);
-  if (s != EXR_OK)
-    return s;
-  s = exr_inline_reorder(f, glyphs, count);
-  if (s != EXR_OK)
-    return s;
-  if (!exr_grow((void **)&l->lines, &l->line_cap, l->line_count + 1, sizeof(*l->lines)))
-    return EXR_MEMORY;
-  x = f->x + (base & 1 ? 0 : indent);
-  if (align == 1)
-    x += fmaxf(0, available - width) / 2;
-  if (align == 2)
-    x += fmaxf(0, available - width);
-  if (align == 3 && !final && !forced && spaces)
-    extra = fmaxf(0, available - width) / (float)spaces;
-  line = &l->lines[l->line_count++];
-  *line = (exr_line){0};
-  line->start = logical_start;
-  line->end = logical_end;
-  line->glyph_start = destination;
-  line->glyph_count = count;
-  line->page = l->page_count - 1;
-  line->y = f->y;
-  line->x = x;
-  line->width = width + extra * (float)spaces;
-  line->height = height;
   l->pages[line->page].line_count++;
-  l->pages[line->page].end = line->end;
-  for (i = 0; i < count; i++) {
-    exr_glyph *g = &glyphs[i];
-    if (exr_font_size(&f->font->faces[g->font_index], g->size))
-      return EXR_FONT;
-    x += glyph_kern(f, i == 0 ? NULL : &glyphs[i - 1], g);
-    g->x = x;
-    g->baseline = f->y + ascent + (height - ascent - descent) / 2;
-    g->page = line->page;
-    g->clip_left = f->x;
-    g->clip_right = f->x + f->width;
-    x += g->advance;
-    if (g->codepoint == ' ' &&
-        (i + 1 == count || glyphs[i + 1].cluster_start != g->cluster_start))
-      x += extra;
+  return project_line(f,line);
+}
+static exr_status ordinary_fragment(flow *f, exr_glyph *glyphs, size_t count, float baseline) {
+  exr_line line={0};
+  float ascent=0,descent=0,height=0;
+  size_t i;
+  line.start=SIZE_MAX;
+  for(i=0;i<count;i++) {
+    exr_glyph *g=&glyphs[i]; exr_face *face=&f->font->faces[g->font_index];
+    if(exr_font_size(face,g->size)) return EXR_FONT;
+    ascent=fmaxf(ascent,(float)face->face->size->metrics.ascender/64);
+    descent=fmaxf(descent,-(float)face->face->size->metrics.descender/64);
+    height=fmaxf(height,g->line_height);
+    if(g->start<line.start) line.start=g->start;
+    if(g->end>line.end) line.end=g->end;
+    g->baseline=baseline; g->clip_left=f->x; g->clip_right=f->x+f->width;
   }
-  f->y += height;
-  f->first_line = 0;
-  return project_line(f, line);
+  height=fmaxf(height,ascent+descent);
+  line.glyph_count=count; line.x=glyphs[0].x;
+  line.y=baseline-ascent-(height-ascent-descent)/2;
+  line.width=glyphs[count-1].x+glyphs[count-1].advance-line.x; line.height=height;
+  return append_fragment(f,&line,glyphs,0,0);
+}
+exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forced, int final) {
+  exr_layout *l=f->layout;
+  size_t i,j,spaces=0,logical_start=glyphs[0].start,logical_end=glyphs[count-1].end;
+  float indent=f->first_line ? f->paragraph->indent : 0;
+  float available=fmaxf(1,f->width-indent),width=0,ascent=0,descent=0,height=0,x,extra=0,baseline;
+  int align=f->paragraph->align;
+  unsigned base=exr_inline_base(f->bidi,logical_start);
+  exr_status status;
+  if(align==4) align=base&1 ? 2 : 0;
+  if(align==5) align=base&1 ? 0 : 2;
+  for(i=0;i<count;i++) {
+    exr_glyph *g=&glyphs[i]; exr_face *face=&f->font->faces[g->font_index];
+    if(g->flags&EXR_GLYPH_RUBY_ITEM) {
+      if(g->advance>available+.001f) return fail(f,EXR_LIMIT,"Ruby group exceeds the inline page extent");
+      ascent=fmaxf(ascent,g->offset_x); descent=fmaxf(descent,g->offset_y);
+    } else {
+      if(exr_font_size(face,g->size)) return EXR_FONT;
+      ascent=fmaxf(ascent,(float)face->face->size->metrics.ascender/64);
+      descent=fmaxf(descent,-(float)face->face->size->metrics.descender/64);
+    }
+    width+=g->advance+glyph_kern(f,i ? &glyphs[i-1] : NULL,g);
+    height=fmaxf(height,g->line_height);
+    if(g->codepoint==' ' && (i+1==count || glyphs[i+1].cluster_start!=g->cluster_start)) spaces++;
+  }
+  height=fmaxf(height,ascent+descent);
+  status=exr_flow_page(f,height,logical_start); if(status!=EXR_OK) return status;
+  status=exr_inline_reorder(f,glyphs,count); if(status!=EXR_OK) return status;
+  baseline=f->y+ascent+(height-ascent-descent)/2;
+  x=f->x+(base&1 ? 0 : indent);
+  if(align==1) x+=fmaxf(0,available-width)/2;
+  if(align==2) x+=fmaxf(0,available-width);
+  if(align==3 && !final && !forced && spaces) extra=fmaxf(0,available-width)/(float)spaces;
+  for(i=0;i<count;) {
+    exr_glyph *g=&glyphs[i];
+    if(g->flags&EXR_GLYPH_RUBY_ITEM) {
+      exr_layout *ruby=NULL;
+      status=exr_ruby_layout(f,g,&ruby); if(status!=EXR_OK) return status;
+      for(j=0;j<ruby->line_count && status==EXR_OK;j++)
+        status=append_fragment(f,&ruby->lines[j],ruby->glyphs+ruby->lines[j].glyph_start,x,baseline-g->offset_x);
+      exr_layout_free(ruby); if(status!=EXR_OK) return status;
+      x+=g->advance; i++;
+    } else {
+      size_t first=i;
+      for(;i<count && !(glyphs[i].flags&EXR_GLYPH_RUBY_ITEM);i++) {
+        g=&glyphs[i]; x+=glyph_kern(f,i ? &glyphs[i-1] : NULL,g); g->x=x; x+=g->advance;
+        if(g->codepoint==' ' && (i+1==count || glyphs[i+1].cluster_start!=g->cluster_start)) x+=extra;
+      }
+      status=ordinary_fragment(f,glyphs+first,i-first,baseline); if(status!=EXR_OK) return status;
+      /* Keep the original justified line rectangle, including the last space. */
+      if(first==0 && i==count && l->line_count) {
+        exr_line *line=&l->lines[l->line_count-1];
+        if(f->writing_mode==EXR_WRITING_HORIZONTAL_TB) line->width=width+extra*(float)spaces;
+        else line->height=width+extra*(float)spaces;
+      }
+    }
+  }
+  l->pages[l->page_count-1].end=logical_end;
+  f->y+=height; f->first_line=0; return EXR_OK;
 }
 exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float width, float height,
                     exr_box_kind kind) {

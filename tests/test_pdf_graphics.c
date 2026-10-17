@@ -80,7 +80,7 @@ static void pixel(const raster *r,unsigned x,unsigned y,unsigned red,unsigned gr
 }
 int main(int argc,char **argv) {
   char path[4096]; FILE *input; unsigned char *data; long length; exr_pdf_file *file=NULL; exr_pdf_page_info *pages=NULL; size_t count,i; uint32_t resources; raster r;
-  const char *invalid[]={"1 1 l S","h","1 2 3 re f","0 0 m","BT 1 1 m ET","3 J",".5 M","-1 w","[0 0] 0 d","[1 2] -1 d","1 0 0 g","/Unsupported cs","/Blend gs","/Soft gs","/Shade sh"};
+  const char *invalid[]={"1 1 l S","h","1 2 3 re f","0 0 m","BT 1 1 m ET","3 J",".5 M","-1 w","[0 0] 0 d","[1 2] -1 d","1 0 0 g","/Missing cs","/Blend gs","/Soft gs","/Shade sh"};
   CHECK(argc==2); snprintf(path,sizeof(path),"%s/pdf-graphics.pdf",argv[1]); input=fopen(path,"rb"); CHECK(input && !fseek(input,0,SEEK_END)); length=ftell(input); CHECK(length>0); rewind(input); data=malloc((size_t)length);
   CHECK(data && fread(data,1,(size_t)length,input)==(size_t)length); fclose(input); OK(exr_pdf_open(data,(size_t)length,&file,&error));
   OK(exr_pdf_pages(file,&pages,&count,&error)); CHECK(count==1); resources=pages[0].resources;

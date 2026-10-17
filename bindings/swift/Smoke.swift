@@ -71,6 +71,50 @@ import CEXReader
         let pcmTail = try pcm.read(firstFrame: 3199, count: 1024)
         let pcmEnd = try pcm.read(firstFrame: 3200, count: 1)
         precondition(pcmTail.count == 1 && pcmEnd.isEmpty)
-        print("Swift SDK: PDF text/render/font ownership owned multilingual metadata and WAVE samples passed")
+        var config = EXReaderLayoutConfig()
+        config.page.width = 220; config.page.height = 180; config.page.margin = 10
+        config.page.font_size = 14; config.page.paragraph_spacing = 4
+        config.userCSS = "p {background-color:#ff0000}"
+        let retainedPage: EXReaderReflowPage
+        let savedNodes: [EXReaderNode]
+        do {
+            let html = "<html><head><title>书😀</title></head><body><p id='hello' style='background-color:#ff0000'>A 中文😀</p>"
+                + String(repeating: "<p>A paragraph with several words.</p>", count: 100) + "</body></html>"
+            let book = try EXReaderDocument(data: Data(html.utf8), format: EXR_HTML)
+            precondition(book.title != nil && String(decoding: book.utf8, as: UTF8.self).contains("中文😀"))
+            savedNodes = book.nodes
+            precondition(!savedNodes.isEmpty && savedNodes[0].parent == -1)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            let pager = try book.pager(font: font, config: config)
+            guard let first = try pager.next(), let second = try pager.next() else { preconditionFailure("missing pages") }
+            retainedPage = first
+            precondition(second.content.start == first.content.end && !first.glyphs.isEmpty && !first.lines.isEmpty && !first.boxes.isEmpty)
+            let glyph = first.glyphs[0]
+            precondition(first.hitTest(x: glyph.x, y: glyph.baseline) != nil)
+            var pages = 2
+            while let _ = try pager.next() { pages += 1 }
+            let end = try pager.next()
+            precondition(pages > 2 && end == nil)
+        }
+        let pageBitmap = try retainedPage.render()
+        let sourceFont = try retainedPage.fontSource(index: 0)
+        let missingImage = try retainedPage.image(resource: 99999)
+        precondition(!sourceFont.data.isEmpty && sourceFont.faceIndex == 0 && sourceFont.axes.isEmpty && missingImage == nil)
+        precondition(pageBitmap.width == 220 && pageBitmap.height == 180 && pageBitmap.channels == 4 && !savedNodes.isEmpty)
+        let retainedChapter: EXReaderDocument
+        do {
+            let publication = try EXReaderPublication(file: root.appendingPathComponent("books/layout.epub"))
+            precondition(!publication.parts.isEmpty && publication.parts[0].path != nil)
+            retainedChapter = try publication.load(part: 0)
+        }
+        precondition(!retainedChapter.utf8.isEmpty && !retainedChapter.nodes.isEmpty)
+        precondition(retainedChapter.nodes.contains { $0.attributes.contains { $0.key == "id" && $0.value == "intro" } })
+        do {
+            _ = try EXReaderDocument(data: Data(), format: EXR_TXT)
+            preconditionFailure("empty document should fail")
+        } catch EXReaderError.engine(let code, _) {
+            precondition(code == Int(EXR_ARGUMENT.rawValue))
+        }
+        print("Swift SDK: PDF/audio/metadata and reflow nodes, lazy parts, page snapshots, UTF-8 and child lifetime passed")
     }
 }
