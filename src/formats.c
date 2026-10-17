@@ -513,7 +513,7 @@ static int package_parse(package *p, const void *data, size_t n) {
   p->parser = NULL;
   return ok == XML_STATUS_OK && !p->failed;
 }
-static int uri_decode(const char *s, size_t n, char out[2048]) {
+int exr_uri_decode(const char *s, size_t n, char out[2048]) {
   size_t i, used = 0, at = 0;
   uint32_t cp;
   if (n >= 2048)
@@ -545,7 +545,7 @@ int exr_resolve_path(const char *base, const char *href, char out[2048]) {
   size_t len = 0, i, used = 0, segments[256], depth = 0;
   size_t href_size = strcspn(href, "#");
   const char *slash = strrchr(base, '/');
-  if (memchr(href, '?', href_size) || !uri_decode(href, href_size, decoded) || decoded[0] == '/' ||
+  if (memchr(href, '?', href_size) || !exr_uri_decode(href, href_size, decoded) || decoded[0] == '/' ||
       strchr(decoded, ':') || strchr(decoded, '\\'))
     return 0;
   if (!decoded[0])
@@ -634,7 +634,7 @@ exr_status exr_document_resolve(const exr_document *d, size_t chapter, const cha
     return exr_fail(e, EXR_ARGUMENT, "Invalid link arguments");
   hash = strchr(uri, '#');
   if (!exr_resolve_path(d->chapters[chapter].path, uri, path) ||
-      (hash && !uri_decode(hash + 1, strlen(hash + 1), fragment)))
+      (hash && !exr_uri_decode(hash + 1, strlen(hash + 1), fragment)))
     return exr_fail(e, EXR_ARGUMENT, "URI is external or invalid");
   for (i = 0; i < d->resource_count; i++)
     if (!strcmp(path, d->resources[i].path)) {
@@ -1302,7 +1302,7 @@ exr_status exr_parse(exr_document *d, const void *data, size_t n, exr_error *e) 
   case EXR_HTML:
     return html(d, data, n, e);
   case EXR_FB2:
-    return xml_flow(d, data, n, 0, e);
+    return exr_fb2(d, data, n, e);
   case EXR_DOCX:
   case EXR_EPUB:
     return zip_document(d, data, n, e);

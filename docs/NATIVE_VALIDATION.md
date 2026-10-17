@@ -485,3 +485,11 @@ and rendered pixels after reopening. XML namespace attributes and CR/LF/tab valu
 Missing bytes, illegal XML names, reserved paths, cancellation and package encryption metadata
 fail with empty outputs. Plain text receives a generated chapter and navigation. The legacy
 XML/text conversion regression remains unchanged.
+
+## 0.19 rich FB2
+
+`native-fb2` verifies original generated PNG bytes, cover designation, URI-decoded image IDs,
+inline emphasis, headings, tables, note links, metadata exclusion and exact rendered pixels after
+structured EPUB round-trip. Strict base64 cases include empty/full/padded/whitespace values,
+invalid alphabet, noncanonical pad bits, incomplete groups, extra padding and data after padding.
+Duplicate binary IDs, missing images, wrong namespaces/roots and entity declarations are rejected.
