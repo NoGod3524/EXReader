@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.60.0"
+#define EXR_VERSION "0.61.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -323,6 +323,20 @@ struct exr_bitmap {
   unsigned char *pixels;
   uint32_t channels; /* 1 (gray) or 4 (RGBA); zero accepted as gray on write. */
 };
+/* Format-independent fixed-page coordinates. bounds are [x0,y0,x1,y1],
+   unit_scale is positive, rotation is clockwise 0/90/180/270. */
+typedef struct {
+  double bounds[4],unit_scale;
+  unsigned rotation,y_down;
+} exr_page_geometry;
+typedef struct {
+  double width,height;
+  double matrix[6],inverse[6]; /* x'=a*x+c*y+e, y'=b*x+d*y+f */
+} exr_viewport;
+/* Maps a source page to a top-left, y-down viewport at the selected scale.
+   Both transforms are returned for painting and hit testing; no allocation. */
+EXR_API exr_status exr_viewport_create(const exr_page_geometry *page,double scale,
+                                        exr_viewport *out,exr_error *error);
 /* All input/output strings are UTF-8. Returned views belong to their owner. */
 EXR_API const char *exr_version(void);
 /* Unicode 17 extended grapheme boundaries plus documented line-break rules.

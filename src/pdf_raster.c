@@ -138,6 +138,11 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
      (config->channels!=1 && config->channels!=4) || config->width>(size_t)64*1024*1024/config->channels/config->height)
     return exr_fail(e,EXR_ARGUMENT,"Invalid PDF raster output configuration");
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+  if(config->initial_clip) {
+    const double *b=config->initial_clip;
+    for(i=0;i<4;i++) if(!isfinite(b[i]) || fabs(b[i])>1e7) return exr_fail(e,EXR_ARGUMENT,"Invalid initial PDF raster clip");
+    if(b[0]>b[2] || b[1]>b[3]) return exr_fail(e,EXR_ARGUMENT,"Inverted initial PDF raster clip");
+  }
   r.config=config; r.control=control; r.mask_budget=config->mask_budget ? config->mask_budget : (size_t)64*1024*1024;
   r.bitmap.width=config->width; r.bitmap.height=config->height; r.bitmap.channels=config->channels; r.bitmap.stride=config->width*config->channels;
   bytes=(size_t)r.bitmap.stride*r.bitmap.height; r.bitmap.pixels=malloc(bytes);
@@ -147,6 +152,14 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
     memset(r.bitmap.pixels,(int)((red*77+green*150+blue*29+128)>>8),bytes);
   }
   else for(i=0;i<bytes;i+=4) for(c=0;c<4;c++) r.bitmap.pixels[i+c]=(unsigned char)(config->background>>(24-8*c));
+  if(config->initial_clip) {
+    const double *b=config->initial_clip; exr_pdf_paint_state paint={0}; exr_vector_segment rect[5]={0};
+    rect[0].verb=EXR_VECTOR_MOVE; rect[0].points[0]=(exr_vector_point){b[0],b[1]};
+    rect[1].verb=EXR_VECTOR_LINE; rect[1].points[0]=(exr_vector_point){b[2],b[1]};
+    rect[2].verb=EXR_VECTOR_LINE; rect[2].points[0]=(exr_vector_point){b[2],b[3]};
+    rect[3].verb=EXR_VECTOR_LINE; rect[3].points[0]=(exr_vector_point){b[0],b[3]}; rect[4].verb=EXR_VECTOR_CLOSE;
+    status=geometry(&r,rect,5,NULL,&paint,EXR_PDF_CLIP,EXR_VECTOR_NONZERO,0,e); if(status!=EXR_OK) goto done;
+  }
   if(FT_Init_FreeType(&r.library)) { status=exr_fail(e,EXR_MEMORY,"PDF font library initialization failed"); goto done; }
   status=exr_pdf_draw_ops(file,resources,content,size,initial,&cb,&r,control,e);
   if(status==EXR_OK) { *out=r.bitmap; memset(&r.bitmap,0,sizeof(r.bitmap)); }

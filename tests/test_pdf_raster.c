@@ -65,14 +65,37 @@ static void fallback_cases(const char *dir,exr_pdf_file *file,uint32_t resources
   config.background=0xff0000ff; OK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)); pixel(&b,1,1,77,77,77); free(b.pixels);
   free(data);
 }
+static void page_cases(const char *dir) {
+  unsigned char *data; size_t size,count,i; exr_pdf_file *file=NULL; exr_pdf_page_info *pages=NULL; exr_viewport view; exr_bitmap b;
+  const unsigned colors[4][4][3]={{{0,0,255},{255,255,0},{255,0,0},{0,255,0}},{{255,0,0},{0,0,255},{0,255,0},{255,255,0}},
+    {{0,255,0},{255,0,0},{255,255,0},{0,0,255}},{{255,255,0},{0,255,0},{0,0,255},{255,0,0}}};
+  data=load(dir,"pdf-page-view.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_pages(file,&pages,&count,&error)); CHECK(count==7);
+  for(i=0;i<4;i++) {
+    size_t corner; OK(exr_pdf_page_viewport(&pages[i],1,&view,&error)); CHECK(view.width==(i%2 ? 4 : 8) && view.height==(i%2 ? 8 : 4));
+    OK(exr_pdf_raster_page(file,&pages[i],1,NULL,NULL,&b,&error)); CHECK(b.width==view.width && b.height==view.height);
+    for(corner=0;corner<4;corner++) pixel(&b,corner%2 ? b.width-1 : 0,corner/2 ? b.height-1 : 0,colors[i][corner][0],colors[i][corner][1],colors[i][corner][2]);
+    free(b.pixels);
+  }
+  OK(exr_pdf_page_viewport(&pages[4],1,&view,&error)); CHECK(view.width==4 && view.height==3);
+  OK(exr_pdf_raster_page(file,&pages[5],1,NULL,NULL,&b,&error)); CHECK(b.width==4 && b.height==2); pixel(&b,3,1,191,191,191); pixel(&b,0,0,0,0,0); free(b.pixels);
+  CHECK(exr_pdf_raster_page(file,&pages[6],1,NULL,NULL,&b,&error)==EXR_FORMAT && !b.pixels && !b.width);
+  CHECK(exr_pdf_raster_page(file,&pages[0],100000,NULL,NULL,&b,&error)==EXR_LIMIT && !b.pixels);
+  free(pages); exr_pdf_close(file); free(data);
+}
 int main(int argc,char **argv) {
   unsigned char *data; size_t size; exr_pdf_file *file=NULL; uint32_t resources; exr_bitmap b; exr_pdf_raster_config config={0}; exr_control control={0};
-  CHECK(argc==2); data=load(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
+  CHECK(argc==2); page_cases(argv[1]); data=load(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
   text_cases(file,resources); clip_cases(file,resources); fallback_cases(argv[1],file,resources);
   config.width=config.height=12; config.channels=4; config.background=0;
   { const char *s="1 0 0 rg 1 1 2 2 re f"; OK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)); CHECK(b.pixels[13*4]==255 && b.pixels[13*4+3]==255 && !b.pixels[3]); free(b.pixels); }
   config.width=0; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);
   config.width=12; control.cancelled=cancelled; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,&control,&b,&error)==EXR_CANCELLED && !b.pixels);
+  { double clip[4]={0,0,12,12}; config.initial_clip=clip;
+    clip[0]=NAN; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);
+    clip[0]=13; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);
+    clip[0]=0; config.mask_budget=143; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_LIMIT && !b.pixels);
+    config.initial_clip=NULL; config.mask_budget=0;
+  }
   exr_pdf_close(file); free(data);
   data=load(argv[1],"pdf-graphics.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Pages"),&resources,&error));
   { uint32_t kids,page; OK(exr_pdf_resolve(file,exr_pdf_get(file,resources,"Kids"),&kids,&error)); OK(exr_pdf_resolve(file,exr_pdf_value_at(file,kids)->first,&page,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,page,"Resources"),&resources,&error)); }

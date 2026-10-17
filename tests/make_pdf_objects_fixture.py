@@ -485,3 +485,15 @@ mask_bytes={**image_objects,2:image_stream(bytes(4096*4096*3),4096,4096,extra=b'
 mask_bytes[60]=image_stream(bytes(4096*4096),4096,4096,b'/DeviceGray',extra=b'/SMask 61 0 R')
 mask_bytes[61]=image_stream(bytes([128]),1,1,b'/DeviceGray')
 pdf('pdf-image-mask-bytes.pdf',values=mask_bytes)
+
+
+# Whole-page crop, quarter-turn rotation, user units and fractional clip edges.
+view_objects={1:b'<< /Type /Catalog /Pages 2 0 R >>',2:b'<< /Type /Pages /Count 7 /Kids [3 0 R 4 0 R 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R] /MediaBox [0 0 8 6] >>'}
+for i,rotation in enumerate((0,90,180,270)):
+    view_objects[3+i]=f'<< /Type /Page /Parent 2 0 R /CropBox [2 1 6 3] /UserUnit 2 /Rotate {rotation} /Contents 10 0 R >>'.encode()
+view_objects[7]=b'<< /Type /Page /Parent 2 0 R /CropBox [-2 -1 4 3] /Contents 10 0 R >>'
+view_objects[8]=b'<< /Type /Page /Parent 2 0 R /CropBox [2 1 5.5 2.5] /Contents 11 0 R >>'
+view_objects[9]=b'<< /Type /Page /Parent 2 0 R /CropBox [10 10 12 12] /Contents 10 0 R >>'
+view_objects[10]=compressed_stream(b'0 g 0 0 8 6 re f 1 0 0 rg 2 1 2 1 re f 0 1 0 rg 4 1 2 1 re f 0 0 1 rg 2 2 2 1 re f 1 1 0 rg 4 2 2 1 re f')
+view_objects[11]=compressed_stream(b'0 g 0 0 8 6 re f')
+pdf('pdf-page-view.pdf',values=view_objects)

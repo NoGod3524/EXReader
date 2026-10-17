@@ -1154,3 +1154,26 @@ mask types/ranges/palettes/mattes, texture alias/cycle errors, mask cycles,
 assembled image page was also compared with Poppler; opaque and constant-mask
 interiors agree, while image boundary antialiasing/interpolation differs.
 The 0.59 commit 99ee06d passed all six CI jobs.
+
+
+## 0.61 Generic page viewports and PDF page raster coordinates
+
+The public allocation-free viewport helper accepts arbitrary page bounds,
+source y-axis direction, unit scale and clockwise quarter-turn rotation. It
+returns top-left/y-down natural dimensions and both affine matrices, for drawing
+and native-coordinate hit tests. Bounds, dimensions, matrix and inverse precision
+are checked. It is independent of PDF or rendering callbacks.
+
+The private PDF page raster entry intersects inherited CropBox with MediaBox,
+applies page UserUnit and rotation, selects bitmap dimensions, and clips to the
+exact viewport rectangle even when dimensions require fractional-pixel rounding.
+It handles content extraction and page painting without caller-built transforms.
+Disjoint crop/media boxes and oversized outputs fail before bitmap allocation.
+
+The viewport suite covers both source axes and all quarter turns, nonzero/negative
+origins, scale/unit multiplication, corner mapping, inverse round trips and
+invalid/precision-limited input. Original seven-page PDF fixtures check actual
+rotated colored quadrants, crop/media intersection, fractional clip pixel values,
+empty intersection, initial clip validation/byte limits and oversized pages.
+Public PDF document opening is still pending. The 0.60 commit 154a2d9 passed
+all six CI jobs.
