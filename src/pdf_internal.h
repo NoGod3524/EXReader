@@ -33,4 +33,9 @@ typedef struct {
 /* Caller frees the page snapshot and content buffer. Object IDs borrow file. */
 exr_status exr_pdf_pages(exr_pdf_file *file,exr_pdf_page_info **pages,size_t *count,exr_error *error);
 exr_status exr_pdf_content(exr_pdf_file *file,uint32_t contents,exr_buffer *out,exr_error *error);
+/* Operand arena and its IDs/bytes are borrowed only for the callback. */
+typedef exr_status (*exr_pdf_operator_fn)(void *context,exr_pdf_file *operands,const char *operator_name,
+                                         const uint32_t *values,size_t count,exr_error *error);
+exr_status exr_pdf_content_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
+                               const exr_control *control,exr_error *error);
 #endif

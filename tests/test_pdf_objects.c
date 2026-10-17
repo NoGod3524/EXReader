@@ -98,10 +98,54 @@ static void filter_cases(const char *dir) {
   filter_case(dir,"tiff4","\x10\xf1\x01",3); filter_case(dir,"tiff16","\0\1\0\0\xff\xff\0\1\0\0\0\1",12);
   for(i=0;i<sizeof(bad)/sizeof(*bad);i++) { char name[256]; snprintf(name,sizeof(name),"pdf-filter-%s.pdf",bad[i]); bad_stream(dir,name,EXR_FORMAT); }
 }
+static exr_status inspect_operation(void *context,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,exr_error *e) {
+  static const char *names[]={"q","cm","BT","Tf","TJ","DP","ET","Q"};
+  size_t *step=context; const exr_pdf_value *v; uint32_t at;
+  (void)e; CHECK(*step<8 && !strcmp(name,names[*step]));
+  if(*step==1) CHECK(count==6 && exr_pdf_value_at(arena,values[4])->u.integer==10 && exr_pdf_value_at(arena,values[5])->u.integer==20);
+  else if(*step==3) { CHECK(count==2); bytes(arena,values[0],"F1",2); CHECK(exr_pdf_value_at(arena,values[1])->u.integer==12); }
+  else if(*step==4) {
+    CHECK(count==1); v=exr_pdf_value_at(arena,values[0]); CHECK(v->kind==EXR_PDF_ARRAY); at=v->first;
+    bytes(arena,at,"A+",2); at=exr_pdf_value_at(arena,at)->next; CHECK(exr_pdf_value_at(arena,at)->u.integer==-120);
+    at=exr_pdf_value_at(arena,at)->next; bytes(arena,at,"B",1); CHECK(exr_pdf_value_at(arena,at)->next==EXR_PDF_NONE);
+  } else if(*step==5) {
+    CHECK(count==5 && exr_pdf_value_at(arena,values[0])->kind==EXR_PDF_BOOL && exr_pdf_value_at(arena,values[1])->kind==EXR_PDF_BOOL);
+    CHECK(exr_pdf_value_at(arena,values[2])->kind==EXR_PDF_NULL); bytes(arena,values[3],"tag",3);
+    CHECK(exr_pdf_value_at(arena,exr_pdf_get(arena,values[4],"K"))->kind==EXR_PDF_ARRAY);
+  } else CHECK(!count);
+  (*step)++; return EXR_OK;
+}
+static exr_status count_operation(void *context,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,exr_error *e) {
+  size_t *operations=context; (void)e;
+  if(!strcmp(name,"Tj")) { CHECK(count==1 && values[0]==0); bytes(arena,values[0],"abc",3); }
+  (*operations)++; return EXR_OK;
+}
+static exr_status stop_operation(void *context,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,exr_error *e) {
+  (void)context; (void)arena; (void)name; (void)values; (void)count; (void)e; return EXR_CANCELLED;
+}
+static int cancelled(void *context) { return *(size_t *)context>0; }
+static void content_operations(void) {
+  const char sample[]="% operators\nq 1 0 0 1 10 20 cm BT /F#31 12 Tf [(A\\053) -120 <42>] TJ true false null /tag << /K [1 2] >> DP ET Q";
+  const char *bad[]={"1","1 0 R Do","[1 0 R] TJ","<< /Key 1 0 R >> DP","(open Tj","<GG> Tj","[1 2 TJ",">","/Name << DP","BI /W 1 ID x EI"};
+  size_t i,step=0; char large[90000],operands[256]; exr_control control={0};
+  OK(exr_pdf_content_ops(sample,sizeof(sample)-1,inspect_operation,&step,NULL,&error)); CHECK(step==8);
+  step=0; for(i=0;i<sizeof(large);i+=9) memcpy(large+i,"(abc) Tj ",9);
+  OK(exr_pdf_content_ops(large,sizeof(large),count_operation,&step,NULL,&error)); CHECK(step==10000);
+  step=0; control.context=&step; control.cancelled=cancelled;
+  CHECK(exr_pdf_content_ops(large,sizeof(large),count_operation,&step,&control,&error)==EXR_CANCELLED && step==256);
+  CHECK(exr_pdf_content_ops(sample,sizeof(sample)-1,stop_operation,NULL,NULL,&error)==EXR_CANCELLED && error.code==EXR_CANCELLED);
+  for(i=0;i<sizeof(bad)/sizeof(*bad);i++) CHECK(exr_pdf_content_ops(bad[i],strlen(bad[i]),count_operation,&step,NULL,&error)==EXR_FORMAT);
+  for(i=0;i<65;i++) { operands[2*i]='1'; operands[2*i+1]=' '; }
+  CHECK(exr_pdf_content_ops(operands,130,count_operation,&step,NULL,&error)==EXR_LIMIT);
+  memset(operands,'x',128); CHECK(exr_pdf_content_ops(operands,128,count_operation,&step,NULL,&error)==EXR_LIMIT);
+  step=0; OK(exr_pdf_content_ops(NULL,0,count_operation,&step,NULL,&error)); CHECK(!step);
+  CHECK(exr_pdf_content_ops(NULL,1,count_operation,&step,NULL,&error)==EXR_ARGUMENT);
+  CHECK(exr_pdf_content_ops(sample,sizeof(sample)-1,NULL,NULL,NULL,&error)==EXR_ARGUMENT);
+}
 int main(int argc,char **argv) {
   const char *bad[]={"object-header-duplicate","object-header-offset","object-header-order","object-header-tail","object-body","xref-indirect","xref-empty-index","xref-size","xref-nested-hybrid","xref-width","xref-overlap","xref-odd-index","xref-generation","object-stream-number","object-stream-index","object-stream-self","object-stream-missing","prev-cycle","prev-offset","encrypted","hybrid","xref-offset","header","eof","startxref","root-type","root-direct","size","token","root-reference","generation","string","key","hex"};
   const char *streams[]={"invalid-length","cycle-length","bad-flate","unsupported-filter","bad-parameters","unsupported-predictor","trailing"}; size_t i;
-  CHECK(argc==2); filter_cases(argv[1]); basic(argv[1],"pdf-objects.pdf"); basic(argv[1],"pdf-objects-predictor-one.pdf"); basic(argv[1],"pdf-stream-whitespace.pdf");
+  CHECK(argc==2); content_operations(); filter_cases(argv[1]); basic(argv[1],"pdf-objects.pdf"); basic(argv[1],"pdf-objects-predictor-one.pdf"); basic(argv[1],"pdf-stream-whitespace.pdf");
   basic(argv[1],"pdf-stream-after-classic.pdf"); incremental(argv[1],"pdf-classic-after-stream.pdf");
   basic(argv[1],"pdf-xref-predictor.pdf"); basic(argv[1],"pdf-hybrid-predictor.pdf"); basic(argv[1],"pdf-xref-stream.pdf"); basic(argv[1],"pdf-object-stream.pdf"); basic(argv[1],"pdf-hybrid.pdf");
   basic(argv[1],"pdf-xref-index.pdf"); basic(argv[1],"pdf-xref-wide.pdf"); basic(argv[1],"pdf-xref-default-type.pdf");

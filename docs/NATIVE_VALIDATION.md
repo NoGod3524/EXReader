@@ -788,3 +788,22 @@ bytes; the first MediaBox is [0, 0, 595, 841]. The downloaded document and local
 stay in ignored build/pdf-reference, outside repository fixtures/CI. This verifies object/page
 and stream reading on an external file, not text interpretation or visual rendering.
 The 0.42 commit 605a50f passed all six CI jobs.
+
+
+## 0.44 PDF content operand lexer
+
+The private content walker reuses the object lexer for numbers, names, strings, arrays,
+dictionaries, booleans and nulls, then delivers each operator with its borrowed operands.
+An arena is cleared after each callback and retains only its high-water allocation, rather
+than appending every operand to the persistent document graph. Bounds cover operand count,
+operator name length, operation count and nested values. Indirect references in content,
+trailing operands, malformed delimiters and inline images fail explicitly. Inline-image data
+is not guessed by searching for EI; support remains pending. Cancellation and callback errors
+propagate. Operator-specific validation and execution remain pending.
+
+Tests check mixed operands and decoded strings, nested arrays/dictionaries, 10,000 arena
+reuses, cancellation/callback errors and invalid grammar/limits. Manual verification of the
+same RFC 9110 PDF walked all 101,754 operators across its 194 pages without retaining all
+operands. This is syntax traversal, not execution or rendering.
+
+The 0.43 commit aaebfa0 passed all six platform and sanitizer CI jobs.
