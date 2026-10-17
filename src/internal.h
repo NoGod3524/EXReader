@@ -53,6 +53,8 @@ exr_status exr_control_poll(const exr_control *control, exr_stage stage,
                              uint64_t completed, uint64_t total, exr_error *error);
 int exr_grow(void **data, size_t *capacity, size_t count, size_t element);
 char *exr_copy(const char *text, size_t size);
+exr_status exr_export_time(char modified[32], exr_error *error);
+exr_status exr_xml_text(const char *text, size_t size, const char *field, exr_error *error);
 int exr_append(exr_buffer *buf, const void *data, size_t size);
 int exr_codepoint(exr_buffer *buf, uint32_t cp);
 int exr_next(const char *text, size_t size, size_t *offset, uint32_t *cp);
@@ -69,6 +71,7 @@ exr_status exr_xml_resource(const exr_document *doc, size_t resource, const char
 exr_status exr_epub_navigation(const exr_document *index, size_t metadata_bytes,
                                 exr_navigation **entries, size_t *count, exr_error *error);
 void exr_navigation_free(exr_navigation *entries, size_t count);
+exr_status exr_epub_export_check(const exr_document *doc, exr_error *error);
 exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **out,
                         exr_error *error);
 int exr_add_block(exr_document *doc, const char *text, size_t size, unsigned heading);
@@ -82,6 +85,7 @@ exr_status exr_xml_tree(exr_document *doc, const void *data, size_t size, size_t
                          int in_spine, int linear, const char *root_name, exr_error *error);
 exr_status exr_model_finish(exr_document *doc, exr_error *error);
 void exr_model_free(exr_document *doc);
+int exr_canonical_path(const char *path);
 int exr_resolve_path(const char *base, const char *href, char out[2048]);
 typedef struct {
   float value;

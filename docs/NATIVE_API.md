@@ -1,4 +1,4 @@
-# Native C API 0.17
+# Native C API 0.18
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -375,7 +375,7 @@ if (count && exr_document_resolve(doc, 0, "../images/cover.png",
 
 `exr_document_resolve()` 以指定章节路径为基准，处理 `..`、UTF-8 和百分号转义，包括仅有 `#fragment` 的地址。成功返回资源索引；若目标 XHTML 已解析，还返回章节根或对应 id / xml:id 节点。找不到资源或片段时相应索引为 `SIZE_MAX`；外部 URI、越过 ZIP 根、非法编码等返回 `EXR_ARGUMENT`。解析基准是章节路径，尚不应用 HTML base 或 xml:base。
 
-CSS `display:none` 只影响布局，不删除规范化正文；重新排版时原有文字位置保持不变。HTML `hidden` 属性在文档投影阶段排除，其行为与 CSS 隐藏不同。现有导出接口仍为文本转换，会丢失图片、链接和样式。
+CSS `display:none` 只影响布局，不删除规范化正文；重新排版时原有文字位置保持不变。HTML `hidden` 属性在文档投影阶段排除，其行为与 CSS 隐藏不同。旧 `exr_document_export()` 仍为文本转换。0.18 新增下述结构导出。
 
 ## 宿主样式与布局输出
 
@@ -433,3 +433,13 @@ SQLite 数据库保存原文件 BLOB、封面 BLOB、元数据和 UTF-8 位置�
 ## 嵌入平台
 
 宿主负责文件选择、字体提供、页面纹理显示、触摸 / 鼠标 / 键盘事件和系统生命周期。像素或布局数据可转为纹理或原生绘图命令。Android 可经 JNI 调用 C，Apple 平台可经 Objective-C / Swift 导入 C 头文件；当前尚未提供这些宿主适配器。
+
+## 结构保真的 EPUB 导出（0.18）
+
+`exr_document_export_epub(doc, control, &bytes, &size, &error)` 序列化当前文档树，按原路径复制全部声明资源，输出可重新打开的 EPUB。成功后用 `exr_free(bytes)` 释放；失败清空 bytes/size。control 可为 NULL，回调在本次调用内借用，新增 EXPORT 阶段。输入文档不可在回调中修改或释放。
+
+保留章节顺序与 linear 标志、嵌套元素、XML expanded names、属性、原始解码文本、相对链接、表格、CSS、图片、字体和封面资源。资源路径中的 `%/#/?/空格/Unicode` 在 manifest 中正确编码，ZIP 成员使用原始路径。重复 spine 路径只存一份相同 XHTML；同路径不同章节报错。EPUB 3 导航资源保留，EPUB 2 NCX 生成有层级和类别的 EPUB 3 导航。没有目录时按章节生成；匿名章节生成无冲突路径。
+
+没有元素名字的语义节点映射为 XHTML 段落、标题、表格等；有名字的自定义元素保留 XML 名字与命名空间。序列化不保留原 XML 前缀拼写、注释、DTD 或字节排版。任意模型不一定能表示为有效 XML：非法名称、字符、命名空间、重复资源路径、保留路径和缺失资源明确失败。`META-INF/encryption.xml` / `rights.xml` 存在时拒绝导出，避免丢失解密或字体混淆信息。原 OPF 的作者、语言、标识符等尚未进入通用文档元数据模型；当前包重新生成 title/und language/identifier/modified，不承诺原 OPF 字段无损。
+
+与读取限制一致：最多 10000 ZIP 成员，单成员 32 MiB，累计未压缩成员和压缩输出各限 128 MiB。此接口输出完整内存包；不是流式写入。它保留模型已有结构，不会恢复 TXT、旧 DOCX/RTF 等解析时已经丢失的信息。

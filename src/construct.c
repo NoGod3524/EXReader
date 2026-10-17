@@ -19,7 +19,7 @@ static exr_status copy_string(exr_document *d, const char *source, const char **
   return *out ? EXR_OK : exr_fail(e, EXR_MEMORY, "Construction string allocation failed");
 }
 /* Paths are raw names, not URIs. Literal %, # and ? are linked using percent-encoded URIs. */
-static int canonical_path(const char *s) {
+int exr_canonical_path(const char *s) {
   size_t start = 0, i, depth = 0, n;
   if (!s || !(n = strlen(s)) || n > 2046)
     return 0;
@@ -170,7 +170,7 @@ exr_status exr_document_create(const exr_document_input *input, exr_document **o
     status = copy_string(d, from->info.properties, &to->properties, e);
     if (status != EXR_OK)
       goto bad;
-    if (!canonical_path(to->path)) {
+    if (!exr_canonical_path(to->path)) {
       status = exr_fail(e, EXR_ARGUMENT, "Resource path must be canonical and relative");
       goto bad;
     }
@@ -214,7 +214,7 @@ exr_status exr_document_create(const exr_document_input *input, exr_document **o
     status = copy_string(d, from->path, &to->path, e);
     if (status != EXR_OK)
       goto bad;
-    if (!canonical_path(to->path)) {
+    if (!exr_canonical_path(to->path)) {
       status = exr_fail(e, EXR_ARGUMENT, "Chapter path must be canonical and relative");
       goto bad;
     }

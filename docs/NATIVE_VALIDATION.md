@@ -475,3 +475,13 @@ Windows GCC 16.2 C11 Release 的 17 个 CTest 项全部通过。新增双向测�
 安装后的 7 个独立宿主示例均构建成功，并在 PATH 仅保留 Windows 系统目录的进程中运行，覆盖中文书籍、字体与输出路径。`tests/fixtures/complex-text.epub` 由同目录 `complex-text.html` 的原创文本与样式生成；[真实字体渲染样张](complex-text.png) 使用宿主 Arial，已检查阿拉伯文、希伯来文、附标和数字混排。字体文件没有打入项目。
 
 0.12.0 的九份新进程性能记录已归档至 `docs/benchmarks/0.12.0-windows-paged/`，口径与结果见 [性能记录](PERFORMANCE.md)。
+
+## 0.18 structured EPUB export
+
+`native-export-epub` round-trips styled tables/images, embedded font selection, EPUB 2 NCX,
+EPUB 3 navigation, repeated spine entries and host-constructed Unicode paths. It compares
+normalized text, linear flags, encoded non-XHTML resource bytes, navigation labels/roles/parents,
+and rendered pixels after reopening. XML namespace attributes and CR/LF/tab values survive.
+Missing bytes, illegal XML names, reserved paths, cancellation and package encryption metadata
+fail with empty outputs. Plain text receives a generated chapter and navigation. The legacy
+XML/text conversion regression remains unchanged.

@@ -5,7 +5,7 @@
 #include "internal.h"
 #include <miniz.h>
 #include <time.h>
-static exr_status xml_text(const char *text, size_t size, const char *field, exr_error *e) {
+exr_status exr_xml_text(const char *text, size_t size, const char *field, exr_error *e) {
   size_t at = 0;
   while (at < size) {
     size_t start = at;
@@ -63,6 +63,20 @@ static int body(exr_buffer *b, const exr_document *d, const char *before, const 
 static int add(mz_zip_archive *z, const char *name, const char *data, size_t n, int level) {
   return mz_zip_writer_add_mem(z, name, data, n, (mz_uint)level);
 }
+exr_status exr_export_time(char modified[32], exr_error *e) {
+  time_t now = time(NULL);
+  struct tm utc;
+#ifdef _WIN32
+  if (gmtime_s(&utc, &now))
+    return exr_fail(e, EXR_IO, "Cannot read UTC time");
+#else
+  if (!gmtime_r(&now, &utc))
+    return exr_fail(e, EXR_IO, "Cannot read UTC time");
+#endif
+  if (!strftime(modified, 32, "%Y-%m-%dT%H:%M:%SZ", &utc))
+    return exr_fail(e, EXR_IO, "Cannot format UTC time");
+  return EXR_OK;
+}
 exr_status exr_document_export(const exr_document *d, exr_format f, void **out, size_t *n,
                                exr_error *e) {
   exr_buffer b = {0}, meta = {0};
@@ -72,26 +86,16 @@ exr_status exr_document_export(const exr_document *d, exr_format f, void **out, 
   size_t size = 0, i;
   const char *title;
   char modified[32];
-  time_t now = time(NULL);
-  struct tm utc;
   if (!d || !out || !n)
     return exr_fail(e, EXR_ARGUMENT, "Invalid export arguments");
   *out = NULL;
   *n = 0;
-#ifdef _WIN32
-  if (gmtime_s(&utc, &now))
-    return exr_fail(e, EXR_IO, "Cannot read UTC time");
-#else
-  if (!gmtime_r(&now, &utc))
-    return exr_fail(e, EXR_IO, "Cannot read UTC time");
-#endif
-  if (!strftime(modified, sizeof(modified), "%Y-%m-%dT%H:%M:%SZ", &utc))
-    return exr_fail(e, EXR_IO, "Cannot format UTC time");
+  if (exr_export_time(modified, e) != EXR_OK) return e ? e->code : EXR_IO;
   title = d->title && d->title[0] ? d->title : "Untitled";
   if (f == EXR_HTML || f == EXR_FB2 || f == EXR_EPUB || f == EXR_DOCX) {
-    exr_status status = f == EXR_DOCX ? EXR_OK : xml_text(title, strlen(title), "title", e);
+    exr_status status = f == EXR_DOCX ? EXR_OK : exr_xml_text(title, strlen(title), "title", e);
     if (status == EXR_OK)
-      status = xml_text(d->text, d->size, "document text", e);
+      status = exr_xml_text(d->text, d->size, "document text", e);
     if (status != EXR_OK)
       return status;
   }
