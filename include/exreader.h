@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.99.0"
+#define EXR_VERSION "0.100.0"
 #define EXR_ABI_VERSION 1u
 typedef enum {
   EXR_OK = 0,
@@ -557,6 +557,15 @@ typedef exr_status (*exr_fixed_text_fn)(void *context,size_t page,const exr_cont
 typedef struct { const char *key,*value; } exr_metadata_entry;
 typedef exr_status (*exr_fixed_metadata_fn)(void *context,const exr_control *control,
   const exr_metadata_entry **entries,size_t *count,exr_error *error);
+/* Page-source coordinates; quad components preserve the provider's declared
+   order. Properties keep format-specific text without a fixed annotation enum. */
+typedef struct {
+  const char *id,*kind; double bounds[4];
+  const double *quads; size_t quad_count;
+  const exr_metadata_entry *properties; size_t property_count;
+} exr_page_annotation;
+typedef exr_status (*exr_fixed_annotations_fn)(void *context,size_t page,const exr_control *control,
+  const exr_page_annotation **annotations,size_t *count,exr_error *error);
 typedef struct {
   size_t struct_size;
   const char *title;
@@ -566,6 +575,7 @@ typedef struct {
   exr_context_release_fn release;
   exr_fixed_text_fn text; /* Optional; appended after the original required prefix. */
   exr_fixed_metadata_fn metadata; /* Optional, lazy document metadata. */
+  exr_fixed_annotations_fn annotations; /* Optional, lazy page annotation data. */
 } exr_fixed_input;
 typedef struct {
   uint32_t channels,background; /* channels 0 -> RGBA */
@@ -579,6 +589,9 @@ EXR_API void exr_fixed_free(exr_fixed_document *document);
 EXR_API exr_status exr_fixed_load_metadata(exr_fixed_document *document,const exr_control *control,
   exr_metadata_entry **entries,size_t *count,exr_error *error);
 EXR_API void exr_metadata_free(exr_metadata_entry *entries,size_t count);
+EXR_API exr_status exr_fixed_load_annotations(exr_fixed_document *document,size_t page,const exr_control *control,
+  exr_page_annotation **annotations,size_t *count,exr_error *error);
+EXR_API void exr_page_annotations_free(exr_page_annotation *annotations,size_t count);
 /* Read document-subject XMP simple literals, Seq/Bag values and preferred Alt. */
 EXR_API exr_status exr_metadata_read_xmp(const void *data,size_t size,const exr_control *control,
   exr_metadata_entry **entries,size_t *count,exr_error *error);

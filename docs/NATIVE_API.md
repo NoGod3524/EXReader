@@ -966,3 +966,14 @@ Swift 的 `EXReaderFixedDocument.metadata()` 与 `EXReaderMetadata.readXMP(Data)
 Java 的 `Pdf.metadata()` 和静态 `EXReader.readXMP(byte[])` 返回独立 MetadataEntry[]，保留重复 key 与原始顺序。JNI 使用标准 UTF-8 byte[] 传输并在 Java 解码 String，保留中文和非 BMP 字符；批量转换逐项释放局部引用，避免大量属性耗尽 JNI 局部引用表。PDF 关闭后 metadata() 与其他操作一样抛 IllegalStateException。
 
 两个封装沿用 C 的资源限制和解析错误。新增宿主验证覆盖输入缓冲清零后的字符串存活、多作者、中文/emoji、4096 个重复属性、无元数据 PDF 和错误传递。手机端的设备运行验证仍须连接真机完成。
+
+
+## 通用页标注快照与 PDF 原生标注读取（0.100）
+
+`exr_fixed_load_annotations(document,page,control,annotations,count,...)` 按页返回 owned `exr_page_annotation` 数组，使用 page_annotations_free 释放，可比原文档活得更久。id 可为空字符串，kind 为宿主自由定义的 UTF-8 类型名；bounds 是规范化的源坐标矩形，quads 为每组 8 个 double 的四点坐标，properties 是可重复 key 的 UTF-8 元数据。输入不绑定高亮枚举、书库记录或 UI。
+
+自定义 fixed_input 可追加 annotations 回调，返回借用数组（到下次提供者操作前有效）；SDK 深拷贝字符串、几何和属性。每页最多 4096 项，全部记录、几何、属性与字符串合计最多 8 MiB；单字符串最多 64 KiB，单项属性最多 4096 个，坐标须有限且绝对值不超过 1e7。重入、无提供者、无效页、损坏结果和取消返回空输出。原始、带 text 和带 metadata 的旧 input 前缀维持 ABI epoch 1。
+
+PDF 提供者读取页面 Annots 数组，跳过 null/失效间接引用，接受各种 Subtype 名称，返回 NM、Rect、可选 QuadPoints，以及 Contents、T、Subj、CreationDate、M。五项文字分别映射到 dc/terms description、creator、subject 与 XMP CreateDate、ModifyDate；复用 Info 的 PDFDocEncoding/UTF-16BE/UTF-8 解码。没有 NM 时 id 为空，不用数组序号伪造稳定身份。Rect 规范化端点，QuadPoints 保持原数组顺序；宿主依照类型解释点序并转换至视口。
+
+原生标注与 SDK 书库里的 fixed_notes 是不同数据来源，目前不会互相覆盖或自动同步。该接口提供读取与几何数据；原生外观绘制、颜色/边框/动作/关系、富文本、表单行为和 PDF 标注写回继续补齐。失败后其他页面操作仍可重试，单页缓存最多保留最近一次加载的原生标注。

@@ -2,7 +2,7 @@
 #include "internal.h"
 struct exr_fixed_document {
   char *title; exr_fixed_page *pages; size_t count,bytes;
-  exr_fixed_draw_fn draw; exr_fixed_text_fn text; exr_fixed_metadata_fn metadata; void *context; exr_context_release_fn release; unsigned busy;
+  exr_fixed_draw_fn draw; exr_fixed_text_fn text; exr_fixed_metadata_fn metadata; exr_fixed_annotations_fn annotations; void *context; exr_context_release_fn release; unsigned busy;
 };
 static exr_status copy_string(const char *source,size_t *bytes,const char **out,exr_error *e) {
   size_t n=0,at=0; uint32_t cp;
@@ -46,6 +46,10 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
     for(i=offsetof(exr_fixed_input,metadata);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Truncated metadata provider field");
     snapshot.metadata=NULL;
   }
+  if(input->struct_size>offsetof(exr_fixed_input,annotations) && input->struct_size<offsetof(exr_fixed_input,annotations)+sizeof(input->annotations)) {
+    for(i=offsetof(exr_fixed_input,annotations);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Truncated annotations provider field");
+    snapshot.annotations=NULL;
+  }
   if(!input->draw || !input->pages || !input->page_count) return exr_fail(e,EXR_ARGUMENT,"Missing fixed page directory/provider");
   if(input->page_count>10000) return exr_fail(e,EXR_LIMIT,"Fixed document exceeds 10000 pages");
   d=calloc(1,sizeof(*d)); if(!d) return exr_fail(e,EXR_MEMORY,"Fixed document allocation failed");
@@ -67,7 +71,7 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
 done:
   free(ids);
   if(status!=EXR_OK) { exr_fixed_free(d); return status; }
-  d->draw=input->draw; d->text=input->text; d->metadata=input->metadata; d->context=input->context; d->release=input->release; d->bytes=sizeof(*d)+d->count*sizeof(*d->pages)+strings;
+  d->draw=input->draw; d->text=input->text; d->metadata=input->metadata; d->annotations=input->annotations; d->context=input->context; d->release=input->release; d->bytes=sizeof(*d)+d->count*sizeof(*d->pages)+strings;
   *out=d; return exr_fail(e,EXR_OK,"");
 }
 const char *exr_fixed_title(const exr_fixed_document *d) { return d ? d->title : ""; }
@@ -105,6 +109,52 @@ exr_status exr_fixed_load_metadata(exr_fixed_document *d,const exr_control *cont
   }
   if(status==EXR_OK) status=exr_control_poll(control,EXR_STAGE_READ,1,1,&local);
   if(status==EXR_OK) { *out=entries; *count=n; } else exr_metadata_free(entries,n);
+  return provider_end(d,status,&local,e);
+}
+void exr_page_annotations_free(exr_page_annotation *annotations,size_t count) {
+  size_t i; if(!annotations) return;
+  for(i=0;i<count;i++) { free((void *)annotations[i].id); free((void *)annotations[i].kind); free((void *)annotations[i].quads); exr_metadata_free((exr_metadata_entry *)annotations[i].properties,annotations[i].property_count); }
+  free(annotations);
+}
+exr_status exr_fixed_load_annotations(exr_fixed_document *d,size_t page,const exr_control *control,exr_page_annotation **out,size_t *count,exr_error *e) {
+  const exr_page_annotation *source=NULL; exr_page_annotation *entries=NULL; size_t n=0,i,j,bytes=0; exr_error local={0}; exr_status status;
+  if(out) *out=NULL;
+  if(count) *count=0;
+  if(!d || !out || !count || page>=d->count || d->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant page annotations load");
+  if(!d->annotations) return exr_fail(e,EXR_FORMAT,"Fixed document has no annotations provider");
+  d->busy=1; status=exr_control_poll(control,EXR_STAGE_READ,0,1,&local);
+  if(status==EXR_OK) status=d->annotations(d->context,page,control,&source,&n,&local);
+  if(status==EXR_OK && local.code!=EXR_OK) status=local.code;
+  if(status==EXR_OK && (n>4096 || (n && !source))) status=exr_fail(&local,n>4096 ? EXR_LIMIT : EXR_FORMAT,"Invalid page annotations result");
+  if(status==EXR_OK && n) { entries=calloc(n,sizeof(*entries)); if(!entries) status=exr_fail(&local,EXR_MEMORY,"Annotations allocation failed"); bytes=n*sizeof(*entries); }
+  for(i=0;status==EXR_OK && i<n;i++) {
+    exr_page_annotation *v=&entries[i]; const exr_page_annotation *s=&source[i]; exr_metadata_entry *properties; double *quads;
+    status=exr_control_cancel(control,&local); if(status!=EXR_OK) break;
+    if(!s->kind || !s->kind[0] || (s->quad_count && !s->quads) || (s->property_count && !s->properties)) { status=exr_fail(&local,EXR_FORMAT,"Missing annotation fields"); break; }
+    memcpy(v->bounds,s->bounds,sizeof(v->bounds));
+    for(j=0;j<4;j++) if(!isfinite(v->bounds[j]) || fabs(v->bounds[j])>1e7) { status=exr_fail(&local,EXR_FORMAT,"Invalid annotation bounds"); break; }
+    if(status!=EXR_OK) break;
+    if(v->bounds[0]>v->bounds[2] || v->bounds[1]>v->bounds[3]) { status=exr_fail(&local,EXR_FORMAT,"Reversed annotation bounds"); break; }
+    status=copy_string(s->id,&bytes,&v->id,&local); if(status==EXR_OK) status=copy_string(s->kind,&bytes,&v->kind,&local); if(status!=EXR_OK) break;
+    if(s->quad_count>((size_t)8*1024*1024-bytes)/(8*sizeof(double))) { status=exr_fail(&local,EXR_LIMIT,"Annotation quads exceed 8 MiB snapshot budget"); break; }
+    if(s->quad_count) {
+      size_t payload=s->quad_count*8*sizeof(double); quads=malloc(payload); if(!quads) { status=exr_fail(&local,EXR_MEMORY,"Annotation quads allocation failed"); break; }
+      v->quads=quads; v->quad_count=s->quad_count; bytes+=payload;
+      for(j=0;j<s->quad_count*8;j++) { quads[j]=s->quads[j]; if(!isfinite(quads[j]) || fabs(quads[j])>1e7) { status=exr_fail(&local,EXR_FORMAT,"Invalid annotation quad coordinate"); break; } }
+      if(status!=EXR_OK) break;
+    }
+    if(s->property_count>4096 || s->property_count>((size_t)8*1024*1024-bytes)/sizeof(*properties)) { status=exr_fail(&local,EXR_LIMIT,"Annotation properties exceed snapshot budget"); break; }
+    if(!s->property_count) continue;
+    properties=calloc(s->property_count,sizeof(*properties)); if(!properties) { status=exr_fail(&local,EXR_MEMORY,"Annotation properties allocation failed"); break; }
+    v->properties=properties; v->property_count=s->property_count; bytes+=s->property_count*sizeof(*properties);
+    for(j=0;status==EXR_OK && j<s->property_count;j++) {
+      if(!s->properties[j].key || !s->properties[j].key[0] || !s->properties[j].value) { status=exr_fail(&local,EXR_FORMAT,"Missing annotation property"); break; }
+      status=copy_string(s->properties[j].key,&bytes,&properties[j].key,&local);
+      if(status==EXR_OK) status=copy_string(s->properties[j].value,&bytes,&properties[j].value,&local);
+    }
+  }
+  if(status==EXR_OK) status=exr_control_poll(control,EXR_STAGE_READ,1,1,&local);
+  if(status==EXR_OK) { *out=entries; *count=n; } else exr_page_annotations_free(entries,n);
   return provider_end(d,status,&local,e);
 }
 exr_status exr_fixed_load_text(exr_fixed_document *d,size_t page,const exr_control *control,exr_fixed_text **out,exr_error *e) {

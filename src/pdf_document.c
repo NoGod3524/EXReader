@@ -4,11 +4,12 @@
 typedef struct {
   unsigned char *data; size_t size,count; exr_pdf_file *file; exr_pdf_page_info *pages; exr_font *font;
   exr_metadata_entry *metadata; size_t metadata_count;
+  exr_page_annotation *annotations; size_t annotation_count;
 } pdf_document;
 static void discard_reader(pdf_document *d) { free(d->pages); d->pages=NULL; exr_pdf_close(d->file); d->file=NULL; }
 static void release(void *context) {
   pdf_document *d=context; if(!d) return; discard_reader(d); exr_font_free(d->font);
-  exr_metadata_free(d->metadata,d->metadata_count);
+  exr_metadata_free(d->metadata,d->metadata_count); exr_page_annotations_free(d->annotations,d->annotation_count);
   free(d->data); free(d);
 }
 static exr_status reader(pdf_document *d,exr_error *e) {
@@ -94,7 +95,7 @@ static exr_status text(void *context,size_t page,const exr_control *control,exr_
 }
 /* ISO 32000 text strings: PDFDocEncoding, BOM UTF-16BE and PDF 2 UTF-8.
    Do not reuse font encodings: Info text is unrelated to a page font. */
-static exr_status metadata_string(exr_pdf_file *file,uint32_t id,char **out,exr_error *e) {
+exr_status exr_pdf_metadata_string(exr_pdf_file *file,uint32_t id,char **out,exr_error *e) {
   static const uint16_t accents[]={0x02d8,0x02c7,0x02c6,0x02d9,0x02dd,0x02db,0x02da,0x02dc};
   static const uint16_t symbols[]={0x2022,0x2020,0x2021,0x2026,0x2014,0x2013,0x0192,0x2044,0x2039,0x203a,0x2212,0x2030,0x201e,0x201c,0x201d,0x2018,0x2019,0x201a,0x2122,0xfb01,0xfb02,0x0141,0x0152,0x0160,0x0178,0x017d,0x0131,0x0142,0x0153,0x0161,0x017e};
   exr_status status; const exr_pdf_value *v; const unsigned char *data; size_t size,at=0; int utf16=0,utf8=0; exr_buffer b={0};
@@ -173,7 +174,7 @@ static exr_status metadata(void *context,const exr_control *control,const exr_me
   d->metadata=calloc(8,sizeof(*d->metadata)); if(!d->metadata) { status=exr_fail(e,EXR_MEMORY,"PDF metadata allocation failed"); goto done; }
   for(i=0;i<8;i++) {
     char *value=NULL; status=exr_control_poll(control,EXR_STAGE_READ,i,8,e); if(status!=EXR_OK) goto done;
-    status=metadata_string(d->file,exr_pdf_get(d->file,info,names[i]),&value,e); if(status!=EXR_OK) goto done;
+    status=exr_pdf_metadata_string(d->file,exr_pdf_get(d->file,info,names[i]),&value,e); if(status!=EXR_OK) goto done;
     if(value) {
       char *key=exr_copy(keys[i],strlen(keys[i])); if(!key) { free(value); status=exr_fail(e,EXR_MEMORY,"PDF metadata key allocation failed"); goto done; }
       d->metadata[d->metadata_count++]=(exr_metadata_entry){key,value};
@@ -184,6 +185,15 @@ read_xmp:
   *out=d->metadata; *count=d->metadata_count;
 done:
   if(status!=EXR_OK) discard_reader(d);
+  return status;
+}
+static exr_status annotations(void *context,size_t page,const exr_control *control,const exr_page_annotation **out,size_t *count,exr_error *e) {
+  pdf_document *d=context; exr_status status;
+  *out=NULL; *count=0; exr_page_annotations_free(d->annotations,d->annotation_count); d->annotations=NULL; d->annotation_count=0;
+  status=reader(d,e); if(status!=EXR_OK) return status;
+  if(page>=d->count) return exr_fail(e,EXR_ARGUMENT,"PDF annotation page is out of range");
+  status=exr_pdf_page_annotations(d->file,d->pages[page].annotations,control,&d->annotations,&d->annotation_count,e);
+  if(status!=EXR_OK) discard_reader(d); else { *out=d->annotations; *count=d->annotation_count; }
   return status;
 }
 static exr_status open_options(const exr_fixed_open_options *input,exr_fixed_open_options *out,exr_error *e) {
@@ -208,7 +218,7 @@ static exr_status open_owned(unsigned char *data,size_t size,const char *title,c
     if(pages[i].geometry.bounds[0]>=pages[i].geometry.bounds[2] || pages[i].geometry.bounds[1]>=pages[i].geometry.bounds[3]) { status=exr_fail(e,EXR_FORMAT,"PDF page crop has no MediaBox intersection"); goto done; }
     pages[i].geometry.unit_scale=p->user_unit; pages[i].geometry.rotation=p->rotation;
   }
-  input.struct_size=sizeof(input); input.title=title; input.pages=pages; input.page_count=d->count; input.draw=draw; input.context=d; input.release=release; input.text=text; input.metadata=metadata;
+  input.struct_size=sizeof(input); input.title=title; input.pages=pages; input.page_count=d->count; input.draw=draw; input.context=d; input.release=release; input.text=text; input.metadata=metadata; input.annotations=annotations;
   status=exr_control_poll(&options->control,EXR_STAGE_READ,d->count,d->count,e);
   if(status==EXR_OK) status=exr_fixed_create(&input,out,e);
 done:

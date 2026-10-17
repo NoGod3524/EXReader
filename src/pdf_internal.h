@@ -19,6 +19,9 @@ typedef struct exr_pdf_file exr_pdf_file;
    when another indirect object is resolved. Public access uses the fixed-document adapter. */
 exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_error *error);
 void exr_pdf_close(exr_pdf_file *file);
+exr_status exr_pdf_metadata_string(exr_pdf_file *file,uint32_t id,char **out,exr_error *error);
+exr_status exr_pdf_page_annotations(exr_pdf_file *file,uint32_t id,const exr_control *control,
+  exr_page_annotation **out,size_t *count,exr_error *error);
 uint32_t exr_pdf_info(const exr_pdf_file *file);
 uint32_t exr_pdf_root(const exr_pdf_file *file);
 const exr_pdf_value *exr_pdf_value_at(const exr_pdf_file *file,uint32_t value);
