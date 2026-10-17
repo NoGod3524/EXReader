@@ -66,7 +66,7 @@ static exr_publication *host_publication(statistics *stats) {
                       {"aux", "units/aux.unit", "Auxiliary", 0}};
   provider *context = malloc(sizeof(*context));
   exr_publication *publication = NULL;
-  exr_publication_input input = {title, parts, 4, load_part, context, release_provider};
+  exr_publication_input input = {title, parts, 4, load_part, context, release_provider, NULL, 0};
   CHECK(context);
   context->stats = stats;
   OK(exr_publication_create(&input, &publication, &error));
@@ -191,7 +191,7 @@ static void ownership_on_failure(void) {
   statistics stats = {0};
   provider *context = malloc(sizeof(*context));
   exr_part part = {"part", "part.unit", "Part", 1};
-  exr_publication_input input = {"Invalid source", &part, 1, NULL, context, release_provider};
+  exr_publication_input input = {"Invalid source", &part, 1, NULL, context, release_provider, NULL, 0};
   exr_publication *publication = (exr_publication *)(uintptr_t)1;
   CHECK(context);
   context->stats = &stats;
@@ -211,7 +211,7 @@ static void metadata_boundaries(void) {
   statistics stats = {0};
   provider *context = malloc(sizeof(*context));
   exr_part part = {"part", "part.unit", "Part", 1};
-  exr_publication_input input = {"Publication", &part, 1, load_part, context, release_provider};
+  exr_publication_input input = {"Publication", &part, 1, load_part, context, release_provider, NULL, 0};
   const char invalid[] = "\xc0\xaf";
   char *large = malloc(65538);
   CHECK(context && large);
@@ -336,7 +336,7 @@ static void callback_boundaries(void) {
   edge_provider provider = {0};
   exr_part part = {"edge", "edge.unit", "Callback edge cases", 1};
   exr_publication_input input = {"Host callback boundaries", &part, 1, edge_load, &provider,
-                                 release_edge_provider};
+                                 release_edge_provider, NULL, 0};
   exr_publication *publication = NULL;
   exr_document *owned = (exr_document *)(uintptr_t)1;
   exr_session *session = NULL;

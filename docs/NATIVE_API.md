@@ -1,4 +1,4 @@
-# Native C API 0.16
+# Native C API 0.17
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -216,6 +216,12 @@ SDK 的 `examples/page.c` 编译为 `exreader-page-example`，用法为 `book.ep
 打开耗时、首画、续排、渲染、完整翻页和进程峰值内存的独立基准及复现命令见 [性能基准](PERFORMANCE.md)。
 
 ## 分段 publication 与 session
+
+0.17 的 `exr_publication_navigation(publication,&entries,&count,error)` 返回借用的扁平目录树，寿命持续到 publication 释放。每项有 parent、part、label、href、base 和 role：parent 必须指向更早的条目，根为 SIZE_MAX；part 为对应分段索引，外部、未解析或重复路径无法唯一确定的目标为 SIZE_MAX。href 保留原 URI，相对于 base 解释；没有链接的目录组也可保留。role 是开放字符串，内置输出使用 toc、page-list、landmarks、nav-list 或原导航类型。
+
+EPUB 在首次请求目录时读取并缓存 EPUB 3 manifest 中的 nav XHTML，未提供有效条目时读取 EPUB 2 NCX；NCX 遵循 OPF spine 的 toc ID，缺失引用在目录请求时返回 EXR_FORMAT。打开 publication 本身仍不解析导航或章节 XHTML。目录解析沿用有实体/深度限制的 XML 树，保留嵌套关系、Unicode 标题和相对链接；远程 href 只作为元数据返回。失败清空输出并保留重试机会，后续成功查询直接复用缓存。
+
+宿主通过 `exr_publication_input.navigation/navigation_count` 提供任意自有格式的同类目录；构造时复制全部字符串和条目，查询不调用章节 loader。最多 10000 项，标题最多 64 KiB，href/base 最多 2046 字节，role 最多 256 字节，与分段目录的字符串合计限制为 64 MiB。输入验证 UTF-8、parent 和 part 范围；自有 role 和 URI 不需要注册。0.17 扩展了 publication 构造输入，宿主需重新编译。
 
 0.15 的 `exr_publication_open_source()` 接收通用随机读取源 `{size,read_at,release,context}`。描述符被复制，打开时只读取 ZIP 目录和 EPUB 元数据；读取某章、CSS、图片或字体时才请求对应字节，不把整个压缩源复制进内存。`exr_publication_open(path)` 使用持有文件句柄的同一路径；`open_memory()` 仍复制调用者的输入。
 

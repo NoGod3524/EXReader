@@ -8,6 +8,9 @@ struct exr_publication {
   exr_part_load_fn load;
   void *context;
   exr_context_release_fn release;
+  exr_navigation *navigation;
+  size_t navigation_count, metadata_bytes;
+  int navigation_ready, busy;
 };
 typedef struct {
   size_t part, bytes;
@@ -56,6 +59,7 @@ void exr_publication_free(exr_publication *p) {
     free((void *)p->parts[i].title);
   }
   free(p->parts);
+  exr_navigation_free(p->navigation, p->navigation_count);
   free(p->title);
   free(p);
 }
@@ -71,6 +75,10 @@ exr_status exr_publication_create(const exr_publication_input *input,
   *out = NULL;
   if (!input || !input->load || !input->parts || !input->part_count)
     return exr_fail(e, EXR_ARGUMENT, "Missing publication directory or loader");
+  if (input->navigation_count && !input->navigation)
+    return exr_fail(e, EXR_ARGUMENT, "Missing publication navigation array");
+  if (input->navigation_count > 10000)
+    return exr_fail(e, EXR_LIMIT, "Navigation exceeds 10000 entries");
   if (input->part_count > 10000)
     return exr_fail(e, EXR_LIMIT, "Publication exceeds 10000 parts");
   p = calloc(1, sizeof(*p));
@@ -95,6 +103,25 @@ exr_status exr_publication_create(const exr_publication_input *input,
       status = copy_string(source->title, 65536, &total, &part->title, e);
     part->in_reading_order = source->in_reading_order != 0;
   }
+  if (status == EXR_OK && input->navigation_count) {
+    p->navigation = calloc(input->navigation_count, sizeof(*p->navigation));
+    if (!p->navigation) status = exr_fail(e, EXR_MEMORY, "Navigation allocation failed");
+    else p->navigation_count = input->navigation_count;
+  }
+  for (i = 0; status == EXR_OK && i < p->navigation_count; i++) {
+    const exr_navigation *source = &input->navigation[i];
+    exr_navigation *v = &p->navigation[i];
+    if ((source->parent != SIZE_MAX && source->parent >= i) ||
+        (source->part != SIZE_MAX && source->part >= p->count)) {
+      status = exr_fail(e, EXR_ARGUMENT, "Invalid navigation parent or part");
+      break;
+    }
+    v->parent = source->parent; v->part = source->part;
+    status = copy_string(source->label, 65536, &total, &v->label, e);
+    if (status == EXR_OK) status = copy_string(source->href, 2046, &total, &v->href, e);
+    if (status == EXR_OK) status = copy_string(source->base, 2046, &total, &v->base, e);
+    if (status == EXR_OK) status = copy_string(source->role, 256, &total, &v->role, e);
+  }
   if (status != EXR_OK) {
     exr_publication_free(p);
     return status;
@@ -102,6 +129,8 @@ exr_status exr_publication_create(const exr_publication_input *input,
   p->load = input->load;
   p->context = input->context;
   p->release = input->release;
+  p->metadata_bytes = total;
+  p->navigation_ready = 1;
   *out = p;
   return exr_fail(e, EXR_OK, "");
 }
@@ -133,6 +162,7 @@ static exr_status publication_index(exr_document *index, exr_publication **out, 
   input.context = index;
   input.release = epub_release;
   status = exr_publication_create(&input, out, e);
+  if (status == EXR_OK) (*out)->navigation_ready = 0;
   free(parts);
   if (status != EXR_OK)
     exr_document_free(index);
@@ -181,21 +211,43 @@ const exr_part *exr_publication_parts(const exr_publication *p, size_t *count) {
     *count = p ? p->count : 0;
   return p ? p->parts : NULL;
 }
+exr_status exr_publication_navigation(exr_publication *p, const exr_navigation **out,
+                                       size_t *count, exr_error *e) {
+  exr_status status;
+  if (out) *out = NULL;
+  if (count) *count = 0;
+  if (!p || !out || !count || p->busy)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid or reentrant navigation request");
+  if (!p->navigation_ready) {
+    exr_navigation *entries = NULL;
+    size_t n = 0;
+    p->busy = 1;
+    status = exr_epub_navigation(p->context, p->metadata_bytes, &entries, &n, e);
+    p->busy = 0;
+    if (status != EXR_OK) return status;
+    p->navigation = entries; p->navigation_count = n; p->navigation_ready = 1;
+  }
+  *out = p->navigation; *count = p->navigation_count;
+  return exr_fail(e, EXR_OK, "");
+}
 exr_status exr_publication_load(exr_publication *p, size_t part, exr_document **out, exr_error *e) {
   exr_document *doc = NULL;
   exr_status status;
   if (!out)
     return exr_fail(e, EXR_ARGUMENT, "Missing part document output");
   *out = NULL;
-  if (!p || part >= p->count)
+  if (!p || part >= p->count || p->busy)
     return exr_fail(e, EXR_ARGUMENT, "Part is outside the publication");
+  p->busy = 1;
   status = p->load(p->context, part, &doc, e);
   if (status == EXR_OK && !doc)
     status = exr_fail(e, EXR_FORMAT, "Part loader returned no document");
   if (status != EXR_OK) {
     exr_document_free(doc);
+    p->busy = 0;
     return status;
   }
+  p->busy = 0;
   *out = doc;
   return exr_fail(e, EXR_OK, "");
 }

@@ -124,7 +124,7 @@ static void cache_budget(exr_font *font) {
                       {"large", "large.unit", "Large", 1}, {"broken", "broken.unit", "Broken", 1},
                       {"layout", "layout.unit", "Layout", 1}, {"c", "c.unit", "C", 1}};
   provider source = {0};
-  exr_publication_input input = {"Budget", parts, 6, load_part, &source, NULL};
+  exr_publication_input input = {"Budget", parts, 6, load_part, &source, NULL, NULL, 0};
   exr_publication *publication = NULL;
   exr_session *session = NULL;
   exr_layout_config config = exr_layout_config_defaults();

@@ -164,6 +164,7 @@ typedef struct {
   size_t chapter, stack[257], depth;
   exr_buffer text;
   exr_status failed;
+  const char *root_name;
 } tree_parser;
 static void stop(tree_parser *p, exr_status code) {
   p->failed = code;
@@ -189,7 +190,7 @@ static void XMLCALL tree_start(void *user, const char *name, const char **attrs)
     stop(p, EXR_LIMIT);
     return;
   }
-  if (!p->depth && strcmp(local_name(name), "html")) {
+  if (!p->depth && strcmp(local_name(name), p->root_name)) {
     stop(p, EXR_FORMAT);
     return;
   }
@@ -254,8 +255,8 @@ static void XMLCALL tree_entity(void *user, const XML_Char *name, int parameter,
   (void)notation;
   stop(p, EXR_FORMAT);
 }
-exr_status exr_xhtml(exr_document *d, const void *data, size_t n, size_t resource, int in_spine,
-                     int linear, exr_error *e) {
+exr_status exr_xml_tree(exr_document *d, const void *data, size_t n, size_t resource, int in_spine,
+                         int linear, const char *root_name, exr_error *e) {
   tree_parser p = {0};
   exr_chapter *chapter;
   enum XML_Status parsed;
@@ -268,6 +269,7 @@ exr_status exr_xhtml(exr_document *d, const void *data, size_t n, size_t resourc
                                              d->chapter_count + 1, sizeof(*d->chapters)))
     return exr_fail(e, EXR_LIMIT, "Chapter limit exceeded");
   p.doc = d;
+  p.root_name = root_name;
   p.chapter = d->chapter_count;
   root = exr_model_node(d, 0, p.chapter, EXR_NODE_CHAPTER, NULL, NULL, 0);
   if (root == SIZE_MAX)
@@ -290,11 +292,15 @@ exr_status exr_xhtml(exr_document *d, const void *data, size_t n, size_t resourc
   XML_SetParamEntityParsing(p.parser, XML_PARAM_ENTITY_PARSING_NEVER);
   parsed = XML_Parse(p.parser, data, (int)n, XML_TRUE);
   if (parsed != XML_STATUS_OK || p.failed)
-    result = exr_fail(e, p.failed ? p.failed : EXR_FORMAT, "XHTML rejected: %s",
+    result = exr_fail(e, p.failed ? p.failed : EXR_FORMAT, "XML tree rejected: %s",
                       XML_ErrorString(XML_GetErrorCode(p.parser)));
   XML_ParserFree(p.parser);
   free(p.text.data);
   return result;
+}
+exr_status exr_xhtml(exr_document *d, const void *data, size_t n, size_t resource, int in_spine,
+                     int linear, exr_error *e) {
+  return exr_xml_tree(d, data, n, resource, in_spine, linear, "html", e);
 }
 
 /* This text projection keeps the existing layout/search API working. Raw tree text and
