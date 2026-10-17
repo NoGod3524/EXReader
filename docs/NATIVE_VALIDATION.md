@@ -1619,3 +1619,19 @@ fail atomically. Full document and indexed-publication point resolvers accept a
 range's start; a range ending in a damaged unrelated chapter still resolves its
 valid start without loading the other chapter. All 66 local Windows suites pass.
 The 0.88 2135309 CI passed all six jobs.
+
+
+## 0.90 CFI text assertions and quoted point creation
+
+Text assertions validate a collapsed XML-whitespace view spanning inline elements;
+stale or out-of-range text offsets recover only through a unique complete context.
+Tests cover preceding/following/both contexts, empty XML, raw whitespace boundaries,
+UTF-16 supplementary text, cross-element contexts, escaped punctuation, preserved
+side bias, missing/ambiguous correction and a direct valid match amid repetitions.
+Quoted local/full/indexed-publication APIs capture bounded Unicode-scalar context.
+Inserting text before the target still resolves to the intended DOM location.
+Surrogate-interior capture, invalid context limits and invalid side values fail;
+bare point CFIs continue to represent UTF-16 interiors. Cancellation occurs while
+building the assertion view. No per-character position map or resident cache is
+created. Full CFI and ordinary/range regression suites remain passing.
+All 67 local Windows suites pass. The 0.89 ab8550e CI passed all six jobs.
