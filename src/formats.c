@@ -609,6 +609,25 @@ static exr_status archive_backing(archive *z, const exr_document *d, exr_error *
   }
   return EXR_OK;
 }
+/* Read the original package XML only when a full CFI is requested. */
+exr_status exr_epub_package_tree(const exr_document *d,const exr_control *control,exr_document **out,exr_error *e) {
+  archive z={0}; package p={0}; void *bytes=NULL; size_t n=0; char path[2048]; exr_status status;
+  *out=NULL;
+  if(!d || d->format!=EXR_EPUB || (!d->archive && !(d->shared_archive && d->shared_archive->source.read_at)))
+    return exr_fail(e,EXR_FORMAT,"Full CFI requires an original EPUB package");
+  status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
+  status=archive_backing(&z,d,e); if(status!=EXR_OK) return status;
+  bytes=member(&z,"META-INF/container.xml",&n,e); if(!bytes) { status=z.status; goto finish; }
+  if(!package_parse(&p,bytes,n) || !p.root || !exr_resolve_path("",p.root,path)) { status=exr_fail(e,EXR_FORMAT,"Invalid CFI container package path"); goto finish; }
+  mz_free(bytes); bytes=member(&z,path,&n,e); if(!bytes) { status=z.status; goto finish; }
+  status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=exr_xml_memory_tree(bytes,n,"package",out,e);
+  if(status==EXR_OK) status=exr_control_cancel(control,e);
+finish:
+  mz_free(bytes); package_free(&p); mz_zip_reader_end(&z.archive);
+  if(status!=EXR_OK) { exr_document_free(*out); *out=NULL; }
+  return status;
+}
 /* Package encryption metadata cannot be dropped while copying encoded resources. */
 exr_status exr_epub_export_check(const exr_document *d, exr_error *e) {
   archive z = {0}; exr_status status;

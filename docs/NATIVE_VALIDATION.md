@@ -1579,3 +1579,17 @@ invalid UTF-8, invalid arguments and cancellation clear outputs. All 66 local
 Windows suites pass. The 0.85 713c2a8 CI passed all six jobs.
 This is a content-path building block; full package CFIs and text assertions are
 separate work, rather than synthesized from assumed spine positions.
+
+
+## 0.87 Original-package full point CFIs
+
+Full CFI creation/resolution reads the original OPF on demand and reuses the DOM
+path engine. The synthetic package places spine at element 10 and adds a spine
+extension before itemrefs, proving neither /6 nor child ordinal shortcuts are
+assumed. Duplicate references to the same resource, linear=no, package/content ID
+correction and supplementary UTF-16 offsets roundtrip. Five existing EPUB fixtures
+exercise full point CFIs through each spine chapter. Auxiliary chapters and partial
+publication-load snapshots are rejected as complete spine mappings. Malformed
+wrappers, non-spine/virtual/biased package targets, repeated indirection, unsupported
+range syntax, missing IDs, excessive offsets and cancellation clear outputs.
+All 66 local Windows suites pass. The 0.86 5db01d0 CI passed all six jobs.

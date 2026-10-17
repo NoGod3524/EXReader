@@ -831,3 +831,12 @@ ls/ilvl 现在构造通用 ol/ul 与 li，保留列表实例 ID 和 0–8 级层
 ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一 ID 修正；缺失或多重匹配返回 EXR_FORMAT。side=0/1/2 分别表示未指定、before、after，终端携带标准 `;s=b/a` 参数。路径最多 64 KiB、256 层，ID 断言最多 4096 字节，支持取消。失败时 path=NULL 或 point.node/offset=SIZE_MAX。
 
 此阶段拒绝文本位置断言、范围、图像 alt 偏移、跨文档重定向、时间和空间偏移；完整 EPUB 包路径仍需保留 OPF spine 的原始结构后接入。
+
+
+## 原始 EPUB 整书位置 CFI（0.87）
+
+`exr_document_cfi_create` / resolve 处理 `epubcfi(package_path!content_path)` 的位置。原始 container 与 OPF 只在请求时读取，使用实际元素树生成 package / spine / itemref 路径与 ID 断言，不假设 spine 固定为 `/6`。读取仍受既有 ZIP 资源限制；不增加常驻 OPF 副本。
+
+完整验证 OPF itemref 与文档阅读顺序的对应关系，重复引用同一资源的条目分别定位，linear=no 仍占自己的 spine 位置。解析成功返回 chapter 和该章原始 DOM 的 point。原有 ID 断言可同时修正 package 与章节的过时索引；多次 `!` 或非 spine 引用拒绝。
+
+此接口要求仍持有原压缩包的完整 EPUB 文档，辅助非 spine 章节不能伪装为标准 spine CFI；从 publication_load 单独加载的章节也不能用自己的局部索引冒充整书顺序。宿主构造文档继续使用独立内容路径接口，输出结构 EPUB 后重新打开才有真实 package 坐标。输入为原始 CFI 字符串，不自动解析 URL 或百分号转义。范围、文本断言、iframe 等额外重定向和音视频空间/时间位置继续补齐。
