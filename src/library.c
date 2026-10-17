@@ -8,8 +8,9 @@
 #define AUDIO_SCHEMA "CREATE TABLE audio_resume(audio_id TEXT PRIMARY KEY,track_id TEXT NOT NULL,offset BLOB NOT NULL CHECK(typeof(offset)='blob' AND length(offset)=8),rate REAL NOT NULL CHECK(rate>0 AND rate<=16));" \
   "CREATE TABLE audio_marks(id INTEGER PRIMARY KEY,audio_id TEXT NOT NULL,track_id TEXT NOT NULL,offset BLOB NOT NULL CHECK(typeof(offset)='blob' AND length(offset)=8),rate REAL NOT NULL CHECK(rate>0 AND rate<=16),label TEXT NOT NULL);" \
   "CREATE INDEX audio_marks_key ON audio_marks(audio_id,id);"
-#define PROGRESS_SCHEMA "CREATE TABLE book_progress(book_id INTEGER PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,position INTEGER NOT NULL CHECK(position>=0),state INTEGER NOT NULL CHECK(state BETWEEN 0 AND 2),prefix TEXT,suffix TEXT,chapter TEXT);" \
+#define PROGRESS_SCHEMA "CREATE TABLE book_progress(book_id INTEGER PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,position INTEGER NOT NULL CHECK(position>=0),state INTEGER NOT NULL CHECK(state BETWEEN 0 AND 3),prefix TEXT,suffix TEXT,chapter TEXT);" \
   "CREATE TRIGGER books_progress_changed AFTER UPDATE OF position ON books WHEN OLD.position<>NEW.position BEGIN DELETE FROM book_progress WHERE book_id=NEW.id;END;"
+#define LOCATION_SCHEMA "ALTER TABLE notes ADD COLUMN location_state INTEGER NOT NULL DEFAULT 1 CHECK(location_state BETWEEN 0 AND 3);"
 struct exr_library {
   sqlite3 *db;
 };
@@ -51,9 +52,9 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
                        "NOT NULL REFERENCES books(id) ON DELETE CASCADE,start INTEGER NOT NULL "
                        "CHECK(start>=0),end INTEGER NOT NULL CHECK(end>=start),text TEXT NOT "
                        "NULL,anchor_exact TEXT,anchor_prefix TEXT,anchor_suffix TEXT,"
-                       "anchor_chapter TEXT);"
+                       "anchor_chapter TEXT,location_state INTEGER NOT NULL DEFAULT 1 CHECK(location_state BETWEEN 0 AND 3));"
                        "CREATE INDEX IF NOT EXISTS notes_book ON notes(book_id);PRAGMA "
-                       "application_id=1163416131;" FIXED_SCHEMA AUDIO_SCHEMA PROGRESS_SCHEMA "PRAGMA user_version=5;COMMIT;";
+                       "application_id=1163416131;" FIXED_SCHEMA AUDIO_SCHEMA PROGRESS_SCHEMA "PRAGMA user_version=6;COMMIT;";
   if (!path || !out)
     return exr_fail(e, EXR_ARGUMENT, "Invalid library arguments");
   *out = NULL;
@@ -84,7 +85,7 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
           "ALTER TABLE notes ADD COLUMN anchor_prefix TEXT;"
           "ALTER TABLE notes ADD COLUMN anchor_suffix TEXT;"
           "ALTER TABLE notes ADD COLUMN anchor_chapter TEXT;"
-          FIXED_SCHEMA AUDIO_SCHEMA PROGRESS_SCHEMA "PRAGMA user_version=5;COMMIT;";
+          FIXED_SCHEMA AUDIO_SCHEMA PROGRESS_SCHEMA LOCATION_SCHEMA "PRAGMA user_version=6;COMMIT;";
       if (sqlite3_exec(l->db, migration, NULL, NULL, NULL) != SQLITE_OK) {
         database_error(l, e);
         sqlite3_exec(l->db, "ROLLBACK", NULL, NULL, NULL);
@@ -95,24 +96,30 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
       return EXR_OK;
     }
     if(app==1163416131 && version==2) {
-      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" FIXED_SCHEMA AUDIO_SCHEMA PROGRESS_SCHEMA "PRAGMA user_version=5;COMMIT;",NULL,NULL,NULL)!=SQLITE_OK) {
+      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" FIXED_SCHEMA AUDIO_SCHEMA PROGRESS_SCHEMA LOCATION_SCHEMA "PRAGMA user_version=6;COMMIT;",NULL,NULL,NULL)!=SQLITE_OK) {
         database_error(l,e); sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); exr_library_close(l); return EXR_DATABASE;
       }
       *out=l; return EXR_OK;
     }
     if(app==1163416131 && version==3) {
-      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" AUDIO_SCHEMA PROGRESS_SCHEMA "PRAGMA user_version=5;COMMIT;",NULL,NULL,NULL)!=SQLITE_OK) {
+      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" AUDIO_SCHEMA PROGRESS_SCHEMA LOCATION_SCHEMA "PRAGMA user_version=6;COMMIT;",NULL,NULL,NULL)!=SQLITE_OK) {
         database_error(l,e); sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); exr_library_close(l); return EXR_DATABASE;
       }
       *out=l; return EXR_OK;
     }
     if(app==1163416131 && version==4) {
-      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" PROGRESS_SCHEMA "PRAGMA user_version=5;COMMIT;",NULL,NULL,NULL)!=SQLITE_OK) {
+      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" PROGRESS_SCHEMA LOCATION_SCHEMA "PRAGMA user_version=6;COMMIT;",NULL,NULL,NULL)!=SQLITE_OK) {
         database_error(l,e); sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); exr_library_close(l); return EXR_DATABASE;
       }
       *out=l; return EXR_OK;
     }
-    if (app == 1163416131 && version == 5) {
+    if(app==1163416131 && version==5) {
+      const char *migration="BEGIN IMMEDIATE;DROP TRIGGER books_progress_changed;ALTER TABLE book_progress RENAME TO book_progress_v5;"
+        PROGRESS_SCHEMA "INSERT INTO book_progress SELECT * FROM book_progress_v5;DROP TABLE book_progress_v5;" LOCATION_SCHEMA "PRAGMA user_version=6;COMMIT;";
+      if(sqlite3_exec(l->db,migration,NULL,NULL,NULL)!=SQLITE_OK) { database_error(l,e); sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); exr_library_close(l); return EXR_DATABASE; }
+      *out=l; return EXR_OK;
+    }
+    if (app == 1163416131 && version == 6) {
       *out = l;
       return EXR_OK;
     }
@@ -427,6 +434,14 @@ static int offset_column(sqlite3_stmt *s, int column, size_t *out) {
   *out = (size_t)value;
   return 1;
 }
+static exr_status annotation_input(const char *text,exr_error *e) {
+  size_t n=0,at=0; uint32_t cp;
+  if(!text) return exr_fail(e,EXR_ARGUMENT,"Missing annotation text");
+  while(n<=EXR_MAX_TEXT && text[n]) n++;
+  if(n>EXR_MAX_TEXT) return exr_fail(e,EXR_LIMIT,"Annotation text exceeds 64 MiB");
+  while(at<n) if(!exr_next(text,n,&at,&cp)) return exr_fail(e,EXR_ENCODING,"Annotation text is not UTF-8");
+  return EXR_OK;
+}
 static exr_status annotation_column(sqlite3_stmt *s, int column, int nullable, char **out,
                                     exr_error *e) {
   const char *text;
@@ -444,14 +459,15 @@ static exr_status annotation_column(sqlite3_stmt *s, int column, int nullable, c
     return exr_fail(e, EXR_MEMORY, "Annotation allocation failed");
   if ((size_t)bytes > limit || memchr(text, 0, (size_t)bytes))
     return exr_fail(e, EXR_DATABASE, "Invalid stored annotation text");
+  { size_t at=0; uint32_t cp; while(at<(size_t)bytes) if(!exr_next(text,(size_t)bytes,&at,&cp)) return exr_fail(e,EXR_DATABASE,"Invalid stored annotation UTF-8"); }
   *out = exr_copy(text, (size_t)bytes);
   return *out ? EXR_OK : exr_fail(e, EXR_MEMORY, "Annotation allocation failed");
 }
-/* Columns: id, book_id, start, end, text, four selectors, book text_size. */
+/* Columns: id, book_id, start, end, text, four selectors, book text_size, location_state. */
 static exr_status read_note(sqlite3_stmt *s, exr_note *note, exr_error *e) {
   exr_error validation;
   exr_status result;
-  size_t text_size;
+  size_t text_size; int location;
   memset(note, 0, sizeof(*note));
   if (sqlite3_column_type(s, 0) != SQLITE_INTEGER ||
       sqlite3_column_type(s, 1) != SQLITE_INTEGER ||
@@ -459,7 +475,8 @@ static exr_status read_note(sqlite3_stmt *s, exr_note *note, exr_error *e) {
       (note->book_id = sqlite3_column_int64(s, 1)) <= 0 ||
       !offset_column(s, 2, &note->start) || !offset_column(s, 3, &note->end) ||
       !offset_column(s, 9, &text_size) || text_size > EXR_MAX_TEXT ||
-      note->start > note->end || note->end > text_size)
+      sqlite3_column_type(s,10)!=SQLITE_INTEGER || (location=sqlite3_column_int(s,10))<0 || location>EXR_ANCHOR_LEGACY ||
+      note->start > note->end || note->end>EXR_MAX_TEXT || (location==EXR_ANCHOR_FOUND && note->end > text_size))
     return exr_fail(e, EXR_DATABASE, "Invalid stored annotation range");
   note->anchor.start = note->start;
   note->anchor.end = note->end;
@@ -478,10 +495,17 @@ static exr_status read_note(sqlite3_stmt *s, exr_note *note, exr_error *e) {
        (note->anchor.prefix || note->anchor.suffix || note->anchor.chapter)) ||
       exr_anchor_validate(&note->anchor, &validation) != EXR_OK)
     return exr_fail(e, EXR_DATABASE, "Invalid stored annotation selector");
+  if(location!=EXR_ANCHOR_FOUND) note->start=note->end=SIZE_MAX;
   return EXR_OK;
 }
 static int bind_nullable_text(sqlite3_stmt *s, int column, const char *text) {
   return text ? bind_text(s, column, text) : sqlite3_bind_null(s, column) == SQLITE_OK;
+}
+static exr_status store_progress(exr_library *l,int64_t book,const exr_anchor *point,exr_anchor_state state,exr_error *e) {
+  sqlite3_stmt *s=NULL;
+  if(!prepare(l,"INSERT INTO book_progress(book_id,position,state,prefix,suffix,chapter)VALUES(?1,?2,?3,?4,?5,?6) ON CONFLICT(book_id) DO UPDATE SET position=excluded.position,state=excluded.state,prefix=excluded.prefix,suffix=excluded.suffix,chapter=excluded.chapter",&s) ||
+     sqlite3_bind_int64(s,1,book)!=SQLITE_OK || sqlite3_bind_int64(s,2,(sqlite3_int64)point->start)!=SQLITE_OK || sqlite3_bind_int(s,3,state)!=SQLITE_OK || !bind_nullable_text(s,4,point->prefix) || !bind_nullable_text(s,5,point->suffix) || !bind_nullable_text(s,6,point->chapter)) { sqlite3_finalize(s); return database_error(l,e); }
+  return done(l,s,e);
 }
 exr_status exr_library_progress(exr_library *l,int64_t book,const exr_anchor *point,exr_error *e) {
   sqlite3_stmt *s=NULL; exr_status status; size_t extent; int step,format,transaction=0;
@@ -500,9 +524,7 @@ exr_status exr_library_progress(exr_library *l,int64_t book,const exr_anchor *po
   sqlite3_finalize(s); s=NULL;
   if(!prepare(l,"UPDATE books SET position=?1 WHERE id=?2",&s) || sqlite3_bind_int64(s,1,(sqlite3_int64)point->start)!=SQLITE_OK || sqlite3_bind_int64(s,2,book)!=SQLITE_OK) { status=database_error(l,e); goto finish; }
   status=done(l,s,e); s=NULL; if(status!=EXR_OK) goto finish;
-  if(!prepare(l,"INSERT INTO book_progress(book_id,position,state,prefix,suffix,chapter)VALUES(?1,?2,1,?3,?4,?5) ON CONFLICT(book_id) DO UPDATE SET position=excluded.position,state=1,prefix=excluded.prefix,suffix=excluded.suffix,chapter=excluded.chapter",&s) ||
-     sqlite3_bind_int64(s,1,book)!=SQLITE_OK || sqlite3_bind_int64(s,2,(sqlite3_int64)point->start)!=SQLITE_OK || !bind_nullable_text(s,3,point->prefix) || !bind_nullable_text(s,4,point->suffix) || !bind_nullable_text(s,5,point->chapter)) { status=database_error(l,e); goto finish; }
-  status=done(l,s,e); s=NULL; if(status!=EXR_OK) goto finish;
+  status=store_progress(l,book,point,EXR_ANCHOR_FOUND,e); if(status!=EXR_OK) goto finish;
   if(sqlite3_exec(l->db,"COMMIT",NULL,NULL,NULL)!=SQLITE_OK) { status=database_error(l,e); goto finish; }
   transaction=0; status=exr_fail(e,EXR_OK,"");
 finish:
@@ -520,10 +542,10 @@ exr_status exr_library_progress_get(exr_library *l,int64_t book,exr_anchor *out,
   if(format==EXR_PDF) { status=exr_fail(e,EXR_FORMAT,"Fixed-page progress uses page positions"); goto finish; }
   if(format<EXR_TXT || format>EXR_MOBI) { status=exr_fail(e,EXR_DATABASE,"Invalid stored book format"); goto finish; }
   if(sqlite3_column_type(s,3)==SQLITE_NULL) { a.start=a.end=position; value=EXR_ANCHOR_LEGACY; goto success; }
-  if(sqlite3_column_type(s,3)!=SQLITE_INTEGER || sqlite3_column_int64(s,3)!=book || !offset_column(s,4,&a.start) || sqlite3_column_type(s,5)!=SQLITE_INTEGER || (value=sqlite3_column_int(s,5))<0 || value>EXR_ANCHOR_AMBIGUOUS) { status=exr_fail(e,EXR_DATABASE,"Invalid stored reading selector"); goto finish; }
-  a.end=a.start; a.exact=exr_copy("",0); if(!a.exact) { status=exr_fail(e,EXR_MEMORY,"Reading selector allocation failed"); goto finish; }
+  if(sqlite3_column_type(s,3)!=SQLITE_INTEGER || sqlite3_column_int64(s,3)!=book || !offset_column(s,4,&a.start) || sqlite3_column_type(s,5)!=SQLITE_INTEGER || (value=sqlite3_column_int(s,5))<0 || value>EXR_ANCHOR_LEGACY) { status=exr_fail(e,EXR_DATABASE,"Invalid stored reading selector"); goto finish; }
+  a.end=a.start; if(value!=EXR_ANCHOR_LEGACY) a.exact=exr_copy("",0); if(value!=EXR_ANCHOR_LEGACY && !a.exact) { status=exr_fail(e,EXR_MEMORY,"Reading selector allocation failed"); goto finish; }
   status=annotation_column(s,6,1,&a.prefix,e); if(status==EXR_OK) status=annotation_column(s,7,1,&a.suffix,e); if(status==EXR_OK) status=annotation_column(s,8,1,&a.chapter,e); if(status!=EXR_OK) goto finish;
-  if(exr_anchor_validate(&a,&local)!=EXR_OK || (value==EXR_ANCHOR_FOUND && (a.start!=position || a.start>extent))) { status=exr_fail(e,EXR_DATABASE,"Inconsistent stored reading selector"); goto finish; }
+  if(exr_anchor_validate(&a,&local)!=EXR_OK || (value==EXR_ANCHOR_LEGACY && (a.prefix || a.suffix || a.chapter)) || (value==EXR_ANCHOR_FOUND && (a.start!=position || a.start>extent))) { status=exr_fail(e,EXR_DATABASE,"Inconsistent stored reading selector"); goto finish; }
 success:
   *out=a; memset(&a,0,sizeof(a)); *state=(exr_anchor_state)value; status=exr_fail(e,EXR_OK,"");
 finish:
@@ -542,7 +564,7 @@ exr_status exr_library_note(exr_library *l, const exr_note *note, int64_t *id, e
   exr_note snapshot;
   const exr_anchor *anchor;
   exr_status result;
-  size_t text_size, note_size = 0;
+  size_t text_size;
   int step, preserve = 0;
   /* The output commonly aliases note->id; retain the input before clearing it. */
   if (note) {
@@ -554,10 +576,7 @@ exr_status exr_library_note(exr_library *l, const exr_note *note, int64_t *id, e
   if (!l || !note || !id || !note->text || note->id < 0 || note->book_id <= 0 ||
       note->start > note->end || (uint64_t)note->end > INT64_MAX)
     return exr_fail(e, EXR_ARGUMENT, "Invalid annotation");
-  while (note_size <= EXR_MAX_TEXT && note->text[note_size])
-    note_size++;
-  if (note_size > EXR_MAX_TEXT)
-    return exr_fail(e, EXR_LIMIT, "Annotation text exceeds 64 MiB");
+  result=annotation_input(note->text,e); if(result!=EXR_OK) return result;
   anchor = &note->anchor;
   if (anchor->exact) {
     if (anchor->start != note->start || anchor->end != note->end)
@@ -590,7 +609,7 @@ exr_status exr_library_note(exr_library *l, const exr_note *note, int64_t *id, e
     exr_note previous = {0};
     if (!prepare(l,
                  "SELECT n.id,n.book_id,n.start,n.end,n.text,n.anchor_exact,n.anchor_prefix,"
-                 "n.anchor_suffix,n.anchor_chapter,b.text_size FROM notes n "
+                 "n.anchor_suffix,n.anchor_chapter,b.text_size,n.location_state FROM notes n "
                  "JOIN books b ON b.id=n.book_id WHERE n.book_id=?1 AND n.id=?2", &s))
       return database_error(l, e);
     if (sqlite3_bind_int64(s, 1, note->book_id) != SQLITE_OK ||
@@ -624,7 +643,7 @@ exr_status exr_library_note(exr_library *l, const exr_note *note, int64_t *id, e
   if (!prepare(l,
                preserve ? "UPDATE notes SET text=?3 WHERE book_id=?4 AND id=?5"
                : note->id > 0 ? "UPDATE notes SET start=?1,end=?2,text=?3,anchor_exact=?6,"
-                                "anchor_prefix=?7,anchor_suffix=?8,anchor_chapter=?9 "
+                                "anchor_prefix=?7,anchor_suffix=?8,anchor_chapter=?9,location_state=1 "
                                 "WHERE book_id=?4 AND id=?5"
                               : "INSERT INTO notes(start,end,text,book_id,anchor_exact,"
                                 "anchor_prefix,anchor_suffix,anchor_chapter)"
@@ -653,6 +672,14 @@ database:
   exr_anchor_free(&captured);
   return result;
 }
+exr_status exr_library_note_text(exr_library *l,int64_t id,const char *text,exr_error *e) {
+  sqlite3_stmt *s=NULL; exr_status status;
+  if(!l || id<=0) return exr_fail(e,EXR_ARGUMENT,"Invalid note text update");
+  status=annotation_input(text,e); if(status!=EXR_OK) return status;
+  if(!prepare(l,"UPDATE notes SET text=?1 WHERE id=?2",&s) || !bind_text(s,1,text) || sqlite3_bind_int64(s,2,id)!=SQLITE_OK) { sqlite3_finalize(s); return database_error(l,e); }
+  status=done(l,s,e); if(status!=EXR_OK) return status;
+  return sqlite3_changes(l->db) ? exr_fail(e,EXR_OK,"") : exr_fail(e,EXR_ARGUMENT,"Note missing");
+}
 void exr_notes_free(exr_note *notes, size_t n) {
   size_t i;
   for (i = 0; i < n; i++) {
@@ -674,7 +701,7 @@ exr_status exr_library_notes(exr_library *l, int64_t book_id, exr_note **out, si
   *count = 0;
   if (!prepare(l,
                "SELECT n.id,n.book_id,n.start,n.end,n.text,n.anchor_exact,n.anchor_prefix,"
-               "n.anchor_suffix,n.anchor_chapter,b.text_size FROM notes n JOIN books b "
+               "n.anchor_suffix,n.anchor_chapter,b.text_size,n.location_state FROM notes n JOIN books b "
                "ON b.id=n.book_id WHERE n.book_id=?1 ORDER BY n.start,n.id", &s))
     return database_error(l, e);
   if (sqlite3_bind_int64(s, 1, book_id) != SQLITE_OK) {
@@ -948,4 +975,78 @@ exr_status exr_library_clear_audio(exr_library *l,const char *key,exr_error *e) 
   status=database_error(l,e);
 rollback:
   sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); return status;
+}
+
+void exr_library_relocation_free(exr_library_relocation *r) { if(r) { free(r->notes); memset(r,0,sizeof(*r)); } }
+exr_status exr_library_reanchor(exr_library *l,int64_t book,size_t fallback,const exr_control *control,
+                                   exr_library_relocation *out,exr_error *e) {
+  exr_library_relocation r={0}; exr_document *doc=NULL; exr_anchor progress={0},captured={0}; exr_anchor_state stored;
+  exr_note note={0}; sqlite3_stmt *read=NULL,*move=NULL,*mark=NULL,*s=NULL; size_t capacity=0,i; int step,transaction=0; exr_status status;
+  const size_t maximum=EXR_MAX_TEXT/sizeof(exr_note_relocation); const char *text;
+  if(out) memset(out,0,sizeof(*out));
+  if(!l || book<=0 || !out) return exr_fail(e,EXR_ARGUMENT,"Invalid book reanchor arguments");
+  status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
+  if(sqlite3_exec(l->db,"BEGIN IMMEDIATE",NULL,NULL,NULL)!=SQLITE_OK) return database_error(l,e);
+  transaction=1;
+  if(!prepare(l,"SELECT text_size,position FROM books WHERE id=?1",&s) || sqlite3_bind_int64(s,1,book)!=SQLITE_OK) { status=database_error(l,e); goto finish; }
+  step=sqlite3_step(s); if(step!=SQLITE_ROW) { status=step==SQLITE_DONE ? exr_fail(e,EXR_ARGUMENT,"Book missing") : database_error(l,e); goto finish; }
+  if(!offset_column(s,0,&r.previous_size) || !offset_column(s,1,&r.previous_position) || r.previous_size>EXR_MAX_TEXT || r.previous_position>r.previous_size) { status=exr_fail(e,EXR_DATABASE,"Invalid stored book extent"); goto finish; }
+  sqlite3_finalize(s); s=NULL;
+  status=exr_library_progress_get(l,book,&progress,&stored,e); if(status!=EXR_OK) goto finish;
+  status=exr_library_document(l,book,&doc,e); if(status!=EXR_OK) goto finish;
+  text=exr_document_text(doc,&r.text_size);
+  if(fallback>r.text_size || (fallback<r.text_size && ((unsigned char)text[fallback]&0xc0)==0x80)) { status=exr_fail(e,EXR_ARGUMENT,"Fallback progress is not a valid UTF-8 boundary"); goto finish; }
+  status=exr_anchor_resolve_ex(doc,&progress,control,&r.progress,e); if(status!=EXR_OK) goto finish;
+  r.position=r.progress.state==EXR_ANCHOR_FOUND ? r.progress.start : fallback;
+  if(!prepare(l,"SELECT id FROM notes WHERE book_id=?1 ORDER BY id",&s) || sqlite3_bind_int64(s,1,book)!=SQLITE_OK) { status=database_error(l,e); goto finish; }
+  while((step=sqlite3_step(s))==SQLITE_ROW) {
+    exr_note_relocation *entry; int64_t id;
+    if(sqlite3_column_type(s,0)!=SQLITE_INTEGER || (id=sqlite3_column_int64(s,0))<=0) { status=exr_fail(e,EXR_DATABASE,"Invalid stored note ID"); goto finish; }
+    if(r.note_count==maximum) { status=exr_fail(e,EXR_LIMIT,"Relocation report exceeds 64 MiB"); goto finish; }
+    if(r.note_count==capacity) {
+      size_t next=capacity ? capacity*2 : 64; exr_note_relocation *copy; if(next>maximum) next=maximum;
+      copy=realloc(r.notes,next*sizeof(*copy)); if(!copy) { status=exr_fail(e,EXR_MEMORY,"Relocation report allocation failed"); goto finish; } r.notes=copy; capacity=next;
+    }
+    entry=&r.notes[r.note_count++]; memset(entry,0,sizeof(*entry)); entry->note_id=id; entry->match=(exr_anchor_match){EXR_ANCHOR_MISSING,SIZE_MAX,SIZE_MAX};
+    if(!(r.note_count%256)) { status=exr_control_poll(control,EXR_STAGE_READ,r.note_count,0,e); if(status!=EXR_OK) goto finish; }
+  }
+  if(step!=SQLITE_DONE) { status=database_error(l,e); goto finish; }
+  sqlite3_finalize(s); s=NULL;
+  /* Collect IDs first, then fetch only one selector at a time. Comments are not
+     copied into migration memory and are never rewritten during relocation. */
+  if(!prepare(l,"SELECT n.id,n.book_id,n.start,n.end,'',n.anchor_exact,n.anchor_prefix,n.anchor_suffix,n.anchor_chapter,b.text_size,n.location_state FROM notes n JOIN books b ON b.id=n.book_id WHERE n.book_id=?1 AND n.id=?2",&read) || sqlite3_bind_int64(read,1,book)!=SQLITE_OK ||
+     !prepare(l,"UPDATE notes SET start=?1,end=?2,anchor_exact=?3,anchor_prefix=?4,anchor_suffix=?5,anchor_chapter=?6,location_state=1 WHERE id=?7 AND book_id=?8",&move) ||
+     !prepare(l,"UPDATE notes SET location_state=?1 WHERE id=?2 AND book_id=?3",&mark)) { status=database_error(l,e); goto finish; }
+  for(i=0;i<r.note_count;i++) {
+    exr_note_relocation *entry=&r.notes[i];
+    status=exr_control_poll(control,EXR_STAGE_READ,i,r.note_count,e); if(status!=EXR_OK) goto finish;
+    if(sqlite3_bind_int64(read,2,entry->note_id)!=SQLITE_OK || sqlite3_step(read)!=SQLITE_ROW) { status=database_error(l,e); goto finish; }
+    status=read_note(read,&note,e); sqlite3_reset(read); if(status!=EXR_OK) goto finish;
+    entry->previous_start=note.anchor.start; entry->previous_end=note.anchor.end;
+    status=exr_anchor_resolve_ex(doc,&note.anchor,control,&entry->match,e); if(status!=EXR_OK) goto finish;
+    if(entry->match.state==EXR_ANCHOR_FOUND) {
+      status=exr_anchor_create(doc,entry->match.start,entry->match.end,&captured,e); if(status!=EXR_OK) goto finish;
+      if(sqlite3_bind_int64(move,1,(sqlite3_int64)captured.start)!=SQLITE_OK || sqlite3_bind_int64(move,2,(sqlite3_int64)captured.end)!=SQLITE_OK ||
+         !bind_nullable_text(move,3,captured.exact) || !bind_nullable_text(move,4,captured.prefix) || !bind_nullable_text(move,5,captured.suffix) || !bind_nullable_text(move,6,captured.chapter) ||
+         sqlite3_bind_int64(move,7,entry->note_id)!=SQLITE_OK || sqlite3_bind_int64(move,8,book)!=SQLITE_OK || sqlite3_step(move)!=SQLITE_DONE) { status=database_error(l,e); goto finish; }
+      sqlite3_reset(move); sqlite3_clear_bindings(move); exr_anchor_free(&captured);
+    } else {
+      if(sqlite3_bind_int(mark,1,entry->match.state)!=SQLITE_OK || sqlite3_bind_int64(mark,2,entry->note_id)!=SQLITE_OK || sqlite3_bind_int64(mark,3,book)!=SQLITE_OK || sqlite3_step(mark)!=SQLITE_DONE) { status=database_error(l,e); goto finish; }
+      sqlite3_reset(mark); sqlite3_clear_bindings(mark);
+    }
+    free(note.text); note.text=NULL; exr_anchor_free(&note.anchor);
+  }
+  if(!prepare(l,"UPDATE books SET text_size=?1,position=?2 WHERE id=?3",&s) || sqlite3_bind_int64(s,1,(sqlite3_int64)r.text_size)!=SQLITE_OK || sqlite3_bind_int64(s,2,(sqlite3_int64)r.position)!=SQLITE_OK || sqlite3_bind_int64(s,3,book)!=SQLITE_OK) { status=database_error(l,e); goto finish; }
+  status=done(l,s,e); s=NULL; if(status!=EXR_OK) goto finish;
+  if(r.progress.state==EXR_ANCHOR_FOUND) {
+    status=exr_anchor_create(doc,r.position,r.position,&captured,e); if(status==EXR_OK) status=store_progress(l,book,&captured,EXR_ANCHOR_FOUND,e);
+  } else status=store_progress(l,book,&progress,r.progress.state,e);
+  if(status!=EXR_OK) goto finish;
+  status=exr_control_poll(control,EXR_STAGE_READ,r.note_count,r.note_count,e); if(status!=EXR_OK) goto finish;
+  if(sqlite3_exec(l->db,"COMMIT",NULL,NULL,NULL)!=SQLITE_OK) { status=database_error(l,e); goto finish; }
+  transaction=0; *out=r; memset(&r,0,sizeof(r)); status=exr_fail(e,EXR_OK,"");
+finish:
+  sqlite3_finalize(s); sqlite3_finalize(read); sqlite3_finalize(move); sqlite3_finalize(mark);
+  if(transaction) sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL);
+  free(note.text); exr_anchor_free(&note.anchor); exr_anchor_free(&captured); exr_anchor_free(&progress); exr_document_free(doc); exr_library_relocation_free(&r); return status;
 }

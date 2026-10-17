@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.94.0"
+#define EXR_VERSION "0.95.0"
 #define EXR_ABI_VERSION 1u
 typedef enum {
   EXR_OK = 0,
@@ -699,6 +699,8 @@ EXR_API exr_status exr_document_cfi_range_create(const exr_document *doc,const e
                                                  const exr_control *control,char **cfi,exr_error *error);
 EXR_API exr_status exr_document_cfi_range_resolve(const exr_document *doc,const char *cfi,const exr_control *control,
                                                   exr_cfi_range *range,exr_error *error);
+EXR_API exr_status exr_anchor_resolve_ex(const exr_document *doc,const exr_anchor *anchor,const exr_control *control,
+                                         exr_anchor_match *match,exr_error *error);
 /* Structure-preserving EPUB: serializes the tree and copies all declared resources.
    Chapter paths, attributes and resource bytes are retained. Missing resources,
    non-XML names and conflicting/reserved paths fail atomically. No network access.
@@ -912,7 +914,7 @@ typedef struct {
 } exr_book;
 typedef struct {
   int64_t id, book_id;
-  size_t start, end;
+  size_t start, end; /* SIZE_MAX when reanchoring could not locate the note. */
   char *text;
   exr_anchor anchor; /* Owned in query results; zero-initialize input notes. */
 } exr_note;
@@ -970,6 +972,8 @@ EXR_API exr_status exr_library_note(exr_library *library, const exr_note *note, 
                                     exr_error *error);
 EXR_API exr_status exr_library_notes(exr_library *library, int64_t book_id, exr_note **notes,
                                      size_t *count, exr_error *error);
+/* Edits only the comment, including notes whose current range is unresolved. */
+EXR_API exr_status exr_library_note_text(exr_library *library,int64_t note_id,const char *text,exr_error *error);
 EXR_API void exr_notes_free(exr_note *notes, size_t count);
 EXR_API void exr_free(void *memory);
 /* Fast reflow progress persistence: host captures a point with anchor_create()
@@ -983,6 +987,18 @@ EXR_API exr_status exr_library_clear_progress(exr_library *library,int64_t book_
 EXR_API exr_status exr_library_blob(exr_library *library, int64_t id, int cover, void **data,
                                     size_t *size, exr_error *error);
 EXR_API exr_status exr_library_remove_note(exr_library *library, int64_t id, exr_error *error);
+typedef struct { int64_t note_id; size_t previous_start,previous_end; exr_anchor_match match; } exr_note_relocation;
+typedef struct {
+  size_t previous_size,text_size,previous_position,position;
+  exr_anchor_match progress; exr_note_relocation *notes; size_t note_count;
+} exr_library_relocation;
+/* Reparse stored reflow source and atomically refresh extent, progress and note
+   positions. Unique matches move; unresolved notes retain comments/selectors,
+   return SIZE_MAX ranges, and never become guessed highlights. Host supplies a
+   valid UTF-8 fallback position for unresolved progress. Report is owned. */
+EXR_API exr_status exr_library_reanchor(exr_library *library,int64_t book_id,size_t fallback_position,
+                                         const exr_control *control,exr_library_relocation *report,exr_error *error);
+EXR_API void exr_library_relocation_free(exr_library_relocation *report);
 EXR_API exr_status exr_library_backup(exr_library *library, const char *path, exr_error *error);
 EXR_API exr_status exr_library_delete(exr_library *library, int64_t id, exr_error *error);
 #ifdef __cplusplus

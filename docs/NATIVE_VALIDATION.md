@@ -1699,3 +1699,18 @@ without partial outputs. Source deletion cascades saved selectors. A conflicting
 v4 migration trigger rolls back the newly created table and version; successful
 v1/v2/v3/v4 upgrades preserve old rows and expose unanchored progress as LEGACY.
 All 71 local Windows suites pass. The 0.93 1d30b03 CI passed all six jobs.
+
+
+## 0.95 Transactional book reprojection and relocation
+
+The relocation suite checks unique annotation/point recovery after a shifted,
+shortened source projection, retained missing/ambiguous/legacy selectors, and
+later recovery from unresolved state. Public unresolved ranges are SIZE_MAX;
+comments and historical selector ranges survive reopen and backup. Comment-only
+edits work without resolving a range. Invalid UTF-8 inputs/stored comments and
+fallbacks inside UTF-8 continuation bytes fail. The original source blob remains
+byte-identical. Triggered writes, deferred-COMMIT failure and final-callback
+cancellation restore all old notes and progress. A conflicting v5 migration table
+rolls back table/trigger/version changes; retry preserves progress and upgrades to
+schema 6. Existing v1-v4 migrations continue passing. All 72 local Windows suites
+pass. The 0.94 695d092 CI passed all six jobs.

@@ -20,7 +20,7 @@ static void checkpoint(exr_library *l,const char *key,uint64_t offset) {
 int main(int argc,char **argv) {
   char path[4096],backup[4096]; exr_library *l=NULL,*other=NULL; exr_audio_checkpoint input={"two",UINT64_MAX,1.5},p={0}; exr_audio_bookmark b={0},*marks=NULL; int found; size_t count; int64_t id;
   CHECK(argc==2); snprintf(path,sizeof(path),"%s/audio-library.sqlite",argv[1]); snprintf(backup,sizeof(backup),"%s/audio-backup.sqlite",argv[1]); remove(path); remove(backup);
-  OK(exr_library_open(path,&l,&error)); scalar(path,"PRAGMA user_version",5);
+  OK(exr_library_open(path,&l,&error)); scalar(path,"PRAGMA user_version",6);
   OK(exr_library_audio_resume_get(l,"host:book",&p,&found,&error)); CHECK(!found && !p.track_id);
   OK(exr_library_audio_resume(l,"host:book",&input,&error)); checkpoint(l,"host:book",UINT64_MAX);
   input.offset_ms=500; OK(exr_library_audio_resume(l,"host:book",&input,&error)); checkpoint(l,"host:book",500);
@@ -45,7 +45,7 @@ int main(int argc,char **argv) {
   OK(exr_library_clear_audio(l,"host:book",&error)); OK(exr_library_audio_resume_get(l,"host:book",&p,&found,&error)); CHECK(!found && !p.track_id); OK(exr_library_audio_bookmarks(l,"host:book",&marks,&count,&error)); CHECK(!count && !marks);
   OK(exr_library_audio_bookmarks(l,"other",&marks,&count,&error)); CHECK(count==1); exr_audio_bookmarks_free(marks,count); exr_library_close(l);
   /* v3 upgrade and rollback after the first new table was created. */
-  sql(path,"DROP TRIGGER books_progress_changed;DROP TABLE book_progress;DROP TABLE audio_resume; PRAGMA user_version=3"); CHECK(exr_library_open(path,&l,&error)==EXR_DATABASE && !l); scalar(path,"PRAGMA user_version",3); scalar(path,"SELECT count(*) FROM sqlite_master WHERE name='audio_resume'",0);
-  sql(path,"DROP TABLE audio_marks"); OK(exr_library_open(path,&l,&error)); scalar(path,"PRAGMA user_version",5); OK(exr_library_audio_resume(l,"after-migration",&input,&error)); exr_library_close(l);
+  sql(path,"DROP TRIGGER books_progress_changed;DROP TABLE book_progress;ALTER TABLE notes DROP COLUMN location_state;DROP TABLE audio_resume; PRAGMA user_version=3"); CHECK(exr_library_open(path,&l,&error)==EXR_DATABASE && !l); scalar(path,"PRAGMA user_version",3); scalar(path,"SELECT count(*) FROM sqlite_master WHERE name='audio_resume'",0);
+  sql(path,"DROP TABLE audio_marks"); OK(exr_library_open(path,&l,&error)); scalar(path,"PRAGMA user_version",6); OK(exr_library_audio_resume(l,"after-migration",&input,&error)); exr_library_close(l);
   remove(path); remove(backup); exr_audio_checkpoint_free(NULL); exr_audio_bookmarks_free(NULL,0); printf("%u audio persistence checks passed\n",checks); return 0;
 }
