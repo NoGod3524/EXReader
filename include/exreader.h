@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.71.0"
+#define EXR_VERSION "0.72.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -60,6 +60,47 @@ typedef struct exr_library exr_library;
 typedef struct exr_publication exr_publication;
 typedef struct exr_session exr_session;
 typedef struct exr_pager exr_pager;
+
+/* Immutable host-defined audio timeline. No codec, URI scheme, UI or device is
+   assumed. Track order defines concatenation; all timestamps are milliseconds. */
+typedef struct exr_audio exr_audio;
+typedef struct {
+  const char *id,*uri,*media_type;
+  uint64_t duration_ms;
+} exr_audio_track;
+typedef struct {
+  const char *id,*title;
+  size_t parent; /* SIZE_MAX root; otherwise an earlier containing chapter. */
+  uint64_t start_ms,end_ms;
+} exr_audio_chapter;
+typedef struct {
+  const char *part_id; /* Arbitrary host text-part or fixed-page ID. */
+  size_t start,end; /* Host UTF-8 byte range, not validated against a document. */
+  uint64_t start_ms,end_ms;
+} exr_audio_sync;
+typedef struct {
+  size_t struct_size;
+  const char *title;
+  const exr_audio_track *tracks; size_t track_count;
+  const exr_audio_chapter *chapters; size_t chapter_count;
+  const exr_audio_sync *sync; size_t sync_count;
+} exr_audio_input;
+typedef struct { size_t track; uint64_t offset_ms; } exr_audio_position;
+EXR_API exr_status exr_audio_create(const exr_audio_input *input,const exr_control *control,exr_audio **out,exr_error *error);
+EXR_API void exr_audio_free(exr_audio *audio);
+EXR_API const char *exr_audio_title(const exr_audio *audio);
+EXR_API uint64_t exr_audio_duration(const exr_audio *audio);
+EXR_API const exr_audio_track *exr_audio_tracks(const exr_audio *audio,size_t *count);
+EXR_API const exr_audio_chapter *exr_audio_chapters(const exr_audio *audio,size_t *count);
+EXR_API const exr_audio_sync *exr_audio_syncs(const exr_audio *audio,size_t *count);
+EXR_API size_t exr_audio_memory_size(const exr_audio *audio);
+/* Boundary timestamps choose the next track; total duration chooses final EOF. */
+EXR_API exr_status exr_audio_locate(const exr_audio *audio,uint64_t time_ms,exr_audio_position *out,exr_error *error);
+/* Enumerate matches in provider order by calling again with from=index+1.
+   Misses return SIZE_MAX. Sync intervals are half-open and may overlap. */
+EXR_API exr_status exr_audio_sync_at(const exr_audio *audio,uint64_t time_ms,size_t from,const exr_control *control,size_t *index,exr_error *error);
+EXR_API exr_status exr_audio_sync_text(const exr_audio *audio,const char *part_id,size_t start,size_t end,size_t from,
+                                        const exr_control *control,size_t *index,exr_error *error);
 
 typedef enum {
   EXR_DIRECTION_AUTO = 0, EXR_DIRECTION_LTR = 1, EXR_DIRECTION_RTL = 2
