@@ -2,10 +2,10 @@
 #include "internal.h"
 struct exr_audio {
   char *title; exr_audio_track *tracks; exr_audio_chapter *chapters; exr_audio_sync *sync;
-  uint64_t *starts,duration; size_t track_count,chapter_count,sync_count,bytes;
+  uint64_t *starts,duration; size_t track_count,chapter_count,sync_count,bytes,references;
 };
 void exr_audio_free(exr_audio *a) {
-  size_t i; if(!a) return;
+  size_t i; if(!a || --a->references) return;
   for(i=0;i<a->track_count;i++) { free((void *)a->tracks[i].id); free((void *)a->tracks[i].uri); free((void *)a->tracks[i].media_type); }
   for(i=0;i<a->chapter_count;i++) { free((void *)a->chapters[i].id); free((void *)a->chapters[i].title); }
   for(i=0;i<a->sync_count;i++) free((void *)a->sync[i].part_id);
@@ -45,6 +45,7 @@ exr_status exr_audio_create(const exr_audio_input *input,const exr_control *cont
   if(bytes>(size_t)128*1024*1024) return exr_fail(e,EXR_LIMIT,"Audio table payload exceeds budget");
   status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
   a=calloc(1,sizeof(*a)); if(!a) return exr_fail(e,EXR_MEMORY,"Audio allocation failed");
+  a->references=1;
   a->tracks=calloc(in.track_count,sizeof(*a->tracks)); a->starts=calloc(in.track_count,sizeof(*a->starts));
   if(in.chapter_count) a->chapters=calloc(in.chapter_count,sizeof(*a->chapters));
   if(in.sync_count) a->sync=calloc(in.sync_count,sizeof(*a->sync));
@@ -122,4 +123,15 @@ exr_status exr_audio_sync_text(const exr_audio *a,const char *part,size_t start,
     if(!strcmp(part,s->part_id) && (start==end ? s->start<=start && start<s->end : s->start<end && start<s->end)) { *index=i; break; }
   }
   return exr_fail(e,EXR_OK,"");
+}
+
+exr_status exr_audio_ref(exr_audio *a,exr_error *e) {
+  if(!a) return exr_fail(e,EXR_ARGUMENT,"Missing audio timeline");
+  if(a->references==SIZE_MAX) return exr_fail(e,EXR_LIMIT,"Audio reference count exhausted");
+  a->references++; return EXR_OK;
+}
+exr_status exr_audio_time(const exr_audio *a,size_t track,uint64_t offset,uint64_t *out,exr_error *e) {
+  if(out) *out=0;
+  if(!a || !out || track>=a->track_count || offset>a->tracks[track].duration_ms) return exr_fail(e,EXR_ARGUMENT,"Invalid track-local audio position");
+  *out=a->starts[track]+offset; return exr_fail(e,EXR_OK,"");
 }
