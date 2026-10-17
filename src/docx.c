@@ -36,6 +36,7 @@ typedef struct {
   size_t abstract_count,number_count;
   char numbering_path[2048];
   const char *marker,*marker_css;
+  unsigned paragraph_decorations;
   char main[2048];
   exr_status status;
   exr_error *error;
@@ -142,6 +143,21 @@ static int properties(docx *x,const exr_document *d,size_t node,exr_buffer *css,
   }
   return 1;
 }
+static int word_decorations(docx *x,const exr_document *d,size_t props,unsigned *flags) {
+  size_t i;
+  if(props==SIZE_MAX) return 1;
+  for(i=d->nodes[props].first_child;i!=SIZE_MAX;i=d->nodes[i].next_sibling) {
+    const exr_node *v=&d->nodes[i]; const char *s=attr(v,"val");
+    if(++x->work>20000000) { x->status=EXR_LIMIT; return 0; }
+    if(word(v,"u")) {
+      if(on(s) && (!s || strcmp(s,"none"))) *flags|=EXR_GLYPH_UNDERLINE;
+      else *flags&=~EXR_GLYPH_UNDERLINE;
+    } else if(word(v,"strike") || word(v,"dstrike")) {
+      if(on(s)) *flags|=EXR_GLYPH_STRIKE; else *flags&=~EXR_GLYPH_STRIKE;
+    } else if(word(v,"rPr") && !word_decorations(x,d,i,flags)) return 0;
+  }
+  return 1;
+}
 static int rel_order(const void *a,const void *b) { return strcmp(((const relationship *)a)->id,((const relationship *)b)->id); }
 static relationship *rel(docx *x,const char *id) {
   size_t lo=0,hi=x->rel_count;
@@ -207,6 +223,15 @@ static int style_css(docx *x,const char *id,exr_buffer *css,int *heading,unsigne
   return (!base || style_css(x,base,css,heading,depth+1)) &&
       properties(x,x->styles_xml,child(x->styles_xml,at,"pPr"),css,heading) &&
       properties(x,x->styles_xml,child(x->styles_xml,at,"rPr"),css,heading);
+}
+static int decoration_style(docx *x,const char *id,unsigned *flags,unsigned depth) {
+  size_t node=style_find(x,id); const char *base;
+  if(node==SIZE_MAX) return 1;
+  if(depth>64) { x->status=EXR_FORMAT; return 0; }
+  base=value(x->styles_xml,node,"basedOn");
+  return (!base || decoration_style(x,base,flags,depth+1)) &&
+      word_decorations(x,x->styles_xml,child(x->styles_xml,node,"pPr"),flags) &&
+      word_decorations(x,x->styles_xml,child(x->styles_xml,node,"rPr"),flags);
 }
 static exr_status styles(docx *x) {
   size_t i,j=0; char path[2048]; const relationship *relationship=NULL;
@@ -635,6 +660,7 @@ invalid:
 }
 static int content(docx *x,size_t parent,size_t source,unsigned depth) {
   const exr_node *v=&x->xml->nodes[source]; size_t at=parent,i,props; exr_buffer css={0}; int heading=0,ok=0;
+  unsigned saved_decorations=x->paragraph_decorations;
   if(depth>250) { x->status=EXR_LIMIT; return 0; }
   i=alternate(x->xml,source);
   if(i!=SIZE_MAX) return content(x,parent,i,depth+1);
@@ -652,18 +678,21 @@ static int content(docx *x,size_t parent,size_t source,unsigned depth) {
   }
   if(word(v,"p") || word(v,"r")) {
     int paragraph=word(v,"p"); const char *style;
+    unsigned decorations=paragraph ? 0 : x->paragraph_decorations;
     props=child(x->xml,source,paragraph ? "pPr" : "rPr");
     if(paragraph && x->styles_xml && x->defaults!=SIZE_MAX) {
       i=child(x->styles_xml,x->defaults,"pPrDefault");
       if(!properties(x,x->styles_xml,child(x->styles_xml,i,"pPr"),&css,&heading)) goto done;
       i=child(x->styles_xml,x->defaults,"rPrDefault");
-      if(!properties(x,x->styles_xml,child(x->styles_xml,i,"rPr"),&css,&heading)) goto done;
+      if(!properties(x,x->styles_xml,child(x->styles_xml,i,"rPr"),&css,&heading) ||
+          !word_decorations(x,x->styles_xml,child(x->styles_xml,i,"rPr"),&decorations)) goto done;
     }
     style=value(x->xml,props,paragraph ? "pStyle" : "rStyle");
     if(!style) style=paragraph ? x->default_paragraph : x->default_character;
-    if(style && !style_css(x,style,&css,&heading,0)) goto done;
+    if(style && (!style_css(x,style,&css,&heading,0) || !decoration_style(x,style,&decorations,0))) goto done;
     if(paragraph && !heading && style && !strncmp(style,"Heading",7) && style[7]>='1' && style[7]<='6' && !style[8]) heading=style[7]-'0';
-    if(!properties(x,x->xml,props,&css,&heading)) goto done;
+    if(!properties(x,x->xml,props,&css,&heading) || !word_decorations(x,x->xml,props,&decorations)) goto done;
+    if(paragraph) x->paragraph_decorations=decorations;
     if(paragraph) {
       char tag[4]="p"; if(heading) { tag[0]='h'; tag[1]=(char)('0'+heading); tag[2]=0; }
       at=make(x,parent,heading ? EXR_NODE_HEADING : EXR_NODE_PARAGRAPH,tag,NULL);
@@ -675,6 +704,8 @@ static int content(docx *x,size_t parent,size_t source,unsigned depth) {
           (x->marker_css && !set(x,marker,"style",x->marker_css)) || make(x,marker,EXR_NODE_TEXT,NULL,x->marker)==SIZE_MAX) goto done;
       x->marker=x->marker_css=NULL;
     }
+    if(!paragraph && (decorations&EXR_GLYPH_UNDERLINE)) { at=make(x,at,EXR_NODE_ELEMENT,"u",NULL); if(at==SIZE_MAX) goto done; }
+    if(!paragraph && (decorations&EXR_GLYPH_STRIKE)) { at=make(x,at,EXR_NODE_ELEMENT,"s",NULL); if(at==SIZE_MAX) goto done; }
   } else if(word(v,"hyperlink")) {
     const char *id=rattr(v,"id"),*anchor=attr(v,"anchor"); relationship *r=rel(x,id); char path[2048]; exr_buffer href={0};
     at=make(x,parent,EXR_NODE_LINK,"a",NULL); if(at==SIZE_MAX) goto done;
@@ -707,6 +738,7 @@ static int content(docx *x,size_t parent,size_t source,unsigned depth) {
   if(!children(x,at,source,depth+1)) goto done;
   ok=1;
 done:
+  x->paragraph_decorations=saved_decorations;
   free(css.data);
   if(!ok && x->status==EXR_OK) x->status=EXR_LIMIT;
   return ok;

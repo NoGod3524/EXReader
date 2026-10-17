@@ -61,7 +61,13 @@ static void rich(const char *dir) {
   config.page=(exr_layout_options){300,240,8,16,1.2f,4};
   OK(exr_layout_create_ex(doc,font,&config,&a,&error));
   glyphs=exr_layout_glyphs(a,&count);
-  for(i=0;i<count;i++) { if(glyphs[i].flags&EXR_GLYPH_BOLD) bold++; if(glyphs[i].flags&EXR_GLYPH_ITALIC) italic++; }
+  for(i=0;i<count;i++) {
+    size_t styled=(size_t)(strstr(text,"Styled")-text),clear=(size_t)(strstr(text,"Clear")-text),struck=(size_t)(strstr(text,"Struck")-text);
+    if(glyphs[i].flags&EXR_GLYPH_BOLD) bold++; if(glyphs[i].flags&EXR_GLYPH_ITALIC) italic++;
+    if(glyphs[i].start>=styled && glyphs[i].start<styled+6) CHECK(glyphs[i].flags&EXR_GLYPH_UNDERLINE);
+    if(glyphs[i].start>=clear && glyphs[i].start<clear+5) CHECK(!(glyphs[i].flags&EXR_GLYPH_UNDERLINE));
+    if(glyphs[i].start>=struck && glyphs[i].start<struck+6) CHECK(glyphs[i].flags&EXR_GLYPH_STRIKE);
+  }
   CHECK(bold>=11 && italic>=6); CHECK(exr_layout_image(a,0));
   OK(exr_document_export_epub(doc,NULL,&zip,&size,&error));
   OK(exr_document_open_memory(EXR_EPUB,zip,size,&copy,&error)); exr_free(zip);

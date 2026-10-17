@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "layout_internal.h"
 #include FT_SYNTHESIS_H
+#include FT_TRUETYPE_TABLES_H
 static void pixel(exr_bitmap *b, int x, int y, uint32_t color, unsigned coverage) {
   unsigned alpha = (color & 255) * coverage / 255;
   unsigned r = color >> 24, g = (color >> 16) & 255, blue = (color >> 8) & 255;
@@ -24,6 +25,26 @@ static void rectangle(exr_bitmap *b, float x, float y, float w, float h, uint32_
   for (yy = top; yy < bottom; yy++)
     for (xx = left; xx < right; xx++)
       pixel(b, xx, yy, color, 255);
+}
+static void decoration(exr_bitmap *out,const exr_glyph *g,const exr_glyph *next,FT_Face face) {
+  float thickness=fmaxf(1,fminf(g->size/6,(float)FT_MulFix(face->underline_thickness,face->size->metrics.y_scale)/64));
+  float left=fmaxf(floorf(g->x),ceilf(g->clip_left)),right=g->x+g->advance;
+  if(next && !(next->flags&EXR_GLYPH_HIDDEN) && (next->flags&EXR_DECORATIONS)==(g->flags&EXR_DECORATIONS) &&
+      next->color==g->color && fabsf(next->baseline-g->baseline)<0.01f) right=fmaxf(right,next->x);
+  right=fminf(ceilf(right),ceilf(g->clip_right));
+  if(g->flags&EXR_GLYPH_UNDERLINE) {
+    float position=(float)FT_MulFix(face->underline_position,face->size->metrics.y_scale)/64;
+    rectangle(out,left,g->baseline-position,right-left,thickness,g->color);
+  }
+  if(g->flags&EXR_GLYPH_STRIKE) {
+    const TT_OS2 *os2=FT_Get_Sfnt_Table(face,ft_sfnt_os2);
+    float position=g->size*0.3f,strike_thickness=thickness;
+    if(os2) {
+      position=(float)FT_MulFix(os2->yStrikeoutPosition,face->size->metrics.y_scale)/64;
+      strike_thickness=fmaxf(1,fminf(g->size/6,(float)FT_MulFix(os2->yStrikeoutSize,face->size->metrics.y_scale)/64));
+    }
+    rectangle(out,left,g->baseline-position,right-left,strike_thickness,g->color);
+  }
 }
 static exr_status picture(exr_bitmap *out, const exr_box *box, const exr_bitmap *src,
                              const exr_control *control, exr_error *error) {
@@ -160,6 +181,10 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
             continue;
           pixel(out, x, y, g->color, a);
         }
+      if(g->flags&EXR_DECORATIONS) {
+        size_t end=l->lines[i].glyph_start+l->lines[i].glyph_count;
+        decoration(out,g,j+1<end ? &l->glyphs[j+1] : NULL,face);
+      }
     }
   if (exr_control_poll(control, EXR_STAGE_RENDER, p->box_count + p->line_count,
                          p->box_count + p->line_count, e) != EXR_OK) goto cancelled;

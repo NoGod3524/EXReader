@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.25.0"
+#define EXR_VERSION "0.26.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -232,7 +232,8 @@ enum {
 enum {
   EXR_GLYPH_BOLD = 1, EXR_GLYPH_ITALIC = 2, EXR_GLYPH_HIDDEN = 4,
   EXR_GLYPH_MISSING = 8, /* No supplied face covers this visible scalar; glyph 0 is used. */
-  EXR_GLYPH_SHAPED = 16 /* Advances/offsets include OpenType positioning. */
+  EXR_GLYPH_SHAPED = 16, /* Advances/offsets include OpenType positioning. */
+  EXR_GLYPH_UNDERLINE = 32, EXR_GLYPH_STRIKE = 64
 };
 
 typedef struct {

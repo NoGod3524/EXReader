@@ -212,7 +212,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
       int removed = (v->flags & EXR_GLYPH_HIDDEN) && v->bidi_level == UINT_MAX;
       /* X9 removes controls from visual ordering, not from shaping context. */
       if ((!removed && (v->font_index != g->font_index || v->size != g->size ||
-          (((v->flags & 3) != (g->flags & 3) || v->color != g->color) &&
+          (((v->flags & (3|EXR_DECORATIONS)) != (g->flags & (3|EXR_DECORATIONS)) || v->color != g->color) &&
            v->cluster_start != g->cluster_start) ||
           v->bidi_level != g->bidi_level)) || (tag && next_tag && tag != next_tag) ||
           (v->boundaries & (EXR_BOUNDARY_LINE | EXR_BOUNDARY_MANDATORY)) ||
@@ -277,7 +277,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
       v.advance = shaped[j].advance_x;
       v.offset_x = shaped[j].offset_x;
       v.offset_y = shaped[j].offset_y;
-      v.flags = shaped[j].flags | EXR_GLYPH_SHAPED;
+      v.flags = shaped[j].flags | EXR_GLYPH_SHAPED | (v.flags & EXR_DECORATIONS);
       if (v.bidi_level == UINT_MAX) v.flags |= EXR_GLYPH_HIDDEN;
       if (result.glyph_count &&
           result.glyphs[result.glyph_count - 1].cluster_start == v.cluster_start)
