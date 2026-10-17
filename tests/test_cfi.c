@@ -81,7 +81,14 @@ static void full_custom(void) {
   { exr_publication *publication=NULL; exr_document *part=NULL; size_t nc;
     OK(exr_publication_open_memory(EXR_EPUB,archive,size,&publication,&error)); OK(exr_publication_load(publication,1,&part,&error)); nodes=exr_document_nodes(part,&nc);
     for(i=0;i<nc;i++) if(nodes[i].kind==EXR_NODE_TEXT) break; CHECK(i<nc); point=(exr_cfi_point){i,0,0};
-    CHECK(exr_document_cfi_create(part,0,&point,NULL,&cfi,&error)==EXR_FORMAT && !cfi); exr_document_free(part); exr_publication_free(publication);
+    CHECK(exr_document_cfi_create(part,0,&point,NULL,&cfi,&error)==EXR_FORMAT && !cfi);
+    { exr_document *resolved=NULL; exr_cfi_point found; size_t target; char *again=NULL;
+      OK(exr_publication_cfi_create(publication,1,part,&point,NULL,&cfi,&error)); CHECK(strstr(cfi,"/6[s2]!"));
+      OK(exr_publication_cfi_resolve(publication,cfi,NULL,&target,&resolved,&found,&error)); CHECK(target==1 && found.offset==0 && resolved);
+      OK(exr_publication_cfi_create(publication,target,resolved,&found,NULL,&again,&error)); CHECK(!strcmp(again,cfi)); exr_free(again); exr_free(cfi); cfi=NULL;
+      exr_publication_free(publication); publication=NULL; same(resolved,0,found); exr_document_free(resolved);
+    }
+    exr_document_free(part);
   }
   mz_free(archive); nodes=exr_document_nodes(d,&count);
   for(i=0;i<count;i++) if(nodes[i].chapter==0 && nodes[i].kind==EXR_NODE_TEXT) break; CHECK(i<count); point=(exr_cfi_point){i,2,0};
@@ -93,6 +100,33 @@ static void full_custom(void) {
   control.cancelled=cancel; CHECK(exr_document_cfi_resolve(d,"epubcfi(/10/4!/4)",&control,&mapped,&out,&error)==EXR_CANCELLED && mapped==SIZE_MAX && out.node==SIZE_MAX);
   CHECK(exr_document_cfi_create(d,0,&point,&control,&cfi,&error)==EXR_CANCELLED && !cfi);
   exr_document_free(d);
+}
+typedef struct { exr_publication *publication; int attempted; exr_status nested; } reentry;
+static void reenter(void *context,exr_stage stage,uint64_t done,uint64_t total) {
+  reentry *r=context; exr_document *d=NULL; exr_cfi_point point; size_t part; exr_error local;
+  (void)stage; (void)done; (void)total;
+  if(!r->attempted) { r->attempted=1; r->nested=exr_publication_cfi_resolve(r->publication,"epubcfi(/6/2!/4)",NULL,&part,&d,&point,&local); }
+}
+static exr_status never_load(void *context,size_t part,exr_document **out,exr_error *e) { (void)context; (void)part; (void)e; *out=NULL; return EXR_IO; }
+static void lazy_cfi(void) {
+  const char *container="<container><rootfiles><rootfile full-path='book.opf'/></rootfiles></container>";
+  const char *opf="<package><metadata/><manifest><item id='a' href='a.xhtml' media-type='application/xhtml+xml'/><item id='b' href='b.xhtml' media-type='application/xhtml+xml'/></manifest><spine><itemref idref='a'/><itemref idref='b'/></spine></package>";
+  const char *html="<html><head/><body><p>Readable</p></body></html>"; const char *names[]={"META-INF/container.xml","book.opf","a.xhtml","b.xhtml"}; const char *values[]={container,opf,html,"<html"};
+  mz_zip_archive zip={0}; void *bytes=NULL; size_t n,i,count,part; exr_publication *p=NULL,*other=NULL; exr_document *a=NULL,*foreign=NULL,*out=NULL; const exr_node *nodes; exr_cfi_point point,result; exr_control control={0}; reentry attempt={0}; char *cfi=NULL;
+  CHECK(mz_zip_writer_init_heap(&zip,0,0)); for(i=0;i<4;i++) CHECK(mz_zip_writer_add_mem(&zip,names[i],values[i],strlen(values[i]),0)); CHECK(mz_zip_writer_finalize_heap_archive(&zip,&bytes,&n)); mz_zip_writer_end(&zip);
+  CHECK(exr_document_open_memory(EXR_EPUB,bytes,n,&out,&error)==EXR_FORMAT && !out);
+  OK(exr_publication_open_memory(EXR_EPUB,bytes,n,&p,&error)); OK(exr_publication_load(p,0,&a,&error)); nodes=exr_document_nodes(a,&count); for(i=0;i<count;i++) if(nodes[i].kind==EXR_NODE_TEXT) break; CHECK(i<count); point=(exr_cfi_point){i,3,2};
+  OK(exr_publication_cfi_create(p,0,a,&point,NULL,&cfi,&error));
+  attempt.publication=p; control.progress=reenter; control.context=&attempt;
+  OK(exr_publication_cfi_resolve(p,cfi,&control,&part,&out,&result,&error)); CHECK(attempt.attempted && attempt.nested==EXR_ARGUMENT && part==0 && result.offset==3 && result.side==2); exr_document_free(out);
+  CHECK(exr_publication_cfi_resolve(p,"epubcfi(/6/4!/4)",NULL,&part,&out,&result,&error)==EXR_FORMAT && !out && part==SIZE_MAX && result.node==SIZE_MAX);
+  OK(exr_publication_open_memory(EXR_EPUB,bytes,n,&other,&error)); mz_free(bytes); OK(exr_publication_load(other,0,&foreign,&error));
+  { char *invalid=NULL; CHECK(exr_publication_cfi_create(p,0,foreign,&point,NULL,&invalid,&error)==EXR_ARGUMENT && !invalid); }
+  control=(exr_control){cancel,NULL,NULL}; CHECK(exr_publication_cfi_resolve(p,cfi,&control,&part,&out,&result,&error)==EXR_CANCELLED && !out && part==SIZE_MAX && result.node==SIZE_MAX);
+  exr_free(cfi); exr_document_free(a); exr_document_free(foreign); exr_publication_free(p); exr_publication_free(other);
+  { exr_part part_input={"custom","custom.xhtml","Custom",1}; exr_publication_input input={0}; input.parts=&part_input; input.part_count=1; input.load=never_load;
+    OK(exr_publication_create(&input,&p,&error)); CHECK(exr_publication_cfi_resolve(p,"epubcfi(/6/2!/4)",NULL,&part,&out,&result,&error)==EXR_FORMAT && !out && part==SIZE_MAX && result.node==SIZE_MAX); exr_publication_free(p);
+  }
 }
 int main(int argc,char **argv) {
   exr_document *d=custom(0); exr_cfi_point point={8,2,0},out; char *path=NULL; size_t i; exr_control control={0};
@@ -118,5 +152,5 @@ int main(int argc,char **argv) {
   { char *large=malloc(65538); CHECK(large); memset(large,'/',65537); large[65537]=0; CHECK(exr_document_cfi_path_resolve(d,0,large,NULL,&out,&error)==EXR_LIMIT && out.node==SIZE_MAX); free(large); }
   CHECK(exr_document_cfi_path_resolve(d,1,"/4",NULL,&out,&error)==EXR_ARGUMENT && out.node==SIZE_MAX);
   CHECK(exr_document_cfi_path_create(d,0,NULL,NULL,&path,&error)==EXR_ARGUMENT && !path);
-  exr_document_free(d); fixtures(argv[1]); full_fixtures(argv[1]); full_custom(); printf("%u chapter CFI checks passed\n",checks); return 0;
+  exr_document_free(d); fixtures(argv[1]); full_fixtures(argv[1]); full_custom(); lazy_cfi(); printf("%u chapter CFI checks passed\n",checks); return 0;
 }

@@ -1593,3 +1593,15 @@ publication-load snapshots are rejected as complete spine mappings. Malformed
 wrappers, non-spine/virtual/biased package targets, repeated indirection, unsupported
 range syntax, missing IDs, excessive offsets and cancellation clear outputs.
 All 66 local Windows suites pass. The 0.86 5db01d0 CI passed all six jobs.
+
+
+## 0.88 Indexed publication point CFIs
+
+The indexed EPUB provider routes through original package metadata before loading
+only the target chapter. A fixture with a malformed second spine XHTML fails an
+eager whole-document open but successfully creates/resolves a CFI into its first
+chapter. Addressing the damaged chapter fails atomically. Tests cover repeated
+spine parts, returned-snapshot lifetime after publication disposal, rejection of a
+snapshot from another archive instance, callback reentry, cancellation and custom
+providers without an EPUB package. Generic local paths remain independently usable.
+All 66 local Windows suites pass. The 0.87 27746e4 CI passed all six jobs.

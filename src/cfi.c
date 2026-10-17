@@ -209,14 +209,16 @@ static exr_status package_mapping(const exr_document *d,const exr_document *pack
   while(next<d->chapter_count && !d->chapters[next].in_spine) next++;
   return next!=d->chapter_count || *chapter==SIZE_MAX ? invalid(e) : EXR_OK;
 }
-exr_status exr_document_cfi_create(const exr_document *d,size_t chapter,const exr_cfi_point *point,
+exr_status exr_cfi_create_for_part(const exr_document *index,size_t part,const exr_document *d,size_t chapter,const exr_cfi_point *point,
                                      const exr_control *control,char **out,exr_error *e) {
   exr_document *package=NULL; char *prefix=NULL,*suffix=NULL; exr_buffer b={0}; size_t mapped,node; exr_status status;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing full CFI output");
   *out=NULL;
-  if(!d || chapter>=d->chapter_count || !point) return exr_fail(e,EXR_ARGUMENT,"Invalid full CFI location");
-  status=exr_epub_package_tree(d,control,&package,e); if(status!=EXR_OK) goto done;
-  status=package_mapping(d,package,chapter,SIZE_MAX,&mapped,&node,e); if(status!=EXR_OK) goto done;
+  if(!index || part>=index->chapter_count || !d || chapter>=d->chapter_count || !point ||
+     index->shared_archive!=d->shared_archive || strcmp(index->chapters[part].path,d->chapters[chapter].path))
+    return exr_fail(e,EXR_ARGUMENT,"CFI document does not belong to this publication part");
+  status=exr_epub_package_tree(index,control,&package,e); if(status!=EXR_OK) goto done;
+  status=package_mapping(index,package,part,SIZE_MAX,&mapped,&node,e); if(status!=EXR_OK) goto done;
   { exr_cfi_point p={node,SIZE_MAX,0}; status=exr_document_cfi_path_create(package,0,&p,control,&prefix,e); }
   if(status==EXR_OK) status=exr_document_cfi_path_create(d,chapter,point,control,&suffix,e);
   if(status!=EXR_OK) goto done;
@@ -225,13 +227,13 @@ exr_status exr_document_cfi_create(const exr_document *d,size_t chapter,const ex
 done:
   free(prefix); free(suffix); free(b.data); exr_document_free(package); return status;
 }
-exr_status exr_document_cfi_resolve(const exr_document *d,const char *cfi,const exr_control *control,
-                                      size_t *chapter,exr_cfi_point *out,exr_error *e) {
-  exr_document *package=NULL; exr_cfi_point prefix_point,result; char *prefix=NULL,*suffix=NULL;
+exr_status exr_cfi_route(const exr_document *d,const char *cfi,const exr_control *control,
+                            size_t *chapter,char **local,exr_error *e) {
+  exr_document *package=NULL; exr_cfi_point prefix_point; char *prefix=NULL,*suffix=NULL;
   size_t n=0,i,bang=SIZE_MAX,mapped,node; int bracket=0; exr_status status;
   if(chapter) *chapter=SIZE_MAX;
-  if(out) *out=(exr_cfi_point){SIZE_MAX,SIZE_MAX,0};
-  if(!d || !cfi || !chapter || !out) return exr_fail(e,EXR_ARGUMENT,"Invalid full CFI resolve arguments");
+  if(local) *local=NULL;
+  if(!d || !cfi || !chapter || !local) return exr_fail(e,EXR_ARGUMENT,"Invalid full CFI route arguments");
   while(n<=CFI_LIMIT && cfi[n]) n++;
   if(n>CFI_LIMIT) return exr_fail(e,EXR_LIMIT,"Full CFI exceeds size limit");
   if(n<10 || strncmp(cfi,"epubcfi(",8) || cfi[n-1]!=')') return invalid(e);
@@ -249,8 +251,22 @@ exr_status exr_document_cfi_resolve(const exr_document *d,const char *cfi,const 
   status=exr_document_cfi_path_resolve(package,0,prefix,control,&prefix_point,e); if(status!=EXR_OK) goto done;
   if(prefix_point.offset!=SIZE_MAX || prefix_point.side) { status=invalid(e); goto done; }
   status=package_mapping(d,package,SIZE_MAX,prefix_point.node,&mapped,&node,e); if(status!=EXR_OK) goto done;
-  status=exr_document_cfi_path_resolve(d,mapped,suffix,control,&result,e);
-  if(status==EXR_OK) { *chapter=mapped; *out=result; }
+  *chapter=mapped; *local=suffix; suffix=NULL; status=EXR_OK;
 done:
   free(prefix); free(suffix); exr_document_free(package); return status;
+}
+exr_status exr_document_cfi_create(const exr_document *d,size_t chapter,const exr_cfi_point *point,
+                                     const exr_control *control,char **out,exr_error *e) {
+  return exr_cfi_create_for_part(d,chapter,d,chapter,point,control,out,e);
+}
+exr_status exr_document_cfi_resolve(const exr_document *d,const char *cfi,const exr_control *control,
+                                      size_t *chapter,exr_cfi_point *out,exr_error *e) {
+  size_t mapped; char *local=NULL; exr_cfi_point result; exr_status status;
+  if(chapter) *chapter=SIZE_MAX;
+  if(out) *out=(exr_cfi_point){SIZE_MAX,SIZE_MAX,0};
+  if(!chapter || !out) return exr_fail(e,EXR_ARGUMENT,"Missing CFI resolve output");
+  status=exr_cfi_route(d,cfi,control,&mapped,&local,e);
+  if(status==EXR_OK) status=exr_document_cfi_path_resolve(d,mapped,local,control,&result,e);
+  if(status==EXR_OK) { *chapter=mapped; *out=result; }
+  free(local); return status;
 }

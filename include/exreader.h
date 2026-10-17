@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.87.0"
+#define EXR_VERSION "0.88.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -718,6 +718,14 @@ EXR_API exr_status exr_publication_navigation(exr_publication *publication,
 /* Own the returned document with document_free(); offsets/indices are part-local. */
 EXR_API exr_status exr_publication_load(exr_publication *publication, size_t part,
                                         exr_document **out, exr_error *error);
+/* Full point CFI for the built-in indexed EPUB provider. Create accepts a
+   single-chapter snapshot from this publication, with snapshot-local node IDs.
+   Resolve parses only the addressed chapter and returns an independent owned
+   document (document_free), plus a point local to it. Auxiliary parts fail. */
+EXR_API exr_status exr_publication_cfi_create(exr_publication *publication,size_t part,const exr_document *document,
+                                              const exr_cfi_point *point,const exr_control *control,char **cfi,exr_error *error);
+EXR_API exr_status exr_publication_cfi_resolve(exr_publication *publication,const char *cfi,const exr_control *control,
+                                               size_t *part,exr_document **document,exr_cfi_point *point,exr_error *error);
 EXR_API exr_status exr_font_open(const char *path, exr_font **out, exr_error *error);
 /* Immutable ordered fallback list, 1..32 scalable Unicode faces, at most 128 MiB
    of copied font bytes in total. Failure leaves *out NULL. No system font lookup. */
