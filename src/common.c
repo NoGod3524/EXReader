@@ -132,6 +132,24 @@ int exr_next(const char *s, size_t n, size_t *at, uint32_t *cp) {
   return 1;
 }
 
+/* Shared prefix table for one-shot and incremental byte matching. */
+exr_status exr_kmp_prefix(const char *q,size_t n,const exr_control *control,uint32_t **out,exr_error *e) {
+  uint32_t *prefix; size_t i,j=0;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing search prefix output");
+  *out=NULL;
+  if(!q || !n) return exr_fail(e,EXR_ARGUMENT,"Missing search pattern");
+  if(n>(size_t)1024*1024) return exr_fail(e,EXR_LIMIT,"Search query exceeds 1 MiB");
+  prefix=malloc(n*sizeof(*prefix)); if(!prefix) return exr_fail(e,EXR_MEMORY,"Search prefix allocation failed");
+  prefix[0]=0;
+  for(i=1;i<n;i++) {
+    exr_status status;
+    if(!(i&4095) && (status=exr_control_cancel(control,e))!=EXR_OK) { free(prefix); return status; }
+    while(j && q[i]!=q[j]) j=prefix[j-1];
+    if(q[i]==q[j]) j++;
+    prefix[i]=(uint32_t)j;
+  }
+  *out=prefix; return EXR_OK;
+}
 /* KMP keeps adversarial repeated-prefix searches linear, with <=4 MiB scratch. */
 exr_status exr_find_bytes(const char *text,size_t size,const char *q,size_t n,size_t from,
                             const exr_control *control,size_t *start,size_t *end,exr_error *e) {
@@ -147,14 +165,7 @@ exr_status exr_find_bytes(const char *text,size_t size,const char *q,size_t n,si
   }
   while(from<size && ((unsigned char)text[from]&0xc0)==0x80) from++;
   if(n>size-from) return exr_fail(e,EXR_OK,"");
-  prefix=malloc(n*sizeof(*prefix)); if(!prefix) return exr_fail(e,EXR_MEMORY,"Search prefix allocation failed");
-  prefix[0]=0;
-  for(i=1;i<n;i++) {
-    if(!(i&4095) && exr_control_cancel(control,e)!=EXR_OK) { free(prefix); return EXR_CANCELLED; }
-    while(j && q[i]!=q[j]) j=prefix[j-1];
-    if(q[i]==q[j]) j++;
-    prefix[i]=(uint32_t)j;
-  }
+  status=exr_kmp_prefix(q,n,control,&prefix,e); if(status!=EXR_OK) return status;
   j=0;
   for(i=from;i<size;i++) {
     if(!((i-from)&4095) && exr_control_cancel(control,e)!=EXR_OK) { free(prefix); return EXR_CANCELLED; }

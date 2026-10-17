@@ -876,3 +876,18 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 `EXR_ABI_VERSION` / `exr_abi_version()` 提供从 0.91 起的 ABI epoch 1。版本字符串仍用 EXR_VERSION / exr_version。ABI 与库版本、SQLite schema 分别管理；同一 epoch 的数组记录不能追加字段改变步长，带 struct_size 的输入维持原始前缀。完整规则见 [SDK_COMPATIBILITY.md](SDK_COMPATIBILITY.md)。
 
 安装包新增可搬迁的 CMake config：`find_package(EXReader 0.91 CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
+
+
+## 通用持久化全文索引（0.92）
+
+`exr_text_index` 使用独立 SQLite 索引文件，application_id=EXRI、schema 1；不把新表塞进普通 schema 4 书库。宿主提供稳定 source/part 标识和 UTF-8 文字，可用章节、固定页面或任意其他分段，不假定格式、书籍 ID 类型或 UI。索引是可重建的派生数据，普通书库备份不包含该独立文件。
+
+`exr_text_index_put` 原子替换一个分段，`remove(source,part)` 删除一段，part=NULL 删除该来源全部分段。外部内容 FTS5 表与正文表在同一事务内更新，INSERT/COMMIT 失败或取消均回滚。source 非空、part 可为空，标识各最多 4096 UTF-8 字节；每段正文最多 64 MiB 减一字节，保留 NUL，不折叠空白或转换大小写。
+
+`exr_text_index_query` 接受 1–4096 UTF-8 字节的字面子串，可按 source 筛选。三个及以上 Unicode 标量用 SQLite FTS5 case-sensitive trigram 选候选，再由共享 C KMP 字节匹配器确认；一两个标量或含 NUL 的查询扫描文字候选，因而支持中文单字/双字搜索。含 NUL 的分段始终进入候选核验，避免 tokenizer 边界影响其后方文字。引号和 AND/OR 等都按普通文字处理，不执行搜索表达式。
+
+`exr_text_query_next` 逐个返回 source、part、原始文字/长度与 UTF-8 start/end，包括重叠命中，顺序为内部行顺序再偏移。一个查询只保留一份模式前缀表，跨 next 继续匹配，不为每次命中重建搜索表。返回指针借用到下次 next 或 free；正文可能有 NUL，使用 text_size。EOF 返回 found=0，错误清空输出并使查询失效，释放后可重新开始。
+
+同一索引句柄最多一个存活查询，查询释放前拒绝该句柄的写入。查询持有索引，可晚于 index_close 释放；独立连接可用 WAL 同时写入，读取快照从第一次 step 开始。操作与生命周期由宿主串行管理，控制回调上下文借用到 query_free；支持协作取消。
+
+构建选项 `EXR_ENABLE_TEXT_INDEX` 默认 ON，复用现有 SQLite C 组件。需要更小核心时设 OFF，公开函数仍保留 ABI，但 available=0、open 返回 EXR_FORMAT；其他阅读功能仍可使用。`exr_text_index_available` 可在宿主界面决定是否提供索引操作。此接口尚不自动遍历书库建索引，也不提供模糊/词干/相关性排名；宿主决定分段和重建时机。
