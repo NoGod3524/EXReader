@@ -3,7 +3,9 @@
 #include <ctype.h>
 enum { BOLD, ITALIC, SIZE, COLOR, BACKGROUND, UNDERLINE, STRIKE, ALIGN, LEFT, RIGHT,
        INDENT, BEFORE, AFTER, LEADING, MULTIPLE, DIRECTION, RTF_PROPERTIES };
-typedef struct { int skip,uc,destination,picture,inherited_skip,star,font,field; int properties[RTF_PROPERTIES]; } rtf_state;
+typedef struct { int skip,uc,destination,picture,inherited_skip,star,font,field,note; int properties[RTF_PROPERTIES]; } rtf_state;
+typedef struct { size_t node,paragraph; } rtf_note;
+
 typedef struct { exr_buffer instruction; char *href; int ready; } rtf_field;
 typedef struct { exr_buffer bytes; int type,nibble,width,height,goal_width,goal_height,scale_x,scale_y; } rtf_picture;
 typedef struct {
@@ -25,6 +27,7 @@ typedef struct {
   size_t field_count,field_capacity;
   rtf_picture *pictures;
   size_t picture_count,picture_capacity;
+  rtf_note *notes; size_t note_count,note_capacity,pending_note_ref; int active_note;
   int last_picture;
   exr_status status;
   exr_error *error;
@@ -55,7 +58,8 @@ static int paragraph_style(rtf_context *c,const rtf_state *s) {
 static int paragraph(rtf_context *c,const rtf_state *s) {
   if(c->paragraph==SIZE_MAX) {
     size_t parent=c->body;
-    if(c->row!=SIZE_MAX) {
+    if(c->active_note>=0) parent=c->notes[c->active_note].node;
+    else if(c->row!=SIZE_MAX) {
       if(c->cell==SIZE_MAX) {
         if(c->cell_count>=256) { c->status=EXR_LIMIT; return 0; }
         c->cell=make(c,c->row,EXR_NODE_CELL,"td",NULL); if(c->cell==SIZE_MAX) return 0;
@@ -116,19 +120,23 @@ static int cell_content(const exr_document *d,size_t node) {
   }
   return 0;
 }
+static void append_existing(rtf_context *c,size_t parent,size_t node) {
+  exr_document *d=c->doc; size_t previous=d->last_children[parent];
+  d->nodes[node].parent=parent; d->nodes[node].next_sibling=SIZE_MAX;
+  if(previous==SIZE_MAX) d->nodes[parent].first_child=node; else d->nodes[previous].next_sibling=node;
+  d->last_children[parent]=node;
+}
 /* Rebuild row links once; continued physical cells become ordinary content
    containers inside the merged owner, preserving all nonempty content. */
 static int cell_append(rtf_context *c,size_t parent,size_t cell,int continuation) {
-  exr_document *d=c->doc; exr_node *n=&d->nodes[cell]; size_t previous=d->last_children[parent];
+  exr_document *d=c->doc; exr_node *n=&d->nodes[cell];
   if(continuation) {
     const char name[]="http://www.w3.org/1999/xhtml|div"; char *copy=exr_model_copy(d,name,sizeof(name)-1);
     if(!copy) { c->status=EXR_LIMIT; return 0; }
     d->model_bytes-=strlen(n->name)+1; free((void *)n->name); n->name=copy; n->kind=EXR_NODE_ELEMENT;
     if(!cell_content(d,cell) && !set(c,cell,"style","display:none;")) return 0;
   }
-  n->parent=parent; n->next_sibling=SIZE_MAX;
-  if(previous==SIZE_MAX) d->nodes[parent].first_child=cell; else d->nodes[previous].next_sibling=cell;
-  d->last_children[parent]=cell; return 1;
+  append_existing(c,parent,cell); return 1;
 }
 static int row_merge(rtf_context *c) {
   size_t i=0,k;
@@ -163,8 +171,40 @@ static int row_merge(rtf_context *c) {
 invalid:
   c->status=EXR_FORMAT; return 0;
 }
+static int note_reference(rtf_context *c,const rtf_state *s) {
+  size_t reference; char id[48],href[64],label[32];
+  if(c->pending_note_ref!=SIZE_MAX) { c->status=EXR_FORMAT; return 0; }
+  if(c->note_count>=10000) { c->status=EXR_LIMIT; return 0; }
+  if(!run_flush(c) || !paragraph(c,s)) return 0;
+  snprintf(id,sizeof(id),"rtf-ref-%zu",c->note_count+1); snprintf(href,sizeof(href),"#rtf-note-%zu",c->note_count+1); snprintf(label,sizeof(label),"%zu",c->note_count+1);
+  reference=make(c,c->paragraph,EXR_NODE_LINK,"a",NULL);
+  if(reference==SIZE_MAX || !set(c,reference,"id",id) || !set(c,reference,"href",href) || !set(c,reference,"role","doc-noteref") || make(c,reference,EXR_NODE_TEXT,NULL,label)==SIZE_MAX) return 0;
+  c->pending_note_ref=reference; return 1;
+}
+static int note_start(rtf_context *c,rtf_state *s) {
+  size_t node; char id[48]; rtf_note *note;
+  if(s->note>=0 || c->active_note>=0) { c->status=EXR_FORMAT; return 0; }
+  if(!run_flush(c) || !paragraph(c,s)) return 0;
+  if(c->note_count>=10000 || !exr_grow((void **)&c->notes,&c->note_capacity,c->note_count+1,sizeof(*c->notes))) { c->status=EXR_LIMIT; return 0; }
+  if(c->pending_note_ref==SIZE_MAX && !note_reference(c,s)) return 0;
+  c->pending_note_ref=SIZE_MAX;
+  node=make(c,SIZE_MAX,EXR_NODE_NOTE,"aside",NULL); if(node==SIZE_MAX) return 0;
+  snprintf(id,sizeof(id),"rtf-note-%zu",c->note_count+1);
+  if(!set(c,node,"id",id) || !set(c,node,"role","doc-footnote")) return 0;
+  note=&c->notes[c->note_count]; note->node=node; note->paragraph=c->paragraph;
+  s->note=c->active_note=(int)c->note_count++; s->field=-1; c->paragraph=SIZE_MAX; c->last_picture=0; return 1;
+}
+static int note_finish(rtf_context *c,const rtf_state *s) {
+  size_t backlink; char href[64]; rtf_note *note;
+  if(c->active_note!=s->note || s->note<0 || !run_flush(c) || !paragraph(c,s)) { if(c->status==EXR_OK) c->status=EXR_FORMAT; return 0; }
+  note=&c->notes[s->note]; snprintf(href,sizeof(href),"#rtf-ref-%d",s->note+1);
+  backlink=make(c,c->paragraph,EXR_NODE_LINK,"a",NULL);
+  if(backlink==SIZE_MAX || !set(c,backlink,"href",href) || !set(c,backlink,"role","doc-backlink") || make(c,backlink,EXR_NODE_TEXT,NULL,"\xe2\x86\xa9")==SIZE_MAX) return 0;
+  c->paragraph=note->paragraph; c->active_note=-1; c->last_picture=0; return 1;
+}
 static int table_control(rtf_context *c,const rtf_state *state,const char *word,long value,int has,int *handled) {
   *handled=1;
+  if(c->active_note>=0 && (!strcmp(word,"trowd") || !strcmp(word,"cell") || !strcmp(word,"row") || !strcmp(word,"cellx") || !strcmp(word,"trleft") || !strncmp(word,"clm",3) || !strncmp(word,"clvm",4))) { c->status=EXR_FORMAT; return 0; }
   if(!strcmp(word,"trowd")) {
     if(c->row!=SIZE_MAX) { c->status=EXR_FORMAT; return 0; }
     if(!run_flush(c)) return 0;
@@ -380,6 +420,7 @@ done:
   return ok && c->status==EXR_OK;
 }
 static int destination_finish(rtf_context *c,const rtf_state *s,const rtf_state *parent) {
+  if(s->note>=0 && s->note!=parent->note && !note_finish(c,s)) return 0;
   if(s->destination==5 && parent->destination!=5) {
     exr_buffer id={0}; size_t start=0,end=c->bookmark.size,node; int ok;
     while(start<end && isspace((unsigned char)c->bookmark.data[start])) start++;
@@ -441,7 +482,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
   exr_status result = EXR_FORMAT;
   if (n < 5 || memcmp(s, "{\\rtf", 5))
     return exr_fail(e, EXR_FORMAT, "Invalid RTF header");
-  context.doc=d; context.error=e; context.paragraph=context.table=context.row=context.cell=SIZE_MAX; states[0].uc=1; states[0].picture=states[0].font=states[0].field=-1;
+  context.doc=d; context.error=e; context.paragraph=context.table=context.row=context.cell=SIZE_MAX; states[0].uc=1; states[0].picture=states[0].font=states[0].field=states[0].note=-1; context.active_note=-1; context.pending_note_ref=SIZE_MAX;
   if(exr_model_node(d,SIZE_MAX,SIZE_MAX,EXR_NODE_DOCUMENT,NULL,NULL,0)==SIZE_MAX) return EXR_LIMIT;
   {
     size_t chapter=make(&context,0,EXR_NODE_CHAPTER,NULL,NULL),html,head,title;
@@ -552,6 +593,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       }
       optional=states[depth].star; states[depth].star=0;
       if(!states[depth].inherited_skip && states[depth].destination==0 && (!states[depth].skip || optional)) {
+        if(!strcmp(word,"footnote")) { states[depth].skip=0; if(!note_start(&context,&states[depth])) goto done; continue; }
         if(!strcmp(word,"fonttbl")) {
           if(!context.fonts) { context.fonts=calloc(4096,sizeof(*context.fonts)); if(!context.fonts) { context.status=EXR_MEMORY; goto done; } }
           states[depth].skip=0; states[depth].destination=3; states[depth].font=-1; context.font_name.size=0; continue;
@@ -603,6 +645,12 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
         if(!literal(&context,&states[depth],' ')) goto done;
         continue;
       }
+      if(!states[depth].destination && !strcmp(word,"chftn")) {
+        if(states[depth].note>=0) { char label[32]; size_t k; snprintf(label,sizeof(label),"%d ",states[depth].note+1); for(k=0;label[k];k++) if(!literal(&context,&states[depth],(unsigned char)label[k])) goto done; }
+        else if(!note_reference(&context,&states[depth])) goto done;
+        continue;
+      }
+      if(!states[depth].destination && !strcmp(word,"ftnalt") && states[depth].note>=0) { if(!set(&context,context.notes[states[depth].note].node,"role","doc-endnote")) goto done; continue; }
       if(!states[depth].destination) {
         int handled; if(!table_control(&context,&states[depth],word,value,has,&handled)) goto done; if(handled) continue;
       }
@@ -652,15 +700,16 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
     if (high || !c || !literal(&context,&states[depth],exr_windows1252((unsigned char)c)))
       goto done;
   }
-  if (depth || high || !run_flush(&context) || context.row!=SIZE_MAX)
+  if (depth || high || !run_flush(&context) || context.row!=SIZE_MAX || context.active_note>=0 || context.pending_note_ref!=SIZE_MAX)
     goto done;
+  for(i=0;i<context.note_count;i++) append_existing(&context,context.body,context.notes[i].node);
   result = EXR_OK;
 done:
   if(context.fonts) { for(i=0;i<4096;i++) free(context.fonts[i]); }
   for(i=0;i<context.field_count;i++) { free(context.fields[i].instruction.data); free(context.fields[i].href); }
   free(context.fields); free(context.fonts); free(context.font_name.data); free(context.bookmark.data); free(context.title.data);
   for(i=0;i<context.picture_count;i++) free(context.pictures[i].bytes.data);
-  free(context.pictures); free(context.run.data);
+  free(context.pictures); free(context.notes); free(context.run.data);
   if(result==EXR_OK) return EXR_OK;
   result=context.status!=EXR_OK ? context.status : EXR_FORMAT;
   return exr_fail(e,result,"Invalid or unsupported RTF stream");
