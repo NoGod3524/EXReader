@@ -77,7 +77,9 @@ exr_status exr_xml_resource(const exr_document *doc, size_t resource, const char
                              exr_document **out, exr_error *error);
 exr_status exr_epub_navigation(const exr_document *index, size_t metadata_bytes,
                                 exr_navigation **entries, size_t *count, exr_error *error);
-exr_status exr_cfi_create_for_part(const exr_document *index,size_t part,const exr_document *doc,size_t chapter,const exr_cfi_point *point,const exr_control *control,char **out,exr_error *error);
+exr_status exr_cfi_context(const exr_document *doc,size_t chapter,const exr_cfi_point *point,size_t context,const exr_control *control,char **before,char **after,exr_error *error);
+exr_status exr_cfi_assertion_resolve(const exr_document *doc,size_t chapter,const char *before,const char *after,const exr_control *control,exr_cfi_point *point,exr_error *error);
+exr_status exr_cfi_create_for_part(const exr_document *index,size_t part,const exr_document *doc,size_t chapter,const exr_cfi_point *point,size_t context,const exr_control *control,char **out,exr_error *error);
 exr_status exr_cfi_route(const exr_document *index,const char *cfi,const exr_control *control,size_t *part,char **local,exr_error *error);
 exr_status exr_epub_package_tree(const exr_document *doc,const exr_control *control,exr_document **out,exr_error *error);
 exr_status exr_epub_export_check(const exr_document *doc, exr_error *error);

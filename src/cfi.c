@@ -98,20 +98,21 @@ static int integer(const char **at,size_t *out) {
   do { unsigned v=(unsigned)(*p-'0'); if(n>(SIZE_MAX-v)/10) return 0; n=n*10+v; p++; } while(*p>='0' && *p<='9');
   *at=p; *out=n; return 1;
 }
-static int assertion(const char **at,exr_buffer *id,unsigned *side) {
-  const char *p=*at; *side=0;
+static int assertion(const char **at,exr_buffer *id,unsigned *side,exr_buffer *after) {
+  const char *p=*at; exr_buffer *value=id; *side=0;
   if(*p!='[') return 1;
   p++;
   while(*p && *p!=']' && *p!=';') {
     if(*p=='^') { p++; if(!*p || !strchr("^[](),;",*p)) return 0; }
-    else if(strchr("[(),",*p)) return 0;
-    if(id->size==4096 || !exr_append(id,p++,1)) return 0;
+    else if(*p==',') { if(!after || value==after) return 0; value=after; p++; continue; }
+    else if(strchr("[()",*p)) return 0;
+    if(value->size==4096 || !exr_append(value,p++,1)) return 0;
   }
   if(*p==';') {
     if(strncmp(p,";s=",3) || (p[3]!='a' && p[3]!='b') || p[4]!=']') return 0;
     *side=p[3]=='b' ? 1u : 2u; p+=4;
   }
-  if(*p!=']' || (!id->size && !*side)) return 0;
+  if(*p!=']' || (!id->size && (!after || !after->size) && !*side)) return 0;
   *at=p+1; return 1;
 }
 /* Map a virtual text chunk (which may span adjacent model text nodes) back to
@@ -134,7 +135,7 @@ static int chunk(const exr_document *d,size_t parent,size_t index,size_t offset,
 }
 exr_status exr_document_cfi_path_resolve(const exr_document *d,size_t chapter,const char *path,
                                            const exr_control *control,exr_cfi_point *out,exr_error *e) {
-  exr_status status; exr_cfi_point result={SIZE_MAX,SIZE_MAX,0}; exr_buffer id={0}; size_t node,depth=0,n=0,at=0; uint32_t cp;
+  exr_status status; exr_cfi_point result={SIZE_MAX,SIZE_MAX,0}; exr_buffer id={0},after={0}; size_t node,depth=0,n=0,at=0; uint32_t cp;
   const char *p=path;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing CFI point output");
   *out=result;
@@ -152,14 +153,20 @@ exr_status exr_document_cfi_path_resolve(const exr_document *d,size_t chapter,co
     if(index&1) {
       if(*p==':') { p++; if(!integer(&p,&offset)) goto malformed; }
       id.size=0; if(id.data) id.data[0]=0;
-      if(!assertion(&p,&id,&side) || id.size || *p || !chunk(d,node,index,offset,&result)) goto malformed;
-      result.side=side; break;
+      { int located;
+        if(!assertion(&p,&id,&side,&after) || *p) goto malformed;
+        located=chunk(d,node,index,offset,&result);
+        if(!located) { result=(exr_cfi_point){SIZE_MAX,SIZE_MAX,0}; if(!id.size && !after.size) goto malformed; }
+        result.side=side;
+        if(id.size || after.size) { status=exr_cfi_assertion_resolve(d,chapter,id.data,after.data,control,&result,e); if(status!=EXR_OK) goto done; }
+      }
+      break;
     }
     for(child=d->nodes[node].first_child;child!=SIZE_MAX;child=d->nodes[child].next_sibling,children++) {
       if(d->nodes[child].kind!=EXR_NODE_TEXT) { ordinal+=2; if(ordinal==index) selected=child; }
     }
     id.size=0; if(id.data) id.data[0]=0;
-    if(!assertion(&p,&id,&side)) goto malformed;
+    if(!assertion(&p,&id,&side,NULL)) goto malformed;
     if(id.size) {
       const char *actual=selected!=SIZE_MAX ? identifier(&d->nodes[selected]) : NULL;
       if(!actual || strcmp(actual,id.data)) {
@@ -185,7 +192,7 @@ exr_status exr_document_cfi_path_resolve(const exr_document *d,size_t chapter,co
 malformed:
   status=invalid(e);
 done:
-  free(id.data); return status;
+  free(id.data); free(after.data); return status;
 }
 
 static const char *tag(const exr_node *n) { const char *p=n->name ? strrchr(n->name,'|') : NULL; return p ? p+1 : n->name ? n->name : ""; }
@@ -210,7 +217,7 @@ static exr_status package_mapping(const exr_document *d,const exr_document *pack
   while(next<d->chapter_count && !d->chapters[next].in_spine) next++;
   return next!=d->chapter_count || *chapter==SIZE_MAX ? invalid(e) : EXR_OK;
 }
-exr_status exr_cfi_create_for_part(const exr_document *index,size_t part,const exr_document *d,size_t chapter,const exr_cfi_point *point,
+exr_status exr_cfi_create_for_part(const exr_document *index,size_t part,const exr_document *d,size_t chapter,const exr_cfi_point *point,size_t context,
                                      const exr_control *control,char **out,exr_error *e) {
   exr_document *package=NULL; char *prefix=NULL,*suffix=NULL; exr_buffer b={0}; size_t mapped,node; exr_status status;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing full CFI output");
@@ -221,7 +228,7 @@ exr_status exr_cfi_create_for_part(const exr_document *index,size_t part,const e
   status=exr_epub_package_tree(index,control,&package,e); if(status!=EXR_OK) goto done;
   status=package_mapping(index,package,part,SIZE_MAX,&mapped,&node,e); if(status!=EXR_OK) goto done;
   { exr_cfi_point p={node,SIZE_MAX,0}; status=exr_document_cfi_path_create(package,0,&p,control,&prefix,e); }
-  if(status==EXR_OK) status=exr_document_cfi_path_create(d,chapter,point,control,&suffix,e);
+  if(status==EXR_OK) status=context ? exr_document_cfi_path_create_quoted(d,chapter,point,context,control,&suffix,e) : exr_document_cfi_path_create(d,chapter,point,control,&suffix,e);
   if(status!=EXR_OK) goto done;
   if(!put(&b,"epubcfi(") || !put(&b,prefix) || !put(&b,"!") || !put(&b,suffix) || !put(&b,")") || b.size>CFI_LIMIT) { status=exr_fail(e,EXR_LIMIT,"Full CFI exceeds allocation or size limit"); goto done; }
   status=exr_control_cancel(control,e); if(status==EXR_OK) { *out=b.data; b.data=NULL; status=exr_fail(e,EXR_OK,""); }
@@ -263,7 +270,7 @@ done:
 }
 exr_status exr_document_cfi_create(const exr_document *d,size_t chapter,const exr_cfi_point *point,
                                      const exr_control *control,char **out,exr_error *e) {
-  return exr_cfi_create_for_part(d,chapter,d,chapter,point,control,out,e);
+  return exr_cfi_create_for_part(d,chapter,d,chapter,point,0,control,out,e);
 }
 exr_status exr_document_cfi_resolve(const exr_document *d,const char *cfi,const exr_control *control,
                                       size_t *chapter,exr_cfi_point *out,exr_error *e) {
@@ -377,4 +384,31 @@ exr_status exr_document_cfi_range_resolve(const exr_document *d,const char *cfi,
   *out=range; status=exr_fail(e,EXR_OK,"");
 done:
   free(a); free(b); free(canonical_a); free(canonical_b); return status;
+}
+
+exr_status exr_document_cfi_path_create_quoted(const exr_document *d,size_t chapter,const exr_cfi_point *point,size_t context,
+                                                const exr_control *control,char **out,exr_error *e) {
+  exr_cfi_point bare; char *path=NULL,*before=NULL,*after=NULL; exr_buffer b={0}; exr_status status;
+  if(out) *out=NULL;
+  if(!out || !point || point->side>2 || point->offset==SIZE_MAX || !context || context>32) return exr_fail(e,EXR_ARGUMENT,"Quoted CFI needs a text boundary and 1..32 context scalars");
+  bare=*point; bare.side=0; status=exr_document_cfi_path_create(d,chapter,&bare,control,&path,e); if(status!=EXR_OK) goto done;
+  status=exr_cfi_context(d,chapter,point,context,control,&before,&after,e); if(status!=EXR_OK) goto done;
+  if(!put(&b,path)) goto limit;
+  if(*before || *after || point->side) {
+    if(!put(&b,"[")) goto limit;
+    if((*before || *after) && (!escaped(&b,before) || !put(&b,",") || !escaped(&b,after))) goto limit;
+    if((point->side && !put(&b,point->side==1 ? ";s=b" : ";s=a")) || !put(&b,"]")) goto limit;
+  }
+  if(b.size>CFI_LIMIT) goto limit;
+  status=exr_control_cancel(control,e); if(status!=EXR_OK) goto done;
+  *out=b.data; b.data=NULL; status=exr_fail(e,EXR_OK,""); goto done;
+limit:
+  status=exr_fail(e,EXR_LIMIT,"Quoted CFI exceeds allocation or size limit");
+done:
+  free(path); free(before); free(after); free(b.data); return status;
+}
+exr_status exr_document_cfi_create_quoted(const exr_document *d,size_t chapter,const exr_cfi_point *point,size_t context,
+                                           const exr_control *control,char **out,exr_error *e) {
+  if(!context || context>32) { if(out) *out=NULL; return exr_fail(e,EXR_ARGUMENT,"Quoted CFI requires 1..32 context scalars"); }
+  return exr_cfi_create_for_part(d,chapter,d,chapter,point,context,control,out,e);
 }
