@@ -58,7 +58,7 @@ exr_status exr_vector_flatten(const exr_vector_segment *segments,size_t count,co
                                const exr_control *control,exr_error *error) {
   const double identity[6]={1,0,0,1,0,0}; flatten_reader r={0}; size_t local_work=0,i;
   if(out) memset(out,0,sizeof(*out));
-  if(!out || (count && !segments) || !isfinite(tolerance) || tolerance<.01 || tolerance>4) return exr_fail(error,EXR_ARGUMENT,"Invalid vector path input or tolerance");
+  if(!out || (count && !segments) || !isfinite(tolerance) || tolerance<=0 || tolerance>1e7) return exr_fail(error,EXR_ARGUMENT,"Invalid vector path input or tolerance");
   if(count>1048576) return exr_fail(error,EXR_LIMIT,"Vector path command budget exceeded");
   if(!transform) transform=identity;
   for(i=0;i<6;i++) if(!isfinite(transform[i]) || fabs(transform[i])>1e7) return exr_fail(error,EXR_ARGUMENT,"Invalid vector path transform");

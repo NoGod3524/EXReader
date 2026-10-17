@@ -63,9 +63,55 @@ static void curves(void) {
   { size_t limited=(size_t)256*1024*1024; CHECK(exr_vector_flatten(segments,4,NULL,.25,&path,&limited,NULL,&error)==EXR_LIMIT && !path.points); }
   OK(exr_vector_flatten(NULL,0,NULL,.25,&path,&work,NULL,&error)); CHECK(!path.point_count && !path.contour_count); exr_vector_polyline_free(&path);
 }
+static exr_bitmap stroked(const exr_vector_polyline *source,const exr_vector_stroke_style *style,const double *matrix,uint32_t color) {
+  exr_vector_polyline outline={0}; exr_vector_edge *edges=NULL; size_t count,work=0; exr_bitmap image=bitmap(1,255);
+  OK(exr_vector_stroke(source,style,matrix,.01,&outline,&work,NULL,&error));
+  OK(exr_vector_edges(&outline,0,&edges,&count,&work,NULL,&error));
+  OK(exr_vector_fill(&image,edges,count,EXR_VECTOR_NONZERO,color,NULL,&work,NULL,&error));
+  free(edges); exr_vector_polyline_free(&outline); return image;
+}
+static void strokes(void) {
+  exr_vector_segment commands[5]={{EXR_VECTOR_MOVE,{{2,4}}},{EXR_VECTOR_LINE,{{6,4}}}};
+  exr_vector_polyline line={0},out={0}; exr_vector_stroke_style style={2,10,EXR_VECTOR_BUTT,EXR_VECTOR_MITER}; exr_bitmap image; size_t work=0,i;
+  OK(exr_vector_flatten(commands,2,NULL,.1,&line,&work,NULL,&error));
+  image=stroked(&line,&style,NULL,0x000000ff); CHECK(pixel(&image,1,3,0)==255 && pixel(&image,2,3,0)==0 && pixel(&image,5,4,0)==0 && pixel(&image,6,3,0)==255); free(image.pixels);
+  style.cap=EXR_VECTOR_SQUARE; image=stroked(&line,&style,NULL,0x000000ff); CHECK(pixel(&image,1,3,0)==0 && pixel(&image,6,4,0)==0 && pixel(&image,0,4,0)==255); free(image.pixels);
+  style.cap=EXR_VECTOR_ROUND_CAP; image=stroked(&line,&style,NULL,0x000000ff); CHECK(pixel(&image,1,3,0)>30 && pixel(&image,1,3,0)<90 && pixel(&image,3,3,0)==0 && pixel(&image,0,3,0)==255); free(image.pixels);
+  exr_vector_polyline_free(&line);
+  commands[0].points[0]=(exr_vector_point){1,5}; commands[1].points[0]=(exr_vector_point){5,5}; commands[2]=(exr_vector_segment){EXR_VECTOR_LINE,{{5,1}}};
+  OK(exr_vector_flatten(commands,3,NULL,.1,&line,&work,NULL,&error)); style.cap=EXR_VECTOR_BUTT;
+  image=stroked(&line,&style,NULL,0x000000ff); CHECK(pixel(&image,5,5,0)==0); free(image.pixels);
+  style.join=EXR_VECTOR_BEVEL; image=stroked(&line,&style,NULL,0x000000ff); CHECK(pixel(&image,5,5,0)==127); free(image.pixels);
+  style.join=EXR_VECTOR_ROUND_JOIN; image=stroked(&line,&style,NULL,0x000000ff); CHECK(pixel(&image,5,5,0)>30 && pixel(&image,5,5,0)<90); free(image.pixels);
+  style.join=EXR_VECTOR_MITER; style.miter_limit=1; image=stroked(&line,&style,NULL,0x000000ff); CHECK(pixel(&image,5,5,0)==127); free(image.pixels);
+  style.miter_limit=10; image=stroked(&line,&style,NULL,0x00000080); CHECK(pixel(&image,4,4,0)==127); free(image.pixels); exr_vector_polyline_free(&line);
+  commands[0].points[0]=(exr_vector_point){4,4}; commands[1].points[0]=(exr_vector_point){4.1,4}; commands[2].points[0]=(exr_vector_point){4.1,4.1};
+  OK(exr_vector_flatten(commands,3,NULL,.1,&line,&work,NULL,&error)); style.width=4; style.join=EXR_VECTOR_ROUND_JOIN;
+  image=stroked(&line,&style,NULL,0x000000ff); CHECK(pixel(&image,3,3,0)==255 && pixel(&image,4,3,0)==0); free(image.pixels); exr_vector_polyline_free(&line);
+  style.join=EXR_VECTOR_MITER;
+  commands[0].points[0]=(exr_vector_point){1,2}; commands[1].points[0]=(exr_vector_point){3,2};
+  OK(exr_vector_flatten(commands,2,NULL,.1,&line,&work,NULL,&error));
+  { const double matrix[6]={2,0,0,3,0,0}; style.width=0; image=stroked(&line,&style,matrix,0x000000ff);
+    CHECK(pixel(&image,3,5,0)==127 && pixel(&image,3,6,0)==127 && pixel(&image,3,4,0)==255); free(image.pixels);
+    style.width=2; image=stroked(&line,&style,matrix,0x000000ff); CHECK(pixel(&image,3,4,0)==0 && pixel(&image,1,4,0)==255); free(image.pixels);
+  }
+  exr_vector_polyline_free(&line);
+  commands[0].points[0]=(exr_vector_point){4,4}; commands[1].points[0]=(exr_vector_point){4,4}; style.width=4; style.cap=EXR_VECTOR_ROUND_CAP;
+  OK(exr_vector_flatten(commands,2,NULL,.1,&line,&work,NULL,&error)); image=stroked(&line,&style,NULL,0x000000ff);
+  CHECK(pixel(&image,4,4,0)==0 && pixel(&image,1,4,0)==255); free(image.pixels);
+  style.cap=EXR_VECTOR_BUTT; image=stroked(&line,&style,NULL,0x000000ff); for(i=0;i<64;i++) CHECK(image.pixels[i]==255); free(image.pixels);
+  style.width=-1; CHECK(exr_vector_stroke(&line,&style,NULL,.1,&out,&work,NULL,&error)==EXR_ARGUMENT && !out.points); style.width=2;
+  style.miter_limit=.5; CHECK(exr_vector_stroke(&line,&style,NULL,.1,&out,&work,NULL,&error)==EXR_ARGUMENT && !out.points); style.miter_limit=10;
+  { exr_control control={0}; unsigned calls=2; control.context=&calls; control.cancelled=cancel;
+    CHECK(exr_vector_stroke(&line,&style,NULL,.1,&out,&work,&control,&error)==EXR_CANCELLED && !out.points);
+  }
+  CHECK(exr_vector_stroke(&line,&style,NULL,.1,&line,&work,NULL,&error)==EXR_ARGUMENT && line.points);
+  { size_t limited=(size_t)256*1024*1024; CHECK(exr_vector_stroke(&line,&style,NULL,.1,&out,&limited,NULL,&error)==EXR_LIMIT && !out.points); }
+  exr_vector_polyline_free(&line);
+}
 int main(void) {
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
-  curves(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
+  curves(); strokes(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
   for(y=0;y<8;y++) for(x=0;x<8;x++) CHECK(pixel(&gray,x,y,0)==(x>=1 && x<5 && y>=1 && y<5 ? 0 : 255));
   memset(gray.pixels,255,64); rectangle(edges,1.25,1.25,4.75,4.75,0);
   OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(pixel(&gray,1,1,0)==112 && pixel(&gray,2,2,0)==0 && pixel(&gray,0,0,0)==255);
