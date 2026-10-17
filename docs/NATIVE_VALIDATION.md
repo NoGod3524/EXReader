@@ -2046,3 +2046,22 @@ All 98 native local suites pass; the final added cancellation assertion passes
 the colour suite. This batch awaits its own six-platform CI. Default AAC-off
 Windows DLL is 4,432,198 bytes, with no new dependencies, public ABI changes,
 version bump or schema change.
+
+
+Commit `c59d1b8` passes all six jobs in [CI run 39071009611](https://github.com/NoGod3524/EXReader/actions/runs/39071009611), including ASAN/UBSAN and all installed platform consumers.
+
+## Milestone 0.18 development: linear sampled PDF functions
+
+The colour suite now has 1191 checks. Type 0 tests use all eight permitted sample
+bit depths with packed RGB tables and real ASCIIHex streams, checking paths,
+XObjects and inline images. Separate tests amplify the low nibble of a 12-bit
+sample and the lowest byte of a 32-bit sample so truncation cannot hide inside
+pixel rounding tolerance. Cases cover reversed Encode/Decode, one-sample and
+zero-width domains, table indexing, and a sampled child of a stitching function.
+Invalid/missing dimensions, Range, bit depths, cubic order, mapping arrays,
+short/long tables and allocation limits fail without partial pixels.
+
+All eight exported sampled-function PDF fixtures independently match MuPDF at the
+three sampled interiors within one RGB byte. All 98 local native suites pass.
+The default Windows DLL is 4,433,734 bytes. This batch awaits its own CI; version,
+ABI and schema remain 0.18.0/1/6, and no runtime dependency was added.
