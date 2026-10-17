@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.14.0"
+#define EXR_VERSION "0.15.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -181,6 +181,18 @@ typedef struct {
 typedef exr_status (*exr_part_load_fn)(void *context, size_t part, exr_document **out,
                                        exr_error *error);
 typedef void (*exr_context_release_fn)(void *context);
+/* Immutable, seekable byte source. read_at returns bytes supplied (short reads
+   are retried); zero before the advertised end is EXR_IO. No network policy is
+   imposed on host callbacks. Built-in file sources only access the chosen file.
+   Context ownership transfers only on successful open. Retained documents may
+   outlive their publication; release runs after the last source reference. */
+typedef size_t (*exr_read_at_fn)(void *context, uint64_t offset, void *buffer, size_t size);
+typedef struct {
+  uint64_t size;
+  exr_read_at_fn read_at;
+  exr_context_release_fn release;
+  void *context;
+} exr_source;
 typedef struct {
   const char *title;
   const exr_part *parts;
@@ -332,6 +344,8 @@ EXR_API exr_status exr_publication_create(const exr_publication_input *input,
 /* Built-in indexed loading currently accepts EPUB. No XHTML is parsed at open. */
 EXR_API exr_status exr_publication_open(const char *path, exr_publication **out,
                                         exr_error *error);
+EXR_API exr_status exr_publication_open_source(const exr_source *source,
+                                               exr_publication **out, exr_error *error);
 EXR_API exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size,
                                                exr_publication **out, exr_error *error);
 EXR_API void exr_publication_free(exr_publication *publication);
