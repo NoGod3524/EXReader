@@ -22,6 +22,14 @@ styles=f'''<w:styles xmlns:w="{w}"><w:docDefaults><w:rPrDefault><w:rPr><w:sz w:v
 <w:style w:type="paragraph" w:styleId="Heading1"><w:basedOn w:val="Normal"/><w:pPr><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/></w:rPr></w:style>
 <w:style w:type="character" w:styleId="Base"><w:rPr><w:sz w:val="28"/><w:color w:val="122334"/></w:rPr></w:style>
 <w:style w:type="character" w:styleId="Child"><w:basedOn w:val="Base"/><w:rPr><w:i/></w:rPr></w:style></w:styles>'''
+def item(num,level,text):
+    return f'<w:p><w:pPr><w:numPr><w:ilvl w:val="{level}"/><w:numId w:val="{num}"/></w:numPr></w:pPr><w:r><w:t>{text}</w:t></w:r></w:p>'
+listing=item(1,0,'List first')+item(1,1,'Nested')+item(1,0,'List second')
+listing+='<w:p><w:r><w:t>Break</w:t></w:r></w:p>'+item(1,0,'List resumed')+item(2,0,'Restart')+item(3,0,'Bullet')+item(4,0,'Roman')
+listing+='<w:p><w:pPr><w:pStyle w:val="NumberStyle"/></w:pPr><w:r><w:t>Styled list</w:t></w:r></w:p>'
+listing+=item(5,0,'Never parent')+item(5,1,'Never first')+item(5,0,'Never parent two')+item(5,1,'Never second')
+main=main.replace('</w:body>',listing+'</w:body>')
+styles=styles.replace('</w:styles>','<w:style w:type="paragraph" w:styleId="NumberStyle"><w:basedOn w:val="Normal"/><w:pPr><w:numPr><w:numId w:val="1"/></w:numPr></w:pPr></w:style></w:styles>')
 entries={
 '_rels/.rels':f'<Relationships xmlns="{rel}"><Relationship Id="Main" Type="{r}/officeDocument" Target="Content/main.xml"/></Relationships>',
 'Content/main.xml':main,
@@ -34,6 +42,15 @@ entries['Content/Notes/footnotes.xml']=f'''<w:footnotes xmlns:w="{w}" xmlns:r="{
 entries['Content/Notes/endnotes.xml']=f'''<w:endnotes xmlns:w="{w}"><w:endnote w:id="4"><w:p><w:r><w:endnoteRef/><w:t> Endnote text.</w:t></w:r></w:p></w:endnote></w:endnotes>'''
 entries['Content/Notes/_rels/footnotes.xml.rels']=f'<Relationships xmlns="{rel}"><Relationship Id="Picture" Type="{r}/image" Target="note.png"/></Relationships>'
 entries['Content/Notes/note.png']=entries['Content/images/图#%?.png']
+entries['Content/_rels/main.xml.rels']=entries['Content/_rels/main.xml.rels'].replace('</Relationships>',f'<Relationship Id="Numbering" Type="{r}/numbering" Target="../Styles/numbering.xml"/></Relationships>')
+entries['Styles/numbering.xml']=f'''<w:numbering xmlns:w="{w}">
+<w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="0"><w:start w:val="3"/><w:numFmt w:val="decimal"/><w:lvlText w:val="%1."/></w:lvl><w:lvl w:ilvl="1"><w:start w:val="1"/><w:numFmt w:val="lowerLetter"/><w:lvlText w:val="%1.%2)"/></w:lvl></w:abstractNum>
+<w:abstractNum w:abstractNumId="1"><w:lvl w:ilvl="0"><w:numFmt w:val="bullet"/><w:lvlText w:val="•"/></w:lvl></w:abstractNum>
+<w:abstractNum w:abstractNumId="2"><w:lvl w:ilvl="0"><w:start w:val="4"/><w:numFmt w:val="upperRoman"/><w:lvlText w:val="%1)"/></w:lvl></w:abstractNum>
+<w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num><w:num w:numId="2"><w:abstractNumId w:val="0"/><w:lvlOverride w:ilvl="0"><w:startOverride w:val="10"/></w:lvlOverride></w:num>
+<w:num w:numId="3"><w:abstractNumId w:val="1"/></w:num><w:num w:numId="4"><w:abstractNumId w:val="2"/></w:num>
+<w:num w:numId="5"><w:abstractNumId w:val="0"/><w:lvlOverride w:ilvl="1"><w:lvl w:ilvl="1"><w:start w:val="5"/><w:numFmt w:val="lowerLetter"/><w:lvlText w:val="%2)"/><w:lvlRestart w:val="0"/></w:lvl></w:lvlOverride></w:num>
+</w:numbering>'''
 with zipfile.ZipFile(root/'rich.docx','w') as archive:
     for name,data in entries.items():
         info=zipfile.ZipInfo(name,(2026,1,1,0,0,0)); info.compress_type=zipfile.ZIP_STORED; info.external_attr=0o100644<<16
