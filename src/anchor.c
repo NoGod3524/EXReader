@@ -203,8 +203,8 @@ static exr_status search_scope(anchor_search *s, exr_error *e) {
   return EXR_OK;
 }
 
-exr_status exr_anchor_resolve(const exr_document *d, const exr_anchor *a,
-                              exr_anchor_match *match, exr_error *e) {
+exr_status exr_anchor_resolve_ex(const exr_document *d, const exr_anchor *a,const exr_control *control,
+                                 exr_anchor_match *match, exr_error *e) {
   anchor_search s = {0};
   exr_status status;
   size_t i;
@@ -216,9 +216,11 @@ exr_status exr_anchor_resolve(const exr_document *d, const exr_anchor *a,
     return exr_fail(e, EXR_ARGUMENT, "Missing document or anchor");
   if ((status = exr_anchor_validate(a, e)) != EXR_OK)
     return status;
+  status=exr_control_cancel(control,e); if(status!=EXR_OK) return status;
+  s.control=control;
   if (!a->exact) {
     match->state = EXR_ANCHOR_LEGACY;
-    return EXR_OK;
+    return exr_fail(e,EXR_OK,"");
   }
   s.text=d->text; s.size=d->size; s.exact=a->exact; s.prefix_text=a->prefix; s.suffix_text=a->suffix;
   s.hi = d->size;
@@ -242,7 +244,11 @@ exr_status exr_anchor_resolve(const exr_document *d, const exr_anchor *a,
       match->end = s.best_start + s.quote;
     }
   }
-  return EXR_OK;
+  return exr_fail(e,EXR_OK,"");
+}
+
+exr_status exr_anchor_resolve(const exr_document *d,const exr_anchor *a,exr_anchor_match *match,exr_error *e) {
+  return exr_anchor_resolve_ex(d,a,NULL,match,e);
 }
 
 void exr_fixed_anchor_free(exr_fixed_anchor *a) {

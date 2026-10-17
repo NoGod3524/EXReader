@@ -911,3 +911,16 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 `exr_library_update` 仅修改元数据且位置不变时保留选择器；通过旧接口修改数值位置时自动清除旧选择器，避免把新位置与旧上下文混配。`clear_progress` 仅删除选择器，不改变数值位置。删除书籍级联删除进度选择器，备份包含它们，精确去重导入不会重置既有进度。
 
 书库升级为 schema 5。v1–v4 在事务中补齐所需表和触发器，失败完整回滚，旧数值进度保持为 LEGACY。ABI epoch 仍为 1，SQLite schema 兼容版本独立管理。本阶段持久化上下文；正文 extent 重新计算与旧标注/进度的批量重定位继续接入。
+
+
+## 书库正文重新定位（0.95）
+
+`exr_library_reanchor(library,book,fallback_position,control,report,...)` 重新解析存储原书，计算当前正文长度，并在同一事务中重新定位文本标注与阅读进度。唯一匹配更新范围和上下文；MISSING、AMBIGUOUS 或无选择器的 LEGACY 不猜测位置。PDF 使用固定页位置，此入口返回 EXR_FORMAT。
+
+宿主必须提供当前正文内的 UTF-8 标量边界 fallback_position；阅读进度无法定位时使用该位置，但保留原选择器与状态。下次可再次尝试恢复。未定位标注的公开 start/end 为 SIZE_MAX，anchor.start/end 保留旧范围，原选文、上下文和备注不丢失；不得直接用未定位范围绘制高亮。
+
+report 返回新旧正文长度、进度位置、进度匹配及逐条 note_id/旧范围/匹配结果，用 `exr_library_relocation_free` 释放。输出须为空，失败清零。每次只读取一个标注选择器，不把全部备注复制进迁移内存；报告最多 64 MiB。取消、数据库写入或 COMMIT 失败均回滚全部变化。控制回调不能重入当前书库。
+
+`exr_library_note_text(library,note_id,text,...)` 只修改备注，不改变范围与选择器，适用于未定位标注。普通 library_note 可在宿主选定新范围后重新捕获选择器。备注须为有效 UTF-8，最长 64 MiB；损坏的存储备注读取返回 EXR_DATABASE。
+
+schema 6 为标注保存定位状态，并允许进度保留 LEGACY 历史位置。v1–v5 事务迁移到最新结构；v5 的旧进度表重建与标注列添加一起提交。原书字节不改写，ABI epoch 仍为 1。
