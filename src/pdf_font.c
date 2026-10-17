@@ -257,7 +257,10 @@ exr_status exr_pdf_font_next(const exr_pdf_font *font,const unsigned char *data,
     if(used!=bytes) { memset(out,0,sizeof(*out)); return exr_fail(error,EXR_FORMAT,"PDF ToUnicode and font code widths disagree"); }
   } else {
     out->text.code=code; out->text.code_bytes=(unsigned)bytes;
-    out->text.size=exr_pdf_glyph_unicode(out->glyph_name,font->info.base_name && !strcmp(font->info.base_name,"ZapfDingbats"),out->text.utf8);
+    /* A symbolic TrueType cmap can ignore the supplied simple Encoding. Its
+       byte-to-Unicode meaning cannot be inferred from that encoding vector. */
+    if(font->info.kind!=EXR_PDF_TRUETYPE || !(font->info.flags&4))
+      out->text.size=exr_pdf_glyph_unicode(out->glyph_name,font->info.base_name && !strcmp(font->info.base_name,"ZapfDingbats"),out->text.utf8);
     if(!out->text.size) { memcpy(out->text.utf8,"\xef\xbf\xbd",4); out->text.size=3; }
   }
   out->cid=code; out->width=font->default_width;

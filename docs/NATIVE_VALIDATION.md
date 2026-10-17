@@ -1014,3 +1014,37 @@ ToUnicode priority, malformed Flags/encoding, and default missing widths.
 These facts do not supply standard-font outlines; actual glyph rasterization
 and public PDF document opening remain pending. The 0.54 commit ba0b13f passed
 all six CI jobs.
+
+
+## 0.56 PDF glyph selection and native outline rendering
+
+A private PDF face adapter opens embedded scalable programs without copying
+program bytes or requiring a Unicode cmap. CID TrueType uses explicit GIDs;
+CID CFF builds a bounded sorted reverse CID index. Simple fonts use glyph names,
+glyph-name Unicode when names are unavailable, Microsoft symbolic cmap rules,
+or the Type1 builtin encoding. A host can explicitly supply fallback bytes for
+unembedded simple fonts. Missing glyphs select glyph zero; ToUnicode text never
+selects a glyph. Symbolic TrueType without ToUnicode retains replacement text
+rather than trusting a possibly ignored simple Encoding vector.
+
+The reusable outline adapter loads unhinted outlines through FreeType and
+copies line/quadratic/cubic segments into owned 1000-em C paths. The existing
+native flatten/edge/fill pipeline performs the rasterization, including arbitrary
+output transforms. No FreeType bitmap rasterizer or external PDF renderer is
+used. Work/count/coordinate limits and cancellation apply; failed calls expose
+no partial path. Input bytes and the FT library outlive each face; required metadata is copied.
+
+`native-pdf-outline` checks actual embedded fonts with/without glyph names,
+symbolic cmap, a cmap-free GID font, simple cubic CFF, sparse CID CFF, 2000-em
+normalization, empty glyphs, missing CIDs, fallback selection, cancellation and
+exhausted work. Pixel checks traverse PDF content -> chosen glyph -> owned
+outline -> C flatten/fill, distinguish semantic A from the selected fi shape,
+and verify y-flip. Public PDF page creation and a complete page raster backend
+remain pending.
+
+
+A manual RFC 9110 pass visits all 194 pages and selects/loads outlines for
+450,578 glyphs, with zero glyph-zero substitutions and 11,849,269 copied outline
+segments. This verifies the nine real embedded fonts and the outline pipeline;
+it is not yet a full-page pixel comparison. The 0.55 commit 79c8cd3 passed all
+six CI jobs.

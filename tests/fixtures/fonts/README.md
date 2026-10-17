@@ -16,3 +16,11 @@ that glyph rasterization refuses huge temporary bitmaps before asking FreeType t
 
 The glyph-only font preserves the primary outlines and glyph order without a cmap table or PostScript glyph names.
 It tests direct glyph rendering independently of Unicode lookup.
+
+
+The five `pdf-*` fonts come from `tools/generate_pdf_test_fonts.py`, under the
+same GPL-3.0-only notice. They contain original rectangle/triangle/quadratic/
+cubic contours. `pdf-names.ttf` uses 2000 units per em and retains PostScript
+names; `pdf-unicode.ttf` omits them; `pdf-symbol.ttf` uses a Microsoft symbolic
+cmap. `pdf-cubic.otf` has ordinary CFF outlines and `pdf-cid.otf` has CID-keyed
+CFF with deliberately sparse CIDs (1, 42, 77, 99). No external outlines are used.
