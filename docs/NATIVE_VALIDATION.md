@@ -1359,3 +1359,17 @@ backup/restore, delete and cascade. Damaged selector types/UTF-8 yield no partia
 results. Migration tests verify schema versions after success and rollback and
 preserve existing reflow rows; previous v1 rollback cases remain covered.
 All 54 local suites pass. The 0.70 934dd91 CI run passed all six jobs.
+
+
+## 0.72 Codec-independent audio timeline and text synchronization
+
+Immutable owned audio metadata retains arbitrary host URI/media types and part
+IDs. Tracks concatenate with checked uint64 durations; chapters may nest or
+cross tracks and synchronization intervals may overlap. Boundary/EOF location
+uses binary search. Time-to-text and text-to-time enumeration preserve provider
+order and support cancellation without allocation. Tests overwrite input strings,
+inspect copied tables, locate track boundaries and EOF, enumerate overlapping
+intervals, query point ranges, preserve UINT64_MAX duration, reject overflow,
+invalid parents/UTF-8/IDs/ranges/counts, exercise cancellation and extension tails.
+This is timeline/sync data, not an audio decoder or device playback backend.
+All 55 local suites pass. The 0.71 792076e CI run passed all six jobs.

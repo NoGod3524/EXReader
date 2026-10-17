@@ -702,3 +702,14 @@ options 可为 NULL；非空时清零并设置 struct_size。fallback_font 是�
 `exr_library_fixed_notes` 按页、范围和 id 返回独立拥有的备注及锚点，使用 exr_fixed_notes_free 释放；引用和上下文以 BLOB 保存，保留内嵌 NUL。读取校验类型、UTF-8、范围与选择器，失败不返回部分列表；查询最多 100000 条、64 MiB 逻辑载荷。remove_fixed_note 删除备注，删除原书自动级联。备份包含原文件与固定备注。重排 note 接口会拒绝 PDF。
 
 SQLite schema 升至 3，v1/v2 自动在事务内迁移；迁移失败完整回滚。旧二进制不能打开 schema 3。备注暂为 SDK 自有数据，不写回 PDF 文件。
+
+
+## 通用有声书时间线（0.72）
+
+`exr_audio_create` 复制轨道、章节及图文同步表。轨道按输入顺序连接，duration_ms 必须为已知非零时长；所有时间使用 uint64 毫秒并检查总和溢出。ID 可由宿主给出，空轨道/章节 ID 自动生成 track-N/chapter-N，同表中必须唯一。URI 和媒体类型是宿主元数据，不自动访问网络或假定编解码器。
+
+章节以全局半开区间表示，可跨轨道。parent 必须为 SIZE_MAX 或之前的包含章节；不同根章节可以重叠。同步片段包含任意 part_id、宿主 UTF-8 字节范围及全局音频区间，可重叠。框架不要求该 ID 对应特定文档格式，也不读取正文来验证其字节范围。
+
+`exr_audio_locate` 二分定位轨道和本地时间；轨道边界归下一轨，总结束时间归末轨 EOF。`exr_audio_sync_at` 枚举当前时间覆盖的片段；`exr_audio_sync_text` 从文字范围或点位置反查同步片段。通过 from=index+1 继续枚举，未命中为 SIZE_MAX。查询保持宿主顺序，支持取消。getters 返回 audio 拥有的不可变表，memory_size 统计拥有的表与字符串。
+
+输入结构设 struct_size，未知尾部只接受全零。最多 10000 轨、100000 章、1000000 同步片段；单字符串最多 64 KiB、全部字符串最多 16 MiB，表载荷最多 128 MiB。该阶段交付时间线与同步模型，解码、声音输出、倍速与播放会话继续接入。
