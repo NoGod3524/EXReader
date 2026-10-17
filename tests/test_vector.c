@@ -182,6 +182,9 @@ int main(void) {
   CHECK(pixel(&rgba,3,3,0)==255 && pixel(&rgba,3,3,1)==255 && pixel(&rgba,3,3,2)==255 && pixel(&rgba,3,3,3)==128);
   memset(gray.pixels,255,64); memset(clip.pixels,128,64); clip.pixels[0]=0; clip.pixels[1]=255;
   OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,&clip,&work,NULL,&error)); CHECK(gray.pixels[0]==255 && gray.pixels[1]==0 && gray.pixels[2]==127);
+  memset(gray.pixels,255,64); memset(clip.pixels,0,64); for(y=0;y<8;y++) clip.pixels[y*8+4]=255; rectangle(edges,3,1,6,5,0);
+  OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,&clip,&work,NULL,&error)); CHECK(pixel(&gray,4,2,0)==0 && pixel(&gray,3,2,0)==255 && pixel(&gray,5,2,0)==255);
+  rectangle(edges,0,0,8,8,0);
   { exr_vector_edge triangles[6]={{0,0,8,0},{8,0,8,8},{8,8,0,0},{0,0,8,8},{8,8,0,8},{0,8,0,0}};
     memset(gray.pixels,255,64); OK(exr_vector_fill(&gray,triangles,6,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error));
     for(i=0;i<64;i++) CHECK(!gray.pixels[i]);
@@ -197,5 +200,9 @@ int main(void) {
   CHECK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,&gray,NULL,NULL,&error)==EXR_ARGUMENT);
   { exr_bitmap alias=gray; alias.pixels++; CHECK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,&alias,NULL,NULL,&error)==EXR_ARGUMENT); }
   OK(exr_vector_fill(&gray,NULL,0,EXR_VECTOR_NONZERO,0x000000ff,NULL,NULL,NULL,&error));
+  { exr_bitmap large={0}; size_t small_work=0; large.width=large.height=large.stride=512; large.channels=1; large.pixels=malloc(512*512); CHECK(large.pixels); memset(large.pixels,255,512*512);
+    rectangle(edges,200,100,204,104,0); OK(exr_vector_fill(&large,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&small_work,NULL,&error));
+    CHECK(small_work<1000 && pixel(&large,202,102,0)==0 && pixel(&large,100,100,0)==255); free(large.pixels);
+  }
   free(gray.pixels); free(rgba.pixels); free(clip.pixels); printf("%u native vector fill checks passed\n",checks); return 0;
 }

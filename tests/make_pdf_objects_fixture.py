@@ -344,3 +344,14 @@ deep_forms={**forms}
 for i in range(20,53):
     deep_forms[i]=compressed_stream(b'/Next Do' if i<52 else b'',form_extra+b'/Resources << /XObject << /Next '+str(i+1).encode()+b' 0 R >> >>')
 pdf('pdf-form-bad-depth.pdf',values=deep_forms)
+
+
+# A complete original one-page vector PDF and resource aliases for draw-state tests.
+graphics={**font_objects}
+graphics[1]=b'<< /Type /Catalog /Pages 15 0 R /Resources 19 0 R >>'
+graphics[15]=b'<< /Type /Pages /Count 1 /Kids [16 0 R] >>'
+graphics[16]=b'<< /Type /Page /Parent 15 0 R /MediaBox [0 0 8 8] /Resources 19 0 R /Contents 17 0 R >>'
+graphics[17]=compressed_stream(b'1 0 0 rg 1 1 6 6 re f 0 0 1 rg 2 2 2 2 re f')
+graphics[19]=b'<< /Font << /Simple 2 0 R /Composite 3 0 R >> /ColorSpace << /RgbAlias /DeviceRGB /Unsupported [/Lab << /WhitePoint [1 1 1] >>] >> /XObject << /Image 13 0 R /Filled 30 0 R >> /ExtGState << /A << /LW 2 /LC 2 /LJ 2 /ML 3 /D [[2 1] 0] /CA 0.25 /ca 0.5 >> /Blend << /BM /Multiply >> /Soft << /SMask << >> >> /G << /Font [3 0 R 20] >> >> >>'
+graphics[30]=compressed_stream(b'1 0 0 rg -10 -10 30 30 re f',b'/Subtype /Form /BBox [0 0 2 2] /Matrix [1 0 0 1 2 3] /Resources << >>')
+pdf('pdf-graphics.pdf',values=graphics)
