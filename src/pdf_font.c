@@ -178,6 +178,20 @@ exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control 
   if(id!=EXR_PDF_NONE) { font->info.base_name=copy_name(&r,id); if(!font->info.base_name) goto done; }
   descriptor=get(&r,metrics,"FontDescriptor"); v=exr_pdf_value_at(file,descriptor);
   if(v && v->kind!=EXR_PDF_DICT) goto invalid;
+  font->info.ascent=800; font->info.descent=-200;
+  id=get(&r,descriptor,"FontBBox");
+  if(id!=EXR_PDF_NONE) {
+    double box[4]; uint32_t at;
+    v=exr_pdf_value_at(file,id); if(!v || v->kind!=EXR_PDF_ARRAY) goto invalid; at=v->first;
+    for(i=0;i<4;i++) { if(!number(&r,at,&box[i])) goto invalid; at=next(file,at); }
+    if(at!=EXR_PDF_NONE || box[0]>box[2] || box[1]>box[3]) goto invalid;
+    if(box[1]<box[3]) { font->info.ascent=box[3]; font->info.descent=box[1]; }
+  }
+  { double ascent=font->info.ascent,descent=font->info.descent;
+    id=get(&r,descriptor,"Ascent"); if(id!=EXR_PDF_NONE && !number(&r,id,&ascent)) goto invalid;
+    id=get(&r,descriptor,"Descent"); if(id!=EXR_PDF_NONE && !number(&r,id,&descent)) goto invalid;
+    if(ascent>descent) { font->info.ascent=ascent; font->info.descent=descent; }
+  }
   id=get(&r,descriptor,"Flags");
   if(id!=EXR_PDF_NONE) {
     uint32_t flags; if(!integer(&r,id,UINT32_MAX,&flags)) goto invalid; font->info.flags=flags;

@@ -515,3 +515,19 @@ public_objects[60]=image_stream(bytes([255,0,0,0,255,0,0,0,255,255,255,255]),2,2
 public_objects[61]=image_stream(bytes([128]),1,1,b'/DeviceGray')
 public_objects[62]=b'<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /BitsPerComponent 8 /ColorSpace /DeviceRGB /Filter /JPXDecode /Length 7 >>\nstream\nnot-jpx\nendstream'
 pdf('pdf-public.pdf',values=public_objects)
+
+# Public semantic text snapshots: source-space cells, not outline ink bounds.
+text_pages={**forms}
+text_pages[1]=b'<< /Type /Catalog /Pages 100 0 R >>'
+text_pages[100]=b'<< /Type /Pages /Count 4 /Kids [101 0 R 102 0 R 103 0 R 104 0 R] /MediaBox [0 0 1000 1000] /Rotate 90 /UserUnit 2 /Resources '+forms[1].split(b'/Resources',1)[1][:-3]+b' >>'
+for i in range(4): text_pages[101+i]=b'<< /Type /Page /Parent 100 0 R /Contents '+str(201+i).encode()+b' 0 R >>'
+text_pages[5]=font_objects[5][:-3]+b' /FontBBox [-50 -300 1100 900] /Ascent 720 /Descent -180 >>'
+text_pages[7]=compressed_stream(simple_map.replace(b'3 beginbfchar',b'4 beginbfchar').replace(b'endbfchar',b'<44> <0000> endbfchar'))
+text_pages[201]=compressed_stream(b'q 2 0 0 3 10 20 cm BT /Simple 10 Tf 50 Tz 4 Ts 1 0 0 1 100 200 Tm (ABCD) Tj 3 Tr (A) Tj ET Q /Outer Do BT /Vertical 20 Tf 1 0 0 1 100 200 Tm <00010002> Tj ET /Image Do')
+text_pages[202]=compressed_stream(b'BT /Simple 10 Tf (A) Tj ET Unknown')
+text_pages[203]=compressed_stream(b'BT /Bad 10 Tf (A) Tj ET')
+text_pages[204]=compressed_stream(b'/Image Do')
+text_pages[100]=text_pages[100].replace(b'/Simple 2 0 R',b'/Simple 2 0 R /Bad 150 0 R')
+text_pages[150]=font_objects[2].replace(b'/FontDescriptor 5 0 R',b'/FontDescriptor 151 0 R')
+text_pages[151]=b'<< /FontBBox [0 100 100 -100] >>'
+pdf('pdf-public-text.pdf',values=text_pages)
