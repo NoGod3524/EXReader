@@ -301,6 +301,9 @@ font_objects={
  11:b'<< /Type /Font /Subtype /Type0 /Encoding /Identity-H /DescendantFonts [12 0 R] >>',
  12:b'<< /Type /Font /Subtype /CIDFontType0 /DW 1000 >>'
 }
+font_objects[1]=font_objects[1][:-2]+b'/Resources << /Font << /Simple 2 0 R /Composite 3 0 R /Vertical 10 0 R >> /ExtGState << /G << /Font [3 0 R 20] >> >> /XObject << /Image 13 0 R /Form 14 0 R >> >> >>'
+font_objects[13]=compressed_stream(b'\0',b'/Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8')
+font_objects[14]=compressed_stream(b'',b'/Type /XObject /Subtype /Form /BBox [0 0 10 10]')
 pdf('pdf-fonts.pdf',values=font_objects)
 font_bad=[('width-short',2,font_objects[2].replace(b'[500 600 700]',b'[500 600]')),('width-extra',2,font_objects[2].replace(b'[500 600 700]',b'[500 600 700 800]')),
  ('first-char',2,font_objects[2].replace(b'/FirstChar 65',b'/FirstChar -1')),('differences',2,font_objects[2].replace(b'[65 /A /B 67 /uni0043]',b'[/A]')),
@@ -317,3 +320,9 @@ font_bad=[('width-short',2,font_objects[2].replace(b'[500 600 700]',b'[500 600]'
  ('subtype',2,font_objects[2].replace(b'/TrueType',b'/Type3')),
  ('width-missing',2,font_objects[2].replace(b'/Widths [500 600 700]',b''))]
 for name,number,value in font_bad: pdf('pdf-font-bad-'+name+'.pdf',values={**font_objects,number:value})
+
+
+font_budget={**font_objects}
+font_budget[1]=b'<< /Type /Catalog /Resources << /Font << '+b' '.join(f'/F{i} {20+i} 0 R'.encode() for i in range(129))+b' >> >> >>'
+for i in range(129): font_budget[20+i]=font_objects[2]
+pdf('pdf-text-font-budget.pdf',values=font_budget)

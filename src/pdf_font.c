@@ -131,6 +131,16 @@ void exr_pdf_font_close(exr_pdf_font *font) {
   exr_pdf_cmap_free(font->unicode); free(font->widths.ranges); free(font->widths.values); free(font->vertical.ranges); free(font->vertical.values); free(font);
 }
 const exr_pdf_font_info *exr_pdf_font_description(const exr_pdf_font *font) { return font ? &font->info : NULL; }
+size_t exr_pdf_font_memory(const exr_pdf_font *font) {
+  size_t bytes=0,i; const char *names[3];
+  if(!font) return 0;
+  bytes=sizeof(*font)+exr_pdf_cmap_memory(font->unicode)+(font->widths.capacity+font->vertical.capacity)*sizeof(width_range)+
+    (font->widths.value_capacity+font->vertical.value_capacity)*sizeof(double);
+  names[0]=font->info.base_name; names[1]=font->info.encoding_name; names[2]=font->info.program_type;
+  for(i=0;i<3;i++) if(names[i]) bytes+=strlen(names[i])+1;
+  for(i=0;i<256;i++) if(font->names[i]) bytes+=strlen(font->names[i])+1;
+  return bytes;
+}
 exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control *control,exr_pdf_font **out,exr_error *error) {
   font_reader r={0}; exr_pdf_font *font; uint32_t subtype,metrics,descriptor,encoding,id,to_unicode; const exr_pdf_value *v; size_t i;
   if(!out) return exr_fail(error,EXR_ARGUMENT,"Missing PDF font output");
