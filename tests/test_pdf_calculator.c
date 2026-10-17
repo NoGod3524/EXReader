@@ -101,4 +101,18 @@ static void limits(void) {
   c=(cancellation){0,100}; CHECK(compile(source,&control,&p)==EXR_OK); c.calls=100;
   CHECK(exr_pdf_calculator_eval(p,.5,1,out,&error)==EXR_CANCELLED); exr_pdf_calculator_free(p); free(source);
 }
-int main(void) { expressions(); invalid(); limits(); printf("%u PDF calculator checks passed\n",checks); return 0; }
+static void multiple_inputs(void) {
+  exr_pdf_calculator *p=NULL; double inputs[32]={.25,.5},out[4]; char source[1024]="{"; unsigned i;
+  CHECK(compile("{ sub }",NULL,&p)==EXR_OK);
+  CHECK(exr_pdf_calculator_eval_inputs(p,inputs,2,1,out,&error)==EXR_OK && out[0]==-.25);
+  CHECK(exr_pdf_calculator_eval_inputs(p,inputs,0,1,out,&error)==EXR_ARGUMENT);
+  CHECK(exr_pdf_calculator_eval_inputs(p,inputs,33,1,out,&error)==EXR_ARGUMENT);
+  inputs[0]=NAN;CHECK(exr_pdf_calculator_eval_inputs(p,inputs,2,1,out,&error)==EXR_FORMAT);exr_pdf_calculator_free(p);inputs[0]=.25;
+  for(i=1;i<32;i++) strcat(source," pop");
+  strcat(source," }");
+  CHECK(compile(source,NULL,&p)==EXR_OK);
+  CHECK(exr_pdf_calculator_eval_inputs(p,inputs,32,1,out,&error)==EXR_OK && out[0]==.25);exr_pdf_calculator_free(p);
+  strcpy(source,"{");for(i=0;i<69;i++) strcat(source," 0");strcat(source," }");
+  CHECK(compile(source,NULL,&p)==EXR_OK);CHECK(exr_pdf_calculator_eval_inputs(p,inputs,32,1,out,&error)==EXR_LIMIT);exr_pdf_calculator_free(p);
+}
+int main(void) { expressions(); invalid(); limits(); multiple_inputs(); printf("%u PDF calculator checks passed\n",checks); return 0; }

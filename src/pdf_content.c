@@ -206,7 +206,7 @@ static exr_status finish_path(content_reader *r,unsigned flags,exr_vector_rule r
   r->path.count=0; r->path.has_point=r->path.pending_clip=0; return status;
 }
 static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,int *handled,exr_error *error) {
-  double numbers[6]; size_t i,expected; exr_vector_point points[4]; exr_vector_verb verb; uint32_t id;
+  double numbers[EXR_PDF_MAX_COLORANTS]; size_t i,expected; exr_vector_point points[4]; exr_vector_verb verb; uint32_t id;
   *handled=1;
   if(!strcmp(name,"w") || !strcmp(name,"J") || !strcmp(name,"j") || !strcmp(name,"M")) {
     if(count!=1 || !numeric(arena,values[0],&numbers[0]) || !line_parameter(r,name,numbers[0])) goto invalid;
@@ -243,7 +243,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     }
     memset(color->values,0,sizeof(color->values));
     if(*source) {
-      double initial[4];
+      double initial[EXR_PDF_MAX_COLORANTS];
       if(!exr_vector_work(&r->color_work,exr_pdf_colorspace_cost(*source))) return exr_fail(error,EXR_LIMIT,"PDF content colour computation budget exceeded");
       exr_pdf_colorspace_initial(*source,initial); if(exr_pdf_colorspace_rgb(*source,initial,color->values,error)!=EXR_OK) return error->code;
       color->space=EXR_PDF_DEVICE_RGB;

@@ -1104,7 +1104,7 @@ inspection_metadata、inspection_chapters、inspection_cover、inspection_durati
 
 Separation 普通命名专色现支持文件声明的 device/CIE alternate 和单输入 Type 2 指数函数、Type 3 分段函数。vector、XObject、inline image、Indexed base 和 ICC Alternate 复用同一转换路径；绘制回调仍输出屏幕 DeviceRGB，既有公开记录不变。默认 tint 为 1，输入先夹到色空间和函数 Domain；输出按各层 Range 再交 alternate。Type 2 处理 C0/C1 默认值、整数/分数与负指数的合法实数域，拒绝非有限中间结果。Type 3 保留半开区间边界、逆向 Encode、子函数 Domain/Range、单段及末尾零宽区间的 Encode 起点规则。
 
-特殊色名 None 不落墨，忽略无需执行的 alternate/tintTransform；填充和描边只在送出 paint 快照时置透明，原图形状态的 alpha 不被改写。图片返回透明像素，q/Q 和后续设备色操作可正常恢复。文字语义与裁切操作仍沿用原路径。DeviceN、多输入/三次采样、物理印版/套印与完整透明度语义尚未实现，不能视为完整印刷色彩支持。
+特殊色名 None 不落墨，忽略无需执行的 alternate/tintTransform；填充和描边只在送出 paint 快照时置透明，原图形状态的 alpha 不被改写。图片返回透明像素，q/Q 和后续设备色操作可正常恢复。文字语义与裁切操作仍沿用原路径。多输入 Type 0/三次采样、物理印版/套印与完整透明度语义尚未实现，不能视为完整印刷色彩支持。
 
 私有函数模型最多 16 层、1024 节点、64 个分段和 1 MiB payload，循环引用/坏维数/非法域直接失败；编译过程支持取消。模型内存计入原颜色缓存，求值复杂度计入原 PDF 图片工作预算；源码对象查找仍使用原 256 Mi 工作上限。不新增运行时依赖，不改变 ABI epoch、版本号或书库 schema。
 
@@ -1162,3 +1162,11 @@ GSUB 匹配允许字体明确引用隐藏字符的 glyph ID，包括 ZWJ、标�
 `[/Separation /All alternateSpace tintTransform]` 在固定 sRGB 输出上按 `R=G=B=1−clamp(tint,0,1)` 绘制；0 为白、1 为黑，选择颜色空间后的缺省 tint 为 1。All 和 None 均忽略备用颜色空间及变换函数的执行，All 仍实际绘制。路径、描边、XObject/内联图片、Indexed 调色板和 Form 继承使用同一颜色模型；图片 Decode、状态保存/恢复和后续设备色操作照常生效。
 
 采用 [ISO 32000-2 §8.6.6.4](https://developer.adobe.com/document-services/docs/assets/5b15559b96303194340b99820d3a70fa/PDF_ISO_32000-2.pdf) 对加色设备明确的反向 tint 规则。该输出是屏幕 RGB；物理印版、套印和色彩管理继续由后续工作补齐。
+
+## PDF DeviceN 多通道颜色（0.18 开发补充）
+
+DeviceN 接受 1–32 个色名、device/CIE/ICC alternate 和最多四输出的 Type 4 变换，按色名数组顺序将输入压栈，逐输入应用 Domain，逐输出应用 Range。单通道也可使用已有 Type 0/2/3。默认所有 tint 为 1；路径填充、描边、XObject/内联图片、Indexed 调色板、图片 Decode 和颜色键掩码共用同一模型，绘制快照仍为屏幕 RGB。
+
+可选属性字典（包括 Subtype NChannel）按复合色的 tintTransform 输出显示，未模拟 Process/Colorants/InkHints 的物理油墨行为。全部色名为 None 时不落墨；混合 None 仍按文件声明的复合变换处理。拒绝 All、重复的非 None 色名、空列表、超过 32 通道和超过 127 字节的色名。多通道 Type 0 采样、物理分色、套印和完整 ICC 仍待实现；Type 2/3 本身只接受一个输入。
+
+最多 32 输入计入原计算器的 100 项操作数栈，不能再额外占用一套栈；保持 4096 指令、64 KiB 源码、1 MiB 函数图载荷及既有取消和页面工作预算。图片相关 Decode/Mask 缓冲扩到 64 项，逐像素只读写实际通道数；JPEG 继续只接受支持的单通道或三通道解码。不新增依赖或公开结构字段。

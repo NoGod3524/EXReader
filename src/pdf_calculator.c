@@ -119,8 +119,10 @@ static operand real(double value) { operand v={value,REAL}; return v; }
 static operand integer(int64_t value) { operand v={(double)value,INTEGER}; return v; }
 static operand boolean(int value) { operand v={value!=0,BOOLEAN}; return v; }
 static operand bits(uint32_t value) { return integer(value<=INT32_MAX ? (int64_t)value : (int64_t)value-INT64_C(4294967296)); }
-exr_status exr_pdf_calculator_eval(const exr_pdf_calculator *p,double input,unsigned outputs,double out[4],exr_error *error) {
-  operand stack[100]; size_t count=1,pc=0,steps=0,i; stack[0]=real(input);
+exr_status exr_pdf_calculator_eval_inputs(const exr_pdf_calculator *p,const double *inputs,unsigned input_count,unsigned outputs,double out[4],exr_error *error) {
+  operand stack[100]; size_t count=input_count,pc=0,steps=0,i;
+  if(!p || !inputs || !input_count || input_count>32 || !outputs || outputs>4 || !out) return exr_fail(error,EXR_ARGUMENT,"Invalid PDF calculator inputs/outputs");
+  for(i=0;i<count;i++) { if(!isfinite(inputs[i])) goto invalid; stack[i]=real(inputs[i]); }
   while(pc<p->count) {
     const instruction *ins=p->code+pc++; unsigned op=ins->op; operand a,b,result; double x,y,z=0; int64_t n,j;
     if(++steps%256==0 && exr_control_cancel(&p->control,error)!=EXR_OK) return EXR_CANCELLED;
@@ -211,4 +213,7 @@ limit:
   return exr_fail(error,EXR_LIMIT,"PDF calculator exceeds 100 operands");
 invalid:
   return exr_fail(error,EXR_FORMAT,"Invalid PDF calculator operands or arithmetic result");
+}
+exr_status exr_pdf_calculator_eval(const exr_pdf_calculator *p,double input,unsigned outputs,double out[4],exr_error *error) {
+  return exr_pdf_calculator_eval_inputs(p,&input,1,outputs,out,error);
 }

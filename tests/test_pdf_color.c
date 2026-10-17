@@ -164,6 +164,69 @@ static void registration(const char *directory) {
     CHECK(exr_fixed_render(d,0,1,NULL,&image,&error)==EXR_FORMAT && !image.pixels);exr_fixed_free(d);free(b.data);free(c.data);
   }
 }
+static void devicen(const char *directory) {
+  const char *program="{ 2 copy mul 1 exch sub }"; char function[4096];
+  static const unsigned rgb[]={64,128,223},identity[]={64,128,192},clipped[]={64,230,198},pink[]={255,127,127};
+  snprintf(function,sizeof(function),"<< /FunctionType 4 /Domain [0 1 0 1] /Range [0 1 0 1 0 1] /Length %zu >>\nstream\n%s\nendstream",strlen(program),program);
+  scenario="DeviceN two inputs preserve stack order across paths and images";
+  same_color_extra("[/DeviceN [/Spot /Varnish] /DeviceRGB 10 0 R]",".25 .5","/Decode [.25 .25 .5 .5]","\x00\x00",2,NULL,rgb,directory,"pdf-color-devicen-two.pdf",function);
+  scenario="DeviceN NChannel attributes use the same composite tint transform";
+  same_color_extra("[/DeviceN [/Spot /Varnish] /DeviceRGB 10 0 R << /Subtype /NChannel >>]",".25 .5","/Decode [.25 .25 .5 .5]","\x00\x00",2,NULL,rgb,NULL,NULL,function);
+  scenario="DeviceN per-input Domain clipping";
+  snprintf(function,sizeof(function),"<< /FunctionType 4 /Domain [.25 .75 .1 .9] /Range [0 1 0 1 0 1] /Length %zu >>\nstream\n%s\nendstream",strlen(program),program);
+  same_color_extra("[/DeviceN [/A /B] /DeviceRGB 10 0 R]","-2 2","/Decode [-2 -2 2 2]","\x00\x00",2,NULL,clipped,NULL,NULL,function);
+  scenario="DeviceN per-output Range clipping";
+  { static const unsigned bounded[]={64,64,191};
+    snprintf(function,sizeof(function),"<< /FunctionType 4 /Domain [0 1 0 1] /Range [0 1 0 .25 0 .75] /Length %zu >>\nstream\n%s\nendstream",strlen(program),program);
+    same_color_extra("[/DeviceN [/A /B] /DeviceRGB 10 0 R]",".25 .5","/Decode [.25 .25 .5 .5]","\x00\x00",2,NULL,bounded,NULL,NULL,function);
+  }
+  scenario="Three-input DeviceN identity";
+  same_color_extra("[/DeviceN [/A /B /C] /DeviceRGB 10 0 R]",".2509803921568627 .5019607843137255 .7529411764705882",NULL,"\x40\x80\xc0",3,NULL,identity,directory,"pdf-color-devicen-three.pdf","<< /FunctionType 4 /Domain [0 1 0 1 0 1] /Range [0 1 0 1 0 1] /Length 3 >>\nstream\n{ }\nendstream");
+  scenario="One-component DeviceN reuses scalar functions";
+  same_color("[/DeviceN [/Spot] /DeviceRGB " RED_FUNCTION "]",".5019607843137255",NULL,"\x80",1,NULL,pink,NULL,NULL);
+  scenario="DeviceN 32 components and 64 Decode entries";
+  { char names[1024]="[/DeviceN [",domain[256]="",values[256]="",decode[512]="/Decode [",body[256]="{",row[32]; unsigned char samples[32]; unsigned i; static const unsigned gray[]={128,128,128};
+    for(i=0;i<32;i++) { snprintf(row,sizeof(row),"/Ink%u ",i);strcat(names,row);strcat(domain,"0 1 ");strcat(values,".5 ");strcat(decode,".5 .5 ");samples[i]=128;if(i)strcat(body," pop"); }
+    strcat(names,"] /DeviceGray 10 0 R]");strcat(decode,"]");strcat(body," }");
+    snprintf(function,sizeof(function),"<< /FunctionType 4 /Domain [%s] /Range [0 1] /Length %zu >>\nstream\n%s\nendstream",domain,strlen(body),body);
+    same_color_extra(names,values,decode,samples,32,NULL,gray,directory,"pdf-color-devicen-32.pdf",function);
+    { buffer c={0},b; exr_fixed_document *d; exr_bitmap image; char mask[1024]; unsigned pass; static const unsigned green[]={0,255,0};
+      add(&c,"0 1 0 rg 0 0 64 16 re f q 8 0 0 8 10 0 cm /Im Do Q");label(&c);
+      for(pass=0;pass<2;pass++) {
+        strcpy(mask,"/Mask [");for(i=0;i<32;i++)strcat(mask,pass && i==31 ? "129 129 " : "128 128 ");strcat(mask,"]");
+        scenario="DeviceN 64-entry color-key mask compares all components";
+        b=book_extra(names,&c,mask,samples,32,NULL,NULL,function);d=opened(&b);image=rendered(d);pixel(&image,14,4,pass ? gray : green,1);
+        exr_bitmap_free(&image);exr_fixed_free(d);free(b.data);
+      }
+      free(c.data);
+    }
+    { buffer c={0},b; exr_fixed_document *d; exr_bitmap image={0}; strcpy(names,"[/DeviceN [");
+      for(i=0;i<33;i++) { snprintf(row,sizeof(row),"/Ink%u ",i);strcat(names,row); }strcat(names,"] /DeviceGray 10 0 R]");
+      scenario="DeviceN rejects 33 colorants before component reads";add(&c,"/S cs 0 0 8 8 re f");b=book_extra(names,&c,NULL,samples,32,NULL,NULL,function);d=opened(&b);
+      CHECK(exr_fixed_render(d,0,1,NULL,&image,&error)==EXR_LIMIT && !image.pixels);exr_fixed_free(d);free(b.data);free(c.data);
+    }
+  }
+  scenario="DeviceN all None components do not mark the page";
+  { buffer c={0},b; exr_fixed_document *d; exr_bitmap image; static const unsigned green[]={0,255,0};
+    add(&c,"0 1 0 rg 0 0 64 16 re f /S cs 1 1 scn 0 0 8 8 re f q 8 0 0 8 10 0 cm /Im Do Q");label(&c);
+    b=book("[/DeviceN [/None /None] /DeviceRGB 10 0 R]",&c,NULL,"\xff\xff",2,NULL,NULL);d=opened(&b);image=rendered(d);pixel(&image,4,4,green,0);pixel(&image,14,4,green,0);text(d);
+    exr_bitmap_free(&image);exr_fixed_free(d);free(b.data);free(c.data);
+  }
+  scenario="DeviceN default tints and q/Q/direct reset";
+  { buffer c={0},b; exr_fixed_document *d; exr_bitmap image; static const unsigned yellow[]={255,255,0},black[]={0,0,0};
+    add(&c,"/S cs 0 0 8 8 re f q .25 .5 scn 10 0 8 8 re f Q 20 0 8 8 re f 0 g 30 0 8 8 re f");label(&c);
+    snprintf(function,sizeof(function),"<< /FunctionType 4 /Domain [0 1 0 1] /Range [0 1 0 1 0 1] /Length %zu >>\nstream\n%s\nendstream",strlen(program),program);
+    b=book_extra("[/DeviceN [/A /B] /DeviceRGB 10 0 R]",&c,NULL,"\x00\x00",2,NULL,NULL,function);d=opened(&b);image=rendered(d);
+    pixel(&image,4,4,yellow,0);pixel(&image,14,4,rgb,1);pixel(&image,24,4,yellow,0);pixel(&image,34,4,black,0);
+    exr_bitmap_free(&image);exr_fixed_free(d);free(b.data);free(c.data);
+  }
+  { const char *invalid[]={"[/DeviceN [] /DeviceRGB 10 0 R]","[/DeviceN [/All] /DeviceRGB 10 0 R]","[/DeviceN [/A /A] /DeviceRGB 10 0 R]","[/DeviceN [/A 2] /DeviceRGB 10 0 R]","[/DeviceN [/A /B] /DeviceRGB 10 0 R 2]","[/DeviceN [/A /B] /DeviceRGB << /FunctionType 2 /Domain [0 1 0 1] /C0 [0 0 0] /C1 [1 1 1] /N 1 >>]"}; size_t i; buffer c={0};add(&c,"/S cs 0 0 8 8 re f");
+    for(i=0;i<sizeof(invalid)/sizeof(*invalid);i++) { buffer b=book_extra(invalid[i],&c,NULL,"\x00",1,NULL,NULL,function);exr_fixed_document *d=opened(&b);exr_bitmap image={0};scenario=invalid[i];
+      CHECK(exr_fixed_render(d,0,1,NULL,&image,&error)==EXR_FORMAT && !image.pixels);exr_fixed_free(d);free(b.data);
+    }
+    free(c.data);
+  }
+}
 static void bad_functions(void) {
   static const char *invalid[]={
     "<< /FunctionType 0 /Domain [0 1] >>", "<< /FunctionType 4 /Domain [0 1] >>", "<< /FunctionType 2 /N 1 >>",
@@ -295,4 +358,4 @@ static void calculator(const char *directory) {
     CHECK(strstr(error.message,"colour computation budget"));exr_fixed_free(d);free(b.data);free(content.data);free(function.data);free(program.data);
   }
 }
-int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); registration(directory); bad_functions(); function_graphs(); sampled(directory); bad_samples(); calculator(directory); printf("%u native PDF source colour-space checks passed\n",checks); return 0; }
+int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); registration(directory); devicen(directory); bad_functions(); function_graphs(); sampled(directory); bad_samples(); calculator(directory); printf("%u native PDF source colour-space checks passed\n",checks); return 0; }

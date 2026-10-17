@@ -60,8 +60,8 @@ void exr_pdf_image_release(exr_vector_texture *texture) { release_texture(textur
 static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
                                  exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e,
                                  image_chain *chain,unsigned *kind) {
-  image_reader r={0}; uint32_t width,height,bits=1,id,key[8]={0}; unsigned channels=1,k,indexed=0,color_key=0;
-  int stencil=0,interpolate=0; double decode[8]={0,1,0,1,0,1,0,1}; exr_pdf_colorspace *space=NULL;
+  image_reader r={0}; uint32_t width,height,bits=1,id,key[2*EXR_PDF_MAX_COLORANTS]={0}; unsigned channels=1,k,indexed=0,color_key=0;
+  int stencil=0,interpolate=0; double decode[2*EXR_PDF_MAX_COLORANTS]={0,1}; exr_pdf_colorspace *space=NULL;
   const unsigned char *bytes; size_t size,row,y,x,local_work=0,owned=0; exr_bitmap bitmap={0}; exr_vector_texture *mask_texture=NULL; const exr_pdf_value *v;
   uint32_t mask=EXR_PDF_NONE; unsigned soft=0,entered=0,charged=0,matte=0; double matte_rgb[4]={0};
   exr_pdf_stream_codec codec=EXR_PDF_STREAM_RAW; uint32_t parameters=EXR_PDF_NONE;
@@ -150,7 +150,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   if(codec==EXR_PDF_STREAM_JPEG) {
     exr_status status;
     id=get(&r,parameters,"ColorTransform"); if(r.error.code!=EXR_OK) goto done;
-    if(stencil || indexed || bits!=8 || channels==4 || id!=EXR_PDF_NONE) {
+    if(stencil || indexed || bits!=8 || (channels!=1 && channels!=3) || id!=EXR_PDF_NONE) {
       exr_fail(&r.error,EXR_FORMAT,"PDF JPEG stencil/CMYK/ColorTransform override is unsupported"); goto done;
     }
     if(!jpeg_frame(bytes,size,width,height,channels)) goto invalid;
@@ -166,7 +166,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
     if(!exr_vector_work(work,(size_t)width*(stencil ? 1 : exr_pdf_colorspace_cost(space)))) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
     for(x=0;x<width;x++) {
-      double values[4]={0}; unsigned char *p=bitmap.pixels+y*bitmap.stride+x*4; unsigned transparent=color_key;
+      double values[EXR_PDF_MAX_COLORANTS]; unsigned char *p=bitmap.pixels+y*bitmap.stride+x*4; unsigned transparent=color_key;
       for(k=0;k<channels;k++) {
         unsigned raw=codec==EXR_PDF_STREAM_JPEG ? p[k] : sample(bytes+y*row,(x*channels+k)*bits,bits);
         double unit=(double)raw/((1u<<bits)-1);
