@@ -9,6 +9,7 @@ typedef struct {
   uint32_t width,height,channels,background;
   size_t mask_budget; /* zero -> 64 MiB, shared immutable clips and text union */
   exr_pdf_program_fn program; void *context;
+  const double *initial_clip; /* Optional output-coordinate [x0,y0,x1,y1]. */
 } exr_pdf_raster_config;
 /* Output is owned and empty on failure. Initial maps PDF user space to pixels.
    Unsupported image filters and non-device/transparency features fail. */
@@ -21,4 +22,10 @@ exr_status exr_pdf_image_decode(exr_pdf_file *file,uint32_t image,uint32_t resou
 exr_status exr_pdf_image_load(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t stencil_color,
                                exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *error);
 void exr_pdf_image_release(exr_vector_texture *texture);
+exr_status exr_pdf_page_viewport(const exr_pdf_page_info *page,double scale,exr_viewport *out,exr_error *error);
+/* Width/height derive from the intersected crop/media box, UserUnit, rotation
+   and scale. NULL config defaults to white RGBA; other config fields apply. */
+exr_status exr_pdf_raster_page(exr_pdf_file *file,const exr_pdf_page_info *page,double scale,
+                                const exr_pdf_raster_config *config,const exr_control *control,
+                                exr_bitmap *out,exr_error *error);
 #endif
