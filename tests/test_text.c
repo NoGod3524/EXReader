@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "exreader.h"
+#include <limits.h>
 #include "../src/text_line.h"
 #include <ctype.h>
 #include <math.h>
