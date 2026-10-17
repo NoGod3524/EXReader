@@ -282,11 +282,12 @@ static int embed(assets *a,uint32_t number,size_t *index) {
 }
 /* Return a local path for an exact resource URI; an empty output means unchanged. */
 static int asset_uri(assets *a,const char *s,size_t size,char path[2048]) {
-  size_t at,index; uint32_t number; int flow; const char *mime=NULL;
+  size_t at,index,original_size=size; uint32_t number; int flow; const char *mime=NULL,*hash;
   path[0]=0;
   if(size>=12 && !memcmp(s,"kindle:flow:",12)) { at=12; flow=1; }
   else if(size>=13 && !memcmp(s,"kindle:embed:",13)) { at=13; flow=0; }
   else return 1;
+  hash=memchr(s,'#',size); if(hash) size=(size_t)(hash-s);
   if(!base32(s,size,&at,&number)) goto bad;
   if(at<size) {
     if(size-at<=6 || memcmp(s+at,"?mime=",6) || size-at-6>=128) goto bad;
@@ -303,10 +304,19 @@ static int asset_uri(assets *a,const char *s,size_t size,char path[2048]) {
       char *copy=exr_model_copy(a->doc,type,strlen(type));
       if(!copy) return asset_error(a,EXR_LIMIT,"KF8 resource metadata limit exceeded");
       free((void *)r->media_type); r->media_type=copy;
-      if(!strcmp(type,"text/css")) a->queue[a->queued++]=index;
+      a->queue[a->queued++]=index;
     } else if(strcmp(r->media_type,type)) goto bad;
   } else if(!embed(a,number,&index)) return 0;
-  strcpy(path,a->doc->resources[index].path); return 1;
+  strcpy(path,a->doc->resources[index].path);
+  if(hash && (size_t)(hash-s)+1<original_size) {
+    char fragment[2048]; exr_buffer encoded={0}; size_t length=strlen(path);
+    if(!exr_uri_decode(hash+1,original_size-(size_t)(hash-s)-1,fragment)) goto bad;
+    if(!exr_uri_path(&encoded,fragment) || encoded.size>2046-length) {
+      free(encoded.data); return asset_error(a,EXR_LIMIT,"KF8 resource fragment exceeds URI limit");
+    }
+    path[length]='#'; memcpy(path+length+1,encoded.data,encoded.size+1); free(encoded.data);
+  }
+  return 1;
 bad:
   return asset_error(a,EXR_FORMAT,"Invalid or unsupported KF8 resource URI");
 }
@@ -348,9 +358,43 @@ static int css_rewrite(assets *a,const char *s,size_t size,exr_buffer *out) {
 limit:
   return asset_error(a,EXR_LIMIT,"KF8 rewritten CSS exceeds buffer limit");
 }
+static int style_node(const exr_node *node) {
+  return node->name && (!strcmp(node->name,"style") ||
+      !strcmp(node->name,"http://www.w3.org/1999/xhtml|style") ||
+      !strcmp(node->name,"http://www.w3.org/2000/svg|style"));
+}
+static int rewrite_nodes(assets *a,exr_document *d) {
+  size_t i,j; exr_buffer css={0};
+  for(i=0;i<d->node_count;i++) {
+    exr_node *v=&d->nodes[i];
+    for(j=0;j<v->attribute_count;j++) {
+      const char *key=v->attributes[j].name,*value=v->attributes[j].value,*local=strrchr(key,'|');
+      char path[2048]; local=local ? local+1 : key;
+      if(!strcmp(local,"src") || !strcmp(local,"href") || !strcmp(local,"poster") || !strcmp(local,"data")) {
+        if(!asset_uri(a,value,strlen(value),path)) goto failed;
+        if(path[0] && !exr_model_attribute(d,i,key,path)) goto limit;
+      } else if(!strcmp(local,"style")) {
+        css.size=0; if(!css_rewrite(a,value,strlen(value),&css)) goto failed;
+        if(!exr_model_attribute(d,i,key,css.data)) goto limit;
+      }
+    }
+    if(v->text && v->parent!=SIZE_MAX && style_node(&d->nodes[v->parent])) {
+      char *copy;
+      css.size=0; if(!css_rewrite(a,v->text,strlen(v->text),&css)) goto failed;
+      if(!strcmp(css.data,v->text)) continue;
+      copy=exr_model_copy(d,css.data,css.size); if(!copy) goto limit;
+      free((void *)v->text); v->text=copy;
+    }
+  }
+  free(css.data); return 1;
+limit:
+  asset_error(a,EXR_LIMIT,"KF8 rewritten model exceeds string budget");
+failed:
+  free(css.data); return 0;
+}
 static exr_status connect_assets(exr_document *d,const exr_mobi_record *records,size_t count,
                                    const exr_mobi_record *shared,size_t shared_count,size_t flows,exr_error *e) {
-  assets a={0}; size_t i,j; exr_buffer css={0};
+  assets a={0}; size_t i; exr_buffer css={0};
   a.doc=d; a.records=records; a.count=count; a.first=u32(records[0].data+108);
   a.shared=shared; a.shared_count=shared_count;
   a.flows=flows; a.error=e; a.status=EXR_OK;
@@ -358,31 +402,26 @@ static exr_status connect_assets(exr_document *d,const exr_mobi_record *records,
   for(i=0;i<count+shared_count;i++) a.mapped[i]=SIZE_MAX;
   for(i=0;i<d->resource_count;i++) a.bytes+=d->resource_data[i].size;
   if(a.bytes>EXR_MAX_INPUT) { asset_error(&a,EXR_LIMIT,"KF8 total resource byte budget exceeded"); goto done; }
-  for(i=0;i<d->node_count;i++) {
-    exr_node *v=&d->nodes[i];
-    for(j=0;j<v->attribute_count;j++) {
-      const char *key=v->attributes[j].name,*value=v->attributes[j].value,*local=strrchr(key,'|');
-      char path[2048]; local=local ? local+1 : key;
-      if(!strcmp(local,"src") || !strcmp(local,"href") || !strcmp(local,"poster") || !strcmp(local,"data")) {
-        if(!asset_uri(&a,value,strlen(value),path)) goto done;
-        if(path[0] && !exr_model_attribute(d,i,key,path)) goto limit;
-      } else if(!strcmp(local,"style")) {
-        css.size=0; if(!css_rewrite(&a,value,strlen(value),&css)) goto done;
-        if(!exr_model_attribute(d,i,key,css.data)) goto limit;
-      }
-    }
-    if(v->text && v->parent!=SIZE_MAX && !strcmp(exr_html_tag(d,&d->nodes[v->parent]),"style")) {
-      char *copy;
-      css.size=0; if(!css_rewrite(&a,v->text,strlen(v->text),&css)) goto done;
-      if(!strcmp(css.data,v->text)) continue;
-      copy=exr_model_copy(d,css.data,css.size); if(!copy) goto limit;
-      free((void *)v->text); v->text=copy;
-    }
-  }
+  if(!rewrite_nodes(&a,d)) goto done;
   while(a.head<a.queued) {
     size_t index=a.queue[a.head++],old=d->resource_data[index].size;
     css.size=0;
-    if(!css_rewrite(&a,(const char *)d->resource_data[index].bytes,old,&css)) goto done;
+    if(!strcmp(d->resources[index].media_type,"text/css")) {
+      if(!css_rewrite(&a,(const char *)d->resource_data[index].bytes,old,&css)) goto done;
+    } else {
+      exr_document *xml=NULL; size_t root;
+      a.status=exr_xml_memory_tree(d->resource_data[index].bytes,old,"svg",&xml,e);
+      if(a.status!=EXR_OK) goto done;
+      root=xml->nodes[xml->chapters[0].root].first_child;
+      while(root!=SIZE_MAX && xml->nodes[root].kind==EXR_NODE_TEXT) root=xml->nodes[root].next_sibling;
+      if(root==SIZE_MAX || !xml->nodes[root].name ||
+         (strcmp(xml->nodes[root].name,"svg") && strcmp(xml->nodes[root].name,"http://www.w3.org/2000/svg|svg"))) {
+        exr_document_free(xml); asset_error(&a,EXR_FORMAT,"KF8 SVG root has an invalid namespace"); goto done;
+      }
+      if(!rewrite_nodes(&a,xml)) { exr_document_free(xml); goto done; }
+      a.status=exr_xml_serialize(xml,xml->chapters[0].root,&css,e); exr_document_free(xml);
+      if(a.status!=EXR_OK) goto done;
+    }
     if(css.size>EXR_MAX_INPUT-(a.bytes-old)) goto limit;
     a.bytes=a.bytes-old+css.size;
     free(d->resource_data[index].bytes); d->resource_data[index].bytes=(unsigned char *)css.data;

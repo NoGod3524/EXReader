@@ -629,3 +629,15 @@ a 9998-guide + 2-chapter book reaches exactly 10000 navigation entries, while 10
 chapters returns EXR_LIMIT.
 
 The 0.32 commit e8aa242 passed all six CI jobs, including sanitizers and Apple/Android builds.
+
+
+## 0.34 KF8 SVG resources
+
+The 1231-check KF8 suite adds SVG/XLink names, unnamespaced/foreign extensions, CDATA CSS,
+style attributes, unchanged literal text, CSS/SVG dependency cycles and URI fragments.
+An independent Expat parse checks expanded names and translated references. A host test decoder
+uses the SVG's resolved embedded PNG to exercise the existing decoder contract, font selection,
+release ownership and matching rendered pages after EPUB export; it is not a vector renderer.
+Malformed XML/roots/namespaces/entities/references/fragments fail atomically.
+
+The 0.33 commit be7bdc1 passed all six platform and sanitizer CI jobs.
