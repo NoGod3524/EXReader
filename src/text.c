@@ -1,86 +1,19 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "text_internal.h"
-#include "unicode_data.h"
+#include "text_line.h"
 
-static int property(const exr_unicode_range *ranges, size_t count, uint32_t cp) {
-  size_t lo = 0, hi = count;
-  while (lo < hi) {
-    size_t mid = lo + (hi - lo) / 2;
-    if (cp < ranges[mid].first)
-      hi = mid;
-    else if (cp > ranges[mid].last)
-      lo = mid + 1;
-    else
-      return ranges[mid].value;
-  }
-  return 0;
-}
 static int grapheme(uint32_t cp) {
   if (cp >= 0xac00 && cp <= 0xd7a3)
     return (cp - 0xac00) % 28 ? exr_gcb_lvt : exr_gcb_lv;
-  return property(exr_gcb_ranges, EXR_GCB_RANGE_COUNT, cp);
+  return exr_unicode_property(exr_gcb_ranges, EXR_GCB_RANGE_COUNT, cp);
 }
 static int control(int gcb) {
   return gcb == exr_gcb_cr || gcb == exr_gcb_lf || gcb == exr_gcb_control;
 }
-static int hard(int lb) {
-  return lb == exr_lb_bk || lb == exr_lb_cr || lb == exr_lb_lf || lb == exr_lb_nl;
-}
-static int ideographic(int lb) {
-  return lb == exr_lb_id || lb == exr_lb_eb || lb == exr_lb_em || lb == exr_lb_ri ||
-         lb == exr_lb_jl || lb == exr_lb_jv || lb == exr_lb_jt ||
-         lb == exr_lb_h2 || lb == exr_lb_h3;
-}
-static int closing(int lb) {
-  return lb == exr_lb_cl || lb == exr_lb_cp || lb == exr_lb_ex ||
-         lb == exr_lb_is || lb == exr_lb_sy || lb == exr_lb_ns || lb == exr_lb_in;
-}
-static int line_class(int lb, uint32_t cp) {
-  if (cp == 0x2018 || cp == 0x201c || cp == 0x301d)
-    return exr_lb_op;
-  if (cp == 0x2019 || cp == 0x201d || cp == 0x301e || cp == 0x301f)
-    return exr_lb_cl;
-  if (lb == exr_lb_ai || lb == exr_lb_sg || lb == exr_lb_xx || lb == exr_lb_sa)
-    return exr_lb_al;
-  return lb == exr_lb_cj ? exr_lb_ns : lb;
-}
-static unsigned line_boundary(const exr_text_state *s, int current, int raw) {
-  int previous = s->previous_lb;
-  int base = previous == exr_lb_sp ? s->space_base : previous;
-  if (!s->started)
-    return 0;
-  if (s->previous_raw_lb == exr_lb_cr && raw == exr_lb_lf)
-    return EXR_BOUNDARY_GLUE;
-  if (hard(s->previous_raw_lb))
-    return EXR_BOUNDARY_LINE | EXR_BOUNDARY_MANDATORY;
-  if (hard(raw))
-    return EXR_BOUNDARY_GLUE;
-  if (current == exr_lb_wj || previous == exr_lb_wj ||
-      current == exr_lb_gl || previous == exr_lb_gl)
-    return EXR_BOUNDARY_GLUE;
-  if (raw == exr_lb_sp || raw == exr_lb_zw)
-    return EXR_BOUNDARY_GLUE;
-  if (s->previous_raw_lb == exr_lb_zwj)
-    return EXR_BOUNDARY_GLUE;
-  if (base == exr_lb_op || closing(current))
-    return EXR_BOUNDARY_GLUE;
-  if (base == exr_lb_zw || previous == exr_lb_sp)
-    return EXR_BOUNDARY_LINE;
-  if (previous == exr_lb_ba || previous == exr_lb_hy || previous == exr_lb_hh ||
-      previous == exr_lb_b2 || previous == exr_lb_cb || current == exr_lb_cb)
-    return EXR_BOUNDARY_LINE;
-  /* This is a documented UAX #14 subset; dictionary, contextual quote and
-     numeric tailoring are separate from the complete UAX #29 algorithm. */
-  if (ideographic(previous) || ideographic(current))
-    return EXR_BOUNDARY_LINE;
-  return 0;
-}
-
-unsigned exr_text_step(exr_text_state *s, uint32_t cp) {
+unsigned exr_text_step(exr_text_state *s, uint32_t cp, exr_text_next next, void *context) {
   int gcb = grapheme(cp), before = s->previous_gcb;
-  int incb = property(exr_incb_ranges, EXR_INCB_RANGE_COUNT, cp);
-  int ep = property(exr_ep_ranges, EXR_EP_RANGE_COUNT, cp);
-  int raw = property(exr_lb_ranges, EXR_LB_RANGE_COUNT, cp), lb = line_class(raw, cp);
+  int incb = exr_unicode_property(exr_incb_ranges, EXR_INCB_RANGE_COUNT, cp);
+  int ep = exr_unicode_property(exr_ep_ranges, EXR_EP_RANGE_COUNT, cp);
   int split = 1;
   unsigned flags;
   if (s->started) {
@@ -107,10 +40,7 @@ unsigned exr_text_step(exr_text_state *s, uint32_t cp) {
              gcb == exr_gcb_regional_indicator && s->ri_odd)
       split = 0; /* GB12/GB13 */
   }
-  if (raw == exr_lb_cm || raw == exr_lb_zwj)
-    lb = !s->started || hard(s->previous_raw_lb) || s->previous_lb == exr_lb_sp ||
-                 s->previous_lb == exr_lb_zw ? exr_lb_al : s->previous_lb;
-  flags = line_boundary(s, lb, raw);
+  flags = exr_line_step(&s->line, cp, next, context);
   if (split)
     flags |= EXR_BOUNDARY_GRAPHEME;
   else
@@ -127,11 +57,7 @@ unsigned exr_text_step(exr_text_state *s, uint32_t cp) {
   else if (incb != exr_incb_extend)
     s->indic_chain = 0;
   s->ri_odd = gcb == exr_gcb_regional_indicator ? !s->ri_odd : 0;
-  if (lb != exr_lb_sp)
-    s->space_base = lb;
   s->previous_gcb = gcb;
-  s->previous_lb = lb;
-  s->previous_raw_lb = raw;
   s->started = 1;
   return flags;
 }
@@ -141,6 +67,12 @@ int exr_text_hidden(uint32_t cp) {
          cp == 0x034f || (cp >= 0x180b && cp <= 0x180d) || cp == 0x180f ||
          (cp >= 0xfe00 && cp <= 0xfe0f) || (cp >= 0xe0020 && cp <= 0xe007f) ||
          (cp >= 0xe0100 && cp <= 0xe01ef);
+}
+
+typedef struct { const char *text; size_t at, size; } text_cursor;
+static int following_scalar(void *context, uint32_t *cp) {
+  text_cursor *c = context;
+  return c->at < c->size && exr_next(c->text, c->size, &c->at, cp);
 }
 
 exr_status exr_text_analyze(const char *text, size_t size, unsigned char **out, exr_error *e) {
@@ -164,7 +96,10 @@ exr_status exr_text_analyze(const char *text, size_t size, unsigned char **out, 
       free(map);
       return exr_fail(e, EXR_ENCODING, "Invalid UTF-8 in text");
     }
-    map[start] = (unsigned char)exr_text_step(&state, cp);
+    {
+      text_cursor cursor = {text, at, size};
+      map[start] = (unsigned char)exr_text_step(&state, cp, following_scalar, &cursor);
+    }
   }
   map[size] = EXR_BOUNDARY_GRAPHEME | EXR_BOUNDARY_LINE | EXR_BOUNDARY_MANDATORY;
   *out = map;

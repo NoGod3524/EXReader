@@ -1867,3 +1867,31 @@ ASAN/UBSAN; Android ARM64 compilation; iOS/iPadOS device and simulator
 compilation with Swift type checking. Mobile compilation does not establish
 device runtime or application validation. Product version 0.18.0, ABI epoch 1
 and library schema 6 remain unchanged.
+
+
+## Milestone 0.18 development: line markup, Unicode line breaking and audio
+
+The local Windows integration run passes all 81 suites. Unicode 17 default UAX
+#14 passes all 19,338 official raw line-break cases; the public/layout map also
+passes the UAX #29 intersection, suppressing 1,388 grapheme-internal opportunities.
+The existing 766 grapheme cases, cross-style lookahead and page continuation
+regressions pass. Pinned tables regenerate byte-for-byte with standard Python,
+without runtime dependencies.
+
+Line-markup tests cover native Underline/StrikeOut/Squiggly creation, updates and
+removal; Z/perimeter/reversed-order quads, vertical orientation, overlap alpha,
+invalid diagonal edges, cancellation and bounded path complexity. Independent
+PyMuPDF 1.28.2 confirms subtype, raw quads and visible line positions.
+
+FLAC tests build original bitstreams for every supported predictor, residual,
+bit depth and stereo family, including 33-bit side channels, CRC failures,
+seek points, sparse retry, unknown duration, cancellation and source ownership.
+The generic PCM test covers custom providers and WAV; the FLAC suite checks
+PCM dispatch and length discovery. Independent FFmpeg-encoded original mono,
+stereo and 8-channel inputs compare correctly; 120 truncation/bit-flip development
+checks finish without crashes. FFmpeg is not a production dependency.
+
+Native audio output tests validate contracts without touching devices. Actual
+Windows, Apple, Android and Linux hardware playback remains manual validation.
+This batch requires a fresh cross-platform CI run; product version remains
+0.18.0, ABI epoch 1 and library schema 6.

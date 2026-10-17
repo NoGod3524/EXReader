@@ -1000,3 +1000,22 @@ ID 和属性值须为有效 UTF-8 C 字符串；UTF-8 载荷各最多 64 KiB，�
 `exr_fixed_draw` / `exr_fixed_render` 在页面正文之后绘制原生标注的 `/AP/N` normal Form，既支持直接 Form，也支持按 `/AS` 选择状态字典中的 Form。使用 Rect、BBox、Matrix 和 Form 自有资源或页面资源，将外观裁切并映射到源页；每项外观与正文的绘制状态隔离。Invisible、Hidden、NoView 标注不绘制，没有可用 normal 外观时跳过。单页解码外观流合计最多 64 MiB，并共享工作预算和取消控制。
 
 带 NoZoom/NoRotate 的可见外观、Form `/Group`（包括透明度组）目前返回 `EXR_FORMAT`；其他尚未支持的 Form 内容仍沿用 PDF 绘制器的错误规则。此入口绘制既有外观，不为任意标注类型合成外观，也不执行表单交互、动作或脚本。
+
+
+## Unicode 默认断行与原生音频（0.18 开发补充）
+
+UAX #14 已实现 Unicode 17 默认 LB1–LB31，包括引号、数字、Brahmic、Hangul、RI 和 emoji 上下文。官方 19,338 个 raw 规则案例全部通过。`exr_text_analyze` 与排版将默认断行机会与 UAX #29 字素边界取交集，因此不提供字素内部断点；词内紧急换行策略继续保留。上下文向后读取只在相关规则需要时使用，不为普通左到右章节分配整段位置数组。字典断词、可见软连字符、完整 Indic 塑形和竖排仍需独立完成。前面的 S009 历史范围描述的是当时实现。
+
+PDF 写回现还支持 `Underline`、`StrikeOut`、`Squiggly`。这三类的前两点声明文字上边，后两点是相应下边，接受 Z 序或周界序，拒绝首边为对角线；保留原始 QuadPoints。外观为实际矢量填充，重叠只叠加一次透明度。Squiggly 每个 quad 最多 16384 个波折间隔，外观路径最多 1048576 条命令，超过返回 EXR_LIMIT。其余写回、所有权和权限规则沿用前节。
+
+`exr_flac_open` / `exr_flac_open_source` / `exr_flac_read` 按需解码 raw FLAC。支持 1–8 声道、4–32 位、1–1048575 Hz、constant/verbatim、fixed 0–4、LPC 1–32、Rice/Rice2/escape、wasted bits、独立声道和三种立体声还原。校验 header CRC8、frame CRC16、预测器与样本整数范围，不验证整流 MD5；不支持 Ogg 容器。打开只读取元数据，未声明长度时 frames=UINT64_MAX，到验证 EOF 后更新真实长度。
+
+FLAC 元数据最多 64 MiB / 65536 块；SEEKTABLE 最多 65536 点、保留最多 4096 点，另有最多 4096 个验证后的稀疏检查点和续扫位置。单帧最多 32 MiB / 65535 样本，样本工作区最多 4 MiB；每次 read 最多 65536 帧、seek 扫描最多 16M 样本帧或 256 MiB。达到扫描预算返回 EXR_LIMIT，验证后的进展保留，可再次读取同一位置继续。失败/取消清空请求输出和 read；source 上下文只在打开成功时接管，打开时的 control 不保留。
+
+`exr_pcm_create` 提供与格式无关的按帧 float PCM 读取模型；宿主可接自己的编解码器、解密源或合成音频。`exr_pcm_open` / open_source 自动识别原生 WAV/FLAC。info 包含 sample_rate、channels、channel_mask 和 frames；mask=0 不假定声道顺序，frames=UINT64_MAX 不虚构时长，FLAC 确认 EOF 后同步真实长度。自定义 provider 的未知长度不从任意 seek 的短读推测。每次最多 65536 帧、32 声道，回调需返回完整请求或 EOF，所有样本必须有限。SDK 保留错误详情，拒绝重入，取消/错误清空输出；context 只在成功 create 后接管。
+
+`exr_audio_output_backend` 返回目标平台的编译后端名：Windows waveOut、macOS/iOS/iPadOS AudioQueue、Android OpenSL ES、Linux 动态 ALSA。这不等同于设备存在。open 使用默认设备，接受 8000–192000 Hz、一或二声道；不打开文件、不创建引擎线程。系统设备访问失败返回 EXR_IO。
+
+`exr_audio_output_write` 复制交错有限 float 数据、裁切至 [-1,1]、转为 PCM16，非阻塞提交；每次最多 65536 帧。调用方总要处理 written，设备错误也可能发生在部分数据已提交后，不能重发已接受的数据。队列满或暂停时 written=0，宿主稍后重试；pause 保留队列，flush 丢弃待播数据并保留逻辑暂停状态。pending 是保守队列估算，不是精确播放时钟。Windows/Apple/Android 最多四个 4096 帧块；ALSA 使用有限设备缓冲，不能保留队列暂停的设备返回 EXR_FORMAT。
+
+声音输出由宿主串行调用并管理生命周期。移动应用的音频会话、前后台、路由和中断策略仍由宿主管理。普通测试不打开扬声器，显式 `exreader-audio-output-test --device` 只提交静音用于手动验证；编译通过不代表真机音频验收。

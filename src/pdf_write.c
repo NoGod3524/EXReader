@@ -29,6 +29,24 @@ static int quad_hull(const double *quad,point hull[8]) {
   for(i=3;i>0;i--) { point p=sorted[i-1]; while(n>lower && cross(hull[n-2],hull[n-1],p)<=0) n--; hull[n++]=p; }
   return n==5;
 }
+/* The first edge declares text orientation. Match the opposite corners by
+   hull adjacency, so both Z order and perimeter order retain that orientation. */
+static int quad_edges(const double *quad,const point hull[8],point edges[4]) {
+  size_t i,first=4,second=4;
+  for(i=0;i<4;i++) {
+    if(hull[i].x==quad[0] && hull[i].y==quad[1]) first=i;
+    if(hull[i].x==quad[2] && hull[i].y==quad[3]) second=i;
+  }
+  if(first==4 || second==4) return 0;
+  edges[0]=hull[first]; edges[1]=hull[second];
+  if((first+1)%4==second) { edges[2]=hull[(first+3)%4]; edges[3]=hull[(first+2)%4]; }
+  else if((first+3)%4==second) { edges[2]=hull[(first+1)%4]; edges[3]=hull[(first+2)%4]; }
+  else return 0;
+  return 1;
+}
+static int line_markup(const char *kind) {
+  return !strcmp(kind,"Underline") || !strcmp(kind,"StrikeOut") || !strcmp(kind,"Squiggly");
+}
 static exr_status text_valid(const char *s,int nonempty,int encode,exr_error *e) {
   size_t n=0,at=0,encoded=2; uint32_t cp;
   if(!s || (nonempty && !*s)) return exr_fail(e,EXR_ARGUMENT,"Missing PDF annotation text");
@@ -43,8 +61,8 @@ static exr_status text_valid(const char *s,int nonempty,int encode,exr_error *e)
 }
 static exr_status validate(const exr_page_annotation *a,const exr_control *control,exr_error *e) {
   size_t i,j; unsigned seen=0; exr_status status;
-  if(!a || !a->kind || (strcmp(a->kind,"Text") && strcmp(a->kind,"Highlight")))
-    return exr_fail(e,EXR_ARGUMENT,"PDF writer supports Text and Highlight annotations");
+  if(!a || !a->kind || (strcmp(a->kind,"Text") && strcmp(a->kind,"Highlight") && !line_markup(a->kind)))
+    return exr_fail(e,EXR_ARGUMENT,"Unsupported PDF annotation subtype");
   status=text_valid(a->id,1,1,e); if(status!=EXR_OK) return status;
   for(i=0;i<4;i++) if(!isfinite(a->bounds[i]) || fabs(a->bounds[i])>1e7)
     return exr_fail(e,EXR_ARGUMENT,"Invalid PDF annotation bounds");
@@ -54,11 +72,13 @@ static exr_status validate(const exr_page_annotation *a,const exr_control *contr
   if((a->quad_count && !a->quads) || (!strcmp(a->kind,"Text") ? a->quad_count!=0 : a->quad_count==0))
     return exr_fail(e,EXR_ARGUMENT,"Invalid quads for PDF annotation subtype");
   for(i=0;i<a->quad_count;i++) {
-    point hull[8]; const double *q=a->quads+i*8;
+    point hull[8],edges[4]; const double *q=a->quads+i*8;
     if((i&255)==0 && (status=exr_control_cancel(control,e))!=EXR_OK) return status;
     for(j=0;j<8;j++) if(!isfinite(q[j]) || q[j]<a->bounds[j%2] || q[j]>a->bounds[j%2+2])
       return exr_fail(e,EXR_ARGUMENT,"PDF annotation quad is outside its bounds");
     if(!quad_hull(q,hull)) return exr_fail(e,EXR_ARGUMENT,"PDF annotation quad must have four convex corners");
+    if(line_markup(a->kind) && !quad_edges(q,hull,edges))
+      return exr_fail(e,EXR_ARGUMENT,"PDF line markup requires its first two corners to declare the text top edge");
   }
   if(a->property_count>5) return exr_fail(e,EXR_ARGUMENT,"Unsupported PDF annotation properties");
   if(a->property_count && !a->properties) return exr_fail(e,EXR_ARGUMENT,"Missing PDF annotation properties");
@@ -114,6 +134,48 @@ static void begin_object(pdf_writer *w,uint32_t id,uint32_t generation) {
   w->objects[w->count++]=(revision_object){id,generation,w->input_size+w->bytes.size};
   format(w,"%" PRIu32 " %" PRIu32 " obj\n",id,generation);
 }
+static point quad_position(const point edges[4],double along,double down) {
+  point top={edges[0].x+(edges[1].x-edges[0].x)*along,edges[0].y+(edges[1].y-edges[0].y)*along};
+  point bottom={edges[2].x+(edges[3].x-edges[2].x)*along,edges[2].y+(edges[3].y-edges[2].y)*along};
+  return (point){top.x+(bottom.x-top.x)*down,top.y+(bottom.y-top.y)*down};
+}
+static void path_point(pdf_writer *w,point p,const exr_page_annotation *a,int first) {
+  number(w,p.x-a->bounds[0]); literal(w," "); number(w,p.y-a->bounds[1]); literal(w,first ? " m " : " l ");
+}
+static void line_appearance(pdf_writer *w,const exr_page_annotation *a,size_t *segments) {
+  size_t i,j; int squiggly=!strcmp(a->kind,"Squiggly"),strike=!strcmp(a->kind,"StrikeOut");
+  for(i=0;i<a->quad_count && w->status==EXR_OK;i++) {
+    point hull[8],edges[4]; int forward; size_t steps=1; double top=strike ? .46 : .90,bottom=strike ? .54 : .98;
+    if(!quad_hull(a->quads+i*8,hull) || !quad_edges(a->quads+i*8,hull,edges)) {
+      w->status=exr_fail(w->error,EXR_ARGUMENT,"Invalid PDF line markup quad"); break;
+    }
+    if((i&255)==0) w->status=exr_control_cancel(w->control,w->error);
+    forward=cross(edges[0],edges[1],edges[3])>0;
+    if(squiggly) {
+      double length=(hypot(edges[1].x-edges[0].x,edges[1].y-edges[0].y)+hypot(edges[3].x-edges[2].x,edges[3].y-edges[2].y))*.5;
+      double height=(hypot(edges[2].x-edges[0].x,edges[2].y-edges[0].y)+hypot(edges[3].x-edges[1].x,edges[3].y-edges[1].y))*.5;
+      double required=ceil(4*length/height);
+      if(!isfinite(required) || required>16384) { w->status=exr_fail(w->error,EXR_LIMIT,"PDF squiggly exceeds 16384 appearance intervals"); break; }
+      steps=(size_t)required; if(steps<2) steps=2; if(steps&1) steps++;
+    }
+    /* One fill unions all strips without alpha darkening or reversed winding
+       cancellation. Stay below the renderer's bounded path allocation. */
+    if(2*(steps+1)+1>1048576-*segments) { w->status=exr_fail(w->error,EXR_LIMIT,"PDF annotation appearance exceeds one million path segments"); break; }
+    *segments+=2*(steps+1)+1;
+    for(j=0;j<=steps && w->status==EXR_OK;j++) {
+      size_t at=forward ? j : steps-j; double down=squiggly ? .90+(at%2 ? .05 : -.05)-.025 : top;
+      if((j&255)==0) w->status=exr_control_cancel(w->control,w->error);
+      path_point(w,quad_position(edges,(double)at/steps,down),a,j==0);
+    }
+    for(j=0;j<=steps && w->status==EXR_OK;j++) {
+      size_t at=forward ? steps-j : j; double down=squiggly ? .90+(at%2 ? .05 : -.05)+.025 : bottom;
+      if((j&255)==0) w->status=exr_control_cancel(w->control,w->error);
+      path_point(w,quad_position(edges,(double)at/steps,down),a,0);
+    }
+    literal(w,"h\n");
+  }
+  literal(w,"f\n");
+}
 static void appearance(pdf_writer *w,uint32_t id,const exr_page_annotation *a,uint32_t color,double opacity) {
   exr_buffer content={0}; pdf_writer p={0}; double width=a->bounds[2]-a->bounds[0],height=a->bounds[3]-a->bounds[1];
   double rgb[3]={(double)((color>>16)&255)/255,(double)((color>>8)&255)/255,(double)(color&255)/255}; size_t i,j;
@@ -127,6 +189,8 @@ static void appearance(pdf_writer *w,uint32_t id,const exr_page_annotation *a,ui
       literal(&p,"h\n");
     }
     literal(&p,"f\n");
+  } else if(line_markup(a->kind)) {
+    size_t segments=0; line_appearance(&p,a,&segments);
   } else {
     literal(&p,"0.2 0.2 0.2 RG "); number(&p,fmin(width,height)/32); literal(&p," w 0 0 "); number(&p,width); literal(&p," "); number(&p,height); literal(&p," re B\n");
     number(&p,width*.65); literal(&p," "); number(&p,height); literal(&p," m "); number(&p,width*.65); literal(&p," "); number(&p,height*.65);

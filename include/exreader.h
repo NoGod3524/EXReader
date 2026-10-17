@@ -301,6 +301,65 @@ EXR_API const exr_wave_info *exr_wave_format(const exr_wave *wave);
    frames per call. Runtime error/cancellation zeros output and returns read=0. */
 EXR_API exr_status exr_wave_read(exr_wave *wave,uint64_t first_frame,size_t frames,float *output,size_t *read,
                                   const exr_control *control,exr_error *error);
+/* Native raw FLAC. Source ownership transfers only on success. Opening reads
+   metadata, not the whole audio payload. UINT64_MAX frames means unspecified
+   STREAMINFO duration; a read reaching verified EOF resolves the actual length.
+   Per-frame CRC8/CRC16 are checked; the whole-stream MD5 is not verified. */
+typedef struct exr_flac exr_flac;
+typedef struct {
+  uint32_t sample_rate,channels,bits_per_sample;
+  uint64_t frames;
+} exr_flac_info;
+EXR_API exr_status exr_flac_open(const char *path,const exr_control *control,exr_flac **out,exr_error *error);
+EXR_API exr_status exr_flac_open_source(const exr_source *source,exr_flac **out,exr_error *error);
+EXR_API void exr_flac_free(exr_flac *flac);
+EXR_API const exr_flac_info *exr_flac_format(const exr_flac *flac);
+/* Same float layout, request limit and failure clearing as exr_wave_read.
+   Bounded scans may return EXR_LIMIT while retaining verified seek checkpoints. */
+EXR_API exr_status exr_flac_read(exr_flac *flac,uint64_t first_frame,size_t frames,float *output,size_t *read,
+  const exr_control *control,exr_error *error);
+
+/* Format-independent PCM source. Channel ordering is declared by the provider;
+   channel_mask==0 leaves it unspecified. frames==UINT64_MAX means unknown.
+   Providers return requested frames or fewer only at EOF, with finite samples.
+   Context ownership transfers only on successful create. */
+typedef struct exr_pcm exr_pcm;
+typedef struct { uint32_t sample_rate,channels,channel_mask; uint64_t frames; } exr_pcm_info;
+typedef exr_status (*exr_pcm_read_fn)(void *context,uint64_t first_frame,size_t frames,float *output,
+  size_t *read,const exr_control *control,exr_error *error);
+typedef struct {
+  size_t struct_size;
+  exr_pcm_info info;
+  exr_pcm_read_fn read;
+  void *context;
+  exr_context_release_fn release;
+} exr_pcm_input;
+EXR_API exr_status exr_pcm_create(const exr_pcm_input *input,exr_pcm **out,exr_error *error);
+/* Auto-detects native WAV or raw FLAC, with the same source ownership rules. */
+EXR_API exr_status exr_pcm_open(const char *path,const exr_control *control,exr_pcm **out,exr_error *error);
+EXR_API exr_status exr_pcm_open_source(const exr_source *source,exr_pcm **out,exr_error *error);
+EXR_API void exr_pcm_free(exr_pcm *pcm);
+EXR_API const exr_pcm_info *exr_pcm_format(const exr_pcm *pcm);
+EXR_API exr_status exr_pcm_read(exr_pcm *pcm,uint64_t first_frame,size_t frames,float *output,size_t *read,
+  const exr_control *control,exr_error *error);
+/* Optional system audio endpoint using the default output device. No engine
+   worker thread or automatic file access. The backend name identifies compiled
+   support, not device availability; open can fail on a headless system.
+   Hosts serialize operations and arrange platform audio-session/lifecycle policy. */
+typedef struct exr_audio_output exr_audio_output;
+EXR_API const char *exr_audio_output_backend(void);
+EXR_API exr_status exr_audio_output_open(uint32_t sample_rate,uint32_t channels,exr_audio_output **out,exr_error *error);
+EXR_API void exr_audio_output_free(exr_audio_output *output);
+/* Interleaved finite float input, clipped to [-1,1] and converted to PCM16.
+   At most 65536 frames per call; written can be smaller or zero (backpressure).
+   Open is active: accepted audio starts when queued. Source data is copied.
+   Paused writes return written=0; retry unwritten frames when space is available.
+   An I/O error may follow partial submission: always honor written even on error. */
+EXR_API exr_status exr_audio_output_write(exr_audio_output *output,const float *samples,size_t frames,size_t *written,exr_error *error);
+EXR_API exr_status exr_audio_output_pause(exr_audio_output *output,int paused,exr_error *error);
+EXR_API exr_status exr_audio_output_flush(exr_audio_output *output,exr_error *error);
+/* Approximate queued frames, not a sample-exact playback clock. */
+EXR_API exr_status exr_audio_output_pending(exr_audio_output *output,size_t *frames,exr_error *error);
 /* Flat navigation tree. Parent must precede its child; SIZE_MAX denotes a root
    or unresolved/ambiguous part. href is relative to base; arbitrary role labels
    permit host-defined navigation categories (e.g. toc, page-list, landmarks). */
@@ -599,10 +658,13 @@ typedef struct {
   exr_control control;
 } exr_pdf_annotation_write_options;
 EXR_API exr_pdf_annotation_write_options exr_pdf_annotation_write_defaults(void);
-/* Zero-based page. Upserts a Text or Highlight annotation by nonempty UTF-8 NM
+/* Zero-based page. Upserts Text, Highlight, Underline, StrikeOut or Squiggly
+   annotations by nonempty UTF-8 NM
    on that page; duplicate matching IDs are an error. Text has no quads;
-   Highlight requires 1-32768 convex four-point quads within its positive-area
+   Text markup requires 1-32768 convex four-point quads within its positive-area
    bounds; coordinate magnitudes and local dimensions cannot exceed 1e7.
+   Line markup treats the first two points as the top edge; the remaining two
+   are the corresponding lower edge (Z or perimeter order, no diagonal edge).
    Five text properties match load_annotations: description, creator, subject,
    CreateDate and ModifyDate (use their full metadata URIs). Other keys fail.
    NULL options use yellow/0.35 for both create and update. An update replaces
@@ -654,7 +716,8 @@ EXR_API exr_status exr_fixed_open(const char *path,const exr_fixed_open_options 
 EXR_API const char *exr_version(void);
 /* Binary layout/calling-contract epoch, independent from release/schema versions. */
 EXR_API uint32_t exr_abi_version(void);
-/* Unicode 17 extended grapheme boundaries plus documented line-break rules.
+/* Unicode 17 UAX #29 graphemes and default UAX #14 line-break rules.
+   Line opportunities are intersected with grapheme boundaries.
    Allocates size+1 bytes indexed by UTF-8 byte offset, freed with exr_free().
    Non-boundary/continuation bytes are zero; end is GRAPHEME|LINE|MANDATORY.
    Text must be valid UTF-8, at most 64 MiB. Embedded U+0000 is a control scalar. */
