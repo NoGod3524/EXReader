@@ -310,3 +310,28 @@ guide_fixture('kf8-encoding-guide.azw3',values=badrows)
 
 guide_fixture('kf8-guide-budget.azw3',with_ncx=False,values=[('x',0,0,0)]*9998)
 guide_fixture('kf8-limit-guide.azw3',with_ncx=False,values=[('x',0,0,0)]*10000)
+
+
+svg_xml=(b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:other="urn:exreader:extension" width="2" height="2">'
+         b'<style><![CDATA[image {background:url(kindle:embed:0002?mime=image/jpeg)}]]></style>'
+         b'<other:style>url(kindle:embed:FFFF)</other:style><local xmlns="">Unnamespaced</local>'
+         b'<image xlink:href="kindle:embed:0001?mime=image/png" width="2" height="2" style="fill:url(\'kindle:embed:0001?mime=image/png\')"/>'
+         b'<use href="kindle:flow:3?mime=image/svg+xml#symbol%20%25"/>'
+         b'<metadata>Literal kindle:embed:ZZZZ</metadata></svg>')
+svg_cycle=b'<svg xmlns="http://www.w3.org/2000/svg"><use href="kindle:flow:2?mime=image/svg+xml"/></svg>'
+svg_main=(b'<html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" href="kindle:flow:1?mime=text/css"/></head>'
+          b'<body><p class="book">'+chr(0x7532).encode()+b'</p><img src="kindle:flow:2?mime=image/svg+xml" width="12" height="12"/></body></html>')
+svg_css=b'@font-face {font-family:Book;src:url(kindle:embed:3)} .book{font-family:Book;color:#123456}'
+def svg_fixture(name='kf8-svg.azw3',svg=None):
+    chunks=[svg_main,svg_css,svg_xml if svg is None else svg,svg_cycle]; table=b'FDST'+u32(12)+u32(4); pos=0
+    for chunk in chunks: table+=u32(pos)+u32(pos+len(chunk)); pos+=len(chunk)
+    container(name,b''.join(chunks),[table,png,jpg,font_record()],skel=0xffffffff,frag=0xffffffff,flows=4,fdst=2,
+              mutate=lambda r:r[0].__setitem__(slice(108,112),u32(3)))
+svg_fixture(); hybrid('kf8-hybrid-svg.azw3','kf8-svg.azw3',shared=2)
+svg_fixture('kf8-bad-svg-xml.azw3',svg=b'<svg><image>')
+svg_fixture('kf8-bad-svg-root.azw3',svg=b'<html/>')
+svg_fixture('kf8-bad-svg-entity.azw3',svg=b'<!DOCTYPE svg [<!ENTITY x "forbidden">]><svg>&x;</svg>')
+svg_fixture('kf8-bad-svg-reference.azw3',svg=svg_xml.replace(b'kindle:embed:0001',b'kindle:embed:FFFF'))
+
+svg_fixture('kf8-bad-svg-namespace.azw3',svg=b'<svg xmlns="urn:wrong"/>')
+svg_fixture('kf8-bad-svg-fragment.azw3',svg=svg_xml.replace(b'#symbol%20%25',b'#symbol%XX'))

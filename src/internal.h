@@ -91,6 +91,8 @@ size_t exr_model_html(exr_document *doc, size_t parent, size_t chapter, exr_node
 int exr_model_attribute(exr_document *doc, size_t node, const char *name, const char *value);
 exr_status exr_xml_memory_tree(const void *data, size_t size, const char *root,
                                 exr_document **out, exr_error *error);
+exr_status exr_xml_serialize(const exr_document *doc, size_t root,
+                               exr_buffer *out, exr_error *error);
 typedef exr_status (*exr_member_read_fn)(void *context, const char *path, int optional,
                                           void **data, size_t *size, exr_error *error);
 exr_status exr_docx(exr_document *doc, exr_member_read_fn read, void *context, exr_error *error);

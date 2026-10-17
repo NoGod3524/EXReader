@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "exreader.h"
+#include <expat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -187,8 +188,78 @@ static void guide_case(const char *dir,const char *name,int authored,int offset)
   CHECK(!strcmp(exr_document_text(doc,NULL),exr_document_text(copy,NULL)));
   exr_document_free(doc); exr_document_free(copy);
 }
+typedef struct { char image[128],use[128],text[2048]; size_t size; unsigned roots,images,local,foreign,style; } svg_info;
+static void XMLCALL svg_start(void *context,const char *name,const char **attributes) {
+  svg_info *info=context; size_t i;
+  if(!strcmp(name,"http://www.w3.org/2000/svg|svg")) info->roots++;
+  if(!strcmp(name,"local")) info->local++;
+  if(!strcmp(name,"urn:exreader:extension|style")) info->foreign++;
+  if(!strcmp(name,"http://www.w3.org/2000/svg|image")) {
+    info->images++;
+    for(i=0;attributes[i];i+=2) {
+      if(!strcmp(attributes[i],"http://www.w3.org/1999/xlink|href")) {
+        CHECK(strlen(attributes[i+1])<sizeof(info->image)); strcpy(info->image,attributes[i+1]);
+      }
+      if(!strcmp(attributes[i],"style") && strstr(attributes[i+1],"embed00001.bin")) info->style++;
+    }
+  }
+  if(!strcmp(name,"http://www.w3.org/2000/svg|use"))
+    for(i=0;attributes[i];i+=2) if(!strcmp(attributes[i],"href")) {
+      CHECK(strlen(attributes[i+1])<sizeof(info->use)); strcpy(info->use,attributes[i+1]);
+    }
+}
+static void XMLCALL svg_text(void *context,const char *text,int size) {
+  svg_info *info=context; CHECK(size>=0 && (size_t)size<sizeof(info->text)-info->size);
+  memcpy(info->text+info->size,text,(size_t)size); info->size+=(size_t)size; info->text[info->size]=0;
+}
+static svg_info svg_parse(const void *data,size_t size) {
+  svg_info info={0}; XML_Parser parser=XML_ParserCreateNS(NULL,'|'); CHECK(parser && size<INT32_MAX);
+  XML_SetUserData(parser,&info); XML_SetStartElementHandler(parser,svg_start); XML_SetCharacterDataHandler(parser,svg_text);
+  CHECK(XML_Parse(parser,data,(int)size,XML_TRUE)==XML_STATUS_OK); XML_ParserFree(parser); CHECK(info.roots==1); return info;
+}
+typedef struct { exr_document *doc; unsigned decoded,released; } svg_decoder;
+static exr_status host_svg(void *context,const exr_resource *resource,const void *data,size_t size,exr_bitmap *out,exr_error *e) {
+  svg_decoder *state=context; svg_info info; void *png=NULL; size_t n,index,node; exr_status status;
+  if(strcmp(resource->media_type,"image/svg+xml")) return exr_image_decode(data,size,out,e);
+  state->decoded++; info=svg_parse(data,size);
+  CHECK(info.images==1 && info.local==1 && info.foreign==1 && info.style==1 && !strcmp(info.image,"embed00001.bin"));
+  CHECK(!strcmp(info.use,"flow0003.bin#symbol%20%25") && strstr(info.text,"url(embed00002.bin)"));
+  CHECK(strstr(info.text,"url(kindle:embed:FFFF)") && strstr(info.text,"Literal kindle:embed:ZZZZ"));
+  status=exr_document_resolve(state->doc,0,info.image,&index,&node,e); if(status!=EXR_OK) return status;
+  status=exr_document_resource(state->doc,index,&png,&n,e); if(status!=EXR_OK) return status;
+  status=exr_image_decode(png,n,out,e); exr_free(png); return status;
+}
+static void host_svg_release(void *context,exr_bitmap *out) {
+  svg_decoder *state=context; state->released++; exr_bitmap_free(out);
+}
+static void svg_case(const char *dir,const char *name) {
+  char path[4096]; exr_document *doc=NULL,*copy=NULL; exr_font *font=NULL; exr_layout *a=NULL,*b=NULL;
+  const exr_resource *resources; const exr_glyph *glyphs; exr_layout_config config=exr_layout_config_defaults();
+  exr_bitmap ba={0},bb={0}; svg_decoder state={0}; void *data=NULL; size_t n,size,i,svgs=0,pages,other;
+  snprintf(path,sizeof(path),"%s/%s",dir,name); OK(exr_document_open(path,&doc,&error));
+  resources=exr_document_resources(doc,&n); CHECK(n==7);
+  for(i=0;i<n;i++) if(!strcmp(resources[i].media_type,"image/svg+xml")) {
+    svg_info info; OK(exr_document_resource(doc,i,&data,&size,&error)); info=svg_parse(data,size); exr_free(data); svgs++;
+    if(!info.images) CHECK(!strcmp(info.use,"flow0002.bin"));
+  }
+  CHECK(svgs==2);
+  snprintf(path,sizeof(path),"%s/fonts/primary.ttf",dir); OK(exr_font_open(path,&font,&error));
+  config.page=(exr_layout_options){180,120,8,20,1.2f,0}; config.decode_image=host_svg; config.release_image=host_svg_release; config.image_context=&state;
+  state.doc=doc; OK(exr_layout_create_ex(doc,font,&config,&a,&error));
+  glyphs=exr_layout_glyphs(a,&n); CHECK(n==1 && glyphs[0].font_index==1 && glyphs[0].color==0x123456ff);
+  OK(exr_document_export_epub(doc,NULL,&data,&size,&error)); OK(exr_document_open_memory(EXR_EPUB,data,size,&copy,&error)); exr_free(data);
+  state.doc=copy; OK(exr_layout_create_ex(copy,font,&config,&b,&error));
+  exr_layout_pages(a,&pages); exr_layout_pages(b,&other); CHECK(pages==other);
+  for(i=0;i<pages;i++) {
+    OK(exr_render_page(a,NULL,i,&ba,&error)); OK(exr_render_page(b,NULL,i,&bb,&error));
+    CHECK(ba.stride==bb.stride && ba.height==bb.height && !memcmp(ba.pixels,bb.pixels,(size_t)ba.stride*ba.height));
+    exr_bitmap_free(&ba); exr_bitmap_free(&bb);
+  }
+  exr_layout_free(a); exr_layout_free(b); CHECK(state.decoded==2 && state.released==2);
+  exr_font_free(font); exr_document_free(doc); exr_document_free(copy);
+}
 int main(int argc,char **argv) {
-  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index","boundary-pointer","boundary-text","boundary-marker","boundary-version","boundary-encrypted","boundary-resource","exth-signature","exth-length","exth-count","exth-entry","exth-entry-size","exth-duplicate","exth-fallback-encoding","exth-fallback-compression","guide-label","guide-target","guide-kind"};
+  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index","boundary-pointer","boundary-text","boundary-marker","boundary-version","boundary-encrypted","boundary-resource","exth-signature","exth-length","exth-count","exth-entry","exth-entry-size","exth-duplicate","exth-fallback-encoding","exth-fallback-compression","guide-label","guide-target","guide-kind","svg-xml","svg-root","svg-entity","svg-reference","svg-namespace","svg-fragment"};
   const char *text="Chapter one\nA bold passage.\nChapter two\nSecond passage."; size_t i;
   CHECK(argc==2);
   valid(argv[1],"kf8-hybrid.azw3",text,2); valid(argv[1],"kf8-basic.azw3",text,2); valid(argv[1],"kf8-multirecord.azw3",text,2); valid(argv[1],"kf8-multicontrol.azw3",text,2);
@@ -202,6 +273,7 @@ int main(int argc,char **argv) {
     if(status!=EXR_FORMAT) fprintf(stderr,"fixture %s returned %d\n",bad[i],status);
     CHECK(status==EXR_FORMAT && !doc && error.code==EXR_FORMAT && error.message[0]);
   }
+  svg_case(argv[1],"kf8-svg.azw3"); svg_case(argv[1],"kf8-hybrid-svg.azw3");
   guide_case(argv[1],"kf8-guide.azw3",1,0); guide_case(argv[1],"kf8-guide-only.azw3",0,0);
   guide_case(argv[1],"kf8-guide-offset.azw3",1,1); guide_case(argv[1],"kf8-hybrid-guide.azw3",1,0);
   navigation_api(); navigation_case(argv[1],"kf8-navigation.azw3"); navigation_case(argv[1],"kf8-navigation-derived.azw3");

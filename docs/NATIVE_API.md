@@ -557,3 +557,10 @@ KF8 的 NCX INDX/CNCX 转为标准 NCX 资源，使用标签偏移（含多 CNCX
 guide INDX/CNCX 保留类型、标签和片段目标，接入同一位置解析与导航快照。支持 tag 3 的片段序号、tag 6 的片段序号及可选偏移。输出 NCX navList class=landmarks；每个 navTarget 的 class 保存原始 guide 类型，start 规范化为 text。thumbimagestandard 是缩略图元数据，不作为阅读入口。NCX 解析器将 navList 的非空 class 暴露为导航 role，未声明时保持 nav-list。
 
 有原目录时合并地标；仅有 guide 时生成按章节顺序的目录。转换后的 EPUB 3 导航保留地标标签、分组和目标；原始类型继续保存在随书复制的 NCX 资源。目录和地标合计最多 10000 条，guide 字符串、索引与目标均沿用现有验证和字节预算。公开导航快照的不同 role 可在转换时重新分组，条目 parent 以当前数组为准。
+
+
+## KF8 SVG 资源引用（0.34）
+
+被引用的 image/svg+xml 流以严格 XML 树解析，转换 src/href/XLink、样式属性与 SVG style 元素中的 Kindle 资源 URI，并保留元素/属性的 expanded namespace、无命名空间扩展和普通正文。复用已有 XML 树序列化器输出有效 SVG XML；CDATA、前缀与属性引号可重新编码，XML 注释不保留。外来命名空间的 style 元素不按 CSS 重写。
+
+CSS 和 SVG 流共用一次入队的资源队列，可相互引用并形成环；依赖不递归内联。资源 URI 支持百分号编码片段，转换为本地路径加规范片段。SVG 根命名空间、XML、实体声明与依赖引用均验证，所有输出沿用模型/缓冲区和合计资源预算。框架内置仍只解码 PNG/JPEG；SVG 图形绘制由宿主 decode_image 提供。本次补齐资源关系与结构保真，没有新增 SVG 矢量栅格器。CSS 转义形式的 url 和 @import 仍未转换。

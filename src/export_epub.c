@@ -141,6 +141,24 @@ static int chapter(writer *w, exr_buffer *b, size_t index) {
   }
 }
 static int compare(const void *a, const void *b) { return strcmp(((const member *)a)->path, ((const member *)b)->path); }
+/* A generic XML fragment preserves named elements' expanded namespaces. */
+exr_status exr_xml_serialize(const exr_document *doc,size_t root,exr_buffer *out,exr_error *e) {
+  exr_document view; writer w={0}; XML_Parser parser; int valid; size_t child;
+  if(!doc || root>=doc->node_count || !out) return exr_fail(e,EXR_ARGUMENT,"Invalid XML serialization input");
+  view=*doc; view.format=EXR_CUSTOM; w.doc=&view; w.error=e; w.status=EXR_LIMIT;
+  if(!put(out,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>")) goto failed;
+  if(doc->nodes[root].kind==EXR_NODE_CHAPTER || doc->nodes[root].kind==EXR_NODE_DOCUMENT) {
+    for(child=doc->nodes[root].first_child;child!=SIZE_MAX;child=doc->nodes[child].next_sibling)
+      if(!tree(&w,out,child,0)) goto failed;
+  } else if(!tree(&w,out,root,0)) goto failed;
+  parser=XML_ParserCreateNS(NULL,'|');
+  if(!parser) return exr_fail(e,EXR_MEMORY,"XML validation allocation failed");
+  valid=XML_Parse(parser,out->data,(int)out->size,XML_TRUE)==XML_STATUS_OK;
+  XML_ParserFree(parser);
+  return exr_fail(e,valid ? EXR_OK : EXR_FORMAT,valid ? "" : "Model cannot be serialized as XML");
+failed:
+  return exr_fail(e,w.status==EXR_OK ? EXR_LIMIT : w.status,"XML serialization failed");
+}
 static size_t find(const member *m, size_t count, const char *path) {
   size_t lo = 0, hi = count;
   while (lo < hi) { size_t mid = lo + (hi-lo)/2; if (strcmp(m[mid].path,path)<0) lo=mid+1; else hi=mid; }
