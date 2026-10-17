@@ -1,6 +1,8 @@
-# Native C API 0.27
+# Native C API 0.18.0
 
-公开入口为 `include/exreader.h`；0.91 起使用 ABI epoch 1，兼容规则见 [SDK 兼容约定](SDK_COMPATIBILITY.md)。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。较早的这些布局变化发生在 ABI epoch 建立之前。宿主按兼容约定选择头文件和库。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
+S013–S100 是保留的历史开发步骤标识，原来被写成 0.13–0.100；产品版本现按 [里程碑映射](VERSIONING.md) 归并。步骤编号用于追溯接口变化，不表示独立发行版本。
+
+公开入口为 `include/exreader.h`；S091 起使用 ABI epoch 1，兼容规则见 [SDK 兼容约定](SDK_COMPATIBILITY.md)。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。较早的这些布局变化发生在 ABI epoch 建立之前。宿主按兼容约定选择头文件和库。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
 0.12.1 修复审计发现的长附标序列塑形开销、重复章节锚点、超限备注写入、XML 非法字符导出、跨行塑形上下文、RTF Unicode fallback 和 HTML script/style 原始文本处理；`exr_library_note()` 同时支持输出 ID 指向输入 `note.id`。回归覆盖见 [验证记录](NATIVE_VALIDATION.md#0121-audit-fixes)。
 
@@ -8,13 +10,13 @@
 
 ### 取消和进度
 
-0.16 提供 `exr_control`：可选 `cancelled(context)`、`progress(context,stage,completed,total)` 和借用的 context。回调同步运行在调用线程，引擎不创建后台线程，也不调度 UI；宿主负责选择工作线程。stage 区分随机读取、样式、分页、塑形和绘制，total 为 0 表示未知；嵌套塑形片段或新的资源操作会重新开始自己的局部计数。回调不能销毁或重入正在访问的对象。
+S016 提供 `exr_control`：可选 `cancelled(context)`、`progress(context,stage,completed,total)` 和借用的 context。回调同步运行在调用线程，引擎不创建后台线程，也不调度 UI；宿主负责选择工作线程。stage 区分随机读取、样式、分页、塑形和绘制，total 为 0 表示未知；嵌套塑形片段或新的资源操作会重新开始自己的局部计数。回调不能销毁或重入正在访问的对象。
 
 通过 `exr_layout_config.control` 控制布局/分页，通过 `exr_shape_options.control` 控制独立塑形，通过 `exr_source.control` 控制读取。`exr_pager_set_control(pager,&control,error)` 可在非忙碌状态替换回调，传 NULL 关闭。取消是协作式的，在阶段边界、文本/lookup 工作批次和图片绘制行批次检查。分页的整段双向分析及依赖库调用会在其相邻检查点响应取消。
 
 取消返回 `EXR_CANCELLED`，失败输出保持 NULL/0。借用分页模式保留之前的页缓存，命中缓存不运行取消回调；解除取消后，下次未命中可从检查点恢复。顺序 `next()` 在任何错误后仍需重建 pager。`exr_render_page_ex(layout,font,page,channels,&control,&bitmap,error)` 接受 channels 为 1 或 4，取消释放并清空部分位图。原来的绘制函数等价于不传 control；绘制调用的 context 只需在这次调用期间有效。
 
-随机读取回调的 control 随源描述符复制，context 必须与保留的源同寿命；布局/分页的 control 随配置复制，context 必须维持到相应工作结束。返回的独立页面不持有布局时的控制回调，之后可用不同的 control 绘制。配置、塑形参数和源描述符在 0.16 扩展了字段，需重新编译宿主。
+随机读取回调的 control 随源描述符复制，context 必须与保留的源同寿命；布局/分页的 control 随配置复制，context 必须维持到相应工作结束。返回的独立页面不持有布局时的控制回调，之后可用不同的 control 绘制。配置、塑形参数和源描述符在 S016 扩展了字段，需重新编译宿主。
 
 - `exr_document`、`exr_font`、`exr_layout`、`exr_library`、`exr_publication`、`exr_session`、`exr_pager`、`exr_bidi` 为不透明句柄，使用各自析构函数释放。
 - document 的 text / title / blocks / nodes / chapters / resources 和 layout 的 pages / lines / glyphs / boxes / image 为只读借用视图，所属对象释放后失效。树节点属性和文本也属于 document。借用的图片像素不可修改或释放。
@@ -43,11 +45,11 @@ FreeType 提供字体、基础字形度量和像素，不负责分页。EXReader
 
 ## 宿主字体集与缺字回退
 
-0.13 支持 CSS `font-family` 列表、引号、CSS 转义、继承和宿主覆盖。指定名称先匹配书内字体，再匹配宿主字体的 FreeType family name，ASCII 字母不区分大小写；无匹配或缺字继续使用宿主的有序回退，不扫描系统字体。选脸按 family 顺序以及常规/粗体/斜体描述符匹配；整字素簇覆盖继续优先。字体已提供的粗斜体不重复合成。
+S013 支持 CSS `font-family` 列表、引号、CSS 转义、继承和宿主覆盖。指定名称先匹配书内字体，再匹配宿主字体的 FreeType family name，ASCII 字母不区分大小写；无匹配或缺字继续使用宿主的有序回退，不扫描系统字体。选脸按 family 顺序以及常规/粗体/斜体描述符匹配；整字素簇覆盖继续优先。字体已提供的粗斜体不重复合成。
 
 `exr_layout_config_defaults()` 默认开启 `embedded_fonts`。EPUB/宿主 XHTML 的链接或内嵌样式表可声明 `@font-face`，支持 TTF/OTF、相对于 CSS 自身路径的 `url()` 和多个候选来源；只加载可见样式实际引用的 family，书内声明限于所属章节。`local()`、远程 URL 和本机文件 URL 不会访问系统或网络；缺失/损坏字体继续尝试下一来源，最终回退到宿主字体。关闭 `embedded_fonts` 仍可使用宿主字体名称；关闭 `document_css` 不加载书内声明，宿主 `user_css` 仍有效。混合字体集最多 32 个 face、编码字节合计 128 MiB，单次布局字体资源读取合计 128 MiB；最多 64 条字体声明，每声明最多尝试 8 个存在的本地候选资源。压缩 WOFF/WOFF2、EPUB 字体混淆解码和可变字体选择尚未实现。
 
-`exr_layout_font(layout)` 返回有效字体集的借用句柄，`glyph.font_index` 索引该集合。`exr_font_source(font,index,&input,error)` 提供借用的编码字节与 face index，供宿主自行绘制；不要释放或修改借用数据。内置渲染器接受该有效集合、创建布局时的宿主字体，或 NULL（使用布局持有的字体）；传入其他集合仍按旧接口处理。页面持有字体引用，释放 document、pager 和原字体后仍可绘制。共享字体与字体表不计入页面缓存载荷预算。0.13 扩展了配置结构，宿主应使用同版本头文件重新编译。
+`exr_layout_font(layout)` 返回有效字体集的借用句柄，`glyph.font_index` 索引该集合。`exr_font_source(font,index,&input,error)` 提供借用的编码字节与 face index，供宿主自行绘制；不要释放或修改借用数据。内置渲染器接受该有效集合、创建布局时的宿主字体，或 NULL（使用布局持有的字体）；传入其他集合仍按旧接口处理。页面持有字体引用，释放 document、pager 和原字体后仍可绘制。共享字体与字体表不计入页面缓存载荷预算。S013 扩展了配置结构，宿主应使用同版本头文件重新编译。
 
 `exr_font_open(path, ...)` 保留单文件、集合首个 face 的入口。`exr_font_create(inputs, count, ...)` 接收有序 `exr_font_input` 数组，每项为编码字体字节 `data/size` 和集合内的 `face_index`（普通字体为 0）。成功时复制全部输入，宿主随后可以释放或修改字节。字体集不可变，用 `exr_font_free()` 释放；布局、渲染和 session 通过现有字体参数接入，无需额外平台后端。字体集需在布局计算、渲染及 session 生命周期内有效，相同句柄的访问由宿主串行处理。
 
@@ -201,7 +203,7 @@ exr_pager_free(pager);
 
 `exr_pager_position()` 返回已扫描到的规范化正文 UTF-8 字节位置，包括断行、字素簇和表格组的前瞻，可能领先最后输出页。重放时可回退；它用于观察当前排版进度，不是可序列化的恢复令牌。布局中的源范围和稳定锚点继续用于保存阅读位置。
 
-0.14 的借用模式默认每 16 页保留一个恢复点，最多 4 个、驻留载荷合计 2 MiB。`exr_pager_set_checkpoints(pager,capacity,byte_budget,interval,error)` 可设置最多 64 个检查点及非零预算/间隔，capacity 为 0 关闭并释放全部检查点。其预算独立于页面缓存，按实际快照数组、遍历栈及引用的表格单元格布局计量；共享单元格载荷保守地计入每个引用它的快照。超预算或分配失败时跳过新检查点，保留已有检查点并正常返回页面。当前工作区与快照复制期间的临时内存另计。
+S014 的借用模式默认每 16 页保留一个恢复点，最多 4 个、驻留载荷合计 2 MiB。`exr_pager_set_checkpoints(pager,capacity,byte_budget,interval,error)` 可设置最多 64 个检查点及非零预算/间隔，capacity 为 0 关闭并释放全部检查点。其预算独立于页面缓存，按实际快照数组、遍历栈及引用的表格单元格布局计量；共享单元格载荷保守地计入每个引用它的快照。超预算或分配失败时跳过新检查点，保留已有检查点并正常返回页面。当前工作区与快照复制期间的临时内存另计。
 
 快照保留原始/暂定/最终行、文档游标、表格 rowspan 组及累计工作量。双向分析按保存的原段落起点重新建立，不把跨行方向当作新段落。恢复点仅在同一个不可变 document、版式和 pager 生命周期内有效，不是持久化格式；顺序 `next()` / 全文布局不会额外保存检查点。`exr_pager_statistics()` 返回累计实际生成页数、驻留检查点数量/字节及成功恢复次数，可用于观察回放开销，NULL 返回全零统计。
 
@@ -219,13 +221,13 @@ SDK 的 `examples/page.c` 编译为 `exreader-page-example`，用法为 `book.ep
 
 ## 分段 publication 与 session
 
-0.17 的 `exr_publication_navigation(publication,&entries,&count,error)` 返回借用的扁平目录树，寿命持续到 publication 释放。每项有 parent、part、label、href、base 和 role：parent 必须指向更早的条目，根为 SIZE_MAX；part 为对应分段索引，外部、未解析或重复路径无法唯一确定的目标为 SIZE_MAX。href 保留原 URI，相对于 base 解释；没有链接的目录组也可保留。role 是开放字符串，内置输出使用 toc、page-list、landmarks、nav-list 或原导航类型。
+S017 的 `exr_publication_navigation(publication,&entries,&count,error)` 返回借用的扁平目录树，寿命持续到 publication 释放。每项有 parent、part、label、href、base 和 role：parent 必须指向更早的条目，根为 SIZE_MAX；part 为对应分段索引，外部、未解析或重复路径无法唯一确定的目标为 SIZE_MAX。href 保留原 URI，相对于 base 解释；没有链接的目录组也可保留。role 是开放字符串，内置输出使用 toc、page-list、landmarks、nav-list 或原导航类型。
 
 EPUB 在首次请求目录时读取并缓存 EPUB 3 manifest 中的 nav XHTML，未提供有效条目时读取 EPUB 2 NCX；NCX 遵循 OPF spine 的 toc ID，缺失引用在目录请求时返回 EXR_FORMAT。打开 publication 本身仍不解析导航或章节 XHTML。目录解析沿用有实体/深度限制的 XML 树，保留嵌套关系、Unicode 标题和相对链接；远程 href 只作为元数据返回。失败清空输出并保留重试机会，后续成功查询直接复用缓存。
 
-宿主通过 `exr_publication_input.navigation/navigation_count` 提供任意自有格式的同类目录；构造时复制全部字符串和条目，查询不调用章节 loader。最多 10000 项，标题最多 64 KiB，href/base 最多 2046 字节，role 最多 256 字节，与分段目录的字符串合计限制为 64 MiB。输入验证 UTF-8、parent 和 part 范围；自有 role 和 URI 不需要注册。0.17 扩展了 publication 构造输入，宿主需重新编译。
+宿主通过 `exr_publication_input.navigation/navigation_count` 提供任意自有格式的同类目录；构造时复制全部字符串和条目，查询不调用章节 loader。最多 10000 项，标题最多 64 KiB，href/base 最多 2046 字节，role 最多 256 字节，与分段目录的字符串合计限制为 64 MiB。输入验证 UTF-8、parent 和 part 范围；自有 role 和 URI 不需要注册。S017 扩展了 publication 构造输入，宿主需重新编译。
 
-0.15 的 `exr_publication_open_source()` 接收通用随机读取源 `{size,read_at,release,context}`。描述符被复制，打开时只读取 ZIP 目录和 EPUB 元数据；读取某章、CSS、图片或字体时才请求对应字节，不把整个压缩源复制进内存。`exr_publication_open(path)` 使用持有文件句柄的同一路径；`open_memory()` 仍复制调用者的输入。
+S015 的 `exr_publication_open_source()` 接收通用随机读取源 `{size,read_at,release,context}`。描述符被复制，打开时只读取 ZIP 目录和 EPUB 元数据；读取某章、CSS、图片或字体时才请求对应字节，不把整个压缩源复制进内存。`exr_publication_open(path)` 使用持有文件句柄的同一路径；`open_memory()` 仍复制调用者的输入。
 
 `read_at(context,offset,buffer,size)` 返回实际字节数，允许短读并会继续补足，尚未读完便返回 0 或返回超过请求的数量会得到 `EXR_IO`。引擎检查所有区间；源大小与每次 ZIP 操作的累计读取量仍限制为 128 MiB，成员解压和 XML 限制不变。源字节必须保持不变，回调及同源对象的访问需串行，回调不能销毁或重入正在访问它的对象。引擎本身不联网，宿主可自行在回调后实现其他存储。
 
@@ -377,7 +379,7 @@ if (count && exr_document_resolve(doc, 0, "../images/cover.png",
 
 `exr_document_resolve()` 以指定章节路径为基准，处理 `..`、UTF-8 和百分号转义，包括仅有 `#fragment` 的地址。成功返回资源索引；若目标 XHTML 已解析，还返回章节根或对应 id / xml:id 节点。找不到资源或片段时相应索引为 `SIZE_MAX`；外部 URI、越过 ZIP 根、非法编码等返回 `EXR_ARGUMENT`。解析基准是章节路径，尚不应用 HTML base 或 xml:base。
 
-CSS `display:none` 只影响布局，不删除规范化正文；重新排版时原有文字位置保持不变。HTML `hidden` 属性在文档投影阶段排除，其行为与 CSS 隐藏不同。旧 `exr_document_export()` 仍为文本转换。0.18 新增下述结构导出。
+CSS `display:none` 只影响布局，不删除规范化正文；重新排版时原有文字位置保持不变。HTML `hidden` 属性在文档投影阶段排除，其行为与 CSS 隐藏不同。旧 `exr_document_export()` 仍为文本转换。S018 新增下述结构导出。
 
 ## 宿主样式与布局输出
 
@@ -436,7 +438,7 @@ SQLite 数据库保存原文件 BLOB、封面 BLOB、元数据和 UTF-8 位置�
 
 宿主负责文件选择、字体提供、页面纹理显示、触摸 / 鼠标 / 键盘事件和系统生命周期。像素或布局数据可转为纹理或原生绘图命令。Android 可经 JNI 调用 C，Apple 平台可经 Objective-C / Swift 导入 C 头文件；当前尚未提供这些宿主适配器。
 
-## 结构保真的 EPUB 导出（0.18）
+## 结构保真的 EPUB 导出（S018）
 
 `exr_document_export_epub(doc, control, &bytes, &size, &error)` 序列化当前文档树，按原路径复制全部声明资源，输出可重新打开的 EPUB。成功后用 `exr_free(bytes)` 释放；失败清空 bytes/size。control 可为 NULL，回调在本次调用内借用，新增 EXPORT 阶段。输入文档不可在回调中修改或释放。
 
@@ -446,15 +448,15 @@ SQLite 数据库保存原文件 BLOB、封面 BLOB、元数据和 UTF-8 位置�
 
 与读取限制一致：最多 10000 ZIP 成员，单成员 32 MiB，累计未压缩成员和压缩输出各限 128 MiB。此接口输出完整内存包；不是流式写入。它保留模型已有结构，不会恢复 TXT、旧 DOCX/RTF 等解析时已经丢失的信息。
 
-## FB2 结构解析（0.19）
+## FB2 结构解析（S019）
 
 FB2 通过原生 XML 树解析，正文转换到通用语义节点和 XHTML 名字：章节/标题/段落、粗体/斜体、图片、表格及跨列属性、诗行、链接和脚注。`notes` / `comments` 正文中的 section 标记为 NOTE，并保留 ID 与脚注链接。多个 body 按原顺序进入同一分段；当前脚注正文也在阅读流中。未知扩展元素保留源 expanded name 和属性。
 
 binary 使用严格 base64 解码，保留编码资源原字节；重复 ID、非法 padding 和缺失的本地图片/封面引用报错。图片 URI 的 Unicode 百分号转义可用。封面资源标记 `cover-image`。description 只提取书名与封面，不进入正文；binary 编码不进入正文。顶层 stylesheet 进入 head/style，命名 style 转成 class；CSS 选择器匹配转换后的元素名。嵌套深度和节点/字符串预算遵循现有模型限制，单 binary 最多 32 MiB。
 
-已有图片、样式、表格、强调文字和链接可通过 0.18 的结构接口转 EPUB；它不会补齐当前排版器不支持的上/下标、删除线或诗歌专有排版。FB2 仍整文件构建 XML 树，未实现章内流式处理。
+已有图片、样式、表格、强调文字和链接可通过 S018 的结构接口转 EPUB；它不会补齐当前排版器不支持的上/下标、删除线或诗歌专有排版。FB2 仍整文件构建 XML 树，未实现章内流式处理。
 
-## DOCX 结构解析（0.20）
+## DOCX 结构解析（S020）
 
 DOCX 读取 package 主文档关系，支持非默认主文档路径；解析 WordprocessingML transitional / strict 名字。正文进入相同 XHTML/语义树，保留段落、标题、字符与段落样式、书签、内部与外部链接、图片、换行/分页和合并表格。样式读取 docDefaults、默认 paragraph/character style、pStyle/rStyle、basedOn、直接格式；支持粗斜体、字号、颜色、字体名、对齐、间距、缩进及段落方向。继承链最多 64 层，属性读取总工作量限 2000 万。
 
@@ -462,7 +464,7 @@ DrawingML/VML 图片按关系读取，原编码字节进入 resources；可读�
 
 当前表格采用引擎的等宽列，尚未实现 Word 专有列宽、表格样式、边框与浮动锚点；图片仍按块排版。页眉页脚、嵌入字体、主题字体/颜色、完整 Word 样式算法及元数据仍待补齐。它是流式阅读模型，未复刻 Word 的打印页面。旧文字导出保持原行为；结构接口可把当前已解析的图片、样式、表格和链接转成 EPUB。
 
-## DOCX 脚注与尾注（0.21）
+## DOCX 脚注与尾注（S021）
 
 正文 footnoteReference/endnoteReference 生成 LINK 与 `doc-noteref`，注释正文生成 NOTE 与 `doc-footnote` / `doc-endnote`，其中的引用标记生成 `doc-backlink`。重复引用共享同一注释正文，保留唯一引用 ID；脚注与尾注各按首次引用次序显示阿拉伯序号。正文书签加 `bookmark-` 前缀，避免与生成的注释 ID 冲突，内部链接同步转换。
 
@@ -470,7 +472,7 @@ DrawingML/VML 图片按关系读取，原编码字节进入 resources；可读�
 
 结构 EPUB 导出保留上述链接与注释语义。本次同时修正章节路径与非 XHTML 资源冲突的情况，导出会失败并保持空输出，不再覆盖资源。
 
-## DOCX 编号列表（0.22）
+## DOCX 编号列表（S022）
 
 首次遇到编号段落才读取 numbering 部件。支持 abstractNum/num、9 层 ilvl、样式继承的 numPr、直接关闭编号、start/startOverride、lvlOverride、lvlRestart、isLgl、lvlText 的 `%1`–`%9` 引用与 suff。每个 numId 保存独立计数，跨普通段落后续号；可生成嵌套 OL/UL/LI，段落、单元格和注释使用同一路径。
 
@@ -478,21 +480,21 @@ DrawingML/VML 图片按关系读取，原编码字节进入 resources；可读�
 
 可见编号保存为段落开头的呈现性 span（role=presentation、aria-hidden=true），其字号/字体等可取自层级 rPr；原序号文本也进入规范化正文与搜索。列表设置 `list-style-type:none`，确保在外部 EPUB 阅读器中不会重复生成编号。此版本没有向核心排版器加入 Word 专用计数规则，也没有为一般 HTML/EPUB 的无文本 LI 自动绘制标记。布局仍使用现有列表缩进，未实现 Word 的精确悬挂缩进和编号制表位。
 
-## RTF 字符与段落结构（0.23）
+## RTF 字符与段落结构（S023）
 
-RTF 使用同一文档树保存分组作用域内的粗体/斜体、半点字号、颜色表引用、段落对齐、缩进、段前后距、行距与文字方向。plain/pard 恢复相应属性；par 创建段落，line 保留为段内换行。u/s 元素保留下划线与删除线语义，0.26 已加入绘制；inline highlight 尚未绘制背景。
+RTF 使用同一文档树保存分组作用域内的粗体/斜体、半点字号、颜色表引用、段落对齐、缩进、段前后距、行距与文字方向。plain/pard 恢复相应属性；par 创建段落，line 保留为段内换行。u/s 元素保留下划线与删除线语义，S026 已加入绘制；inline highlight 尚未绘制背景。
 
 词法器保留 0.12.1 的 Unicode fallback 规则：整条控制词、转义符号、十六进制字节和 bin 段各按一个 fallback 字符消费，fallback 内不执行格式或 destination；分组边界终止 fallback。支持 Windows-1252 与 Unicode 转义；其他 ansicpg 编码仍拒绝。表格、编号列表、脚注和样式表继承仍待后续接入。颜色表最多 4096 项，分组深度上限仍为 255。
 
 RTF 已解析的文字、字号、颜色和段落结构可转成 EPUB；旧文字转换保持原行为。相同属性赋值复用现有字符串，避免逐段更新样式时重复计入模型预算。
 
-## RTF 内嵌图片（0.24）
+## RTF 内嵌图片（S024）
 
 pict 的 pngblip/jpegblip 支持十六进制与 bin 数据，编码字节转移给资源表，IMAGE 节点保留 picw/pich、picwgoal/pichgoal 和缩放后的尺寸。尺寸不指定时使用内在尺寸。单图片最多 32 MiB、picture 分组最多 9996 个；拒绝非法十六进制、半字节残留和 PNG/JPEG 签名失配。wmetafile/emfblip 字节也可保留为资源，内置解码器不绘制它们，宿主可替换图片解码器。
 
 识别紧跟可选 destination 标记的 shppict；已有可显示图片时跳过相邻 nonshppict 兼容分支，避免重复。未知 destination 继续跳过，不会由其中的已知词重新激活。没有编码类型的 pict 保持旧的忽略行为。图片可通过结构接口转 EPUB，字节与显示尺寸保留。
 
-## RTF 字体名称、字段链接与元数据（0.25）
+## RTF 字体名称、字段链接与元数据（S025）
 
 fonttbl 的名称（包括 Unicode 转义）转为 font-family，保留 deff 默认字体、f 切换和 plain 恢复。字体编号最多 4095；不扫描系统字体、不加载 fontemb/fontfile，字体字节仍由宿主或书籍资源提供。尚未使用 fcharset 解码其他传统代码页，ansicpg 范围保持 Windows-1252。
 
@@ -500,7 +502,7 @@ field/fldinst/fldrslt 保留字段的可见结果。HYPERLINK 支持引用 URL�
 
 info/title 提取 UTF-8 书名并同步 XHTML head/title，其他 info 内容不进入正文。字体名、字段指令、书签名和书名各有 64 KiB 临时限制；字体名称和字段元数据累计限制为 64 MiB，已解析的字段指令立即释放。最多 10000 个字段。结构 EPUB 导出保留字体名称、链接、定位节点和书名。
 
-## 通用文字饰线（0.26）
+## 通用文字饰线（S026）
 
 u 元素默认下划线，s/strike/del 默认删除线；CSS text-decoration-line 和简单 text-decoration 支持 none、underline、line-through 或两者组合。祖先饰线传播到文字后代，后代的 none 不移除祖先饰线；在饰线源元素上设置 none 可关闭该元素的默认修饰。宿主 user_css 可覆盖这些默认值。
 
@@ -508,7 +510,7 @@ u 元素默认下划线，s/strike/del 默认删除线；CSS text-decoration-lin
 
 DOCX 的默认、继承与直接 rPr 下划线/删除线在 run 层解析，允许直接关闭继承修饰，不把 Word 规则放进 CSS 引擎。RTF/FB2 与宿主模型使用同一饰线输出。当前没有双线、波浪线、跳过字形墨迹或独立饰线颜色；饰线使用当前文字颜色和字形字号。RTL、字体变化和其他样式边界仍遵循已有塑形范围限制。
 
-## MOBI HUFF/CDIC 与记录边界（0.27）
+## MOBI HUFF/CDIC 与记录边界（S027）
 
 原生 C 解码器支持 compression=0x4448 的 HUFF/CDIC：短码缓存、长码表、多个 CDIC、递归压缩词条与已展开词条缓存。循环引用返回 EXR_FORMAT，超过 64 层返回 EXR_LIMIT。完成文本解码后立即释放字典缓存，再进入文档解析。
 
@@ -517,14 +519,14 @@ MOBI 统一校验 PalmDB 记录目录、头长度与文本长度；三种压缩�
 HUFF 最多 1048576 个词条，整书解压正文与每个展开词条各限 64 MiB，解码缓冲区/缓存合计分配上限 128 MiB，累计复制工作量 256 MiB、码字工作量 134217728 次。该分配预算不包含原书、词条元数据与后续文档模型。目录字段先预检，词条缓存按引用展开。当前仍提供 MOBI 正文模型；KF8 结构重建、图像/链接与富排版仍待补齐，加密书籍不支持。
 
 
-## KF8 章节重建（0.28）
+## KF8 章节重建（S028）
 
 原生 C 解析 version=8 的 UTF-8 KF8，复用三种 MOBI 记录解压方式。FDST 分离正文流和附加流；INDX/TAGX 支持多个索引记录、多个控制字节、按值数量或按字节长度编码的 VWI。SKEL/FRAG 按索引次序拼接为独立 XHTML 章节，进入通用文档树；无骨架表时将完整正文流解析为一章。章节、属性与文字可经结构 EPUB 导出。
 
 索引最多 262144 项，章节/资源最多 10000 项，重建文字受 64 MiB 缓冲区上限约束，累计插入搬移最多 256 MiB。记录目录、索引头、TAGX 掩码、IDXT 边界、VWI 溢出、片段长度与插入位置均验证；骨架原始区间不得重叠，不猜测修复损坏片段。附加流暂以 application/octet-stream 资源保留。当前未接通 kindle:flow/embed/pos 资源引用、FONT 解包、NCX、混合 MOBI/KF8 或 ORDT 特殊采样本编码；后续继续补齐。
 
 
-## KF8 资源与 FONT（0.29）
+## KF8 资源与 FONT（S029）
 
 kindle:flow 的 text/css 与 image/svg+xml 引用转为本地资源路径；kindle:embed 按首资源记录和一基 Base32 序号定位，重复引用共享一份资源。CSS 的 url()、文档 src/href/poster/data、内联样式与 style 正文接通资源表，保留 CSS 注释、普通字符串及阅读正文中的相同文字。CSS 资源依赖按队列处理，每份只处理一次，允许循环引用。
 
@@ -533,63 +535,63 @@ PNG/JPEG 可直接绘制；GIF/WebP 和 SVG 流保留为资源，须由宿主提
 每个新增图片或字体最多 32 MiB，全部章节/流/资产编码字节合计最多 128 MiB；字体解包另使用最多两份 32 MiB 临时缓冲区。未识别的嵌入资源签名、无效 URI、越界序号及同一流的 MIME 冲突返回 EXR_FORMAT。XHTML 资源接口保留重建后的原始字节，通用树上的链接是转换后的本地路径；结构 EPUB 输出使用树并保留已转换 CSS 与原始图片/字体。
 
 
-## KF8 定位链接（0.30）
+## KF8 定位链接（S030）
 
 kindle:pos:fid:BASE32:off:BASE32 按片段序号及片段内字节偏移，映射到重建章节中该位置之前最近的命名锚点。解析器在元素开始时保留原始字节位置；ID 属性已完整解析，目标位于标签内部时可匹配当前标签。进入 body 时重置为章首；没有更近的命名锚点则链接到章首。读取 id、xml:id 和旧式 a/name，后者补同名 id 以接入通用链接解析。
 
 输出为规范章节路径和百分号编码片段，支持 Unicode、空格、%、# 等 ID；同一 ID 可在不同章节重复，同章重复命名锚点返回 EXR_FORMAT。片段序号、偏移、重建章节范围、语法和 Base32 溢出均验证，越界失败，不重定向猜测目标。临时位置索引按命名元素数量增长，受通用节点上限约束，链接转换后释放。位置映射仅内部使用，公共节点的 start/end 仍是归一化正文范围。
 
 
-## 文档导航与 KF8 NCX（0.31）
+## 文档导航与 KF8 NCX（S031）
 
 `exr_document_navigation(doc, &entries, &count, error)` 从文档声明的 nav/NCX 资源读取导航，返回独立拥有的 exr_navigation 数组；使用 `exr_navigation_free(entries, count)` 释放。快照可在文档释放后继续读取；没有作者目录时返回 NULL/0。该接口沿用 EPUB 和自定义资源的通用解析，条目包含 parent、part、label、href、base 和 role。publication_navigation 的借用语义保持原样，不要释放它返回的借用数组。
 
 KF8 的 NCX INDX/CNCX 转为标准 NCX 资源，使用标签偏移（含多 CNCX 记录的 65536 基数）、级别、可选父子关系和 fid/off 定位，连接已有章内锚点。父子关系省略时从层级推导；显式关系必须与层级一致。目录元数据不加入正文；结构 EPUB 转换保留目录层级与目标。最多 10000 条目录、250 层嵌套；CNCX 单记录最多 65536 字节，总字符串数最多 262144、总字节最多 64 MiB。拒绝缺失标签、非完整 VWI、非法尾填充、级别跳跃、矛盾父子关系及无效目标。当前未接入 KF8 guide、混合 MOBI/KF8 头与 ORDT 特殊采样本编码。
 
 
-## MOBI/KF8 混合容器（0.32）
+## MOBI/KF8 混合容器（S032）
 
 旧 MOBI 头通过 EXTH 121 声明 KF8 头记录时，验证前一条恰为 BOUNDARY，再按 KF8 头的相对记录索引读取正文、HUFF 字典、FDST、SKEL/FRAG 和 NCX。旧正文不重复加入阅读流。前半部首资源到边界之间的记录作为共享资源前缀，保持序号与占位记录；后半部本地资源接在共享前缀后。图片、字体可以全部共享、部分共享或全部本地存储。
 
 选择由 EXTH 121 明确驱动；不存在该字段或值为 0xffffffff 时保持旧 MOBI 解码，不扫描内容猜测边界。校验 EXTH 长度、计数、记录长度与重复边界字段、指针、标记、目标版本及共享资源起点。EXTH 最多 262144 项；两部分加密标志均须为零。解析器借用原输入的记录，不拼接或复制整份容器。
 
 
-## KF8 guide 地标（0.33）
+## KF8 guide 地标（S033）
 
 guide INDX/CNCX 保留类型、标签和片段目标，接入同一位置解析与导航快照。支持 tag 3 的片段序号、tag 6 的片段序号及可选偏移。输出 NCX navList class=landmarks；每个 navTarget 的 class 保存原始 guide 类型，start 规范化为 text。thumbimagestandard 是缩略图元数据，不作为阅读入口。NCX 解析器将 navList 的非空 class 暴露为导航 role，未声明时保持 nav-list。
 
 有原目录时合并地标；仅有 guide 时生成按章节顺序的目录。转换后的 EPUB 3 导航保留地标标签、分组和目标；原始类型继续保存在随书复制的 NCX 资源。目录和地标合计最多 10000 条，guide 字符串、索引与目标均沿用现有验证和字节预算。公开导航快照的不同 role 可在转换时重新分组，条目 parent 以当前数组为准。
 
 
-## KF8 SVG 资源引用（0.34）
+## KF8 SVG 资源引用（S034）
 
 被引用的 image/svg+xml 流以严格 XML 树解析，转换 src/href/XLink、样式属性与 SVG style 元素中的 Kindle 资源 URI，并保留元素/属性的 expanded namespace、无命名空间扩展和普通正文。复用已有 XML 树序列化器输出有效 SVG XML；CDATA、前缀与属性引号可重新编码，XML 注释不保留。外来命名空间的 style 元素不按 CSS 重写。
 
 CSS 和 SVG 流共用一次入队的资源队列，可相互引用并形成环；依赖不递归内联。资源 URI 支持百分号编码片段，转换为本地路径加规范片段。SVG 根命名空间、XML、实体声明与依赖引用均验证，所有输出沿用模型/缓冲区和合计资源预算。框架内置仍只解码 PNG/JPEG；SVG 图形绘制由宿主 decode_image 提供。本次补齐资源关系与结构保真，没有新增 SVG 矢量栅格器。CSS 转义形式的 url 和 @import 仍未转换。
 
 
-## KF8 ORDT 索引与骨架兼容（0.35）
+## KF8 ORDT 索引与骨架兼容（S035）
 
 支持 INDX 的 ORDT 标签映射，包含 codepage 65002 标记及带显式 ORDT 表的普通 UTF-8 索引头。校验两张表的签名、计数、偏移、边界、互不重叠及 TAGX 非重叠；用 ORDT2 将标签字节映射回字节，再解读 FRAG 十进制插入位置或 guide 类型。子索引可继承主表，也可声明相同映射；矛盾映射返回 EXR_FORMAT。当前映射最多 256 项、每项结果须为 0..255，不实现其他未知宽字符索引变体。CNCX 仍使用书籍 UTF-8 字符串。
 
 真实文件还包含重复的 SKEL 片段计数与起止元组。相同重复值已兼容；冲突值拒绝。guide 类型拥有独立短字符串，索引解析失败时统一清理已解码条目，避免引用临时解码数组。
 
 
-## MOBI/KF8 书名与封面（0.36）
+## MOBI/KF8 书名与封面（S036）
 
 读取 MOBI full-name 字段与 EXTH 503 更新书名，最后一个非空更新值优先；末尾 NUL 填充移除，内部 NUL/非法 UTF-8/XML 字符拒绝。按标题所属头的 UTF-8/Windows-1252 编码解码，原始和解码后的标题各限 64 KiB。混合文件优先现代头，未提供书名或封面时回退旧头；显式 cover=0xffffffff 保持无封面，不回退旧封面。
 
 EXTH 201 的零基封面资源序号使用同一共享/本地资源寻址；已保留的资源直接复用，未在正文出现的封面按需复制。封面须为已识别图像，标记为通用 cover-image 属性，可通过现有资源接口读取；旧 MOBI 正文转换也可保留独立封面。标题和封面属性经结构 EPUB 输出保留。书库导入在没有用户标题覆盖时使用已解析书名；本节不改变 SQLite cover 字段的显式设置接口。
 
 
-## 书库自动封面导入（0.37）
+## 书库自动封面导入（S037）
 
 exr_library_import 统一读取文档资源中的第一个 cover-image token，存入原有 cover 字段，格式适配器不参与数据库逻辑。EPUB、FB2、MOBI/KF8 共用这条路径，标题仍可由调用者覆盖。封面字节最多 8 MiB；超限只省略快捷封面副本，完整封面继续留在保存的原书中，可通过书库文档资源访问。
 
 封面读取在数据库插入前完成。声明封面无法读取时返回相应错误，书籍 ID 为零，不留下半条记录；源书、书名和封面以同一条 INSERT 写入。所有参数绑定结果均检查。现有单独修改封面的接口可继续用于用户编辑。
 
 
-## 通用固定版面构造（0.38）
+## 通用固定版面构造（S038）
 
 `exr_layout_create_positioned(doc, font, input, config, &layout, error)` 接收已定位的页面、exr_glyph、exr_line、exr_box 和 exr_paint 数组，不重新塑形、换行或分页。各页原始坐标从左上起、y 向下，保持比例居中适配 config.page 的 width/height/margin；其余重排样式字段不参与定位排版。图片解码和取消控制继续使用现有配置。没有字形时可不提供字体。
 
@@ -600,14 +602,14 @@ input 必须清零并填写 struct_size；较大的结构仅在未知尾字节�
 原始尺寸 0.001..10000000；视口 1..16384，margin 必须留出正面积。坐标和变换后坐标必须有限且绝对值不超过 10000000，字形渲染尺寸最多 4096。小于 1/64 像素的字形不栅格化；单字形位图在调用 FreeType 绘制前限制为 8192 边长和 1600 万像素。页面位图仍限 64 MiB。当前指令包含定位文字、矩形与图片；任意路径、仿射绘制和裁剪栈后续继续补齐。
 
 
-## 通用固定页面视口（0.61）
+## 通用固定页面视口（S061）
 
 `exr_viewport_create(&geometry, scale, &viewport, &error)` 为任意固定版面来源生成正向和逆向仿射矩阵，不分配内存。`geometry.bounds` 是原始坐标的 `[x0,y0,x1,y1]`，`unit_scale` 是正数单位倍率；`rotation` 为顺时针 0/90/180/270 度，`y_down` 表示原坐标是否向下增加。输出从左上开始、y 向下，包含实际宽高、绘制矩阵和命中测试所需的逆矩阵。`scale=1` 保留单位倍率后的自然尺寸，调用方可自行据此适配窗口或设备像素比。
 
 矩阵使用 `[a,b,c,d,e,f]`：`x'=a*x+c*y+e`，`y'=b*x+d*y+f`。输入/输出坐标和矩阵元素限绝对值 10000000；无面积、非法旋转或非有限参数返回 EXR_ARGUMENT，尺寸/逆矩阵超出预算返回 EXR_LIMIT，失败时输出清零。该函数与 PDF、字体、图像和 UI 都无绑定；它不打开 PDF 文件。
 
 
-## 通用 C 画布（0.62）
+## 通用 C 画布（S062）
 
 `exr_canvas_create` 创建立即绘制的灰度/RGBA 画布；配置中的 width/height 必填，channels=0 默认 RGBA，background 为 0xRRGGBBAA，mask_budget=0 默认 64 MiB。它与 PDF、文档树、字体和 UI 无绑定。输入的路径、样式、矩阵、图片及遮罩仅在绘制调用期间借用，调用后即可释放或修改。
 
@@ -619,14 +621,14 @@ input 必须清零并填写 struct_size；较大的结构仅在未知尾字节�
 输出最多 64 MiB、边长最多 16384，单路径命令/边数限制沿用 C 矢量核，全部绘制共享 256M 工作预算和取消控制。任何失败的绘制都将画布置为失败状态，后续 take 返回首个失败，避免交付半张图片。PDF 路径、字形轮廓、图片和裁切已调用相同的通用画布；其字体/格式读取留在解析器一侧。
 
 
-## 字形轮廓读取（0.63）
+## 字形轮廓读取（S063）
 
 `exr_font_glyph_outline(font, font_index, glyph_id, &segments, &count, control, error)` 返回独立拥有的 move/line/quad/cubic/close 路径，用 `exr_free` 释放。坐标归一化为 1000 em，基线原点为零、y 向上，不进行 hinting 或位图栅格化。读取后可释放字体，路径继续有效；空字形返回 NULL/0。该接口按实际 glyph ID 读取，也支持 `exr_font_create_glyphs` 创建的无 Unicode cmap 字体。
 
 例如将字号 `size` 的轮廓画到基线 `(x, baseline)`，可给 `exr_canvas_path` 传入 `[size/1000, 0, 0, -size/1000, x, baseline]`。宿主也可自行消费这些曲线，不使用引擎画布。无效字体/索引/字形返回 EXR_ARGUMENT，预算与取消控制沿用轮廓核；失败清空路径/count。与 shape/layout/render 一样，同一个字体对象不能并发参与这些操作。
 
 
-## 通用流式绘制回调（0.64）
+## 通用流式绘制回调（S064）
 
 `exr_draw_sink` 提供 path、image、clip、state 四种回调及 context。解析器可以直接输出通用路径、样式、矩阵和分层图片；宿主可使用原生图形接口、记录器或检查工具消费这些数据。回调参数只在该次回调期间借用，需保存时自行复制。未提供的回调被跳过，回调返回非 EXR_OK 可终止遍历。
 
@@ -637,7 +639,7 @@ clip 的 accumulate=0 立即与当前裁切相交，accumulate=1 将路径加入
 PDF 的私有格式适配器已改为输出这一协议：字体编号先转为通用字形路径，图片保留独立分辨率遮罩，裁切组不依赖位图后端。内置 PDF 栅格化只是通用回调的一个消费者，格式解析与像素输出已经分开。
 
 
-## 开放固定页面文档模型（0.65）
+## 开放固定页面文档模型（S065）
 
 `exr_fixed_create` 接收通用页目录和按需 draw 回调，不要求来源是 PDF。`exr_fixed_input` 清零并设置 struct_size；成功时复制标题、页 ID/标签和 geometry，并接管 context 的 release 回调。失败时上下文仍由调用方管理。空 ID 自动生成为 page-1 等，有效 ID 必须唯一；目录顺序保持不变。页数最多 10000，单字符串最多 64 KiB，字符串载荷总计最多 8 MiB。未知扩展尾部只有全零时可兼容。
 
@@ -648,7 +650,7 @@ PDF 的私有格式适配器已改为输出这一协议：字体编号先转为�
 同一文档不能并发绘制，也不能在回调中重入绘制或释放文档；元数据查询可在回调中使用。提供者和绘制消费者均可返回错误或取消，状态及诊断会传回调用方。该模型不强制 DOM、字体库、持久化或某种解析器实现。
 
 
-## 公开固定格式打开 / PDF（0.66）
+## 公开固定格式打开 / PDF（S066）
 
 `exr_fixed_open(path, options, &document, error)` 接受 UTF-8 文件路径；`exr_fixed_open_memory(EXR_PDF, bytes, size, options, &document, error)` 复制输入字节，调用后可释放原缓冲。当前内置固定格式为 PDF，自定义格式继续通过 `exr_fixed_create` 接入。输入最多 128 MiB；文件入口接管已读取缓冲，不再重复复制整本文件。打开时读取交叉引用、页树和页目录，字体、内容和图片按绘制请求解析。文件入口暂以文件名作为默认标题，内存入口没有文件名时标题为空。
 
@@ -659,16 +661,16 @@ options 可为 NULL；非空时清零并设置 struct_size。fallback_font 是�
 `examples/fixed.c` 展示打开、可选字体、页查询、渲染和 PNG 输出；安装 SDK 的示例工程也构建它。Windows 示例通过统一 UTF-8 参数入口支持中文文件名。PDF 文字搜索/选择/标注接入、Info/XMP 元数据以及尚未实现的复杂绘制特性继续补齐。
 
 
-## 通用固定页文字快照（0.67）
+## 通用固定页文字快照（S067）
 
 `exr_fixed_text_create` 复制显式长度的 UTF-8 和 `exr_text_region` 数组；文字允许内嵌 NUL。每个 region 保存 UTF-8 字节区间、源页面坐标四边形以及竖排/不可见标志。区间可重叠，一个区间可有多个四边形，数组顺序由提供者定义。接口不假定 PDF、DOM 或特定阅读顺序。四个点的排列由提供者说明，不能从 region 推断精确字形墨迹。
 
 `exr_fixed_input.text` 是可选尾字段，旧版 required prefix 仍可创建文档。`exr_fixed_load_text` 按需调用提供者，返回独立拥有的快照；文档释放后仍能读取快照。用 string/regions getter 读取，最终调用 `exr_fixed_text_free`。没有提供者时返回 EXR_FORMAT；失败或取消不会返回部分结果，回调重入被拒绝。
 
-文字最多 64 MiB、region 最多 4M、总载荷最多 128 MiB。创建校验 UTF-8、区间边界、有限坐标和标志，并支持取消。0.68 起内置 PDF 也提供文字快照。
+文字最多 64 MiB、region 最多 4M、总载荷最多 128 MiB。创建校验 UTF-8、区间边界、有限坐标和标志，并支持取消。S068 起内置 PDF 也提供文字快照。
 
 
-## PDF 文字快照（0.68）
+## PDF 文字快照（S068）
 
 `exr_fixed_load_text` 现在支持内置 PDF。结果按内容操作符顺序连接 ToUnicode / 已知编码语义映射，保留多字符连字、NUL、非 BMP 字符以及嵌套 Form 的完整变换。源坐标仍未应用页面 CropBox、Rotate 和 UserUnit；使用公开 viewport 矩阵映射到屏幕。无需宿主字体，也不需要可绘制的嵌入字体轮廓。
 
@@ -677,7 +679,7 @@ options 可为 NULL；非空时清零并设置 struct_size。fallback_font 是�
 文字提供者每页最多 32 MiB - 1 字节、region 数组最多 64 MiB。图片无须解码，失败/取消丢弃部分结果且下一页可重试。此阶段保持内容顺序，不推断空格/换行，不重建 tagged PDF 阅读顺序或 ActualText。
 
 
-## 固定页搜索、选择和点击（0.69）
+## 固定页搜索、选择和点击（S069）
 
 `exr_fixed_text_find(text, query, query_size, from, control, &start, &end, error)` 按显式长度做精确、大小写敏感 UTF-8 搜索，包含 NUL；from 落在多字节内部时向后移动到下一边界。无结果时 start/end 为 SIZE_MAX，查询最多 1 MiB。KMP 时间为 O(正文+查询)，临时前缀表最多 4 MiB，可取消。重排正文 `exr_document_find` 也复用此实现，但保留原有 NUL 结尾 query 参数。
 
@@ -686,14 +688,14 @@ options 可为 NULL；非空时清零并设置 struct_size。fallback_font 是�
 `exr_fixed_text_hit` 在源页面坐标中计算点到实际四边形的距离，max_distance 指定允许距离，exclude_flags 可过滤不可见或竖排区域；返回 region 索引，无命中为 SIZE_MAX。同距离选择数组中第一个 region。支持旋转、斜切和退化线段，不用包围盒代替字格；先用 viewport.inverse 把屏幕坐标映射回源坐标。它返回整个语义范围，宿主决定连字内部光标策略。选择和命中均线性遍历当前页并支持取消。
 
 
-## 固定页稳定标注锚点（0.70）
+## 固定页稳定标注锚点（S070）
 
 `exr_fixed_anchor_create(page_id, text, start, end, &anchor, error)` 保存页 ID、原字节范围、最多 64 KiB 的精确引用及两侧各 32 个 Unicode 标量上下文。exact/prefix/suffix 带显式长度，可包含 NUL；输出须为空，创建成功后独立拥有所有字节，使用 exr_fixed_anchor_free 释放。宿主可直接序列化这些公开字段，备注、颜色和分类由宿主管理。
 
 `exr_fixed_anchor_resolve` 在指定页快照内比较引用与上下文，返回 FOUND/MISSING/AMBIGUOUS。只有 FOUND 提供新范围，可再次交给 exr_fixed_text_select 获取当前字格。页 ID 不匹配不会跨页猜测；原偏移不用于打破重复内容的平局。支持空范围书签与可取消线性搜索；与重排正文锚点共用匹配实现。此接口定位宿主创建的标注，不读取或改写 PDF 内置 annotation 对象，也尚未连接 SQLite 固定页备注表。
 
 
-## PDF 书库与固定页备注（0.71）
+## PDF 书库与固定页备注（S071）
 
 `exr_library_import(EXR_PDF, ...)` 保存原始 PDF 和页数，不预先提取全书文字；标题空缺时使用 Untitled。通过 exr_library_fixed 重新打开固定文档，options 可提供宿主字体和打开取消。PDF 的 book.position 是从零开始的页索引，页数值可表示阅读结束；重排书籍仍使用原正文偏移。书名、标签、收藏、封面、删除和备份接口共用现有书库。
 
@@ -704,7 +706,7 @@ options 可为 NULL；非空时清零并设置 struct_size。fallback_font 是�
 SQLite schema 升至 3，v1/v2 自动在事务内迁移；迁移失败完整回滚。旧二进制不能打开 schema 3。备注暂为 SDK 自有数据，不写回 PDF 文件。
 
 
-## 通用有声书时间线（0.72）
+## 通用有声书时间线（S072）
 
 `exr_audio_create` 复制轨道、章节及图文同步表。轨道按输入顺序连接，duration_ms 必须为已知非零时长；所有时间使用 uint64 毫秒并检查总和溢出。ID 可由宿主给出，空轨道/章节 ID 自动生成 track-N/chapter-N，同表中必须唯一。URI 和媒体类型是宿主元数据，不自动访问网络或假定编解码器。
 
@@ -715,7 +717,7 @@ SQLite schema 升至 3，v1/v2 自动在事务内迁移；迁移失败完整回�
 输入结构设 struct_size，未知尾部只接受全零。最多 10000 轨、100000 章、1000000 同步片段；单字符串最多 64 KiB、全部字符串最多 16 MiB，表载荷最多 128 MiB。该阶段交付时间线与同步模型，解码、声音输出、倍速与播放会话继续接入。
 
 
-## 有声书播放后端与续播（0.73）
+## 有声书播放后端与续播（S073）
 
 `exr_audio_player_create` 保留 audio，接管成功创建后的 backend context。创建、首次播放前跳转/恢复/改倍速均不打开设备；最后释放 player 时若访问过后端则发送 CLOSE，再调用 release。callback 同步接收 LOAD/PLAY/PAUSE/SEEK/RATE/CLOSE、轨道元数据、本地时间、倍速及 generation。LOAD 替换当前源并停在暂停状态，SEEK/RATE 保持播放状态，CLOSE 关闭当前后端，不依赖命令中的来源描述选择设备。具体编解码、变速算法与声音设备由宿主后端实现。
 
@@ -726,7 +728,7 @@ play/pause/seek/rate 控制请求状态，倍速范围为 (0,16]，后端可按�
 通过 get 的 track_id/offset_ms/rate 保存书签或续播点，再调用 restore 恢复为暂停；在原书前面插入其他轨道也可依照稳定 ID 找回位置。宿主负责持久化这些字段和备注。audio_time 提供轨道本地时间到全局时间的 O(1) 映射。此阶段测试使用可控后端，平台声音设备适配和实际音频解码尚未交付。
 
 
-## C 原生 WAV 按需解码（0.74）
+## C 原生 WAV 按需解码（S074）
 
 `exr_wave_open` 从 UTF-8 路径打开 RIFF/WAVE，`exr_wave_open_source` 接受宿主随机读取源。源上下文只在成功打开后接管；source.control 仅用于打开，此后各次 read 使用自己的 control。打开只扫描 chunk 头和必要的 fmt 字段，跳过音频载荷；不常驻复制整段音频。文件读取支持 64 位偏移，原电子书文件源仍保留 128 MiB 上限。
 
@@ -737,7 +739,7 @@ play/pause/seek/rate 控制请求状态，倍速范围为 (0,16]，后端可按�
 当前不解码压缩 WAV、RF64、RIFX 或多个 data 块；MP3/AAC/M4B 解码、变速处理和操作系统声音输出继续接入。
 
 
-## 有声书续播与时间书签持久化（0.75）
+## 有声书续播与时间书签持久化（S075）
 
 `exr_library_audio_resume` / resume_get 保存和读取 track_id、offset_ms、rate。宿主提供稳定 audio_id，不绑定文件 URI、书籍格式或 books 行 ID；可用于独立有声书或书籍的配音轨道。把 player_get 的相应字段写入 checkpoint，重开后通过 player_restore 恢复。没有保存记录时 get 返回 found=0、空 checkpoint；读取结果使用 exr_audio_checkpoint_free 释放。
 
@@ -746,12 +748,12 @@ play/pause/seek/rate 控制请求状态，倍速范围为 (0,16]，后端可按�
 时间以 8 字节小端 BLOB 保留完整 uint64 范围；恢复到实际时间线时，player 仍校验轨道 ID 与本地时长。保存不自动读取声音文件。audio_id 最多 4096 字节，track_id/标签最多 64 KiB；标识非空且文本须为 UTF-8。查询最多 100000 项和 64 MiB 逻辑载荷，损坏记录不会返回部分结果。schema 4 从 v1/v2/v3 在事务内迁移；旧版二进制会拒绝新版本库。
 
 
-## 安装后的 WAV 宿主示例（0.76）
+## 安装后的 WAV 宿主示例（S076）
 
 `examples/wave.c` 只依赖公开头文件和 SDK 动态库，按 1024 帧读取 WAV 并打印采样率、声道、总帧数和峰值。它提供交错 float 数据接入宿主声音设备的入口，不打开设备。安装包包含可用标准库脚本重新生成的原创 400 Hz PCM 样本。命令为 `exreader-wave-example input.wav`，Windows 入口支持 UTF-8 路径。三桌面 CI 在独立安装 SDK 后构建并运行此示例，Windows 还覆盖中文文件名。
 
 
-## Swift 接入（0.77）
+## Swift 接入（S077）
 
 安装后的 include/module.modulemap 提供 `import CEXReader`，直接开放全部 C 接口。`bindings/swift/EXReader.swift` 提供 ARC 管理的字体、固定文档、独立文字快照和 WAV 封装；返回的图像 Data、文字 Data 和 region 数组具有独立生命周期。字体字节在 C 内复制，PDF 持有字体引用；同一固定文档/WAV 的可变操作由封装锁串行执行。Swift 类不声明 Sendable，宿主负责对象跨并发域的安排。
 
@@ -760,7 +762,7 @@ play/pause/seek/rate 控制请求状态，倍速范围为 (0,16]，后端可按�
 macOS 可用 `swiftc -I SDK/include -L SDK/lib -lexreader -Xlinker -rpath -Xlinker SDK/lib bindings/swift/EXReader.swift bindings/swift/Smoke.swift -o swift-example` 构建示例，传入 SDK/examples 目录运行。Apple CI 运行独立安装 SDK 的 Swift 示例，并对 iOS/iPadOS arm64 设备与模拟器目标分别检查封装。
 
 
-## JNI / Java / Android 接入（0.78）
+## JNI / Java / Android 接入（S078）
 
 `EXR_BUILD_JNI=ON` 构建可选 exreader_jni 动态库；Android 默认启用，普通桌面默认关闭，不增加 C 核的 JDK 依赖。桌面构建绑定需要 JDK 头文件；运行时一并放置 exreader 与 exreader_jni。安装包包含 bindings/jni 中的 Java 源码和 Android 混淆保留规则。Android 两个库都使用 16 KiB ELF 页面对齐。
 
@@ -771,42 +773,42 @@ Pdf/Wave 实现 AutoCloseable；使用 try-with-resources 或显式 close，重�
 桌面 CI 用真实 JVM 和 `-Xcheck:jni` 运行安装后绑定，Android CI 交叉编译 JNI 库。此阶段封装 PDF 和 WAV 常用调用；其余完整 C 接口可从 Android NDK 直接接入，Android 应用生命周期、内容 URI 授权、声音输出及真机运行继续补齐。
 
 
-## RTF 表格结构（0.79）
+## RTF 表格结构（S079）
 
 RTF 的 trowd/cell/row 现在构造通用 table/tr/td 文档树。单元格保留多段落、空单元格、既有内联样式、链接和图片；连续行组成同一表，正文恢复后下一行开始新表。cellx 定义可位于内容前或内容后，坐标作为 data-rtf-cellx 属性保留；没有 cellx 时按实际单元格构造。
 
 接入现有表格换行、跨页、宿主布局查询和结构化 EPUB 导出。内置布局仍使用等宽列，不将原始 twip 边界当作已实现的精确列宽。每行最多 256 列，检查缺失 cell/row、定义数量不符、重复行开始及非递增边界。此阶段拒绝嵌套表与合并标记，随后补合并结构。跳过的目的地和 Unicode fallback 不会意外执行表格控制字。
 
 
-## RTF 合并单元格（0.80）
+## RTF 合并单元格（S080）
 
 clmgf/clmrg 与 clvmgf/clvmrg 现在生成标准 colspan/rowspan。行结束时线性重建链接，将续接物理格转换为所属单元格内的普通 div 内容容器；非空文字、段落样式、链接和图片保留，空续接容器隐藏，避免增加虚假的空行。宿主仍读取通用表格节点和属性。
 
 支持横向、纵向及矩形组合合并，纵向续接要求上一行的覆盖列数和声明边界一致。检查孤立续接、宽度变化、冲突标记与跨间断的连接；单元格定义前后的标记都随 cellx 解析。trleft 与 cellx 原始坐标以属性保留。合并后的整组高度仍受现有分页规则约束，嵌套表与精确原始列宽排版尚未实现。
 
 
-## RTF 脚注、尾注与回链（0.81）
+## RTF 脚注、尾注与回链（S081）
 
 footnote 组现在创建独立的通用 aside / EXR_NODE_NOTE；ftnalt 标为 doc-endnote，其余标为 doc-footnote。正文 chftn 位置生成 doc-noteref 链接，注释末尾有 doc-backlink，所有目标使用稳定的文档内 ID。没有显式标记时在注释位置补引用；编号暂按出现顺序生成。
 
 解析期间注释独立构造，完成后按出现顺序接到正文末尾，保持主文连续；注释里的段落、样式、链接和图片保留，父表格内的引用不会把注释正文写进单元格。通用 ID 解析和 EPUB 结构导出继续使用相同模型。此阶段是语义结构与文末注释，不承诺逐页页脚定位或原始自定义编号。最多 10000 条，拒绝嵌套注释、悬空引用及注释内嵌套表格。
 
 
-## RTF 列表层级与显示标签（0.82）
+## RTF 列表层级与显示标签（S082）
 
 ls/ilvl 现在构造通用 ol/ul 与 li，保留列表实例 ID 和 0–8 级层级。listtext/pntext 的实际编号或项目符号继续作为带样式的显示标签保留，避免重复生成；标记 span 使用 presentation/aria-hidden，语义列表项独立可读。普通段落、不同单元格、不同列表实例分别分组；脚注解析后恢复父列表状态。
 
 开始即跳到较深层级时生成 presentation 容器补齐树结构，原始层级仍可查询。列表容器不额外增加原段落已有的缩进。此阶段沿用原文件给出的显示标签；没有标签时只保留列表结构，完整 numbering/listoverride 计数定义继续补齐。
 
 
-## RTF 自动编号（0.83）
+## RTF 自动编号（S083）
 
 解析 listtable / listoverridetable，在没有 listtext 时生成编号；已有显示标签原样保留，同时推进计数。支持 decimal、大小写 Roman / Letter、补零、项目符号和无编号，保留 leveltext 模板、多级引用、legal 前级十进制化、norestart、follow 和独立实例的起始值/格式覆盖。编号字符格式与正文独立，列表缩进只补正文未显式指定的值。通用 ol 的 start/type 和 data-rtf-number-format 保留语义。
 
 最多 2000 个定义和覆盖实例、每个 9 层、模板 255 个标量，计入既有元数据字节预算；计数溢出返回 EXR_LIMIT。未实现的编号制式在缺少原标签时返回 EXR_FORMAT。控制参数严格限制为 signed int32；正文 hex NUL 拒绝，模板内编号占位符允许零值。Roman 超过 3999 和非正 Roman/字母值使用十进制回退。
 
 
-## 结构化 HTML 资源包（0.84）
+## 结构化 HTML 资源包（S084）
 
 `exr_document_export_html_bundle` 输出 ZIP 字节和独立的 entry_path 字符串，两者分别用 exr_free 释放。解压整个包，再打开 entry_path 指定的 XHTML 文件；这是带资源的目录包，不是单文件 HTML。入口提供阅读顺序、NCX 层级目录与原 EPUB nav 的入口链接，名称遇到原文件时自动避让。
 
@@ -815,14 +817,14 @@ ls/ilvl 现在构造通用 ol/ul 与 li，保留列表实例 ID 和 0–8 级层
 复用结构 EPUB 导出的路径冲突、缺失资源、XML、加密/字体混淆校验和字节预算。失败或取消清空 data/size/entry_path，不写文件、不联网。旧 exr_document_export(EXR_HTML) 继续提供纯正文转换。
 
 
-## 精确重复导入（0.85）
+## 精确重复导入（S085）
 
 `exr_library_import_unique` 按格式与原文件全部字节查找重复，命中时返回最小的已有正 ID、created=0；不改已有书名、作者、进度、封面或标注。没有重复时调用既有解析与封面导入，成功提交后返回新 ID、created=1。旧 import 继续允许多个副本。
 
 查询、插入和提交使用同一写事务，跨连接同时导入不会增加两个副本；SQLite 连接互斥量保护同一连接上的整个操作。失败时 id/created 清零，回滚新增数据。沿用 128 MiB 原文件上限与 schema 4，不增加数据库迁移或常驻索引。当前先按格式和字节数筛选，再作精确 BLOB 比较；大书库查询成本随候选文件总字节数增加。不同编码、重新打包、转换格式或仅正文相同的文件视为不同来源。
 
 
-## 章节 CFI 内容路径（0.86）
+## 章节 CFI 内容路径（S086）
 
 `exr_document_cfi_path_create` / resolve 实现 [EPUB CFI 1.1](https://w3c.github.io/epub-specs/epub33/epubcfi/) 的内容文档路径组件，例如 `/4[body]/2[p]/1:3`。调用方单独提供 chapter；接口不添加 package spine 前缀、`!` 或 `epubcfi(...)`，也不做 URI 百分号解码。章节必须具有唯一的 XML 文档元素，不能把多根的普通文本模型当作原始 XHTML。
 
@@ -833,7 +835,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 此阶段拒绝文本位置断言、范围、图像 alt 偏移、跨文档重定向、时间和空间偏移；完整 EPUB 包路径仍需保留 OPF spine 的原始结构后接入。
 
 
-## 原始 EPUB 整书位置 CFI（0.87）
+## 原始 EPUB 整书位置 CFI（S087）
 
 `exr_document_cfi_create` / resolve 处理 `epubcfi(package_path!content_path)` 的位置。原始 container 与 OPF 只在请求时读取，使用实际元素树生成 package / spine / itemref 路径与 ID 断言，不假设 spine 固定为 `/6`。读取仍受既有 ZIP 资源限制；不增加常驻 OPF 副本。
 
@@ -842,7 +844,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 此接口要求仍持有原压缩包的完整 EPUB 文档，辅助非 spine 章节不能伪装为标准 spine CFI；从 publication_load 单独加载的章节也不能用自己的局部索引冒充整书顺序。宿主构造文档继续使用独立内容路径接口，输出结构 EPUB 后重新打开才有真实 package 坐标。输入为原始 CFI 字符串，不自动解析 URL 或百分号转义。范围、文本断言、iframe 等额外重定向和音视频空间/时间位置继续补齐。
 
 
-## 按需出版物 CFI（0.88）
+## 按需出版物 CFI（S088）
 
 `exr_publication_cfi_create` 接受内置 EPUB publication、part、由它加载的独立章节文档与章节局部 point。创建前验证原始压缩源归属和章节路径；重复 spine 项仍由显式 part 区分。完整文档的 CFI 接口继续使用原有完整阅读顺序校验。
 
@@ -851,7 +853,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 操作不创建 session、不预排版、不加入常驻缓存。内置 EPUB 提供者以外的宿主出版物返回 EXR_FORMAT，可继续使用通用局部路径接口。与 publication_load 一样拒绝重入；输入输出的 XML 文本位置仍使用原始 DOM / UTF-16 约定。
 
 
-## EPUB CFI 选区范围（0.89）
+## EPUB CFI 选区范围（S089）
 
 `exr_document_cfi_range_create` / range_resolve 使用标准 `epubcfi(P,S,E)` 三段形式，支持同一文本块、元素与跨 spine 章节范围；共同路径按完整步骤提取，不按数字字符串的前几个字符截断。`exr_cfi_range` 分别保存起止 chapter 与原始 DOM point，零长度范围可用，端点不得指定 side bias。
 
@@ -860,7 +862,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 完整文档和按需出版物的单点 resolve 现在按规范取范围的起点；它们只处理起点的语义目标，不验证另一端是否存在。需要两端有效性与顺序检查时使用 range_resolve，该接口目前要求完整 EPUB 文档。原始文本 UTF-16 单元、未折叠空白和章节作用域规则保持一致。文本位置断言、额外文档嵌入、时间和空间偏移仍待实现。
 
 
-## CFI 文本断言与位置修正（0.90）
+## CFI 文本断言与位置修正（S090）
 
 内容路径现在读取标准 `[before,after]`、仅前文或仅后文断言，可附带 side bias。验证使用同章原始 XML 文字的连续视图，忽略元素边界，把 XML 空白（空格、TAB、CR、LF）连续序列折叠为一个空格。它不借用排版投影，不删除未显示元素里的文字，也不做 Unicode 规范化。
 
@@ -871,14 +873,14 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 规范化视图是单次操作的临时缓冲，最多 64 MiB 减一字节，不常驻，不建立逐字符映射表；位置回查用第二遍遍历。查询最多两次线性 KMP 扫描，拒绝歧义，支持取消。现有路径断言每侧上限 4096 字节。完整文档、范围和按需单点入口共享这些规则。
 
 
-## SDK ABI 与安装包接入（0.91）
+## SDK ABI 与安装包接入（S091）
 
-`EXR_ABI_VERSION` / `exr_abi_version()` 提供从 0.91 起的 ABI epoch 1。版本字符串仍用 EXR_VERSION / exr_version。ABI 与库版本、SQLite schema 分别管理；同一 epoch 的数组记录不能追加字段改变步长，带 struct_size 的输入维持原始前缀。完整规则见 [SDK_COMPATIBILITY.md](SDK_COMPATIBILITY.md)。
+`EXR_ABI_VERSION` / `exr_abi_version()` 提供从 S091 起的 ABI epoch 1。版本字符串仍用 EXR_VERSION / exr_version。ABI 与库版本、SQLite schema 分别管理；同一 epoch 的数组记录不能追加字段改变步长，带 struct_size 的输入维持原始前缀。完整规则见 [SDK_COMPATIBILITY.md](SDK_COMPATIBILITY.md)。
 
-安装包新增可搬迁的 CMake config：`find_package(EXReader 0.91 CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
+安装包新增可搬迁的 CMake config：`find_package(EXReader 0.18.0 EXACT CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
 
 
-## 通用持久化全文索引（0.92）
+## 通用持久化全文索引（S092）
 
 `exr_text_index` 使用独立 SQLite 索引文件，application_id=EXRI、schema 1；不把新表塞进普通 schema 4 书库。宿主提供稳定 source/part 标识和 UTF-8 文字，可用章节、固定页面或任意其他分段，不假定格式、书籍 ID 类型或 UI。索引是可重建的派生数据，普通书库备份不包含该独立文件。
 
@@ -893,7 +895,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 构建选项 `EXR_ENABLE_TEXT_INDEX` 默认 ON，复用现有 SQLite C 组件。需要更小核心时设 OFF，公开函数仍保留 ABI，但 available=0、open 返回 EXR_FORMAT；其他阅读功能仍可使用。`exr_text_index_available` 可在宿主界面决定是否提供索引操作。此接口尚不自动遍历书库建索引，也不提供模糊/词干/相关性排名；宿主决定分段和重建时机。
 
 
-## 流式来源索引重建（0.93）
+## 流式来源索引重建（S093）
 
 `exr_text_index_replace(index,source,provider,context,control,...)` 在一个事务内替换整个来源。provider 按递增 ordinal 返回 `exr_text_part{id,text,size}`，found=0 结束；空序列清空该来源。最多 100000 个分段，分段 ID 必须唯一，文字/ID 上限与 put 相同。输入仅借用到下一次回调或 replace 返回，宿主可在下一次回调释放上一个章节，不必同时保留整本书。
 
@@ -902,7 +904,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 安装后的 `exreader-search-example input.epub index.sqlite literal-query` 演示按阅读顺序逐章加载、回收上一章、原子重建与最多 20 条搜索结果。source 使用调用方文件路径，part 采用示例自选的序号；这是宿主选择，不是索引模型对标识的限制。原始 C 接口可接任意格式和宿主解析器。
 
 
-## 稳定阅读进度持久化（0.94）
+## 稳定阅读进度持久化（S094）
 
 `exr_library_progress` 接收宿主从当前文档用 anchor_create(position,position) 捕获的点锚，原子保存 books.position 与前后文/章节作用域。exact 必须是空字符串、start=end 且位于存储正文 extent 内。宿主负责把锚点对应到正确的书籍；接口只验证范围与选择器编码，不为每次进度更新重新解析原文件。
 
@@ -913,7 +915,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 书库升级为 schema 5。v1–v4 在事务中补齐所需表和触发器，失败完整回滚，旧数值进度保持为 LEGACY。ABI epoch 仍为 1，SQLite schema 兼容版本独立管理。本阶段持久化上下文；正文 extent 重新计算与旧标注/进度的批量重定位继续接入。
 
 
-## 书库正文重新定位（0.95）
+## 书库正文重新定位（S095）
 
 `exr_library_reanchor(library,book,fallback_position,control,report,...)` 重新解析存储原书，计算当前正文长度，并在同一事务中重新定位文本标注与阅读进度。唯一匹配更新范围和上下文；MISSING、AMBIGUOUS 或无选择器的 LEGACY 不猜测位置。PDF 使用固定页位置，此入口返回 EXR_FORMAT。
 
@@ -926,7 +928,7 @@ report 返回新旧正文长度、进度位置、进度匹配及逐条 note_id/�
 schema 6 为标注保存定位状态，并允许进度保留 LEGACY 历史位置。v1–v5 事务迁移到最新结构；v5 的旧进度表重建与标注列添加一起提交。原书字节不改写，ABI epoch 仍为 1。
 
 
-## 通用文本标注交换（0.96）
+## 通用文本标注交换（S096）
 
 `exr_text_annotation_export` / import 使用 W3C Web Annotation 的紧凑 JSON-LD 子集：固定 `http://www.w3.org/ns/anno.jsonld` context，单个 Annotation、单个 TextualBody（纯文本）及单个 SpecificResource/TextQuoteSelector。结构保留可选 id、source、备注、exact、prefix、suffix。独立于书库和格式；不分配书籍 ID、不访问网络、不把第三方资源自动映射到本地文件。
 
@@ -937,7 +939,7 @@ source 由宿主指定，应标识准确的目标文档或章节。SDK 的 UTF-8
 这是明确的单标注交换子集，不是任意 JSON-LD 处理器。context 改写、数组 body/target/selector、HTML 正文、TextPositionSelector、target scope/state、selector refinedBy 等返回错误，避免忽略额外目标约束。固定页坐标、媒体时间、集合批处理与第三方选择器转换尚未接通。
 
 
-## 按需固定页元数据与 PDF Info（0.97）
+## 按需固定页元数据与 PDF Info（S097）
 
 `exr_fixed_load_metadata` 返回独立的 UTF-8 key/value 数组，用 metadata_free 释放，可比文档活得更久。允许重复 key，不绑定书籍 ID、格式或 UI。最多 4096 项、单字符串 64 KiB、总字符串 8 MiB。空结果 count=0/entries=NULL；错误或取消清空输出。自定义 fixed_input 可追加 metadata 回调，返回借用数组和字符串（到下次提供者操作前有效），SDK 立即深拷贝。回调错误详情、重入限制和最终取消规则与文本加载一致；未提供回调返回 EXR_FORMAT。原始和带 text 的旧 input 前缀继续兼容 ABI epoch 1。
 
@@ -948,7 +950,7 @@ PDF 提供者按需读取有效修订的 Info 字典：Title、Author、Subject 
 书库 PDF 导入取得 Info 标题/作者，调用方非空 title 优先；缺少标题仍回退 Untitled。导入时遇到损坏的元数据不会产生部分书籍记录；已有精确去重结果继续保留原用户元数据。fixed_title 的文件名/宿主标题规则保持独立，原文件字节不改写。XMP XML、额外自定义 Info 项与元数据回写尚未接通。
 
 
-## 通用 XMP 与 PDF 元数据优先级（0.98）
+## 通用 XMP 与 PDF 元数据优先级（S098）
 
 `exr_metadata_read_xmp(data,size,control,entries,count,...)` 直接接收 XML packet，复用既有 Expat。输入不依赖 PDF、书库或宿主模型；输出沿用 owned metadata_entry 数组与 metadata_free。支持 UTF-8/带 BOM 的 UTF-16 XML、空文档主体的 RDF Description 简写属性、简单文字属性、rdf:Seq/Bag 多值和 rdf:Alt。Alt 选择 x-default，否则取第一个备选；重复 x-default 返回错误。多作者/多关键词按原始顺序和重复值保留。
 
@@ -959,7 +961,7 @@ packet 最多 1 MiB，嵌套最多 64 层，输出最多 4096 值，key 最多 4
 PDF Catalog Metadata stream（含已有解码器支持的 Flate 等 lossless filter）接入同一解析器。XMP 的已提取属性替换同 key 的 Info 值，其余 Info 项保留；多值不压平。书库选择首个非空标题，并把多个非空作者用 `; ` 合并到既有 author 字符串；元数据接口仍返回独立作者。宿主非空 title 继续优先。失败不会阻止独立页面绘制，也不生成部分书库记录。元数据写回仍待实现。
 
 
-## Swift / JNI 元数据适配（0.99）
+## Swift / JNI 元数据适配（S099）
 
 Swift 的 `EXReaderFixedDocument.metadata()` 与 `EXReaderMetadata.readXMP(Data)` 返回独立 `[EXReaderMetadataEntry]`，每项包含 key/value String。PDF 操作用现有对象锁串行执行；读取后不保留 C 指针，结果可比原文档与输入 Data 活得更久。
 
@@ -968,7 +970,7 @@ Java 的 `Pdf.metadata()` 和静态 `EXReader.readXMP(byte[])` 返回独立 Meta
 两个封装沿用 C 的资源限制和解析错误。新增宿主验证覆盖输入缓冲清零后的字符串存活、多作者、中文/emoji、4096 个重复属性、无元数据 PDF 和错误传递。手机端的设备运行验证仍须连接真机完成。
 
 
-## 通用页标注快照与 PDF 原生标注读取（0.100）
+## 通用页标注快照与 PDF 原生标注读取（S100）
 
 `exr_fixed_load_annotations(document,page,control,annotations,count,...)` 按页返回 owned `exr_page_annotation` 数组，使用 page_annotations_free 释放，可比原文档活得更久。id 可为空字符串，kind 为宿主自由定义的 UTF-8 类型名；bounds 是规范化的源坐标矩形，quads 为每组 8 个 double 的四点坐标，properties 是可重复 key 的 UTF-8 元数据。输入不绑定高亮枚举、书库记录或 UI。
 

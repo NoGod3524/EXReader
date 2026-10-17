@@ -1,6 +1,11 @@
 # Native C validation
 
-## 0.17 generic navigation and NCX
+Historical sections S013–S100 refer to development steps, formerly numbered
+0.13–0.100. The [milestone version map](VERSIONING.md) defines the current release
+numbering. Original binary versions, measurement labels, commit IDs and CI results
+in the records below retain their original identities.
+
+## S017 generic navigation and NCX
 
 `native-navigation` passes 145 checks using seven original deterministic fixtures
 from `tests/make_navigation_fixtures.py`. Tests cover explicit NCX selection over
@@ -14,7 +19,7 @@ and failed-construction ownership. All 27 local CTest suites pass. The control
 milestone passed all six CI jobs at
 [d21f902](https://github.com/NoGod3524/EXReader/actions/runs/38998166360).
 
-## 0.16 operation control
+## S016 operation control
 
 `native-control` passes 3555 checks. It cancels style computation, lookup work in a
 long mark run, partial rendering and seekable reading, verifies cleared outputs,
@@ -25,7 +30,7 @@ Source cancellation preserves failed-open ownership and permits later load retry
 All 26 local Windows CTest suites pass. The source milestone passed all six jobs at
 [83a18ac](https://github.com/NoGod3524/EXReader/actions/runs/38997470863).
 
-## 0.15 seekable sources
+## S015 seekable sources
 
 `native-source` passes 463 local Windows checks. An EPUB is generated in memory
 from the original font fixture plus an 8 MiB stored, unused member. Indexed opening
@@ -38,7 +43,7 @@ once, and its retained page/fonts still render afterward. All 25 local CTest sui
 pass. The checkpoint milestone passed all six CI jobs at
 [bc27700](https://github.com/NoGod3524/EXReader/actions/runs/38997073291).
 
-## 0.14 pagination checkpoints
+## S014 pagination checkpoints
 
 `native-checkpoints` passes 3922 checks. Uncached seeks compare glyph IDs, source
 ranges, exact line geometry, boxes and rendered pixels against a pager with
@@ -50,7 +55,7 @@ the same state restoration rather than a separate output path. All 24 local Wind
 CTest suites pass. The preceding font milestone passed all six CI jobs at
 [8ba092c](https://github.com/NoGod3524/EXReader/actions/runs/38996703264).
 
-## 0.13 book fonts
+## S013 book fonts
 
 The original `font-book.epub` is reproduced by `tests/make_font_book.py` using only
 the repository's geometric font fixtures. `native-book-font` passes 136 checks:
@@ -476,7 +481,7 @@ Windows GCC 16.2 C11 Release 的 17 个 CTest 项全部通过。新增双向测�
 
 0.12.0 的九份新进程性能记录已归档至 `docs/benchmarks/0.12.0-windows-paged/`，口径与结果见 [性能记录](PERFORMANCE.md)。
 
-## 0.18 structured EPUB export
+## S018 structured EPUB export
 
 `native-export-epub` round-trips styled tables/images, embedded font selection, EPUB 2 NCX,
 EPUB 3 navigation, repeated spine entries and host-constructed Unicode paths. It compares
@@ -486,7 +491,7 @@ Missing bytes, illegal XML names, reserved paths, cancellation and package encry
 fail with empty outputs. Plain text receives a generated chapter and navigation. The legacy
 XML/text conversion regression remains unchanged.
 
-## 0.19 rich FB2
+## S019 rich FB2
 
 `native-fb2` verifies original generated PNG bytes, cover designation, URI-decoded image IDs,
 inline emphasis, headings, tables, note links, metadata exclusion and exact rendered pixels after
@@ -494,7 +499,7 @@ structured EPUB round-trip. Strict base64 cases include empty/full/padded/whites
 invalid alphabet, noncanonical pad bits, incomplete groups, extra padding and data after padding.
 Duplicate binary IDs, missing images, wrong namespaces/roots and entity declarations are rejected.
 
-## 0.20 rich DOCX
+## S020 rich DOCX
 
 `native-docx` opens an original package whose main part is outside word/document.xml.
 It checks inherited/default/direct formatting, headings, bookmarks, links, a Unicode image path
@@ -504,7 +509,7 @@ and exact rendered pixels. Regressions reject missing relationships/resources, t
 relationship ID collisions, invalid namespaces, style cycles and orphan merge continuations;
 external image URIs remain metadata without network reads.
 
-## 0.21 DOCX notes
+## S021 DOCX notes
 
 The DOCX fixture adds repeated footnote references, an endnote, backlinks, a non-default notes
 part path, separator/orphan exclusion, and an image relation that reuses a main-part ID for a
@@ -516,7 +521,7 @@ The 0.20 sanitizer job stopped at a GCC debug-build format-truncation diagnostic
 path construction (before running tests). 0.21 checks the length before copying fixed path
 segments, shared by main/notes parts, with no formatted truncation path.
 
-## 0.22 DOCX numbering
+## S022 DOCX numbering
 
 The generated fixture verifies multilevel references, independent numId counters, continuation,
 start overrides, style-derived numbering and never-restart levels. Visible labels and list nodes
@@ -524,28 +529,28 @@ survive structured EPUB round-trip with identical rendering. Additional cases co
 zero-padded decimals, alphabetic rollover, subtractive Roman numerals, large-value fallback,
 bullets, suppressed labels, missing definitions and unsupported numbering formats.
 
-## 0.23 styled RTF
+## S023 styled RTF
 
 `native-rtf` verifies group-scoped bold/italic, explicit size and color, paragraph properties,
 semantic underline/strike nodes, metadata exclusion, paragraph/soft breaks and exact pixels after
 EPUB conversion. Invalid palette components/references and font sizes fail atomically. All 29
 existing Unicode fallback cases remain unchanged and pass through the new tree adapter.
 
-## 0.24 RTF pictures
+## S024 RTF pictures
 
 PNG/JPEG cases exercise both hex and binary pict streams, twip dimensions, optional shppict,
 nonshppict suppression, exact encoded bytes and identical rendered pixels after EPUB round-trip.
 Malformed hex/signatures fail. A known word nested in an unknown optional destination cannot
 reactivate that skipped content. The existing Unicode fallback suite remains unchanged.
 
-## 0.25 RTF fields/fonts
+## S025 RTF fields/fonts
 
 RTF tests cover Unicode font/title metadata, default/explicit font names, scoped formatting in
 external hyperlinks, internal bookmark resolution and a non-hyperlink field's visible result.
 Titles, links, style requests and pixels survive EPUB conversion. Empty font names and skipped
 metadata with later known destinations remain valid without leaking metadata into body text.
 
-## 0.26 text decorations
+## S026 text decorations
 
 `native-decoration` checks semantic/CSS defaults, ancestor propagation, user overrides,
 combined lines, visible raster output, preserved OpenType flags, Latin ligature boundaries and
@@ -553,7 +558,7 @@ Arabic joining forms. Eager pages match borrowed paged/replayed output exactly. 
 verify inherited underline, direct removal and strike, then compare EPUB round-trip pixels;
 RTF regressions now assert underline/strike glyph flags as well as semantic nodes.
 
-## 0.27 MOBI compression
+## S027 MOBI compression
 
 `native-mobi` uses original generated PalmDB/HUFF/CDIC fixtures: fixed/short/long codes,
 multiple dictionaries, recursive phrases, UTF-8/Windows-1252, multiple records and trailer flags.
@@ -562,7 +567,7 @@ Cases reject bad tables/offsets/prefixes, missing/truncated dictionaries, phrase
 PalmDOC tests distinguish valid in-record overlap from invalid cross-record references.
 
 
-## 0.28 KF8 reconstruction
+## S028 KF8 reconstruction
 
 `native-kf8` checks two-chapter SKEL/FRAG assembly, multiple data INDX records,
 multiple control bytes, TAGX byte-length prefixes before value payloads, repeated insertions,
@@ -572,7 +577,7 @@ IDXT offsets, masks, VWI, fragment bounds/order, unsupported ORDT, orphan indexe
 XHTML and truncated/gapped FDST fail atomically.
 
 
-## 0.29 KF8 assets
+## S029 KF8 assets
 
 `native-kf8` includes PNG/JPEG reuse, transitive/cyclic CSS resource references, inline CSS,
 untouched comments/string literals/body text, and FONT flag combinations 0/1/2/3. Recovered
@@ -582,7 +587,7 @@ Base32 URIs, conflicting MIME types, bad signatures, FONT flags/offsets/keys/siz
 corruption/trailing bytes and oversized font declarations. The suite totals 290 checks.
 
 
-## 0.30 KF8 positions
+## S030 KF8 positions
 
 Tests verify cross-chapter/return links, targets inside start tags, chapter-top fallback,
 legacy named anchors, XML IDs, duplicate IDs in different chapters and URI-escaped Unicode IDs.
@@ -596,7 +601,7 @@ was passed directly to strstr. Commit a1ab85a copies and explicitly terminates t
 the binary resource API continues to return an exact byte array without a terminator contract.
 
 
-## 0.31 KF8 authored navigation
+## S031 KF8 authored navigation
 
 The 582-check KF8 suite verifies a three-level authored NCX with explicit and derived parent
 relationships, multiple CNCX records, escaped Unicode/quote/ampersand labels, stable part/anchor
@@ -609,7 +614,7 @@ Both the sanitizer repair (a1ab85a) and the 0.30 feature commit (42e362f) passed
 including AddressSanitizer/UndefinedBehaviorSanitizer.
 
 
-## 0.32 hybrid MOBI/KF8
+## S032 hybrid MOBI/KF8
 
 Tests read declared hybrid boundaries with chapter reconstruction, authored navigation,
 all/partial/no shared assets and HUFF text records. Font bytes, image reuse and EPUB rendering
@@ -619,7 +624,7 @@ target versions/encryption and shared-resource starts fail atomically. Legacy fa
 unsupported encoding/compression even after successful optional EXTH parsing.
 
 
-## 0.33 KF8 guide landmarks
+## S033 KF8 guide landmarks
 
 Fixtures cover combined TOC/landmarks, guide-only chapter fallback, tag 3 and tag 6 offset
 forms, shared hybrid containers, thumbnail suppression, normalized start types and preserved
@@ -631,7 +636,7 @@ chapters returns EXR_LIMIT.
 The 0.32 commit e8aa242 passed all six CI jobs, including sanitizers and Apple/Android builds.
 
 
-## 0.34 KF8 SVG resources
+## S034 KF8 SVG resources
 
 The 1231-check KF8 suite adds SVG/XLink names, unnamespaced/foreign extensions, CDATA CSS,
 style attributes, unchanged literal text, CSS/SVG dependency cycles and URI fragments.
@@ -643,7 +648,7 @@ Malformed XML/roots/namespaces/entities/references/fragments fail atomically.
 The 0.33 commit be7bdc1 passed all six platform and sanitizer CI jobs.
 
 
-## 0.35 ORDT and external KF8 validation
+## S035 ORDT and external KF8 validation
 
 Fixtures exercise ORDT fragment labels, NCX/guide indexes, inherited/explicit matching tables,
 UTF-8 headers carrying maps and hybrid books. Cases reject bad counts/pointers/signatures,
@@ -667,7 +672,7 @@ This check measures format fidelity, not a controlled performance baseline.
 The 0.34 commit 46750e0 passed all six platform and sanitizer CI jobs.
 
 
-## 0.36 MOBI/KF8 metadata
+## S036 MOBI/KF8 metadata
 
 Tests cover UTF-8 updated titles, Windows-1252 full names, NUL suffix padding, repeated/empty
 updated values, unreferenced and reused covers, legacy MOBI and modern/legacy hybrid fallback,
@@ -681,7 +686,7 @@ with its newly parsed title and cover metadata. Its EPUB output byte size change
 is now included. The 0.35 commit fdcc9e4 passed all six CI jobs.
 
 
-## 0.37 library cover import
+## S037 library cover import
 
 `native-cover-import` adds 97 checks for EPUB, FB2 and KF8 source covers, user title overrides,
 whitespace-separated property tokens, exact copied bytes, retained original source blobs,
@@ -692,7 +697,7 @@ The deterministic ZIP fixtures use the project's original PNG and fixed metadata
 The 0.36 commit 82d4270 passed all six platform and sanitizer CI jobs.
 
 
-## 0.38 positioned layout foundation
+## S038 positioned layout foundation
 
 `native-positioned` checks exact raster equality when an existing text layout is reconstructed,
 paint-order occlusion, proportional scaling/letterboxing, hit tests, source-array/document/font
@@ -705,7 +710,7 @@ rendering suites continue to pass after sharing the image and raster primitives.
 The 0.37 commit 10d81b3 passed all six platform and sanitizer CI jobs.
 
 
-## 0.39 PDF object foundation
+## S039 PDF object foundation
 
 The private native parser reads bounded PDF scalar/collection values, exact signed 64-bit
 integers, escaped names/literal/hex strings, indirect objects, traditional cross-reference
@@ -722,7 +727,7 @@ is still unconnected: this milestone supplies internal object parsing, not page 
 The 0.38 commit 12f12cf passed all six platform and sanitizer CI jobs.
 
 
-## 0.40 PDF cross-reference and object streams
+## S040 PDF cross-reference and object streams
 
 The same private parser now reads cross-reference streams with 0..8-byte fields, default
 entry types, Index subsections, raw/Flate data, compressed object streams and hybrid tables.
@@ -737,7 +742,7 @@ container transitions and invalid widths/ranges/generations/headers/indexes/obje
 Public PDF page reading remains unconnected. The 0.39 commit 3301cf3 passed all six CI jobs.
 
 
-## 0.41 PDF filter pipelines and predictors
+## S041 PDF filter pipelines and predictors
 
 PDF streams now support up to 16 ordered filters with matching DecodeParms arrays:
 Flate, ASCIIHex, ASCII85 and RunLength (including their PDF abbreviations). TIFF horizontal
@@ -752,7 +757,7 @@ row lengths, tags, parameter shapes/counts and unsupported values fail atomicall
 page reading remains unconnected. The 0.40 commit 2ac097a passed all six CI jobs.
 
 
-## 0.42 native PDF LZW
+## S042 native PDF LZW
 
 A bounded C LZW decoder adds clear/end codes, 9..12-bit widths, both EarlyChange modes,
 full-table handling and the code-equals-next case. Its output uses the same filter pipeline,
@@ -763,7 +768,7 @@ The fixture compressor uses string dictionaries and emitted-code counts, indepen
 the reader's prefix/suffix representation. PDF page reading is still unconnected.
 
 
-## 0.43 PDF page tree and content assembly
+## S043 PDF page tree and content assembly
 
 Private page snapshots preserve document order, normalized MediaBox/CropBox rectangles,
 inherited Resources/Rotate/boxes, per-page UserUnit and borrowed content/annotation IDs.
@@ -790,7 +795,7 @@ and stream reading on an external file, not text interpretation or visual render
 The 0.42 commit 605a50f passed all six CI jobs.
 
 
-## 0.44 PDF content operand lexer
+## S044 PDF content operand lexer
 
 The private content walker reuses the object lexer for numbers, names, strings, arrays,
 dictionaries, booleans and nulls, then delivers each operator with its borrowed operands.
@@ -809,7 +814,7 @@ operands. This is syntax traversal, not execution or rendering.
 The 0.43 commit aaebfa0 passed all six platform and sanitizer CI jobs.
 
 
-## 0.45 PDF ToUnicode CMaps
+## S045 PDF ToUnicode CMaps
 
 A private C ToUnicode reader supports 1..4-byte variable-length codespaces, bfchar mappings,
 bfrange string/array destinations, UTF-16BE surrogate pairs and multi-character mappings.
@@ -829,7 +834,7 @@ font selection/metrics, operator execution and raster drawing remain pending. Th
 commit 03778cc passed all six CI jobs.
 
 
-## 0.46 PDF font descriptions and declared metrics
+## S046 PDF font descriptions and declared metrics
 
 A private font reader preserves simple Type1/TrueType descriptions, Differences glyph names,
 embedded Type1/TrueType/CFF/OpenType programs, ToUnicode maps and Identity-H/V composite
@@ -849,7 +854,7 @@ text. This is internal font data preparation, not public PDF rendering. The 0.45
 477d357 passed all six CI jobs.
 
 
-## 0.47 PDF text state and glyph geometry
+## S047 PDF text state and glyph geometry
 
 The private text walker executes BT/ET, Tf, Tm/Td/TD/T*, Tc/Tw/Tz/TL/Ts/Tr, Tj/TJ and both
 quote operators. It composes text matrices with cm transforms, restores text parameters/CTM
@@ -870,7 +875,7 @@ content-order glyph geometry/Unicode, not reading-order reconstruction or visual
 Public PDF opening remains unconnected. The 0.46 commit 3255a25 passed all six CI jobs.
 
 
-## 0.48 recursive PDF Form text
+## S048 recursive PDF Form text
 
 The text walker now executes Form XObjects with Matrix composition, local/inherited Resources,
 implicit graphics-state restoration, isolated text/line matrices and protected q/Q stack floors.
@@ -888,7 +893,7 @@ raster rendering remain pending.
 The 0.47 commit 325a7f0 passed all six platform and sanitizer CI jobs.
 
 
-## 0.49 glyph-only font input
+## S049 glyph-only font input
 
 The additive public exr_font_create_glyphs constructor uses the existing copied font-input
 model and the same limits, while accepting scalable faces without Unicode charmaps. Those
@@ -904,7 +909,7 @@ and exact RGBA raster equality for identical glyph IDs. Existing font/fallback s
 The 0.48 commit 9a35ebb passed all six platform and sanitizer CI jobs.
 
 
-## 0.50 native vector scan conversion
+## S050 native vector scan conversion
 
 A format-neutral private C raster primitive fills closed edge contours using nonzero/even-odd
 rules, four vertical subpixel samples and exact horizontal span coverage. It supports gray or
@@ -920,7 +925,7 @@ straight-alpha source-over for transparent targets, including very low destinati
 Existing positioned/image/PNG suites pass. The 0.49 commit 47c50b9 passed all six CI jobs.
 
 
-## 0.51 native path flattening
+## S051 native path flattening
 
 The format-neutral path model adds move/line/quadratic/cubic/close commands and owned
 polylines with explicit contour boundaries/closure. Curves are transformed first and split
@@ -936,7 +941,7 @@ curved-region raster pixels, ownership/free, invalid coordinates/tolerances and 
 commit cf835bb passed all six platform and sanitizer CI jobs.
 
 
-## 0.52 native stroke outlines
+## S052 native stroke outlines
 
 The vector core constructs positive-winding polygon unions for segment bodies, butt/round/
 square caps and miter/round/bevel joins. Miter limits fall back to bevel; round joins use only
@@ -954,7 +959,7 @@ paths and display-list/PDF integration remain pending. The 0.51 commit 2a72314 p
 platform and sanitizer CI jobs.
 
 
-## 0.53 native dash geometry
+## S053 native dash geometry
 
 The vector core splits source-coordinate polylines by even/odd dash arrays and positive or
 negative wrapped phase, restarting the pattern per source contour. It preserves zero-length
@@ -970,7 +975,7 @@ pixels, invalid/all-zero patterns, tiny-length limits and cancellation. Display-
 integration remains pending. The 0.52 commit ff33a4b passed all six CI jobs.
 
 
-## 0.54 PDF drawing events and vector integration
+## S054 PDF drawing events and vector integration
 
 The unified private content interpreter emits borrowed path/glyph/image/state events with
 an optional initial output transform. Paths capture construction-time CTMs; paint snapshots
@@ -996,7 +1001,7 @@ regression test preventing tiny glyphs from scanning a whole large page width. T
 4b20178 passed all six CI jobs.
 
 
-## 0.55 PDF encoding facts and standard font metrics
+## S055 PDF encoding facts and standard font metrics
 
 Simple fonts now retain descriptor Flags, resolve base-encoding glyph names and
 Differences independently of ToUnicode, and extract Unicode through the Adobe
@@ -1016,7 +1021,7 @@ and public PDF document opening remain pending. The 0.54 commit ba0b13f passed
 all six CI jobs.
 
 
-## 0.56 PDF glyph selection and native outline rendering
+## S056 PDF glyph selection and native outline rendering
 
 A private PDF face adapter opens embedded scalable programs without copying
 program bytes or requiring a Unicode cmap. CID TrueType uses explicit GIDs;
@@ -1050,7 +1055,7 @@ it is not yet a full-page pixel comparison. The 0.55 commit 79c8cd3 passed all
 six CI jobs.
 
 
-## 0.57 Native PDF text/vector page raster backend
+## S057 Native PDF text/vector page raster backend
 
 The private content raster backend now combines the PDF interpreter, cached
 font faces, native outline/curve/dash/stroke/fill code, straight RGBA or gray
@@ -1079,7 +1084,7 @@ an independent development oracle and is not linked or distributed. The 0.56
 commit e84c996 passed all six CI jobs.
 
 
-## 0.58 Packed PDF images and affine image painting
+## S058 Packed PDF images and affine image painting
 
 A native image reader decodes raw or supported lossless-filter image streams
 with 1/2/4/8/16-bit DeviceGray/RGB/CMYK components, independent packed row padding,
@@ -1104,7 +1109,7 @@ fringes, malformed dictionaries/data, cancellation and exhausted work. The 0.57
 commit d3435f9 passed all six CI jobs.
 
 
-## 0.59 Terminal JPEG filters and PDF JPEG rendering
+## S059 Terminal JPEG filters and PDF JPEG rendering
 
 The stream layer can explicitly preserve a final DCT codec after decoding its
 lossless prefixes. Cached entries retain the codec/parameter IDs; the ordinary
@@ -1127,7 +1132,7 @@ committed original bytes. No decoder dependency was added. The 0.58 commit
 b536469 passed all six CI jobs.
 
 
-## 0.60 Indexed images, independent opacity layers and image mattes
+## S060 Indexed images, independent opacity layers and image mattes
 
 The PDF image reader supports Indexed palettes over device spaces, literal or
 stream lookup tables, hival clamping, index Decode maps and pre-Decode color-key
@@ -1156,7 +1161,7 @@ interiors agree, while image boundary antialiasing/interpolation differs.
 The 0.59 commit 99ee06d passed all six CI jobs.
 
 
-## 0.61 Generic page viewports and PDF page raster coordinates
+## S061 Generic page viewports and PDF page raster coordinates
 
 The public allocation-free viewport helper accepts arbitrary page bounds,
 source y-axis direction, unit scale and clockwise quarter-turn rotation. It
@@ -1179,7 +1184,7 @@ Public PDF document opening is still pending. The 0.60 commit 154a2d9 passed
 all six CI jobs.
 
 
-## 0.62 Public immediate canvas shared by the PDF backend
+## S062 Public immediate canvas shared by the PDF backend
 
 The generic path/point/fill/stroke and layered RGBA texture types are now public.
 The public canvas owns a bounded bitmap, immutable shared clips, a 160-entry clip
@@ -1203,7 +1208,7 @@ continue to exercise the same rendering through the refactored backend. The
 0.61 commit dd68de3 passed all six CI jobs.
 
 
-## 0.63 Public direct-glyph outline paths
+## S063 Public direct-glyph outline paths
 
 The SDK can read owned 1000-em unhinted Bézier paths from an existing font face
 and actual GID, including cmap-free faces. It reuses the same outline adapter
@@ -1220,7 +1225,7 @@ was added.
 The 0.62 commit f080abd passed all six CI jobs.
 
 
-## 0.64 Streaming draw sinks independent of pixel output
+## S064 Streaming draw sinks independent of pixel output
 
 The public draw sink carries borrowed path/style/matrix, layered images, clip
 operations and clip-state/group events. A canvas supplies this sink through a
@@ -1237,7 +1242,7 @@ Existing complete page/image pixel suites run through the same sink adapter.
 The 0.63 commit dcb66ab passed all six CI jobs.
 
 
-## 0.65 Open fixed-page provider documents
+## S065 Open fixed-page provider documents
 
 The public fixed-document model copies a bounded UTF-8 page directory and
 geometry, accepts custom stable IDs/labels and an on-demand drawing provider,
@@ -1263,7 +1268,7 @@ format is required by this test.
 The 0.64 commit 8031631 passed all six CI jobs.
 
 
-## 0.66 Public fixed-PDF reader and installed host example
+## S066 Public fixed-PDF reader and installed host example
 
 The built-in PDF provider now connects to the public generic fixed document.
 Memory opens copy source bytes; file opens adopt the UTF-8 reader buffer without
@@ -1292,7 +1297,7 @@ remaining unsupported PDF features are not claimed complete. The 0.65 commit
 ed66563 passed all six CI jobs.
 
 
-## 0.67 Format-independent fixed text snapshots
+## S067 Format-independent fixed text snapshots
 
 Owned explicit-length UTF-8 snapshots preserve embedded NUL, overlapping ranges,
 multiple quads per range, source coordinates and vertical/invisible flags. The
@@ -1303,7 +1308,7 @@ provider failures, old prefixes and truncated optional function pointers.
 All 53 local suites pass. The 0.66 b167c58 CI run passed all jobs.
 
 
-## 0.68 Public PDF semantic text and source-space quads
+## S068 Public PDF semantic text and source-space quads
 
 The built-in provider exposes independent owned snapshots using the existing
 text-only C walker. Descriptor heights (or documented estimates), declared
@@ -1318,7 +1323,7 @@ A public-only RFC 9110 client extracts all 194 pages: 456,338 UTF-8 bytes and
 The installed host example now exercises the text entry point before rendering.
 
 
-## 0.69 Fixed text search, selection and geometric hits
+## S069 Fixed text search, selection and geometric hits
 
 A bounded linear KMP helper serves explicit-length fixed snapshots and existing
 reflow document search. Tests cover embedded NUL, UTF-8 continuation starts,
@@ -1331,7 +1336,7 @@ search a semantic ligature, select its one full quad and hit transformed text.
 All 53 local suites pass. The 0.68 CI run passed all six jobs.
 
 
-## 0.70 Page-scoped stable fixed text anchors
+## S070 Page-scoped stable fixed text anchors
 
 The existing quote/context matcher now consumes a length-delimited text view,
 shared by reflow and fixed providers. New public selectors own page IDs and
@@ -1345,7 +1350,7 @@ All 53 local suites pass; the added long-search cancellation case also passes.
 The 0.69 dacd144 CI run passed all six jobs.
 
 
-## 0.71 PDF library, page progress and persistent fixed notes
+## S071 PDF library, page progress and persistent fixed notes
 
 PDF imports retain original source and page-count extent. Fixed document lookup,
 page progress, metadata and covers use the existing library. Fixed-note writes
@@ -1361,7 +1366,7 @@ preserve existing reflow rows; previous v1 rollback cases remain covered.
 All 54 local suites pass. The 0.70 934dd91 CI run passed all six jobs.
 
 
-## 0.72 Codec-independent audio timeline and text synchronization
+## S072 Codec-independent audio timeline and text synchronization
 
 Immutable owned audio metadata retains arbitrary host URI/media types and part
 IDs. Tracks concatenate with checked uint64 durations; chapters may nest or
@@ -1375,7 +1380,7 @@ This is timeline/sync data, not an audio decoder or device playback backend.
 All 55 local suites pass. The 0.71 792076e CI run passed all six jobs.
 
 
-## 0.73 Host playback commands, generations and stable resume points
+## S073 Host playback commands, generations and stable resume points
 
 A retained audio player lazily dispatches transport/rate commands to a host
 backend, preserving independence from codecs and devices. Tests verify no eager
@@ -1390,7 +1395,7 @@ tests, not actual operating-system audio playback validation.
 All 56 local suites pass. The 0.72 b6b31d7 CI run passed all six jobs.
 
 
-## 0.74 Native bounded random-access WAVE PCM decoding
+## S074 Native bounded random-access WAVE PCM decoding
 
 The C RIFF reader scans headers, skips payloads and reads samples with a 4 KiB
 buffer. Public tests verify unsigned 8-bit, signed 16/24/32-bit, float 32/64-bit,
@@ -1408,7 +1413,7 @@ has already begun. All 57 local suites pass, including the expanded WAVE checks.
 The 0.73 de65c24 CI run passed all six jobs.
 
 
-## 0.75 Persistent audio resume points and time bookmarks
+## S075 Persistent audio resume points and time bookmarks
 
 Independent host audio keys persist stable track IDs, uint64 offsets and rates.
 Offset BLOBs retain UINT64_MAX without signed-integer truncation. Tests save,
@@ -1422,7 +1427,7 @@ timeline when restoring the player, rather than opening files during persistence
 All 58 local suites pass. The 0.74 a0ddece CI run passed all six jobs.
 
 
-## 0.76 Standalone installed-SDK WAVE host example
+## S076 Standalone installed-SDK WAVE host example
 
 The public-only decoder example scans an original 3200-frame 16 kHz mono PCM
 fixture in bounded batches and reports its expected 0.5 peak. The fixture is
@@ -1435,7 +1440,7 @@ examples, decodes the Chinese-named WAVE fixture to the expected 3200 frames /
 passed all six jobs.
 
 
-## 0.77 Swift C module and owned host wrappers
+## S077 Swift C module and owned host wrappers
 
 The installed C module exposes the full public API. ARC wrappers retain native
 PDF/font/text/WAVE handles and copy output data; mutable document and WAVE calls
@@ -1451,7 +1456,7 @@ The 0.77 f5e92f1 CI run passed all six jobs, including actual macOS Swift
 execution and device/simulator Swift typechecks.
 
 
-## 0.78 Optional JNI adapter and owned Java host API
+## S078 Optional JNI adapter and owned Java host API
 
 Java AutoCloseable handles serialize operations and prevent duplicate close/use
 after close. JNI copies PDF/font inputs into the C model and returns independent
@@ -1468,7 +1473,7 @@ The 0.78 2aa97a9 CI run passed all six jobs. JNI smoke tests ran on Windows,
 Linux and macOS with -Xcheck:jni, and the Android JNI library compiled.
 
 
-## 0.79 RTF row and cell document structure
+## S079 RTF row and cell document structure
 
 RTF row/cell controls produce generic table nodes, retaining empty cells, multiple
 paragraphs, inline styling and declared cell boundaries. Tests inspect two
@@ -1480,7 +1485,7 @@ table controls. Complex merged/nested tables remain explicitly unsupported.
 All 60 local suites pass. The 0.78 JNI/Swift/desktop/mobile CI run passed all six jobs.
 
 
-## 0.80 RTF horizontal, vertical and rectangular cell merges
+## S080 RTF horizontal, vertical and rectangular cell merges
 
 Physical continuation cells are retained as generic content containers in the
 merged owner, using standard colspan/rowspan and rebuilt parent/sibling links.
@@ -1493,7 +1498,7 @@ cross-table continuation are rejected.
 All 60 local suites pass. The 0.79 c0c9808 CI run passed all six jobs.
 
 
-## 0.81 RTF footnote/endnote structure and reference backlinks
+## S081 RTF footnote/endnote structure and reference backlinks
 
 Detached note nodes collect styled paragraphs/images independently from body or
 parent table cells, then append after the main flow. Reference and backlink roles
@@ -1507,7 +1512,7 @@ RTF numbering schemes are outside this stage.
 All 61 local suites pass. The 0.80 adfd228 CI run passed all six jobs.
 
 
-## 0.82 RTF semantic list hierarchy and retained display labels
+## S082 RTF semantic list hierarchy and retained display labels
 
 Modern ls/ilvl paragraphs and legacy pntext markers produce generic lists/items
 without duplicating source labels. Tests inspect nested levels, bullet and legacy
@@ -1518,7 +1523,7 @@ Counter/listoverride definitions without supplied display labels remain pending.
 All 62 local suites pass. The 0.81 fd411e4 CI run passed all six jobs.
 
 
-## 0.83 RTF numbering definitions and automatic labels
+## S083 RTF numbering definitions and automatic labels
 
 Tests cover independent overrides, decimal continuation, supplied labels without
 regeneration, Roman/letter/zero-padded formats, nfcn priority, multi-level legal
@@ -1534,7 +1539,7 @@ counter overflow are rejected. Shared numbering code also passes DOCX regression
 All 63 local Windows suites pass. The 0.82 0c311d8 CI passed all six jobs.
 
 
-## 0.84 Structured HTML directory archives
+## S084 Structured HTML directory archives
 
 The HTML exporter shares chapter serialization and path/resource validation with
 EPUB, writes all chapters and assets into an ordinary ZIP, and returns an owned,
@@ -1549,7 +1554,7 @@ package export fails with empty outputs. All 64 local Windows suites pass.
 The 0.83 4973ea6 CI passed all six jobs.
 
 
-## 0.85 Opt-in atomic exact-source deduplication
+## S085 Opt-in atomic exact-source deduplication
 
 Unique import compares complete original BLOBs after format/length filtering and
 returns the oldest matching row without changing its metadata. Tests retain edited
@@ -1564,7 +1569,7 @@ new digest implementation or mandatory index is added. All 65 local Windows suit
 pass. The 0.84 8292325 CI passed all six jobs.
 
 
-## 0.86 Chapter-local CFI content paths
+## S086 Chapter-local CFI content paths
 
 The native XML-tree path implementation counts child elements separately from
 potentially empty character-data chunks, merging adjacent text nodes logically.
@@ -1581,7 +1586,7 @@ This is a content-path building block; full package CFIs and text assertions are
 separate work, rather than synthesized from assumed spine positions.
 
 
-## 0.87 Original-package full point CFIs
+## S087 Original-package full point CFIs
 
 Full CFI creation/resolution reads the original OPF on demand and reuses the DOM
 path engine. The synthetic package places spine at element 10 and adds a spine
@@ -1595,7 +1600,7 @@ range syntax, missing IDs, excessive offsets and cancellation clear outputs.
 All 66 local Windows suites pass. The 0.86 5db01d0 CI passed all six jobs.
 
 
-## 0.88 Indexed publication point CFIs
+## S088 Indexed publication point CFIs
 
 The indexed EPUB provider routes through original package metadata before loading
 only the target chapter. A fixture with a malformed second spine XHTML fails an
@@ -1607,7 +1612,7 @@ providers without an EPUB package. Generic local paths remain independently usab
 All 66 local Windows suites pass. The 0.87 27746e4 CI passed all six jobs.
 
 
-## 0.89 Simple CFI ranges and point-context range starts
+## S089 Simple CFI ranges and point-context range starts
 
 Range generation extracts a common sequence of complete steps and emits P,S,E.
 Tests cover same-text/zero-length/cross-spine ranges, literal canonical output,
@@ -1621,7 +1626,7 @@ valid start without loading the other chapter. All 66 local Windows suites pass.
 The 0.88 2135309 CI passed all six jobs.
 
 
-## 0.90 CFI text assertions and quoted point creation
+## S090 CFI text assertions and quoted point creation
 
 Text assertions validate a collapsed XML-whitespace view spanning inline elements;
 stale or out-of-range text offsets recover only through a unique complete context.
@@ -1637,7 +1642,7 @@ created. Full CFI and ordinary/range regression suites remain passing.
 All 67 local Windows suites pass. The 0.89 ab8550e CI passed all six jobs.
 
 
-## 0.91 ABI epoch and relocatable installed CMake package
+## S091 ABI epoch and relocatable installed CMake package
 
 ABI epoch 1 is exported at runtime and documented with fixed array strides,
 size-versioned prefixes, ownership, callback and synchronization rules. A C consumer
@@ -1652,7 +1657,7 @@ builds/runs the imported-target C and C++ consumers on all three systems.
 The 0.90 fb49403 CI passed all six jobs.
 
 
-## 0.92 Optional generic persistent text index
+## S092 Optional generic persistent text index
 
 SQLite FTS5 case-sensitive trigrams select candidates; the shared C KMP prefix
 builder supports an incremental literal byte matcher with overlapping results.
@@ -1672,7 +1677,7 @@ bytes disabled; these are binary-size observations, not open/RSS benchmarks.
 The 0.91 7dc8d8a CI passed all six jobs.
 
 
-## 0.93 Atomic streaming source replacement
+## S093 Atomic streaming source replacement
 
 The callback provider recycles and poisons its previous part buffer before loading
 the next part, exercising borrowed-input lifetime without retaining all chapters.
@@ -1687,7 +1692,7 @@ independently, and the search host returned 20 bounded matches from layout.epub.
 All 70 local Windows suites pass. The 0.92 891f818 CI passed all six jobs.
 
 
-## 0.94 Stored reading-position selectors and schema 5
+## S094 Stored reading-position selectors and schema 5
 
 A host-captured point selector and numeric position commit atomically without
 reparsing the source on each update. Tests resolve saved context after reopen and
@@ -1701,7 +1706,7 @@ v1/v2/v3/v4 upgrades preserve old rows and expose unanchored progress as LEGACY.
 All 71 local Windows suites pass. The 0.93 1d30b03 CI passed all six jobs.
 
 
-## 0.95 Transactional book reprojection and relocation
+## S095 Transactional book reprojection and relocation
 
 The relocation suite checks unique annotation/point recovery after a shifted,
 shortened source projection, retained missing/ambiguous/legacy selectors, and
@@ -1716,7 +1721,7 @@ schema 6. Existing v1-v4 migrations continue passing. All 72 local Windows suite
 pass. The 0.94 695d092 CI passed all six jobs.
 
 
-## 0.96 Text annotation interchange
+## S096 Text annotation interchange
 
 The new native-annotation suite round-trips quoted UTF-8 selection, plain-text
 comments, optional identifiers and context through compact Web Annotation JSON,
@@ -1730,7 +1735,7 @@ anchor host exchanges JSON before relocating a quote after an insertion, and the
 compat host verifies ABI epoch 1. The 0.95 a0a50a1 CI passed all six jobs.
 
 
-## 0.97 Lazy generic fixed metadata and PDF Info
+## S097 Lazy generic fixed metadata and PDF Info
 
 An owned generic UTF-8 key/value snapshot preserves duplicate keys and survives
 provider/document release. Tests check legacy input prefixes, truncated callbacks,
@@ -1744,7 +1749,7 @@ title/author, preserves host title precedence and creates no row on metadata
 failure. All 74 local Windows suites pass. The 0.96 17a826d CI passed all six jobs.
 
 
-## 0.98 Shared XMP extraction and PDF metadata merge
+## S098 Shared XMP extraction and PDF metadata merge
 
 The metadata suite now parses independent UTF-8/UTF-16 XMP, namespace aliases,
 Description attributes, simple/empty literals, ordered duplicate Seq/Bag values,
@@ -1759,7 +1764,7 @@ joins multiple authors. All 74 local Windows suites pass. The 0.97 07d952f CI
 passed all six jobs.
 
 
-## 0.99 Swift and Java metadata consumers
+## S099 Swift and Java metadata consumers
 
 Swift and JNI now copy metadata into owned language strings, preserving repeated
 keys and order. Expanded host checks exercise supplementary-plane Unicode,
@@ -1786,7 +1791,7 @@ samples) produced these medians; OS disk cache remains uncontrolled:
 These measure the first reading-order part and do not characterize complex PDF,
 image-heavy books or metadata parsing. Local Release DLL: 4,110,947 bytes.
 
-## 0.100 Generic page annotation snapshots and native PDF annotations
+## S100 Generic page annotation snapshots and native PDF annotations
 
 Original in-memory PDFs cover indirect annotations/strings, null/unknown
 references, normalized rectangles, raw QuadPoints, multilingual comments, missing
@@ -1797,3 +1802,14 @@ retry remain available. A custom provider verifies independent copies, reentry,
 errors, invalid UTF-8/nonfinite coordinates, overflow-sized quads, truncated input
 extensions, absent providers and empty results. Legacy metadata-capable input
 layout is checked. All 75 local Windows suites pass.
+
+
+## Milestone 0.18.0: version consolidation
+
+Current product declarations, runtime version and installed CMake metadata use
+0.18.0. Historical development steps S013-S100 map to milestones 0.13-0.18;
+original commit/build/measurement identities remain intact. No engine behavior,
+ABI epoch or database schema changed. The native ABI check passes. All eleven
+installed C examples build, and installed C compatibility and independent C++17
+consumers report 0.18.0 / ABI 1. EXACT package selection rejects a preserved
+historical 0.99.0 SDK, preventing its larger old number from winning selection.
