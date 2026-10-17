@@ -1997,3 +1997,26 @@ invalid inputs and closing parents before children. Swift smoke covers matching
 ARC ownership and record snapshots; this batch awaits its own real macOS runtime
 and iOS/iPadOS type checks in CI. Default AAC-off Windows DLL is 4,409,868 bytes;
 this batch adds no production dependencies. Version stays 0.18.0, ABI 1, schema 6.
+
+
+Commit `55fb274` passes all six jobs in [CI run 39068978337](https://github.com/NoGod3524/EXReader/actions/runs/39068978337), including real JVM/Swift execution, iOS/iPadOS typechecks, Android builds and ASAN/UBSAN.
+
+## Milestone 0.18 development: independent M4B metadata inspection
+
+The AAC decoder and metadata inspector now reuse the same bounded ISO-BMFF box,
+byte-source and time-header helpers, compiled independently of FAAD2. This moves
+existing parsing rather than adding a second box parser. All 98 local default
+AAC-off suites pass; a separate AAC-on build passes AAC/M4B/metadata suites after
+the refactor. The new 2726-check suite covers multi-value UTF-8/UTF-16BE metadata,
+JPEG cover copying, v0/v1 Nero chapters, source/child ownership, conversion into
+the open audio timeline, every byte-truncation boundary, read errors/cancellation,
+malformed Unicode/time ranges, value limits and overflow. A virtual source skips
+a 5 GiB mdat and reads under 1000 bytes to obtain a later moov.
+
+An independently FFmpeg-authored 4009-byte fixture has Unicode title/artist,
+JPEG cover, both chapter representations and 200 ms duration. Inspection matches
+FFprobe's two [0,100)/[100,200) chapter intervals and metadata; the implementation
+currently consumes Nero chpl. Java's real -Xcheck:jni run reads the same fixture
+with AAC disabled. Swift has matching smoke assertions awaiting this batch's CI.
+The Windows default DLL is 4,421,644 bytes; no new production dependencies.
+Version remains 0.18.0, ABI 1 and schema 6.

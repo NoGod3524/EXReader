@@ -11,6 +11,9 @@ public final class Smoke {
     public static void main(String[] args) throws Exception {
         check(args.length==2);
         Path root=Paths.get(args[0]),temporary=Paths.get(args[1]);
+        EXReader.AudioBookMetadata audiobook=EXReader.readM4b(root.resolve("audio/metadata.m4b").toString());
+        check(audiobook.durationMilliseconds==200 && audiobook.chapters.length==2 && audiobook.chapters[0].parent==-1 && audiobook.chapters[0].startMilliseconds==0 && audiobook.chapters[1].startMilliseconds==100 && audiobook.chapters[1].endMilliseconds==200);
+        check(audiobook.entries[0].value.equals("Book 中文😀") && audiobook.entries[1].value.equals("作者") && audiobook.cover.length>0 && audiobook.coverMediaType.equals("image/jpeg"));
         check(EXReader.version().startsWith("0."));
         byte[] pdf=Files.readAllBytes(root.resolve("fixed-pages/pdf-public.pdf"));
         EXReader.Bitmap bitmap;

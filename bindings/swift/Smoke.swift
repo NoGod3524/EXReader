@@ -6,6 +6,10 @@ import CEXReader
     static func main() throws {
         precondition(CommandLine.arguments.count == 2)
         let root = URL(fileURLWithPath: CommandLine.arguments[1])
+        let audiobook = try EXReaderMetadata.readM4B(file: root.appendingPathComponent("audio/metadata.m4b"))
+        precondition(audiobook.durationMilliseconds == 200 && audiobook.chapters.count == 2 && audiobook.chapters[0].parent == nil)
+        precondition(audiobook.chapters[0].startMilliseconds == 0 && audiobook.chapters[1].startMilliseconds == 100 && audiobook.chapters[1].endMilliseconds == 200)
+        precondition(audiobook.entries[0].value == "Book 中文😀" && audiobook.entries[1].value == "作者" && audiobook.cover?.isEmpty == false && audiobook.coverMediaType == "image/jpeg")
         let pdf = try Data(contentsOf: root.appendingPathComponent("fixed-pages/pdf-public.pdf"))
         let document = try EXReaderFixedDocument(data: pdf)
         precondition(document.pageCount == 5)

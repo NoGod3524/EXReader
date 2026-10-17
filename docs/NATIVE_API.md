@@ -1081,3 +1081,14 @@ PDF vector、XObject 与 inline image 通过同一个私有颜色模型处理 De
 Swift EXReaderDocument/Publication/Pager/ReflowPage 和 Java EXReader.Document/Publication/Pager/ReflowPage 提供内存/本地文档、EPUB manifest/spine 按章加载和逐页排版。next 返回独立页面，EOF 返回 nil/null；排版错误后分页器失效。所有文本索引为章内规范化 UTF-8 字节，缺省 node/resource 索引为 -1。Swift 复制无指针 C glyph/line/box 记录，Java 返回类型化 LayoutSnapshot；节点名称、属性和原始文本为独立字符串。fontSource 提供实际字体 bytes、face index 和可变轴坐标，image 提供独立 RGBA 数据；宿主可以使用这些快照自行绘制。
 
 同一 publication 及其加载的 document/pager/page 共用串行 gate，保护共享 archive/image 的引用和访问。Swift 另串行访问共享 EXReaderFont，锁顺序为文档再字体，PDF fallback 字体使用同一个字体 gate。Java 对原生文档使用内部引用计数，关闭 publication/document/pager 后已取得的子对象仍有效；各 AutoCloseable 对象需显式 close。Swift 使用 ARC；页面保留 document/font，可独立于分页器存活。快照和位图可在对应页面释放后继续使用。平台包装未接入取消回调和随机缓存配置，C 接口保留这些能力。HTML 的既有导入路径仍为正文提取；保留结构的路径使用 EPUB/FB2/DOCX/RTF/宿主文档。
+
+
+## M4B 元数据、封面与章节快照（0.18 开发补充）
+
+exr_m4b_inspect / exr_m4b_inspect_source 只读取 ISO-BMFF 目录和选中的元数据 payload，不打开 AAC decoder，也不扫描 mdat。AAC=OFF 时同样可用。inspect_source 在调用期间借用 source，不接管 context、不调用 release；结果独立拥有字符串、章节和原始封面，inspection_free 后释放。文件入口支持大文件与 UTF-8 路径，始终关闭临时文件。
+
+支持 moov/meta、moov/udta/meta 的 iTunes ilst：title/creator/contributor/date/description/rights 使用 dcterms URI，album/genre 使用 XMP DynamicMedia URI；aART 和 ©ART 都归一为 creator；同一键多值保留。data 类型支持 UTF-8 与 UTF-16BE（含 surrogate），拒绝嵌入 NUL 和错误编码；最多移除一个末尾终止符。covr 选第一张支持的 JPEG/PNG，检查 data 类型和文件签名，返回原始编码字节；完整图片验证由 image decoder 负责。最大 256 值/1 MiB 文本、每值 64 KiB、封面 16 MiB；全调用最多读 32 MiB/扫描 65536 个 box，支持 source.control 取消。
+
+读取 mvhd v0/v1 的电影时长和 Nero chpl v0/v1 章节；100 ns 章节时刻向下转换为毫秒，必须在已知时长内严格递增。稳定章节 ID 从原时间戳生成，parent 为 SIZE_MAX；每章 end 为下一章 start，最后一章 end 为电影时长。未知时长/end 使用 UINT64_MAX；无 mvhd 可返回未知时长，缺省元数据/封面/章节返回空。毫秒精度下重复的章节时刻不接受。当前不读取 QuickTime chapter text track、mdta/freeform 标签，不进行音轨/DRM 可播放性验证，也不自动修改书库。
+
+inspection_metadata、inspection_chapters、inspection_cover、inspection_duration 返回只读快照视图。宿主可将 exr_audio_chapter 和时长交给 exr_audio_create，指定自己的轨道 URI；audio_create 会再复制输入，因此可立即释放 inspection。Swift EXReaderMetadata.readM4B 和 Java EXReader.readM4b 返回独立 AudioBookMetadata（entries/chapters/duration/encoded cover），没有原生句柄需要保留。Swift 未知时间用 nil，Java 用 -1；无法放入 Java signed long 的已知时间返回 EXR_LIMIT。

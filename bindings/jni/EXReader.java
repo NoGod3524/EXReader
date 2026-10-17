@@ -24,6 +24,24 @@ public final class EXReader {
         Objects.requireNonNull(packet);
         return metadataValues(nativeReadXMP(packet));
     }
+    public static final class AudioChapter {
+        public final String id,title;
+        public final long parent,startMilliseconds,endMilliseconds; // -1: absent parent/unknown end.
+        private AudioChapter(byte[] id,byte[] title,long parent,long start,long end) {
+            this.id=utf8String(id); this.title=utf8String(title); this.parent=parent; startMilliseconds=start; endMilliseconds=end;
+        }
+    }
+    public static final class AudioBookMetadata {
+        public final MetadataEntry[] entries;
+        public final AudioChapter[] chapters;
+        public final long durationMilliseconds; // -1: unknown duration.
+        public final byte[] cover; // null when absent, otherwise independently owned encoded bytes.
+        public final String coverMediaType;
+        private AudioBookMetadata(byte[][] entries,AudioChapter[] chapters,long duration,byte[] cover,byte[] mediaType) {
+            this.entries=metadataValues(entries); this.chapters=chapters; durationMilliseconds=duration; this.cover=cover; coverMediaType=utf8String(mediaType);
+        }
+    }
+    public static AudioBookMetadata readM4b(String path) { return nativeReadM4b(pathBytes(path)); }
     public static final class Bitmap {
         public final int width, height, stride, channels;
         public final byte[] pixels;
@@ -302,6 +320,7 @@ public final class EXReader {
     private static native Bitmap nativePageRender(long handle);
     private static native void nativePageClose(long handle);
     private static native String nativeVersion();
+    private static native AudioBookMetadata nativeReadM4b(byte[] path);
     private static native byte[][] nativeReadXMP(byte[] packet);
     private static native byte[][] nativePdfMetadata(long handle);
     private static native long nativePdfOpen(byte[] bytes,byte[] font,int faceIndex);

@@ -687,6 +687,18 @@ typedef exr_status (*exr_fixed_text_fn)(void *context,size_t page,const exr_cont
 /* UTF-8 key/value metadata, independent of a file format. Provider values are
    borrowed until its next operation; load_metadata returns owned copies. */
 typedef struct { const char *key,*value; } exr_metadata_entry;
+/* Independent ISO-BMFF metadata snapshot, available even with AAC disabled.
+   inspect_source borrows the source for this call and never calls release.
+   Reads iTunes ilst text/PNG/JPEG cover and Nero chpl (not QuickTime chapter tracks).
+   Unknown duration/end is UINT64_MAX. Chapter timestamps use the audio ms model. */
+typedef struct exr_m4b_inspection exr_m4b_inspection;
+EXR_API exr_status exr_m4b_inspect(const char *path,const exr_control *control,exr_m4b_inspection **out,exr_error *error);
+EXR_API exr_status exr_m4b_inspect_source(const exr_source *source,exr_m4b_inspection **out,exr_error *error);
+EXR_API void exr_m4b_inspection_free(exr_m4b_inspection *inspection);
+EXR_API uint64_t exr_m4b_inspection_duration(const exr_m4b_inspection *inspection);
+EXR_API const exr_metadata_entry *exr_m4b_inspection_metadata(const exr_m4b_inspection *inspection,size_t *count);
+EXR_API const exr_audio_chapter *exr_m4b_inspection_chapters(const exr_m4b_inspection *inspection,size_t *count);
+EXR_API const void *exr_m4b_inspection_cover(const exr_m4b_inspection *inspection,size_t *size,const char **media_type);
 typedef exr_status (*exr_fixed_metadata_fn)(void *context,const exr_control *control,
   const exr_metadata_entry **entries,size_t *count,exr_error *error);
 /* Page-source coordinates; quad components preserve the provider's declared
