@@ -109,9 +109,61 @@ static void strokes(void) {
   { size_t limited=(size_t)256*1024*1024; CHECK(exr_vector_stroke(&line,&style,NULL,.1,&out,&limited,NULL,&error)==EXR_LIMIT && !out.points); }
   exr_vector_polyline_free(&line);
 }
+static void interval(const exr_vector_polyline *path,size_t index,double first,double last) {
+  const exr_vector_contour *c; CHECK(index<path->contour_count); c=&path->contours[index];
+  CHECK(fabs(path->points[c->start].x-first)<1e-9 && fabs(path->points[c->start+c->count-1].x-last)<1e-9);
+}
+static void dashes(void) {
+  exr_vector_segment commands[5]={{EXR_VECTOR_MOVE,{{0,4}}},{EXR_VECTOR_LINE,{{12,4}}}};
+  exr_vector_polyline line={0},dashed={0}; size_t work=0,i; const double pattern[2]={2,1},odd[3]={2,1,1},dots[2]={0,2},zero_gap[2]={2,0};
+  OK(exr_vector_flatten(commands,2,NULL,.1,&line,&work,NULL,&error));
+  OK(exr_vector_dash(&line,pattern,2,0,&dashed,&work,NULL,&error)); CHECK(dashed.contour_count==4);
+  for(i=0;i<4;i++) interval(&dashed,i,3*(double)i,3*(double)i+2); exr_vector_polyline_free(&dashed);
+  OK(exr_vector_dash(&line,pattern,2,-1,&dashed,&work,NULL,&error)); CHECK(dashed.contour_count==4); interval(&dashed,0,1,3); interval(&dashed,3,10,12); exr_vector_polyline_free(&dashed);
+  OK(exr_vector_dash(&line,odd,3,0,&dashed,&work,NULL,&error)); CHECK(dashed.contour_count==5); interval(&dashed,0,0,2); interval(&dashed,1,3,4); interval(&dashed,2,6,7); interval(&dashed,4,11,12); exr_vector_polyline_free(&dashed);
+  OK(exr_vector_dash(&line,dots,2,0,&dashed,&work,NULL,&error)); CHECK(dashed.contour_count==7);
+  for(i=0;i<7;i++) { CHECK(dashed.contours[i].count==2); interval(&dashed,i,2*(double)i,2*(double)i); } exr_vector_polyline_free(&dashed);
+  OK(exr_vector_dash(&line,zero_gap,2,0,&dashed,&work,NULL,&error)); CHECK(dashed.contour_count==6); interval(&dashed,5,10,12); exr_vector_polyline_free(&dashed);
+  OK(exr_vector_dash(&line,NULL,0,0,&dashed,&work,NULL,&error)); CHECK(dashed.point_count==line.point_count && dashed.points!=line.points && !memcmp(dashed.points,line.points,line.point_count*sizeof(*line.points))); exr_vector_polyline_free(&dashed); exr_vector_polyline_free(&line);
+  commands[1].points[0].x=3; commands[2]=(exr_vector_segment){EXR_VECTOR_MOVE,{{10,4}}}; commands[3]=(exr_vector_segment){EXR_VECTOR_LINE,{{13,4}}};
+  OK(exr_vector_flatten(commands,4,NULL,.1,&line,&work,NULL,&error));
+  OK(exr_vector_dash(&line,pattern,2,1,&dashed,&work,NULL,&error)); CHECK(dashed.contour_count==4); interval(&dashed,0,0,1); interval(&dashed,1,2,3); interval(&dashed,2,10,11); interval(&dashed,3,12,13); exr_vector_polyline_free(&dashed); exr_vector_polyline_free(&line);
+  commands[0].points[0]=(exr_vector_point){2,2}; commands[1].points[0]=(exr_vector_point){6,2}; commands[2]=(exr_vector_segment){EXR_VECTOR_LINE,{{6,6}}}; commands[3]=(exr_vector_segment){EXR_VECTOR_LINE,{{2,6}}}; commands[4]=(exr_vector_segment){EXR_VECTOR_CLOSE,{{0}}};
+  OK(exr_vector_flatten(commands,5,NULL,.1,&line,&work,NULL,&error));
+  { const double solid[2]={100,1}; OK(exr_vector_dash(&line,solid,2,0,&dashed,&work,NULL,&error)); CHECK(dashed.contour_count==1 && dashed.contours[0].closed); exr_vector_polyline_free(&dashed); }
+  { const double wraps[2]={3,2}; exr_vector_contour *c;
+    OK(exr_vector_dash(&line,wraps,2,0,&dashed,&work,NULL,&error)); CHECK(dashed.contour_count==3); c=&dashed.contours[2]; CHECK(c->count==3 && !c->closed);
+    CHECK(dashed.points[c->start].x==2 && dashed.points[c->start].y==3 && dashed.points[c->start+1].x==2 && dashed.points[c->start+1].y==2 && dashed.points[c->start+2].x==5);
+    exr_vector_polyline_free(&dashed);
+  }
+  { const double wraps[4]={0,0,3,2}; exr_vector_edge *edges=NULL; size_t count;
+    OK(exr_vector_dash(&line,wraps,4,0,&dashed,&work,NULL,&error)); OK(exr_vector_edges(&dashed,0,&edges,&count,&work,NULL,&error)); CHECK(count>0); free(edges); exr_vector_polyline_free(&dashed);
+  }
+  { const double wraps[6]={0,0,3,0,0,2}; exr_vector_edge *edges=NULL; size_t count; exr_vector_contour *last;
+    line.points[0].x=line.points[3].x=1;
+    OK(exr_vector_dash(&line,wraps,6,0,&dashed,&work,NULL,&error)); CHECK(dashed.contour_count==11);
+    last=&dashed.contours[10]; CHECK(last->count==2 && dashed.points[last->start].x==1 && dashed.points[last->start].y==2);
+    OK(exr_vector_edges(&dashed,0,&edges,&count,&work,NULL,&error)); CHECK(count>0); free(edges); exr_vector_polyline_free(&dashed);
+  }
+  { const double invalid[2]={0,0}; CHECK(exr_vector_dash(&line,invalid,2,0,&dashed,&work,NULL,&error)==EXR_ARGUMENT && !dashed.points); }
+  { const double invalid[2]={1,-1}; CHECK(exr_vector_dash(&line,invalid,2,0,&dashed,&work,NULL,&error)==EXR_ARGUMENT && !dashed.points); }
+  { const double tiny[2]={1e-300,1e-300}; CHECK(exr_vector_dash(&line,tiny,2,0,&dashed,&work,NULL,&error)==EXR_LIMIT && !dashed.points); }
+  CHECK(exr_vector_dash(&line,pattern,2,0,&line,&work,NULL,&error)==EXR_ARGUMENT && line.points);
+  { exr_control control={0}; unsigned calls=2; control.context=&calls; control.cancelled=cancel;
+    CHECK(exr_vector_dash(&line,pattern,2,0,&dashed,&work,&control,&error)==EXR_CANCELLED && !dashed.points);
+  }
+  exr_vector_polyline_free(&line);
+  commands[0].points[0]=(exr_vector_point){0,4}; commands[1].points[0]=(exr_vector_point){8,4};
+  OK(exr_vector_flatten(commands,2,NULL,.1,&line,&work,NULL,&error));
+  { const double gaps[2]={2,2}; exr_vector_stroke_style style={2,10,EXR_VECTOR_BUTT,EXR_VECTOR_MITER}; exr_bitmap image;
+    OK(exr_vector_dash(&line,gaps,2,0,&dashed,&work,NULL,&error)); image=stroked(&dashed,&style,NULL,0x000000ff);
+    for(i=0;i<8;i++) CHECK(pixel(&image,(unsigned)i,3,0)==(i%4<2 ? 0 : 255)); free(image.pixels); exr_vector_polyline_free(&dashed);
+  }
+  exr_vector_polyline_free(&line);
+}
 int main(void) {
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
-  curves(); strokes(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
+  curves(); strokes(); dashes(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
   for(y=0;y<8;y++) for(x=0;x<8;x++) CHECK(pixel(&gray,x,y,0)==(x>=1 && x<5 && y>=1 && y<5 ? 0 : 255));
   memset(gray.pixels,255,64); rectangle(edges,1.25,1.25,4.75,4.75,0);
   OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(pixel(&gray,1,1,0)==112 && pixel(&gray,2,2,0)==0 && pixel(&gray,0,0,0)==255);

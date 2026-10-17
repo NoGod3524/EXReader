@@ -31,6 +31,11 @@ typedef struct { double width,miter_limit; exr_vector_cap cap; exr_vector_join j
 exr_status exr_vector_stroke(const exr_vector_polyline *path,const exr_vector_stroke_style *style,
                               const double transform[6],double tolerance,exr_vector_polyline *out,
                               size_t *work,const exr_control *control,exr_error *error);
+/* Dash lengths/phase use source coordinates and restart per contour. Odd arrays
+   repeat twice; zero-length on entries are retained as two-point dot contours. */
+exr_status exr_vector_dash(const exr_vector_polyline *path,const double *lengths,size_t length_count,
+                            double phase,exr_vector_polyline *out,size_t *work,
+                            const exr_control *control,exr_error *error);
 /* Edges describe closed contours in bitmap coordinates. Clip is an optional
    matching 8-bit coverage bitmap. Work is a shared 256M-operation counter.
    A failed/cancelled draw may have modified rows; page rendering discards them. */
