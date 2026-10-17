@@ -3,17 +3,41 @@
 #include "opentype_internal.h"
 #include FT_SYNTHESIS_H
 #include FT_PARAMETER_TAGS_H
+#include FT_TRUETYPE_TABLES_H
 FT_Error exr_font_face_open(FT_Library library,const void *data,size_t size,unsigned face_index,FT_Face *out) {
   FT_Parameter parameter={FT_PARAM_TAG_IGNORE_SBIX,NULL}; FT_Open_Args open={0};
   open.flags=FT_OPEN_MEMORY|FT_OPEN_PARAMS; open.memory_base=data; open.memory_size=(FT_Long)size;
   open.num_params=1; open.params=&parameter;
   return FT_Open_Face(library,&open,(FT_Long)face_index,out);
 }
+int exr_font_face_supported(FT_Face face) {
+  FT_ULong data=0,locations=0;
+  return FT_IS_SCALABLE(face) || (FT_IS_SFNT(face) && FT_HAS_COLOR(face) && face->num_fixed_sizes>0 && face->num_fixed_sizes<=256 &&
+    !FT_Load_Sfnt_Table(face,FT_MAKE_TAG('C','B','D','T'),0,NULL,&data) && data>=4 &&
+    !FT_Load_Sfnt_Table(face,FT_MAKE_TAG('C','B','L','C'),0,NULL,&locations) && locations>=8);
+}
+static int bitmap_metrics(exr_face *face) {
+  const TT_Header *head=FT_Get_Sfnt_Table(face->face,ft_sfnt_head);
+  const TT_HoriHeader *hori=FT_Get_Sfnt_Table(face->face,ft_sfnt_hhea);
+  const TT_VertHeader *vert=FT_Get_Sfnt_Table(face->face,ft_sfnt_vhea); FT_ULong size=0;
+  if(!head || !head->Units_Per_EM || !hori || !hori->number_Of_HMetrics || hori->number_Of_HMetrics>face->face->num_glyphs) return 0;
+  face->design_units=head->Units_Per_EM; face->hmetrics=hori->number_Of_HMetrics;
+  if(FT_Load_Sfnt_Table(face->face,FT_MAKE_TAG('h','m','t','x'),0,NULL,&size) ||
+     size<4*(uint64_t)face->hmetrics+2*((uint64_t)face->face->num_glyphs-face->hmetrics)) return 0;
+  if(vert) {
+    size=0;
+    face->vmetrics=vert->number_Of_VMetrics;
+    if(!face->vmetrics || face->vmetrics>(uint64_t)face->face->num_glyphs ||
+       FT_Load_Sfnt_Table(face->face,FT_MAKE_TAG('v','m','t','x'),0,NULL,&size) ||
+       size<4*(uint64_t)face->vmetrics+2*((uint64_t)face->face->num_glyphs-face->vmetrics)) return 0;
+  }
+  return 1;
+}
 static exr_status create_font(const exr_font_input *inputs,size_t count,int unicode,exr_font **out,exr_error *e) {
   exr_font *font;
   size_t i, total = 0;
   exr_status status = EXR_FONT;
-  const char *message = unicode ? "Font must contain a scalable Unicode face" : "Font must contain a scalable face";
+  const char *message = unicode ? "Font must contain a supported Unicode face" : "Font must contain a supported face";
   if (!out)
     return exr_fail(e, EXR_ARGUMENT, "Missing font output");
   *out = NULL;
@@ -54,8 +78,11 @@ static exr_status create_font(const exr_font_input *inputs,size_t count,int unic
     face->scope = SIZE_MAX;
     /* sbix images use the shared PNG/JPEG decoder; keep scalable text metrics. */
     if (exr_font_face_open(font->library,face->bytes,inputs[i].size,inputs[i].face_index,&face->face) ||
-        !FT_IS_SCALABLE(face->face))
+        !exr_font_face_supported(face->face))
       goto bad;
+    face->bitmap_only=!FT_IS_SCALABLE(face->face); face->bitmap_scale_y=1;
+    face->design_units=face->face->units_per_EM;
+    if((face->bitmap_only && !bitmap_metrics(face)) || !face->design_units) goto bad;
     if (FT_Select_Charmap(face->face, FT_ENCODING_UNICODE)) {
       if (unicode) goto bad;
       /* Codepoint lookup must not mistake an arbitrary encoding for Unicode. */
@@ -117,7 +144,7 @@ void exr_font_free(exr_font *f) {
     for (i = 0; i < f->count; i++) {
       exr_face *face = &f->faces[i];
       exr_ot_free(face);
-      exr_font_sbix_free(face);
+      exr_font_bitmaps_free(face);
       if (face->face)
         FT_Done_Face(face->face);
       free(face->advances);
@@ -145,8 +172,16 @@ int exr_font_size(exr_face *font, float pixels) {
   FT_F26Dot6 size = (FT_F26Dot6)lroundf(pixels * 64);
   if (font->metric_size == size)
     return 0;
-  if (FT_Set_Char_Size(font->face, 0, size, 72, 72))
-    return 1;
+  if(font->bitmap_only) {
+    int i,selected=-1; double best=0;
+    for(i=0;i<font->face->num_fixed_sizes;i++) {
+      double ppem=font->face->available_sizes[i].y_ppem/64.0;
+      if(ppem<=0) return 1;
+      if(selected<0 || (ppem>=pixels && (best<pixels || ppem<best)) || (ppem<pixels && best<pixels && ppem>best)) { selected=i; best=ppem; }
+    }
+    if(selected<0 || FT_Select_Size(font->face,selected) || !font->face->size->metrics.x_ppem || !font->face->size->metrics.y_ppem) return 1;
+    font->bitmap_scale_y=pixels/font->face->size->metrics.y_ppem;
+  } else if(FT_Set_Char_Size(font->face,0,size,72,72)) return 1;
   font->metric_size = size;
   if (font->measured)
     memset(font->measured, 0, font->metric_count);
@@ -160,12 +195,20 @@ static int measure(exr_face *font, uint32_t glyph, unsigned flags, int vertical,
     *advance = font->advances[glyph];
     return 0;
   }
-  if (FT_Load_Glyph(font->face, glyph, vertical ? FT_LOAD_VERTICAL_LAYOUT : FT_LOAD_DEFAULT))
-    return 1;
-  if (flags & 1)
-    FT_GlyphSlot_Embolden(font->face->glyph);
-  *advance = (float)(vertical ? font->face->glyph->advance.y : font->face->glyph->advance.x) / 64;
-  if (vertical && !FT_HAS_VERTICAL(font->face)) *advance = (float)font->metric_size / 64;
+  if(font->bitmap_only) {
+    unsigned metrics=vertical ? font->vmetrics : font->hmetrics;
+    if(!metrics) *advance=(float)font->metric_size/64;
+    else {
+      unsigned char bytes[2]; FT_ULong n=2; uint32_t index=glyph<metrics ? glyph : metrics-1;
+      if(FT_Load_Sfnt_Table(font->face,vertical ? FT_MAKE_TAG('v','m','t','x') : FT_MAKE_TAG('h','m','t','x'),(FT_Long)index*4,bytes,&n) || n!=2) return 1;
+      *advance=((unsigned)bytes[0]*256+bytes[1])*(float)font->metric_size/(64*font->design_units);
+    }
+  } else {
+    if (FT_Load_Glyph(font->face, glyph, vertical ? FT_LOAD_VERTICAL_LAYOUT : FT_LOAD_DEFAULT)) return 1;
+    if(flags&1) FT_GlyphSlot_Embolden(font->face->glyph);
+    *advance=(float)(vertical ? font->face->glyph->advance.y : font->face->glyph->advance.x)/64;
+    if(vertical && !FT_HAS_VERTICAL(font->face)) *advance=(float)font->metric_size/64;
+  }
   if (glyph < font->metric_count) {
     font->advances[glyph] = *advance;
     font->measured[glyph] = (unsigned char)key;
@@ -208,8 +251,8 @@ exr_layout_options exr_layout_defaults(void) {
 float exr_kern(exr_face *f, uint32_t left, uint32_t right) {
   FT_Vector v = {0};
   if (left && right && FT_HAS_KERNING(f->face))
-    FT_Get_Kerning(f->face, left, right, FT_KERNING_DEFAULT, &v);
-  return (float)v.x / 64;
+    FT_Get_Kerning(f->face,left,right,f->bitmap_only ? FT_KERNING_UNSCALED : FT_KERNING_DEFAULT,&v);
+  return f->bitmap_only ? (float)v.x*(float)f->metric_size/(64*f->design_units) : (float)v.x/64;
 }
 exr_layout_config exr_layout_config_defaults(void) {
   exr_layout_config config = {0};

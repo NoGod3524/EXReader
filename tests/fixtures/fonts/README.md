@@ -53,3 +53,13 @@ The same generator creates `../color-fonts.epub`, embedding bitmap.ttf and
 color.ttf under distinct CSS family aliases. It tests both actual book fonts
 and their retained rendering lifetime, with no external assets. SHA-256:
 `84db7e3f37149a047d1220b385b287babee9e5e1f03880421adb2c5e8db55d8d`.
+
+`cbdt.ttf` removes the original color font's outlines and adds original PNGs
+in two CBDT/CBLC strikes. `tools/generate_cbdt_test_font.py` covers all five
+index formats, image formats 17/18/19, sparse coverage, hmtx repeated advances
+and explicit vertical metrics. It also creates `../cbdt-fonts.epub` by replacing
+the sbix font in the original book, to check embedded bitmap-only selection.
+Both are GPL-3.0-only, with no external assets. SHA-256:
+
+- cbdt.ttf: `ff3829855610c05294f5b8e94cb8832072e8f6af5f74916044fbd03ae5ea920e`
+- cbdt-fonts.epub: `354a83ee2eaf74f591e394d158717fabd750f6e58324f4ef50b2ab1482879f23`

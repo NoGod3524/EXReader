@@ -151,8 +151,8 @@ static exr_status shape(flow *f,size_t first,size_t stop,int base,ruby_text *out
   for(i=0;i<l->glyph_count;i++) {
     exr_glyph *g=&l->glyphs[i]; exr_face *face=&f->font->faces[g->font_index];
     if(exr_font_size(face,g->size)) { status=failure(f,EXR_FONT,"Cannot size ruby font"); goto done; }
-    out->ascent=fmaxf(out->ascent,(float)face->face->size->metrics.ascender/64);
-    out->descent=fmaxf(out->descent,-(float)face->face->size->metrics.descender/64);
+    out->ascent=fmaxf(out->ascent,exr_font_ascent(face));
+    out->descent=fmaxf(out->descent,exr_font_descent(face));
     out->height=fmaxf(out->height,g->line_height);
     out->width+=kern(f,i ? &l->glyphs[i-1] : NULL,g); g->x=out->width; out->width+=g->advance;
     if(g->start<line->start) line->start=g->start;

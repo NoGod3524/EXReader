@@ -109,7 +109,7 @@ static void fallback(const char *directory,const char *color_file) {
   CHECK(n==1 && glyphs[0].font_index==1 && glyphs[0].glyph==2 && glyphs[0].cluster_start==0 && glyphs[0].cluster_end==4 && !(glyphs[0].flags&EXR_GLYPH_MISSING) && fabsf(glyphs[0].advance-90)<.01f);
   exr_font_free(font); exr_document_free(doc); OK(exr_render_page_color(layout,NULL,0,&image,&error));
   for(i=0;i<(size_t)image.width*image.height;i++) { const unsigned char *p=image.pixels+i*4; if(p[0]==255 && !p[1] && !p[2]) red++; if(!p[0] && p[1]==255 && !p[2]) green++; if(p[2]==255 && p[0]==127 && p[1]==127) blue++; }
-  CHECK((!strcmp(color_file,"bitmap.ttf") ? green>100 : red>100) && blue>100); exr_bitmap_free(&image); exr_layout_free(layout);
+  CHECK((strcmp(color_file,"color.ttf") ? green>100 : red>100) && blue>100); exr_bitmap_free(&image); exr_layout_free(layout);
 }
 static void bitmap_queries(exr_font *font) {
   const float sizes[]={5,10,15,100},scales[]={.5f,1,.75f,5},left[]={.5f,1,1.5f,10},top[]={-3,-6,-9,-60};
@@ -203,10 +203,10 @@ static void bitmap_raster(const char *directory,const char *output) {
   }
   bitmap_bad(directory);
 }
-static void embedded(const char *directory) {
+static void embedded(const char *directory,const char *name) {
   char path[4096]; exr_document *doc=NULL; exr_font *host=open_font(directory,"primary.ttf"); exr_layout *layout=NULL;
   exr_layout_config config=exr_layout_config_defaults(); const exr_glyph *glyphs; size_t n,i,np,red=0,green=0;
-  snprintf(path,sizeof(path),"%s/../color-fonts.epub",directory); OK(exr_document_open(path,&doc,&error));
+  snprintf(path,sizeof(path),"%s/../%s",directory,name); OK(exr_document_open(path,&doc,&error));
   config.page=(exr_layout_options){200,400,0,100,1,0}; OK(exr_layout_create_ex(doc,host,&config,&layout,&error));
   CHECK(exr_font_count(exr_layout_font(layout))==3); glyphs=exr_layout_glyphs(layout,&n); CHECK(n==2);
   CHECK(glyphs[0].font_index==1 && glyphs[1].font_index==2 && glyphs[0].glyph==2 && glyphs[1].glyph==2);
@@ -217,9 +217,107 @@ static void embedded(const char *directory) {
   }
   CHECK(red>100 && green>100); exr_layout_free(layout);
 }
+static void cbdt(const char *directory,const char *output) {
+  exr_font *font=open_font(directory,"cbdt.ttf"); exr_glyph_image frame={0}; exr_glyph g=glyph(2,0xff00ffff,0); exr_bitmap image={0}; exr_layout *layout;
+  exr_shape_options options=exr_shape_defaults(); exr_shaped_glyph *shaped=NULL; exr_path_segment *outline=NULL; size_t n,i;
+  const float sizes[]={5,10,15,100}; const unsigned widths[]={8,8,16,16};
+  for(i=0;i<4;i++) {
+    OK(exr_font_glyph_image(font,0,2,sizes[i],&frame,NULL,&error)); CHECK(frame.bitmap.width==widths[i]);
+    CHECK(fabsf(frame.left-sizes[i]/10)<1e-5f && fabsf(frame.top+sizes[i]*.6f)<1e-5f);
+    pixel(&frame.bitmap,1,1,i<2 ? 0xff0000ff : 0x00ff00ff); exr_bitmap_free(&frame.bitmap);
+  }
+  for(i=0;i<11;i++) {
+    OK(exr_font_glyph_image(font,0,(uint32_t)i,100,&frame,NULL,&error));
+    CHECK((i==1 || i==8 || i==9) ? !frame.bitmap.pixels : frame.bitmap.pixels!=NULL); exr_bitmap_free(&frame.bitmap);
+  }
+  OK(exr_font_glyph_outline(font,0,2,&outline,&n,NULL,&error)); CHECK(!outline && !n);
+  options.font_size=100; OK(exr_shape(font,0,"\xf0\x9f\x98\x80 ",5,&options,&shaped,&n,&error));
+  CHECK(n==2 && shaped[0].glyph==2 && shaped[1].glyph==1 && fabsf(shaped[0].advance_x-90)<.01f && fabsf(shaped[1].advance_x-90)<.01f && shaped[0].end==4); exr_free(shaped);
+  OK(exr_shape_vertical(font,0,"\xf0\x9f\x98\x80",4,&options,&shaped,&n,&error)); CHECK(n==1 && fabsf(shaped[0].advance_y+100)<.01f); exr_free(shaped);
+  options.font_size=15; OK(exr_shape(font,0,"A",1,&options,&shaped,&n,&error)); CHECK(n==1 && fabsf(shaped[0].advance_x-13.5f)<.01f); exr_free(shaped);
+  layout=page(font,&g,1); OK(exr_render_page_color(layout,NULL,0,&image,&error)); pixel(&image,35,60,0x00ff00ff); pixel(&image,85,60,0x7f7fffff);
+  { char path[4096]; snprintf(path,sizeof(path),"%s/font-cbdt.png",output); OK(exr_bitmap_write_png(&image,path,&error)); }
+  exr_bitmap_free(&image); exr_layout_free(layout);
+  g.color=0xff00ff80; g.flags=EXR_GLYPH_UNDERLINE|EXR_GLYPH_STRIKE; layout=page(font,&g,1); OK(exr_render_page_color(layout,NULL,0,&image,&error)); pixel(&image,15,112,0xff7fffff); exr_bitmap_free(&image); exr_layout_free(layout);
+  { exr_document *doc=NULL; exr_layout_config config=exr_layout_config_defaults(); const exr_glyph *glyphs; const exr_line *lines; size_t lines_count;
+    config.page=(exr_layout_options){200,400,0,100,1,0}; config.user_css="p {writing-mode:vertical-rl}";
+    OK(exr_document_open_memory(EXR_TXT,"\xf0\x9f\x98\x80",4,&doc,&error)); OK(exr_layout_create_ex(doc,font,&config,&layout,&error));
+    glyphs=exr_layout_glyphs(layout,&n); lines=exr_layout_lines(layout,&lines_count);
+    CHECK(n==1 && lines_count==1 && (glyphs[0].flags&EXR_GLYPH_VERTICAL) && fabsf(glyphs[0].advance-100)<.01f && fabsf(lines[0].width-100)<.01f);
+    OK(exr_render_page_color(layout,NULL,0,&image,&error)); exr_bitmap_free(&image); exr_layout_free(layout); exr_document_free(doc);
+  }
+  { const char text[]="\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80";
+    exr_document *doc=NULL; exr_pager *pager=NULL; exr_layout_config config=exr_layout_config_defaults(); size_t np;
+    config.page=(exr_layout_options){200,200,0,100,1,0}; config.user_css="p {margin:0}";
+    OK(exr_document_open_memory(EXR_TXT,text,sizeof(text)-1,&doc,&error)); OK(exr_layout_create_ex(doc,font,&config,&layout,&error)); exr_layout_pages(layout,&np); CHECK(np==2);
+    OK(exr_pager_create(doc,font,&config,&pager,&error));
+    for(i=0;i<np;i++) { exr_layout *part=NULL; exr_bitmap expected={0};
+      OK(exr_pager_next(pager,&part,&error)); CHECK(part); OK(exr_render_page_color(layout,NULL,i,&expected,&error)); OK(exr_render_page_color(part,NULL,0,&image,&error));
+      CHECK(expected.width==image.width && expected.height==image.height && !memcmp(expected.pixels,image.pixels,(size_t)image.stride*image.height));
+      exr_bitmap_free(&expected); exr_bitmap_free(&image); exr_layout_free(part);
+    }
+    { exr_layout *part=NULL; OK(exr_pager_next(pager,&part,&error)); CHECK(!part); }
+    exr_pager_free(pager); exr_layout_free(layout); exr_document_free(doc);
+  }
+  OK(exr_font_glyph_image(font,0,2,100,&frame,NULL,&error)); exr_font_free(font); pixel(&frame.bitmap,1,1,0x00ff00ff); exr_bitmap_free(&frame.bitmap);
+}
+static void cbdt_bad(const char *directory) {
+  size_t i;
+  for(i=0;i<23;i++) {
+    exr_font_input input=input_font(directory,"cbdt.ttf"); unsigned char *p=(void *)input.data;
+    size_t loc=table_at(&input,"CBLC"),data=table_at(&input,"CBDT"),array=loc+u32(p+loc+8);
+    size_t sparse4=array+u32(p+array+4),dense=array+u32(p+array+12),constant=array+u32(p+array+20),sparse5=array+u32(p+array+28);
+    size_t record=data+u32(p+dense+4); exr_font *font=NULL; exr_glyph_image frame={0}; exr_status expected=EXR_FONT;
+    switch(i) {
+      case 0: put(p+loc,0x20000,4); break;
+      case 1: put(p+data,0x20000,4); break;
+      case 2: put(p+loc+12,UINT32_MAX,4); break;
+      case 3: put(p+array+4,0,4); break;
+      case 4: put(p+array+8,1,2); break;
+      case 5: put(p+sparse4+12,2,2); break; /* Out of range sparse code. */
+      case 6: put(p+sparse4+14,65535,2); break; /* Non-monotone offsets. */
+      case 7: put(p+dense+20,0,4); break; /* Unqueried offset still validated. */
+      case 8: put(p+dense+4,UINT32_MAX,4); break;
+      case 9: put(p+dense,6,2); expected=EXR_FORMAT; break;
+      case 10: put(p+constant+8,UINT32_MAX,4); break;
+      case 11: put(p+constant+8,0,4); break;
+      case 12: put(p+sparse5+26,7,2); break; /* Duplicate sparse code. */
+      case 13: put(p+sparse5+24,6,2); break;
+      case 14: put(p+sparse5+20,UINT32_MAX,4); break;
+      case 15: put(p+record+5,UINT32_MAX,4); break;
+      case 16: put(p+record+9,0,1); expected=EXR_FORMAT; break;
+      case 17: put(p+record,1,1); break; /* PNG/metrics size mismatch. */
+      case 18: put(p+dense+2,19,2); break; /* No constant metrics. */
+      case 19: put(p+loc+8+46,8,1); expected=EXR_FORMAT; break;
+      case 20: put(p+loc+8+47,2,1); expected=EXR_FORMAT; break;
+      case 21: put(p+loc+8+44,11,1); expected=EXR_FORMAT; break;
+      default: { size_t a=loc+u32(p+loc+8+48),d=a+u32(p+a+12); put(p+d+14,0,2); break; }
+    }
+    OK(exr_font_create(&input,1,&font,&error)); free((void *)input.data);
+    { exr_status status=exr_font_glyph_image(font,0,2,(i==16 || i==17) ? 5 : 100,&frame,NULL,&error);
+      if(status!=expected) fprintf(stderr,"CBDT mutation %u: expected %d, got %d\n",(unsigned)i,expected,status);
+      CHECK(status==expected && !frame.bitmap.pixels && !frame.scale); }
+    exr_font_free(font);
+  }
+  for(i=0;i<4;i++) {
+    exr_font *font=open_font(directory,"cbdt.ttf"); exr_glyph_image frame={0}; cancel_state s={0,(unsigned)i*10}; exr_control control={0}; control.context=&s; control.cancelled=cancelled;
+    CHECK(exr_font_glyph_image(font,0,2,100,&frame,&control,&error)==EXR_CANCELLED && !frame.bitmap.pixels);
+    OK(exr_font_glyph_image(font,0,2,100,&frame,NULL,&error)); CHECK(frame.bitmap.width==16); exr_bitmap_free(&frame.bitmap); exr_font_free(font);
+  }
+  { exr_font_input input=input_font(directory,"cbdt.ttf"); unsigned char *p=(void *)input.data; exr_font *font=NULL;
+    exr_shape_options options=exr_shape_defaults(); exr_shaped_glyph *shaped=NULL; size_t n;
+    for(i=0;i<u16(p+4);i++) if(!memcmp(p+12+i*16,"vhea",4) || !memcmp(p+12+i*16,"vmtx",4)) memcpy(p+12+i*16,"xxxx",4);
+    OK(exr_font_create(&input,1,&font,&error)); free((void *)input.data); options.font_size=80;
+    OK(exr_shape_vertical(font,0,"A",1,&options,&shaped,&n,&error)); CHECK(n==1 && fabsf(shaped[0].advance_y+80)<.01f); exr_free(shaped); exr_font_free(font);
+  }
+  { exr_font_input input=input_font(directory,"cbdt.ttf"); unsigned char *p=(void *)input.data; exr_font *font=NULL; exr_glyph_image frame={0}; size_t loc=table_at(&input,"CBLC"),data=table_at(&input,"CBDT");
+    for(i=0;i<2;i++) { size_t array=loc+u32(p+loc+8+i*48),sub=array+u32(p+array+4),record=data+u32(p+sub+4); memset(p+record,0,12); }
+    OK(exr_font_create(&input,1,&font,&error)); free((void *)input.data); OK(exr_font_glyph_image(font,0,0,100,&frame,NULL,&error)); CHECK(!frame.bitmap.pixels); exr_font_free(font);
+  }
+}
 int main(int argc,char **argv) {
   exr_font *font; exr_font_color_layer *owned=NULL; size_t n; CHECK(argc==3); font=open_font(argv[1],"color.ttf"); queries(font,argv[1]); raster(font,argv[2]);
   OK(exr_font_color_layers(font,0,2,1,0x00ff00ff,&owned,&n,NULL,&error)); exr_font_free(font);
   CHECK(n==3 && owned[0].color==0xffff00ff && owned[2].color==0x00ff00ff); exr_free(owned);
-  fallback(argv[1],"color.ttf"); fallback(argv[1],"bitmap.ttf"); bitmap_raster(argv[1],argv[2]); embedded(argv[1]); printf("%u color-font palette, layers and raster checks passed\n",checks); return 0;
+  fallback(argv[1],"color.ttf"); fallback(argv[1],"bitmap.ttf"); bitmap_raster(argv[1],argv[2]); embedded(argv[1],"color-fonts.epub"); embedded(argv[1],"cbdt-fonts.epub"); cbdt(argv[1],argv[2]); cbdt_bad(argv[1]); fallback(argv[1],"cbdt.ttf"); printf("%u color-font palette, layers and raster checks passed\n",checks); return 0;
 }

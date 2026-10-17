@@ -975,11 +975,11 @@ EXR_API exr_status exr_publication_cfi_create_quoted(exr_publication *publicatio
 EXR_API exr_status exr_publication_cfi_resolve(exr_publication *publication,const char *cfi,const exr_control *control,
                                                size_t *part,exr_document **document,exr_cfi_point *point,exr_error *error);
 EXR_API exr_status exr_font_open(const char *path, exr_font **out, exr_error *error);
-/* Immutable ordered fallback list, 1..32 scalable Unicode faces, at most 128 MiB
+/* Immutable ordered fallback list, 1..32 scalable or CBDT/CBLC Unicode faces, at most 128 MiB
    of copied font bytes in total. Failure leaves *out NULL. No system font lookup. */
 EXR_API exr_status exr_font_create(const exr_font_input *inputs, size_t count,
                                    exr_font **out, exr_error *error);
-/* Also accepts scalable faces without Unicode charmaps, for direct glyph IDs.
+/* Also accepts supported faces without Unicode charmaps, for direct glyph IDs.
    Such faces do not participate in Unicode character lookup. Inputs are copied. */
 EXR_API exr_status exr_font_create_glyphs(const exr_font_input *inputs, size_t count,
                                           exr_font **out, exr_error *error);
@@ -1015,7 +1015,7 @@ typedef struct {
   float left,top,scale; /* Relative to glyph origin, x right/y down; bitmap pixels times scale. */
   uint32_t flags;
 } exr_glyph_image;
-/* Owned intrinsic-color image at the best available strike for requested pixels.
+/* Owned sbix/CBDT intrinsic-color image at the best available strike for requested pixels.
    No image returns a zero record. Free bitmap with exr_bitmap_free. The image
    does not include text opacity or synthetic styles; glyph advances stay separate. */
 EXR_API exr_status exr_font_glyph_image(exr_font *font,size_t font_index,uint32_t glyph,float pixels,
@@ -1024,6 +1024,7 @@ EXR_API exr_status exr_font_glyph_image(exr_font *font,size_t font_index,uint32_
 EXR_API int exr_font_has_glyph(const exr_font *font, size_t font_index, uint32_t codepoint);
 EXR_API void exr_font_free(exr_font *font);
 /* Owned unhinted Bézier path in 1000-em units, origin on the baseline, y up.
+   Bitmap-only glyphs return NULL/0.
    Direct glyph IDs also work without a Unicode cmap. Free segments with
    exr_free(); the path outlives its font. Same font concurrency rule as shape. */
 EXR_API exr_status exr_font_glyph_outline(exr_font *font,size_t font_index,uint32_t glyph,

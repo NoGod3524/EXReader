@@ -1127,7 +1127,7 @@ Separation 普通命名专色现支持文件声明的 device/CIE alternate 和�
 
 `exr_font_color_palettes` 查询 CPAL 调色板和条目数，无 CPAL 返回 0/0；`exr_font_color_layers` 根据显式调色板序号与前景色，返回独立的 `exr_font_color_layer { glyph, color }` 数组，按从后到前排列，color 为 RRGGBBAA；用 exr_free 释放。没有 COLR v0 图层时返回 NULL/0，未知调色板/字形序号返回 EXR_ARGUMENT，支持取消和失败清空输出。快照可比字体活得更久，glyph ID 仍属于对应字体面；宿主可结合 glyph_outline 读取各层路径，自行绘制或选用其他调色板。查询其他调色板不会改变默认页面绘制。所有操作继续遵循同一字体实例串行访问规则。
 
-单字形最多 256 层，每层位图最多 8192×8192 且不超过 16M 像素。页面文字共用 256M 工作预算，计入图层遍历、必要的调色板复制和栅格像素；调色板按字体面缓存，避免每个字形重复复制。长位图按行检查取消，错误时释放整页输出。默认 API 未修改既有公开记录；新增查询函数和独立图层记录，ABI epoch 仍为 1。当前范围是 COLR v0 与 CPAL 颜色；COLR v1 渐变/合成、SVG 字体和 CBDT/CBLC 位图 emoji 待实现。
+单字形最多 256 层，每层位图最多 8192×8192 且不超过 16M 像素。页面文字共用 256M 工作预算，计入图层遍历、必要的调色板复制和栅格像素；调色板按字体面缓存，避免每个字形重复复制。长位图按行检查取消，错误时释放整页输出。默认 API 未修改既有公开记录；新增查询函数和独立图层记录，ABI epoch 仍为 1。当前范围是 COLR v0 与 CPAL 颜色；COLR v1 渐变/合成、SVG 字体待实现；CBDT/CBLC 支持见下节。
 
 ## sbix 彩色位图字形（0.18 开发补充）
 
@@ -1139,4 +1139,12 @@ Separation 普通命名专色现支持文件声明的 device/CIE alternate 和�
 
 默认页面绘制优先 sbix，其次 COLR v0，再用普通字形；图片保留原色并乘文字 alpha，双线性缩放、灰度、竖排侧转和行内裁切复用共用像素合成。flags 中 EXR_GLYPH_IMAGE_OUTLINE_OVERLAY 表示先画位图再覆盖轮廓，轮廓合成粗斜体照常，位图不做合成变形；装饰线仍绘制一次。每面最多 256 strike，缓存的只是已验证目录；dupe 最多遍历 16 条记录，拒绝循环/越界。编码图像最多 32 MiB，解码和缩放后各受 8192 边长/16M 像素限制；目录读取、解码与绘制费用计入文字页 256M 预算，支持取消与失败清空结果。
 
-当前没有解码图像缓存，每次查询/绘制按需解码；宿主可通过上述独立快照实现自己的缓存。TIFF、Apple PDF/mask/flip、CBDT/CBLC、COLR v1 与 SVG 字体仍待实现。sbix 定位、选择和旗标语义见 [OpenType sbix 规范](https://learn.microsoft.com/en-us/typography/opentype/spec/sbix)。
+当前没有解码图像缓存，每次查询/绘制按需解码；宿主可通过上述独立快照实现自己的缓存。TIFF、Apple PDF/mask/flip、COLR v1 与 SVG 字体仍待实现。sbix 定位、选择和旗标语义见 [OpenType sbix 规范](https://learn.microsoft.com/en-us/typography/opentype/spec/sbix)。
+
+## CBDT/CBLC 彩色位图字体（0.18 开发补充）
+
+宿主输入和 EPUB 内嵌字体均接受只有 CBDT/CBLC 的 SFNT 字体。原生读取版本 3.0、index formats 1–5 和 PNG image formats 17/18/19，复用 `exr_font_glyph_image` 返回独立 RGBA 快照。默认绘制顺序为 sbix、CBDT、COLR v0、普通轮廓。按字形覆盖选择 strike 的规则与 sbix 相同；空记录无图像，合法位图字形的 outline 查询返回 NULL/0。
+
+排版使用 head 的设计单位和 hmtx/vmtx，字号连续缩放，不按 strike 整数跳动。缺省 vmtx 时竖向 advance 为 em；有 big metrics 时使用明确的竖向原点，只有横向 small metrics 时按位图尺寸和逻辑 advance 居中。装饰线使用字体 post/OS2 度量；位图保留原色并乘文字 alpha，不做合成粗斜体。
+
+第一次读取验证全部索引的边界、offset 单调性、稀疏 glyph ID 的严格递增和数据范围，分块读取且计入工作预算；只缓存目录。每面最多 256 个 strike，PNG 编码、解码、缩放和取消沿用 sbix 限额。当前支持 square ppem、bitDepth 32；format 17 接受横向 small metrics，非方形 strike、仅竖向 small metrics 和其他编码返回 EXR_FORMAT。规范见 [CBDT](https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt) 与 [CBLC](https://learn.microsoft.com/en-us/typography/opentype/spec/cblc)。

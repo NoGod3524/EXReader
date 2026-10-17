@@ -199,7 +199,7 @@ static exr_status load_font(const exr_document *d, exr_font *font, const exr_fon
     }
     *read_bytes += *size;
     if (!exr_font_face_open(font->library, *out, *size, 0, &probe) &&
-        FT_IS_SCALABLE(probe) && !FT_Select_Charmap(probe, FT_ENCODING_UNICODE)) {
+        exr_font_face_supported(probe) && !FT_Select_Charmap(probe, FT_ENCODING_UNICODE)) {
       FT_Done_Face(probe);
       return EXR_OK;
     }

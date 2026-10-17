@@ -584,7 +584,7 @@ static size_t value_record(ot_work *w, ot_view sub, size_t at, unsigned format, 
   if (!bounds(sub, at, 1, value_size(format))) return at;
   for (i = 0; i < 4; i++) if (format & (1u << i)) { out[i] += s16(sub, at)*w->scale; at += 2; }
   for (i = 0; i < 4; i++) if (format & (16u << i)) {
-    unsigned ppem = i & 1 ? w->face->face->size->metrics.y_ppem : w->face->face->size->metrics.x_ppem;
+    unsigned ppem = w->face->bitmap_only ? (unsigned)fmaxf(1,roundf(w->options->font_size)) : (i & 1 ? w->face->face->size->metrics.y_ppem : w->face->face->size->metrics.x_ppem);
     out[i] += device(sub, u16(sub, at), ppem); at += 2;
   }
   return at;
@@ -601,16 +601,18 @@ static int anchor(ot_work *w, ot_view origin, unsigned offset, unsigned glyph, f
   *x = s16(v, 2)*w->scale; *y = s16(v, 4)*w->scale;
   if (format == 2) {
     unsigned point = u16(v, 6);
-    if (FT_Load_Glyph(w->face->face, glyph, FT_LOAD_DEFAULT)) { w->status = EXR_FONT; return 0; }
-    if (w->face->face->glyph->format == FT_GLYPH_FORMAT_OUTLINE &&
+    if(!w->face->bitmap_only) {
+      if (FT_Load_Glyph(w->face->face, glyph, FT_LOAD_DEFAULT)) { w->status = EXR_FONT; return 0; }
+      if (w->face->face->glyph->format == FT_GLYPH_FORMAT_OUTLINE &&
         w->face->face->glyph->outline.n_points > 0 &&
         point < (unsigned)w->face->face->glyph->outline.n_points) {
-      *x = (float)w->face->face->glyph->outline.points[point].x/64;
-      *y = (float)w->face->face->glyph->outline.points[point].y/64;
+        *x = (float)w->face->face->glyph->outline.points[point].x/64;
+        *y = (float)w->face->face->glyph->outline.points[point].y/64;
+      }
     }
   } else if (format == 3) {
-    *x += device(v, u16(v, 6), w->face->face->size->metrics.x_ppem);
-    *y += device(v, u16(v, 8), w->face->face->size->metrics.y_ppem);
+    *x += device(v, u16(v, 6), w->face->bitmap_only ? (unsigned)fmaxf(1,roundf(w->options->font_size)) : w->face->face->size->metrics.x_ppem);
+    *y += device(v, u16(v, 8), w->face->bitmap_only ? (unsigned)fmaxf(1,roundf(w->options->font_size)) : w->face->face->size->metrics.y_ppem);
   } else if (format != 1) { w->status = EXR_FONT; return 0; }
   return w->status == EXR_OK;
 }
@@ -1419,9 +1421,9 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
   if (!size) return exr_fail(error, EXR_OK, "");
   w.face = &font->faces[face_index]; w.options = options; w.vertical = vertical;
   w.work_limit = 64000000u;
-  if (!w.face->face->units_per_EM)
+  if (!w.face->design_units)
     return exr_fail(error, EXR_FONT, "Font has no usable design-unit scale");
-  w.scale = options->font_size/(float)w.face->face->units_per_EM;
+  w.scale = options->font_size/(float)w.face->design_units;
   w.status = exr_text_analyze(text, size, &boundaries, error);
   if (w.status != EXR_OK) goto done;
   w.status = exr_control_cancel(&options->control, error);

@@ -142,6 +142,12 @@ static exr_status project_line(flow *f, exr_line *line) {
     else {
       exr_face *face = &f->font->faces[g->font_index];
       FT_Glyph_Metrics metrics;
+      if(face->bitmap_only) {
+        float ox=0,oy=0;
+        exr_status status=exr_font_bitmap_vertical(face,g->glyph,g->size,&ox,&oy,&f->config->control,f->error); if(status!=EXR_OK) return status;
+        g->x=f->writing_mode==EXR_WRITING_VERTICAL_RL ? f->origin_x-start-height/2 : start+height/2;
+        g->offset_x+=ox; g->offset_y+=oy; g->baseline=pen; continue;
+      }
       if (exr_font_size(face, g->size) || FT_Load_Glyph(face->face, g->glyph, FT_LOAD_VERTICAL_LAYOUT))
         return fail(f, EXR_FONT, "Cannot position vertical font glyph");
       metrics = face->face->glyph->metrics;
@@ -182,8 +188,8 @@ static exr_status ordinary_fragment(flow *f, exr_glyph *glyphs, size_t count, fl
   for(i=0;i<count;i++) {
     exr_glyph *g=&glyphs[i]; exr_face *face=&f->font->faces[g->font_index];
     if(exr_font_size(face,g->size)) return EXR_FONT;
-    ascent=fmaxf(ascent,(float)face->face->size->metrics.ascender/64);
-    descent=fmaxf(descent,-(float)face->face->size->metrics.descender/64);
+    ascent=fmaxf(ascent,exr_font_ascent(face));
+    descent=fmaxf(descent,exr_font_descent(face));
     height=fmaxf(height,g->line_height);
     if(g->start<line.start) line.start=g->start;
     if(g->end>line.end) line.end=g->end;
@@ -212,8 +218,8 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
       ascent=fmaxf(ascent,g->offset_x); descent=fmaxf(descent,g->offset_y);
     } else {
       if(exr_font_size(face,g->size)) return EXR_FONT;
-      ascent=fmaxf(ascent,(float)face->face->size->metrics.ascender/64);
-      descent=fmaxf(descent,-(float)face->face->size->metrics.descender/64);
+      ascent=fmaxf(ascent,exr_font_ascent(face));
+      descent=fmaxf(descent,exr_font_descent(face));
     }
     width+=g->advance+glyph_kern(f,i ? &glyphs[i-1] : NULL,g);
     height=fmaxf(height,g->line_height);
