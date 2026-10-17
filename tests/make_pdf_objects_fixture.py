@@ -326,3 +326,21 @@ font_budget={**font_objects}
 font_budget[1]=b'<< /Type /Catalog /Resources << /Font << '+b' '.join(f'/F{i} {20+i} 0 R'.encode() for i in range(129))+b' >> >> >>'
 for i in range(129): font_budget[20+i]=font_objects[2]
 pdf('pdf-text-font-budget.pdf',values=font_budget)
+
+
+forms={**font_objects}
+forms[1]=forms[1].replace(b'/Image 13 0 R /Form 14 0 R',b'/Image 13 0 R /Form 14 0 R /Outer 20 0 R /Inner 21 0 R /Inherit 22 0 R /Local 23 0 R')
+form_extra=b'/Subtype /Form /BBox [0 0 100 100] '
+forms[20]=compressed_stream(b'/Inner Do',form_extra+b'/Matrix [1 0 0 1 10 20] /Resources << /XObject << /Inner 21 0 R >> >>')
+forms[21]=compressed_stream(b'q BT /Simple 10 Tf (A) Tj ET Q',form_extra+b'/Matrix [2 0 0 3 5 7] /Resources << /Font << /Simple 2 0 R >> >>')
+forms[22]=compressed_stream(b'BT /Simple 10 Tf (B) Tj ET',form_extra)
+forms[23]=compressed_stream(b'BT /C 10 Tf <0001> Tj ET',form_extra+b'/Matrix [0 1 -1 0 0 0] /Resources << /Font << /C 3 0 R >> >>')
+pdf('pdf-text-forms.pdf',values=forms)
+for name,body,extra in [
+ ('cycle',b'/Outer Do',b'/Resources << /XObject << /Outer 20 0 R >> >>'),
+ ('pop',b'Q',b''),('open',b'BT',b''),('save',b'q',b''),('matrix',b'',b'/Matrix [1 0 0 1 2]'),('box',b'',b'/BBox [0 1 2]'),('type',b'',b'/FormType 2'),('resources',b'',b'/Resources []')]:
+    pdf('pdf-form-bad-'+name+'.pdf',values={**forms,20:compressed_stream(body,form_extra+extra)})
+deep_forms={**forms}
+for i in range(20,53):
+    deep_forms[i]=compressed_stream(b'/Next Do' if i<52 else b'',form_extra+b'/Resources << /XObject << /Next '+str(i+1).encode()+b' 0 R >> >>')
+pdf('pdf-form-bad-depth.pdf',values=deep_forms)
