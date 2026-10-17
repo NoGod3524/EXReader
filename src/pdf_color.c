@@ -1,11 +1,13 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "pdf_internal.h"
-typedef enum { SPACE_GRAY,SPACE_RGB,SPACE_CMYK,SPACE_CALGRAY,SPACE_CALRGB,SPACE_LAB,SPACE_INDEXED,SPACE_ICC } space_kind;
+#include "pdf_function_internal.h"
+typedef enum { SPACE_GRAY,SPACE_RGB,SPACE_CMYK,SPACE_CALGRAY,SPACE_CALRGB,SPACE_LAB,SPACE_INDEXED,SPACE_ICC,SPACE_TINT } space_kind;
 struct exr_pdf_colorspace {
-  space_kind kind; unsigned components,high;
+  space_kind kind; unsigned components,high; int no_paint;
   double ranges[8],gamma[3],matrix[9],transform[9],offset[3];
   unsigned char palette[1024];
   struct exr_pdf_colorspace *alternate;
+  exr_pdf_function *function;
 };
 typedef struct {
   exr_pdf_file *resources_file; uint32_t resources;
@@ -53,16 +55,21 @@ static double transfer(double linear) {
   return linear<=0.0031308 ? 12.92*linear : 1.055*pow(linear,1/2.4)-0.055;
 }
 static double lab_inverse(double value) { return value>=6.0/29 ? value*value*value : (108.0/841)*(value-4.0/29); }
-void exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double values[4],double rgb[3]) {
+exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double values[4],double rgb[3],exr_error *error) {
   double v[4]={0},xyz[3]={0}; unsigned i,j;
+  if(exr_pdf_colorspace_no_paint(s)) { memset(rgb,0,3*sizeof(double)); return EXR_OK; }
   for(i=0;i<s->components;i++) v[i]=clamp(values[i],s->ranges[2*i],s->ranges[2*i+1]);
-  if(s->kind==SPACE_GRAY) { rgb[0]=rgb[1]=rgb[2]=v[0]; return; }
-  if(s->kind==SPACE_RGB) { memcpy(rgb,v,3*sizeof(double)); return; }
-  if(s->kind==SPACE_CMYK) { for(i=0;i<3;i++) rgb[i]=1-fmin(1,v[i]+v[3]); return; }
+  if(s->kind==SPACE_GRAY) { rgb[0]=rgb[1]=rgb[2]=v[0]; return EXR_OK; }
+  if(s->kind==SPACE_RGB) { memcpy(rgb,v,3*sizeof(double)); return EXR_OK; }
+  if(s->kind==SPACE_CMYK) { for(i=0;i<3;i++) rgb[i]=1-fmin(1,v[i]+v[3]); return EXR_OK; }
   if(s->kind==SPACE_INDEXED) {
-    unsigned index=(unsigned)floor(v[0]+.5); for(i=0;i<3;i++) rgb[i]=s->palette[index*4+i]/255.0; return;
+    unsigned index=(unsigned)floor(v[0]+.5); for(i=0;i<3;i++) rgb[i]=s->palette[index*4+i]/255.0; return EXR_OK;
   }
-  if(s->kind==SPACE_ICC) { exr_pdf_colorspace_rgb(s->alternate,v,rgb); return; }
+  if(s->kind==SPACE_ICC) return exr_pdf_colorspace_rgb(s->alternate,v,rgb,error);
+  if(s->kind==SPACE_TINT) {
+    double alternate[4]={0}; exr_status status=exr_pdf_function_eval(s->function,v[0],alternate,error);
+    return status==EXR_OK ? exr_pdf_colorspace_rgb(s->alternate,alternate,rgb,error) : status;
+  }
   if(s->kind==SPACE_CALGRAY) {
     double gray=pow(v[0],s->gamma[0]); for(i=0;i<3;i++) xyz[i]=gray*s->matrix[i];
   } else if(s->kind==SPACE_CALRGB) {
@@ -77,6 +84,7 @@ void exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double values[4],d
     for(j=0;j<3;j++) linear+=s->transform[3*i+j]*xyz[j];
     rgb[i]=transfer(linear);
   }
+  return EXR_OK;
 }
 /* Fixed output policy: Bradford adaptation to D65, relative XYZ black-point
    compensation, linear sRGB conversion and final clipping to its gamut. */
@@ -149,11 +157,27 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
       double values[4]={0},rgb[3]; unsigned k;
       if(!(i&63) && exr_control_cancel(r->control,r->error)!=EXR_OK) { exr_pdf_colorspace_free(base); status=EXR_CANCELLED; goto done; }
       for(k=0;k<base->components;k++) values[k]=base->ranges[2*k]+lookup[i*base->components+k]/255.0*(base->ranges[2*k+1]-base->ranges[2*k]);
-      exr_pdf_colorspace_rgb(base,values,rgb);
+      status=exr_pdf_colorspace_rgb(base,values,rgb,r->error);
+      if(status!=EXR_OK) { exr_pdf_colorspace_free(base); goto done; }
       for(k=0;k<3;k++) s->palette[i*4+k]=(unsigned char)floor(rgb[k]*255+.5);
       s->palette[i*4+3]=255;
     }
+    s->no_paint=exr_pdf_colorspace_no_paint(base);
     exr_pdf_colorspace_free(base); *out=s; return EXR_OK;
+  }
+  if(name_is(file,value,"Separation")) {
+    const unsigned char *name; size_t length;
+    if(!array(r,file,id,ids,4)) goto bad;
+    v=exr_pdf_value_at(file,ids[1]); name=exr_pdf_bytes(file,ids[1],&length);
+    if(!v || v->kind!=EXR_PDF_NAME || !name || !length || memchr(name,0,length) || name_is(file,ids[1],"All")) goto bad;
+    s=device(SPACE_TINT,1); if(!s) goto memory;
+    s->no_paint=name_is(file,ids[1],"None");
+    if(s->no_paint) { *out=s; return EXR_OK; }
+    status=open_space(r,file,ids[2],depth+1,&s->alternate); if(status!=EXR_OK) goto done;
+    if(s->alternate->kind==SPACE_INDEXED || s->alternate->kind==SPACE_TINT) goto bad;
+    status=exr_pdf_function_open(file,ids[3],s->alternate->components,r->control,&s->function,r->error);
+    if(status!=EXR_OK) goto done;
+    *out=s; return EXR_OK;
   }
   if(!array(r,file,id,ids,2)) goto bad;
   if(name_is(file,value,"ICCBased")) {
@@ -210,8 +234,10 @@ exr_status exr_pdf_colorspace_open(exr_pdf_file *file,uint32_t value,exr_pdf_fil
   r.resources_file=resource_file; r.resources=resources; r.control=control; r.error=error ? error : &local; memset(r.error,0,sizeof(*r.error));
   status=open_space(&r,file,value,0,out); return status==EXR_OK ? exr_fail(error,EXR_OK,"") : status;
 }
-void exr_pdf_colorspace_free(exr_pdf_colorspace *s) { if(s) { exr_pdf_colorspace_free(s->alternate); free(s); } }
-size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *s) { return s ? sizeof(*s)+exr_pdf_colorspace_memory(s->alternate) : 0; }
+void exr_pdf_colorspace_free(exr_pdf_colorspace *s) { if(s) { exr_pdf_colorspace_free(s->alternate); exr_pdf_function_free(s->function); free(s); } }
+size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *s) { return s ? sizeof(*s)+exr_pdf_colorspace_memory(s->alternate)+exr_pdf_function_memory(s->function) : 0; }
+int exr_pdf_colorspace_no_paint(const exr_pdf_colorspace *s) { return s && (s->no_paint || exr_pdf_colorspace_no_paint(s->alternate)); }
+size_t exr_pdf_colorspace_cost(const exr_pdf_colorspace *s) { return !s ? 0 : exr_pdf_colorspace_no_paint(s) ? s->components : s->components+exr_pdf_function_cost(s->function)+exr_pdf_colorspace_cost(s->alternate); }
 unsigned exr_pdf_colorspace_components(const exr_pdf_colorspace *s) { return s ? s->components : 0; }
 exr_pdf_color_space exr_pdf_colorspace_device(const exr_pdf_colorspace *s) {
   return !s ? 0 : s->kind==SPACE_GRAY ? EXR_PDF_DEVICE_GRAY : s->kind==SPACE_RGB ? EXR_PDF_DEVICE_RGB : s->kind==SPACE_CMYK ? EXR_PDF_DEVICE_CMYK : 0;
@@ -220,5 +246,5 @@ int exr_pdf_colorspace_indexed(const exr_pdf_colorspace *s) { return s && s->kin
 void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *s,double ranges[8]) { memcpy(ranges,s->ranges,8*sizeof(double)); }
 void exr_pdf_colorspace_initial(const exr_pdf_colorspace *s,double values[4]) {
   unsigned i; memset(values,0,4*sizeof(double));
-  for(i=0;i<s->components;i++) values[i]=clamp(s->kind==SPACE_CMYK && i==3 ? 1 : 0,s->ranges[i*2],s->ranges[i*2+1]);
+  for(i=0;i<s->components;i++) values[i]=clamp((s->kind==SPACE_CMYK && i==3) || s->kind==SPACE_TINT ? 1 : 0,s->ranges[i*2],s->ranges[i*2+1]);
 }

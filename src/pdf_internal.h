@@ -123,7 +123,9 @@ exr_pdf_color_space exr_pdf_colorspace_device(const exr_pdf_colorspace *space);
 int exr_pdf_colorspace_indexed(const exr_pdf_colorspace *space);
 void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *space,double ranges[8]);
 void exr_pdf_colorspace_initial(const exr_pdf_colorspace *space,double values[4]);
-void exr_pdf_colorspace_rgb(const exr_pdf_colorspace *space,const double values[4],double rgb[3]);
+exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *space,const double values[4],double rgb[3],exr_error *error);
+int exr_pdf_colorspace_no_paint(const exr_pdf_colorspace *space);
+size_t exr_pdf_colorspace_cost(const exr_pdf_colorspace *space);
 typedef struct {
   exr_pdf_color fill,stroke; exr_vector_stroke_style line;
   const double *dashes; size_t dash_count; double dash_phase,matrix[6];

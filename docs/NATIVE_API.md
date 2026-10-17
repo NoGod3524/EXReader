@@ -1076,7 +1076,7 @@ C OpenType 路径现在对 Devanagari 的 deva/dev2 script 进行音节分类、
 
 EPUB/结构文档的 ruby/rb/rt/rp/rtc 使用不可拆的内部 inline 项参与原换行与续排；提交页面时展开为正文和注音各自的真实 glyph/line，内部标记不出现在公开数组。支持横排、vertical-rl/lr、默认半字号、over/under、center/start/space-between/space-around、rbspan 与最多 8 层注音。隐式 base→rt 对可逐组分页；显式 rb 或 rtc 的交错源码组保持整体，避免同页单区间模型丢失源归属。正文与注音各自可命中、选择、定位、导出 positioned 布局并恢复 checkpoint。嵌套 ruby 不支持；每个 ruby 最多 256 个正文/注音分段、每个当前组最多 8192 shaped glyph，超出页宽的不可拆组返回 EXR_LIMIT。树中图片等非文本内容不具备 ruby 内的布局语义。
 
-PDF vector、XObject 与 inline image 通过同一个私有颜色模型处理 Device、Indexed、CalGray、CalRGB、Lab 和 ICCBased Alternate。图形状态保留输入色空间，绘制回调接收转换后的 DeviceRGB；q/Q、Form 和 Type3 作用域沿用原状态栈。固定输出策略是 Bradford 白点适配至 D65、XYZ 黑点补偿、线性 sRGB 转换及最终色域裁剪。ICCBased 不读取 ICC LUT/AToB，按 N/Range/Alternate 回退；完整 ICC、OutputIntent、Separation/DeviceN、Pattern 和非设备颜色图像的 SMask Matte 尚未实现。模型嵌套最多 16，页面颜色缓存最多 128 个/32 MiB，支持取消与失败清理。
+PDF vector、XObject 与 inline image 通过同一个私有颜色模型处理 Device、Indexed、CalGray、CalRGB、Lab 和 ICCBased Alternate。图形状态保留输入色空间，绘制回调接收转换后的 DeviceRGB；q/Q、Form 和 Type3 作用域沿用原状态栈。固定输出策略是 Bradford 白点适配至 D65、XYZ 黑点补偿、线性 sRGB 转换及最终色域裁剪。ICCBased 不读取 ICC LUT/AToB，按 N/Range/Alternate 回退；完整 ICC、OutputIntent、DeviceN、Pattern 和非设备颜色图像的 SMask Matte 尚未实现；Separation 的新增范围见下节颜色函数补充。模型嵌套最多 16，页面颜色缓存最多 128 个/32 MiB，支持取消与失败清理。
 
 Swift EXReaderDocument/Publication/Pager/ReflowPage 和 Java EXReader.Document/Publication/Pager/ReflowPage 提供内存/本地文档、EPUB manifest/spine 按章加载和逐页排版。next 返回独立页面，EOF 返回 nil/null；排版错误后分页器失效。所有文本索引为章内规范化 UTF-8 字节，缺省 node/resource 索引为 -1。Swift 复制无指针 C glyph/line/box 记录，Java 返回类型化 LayoutSnapshot；节点名称、属性和原始文本为独立字符串。fontSource 提供实际字体 bytes、face index 和可变轴坐标，image 提供独立 RGBA 数据；宿主可以使用这些快照自行绘制。
 
@@ -1092,3 +1092,12 @@ exr_m4b_inspect / exr_m4b_inspect_source 只读取 ISO-BMFF 目录和选中的�
 读取 mvhd v0/v1 的电影时长和 Nero chpl v0/v1 章节；100 ns 章节时刻向下转换为毫秒，必须在已知时长内严格递增。稳定章节 ID 从原时间戳生成，parent 为 SIZE_MAX；每章 end 为下一章 start，最后一章 end 为电影时长。未知时长/end 使用 UINT64_MAX；无 mvhd 可返回未知时长，缺省元数据/封面/章节返回空。毫秒精度下重复的章节时刻不接受。当前不读取 QuickTime chapter text track、mdta/freeform 标签，不进行音轨/DRM 可播放性验证，也不自动修改书库。
 
 inspection_metadata、inspection_chapters、inspection_cover、inspection_duration 返回只读快照视图。宿主可将 exr_audio_chapter 和时长交给 exr_audio_create，指定自己的轨道 URI；audio_create 会再复制输入，因此可立即释放 inspection。Swift EXReaderMetadata.readM4B 和 Java EXReader.readM4b 返回独立 AudioBookMetadata（entries/chapters/duration/encoded cover），没有原生句柄需要保留。Swift 未知时间用 nil，Java 用 -1；无法放入 Java signed long 的已知时间返回 EXR_LIMIT。
+
+
+## PDF 专色与标量颜色函数（0.18 开发补充）
+
+Separation 普通命名专色现支持文件声明的 device/CIE alternate 和单输入 Type 2 指数函数、Type 3 分段函数。vector、XObject、inline image、Indexed base 和 ICC Alternate 复用同一转换路径；绘制回调仍输出屏幕 DeviceRGB，既有公开记录不变。默认 tint 为 1，输入先夹到色空间和函数 Domain；输出按各层 Range 再交 alternate。Type 2 处理 C0/C1 默认值、整数/分数与负指数的合法实数域，拒绝非有限中间结果。Type 3 保留半开区间边界、逆向 Encode、子函数 Domain/Range、单段及末尾零宽区间的 Encode 起点规则。
+
+特殊色名 None 不落墨，忽略无需执行的 alternate/tintTransform；填充和描边只在送出 paint 快照时置透明，原图形状态的 alpha 不被改写。图片返回透明像素，q/Q 和后续设备色操作可正常恢复。文字语义与裁切操作仍沿用原路径。注册色 All、DeviceN、FunctionType 0 采样及 Type 4 计算器、物理印版/套印与完整透明度语义尚未实现，不能视为完整印刷色彩支持。
+
+私有函数模型最多 16 层、1024 节点、64 个分段和 1 MiB payload，循环引用/坏维数/非法域直接失败；编译过程支持取消。模型内存计入原颜色缓存，求值复杂度计入原 PDF 图片工作预算；源码对象查找仍使用原 256 Mi 工作上限。不新增运行时依赖，不改变 ABI epoch、版本号或书库 schema。
