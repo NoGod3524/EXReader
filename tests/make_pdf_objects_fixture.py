@@ -305,7 +305,22 @@ font_objects[1]=font_objects[1][:-2]+b'/Resources << /Font << /Simple 2 0 R /Com
 font_objects[13]=compressed_stream(b'\0',b'/Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8')
 font_objects[14]=compressed_stream(b'',b'/Type /XObject /Subtype /Form /BBox [0 0 10 10]')
 pdf('pdf-fonts.pdf',values=font_objects)
-font_bad=[('width-short',2,font_objects[2].replace(b'[500 600 700]',b'[500 600]')),('width-extra',2,font_objects[2].replace(b'[500 600 700]',b'[500 600 700 800]')),
+
+# Standard 14 facts and semantic fallback without ToUnicode.
+standard_fonts=('Helvetica','Helvetica-Bold','Helvetica-Oblique','Helvetica-BoldOblique',
+ 'Times-Roman','Times-Bold','Times-Italic','Times-BoldItalic','Courier','Courier-Bold',
+ 'Courier-Oblique','Courier-BoldOblique','Symbol','ZapfDingbats')
+fallback={i+2:f'<< /Type /Font /Subtype /Type1 /BaseFont /{name} >>'.encode() for i,name in enumerate(standard_fonts)}
+fallback[1]=b'<< /Type /Catalog /Fonts << '+b' '.join(f'/{name} {i+2} 0 R'.encode() for i,name in enumerate(standard_fonts))+b' /WinAnsi 16 0 R /Custom 18 0 R /Names 19 0 R >> >>'
+fallback[16]=b'<< /Subtype /Type1 /BaseFont /Helvetica /FontDescriptor 17 0 R /Encoding << /BaseEncoding /WinAnsiEncoding /Differences [65 /B] >> >>'
+fallback[17]=b'<< /Flags 32 >>'
+fallback[18]=b'<< /Subtype /Type1 /BaseFont /PrivateFont /FirstChar 65 /LastChar 65 /Widths [9] >>'
+fallback[19]=b'<< /Subtype /Type1 /BaseFont /PrivateFont /FirstChar 65 /LastChar 67 /Widths [10 20 30] /Encoding << /Differences [65 /fi /uni00410042 /u1F600] >> >>'
+pdf('pdf-font-fallback.pdf',values=fallback)
+
+font_bad=[('unknown-encoding',2,font_objects[2].replace(b'/WinAnsiEncoding',b'/UnknownEncoding')),
+ ('flags',5,font_objects[5].replace(b'/MissingWidth 250',b'/MissingWidth 250 /Flags -1')),
+ ('width-short',2,font_objects[2].replace(b'[500 600 700]',b'[500 600]')),('width-extra',2,font_objects[2].replace(b'[500 600 700]',b'[500 600 700 800]')),
  ('first-char',2,font_objects[2].replace(b'/FirstChar 65',b'/FirstChar -1')),('differences',2,font_objects[2].replace(b'[65 /A /B 67 /uni0043]',b'[/A]')),
  ('encoding',3,font_objects[3].replace(b'/Identity-H',b'/Other-Encoding')),('descendants',3,font_objects[3].replace(b'[4 0 R]',b'[4 0 R 4 0 R]')),
  ('w-overlap',4,font_objects[4].replace(b'[10 12 700 1 [510 520]]',b'[1 3 700 2 [510 520]]')),

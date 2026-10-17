@@ -994,3 +994,23 @@ path paint events and 2,004 clips over 194 pages; this remains event validation,
 RFC comparison. Raster scanlines now use the actual horizontal shape bounds, with a work-size
 regression test preventing tiny glyphs from scanning a whole large page width. The 0.53 commit
 4b20178 passed all six CI jobs.
+
+
+## 0.55 PDF encoding facts and standard font metrics
+
+Simple fonts now retain descriptor Flags, resolve base-encoding glyph names and
+Differences independently of ToUnicode, and extract Unicode through the Adobe
+glyph lists when ToUnicode is absent. The native mapper handles suffixes,
+underscore components, multi-scalar names, strict uniXXXX groups and uXXXXX
+scalars; Zapf names apply only to ZapfDingbats. Unknown builtin encodings remain
+unknown, and an existing ToUnicode map remains authoritative even for unmapped
+codes. Type1 standard 14 fonts can omit Widths; their metrics use the selected
+glyph name, including Differences. Nonstandard fonts still require Widths.
+
+Pinned reproducible fact tables add no runtime dependency. Tests cover the full
+set of 14 standard font names, encoding-vector exceptions, ligatures, private
+names, multi-scalar/supplementary Unicode, invalid surrogates/hex/scalars,
+ToUnicode priority, malformed Flags/encoding, and default missing widths.
+These facts do not supply standard-font outlines; actual glyph rasterization
+and public PDF document opening remain pending. The 0.54 commit ba0b13f passed
+all six CI jobs.
