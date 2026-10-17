@@ -7,7 +7,12 @@ typedef struct {
   uint32_t label, fragments, start, length, file, sequence;
   unsigned present;
 } entry;
-typedef struct { entry *items; size_t count, capacity; } index_table;
+typedef struct {
+  uint32_t title,level,parent,first,last,fid,offset;
+  unsigned present;
+} nav_entry;
+typedef union { entry book; nav_entry nav; } index_entry;
+typedef struct { index_entry *items; size_t count, capacity; } index_table;
 typedef struct { unsigned tag, width, mask, end; } tag;
 static uint16_t u16(const unsigned char *p) { return (uint16_t)((p[0]<<8)|p[1]); }
 static uint32_t u32(const unsigned char *p) {
@@ -38,11 +43,12 @@ static int decimal(const unsigned char *s,size_t size,uint32_t *out) {
   *out=value; return 1;
 }
 static int decode_entry(const unsigned char *s,size_t size,const tag *tags,size_t nt,
-                         size_t controls,int fragment,entry *out) {
+                         size_t controls,int kind,index_entry *output) {
+  entry *out=&output->book; nav_entry *nav=&output->nav;
   size_t at,control=0,i,j; uint32_t counts[64]={0}; unsigned bytes[64]={0};
   unsigned seen[256]={0};
   if(!size || (size_t)s[0]+1>size) return 0;
-  if(fragment && !decimal(s+1,s[0],&out->label)) return 0;
+  if(kind==1 && !decimal(s+1,s[0],&out->label)) return 0;
   at=(size_t)s[0]+1;
   if(controls>size-at) return 0;
   /* Byte-length prefixes precede ALL value payloads, even for later tags. */
@@ -72,19 +78,38 @@ static int decode_entry(const unsigned char *s,size_t size,const tag *tags,size_
       n++;
     }
     if(n%tags[i].width) return 0;
+    if(kind==2) {
+      if(tags[i].tag==6) {
+        if(n!=2) return 0;
+        nav->fid=values[0]; nav->offset=values[1]; nav->present|=32;
+      } else {
+        unsigned flag=0; uint32_t *field=NULL;
+        switch(tags[i].tag) {
+        case 3: field=&nav->title; flag=1; break;
+        case 4: field=&nav->level; flag=2; break;
+        case 21: field=&nav->parent; flag=4; break;
+        case 22: field=&nav->first; flag=8; break;
+        case 23: field=&nav->last; flag=16; break;
+        default: break;
+        }
+        if(field) { if(n!=1) return 0; *field=values[0]; nav->present|=flag; }
+      }
+      continue;
+    }
     switch(tags[i].tag) {
-    case 1: if(!fragment) { if(n!=1) return 0; out->fragments=values[0]; out->present|=1; } break;
-    case 3: if(fragment) { if(n!=1) return 0; out->file=values[0]; out->present|=2; } break;
-    case 4: if(fragment) { if(n!=1) return 0; out->sequence=values[0]; out->present|=4; } break;
+    case 1: if(kind==0) { if(n!=1) return 0; out->fragments=values[0]; out->present|=1; } break;
+    case 3: if(kind==1) { if(n!=1) return 0; out->file=values[0]; out->present|=2; } break;
+    case 4: if(kind==1) { if(n!=1) return 0; out->sequence=values[0]; out->present|=4; } break;
     case 6: if(n!=2) return 0; out->start=values[0]; out->length=values[1]; out->present|=8; break;
     default: break;
     }
   }
   while(at<size) if(s[at++]) return 0;
-  return (out->present&(fragment ? 14u : 9u))==(fragment ? 14u : 9u);
+  if(kind==2) return (nav->present&35)==35;
+  return (out->present&(kind==1 ? 14u : 9u))==(kind==1 ? 14u : 9u);
 }
 static exr_status index_read(const exr_mobi_record *records,size_t nr,size_t first,
-                               int fragment,index_table *out,exr_error *e) {
+                               int kind,index_table *out,exr_error *e) {
   const exr_mobi_record *r; const unsigned char *s; tag tags[64];
   size_t pos,len,nt,controls,sections,i,j,total=0; unsigned masks[32]={0};
   if(first>=nr || !header(&records[first])) goto bad;
@@ -110,14 +135,15 @@ static exr_status index_read(const exr_mobi_record *records,size_t nr,size_t fir
     n=u32(s+24); table=u32(s+20); previous=u32(s+4);
     if(table<previous || table>r->size || r->size-table<4 ||
        memcmp(s+table,"IDXT",4) || n>(r->size-table-4)/2) goto bad;
-    if(n>EXR_MAX_NODES-out->count) return exr_fail(e,EXR_LIMIT,"KF8 index entry limit exceeded");
+    if(n>(kind==2 ? 10000u : EXR_MAX_NODES)-out->count) return exr_fail(e,EXR_LIMIT,"KF8 index entry limit exceeded");
     if(!exr_grow((void **)&out->items,&out->capacity,out->count+n,sizeof(*out->items)))
       return exr_fail(e,EXR_MEMORY,"KF8 index allocation failed");
     for(j=0;j<n;j++) {
       size_t start=u16(s+table+4+j*2),end=j+1<n ? u16(s+table+6+j*2) : table;
-      entry v={0};
+      index_entry v; memset(&v,0,sizeof(v));
+      if(kind==2) v.nav.parent=v.nav.first=v.nav.last=UINT32_MAX;
       if(start<previous || start>=end || end>table ||
-         !decode_entry(s+start,end-start,tags,nt,controls,fragment,&v)) goto bad;
+         !decode_entry(s+start,end-start,tags,nt,controls,kind,&v)) goto bad;
       out->items[out->count++]=v; previous=end;
     }
     total+=n;
@@ -386,7 +412,7 @@ static exr_status position_uri(const source_map *map,const index_table *fragment
   if(!base32(uri,size,&at,&fid) || size-at<5 || memcmp(uri+at,":off:",5)) goto bad;
   at+=5;
   if(!base32(uri,size,&at,&off) || at!=size || fid>=fragments->count) goto bad;
-  f=&fragments->items[fid]; part=f->file;
+  f=&fragments->items[fid].book; part=f->file;
   if(part>=map->doc->chapter_count || off>=f->length) goto bad;
   p=&map->parts[part];
   if(f->label<p->start || (size_t)(f->label-p->start)>p->length ||
@@ -429,6 +455,121 @@ static exr_status connect_positions(source_map *map,const index_table *fragments
   }
   return EXR_OK;
 }
+typedef struct { uint32_t key; const char *text; size_t size; } cncx_string;
+static exr_status cncx_read(const exr_mobi_record *records,size_t nr,size_t first,
+                              cncx_string **out,size_t *count,exr_error *e) {
+  size_t sections=u32(records[first].data+24),strings=u32(records[first].data+52);
+  size_t i,capacity=0,bytes=0; exr_status status=EXR_OK;
+  *out=NULL; *count=0;
+  if(sections>nr-first-1 || strings>nr-first-1-sections) goto bad;
+  for(i=0;i<strings;i++) {
+    const exr_mobi_record *r=&records[first+1+sections+i]; size_t at=0;
+    if(r->size>65536) goto bad;
+    while(at<r->size) {
+      size_t start=at; uint32_t length;
+      if(!r->data[at]) {
+        while(at<r->size) if(r->data[at++]) goto bad;
+        break;
+      }
+      if(!vwi(r->data,r->size,&at,&length) || length>r->size-at) goto bad;
+      if(*count>=EXR_MAX_NODES || length>EXR_MAX_TEXT-bytes) { status=EXR_LIMIT; goto bad; }
+      status=exr_xml_text((const char *)r->data+at,length,"KF8 CNCX label",e);
+      if(status!=EXR_OK) return status;
+      if(!exr_grow((void **)out,&capacity,*count+1,sizeof(**out))) { status=EXR_MEMORY; goto bad; }
+      (*out)[(*count)++]=(cncx_string){(uint32_t)(i*65536+start),(const char *)r->data+at,length};
+      bytes+=length; at+=length;
+    }
+  }
+  return EXR_OK;
+bad:
+  return exr_fail(e,status==EXR_OK ? EXR_FORMAT : status,"Invalid or oversized KF8 CNCX strings");
+}
+static const cncx_string *cncx_find(const cncx_string *strings,size_t count,uint32_t key) {
+  size_t low=0,high=count;
+  while(low<high) {
+    size_t middle=low+(high-low)/2;
+    if(strings[middle].key<key) low=middle+1; else high=middle;
+  }
+  return low<count && strings[low].key==key ? &strings[low] : NULL;
+}
+static int xml_escape(exr_buffer *out,const char *s,size_t size) {
+  size_t i;
+  for(i=0;i<size;i++) {
+    const char *replacement=s[i]=='&' ? "&amp;" : s[i]=='<' ? "&lt;" : s[i]=='>' ? "&gt;" :
+      s[i]=='"' ? "&quot;" : s[i]=='\r' ? "&#13;" : s[i]=='\n' ? "&#10;" : s[i]=='\t' ? "&#9;" : NULL;
+    if(!exr_append(out,replacement ? replacement : s+i,replacement ? strlen(replacement) : 1)) return 0;
+  }
+  return 1;
+}
+static void to_base32(uint32_t value,char out[8]) {
+  const char alphabet[]="0123456789ABCDEFGHIJKLMNOPQRSTUV"; char reversed[8]; size_t n=0,i;
+  do { reversed[n++]=alphabet[value&31]; value>>=5; } while(value);
+  for(i=0;i<n;i++) out[i]=reversed[n-1-i];
+  out[n]=0;
+}
+static exr_status build_navigation(source_map *map,const index_table *fragments,
+                                     const exr_mobi_record *records,size_t nr,size_t first,exr_error *e) {
+  index_table table={0}; cncx_string *strings=NULL; size_t string_count=0,i,depth=0,index;
+  size_t stack[252],*parents=NULL,*first_child=NULL,*last_child=NULL,*ends=NULL;
+  exr_buffer xml={0}; exr_status status;
+  if(first==UINT32_MAX) return EXR_OK;
+  status=index_read(records,nr,first,2,&table,e); if(status!=EXR_OK) goto done;
+  if(!table.count) { status=EXR_FORMAT; goto bad; }
+  status=cncx_read(records,nr,first,&strings,&string_count,e); if(status!=EXR_OK) goto done;
+  parents=malloc(table.count*sizeof(*parents)); first_child=malloc(table.count*sizeof(*first_child));
+  last_child=malloc(table.count*sizeof(*last_child)); ends=malloc(table.count*sizeof(*ends));
+  if(!parents || !first_child || !last_child || !ends) { status=EXR_MEMORY; goto bad; }
+  for(i=0;i<table.count;i++) first_child[i]=last_child[i]=SIZE_MAX;
+  for(i=0;i<table.count;i++) {
+    const nav_entry *v=&table.items[i].nav;
+    if(v->level>250 || v->level>depth) { status=EXR_FORMAT; goto bad; }
+    while(depth>v->level) ends[stack[--depth]]=i;
+    parents[i]=depth ? stack[depth-1] : SIZE_MAX;
+    if((v->present&4) && (v->parent==UINT32_MAX ? SIZE_MAX : v->parent)!=parents[i]) { status=EXR_FORMAT; goto bad; }
+    if(parents[i]!=SIZE_MAX) {
+      if(first_child[parents[i]]==SIZE_MAX) first_child[parents[i]]=i;
+      last_child[parents[i]]=i;
+    }
+    stack[depth++]=i;
+  }
+  while(depth) ends[stack[--depth]]=table.count;
+  for(i=0;i<table.count;i++) {
+    const nav_entry *v=&table.items[i].nav;
+    if((v->present&24)==0) continue;
+    if((v->present&24)!=24) { status=EXR_FORMAT; goto bad; }
+    if(first_child[i]==SIZE_MAX) {
+      if(v->first!=UINT32_MAX || v->last!=UINT32_MAX) { status=EXR_FORMAT; goto bad; }
+    } else if(v->first!=first_child[i] || v->last<last_child[i] || v->last>=ends[i]) { status=EXR_FORMAT; goto bad; }
+  }
+#define PUT(s) do { if(!exr_append(&xml,s,strlen(s))) { status=EXR_LIMIT; goto bad; } } while(0)
+  PUT("<ncx xmlns=\"http://www.daisy.org/z3986/2005/ncx/\" version=\"2005-1\"><head/><docTitle><text>Contents</text></docTitle><navMap>");
+  for(i=0;i<table.count;i++) {
+    const nav_entry *v=&table.items[i].nav; const cncx_string *label=cncx_find(strings,string_count,v->title);
+    char uri[64],target[2048],fid[8],offset[8],value[80];
+    if(!label) { status=EXR_FORMAT; goto bad; }
+    while(depth>v->level) { PUT("</navPoint>"); depth--; }
+    to_base32(v->fid,fid); to_base32(v->offset,offset);
+    snprintf(uri,sizeof(uri),"kindle:pos:fid:%s:off:%s",fid,offset);
+    status=position_uri(map,fragments,uri,target,e); if(status!=EXR_OK) goto done;
+    snprintf(value,sizeof(value),"<navPoint id=\"n%u\" playOrder=\"%u\"><navLabel><text>",(unsigned)i,(unsigned)i+1);
+    PUT(value);
+    if(!xml_escape(&xml,label->text,label->size)) { status=EXR_LIMIT; goto bad; }
+    PUT("</text></navLabel><content src=\"");
+    if(!xml_escape(&xml,target,strlen(target))) { status=EXR_LIMIT; goto bad; }
+    PUT("\"/>"); depth++;
+  }
+  while(depth) { PUT("</navPoint>"); depth--; }
+  PUT("</navMap></ncx>");
+#undef PUT
+  status=resource(map->doc,"kf8-navigation.ncx","application/x-dtbncx+xml",xml.data,xml.size,&index,e);
+  if(status==EXR_OK) { map->doc->has_ncx=1; map->doc->ncx_resource=index; }
+  goto done;
+bad:
+  exr_fail(e,status,"Invalid or oversized KF8 navigation hierarchy or label");
+done:
+  free(table.items); free(strings); free(parents); free(first_child); free(last_child); free(ends); free(xml.data);
+  return status;
+}
 exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
                     const char *text,size_t size,exr_error *e) {
   const unsigned char *h=records[0].data; size_t flow_size=size,flows,fdst,i,frag=0,work=0;
@@ -468,18 +609,18 @@ exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
   for(i=0;i<(skeletons.count ? skeletons.count : 1);i++) {
     size_t index,j,base; char path[64]; entry v={0};
     part.size=0;
-    if(skeletons.count) v=skeletons.items[i]; else v.length=(uint32_t)flow_size;
+    if(skeletons.count) v=skeletons.items[i].book; else v.length=(uint32_t)flow_size;
     if(v.start>flow_size || v.length>flow_size-v.start ||
        v.fragments>fragments.count-frag) goto bad;
     if(i) {
-      entry before=skeletons.items[i-1]; size_t previous=before.start+before.length;
-      for(j=frag-before.fragments;j<frag;j++) previous+=fragments.items[j].length;
+      entry before=skeletons.items[i-1].book; size_t previous=before.start+before.length;
+      for(j=frag-before.fragments;j<frag;j++) previous+=fragments.items[j].book.length;
       if(v.start<previous) goto bad;
     }
     if(!exr_append(&part,text+v.start,v.length)) { status=EXR_LIMIT; goto bad; }
     base=(size_t)v.start+v.length;
     for(j=0;j<v.fragments;j++,frag++) {
-      entry f=fragments.items[frag]; size_t insert;
+      entry f=fragments.items[frag].book; size_t insert;
       if(f.file!=i || f.label<v.start || (insert=f.label-v.start)>part.size ||
          base>flow_size || f.length>flow_size-base) goto bad;
       if(part.size>EXR_MAX_TEXT-f.length || part.size-insert>EXR_MAX_INPUT*2-work) { status=EXR_LIMIT; goto bad; }
@@ -498,6 +639,7 @@ exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
   }
   if(frag!=fragments.count) goto bad;
   status=connect_positions(&map,&fragments,e); if(status!=EXR_OK) goto done;
+  status=build_navigation(&map,&fragments,records,nr,u32(h+244),e); if(status!=EXR_OK) goto done;
   status=connect_assets(d,records,nr,flows,e); goto done;
 bad:
   if(status==EXR_OK) status=EXR_FORMAT;

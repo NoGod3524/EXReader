@@ -178,3 +178,45 @@ positional('kf8-bad-pos-duplicate.azw3',target=(b'<p>Top.</p><p id="shared">Seco
            b'<a name="legacy"></a><p xml:id="xml-target">XML.</p><p id="shared">Duplicate.</p>'))
 positional('kf8-bad-pos-body-duplicate.azw3',target=(b'<p>Top.</p><p id="body-top">Second.</p>'
            b'<a name="legacy"></a><p xml:id="xml-target">XML.</p><p id="shared">Shared.</p>'))
+
+
+# Authored KF8 NCX hierarchy, including a second CNCX record (offset +65536).
+def ncx_index(rows,ctoc=2,parents=True,children=True):
+    tags=[(3,1,1,0),(4,1,2,0),(6,2,12,0),(21,1,16,0),(22,1,32,0),(23,1,64,0)]
+    master=bytearray(192); master[:4]=b'INDX'; master[4:8]=u32(192)
+    master[24:28]=u32(1); master[28:32]=u32(65001); master[36:40]=u32(len(rows)); master[52:56]=u32(ctoc)
+    master+=b'TAGX'+u32(12+4*len(tags))+u32(1)+b''.join(bytes(t) for t in tags)
+    data=bytearray(192); data[:4]=b'INDX'; data[4:8]=u32(192); data[24:28]=u32(len(rows)); offsets=[]
+    for i,(title,level,fid,off,parent,first,last) in enumerate(rows):
+        offsets.append(len(data)); label=str(i).encode()
+        control=7|(16 if parents else 0)|(96 if children else 0)
+        values=[title,level,fid,off]+([parent] if parents else [])+([first,last] if children else [])
+        data+=bytes([len(label)])+label+bytes([control])+b''.join(vwi(n) for n in values)
+    data+=bytes(2); data[20:24]=u32(len(data)); data+=b'IDXT'+b''.join(map(u16,offsets))
+    return [master,data]
+navbody=(b'<h1 id="chapter-a">Alpha.</h1><h2 id="child-a">Child.</h2>'
+         b'<h3 id="deep-a">Deep.</h3><h2 id="child-b">Sibling.</h2>')
+navbody2=b'<h1 id="chapter-b">Beta.</h1>'
+navraw=skel+navbody+skel+navbody2; navstart=len(skel)+len(navbody)
+navbase=indx([('0',[1,0,len(skel)]),('1',[1,navstart,len(skel)])])+indx([(insert,[0,0,0,len(navbody)]),(navstart+insert,[1,1,0,len(navbody2)])],True)
+texts=[b'Alpha',b'Child',b'Deep',b'Sibling']; ctoc=bytearray(); keys=[]
+for t in texts: keys.append(len(ctoc)); ctoc+=vwi(len(t))+t
+ctoc+=bytes(4); label2=('Beta '+chr(0x4e8c)+' & "quotes"').encode(); ctoc2=vwi(len(label2))+label2+bytes(2)
+navrows=[(keys[0],0,0,0,0xffffffff,1,3),
+         (keys[1],1,0,navbody.index(b'<h2'),0,2,2),
+         (keys[2],2,0,navbody.index(b'<h3'),1,0xffffffff,0xffffffff),
+         (keys[3],1,0,navbody.index(b'<h2 id="child-b"'),0,0xffffffff,0xffffffff),
+         (65536,0,1,0,0xffffffff,0xffffffff,0xffffffff)]
+def nav_fixture(name='kf8-navigation.azw3',rows=None,mutate=None,parents=True,children=True):
+    def change(r):
+        r[0][244:248]=u32(6)
+        if mutate: mutate(r)
+    container(name,navraw,navbase+ncx_index(navrows if rows is None else rows,parents=parents,children=children)+[ctoc,ctoc2],mutate=change)
+nav_fixture(); nav_fixture('kf8-navigation-derived.azw3',parents=False,children=False)
+for name,row,col,value in [('nav-title',0,0,999),('nav-level',1,1,3),('nav-parent',2,4,0),
+                           ('nav-child',0,5,2),('nav-last',0,6,4),('nav-leaf',4,5,0),('nav-target',4,2,9)]:
+    rows=[list(r) for r in navrows]; rows[row][col]=value
+    nav_fixture('kf8-bad-'+name+'.azw3',rows=rows)
+nav_fixture('kf8-bad-cncx-truncated.azw3',mutate=lambda r:r.__setitem__(8,bytearray(b'\x7f')))
+nav_fixture('kf8-bad-cncx-padding.azw3',mutate=lambda r:r[8].__setitem__(-1,1))
+nav_fixture('kf8-bad-cncx-index.azw3',mutate=lambda r:r[6].__setitem__(slice(52,56),u32(99)))

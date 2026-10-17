@@ -536,3 +536,10 @@ PNG/JPEG 可直接绘制；GIF/WebP 和 SVG 流保留为资源，须由宿主提
 kindle:pos:fid:BASE32:off:BASE32 按片段序号及片段内字节偏移，映射到重建章节中该位置之前最近的命名锚点。解析器在元素开始时保留原始字节位置；ID 属性已完整解析，目标位于标签内部时可匹配当前标签。进入 body 时重置为章首；没有更近的命名锚点则链接到章首。读取 id、xml:id 和旧式 a/name，后者补同名 id 以接入通用链接解析。
 
 输出为规范章节路径和百分号编码片段，支持 Unicode、空格、%、# 等 ID；同一 ID 可在不同章节重复，同章重复命名锚点返回 EXR_FORMAT。片段序号、偏移、重建章节范围、语法和 Base32 溢出均验证，越界失败，不重定向猜测目标。临时位置索引按命名元素数量增长，受通用节点上限约束，链接转换后释放。位置映射仅内部使用，公共节点的 start/end 仍是归一化正文范围。
+
+
+## 文档导航与 KF8 NCX（0.31）
+
+`exr_document_navigation(doc, &entries, &count, error)` 从文档声明的 nav/NCX 资源读取导航，返回独立拥有的 exr_navigation 数组；使用 `exr_navigation_free(entries, count)` 释放。快照可在文档释放后继续读取；没有作者目录时返回 NULL/0。该接口沿用 EPUB 和自定义资源的通用解析，条目包含 parent、part、label、href、base 和 role。publication_navigation 的借用语义保持原样，不要释放它返回的借用数组。
+
+KF8 的 NCX INDX/CNCX 转为标准 NCX 资源，使用标签偏移（含多 CNCX 记录的 65536 基数）、级别、可选父子关系和 fid/off 定位，连接已有章内锚点。父子关系省略时从层级推导；显式关系必须与层级一致。目录元数据不加入正文；结构 EPUB 转换保留目录层级与目标。最多 10000 条目录、250 层嵌套；CNCX 单记录最多 65536 字节，总字符串数最多 262144、总字节最多 64 MiB。拒绝缺失标签、非完整 VWI、非法尾填充、级别跳跃、矛盾父子关系及无效目标。当前未接入 KF8 guide、混合 MOBI/KF8 头与 ORDT 特殊采样本编码。

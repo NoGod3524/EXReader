@@ -594,3 +594,16 @@ IDs within a chapter fail atomically. Position offsets come from the shared XML 
 The 0.29 sanitizer run found a test-only over-read: binary CSS returned by the resource API
 was passed directly to strstr. Commit a1ab85a copies and explicitly terminates test strings;
 the binary resource API continues to return an exact byte array without a terminator contract.
+
+
+## 0.31 KF8 authored navigation
+
+The 582-check KF8 suite verifies a three-level authored NCX with explicit and derived parent
+relationships, multiple CNCX records, escaped Unicode/quote/ampersand labels, stable part/anchor
+targets and matching navigation after structured EPUB export and publication loading.
+Document navigation snapshots remain readable after the source document is released; empty
+and invalid-output cases are checked. Invalid title keys, level jumps, parent/child ranges,
+leaf declarations, targets, CNCX lengths/padding/counts fail atomically.
+
+Both the sanitizer repair (a1ab85a) and the 0.30 feature commit (42e362f) passed all six CI jobs,
+including AddressSanitizer/UndefinedBehaviorSanitizer.

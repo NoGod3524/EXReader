@@ -115,8 +115,45 @@ static void positions_case(const char *dir) {
   position_links(copy); CHECK(!strcmp(exr_document_text(doc,NULL),exr_document_text(copy,NULL)));
   exr_document_free(doc); exr_document_free(copy);
 }
+static void check_navigation(exr_document *doc,const exr_navigation *nav,size_t count) {
+  const char *labels[]={"Alpha","Child","Deep","Sibling","Beta \xe4\xba\x8c & \"quotes\""};
+  const char *ids[]={"chapter-a","child-a","deep-a","child-b","chapter-b"};
+  size_t expected[]={SIZE_MAX,0,1,0,SIZE_MAX},i,n; const exr_node *nodes=exr_document_nodes(doc,&n);
+  CHECK(count==5);
+  for(i=0;i<count;i++) {
+    size_t target,resource; const char *id;
+    CHECK(!strcmp(nav[i].label,labels[i]) && nav[i].parent==expected[i]);
+    CHECK(nav[i].part==(i==4 ? 1u : 0u) && !strcmp(nav[i].role,"toc"));
+    OK(exr_document_resolve(doc,0,nav[i].href,&resource,&target,&error)); CHECK(target<n);
+    id=exr_node_attribute(&nodes[target],"id"); CHECK(id && !strcmp(id,ids[i]));
+  }
+}
+static void navigation_case(const char *dir,const char *name) {
+  char path[4096]; exr_document *doc=NULL,*copy=NULL; exr_navigation *a=NULL,*b=NULL;
+  exr_publication *publication=NULL; const exr_navigation *borrowed; size_t n,m,size; void *data=NULL;
+  snprintf(path,sizeof(path),"%s/%s",dir,name); OK(exr_document_open(path,&doc,&error));
+  OK(exr_document_navigation(doc,&a,&n,&error)); check_navigation(doc,a,n);
+  CHECK(!strstr(exr_document_text(doc,NULL),"quotes"));
+  OK(exr_document_export_epub(doc,NULL,&data,&size,&error));
+  OK(exr_document_open_memory(EXR_EPUB,data,size,&copy,&error));
+  OK(exr_document_navigation(copy,&b,&m,&error)); check_navigation(copy,b,m); exr_navigation_free(b,m);
+  OK(exr_publication_open_memory(EXR_EPUB,data,size,&publication,&error)); exr_free(data);
+  OK(exr_publication_navigation(publication,&borrowed,&m,&error)); CHECK(m==n);
+  check_navigation(copy,borrowed,m);
+  exr_publication_free(publication); exr_document_free(copy); exr_document_free(doc);
+  CHECK(!strcmp(a[1].label,"Child") && a[2].parent==1); exr_navigation_free(a,n);
+}
+static void navigation_api(void) {
+  exr_document *doc=NULL; exr_navigation *nav=(exr_navigation *)(uintptr_t)1; size_t n=99;
+  CHECK(exr_document_navigation(NULL,&nav,&n,&error)==EXR_ARGUMENT && !nav && !n);
+  OK(exr_document_open_memory(EXR_TXT,"Plain",5,&doc,&error));
+  OK(exr_document_navigation(doc,&nav,&n,&error)); CHECK(!nav && !n);
+  CHECK(exr_document_navigation(doc,NULL,&n,&error)==EXR_ARGUMENT && !n);
+  CHECK(exr_document_navigation(doc,&nav,NULL,&error)==EXR_ARGUMENT && !nav);
+  exr_navigation_free(NULL,0); exr_document_free(doc);
+}
 int main(int argc,char **argv) {
-  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate"};
+  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index"};
   const char *text="Chapter one\nA bold passage.\nChapter two\nSecond passage."; size_t i;
   CHECK(argc==2);
   valid(argv[1],"kf8-basic.azw3",text,2); valid(argv[1],"kf8-multirecord.azw3",text,2); valid(argv[1],"kf8-multicontrol.azw3",text,2);
@@ -130,6 +167,7 @@ int main(int argc,char **argv) {
     if(status!=EXR_FORMAT) fprintf(stderr,"fixture %s returned %d\n",bad[i],status);
     CHECK(status==EXR_FORMAT && !doc && error.code==EXR_FORMAT && error.message[0]);
   }
+  navigation_api(); navigation_case(argv[1],"kf8-navigation.azw3"); navigation_case(argv[1],"kf8-navigation-derived.azw3");
   positions_case(argv[1]);
   assets_case(argv[1],"kf8-assets.azw3");
   assets_case(argv[1],"kf8-assets-font0.azw3"); assets_case(argv[1],"kf8-assets-font1.azw3"); assets_case(argv[1],"kf8-assets-font2.azw3");
