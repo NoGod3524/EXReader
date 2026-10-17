@@ -143,3 +143,38 @@ f=bytearray(font_record(1)); f[-1]^=255
 asset_fixture('kf8-bad-font-compressed.azw3',fontdata=f)
 f=bytearray(font_record()); f[4:8]=u32(32*1024*1024+1)
 asset_fixture('kf8-limit-font.azw3',fontdata=f)
+
+
+def b32(n):
+    alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUV'; result=''
+    while n: result=alphabet[n%32]+result; n//=32
+    return result or '0'
+def positional(name='kf8-positions.azw3',replacement=None,target=None):
+    targetbody=(b'<p>Top.</p><p id="target % # '+chr(0x7532).encode()+b'">Second.</p>'
+                b'<a name="legacy"></a><p>Legacy target.</p><p xml:id="xml-target">XML target.</p>'
+                b'<p id="shared">Shared second.</p>') if target is None else target
+    locations=[('top',0),('forward',targetbody.index(b'<p id=')),
+               ('inside',targetbody.index(b'<p id=')+7),('legacy',targetbody.index(b'<a name=')),
+               ('xml',targetbody.index(b'<p xml:id=')),('shared',targetbody.index(b'<p id="shared"'))]
+    body=b'<p id="shared">First.</p>'
+    for key,offset in locations:
+        uri='kindle:pos:fid:1:off:'+b32(offset)
+        if replacement is not None and key=='forward': uri=replacement
+        body+=b'<a data-test="'+key.encode()+b'" href="'+uri.encode()+b'">'+key.encode()+b'</a>'
+    body+=b'<a data-test="back" href="kindle:pos:fid:0:off:0">Back.</a>'
+    html=skel.replace(b'<body>',b'<body id="body-top">')
+    where=html.index(b'</body>'); second=len(html)+len(body)
+    skeleton=[('0',[1,0,len(html)]),('1',[1,second,len(html)])]
+    fragment=[(where,[0,0,0,len(body)]),(second+where,[1,1,0,len(targetbody)])]
+    container(name,html+body+html+targetbody,indx(skeleton)+indx(fragment,True))
+positional()
+for key,uri in [('fid','kindle:pos:fid:9:off:0'),('off','kindle:pos:fid:1:off:FFFF'),
+                ('overflow','kindle:pos:fid:1:off:VVVVVVVVVV'),('separator','kindle:pos:fid:1:off0'),
+                ('trailing','kindle:pos:fid:1:off:0?x=1'),('empty','kindle:pos:fid::off:0'),
+                ('prefix','kindle:pos:foo'),('length','kindle:pos:fid:1:off:'+b32(9999))]:
+    positional('kf8-bad-pos-'+key+'.azw3',replacement=uri)
+# Duplicate anchors within a chapter cannot produce an unambiguous translated link.
+positional('kf8-bad-pos-duplicate.azw3',target=(b'<p>Top.</p><p id="shared">Second.</p>'
+           b'<a name="legacy"></a><p xml:id="xml-target">XML.</p><p id="shared">Duplicate.</p>'))
+positional('kf8-bad-pos-body-duplicate.azw3',target=(b'<p>Top.</p><p id="body-top">Second.</p>'
+           b'<a name="legacy"></a><p xml:id="xml-target">XML.</p><p id="shared">Shared.</p>'))

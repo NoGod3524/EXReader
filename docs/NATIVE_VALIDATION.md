@@ -580,3 +580,17 @@ font bytes equal the original geometric font, layout selects that font and CSS c
 rendered pages match EPUB round-trip pixels. Cases reject malformed/overflowing/out-of-range
 Base32 URIs, conflicting MIME types, bad signatures, FONT flags/offsets/keys/size, compressed
 corruption/trailing bytes and oversized font declarations. The suite totals 290 checks.
+
+
+## 0.30 KF8 positions
+
+Tests verify cross-chapter/return links, targets inside start tags, chapter-top fallback,
+legacy named anchors, XML IDs, duplicate IDs in different chapters and URI-escaped Unicode IDs.
+Every translated target resolves to the same chapter/anchor after EPUB round-trip. Malformed
+prefixes/separators, missing numbers, overflow, invalid fragment/offset bounds and duplicate
+IDs within a chapter fail atomically. Position offsets come from the shared XML parser's
+64-bit source byte index and never replace public normalized text offsets.
+
+The 0.29 sanitizer run found a test-only over-read: binary CSS returned by the resource API
+was passed directly to strstr. Commit a1ab85a copies and explicitly terminates test strings;
+the binary resource API continues to return an exact byte array without a terminator contract.
