@@ -85,17 +85,23 @@ exr_status exr_layout_create_positioned(const exr_document *d,exr_font *font,
         if(!(k&255)) { status=exr_control_cancel(&config->control,e); if(status!=EXR_OK) goto failed; }
         if(g->page!=i || g->font_index>=font->count || g->glyph>=(uint64_t)font->faces[g->font_index].face->num_glyphs ||
            g->codepoint>0x10ffff || (g->codepoint>=0xd800 && g->codepoint<=0xdfff) ||
-           (g->node!=SIZE_MAX && g->node>=d->node_count) || (g->flags&~127u) || (g->boundaries&~15u) || g->bidi_level>127 ||
+           (g->node!=SIZE_MAX && g->node>=d->node_count) || (g->flags&~511u) ||
+           ((g->flags&EXR_GLYPH_SIDEWAYS) && !(g->flags&EXR_GLYPH_VERTICAL)) ||
+           (g->boundaries&~15u) ||
+           (g->bidi_level>127 && !(g->bidi_level==UINT_MAX && (g->flags&EXR_GLYPH_HIDDEN))) ||
            !range(d,g->start,g->end) || !range(d,g->cluster_start,g->cluster_end) ||
            g->cluster_start>g->start || g->cluster_end<g->end || g->cluster_start<v->start || g->cluster_end>v->end ||
            !number(g->x) || !number(g->baseline) || !nonnegative(g->advance) || !nonnegative(g->size) ||
            (!(g->flags&EXR_GLYPH_HIDDEN) && !g->size) || !nonnegative(g->line_height) ||
            !number(g->offset_x) || !number(g->offset_y) || !number(g->clip_left) || !number(g->clip_right) || g->clip_left>g->clip_right ||
-           (k>glyph && g->cluster_start!=l->glyphs[k-1].cluster_start && g->x<input->glyphs[k-1].x)) goto invalid;
+           (k>glyph && !!(g->flags&EXR_GLYPH_VERTICAL)!=!!(input->glyphs[k-1].flags&EXR_GLYPH_VERTICAL)) ||
+           (k>glyph && g->cluster_start!=l->glyphs[k-1].cluster_start &&
+            ((g->flags&EXR_GLYPH_VERTICAL) ? g->baseline<input->glyphs[k-1].baseline : g->x<input->glyphs[k-1].x))) goto invalid;
         if(!point(&g->x,scale,dx) || !point(&g->baseline,scale,dy) || !point(&g->advance,scale,0) ||
            !point(&g->size,scale,0) || g->size>4096 || !point(&g->line_height,scale,0) ||
            !point(&g->offset_x,scale,0) || !point(&g->offset_y,scale,0) ||
-           !point(&g->clip_left,scale,dx) || !point(&g->clip_right,scale,dx)) goto invalid;
+           !point(&g->clip_left,scale,(g->flags&EXR_GLYPH_VERTICAL) ? dy : dx) ||
+           !point(&g->clip_right,scale,(g->flags&EXR_GLYPH_VERTICAL) ? dy : dx)) goto invalid;
         g->flags|=EXR_GLYPH_SHAPED;
       }
       glyph+=v->glyph_count;

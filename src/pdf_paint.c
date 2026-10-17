@@ -37,6 +37,9 @@ static exr_status state_event(void *context,exr_pdf_state_event event,exr_error 
 }
 static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_error *e) {
   pdf_painter *r=context; size_t i,count=0; exr_status status; exr_vector_segment *segments=NULL; unsigned flags=0,mode=g->rendering_mode;
+  /* Type3 CharProcs are interpreted by the content walker with the same
+     graphics state, resources, recursion guard and operation budget. */
+  if(exr_pdf_font_description(g->font)->kind==EXR_PDF_TYPE3) return EXR_OK;
   if(mode==3) return EXR_OK;
   if(mode==0 || mode==2 || mode==4 || mode==6) flags|=EXR_PDF_FILL;
   if(mode==1 || mode==2 || mode==5 || mode==6) flags|=EXR_PDF_STROKE;

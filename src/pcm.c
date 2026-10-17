@@ -27,17 +27,28 @@ static exr_status mp3_read(void *context,uint64_t first,size_t frames,float *out
   return exr_mp3_read(context,first,frames,output,read,control,e);
 }
 static void mp3_free(void *context) { exr_mp3_free(context); }
+static exr_status aac_read(void *context,uint64_t first,size_t frames,float *output,size_t *read,const exr_control *control,exr_error *e) {
+  return exr_aac_read(context,first,frames,output,read,control,e);
+}
+static void aac_free(void *context) { exr_aac_free(context); }
+static exr_status m4b_read(void *context,uint64_t first,size_t frames,float *output,size_t *read,const exr_control *control,exr_error *e) {
+  return exr_m4b_read(context,first,frames,output,read,control,e);
+}
+static void m4b_free(void *context) { exr_m4b_free(context); }
 exr_status exr_pcm_open_source(const exr_source *source,exr_pcm **out,exr_error *e) {
-  exr_pcm *pcm; unsigned char signature[4]; size_t done=0; exr_status status;
+  exr_pcm *pcm; unsigned char signature[8]={0}; size_t done=0,signature_size; exr_status status; int bmff;
   if(out) *out=NULL;
   if(!source || !out || !source->read_at || source->size<4) return exr_fail(e,EXR_ARGUMENT,"Invalid PCM byte source");
-  while(done<sizeof(signature)) {
+  signature_size=source->size<sizeof(signature) ? (size_t)source->size : sizeof(signature);
+  while(done<signature_size) {
     size_t got; status=exr_control_cancel(&source->control,e); if(status!=EXR_OK) return status;
-    got=source->read_at(source->context,done,signature+done,sizeof(signature)-done);
-    if(!got || got>sizeof(signature)-done) return exr_fail(e,EXR_IO,"PCM source returned an invalid/short read");
+    got=source->read_at(source->context,done,signature+done,signature_size-done);
+    if(!got || got>signature_size-done) return exr_fail(e,EXR_IO,"PCM source returned an invalid/short read");
     done+=got;
   }
-  if(memcmp(signature,"RIFF",4) && memcmp(signature,"fLaC",4) && memcmp(signature,"ID3",3) &&
+  bmff=signature_size==8 && (!memcmp(signature+4,"ftyp",4) || !memcmp(signature+4,"free",4) ||
+    !memcmp(signature+4,"skip",4) || !memcmp(signature+4,"wide",4) || !memcmp(signature+4,"mdat",4) || !memcmp(signature+4,"moov",4));
+  if(!bmff && memcmp(signature,"RIFF",4) && memcmp(signature,"fLaC",4) && memcmp(signature,"ID3",3) &&
      !(signature[0]==255 && (signature[1]&0xe0)==0xe0)) return exr_fail(e,EXR_FORMAT,"Unknown PCM source codec");
   pcm=calloc(1,sizeof(*pcm)); if(!pcm) return exr_fail(e,EXR_MEMORY,"PCM decoder allocation failed");
   if(!memcmp(signature,"RIFF",4)) {
@@ -54,12 +65,28 @@ exr_status exr_pcm_open_source(const exr_source *source,exr_pcm **out,exr_error 
       info=exr_flac_format(flac); pcm->info=(exr_pcm_info){info->sample_rate,info->channels,0,info->frames};
       pcm->context=flac; pcm->read=flac_read; pcm->release=flac_free; pcm->kind=2;
     }
+  } else if(bmff) {
+    exr_m4b *m4b=NULL; const exr_m4b_info *info;
+    status=exr_m4b_open_source(source,&m4b,e);
+    if(status==EXR_OK) {
+      info=exr_m4b_format(m4b); pcm->info=(exr_pcm_info){info->sample_rate,info->channels,0,info->frames};
+      pcm->context=m4b; pcm->read=m4b_read; pcm->release=m4b_free; pcm->kind=5;
+    }
   } else {
     exr_mp3 *mp3=NULL; const exr_mp3_info *info;
-    status=exr_mp3_open_source(source,&mp3,e);
+    int adts=signature[0]==255 && !(signature[1]&6);
+    status=adts ? EXR_FORMAT : exr_mp3_open_source(source,&mp3,e);
     if(status==EXR_OK) {
       info=exr_mp3_format(mp3); pcm->info=(exr_pcm_info){info->sample_rate,info->channels,0,info->frames};
       pcm->context=mp3; pcm->read=mp3_read; pcm->release=mp3_free; pcm->kind=3;
+    } else if(status==EXR_FORMAT) {
+      /* ID3 is shared by MP3 and ADTS. Failed opens retain source ownership. */
+      exr_aac *aac=NULL; const exr_aac_info *aac_info;
+      status=exr_aac_open_source(source,&aac,e);
+      if(status==EXR_OK) {
+        aac_info=exr_aac_format(aac); pcm->info=(exr_pcm_info){aac_info->sample_rate,aac_info->channels,0,aac_info->frames};
+        pcm->context=aac; pcm->read=aac_read; pcm->release=aac_free; pcm->kind=4;
+      }
     }
   }
   if(status!=EXR_OK) { free(pcm); return status; }
@@ -100,5 +127,6 @@ exr_status exr_pcm_read(exr_pcm *pcm,uint64_t first,size_t frames,float *output,
   }
   if(pcm->kind==2) pcm->info.frames=exr_flac_format(pcm->context)->frames;
   else if(pcm->kind==3) pcm->info.frames=exr_mp3_format(pcm->context)->frames;
+  else if(pcm->kind==4) pcm->info.frames=exr_aac_format(pcm->context)->frames;
   *read=got; return exr_fail(e,EXR_OK,"");
 }

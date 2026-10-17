@@ -1036,3 +1036,22 @@ FLAC 元数据最多 64 MiB / 65536 块；SEEKTABLE 最多 65536 点、保留最
 输出为独立完整 PDF，增量保留原字节，用 exr_free 释放。count=0 返回独立原样副本；认证权限、加密、XFA、命名/空白 RDF 主体、DTD 和无法同步的 XML 返回错误，不输出半个文件。XMP 流重建为 UTF-8，保留命名空间及未改结构的语义，不保留原 XML 词法拼写或旧 Metadata stream 的未知字典键。编辑要求 UTF-8 和编码后的 UTF-16 文本各最多 64 KiB，XMP 最多 1 MiB。
 
 Swift `EXReaderPCM` 和 Java `EXReader.Pcm` 统一读取启用的 PCM 解码器；句柄操作串行，返回独立 float 样本，时长 getter 可反映后续 EOF 发现。未知长度分别表示 nil 和 -1。`examples/pcm.c` 默认只检查音频；显式 --play 才打开系统设备，按 backpressure 提交并等待队列排空。
+
+
+## 竖排、Type3、AAC/M4B 与 EPUB 原书编辑（0.18 开发补充）
+
+通过 CSS writing-mode: vertical-rl / vertical-lr 选择统一页面方向，text-orientation 支持 mixed / upright / sideways。Unicode 17 UAX #50 决定字素朝向；Tr 仅在字体确实提供竖向替代时直立，Tu 无替代仍直立。原生 shape_vertical 使用 vmtx、vrt2（优先于 vert）与 vkrn，没有 vmtx 时采用 em 度量。字素方向跨样式保持一致，页级续排、检查点、缓存和命中使用同一排版路径。当前不同块之间的 writing-mode 切换返回 EXR_FORMAT，异轴上下文和 ruby 继续补齐。
+
+公开 glyph/line/box 数组始终使用物理页面坐标。VERTICAL 表示 advance 及 clip_left/right 沿 y 轴，SIDEWAYS 表示顺时针 90 度；exr_glyph_matrix 将现有 1000-em、y-up 字形轮廓映射到物理页面。UTF-8 范围、锚点和 CFI 仍是逻辑顺序。exr_layout_writing_mode 返回普通重排页方向；positioned 输入可逐字形混用轴，应读取 glyph flags。所有原有固定步长结构保持 ABI epoch 1。
+
+PDF Type3 支持 Encoding/Differences/ToUnicode/Widths、FontBBox 和完整 FontMatrix，CharProcs 复用现有 C 内容解释器绘制路径、Form、stencil 图片及嵌套文字。父字形输出一次文字语义，CharProc 内部装饰文字不重复进入选择/搜索。d0 继承并可覆盖颜色；d1 继承填充/描边色，拒绝有色绘图及非 stencil 图片。Tr 3/7 隐藏；Type3 父字形不形成普通字体文本 clip。递归共享 32 层及全局工作预算，.notdef 用于缺失编码。自绘 sink 须按层保存 BEGIN_CLIP/END_CLIP 的 pending text union，内置 canvas 已支持嵌套；SAVE/RESTORE 的 clip 状态与 pending union 分开管理。
+
+EXR_ENABLE_AAC 默认 OFF；启用后用固定版本 FAAD2 C codec 解码，关闭时不下载组件，所有 AAC/M4B 符号仍存在并报告不可用。exr_aac_* 支持 ADTS 单 raw block、channel_configuration 1–7、AAC-LC/PNS/SBR/PS，输出 1–8 声道独立 float PCM；不支持 PCE、ADIF、LATM、DRM，也不验证 ADTS CRC。ADTS 没有编码器裁剪信息，保留完整 timeline，未知 frames 为 UINT64_MAX，EOF 后更新。
+
+exr_m4b_* 支持普通未分片 M4A/M4B 的 mp4a AAC，按需读取 sample/chunk/time 表及音频包，不常驻复制 mdat 或完整 sample 表。支持 stsz/stz2、stco/co64、单段 rate=1 audio edit 与可选 leading empty edit，正确处理 priming、末包短 duration 和前导静音；movie edit 终点按半开区间向上取样本边界并与精确 media 尾界相交。拒绝加密、外部 data reference、多 sample description、分片、多段/变速 edit 和非零 composition offsets。章节/封面元数据尚未从 M4B 导入。
+
+AAC/M4B 为精确跳播保留当前完整解码器状态，后退从头重放；每次 read 最多 65536 帧，重放至多 16M 帧，输入工作量有界。EXR_LIMIT 后同一目标可续扫，不能当作快速随机状态快照。PCM 自动识别已接 ADTS、带 ID3 的 AAC 和常见 ISO-BMFF 首 box；自有 demux/边界/ownership 与第三方解码算法分别记录在许可证清单。六平台 CI 将显式开启可选 codec 验证，默认轻核构建仍关闭 AAC。
+
+exr_epub_metadata_write 编辑单个本地 OPF 的 DC title/creator/subject/description/publisher/contributor/date/type/format/source/language/relation/coverage/rights，key 使用 dcterms URI。缺省不改，整 key 的多值及传递 refinements 一起替换，保留首个原 id；NULL 删除可选属性，普通空串保留，title/language 不能空或删除。identifier 不提供写入，避免破坏字体混淆标识。未知结构和命名空间保留语义，XML 统一 UTF-8 序列化。
+
+cover 为 NULL 时不变；空 data/size 清除封面 designation 并保留原资源；PNG/JPEG 替换做 MIME/签名检查，沿用已有封面 URI 以保住书内链接，并更新共享该资源的 manifest media-type。没有封面时创建不冲突的本地资源与 EPUB2/3 designation。签名/rights 文件、歧义 cover、加密 cover、metadata/cover 写入时的 element base URI，以及 cover 覆盖保留包成员 返回错误；仅混淆字体的 encryption.xml 可原样保留，清 designation 不需要解密。封面最多 16 MiB，XML 输入每个最多 4 MiB、输出 OPF 8 MiB、ZIP 128 MiB/10000 entries，元数据值 64 KiB/64 keys。未改 ZIP 成员按原压缩字节复制，输出 mimetype 为第一个无压缩成员；ZIP 容器字节及 OPF 词法拼写可以变化。输出独立内存以 exr_free 释放，无修改时独立原样复制，失败/取消清空输出。

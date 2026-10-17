@@ -24,3 +24,9 @@ cubic contours. `pdf-names.ttf` uses 2000 units per em and retains PostScript
 names; `pdf-unicode.ttf` omits them; `pdf-symbol.ttf` uses a Microsoft symbolic
 cmap. `pdf-cubic.otf` has ordinary CFF outlines and `pdf-cid.otf` has CID-keyed
 CFF with deliberately sparse CIDs (1, 42, 77, 99). No external outlines are used.
+
+
+The three `vertical-*` fonts are original rectangles/triangles from
+`tools/generate_vertical_test_fonts.py` (GPL-3.0-only). They distinguish native
+vmtx metrics, vert fallback, vrt2 priority and vertical kerning; the plain face
+omits vertical metrics/alternates to exercise em and orientation fallback.

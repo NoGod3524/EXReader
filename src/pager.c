@@ -25,6 +25,8 @@ typedef struct {
 struct exr_pager {
   flow f;
   exr_layout_config config;
+  exr_layout_options physical_page;
+  exr_writing_mode writing_mode;
   exr_style *styles;
   size_t style_count;
   exr_layout *assets;
@@ -396,6 +398,46 @@ static int box_order(const void *a, const void *b) {
     return x->node < y->node ? -1 : 1;
   return (int)x->kind - (int)y->kind;
 }
+static exr_status project_page(exr_pager *p) {
+  exr_layout *l = p->f.layout;
+  size_t i, j;
+  l->writing_mode = p->writing_mode;
+  if (p->writing_mode == EXR_WRITING_HORIZONTAL_TB) return EXR_OK;
+  for (i = 0; i < l->line_count; i++) {
+    exr_line *line = &l->lines[i];
+    float start = line->y, height = line->height, x = line->x, width = line->width;
+    for (j = line->glyph_start; j < line->glyph_start + line->glyph_count; j++) {
+      exr_glyph *g = &l->glyphs[j];
+      float pen = g->x, baseline = g->baseline;
+      if (!(j & 255) && exr_control_cancel(&p->config.control, p->f.error) != EXR_OK) return EXR_CANCELLED;
+      if (g->flags & EXR_GLYPH_SIDEWAYS)
+        g->x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width - baseline :
+                                                         2 * start + height - baseline;
+      else {
+        exr_face *face = &p->f.font->faces[g->font_index];
+        FT_Glyph_Metrics metrics;
+        if (exr_font_size(face, g->size) || FT_Load_Glyph(face->face, g->glyph, FT_LOAD_VERTICAL_LAYOUT))
+          return failure(p, EXR_FONT, "Cannot position vertical font glyph");
+        metrics = face->face->glyph->metrics;
+        g->x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width - start - height / 2 :
+                                                         start + height / 2;
+        g->offset_x += (float)(metrics.vertBearingX - metrics.horiBearingX) / 64;
+        g->offset_y -= (float)(metrics.vertBearingY + metrics.horiBearingY) / 64;
+      }
+      g->baseline = pen;
+    }
+    line->x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width - start - height : start;
+    line->y = x; line->width = height; line->height = width;
+  }
+  for (i = 0; i < l->box_count; i++) {
+    exr_box *b = &l->boxes[i];
+    float x = b->x, y = b->y, width = b->width, height = b->height;
+    b->x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width - y - height : y;
+    b->y = x; b->width = height; b->height = width;
+  }
+  l->options = p->physical_page;
+  return EXR_OK;
+}
 static exr_status seal(exr_pager *p, int partial) {
   flow *f = &p->f;
   exr_layout *l = f->layout;
@@ -442,6 +484,37 @@ static exr_status seal(exr_pager *p, int partial) {
     l->image_count++;
     l->image_bytes += size;
   }
+  return project_page(p);
+}
+static exr_status writing_mode(exr_pager *p, exr_error *e) {
+  size_t i;
+  int found = 0;
+  for (i = 0; i < p->style_count; i++) {
+    const exr_node *n = &p->f.doc->nodes[i];
+    if (!(i & 255) && exr_control_cancel(&p->config.control, e) != EXR_OK) return EXR_CANCELLED;
+    if (p->styles[i].display == EXR_CSS_NONE || n->start == SIZE_MAX ||
+        (n->kind != EXR_NODE_TEXT && n->kind != EXR_NODE_IMAGE) ||
+        n->chapter >= p->f.doc->chapter_count || !p->f.doc->chapters[n->chapter].in_spine ||
+        !p->f.doc->chapters[n->chapter].linear) continue;
+    if (found && p->writing_mode != p->styles[i].writing_mode)
+      return exr_fail(e, EXR_FORMAT, "Orthogonal writing-mode contexts are not supported");
+    p->writing_mode = p->styles[i].writing_mode; found = 1;
+  }
+  if (p->writing_mode != EXR_WRITING_HORIZONTAL_TB) {
+    float swap = p->config.page.width;
+    p->config.page.width = p->config.page.height; p->config.page.height = swap;
+    for (i = 0; i < p->style_count; i++) {
+      exr_style *s = &p->styles[i];
+      exr_length margin[4], padding[4], length = s->width;
+      size_t map[4] = {p->writing_mode == EXR_WRITING_VERTICAL_RL ? 1u : 3u, 2u,
+                       p->writing_mode == EXR_WRITING_VERTICAL_RL ? 3u : 1u, 0u}, j;
+      s->width = s->height; s->height = length;
+      length = s->max_width; s->max_width = s->max_height; s->max_height = length;
+      memcpy(margin, s->margin, sizeof(margin)); memcpy(padding, s->padding, sizeof(padding));
+      for (j = 0; j < 4; j++) { s->margin[j] = margin[map[j]]; s->padding[j] = padding[map[j]]; }
+    }
+  }
+  p->f.writing_mode = p->writing_mode;
   return EXR_OK;
 }
 exr_status exr_pager_create(const exr_document *doc, exr_font *font,
@@ -466,6 +539,8 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   if (!p)
     return exr_fail(e, EXR_MEMORY, "Pager allocation failed");
   p->config = *config;
+  p->physical_page = config->page;
+  p->f.doc = doc;
   p->style_count = doc->node_count;
   p->config.user_css = NULL;
   if (config->user_css) {
@@ -486,13 +561,15 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
     exr_pager_free(p);
     return status;
   }
+  status = writing_mode(p, e);
+  if (status != EXR_OK) { free(font_rules); exr_pager_free(p); return status; }
   p->assets = calloc(1, sizeof(*p->assets));
   if (!p->assets) {
     free(font_rules);
     exr_pager_free(p);
     return exr_fail(e, EXR_MEMORY, "Pager asset allocation failed");
   }
-  p->assets->options = config->page;
+  p->assets->options = p->config.page;
   status = exr_book_fonts(doc, font, p->styles, font_rules, font_count, &p->config.control,
                            &p->assets->font, e);
   free(font_rules);
@@ -506,7 +583,7 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   p->f.paragraph = &p->styles[0];
   p->f.paginate = p->f.page_limit = 1;
   p->f.x = p->f.y = config->page.margin;
-  p->f.width = config->page.width - 2 * config->page.margin;
+  p->f.width = p->config.page.width - 2 * config->page.margin;
   p->cache_capacity = 1;
   p->checkpoint_capacity = 4;
   p->checkpoint_budget = 2*1024*1024;
@@ -580,6 +657,7 @@ static void reset_cursor(exr_pager *p) {
   exr_inline_buffer_clear(&p->line);
   exr_inline_clear(&p->bidi);
   memset(&p->f, 0, sizeof(p->f));
+  p->f.writing_mode = p->writing_mode;
   p->f.doc = doc;
   p->f.font = font;
   p->f.assets = p->assets;
@@ -775,7 +853,8 @@ exr_status exr_flow_create(const exr_document *doc, exr_font *font,
     exr_pager_free(pager);
     return exr_fail(e, EXR_MEMORY, "Whole-document layout allocation failed");
   }
-  all->options = pager->config.page;
+  all->options = pager->physical_page;
+  all->writing_mode = pager->writing_mode;
   all->font = pager->assets->font;
   exr_font_ref(all->font);
   while ((status = exr_pager_next(pager, &page, e)) == EXR_OK && page) {

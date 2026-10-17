@@ -144,22 +144,54 @@ int exr_font_size(exr_face *font, float pixels) {
     memset(font->measured, 0, font->metric_count);
   return 0;
 }
-int exr_measure(exr_face *font, uint32_t glyph, unsigned flags, float *advance) {
+static int measure(exr_face *font, uint32_t glyph, unsigned flags, int vertical, float *advance) {
+  unsigned key;
   flags &= EXR_GLYPH_BOLD | EXR_GLYPH_ITALIC;
-  if (glyph < font->metric_count && font->measured[glyph] == flags + 1) {
+  key = flags + 1 + (vertical ? 4u : 0u);
+  if (glyph < font->metric_count && font->measured[glyph] == key) {
     *advance = font->advances[glyph];
     return 0;
   }
-  if (FT_Load_Glyph(font->face, glyph, FT_LOAD_DEFAULT))
+  if (FT_Load_Glyph(font->face, glyph, vertical ? FT_LOAD_VERTICAL_LAYOUT : FT_LOAD_DEFAULT))
     return 1;
   if (flags & 1)
     FT_GlyphSlot_Embolden(font->face->glyph);
-  *advance = (float)font->face->glyph->advance.x / 64;
+  *advance = (float)(vertical ? font->face->glyph->advance.y : font->face->glyph->advance.x) / 64;
+  if (vertical && !FT_HAS_VERTICAL(font->face)) *advance = (float)font->metric_size / 64;
   if (glyph < font->metric_count) {
     font->advances[glyph] = *advance;
-    font->measured[glyph] = (unsigned char)(flags + 1);
+    font->measured[glyph] = (unsigned char)key;
   }
   return 0;
+}
+int exr_measure(exr_face *font, uint32_t glyph, unsigned flags, float *advance) {
+  return measure(font, glyph, flags, 0, advance);
+}
+int exr_measure_vertical(exr_face *font, uint32_t glyph, unsigned flags, float *advance) {
+  return measure(font, glyph, flags, 1, advance);
+}
+exr_writing_mode exr_layout_writing_mode(const exr_layout *l) {
+  return l ? l->writing_mode : EXR_WRITING_HORIZONTAL_TB;
+}
+exr_status exr_glyph_matrix(const exr_glyph *g, double matrix[6], exr_error *e) {
+  double scale;
+  if (matrix) memset(matrix, 0, 6 * sizeof(*matrix));
+  if (!g || !matrix || !isfinite(g->x) || !isfinite(g->baseline) ||
+      !isfinite(g->offset_x) || !isfinite(g->offset_y) || !isfinite(g->size) ||
+      g->size < 0 || g->size > 4096 || (g->flags & ~511u) ||
+      ((g->flags & EXR_GLYPH_SIDEWAYS) && !(g->flags & EXR_GLYPH_VERTICAL)))
+    return exr_fail(e, EXR_ARGUMENT, "Invalid glyph transformation input");
+  scale = (double)g->size / 1000;
+  if (g->flags & EXR_GLYPH_SIDEWAYS) {
+    matrix[1] = matrix[2] = scale;
+    matrix[4] = (double)g->x + g->offset_y;
+    matrix[5] = (double)g->baseline + g->offset_x;
+  } else {
+    matrix[0] = scale; matrix[3] = -scale;
+    matrix[4] = (double)g->x + g->offset_x;
+    matrix[5] = (double)g->baseline - g->offset_y;
+  }
+  return exr_fail(e, EXR_OK, "");
 }
 exr_layout_options exr_layout_defaults(void) {
   exr_layout_options o = {720, 1040, 48, 24, 1.6f, 12};
@@ -274,17 +306,20 @@ size_t exr_layout_hit_test(const exr_layout *l, size_t p, float x, float y) {
     const exr_glyph *g = &l->glyphs[i];
     size_t end = i + 1;
     int visible = !(g->flags & EXR_GLYPH_HIDDEN);
-    float left = g->x, right = g->x + g->advance;
+    int vertical = !!(g->flags & EXR_GLYPH_VERTICAL);
+    float position = vertical ? y : x;
+    float left = vertical ? g->baseline : g->x, right = left + g->advance;
     while (end < line->glyph_start + line->glyph_count &&
            l->glyphs[end].cluster_start == g->cluster_start) {
-      left = fminf(left, l->glyphs[end].x);
-      right = fmaxf(right, l->glyphs[end].x + l->glyphs[end].advance);
+      float pen = vertical ? l->glyphs[end].baseline : l->glyphs[end].x;
+      left = fminf(left, pen);
+      right = fmaxf(right, pen + l->glyphs[end].advance);
       visible |= !(l->glyphs[end].flags & EXR_GLYPH_HIDDEN);
       end++;
     }
     if (visible) last_visible = g;
-    if (visible && x <= right)
-      return (x < (left + right) / 2) != (g->bidi_level & 1) ?
+    if (visible && position <= right)
+      return (position < (left + right) / 2) != (g->bidi_level & 1) ?
                  g->cluster_start : g->cluster_end;
     i = end;
   }

@@ -31,6 +31,7 @@ struct ot_work {
   ot_view gdef, table, lookups;
   int positioning;
   int rtl;
+  int vertical;
   size_t next_scan;
   size_t control_next;
 };
@@ -781,7 +782,8 @@ static void apply_table(ot_work *w, ot_table *source, uint32_t script, int posit
     EXR_TAG('r','l','i','g'), EXR_TAG('r','c','l','t'), EXR_TAG('c','a','l','t'),
     EXR_TAG('l','i','g','a'), EXR_TAG('c','l','i','g')};
   static const uint32_t position_tags[] = {
-    EXR_TAG('c','u','r','s'), EXR_TAG('k','e','r','n'), EXR_TAG('m','a','r','k'), EXR_TAG('m','k','m','k')};
+    EXR_TAG('c','u','r','s'), EXR_TAG('k','e','r','n'), EXR_TAG('m','a','r','k'), EXR_TAG('m','k','m','k'),
+    EXR_TAG('v','k','r','n')};
   const uint32_t *tags = positioning ? position_tags : substitution_tags;
   size_t count = positioning ? sizeof(position_tags)/sizeof(*position_tags) :
                                sizeof(substitution_tags)/sizeof(*substitution_tags), i, j;
@@ -798,12 +800,21 @@ static void apply_table(ot_work *w, ot_table *source, uint32_t script, int posit
       if (script != EXR_TAG('a','r','a','b')) continue;
       mask = i == 2 ? 1u : i == 3 ? 8u : i == 4 ? 4u : 2u;
     }
-    enabled = feature_value(w->options, tags[i], 1);
+    enabled = feature_value(w->options, tags[i],
+                            tags[i] == EXR_TAG('v','k','r','n') ? (unsigned)w->vertical :
+                            tags[i] == EXR_TAG('k','e','r','n') ? (unsigned)!w->vertical : 1u);
     if (feature_tag(w, features, lang, tags[i], mask, enabled) && tags[i] == EXR_TAG('k','e','r','n'))
       *has_kern = 1;
   }
+  if (!positioning && w->vertical && w->status == EXR_OK) {
+    unsigned enabled = feature_value(w->options, EXR_TAG('v','r','t','2'), 1);
+    if (!feature_tag(w, features, lang, EXR_TAG('v','r','t','2'), 0, enabled))
+      feature_tag(w, features, lang, EXR_TAG('v','e','r','t'), 0,
+                  feature_value(w->options, EXR_TAG('v','e','r','t'), 1));
+  }
   for (i = 0; i < w->options->feature_count && w->status == EXR_OK; i++) {
     uint32_t tag = w->options->features[i].tag;
+    if (w->vertical && (tag == EXR_TAG('v','r','t','2') || tag == EXR_TAG('v','e','r','t'))) continue;
     for (j = 0; j < count && tag != tags[j]; j++) {}
     if (j == count) feature_tag(w, features, lang, tag, 0, w->options->features[i].value);
   }
@@ -845,9 +856,9 @@ exr_shape_options exr_shape_defaults(void) {
   options.font_size = 24;
   return options;
 }
-exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t size,
+static exr_status shape(exr_font *font, size_t face_index, const char *text, size_t size,
                        const exr_shape_options *options, exr_shaped_glyph **out,
-                       size_t *out_count, exr_error *error) {
+                       size_t *out_count, int vertical, exr_error *error) {
   exr_shape_options defaults = exr_shape_defaults();
   ot_work w = {0};
   unsigned char *boundaries = NULL;
@@ -877,7 +888,7 @@ exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t
   w.status = exr_control_poll(&options->control, EXR_STAGE_SHAPE, 0, size, error);
   if (w.status != EXR_OK) return w.status;
   if (!size) return exr_fail(error, EXR_OK, "");
-  w.face = &font->faces[face_index]; w.options = options;
+  w.face = &font->faces[face_index]; w.options = options; w.vertical = vertical;
   w.work_limit = 64000000u;
   if (!w.face->face->units_per_EM)
     return exr_fail(error, EXR_FONT, "Font has no usable design-unit scale");
@@ -908,11 +919,16 @@ exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t
     item->out.start = cluster_start; item->out.end = cluster_end;
     item->out.glyph = FT_Get_Char_Index(w.face->face, cp); item->cp = cp; item->parent = SIZE_MAX;
     item->out.flags = options->style_flags;
+    if (vertical) item->out.flags |= EXR_GLYPH_VERTICAL;
     if (exr_text_hidden(cp)) item->out.flags |= EXR_GLYPH_HIDDEN;
     else if (!item->out.glyph) item->out.flags |= EXR_GLYPH_MISSING;
     if (!script) {
       unsigned sc = property(exr_shape_script, sizeof(exr_shape_script)/sizeof(*exr_shape_script), cp);
       if (sc) script = sc == 1 ? EXR_TAG('l','a','t','n') : EXR_TAG('a','r','a','b');
+      else if (vertical && ((cp >= 0x3400 && cp <= 0x9fff) || (cp >= 0x20000 && cp <= 0x3ffff)))
+        script = EXR_TAG('h','a','n','i');
+      else if (vertical && cp >= 0x3040 && cp <= 0x30ff) script = EXR_TAG('k','a','n','a');
+      else if (vertical && cp >= 0xac00 && cp <= 0xd7af) script = EXR_TAG('h','a','n','g');
     }
   }
   if (!script) script = EXR_TAG('D','F','L','T');
@@ -929,12 +945,16 @@ exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t
     w.items[i].out.flags &= ~EXR_GLYPH_MISSING;
     if (!w.items[i].out.glyph && !(w.items[i].out.flags & EXR_GLYPH_HIDDEN))
       w.items[i].out.flags |= EXR_GLYPH_MISSING;
-    if (!(w.items[i].out.flags & EXR_GLYPH_HIDDEN) &&
-        exr_measure(w.face, w.items[i].out.glyph, options->style_flags, &w.items[i].out.advance_x)) {
-      w.status = EXR_FONT; goto done;
+    if (!(w.items[i].out.flags & EXR_GLYPH_HIDDEN)) {
+      float advance;
+      int failed = vertical ? exr_measure_vertical(w.face, w.items[i].out.glyph, options->style_flags, &advance) :
+                              exr_measure(w.face, w.items[i].out.glyph, options->style_flags, &advance);
+      if (failed) { w.status = EXR_FONT; goto done; }
+      if (vertical) w.items[i].out.advance_y = -advance;
+      else w.items[i].out.advance_x = advance;
     }
     cls = item_class(&w, i);
-    if (cls == 3) w.items[i].out.advance_x = 0;
+    if (cls == 3) w.items[i].out.advance_x = w.items[i].out.advance_y = 0;
     /* GPOS cannot change glyph classes. Cache predecessors once, so a long
        combining sequence does not rescan the same mark run for each glyph. */
     w.items[i].previous_visible = previous_visible;
@@ -945,7 +965,7 @@ exr_status exr_shape(exr_font *font, size_t face_index, const char *text, size_t
     }
   }
   apply_table(&w, &w.face->ot->gpos, script, 1, &has_kern);
-  if (!has_kern && feature_value(options, EXR_TAG('k','e','r','n'), 1)) {
+  if (!has_kern && feature_value(options, EXR_TAG('k','e','r','n'), (unsigned)!vertical)) {
     size_t previous = SIZE_MAX;
     for (i = 0; i < w.count; i++) {
       if (w.items[i].out.flags & EXR_GLYPH_HIDDEN || item_class(&w, i) == 3) continue;
@@ -978,4 +998,13 @@ done:
                                   w.status == EXR_LIMIT ? "OpenType shaping work limit exceeded" :
                                   w.status == EXR_ENCODING ? "Shaping text is not UTF-8" :
                                   w.status == EXR_CANCELLED ? "Operation cancelled" : "Shaping allocation failed");
+}
+
+exr_status exr_shape(exr_font *font,size_t index,const char *text,size_t size,
+                       const exr_shape_options *options,exr_shaped_glyph **out,size_t *count,exr_error *e) {
+  return shape(font,index,text,size,options,out,count,0,e);
+}
+exr_status exr_shape_vertical(exr_font *font,size_t index,const char *text,size_t size,
+                                const exr_shape_options *options,exr_shaped_glyph **out,size_t *count,exr_error *e) {
+  return shape(font,index,text,size,options,out,count,1,e);
 }

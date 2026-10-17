@@ -39,7 +39,8 @@ exr_status exr_flow_page(flow *f, float height, size_t offset) {
 static float glyph_kern(flow *f, const exr_glyph *previous, const exr_glyph *g) {
   if (!previous || ((previous->flags | g->flags) & (EXR_GLYPH_HIDDEN | EXR_GLYPH_SHAPED)) ||
       previous->font_index != g->font_index || previous->size != g->size ||
-      (previous->flags & 3) != (g->flags & 3))
+      (previous->flags & 3) != (g->flags & 3) ||
+      ((g->flags & EXR_GLYPH_VERTICAL) && !(g->flags & EXR_GLYPH_SIDEWAYS)))
     return 0;
   return exr_kern(&f->font->faces[g->font_index], previous->glyph, g->glyph);
 }
@@ -100,7 +101,10 @@ exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
     selected = &f->font->faces[face];
     g->flags &= ~selected->style_flags;
     g->glyph = FT_Get_Char_Index(selected->face, cp);
-    if (exr_font_size(selected, g->size) || exr_measure(selected, g->glyph, g->flags, &g->advance))
+    if (exr_font_size(selected, g->size) ||
+        ((g->flags & EXR_GLYPH_VERTICAL) && !(g->flags & EXR_GLYPH_SIDEWAYS) ?
+         exr_measure_vertical(selected, g->glyph, g->flags, &g->advance) :
+         exr_measure(selected, g->glyph, g->flags, &g->advance)))
       return fail(f, EXR_FONT, "Cannot measure selected font");
     if (g->codepoint == '\t')
       g->advance *= 4;
@@ -370,6 +374,7 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
     return status;
   w = bitmap ? (float)bitmap->width : 160;
   h = bitmap ? (float)bitmap->height : 80;
+  if (f->writing_mode != EXR_WRITING_HORIZONTAL_TB) { float swap = w; w = h; h = swap; }
   scale = 1;
   if (s->width.value >= 0)
     scale = used(s->width, width) / w;
@@ -384,6 +389,8 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
   scale = fminf(1, fminf(width / w, exr_flow_room(f) / h));
   if (s->max_width.value >= 0)
     scale = fminf(scale, used(s->max_width, width) / w);
+  if (s->max_height.value >= 0)
+    scale = fminf(scale, used(s->max_height, exr_flow_room(f)) / h);
   w *= scale;
   h *= scale;
   status = exr_flow_page(f, h, f->doc->nodes[node].start);

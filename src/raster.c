@@ -15,8 +15,19 @@ static void rectangle(exr_bitmap *b, float x, float y, float w, float h, uint32_
     for (xx = left; xx < right; xx++)
       exr_pixel(b, xx, yy, color, 255);
 }
-static void decoration(exr_bitmap *out,const exr_glyph *g,const exr_glyph *next,FT_Face face) {
+static void decoration(exr_bitmap *out,const exr_glyph *g,const exr_glyph *next,FT_Face face,const exr_line *line) {
   float thickness=fmaxf(1,fminf(g->size/6,(float)FT_MulFix(face->underline_thickness,face->size->metrics.y_scale)/64));
+  if(g->flags&EXR_GLYPH_VERTICAL) {
+    float top=fmaxf(floorf(g->baseline),ceilf(g->clip_left)),bottom=g->baseline+g->advance;
+    float center=line ? line->x+line->width/2 : g->x;
+    float edge=line ? line->x+line->width-thickness : g->x+g->size/2-thickness;
+    if(next && !(next->flags&EXR_GLYPH_HIDDEN) && (next->flags&EXR_DECORATIONS)==(g->flags&EXR_DECORATIONS) &&
+       next->color==g->color) bottom=fmaxf(bottom,next->baseline);
+    bottom=fminf(ceilf(bottom),ceilf(g->clip_right));
+    if(g->flags&EXR_GLYPH_UNDERLINE) rectangle(out,edge,top,thickness,bottom-top,g->color);
+    if(g->flags&EXR_GLYPH_STRIKE) rectangle(out,center,top,thickness,bottom-top,g->color);
+    return;
+  }
   float left=fmaxf(floorf(g->x),ceilf(g->clip_left)),right=g->x+g->advance;
   if(next && !(next->flags&EXR_GLYPH_HIDDEN) && (next->flags&EXR_DECORATIONS)==(g->flags&EXR_DECORATIONS) &&
       next->color==g->color && fabsf(next->baseline-g->baseline)<0.01f) right=fmaxf(right,next->x);
@@ -95,7 +106,7 @@ static exr_status draw_box(exr_bitmap *out,const exr_layout *l,const exr_box *b,
   }
   return EXR_OK;
 }
-static exr_status draw_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,const exr_glyph *next) {
+static exr_status draw_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,const exr_glyph *next,const exr_line *line) {
   exr_face *selected; FT_Face face; FT_GlyphSlot slot; unsigned by,bx; int left,top;
   if((g->flags&EXR_GLYPH_HIDDEN) || g->size<1.0f/64) return EXR_OK;
   if(g->font_index>=font->count) return EXR_FONT;
@@ -114,17 +125,35 @@ static exr_status draw_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,c
   slot=face->glyph;
   left=(int)lroundf(g->x+g->offset_x)+slot->bitmap_left;
   top=(int)lroundf(g->baseline-g->offset_y)-slot->bitmap_top;
+  if(g->flags&EXR_GLYPH_SIDEWAYS) {
+    left=(int)lroundf(g->x+g->offset_y)+slot->bitmap_top-1;
+    top=(int)lroundf(g->baseline+g->offset_x)+slot->bitmap_left;
+  }
   for(by=0;by<slot->bitmap.rows;by++) for(bx=0;bx<slot->bitmap.width;bx++) {
-    int x=left+(int)bx,y=top+(int)by; const unsigned char *row; unsigned a;
-    if(x<0 || y<0 || (uint32_t)x>=out->width || (uint32_t)y>=out->height || (float)x<g->clip_left || (float)x>=g->clip_right) continue;
+    int sideways=!!(g->flags&EXR_GLYPH_SIDEWAYS);
+    int x=sideways ? left-(int)by : left+(int)bx,y=sideways ? top+(int)bx : top+(int)by;
+    float inline_position=(float)((g->flags&EXR_GLYPH_VERTICAL) ? y : x);
+    const unsigned char *row; unsigned a;
+    if(x<0 || y<0 || (uint32_t)x>=out->width || (uint32_t)y>=out->height ||
+       inline_position<g->clip_left || inline_position>=g->clip_right) continue;
     row=slot->bitmap.buffer+(ptrdiff_t)by*slot->bitmap.pitch;
     if(slot->bitmap.pixel_mode==FT_PIXEL_MODE_GRAY) a=row[bx];
     else if(slot->bitmap.pixel_mode==FT_PIXEL_MODE_MONO) a=(row[bx/8]&(0x80>>(bx%8))) ? 255 : 0;
     else continue;
     exr_pixel(out,x,y,g->color,a);
   }
-  if(g->flags&EXR_DECORATIONS) decoration(out,g,next,face);
+  if(g->flags&EXR_DECORATIONS) decoration(out,g,next,face,line);
   return EXR_OK;
+}
+static const exr_line *glyph_line(const exr_layout *l,size_t glyph) {
+  size_t lo=0,hi=l->line_count;
+  while(lo<hi) {
+    size_t mid=lo+(hi-lo)/2; const exr_line *line=&l->lines[mid];
+    if(glyph<line->glyph_start) hi=mid;
+    else if(glyph-line->glyph_start>=line->glyph_count) lo=mid+1;
+    else return line;
+  }
+  return NULL;
 }
 static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned channels,
                          const exr_control *control, exr_bitmap *out, exr_error *e) {
@@ -157,7 +186,7 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
       const exr_paint *command=&l->paints[positioned->paint_start+i];
       if(!(i&31) && exr_control_poll(control,EXR_STAGE_RENDER,i,total,e)!=EXR_OK) goto cancelled;
       if(command->kind==EXR_PAINT_GLYPH) {
-        status=draw_glyph(out,f,&l->glyphs[command->index],NULL); if(status!=EXR_OK) goto font_error;
+        status=draw_glyph(out,f,&l->glyphs[command->index],NULL,glyph_line(l,command->index)); if(status!=EXR_OK) goto font_error;
       } else if(draw_box(out,l,&l->boxes[command->index],control,e)!=EXR_OK) goto cancelled;
     }
   } else {
@@ -170,7 +199,7 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
       for(j=l->lines[i].glyph_start;j<end;j++) {
         if(j==l->lines[i].glyph_start && exr_control_poll(control,EXR_STAGE_RENDER,p->box_count+i-p->line_start,total,e)!=EXR_OK) goto cancelled;
         if(!(j&31) && exr_control_cancel(control,e)!=EXR_OK) goto cancelled;
-        status=draw_glyph(out,f,&l->glyphs[j],j+1<end ? &l->glyphs[j+1] : NULL); if(status!=EXR_OK) goto font_error;
+        status=draw_glyph(out,f,&l->glyphs[j],j+1<end ? &l->glyphs[j+1] : NULL,&l->lines[i]); if(status!=EXR_OK) goto font_error;
       }
     }
   }

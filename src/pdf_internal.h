@@ -75,11 +75,12 @@ void exr_pdf_cmap_free(exr_pdf_cmap *map);
 exr_status exr_pdf_cmap_next(const exr_pdf_cmap *map,const unsigned char *data,size_t size,size_t *at,
                             exr_pdf_mapping *out,exr_error *error);
 typedef struct exr_pdf_font exr_pdf_font;
-typedef enum { EXR_PDF_TYPE1,EXR_PDF_TRUETYPE,EXR_PDF_CID_TYPE0,EXR_PDF_CID_TYPE2 } exr_pdf_font_kind;
+typedef enum { EXR_PDF_TYPE1,EXR_PDF_TRUETYPE,EXR_PDF_CID_TYPE0,EXR_PDF_CID_TYPE2,EXR_PDF_TYPE3 } exr_pdf_font_kind;
 typedef struct {
   exr_pdf_font_kind kind; const char *base_name,*encoding_name,*program_type;
   const unsigned char *program; size_t program_size; unsigned composite,vertical,flags;
   double ascent,descent; /* Logical cell height in 1000-em units; descriptor or estimated. */
+  double type3_quad[8]; /* Declared FontBBox after its full normalized FontMatrix. */
 } exr_pdf_font_info;
 typedef struct {
   exr_pdf_mapping text; uint32_t cid,glyph; unsigned glyph_known;
@@ -94,6 +95,10 @@ exr_status exr_pdf_font_next(const exr_pdf_font *font,const unsigned char *data,
                              exr_pdf_character *out,exr_error *error);
 size_t exr_pdf_cmap_memory(const exr_pdf_cmap *map);
 size_t exr_pdf_font_memory(const exr_pdf_font *font);
+/* Type3 metrics stay in normalized 1000-em text units. Matrix maps raw
+   CharProc glyph coordinates to those units; an absent glyph is NONE. */
+exr_status exr_pdf_font_type3(exr_pdf_file *file,const exr_pdf_font *font,uint32_t code,
+  uint32_t *stream,uint32_t *resources,double matrix[6],exr_error *error);
 /* Immutable normative facts; glyph names and encoded byte values are distinct
    from ToUnicode's semantic text. Unknown names/metrics return no mapping. */
 const char *exr_pdf_encoding_glyph(const char *encoding,unsigned code);
