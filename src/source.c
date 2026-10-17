@@ -11,11 +11,16 @@
 
 static size_t file_read(void *context, uint64_t offset, void *buffer, size_t size) {
   FILE *file = context;
-  if (offset > LONG_MAX || fseek(file, (long)offset, SEEK_SET)) return 0;
+  if(offset>INT64_MAX) return 0;
+#ifdef _WIN32
+  if(_fseeki64(file,(int64_t)offset,SEEK_SET)) return 0;
+#else
+  if(fseeko(file,(off_t)offset,SEEK_SET)) return 0;
+#endif
   return fread(buffer, 1, size, file);
 }
 static void file_release(void *context) { fclose(context); }
-exr_status exr_file_source(const char *path, exr_source *source, exr_error *e) {
+exr_status exr_file_source_limit(const char *path,uint64_t maximum,exr_source *source,exr_error *e) {
   FILE *file;
   int64_t size;
   memset(source, 0, sizeof(*source));
@@ -26,10 +31,12 @@ exr_status exr_file_source(const char *path, exr_source *source, exr_error *e) {
 #else
   size = fseeko(file, 0, SEEK_END) ? -1 : (int64_t)ftello(file);
 #endif
-  if (size < 0 || (uint64_t)size > EXR_MAX_INPUT) {
+  if (size < 0 || (uint64_t)size > maximum) {
     fclose(file);
-    return exr_fail(e, size < 0 ? EXR_IO : EXR_LIMIT, "Cannot size publication or input exceeds 128 MiB");
+    return exr_fail(e, size < 0 ? EXR_IO : EXR_LIMIT, "Cannot size file or input exceeds byte limit");
   }
   *source = (exr_source){(uint64_t)size, file_read, file_release, file, {0}};
   return EXR_OK;
 }
+
+exr_status exr_file_source(const char *path,exr_source *source,exr_error *e) { return exr_file_source_limit(path,EXR_MAX_INPUT,source,e); }

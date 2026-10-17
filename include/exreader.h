@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.73.0"
+#define EXR_VERSION "0.74.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -285,6 +285,21 @@ typedef struct {
   void *context;
   exr_control control;
 } exr_source;
+/* Native RIFF/WAVE random PCM decoding; source ownership transfers on success. */
+typedef struct exr_wave exr_wave;
+typedef struct {
+  uint32_t sample_rate,channels,bits_per_sample,valid_bits,channel_mask;
+  uint64_t frames;
+  int floating;
+} exr_wave_info;
+EXR_API exr_status exr_wave_open(const char *path,const exr_control *control,exr_wave **out,exr_error *error);
+EXR_API exr_status exr_wave_open_source(const exr_source *source,exr_wave **out,exr_error *error);
+EXR_API void exr_wave_free(exr_wave *wave);
+EXR_API const exr_wave_info *exr_wave_format(const exr_wave *wave);
+/* Interleaved float output, caller capacity >= frames*channels. At most 65536
+   frames per call. Runtime error/cancellation zeros output and returns read=0. */
+EXR_API exr_status exr_wave_read(exr_wave *wave,uint64_t first_frame,size_t frames,float *output,size_t *read,
+                                  const exr_control *control,exr_error *error);
 /* Flat navigation tree. Parent must precede its child; SIZE_MAX denotes a root
    or unresolved/ambiguous part. href is relative to base; arbitrary role labels
    permit host-defined navigation categories (e.g. toc, page-list, landmarks). */
