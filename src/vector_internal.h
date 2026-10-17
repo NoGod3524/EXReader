@@ -23,6 +23,14 @@ exr_status exr_vector_flatten(const exr_vector_segment *segments,size_t count,co
                                const exr_control *control,exr_error *error);
 exr_status exr_vector_edges(const exr_vector_polyline *path,int close_open,exr_vector_edge **out,
                              size_t *count,size_t *work,const exr_control *control,exr_error *error);
+typedef enum { EXR_VECTOR_BUTT,EXR_VECTOR_ROUND_CAP,EXR_VECTOR_SQUARE } exr_vector_cap;
+typedef enum { EXR_VECTOR_MITER,EXR_VECTOR_ROUND_JOIN,EXR_VECTOR_BEVEL } exr_vector_join;
+typedef struct { double width,miter_limit; exr_vector_cap cap; exr_vector_join join; } exr_vector_stroke_style;
+/* Positive width is in source units, then transformed. Width zero is a one-pixel
+   hairline in target coordinates. Closed positive-winding polygons form a union. */
+exr_status exr_vector_stroke(const exr_vector_polyline *path,const exr_vector_stroke_style *style,
+                              const double transform[6],double tolerance,exr_vector_polyline *out,
+                              size_t *work,const exr_control *control,exr_error *error);
 /* Edges describe closed contours in bitmap coordinates. Clip is an optional
    matching 8-bit coverage bitmap. Work is a shared 256M-operation counter.
    A failed/cancelled draw may have modified rows; page rendering discards them. */

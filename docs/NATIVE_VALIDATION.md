@@ -934,3 +934,21 @@ checks transformed quadratic and collinear cubic curves, closure/current-point b
 curved-region raster pixels, ownership/free, invalid coordinates/tolerances and cancellation
 /work limits. Stroke construction and display-list/PDF integration remain pending. The 0.50
 commit cf835bb passed all six platform and sanitizer CI jobs.
+
+
+## 0.52 native stroke outlines
+
+The vector core constructs positive-winding polygon unions for segment bodies, butt/round/
+square caps and miter/round/bevel joins. Miter limits fall back to bevel; round joins use only
+the outer arc rather than a whole disk, preserving short-segment geometry. Round caps/arcs
+subdivide by target-pixel tolerance. Positive widths are outlined in source coordinates and
+then transformed, preserving anisotropic scaling; zero-width hairlines are outlined as one
+pixel after transforming the centerline. Shared vertex/work/coordinate budgets, cancellation
+and atomic owned output apply. Flatten tolerance now accepts any finite positive value within
+the coordinate budget, allowing callers to choose source tolerances for scaled strokes.
+
+Tests cover exact cap/join pixels, miter fallback, nonuniform transforms versus device-space
+hairlines, short round joins, zero-length round dots, single-application stroke alpha at
+component overlaps, invalid styles, output aliasing, cancellation and work exhaustion. Dashed
+paths and display-list/PDF integration remain pending. The 0.51 commit 2a72314 passed all six
+platform and sanitizer CI jobs.
