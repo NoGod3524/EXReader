@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.86.0"
+#define EXR_VERSION "0.87.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -674,6 +674,13 @@ EXR_API exr_status exr_document_cfi_path_create(const exr_document *doc,size_t c
                                                 const exr_control *control,char **path,exr_error *error);
 EXR_API exr_status exr_document_cfi_path_resolve(const exr_document *doc,size_t chapter,const char *path,
                                                  const exr_control *control,exr_cfi_point *point,exr_error *error);
+/* Full point CFI through the original package spine. Requires a complete EPUB
+   document retaining its archive; auxiliary non-spine chapters are rejected.
+   Raw epubcfi(...) strings only; no URI percent decoding. Failure clears output. */
+EXR_API exr_status exr_document_cfi_create(const exr_document *doc,size_t chapter,const exr_cfi_point *point,
+                                           const exr_control *control,char **cfi,exr_error *error);
+EXR_API exr_status exr_document_cfi_resolve(const exr_document *doc,const char *cfi,const exr_control *control,
+                                            size_t *chapter,exr_cfi_point *point,exr_error *error);
 /* Structure-preserving EPUB: serializes the tree and copies all declared resources.
    Chapter paths, attributes and resource bytes are retained. Missing resources,
    non-XML names and conflicting/reserved paths fail atomically. No network access.
