@@ -165,6 +165,8 @@ typedef struct {
   exr_buffer text;
   exr_status failed;
   const char *root_name;
+  exr_xml_position_fn position;
+  void *position_context;
 } tree_parser;
 static void stop(tree_parser *p, exr_status code) {
   p->failed = code;
@@ -206,10 +208,8 @@ static void XMLCALL tree_start(void *user, const char *name, const char **attrs)
     stop(p, EXR_LIMIT);
     return;
   }
-  if (!count)
-    return;
-  a = calloc(count, sizeof(*a));
-  if (!a) {
+  a = count ? calloc(count, sizeof(*a)) : NULL;
+  if (count && !a) {
     stop(p, EXR_MEMORY);
     return;
   }
@@ -229,6 +229,12 @@ static void XMLCALL tree_start(void *user, const char *name, const char **attrs)
       token(exr_node_attribute(node, "role"), "doc-footnote") ||
       token(exr_node_attribute(node, "role"), "doc-endnote"))
     node->kind = EXR_NODE_NOTE;
+  if (p->position) {
+    int64_t offset = XML_GetCurrentByteIndex64(p->parser);
+    exr_status status = offset < 0 ? EXR_FORMAT :
+        p->position(p->position_context, (size_t)offset, index);
+    if (status != EXR_OK) stop(p, status);
+  }
 }
 static void XMLCALL tree_end(void *user, const char *name) {
   tree_parser *p = user;
@@ -256,8 +262,9 @@ static void XMLCALL tree_entity(void *user, const XML_Char *name, int parameter,
   (void)notation;
   stop(p, EXR_FORMAT);
 }
-exr_status exr_xml_tree(exr_document *d, const void *data, size_t n, size_t resource, int in_spine,
-                         int linear, const char *root_name, exr_error *e) {
+static exr_status xml_tree(exr_document *d, const void *data, size_t n, size_t resource, int in_spine,
+                            int linear, const char *root_name, exr_xml_position_fn position,
+                            void *context, exr_error *e) {
   tree_parser p = {0};
   exr_chapter *chapter;
   enum XML_Status parsed;
@@ -271,6 +278,8 @@ exr_status exr_xml_tree(exr_document *d, const void *data, size_t n, size_t reso
     return exr_fail(e, EXR_LIMIT, "Chapter limit exceeded");
   p.doc = d;
   p.root_name = root_name;
+  p.position = position;
+  p.position_context = context;
   p.chapter = d->chapter_count;
   root = exr_model_node(d, 0, p.chapter, EXR_NODE_CHAPTER, NULL, NULL, 0);
   if (root == SIZE_MAX)
@@ -298,6 +307,14 @@ exr_status exr_xml_tree(exr_document *d, const void *data, size_t n, size_t reso
   XML_ParserFree(p.parser);
   free(p.text.data);
   return result;
+}
+exr_status exr_xml_tree(exr_document *d, const void *data, size_t n, size_t resource, int in_spine,
+                         int linear, const char *root_name, exr_error *e) {
+  return xml_tree(d,data,n,resource,in_spine,linear,root_name,NULL,NULL,e);
+}
+exr_status exr_xhtml_positions(exr_document *d,const void *data,size_t n,size_t resource,
+                                 exr_xml_position_fn position,void *context,exr_error *e) {
+  return xml_tree(d,data,n,resource,1,1,"html",position,context,e);
 }
 exr_status exr_xhtml(exr_document *d, const void *data, size_t n, size_t resource, int in_spine,
                      int linear, exr_error *e) {

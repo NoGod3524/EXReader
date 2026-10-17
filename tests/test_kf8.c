@@ -82,8 +82,41 @@ static void assets_case(const char *dir,const char *name) {
   }
   exr_layout_free(a); exr_layout_free(b); exr_font_free(font); exr_document_free(doc); exr_document_free(copy);
 }
+static void position_links(exr_document *doc) {
+  size_t i,n,links=0,parts; const exr_node *nodes=exr_document_nodes(doc,&n);
+  const exr_chapter *chapters=exr_document_chapters(doc,&parts); CHECK(parts>=2);
+  for(i=0;i<n;i++) {
+    const char *key=exr_node_attribute(&nodes[i],"data-test"),*href,*expected=NULL,*id;
+    size_t resource,target;
+    if(!key) continue;
+    href=exr_node_attribute(&nodes[i],"href"); CHECK(href && !strstr(href,"kindle:"));
+    OK(exr_document_resolve(doc,nodes[i].chapter,href,&resource,&target,&error)); CHECK(target<n && resource!=SIZE_MAX);
+    CHECK(nodes[target].chapter==(!strcmp(key,"back") ? 0u : 1u));
+    if(!strcmp(key,"top")) CHECK(target==chapters[1].root);
+    else {
+      if(!strcmp(key,"forward") || !strcmp(key,"inside")) {
+        expected="target % # \xe7\x94\xb2";
+        CHECK(strstr(href,"%25") && strstr(href,"%23") && strstr(href,"%E7%94%B2"));
+      } else if(!strcmp(key,"legacy")) expected="legacy";
+      else if(!strcmp(key,"xml")) expected="xml-target";
+      else expected="shared";
+      id=exr_node_attribute(&nodes[target],"id"); if(!id) id=exr_node_attribute(&nodes[target],"http://www.w3.org/XML/1998/namespace|id");
+      CHECK(id && !strcmp(id,expected));
+    }
+    links++;
+  }
+  CHECK(links==7);
+}
+static void positions_case(const char *dir) {
+  char path[4096]; exr_document *doc=NULL,*copy=NULL; void *data=NULL; size_t size;
+  snprintf(path,sizeof(path),"%s/kf8-positions.azw3",dir); OK(exr_document_open(path,&doc,&error));
+  position_links(doc); OK(exr_document_export_epub(doc,NULL,&data,&size,&error));
+  OK(exr_document_open_memory(EXR_EPUB,data,size,&copy,&error)); exr_free(data);
+  position_links(copy); CHECK(!strcmp(exr_document_text(doc,NULL),exr_document_text(copy,NULL)));
+  exr_document_free(doc); exr_document_free(copy);
+}
 int main(int argc,char **argv) {
-  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed"};
+  const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate"};
   const char *text="Chapter one\nA bold passage.\nChapter two\nSecond passage."; size_t i;
   CHECK(argc==2);
   valid(argv[1],"kf8-basic.azw3",text,2); valid(argv[1],"kf8-multirecord.azw3",text,2); valid(argv[1],"kf8-multicontrol.azw3",text,2);
@@ -97,6 +130,7 @@ int main(int argc,char **argv) {
     if(status!=EXR_FORMAT) fprintf(stderr,"fixture %s returned %d\n",bad[i],status);
     CHECK(status==EXR_FORMAT && !doc && error.code==EXR_FORMAT && error.message[0]);
   }
+  positions_case(argv[1]);
   assets_case(argv[1],"kf8-assets.azw3");
   assets_case(argv[1],"kf8-assets-font0.azw3"); assets_case(argv[1],"kf8-assets-font1.azw3"); assets_case(argv[1],"kf8-assets-font2.azw3");
   { char path[4096]; exr_document *doc=NULL; snprintf(path,sizeof(path),"%s/kf8-limit-font.azw3",argv[1]); CHECK(exr_document_open(path,&doc,&error)==EXR_LIMIT && !doc); }

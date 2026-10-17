@@ -82,6 +82,9 @@ size_t exr_model_node(exr_document *doc, size_t parent, size_t chapter, exr_node
                       const char *name, const char *text, size_t length);
 exr_status exr_xhtml(exr_document *doc, const void *data, size_t size, size_t resource,
                      int in_spine, int linear, exr_error *error);
+typedef exr_status (*exr_xml_position_fn)(void *context, size_t offset, size_t node);
+exr_status exr_xhtml_positions(exr_document *doc, const void *data, size_t size, size_t resource,
+                                 exr_xml_position_fn position, void *context, exr_error *error);
 exr_status exr_xml_tree(exr_document *doc, const void *data, size_t size, size_t resource,
                          int in_spine, int linear, const char *root_name, exr_error *error);
 size_t exr_model_html(exr_document *doc, size_t parent, size_t chapter, exr_node_kind kind,

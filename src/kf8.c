@@ -345,11 +345,96 @@ limit:
 done:
   free(css.data); free(a.mapped); return a.status;
 }
+typedef struct { size_t offset,node,chapter; const char *id,*declared_id; } source_mark;
+typedef struct { size_t start,length,first,count; } source_part;
+typedef struct {
+  exr_document *doc;
+  source_mark *marks;
+  size_t count,capacity;
+  source_part *parts;
+} source_map;
+static exr_status source_position(void *context,size_t offset,size_t node) {
+  source_map *map=context; exr_node *v=&map->doc->nodes[node];
+  const char *id=exr_node_attribute(v,"id"),*tag_name=exr_html_tag(map->doc,v);
+  int body=!strcmp(tag_name,"body");
+  if(!id) id=exr_node_attribute(v,"http://www.w3.org/XML/1998/namespace|id");
+  if(!id && !strcmp(tag_name,"a")) {
+    id=exr_node_attribute(v,"name");
+    if(id && *id && !exr_model_attribute(map->doc,node,"id",id)) return EXR_LIMIT;
+    id=exr_node_attribute(v,"id");
+  }
+  if(!body && (!id || !*id)) return EXR_OK;
+  if(!exr_grow((void **)&map->marks,&map->capacity,map->count+1,sizeof(*map->marks))) return EXR_MEMORY;
+  map->marks[map->count++]=(source_mark){offset,body ? map->doc->chapters[v->chapter].root : node,
+                                        v->chapter,body ? NULL : id,id};
+  map->parts[v->chapter].count++; return EXR_OK;
+}
+static int mark_order(const void *left,const void *right) {
+  const source_mark *a=left,*b=right;
+  if(a->chapter!=b->chapter) return a->chapter<b->chapter ? -1 : 1;
+  if(!a->declared_id || !b->declared_id) return (!a->declared_id)-(!b->declared_id);
+  return strcmp(a->declared_id,b->declared_id);
+}
+static exr_status position_uri(const source_map *map,const index_table *fragments,
+                                 const char *uri,char out[2048],exr_error *e) {
+  size_t at=15,size=strlen(uri),part,offset,low,high; uint32_t fid,off;
+  const entry *f; const source_part *p; const char *id=NULL; exr_buffer b={0};
+  exr_status status=EXR_FORMAT;
+  out[0]=0;
+  if(size<11 || memcmp(uri,"kindle:pos:",11)) return EXR_OK;
+  if(size<15 || memcmp(uri,"kindle:pos:fid:",15)) goto bad;
+  if(!base32(uri,size,&at,&fid) || size-at<5 || memcmp(uri+at,":off:",5)) goto bad;
+  at+=5;
+  if(!base32(uri,size,&at,&off) || at!=size || fid>=fragments->count) goto bad;
+  f=&fragments->items[fid]; part=f->file;
+  if(part>=map->doc->chapter_count || off>=f->length) goto bad;
+  p=&map->parts[part];
+  if(f->label<p->start || (size_t)(f->label-p->start)>p->length ||
+     off>=p->length-(f->label-p->start)) goto bad;
+  offset=(size_t)(f->label-p->start)+off; low=p->first; high=low+p->count;
+  while(low<high) {
+    size_t middle=low+(high-low)/2;
+    if(map->marks[middle].offset<=offset) low=middle+1; else high=middle;
+  }
+  if(low>p->first) id=map->marks[low-1].id;
+  if(!exr_append(&b,map->doc->chapters[part].path,strlen(map->doc->chapters[part].path)) ||
+     (id && (!exr_append(&b,"#",1) || !exr_uri_path(&b,id)))) { status=EXR_LIMIT; goto bad; }
+  if(b.size>=2048) { status=EXR_LIMIT; goto bad; }
+  memcpy(out,b.data,b.size+1); free(b.data); return EXR_OK;
+bad:
+  free(b.data); return exr_fail(e,status,"Invalid or unsupported KF8 position URI");
+}
+static exr_status connect_positions(source_map *map,const index_table *fragments,exr_error *e) {
+  source_mark *sorted=NULL; size_t i,j; exr_status status=EXR_OK;
+  if(map->count) {
+    sorted=malloc(map->count*sizeof(*sorted));
+    if(!sorted) return exr_fail(e,EXR_MEMORY,"KF8 anchor index allocation failed");
+    memcpy(sorted,map->marks,map->count*sizeof(*sorted));
+    qsort(sorted,map->count,sizeof(*sorted),mark_order);
+    for(i=1;i<map->count;i++) if(sorted[i].declared_id && sorted[i-1].declared_id && !mark_order(&sorted[i-1],&sorted[i])) {
+      free(sorted); return exr_fail(e,EXR_FORMAT,"Duplicate KF8 anchor ID");
+    }
+    free(sorted);
+  }
+  for(i=0;i<map->doc->node_count;i++) {
+    exr_node *v=&map->doc->nodes[i];
+    for(j=0;j<v->attribute_count;j++) {
+      const char *key=v->attributes[j].name,*local=strrchr(key,'|'); char uri[2048];
+      local=local ? local+1 : key;
+      if(strcmp(local,"href")) continue;
+      status=position_uri(map,fragments,v->attributes[j].value,uri,e);
+      if(status!=EXR_OK) return status;
+      if(uri[0] && !exr_model_attribute(map->doc,i,key,uri)) return exr_fail(e,EXR_LIMIT,"KF8 link metadata limit exceeded");
+    }
+  }
+  return EXR_OK;
+}
 exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
                     const char *text,size_t size,exr_error *e) {
   const unsigned char *h=records[0].data; size_t flow_size=size,flows,fdst,i,frag=0,work=0;
   index_table skeletons={0},fragments={0}; exr_status status=EXR_FORMAT;
   size_t skel,frags; exr_buffer part={0};
+  source_map map={0}; map.doc=d;
   if(u32(h+20)<248) goto bad;
   skel=u32(h+252); frags=u32(h+248); flows=u32(h+196); fdst=u32(h+192);
   if(flows>10000) { status=EXR_LIMIT; goto bad; }
@@ -378,6 +463,8 @@ exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
     if(frags!=UINT32_MAX) { status=index_read(records,nr,frags,1,&fragments,e); if(status!=EXR_OK) goto done; }
     if(!skeletons.count || skeletons.count>10000) goto bad;
   } else if(frags!=UINT32_MAX) goto bad;
+  map.parts=calloc(skeletons.count ? skeletons.count : 1,sizeof(*map.parts));
+  if(!map.parts) { status=EXR_MEMORY; goto bad; }
   for(i=0;i<(skeletons.count ? skeletons.count : 1);i++) {
     size_t index,j,base; char path[64]; entry v={0};
     part.size=0;
@@ -405,13 +492,16 @@ exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
     snprintf(path,sizeof(path),"part%04u.xhtml",(unsigned)i);
     status=resource(d,path,"application/xhtml+xml",part.data,part.size,&index,e);
     if(status!=EXR_OK) goto done;
-    status=exr_xhtml(d,part.data,part.size,index,1,1,e); if(status!=EXR_OK) goto done;
+    map.parts[i]=(source_part){v.start,part.size,map.count,0};
+    status=exr_xhtml_positions(d,part.data,part.size,index,source_position,&map,e);
+    if(status!=EXR_OK) goto done;
   }
   if(frag!=fragments.count) goto bad;
+  status=connect_positions(&map,&fragments,e); if(status!=EXR_OK) goto done;
   status=connect_assets(d,records,nr,flows,e); goto done;
 bad:
   if(status==EXR_OK) status=EXR_FORMAT;
   exr_fail(e,status,"Invalid or unsupported KF8 reconstruction data");
 done:
-  free(part.data); free(skeletons.items); free(fragments.items); return status;
+  free(map.marks); free(map.parts); free(part.data); free(skeletons.items); free(fragments.items); return status;
 }
