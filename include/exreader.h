@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.85.0"
+#define EXR_VERSION "0.86.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -662,6 +662,18 @@ EXR_API void exr_anchor_free(exr_anchor *anchor);
    report MISSING/AMBIGUOUS/LEGACY; only FOUND supplies a usable range. */
 EXR_API exr_status exr_anchor_resolve(const exr_document *doc, const exr_anchor *anchor,
                                       exr_anchor_match *match, exr_error *error);
+/* DOM location for a chapter-local EPUB CFI path component. TEXT offsets count
+   UTF-16 code units in raw, uncollapsed node text (including surrogate interiors).
+   Element offset=SIZE_MAX denotes the element; other offsets are child-node
+   boundaries. side: 0 unspecified, 1 before, 2 after. No normalized text offsets. */
+typedef struct { size_t node,offset; unsigned side; } exr_cfi_point;
+/* These APIs produce/consume the content-document component, e.g. /4/2[id]/1:3,
+   not the package spine prefix or epubcfi(...) wrapper. chapter must have one
+   XML document element. Owned path uses exr_free; failure clears output. */
+EXR_API exr_status exr_document_cfi_path_create(const exr_document *doc,size_t chapter,const exr_cfi_point *point,
+                                                const exr_control *control,char **path,exr_error *error);
+EXR_API exr_status exr_document_cfi_path_resolve(const exr_document *doc,size_t chapter,const char *path,
+                                                 const exr_control *control,exr_cfi_point *point,exr_error *error);
 /* Structure-preserving EPUB: serializes the tree and copies all declared resources.
    Chapter paths, attributes and resource bytes are retained. Missing resources,
    non-XML names and conflicting/reserved paths fail atomically. No network access.
