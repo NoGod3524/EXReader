@@ -12,6 +12,7 @@ typedef struct {
   size_t resource;
 } relationship;
 typedef struct { const char *id; size_t node; } word_style;
+typedef struct { int id,endnote; size_t ordinal,first_reference; } note_entry;
 typedef struct {
   exr_document *out,*xml,*rels_xml,*styles_xml;
   exr_member_read_fn read;
@@ -21,6 +22,8 @@ typedef struct {
   word_style *styles;
   size_t style_count,defaults,work;
   const char *default_paragraph,*default_character;
+  note_entry *notes;
+  size_t note_count,note_capacity,*note_slots,footnote_count,endnote_count,reference_count,current_note;
   char main[2048];
   exr_status status;
   exr_error *error;
@@ -260,7 +263,8 @@ static int image(docx *x,size_t parent,const exr_node *blip,float width,float he
         else if(!strcmp(ext,".svg")) media="image/svg+xml";
         else if(!strcmp(ext,".webp")) media="image/webp";
       }
-      resources[i].id=exr_model_copy(x->out,r->id,strlen(r->id)); resources[i].path=exr_model_copy(x->out,path,strlen(path));
+      snprintf(numbered,sizeof(numbered),"image-%zu",i);
+      resources[i].id=exr_model_copy(x->out,numbered,strlen(numbered)); resources[i].path=exr_model_copy(x->out,path,strlen(path));
       resources[i].media_type=exr_model_copy(x->out,media,strlen(media)); resources[i].properties=exr_model_copy(x->out,"",0);
       if(!resources[i].id || !resources[i].path || !resources[i].media_type || !resources[i].properties) { x->status=EXR_LIMIT; return 0; }
       r->resource=i;
@@ -276,6 +280,53 @@ static int image(docx *x,size_t parent,const exr_node *blip,float width,float he
     snprintf(numbered,sizeof(numbered),"%.4f",width); if(!set(x,at,"width",numbered)) return 0;
     snprintf(numbered,sizeof(numbered),"%.4f",height); if(!set(x,at,"height",numbered)) return 0;
   }
+  return 1;
+}
+static size_t note_find(docx *x,int id,int endnote) {
+  size_t slot=((unsigned)id*2654435761u+(unsigned)endnote*2246822519u)&16383u;
+  if(!x->note_slots) {
+    x->note_slots=calloc(16384,sizeof(*x->note_slots));
+    if(!x->note_slots) { x->status=EXR_MEMORY; return SIZE_MAX; }
+  }
+  while(x->note_slots[slot]) {
+    size_t at=x->note_slots[slot]-1;
+    if(x->notes[at].id==id && x->notes[at].endnote==endnote) return at;
+    slot=(slot+1)&16383u;
+  }
+  if(x->note_count>=10000 || !exr_grow((void **)&x->notes,&x->note_capacity,x->note_count+1,sizeof(*x->notes))) {
+    x->status=EXR_LIMIT; return SIZE_MAX;
+  }
+  x->note_slots[slot]=x->note_count+1;
+  x->notes[x->note_count]=(note_entry){id,endnote,endnote ? ++x->endnote_count : ++x->footnote_count,x->reference_count};
+  return x->note_count++;
+}
+static int note_reference(docx *x,size_t parent,const exr_node *v,int endnote,int backlink) {
+  size_t index,at; char id[100],href[100],label[48]; note_entry *entry; int source_id;
+  if(backlink) {
+    if(x->current_note==SIZE_MAX) { x->status=EXR_FORMAT; return 0; }
+    index=x->current_note;
+  } else {
+    if(x->current_note!=SIZE_MAX || !number(attr(v,"id"),&source_id) || source_id<0) { x->status=EXR_FORMAT; return 0; }
+    index=note_find(x,source_id,endnote); if(index==SIZE_MAX) return 0;
+  }
+  entry=&x->notes[index];
+  if(backlink) {
+    snprintf(href,sizeof(href),"#noteref-%s-%d-%zu",entry->endnote ? "endnote" : "footnote",entry->id,entry->first_reference);
+  } else {
+    snprintf(id,sizeof(id),"noteref-%s-%d-%zu",endnote ? "endnote" : "footnote",entry->id,x->reference_count++);
+    snprintf(href,sizeof(href),"#%s-%d",endnote ? "endnote" : "footnote",entry->id);
+  }
+  at=make(x,parent,EXR_NODE_LINK,"a",NULL);
+  if(at==SIZE_MAX || !set(x,at,"href",href) || !set(x,at,"role",backlink ? "doc-backlink" : "doc-noteref") ||
+      (!backlink && !set(x,at,"id",id))) return 0;
+  snprintf(label,sizeof(label),"%zu",entry->ordinal);
+  return make(x,at,EXR_NODE_TEXT,NULL,label)!=SIZE_MAX;
+}
+static int relationship_path(const char *part,char path[2048]) {
+  const char *slash=strrchr(part,'/'); size_t length=strlen(part),directory=slash ? (size_t)(slash-part)+1 : 0;
+  if(length>2048-12) return 0;
+  memcpy(path,part,directory); memcpy(path+directory,"_rels/",6);
+  memcpy(path+directory+6,part+directory,length-directory); memcpy(path+length+6,".rels",6);
   return 1;
 }
 static int content(docx *x,size_t parent,size_t source,unsigned depth);
@@ -375,6 +426,8 @@ static int content(docx *x,size_t parent,size_t source,unsigned depth) {
   if(v->kind==EXR_NODE_TEXT) return 1; /* Only w:t/instrText carry Word text. */
   if(word(v,"pPr") || word(v,"rPr") || word(v,"tcPr") || word(v,"trPr") || word(v,"tblPr") || word(v,"sectPr") ||
       word(v,"del") || word(v,"instrText")) return 1;
+  if(word(v,"footnoteReference") || word(v,"endnoteReference")) return note_reference(x,parent,v,word(v,"endnoteReference"),0);
+  if(word(v,"footnoteRef") || word(v,"endnoteRef")) return note_reference(x,parent,v,word(v,"endnoteRef"),1);
   if(word(v,"tbl")) return table(x,parent,source,depth+1);
   if(word(v,"drawing") || word(v,"pict")) return drawing(x,parent,source,depth+1);
   if(word(v,"t")) {
@@ -410,16 +463,20 @@ static int content(docx *x,size_t parent,size_t source,unsigned depth) {
       else if(target(x,r,path)) {
         const char *fragment=strchr(r->target,'#');
         ok=exr_uri_path(&href,!strcmp(path,x->main) ? "document.xhtml" : path);
-        if(ok && fragment && !anchor) ok=put(&href,fragment);
+        if(ok && fragment && !anchor) ok=put(&href,"#bookmark-") && put(&href,fragment+1);
       }
       if(!ok) { free(href.data); x->status=EXR_FORMAT; goto done; }
     }
-    if(anchor && (!put(&href,"#") || !exr_uri_path(&href,anchor))) { free(href.data); goto done; }
+    if(anchor && (!put(&href,"#bookmark-") || !exr_uri_path(&href,anchor))) { free(href.data); goto done; }
     ok=!href.size || set(x,at,"href",href.data); free(href.data); if(!ok) goto done;
     ok=0;
   } else if(word(v,"bookmarkStart")) {
     const char *name=attr(v,"name");
-    if(name) { at=make(x,parent,EXR_NODE_ELEMENT,"span",NULL); if(at==SIZE_MAX || !set(x,at,"id",name)) goto done; }
+    if(name) {
+      exr_buffer id={0}; int valid=put(&id,"bookmark-") && put(&id,name);
+      at=make(x,parent,EXR_NODE_ELEMENT,"span",NULL);
+      valid=valid && at!=SIZE_MAX && set(x,at,"id",id.data); free(id.data); if(!valid) goto done;
+    }
   } else if(word(v,"tab")) return make(x,parent,EXR_NODE_TEXT,NULL,"\t")!=SIZE_MAX;
   else if(word(v,"br") || word(v,"cr")) {
     const char *type=attr(v,"type"); int page=type && !strcmp(type,"page");
@@ -434,10 +491,64 @@ done:
   if(!ok && x->status==EXR_OK) x->status=EXR_LIMIT;
   return ok;
 }
+typedef struct { int id; size_t node; } source_note;
+static int note_order(const void *a,const void *b) {
+  int x=((const source_note *)a)->id,y=((const source_note *)b)->id;
+  return x<y ? -1 : x>y;
+}
+static int append_notes(docx *x,size_t body,int endnote) {
+  exr_document *source=NULL,*rels_xml=NULL,*old_xml=x->xml,*old_rels_xml=x->rels_xml;
+  relationship *rels=NULL,*old_rels=x->rels; source_note *entries=NULL;
+  size_t count=0,rel_count=0,old_rel_count=x->rel_count,i,j,section=SIZE_MAX;
+  char path[2048],relpath[2048],old_main[2048]; const relationship *part=NULL; int ok=0;
+  if(!(endnote ? x->endnote_count : x->footnote_count)) return 1;
+  for(i=0;i<x->rel_count;i++) if(rel_type(x->rels[i].type,endnote ? "endnotes" : "footnotes")) { part=&x->rels[i]; break; }
+  if(!part || part->external || !target(x,part,path) || !relationship_path(path,relpath)) {
+    x->status=exr_fail(x->error,EXR_FORMAT,"Referenced DOCX notes part is missing or invalid"); return 0;
+  }
+  x->status=xml_read(x,path,endnote ? "endnotes" : "footnotes",0,&source); if(x->status!=EXR_OK) goto done;
+  if(!word(&source->nodes[root(source)],endnote ? "endnotes" : "footnotes")) { x->status=EXR_FORMAT; goto done; }
+  for(i=source->nodes[root(source)].first_child;i!=SIZE_MAX;i=source->nodes[i].next_sibling)
+    if(word(&source->nodes[i],endnote ? "endnote" : "footnote")) count++;
+  if(count>10000) { x->status=EXR_LIMIT; goto done; }
+  entries=calloc(count ? count : 1,sizeof(*entries)); if(!entries) { x->status=EXR_MEMORY; goto done; }
+  count=0;
+  for(i=source->nodes[root(source)].first_child;i!=SIZE_MAX;i=source->nodes[i].next_sibling) {
+    const exr_node *v=&source->nodes[i]; const char *type=attr(v,"type"); int id;
+    if(!word(v,endnote ? "endnote" : "footnote")) continue;
+    if(type && strcmp(type,"normal")) continue;
+    if(!number(attr(v,"id"),&id) || id<0) { x->status=EXR_FORMAT; goto done; }
+    entries[count++]=(source_note){id,i};
+  }
+  if(count>1) qsort(entries,count,sizeof(*entries),note_order);
+  for(i=1;i<count;i++) if(entries[i-1].id==entries[i].id) { x->status=EXR_FORMAT; goto done; }
+  x->status=relations(x,relpath,&rels_xml,&rels,&rel_count); if(x->status!=EXR_OK) goto done;
+  strcpy(old_main,x->main); strcpy(x->main,path);
+  x->xml=source; x->rels=rels; x->rels_xml=rels_xml; x->rel_count=rel_count;
+  section=make(x,body,EXR_NODE_SECTION,"section",NULL);
+  if(section==SIZE_MAX || !set(x,section,"role","doc-endnotes")) goto restore;
+  for(i=0;i<x->note_count;i++) if(x->notes[i].endnote==endnote) {
+    size_t lo=0,hi=count,note; char id[80];
+    while(lo<hi) { size_t mid=lo+(hi-lo)/2; if(entries[mid].id<x->notes[i].id) lo=mid+1; else hi=mid; }
+    if(lo==count || entries[lo].id!=x->notes[i].id) { x->status=exr_fail(x->error,EXR_FORMAT,"DOCX note reference has no body"); goto restore; }
+    note=make(x,section,EXR_NODE_NOTE,"aside",NULL); if(note==SIZE_MAX) goto restore;
+    snprintf(id,sizeof(id),"%s-%d",endnote ? "endnote" : "footnote",x->notes[i].id);
+    if(!set(x,note,"id",id) || !set(x,note,"role",endnote ? "doc-endnote" : "doc-footnote")) goto restore;
+    x->current_note=i;
+    for(j=source->nodes[entries[lo].node].first_child;j!=SIZE_MAX;j=source->nodes[j].next_sibling)
+      if(!content(x,note,j,0)) { if(x->status==EXR_OK) x->status=EXR_LIMIT; goto restore; }
+  }
+  ok=1;
+restore:
+  strcpy(x->main,old_main); x->xml=old_xml; x->rels=old_rels; x->rels_xml=old_rels_xml; x->rel_count=old_rel_count;
+  x->current_note=SIZE_MAX;
+done:
+  free(entries); free(rels); exr_document_free(source); exr_document_free(rels_xml); return ok;
+}
 exr_status exr_docx(exr_document *d,exr_member_read_fn read,void *context,exr_error *e) {
   docx x={0}; exr_document *package=NULL; relationship *package_rels=NULL; size_t package_count=0;
-  size_t i,body,chapter,html,head,title,out_body; char relpath[2048]; const char *slash;
-  x.out=d; x.read=read; x.context=context; x.error=e; x.defaults=SIZE_MAX; strcpy(x.main,"word/document.xml");
+  size_t i,body,chapter,html,head,title,out_body; char relpath[2048];
+  x.out=d; x.read=read; x.context=context; x.error=e; x.defaults=x.current_note=SIZE_MAX; strcpy(x.main,"word/document.xml");
   x.status=relations(&x,"_rels/.rels",&package,&package_rels,&package_count); if(x.status!=EXR_OK) goto done;
   for(i=0;i<package_count;i++) if(rel_type(package_rels[i].type,"officeDocument")) {
     const char *target=package_rels[i].target;
@@ -448,10 +559,7 @@ exr_status exr_docx(exr_document *d,exr_member_read_fn read,void *context,exr_er
   x.status=xml_read(&x,x.main,"document",0,&x.xml); if(x.status!=EXR_OK) goto done;
   if(!word(&x.xml->nodes[root(x.xml)],"document")) { x.status=EXR_FORMAT; goto done; }
   body=child(x.xml,root(x.xml),"body"); if(body==SIZE_MAX) { x.status=EXR_FORMAT; goto done; }
-  slash=strrchr(x.main,'/');
-  if(slash) snprintf(relpath,sizeof(relpath),"%.*s/_rels/%s.rels",(int)(slash-x.main),x.main,slash+1);
-  else snprintf(relpath,sizeof(relpath),"_rels/%s.rels",x.main);
-  if(strlen(x.main)+13>=sizeof(relpath)) { x.status=EXR_LIMIT; goto done; }
+  if(!relationship_path(x.main,relpath)) { x.status=EXR_LIMIT; goto done; }
   x.status=relations(&x,relpath,&x.rels_xml,&x.rels,&x.rel_count); if(x.status!=EXR_OK) goto done;
   x.status=styles(&x); if(x.status!=EXR_OK) goto done;
   if(exr_model_node(d,SIZE_MAX,SIZE_MAX,EXR_NODE_DOCUMENT,NULL,NULL,0)==SIZE_MAX) { x.status=EXR_LIMIT; goto done; }
@@ -467,7 +575,9 @@ exr_status exr_docx(exr_document *d,exr_member_read_fn read,void *context,exr_er
   out_body=make(&x,html,EXR_NODE_ELEMENT,"body",NULL); if(out_body==SIZE_MAX) goto done;
   for(i=x.xml->nodes[body].first_child;i!=SIZE_MAX;i=x.xml->nodes[i].next_sibling)
     if(!content(&x,out_body,i,0)) { if(x.status==EXR_OK) x.status=EXR_LIMIT; break; }
+  if(x.status==EXR_OK && (!append_notes(&x,out_body,0) || !append_notes(&x,out_body,1)) && x.status==EXR_OK) x.status=EXR_LIMIT;
 done:
+  free(x.notes); free(x.note_slots);
   free(package_rels); exr_document_free(package); free(x.rels); free(x.styles);
   exr_document_free(x.xml); exr_document_free(x.rels_xml); exr_document_free(x.styles_xml);
   if(x.status!=EXR_OK && (!e || !e->message[0])) exr_fail(e,x.status,"DOCX structure rejected");

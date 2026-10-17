@@ -272,6 +272,10 @@ exr_status exr_document_export_epub(const exr_document *d, const exr_control *co
       if (previous->resource!=SIZE_MAX && members[i].resource!=SIZE_MAX) {
         w.status=exr_fail(e,EXR_FORMAT,"Conflicting resource paths"); goto failed;
       }
+      if ((previous->resource!=SIZE_MAX && previous->chapter==SIZE_MAX && strcmp(previous->media,"application/xhtml+xml")) ||
+          (members[i].resource!=SIZE_MAX && strcmp(members[i].media,"application/xhtml+xml"))) {
+        w.status=exr_fail(e,EXR_FORMAT,"Chapter path conflicts with a non-XHTML resource"); goto failed;
+      }
       if (members[i].chapter!=SIZE_MAX) {
         if (previous->chapter!=SIZE_MAX) {
           exr_buffer other={0}; xml.size=0;
