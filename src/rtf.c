@@ -3,7 +3,8 @@
 #include <ctype.h>
 enum { BOLD, ITALIC, SIZE, COLOR, BACKGROUND, UNDERLINE, STRIKE, ALIGN, LEFT, RIGHT,
        INDENT, BEFORE, AFTER, LEADING, MULTIPLE, DIRECTION, RTF_PROPERTIES };
-typedef struct { int skip,uc,destination,picture,inherited_skip,star; int properties[RTF_PROPERTIES]; } rtf_state;
+typedef struct { int skip,uc,destination,picture,inherited_skip,star,font,field; int properties[RTF_PROPERTIES]; } rtf_state;
+typedef struct { exr_buffer instruction; char *href; int ready; } rtf_field;
 typedef struct { exr_buffer bytes; int type,nibble,width,height,goal_width,goal_height,scale_x,scale_y; } rtf_picture;
 typedef struct {
   exr_document *doc;
@@ -13,6 +14,12 @@ typedef struct {
   uint32_t colors[4096];
   size_t color_count;
   unsigned red,green,blue,components;
+  char **fonts;
+  exr_buffer font_name,bookmark,title;
+  size_t metadata_bytes,title_text;
+  int default_font;
+  rtf_field *fields;
+  size_t field_count,field_capacity;
   rtf_picture *pictures;
   size_t picture_count,picture_capacity;
   int last_picture;
@@ -55,15 +62,30 @@ static int css_color(rtf_context *c,exr_buffer *b,const char *property,int index
   color=c->colors[index]; if(!color) return 1;
   snprintf(text,sizeof(text),"%s:#%06lx;",property,(unsigned long)(color>>8)); return put(b,text);
 }
+static int font_css(rtf_context *c,exr_buffer *css,const rtf_state *s) {
+  int font=s->font<0 ? c->default_font : s->font; const char *family;
+  if(!c->fonts || font<0 || font>=4096 || !(family=c->fonts[font])) return 1;
+  if(!put(css,"font-family:\"")) return 0;
+  while(*family) {
+    if((*family=='"' || *family=='\\') && !put(css,"\\")) return 0;
+    if(!exr_append(css,family++,1)) return 0;
+  }
+  return put(css,"\";");
+}
 static int run_flush(rtf_context *c) {
   const int *p=c->style.properties; exr_buffer css={0}; size_t parent,span; int ok=0;
   if(!c->run.size) return 1;
   if(!paragraph(c,&c->style)) goto done;
   parent=c->paragraph;
+  if(c->style.field>=0 && c->fields[c->style.field].href) {
+    parent=make(c,parent,EXR_NODE_LINK,"a",NULL);
+    if(parent==SIZE_MAX || !set(c,parent,"href",c->fields[c->style.field].href)) goto done;
+  }
   if(p[BOLD]) { parent=make(c,parent,EXR_NODE_ELEMENT,"strong",NULL); if(parent==SIZE_MAX) goto done; }
   if(p[ITALIC]) { parent=make(c,parent,EXR_NODE_ELEMENT,"em",NULL); if(parent==SIZE_MAX) goto done; }
   if(p[UNDERLINE]) { parent=make(c,parent,EXR_NODE_ELEMENT,"u",NULL); if(parent==SIZE_MAX) goto done; }
   if(p[STRIKE]) { parent=make(c,parent,EXR_NODE_ELEMENT,"s",NULL); if(parent==SIZE_MAX) goto done; }
+  if(!font_css(c,&css,&c->style)) goto done;
   if(p[SIZE] && !css_number(&css,"font-size",p[SIZE]*2.0f/3,1)) goto done;
   if(!css_color(c,&css,"color",p[COLOR]) || !css_color(c,&css,"background-color",p[BACKGROUND])) goto done;
   span=make(c,parent,EXR_NODE_ELEMENT,"span",NULL);
@@ -75,7 +97,7 @@ done:
 static int emit(rtf_context *c,const rtf_state *s,uint32_t cp) {
   if(s->skip || s->destination) return 1;
   if(cp!=32 && cp!=9 && cp!=10 && cp!=13) c->last_picture=0;
-  if(c->run.size && memcmp(c->style.properties,s->properties,sizeof(s->properties)) && !run_flush(c)) return 0;
+  if(c->run.size && (memcmp(c->style.properties,s->properties,sizeof(s->properties)) || c->style.font!=s->font || c->style.field!=s->field) && !run_flush(c)) return 0;
   if(!c->run.size) c->style=*s;
   if(!exr_codepoint(&c->run,cp)) { c->status=EXR_LIMIT; return 0; } return 1;
 }
@@ -84,8 +106,33 @@ static int picture_bytes(rtf_context *c,int index,const void *data,size_t size) 
   if(size>32u*1024*1024-p->bytes.size || !exr_append(&p->bytes,data,size)) { c->status=EXR_LIMIT; return 0; }
   return 1;
 }
+static int font_commit(rtf_context *c,const rtf_state *s) {
+  size_t start=0,end=c->font_name.size,old; char *name;
+  if(s->font<0) { c->font_name.size=0; return 1; }
+  while(start<end && isspace((unsigned char)c->font_name.data[start])) start++;
+  while(end>start && isspace((unsigned char)c->font_name.data[end-1])) end--;
+  old=c->fonts[s->font] ? strlen(c->fonts[s->font]) : 0;
+  if(end-start>EXR_MAX_TEXT-(c->metadata_bytes-old)) { c->status=EXR_LIMIT; return 0; }
+  name=exr_copy(c->font_name.data ? c->font_name.data+start : "",end-start); if(!name) { c->status=EXR_MEMORY; return 0; }
+  free(c->fonts[s->font]); c->fonts[s->font]=name; c->metadata_bytes=c->metadata_bytes-old+end-start;
+  c->font_name.size=0; if(c->font_name.data) c->font_name.data[0]=0; return 1;
+}
 static int literal(rtf_context *c,const rtf_state *s,uint32_t cp) {
   if(s->skip) return 1;
+  if(s->destination==3) {
+    if(cp==';') return font_commit(c,s);
+    if(c->font_name.size>=65536 || !exr_codepoint(&c->font_name,cp) || c->font_name.size>65536) { c->status=EXR_LIMIT; return 0; } return 1;
+  }
+  if(s->destination==4 && s->field>=0) {
+    exr_buffer *instruction=&c->fields[s->field].instruction;
+    size_t before=instruction->size;
+    if(instruction->size>=65536 || c->metadata_bytes>EXR_MAX_TEXT-4 || !exr_codepoint(instruction,cp) || instruction->size>65536) { c->status=EXR_LIMIT; return 0; }
+    c->metadata_bytes+=instruction->size-before; return 1;
+  }
+  if(s->destination==5 || s->destination==7) {
+    exr_buffer *value=s->destination==5 ? &c->bookmark : &c->title;
+    if(value->size>=65536 || !exr_codepoint(value,cp) || value->size>65536) { c->status=EXR_LIMIT; return 0; } return 1;
+  }
   if(s->destination==2 && s->picture>=0) {
     rtf_picture *p=&c->pictures[s->picture]; unsigned char byte; int digit;
     if(!p->type || cp==32 || cp==9 || cp==10 || cp==13) return 1;
@@ -165,6 +212,81 @@ static int picture_control(rtf_context *c,rtf_state *s,const char *word,long val
   }
   return 1;
 }
+static int field_start(rtf_context *c,rtf_state *s) {
+  if(c->field_count>=10000 || !exr_grow((void **)&c->fields,&c->field_capacity,c->field_count+1,sizeof(*c->fields))) { c->status=EXR_LIMIT; return 0; }
+  s->field=(int)c->field_count++; memset(&c->fields[s->field],0,sizeof(*c->fields)); return run_flush(c);
+}
+static int same(const char *a,const char *b) {
+  while(*a && *b) { if(tolower((unsigned char)*a++)!=tolower((unsigned char)*b++)) return 0; }
+  return !*a && !*b;
+}
+static int field_token(rtf_context *c,const char **cursor,exr_buffer *out) {
+  const char *p=*cursor; int quote;
+  out->size=0;
+  while(*p && isspace((unsigned char)*p)) p++;
+  if(!*p) { *cursor=p; return 0; }
+  quote=*p=='"'; if(quote) p++;
+  while(*p && (quote ? *p!='"' : !isspace((unsigned char)*p))) {
+    if(quote && *p=='\\' && (p[1]=='"' || p[1]=='\\')) p++;
+    if(!exr_append(out,p++,1)) { c->status=EXR_LIMIT; return 0; }
+  }
+  if(quote) { if(*p!='"') return 0; p++; }
+  if(!exr_append(out,"",0)) { c->status=EXR_LIMIT; return 0; }
+  *cursor=p; return 1;
+}
+static int metadata_append(rtf_context *c,exr_buffer *buffer,const char *text) {
+  if(!put(buffer,text)) { c->status=EXR_LIMIT; return 0; } return 1;
+}
+static int field_link(rtf_context *c,int index) {
+  rtf_field *f=&c->fields[index]; exr_buffer token={0},url={0},anchor={0},href={0};
+  const char *cursor=f->instruction.data ? f->instruction.data : ""; int ok=1;
+  if(f->ready) return 1;
+  f->ready=1;
+  if(!field_token(c,&cursor,&token) || !same(token.data,"HYPERLINK")) goto done;
+  while(field_token(c,&cursor,&token)) {
+    if(token.data[0]=='\\') {
+      if(same(token.data,"\\l")) {
+        if(!field_token(c,&cursor,&token) || !metadata_append(c,&anchor,token.data)) goto done;
+      } else if(same(token.data,"\\o") || same(token.data,"\\t")) {
+        if(!field_token(c,&cursor,&token)) goto done;
+      } else if(!same(token.data,"\\m") && !same(token.data,"\\n")) goto done;
+    } else {
+      if(url.size || !metadata_append(c,&url,token.data)) goto done;
+    }
+  }
+  if(!url.size && !anchor.size) goto done;
+  if(url.size && !put(&href,url.data)) { ok=0; goto done; }
+  if(anchor.size && (!put(&href,url.size ? "#" : "#bookmark-") || !exr_uri_path(&href,anchor.data))) { ok=0; goto done; }
+  if(href.size>EXR_MAX_TEXT-(c->metadata_bytes-f->instruction.size)) { c->status=EXR_LIMIT; goto done; }
+  f->href=href.data; href.data=NULL;
+  c->metadata_bytes+=strlen(f->href);
+done:
+  free(token.data); free(url.data); free(anchor.data); free(href.data);
+  c->metadata_bytes-=f->instruction.size;
+  free(f->instruction.data); memset(&f->instruction,0,sizeof(f->instruction));
+  if(!ok && c->status==EXR_OK) c->status=EXR_LIMIT;
+  return ok && c->status==EXR_OK;
+}
+static int destination_finish(rtf_context *c,const rtf_state *s,const rtf_state *parent) {
+  if(s->destination==5 && parent->destination!=5) {
+    exr_buffer id={0}; size_t start=0,end=c->bookmark.size,node; int ok;
+    while(start<end && isspace((unsigned char)c->bookmark.data[start])) start++;
+    while(end>start && isspace((unsigned char)c->bookmark.data[end-1])) end--;
+    if(start==end) return 1;
+    ok=put(&id,"bookmark-") && exr_append(&id,c->bookmark.data+start,end-start) && paragraph(c,s);
+    node=ok ? make(c,c->paragraph,EXR_NODE_ELEMENT,"span",NULL) : SIZE_MAX;
+    ok=ok && node!=SIZE_MAX && set(c,node,"id",id.data); free(id.data); return ok;
+  }
+  if(s->destination==7 && parent->destination!=7) {
+    char *title=exr_copy(c->title.data,c->title.size),*node_title;
+    if(!title) { c->status=EXR_MEMORY; return 0; }
+    node_title=exr_model_copy(c->doc,title,c->title.size);
+    if(!node_title) { free(title); c->status=EXR_LIMIT; return 0; }
+    free(c->doc->title); c->doc->title=title;
+    free((void *)c->doc->nodes[c->title_text].text); c->doc->nodes[c->title_text].text=node_title;
+  }
+  return 1;
+}
 static int style_control(rtf_context *c,rtf_state *s,const char *word,long value,int has) {
   int key=-1;
   if(!strcmp(word,"b")) key=BOLD;
@@ -182,7 +304,7 @@ static int style_control(rtf_context *c,rtf_state *s,const char *word,long value
   else if(!strcmp(word,"qj")) s->properties[ALIGN]=3;
   else if(!strcmp(word,"ltrpar")) s->properties[DIRECTION]=1;
   else if(!strcmp(word,"rtlpar")) s->properties[DIRECTION]=2;
-  else if(!strcmp(word,"plain")) memset(s->properties,0,ALIGN*sizeof(*s->properties));
+  else if(!strcmp(word,"plain")) { memset(s->properties,0,ALIGN*sizeof(*s->properties)); s->font=-1; }
   else if(!strcmp(word,"pard")) memset(s->properties+ALIGN,0,(RTF_PROPERTIES-ALIGN)*sizeof(*s->properties));
   else {
     if(!strcmp(word,"li")) key=LEFT;
@@ -207,7 +329,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
   exr_status result = EXR_FORMAT;
   if (n < 5 || memcmp(s, "{\\rtf", 5))
     return exr_fail(e, EXR_FORMAT, "Invalid RTF header");
-  context.doc=d; context.error=e; context.paragraph=SIZE_MAX; states[0].uc=1; states[0].picture=-1;
+  context.doc=d; context.error=e; context.paragraph=SIZE_MAX; states[0].uc=1; states[0].picture=states[0].font=states[0].field=-1;
   if(exr_model_node(d,SIZE_MAX,SIZE_MAX,EXR_NODE_DOCUMENT,NULL,NULL,0)==SIZE_MAX) return EXR_LIMIT;
   {
     size_t chapter=make(&context,0,EXR_NODE_CHAPTER,NULL,NULL),html,head,title;
@@ -216,7 +338,8 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
     d->chapter_count=d->chapter_capacity=1; d->chapters[0]=(exr_chapter){"main","book.xhtml",chapter,SIZE_MAX,1,1};
     html=make(&context,chapter,EXR_NODE_ELEMENT,"html",NULL); if(html==SIZE_MAX) return EXR_LIMIT;
     head=make(&context,html,EXR_NODE_ELEMENT,"head",NULL); if(head==SIZE_MAX) return EXR_LIMIT;
-    title=make(&context,head,EXR_NODE_ELEMENT,"title",NULL); if(title==SIZE_MAX || make(&context,title,EXR_NODE_TEXT,NULL,"Untitled")==SIZE_MAX) return EXR_LIMIT;
+    title=make(&context,head,EXR_NODE_ELEMENT,"title",NULL); if(title==SIZE_MAX) return EXR_LIMIT;
+    context.title_text=make(&context,title,EXR_NODE_TEXT,NULL,"Untitled"); if(context.title_text==SIZE_MAX) return EXR_LIMIT;
     context.body=make(&context,html,EXR_NODE_ELEMENT,"body",NULL); if(context.body==SIZE_MAX) return EXR_LIMIT;
   }
   while (i < n) {
@@ -238,6 +361,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       if (!depth)
         goto done;
       if(states[depth].picture>=0 && states[depth].picture!=states[depth-1].picture && !picture_finish(&context,&states[depth])) goto done;
+      if(!destination_finish(&context,&states[depth],&states[depth-1])) goto done;
       depth--;
       continue;
     }
@@ -273,6 +397,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
           fallback--;
           continue;
         }
+        states[depth].star=0;
         if (!states[depth].skip && !literal(&context,&states[depth],exr_windows1252((unsigned char)c)))
           goto done;
         continue;
@@ -314,11 +439,35 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
         continue;
       }
       optional=states[depth].star; states[depth].star=0;
-      if(optional && !states[depth].inherited_skip && !strcmp(word,"shppict")) { states[depth].skip=0; continue; }
+      if(!states[depth].inherited_skip && states[depth].destination==0 && (!states[depth].skip || optional)) {
+        if(!strcmp(word,"fonttbl")) {
+          if(!context.fonts) { context.fonts=calloc(4096,sizeof(*context.fonts)); if(!context.fonts) { context.status=EXR_MEMORY; goto done; } }
+          states[depth].skip=0; states[depth].destination=3; states[depth].font=-1; context.font_name.size=0; continue;
+        }
+        if(!strcmp(word,"field")) { states[depth].skip=0; if(!field_start(&context,&states[depth])) goto done; continue; }
+        if(!strcmp(word,"bkmkstart")) {
+          states[depth].skip=0; states[depth].destination=5; context.bookmark.size=0; if(!run_flush(&context)) goto done; continue;
+        }
+        if(!strcmp(word,"bkmkend")) { states[depth].skip=1; continue; }
+        if(!strcmp(word,"info")) { states[depth].skip=0; states[depth].destination=6; continue; }
+      }
+      if(!states[depth].skip && states[depth].destination==6 && !strcmp(word,"title")) { states[depth].destination=7; context.title.size=0; continue; }
+      if(!states[depth].inherited_skip && (!states[depth].skip || optional) && states[depth].field>=0 &&
+          (states[depth].destination==0 || states[depth].destination==4)) {
+        if(!strcmp(word,"fldinst")) { states[depth].skip=0; states[depth].destination=4; continue; }
+        if(!strcmp(word,"fldrslt")) { states[depth].skip=0; states[depth].destination=0; if(!field_link(&context,states[depth].field)) goto done; continue; }
+      }
+      if(!states[depth].skip && (states[depth].destination==0 || states[depth].destination==3) && (!strcmp(word,"f") || !strcmp(word,"deff"))) {
+        if(!has || value<0 || value>=4096) goto done;
+        if(!strcmp(word,"deff")) context.default_font=(int)value;
+        else states[depth].font=(int)value;
+        continue;
+      }
+      if(optional && !states[depth].inherited_skip && states[depth].destination==0 && !strcmp(word,"shppict")) { states[depth].skip=0; continue; }
       if(!states[depth].skip && !strcmp(word,"nonshppict") && context.last_picture) { states[depth].skip=1; continue; }
-      if(!states[depth].skip && !strcmp(word,"pict")) { if(!picture_start(&context,&states[depth])) goto done; continue; }
+      if(!states[depth].skip && states[depth].destination==0 && !strcmp(word,"pict")) { if(!picture_start(&context,&states[depth])) goto done; continue; }
       if(!states[depth].skip && states[depth].destination==2) { if(!picture_control(&context,&states[depth],word,value,has)) goto done; continue; }
-      if(!states[depth].skip && !strcmp(word,"colortbl")) {
+      if(!states[depth].skip && states[depth].destination==0 && !strcmp(word,"colortbl")) {
         states[depth].destination=1; context.color_count=0; context.red=context.green=context.blue=context.components=0; continue;
       }
       if(!states[depth].skip && states[depth].destination==1) {
@@ -331,14 +480,17 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
         }
         continue;
       }
-      if (!strcmp(word, "fonttbl") || !strcmp(word, "stylesheet") ||
-          !strcmp(word, "info") || !strcmp(word, "object") ||
+      if (!strcmp(word, "stylesheet") || !strcmp(word, "fontemb") || !strcmp(word, "fontfile") || !strcmp(word, "object") ||
           !strcmp(word, "header") || !strcmp(word, "footer")) {
         states[depth].skip = 1;
         continue;
       }
       if (states[depth].skip)
         continue;
+      if(states[depth].destination && (!strcmp(word,"par") || !strcmp(word,"line") || !strcmp(word,"tab"))) {
+        if(!literal(&context,&states[depth],' ')) goto done;
+        continue;
+      }
       if (!strcmp(word, "ansicpg") && value != 1252)
         goto done;
       if (!strcmp(word, "uc")) {
@@ -389,6 +541,9 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
     goto done;
   result = EXR_OK;
 done:
+  if(context.fonts) { for(i=0;i<4096;i++) free(context.fonts[i]); }
+  for(i=0;i<context.field_count;i++) { free(context.fields[i].instruction.data); free(context.fields[i].href); }
+  free(context.fields); free(context.fonts); free(context.font_name.data); free(context.bookmark.data); free(context.title.data);
   for(i=0;i<context.picture_count;i++) free(context.pictures[i].bytes.data);
   free(context.pictures); free(context.run.data);
   if(result==EXR_OK) return EXR_OK;
