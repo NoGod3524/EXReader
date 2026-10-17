@@ -13,6 +13,11 @@ typedef struct {
   size_t struct_size; const char *title; const exr_fixed_page *pages; size_t page_count;
   exr_fixed_draw_fn draw; void *context; exr_context_release_fn release; exr_fixed_text_fn text;
 } text_fixed_input;
+typedef struct {
+  size_t struct_size; const char *title; const exr_fixed_page *pages; size_t page_count;
+  exr_fixed_draw_fn draw; void *context; exr_context_release_fn release; exr_fixed_text_fn text; exr_fixed_metadata_fn metadata;
+} metadata_fixed_input;
+_Static_assert(sizeof(metadata_fixed_input)==offsetof(exr_fixed_input,annotations),"Metadata-capable input prefix must retain its layout");
 _Static_assert(sizeof(text_fixed_input)==offsetof(exr_fixed_input,metadata),"Text-capable input prefix must retain its layout");
 _Static_assert(sizeof(old_fixed_input)==offsetof(exr_fixed_input,text),"Original input prefix must retain its layout");
 static exr_status draw(void *context,size_t page,const double matrix[6],const exr_draw_sink *sink,const exr_control *control,exr_error *e) {

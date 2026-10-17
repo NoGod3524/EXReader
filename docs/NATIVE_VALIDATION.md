@@ -1768,3 +1768,32 @@ cleared input buffers and closed PDF handles. JNI conversion releases per-entry
 local references and keeps standard UTF-8 transport. All 74 local Windows core
 suites pass; the new language-host cases are verified by the platform CI jobs.
 The 0.98 520db83 CI passed all six jobs.
+
+
+The 0.99 Swift fixture variable collision was corrected in 5e0d2d9; all six CI
+jobs passed, including real Swift/macOS and JVM runs with 4096 multilingual
+metadata values, Android JNI builds and Apple device/simulator typechecks.
+Independent installed C and C++ consumers also passed locally. Nine fresh-process
+0.99 Windows 11 / Arial paged measurements (three runs per fixture, eight page
+samples) produced these medians; OS disk cache remains uncontrolled:
+
+| Text-only EPUB fixture | Publication open ms | First visible ms | Turn p95 ms | Process peak MiB |
+| --- | ---: | ---: | ---: | ---: |
+| 16 KiB short | 2.310 | 15.879 | 12.300 | 10.86 |
+| 1 MiB single paragraph | 4.183 | 29.629 | 14.266 | 13.04 |
+| 32 chapters, 32 KiB each | 2.534 | 18.328 | 16.356 | 10.97 |
+
+These measure the first reading-order part and do not characterize complex PDF,
+image-heavy books or metadata parsing. Local Release DLL: 4,110,947 bytes.
+
+## 0.100 Generic page annotation snapshots and native PDF annotations
+
+Original in-memory PDFs cover indirect annotations/strings, null/unknown
+references, normalized rectangles, raw QuadPoints, multilingual comments, missing
+names, and five common text properties. Snapshots survive document release.
+Invalid subtypes, geometry shapes/types/ranges, non-string comments, overlong
+lists and the aggregate 8 MiB budget return no partial output; page rendering and
+retry remain available. A custom provider verifies independent copies, reentry,
+errors, invalid UTF-8/nonfinite coordinates, overflow-sized quads, truncated input
+extensions, absent providers and empty results. Legacy metadata-capable input
+layout is checked. All 75 local Windows suites pass.
