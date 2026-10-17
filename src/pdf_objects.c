@@ -4,15 +4,15 @@
 #define PDF_MAX_OBJECTS 1048576u
 #define PDF_MAX_VALUES 1048576u
 #define PDF_MAX_STRINGS ((size_t)32*1024*1024)
-typedef struct { size_t offset; uint32_t value,revision; unsigned generation,type,state,seen; } pdf_xref;
-typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; } pdf_stream;
+typedef struct { size_t offset; uint32_t value,revision; unsigned generation,type,state,seen; uint32_t compressed_index; } pdf_xref;
+typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; } pdf_stream;
 struct exr_pdf_file {
-  const unsigned char *data; size_t size,work,decoded_bytes,decode_work,declared_size;
+  const unsigned char *data; size_t size,work,decoded_bytes,decode_work,declared_size,index_bytes;
   exr_pdf_value *values; size_t value_count,value_capacity;
   exr_buffer strings;
   pdf_xref *xref; size_t xref_count,xref_capacity;
   pdf_stream *streams; size_t stream_count,stream_capacity;
-  uint32_t root,revision; unsigned resolving;
+  uint32_t root,revision; unsigned resolving,loading_xref;
   exr_error error;
 };
 typedef struct { exr_pdf_file *file; const unsigned char *data; size_t size,at; } parser;
@@ -215,6 +215,7 @@ static int direct_integer(exr_pdf_file *f,uint32_t id,uint64_t maximum,uint64_t 
   *out=(uint64_t)v->u.integer; return 1;
 }
 static uint32_t indirect(parser *p,uint32_t object,unsigned generation);
+static uint32_t compressed_object(exr_pdf_file *f,uint32_t object);
 static uint32_t resolve(exr_pdf_file *f,uint32_t id) {
   uint32_t seen[64]; size_t count=0,i;
   while(id!=EXR_PDF_NONE && f->error.code==EXR_OK) {
@@ -222,6 +223,7 @@ static uint32_t resolve(exr_pdf_file *f,uint32_t id) {
     if(!v) { failed(f,EXR_FORMAT,"Invalid PDF value index"); return EXR_PDF_NONE; }
     if(v->kind!=EXR_PDF_REF) return id;
     object=v->u.ref.object; generation=v->u.ref.generation;
+    if(f->loading_xref) { failed(f,EXR_FORMAT,"Indirect value in PDF cross-reference stream"); return EXR_PDF_NONE; }
     if(object>=f->xref_count || !f->xref[object].seen || !f->xref[object].type || f->xref[object].generation!=generation) return EXR_PDF_NONE;
     for(i=0;i<count;i++) if(seen[i]==object) { failed(f,EXR_FORMAT,"Cyclic PDF reference chain"); return EXR_PDF_NONE; }
     if(count==64 || f->resolving>=64) { failed(f,EXR_LIMIT,"PDF object nesting exceeds 64"); return EXR_PDF_NONE; }
@@ -229,7 +231,8 @@ static uint32_t resolve(exr_pdf_file *f,uint32_t id) {
     if(f->xref[object].state==1) { failed(f,EXR_FORMAT,"Cyclic PDF object loading"); return EXR_PDF_NONE; }
     if(!f->xref[object].state) {
       parser p={f,f->data,f->size,f->xref[object].offset}; uint32_t loaded;
-      f->xref[object].state=1; f->resolving++; loaded=indirect(&p,object,generation); f->resolving--;
+      f->xref[object].state=1; f->resolving++;
+      loaded=f->xref[object].type==2 ? compressed_object(f,object) : indirect(&p,object,generation); f->resolving--;
       if(loaded==EXR_PDF_NONE) return loaded;
       f->xref[object].value=loaded; f->xref[object].state=2;
     }
@@ -253,7 +256,7 @@ static uint32_t indirect(parser *p,uint32_t object,unsigned generation) {
     if(!exr_grow((void **)&f->streams,&f->stream_capacity,f->stream_count+1,sizeof(*f->streams))) {
       failed(f,EXR_MEMORY,"PDF stream allocation failed"); return EXR_PDF_NONE;
     }
-    index=f->stream_count++; f->streams[index]=(pdf_stream){start,(size_t)length,NULL,0,id,0};
+    index=f->stream_count++; f->streams[index]=(pdf_stream){start,(size_t)length,NULL,0,id,0,NULL,NULL,0,0};
     f->values[id].kind=EXR_PDF_STREAM; f->values[id].u.ref.object=(uint32_t)index;
   }
   if(!word(p,"endobj")) goto bad;
@@ -268,6 +271,117 @@ static int xref_room(exr_pdf_file *f,size_t count) {
   if(f->xref_capacity>previous) memset(f->xref+previous,0,(f->xref_capacity-previous)*sizeof(*f->xref));
   if(count>f->xref_count) f->xref_count=count;
   return 1;
+}
+static int name_is(exr_pdf_file *f,uint32_t id,const char *expected) {
+  size_t n; const unsigned char *bytes=exr_pdf_bytes(f,id,&n);
+  return bytes && f->values[id].kind==EXR_PDF_NAME && n==strlen(expected) && !memcmp(bytes,expected,n);
+}
+static int array_integers(exr_pdf_file *f,uint32_t id,uint64_t *values,size_t capacity,size_t *count) {
+  const exr_pdf_value *v=exr_pdf_value_at(f,id); uint32_t at;
+  *count=0; if(!v || v->kind!=EXR_PDF_ARRAY) return 0;
+  for(at=v->first;at!=EXR_PDF_NONE;at=f->values[at].next) {
+    if(*count==capacity || !direct_integer(f,at,UINT32_MAX,&values[*count])) return 0;
+    (*count)++;
+  }
+  return 1;
+}
+static int stream_xref(parser *p,size_t *previous,uint32_t *root,int hybrid) {
+  exr_pdf_file *f=p->file; parser start=*p; uint64_t object,generation,size,widths[3],range[2],fields[3];
+  uint32_t dict,id,at; const unsigned char *data; size_t length,n,row=0,pos=0,i,k,ranges=0;
+  unsigned char *seen=NULL; int ok=0;
+  if(!integer_token(p,&object) || !object || object>=PDF_MAX_OBJECTS || !integer_token(p,&generation) || generation) goto bad;
+  f->loading_xref=1; dict=indirect(&start,(uint32_t)object,0);
+  if(dict==EXR_PDF_NONE || f->values[dict].kind!=EXR_PDF_STREAM || !name_is(f,exr_pdf_get(f,dict,"Type"),"XRef") ||
+     !direct_integer(f,exr_pdf_get(f,dict,"Size"),PDF_MAX_OBJECTS,&size) || !size || object>=size ||
+     !array_integers(f,exr_pdf_get(f,dict,"W"),widths,3,&n) || n!=3 || !xref_room(f,(size_t)size)) goto bad;
+  for(i=0;i<3;i++) { if(widths[i]>8) goto bad; row+=(size_t)widths[i]; }
+  if(!row) goto bad;
+  id=exr_pdf_get(f,dict,"Encrypt");
+  if(id!=EXR_PDF_NONE && f->values[id].kind!=EXR_PDF_NULL) goto bad;
+  if(exr_pdf_get(f,dict,"XRefStm")!=EXR_PDF_NONE) goto bad;
+  *root=exr_pdf_get(f,dict,"Root");
+  if(*root!=EXR_PDF_NONE && f->values[*root].kind!=EXR_PDF_REF) goto bad;
+  *previous=SIZE_MAX; id=exr_pdf_get(f,dict,"Prev");
+  if(id!=EXR_PDF_NONE) { uint64_t offset; if(!direct_integer(f,id,f->size-1,&offset)) goto bad; *previous=(size_t)offset; }
+  if(exr_pdf_stream_data(f,dict,&data,&length,NULL)!=EXR_OK) goto bad;
+  seen=calloc((size_t)(size+7)/8,1); if(!seen) { failed(f,EXR_MEMORY,"PDF xref validation allocation failed"); goto done; }
+  id=exr_pdf_get(f,dict,"Index");
+  if(id!=EXR_PDF_NONE && f->values[id].kind!=EXR_PDF_ARRAY) goto bad;
+  at=id==EXR_PDF_NONE ? EXR_PDF_NONE : f->values[id].first;
+  do {
+    if(id==EXR_PDF_NONE) { range[0]=0; range[1]=size; }
+    else {
+      if(at==EXR_PDF_NONE || !direct_integer(f,at,size,&range[0])) goto bad;
+      at=f->values[at].next;
+      if(at==EXR_PDF_NONE || !direct_integer(f,at,size-range[0],&range[1])) goto bad;
+      at=f->values[at].next;
+    }
+    if(range[1]>size-range[0] || range[1]>(length-pos)/row || ++ranges>262144) goto bad;
+    for(i=0;i<(size_t)range[1];i++) {
+      size_t number=(size_t)range[0]+i; pdf_xref *x=&f->xref[number];
+      if(seen[number/8]&(1u<<(number%8))) goto bad;
+      seen[number/8]|=(unsigned char)(1u<<(number%8));
+      fields[0]=widths[0] ? 0 : 1; fields[1]=fields[2]=0;
+      for(k=0;k<3;k++) { size_t b; for(b=0;b<(size_t)widths[k];b++) fields[k]=(fields[k]<<8)|data[pos++]; }
+      if(fields[0]==1 ? fields[1]>=f->size || fields[2]>65535 :
+         fields[0]==2 ? !fields[1] || fields[1]>=size || fields[2]>=PDF_MAX_OBJECTS :
+         fields[0]==0 ? fields[1]>=PDF_MAX_OBJECTS || fields[2]>65535 : 0) goto bad;
+      if(x->seen && x->revision==f->revision && !hybrid) goto bad;
+      if(!x->seen || (hybrid && x->revision==f->revision)) {
+        *x=(pdf_xref){(size_t)fields[1],EXR_PDF_NONE,f->revision,fields[0]==2 ? 0 : (unsigned)fields[2],
+                     fields[0]<=2 ? (unsigned)fields[0] : 0,0,1,(uint32_t)fields[2]};
+      }
+    }
+  } while(id!=EXR_PDF_NONE && at!=EXR_PDF_NONE);
+  if(pos!=length || (id!=EXR_PDF_NONE && !ranges)) goto bad;
+  if(f->revision==1 && !hybrid) f->declared_size=(size_t)size;
+  ok=1; goto done;
+bad:
+  failed(f,EXR_FORMAT,"Invalid PDF cross-reference stream");
+done:
+  f->loading_xref=0; free(seen); return ok;
+}
+static uint32_t compressed_object(exr_pdf_file *f,uint32_t object) {
+  pdf_xref entry=f->xref[object]; uint32_t ref=value_new(f,EXR_PDF_REF),dict,id,result;
+  size_t index,n,i; const unsigned char *data; uint64_t count,first; parser p;
+  if(ref==EXR_PDF_NONE) return ref;
+  if(entry.offset>=f->xref_count || f->xref[entry.offset].type!=1) goto bad;
+  f->values[ref].u.ref.object=(uint32_t)entry.offset;
+  dict=resolve(f,ref);
+  if(dict==EXR_PDF_NONE || f->values[dict].kind!=EXR_PDF_STREAM || !name_is(f,exr_pdf_get(f,dict,"Type"),"ObjStm")) goto bad;
+  index=f->values[dict].u.ref.object;
+  if(exr_pdf_get(f,dict,"Extends")!=EXR_PDF_NONE) { failed(f,EXR_FORMAT,"PDF object stream Extends is not implemented yet"); return EXR_PDF_NONE; }
+  if(exr_pdf_stream_data(f,dict,&data,&n,NULL)!=EXR_OK) return EXR_PDF_NONE;
+  if(!f->streams[index].objects) {
+    uint32_t *numbers=NULL,*offsets=NULL; unsigned char *seen=NULL;
+    if(!direct_integer(f,resolve(f,exr_pdf_get(f,dict,"N")),PDF_MAX_OBJECTS,&count) || !count ||
+       !direct_integer(f,resolve(f,exr_pdf_get(f,dict,"First")),n,&first) || count>first/3) goto bad;
+    if(count*sizeof(uint32_t)*2>PDF_MAX_STRINGS-f->index_bytes) { failed(f,EXR_LIMIT,"PDF object stream index budget exceeded"); return EXR_PDF_NONE; }
+    numbers=calloc((size_t)count,sizeof(*numbers)); offsets=calloc((size_t)count,sizeof(*offsets)); seen=calloc(PDF_MAX_OBJECTS/8,1);
+    if(!numbers || !offsets || !seen) { free(numbers); free(offsets); free(seen); failed(f,EXR_MEMORY,"PDF object stream index allocation failed"); return EXR_PDF_NONE; }
+    p=(parser){f,data,(size_t)first,0};
+    for(i=0;i<(size_t)count;i++) {
+      uint64_t number,offset;
+      if(!integer_token(&p,&number) || !number || number>=PDF_MAX_OBJECTS || !integer_token(&p,&offset) || offset>=n-first ||
+         (i && offset<=offsets[i-1]) || (seen[number/8]&(1u<<(number%8)))) break;
+      seen[number/8]|=(unsigned char)(1u<<(number%8)); numbers[i]=(uint32_t)number; offsets[i]=(uint32_t)offset;
+    }
+    free(seen);
+    if(i!=(size_t)count || !skip(&p) || p.at!=p.size) { free(numbers); free(offsets); goto bad; }
+    f->streams[index].objects=numbers; f->streams[index].offsets=offsets;
+    f->index_bytes+=(size_t)count*sizeof(uint32_t)*2;
+    f->streams[index].object_count=(size_t)count; f->streams[index].first=(size_t)first;
+  }
+  i=entry.compressed_index;
+  if(i>=f->streams[index].object_count || f->streams[index].objects[i]!=object) goto bad;
+  p=(parser){f,data,n,f->streams[index].first+f->streams[index].offsets[i]};
+  if(i+1<f->streams[index].object_count) p.size=f->streams[index].first+f->streams[index].offsets[i+1];
+  result=parse_value(&p,0); if(result==EXR_PDF_NONE) return result;
+  id=result;
+  if(f->values[id].kind==EXR_PDF_REF || !skip(&p) || p.at!=p.size) goto bad;
+  return result;
+bad:
+  failed(f,EXR_FORMAT,"Invalid compressed PDF object or object stream index"); return EXR_PDF_NONE;
 }
 static int classic_xref(parser *p,size_t *previous,uint32_t *root) {
   exr_pdf_file *f=p->file; uint64_t first,count,i,size; uint32_t trailer,id;
@@ -285,7 +399,7 @@ static int classic_xref(parser *p,size_t *previous,uint32_t *root) {
       if(type ? offset>=f->size : offset>=PDF_MAX_OBJECTS) goto bad;
       x=&f->xref[first+i];
       if(x->seen && x->revision==f->revision) goto bad;
-      if(!x->seen) *x=(pdf_xref){(size_t)offset,EXR_PDF_NONE,f->revision,(unsigned)generation,type,0,1};
+      if(!x->seen) *x=(pdf_xref){(size_t)offset,EXR_PDF_NONE,f->revision,(unsigned)generation,type,0,1,0};
     }
   }
   trailer=parse_value(p,0);
@@ -294,7 +408,13 @@ static int classic_xref(parser *p,size_t *previous,uint32_t *root) {
   if(f->revision==1) f->declared_size=(size_t)size;
   id=exr_pdf_get(f,trailer,"Encrypt");
   if(id!=EXR_PDF_NONE && f->values[id].kind!=EXR_PDF_NULL) { failed(f,EXR_FORMAT,"Encrypted PDF is not supported"); return 0; }
-  if(exr_pdf_get(f,trailer,"XRefStm")!=EXR_PDF_NONE) { failed(f,EXR_FORMAT,"Hybrid xref streams are not implemented yet"); return 0; }
+  id=exr_pdf_get(f,trailer,"XRefStm");
+  if(id!=EXR_PDF_NONE) {
+    parser other; size_t ignored_previous; uint32_t ignored_root;
+    if(!direct_integer(f,id,f->size-1,&size)) goto bad;
+    other=(parser){f,f->data,f->size,(size_t)size};
+    if(!stream_xref(&other,&ignored_previous,&ignored_root,1)) return 0;
+  }
   *root=exr_pdf_get(f,trailer,"Root");
   if(*root!=EXR_PDF_NONE && f->values[*root].kind!=EXR_PDF_REF) goto bad;
   id=exr_pdf_get(f,trailer,"Prev"); *previous=SIZE_MAX;
@@ -305,7 +425,7 @@ bad:
 }
 void exr_pdf_close(exr_pdf_file *f) {
   size_t i; if(!f) return;
-  for(i=0;i<f->stream_count;i++) free(f->streams[i].decoded);
+  for(i=0;i<f->stream_count;i++) { free(f->streams[i].decoded); free(f->streams[i].objects); free(f->streams[i].offsets); }
   free(f->streams); free(f->xref); free(f->values); free(f->strings.data); free(f);
 }
 uint32_t exr_pdf_root(const exr_pdf_file *f) { return f ? f->root : EXR_PDF_NONE; }
@@ -344,8 +464,8 @@ exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_erro
     if(count==10000) { failed(f,EXR_LIMIT,"PDF revision limit exceeded"); goto done; }
     visited[count++]=at; f->revision=(uint32_t)count;
     p=(parser){f,bytes,size,at};
-    if(!word(&p,"xref")) { failed(f,EXR_FORMAT,"PDF xref streams are not implemented yet"); goto done; }
-    if(!classic_xref(&p,&previous,&candidate)) goto done;
+    if(word(&p,"xref")) { if(!classic_xref(&p,&previous,&candidate)) goto done; }
+    else if(!stream_xref(&p,&previous,&candidate,0)) goto done;
     if(root==EXR_PDF_NONE) root=candidate;
     at=previous;
   }

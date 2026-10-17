@@ -720,3 +720,18 @@ inheritance/deletion, stream lengths/cache reuse, checksum/tail errors, unsuppor
 expansion limits and every truncated prefix. All 37 suites pass. Public PDF document opening
 is still unconnected: this milestone supplies internal object parsing, not page rendering.
 The 0.38 commit 12f12cf passed all six platform and sanitizer CI jobs.
+
+
+## 0.40 PDF cross-reference and object streams
+
+The same private parser now reads cross-reference streams with 0..8-byte fields, default
+entry types, Index subsections, raw/Flate data, compressed object streams and hybrid tables.
+Compressed objects are parsed on demand from bounded slices; stream headers are validated
+once and cached with a 32 MiB aggregate index budget. Direct bootstrap values prevent
+reference cycles before the object table exists. Newest entries still override older streams
+and tables, including free tombstones and transitions between compressed/uncompressed objects.
+
+Original fixtures cover compressed catalogs, stream lengths stored in object streams, shared
+index reuse, wide fields, optional fields, split ranges, hybrid precedence, both incremental
+container transitions and invalid widths/ranges/generations/headers/indexes/object bodies.
+Public PDF page reading remains unconnected. The 0.39 commit 3301cf3 passed all six CI jobs.
