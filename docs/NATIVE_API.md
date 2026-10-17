@@ -744,3 +744,8 @@ play/pause/seek/rate 控制请求状态，倍速范围为 (0,16]，后端可按�
 `exr_library_audio_bookmark` 新增/修改带标签的时间书签，id=0 表示新增，更新必须属于同一个 audio_id。bookmarks 按 id 返回独立列表，用 exr_audio_bookmarks_free 释放。remove_audio_bookmark 删除单项，clear_audio 在事务中同时删除该 key 的续播与全部书签。独立 key 由宿主管理生命周期，删除普通书籍不会隐式清理它。备份包含这些表。
 
 时间以 8 字节小端 BLOB 保留完整 uint64 范围；恢复到实际时间线时，player 仍校验轨道 ID 与本地时长。保存不自动读取声音文件。audio_id 最多 4096 字节，track_id/标签最多 64 KiB；标识非空且文本须为 UTF-8。查询最多 100000 项和 64 MiB 逻辑载荷，损坏记录不会返回部分结果。schema 4 从 v1/v2/v3 在事务内迁移；旧版二进制会拒绝新版本库。
+
+
+## 安装后的 WAV 宿主示例（0.76）
+
+`examples/wave.c` 只依赖公开头文件和 SDK 动态库，按 1024 帧读取 WAV 并打印采样率、声道、总帧数和峰值。它提供交错 float 数据接入宿主声音设备的入口，不打开设备。安装包包含可用标准库脚本重新生成的原创 400 Hz PCM 样本。命令为 `exreader-wave-example input.wav`，Windows 入口支持 UTF-8 路径。三桌面 CI 在独立安装 SDK 后构建并运行此示例，Windows 还覆盖中文文件名。

@@ -1420,3 +1420,16 @@ through existing migration tests; v3 tests verify successful upgrade and rollbac
 after the first new table was created. Saved time is validated against a concrete
 timeline when restoring the player, rather than opening files during persistence.
 All 58 local suites pass. The 0.74 a0ddece CI run passed all six jobs.
+
+
+## 0.76 Standalone installed-SDK WAVE host example
+
+The public-only decoder example scans an original 3200-frame 16 kHz mono PCM
+fixture in bounded batches and reports its expected 0.5 peak. The fixture is
+reproducible with Python standard-library math/struct/wave. CTest checks decoded
+frame count and peak. Installed host builds include the example and desktop CI
+runs it separately from engine build files; Windows also uses a Chinese filename.
+All 59 local suites pass. An independent installed-SDK build compiles all host
+examples, decodes the Chinese-named WAVE fixture to the expected 3200 frames /
+0.5 peak, and runs the public PDF text/render example. The 0.75 c8f07c3 CI run
+passed all six jobs.
