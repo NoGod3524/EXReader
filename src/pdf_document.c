@@ -3,10 +3,13 @@
 #include "layout_internal.h"
 typedef struct {
   unsigned char *data; size_t size,count; exr_pdf_file *file; exr_pdf_page_info *pages; exr_font *font;
+  exr_metadata_entry metadata[8];
 } pdf_document;
 static void discard_reader(pdf_document *d) { free(d->pages); d->pages=NULL; exr_pdf_close(d->file); d->file=NULL; }
 static void release(void *context) {
-  pdf_document *d=context; if(!d) return; discard_reader(d); exr_font_free(d->font); free(d->data); free(d);
+  pdf_document *d=context; size_t i; if(!d) return; discard_reader(d); exr_font_free(d->font);
+  for(i=0;i<8;i++) free((void *)d->metadata[i].value);
+  free(d->data); free(d);
 }
 static exr_status reader(pdf_document *d,exr_error *e) {
   exr_status status; size_t count=0;
@@ -89,6 +92,68 @@ static exr_status text(void *context,size_t page,const exr_control *control,exr_
   if(status!=EXR_OK) discard_reader(d);
   return status;
 }
+/* ISO 32000 text strings: PDFDocEncoding, BOM UTF-16BE and PDF 2 UTF-8.
+   Do not reuse font encodings: Info text is unrelated to a page font. */
+static exr_status metadata_string(exr_pdf_file *file,uint32_t id,char **out,exr_error *e) {
+  static const uint16_t accents[]={0x02d8,0x02c7,0x02c6,0x02d9,0x02dd,0x02db,0x02da,0x02dc};
+  static const uint16_t symbols[]={0x2022,0x2020,0x2021,0x2026,0x2014,0x2013,0x0192,0x2044,0x2039,0x203a,0x2212,0x2030,0x201e,0x201c,0x201d,0x2018,0x2019,0x201a,0x2122,0xfb01,0xfb02,0x0141,0x0152,0x0160,0x0178,0x017d,0x0131,0x0142,0x0153,0x0161,0x017e};
+  exr_status status; const exr_pdf_value *v; const unsigned char *data; size_t size,at=0; int utf16=0,utf8=0; exr_buffer b={0};
+  *out=NULL; status=exr_pdf_resolve(file,id,&id,e); if(status!=EXR_OK) return status;
+  v=exr_pdf_value_at(file,id); if(!v || v->kind==EXR_PDF_NULL) return EXR_OK;
+  if(v->kind!=EXR_PDF_STRING) return exr_fail(e,EXR_FORMAT,"PDF metadata value is not a text string");
+  data=exr_pdf_bytes(file,id,&size); if(size>65536) return exr_fail(e,EXR_LIMIT,"PDF metadata value exceeds 64 KiB");
+  if(size>=2 && data[0]==0xfe && data[1]==0xff) { utf16=1; at=2; }
+  else if(size>=3 && data[0]==0xef && data[1]==0xbb && data[2]==0xbf) { utf8=1; at=3; }
+  while(at<size) {
+    uint32_t cp;
+    if(utf16) {
+      if(size-at<2) goto invalid;
+      cp=((uint32_t)data[at]<<8)|data[at+1]; at+=2;
+      if(cp>=0xd800 && cp<=0xdbff) {
+        uint32_t low; if(size-at<2) goto invalid;
+        low=((uint32_t)data[at]<<8)|data[at+1]; at+=2; if(low<0xdc00 || low>0xdfff) goto invalid;
+        cp=0x10000+((cp-0xd800)<<10)+(low-0xdc00);
+      } else if(cp>=0xdc00 && cp<=0xdfff) goto invalid;
+    } else if(utf8) { if(!exr_next((const char *)data,size,&at,&cp)) goto invalid; }
+    else {
+      cp=data[at++];
+      if(cp==0x7f || cp==0x9f || cp==0xad) goto invalid;
+      if(cp>=0x18 && cp<=0x1f) cp=accents[cp-0x18];
+      else if(cp>=0x80 && cp<=0x9e) cp=symbols[cp-0x80];
+      else if(cp==0xa0) cp=0x20ac;
+    }
+    if(!cp) goto invalid;
+    if(!exr_codepoint(&b,cp)) { status=exr_fail(e,EXR_MEMORY,"PDF metadata allocation failed"); goto done; }
+    if(b.size>65536) { status=exr_fail(e,EXR_LIMIT,"Decoded PDF metadata exceeds 64 KiB"); goto done; }
+  }
+  if(!b.data) b.data=exr_copy("",0);
+  if(!b.data) { status=exr_fail(e,EXR_MEMORY,"PDF metadata allocation failed"); goto done; }
+  *out=b.data; return EXR_OK;
+invalid:
+  status=exr_fail(e,EXR_FORMAT,"Invalid PDF metadata text encoding");
+done:
+  free(b.data); return status;
+}
+static exr_status metadata(void *context,const exr_control *control,const exr_metadata_entry **out,size_t *count,exr_error *e) {
+  static const char *names[]={"Title","Author","Subject","Keywords","Creator","Producer","CreationDate","ModDate"};
+  static const char *keys[]={"http://purl.org/dc/terms/title","http://purl.org/dc/terms/creator","http://purl.org/dc/terms/description","http://ns.adobe.com/pdf/1.3/Keywords","http://ns.adobe.com/xap/1.0/CreatorTool","http://ns.adobe.com/pdf/1.3/Producer","http://ns.adobe.com/xap/1.0/CreateDate","http://ns.adobe.com/xap/1.0/ModifyDate"};
+  pdf_document *d=context; uint32_t info; const exr_pdf_value *v; exr_status status; size_t i,n=0;
+  *out=NULL; *count=0;
+  for(i=0;i<8;i++) { free((void *)d->metadata[i].value); d->metadata[i]=(exr_metadata_entry){0}; }
+  status=reader(d,e); if(status!=EXR_OK) return status;
+  status=exr_pdf_resolve(d->file,exr_pdf_info(d->file),&info,e); if(status!=EXR_OK) goto done;
+  v=exr_pdf_value_at(d->file,info); if(!v || v->kind==EXR_PDF_NULL) return EXR_OK;
+  if(v->kind!=EXR_PDF_DICT) { status=exr_fail(e,EXR_FORMAT,"PDF Info is not a dictionary"); goto done; }
+  for(i=0;i<8;i++) {
+    char *value=NULL; status=exr_control_poll(control,EXR_STAGE_READ,i,8,e); if(status!=EXR_OK) goto done;
+    status=metadata_string(d->file,exr_pdf_get(d->file,info,names[i]),&value,e); if(status!=EXR_OK) goto done;
+    if(value) { d->metadata[n].key=keys[i]; d->metadata[n++].value=value; }
+  }
+  *out=d->metadata; *count=n;
+done:
+  if(status!=EXR_OK) discard_reader(d);
+  return status;
+}
 static exr_status open_options(const exr_fixed_open_options *input,exr_fixed_open_options *out,exr_error *e) {
   size_t i,minimum=offsetof(exr_fixed_open_options,control)+sizeof(out->control); memset(out,0,sizeof(*out));
   if(!input) return EXR_OK;
@@ -111,7 +176,7 @@ static exr_status open_owned(unsigned char *data,size_t size,const char *title,c
     if(pages[i].geometry.bounds[0]>=pages[i].geometry.bounds[2] || pages[i].geometry.bounds[1]>=pages[i].geometry.bounds[3]) { status=exr_fail(e,EXR_FORMAT,"PDF page crop has no MediaBox intersection"); goto done; }
     pages[i].geometry.unit_scale=p->user_unit; pages[i].geometry.rotation=p->rotation;
   }
-  input.struct_size=sizeof(input); input.title=title; input.pages=pages; input.page_count=d->count; input.draw=draw; input.context=d; input.release=release; input.text=text;
+  input.struct_size=sizeof(input); input.title=title; input.pages=pages; input.page_count=d->count; input.draw=draw; input.context=d; input.release=release; input.text=text; input.metadata=metadata;
   status=exr_control_poll(&options->control,EXR_STAGE_READ,d->count,d->count,e);
   if(status==EXR_OK) status=exr_fixed_create(&input,out,e);
 done:

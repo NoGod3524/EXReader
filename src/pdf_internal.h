@@ -16,9 +16,10 @@ typedef struct {
 } exr_pdf_value;
 typedef struct exr_pdf_file exr_pdf_file;
 /* The input is borrowed until close. IDs remain stable; value pointers may move
-   when another indirect object is resolved. No PDF API is exported yet. */
+   when another indirect object is resolved. Public access uses the fixed-document adapter. */
 exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_error *error);
 void exr_pdf_close(exr_pdf_file *file);
+uint32_t exr_pdf_info(const exr_pdf_file *file);
 uint32_t exr_pdf_root(const exr_pdf_file *file);
 const exr_pdf_value *exr_pdf_value_at(const exr_pdf_file *file,uint32_t value);
 const unsigned char *exr_pdf_bytes(const exr_pdf_file *file,uint32_t value,size_t *size);

@@ -2,7 +2,7 @@
 #include "internal.h"
 struct exr_fixed_document {
   char *title; exr_fixed_page *pages; size_t count,bytes;
-  exr_fixed_draw_fn draw; exr_fixed_text_fn text; void *context; exr_context_release_fn release; unsigned busy;
+  exr_fixed_draw_fn draw; exr_fixed_text_fn text; exr_fixed_metadata_fn metadata; void *context; exr_context_release_fn release; unsigned busy;
 };
 static exr_status copy_string(const char *source,size_t *bytes,const char **out,exr_error *e) {
   size_t n=0,at=0; uint32_t cp;
@@ -42,6 +42,10 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
     for(i=offsetof(exr_fixed_input,text);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Truncated fixed text provider field");
     snapshot.text=NULL;
   }
+  if(input->struct_size>offsetof(exr_fixed_input,metadata) && input->struct_size<offsetof(exr_fixed_input,metadata)+sizeof(input->metadata)) {
+    for(i=offsetof(exr_fixed_input,metadata);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Truncated metadata provider field");
+    snapshot.metadata=NULL;
+  }
   if(!input->draw || !input->pages || !input->page_count) return exr_fail(e,EXR_ARGUMENT,"Missing fixed page directory/provider");
   if(input->page_count>10000) return exr_fail(e,EXR_LIMIT,"Fixed document exceeds 10000 pages");
   d=calloc(1,sizeof(*d)); if(!d) return exr_fail(e,EXR_MEMORY,"Fixed document allocation failed");
@@ -63,7 +67,7 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
 done:
   free(ids);
   if(status!=EXR_OK) { exr_fixed_free(d); return status; }
-  d->draw=input->draw; d->text=input->text; d->context=input->context; d->release=input->release; d->bytes=sizeof(*d)+d->count*sizeof(*d->pages)+strings;
+  d->draw=input->draw; d->text=input->text; d->metadata=input->metadata; d->context=input->context; d->release=input->release; d->bytes=sizeof(*d)+d->count*sizeof(*d->pages)+strings;
   *out=d; return exr_fail(e,EXR_OK,"");
 }
 const char *exr_fixed_title(const exr_fixed_document *d) { return d ? d->title : ""; }
@@ -73,6 +77,35 @@ static exr_status provider_end(exr_fixed_document *d,exr_status status,exr_error
   d->busy=0;
   if(status!=EXR_OK) { local->code=status; if(!local->message[0]) exr_fail(local,status,"Fixed page provider failed"); if(e) *e=*local; return status; }
   return exr_fail(e,EXR_OK,"");
+}
+void exr_metadata_free(exr_metadata_entry *entries,size_t count) {
+  size_t i; if(!entries) return;
+  for(i=0;i<count;i++) { free((void *)entries[i].key); free((void *)entries[i].value); }
+  free(entries);
+}
+exr_status exr_fixed_load_metadata(exr_fixed_document *d,const exr_control *control,exr_metadata_entry **out,size_t *count,exr_error *e) {
+  const exr_metadata_entry *borrowed=NULL; exr_metadata_entry *entries=NULL; size_t n=0,i,bytes=0;
+  exr_error local={0}; exr_status status;
+  if(out) *out=NULL;
+  if(count) *count=0;
+  if(!d || !out || !count || d->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant metadata load");
+  if(!d->metadata) return exr_fail(e,EXR_FORMAT,"Fixed document has no metadata provider");
+  d->busy=1; status=exr_control_poll(control,EXR_STAGE_READ,0,1,&local);
+  if(status==EXR_OK) status=d->metadata(d->context,control,&borrowed,&n,&local);
+  if(status==EXR_OK && local.code!=EXR_OK) status=local.code;
+  if(status==EXR_OK && (n>4096 || (n && !borrowed))) status=exr_fail(&local,n>4096 ? EXR_LIMIT : EXR_FORMAT,"Invalid metadata provider result");
+  if(status==EXR_OK && n) {
+    entries=calloc(n,sizeof(*entries)); if(!entries) status=exr_fail(&local,EXR_MEMORY,"Metadata snapshot allocation failed");
+  }
+  for(i=0;status==EXR_OK && i<n;i++) {
+    status=exr_control_cancel(control,&local); if(status!=EXR_OK) break;
+    if(!borrowed[i].key || !borrowed[i].key[0] || !borrowed[i].value) { status=exr_fail(&local,EXR_FORMAT,"Missing metadata key/value"); break; }
+    status=copy_string(borrowed[i].key,&bytes,&entries[i].key,&local);
+    if(status==EXR_OK) status=copy_string(borrowed[i].value,&bytes,&entries[i].value,&local);
+  }
+  if(status==EXR_OK) status=exr_control_poll(control,EXR_STAGE_READ,1,1,&local);
+  if(status==EXR_OK) { *out=entries; *count=n; } else exr_metadata_free(entries,n);
+  return provider_end(d,status,&local,e);
 }
 exr_status exr_fixed_load_text(exr_fixed_document *d,size_t page,const exr_control *control,exr_fixed_text **out,exr_error *e) {
   exr_fixed_text *text=NULL; exr_error local={0}; exr_status status;

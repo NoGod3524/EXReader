@@ -12,7 +12,7 @@ struct exr_pdf_file {
   exr_buffer strings;
   pdf_xref *xref; size_t xref_count,xref_capacity;
   pdf_stream *streams; size_t stream_count,stream_capacity;
-  uint32_t root,revision; unsigned resolving,loading_xref;
+  uint32_t root,info,revision; unsigned resolving,loading_xref;
   exr_error error;
 };
 typedef struct { exr_pdf_file *file; const unsigned char *data; size_t size,at; } parser;
@@ -285,7 +285,7 @@ static int array_integers(exr_pdf_file *f,uint32_t id,uint64_t *values,size_t ca
   }
   return 1;
 }
-static int stream_xref(parser *p,size_t *previous,uint32_t *root,int hybrid) {
+static int stream_xref(parser *p,size_t *previous,uint32_t *root,uint32_t *info,int hybrid) {
   exr_pdf_file *f=p->file; parser start=*p; uint64_t object,generation,size,widths[3],range[2],fields[3];
   uint32_t dict,id,at; const unsigned char *data; size_t length,n,row=0,pos=0,i,k,ranges=0;
   unsigned char *seen=NULL; int ok=0;
@@ -299,6 +299,7 @@ static int stream_xref(parser *p,size_t *previous,uint32_t *root,int hybrid) {
   id=exr_pdf_get(f,dict,"Encrypt");
   if(id!=EXR_PDF_NONE && f->values[id].kind!=EXR_PDF_NULL) goto bad;
   if(exr_pdf_get(f,dict,"XRefStm")!=EXR_PDF_NONE) goto bad;
+  *info=exr_pdf_get(f,dict,"Info");
   *root=exr_pdf_get(f,dict,"Root");
   if(*root!=EXR_PDF_NONE && f->values[*root].kind!=EXR_PDF_REF) goto bad;
   *previous=SIZE_MAX; id=exr_pdf_get(f,dict,"Prev");
@@ -383,7 +384,7 @@ static uint32_t compressed_object(exr_pdf_file *f,uint32_t object) {
 bad:
   failed(f,EXR_FORMAT,"Invalid compressed PDF object or object stream index"); return EXR_PDF_NONE;
 }
-static int classic_xref(parser *p,size_t *previous,uint32_t *root) {
+static int classic_xref(parser *p,size_t *previous,uint32_t *root,uint32_t *info) {
   exr_pdf_file *f=p->file; uint64_t first,count,i,size; uint32_t trailer,id;
   size_t maximum=0;
   for(;;) {
@@ -410,11 +411,12 @@ static int classic_xref(parser *p,size_t *previous,uint32_t *root) {
   if(id!=EXR_PDF_NONE && f->values[id].kind!=EXR_PDF_NULL) { failed(f,EXR_FORMAT,"Encrypted PDF is not supported"); return 0; }
   id=exr_pdf_get(f,trailer,"XRefStm");
   if(id!=EXR_PDF_NONE) {
-    parser other; size_t ignored_previous; uint32_t ignored_root;
+    parser other; size_t ignored_previous; uint32_t ignored_root,ignored_info;
     if(!direct_integer(f,id,f->size-1,&size)) goto bad;
     other=(parser){f,f->data,f->size,(size_t)size};
-    if(!stream_xref(&other,&ignored_previous,&ignored_root,1)) return 0;
+    if(!stream_xref(&other,&ignored_previous,&ignored_root,&ignored_info,1)) return 0;
   }
+  *info=exr_pdf_get(f,trailer,"Info");
   *root=exr_pdf_get(f,trailer,"Root");
   if(*root!=EXR_PDF_NONE && f->values[*root].kind!=EXR_PDF_REF) goto bad;
   id=exr_pdf_get(f,trailer,"Prev"); *previous=SIZE_MAX;
@@ -428,6 +430,7 @@ void exr_pdf_close(exr_pdf_file *f) {
   for(i=0;i<f->stream_count;i++) { free(f->streams[i].decoded); free(f->streams[i].objects); free(f->streams[i].offsets); }
   free(f->streams); free(f->xref); free(f->values); free(f->strings.data); free(f);
 }
+uint32_t exr_pdf_info(const exr_pdf_file *f) { return f ? f->info : EXR_PDF_NONE; }
 uint32_t exr_pdf_root(const exr_pdf_file *f) { return f ? f->root : EXR_PDF_NONE; }
 static exr_status result(exr_pdf_file *f,exr_error *e) { if(e) *e=f->error; return f->error.code; }
 exr_status exr_pdf_resolve(exr_pdf_file *f,uint32_t id,uint32_t *out,exr_error *e) {
@@ -444,7 +447,7 @@ exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_erro
   if(memcmp(bytes,"%PDF-",5) || !((bytes[5]=='1' && bytes[6]=='.' && bytes[7]>='0' && bytes[7]<='7') ||
      (bytes[5]=='2' && bytes[6]=='.' && bytes[7]=='0'))) return exr_fail(e,EXR_FORMAT,"Invalid PDF header version");
   f=calloc(1,sizeof(*f)); if(!f) return exr_fail(e,EXR_MEMORY,"PDF file allocation failed");
-  f->data=bytes; f->size=size; f->root=EXR_PDF_NONE;
+  f->data=bytes; f->size=size; f->root=f->info=EXR_PDF_NONE;
   while(end && whitespace(bytes[end-1])) end--;
   if(end<5 || memcmp(bytes+end-5,"%%EOF",5)) goto bad;
   at=end-5;
@@ -459,14 +462,15 @@ exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_erro
   if(p.at!=p.size) goto bad;
   at=(size_t)offset;
   while(at!=SIZE_MAX) {
-    uint32_t candidate; size_t previous;
+    uint32_t candidate,info; size_t previous;
     for(i=0;i<count;i++) if(visited[i]==at) { failed(f,EXR_FORMAT,"Cyclic PDF Prev chain"); goto done; }
     if(count==10000) { failed(f,EXR_LIMIT,"PDF revision limit exceeded"); goto done; }
     visited[count++]=at; f->revision=(uint32_t)count;
     p=(parser){f,bytes,size,at};
-    if(word(&p,"xref")) { if(!classic_xref(&p,&previous,&candidate)) goto done; }
-    else if(!stream_xref(&p,&previous,&candidate,0)) goto done;
+    if(word(&p,"xref")) { if(!classic_xref(&p,&previous,&candidate,&info)) goto done; }
+    else if(!stream_xref(&p,&previous,&candidate,&info,0)) goto done;
     if(root==EXR_PDF_NONE) root=candidate;
+    if(f->info==EXR_PDF_NONE) f->info=info;
     at=previous;
   }
   if(root==EXR_PDF_NONE || f->declared_size<f->xref_count) goto bad;

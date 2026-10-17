@@ -170,6 +170,8 @@ exr_status exr_library_import(exr_library *l, exr_format format, const void *dat
                               const char *title, int64_t *id, exr_error *e) {
   sqlite3_stmt *s = NULL;
   exr_document *d = NULL; exr_fixed_document *fixed=NULL; size_t extent=0;
+  exr_metadata_entry *metadata=NULL; size_t metadata_count=0,i;
+  const char *source_title="",*source_author="";
   exr_status result;
   void *cover=NULL; size_t cover_size=0;
   if (!l || !id)
@@ -177,28 +179,32 @@ exr_status exr_library_import(exr_library *l, exr_format format, const void *dat
   *id = 0;
   if(format==EXR_PDF) {
     result=exr_fixed_open_memory(format,data,n,NULL,&fixed,e);
-    if(result==EXR_OK) exr_fixed_pages(fixed,&extent);
+    if(result==EXR_OK) { exr_fixed_pages(fixed,&extent); result=exr_fixed_load_metadata(fixed,NULL,&metadata,&metadata_count,e); }
+    if(result==EXR_OK) for(i=0;i<metadata_count;i++) {
+      if(!strcmp(metadata[i].key,"http://purl.org/dc/terms/title")) source_title=metadata[i].value;
+      if(!strcmp(metadata[i].key,"http://purl.org/dc/terms/creator")) source_author=metadata[i].value;
+    }
   } else {
     result=exr_document_open_memory(format,data,n,&d,e);
-    if(result==EXR_OK) { extent=d->size; result=import_cover(d,&cover,&cover_size,e); }
+    if(result==EXR_OK) { extent=d->size; source_title=exr_document_title(d); result=import_cover(d,&cover,&cover_size,e); }
   }
   if(result!=EXR_OK) goto cleanup;
-  if (!prepare(l, "INSERT INTO books(format,title,text_size,source,cover)VALUES(?1,?2,?3,?4,?5)", &s)) {
+  if (!prepare(l, "INSERT INTO books(format,title,text_size,source,cover,author)VALUES(?1,?2,?3,?4,?5,?6)", &s)) {
     result=database_error(l,e); goto cleanup;
   }
   if(sqlite3_bind_int(s, 1, format)!=SQLITE_OK || !bind_text(s, 2,
             title && title[0] ? title
-                              : (exr_document_title(d)[0] ? exr_document_title(d) : "Untitled")) ||
+                              : (source_title[0] ? source_title : "Untitled")) ||
      sqlite3_bind_int64(s, 3, (sqlite3_int64)extent)!=SQLITE_OK ||
      sqlite3_bind_blob(s, 4, data, (int)n, SQLITE_TRANSIENT)!=SQLITE_OK ||
-     (cover ? sqlite3_bind_blob(s,5,cover,(int)cover_size,SQLITE_STATIC) : sqlite3_bind_null(s,5))!=SQLITE_OK) {
+     (cover ? sqlite3_bind_blob(s,5,cover,(int)cover_size,SQLITE_STATIC) : sqlite3_bind_null(s,5))!=SQLITE_OK || !bind_text(s,6,source_author)) {
     result=database_error(l,e); sqlite3_finalize(s); goto cleanup;
   }
   result = done(l, s, e);
   if (result == EXR_OK)
     *id = sqlite3_last_insert_rowid(l->db);
 cleanup:
-  free(cover); exr_document_free(d); exr_fixed_free(fixed);
+  exr_metadata_free(metadata,metadata_count); free(cover); exr_document_free(d); exr_fixed_free(fixed);
   return result;
 }
 /* ponytail: exact-byte scan, bounded by stored sources of the same size/format.
