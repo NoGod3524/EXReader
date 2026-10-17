@@ -7,7 +7,9 @@
 #include <string.h>
 
 /* Define EXR_PAGER_GOLDEN_ONLY to record the fixture with the installed 0.10.0 SDK.
-   The normal test compares both the old engine snapshot and independent page output. */
+   The normal test compares both the old engine snapshot and independent page output.
+   In 0.18.0 only fragment box source ranges were corrected; all 89 gray/RGBA
+   baselines and the other geometry fields retain the original values. */
 static exr_error error;
 static unsigned checks;
 static exr_font *font;

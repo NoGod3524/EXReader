@@ -1943,3 +1943,19 @@ EPUB edit checks reopen the result and verify UTF-8/UTF-16 package input, title/
 
 
 All 89 local Windows suites pass, with the corrected EPUB boundary fixture rerun after the full suite. The separate AAC-enabled build passes AAC/M4B/EPUB-edit integration tests; the default AAC-disabled build retains all symbols and passes its disabled-codec tests. Release DLL sizes on this Windows MinGW build are 4,314,085 bytes with AAC disabled and about 4.83 MB enabled. These are build artifacts, not peak runtime-memory measurements. This batch awaits its own six-job CI run with AAC explicitly enabled; version 0.18.0, ABI epoch 1 and library schema 6 remain unchanged.
+
+
+Commit `5e82ba3` passes all six jobs in [CI run 39059214579](https://github.com/NoGod3524/EXReader/actions/runs/39059214579), with AAC enabled on desktop/sanitizer/mobile builds. CI found two portability/test defects in the previous batch: a BMFF table-row initializer and treating a non-terminated extracted ZIP member as a C string. Both are fixed; the latter is in the test helper, not the EPUB writer.
+
+## Milestone 0.18 development: orthogonal blocks, font variations, WSOLA and inline images
+
+Orthogonal tests exercise every pair of the three writing modes, long blocks, nested tables/rowspan, opposite-axis cells, nested blocks and images, explicit dimensions and trailing padding/margins, forced page breaks, hidden chapters, budgets, continuation/checkpoint replay, source anchors and positioned-array pixel round trips. The old cell walker was removed in favor of the same pager engine. The 89-page prior golden corpus retains every label/page/gray/RGBA hash; ten geometry hashes change only because box source ranges are now clipped to their containing page. The previously rejected tall table remains rejected.
+
+The original 2688-byte variable font has two axes, hidden width, avar, a named heavy instance, gvar/HVAR/VVAR, variable kern/mark positioning and conditional rvrn. It regenerates byte-for-byte (SHA-256 02c1529a150e918a053ce709a98cb037f2c37cc85604654a3114b6d80a322553). Public tests cover axes/ownership, independent instances, avar, named instance, outlines, metrics, font-list merging and rejection contracts. Separate synthetic tables check longWords signed 32/16-bit, shortWords 16/8-bit, malformed item/region indices and FeatureVariations. Independent HarfBuzz comparison of eight axis/text cases matches glyph IDs with max coordinate/advance error 0.000123 px at 100 px size. It exposed and fixed the existing PairPos format-1 device-offset origin (PairSet, not PairPos). HarfBuzz/fontTools are development checks, not SDK dependencies.
+
+WSOLA tests check exact duration at fixed/Q32-edge rates, one-frame/random input and varied output chunking, bit-identical 1x pass-through, 1–8 channel phase coherence, finite extremes, empty/short EOF, backpressure, cancellation/retry/reentry and reset. A 440 Hz input remains approximately 440 Hz at 0.5/0.75/1/1.5/2x; a 220 Hz input at 1.333333333x measures 219.938 Hz. All checks are numeric and silent.
+
+Inline-image tests verify binary pixels containing EI/whitespace, CRLF ID, packed/16-bit samples, stencil reversal, all supported filter boundaries/chains/predictors, JPEG APP false EOI/entropy stuffing/restart, cross-arena resource aliases, Form/Type3 scope, malformed input, cancellation and the shared decode budget across repeated Forms. Independent PyMuPDF/Poppler pixels and text match six original PDFs (JPEG pixel tolerance 6).
+
+
+All 94 local Windows suites pass. After the final hidden/empty-chapter viewport fix, orthogonal/vertical/flow/pager were rebuilt and rerun successfully. The installed Windows SDK passes a separate C++17 consumer using ABI epoch 1. This batch still requires its own cross-platform CI run; product version 0.18.0 and library schema 6 remain unchanged.

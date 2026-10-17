@@ -66,6 +66,10 @@ typedef exr_status (*exr_pdf_operator_fn)(void *context,exr_pdf_file *operands,c
                                          const uint32_t *values,size_t count,exr_error *error);
 exr_status exr_pdf_content_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
                                const exr_control *control,exr_error *error);
+/* Inline image dictionaries live in the operand arena; ColorSpace names are
+   resolved against the current page/Form resource dictionary. */
+exr_status exr_pdf_content_ops_resources(exr_pdf_file *owner,uint32_t resources,const void *data,size_t size,
+  exr_pdf_operator_fn operation,void *context,size_t *decode_budget,const exr_control *control,exr_error *error);
 exr_status exr_pdf_syntax_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
                               size_t maximum_operands,const exr_control *control,exr_error *error);
 typedef struct exr_pdf_cmap exr_pdf_cmap;
@@ -127,7 +131,7 @@ typedef struct {
 typedef enum { EXR_PDF_SAVE,EXR_PDF_RESTORE,EXR_PDF_BEGIN_TEXT,EXR_PDF_END_TEXT } exr_pdf_state_event;
 typedef exr_status (*exr_pdf_path_fn)(void *context,const exr_pdf_path_paint *path,exr_error *error);
 typedef exr_status (*exr_pdf_state_fn)(void *context,exr_pdf_state_event event,exr_error *error);
-typedef exr_status (*exr_pdf_image_fn)(void *context,exr_pdf_file *file,uint32_t image,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *error);
+typedef exr_status (*exr_pdf_image_fn)(void *context,exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *error);
 typedef struct { exr_pdf_text_fn glyph; exr_pdf_path_fn path; exr_pdf_state_fn state; exr_pdf_image_fn image; } exr_pdf_draw_callbacks;
 exr_status exr_pdf_text_ops(exr_pdf_file *file,uint32_t resources,const void *data,size_t size,
                             exr_pdf_text_fn glyph,void *context,const exr_control *control,exr_error *error);

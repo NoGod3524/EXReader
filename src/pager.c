@@ -4,11 +4,14 @@
 
 typedef struct {
   size_t node, child, position;
-  int phase, entered;
+  int phase, entered, sized_inline;
   float x, width, old_x, old_width, outer_x, outer_width;
   float pt, pb, first_y, parent_inset;
+  float parent_inline_end, inline_end, min_inline;
   const exr_style *old_paragraph;
   exr_table_cursor *table;
+  exr_pager *context;
+  exr_layout *fragment;
 } frame;
 typedef struct {
   size_t index, bytes;
@@ -35,6 +38,9 @@ struct exr_pager {
   frame frames[258];
   size_t depth, chapter, position, emitted;
   int finished, failed, busy;
+  int local; /* 1: bounded block context, 2: unpaginated table unit. */
+  size_t local_root, resume_bidi_first;
+  int resume_bidi;
   int mode; /* Owned sequential output or borrowed cached output. */
   cached_page cache[64]; /* Most recently used first. */
   size_t cache_count, cache_bytes, cache_capacity, cache_budget;
@@ -42,11 +48,20 @@ struct exr_pager {
   size_t checkpoint_count, checkpoint_bytes, checkpoint_capacity, checkpoint_budget, interval;
   size_t generated_pages, restored_checkpoints;
 };
+static exr_pager *context_clone(const exr_pager *source);
+static size_t context_memory_size(const exr_pager *p);
+static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e);
+static void clear_frame(frame *f) {
+  exr_table_free(f->table);
+  exr_pager_free(f->context);
+  exr_layout_free(f->fragment);
+  f->table = NULL; f->context = NULL; f->fragment = NULL;
+}
 static void checkpoint_free(checkpoint *c) {
   size_t i;
   if (!c) return;
   if (c->frames)
-    for (i = 0; i < c->depth; i++) exr_table_free(c->frames[i].table);
+    for (i = 0; i < c->depth; i++) clear_frame(&c->frames[i]);
   free(c->frames);
   exr_inline_buffer_clear(&c->line);
   free(c);
@@ -75,15 +90,76 @@ static checkpoint *checkpoint_clone(const checkpoint *source) {
     if (!copy->frames) goto bad;
     for (i = 0; i < copy->depth; i++) {
       copy->frames[i] = source->frames[i]; copy->frames[i].table = NULL;
+      copy->frames[i].context = NULL; copy->frames[i].fragment = NULL;
       if (source->frames[i].table) {
         copy->frames[i].table = exr_table_clone(source->frames[i].table);
         if (!copy->frames[i].table) goto bad;
       }
+      if (source->frames[i].context) {
+        copy->frames[i].context = context_clone(source->frames[i].context);
+        if (!copy->frames[i].context) goto bad;
+      }
+      copy->frames[i].fragment = source->frames[i].fragment;
+      exr_layout_ref(copy->frames[i].fragment);
     }
   }
   return copy;
 bad:
   checkpoint_free(copy); return NULL;
+}
+static exr_pager *context_clone(const exr_pager *source) {
+  checkpoint state = {0}, *saved;
+  exr_pager *copy;
+  size_t i;
+  if (!source) return NULL;
+  state.f = source->f; state.line = source->line;
+  state.frames = (frame *)source->frames; state.depth = source->depth;
+  saved = checkpoint_clone(&state);
+  if (!saved) return NULL;
+  copy = calloc(1, sizeof(*copy));
+  if (!copy) { checkpoint_free(saved); return NULL; }
+  copy->f = saved->f; copy->line = saved->line; memset(&saved->line, 0, sizeof(saved->line));
+  copy->config = source->config; copy->config.user_css = NULL;
+  copy->physical_page = source->physical_page; copy->writing_mode = source->writing_mode;
+  copy->styles = source->styles; copy->assets = source->assets;
+  copy->local = source->local; copy->local_root = source->local_root;
+  copy->depth = source->depth; copy->chapter = source->chapter;
+  copy->position = source->position; copy->emitted = source->emitted;
+  copy->finished = source->finished;
+  copy->f.layout = NULL; copy->f.error = NULL;
+  copy->f.config = &copy->config; copy->f.bidi = &copy->bidi;
+  copy->resume_bidi = source->line.text.started;
+  copy->resume_bidi_first = source->resume_bidi ? source->resume_bidi_first : source->bidi.first_node;
+  for (i = 0; i < copy->depth; i++) {
+    copy->frames[i] = saved->frames[i];
+    saved->frames[i].table = NULL; saved->frames[i].context = NULL; saved->frames[i].fragment = NULL;
+  }
+  checkpoint_free(saved);
+  return copy;
+}
+static size_t context_memory_size(const exr_pager *p) {
+  size_t total = sizeof(*p), i;
+  const exr_layout *queues[3];
+  if (!p) return 0;
+  queues[0] = &p->line.run; queues[1] = &p->line.raw; queues[2] = &p->line.line;
+  for (i = 0; i < 3; i++) {
+    if (queues[i]->glyph_count > (SIZE_MAX-total)/sizeof(exr_glyph)) return SIZE_MAX;
+    total += queues[i]->glyph_count*sizeof(exr_glyph);
+  }
+  for (i = 0; i < p->depth; i++) {
+    size_t bytes = exr_table_memory_size(p->frames[i].table);
+    if (bytes > SIZE_MAX-total) return SIZE_MAX;
+    total += bytes;
+    bytes = context_memory_size(p->frames[i].context);
+    if (bytes > SIZE_MAX-total) return SIZE_MAX;
+    total += bytes;
+    if (p->frames[i].fragment) {
+      bytes = exr_layout_memory_size(p->frames[i].fragment);
+      if (bytes > SIZE_MAX-total) return SIZE_MAX;
+      total += bytes;
+    }
+  }
+  return total;
 }
 static void evict_checkpoint(exr_pager *p) {
   checkpoint *c = p->checkpoints[--p->checkpoint_count];
@@ -105,6 +181,14 @@ static void save_checkpoint(exr_pager *p) {
     size_t part = exr_table_memory_size(p->frames[i].table);
     if (part > SIZE_MAX - bytes) return;
     bytes += part;
+    part = context_memory_size(p->frames[i].context);
+    if (part > SIZE_MAX - bytes) return;
+    bytes += part;
+    if (p->frames[i].fragment) {
+      part = exr_layout_memory_size(p->frames[i].fragment);
+      if (part > SIZE_MAX - bytes) return;
+      bytes += part;
+    }
   }
   if (bytes > p->checkpoint_budget) return;
   state.f = p->f;
@@ -134,7 +218,8 @@ static exr_status restore_checkpoint(exr_pager *p, const checkpoint *source, exr
   p->line = copy->line; memset(&copy->line, 0, sizeof(copy->line));
   p->depth = copy->depth;
   for (i = 0; i < copy->depth; i++) {
-    p->frames[i] = copy->frames[i]; copy->frames[i].table = NULL;
+    p->frames[i] = copy->frames[i];
+    copy->frames[i].table = NULL; copy->frames[i].context = NULL; copy->frames[i].fragment = NULL;
   }
   p->chapter = copy->chapter; p->position = copy->position; p->emitted = copy->emitted;
   p->assets->work_glyphs = copy->work_glyphs; p->assets->shape_work = copy->shape_work;
@@ -204,11 +289,45 @@ static exr_status push(exr_pager *p, size_t index, float x, float width) {
   f->width = width;
   return EXR_OK;
 }
+static exr_status context_create(flow *parent, size_t node, float width, float height,
+                                  exr_writing_mode mode, int local, exr_pager **out) {
+  exr_pager *p;
+  exr_status status;
+  *out = NULL;
+  if (parent->context_depth >= 8 || !isfinite(width) || !isfinite(height) || width < 1 || height < 1)
+    return exr_fail(parent->error, EXR_LIMIT, "Writing-mode context nesting or geometry limit exceeded");
+  p = calloc(1, sizeof(*p));
+  if (!p) return exr_fail(parent->error, EXR_MEMORY, "Writing-mode context allocation failed");
+  p->config = *parent->config; p->config.user_css = NULL;
+  p->config.page.width = width; p->config.page.height = height; p->config.page.margin = 0;
+  p->physical_page = p->config.page;
+  if (mode != EXR_WRITING_HORIZONTAL_TB) {
+    p->physical_page.width = height; p->physical_page.height = width;
+  }
+  p->local = local; p->local_root = node; p->writing_mode = mode;
+  p->styles = (exr_style *)parent->styles; p->assets = parent->assets;
+  p->f = *parent;
+  p->f.layout = NULL; p->f.config = &p->config; p->f.bidi = &p->bidi;
+  p->f.origin_x = p->f.used_inline = p->f.x = p->f.y = p->f.bottom_inset = p->f.inline_end_inset = 0;
+  p->f.width = width; p->f.pending = 0; p->f.first_line = 1;
+  p->f.force_break = 0; p->f.paginate = p->f.page_limit = local == 1;
+  p->f.context_depth += local == 1;
+  p->f.table_depth += local == 2;
+  p->f.writing_mode = mode;
+  status = push(p, node, 0, width);
+  if (status != EXR_OK) { exr_pager_free(p); return status; }
+  *out = p; return EXR_OK;
+}
 static exr_status advance(exr_pager *p) {
   flow *f = &p->f;
   exr_status status = exr_control_poll(&p->config.control, EXR_STAGE_LAYOUT, p->position,
                                        p->f.doc->size, p->f.error);
   if (status != EXR_OK) return status;
+  if (p->resume_bidi) {
+    status = exr_inline_prepare(f, p->resume_bidi_first, &p->bidi);
+    if (status != EXR_OK) return status;
+    p->resume_bidi = 0;
+  }
   status = exr_inline_drain(f, &p->line);
   if (status != EXR_OK)
     return status;
@@ -222,6 +341,12 @@ static exr_status advance(exr_pager *p) {
       if (status != EXR_OK) return status;
     }
     if (!p->depth) {
+      if (p->local) {
+        status = finish_run(p);
+        if (status != EXR_OK) return status;
+        p->finished = 1; p->position = f->doc->nodes[p->local_root].end;
+        return EXR_OK;
+      }
       while (p->chapter < f->doc->chapter_count &&
              (!f->doc->chapters[p->chapter].in_spine || !f->doc->chapters[p->chapter].linear))
         p->chapter++;
@@ -247,6 +372,20 @@ static exr_status advance(exr_pager *p) {
         p->depth--;
         break;
       }
+      if (s->display != EXR_CSS_INLINE && n->kind != EXR_NODE_TEXT && n->kind != EXR_NODE_BREAK &&
+          s->writing_mode != f->writing_mode) {
+        int perpendicular = (s->writing_mode == EXR_WRITING_HORIZONTAL_TB) !=
+                            (f->writing_mode == EXR_WRITING_HORIZONTAL_TB);
+        status = finish_run(p);
+        if (status != EXR_OK) return status;
+        if (s->before && f->layout->page_count && f->y > exr_flow_top(f)) f->force_break = 1;
+        status = context_create(f, v->node, perpendicular ? exr_flow_room(f) : f->width,
+                                   perpendicular ? f->width : exr_flow_room(f),
+                                   s->writing_mode, 1, &v->context);
+        if (status != EXR_OK) return status;
+        v->phase = 30;
+        break;
+      }
       if (n->kind == EXR_NODE_TEXT) {
         v->position = n->start;
         v->phase = 10;
@@ -265,15 +404,17 @@ static exr_status advance(exr_pager *p) {
       if (s->before && f->layout->page_count && f->y > exr_flow_top(f))
         f->force_break = 1;
       {
+        exr_style box = exr_flow_style(s, f->writing_mode);
+        const exr_style *b = &box;
         float border = s->border_style ? s->border_width : 0;
-        float ml = used(s->margin[3], v->width), mr = used(s->margin[1], v->width);
-        float pl = used(s->padding[3], v->width) + border;
-        float pr = used(s->padding[1], v->width) + border;
+        float ml = used(b->margin[3], v->width), mr = used(b->margin[1], v->width);
+        float pl = used(b->padding[3], v->width) + border;
+        float pr = used(b->padding[1], v->width) + border;
         float content = v->width - ml - mr - pl - pr;
-        if (s->width.value >= 0 && n->kind != EXR_NODE_IMAGE)
-          content = fminf(content, used(s->width, v->width));
-        if (s->max_width.value >= 0 && n->kind != EXR_NODE_IMAGE)
-          content = fminf(content, used(s->max_width, v->width));
+        if (b->width.value >= 0 && n->kind != EXR_NODE_IMAGE)
+          content = fminf(content, used(b->width, v->width));
+        if (b->max_width.value >= 0 && n->kind != EXR_NODE_IMAGE)
+          content = fminf(content, used(b->max_width, v->width));
         if (content < 1 || !isfinite(content))
           return failure(p, EXR_ARGUMENT, "CSS leaves no content width");
         v->old_x = f->x;
@@ -281,15 +422,21 @@ static exr_status advance(exr_pager *p) {
         v->old_paragraph = f->paragraph;
         v->outer_width = content + pl + pr;
         v->outer_x = v->x + ml;
-        if (s->margin[3].value < 0)
+        if (b->margin[3].value < 0)
           v->outer_x += fmaxf(0, v->width - v->outer_width - mr) /
-                        (s->margin[1].value < 0 ? 2 : 1);
+                        (b->margin[1].value < 0 ? 2 : 1);
         v->x = v->outer_x + pl;
         v->width = content;
-        v->pt = used(s->padding[0], f->width) + border;
-        v->pb = used(s->padding[2], f->width) + border;
+        v->pt = used(b->padding[0], f->width) + border;
+        v->pb = used(b->padding[2], f->width) + border;
         v->parent_inset = f->bottom_inset;
-        f->y += used(s->margin[0], f->width);
+        v->parent_inline_end = f->inline_end_inset;
+        v->inline_end = pr + mr;
+        v->min_inline = v->outer_x + v->outer_width + mr + v->parent_inline_end;
+        v->sized_inline = (b->width.value >= 0 && n->kind != EXR_NODE_IMAGE) ||
+                          (s->background & 255) || (s->border_style && s->border_width > 0) ||
+                          s->display == EXR_CSS_CELL;
+        f->y += used(b->margin[0], f->width);
       }
       v->phase = 2;
       break;
@@ -298,7 +445,9 @@ static exr_status advance(exr_pager *p) {
       if (status != EXR_OK)
         return status;
       v->first_y = f->y;
-      f->bottom_inset += v->pb;
+      if (f->paginate) f->bottom_inset += v->pb;
+      f->inline_end_inset += v->inline_end;
+      if (v->sized_inline) f->used_inline = fmaxf(f->used_inline, v->min_inline);
       f->y += v->pt;
       f->x = v->x;
       f->width = v->width;
@@ -353,18 +502,24 @@ static exr_status advance(exr_pager *p) {
       status = finish_run(p);
       if (status != EXR_OK)
         return status;
-      f->y = fminf(f->y, exr_flow_bottom(f));
-      f->bottom_inset -= v->pb;
+      if (f->paginate) {
+        f->y = fminf(f->y, exr_flow_bottom(f));
+        f->bottom_inset -= v->pb;
+      }
       f->y += v->pb;
       if ((s->background & 255) || (s->border_style && s->border_width > 0) || s->display == EXR_CSS_CELL)
         if (!exr_flow_box(f, v->node, 0, v->outer_x, v->first_y, v->outer_width,
                             f->y - v->first_y,
                             s->display == EXR_CSS_CELL ? EXR_BOX_CELL : EXR_BOX_BLOCK))
           return failure(p, EXR_MEMORY, "Block fragment allocation failed");
-      f->y += used(s->margin[2], v->old_width);
+      {
+        exr_style box = exr_flow_style(s, f->writing_mode);
+        f->y += used(box.margin[2], v->old_width);
+      }
       f->x = v->old_x;
       f->width = v->old_width;
       f->paragraph = v->old_paragraph;
+      f->inline_end_inset = v->parent_inline_end;
       f->first_line = 1;
       if (s->after)
         f->force_break = 1;
@@ -386,6 +541,30 @@ static exr_status advance(exr_pager *p) {
         return status;
       p->depth--;
       break;
+    case 30: {
+      float height;
+      int perpendicular = (s->writing_mode == EXR_WRITING_HORIZONTAL_TB) !=
+                          (f->writing_mode == EXR_WRITING_HORIZONTAL_TB);
+      if (!v->fragment) {
+        v->context->config.control = p->config.control;
+        status = next_page(v->context, &v->fragment, f->error);
+        if (status != EXR_OK) return status;
+        if (!v->fragment) {
+          clear_frame(v); p->depth--; f->first_line = 1;
+          if (s->after) f->force_break = 1;
+          break;
+        }
+      }
+      height = perpendicular ? v->fragment->flow_inline : v->fragment->flow_block;
+      status = exr_flow_page(f, height, v->fragment->pages[0].start);
+      if (status != EXR_OK) return status;
+      status = exr_flow_copy(f, v->fragment, v->node, f->x, f->y, height);
+      if (status != EXR_OK) return status;
+      f->y += height; f->first_line = 1;
+      if (v->context->position > p->position) p->position = v->context->position;
+      exr_layout_free(v->fragment); v->fragment = NULL;
+      break;
+    }
     default:
       return failure(p, EXR_FORMAT, "Invalid layout continuation");
     }
@@ -397,46 +576,6 @@ static int box_order(const void *a, const void *b) {
   if (x->node != y->node)
     return x->node < y->node ? -1 : 1;
   return (int)x->kind - (int)y->kind;
-}
-static exr_status project_page(exr_pager *p) {
-  exr_layout *l = p->f.layout;
-  size_t i, j;
-  l->writing_mode = p->writing_mode;
-  if (p->writing_mode == EXR_WRITING_HORIZONTAL_TB) return EXR_OK;
-  for (i = 0; i < l->line_count; i++) {
-    exr_line *line = &l->lines[i];
-    float start = line->y, height = line->height, x = line->x, width = line->width;
-    for (j = line->glyph_start; j < line->glyph_start + line->glyph_count; j++) {
-      exr_glyph *g = &l->glyphs[j];
-      float pen = g->x, baseline = g->baseline;
-      if (!(j & 255) && exr_control_cancel(&p->config.control, p->f.error) != EXR_OK) return EXR_CANCELLED;
-      if (g->flags & EXR_GLYPH_SIDEWAYS)
-        g->x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width - baseline :
-                                                         2 * start + height - baseline;
-      else {
-        exr_face *face = &p->f.font->faces[g->font_index];
-        FT_Glyph_Metrics metrics;
-        if (exr_font_size(face, g->size) || FT_Load_Glyph(face->face, g->glyph, FT_LOAD_VERTICAL_LAYOUT))
-          return failure(p, EXR_FONT, "Cannot position vertical font glyph");
-        metrics = face->face->glyph->metrics;
-        g->x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width - start - height / 2 :
-                                                         start + height / 2;
-        g->offset_x += (float)(metrics.vertBearingX - metrics.horiBearingX) / 64;
-        g->offset_y -= (float)(metrics.vertBearingY + metrics.horiBearingY) / 64;
-      }
-      g->baseline = pen;
-    }
-    line->x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width - start - height : start;
-    line->y = x; line->width = height; line->height = width;
-  }
-  for (i = 0; i < l->box_count; i++) {
-    exr_box *b = &l->boxes[i];
-    float x = b->x, y = b->y, width = b->width, height = b->height;
-    b->x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width - y - height : y;
-    b->y = x; b->width = height; b->height = width;
-  }
-  l->options = p->physical_page;
-  return EXR_OK;
 }
 static exr_status seal(exr_pager *p, int partial) {
   flow *f = &p->f;
@@ -458,7 +597,16 @@ static exr_status seal(exr_pager *p, int partial) {
       v->first_y = p->config.page.margin;
     }
   else
-    l->pages[0].end = p->f.doc->size;
+    l->pages[0].end = p->local ? p->f.doc->nodes[p->local_root].end : p->f.doc->size;
+  /* A block decoration belongs to this fragment's source range, so the public
+     arrays can be rebuilt through the same positioned-layout validation. */
+  for (i = 0; i < l->box_count; i++) {
+    exr_box *box = &l->boxes[i];
+    if (box->start < l->pages[0].start) box->start = l->pages[0].start;
+    if (box->start > l->pages[0].end) box->start = l->pages[0].end;
+    if (box->end < box->start) box->end = box->start;
+    if (box->end > l->pages[0].end) box->end = l->pages[0].end;
+  }
   if (l->box_count)
     qsort(l->boxes, l->box_count, sizeof(*l->boxes), box_order);
   l->pages[0].box_count = l->box_count;
@@ -484,37 +632,83 @@ static exr_status seal(exr_pager *p, int partial) {
     l->image_count++;
     l->image_bytes += size;
   }
-  return project_page(p);
+  l->flow_inline = f->used_inline;
+  l->flow_block = f->y;
+  /* Partial block backgrounds can fill the unused tail of a fragment. Their
+     extent must travel with the fragment when an enclosing axis is different. */
+  for (i = 0; i < l->box_count; i++) {
+    const exr_box *box = &l->boxes[i];
+    float end = f->writing_mode == EXR_WRITING_HORIZONTAL_TB ? box->y + box->height :
+                f->writing_mode == EXR_WRITING_VERTICAL_RL ? f->origin_x - box->x : box->x + box->width;
+    l->flow_block = fmaxf(l->flow_block, end);
+  }
+  l->writing_mode = f->writing_mode;
+  l->options = p->physical_page;
+  return EXR_OK;
+}
+/* Anonymous document/chapter wrappers follow their single visible block.
+   An explicit outer declaration fixes the viewport, leaving inner changes local. */
+static int substantive(const exr_pager *p, size_t node) {
+  const exr_node *n = &p->f.doc->nodes[node];
+  size_t at;
+  if (p->styles[node].display == EXR_CSS_NONE || n->start == SIZE_MAX) return 0;
+  if (n->kind != EXR_NODE_TEXT) return 1;
+  for (at = n->start; at < n->end; at++) {
+    unsigned char c = (unsigned char)p->f.doc->text[at];
+    if (c != ' ' && c != '\t' && c != '\r' && c != '\n' && c != '\f') return 1;
+  }
+  return 0;
 }
 static exr_status writing_mode(exr_pager *p, exr_error *e) {
-  size_t i;
+  size_t chapter, at, bytes = (p->style_count + CHAR_BIT - 1)/CHAR_BIT;
+  unsigned char *visible = calloc(bytes ? bytes : 1, 1);
   int found = 0;
-  for (i = 0; i < p->style_count; i++) {
-    const exr_node *n = &p->f.doc->nodes[i];
-    if (!(i & 255) && exr_control_cancel(&p->config.control, e) != EXR_OK) return EXR_CANCELLED;
-    if (p->styles[i].display == EXR_CSS_NONE || n->start == SIZE_MAX ||
-        (n->kind != EXR_NODE_TEXT && n->kind != EXR_NODE_IMAGE) ||
-        n->chapter >= p->f.doc->chapter_count || !p->f.doc->chapters[n->chapter].in_spine ||
-        !p->f.doc->chapters[n->chapter].linear) continue;
-    if (found && p->writing_mode != p->styles[i].writing_mode)
-      return exr_fail(e, EXR_FORMAT, "Orthogonal writing-mode contexts are not supported");
-    p->writing_mode = p->styles[i].writing_mode; found = 1;
+  if (!visible) return exr_fail(e, EXR_MEMORY, "Writing-mode visibility allocation failed");
+  /* Parents precede children in the document model. One temporary bit per node
+     identifies visible content without repeatedly walking every subtree. */
+  for (at = p->style_count; at; at--) {
+    size_t node = at-1, parent = p->f.doc->nodes[node].parent;
+    const exr_node *n = &p->f.doc->nodes[node];
+    if (!(node & 255) && exr_control_cancel(&p->config.control, e) != EXR_OK) { free(visible); return EXR_CANCELLED; }
+    if ((n->kind == EXR_NODE_TEXT || n->kind == EXR_NODE_IMAGE) && substantive(p,node))
+      visible[node/CHAR_BIT] |= (unsigned char)(1u << (node%CHAR_BIT));
+    if (parent != SIZE_MAX && (visible[node/CHAR_BIT] & (1u << (node%CHAR_BIT))))
+      visible[parent/CHAR_BIT] |= (unsigned char)(1u << (parent%CHAR_BIT));
   }
+  for (chapter = 0; chapter < p->f.doc->chapter_count; chapter++) {
+    size_t chain[258], count = 0, node = p->f.doc->chapters[chapter].root, i;
+    exr_writing_mode mode;
+    if (!p->f.doc->chapters[chapter].in_spine || !p->f.doc->chapters[chapter].linear ||
+        !(visible[node/CHAR_BIT] & (1u << (node%CHAR_BIT)))) continue;
+    for (;;) {
+      size_t child, single = SIZE_MAX;
+      if (count == sizeof(chain)/sizeof(*chain)) {
+        free(visible); return exr_fail(e, EXR_LIMIT, "Writing-mode viewport depth exceeded");
+      }
+      chain[count++] = node;
+      if (p->styles[node].writing_declared) break;
+      for (child = p->f.doc->nodes[node].first_child; child != SIZE_MAX;
+           child = p->f.doc->nodes[child].next_sibling) {
+        if (!(visible[child/CHAR_BIT] & (1u << (child%CHAR_BIT)))) continue;
+        if (single != SIZE_MAX) { single = SIZE_MAX; break; }
+        single = child;
+      }
+      if (single == SIZE_MAX || p->styles[single].display == EXR_CSS_INLINE ||
+          p->f.doc->nodes[single].kind == EXR_NODE_IMAGE) break;
+      node = single;
+      if (exr_control_cancel(&p->config.control, e) != EXR_OK) { free(visible); return EXR_CANCELLED; }
+    }
+    mode = p->styles[node].writing_mode;
+    for (i = 0; i < count; i++) p->styles[chain[i]].writing_mode = mode;
+    if (!found) { p->writing_mode = mode; found = 1; }
+  }
+  free(visible);
   if (p->writing_mode != EXR_WRITING_HORIZONTAL_TB) {
     float swap = p->config.page.width;
     p->config.page.width = p->config.page.height; p->config.page.height = swap;
-    for (i = 0; i < p->style_count; i++) {
-      exr_style *s = &p->styles[i];
-      exr_length margin[4], padding[4], length = s->width;
-      size_t map[4] = {p->writing_mode == EXR_WRITING_VERTICAL_RL ? 1u : 3u, 2u,
-                       p->writing_mode == EXR_WRITING_VERTICAL_RL ? 3u : 1u, 0u}, j;
-      s->width = s->height; s->height = length;
-      length = s->max_width; s->max_width = s->max_height; s->max_height = length;
-      memcpy(margin, s->margin, sizeof(margin)); memcpy(padding, s->padding, sizeof(padding));
-      for (j = 0; j < 4; j++) { s->margin[j] = margin[map[j]]; s->padding[j] = padding[map[j]]; }
-    }
   }
   p->f.writing_mode = p->writing_mode;
+  p->f.origin_x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width : 0;
   return EXR_OK;
 }
 exr_status exr_pager_create(const exr_document *doc, exr_font *font,
@@ -594,6 +788,7 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
 static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
   exr_layout *l;
   exr_status status;
+  size_t i;
   if (!out)
     return exr_fail(e, EXR_ARGUMENT, "Missing page output");
   *out = NULL;
@@ -612,9 +807,13 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
   p->f.layout = l;
   p->f.error = e;
   p->f.y = p->config.page.margin;
+  p->f.used_inline = 0;
+  for (i = 0; i < p->depth; i++)
+    if (p->frames[i].entered && p->frames[i].sized_inline)
+      p->f.used_inline = fmaxf(p->f.used_inline, p->frames[i].min_inline);
   p->busy = 1;
   status = advance(p);
-  if (status == EXR_OK && !l->page_count && !p->emitted)
+  if (status == EXR_OK && !l->page_count && !p->emitted && !p->local)
     status = failure(p, EXR_FORMAT, "No layout content");
   if ((status == EXR_OK || status == EXR_PAUSE) && l->page_count)
     status = seal(p, status == EXR_PAUSE);
@@ -637,6 +836,25 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
     exr_layout_free(l);
   return exr_fail(e, EXR_OK, "");
 }
+exr_status exr_flow_unit(flow *parent, size_t node, float width,
+                          exr_layout **out, float *height) {
+  exr_pager *p = NULL;
+  exr_status status;
+  *out = NULL; *height = 0;
+  status = context_create(parent, node, width, exr_flow_room(parent),
+                            parent->writing_mode, 2, &p);
+  if (status != EXR_OK) return status;
+  status = next_page(p, out, parent->error);
+  if (status == EXR_OK) {
+    *height = p->f.y;
+    if (!*out) {
+      *out = calloc(1, sizeof(**out));
+      if (!*out) status = exr_fail(parent->error, EXR_MEMORY, "Empty flow unit allocation failed");
+      else (*out)->writing_mode = parent->writing_mode;
+    }
+  }
+  exr_pager_free(p); return status;
+}
 exr_status exr_pager_next(exr_pager *p, exr_layout **out, exr_error *e) {
   if (!out)
     return exr_fail(e, EXR_ARGUMENT, "Missing page output");
@@ -652,12 +870,13 @@ static void reset_cursor(exr_pager *p) {
   exr_font *font = p->f.font;
   size_t i;
   for (i = 0; i < p->depth; i++)
-    exr_table_free(p->frames[i].table);
+    clear_frame(&p->frames[i]);
   memset(p->frames, 0, sizeof(p->frames));
   exr_inline_buffer_clear(&p->line);
   exr_inline_clear(&p->bidi);
   memset(&p->f, 0, sizeof(p->f));
   p->f.writing_mode = p->writing_mode;
+  p->f.origin_x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width : 0;
   p->f.doc = doc;
   p->f.font = font;
   p->f.assets = p->assets;
@@ -671,6 +890,7 @@ static void reset_cursor(exr_pager *p) {
   p->assets->work_glyphs = p->assets->shape_work = 0;
   p->depth = p->chapter = p->position = p->emitted = 0;
   p->finished = p->failed = 0;
+  p->resume_bidi = 0;
 }
 static void evict_page(exr_pager *p) {
   cached_page *entry = &p->cache[--p->cache_count];
@@ -780,14 +1000,16 @@ void exr_pager_free(exr_pager *p) {
   if (!p)
     return;
   for (i = 0; i < p->depth; i++)
-    exr_table_free(p->frames[i].table);
+    clear_frame(&p->frames[i]);
   while (p->cache_count)
     evict_page(p);
   while (p->checkpoint_count) evict_checkpoint(p);
   exr_inline_buffer_clear(&p->line);
   exr_inline_clear(&p->bidi);
-  exr_layout_free(p->assets);
-  exr_styles_free(p->styles, p->style_count);
+  if (!p->local) {
+    exr_layout_free(p->assets);
+    exr_styles_free(p->styles, p->style_count);
+  }
   free((void *)p->config.user_css);
   free(p);
 }

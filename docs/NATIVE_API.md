@@ -1040,7 +1040,7 @@ Swift `EXReaderPCM` 和 Java `EXReader.Pcm` 统一读取启用的 PCM 解码器�
 
 ## 竖排、Type3、AAC/M4B 与 EPUB 原书编辑（0.18 开发补充）
 
-通过 CSS writing-mode: vertical-rl / vertical-lr 选择统一页面方向，text-orientation 支持 mixed / upright / sideways。Unicode 17 UAX #50 决定字素朝向；Tr 仅在字体确实提供竖向替代时直立，Tu 无替代仍直立。原生 shape_vertical 使用 vmtx、vrt2（优先于 vert）与 vkrn，没有 vmtx 时采用 em 度量。字素方向跨样式保持一致，页级续排、检查点、缓存和命中使用同一排版路径。当前不同块之间的 writing-mode 切换返回 EXR_FORMAT，异轴上下文和 ruby 继续补齐。
+通过 CSS writing-mode: vertical-rl / vertical-lr 选择统一页面方向，text-orientation 支持 mixed / upright / sideways。Unicode 17 UAX #50 决定字素朝向；Tr 仅在字体确实提供竖向替代时直立，Tu 无替代仍直立。原生 shape_vertical 使用 vmtx、vrt2（优先于 vert）与 vkrn，没有 vmtx 时采用 em 度量。字素方向跨样式保持一致，页级续排、检查点、缓存和命中使用同一排版路径。不同块之间的 writing-mode 切换现已通过局部上下文续排，ruby 继续补齐。
 
 公开 glyph/line/box 数组始终使用物理页面坐标。VERTICAL 表示 advance 及 clip_left/right 沿 y 轴，SIDEWAYS 表示顺时针 90 度；exr_glyph_matrix 将现有 1000-em、y-up 字形轮廓映射到物理页面。UTF-8 范围、锚点和 CFI 仍是逻辑顺序。exr_layout_writing_mode 返回普通重排页方向；positioned 输入可逐字形混用轴，应读取 glyph flags。所有原有固定步长结构保持 ABI epoch 1。
 
@@ -1055,3 +1055,16 @@ AAC/M4B 为精确跳播保留当前完整解码器状态，后退从头重放；
 exr_epub_metadata_write 编辑单个本地 OPF 的 DC title/creator/subject/description/publisher/contributor/date/type/format/source/language/relation/coverage/rights，key 使用 dcterms URI。缺省不改，整 key 的多值及传递 refinements 一起替换，保留首个原 id；NULL 删除可选属性，普通空串保留，title/language 不能空或删除。identifier 不提供写入，避免破坏字体混淆标识。未知结构和命名空间保留语义，XML 统一 UTF-8 序列化。
 
 cover 为 NULL 时不变；空 data/size 清除封面 designation 并保留原资源；PNG/JPEG 替换做 MIME/签名检查，沿用已有封面 URI 以保住书内链接，并更新共享该资源的 manifest media-type。没有封面时创建不冲突的本地资源与 EPUB2/3 designation。签名/rights 文件、歧义 cover、加密 cover、metadata/cover 写入时的 element base URI，以及 cover 覆盖保留包成员 返回错误；仅混淆字体的 encryption.xml 可原样保留，清 designation 不需要解密。封面最多 16 MiB，XML 输入每个最多 4 MiB、输出 OPF 8 MiB、ZIP 128 MiB/10000 entries，元数据值 64 KiB/64 keys。未改 ZIP 成员按原压缩字节复制，输出 mimetype 为第一个无压缩成员；ZIP 容器字节及 OPF 词法拼写可以变化。输出独立内存以 exr_free 释放，无修改时独立原样复制，失败/取消清空输出。
+
+
+## 混轴续排、可变字体、保音高变速和 PDF 内联图（0.18 开发补充）
+
+横排/vertical-rl/vertical-lr 可以作为块级局部 writing context 相互嵌套，最多 8 层。父子都复用同一个 pager walker、表格/图片路径与 assets，不另造递归排版器。长块按片生成，父页放不下时保留 fragment，随机页 checkpoint 克隆局部 continuation 并将内存计入预算；正文范围和开放数组始终映射到原逻辑文本。首个可见 linear spine chapter 的外层决定主 viewport，普通 inline span 使用父 flow 方向。超页不可拆的 table rowspan group 仍返回 EXR_LIMIT，表格单元格仍是有界的当前行组临时布局。背景 box 的 start/end 夹到其所在页，便于原样送入 positioned 接口。
+
+exr_font_axes 返回独立 axis 快照，包含 OpenType tag、隐藏标志、最小/默认/最大/当前设计坐标；静态字体返回 NULL/0。exr_font_create_variable 从原字体列表和稀疏 font_index/tag/value 创建全新实例，未指定轴保留该 face/named instance 的值。最多 64 轴/face、2048 assignments，拒绝重复、未知、非有限和越界值，设计坐标按 16.16 量化。字体字节继续复制；新实例不会改变旧字体和既有 layout；书内字体合并保留宿主实例坐标。exr_font_source 仍返回原编码字节，宿主复现非默认实例时应另读取 axes。轴由宿主指定，当前不解析 CSS font-variation-settings，也不按 wght/ital 自动选择 CSS 字体实例。
+
+FreeType 处理可变轮廓、HVAR/VVAR 度量及 avar 归一化；C OpenType 引擎处理 GDEF 1.3 ItemVariationStore、ValueRecord/anchor 的 VariationIndex（含 longWords）和 GSUB/GPOS 1.1 FeatureVariations 的首匹配 axis-range 条件集。每次 shape 只获取一次归一化坐标，默认 rvrn 在普通替换之前执行；保留原工作/取消限额。不接受的坏表清空输出，普通静态字体路径保持不变。
+
+exr_stretch_* 是不持有 decoder、文件、设备或 player 的流式 WSOLA 处理器。7350–192000 Hz、1–8 声道、0.5–2 倍固定速度；浮点样本交错排列。push/pull 每次最多 65536 帧，push 只接受环形缓冲可用空间，pull 最多一个输出 hop；反复拉取输出后重试输入。不同块切分输出逐样本相同，1 倍速为 bit-exact 旁路。finish 结束输入，再 pull 到 drained；最终样本数按 round(input/reported_rate) 精确计算，reported_rate 是 Q32 实际值。reset 丢弃当前流并更改速度，格式不变。创建后处理路径不再分配，最高配置内存小于 1 MiB；约 20 ms 窗/10 ms hop/±5 ms 搜索，所有声道共享匹配偏移。取消不提交新输出并保留待取样本供重试。短输入/EOF 零延伸；这是低延迟语音/阅读用途算法，瞬态音乐保真不在当前验收范围。宿主可把 PCM、stretch、audio output 串联。
+
+PDF BI/ID/EI 现支持 RAW、DCT JPEG 与现有 Flate/LZW/ASCII85/ASCIIHex/RunLength/predictor 能力及短键/色空间缩写。RAW 按 W/H/BPC/通道精确算行字节；滤镜使用自己的真实终止位置后再验证 EI，不用像素子串搜索。JPEG 按 marker/entropy/FF00/restart 跳到真实 EOI，APP 内的伪 EOI 不结束数据。Form/Type3 资源作用域、Indexed 别名和 stencil 复用现有图片路径，临时 synthetic stream 的解码缓存每张释放；图片无需改变公开 draw ABI。边长 8192、16 Mi 像素、每图 decoded 64 MiB、临时缓存 128 MiB、同页及嵌套 Form/CharProc 累计解压工作 256 MiB。未知首滤镜无法安全定位结束时明确报错。JPEG 像素仍只接受已支持的 gray/RGB8 路径；文字提取可安全跳过 CMYK/ColorTransform override 的 JPEG，像素绘制不支持。

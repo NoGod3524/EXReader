@@ -50,6 +50,7 @@ struct exr_layout {
   size_t paint_count;
   exr_positioned_page *positioned;
   exr_writing_mode writing_mode;
+  float flow_inline, flow_block; /* Private logical extents of a reusable flow fragment. */
 };
 exr_status exr_layout_image_asset(const exr_document *doc, exr_layout *assets,
                                     const exr_layout_config *config, size_t resource,

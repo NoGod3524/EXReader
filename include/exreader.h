@@ -387,6 +387,26 @@ EXR_API void exr_pcm_free(exr_pcm *pcm);
 EXR_API const exr_pcm_info *exr_pcm_format(const exr_pcm *pcm);
 EXR_API exr_status exr_pcm_read(exr_pcm *pcm,uint64_t first_frame,size_t frames,float *output,size_t *read,
   const exr_control *control,exr_error *error);
+/* Bounded native WSOLA pitch-preserving time stretch, interleaved float PCM.
+   Format stays fixed; rate is playback speed 0.5..2, sample_rate 7350..192000,
+   channels 1..8. push accepts available ring capacity, pull returns <= one hop;
+   serialize access and retry after draining output when backpressure accepts 0. */
+typedef struct exr_stretch exr_stretch;
+typedef struct {
+  uint32_t sample_rate,channels; double rate;
+  uint64_t input_frames,output_frames;
+  size_t input_buffered,output_buffered,latency_frames;
+  int finished,drained;
+} exr_stretch_state;
+EXR_API exr_status exr_stretch_create(uint32_t sample_rate,uint32_t channels,double rate,exr_stretch **out,exr_error *error);
+EXR_API void exr_stretch_free(exr_stretch *stretch);
+EXR_API exr_status exr_stretch_get(const exr_stretch *stretch,exr_stretch_state *out,exr_error *error);
+EXR_API exr_status exr_stretch_push(exr_stretch *stretch,const float *input,size_t frames,size_t *accepted,const exr_control *control,exr_error *error);
+EXR_API exr_status exr_stretch_pull(exr_stretch *stretch,float *output,size_t frames,size_t *read,const exr_control *control,exr_error *error);
+/* finish closes input; pull through drained. Exact duration is round(input/rate)
+   using the reported Q32 rate. reset discards the stream and changes its rate. */
+EXR_API exr_status exr_stretch_finish(exr_stretch *stretch,exr_error *error);
+EXR_API exr_status exr_stretch_reset(exr_stretch *stretch,double rate,exr_error *error);
 /* Optional system audio endpoint using the default output device. No engine
    worker thread or automatic file access. The backend name identifies compiled
    support, not device availability; open can fail on a headless system.
@@ -951,6 +971,19 @@ EXR_API exr_status exr_font_create(const exr_font_input *inputs, size_t count,
    Such faces do not participate in Unicode character lookup. Inputs are copied. */
 EXR_API exr_status exr_font_create_glyphs(const exr_font_input *inputs, size_t count,
                                           exr_font **out, exr_error *error);
+enum { EXR_FONT_AXIS_HIDDEN=1 };
+typedef struct { uint32_t tag,flags; double minimum,initial,maximum,value; } exr_font_axis;
+typedef struct { size_t font_index; uint32_t tag; double value; } exr_font_coordinate;
+/* Owned independent axis snapshot; static fonts return NULL/0. Free with exr_free.
+   The initial value is the font default, value is this immutable instance's value. */
+EXR_API exr_status exr_font_axes(const exr_font *font,size_t font_index,
+  exr_font_axis **out,size_t *count,exr_error *error);
+/* Creates a new immutable Unicode font set with sparse design coordinates.
+   Unspecified axes retain the selected face/named-instance coordinates. At most
+   64 axes per face and 2048 assignments; unknown, duplicate/out-of-range axes fail.
+   Coordinates are rounded to the font format's 16.16 design-unit precision. */
+EXR_API exr_status exr_font_create_variable(const exr_font_input *inputs,size_t count,
+  const exr_font_coordinate *coordinates,size_t coordinate_count,exr_font **out,exr_error *error);
 EXR_API size_t exr_font_count(const exr_font *font);
 /* Scalar cmap coverage, not a shaping/sequence support test; invalid input returns 0. */
 EXR_API int exr_font_has_glyph(const exr_font *font, size_t font_index, uint32_t codepoint);

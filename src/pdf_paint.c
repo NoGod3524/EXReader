@@ -60,10 +60,10 @@ static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_erro
   if(status==EXR_OK) status=geometry(r,segments,count,g->transform,&g->paint,flags,EXR_VECTOR_NONZERO,1,e);
   free(segments); return status;
 }
-static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *e) {
+static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *e) {
   pdf_painter *r=context; exr_vector_texture *image=NULL; double matrix[6]; const double flip[6]={1,0,0,-1,0,1};
   exr_status status; if(!r->sink.image) return EXR_OK;
-  status=exr_pdf_image_load(file,id,resources,rgba(&paint->fill),&image,r->work,r->control,e);
+  status=exr_pdf_image_load_from(file,id,resource_file,resources,rgba(&paint->fill),&image,r->work,r->control,e);
   multiply(paint->matrix,flip,matrix);
   if(status==EXR_OK) status=r->sink.image(r->sink.context,image,matrix,paint->fill.alpha,e);
   exr_pdf_image_release(image); return status;

@@ -64,7 +64,8 @@ static exr_status state_event(void *context,exr_pdf_state_event event,exr_error 
   return EXR_OK;
 }
 static exr_status glyph_event(void *context,const exr_pdf_text_glyph *glyph,exr_error *e) { raster *r=context; (void)e; r->glyph=*glyph; r->glyphs++; return EXR_OK; }
-static exr_status image_event(void *context,exr_pdf_file *file,uint32_t image,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *e) {
+static exr_status image_event(void *context,exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *e) {
+  (void)resource_file;
   raster *r=context; (void)e; (void)resources; CHECK(exr_pdf_value_at(file,image)->kind==EXR_PDF_STREAM); r->image_paint=*paint; r->images++; return EXR_OK;
 }
 static exr_status stop_path(void *context,const exr_pdf_path_paint *path,exr_error *e) { (void)context; (void)path; (void)e; return EXR_CANCELLED; }

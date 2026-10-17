@@ -944,6 +944,7 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     for (p = 0; p < PROPERTIES; p++)
       if (w[p].value)
         apply(s, parent, p, w[p].value, o->font_size);
+    s->writing_declared = w[WRITING_MODE].value != NULL;
     if (s->writing_mode != EXR_WRITING_HORIZONTAL_TB) {
       if ((n->kind == EXR_NODE_PARAGRAPH || n->kind == EXR_NODE_HEADING) && !w[MB].value) {
         int end = s->writing_mode == EXR_WRITING_VERTICAL_RL ? ML : MR;

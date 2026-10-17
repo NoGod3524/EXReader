@@ -17,9 +17,9 @@ typedef struct {
   const exr_layout_config *config;
   exr_font *font;
   exr_error *error;
-  float x, width, y, bottom_inset;
+  float x, width, y, bottom_inset, origin_x, used_inline, inline_end_inset;
   size_t pending;
-  int first_line, paginate, force_break, table_depth, page_limit;
+  int first_line, paginate, force_break, table_depth, page_limit, context_depth;
   exr_inline_bidi *bidi;
   exr_writing_mode writing_mode;
 } flow;
@@ -46,6 +46,7 @@ void exr_inline_buffer_clear(exr_line_buffer *buffer);
 float exr_flow_top(const flow *f);
 float exr_flow_bottom(const flow *f);
 float exr_flow_room(const flow *f);
+exr_style exr_flow_style(const exr_style *style, exr_writing_mode mode);
 exr_status exr_flow_page(flow *f, float height, size_t offset);
 exr_box *exr_flow_box(flow *f, size_t node, size_t page, float x, float y,
                        float width, float height, exr_box_kind kind);
