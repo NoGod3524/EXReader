@@ -178,3 +178,38 @@ JNIEXPORT jfloatArray JNICALL Java_org_exreader_EXReader_nativeWaveRead(JNIEnv *
   free(samples); return (*env)->ExceptionCheck(env) ? NULL : out;
 }
 JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativeWaveClose(JNIEnv *env,jclass cls,jlong handle) { (void)cls; exr_wave_free(pointer(env,handle)); }
+
+JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePcmOpen(JNIEnv *env,jclass cls,jbyteArray bytes) {
+  exr_pcm *wave=NULL; exr_error error={0}; exr_status status; jsize size; char *path; (void)cls;
+  if(!bytes) { argument(env,"Missing PCM path"); return 0; }
+  size=(*env)->GetArrayLength(env,bytes); if(size<=0 || size>1024*1024) { argument(env,"Invalid PCM path size"); return 0; }
+  path=malloc((size_t)size+1); if(!path) { error.code=EXR_MEMORY; engine_error(env,EXR_MEMORY,&error); return 0; }
+  (*env)->GetByteArrayRegion(env,bytes,0,size,(jbyte *)path); path[size]=0;
+  if((*env)->ExceptionCheck(env)) { free(path); return 0; }
+  if(memchr(path,0,(size_t)size)) { free(path); argument(env,"NUL in PCM path"); return 0; }
+  status=exr_pcm_open(path,NULL,&wave,&error); free(path);
+  if(status!=EXR_OK) engine_error(env,status,&error);
+  return (jlong)(intptr_t)wave;
+}
+JNIEXPORT jobject JNICALL Java_org_exreader_EXReader_nativePcmFormat(JNIEnv *env,jclass cls,jlong handle) {
+  exr_pcm *w=pointer(env,handle); const exr_pcm_info *info; jclass type; jmethodID constructor; jobject out=NULL; (void)cls;
+  if(!w) return NULL;
+  info=exr_pcm_format(w); type=(*env)->FindClass(env,"org/exreader/EXReader$PcmFormat"); if(!type) return NULL;
+  constructor=(*env)->GetMethodID(env,type,"<init>","(IIIJ)V");
+  if(constructor) out=(*env)->NewObject(env,type,constructor,(jint)info->sample_rate,(jint)info->channels,(jint)info->channel_mask,(jlong)info->frames);
+  if((*env)->ExceptionCheck(env)) out=NULL;
+  (*env)->DeleteLocalRef(env,type); return out;
+}
+JNIEXPORT jfloatArray JNICALL Java_org_exreader_EXReader_nativePcmRead(JNIEnv *env,jclass cls,jlong handle,jlong first,jint frames) {
+  exr_pcm *w=pointer(env,handle); const exr_pcm_info *info; exr_error error={0}; exr_status status; float *samples; size_t count=0,total; jfloatArray out=NULL; (void)cls;
+  if(!w) return NULL;
+  if(first<0 || frames<0 || frames>65536) { argument(env,"Invalid PCM frame range"); return NULL; }
+  info=exr_pcm_format(w); total=(size_t)frames*info->channels; samples=total ? malloc(total*sizeof(*samples)) : NULL;
+  if(total && !samples) { engine_error(env,EXR_MEMORY,&error); return NULL; }
+  status=exr_pcm_read(w,(uint64_t)first,(size_t)frames,samples,&count,NULL,&error);
+  if(status!=EXR_OK) { free(samples); engine_error(env,status,&error); return NULL; }
+  out=(*env)->NewFloatArray(env,(jsize)(count*info->channels));
+  if(out && count) (*env)->SetFloatArrayRegion(env,out,0,(jsize)(count*info->channels),samples);
+  free(samples); return (*env)->ExceptionCheck(env) ? NULL : out;
+}
+JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePcmClose(JNIEnv *env,jclass cls,jlong handle) { (void)cls; exr_pcm_free(pointer(env,handle)); }

@@ -75,15 +75,7 @@ public final class EXReader {
     public static final class Wave implements AutoCloseable {
         private long handle;
         public Wave(String filePath) {
-            Objects.requireNonNull(filePath);
-            if(filePath.indexOf(0)>=0) throw new IllegalArgumentException("NUL in path");
-            for(int i=0;i<filePath.length();i++) {
-                char c=filePath.charAt(i);
-                if(Character.isHighSurrogate(c)) {
-                    if(i+1>=filePath.length() || !Character.isLowSurrogate(filePath.charAt(++i))) throw new IllegalArgumentException("Invalid UTF-16 path");
-                } else if(Character.isLowSurrogate(c)) throw new IllegalArgumentException("Invalid UTF-16 path");
-            }
-            handle=nativeWaveOpen(filePath.getBytes(StandardCharsets.UTF_8));
+            handle=nativeWaveOpen(pathBytes(filePath));
         }
         private long checked() { if(handle==0) throw new IllegalStateException("WAVE is closed"); return handle; }
         public synchronized WaveFormat format() { return nativeWaveFormat(checked()); }
@@ -93,6 +85,37 @@ public final class EXReader {
         }
         @Override public synchronized void close() {
             if(handle!=0) { nativeWaveClose(handle); handle=0; }
+        }
+    }
+    private static byte[] pathBytes(String filePath) {
+        Objects.requireNonNull(filePath);
+        if(filePath.indexOf(0)>=0) throw new IllegalArgumentException("NUL in path");
+        for(int i=0;i<filePath.length();i++) {
+            char c=filePath.charAt(i);
+            if(Character.isHighSurrogate(c)) {
+                if(i+1>=filePath.length() || !Character.isLowSurrogate(filePath.charAt(++i))) throw new IllegalArgumentException("Invalid UTF-16 path");
+            } else if(Character.isLowSurrogate(c)) throw new IllegalArgumentException("Invalid UTF-16 path");
+        }
+        return filePath.getBytes(StandardCharsets.UTF_8);
+    }
+    public static final class PcmFormat {
+        public final int sampleRate,channels,channelMask;
+        public final long frames; // -1 when duration is not yet known.
+        private PcmFormat(int rate,int channels,int mask,long frames) {
+            sampleRate=rate; this.channels=channels; channelMask=mask; this.frames=frames;
+        }
+    }
+    public static final class Pcm implements AutoCloseable {
+        private long handle;
+        public Pcm(String filePath) { handle=nativePcmOpen(pathBytes(filePath)); }
+        private long checked() { if(handle==0) throw new IllegalStateException("PCM is closed"); return handle; }
+        public synchronized PcmFormat format() { return nativePcmFormat(checked()); }
+        public synchronized float[] read(long firstFrame,int count) {
+            if(firstFrame<0 || count<0 || count>65536) throw new IllegalArgumentException("Invalid frame range");
+            return nativePcmRead(checked(),firstFrame,count);
+        }
+        @Override public synchronized void close() {
+            if(handle!=0) { nativePcmClose(handle); handle=0; }
         }
     }
     private static native String nativeVersion();
@@ -107,4 +130,8 @@ public final class EXReader {
     private static native WaveFormat nativeWaveFormat(long handle);
     private static native float[] nativeWaveRead(long handle,long firstFrame,int count);
     private static native void nativeWaveClose(long handle);
+    private static native long nativePcmOpen(byte[] path);
+    private static native PcmFormat nativePcmFormat(long handle);
+    private static native float[] nativePcmRead(long handle,long firstFrame,int count);
+    private static native void nativePcmClose(long handle);
 }

@@ -64,6 +64,13 @@ import CEXReader
         precondition(samples.count == 1024 && samples.map { abs($0) }.max() == 0.5)
         let tail = try wave.read(firstFrame: 3199, count: 1024)
         precondition(tail.count == 1)
+        let pcm = try EXReaderPCM(file: root.appendingPathComponent("audio/pcm.wav"))
+        precondition(pcm.format.sampleRate == 16000 && pcm.format.channels == 1 && pcm.format.frames == 3200)
+        let decoded = try pcm.read(firstFrame: 0, count: 1024)
+        precondition(decoded == samples)
+        let pcmTail = try pcm.read(firstFrame: 3199, count: 1024)
+        let pcmEnd = try pcm.read(firstFrame: 3200, count: 1)
+        precondition(pcmTail.count == 1 && pcmEnd.isEmpty)
         print("Swift SDK: PDF text/render/font ownership owned multilingual metadata and WAVE samples passed")
     }
 }

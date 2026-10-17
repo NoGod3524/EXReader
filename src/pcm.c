@@ -23,6 +23,10 @@ static exr_status flac_read(void *context,uint64_t first,size_t frames,float *ou
 }
 static void wave_free(void *context) { exr_wave_free(context); }
 static void flac_free(void *context) { exr_flac_free(context); }
+static exr_status mp3_read(void *context,uint64_t first,size_t frames,float *output,size_t *read,const exr_control *control,exr_error *e) {
+  return exr_mp3_read(context,first,frames,output,read,control,e);
+}
+static void mp3_free(void *context) { exr_mp3_free(context); }
 exr_status exr_pcm_open_source(const exr_source *source,exr_pcm **out,exr_error *e) {
   exr_pcm *pcm; unsigned char signature[4]; size_t done=0; exr_status status;
   if(out) *out=NULL;
@@ -33,7 +37,8 @@ exr_status exr_pcm_open_source(const exr_source *source,exr_pcm **out,exr_error 
     if(!got || got>sizeof(signature)-done) return exr_fail(e,EXR_IO,"PCM source returned an invalid/short read");
     done+=got;
   }
-  if(memcmp(signature,"RIFF",4) && memcmp(signature,"fLaC",4)) return exr_fail(e,EXR_FORMAT,"Unknown PCM source codec");
+  if(memcmp(signature,"RIFF",4) && memcmp(signature,"fLaC",4) && memcmp(signature,"ID3",3) &&
+     !(signature[0]==255 && (signature[1]&0xe0)==0xe0)) return exr_fail(e,EXR_FORMAT,"Unknown PCM source codec");
   pcm=calloc(1,sizeof(*pcm)); if(!pcm) return exr_fail(e,EXR_MEMORY,"PCM decoder allocation failed");
   if(!memcmp(signature,"RIFF",4)) {
     exr_wave *wave=NULL; const exr_wave_info *info;
@@ -42,12 +47,19 @@ exr_status exr_pcm_open_source(const exr_source *source,exr_pcm **out,exr_error 
       info=exr_wave_format(wave); pcm->info=(exr_pcm_info){info->sample_rate,info->channels,info->channel_mask,info->frames};
       pcm->context=wave; pcm->read=wave_read; pcm->release=wave_free; pcm->kind=1;
     }
-  } else {
+  } else if(!memcmp(signature,"fLaC",4)) {
     exr_flac *flac=NULL; const exr_flac_info *info;
     status=exr_flac_open_source(source,&flac,e);
     if(status==EXR_OK) {
       info=exr_flac_format(flac); pcm->info=(exr_pcm_info){info->sample_rate,info->channels,0,info->frames};
       pcm->context=flac; pcm->read=flac_read; pcm->release=flac_free; pcm->kind=2;
+    }
+  } else {
+    exr_mp3 *mp3=NULL; const exr_mp3_info *info;
+    status=exr_mp3_open_source(source,&mp3,e);
+    if(status==EXR_OK) {
+      info=exr_mp3_format(mp3); pcm->info=(exr_pcm_info){info->sample_rate,info->channels,0,info->frames};
+      pcm->context=mp3; pcm->read=mp3_read; pcm->release=mp3_free; pcm->kind=3;
     }
   }
   if(status!=EXR_OK) { free(pcm); return status; }
@@ -87,5 +99,6 @@ exr_status exr_pcm_read(exr_pcm *pcm,uint64_t first,size_t frames,float *output,
     return status;
   }
   if(pcm->kind==2) pcm->info.frames=exr_flac_format(pcm->context)->frames;
+  else if(pcm->kind==3) pcm->info.frames=exr_mp3_format(pcm->context)->frames;
   *read=got; return exr_fail(e,EXR_OK,"");
 }

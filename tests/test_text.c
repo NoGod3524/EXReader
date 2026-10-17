@@ -404,6 +404,175 @@ static void contextual_lines(void) {
   exr_document_free(doc);
 }
 
+static exr_font *hyphen_fonts(const char *directory, const char *system) {
+  char primary[4096];
+  const char *paths[2];
+  exr_font_input inputs[2];
+  exr_font *result = NULL;
+  size_t i;
+  snprintf(primary, sizeof(primary), "%s/../fonts/primary.ttf", directory);
+  paths[0] = primary; paths[1] = system;
+  for (i = 0; i < 2; i++) {
+    FILE *file = fopen(paths[i], "rb");
+    long size;
+    void *bytes;
+    CHECK(file && !fseek(file, 0, SEEK_END));
+    size = ftell(file);
+    CHECK(size > 0 && !fseek(file, 0, SEEK_SET));
+    bytes = malloc((size_t)size);
+    CHECK(bytes && fread(bytes, 1, (size_t)size, file) == (size_t)size && !fclose(file));
+    inputs[i] = (exr_font_input){bytes, (size_t)size, 0};
+  }
+  OK(exr_font_create(inputs, 2, &result, &error));
+  for (i = 0; i < 2; i++) free((void *)inputs[i].data);
+  return result;
+}
+static exr_layout_config hyphen_config(float width, int rtl) {
+  exr_layout_config c = exr_layout_config_defaults();
+  c.page.width = width + 16;
+  c.page.height = 64;
+  c.page.margin = 8;
+  c.page.font_size = 16;
+  c.page.line_height = 1.25f;
+  c.page.paragraph_spacing = 0;
+  if (rtl) c.user_css = "#body {direction:rtl}";
+  return c;
+}
+static unsigned visible_hyphens(const exr_document *doc, const exr_layout *lay, int rtl) {
+  size_t n, i, j, length;
+  const exr_glyph *glyphs = exr_layout_glyphs(lay, &n);
+  const char *source = exr_document_text(doc, &length);
+  unsigned visible = 0;
+  valid_clusters(doc, lay);
+  for (i = 0; i < n; i++) {
+    const exr_glyph *g = &glyphs[i];
+    if (g->codepoint != 0xad) continue;
+    CHECK(g->end <= length && g->end - g->start == 2 &&
+          (unsigned char)source[g->start] == 0xc2 && (unsigned char)source[g->start + 1] == 0xad);
+    if (g->flags & EXR_GLYPH_HIDDEN) { CHECK(!g->advance); continue; }
+    CHECK(g->glyph && g->advance > 0 && g->font_index == 1 &&
+          !(g->flags & EXR_GLYPH_MISSING) && g->bidi_level != UINT_MAX);
+    CHECK(!!(g->bidi_level & 1) == !!rtl);
+    CHECK(exr_layout_hit_test(lay, g->page, g->x + g->advance / 4, g->baseline - g->size / 3) ==
+          (rtl ? g->cluster_end : g->cluster_start));
+    CHECK(exr_layout_hit_test(lay, g->page, g->x + g->advance * 3 / 4, g->baseline - g->size / 3) ==
+          (rtl ? g->cluster_start : g->cluster_end));
+    for (j = 0; j < n; j++)
+      if (glyphs[j].page == g->page && fabsf(glyphs[j].baseline - g->baseline) < 0.01f &&
+          !(glyphs[j].flags & EXR_GLYPH_HIDDEN))
+        CHECK(rtl ? g->x <= glyphs[j].x + 0.01f : g->x + 0.01f >= glyphs[j].x);
+    visible++;
+  }
+  return visible;
+}
+static void hyphen_page_equal(const exr_layout *whole, size_t index, const exr_layout *single) {
+  size_t count, i, j;
+  const exr_page *all = exr_layout_pages(whole, NULL), *one = exr_layout_pages(single, &count);
+  const exr_line *a = exr_layout_lines(whole, NULL), *b = exr_layout_lines(single, NULL);
+  const exr_glyph *ga = exr_layout_glyphs(whole, NULL), *gb = exr_layout_glyphs(single, NULL);
+  CHECK(count == 1 && all[index].start == one[0].start && all[index].end == one[0].end &&
+        all[index].line_count == one[0].line_count);
+  for (i = 0; i < one[0].line_count; i++) {
+    const exr_line *left = &a[all[index].line_start + i], *right = &b[one[0].line_start + i];
+    CHECK(left->start == right->start && left->end == right->end &&
+          left->glyph_count == right->glyph_count && fabsf(left->width - right->width) < 0.01f);
+    for (j = 0; j < left->glyph_count; j++) {
+      const exr_glyph *x = &ga[left->glyph_start + j], *y = &gb[right->glyph_start + j];
+      CHECK(x->start == y->start && x->end == y->end && x->codepoint == y->codepoint &&
+            x->glyph == y->glyph && x->font_index == y->font_index && x->flags == y->flags &&
+            x->bidi_level == y->bidi_level && fabsf(x->x - y->x) < 0.01f &&
+            fabsf(x->advance - y->advance) < 0.01f && fabsf(x->baseline - y->baseline) < 0.01f);
+    }
+  }
+}
+static void soft_hyphens(const char *directory, const char *font_path) {
+  exr_font *saved = font;
+  unsigned rtl;
+  font = hyphen_fonts(directory, font_path);
+  for (rtl = 0; rtl < 2; rtl++) {
+    const char *parts[] = {rtl ? "\xd7\x90\xd7\x91\xd7\x90\xd7\x91" : "AAAA",
+                           "\xc2\xad", rtl ? "\xd7\x92\xd7\x93\xd7\x92\xd7\x93" : "VVVV"};
+    const char *hyphen = exr_font_has_glyph(font, 1, 0x2010) ? "\xe2\x80\x90" : "-";
+    const char *literal[] = {parts[0], hyphen, parts[2]};
+    exr_document *doc = document(parts, 3), *shown = document(literal, 3);
+    exr_layout_config c = hyphen_config(500, (int)rtl);
+    exr_layout *wide = NULL, *probe = NULL, *wrapped = NULL, *tight = NULL;
+    const exr_glyph *g;
+    size_t n, i;
+    float before = 0, dash = 0;
+    OK(exr_layout_create_ex(doc, font, &c, &wide, &error));
+    CHECK(!visible_hyphens(doc, wide, (int)rtl));
+    OK(exr_layout_create_ex(shown, font, &c, &probe, &error));
+    g = exr_layout_glyphs(probe, &n);
+    for (i = 0; i < n; i++) {
+      if (g[i].node == 4) before += g[i].advance;
+      if (g[i].node == 6) dash += g[i].advance;
+    }
+    CHECK(before > 0 && dash > 0);
+    c = hyphen_config(before + dash + 1, (int)rtl);
+    OK(exr_layout_create_ex(doc, font, &c, &wrapped, &error));
+    CHECK(visible_hyphens(doc, wrapped, (int)rtl) == 1);
+    g = exr_layout_glyphs(wrapped, &n);
+    for (i = 0; i < n; i++)
+      if (g[i].codepoint == 0xad && !(g[i].flags & EXR_GLYPH_HIDDEN)) {
+        exr_bitmap bitmap = {0};
+        size_t x, y, ink = 0;
+        CHECK(g[i].size == 20 && g[i].color == 0x334455ff);
+        OK(exr_render_page(wrapped, font, g[i].page, &bitmap, &error));
+        for (y = 0; y < bitmap.height; y++)
+          for (x = (size_t)fmaxf(0, g[i].x); x < bitmap.width && (float)x < g[i].x + g[i].advance; x++)
+            if ((float)y > g[i].baseline - g[i].size && (float)y < g[i].baseline + 2 &&
+                bitmap.pixels[y * bitmap.stride + x] < 255) ink++;
+        CHECK(ink > 0);
+        exr_bitmap_free(&bitmap);
+      }
+    c = hyphen_config(before + dash / 2, (int)rtl);
+    OK(exr_layout_create_ex(doc, font, &c, &tight, &error));
+    visible_hyphens(doc, tight, (int)rtl);
+    {
+      const exr_line *lines = exr_layout_lines(tight, &n);
+      CHECK(lines[0].end < strlen(parts[0])); /* Retreat when the hyphen itself will not fit. */
+      for (i = 0; i < n; i++) CHECK(lines[i].width <= before + dash / 2 + 0.01f);
+    }
+    exr_layout_free(wide); exr_layout_free(probe); exr_layout_free(wrapped); exr_layout_free(tight);
+    exr_document_free(doc); exr_document_free(shown);
+  }
+  {
+    const char *parts[] = {"AAAA\xc2\xadVVVV AAAA\xc2\xadVVVV AAAA\xc2\xadVVVV "
+                           "AAAA\xc2\xadVVVV AAAA\xc2\xadVVVV AAAA\xc2\xadVVVV"};
+    exr_document *doc = document(parts, 1);
+    exr_layout_config c = hyphen_config(40, 0);
+    exr_layout *whole = NULL, *next = NULL;
+    const exr_layout *cached = NULL;
+    exr_pager *pager = NULL;
+    size_t count, i;
+    unsigned visible = 0;
+    OK(exr_layout_create_ex(doc, font, &c, &whole, &error));
+    CHECK(visible_hyphens(doc, whole, 0) > 1);
+    exr_layout_pages(whole, &count);
+    CHECK(count > 2);
+    OK(exr_pager_create(doc, font, &c, &pager, &error));
+    for (i = 0; i < count; i++) {
+      OK(exr_pager_next(pager, &next, &error)); CHECK(next);
+      hyphen_page_equal(whole, i, next);
+      visible += visible_hyphens(doc, next, 0);
+      exr_layout_free(next);
+    }
+    CHECK(visible == visible_hyphens(doc, whole, 0));
+    exr_pager_free(pager);
+    OK(exr_pager_create(doc, font, &c, &pager, &error));
+    OK(exr_pager_set_cache(pager, 1, 1024 * 1024, &error));
+    OK(exr_pager_set_checkpoints(pager, 16, 1024 * 1024, 1, &error));
+    OK(exr_pager_get(pager, count - 1, &cached, &error)); hyphen_page_equal(whole, count - 1, cached);
+    OK(exr_pager_get(pager, 0, &cached, &error)); hyphen_page_equal(whole, 0, cached);
+    OK(exr_pager_get(pager, count - 2, &cached, &error)); hyphen_page_equal(whole, count - 2, cached);
+    CHECK(exr_pager_statistics(pager).restored_checkpoints > 0);
+    exr_pager_free(pager); exr_layout_free(whole); exr_document_free(doc);
+  }
+  exr_font_free(font);
+  font = saved;
+}
+
 static void single_cluster_hit(void) {
   const char *clusters[][3] = {{"a", "\xcc\x81", NULL},
                               {"\xf0\x9f\x91\xa9", "\xe2\x80\x8d", "\xf0\x9f\x92\xbb"},
@@ -588,6 +757,7 @@ int main(int argc, char **argv) {
   OK(exr_font_open(font_path, &font, &error));
   inline_clusters();
   contextual_lines();
+  soft_hyphens(argv[1], font_path);
   single_cluster_hit();
   protected_groups();
   protected_marks_and_quotes();

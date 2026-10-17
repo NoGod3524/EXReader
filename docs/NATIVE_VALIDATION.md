@@ -1895,3 +1895,35 @@ Native audio output tests validate contracts without touching devices. Actual
 Windows, Apple, Android and Linux hardware playback remains manual validation.
 This batch requires a fresh cross-platform CI run; product version remains
 0.18.0, ABI epoch 1 and library schema 6.
+
+
+Commit `3b27c84` passes all six jobs in [CI run 39056812314](https://github.com/NoGod3524/EXReader/actions/runs/39056812314): desktop runtime/SDK/JNI/Swift, ASAN/UBSAN, Android and Apple mobile compilation.
+
+## Milestone 0.18 development: gapless MP3, visible soft hyphens and PDF metadata
+
+MP3 fixtures are original FFmpeg-encoded short waveforms embedded in the test,
+not upstream copyrighted test audio. MPEG-1 stereo VBR/44.1k, MPEG-2 mono CBR/24k
+and MPEG-2.5 mono/8k sample counts match FFmpeg (8837/4817/1617); independent
+PCM comparison max error is 1.70e-6. Tests exercise sample-exact random seeks,
+complete decoder-state checkpoints, sparse retry, a 1.2 TB virtual source with
+lightweight open, cancellation/ownership, and the 64 KiB sync-candidate boundary.
+An independent CMake EXR_ENABLE_MP3=OFF build passes native-mp3/native-pcm/native-flac
+without fetching minimp3.
+
+Soft-hyphen tests verify hidden unbroken text, visible pixels only at selected
+line ends, font fallback, mixed size/color, RTL, hit-to-original-source mapping,
+width retreat and full-layout/sequential-page/random-checkpoint agreement.
+
+PDF metadata tests cover Info-only and XMP synchronization, encoded streams,
+Unicode, aliases/attributes, whole-property deletion/replacement, UTF-16 XMP,
+default namespaces, complex unknown RDF, comments/PI/CDATA and attribute character
+references, date precision/timezones, invalid input, cancellation and byte-identical
+original prefixes. Independent pypdf/PyMuPDF checks verify eight output PDFs,
+unchanged rendered pages and equivalent Info/XMP date instants.
+
+All 84 local Windows suites pass after integration, including the installed-host
+PCM example contract. The MP3-disabled build separately passes its MP3, PCM and
+FLAC suites. The Swift and JNI PCM wrappers add owned sample arrays, serialized
+handle access and unknown-duration reporting; their host compilation and runtime
+smokes require the fresh cross-platform CI run for this batch. Version 0.18.0,
+ABI epoch 1 and library schema 6 remain unchanged.

@@ -335,13 +335,37 @@ static exr_status copy_glyphs(flow *f, exr_line_buffer *b, exr_layout *to,
   return EXR_OK;
 }
 static exr_status shape_line_copy(flow *f, exr_line_buffer *b, exr_layout *to, const exr_glyph *from,
-                                   size_t count, uint32_t before, uint32_t after) {
+                                   size_t count, uint32_t before, uint32_t after, int hyphen) {
   flow child = *f;
   exr_status status = line_work(f, count);
+  size_t soft = SIZE_MAX, i;
   if (status == EXR_OK) status = copy_glyphs(f, b, to, from, count);
   if (status != EXR_OK) return status;
   child.layout = to;
+  if (hyphen && count && to->glyphs[count - 1].codepoint == 0xad) {
+    exr_glyph *g = &to->glyphs[count - 1];
+    size_t order[32], n = exr_font_order(f->font, f->styles[g->node].family,
+                                          f->styles[g->node].flags,
+                                          f->doc->nodes[g->node].chapter, order);
+    soft = g->start;
+    /* Prefer the Unicode hyphen throughout the allowed fallback sequence. */
+    for (i = 0; i < n && !exr_font_has_glyph(f->font, order[i], 0x2010); i++) {}
+    g->codepoint = i < n ? 0x2010 : '-';
+    g->flags &= ~(EXR_GLYPH_HIDDEN | EXR_GLYPH_MISSING | EXR_GLYPH_SHAPED);
+    g->bidi_level = exr_inline_base(f->bidi, g->start);
+    for (i = count - 1; i; i--)
+      if (!(to->glyphs[i - 1].flags & EXR_GLYPH_HIDDEN) &&
+          to->glyphs[i - 1].bidi_level != UINT_MAX) {
+        g->bidi_level = to->glyphs[i - 1].bidi_level;
+        break;
+      }
+    status = exr_flow_cluster(&child, count - 1, count);
+    if (status != EXR_OK) return status;
+  }
   status = exr_inline_shape(&child, 0, before, after);
+  if (soft != SIZE_MAX)
+    for (i = 0; i < to->glyph_count; i++)
+      if (to->glyphs[i].start == soft) to->glyphs[i].codepoint = 0xad;
   return status == EXR_OK ? line_work(f, to->glyph_count) : status;
 }
 static exr_status measure_line_cluster(flow *f, exr_line_buffer *b) {
@@ -399,7 +423,8 @@ static exr_status fit_line(flow *f, exr_line_buffer *b) {
       else high = middle;
     }
     b->raw_end = low;
-    status = shape_line_copy(f, b, &b->line, b->raw.glyphs, low, 0, 0);
+    status = shape_line_copy(f, b, &b->line, b->raw.glyphs, low, 0, 0,
+                             !b->final && !b->forced);
     if (status != EXR_OK) return status;
     for (i = 0; i < b->line.glyph_count; i++) {
       exr_glyph *g = &b->line.glyphs[i];
@@ -456,7 +481,7 @@ static exr_status reshape_carry(flow *f, exr_line_buffer *b) {
         after = b->run.glyphs[i].codepoint;
         break;
       }
-  status = shape_line_copy(f, b, &b->line, b->raw.glyphs, prefix, 0, after);
+  status = shape_line_copy(f, b, &b->line, b->raw.glyphs, prefix, 0, after, 0);
   if (status != EXR_OK) return status;
   status = line_reserve(f, b, &b->run, b->run.glyph_count - old + b->line.glyph_count);
   if (status != EXR_OK) return status;
