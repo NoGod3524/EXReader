@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.13.0"
+#define EXR_VERSION "0.14.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -374,7 +374,8 @@ EXR_API exr_status exr_pager_create(const exr_document *doc, exr_font *font,
                                      exr_error *error);
 EXR_API exr_status exr_pager_next(exr_pager *pager, exr_layout **out, exr_error *error);
 /* Alternative borrowed-page mode; cannot be mixed with next(). Cache defaults to
-   one page/no byte limit. Older evicted pages are replayed from the beginning.
+   one page/no byte limit. Evicted pages resume from a retained checkpoint when
+   available, otherwise from the beginning.
    New oversize pages return EXR_LIMIT without evicting existing cached pages. */
 EXR_API exr_status exr_pager_set_cache(exr_pager *pager, size_t capacity, size_t byte_budget,
                                        exr_error *error);
@@ -382,6 +383,16 @@ EXR_API exr_status exr_pager_get(exr_pager *pager, size_t page, const exr_layout
                                  exr_error *error);
 EXR_API size_t exr_pager_cached_count(const exr_pager *pager);
 EXR_API size_t exr_pager_cached_bytes(const exr_pager *pager);
+/* Bounded in-memory replay checkpoints, separate from the page payload cache.
+   Defaults: 4 entries / 2 MiB / every 16 pages in get() mode. Capacity zero disables.
+   Capacity <=64, nonzero budget/interval required when enabled; not serialized. */
+EXR_API exr_status exr_pager_set_checkpoints(exr_pager *pager, size_t capacity,
+                                             size_t byte_budget, size_t interval,
+                                             exr_error *error);
+typedef struct {
+  size_t generated_pages, checkpoint_count, checkpoint_bytes, restored_checkpoints;
+} exr_pager_stats;
+EXR_API exr_pager_stats exr_pager_statistics(const exr_pager *pager);
 /* Scanned UTF-8 source position, possibly ahead of the last page due to lookahead;
    this is progress information, not a serializable resume token. */
 EXR_API size_t exr_pager_position(const exr_pager *pager);

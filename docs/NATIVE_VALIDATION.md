@@ -1,5 +1,17 @@
 # Native C validation
 
+## 0.14 pagination checkpoints
+
+`native-checkpoints` passes 3922 checks. Uncached seeks compare glyph IDs, source
+ranges, exact line geometry, boxes and rendered pixels against a pager with
+checkpoints disabled. Cases cover Latin ligatures, mixed Arabic/Hebrew paragraphs,
+pending rowspan groups, embedded fonts, defaults, disabled/tiny budgets and invalid
+settings. A backward seek from page 40 to 37 generates at most four pages with the
+configured checkpoints, while the control regenerates 38. Table and bidi cases use
+the same state restoration rather than a separate output path. All 24 local Windows
+CTest suites pass. The preceding font milestone passed all six CI jobs at
+[8ba092c](https://github.com/NoGod3524/EXReader/actions/runs/38996703264).
+
 ## 0.13 book fonts
 
 The original `font-book.epub` is reproduced by `tests/make_font_book.py` using only

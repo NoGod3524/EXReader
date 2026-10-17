@@ -7,6 +7,7 @@ void exr_inline_clear(exr_inline_bidi *b) {
   exr_bidi_free(b->analysis);
   free(b->offsets);
   memset(b, 0, sizeof(*b));
+  b->first_node = SIZE_MAX;
 }
 /* Walk only the remaining visible inline portion of this block. */
 static size_t following(flow *f, size_t node) {
@@ -43,6 +44,7 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
   exr_status status;
   uint32_t cp;
   exr_inline_clear(b);
+  b->first_node = first;
   for (node = first; node != SIZE_MAX; node = next_text(f, following(f, node))) {
     const exr_node *n = &f->doc->nodes[node];
     bytes += n->end - n->start;

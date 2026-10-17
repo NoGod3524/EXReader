@@ -28,6 +28,7 @@ typedef struct {
   size_t *refs; /* Shared immutable decoded pixels across independent pages. */
 } exr_cached_image;
 struct exr_layout {
+  size_t refs;
   exr_layout_options options;
   exr_glyph *glyphs;
   size_t glyph_count, glyph_cap;
@@ -47,6 +48,7 @@ struct exr_layout {
   exr_font *font; /* Retained effective font set, including selected book fonts. */
 };
 void exr_font_ref(exr_font *font);
+void exr_layout_ref(exr_layout *layout);
 exr_status exr_book_fonts(const exr_document *doc, exr_font *fallback,
                            const exr_style *styles, const exr_font_rule *rules, size_t count,
                            exr_font **out, exr_error *error);
