@@ -44,12 +44,12 @@ import CEXReader
         let fallbackBitmap = try retainedFontDocument.render(page: 1)
         precondition(fallbackBitmap.width == 12)
         let head = "<r:RDF xmlns:r='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><r:Description xmlns:dc='http://purl.org/dc/elements/1.1/'>"
-        let tail = "</r:Description></r:RDF>"
-        var packet = Data((head + "<dc:title>中文😀</dc:title><dc:creator><r:Seq><r:li>Alice</r:li><r:li>Bob</r:li></r:Seq></dc:creator>" + tail).utf8)
+        let xmpTail = "</r:Description></r:RDF>"
+        var packet = Data((head + "<dc:title>中文😀</dc:title><dc:creator><r:Seq><r:li>Alice</r:li><r:li>Bob</r:li></r:Seq></dc:creator>" + xmpTail).utf8)
         let metadata = try EXReaderMetadata.readXMP(packet)
         packet.resetBytes(in: 0..<packet.count)
         precondition(metadata.count == 3 && metadata[0].key == "http://purl.org/dc/terms/title" && metadata[0].value == "中文😀" && metadata[1].value == "Alice" && metadata[2].value == "Bob")
-        let many = head + String(repeating: "<dc:subject>词😀</dc:subject>", count: 4096) + tail
+        let many = head + String(repeating: "<dc:subject>词😀</dc:subject>", count: 4096) + xmpTail
         let manyMetadata = try EXReaderMetadata.readXMP(Data(many.utf8))
         precondition(manyMetadata.count == 4096)
         do {
