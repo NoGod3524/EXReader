@@ -679,3 +679,14 @@ and conflicting duplicate cover declarations fail atomically.
 The external Gutenberg file also opens and passes text/navigation/nonchapter-asset round-trip
 with its newly parsed title and cover metadata. Its EPUB output byte size changes as metadata
 is now included. The 0.35 commit fdcc9e4 passed all six CI jobs.
+
+
+## 0.37 library cover import
+
+`native-cover-import` adds 97 checks for EPUB, FB2 and KF8 source covers, user title overrides,
+whitespace-separated property tokens, exact copied bytes, retained original source blobs,
+the exact 8 MiB boundary, a larger original cover and a misleading non-cover property name.
+A missing declared cover aborts without adding a database row or returning a book ID.
+The deterministic ZIP fixtures use the project's original PNG and fixed metadata.
+
+The 0.36 commit 82d4270 passed all six platform and sanitizer CI jobs.

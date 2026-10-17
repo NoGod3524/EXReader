@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.36.0"
+#define EXR_VERSION "0.37.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -513,6 +513,8 @@ typedef struct {
 } exr_note;
 EXR_API exr_status exr_library_open(const char *path, exr_library **out, exr_error *error);
 EXR_API void exr_library_close(exr_library *library);
+/* Imports original bytes and the first declared cover-image up to 8 MiB.
+   Larger covers remain in the original source; failed cover reads abort the insert. */
 EXR_API exr_status exr_library_import(exr_library *library, exr_format format, const void *data,
                                       size_t size, const char *title, int64_t *id,
                                       exr_error *error);
