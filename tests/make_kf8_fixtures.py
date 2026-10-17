@@ -93,3 +93,53 @@ container('kf8-bad-fdst-gap.azw3',raw+css,extras+[fdst],flows=2,fdst=6,mutate=la
 bad('vwi',lambda r:r[5].__setitem__(slice(198,202),bytes(4)))
 bad('short-header',lambda r:r[0].__setitem__(slice(20,24),u32(116)))
 bad('decreasing-idxt',lambda r:r[3].__setitem__(slice(-2,None),u16(192)))
+
+
+# Resource fixtures reuse only the project's original geometric font and tiny images.
+import zlib, zipfile, base64, xml.etree.ElementTree as ET
+png=base64.b64decode(next(n.text for n in ET.parse(root/'rich.fb2').getroot().iter() if n.tag.endswith('binary')))
+with zipfile.ZipFile(root/'layout.epub') as z:
+    jpg=z.read(next(n for n in z.namelist() if n.endswith('sample.jpg')))
+font=(root/'fonts/fallback.ttf').read_bytes()
+def font_record(flags=3):
+    content=zlib.compress(font) if flags&1 else font
+    key=b'EXReader-key'
+    if flags&2: content=bytes(c^(key[i%len(key)] if i<1040 else 0) for i,c in enumerate(content))
+    return b'FONT'+u32(len(font))+u32(flags)+u32(24+len(key))+u32(len(key))+u32(24)+key+content
+xhtml=(b'<html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" href="kindle:flow:0001?mime=text/css"/>'
+       b'<style>p { margin: 0; background-image:url( kindLeLiteral ); } /* kindle:embed:FFFF */</style></head><body>'
+       b'<p class="book">'+chr(0x7532).encode()+b'</p><p style="color:#654321; background-image: URL(\'kindle:embed:0001?mime=image/png\')">Image</p>'
+       b'<img src="kindle:embed:0001?mime=image/png" width="8" height="8"/>'
+       b'<img src="kindle:embed:0002?mime=image/jpeg" width="8" height="8"/>'
+       b'<img src="kindle:embed:0001?mime=image/png" width="8" height="8"/>'
+       b'<p>Literal kindle:embed:ZZZZ</p></body></html>')
+css1=(b'@font-face {font-family:Book;src:URL("kindle:embed:0003")} .book {font-family:Book;color:#123456}'
+      b' p { background:url(kindle:flow:0002?mime=text/css); content:"kindle:embed:FFFF"; }'
+      b' /* url(kindle:embed:ZZZZ) */')
+css2=b'p { background-image:url(kindle:embed:0001?mime=image/png); background:url(kindle:flow:0001?mime=text/css) }'
+def asset_fixture(name='kf8-assets.azw3',fontdata=None,xml=None,css=None,mutate=None):
+    chunks=[xhtml if xml is None else xml,css1 if css is None else css,css2]
+    table=b'FDST'+u32(12)+u32(3); pos=0
+    for chunk in chunks: table+=u32(pos)+u32(pos+len(chunk)); pos+=len(chunk)
+    def change(r):
+        r[0][108:112]=u32(3)
+        if mutate: mutate(r)
+    container(name,b''.join(chunks),[table,png,jpg,font_record() if fontdata is None else fontdata],
+              skel=0xffffffff,frag=0xffffffff,flows=3,fdst=2,mutate=change)
+asset_fixture()
+for flags in (0,1,2): asset_fixture('kf8-assets-font'+str(flags)+'.azw3',fontdata=font_record(flags))
+for name,uri in [('embed-zero','kindle:embed:0'),('embed-range','kindle:embed:FFFF'),
+                 ('embed-overflow','kindle:embed:VVVVVVVVVVV'),('embed-bad-number','kindle:embed:WW'),
+                 ('flow-zero','kindle:flow:0?mime=text/css'),('flow-range','kindle:flow:3?mime=text/css'),
+                 ('flow-mime','kindle:flow:1?mime=image/png'),('flow-conflict','kindle:flow:1?mime=image/svg+xml')]:
+    asset_fixture('kf8-bad-'+name+'.azw3',xml=xhtml.replace(b'kindle:embed:0001?mime=image/png',uri.encode()))
+asset_fixture('kf8-bad-asset-signature.azw3',mutate=lambda r:r[3].__setitem__(slice(0,8),b'notimage'))
+asset_fixture('kf8-bad-asset-pointer.azw3',mutate=lambda r:r[0].__setitem__(slice(108,112),u32(1)))
+for name,offset,value in [('font-flags',8,4),('font-offset',12,1),('font-key',16,0),('font-size',4,len(font)+1),('font-key-start',20,99999)]:
+    f=bytearray(font_record()); f[offset:offset+4]=u32(value)
+    asset_fixture('kf8-bad-'+name+'.azw3',fontdata=f)
+asset_fixture('kf8-bad-font-trailing.azw3',fontdata=font_record(1)+b'junk')
+f=bytearray(font_record(1)); f[-1]^=255
+asset_fixture('kf8-bad-font-compressed.azw3',fontdata=f)
+f=bytearray(font_record()); f[4:8]=u32(32*1024*1024+1)
+asset_fixture('kf8-limit-font.azw3',fontdata=f)

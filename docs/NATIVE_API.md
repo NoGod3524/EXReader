@@ -520,3 +520,12 @@ HUFF 最多 1048576 个词条，整书解压正文与每个展开词条各限 64
 原生 C 解析 version=8 的 UTF-8 KF8，复用三种 MOBI 记录解压方式。FDST 分离正文流和附加流；INDX/TAGX 支持多个索引记录、多个控制字节、按值数量或按字节长度编码的 VWI。SKEL/FRAG 按索引次序拼接为独立 XHTML 章节，进入通用文档树；无骨架表时将完整正文流解析为一章。章节、属性与文字可经结构 EPUB 导出。
 
 索引最多 262144 项，章节/资源最多 10000 项，重建文字受 64 MiB 缓冲区上限约束，累计插入搬移最多 256 MiB。记录目录、索引头、TAGX 掩码、IDXT 边界、VWI 溢出、片段长度与插入位置均验证；骨架原始区间不得重叠，不猜测修复损坏片段。附加流暂以 application/octet-stream 资源保留。当前未接通 kindle:flow/embed/pos 资源引用、FONT 解包、NCX、混合 MOBI/KF8 或 ORDT 特殊采样本编码；后续继续补齐。
+
+
+## KF8 资源与 FONT（0.29）
+
+kindle:flow 的 text/css 与 image/svg+xml 引用转为本地资源路径；kindle:embed 按首资源记录和一基 Base32 序号定位，重复引用共享一份资源。CSS 的 url()、文档 src/href/poster/data、内联样式与 style 正文接通资源表，保留 CSS 注释、普通字符串及阅读正文中的相同文字。CSS 资源依赖按队列处理，每份只处理一次，允许循环引用。
+
+PNG/JPEG 可直接绘制；GIF/WebP 和 SVG 流保留为资源，须由宿主提供相应解码器。SVG 内部的 Kindle 引用、CSS 转义形式的 url 与 @import 尚未转换。FONT 支持无压缩、zlib、前 1040 字节 XOR 混淆或两者组合，校验字段、密钥区间、解压精确长度和压缩流尾；恢复字体原字节后交给现有字体选择和排版。支持 TTF/OTF/TTC/WOFF/WOFF2 签名，实际可用字体由 FreeType 构建能力决定。
+
+每个新增图片或字体最多 32 MiB，全部章节/流/资产编码字节合计最多 128 MiB；字体解包另使用最多两份 32 MiB 临时缓冲区。未识别的嵌入资源签名、无效 URI、越界序号及同一流的 MIME 冲突返回 EXR_FORMAT。XHTML 资源接口保留重建后的原始字节，通用树上的链接是转换后的本地路径；结构 EPUB 输出使用树并保留已转换 CSS 与原始图片/字体。

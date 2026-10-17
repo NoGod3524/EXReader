@@ -570,3 +570,13 @@ zero-fragment skeletons, unsplit XHTML and FDST auxiliary streams. Chapter paths
 resource bytes and text survive structured EPUB round-trip. Corrupt headers, total counts,
 IDXT offsets, masks, VWI, fragment bounds/order, unsupported ORDT, orphan indexes, malformed
 XHTML and truncated/gapped FDST fail atomically.
+
+
+## 0.29 KF8 assets
+
+`native-kf8` includes PNG/JPEG reuse, transitive/cyclic CSS resource references, inline CSS,
+untouched comments/string literals/body text, and FONT flag combinations 0/1/2/3. Recovered
+font bytes equal the original geometric font, layout selects that font and CSS color, and
+rendered pages match EPUB round-trip pixels. Cases reject malformed/overflowing/out-of-range
+Base32 URIs, conflicting MIME types, bad signatures, FONT flags/offsets/keys/size, compressed
+corruption/trailing bytes and oversized font declarations. The suite totals 290 checks.

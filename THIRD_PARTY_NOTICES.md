@@ -70,3 +70,9 @@ KF8 INDX/TAGX, FDST and skeleton/fragment semantics were checked against
 [`lib/mobi_index.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_index.py)
 and [`lib/mobi_k8proc.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_k8proc.py)
 of the same GPLv3 project. EXReader's bounded C reconstruction is in `src/kf8.c`.
+
+
+KF8 resource URI and FONT field semantics were also checked against
+[`lib/mobi_html.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_html.py)
+and [`lib/kindleunpack.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/kindleunpack.py).
+FONT zlib streams use the existing miniz dependency; all resource handling remains native C.
