@@ -761,3 +761,30 @@ literal-only width boundaries through a full dictionary, dictionary references, 
 runs, table resets, empty data, PNG prediction and malformed codes/terminators/parameters.
 The fixture compressor uses string dictionaries and emitted-code counts, independently of
 the reader's prefix/suffix representation. PDF page reading is still unconnected.
+
+
+## 0.43 PDF page tree and content assembly
+
+Private page snapshots preserve document order, normalized MediaBox/CropBox rectangles,
+inherited Resources/Rotate/boxes, per-page UserUnit and borrowed content/annotation IDs.
+Traversal validates node types, parents, exact subtree counts, repeated/cyclic nodes and
+bounded depth/node/page counts. Null inherited entries behave as absent; CropBox can extend
+beyond MediaBox and is retained for the later rendering clip. Content streams remain lazy:
+raw/filtered streams and arrays are concatenated exactly with no inserted bytes, up to 64 MiB,
+using two passes and one exact output allocation. Errors return no partial snapshot/buffer.
+
+`native-pdf-pages` covers ordered nested trees, sibling isolation, reverse-coordinate boxes,
+negative/large quarter-turns, null/overridden/inherited properties, user units, empty trees,
+compressed/hybrid object containers and split tokens across content streams. Malformed
+geometry/types/counts/parents/resources/depth and content failures are rejected. The public
+PDF document/rendering path remains unconnected. The 0.41 commit 6018c88 passed all six CI jobs.
+
+
+Manual external-file verification on 2026-10-17 also opened the official RFC 9110 PDF:
+https://www.rfc-editor.org/rfc/rfc9110.pdf (2,858,365 bytes, SHA-256
+`60b30efa1048900833d1758440247fe8ac85a3134f2327388dcb24e07d814c89`). The native parser
+returned 194 ordered pages and decoded/assembled all page content streams, totaling 3,817,384
+bytes; the first MediaBox is [0, 0, 595, 841]. The downloaded document and local check harness
+stay in ignored build/pdf-reference, outside repository fixtures/CI. This verifies object/page
+and stream reading on an external file, not text interpretation or visual rendering.
+The 0.42 commit 605a50f passed all six CI jobs.

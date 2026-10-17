@@ -2,7 +2,7 @@
 #include "pdf_internal.h"
 #include <miniz.h>
 #define PDF_MAX_OBJECTS 1048576u
-#define PDF_MAX_VALUES 1048576u
+#define PDF_MAX_VALUES EXR_PDF_MAX_VALUES
 #define PDF_MAX_STRINGS ((size_t)32*1024*1024)
 typedef struct { size_t offset; uint32_t value,revision; unsigned generation,type,state,seen; uint32_t compressed_index; } pdf_xref;
 typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; } pdf_stream;

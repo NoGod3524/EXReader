@@ -236,3 +236,47 @@ encoded_stream('lzw-no-clear',lzw_codes([65,257]),b'/LZW')
 encoded_stream('lzw-no-end',lzw_codes([256,65]),b'/LZW')
 encoded_stream('lzw-tail',lzw_encode(payload)+b'junk',b'/LZW')
 encoded_stream('lzw-bad-early',lzw_encode(payload),b'/LZW',b'<< /EarlyChange 2 >>')
+
+
+# Ordered page trees, inherited attributes and lazy content concatenation.
+page_objects={
+ 1:b'<< /Type /Catalog /Pages 2 0 R >>',
+ 2:b'<< /Type /Pages /Count 3 /Kids [3 0 R 4 0 R] /MediaBox [-10 -20 200 300] /Resources 10 0 R /Rotate -90 >>',
+ 3:b'<< /Type /Page /Parent 2 0 R /Contents [8 0 R 9 0 R] /Annots [] >>',
+ 4:b'<< /Type /Pages /Parent 2 0 R /Count 2 /Kids [5 0 R 6 0 R] /MediaBox [400 500 0 0] /CropBox [10 20 300 450] /Resources << /Local true >> /Rotate 450 >>',
+ 5:b'<< /Type /Page /Parent 4 0 R /Resources null /Contents 8 0 R /UserUnit 2.5 >>',
+ 6:b'<< /Type /Page /Parent 4 0 R /MediaBox [0 0 100 150] /CropBox null /Rotate 0 /Contents null >>',
+ 8:b'<< /Length 4 >>\nstream\n(hel\nendstream',
+ 9:b'<< /Length 10 /Filter /Fl >>\nstream\n'+zlib.compress(b'lo) Tj')+b'\nendstream',
+ 10:b'<< /Inherited true >>'
+}
+# compressed content length is authoritative even if it contains token-like bytes
+page_objects[9]=page_objects[9].replace(b'/Length 10',b'/Length '+str(len(zlib.compress(b'lo) Tj'))).encode())
+pdf('pdf-pages.pdf',values=page_objects)
+pdf('pdf-pages-empty.pdf',values={1:page_objects[1],2:b'<< /Type /Pages /Count 0 /Kids [] >>'})
+for name,number,value in [
+ ('count',2,page_objects[2].replace(b'/Count 3',b'/Count 2')),
+ ('cycle',4,page_objects[4].replace(b'[5 0 R 6 0 R]',b'[5 0 R 4 0 R]')),
+ ('repeated',4,page_objects[4].replace(b'[5 0 R 6 0 R]',b'[5 0 R 5 0 R]')),
+ ('parent',5,page_objects[5].replace(b'/Parent 4',b'/Parent 2')),
+ ('root-parent',2,page_objects[2].replace(b'/Type /Pages',b'/Type /Pages /Parent 2 0 R')),
+ ('root-type',2,page_objects[2].replace(b'/Type /Pages',b'/Type /Page')),
+ ('missing-media',2,page_objects[2].replace(b'/MediaBox [-10 -20 200 300]',b'')),
+ ('media-size',2,page_objects[2].replace(b'[-10 -20 200 300]',b'[0 0 0 300]')),
+ ('media-arity',2,page_objects[2].replace(b'[-10 -20 200 300]',b'[0 0 300]')),
+ ('media-number',2,page_objects[2].replace(b'[-10 -20 200 300]',b'[0 0 /Name 300]')),
+ ('media-range',2,page_objects[2].replace(b'[-10 -20 200 300]',b'[0 0 10000001 300]')),
+ ('rotate',4,page_objects[4].replace(b'/Rotate 450',b'/Rotate 45')),
+ ('rotate-real',4,page_objects[4].replace(b'/Rotate 450',b'/Rotate 90.0')),
+ ('resources',4,page_objects[4].replace(b'/Resources << /Local true >>',b'/Resources []')),
+ ('kids',4,page_objects[4].replace(b'[5 0 R 6 0 R]',b'[<< /Type /Page >>]')),
+ ('unit',5,page_objects[5].replace(b'/UserUnit 2.5',b'/UserUnit 0')),
+ ('unit-limit',5,page_objects[5].replace(b'/UserUnit 2.5',b'/UserUnit 75001')),
+ ('content-type',3,page_objects[3].replace(b'[8 0 R 9 0 R]',b'[8 0 R 42]')),
+ ('content-stream',9,page_objects[9].replace(zlib.compress(b'lo) Tj'),b'X'*len(zlib.compress(b'lo) Tj')))),
+]: pdf('pdf-pages-bad-'+name+'.pdf',values={**page_objects,number:value})
+deep={1:b'<< /Type /Catalog /Pages 2 0 R >>'}
+for number in range(2,132):
+    deep[number]=b'<< /Type /Pages /Count 1 /Kids ['+str(number+1).encode()+b' 0 R]'+(b' /Parent '+str(number-1).encode()+b' 0 R' if number>2 else b'')+b' >>'
+deep[132]=b'<< /Type /Page /Parent 131 0 R /MediaBox [0 0 1 1] >>'
+pdf('pdf-pages-bad-depth.pdf',values=deep)
