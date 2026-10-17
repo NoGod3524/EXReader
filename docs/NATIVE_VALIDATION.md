@@ -1343,3 +1343,19 @@ and cancel both before and during search. Public PDF ligature anchors resolve
 back to the original range. Existing reflow anchor/library tests remain covered.
 All 53 local suites pass; the added long-search cancellation case also passes.
 The 0.69 dacd144 CI run passed all six jobs.
+
+
+## 0.71 PDF library, page progress and persistent fixed notes
+
+PDF imports retain original source and page-count extent. Fixed document lookup,
+page progress, metadata and covers use the existing library. Fixed-note writes
+capture selectors from the stored source, scope updates to the correct book and
+respect cancellation before insertion. Quote/context BLOBs preserve embedded NUL.
+Schema 3 adds a cascading fixed-note table; v1/v2 upgrades are transactional.
+Public tests import malformed/valid PDFs, reject incorrect API families, retain
+progress/cover edits after reopen, save ligature/NUL/page-only notes, resolve
+reopened selectors, update ID aliases, reject cross-book edits and bad ranges,
+backup/restore, delete and cascade. Damaged selector types/UTF-8 yield no partial
+results. Migration tests verify schema versions after success and rollback and
+preserve existing reflow rows; previous v1 rollback cases remain covered.
+All 54 local suites pass. The 0.70 934dd91 CI run passed all six jobs.

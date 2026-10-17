@@ -691,3 +691,14 @@ options 可为 NULL；非空时清零并设置 struct_size。fallback_font 是�
 `exr_fixed_anchor_create(page_id, text, start, end, &anchor, error)` 保存页 ID、原字节范围、最多 64 KiB 的精确引用及两侧各 32 个 Unicode 标量上下文。exact/prefix/suffix 带显式长度，可包含 NUL；输出须为空，创建成功后独立拥有所有字节，使用 exr_fixed_anchor_free 释放。宿主可直接序列化这些公开字段，备注、颜色和分类由宿主管理。
 
 `exr_fixed_anchor_resolve` 在指定页快照内比较引用与上下文，返回 FOUND/MISSING/AMBIGUOUS。只有 FOUND 提供新范围，可再次交给 exr_fixed_text_select 获取当前字格。页 ID 不匹配不会跨页猜测；原偏移不用于打破重复内容的平局。支持空范围书签与可取消线性搜索；与重排正文锚点共用匹配实现。此接口定位宿主创建的标注，不读取或改写 PDF 内置 annotation 对象，也尚未连接 SQLite 固定页备注表。
+
+
+## PDF 书库与固定页备注（0.71）
+
+`exr_library_import(EXR_PDF, ...)` 保存原始 PDF 和页数，不预先提取全书文字；标题空缺时使用 Untitled。通过 exr_library_fixed 重新打开固定文档，options 可提供宿主字体和打开取消。PDF 的 book.position 是从零开始的页索引，页数值可表示阅读结束；重排书籍仍使用原正文偏移。书名、标签、收藏、封面、删除和备份接口共用现有书库。
+
+`exr_library_fixed_note` 接受 exr_fixed_note 的 id/book_id/page/start/end/text。新增时 id=0，更新要求原 id 属于该 book。每次写入从保存的原书读取指定页并捕获稳定锚点，输入 anchor 不参与写入；参数 control 支持取消，失败不写入。备注最多 1 MiB，引用最多 64 KiB。区间为当前页 UTF-8 边界，允许空范围书签。
+
+`exr_library_fixed_notes` 按页、范围和 id 返回独立拥有的备注及锚点，使用 exr_fixed_notes_free 释放；引用和上下文以 BLOB 保存，保留内嵌 NUL。读取校验类型、UTF-8、范围与选择器，失败不返回部分列表；查询最多 100000 条、64 MiB 逻辑载荷。remove_fixed_note 删除备注，删除原书自动级联。备份包含原文件与固定备注。重排 note 接口会拒绝 PDF。
+
+SQLite schema 升至 3，v1/v2 自动在事务内迁移；迁移失败完整回滚。旧二进制不能打开 schema 3。备注暂为 SDK 自有数据，不写回 PDF 文件。
