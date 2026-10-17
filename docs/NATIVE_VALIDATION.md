@@ -2235,3 +2235,24 @@ C mapper; no new runtime dependency or public ABI is introduced.
 All 100 Windows suites and the installed C++17 SDK consumer pass. The full
 4004-image/3944-emoji independent reference still passes. The preceding
 explicit-component commit 504e463 passes all six platform/sanitizer CI jobs.
+
+## Milestone 0.18 development: PDF registration All
+
+Native color conversion recognizes Separation /All, including escaped names,
+and maps subtractive tint to additive output as R=G=B=1-tint, per the explicit
+additive-device wording in ISO 32000-2 8.6.6.4. Its default tint is 1; alternate
+spaces/transforms are not executed. C tests cover endpoints, intermediate tints,
+clipping, Decode, paths, strokes, XObject/inline images, Indexed palettes,
+Form inheritance and q/Q/direct-color resets. All remains excluded as the
+alternate of another Separation color space. Text extraction remains available.
+
+For a valid alternate whose gray transform also expresses 1-tint, MuPDF's entire
+64x32 RGB render differs by at most 1 byte/channel; Poppler's three solid
+interiors agree. Poppler paints an extra right-edge column on the image squares,
+so whole-image pixel equality is not claimed. With a deliberately red alternate,
+both reference RGB renderers use that alternate rather than the All complement;
+the native regression intentionally follows the standard's special-All rule.
+The reference discrepancy is isolated from ordinary spot-color conversions.
+No new dependency, public ABI or product-version change is involved.
+All 100 local Windows suites pass. The preceding Unicode-variation commit
+9f52053 passes all six desktop/mobile/sanitizer CI jobs.

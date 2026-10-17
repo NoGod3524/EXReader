@@ -129,6 +129,41 @@ static void separation(const char *directory) {
     exr_bitmap_free(&image);exr_fixed_free(d);free(b.data);free(c.data);
   }
 }
+static void registration(const char *directory) {
+  static const unsigned black[]={0,0,0},white[]={255,255,255},gray127[]={127,127,127},gray191[]={191,191,191},red[]={255,0,0};
+  scenario="Registration All ignores its red alternate tint transform";
+  same_color("[/Separation /All /DeviceRGB " RED_FUNCTION "]",".5019607843137255",NULL,"\x80",1,NULL,gray127,directory,"pdf-color-registration.pdf");
+  scenario="Registration tint zero is white";
+  same_color("[/Separation /All /DeviceRGB " RED_FUNCTION "]","0",NULL,"\x00",1,NULL,white,NULL,NULL);
+  scenario="Registration tint one is black";
+  same_color("[/Separation /All /DeviceRGB " RED_FUNCTION "]","1",NULL,"\xff",1,NULL,black,NULL,NULL);
+  scenario="Registration Decode and reversed ink polarity";
+  same_color("[/Separation /All /DeviceGray << /FunctionType 2 /Domain [0 1] /N 1 >>]",".25","/Decode [.25 .25]","\x00",1,NULL,gray191,NULL,NULL);
+  scenario="Registration out-of-range tint clamps";
+  same_color("[/Separation /All /DeviceRGB " RED_FUNCTION "]","2","/Decode [2 2]","\x00",1,NULL,black,NULL,NULL);
+  scenario="Indexed registration palette";
+  same_color("[/Indexed [/Separation /All /DeviceRGB " RED_FUNCTION "] 0 <80>]","0",NULL,"\x00",1,NULL,gray127,NULL,NULL);
+  scenario="Registration escaped All name and equivalent gray reference";
+  same_color("[/Separation /#41ll /DeviceGray << /FunctionType 2 /Domain [0 1] /C0 [1] /C1 [0] /N 1 >>]",".5019607843137255",NULL,"\x80",1,NULL,gray127,directory,"pdf-color-registration-gray.pdf");
+  scenario="Registration defaults, stroke and restored/direct color states";
+  { buffer c={0},b; exr_fixed_document *d; exr_bitmap image;
+    add(&c,"1 0 0 rg /S cs 0 0 8 8 re f q .25 sc 10 0 8 8 re f Q 20 0 8 8 re f /S CS 4 w 30 4 m 38 4 l S 1 0 0 rg 40 0 8 8 re f"); label(&c);
+    b=book("[/Separation /All /DeviceRGB " RED_FUNCTION "]",&c,NULL,"\x00",1,NULL,NULL); d=opened(&b); image=rendered(d);
+    pixel(&image,4,4,black,0);pixel(&image,14,4,gray191,1);pixel(&image,24,4,black,0);pixel(&image,34,4,black,0);pixel(&image,44,4,red,0);text(d);
+    save(&b,directory,"pdf-color-registration-state.pdf"); exr_bitmap_free(&image);exr_fixed_free(d);free(b.data);free(c.data);
+  }
+  scenario="Registration in an inherited Form scope";
+  { buffer c={0},b; exr_fixed_document *d; exr_bitmap image;
+    add(&c,"/S cs .25 sc /Fm Do");label(&c);
+    b=book("[/Separation /All /DeviceRGB " RED_FUNCTION "]",&c,NULL,"\x00",1,NULL,"0 0 8 8 re f");d=opened(&b);image=rendered(d);pixel(&image,4,4,gray191,1);
+    exr_bitmap_free(&image);exr_fixed_free(d);free(b.data);free(c.data);
+  }
+  scenario="Registration cannot be a Separation alternate";
+  { buffer c={0},b; exr_fixed_document *d; exr_bitmap image={0}; add(&c,"/S cs .5 sc 0 0 8 8 re f");
+    b=book("[/Separation /Spot [/Separation /All /DeviceRGB " RED_FUNCTION "] << /FunctionType 2 /Domain [0 1] /N 1 >>]",&c,NULL,"\x00",1,NULL,NULL);d=opened(&b);
+    CHECK(exr_fixed_render(d,0,1,NULL,&image,&error)==EXR_FORMAT && !image.pixels);exr_fixed_free(d);free(b.data);free(c.data);
+  }
+}
 static void bad_functions(void) {
   static const char *invalid[]={
     "<< /FunctionType 0 /Domain [0 1] >>", "<< /FunctionType 4 /Domain [0 1] >>", "<< /FunctionType 2 /N 1 >>",
@@ -260,4 +295,4 @@ static void calculator(const char *directory) {
     CHECK(strstr(error.message,"colour computation budget"));exr_fixed_free(d);free(b.data);free(content.data);free(function.data);free(program.data);
   }
 }
-int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); bad_functions(); function_graphs(); sampled(directory); bad_samples(); calculator(directory); printf("%u native PDF source colour-space checks passed\n",checks); return 0; }
+int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); registration(directory); bad_functions(); function_graphs(); sampled(directory); bad_samples(); calculator(directory); printf("%u native PDF source colour-space checks passed\n",checks); return 0; }

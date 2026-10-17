@@ -1104,7 +1104,7 @@ inspection_metadata、inspection_chapters、inspection_cover、inspection_durati
 
 Separation 普通命名专色现支持文件声明的 device/CIE alternate 和单输入 Type 2 指数函数、Type 3 分段函数。vector、XObject、inline image、Indexed base 和 ICC Alternate 复用同一转换路径；绘制回调仍输出屏幕 DeviceRGB，既有公开记录不变。默认 tint 为 1，输入先夹到色空间和函数 Domain；输出按各层 Range 再交 alternate。Type 2 处理 C0/C1 默认值、整数/分数与负指数的合法实数域，拒绝非有限中间结果。Type 3 保留半开区间边界、逆向 Encode、子函数 Domain/Range、单段及末尾零宽区间的 Encode 起点规则。
 
-特殊色名 None 不落墨，忽略无需执行的 alternate/tintTransform；填充和描边只在送出 paint 快照时置透明，原图形状态的 alpha 不被改写。图片返回透明像素，q/Q 和后续设备色操作可正常恢复。文字语义与裁切操作仍沿用原路径。注册色 All、DeviceN、多输入/三次采样、物理印版/套印与完整透明度语义尚未实现，不能视为完整印刷色彩支持。
+特殊色名 None 不落墨，忽略无需执行的 alternate/tintTransform；填充和描边只在送出 paint 快照时置透明，原图形状态的 alpha 不被改写。图片返回透明像素，q/Q 和后续设备色操作可正常恢复。文字语义与裁切操作仍沿用原路径。DeviceN、多输入/三次采样、物理印版/套印与完整透明度语义尚未实现，不能视为完整印刷色彩支持。
 
 私有函数模型最多 16 层、1024 节点、64 个分段和 1 MiB payload，循环引用/坏维数/非法域直接失败；编译过程支持取消。模型内存计入原颜色缓存，求值复杂度计入原 PDF 图片工作预算；源码对象查找仍使用原 256 Mi 工作上限。不新增运行时依赖，不改变 ABI epoch、版本号或书库 schema。
 
@@ -1156,3 +1156,9 @@ GSUB 匹配允许字体明确引用隐藏字符的 glyph ID，包括 ZWJ、标�
 原生 shape 在 GSUB 之前读取 cmap 14 的默认和非默认变体映射，覆盖 BMP、补充平面和 Mongolian 变体选择符。支持的选择符被消费，字形保留完整 UTF-8 字素范围；未知或连续多余的选择符维持 HIDDEN/零宽。无基础字符普通 cmap 映射、但有明确非默认变体映射时，也能塑形该序列。`exr_font_has_glyph` 仍只报告单字符 cmap 覆盖。
 
 完整布局、页级续排和竖排使用同一路径。即使字体没有 GSUB/GPOS 表也会应用 cmap 14；同行内元素改变字号时，隐藏选择符继续与基础字符一起塑形。字体回退在覆盖整个字素的候选中优先选择提供该变体映射的字体；都不支持该序列时保留原来的单字符回退顺序。字体由宿主提供，未做系统字体查找。
+
+## PDF All 注册色（0.18 开发补充）
+
+`[/Separation /All alternateSpace tintTransform]` 在固定 sRGB 输出上按 `R=G=B=1−clamp(tint,0,1)` 绘制；0 为白、1 为黑，选择颜色空间后的缺省 tint 为 1。All 和 None 均忽略备用颜色空间及变换函数的执行，All 仍实际绘制。路径、描边、XObject/内联图片、Indexed 调色板和 Form 继承使用同一颜色模型；图片 Decode、状态保存/恢复和后续设备色操作照常生效。
+
+采用 [ISO 32000-2 §8.6.6.4](https://developer.adobe.com/document-services/docs/assets/5b15559b96303194340b99820d3a70fa/PDF_ISO_32000-2.pdf) 对加色设备明确的反向 tint 规则。该输出是屏幕 RGB；物理印版、套印和色彩管理继续由后续工作补齐。
