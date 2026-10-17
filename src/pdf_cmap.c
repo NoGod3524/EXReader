@@ -123,6 +123,9 @@ invalid:
   return exr_fail(error,EXR_FORMAT,"Invalid PDF ToUnicode CMap block or operands");
 }
 void exr_pdf_cmap_free(exr_pdf_cmap *map) { if(map) { free(map->spaces); free(map->mappings); free(map->strings.data); free(map); } }
+size_t exr_pdf_cmap_memory(const exr_pdf_cmap *map) {
+  return map ? sizeof(*map)+(map->space_capacity+map->capacity)*sizeof(cmap_range)+map->strings.capacity : 0;
+}
 exr_status exr_pdf_cmap_parse(const void *data,size_t size,const exr_control *control,exr_pdf_cmap **out,exr_error *error) {
   cmap_reader r={0}; exr_pdf_cmap *map; size_t i,j; exr_status status;
   if(!out) return exr_fail(error,EXR_ARGUMENT,"Missing PDF ToUnicode CMap output");

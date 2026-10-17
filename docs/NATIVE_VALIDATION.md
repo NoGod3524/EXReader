@@ -847,3 +847,24 @@ custom composite Encoding CMaps, Type3 execution, base-encoding Unicode fallback
 font-face/glyph selection remain pending; missing ToUnicode yields U+FFFD rather than guessed
 text. This is internal font data preparation, not public PDF rendering. The 0.45 commit
 477d357 passed all six CI jobs.
+
+
+## 0.47 PDF text state and glyph geometry
+
+The private text walker executes BT/ET, Tf, Tm/Td/TD/T*, Tc/Tw/Tz/TL/Ts/Tr, Tj/TJ and both
+quote operators. It composes text matrices with cm transforms, restores text parameters/CTM
+through q/Q without incorrectly restoring the current text matrix, and supports ExtGState
+Font selection. Horizontal spacing and Identity-V origins/advances follow declared metrics;
+word spacing applies only to single-byte code 32. Each streaming callback receives owned-value
+character/Unicode data, a borrowed font and a glyph-to-PDF-user-space transform (1000 units).
+The cache is bounded to 128 fonts/128 MiB owned metadata; glyph/state/coordinate budgets,
+cancellation and callback failures are enforced. Nontext drawing operators are skipped;
+Form execution, inline images, ActualText replacement and visual clipping remain pending.
+
+`native-pdf-text` checks exact affine/rotated positions, character/word spacing, TJ adjustments,
+line/quote operators, q/Q semantics, vertical origins, ExtGState fonts, invisible text modes,
+compatibility sections, malformed state/operands, truncated codes, callback cancellation,
+stack/coordinate limits and a 129-font cache admission case. Manual verification executes
+all 194 pages of RFC 9110 and emits 450,578 glyph records with 456,338 UTF-8 bytes. This verifies
+content-order glyph geometry/Unicode, not reading-order reconstruction or visual rendering.
+Public PDF opening remains unconnected. The 0.46 commit 3255a25 passed all six CI jobs.

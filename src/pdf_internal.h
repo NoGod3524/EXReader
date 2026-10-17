@@ -63,4 +63,15 @@ void exr_pdf_font_close(exr_pdf_font *font);
 const exr_pdf_font_info *exr_pdf_font_description(const exr_pdf_font *font);
 exr_status exr_pdf_font_next(const exr_pdf_font *font,const unsigned char *data,size_t size,size_t *at,
                              exr_pdf_character *out,exr_error *error);
+size_t exr_pdf_cmap_memory(const exr_pdf_cmap *map);
+size_t exr_pdf_font_memory(const exr_pdf_font *font);
+typedef struct {
+  const exr_pdf_font *font; exr_pdf_character character;
+  double transform[6]; /* glyph coordinates in 1000 units to PDF user space */
+  size_t sequence; unsigned rendering_mode;
+} exr_pdf_text_glyph;
+/* Glyph/font/name pointers are borrowed only during each streaming callback. */
+typedef exr_status (*exr_pdf_text_fn)(void *context,const exr_pdf_text_glyph *glyph,exr_error *error);
+exr_status exr_pdf_text_ops(exr_pdf_file *file,uint32_t resources,const void *data,size_t size,
+                            exr_pdf_text_fn glyph,void *context,const exr_control *control,exr_error *error);
 #endif
