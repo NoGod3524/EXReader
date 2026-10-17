@@ -758,3 +758,14 @@ play/pause/seek/rate 控制请求状态，倍速范围为 (0,16]，后端可按�
 文字区间保持 UTF-8 字节范围，不能直接当作 Swift String 的字符索引。find 接受 Data，保留 NUL 和多字节语义；Bitmap 返回原始像素、stride 和 channels，宿主自行接显示后端。WAV 返回交错 float 样本，文件权限和声音设备仍由应用管理。Swift 不替换 C 的通用构造、绘制回调或音频后端模型，这些接口可直接通过 CEXReader 使用。
 
 macOS 可用 `swiftc -I SDK/include -L SDK/lib -lexreader -Xlinker -rpath -Xlinker SDK/lib bindings/swift/EXReader.swift bindings/swift/Smoke.swift -o swift-example` 构建示例，传入 SDK/examples 目录运行。Apple CI 运行独立安装 SDK 的 Swift 示例，并对 iOS/iPadOS arm64 设备与模拟器目标分别检查封装。
+
+
+## JNI / Java / Android 接入（0.78）
+
+`EXR_BUILD_JNI=ON` 构建可选 exreader_jni 动态库；Android 默认启用，普通桌面默认关闭，不增加 C 核的 JDK 依赖。桌面构建绑定需要 JDK 头文件；运行时一并放置 exreader 与 exreader_jni。安装包包含 bindings/jni 中的 Java 源码和 Android 混淆保留规则。Android 两个库都使用 16 KiB ELF 页面对齐。
+
+`org.exreader.EXReader.Pdf` 从 byte[] 打开 PDF，可传宿主字体与 TTC 索引，返回页数、独立 RGBA Bitmap 和 TextPage。文字以标准 UTF-8 byte[] 保存，字节范围、源坐标 quad 与标志使用各自类型数组；转换为 String 时不使用 JNI Modified UTF-8，因此保留 NUL 和非 BMP 字符。`Wave` 从标准 UTF-8 文件路径按帧返回 float[]，并提供采样格式。
+
+Pdf/Wave 实现 AutoCloseable；使用 try-with-resources 或显式 close，重复关闭安全，关闭后操作抛出 IllegalStateException。每个 Java 对象同步串行调用 C 句柄，输入在 native 创建期间复制，输出数组不借用 C 生命周期。Native 错误转换为带 code 的 EXReaderException；参数和 OOM 异常保留 JVM 状态，所有失败路径释放已创建的 native 数据。
+
+桌面 CI 用真实 JVM 和 `-Xcheck:jni` 运行安装后绑定，Android CI 交叉编译 JNI 库。此阶段封装 PDF 和 WAV 常用调用；其余完整 C 接口可从 Android NDK 直接接入，Android 应用生命周期、内容 URI 授权、声音输出及真机运行继续补齐。
