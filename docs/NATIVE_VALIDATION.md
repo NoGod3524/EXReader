@@ -1478,3 +1478,16 @@ sequences, definition counts/order, nested/merge controls and the 256-column
 limit are checked. Optional destinations and Unicode fallback must not execute
 table controls. Complex merged/nested tables remain explicitly unsupported.
 All 60 local suites pass. The 0.78 JNI/Swift/desktop/mobile CI run passed all six jobs.
+
+
+## 0.80 RTF horizontal, vertical and rectangular cell merges
+
+Physical continuation cells are retained as generic content containers in the
+merged owner, using standard colspan/rowspan and rebuilt parent/sibling links.
+Empty continuation containers do not add visible blank paragraphs. Tests cover
+horizontal content retention, vertical continuation with an empty physical row,
+rectangular merges, parent ordering and hidden empty containers. Structured EPUB
+roundtrips compare text and rendered pixels. Orphan continuations, conflicting
+flags, changed boundaries, omitted definitions, interrupted vertical chains and
+cross-table continuation are rejected.
+All 60 local suites pass. The 0.79 c0c9808 CI run passed all six jobs.

@@ -11,7 +11,9 @@ typedef struct {
   exr_buffer run;
   rtf_state style;
   size_t paragraph,body,table,row,cell,cell_count,definition_count;
-  size_t cells[256]; long boundaries[256];
+  size_t cells[256],owner[256],owner_span[256],owner_rows[256];
+  long boundaries[256],owner_left[256],owner_right[256],row_left;
+  unsigned char horizontal[256],vertical[256],pending_horizontal,pending_vertical;
   uint32_t colors[4096];
   size_t color_count;
   unsigned red,green,blue,components;
@@ -104,21 +106,79 @@ static int run_flush(rtf_context *c) {
 done:
   free(css.data); if(!ok && c->status==EXR_OK) c->status=EXR_LIMIT; return ok;
 }
+static int cell_content(const exr_document *d,size_t node) {
+  size_t child;
+  for(child=d->nodes[node].first_child;child!=SIZE_MAX;child=d->nodes[child].next_sibling) {
+    const exr_node *n=&d->nodes[child];
+    if(n->kind==EXR_NODE_IMAGE || n->kind==EXR_NODE_BREAK) return 1;
+    if(n->kind==EXR_NODE_TEXT && n->text && n->text[strspn(n->text," \t\r\n")]) return 1;
+    if(cell_content(d,child)) return 1;
+  }
+  return 0;
+}
+/* Rebuild row links once; continued physical cells become ordinary content
+   containers inside the merged owner, preserving all nonempty content. */
+static int cell_append(rtf_context *c,size_t parent,size_t cell,int continuation) {
+  exr_document *d=c->doc; exr_node *n=&d->nodes[cell]; size_t previous=d->last_children[parent];
+  if(continuation) {
+    const char name[]="http://www.w3.org/1999/xhtml|div"; char *copy=exr_model_copy(d,name,sizeof(name)-1);
+    if(!copy) { c->status=EXR_LIMIT; return 0; }
+    d->model_bytes-=strlen(n->name)+1; free((void *)n->name); n->name=copy; n->kind=EXR_NODE_ELEMENT;
+    if(!cell_content(d,cell) && !set(c,cell,"style","display:none;")) return 0;
+  }
+  n->parent=parent; n->next_sibling=SIZE_MAX;
+  if(previous==SIZE_MAX) d->nodes[parent].first_child=cell; else d->nodes[previous].next_sibling=cell;
+  d->last_children[parent]=cell; return 1;
+}
+static int row_merge(rtf_context *c) {
+  size_t i=0,k;
+  c->doc->nodes[c->row].first_child=SIZE_MAX; c->doc->last_children[c->row]=SIZE_MAX;
+  while(i<c->cell_count) {
+    size_t end=i+1,td,rows=1; unsigned v=0,h=c->definition_count ? c->horizontal[i] : 0; long left=c->definition_count ? (i ? c->boundaries[i-1] : c->row_left) : 0,right=0; char number[48];
+    if(h==2) goto invalid;
+    if(h==1) while(end<c->cell_count && c->horizontal[end]==2) end++;
+    if(c->definition_count) {
+      right=c->boundaries[end-1];
+      for(k=i;k<end;k++) if(c->vertical[k]) { if(v && v!=c->vertical[k]) goto invalid; v=c->vertical[k]; }
+    }
+    if(v==2) {
+      td=c->owner[i];
+      if(td==SIZE_MAX || c->owner_span[i]!=end-i || c->owner_left[i]!=left || c->owner_right[i]!=right) goto invalid;
+      rows=c->owner_rows[i]+1;
+      for(k=i;k<end;k++) if(c->owner[k]!=td || c->owner_span[k]!=end-i || c->owner_rows[k]+1!=rows) goto invalid;
+      snprintf(number,sizeof(number),"%zu",rows); if(!set(c,td,"rowspan",number)) return 0;
+      for(k=i;k<end;k++) if(!cell_append(c,td,c->cells[k],1)) return 0;
+    } else {
+      td=c->cells[i]; if(!cell_append(c,c->row,td,0)) return 0;
+      if(end-i>1) { snprintf(number,sizeof(number),"%zu",end-i); if(!set(c,td,"colspan",number)) return 0; }
+      for(k=i+1;k<end;k++) if(!cell_append(c,td,c->cells[k],1)) return 0;
+    }
+    for(k=i;k<end;k++) {
+      c->owner[k]=v ? td : SIZE_MAX; c->owner_span[k]=end-i; c->owner_rows[k]=rows; c->owner_left[k]=left; c->owner_right[k]=right;
+    }
+    i=end;
+  }
+  for(;i<256;i++) c->owner[i]=SIZE_MAX;
+  return 1;
+invalid:
+  c->status=EXR_FORMAT; return 0;
+}
 static int table_control(rtf_context *c,const rtf_state *state,const char *word,long value,int has,int *handled) {
   *handled=1;
   if(!strcmp(word,"trowd")) {
     if(c->row!=SIZE_MAX) { c->status=EXR_FORMAT; return 0; }
     if(!run_flush(c)) return 0;
     c->paragraph=SIZE_MAX; c->last_picture=0;
-    if(c->table==SIZE_MAX) { c->table=make(c,c->body,EXR_NODE_TABLE,"table",NULL); if(c->table==SIZE_MAX) return 0; }
-    c->row=make(c,c->table,EXR_NODE_ROW,"tr",NULL); c->cell=SIZE_MAX; c->cell_count=c->definition_count=0;
+    if(c->table==SIZE_MAX) { size_t k; c->table=make(c,c->body,EXR_NODE_TABLE,"table",NULL); if(c->table==SIZE_MAX) return 0; for(k=0;k<256;k++) c->owner[k]=SIZE_MAX; }
+    c->row=make(c,c->table,EXR_NODE_ROW,"tr",NULL); c->cell=SIZE_MAX; c->cell_count=c->definition_count=0; c->row_left=0; c->pending_horizontal=c->pending_vertical=0;
     return c->row!=SIZE_MAX;
   }
   if(!strcmp(word,"cellx")) {
     if(c->row==SIZE_MAX || !has || value< -10000000 || value>10000000 ||
        (c->definition_count && value<=c->boundaries[c->definition_count-1])) { c->status=EXR_FORMAT; return 0; }
     if(c->definition_count==256) { c->status=EXR_LIMIT; return 0; }
-    c->boundaries[c->definition_count++]=value; return 1;
+    c->horizontal[c->definition_count]=c->pending_horizontal; c->vertical[c->definition_count]=c->pending_vertical;
+    c->pending_horizontal=c->pending_vertical=0; c->boundaries[c->definition_count++]=value; return 1;
   }
   if(!strcmp(word,"cell")) {
     if(c->row==SIZE_MAX) { c->status=EXR_FORMAT; return 0; }
@@ -129,13 +189,21 @@ static int table_control(rtf_context *c,const rtf_state *state,const char *word,
   if(!strcmp(word,"row")) {
     size_t i;
     if(c->row==SIZE_MAX || !run_flush(c)) { if(c->status==EXR_OK) c->status=EXR_FORMAT; return 0; }
-    if(c->cell!=SIZE_MAX || !c->cell_count || (c->definition_count && c->definition_count!=c->cell_count)) { c->status=EXR_FORMAT; return 0; }
+    if(c->cell!=SIZE_MAX || !c->cell_count || c->pending_horizontal || c->pending_vertical || (c->definition_count && c->definition_count!=c->cell_count)) { c->status=EXR_FORMAT; return 0; }
     for(i=0;i<c->definition_count;i++) { char number[48]; snprintf(number,sizeof(number),"%ld",c->boundaries[i]); if(!set(c,c->cells[i],"data-rtf-cellx",number)) return 0; }
+    { char number[48]; snprintf(number,sizeof(number),"%ld",c->row_left); if(!set(c,c->row,"data-rtf-row-left",number)) return 0; }
+    if(!row_merge(c)) return 0;
     c->row=c->cell=c->paragraph=SIZE_MAX; c->last_picture=0; return 1;
   }
   if(!strcmp(word,"intbl")) return 1;
   if(!strcmp(word,"itap")) { if(!has || value<0 || value>1) { c->status=EXR_FORMAT; return 0; } return 1; }
-  if(!strcmp(word,"nestcell") || !strcmp(word,"nestrow") || !strcmp(word,"clmgf") || !strcmp(word,"clmrg") || !strcmp(word,"clvmgf") || !strcmp(word,"clvmrg")) { c->status=EXR_FORMAT; return 0; }
+  if(!strcmp(word,"trleft")) { if(c->row==SIZE_MAX || !has || value< -10000000 || value>10000000) { c->status=EXR_FORMAT; return 0; } c->row_left=value; return 1; }
+  if(!strcmp(word,"clmgf") || !strcmp(word,"clmrg") || !strcmp(word,"clvmgf") || !strcmp(word,"clvmrg")) {
+    int vertical=!strncmp(word,"clv",3); unsigned char value_flag=(!strcmp(word,"clmgf") || !strcmp(word,"clvmgf")) ? 1 : 2;
+    unsigned char *pending=vertical ? &c->pending_vertical : &c->pending_horizontal;
+    if(c->row==SIZE_MAX || *pending) { c->status=EXR_FORMAT; return 0; } *pending=value_flag; return 1;
+  }
+  if(!strcmp(word,"nestcell") || !strcmp(word,"nestrow")) { c->status=EXR_FORMAT; return 0; }
   *handled=0; return 1;
 }
 static int emit(rtf_context *c,const rtf_state *s,uint32_t cp) {
@@ -201,7 +269,7 @@ static int line_break(rtf_context *c,const rtf_state *s,int soft) {
   c->last_picture=0;
   if(soft) {
     if(!paragraph(c,s) || make(c,c->paragraph,EXR_NODE_BREAK,"br",NULL)==SIZE_MAX) return 0;
-  } else c->paragraph=SIZE_MAX;
+  } else { c->paragraph=SIZE_MAX; if(c->row==SIZE_MAX) c->table=SIZE_MAX; }
   return 1;
 }
 static int picture_start(rtf_context *c,rtf_state *s) {
