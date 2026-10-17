@@ -1,4 +1,4 @@
-# Native C API 0.19
+# Native C API 0.20
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -451,3 +451,11 @@ FB2 通过原生 XML 树解析，正文转换到通用语义节点和 XHTML 名�
 binary 使用严格 base64 解码，保留编码资源原字节；重复 ID、非法 padding 和缺失的本地图片/封面引用报错。图片 URI 的 Unicode 百分号转义可用。封面资源标记 `cover-image`。description 只提取书名与封面，不进入正文；binary 编码不进入正文。顶层 stylesheet 进入 head/style，命名 style 转成 class；CSS 选择器匹配转换后的元素名。嵌套深度和节点/字符串预算遵循现有模型限制，单 binary 最多 32 MiB。
 
 已有图片、样式、表格、强调文字和链接可通过 0.18 的结构接口转 EPUB；它不会补齐当前排版器不支持的上/下标、删除线或诗歌专有排版。FB2 仍整文件构建 XML 树，未实现章内流式处理。
+
+## DOCX 结构解析（0.20）
+
+DOCX 读取 package 主文档关系，支持非默认主文档路径；解析 WordprocessingML transitional / strict 名字。正文进入相同 XHTML/语义树，保留段落、标题、字符与段落样式、书签、内部与外部链接、图片、换行/分页和合并表格。样式读取 docDefaults、默认 paragraph/character style、pStyle/rStyle、basedOn、直接格式；支持粗斜体、字号、颜色、字体名、对齐、间距、缩进及段落方向。继承链最多 64 层，属性读取总工作量限 2000 万。
+
+DrawingML/VML 图片按关系读取，原编码字节进入 resources；可读取尺寸，重复引用共享资源。路径与 Unicode/百分号编码经过解析，外部图片只保留 URI，框架不访问网络。表格的 gridSpan/vMerge 转成 colspan/rowspan；gridBefore/gridAfter 用空单元格保留列位置，最多 256 列。插入修订与字段结果可见，删除修订和字段指令排除；AlternateContent 优先使用 Fallback，没有 Fallback 时取首个 Choice，不重复输出两支。
+
+当前表格采用引擎的等宽列，尚未实现 Word 专有列宽、表格样式、边框与浮动锚点；图片仍按块排版。编号列表、脚注/尾注、页眉页脚、嵌入字体、主题字体/颜色、完整 Word 样式算法及元数据仍待补齐。它是流式阅读模型，未复刻 Word 的打印页面。旧文字导出保持原行为；结构接口可把当前已解析的图片、样式、表格和链接转成 EPUB。

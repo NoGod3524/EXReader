@@ -493,3 +493,13 @@ inline emphasis, headings, tables, note links, metadata exclusion and exact rend
 structured EPUB round-trip. Strict base64 cases include empty/full/padded/whitespace values,
 invalid alphabet, noncanonical pad bits, incomplete groups, extra padding and data after padding.
 Duplicate binary IDs, missing images, wrong namespaces/roots and entity declarations are rejected.
+
+## 0.20 rich DOCX
+
+`native-docx` opens an original package whose main part is outside word/document.xml.
+It checks inherited/default/direct formatting, headings, bookmarks, links, a Unicode image path
+with literal #/%/?, embedded dimensions, horizontal/vertical cell merges, row grid offsets,
+alternate-content selection and revision/field text. Structured EPUB round-trip compares text
+and exact rendered pixels. Regressions reject missing relationships/resources, traversal targets,
+relationship ID collisions, invalid namespaces, style cycles and orphan merge continuations;
+external image URIs remain metadata without network reads.

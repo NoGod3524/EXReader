@@ -230,113 +230,6 @@ done:
   return result;
 }
 typedef struct {
-  exr_document *doc;
-  XML_Parser parser;
-  exr_buffer text, title;
-  int depth, body, paragraph, title_depth, docx, failed;
-  unsigned heading;
-} flow_xml;
-static void XMLCALL flow_start(void *user, const char *full, const char **attrs) {
-  flow_xml *x = user;
-  const char *tag = local(full);
-  x->depth++;
-  if (x->depth > 256) {
-    x->failed = 1;
-    XML_StopParser(x->parser, XML_FALSE);
-    return;
-  }
-  if (!strcmp(tag, "body"))
-    x->body = x->depth;
-  if (!strcmp(tag, "book-title") && !x->docx)
-    x->title_depth = x->depth;
-  if (x->body && (!strcmp(tag, "p") || !strcmp(tag, "v") || !strcmp(tag, "subtitle"))) {
-    if (!flush(x->doc, &x->text, x->heading))
-      x->failed = 1;
-    x->paragraph = x->depth;
-  }
-  if (x->body && !strcmp(tag, "title"))
-    x->heading = 1;
-  if (x->docx && !strcmp(tag, "pStyle")) {
-    const char *v = attribute(attrs, "val");
-    if (v && !strncmp(v, "Heading", 7) && v[7] >= '1' && v[7] <= '6')
-      x->heading = (unsigned)(v[7] - '0');
-  }
-  if (x->paragraph && (!strcmp(tag, "tab") || !strcmp(tag, "br")))
-    if (!exr_append(&x->text, " ", 1))
-      x->failed = 1;
-  if (x->failed)
-    XML_StopParser(x->parser, XML_FALSE);
-}
-static void XMLCALL flow_end(void *user, const char *full) {
-  flow_xml *x = user;
-  const char *tag = local(full);
-  if (x->paragraph == x->depth) {
-    if (!flush(x->doc, &x->text, x->heading))
-      x->failed = 1;
-    x->paragraph = 0;
-    if (x->docx)
-      x->heading = 0;
-  }
-  if (x->title_depth == x->depth) {
-    if (x->title.size && !x->doc->title)
-      x->doc->title = exr_copy(x->title.data, x->title.size);
-    x->title_depth = 0;
-  }
-  if (x->body == x->depth)
-    x->body = 0;
-  if (!strcmp(tag, "title"))
-    x->heading = 0;
-  x->depth--;
-  if (x->failed)
-    XML_StopParser(x->parser, XML_FALSE);
-}
-static void XMLCALL flow_text(void *user, const XML_Char *s, int n) {
-  flow_xml *x = user;
-  if (x->paragraph && !exr_append(&x->text, s, (size_t)n))
-    x->failed = 1;
-  if (x->title_depth && !exr_append(&x->title, s, (size_t)n))
-    x->failed = 1;
-  if (x->failed)
-    XML_StopParser(x->parser, XML_FALSE);
-}
-static void XMLCALL reject_entity(void *user, const XML_Char *name, int parameter,
-                                  const XML_Char *value, int length, const XML_Char *base,
-                                  const XML_Char *system, const XML_Char *public_id,
-                                  const XML_Char *notation) {
-  flow_xml *x = user;
-  (void)name;
-  (void)parameter;
-  (void)value;
-  (void)length;
-  (void)base;
-  (void)system;
-  (void)public_id;
-  (void)notation;
-  x->failed = 1;
-  XML_StopParser(x->parser, XML_FALSE);
-}
-static exr_status xml_flow(exr_document *doc, const void *data, size_t n, int docx, exr_error *e) {
-  flow_xml x = {0};
-  enum XML_Status result;
-  x.doc = doc;
-  x.docx = docx;
-  x.parser = XML_ParserCreateNS(NULL, '|');
-  if (!x.parser)
-    return exr_fail(e, EXR_MEMORY, "XML allocation failed");
-  XML_SetUserData(x.parser, &x);
-  XML_SetElementHandler(x.parser, flow_start, flow_end);
-  XML_SetCharacterDataHandler(x.parser, flow_text);
-  XML_SetEntityDeclHandler(x.parser, reject_entity);
-  XML_SetParamEntityParsing(x.parser, XML_PARAM_ENTITY_PARSING_NEVER);
-  result = XML_Parse(x.parser, data, (int)n, XML_TRUE);
-  if (result == XML_STATUS_ERROR || x.failed)
-    exr_fail(e, EXR_FORMAT, "XML rejected: %s", XML_ErrorString(XML_GetErrorCode(x.parser)));
-  XML_ParserFree(x.parser);
-  free(x.text.data);
-  free(x.title.data);
-  return result == XML_STATUS_OK && !x.failed ? EXR_OK : EXR_FORMAT;
-}
-typedef struct {
   mz_zip_archive archive;
   size_t expanded;
   exr_status status;
@@ -512,6 +405,19 @@ static int package_parse(package *p, const void *data, size_t n) {
   XML_ParserFree(p->parser);
   p->parser = NULL;
   return ok == XML_STATUS_OK && !p->failed;
+}
+int exr_uri_path(exr_buffer *b, const char *s) {
+  const unsigned char *p; char hex[4];
+  for (p = (const unsigned char *)s; *p; p++) {
+    if ((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') ||
+        (*p >= '0' && *p <= '9') || strchr("/-._~", *p)) {
+      if (!exr_append(b, p, 1)) return 0;
+    } else {
+      snprintf(hex, sizeof(hex), "%%%02X", *p);
+      if (!exr_append(b, hex, strlen(hex))) return 0;
+    }
+  }
+  return 1;
 }
 int exr_uri_decode(const char *s, size_t n, char out[2048]) {
   size_t i, used = 0, at = 0;
@@ -1007,6 +913,12 @@ done:
   *out = d;
   return exr_fail(e, EXR_OK, "");
 }
+static exr_status docx_member(void *context, const char *path, int optional, void **data,
+                                size_t *size, exr_error *e) {
+  archive *z = context; *data=NULL; *size=0;
+  if(optional && mz_zip_reader_locate_file(&z->archive,path,NULL,0)<0) return EXR_OK;
+  *data=member(z,path,size,e); return *data ? EXR_OK : z->status;
+}
 static exr_status zip_document(exr_document *d, const void *data, size_t n, exr_error *e) {
   archive z = {0};
   exr_chapter *chapters = NULL;
@@ -1015,10 +927,7 @@ static exr_status zip_document(exr_document *d, const void *data, size_t n, exr_
   if (result != EXR_OK)
     return result;
   if (d->format == EXR_DOCX) {
-    size_t size = 0;
-    void *bytes = member(&z, "word/document.xml", &size, e);
-    result = bytes ? xml_flow(d, bytes, size, 1, e) : z.status;
-    mz_free(bytes);
+    result = exr_docx(d, docx_member, &z, e);
     goto done;
   }
   result = epub_metadata(d, &z, e);

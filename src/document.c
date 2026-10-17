@@ -453,3 +453,45 @@ exr_status exr_model_finish(exr_document *d, exr_error *e) {
   d->last_capacity = 0;
   return EXR_OK;
 }
+
+/* Shared semantic construction helpers used by format adapters. */
+size_t exr_model_html(exr_document *d, size_t parent, size_t chapter, exr_node_kind kind,
+                       const char *tag, const char *text) {
+  exr_buffer expanded = {0}; size_t index;
+  if (tag) {
+    const char prefix[] = "http://www.w3.org/1999/xhtml|";
+    if (!exr_append(&expanded, prefix, sizeof(prefix)-1) || !exr_append(&expanded, tag, strlen(tag))) {
+      free(expanded.data); return SIZE_MAX;
+    }
+    tag = expanded.data;
+  }
+  index = exr_model_node(d, parent, chapter, kind, tag, text, text ? strlen(text) : 0);
+  free(expanded.data); return index;
+}
+int exr_model_attribute(exr_document *d, size_t index, const char *key, const char *value) {
+  exr_node *v = &d->nodes[index]; exr_attribute *a = (exr_attribute *)v->attributes; size_t i;
+  for (i=0; i<v->attribute_count; i++) if (!strcmp(a[i].name,key)) break;
+  if (i==v->attribute_count) {
+    exr_attribute *grown;
+    if (i>=256) return 0;
+    grown = realloc(a,(i+1)*sizeof(*a)); if (!grown) return 0;
+    a=grown; v->attributes=a; a[i].name=a[i].value=NULL; v->attribute_count++;
+    a[i].name=exr_model_copy(d,key,strlen(key)); if (!a[i].name) return 0;
+  } else free((void *)a[i].value);
+  a[i].value=exr_model_copy(d,value,strlen(value)); return a[i].value!=NULL;
+}
+exr_status exr_xml_memory_tree(const void *data, size_t size, const char *root,
+                                exr_document **out, exr_error *e) {
+  exr_document *d = calloc(1,sizeof(*d)); exr_resource *r; exr_status status;
+  *out=NULL;
+  if (!d) return exr_fail(e,EXR_MEMORY,"XML tree allocation failed");
+  d->resources=calloc(1,sizeof(*d->resources));
+  if (!d->resources) { exr_document_free(d); return EXR_MEMORY; }
+  d->resource_count=d->resource_capacity=1; r=d->resources;
+  r->id=exr_copy("source",6); r->path=exr_copy("source.xml",10);
+  r->media_type=exr_copy("application/xml",15); r->properties=exr_copy("",0);
+  if (!r->id || !r->path || !r->media_type || !r->properties) { exr_document_free(d); return EXR_MEMORY; }
+  status=exr_xml_tree(d,data,size,0,1,1,root,e);
+  if(status!=EXR_OK) { exr_document_free(d); return status; }
+  *out=d; return EXR_OK;
+}
