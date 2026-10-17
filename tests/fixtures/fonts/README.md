@@ -63,3 +63,9 @@ Both are GPL-3.0-only, with no external assets. SHA-256:
 
 - cbdt.ttf: `ff3829855610c05294f5b8e94cb8832072e8f6af5f74916044fbd03ae5ea920e`
 - cbdt-fonts.epub: `354a83ee2eaf74f591e394d158717fabd750f6e58324f4ef50b2ab1482879f23`
+
+`emoji.ttf` adds original GSUB rules and Unicode mappings to cbdt.ttf, using
+`tools/generate_emoji_test_font.py` (GPL-3.0-only). Explicit ZWJ, tag, variation
+selector and ZWNJ components exercise ligature/context/reverse substitution,
+ignored-mark flags, control barriers and whole-layout cluster preservation.
+SHA-256: `8988a05d5260318364d19ac7507070f9206629377958641b8ef2bfadfa852bf7`.

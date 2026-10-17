@@ -2199,3 +2199,23 @@ All 100 local Windows suites pass, including byte-identical whole/paged bitmap
 renders; the installed C++17 SDK consumer passes. The default release DLL is
 4,492,143 bytes, 13,305 bytes above the preceding sbix build. This batch's
 desktop/mobile/sanitizer CI is checked against its own commit after pushing.
+
+## Milestone 0.18 development: explicit invisible OpenType components
+
+The shared matcher now checks explicit glyph/coverage/class matches before
+skipping eligible default-ignorables, while preserving GDEF lookup filtering,
+ordinary ZWNJ barriers and Indic-specific ZWJ behavior. Ligature, contextual,
+chaining and reverse substitutions use it. The original emoji.ttf covers ZWJ,
+tag and keycap components, explicit ZWNJ, ignored marks, hidden-leading ligatures
+and a whole-layout emoji with one preserved UTF-8 cluster.
+
+`tools/check_bitmap_reference.py <library> <font> <emoji-test.txt>` compares
+all images with fontTools/Pillow and all fully qualified sequences with
+HarfBuzz (visible glyph IDs, advances and offsets; tolerance 0.02 pixels at
+100px). Unicode 17's official `17.0.0/emoji/emoji-test.txt`, SHA-256
+`1d8a944f88d7952f7ef7c5167fef3c67995bcae24543949710231b03a201acda`,
+has 3944 fully qualified sequences; all match with the above Noto font.
+Hidden unconsumed API records are excluded from this reference comparison;
+the C regression suite checks their zero advances and cluster ownership.
+All 100 local Windows suites pass. CBDT commit 3f8547d passes all six
+platform/sanitizer CI jobs. Version/ABI/schema remain 0.18.0/1/6.

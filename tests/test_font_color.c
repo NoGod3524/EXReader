@@ -315,9 +315,51 @@ static void cbdt_bad(const char *directory) {
     OK(exr_font_create(&input,1,&font,&error)); free((void *)input.data); OK(exr_font_glyph_image(font,0,0,100,&frame,NULL,&error)); CHECK(!frame.bitmap.pixels); exr_font_free(font);
   }
 }
+static void emoji(const char *directory) {
+  const char *cases[]={"\xf0\x9f\x91\xa9\xe2\x80\x8d\xf0\x9f\x92\xbb", /* Woman technologist. */
+    "\xf0\x9f\x8f\xb4\xf3\xa0\x81\xa7\xf3\xa0\x81\xa2\xf3\xa0\x81\xbf", /* Original tag sequence. */
+    "1\xef\xb8\x8f\xe2\x83\xa3"};
+  const char *profession=cases[0]; exr_font *font=open_font(directory,"emoji.ttf"); exr_shape_options options=exr_shape_defaults();
+  exr_shaped_glyph *shaped=NULL; size_t n,i; options.font_size=100;
+  for(i=0;i<3;i++) {
+    OK(exr_shape(font,0,cases[i],strlen(cases[i]),&options,&shaped,&n,&error));
+    CHECK(n==1 && shaped[0].glyph==10 && !shaped[0].start && shaped[0].end==strlen(cases[i]) && !(shaped[0].flags&EXR_GLYPH_HIDDEN) && shaped[0].advance_x==90);
+    exr_free(shaped);
+  }
+  { exr_shape_feature features[2]={{EXR_TAG('c','c','m','p'),0},{0,1}};
+    const char *texts[]={profession,"\xe2\x80\x8d\xf0\x9f\x91\xa9\xf0\x9f\x92\xbb","\xe2\x80\x8d\xf0\x9f\x91\xa9\xf0\x9f\x92\xbb",profession};
+    options.features=features; options.feature_count=2;
+    for(i=0;i<4;i++) {
+      features[1].tag=EXR_TAG('s','s','0','1')+(uint32_t)i;
+      OK(exr_shape(font,0,texts[i],strlen(texts[i]),&options,&shaped,&n,&error));
+      CHECK(n==3 && shaped[i==1 || i==2 ? 1 : 0].glyph==4 && (shaped[i==1 || i==2 ? 0 : 1].flags&EXR_GLYPH_HIDDEN)); exr_free(shaped);
+    }
+    features[1].tag=EXR_TAG('s','s','0','5');
+    OK(exr_shape(font,0,"\xe2\x80\x8d\xf0\x9f\x92\xbb",7,&options,&shaped,&n,&error));
+    CHECK(n==1 && shaped[0].glyph==10 && !(shaped[0].flags&EXR_GLYPH_HIDDEN) && shaped[0].advance_x==90 && !shaped[0].start && shaped[0].end==7); exr_free(shaped);
+    options.features=NULL; options.feature_count=0;
+  }
+  { exr_shape_feature features[2]={{EXR_TAG('c','c','m','p'),0},{EXR_TAG('s','s','0','7'),1}};
+    options.features=features; options.feature_count=2;
+    OK(exr_shape(font,0,cases[1],strlen(cases[1]),&options,&shaped,&n,&error)); CHECK(n==4 && shaped[0].glyph==2); exr_free(shaped);
+    options.features=NULL; options.feature_count=0;
+  }
+  { const char blocked[]="\xf0\x9f\x91\xa9\xe2\x80\x8c\xf0\x9f\x92\xbb";
+    exr_shape_feature explicit_zwnj={EXR_TAG('s','s','0','6'),1};
+    OK(exr_shape(font,0,blocked,sizeof(blocked)-1,&options,&shaped,&n,&error)); CHECK(n==3 && shaped[0].glyph==2 && shaped[2].glyph==6 && (shaped[1].flags&EXR_GLYPH_HIDDEN)); exr_free(shaped);
+    options.features=&explicit_zwnj; options.feature_count=1;
+    OK(exr_shape(font,0,blocked,sizeof(blocked)-1,&options,&shaped,&n,&error)); CHECK(n==1 && shaped[0].glyph==10); exr_free(shaped); options.features=NULL; options.feature_count=0;
+  }
+  { exr_document *doc=NULL; exr_layout *layout=NULL; exr_layout_config config=exr_layout_config_defaults(); const exr_glyph *glyphs; exr_bitmap image={0};
+    config.page=(exr_layout_options){200,200,0,100,1,0}; config.user_css="p {margin:0}";
+    OK(exr_document_open_memory(EXR_TXT,profession,strlen(profession),&doc,&error)); OK(exr_layout_create_ex(doc,font,&config,&layout,&error));
+    glyphs=exr_layout_glyphs(layout,&n); CHECK(n==1 && glyphs[0].glyph==10 && !glyphs[0].cluster_start && glyphs[0].cluster_end==strlen(profession));
+    exr_document_free(doc); exr_font_free(font); OK(exr_render_page_color(layout,NULL,0,&image,&error)); exr_bitmap_free(&image); exr_layout_free(layout);
+  }
+}
 int main(int argc,char **argv) {
   exr_font *font; exr_font_color_layer *owned=NULL; size_t n; CHECK(argc==3); font=open_font(argv[1],"color.ttf"); queries(font,argv[1]); raster(font,argv[2]);
   OK(exr_font_color_layers(font,0,2,1,0x00ff00ff,&owned,&n,NULL,&error)); exr_font_free(font);
   CHECK(n==3 && owned[0].color==0xffff00ff && owned[2].color==0x00ff00ff); exr_free(owned);
-  fallback(argv[1],"color.ttf"); fallback(argv[1],"bitmap.ttf"); bitmap_raster(argv[1],argv[2]); embedded(argv[1],"color-fonts.epub"); embedded(argv[1],"cbdt-fonts.epub"); cbdt(argv[1],argv[2]); cbdt_bad(argv[1]); fallback(argv[1],"cbdt.ttf"); printf("%u color-font palette, layers and raster checks passed\n",checks); return 0;
+  fallback(argv[1],"color.ttf"); fallback(argv[1],"bitmap.ttf"); bitmap_raster(argv[1],argv[2]); embedded(argv[1],"color-fonts.epub"); embedded(argv[1],"cbdt-fonts.epub"); cbdt(argv[1],argv[2]); cbdt_bad(argv[1]); fallback(argv[1],"cbdt.ttf"); emoji(argv[1]); printf("%u color-font palette, layers and raster checks passed\n",checks); return 0;
 }

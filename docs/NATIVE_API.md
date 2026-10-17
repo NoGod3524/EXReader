@@ -1148,3 +1148,5 @@ Separation 普通命名专色现支持文件声明的 device/CIE alternate 和�
 排版使用 head 的设计单位和 hmtx/vmtx，字号连续缩放，不按 strike 整数跳动。缺省 vmtx 时竖向 advance 为 em；有 big metrics 时使用明确的竖向原点，只有横向 small metrics 时按位图尺寸和逻辑 advance 居中。装饰线使用字体 post/OS2 度量；位图保留原色并乘文字 alpha，不做合成粗斜体。
 
 第一次读取验证全部索引的边界、offset 单调性、稀疏 glyph ID 的严格递增和数据范围，分块读取且计入工作预算；只缓存目录。每面最多 256 个 strike，PNG 编码、解码、缩放和取消沿用 sbix 限额。当前支持 square ppem、bitDepth 32；format 17 接受横向 small metrics，非方形 strike、仅竖向 small metrics 和其他编码返回 EXR_FORMAT。规范见 [CBDT](https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt) 与 [CBLC](https://learn.microsoft.com/en-us/typography/opentype/spec/cblc)。
+
+GSUB 匹配允许字体明确引用隐藏字符的 glyph ID，包括 ZWJ、标签字符和变体选择符；只有没有匹配的可忽略字符才跳过，GDEF/lookup 的过滤规则优先。普通 ZWNJ 继续阻断连接，也可被字体明确列为组件。合字、上下文、链式上下文和反向替换共用该匹配规则，消费后的合字保留完整 UTF-8 字素范围；未消费的隐藏记录保留零宽和 HIDDEN 标志。字形选择来自字体表，不内置特定 emoji 列表。
