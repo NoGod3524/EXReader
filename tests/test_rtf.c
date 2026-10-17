@@ -87,11 +87,54 @@ static void skipped(void) {
   OK(exr_document_open_memory(EXR_RTF,input,strlen(input),&doc,&error));
   CHECK(!strcmp(exr_document_text(doc,NULL),"AB")); exr_document_free(doc);
 }
+static void links_fonts(const char *dir) {
+  const char *input="{\\rtf1\\ansi\\ansicpg1252\\deff0{\\fonttbl{\\f0\\fnil SourceSerif;}{\\f1\\fswiss Alt\\u20013?;}}{\\info{\\title Test \\u20013? title}{\\author Hidden author}}A{\\*\\bkmkstart target}{\\*\\bkmkend target}{\\field{\\*\\fldinst HYPERLINK \"https://example.test/?a=1&b=2\"}{\\fldrslt \\f1 Web {\\b bold}}} {\\field{\\*\\fldinst HYPERLINK \\\\l \"target\"}{\\fldrslt Back}} {\\field{\\*\\fldinst DATE}{\\fldrslt Date result}}}";
+  exr_document *doc=NULL,*copy=NULL; exr_font *font=NULL; exr_layout *a=NULL,*b=NULL;
+  exr_bitmap pa={0},pb={0}; exr_layout_config config=exr_layout_config_defaults(); char path[4096];
+  const exr_node *nodes; size_t count,i,links=0,internal=0,font0=0,font1=0,resource,target;
+  void *zip=NULL; size_t size;
+  OK(exr_document_open_memory(EXR_RTF,input,strlen(input),&doc,&error));
+  CHECK(!strcmp(exr_document_title(doc),"Test 中 title"));
+  CHECK(!strcmp(exr_document_text(doc,NULL),"AWeb bold Back Date result"));
+  nodes=exr_document_nodes(doc,&count);
+  for(i=0;i<count;i++) {
+    const char *style=exr_node_attribute(&nodes[i],"style");
+    if(style && strstr(style,"SourceSerif")) font0++;
+    if(style && strstr(style,"Alt中")) font1++;
+    if(nodes[i].kind==EXR_NODE_LINK) {
+      const char *href=exr_node_attribute(&nodes[i],"href"); CHECK(href); links++;
+      if(*href=='#') {
+        internal++; OK(exr_document_resolve(doc,0,href,&resource,&target,&error));
+        CHECK(target<count && !strcmp(exr_node_attribute(&nodes[target],"id"),"bookmark-target"));
+      } else CHECK(!strcmp(href,"https://example.test/?a=1&b=2"));
+    }
+  }
+  CHECK(links==3 && internal==1 && font0 && font1);
+  snprintf(path,sizeof(path),"%s/fonts/primary.ttf",dir); OK(exr_font_open(path,&font,&error));
+  config.page=(exr_layout_options){300,180,8,16,1.2f,4}; OK(exr_layout_create_ex(doc,font,&config,&a,&error));
+  OK(exr_document_export_epub(doc,NULL,&zip,&size,&error)); OK(exr_document_open_memory(EXR_EPUB,zip,size,&copy,&error)); exr_free(zip);
+  CHECK(!strcmp(exr_document_title(copy),exr_document_title(doc)));
+  OK(exr_layout_create_ex(copy,font,&config,&b,&error)); OK(exr_render_page(a,NULL,0,&pa,&error)); OK(exr_render_page(b,NULL,0,&pb,&error));
+  CHECK(pa.stride==pb.stride && pa.height==pb.height && !memcmp(pa.pixels,pb.pixels,(size_t)pa.stride*pa.height));
+  exr_bitmap_free(&pa); exr_bitmap_free(&pb); exr_layout_free(a); exr_layout_free(b); exr_font_free(font); exr_document_free(doc); exr_document_free(copy);
+}
+static void metadata_edges(void) {
+  const char *cases[]={
+    "{\\rtf1 A{\\*\\unknown \\field\\fldinst HYPERLINK \"https://bad.test\"\\fldrslt Secret}B}",
+    "{\\rtf1 A{\\*\\'41\\fonttbl Secret}B}",
+    "{\\rtf1{\\fonttbl{\\f0;}}AB}"};
+  size_t i;
+  for(i=0;i<sizeof(cases)/sizeof(*cases);i++) {
+    exr_document *doc=NULL;
+    OK(exr_document_open_memory(EXR_RTF,cases[i],strlen(cases[i]),&doc,&error));
+    CHECK(!strcmp(exr_document_text(doc,NULL),"AB")); exr_document_free(doc);
+  }
+}
 static void invalid(const char *rtf) {
   exr_document *doc=NULL; CHECK(exr_document_open_memory(EXR_RTF,rtf,strlen(rtf),&doc,&error)==EXR_FORMAT); CHECK(!doc);
 }
 int main(int argc,char **argv) {
-  CHECK(argc==2); rich(argv[1]); skipped(); picture_case(argv[1],0,0); picture_case(argv[1],1,0); picture_case(argv[1],0,1); picture_case(argv[1],1,1);
+  CHECK(argc==2); rich(argv[1]); skipped(); metadata_edges(); links_fonts(argv[1]); picture_case(argv[1],0,0); picture_case(argv[1],1,0); picture_case(argv[1],0,1); picture_case(argv[1],1,1);
   invalid("{\\rtf1{\\colortbl;\\red256\\green0\\blue0;}\\cf1 bad}");
   invalid("{\\rtf1\\cf1 missing color}"); invalid("{\\rtf1\\fs0 invalid size}");
   invalid("{\\rtf1{\\pict\\pngblip 89504e4}}");

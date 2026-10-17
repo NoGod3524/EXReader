@@ -537,3 +537,10 @@ PNG/JPEG cases exercise both hex and binary pict streams, twip dimensions, optio
 nonshppict suppression, exact encoded bytes and identical rendered pixels after EPUB round-trip.
 Malformed hex/signatures fail. A known word nested in an unknown optional destination cannot
 reactivate that skipped content. The existing Unicode fallback suite remains unchanged.
+
+## 0.25 RTF fields/fonts
+
+RTF tests cover Unicode font/title metadata, default/explicit font names, scoped formatting in
+external hyperlinks, internal bookmark resolution and a non-hyperlink field's visible result.
+Titles, links, style requests and pixels survive EPUB conversion. Empty font names and skipped
+metadata with later known destinations remain valid without leaking metadata into body text.

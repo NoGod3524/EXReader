@@ -1,4 +1,4 @@
-# Native C API 0.24
+# Native C API 0.25
 
 公开入口为 `include/exreader.h`；API 仍为实验性，尚未承诺二进制兼容。0.12 新增独立双向分析与 OpenType 塑形接口，`exr_glyph` 末尾增加 `offset_x/offset_y/bidi_level`，`exr_layout_config` 末尾增加段落 `direction`，并增加 `EXR_GLYPH_SHAPED` 标志。宿主需使用匹配版本的头文件和库重新编译。所有路径和字符串使用 UTF-8。所有 `exr_status` 函数返回 `EXR_OK` 表示成功；可选 `exr_error*` 接收错误详情。
 
@@ -480,7 +480,7 @@ DrawingML/VML 图片按关系读取，原编码字节进入 resources；可读�
 
 RTF 使用同一文档树保存分组作用域内的粗体/斜体、半点字号、颜色表引用、段落对齐、缩进、段前后距、行距与文字方向。plain/pard 恢复相应属性；par 创建段落，line 保留为段内换行。u/s 元素保留下划线与删除线语义，当前栅格器尚未绘制这两种修饰；inline highlight 也尚未绘制背景。
 
-词法器保留 0.12.1 的 Unicode fallback 规则：整条控制词、转义符号、十六进制字节和 bin 段各按一个 fallback 字符消费，fallback 内不执行格式或 destination；分组边界终止 fallback。支持 Windows-1252 与 Unicode 转义；其他 ansicpg 编码仍拒绝。字体表、field 链接和其他结构仍待后续接入。颜色表最多 4096 项，分组深度上限仍为 255。
+词法器保留 0.12.1 的 Unicode fallback 规则：整条控制词、转义符号、十六进制字节和 bin 段各按一个 fallback 字符消费，fallback 内不执行格式或 destination；分组边界终止 fallback。支持 Windows-1252 与 Unicode 转义；其他 ansicpg 编码仍拒绝。表格、编号列表、脚注和样式表继承仍待后续接入。颜色表最多 4096 项，分组深度上限仍为 255。
 
 RTF 已解析的文字、字号、颜色和段落结构可转成 EPUB；旧文字转换保持原行为。相同属性赋值复用现有字符串，避免逐段更新样式时重复计入模型预算。
 
@@ -489,3 +489,11 @@ RTF 已解析的文字、字号、颜色和段落结构可转成 EPUB；旧文�
 pict 的 pngblip/jpegblip 支持十六进制与 bin 数据，编码字节转移给资源表，IMAGE 节点保留 picw/pich、picwgoal/pichgoal 和缩放后的尺寸。尺寸不指定时使用内在尺寸。单图片最多 32 MiB、picture 分组最多 9996 个；拒绝非法十六进制、半字节残留和 PNG/JPEG 签名失配。wmetafile/emfblip 字节也可保留为资源，内置解码器不绘制它们，宿主可替换图片解码器。
 
 识别紧跟可选 destination 标记的 shppict；已有可显示图片时跳过相邻 nonshppict 兼容分支，避免重复。未知 destination 继续跳过，不会由其中的已知词重新激活。没有编码类型的 pict 保持旧的忽略行为。图片可通过结构接口转 EPUB，字节与显示尺寸保留。
+
+## RTF 字体名称、字段链接与元数据（0.25）
+
+fonttbl 的名称（包括 Unicode 转义）转为 font-family，保留 deff 默认字体、f 切换和 plain 恢复。字体编号最多 4095；不扫描系统字体、不加载 fontemb/fontfile，字体字节仍由宿主或书籍资源提供。尚未使用 fcharset 解码其他传统代码页，ansicpg 范围保持 Windows-1252。
+
+field/fldinst/fldrslt 保留字段的可见结果。HYPERLINK 支持引用 URL、`\l` 内部书签、`\o` 提示与 `\t` 目标框架参数；不会执行字段或访问链接。bkmkstart 生成 `bookmark-` 前缀的定位节点，内部链接同步编码。未知字段作为普通可见结果保留；忽略的未知 destination 不能被其中的 field/fonttbl 等词激活。
+
+info/title 提取 UTF-8 书名并同步 XHTML head/title，其他 info 内容不进入正文。字体名、字段指令、书签名和书名各有 64 KiB 临时限制；字体名称和字段元数据累计限制为 64 MiB，已解析的字段指令立即释放。最多 10000 个字段。结构 EPUB 导出保留字体名称、链接、定位节点和书名。
