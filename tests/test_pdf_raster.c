@@ -77,6 +77,6 @@ int main(int argc,char **argv) {
   data=load(argv[1],"pdf-graphics.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Pages"),&resources,&error));
   { uint32_t kids,page; OK(exr_pdf_resolve(file,exr_pdf_get(file,resources,"Kids"),&kids,&error)); OK(exr_pdf_resolve(file,exr_pdf_value_at(file,kids)->first,&page,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,page,"Resources"),&resources,&error)); }
   b=render(file,resources,"0 1 0 rg /Filled Do 0 0 1 1 re f",4,0); pixel(&b,2,3,255,0,0); pixel(&b,0,0,0,255,0); pixel(&b,4,4,255,255,255); free(b.pixels);
-  { const char *s="/Image Do"; CHECK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)==EXR_FORMAT && !b.pixels); }
+  { const char *s="/Image Do"; OK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)); pixel(&b,0,0,0,0,0); free(b.pixels); }
   exr_pdf_close(file); free(data); printf("%u native PDF raster checks passed\n",checks); return 0;
 }
