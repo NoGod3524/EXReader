@@ -2120,3 +2120,23 @@ are covered. A separate real FFmpeg file made with use_metadata_tags exposes the
 same title, author and custom string as ffprobe. Existing chapter and audio paths
 remain available with AAC either enabled or disabled. No public ABI or runtime
 dependency was added.
+
+## Milestone 0.18 development: COLR v0 layers and CPAL snapshots
+
+The new color-font suite has 40145 checks. The 3760-byte original color.ttf
+fixture has two palettes, three palette entries, translucent/transparent colors,
+foreground-color layers, 256/257-layer glyphs and an oversized outline layer.
+Tests exercise owned layer snapshots after palette changes and font destruction,
+palette queries, invalid arguments, cancellation, default palette restoration,
+horizontal/sideways/vertical clipping, source alpha, grayscale output and single
+decoration painting. A non-BMP emoji falls back to the second font while retaining
+its original four-byte text cluster; retained layouts render after documents and
+input fonts are released. Large overlapping glyphs hit the shared raster-work
+limit and discard their output. Layer and bitmap limits are checked separately.
+
+The exported 200x200 color fixture is byte-for-byte pixel identical to Pillow's
+independent FreeType COLR compositor, including all overlapping interiors.
+All 100 local native suites pass. A C++17 host builds and runs against the newly
+installed SDK and links both new public color-font queries. The default Windows
+DLL is 4,468,475 bytes. No runtime dependency was added; version/ABI/schema remain
+0.18.0/1/6. The preceding named-metadata batch (58e907f) passes all six CI jobs.

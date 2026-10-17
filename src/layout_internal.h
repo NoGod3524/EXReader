@@ -4,6 +4,7 @@
 #include "internal.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_COLOR_H
 typedef struct {
   FT_Face face;
   unsigned char *bytes;
@@ -15,6 +16,7 @@ typedef struct {
   size_t metric_count;
   FT_F26Dot6 metric_size;
   struct exr_ot_state *ot;
+  FT_Color *color_palette; unsigned palette_index,palette_ready;
 } exr_face;
 struct exr_font {
   FT_Library library;
@@ -63,6 +65,8 @@ exr_status exr_book_fonts(const exr_document *doc, exr_font *fallback,
 size_t exr_font_order(const exr_font *font, const char *family, unsigned flags,
                        size_t chapter, size_t order[32]);
 int exr_font_size(exr_face *font, float size);
+exr_status exr_font_colr(exr_face *face,uint32_t glyph,size_t palette,uint32_t foreground,
+                         exr_font_color_layer layers[256],size_t *count,size_t *work);
 int exr_measure(exr_face *font, uint32_t glyph, unsigned flags, float *advance);
 int exr_measure_vertical(exr_face *font, uint32_t glyph, unsigned flags, float *advance);
 float exr_kern(exr_face *font, uint32_t left, uint32_t right);
