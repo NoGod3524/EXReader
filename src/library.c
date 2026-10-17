@@ -186,6 +186,37 @@ cleanup:
   free(cover); exr_document_free(d); exr_fixed_free(fixed);
   return result;
 }
+/* ponytail: exact-byte scan, bounded by stored sources of the same size/format.
+   Add a digest index only if measured library size makes this scan too costly. */
+exr_status exr_library_import_unique(exr_library *l,exr_format format,const void *data,size_t n,
+                                       const char *title,int64_t *id,int *created,exr_error *e) {
+  sqlite3_stmt *s=NULL; exr_status status=EXR_OK; int step,transaction=0,inserted=0; int64_t found=0;
+  if(id) *id=0;
+  if(created) *created=0;
+  if(!l || !id || !created || !data || !n || format<EXR_TXT || format>EXR_PDF)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid unique import arguments");
+  if(n>EXR_MAX_INPUT) return exr_fail(e,EXR_LIMIT,"Unique import exceeds source byte limit");
+  sqlite3_mutex_enter(sqlite3_db_mutex(l->db));
+  if(sqlite3_exec(l->db,"BEGIN IMMEDIATE",NULL,NULL,NULL)!=SQLITE_OK) { status=database_error(l,e); goto finish; }
+  transaction=1;
+  if(!prepare(l,"SELECT id FROM books WHERE format=?1 AND length(source)=?2 AND source=?3 ORDER BY id LIMIT 1",&s) ||
+     sqlite3_bind_int(s,1,format)!=SQLITE_OK || sqlite3_bind_int64(s,2,(sqlite3_int64)n)!=SQLITE_OK || sqlite3_bind_blob(s,3,data,(int)n,SQLITE_STATIC)!=SQLITE_OK) {
+    status=database_error(l,e); goto finish;
+  }
+  step=sqlite3_step(s);
+  if(step==SQLITE_ROW) {
+    if(sqlite3_column_type(s,0)!=SQLITE_INTEGER || (found=sqlite3_column_int64(s,0))<=0) { status=exr_fail(e,EXR_DATABASE,"Invalid duplicate book ID"); goto finish; }
+  } else if(step!=SQLITE_DONE) { status=database_error(l,e); goto finish; }
+  sqlite3_finalize(s); s=NULL;
+  if(!found) { status=exr_library_import(l,format,data,n,title,&found,e); if(status!=EXR_OK) goto finish; inserted=1; }
+  if(sqlite3_exec(l->db,"COMMIT",NULL,NULL,NULL)!=SQLITE_OK) { status=database_error(l,e); goto finish; }
+  transaction=0; *id=found; *created=inserted;
+finish:
+  sqlite3_finalize(s);
+  if(transaction) sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL);
+  sqlite3_mutex_leave(sqlite3_db_mutex(l->db));
+  return status==EXR_OK ? exr_fail(e,EXR_OK,"") : status;
+}
 void exr_books_free(exr_book *books, size_t n) {
   size_t i;
   for (i = 0; i < n; i++) {
