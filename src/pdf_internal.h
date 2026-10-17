@@ -3,6 +3,7 @@
 #define EXR_PDF_INTERNAL_H
 #include "internal.h"
 #define EXR_PDF_NONE UINT32_MAX
+#define EXR_PDF_MAX_VALUES 1048576u
 typedef enum {
   EXR_PDF_NULL,EXR_PDF_BOOL,EXR_PDF_INT,EXR_PDF_REAL,EXR_PDF_NAME,
   EXR_PDF_STRING,EXR_PDF_ARRAY,EXR_PDF_DICT,EXR_PDF_REF,EXR_PDF_STREAM
@@ -24,4 +25,12 @@ uint32_t exr_pdf_get(exr_pdf_file *file,uint32_t dict,const char *key);
 exr_status exr_pdf_resolve(exr_pdf_file *file,uint32_t value,uint32_t *out,exr_error *error);
 exr_status exr_pdf_stream_data(exr_pdf_file *file,uint32_t stream,const unsigned char **data,
                                  size_t *size,exr_error *error);
+typedef struct {
+  uint32_t object,resources,contents,annotations;
+  double media[4],crop[4],user_unit;
+  unsigned rotation;
+} exr_pdf_page_info;
+/* Caller frees the page snapshot and content buffer. Object IDs borrow file. */
+exr_status exr_pdf_pages(exr_pdf_file *file,exr_pdf_page_info **pages,size_t *count,exr_error *error);
+exr_status exr_pdf_content(exr_pdf_file *file,uint32_t contents,exr_buffer *out,exr_error *error);
 #endif
