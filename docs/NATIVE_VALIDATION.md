@@ -641,3 +641,27 @@ release ownership and matching rendered pages after EPUB export; it is not a vec
 Malformed XML/roots/namespaces/entities/references/fragments fail atomically.
 
 The 0.33 commit be7bdc1 passed all six platform and sanitizer CI jobs.
+
+
+## 0.35 ORDT and external KF8 validation
+
+Fixtures exercise ORDT fragment labels, NCX/guide indexes, inherited/explicit matching tables,
+UTF-8 headers carrying maps and hybrid books. Cases reject bad counts/pointers/signatures,
+wide mapping values, overlapping tables, out-of-range labels, missing maps, conflicting local
+maps and a late guide-label failure after prior labels have allocated. Identical repeated SKEL
+values are accepted; conflicting repeated counts are rejected.
+
+An external validation used Project Gutenberg's Pride and Prejudice KF8 on 2026-10-17:
+
+- Source: https://www.gutenberg.org/cache/epub/1342/pg1342-images-kf8.mobi
+- SHA-256: `7d22f45b5f2f19a1af24e854ac5ecf62eb0a9b532f38f0cb556caf18220d8cae`
+- Input: 25,333,914 bytes; normalized text: 745,266 bytes.
+- Reading order: 76 parts; authored navigation/landmarks: 64 entries; retained resources: 245.
+- Structured EPUB output: 24,701,445 bytes. Reopening preserves exact normalized text,
+  navigation role/label/href/part tuples, and every non-XHTML resource's bytes and media type.
+
+The external ebook is not redistributed in this repository or required by CI. Its repeated
+SKEL tuples exposed a compatibility gap and are covered by the original generated regression.
+This check measures format fidelity, not a controlled performance baseline.
+
+The 0.34 commit 46750e0 passed all six platform and sanitizer CI jobs.

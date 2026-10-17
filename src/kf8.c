@@ -13,7 +13,12 @@ typedef struct {
 } nav_entry;
 typedef struct { const char *kind; uint32_t size,title,fid,offset; unsigned present; } guide_entry;
 typedef union { entry book; nav_entry nav; guide_entry guide; } index_entry;
-typedef struct { index_entry *items; size_t count, capacity; } index_table;
+typedef struct { index_entry *items; size_t count, capacity; int kind; } index_table;
+static void index_free(index_table *table) {
+  size_t i;
+  if(table->kind==3) for(i=0;i<table->count;i++) free((void *)table->items[i].guide.kind);
+  free(table->items); memset(table,0,sizeof(*table));
+}
 typedef struct { unsigned tag, width, mask, end; } tag;
 static uint16_t u16(const unsigned char *p) { return (uint16_t)((p[0]<<8)|p[1]); }
 static uint32_t u32(const unsigned char *p) {
@@ -31,8 +36,27 @@ static int vwi(const unsigned char *s,size_t end,size_t *at,uint32_t *out) {
 }
 static int header(const exr_mobi_record *r) {
   return r->size>=192 && !memcmp(r->data,"INDX",4) && u32(r->data+4)>=192 &&
-    u32(r->data+4)<=r->size && u32(r->data+28)!=65002 &&
-    !u32(r->data+164) && !u32(r->data+168);
+    u32(r->data+4)<=r->size;
+}
+typedef struct { unsigned char bytes[256]; size_t count,start[2],end[2]; } ordt_map;
+static int ordt_read(const exr_mobi_record *r,int inherited,ordt_map *out) {
+  const unsigned char *s=r->data; size_t i;
+  memset(out,0,sizeof(*out));
+  if(!u32(s+164) && !u32(s+168)) return u32(s+28)!=65002 || inherited;
+  out->count=u32(s+168);
+  if(u32(s+164)!=1 || !out->count || out->count>256) return 0;
+  for(i=0;i<2;i++) {
+    size_t start=u32(s+172+i*4),length=4+out->count*(i+1);
+    if(start<192 || start>r->size || length>r->size-start || memcmp(s+start,"ORDT",4)) return 0;
+    out->start[i]=start; out->end[i]=start+length;
+  }
+  if(out->start[0]<out->end[1] && out->start[1]<out->end[0]) return 0;
+  for(i=0;i<out->count;i++) {
+    unsigned value=u16(s+out->start[1]+4+i*2);
+    if(value>255) return 0;
+    out->bytes[i]=(unsigned char)value;
+  }
+  return 1;
 }
 static int decimal(const unsigned char *s,size_t size,uint32_t *out) {
   size_t i; uint32_t value=0;
@@ -44,13 +68,13 @@ static int decimal(const unsigned char *s,size_t size,uint32_t *out) {
   *out=value; return 1;
 }
 static int decode_entry(const unsigned char *s,size_t size,const tag *tags,size_t nt,
-                         size_t controls,int kind,index_entry *output) {
+                         size_t controls,int kind,const unsigned char *label,index_entry *output) {
   entry *out=&output->book; nav_entry *nav=&output->nav; guide_entry *guide=&output->guide;
   size_t at,control=0,i,j; uint32_t counts[64]={0}; unsigned bytes[64]={0};
   unsigned seen[256]={0};
   if(!size || (size_t)s[0]+1>size) return 0;
-  if(kind==1 && !decimal(s+1,s[0],&out->label)) return 0;
-  if(kind==3) { guide->kind=(const char *)s+1; guide->size=s[0]; }
+  if(kind==1 && !decimal(label,s[0],&out->label)) return 0;
+  if(kind==3) { guide->kind=(const char *)label; guide->size=s[0]; }
   at=(size_t)s[0]+1;
   if(controls>size-at) return 0;
   /* Byte-length prefixes precede ALL value payloads, even for later tags. */
@@ -71,12 +95,14 @@ static int decode_entry(const unsigned char *s,size_t size,const tag *tags,size_
   }
   at=j;
   for(i=0;i<nt;i++) if(counts[i]) {
-    size_t end=size,n=0; uint32_t values[2]={0};
+    size_t end=size,n=0,cycle=kind==0 && tags[i].tag==1 ? 1 : kind==0 && tags[i].tag==6 ? 2 : 0;
+    uint32_t values[2]={0}; int repeated=1;
     if(bytes[i]) { if(counts[i]>size-at) return 0; end=at+counts[i]; }
     while(bytes[i] ? at<end : n<counts[i]) {
       uint32_t value;
       if(!vwi(s,end,&at,&value)) return 0;
       if(n<2) values[n]=value;
+      if(cycle && n>=cycle && value!=values[n%cycle]) repeated=0;
       n++;
     }
     if(n%tags[i].width) return 0;
@@ -110,10 +136,11 @@ static int decode_entry(const unsigned char *s,size_t size,const tag *tags,size_
       continue;
     }
     switch(tags[i].tag) {
-    case 1: if(kind==0) { if(n!=1) return 0; out->fragments=values[0]; out->present|=1; } break;
+    case 1: if(kind==0) { if(!n || !repeated) return 0; out->fragments=values[0]; out->present|=1; } break;
     case 3: if(kind==1) { if(n!=1) return 0; out->file=values[0]; out->present|=2; } break;
     case 4: if(kind==1) { if(n!=1) return 0; out->sequence=values[0]; out->present|=4; } break;
-    case 6: if(n!=2) return 0; out->start=values[0]; out->length=values[1]; out->present|=8; break;
+    case 6: if(kind==0 ? n<2 || n%2 || !repeated : n!=2) return 0;
+      out->start=values[0]; out->length=values[1]; out->present|=8; break;
     default: break;
     }
   }
@@ -126,13 +153,17 @@ static exr_status index_read(const exr_mobi_record *records,size_t nr,size_t fir
                                int kind,index_table *out,exr_error *e) {
   const exr_mobi_record *r; const unsigned char *s; tag tags[64];
   size_t pos,len,nt,controls,sections,i,j,total=0; unsigned masks[32]={0};
+  ordt_map mapping;
+  out->kind=kind;
   if(first>=nr || !header(&records[first])) goto bad;
   r=&records[first]; s=r->data; pos=u32(s+4); sections=u32(s+24);
+  if(!ordt_read(r,0,&mapping)) goto bad;
   if(!sections || sections>nr-first-1 || u32(s+52)>nr-first-1-sections ||
      pos>r->size || r->size-pos<12 || memcmp(s+pos,"TAGX",4)) goto bad;
   len=u32(s+pos+4); controls=u32(s+pos+8);
   if(len<12 || len>r->size-pos || (len-12)%4 || (nt=(len-12)/4)>64 ||
      !controls || controls>32) goto bad;
+  if(mapping.count) for(i=0;i<2;i++) if(mapping.start[i]<pos+len && pos<mapping.end[i]) goto bad;
   for(i=0,j=0;i<nt;i++) {
     const unsigned char *t=s+pos+12+i*4; unsigned shifted=t[2];
     tags[i]=(tag){t[0],t[1],t[2],t[3]};
@@ -143,9 +174,10 @@ static exr_status index_read(const exr_mobi_record *records,size_t nr,size_t fir
     if(shifted&(shifted+1)) goto bad;
   }
   for(i=0;i<sections;i++) {
-    size_t n,table,previous;
+    size_t n,table,previous; ordt_map local;
     r=&records[first+1+i]; s=r->data;
-    if(!header(r)) goto bad;
+    if(!header(r) || !ordt_read(r,mapping.count!=0,&local)) goto bad;
+    if(local.count && (local.count!=mapping.count || memcmp(local.bytes,mapping.bytes,local.count))) goto bad;
     n=u32(s+24); table=u32(s+20); previous=u32(s+4);
     if(table<previous || table>r->size || r->size-table<4 ||
        memcmp(s+table,"IDXT",4) || n>(r->size-table-4)/2) goto bad;
@@ -154,10 +186,23 @@ static exr_status index_read(const exr_mobi_record *records,size_t nr,size_t fir
       return exr_fail(e,EXR_MEMORY,"KF8 index allocation failed");
     for(j=0;j<n;j++) {
       size_t start=u16(s+table+4+j*2),end=j+1<n ? u16(s+table+6+j*2) : table;
-      index_entry v; memset(&v,0,sizeof(v));
+      index_entry v; unsigned char decoded[256]; const unsigned char *label; size_t k;
+      memset(&v,0,sizeof(v));
       if(kind==2) v.nav.parent=v.nav.first=v.nav.last=UINT32_MAX;
-      if(start<previous || start>=end || end>table ||
-         !decode_entry(s+start,end-start,tags,nt,controls,kind,&v)) goto bad;
+      if(start<previous || start>=end || end>table || (size_t)s[start]+1>end-start) goto bad;
+      label=s+start+1;
+      if(mapping.count) {
+        for(k=0;k<s[start];k++) {
+          if(label[k]>=mapping.count) goto bad;
+          decoded[k]=mapping.bytes[label[k]];
+        }
+        label=decoded;
+      }
+      if(!decode_entry(s+start,end-start,tags,nt,controls,kind,label,&v)) goto bad;
+      if(kind==3) {
+        v.guide.kind=exr_copy((const char *)label,s[start]);
+        if(!v.guide.kind) return exr_fail(e,EXR_MEMORY,"KF8 guide type allocation failed");
+      }
       out->items[out->count++]=v; previous=end;
     }
     total+=n;
@@ -603,7 +648,7 @@ static exr_status append_guide(source_map *map,const index_table *fragments,
 bad:
   exr_fail(e,status,"Invalid or oversized KF8 guide metadata");
 done:
-  free(table.items); free(strings); return status;
+  index_free(&table); free(strings); return status;
 }
 static exr_status build_navigation(source_map *map,const index_table *fragments,
                                      const exr_mobi_record *records,size_t nr,size_t first,
@@ -680,7 +725,7 @@ static exr_status build_navigation(source_map *map,const index_table *fragments,
 bad:
   exr_fail(e,status,"Invalid or oversized KF8 navigation hierarchy or label");
 done:
-  free(table.items); free(strings); free(parents); free(first_child); free(last_child); free(ends); free(xml.data);
+  index_free(&table); free(strings); free(parents); free(first_child); free(last_child); free(ends); free(xml.data);
   return status;
 }
 exr_status exr_kf8(exr_document *d,const exr_mobi_record *records,size_t nr,
@@ -758,5 +803,5 @@ bad:
   if(status==EXR_OK) status=EXR_FORMAT;
   exr_fail(e,status,"Invalid or unsupported KF8 reconstruction data");
 done:
-  free(map.marks); free(map.parts); free(part.data); free(skeletons.items); free(fragments.items); return status;
+  free(map.marks); free(map.parts); free(part.data); index_free(&skeletons); index_free(&fragments); return status;
 }

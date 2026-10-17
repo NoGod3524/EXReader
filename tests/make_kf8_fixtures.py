@@ -11,8 +11,9 @@ def vwi(n):
     while n: groups.append(n&127); n>>=7
     groups.reverse(); groups[-1]|=128
     return bytes(groups)
-def indx(entries,fragment=False,multiple=False):
+def indx(entries,fragment=False,multiple=False,repeated=False):
     tags=[(3,1,1,0),(4,1,2,0),(6,2,12,0)] if fragment else [(1,1,1,0),(6,2,6,0)]
+    if repeated: tags=[(1,1,3,0),(6,2,12,0)]
     if multiple: tags=[(3,1,1,0),(0,0,0,1),(4,1,1,0),(6,2,6,0)]
     master=bytearray(192); master[:4]=b'INDX'; master[4:8]=u32(192)
     master[24:28]=u32(1); master[28:32]=u32(65001); master[36:40]=u32(len(entries))
@@ -25,6 +26,7 @@ def indx(entries,fragment=False,multiple=False):
             payload=b''.join(vwi(x) for x in values[2:])
             control=bytes([1,7]) if multiple else bytes([15])
             row=control+vwi(len(payload))+vwi(values[0])+vwi(values[1])+payload
+        elif repeated: row=bytes([10])+vwi(values[0])*2+b''.join(vwi(x) for x in values[1:])*2
         else: row=bytes([3])+b''.join(vwi(x) for x in values)
         data+=bytes([len(label)])+label+row
     data+=bytes(2); data[20:24]=u32(len(data)); data+=b'IDXT'+b''.join(map(u16,offsets))
@@ -335,3 +337,51 @@ svg_fixture('kf8-bad-svg-reference.azw3',svg=svg_xml.replace(b'kindle:embed:0001
 
 svg_fixture('kf8-bad-svg-namespace.azw3',svg=b'<svg xmlns="urn:wrong"/>')
 svg_fixture('kf8-bad-svg-fragment.azw3',svg=svg_xml.replace(b'#symbol%20%25',b'#symbol%XX'))
+
+
+# ORDT maps encoded index labels back to bytes; CNCX strings remain UTF-8.
+def add_ordt(record,code=65002):
+    record[28:32]=u32(code); record[164:168]=u32(1); record[168:172]=u32(256)
+    record[172:176]=u32(len(record)); record+=b'ORDT'+bytes(range(256))
+    record[176:180]=u32(len(record)); record+=b'ORDT'+b''.join(u16(i^128) for i in range(256))
+    return record
+def ordt_fixture(name,source='kf8-guide.azw3',local=False,code=65002,mutate=None):
+    records=read_records(source)
+    for i,r in enumerate(records):
+        if r[:4]!=b'INDX' or r[192:196]!=b'TAGX': continue
+        n=struct.unpack_from('>I',r,24)[0]; add_ordt(r,code)
+        for k in range(i+1,i+1+n):
+            data=records[k]; table=struct.unpack_from('>I',data,20)[0]; count=struct.unpack_from('>I',data,24)[0]
+            for j in range(count):
+                at=struct.unpack_from('>H',data,table+4+j*2)[0]
+                for x in range(at+1,at+1+data[at]): data[x]^=128
+            if local: add_ordt(data)
+    if mutate: mutate(records)
+    write_records(name,records)
+ordt_fixture('kf8-ordt-basic.azw3','kf8-basic.azw3')
+ordt_fixture('kf8-ordt-navigation.azw3','kf8-navigation.azw3')
+ordt_fixture('kf8-ordt-guide.azw3'); ordt_fixture('kf8-ordt-local.azw3',local=True)
+ordt_fixture('kf8-ordt-utf8-header.azw3',code=65001)
+hybrid('kf8-hybrid-ordt.azw3','kf8-ordt-guide.azw3')
+for name,mutate in [
+    ('ordt-count',lambda r:r[4].__setitem__(slice(164,168),u32(2))),
+    ('ordt-entries',lambda r:r[4].__setitem__(slice(168,172),u32(257))),
+    ('ordt-pointer',lambda r:r[4].__setitem__(slice(176,180),u32(99999))),
+    ('ordt-signature',lambda r:r[4].__setitem__(slice(struct.unpack_from('>I',r[4],172)[0],struct.unpack_from('>I',r[4],172)[0]+4),b'NOPE')),
+    ('ordt-value',lambda r:r[4].__setitem__(slice(-2,None),u16(256))),
+    ('ordt-overlap',lambda r:r[4].__setitem__(slice(176,180),r[4][172:176])),
+    ('ordt-label',lambda r:r[4].__setitem__(slice(168,172),u32(128))),
+    ('ordt-missing',lambda r:(r[4].__setitem__(slice(164,172),bytes(8)))),
+    ('ordt-local-conflict',lambda r:r[5].__setitem__(slice(-2,None),u16(1)))]:
+    ordt_fixture('kf8-bad-'+name+'.azw3',local=name=='ordt-local-conflict',mutate=mutate)
+def late_ordt_error(records):
+    records[10][168:172]=u32(255)
+    table=struct.unpack_from('>I',records[11],20)[0]
+    third=struct.unpack_from('>H',records[11],table+8)[0]; records[11][third+1]=255
+ordt_fixture('kf8-bad-ordt-late-label.azw3',mutate=late_ordt_error)
+
+container('kf8-skel-repeats.azw3',raw,indx(sk,repeated=True)+indx(fr,True))
+repeat_bad=indx(sk,repeated=True)
+assert repeat_bad[1][196]==0x81
+repeat_bad[1][196]^=1
+container('kf8-bad-skel-repeats.azw3',raw,repeat_bad+indx(fr,True))
