@@ -1547,3 +1547,18 @@ cover XML escaping, entry-path collision, generated chapter paths, invalid names
 missing resources and early/final-progress cancellation. Encrypted/obfuscated
 package export fails with empty outputs. All 64 local Windows suites pass.
 The 0.83 4973ea6 CI passed all six jobs.
+
+
+## 0.85 Opt-in atomic exact-source deduplication
+
+Unique import compares complete original BLOBs after format/length filtering and
+returns the oldest matching row without changing its metadata. Tests retain edited
+title/progress/favorite, cover and notes; ordinary import still allows intentional
+copies. Changed bytes and different formats remain distinct. Shared-connection and
+two-connection worker threads each produce one created row and one reused ID.
+Invalid PDF input, forced INSERT failure and deferred-foreign-key COMMIT failure
+leave no added rows or output IDs, and subsequent operations succeed. PDF binary
+sources, backup/reopen, reuse after deleting the oldest copy, invalid stored IDs,
+invalid arguments and the source byte limit are covered. No schema migration,
+new digest implementation or mandatory index is added. All 65 local Windows suites
+pass. The 0.84 8292325 CI passed all six jobs.

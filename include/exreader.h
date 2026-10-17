@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.84.0"
+#define EXR_VERSION "0.85.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -859,6 +859,12 @@ EXR_API void exr_library_close(exr_library *library);
 EXR_API exr_status exr_library_import(exr_library *library, exr_format format, const void *data,
                                       size_t size, const char *title, int64_t *id,
                                       exr_error *error);
+/* Opt-in exact deduplication: same format and original bytes reuse the oldest ID.
+   Existing metadata, progress, cover and notes stay untouched. created is 1 only
+   for an inserted row. Lookup/insert commit atomically across library handles;
+   failure clears id/created. Ordinary import still permits duplicate records. */
+EXR_API exr_status exr_library_import_unique(exr_library *library,exr_format format,const void *data,
+                                             size_t size,const char *title,int64_t *id,int *created,exr_error *error);
 EXR_API exr_status exr_library_books(exr_library *library, const char *query, exr_book **books,
                                      size_t *count, exr_error *error);
 EXR_API void exr_books_free(exr_book *books, size_t count);
