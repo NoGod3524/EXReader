@@ -116,7 +116,7 @@ static exr_status m4b_sc_entry(m4b_io *io,const exr_m4b *m,uint32_t index,uint32
   return EXR_OK;
 }
 static exr_status m4b_validate_sc(m4b_io *io,const exr_m4b *m) {
-  uint32_t i,current[3],next[3]; uint64_t samples=0; exr_status status=m4b_sc_entry(io,m,0,current); if(status!=EXR_OK) return status;
+  uint32_t i,current[3]={0},next[3]={0}; uint64_t samples=0; exr_status status=m4b_sc_entry(io,m,0,current); if(status!=EXR_OK) return status;
   if(current[0]!=1) return m4b_fail(io,"ISO-BMFF first sample-to-chunk entry must start at chunk 1");
   for(i=0;i<m->sc.count;i++) {
     uint64_t end=(uint64_t)m->chunks.count+1,count;
@@ -135,7 +135,7 @@ static exr_status m4b_chunk_offset(m4b_io *io,const exr_m4b *m,uint32_t chunk,ui
   *offset=m->chunks.width==8 ? m4b_be64(b) : m4b_be32(b); return EXR_OK;
 }
 static exr_status m4b_initial_cursor(m4b_io *io,const exr_m4b *m,m4b_cursor *cursor) {
-  uint32_t sc[3]; exr_status status=m4b_sc_entry(io,m,0,sc); if(status!=EXR_OK) return status;
+  uint32_t sc[3]={0}; exr_status status=m4b_sc_entry(io,m,0,sc); if(status!=EXR_OK) return status;
   memset(cursor,0,sizeof(*cursor)); cursor->per_chunk=sc[1]; return m4b_chunk_offset(io,m,0,&cursor->offset);
 }
 static exr_status m4b_packet(m4b_io *io,exr_m4b *m,const m4b_cursor *cursor,m4b_cursor *next,uint32_t *size) {
@@ -146,7 +146,7 @@ static exr_status m4b_packet(m4b_io *io,exr_m4b *m,const m4b_cursor *cursor,m4b_
   status=m4b_read_bytes(io,cursor->offset,m->packet,*size); if(status!=EXR_OK) return status;
   *next=*cursor; next->packet++; next->within++; next->offset+=*size;
   if(next->packet<m->sizes.count && next->within==next->per_chunk) {
-    uint32_t sc[3]; next->chunk++; next->within=0;
+    uint32_t sc[3]={0}; next->chunk++; next->within=0;
     if(next->sc+1<m->sc.count) { status=m4b_sc_entry(io,m,next->sc+1,sc); if(status!=EXR_OK) return status; if(sc[0]==next->chunk+1) { next->sc++; next->per_chunk=sc[1]; } }
     status=m4b_chunk_offset(io,m,next->chunk,&next->offset); if(status!=EXR_OK) return status;
   }
