@@ -138,6 +138,7 @@ static void plain_and_encrypted(void) {
   mz_zip_reader_end(&reader); mz_zip_writer_end(&writer); exr_free(bytes); bytes=NULL;
   OK(exr_document_open_memory(EXR_EPUB,modified,n,&copy,&error));
   CHECK(exr_document_export_epub(copy,NULL,&bytes,&size,&error)==EXR_FORMAT); CHECK(!bytes && !size);
+  { char *entry=NULL; CHECK(exr_document_export_html_bundle(copy,NULL,&bytes,&size,&entry,&error)==EXR_FORMAT); CHECK(!bytes && !size && !entry); }
   mz_free(modified); exr_document_free(copy); exr_document_free(d);
 }
 int main(int argc,char **argv) {
