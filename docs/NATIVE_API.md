@@ -797,3 +797,10 @@ footnote 组现在创建独立的通用 aside / EXR_NODE_NOTE；ftnalt 标为 do
 ls/ilvl 现在构造通用 ol/ul 与 li，保留列表实例 ID 和 0–8 级层级。listtext/pntext 的实际编号或项目符号继续作为带样式的显示标签保留，避免重复生成；标记 span 使用 presentation/aria-hidden，语义列表项独立可读。普通段落、不同单元格、不同列表实例分别分组；脚注解析后恢复父列表状态。
 
 开始即跳到较深层级时生成 presentation 容器补齐树结构，原始层级仍可查询。列表容器不额外增加原段落已有的缩进。此阶段沿用原文件给出的显示标签；没有标签时只保留列表结构，完整 numbering/listoverride 计数定义继续补齐。
+
+
+## RTF 自动编号（0.83）
+
+解析 listtable / listoverridetable，在没有 listtext 时生成编号；已有显示标签原样保留，同时推进计数。支持 decimal、大小写 Roman / Letter、补零、项目符号和无编号，保留 leveltext 模板、多级引用、legal 前级十进制化、norestart、follow 和独立实例的起始值/格式覆盖。编号字符格式与正文独立，列表缩进只补正文未显式指定的值。通用 ol 的 start/type 和 data-rtf-number-format 保留语义。
+
+最多 2000 个定义和覆盖实例、每个 9 层、模板 255 个标量，计入既有元数据字节预算；计数溢出返回 EXR_LIMIT。未实现的编号制式在缺少原标签时返回 EXR_FORMAT。控制参数严格限制为 signed int32；正文 hex NUL 拒绝，模板内编号占位符允许零值。Roman 超过 3999 和非正 Roman/字母值使用十进制回退。

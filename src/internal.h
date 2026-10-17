@@ -59,6 +59,7 @@ char *exr_copy(const char *text, size_t size);
 exr_status exr_export_time(char modified[32], exr_error *error);
 exr_status exr_xml_text(const char *text, size_t size, const char *field, exr_error *error);
 int exr_append(exr_buffer *buf, const void *data, size_t size);
+exr_status exr_number_text(exr_buffer *out,int value,const char *format,exr_error *error);
 int exr_codepoint(exr_buffer *buf, uint32_t cp);
 int exr_next(const char *text, size_t size, size_t *offset, uint32_t *cp);
 FILE *exr_fopen(const char *path, const char *mode);

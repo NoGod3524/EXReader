@@ -3,7 +3,17 @@
 #include <ctype.h>
 enum { BOLD, ITALIC, SIZE, COLOR, BACKGROUND, UNDERLINE, STRIKE, ALIGN, LEFT, RIGHT,
        INDENT, BEFORE, AFTER, LEADING, MULTIPLE, DIRECTION, RTF_PROPERTIES };
-typedef struct { int skip,uc,destination,picture,inherited_skip,star,font,field,note,list_id,list_level,list_text; int properties[RTF_PROPERTIES]; } rtf_state;
+enum { LIST_TABLE=8,LIST_DEF,LIST_LEVEL,LEVEL_TEXT,LEVEL_NUMBERS,OVERRIDE_TABLE,LIST_OVERRIDE,OVERRIDE_LEVEL };
+typedef struct { int skip,uc,destination,picture,inherited_skip,star,font,field,note,list_id,list_level,list_text,definition,number_level,override_index,override_level,font_set; unsigned specified; int properties[RTF_PROPERTIES]; } rtf_state;
+typedef struct {
+  int format,start,has_start,follow,legal,norestart,nfcn,font,font_set,expected,text_seen,numbers_seen; size_t count;
+  unsigned specified; int properties[RTF_PROPERTIES]; uint32_t pattern[255]; uint64_t references[4];
+} rtf_number_level;
+typedef struct { int id,has_id; size_t count; rtf_number_level levels[9]; } rtf_number_definition;
+typedef struct {
+  int id,list_id,has_list_id,definition,expected; size_t count;
+  unsigned start_flags,start_set,format_flags,format_set,started; int starts[9],counter[9]; rtf_number_level levels[9];
+} rtf_number_override;
 typedef struct { size_t node,paragraph; } rtf_note;
 typedef struct { size_t container,depth; struct { size_t list,item; int id; } levels[9]; } rtf_lists;
 
@@ -29,6 +39,8 @@ typedef struct {
   rtf_picture *pictures;
   size_t picture_count,picture_capacity;
   rtf_lists lists,note_lists;
+  rtf_number_definition *number_definitions; size_t number_count,number_capacity;
+  rtf_number_override *number_overrides; size_t override_count,override_capacity; unsigned override_map[2001];
   rtf_note *notes; size_t note_count,note_capacity,pending_note_ref; int active_note;
   int last_picture;
   exr_status status;
@@ -46,8 +58,190 @@ static int set(rtf_context *c,size_t node,const char *key,const char *value) {
 static int css_number(exr_buffer *b,const char *name,float value,int px) {
   char text[100]; snprintf(text,sizeof(text),"%s:%.4f%s;",name,value,px ? "px" : ""); return put(b,text);
 }
+static int run_flush(rtf_context *c);
+static int style_control(rtf_context *c,rtf_state *s,const char *word,long value,int has);
+static int number_grow(rtf_context *c,void **data,size_t *capacity,size_t count,size_t unit) {
+  size_t next,delta; void *copy;
+  if(count<*capacity) return 1;
+  if(count>=2000) { c->status=EXR_LIMIT; return 0; }
+  next=*capacity ? *capacity*2 : 1; if(next>2000) next=2000; delta=(next-*capacity)*unit;
+  if(delta>EXR_MAX_TEXT-c->metadata_bytes) { c->status=EXR_LIMIT; return 0; }
+  copy=realloc(*data,next*unit); if(!copy) { c->status=EXR_MEMORY; return 0; }
+  *data=copy; *capacity=next; c->metadata_bytes+=delta; return 1;
+}
+static rtf_number_level *metadata_level(rtf_context *c,const rtf_state *s) {
+  if(s->number_level<0 || s->number_level>8) return NULL;
+  if(s->override_index>=0 && (size_t)s->override_index<c->override_count) return &c->number_overrides[s->override_index].levels[s->number_level];
+  if(s->definition>=0 && (size_t)s->definition<c->number_count) return &c->number_definitions[s->definition].levels[s->number_level];
+  return NULL;
+}
+static rtf_number_level *number_level(rtf_context *c,const rtf_state *s,rtf_number_override **instance) {
+  rtf_number_override *o; size_t i; unsigned at;
+  if(instance) *instance=NULL;
+  if(s->list_id<=0 || s->list_id>2000 || s->list_level<0 || s->list_level>8 || !(at=c->override_map[s->list_id])) return NULL;
+  o=&c->number_overrides[at-1]; if(instance) *instance=o;
+  if(o->definition==-1) {
+    o->definition=-2;
+    for(i=0;i<c->number_count;i++) if(c->number_definitions[i].id==o->list_id) { o->definition=(int)i; break; }
+  }
+  if(o->definition<0 || (size_t)s->list_level>=c->number_definitions[o->definition].count) return NULL;
+  return o->format_flags&(1u<<s->list_level) ? &o->levels[s->list_level] : &c->number_definitions[o->definition].levels[s->list_level];
+}
+static int number_literal(rtf_context *c,const rtf_state *s,uint32_t cp,int byte) {
+  rtf_number_level *level=metadata_level(c,s);
+  if(s->destination!=LEVEL_TEXT && s->destination!=LEVEL_NUMBERS) return 1;
+  if(!level) goto invalid;
+  if(s->destination==LEVEL_TEXT) {
+    if(level->expected<0) { if(cp>255) goto invalid; level->expected=(int)cp; }
+    else if(level->count<(size_t)level->expected) {
+      if(byte && cp>=128) cp=exr_windows1252((unsigned char)cp);
+      level->pattern[level->count++]=cp;
+    } else if(cp!=';' && cp!=' ' && cp!='\t' && cp!='\r' && cp!='\n') goto invalid;
+  } else if(!byte && (cp==';' || cp==' ' || cp=='\t' || cp=='\r' || cp=='\n')) return 1;
+  else {
+    size_t at;
+    if(!cp || cp>255) goto invalid;
+    at=cp-1; if(level->references[at/64]&(UINT64_C(1)<<(at%64))) goto invalid;
+    level->references[at/64]|=UINT64_C(1)<<(at%64);
+  }
+  return 1;
+invalid:
+  c->status=EXR_FORMAT; return 0;
+}
+static int number_control(rtf_context *c,rtf_state *s,const char *word,long value,int has,int *handled) {
+  rtf_number_level *level; rtf_number_override *o=s->override_index>=0 && (size_t)s->override_index<c->override_count ? &c->number_overrides[s->override_index] : NULL;
+  *handled=1;
+  if(s->destination<LIST_TABLE) { *handled=0; return 1; }
+  if(!strcmp(word,"u") || !strcmp(word,"uc")) { *handled=0; return 1; }
+  if(s->destination==LIST_TABLE && !strcmp(word,"list")) {
+    rtf_number_definition *d;
+    if(!number_grow(c,(void **)&c->number_definitions,&c->number_capacity,c->number_count,sizeof(*d))) return 0;
+    s->definition=(int)c->number_count++; s->override_index=-1; s->number_level=-1; s->destination=LIST_DEF;
+    d=&c->number_definitions[s->definition]; memset(d,0,sizeof(*d)); return 1;
+  }
+  if(s->destination==OVERRIDE_TABLE && !strcmp(word,"listoverride")) {
+    if(!number_grow(c,(void **)&c->number_overrides,&c->override_capacity,c->override_count,sizeof(*o))) return 0;
+    s->override_index=(int)c->override_count++; s->definition=s->number_level=s->override_level=-1; s->destination=LIST_OVERRIDE;
+    o=&c->number_overrides[s->override_index]; memset(o,0,sizeof(*o)); o->definition=-1; return 1;
+  }
+  if(s->destination==LIST_OVERRIDE && !strcmp(word,"lfolevel")) {
+    if(!o || o->count>=9) goto invalid;
+    s->override_level=(int)o->count++; s->number_level=-1; s->destination=OVERRIDE_LEVEL; return 1;
+  }
+  if((s->destination==LIST_DEF || s->destination==OVERRIDE_LEVEL) && !strcmp(word,"listlevel")) {
+    if(s->destination==LIST_DEF) {
+      rtf_number_definition *d=&c->number_definitions[s->definition]; if(d->count>=9) goto invalid; s->number_level=(int)d->count++;
+    } else s->number_level=s->override_level;
+    level=metadata_level(c,s); if(!level) goto invalid; memset(level,0,sizeof(*level)); level->start=1; level->font=level->expected=-1;
+    s->font=-1; s->font_set=0; s->specified=0; memset(s->properties,0,sizeof(s->properties)); s->destination=LIST_LEVEL; return 1;
+  }
+  if(!strcmp(word,"listid") && (s->destination==LIST_DEF || s->destination==LIST_OVERRIDE)) {
+    if(!has || (value>= -5 && value<= -1)) goto invalid;
+    if(o) { o->list_id=(int)value; o->has_list_id=1; }
+    else { c->number_definitions[s->definition].id=(int)value; c->number_definitions[s->definition].has_id=1; }
+    return 1;
+  }
+  if(s->destination==LIST_OVERRIDE && !strcmp(word,"ls")) { if(!o || !has || value<1 || value>2000) goto invalid; o->id=(int)value; return 1; }
+  if(s->destination==LIST_OVERRIDE && !strcmp(word,"listoverridecount")) { if(!o || !has || value<0 || value>9) goto invalid; o->expected=(int)value; return 1; }
+  if(s->destination==OVERRIDE_LEVEL) {
+    unsigned bit=1u<<s->override_level;
+    if(!strcmp(word,"listoverridestartat") || !strcmp(word,"listoverridestart")) { o->start_flags|=bit; return 1; }
+    if(!strcmp(word,"listoverrideformat")) { if(!has || value) o->format_flags|=bit; return 1; }
+    if(!strcmp(word,"levelstartat")) { if(!has) goto invalid; o->starts[s->override_level]=(int)value; o->start_set|=bit; return 1; }
+  }
+  if(s->destination!=LIST_LEVEL) return 1;
+  level=metadata_level(c,s); if(!level) goto invalid;
+  if(!strcmp(word,"leveltext")) { if(level->text_seen) goto invalid; level->text_seen=1; s->destination=LEVEL_TEXT; return 1; }
+  if(!strcmp(word,"levelnumbers")) { if(level->numbers_seen) goto invalid; level->numbers_seen=1; s->destination=LEVEL_NUMBERS; return 1; }
+  if(!strcmp(word,"levelnfc") || !strcmp(word,"levelnfcn")) {
+    if(!has || value<0 || value>255) goto invalid;
+    if(!strcmp(word,"levelnfcn")) { level->format=(int)value; level->nfcn=1; } else if(!level->nfcn) level->format=(int)value; return 1;
+  }
+  if(!strcmp(word,"levelstartat")) { if(!has) goto invalid; level->start=(int)value; level->has_start=1; return 1; }
+  if(!strcmp(word,"levelfollow")) { if(!has || value<0 || value>2) goto invalid; level->follow=(int)value; return 1; }
+  if(!strcmp(word,"levellegal") || !strcmp(word,"levelnorestart")) { int flag=!has || value!=0; if(!strcmp(word,"levellegal")) level->legal=flag; else level->norestart=flag; return 1; }
+  if(!strcmp(word,"f")) { if(!has || value<0 || value>=4096) goto invalid; s->font=(int)value; s->font_set=1; return 1; }
+  return style_control(c,s,word,value,has);
+invalid:
+  c->status=EXR_FORMAT; return 0;
+}
+static int number_finish(rtf_context *c,const rtf_state *s,const rtf_state *parent) {
+  size_t i; rtf_number_level *level=metadata_level(c,s);
+  if(s->destination==LEVEL_TEXT && parent->destination!=LEVEL_TEXT && (!level || level->expected<0 || level->count!=(size_t)level->expected)) goto invalid;
+  if(s->destination==LIST_LEVEL && parent->destination!=LIST_LEVEL) {
+    if(!level) goto invalid;
+    for(i=0;i<255;i++) {
+      int reference=(level->references[i/64]&(UINT64_C(1)<<(i%64)))!=0;
+      if(reference && (i>=level->count || level->pattern[i]>8)) goto invalid;
+      if(i<level->count && level->pattern[i]<=8 && !reference) goto invalid;
+    }
+    level->font=s->font; level->font_set=s->font_set; level->specified=s->specified; memcpy(level->properties,s->properties,sizeof(level->properties));
+    if(s->override_index>=0) {
+      rtf_number_override *o=&c->number_overrides[s->override_index]; unsigned bit=1u<<s->number_level; o->format_set|=bit;
+      if(level->has_start) { o->start_set|=bit; o->starts[s->number_level]=level->start; }
+    }
+  }
+  if(s->destination==LIST_DEF && parent->destination!=LIST_DEF) {
+    rtf_number_definition *d=&c->number_definitions[s->definition]; if(!d->has_id || !d->count) goto invalid;
+    for(i=0;i<c->number_count;i++) if(i!=(size_t)s->definition && c->number_definitions[i].has_id && c->number_definitions[i].id==d->id) goto invalid;
+  }
+  if(s->destination==LIST_OVERRIDE && parent->destination!=LIST_OVERRIDE) {
+    rtf_number_override *o=&c->number_overrides[s->override_index];
+    if(!o->id || !o->has_list_id || c->override_map[o->id] || (o->expected && (size_t)o->expected!=o->count) || (o->start_flags&~o->start_set) || (o->format_flags&~o->format_set)) goto invalid;
+    c->override_map[o->id]=(unsigned)s->override_index+1;
+  }
+  return 1;
+invalid:
+  c->status=EXR_FORMAT; return 0;
+}
+static const char *number_format(int format) {
+  switch(format) { case 0:return "decimal"; case 1:return "upperRoman"; case 2:return "lowerRoman"; case 3:return "upperLetter"; case 4:return "lowerLetter"; case 22:return "decimalZero"; default:return NULL; }
+}
+static int number_marker(rtf_context *c,const rtf_state *s) {
+  rtf_number_override *o=NULL; rtf_number_level *level=number_level(c,s,&o); rtf_state marker=*s; exr_buffer label={0},saved; rtf_state saved_style; size_t i; unsigned bit; int ok=0;
+  if(!o) return 1;
+  if(!level) { if(s->list_text) return 1; c->status=EXR_FORMAT; return 0; }
+  bit=1u<<s->list_level;
+  if(o->started&bit) { if(o->counter[s->list_level]==INT_MAX) { c->status=EXR_LIMIT; return 0; } o->counter[s->list_level]++; }
+  else { o->counter[s->list_level]=o->start_flags&bit ? o->starts[s->list_level] : c->number_definitions[o->definition].levels[s->list_level].start; o->started|=bit; }
+  for(i=(size_t)s->list_level+1;i<9;i++) { rtf_state other=*s; rtf_number_level *next; other.list_level=(int)i; next=number_level(c,&other,NULL); if(!next || !next->norestart) o->started&=~(1u<<i); }
+  if(s->list_text) return 1;
+  if(level->format==255) return 1;
+  if(level->expected>=0) {
+    for(i=0;i<level->count;i++) {
+      uint32_t cp=level->pattern[i];
+      if(cp<=8) {
+        rtf_state other=*s; rtf_number_level *reference; const char *format; int value; unsigned flag=1u<<cp;
+        other.list_level=(int)cp; reference=number_level(c,&other,NULL); if(!reference) { c->status=EXR_FORMAT; goto done; }
+        format=number_format(level->legal && cp<(unsigned)s->list_level ? 0 : reference->format); if(!format) { c->status=EXR_FORMAT; goto done; }
+        value=o->started&flag ? o->counter[cp] : o->start_flags&flag ? o->starts[cp] : c->number_definitions[o->definition].levels[cp].start;
+        c->status=exr_number_text(&label,value,format,c->error); if(c->status!=EXR_OK) goto done;
+      } else if(!exr_codepoint(&label,cp)) { c->status=EXR_LIMIT; goto done; }
+    }
+  } else if(level->format==23) { if(!exr_codepoint(&label,0x2022)) { c->status=EXR_LIMIT; goto done; } }
+  else {
+    const char *format=number_format(level->format); if(!format) { c->status=EXR_FORMAT; goto done; }
+    c->status=exr_number_text(&label,o->counter[s->list_level],format,c->error); if(c->status!=EXR_OK) goto done;
+    if(!put(&label,".")) { c->status=EXR_LIMIT; goto done; }
+  }
+  if(label.size && level->follow!=2 && !put(&label,level->follow ? " " : "\t")) { c->status=EXR_LIMIT; goto done; }
+  if(label.size>4096) { c->status=EXR_LIMIT; goto done; }
+  if(!label.size) { ok=1; goto done; }
+  for(i=0;i<ALIGN;i++) if(level->specified&(1u<<i)) marker.properties[i]=level->properties[i];
+  if(level->font_set) marker.font=level->font;
+  marker.list_text=1; saved=c->run; saved_style=c->style; c->run=label; c->style=marker;
+  ok=run_flush(c); label=c->run; c->run=saved; c->style=saved_style;
+done:
+  free(label.data); return ok;
+}
 static int paragraph_style(rtf_context *c,const rtf_state *s) {
-  exr_buffer css={0}; const int *p=s->properties; int ok;
+  exr_buffer css={0}; int merged[RTF_PROPERTIES]; const int *p=s->properties; int ok; rtf_number_level *level=number_level(c,s,NULL);
+  if(level) {
+    memcpy(merged,p,sizeof(merged));
+    if(!(s->specified&(1u<<LEFT)) && (level->specified&(1u<<LEFT))) merged[LEFT]=level->properties[LEFT];
+    if(!(s->specified&(1u<<INDENT)) && (level->specified&(1u<<INDENT))) merged[INDENT]=level->properties[INDENT];
+    p=merged;
+  }
   if(c->paragraph==SIZE_MAX) return 1;
   ok=put(&css,p[ALIGN]==1 ? "text-align:right;" : p[ALIGN]==2 ? "text-align:center;" : p[ALIGN]==3 ? "text-align:justify;" : "text-align:left;") &&
       css_number(&css,"margin-left",p[LEFT]/15.0f,1) && css_number(&css,"margin-right",p[RIGHT]/15.0f,1) &&
@@ -67,11 +261,22 @@ static int list_parent(rtf_context *c,const rtf_state *s,size_t container,size_t
     size_t at=strspn(c->run.data," \t\r\n"); uint32_t cp;
     if(at<c->run.size && exr_next(c->run.data,c->run.size,&at,&cp)) bullet=cp==0x2022 || cp==0xb7 || cp==0x25cf || cp==0x25cb || cp==0x25aa || cp=='*' || cp=='-';
   }
-  if(lists->depth>level && (lists->levels[level].id!=s->list_id || (s->list_text && strcmp(exr_html_tag(c->doc,&c->doc->nodes[lists->levels[level].list]),bullet ? "ul" : "ol")))) lists->depth=level;
+  { rtf_number_level *definition=number_level(c,s,NULL); if(definition) bullet=definition->format==23; }
+  if(lists->depth>level && (lists->levels[level].id!=s->list_id || ((s->list_text || number_level(c,s,NULL)) && strcmp(exr_html_tag(c->doc,&c->doc->nodes[lists->levels[level].list]),bullet ? "ul" : "ol")))) lists->depth=level;
   for(k=lists->depth;k<=level;k++) {
     size_t owner=k ? lists->levels[k-1].item : container,list; char value[48];
-    list=make(c,owner,EXR_NODE_LIST,bullet ? "ul" : "ol",NULL); if(list==SIZE_MAX) return 0;
+    rtf_state at_level=*s; rtf_number_override *instance=NULL; rtf_number_level *definition; int start,level_bullet;
+    at_level.list_level=(int)k; definition=number_level(c,&at_level,&instance);
+    level_bullet=definition ? definition->format==23 : bullet;
+    list=make(c,owner,EXR_NODE_LIST,level_bullet ? "ul" : "ol",NULL); if(list==SIZE_MAX) return 0;
     if(!set(c,list,"style","list-style-type:none;padding:0;margin:0;")) return 0;
+    { if(definition && instance) {
+        snprintf(value,sizeof(value),"%d",definition->format); if(!set(c,list,"data-rtf-number-format",value)) return 0;
+        start=instance->started&(1u<<k) ? instance->counter[k]+(instance->counter[k]<INT_MAX) : instance->start_flags&(1u<<k) ? instance->starts[k] : c->number_definitions[instance->definition].levels[k].start;
+        if(!level_bullet) { snprintf(value,sizeof(value),"%d",start); if(!set(c,list,"start",value)) return 0; }
+        if(definition->format>=1 && definition->format<=4 && !set(c,list,"type",definition->format==1 ? "I" : definition->format==2 ? "i" : definition->format==3 ? "A" : "a")) return 0;
+      }
+    }
     snprintf(value,sizeof(value),"%d",s->list_id); if(!set(c,list,"data-rtf-list-id",value)) return 0;
     snprintf(value,sizeof(value),"%zu",k); if(!set(c,list,"data-rtf-list-level",value)) return 0;
     lists->levels[k].list=list; lists->levels[k].id=s->list_id; lists->levels[k].item=SIZE_MAX;
@@ -94,7 +299,7 @@ static int paragraph(rtf_context *c,const rtf_state *s) {
       parent=c->cell;
     } else c->table=SIZE_MAX;
     if(!list_parent(c,s,parent,&parent)) return 0;
-    c->paragraph=make(c,parent,EXR_NODE_PARAGRAPH,"p",NULL); if(c->paragraph==SIZE_MAX) return 0;
+    c->paragraph=make(c,parent,EXR_NODE_PARAGRAPH,"p",NULL); if(c->paragraph==SIZE_MAX || !number_marker(c,s)) return 0;
   }
   return paragraph_style(c,s);
 }
@@ -278,7 +483,7 @@ static int table_control(rtf_context *c,const rtf_state *state,const char *word,
 static int emit(rtf_context *c,const rtf_state *s,uint32_t cp) {
   if(s->skip || s->destination) return 1;
   if(cp!=32 && cp!=9 && cp!=10 && cp!=13) c->last_picture=0;
-  if(c->run.size && (memcmp(c->style.properties,s->properties,sizeof(s->properties)) || c->style.font!=s->font || c->style.field!=s->field) && !run_flush(c)) return 0;
+  if(c->run.size && (memcmp(c->style.properties,s->properties,sizeof(s->properties)) || c->style.font!=s->font || c->style.field!=s->field || c->style.specified!=s->specified) && !run_flush(c)) return 0;
   if(!c->run.size) c->style=*s;
   if(!exr_codepoint(&c->run,cp)) { c->status=EXR_LIMIT; return 0; } return 1;
 }
@@ -300,6 +505,8 @@ static int font_commit(rtf_context *c,const rtf_state *s) {
 }
 static int literal(rtf_context *c,const rtf_state *s,uint32_t cp) {
   if(s->skip) return 1;
+  if(s->destination>=LIST_TABLE) return number_literal(c,s,cp,0);
+  if(!cp) { c->status=EXR_FORMAT; return 0; }
   if(s->destination==3) {
     if(cp==';') return font_commit(c,s);
     if(c->font_name.size>=65536 || !exr_codepoint(&c->font_name,cp) || c->font_name.size>65536) { c->status=EXR_LIMIT; return 0; } return 1;
@@ -449,7 +656,9 @@ done:
   return ok && c->status==EXR_OK;
 }
 static int destination_finish(rtf_context *c,const rtf_state *s,const rtf_state *parent) {
+  if(s->destination>=LIST_TABLE && !number_finish(c,s,parent)) return 0;
   if(s->note>=0 && s->note!=parent->note && !note_finish(c,s)) return 0;
+  if(s->list_text && !parent->list_text && !paragraph_style(c,parent)) return 0;
   if(s->destination==5 && parent->destination!=5) {
     exr_buffer id={0}; size_t start=0,end=c->bookmark.size,node; int ok;
     while(start<end && isspace((unsigned char)c->bookmark.data[start])) start++;
@@ -475,19 +684,19 @@ static int style_control(rtf_context *c,rtf_state *s,const char *word,long value
   else if(!strcmp(word,"i")) key=ITALIC;
   else if(!strcmp(word,"ul") || !strcmp(word,"ulnone")) key=UNDERLINE;
   else if(!strcmp(word,"strike")) key=STRIKE;
-  if(key>=0) s->properties[key]=strcmp(word,"ulnone") && (!has || value!=0);
-  else if(!strcmp(word,"fs")) { if(!has || value<1 || value>32767) return 0; s->properties[SIZE]=(int)value; }
+  if(key>=0) { s->properties[key]=strcmp(word,"ulnone") && (!has || value!=0); s->specified|=1u<<key; }
+  else if(!strcmp(word,"fs")) { if(!has || value<1 || value>32767) return 0; s->properties[SIZE]=(int)value; s->specified|=1u<<SIZE; }
   else if(!strcmp(word,"cf") || !strcmp(word,"highlight")) {
     if(!has || value<0 || value>=4096) return 0;
-    s->properties[!strcmp(word,"cf") ? COLOR : BACKGROUND]=(int)value;
-  } else if(!strcmp(word,"ql")) s->properties[ALIGN]=0;
-  else if(!strcmp(word,"qr")) s->properties[ALIGN]=1;
-  else if(!strcmp(word,"qc")) s->properties[ALIGN]=2;
-  else if(!strcmp(word,"qj")) s->properties[ALIGN]=3;
-  else if(!strcmp(word,"ltrpar")) s->properties[DIRECTION]=1;
-  else if(!strcmp(word,"rtlpar")) s->properties[DIRECTION]=2;
-  else if(!strcmp(word,"plain")) { memset(s->properties,0,ALIGN*sizeof(*s->properties)); s->font=-1; }
-  else if(!strcmp(word,"pard")) { memset(s->properties+ALIGN,0,(RTF_PROPERTIES-ALIGN)*sizeof(*s->properties)); if(!s->list_text) s->list_id=s->list_level=0; }
+    key=!strcmp(word,"cf") ? COLOR : BACKGROUND; s->properties[key]=(int)value; s->specified|=1u<<key;
+  } else if(!strcmp(word,"ql")) { s->properties[ALIGN]=0; s->specified|=1u<<ALIGN; }
+  else if(!strcmp(word,"qr")) { s->properties[ALIGN]=1; s->specified|=1u<<ALIGN; }
+  else if(!strcmp(word,"qc")) { s->properties[ALIGN]=2; s->specified|=1u<<ALIGN; }
+  else if(!strcmp(word,"qj")) { s->properties[ALIGN]=3; s->specified|=1u<<ALIGN; }
+  else if(!strcmp(word,"ltrpar")) { s->properties[DIRECTION]=1; s->specified|=1u<<DIRECTION; }
+  else if(!strcmp(word,"rtlpar")) { s->properties[DIRECTION]=2; s->specified|=1u<<DIRECTION; }
+  else if(!strcmp(word,"plain")) { memset(s->properties,0,ALIGN*sizeof(*s->properties)); s->font=-1; s->font_set=1; s->specified|=(1u<<ALIGN)-1; }
+  else if(!strcmp(word,"pard")) { memset(s->properties+ALIGN,0,(RTF_PROPERTIES-ALIGN)*sizeof(*s->properties)); s->specified&=(1u<<ALIGN)-1; if(!s->list_text) s->list_id=s->list_level=0; }
   else if(!strcmp(word,"ls")) { if(!has || value<0 || value>INT_MAX) { c->status=EXR_FORMAT; return 0; } s->list_id=(int)value; }
   else if(!strcmp(word,"ilvl")) { if(!has || value<0 || value>8) { c->status=EXR_FORMAT; return 0; } s->list_level=(int)value; }
   else {
@@ -498,7 +707,7 @@ static int style_control(rtf_context *c,rtf_state *s,const char *word,long value
     else if(!strcmp(word,"sa")) key=AFTER;
     else if(!strcmp(word,"sl")) key=LEADING;
     else if(!strcmp(word,"slmult")) key=MULTIPLE;
-    if(key>=0) { if(!has || value < -10000000 || value>10000000) return 0; s->properties[key]=(int)value; }
+    if(key>=0) { if(!has || value < -10000000 || value>10000000) return 0; s->properties[key]=(int)value; s->specified|=1u<<key; }
   }
   (void)c; return 1;
 }
@@ -513,7 +722,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
   exr_status result = EXR_FORMAT;
   if (n < 5 || memcmp(s, "{\\rtf", 5))
     return exr_fail(e, EXR_FORMAT, "Invalid RTF header");
-  context.doc=d; context.error=e; context.paragraph=context.table=context.row=context.cell=SIZE_MAX; states[0].uc=1; states[0].picture=states[0].font=states[0].field=states[0].note=-1; context.active_note=-1; context.pending_note_ref=SIZE_MAX;
+  context.doc=d; context.error=e; context.paragraph=context.table=context.row=context.cell=SIZE_MAX; states[0].uc=1; states[0].picture=states[0].font=states[0].field=states[0].note=-1; states[0].definition=states[0].number_level=states[0].override_index=states[0].override_level=-1; context.active_note=-1; context.pending_note_ref=SIZE_MAX;
   if(exr_model_node(d,SIZE_MAX,SIZE_MAX,EXR_NODE_DOCUMENT,NULL,NULL,0)==SIZE_MAX) return EXR_LIMIT;
   {
     size_t chapter=make(&context,0,EXR_NODE_CHAPTER,NULL,NULL),html,head,title;
@@ -552,7 +761,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
     if (c == '\\') {
       char word[40] = {0};
       size_t k = 0;
-      long value = 0;
+      long value = 0; uint64_t magnitude=0;
       int negative = 0, has = 0, optional = 0;
       if (i >= n)
         goto done;
@@ -582,8 +791,10 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
           continue;
         }
         states[depth].star=0;
-        if (!states[depth].skip && !literal(&context,&states[depth],exr_windows1252((unsigned char)c)))
-          goto done;
+        if(!states[depth].skip) {
+          if(states[depth].destination==LEVEL_TEXT || states[depth].destination==LEVEL_NUMBERS) { if(!number_literal(&context,&states[depth],c,1)) goto done; }
+          else if(!literal(&context,&states[depth],exr_windows1252((unsigned char)c))) goto done;
+        }
         continue;
       }
       word[k++] = (char)c;
@@ -598,12 +809,11 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       }
       while (i < n && isdigit(s[i])) {
         has = 1;
-        if (value > 100000000)
-          goto done;
-        value = value * 10 + s[i++] - '0';
+        unsigned digit=s[i]-'0'; uint64_t maximum=negative ? UINT64_C(2147483648) : UINT64_C(2147483647);
+        if(magnitude>(maximum-digit)/10) goto done;
+        magnitude=magnitude*10+digit; i++;
       }
-      if (negative)
-        value = -value;
+      value=negative ? (long)-(int64_t)magnitude : (long)magnitude;
       if (i < n && s[i] == ' ')
         i++;
       if (!strcmp(word, "bin")) {
@@ -624,6 +834,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       }
       optional=states[depth].star; states[depth].star=0;
       if(!states[depth].inherited_skip && states[depth].destination==0 && (!states[depth].skip || optional)) {
+        if(!strcmp(word,"listtable") || !strcmp(word,"listoverridetable")) { states[depth].skip=0; states[depth].destination=!strcmp(word,"listtable") ? LIST_TABLE : OVERRIDE_TABLE; continue; }
         if(!strcmp(word,"listtext") || !strcmp(word,"pntext")) { states[depth].skip=0; states[depth].list_text=1; if(!states[depth].list_id) states[depth].list_id=-1; continue; }
         if(!strcmp(word,"footnote")) { states[depth].skip=0; if(!note_start(&context,&states[depth])) goto done; continue; }
         if(!strcmp(word,"fonttbl")) {
@@ -646,7 +857,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       if(!states[depth].skip && (states[depth].destination==0 || states[depth].destination==3) && (!strcmp(word,"f") || !strcmp(word,"deff"))) {
         if(!has || value<0 || value>=4096) goto done;
         if(!strcmp(word,"deff")) context.default_font=(int)value;
-        else states[depth].font=(int)value;
+        else { states[depth].font=(int)value; states[depth].font_set=1; }
         continue;
       }
       if(optional && !states[depth].inherited_skip && states[depth].destination==0 && !strcmp(word,"shppict")) { states[depth].skip=0; continue; }
@@ -673,6 +884,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       }
       if (states[depth].skip)
         continue;
+      { int handled; if(!number_control(&context,&states[depth],word,value,has,&handled)) goto done; if(handled) continue; }
       if(states[depth].destination && (!strcmp(word,"par") || !strcmp(word,"line") || !strcmp(word,"tab"))) {
         if(!literal(&context,&states[depth],' ')) goto done;
         continue;
@@ -709,7 +921,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
             high = 0;
           } else if (high)
             goto done;
-          if (!cp || !literal(&context,&states[depth],cp))
+          if ((!cp && states[depth].destination!=LEVEL_TEXT) || !literal(&context,&states[depth],cp))
             goto done;
         }
         fallback = states[depth].uc;
@@ -741,7 +953,7 @@ done:
   for(i=0;i<context.field_count;i++) { free(context.fields[i].instruction.data); free(context.fields[i].href); }
   free(context.fields); free(context.fonts); free(context.font_name.data); free(context.bookmark.data); free(context.title.data);
   for(i=0;i<context.picture_count;i++) free(context.pictures[i].bytes.data);
-  free(context.pictures); free(context.notes); free(context.run.data);
+  free(context.pictures); free(context.notes); free(context.number_definitions); free(context.number_overrides); free(context.run.data);
   if(result==EXR_OK) return EXR_OK;
   result=context.status!=EXR_OK ? context.status : EXR_FORMAT;
   return exr_fail(e,result,"Invalid or unsupported RTF stream");
