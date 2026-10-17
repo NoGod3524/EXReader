@@ -1098,7 +1098,7 @@ inspection_metadata、inspection_chapters、inspection_cover、inspection_durati
 
 Separation 普通命名专色现支持文件声明的 device/CIE alternate 和单输入 Type 2 指数函数、Type 3 分段函数。vector、XObject、inline image、Indexed base 和 ICC Alternate 复用同一转换路径；绘制回调仍输出屏幕 DeviceRGB，既有公开记录不变。默认 tint 为 1，输入先夹到色空间和函数 Domain；输出按各层 Range 再交 alternate。Type 2 处理 C0/C1 默认值、整数/分数与负指数的合法实数域，拒绝非有限中间结果。Type 3 保留半开区间边界、逆向 Encode、子函数 Domain/Range、单段及末尾零宽区间的 Encode 起点规则。
 
-特殊色名 None 不落墨，忽略无需执行的 alternate/tintTransform；填充和描边只在送出 paint 快照时置透明，原图形状态的 alpha 不被改写。图片返回透明像素，q/Q 和后续设备色操作可正常恢复。文字语义与裁切操作仍沿用原路径。注册色 All、DeviceN、多输入/三次采样及 Type 4 计算器、物理印版/套印与完整透明度语义尚未实现，不能视为完整印刷色彩支持。
+特殊色名 None 不落墨，忽略无需执行的 alternate/tintTransform；填充和描边只在送出 paint 快照时置透明，原图形状态的 alpha 不被改写。图片返回透明像素，q/Q 和后续设备色操作可正常恢复。文字语义与裁切操作仍沿用原路径。注册色 All、DeviceN、多输入/三次采样、物理印版/套印与完整透明度语义尚未实现，不能视为完整印刷色彩支持。
 
 私有函数模型最多 16 层、1024 节点、64 个分段和 1 MiB payload，循环引用/坏维数/非法域直接失败；编译过程支持取消。模型内存计入原颜色缓存，求值复杂度计入原 PDF 图片工作预算；源码对象查找仍使用原 256 Mi 工作上限。不新增运行时依赖，不改变 ABI epoch、版本号或书库 schema。
 
@@ -1108,3 +1108,10 @@ Separation 普通命名专色现支持文件声明的 device/CIE alternate 和�
 单输入 FunctionType 0 现支持 Order 1，样本为 MSB-first 的 1/2/4/8/12/16/24/32 位整数，1–4 输出。输入按 Domain→Encode→Size 映射并做相邻样本线性插值，输出再按 Decode→Range 映射；默认 Encode 为 [0 Size−1]，默认 Decode 为 Range。支持反向映射、单样本/零宽域、跨字节和 32 位最低有效字节，采样函数也可作为 Type 3 子函数。
 
 采样表必须来自 stream，经既有无损滤镜解码后精确匹配表长，再复制进函数模型；表数据、节点和映射数组共同受 1 MiB 编译载荷预算限制，节点开销在分配前计入。模型不借用 stream 样本指针，求值费用继续计入 PDF 图片工作预算。当前不支持多输入采样和 Order 3 三次插值。
+
+### PDF Type 4 计算器颜色函数（0.18 开发中）
+
+普通 Separation 的 tintTransform 现支持单输入、1–4 输出的 Type 4 stream，也可作为 Type 3 子函数。所有表 42 算术、关系、布尔/32 位位运算、栈操作和 if/ifelse 均有实现。语法采用 PDF 十进制数字与注释；花括号条件表达式编译成仅向前跳转的指令，没有变量、过程对象、循环或任意 PostScript 执行。整数溢出的 add/sub/mul/neg/abs 提升为实数，idiv/mod 严格要求整数；round 的半整数向较大整数舍入，包括 −6.5→−6。最终栈必须恰好包含声明的数值输出，Domain/Range 继续沿用共用函数路径。
+
+每程序最多 64 KiB 解码源码、4096 指令、32 层条件嵌套、100 操作数；实际指令内存计入整个函数图的 1 MiB 预算。长程序每 256 条执行指令检查取消。按指令和栈搬运成本收费，向量颜色选择/设置共享每次 content/Form 遍历的 256M 工作量上限，图片沿用既有 sample/function 工作预算。编译后的数据由颜色模型持有，取消上下文仅在当前同步 render 期间借用；无公开 ABI 变化。
+

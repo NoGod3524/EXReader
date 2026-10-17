@@ -2063,5 +2063,26 @@ short/long tables and allocation limits fail without partial pixels.
 
 All eight exported sampled-function PDF fixtures independently match MuPDF at the
 three sampled interiors within one RGB byte. All 98 local native suites pass.
+
+## Milestone 0.18 development: bounded PDF calculator functions
+
+The standalone calculator suite has 254 checks over every permitted operator,
+integer-to-real promotion, strict integer/boolean operands, logical shifts,
+negative division/remainders, signed and extreme rolls, conditional syntax,
+skipped invalid branches, comments, decimal syntax and all source truncations.
+It exercises 32/33 nesting, 4096/4097 instructions, exactly 100 and overflowing
+stacks, source length, memory/cost accounting and compile/execution cancellation.
+PLRM specifies round(-6.5) = -6; this is checked directly because MuPDF's
+negative-half behavior differs from that specification.
+
+The colour suite has 1290 checks. Five exported calculator PDF fixtures cover
+stack math, both conditional branches, trigonometry and four-channel output
+through paths, XObjects and inline images. RGB/gray interiors match MuPDF within
+one byte; the CMYK case matches equivalent direct DeviceCMYK painting in MuPDF
+within one byte. EXReader's simple DeviceCMYK conversion differs from MuPDF's
+CMYK conversion, independently of the function evaluator. Additional cases
+check stitching, Domain/Range, invalid outputs and the shared vector colour-work
+budget. There are now 99 native test suites. Version remains 0.18.0, ABI epoch 1
+and library schema 6.
 The default Windows DLL is 4,433,734 bytes. This batch awaits its own CI; version,
 ABI and schema remain 0.18.0/1/6, and no runtime dependency was added.

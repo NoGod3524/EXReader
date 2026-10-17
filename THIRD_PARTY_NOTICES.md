@@ -2,6 +2,16 @@
 
 EXReader's own C sources are GPL-3.0-only. Third-party code keeps its original license.
 
+## PDF calculator command names
+
+The compatibility command names in `src/pdf_calculator.c` follow PDF 32000-1,
+table 42, and the PostScript Language Reference, third edition, section 1.5.
+Copyright 1985-1999 Adobe Systems Incorporated. All rights reserved.
+Adobe permits use of the copyrighted command list to write compatible programs
+and interpreters, with an appropriate copyright notice. The calculator
+implementation is original EXReader C code; no Adobe interpreter code is included.
+PostScript is a registered trademark of Adobe Systems Incorporated.
+
 | Component | Pinned source | License | Use |
 | --- | --- | --- | --- |
 | FreeType | VER-2-14-1, freetype/freetype | FreeType License OR GPL-2.0-only; FreeType License selected | Font loading, glyph metrics and rasterization |
