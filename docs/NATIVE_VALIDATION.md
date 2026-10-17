@@ -552,3 +552,11 @@ combined lines, visible raster output, preserved OpenType flags, Latin ligature 
 Arabic joining forms. Eager pages match borrowed paged/replayed output exactly. DOCX tests
 verify inherited underline, direct removal and strike, then compare EPUB round-trip pixels;
 RTF regressions now assert underline/strike glyph flags as well as semantic nodes.
+
+## 0.27 MOBI compression
+
+`native-mobi` uses original generated PalmDB/HUFF/CDIC fixtures: fixed/short/long codes,
+multiple dictionaries, recursive phrases, UTF-8/Windows-1252, multiple records and trailer flags.
+Cases reject bad tables/offsets/prefixes, missing/truncated dictionaries, phrase cycles,
+65-level nesting, expansion-budget overflow, record-directory corruption and bad trailers.
+PalmDOC tests distinguish valid in-record overlap from invalid cross-record references.

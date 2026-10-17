@@ -57,3 +57,10 @@ HarfBuzz 14.6.0, accessed through the development-only uharfbuzz 0.56.3 package,
 was used as an independent oracle for selected fixture glyphs and anchor values.
 HarfBuzz and fontTools are not linked into or distributed as part of the native
 engine.
+
+## MOBI format reference
+
+HUFF/CDIC field semantics were checked against the GPLv3 KindleUnpack project's
+[`lib/mobi_uncompress.py`](https://github.com/kevinhendricks/KindleUnpack/blob/2efebb372258cdcbd1478da6e5f843c97504ebb5/lib/mobi_uncompress.py),
+by the KindleUnpack developers. EXReader implements the decoding, bounded dictionary cache,
+cycle detection and record handling in C in `src/huff.c` and `src/formats.c`, under GPL-3.0-only.

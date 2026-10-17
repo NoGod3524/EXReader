@@ -957,89 +957,99 @@ static uint16_t be16(const unsigned char *p) { return (uint16_t)((p[0] << 8) | p
 static uint32_t be32(const unsigned char *p) {
   return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) | ((uint32_t)p[2] << 8) | p[3];
 }
-static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e) {
-  const unsigned char *s = data, *h;
-  size_t records, start, stop, i, j, text_records;
-  unsigned compression, encoding;
-  exr_buffer text = {0}, utf8 = {0};
-  exr_status result = EXR_FORMAT;
-  if (n < 86 || memcmp(s + 60, "BOOKMOBI", 8))
-    return exr_fail(e, EXR_FORMAT, "Not a MOBI container");
-  records = be16(s + 76);
-  if (records < 2 || records > (n - 78) / 8)
-    return exr_fail(e, EXR_FORMAT, "Invalid MOBI record directory");
-  start = be32(s + 78);
-  stop = be32(s + 86);
-  if (start > stop || stop > n || stop - start < 132)
-    return exr_fail(e, EXR_FORMAT, "Invalid MOBI header");
-  h = s + start;
-  compression = be16(h);
-  text_records = be16(h + 8);
-  if (memcmp(h + 16, "MOBI", 4) || be16(h + 12))
-    return exr_fail(e, EXR_FORMAT, "Encrypted or invalid MOBI");
-  encoding = be32(h + 28);
-  if (be32(h + 36) >= 8)
-    return exr_fail(e, EXR_FORMAT, "KF8 reconstruction is not implemented");
-  if ((compression != 1 && compression != 2) || !text_records || text_records >= records ||
-      (encoding != 65001 && encoding != 1252))
-    return exr_fail(e, EXR_FORMAT, "Unsupported MOBI compression or encoding");
-  for (i = 1; i <= text_records; i++) {
-    start = be32(s + 78 + i * 8);
-    stop = i + 1 < records ? be32(s + 78 + (i + 1) * 8) : n;
-    if (start > stop || stop > n)
-      goto done;
-    for (j = start; j < stop; j++) {
-      unsigned c = s[j];
-      if (compression == 1) {
-        if (!exr_append(&text, s + j, 1))
-          goto done;
-        continue;
+static exr_status mobi_trailer(exr_mobi_record *record,unsigned flags,exr_error *e) {
+  unsigned entries=flags>>1;
+  while(entries) {
+    if(entries&1) {
+      size_t value=0,k; int terminated=0;
+      for(k=0;k<4 && k<record->size;k++) {
+        unsigned byte=record->data[record->size-k-1]; value|=(size_t)(byte&127)<<(7*k);
+        if(byte&128) { terminated=1; break; }
       }
-      if (c >= 1 && c <= 8) {
-        if (c > stop - j - 1 || !exr_append(&text, s + j + 1, c))
-          goto done;
-        j += c;
-      } else if (c <= 0x7f) {
-        if (!exr_append(&text, s + j, 1))
-          goto done;
-      } else if (c >= 0xc0) {
-        unsigned char pair[2] = {' ', (unsigned char)(c ^ 0x80)};
-        if (!exr_append(&text, pair, 2))
-          goto done;
-      } else {
-        size_t distance, length, k;
-        if (++j >= stop)
-          goto done;
-        c = (c << 8) | s[j];
-        distance = (c & 0x3fff) >> 3;
-        length = (c & 7) + 3;
-        if (!distance || distance > text.size)
-          goto done;
-        for (k = 0; k < length; k++) {
-          char b = text.data[text.size - distance];
-          if (!exr_append(&text, &b, 1))
-            goto done;
-        }
-      }
+      if(!terminated || value<k+1 || value>record->size) return exr_fail(e,EXR_FORMAT,"Invalid MOBI record trailer");
+      record->size-=value;
+    }
+    entries>>=1;
+  }
+  if(flags&1) {
+    size_t overlap;
+    if(!record->size) return exr_fail(e,EXR_FORMAT,"Missing MOBI multibyte trailer");
+    overlap=(record->data[record->size-1]&3)+1;
+    if(overlap>record->size) return exr_fail(e,EXR_FORMAT,"Invalid MOBI multibyte trailer");
+    record->size-=overlap;
+  }
+  return EXR_OK;
+}
+static exr_status mobi_palmdoc(const exr_mobi_record *record,exr_buffer *out,exr_error *e) {
+  size_t i=0,base=out->size;
+  while(i<record->size) {
+    unsigned byte=record->data[i++];
+    if(byte>=1 && byte<=8) {
+      if(byte>record->size-i) return exr_fail(e,EXR_FORMAT,"Truncated PalmDOC literal");
+      if(!exr_append(out,record->data+i,byte)) goto limit;
+      i+=byte;
+    } else if(byte<=127) {
+      unsigned char c=(unsigned char)byte; if(!exr_append(out,&c,1)) goto limit;
+    } else if(byte>=192) {
+      unsigned char pair[2]={' ',(unsigned char)(byte^128)};
+      if(!exr_append(out,pair,2)) goto limit;
+    } else {
+      size_t distance,length,k;
+      if(i==record->size) return exr_fail(e,EXR_FORMAT,"Truncated PalmDOC back reference");
+      byte=(byte<<8)|record->data[i++]; distance=(byte&16383)>>3; length=(byte&7)+3;
+      if(!distance || distance>out->size-base) return exr_fail(e,EXR_FORMAT,"PalmDOC reference leaves its record");
+      for(k=0;k<length;k++) { char c=out->data[out->size-distance]; if(!exr_append(out,&c,1)) goto limit; }
     }
   }
-  if (be32(h + 4) > text.size || !be32(h + 4))
-    goto done;
-  text.size = be32(h + 4);
-  text.data[text.size] = 0;
-  if (encoding == 1252) {
-    for (i = 0; i < text.size; i++)
-      if (!exr_codepoint(&utf8, exr_windows1252((unsigned char)text.data[i])))
-        goto done;
-    result = html(d, utf8.data, utf8.size, e);
-  } else
-    result = html(d, text.data, text.size, e);
+  return EXR_OK;
+limit:
+  return exr_fail(e,EXR_LIMIT,"PalmDOC text exceeds allocation or size limit");
+}
+static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e) {
+  const unsigned char *s=data,*h; exr_mobi_record *records=NULL;
+  size_t count,start,stop,i,text_count,header_size; unsigned compression,encoding,flags=0;
+  exr_mobi_huff *huff=NULL; exr_buffer text={0},utf8={0}; exr_status status=EXR_FORMAT;
+  if(n<94 || memcmp(s+60,"BOOKMOBI",8)) return exr_fail(e,EXR_FORMAT,"Not a MOBI container");
+  count=be16(s+76);
+  if(count<2 || count>(n-78)/8) return exr_fail(e,EXR_FORMAT,"Invalid MOBI record directory");
+  records=calloc(count,sizeof(*records)); if(!records) return exr_fail(e,EXR_MEMORY,"MOBI directory allocation failed");
+  for(i=0;i<count;i++) {
+    start=be32(s+78+i*8); stop=i+1<count ? be32(s+78+(i+1)*8) : n;
+    if(start<78+count*8 || start>stop || stop>n) goto done;
+    records[i]=(exr_mobi_record){s+start,stop-start};
+  }
+  h=records[0].data;
+  if(records[0].size<132 || memcmp(h+16,"MOBI",4) || be16(h+12)) goto done;
+  header_size=be32(h+20);
+  if(header_size<116 || header_size>records[0].size-16) goto done;
+  compression=be16(h); text_count=be16(h+8); encoding=be32(h+28);
+  if(be32(h+36)>=8) { status=exr_fail(e,EXR_FORMAT,"KF8 reconstruction is not implemented"); goto done; }
+  if(!text_count || text_count>=count || !be32(h+4) || (encoding!=65001 && encoding!=1252)) goto done;
+  if(be32(h+4)>EXR_MAX_TEXT) { status=EXR_LIMIT; goto done; }
+  if(header_size>=228 && be32(h+104)>=5) flags=be16(h+242);
+  if(compression==0x4448) {
+    size_t first=be32(h+112),number=be32(h+116);
+    if(first<=text_count || first>=count || number<2 || number>count-first) goto done;
+    status=exr_mobi_huff_open(records+first,number,&huff,e); if(status!=EXR_OK) goto done;
+  } else if(compression!=1 && compression!=2) goto done;
+  for(i=1;i<=text_count;i++) {
+    exr_mobi_record record=records[i]; status=mobi_trailer(&record,flags,e); if(status!=EXR_OK) goto done;
+    if(compression==0x4448) status=exr_mobi_huff_decode(huff,record.data,record.size,&text,e);
+    else if(compression==2) status=mobi_palmdoc(&record,&text,e);
+    else if(!exr_append(&text,record.data,record.size)) status=exr_fail(e,EXR_LIMIT,"MOBI text exceeds allocation or size limit");
+    if(status!=EXR_OK) goto done;
+  }
+  if(be32(h+4)>text.size) { status=EXR_FORMAT; goto done; }
+  exr_mobi_huff_free(huff); huff=NULL;
+  text.size=be32(h+4); text.data[text.size]=0;
+  if(encoding==1252) {
+    for(i=0;i<text.size;i++) if(!exr_codepoint(&utf8,exr_windows1252((unsigned char)text.data[i]))) { status=EXR_LIMIT; goto done; }
+    status=html(d,utf8.data,utf8.size,e);
+  } else status=html(d,text.data,text.size,e);
 done:
-  free(text.data);
-  free(utf8.data);
-  if (result != EXR_OK)
-    exr_fail(e, result, "Invalid or unsupported MOBI text stream");
-  return result;
+  exr_mobi_huff_free(huff); free(records); free(text.data); free(utf8.data);
+  if(status!=EXR_OK && (!e || !e->message[0])) exr_fail(e,status,"Invalid or unsupported MOBI stream");
+  return status;
 }
 exr_status exr_parse(exr_document *d, const void *data, size_t n, exr_error *e) {
   switch (d->format) {
