@@ -497,3 +497,21 @@ view_objects[9]=b'<< /Type /Page /Parent 2 0 R /CropBox [10 10 12 12] /Contents 
 view_objects[10]=compressed_stream(b'0 g 0 0 8 6 re f 1 0 0 rg 2 1 2 1 re f 0 1 0 rg 4 1 2 1 re f 0 0 1 rg 2 2 2 1 re f 1 1 0 rg 4 2 2 1 re f')
 view_objects[11]=compressed_stream(b'0 g 0 0 8 6 re f')
 pdf('pdf-page-view.pdf',values=view_objects)
+
+
+# Public fixed-PDF entry: embedded text, fallback collection, lazy failures and masks.
+public_objects={**outline_fonts}
+public_resources=outline_fonts[1].split(b'/Resources',1)[1][:-3]
+public_resources=public_resources[:-3]+b' /XObject << /Image 60 0 R /JPX 62 0 R >> >>'
+public_objects[1]=b'<< /Type /Catalog /Pages 100 0 R >>'
+public_objects[100]=b'<< /Type /Pages /Count 5 /Kids [101 0 R 102 0 R 103 0 R 104 0 R 105 0 R] /MediaBox [0 0 12 12] /Resources '+public_resources+b' >>'
+for index in range(5): public_objects[101+index]=b'<< /Type /Page /Parent 100 0 R /Contents '+str(201+index).encode()+b' 0 R'+(b' /MediaBox [0 0 12 16]' if index==1 else b'')+b' >>'
+public_objects[201]=compressed_stream(b'BT /Names 10 Tf (A) Tj ET')
+public_objects[202]=compressed_stream(b'BT /Fallback 10 Tf 1 0 0 1 1 4 Tm (A) Tj ET')
+public_objects[203]=compressed_stream(b'8 0 0 8 0 0 cm /JPX Do')
+public_objects[204]=compressed_stream(b'BT /BadEmbedded 10 Tf (A) Tj ET')
+public_objects[205]=compressed_stream(b'8 0 0 8 0 0 cm /Image Do')
+public_objects[60]=image_stream(bytes([255,0,0,0,255,0,0,0,255,255,255,255]),2,2,extra=b'/SMask 61 0 R')
+public_objects[61]=image_stream(bytes([128]),1,1,b'/DeviceGray')
+public_objects[62]=b'<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /BitsPerComponent 8 /ColorSpace /DeviceRGB /Filter /JPXDecode /Length 7 >>\nstream\nnot-jpx\nendstream'
+pdf('pdf-public.pdf',values=public_objects)

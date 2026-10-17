@@ -1261,3 +1261,32 @@ zero/nonzero unknown tails, large/tiny unit geometry and bitmap limits. No file
 format is required by this test.
 
 The 0.64 commit 8031631 passed all six CI jobs.
+
+
+## 0.66 Public fixed-PDF reader and installed host example
+
+The built-in PDF provider now connects to the public generic fixed document.
+Memory opens copy source bytes; file opens adopt the UTF-8 reader buffer without
+a second full-file copy. Only directory/geometry is prepared at open; page
+content/fonts/images remain lazy. Optional host fonts are retained and expose
+selected collection indices. Matching same-page programs share FT face references
+while retaining independent PDF encoding/metric metadata. Bad embedded programs
+remain errors. A failed/cancelled page discards lazy reader state, allowing the
+next page to rebuild safely instead of inheriting a sticky object/stream error.
+
+Public-DLL tests free/overwrite original bytes, render embedded text and soft
+images, inspect generic paths/images, ignore unknown image codecs in partial
+consumers, stop callbacks, recover from missing fonts/unsupported streams/bad
+embedded programs, retain a host TTC face after its original handle is freed,
+validate option tails and open malformed/oversized input. Shared-face tests close
+the original wrapper before using its retained clone. The installed example
+builds against only exreader.h and the installed import library/DLL and renders
+Chinese-named input/output paths successfully. CI now runs the installed fixed
+example on all three desktop platforms, including Windows Unicode paths.
+
+A manual public-only client opens RFC 9110 and renders all 194 pages, with
+388,306,520 aggregate RGBA bytes freed page by page. One development pass took
+24.482 seconds (not the benchmark suite). The public fixed host example also
+renders its 595 x 841 first page. Public search/selection/annotation data and
+remaining unsupported PDF features are not claimed complete. The 0.65 commit
+ed66563 passed all six CI jobs.

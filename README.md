@@ -1,6 +1,6 @@
 # EXReader — native C ebook engine
 
-主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.65.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
+主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.66.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
 
 0.12.1 修复全库审计确认的七项缺陷，覆盖长附标塑形、重复章节标注、备注长度、XML 导出、跨行塑形、RTF fallback 和 HTML script/style。每项有独立回归测试与提交；[验证记录](docs/NATIVE_VALIDATION.md#0121-audit-fixes) 列出覆盖范围与资源上限。
 
@@ -12,7 +12,9 @@
 
 | 模块 | 当前能力 |
 | --- | --- |
-| 固定版面构造 | `exr_layout_create_positioned()` 复制页面、定位字形、图片/色块和有序绘制指令，保留源范围与命中；已有私有 PDF 对象/页树解析，页面绘制尚待接入 |
+| 固定版面构造 | `exr_layout_create_positioned()` 保留定位字形、图片/色块和源范围；`exr_fixed_create()` 接收任意格式的页目录和按需绘制提供者 |
+| C 原生 PDF | `exr_fixed_open()` / `exr_fixed_open_memory(EXR_PDF,...)` 打开页目录，`exr_fixed_render()` 按页绘制；对象/流、字体、文字、路径、Form、JPEG、调色板和图像遮罩由 C 核处理 |
+| 通用绘制接口 | 开放 Bézier 字形轮廓、路径/描边、分层图片、裁切、正逆视口矩阵和流式绘制回调；可用内置 C 画布或宿主绘制后端 |
 | 文档输入 | TXT（UTF-8、带 BOM 的 UTF-16）、HTML、FB2、EPUB spine、DOCX 结构、RTF 正文、MOBI / PalmDOC / HUFF-CDIC、KF8 章节、CSS、图片与字体 |
 | 宿主文档构造 | `exr_document_create()` 接收通用节点、章节和资源字节，复制输入并生成规范化正文；宿主解析器无需注册，可直接接入现有搜索、布局、渲染和正文导出 |
 | 操作控制 | 随机读取、样式、分页、OpenType 塑形和绘制的协作取消与进度回调；取消未命中页面时保留已有缓存，可清除取消后恢复 |
@@ -39,7 +41,7 @@
 | 结构导出 | 新接口输出 EPUB，保留章节树、属性、图片、CSS、字体、链接、嵌套目录及资源原字节；校验路径、缺失资源和 XML 合法性 |
 | 文字转换 | C 输出 TXT、HTML、FB2、RTF、EPUB、DOCX；覆盖 Unicode 与文本转义往返，不保留复杂排版和图片 |
 
-当前横排覆盖拉丁文字、中日韩文字和阿拉伯 / 希伯来双向混排。EPUB 和宿主构造的文档使用文档树进行样式、图片和表格布局；FB2 还保留内嵌图片、封面、表格、强调文字和脚注；DOCX 保留段落与字符样式、图片、合并表格、链接、编号列表及脚注/尾注；RTF 保留图片、链接、书签、字体名称、粗斜体、字号、颜色与段落属性；MOBI 目前提供段落与标题，KF8 可重建章节 XHTML，接通 CSS、图片、SVG 内部资源、嵌入字体、定位链接、NCX 层级目录和 guide 地标，也可读取声明边界的 MOBI/KF8 混合文件。图片按块排版，表格采用等宽列，超过一页高度的行或 rowspan 行组返回 `EXR_LIMIT`。OpenType lookup 引擎已有拉丁与阿拉伯预处理；Indic 音节与前置元音重排、可变字体、彩色 emoji、完整 UAX #14 换行、竖排、自动连字符、完整 CSS、浮动绕排和 EPUB CFI / 跨引擎标注迁移仍待实现。PDF 固定版面引擎、CBZ、音频播放和 OCR 也尚未完成；PDF 文件当前返回不支持。具体范围见 [接口文档](docs/NATIVE_API.md)。
+当前横排覆盖拉丁文字、中日韩文字和阿拉伯 / 希伯来双向混排。EPUB 和宿主构造的文档使用文档树进行样式、图片和表格布局；FB2 还保留内嵌图片、封面、表格、强调文字和脚注；DOCX 保留段落与字符样式、图片、合并表格、链接、编号列表及脚注/尾注；RTF 保留图片、链接、书签、字体名称、粗斜体、字号、颜色与段落属性；MOBI 目前提供段落与标题，KF8 可重建章节 XHTML，接通 CSS、图片、SVG 内部资源、嵌入字体、定位链接、NCX 层级目录和 guide 地标，也可读取声明边界的 MOBI/KF8 混合文件。图片按块排版，表格采用等宽列，超过一页高度的行或 rowspan 行组返回 `EXR_LIMIT`。OpenType lookup 引擎已有拉丁与阿拉伯预处理；Indic 音节与前置元音重排、可变字体、彩色 emoji、完整 UAX #14 换行、竖排、自动连字符、完整 CSS、浮动绕排和 EPUB CFI / 跨引擎标注迁移仍待实现。PDF 已通过独立固定页面入口支持打开与绘制，文字搜索、选择和标注尚未接入；加密、Type3、非设备色彩空间、复杂透明度、部分图像编解码和内联图片仍不支持。CBZ、音频播放和 OCR 也尚未完成。具体范围见 [接口文档](docs/NATIVE_API.md)。
 
 0.7 提供稳定标注的文本锚点基础：精确选文至少需要一侧完整上下文或文档 / 章节边界佐证，同分候选返回歧义，不猜测旧偏移附近的位置。锚点仍按 Unicode 标量边界捕获，不自动扩展为字素簇；不提供模糊改字匹配、Unicode 规范化或文档指纹。旧书库标注保留为仅偏移的 legacy 记录，不自动认定已迁移。宿主可自行持久化选择器字段，正文格式转换不携带标注。
 
@@ -55,7 +57,7 @@
 
 带 OpenType 的连续无断点塑形段当前最多 8192 个标量，超过返回 `EXR_LIMIT`。双向分析先读取整个可见段落，其元数据内存不在页面缓存预算内；页级续排减少布局驻留量，文件解析、双向分析和不可拆组仍有各自工作区。
 
-当前正在接通 C 原生 PDF 引擎：对象、流、页树、字体、文字定位、Form 和通用路径栅格已有独立测试，公开 PDF 打开和整页绘制尚待接入。完成 PDF 后继续推进有声书及其余排版能力；新增能力继续使用开放的文档与资源接口。0.14 已补带预算的分页检查点，0.15 已补随机读取源；大书后续继续完善章节增量解析。EPUB 正文使用严格 XHTML 解析，未实现 HTML5 错误恢复、远程资源和元素级 base URI；原始 NCX 可通过资源接口读取。EPUB 导出保留已支持的文档树、资源、导航和元数据；其他格式的转换仍以正文为主。
+C 原生 PDF 打开与整页绘制已接入公开固定页面接口，按页输出通用绘制回调或 RGBA/灰度图像；下一步补固定页文字几何、搜索选择和标注，然后推进有声书及其余排版能力；新增能力继续使用开放的文档与资源接口。0.14 已补带预算的分页检查点，0.15 已补随机读取源；大书后续继续完善章节增量解析。EPUB 正文使用严格 XHTML 解析，未实现 HTML5 错误恢复、远程资源和元素级 base URI；原始 NCX 可通过资源接口读取。EPUB 导出保留已支持的文档树、资源、导航和元数据；其他格式的转换仍以正文为主。
 
 ## 构建
 
@@ -177,3 +179,14 @@ exreader-lazy-example font.ttf epub-part.png book.epub 0
 当前默认开发线直接使用 C 工程。此前的 [JavaScript 框架](https://github.com/NoGod3524/EXReader/commit/4533185)、[带 UI 的阅读器](https://github.com/NoGod3524/EXReader/tree/codex/reader-app) 和 [MIT 版 0.1.1](https://github.com/NoGod3524/EXReader/tree/codex/reader-0.1.1) 保留为历史版本。现有下载页仍是 0.1.1 阅读器；原生引擎目前与旧 UI、IndexedDB 书库和旧标注尚未接通。
 
 Copyright (c) 2026 EXReader contributors. 自有代码为 GPL-3.0-only，第三方组件保留原许可；既有版本的 MIT 授权不撤回。
+
+
+固定页面宿主示例（仅使用公开 SDK）：
+
+```sh
+exreader-fixed-example book.pdf page.png 0
+# 未嵌入字体的 PDF 可显式提供宿主字体：
+exreader-fixed-example book.pdf page.png 0 fallback.ttf
+```
+
+该入口使用固定页面模型；重排文档仍使用 `exr_document_open` 和 layout/pager 接口。

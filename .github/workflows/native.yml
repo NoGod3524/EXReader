@@ -35,6 +35,7 @@ jobs:
           ./build/sdk-example/Release/exreader-construct-example.exe C:/Windows/Fonts/arial.ttf host-page.png
           ./build/sdk-example/Release/exreader-anchor-example.exe
           ./build/sdk-example/Release/exreader-shaping-example.exe stage/examples/shaping-fonts/shaping.ttf
+          ./build/sdk-example/Release/exreader-fixed-example.exe stage/examples/fixed-pages/pdf-public.pdf fixed-host-page.png
           ./build/sdk-example/Release/exreader-text-example.exe
           ./build/sdk-example/Release/exreader-font-example.exe stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
           ./build/sdk-example/Release/exreader-page-example.exe tests/fixtures/layout.epub C:/Windows/Fonts/arial.ttf pager-host-page.png
@@ -43,6 +44,8 @@ jobs:
           Copy-Item -LiteralPath tests/fixtures/layout.epub -Destination 'build/中文 example/示例.epub'
           ./build/sdk-example/Release/exreader-lazy-example.exe C:/Windows/Fonts/arial.ttf 'build/中文 example/页面.png' 'build/中文 example/示例.epub' 1
           ./build/sdk-example/Release/exreader-construct-example.exe C:/Windows/Fonts/arial.ttf 'build/中文 example/构造页面.png'
+          Copy-Item -LiteralPath tests/fixtures/pdf-public.pdf -Destination 'build/中文 example/示例.pdf'
+          ./build/sdk-example/Release/exreader-fixed-example.exe 'build/中文 example/示例.pdf' 'build/中文 example/固定页面.png'
           Copy-Item -LiteralPath stage/examples/fonts/primary.ttf -Destination 'build/中文 example/主字体.ttf'
           Copy-Item -LiteralPath stage/examples/fonts/fallback.ttf -Destination 'build/中文 example/回退字体.ttf'
           ./build/sdk-example/Release/exreader-font-example.exe 'build/中文 example/主字体.ttf' 'build/中文 example/回退字体.ttf' 'build/中文 example/字体页面.png'
@@ -55,6 +58,7 @@ jobs:
           ./build/sdk-example/exreader-construct-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf host-page.png
           ./build/sdk-example/exreader-anchor-example
           ./build/sdk-example/exreader-shaping-example stage/examples/shaping-fonts/shaping.ttf
+          ./build/sdk-example/exreader-fixed-example stage/examples/fixed-pages/pdf-public.pdf fixed-host-page.png
           ./build/sdk-example/exreader-text-example
           ./build/sdk-example/exreader-font-example stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
           ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf pager-host-page.png
@@ -68,6 +72,7 @@ jobs:
           ./build/sdk-example/exreader-construct-example /System/Library/Fonts/Supplemental/Arial.ttf host-page.png
           ./build/sdk-example/exreader-anchor-example
           ./build/sdk-example/exreader-shaping-example stage/examples/shaping-fonts/shaping.ttf
+          ./build/sdk-example/exreader-fixed-example stage/examples/fixed-pages/pdf-public.pdf fixed-host-page.png
           ./build/sdk-example/exreader-text-example
           ./build/sdk-example/exreader-font-example stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
           ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /System/Library/Fonts/Supplemental/Arial.ttf pager-host-page.png

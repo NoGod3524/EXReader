@@ -21,13 +21,20 @@ static void glyph_selection(exr_pdf_file *file,FT_Library library) {
   const char *names[]={"Names","Unicode","Symbol","Cubic","CID","GlyphOnly"}; size_t i,j,work=0,count; uint32_t glyph;
   for(i=0;i<sizeof(names)/sizeof(*names);i++) {
     exr_pdf_font *font=font_open(file,names[i]); exr_pdf_face *face=NULL; exr_pdf_character ch; exr_vector_segment *segments=NULL;
-    OK(exr_pdf_face_open(library,font,NULL,0,&face,NULL,&error)); CHECK(exr_pdf_face_memory(face)>0);
+    OK(exr_pdf_face_open(library,font,NULL,&face,NULL,&error)); CHECK(exr_pdf_face_memory(face)>0);
     ch=character(font,i==4 ? "\0\x2a" : i==5 ? "\0\2" : "A",i>=4 ? 2 : 1);
     if(i<4) CHECK(ch.text.size==1 && ch.text.utf8[0]=='A'); /* Semantic A still paints fi. */
     OK(exr_pdf_face_glyph(face,&ch,&glyph,&error)); CHECK(glyph==2);
     OK(exr_pdf_face_outline(face,&ch,&segments,&count,&work,NULL,&error)); CHECK(count>=5);
     if(i<5) CHECK(segments[0].verb==EXR_VECTOR_MOVE && segments[0].points[0].x==500 && segments[0].points[0].y==0);
     free(segments);
+    if(i==0) {
+      exr_pdf_face *shared=NULL; exr_pdf_font *other=font_open(file,"CID");
+      CHECK(exr_pdf_face_matches(face,font,NULL) && !exr_pdf_face_matches(face,other,NULL));
+      CHECK(exr_pdf_face_open_shared(library,other,NULL,face,&shared,NULL,&error)==EXR_ARGUMENT && !shared); exr_pdf_font_close(other);
+      OK(exr_pdf_face_open_shared(library,font,NULL,face,&shared,NULL,&error)); exr_pdf_face_close(face); face=shared;
+      OK(exr_pdf_face_outline(face,&ch,&segments,&count,&work,NULL,&error)); CHECK(count>=5 && segments[0].points[0].x==500); free(segments);
+    }
     if(i<4) {
       ch=character(font,"Q",1); OK(exr_pdf_face_outline(face,&ch,&segments,&count,&work,NULL,&error));
       for(j=0;j<count;j++) if(segments[j].verb==(i==3 ? EXR_VECTOR_CUBIC : EXR_VECTOR_QUAD)) break;
@@ -49,7 +56,7 @@ static void glyph_selection(exr_pdf_file *file,FT_Library library) {
 typedef struct { FT_Library library; exr_bitmap bitmap; size_t work,glyphs; } raster;
 static exr_status draw_glyph(void *context,const exr_pdf_text_glyph *g,exr_error *e) {
   raster *r=context; exr_pdf_face *face=NULL; exr_vector_segment *segments=NULL; exr_vector_polyline path={0}; exr_vector_edge *edges=NULL; size_t count=0,edge_count=0;
-  exr_status status=exr_pdf_face_open(r->library,g->font,NULL,0,&face,NULL,e);
+  exr_status status=exr_pdf_face_open(r->library,g->font,NULL,&face,NULL,e);
   if(status==EXR_OK) status=exr_pdf_face_outline(face,&g->character,&segments,&count,&r->work,NULL,e);
   exr_pdf_face_close(face); /* The outline is independent of the FT slot/face. */
   if(status==EXR_OK) status=exr_vector_flatten(segments,count,g->transform,.01,&path,&r->work,NULL,e);
@@ -74,8 +81,8 @@ static void generic_and_fallback(const char *dir,FT_Library library) {
   FT_Done_Face(ft);
   { exr_pdf_file *file=NULL; exr_pdf_font *font=NULL; exr_pdf_face *face=NULL; exr_pdf_character ch; uint32_t fonts,id,glyph; size_t pdf_size; unsigned char *pdf=read_fixture(dir,"pdf-font-fallback.pdf",&pdf_size);
     OK(exr_pdf_open(pdf,pdf_size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Fonts"),&fonts,&error)); id=exr_pdf_get(file,fonts,"Helvetica"); OK(exr_pdf_font_open(file,id,NULL,&font,&error));
-    CHECK(exr_pdf_face_open(library,font,NULL,0,&face,NULL,&error)==EXR_FORMAT && !face);
-    OK(exr_pdf_face_open(library,font,data,size,&face,NULL,&error)); ch=character(font,"A",1);
+    CHECK(exr_pdf_face_open(library,font,NULL,&face,NULL,&error)==EXR_FORMAT && !face);
+    { exr_font_input source={data,size,0}; OK(exr_pdf_face_open(library,font,&source,&face,NULL,&error)); } ch=character(font,"A",1);
     OK(exr_pdf_face_glyph(face,&ch,&glyph,&error)); CHECK(glyph==1); exr_pdf_face_close(face); exr_pdf_font_close(font); exr_pdf_close(file); free(pdf);
   }
   free(data);

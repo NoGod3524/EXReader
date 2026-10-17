@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.65.0"
+#define EXR_VERSION "0.66.0"
 typedef enum {
   EXR_OK = 0,
   EXR_ARGUMENT,
@@ -444,6 +444,18 @@ EXR_API exr_status exr_fixed_draw(exr_fixed_document *document,size_t page,const
    NULL options default to white RGBA. Failure returns no partial bitmap. */
 EXR_API exr_status exr_fixed_render(exr_fixed_document *document,size_t page,double scale,
                                      const exr_fixed_render_options *options,exr_bitmap *out,exr_error *error);
+typedef struct {
+  size_t struct_size;
+  exr_font *fallback_font; /* Optional ordered font set, retained until fixed_free. */
+  exr_control control; /* Used only while opening. */
+} exr_fixed_open_options;
+/* Built-in fixed-format readers (currently PDF). Memory input is copied;
+   file input uses UTF-8 paths. No system font lookup or eager page painting. */
+EXR_API exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
+                                          const exr_fixed_open_options *options,
+                                          exr_fixed_document **out,exr_error *error);
+EXR_API exr_status exr_fixed_open(const char *path,const exr_fixed_open_options *options,
+                                   exr_fixed_document **out,exr_error *error);
 /* All input/output strings are UTF-8. Returned views belong to their owner. */
 EXR_API const char *exr_version(void);
 /* Unicode 17 extended grapheme boundaries plus documented line-break rules.

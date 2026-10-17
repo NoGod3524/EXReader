@@ -44,10 +44,11 @@ static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_erro
   if(!((flags&3) && r->sink.path) && !((flags&EXR_PDF_CLIP) && r->sink.clip)) return EXR_OK;
   for(i=0;i<r->font_count;i++) if(r->fonts[i].key==g->font) break;
   if(i==r->font_count) {
-    const exr_pdf_font_info *info=exr_pdf_font_description(g->font); const void *fallback=NULL; size_t size=0,bytes;
+    const exr_pdf_font_info *info=exr_pdf_font_description(g->font); exr_font_input fallback={0}; size_t bytes,j; const exr_pdf_face *shared=NULL;
     if(i==128) return exr_fail(e,EXR_LIMIT,"PDF paint face cache exceeds 128 fonts");
-    if(!info->program && r->program) { status=r->program(r->program_context,info,&fallback,&size,e); if(status!=EXR_OK) return status; }
-    status=exr_pdf_face_open(r->library,g->font,fallback,size,&r->fonts[i].face,r->control,e); if(status!=EXR_OK) return status;
+    if(!info->program && r->program) { status=r->program(r->program_context,info,&fallback,e); if(status!=EXR_OK) return status; }
+    for(j=0;j<i;j++) if(exr_pdf_face_matches(r->fonts[j].face,g->font,&fallback)) { shared=r->fonts[j].face; break; }
+    status=exr_pdf_face_open_shared(r->library,g->font,&fallback,shared,&r->fonts[i].face,r->control,e); if(status!=EXR_OK) return status;
     r->fonts[i].key=g->font; r->font_count++; bytes=exr_pdf_face_memory(r->fonts[i].face);
     if(bytes>(size_t)32*1024*1024-r->font_bytes) return exr_fail(e,EXR_LIMIT,"PDF paint CID indexes exceed 32 MiB");
     r->font_bytes+=bytes;
