@@ -946,3 +946,14 @@ PDF 提供者按需读取有效修订的 Info 字典：Title、Author、Subject 
 支持 PDFDocEncoding、带 BOM 的 UTF-16BE/UTF-8、间接字符串、classic/xref-stream 及增量修订中的 Info 继承；最新显式 null 不恢复旧字典。非法编码、非文本值和超限数据返回错误，失败后仍可绘制页面或重试元数据。解析只在请求时进行，不为每页常驻复制元数据。
 
 书库 PDF 导入取得 Info 标题/作者，调用方非空 title 优先；缺少标题仍回退 Untitled。导入时遇到损坏的元数据不会产生部分书籍记录；已有精确去重结果继续保留原用户元数据。fixed_title 的文件名/宿主标题规则保持独立，原文件字节不改写。XMP XML、额外自定义 Info 项与元数据回写尚未接通。
+
+
+## 通用 XMP 与 PDF 元数据优先级（0.98）
+
+`exr_metadata_read_xmp(data,size,control,entries,count,...)` 直接接收 XML packet，复用既有 Expat。输入不依赖 PDF、书库或宿主模型；输出沿用 owned metadata_entry 数组与 metadata_free。支持 UTF-8/带 BOM 的 UTF-16 XML、空文档主体的 RDF Description 简写属性、简单文字属性、rdf:Seq/Bag 多值和 rdf:Alt。Alt 选择 x-default，否则取第一个备选；重复 x-default 返回错误。多作者/多关键词按原始顺序和重复值保留。
+
+属性名以 namespace URI + local name 组成 key，不依赖 XML 前缀。Dublin Core elements 1.1 的属性映射为 dc/terms URI，其他命名空间保留原 URI。输出只提供当前文字值，不保存 RDF 类型、语言标签或原始 XML；它是阅读元数据提取接口，不是 RDF 往返序列化器。仅接收空或缺省 rdf:about 的文档主体；命名主体返回错误。嵌套资源、结构化属性、rdf:resource 和 parseType 整项跳过，包括此前已读到的同属性部分列表值。
+
+packet 最多 1 MiB，嵌套最多 64 层，输出最多 4096 值，key 最多 4096 字节、value 最多 64 KiB、总字符串最多 8 MiB。DTD/实体声明被拒绝；不读取网络或外部实体。损坏 XML、超限、取消均清空输出，最终进度回调仍可取消。
+
+PDF Catalog Metadata stream（含已有解码器支持的 Flate 等 lossless filter）接入同一解析器。XMP 的已提取属性替换同 key 的 Info 值，其余 Info 项保留；多值不压平。书库选择首个非空标题，并把多个非空作者用 `; ` 合并到既有 author 字符串；元数据接口仍返回独立作者。宿主非空 title 继续优先。失败不会阻止独立页面绘制，也不生成部分书库记录。元数据写回仍待实现。

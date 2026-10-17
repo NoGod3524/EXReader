@@ -3,12 +3,12 @@
 #include "layout_internal.h"
 typedef struct {
   unsigned char *data; size_t size,count; exr_pdf_file *file; exr_pdf_page_info *pages; exr_font *font;
-  exr_metadata_entry metadata[8];
+  exr_metadata_entry *metadata; size_t metadata_count;
 } pdf_document;
 static void discard_reader(pdf_document *d) { free(d->pages); d->pages=NULL; exr_pdf_close(d->file); d->file=NULL; }
 static void release(void *context) {
-  pdf_document *d=context; size_t i; if(!d) return; discard_reader(d); exr_font_free(d->font);
-  for(i=0;i<8;i++) free((void *)d->metadata[i].value);
+  pdf_document *d=context; if(!d) return; discard_reader(d); exr_font_free(d->font);
+  exr_metadata_free(d->metadata,d->metadata_count);
   free(d->data); free(d);
 }
 static exr_status reader(pdf_document *d,exr_error *e) {
@@ -134,22 +134,54 @@ invalid:
 done:
   free(b.data); return status;
 }
+static exr_status merge_xmp(pdf_document *d,const exr_control *control,exr_error *e) {
+  uint32_t id; const exr_pdf_value *v; const unsigned char *data; size_t size,i,j,n=0,bytes=0;
+  exr_metadata_entry *xmp=NULL,*merged; size_t xcount=0; exr_status status;
+  status=exr_pdf_resolve(d->file,exr_pdf_get(d->file,exr_pdf_root(d->file),"Metadata"),&id,e); if(status!=EXR_OK) return status;
+  v=exr_pdf_value_at(d->file,id); if(!v || v->kind==EXR_PDF_NULL) return EXR_OK;
+  if(v->kind!=EXR_PDF_STREAM) return exr_fail(e,EXR_FORMAT,"PDF Metadata is not a stream");
+  status=exr_pdf_stream_data(d->file,id,&data,&size,e); if(status!=EXR_OK) return status;
+  status=exr_metadata_read_xmp(data,size,control,&xmp,&xcount,e); if(status!=EXR_OK) return status;
+  /* XMP replaces Info values of the same key; repeated XMP values keep order. */
+  for(i=0;i<d->metadata_count;i++) {
+    for(j=0;j<xcount;j++) if(!strcmp(d->metadata[i].key,xmp[j].key)) break;
+    if(j<xcount) { free((void *)d->metadata[i].key); free((void *)d->metadata[i].value); }
+    else d->metadata[n++]=d->metadata[i];
+  }
+  d->metadata_count=n;
+  if(xcount>4096-n) { status=exr_fail(e,EXR_LIMIT,"PDF metadata exceeds 4096 values"); goto done; }
+  for(i=0;i<n;i++) bytes+=strlen(d->metadata[i].key)+strlen(d->metadata[i].value)+2;
+  for(i=0;i<xcount;i++) bytes+=strlen(xmp[i].key)+strlen(xmp[i].value)+2;
+  if(bytes>(size_t)8*1024*1024) { status=exr_fail(e,EXR_LIMIT,"PDF metadata exceeds 8 MiB"); goto done; }
+  if(xcount) {
+    merged=realloc(d->metadata,(n+xcount)*sizeof(*merged)); if(!merged) { status=exr_fail(e,EXR_MEMORY,"PDF metadata merge allocation failed"); goto done; }
+    d->metadata=merged; memcpy(d->metadata+n,xmp,xcount*sizeof(*xmp)); d->metadata_count=n+xcount; free(xmp); xmp=NULL;
+  }
+done:
+  exr_metadata_free(xmp,xcount); return status;
+}
 static exr_status metadata(void *context,const exr_control *control,const exr_metadata_entry **out,size_t *count,exr_error *e) {
   static const char *names[]={"Title","Author","Subject","Keywords","Creator","Producer","CreationDate","ModDate"};
   static const char *keys[]={"http://purl.org/dc/terms/title","http://purl.org/dc/terms/creator","http://purl.org/dc/terms/description","http://ns.adobe.com/pdf/1.3/Keywords","http://ns.adobe.com/xap/1.0/CreatorTool","http://ns.adobe.com/pdf/1.3/Producer","http://ns.adobe.com/xap/1.0/CreateDate","http://ns.adobe.com/xap/1.0/ModifyDate"};
-  pdf_document *d=context; uint32_t info; const exr_pdf_value *v; exr_status status; size_t i,n=0;
+  pdf_document *d=context; uint32_t info; const exr_pdf_value *v; exr_status status; size_t i;
   *out=NULL; *count=0;
-  for(i=0;i<8;i++) { free((void *)d->metadata[i].value); d->metadata[i]=(exr_metadata_entry){0}; }
+  exr_metadata_free(d->metadata,d->metadata_count); d->metadata=NULL; d->metadata_count=0;
   status=reader(d,e); if(status!=EXR_OK) return status;
   status=exr_pdf_resolve(d->file,exr_pdf_info(d->file),&info,e); if(status!=EXR_OK) goto done;
-  v=exr_pdf_value_at(d->file,info); if(!v || v->kind==EXR_PDF_NULL) return EXR_OK;
+  v=exr_pdf_value_at(d->file,info); if(!v || v->kind==EXR_PDF_NULL) goto read_xmp;
   if(v->kind!=EXR_PDF_DICT) { status=exr_fail(e,EXR_FORMAT,"PDF Info is not a dictionary"); goto done; }
+  d->metadata=calloc(8,sizeof(*d->metadata)); if(!d->metadata) { status=exr_fail(e,EXR_MEMORY,"PDF metadata allocation failed"); goto done; }
   for(i=0;i<8;i++) {
     char *value=NULL; status=exr_control_poll(control,EXR_STAGE_READ,i,8,e); if(status!=EXR_OK) goto done;
     status=metadata_string(d->file,exr_pdf_get(d->file,info,names[i]),&value,e); if(status!=EXR_OK) goto done;
-    if(value) { d->metadata[n].key=keys[i]; d->metadata[n++].value=value; }
+    if(value) {
+      char *key=exr_copy(keys[i],strlen(keys[i])); if(!key) { free(value); status=exr_fail(e,EXR_MEMORY,"PDF metadata key allocation failed"); goto done; }
+      d->metadata[d->metadata_count++]=(exr_metadata_entry){key,value};
+    }
   }
-  *out=d->metadata; *count=n;
+read_xmp:
+  status=merge_xmp(d,control,e); if(status!=EXR_OK) goto done;
+  *out=d->metadata; *count=d->metadata_count;
 done:
   if(status!=EXR_OK) discard_reader(d);
   return status;
