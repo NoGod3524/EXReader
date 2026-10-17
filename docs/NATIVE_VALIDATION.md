@@ -1650,3 +1650,23 @@ with spaces and configuring a new consumer still succeeds, and an independent
 C++17 consumer links the C ABI and exercises document ownership. Desktop CI now
 builds/runs the imported-target C and C++ consumers on all three systems.
 The 0.90 fb49403 CI passed all six jobs.
+
+
+## 0.92 Optional generic persistent text index
+
+SQLite FTS5 case-sensitive trigrams select candidates; the shared C KMP prefix
+builder supports an incremental literal byte matcher with overlapping results.
+Tests cover empty indexes/parts, source filters, Chinese one/two/three-scalar
+queries, emoji, accents/case, quoted punctuation, spaces, embedded-NUL queries
+and matches after NUL. A 128 KiB repeated-prefix source exercises streaming
+continuation without rebuilding the pattern table per hit. Active-query write
+rejection, a concurrent WAL writer with a stable read snapshot, retained query
+lifetime after owner close and persistence/reopen are checked. Forced INSERT and
+deferred-FK COMMIT failures retain the previous index; part/source deletion,
+corrupt UTF-8, invalid input/byte limits and cancellation clear outputs. Index
+schema validation/creation occur under a write transaction and reject an ordinary
+book library. All 69 local Windows suites pass. A separate index-disabled build
+passes availability/open checks and still opens a TXT document. Release DLL sizes
+for this local compiler configuration are 4,073,866 bytes enabled and 3,810,969
+bytes disabled; these are binary-size observations, not open/RSS benchmarks.
+The 0.91 7dc8d8a CI passed all six jobs.

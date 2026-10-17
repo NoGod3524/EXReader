@@ -11,7 +11,9 @@ Within one epoch, existing exported C symbols, calling conventions, enum numeric
 values, public record sizes/alignment/member offsets, callback signatures and
 ownership contracts remain compatible on the same operating system, architecture
 and compiler ABI. Removing symbols or changing those layouts requires a new epoch.
-Adding functions does not. A host using new functions also requires the release
+Adding functions does not. Optional build features retain their public symbols;
+for example, `exr_text_index_available()` reports whether FTS indexing is enabled.
+A host using new functions also requires the release
 that first provides them; an epoch alone does not imply that every later symbol
 exists in an older library.
 
