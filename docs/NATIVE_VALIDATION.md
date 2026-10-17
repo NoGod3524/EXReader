@@ -560,3 +560,13 @@ multiple dictionaries, recursive phrases, UTF-8/Windows-1252, multiple records a
 Cases reject bad tables/offsets/prefixes, missing/truncated dictionaries, phrase cycles,
 65-level nesting, expansion-budget overflow, record-directory corruption and bad trailers.
 PalmDOC tests distinguish valid in-record overlap from invalid cross-record references.
+
+
+## 0.28 KF8 reconstruction
+
+`native-kf8` checks two-chapter SKEL/FRAG assembly, multiple data INDX records,
+multiple control bytes, TAGX byte-length prefixes before value payloads, repeated insertions,
+zero-fragment skeletons, unsplit XHTML and FDST auxiliary streams. Chapter paths, structure,
+resource bytes and text survive structured EPUB round-trip. Corrupt headers, total counts,
+IDXT offsets, masks, VWI, fragment bounds/order, unsupported ORDT, orphan indexes, malformed
+XHTML and truncated/gapped FDST fail atomically.

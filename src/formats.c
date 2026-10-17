@@ -1023,7 +1023,7 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
   header_size=be32(h+20);
   if(header_size<116 || header_size>records[0].size-16) goto done;
   compression=be16(h); text_count=be16(h+8); encoding=be32(h+28);
-  if(be32(h+36)>=8) { status=exr_fail(e,EXR_FORMAT,"KF8 reconstruction is not implemented"); goto done; }
+  if(be32(h+36)>8) { status=exr_fail(e,EXR_FORMAT,"Unsupported MOBI version"); goto done; }
   if(!text_count || text_count>=count || !be32(h+4) || (encoding!=65001 && encoding!=1252)) goto done;
   if(be32(h+4)>EXR_MAX_TEXT) { status=EXR_LIMIT; goto done; }
   if(header_size>=228 && be32(h+104)>=5) flags=be16(h+242);
@@ -1042,7 +1042,10 @@ static exr_status mobi(exr_document *d, const void *data, size_t n, exr_error *e
   if(be32(h+4)>text.size) { status=EXR_FORMAT; goto done; }
   exr_mobi_huff_free(huff); huff=NULL;
   text.size=be32(h+4); text.data[text.size]=0;
-  if(encoding==1252) {
+  if(be32(h+36)==8) {
+    if(encoding!=65001) { status=exr_fail(e,EXR_FORMAT,"KF8 requires UTF-8 encoding"); goto done; }
+    status=exr_kf8(d,records,count,text.data,text.size,e);
+  } else if(encoding==1252) {
     for(i=0;i<text.size;i++) if(!exr_codepoint(&utf8,exr_windows1252((unsigned char)text.data[i]))) { status=EXR_LIMIT; goto done; }
     status=html(d,utf8.data,utf8.size,e);
   } else status=html(d,text.data,text.size,e);
