@@ -16,8 +16,12 @@ static void rectangle(exr_bitmap *b, float x, float y, float w, float h, uint32_
     for (xx = left; xx < right; xx++)
       exr_pixel(b, xx, yy, color, 255);
 }
-static void decoration(exr_bitmap *out,const exr_glyph *g,const exr_glyph *next,FT_Face face,const exr_line *line) {
-  float thickness=fmaxf(1,fminf(g->size/6,(float)FT_MulFix(face->underline_thickness,face->size->metrics.y_scale)/64));
+static void decoration(exr_bitmap *out,const exr_glyph *g,const exr_glyph *next,const exr_face *selected,const exr_line *line) {
+  FT_Face face=selected->face; const TT_Postscript *post=selected->bitmap_only ? FT_Get_Sfnt_Table(face,ft_sfnt_post) : NULL;
+  float scale=selected->bitmap_scale_y;
+  FT_Short underline_thickness=post ? post->underlineThickness : face->underline_thickness;
+  FT_Short underline_position=post ? post->underlinePosition : face->underline_position;
+  float thickness=fmaxf(1,fminf(g->size/6,(float)FT_MulFix(underline_thickness,face->size->metrics.y_scale)/64*scale));
   if(g->flags&EXR_GLYPH_VERTICAL) {
     float top=fmaxf(floorf(g->baseline),ceilf(g->clip_left)),bottom=g->baseline+g->advance;
     float center=line ? line->x+line->width/2 : g->x;
@@ -34,15 +38,15 @@ static void decoration(exr_bitmap *out,const exr_glyph *g,const exr_glyph *next,
       next->color==g->color && fabsf(next->baseline-g->baseline)<0.01f) right=fmaxf(right,next->x);
   right=fminf(ceilf(right),ceilf(g->clip_right));
   if(g->flags&EXR_GLYPH_UNDERLINE) {
-    float position=(float)FT_MulFix(face->underline_position,face->size->metrics.y_scale)/64;
+    float position=(float)FT_MulFix(underline_position,face->size->metrics.y_scale)/64*scale;
     rectangle(out,left,g->baseline-position,right-left,thickness,g->color);
   }
   if(g->flags&EXR_GLYPH_STRIKE) {
     const TT_OS2 *os2=FT_Get_Sfnt_Table(face,ft_sfnt_os2);
     float position=g->size*0.3f,strike_thickness=thickness;
     if(os2) {
-      position=(float)FT_MulFix(os2->yStrikeoutPosition,face->size->metrics.y_scale)/64;
-      strike_thickness=fmaxf(1,fminf(g->size/6,(float)FT_MulFix(os2->yStrikeoutSize,face->size->metrics.y_scale)/64));
+      position=(float)FT_MulFix(os2->yStrikeoutPosition,face->size->metrics.y_scale)/64*scale;
+      strike_thickness=fmaxf(1,fminf(g->size/6,(float)FT_MulFix(os2->yStrikeoutSize,face->size->metrics.y_scale)/64*scale));
     }
     rectangle(out,left,g->baseline-position,right-left,strike_thickness,g->color);
   }
@@ -115,6 +119,7 @@ static exr_status draw_single_glyph(exr_bitmap *out,exr_font *font,const exr_gly
   if((g->flags&EXR_GLYPH_HIDDEN) || g->size<1.0f/64) return EXR_OK;
   if(g->font_index>=font->count) return EXR_FONT;
   selected=&font->faces[g->font_index]; face=selected->face;
+  if(selected->bitmap_only) return EXR_OK;
   if(exr_control_cancel(control,error)!=EXR_OK) return EXR_CANCELLED;
   if(!exr_vector_work(work,1)) return EXR_LIMIT;
   if(exr_font_size(selected,g->size) || FT_Load_Glyph(face,g->glyph,outline_only ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT)) return EXR_FONT;
@@ -189,7 +194,7 @@ static exr_status draw_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,c
   exr_font_color_layer layers[256]; exr_glyph_image image={0}; size_t n=0,i; exr_status status;
   if((g->flags&EXR_GLYPH_HIDDEN) || g->size<1.0f/64 || !(g->color&255)) return EXR_OK;
   if(g->font_index>=font->count) return EXR_FONT;
-  status=exr_font_sbix_image(font->faces+g->font_index,g->glyph,g->size,&image,work,control,error); if(status!=EXR_OK) return status;
+  status=exr_font_image(font->faces+g->font_index,g->glyph,g->size,&image,work,control,error); if(status!=EXR_OK) return status;
   if(image.bitmap.pixels) {
     status=draw_bitmap_glyph(out,g,&image,work,control,error); exr_bitmap_free(&image.bitmap); if(status!=EXR_OK) return status;
     if(image.flags&EXR_GLYPH_IMAGE_OUTLINE_OVERLAY) { status=draw_single_glyph(out,font,g,1,work,control,error); if(status!=EXR_OK) return status; }
@@ -205,7 +210,7 @@ decorations:
   if(g->flags&EXR_DECORATIONS) {
     exr_face *face=font->faces+g->font_index;
     if(exr_font_size(face,g->size)) return EXR_FONT;
-    decoration(out,g,next,face->face,line);
+    decoration(out,g,next,face,line);
   }
   return EXR_OK;
 }

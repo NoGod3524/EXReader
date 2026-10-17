@@ -2173,3 +2173,29 @@ color-font suite now has 80408 checks. This closes the old embedded-only probe
 that discarded sbix as non-scalable. The preceding sbix batch (77bfa02) passes
 all six desktop/mobile/sanitizer CI jobs. No public ABI, dependency or version
 change is involved.
+
+## Milestone 0.18 development: CBDT/CBLC bitmap-only fonts
+
+The original 3004-byte cbdt.ttf exercises both bitmap-only font metrics and
+two native strikes, all five index formats and PNG image formats 17/18/19.
+Tests cover sparse and absent images, continuous advances including hmtx tail
+reuse, explicit/fallback vertical metrics, empty outlines, decorations, retained
+snapshots, font fallback, embedded EPUB fonts and identical whole/paged pixels.
+Malformed offsets, unordered/duplicate sparse IDs, unsupported encoding/depth,
+wrong PNG sizes/signatures and cancellation are rejected with cleared outputs.
+All index arrays are checked once in bounded reads before binary searches.
+
+As an independent local reference, NotoColorEmoji.ttf from
+googlefonts/noto-emoji `main/2D/fonts` (SHA-256
+`15671215ab769fdc7162a045d56fd7d7e477c51b04e6b3c761d914d8fdd6cc44`)
+has 4046 glyphs, of which 4004 have CBDT images. All 4004 decoded RGBA buffers
+match fontTools-extracted PNGs decoded with Pillow exactly, including native
+bearings; the remaining 42 return no image. The external font is not shipped.
+This test also exposed an existing ZWJ substitution issue, tracked separately
+from bitmap decoding. The preceding embedded sbix batch (126b1e0) passes all
+six platform/sanitizer CI jobs. No runtime dependency or ABI/schema/version
+change is involved.
+All 100 local Windows suites pass, including byte-identical whole/paged bitmap
+renders; the installed C++17 SDK consumer passes. The default release DLL is
+4,492,143 bytes, 13,305 bytes above the preceding sbix build. This batch's
+desktop/mobile/sanitizer CI is checked against its own commit after pushing.
