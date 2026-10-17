@@ -820,3 +820,14 @@ ls/ilvl 现在构造通用 ol/ul 与 li，保留列表实例 ID 和 0–8 级层
 `exr_library_import_unique` 按格式与原文件全部字节查找重复，命中时返回最小的已有正 ID、created=0；不改已有书名、作者、进度、封面或标注。没有重复时调用既有解析与封面导入，成功提交后返回新 ID、created=1。旧 import 继续允许多个副本。
 
 查询、插入和提交使用同一写事务，跨连接同时导入不会增加两个副本；SQLite 连接互斥量保护同一连接上的整个操作。失败时 id/created 清零，回滚新增数据。沿用 128 MiB 原文件上限与 schema 4，不增加数据库迁移或常驻索引。当前先按格式和字节数筛选，再作精确 BLOB 比较；大书库查询成本随候选文件总字节数增加。不同编码、重新打包、转换格式或仅正文相同的文件视为不同来源。
+
+
+## 章节 CFI 内容路径（0.86）
+
+`exr_document_cfi_path_create` / resolve 实现 [EPUB CFI 1.1](https://w3c.github.io/epub-specs/epub33/epubcfi/) 的内容文档路径组件，例如 `/4[body]/2[p]/1:3`。调用方单独提供 chapter；接口不添加 package spine 前缀、`!` 或 `epubcfi(...)`，也不做 URI 百分号解码。章节必须具有唯一的 XML 文档元素，不能把多根的普通文本模型当作原始 XHTML。
+
+`exr_cfi_point.node` 指向文档节点。文字节点的 offset 是原始未折叠文字内的 UTF-16 单元数，包括 surrogate pair 中间的位置；元素 offset=SIZE_MAX 表示元素本身，其余 offset 是直接子节点边界。它与规范化正文 UTF-8 偏移不同。连续文字节点按 CFI 的同一个逻辑文字块计数，解引用可返回等价的前一个文字节点末端。空文字块和首尾 virtual element 转为父元素的子节点边界。根元素自身对应空的局部路径。
+
+ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一 ID 修正；缺失或多重匹配返回 EXR_FORMAT。side=0/1/2 分别表示未指定、before、after，终端携带标准 `;s=b/a` 参数。路径最多 64 KiB、256 层，ID 断言最多 4096 字节，支持取消。失败时 path=NULL 或 point.node/offset=SIZE_MAX。
+
+此阶段拒绝文本位置断言、范围、图像 alt 偏移、跨文档重定向、时间和空间偏移；完整 EPUB 包路径仍需保留 OPF spine 的原始结构后接入。

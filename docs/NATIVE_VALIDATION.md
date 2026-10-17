@@ -1562,3 +1562,20 @@ sources, backup/reopen, reuse after deleting the oldest copy, invalid stored IDs
 invalid arguments and the source byte limit are covered. No schema migration,
 new digest implementation or mandatory index is added. All 65 local Windows suites
 pass. The 0.84 8292325 CI passed all six jobs.
+
+
+## 0.86 Chapter-local CFI content paths
+
+The native XML-tree path implementation counts child elements separately from
+potentially empty character-data chunks, merging adjacent text nodes logically.
+Tests verify literal CFI strings with escaped IDs, XML IDs, raw whitespace,
+supplementary Unicode/UTF-16 surrogate interiors, element child boundaries, empty
+chunks, virtual first/last elements, implicit zero offsets, side bias and unique
+ID correction. Duplicate IDs fail during correction rather than guessing. Text
+nodes across layout/font/navigation EPUB fixtures roundtrip through canonical
+paths at both endpoints. Invalid grammar, leading-zero/overflow integers, excessive
+offsets, malformed escapes, unsupported suffixes, missing IDs, byte budgets,
+invalid UTF-8, invalid arguments and cancellation clear outputs. All 66 local
+Windows suites pass. The 0.85 713c2a8 CI passed all six jobs.
+This is a content-path building block; full package CFIs and text assertions are
+separate work, rather than synthesized from assumed spine positions.
