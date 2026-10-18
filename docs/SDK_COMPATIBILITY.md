@@ -253,3 +253,21 @@ private flag, omitted from public output, and do not enter Unicode/dictionary in
 Snapshots include all display states by value; no public record/API size changed.
 Internal display breaks and mixed-direction subclusters within an atomic side,
 full changed-paragraph bidi resolution, casing and conditional compounds remain open.
+
+
+### Display bidi after discretionary spelling changes (0.18 development)
+
+Generated strings now participate in a mapped display analysis before shaping
+and final visual ordering; mixed-direction visual subruns retain the original
+source selection range, with direction-specific hit endpoints. No public record
+size, symbol contract, ABI epoch or library schema changes. Private virtual
+indices/flags never appear in installed SDK snapshots. Immutable history and
+AUTO paragraph-base records survive checkpoints; ephemeral bidi views are rebuilt.
+AUTO preflight ignores isolate contents and preserves current page/float geometry.
+Its bounded two-base retry reports EXR_LIMIT for non-converging discretionary
+layout. Providers must be deterministic and can be queried during preflight.
+Installed JNI/Swift consumers verify actual Latin/Arabic/Han levels, source hits,
+and leading neutral pages whose base changes after a later replacement.
+Internal generated-side line breaks, effects of future unselected edits on
+already-published neutral/bracket context, casing and conditional compounds remain
+open; the broader VERSIONING.md roadmap remains active.

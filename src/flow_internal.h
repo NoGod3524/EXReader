@@ -4,14 +4,17 @@
 #include "layout_internal.h"
 #include "text_internal.h"
 #include "hyphen_internal.h"
+#include "display_bidi_internal.h"
 #define EXR_PAUSE ((exr_status)100)
 #define EXR_REFLOW ((exr_status)101)
 #define EXR_FRAGMENT_SMALL ((exr_status)102)
+#define EXR_BIDI_RESOLVED ((exr_status)103)
 #define EXR_MAX_FLOATS 128
 typedef struct { float x,y,width,height; unsigned side; } exr_float;
 typedef struct { exr_float items[EXR_MAX_FLOATS]; size_t count; } exr_float_state;
 #define EXR_GLYPH_TRY_VERTICAL 512u /* Internal UAX #50 Tr probe, cleared before output. */
 #define EXR_GLYPH_DELETED 4096u /* Private empty replacement source marker. */
+#define EXR_GLYPH_DISPLAY_BIDI 8192u /* Private page field holds a display scalar index. */
 #define EXR_GLYPH_RUBY_ITEM 1024u /* Internal atomic inline item, expanded before output. */
 #define EXR_BOUNDARY_AUTO_HYPHEN 16u /* Private raw-source opportunity, not a shaping boundary. */
 typedef struct {
@@ -30,6 +33,10 @@ typedef struct {
   size_t *offsets, count;
   size_t first_node;
 } exr_inline_bidi;
+typedef struct {
+  size_t start,end,isolate_depth;
+  unsigned strong;
+} exr_bidi_probe;
 typedef struct {
   exr_layout *layout, *assets;
   const exr_document *doc;
@@ -53,6 +60,10 @@ typedef struct {
   int unit_assigned;
   int fragment_probe;
   exr_inline_bidi *bidi;
+  const exr_bidi_override *auto_bases; /* Borrowed from this pager line buffer. */
+  exr_bidi_probe *auto_probe; /* Borrowed only by a speculative paragraph cursor. */
+  const exr_display_view *display_bidi; /* Borrowed only while emitting a line. */
+  size_t display_first,display_count;
   exr_writing_mode writing_mode;
 } flow;
 typedef struct {
@@ -61,6 +72,10 @@ typedef struct {
   uint32_t display_previous, line_previous;
   size_t display_node, line_node;
   int track_display, display_changed;
+  exr_display_state *display;
+  exr_bidi_override *auto_bases;
+  unsigned first_strong,line_first_strong; /* Safe-window context; full path retains UAX9 P2. */
+  int last_hyphen,line_last_hyphen,display_committed;
   uint32_t before, after;
   size_t cluster_start, ready, scan, soft, emergency, line_end, raw_end;
   float scan_width;
@@ -79,6 +94,8 @@ typedef struct {
 void exr_inline_clear(exr_inline_bidi *bidi);
 unsigned exr_vertical_flags(uint32_t codepoint, exr_text_orientation orientation);
 exr_status exr_inline_prepare(flow *f, size_t first_node, exr_inline_bidi *bidi);
+exr_status exr_inline_auto_stable(flow *f,exr_line_buffer *buffer,size_t node,size_t offset,int *stable);
+size_t exr_inline_paragraph_end(flow *f,size_t node,size_t offset);
 unsigned exr_inline_level(const exr_inline_bidi *bidi, size_t offset);
 unsigned exr_inline_base(const exr_inline_bidi *bidi, size_t offset);
 exr_status exr_inline_reorder(flow *f, exr_glyph *glyphs, size_t count);

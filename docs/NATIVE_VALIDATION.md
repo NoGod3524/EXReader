@@ -3176,3 +3176,52 @@ all three benchmark datasets match the corrected benchmark executable hash.
 The following record-only commit refreshes the measured evidence and skips a
 redundant CI run. Paragraph bidi/internal display positions and the broader
 compatibility roadmap remain unfinished.
+
+
+### Discretionary display bidi and AUTO-base preflight (0.18 development)
+
+Mapped display scalars now carry distinct private visual indices while preserving
+original source ranges. Candidate levels are applied before shaping/measurement
+and reused for final reorder. Exact committed changes, current before/after,
+queued carry and original future text participate in paragraph analysis. Safe
+class-preserving L replacements keep their former fast path. Compact strong
+context windows are used only without paired brackets, explicit/isolate controls
+or B/S separators; other cases use complete current paragraph context. Grapheme
+state is replayed from the exact line origin even on the window path.
+
+A reproduced leading-neutral regression produced EN level 0 where the completed
+AUTO paragraph required level 2: later spelling deletion changed the first strong
+from L to R/AL after earlier pages had already been emitted. AUTO now resolves
+its first actual strong outside nested isolates before publishing those pages.
+Trial cursors preserve current page height, float exclusions and source state;
+per-source-paragraph decisions survive checkpoint restore, with independent B
+paragraphs and a bounded non-convergence error. An unchanged first strong scalar
+is proven from the existing word cache where possible, avoiding speculative work
+and owned bidi arrays for ordinary class-preserving replacement text.
+
+Local GCC Release: all 113 CTests pass. The layout suite records 1,985,278 checks,
+70 EPUB fixtures (14 new, all 56 previous EPUB blobs unchanged), 9 original + 256
+seeded full-display differential cases, four additional leading-digit/isolate/B
+cases, actual Arabic lam-alef replacement ligatures, public flag separation,
+positioned reconstruction, pixels/hits, cached/uncached/backward pages and provider
+error/cancellation recovery. Installed C/C++ consumers and Java -Xcheck:jni pass;
+JNI checks mixed levels 2/1/0 and an all-digit first page resolved to level 2.
+Swift contains equivalent installed SDK checks for macOS CI.
+
+Three fresh processes per mode over each 1 MiB EPUB and its first 65 pages:
+
+| Workload | Enabled first visible (ms) | Peak RSS (bytes) | Turn p50 / p95 (ms) |
+| --- | ---: | ---: | ---: |
+| English dictionary | 21.9788 | 14577664 | 4.8733 / 7.3615 |
+| Class-preserving repeated spelling changes | 18.2604 | 14024704 | 6.9389 / 11.1030 |
+| Latin/Arabic/Han mixed spelling changes | 39.7312 | 14454784 | 8.6898 / 10.7964 |
+
+Raw inputs, output, dictionary/binary/font hashes and source provenance live under
+benchmarks/0.18.0-hyphen-bidi-windows. Disk cache/background load are uncontrolled.
+An initial unnecessary forced-LTR array path measured 148 ms / 77.7 MB on the
+class-preserving workload; it was removed before this measured snapshot.
+Internal generated-side line breaks, future unselected edits affecting already
+emitted neutral/bracket context, language casing and conditional compounds remain
+open. This step does not complete the broader PDF/platform/service roadmap.
+Cross-platform CI results and final Git-byte source hashes are recorded after
+the actual validated snapshot completes.

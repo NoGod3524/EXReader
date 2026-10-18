@@ -198,7 +198,7 @@ static exr_status ordinary_fragment(flow *f, exr_glyph *glyphs, size_t count, fl
   line.start=SIZE_MAX;
   for(i=0;i<count;i++) {
     exr_glyph *g=&glyphs[i]; exr_face *face=&f->font->faces[g->font_index];
-    g->boundaries&=15u;g->flags&=~EXR_GLYPH_DELETED;
+    g->boundaries&=15u;g->flags&=~(EXR_GLYPH_DELETED|EXR_GLYPH_DISPLAY_BIDI);
     if(f->intrinsic && !(i&255) && exr_control_cancel(&f->config->control,f->error)!=EXR_OK) return EXR_CANCELLED;
     if(exr_font_size(face,g->size)) return EXR_FONT;
     ascent=fmaxf(ascent,exr_font_ascent(face));
@@ -221,6 +221,7 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
   float available=fmaxf(1,f->width-indent),width=0,ascent=0,descent=0,height=0,x,extra=0,baseline;
   int align=f->intrinsic ? 0 : f->paragraph->align;
   unsigned base=exr_inline_base(f->bidi,logical_start);
+  if(f->display_bidi) { unsigned projected=exr_bidi_base_level(f->display_bidi->bidi,f->display_first);if(projected!=UINT_MAX) base=projected; }
   exr_status status;
   if(f->intrinsic) {
     while(count && (glyphs[count-1].codepoint==' ' || glyphs[count-1].codepoint=='\t')) count--;

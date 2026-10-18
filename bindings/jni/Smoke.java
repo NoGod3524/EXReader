@@ -289,6 +289,37 @@ public final class Smoke {
                 check(joined && separated && page.render().width==80);
             }
         }
+        try(EXReader.Publication bidiBook=new EXReader.Publication(root.resolve("books/hyphen-bidi-long.epub").toString());
+            EXReader.Document bidiChapter=bidiBook.load(0);
+            EXReader.Pager bidiPager=bidiChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,compoundConfig)) {
+            bidiPager.setHyphenation(new EXReader.HyphenDictionary[]{new EXReader.HyphenDictionary("zb",
+                ".aaaa1aaaaaaaa./ا1中=12ا,4,2".getBytes(StandardCharsets.UTF_8),1,1)},0);
+            try(EXReader.ReflowPage page=bidiPager.next()) {
+                check(page!=null);int beforeCount=0;int[] visual={49,0x627,0x4e2d},levels={2,1,0};
+                for(EXReader.Glyph g:page.snapshot().glyphs) {
+                    check((g.flags&~2559)==0 && g.start>=0);
+                    if((g.flags&2048)!=0 && g.start==3 && g.end==4) {
+                        check(beforeCount<3 && g.codepoint==visual[beforeCount] && g.bidiLevel==levels[beforeCount]);beforeCount++;
+                        check(page.hitTest(g.x+.1f,g.baseline-2)==((g.bidiLevel&1)!=0 ? 4 : 3));
+                    }
+                }
+                check(beforeCount==3 && page.render().width==80);
+            }
+        }
+        try(EXReader.Publication leadingBook=new EXReader.Publication(root.resolve("books/hyphen-bidi-leading.epub").toString());
+            EXReader.Document leadingChapter=leadingBook.load(0);
+            EXReader.Pager leadingPager=leadingChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,compoundConfig)) {
+            leadingPager.setHyphenation(new EXReader.HyphenDictionary[]{new EXReader.HyphenDictionary("ze",
+                ".aaaa1aaaaaaaa./=אב1,1,5".getBytes(StandardCharsets.UTF_8),1,1)},0);
+            try(EXReader.ReflowPage page=leadingPager.next()) {
+                check(page!=null);var glyphs=page.snapshot().glyphs;check(glyphs.length>0);
+                for(EXReader.Glyph g:glyphs) {
+                    check(g.codepoint==49 && g.bidiLevel==2 && (g.flags&~2559)==0);
+                    check(page.hitTest(g.x+.1f,g.baseline-2)==g.clusterStart);
+                }
+                check(page.render().width==80);
+            }
+        }
         System.out.println("JNI SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed");
     }
 }
