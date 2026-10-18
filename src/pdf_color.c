@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "pdf_internal.h"
 #include "pdf_function_internal.h"
+#include "icc_internal.h"
 typedef enum { SPACE_GRAY,SPACE_RGB,SPACE_CMYK,SPACE_CALGRAY,SPACE_CALRGB,SPACE_LAB,SPACE_INDEXED,SPACE_ICC,SPACE_TINT,SPACE_ALL } space_kind;
 struct exr_pdf_colorspace {
   space_kind kind; unsigned components,high; int no_paint;
@@ -8,6 +9,7 @@ struct exr_pdf_colorspace {
   unsigned char palette[1024];
   struct exr_pdf_colorspace *alternate;
   exr_pdf_function *function;
+  exr_icc *icc;
 };
 typedef struct {
   exr_pdf_file *resources_file; uint32_t resources;
@@ -67,7 +69,7 @@ exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double *valu
   if(s->kind==SPACE_INDEXED) {
     unsigned index=(unsigned)floor(v[0]+.5); for(i=0;i<3;i++) rgb[i]=s->palette[index*4+i]/255.0; return EXR_OK;
   }
-  if(s->kind==SPACE_ICC) return exr_pdf_colorspace_rgb(s->alternate,v,rgb,error);
+  if(s->kind==SPACE_ICC) return s->icc ? exr_icc_rgb(s->icc,v,rgb,error) : exr_pdf_colorspace_rgb(s->alternate,v,rgb,error);
   if(s->kind==SPACE_TINT) {
     double alternate[4]={0}; exr_status status=exr_pdf_function_eval_inputs(s->function,v,alternate,error);
     return status==EXR_OK ? exr_pdf_colorspace_rgb(s->alternate,alternate,rgb,error) : status;
@@ -219,6 +221,13 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
     channels=(unsigned)n->u.integer; s=device(SPACE_ICC,channels); if(!s) goto memory;
     value=get(r,file,ids[1],"Range"); if(value!=EXR_PDF_NONE && !numbers(r,file,value,s->ranges,channels*2)) goto bad;
     for(i=0;i<channels;i++) if(s->ranges[2*i]>s->ranges[2*i+1]) goto bad;
+#ifdef EXR_ENABLE_ICC
+    { const unsigned char *profile;size_t size;
+      status=exr_pdf_stream_data(file,ids[1],&profile,&size,r->error);if(status!=EXR_OK) goto done;
+      status=exr_icc_open(profile,size,channels,r->control,&s->icc,r->error);if(status!=EXR_OK) goto done;
+      if(s->icc) { *out=s;return EXR_OK; }
+    }
+#endif
     alternate=get(r,file,ids[1],"Alternate");
     if(alternate==EXR_PDF_NONE) { s->alternate=device(channels==1 ? SPACE_GRAY : channels==3 ? SPACE_RGB : SPACE_CMYK,channels); if(!s->alternate) goto memory; }
     else { status=open_space(r,file,alternate,depth+1,&s->alternate); if(status!=EXR_OK) goto done; }
@@ -265,10 +274,10 @@ exr_status exr_pdf_colorspace_open(exr_pdf_file *file,uint32_t value,exr_pdf_fil
   r.resources_file=resource_file; r.resources=resources; r.control=control; r.error=error ? error : &local; memset(r.error,0,sizeof(*r.error));
   status=open_space(&r,file,value,0,out); return status==EXR_OK ? exr_fail(error,EXR_OK,"") : status;
 }
-void exr_pdf_colorspace_free(exr_pdf_colorspace *s) { if(s) { exr_pdf_colorspace_free(s->alternate); exr_pdf_function_free(s->function); free(s); } }
-size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *s) { return s ? sizeof(*s)+exr_pdf_colorspace_memory(s->alternate)+exr_pdf_function_memory(s->function) : 0; }
+void exr_pdf_colorspace_free(exr_pdf_colorspace *s) { if(s) { exr_pdf_colorspace_free(s->alternate); exr_pdf_function_free(s->function); exr_icc_free(s->icc); free(s); } }
+size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *s) { return s ? sizeof(*s)+exr_pdf_colorspace_memory(s->alternate)+exr_pdf_function_memory(s->function)+exr_icc_memory(s->icc) : 0; }
 int exr_pdf_colorspace_no_paint(const exr_pdf_colorspace *s) { return s && (s->no_paint || exr_pdf_colorspace_no_paint(s->alternate)); }
-size_t exr_pdf_colorspace_cost(const exr_pdf_colorspace *s) { return !s ? 0 : exr_pdf_colorspace_no_paint(s) ? s->components : s->components+exr_pdf_function_cost(s->function)+exr_pdf_colorspace_cost(s->alternate); }
+size_t exr_pdf_colorspace_cost(const exr_pdf_colorspace *s) { return !s ? 0 : exr_pdf_colorspace_no_paint(s) ? s->components : s->components+exr_pdf_function_cost(s->function)+exr_icc_cost(s->icc)+exr_pdf_colorspace_cost(s->alternate); }
 unsigned exr_pdf_colorspace_components(const exr_pdf_colorspace *s) { return s ? s->components : 0; }
 exr_pdf_color_space exr_pdf_colorspace_device(const exr_pdf_colorspace *s) {
   return !s ? 0 : s->kind==SPACE_GRAY ? EXR_PDF_DEVICE_GRAY : s->kind==SPACE_RGB ? EXR_PDF_DEVICE_RGB : s->kind==SPACE_CMYK ? EXR_PDF_DEVICE_CMYK : 0;

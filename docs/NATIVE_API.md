@@ -1076,7 +1076,7 @@ C OpenType 路径现在对 Devanagari 的 deva/dev2 script 进行音节分类、
 
 EPUB/结构文档的 ruby/rb/rt/rp/rtc 使用不可拆的内部 inline 项参与原换行与续排；提交页面时展开为正文和注音各自的真实 glyph/line，内部标记不出现在公开数组。支持横排、vertical-rl/lr、默认半字号、over/under、center/start/space-between/space-around、rbspan 与最多 8 层注音。隐式 base→rt 对可逐组分页；显式 rb 或 rtc 的交错源码组保持整体，避免同页单区间模型丢失源归属。正文与注音各自可命中、选择、定位、导出 positioned 布局并恢复 checkpoint。嵌套 ruby 不支持；每个 ruby 最多 256 个正文/注音分段、每个当前组最多 8192 shaped glyph，超出页宽的不可拆组返回 EXR_LIMIT。树中图片等非文本内容不具备 ruby 内的布局语义。
 
-PDF vector、XObject 与 inline image 通过同一个私有颜色模型处理 Device、Indexed、CalGray、CalRGB、Lab 和 ICCBased Alternate。图形状态保留输入色空间，绘制回调接收转换后的 DeviceRGB；q/Q、Form 和 Type3 作用域沿用原状态栈。固定输出策略是 Bradford 白点适配至 D65、XYZ 黑点补偿、线性 sRGB 转换及最终色域裁剪。ICCBased 不读取 ICC LUT/AToB，按 N/Range/Alternate 回退；完整 ICC、OutputIntent、DeviceN、Pattern 和非设备颜色图像的 SMask Matte 尚未实现；Separation 的新增范围见下节颜色函数补充。模型嵌套最多 16，页面颜色缓存最多 128 个/32 MiB，支持取消与失败清理。
+PDF vector、XObject 与 inline image 通过同一个私有颜色模型处理 Device、Indexed、CalGray、CalRGB、Lab 和 ICCBased Alternate。图形状态保留输入色空间，绘制回调接收转换后的 DeviceRGB；q/Q、Form 和 Type3 作用域沿用原状态栈。固定输出策略是 Bradford 白点适配至 D65、XYZ 黑点补偿、线性 sRGB 转换及最终色域裁剪。ICCBased 的原 Alternate 路径与新增配置转换见下节；OutputIntent、Pattern 和非设备颜色图像的 SMask Matte 尚未实现；Separation 的新增范围见下节颜色函数补充。模型嵌套最多 16，页面颜色缓存最多 128 个/32 MiB，支持取消与失败清理。
 
 Swift EXReaderDocument/Publication/Pager/ReflowPage 和 Java EXReader.Document/Publication/Pager/ReflowPage 提供内存/本地文档、EPUB manifest/spine 按章加载和逐页排版。next 返回独立页面，EOF 返回 nil/null；排版错误后分页器失效。所有文本索引为章内规范化 UTF-8 字节，缺省 node/resource 索引为 -1。Swift 复制无指针 C glyph/line/box 记录，Java 返回类型化 LayoutSnapshot；节点名称、属性和原始文本为独立字符串。fontSource 提供实际字体 bytes、face index 和可变轴坐标，image 提供独立 RGBA 数据；宿主可以使用这些快照自行绘制。
 
@@ -1167,7 +1167,7 @@ GSUB 匹配允许字体明确引用隐藏字符的 glyph ID，包括 ZWJ、标�
 
 DeviceN 接受 1–32 个色名、device/CIE/ICC alternate 和最多四输出的 Type 0/4 变换，按色名数组顺序将输入压栈，逐输入应用 Domain，逐输出应用 Range。单通道也可使用已有 Type 0/2/3。默认所有 tint 为 1；路径填充、描边、XObject/内联图片、Indexed 调色板、图片 Decode 和颜色键掩码共用同一模型，绘制快照仍为屏幕 RGB。
 
-可选属性字典（包括 Subtype NChannel）按复合色的 tintTransform 输出显示，未模拟 Process/Colorants/InkHints 的物理油墨行为。全部色名为 None 时不落墨；混合 None 仍按文件声明的复合变换处理。拒绝 All、重复的非 None 色名、空列表、超过 32 通道和超过 127 字节的色名。物理分色、套印和完整 ICC 仍待实现；Type 2/3 本身只接受一个输入。
+可选属性字典（包括 Subtype NChannel）按复合色的 tintTransform 输出显示，未模拟 Process/Colorants/InkHints 的物理油墨行为。全部色名为 None 时不落墨；混合 None 仍按文件声明的复合变换处理。拒绝 All、重复的非 None 色名、空列表、超过 32 通道和超过 127 字节的色名。物理分色、套印及其余 ICC/输出意图仍待实现；Type 2/3 本身只接受一个输入。
 
 最多 32 输入计入原计算器的 100 项操作数栈，不能再额外占用一套栈；保持 4096 指令、64 KiB 源码、1 MiB 函数图载荷及既有取消和页面工作预算。图片相关 Decode/Mask 缓冲扩到 64 项，逐像素只读写实际通道数；JPEG 继续只接受支持的单通道或三通道解码。不新增依赖或公开结构字段。
 
@@ -1188,3 +1188,14 @@ FunctionType 0 接受 1–32 输入、1–4 输出，按 PDF 定义以首输入�
 根目录 `ComicInfo.xml`（ASCII 大小写不敏感）最多 1 MiB，拒绝重复和不安全 XML。Title/Writer/Summary/LanguageISO/Publisher 映射为 dcterms 属性；其余直接文本字段保留为 `urn:comicinfo:<原字段名>`。最多 128 值、每值 64 KiB；Pages 等嵌套结构尚未解释。缺省目录顺序不受 ComicInfo/Manga 字段影响；没有自动双页拆分或 EXIF 旋转。书库复用原书保存、元数据编辑、封面设置、精确去重、页进度、固定页书签和备份，schema 仍为 6；未自动选择封面。图片页的文字快照为空，未运行 OCR。
 
 Swift 的 `EXReaderFixedDocument(data: ..., format: .cbz)` 和 Java 的 `new EXReader.FixedDocument(EXReader.FixedFormat.CBZ, bytes)` 复用原有元数据/绘制/文字接口；旧 Swift 缺省 PDF 和 Java `EXReader.Pdf` 构造方式保留。C ABI epoch 1 和版本 0.18.0 不变，无新增运行时依赖。
+
+
+## ICCBased 配置转换（0.18 开发补充）
+
+默认启用 `EXR_ENABLE_ICC=ON`，静态编入 MIT 许可的 LittleCMS 2.19.1 C 核心。不开启其工具、格式插件、额外图片依赖或单独运行时 DLL。关闭此选项时保留原 Alternate 回退行为。支持 PDF 32000-1 表 68 的 input/display/output/color-space 类及 Gray/RGB/CMYK/Lab 输入，读取 v2/v4 的矩阵、TRC、AToB LUT 和受支持的多过程元素。按当前固定 RelativeColorimetric 策略转换到 sRGB；关闭优化预计算和像素缓存，避免按图像建立大转换表。PDF 自身的范围、颜色状态、图像 Decode、Indexed 调色板、Separation/DeviceN Alternate、填充和描边复用原路径。
+
+Lab 使用真实 L*/a*/b* 单位及文件 Range（通常 [0 100 -128 127 -128 127]）；CMYK 由 PDF 的 0–1 转为 CMS 的百分比；不将 Lab 数值归一到 RGB 单位。XYZ 输入配置不属于 PDF 表 68 的合法输入类型，走 Alternate。配置可用时忽略 Alternate；损坏、不支持或与 N 不匹配的配置按 Alternate 回退。超过处理预算、内存分配失败和取消直接报错，不隐藏为颜色回退。
+
+配置数据最多 4 MiB；每个 CMS context 用私有分配器将全部分配及对齐头开销限制为 16 MiB，实际驻留分配计入原页面颜色缓存。配置最多 512 tags、每个被检查的输入 pipeline 最多 64 stages；逐像素费用按 pipeline 规模计入已有页面/图片工作预算。配置编译的分配点及求值支持取消，失败释放 profile/transform/context；不同 context 使用独立状态。
+
+本步未接入 PDF `ri`/图像 Intent 的动态渲染意图、OutputIntent、软打样、透明组混合色空间、物理印版或套印。因此这是 ICCBased 配置读取与转换的完成批次，完整 PDF 印刷色彩仍有后续工作。公开 C 记录、ABI epoch 1、书库 schema 6 和版本 0.18.0 保持不变。

@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef EXR_ENABLE_ICC
+static int cancelled_later(void *context) { unsigned *remaining=context;return (*remaining)--==0; }
+#include <lcms2.h>
+#endif
 static exr_error error; static unsigned checks; static const char *scenario;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"%s line %d: %s (%d %s)\n",scenario,__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -18,17 +22,20 @@ static void bytes(buffer *b,const void *data,size_t n) { if(n>b->capacity-b->siz
 static void add(buffer *b,const char *text) { bytes(b,text,strlen(text)); }
 static void object(buffer *b,size_t *offset,unsigned id,const char *body) { char row[64]; offset[id]=b->size; snprintf(row,sizeof(row),"%u 0 obj\n",id); add(b,row); add(b,body); add(b,"\nendobj\n"); }
 static void stream(buffer *b,size_t *offset,unsigned id,const char *dict,const void *data,size_t size) { char row[2048]; offset[id]=b->size; snprintf(row,sizeof(row),"%u 0 obj\n<< %s /Length %zu >>\nstream\n",id,dict,size); add(b,row); bytes(b,data,size); add(b,"\nendstream\nendobj\n"); }
-static buffer book_extra(const char *definition,const buffer *content,const char *image_dict,const void *samples,size_t sample_size,const char *icc_dict,const char *form,const char *extra) {
+static buffer book_profile(const char *definition,const buffer *content,const char *image_dict,const void *samples,size_t sample_size,const char *icc_dict,const char *form,const char *extra,const void *profile,size_t profile_size) {
   buffer b={0}; size_t offset[11],xref; char row[8192]; unsigned i;
   add(&b,"%PDF-1.7\n"); object(&b,offset,1,"<< /Type /Catalog /Pages 2 0 R >>"); object(&b,offset,2,"<< /Type /Pages /Count 1 /Kids [3 0 R] >>");
   snprintf(row,sizeof(row),"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 64 32] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> /XObject << /Im 7 0 R /Fm 8 0 R >> /ColorSpace << /S %s /Alias /S /Base " CG " >> >> >>",definition); object(&b,offset,3,row);
   stream(&b,offset,4,"",content->data,content->size); object(&b,offset,5,"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-  stream(&b,offset,6,icc_dict ? icc_dict : "/N 3",NULL,0);
+  stream(&b,offset,6,icc_dict ? icc_dict : "/N 3",profile,profile_size);
   snprintf(row,sizeof(row),"/Type /XObject /Subtype /Image /Width 1 /Height 1 /BitsPerComponent 8 /ColorSpace %s %s",definition,image_dict ? image_dict : ""); stream(&b,offset,7,row,samples,sample_size);
   stream(&b,offset,8,"/Type /XObject /Subtype /Form /BBox [0 0 64 32] /Resources << /ColorSpace << /S 10 0 R /Base " CG2 " >> >>",form,form ? strlen(form) : 0);
   stream(&b,offset,9,"","\x00\x80\xff",3); object(&b,offset,10,extra ? extra : "[/Indexed /Base 0 <80>]");
   xref=b.size; add(&b,"xref\n0 11\n0000000000 65535 f \n"); for(i=1;i<11;i++) { snprintf(row,sizeof(row),"%010zu 00000 n \n",offset[i]); add(&b,row); }
   snprintf(row,sizeof(row),"trailer\n<< /Size 11 /Root 1 0 R >>\nstartxref\n%zu\n%%%%EOF\n",xref); add(&b,row); return b;
+}
+static buffer book_extra(const char *definition,const buffer *content,const char *image_dict,const void *samples,size_t sample_size,const char *icc_dict,const char *form,const char *extra) {
+  return book_profile(definition,content,image_dict,samples,sample_size,icc_dict,form,extra,NULL,0);
 }
 static buffer book(const char *definition,const buffer *content,const char *image_dict,const void *samples,size_t sample_size,const char *icc_dict,const char *form) {
   return book_extra(definition,content,image_dict,samples,sample_size,icc_dict,form,NULL);
@@ -435,4 +442,66 @@ static void calculator(const char *directory) {
     CHECK(strstr(error.message,"colour computation budget"));exr_fixed_free(d);free(b.data);free(content.data);free(function.data);free(program.data);
   }
 }
-int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); registration(directory); devicen(directory); bad_functions(); function_graphs(); sampled(directory); multidimensional_samples(directory); bad_samples(); cubic_samples(directory); calculator(directory); printf("%u native PDF source colour-space checks passed\n",checks); return 0; }
+#ifdef EXR_ENABLE_ICC
+static void icc_fixture(cmsHPROFILE profile,const char *dictionary,const char *components,const void *samples,size_t sample_size,const unsigned expected[3],const char *directory,const char *name) {
+  cmsUInt32Number size=0;void *data;buffer content={0},b;exr_fixed_document *d;exr_bitmap image;
+  CHECK(cmsSaveProfileToMem(profile,NULL,&size) && size);data=malloc(size);CHECK(data && cmsSaveProfileToMem(profile,data,&size));
+  add(&content,"/S cs ");add(&content,components);add(&content," sc 0 0 8 8 re f q 8 0 0 8 10 0 cm /Im Do Q q 8 0 0 8 20 0 cm BI /W 1 /H 1 /BPC 8 /CS /S ID ");
+  bytes(&content,samples,sample_size);add(&content,"\nEI Q /S CS ");add(&content,components);add(&content," SC 2 w 30 4 m 38 4 l S ");label(&content);
+  b=book_profile("[/ICCBased 6 0 R]",&content,NULL,samples,sample_size,dictionary,NULL,NULL,data,size);free(data);d=opened(&b);image=rendered(d);
+  pixel(&image,4,4,expected,2);pixel(&image,14,4,expected,2);pixel(&image,24,4,expected,2);pixel(&image,34,4,expected,2);text(d);save(&b,directory,name);exr_bitmap_free(&image);exr_fixed_free(d);free(b.data);free(content.data);
+}
+static void icc_profiles(const char *directory) {
+  cmsCIExyY white={.3127,.3290,1};cmsCIExyYTRIPLE primaries={{.64,.33,1},{.30,.60,1},{.15,.06,1}};
+  cmsToneCurve *linear=cmsBuildGamma(NULL,1),*curves[3]={linear,linear,linear};cmsHPROFILE rgb,gray,cmyk,lab,xyz;
+  CHECK(linear);rgb=cmsCreateRGBProfile(&white,&primaries,curves);gray=cmsCreateGrayProfile(&white,linear);CHECK(rgb && gray);cmsFreeToneCurve(linear);
+  scenario="ICC matrix/TRC converts linear RGB instead of using Alternate";
+  icc_fixture(rgb,"/N 3 /Alternate /DeviceRGB",".5019607843137255 .2509803921568627 .7529411764705882","\x80\x40\xc0",3,(const unsigned[3]){188,137,225},directory,"pdf-color-icc-linear-rgb.pdf");
+  scenario="Usable ICC ignores an unusable Alternate";
+  icc_fixture(rgb,"/N 3 /Alternate /Missing",".5019607843137255 .2509803921568627 .7529411764705882","\x80\x40\xc0",3,(const unsigned[3]){188,137,225},NULL,NULL);
+  scenario="ICC RGB input clipping";
+  icc_fixture(rgb,"/N 3","1 0 0","\xff\x00\x00",3,(const unsigned[3]){255,0,0},NULL,NULL);
+  cmsSetProfileVersion(rgb,2.1);
+  scenario="ICC v2 matrix/TRC";
+  icc_fixture(rgb,"/N 3",".5019607843137255 .2509803921568627 .7529411764705882","\x80\x40\xc0",3,(const unsigned[3]){188,137,225},directory,"pdf-color-icc-v2.pdf");
+  scenario="ICC Gray TRC to fixed sRGB";
+  icc_fixture(gray,"/N 1",".5019607843137255","\x80",1,(const unsigned[3]){188,188,188},directory,"pdf-color-icc-gray.pdf");
+  scenario="ICC channel mismatch falls back to declared Alternate";
+  icc_fixture(gray,"/N 3 /Alternate /DeviceRGB",".5019607843137255 .2509803921568627 .7529411764705882","\x80\x40\xc0",3,(const unsigned[3]){128,64,192},NULL,NULL);
+  { cmsUInt32Number size=0;void *data;buffer content={0},b;exr_fixed_document *d;exr_bitmap image;
+    CHECK(cmsSaveProfileToMem(rgb,NULL,&size));data=malloc(size);CHECK(data && cmsSaveProfileToMem(rgb,data,&size));
+    scenario="ICC profile in Indexed base";add(&content,"/S cs 0 sc 0 0 8 8 re f");label(&content);
+    b=book_profile("[/Indexed [/ICCBased 6 0 R] 0 <8040c0>]",&content,NULL,"\x00",1,"/N 3",NULL,NULL,data,size);
+    d=opened(&b);
+    { exr_fixed_render_options options={0};unsigned remaining=60;options.control.cancelled=cancelled_later;options.control.context=&remaining;
+      CHECK(exr_fixed_render(d,0,1,&options,&image,&error)==EXR_CANCELLED && !image.pixels);
+    }
+    image=rendered(d);pixel(&image,4,4,(const unsigned[3]){188,137,225},2);exr_bitmap_free(&image);exr_fixed_free(d);free(b.data);free(data);free(content.data);
+  }
+  /* An original 4D CMYK -> XYZ LUT: just K drives a neutral linear ramp. */
+  cmyk=cmsCreateProfilePlaceholder(NULL);CHECK(cmyk);cmsSetProfileVersion(cmyk,2.1);cmsSetDeviceClass(cmyk,cmsSigInputClass);cmsSetColorSpace(cmyk,cmsSigCmykData);cmsSetPCS(cmyk,cmsSigXYZData);
+  CHECK(cmsWriteTag(cmyk,cmsSigMediaWhitePointTag,cmsD50_XYZ()));
+  { cmsPipeline *pipeline=cmsPipelineAlloc(NULL,4,3);cmsUInt16Number table[48];unsigned point,k;const cmsCIEXYZ *d50=cmsD50_XYZ();
+    CHECK(pipeline);for(point=0;point<16;point++) for(k=0;k<3;k++) { double channel=k==0 ? d50->X : k==1 ? d50->Y : d50->Z;table[point*3+k]=(cmsUInt16Number)(point&1 ? 0 : floor(channel*32768+.5)); }
+    CHECK(cmsPipelineInsertStage(pipeline,cmsAT_END,cmsStageAllocToneCurves(NULL,4,NULL)));
+    CHECK(cmsPipelineInsertStage(pipeline,cmsAT_END,cmsStageAllocCLut16bit(NULL,2,4,3,table)));
+    CHECK(cmsPipelineInsertStage(pipeline,cmsAT_END,cmsStageAllocToneCurves(NULL,3,NULL)));
+    CHECK(cmsWriteTag(cmyk,cmsSigAToB0Tag,pipeline));cmsPipelineFree(pipeline);
+  }
+  scenario="ICC four-input sampled LUT and CMYK scale";
+  icc_fixture(cmyk,"/N 4","0 0 0 .5019607843137255","\x00\x00\x00\x80",4,(const unsigned[3]){187,187,187},directory,"pdf-color-icc-cmyk-lut.pdf");
+  /* The built-in PCS identity profiles use abstract class; make them input profiles. */
+  lab=cmsCreateLab4Profile(NULL);xyz=cmsCreateXYZProfile();CHECK(lab && xyz);cmsSetDeviceClass(lab,cmsSigInputClass);cmsSetDeviceClass(xyz,cmsSigInputClass);
+  scenario="ICC Lab uses physical component units and authored Range";
+  icc_fixture(lab,"/N 3 /Range [0 100 -128 127 -128 127]","50.19607843137255 0 0","\x80\x80\x80",3,(const unsigned[3]){119,119,119},directory,"pdf-color-icc-lab.pdf");
+  scenario="XYZ is outside PDF table 68 and uses the Alternate";
+  icc_fixture(xyz,"/N 3",".48211 .5 .412605","\x7b\x80\x69",3,(const unsigned[3]){123,128,105},NULL,NULL);
+  cmsCloseProfile(rgb);cmsCloseProfile(gray);cmsCloseProfile(cmyk);cmsCloseProfile(lab);cmsCloseProfile(xyz);
+}
+#endif
+int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); registration(directory); devicen(directory); bad_functions(); function_graphs(); sampled(directory); multidimensional_samples(directory); bad_samples(); cubic_samples(directory); calculator(directory);
+#ifdef EXR_ENABLE_ICC
+  icc_profiles(directory);
+#endif
+  printf("%u native PDF source colour-space checks passed\n",checks);return 0;
+}

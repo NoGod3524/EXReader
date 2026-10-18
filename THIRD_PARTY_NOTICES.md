@@ -19,6 +19,7 @@ PostScript is a registered trademark of Adobe Systems Incorporated.
 | miniz | 3.1.2, richgel999/miniz | MIT | ZIP containers and decompression |
 | SQLite | 3.54.0 amalgamation, sqlite.org | Public domain | Local bookshelf and annotations |
 | stb_image | 2c980bb59875b0d32144a71867fbdebb2f77cd20, nothings/stb | MIT OR public domain; MIT selected | PNG/JPEG decoding only |
+| LittleCMS | lcms2.19.1, mm2/Little-CMS | MIT | Optional ICCBased profile-to-sRGB conversion; EXR_ENABLE_ICC |
 
 CMake verifies every source archive using the SHA-256 values in cmake/deps.cmake. CSS matching, Unicode boundary and bidirectional algorithms, OpenType GSUB/GPOS processing, line breaking, pagination, image placement, table layout, pixel compositing, document positions, the document model and format extraction are EXReader C code. FreeType supplies font access, glyph metrics and rasterization; stb_image supplies decoded image pixels. License texts are included in the installed SDK under share/exreader/licenses.
 
