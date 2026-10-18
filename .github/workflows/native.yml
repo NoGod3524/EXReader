@@ -111,6 +111,13 @@ jobs:
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
           python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /System/Library/Fonts/Supplemental/Arial.ttf build/performance --runs 1 --max-pages 8 --paging
+      - name: Measure installed PDF group rendering
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = Windows ]; then runtime=./stage/bin/exreader.dll;
+          elif [ "${{ runner.os }}" = macOS ]; then runtime=./stage/lib/libexreader.dylib;
+          else runtime=./stage/lib/libexreader.so; fi
+          python tools/benchmark_pdf_blend.py "$runtime" tests/fixtures/pdf-blend build/performance/pdf --runs 1 --scale 1 --case nonisolated --case ap-nonisolated
       - name: Bound table alignment memory against the installed SDK
         shell: bash
         run: |

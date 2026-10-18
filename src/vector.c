@@ -21,7 +21,7 @@ static void span(float *coverage,int origin,uint32_t width,double left,double ri
   for(x=(int)floor(left);x<end;x++) coverage[x-origin]+=(float)(fmin(right,x+1)-fmax(left,x));
 }
 exr_status exr_vector_fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
-                            exr_vector_rule rule,uint32_t color,const exr_bitmap *clip,exr_blend_mode mode,
+                            exr_vector_rule rule,uint32_t color,const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,
                             size_t *work,const exr_control *control,exr_error *error) {
   size_t local_work=0,i; crossing *crossings=NULL; float *coverage=NULL; double low=DBL_MAX,high=-DBL_MAX,left_bound=DBL_MAX,right_bound=-DBL_MAX;
   int y,top,bottom,left,right; uint32_t row_width; exr_status status=EXR_OK;
@@ -70,11 +70,11 @@ exr_status exr_vector_fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges
         previous=current;
       }
     }
-    if(!exr_vector_work(work,(size_t)row_width*(mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64))) goto limit;
+    if(!exr_vector_work(work,(size_t)row_width*((state ? 20+state->depth*4 : 0)+(mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64)))) goto limit;
     for(x=0;x<row_width;x++) {
       unsigned alpha=(unsigned)fmin(255,floor(coverage[x]*255/4+.5));
       if(clip) alpha=(alpha*clip->pixels[(size_t)y*clip->stride+(unsigned)left+x]+127)/255;
-      if(alpha) { if(mode==EXR_BLEND_NORMAL) exr_pixel(bitmap,left+(int)x,y,color,alpha);else exr_pixel_blend(bitmap,left+(int)x,y,color,alpha,mode); }
+      if(alpha) { if(state) exr_pixel_composite(bitmap,left+(int)x,y,color,alpha,mode,state);else if(mode==EXR_BLEND_NORMAL) exr_pixel(bitmap,left+(int)x,y,color,alpha);else exr_pixel_blend(bitmap,left+(int)x,y,color,alpha,mode); }
     }
   }
   status=exr_fail(error,EXR_OK,""); goto done;
@@ -86,5 +86,5 @@ done:
 
 exr_status exr_vector_fill(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
   exr_vector_rule rule,uint32_t color,const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *error) {
-  return exr_vector_fill_blend(bitmap,edges,count,rule,color,clip,EXR_BLEND_NORMAL,work,control,error);
+  return exr_vector_fill_blend(bitmap,edges,count,rule,color,clip,EXR_BLEND_NORMAL,NULL,work,control,error);
 }

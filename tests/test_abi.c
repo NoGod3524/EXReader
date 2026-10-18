@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 static exr_error error; static unsigned checks;
+typedef struct {
+  size_t struct_size;exr_draw_sink base;exr_draw_blend_fn blend;
+  exr_draw_layer_begin_fn begin_layer;exr_draw_layer_end_fn end_layer;
+} isolated_draw_sink;
+_Static_assert(sizeof(isolated_draw_sink)==offsetof(exr_draw_sink_ex,begin_group),"Isolated drawing sink retains its prefix");
 typedef struct { size_t struct_size; exr_font *fallback_font; exr_control control; } original_fixed_options;
 _Static_assert(sizeof(original_fixed_options)==offsetof(exr_fixed_open_options,pdf_password),"Original fixed open options retain their prefix");
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)

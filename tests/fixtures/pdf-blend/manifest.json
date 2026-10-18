@@ -3,7 +3,7 @@
   "mupdf": "1.28.2",
   "pypdfium2": "5.14.0",
   "pdfium": "156.0.8076.0",
-  "scope": "Original RGB scenes. Raw MuPDF/PDFium renders retained separately. Expected samples use PDFium premultiplied alpha plus ISO 32000-1 11.4.7 page isolation; annotation white region uses PDFium white; BM array/null cells use 11.6.3 and 7.3.9 normative results. MuPDF partial-alpha nonseparable blending differs; both engines misselect unknown-first BM array. Font is original GPL-3.0-only fixture.",
+  "scope": "Original RGB scenes. Raw MuPDF/PDFium renders retained separately. Expected samples use PDFium premultiplied alpha plus ISO 32000-1 11.4.7 page isolation; annotation white region uses PDFium white; BM array/null cells use 11.6.3 and 7.3.9 normative results. Non-isolated interior samples use independent Decimal(40) ISO group formulas, cross-checked against MuPDF on opaque/separable samples; PDFium implicitly isolates these Forms. MuPDF partial-alpha nonseparable blending differs; both engines misselect unknown-first BM array. Font is original GPL-3.0-only fixture.",
   "modes": [
     "Normal",
     "Multiply",
@@ -230,6 +230,14 @@
     "ap-groups": [
       256,
       16
+    ],
+    "nonisolated": [
+      256,
+      160
+    ],
+    "ap-nonisolated": [
+      256,
+      16
     ]
   },
   "sha256": {
@@ -241,6 +249,14 @@
     "ap-groups-white.rgba": "71f8c5d667343b679a89afec8fe0dd55d9be5435a9d6f1761ce7dcfb060cf9cf",
     "ap-groups.mask": "3431383721510cf1c211de027cf958c183e16db5fabb6b230eb284c85e196aa9",
     "ap-groups.pdf": "6a90cefc8cddfbdfdc157adcd8f464e622e15e438297f85f73091da9ed478f89",
+    "ap-nonisolated-alpha.rgba": "5fc421ef1467c38ea99b9608287932f5c7db746a1cd681418d399bf09ebbe0d0",
+    "ap-nonisolated-mupdf-alpha.rgba": "9484603687418c9c97ea828c4d9d93c9f79996ba461aaa18300a5620a935a699",
+    "ap-nonisolated-mupdf-white.rgba": "3edb5a4e4e7d1f53378733a2a6326ea162d2864bf6874ae07c12a7aa634bdad7",
+    "ap-nonisolated-pdfium-alpha.rgba": "b854a5e59e14fa3c48f18d60ff793a2f56d02c1449c4673695ffab76d6d141ce",
+    "ap-nonisolated-pdfium-white.rgba": "86fe015db111fe6fc1a7b6b7b1bec5c2bbeac3b58b15df636238d30f07dacdf4",
+    "ap-nonisolated-white.rgba": "a3d867eb3a72813c3567e70b71795c5a6034439947c687fc0a29ddaeb49ab9c9",
+    "ap-nonisolated.mask": "3431383721510cf1c211de027cf958c183e16db5fabb6b230eb284c85e196aa9",
+    "ap-nonisolated.pdf": "3eeba1795cfea82993315383692850953657fb463798875c932e097a9d66dd85",
     "bad-0.pdf": "c84540b214e4e2194fea47fb853c4e20a349c8a5fc0dbf63db3a6a7668d029b3",
     "bad-1.pdf": "bf663d45e2acfe74412e646a92d87bb6bd5f46a7e170d6065c542f7ce47c2503",
     "bad-2.pdf": "5e03ec2aa99e03b239941460b2014fe2d5079e73e972f00188b173cc2159185e",
@@ -265,6 +281,7 @@
     "group-bad-2.pdf": "be534ae398a4d1e13c51825c80152f289ef3efbac325ff55a48db59de7a4cd31",
     "group-bad-3.pdf": "459a2d94f060c7a1282a1a64208e6577f5c65312c2a8014a8482a94128317eba",
     "group-bad-4.pdf": "f2ba8028163c9714abbb66d90bf931e572b059a4e83c2a1e68361504356a1db4",
+    "group-bad-5.pdf": "ee0f9dacdbfe067c703ec0c3c8f1c7619bec312e233e4f83468b7ab014d65838",
     "group-malformed.pdf": "bd23139aa1bcca9f67982667c4e7f54c8b81708ca4b8118652c791c2733e26c7",
     "groups-alpha.rgba": "282f136f82af4f83029f8c2ce056affb32e8504c77b56fa4962d59117f4e2e0e",
     "groups-mupdf-alpha.rgba": "12474248a80c74fef6d5d49a4c3159ec1da03e2eea51a5dcfdc694643586274f",
@@ -274,6 +291,15 @@
     "groups-white.rgba": "3bfed0455ccb7ec49e90fa596425b2cc445b210363d4f9842227e10f88fb48c5",
     "groups.mask": "c9a6b3020260db981a926dd9055d8462ab16c60ced563e5ecf6f101c0c069b40",
     "groups.pdf": "29451a5c819cb19d9a024d13f1f037861e86c38f89aa5c206fb70e441563cf25",
+    "nonisolated-alpha.rgba": "55550cb83e270369ec5649901e480d67e8d1bbb76cf884e85b9a5d09460f78b7",
+    "nonisolated-mupdf-alpha.rgba": "25d0613160351d4c17f131210936cbdac27ad8b3193067a4567f4cf7a6cd00eb",
+    "nonisolated-mupdf-white.rgba": "d19b49043674b95fb09a56e812876864ec381bf5dd1539d9a9dca72f58ab6d13",
+    "nonisolated-oracle.json": "53512b901cfd790f07eb8b301eec58b5488ef42a0389deaac3786882fa3e537f",
+    "nonisolated-pdfium-alpha.rgba": "97ec441ed729f38b4eec212b1da824095fe3363a777cb20beaf8a88581e36b11",
+    "nonisolated-pdfium-white.rgba": "fc9c2af76b49dbb1e34aac4c89f83f9e3a3d4a30484bc2111a79073aadff7bd5",
+    "nonisolated-white.rgba": "464119e9845c78a65f8ace270e5982b671cdd1e7c54d23fa304905464d92e410",
+    "nonisolated.mask": "f9b5a41d38c03ff7daba9b657bf75adf6c6686f9ca3bc67dc8b3b3dd8cadc3aa",
+    "nonisolated.pdf": "0e0d2ce9292eb0d6c1e52a6937e64a1325cc7c9671c0effbe1d46183ff0dbe5f",
     "primitives-alpha.rgba": "02da43d2a988adb8c8e3ca2711dafb2b0859de4501badc4809a86ec500504fcf",
     "primitives-mupdf-alpha.rgba": "2327ca9a2c466334ab6b6b30e91fc2e6d629b8e6591cece0864ad052c49a2abc",
     "primitives-mupdf-white.rgba": "f8783d8dd94f87690fcc6aed1a03e3c5b1f1a5d1bb27841bd808a410c7272c6a",

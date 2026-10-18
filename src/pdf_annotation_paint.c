@@ -16,6 +16,9 @@ static exr_status scope_blend(void *context,exr_blend_mode mode,exr_error *e) {
 static exr_status scope_begin_layer(void *context,double opacity,exr_blend_mode mode,exr_error *e) {
   paint_scope *s=context;return s->target->begin_layer(s->target->base.context,opacity,mode,e);
 }
+static exr_status scope_begin_group(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
+  paint_scope *s=context;return s->target->begin_group(s->target->base.context,opacity,mode,flags,e);
+}
 static exr_status scope_end_layer(void *context,unsigned commit,exr_error *e) {
   paint_scope *s=context;return s->target->end_layer(s->target->base.context,commit,e);
 }
@@ -39,6 +42,7 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
   consumer.base.image=sink->base.image ? scope_image : NULL; consumer.base.state=sink->base.state ? scope_state : NULL;
   consumer.blend=sink->blend ? scope_blend : NULL;
   consumer.begin_layer=sink->begin_layer ? scope_begin_layer : NULL;consumer.end_layer=sink->end_layer ? scope_end_layer : NULL;
+  consumer.begin_group=sink->begin_group ? scope_begin_group : NULL;
   if(sink->base.state) {
     status=sink->base.state(sink->base.context,EXR_DRAW_SAVE,e);
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
@@ -53,12 +57,8 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
   }
   if(status==EXR_OK && layer) {
-    if(!sink->begin_layer) status=exr_fail(e,EXR_FORMAT,"PDF appearance consumer lacks isolated layers");
-    else {
-      status=sink->begin_layer(sink->base.context,1,EXR_BLEND_NORMAL,e);
-      if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
-      if(status==EXR_OK) begun=1;
-    }
+    status=exr_sink_begin_group(sink,1,EXR_BLEND_NORMAL,layer==EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0,e);
+    if(status==EXR_OK) begun=1;
   }
   if(status==EXR_OK) status=exr_pdf_paint_content_ex(file,resources,content,size,matrix,&consumer,program,context,work,control,e);
   if(sink->base.state) {
@@ -195,9 +195,9 @@ exr_status exr_pdf_paint_page_ex(exr_pdf_file *file,const exr_pdf_page_info *pag
     if(status==EXR_OK) status=exr_pdf_group_rgb(file,group,1,&present,e);
     if(status!=EXR_OK) return status;
   }
-  if(sink->blend && !sink->begin_layer) return exr_fail(e,EXR_FORMAT,"PDF blend consumer requires page layer support");
-  if(sink->begin_layer) {
-    status=sink->begin_layer(sink->base.context,1,EXR_BLEND_NORMAL,e);
+  if(sink->blend && !sink->begin_layer && !sink->begin_group) return exr_fail(e,EXR_FORMAT,"PDF blend consumer requires page layer support");
+  if(sink->begin_layer || sink->begin_group) {
+    status=exr_sink_begin_group(sink,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED,e);
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
     if(status!=EXR_OK) return status;
   }

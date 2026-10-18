@@ -400,3 +400,20 @@ combined fill/stroke uses two coverage masks charged to mask_budget. Callers
 using a canvas directly can set the layer budget before entering layers. Layer
 budget failure, cancellation or unbalanced scopes never returns a partial bitmap.
 This is still 0.18.0 development, ABI 1 and schema 6.
+
+
+Non-isolated RGB groups append optional `begin_group` to the size-tagged
+`exr_draw_sink_ex`; all earlier prefixes remain accepted. Initialize the new
+struct_size when recompiling. General begin is preferred; isolated requests
+fall back to begin_layer, while non-isolated requests on an old consumer return
+EXR_UNSUPPORTED. Either begin callback requires end_layer. The original sink,
+fixed render options, ABI 1 and schema 6 retain their layouts/contracts.
+
+Direct canvases can use exr_canvas_begin_group with flags=0 or
+EXR_GROUP_ISOLATED, closing either with end_layer. Non-isolated groups reserve
+24 bytes/pixel (RGBA8 plus five float channels), versus 4 for isolated layers;
+both count against the aggregate 64 MiB default and the per-group 64 MiB cap.
+The precision state remains private and is heap-stable across layer-stack growth.
+No additional runtime component is introduced. The PDF Form/AP default I=false
+now renders as non-isolated RGB; explicit CS on a non-isolated Form is malformed.
+Knockout groups and graphics-state soft masks remain pending.

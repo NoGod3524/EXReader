@@ -21,4 +21,5 @@ static inline void exr_pixel(exr_bitmap *bitmap,int x,int y,uint32_t color,unsig
   }
 }
 void exr_pixel_blend(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage,exr_blend_mode mode);
+void exr_pixel_composite(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage,exr_blend_mode mode,exr_composite_state *state);
 #endif

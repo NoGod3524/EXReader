@@ -12,9 +12,11 @@ int main(int argc,char **argv) {
     exr_canvas *canvas=nullptr;exr_bitmap bitmap{};exr_draw_sink_ex sink{};sink.struct_size=sizeof(sink);
     if(exr_canvas_create(&config,&canvas,&error)!=EXR_OK) return 90;
     std::unique_ptr<exr_canvas,decltype(&exr_canvas_free)> owner(canvas,exr_canvas_free);
-    if(exr_canvas_get_sink_ex(canvas,&sink,&error)!=EXR_OK || !sink.blend || !sink.begin_layer || !sink.end_layer) return 91;
+    if(exr_canvas_get_sink_ex(canvas,&sink,&error)!=EXR_OK || !sink.blend || !sink.begin_layer || !sink.end_layer || !sink.begin_group) return 91;
     if(exr_canvas_set_layer_budget(canvas,4,&error)!=EXR_OK || sink.begin_layer(canvas,.5,EXR_BLEND_SCREEN,&error)!=EXR_OK) return 92;
     if(sink.blend(canvas,EXR_BLEND_HUE,&error)!=EXR_OK || sink.end_layer(canvas,1,&error)!=EXR_OK) return 93;
+    if(exr_canvas_set_layer_budget(canvas,24,&error)!=EXR_OK || exr_canvas_begin_group(canvas,.5,EXR_BLEND_NORMAL,0,&error)!=EXR_OK) return 95;
+    if(sink.end_layer(canvas,1,&error)!=EXR_OK || sink.begin_group(canvas,1,EXR_BLEND_NORMAL,0,&error)!=EXR_OK || sink.end_layer(canvas,0,&error)!=EXR_OK) return 96;
     if(exr_canvas_take(canvas,&bitmap,&error)!=EXR_OK || bitmap.channels!=4) return 94;
     exr_bitmap_free(&bitmap);
   }

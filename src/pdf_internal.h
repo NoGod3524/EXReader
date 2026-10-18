@@ -152,8 +152,9 @@ typedef exr_status (*exr_pdf_state_fn)(void *context,exr_pdf_state_event event,e
 typedef exr_status (*exr_pdf_image_fn)(void *context,exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *error);
 typedef struct {
   exr_pdf_text_fn glyph;exr_pdf_path_fn path;exr_pdf_state_fn state;exr_pdf_image_fn image;
-  exr_draw_layer_begin_fn begin_layer;exr_draw_layer_end_fn end_layer;
+  exr_draw_group_begin_fn begin_group;exr_draw_layer_end_fn end_layer;
 } exr_pdf_draw_callbacks;
+enum { EXR_PDF_GROUP_ISOLATED=1,EXR_PDF_GROUP_NONISOLATED=2 };
 exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *present,exr_error *error);
 exr_status exr_pdf_text_ops(exr_pdf_file *file,uint32_t resources,const void *data,size_t size,
                             exr_pdf_text_fn glyph,void *context,const exr_control *control,exr_error *error);

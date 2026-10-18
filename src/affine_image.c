@@ -38,7 +38,7 @@ static void texture_sample(const exr_vector_texture *texture,double u,double v,d
   }
 }
 exr_status exr_vector_texture_blend(exr_bitmap *target,const exr_vector_texture *source,const double m[6],double alpha,
-                                     const exr_bitmap *clip,exr_blend_mode mode,size_t *work,const exr_control *control,exr_error *e) {
+                                     const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
   size_t local_work=0,i; double det,inv[6],left=1e7,top=1e7,right=-1e7,bottom=-1e7; int x0,y0,x1,y1,x,y;
   const exr_vector_texture *layers[16],*layer=source; size_t depth=0,cost=0;
   if(mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY) return exr_fail(e,EXR_ARGUMENT,"Invalid affine image blend mode");
@@ -54,6 +54,7 @@ exr_status exr_vector_texture_blend(exr_bitmap *target,const exr_vector_texture 
       return exr_fail(e,EXR_ARGUMENT,"Invalid affine image matte");
     cost+=layer->interpolate ? 24 : 12; layers[depth++]=layer; layer=layer->mask;
   }
+  cost+=state ? 20+state->depth*4 : 0;
   cost+=mode==EXR_BLEND_NORMAL ? 0 : mode<EXR_BLEND_HUE ? 24 : 64;
   for(i=0;i<6;i++) if(!isfinite(m[i]) || fabs(m[i])>1e7) return exr_fail(e,EXR_ARGUMENT,"Invalid affine image transform");
   if(!work) work=&local_work;
@@ -83,7 +84,7 @@ exr_status exr_vector_texture_blend(exr_bitmap *target,const exr_vector_texture 
       }
       if(!sums[3]) continue;
       for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(sums[k]/sums[3]+.5))<<(24-8*k);
-      color|=(uint32_t)fmin(255,floor(sums[3]*alpha/4+.5)); if(mode==EXR_BLEND_NORMAL) exr_pixel(target,x,y,color,coverage);else exr_pixel_blend(target,x,y,color,coverage,mode);
+      color|=(uint32_t)fmin(255,floor(sums[3]*alpha/4+.5)); if(state) exr_pixel_composite(target,x,y,color,coverage,mode,state);else if(mode==EXR_BLEND_NORMAL) exr_pixel(target,x,y,color,coverage);else exr_pixel_blend(target,x,y,color,coverage,mode);
     }
   }
   return exr_fail(e,EXR_OK,"");
@@ -96,5 +97,5 @@ exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const do
 
 exr_status exr_vector_texture_paint(exr_bitmap *target,const exr_vector_texture *source,const double matrix[6],double alpha,
   const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *error) {
-  return exr_vector_texture_blend(target,source,matrix,alpha,clip,EXR_BLEND_NORMAL,work,control,error);
+  return exr_vector_texture_blend(target,source,matrix,alpha,clip,EXR_BLEND_NORMAL,NULL,work,control,error);
 }
