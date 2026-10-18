@@ -3459,7 +3459,7 @@ ordinary reads now keep the preceding fast path. Work/memory caps were not raise
 Installed C/C++ and JNI -Xcheck:jni pass. Both legacy and explicit calls are used;
 Swift/JNI smoke checks uppercase generated strings, repeated original offsets,
 public bits and hits on two pages. Swift execution and final cross-platform/
-sanitizer results will be recorded against this code commit after CI.
+sanitizer results are recorded below.
 
 Final Windows DLL: 5,598,680 bytes, 166,992 above the preceding verified snapshot;
 SHA256 0f2f5838eb6ac487b5ff1afe795ebe669cfa4d5fa3e53517cdeec5e8dedef8dd.
@@ -3481,3 +3481,15 @@ Exact source/binary/input/font hashes and all records are in
 benchmarks/0.18.0-hyphen-case-windows. The five preceding books and generated counts
 are unchanged. Disk cache/background load are uncontrolled. Conditional compound
 rewrites, tall-row fragmentation and the complete PDF/SDK roadmap remain open.
+
+
+Commit f9754b05032f1b970d5ad75c111b91b7aadffab1 passed all six jobs in
+[CI run 39128029466](https://github.com/NoGod3524/EXReader/actions/runs/39128029466):
+Windows/Linux/macOS (115 CTests each), installed C/C++/JNI, macOS Swift literal
+and explicit WORD two-page source/hit/public-bit checks, ASan/UBSan/leaks (113
+tests), Android ARM64, and iOS/iPadOS device/simulator engine libraries plus
+Swift checks. All 251 recorded source hashes match the exact validated Git blob
+bytes, all 87 preceding EPUBs are unchanged, and four local runtime copies agree.
+All eight benchmark datasets match the recorded final executable and input bytes.
+The following verification-only commit updates records and skips redundant CI.
+The conditional-compound, tall-row and complete PDF/SDK roadmap remains active.

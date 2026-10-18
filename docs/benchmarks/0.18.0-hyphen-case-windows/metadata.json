@@ -19,8 +19,11 @@
     "new_successful_EPUBs": 15,
     "expected_preexisting_tall_row_limit": 1,
     "installed_C_Cpp_JNI": "passed; old calls plus WORD policy on two generated pages, hits/ranges/public-bit checks",
-    "CI": "pending",
-    "source_hash_count": 251
+    "CI": "https://github.com/NoGod3524/EXReader/actions/runs/39128029466",
+    "source_hash_count": 251,
+    "cross_platform_CI": "All six jobs passed: Windows/Linux/macOS (115 CTests each), installed C/C++/JNI, macOS Swift legacy and WORD two-page cases, ASan/UBSan/leaks (113 tests), Android ARM64, iOS/iPadOS device/simulator engine libraries and Swift checks",
+    "sanitizer_native_tests": 113,
+    "source_hash_verification": "All 251 recorded hashes match exact validated Git blob bytes; all 87 preceding EPUBs unchanged; four local runtime copies and eight benchmark binaries/inputs verified"
   },
   "scope": "Explicit immutable native LITERAL/WORD case policy, full Unicode 17 mappings, Greek Final_Sigma and tr/az/lt conditions in logical changed-word context; title-initial deletion/insertion can extend the original grapheme range. Providers and old calls stay literal. Cursor-local on-demand original safety cache and accepted display suffix reuse avoid repeated source scanning; pre-fix DLL reproduces native page-8 EXR_LIMIT. Original arrays, work/memory caps and ABI/schema/version unchanged. Conditional compounds, tall rows, extra CLDR host tailoring and full roadmap stay open.",
   "performance": "Eight 1 MiB workloads, first 65 pages, three fresh processes per mode; sequential with no concurrent build/tests. Five original books/counts unchanged. Disk cache/background load uncontrolled. Initial eager safety classification was discarded because it slowed ordinary opens.",
@@ -276,5 +279,6 @@
     "tools/generate_hyphen_unicode.py": "988d1864fd5cfe51ca453e0785b0b91c9b635c08e398617c8341bb3821601a5e",
     "tools/generate_normalize_unicode.py": "f39b3a8883f59a10a914bac081ba5570488df336d3e70e30d92d9521ef73a74a",
     "tools/generate_unicode.py": "a6988d10f0110e0ebed13a9a35adc346c927bda170a0d31edbf114e284f0a138"
-  }
+  },
+  "validated_code_commit": "f9754b05032f1b970d5ad75c111b91b7aadffab1"
 }
