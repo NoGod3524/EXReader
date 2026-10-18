@@ -2890,3 +2890,14 @@ Exact source/binary hashes and reference results are recorded under
 benchmarks/0.18.0-hyphen-compounds-windows. No external dictionary, libhyphen or
 Perl code is shipped or linked. Spelling-changing replacements remain pending;
 the existing provider bitmap expresses positions, not replacement text.
+
+
+Commit 5037678 passed all six jobs in
+[CI run 39104382464](https://github.com/NoGod3524/EXReader/actions/runs/39104382464):
+Windows/Linux/macOS native tests (111 each), installed C/C++ SDK consumers,
+JNI compound-page rendering, macOS Swift compound-page rendering, ASan/UBSan
+with leak checks (110 native tests), Android ARM64, and iOS/iPadOS device and
+simulator libraries plus Swift type checking. All 151 recorded source hashes
+match that Git snapshot. Three oracle DLL hashes and both benchmark executable
+hashes match the final measured binaries. The following verification-record
+commit changes documentation/metadata only.
