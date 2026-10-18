@@ -2959,3 +2959,14 @@ rewriting of compound subparts remain required before claiming full layout
 support. Input/output/source/binary provenance is under
 benchmarks/0.18.0-hyphen-replacements-windows. External dictionaries/reference
 libraries remain development inputs, not installed SDK dependencies.
+
+
+Commit 8067ede passed all six jobs in
+[CI run 39106167796](https://github.com/NoGod3524/EXReader/actions/runs/39106167796):
+Windows/Linux/macOS native tests (113 each), installed C example exercising
+owned replacement records, C++/JNI consumers, macOS Swift smoke, ASan/UBSan
+with leak checks (111 native tests), Android ARM64, and iOS/iPadOS device and
+simulator libraries plus Swift type checking. All 154 source hashes match that
+Git snapshot. Four oracle DLL hashes and both benchmark executable hashes match
+the final measured binaries. The following verification-record commit updates
+only documentation/metadata. EPUB replacement rendering remains unfinished.
