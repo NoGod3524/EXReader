@@ -89,18 +89,29 @@ static void compare(exr_document *d,const exr_layout *whole,const exr_layout_con
   CHECK(exr_pager_statistics(fast).restored_checkpoints>0 && exr_pager_statistics(fast).checkpoint_bytes<=8*1024*1024);
   exr_pager_free(fast);exr_pager_free(slow);
 }
+/* Same-build comparison against a preceding DLL, including every page pixel.
+   The fixture font is fixed; output is evidence rather than a platform hash. */
+static void signature(const exr_layout *l,unsigned test) {
+  size_t i,n;uint64_t hash=UINT64_C(14695981039346656037);exr_layout_pages(l,&n);
+  for(i=0;i<n;i++) {
+    exr_bitmap b={0};size_t k;OK(exr_render_page_color(l,NULL,i,&b,&error));
+    for(k=0;k<(size_t)b.stride*b.height;k++) { hash^=b.pixels[k];hash*=UINT64_C(1099511628211); }
+    exr_bitmap_free(&b);
+  }
+  printf("case %u pages %zu pixels %016llx\n",test,n,(unsigned long long)hash);
+}
 static void cases(const char *directory) {
   unsigned test;char path[4096];
-  for(test=0;test<20;test++) {
+  for(test=0;test<24;test++) {
     exr_document *d=NULL;exr_layout *l=NULL;exr_layout_config c=config();size_t count,i,tables=0,cells=0;const exr_node *nodes;
     snprintf(path,sizeof(path),"%s/table-fragments-%u.epub",directory,test);OK(exr_document_open(path,&d,&error));
     nodes=exr_document_nodes(d,&count);for(i=0;i<count;i++) { tables+=nodes[i].kind==EXR_NODE_TABLE;cells+=nodes[i].kind==EXR_NODE_CELL; }
     CHECK(tables>0 && cells>=2 && count>8);
-    if(test==6 || test==7) { c.page.width=100;c.page.height=180; }
+    if(test==6 || test==7 || test==23) { c.page.width=100;c.page.height=180; }
     { exr_status status=exr_layout_create_ex(d,font,&c,&l,&error);if(status!=EXR_OK) fprintf(stderr,"fragment case %u\n",test);OK(status); }
     fprintf(stderr,"fragment case %u\n",test);
     if(test!=16) { size_t np;const exr_page *pages=exr_layout_pages(l,&np);CHECK(np && pages[np-1].line_count>0); }
-    compare(d,l,&c,test==6 || test==7);exr_layout_free(l);exr_document_free(d);
+    signature(l,test);compare(d,l,&c,test==6 || test==7 || test==23);exr_layout_free(l);exr_document_free(d);
   }
 }
 static int within(int x,int y,float left,float top,float width,float height) {
@@ -131,8 +142,9 @@ static void alpha_borders(void) {
 typedef struct { unsigned calls,at; } cancel_state;
 static int cancel_after(void *context) { cancel_state *s=context;return ++s->calls>=s->at; }
 static void recovery(const char *directory) {
-  char path[4096];exr_document *d=NULL;exr_layout_config c=config();exr_pager *p=NULL;const exr_layout *page=NULL;unsigned threshold;
-  snprintf(path,sizeof(path),"%s/table-fragments-12.epub",directory);OK(exr_document_open(path,&d,&error));
+  char path[4096];exr_document *d=NULL;exr_layout_config c=config();exr_pager *p=NULL;const exr_layout *page=NULL;unsigned threshold,test;const unsigned ids[]={12,21,22,23};
+  for(test=0;test<sizeof(ids)/sizeof(*ids);test++) {
+  snprintf(path,sizeof(path),"%s/table-fragments-%u.epub",directory,ids[test]);OK(exr_document_open(path,&d,&error));
   for(threshold=1;threshold<=32;threshold*=2) {
     cancel_state state={0,threshold};exr_control control={cancel_after,NULL,&state};
     OK(exr_pager_create(d,font,&c,&p,&error));OK(exr_pager_set_control(p,&control,&error));
@@ -143,7 +155,8 @@ static void recovery(const char *directory) {
   OK(exr_pager_create(d,font,&c,&p,&error));OK(exr_pager_set_cache(p,1,1,&error));
   CHECK(exr_pager_get(p,0,&page,&error)==EXR_LIMIT && !page && !exr_pager_cached_count(p));
   OK(exr_pager_set_cache(p,1,262144,&error));OK(exr_pager_get(p,0,&page,&error));CHECK(page);
-  exr_pager_free(p);exr_document_free(d);
+  exr_pager_free(p);exr_document_free(d);p=NULL;d=NULL;
+  }
 }
 static void large_fixed(const char *directory) {
   char path[4096];exr_document *d=NULL;exr_pager *p=NULL;const exr_layout *page=NULL;exr_layout_config c=config();

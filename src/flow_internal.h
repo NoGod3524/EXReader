@@ -60,6 +60,7 @@ typedef struct {
   size_t pending;
   int first_line, paginate, force_break, unit_depth, page_limit, context_depth;
   int intrinsic; /* 1: every legal line break, 2: unwrapped streaming measure. */
+  int measure_height; /* Exact wrapped geometry; discard emitted glyph/line snapshots. */
   double intrinsic_extent;
   size_t border_node;
   float border_insets[4]; /* Logical top/right/bottom/left of a collapsed cell. */

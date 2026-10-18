@@ -7,7 +7,7 @@ typedef struct {
   exr_pager *cursor;
   float gap;
   int finished;
-  float height,baseline,content_bottom;
+  float height,baseline,content_bottom,content_height;
   float border[4];
 } table_cell;
 typedef struct { float width; uint32_t color,rank; } table_edge;
@@ -468,9 +468,9 @@ bad:
   return failed(f, status);
 }
 static exr_status measure(flow *f, exr_table_cursor *t) {
-  size_t i, j;
+  size_t i, j,retained=t->first;
   exr_status status;
-  int probe=f->paginate;
+  int probe=f->paginate,exact=0,tall=0;
   float full_room=fmaxf(exr_flow_room(f),f->unit_assigned ? f->unit_block_reference : 0);
   t->end = t->row + 1;
   t->last = t->first;
@@ -485,14 +485,14 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
     float minimum=style.height.percent && !t->min_height ? 0 : length_value(style.height,t->min_height);
     t->heights[i]=fmaxf(t->heights[i],fmaxf(minimum,t->min_height/(float)t->row_count));
   }
-  /* Middle/bottom alignment needs the whole group's intrinsic heights. Other
-     rows need only a bounded first-fragment probe; the grid grows on demand. */
+  /* Probe short cells once. Only unfinished aligned groups need exact full
+     heights; those measurements retain geometry rather than full glyph arrays. */
   for(i=t->first;i<t->last;i++) if(f->styles[t->cells[i].node].vertical_align==EXR_CELL_MIDDLE ||
-      f->styles[t->cells[i].node].vertical_align==EXR_CELL_BOTTOM) probe=0;
+      f->styles[t->cells[i].node].vertical_align==EXR_CELL_BOTTOM) exact=1;
   for (i = t->first; i < t->last; i++) {
     table_cell *c = &t->cells[i];
     flow local=cell_flow(f,t,c);
-    if(probe) {
+    if(probe && !(exact && tall)) {
       exr_pager *cursor=NULL;
       status=exr_flow_fragment(&local,NULL,c->node,t->columns_at[c->column+c->colspan]-t->columns_at[c->column],full_room,0,0,&cursor,&c->layout);
       if(status==EXR_OK) {
@@ -500,13 +500,20 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
         c->height=c->layout ? c->layout->flow_block : 0;
         if(!finished) {
           if(f->defer_tall_rows) status=EXR_FRAGMENT_SMALL;
-          else c->height=fmaxf(c->height,full_room+1);
+          else if(exact) {
+            exr_layout_free(c->layout);c->layout=NULL;local.measure_height=1;
+            status=exr_flow_unit(&local,c->node,t->columns_at[c->column+c->colspan]-t->columns_at[c->column],&c->layout,&c->height);
+            tall=1;
+          } else c->height=fmaxf(c->height,full_room+1);
         }
       }
       exr_pager_free(cursor);
       if(status==EXR_FRAGMENT_SMALL && !f->fragment_probe) status=exr_fail(f->error,EXR_LIMIT,"Table cell contains an item larger than a page");
-    } else status = exr_flow_unit(&local, c->node, t->columns_at[c->column+c->colspan]-t->columns_at[c->column],
+    } else {
+      if(probe && exact && tall) local.measure_height=1;
+      status = exr_flow_unit(&local, c->node, t->columns_at[c->column+c->colspan]-t->columns_at[c->column],
                            &c->layout, &c->height);
+    }
     if (status != EXR_OK) return status;
     if(!c->layout) {
       c->layout=calloc(1,sizeof(*c->layout));if(!c->layout) return exr_fail(f->error,EXR_MEMORY,"Empty table cell allocation failed");
@@ -520,9 +527,17 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
       float after=length_value(style.padding[2],width)+(t->collapse ? c->border[2] : border);
       if(style.height.value>=0 && (!style.height.percent || t->min_height>0))
         c->height=fmaxf(c->height,length_value(style.height,t->min_height)+before+after);
-      c->content_bottom=fmaxf(0,c->layout->flow_block-after);
+      c->content_height=c->layout->flow_block;
+      c->content_bottom=fmaxf(0,c->content_height-after);
       c->baseline=c->layout->has_baseline ? c->layout->first_baseline : c->content_bottom;
       if(style.vertical_align==EXR_CELL_BASELINE) t->baselines[c->row]=fmaxf(t->baselines[c->row],c->baseline);
+    }
+    if(probe && exact) {
+      float minimum=0;
+      if(c->rowspan==1) t->heights[c->row]=fmaxf(t->heights[c->row],c->height);
+      for(j=t->row;j<t->end;j++) minimum+=t->heights[j];
+      if(c->height>full_room+.01f || minimum>full_room+.01f) tall=1;
+      if(tall) for(;retained<=i;retained++) { exr_layout_free(t->cells[retained].layout);t->cells[retained].layout=NULL; }
     }
     if (f->doc->nodes[c->node].end != SIZE_MAX && f->doc->nodes[c->node].end > t->position)
       t->position = f->doc->nodes[c->node].end;
@@ -530,7 +545,7 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
   for(i=t->first;i<t->last;i++) {
     table_cell *c=&t->cells[i];
     float shift=f->styles[c->node].vertical_align==EXR_CELL_BASELINE ? fmaxf(0,t->baselines[c->row]-c->baseline) : 0;
-    if(c->rowspan==1) t->heights[c->row]=fmaxf(t->heights[c->row],fmaxf(c->height,c->layout->flow_block+shift));
+    if(c->rowspan==1) t->heights[c->row]=fmaxf(t->heights[c->row],fmaxf(c->height,c->content_height+shift));
   }
   /* Keep the eager algorithm's pass order, including overlapping spanning cells. */
   for (i = t->first; i < t->last; i++) {
@@ -539,7 +554,7 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
     for (j = c->row; j < c->row + c->rowspan; j++)
       total += t->heights[j];
     { float shift=f->styles[c->node].vertical_align==EXR_CELL_BASELINE ? fmaxf(0,t->baselines[c->row]-c->baseline) : 0;
-      float needed=fmaxf(c->height,c->layout->flow_block+shift);
+      float needed=fmaxf(c->height,c->content_height+shift);
       if(total<needed) t->heights[c->row+c->rowspan-1]+=needed-total;
     }
   }
@@ -553,7 +568,7 @@ size_t exr_table_position(const exr_table_cursor *t) { return t ? t->position : 
 void exr_table_geometry(const exr_table_cursor *t,float *x,float *width) { *x=t->x-t->border[3]; *width=t->width+t->border[3]+t->border[1]; }
 static float cell_inset(flow *f,const exr_table_cursor *t,const table_cell *c) {
   float allocated=t->positions[c->row+c->rowspan]-t->positions[c->row];
-  float room=fmaxf(0,allocated-c->layout->flow_block);
+  float room=fmaxf(0,allocated-c->content_height);
   switch(f->styles[c->node].vertical_align) {
     case EXR_CELL_TOP: return 0;
     case EXR_CELL_MIDDLE: return room/2;
@@ -759,7 +774,7 @@ exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
       t->fragmented=1;t->consumed=0;t->position=previous;
       for(i=t->first;i<t->last;i++) {
         t->cells[i].gap=cell_inset(f,t,t->cells+i);
-        t->cells[i].finished=t->cells[i].layout->flow_block<.001f && !t->cells[i].layout->glyph_count;
+        t->cells[i].finished=t->cells[i].content_height<.001f;
         exr_layout_free(t->cells[i].layout);t->cells[i].layout=NULL;
       }
       return split_row(f,t,done);

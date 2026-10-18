@@ -104,6 +104,11 @@ jobs:
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
           python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /System/Library/Fonts/Supplemental/Arial.ttf build/performance --runs 1 --max-pages 8 --paging
+      - name: Bound table alignment memory against the installed SDK
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = Windows ]; then benchmark=./stage/bin/exreader-benchmark.exe; else benchmark=./stage/bin/exreader-benchmark; fi
+          python tools/benchmark_table_layout.py "$benchmark" stage/examples/fonts/primary.ttf build/table-performance --runs 1 --check-memory
       - name: Build and run JNI host against installed SDK
         shell: bash
         run: |

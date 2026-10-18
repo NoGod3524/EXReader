@@ -7,7 +7,7 @@ from zipfile import ZipFile, ZipInfo, ZIP_STORED, ZIP_DEFLATED
 root=Path(__file__).resolve().parents[1]/'tests/fixtures'
 with ZipFile(root/'float-both.epub') as z: base={n:z.read(n) for n in z.namelist()}
 words='Abc def '*120;other='Xyz '*120
-for test in range(20):
+for test in range(24):
     mode=lead=decoration=inside=table=''
     if test==1:decoration='border:3px solid #30408080;background:#ffe080;padding:4px'
     if test==2:table='border-collapse:collapse;border:3px solid #30408080'
@@ -29,6 +29,12 @@ for test in range(20):
     if test==17:body=f"<table style='width:140px;border-collapse:collapse;border:3px solid blue'><tr><td style='vertical-align:bottom;background:#80ffaa'></td><td>{words}</td></tr></table>"
     if test==18:body=f"<table style='width:140px'><tr><td rowspan='100'>{words}</td><td>Row 0</td></tr>"+''.join(f"<tr><td>Row {i}</td></tr>" for i in range(1,100))+"</table>"
     if test==19:body=f"<table style='width:140px'><tr><td rowspan='3' style='vertical-align:middle;background:#80ffaa'>{words}</td><td style='font-size:18px;line-height:27px'>{other}</td></tr><tr><td style='font-size:10px;line-height:17px'>{words}</td></tr><tr><td>{other}</td></tr></table>"
+    if test==20:body="<p>Lead</p><table style='width:140px;table-layout:fixed;border-collapse:collapse;border:3px solid blue'><tr style='height:60px'><td style='vertical-align:middle'><ruby>Ab<rt>CD</rt></ruby></td><td style='vertical-align:bottom'>End</td></tr></table><p>After</p>"
+    if test==21:body="<table style='width:140px;table-layout:fixed'><tr><td rowspan='100' style='vertical-align:bottom'>Span end</td><td>Row 0</td></tr>"+''.join(f"<tr><td style='vertical-align:middle'>Row {i}</td></tr>" for i in range(1,100))+"</table>"
+    if test==22:body=f"<table style='width:140px;table-layout:fixed;border-collapse:collapse;border:3px solid #30408080'><tr><td style='vertical-align:middle'><div style='float:left;width:14px;height:80px'>X</div><ruby>Ab<rt>CD</rt></ruby><span dir='rtl'>שָׁלוֹם 123</span>{words}<img src='image.png' style='width:28px;height:40px'/></td><td style='vertical-align:bottom'><table style='width:60px'><tr><td>{other}</td></tr></table></td></tr></table>"
+    if test==23:
+        mode='writing-mode:vertical-lr'
+        body=f"<table style='height:140px;table-layout:fixed'><tr><td style='vertical-align:bottom'><ruby>Ab<rt>CD</rt></ruby>{words}</td><td style='vertical-align:middle'><img src='image.png' style='width:28px;height:40px'/>{other}</td></tr></table>"
     files=dict(base)
     files['chapter.xhtml']=(f'<html xmlns="http://www.w3.org/1999/xhtml" style="{mode}"><head><title>Table fragments {test}</title><link rel="stylesheet" href="style.css"/></head><body>{body}</body></html>').encode()
     files['style.css']=b'html,body,p,div,table,tr,td {margin:0;padding:0;font-size:14px;line-height:20px}'
@@ -51,4 +57,4 @@ files['chapter.xhtml']=('<html xmlns="http://www.w3.org/1999/xhtml"><head><title
 with ZipFile(root/'table-fragments-large-fixed.epub','w') as z:
     for key,data in files.items():
         info=ZipInfo(key,(2026,1,1,0,0,0));info.compress_type=ZIP_STORED if key=='mimetype' else ZIP_DEFLATED;z.writestr(info,data)
-print('24 original table-fragment EPUBs generated')
+print('28 original table-fragment EPUBs generated')

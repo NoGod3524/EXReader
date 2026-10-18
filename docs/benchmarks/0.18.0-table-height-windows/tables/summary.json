@@ -1,0 +1,43 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "runs": 3,
+  "binary_sha256": "1336e6069897e80b3050547de91236f019b748848f1ded2f3a5671c306e95550",
+  "font_sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+  "fixture_sha256": "67d9f5f30c11ce8eabef73a41ca97bfababb3cab0005368fc8bedbadb7730c0e",
+  "scope": "1 MiB in one cell, first 65 pages; fresh processes, sequential; disk cache and background load uncontrolled",
+  "cases": {
+    "fixed": {
+      "first_visible_total_ms": 38.7098,
+      "peak_rss_bytes": 14422016,
+      "turn_total_p50_ms": 22.8963,
+      "turn_total_p95_ms": 27.0503,
+      "glyph_count": 73324,
+      "input_sha256": "67d9f5f30c11ce8eabef73a41ca97bfababb3cab0005368fc8bedbadb7730c0e"
+    },
+    "auto": {
+      "first_visible_total_ms": 5465.8188,
+      "peak_rss_bytes": 14688256,
+      "turn_total_p50_ms": 46.8099,
+      "turn_total_p95_ms": 56.3872,
+      "glyph_count": 146644,
+      "input_sha256": "301f0926dd5e8d483b2c3b944e64c9a3e5325174faffaa79b92418e21defd3f6"
+    },
+    "middle": {
+      "first_visible_total_ms": 2899.4178,
+      "peak_rss_bytes": 14573568,
+      "turn_total_p50_ms": 23.4863,
+      "turn_total_p95_ms": 27.547,
+      "glyph_count": 73320,
+      "input_sha256": "c5e51b0626ff06bd753e98193bb55602698dc449a3838bf0fc8c9d60d4b86fd9"
+    },
+    "bottom": {
+      "first_visible_total_ms": 2857.1948,
+      "peak_rss_bytes": 14516224,
+      "turn_total_p50_ms": 22.6038,
+      "turn_total_p95_ms": 27.5956,
+      "glyph_count": 73320,
+      "input_sha256": "6994937076edeff11062c78884c3540f1ac56cdee6dcd5af56ccc43bbf2ec388"
+    }
+  },
+  "alignment_peak_ceiling_bytes": 81530880
+}

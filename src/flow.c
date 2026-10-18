@@ -295,6 +295,9 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
   }
   if(logical_start<l->pages[l->page_count-1].start) l->pages[l->page_count-1].start=logical_start;
   if(logical_end>l->pages[l->page_count-1].end) l->pages[l->page_count-1].end=logical_end;
+  if(f->measure_height) {
+    l->glyph_count=l->line_count=l->pages[l->page_count-1].line_count=0;
+  }
   f->y+=height; f->first_line=0; return EXR_OK;
 }
 exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float width, float height,
@@ -545,6 +548,7 @@ static exr_status copy_cell(flow *f, const cell *c, float x, float y, float heig
     }
     l->boxes[l->box_count++] = v;
   }
+  if(f->measure_height) l->glyph_count=l->line_count=l->pages[p].line_count=0;
   f->pending = l->glyph_count;
   if (from->page_count && from->pages[from->page_count-1].end > l->pages[p].end)
     l->pages[p].end = from->pages[from->page_count-1].end;
