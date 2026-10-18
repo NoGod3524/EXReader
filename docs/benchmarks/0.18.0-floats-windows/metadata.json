@@ -28,16 +28,18 @@
     "source_A_characters": 24000
   },
   "after_source_sha256": {
-    "CMakeLists.txt": "3ac4a9dcb4f2460460e85d933288af90c94f1391f2eb2946e2b3eb64697ea8a3",
-    "src/flow.c": "7c75e0b95a4e70ce21813d43221305beeabbba4caf6dedfd8e80f763bc80c9f6",
-    "src/floats.c": "7fc0ecdb543ad00bc25ae2ed245e9e299323159869d1120713aa84d1271942db",
+    "CMakeLists.txt": "a60e1fc99d72640bcb51b91eb4a3c803866c92fd8156ccab39e79346ea2a37ce",
+    "src/flow.c": "432a98d2208e9f94cc69dcb1056f74cebc1ab607378ae6afc11d61c8870f9d39",
+    "src/floats.c": "b120da5ce3aa0dcc40e2ca10d5c56c19572156b1c48f70bb5438664611f3620d",
     "src/flow_internal.h": "60f9fffbce7dfceb005be4c3a7a1632038971e818a4b24b1287c7cb84b5ef7e1",
-    "src/inline.c": "fad18c33c3944f3180d9da69c4d7f778cc09c2e63d640e5cbe7175e6e09dd209",
-    "src/internal.h": "853e177004cad38ebdfff66c0fdbdc8398f2450ed0fe73155c29cae41169f921",
-    "src/layout.c": "fa6b9724722de57d08a78bef57d8cab68206eb79ee9f4ddba5f99b2f7380083e",
+    "src/inline.c": "c850f384fa02cca84d9d912980142ac6f665e2b1fb3039a39036ee832e3a73a5",
+    "src/internal.h": "6d8ec9d0820e2648435de74764b4d5721c60501a30b18beabbdfa1e015bf6477",
+    "src/layout.c": "09d9dc4534342a8c44dd1835be37398f954500f195f8c94a3b63a82c9339223d",
     "src/layout_internal.h": "819ed70a9abaa8a0254a858fe0c31d87ccfca83008ad1b66a38163b1febc9fa2",
-    "src/pager.c": "247b0111fb3ea51b334a17de2cb2bb74ad731ef2d7762ecd4b9f3c0a895d84c3",
-    "src/positioned.c": "fdd3fd37b9106077ad7a428193d098b28917935676737a9117d11e8f1a113304",
-    "src/style.c": "abea7fdc3e0e35f386ef7faa16ce1d00939672837b45725b6351940ade08a5e4"
-  }
+    "src/pager.c": "4a3abe1db59b16eb69c926ae871f652a4febc2c8e6b27e29c056974c49411c86",
+    "src/positioned.c": "a5d423498df6651a2fa2c9ba1cfda773302ea58589f105706dc7c4b6f487ee54",
+    "src/style.c": "2122c4ec2742e8ebe3a0c36241b5749a9a1bdf462c450ff2f28a9f99b01f46a4"
+  },
+  "after_source_commit": "7abacb9d45e4dc3bd4a5377eefe149243d176ef2",
+  "source_hash_basis": "Git blob bytes (LF), independent of Windows checkout line endings"
 }
