@@ -1,7 +1,8 @@
 # 图形状态软遮罩（工作包 2）设计
 
-状态：**已实现并验收**。Alpha/Luminosity、`BC`、指数型 `TR`、`/Matrix`、`/BBox`、`q/Q`、`/None` 均可用；
-34 个场景与 8 个损坏输入进入 `native-blend`，函数型 `TR` 之外的非 Identity 类型明确返回 `EXR_UNSUPPORTED`。
+状态：**已实现并验收**。Alpha/Luminosity、`BC`、指数型 `TR`、`/Matrix`、`/BBox`、`q/Q`、`/None`、
+DeviceGray 组色空间以及“遮罩作用于组提交”均可用；41 个场景与 8 个损坏输入进入 `native-blend`，
+非 Identity/指数型的 `TR` 与非 RGB/灰组色空间明确返回 `EXR_UNSUPPORTED`。
 
 ## 1. 规范范围（ISO 32000-1 11.6.5.2）
 

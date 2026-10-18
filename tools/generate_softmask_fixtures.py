@@ -57,6 +57,7 @@ class PDF:
         self.w, self.h = width, height
         self.objects = [b'', b'', b'', b'']
         self.forms = []
+        self.page_res = []
 
     def add(self, body):
         self.objects.append(body)
@@ -79,9 +80,12 @@ class PDF:
         data = content.encode()
         self.objects[0] = b'<< /Type /Catalog /Pages 2 0 R >>'
         self.objects[1] = b'<< /Type /Pages /Count 1 /Kids [3 0 R] >>'
+        resources = ['/XObject << %s >>' % ' '.join('/Fm%d %d 0 R' % (i, o) for i, o in self.forms)]
+        for category, entries in self.page_res:
+            resources.append('/%s << %s >>' % (category, ' '.join('/%s %d 0 R' % (n, o) for n, o in entries)))
         self.objects[2] = ('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %d %d] /Contents 4 0 R '
-                           '/Group << /S /Transparency /CS /DeviceRGB /I true >> /Resources << /XObject << %s >> >> >>'
-                           % (self.w, self.h, ' '.join('/Fm%d %d 0 R' % (i, o) for i, o in self.forms))).encode()
+                           '/Group << /S /Transparency /CS /DeviceRGB /I true >> /Resources << %s >> >>'
+                           % (self.w, self.h, ' '.join(resources))).encode()
         self.objects[3] = b'<< /Length ' + str(len(data)).encode() + b' >>\nstream\n' + data + b'\nendstream'
         out = bytearray(b'%PDF-1.7\n%\x80\x81\x82\x83\n')
         offsets = [0]
@@ -193,6 +197,29 @@ def main():
         'content': '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 8 16 re f Q 0 1 0 rg 8 0 8 16 re f',
         'expect': lambda x, y: 1.0 if x >= 8 else 0.0,
     }])
+    # Device-grey group colour space: luminance is computed in the mask group's own CS.
+    grey_pdf = PDF(CELL, CELL)
+    grey_mask = grey_pdf.form('0.5 0.5 0.5 rg 0 0 16 16 re f', group=b'/S /Transparency /I true /CS /DeviceGray')
+    grey_cell = grey_pdf.cell('<< /S /Luminosity /G %d 0 R /BC [0.5] >>' % grey_mask,
+                              '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 16 16 re f Q')
+    grey_pdf.forms.append((0, grey_cell))
+    grey_pdf.finish('softmask-gray', 'q 1 0 0 1 0 0 cm /Fm0 Do Q')
+    write_images('softmask-gray', [cell_pixels(lambda x, y: 0.5)], CELL)
+
+    # Nested: the mask is set on the page and applies to the form's composite, while
+    # the form body starts with the default graphics state (ISO 32000-1 8.10.1).
+    nested_pdf = PDF(CELL, CELL)
+    nested_mask = nested_pdf.form('1 1 1 rg 0 0 8 16 re f')
+    nested_gs = nested_pdf.add(('<< /SMask << /S /Alpha /G %d 0 R >> >>' % nested_mask).encode())
+    nested_form = nested_pdf.form('1 0 0 rg 0 0 16 16 re f')
+    nested_pdf.page_res.append(('ExtGState', [('GS1', nested_gs)]))
+    nested_pdf.page_res.append(('XObject', [('Nest', nested_form)]))
+    nested_pdf.finish('softmask-nested', '1 1 1 rg 0 0 16 16 re f q /GS1 gs /Nest Do Q')
+    nested_pixels = []
+    for y in range(CELL):
+        for x in range(CELL):
+            nested_pixels.append((1.0, 0.0, 0.0) if x < 8 else (1.0, 1.0, 1.0))
+    write_images('softmask-nested', [nested_pixels], CELL)
     print('soft mask scenes written')
 
 

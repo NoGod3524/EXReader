@@ -31,6 +31,18 @@ exr_status exr_pdf_soft_mask_kind(exr_pdf_file *file, uint32_t mask, int *kind, 
   if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "G"), &g, e) != EXR_OK) return e->code;
   v = exr_pdf_value_at(file, g);
   if (!v || v->kind != EXR_PDF_STREAM) return fail(e, EXR_FORMAT, "PDF soft mask group must be a form stream");
+  /* ISO 32000-1 11.6.5.2: the group colour space decides how BC and the mask
+     luminance are interpreted. Only device RGB and grey are supported. */
+  if (exr_pdf_resolve(file, exr_pdf_get(file, g, "Group"), &id, e) != EXR_OK) return e->code;
+  if (id != EXR_PDF_NONE && exr_pdf_value_at(file, id)->kind != EXR_PDF_NULL) {
+    uint32_t cs;
+    const exr_pdf_value *group = exr_pdf_value_at(file, id);
+    if (group->kind != EXR_PDF_DICT) return fail(e, EXR_FORMAT, "PDF soft mask group must be a dictionary");
+    if (exr_pdf_resolve(file, exr_pdf_get(file, id, "CS"), &cs, e) != EXR_OK) return e->code;
+    if (cs != EXR_PDF_NONE && exr_pdf_value_at(file, cs)->kind != EXR_PDF_NULL &&
+        !name_is(file, cs, "DeviceRGB") && !name_is(file, cs, "DeviceGray"))
+      return fail(e, EXR_UNSUPPORTED, "PDF soft mask group colour space is not device RGB or grey");
+  }
   if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "TR"), &id, e) != EXR_OK) return e->code;
   if (id != EXR_PDF_NONE && exr_pdf_value_at(file, id)->kind != EXR_PDF_NULL && !name_is(file, id, "Identity")) {
     /* Only the exponential function (type 2) is supported; anything else is a
