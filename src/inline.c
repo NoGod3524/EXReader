@@ -1492,7 +1492,7 @@ static exr_status hyphenate_scalar(flow *f,exr_line_buffer *b,exr_glyph *g) {
 exr_status exr_inline_auto_stable(flow *f,exr_line_buffer *b,size_t node,size_t start,int *stable) {
   exr_glyph g={0};size_t at=start,i;exr_status status;
   *stable=0;
-  if(!exr_next(f->doc->text,f->doc->nodes[node].end,&at,&g.codepoint) || !exr_bidi_strong_type(g.codepoint) ||
+  if(exr_ruby_node(f->doc,node) || !exr_next(f->doc->text,f->doc->nodes[node].end,&at,&g.codepoint) || !exr_bidi_strong_type(g.codepoint) ||
      f->styles[node].hyphens!=EXR_HYPHENS_AUTO || (b->in_word && b->word_start<start)) return EXR_OK;
   g.start=start;g.end=at;g.node=node;g.boundaries=EXR_BOUNDARY_GRAPHEME;
   status=hyphenate_scalar(f,b,&g);if(status!=EXR_OK) return status;

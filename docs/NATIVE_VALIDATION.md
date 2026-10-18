@@ -3199,12 +3199,13 @@ paragraphs and a bounded non-convergence error. An unchanged first strong scalar
 is proven from the existing word cache where possible, avoiding speculative work
 and owned bidi arrays for ordinary class-preserving replacement text.
 
-Local GCC Release: all 113 CTests pass. The layout suite records 1,985,278 checks,
-70 EPUB fixtures (14 new, all 56 previous EPUB blobs unchanged), 9 original + 256
+Local GCC Release: all 113 CTests pass. The layout suite records 2,024,397 checks,
+71 EPUB fixtures (15 new, all 56 previous EPUB blobs unchanged), 9 original + 256
 seeded full-display differential cases, four additional leading-digit/isolate/B
 cases, actual Arabic lam-alef replacement ligatures, public flag separation,
 positioned reconstruction, pixels/hits, cached/uncached/backward pages and provider
-error/cancellation recovery. Installed C/C++ consumers and Java -Xcheck:jni pass;
+error/cancellation recovery. A ruby-leading regression verifies that atomic
+ruby contents do not falsely fix the parent P2 base. Installed C/C++ consumers and Java -Xcheck:jni pass;
 JNI checks mixed levels 2/1/0 and an all-digit first page resolved to level 2.
 Swift contains equivalent installed SDK checks for macOS CI.
 
@@ -3212,9 +3213,9 @@ Three fresh processes per mode over each 1 MiB EPUB and its first 65 pages:
 
 | Workload | Enabled first visible (ms) | Peak RSS (bytes) | Turn p50 / p95 (ms) |
 | --- | ---: | ---: | ---: |
-| English dictionary | 21.9788 | 14577664 | 4.8733 / 7.3615 |
-| Class-preserving repeated spelling changes | 18.2604 | 14024704 | 6.9389 / 11.1030 |
-| Latin/Arabic/Han mixed spelling changes | 39.7312 | 14454784 | 8.6898 / 10.7964 |
+| English dictionary | 21.9170 | 14544896 | 4.8484 / 8.2059 |
+| Class-preserving repeated spelling changes | 18.4677 | 13996032 | 6.1752 / 8.7633 |
+| Latin/Arabic/Han mixed spelling changes | 39.3588 | 14413824 | 8.6872 / 10.8265 |
 
 Raw inputs, output, dictionary/binary/font hashes and source provenance live under
 benchmarks/0.18.0-hyphen-bidi-windows. Disk cache/background load are uncontrolled.

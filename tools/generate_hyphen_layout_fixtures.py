@@ -112,4 +112,5 @@ leading='1111111111111111111111111111111111111111111111111111111111111111 '
 epub('bidi-leading','<p style="width:49px;text-align:start">'+leading+bidi_words+'</p>',attrs='lang="ze"')
 epub('bidi-leading-float','<div style="float:left;width:14px;height:100px;background:#ffe080">A</div><p style="width:49px;text-align:start">'+leading+bidi_words+'</p>',attrs='lang="ze"')
 epub('bidi-paragraphs','<p style="width:49px;text-align:start">1111\u2029'+leading+bidi_words+'</p>',attrs='lang="ze"')
+epub('bidi-leading-ruby','<p style="width:49px;text-align:start"><ruby>AA<rt>A</rt></ruby> '+leading+bidi_words+'</p>',attrs='lang="ze"')
 print(count,'hyphenation EPUBs and shaping/hyphen.ttf generated')
