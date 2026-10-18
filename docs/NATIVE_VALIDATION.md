@@ -3771,8 +3771,8 @@ cases with both the synthetic fixture font and Windows Arial. Default checks
 are 163,762; Arial checks are 161,863. Desktop CI now runs platform-font cases
 in addition to ordinary CTests and installed-SDK memory budgets.
 
-Installed C/C++/JNI smokes pass. The full cross-platform and sanitizer result
-will be recorded after this code commit's CI. DLL is 5,616,795 bytes
+Installed C/C++/JNI smokes pass. The exact code-commit cross-platform and
+sanitizer result is recorded below. DLL is 5,616,795 bytes
 (-2,498 versus the previous snapshot), SHA256 b1e166c7e0110f0c892139794c602313b41f0c2e9fd2ce53fc43c881a614c157.
 
 A separate alternating fresh-process auto-table probe (first two pages, same
@@ -3796,3 +3796,17 @@ signatures, independent lookup flag results, DLL and source provenance are in
 [OpenType filter records](benchmarks/0.18.0-ot-filter-windows/metadata.json).
 Auto min/max-content and exact aligned heights still scan the complete cell.
 The full compatibility/reading SDK roadmap remains active.
+
+
+Commit b644e95e89b54c0ee159fce0157f3b1cb469cc6b passed all six jobs in
+[CI run 39140223345](https://github.com/NoGod3524/EXReader/actions/runs/39140223345):
+Windows/Linux/macOS (117 CTests each), 24 platform OpenType font table cases on
+each desktop, installed SDK memory regressions and C/C++/JNI, macOS Swift,
+ASan/UBSan/leaks (114 tests), Android ARM64, and iOS/iPadOS device/simulator
+engine libraries plus Swift checks. All 663 recorded hashes match the exact
+code-commit Git blobs. The source list now explicitly includes the whole shaping
+fixture directory; five prior shaping TTFs match the preceding validated code
+commit. All 111 preceding hyphen EPUBs, four local runtime copies and nine
+preceding workload input/font/generated counts were verified.
+This verification-only commit adds the completed provenance record and skips
+redundant CI. The complete PDF/reading SDK roadmap remains active.

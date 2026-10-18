@@ -318,5 +318,7 @@
       }
     ],
     "first_visible_median_ms": 5335.1496
-  }
+  },
+  "font_sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+  "book_sha256": "301f0926dd5e8d483b2c3b944e64c9a3e5325174faffaa79b92418e21defd3f6"
 }
