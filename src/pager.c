@@ -582,7 +582,7 @@ static exr_status advance(exr_pager *p) {
       height = perpendicular ? v->fragment->flow_inline : v->fragment->flow_block;
       status = exr_flow_page(f, height, v->fragment->pages[0].start);
       if (status != EXR_OK) return status;
-      status = exr_flow_copy(f, v->fragment, v->node, f->x, f->y, height);
+      status = exr_flow_copy(f, v->fragment, v->node, f->x, f->y, height,0);
       if (status != EXR_OK) return status;
       f->y += height; f->first_line = 1;
       if (v->context->position > p->position) p->position = v->context->position;

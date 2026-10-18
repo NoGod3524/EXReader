@@ -4,16 +4,16 @@
 typedef struct {
   size_t node, row, column, colspan, rowspan;
   exr_layout *layout;
-  float height;
+  float height,baseline,content_bottom;
 } table_cell;
 struct exr_table_cursor {
   size_t *rows, row_count, row_capacity;
   table_cell *cells;
   size_t cell_count, cell_capacity, columns;
-  float *heights, *positions;
+  float *heights, *positions, *baselines;
   size_t row, first, last, end;
   size_t position;
-  float x, width;
+  float x, width, min_height;
   float columns_at[65]; /* Logical inline edges, preserved by checkpoint clones. */
   int measured;
 };
@@ -55,6 +55,7 @@ void exr_table_free(exr_table_cursor *t) {
   free(t->rows);
   free(t->heights);
   free(t->positions);
+  free(t->baselines);
   free(t);
 }
 static exr_status failed(flow *f, exr_status status) {
@@ -178,13 +179,16 @@ static exr_status column_widths(flow *f,exr_table_cursor *t,size_t node) {
   for(i=0;i<t->columns;i++) t->columns_at[i+1]=fmaxf(t->columns_at[i]+1,
     fminf(t->width-(float)(t->columns-i-1),t->columns_at[i]+widths[i]));
   t->columns_at[t->columns]=t->width;
+  /* Across float exponent boundaries, rounded (left + 1) can leave a delta
+     just below one pixel. Anchor the final edge and enforce the floor backwards. */
+  for(i=t->columns;i>1;i--) t->columns_at[i-1]=fminf(t->columns_at[i-1],t->columns_at[i]-1);
   return EXR_OK;
 }
 size_t exr_table_memory_size(const exr_table_cursor *t) {
   size_t total, i;
   if (!t) return 0;
   total = sizeof(*t) + t->row_capacity*sizeof(*t->rows) + t->cell_capacity*sizeof(*t->cells);
-  if (t->heights) total += (2*t->row_count + 1)*sizeof(float);
+  if (t->heights) total += (3*t->row_count + 1)*sizeof(float);
   for (i = 0; i < t->cell_count; i++) {
     size_t bytes = exr_layout_memory_size(t->cells[i].layout);
     if (bytes > SIZE_MAX - total) return SIZE_MAX;
@@ -199,7 +203,7 @@ exr_table_cursor *exr_table_clone(const exr_table_cursor *t) {
   copy = malloc(sizeof(*copy));
   if (!copy) return NULL;
   *copy = *t;
-  copy->rows = NULL; copy->cells = NULL; copy->heights = copy->positions = NULL;
+  copy->rows = NULL; copy->cells = NULL; copy->heights = copy->positions = copy->baselines = NULL;
   copy->cell_count = 0;
   if (t->row_count) {
     copy->rows = malloc(t->row_count*sizeof(*t->rows));
@@ -216,9 +220,11 @@ exr_table_cursor *exr_table_clone(const exr_table_cursor *t) {
   if (t->heights) {
     copy->heights = malloc(t->row_count*sizeof(*t->heights));
     copy->positions = malloc((t->row_count + 1)*sizeof(*t->positions));
-    if (!copy->heights || !copy->positions) goto bad;
+    copy->baselines = malloc(t->row_count*sizeof(*t->baselines));
+    if (!copy->heights || !copy->positions || !copy->baselines) goto bad;
     memcpy(copy->heights, t->heights, t->row_count*sizeof(*t->heights));
     memcpy(copy->positions, t->positions, (t->row_count + 1)*sizeof(*t->positions));
+    memcpy(copy->baselines, t->baselines, t->row_count*sizeof(*t->baselines));
   }
   copy->row_capacity = copy->row_count; copy->cell_capacity = copy->cell_count;
   return copy;
@@ -238,6 +244,9 @@ exr_status exr_table_create(flow *f, size_t node, float x, float width,
     return exr_fail(f->error, EXR_MEMORY, "Table cursor allocation failed");
   t->x = x;
   t->width = width;
+  { exr_style style=exr_flow_style(&f->styles[node],f->writing_mode);
+    t->min_height=length_value(style.height,exr_flow_room(f));
+  }
   if (!rows(f, t, node)) {
     status = EXR_LIMIT;
     goto bad;
@@ -289,7 +298,8 @@ exr_status exr_table_create(flow *f, size_t node, float x, float width,
   if (t->columns && t->row_count) {
     t->heights = calloc(t->row_count, sizeof(*t->heights));
     t->positions = calloc(t->row_count + 1, sizeof(*t->positions));
-    if (!t->heights || !t->positions) {
+    t->baselines = calloc(t->row_count, sizeof(*t->baselines));
+    if (!t->heights || !t->positions || !t->baselines) {
       status = EXR_MEMORY;
       goto bad;
     }
@@ -311,16 +321,35 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
     if (c->row + c->rowspan > t->end)
       t->end = c->row + c->rowspan;
   }
+  for(i=t->row;i<t->end;i++) {
+    exr_style style=exr_flow_style(&f->styles[t->rows[i]],f->writing_mode);
+    float minimum=style.height.percent && !t->min_height ? 0 : length_value(style.height,t->min_height);
+    t->heights[i]=fmaxf(t->heights[i],fmaxf(minimum,t->min_height/(float)t->row_count));
+  }
   for (i = t->first; i < t->last; i++) {
     table_cell *c = &t->cells[i];
     status = exr_flow_unit(f, c->node, t->columns_at[c->column+c->colspan]-t->columns_at[c->column],
                            &c->layout, &c->height);
     if (status != EXR_OK)
       return status;
+    {
+      exr_style style=exr_flow_style(&f->styles[c->node],f->writing_mode);
+      float width=t->columns_at[c->column+c->colspan]-t->columns_at[c->column];
+      float border=style.border_style ? style.border_width : 0;
+      float after=length_value(style.padding[2],width)+border;
+      if(style.height.value>=0 && (!style.height.percent || t->min_height>0))
+        c->height=fmaxf(c->height,length_value(style.height,t->min_height)+length_value(style.padding[0],width)+border+after);
+      c->content_bottom=fmaxf(0,c->layout->flow_block-after);
+      c->baseline=c->layout->has_baseline ? c->layout->first_baseline : c->content_bottom;
+      if(style.vertical_align==EXR_CELL_BASELINE) t->baselines[c->row]=fmaxf(t->baselines[c->row],c->baseline);
+    }
     if (f->doc->nodes[c->node].end != SIZE_MAX && f->doc->nodes[c->node].end > t->position)
       t->position = f->doc->nodes[c->node].end;
-    if (c->rowspan == 1)
-      t->heights[c->row] = fmaxf(t->heights[c->row], c->height);
+  }
+  for(i=t->first;i<t->last;i++) {
+    table_cell *c=&t->cells[i];
+    float shift=f->styles[c->node].vertical_align==EXR_CELL_BASELINE ? fmaxf(0,t->baselines[c->row]-c->baseline) : 0;
+    if(c->rowspan==1) t->heights[c->row]=fmaxf(t->heights[c->row],fmaxf(c->height,c->layout->flow_block+shift));
   }
   /* Keep the eager algorithm's pass order, including overlapping spanning cells. */
   for (i = t->first; i < t->last; i++) {
@@ -328,8 +357,10 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
     float total = 0;
     for (j = c->row; j < c->row + c->rowspan; j++)
       total += t->heights[j];
-    if (total < c->height)
-      t->heights[c->row + c->rowspan - 1] += c->height - total;
+    { float shift=f->styles[c->node].vertical_align==EXR_CELL_BASELINE ? fmaxf(0,t->baselines[c->row]-c->baseline) : 0;
+      float needed=fmaxf(c->height,c->layout->flow_block+shift);
+      if(total<needed) t->heights[c->row+c->rowspan-1]+=needed-total;
+    }
   }
   /* Accumulate positions globally to preserve the eager float arithmetic. */
   for (i = t->row; i < t->end; i++)
@@ -339,6 +370,16 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
 }
 size_t exr_table_position(const exr_table_cursor *t) { return t ? t->position : 0; }
 void exr_table_geometry(const exr_table_cursor *t,float *x,float *width) { *x=t->x; *width=t->width; }
+static float cell_inset(flow *f,const exr_table_cursor *t,const table_cell *c) {
+  float allocated=t->positions[c->row+c->rowspan]-t->positions[c->row];
+  float room=fmaxf(0,allocated-c->layout->flow_block);
+  switch(f->styles[c->node].vertical_align) {
+    case EXR_CELL_TOP: return 0;
+    case EXR_CELL_MIDDLE: return room/2;
+    case EXR_CELL_BOTTOM: return room;
+    default: return fminf(room,fmaxf(0,t->baselines[c->row]-c->baseline));
+  }
+}
 exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
   exr_status status;
   size_t i;
@@ -359,12 +400,19 @@ exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
     return status;
   if (status != EXR_OK)
     return failed(f, status);
+  if(!f->layout->has_baseline) {
+    float baseline=t->baselines[t->row]; int aligned=0;
+    for(i=t->first;i<t->last && t->cells[i].row==t->row;i++) if(f->styles[t->cells[i].node].vertical_align==EXR_CELL_BASELINE) aligned=1;
+    if(!aligned) for(i=t->first;i<t->last && t->cells[i].row==t->row;i++)
+      baseline=fmaxf(baseline,t->cells[i].content_bottom+cell_inset(f,t,&t->cells[i]));
+    f->layout->first_baseline=f->y+baseline; f->layout->has_baseline=1;
+  }
   for (i = t->first; i < t->last; i++) {
     table_cell *c = &t->cells[i];
     status = exr_flow_copy(f, c->layout, c->node,
                            t->x + t->columns_at[c->column],
                            f->y + t->positions[c->row] - t->positions[t->row],
-                           t->positions[c->row + c->rowspan] - t->positions[c->row]);
+                           t->positions[c->row + c->rowspan] - t->positions[c->row],cell_inset(f,t,c));
     if (status != EXR_OK)
       return failed(f, status);
   }

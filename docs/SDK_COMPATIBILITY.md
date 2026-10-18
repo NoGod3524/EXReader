@@ -53,6 +53,13 @@ presentation; unnamed host nodes can carry that inline style directly. The old
 0.10 pixel goldens explicitly request this fixed presentation, while independent
 auto-width vectors, random tables and checkpoint tests validate the new default.
 
+Cell alignment now uses the CSS baseline initial value and HTML table-group
+defaults, with top/middle/bottom/baseline support. Different font sizes/paddings
+and spanning cells may therefore change row heights or content coordinates.
+Request `vertical-align:top` on cells to preserve the old top-aligned presentation;
+the legacy pixel-golden CSS does so explicitly. The first-line/row baseline
+metadata remains private; public array strides and ABI epoch stay unchanged.
+
 ## Ownership and execution
 
 Opaque handles are released with their matching `*_free`/close function. Allocated

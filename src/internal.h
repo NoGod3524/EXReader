@@ -140,6 +140,7 @@ typedef struct {
   int percent;
 } exr_length; /* value < 0 means auto */
 enum { EXR_CSS_NONE, EXR_CSS_INLINE, EXR_CSS_BLOCK, EXR_CSS_TABLE, EXR_CSS_ROW, EXR_CSS_CELL };
+enum { EXR_CELL_BASELINE,EXR_CELL_TOP,EXR_CELL_MIDDLE,EXR_CELL_BOTTOM };
 typedef struct {
   char family[128], source[2048], base[2048];
   size_t chapter;
@@ -152,6 +153,7 @@ typedef struct {
   int leading_relative, align, display, before, after, border_style, writing_declared;
   int ruby_position, ruby_align;
   int table_fixed;
+  int vertical_align;
   unsigned flags;
   exr_direction direction;
   exr_writing_mode writing_mode;

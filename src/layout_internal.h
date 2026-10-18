@@ -57,6 +57,8 @@ struct exr_layout {
   exr_positioned_page *positioned;
   exr_writing_mode writing_mode;
   float flow_inline, flow_block; /* Private logical extents of a reusable flow fragment. */
+  float first_baseline; /* First line's logical block-axis baseline, including ruby. */
+  unsigned has_baseline;
 };
 exr_status exr_layout_image_asset(const exr_document *doc, exr_layout *assets,
                                     const exr_layout_config *config, size_t resource,

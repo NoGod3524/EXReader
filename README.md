@@ -45,7 +45,7 @@
 | 竖排 | 统一页面 vertical-rl / vertical-lr、Unicode 17 字形朝向、vert / vrt2 / vkrn 与 vmtx、混合直立/侧排、横竖/反向列块上下文、物理命中、分页和检查点 |
 | 可变字体 | 只读轴查询、按 tag/face 创建独立坐标实例；gvar/HVAR/VVAR、avar、原生 GDEF VariationIndex 与 GSUB/GPOS 条件特征替换 |
 | CSS 子集 | 章节样式表、内嵌和内联样式；元素 / 类 / ID / 后代 / 子选择器，优先级和继承；混合字号、粗斜体、颜色、段落方向、对齐、缩进、边距、背景、实线边框和强制分页 |
-| 图片与表格 | PNG/JPEG 解码、透明合成和等比缩放；按内容自动列宽或 CSS 固定列宽、单元格换行、colspan / rowspan、按行组跨页 |
+| 图片与表格 | PNG/JPEG 解码、透明合成和等比缩放；按内容自动列宽或 CSS 固定列宽、单元格垂直对齐/基线、换行、colspan / rowspan、按行组跨页 |
 | 字体回退 | 宿主提供有序字体字节和集合 face index；优先整字素簇覆盖，必要时逐标量回退；可查询 cmap 覆盖，布局输出字体索引与缺字标记 |
 | 书内字体与匹配 | 本地 `@font-face` TTF/OTF、CSS `font-family` 列表与转义、粗斜体选脸、章节作用域与宿主禁用开关；布局保留有效字体集，可读取编码字节自行绘制 |
 | 原生渲染 | FreeType 字形栅格化，C 合成灰度或 RGBA 像素；BMP / PNG 输出，无图形界面依赖 |

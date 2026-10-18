@@ -9,7 +9,7 @@
 /* Define EXR_PAGER_GOLDEN_ONLY to record the fixture with the installed 0.10.0 SDK.
    The normal test compares both the old engine snapshot and independent page output.
    The old equal-column contract is explicitly requested with standard fixed
-   table CSS. Native table-column/intrinsic tests cover the new auto default.
+   table/top-alignment CSS. Dedicated table tests cover auto widths and alignment.
    In 0.18.0 fragment box source ranges were corrected; the 89 pixel baselines
    and other fixed-table geometry fields retain the original values. */
 static exr_error error;
@@ -188,16 +188,16 @@ static exr_document *host_document(void) {
   table = add(&c, EXR_NODE_TABLE, inner, NULL, "margin:4px 0;border:1px solid #304050;table-layout:fixed;width:100%");
   row = add(&c, EXR_NODE_ROW, table, NULL, NULL);
   cell = add(&c, EXR_NODE_CELL, row, NULL,
-             "padding:2px;border:1px solid #506070;background:#ddeeff");
+             "padding:2px;border:1px solid #506070;background:#ddeeff;vertical-align:top");
   c.attrs[cell][1] = (exr_attribute){"rowspan", "2"}; c.nodes[cell].attribute_count = 2;
   add(&c, EXR_NODE_TEXT, cell, "AV a AV a AV a", NULL);
-  cell = add(&c, EXR_NODE_CELL, row, NULL, "padding:3px;border:1px solid #506070");
+  cell = add(&c, EXR_NODE_CELL, row, NULL, "padding:3px;border:1px solid #506070;vertical-align:top");
   add(&c, EXR_NODE_TEXT, cell, "AV a", NULL);
   row = add(&c, EXR_NODE_ROW, table, NULL, NULL);
-  cell = add(&c, EXR_NODE_CELL, row, NULL, "padding:2px;border:1px solid #506070");
+  cell = add(&c, EXR_NODE_CELL, row, NULL, "padding:2px;border:1px solid #506070;vertical-align:top");
   add(&c, EXR_NODE_TEXT, cell, "a AV", NULL);
   row = add(&c, EXR_NODE_ROW, table, NULL, NULL);
-  cell = add(&c, EXR_NODE_CELL, row, NULL, "padding:4px;border:1px solid #506070");
+  cell = add(&c, EXR_NODE_CELL, row, NULL, "padding:4px;border:1px solid #506070;vertical-align:top");
   c.attrs[cell][1] = (exr_attribute){"colspan", "2"}; c.nodes[cell].attribute_count = 2;
   add(&c, EXR_NODE_TEXT, cell, "AV a AV a AV a", NULL);
   p = add(&c, EXR_NODE_PARAGRAPH, section, NULL,
@@ -428,7 +428,7 @@ static void validation(void) {
 #endif
 int main(int argc, char **argv) {
   exr_layout_config config = exr_layout_config_defaults();
-  config.user_css="table {table-layout:fixed;width:100%}";
+  config.user_css="table {table-layout:fixed;width:100%} td,th {vertical-align:top}";
   FILE *records;
   CHECK(argc == 3);
   fixtures = argv[1]; load_fonts(argv[2]);
