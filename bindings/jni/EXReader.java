@@ -63,14 +63,31 @@ public final class EXReader {
         PDF(8), CBZ(9);
         final int code; FixedFormat(int code) { this.code=code; }
     }
+    public static final int PASSWORD_REQUIRED = 10;
+    public static final class PdfSecurity {
+        public final boolean encrypted,ownerAuthenticated,metadataEncrypted;
+        public final int revision,keyBits;
+        public final long permissions; // unsigned 32-bit /P; inspect together with revision/owner role.
+        private PdfSecurity(long[] values) {
+            encrypted=values[0]!=0; revision=(int)values[1]; keyBits=(int)values[2];
+            ownerAuthenticated=values[3]!=0; permissions=values[4]; metadataEncrypted=values[5]!=0;
+        }
+    }
     public static class FixedDocument implements AutoCloseable {
         private long handle;
+        public final PdfSecurity pdfSecurity; // null for CBZ.
         public FixedDocument(FixedFormat format,byte[] bytes) { this(format,bytes,null,0); }
         public FixedDocument(FixedFormat format,byte[] bytes, byte[] fallbackFont, int faceIndex) {
+            this(format,bytes,fallbackFont,faceIndex,null);
+        }
+        /** Password bytes: PDFDocEncoding for R2-4; UTF-8 for R5-6. Borrowed only during construction. */
+        public FixedDocument(FixedFormat format,byte[] bytes,byte[] fallbackFont,int faceIndex,byte[] password) {
             Objects.requireNonNull(format);
             Objects.requireNonNull(bytes);
             if(faceIndex<0) throw new IllegalArgumentException("Negative face index");
-            handle=nativePdfOpen(bytes, fallbackFont, faceIndex, format.code);
+            long[] security=new long[6];
+            handle=nativePdfOpen(bytes, fallbackFont, faceIndex, format.code,password,security);
+            pdfSecurity=format==FixedFormat.PDF ? new PdfSecurity(security) : null;
         }
         private long checked() { if(handle==0) throw new IllegalStateException("Fixed document is closed"); return handle; }
         public synchronized int pageCount() { return nativePdfCount(checked()); }
@@ -90,6 +107,8 @@ public final class EXReader {
     public static final class Pdf extends FixedDocument {
         public Pdf(byte[] bytes) { super(FixedFormat.PDF,bytes); }
         public Pdf(byte[] bytes,byte[] fallbackFont,int faceIndex) { super(FixedFormat.PDF,bytes,fallbackFont,faceIndex); }
+        public Pdf(byte[] bytes,byte[] password) { super(FixedFormat.PDF,bytes,null,0,password); }
+        public Pdf(byte[] bytes,byte[] fallbackFont,int faceIndex,byte[] password) { super(FixedFormat.PDF,bytes,fallbackFont,faceIndex,password); }
     }
     public static final class WaveFormat {
         public final int sampleRate,channels,bitsPerSample,validBits,channelMask;
@@ -332,7 +351,7 @@ public final class EXReader {
     private static native AudioBookMetadata nativeReadM4b(byte[] path);
     private static native byte[][] nativeReadXMP(byte[] packet);
     private static native byte[][] nativePdfMetadata(long handle);
-    private static native long nativePdfOpen(byte[] bytes,byte[] font,int faceIndex,int format);
+    private static native long nativePdfOpen(byte[] bytes,byte[] font,int faceIndex,int format,byte[] password,long[] security);
     private static native int nativePdfCount(long handle);
     private static native TextPage nativePdfText(long handle,int page);
     private static native Bitmap nativePdfRender(long handle,int page,double scale);

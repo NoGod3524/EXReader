@@ -1,21 +1,23 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "pdf_raster_internal.h"
 #include "layout_internal.h"
+#include "pdf_crypto.h"
 typedef struct {
   unsigned char *data; size_t size,count; exr_pdf_file *file; exr_pdf_page_info *pages; exr_font *font;
   exr_metadata_entry *metadata; size_t metadata_count;
   exr_page_annotation *annotations; size_t annotation_count;
+  exr_pdf_crypt crypt;
 } pdf_document;
 static void discard_reader(pdf_document *d) { free(d->pages); d->pages=NULL; exr_pdf_close(d->file); d->file=NULL; }
 static void release(void *context) {
   pdf_document *d=context; if(!d) return; discard_reader(d); exr_font_free(d->font);
   exr_metadata_free(d->metadata,d->metadata_count); exr_page_annotations_free(d->annotations,d->annotation_count);
-  free(d->data); free(d);
+  exr_pdf_secret_clear(&d->crypt,sizeof(d->crypt)); free(d->data); free(d);
 }
 static exr_status reader(pdf_document *d,exr_error *e) {
   exr_status status; size_t count=0;
   if(d->file) return EXR_OK;
-  status=exr_pdf_open(d->data,d->size,&d->file,e);
+  status=exr_pdf_open_password(d->data,d->size,NULL,0,&d->crypt,NULL,&d->file,e);
   if(status==EXR_OK) status=exr_pdf_pages(d->file,&d->pages,&count,e);
   if(status==EXR_OK && (!count || (d->count && count!=d->count))) status=exr_fail(e,EXR_FORMAT,"Invalid or changed PDF page directory");
   if(status!=EXR_OK) { discard_reader(d); return status==EXR_ARGUMENT ? exr_fail(e,EXR_FORMAT,"Invalid PDF bytes") : status; }
@@ -38,13 +40,14 @@ static exr_status draw(void *context,size_t page,const double matrix[6],const ex
   pdf_document *d=context; exr_buffer content={0}; exr_status status=reader(d,e);
   if(status!=EXR_OK) return status;
   if(page>=d->count) return exr_fail(e,EXR_ARGUMENT,"PDF page is out of range");
+  exr_pdf_control(d->file,control);
   status=exr_control_cancel(control,e);
   if(status==EXR_OK) status=exr_pdf_content(d->file,d->pages[page].contents,&content,e);
   if(status==EXR_OK) status=exr_pdf_paint_page(d->file,&d->pages[page],content.data,content.size,matrix,sink,program,d,NULL,control,e);
   free(content.data);
   /* Failed lazy resolution/decoding can leave a sticky parser error. Rebuild
      the reader on the next request, so another page remains independently usable. */
-  if(status!=EXR_OK) discard_reader(d);
+  if(status!=EXR_OK) discard_reader(d); else exr_pdf_control(d->file,NULL);
   return status;
 }
 /* Snapshot order follows content operators, including nested Forms. No inferred
@@ -86,12 +89,13 @@ static exr_status text(void *context,size_t page,const exr_control *control,exr_
   pdf_document *d=context; text_builder b={0}; exr_buffer content={0}; exr_status status=reader(d,e);
   *out=NULL; if(status!=EXR_OK) return status;
   if(page>=d->count) return exr_fail(e,EXR_ARGUMENT,"PDF page is out of range");
+  exr_pdf_control(d->file,control);
   status=exr_control_cancel(control,e);
   if(status==EXR_OK) status=exr_pdf_content(d->file,d->pages[page].contents,&content,e);
   if(status==EXR_OK) status=exr_pdf_text_ops(d->file,d->pages[page].resources,content.data,content.size,collect_text,&b,control,e);
   if(status==EXR_OK) status=exr_fixed_text_create(b.bytes.data,b.bytes.size,b.regions,b.count,control,out,e);
   free(content.data); free(b.bytes.data); free(b.regions);
-  if(status!=EXR_OK) discard_reader(d);
+  if(status!=EXR_OK) discard_reader(d); else exr_pdf_control(d->file,NULL);
   return status;
 }
 /* ISO 32000 text strings: PDFDocEncoding, BOM UTF-16BE and PDF 2 UTF-8.
@@ -169,6 +173,7 @@ static exr_status metadata(void *context,const exr_control *control,const exr_me
   *out=NULL; *count=0;
   exr_metadata_free(d->metadata,d->metadata_count); d->metadata=NULL; d->metadata_count=0;
   status=reader(d,e); if(status!=EXR_OK) return status;
+  exr_pdf_control(d->file,control);
   status=exr_pdf_resolve(d->file,exr_pdf_info(d->file),&info,e); if(status!=EXR_OK) goto done;
   v=exr_pdf_value_at(d->file,info); if(!v || v->kind==EXR_PDF_NULL) goto read_xmp;
   if(v->kind!=EXR_PDF_DICT) { status=exr_fail(e,EXR_FORMAT,"PDF Info is not a dictionary"); goto done; }
@@ -185,7 +190,7 @@ read_xmp:
   status=merge_xmp(d,control,e); if(status!=EXR_OK) goto done;
   *out=d->metadata; *count=d->metadata_count;
 done:
-  if(status!=EXR_OK) discard_reader(d);
+  if(status!=EXR_OK) discard_reader(d); else exr_pdf_control(d->file,NULL);
   return status;
 }
 static exr_status annotations(void *context,size_t page,const exr_control *control,const exr_page_annotation **out,size_t *count,exr_error *e) {
@@ -193,8 +198,9 @@ static exr_status annotations(void *context,size_t page,const exr_control *contr
   *out=NULL; *count=0; exr_page_annotations_free(d->annotations,d->annotation_count); d->annotations=NULL; d->annotation_count=0;
   status=reader(d,e); if(status!=EXR_OK) return status;
   if(page>=d->count) return exr_fail(e,EXR_ARGUMENT,"PDF annotation page is out of range");
+  exr_pdf_control(d->file,control);
   status=exr_pdf_page_annotations(d->file,d->pages[page].annotations,control,&d->annotations,&d->annotation_count,e);
-  if(status!=EXR_OK) discard_reader(d); else { *out=d->annotations; *count=d->annotation_count; }
+  if(status!=EXR_OK) discard_reader(d); else { exr_pdf_control(d->file,NULL); *out=d->annotations; *count=d->annotation_count; }
   return status;
 }
 static exr_status open_options(const exr_fixed_open_options *input,exr_fixed_open_options *out,exr_error *e) {
@@ -202,7 +208,16 @@ static exr_status open_options(const exr_fixed_open_options *input,exr_fixed_ope
   if(!input) return EXR_OK;
   if(input->struct_size<minimum || input->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed open options size");
   for(i=sizeof(*out);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Unsupported fixed open options extension");
-  memcpy(out,input,input->struct_size<sizeof(*out) ? input->struct_size : sizeof(*out)); return EXR_OK;
+  if((input->struct_size>offsetof(exr_fixed_open_options,pdf_password) && input->struct_size<offsetof(exr_fixed_open_options,pdf_password)+sizeof(out->pdf_password)) ||
+     (input->struct_size>offsetof(exr_fixed_open_options,pdf_password_size) && input->struct_size<offsetof(exr_fixed_open_options,pdf_password_size)+sizeof(out->pdf_password_size)) ||
+     (input->struct_size>offsetof(exr_fixed_open_options,pdf_security) && input->struct_size<offsetof(exr_fixed_open_options,pdf_security)+sizeof(out->pdf_security)))
+    return exr_fail(e,EXR_ARGUMENT,"Truncated PDF open options field");
+  memcpy(out,input,input->struct_size<sizeof(*out) ? input->struct_size : sizeof(*out));
+  if(out->pdf_password_size && !out->pdf_password) return exr_fail(e,EXR_ARGUMENT,"Missing PDF password bytes");
+  if(out->pdf_password_size>1024) return exr_fail(e,EXR_LIMIT,"PDF password exceeds 1024 bytes");
+  if(out->pdf_security && (out->pdf_security->struct_size<sizeof(*out->pdf_security) || out->pdf_security->struct_size>4096))
+    return exr_fail(e,EXR_ARGUMENT,"Invalid PDF security info size");
+  return EXR_OK;
 }
 /* Takes bytes on every path; no second whole-file copy for file-based opens. */
 static exr_status open_owned(unsigned char *data,size_t size,const char *title,const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e) {
@@ -210,7 +225,14 @@ static exr_status open_owned(unsigned char *data,size_t size,const char *title,c
   if(exr_control_cancel(&options->control,e)!=EXR_OK) { free(data); return EXR_CANCELLED; }
   d=calloc(1,sizeof(*d)); if(!d) { free(data); return exr_fail(e,EXR_MEMORY,"PDF document allocation failed"); }
   d->data=data; d->size=size; d->font=options->fallback_font; exr_font_ref(d->font);
-  status=reader(d,e); if(status!=EXR_OK) goto done;
+  status=exr_pdf_open_password(data,size,options->pdf_password,options->pdf_password_size,NULL,&options->control,&d->file,e);
+  if(status==EXR_ARGUMENT) status=exr_fail(e,EXR_FORMAT,"Invalid PDF bytes");
+  if(status!=EXR_OK) goto done;
+  exr_pdf_crypt_snapshot(d->file,&d->crypt);
+  exr_pdf_control(d->file,&options->control);
+  status=exr_pdf_pages(d->file,&d->pages,&d->count,e); if(status!=EXR_OK) goto done;
+  exr_pdf_control(d->file,NULL);
+  if(!d->count) { status=exr_fail(e,EXR_FORMAT,"PDF has no pages"); goto done; }
   pages=calloc(d->count,sizeof(*pages)); if(!pages) { status=exr_fail(e,EXR_MEMORY,"PDF fixed directory allocation failed"); goto done; }
   for(i=0;i<d->count;i++) {
     size_t k; exr_pdf_page_info *p=&d->pages[i];
@@ -222,6 +244,12 @@ static exr_status open_owned(unsigned char *data,size_t size,const char *title,c
   input.struct_size=sizeof(input); input.title=title; input.pages=pages; input.page_count=d->count; input.draw=draw; input.context=d; input.release=release; input.text=text; input.metadata=metadata; input.annotations=annotations;
   status=exr_control_poll(&options->control,EXR_STAGE_READ,d->count,d->count,e);
   if(status==EXR_OK) status=exr_fixed_create(&input,out,e);
+  if(status==EXR_OK && options->pdf_security) {
+    exr_pdf_security_info info={0}; info.struct_size=options->pdf_security->struct_size; info.encrypted=!!d->crypt.revision;
+    info.revision=d->crypt.revision; info.key_bits=d->crypt.length*8; info.owner_authenticated=d->crypt.owner;
+    info.permissions=info.encrypted ? d->crypt.permissions : UINT32_MAX; info.metadata_encrypted=info.encrypted && d->crypt.metadata;
+    memcpy(options->pdf_security,&info,sizeof(info));
+  }
 done:
   free(pages); if(status!=EXR_OK) release(d); return status;
 }

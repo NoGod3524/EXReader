@@ -1,12 +1,13 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "pdf_internal.h"
+#include "pdf_crypto.h"
 #include <miniz.h>
 #include <inttypes.h>
 #define PDF_MAX_OBJECTS 1048576u
 #define PDF_MAX_VALUES EXR_PDF_MAX_VALUES
 #define PDF_MAX_STRINGS ((size_t)32*1024*1024)
 typedef struct { size_t offset; uint32_t value,revision; unsigned generation,type,state,seen; uint32_t compressed_index; } pdf_xref;
-typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; exr_pdf_stream_codec codec; uint32_t parameters; unsigned inline_image; } pdf_stream;
+typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; exr_pdf_stream_codec codec; uint32_t parameters; unsigned inline_image; uint32_t object; unsigned generation,unencrypted; } pdf_stream;
 struct exr_pdf_file {
   const unsigned char *data; size_t size,work,decoded_bytes,decode_work,declared_size,index_bytes;
   exr_pdf_value *values; size_t value_count,value_capacity;
@@ -15,6 +16,8 @@ struct exr_pdf_file {
   pdf_stream *streams; size_t stream_count,stream_capacity;
   uint32_t root,info,revision,raw_root,trailer_id; size_t startxref;
   unsigned resolving,loading_xref;
+  uint32_t encrypt; unsigned encrypt_seen;
+  exr_pdf_crypt crypt;
   const exr_control *control;
   size_t *decode_budget;
   exr_error error;
@@ -252,9 +255,30 @@ static uint32_t resolve(exr_pdf_file *f,uint32_t id) {
   return EXR_PDF_NONE;
 }
 static uint32_t indirect(parser *p,uint32_t object,unsigned generation) {
-  exr_pdf_file *f=p->file; uint64_t number,gen,length; uint32_t id;
+  exr_pdf_file *f=p->file; uint64_t number,gen,length; uint32_t id; size_t first=f->value_count,last,i;
   if(!integer_token(p,&number) || !integer_token(p,&gen) || number!=object || gen!=generation || !word(p,"obj")) goto bad;
   id=parse_value(p,0); if(id==EXR_PDF_NONE) return id;
+  last=f->value_count;
+  if(f->crypt.revision && !f->loading_xref) {
+    uint32_t type=exr_pdf_get(f,id,"Type"); size_t n; const unsigned char *name=exr_pdf_bytes(f,type,&n);
+    int xref=name && f->values[type].kind==EXR_PDF_NAME && n==4 && !memcmp(name,"XRef",4);
+    /* Signature Contents is an unencrypted byte string, even in a nested direct
+       dictionary and when the optional /Type /Sig is absent. Mark it in the
+       otherwise unused STRING.first field, then restore the scalar invariant. */
+    for(i=first;!xref && i<last;i++) if(f->values[i].kind==EXR_PDF_DICT) {
+      uint32_t contents=exr_pdf_get(f,(uint32_t)i,"Contents"),range=exr_pdf_get(f,(uint32_t)i,"ByteRange");
+      type=exr_pdf_get(f,(uint32_t)i,"Type"); name=exr_pdf_bytes(f,type,&n);
+      if(contents!=EXR_PDF_NONE && f->values[contents].kind==EXR_PDF_STRING &&
+         ((name && f->values[type].kind==EXR_PDF_NAME && n==3 && !memcmp(name,"Sig",3)) ||
+          (range!=EXR_PDF_NONE && f->values[range].kind==EXR_PDF_ARRAY))) f->values[contents].first=EXR_PDF_NONE-1;
+    }
+    for(i=first;!xref && i<last;i++) if(f->values[i].kind==EXR_PDF_STRING) {
+      size_t size=f->values[i].u.bytes.length; unsigned char *data=(unsigned char *)f->strings.data+f->values[i].u.bytes.offset;
+      if(f->values[i].first==EXR_PDF_NONE-1) { f->values[i].first=EXR_PDF_NONE; continue; }
+      if(exr_pdf_crypt_bytes(&f->crypt,f->crypt.strings,object,generation,data,&size,f->control,&f->error)!=EXR_OK) return EXR_PDF_NONE;
+      f->values[i].u.bytes.length=(uint32_t)size;
+    }
+  }
   if(f->values[id].kind==EXR_PDF_DICT && word(p,"stream")) {
     uint32_t length_value=resolve(f,exr_pdf_get(f,id,"Length")); size_t start,index;
     if(!direct_integer(f,length_value,EXR_MAX_INPUT,&length)) goto bad;
@@ -267,7 +291,10 @@ static uint32_t indirect(parser *p,uint32_t object,unsigned generation) {
     if(!exr_grow((void **)&f->streams,&f->stream_capacity,f->stream_count+1,sizeof(*f->streams))) {
       failed(f,EXR_MEMORY,"PDF stream allocation failed"); return EXR_PDF_NONE;
     }
-    index=f->stream_count++; f->streams[index]=(pdf_stream){.offset=start,.size=(size_t)length,.dict=id,.parameters=EXR_PDF_NONE};
+    { uint32_t type=exr_pdf_get(f,id,"Type"); size_t n; const unsigned char *name=exr_pdf_bytes(f,type,&n);
+      unsigned xref=name && f->values[type].kind==EXR_PDF_NAME && n==4 && !memcmp(name,"XRef",4);
+      index=f->stream_count++; f->streams[index]=(pdf_stream){.offset=start,.size=(size_t)length,.dict=id,.parameters=EXR_PDF_NONE,.object=object,.generation=generation,.unencrypted=f->loading_xref || xref};
+    }
     f->values[id].kind=EXR_PDF_STREAM; f->values[id].u.ref.object=(uint32_t)index;
   }
   if(!word(p,"endobj")) goto bad;
@@ -308,7 +335,7 @@ static int stream_xref(parser *p,size_t *previous,uint32_t *root,uint32_t *info,
   for(i=0;i<3;i++) { if(widths[i]>8) goto bad; row+=(size_t)widths[i]; }
   if(!row) goto bad;
   id=exr_pdf_get(f,dict,"Encrypt");
-  if(id!=EXR_PDF_NONE && f->values[id].kind!=EXR_PDF_NULL) goto bad;
+  if(!hybrid && !f->encrypt_seen && id!=EXR_PDF_NONE) { f->encrypt=id; f->encrypt_seen=1; }
   if(exr_pdf_get(f,dict,"XRefStm")!=EXR_PDF_NONE) goto bad;
   *info=exr_pdf_get(f,dict,"Info");
   *root=exr_pdf_get(f,dict,"Root");
@@ -420,7 +447,7 @@ static int classic_xref(parser *p,size_t *previous,uint32_t *root,uint32_t *info
      !direct_integer(f,exr_pdf_get(f,trailer,"Size"),PDF_MAX_OBJECTS,&size) || size<maximum || !xref_room(f,(size_t)size)) goto bad;
   if(f->revision==1) f->declared_size=(size_t)size;
   id=exr_pdf_get(f,trailer,"Encrypt");
-  if(id!=EXR_PDF_NONE && f->values[id].kind!=EXR_PDF_NULL) { failed(f,EXR_FORMAT,"Encrypted PDF is not supported"); return 0; }
+  if(!f->encrypt_seen && id!=EXR_PDF_NONE) { f->encrypt=id; f->encrypt_seen=1; }
   id=exr_pdf_get(f,trailer,"XRefStm");
   if(id!=EXR_PDF_NONE) {
     parser other; size_t ignored_previous; uint32_t ignored_root,ignored_info;
@@ -441,7 +468,7 @@ bad:
 void exr_pdf_close(exr_pdf_file *f) {
   size_t i; if(!f) return;
   for(i=0;i<f->stream_count;i++) { free(f->streams[i].decoded); free(f->streams[i].objects); free(f->streams[i].offsets); }
-  free(f->streams); free(f->xref); free(f->values); free(f->strings.data); free(f);
+  free(f->streams); free(f->xref); free(f->values); free(f->strings.data); exr_pdf_secret_clear(&f->crypt,sizeof(f->crypt)); free(f);
 }
 uint32_t exr_pdf_info(const exr_pdf_file *f) { return f ? f->info : EXR_PDF_NONE; }
 uint32_t exr_pdf_root(const exr_pdf_file *f) { return f ? f->root : EXR_PDF_NONE; }
@@ -609,7 +636,8 @@ exr_status exr_pdf_resolve(exr_pdf_file *f,uint32_t id,uint32_t *out,exr_error *
   if(!f || !out) return exr_fail(e,EXR_ARGUMENT,"Missing PDF resolution input/output");
   *out=resolve(f,id); return result(f,e);
 }
-exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_error *e) {
+static exr_status open_pdf(const void *data,size_t size,const void *password,size_t password_size,const exr_pdf_crypt *saved,
+  const exr_control *control,int allow_encrypted,exr_pdf_file **out,exr_error *e) {
   const unsigned char *bytes=data; exr_pdf_file *f; parser p; size_t end=size,at,visited[10000],count=0,i; uint64_t offset;
   uint32_t root=EXR_PDF_NONE;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing PDF output");
@@ -618,7 +646,7 @@ exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_erro
   if(memcmp(bytes,"%PDF-",5) || !((bytes[5]=='1' && bytes[6]=='.' && bytes[7]>='0' && bytes[7]<='7') ||
      (bytes[5]=='2' && bytes[6]=='.' && bytes[7]=='0'))) return exr_fail(e,EXR_FORMAT,"Invalid PDF header version");
   f=calloc(1,sizeof(*f)); if(!f) return exr_fail(e,EXR_MEMORY,"PDF file allocation failed");
-  f->data=bytes; f->size=size; f->root=f->info=f->raw_root=f->trailer_id=EXR_PDF_NONE;
+  f->data=bytes; f->size=size; f->root=f->info=f->raw_root=f->trailer_id=f->encrypt=EXR_PDF_NONE; f->control=control;
   while(end && whitespace(bytes[end-1])) end--;
   if(end<5 || memcmp(bytes+end-5,"%%EOF",5)) goto bad;
   at=end-5;
@@ -634,6 +662,7 @@ exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_erro
   at=f->startxref=(size_t)offset;
   while(at!=SIZE_MAX) {
     uint32_t candidate,info; size_t previous;
+    if(exr_control_cancel(control,&f->error)!=EXR_OK) goto done;
     for(i=0;i<count;i++) if(visited[i]==at) { failed(f,EXR_FORMAT,"Cyclic PDF Prev chain"); goto done; }
     if(count==10000) { failed(f,EXR_LIMIT,"PDF revision limit exceeded"); goto done; }
     visited[count++]=at; f->revision=(uint32_t)count;
@@ -646,19 +675,37 @@ exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_erro
   }
   if(root==EXR_PDF_NONE || f->declared_size<f->xref_count) goto bad;
   f->raw_root=root;
+  if(f->encrypt!=EXR_PDF_NONE && f->values[f->encrypt].kind!=EXR_PDF_NULL) {
+    uint32_t dict=resolve(f,f->encrypt);
+    if(dict==EXR_PDF_NONE || f->values[dict].kind!=EXR_PDF_DICT) goto bad;
+    if(!allow_encrypted) { failed(f,EXR_FORMAT,"Encrypted PDF requires authenticated reading; encrypted PDF writing is unsupported"); goto done; }
+    if(exr_pdf_crypt_init(f,dict,f->trailer_id,password,password_size,saved,control,&f->crypt,&f->error)!=EXR_OK) goto done;
+    f->encrypt=dict;
+  }
   f->root=resolve(f,root);
   if(f->root==EXR_PDF_NONE || f->values[f->root].kind!=EXR_PDF_DICT) goto bad;
   root=resolve(f,exr_pdf_get(f,f->root,"Type"));
   { size_t length; const unsigned char *name=exr_pdf_bytes(f,root,&length);
     if(!name || f->values[root].kind!=EXR_PDF_NAME || length!=7 || memcmp(name,"Catalog",7)) goto bad;
   }
-  if(f->error.code==EXR_OK) { *out=f; return result(f,e); }
+  if(f->error.code==EXR_OK) { f->control=NULL; *out=f; return result(f,e); }
   goto done;
 bad:
   failed(f,EXR_FORMAT,"Invalid PDF header, EOF, startxref or catalog");
 done:
   { exr_status status=result(f,e); exr_pdf_close(f); return status; }
 }
+exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_error *e) {
+  return open_pdf(data,size,NULL,0,NULL,NULL,0,out,e);
+}
+exr_status exr_pdf_open_password(const void *data,size_t size,const void *password,size_t password_size,
+  const exr_pdf_crypt *saved,const exr_control *control,exr_pdf_file **out,exr_error *e) {
+  if(out) *out=NULL;
+  if((password_size && !password) || password_size>1024) return exr_fail(e,password_size>1024 ? EXR_LIMIT : EXR_ARGUMENT,"Invalid PDF password bytes (maximum 1024)");
+  return open_pdf(data,size,password,password_size,saved,control,1,out,e);
+}
+void exr_pdf_crypt_snapshot(const exr_pdf_file *f,exr_pdf_crypt *out) { *out=f->crypt; }
+void exr_pdf_control(exr_pdf_file *f,const exr_control *control) { if(f) f->control=control; }
 typedef struct { unsigned char *data; size_t size,capacity; } pdf_output;
 static int decode_work(exr_pdf_file *f,size_t amount) {
   size_t *work=f->decode_budget ? f->decode_budget : &f->decode_work;
@@ -891,6 +938,7 @@ static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char
   uint32_t filter,parameters,filters[16],parms[16],at; size_t index,count=0,n=0,i,encoded_size=0; pdf_stream source;
   exr_pdf_stream_codec terminal=EXR_PDF_STREAM_RAW; uint32_t terminal_parameters=EXR_PDF_NONE;
   const unsigned char *input; size_t input_size; pdf_output current={0};
+  exr_crypt_method encryption=EXR_CRYPT_IDENTITY;
   if(data) *data=NULL;
   if(size) *size=0;
   if(codec) *codec=EXR_PDF_STREAM_RAW;
@@ -930,10 +978,32 @@ static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char
   }
   if(f->error.code!=EXR_OK) goto done;
   input=f->data+source.offset; input_size=source.size;
+  if(f->crypt.revision && !source.unencrypted && !source.inline_image) {
+    uint32_t type=resolve(f,exr_pdf_get(f,id,"Type"));
+    encryption=name_is(f,type,"EmbeddedFile") ? f->crypt.embedded : f->crypt.streams;
+    if(!f->crypt.metadata && name_is(f,type,"Metadata")) encryption=EXR_CRYPT_IDENTITY;
+  }
+  for(i=0;i<count;i++) if(name_is(f,filters[i],"Crypt")) {
+    uint32_t name;
+    if(i || source.inline_image || source.unencrypted || !f->crypt.revision) goto unsupported;
+    if(parms[i]!=EXR_PDF_NONE && f->values[parms[i]].kind!=EXR_PDF_NULL && f->values[parms[i]].kind!=EXR_PDF_DICT) goto unsupported;
+    name=resolve(f,exr_pdf_get(f,parms[i],"Name"));
+    if(exr_pdf_crypt_filter(f,f->encrypt,name,&f->crypt,&encryption,&f->error)!=EXR_OK) goto done;
+  }
+  if(encryption!=EXR_CRYPT_IDENTITY) {
+    if(input_size>EXR_MAX_INPUT-f->decoded_bytes) { failed(f,EXR_LIMIT,"PDF decrypted stream cache budget exceeded"); goto done; }
+    if(!decode_work(f,input_size)) goto done;
+    current.capacity=input_size ? input_size : 1; current.data=malloc(current.capacity);
+    if(!current.data) { failed(f,EXR_MEMORY,"PDF decryption allocation failed"); goto done; }
+    memcpy(current.data,input,input_size); current.size=input_size;
+    if(exr_pdf_crypt_bytes(&f->crypt,encryption,source.object,source.generation,current.data,&current.size,f->control,&f->error)!=EXR_OK) goto done;
+    input=current.data; input_size=current.size;
+  }
   for(i=0;i<count;i++) {
     pdf_output output={0}; int ok=0,is_flate=name_is(f,filters[i],"FlateDecode") || name_is(f,filters[i],"Fl");
     int is_lzw=name_is(f,filters[i],"LZWDecode") || name_is(f,filters[i],"LZW");
     size_t *end=source.inline_image && !i ? &encoded_size : NULL;
+    if(name_is(f,filters[i],"Crypt")) continue;
     if(parms[i]!=EXR_PDF_NONE && f->values[parms[i]].kind!=EXR_PDF_NULL && f->values[parms[i]].kind!=EXR_PDF_DICT) goto unsupported;
     if(allow_image && (name_is(f,filters[i],"DCTDecode") || name_is(f,filters[i],"DCT"))) {
       if(i+1!=count) goto unsupported;

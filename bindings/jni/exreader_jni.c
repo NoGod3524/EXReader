@@ -80,9 +80,12 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_EXReader_nativePdfMetadata(JNIE
   if(status!=EXR_OK) engine_error(env,status,&error); else out=metadata_values(env,entries,count);
   exr_metadata_free(entries,count); return out;
 }
-JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePdfOpen(JNIEnv *env,jclass cls,jbyteArray bytes,jbyteArray font,jint face,jint format) {
+JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePdfOpen(JNIEnv *env,jclass cls,jbyteArray bytes,jbyteArray font,jint face,jint format,jbyteArray password,jlongArray security) {
   jbyte *input=NULL,*program=NULL; jsize size,font_size=0; exr_fixed_document *document=NULL; exr_font *fallback=NULL; exr_font_input source={0}; exr_fixed_open_options options={0}; exr_error error={0}; exr_status status=EXR_OK; (void)cls;
   if(!bytes || face<0) { argument(env,"Missing PDF bytes or invalid face index"); return 0; }
+  unsigned char secret[1024]={0}; jsize secret_size=password ? (*env)->GetArrayLength(env,password) : 0; size_t i;
+  exr_pdf_security_info info={0}; info.struct_size=sizeof(info);
+  if(secret_size>1024 || !security || (*env)->GetArrayLength(env,security)!=6) { argument(env,"Invalid PDF password/security output"); return 0; }
   size=(*env)->GetArrayLength(env,bytes); if(size<=0 || size>128*1024*1024) { argument(env,"Invalid PDF input size"); return 0; }
   input=(*env)->GetByteArrayElements(env,bytes,NULL); if(!input) return 0;
   if(font) {
@@ -91,9 +94,17 @@ JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePdfOpen(JNIEnv *env,jcl
     source.data=program; source.size=(size_t)font_size; source.face_index=(unsigned)face;
     status=exr_font_create_glyphs(&source,1,&fallback,&error); if(status!=EXR_OK) goto finish;
   }
-  options.struct_size=sizeof(options); options.fallback_font=fallback;
+  if(secret_size) { (*env)->GetByteArrayRegion(env,password,0,secret_size,(jbyte *)secret); if((*env)->ExceptionCheck(env)) goto finish; }
+  options.struct_size=sizeof(options); options.fallback_font=fallback; options.pdf_password=secret; options.pdf_password_size=(size_t)secret_size;
+  if(format==EXR_PDF) options.pdf_security=&info;
   status=exr_fixed_open_memory((exr_format)format,input,(size_t)size,&options,&document,&error);
+  if(status==EXR_OK) {
+    jlong values[6]={info.encrypted,info.revision,info.key_bits,info.owner_authenticated,info.permissions,info.metadata_encrypted};
+    (*env)->SetLongArrayRegion(env,security,0,6,values);
+    if((*env)->ExceptionCheck(env)) { exr_fixed_free(document); document=NULL; }
+  }
 finish:
+  { volatile unsigned char *p=secret; for(i=0;i<sizeof(secret);i++) p[i]=0; }
   if(program) (*env)->ReleaseByteArrayElements(env,font,program,JNI_ABORT);
   (*env)->ReleaseByteArrayElements(env,bytes,input,JNI_ABORT); exr_font_free(fallback);
   if(status!=EXR_OK) engine_error(env,status,&error);

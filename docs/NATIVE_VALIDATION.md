@@ -2411,3 +2411,42 @@ validation for this change is not yet recorded here. Explicit ColorTransform
 overrides, 12-bit/non-supported JPEG variants and CMYK image Matte remain
 unsupported. Image SMask support does not imply graphics-state soft masks or
 transparency groups. See VERSIONING.md for the next compatibility milestones.
+
+CMYK/YCCK commit aa3a329 subsequently passed all six platform jobs in run
+39087678945 (desktop tests/installed SDK, ASan/UBSan, Android ARM64 and
+iOS/iPadOS device/simulator library builds).
+
+## PDF Standard security authentication (0.18 development)
+
+Original independently generated pypdf 6.16.1 / cryptography 50.0.2 fixtures
+cover R2-6 user/owner/empty passwords, object generation 17, Flate after crypto,
+ObjStm and unencrypted xref streams, encrypted/clear XMP, Identity and explicit
+Crypt, direct nested signature Contents with/without Type, and inherited
+incremental revisions with a changed second file ID. Public adapter tests verify
+page directories, semantic text, metadata, annotations and actual green pixels.
+Failed page 1 followed by successful page 0 tests rebuilding with a retained
+derived key after caller input and password buffers are destroyed. Wrong
+passwords and malformed padding/permissions return no document/partial text.
+Unicode cases exercise mapping-to-nothing, non-ASCII spaces, compatibility and
+canonical composition, Hangul, Arabic bidi rules, prohibited/unassigned input,
+invalid UTF-8 and 127-byte truncation. Cancellation is checked during R6 hashing;
+options prefix/truncation, limits, unchanged security output on failure and
+rejection by existing encrypted-input editing APIs are regression cases.
+
+All 102 Windows CTest entries passed after the initial integration; additional
+signature/incremental/cancellation cases also pass in native-pdf-crypto.
+The installed Windows MinGW JNI host passed with -Xcheck:jni, including password
+failure/retry, permission snapshot and encrypted parser recovery. The optional
+crypto-disabled build passed native-pdf-crypto, native-fixed-pdf and native-abi.
+Default Windows Release DLL: 5,164,761 bytes vs aa3a329's 4,985,111 (+179,650,
+about 175 KiB); the crypto-disabled equivalent is 4,991,620 bytes. These numbers
+measure the whole DLL, not package size or runtime memory. Platform CI for this
+batch is recorded after pushing; no certificate/EFOpen or encrypted-write
+support is claimed by these tests.
+
+The final Windows batch passed all 102 entries. Re-running both fixture/table
+generators reproduced every SHA-256. A separate deterministic 3,000-input
+encrypted-PDF mutation run through public open/load-text returned 304 successful
+opens, 2,319 format errors, 274 password errors and 103 unsupported-feature
+errors without process failure. This mutation run is separate from sanitizer
+evidence; sanitizer status is supplied by the platform CI run.

@@ -1,0 +1,9 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+#define MBEDTLS_AES_C
+#define MBEDTLS_AES_ROM_TABLES
+#define MBEDTLS_CIPHER_MODE_CBC
+#define MBEDTLS_MD5_C
+#define MBEDTLS_SHA256_C
+#define MBEDTLS_SHA512_C
+#define MBEDTLS_SHA384_C
+#define MBEDTLS_PLATFORM_C
