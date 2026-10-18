@@ -3139,7 +3139,7 @@ joined source interval 4..9 and following separate interval 9..13 in a real page
 Swift smoke contains the same installed RI test for macOS CI.
 
 Windows DLL: 5,399,429 bytes (3,832 above the preceding verified snapshot), SHA256
-56f7a77c305404f9274337a7325a3ee43d0723d699768c6f540563c6dbc88809.
+7074f7d616216acfd1de1749eff46786f436a881a24d6cb63ec4bf7a0823d313.
 There is no new dependency or owned heap array. Ordinary bitmap dictionaries
 skip display-state replay; replacement-capable dictionaries track line origins,
 and actual changed carry is rescanned within the existing work/payload budgets.
@@ -3151,3 +3151,28 @@ mixed-direction visual subclusters, full changed-paragraph bidi resolution,
 language casing and conditional compound rewriting remain open. Broader PDF,
 platform/SDK/service and advanced CSS/conversion requirements in VERSIONING.md
 remain active; projected graphemes do not complete those compatibility goals.
+
+
+The initial CI run 39112561682 passed five platform jobs, but UBSan found a null
+source pointer passed to memcpy with a zero byte count in the shared inline
+shaper. The RI/Emoji join regressions legitimately empty the ready FIFO while
+preserving pending input. The shared result-copy path now skips empty copies;
+that fix preserves the required join behavior rather than avoiding the case.
+All 113 local tests and the matching installed C/C++/JNI consumers pass again.
+The three performance datasets and binary/source hashes are refreshed against
+the corrected measured code snapshot; their values do not refer to the initial
+UBSan-failing DLL. Final cross-platform verification is recorded below when done.
+
+
+Corrected commit fecef3c passed all six jobs in
+[CI run 39112952902](https://github.com/NoGod3524/EXReader/actions/runs/39112952902):
+Windows/Linux/macOS native tests (113 each), installed C/C++/JNI consumers,
+macOS Swift RI source-range verification, ASan/UBSan with leak checks (111 tests),
+Android ARM64, and iOS/iPadOS device/simulator libraries plus Swift type checking.
+All 189 recorded source hashes match that corrected Git commit; all 45 preexisting
+EPUBs are unchanged. Local runtime copies match the corrected measured DLL SHA256
+7074f7d616216acfd1de1749eff46786f436a881a24d6cb63ec4bf7a0823d313;
+all three benchmark datasets match the corrected benchmark executable hash.
+The following record-only commit refreshes the measured evidence and skips a
+redundant CI run. Paragraph bidi/internal display positions and the broader
+compatibility roadmap remain unfinished.
