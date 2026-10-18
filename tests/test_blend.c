@@ -89,9 +89,12 @@ static void consumers(void) {
   { exr_draw_sink_ex missing=sink;missing.end_layer=NULL;CHECK(exr_fixed_draw_ex(d,0,NULL,&missing,NULL,&error)==EXR_ARGUMENT); }
   exr_fixed_free(d);
   d=open_book("nonisolated");memset(&state,0,sizeof(state));
-  CHECK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error)==EXR_UNSUPPORTED);CHECK(state.begins==state.ends);
+  CHECK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error)==EXR_UNSUPPORTED);CHECK(state.begins==state.ends);exr_fixed_free(d);
+  /* Knockout needs the size-tagged begin_group; a begin_layer-only consumer must refuse. */
+  d=open_book("knockout");memset(&state,0,sizeof(state));
+  CHECK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error)==EXR_UNSUPPORTED);CHECK(state.begins==state.ends);exr_fixed_free(d);
   memset(&state,0,sizeof(state));sink.begin_group=begin_group;sink.begin_layer=NULL;
-  OK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error));CHECK(state.begins==state.ends && state.paths);exr_fixed_free(d);
+  d=open_book("nonisolated");OK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error));CHECK(state.begins==state.ends && state.paths);exr_fixed_free(d);
   d=open_book("group-malformed");memset(&state,0,sizeof(state));
   CHECK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error)==EXR_FORMAT);CHECK(state.begins==2 && state.ends==2);exr_fixed_free(d);
 }
@@ -287,6 +290,20 @@ static void knockout(void) {
   OK(exr_canvas_end_layer(c,1,&error));px=exr_canvas_bitmap(c)->pixels;
   CHECK(px[1]>=253 && px[3]>=126 && px[3]<=130);
   exr_canvas_free(c);
+  /* Budget: a knockout group costs the same 24 bytes/pixel as a non-isolated one. */
+  { exr_canvas *b=canvas(1,1,0);OK(exr_canvas_set_layer_budget(b,23,&error));
+    CHECK(exr_canvas_begin_group(b,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error)==EXR_LIMIT);exr_canvas_free(b);
+  }
+  { exr_canvas *b=canvas(1,1,0);OK(exr_canvas_set_layer_budget(b,24,&error));
+    OK(exr_canvas_begin_group(b,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));OK(exr_canvas_end_layer(b,0,&error));exr_canvas_free(b);
+  }
+  /* Cancellation aborts a knockout group without producing a partial commit. */
+  { int stop=0;exr_canvas_config cfg={0};exr_canvas *b=NULL;cfg.width=cfg.height=1;cfg.control.cancelled=cancelled;cfg.control.context=&stop;
+    OK(exr_canvas_create(&cfg,&b,&error));rect(p,1,1);style.fill=0x00ff0080;
+    OK(exr_canvas_begin_group(b,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));
+    OK(exr_canvas_path(b,p,5,NULL,&style,&error));stop=1;
+    CHECK(exr_canvas_end_layer(b,1,&error)==EXR_CANCELLED);exr_canvas_free(b);
+  }
   /* Isolated knockout starts transparent. */
   c=canvas(4,4,0xffffffff);rect(p,4,4);style.fill=0x00ff0080;
   OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT,&error));
