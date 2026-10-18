@@ -32,6 +32,36 @@ static void multiply(const double a[6], const double b[6], double out[6]) {
   out[4] = a[0] * b[4] + a[2] * b[5] + a[4]; out[5] = a[1] * b[4] + a[3] * b[5] + a[5];
 }
 
+/* Exponential transfer function (ISO 32000-1 7.10.2.2): C0 + x^N (C1 - C0). */
+typedef struct { int present; double c0, c1, n; } mask_transfer;
+static mask_transfer transfer_state;
+static double transfer(double x) {
+  if (!transfer_state.present) return x;
+  return transfer_state.c0 + pow(fmax(0, fmin(1, x)), transfer_state.n) * (transfer_state.c1 - transfer_state.c0);
+}
+static exr_status load_transfer(exr_pdf_file *file, uint32_t mask, exr_error *e) {
+  uint32_t id, at; const exr_pdf_value *v, *array; size_t i;
+  transfer_state.present = 0; transfer_state.c0 = 0; transfer_state.c1 = 1; transfer_state.n = 1;
+  if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "TR"), &id, e) != EXR_OK) return e->code;
+  if (id == EXR_PDF_NONE || exr_pdf_value_at(file, id)->kind == EXR_PDF_NULL) return EXR_OK;
+  if (exr_pdf_value_at(file, id)->kind != EXR_PDF_DICT) return EXR_OK;  /* /Identity */
+  transfer_state.present = 1;
+  for (i = 0; i < 2; i++) {
+    const char *key = i ? "C1" : "C0";
+    double *target = i ? &transfer_state.c1 : &transfer_state.c0;
+    if (exr_pdf_resolve(file, exr_pdf_get(file, id, key), &at, e) != EXR_OK) return e->code;
+    v = exr_pdf_value_at(file, at);
+    if (!v || v->kind == EXR_PDF_NULL) continue;
+    if (v->kind != EXR_PDF_ARRAY) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer function");
+    array = v;
+    { uint32_t first = array->first; if (first == EXR_PDF_NONE) continue; if (exr_pdf_resolve(file, first, &at, e) != EXR_OK || !number(file, at, target)) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer function"); }
+  }
+  if (exr_pdf_resolve(file, exr_pdf_get(file, id, "N"), &at, e) != EXR_OK) return e->code;
+  v = exr_pdf_value_at(file, at);
+  if (v && v->kind != EXR_PDF_NULL && !number(file, at, &transfer_state.n)) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer function");
+  if (transfer_state.n <= 0) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer exponent");
+  return EXR_OK;
+}
 exr_status exr_pdf_soft_mask_build(exr_pdf_file *file, uint32_t mask, const double set_matrix[6],
                                    unsigned width, unsigned height, unsigned char **out,
                                    size_t *work, const exr_control *control, exr_error *e) {
@@ -40,6 +70,7 @@ exr_status exr_pdf_soft_mask_build(exr_pdf_file *file, uint32_t mask, const doub
   const exr_pdf_value *v; int kind = 0, count = 0; exr_bitmap bitmap = {0}; exr_pdf_raster_config config = {0}; exr_status status;
   *out = NULL;
   status = exr_pdf_soft_mask_kind(file, mask, &kind, e); if (status != EXR_OK) return status;
+  status = load_transfer(file, mask, e); if (status != EXR_OK) return status;
   if (exr_pdf_resolve(file, mask, &mask, e) != EXR_OK) return e->code;
   if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "G"), &form, e) != EXR_OK) return e->code;
   if (exr_pdf_stream_data(file, form, &data, &size, e) != EXR_OK) return e->code;
@@ -92,8 +123,8 @@ exr_status exr_pdf_soft_mask_build(exr_pdf_file *file, uint32_t mask, const doub
       double v1 = pixels[i * 4 + 1] / 255. * a + bc[1] * (1 - a);
       double v2 = pixels[i * 4 + 2] / 255. * a + bc[2] * (1 - a);
       double lum = .3 * v0 + .59 * v1 + .11 * v2;
-      result[i] = (unsigned char)fmax(0, fmin(255, floor(lum * 255 + .5)));
-    } else result[i] = (unsigned char)a * 255;
+      result[i] = (unsigned char)fmax(0, fmin(255, floor(transfer(lum) * 255 + .5)));
+    } else { double a2 = transfer(a); result[i] = (unsigned char)fmax(0, fmin(255, floor(a2 * 255 + .5))); }
   }
   free(bitmap.pixels);
   *out = result;

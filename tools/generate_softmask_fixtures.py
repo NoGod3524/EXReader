@@ -175,9 +175,24 @@ def main():
     bad('softmask-bad-2', lambda pdf, m: '<< /S /Alpha >>')
     bad('softmask-bad-3', lambda pdf, m: '<< /S /Alpha /G %d 0 R >>' % pdf.add(b'42'))
     bad('softmask-bad-4', lambda pdf, m: '<< /S /Luminosity /G %d 0 R /BC [1 2] >>' % m)
-    bad('softmask-bad-5', lambda pdf, m: '<< /S /Alpha /G %d 0 R /TR << /FunctionType 2 /Domain [0 1] /C0 [0] /C1 [1] /N 1 >> >>' % m)
+    bad('softmask-bad-5', lambda pdf, m: '<< /S /Alpha /G %d 0 R /TR << /FunctionType 99 >> >>' % m)
     bad('softmask-bad-6', lambda pdf, m: '<< /S /Alpha /G %d 0 R >>' % m, bbox=None)
     bad('softmask-bad-7', lambda pdf, m: '<< /S /Alpha /G %d 0 R >>' % m, bbox=b'[16 0 0 16]')
+    # Transfer function: luminance 0.5 with C0=0, C1=1, N=2 gives a 0.25 mask.
+    pdf = PDF(CELL, CELL)
+    mask = pdf.form('0.5 0.5 0.5 rg 0 0 16 16 re f')
+    cell = pdf.cell('<< /S /Luminosity /G %d 0 R /TR << /FunctionType 2 /Domain [0 1] /C0 [0] /C1 [1] /N 2 >> >>' % mask,
+                    '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 16 16 re f Q')
+    pdf.forms.append((0, cell))
+    pdf.finish('softmask-tr', 'q 1 0 0 1 0 0 cm /Fm0 Do Q')
+    write_images('softmask-tr', [cell_pixels(lambda x, y: 0.25)], CELL)
+
+    grid('softmask-qq', [{
+        'mask': 'q Q',
+        'dict': lambda m: '<< /S /Alpha /G %d 0 R >>' % m,
+        'content': '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 8 16 re f Q 0 1 0 rg 8 0 8 16 re f',
+        'expect': lambda x, y: 1.0 if x >= 8 else 0.0,
+    }])
     print('soft mask scenes written')
 
 

@@ -53,7 +53,7 @@
 | PDF 阅读 | 固定页 API、对象/流解码、字体/Type3、路径/图像/内联图、文字几何/搜索/选择、Info/XMP、原生标注读取 | 更多 PDF 图像过滤器、Pattern/其他绘制特性；完整现实文档兼容语料与持续模糊测试 |
 | PDF 认证 | Standard R2–R6 用户/所有者/空密码、RC4/AES、Crypt filter、对象流/元数据解密、可重试密码、权限快照 | 证书 PubSec、EFOpen 专用附件认证、加密写回；当前编辑入口拒绝加密输入 |
 | PDF 色彩 | Device/Indexed/CalGray/CalRGB/Lab、ICCBased v2/v4 至 sRGB、Separation/All/None/DeviceN、Type 0 多输入线性/三次采样和 2/3/4 函数；CMYK/YCCK JPEG | 非 RGB 透明组色空间、OutputIntent、动态渲染意图、Matte 扩展、Pattern/套印等；完整印刷色彩 |
-| PDF 合成 | 16 种 RGB 模式、页面隔离组、隔离/非隔离/嵌套挖空组、隔离和非隔离 Form/AP 组、填充/描边单一透明元素、通用扩展 sink、取消/预算/清理 | 图形状态 Alpha/Luminosity SMask、组区域裁小、联合子像素覆盖 |
+| PDF 合成 | 16 种 RGB 模式、页面隔离组、隔离/非隔离/嵌套挖空组、隔离和非隔离 Form/AP 组、图形状态 Alpha/Luminosity 软遮罩（BC、指数 TR、矩阵/BBox、q/Q/None）、填充/描边单一透明元素、通用扩展 sink、取消/预算/清理 | 组区域裁小、非指数型 TR、联合子像素覆盖 |
 | PDF 编辑 | Text/Highlight/Underline/StrikeOut/Squiggly 新增/修改/删除与外观；元数据增量写回 | 其余标注编辑、AcroForm；增量删除保留历史原文，安全 redaction 尚未实现 |
 | CBZ | PNG/JPEG、自然排序、ComicInfo、按页读取/解码、固定页/书库书签 | WebP/GIF/BMP/AVIF/TIFF 等页图，不支持时明确拒绝 |
 | 书库 | SQLite 原书、元数据/封面、标签/收藏/已读、文本和固定页进度/标注、音频书签、精确去重、事务备份 | 旧 UI 数据迁移、流式大媒体导入、应用级同步/冲突和多设备体验 |
