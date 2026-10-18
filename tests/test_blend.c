@@ -339,6 +339,22 @@ static void knockout(void) {
   px=exr_canvas_bitmap(c)->pixels;CHECK(px[0]>=125 && px[0]<=130 && px[1]>=253 && px[2]>=125 && px[2]<=130);
   exr_canvas_free(c);
 }
+static void softmask(void) {
+  /* 11.6.5.2: the mask scales each painted element; /None restores full painting. */
+  struct { const char *name; unsigned x; unsigned r,g,b; } cases[] = {
+    {"softmask-alpha",4,0,255,0},{"softmask-alpha",12,255,0,0},
+    {"softmask-luminosity",4,0,255,0},{"softmask-luminosity",12,255,0,0},
+    {"softmask-none",4,0,255,0},{"softmask-none",12,0,255,0},
+  };
+  unsigned i;
+  for(i=0;i<sizeof(cases)/sizeof(*cases);i++) {
+    exr_fixed_document *d=open_book(cases[i].name);exr_fixed_render_options options={0};exr_bitmap result={0};
+    options.channels=4;options.background=0;OK(exr_fixed_render(d,0,1,&options,&result,&error));
+    { const unsigned char *p=result.pixels+8*result.stride+cases[i].x*4;
+      CHECK(p[0]==cases[i].r && p[1]==cases[i].g && p[2]==cases[i].b && p[3]==255); }
+    exr_bitmap_free(&result);exr_fixed_free(d);
+  }
+}
 static void invalid(void) {
   { exr_fixed_document *d=open_book("group-malformed");exr_bitmap b={0};unsigned i;for(i=0;i<5;i++) CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels);exr_fixed_free(d); }
   { unsigned i;for(i=1;i<6;i++) {char name[24];exr_fixed_document *d;exr_bitmap b={0};exr_status got;snprintf(name,sizeof(name),"group-bad-%u",i);d=open_book(name);got=exr_fixed_render(d,0,1,NULL,&b,&error);
@@ -348,4 +364,4 @@ static void invalid(void) {
       exr_fixed_free(d);} }
   unsigned i;for(i=0;i<3;i++) {char name[16];exr_fixed_document *d;exr_bitmap b={0};snprintf(name,sizeof(name),"bad-%u",i);d=open_book(name);CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels);exr_fixed_free(d);}
 }
-int main(int argc,char **argv) {CHECK(argc==2);directory=argv[1];direct();analytic();layers();nonisolated();references();consumers();knockout();invalid();printf("%u RGB blend checks passed\n",checks);return 0;}
+int main(int argc,char **argv) {CHECK(argc==2);directory=argv[1];direct();analytic();layers();nonisolated();references();consumers();knockout();softmask();invalid();printf("%u RGB blend checks passed\n",checks);return 0;}

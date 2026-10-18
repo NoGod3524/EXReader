@@ -682,6 +682,8 @@ typedef exr_status (*exr_draw_group_begin_fn)(void *context,double opacity,exr_b
 /* Graphics-state soft mask: one byte per page pixel, 255 = fully visible, NULL
    clears it. A consumer without this callback refuses PDF soft masks. */
 typedef exr_status (*exr_draw_soft_mask_fn)(void *context,const unsigned char *mask,size_t width,size_t height,exr_error *error);
+/* Consumer extent in device pixels; required to build page-space soft masks. */
+typedef exr_status (*exr_draw_extent_fn)(void *context,unsigned *width,unsigned *height,exr_error *error);
 
 typedef struct {
   size_t struct_size;
@@ -691,6 +693,7 @@ typedef struct {
   exr_draw_layer_end_fn end_layer;
   exr_draw_group_begin_fn begin_group; /* Optional general group begin; shares end_layer. */
   exr_draw_soft_mask_fn soft_mask; /* Optional page-space soft mask. */
+  exr_draw_extent_fn extent; /* Optional device extent; needed for soft masks. */
 } exr_draw_sink_ex;
 /* Initialize out->struct_size to the available storage size. */
 EXR_API exr_status exr_canvas_get_sink_ex(exr_canvas *canvas,exr_draw_sink_ex *out,exr_error *error);

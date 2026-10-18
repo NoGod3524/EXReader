@@ -89,13 +89,13 @@ static void write_rgba(exr_bitmap *b,exr_composite_state *state,size_t x,size_t 
 }
 void exr_pixel_composite(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage,exr_blend_mode mode,exr_composite_state *state) {
   double back[4],source[3],out[4],alpha;unsigned k;
-  if(!state || !state->pixels) { exr_pixel_blend(bitmap,x,y,color,coverage,mode);return; }
   if(state && state->soft_mask) {
     size_t mx=(size_t)x,my=(size_t)y;
     unsigned mask=(mx<state->soft_mask_width && my<state->soft_mask_height) ?
       state->soft_mask[my*state->soft_mask_width+mx] : 0u;
     coverage=(coverage*mask+127)/255;
   }
+  if(!state || !state->pixels) { exr_pixel_blend(bitmap,x,y,color,coverage,mode);return; }
   alpha=(color&255)/255.*coverage/255.;if(!alpha) return;
   for(k=0;k<3;k++) source[k]=((color>>(24-8*k))&255)/255.;
   if(state->knockout) {

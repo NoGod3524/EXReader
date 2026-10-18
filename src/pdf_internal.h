@@ -132,7 +132,11 @@ size_t exr_pdf_colorspace_cost(const exr_pdf_colorspace *space);
 typedef struct {
   exr_pdf_color fill,stroke; exr_vector_stroke_style line;exr_blend_mode blend;
   const double *dashes; size_t dash_count; double dash_phase,matrix[6];
+  uint32_t smask; double smask_matrix[6]; /* 11.6.5.2 mask object and the CTM when it was set. */
 } exr_pdf_paint_state;
+exr_status exr_pdf_soft_mask_kind(exr_pdf_file *file,uint32_t mask,int *kind,exr_error *error);
+exr_status exr_pdf_soft_mask_build(exr_pdf_file *file,uint32_t mask,const double set_matrix[6],
+  unsigned width,unsigned height,unsigned char **out,size_t *work,const exr_control *control,exr_error *error);
 typedef struct {
   const exr_pdf_font *font; exr_pdf_character character;
   double transform[6]; /* glyph coordinates in 1000 units to output space */

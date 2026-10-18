@@ -210,7 +210,12 @@ static exr_status apply_ext_state(content_reader *r,uint32_t dictionary,exr_erro
   if(resolved(r->file,exr_pdf_get(r->file,dictionary,"BM"),&id,error)!=EXR_OK) return error->code;
   if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL && blend_mode(r,id,error)!=EXR_OK) return error->code;
   if(resolved(r->file,exr_pdf_get(r->file,dictionary,"SMask"),&id,error)!=EXR_OK) return error->code;
-  if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL && !name_is(r->file,id,"None")) return exr_fail(error,EXR_FORMAT,"PDF soft-mask graphics states are not implemented yet");
+  if(id==EXR_PDF_NONE || exr_pdf_value_at(r->file,id)->kind==EXR_PDF_NULL || name_is(r->file,id,"None")) r->state.paint.smask=EXR_PDF_NONE;
+  else {
+    int kind;
+    if(exr_pdf_soft_mask_kind(r->file,id,&kind,error)!=EXR_OK) return error->code;
+    r->state.paint.smask=id;memcpy(r->state.paint.smask_matrix,r->state.ctm,sizeof(r->state.paint.smask_matrix));
+  }
   return EXR_OK;
 invalid:
   if(error->code!=EXR_OK) return error->code;
@@ -586,6 +591,7 @@ static exr_status walk_content(exr_pdf_file *file,uint32_t resources,const void 
   r->state.paint.fill.space=r->state.paint.stroke.space=EXR_PDF_DEVICE_GRAY; r->state.paint.fill.alpha=r->state.paint.stroke.alpha=1;
   r->state.paint.line=(exr_vector_stroke_style){1,10,EXR_VECTOR_BUTT,EXR_VECTOR_MITER};
   identity(r->state.ctm); if(initial) memcpy(r->state.ctm,initial,sizeof(r->state.ctm)); identity(r->matrix); identity(r->line);
+  r->state.paint.smask=EXR_PDF_NONE;
   status=exr_pdf_content_ops_resources(r->file,r->resources,data,size,content_operation,r,&r->inline_work,control,&local);
   if(status==EXR_OK && (r->inside || r->depth || r->compatibility)) status=exr_fail(&local,EXR_FORMAT,"Unbalanced PDF text/graphics/compatibility state");
   if(status==EXR_OK && graphics && (r->path.count || r->path.pending_clip)) status=exr_fail(&local,EXR_FORMAT,"Unterminated PDF path object");
