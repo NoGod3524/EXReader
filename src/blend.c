@@ -90,6 +90,12 @@ static void write_rgba(exr_bitmap *b,exr_composite_state *state,size_t x,size_t 
 void exr_pixel_composite(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage,exr_blend_mode mode,exr_composite_state *state) {
   double back[4],source[3],out[4],alpha;unsigned k;
   if(!state || !state->pixels) { exr_pixel_blend(bitmap,x,y,color,coverage,mode);return; }
+  if(state && state->soft_mask) {
+    size_t mx=(size_t)x,my=(size_t)y;
+    unsigned mask=(mx<state->soft_mask_width && my<state->soft_mask_height) ?
+      state->soft_mask[my*state->soft_mask_width+mx] : 0u;
+    coverage=(coverage*mask+127)/255;
+  }
   alpha=(color&255)/255.*coverage/255.;if(!alpha) return;
   for(k=0;k<3;k++) source[k]=((color>>(24-8*k))&255)/255.;
   if(state->knockout) {
@@ -205,12 +211,17 @@ exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,cons
     for(x=0;x<target->width;x++) {
       unsigned char *p=target->pixels+y*target->stride+x*target->channels,fp[4]={0},sp[4]={0};
       double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
-      double fw,sw,bw,fa,sa,ba,a;unsigned channel;
+      double fw,sw,bw,fa,sa,ba,a,m=1;unsigned channel;
       exr_bitmap first={1,1,target->channels,fp,target->channels},second={1,1,target->channels,sp,target->channels};
       if(!(stroke_color&255)) s=0;
       fw=f*(1-s)*k;sw=s*k;bw=1-fw-sw;
       if((!f && !s) || !k) continue;
       if(!exr_vector_work(work,cost+(state ? 64+state->depth*4 : 0))) return exr_fail(e,EXR_LIMIT,"Compound path blend exceeds budget");
+      if(state && state->soft_mask) {
+        m=((size_t)x<state->soft_mask_width && (size_t)y<state->soft_mask_height) ?
+          state->soft_mask[(size_t)y*state->soft_mask_width+(size_t)x]/255. : 0;
+        if(!m) continue;
+      }
       if(state && state->pixels) {
         double back[4],base[4],fc[3],sc[3],fr[4],sr[4],out[4],af=(fill_color&255)/255.,as=(stroke_color&255)/255.;
         read_rgba(target,state,x,y,back);
@@ -218,14 +229,14 @@ exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,cons
         if(state->knockout) read_backdrop(state,x,y,base);else memcpy(base,back,sizeof(base));
         for(channel=0;channel<3;channel++) { fc[channel]=((fill_color>>(24-8*channel))&255)/255.;sc[channel]=((stroke_color>>(24-8*channel))&255)/255.; }
         over_rgba(base,fc,af,mode,fr);over_rgba(base,sc,as,mode,sr);
-        for(channel=0;channel<4;channel++) out[channel]=fw*fr[channel]+sw*sr[channel]+bw*back[channel];
-        write_rgba(target,state,x,y,out,fw*af+sw*as);continue;
+        for(channel=0;channel<4;channel++) out[channel]=m*(fw*fr[channel]+sw*sr[channel])+(m*bw+(1-m))*back[channel];
+        write_rgba(target,state,x,y,out,m*(fw*af+sw*as));continue;
       }
       memcpy(fp,p,target->channels);memcpy(sp,p,target->channels);
       exr_pixel_blend(&first,0,0,fill_color,255,mode);exr_pixel_blend(&second,0,0,stroke_color,255,mode);
-      if(target->channels==1) { p[0]=(unsigned char)floor(fw*fp[0]+sw*sp[0]+bw*p[0]+.5);continue; }
-      fa=fp[3]/255.;sa=sp[3]/255.;ba=p[3]/255.;a=fw*fa+sw*sa+bw*ba;
-      for(channel=0;channel<3;channel++) p[channel]=a>0 ? (unsigned char)fmin(255,floor((fw*fa*fp[channel]+sw*sa*sp[channel]+bw*ba*p[channel])/a+.5)) : 0;
+      if(target->channels==1) { p[0]=(unsigned char)floor(m*(fw*fp[0]+sw*sp[0])+(m*bw+(1-m))*p[0]+.5);continue; }
+      fa=fp[3]/255.;sa=sp[3]/255.;ba=p[3]/255.;a=m*(fw*fa+sw*sa)+(m*bw+(1-m))*ba;
+      for(channel=0;channel<3;channel++) p[channel]=a>0 ? (unsigned char)fmin(255,floor((m*fw*fa*fp[channel]+m*sw*sa*sp[channel]+(m*bw+(1-m))*ba*p[channel])/a+.5)) : 0;
       p[3]=(unsigned char)fmin(255,floor(a*255+.5));
     }
   }
