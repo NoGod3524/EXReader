@@ -221,7 +221,8 @@ shaping/width measurement. Generated glyph source ranges may be nonempty and
 cover the replaced original text; do not discard them from hit/range mappings
 or copy their characters into source text. Expansion sides are atomic source
 clusters. Empty right-side deletions retain an invisible generated source span.
-Strings remain literal and inherit their original side's style/bidi level.
+Strings remain literal and inherit their original side's style; display bidi
+resolution is described below.
 Internal U+00B7 now stays inside gathered words, including host-provider input.
 
 Pending edits and cached word edits are deep-copied with pager checkpoints and
@@ -235,7 +236,8 @@ start within a generated side; private raw indices preserve the exact display
 range. Candidates whose left context was consumed by an ordinary break are
 dropped with their automatic bit. Generated sides remain atomic to selection.
 Derived tokens exceeding 256 scalars/1024 bytes use ordinary/emergency fallback.
-Full changed-paragraph bidi analysis, internal display positions and language-aware casing remain required work. Installed Swift/JNI smoke now
+Global effects of future unselected edits on earlier lines, internal display
+positions and language-aware casing remain required work. Installed Swift/JNI smoke now
 checks actual replacement glyphs with nonempty original source intervals.
 
 A zero-cut after insertion shares its source cluster with the following original
@@ -251,8 +253,8 @@ side. A cluster crossing ready/pending is deferred intact before remeasurement.
 Format controls/selectors are hidden normally. Empty deletions have a distinct
 private flag, omitted from public output, and do not enter Unicode/dictionary input.
 Snapshots include all display states by value; no public record/API size changed.
-Internal display breaks and mixed-direction subclusters within an atomic side,
-full changed-paragraph bidi resolution, casing and conditional compounds remain open.
+Internal display breaks, global effects of future unselected edits on earlier
+lines, casing and conditional compounds remain open.
 
 
 ### Display bidi after discretionary spelling changes (0.18 development)

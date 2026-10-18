@@ -3216,13 +3216,46 @@ Three fresh processes per mode over each 1 MiB EPUB and its first 65 pages:
 | English dictionary | 21.9170 | 14544896 | 4.8484 / 8.2059 |
 | Class-preserving repeated spelling changes | 18.4677 | 13996032 | 6.1752 / 8.7633 |
 | Latin/Arabic/Han mixed spelling changes | 39.3588 | 14413824 | 8.6872 / 10.8265 |
+| First-word deletion changes whole long paragraph AUTO base to RTL | 220.6126 | 77860864 | 8.3260 / 10.5479 |
 
 Raw inputs, output, dictionary/binary/font hashes and source provenance live under
 benchmarks/0.18.0-hyphen-bidi-windows. Disk cache/background load are uncontrolled.
 An initial unnecessary forced-LTR array path measured 148 ms / 77.7 MB on the
-class-preserving workload; it was removed before this measured snapshot.
+class-preserving workload; it was removed before this measured snapshot. The
+separate forced-RTL AUTO stress case still needs whole-source bidi arrays and
+preflight/replay. Its 220.6 ms / 77.9 MB is a measured remaining performance cost;
+14-15 MB is not an upper bound for all mixed-direction inputs.
 Internal generated-side line breaks, future unselected edits affecting already
 emitted neutral/bracket context, language casing and conditional compounds remain
 open. This step does not complete the broader PDF/platform/service roadmap.
 Cross-platform CI results and final Git-byte source hashes are recorded after
 the actual validated snapshot completes.
+
+
+Follow-up regression reproduced outside the passing suite: page width 76,
+14 px fixture font, AUTO, source `a אב +++++++++++++ aaaaaaaaaaaa`, replacement
+`.aaaa1aaaaaaaa./א1中=12א,1,5`. The later selected edit changes the strong context
+after the plus run. Previously emitted earlier-line pluses retain the old source
+context and their visual order differs from full analysis of the final display.
+This is the documented future-unselected-edit limitation, not one of the passing
+269 differential cases. The scratch reproduction adds a `bidi_case` with that
+prefix/before/after and erase_first=1; it fails on line 0 (actual U+05D1 versus
+expected U+002B at the compared visual position). Earlier neutral/bracket context
+needs speculative future display decisions or replay before publication; AUTO
+P2 preflight alone does not solve it.
+
+
+Ruby-corrected commit 3e332a6096666f3a7a96d4961a2e73a932876581 passed all six jobs in
+[CI run 39118235782](https://github.com/NoGod3524/EXReader/actions/runs/39118235782):
+Windows/Linux/macOS (113 CTests each), installed C/C++/JNI, macOS Swift mixed
+visual/source-hit and leading-neutral AUTO checks, ASan/UBSan/leaks (111 tests),
+Android ARM64, iOS/iPadOS device/simulator builds and Swift type checking. All
+206 source hashes match the exact validated Git blob bytes; all 56 preceding
+EPUB fixtures are unchanged. Final Windows DLL is 5,419,931 bytes (20,502 above
+the preceding verified snapshot), SHA256
+9cfb5a4be5b02b9b9ebeff9a54ca95b224bd1a654a9da71692396ac253b3f1ca.
+Installed runtime copies match it; all four benchmark datasets match the final
+benchmark executable. The subsequent record-only commit adds the AUTO stress
+measurement, records the separately reproduced next neutral-context regression
+and final evidence, and skips a redundant CI run. The full compatibility/SDK
+roadmap remains active; this verification does not close the remaining items.

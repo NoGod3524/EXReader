@@ -14,12 +14,16 @@
     "new_bidi_EPUB_fixtures": 15,
     "differential_cases": 269,
     "installed_C_Cpp_JNI": "passed; JNI mixed levels/source hits and leading-neutral AUTO base",
-    "CI": "pending this snapshot",
+    "CI": "https://github.com/NoGod3524/EXReader/actions/runs/39118235782",
     "ruby_leading_regression": "reproduced wrong EN level; the first-strong proof now excludes atomic ruby contents; cached/uncached/replay and positioned hits pass",
-    "initial_CI": "https://github.com/NoGod3524/EXReader/actions/runs/39118027711; four jobs already passed before the ruby correction; final exact snapshot pending"
+    "initial_CI": "https://github.com/NoGod3524/EXReader/actions/runs/39118027711: all six jobs passed; the additional ruby fast-proof regression was then fixed and all six jobs rerun on the exact final snapshot",
+    "cross_platform_CI": "All six jobs passed on the ruby-corrected snapshot: Windows/Linux/macOS (113 tests each), installed C/C++/JNI, macOS Swift mixed/source/AUTO checks, ASan/UBSan/leaks (111 tests), Android ARM64, iOS/iPadOS device/simulator and Swift type checks",
+    "sanitizer_native_tests": 111,
+    "source_hash_verification": "All 206 recorded hashes match Git blob bytes of the exact validated commit; all 56 preceding EPUB fixture blobs unchanged",
+    "known_limits": "A separate scratch differential test reproduces prior neutral-line visual order changing after a future discretionary edit; see NATIVE_VALIDATION.md. Not included in the passing 269 cases. Internal display breaks, casing, conditional compounds, long AUTO-to-RTL memory and the broader roadmap remain open."
   },
   "scope": "Mapped selected-display bidi before shaping and reordering; actual AUTO P2 preflight with isolate/B handling, bounded two-base convergence, checkpoints and original-source hit intervals. Future unselected edits affecting prior lines, internal display breaks and broader compatibility roadmap remain open.",
-  "performance": "Three fresh processes/mode/workload; 1 MiB, first 65 pages; English, class-preserving replacement and actual Latin/Arabic/Han generated text. Disk cache/background load uncontrolled.",
+  "performance": "Four workloads, three fresh processes per mode, 1 MiB and first 65 pages. English, class-preserving changes, actual Latin/Arabic/Han changes and the long-paragraph AUTO-to-RTL stress case. The latter still measures 220.6 ms / 77.9 MB from whole-source bidi arrays and trial/replay; disk cache/background load uncontrolled.",
   "source_files_sha256": {
     ".github/workflows/native.yml": "459d07dd1f849bde1ea357dfe2985cf835e2735dc5bea435168d33a8dbee2f61",
     "CMakeLists.txt": "40536387f42cbe908a8d8ca016f108b8f1f5b7d460685d7c6df7d96fb9f7da56",
@@ -227,5 +231,6 @@
     "tools/generate_hyphen_unicode.py": "988d1864fd5cfe51ca453e0785b0b91c9b635c08e398617c8341bb3821601a5e",
     "tools/generate_normalize_unicode.py": "f39b3a8883f59a10a914bac081ba5570488df336d3e70e30d92d9521ef73a74a",
     "tools/generate_unicode.py": "a6988d10f0110e0ebed13a9a35adc346c927bda170a0d31edbf114e284f0a138"
-  }
+  },
+  "source_validated_commit": "3e332a6096666f3a7a96d4961a2e73a932876581"
 }
