@@ -3323,3 +3323,17 @@ contexts. Initial whole-paragraph planning was discarded after an exploratory
 casing, conditional compounds, tall-row fragmentation and the complete roadmap
 remain open. Final cross-platform results will be recorded against the actual
 validated code commit after CI completes.
+
+
+Commit dde7671327a29ce14484ab84e897b2a2821266ea passed all six jobs in
+[CI run 39121547861](https://github.com/NoGod3524/EXReader/actions/runs/39121547861):
+Windows/Linux/macOS (113 tests each), installed C/C++/JNI and macOS Swift future
+neutral/source-hit verification, ASan/UBSan/leaks (111 tests), Android ARM64, and
+iOS/iPadOS device/simulator libraries plus Swift checks. All 214 recorded source
+hashes match the exact Git snapshot; all 71 preceding EPUBs are unchanged. Final
+Windows DLL: 5,429,592 bytes (9,661 above the prior verified snapshot), SHA256
+cb0850aa05460ebdaeda28d5d9a973af3709463ef1726445c7545d6ce1b0418f.
+Installed runtime copies match; all four measured datasets match the verified
+benchmark executable hash. The following documentation-only commit records
+verification and skips a redundant CI run. The broad compatibility/SDK roadmap
+and the remaining explicit layout items stay active.
