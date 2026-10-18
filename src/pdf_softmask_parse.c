@@ -32,8 +32,17 @@ exr_status exr_pdf_soft_mask_kind(exr_pdf_file *file, uint32_t mask, int *kind, 
   v = exr_pdf_value_at(file, g);
   if (!v || v->kind != EXR_PDF_STREAM) return fail(e, EXR_FORMAT, "PDF soft mask group must be a form stream");
   if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "TR"), &id, e) != EXR_OK) return e->code;
-  if (id != EXR_PDF_NONE && exr_pdf_value_at(file, id)->kind != EXR_PDF_NULL && !name_is(file, id, "Identity"))
-    return fail(e, EXR_UNSUPPORTED, "PDF soft mask transfer functions are not implemented yet");
+  if (id != EXR_PDF_NONE && exr_pdf_value_at(file, id)->kind != EXR_PDF_NULL && !name_is(file, id, "Identity")) {
+    /* Only the exponential function (type 2) is supported; anything else is a
+       declared boundary rather than a silent approximation. */
+    const exr_pdf_value *tr = exr_pdf_value_at(file, id);
+    uint32_t type;
+    double probe;
+    if (tr->kind != EXR_PDF_DICT) return fail(e, EXR_FORMAT, "PDF soft mask transfer function must be a dictionary");
+    if (exr_pdf_resolve(file, exr_pdf_get(file, id, "FunctionType"), &type, e) != EXR_OK) return e->code;
+    if (type == EXR_PDF_NONE || !number(file, type, &probe) || probe != 2)
+      return fail(e, EXR_UNSUPPORTED, "Only exponential PDF soft mask transfer functions are implemented");
+  }
   if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "BC"), &id, e) != EXR_OK) return e->code;
   if (id != EXR_PDF_NONE && exr_pdf_value_at(file, id)->kind != EXR_PDF_NULL) {
     double bc[4]; unsigned count = 0;

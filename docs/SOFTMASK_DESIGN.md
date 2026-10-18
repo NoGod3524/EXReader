@@ -1,6 +1,7 @@
 # 图形状态软遮罩（工作包 2）设计
 
-状态：**设计阶段，引擎仍拒绝非 `None` 的 `SMask`**（`pdf_content.c` 返回 `EXR_FORMAT`）。
+状态：**已实现并验收**。Alpha/Luminosity、`BC`、指数型 `TR`、`/Matrix`、`/BBox`、`q/Q`、`/None` 均可用；
+34 个场景与 8 个损坏输入进入 `native-blend`，函数型 `TR` 之外的非 Identity 类型明确返回 `EXR_UNSUPPORTED`。
 
 ## 1. 规范范围（ISO 32000-1 11.6.5.2）
 

@@ -22,7 +22,7 @@ stream
 endstream
 endobj
 6 0 obj
-<< /SMask << /S /Alpha /G 5 0 R /TR << /FunctionType 2 /Domain [0 1] /C0 [0] /C1 [1] /N 1 >> >> /BM /Normal >>
+<< /SMask << /S /Alpha /G 5 0 R /TR << /FunctionType 99 >> >> /BM /Normal >>
 endobj
 7 0 obj
 << /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true >> /Resources << /ExtGState << /GS1 6 0 R >> >> /Length 59 >>
@@ -39,9 +39,9 @@ xref
 0000000302 00000 n 
 0000000378 00000 n 
 0000000554 00000 n 
-0000000680 00000 n 
+0000000646 00000 n 
 trailer
 << /Size 8 /Root 1 0 R >>
 startxref
-920
+886
 %%EOF
