@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(EXReader VERSION 0.18.0 LANGUAGES C)
+project(EXReader VERSION 0.19.0 LANGUAGES C)
 set(EXR_ABI_VERSION 1)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -639,6 +639,22 @@ if(EXR_BUILD_TESTS)
   if(EXR_ENABLE_ICC)
     target_compile_definitions(exreader-pdf-color-test PRIVATE EXR_ENABLE_ICC=1)
     target_link_libraries(exreader-pdf-color-test PRIVATE exr_lcms)
+  endif()
+endif()
+option(EXR_BUILD_FUZZ "Build the deterministic parser fuzz driver" OFF)
+if(EXR_BUILD_FUZZ)
+  add_executable(exreader-fuzz tests/fuzz_parse.c)
+  target_link_libraries(exreader-fuzz PRIVATE exreader)
+  if(NOT MSVC)
+    target_compile_options(exreader-fuzz PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  endif()
+  if(EXR_BUILD_TESTS)
+    # Bounded smoke run; long campaigns use the same driver with a larger --iterations.
+    add_test(NAME native-fuzz-smoke COMMAND exreader-fuzz --seed 1 --iterations 500
+      --save ${CMAKE_CURRENT_BINARY_DIR}/fuzz-last.bin
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pdf-blend/nonisolated.pdf
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/layout.epub
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/sample.txt)
   endif()
 endif()
 include(CMakePackageConfigHelpers)

@@ -87,7 +87,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 0.18.0 EXACT CONFIG REQUIRED)
+find_package(EXReader 0.19.0 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -417,3 +417,12 @@ The precision state remains private and is heap-stable across layer-stack growth
 No additional runtime component is introduced. The PDF Form/AP default I=false
 now renders as non-isolated RGB; explicit CS on a non-isolated Form is malformed.
 Knockout groups and graphics-state soft masks remain pending.
+
+## Package version 0.19.0
+
+The current tree, header and installed config package report **0.19.0**
+development. ABI epoch 1 and library schema 6 are unchanged: no exported
+symbol, record layout, enum value or callback signature moves with this
+renumbering. Select this package with `find_package(EXReader 0.19.0 EXACT
+CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
+CI run 39148719500 and the benchmark samples) keep their original number.

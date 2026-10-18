@@ -2,6 +2,8 @@
 
 交接日期：2026 年 10 月 18 日。当前交付为无 UI 的 C11 电子书 SDK，GPL-3.0-only，0.18.0 开发版，ABI epoch 1，书库 schema 6。本次停止点是非隔离 RGB PDF 透明组这一可独立验收批次；完整 PDF、EPUB 排版及阅读 SDK 的目标仍有后续工作。用户要求本批完成后暂停，当前已暂停，未经后续继续指令不启动下一批。
 
+版本号已在本记录之后提升为 **0.19.0 开发版**（ABI epoch 1、书库 schema 6 不变）；下文所有运行库哈希、CI 运行与采样仍对应 0.18.0 的已验证代码提交 `ec8d4a98`。
+
 ## 代码与交付位置
 
 | 项目 | 当前值 |
@@ -98,6 +100,8 @@ CI 已完成，准确代码 SHA 的六个作业全部成功：
 | Android | ARM64共享引擎库构建与安装通过 |
 | iOS / iPadOS | arm64设备与模拟器引擎库、对应Swift适配检查通过 |
 
+ASan 的 116 项比桌面的 119 项少 3 项：`native-hyphen-compound-oracle`、`native-hyphen-replacement-oracle` 与 `native-hyphen-conditional-oracle` 通过 ctypes 把运行库载入未插桩的 Python，ASan 运行库无法这样装载（`CMakeLists.txt` 中的 `if(NOT EXR_SANITIZE)` 分支）；对应的原生 C 复合词、队列与预算回归仍在 ASan 下运行。
+
 作业ID、起止时间和实际CTest汇总见 [ci.json](benchmarks/0.18.0-pdf-nonisolated-windows/ci.json)。当前无失败测试待修。
 
 ### 性能与轻量化现状
@@ -143,7 +147,7 @@ CI 已完成，准确代码 SHA 的六个作业全部成功：
 | 15 | OPDS 与 LCP | OPDS1/2 各≥10个分页/搜索/认证/获取/坏数据样本；网络与凭据由宿主控制。LCP 使用授权测试出版物完成打开/失效/续期/错误密码等路径，明确官方实现许可与分发条件；不把未授权 DRM 解密纳入核心 |
 | 16 | 发行 SDK 和可靠性 | 统一当前支持矩阵、版本化文档和迁移实例，全部六个 CI 作业通过；增加解析/字体/布局的 sanitizer fuzz 目标，每目标固定种子持续≥24 CPU 小时且所有 crash 入回归。发布前验证默认及裁剪配置符号/安装消费，并附6平台产物、依赖许可和基准 |
 
-工作包 3 是轻量化优先项，可在 1/2 的架构需要时提前，但一次只交付一包并保留可复现对照。发行支持以冻结的矩阵条目为单位。
+工作包 3 是轻量化优先项，可在 1/2 的架构需要时提前，但一次只交付一包并保留可复现对照。执行前先做两项纯重构并保持 119 项全绿：拆分 `src/pager.c` 的 `advance`（339 行单函数）与把 108 份自带 `main`/`CHECK` 的测试脚手架收敛为共享头文件。发行支持以冻结的矩阵条目为单位。
 
 ## 总体验收的语料与标准目标
 
@@ -173,6 +177,7 @@ EPUB以EPUB3.3阅读链路、CSS2.2布局与所声明的CSS Text/Writing Modes/R
 | `tools/pdf_group_reference.py` | 独立 Decimal 规范参考及可运行核验 |
 | `tools/generate_pdf_blend_fixtures.py` | 原创场景及开发期参考生成；外部工具仅用于此流程 |
 | `tools/benchmark_pdf_blend.py` | 单页打开/首画/重画/峰值，支持 --case 与新进程重复 |
+| `tests/fuzz_parse.c`、`docs/FUZZING.md` | 确定性解析器 fuzz 驱动（种子变异、崩溃输入落盘、CI `fuzz` 作业） |
 | `src/flow.c`、`pager.c`、`pager_table.c`、`floats.c`、`layout.c` | EPUB 行排版、检查点、表格/浮动续排与布局 |
 | `src/hyphen.c`、`display_bidi.c`、`opentype.c` | 断词/改写/显示方向、字体 lookup |
 | `bindings/swift/`、`bindings/jni/`、`examples/`、`tests/sdk_cpp/` | 安装后宿主和语言适配 |
@@ -196,7 +201,7 @@ cmake --build build/sdk-cpp --config Release --parallel 4
 python tools/pdf_group_reference.py tests/fixtures/pdf-blend
 ```
 
-SDK 消费使用 `find_package(EXReader 0.18.0 EXACT CONFIG REQUIRED)`，防止选到旧编号更大的开发包。Windows MSVC 是 CI 路径；本地 MinGW 通过 ASCII junction 避开中文路径。动态库分别为 MSVC `exreader.dll`、MinGW `libexreader.dll`、Linux `libexreader.so`、macOS `libexreader.dylib`。
+SDK 消费使用 `find_package(EXReader 0.19.0 EXACT CONFIG REQUIRED)`，防止选到旧编号更大的开发包。Windows MSVC 是 CI 路径；本地 MinGW 通过 ASCII junction 避开中文路径。动态库分别为 MSVC `exreader.dll`、MinGW `libexreader.dll`、Linux `libexreader.so`、macOS `libexreader.dylib`。
 
 ### 本机已验证环境
 
@@ -242,7 +247,7 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 
 ## CI 产物与保存
 
-本次 workflow 上传三桌面安装包、Android ARM64、iOS/iPadOS device/simulator 库和三桌面性能记录。可用 `gh run download 39148719500 --dir <本地目录>` 获取全部产物，或按 artifact 名称筛选。CI 产物有平台保留期，不代替正式 release；已提交的原始性能和来源记录长期随 Git 保留。提交/发布时不要将本地 AAC OFF 的5.66 MB库体积当作所有 CI 配置的体积。
+本次 workflow 上传三桌面安装包、Android ARM64、iOS/iPadOS device/simulator 库和三桌面性能记录。workflow 现共七个作业：上面六个之外新增 `fuzz`（ASan/UBSan + `EXR_BUILD_FUZZ=ON`，每次推送 20 万次种子迭代，失败时上传触发输入）；开启 `EXR_BUILD_FUZZ=ON` 的构建本地 CTest 为 120 项（新增 `native-fuzz-smoke`）。可用 `gh run download 39148719500 --dir <本地目录>` 获取全部产物，或按 artifact 名称筛选。CI 产物有平台保留期，不代替正式 release；已提交的原始性能和来源记录长期随 Git 保留。提交/发布时不要将本地 AAC OFF 的5.66 MB库体积当作所有 CI 配置的体积。
 
 ## 依赖与许可
 
@@ -264,7 +269,7 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 1. 非隔离主场景首画约548 ms，部分旧场景比历史采样慢，缺少受控交替归因。下一轮优化从此处保留对照数据。
 2. 整画布24字节预留导致大页面单组超过64 MiB时拒绝渲染，不能仅提高预算后宣称轻量化完成。
 3. auto表格和middle/bottom精确高度测量需扫描完整输入，存在秒级首屏成本；解析和双向数据也不由页面缓存上限包住。
-4. 当前公开文档含历史步骤叙述，应在发行前合成统一的当前支持矩阵，避免早期“未支持”段落掩盖后续已完成能力。
+4. 当前公开文档含历史步骤叙述；已新增 [SUPPORT_MATRIX.md](SUPPORT_MATRIX.md) 作为单一当前状态入口，发行前仍需把早期“未支持”段落并入该表并删除重复叙述。
 5. iOS/iPadOS和Android当前验证层级仍是库编译/适配检查；移动视图、后台音频、手势、无障碍和真机运行尚未交付。
 6. CI目前提示checkout/upload-artifact v4使用的Node20已退役并强制在Node24运行；当前任务成功，后续可单独升级actions并跑相同矩阵。
 7. 本批验证集中于透明组及完整现有回归；安全redaction、OCR、完整CSS与全部PDF文件兼容仍按上面的独立目标推进。

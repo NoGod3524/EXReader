@@ -15,7 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_VERSION "0.18.0"
+#define EXR_VERSION "0.19.0"
 #define EXR_ABI_VERSION 1u
 typedef enum {
   EXR_OK = 0,
@@ -924,6 +924,12 @@ EXR_API const exr_bidi_scalar *exr_bidi_scalars(const exr_bidi *bidi, size_t *co
 EXR_API exr_status exr_bidi_reorder(const exr_bidi *bidi, size_t first, size_t count,
                                     size_t **out_order, size_t *out_count, exr_error *error);
 EXR_API void exr_bidi_free(exr_bidi *bidi);
+/* Unicode Bidi_Mirroring_Glyph for one scalar; returns the scalar unchanged when
+   no mirrored glyph is defined. */
+EXR_API uint32_t exr_bidi_mirror(uint32_t codepoint);
+/* UAX #9 paragraph embedding base level of one scalar; UINT_MAX when bidi is
+   NULL or scalar_index is past the analysed scalars. */
+EXR_API unsigned exr_bidi_base_level(const exr_bidi *bidi, size_t scalar_index);
 /* Copies every input string/attribute/blob during this call. Failure leaves *out NULL. */
 EXR_API exr_status exr_document_create(const exr_document_input *input, exr_document **out,
                                        exr_error *error);
