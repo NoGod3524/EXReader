@@ -1088,8 +1088,9 @@ typedef struct {
 } exr_hyphen_provider;
 /* UTF-8 TeX-style pattern tokens, optional UTF-8 header and HYPHENMIN directives.
    Digits 0..9 give weights, '.' anchors word edges, %/# introduce comments.
-   Raw TeX commands, compound NEXTLEVEL and spelling replacements are rejected;
-   a custom provider may implement these. left/right=0 uses file/default=2. */
+   Raw TeX commands, compound NEXTLEVEL and spelling replacements are rejected.
+   Providers may read other formats but this API returns break positions only,
+   not spelling-changing replacement text. left/right=0 uses file/default=2. */
 typedef struct {
   size_t struct_size;
   const char *language; /* ASCII BCP47-style key; NULL/empty is the untagged key. */
