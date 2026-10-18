@@ -3917,3 +3917,18 @@ SHA256 6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4.
 Final records: `benchmarks/0.18.0-pdf-nonisolated-windows/metadata.json`.
 The complete handoff is `HANDOFF.md`; this batch is complete and further feature
 work is paused at the user's request. The overall compatibility goal remains open.
+
+## Maintenance: 0.19.0 housekeeping, fuzz driver and support matrix
+
+Code commits `c58fce5` (version bump, public bidi declarations, generated-header
+SPDX, deterministic parser fuzz driver, support matrix), `c31311d` (knockout group
+reference and design) and `2228f59` (fuzz job builds only the driver) passed all
+seven jobs of CI run 39158684773: Windows/Linux/macOS 120 CTests each, installed
+C/C++/JNI, sanitizers, Android ARM64, iOS/iPadOS, and the new seeded fuzz campaign
+(200,000 iterations under ASan/UBSan). Local Windows Release with
+`EXR_BUILD_FUZZ=ON` also reports 120/120 and the fuzz driver is deterministic
+(same seed reproduces the same parsed-document count).
+
+Engine behaviour is unchanged by this batch: the knockout model exists only as the
+independent Decimal reference in `tools/pdf_group_reference.py` (`--self-test`
+checks five invariants), and PDF `K=false` still returns `EXR_UNSUPPORTED`.
