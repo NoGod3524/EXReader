@@ -3983,3 +3983,17 @@ Work package 1 is complete for the declared scope: 42 original scenes with a Dec
 reference (difference 0), isolated/non-isolated/nested knockout, cancellation, budget,
 legacy-consumer regressions and alternating sampling. Remaining PDF compositing work
 (graphics-state soft masks, group-area clipping) is tracked separately.
+
+## Work package 1 completion: element kinds, edges, abort and depth (0.19.0 development)
+
+Commit `348d52b` completes the work-package-1 acceptance matrix: **50 original scenes**
+(16 isolated modes, 16 non-isolated modes, 10 alpha/coverage combinations, 6 text/image/nested
+element kinds and 2 antialiased-edge cells). The edge sampling rule is now explicit: interior
+pixels must match the Decimal reference within 3/255, while half-covered edge pixels are excluded
+because coverage is a rasteriser result rather than part of the integer model; edge correctness
+stays covered by the existing path and glyph antialiasing regressions.
+
+Abort (`commit=0` without residual workspace), 32-level depth, cancellation, budget (23/24 bytes
+per pixel) and legacy-consumer regressions cover the remaining acceptance items. CI run
+39164911938 passed all seven jobs; locally 120/120 CTests and 954,979 blend assertions pass with
+a reference difference of 0 on every scene.
