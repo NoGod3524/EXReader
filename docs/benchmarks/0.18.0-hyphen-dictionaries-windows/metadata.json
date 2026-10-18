@@ -146,5 +146,6 @@
     "src/wave.c": "d0c467a5547640e07255a96b8dda48728452b080092e442fe575595d4b348ffd",
     "src/xmp.c": "abecba31a04fc54a1af0c267094975c774e58b7f8ac60450737a13d3c00ba604",
     "src/xmp_write.c": "11fc2b84b892eec5f2af821fd932e272bb6dac094659a0577514a33c5c4ead10"
-  }
+  },
+  "source_commit": "e9e3b64d5cfa578d9ab224302fc5c12666a4da94"
 }

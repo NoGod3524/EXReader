@@ -2753,3 +2753,12 @@ hyphens, final shaping, bidi/vertical drawing and page/checkpoint integration
 remain required. Native compound/spelling-replacement grammars and canonical
 normalization also remain pending. Existing manual soft-hyphen behavior is not
 changed by this standalone module.
+
+
+Commit e9e3b64 passed all six jobs in
+[CI run 39098580288](https://github.com/NoGod3524/EXReader/actions/runs/39098580288):
+Windows/Linux/macOS native tests, installed C dictionary example and SDK/JNI
+checks, macOS Swift smoke, ASan/UBSan, Android ARM64, and iOS/iPadOS device and
+simulator library builds. Following header edits clarify comments only: the
+provider bitmap expresses source break positions, not spelling replacements.
+Benchmark hashes refer to the exact e9e3b64 source snapshot.

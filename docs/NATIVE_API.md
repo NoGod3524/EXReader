@@ -1352,13 +1352,15 @@ Unicode 17 full case folding，tr/az 用 Turkic I 映射；折叠展开（如 ß
 
 单词最多 1,024 字节/256 标量，模式最多 128 原始标量；每词最多三倍 case-fold 展开。
 每词典输入最多 8 MiB，全部输入最多 32 MiB；每词典最多 262,144 个模式、一百万 trie
-节点。构造和查询受 64 Mi 工作预算与取消控制，构造字节预算 0=32 MiB，最多 128 MiB，
+节点。原生构造和查询受 64 Mi 工作预算与取消控制；provider 需在回调内响应 control。
+构造字节预算 0=32 MiB，最多 128 MiB，
 包含语言目录、数组分配容量和 packed edges。`exr_hyphenator_memory_size` 计这些实际
 payload，排除分配器开销、借入源字节、临时栈和宿主自有 provider context。
 
 原生格式当前拒绝 TeX 命令、复合词 NEXTLEVEL/COMPOUND 配置和带拼写替换的模式，
-返回 EXR_UNSUPPORTED，不悄悄忽略。它不是任意 Hunspell/TeX 文件的完整读取器；这些
-能力仍需后续原生实现或对应 provider。词典数据的许可由宿主单独管理，不自动下载。
+返回 EXR_UNSUPPORTED，不悄悄忽略。它不是任意 Hunspell/TeX 文件的完整读取器。其他
+读取器与复合词算法可由 provider 接入；改变拼写的断行仍需后续替换文字数据模型，
+当前位图接口只表达原文断点。词典数据的许可由宿主单独管理，不自动下载。
 安装 SDK 的 `examples/hyphen.c` 可输出 `hy-phen-ation`，使用的是原创演示模式。
 
 本步只提供词典构造、断点查询和开放接口，尚未接入排版器自动插入连字符。CSS
