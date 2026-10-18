@@ -56,12 +56,24 @@ def over(back,source,alpha,mode):
         for pb,cs,bm in zip(back,source,mixed))+(alpha+back[3]*(1-alpha),)
 
 
-def group(back,elements,isolated=False):
+def group(back,elements,isolated=False,knockout=False):
+    """Evaluate one transparency group at a fully covered interior probe.
+
+    knockout=False: each element composites with the accumulated result.
+    knockout=True: each element composites with the group's *initial* backdrop;
+    a fully covered probe therefore keeps only the newest covering element
+    instead of accumulating earlier ones. Zero-coverage elements change nothing.
+    """
     initial=ZERO if isolated else back
     result=initial;group_alpha=D(0)
     for source,alpha,mode in elements:
-        if callable(source):source,inner_alpha=source(result);alpha*=inner_alpha
-        result=over(result,source,alpha,mode);group_alpha+=alpha*(1-group_alpha)
+        if callable(source):
+            source,inner_alpha=source(initial if knockout else result);alpha*=inner_alpha
+        if knockout:
+            if alpha:result=over(initial,source,alpha,mode)
+        else:
+            result=over(result,source,alpha,mode)
+        group_alpha+=alpha*(1-group_alpha)
     if not group_alpha:return (D(0),)*3,D(0)
     return tuple((v-(1-group_alpha)*b)/group_alpha for v,b in zip(result[:3],initial)),group_alpha
 
@@ -116,6 +128,36 @@ def verify(directory):
     print('208 independent blend samples match PDFium within',maximum,'and 160 group probes reproduce exactly')
 
 
+def self_test():
+    """Knockout invariants that do not depend on any renderer output."""
+    with localcontext() as context:
+        context.prec=40
+        a=D(128)/255;red=color((255,0,0));green=color((0,255,0));blue=color((0,0,255))
+        ba=D(192)/255;back=tuple(v*ba for v in color((51,102,153)))+(ba,)
+        elements=[(red,a,'Multiply'),(green,D(1)/255,'Normal'),(blue,a,'Screen')]
+        knockout=group(back,elements,knockout=True)
+        # Group alpha is the union of every element's coverage, not just the top one.
+        last_alpha=D(1)/255;a_union=1-(1-a)*(1-last_alpha)*(1-a)
+        expected=over(back,blue,a,'Screen')
+        expected=tuple((v-(1-a_union)*b)/a_union for v,b in zip(expected[:3],back)),a_union
+        assert knockout[1]==expected[1]
+        for got,want in zip(knockout[0],expected[0]):
+            assert abs(got-want)<D('1e-30'),(got,want)
+        accumulated=group(back,elements)
+        assert any(abs(x-y)>D('1e-6') for x,y in zip(knockout[0],accumulated[0]))
+        swapped=group(back,list(reversed(elements)),knockout=True)
+        assert any(abs(x-y)>D('1e-6') for x,y in zip(knockout[0],swapped[0]))
+        assert knockout[1]==swapped[1]
+        covered=group(back,[(red,a,'Normal')],knockout=True)
+        zeroed=group(back,[(red,a,'Normal'),(green,D(0),'Normal')],knockout=True)
+        assert covered==zeroed
+        isolated=group(back,[(blue,a,'Normal')],isolated=True,knockout=True)
+        # The group colour is unpremultiplied, so an isolated knockout keeps the source colour.
+        assert isolated[1]==a and isolated[0]==blue
+        print('knockout self-test: 5 invariants hold')
+
+
 if __name__=='__main__':
     import sys
-    verify(sys.argv[1])
+    if len(sys.argv)>1 and sys.argv[1]=='--self-test':self_test()
+    else:verify(sys.argv[1])
