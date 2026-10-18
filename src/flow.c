@@ -197,6 +197,7 @@ static exr_status ordinary_fragment(flow *f, exr_glyph *glyphs, size_t count, fl
   line.start=SIZE_MAX;
   for(i=0;i<count;i++) {
     exr_glyph *g=&glyphs[i]; exr_face *face=&f->font->faces[g->font_index];
+    if(f->intrinsic && !(i&255) && exr_control_cancel(&f->config->control,f->error)!=EXR_OK) return EXR_CANCELLED;
     if(exr_font_size(face,g->size)) return EXR_FONT;
     ascent=fmaxf(ascent,exr_font_ascent(face));
     descent=fmaxf(descent,exr_font_descent(face));
@@ -216,15 +217,19 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
   size_t i,j,spaces=0,logical_start=glyphs[0].start,logical_end=glyphs[count-1].end;
   float indent=f->first_line ? f->paragraph->indent : 0;
   float available=fmaxf(1,f->width-indent),width=0,ascent=0,descent=0,height=0,x,extra=0,baseline;
-  int align=f->paragraph->align;
+  int align=f->intrinsic ? 0 : f->paragraph->align;
   unsigned base=exr_inline_base(f->bidi,logical_start);
   exr_status status;
+  if(f->intrinsic) {
+    while(count && (glyphs[count-1].codepoint==' ' || glyphs[count-1].codepoint=='\t')) count--;
+    if(!count) return EXR_OK;
+  }
   if(align==4) align=base&1 ? 2 : 0;
   if(align==5) align=base&1 ? 0 : 2;
   for(i=0;i<count;i++) {
     exr_glyph *g=&glyphs[i]; exr_face *face=&f->font->faces[g->font_index];
     if(g->flags&EXR_GLYPH_RUBY_ITEM) {
-      if(g->advance>available+.001f) return fail(f,EXR_LIMIT,"Ruby group exceeds the inline page extent");
+      if(!f->intrinsic && g->advance>available+.001f) return fail(f,EXR_LIMIT,"Ruby group exceeds the inline page extent");
       ascent=fmaxf(ascent,g->offset_x); descent=fmaxf(descent,g->offset_y);
     } else {
       if(exr_font_size(face,g->size)) return EXR_FONT;
@@ -236,6 +241,11 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
     if(g->codepoint==' ' && (i+1==count || glyphs[i+1].cluster_start!=g->cluster_start)) spaces++;
   }
   height=fmaxf(height,ascent+descent);
+  if(f->intrinsic) {
+    f->intrinsic_extent=fmax(f->intrinsic_extent,f->x+width+fmaxf(0,indent)+f->inline_end_inset);
+    f->first_line=0;
+    return EXR_OK; /* Measurement commits no second full glyph/line snapshot. */
+  }
   status=exr_flow_page(f,height,logical_start); if(status!=EXR_OK) return status;
   status=exr_inline_reorder(f,glyphs,count); if(status!=EXR_OK) return status;
   baseline=f->y+ascent+(height-ascent-descent)/2;
@@ -290,6 +300,7 @@ exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float wi
   b->y = y;
   b->width = width;
   b->height = fmaxf(0, height);
+  if(f->intrinsic && kind==EXR_BOX_IMAGE) f->intrinsic_extent=fmax(f->intrinsic_extent,x+width+f->inline_end_inset);
   f->used_inline = fmaxf(f->used_inline, x + width + (kind == EXR_BOX_IMAGE ? f->inline_end_inset : 0));
   if (f->writing_mode != EXR_WRITING_HORIZONTAL_TB) {
     b->x = f->writing_mode == EXR_WRITING_VERTICAL_RL ? f->origin_x - y - b->height : y;
@@ -382,6 +393,12 @@ static exr_status image_asset(flow *f, size_t node, size_t *resource, const exr_
 }
 exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
   exr_style logical = exr_flow_style(&f->styles[node], f->writing_mode);
+  if(f->intrinsic) {
+    if(logical.width.percent) logical.width.value=-1;
+    if(logical.height.percent) logical.height.value=-1;
+    if(logical.max_width.percent) logical.max_width.value=-1;
+    if(logical.max_height.percent) logical.max_height.value=-1;
+  }
   const exr_style *s = &logical;
   const exr_bitmap *bitmap;
   size_t resource;
@@ -448,6 +465,7 @@ static exr_status copy_cell(flow *f, const cell *c, float x, float y, float heig
   float block = vertical ? physical_width : physical_height;
   float dx = vertical ? (f->writing_mode == EXR_WRITING_VERTICAL_RL ? f->origin_x-y-block : y) : x;
   float dy = vertical ? x : y;
+  if(f->intrinsic) f->intrinsic_extent=fmax(f->intrinsic_extent,x+(vertical ? physical_height : physical_width)+f->inline_end_inset);
   if (from->writing_mode == EXR_WRITING_VERTICAL_RL) dx += from->flow_block;
   f->used_inline = fmaxf(f->used_inline, x + (vertical ? physical_height : physical_width) + f->inline_end_inset);
   if (from->glyph_count > EXR_MAX_ITEMS - l->glyph_count ||

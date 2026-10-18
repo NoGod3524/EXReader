@@ -455,7 +455,7 @@ static void pagers_and_tables(void) {
       if (boxes[i].node == 4) left = &boxes[i];
       if (boxes[i].node == 6) right = &boxes[i];
     }
-  CHECK(left && right && near(left->y, right->y) && right->x - left->x >= 45);
+  CHECK(left && right && near(left->y, right->y) && near(right->x,left->x+left->width));
   exr_layout_free(l);
   pagination(doc, &c, 0); exr_document_free(doc);
 }

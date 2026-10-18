@@ -139,7 +139,7 @@ static void styled_book(void) {
   lower = get_box(doc, layout, "lower", EXR_BOX_CELL);
   wide = get_box(doc, layout, "wide", EXR_BOX_CELL);
   CHECK(near(span->height, right->height + lower->height));
-  CHECK(near(span->width * 2, wide->width));
+  CHECK(near(span->width + right->width, wide->width));
   CHECK(near(span->y, right->y) && near(lower->y, right->y + right->height));
   CHECK(span->page == lower->page && right->page == lower->page);
   g = require_glyph(doc, layout, "right");

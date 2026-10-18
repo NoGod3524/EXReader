@@ -36,6 +36,7 @@ enum {
   MAX_HEIGHT,
   RUBY_POSITION,
   RUBY_ALIGN,
+  TABLE_LAYOUT,
   PROPERTIES
 };
 typedef struct {
@@ -223,7 +224,7 @@ static int property(const char *s, size_t n) {
       "max-width",    "margin-top",    "margin-right",   "margin-bottom", "margin-left",
       "padding-top",  "padding-right", "padding-bottom", "padding-left",  "background-color",
       "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction",
-      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align"};
+      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -602,6 +603,8 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->ruby_align = parent->ruby_align;
     else if (prop == INDENT)
       s->indent = parent->indent;
+    else if (prop == TABLE_LAYOUT)
+      s->table_fixed = parent->table_fixed;
     else
       return 0;
     return 1;
@@ -720,6 +723,10 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->align = 3;
     else
       return 0;
+  } else if (prop == TABLE_LAYOUT) {
+    if(!strcmp(v,"fixed")) s->table_fixed=1;
+    else if(!strcmp(v,"auto")) s->table_fixed=0;
+    else return 0;
   } else if (prop == DISPLAY) {
     if (!strcmp(v, "none"))
       s->display = EXR_CSS_NONE;

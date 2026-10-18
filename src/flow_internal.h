@@ -21,6 +21,8 @@ typedef struct {
   float x, width, y, bottom_inset, origin_x, used_inline, inline_end_inset;
   size_t pending;
   int first_line, paginate, force_break, table_depth, page_limit, context_depth;
+  int intrinsic; /* 1: every legal line break, 2: unwrapped streaming measure. */
+  double intrinsic_extent;
   exr_inline_bidi *bidi;
   exr_writing_mode writing_mode;
 } flow;
@@ -32,6 +34,9 @@ typedef struct {
   float scan_width;
   int initialized, finishing, forced, final, line_ready;
   unsigned vertical_flags;
+  double measure_width, measure_trailing;
+  exr_glyph measure_last;
+  int measure_has_last;
 } exr_line_buffer;
 void exr_inline_clear(exr_inline_bidi *bidi);
 unsigned exr_vertical_flags(uint32_t codepoint, exr_text_orientation orientation);
@@ -57,6 +62,7 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count,
                                int forced, int final);
 exr_status exr_flow_unit(flow *parent, size_t node, float width,
                           exr_layout **out, float *height);
+exr_status exr_flow_intrinsic(flow *parent,size_t node,float width,int mode,float *out);
 exr_status exr_flow_copy(flow *f, const exr_layout *from, size_t node,
                           float x, float y, float height);
 typedef struct exr_table_cursor exr_table_cursor;
@@ -66,4 +72,5 @@ void exr_table_free(exr_table_cursor *cursor);
 size_t exr_table_memory_size(const exr_table_cursor *cursor);
 exr_table_cursor *exr_table_clone(const exr_table_cursor *cursor);
 size_t exr_table_position(const exr_table_cursor *cursor);
+void exr_table_geometry(const exr_table_cursor *cursor,float *x,float *width);
 #endif

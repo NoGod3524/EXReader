@@ -479,7 +479,7 @@ static exr_status fit_line(flow *f, exr_line_buffer *b) {
         return exr_fail(f->error, EXR_FONT, "Cannot size final line font");
       width += g->advance + line_kern(f, i ? g - 1 : NULL, g);
     }
-    if (width <= available + 0.001f) break;
+    if (f->intrinsic || width <= available + 0.001f) break;
     {
       size_t emergency = 0;
       i = b->line_end;
@@ -543,8 +543,34 @@ static exr_status reshape_carry(flow *f, exr_line_buffer *b) {
   b->line.glyph_count = 0;
   return EXR_OK;
 }
+/* Max-content uses the same measured/shaped segments, retaining only joining
+   context and one previous glyph. A long paragraph does not become one huge
+   provisional line or a second full glyph snapshot. */
+static exr_status measure_unwrapped(flow *f,exr_line_buffer *b) {
+  size_t i,count=b->ready;
+  for(i=0;i<count;i++) {
+    exr_glyph *g=&b->run.glyphs[i]; float advance;
+    if(!(i&255) && exr_control_cancel(&f->config->control,f->error)!=EXR_OK) return EXR_CANCELLED;
+    if(g->boundaries&EXR_BOUNDARY_MANDATORY) {
+      f->intrinsic_extent=fmax(f->intrinsic_extent,f->x+b->measure_width-b->measure_trailing+f->inline_end_inset);
+      b->measure_width=b->measure_trailing=0; b->measure_has_last=0;
+    }
+    if(exr_font_size(&f->font->faces[g->font_index],g->size)) return exr_fail(f->error,EXR_FONT,"Cannot size intrinsic line font");
+    if(f->first_line) { b->measure_width+=fmaxf(0,f->paragraph->indent); f->first_line=0; }
+    advance=g->advance+line_kern(f,b->measure_has_last ? &b->measure_last : NULL,g);
+    b->measure_width+=advance;
+    if(g->codepoint==' ' || g->codepoint=='\t') b->measure_trailing+=advance;
+    else if(!(g->flags&EXR_GLYPH_HIDDEN)) b->measure_trailing=0;
+    b->measure_last=*g; b->measure_has_last=1;
+  }
+  if(b->finishing) f->intrinsic_extent=fmax(f->intrinsic_extent,f->x+b->measure_width-b->measure_trailing+f->inline_end_inset);
+  if(count) memmove(b->run.glyphs,b->run.glyphs+count,(b->run.glyph_count-count)*sizeof(*b->run.glyphs));
+  b->run.glyph_count-=count; b->cluster_start-=count; b->ready=0; b->raw.glyph_count=0;
+  return EXR_OK;
+}
 exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
   if (!b->initialized) reset_line_scan(b);
+  if(f->intrinsic==2) return measure_unwrapped(f,b);
   for (;;) {
     if (!b->line_end) {
       float indent = f->first_line ? f->paragraph->indent : 0;
@@ -562,8 +588,9 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
           b->emergency = i;
           if (g->boundaries & EXR_BOUNDARY_LINE) b->soft = i;
         }
+        if(f->intrinsic==1 && i && b->soft==i) { b->line_end=i; b->forced=b->final=0; break; }
         advance = g->advance + line_kern(f, i ? g - 1 : NULL, g);
-        if (i && b->scan_width + advance > available &&
+        if (!f->intrinsic && i && b->scan_width + advance > available &&
             (b->soft != SIZE_MAX || b->emergency != SIZE_MAX)) {
           b->line_end = b->soft != SIZE_MAX ? b->soft : b->emergency;
           b->forced = b->final = 0; break;
@@ -658,6 +685,7 @@ exr_status exr_inline_finish(flow *f, exr_line_buffer *b) {
   if (status != EXR_OK) return status;
   memset(&b->text, 0, sizeof(b->text));
   b->raw.glyph_count = 0; b->before = b->after = 0; b->finishing = 0;
+  b->measure_width=b->measure_trailing=0; b->measure_has_last=0;
   reset_line_scan(b);
   return EXR_OK;
 }

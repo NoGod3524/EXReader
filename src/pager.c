@@ -6,6 +6,7 @@
 typedef struct {
   size_t node, child, position;
   int phase, entered, sized_inline;
+  int old_intrinsic;
   float x, width, old_x, old_width, outer_x, outer_width;
   float pt, pb, first_y, parent_inset;
   float parent_inline_end, inline_end, min_inline;
@@ -317,6 +318,7 @@ static exr_status context_create(flow *parent, size_t node, float width, float h
   p->f.context_depth += local == 1;
   p->f.table_depth += local == 2;
   p->f.writing_mode = mode;
+  if(local==1) p->f.intrinsic=0; /* Orthogonal subcontexts measure through their physical fragment. */
   status = push(p, node, 0, width);
   if (status != EXR_OK) { exr_pager_free(p); return status; }
   *out = p; return EXR_OK;
@@ -416,12 +418,18 @@ static exr_status advance(exr_pager *p) {
         float pl = used(b->padding[3], v->width) + border;
         float pr = used(b->padding[1], v->width) + border;
         float content = v->width - ml - mr - pl - pr;
+        int cell_root=p->local==2 && v->node==p->local_root && s->display==EXR_CSS_CELL;
+        v->old_intrinsic=f->intrinsic;
         /* A table cell's width already contributed to column allocation. Its
            percentage is relative to the table, not a second percentage here. */
         if (b->width.value >= 0 && n->kind != EXR_NODE_IMAGE &&
-            !(p->local==2 && v->node==p->local_root && s->display==EXR_CSS_CELL))
+            !cell_root && (!f->intrinsic || !b->width.percent)) {
           content = fminf(content, used(b->width, v->width));
-        if (b->max_width.value >= 0 && n->kind != EXR_NODE_IMAGE)
+          /* A fixed-width descendant is a definite constraint even while
+             measuring an ancestor's intrinsic width. */
+          f->intrinsic=0;
+        }
+        if (b->max_width.value >= 0 && n->kind != EXR_NODE_IMAGE && (!f->intrinsic || !b->max_width.percent))
           content = fminf(content, used(b->max_width, v->width));
         if (content < 1 || !isfinite(content))
           return failure(p, EXR_ARGUMENT, "CSS leaves no content width");
@@ -444,6 +452,8 @@ static exr_status advance(exr_pager *p) {
         v->sized_inline = (b->width.value >= 0 && n->kind != EXR_NODE_IMAGE) ||
                           (s->background & 255) || (s->border_style && s->border_width > 0) ||
                           s->display == EXR_CSS_CELL;
+        if(v->old_intrinsic) f->intrinsic_extent=fmax(f->intrinsic_extent,
+          f->x+ml+pl+pr+mr+(f->intrinsic ? 0 : content)+f->inline_end_inset);
         f->y += used(b->margin[0], f->width);
       }
       v->phase = 2;
@@ -474,9 +484,14 @@ static exr_status advance(exr_pager *p) {
       } else if (s->display == EXR_CSS_TABLE) {
         int done;
         if (!v->table) {
+          float x,width;
           status = exr_table_create(f, v->node, f->x, f->width, &v->table);
           if (status != EXR_OK)
             return status;
+          exr_table_geometry(v->table,&x,&width);
+          v->outer_x+=x-f->x; v->x=x;
+          v->outer_width-=f->width-width; v->width=width;
+          f->x=x; f->width=width;
         }
         status = exr_table_step(f, v->table, &done);
         if (exr_table_position(v->table) > p->position)
@@ -529,6 +544,7 @@ static exr_status advance(exr_pager *p) {
       f->paragraph = v->old_paragraph;
       f->inline_end_inset = v->parent_inline_end;
       f->first_line = 1;
+      f->intrinsic=v->old_intrinsic;
       if (s->after)
         f->force_break = 1;
       v->entered = 0;
@@ -878,6 +894,17 @@ exr_status exr_flow_unit(flow *parent, size_t node, float width,
     }
   }
   exr_pager_free(p); return status;
+}
+exr_status exr_flow_intrinsic(flow *parent,size_t node,float width,int mode,float *out) {
+  flow measure=*parent; exr_pager *p=NULL; exr_layout *layout=NULL; exr_status status;
+  *out=0; measure.intrinsic=mode; measure.intrinsic_extent=0;
+  status=context_create(&measure,node,width,exr_flow_room(parent),parent->writing_mode,2,&p);
+  if(status==EXR_OK) status=next_page(p,&layout,parent->error);
+  if(status==EXR_OK) {
+    if(!isfinite(p->f.intrinsic_extent) || p->f.intrinsic_extent>1e9) status=exr_fail(parent->error,EXR_LIMIT,"Intrinsic table width exceeds coordinate budget");
+    else *out=(float)p->f.intrinsic_extent;
+  }
+  exr_layout_free(layout); exr_pager_free(p); return status;
 }
 exr_status exr_pager_next(exr_pager *p, exr_layout **out, exr_error *e) {
   if (!out)

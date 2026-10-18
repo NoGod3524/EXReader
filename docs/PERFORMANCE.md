@@ -155,3 +155,24 @@ python tests/check_benchmark.py stage/bin/exreader-benchmark /path/to/font.ttf
 ```
 
 验证覆盖有效 JSON、非负计时、样本数、百分位、输入大小、Unicode 文件路径、固定 EPUB 生成、两模式三场景 runner、达到页级采样上限后停止、EOF 后与 eager 的页数 / glyph 总数一致，以及坏参数失败。验证不设机器相关的耗时阈值。
+
+## 0.18 自动表格列宽
+
+Windows x64 / GCC 16.2 Release，用原生 benchmark 对 1000 行、2000 个单元格、4000 个正文 A 字符的 EPUB 做每模式 3 次独立进程测量。基线为 65c32d9 的等分布局；新实现测量 min/max-content 后按内容分配。表格均产出 18 页，包含完整 EOF 计数。字体是仓库原始测试字体，磁盘缓存未控制。
+
+| 页级模式，3 轮中位数 | 等分基线 | 自动内容列宽 |
+| --- | ---: | ---: |
+| EPUB 索引打开 | 2.10 ms | 2.11 ms |
+| 章节解析、建表与首屏排版 | 5.12 ms | 11.58 ms |
+| 含字体/打开/首画的首屏总耗时 | 7.99 ms | 15.09 ms |
+| 全进程峰值 RSS | 12,513,280 bytes | 12,509,184 bytes |
+| 后续完整翻页 p50 | 0.67 ms | 0.66 ms |
+| 后续完整翻页 p95 | 1.02 ms | 0.78 ms |
+
+自动列宽需要先读取表格内容，首屏多约 6.5 ms 的测量工作；后续翻页复用列边界。这个小样本用于记录成本，微小翻页差异不作为性能提升结论。MIN/MAX 测量不保留整份字形副本；max-content 按已塑形段流式累计。显式 fixed 布局可以避开内容测量。
+
+输入 EPUB、原始各轮 JSON、摘要与 SHA-256 位于 [0.18 表格基准](benchmarks/0.18.0-table-auto-windows/metadata.json)。复测：
+
+```sh
+exreader-benchmark docs/benchmarks/0.18.0-table-auto-windows/table-auto-1000-rows.epub tests/fixtures/fonts/primary.ttf --max-pages 0 --paging
+```

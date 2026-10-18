@@ -93,33 +93,71 @@ static exr_status column_hints(flow *f,exr_table_cursor *t,size_t parent,exr_len
   }
   return EXR_OK;
 }
-/* Declared columns/cell widths are minimum hints before fitting the table's
-   inline extent. Undeclared columns share the remaining space. Intrinsic
-   min/max-content sizing is handled separately from these declared hints. */
 static exr_status column_widths(flow *f,exr_table_cursor *t,size_t node) {
-  float widths[64]={0},total=0,available=t->width; unsigned kinds[64]={0},lowest=2;
+  float widths[64]={0},preferred[64]={0},total=0,available=t->width; unsigned kinds[64]={0},lowest=2;
   size_t column=0,i,n,automatic=0; exr_status status;
+  exr_style table=exr_flow_style(&f->styles[node],f->writing_mode);
+  int fixed=table.table_fixed && table.width.value>=0 && (!f->intrinsic || !table.width.percent);
   exr_length empty={-1,0};
   status=column_hints(f,t,node,empty,widths,&column); if(status!=EXR_OK) return status;
   if(column>t->columns && t->row_count) t->columns=column;
   if(!t->columns) return EXR_OK;
   if(t->width<(float)t->columns) return exr_fail(f->error,EXR_LIMIT,"Table has less than one pixel per column");
-  for(i=0;i<t->columns;i++) if(widths[i]>0) kinds[i]=2;
+  for(i=0;i<t->columns;i++) { if(widths[i]>0) kinds[i]=2; preferred[i]=widths[i]; }
   for(n=1;n<=t->columns;n++) for(i=0;i<t->cell_count;i++) {
-    const table_cell *cell=&t->cells[i]; exr_style style; float width;
+    const table_cell *cell=&t->cells[i]; exr_style style; float width=0,minimum=0,maximum=0;
     if(cell->colspan!=n) continue;
+    if(fixed && cell->row) continue;
     status=exr_control_cancel(&f->config->control,f->error); if(status!=EXR_OK) return status;
     style=exr_flow_style(&f->styles[cell->node],f->writing_mode);
-    if(style.width.value<0) continue;
-    width=length_value(style.width,t->width)+length_value(style.padding[1],t->width)+length_value(style.padding[3],t->width)+
+    if(style.width.value>=0) width=length_value(style.width,t->width)+length_value(style.padding[1],t->width)+length_value(style.padding[3],t->width)+
       (style.border_style ? 2*style.border_width : 0);
     width=fminf(width,t->width*64);
-    if(n==1) { widths[cell->column]=fmaxf(widths[cell->column],width); if(width>0) kinds[cell->column]=2; }
-    else hint(widths,kinds,cell->column,cell->colspan,width);
+    if(!fixed) {
+      if(f->intrinsic!=2) { status=exr_flow_intrinsic(f,cell->node,t->width,1,&minimum); if(status!=EXR_OK) return status; }
+      if(f->intrinsic!=1) { status=exr_flow_intrinsic(f,cell->node,t->width,2,&maximum); if(status!=EXR_OK) return status; }
+    }
+    minimum=fmaxf(minimum,width); maximum=fmaxf(fmaxf(minimum,maximum),width);
+    if(n==1) {
+      widths[cell->column]=fmaxf(widths[cell->column],minimum);
+      preferred[cell->column]=fmaxf(preferred[cell->column],maximum);
+      if(width>0) kinds[cell->column]=2;
+    } else {
+      hint(widths,kinds,cell->column,cell->colspan,minimum);
+      for(column=0;column<t->columns;column++) preferred[column]=fmaxf(preferred[column],widths[column]);
+      hint(preferred,kinds,cell->column,cell->colspan,maximum);
+    }
+  }
+  {
+    double min_total=0,max_total=0;
+    for(i=0;i<t->columns;i++) {
+      widths[i]=fmaxf(1,widths[i]); preferred[i]=fmaxf(widths[i],preferred[i]);
+      min_total+=widths[i]; max_total+=preferred[i];
+    }
+    if(f->intrinsic) {
+      /* Nested tables expose their measured width directly. They do not lay
+         out all cells a third time just to obtain the same intrinsic result. */
+      f->intrinsic_extent=fmax(f->intrinsic_extent,t->x+(f->intrinsic==1 ? min_total : max_total)+f->inline_end_inset);
+      t->row=t->row_count; return EXR_OK;
+    }
+    if(!fixed && table.width.value<0) {
+      float shrink=(float)fmin(t->width,max_total);
+      if(table.margin[3].value<0) t->x+=(t->width-shrink)/(table.margin[1].value<0 ? 2 : 1);
+      t->width=available=shrink;
+    }
+    if(!fixed && min_total<available && max_total>min_total) {
+      double fraction=fmin(1,(available-min_total)/(max_total-min_total));
+      for(i=0;i<t->columns;i++) widths[i]+=(float)((preferred[i]-widths[i])*fraction);
+    }
   }
   for(i=0;i<t->columns;i++) { total+=widths[i]; if(kinds[i]<lowest) lowest=kinds[i]; }
   for(i=0;i<t->columns;i++) if(kinds[i]==lowest) automatic++;
-  if(lowest<2 && total<available) for(i=0;i<t->columns;i++) if(kinds[i]==lowest) widths[i]+=(available-total)/(float)automatic;
+  if(lowest<2 && total<available) {
+    double weights=0;
+    for(i=0;i<t->columns;i++) if(kinds[i]==lowest) weights+=fixed ? 1 : preferred[i];
+    for(i=0;i<t->columns;i++) if(kinds[i]==lowest)
+      widths[i]+=(float)((available-total)*(weights ? (fixed ? 1 : preferred[i])/weights : 1.0/automatic));
+  }
   /* Fit overconstrained hints while keeping every column at least one pixel.
      Lock tiny columns before redistributing, at most one pass per column. */
   {
@@ -300,6 +338,7 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
   return EXR_OK;
 }
 size_t exr_table_position(const exr_table_cursor *t) { return t ? t->position : 0; }
+void exr_table_geometry(const exr_table_cursor *t,float *x,float *width) { *x=t->x; *width=t->width; }
 exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
   exr_status status;
   size_t i;

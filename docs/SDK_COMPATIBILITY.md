@@ -44,6 +44,15 @@ original constructors while adding password-byte overloads and security snapshot
 Rebuild JNI together with its matching Java wrapper. Windows MinGW now installs
 `exreader_jni.dll` with the filename expected by `System.loadLibrary`.
 
+The later 0.18 table-layout update defaults to content-driven auto widths,
+including shrink-to-content for tables without a definite width. Existing table
+page counts and coordinates may therefore change, while source text positions
+and public ABI layouts retain their contract. Use standard
+`table {table-layout:fixed;width:100%}` CSS for the old full-width equal-column
+presentation; unnamed host nodes can carry that inline style directly. The old
+0.10 pixel goldens explicitly request this fixed presentation, while independent
+auto-width vectors, random tables and checkpoint tests validate the new default.
+
 ## Ownership and execution
 
 Opaque handles are released with their matching `*_free`/close function. Allocated
