@@ -25,7 +25,8 @@
     "Pyphen_ordinary_breaks": 26761,
     "canonical_original_byte_queries": 47955,
     "installed_C_Cpp_JNI": "passed; DLL hashes matched",
-    "cross_platform_CI": "pending"
+    "cross_platform_CI": "all six jobs passed",
+    "CI_run": "https://github.com/NoGod3524/EXReader/actions/runs/39106167796"
   },
   "scope": "Native owned discretionary queries, provider and rule parser. EPUB replacement rendering/carry/checkpoint/source mappings remain pending; current pager uses ordinary bitmap API.",
   "performance": "Three fresh processes per mode, same 1 MiB input and first 65 pages; unchanged external English dictionary. This measures ordinary layout, not replacement rendering. Disk cache/background system load uncontrolled; observed substantial latency variation.",
@@ -184,5 +185,6 @@
     "tools/generate_hyphen_unicode.py": "988d1864fd5cfe51ca453e0785b0b91c9b635c08e398617c8341bb3821601a5e",
     "tools/generate_normalize_unicode.py": "f39b3a8883f59a10a914bac081ba5570488df336d3e70e30d92d9521ef73a74a",
     "tools/generate_unicode.py": "a6988d10f0110e0ebed13a9a35adc346c927bda170a0d31edbf114e284f0a138"
-  }
+  },
+  "code_commit": "8067ede251d9a3298c07e33f33b5e59e4aaaed3f"
 }
