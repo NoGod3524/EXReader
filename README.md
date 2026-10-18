@@ -8,7 +8,7 @@
 
 0.12.1 修复全库审计确认的七项缺陷，覆盖长附标塑形、重复章节标注、备注长度、XML 导出、跨行塑形、RTF fallback 和 HTML script/style。每项有独立回归测试与提交；[验证记录](docs/NATIVE_VALIDATION.md#0121-audit-fixes) 列出覆盖范围与资源上限。
 
-文本解码、格式解析、文档模型、CSS 子集、字素边界、双向文字、OpenType 替换与定位、换行、分页、文字位置、命中测试、页面像素合成和书库都在本项目 C 代码中。底层使用 FreeType、Expat、miniz、SQLite 和 stb_image 五个 C 组件，分别处理字体、XML、ZIP、数据库和 PNG/JPEG 解码。MP3 使用可关闭的 CC0 minimp3 C 解码器，按需读取与精确续扫由本框架处理。
+文本解码、格式解析、文档模型、CSS 子集、字素边界、双向文字、OpenType 替换与定位、换行、分页、文字位置、命中测试、页面像素合成和书库都在本项目 C 代码中。底层使用 FreeType、Expat、miniz、SQLite 和 stb_image 五个 C 组件，分别处理字体、XML、ZIP、数据库和 PNG/JPEG 解码。MP3 使用可关闭的 CC0 minimp3 C 解码器，按需读取与精确续扫由本框架处理。PDF 密码认证使用可关闭的 Mbed TLS 密码学子集，不引入 TLS 或网络模块。
 
 框架面向通用宿主：宿主可以直接构造文档树和资源，将自己的解析结果交给引擎；文档树、资源、字形、行、图片和单元格坐标均可读取。宿主可以覆盖样式、关闭书内 CSS、替换图片解码器，或直接使用布局数据自行绘制。文档构造、解析和排版可独立于 SQLite 书库使用，UI、账号、同步和平台事件由宿主决定。
 
@@ -17,7 +17,7 @@
 | 模块 | 当前能力 |
 | --- | --- |
 | 固定版面构造 | `exr_layout_create_positioned()` 保留定位字形、图片/色块和源范围；`exr_fixed_create()` 接收任意格式的页目录和按需绘制提供者 |
-| C 原生 PDF | `exr_fixed_open()` / `exr_fixed_open_memory(EXR_PDF,...)` 打开页目录，`exr_fixed_render()` 按页绘制，`exr_fixed_load_text()` 返回语义文字与源坐标字格；对象/流、字体、文字、路径、Form、JPEG、调色板和图像遮罩由 C 核处理；支持 CMYK/YCCK JPEG 的四分量 Decode/ICC 转换 |
+| C 原生 PDF | `exr_fixed_open()` / `exr_fixed_open_memory(EXR_PDF,...)` 打开页目录，`exr_fixed_render()` 按页绘制，`exr_fixed_load_text()` 返回语义文字与源坐标字格；对象/流、字体、文字、路径、Form、JPEG、调色板和图像遮罩由 C 核处理；支持 CMYK/YCCK JPEG 的四分量 Decode/ICC 转换，以及可选 R2–R6 密码认证与 RC4/AES 读取 |
 | SDK 兼容 | ABI epoch 1 运行时查询；安装后可通过 CMake `EXReader::exreader` 接入，含独立宿主示例与明确的布局/所有权约定 |
 | JNI 接入 | 可选 Java/Android 桥接库，提供串行 AutoCloseable 重排文档、EPUB 分章加载、分页、PDF/WAV/PCM 句柄；开放节点、字形/行/框、字体与图片快照 |
 | Swift 接入 | SDK 内置 C 模块映射，提供 ARC 通用文档、EPUB 分章加载、分页、字体、PDF 和 WAV/PCM 封装；布局记录、字体与图片可独立复制 |
@@ -58,7 +58,7 @@
 | 原文件元数据 | PDF Info/XMP 同步增量写回；EPUB 书名等 DC 元数据及 PNG/JPEG 封面写回，保留未改章节与资源的压缩字节 |
 | 文字转换 | C 输出 TXT、HTML、FB2、RTF、EPUB、DOCX；覆盖 Unicode 与文本转义往返，不保留复杂排版和图片 |
 
-当前横排覆盖拉丁文字、中日韩文字和阿拉伯 / 希伯来双向混排。EPUB 和宿主构造的文档使用文档树进行样式、图片和表格布局；FB2 还保留内嵌图片、封面、表格、强调文字和脚注；DOCX 保留段落与字符样式、图片、合并表格、链接、编号列表及脚注/尾注；RTF 保留列表层级、原显示标签与多级自动编号、横向/纵向/矩形合并表格、多段落单元格、脚注/尾注与回链、图片、链接、书签、字体名称、粗斜体、字号、颜色与段落属性；MOBI 目前提供段落与标题，KF8 可重建章节 XHTML，接通 CSS、图片、SVG 内部资源、嵌入字体、定位链接、NCX 层级目录和 guide 地标，也可读取声明边界的 MOBI/KF8 混合文件。图片按块排版，表格采用等宽列，超过一页高度的行或 rowspan 行组返回 `EXR_LIMIT`。OpenType lookup 引擎已有拉丁与阿拉伯预处理；Devanagari 已有 deva/dev2 音节预处理、前置元音/reph 重排和分阶段塑形；ruby 已有横竖排、单段/多段与多层注音。sbix PNG/JPEG 与 CBDT/CBLC PNG 已有位图字形读取与绘制，支持仅含位图的字体；COLR v0/CPAL 已有彩色轮廓分层绘制与开放图层查询。其余 Indic 脚本专用处理、COLR v1/SVG emoji、字典连字符、完整 CSS、浮动绕排仍待实现；已有基于 TextQuoteSelector 的单条纯文本 Web Annotation JSON 导入导出。PDF 已通过独立固定页面入口支持打开、绘制、文字搜索、选择、SDK 自有固定页备注、Type3 字形绘制/文字语义和 Text/Highlight/Underline/StrikeOut/Squiggly 原生标注编辑；CalGray/CalRGB/Lab/Indexed 已统一转换为固定 sRGB，ICCBased 已有 ICC v2/v4 配置到 sRGB 的转换，无法使用时按 Alternate 回退；普通 Separation 专色已有 Type 0 多输入线性/三次采样、Type 2/3/4 颜色函数转换、None 不落墨、All 注册色屏幕绘制与 DeviceN 多通道 Type 0/4 转换；其余 ICC/输出意图、加密、复杂透明度和部分图像编解码仍待补充；内联图片已复用现有 RAW/JPEG/无损 filter 解码路径。有声书已提供时间线、同步、宿主播放控制、续播与书签持久化、原生 WAV/FLAC 与可选 MP3、ADTS AAC、M4A/M4B 解码、开放 PCM 接口和六平台原生声音输出；已补无依赖的流式 WSOLA 保音高变速；移动音频会话/真机验收继续补齐。CBZ 已有 PNG/JPEG 固定页读取、自然排序、ComicInfo 元数据、按页解码与书库页书签；OCR 尚未实现。具体范围见 [接口文档](docs/NATIVE_API.md)。
+当前横排覆盖拉丁文字、中日韩文字和阿拉伯 / 希伯来双向混排。EPUB 和宿主构造的文档使用文档树进行样式、图片和表格布局；FB2 还保留内嵌图片、封面、表格、强调文字和脚注；DOCX 保留段落与字符样式、图片、合并表格、链接、编号列表及脚注/尾注；RTF 保留列表层级、原显示标签与多级自动编号、横向/纵向/矩形合并表格、多段落单元格、脚注/尾注与回链、图片、链接、书签、字体名称、粗斜体、字号、颜色与段落属性；MOBI 目前提供段落与标题，KF8 可重建章节 XHTML，接通 CSS、图片、SVG 内部资源、嵌入字体、定位链接、NCX 层级目录和 guide 地标，也可读取声明边界的 MOBI/KF8 混合文件。图片按块排版，表格采用等宽列，超过一页高度的行或 rowspan 行组返回 `EXR_LIMIT`。OpenType lookup 引擎已有拉丁与阿拉伯预处理；Devanagari 已有 deva/dev2 音节预处理、前置元音/reph 重排和分阶段塑形；ruby 已有横竖排、单段/多段与多层注音。sbix PNG/JPEG 与 CBDT/CBLC PNG 已有位图字形读取与绘制，支持仅含位图的字体；COLR v0/CPAL 已有彩色轮廓分层绘制与开放图层查询。其余 Indic 脚本专用处理、COLR v1/SVG emoji、字典连字符、完整 CSS、浮动绕排仍待实现；已有基于 TextQuoteSelector 的单条纯文本 Web Annotation JSON 导入导出。PDF 已通过独立固定页面入口支持打开、绘制、文字搜索、选择、SDK 自有固定页备注、Type3 字形绘制/文字语义和 Text/Highlight/Underline/StrikeOut/Squiggly 原生标注编辑；CalGray/CalRGB/Lab/Indexed 已统一转换为固定 sRGB，ICCBased 已有 ICC v2/v4 配置到 sRGB 的转换，无法使用时按 Alternate 回退；普通 Separation 专色已有 Type 0 多输入线性/三次采样、Type 2/3/4 颜色函数转换、None 不落墨、All 注册色屏幕绘制与 DeviceN 多通道 Type 0/4 转换；标准安全处理器 R2–R6 已有用户/所有者/空密码认证和 RC4/AES 解密、对象流及元数据/Crypt 过滤器处理，宿主可查询权限并重试密码；证书加密、其余 ICC/输出意图、复杂透明度和部分图像编解码仍待补充；内联图片已复用现有 RAW/JPEG/无损 filter 解码路径。有声书已提供时间线、同步、宿主播放控制、续播与书签持久化、原生 WAV/FLAC 与可选 MP3、ADTS AAC、M4A/M4B 解码、开放 PCM 接口和六平台原生声音输出；已补无依赖的流式 WSOLA 保音高变速；移动音频会话/真机验收继续补齐。CBZ 已有 PNG/JPEG 固定页读取、自然排序、ComicInfo 元数据、按页解码与书库页书签；OCR 尚未实现。具体范围见 [接口文档](docs/NATIVE_API.md)。
 
 0.7 提供稳定标注的文本锚点基础：精确选文至少需要一侧完整上下文或文档 / 章节边界佐证，同分候选返回歧义，不猜测旧偏移附近的位置。锚点仍按 Unicode 标量边界捕获，不自动扩展为字素簇；不提供模糊改字匹配、Unicode 规范化或文档指纹。旧书库标注保留为仅偏移的 legacy 记录，不自动认定已迁移。宿主可自行持久化选择器字段，正文格式转换不携带标注。
 

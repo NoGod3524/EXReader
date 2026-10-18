@@ -1208,3 +1208,32 @@ DCTDecode 的四分量 JPEG 先保留 C/M/Y/K 样本，再应用 PDF Decode、�
 XObject 和 BI/ID/EI 内联图片复用该路径，支持已有颜色键、独立图像软遮罩和插值；可用的 ICC 配置继续转换到固定 sRGB，不可用时按既有 Alternate 规则回退。无配置的 DeviceCMYK 沿用已有屏幕近似，不表示印刷级色彩匹配。显式 DecodeParms ColorTransform override、12-bit JPEG、其他 JPEG 编码类型和 CMYK 图像 Matte 仍返回错误。未增加公开 ABI 字段或运行时依赖。
 
 沿用 32 MiB 编码、8192 边长/16 Mi 像素、128 MiB 解码临时分配和图像/遮罩载荷预算，输出转换使用现有页面工作限额。支持解码前后及输出行重建期间的协作取消；熵解码/IDCT 内部沿用 stb 的同步调用。
+
+## PDF 密码认证与读取（0.18 开发补充）
+
+`exr_fixed_open_options` 新增 `pdf_password` / `pdf_password_size`，只在打开调用期间借用，长度最多 1024 字节；NULL/0 尝试空密码。Standard R2/R3 使用 RC4，R4 支持 V2/AESV2，R5/R6 支持 AESV3。R2–R4 密码由宿主提供 PDFDocEncoding 原始字节；R5/R6 接收 UTF-8，经 RFC 4013 / Unicode 3.2 SASLprep 映射、NFKC、禁止字符及双向规则检查后按规范截断为 127 字节。非 ASCII 密码不依赖系统 locale 或新版 Unicode 规则。
+
+缺少/错误密码返回 `EXR_PASSWORD`，输出文档为 NULL；宿主可保留自己的输入、提示密码后重新调用同一打开入口。密码正确后，公开固定页绘制、选文/搜索、元数据和原生标注读取使用同一解密对象树。支持用户及所有者密码，同密码同时匹配时优先识别所有者。核心没有密码 UI，也不保存明文密码。
+
+可在 options 的 `pdf_security` 指向已初始化 `struct_size` 的 `exr_pdf_security_info`；只在成功打开 PDF 后写入。记录含 encrypted、revision、key_bits、owner_authenticated、原始 permissions /P 及 metadata_encrypted。未加密 PDF 的 permissions 为 UINT32_MAX。权限常量对应 ISO 32000 的 /P 位，宿主还须结合 revision 解释旧版本位的含义；所有者认证具有完整权限。权限字段供应用决定提供哪些操作，不能替代应用或文件系统权限控制。
+
+```c
+exr_fixed_open_options options = {0};
+exr_pdf_security_info security = {0};
+exr_fixed_document *document = NULL;
+options.struct_size = sizeof(options);
+security.struct_size = sizeof(security);
+options.pdf_password = password_bytes;
+options.pdf_password_size = password_length;
+options.pdf_security = &security;
+exr_status status = exr_fixed_open(path, &options, &document, &error);
+/* EXR_PASSWORD: host may ask again; success: inspect security, then read pages. */
+```
+
+解密涵盖间接对象的 literal/hex 字符串、流、压缩对象流、世代号、StrF/StmF/EFF 与显式首位 Crypt filter；Identity 不解密，XRef 流及其 ID 保持明文，ObjStm 内字符串不重复解密，签名字典 Contents 保持明文。EncryptMetadata=false 的 Metadata 流保持明文。AES 严格校验 IV/长度及 PKCS#7，R5/R6 同时验证加密 Perms 与 /P、EncryptMetadata 是否一致。密码错误不提供部分页目录或 metadata；流损坏仍在读取对应页时返回错误且不返回部分结果。
+
+会话仅在内存保留派生文件密钥，用于错误/取消后重新建立延迟解析器；文档释放和临时密钥退出时清零。原书入库逻辑不存储密码或派生密钥。解密流计入现有 128 MiB 缓存/临时载荷与 256 MiB 工作预算，AES/RC4 按 64 KiB、R6 哈希按轮检查取消。
+
+`EXR_ENABLE_PDF_CRYPTO` 默认 ON，使用固定 Mbed TLS 3.6.7 的最小 C 算法子集；OFF 不下载该组件，保留公开符号，`exr_pdf_crypto_available()` 返回 0，加密打开返回 `EXR_UNSUPPORTED`。非 Standard（含证书 PubSec）、EFOpen 专用附件认证及其他 Crypt 方法也返回 `EXR_UNSUPPORTED`。当前编辑接口继续拒绝加密输入，避免在加密 trailer 下写入未加密新对象；没有加密写回或证书认证能力。
+
+Swift 的 `EXReaderFixedDocument(..., password: Data?)` 和 Java 的 password-byte 构造器提供同样的重试错误码与 `pdfSecurity` 快照。旧 C options 前缀、原 Swift 默认调用及 Java 原构造器保持可用，ABI epoch 仍为 1。

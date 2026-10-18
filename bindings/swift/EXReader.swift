@@ -157,20 +157,37 @@ public final class EXReaderFixedDocument {
     private let handle: OpaquePointer
     private let lock = NSLock()
     private let fallbackFont: EXReaderFont?
-    public init(data: Data, fallbackFont: EXReaderFont? = nil, format: EXReaderFixedFormat = .pdf) throws {
+    public struct PdfSecurity {
+        public let encrypted,ownerAuthenticated,metadataEncrypted: Bool
+        public let revision,keyBits,permissions: UInt32
+    }
+    public let pdfSecurity: PdfSecurity?
+    /// Password bytes: PDFDocEncoding for R2-4; UTF-8 for R5-6. Used only while opening.
+    public init(data: Data, fallbackFont: EXReaderFont? = nil, format: EXReaderFixedFormat = .pdf, password: Data? = nil) throws {
         var result: OpaquePointer?
         var error = exr_error()
         var options = exr_fixed_open_options()
         options.struct_size = MemoryLayout<exr_fixed_open_options>.size
         options.fallback_font = fallbackFont?.handle
+        var security = exr_pdf_security_info()
+        security.struct_size = MemoryLayout<exr_pdf_security_info>.size
         fallbackFont?.gate.lock(); defer { fallbackFont?.gate.unlock() }
-        let status = data.withUnsafeBytes { bytes in
-            exr_fixed_open_memory(format == .pdf ? EXR_PDF : EXR_CBZ, bytes.baseAddress, bytes.count, &options, &result, &error)
+        let status = (password ?? Data()).withUnsafeBytes { secret in
+            options.pdf_password = secret.baseAddress
+            options.pdf_password_size = secret.count
+            return withUnsafeMutablePointer(to: &security) { info in
+                options.pdf_security = format == .pdf ? info : nil
+                return data.withUnsafeBytes { bytes in
+                    exr_fixed_open_memory(format == .pdf ? EXR_PDF : EXR_CBZ, bytes.baseAddress, bytes.count, &options, &result, &error)
+                }
+            }
         }
         try check(status, error)
         guard let result else { throw EXReaderError.invalidResult }
         handle = result
         self.fallbackFont = fallbackFont
+        pdfSecurity = format == .pdf ? PdfSecurity(encrypted: security.encrypted != 0, ownerAuthenticated: security.owner_authenticated != 0,
+            metadataEncrypted: security.metadata_encrypted != 0, revision: security.revision, keyBits: security.key_bits, permissions: security.permissions) : nil
     }
     deinit {
         fallbackFont?.gate.lock(); defer { fallbackFont?.gate.unlock() }

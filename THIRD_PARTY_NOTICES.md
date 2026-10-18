@@ -20,10 +20,27 @@ PostScript is a registered trademark of Adobe Systems Incorporated.
 | SQLite | 3.54.0 amalgamation, sqlite.org | Public domain | Local bookshelf and annotations |
 | stb_image | 2c980bb59875b0d32144a71867fbdebb2f77cd20, nothings/stb | MIT OR public domain; MIT selected | PNG/JPEG decoding only |
 | LittleCMS | lcms2.19.1, mm2/Little-CMS | MIT | Optional ICCBased profile-to-sRGB conversion; EXR_ENABLE_ICC |
+| Mbed TLS crypto subset | mbedtls-3.6.7, Mbed-TLS/mbedtls | Apache-2.0 OR GPL-2.0-or-later; Apache-2.0 selected | Optional PDF MD5/SHA-256/384/512 and AES-CBC/ECB; EXR_ENABLE_PDF_CRYPTO |
 
 CMake verifies every source archive using the SHA-256 values in cmake/deps.cmake. CSS matching, Unicode boundary and bidirectional algorithms, OpenType GSUB/GPOS processing, line breaking, pagination, image placement, table layout, pixel compositing, document positions, the document model and format extraction are EXReader C code. FreeType supplies font access, glyph metrics and rasterization; stb_image supplies decoded image pixels. License texts are included in the installed SDK under share/exreader/licenses.
 
 The old JavaScript framework and reader are retained in Git history and their respective reader branches. They are not linked into this native engine.
+
+The legacy ARC4 key schedule and byte loop in `src/pdf_crypto.c` adapt
+`library/arc4.c` from Mbed TLS **mbedtls-2.28.10**, Copyright The Mbed TLS
+Contributors, under Apache-2.0. Context handling and cancellation are adapted
+for EXReader; this code is used only to read legacy PDF R2-4. Both the full
+Mbed TLS license text and this modification notice accompany installed SDKs.
+The other cryptographic primitives are built from the pinned 3.6.7 source.
+No TLS/network, certificate parser, random-number generator or encryption writer
+is included in EXReader's selected component.
+
+`src/pdf_saslprep_data.h` contains Unicode 3.2 mapping, normalization, combining,
+composition and stringprep properties generated from Python's frozen UCD and
+RFC 4013 tables by `tools/generate_saslprep.py`. The Unicode-3.0 license in
+`tests/fixtures/unicode/LICENSE.txt` applies to these data. No Python code is
+linked into the SDK. Original security fixtures under `tests/fixtures/pdf-crypto`
+are generated with independent pypdf/cryptography development tools.
 
 The private four-component JPEG adapter in `src/images.c` adapts row reconstruction
 from stb_image's `load_jpeg_image`, using the pinned decoder's entropy, IDCT,

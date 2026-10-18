@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 static exr_error error; static unsigned checks;
+typedef struct { size_t struct_size; exr_font *fallback_font; exr_control control; } original_fixed_options;
+_Static_assert(sizeof(original_fixed_options)==offsetof(exr_fixed_open_options,pdf_password),"Original fixed open options retain their prefix");
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 typedef struct {
   size_t struct_size; const char *title; const exr_fixed_page *pages; size_t page_count;
@@ -26,6 +28,10 @@ static exr_status draw(void *context,size_t page,const double matrix[6],const ex
 int main(void) {
   old_fixed_input input={0}; exr_fixed_page page={0}; exr_fixed_document *d=NULL; const exr_fixed_page *pages; size_t count;
   CHECK(exr_abi_version()==EXR_ABI_VERSION && EXR_ABI_VERSION==1); CHECK(!strcmp(exr_version(),EXR_VERSION));
+  CHECK(EXR_CANCELLED==9 && EXR_PASSWORD==10 && EXR_UNSUPPORTED==11);
+  { original_fixed_options options={0}; options.struct_size=sizeof(options);
+    CHECK(exr_fixed_open_memory(EXR_PDF,"%PDF-1.7",8,(const exr_fixed_open_options *)&options,&d,&error)==EXR_FORMAT && !d);
+  }
   page.id="original"; page.geometry.bounds[2]=100; page.geometry.bounds[3]=80; page.geometry.unit_scale=1;
   input.struct_size=sizeof(input); input.title="Prefix consumer"; input.pages=&page; input.page_count=1; input.draw=draw;
   CHECK(exr_fixed_create((const exr_fixed_input *)&input,&d,&error)==EXR_OK);

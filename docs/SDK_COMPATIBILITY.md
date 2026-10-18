@@ -33,6 +33,17 @@ rejects unsupported nonzero extensions instead of silently interpreting them.
 The original fixed-provider prefix remains a tested consumer even though later
 headers append optional text, metadata and annotation callbacks.
 
+The 0.18 development PDF password interface appends `pdf_password`,
+`pdf_password_size` and `pdf_security` to `exr_fixed_open_options`; the original
+prefix remains accepted. Recompile hosts that need these fields. Error values
+0-9 retain their numbers; 10 is `EXR_PASSWORD`, 11 is `EXR_UNSUPPORTED`.
+`exr_pdf_security_info` is a new output type with its own `struct_size`.
+`exr_pdf_crypto_available()` reports the optional build component. The Swift
+initializer adds a defaulted `password: Data?` parameter, and Java retains its
+original constructors while adding password-byte overloads and security snapshots.
+Rebuild JNI together with its matching Java wrapper. Windows MinGW now installs
+`exreader_jni.dll` with the filename expected by `System.loadLibrary`.
+
 ## Ownership and execution
 
 Opaque handles are released with their matching `*_free`/close function. Allocated

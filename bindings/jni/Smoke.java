@@ -16,6 +16,18 @@ public final class Smoke {
         check(audiobook.entries[0].value.equals("Book 中文😀") && audiobook.entries[1].value.equals("作者") && audiobook.cover.length>0 && audiobook.coverMediaType.equals("image/jpeg"));
         check(EXReader.version().startsWith("0."));
         byte[] pdf=Files.readAllBytes(root.resolve("fixed-pages/pdf-public.pdf"));
+        byte[] encrypted=Files.readAllBytes(root.resolve("fixed-pages/encrypted-r6.pdf"));
+        try { new EXReader.Pdf(encrypted).close(); throw new AssertionError(); }
+        catch(EXReaderException e) { check(e.code==EXReader.PASSWORD_REQUIRED); }
+        byte[] password="reader".getBytes(StandardCharsets.UTF_8);
+        try(EXReader.Pdf protectedPdf=new EXReader.Pdf(encrypted,password)) {
+            Arrays.fill(password,(byte)0);
+            check(protectedPdf.pageCount()==2 && protectedPdf.pdfSecurity.encrypted && protectedPdf.pdfSecurity.revision==6 && protectedPdf.pdfSecurity.keyBits==256);
+            check(!protectedPdf.pdfSecurity.ownerAuthenticated && protectedPdf.pdfSecurity.permissions==0xfffff0c4L);
+            check(protectedPdf.text(0).text().equals("Secret text"));
+            try { protectedPdf.text(1); throw new AssertionError(); } catch(EXReaderException e) { check(e.code==5); }
+            check(protectedPdf.text(0).text().equals("Secret text"));
+        }
         try(EXReader.FixedDocument comic=new EXReader.FixedDocument(EXReader.FixedFormat.CBZ,Files.readAllBytes(root.resolve("fixed-pages/comic.cbz")))) {
             check(comic.pageCount()==4 && comic.metadata()[0].value.equals("SDK Comic") && comic.text(0).utf8.length==0);
             EXReader.Bitmap page=comic.render(0,1);

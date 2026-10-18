@@ -21,6 +21,8 @@ typedef struct exr_pdf_file exr_pdf_file;
    when another indirect object is resolved. Public access uses the fixed-document adapter. */
 exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_error *error);
 void exr_pdf_close(exr_pdf_file *file);
+/* Borrowed only for the duration of one synchronous adapter operation. */
+void exr_pdf_control(exr_pdf_file *file,const exr_control *control);
 exr_status exr_pdf_metadata_string(exr_pdf_file *file,uint32_t id,char **out,exr_error *error);
 /* Patch document-subject XMP without flattening unknown RDF structures. */
 exr_status exr_pdf_xmp_write(const void *data,size_t size,const exr_metadata_entry *changes,size_t count,

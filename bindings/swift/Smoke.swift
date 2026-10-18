@@ -11,6 +11,18 @@ import CEXReader
         precondition(audiobook.chapters[0].startMilliseconds == 0 && audiobook.chapters[1].startMilliseconds == 100 && audiobook.chapters[1].endMilliseconds == 200)
         precondition(audiobook.entries[0].value == "Book 中文😀" && audiobook.entries[1].value == "作者" && audiobook.cover?.isEmpty == false && audiobook.coverMediaType == "image/jpeg")
         let pdf = try Data(contentsOf: root.appendingPathComponent("fixed-pages/pdf-public.pdf"))
+        let encrypted = try Data(contentsOf: root.appendingPathComponent("fixed-pages/encrypted-r6.pdf"))
+        do { _ = try EXReaderFixedDocument(data: encrypted); preconditionFailure("password must be required") }
+        catch EXReaderError.engine(let code, _) { precondition(code == 10) }
+        let protectedPdf = try EXReaderFixedDocument(data: encrypted, password: Data("reader".utf8))
+        precondition(protectedPdf.pageCount == 2 && protectedPdf.pdfSecurity?.encrypted == true && protectedPdf.pdfSecurity?.revision == 6 && protectedPdf.pdfSecurity?.keyBits == 256)
+        precondition(protectedPdf.pdfSecurity?.ownerAuthenticated == false && protectedPdf.pdfSecurity?.permissions == 0xfffff0c4)
+        let protectedText = try protectedPdf.text(page: 0)
+        precondition(protectedText.string == "Secret text")
+        do { _ = try protectedPdf.text(page: 1); preconditionFailure("invalid page must fail") }
+        catch EXReaderError.engine(let code, _) { precondition(code == 5) }
+        let retriedText = try protectedPdf.text(page: 0)
+        precondition(retriedText.string == "Secret text")
         let comic = try EXReaderFixedDocument(data: Data(contentsOf: root.appendingPathComponent("fixed-pages/comic.cbz")), format: .cbz)
         precondition(comic.pageCount == 4)
         let comicMetadata = try comic.metadata()
