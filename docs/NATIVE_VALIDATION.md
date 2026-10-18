@@ -3557,3 +3557,16 @@ unchanged. Inputs/binary hashes and raw records are in
 benchmarks/0.18.0-hyphen-stems-windows. Disk cache/background load are uncontrolled;
 these small machine samples do not establish performance on mobile devices.
 Tall-row fragmentation and the complete PDF/SDK roadmap remain active.
+
+
+Commit 177b6e1d6b7587612cde08340006bd2cd4adf21e passed all six jobs in
+[CI run 39131460762](https://github.com/NoGod3524/EXReader/actions/runs/39131460762):
+Windows/Linux/macOS (116 CTests each), installed C/C++/JNI, macOS Swift including
+the conditional-stem EPUB, ASan/UBSan/leaks (113 tests), Android ARM64, and
+iOS/iPadOS device/simulator engine libraries plus Swift checks. All 287 recorded
+source hashes match the exact code-commit Git blob bytes and now include every
+one of the 111 hyphen EPUB fixtures. Independent parent/current Git blob comparison
+also verifies all 102 preceding EPUBs are unchanged. Four local runtime copies
+agree, and nine benchmark executable/font/book sets are verified. This following
+verification-only commit updates records and skips redundant CI. Tall-row
+fragmentation and the complete PDF/SDK roadmap remain active.
