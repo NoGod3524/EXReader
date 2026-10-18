@@ -295,8 +295,10 @@ static exr_status context_create(flow *parent, size_t node, float width, float h
   exr_pager *p;
   exr_status status;
   *out = NULL;
-  if (parent->context_depth >= 8 || !isfinite(width) || !isfinite(height) || width < 1 || height < 1)
-    return exr_fail(parent->error, EXR_LIMIT, "Writing-mode context nesting or geometry limit exceeded");
+  if (parent->context_depth >= 8)
+    return exr_fail(parent->error, EXR_LIMIT, "Writing-mode context nesting limit exceeded");
+  if (!isfinite(width) || !isfinite(height) || width < 1 || height < 1)
+    return exr_fail(parent->error, EXR_LIMIT, "Invalid flow context extent %.3f x %.3f",(double)width,(double)height);
   p = calloc(1, sizeof(*p));
   if (!p) return exr_fail(parent->error, EXR_MEMORY, "Writing-mode context allocation failed");
   p->config = *parent->config; p->config.user_css = NULL;
@@ -414,7 +416,10 @@ static exr_status advance(exr_pager *p) {
         float pl = used(b->padding[3], v->width) + border;
         float pr = used(b->padding[1], v->width) + border;
         float content = v->width - ml - mr - pl - pr;
-        if (b->width.value >= 0 && n->kind != EXR_NODE_IMAGE)
+        /* A table cell's width already contributed to column allocation. Its
+           percentage is relative to the table, not a second percentage here. */
+        if (b->width.value >= 0 && n->kind != EXR_NODE_IMAGE &&
+            !(p->local==2 && v->node==p->local_root && s->display==EXR_CSS_CELL))
           content = fminf(content, used(b->width, v->width));
         if (b->max_width.value >= 0 && n->kind != EXR_NODE_IMAGE)
           content = fminf(content, used(b->max_width, v->width));

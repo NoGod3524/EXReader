@@ -420,7 +420,7 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 宿主设置 `decode_image`、`release_image` 和 `image_context` 可替换解码器。回调收到资源元数据及编码字节；返回 `channels=4`、非预乘 RGBA、有效 width/height/stride。引擎复制像素，然后无论成功或失败都调用配套 release 回调一次；不得在 release 中释放借用的编码输入。`EXR_FORMAT` 表示占位框，其余非成功状态中止布局。要保留内置 PNG/JPEG 支持，宿主回调可以调用 `exr_image_decode()` 并在 release 中使用 `exr_bitmap_free()`。直接创建完整 layout 时，回调及 context 只需在 create 调用期间有效；使用 pager / session 时需在相应句柄整个生命周期内有效。渲染已有布局不会再次调用它们。
 
-表格采用等宽列，支持单元格换行、colspan 和 rowspan。具有跨行单元格的相连行组一起分页；高于一页的行组返回 `EXR_LIMIT`。上限为 64 列、4096 行/单元格、8 层嵌套。尚不支持按内容自动分配列宽、跨页拆分单元格、重复表头、垂直对齐和 border-collapse。单元格的可见边框、背景和内边距由样式控制。
+表格支持指定列宽、单元格换行、colspan 和 rowspan，无宽度提示时等分。CSS 的 col/colgroup/cell 宽度与 HTML width 属性参与列分配，详见“表格指定列宽”补充。具有跨行单元格的相连行组一起分页；高于一页的行组返回 `EXR_LIMIT`。上限为 64 列、4096 行/单元格、8 层嵌套。尚不支持按内容自动分配列宽、跨页拆分单元格、重复表头、垂直对齐和 border-collapse。单元格的可见边框、背景和内边距由样式控制。
 
 `exr_render_page()` 输出 1 通道灰度；`exr_render_page_color()` 输出 4 通道 RGBA。内置渲染器使用白底、双线性图片缩放、透明合成和 FreeType 字形，整页位图不超过 64 MiB。`stride` 是每行字节数。PNG 支持两种通道并保留输入 alpha；BMP 写为 24 位并将 alpha 合成到白底。写入时 `channels=0` 兼容灰度输入。框架不提供窗口、GPU 或事件循环。
 
@@ -1237,3 +1237,13 @@ exr_status status = exr_fixed_open(path, &options, &document, &error);
 `EXR_ENABLE_PDF_CRYPTO` 默认 ON，使用固定 Mbed TLS 3.6.7 的最小 C 算法子集；OFF 不下载该组件，保留公开符号，`exr_pdf_crypto_available()` 返回 0，加密打开返回 `EXR_UNSUPPORTED`。非 Standard（含证书 PubSec）、EFOpen 专用附件认证及其他 Crypt 方法也返回 `EXR_UNSUPPORTED`。当前编辑接口继续拒绝加密输入，避免在加密 trailer 下写入未加密新对象；没有加密写回或证书认证能力。
 
 Swift 的 `EXReaderFixedDocument(..., password: Data?)` 和 Java 的 password-byte 构造器提供同样的重试错误码与 `pdfSecurity` 快照。旧 C options 前缀、原 Swift 默认调用及 Java 原构造器保持可用，ABI epoch 仍为 1。
+
+## 表格指定列宽（0.18 开发补充）
+
+col、colgroup 和单元格的 CSS width，以及 table/col/colgroup/cell 的 HTML width 属性，参与表格逻辑行内方向的列分配；col/colgroup 的 span 和 colspan 均可提供跨列提示。单位使用现有 px/pt/em/rem/% 解析器。竖排继续按既有逻辑轴映射，以 height 指定行内尺寸；不新增公开字段或宿主专用表格模型。
+
+先收集列和单列单元格提示，再处理由少到多的 colspan。跨列约束优先增加没有单列提示的列。剩余空间先分给完全未指定的列，其次分给只有跨列提示的列；全指定时按比例填满表格。提示总和超过表格时按比例收缩，并为每列保留至少 1px。完全没有提示时保持原有等分行为。单元格 width 在列分配时消费，内部布局不再对分配宽度重复计算百分比。单元格内边距和可见边框计入指定宽度提示。
+
+同一组列边界用于测量、绘制、分页、竖排和命中坐标；checkpoint 复制边界，预算包含完整私有状态及行/单元格数组实际分配容量。列数超出 64 或可用空间不足每列 1px 返回 EXR_LIMIT。行组/嵌套等现有限额继续适用。
+
+这是指定宽度分配。按内容测量的 min/max-content 自动布局、垂直对齐、border-collapse、重复表头和跨页拆分单元格仍待完成。DOCX/RTF 专用 twip 列网格不会自动转换为本步骤的 CSS 宽度提示。
