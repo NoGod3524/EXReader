@@ -104,6 +104,24 @@ static void marks(void) {
   o.direction = EXR_DIRECTION_RTL;
   expect("a\xcc\x81", &o, acute, 2); /* Offsets are relative to the logical pen. */
 }
+static void lookup_flags(void) {
+  exr_font *original=font;exr_shape_options o=options();
+  exr_shape_feature features[4]={{TAG('l','i','g','a'),0},{TAG('m','a','r','k'),0},
+    {TAG('m','k','m','k'),0},{TAG('s','s','1','3'),1}};
+  const expected plain[]={{F,0,1,6,0,0,0},{I,1,2,4,0,0,0}};
+  const expected ligature[]={{FI,0,2,9,0,0,0}};
+  const expected filtered[]={{SMALL_A,0,5,10,0,0,0},{DOT,0,5,0,0,0,0},{GRAVE,0,5,0,0,0,0}};
+  const expected unfiltered[]={{SMALL_A,0,5,10,0,0,0},{GRAVE,0,5,0,0,0,0},{ACUTE,0,5,0,0,0,0}};
+  const expected right_to_left[]={{B,0,1,10,0,0,0}};
+  font=open_font("lookup-flags.ttf");o.features=features;o.feature_count=4;
+  expect("fi",&o,plain,2); /* Base glyphs are ignored by ss13. */
+  features[0].value=1;features[3].tag=TAG('s','s','1','4');expect("fi",&o,ligature,1);
+  features[3].tag=TAG('s','s','1','5');expect("a\xcc\x87\xcc\x81",&o,filtered,3);
+  features[3].tag=TAG('s','s','1','6');expect("a\xcc\x87\xcc\x81",&o,filtered,3);
+  features[3].tag=TAG('s','s','1','7');expect("a",&o,right_to_left,1);
+  features[3].tag=TAG('s','s','1','8');expect("a\xcc\x87\xcc\x81",&o,unfiltered,3);
+  exr_font_free(font);font=original;
+}
 static void long_marks(void) {
   static const struct {
     const char *prefix;
@@ -314,21 +332,29 @@ static void validation(void) {
   CHECK(exr_shape(font, 0, "A", 1, &o, &g, NULL, &error) == EXR_ARGUMENT && !g);
 }
 static void damaged_tables(void) {
-  const char *names[] = {"broken-gsub.ttf", "broken-gpos.ttf"};
+  const char *names[] = {"broken-gsub.ttf", "broken-gpos.ttf", "broken-gdef.ttf"};
   size_t i;
   exr_shape_options o = options();
+  exr_shape_feature disabled[]={{TAG('l','i','g','a'),0},{TAG('k','e','r','n'),0},
+    {TAG('m','a','r','k'),0},{TAG('m','k','m','k'),0}};
   for (i = 0; i < sizeof(names)/sizeof(*names); i++) {
     exr_font *broken = open_font(names[i]);
     exr_shaped_glyph *g = (exr_shaped_glyph *)(uintptr_t)1;
     size_t count = 99;
+    if(i==2) { o.features=disabled;o.feature_count=4; }
     CHECK(exr_shape(broken, 0, "AV ffi", 6, &o, &g, &count, &error) == EXR_FONT);
     CHECK(!g && !count && error.code == EXR_FONT && error.message[0]);
     exr_font_free(broken);
   }
+  {
+    exr_font *original=font;exr_shape_feature feature={TAG('s','s','1','6'),1};
+    font=open_font("broken-mark-sets.ttf");o.features=&feature;o.feature_count=1;
+    rejected("a\xcc\x87\xcc\x81",5,&o,EXR_FONT);exr_font_free(font);font=original;
+  }
 }
 int main(int argc, char **argv) {
   CHECK(argc == 2); directory = argv[1]; font = open_font("shaping.ttf");
-  validation(); latin(); marks(); long_marks(); optional_lookups(); context_formats();
+  validation(); latin(); marks(); lookup_flags(); long_marks(); optional_lookups(); context_formats();
   arabic(); controls_and_missing(); damaged_tables();
   exr_font_free(font);
   printf("EXReader shaping: %u checks passed\n", checks);

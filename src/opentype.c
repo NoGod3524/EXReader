@@ -168,6 +168,8 @@ static unsigned item_class(ot_work *w, size_t at) {
 }
 static int ignored_properties(ot_work *w, size_t at, unsigned flags, unsigned filtering) {
   unsigned cls;
+  /* RightToLeft alone does not filter glyph classes. */
+  if(!(flags & 0xff1e)) return 0;
   cls = item_class(w, at);
   if ((cls == 1 && (flags & 2)) || (cls == 2 && (flags & 4)) ||
       (cls == 3 && (flags & 8))) return 1;

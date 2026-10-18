@@ -75,3 +75,22 @@ original hyphen glyph (250 units) and a kern pair f/hyphen (XAdvance=-80). At
 GPOS. Hyphenation layout tests break a provisional fi ligature and lam-alef
 joining context, checking the final glyph IDs, source ranges and positioned
 render reconstruction. These fixtures contain no external font outlines.
+
+
+`lookup-flags.ttf` adds optional `ss13`–`ss18` lookups to the same original
+outlines. They verify IgnoreBaseGlyphs, IgnoreLigatures, MarkAttachmentType,
+UseMarkFilteringSet, RightToLeft-only and unfiltered matching. The attachment/
+filtering cases use `a + dot + acute`: dot is excluded from the top-mark set,
+remains unchanged, and acute becomes grave through a contextual lookup. The
+unfiltered control instead replaces dot. Tests disable mark positioning for
+these cases and assert explicit glyphs, cluster ranges and zero mark advances.
+All earlier TTF bytes remain unchanged.
+
+
+`broken-gdef.ttf` corrupts GlyphClassDef's relative offset. Even with the
+optional filtering/positioning features disabled, ordinary advance/mark
+classification must reject it. `broken-mark-sets.ttf` corrupts MarkGlyphSetsDef
+and is rejected when ss16 needs the mark filtering set. Both preserve loadable
+outline/cmap data and must return EXR_FONT with empty output. The new valid
+lookup flag expectations were independently checked with HarfBuzz 14.6.0
+(uharfbuzz 0.56.3); no oracle library is required to build or run the C tests.

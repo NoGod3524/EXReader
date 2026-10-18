@@ -1,0 +1,25 @@
+case 0 pages 41 pixels f489ed3471d6ce38
+case 1 pages 41 pixels e709db8444b000aa
+case 2 pages 41 pixels 28b699808529ef12
+case 3 pages 41 pixels 02af630075c43418
+case 4 pages 41 pixels b9409c7cdd4bf038
+case 5 pages 41 pixels f611faa1cd6cabbc
+case 6 pages 23 pixels 55f65a7384a99e84
+case 7 pages 23 pixels 2cb3269a5cb6f424
+case 8 pages 41 pixels 3963e3f375c832e9
+case 9 pages 41 pixels b355be6266e1318c
+case 10 pages 30 pixels f3d797a9605b153e
+case 11 pages 80 pixels f6071ec6a02ed0a9
+case 12 pages 60 pixels 59cf833c553b199d
+case 13 pages 30 pixels 78a97fd243d4efa5
+case 14 pages 82 pixels bccfe60820a9a757
+case 15 pages 61 pixels b92765be33475925
+case 16 pages 8 pixels aad085246217b23b
+case 17 pages 16 pixels fdd0591a7c030d69
+case 18 pages 73 pixels 1c28f7ecda0ebcad
+case 19 pages 60 pixels 38a2e426330c72a5
+case 20 pages 3 pixels 40245cdba48af460
+case 21 pages 25 pixels 37895db3e5193c3c
+case 22 pages 42 pixels d941f4d66088698e
+case 23 pages 31 pixels 6dd621fc8005282d
+161863 table fragment checks passed

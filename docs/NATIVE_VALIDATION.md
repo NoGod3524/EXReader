@@ -3743,3 +3743,56 @@ Git blobs; 111 preceding hyphen EPUBs and four current local runtime copies
 were verified. This verification-only record skips redundant CI. Automatic
 intrinsic/full-height scan CPU cost and the complete compatibility/SDK roadmap
 remain open.
+
+
+## OpenType lookup class filtering and platform font coverage (0.18 development)
+
+Lookup flags without IgnoreBaseGlyphs/IgnoreLigatures/IgnoreMarks/
+UseMarkFilteringSet/MarkAttachmentType no longer query GDEF glyph classes merely
+to decide that no class is filtered. RightToLeft alone is not class filtering.
+Actual GSUB/GPOS work, later mark/advance classification and needed filtering
+remain active; lookup validation, recursion/work budgets and cancellation checks
+remain on their existing paths. No cache, persistent state, new dependency,
+public API/record or version change.
+
+All 117 local Release CTests pass. Shaping now passes 295,446 checks. An original
+lookup-flags font verifies base/ligature ignoring, mark attachment classes, mark
+filtering sets, RightToLeft-only and ordinary matching, with independent
+HarfBuzz 14.6.0 / uharfbuzz 0.56.3 glyph/advance/offset evidence. Damaged GDEF
+GlyphClassDef and MarkGlyphSetsDef offsets are rejected with empty output; both
+new bad fonts and valid flags also pass against the preceding DLL. Earlier TTF
+bytes remain unchanged. The oracle is development-only, outside the SDK.
+
+Table tests accept valid image/geometry-only final pages. Their optional
+--font mode exercises the same 24 structured layout/reference/paging/hit/
+checkpoint/pixel cases with a platform OpenType font. The current and preceding
+DLL have identical page counts and full per-page RGBA signatures for all 24
+cases with both the synthetic fixture font and Windows Arial. Default checks
+are 163,762; Arial checks are 161,863. Desktop CI now runs platform-font cases
+in addition to ordinary CTests and installed-SDK memory budgets.
+
+Installed C/C++/JNI smokes pass. The full cross-platform and sanitizer result
+will be recorded after this code commit's CI. DLL is 5,616,795 bytes
+(-2,498 versus the previous snapshot), SHA256 b1e166c7e0110f0c892139794c602313b41f0c2e9fd2ce53fc43c881a614c157.
+
+A separate alternating fresh-process auto-table probe (first two pages, same
+1 MiB book and Arial) measured first-visible medians of 6519.6070 ms before and
+5335.1496 ms after; the same 4,516 glyphs were emitted. These three-process
+medians support this workload's improvement, not a universal latency bound.
+Four table workloads below use the first 65 pages and three fresh processes
+per case, sequential without concurrent builds/tests, disk cache/background
+load uncontrolled:
+
+| Table workload | First visible (ms) | Peak RSS (bytes) | Turn p50 / p95 (ms) |
+| --- | ---: | ---: | ---: |
+| fixed | 40.7485 | 14442496 | 23.4633 / 27.6029 |
+| auto | 4434.3046 | 14700544 | 47.2473 / 53.6433 |
+| middle | 2435.3444 | 14536704 | 23.0874 / 27.5857 |
+| bottom | 2404.3137 | 14508032 | 22.5721 / 27.9052 |
+
+Nine preceding hyphen books/font hashes and generated counts remain unchanged;
+111 preceding hyphen EPUBs are unchanged. Raw measurements, before/after pixel
+signatures, independent lookup flag results, DLL and source provenance are in
+[OpenType filter records](benchmarks/0.18.0-ot-filter-windows/metadata.json).
+Auto min/max-content and exact aligned heights still scan the complete cell.
+The full compatibility/reading SDK roadmap remains active.

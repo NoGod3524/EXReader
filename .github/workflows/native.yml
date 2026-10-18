@@ -22,6 +22,13 @@ jobs:
         run: cmake --build build/native --config Release --parallel 4
       - name: Native parsing, pagination, rendering and bookshelf tests
         run: ctest --test-dir build/native -C Release --output-on-failure
+      - name: Table continuation with a platform OpenType font
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = Windows ]; then font=C:/Windows/Fonts/arial.ttf; test=./build/native/Release/exreader-table-fragments-test.exe;
+          elif [ "${{ runner.os }}" = macOS ]; then font=/System/Library/Fonts/Supplemental/Arial.ttf; test=./build/native/exreader-table-fragments-test;
+          else font=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf; test=./build/native/exreader-table-fragments-test; fi
+          "$test" tests/fixtures --font "$font"
       - name: Install portable SDK with license notices
         run: cmake --install build/native --config Release --prefix stage
       - name: Build host examples against the installed SDK
