@@ -71,6 +71,9 @@ def main():
             assert enabled["hyphen_dictionary_input_bytes"] == len("aa1aaaa aaaa1aa") and enabled["generated_glyph_count"] > 0
             assert nonnegative(enabled["hyphen_dictionary_load_ms"])
         run([hyphen_book, font, "--hyphens", "en"], ok=False, patterns="a/b")
+        enlarged = run([hyphen_book, font, "--paging", "--max-pages", 2, "--hyphens", "en"], patterns="aa1aaaa aaaa1aa "*400)
+        assert enlarged["hyphen_dictionary_input_bytes"] == len("aa1aaaa aaaa1aa ")*400
+        run([hyphen_book, font, "--hyphens", "en"], ok=False, patterns=" "*(8*1024*1024+1))
         for arguments in ([], [book], ["--text-bytes", "0", font],
                           ["--text-bytes", "-1", font], ["--text-bytes", "x", font],
                           ["--text-bytes", "67108865", font],

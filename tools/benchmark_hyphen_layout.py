@@ -20,8 +20,10 @@ def main():
     parser.add_argument('binary',type=Path);parser.add_argument('font',type=Path);parser.add_argument('output',type=Path)
     parser.add_argument('--dictionary',type=Path,required=True);parser.add_argument('--language',required=True)
     parser.add_argument('--drop-compound-minima',action='store_true')
+    parser.add_argument('--text',help='Optional repeated UTF-8 source fragment (XML escaped), filling 1 MiB')
     parser.add_argument('--runs',type=int,default=3);args=parser.parse_args()
     if not 1<=args.runs<=20: parser.error('runs must be in 1..20')
+    if args.text is not None and not args.text: parser.error('text fragment cannot be empty')
     data=args.dictionary.read_bytes();patterns=data;removed=[]
     if args.drop_compound_minima:
         lines=data.decode('utf-8').splitlines()
@@ -35,6 +37,9 @@ def main():
     files['OPS/package.opf']=files['OPS/package.opf'].replace(b'<dc:language>en</dc:language>',
         ('<dc:language>'+escape(args.language)+'</dc:language>').encode())
     # A single large chapter, explicit opt-in, unchanged between the two modes.
+    if args.text is not None:
+        fragment=args.text.encode('utf-8');text=(fragment*(1048576//len(fragment)+1))[:1048576].decode('utf-8','ignore')
+        files['OPS/c0.xhtml']=('<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Hyphen benchmark</title></head><body><p>'+escape(text)+'</p></body></html>').encode()
     content=files['OPS/c0.xhtml'].replace(b'<body>',b'<body style="hyphens:auto">')
     content=content.replace(b'<p>',b'<p style="width:360px">')
     files['OPS/c0.xhtml']=content
@@ -47,7 +52,7 @@ def main():
       'binary_sha256':hashlib.sha256(args.binary.read_bytes()).hexdigest(),
       'input_sha256':hashlib.sha256(book.read_bytes()).hexdigest(),'dictionary_language':args.language,
       'dictionary_sha256':hashlib.sha256(data).hexdigest(),'portable_sha256':hashlib.sha256(patterns).hexdigest(),
-      'removed_metadata':removed,'scope':'Same 1 MiB text-only EPUB, first 65 pages; dictionary construction included in first-visible time. File read from stdin excluded.','cases':{}}
+      'removed_metadata':removed,'text_fragment':args.text,'scope':'Same 1 MiB text-only EPUB, first 65 pages; dictionary construction included in first-visible time. File read from stdin excluded.','cases':{}}
     for enabled in (False,True):
         records=[];name='enabled' if enabled else 'disabled'
         for index in range(args.runs):

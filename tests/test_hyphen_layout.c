@@ -11,9 +11,9 @@ static const char *directory;
 static int near(float a,float b) { return fabsf(a-b)<.03f; }
 static exr_layout_config config(void) { exr_layout_config c=exr_layout_config_defaults(); c.page=(exr_layout_options){80,100,10,14,20.f/14,0}; c.user_css="html,body,p{margin:0;padding:0;font-size:14px;line-height:20px}"; return c; }
 static exr_hyphenator *dictionary(void) {
-  const char *patterns="aa1aaaa aaaa1aa f1if1if1if1i"; const char *arabic="ل1ال1ال1ا";
-  exr_hyphen_pattern_input i[]={{sizeof(*i),"en",patterns,strlen(patterns),1,1},{sizeof(*i),"ar",arabic,strlen(arabic),1,1}}; exr_hyphenator *h=NULL;
-  OK(exr_hyphenator_create_patterns(i,2,0,NULL,&h,&error)); return h;
+  const char *patterns="aa1aaaa aaaa1aa f1if1if1if1i"; const char *arabic="ل1ال1ال1ا"; const char *french="é1té";
+  exr_hyphen_pattern_input i[]={{sizeof(*i),"en",patterns,strlen(patterns),1,1},{sizeof(*i),"ar",arabic,strlen(arabic),1,1},{sizeof(*i),"fr",french,strlen(french),1,1}}; exr_hyphenator *h=NULL;
+  OK(exr_hyphenator_create_patterns(i,3,0,NULL,&h,&error)); return h;
 }
 static exr_document *constructed(const char *text,const char *lang,const char *style) {
   exr_document *d=NULL; exr_attribute attrs[]={{"lang",lang},{"style",style}};
@@ -90,6 +90,11 @@ static void replay(const char *name) {
   exr_document *d=book(name); exr_hyphenator *h=dictionary(); exr_layout_config c=config(); exr_layout *all;
   exr_pager *fast=NULL,*slow=NULL; const exr_layout *a,*b; size_t np,i,targets[]={20,15,2,11,0,20,4};
   c.page.width=55; all=layout(d,font,h,&c); exr_layout_pages(all,&np); CHECK(np>20 && generated(all)>0); source(d,all);
+  if(!strcmp(name,"canonical")) {
+    size_t count,j,bytes;const exr_glyph *glyphs=exr_layout_glyphs(all,&count);const char *text=exr_document_text(d,&bytes);
+    CHECK(bytes==6399 && !memcmp(text,"ÉTÉ ",8));
+    for(j=0;j<count;j++) if(glyphs[j].flags&EXR_GLYPH_GENERATED) CHECK(glyphs[j].start==glyphs[j].end && glyphs[j].start%8==3);
+  }
   OK(exr_pager_create(d,font,&c,&fast,&error));OK(exr_pager_create(d,font,&c,&slow,&error));
   OK(exr_pager_set_hyphenator(fast,h,&error));OK(exr_pager_set_hyphenator(slow,h,&error));exr_hyphenator_free(h);
   OK(exr_pager_set_cache(fast,1,262144,&error));OK(exr_pager_set_checkpoints(fast,32,1024*1024,1,&error));OK(exr_pager_set_checkpoints(slow,0,0,0,&error));
@@ -186,5 +191,5 @@ static void sessions(void) {
   OK(exr_session_get(session,0,&d,&l,&error));CHECK(!generated(l));exr_session_free(session);
 }
 int main(int argc,char **argv) {
-  char path[4096]; CHECK(argc==2);directory=argv[1];snprintf(path,sizeof(path),"%s/fonts/primary.ttf",directory); OK(exr_font_open(path,&font,&error)); ordinary();fixtures();cascade();joining();word_boundaries();provider_recovery();sessions();replay("long");replay("rtl");replay("vertical");replay("float");replay("orthogonal"); exr_font_free(font); printf("%u automatic hyphen layout checks passed\n",checks); return 0;
+  char path[4096]; CHECK(argc==2);directory=argv[1];snprintf(path,sizeof(path),"%s/fonts/primary.ttf",directory); OK(exr_font_open(path,&font,&error)); ordinary();fixtures();cascade();joining();word_boundaries();provider_recovery();sessions();replay("long");replay("rtl");replay("vertical");replay("float");replay("orthogonal");replay("canonical"); exr_font_free(font); printf("%u automatic hyphen layout checks passed\n",checks); return 0;
 }

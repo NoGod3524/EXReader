@@ -1111,7 +1111,9 @@ EXR_API exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input
    scalars. Errors on valid-sized requests clear breaks. Provider output is
    checked; language tags are case-insensitive with parent-tag lookup. Native
    patterns use full Unicode 17 case folding (Turkic overrides for tr/az).
-   Canonical normalization is not performed. Serialize use/lifetime per object. */
+   Native matching uses Unicode 17 NFC -> full fold -> NFC; output offsets and
+   minimum graphemes refer to original text. Providers receive original bytes.
+   Serialize use/lifetime per object. */
 EXR_API exr_status exr_hyphenator_breaks(exr_hyphenator *hyphenator,const char *language,
   const char *word,size_t size,unsigned char *breaks,const exr_control *control,exr_error *error);
 EXR_API size_t exr_hyphenator_memory_size(const exr_hyphenator *hyphenator);

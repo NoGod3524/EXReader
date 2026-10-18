@@ -238,12 +238,27 @@ static int example_main(int argc, char **argv) {
 #ifdef _WIN32
     if (_setmode(_fileno(stdin), _O_BINARY) == -1) { fprintf(stderr,"Cannot set binary dictionary stdin\n"); goto done; }
 #endif
-    hyphen_patterns = malloc(8u * 1024u * 1024u + 1);
-    if (!hyphen_patterns) { fprintf(stderr,"Dictionary input allocation failed\n"); goto done; }
-    hyphen_size = fread(hyphen_patterns, 1, 8u * 1024u * 1024u + 1, stdin);
-    if (ferror(stdin) || hyphen_size > 8u * 1024u * 1024u) {
-      fprintf(stderr,"Hyphenation stdin exceeds 8 MiB or could not be read\n"); goto done;
+    /* Grow with actual input: an 8 MiB fread request can inflate Windows pipe
+       peak RSS even for a tiny dictionary, obscuring the engine measurement. */
+    { size_t reserved = 0;
+      for (;;) {
+        size_t available, got;
+        if (hyphen_size == reserved) {
+          size_t next = reserved ? reserved * 2 : 4096;
+          unsigned char *grown = realloc(hyphen_patterns, next);
+          if (!grown) { fprintf(stderr,"Dictionary input allocation failed\n"); goto done; }
+          hyphen_patterns = grown; reserved = next;
+        }
+        available = reserved - hyphen_size;
+        got = fread(hyphen_patterns + hyphen_size, 1, available, stdin); hyphen_size += got;
+        if (hyphen_size == 8u * 1024u * 1024u) {
+          if (fgetc(stdin) != EOF) { fprintf(stderr,"Hyphenation stdin exceeds 8 MiB\n"); goto done; }
+          break;
+        }
+        if (got < available) break;
+      }
     }
+    if (ferror(stdin)) { fprintf(stderr,"Dictionary stdin could not be read\n"); goto done; }
   }
   started = at = now_ms();
   status = exr_font_open(font_path, &font, &error);
