@@ -2335,3 +2335,45 @@ It does not run OCR, apply ComicInfo page semantics, split spreads, apply EXIF
 orientation, automatically extract a cover, or write back ComicInfo. Book cover
 editing uses the existing library API. C ABI epoch 1, schema 6 and product
 version 0.18.0 remain unchanged. Platform CI is checked after push.
+
+CBZ commit e7ce3ce passed Windows/macOS native and SDK tests, Android, Apple
+mobile builds and ASan/UBSan. Its Ubuntu GCC 11 job rejected potentially
+uninitialized decoder dimensions after extracting header probing into a helper.
+The ICC batch initializes the decoder dimensions from that validated header;
+the final batch CI must also verify this compiler fix.
+
+## Milestone 0.18 development: ICCBased profile conversion
+
+EXR_ENABLE_ICC (default ON) statically includes the MIT-licensed LittleCMS
+2.19.1 C core, pinned by SHA-256. This is a color conversion dependency, not
+a PDF parser/renderer. A private per-context allocator tracks aligned allocation
+headers and live bytes, enforces 16 MiB, supports cancellation during compilation
+and releases context/transform/profile state on every failure. ICC input is
+capped at 4 MiB, 512 tags and 64 stages per inspected input pipeline. Actual
+retained memory is charged to the existing color cache and conversion work to
+the existing vector/image budget. Optimization precalculation and last-pixel
+caching are disabled.
+
+The native PDF path uses valid Gray/RGB/CMYK/Lab input/display/output/color-space
+profiles before Alternate; unusable/mismatching profiles retain Alternate
+fallback. ISO 32000-1 tables 68/69 define the accepted types and physical Lab
+units. XYZ input profiles are outside table 68 and use Alternate. Native tests
+cover v2/v4 matrix/TRC, a synthetic four-input CMYK-to-XYZ-PCS LUT, Lab ranges,
+valid-profile precedence, channel mismatch, Indexed bases, paths, strokes,
+XObject/inline images and mid-operation cancellation/retry. Five valid fixtures
+agree with MuPDF 1.28.2 at ten path/image interiors within one RGB byte/channel.
+
+All 101 local Windows suites, the ICC=OFF PDF-color suite and an installed C++17
+SDK consumer pass. Default release DLL: 4,981,470 bytes (4.75 MiB); ICC=OFF:
+4,515,472 bytes (4.31 MiB). Three-run, fresh-process EPUB text benchmarks using
+Arial and the existing 720x1040 gray renderer measured median first-visible
+times of 15.79/24.74/12.75 ms, page turns of 10.68/8.43/8.74 ms and process
+peak RSS of 11.15/13.29/11.33 MiB for short/long-single/many-chapter-first-part.
+Disk cache remains uncontrolled; these are text benchmarks, not ICC-PDF timing.
+
+This batch fixes the rendering intent to RelativeColorimetric. Dynamic PDF ri,
+image Intent, OutputIntent, proofing, transparency-group color management and
+physical overprint are still pending; this is not full print-color conformance.
+No public C layout, ABI epoch, schema or product-version change. Final platform
+CI is checked after pushing this batch; further feature development pauses at
+the user's request after this checkpoint.

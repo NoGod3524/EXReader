@@ -91,6 +91,7 @@ exr_status exr_image_decode(const void *data, size_t n, exr_bitmap *out, exr_err
     return exr_fail(e, EXR_ARGUMENT, "Missing image output");
   memset(out, 0, sizeof(*out));
   status=exr_image_dimensions(data,n,&width,&height,e); if(status!=EXR_OK) return status;
+  w=(int)width;h=(int)height;
   pixels = stbi_load_from_memory(data, (int)n, &w, &h, &channels, 4);
   if (!pixels)
     return exr_fail(e,

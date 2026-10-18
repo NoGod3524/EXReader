@@ -818,7 +818,7 @@ typedef struct {
   exr_font *fallback_font; /* Optional ordered font set, retained until fixed_free. */
   exr_control control; /* Used only while opening. */
 } exr_fixed_open_options;
-/* Built-in fixed-format readers (currently PDF). Memory input is copied;
+/* Built-in fixed-format readers (PDF and CBZ). Memory input is copied;
    file input uses UTF-8 paths. No system font lookup or eager page painting. */
 EXR_API exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
                                           const exr_fixed_open_options *options,
@@ -1227,7 +1227,7 @@ EXR_API void exr_books_free(exr_book *books, size_t count);
 EXR_API exr_status exr_library_update(exr_library *library, const exr_book *book, exr_error *error);
 EXR_API exr_status exr_library_document(exr_library *library, int64_t id, exr_document **doc,
                                         exr_error *error);
-/* PDF books keep page-count extent and zero-based page progress. */
+/* PDF/CBZ books keep page-count extent and zero-based page progress. */
 EXR_API exr_status exr_library_fixed(exr_library *library,int64_t id,const exr_fixed_open_options *options,
                                       exr_fixed_document **out,exr_error *error);
 EXR_API exr_status exr_library_fixed_note(exr_library *library,const exr_fixed_note *note,const exr_control *control,
