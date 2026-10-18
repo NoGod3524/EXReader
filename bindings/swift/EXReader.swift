@@ -436,6 +436,16 @@ public final class EXReaderPublication {
         return EXReaderDocument(handle: result, gate: gate)
     }
 }
+/// Host-owned UTF-8 patterns; dictionary data and its license are supplied separately.
+public struct EXReaderHyphenDictionary {
+    public var language: String
+    public var patterns: Data
+    public var leftMinimum, rightMinimum: UInt32
+    public init(language: String, patterns: Data, leftMinimum: UInt32 = 2, rightMinimum: UInt32 = 2) {
+        self.language = language; self.patterns = patterns
+        self.leftMinimum = leftMinimum; self.rightMinimum = rightMinimum
+    }
+}
 public final class EXReaderPager {
     private var handle: OpaquePointer?
     fileprivate let document: EXReaderDocument
@@ -467,6 +477,41 @@ public final class EXReaderPager {
         document.gate.lock(); defer { document.gate.unlock() }
         font.gate.lock(); defer { font.gate.unlock() }
         exr_pager_free(handle)
+    }
+    /// Before next(); empty dictionaries disable hyphenation. CSS hyphens:auto is required.
+    /// Each pager owns independent compiled data. byteBudget=0 uses 32 MiB (maximum 128 MiB).
+    public func setHyphenation(_ dictionaries: [EXReaderHyphenDictionary], byteBudget: Int = 0) throws {
+        guard dictionaries.count <= 64, byteBudget >= 0, byteBudget <= 128 * 1024 * 1024 else { throw EXReaderError.invalidInput }
+        var total = 0
+        for d in dictionaries {
+            guard !d.language.utf8.contains(0), d.language.utf8.count <= 255,
+                  d.leftMinimum <= 64, d.rightMinimum <= 64, d.patterns.count <= 8 * 1024 * 1024 else { throw EXReaderError.invalidInput }
+            total += d.patterns.count
+        }
+        guard total <= 32 * 1024 * 1024 else { throw EXReaderError.invalidInput }
+        let languages = dictionaries.map { Data($0.language.utf8CString.map { UInt8(bitPattern: $0) }) as NSData }
+        let patterns = dictionaries.map { $0.patterns as NSData }
+        var inputs = dictionaries.indices.map { i -> exr_hyphen_pattern_input in
+            var value = exr_hyphen_pattern_input()
+            value.struct_size = MemoryLayout<exr_hyphen_pattern_input>.size
+            value.language = languages[i].bytes.assumingMemoryBound(to: CChar.self)
+            value.patterns = patterns[i].bytes; value.size = patterns[i].length
+            value.left_min = dictionaries[i].leftMinimum; value.right_min = dictionaries[i].rightMinimum
+            return value
+        }
+        document.gate.lock(); defer { document.gate.unlock() }
+        font.gate.lock(); defer { font.gate.unlock() }
+        guard let handle else { throw EXReaderError.invalidInput }
+        var result: OpaquePointer?
+        defer { exr_hyphenator_free(result) }
+        var error = exr_error()
+        let status: exr_status = withExtendedLifetime((languages, patterns)) {
+            inputs.withUnsafeMutableBufferPointer {
+                $0.isEmpty ? EXR_OK : exr_hyphenator_create_patterns($0.baseAddress, $0.count, byteBudget, nil, &result, &error)
+            }
+        }
+        try check(status, error)
+        try check(exr_pager_set_hyphenator(handle, result, &error), error)
     }
     /** nil at EOF. An engine error invalidates this pager; construct another to retry. */
     public func next() throws -> EXReaderReflowPage? {

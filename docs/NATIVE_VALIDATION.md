@@ -2762,3 +2762,33 @@ checks, macOS Swift smoke, ASan/UBSan, Android ARM64, and iOS/iPadOS device and
 simulator library builds. Following header edits clarify comments only: the
 provider bitmap expresses source break positions, not spelling replacements.
 Benchmark hashes refer to the exact e9e3b64 source snapshot.
+
+## Automatic hyphenation in native layout (0.18.0 development)
+
+The additional native-hyphen-layout test has 140,413 checks across 24 original
+EPUB fixtures and host-constructed trees. It verifies OPF/XML/HTML language
+inheritance, explicit empty/invalid/unknown tags, CSS inheritance and invalid
+values, auto/manual/none, styled inline words and out-of-flow source gaps.
+Generated hyphens retain source positions; all original nonspace text remains
+covered. Original fonts check fi ligature splitting, GPOS kerning with the
+inserted glyph and Arabic isolated-lam reshaping/RTL placement. Wide final lines
+retain their fi ligatures. Positioned reconstruction matches every fixture page
+pixel for pixel.
+
+Full-layout, cached-page and checkpoint-free/backward replay agree on glyphs,
+pixels and hit positions in long horizontal, RTL, vertical, floating and
+orthogonal content. Provider errors/cancellation, recovery, reentry, session
+cache invalidation/budgets, caller-release retention, internal apostrophes,
+numeric/oversized words and join/combining controls are covered. Checkpoint
+payload counts its lazily allocated word cache. All 109 native tests pass on
+Windows; the 15,046-word Pyphen oracle still agrees. Installed C and JNI smoke
+pass with actual inserted hyphens, including a rejected replacement dictionary
+that preserves the previously installed data. Swift/device CI is tracked below
+when this source snapshot completes its run.
+
+The benchmark now accepts --hyphens LANGUAGE with <=8 MiB UTF-8 patterns on
+stdin. Existing eager/paged validation also tests enabled/disabled results,
+dictionary metadata and rejected unsupported patterns. Same-input, fresh-process
+measurements and exact executable/font/source provenance are recorded in
+benchmarks/0.18.0-hyphen-layout-windows. This does not validate compound word
+rules, spelling replacements, normalization or arbitrary dictionary formats.

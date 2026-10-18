@@ -313,3 +313,27 @@ payload 包含对象、语言目录、trie/weight 数组容量及 packed edges�
 峰值进程内存 17,911,808 bytes，翻页 p50/p95 1.31/1.67 ms；磁盘缓存未控制。该数据
 只记录未启用模块的普通阅读成本。源码和字体/程序哈希、原始结果见
 [词典模块记录](benchmarks/0.18.0-hyphen-dictionaries-windows/metadata.json)。
+
+## 排版器自动断词（0.18.0 开发中）
+
+同一份 1 MiB、单段落英文 EPUB（段宽 360px，正文 hyphens:auto）、Windows 11、
+GCC 16.2 Release、Arial；各模式三次新进程，逐页生成并绘制前 65 页。词典为开发
+环境中的 English US portable 模式，显式去掉 COMPOUND 最小值元数据，不验证复合词。
+输入、词典投影及字体/可执行文件哈希见
+[原始记录](benchmarks/0.18.0-hyphen-layout-windows/summary.json)。
+
+| 场景 | 首屏 ms | 进程峰值 bytes | 翻页 p50/p95 ms |
+| --- | ---: | ---: | ---: |
+| 不配置词典 | 16.27 | 13,795,328 | 4.15 / 6.13 |
+| 配置英文词典 | 20.47 | 17,817,600 | 4.49 / 7.73 |
+
+表中各指标为三次测量中位数；磁盘缓存未控制。启用词典的前 65 页共生成 775 个
+连字符，编译词典中位数 2.95ms、常驻 payload 519,072 bytes。首屏包括构造词典，
+不包括将模式文件读入 stdin；进程峰值包含解析时的临时分配和分配器保留内存，
+不能用常驻 trie 大小代替。新 DLL 为 5,297,555 bytes，比查询模块增加 9,624 bytes，
+无新增链接依赖或随包语言词典。此处输入与上一节普通文本基准不同，应比较本表两行。
+
+复测工具为 `tools/benchmark_hyphen_layout.py`，它复用现有 benchmark 的时钟、绘制、
+峰值与分页采样；词典保持在调用者的外部目录。`--hyphens language` 也可直接用于
+exreader-benchmark 的 EPUB eager/paged 模式，从 stdin 接收 UTF-8 模式；文档仍须
+声明 hyphens:auto 与匹配语言，工具不偷偷覆盖 CSS。

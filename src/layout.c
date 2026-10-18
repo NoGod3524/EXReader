@@ -229,7 +229,7 @@ exr_status exr_glyph_matrix(const exr_glyph *g, double matrix[6], exr_error *e) 
   if (matrix) memset(matrix, 0, 6 * sizeof(*matrix));
   if (!g || !matrix || !isfinite(g->x) || !isfinite(g->baseline) ||
       !isfinite(g->offset_x) || !isfinite(g->offset_y) || !isfinite(g->size) ||
-      g->size < 0 || g->size > 4096 || (g->flags & ~511u) ||
+      g->size < 0 || g->size > 4096 || (g->flags & ~(511u|EXR_GLYPH_GENERATED)) ||
       ((g->flags & EXR_GLYPH_SIDEWAYS) && !(g->flags & EXR_GLYPH_VERTICAL)))
     return exr_fail(e, EXR_ARGUMENT, "Invalid glyph transformation input");
   scale = (double)g->size / 1000;

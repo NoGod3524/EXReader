@@ -220,6 +220,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     exr_shape_options options = exr_shape_defaults();
     exr_buffer text = {0};
     uint32_t tag = exr_ot_script(g->codepoint);
+    unsigned generated = 0;
     unsigned orientation = g->flags & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS | EXR_GLYPH_TRY_VERTICAL);
     int vertical = (orientation & EXR_GLYPH_VERTICAL) &&
                    (!(orientation & EXR_GLYPH_SIDEWAYS) || (orientation & EXR_GLYPH_TRY_VERTICAL));
@@ -311,6 +312,9 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
           else high = middle;
         }
         finish = low;
+        /* One scan per shaped cluster, including a long combining sequence. */
+        generated = 0;
+        { size_t source; for(source=k;source<finish;source++) generated |= l->glyphs[i+source].flags & EXR_GLYPH_GENERATED; }
       }
       v = l->glyphs[i + k];
       v.start = l->glyphs[i + k].start;
@@ -324,6 +328,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
       v.offset_y = shaped[j].offset_y;
       v.flags = shaped[j].flags | EXR_GLYPH_SHAPED | (v.flags & EXR_DECORATIONS) |
                 (orientation & (EXR_GLYPH_VERTICAL | EXR_GLYPH_SIDEWAYS));
+      v.flags |= generated;
       if (v.bidi_level == UINT_MAX) v.flags |= EXR_GLYPH_HIDDEN;
       if (result.glyph_count &&
           result.glyphs[result.glyph_count - 1].cluster_start == v.cluster_start)
@@ -403,7 +408,8 @@ static exr_status shape_line_copy(flow *f, exr_line_buffer *b, exr_layout *to, c
   if (status == EXR_OK) status = copy_glyphs(f, b, to, from, count);
   if (status != EXR_OK) return status;
   child.layout = to;
-  if (hyphen && count && to->glyphs[count - 1].codepoint == 0xad) {
+  if (hyphen && count && to->glyphs[count - 1].codepoint == 0xad &&
+      f->styles[to->glyphs[count-1].node].hyphens!=EXR_HYPHENS_NONE) {
     exr_glyph *g = &to->glyphs[count - 1];
     size_t order[32], n = exr_font_order(f->font, f->styles[g->node].family,
                                           f->styles[g->node].flags,
@@ -428,6 +434,19 @@ static exr_status shape_line_copy(flow *f, exr_line_buffer *b, exr_layout *to, c
     for (i = 0; i < to->glyph_count; i++)
       if (to->glyphs[i].start == soft) to->glyphs[i].codepoint = 0xad;
   return status == EXR_OK ? line_work(f, to->glyph_count) : status;
+}
+static exr_status generated_hyphen(flow *f,exr_line_buffer *b,exr_layout *to,size_t point) {
+  flow child=*f; exr_glyph g=to->glyphs[to->glyph_count-1]; size_t i,n,order[32]; exr_status status;
+  n=exr_font_order(f->font,f->styles[g.node].family,f->styles[g.node].flags,f->doc->nodes[g.node].chapter,order);
+  for(i=0;i<n && !exr_font_has_glyph(f->font,order[i],0x2010);i++) {}
+  g.codepoint=i<n ? 0x2010 : '-';
+  g.flags=f->styles[g.node].flags|EXR_GLYPH_GENERATED;
+  if(f->writing_mode!=EXR_WRITING_HORIZONTAL_TB) g.flags|=exr_vertical_flags(g.codepoint,f->styles[g.node].orientation);
+  g.start=g.end=g.cluster_start=g.cluster_end=point; g.boundaries=EXR_BOUNDARY_GRAPHEME;
+  g.offset_x=g.offset_y=0;
+  status=line_reserve(f,b,to,to->glyph_count+1); if(status!=EXR_OK) return status;
+  to->glyphs[to->glyph_count++]=g; child.layout=to;
+  return exr_flow_cluster(&child,to->glyph_count-1,to->glyph_count);
 }
 static exr_status measure_line_cluster(flow *f, exr_line_buffer *b) {
   flow child = *f;
@@ -467,16 +486,80 @@ static exr_status shape_line_segment(flow *f, exr_line_buffer *b, uint32_t after
   }
   return status;
 }
+static exr_status line_geometry(flow *f,exr_line_buffer *b,float *width) {
+  size_t i; float ascent=0,descent=0,leading=0,minimum=0,old_y=f->y;
+  float indent=f->first_line ? f->paragraph->indent : 0; exr_status status;
+  *width=0;
+  for(i=0;i<b->line.glyph_count;i++) {
+    exr_glyph *g=&b->line.glyphs[i];
+    if(f->floats->count && !f->intrinsic) {
+      status=line_metric(f,g,&ascent,&descent,&leading); if(status!=EXR_OK) return status;
+    } else if(exr_font_size(&f->font->faces[g->font_index],g->size)) return exr_fail(f->error,EXR_FONT,"Cannot size final line font");
+    *width+=g->advance+line_kern(f,i ? g-1 : NULL,g);
+    if(!i || g->cluster_start==b->line.glyphs[0].cluster_start) minimum=*width;
+  }
+  b->line_x=f->x; b->line_width=f->width;
+  if(!f->intrinsic && f->floats->count && b->line.glyph_count) {
+    status=exr_flow_line_slot(f,fmaxf(leading,ascent+descent),fmaxf(1,minimum+indent),b->line.glyphs[0].start,&b->line_x,&b->line_width);
+    if(status!=EXR_OK) return status;
+    if(f->y!=old_y) return EXR_REFLOW;
+  }
+  return EXR_OK;
+}
+/* Raw-source candidates may cross a provisional ligature. Reshape the complete
+   selected prefix, including the inserted character, then rebuild its carry. */
+static exr_status fit_dictionary(flow *f,exr_line_buffer *b,int *found) {
+  size_t i,limit=0,source_end; int any=0; exr_status status;
+  float indent=f->first_line ? f->paragraph->indent : 0;
+  *found=0; if(!f->hyphenator || !b->ready) return EXR_OK;
+  source_end=b->run.glyphs[b->scan<b->ready ? b->scan : b->ready-1].cluster_end;
+  while(limit<b->raw.glyph_count && b->raw.glyphs[limit].start<source_end) limit++;
+  for(i=1;i<b->raw.glyph_count && i<=limit;i++) any|=!!(b->raw.glyphs[i].boundaries&EXR_BOUNDARY_AUTO_HYPHEN);
+  if(!any) return EXR_OK;
+  /* A complete fitting final/forced line must retain its original ligatures. */
+  if(!f->intrinsic && (b->final || b->forced)) {
+    float width; size_t end=b->run.glyphs[b->line_end-1].cluster_end,count=0;
+    while(count<b->raw.glyph_count && b->raw.glyphs[count].start<end) count++;
+    status=shape_line_copy(f,b,&b->line,b->raw.glyphs,count,0,0,0); if(status!=EXR_OK) return status;
+    status=line_geometry(f,b,&width); if(status!=EXR_OK) return status;
+    if(width<=fmaxf(1,b->line_width-indent)+.001f) { b->raw_end=count; b->line_ready=1; *found=1; return EXR_OK; }
+  }
+  for(i=f->intrinsic==1 ? 1 : limit;i && i<=limit;i=f->intrinsic==1 ? i+1 : i-1) {
+    unsigned boundaries; int automatic; float width; flow child=*f; size_t consumed=0,point;
+    if(i>=b->raw.glyph_count) continue;
+    boundaries=b->raw.glyphs[i].boundaries;
+    if(!(boundaries&EXR_BOUNDARY_GRAPHEME) || (boundaries&EXR_BOUNDARY_GLUE) ||
+       !(boundaries&(EXR_BOUNDARY_LINE|EXR_BOUNDARY_AUTO_HYPHEN))) continue;
+    automatic=!!(boundaries&EXR_BOUNDARY_AUTO_HYPHEN) && !(boundaries&EXR_BOUNDARY_LINE);
+    point=b->raw.glyphs[i].start;
+    if(automatic) {
+      /* Start from unshaped source again, so kerning/joining includes the hyphen. */
+      status=copy_glyphs(f,b,&b->line,b->raw.glyphs,i); if(status!=EXR_OK) return status;
+      status=line_work(f,i+1); if(status!=EXR_OK) return status;
+      status=generated_hyphen(f,b,&b->line,point); if(status!=EXR_OK) return status;
+      child.layout=&b->line; status=exr_inline_shape(&child,0,0,0); if(status!=EXR_OK) return status;
+      status=line_work(f,b->line.glyph_count); if(status!=EXR_OK) return status;
+    } else { status=shape_line_copy(f,b,&b->line,b->raw.glyphs,i,0,0,1); if(status!=EXR_OK) return status; }
+    status=line_geometry(f,b,&width); if(status!=EXR_OK) return status;
+    if(!f->intrinsic && width>fmaxf(1,b->line_width-indent)+.001f) continue;
+    while(consumed<b->ready && b->run.glyphs[consumed].start<point) consumed++;
+    if(!consumed) continue;
+    b->line_end=consumed; b->raw_end=i; b->forced=b->final=0; b->line_ready=1;
+    *found=1; return EXR_OK;
+  }
+  return EXR_OK;
+}
 /* A provisional ligature is one protected cluster. Final fitting can retreat
    across its start, never through it or a GLUE boundary. */
 static exr_status fit_line(flow *f, exr_line_buffer *b) {
   float indent = f->first_line ? f->paragraph->indent : 0;
   float available;
   size_t tries = 0;
+  { int found; exr_status status=fit_dictionary(f,b,&found); if(status!=EXR_OK || found) return status; }
   for (;;) {
     size_t i, source_end = b->run.glyphs[b->line_end - 1].cluster_end;
     size_t low = 0, high = b->raw.glyph_count;
-    float width = 0,ascent=0,descent=0,leading=0,minimum=0,old_y=f->y;
+    float width = 0;
     exr_status status;
     while (low < high) {
       size_t middle = low + (high - low) / 2;
@@ -487,21 +570,7 @@ static exr_status fit_line(flow *f, exr_line_buffer *b) {
     status = shape_line_copy(f, b, &b->line, b->raw.glyphs, low, 0, 0,
                              !b->final && !b->forced);
     if (status != EXR_OK) return status;
-    for (i = 0; i < b->line.glyph_count; i++) {
-      exr_glyph *g = &b->line.glyphs[i];
-      if(f->floats->count && !f->intrinsic) {
-        status=line_metric(f,g,&ascent,&descent,&leading); if(status!=EXR_OK) return status;
-      } else if(exr_font_size(&f->font->faces[g->font_index],g->size)) return exr_fail(f->error,EXR_FONT,"Cannot size final line font");
-      width += g->advance + line_kern(f, i ? g - 1 : NULL, g);
-      if(!i || g->cluster_start==b->line.glyphs[0].cluster_start) minimum=width;
-    }
-    b->line_x=f->x; b->line_width=f->width;
-    if(!f->intrinsic && f->floats->count && b->line.glyph_count) {
-      status=exr_flow_line_slot(f,fmaxf(leading,ascent+descent),fmaxf(1,minimum+indent),
-        b->line.glyphs[0].start,&b->line_x,&b->line_width);
-      if(status!=EXR_OK) return status;
-      if(f->y!=old_y) return EXR_REFLOW;
-    }
+    status=line_geometry(f,b,&width); if(status!=EXR_OK) return status;
     available=fmaxf(1,b->line_width-indent);
     if (f->intrinsic || width <= available + 0.001f) break;
     {
@@ -679,26 +748,81 @@ exr_status exr_inline_break(flow *f,exr_line_buffer *b) {
   b->line_end=b->ready; b->line_ready=0; b->forced=b->final=0;
   return exr_inline_drain(f,b);
 }
-typedef struct { flow *f; size_t node, at; } inline_text_cursor;
+typedef struct { flow *f; size_t node, at, start; } inline_text_cursor;
 static int following_inline_scalar(void *context, uint32_t *cp) {
   inline_text_cursor *c = context;
   while (c->node != SIZE_MAX) {
     const exr_node *n = &c->f->doc->nodes[c->node];
-    if (c->at<n->end && exr_ruby_node(c->f->doc,c->node)) { c->at=n->end; *cp=0xfffc; return 1; }
-    if (c->at < n->end)
+    if (c->at<n->end && exr_ruby_node(c->f->doc,c->node)) { c->start=c->at; c->at=n->end; *cp=0xfffc; return 1; }
+    if (c->at < n->end) {
+      c->start=c->at;
       return exr_next(c->f->doc->text, n->end, &c->at, cp);
+    }
     c->node = next_text(c->f, following(c->f, c->node));
     if (c->node != SIZE_MAX) c->at = c->f->doc->nodes[c->node].start;
   }
   return 0;
 }
+static const char *node_language(const flow *f,size_t node) {
+  for(;node!=SIZE_MAX;node=f->doc->nodes[node].parent) {
+    const exr_node *n=&f->doc->nodes[node]; const char *value=exr_node_attribute(n,"http://www.w3.org/XML/1998/namespace|lang");
+    if(!value) value=exr_node_attribute(n,"xml:lang");
+    if(!value) value=exr_node_attribute(n,"lang");
+    if(value) return value;
+  }
+  return f->doc->language ? f->doc->language : "";
+}
+static int apostrophe(uint32_t cp) { return cp=='\'' || cp==0x2019; }
+static int word_after(inline_text_cursor cursor) {
+  uint32_t cp; return following_inline_scalar(&cursor,&cp) && exr_hyphen_word_kind(cp)!=0;
+}
+static exr_status word_points(flow *f,exr_line_buffer *b,const char key[256]) {
+  char text[1024]; unsigned char points[1025]; size_t bytes=0,count=0,offsets[256],sources[256];
+  inline_text_cursor cursor={f,b->word_node,b->word_start,0}; uint32_t cp; int numeric=0,previous=0;
+  exr_hyphen_word *w=b->word; exr_status status;
+  w->start=b->word_start; w->until=b->word_start; w->count=0; memcpy(w->language,key,strlen(key)+1);
+  while(following_inline_scalar(&cursor,&cp)) {
+    unsigned kind=exr_hyphen_word_kind(cp); size_t size=cursor.at-cursor.start;
+    if(!kind && !(apostrophe(cp) && previous && word_after(cursor))) break;
+    if(count==256 || size>sizeof(text)-bytes) { w->until=SIZE_MAX; return EXR_OK; }
+    offsets[count]=bytes; sources[count++]=cursor.start;
+    memcpy(text+bytes,f->doc->text+cursor.start,size); bytes+=size; w->until=cursor.at;
+    numeric|=kind==3 || (count==1 && kind!=1); previous=!!kind;
+  }
+  if(numeric || !bytes) return EXR_OK;
+  status=exr_hyphenator_breaks(f->hyphenator,key,text,bytes,points,&f->config->control,f->error);
+  if(status!=EXR_OK) return status;
+  for(bytes=0;bytes<count;bytes++) if(points[offsets[bytes]]) w->points[w->count++]=sources[bytes];
+  return EXR_OK;
+}
+static exr_status hyphenate_scalar(flow *f,exr_line_buffer *b,exr_glyph *g) {
+  unsigned kind=exr_hyphen_word_kind(g->codepoint); size_t i; char key[256];
+  inline_text_cursor after={f,g->node,g->end,0}; exr_status status;
+  if(!kind && !(apostrophe(g->codepoint) && b->in_word && exr_hyphen_word_kind(b->previous_scalar) && word_after(after))) {
+    b->in_word=0; if(b->word) b->word->until=0; return EXR_OK;
+  }
+  if(!b->in_word) { b->word_node=g->node; b->word_start=g->start; b->in_word=1; }
+  if(f->styles[g->node].hyphens!=EXR_HYPHENS_AUTO || !(g->boundaries&EXR_BOUNDARY_GRAPHEME) ||
+      (g->boundaries&EXR_BOUNDARY_GLUE) || !exr_hyphen_language(node_language(f,g->node),key)) return EXR_OK;
+  if(!b->word) { b->word=calloc(1,sizeof(*b->word)); if(!b->word) return exr_fail(f->error,EXR_MEMORY,"Hyphenation word cache allocation failed"); }
+  if(b->word->start==b->word_start && b->word->until==SIZE_MAX) return EXR_OK;
+  if(b->word->start!=b->word_start || b->word->until<=g->start || strcmp(b->word->language,key)) {
+    status=word_points(f,b,key); if(status!=EXR_OK) return status;
+  }
+  for(i=0;i<b->word->count;i++) if(b->word->points[i]==g->start) { g->boundaries|=EXR_BOUNDARY_AUTO_HYPHEN; break; }
+  return EXR_OK;
+}
 exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
   exr_status status;
   if (!b->initialized) reset_line_scan(b);
   {
-    inline_text_cursor cursor = {f, g.node, g.end};
+    inline_text_cursor cursor = {f, g.node, g.end,0};
     g.boundaries = exr_text_step(&b->text, g.codepoint, following_inline_scalar, &cursor);
   }
+  if(b->previous_scalar==0xad && f->styles[b->previous_node].hyphens==EXR_HYPHENS_NONE) g.boundaries&=~EXR_BOUNDARY_LINE;
+  if(f->hyphenator && !(g.flags&EXR_GLYPH_RUBY_ITEM)) {
+    status=hyphenate_scalar(f,b,&g); if(status!=EXR_OK) return status;
+  } else if(f->hyphenator) { b->in_word=0; if(b->word) b->word->until=0; }
   if ((g.flags & EXR_GLYPH_RUBY_ITEM) ||
       (b->run.glyph_count && (b->run.glyphs[b->run.glyph_count-1].flags & EXR_GLYPH_RUBY_ITEM)))
     g.boundaries |= EXR_BOUNDARY_GRAPHEME;
@@ -721,6 +845,7 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
   status = line_reserve(f, b, &b->run, b->run.glyph_count + 1);
   if (status != EXR_OK) return status;
   b->run.glyphs[b->run.glyph_count++] = g;
+  b->previous_scalar=g.codepoint; b->previous_node=g.node;
   return exr_inline_drain(f, b);
 }
 exr_status exr_inline_finish(flow *f, exr_line_buffer *b) {
@@ -736,10 +861,12 @@ exr_status exr_inline_finish(flow *f, exr_line_buffer *b) {
   memset(&b->text, 0, sizeof(b->text));
   b->raw.glyph_count = 0; b->before = b->after = 0; b->finishing = 0;
   b->measure_width=b->measure_trailing=0; b->measure_has_last=0;
+  b->in_word=0; b->previous_scalar=0; b->previous_node=0; if(b->word) b->word->until=0;
   reset_line_scan(b);
   return EXR_OK;
 }
 void exr_inline_buffer_clear(exr_line_buffer *b) {
   free(b->run.glyphs); free(b->raw.glyphs); free(b->line.glyphs);
+  free(b->word);
   memset(b, 0, sizeof(*b));
 }

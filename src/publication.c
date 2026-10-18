@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "layout_internal.h"
+#include "hyphen_internal.h"
 
 struct exr_publication {
   char *title;
@@ -20,6 +21,7 @@ typedef struct {
 struct exr_session {
   exr_publication *publication;
   exr_font *font;
+  exr_hyphenator *hyphenator;
   exr_layout_config config;
   cached_part *cache; /* Most recently used first, at most 64 entries. */
   size_t count, capacity, bytes, budget;
@@ -302,6 +304,7 @@ void exr_session_free(exr_session *s) {
   exr_session_clear(s);
   free(s->cache);
   free((void *)s->config.user_css);
+  exr_hyphenator_free(s->hyphenator);
   exr_publication_free(s->publication);
   free(s);
 }
@@ -321,6 +324,14 @@ exr_status exr_session_set_budget(exr_session *s, size_t bytes, exr_error *e) {
   while (s->budget && s->bytes > s->budget)
     evict_last(s);
   return exr_fail(e, EXR_OK, "");
+}
+exr_status exr_session_set_hyphenator(exr_session *s,exr_hyphenator *h,exr_error *e) {
+  exr_status status;
+  if(!s || s->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant session access");
+  if(h==s->hyphenator) return exr_fail(e,EXR_OK,"");
+  if(h) { status=exr_hyphenator_ref(h,e); if(status!=EXR_OK) return status; }
+  exr_session_clear(s); exr_hyphenator_free(s->hyphenator); s->hyphenator=h;
+  return exr_fail(e,EXR_OK,"");
 }
 
 exr_status exr_session_create(exr_publication *p, exr_font *font,
@@ -390,7 +401,7 @@ exr_status exr_session_get(exr_session *s, size_t part, const exr_document **doc
   s->busy = 1;
   status = exr_publication_load(s->publication, part, &entry.document, e);
   if (status == EXR_OK)
-    status = exr_layout_create_ex(entry.document, s->font, &s->config, &entry.layout, e);
+    status = exr_layout_create_hyphenated(entry.document,s->font,&s->config,s->hyphenator,&entry.layout,e);
   s->busy = 0;
   if (status != EXR_OK) {
     exr_document_free(entry.document);

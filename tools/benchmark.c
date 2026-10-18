@@ -14,6 +14,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <psapi.h>
+#include <io.h>
+#include <fcntl.h>
 #else
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -162,6 +164,11 @@ static int example_main(int argc, char **argv) {
   exr_publication *publication = NULL;
   exr_session *session = NULL;
   exr_pager *pager = NULL;
+  exr_hyphenator *hyphenator = NULL;
+  const char *hyphen_language = NULL;
+  unsigned char *hyphen_patterns = NULL;
+  size_t hyphen_size = 0, inserted = 0;
+  double hyphen_ms = 0;
   exr_document *owned_doc = NULL;
   exr_layout *owned_layout = NULL;
   exr_font *font = NULL;
@@ -199,9 +206,12 @@ static int example_main(int argc, char **argv) {
       if (!number(argv[++arg], &max_pages))
         goto usage;
       saw_max = 1;
-    } else
+    } else if (!strcmp(argv[arg], "--hyphens") && !hyphen_language && arg + 1 < argc)
+      hyphen_language = argv[++arg];
+    else
       goto usage;
   }
+  if (hyphen_language && generated_mode) goto usage;
   total_pages_known = !paging;
   if (now_ms() < 0 || !peak_rss(&baseline)) {
     fprintf(stderr, "Monotonic clock or process peak RSS unavailable\n");
@@ -224,11 +234,30 @@ static int example_main(int argc, char **argv) {
     fprintf(stderr, "Cannot read input file size\n");
     goto done;
   }
+  if (hyphen_language) {
+#ifdef _WIN32
+    if (_setmode(_fileno(stdin), _O_BINARY) == -1) { fprintf(stderr,"Cannot set binary dictionary stdin\n"); goto done; }
+#endif
+    hyphen_patterns = malloc(8u * 1024u * 1024u + 1);
+    if (!hyphen_patterns) { fprintf(stderr,"Dictionary input allocation failed\n"); goto done; }
+    hyphen_size = fread(hyphen_patterns, 1, 8u * 1024u * 1024u + 1, stdin);
+    if (ferror(stdin) || hyphen_size > 8u * 1024u * 1024u) {
+      fprintf(stderr,"Hyphenation stdin exceeds 8 MiB or could not be read\n"); goto done;
+    }
+  }
   started = at = now_ms();
   status = exr_font_open(font_path, &font, &error);
   font_ms = now_ms() - at;
   if (status != EXR_OK)
     goto engine_error;
+  if (hyphen_language) {
+    exr_hyphen_pattern_input input = {sizeof(input),hyphen_language,hyphen_patterns,hyphen_size,0,0};
+    at = now_ms();
+    status = exr_hyphenator_create_patterns(&input,1,0,NULL,&hyphenator,&error);
+    hyphen_ms = now_ms() - at;
+    free(hyphen_patterns); hyphen_patterns = NULL;
+    if (status != EXR_OK) goto engine_error;
+  }
   if (!generated_mode) {
     at = now_ms();
     status = exr_publication_open(book, &publication, &error);
@@ -244,6 +273,7 @@ static int example_main(int argc, char **argv) {
     }
     if (!paging) {
       status = exr_session_create(publication, font, NULL, 1, &session, &error);
+      if (status == EXR_OK && hyphenator) status = exr_session_set_hyphenator(session,hyphenator,&error);
       if (status != EXR_OK)
         goto engine_error;
     }
@@ -255,6 +285,7 @@ static int example_main(int argc, char **argv) {
     document = owned_doc;
     if (status == EXR_OK && paging)
       status = exr_pager_create(owned_doc, font, NULL, &pager, &error);
+    if (status == EXR_OK && paging && hyphenator) status = exr_pager_set_hyphenator(pager,hyphenator,&error);
     if (status == EXR_OK)
       status = paging ? exr_pager_next(pager, &owned_layout, &error)
                       : exr_layout_create(owned_doc, font, NULL, &owned_layout, &error);
@@ -271,7 +302,9 @@ static int example_main(int argc, char **argv) {
   }
   exr_document_text(document, &text_bytes);
   exr_layout_pages(layout, &page_count);
-  exr_layout_glyphs(layout, &glyph_count);
+  { const exr_glyph *g = exr_layout_glyphs(layout, &glyph_count);
+    for(i=0;i<glyph_count;i++) inserted+=!!(g[i].flags&EXR_GLYPH_GENERATED);
+  }
   if (!page_count) {
     fprintf(stderr, "Layout has no pages\n");
     goto done;
@@ -306,7 +339,9 @@ static int example_main(int argc, char **argv) {
         owned_layout = next;
         layout = next;
         exr_layout_pages(layout, &pages);
-        exr_layout_glyphs(layout, &glyphs);
+        { const exr_glyph *g = exr_layout_glyphs(layout, &glyphs);
+          for(i=0;i<glyphs;i++) inserted+=!!(g[i].flags&EXR_GLYPH_GENERATED);
+        }
         page_count += pages;
         glyph_count += glyphs;
       }
@@ -364,6 +399,8 @@ static int example_main(int argc, char **argv) {
          glyph_count, sample_count, page_count > 1 ? 1u : 0u, page_count == 1 ? "true" : "false",
          font_ms, publication_ms, layout_ms, paint_ms, total_ms,
          baseline, peak, peak >= baseline ? peak - baseline : 0);
+  printf(",\"hyphenation_enabled\":%s,\"hyphen_dictionary_input_bytes\":%zu,\"hyphen_dictionary_payload_bytes\":%zu,\"hyphen_dictionary_load_ms\":%.6f,\"generated_glyph_count\":%zu",
+         hyphenator ? "true" : "false",hyphen_size,exr_hyphenator_memory_size(hyphenator),hyphen_ms,inserted);
   metric_json("turn_layout", samples, sample_count, 0, sorted);
   metric_json("turn_render", samples, sample_count, 1, sorted);
   metric_json("turn_total", samples, sample_count, 2, sorted);
@@ -374,9 +411,10 @@ engine_error:
   fprintf(stderr, "EXReader error %d: %s\n", (int)error.code, error.message);
   goto done;
 usage:
-  fprintf(stderr, "Usage: exreader-benchmark book.epub font.ttf [--max-pages N] [--paging]\n"
+  fprintf(stderr, "Usage: exreader-benchmark book.epub font.ttf [--max-pages N] [--paging] [--hyphens language]\n"
                   "       exreader-benchmark --text-bytes N font.ttf [--max-pages N] [--paging]\n"
-                  "N samples: default 64, zero renders all pages after the first paint.\n");
+                  "N samples: default 64, zero renders all pages after the first paint.\n"
+                  "--hyphens reads UTF-8 patterns from stdin; EPUB must opt in with CSS hyphens:auto.\n");
   result = 2;
 done:
   exr_bitmap_free(&bitmap);
@@ -384,6 +422,8 @@ done:
   free(sorted);
   exr_layout_free(owned_layout);
   exr_pager_free(pager);
+  exr_hyphenator_free(hyphenator);
+  free(hyphen_patterns);
   exr_document_free(owned_doc);
   exr_session_free(session);
   exr_publication_free(publication);

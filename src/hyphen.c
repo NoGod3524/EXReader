@@ -40,7 +40,7 @@ static exr_status work(hy_work *w,size_t count) {
   }
   w->work+=count; return EXR_OK;
 }
-static int canonical(const char *language,char out[256]) {
+int exr_hyphen_language(const char *language,char out[256]) {
   size_t n=0,component=0; int primary=1;
   if(!language) language="";
   for(;language[n];n++) {
@@ -67,6 +67,7 @@ static unsigned fold(uint32_t cp,const char *language,uint32_t values[3]) {
   values[0]=cp; return 1;
 }
 unsigned exr_hyphen_word_kind(uint32_t cp) {
+  if(cp==0x200c || cp==0x200d) return 2; /* Joining controls stay inside the word. */
   size_t lo=0,hi=sizeof(exr_word_ranges)/sizeof(*exr_word_ranges);
   while(lo<hi) {
     size_t mid=lo+(hi-lo)/2;
@@ -242,7 +243,7 @@ exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs
   if(!inputs || !count || count>64 || budget>EXR_MAX_INPUT) return exr_fail(e,EXR_ARGUMENT,"Invalid hyphenation dictionary registry");
   for(i=0;i<count;i++) {
     char key[256];
-    if(inputs[i].struct_size!=sizeof(*inputs) || (!inputs[i].patterns && inputs[i].size) || !canonical(inputs[i].language,key)) return exr_fail(e,EXR_ARGUMENT,"Invalid hyphenation dictionary input");
+    if(inputs[i].struct_size!=sizeof(*inputs) || (!inputs[i].patterns && inputs[i].size) || !exr_hyphen_language(inputs[i].language,key)) return exr_fail(e,EXR_ARGUMENT,"Invalid hyphenation dictionary input");
     if(inputs[i].left_min>64 || inputs[i].right_min>64 || inputs[i].size>8*1024*1024 || inputs[i].size>32*1024*1024-total)
       return exr_fail(e,EXR_LIMIT,"Hyphenation dictionary input limit exceeded");
     total+=inputs[i].size;
@@ -254,7 +255,7 @@ exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs
   if(!h->dictionaries) { status=exr_fail(e,EXR_MEMORY,"Hyphenation registry allocation failed"); goto failed; }
   h->count=count; h->bytes+=count*sizeof(*h->dictionaries); w.owner=h; w.control=control; w.error=e;
   for(i=0;i<count;i++) {
-    canonical(inputs[i].language,h->dictionaries[i].language);
+    exr_hyphen_language(inputs[i].language,h->dictionaries[i].language);
     for(j=0;j<i;j++) if(!strcmp(h->dictionaries[j].language,h->dictionaries[i].language)) { status=exr_fail(e,EXR_ARGUMENT,"Duplicate hyphenation language key"); goto failed; }
     status=exr_control_poll(control,EXR_STAGE_READ,i,count,e); if(status!=EXR_OK) goto failed;
     status=load(&w,&h->dictionaries[i],&inputs[i]); if(status!=EXR_OK) goto failed;
@@ -274,7 +275,7 @@ exr_status exr_hyphenator_breaks(exr_hyphenator *h,const char *language,const ch
   unsigned char *boundaries=NULL; char key[256]; exr_status status; hy_work w={h,control,e,0};
   if(size>1024) return exr_fail(e,EXR_LIMIT,"Hyphenation word exceeds 1024 UTF-8 bytes");
   if(out) memset(out,0,size+1);
-  if(!h || h->busy || !text || !out || !canonical(language,key)) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant hyphenation query");
+  if(!h || h->busy || !text || !out || !exr_hyphen_language(language,key)) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant hyphenation query");
   if(e) memset(e,0,sizeof(*e));
   while(at<size) {
     uint32_t cp; size_t start=at;

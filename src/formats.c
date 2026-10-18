@@ -304,8 +304,8 @@ typedef struct {
   size_t count, capacity;
   spine_item *spine;
   size_t spine_count, spine_cap;
-  exr_buffer title;
-  int in_title, failed, depth;
+  exr_buffer title,language;
+  int in_title,in_language,have_language,failed,depth;
 } package;
 static void XMLCALL package_start(void *user, const char *full, const char **attrs) {
   package *p = user;
@@ -359,6 +359,9 @@ static void XMLCALL package_start(void *user, const char *full, const char **att
   }
   if (!strcmp(tag, "title"))
     p->in_title = 1;
+  if(!p->have_language && !strcmp(full,"http://purl.org/dc/elements/1.1/|language")) {
+    p->language.size=0; p->in_language=p->depth;
+  }
   if (p->failed)
     XML_StopParser(p->parser, XML_FALSE);
 }
@@ -366,6 +369,13 @@ static void XMLCALL package_end(void *user, const char *tag) {
   package *p = user;
   if (!strcmp(local(tag), "title"))
     p->in_title = 0;
+  if(p->in_language==p->depth) {
+    size_t first=0,last=p->language.size;
+    while(first<last && space((unsigned char)p->language.data[first])) first++;
+    while(last>first && space((unsigned char)p->language.data[last-1])) last--;
+    if(last>first) { memmove(p->language.data,p->language.data+first,last-first); p->language.size=last-first; p->language.data[p->language.size]=0; p->have_language=1; }
+    p->in_language=0;
+  }
   p->depth--;
 }
 static void XMLCALL package_text(void *user, const XML_Char *s, int n) {
@@ -373,6 +383,9 @@ static void XMLCALL package_text(void *user, const XML_Char *s, int n) {
   if (p->in_title && !exr_append(&p->title, s, (size_t)n)) {
     p->failed = 1;
     XML_StopParser(p->parser, XML_FALSE);
+  }
+  if(p->in_language && ((size_t)n>4096-p->language.size || !exr_append(&p->language,s,(size_t)n))) {
+    p->failed=1; XML_StopParser(p->parser,XML_FALSE);
   }
 }
 static void XMLCALL package_entity(void *user, const XML_Char *name, int parameter,
@@ -584,6 +597,7 @@ static void package_free(package *p) {
   free(p->root);
   free(p->toc_id);
   free(p->title.data);
+  free(p->language.data);
 }
 static exr_status archive_open(archive *z, const void *data, size_t n, exr_error *e) {
   if (!mz_zip_reader_init_mem(&z->archive, data, n, 0))
@@ -750,6 +764,10 @@ static exr_status epub_metadata(exr_document *d, archive *z, exr_error *e) {
       goto done;
     }
   }
+  if(p.have_language) {
+    d->language=exr_copy(p.language.data,p.language.size);
+    if(!d->language) { result=exr_fail(e,EXR_MEMORY,"Publication language allocation failed"); goto done; }
+  }
   for (i = 0; i < p.count; i++) {
     exr_resource r;
     if (!exr_resolve_path(p.root, p.items[i].href, path) || !p.items[i].id[0]) {
@@ -906,6 +924,10 @@ exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **
   d->archive = index->archive;
   d->archive_size = index->archive_size;
   d->shared_archive->refs++;
+  if(index->language) {
+    d->language=exr_copy(index->language,strlen(index->language));
+    if(!d->language) { result=exr_fail(e,EXR_MEMORY,"Chapter language allocation failed"); goto done; }
+  }
   if (index->title) {
     d->title = exr_copy(index->title, strlen(index->title));
     if (!d->title) {

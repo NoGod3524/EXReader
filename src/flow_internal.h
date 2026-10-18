@@ -3,6 +3,7 @@
 #define EXR_FLOW_INTERNAL_H
 #include "layout_internal.h"
 #include "text_internal.h"
+#include "hyphen_internal.h"
 #define EXR_PAUSE ((exr_status)100)
 #define EXR_REFLOW ((exr_status)101)
 #define EXR_FRAGMENT_SMALL ((exr_status)102)
@@ -11,6 +12,11 @@ typedef struct { float x,y,width,height; unsigned side; } exr_float;
 typedef struct { exr_float items[EXR_MAX_FLOATS]; size_t count; } exr_float_state;
 #define EXR_GLYPH_TRY_VERTICAL 512u /* Internal UAX #50 Tr probe, cleared before output. */
 #define EXR_GLYPH_RUBY_ITEM 1024u /* Internal atomic inline item, expanded before output. */
+#define EXR_BOUNDARY_AUTO_HYPHEN 16u /* Private raw-source opportunity, not a shaping boundary. */
+typedef struct {
+  size_t start,until,count,points[256];
+  char language[256];
+} exr_hyphen_word;
 typedef struct {
   exr_bidi *analysis;
   size_t *offsets, count;
@@ -22,6 +28,7 @@ typedef struct {
   const exr_style *styles, *paragraph;
   const exr_layout_config *config;
   exr_font *font;
+  exr_hyphenator *hyphenator; /* Borrowed from the owning root pager. */
   exr_error *error;
   float x, width, y, bottom_inset, origin_x, used_inline, inline_end_inset;
   size_t pending;
@@ -52,6 +59,10 @@ typedef struct {
   double measure_width, measure_trailing;
   exr_glyph measure_last;
   int measure_has_last;
+  exr_hyphen_word *word;
+  size_t word_node,word_start,previous_node;
+  uint32_t previous_scalar;
+  int in_word;
 } exr_line_buffer;
 void exr_inline_clear(exr_inline_bidi *bidi);
 unsigned exr_vertical_flags(uint32_t codepoint, exr_text_orientation orientation);

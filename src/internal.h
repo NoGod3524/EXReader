@@ -23,7 +23,7 @@ typedef struct {
   exr_source source;
 } exr_archive_store;
 struct exr_document {
-  char *text, *title;
+  char *text, *title,*language; /* Optional publication-level fallback; element lang wins. */
   size_t size, text_capacity;
   exr_block *blocks;
   size_t count, capacity;
@@ -141,6 +141,7 @@ typedef struct {
 } exr_length; /* value < 0 means auto */
 enum { EXR_CSS_NONE, EXR_CSS_INLINE, EXR_CSS_BLOCK, EXR_CSS_TABLE, EXR_CSS_ROW, EXR_CSS_CELL };
 enum { EXR_CELL_BASELINE,EXR_CELL_TOP,EXR_CELL_MIDDLE,EXR_CELL_BOTTOM };
+enum { EXR_HYPHENS_MANUAL,EXR_HYPHENS_AUTO,EXR_HYPHENS_NONE };
 typedef struct {
   char family[128], source[2048], base[2048];
   size_t chapter;
@@ -156,6 +157,7 @@ typedef struct {
   int border_collapse;
   int vertical_align;
   int float_side,clear_side; /* CSS line-left=1, line-right=2, both=3. */
+  int hyphens;
   unsigned flags;
   exr_direction direction;
   exr_writing_mode writing_mode;

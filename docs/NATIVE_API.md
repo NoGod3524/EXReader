@@ -1363,6 +1363,32 @@ payload，排除分配器开销、借入源字节、临时栈和宿主自有 pro
 当前位图接口只表达原文断点。词典数据的许可由宿主单独管理，不自动下载。
 安装 SDK 的 `examples/hyphen.c` 可输出 `hy-phen-ation`，使用的是原创演示模式。
 
-本步只提供词典构造、断点查询和开放接口，尚未接入排版器自动插入连字符。CSS
-hyphens、文档语言继承、连字在实际断点的重塑形、双向/竖排绘制、续排与 checkpoint
-一致性仍是接下来的验收内容；现有手工软连字符路径保持原行为。
+`exr_layout_create_hyphenated` 在完整布局中使用可选词典；原来的 create/create_ex
+入口保持不启用字典。`exr_pager_set_hyphenator` 在选择访问模式之前调用（包括
+set_cache/get/next），持有词典引用。`exr_session_set_hyphenator` 可在空闲时替换，
+成功后清空旧章节缓存，已有借用指针失效。调用者随后可释放自己的词典引用；
+生成的布局不依赖词典存活。共享同一词典的分页器/会话须由宿主串行使用。
+
+CSS `hyphens` 支持 auto/manual/none/inherit，默认 manual。auto 与已配置词典同时
+存在才生成字典机会；manual 保留显式软连字符；none 也禁用软连字符断行。语言从
+最近元素的 xml:lang/lang 继承，未声明时使用 EPUB 首个非空 dc:language；显式空
+语言阻断继承，非法标签不猜测语言。宿主构造的文档可用相同元素属性。文本单词可
+跨内联样式节点和源位置不连续的浮动节点；保留内部撇号、组合字符及 ZWJ/ZWNJ，
+含数字、非字母起始或超出 1,024 字节/256 标量的词跳过自动查询。当前其他格式的
+语言元数据还没有统一映射；普通 HTML 导入仍是正文提取，不能用于完整 CSS 保真。
+
+实际断点从原始标量重塑形，连字符也参与同一字体回退、OpenType 和宽度拟合；
+可拆开 provisional fi/阿拉伯连字，在新行重新计算连接形式。可完整放下的最后一行
+保持原连字。字素和 GLUE 保护优先，支持 RTL、竖排、table min-content、浮动和
+横竖混排上下文。检查点深拷贝并计入单词缓存；取消/provider 错误不返回部分页面，
+缓存分页器可在错误修正后重试。无可用断点时保留现有字素紧急换行/裁剪策略。
+
+`EXR_GLYPH_GENERATED` 标记含自动生成文字的字形；独立连字符的 start/end 和
+cluster_start/end 都指向原文断点，范围为空，原文不插字符。若字体把它与正文合成
+同一个字形簇，该簇保留正文范围及该标记。搜索/复制/标注继续使用原文 UTF-8 范围。
+公共 glyph 记录和 ABI 不变，private 断词机会位不会出现在公开 boundaries 中。
+
+Swift `EXReaderPager.setHyphenation` 和 JNI `Pager.setHyphenation` 接多语言模式及
+字节预算，每个分页器拥有独立编译数据，避免跨分页器隐含共享。空数组关闭，需在
+next 之前设置；失败保留已装词典。安装示例和两套 smoke 均覆盖实际断词绘制。
+复合词 NEXTLEVEL、拼写替换、NFC 及自动下载词典继续单独跟踪。

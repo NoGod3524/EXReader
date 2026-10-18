@@ -237,10 +237,41 @@ public final class EXReader {
         }
         @Override public void close() { synchronized(gate) { if(handle!=0) { nativeDocumentClose(handle); handle=0; } } }
     }
+    /** Host-owned UTF-8 patterns and their separate dictionary license. No data is downloaded. */
+    public static final class HyphenDictionary {
+        public final String language;
+        private final byte[] patterns;
+        public final int leftMinimum,rightMinimum;
+        public HyphenDictionary(String language,byte[] patterns,int leftMinimum,int rightMinimum) {
+            this.language=Objects.requireNonNull(language);
+            this.patterns=Objects.requireNonNull(patterns).clone();
+            if(leftMinimum<0 || leftMinimum>64 || rightMinimum<0 || rightMinimum>64)
+                throw new IllegalArgumentException("Invalid hyphenation minima");
+            this.leftMinimum=leftMinimum; this.rightMinimum=rightMinimum;
+        }
+    }
     public static final class Pager implements AutoCloseable {
         private final Object gate;
         private long handle;
         private Pager(Object gate) { this.gate=gate; }
+        /** Call before next(); empty dictionaries disable hyphenation. CSS hyphens:auto is required.
+         * byteBudget: 0 uses 32 MiB, otherwise at most 128 MiB. Compiled data belongs to this pager. */
+        public void setHyphenation(HyphenDictionary[] dictionaries,long byteBudget) {
+            Objects.requireNonNull(dictionaries);
+            if(dictionaries.length>64 || byteBudget<0 || byteBudget>128L*1024*1024)
+                throw new IllegalArgumentException("Invalid hyphenation budget or language count");
+            byte[][] languages=new byte[dictionaries.length][],patterns=new byte[dictionaries.length][];
+            int[] minima=new int[dictionaries.length*2];
+            for(int i=0;i<dictionaries.length;i++) {
+                HyphenDictionary d=Objects.requireNonNull(dictionaries[i]);
+                languages[i]=pathBytes(d.language); patterns[i]=d.patterns;
+                minima[i*2]=d.leftMinimum; minima[i*2+1]=d.rightMinimum;
+            }
+            synchronized(gate) {
+                if(handle==0) throw new IllegalStateException("Pager is closed");
+                nativePagerHyphenation(handle,languages,patterns,minima,byteBudget);
+            }
+        }
         /** null at EOF; an engine error invalidates the pager. */
         public ReflowPage next() {
             synchronized(gate) {
@@ -339,6 +370,7 @@ public final class EXReader {
     private static native Node[] nativeDocumentNodes(long handle);
     private static native void nativeDocumentClose(long handle);
     private static native long nativePagerCreate(long handle,byte[] font,int face,float[] page,byte[] css,boolean documentCSS,boolean embeddedFonts,int direction);
+    private static native void nativePagerHyphenation(long handle,byte[][] languages,byte[][] patterns,int[] minima,long byteBudget);
     private static native long nativePagerNext(long handle);
     private static native void nativePagerClose(long handle);
     private static native LayoutSnapshot nativePageSnapshot(long handle);

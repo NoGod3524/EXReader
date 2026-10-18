@@ -44,7 +44,7 @@ jobs:
           ./build/sdk-example/Release/exreader-wave-example.exe stage/examples/audio/pcm.wav
           ./build/sdk-example/Release/exreader-pcm-example.exe stage/examples/audio/pcm.wav
           ./build/sdk-example/Release/exreader-text-example.exe
-          ./build/sdk-example/Release/exreader-hyphen-example.exe
+          ./build/sdk-example/Release/exreader-hyphen-example.exe stage/examples/fonts/primary.ttf hyphen-host-page.png
           ./build/sdk-example/Release/exreader-font-example.exe stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
           ./build/sdk-example/Release/exreader-page-example.exe tests/fixtures/layout.epub C:/Windows/Fonts/arial.ttf pager-host-page.png
           ./build/sdk-example/Release/exreader-lazy-example.exe C:/Windows/Fonts/arial.ttf lazy-host-page.png
@@ -75,7 +75,7 @@ jobs:
           ./build/sdk-example/exreader-wave-example stage/examples/audio/pcm.wav
           ./build/sdk-example/exreader-pcm-example stage/examples/audio/pcm.wav
           ./build/sdk-example/exreader-text-example
-          ./build/sdk-example/exreader-hyphen-example
+          ./build/sdk-example/exreader-hyphen-example stage/examples/fonts/primary.ttf hyphen-host-page.png
           ./build/sdk-example/exreader-font-example stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
           ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf pager-host-page.png
           ./build/sdk-example/exreader-lazy-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf lazy-host-page.png
@@ -95,7 +95,7 @@ jobs:
           ./build/sdk-example/exreader-wave-example stage/examples/audio/pcm.wav
           ./build/sdk-example/exreader-pcm-example stage/examples/audio/pcm.wav
           ./build/sdk-example/exreader-text-example
-          ./build/sdk-example/exreader-hyphen-example
+          ./build/sdk-example/exreader-hyphen-example stage/examples/fonts/primary.ttf hyphen-host-page.png
           ./build/sdk-example/exreader-font-example stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
           ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /System/Library/Fonts/Supplemental/Arial.ttf pager-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-host-page.png

@@ -41,6 +41,7 @@ enum {
   BORDER_COLLAPSE,
   FLOAT_SIDE,
   CLEAR_SIDE,
+  HYPHENS,
   PROPERTIES
 };
 typedef struct {
@@ -228,7 +229,7 @@ static int property(const char *s, size_t n) {
       "max-width",    "margin-top",    "margin-right",   "margin-bottom", "margin-left",
       "padding-top",  "padding-right", "padding-bottom", "padding-left",  "background-color",
       "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction",
-      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align", "border-collapse", "float", "clear"};
+      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align", "border-collapse", "float", "clear", "hyphens"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -617,6 +618,8 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->float_side = parent->float_side;
     else if (prop == CLEAR_SIDE)
       s->clear_side = parent->clear_side;
+    else if (prop == HYPHENS)
+      s->hyphens = parent->hyphens;
     else
       return 0;
     return 1;
@@ -742,6 +745,11 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     else if(!strcmp(v,"bottom")) s->vertical_align=EXR_CELL_BOTTOM;
     else if(!strcmp(v,"sub") || !strcmp(v,"super") || !strcmp(v,"text-top") || !strcmp(v,"text-bottom") ||
             (length(v[0]=='-' ? v+1 : v,s->font_size,root,0,&l) && l.value>=0)) s->vertical_align=EXR_CELL_BASELINE;
+    else return 0;
+  } else if(prop==HYPHENS) {
+    if(!strcmp(v,"none")) s->hyphens=EXR_HYPHENS_NONE;
+    else if(!strcmp(v,"manual")) s->hyphens=EXR_HYPHENS_MANUAL;
+    else if(!strcmp(v,"auto")) s->hyphens=EXR_HYPHENS_AUTO;
     else return 0;
   } else if (prop == FLOAT_SIDE || prop == CLEAR_SIDE) {
     int side;
@@ -926,6 +934,7 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     s->ruby_align = parent->ruby_align;
     s->indent = parent->indent;
     s->border_collapse = parent->border_collapse;
+    s->hyphens = parent->hyphens;
     s->display = EXR_CSS_INLINE;
     /* HTML table defaults; other host-defined elements retain the CSS initial
        baseline value unless the author explicitly inherits it. */
