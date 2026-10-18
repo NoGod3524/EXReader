@@ -1,0 +1,9 @@
+{
+  "seed": 180329,
+  "generated_queries": 4801,
+  "unicode_queries": 1200,
+  "opportunities": 16929,
+  "external_queries": 49,
+  "external_scope": "ASCII anchored conditional left stems; cut>0 and restored stem shorter than parent; documented substring preprocessing",
+  "library_sha256": "6a7478f4479aac0e509a4e88618504dad46bd78f399fe9b96c6772e744321535"
+}

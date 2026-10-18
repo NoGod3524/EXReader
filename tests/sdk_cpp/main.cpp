@@ -27,5 +27,12 @@ int main() {
   std::unique_ptr<exr_hyphenation,decltype(&exr_hyphenation_free)> owned_result(result,exr_hyphenation_free);
   const auto *breaks=exr_hyphenation_breaks(result,&count);
   if(count!=1 || std::strcmp(breaks[0].before,"SS") || std::strcmp(breaks[0].after,"FFI")) return 9;
+  const char compound[]= "efg1hijk/gg=h,3,2\n.abcd1efgg.\nNEXTLEVEL\n.ab1cd.\n.hi1jk.";
+  dictionary={sizeof(dictionary),"und",compound,sizeof(compound)-1,1,1};
+  if(exr_hyphenator_create_patterns(&dictionary,1,0,nullptr,&hyphenator,&error)!=EXR_OK) return 10;
+  owned_hyphenator.reset(hyphenator);
+  if(exr_hyphenator_query(hyphenator,"und","abcdefghijk",11,nullptr,&result,&error)!=EXR_OK) return 11;
+  owned_result.reset(result);breaks=exr_hyphenation_breaks(result,&count);
+  if(count!=4 || breaks[1].point!=4 || std::strcmp(breaks[2].before,"gg") || breaks[2].start!=6 || breaks[2].end!=8) return 12;
   std::printf("C++ consumer: %s ABI %u\n",exr_version(),unsigned(exr_abi_version())); return 0;
 }

@@ -111,6 +111,76 @@ static void casing(void) {
     exr_hyphenation_free(r);exr_hyphenator_free(h);
   }
 }
+static void compound_case(const char *language,exr_hyphen_case_policy policy,const char *rules,const char *word,
+                          const exr_hyphen_break *expected,size_t count) {
+  exr_hyphen_pattern_input input={sizeof(input),language,rules,strlen(rules),1,1};exr_hyphenator *h=NULL;
+  exr_hyphenation *r=NULL;size_t n,i,j;unsigned char bitmap[1025];const exr_hyphen_break *items;
+  OK(exr_hyphenator_create_patterns_ex(&input,1,0,policy,NULL,&h,&error));
+  OK(exr_hyphenator_query(h,language,word,strlen(word),NULL,&r,&error));items=exr_hyphenation_breaks(r,&n);
+  if(n!=count) fprintf(stderr,"compound %s: %zu results, expected %zu\n",word,n,count);
+  CHECK(n==count);OK(exr_hyphenator_breaks(h,language,word,strlen(word),bitmap,NULL,&error));
+  for(i=0;i<n;i++) {
+    CHECK(items[i].point==expected[i].point && items[i].start==expected[i].start && items[i].end==expected[i].end);
+    CHECK(!strcmp(items[i].before,expected[i].before) && !strcmp(items[i].after,expected[i].after));
+  }
+  for(i=0;i<=strlen(word);i++) {
+    int ordinary=0;for(j=0;j<n;j++) if(items[j].point==i && items[j].start==i && items[j].end==i && !items[j].before_size && !items[j].after_size) ordinary=1;
+    CHECK(!!bitmap[i]==ordinary);
+  }
+  exr_hyphenation_free(r);exr_hyphenator_free(h);
+}
+#define P(p) {p,p,p,"","",0,0}
+#define R(p,a,b,x,y) {p,a,b,x,y,sizeof(x)-1,sizeof(y)-1}
+static void compounds(void) {
+  const char *rules="efg1hijk/gg=h,3,2\n.abcd1efgg.\nNEXTLEVEL\n.ab1cd.\n.hi1jk.";
+  const exr_hyphen_break normal[]={P(2),P(4),R(7,6,8,"gg","h"),P(9)},upper[]={P(2),P(4),R(7,6,8,"GG","H"),P(9)};
+  const exr_hyphen_break deletion[]={P(2),P(4),R(7,6,8,"","h"),P(9)},contraction[]={P(2),P(4),R(7,5,8,"x","h"),P(9)};
+  const exr_hyphen_break insertion[]={P(2),P(4),R(7,7,7,"zz","h"),P(9)},same[]={P(2),P(5),R(7,5,8,"fg","h"),P(9)};
+  const exr_hyphen_break canonical[]={P(2),P(7),R(8,4,9,"éf","g"),P(10)},expanded[]={P(2),P(4),R(7,6,8,"ﬃ","h"),P(9)};
+  const exr_hyphen_break no[]={R(7,6,8,"gg","h"),P(9)},minimum[]={P(4),R(7,6,8,"gg","h")},conflict[]={P(2),P(4),P(9)};
+  const exr_hyphen_break interior[]={R(6,6,8,"cc","bc")};
+  compound_case("und",EXR_HYPHEN_CASE_LITERAL,rules,"abcdefghijk",normal,4);
+  compound_case("und",EXR_HYPHEN_CASE_WORD,rules,"ABCDEFGHIJK",upper,4);
+  compound_case("und",EXR_HYPHEN_CASE_WORD,rules,"Abcdefghijk",normal,4);
+  compound_case("und",EXR_HYPHEN_CASE_WORD,rules,"aBCdefghijk",normal,4);
+  compound_case("und",EXR_HYPHEN_CASE_LITERAL,".abcdefg1hijk./=h,7,2\n.abcd1ef.\nNEXTLEVEL\n.ab1cd.\n.hi1jk.","abcdefghijk",deletion,4);
+  compound_case("und",EXR_HYPHEN_CASE_LITERAL,".abcdefg1hijk./x=h,6,3\n.abcd1ex.\nNEXTLEVEL\n.ab1cd.\n.hi1jk.","abcdefghijk",contraction,4);
+  compound_case("und",EXR_HYPHEN_CASE_LITERAL,".abcdefg1hijk./zz=h,8,0\n.abcd1efgzz.\nNEXTLEVEL\n.ab1cd.\n.hi1jk.","abcdefghijk",insertion,4);
+  compound_case("und",EXR_HYPHEN_CASE_LITERAL,".abcdefg1hijk./fg=h,6,3\n.abcde1fg.\nNEXTLEVEL\n.ab1cde.\n.hi1jk.","abcdefghijk",same,4);
+  compound_case("und",EXR_HYPHEN_CASE_LITERAL,".abcdéf1ghijk./éf=g,5,3\n.abcdé1f.\nNEXTLEVEL\n.ab1cdé.\n.gh1ijk.","abcdéfghijk",canonical,4);
+  compound_case("und",EXR_HYPHEN_CASE_LITERAL,".abcdefg1hijk./ﬃ=h,7,2\n.abcd1efffi.\nNEXTLEVEL\n.ab1cd.\n.hi1jk.","abcdefghijk",expanded,4);
+  compound_case("und",EXR_HYPHEN_CASE_LITERAL,"NOHYPHEN cd\nefg1hijk/gg=h,3,2\n.abcd1efgg.\nNEXTLEVEL\n.ab1cd.\n.hi1jk.","abcdefghijk",no,2);
+  compound_case("und",EXR_HYPHEN_CASE_LITERAL,"COMPOUNDLEFTHYPHENMIN 3\nCOMPOUNDRIGHTHYPHENMIN 3\nefg1hijk/gg=h,3,2\n.abcd1efgg.\nNEXTLEVEL\n.ab1cd.\n.hi1jk.","abcdefghijk",minimum,2);
+  compound_case("und",EXR_HYPHEN_CASE_LITERAL,"efg1hijk/gg=h,3,2\nefg1hijk/zz=h,3,2\n.abcd1efg.\nNEXTLEVEL\n.ab1cd.\n.hi1jk.","abcdefghijk",conflict,3);
+  /* A virtual insertion has no invented source boundary inside its two c's. */
+  compound_case("und",EXR_HYPHEN_CASE_LITERAL,"b3aac/aca=bc,1,4\na5bcc/cc=bc,2,2\nNEXTLEVEL","cabbaabccacacbacc",interior,1);
+}
+#undef P
+#undef R
+static int compound_cancel(void *context) { unsigned *remaining=context;return !--*remaining; }
+static void compound_recovery(void) {
+  char rules[300]="a1a/",word[257];exr_hyphenator *h;exr_hyphenation *r;size_t n,i;
+  unsigned remaining;exr_control control={compound_cancel,NULL,&remaining};unsigned char bitmap[257];
+  memset(rules+4,'b',128);strcpy(rules+132,"=,1,2\nNEXTLEVEL\n.b1b.");memset(word,'a',256);word[256]=0;h=create(rules);
+  for(remaining=2;remaining<=8;) {
+    unsigned threshold=remaining;r=(exr_hyphenation *)1;
+    CHECK(exr_hyphenator_query(h,"und",word,256,&control,&r,&error)==EXR_CANCELLED && !r);
+    remaining=threshold;memset(bitmap,0xff,sizeof(bitmap));
+    CHECK(exr_hyphenator_breaks(h,"und",word,256,bitmap,&control,&error)==EXR_CANCELLED);
+    for(i=0;i<sizeof(bitmap);i++) CHECK(!bitmap[i]);
+    remaining=threshold*2;
+  }
+  r=query(h,word);CHECK(exr_hyphenation_breaks(r,&n) && n==255);
+  exr_hyphenation_free(r);exr_hyphenator_free(h);
+  {
+    exr_hyphen_pattern_input input={sizeof(input),"de",rules,0,1,1};char *at=rules+4;
+    for(i=0;i<128;i++) { *at++=(char)0xc3;*at++=(char)0x9f; }strcpy(at,"=,1,2\nNEXTLEVEL");input.size=strlen(rules);
+    OK(exr_hyphenator_create_patterns_ex(&input,1,0,EXR_HYPHEN_CASE_WORD,NULL,&h,&error));r=(exr_hyphenation *)1;
+    CHECK(exr_hyphenator_query(h,"de","AAAA",4,NULL,&r,&error)==EXR_LIMIT && !r);
+    OK(exr_hyphenator_query(h,"de","aaaa",4,NULL,&r,&error));CHECK(exr_hyphenation_breaks(r,&n) && n==3);
+    exr_hyphenation_free(r);exr_hyphenator_free(h);
+  }
+}
 static void limits(void) {
   char rules[256]="a1a/",word[257];size_t i,bytes;exr_hyphenator *h=NULL;exr_hyphenation *result;
   exr_hyphen_pattern_input source={sizeof(source),"und",rules,0,1,1};
@@ -189,4 +259,4 @@ static void failures(void) {
     CHECK(exr_hyphenator_create_patterns(&source,1,bytes-1,NULL,&h,&error)==EXR_LIMIT && !h);
   }
 }
-int main(void) { native();casing();limits();providers();failures();printf("%u discretionary hyphenation checks passed\n",checks);return 0; }
+int main(void) { native();casing();compounds();compound_recovery();limits();providers();failures();printf("%u discretionary hyphenation checks passed\n",checks);return 0; }

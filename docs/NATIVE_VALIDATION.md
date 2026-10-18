@@ -3493,3 +3493,67 @@ bytes, all 87 preceding EPUBs are unchanged, and four local runtime copies agree
 All eight benchmark datasets match the recorded final executable and input bytes.
 The following verification-only commit updates records and skips redundant CI.
 The conditional-compound, tall-row and complete PDF/SDK roadmap remains active.
+
+
+## Conditional compound stem reconstruction (0.18 development)
+
+Explicit first-level discretionary compound rules now reconstruct the left stem
+for recursive root/leaf matching. Original synthetic rules restore abcdefgg from
+abcdefghijk and enable breaks 2/4 in addition to 7/9; the prior implementation
+returns only 7/9. Matching context does not apply a spelling edit unless that
+boundary is actually taken. Float tests exercise an earlier enabled break while
+the later spelling boundary fits and remains untaken.
+
+Public C query/bitmap, Swift/JNI calls, ABI 1, schema 6 and development version
+remain unchanged. Original source ranges are protected across expansion,
+contraction, deletion and insertion; equivalent normalized spelling retains source
+boundaries. Word minima use original graphemes. Iterative parts strictly shrink
+original intervals. Conditional normalization scratch and owned tails share a
+1 MiB byte cap, all parts share existing 64 Mi work/cancellation, and public
+replacement text still shares the 128-scalar/512-byte cap. The MSVC alignment
+branch follows the existing allocator handling for its C headers.
+
+All 116 local Release CTests pass. Native discretionary tests pass 1,851 checks,
+including recursive stems, WORD/literal, NFC/NFD, fold expansion, minima,
+NOHYPHEN, conflicts, unmappable generated interiors, maximum-size words,
+cancellation after work begins, output-limit failure and subsequent valid query.
+The independent immutable source-span oracle passes 4,801 generated queries
+(16,929 opportunities), plus 1,200 Unicode projected queries. A separate external
+libhyphen build agrees on 49 anchored conditional cases after its required
+substring preprocessing. Its cut=0 default extent and restored-stem parent-length
+clamp are outside that comparison; independent/native cases retain EXReader's
+explicit insertion/source semantics. The 5,000-query literal oracle and 3,011
+unmodified Catalan dictionary queries also pass; malformed Hungarian raw input
+continues to be rejected explicitly.
+
+Automatic layout passes 2,532,330 checks. Nine new original EPUBs cover restored
+stems with RTL, vertical, floats, orthogonal flow, tables, inline styles, canonical
+text and WORD case. All 102 preceding EPUBs remain byte-identical; 111 total,
+including the existing expected tall-row limit. Eager layout, cached/uncached
+paging, backward access, hit testing, pixel rendering and checkpoint restoration
+agree. Installed C/C++ and JNI -Xcheck:jni pass with the final library. New smoke
+cases exercise the existing entry points and a restored-stem EPUB break; Swift
+execution and final cross-platform/sanitizer results follow after CI.
+
+Final local Windows DLL: 5,607,052 bytes (+8,372 over the previous verified build),
+SHA256 6a7478f4479aac0e509a4e88618504dad46bd78f399fe9b96c6772e744321535.
+Nine 1 MiB workloads, first 65 pages, three fresh processes per mode measured
+sequentially with no concurrent build/tests, using the preceding Arial font:
+
+| Workload | Enabled first visible (ms) | Peak RSS (bytes) | Turn p50 / p95 (ms) |
+| --- | ---: | ---: | ---: |
+| english | 20.9421 | 14602240 | 4.4201 / 7.6757 |
+| rematch | 17.8265 | 14053376 | 5.7363 / 8.6465 |
+| mixed | 27.6752 | 14512128 | 13.7542 / 18.0511 |
+| auto | 28.4701 | 14290944 | 14.7564 / 17.4456 |
+| insertion | 17.9485 | 14110720 | 6.1492 / 8.6766 |
+| upper | 22.1639 | 14602240 | 10.6457 / 13.5806 |
+| title | 29.6340 | 14647296 | 14.2742 / 16.6212 |
+| lithuanian | 47.8840 | 14725120 | 15.2609 / 17.4915 |
+| conditional | 19.1711 | 14000128 | 8.3184 / 11.0956 |
+
+All eight preceding benchmark books, font hashes and generated counts are
+unchanged. Inputs/binary hashes and raw records are in
+benchmarks/0.18.0-hyphen-stems-windows. Disk cache/background load are uncontrolled;
+these small machine samples do not establish performance on mobile devices.
+Tall-row fragmentation and the complete PDF/SDK roadmap remain active.

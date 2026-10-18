@@ -39,6 +39,18 @@ static int example_main(int argc,char **argv) {
     }
     exr_hyphenation_free(result);exr_hyphenator_free(rewrites);
   }
+  {
+    const char rules[]="efg1hijk/gg=h,3,2\n.abcd1efgg.\nNEXTLEVEL\n.ab1cd.\n.hi1jk.";
+    exr_hyphen_pattern_input input={sizeof(input),"xx",rules,sizeof(rules)-1,1,1};
+    exr_hyphenator *compound=NULL;exr_hyphenation *result=NULL;const exr_hyphen_break *items;size_t count;
+    exr_status status=exr_hyphenator_create_patterns(&input,1,0,NULL,&compound,&error);
+    if(status==EXR_OK) status=exr_hyphenator_query(compound,"xx","abcdefghijk",11,NULL,&result,&error);
+    items=exr_hyphenation_breaks(result,&count);
+    if(status==EXR_OK && (count!=4 || items[0].point!=2 || items[1].point!=4 || items[2].point!=7 || items[3].point!=9 ||
+       items[2].start!=6 || items[2].end!=8 || strcmp(items[2].before,"gg") || strcmp(items[2].after,"h"))) status=EXR_FORMAT;
+    exr_hyphenation_free(result);exr_hyphenator_free(compound);
+    if(status!=EXR_OK) { fprintf(stderr,"compound: %s\n",error.message);exr_hyphenator_free(hyphenator);return 1; }
+  }
   if(argc==3) {
     exr_document *doc=NULL;exr_font *font=NULL;exr_layout *layout=NULL;exr_bitmap bitmap={0};exr_status status;
     exr_attribute attrs[]={{"lang","en"},{"style","hyphens:auto"}};
