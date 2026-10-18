@@ -24,8 +24,9 @@
     "strict_minimum_reference_differences": 780,
     "real_dictionary_compound_exact_matches": 1015,
     "installed_C_Cpp_JNI": "passed; matching DLL hashes",
-    "cross_platform_CI": "pending corrected insertion snapshot",
-    "zero_cut_cursor_and_clip_progress": "passed; original cursor failure reproduced before fix"
+    "cross_platform_CI": "all six jobs passed on corrected insertion snapshot",
+    "zero_cut_cursor_and_clip_progress": "passed; original cursor failure reproduced before fix",
+    "CI_run": "https://github.com/NoGod3524/EXReader/actions/runs/39108949322"
   },
   "scope": "Actual literal replacement shaping/width fitting, original source spans, page carry, checkpoint cloning/budget and Swift/JNI rendering. Rematching changed word remainders, complete changed-text boundary/bidi analysis, casing and conditional compound rewriting remain pending.",
   "performance": "Three fresh processes per mode; each 1 MiB input and first 65 pages. English ordinary rules, original rewrite pattern and unchanged external Catalan dictionary. Disk cache/system background load uncontrolled.",
@@ -194,5 +195,6 @@
     "tools/generate_hyphen_unicode.py": "988d1864fd5cfe51ca453e0785b0b91c9b635c08e398617c8341bb3821601a5e",
     "tools/generate_normalize_unicode.py": "f39b3a8883f59a10a914bac081ba5570488df336d3e70e30d92d9521ef73a74a",
     "tools/generate_unicode.py": "a6988d10f0110e0ebed13a9a35adc346c927bda170a0d31edbf114e284f0a138"
-  }
+  },
+  "code_commit": "4ee39235cf49e723b2f6a975cf3948873c430dcf"
 }
