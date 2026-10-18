@@ -3,7 +3,7 @@
 #include <cstring>
 #include <memory>
 #include <cstdio>
-int main() {
+int main(int argc,char **argv) {
   static_assert(EXR_ABI_VERSION==1,"Expected documented ABI epoch");
   if(exr_abi_version()!=EXR_ABI_VERSION || std::strcmp(exr_version(),EXR_VERSION)) return 1;
   exr_error error{}; exr_document *raw=nullptr;
@@ -34,5 +34,21 @@ int main() {
   if(exr_hyphenator_query(hyphenator,"und","abcdefghijk",11,nullptr,&result,&error)!=EXR_OK) return 11;
   owned_result.reset(result);breaks=exr_hyphenation_breaks(result,&count);
   if(count!=4 || breaks[1].point!=4 || std::strcmp(breaks[2].before,"gg") || breaks[2].start!=6 || breaks[2].end!=8) return 12;
+  if(argc==3) {
+    exr_document *book=nullptr;exr_font *face=nullptr;exr_pager *pager=nullptr;const exr_layout *page=nullptr;exr_bitmap bitmap{};
+    if(exr_document_open(argv[2],&book,&error)!=EXR_OK) return 13;
+    std::unique_ptr<exr_document,decltype(&exr_document_free)> owned_book(book,exr_document_free);
+    if(exr_font_open(argv[1],&face,&error)!=EXR_OK) return 14;
+    std::unique_ptr<exr_font,decltype(&exr_font_free)> owned_font(face,exr_font_free);
+    auto config=exr_layout_config_defaults();config.page={180,100,10,14,20.f/14,0};
+    config.user_css="html,body,p,table,tr,td {margin:0;padding:0;font-size:14px;line-height:20px}";
+    if(exr_pager_create(book,face,&config,&pager,&error)!=EXR_OK) return 15;
+    std::unique_ptr<exr_pager,decltype(&exr_pager_free)> owned_pager(pager,exr_pager_free);
+    if(exr_pager_set_checkpoints(pager,32,8*1024*1024,1,&error)!=EXR_OK ||
+       exr_pager_get(pager,20,&page,&error)!=EXR_OK || !page || exr_pager_get(pager,2,&page,&error)!=EXR_OK || !page) return 16;
+    if(exr_render_page_color(page,face,0,&bitmap,&error)!=EXR_OK) return 17;
+    bool valid=bitmap.width==180 && bitmap.height==100 && exr_pager_statistics(pager).restored_checkpoints>0;
+    exr_bitmap_free(&bitmap);if(!valid) return 18;
+  } else if(argc!=1) return 19;
   std::printf("C++ consumer: %s ABI %u\n",exr_version(),unsigned(exr_abi_version())); return 0;
 }

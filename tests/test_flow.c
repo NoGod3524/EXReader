@@ -247,8 +247,9 @@ static void pagination(void) {
   exr_document_free(doc);
   doc = open_book("layout-tall.epub");
   layout = NULL;
-  CHECK(exr_layout_create(doc, font, &o, &layout, &error) == EXR_LIMIT && !layout &&
-        error.message[0]);
+  OK(exr_layout_create(doc, font, &o, &layout, &error));
+  { size_t pages;exr_layout_pages(layout,&pages);CHECK(pages>1); }
+  geometry(layout,o);exr_layout_free(layout);
   exr_document_free(doc);
   doc = open_book("layout-padding.epub");
   layout = NULL;

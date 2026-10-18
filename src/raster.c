@@ -107,10 +107,13 @@ static exr_status draw_box(exr_bitmap *out,const exr_layout *l,const exr_box *b,
     break;
   }
   if(bw>0) {
+    /* Rasterize the union once, including fractional-width corner pixels. */
+    float top=ceilf(b->y+bw),bottom=fmaxf(top,floorf(b->y+b->height-bw));
+    float right=fmaxf(ceilf(b->x+bw),floorf(b->x+b->width-bw));
     rectangle(out,b->x,b->y,b->width,bw,b->border_color);
-    rectangle(out,b->x,b->y+b->height-bw,b->width,bw,b->border_color);
-    rectangle(out,b->x,b->y,bw,b->height,b->border_color);
-    rectangle(out,b->x+b->width-bw,b->y,bw,b->height,b->border_color);
+    rectangle(out,b->x,bottom,b->width,ceilf(b->y+b->height)-bottom,b->border_color);
+    rectangle(out,b->x,top,bw,bottom-top,b->border_color);
+    rectangle(out,right,top,ceilf(b->x+b->width)-right,bottom-top,b->border_color);
   }
   return EXR_OK;
 }

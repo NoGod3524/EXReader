@@ -70,6 +70,7 @@ typedef struct {
   float unit_block_reference;
   int unit_assigned;
   int fragment_probe;
+  int defer_tall_rows; /* Initial auto-table probe prefers its wider float-free corridor. */
   exr_inline_bidi *bidi;
   const exr_bidi_override *auto_bases; /* Borrowed from this pager line buffer. */
   void *plan_cursor;
@@ -150,11 +151,21 @@ exr_status exr_flow_unit(flow *parent, size_t node, float width,
 exr_status exr_flow_intrinsic(flow *parent,size_t node,float width,int mode,float *out);
 exr_status exr_flow_copy(flow *f, const exr_layout *from, size_t node,
                           float x, float y, float height,float inset);
+/* Speculative paginated BFC: source stays immutable; returned cursor/layout are owned. */
+exr_status exr_flow_fragment(flow *parent,const exr_pager *source,size_t node,float width,
+                            float budget,float bottom,float fixed,exr_pager **out,exr_layout **part);
+exr_pager *exr_flow_cursor_clone(const exr_pager *cursor);
+size_t exr_flow_cursor_size(const exr_pager *cursor);
+size_t exr_flow_cursor_position(const exr_pager *cursor);
+int exr_flow_cursor_finished(const exr_pager *cursor);
+size_t exr_flow_cursor_floats(const exr_pager *cursor);
+
 typedef struct exr_table_cursor exr_table_cursor;
 exr_status exr_table_create(flow *f, size_t node, float x, float width, exr_table_cursor **out);
 exr_status exr_table_step(flow *f, exr_table_cursor *cursor, int *done);
 void exr_table_free(exr_table_cursor *cursor);
 size_t exr_table_memory_size(const exr_table_cursor *cursor);
+size_t exr_table_float_cursors(const exr_table_cursor *cursor);
 exr_table_cursor *exr_table_clone(const exr_table_cursor *cursor);
 size_t exr_table_position(const exr_table_cursor *cursor);
 void exr_table_geometry(const exr_table_cursor *cursor,float *x,float *width);
