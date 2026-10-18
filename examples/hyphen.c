@@ -28,6 +28,15 @@ static int example_main(int argc,char **argv) {
        strcmp(items[0].before,"aa") || strcmp(items[0].after,"aaa")) {
       exr_hyphenation_free(result);exr_hyphenator_free(rewrites);exr_hyphenator_free(hyphenator);return 1;
     }
+    exr_hyphenation_free(result);exr_hyphenator_free(rewrites);result=NULL;rewrites=NULL;
+    if(exr_hyphenator_create_patterns_ex(&alternative,1,0,EXR_HYPHEN_CASE_WORD,NULL,&rewrites,&error)!=EXR_OK ||
+       exr_hyphenator_query(rewrites,"xx","AAAAAAAA",8,NULL,&result,&error)!=EXR_OK) {
+      fprintf(stderr,"%s\n",error.message);exr_hyphenator_free(rewrites);exr_hyphenator_free(hyphenator);return 1;
+    }
+    items=exr_hyphenation_breaks(result,&count);
+    if(count!=1 || strcmp(items[0].before,"AA") || strcmp(items[0].after,"AAA")) {
+      exr_hyphenation_free(result);exr_hyphenator_free(rewrites);exr_hyphenator_free(hyphenator);return 1;
+    }
     exr_hyphenation_free(result);exr_hyphenator_free(rewrites);
   }
   if(argc==3) {

@@ -437,6 +437,7 @@ public final class EXReaderPublication {
     }
 }
 /// Host-owned UTF-8 patterns; dictionary data and its license are supplied separately.
+public enum EXReaderHyphenCasePolicy { case literal, word }
 public struct EXReaderHyphenDictionary {
     public var language: String
     public var patterns: Data
@@ -481,6 +482,10 @@ public final class EXReaderPager {
     /// Before next(); empty dictionaries disable hyphenation. CSS hyphens:auto is required.
     /// Each pager owns independent compiled data. byteBudget=0 uses 32 MiB (maximum 128 MiB).
     public func setHyphenation(_ dictionaries: [EXReaderHyphenDictionary], byteBudget: Int = 0) throws {
+        try setHyphenation(dictionaries, byteBudget: byteBudget, casePolicy: .literal)
+    }
+    /// WORD preserves uniform/initial-title casing with Unicode language/context rules.
+    public func setHyphenation(_ dictionaries: [EXReaderHyphenDictionary], byteBudget: Int = 0, casePolicy: EXReaderHyphenCasePolicy) throws {
         guard dictionaries.count <= 64, byteBudget >= 0, byteBudget <= 128 * 1024 * 1024 else { throw EXReaderError.invalidInput }
         var total = 0
         for d in dictionaries {
@@ -507,7 +512,7 @@ public final class EXReaderPager {
         var error = exr_error()
         let status: exr_status = withExtendedLifetime((languages, patterns)) {
             inputs.withUnsafeMutableBufferPointer {
-                $0.isEmpty ? EXR_OK : exr_hyphenator_create_patterns($0.baseAddress, $0.count, byteBudget, nil, &result, &error)
+                $0.isEmpty ? EXR_OK : exr_hyphenator_create_patterns_ex($0.baseAddress, $0.count, byteBudget, casePolicy == .word ? EXR_HYPHEN_CASE_WORD : EXR_HYPHEN_CASE_LITERAL, nil, &result, &error)
             }
         }
         try check(status, error)

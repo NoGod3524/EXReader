@@ -84,7 +84,7 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
   exr_status status;
   uint32_t cp;
   exr_inline_clear(b);
-  b->first_node = first;b->prepared=1;
+  b->first_node = first;b->prepared=1;b->window_safe=-1;
   for (node = first; node != SIZE_MAX; node = next_text(f, following(f, node))) {
     const exr_node *n = &f->doc->nodes[node];
     if(f->styles[node].hyphens==EXR_HYPHENS_AUTO) risks|=exr_hyphenator_bidi_risk(f->hyphenator,node_language(f,node));
@@ -620,8 +620,17 @@ static exr_status bidi_glyphs(flow *f,exr_display_builder *builder,const exr_gly
 static exr_status bidi_init(flow *f,exr_line_buffer *b,exr_display_state *state,size_t origin) {
   inline_text_cursor cursor={f,state->first_node,0,0};exr_glyph *suffix=NULL;size_t count=0,capacity=0,scanned=0;uint32_t cp;exr_status status=EXR_OK;
   if(state->first_node==SIZE_MAX) return exr_fail(f->error,EXR_FORMAT,"Missing display paragraph source");
-  cursor.at=f->doc->nodes[state->first_node].start;state->window_safe=1;
+  /* Classify source safety once, on demand, per cursor's immutable inline
+     context. Ordinary opens never pay for this optional candidate-view cache. */
+  int cacheable=f->bidi && f->bidi->prepared && f->bidi->first_node==state->first_node;
+  int known=cacheable && f->bidi->window_safe>=0;
+  cursor.at=f->doc->nodes[state->first_node].start;state->window_safe=known ? f->bidi->window_safe : 1;
+  if(known && (!state->window_safe || !b->first_strong)) return EXR_OK;
+  if(known && b->plan && b->plan->content.safe && b->plan_prefix) {
+    state->context=b->plan_prefix;state->context->refs++;return EXR_OK;
+  }
   while(following_inline_scalar(&cursor,&cp)) {
+    if(known && cursor.start>=origin) break;
     if(!(scanned++&255)) {
       status=line_work(f,256);if(status!=EXR_OK) goto done;
       status=exr_control_cancel(&f->config->control,f->error);if(status!=EXR_OK) goto done;
@@ -635,12 +644,16 @@ static exr_status bidi_init(flow *f,exr_line_buffer *b,exr_display_state *state,
     if(exr_ruby_node(f->doc,cursor.node)) suffix[count].flags=EXR_GLYPH_RUBY_ITEM;
     count++;
   }
+  if(state->window_safe && b->first_strong && b->plan && b->plan->content.safe && b->plan_prefix) {
+    state->context=b->plan_prefix;state->context->refs++;goto done;
+  }
   if(count && b->last_hyphen) {
     if(!exr_grow((void **)&suffix,&capacity,count+1,sizeof(*suffix))) { status=exr_fail(f->error,EXR_MEMORY,"Display context allocation failed");goto done; }
     suffix[count]=(exr_glyph){0};suffix[count].start=suffix[count].end=origin;suffix[count].codepoint=(uint32_t)b->last_hyphen;suffix[count].flags=EXR_GLYPH_GENERATED;count++;
   }
   if(count) status=exr_display_patch_create(f->doc,suffix,count,NULL,&state->context,f->error);
 done:
+  if(cacheable && !known && status==EXR_OK) f->bidi->window_safe=state->window_safe;
   free(suffix);return status;
 }
 static int bidi_window_glyphs(const exr_glyph *g,size_t count) {

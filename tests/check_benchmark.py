@@ -70,6 +70,11 @@ def main():
             assert enabled["hyphenation_enabled"] and enabled["hyphen_dictionary_payload_bytes"] > 0
             assert enabled["hyphen_dictionary_input_bytes"] == len("aa1aaaa aaaa1aa") and enabled["generated_glyph_count"] > 0
             assert nonnegative(enabled["hyphen_dictionary_load_ms"])
+        case_book=Path(__file__).resolve().parent/"fixtures"/"hyphen-case-insertion.epub"
+        cased=run([case_book,font,"--paging","--max-pages",2,"--hyphens","de","--hyphen-case","word"],patterns=".bbbb1bbbb./=abcdefghijklmnop,5,0")
+        assert cased["hyphen_case_policy"]=="word" and cased["generated_glyph_count"]>0
+        run([hyphen_book,font,"--hyphen-case","word"],ok=False)
+        run([hyphen_book,font,"--hyphens","en","--hyphen-case","invalid"],ok=False)
         run([hyphen_book, font, "--hyphens", "en"], ok=False, patterns="a/b")
         enlarged = run([hyphen_book, font, "--paging", "--max-pages", 2, "--hyphens", "en"], patterns="aa1aaaa aaaa1aa "*400)
         assert enlarged["hyphen_dictionary_input_bytes"] == len("aa1aaaa aaaa1aa ")*400

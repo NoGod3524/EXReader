@@ -207,7 +207,7 @@ when ignored by a provider. Original bitmap providers remain supported.
 
 Native dictionaries now accept pattern/before=after[,start,cut]. Malformed
 ranges are EXR_FORMAT, not silently truncated. Explicit cut=0 is insertion;
-replacement strings are literal, with no automatic casing. Equal-weight plain
+replacement strings are literal by default; the explicit case policy is described below. Equal-weight plain
 rules win over rewrites; conflicting equal-weight rewrites suppress the point.
 The old breaks API intentionally omits spelling-changing opportunities. Layout
 now selects the richer query when needed, including Swift/JNI pagers. Conditional
@@ -236,7 +236,7 @@ start within a generated side; private raw indices preserve the exact display
 range. Candidates whose left context was consumed by an ordinary break are
 dropped with their automatic bit. Generated sides remain atomic to selection.
 Derived tokens exceeding 256 scalars/1024 bytes use ordinary/emergency fallback.
-Future edit context and generated-side wrapping are covered by the supplements below; language-aware casing remains required work. Installed Swift/JNI smoke now
+Future edit context and generated-side wrapping are covered by the supplements below; the explicit Unicode case policy is described below. Installed Swift/JNI smoke now
 checks actual replacement glyphs with nonempty original source intervals.
 
 A zero-cut after insertion shares its source cluster with the following original
@@ -252,7 +252,7 @@ side. A cluster crossing ready/pending is deferred intact before remeasurement.
 Format controls/selectors are hidden normally. Empty deletions have a distinct
 private flag, omitted from public output, and do not enter Unicode/dictionary input.
 Snapshots include all display states by value; no public record/API size changed.
-Casing and conditional compounds remain open; future
+Conditional compounds remain open; future
 context verification is described in the following supplement.
 
 
@@ -269,7 +269,7 @@ Its bounded two-base retry reports EXR_LIMIT for non-converging discretionary
 layout. Providers must be deterministic and can be queried during preflight.
 Installed JNI/Swift consumers verify actual Latin/Arabic/Han levels, source hits,
 and leading neutral pages whose base changes after a later replacement.
-Casing and conditional compounds remain
+Conditional compounds remain
 open; future neutral/bracket context now uses the following proposal supplement.
 
 
@@ -290,9 +290,9 @@ remain separate. Rebuilt views and shared immutable original bidi analyses avoid
 copying complete text into every cursor/checkpoint. Copy/analysis work is charged
 to the common work budget. No public API/record/ABI/schema changes.
 JNI/Swift smoke verifies page-one plus signs at RTL level 1 even though the later
-replacement that determines them is not on that page. Internal generated-side
-breaks, casing, conditional compounds, tall table-row fragmentation and the
-broader VERSIONING.md roadmap remain open.
+replacement that determines them is not on that page. Generated-side breaks and
+explicit Unicode casing are covered below; conditional compounds, tall table-row
+fragmentation and the broader VERSIONING.md roadmap remain open.
 
 
 ### Generated-side wrapping (0.18 development)
@@ -317,3 +317,37 @@ uses the existing fast path. Empty generated ranges refer to their following
 original L anchor; other cases keep display proposal/analysis. The 1 MiB selected
 and unselected insertion regression checks that ordinary text avoids repeated
 whole-paragraph work without raising resource limits.
+
+
+### Explicit native dictionary case policy (0.18 development)
+
+The additive `exr_hyphenator_create_patterns_ex` symbol accepts LITERAL or WORD.
+The legacy C constructor and existing Swift/JNI methods preserve literal behavior.
+No public record size, ABI epoch (1), schema (6) or version change. The old JNI
+native entry point remains present; a distinct entry point handles the explicit
+policy, so older compiled Java consumers keep their calling contract. Providers
+continue receiving original bytes and emitting literal discretionary strings.
+
+WORD classifies original cased characters and applies Unicode 17 full mappings
+to uniform lower/upper or initial-title words; mixed/uncased words remain literal.
+Logical changed-word context includes unchanged prefix/suffix and both generated
+sides, excluding the display hyphen. Standard Final_Sigma and tr/az/lt conditional
+rules are included. Title preservation can extend end through an original retained
+grapheme when moving/deleting the original initial; point is unchanged. Respect
+the returned source ranges instead of assuming the dictionary cut stayed fixed.
+Additional CLDR lexical tailoring can be supplied by host providers.
+
+Generated text still shares the 128-scalar/512-byte cap, work/result budgets and
+original selection affiliation. Case-sensitive display proposals, Unicode/shape
+state, subsequent rematching and checkpoints use the existing common pipeline.
+The compiled Unicode tables add no runtime component or dictionary download.
+Installed C/C++ examples and two-page Swift/JNI smoke use the new policy while
+retaining the preceding literal smoke checks.
+
+Original inline window safety is classified once on demand in a cursor-local
+cache; shared original bidi arrays remain immutable. Ordinary opens do not
+classify this additional property. Temporary unmatched candidates can retain an accepted safe display
+suffix instead of rescanning the whole source paragraph. Checkpoints rebuild
+original safety and preserve the existing display prefix. The 1 MiB combining-
+mark regression checks forward access, eviction, pixel-stable rewind and restored
+checkpoints; work caps are unchanged.

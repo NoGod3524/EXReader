@@ -1133,6 +1133,18 @@ EXR_API exr_status exr_hyphenator_create_discretionary(const exr_hyphen_discreti
   exr_hyphenator **out,exr_error *error);
 /* 1..64 languages, <=8 MiB each / 32 MiB input total. Payload byte budget is
    0=32 MiB default, <=128 MiB. Input buffers are borrowed only during create. */
+typedef enum {
+  EXR_HYPHEN_CASE_LITERAL = 0, /* Existing behavior; replacement strings are literal. */
+  EXR_HYPHEN_CASE_WORD = 1 /* Preserve uniform lower/upper or initial title case; mixed/uncased stays literal. */
+} exr_hyphen_case_policy;
+/* Native dictionaries only. Unicode 17 full mappings use original/query language
+   and logical changed-word context, including tr/az/lt conditional rules. Title
+   preservation may extend a replacement through the next retained grapheme.
+   Original byte point stays fixed; existing payload/work limits still apply.
+   Legacy create_patterns is equivalent to CASE_LITERAL. Providers stay literal. */
+EXR_API exr_status exr_hyphenator_create_patterns_ex(const exr_hyphen_pattern_input *inputs,
+  size_t count,size_t byte_budget,exr_hyphen_case_policy case_policy,const exr_control *control,
+  exr_hyphenator **out,exr_error *error);
 EXR_API exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs,
   size_t count,size_t byte_budget,const exr_control *control,exr_hyphenator **out,exr_error *error);
 /* breaks has size+1 bytes: 1 permits a break before that UTF-8 byte; all other
