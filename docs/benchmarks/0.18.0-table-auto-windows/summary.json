@@ -1,0 +1,42 @@
+{
+  "before-eager": {
+    "publication_open_ms": 2.345,
+    "first_layout_ms": 8.8237,
+    "first_visible_total_ms": 11.9432,
+    "peak_rss_bytes": 12451840,
+    "turn_total_p50_ms": 0.433,
+    "turn_total_p95_ms": 0.474,
+    "page_count": 18,
+    "glyph_count": 4000
+  },
+  "before-paged": {
+    "publication_open_ms": 2.0989,
+    "first_layout_ms": 5.1238,
+    "first_visible_total_ms": 7.9918,
+    "peak_rss_bytes": 12513280,
+    "turn_total_p50_ms": 0.6735,
+    "turn_total_p95_ms": 1.0237,
+    "page_count": 18,
+    "glyph_count": 4000
+  },
+  "after-eager": {
+    "publication_open_ms": 2.0495,
+    "first_layout_ms": 16.6157,
+    "first_visible_total_ms": 19.5509,
+    "peak_rss_bytes": 12484608,
+    "turn_total_p50_ms": 0.4438,
+    "turn_total_p95_ms": 0.6692,
+    "page_count": 18,
+    "glyph_count": 4000
+  },
+  "after-paged": {
+    "publication_open_ms": 2.1144,
+    "first_layout_ms": 11.5801,
+    "first_visible_total_ms": 15.094,
+    "peak_rss_bytes": 12509184,
+    "turn_total_p50_ms": 0.6633,
+    "turn_total_p95_ms": 0.7824,
+    "page_count": 18,
+    "glyph_count": 4000
+  }
+}

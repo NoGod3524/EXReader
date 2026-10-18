@@ -2473,3 +2473,38 @@ dependency/public ABI change; Windows Release DLL 5,164,761 -> 5,171,978 bytes
 column-edge storage is part of the cursor and every checkpoint's sizeof budget.
 Content-driven intrinsic widths, vertical alignment and collapsed borders remain
 separate pending steps. Platform validation is recorded after the feature push.
+
+Declared-column commit d4d8fb3 passed all six jobs in run 39089391521, including
+the 103-entry desktop/sanitizer suite and desktop installed SDK/mobile builds.
+
+## EPUB intrinsic table widths (0.18 development)
+
+The default auto algorithm measures legal-break and unwrapped content through
+the actual native font/shaping/line pipeline. The fixed CSS alternative uses
+declared columns/first row. Auto vectors use original fonts with known advances:
+content shrinkage, minimum/preferred interpolation, excess space, late wider
+rows, colspan, soft hyphen, font fallback/graphemes, Arabic lam-alef, CJK,
+nested tables, explicit breaks, mixed sizes, block/image definite and percentage
+sizes, padding/borders, centering and vertical flow. The fixture generator now
+produces 33 EPUBs (10 declared-column and 23 additional auto/fixed cases).
+
+Five hundred deterministic generated host tables vary widths, percentages,
+spans, directions, fixed/auto selection and viewport sizes. Tests check bounded
+finite cell geometry and preservation of every original A character. A long
+8192-word row verifies streaming max measurement and final content preservation.
+Random/backwards/evicted pages compare glyph coordinates, hit-test results and
+RGBA bytes against both checkpoint-free replay and complete layout. Cancellation
+during measurement returns no partial layout and a new open succeeds.
+
+The old 0.10 pixel goldens now explicitly request standard full-width fixed CSS;
+the old unnamed host table carries the same inline style. Those goldens are not
+regenerated to bless auto output. Flow/complex-text checks now test real cell
+adjacency/spanning instead of assuming equal default columns. Independent auto
+vectors validate the changed default. All 104 local Windows CTest entries pass.
+
+No dependency, public ABI or schema change. Default Windows Release DLL grows
+from 5,171,978 to 5,177,756 bytes (+5,778). The reproducible 1000-row benchmark in
+PERFORMANCE.md records the measurement cost and peak RSS. Column alignment,
+collapsed borders and remaining CSS/table compatibility stay on the roadmap;
+this checkpoint is not a claim of full CSS table conformance. Platform CI follows
+the feature push.

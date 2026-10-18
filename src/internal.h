@@ -151,6 +151,7 @@ typedef struct {
   int family_owned;
   int leading_relative, align, display, before, after, border_style, writing_declared;
   int ruby_position, ruby_align;
+  int table_fixed;
   unsigned flags;
   exr_direction direction;
   exr_writing_mode writing_mode;

@@ -8,8 +8,10 @@
 
 /* Define EXR_PAGER_GOLDEN_ONLY to record the fixture with the installed 0.10.0 SDK.
    The normal test compares both the old engine snapshot and independent page output.
-   In 0.18.0 only fragment box source ranges were corrected; all 89 gray/RGBA
-   baselines and the other geometry fields retain the original values. */
+   The old equal-column contract is explicitly requested with standard fixed
+   table CSS. Native table-column/intrinsic tests cover the new auto default.
+   In 0.18.0 fragment box source ranges were corrected; the 89 pixel baselines
+   and other fixed-table geometry fields retain the original values. */
 static exr_error error;
 static unsigned checks;
 static exr_font *font;
@@ -183,7 +185,7 @@ static exr_document *host_document(void) {
   add(&c, EXR_NODE_TEXT, i, "a", NULL);
   i = add(&c, EXR_NODE_ELEMENT, p, NULL, "font-size:18px;color:#215321");
   add(&c, EXR_NODE_TEXT, i, "\xcc\x81 AV a AV a AV a", NULL);
-  table = add(&c, EXR_NODE_TABLE, inner, NULL, "margin:4px 0;border:1px solid #304050");
+  table = add(&c, EXR_NODE_TABLE, inner, NULL, "margin:4px 0;border:1px solid #304050;table-layout:fixed;width:100%");
   row = add(&c, EXR_NODE_ROW, table, NULL, NULL);
   cell = add(&c, EXR_NODE_CELL, row, NULL,
              "padding:2px;border:1px solid #506070;background:#ddeeff");
@@ -426,6 +428,7 @@ static void validation(void) {
 #endif
 int main(int argc, char **argv) {
   exr_layout_config config = exr_layout_config_defaults();
+  config.user_css="table {table-layout:fixed;width:100%}";
   FILE *records;
   CHECK(argc == 3);
   fixtures = argv[1]; load_fonts(argv[2]);

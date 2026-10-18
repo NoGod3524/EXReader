@@ -1,0 +1,13 @@
+{
+  "platform": "Windows x64",
+  "compiler": "GCC 16.2.0 Release",
+  "runs_per_mode": 3,
+  "baseline_commit": "65c32d9",
+  "current": "0.18 development auto table widths",
+  "input_sha256": "2c1a58e3098257642376faf34522be4cb004cc3ab721c63a29be4d47e480f1bb",
+  "input_rows": 1000,
+  "font": "tests/fixtures/fonts/primary.ttf",
+  "font_sha256": "ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed",
+  "disk_cache": "uncontrolled",
+  "note": "Raw labels before/after distinguish equal-column baseline from content measurement. Path strings normalized after measurement."
+}
