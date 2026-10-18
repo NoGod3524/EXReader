@@ -65,6 +65,60 @@ static void canonical(void) {
   }
 }
 
+static void marked(const char *rules,const char *word,const char *expected) {
+  exr_hyphenator *h=create("und",rules,0,0);unsigned char map[1025],wanted[1025]={0};size_t i,at=0,size=strlen(word);
+  for(i=0;expected[i];i++) if(expected[i]=='*') wanted[at]=1;else { CHECK(at<size && word[at]==expected[i]);at++; }
+  CHECK(at==size);OK(exr_hyphenator_breaks(h,"und",word,size,map,NULL,&error));
+  for(i=0;i<=size;i++) { if(map[i]!=wanted[i]) fprintf(stderr,"compound %s: byte %zu got %u\n",word,i,map[i]);CHECK(map[i]==wanted[i]); }
+  exr_hyphenator_free(h);
+}
+static void compounds(void) {
+  marked("abcd1efgh\nNEXTLEVEL\n.ab1cd.\n.ef1gh.","abcdefgh","ab*cd*ef*gh");
+  marked("abcd1efgh\nNEXTLEVEL\n.abcdefgh2.","abcdefgh","abcd*efgh");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\n.abcd1efgh.\n.ab1cd.\nNEXTLEVEL\n.e1fgh.","abcdefgh","ab*cd*e*fgh");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 2\nNEXTLEVEL\na1","ab","ab");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\nCOMPOUNDRIGHTHYPHENMIN 2\nabcd1efgh\n.ab1cd.\nNEXTLEVEL\na1\nb1\ne1\nf1\ng1","abcdefgh","ab*cd*e*f*g*h");
+  marked("COMPOUNDLEFTHYPHENMIN 3\nCOMPOUNDRIGHTHYPHENMIN 3\nabcd1efgh\nNEXTLEVEL\n.ab1cd.\n.ef1gh.","abcdefgh","abcd*efgh");
+  marked("LEFTHYPHENMIN 5\nabcd1efgh\nNEXTLEVEL\n.ab1cd.\n.ef1gh.","abcdefgh","abcdef*gh");
+  marked("a1","aaaa'aaaa","aaaa'aaaa");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\na1","aaaa'aaaa","a*a*a*a'a*a*a*a");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\na1","aaaa-aaaa","a*a*a*a-a*a*a*a");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\na1","aaaa–aaaa","a*a*a*a–a*a*a*a");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\na1","aaaa’aaaa","a*a*a*a’a*a*a*a");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\nNOHYPHEN xy\nNEXTLEVEL\na1\nb1\nx1\ny1\nc1","abxycd","a*bx*yc*d");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\nNOHYPHEN aa\nNEXTLEVEL\na1","aaaaaa","aaaaaa");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\nNOHYPHEN x\nNOHYPHEN y\nNEXTLEVEL\na1\nb1\nx1\ny1\nc1","abxycd","a*b*xyc*d");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\nNEXTLEVEL\nLEFTHYPHENMIN 5\nNOHYPHEN a\na1","aaaaaa","a*a*a*a*a*a");
+  marked("LEFTHYPHENMIN 0\nRIGHTHYPHENMIN 0\na1","aaaaaa","aa*a*a*aa");
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\nNOHYPHEN é\nNEXTLEVEL\na1\né1","aéa","aéa");
+}
+
+static int compound_cancel(void *context) { return ++*(unsigned *)context>=2; }
+static void compound_limits(void) {
+  char word[257],rules[512];unsigned char out[257];size_t i,n=0,bytes;unsigned calls=0;exr_hyphenator *h=NULL;
+  exr_control control={compound_cancel,NULL,&calls};exr_hyphen_pattern_input source;
+  memset(word,'a',256);word[256]=0;
+  h=create("und","LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\n.a1\nNEXTLEVEL\na1",0,0);
+  OK(exr_hyphenator_breaks(h,"und",word,256,out,NULL,&error));for(i=0;i<=256;i++) CHECK(out[i]==(i && i<256));
+  CHECK(exr_hyphenator_breaks(h,"und",word,256,out,&control,&error)==EXR_CANCELLED && calls==2);
+  for(i=0;i<=256;i++) CHECK(!out[i]);
+  OK(exr_hyphenator_breaks(h,"und",word,256,out,NULL,&error));CHECK(out[128]);exr_hyphenator_free(h);
+  n=(size_t)snprintf(rules,sizeof(rules),"NOHYPHEN ");
+  for(i=0;i<64;i++) { if(i) rules[n++]=',';rules[n++]='a'; }
+  strcpy(rules+n,"\nNEXTLEVEL\na1");h=create("und",rules,0,0);bytes=exr_hyphenator_memory_size(h);exr_hyphenator_free(h);h=NULL;
+  source=input("und",rules,0,0);OK(exr_hyphenator_create_patterns(&source,1,bytes,NULL,&h,&error));exr_hyphenator_free(h);h=NULL;
+  CHECK(exr_hyphenator_create_patterns(&source,1,bytes-1,NULL,&h,&error)==EXR_LIMIT && !h);
+  rules[n++]=',';rules[n++]='a';strcpy(rules+n,"\nNEXTLEVEL\na1");source=input("und",rules,0,0);
+  CHECK(exr_hyphenator_create_patterns(&source,1,0,NULL,&h,&error)==EXR_LIMIT && !h);
+  marked("LEFTHYPHENMIN 1\nRIGHTHYPHENMIN 1\nNOHYPHEN a\nNOHYPHEN\nNEXTLEVEL\na1","aaaa","a*a*a*a");
+  source=input("und","UTF-16\na1",1,1);CHECK(exr_hyphenator_create_patterns(&source,1,0,NULL,&h,&error)==EXR_UNSUPPORTED && !h);
+  n=(size_t)snprintf(rules,sizeof(rules),"NOHYPHEN ");memset(rules+n,'a',128);strcpy(rules+n+128,"\nNEXTLEVEL\na1");
+  h=create("und",rules,1,1);OK(exr_hyphenator_breaks(h,"und",word,256,out,NULL,&error));for(i=0;i<=256;i++) CHECK(!out[i]);exr_hyphenator_free(h);h=NULL;
+  memset(rules+n,'a',129);strcpy(rules+n+129,"\nNEXTLEVEL\na1");source=input("und",rules,1,1);
+  CHECK(exr_hyphenator_create_patterns(&source,1,0,NULL,&h,&error)==EXR_LIMIT && !h);
+  source=input("und","NOHYPHEN \xff\nNEXTLEVEL\na1",1,1);CHECK(exr_hyphenator_create_patterns(&source,1,0,NULL,&h,&error)==EXR_ENCODING && !h);
+}
+
 typedef struct { unsigned calls,releases; int mode,stop; exr_hyphenator *self; } host;
 static exr_status provider(void *context,const char *language,const char *word,size_t size,unsigned char *out,const exr_control *control,exr_error *e) {
   host *s=context; (void)word; (void)control; (void)e; s->calls++; CHECK(!strcmp(language,"en-us"));
@@ -96,7 +150,7 @@ static void providers(void) {
   exr_hyphenator_free(h); CHECK(s.releases==1);
 }
 static void failures(void) {
-  const char *invalid[]={"a11b","12","a/b","\\patterns{a1b}","NEXTLEVEL","COMPOUNDLEFTHYPHENMIN 2","LEFTHYPHENMIN","RIGHTHYPHENMIN x","UTF-8\na1\xff"};
+  const char *invalid[]={"a11b","12","a/b","\\patterns{a1b}","NEXTLEVEL NEXTLEVEL","COMPOUNDLEFTHYPHENMIN x","NOHYPHEN -,,x","NOHYPHEN -,","LEFTHYPHENMIN","RIGHTHYPHENMIN x","UTF-8\na1\xff"};
   size_t j; exr_hyphenator *h=NULL; exr_hyphen_pattern_input i=input("en","a1b",1,1); unsigned char out[1025]; char large[1026];
   for(j=0;j<sizeof(invalid)/sizeof(*invalid);j++) { i=input("en",invalid[j],1,1); CHECK(exr_hyphenator_create_patterns(&i,1,0,NULL,&h,&error)!=EXR_OK && !h && error.message[0]); }
   i=input("en","a1b",1,1); CHECK(exr_hyphenator_create_patterns(&i,1,1,NULL,&h,&error)==EXR_LIMIT && !h);
@@ -143,4 +197,4 @@ static void generated(void) {
     exr_hyphenator_free(h);
   }
 }
-int main(void) { basic(); unicode(); canonical(); providers(); failures(); generated(); printf("%u hyphenation dictionary checks passed\n",checks); return 0; }
+int main(void) { basic(); unicode(); canonical(); compounds(); compound_limits(); providers(); failures(); generated(); printf("%u hyphenation dictionary checks passed\n",checks); return 0; }

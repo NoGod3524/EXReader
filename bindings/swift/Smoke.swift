@@ -231,6 +231,20 @@ import CEXReader
             precondition(!inserted.isEmpty && inserted.allSatisfy { $0.start == $0.end && $0.start % 8 == 3 })
             let bitmap = try page.render(); precondition(bitmap.width == 55)
         }
+        do {
+            let publication = try EXReaderPublication(file: root.appendingPathComponent("books/hyphen-compound.epub"))
+            let chapter = try publication.load(part: 0)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            var config = EXReaderLayoutConfig()
+            config.page.width = 80; config.page.height = 100; config.page.margin = 10; config.page.font_size = 14
+            config.userCSS = "html,body,p {margin:0;padding:0;font-size:14px;line-height:20px}"
+            let pager = try chapter.pager(font: font, config: config)
+            try pager.setHyphenation([EXReaderHyphenDictionary(language: "xx", patterns: Data("aaaa1aaaa\n.aa1aa.\nNEXTLEVEL\n.a1a.".utf8), leftMinimum: 1, rightMinimum: 1)])
+            guard let page = try pager.next() else { preconditionFailure("missing compound page") }
+            let inserted = page.glyphs.filter { ($0.flags & 2048) != 0 }
+            precondition(inserted.contains { $0.start == 5 } && inserted.allSatisfy { $0.start == $0.end && (1...7).contains($0.start % 9) })
+            let bitmap = try page.render(); precondition(bitmap.width == 80)
+        }
         print("Swift SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed")
     }
 }

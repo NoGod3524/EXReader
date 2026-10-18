@@ -2844,3 +2844,49 @@ byte mapping, macOS Swift canonical-word rendering, ASan/UBSan with leak checks,
 Android ARM64, and iOS/iPadOS device/simulator libraries and Swift type checking.
 All 146 source hashes match the committed snapshot. Benchmark binary hashes
 match the measured executable; the following record-only commit updates no code.
+
+
+## Native compound dictionary rules (0.18.0 development)
+
+Two NEXTLEVEL rule sets now separate recursive compound segmentation from
+ordinary leaf rules. Compound anchors are reapplied to each part; ordinary even
+weights cannot erase structural cuts. A bounded 256-part disjoint work queue
+avoids recursive C stack use. Both levels share the one-million-node ceiling,
+262,144 source-pattern ceiling, payload budget and 64 Mi work budget. Explicit
+and implicit separators, component/global minima and NOHYPHEN sequence
+boundaries are checked against original grapheme/source boundaries. Protected
+apostrophes can segment components without allowing a visible GLUE break.
+
+The native dictionary test has 333,037 checks, including recursive peeling at
+the 256-scalar limit, cancellation/retry, exact payload budgets, NOHYPHEN limits
+and malformed input. The automatic-layout test has 223,015 checks across 27
+original EPUBs and host trees. The two new long EPUBs verify compound rules and
+curly-apostrophe components; generated glyphs retain original byte positions.
+Full layout, cached/uncached pages and backward checkpoint replay agree on
+pixels, glyphs and hit positions. All 111 native tests pass locally. Installed
+C/C++ consumers and JNI with -Xcheck:jni pass against the final installed DLL.
+Swift uses the same compound fixture in platform CI.
+
+The new independent slow literal-overlay/recursive oracle agrees on all 10,075
+curated/generated queries (seed 180327), and is a normal desktop CTest. It is
+excluded from sanitizer CTest because ctypes cannot load an ASan library into
+an unsanitized Python host; the C queue/budget/compound tests remain covered
+there (110 tests). Optional external libhyphen comparison uses source commit
+c299444629416f90625a2e56fdfc4efdca131ecc and its official substrings.pl
+preprocessor, with duplicate pattern weights max-merged for that reference.
+Native and literal-oracle pattern inputs are unchanged.
+
+9,295 generated queries agree exactly with that reference. In the remaining
+780, libhyphen's right-minimum filtering allows a first-byte break on a short
+word/leaf; native matching strictly enforces the declared inward minimum and
+agrees with the literal oracle. These differences are classified explicitly,
+not counted as exact matches. All 1,015 separator queries using five unmodified
+real dictionaries agree with the prepared reference. The separate Pyphen 0.17.2
+word oracle agrees on 19,051 words / 26,761 breaks across English, French,
+Spanish, Italian and Russian, with no metadata projection. The canonical
+source-offset oracle still passes all 47,955 queries.
+
+Exact source/binary hashes and reference results are recorded under
+benchmarks/0.18.0-hyphen-compounds-windows. No external dictionary, libhyphen or
+Perl code is shipped or linked. Spelling-changing replacements remain pending;
+the existing provider bitmap expresses positions, not replacement text.

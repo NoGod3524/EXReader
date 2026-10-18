@@ -592,6 +592,11 @@ if(EXR_BUILD_TESTS)
     endif()
   endforeach()
   if(Python3_FOUND)
+    # ctypes cannot load an ASan library into an unsanitized Python runtime.
+    # The native C compound and queue/budget regressions still run under ASan.
+    if(NOT EXR_SANITIZE)
+      add_test(NAME native-hyphen-compound-oracle COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_hyphen_compound.py $<TARGET_FILE:exreader>)
+    endif()
     if(EXR_BUILD_TOOLS)
       add_test(NAME native-benchmark COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_benchmark.py $<TARGET_FILE:exreader-benchmark> ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf)
     endif()
@@ -654,7 +659,7 @@ install(FILES tests/fixtures/shaping/shaping.ttf tests/fixtures/shaping/README.m
 
 install(FILES tests/fixtures/audio/pcm.wav DESTINATION examples/audio)
 install(FILES tests/fixtures/audio/metadata.m4b DESTINATION examples/audio)
-install(FILES tests/fixtures/layout.epub tests/fixtures/hyphen-long.epub tests/fixtures/hyphen-canonical.epub DESTINATION examples/books)
+install(FILES tests/fixtures/layout.epub tests/fixtures/hyphen-long.epub tests/fixtures/hyphen-canonical.epub tests/fixtures/hyphen-compound.epub DESTINATION examples/books)
 install(FILES tests/fixtures/float-both.epub tests/fixtures/float-long-main.epub tests/fixtures/float-bfc-stream.epub DESTINATION examples/books)
 
 install(FILES include/module.modulemap DESTINATION include)

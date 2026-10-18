@@ -228,6 +228,22 @@ public final class Smoke {
                 check(inserted>0 && page.render().width==55);
             }
         }
+        EXReader.LayoutConfig compoundConfig=new EXReader.LayoutConfig();
+        compoundConfig.width=80; compoundConfig.height=100; compoundConfig.margin=10; compoundConfig.fontSize=14;
+        compoundConfig.userCSS="html,body,p {margin:0;padding:0;font-size:14px;line-height:20px}";
+        try(EXReader.Publication compoundBook=new EXReader.Publication(root.resolve("books/hyphen-compound.epub").toString());
+            EXReader.Document compoundChapter=compoundBook.load(0);
+            EXReader.Pager compoundPager=compoundChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,compoundConfig)) {
+            compoundPager.setHyphenation(new EXReader.HyphenDictionary[]{new EXReader.HyphenDictionary("xx",
+                "aaaa1aaaa\n.aa1aa.\nNEXTLEVEL\n.a1a.".getBytes(StandardCharsets.UTF_8),1,1)},0);
+            try(EXReader.ReflowPage page=compoundPager.next()) {
+                check(page!=null);boolean compoundFirstBreak=false;
+                for(EXReader.Glyph g:page.snapshot().glyphs) if((g.flags&2048)!=0) {
+                    check(g.start==g.end && g.start%9>=1 && g.start%9<=7);compoundFirstBreak|=g.start==5;
+                }
+                check(compoundFirstBreak && page.render().width==80);
+            }
+        }
         System.out.println("JNI SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed");
     }
 }

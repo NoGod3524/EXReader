@@ -772,7 +772,7 @@ static const char *node_language(const flow *f,size_t node) {
   }
   return f->doc->language ? f->doc->language : "";
 }
-static int apostrophe(uint32_t cp) { return cp=='\'' || cp==0x2019; }
+static int word_joiner(uint32_t cp) { return cp=='\'' || cp==0x2019 || cp=='-' || cp==0x2013; }
 static int word_after(inline_text_cursor cursor) {
   uint32_t cp; return following_inline_scalar(&cursor,&cp) && exr_hyphen_word_kind(cp)!=0;
 }
@@ -783,7 +783,7 @@ static exr_status word_points(flow *f,exr_line_buffer *b,const char key[256]) {
   w->start=b->word_start; w->until=b->word_start; w->count=0; memcpy(w->language,key,strlen(key)+1);
   while(following_inline_scalar(&cursor,&cp)) {
     unsigned kind=exr_hyphen_word_kind(cp); size_t size=cursor.at-cursor.start;
-    if(!kind && !(apostrophe(cp) && previous && word_after(cursor))) break;
+    if(!kind && !(word_joiner(cp) && previous && word_after(cursor))) break;
     if(count==256 || size>sizeof(text)-bytes) { w->until=SIZE_MAX; return EXR_OK; }
     offsets[count]=bytes; sources[count++]=cursor.start;
     memcpy(text+bytes,f->doc->text+cursor.start,size); bytes+=size; w->until=cursor.at;
@@ -798,7 +798,7 @@ static exr_status word_points(flow *f,exr_line_buffer *b,const char key[256]) {
 static exr_status hyphenate_scalar(flow *f,exr_line_buffer *b,exr_glyph *g) {
   unsigned kind=exr_hyphen_word_kind(g->codepoint); size_t i; char key[256];
   inline_text_cursor after={f,g->node,g->end,0}; exr_status status;
-  if(!kind && !(apostrophe(g->codepoint) && b->in_word && exr_hyphen_word_kind(b->previous_scalar) && word_after(after))) {
+  if(!kind && !(word_joiner(g->codepoint) && b->in_word && exr_hyphen_word_kind(b->previous_scalar) && word_after(after))) {
     b->in_word=0; if(b->word) b->word->until=0; return EXR_OK;
   }
   if(!b->in_word) { b->word_node=g->node; b->word_start=g->start; b->in_word=1; }

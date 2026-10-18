@@ -234,3 +234,10 @@ in the SDK. The generator pins all inputs by SHA-256 and uses the Python standar
 library, not the host Python Unicode version. Reproduce with
 `python tools/generate_normalize_unicode.py --download --check`.
 These Unicode 17 data do not replace PDF SASLprep's mandated Unicode 3.2 tables.
+
+`tools/check_hyphen_compound.py` has an independent literal-overlay development
+oracle. It can additionally compare with a caller-supplied libhyphen build and
+its official substring preprocessor. Neither libhyphen, its Perl script nor its
+patterns are linked into or distributed with EXReader. External dictionaries
+retain their separate data licenses; raw input hashes and explicit reference
+preprocessing are recorded in verification output.
