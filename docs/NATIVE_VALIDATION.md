@@ -2283,3 +2283,24 @@ Code commit f3727ea passes all six jobs in CI run 39078721295: Windows,
 Linux and macOS native tests/installed SDKs, Android ARM64, Apple device/simulator
 builds and ASan/UBSan. Mobile builds do not establish device application/runtime
 validation.
+
+## Milestone 0.18 development: multidimensional and cubic sampled functions
+
+Type 0 now accepts 1–32 input axes and Order 1/3 with 1–4 outputs. Samples
+remain packed, with input zero varying fastest. Cardinal cubic convolution
+(a=-1/2) replicates boundary samples, uses linear interpolation for two-point
+axes, and applies Decode before final Range clipping, including overshoot.
+The graph retains its 1 MiB payload budget. Grid multiplication is checked
+before allocation; worst-case interpolation has at most 65536 neighboring
+sample combinations and is charged to vector/image work budgets. Degenerate
+axes do not multiply work. Evaluation checks cancellation every 256 neighbors.
+
+Regressions cover all eight bit depths on two-axis RGB tables, a non-square
+grid, trilinear interpolation, 32 axes with singleton/zero-width dimensions,
+independent Domain/Encode/Decode mapping, cubic interior/endpoints/overshoot,
+one/two/three-point axes, tensor cubic interpolation, malformed dimensions
+and preallocation work limits. Ten linear fixtures (30 path/XObject/inline
+interiors) agree with MuPDF 1.28.2 within one byte per channel. Cubic tests use
+analytical expectations; no independent cubic-renderer equivalence is claimed.
+All 100 local Windows suites pass. No runtime dependency or ABI/schema/version
+change. Platform CI is checked separately after pushing this implementation.
