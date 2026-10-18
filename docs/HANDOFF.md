@@ -176,6 +176,7 @@ EPUB以EPUB3.3阅读链路、CSS2.2布局与所声明的CSS Text/Writing Modes/R
 | `tests/fixtures/pdf-blend/` | 原创 PDF、mask、预期 RGBA、外部原始像素、manifest/oracle |
 | `tools/pdf_group_reference.py` | 独立 Decimal 规范参考及可运行核验 |
 | `tools/generate_pdf_blend_fixtures.py` | 原创场景及开发期参考生成；外部工具仅用于此流程 |
+| `tools/generate_knockout_fixtures.py` | 42 个挖空场景与 Decimal(40) 独立参考，`--check` 可重现 |
 | `tools/benchmark_pdf_blend.py` | 单页打开/首画/重画/峰值，支持 --case 与新进程重复 |
 | `tests/fuzz_parse.c`、`docs/FUZZING.md` | 确定性解析器 fuzz 驱动（种子变异、崩溃输入落盘、CI `fuzz` 作业） |
 | `src/flow.c`、`pager.c`、`pager_table.c`、`floats.c`、`layout.c` | EPUB 行排版、检查点、表格/浮动续排与布局 |

@@ -24,7 +24,7 @@ static exr_canvas *canvas(unsigned width,unsigned height,uint32_t background) {
   exr_canvas_config config={0};exr_canvas *c=NULL;config.width=width;config.height=height;config.background=background;OK(exr_canvas_create(&config,&c,&error));return c;
 }
 static void references(void) {
-  const char *names[]={"flat","primitives","state","groups","compound","ap-groups","nonisolated","ap-nonisolated"};unsigned test,alpha;
+  const char *names[]={"flat","primitives","state","groups","compound","ap-groups","nonisolated","ap-nonisolated","knockout","knockout-nonisolated","knockout-shapes"};unsigned test,alpha;
   for(test=0;test<sizeof(names)/sizeof(*names);test++) {
     exr_fixed_document *d=open_book(names[test]);size_t page_count,mask_size;const exr_fixed_page *pages=exr_fixed_pages(d,&page_count);char name[64];unsigned char *mask;
     CHECK(page_count==1);snprintf(name,sizeof(name),"%s.mask",names[test]);mask=load(name,&mask_size);

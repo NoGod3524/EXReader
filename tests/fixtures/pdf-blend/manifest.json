@@ -315,6 +315,29 @@
     "state-pdfium-white.rgba": "313cb738c5b5413b673ecacff93894cae315b1c203c0950927b78531873575e9",
     "state-white.rgba": "dea25af5e08aa01e7568ec9eeb8ab447a084b90297c590b0dd9275a1265aa84a",
     "state.mask": "4fd49f9bdb750657b15e232707d8a60711b26d00a9875aa77faf67a6480fa8ea",
-    "state.pdf": "55cbfe5629bcd1ccd73549e377eaa1da0628a27dcd7533a5cc5370ff2e255352"
-  }
+    "state.pdf": "55cbfe5629bcd1ccd73549e377eaa1da0628a27dcd7533a5cc5370ff2e255352",
+    "knockout.pdf": "3d29dd7410814cdaafd4ebf94483b72c57be89bf566344d191b19da84c9de9bd",
+    "knockout-nonisolated.pdf": "3427f9b8d2f1743190db089b4b5ae5e010833c8ae684f51a0d595b8de23dcbb5",
+    "knockout-shapes.pdf": "928ad4e5d7c42a78c76b6fdfcab63f46587db5436c8f192a0772b42f39bea0c7"
+  },
+  "knockout_scenes": [
+    {
+      "file": "knockout.pdf",
+      "isolation": "isolated",
+      "scenes": 16,
+      "reference": "Decimal(40) ISO 32000-1 11.4.5"
+    },
+    {
+      "file": "knockout-nonisolated.pdf",
+      "isolation": "non-isolated",
+      "scenes": 16,
+      "reference": "Decimal(40) ISO 32000-1 11.4.5"
+    },
+    {
+      "file": "knockout-shapes.pdf",
+      "isolation": "isolated",
+      "scenes": 10,
+      "reference": "Decimal(40) ISO 32000-1 11.4.5"
+    }
+  ]
 }
