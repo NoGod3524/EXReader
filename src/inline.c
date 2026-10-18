@@ -356,7 +356,7 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
       !inline_grow(l, start + result.glyph_count)) {
     status = EXR_LIMIT; goto done;
   }
-  memcpy(l->glyphs + start, result.glyphs, result.glyph_count * sizeof(*l->glyphs));
+  if(result.glyph_count) memcpy(l->glyphs + start, result.glyphs, result.glyph_count * sizeof(*l->glyphs));
   l->glyph_count = start + result.glyph_count;
 done:
   free(positions); free(result.glyphs);
