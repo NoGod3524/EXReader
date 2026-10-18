@@ -145,3 +145,15 @@ letters and verifies table coordinates through EOF. Tables without external floa
 keep their existing pagination path. Unbreakable table row groups still must fit a
 page. Checkpoint cloning owns and budgets all pending continuation contexts;
 no public record size, ABI epoch or schema changes.
+
+
+The optional exr_hyphenator adds standalone C provider/pattern-query functions.
+Existing layout_config, glyph and pager structures are unchanged, ABI epoch 1
+and schema 6 remain. Host callback ownership transfers only on successful
+create. Native pattern objects own their packed trie and language keys; source
+buffers can be released after create. Context lifetimes are serialized, with
+reentry rejected. Native UTF-8 byte offsets refer to the original word even
+when Unicode full case folding expands characters. The installed C example is
+built/run independently by desktop CI. No language data or new binary dependency
+is shipped. This step does not enable automatic hyphens in any layout; pager,
+session, CSS and Swift/JNI integration are subsequent work.

@@ -1075,6 +1075,44 @@ EXR_API exr_status exr_shape_vertical(exr_font *font, size_t font_index, const c
 EXR_API exr_status exr_glyph_matrix(const exr_glyph *glyph, double matrix[6], exr_error *error);
 EXR_API exr_layout_options exr_layout_defaults(void);
 EXR_API exr_layout_config exr_layout_config_defaults(void);
+/* Optional, immutable language dictionaries. No dictionary is built in or
+   downloaded. Each dictionary's data/license is supplied by the host. */
+typedef struct exr_hyphenator exr_hyphenator;
+typedef exr_status (*exr_hyphenate_fn)(void *context,const char *language,
+  const char *word,size_t size,unsigned char *breaks,const exr_control *control,exr_error *error);
+typedef struct {
+  size_t struct_size;
+  exr_hyphenate_fn hyphenate;
+  exr_context_release_fn release;
+  void *context;
+} exr_hyphen_provider;
+/* UTF-8 TeX-style pattern tokens, optional UTF-8 header and HYPHENMIN directives.
+   Digits 0..9 give weights, '.' anchors word edges, %/# introduce comments.
+   Raw TeX commands, compound NEXTLEVEL and spelling replacements are rejected;
+   a custom provider may implement these. left/right=0 uses file/default=2. */
+typedef struct {
+  size_t struct_size;
+  const char *language; /* ASCII BCP47-style key; NULL/empty is the untagged key. */
+  const void *patterns;
+  size_t size;
+  unsigned left_min,right_min; /* Minimum graphemes retained at each edge, <=64. */
+} exr_hyphen_pattern_input;
+EXR_API exr_status exr_hyphenator_create(const exr_hyphen_provider *provider,
+  exr_hyphenator **out,exr_error *error);
+/* 1..64 languages, <=8 MiB each / 32 MiB input total. Payload byte budget is
+   0=32 MiB default, <=128 MiB. Input buffers are borrowed only during create. */
+EXR_API exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs,
+  size_t count,size_t byte_budget,const exr_control *control,exr_hyphenator **out,exr_error *error);
+/* breaks has size+1 bytes: 1 permits a break before that UTF-8 byte; all other
+   bytes are 0, including 0/size and grapheme interiors. Size <=1024 bytes / 256
+   scalars. Errors on valid-sized requests clear breaks. Provider output is
+   checked; language tags are case-insensitive with parent-tag lookup. Native
+   patterns use full Unicode 17 case folding (Turkic overrides for tr/az).
+   Canonical normalization is not performed. Serialize use/lifetime per object. */
+EXR_API exr_status exr_hyphenator_breaks(exr_hyphenator *hyphenator,const char *language,
+  const char *word,size_t size,unsigned char *breaks,const exr_control *control,exr_error *error);
+EXR_API size_t exr_hyphenator_memory_size(const exr_hyphenator *hyphenator);
+EXR_API void exr_hyphenator_free(exr_hyphenator *hyphenator);
 EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,
                                      const exr_layout_options *options, exr_layout **out,
                                      exr_error *error);

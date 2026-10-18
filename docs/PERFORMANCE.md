@@ -290,3 +290,26 @@ Windows / GCC 16.2 Release，primary.ttf，默认基准页面，三次新进程�
 ```text
 exreader-benchmark docs/benchmarks/0.18.0-table-floats-windows/bfc-1048576.epub tests/fixtures/fonts/primary.ttf --paging --max-pages 0
 ```
+
+
+## 可选断词词典模块（0.18.0 开发中）
+
+模块尚未接入自动排版，因此下表不是自动断词性能。当前 Windows/GCC 16.2 Release
+DLL 为 5,287,931 bytes，比表格 BFC 步骤增加 56,731 bytes，无新增链接依赖，且不携带
+语言词典。原生词典对象按需分配；外部参考文件仅用于开发验证，不打包进 SDK。
+
+| 参考词典 | 原生 payload bytes | 核对词条数 |
+| --- | ---: | ---: |
+| English US portable 模式 | 519,072 | 3,106 |
+| Español | 28,768 | 3,996 |
+| Italiano | 24,980 | 3,934 |
+| Русский | 218,828 | 4,010 |
+
+payload 包含对象、语言目录、trie/weight 数组容量及 packed edges，不包括借入源文件、
+分配器开销或临时栈。英文移除了复合词最小值配置，此处不验证复合词算法。原始文件
+哈希、输入投影和 Pyphen 版本记录在 reference.json，词典各自的许可仍须单独处理。
+
+未创建词典对象的 1 MiB 普通文本、逐页前 65 页，三次新进程中位数：首屏 9.83 ms，
+峰值进程内存 17,911,808 bytes，翻页 p50/p95 1.31/1.67 ms；磁盘缓存未控制。该数据
+只记录未启用模块的普通阅读成本。源码和字体/程序哈希、原始结果见
+[词典模块记录](benchmarks/0.18.0-hyphen-dictionaries-windows/metadata.json)。

@@ -199,3 +199,22 @@ The full upstream COPYING and copyright notice are installed under
 the CLI, DRM or fixed-point variants. This component defaults to OFF and is not
 downloaded when disabled. ADTS source access, validation, ownership, cancellation
 and exact bounded replay are EXReader C code; AAC synthesis uses FAAD2.
+
+
+## Hyphenation Unicode data and external test dictionaries
+
+`src/hyphen_unicode_data.h` derives full case folding and L/M category ranges
+from Unicode 17.0.0 `CaseFolding.txt` and `UnicodeData.txt`, under **Unicode-3.0**.
+The same Unicode copyright/license installed above applies. Reproduce with
+`python tools/generate_hyphen_unicode.py --download --check`; the generator pins
+both source SHA-256 values. No language dictionary is bundled with the SDK.
+The original weighted patterns in `examples/hyphen.c` are EXReader GPL-3.0-only
+sample code, not a complete natural-language dictionary.
+
+`tools/check_hyphen_reference.py` is an optional development check against a
+separate Pyphen 0.17.2 installation. Pyphen and its language dictionaries are not
+linked, copied into the SDK or required for builds. Each external dictionary
+retains its own license; consult its `README_hyph_*.txt` and Pyphen package
+license before redistribution. Recorded oracle results contain hashes/counts,
+not dictionary data. English US COMPOUND minimum metadata is explicitly removed
+for the portable-pattern comparison; this is not validation of compound rules.
