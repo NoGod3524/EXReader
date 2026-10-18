@@ -13,7 +13,9 @@
     "original_epubs": 24,
     "installed_C": "passed",
     "installed_JNI_Xcheck": "passed",
-    "Swift_and_cross_platform_CI": "pending"
+    "Swift_and_cross_platform_CI": "all six jobs passed",
+    "CI_run": "https://github.com/NoGod3524/EXReader/actions/runs/39100630401",
+    "installed_Cpp": "passed, 0.18.0 ABI 1"
   },
   "source_files_sha256": {
     "CMakeLists.txt": "5963dd16e9249e8c2909f51bcae8b13196848edb29dcce82e8800ae48f753d38",
@@ -148,5 +150,6 @@
     "tools/benchmark_hyphen_layout.py": "c0c17fb937d53d8daa726a93ff27008e93fd322d76053bfab14203f491014274",
     "tools/generate_hyphen_layout_fixtures.py": "e4e92297ade148ed0142b84f3e72a2964b47ed81aa579c52f5e527ba5e42df14",
     "tools/generate_hyphen_unicode.py": "839b4af9ff3e59bc26a9887a3e6a13a13cc3396644599c3704ffa913993183a4"
-  }
+  },
+  "code_commit": "daa7cc570d6bc4edc49490b3b0c2035b06b70069"
 }
