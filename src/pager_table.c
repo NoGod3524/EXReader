@@ -14,6 +14,7 @@ struct exr_table_cursor {
   size_t row, first, last, end;
   size_t position;
   float x, width;
+  float columns_at[65]; /* Logical inline edges, preserved by checkpoint clones. */
   int measured;
 };
 
@@ -61,10 +62,90 @@ static exr_status failed(flow *f, exr_status status) {
     return exr_fail(f->error, status, "Table layout limit exceeded");
   return status;
 }
+static float length_value(exr_length value,float width) {
+  return value.value<0 ? 0 : value.percent ? value.value*width : value.value;
+}
+static void hint(float widths[64],unsigned kinds[64],size_t first,size_t count,float desired) {
+  size_t i,free_columns=0; float total=0;
+  for(i=first;i<first+count;i++) total+=widths[i];
+  for(i=first;i<first+count;i++) if(kinds[i]<2) free_columns++;
+  if(desired>total) for(i=first;i<first+count;i++) if(!free_columns || kinds[i]<2) {
+    widths[i]+=(desired-total)/(float)(free_columns ? free_columns : count);
+    if(kinds[i]<1) kinds[i]=1;
+  }
+}
+static exr_status column_hints(flow *f,exr_table_cursor *t,size_t parent,exr_length inherited,float widths[64],size_t *column) {
+  size_t child;
+  for(child=f->doc->nodes[parent].first_child;child!=SIZE_MAX;child=f->doc->nodes[child].next_sibling) {
+    const exr_node *n=&f->doc->nodes[child]; const char *name=exr_html_tag(f->doc,n);
+    exr_style style=exr_flow_style(&f->styles[child],f->writing_mode); exr_length width=style.width.value<0 ? inherited : style.width;
+    if(style.display==EXR_CSS_NONE) continue;
+    if(!strcmp(name,"colgroup")) {
+      size_t before=*column; exr_status status=column_hints(f,t,child,width,widths,column);
+      if(status!=EXR_OK) return status;
+      if(*column!=before) continue;
+    } else if(strcmp(name,"col")) continue;
+    {
+      size_t count=span(n,"span",65),i;
+      if(count>64-*column) return exr_fail(f->error,EXR_LIMIT,"Table column declarations exceed 64 columns");
+      for(i=0;i<count;i++) widths[(*column)++]=length_value(width,t->width);
+    }
+  }
+  return EXR_OK;
+}
+/* Declared columns/cell widths are minimum hints before fitting the table's
+   inline extent. Undeclared columns share the remaining space. Intrinsic
+   min/max-content sizing is handled separately from these declared hints. */
+static exr_status column_widths(flow *f,exr_table_cursor *t,size_t node) {
+  float widths[64]={0},total=0,available=t->width; unsigned kinds[64]={0},lowest=2;
+  size_t column=0,i,n,automatic=0; exr_status status;
+  exr_length empty={-1,0};
+  status=column_hints(f,t,node,empty,widths,&column); if(status!=EXR_OK) return status;
+  if(column>t->columns && t->row_count) t->columns=column;
+  if(!t->columns) return EXR_OK;
+  if(t->width<(float)t->columns) return exr_fail(f->error,EXR_LIMIT,"Table has less than one pixel per column");
+  for(i=0;i<t->columns;i++) if(widths[i]>0) kinds[i]=2;
+  for(n=1;n<=t->columns;n++) for(i=0;i<t->cell_count;i++) {
+    const table_cell *cell=&t->cells[i]; exr_style style; float width;
+    if(cell->colspan!=n) continue;
+    status=exr_control_cancel(&f->config->control,f->error); if(status!=EXR_OK) return status;
+    style=exr_flow_style(&f->styles[cell->node],f->writing_mode);
+    if(style.width.value<0) continue;
+    width=length_value(style.width,t->width)+length_value(style.padding[1],t->width)+length_value(style.padding[3],t->width)+
+      (style.border_style ? 2*style.border_width : 0);
+    width=fminf(width,t->width*64);
+    if(n==1) { widths[cell->column]=fmaxf(widths[cell->column],width); if(width>0) kinds[cell->column]=2; }
+    else hint(widths,kinds,cell->column,cell->colspan,width);
+  }
+  for(i=0;i<t->columns;i++) { total+=widths[i]; if(kinds[i]<lowest) lowest=kinds[i]; }
+  for(i=0;i<t->columns;i++) if(kinds[i]==lowest) automatic++;
+  if(lowest<2 && total<available) for(i=0;i<t->columns;i++) if(kinds[i]==lowest) widths[i]+=(available-total)/(float)automatic;
+  /* Fit overconstrained hints while keeping every column at least one pixel.
+     Lock tiny columns before redistributing, at most one pass per column. */
+  {
+    unsigned locked[64]={0}; size_t count=t->columns;
+    for(;;) {
+      int changed=0; float scale; total=0;
+      for(i=0;i<t->columns;i++) if(!locked[i]) total+=widths[i];
+      scale=total ? available/total : available/(float)count;
+      for(i=0;i<t->columns;i++) if(!locked[i] && (total ? widths[i]*scale : scale)<1) {
+        locked[i]=1; widths[i]=1; available-=1; count--; changed=1;
+      }
+      if(!changed || !count) {
+        if(count) for(i=0;i<t->columns;i++) if(!locked[i]) widths[i]=total ? widths[i]*available/total : available/(float)count;
+        break;
+      }
+    }
+  }
+  for(i=0;i<t->columns;i++) t->columns_at[i+1]=fmaxf(t->columns_at[i]+1,
+    fminf(t->width-(float)(t->columns-i-1),t->columns_at[i]+widths[i]));
+  t->columns_at[t->columns]=t->width;
+  return EXR_OK;
+}
 size_t exr_table_memory_size(const exr_table_cursor *t) {
   size_t total, i;
   if (!t) return 0;
-  total = sizeof(*t) + t->row_count*sizeof(*t->rows) + t->cell_count*sizeof(*t->cells);
+  total = sizeof(*t) + t->row_capacity*sizeof(*t->rows) + t->cell_capacity*sizeof(*t->cells);
   if (t->heights) total += (2*t->row_count + 1)*sizeof(float);
   for (i = 0; i < t->cell_count; i++) {
     size_t bytes = exr_layout_memory_size(t->cells[i].layout);
@@ -166,7 +247,8 @@ exr_status exr_table_create(flow *f, size_t node, float x, float width,
         t->columns = column;
     }
   }
-  if (t->columns) {
+  status=column_widths(f,t,node); if(status!=EXR_OK) goto bad;
+  if (t->columns && t->row_count) {
     t->heights = calloc(t->row_count, sizeof(*t->heights));
     t->positions = calloc(t->row_count + 1, sizeof(*t->positions));
     if (!t->heights || !t->positions) {
@@ -193,7 +275,7 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
   }
   for (i = t->first; i < t->last; i++) {
     table_cell *c = &t->cells[i];
-    status = exr_flow_unit(f, c->node, t->width * (float)c->colspan / (float)t->columns,
+    status = exr_flow_unit(f, c->node, t->columns_at[c->column+c->colspan]-t->columns_at[c->column],
                            &c->layout, &c->height);
     if (status != EXR_OK)
       return status;
@@ -241,7 +323,7 @@ exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
   for (i = t->first; i < t->last; i++) {
     table_cell *c = &t->cells[i];
     status = exr_flow_copy(f, c->layout, c->node,
-                           t->x + t->width * (float)c->column / (float)t->columns,
+                           t->x + t->columns_at[c->column],
                            f->y + t->positions[c->row] - t->positions[t->row],
                            t->positions[c->row + c->rowspan] - t->positions[c->row]);
     if (status != EXR_OK)

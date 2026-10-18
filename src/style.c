@@ -923,7 +923,8 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     if (n->kind == EXR_NODE_CELL) {
       s->display = EXR_CSS_CELL;
     }
-    if (n->kind == EXR_NODE_IMAGE) {
+    if (n->kind == EXR_NODE_IMAGE || n->kind == EXR_NODE_CELL || n->kind == EXR_NODE_TABLE ||
+        !strcmp(name,"col") || !strcmp(name,"colgroup")) {
       attr = exr_node_attribute(n, "width");
       if (attr)
         length(attr, s->font_size, o->font_size, 1, &s->width);
