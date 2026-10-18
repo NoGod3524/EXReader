@@ -370,7 +370,7 @@ exr_status exr_table_create(flow *f, size_t node, float x, float width,
   t->width = width;
   t->node=node; t->collapse=f->styles[node].border_collapse;
   { exr_style style=exr_flow_style(&f->styles[node],f->writing_mode);
-    t->min_height=length_value(style.height,exr_flow_room(f));
+    t->min_height=length_value(style.height,f->unit_assigned && node==f->unit_node ? f->unit_block_reference : exr_flow_room(f));
   }
   if (!rows(f, t, node)) {
     status = EXR_LIMIT;

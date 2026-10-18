@@ -68,4 +68,4 @@ foliate-js 的浏览器排版能力用于建立对照用例；C 原生路径按�
 
 当前加密读取实现已接入 Standard R2–R6；证书处理器、EFOpen 专用附件认证和加密写回继续单独跟踪。EPUB 排版与 SDK 可靠性为贯穿验收重点：优先推进表格列宽/对齐/边框、浮动绕排和字典断词，同时比较完整布局与页级续排的分页、命中坐标、缓存淘汰及 checkpoint 恢复。每步保留独立回归用例，公开支持矩阵与资源上限。
 
-表格已补指定列宽、min/max-content 自动列宽、CSS fixed 布局与单元格 top/middle/bottom/baseline 对齐；已补当前统一实线边框的 border-collapse、hidden 冲突和共享半宽；逐边/其他线型边框继续跟踪，已接入 float/clear、逐行绕排、短块移页、长浮动块/表格/嵌套浮动的页级续排及对应 checkpoint/定位验证。普通表格与外部浮动并排，以及字典断词继续逐项补齐。完整兼容目标和应用接入目标保持不变。
+表格已补指定列宽、min/max-content 自动列宽、CSS fixed 布局与单元格 top/middle/bottom/baseline 对齐；已补当前统一实线边框的 border-collapse、hidden 冲突和共享半宽；逐边/其他线型边框继续跟踪，已接入 float/clear、逐行绕排、短块移页、长浮动块/表格/嵌套浮动的页级续排及对应 checkpoint/定位验证。已补普通表格与外部浮动的独立 BFC 并排与跨页固定列宽；按语言字典断词为下一项。完整兼容目标和应用接入目标保持不变。

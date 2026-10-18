@@ -1,0 +1,137 @@
+[
+  {
+    "schema_version": 2,
+    "engine_version": "0.18.0",
+    "mode": "indexed_epub",
+    "layout_mode": "paged",
+    "layout_scope": "first_reading_order_part",
+    "input": "docs\\benchmarks\\0.18.0-table-floats-windows\\bfc-1048576.epub",
+    "font": "tests\\fixtures\\fonts\\primary.ttf",
+    "clock": "monotonic",
+    "disk_cache": "uncontrolled",
+    "rss_metric": "process_high_water_mark",
+    "input_bytes": 6253,
+    "text_bytes": 1059575,
+    "part_count": 2,
+    "part_index": 0,
+    "page_count": 2,
+    "total_pages_known": false,
+    "glyph_count": 2275,
+    "sample_count": 1,
+    "sample_first_page": 1,
+    "single_page_repaint": false,
+    "font_open_ms": 0.244,
+    "publication_open_ms": 1.6704,
+    "first_layout_ms": 27.2288,
+    "first_paint_ms": 0.9375,
+    "first_visible_total_ms": 30.0812,
+    "baseline_peak_rss_bytes": 6918144,
+    "peak_rss_bytes": 21880832,
+    "incremental_peak_rss_bytes": 14962688,
+    "turn_layout_p50_ms": 0.4793,
+    "turn_layout_p95_ms": 0.4793,
+    "turn_layout_ms_samples": [
+      0.4793
+    ],
+    "turn_render_p50_ms": 0.8893,
+    "turn_render_p95_ms": 0.8893,
+    "turn_render_ms_samples": [
+      0.8893
+    ],
+    "turn_total_p50_ms": 1.39,
+    "turn_total_p95_ms": 1.39,
+    "turn_total_ms_samples": [
+      1.39
+    ]
+  },
+  {
+    "schema_version": 2,
+    "engine_version": "0.18.0",
+    "mode": "indexed_epub",
+    "layout_mode": "paged",
+    "layout_scope": "first_reading_order_part",
+    "input": "docs\\benchmarks\\0.18.0-table-floats-windows\\bfc-1048576.epub",
+    "font": "tests\\fixtures\\fonts\\primary.ttf",
+    "clock": "monotonic",
+    "disk_cache": "uncontrolled",
+    "rss_metric": "process_high_water_mark",
+    "input_bytes": 6253,
+    "text_bytes": 1059575,
+    "part_count": 2,
+    "part_index": 0,
+    "page_count": 2,
+    "total_pages_known": false,
+    "glyph_count": 2275,
+    "sample_count": 1,
+    "sample_first_page": 1,
+    "single_page_repaint": false,
+    "font_open_ms": 0.1599,
+    "publication_open_ms": 1.5193,
+    "first_layout_ms": 29.1751,
+    "first_paint_ms": 0.9332,
+    "first_visible_total_ms": 31.7881,
+    "baseline_peak_rss_bytes": 6893568,
+    "peak_rss_bytes": 21880832,
+    "incremental_peak_rss_bytes": 14987264,
+    "turn_layout_p50_ms": 0.5111,
+    "turn_layout_p95_ms": 0.5111,
+    "turn_layout_ms_samples": [
+      0.5111
+    ],
+    "turn_render_p50_ms": 1.5513,
+    "turn_render_p95_ms": 1.5513,
+    "turn_render_ms_samples": [
+      1.5513
+    ],
+    "turn_total_p50_ms": 2.0979,
+    "turn_total_p95_ms": 2.0979,
+    "turn_total_ms_samples": [
+      2.0979
+    ]
+  },
+  {
+    "schema_version": 2,
+    "engine_version": "0.18.0",
+    "mode": "indexed_epub",
+    "layout_mode": "paged",
+    "layout_scope": "first_reading_order_part",
+    "input": "docs\\benchmarks\\0.18.0-table-floats-windows\\bfc-1048576.epub",
+    "font": "tests\\fixtures\\fonts\\primary.ttf",
+    "clock": "monotonic",
+    "disk_cache": "uncontrolled",
+    "rss_metric": "process_high_water_mark",
+    "input_bytes": 6253,
+    "text_bytes": 1059575,
+    "part_count": 2,
+    "part_index": 0,
+    "page_count": 2,
+    "total_pages_known": false,
+    "glyph_count": 2275,
+    "sample_count": 1,
+    "sample_first_page": 1,
+    "single_page_repaint": false,
+    "font_open_ms": 0.1579,
+    "publication_open_ms": 1.4456,
+    "first_layout_ms": 28.091,
+    "first_paint_ms": 3.1225,
+    "first_visible_total_ms": 32.8174,
+    "baseline_peak_rss_bytes": 6877184,
+    "peak_rss_bytes": 21803008,
+    "incremental_peak_rss_bytes": 14925824,
+    "turn_layout_p50_ms": 0.8594,
+    "turn_layout_p95_ms": 0.8594,
+    "turn_layout_ms_samples": [
+      0.8594
+    ],
+    "turn_render_p50_ms": 1.0646,
+    "turn_render_p95_ms": 1.0646,
+    "turn_render_ms_samples": [
+      1.0646
+    ],
+    "turn_total_p50_ms": 1.963,
+    "turn_total_p95_ms": 1.963,
+    "turn_total_ms_samples": [
+      1.963
+    ]
+  }
+]

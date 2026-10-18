@@ -176,6 +176,25 @@ import CEXReader
             }
             precondition(pages > 20 && letters == 7500)
         }
-        print("Swift SDK: PDF/audio/metadata, float image pixels, streaming floats and reflow lifetime passed")
+        do {
+            let publication = try EXReaderPublication(file: root.appendingPathComponent("books/float-bfc-stream.epub"))
+            let chapter = try publication.load(part: 0)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            let pager = try chapter.pager(font: font, config: floatConfig)
+            guard let table = chapter.nodes.firstIndex(where: { $0.attributes.contains { $0.key == "id" && $0.value == "ordinary" } }) else { preconditionFailure("missing table") }
+            var pages = 0, letters = 0, fragments = 0
+            while let page = try pager.next() {
+                letters += page.glyphs.filter { $0.codepoint == 65 }.count
+                for box in page.boxes where box.node == table && (box.flags & 2) == 0 {
+                    precondition(abs(box.x - 100) < 0.01 && abs(box.width - 100) < 0.01)
+                    fragments += 1
+                }
+                let bitmap = try page.render()
+                precondition(bitmap.width == 240)
+                pages += 1
+            }
+            precondition(pages > 20 && fragments > 20 && letters == 3350)
+        }
+        print("Swift SDK: PDF/audio/metadata, float images, table BFCs, streaming and reflow lifetime passed")
     }
 }
