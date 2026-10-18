@@ -79,7 +79,7 @@ def source_data(name, cache, fixture_dir, download):
     """Read only bytes matching the pinned source; never silently update pins."""
     url, expected = SOURCES[name]
     fixture = fixture_dir / name
-    path = fixture if name in ("GraphemeBreakTest.txt", "LineBreakTest.txt", "LICENSE.txt") and fixture.exists() else cache / name
+    path = fixture if name in ("GraphemeBreakTest.txt", "LineBreakTest.txt", "NormalizationTest.txt", "LICENSE.txt") and fixture.exists() else cache / name
     if path.exists():
         data = path.read_bytes()
     elif download:

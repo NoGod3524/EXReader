@@ -17,7 +17,7 @@ static exr_hyphenator *create(const char *language,const char *text,unsigned lef
 static void breaks(exr_hyphenator *h,const char *lang,const char *word,size_t first,size_t second) {
   size_t size=strlen(word),i; unsigned char map[1025]; memset(map,0xff,sizeof(map));
   OK(exr_hyphenator_breaks(h,lang,word,size,map,NULL,&error));
-  for(i=0;i<=size;i++) CHECK(map[i]==(i==first || i==second));
+  for(i=0;i<=size;i++) { if(map[i]!=(i==first || i==second)) fprintf(stderr,"%s / %s: byte %zu got %u\n",lang ? lang : "",word,i,map[i]); CHECK(map[i]==(i==first || i==second)); }
 }
 static void basic(void) {
   exr_hyphenator *h=create("en","UTF-8\nLEFTHYPHENMIN 2\nRIGHTHYPHENMIN 2\nhy1phen phen1ation % comment\n# other comment\n",0,0);
@@ -33,7 +33,7 @@ static void basic(void) {
   }
 }
 static void unicode(void) {
-  exr_hyphenator *h=create("fr",".é1té.",1,1); breaks(h,"fr-CA","ÉTÉ",2,SIZE_MAX); breaks(h,"fr","ÉTÉ",SIZE_MAX,SIZE_MAX); exr_hyphenator_free(h);
+  exr_hyphenator *h=create("fr",".é1té.",1,1); breaks(h,"fr-CA","ÉTÉ",2,SIZE_MAX); breaks(h,"fr","ÉTÉ",3,SIZE_MAX); exr_hyphenator_free(h);
   h=create("el",".ο1ς.",1,1); breaks(h,"el","ΟΣ",2,SIZE_MAX); breaks(h,"el","ος",2,SIZE_MAX); exr_hyphenator_free(h);
   h=create("tr",".ı1a. .i1b.",1,1); breaks(h,"tr-TR","Ia",1,SIZE_MAX); breaks(h,"tr","İb",2,SIZE_MAX); exr_hyphenator_free(h);
   h=create("de","mas1se",1,1); breaks(h,"de","Maße",SIZE_MAX,SIZE_MAX); breaks(h,"de","MASSE",3,SIZE_MAX); exr_hyphenator_free(h);
@@ -42,6 +42,29 @@ static void unicode(void) {
   h=create("he","ש1ָלו",1,1); breaks(h,"he","שָלו",SIZE_MAX,SIZE_MAX); exr_hyphenator_free(h);
   h=create("xx","👩1‍💻",1,1); breaks(h,"xx","👩‍💻",SIZE_MAX,SIZE_MAX); exr_hyphenator_free(h);
 }
+static void canonical(void) {
+  exr_hyphenator *h=create("fr",".é1té.",1,1);
+  breaks(h,"fr","été",2,SIZE_MAX);breaks(h,"fr","été",3,SIZE_MAX);exr_hyphenator_free(h);
+  h=create("fr",".é1x. .é2x.",1,1);breaks(h,"fr","éx",SIZE_MAX,SIZE_MAX);exr_hyphenator_free(h);
+  h=create("fr",".e1́x.",1,1);breaks(h,"fr","éx",SIZE_MAX,SIZE_MAX);breaks(h,"fr","éx",SIZE_MAX,SIZE_MAX);exr_hyphenator_free(h);
+  h=create("xx",".ạ́1x.",1,1);breaks(h,"xx","ạ́x",5,SIZE_MAX);exr_hyphenator_free(h);
+  h=create("xx",".ạ́1x.",1,1);breaks(h,"xx","ạ́x",5,SIZE_MAX);exr_hyphenator_free(h);
+  h=create("ko",".가1나.",1,1);breaks(h,"ko","가나",6,SIZE_MAX);exr_hyphenator_free(h);
+  h=create("hi",".क़1x.",1,1);breaks(h,"hi","क़x",3,SIZE_MAX);exr_hyphenator_free(h);
+  h=create("tr",".i1b.",1,1);breaks(h,"tr","İb",3,SIZE_MAX);breaks(h,"tr","İb",2,SIZE_MAX);exr_hyphenator_free(h);
+  h=create("el",".ΐ1x.",1,1);breaks(h,"el","Ϊ́x",6,SIZE_MAX);exr_hyphenator_free(h);
+  h=create("en",".ﬃ1x.",1,1);breaks(h,"en","FFIx",3,SIZE_MAX);breaks(h,"en","ﬃx",3,SIZE_MAX);exr_hyphenator_free(h);
+  { char word[769];unsigned char out[769];size_t i;
+    h=create("und","ffi1ffi",1,1);
+    for(i=0;i<256;i++) memcpy(word+3*i,"ﬃ",3);word[768]=0;
+    OK(exr_hyphenator_breaks(h,"und",word,768,out,NULL,&error));
+    for(i=0;i<=768;i++) CHECK(out[i]==(i && i<768 && i%3==0));
+    for(i=0;i<256;i++) memcpy(word+3*i,"ᾯ",3);
+    OK(exr_hyphenator_breaks(h,"und",word,768,out,NULL,&error));for(i=0;i<=768;i++) CHECK(!out[i]);
+    exr_hyphenator_free(h);
+  }
+}
+
 typedef struct { unsigned calls,releases; int mode,stop; exr_hyphenator *self; } host;
 static exr_status provider(void *context,const char *language,const char *word,size_t size,unsigned char *out,const exr_control *control,exr_error *e) {
   host *s=context; (void)word; (void)control; (void)e; s->calls++; CHECK(!strcmp(language,"en-us"));
@@ -120,4 +143,4 @@ static void generated(void) {
     exr_hyphenator_free(h);
   }
 }
-int main(void) { basic(); unicode(); providers(); failures(); generated(); printf("%u hyphenation dictionary checks passed\n",checks); return 0; }
+int main(void) { basic(); unicode(); canonical(); providers(); failures(); generated(); printf("%u hyphenation dictionary checks passed\n",checks); return 0; }

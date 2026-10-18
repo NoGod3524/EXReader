@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pinned Unicode case-fold and L/M category tables for dictionary hyphenation."""
+"""Pinned Unicode case-fold and L/M/N category tables for dictionary hyphenation."""
 # SPDX-License-Identifier: GPL-3.0-only
 import argparse
 from pathlib import Path
@@ -16,6 +16,16 @@ def generate(data,unicode):
         key=int(fields[0],16); values=[int(x,16) for x in fields[2].split()]
         if not 1<=len(values)<=3: raise ValueError('unexpected folding length')
         mapping[key]=values
+    canonical={}
+    for line in unicode.decode('utf-8').splitlines():
+        fields=line.split(';')
+        if fields[5] and not fields[5].startswith('<'):
+            canonical[int(fields[0],16)]=tuple(int(x,16) for x in fields[5].split())
+    def nfd_length(cp):
+        if 0xac00<=cp<=0xd7a3: return 3 if (cp-0xac00)%28 else 2
+        return sum(nfd_length(x) for x in canonical[cp]) if cp in canonical else 1
+    assert max(nfd_length(cp) for cp in canonical)==4
+    assert all(sum(nfd_length(x) for x in parts)<=3*nfd_length(cp) for cp,parts in mapping.items())
     ranges=[]; first=None
     for line in unicode.decode('utf-8').splitlines():
         fields=line.split(';'); cp=int(fields[0],16); value=1 if fields[2].startswith('L') else 2 if fields[2].startswith('M') else 3 if fields[2].startswith('N') else 0
@@ -32,7 +42,7 @@ def generate(data,unicode):
     for name in ('CaseFolding.txt','UnicodeData.txt'):
         url,sha=shared.SOURCES[name]; lines += [' * '+url,' * '+sha]
     lines+=[' */','#ifndef EXR_HYPHEN_UNICODE_DATA_H','#define EXR_HYPHEN_UNICODE_DATA_H',
-      '#include <stdint.h>','typedef struct { uint32_t cp,values[3]; unsigned count; } exr_case_fold;',
+      '#include <stdint.h>','#define EXR_CANONICAL_FOLD_FACTOR 12u /* NFD <=4x; folded NFD <=3x its input NFD. */','typedef struct { uint32_t cp,values[3]; unsigned count; } exr_case_fold;',
       'static const exr_case_fold exr_case_folds[] = {']
     for key,values in sorted(mapping.items()):
         lines.append('  {0x%X,{%s},%u},'%(key,','.join('0x%X'%v for v in values+[0]*(3-len(values))),len(values)))

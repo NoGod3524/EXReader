@@ -1,12 +1,15 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "hyphen_internal.h"
+#include "normalize_internal.h"
 #include "hyphen_unicode_data.h"
 
 #define NONE UINT32_MAX
 #define EDGE UINT32_C(0x110000)
 #define WORD_SCALARS 256
-#define FOLDED_SCALARS (3*WORD_SCALARS+2)
+#define FOLDED_SCALARS (EXR_CANONICAL_FOLD_FACTOR*WORD_SCALARS+2)
 #define PATTERN_SCALARS 128
+#define NORMAL_SCALARS (EXR_CANONICAL_FOLD_FACTOR*WORD_SCALARS)
+#define NORMAL_PATTERN (EXR_CANONICAL_FOLD_FACTOR*PATTERN_SCALARS)
 #define WORK_LIMIT (64u*1024u*1024u)
 typedef struct {
   uint32_t cp,child,next,values;
@@ -66,6 +69,42 @@ static unsigned fold(uint32_t cp,const char *language,uint32_t values[3]) {
   }
   values[0]=cp; return 1;
 }
+/* NFC -> full fold -> NFC, retaining intervals in the original scalar stream.
+   ASCII dictionaries/words need no normalization table searches. */
+static exr_status canonical_non_ascii(hy_work *w,const char *language,const uint32_t *input,size_t count,
+                                      exr_normal_scalar *out,size_t capacity,size_t *written) {
+  exr_normal_scalar scratch[NORMAL_SCALARS];size_t i,n,used=0;exr_status status;
+  for(i=0;i<count;i++) scratch[i]=(exr_normal_scalar){input[i],(unsigned)i,(unsigned)i+1};
+  status=exr_normalize_nfc(scratch,count,out,capacity,&n,w->control,&w->work,w->error);if(status!=EXR_OK) return status;
+  for(i=0;i<n;i++) {
+    uint32_t values[3];unsigned j,len=fold(out[i].cp,language,values);
+    if(len>capacity-used) return exr_fail(w->error,EXR_LIMIT,"Canonical folding scalar limit exceeded");
+    for(j=0;j<len;j++) scratch[used++]=(exr_normal_scalar){values[j],out[i].first,out[i].last};
+  }
+  return exr_normalize_nfc(scratch,used,out,capacity,written,w->control,&w->work,w->error);
+}
+static exr_status canonical_fold(hy_work *w,const char *language,const uint32_t *input,size_t count,
+                                  exr_normal_scalar *out,size_t capacity,size_t *written) {
+  size_t i;exr_status status;
+  for(i=0;i<count;i++) if(input[i]>=128) return canonical_non_ascii(w,language,input,count,out,capacity,written);
+  for(i=0;i<count;i++) {
+    uint32_t values[3];fold(input[i],language,values);out[i]=(exr_normal_scalar){values[0],(unsigned)i,(unsigned)i+1};
+  }
+  status=work(w,count);if(status==EXR_OK) *written=count;return status;
+}
+/* A boundary survives only if every output on each side came exclusively from
+   that original side. This excludes fold/decomposition interiors and reordered
+   or composed spans, without guessing an offset from normalized byte lengths. */
+static void original_boundaries(const exr_normal_scalar *items,size_t count,size_t originals,size_t *map) {
+  unsigned suffix[NORMAL_SCALARS+1],high=0;size_t i;
+  for(i=0;i<=originals;i++) map[i]=SIZE_MAX;
+  suffix[count]=(unsigned)originals;
+  for(i=count;i;i--) suffix[i-1]=items[i-1].first<suffix[i] ? items[i-1].first : suffix[i];
+  for(i=0;i<=count;i++) {
+    if(high==suffix[i]) map[high]=i;
+    if(i<count && items[i].last>high) high=items[i].last;
+  }
+}
 unsigned exr_hyphen_word_kind(uint32_t cp) {
   if(cp==0x200c || cp==0x200d) return 2; /* Joining controls stay inside the word. */
   size_t lo=0,hi=sizeof(exr_word_ranges)/sizeof(*exr_word_ranges);
@@ -100,29 +139,32 @@ static exr_status child(hy_work *w,hy_dictionary *d,uint32_t parent,uint32_t cp,
   return EXR_OK;
 }
 static exr_status pattern(hy_work *w,hy_dictionary *d,const char *text,size_t size) {
-  uint32_t letters[3*PATTERN_SCALARS],node=0; unsigned char scores[3*PATTERN_SCALARS+1]={0};
-  size_t at=0,n=0,scalars=0,i; int digit=0; exr_status status;
+  uint32_t letters[PATTERN_SCALARS],node=0;unsigned char original[PATTERN_SCALARS+1]={0},scores[NORMAL_PATTERN+1]={0};
+  exr_normal_scalar normalized[NORMAL_PATTERN];size_t map[PATTERN_SCALARS+1];
+  size_t at=0,count=0,n=0,i;int digit=0;exr_status status;
   while(at<size) {
-    uint32_t cp,values[3]; unsigned count,j;
+    uint32_t cp;
     if(!exr_next(text,size,&at,&cp)) return exr_fail(w->error,EXR_ENCODING,"Invalid UTF-8 hyphenation pattern");
     if(cp>='0' && cp<='9') {
       if(digit) return exr_fail(w->error,EXR_FORMAT,"Adjacent hyphenation weights");
-      scores[n]=(unsigned char)(cp-'0'); digit=1; continue;
+      original[count]=(unsigned char)(cp-'0');digit=1;continue;
     }
     digit=0;
     if(cp=='/' || cp=='\\' || cp=='{' || cp=='}' || cp=='=') return exr_fail(w->error,EXR_UNSUPPORTED,"Hyphenation spelling replacements or TeX commands require a provider");
-    if(cp<0x20 || cp==0x7f || ++scalars>PATTERN_SCALARS) return exr_fail(w->error,EXR_LIMIT,"Invalid or overlong hyphenation pattern");
-    if(cp=='.') { values[0]=EDGE; count=1; } else count=fold(cp,d->language,values);
-    for(j=0;j<count;j++) letters[n++]=values[j];
+    if(cp<0x20 || cp==0x7f || count==PATTERN_SCALARS) return exr_fail(w->error,EXR_LIMIT,"Invalid or overlong hyphenation pattern");
+    letters[count++]=cp;
   }
-  if(!n) return exr_fail(w->error,EXR_FORMAT,"Hyphenation pattern has no letters");
-  for(i=0;i<n;i++) { status=child(w,d,node,letters[i],&node); if(status!=EXR_OK) return status; }
+  if(!count) return exr_fail(w->error,EXR_FORMAT,"Hyphenation pattern has no letters");
+  status=canonical_fold(w,d->language,letters,count,normalized,NORMAL_PATTERN,&n);if(status!=EXR_OK) return status;
+  original_boundaries(normalized,n,count,map);
+  for(i=0;i<=count;i++) if(map[i]!=SIZE_MAX && original[i]>scores[map[i]]) scores[map[i]]=original[i];
+  for(i=0;i<n;i++) { uint32_t cp=normalized[i].cp=='.' ? EDGE : normalized[i].cp;status=child(w,d,node,cp,&node);if(status!=EXR_OK) return status; }
   if(d->nodes[node].values==NONE) {
-    status=reserve(w,(void **)&d->values,&d->value_capacity,d->value_count+n+1,1); if(status!=EXR_OK) return status;
-    d->nodes[node].values=(uint32_t)d->value_count; d->nodes[node].length=(unsigned short)(n+1);
-    memcpy(d->values+d->value_count,scores,n+1); d->value_count+=n+1;
+    status=reserve(w,(void **)&d->values,&d->value_capacity,d->value_count+n+1,1);if(status!=EXR_OK) return status;
+    d->nodes[node].values=(uint32_t)d->value_count;d->nodes[node].length=(unsigned short)(n+1);
+    memcpy(d->values+d->value_count,scores,n+1);d->value_count+=n+1;
   } else for(i=0;i<=n;i++) {
-    unsigned char *v=&d->values[d->nodes[node].values+i]; if(scores[i]>*v) *v=scores[i];
+    unsigned char *v=&d->values[d->nodes[node].values+i];if(scores[i]>*v) *v=scores[i];
   }
   return work(w,n+1);
 }
@@ -195,16 +237,15 @@ static hy_dictionary *dictionary(exr_hyphenator *h,const char *language) {
 static exr_status native_breaks(hy_work *w,const char *language,const uint32_t *scalars,
                                 const size_t *offsets,size_t count,const unsigned char *boundaries,unsigned char *out) {
   hy_dictionary *d=dictionary(w->owner,language);
-  uint32_t word[FOLDED_SCALARS]; size_t folded_at[WORD_SCALARS+1],n=1,i,j,graphemes[WORD_SCALARS+1]={0};
+  uint32_t word[FOLDED_SCALARS];exr_normal_scalar normalized[NORMAL_SCALARS];
+  size_t folded_at[WORD_SCALARS+1],n=0,i,j,graphemes[WORD_SCALARS+1]={0};
   unsigned char scores[FOLDED_SCALARS+1]={0}; exr_status status;
   if(!d) return EXR_OK;
-  word[0]=EDGE;
-  for(i=0;i<count;i++) {
-    uint32_t values[3]; unsigned k,len=fold(scalars[i],d->language,values);
-    folded_at[i]=n; for(k=0;k<len;k++) word[n++]=values[k];
-    graphemes[i+1]=graphemes[i]+!!(boundaries[offsets[i]]&EXR_BOUNDARY_GRAPHEME);
-  }
-  folded_at[count]=n; word[n++]=EDGE;
+  status=canonical_fold(w,d->language,scalars,count,normalized,NORMAL_SCALARS,&n);if(status!=EXR_OK) return status;
+  original_boundaries(normalized,n,count,folded_at);word[0]=EDGE;
+  for(i=0;i<n;i++) word[i+1]=normalized[i].cp;
+  word[++n]=EDGE;n++;
+  for(i=0;i<count;i++) graphemes[i+1]=graphemes[i]+!!(boundaries[offsets[i]]&EXR_BOUNDARY_GRAPHEME);
   for(i=0;i<n;i++) {
     uint32_t node=0;
     for(j=i;j<n;j++) {
@@ -223,7 +264,7 @@ static exr_status native_breaks(hy_work *w,const char *language,const uint32_t *
     }
   }
   for(i=1;i<count;i++) if(graphemes[i]>=d->left && graphemes[count]-graphemes[i]>=d->right &&
-      (boundaries[offsets[i]]&EXR_BOUNDARY_GRAPHEME)) out[offsets[i]]=(unsigned char)(scores[folded_at[i]]&1);
+      (boundaries[offsets[i]]&EXR_BOUNDARY_GRAPHEME) && folded_at[i]!=SIZE_MAX) out[offsets[i]]=(unsigned char)(scores[folded_at[i]+1]&1);
   return EXR_OK;
 }
 

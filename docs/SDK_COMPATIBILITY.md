@@ -172,3 +172,13 @@ positioned reconstruction; selection/copy use source text, not generated glyph
 characters. Swift/JNI install dictionaries independently per pager before next.
 No language dictionaries are bundled; pattern format limits and separate data
 licenses still apply.
+
+Native pattern matching now canonicalizes both patterns and words using Unicode
+17 NFC -> full fold -> NFC. This deliberately adds break matches for canonically
+equivalent spellings (e.g. decomposed accents). The original document and provider
+callback bytes remain unchanged. Grapheme minima and returned offsets still use
+original text; folded/decomposed interiors never become new source positions.
+A canonically merged pattern preserves max-weight conflict resolution. Consumers
+need no record/ABI/schema migration. The separately versioned Unicode 3.2 PDF
+password preparation is unchanged. Compound and spelling replacement grammars
+remain unsupported by the native parser.

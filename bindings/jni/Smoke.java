@@ -200,7 +200,7 @@ public final class Smoke {
         hyphenConfig.userCSS="html,body,p {margin:0;padding:0;font-size:14px;line-height:20px}";
         byte[] patterns="aa1aaaa aaaa1aa".getBytes(StandardCharsets.UTF_8);
         EXReader.HyphenDictionary[] dictionaries={new EXReader.HyphenDictionary("en",patterns,1,1),
-            new EXReader.HyphenDictionary("fr","bb1bbbb".getBytes(StandardCharsets.UTF_8),1,1)};
+            new EXReader.HyphenDictionary("fr","é1té".getBytes(StandardCharsets.UTF_8),1,1)};
         Arrays.fill(patterns,(byte)0); // Dictionary input was copied by its value object.
         try(EXReader.Publication hyphenBook=new EXReader.Publication(root.resolve("books/hyphen-long.epub").toString());
             EXReader.Document hyphenChapter=hyphenBook.load(0);
@@ -215,6 +215,18 @@ public final class Smoke {
             }
             try { hyphenPager.setHyphenation(new EXReader.HyphenDictionary[0],0); throw new AssertionError(); }
             catch(EXReaderException expected) { check(expected.code==1); }
+        }
+        try(EXReader.Publication canonicalBook=new EXReader.Publication(root.resolve("books/hyphen-canonical.epub").toString());
+            EXReader.Document canonicalChapter=canonicalBook.load(0);
+            EXReader.Pager canonicalPager=canonicalChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,hyphenConfig)) {
+            canonicalPager.setHyphenation(dictionaries,0);
+            try(EXReader.ReflowPage page=canonicalPager.next()) {
+                check(page!=null); int inserted=0;
+                for(EXReader.Glyph g:page.snapshot().glyphs) if((g.flags&2048)!=0) {
+                    check(g.start==g.end && g.start%8==3); inserted++;
+                }
+                check(inserted>0 && page.render().width==55);
+            }
         }
         System.out.println("JNI SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed");
     }

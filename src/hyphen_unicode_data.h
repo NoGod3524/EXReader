@@ -9,6 +9,7 @@
 #ifndef EXR_HYPHEN_UNICODE_DATA_H
 #define EXR_HYPHEN_UNICODE_DATA_H
 #include <stdint.h>
+#define EXR_CANONICAL_FOLD_FACTOR 12u /* NFD <=4x; folded NFD <=3x its input NFD. */
 typedef struct { uint32_t cp,values[3]; unsigned count; } exr_case_fold;
 static const exr_case_fold exr_case_folds[] = {
   {0x41,{0x61,0x0,0x0},1},

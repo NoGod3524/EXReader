@@ -2799,3 +2799,40 @@ hyphen rendering, macOS Swift rendering, ASan/UBSan with leak checks, Android
 ARM64, and iOS/iPadOS device/simulator libraries plus Swift type checking.
 All 132 benchmark source hashes match Git blob bytes of that commit. The
 following verification-record commit changes documentation/metadata only.
+
+## Unicode 17 canonical dictionary matching (0.18.0 development)
+
+The native NFC core passes all 20,034 official NormalizationTest cases: NFC of
+c1/c2/c3 equals c2, and NFC of c4/c5 equals c4. A second pass checks idempotence
+and contributing source intervals. All 1,094,978 scalars not listed as singleton
+inputs are checked for NFC stability, excluding surrogate code points. The test
+has 3,404,736 checks, including Hangul, canonical reordering, composition blocking,
+full composition exclusions, cancellation, output/input limits and shared work
+budget exhaustion. Generation is byte-exact against SHA-256-pinned Unicode 17
+source files, using no host Unicode implementation.
+
+Native dictionaries normalize both patterns and queries as NFC -> full fold ->
+NFC. The dictionary test has 331,876 checks, including decomposed French, reordered
+Vietnamese marks, excluded Devanagari composites, Hangul, Turkic I+dot, Greek
+folding and 256 repeated compatibility ligatures or Greek composites at the
+original scalar limit. Canonically merged pattern weights still take the maximum;
+weights inside a composed span cannot generate an interior source break.
+The separate official-data integration oracle checks 15,985 letter/mark word
+cases across c1/c2/c3: 47,955 queries yield the exact expected original byte offset.
+The existing Pyphen oracle still agrees on all 15,046 words / 18,664 breaks.
+
+The 25th original EPUB uses 800 decomposed French words and a composed pattern.
+The original 6,399 bytes remain unchanged; all 800 generated hyphens occur at
+byte 3 modulo 8. Whole layout, cached pages and backwards checkpoint replay
+retain glyphs, hit positions and pixels. There are now 159,072 automatic-layout
+checks. Installed JNI also verifies original-byte positions and rendering with
+that EPUB; Swift uses the same installed scenario. All 110 native tests pass
+locally, including the unchanged PDF Unicode 3.2 password tests.
+
+The benchmark's dictionary stdin buffer now grows with actual input instead of
+requesting 8 MiB up front: Windows pipe reads could inflate the recorded process
+peak even with a tiny dictionary. Regression checks cover growth beyond the
+first allocation and rejecting more than 8 MiB. New English and decomposed-word
+measurements are under benchmarks/0.18.0-hyphen-nfc-windows, with exact source and
+binary provenance. Earlier measurements retain their original procedure.
+Compound dictionaries and spelling-changing break replacements remain pending.
