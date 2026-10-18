@@ -3948,3 +3948,19 @@ iOS/iPadOS, fuzz campaign). This is **not** the work-package acceptance: the ≥
 scenes, independent reference masks, cancellation/budget regressions and alternating
 performance sampling are still outstanding, so the support matrix records knockout as
 partial and `docs/KNOCKOUT_DESIGN.md` lists the remaining steps.
+
+## Knockout scenes, regressions and CI (0.19.0 development)
+
+Commits `79c8d41` (42 original scenes plus the Decimal reference) and `ac99751` (budget,
+cancellation and legacy-consumer regressions) passed all seven jobs of CI run 39160647220.
+Local Windows Release reports 120/120 CTests and 938,928 blend assertions.
+
+`python tools/generate_knockout_fixtures.py --check` reproduces every artifact byte for byte
+from the Decimal(40) model, so the scenes do not depend on PDFium or MuPDF. `native-blend`
+compares both the premultiplied and the over-white variants for 42 scenes and reports a maximum
+difference of 0. Budget coverage: a knockout group under 24 bytes/pixel fails with `EXR_LIMIT`
+and succeeds at 24; cancellation before `end_layer` aborts without a partial commit; a
+consumer with only `begin_layer` refuses knockout scenes.
+
+Outstanding for the work package: alternating old/new performance sampling and the final
+support-matrix upgrade from partial to supported.
