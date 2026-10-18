@@ -1,0 +1,65 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "host": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]",
+  "library_sha256": "37ccfeea6677e42de42c7d197d1042ffd46e91a491e00cbb8a939153d4c9f27c",
+  "library_bytes": 5651736,
+  "scale": 4.0,
+  "runs": 3,
+  "scope": "One-page original PDF probes; fresh Python/ctypes processes; RSS includes host; disk cache/background load uncontrolled; repeated repaint, not page navigation.",
+  "cases": {
+    "flat": {
+      "open_ms": 0.3081,
+      "first_render_ms": 67.9305,
+      "repaint_p50_ms": 66.0387,
+      "repaint_p95_ms": 76.2943,
+      "peak_rss_bytes": 34181120,
+      "incremental_peak_rss_bytes": 8310784,
+      "pdf_sha256": "0c5d5a09e5f49aeb3a699219354718ea9bc22c3f43c84e74d9d05bc0485ec861"
+    },
+    "primitives": {
+      "open_ms": 0.2313,
+      "first_render_ms": 49.455,
+      "repaint_p50_ms": 47.2113,
+      "repaint_p95_ms": 55.8357,
+      "peak_rss_bytes": 32673792,
+      "incremental_peak_rss_bytes": 6815744,
+      "pdf_sha256": "969b506ae20d43ff2a0a3ccfb787cacff9cb643226c27e6081481385739c127a"
+    },
+    "state": {
+      "open_ms": 0.2522,
+      "first_render_ms": 1.6409,
+      "repaint_p50_ms": 1.5455,
+      "repaint_p95_ms": 4.1727,
+      "peak_rss_bytes": 26554368,
+      "incremental_peak_rss_bytes": 700416,
+      "pdf_sha256": "55cbfe5629bcd1ccd73549e377eaa1da0628a27dcd7533a5cc5370ff2e255352"
+    },
+    "groups": {
+      "open_ms": 0.2359,
+      "first_render_ms": 96.5663,
+      "repaint_p50_ms": 96.3421,
+      "repaint_p95_ms": 104.7326,
+      "peak_rss_bytes": 30662656,
+      "incremental_peak_rss_bytes": 4775936,
+      "pdf_sha256": "29451a5c819cb19d9a024d13f1f037861e86c38f89aa5c206fb70e441563cf25"
+    },
+    "compound": {
+      "open_ms": 0.5152,
+      "first_render_ms": 46.6669,
+      "repaint_p50_ms": 46.6109,
+      "repaint_p95_ms": 54.9107,
+      "peak_rss_bytes": 28565504,
+      "incremental_peak_rss_bytes": 2744320,
+      "pdf_sha256": "aac37d895f115c4c4ad1f5d2232c55714def4075b562420bc1bfcd0f5403b0ec"
+    },
+    "ap-groups": {
+      "open_ms": 0.2471,
+      "first_render_ms": 11.0877,
+      "repaint_p50_ms": 11.6219,
+      "repaint_p95_ms": 12.6217,
+      "peak_rss_bytes": 27095040,
+      "incremental_peak_rss_bytes": 1220608,
+      "pdf_sha256": "6a90cefc8cddfbdfdc157adcd8f464e622e15e438297f85f73091da9ed478f89"
+    }
+  }
+}
