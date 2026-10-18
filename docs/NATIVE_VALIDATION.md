@@ -2637,3 +2637,40 @@ EXR_LIMIT with no partial layout. The pre-guard implementation accepted the nint
 so the new limit is tested independently. The fixture generator now creates 45
 float EPUBs. This uses the existing private counter and adds no public structure.
 All 107 local tests pass after this guard; Release DLL 5,218,600 bytes.
+
+
+## Long float continuations (0.18.0 development)
+
+Long floats now retain a page cursor instead of laying out an entire unit up
+front. The first probe is bounded to one page, short floats retain whole-unit
+placement, and long floats use the current remaining space. Continuations run
+before main flow on subsequent pages. Clear waits for the selected side, and
+EOF drains unfinished floats even after all ordinary text has finished.
+
+Twenty-two additional original EPUBs extend the float set to 67. Tests cover
+long left/right/pair floats, float-only and short-main documents, partial first
+pages, margins/padding/borders, empty/explicit/percentage heights, floating
+collapsed tables, nested continuations, vertical and orthogonal writing modes,
+and a descending-start source envelope. Public positioned reconstruction and
+page lookup are checked alongside source containment and visible non-overlap.
+Unbreakable lines/row groups, the existing 129-live-rectangle limit and a nested
+130-cursor tree fail without returning a partial layout. The whole pager tree
+is capped at 128 pending/committed floating contexts, in addition to depth 8.
+
+Seven long variants compare random/backward cached pages against checkpoint-
+free replay and full-document pixels/hit tests. A saved nested cursor is
+cancelled during advancement and then restored; its recovered page matches
+pixels before the cancellation. Tiny checkpoint budgets skip snapshots without
+failing layout; tiny page budgets return no borrowed result. The float test has
+584,942 checks, and all 107 native tests pass locally, with existing goldens.
+Installed JNI passes -Xcheck:jni and renders the new float-long-main.epub through
+EOF, counting all 7,500 A characters. Equivalent Swift smoke is part of macOS
+CI. Native margin/border continuation pixels were inspected at 320 by 320.
+
+Ordinary tables still clear external floats; per-side decoration slicing and
+complete CSS fragmentation semantics remain outside the supported subset.
+Large auto-width measurement, paragraph bidi analysis and parsed document
+storage can still scale with the source. These are independent of retaining
+only bounded output fragments and cursors. See PERFORMANCE.md for raw timing
+and high-water-memory measurements. Cross-platform CI for this commit is
+recorded separately after it completes.

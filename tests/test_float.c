@@ -134,7 +134,9 @@ static void pages(const char *name) {
   CHECK(exr_pager_statistics(fast).restored_checkpoints>0); exr_pager_free(fast); exr_pager_free(slow); exr_layout_free(whole); exr_document_free(d);
 }
 static void limits(void) {
-  exr_document *d=book("oversized"); exr_layout_config c=config(); exr_layout *l=NULL; CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
+  exr_document *d=book("long-unbreakable"); exr_layout_config c=config(); exr_layout *l=NULL; CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
+  d=book("long-table-unbreakable"); CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
+  d=book("long-cursor-limit"); CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
   d=book("limit"); c.page.width=2048; CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
 }
 typedef struct { unsigned calls; int stop; } cancellation;
@@ -197,8 +199,42 @@ static void depth_limit(void) {
   exr_document *d=book("depth-8"); exr_layout *l=layout(d); exr_layout_config c=config(); validate(d,l); exr_layout_free(l); exr_document_free(d);
   d=book("depth-9"); l=NULL; CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
 }
+static void long_floats(void) {
+  const char *names[]={"oversized","long-only","long-short-main","long-main","long-right","long-pair","long-clear","long-clear-br","long-clear-float","long-partial","long-margins","long-height","long-empty","long-percent","long-table","long-nested","long-orthogonal","long-vertical","long-orthogonal-margins","long-descending"}; size_t i;
+  for(i=0;i<sizeof(names)/sizeof(*names);i++) {
+    exr_document *d=book(names[i]); exr_layout_config c=config(); exr_layout *l=NULL; size_t np,n,j; const exr_glyph *g;
+    exr_status status=exr_layout_create_ex(d,font,&c,&l,&error);
+    if(status!=EXR_OK) fprintf(stderr,"long fixture %s\n",names[i]); OK(status);
+    exr_layout_pages(l,&np); CHECK(np>1); validate(d,l);
+    if(!strcmp(names[i],"long-descending")) { const exr_page *p=exr_layout_pages(l,NULL); int descending=0; for(j=1;j<np;j++) descending|=p[j].start<p[j-1].start; if(!descending) { for(j=0;j<np;j++) fprintf(stderr,"page %zu %zu..%zu\n",j,p[j].start,p[j].end); } CHECK(descending); }
+    g=exr_layout_glyphs(l,&n); for(j=0;j<n;j++) CHECK(exr_layout_page_at(l,g[j].start)==g[j].page);
+    if(i>=6 && i<=8) { const exr_line *after=first_line(d,l,"after"); CHECK(after->page==np-1); }
+    if(i==9) CHECK(near(box(d,l,"floating")->y,160));
+    if(i>=11 && i<=13) { const exr_box *b=exr_layout_boxes(l,&n); float total=0; size_t root=node(d,"floating"); for(j=0;j<n;j++) if(b[j].node==root) total+=b[j].height; if(!near(total,i==11 ? 675 : i==12 ? 650 : 500)) fprintf(stderr,"%s total height %.3f\n",names[i],total); CHECK(near(total,i==11 ? 675 : i==12 ? 650 : 500)); }
+    positioned(d,l); exr_layout_free(l); exr_document_free(d);
+  }
+  pages("long-main"); pages("long-pair"); pages("long-table"); pages("long-nested"); pages("long-orthogonal"); pages("long-orthogonal-margins"); pages("long-descending");
+}
+static void stream_recovery(void) {
+  exr_document *d=book("long-nested"); exr_layout_config c=config(); exr_pager *p=NULL; const exr_layout *page; exr_bitmap before={0},after={0};
+  cancellation state={0}; exr_control control={cancelled,progress,&state}; exr_pager_stats stats;
+  OK(exr_pager_create(d,font,&c,&p,&error)); OK(exr_pager_set_cache(p,1,262144,&error));
+  OK(exr_pager_set_checkpoints(p,32,1024*1024,1,&error)); OK(exr_pager_get(p,2,&page,&error)); OK(exr_render_page_color(page,NULL,0,&before,&error));
+  stats=exr_pager_statistics(p); CHECK(stats.checkpoint_bytes>0 && stats.checkpoint_bytes<=1024*1024);
+  /* Abort while a saved float cursor is advancing, then replay from that saved
+     state. The failed output is empty and the recovered page is pixel exact. */
+  OK(exr_pager_set_control(p,&control,&error)); CHECK(exr_pager_get(p,15,&page,&error)==EXR_CANCELLED && !page && state.stop);
+  OK(exr_pager_set_control(p,NULL,&error)); OK(exr_pager_get(p,1,&page,&error)); OK(exr_pager_get(p,2,&page,&error)); OK(exr_render_page_color(page,NULL,0,&after,&error));
+  CHECK(before.stride==after.stride && before.height==after.height && !memcmp(before.pixels,after.pixels,(size_t)before.stride*before.height));
+  CHECK(exr_pager_statistics(p).restored_checkpoints>0);
+  OK(exr_pager_set_checkpoints(p,32,1,1,&error)); CHECK(!exr_pager_statistics(p).checkpoint_bytes);
+  OK(exr_pager_get(p,12,&page,&error)); CHECK(!exr_pager_statistics(p).checkpoint_bytes);
+  OK(exr_pager_set_cache(p,1,1,&error)); CHECK(exr_pager_get(p,13,&page,&error)==EXR_LIMIT && !page);
+  OK(exr_pager_set_cache(p,1,262144,&error)); OK(exr_pager_get(p,2,&page,&error));
+  exr_bitmap_free(&before); exr_bitmap_free(&after); exr_pager_free(p); exr_document_free(d);
+}
 int main(int argc,char **argv) {
-  char path[4096]; CHECK(argc==2); directory=argv[1]; snprintf(path,sizeof(path),"%s/fonts/primary.ttf",directory); OK(exr_font_open(path,&font,&error)); pictures(); pages("pages"); pages("orthogonal-pages"); limits(); recovery(); generated(); joining(); cell_baseline(); source_overlap(); depth_limit(); exr_font_free(font); printf("%u float checks passed\n",checks); return 0;
+  char path[4096]; CHECK(argc==2); directory=argv[1]; snprintf(path,sizeof(path),"%s/fonts/primary.ttf",directory); OK(exr_font_open(path,&font,&error)); pictures(); pages("pages"); pages("orthogonal-pages"); limits(); recovery(); generated(); joining(); cell_baseline(); source_overlap(); depth_limit(); long_floats(); stream_recovery(); exr_font_free(font); printf("%u float checks passed\n",checks); return 0;
 }
 
 

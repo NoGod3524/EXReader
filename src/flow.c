@@ -34,7 +34,7 @@ exr_status exr_flow_page(flow *f, float height, size_t offset) {
   exr_layout *l = f->layout;
   exr_page *p;
   if (f->paginate && height > exr_flow_room(f) + 0.01f)
-    return fail(f, EXR_LIMIT, "Unbreakable content exceeds page height");
+    return fail(f, f->fragment_probe ? EXR_FRAGMENT_SMALL : EXR_LIMIT, "Unbreakable content exceeds page height");
   if (!l->page_count || (f->paginate && (f->force_break || f->y + height > exr_flow_bottom(f)))) {
     if (l->page_count && f->y <= exr_flow_top(f) && !f->force_break)
       return EXR_OK;
@@ -287,6 +287,7 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
       }
     }
   }
+  if(logical_start<l->pages[l->page_count-1].start) l->pages[l->page_count-1].start=logical_start;
   if(logical_end>l->pages[l->page_count-1].end) l->pages[l->page_count-1].end=logical_end;
   f->y+=height; f->first_line=0; return EXR_OK;
 }
@@ -477,6 +478,7 @@ typedef struct {
 static exr_status copy_cell(flow *f, const cell *c, float x, float y, float height) {
   exr_layout *l = f->layout, *from = c->layout;
   size_t i, offset = l->glyph_count, p = l->page_count - 1;
+  if(from->page_count && from->pages[0].start<l->pages[p].start) l->pages[p].start=from->pages[0].start;
   int vertical = f->writing_mode != EXR_WRITING_HORIZONTAL_TB;
   int from_vertical = from->writing_mode != EXR_WRITING_HORIZONTAL_TB;
   float physical_width = from_vertical ? from->flow_block : from->flow_inline;

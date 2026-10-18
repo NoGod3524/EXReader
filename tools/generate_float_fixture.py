@@ -67,6 +67,32 @@ epub('auto-corridor',image('picture','left',140)+'<div id="floating" style="floa
 epub('source-overlap','<p>'+('A<br/>'*8)+'</p><p><span style="font-size:56px">A</span><span style="float:left;width:40px;height:20px;background:#ffe080">AAA</span>A A A A</p>')
 for depth in (8,9):
     epub('depth-'+str(depth),('<div style="float:left;width:100px;height:40px;background:#ffe080">'*depth)+'A'+('</div>'*depth)+'<p>'+text()+'</p>')
+long_body='<p>'+('A '*2500)+'</p>'
+def side(body=long_body,style=''):
+    return '<div id="floating" style="float:left;width:80px;background:#ffe080;'+style+'">'+body+'</div>'
+epub('long-only',side())
+epub('long-short-main',side()+'<p>'+text(10)+'</p>')
+epub('long-main',side()+'<p>'+text(5000)+'</p>')
+epub('long-right',side(style='float:right')+'<p>'+text(5000)+'</p>')
+epub('long-pair',side()+side(style='float:right')+'<p>'+text(5000)+'</p>')
+epub('long-clear',side()+'<p id="after" style="clear:both">AAA</p>')
+epub('long-clear-br','<p>'+side()+'A<br style="clear:both"/><span id="after">AAA</span></p>')
+epub('long-clear-float',side()+'<div id="after" style="float:right;clear:left;width:40px;background:blue">AAA</div>')
+epub('long-partial','<p>'+('A<br/>'*7)+'</p>'+side()+'<p>'+text(1000)+'</p>')
+epub('long-margins',side(style='margin:5px 7px 9px 11px;padding:3px;border:2px solid red')+'<p>'+text(1000)+'</p>')
+epub('long-height',side('A','height:650px;padding:3px;border:2px solid red')+'<p>'+text(1000)+'</p>')
+epub('long-empty',side('','height:650px')+'<p>'+text(1000)+'</p>')
+epub('long-percent',side('A','height:250%')+'<p>'+text(1000)+'</p>')
+epub('long-table','<table id="floating" style="float:left;width:80px;border-collapse:collapse">'+('<tr><td>A</td><td>AA</td></tr>'*250)+'</table><p>'+text(1000)+'</p>','td {border:2px solid blue}')
+epub('long-nested',side('<div style="float:right;width:30px;background:blue">'+long_body+'</div><p>'+('A '*1000)+'</p>')+'<p>'+text(1000)+'</p>')
+epub('long-orthogonal',side('<div style="writing-mode:vertical-rl">'+long_body+'</div>')+'<p>'+text(1000)+'</p>')
+epub('long-orthogonal-margins','<p>'+('A<br/>'*7)+'</p>'+side('<div style="writing-mode:vertical-rl">'+long_body+'</div>','margin:5px 7px 9px 11px;padding:3px;border:2px solid red')+'<p>'+text(1000)+'</p>')
+epub('long-vertical',side(style='width:80px;height:80px')+'<p>'+text(5000)+'</p>','html {writing-mode:vertical-rl}')
+epub('long-unbreakable',side('<p style="font-size:240px;line-height:260px">A</p>'))
+epub('long-table-unbreakable',side('<table><tr><td>'+long_body+'</td></tr></table>'))
+epub('long-descending',side('<p>'+('A '*1000)+'</p>','height:10000px')+side('A','height:1200px')+'<p>'+text(100)+'</p>')
+inner=''.join('<div style="float:left;width:1px;height:1000px;background:blue"></div>' for _ in range(64))
+epub('long-cursor-limit',side(inner)+side(inner))
 print(count,'float fixtures generated')
 
 

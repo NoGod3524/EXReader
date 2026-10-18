@@ -222,7 +222,7 @@ Windows x64 / GCC 16.2 Release、仓库 primary.ttf，每模式 3 轮独立进�
 | 完整翻页 p95 | 2.54 ms | 4.44 ms |
 | 总页数 | 40 | 23 |
 
-浮动复用原有字体、图片缓存与页级队列。每个排版上下文保留最多 128 个避让矩形，当前 64 位构建约 2.6 KiB，并计入上下文及 checkpoint 大小；临时 flow 副本只借用它。跨页重排待提交的行会有额外塑形工作，已落到上述实际翻页计时。字号、脚本、图片尺寸和长浮动块会改变成本；当前超过整页高度的浮动块返回 EXR_LIMIT，尚未拆分。
+浮动复用原有字体、图片缓存与页级队列。每个排版上下文保留最多 128 个避让矩形，当前 64 位构建约 2.6 KiB，并计入上下文及 checkpoint 大小；临时 flow 副本只借用它。跨页重排待提交的行会有额外塑形工作，已落到上述实际翻页计时。字号、脚本、图片尺寸和长浮动块会改变成本；该组历史基准对应 7abacb9，当时超过整页高度的浮动块返回 EXR_LIMIT。后续续排实现的独立数据见下文。
 
 输入文件、eager/paged 原始三轮 JSON 与程序/字体 SHA-256 见 [浮动基准](benchmarks/0.18.0-floats-windows/metadata.json)。复测：
 
@@ -230,3 +230,35 @@ Windows x64 / GCC 16.2 Release、仓库 primary.ttf，每模式 3 轮独立进�
 exreader-benchmark --text-bytes 1048576 tests/fixtures/fonts/primary.ttf --max-pages 64 --paging
 exreader-benchmark docs/benchmarks/0.18.0-floats-windows/floats.epub tests/fixtures/fonts/primary.ttf --max-pages 0 --paging
 ```
+
+
+## 长浮动块页级续排（0.18.0 开发中）
+
+Windows / GCC 16.2 Release，原始 primary.ttf，每场景 3 个全新进程，磁盘缓存未控制。
+下表为三轮中位数；内存是整个进程的峰值工作集，含文档、字体和页面绘制。
+压力 EPUB 中长侧栏宽 160px，每段 128 字节，另有 1,000 个 A 的正文。
+基准默认页面尺寸，测首个 reading-order part；不是整个 spine 的总耗时。
+
+| 场景 | 输出页数 | 首屏 ms | 峰值 bytes | 翻页 p50/p95 ms |
+| --- | ---: | ---: | ---: | ---: |
+| 64 KiB 侧栏，逐页至 EOF | 66 | 5.48 | 11,268,096 | 0.99 / 1.32 |
+| 同一侧栏，完整布局 | 66 | 37.63 | 26,910,720 | 0.47 / 0.63 |
+| 1 MiB 侧栏，前两页 | 2（未到 EOF） | 20.82 | 18,825,216 | 1.31 / 1.31（单次翻页） |
+| 同一侧栏，逐页至 EOF | 1,046 | 20.68 | 18,804,736 | 0.93 / 2.18 |
+| 1 MiB 普通文本，前 65 页 | 65（未到 EOF） | 10.58 | 17,838,080 | 1.13 / 2.52 |
+
+完整布局的翻页只绘制已有页面；逐页计时包含续排和绘制。1 MiB 侧栏全程
+与前两页的峰值接近，支持布局片段未随已读页数积存；文档解析、节点和样式
+仍随输入增长。自动宽度会先测 min/max-content，超长单段的双向分析也保留
+段落级数据，因此不宣称所有排版内存都与源大小无关。
+
+原始三轮 JSON、输入 EPUB、程序/字体 SHA-256 和 Git blob 来源清单见
+[续排基准](benchmarks/0.18.0-float-stream-windows/metadata.json)。复测：
+
+```text
+exreader-benchmark docs/benchmarks/0.18.0-float-stream-windows/float-1048576.epub tests/fixtures/fonts/primary.ttf --paging --max-pages 0
+exreader-benchmark docs/benchmarks/0.18.0-float-stream-windows/float-1048576.epub tests/fixtures/fonts/primary.ttf --paging --max-pages 1
+```
+
+每个格式的 `--max-pages` 为首屏之后的翻页数。字典、OCR、平台视图和网络组件
+未包含在这次负载中。该步骤没有新依赖，DLL 字节数见同一 metadata 文件。
