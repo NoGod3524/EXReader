@@ -36,20 +36,25 @@ static exr_status program(void *context,const exr_pdf_font_info *info,exr_font_i
   if(selected==SIZE_MAX) return exr_fail(e,EXR_FORMAT,"No usable PDF fallback font face");
   return exr_font_source(d->font,selected,out,e);
 }
-static exr_status draw(void *context,size_t page,const double matrix[6],const exr_draw_sink *sink,const exr_control *control,exr_error *e) {
+static exr_status draw_ex(void *context,size_t page,const double matrix[6],const exr_draw_sink_ex *sink,const exr_control *control,exr_error *e) {
   pdf_document *d=context; exr_buffer content={0}; exr_status status=reader(d,e);
   if(status!=EXR_OK) return status;
   if(page>=d->count) return exr_fail(e,EXR_ARGUMENT,"PDF page is out of range");
   exr_pdf_control(d->file,control);
   status=exr_control_cancel(control,e);
   if(status==EXR_OK) status=exr_pdf_content(d->file,d->pages[page].contents,&content,e);
-  if(status==EXR_OK) status=exr_pdf_paint_page(d->file,&d->pages[page],content.data,content.size,matrix,sink,program,d,NULL,control,e);
+  if(status==EXR_OK) status=exr_pdf_paint_page_ex(d->file,&d->pages[page],content.data,content.size,matrix,sink,program,d,NULL,control,e);
   free(content.data);
   /* Failed lazy resolution/decoding can leave a sticky parser error. Rebuild
      the reader on the next request, so another page remains independently usable. */
   if(status!=EXR_OK) discard_reader(d); else exr_pdf_control(d->file,NULL);
   return status;
 }
+static exr_status draw(void *context,size_t page,const double matrix[6],const exr_draw_sink *sink,const exr_control *control,exr_error *e) {
+  exr_draw_sink_ex extended={0};extended.struct_size=sizeof(extended);extended.base=*sink;
+  return draw_ex(context,page,matrix,&extended,control,e);
+}
+
 /* Snapshot order follows content operators, including nested Forms. No inferred
    spaces/line breaks or glyph-outline guesses are added to semantic mappings. */
 typedef struct { exr_buffer bytes; exr_text_region *regions; size_t count,capacity; } text_builder;
@@ -241,7 +246,7 @@ static exr_status open_owned(unsigned char *data,size_t size,const char *title,c
     if(pages[i].geometry.bounds[0]>=pages[i].geometry.bounds[2] || pages[i].geometry.bounds[1]>=pages[i].geometry.bounds[3]) { status=exr_fail(e,EXR_FORMAT,"PDF page crop has no MediaBox intersection"); goto done; }
     pages[i].geometry.unit_scale=p->user_unit; pages[i].geometry.rotation=p->rotation;
   }
-  input.struct_size=sizeof(input); input.title=title; input.pages=pages; input.page_count=d->count; input.draw=draw; input.context=d; input.release=release; input.text=text; input.metadata=metadata; input.annotations=annotations;
+  input.struct_size=sizeof(input); input.title=title; input.pages=pages; input.page_count=d->count; input.draw=draw;input.draw_ex=draw_ex; input.context=d; input.release=release; input.text=text; input.metadata=metadata; input.annotations=annotations;
   status=exr_control_poll(&options->control,EXR_STAGE_READ,d->count,d->count,e);
   if(status==EXR_OK) status=exr_fixed_create(&input,out,e);
   if(status==EXR_OK && options->pdf_security) {

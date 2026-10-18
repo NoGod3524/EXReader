@@ -87,9 +87,9 @@ static void failures(void) {
   const char *forms[]={"/BBox [0 0 0 10]","/BBox [0 0 10]","/BBox [0 0 10 10] /Matrix [1 0 0 1 0]","/BBox [0 0 10 10] /Resources 42","/BBox [0 0 10 10] /Group << /S /Transparency >>","/Subtype /Image /BBox [0 0 10 10]","/BBox [0 0 10 10] /FormType 2"};
   size_t i; exr_fixed_document *d; exr_bitmap b;
   for(i=0;i<sizeof(forms)/sizeof(*forms);i++) {
-    build("[6 0 R]",FIRST,"null","",forms[i],RED); d=open_pdf(); CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels && !b.width);
+    build("[6 0 R]",FIRST,"null","",forms[i],RED); d=open_pdf(); CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==(i==4 ? EXR_UNSUPPORTED : EXR_FORMAT) && !b.pixels && !b.width);
     OK(exr_fixed_render(d,1,1,NULL,&b,&error)); CHECK(color(&b,15,15)==0x0000ff); exr_bitmap_free(&b);
-    CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels); exr_fixed_free(d);
+    CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==(i==4 ? EXR_UNSUPPORTED : EXR_FORMAT) && !b.pixels); exr_fixed_free(d);
   }
   build("[6 0 R]",FIRST,"null","",FORM,"q BT"); d=open_pdf();
   { observer o={0}; exr_draw_sink sink={0}; sink.state=state; sink.path=path; sink.context=&o;

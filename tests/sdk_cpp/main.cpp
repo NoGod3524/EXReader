@@ -7,6 +7,17 @@ int main(int argc,char **argv) {
   static_assert(EXR_ABI_VERSION==1,"Expected documented ABI epoch");
   if(exr_abi_version()!=EXR_ABI_VERSION || std::strcmp(exr_version(),EXR_VERSION)) return 1;
   exr_error error{}; exr_document *raw=nullptr;
+  {
+    exr_canvas_config config{};config.width=config.height=1;
+    exr_canvas *canvas=nullptr;exr_bitmap bitmap{};exr_draw_sink_ex sink{};sink.struct_size=sizeof(sink);
+    if(exr_canvas_create(&config,&canvas,&error)!=EXR_OK) return 90;
+    std::unique_ptr<exr_canvas,decltype(&exr_canvas_free)> owner(canvas,exr_canvas_free);
+    if(exr_canvas_get_sink_ex(canvas,&sink,&error)!=EXR_OK || !sink.blend || !sink.begin_layer || !sink.end_layer) return 91;
+    if(exr_canvas_set_layer_budget(canvas,4,&error)!=EXR_OK || sink.begin_layer(canvas,.5,EXR_BLEND_SCREEN,&error)!=EXR_OK) return 92;
+    if(sink.blend(canvas,EXR_BLEND_HUE,&error)!=EXR_OK || sink.end_layer(canvas,1,&error)!=EXR_OK) return 93;
+    if(exr_canvas_take(canvas,&bitmap,&error)!=EXR_OK || bitmap.channels!=4) return 94;
+    exr_bitmap_free(&bitmap);
+  }
   const char text[]=u8"C++ host";
   if(exr_document_open_memory(EXR_TXT,text,sizeof(text)-1,&raw,&error)!=EXR_OK) return 2;
   std::unique_ptr<exr_document,decltype(&exr_document_free)> document(raw,exr_document_free);

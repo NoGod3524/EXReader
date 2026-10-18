@@ -3810,3 +3810,58 @@ commit. All 111 preceding hyphen EPUBs, four local runtime copies and nine
 preceding workload input/font/generated counts were verified.
 This verification-only commit adds the completed provenance record and skips
 redundant CI. The complete PDF/reading SDK roadmap remains active.
+
+
+## RGB blends and isolated transparency groups (0.18 development)
+
+`native-blend` exercises all 16 ISO RGB modes through paths, strokes, images,
+embedded TrueType outlines, ordinary/nested Forms and annotation appearances.
+Original fixtures and independently generated raw MuPDF 1.28.2 / PDFium
+156.0.8076.0 renders are under `tests/fixtures/pdf-blend`. The generator uses
+PyMuPDF 1.28.2 and pypdfium2 5.14.0 only during development; neither renderer is
+linked to or distributed in the SDK. Blend math was independently authored from
+ISO formulas. The embedded font is the existing original GPL-3.0-only test font.
+
+Reference selection is explicit in manifest.json. The PDFium transparent result
+supplies premultiplied blend samples; ISO 32000-1 11.4.7 requires isolating page
+content before normally flattening it onto the medium. Raw PDFium white output
+paints blend operations directly onto white instead, so it is not used for page
+content white expectations. Annotation APs paint after the page group; their
+white regions use raw PDFium white output. Raw MuPDF is retained, but differs
+from ISO/PDFium partial-alpha nonseparable math. A separate analytic luminosity
+example checks premultiplied RGB approximately (92,97,40), alpha 224 for source
+(240,31,0,192) over (17,255,127,128), alongside opaque analytic blend expectations.
+
+Both external engines select Normal for the unknown-first BM array and reset BM
+on the null test state. Those cells use explicit ISO 11.6.3 first-recognized and
+7.3.9 null-as-absent expectations instead. These exceptions are visible in the
+generator; tolerance is not widened. Flat/state/combined-fill-stroke pixels and
+selected primitive/group interiors compare within 3/255; the measured maximum
+is 2. Both transparent and white output, RGB-to-gray and full extended-sink
+replay are checked. Combined fill/stroke includes unequal and zero stroke alpha.
+
+Layer checks cover nested commit/abort, opacity applied once, inherited fractional
+clip applied once, parent blend and nested pending text-clip restoration, saved
+state boundaries, unfinished layers, 32-layer/aggregate byte budgets, compound
+coverage-mask budget failure, cancellation, failed-stream abort and cleanup.
+Malformed BM arrays and group flags/subtypes are rejected; recognized non-isolated,
+knockout and non-RGB groups return EXR_UNSUPPORTED. Sink prefix canaries,
+truncated callbacks, nonzero future tails, incomplete pairs, legacy consumer
+rejection and success-with-error callbacks have explicit checks. The public
+annotation appearance regression is updated to distinguish unsupported groups
+from malformed Forms. The installed C++ smoke calls the new canvas effects API.
+
+Local Windows Release: all 118 CTests passed; native-blend reports 739740 checks.
+Installed C and C++ consumers passed; JNI -Xcheck:jni passed with the installed
+runtime directory in PATH. Cross-platform/sanitizer results are recorded with the
+validated code commit in `docs/benchmarks/0.18.0-pdf-blend-windows/metadata.json`.
+
+`tools/benchmark_pdf_blend.py` records open, first render, eight repeated repaints,
+RGBA stability and process peak RSS in fresh ctypes hosts. RSS includes Python
+and the loaded runtime. Its six small one-page scenes are compositor probes,
+not navigation or large-book results. Scale, input/runtime hashes and all samples
+are retained in that directory. Full-canvas intermediate layers and compound
+coverage masks are current memory/time costs; bounded/cropped group buffers
+remain work. Non-isolated/knockout groups, graphics-state soft masks, non-RGB
+blending spaces, joint subpixel compound coverage and wider transparency/color
+compatibility remain outside this batch.

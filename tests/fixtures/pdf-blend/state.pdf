@@ -1,0 +1,62 @@
+%PDF-1.7
+%ÄÅÇÉ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 1 /Kids [3 0 R] >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 96 16] /Contents 4 0 R /Group << /S /Transparency /CS /DeviceRGB /I true >> /Resources << /ExtGState << /N 5 0 R /M 6 0 R /A 7 0 R /U 8 0 R /C 9 0 R /X 10 0 R /Z 11 0 R >> /XObject <<  >> /Font <<  >> >> >>
+endobj
+4 0 obj
+<< /Length 773  >>
+stream
+q /N gs 0.200000000 0.400000000 0.600000000 rg 0 0 16 16 re f /A gs 0.800000000 0.301960784 0.101960784 rg 0 0 16 16 re f Q
+q /N gs 0.200000000 0.400000000 0.600000000 rg 16 0 16 16 re f /U gs 0.800000000 0.301960784 0.101960784 rg 16 0 16 16 re f Q
+q /N gs 0.200000000 0.400000000 0.600000000 rg 32 0 16 16 re f /C gs 0.800000000 0.301960784 0.101960784 rg 32 0 16 16 re f Q
+q /N gs 0.200000000 0.400000000 0.600000000 rg 48 0 16 16 re f /X gs 0.800000000 0.301960784 0.101960784 rg 48 0 16 16 re f Q
+q /N gs 0.200000000 0.400000000 0.600000000 rg 64 0 16 16 re f /M gs q /N gs Q /Z gs 0.800000000 0.301960784 0.101960784 rg 64 0 16 16 re f Q
+q /N gs 0.200000000 0.400000000 0.600000000 rg 80 0 16 16 re f q /M gs Q 0.800000000 0.301960784 0.101960784 rg 80 0 16 16 re f Q
+endstream
+endobj
+5 0 obj
+<< /BM /Normal /ca 1.000000000 /CA 1.000000000 >>
+endobj
+6 0 obj
+<< /BM /Multiply /ca 1.000000000 /CA 1.000000000 >>
+endobj
+7 0 obj
+<< /BM [/Missing /Multiply /Screen] /ca 1.000000000 /CA 1.000000000 >>
+endobj
+8 0 obj
+<< /BM [/Missing /Other] /ca 1.000000000 /CA 1.000000000 >>
+endobj
+9 0 obj
+<< /BM /Compatible /ca 1.000000000 /CA 1.000000000 >>
+endobj
+10 0 obj
+<< /BM /Unregistered /ca 1.000000000 /CA 1.000000000 >>
+endobj
+11 0 obj
+<< /BM null /ca 1.000000000 /CA 1.000000000 >>
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000387 00000 n 
+0000001212 00000 n 
+0000001277 00000 n 
+0000001344 00000 n 
+0000001430 00000 n 
+0000001505 00000 n 
+0000001574 00000 n 
+0000001646 00000 n 
+trailer
+<< /Size 12 /Root 1 0 R >>
+startxref
+1709
+%%EOF

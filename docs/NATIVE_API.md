@@ -1000,7 +1000,7 @@ ID 和属性值须为有效 UTF-8 C 字符串；UTF-8 载荷各最多 64 KiB，�
 
 `exr_fixed_draw` / `exr_fixed_render` 在页面正文之后绘制原生标注的 `/AP/N` normal Form，既支持直接 Form，也支持按 `/AS` 选择状态字典中的 Form。使用 Rect、BBox、Matrix 和 Form 自有资源或页面资源，将外观裁切并映射到源页；每项外观与正文的绘制状态隔离。Invisible、Hidden、NoView 标注不绘制，没有可用 normal 外观时跳过。单页解码外观流合计最多 64 MiB，并共享工作预算和取消控制。
 
-带 NoZoom/NoRotate 的可见外观、Form `/Group`（包括透明度组）目前返回 `EXR_FORMAT`；其他尚未支持的 Form 内容仍沿用 PDF 绘制器的错误规则。此入口绘制既有外观，不为任意标注类型合成外观，也不执行表单交互、动作或脚本。
+带 NoZoom/NoRotate 的可见外观目前返回 `EXR_FORMAT`。Form `/Group` 支持隔离、非挖空的 RGB 透明组；非隔离、挖空和其他组色彩空间返回 `EXR_UNSUPPORTED`。其他尚未支持的 Form 内容仍沿用 PDF 绘制器的错误规则。此入口绘制既有外观，不为任意标注类型合成外观，也不执行表单交互、动作或脚本。
 
 
 ## Unicode 默认断行与原生音频（0.18 开发补充）
@@ -1629,3 +1629,56 @@ libhyphen 参考比较使用其要求的 substring 预处理，并限定在双�
 公开页面的原文包络可因多列/跨行续排而重叠；选文与命中应使用实际 glyph 的源范围。
 失败页不返回或进入缓存；缓存读取模式可以在清除取消控制或调整缓存预算后重试。
 C/Swift/JNI 接口及公开记录大小沿用现有约定，ABI epoch 1、schema 6 不变。
+
+
+## RGB 混合模式与隔离透明组（0.18 开发中）
+
+`exr_canvas_blend` 设置 ISO 32000-1 的 16 种 RGB 混合模式，随 save/restore
+保存恢复。普通路径、字形轮廓和图片使用同一合成路径；裁剪遮罩的构造始终使用
+Normal 覆盖率，不受绘制混合模式影响。ColorDodge/ColorBurn 的极值按 PDF
+表 136 的源颜色优先条件处理。
+
+`exr_canvas_begin_layer(canvas, opacity, mode, error)` 创建透明 RGB 隔离层，
+内部初始 blend 为 Normal；`end_layer(canvas, 1, error)` 按指定透明度和模式
+合成到父层。继承的裁剪只在提交时应用一次。`commit=0` 丢弃图层并清理其
+内部保存状态和未提交文字裁剪并集；父层的 blend、裁剪及待提交并集恢复。
+内部 restore 不能跨越图层边界。有效 end 调用即使返回错误也消耗该层；
+失败画布保留第一次错误，abort 仍可清理资源。存在未结束层时 take 返回错误。
+
+图层最多 32 层，每层目前分配完整画布 RGBA 缓冲，每层最多 64 MiB；
+所有活动子层的像素预算合计默认 64 MiB，另计基础位图、裁剪及状态。
+`exr_canvas_set_layer_budget` 在进入图层前设置合计预算，0 恢复默认。
+父层持有的子层状态、裁剪遮罩和像素纳入 `exr_canvas_memory_size`。
+按组边界裁小临时缓冲仍是性能目标。
+
+同一路径的 fill/stroke 作为一个透明元素处理：两者基于原始背景，描边形状
+覆盖填充，最后裁剪一次；零透明度描边沿用 MuPDF/PDFium 的不落墨行为。
+内部使用两个覆盖率缓冲，计入 mask_budget，最多额外 2 字节/画布像素；
+分数覆盖率分别光栅化后组合，尚未使用联合子像素采样。
+
+宿主自绘可使用新的大小标记记录 `exr_draw_sink_ex`，初始化 struct_size，
+将原有 sink 放入 base，另提供 blend、begin_layer/end_layer。所有回调共用
+base.context，图层回调必须成对。回调输入仍仅在调用时借用；回调返回 OK
+但 error.code 非 OK 同样终止绘制。仅做检查的宿主可跳过不需要的基础回调。
+`exr_canvas_get_sink_ex` 连接内置实现，按调用方提供的存储大小写入；
+未知非零输入尾部、不完整非零回调字段及单边图层回调均拒绝。
+
+`exr_fixed_input` 在已大小标记的尾部增加可选 draw_ex；原 draw 仍必填。
+`exr_fixed_draw_ex` 调用扩展提供者，缺省时回退到 draw 与 sink.base。
+原 exr_draw_sink 的布局与 exr_fixed_draw 保留；原接口的 PDF 消费者只接受
+Normal 绘制，实际遇到其他模式或隔离 Form 时返回错误。
+PDF 混合消费者必须支持图层回调，以便先隔离页面内容，再合成到介质背景；
+原生标注外观在页面内容组之后绘制。
+
+PDF `/BM` 支持名字、Compatible、按顺序选择第一个已知名字的数组；全部
+未知时使用 Normal，null 条目相当于缺失，保留原值。数组仍全量校验、计费和
+响应取消。页面及 Form、标注 AP 的 `/Group` 当前接受 `/S /Transparency`、
+`/I true`、`/K false`、缺省或 DeviceRGB 色彩空间；页面 I 按介质合成规范
+忽略，页面总是隔离。Form 入口重置混合模式与 ca/CA，调用者的透明度和模式
+在组结束时仅应用一次。非隔离组、挖空组及其他组色彩空间显式返回
+`EXR_UNSUPPORTED`；图形状态 `/SMask`（Alpha/Luminosity）仍未接入。
+
+`exr_fixed_render` 自动接入扩展 PDF 提供者；要求灰度输出时保留 RGB 工作
+缓冲，整页完成后再转灰，避免先逐图元丢色改变后续混合结果。RGB 工作位图
+仍受 64 MiB 限制。直接灰度画布继续按每次绘制转换。
+版本仍为 0.18.0 开发版、ABI 1、书库 schema 6；本节没有增加运行时依赖。

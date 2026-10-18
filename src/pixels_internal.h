@@ -20,4 +20,5 @@ static inline void exr_pixel(exr_bitmap *bitmap,int x,int y,uint32_t color,unsig
     p[3]=(unsigned char)((denominator+127)/255);
   }
 }
+void exr_pixel_blend(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage,exr_blend_mode mode);
 #endif

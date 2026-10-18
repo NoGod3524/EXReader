@@ -377,3 +377,26 @@ Top/baseline groups probe one page before committing a tall row. Middle/bottom
 alignment still needs full-height measurement, and auto-width tables still scan
 full min/max-content input. Large-cell cost differences are recorded separately;
 the performance report lists fixed, automatic and bottom-aligned costs separately.
+
+
+RGB compositing adds size-tagged `exr_draw_sink_ex` and an optional `draw_ex`
+tail to size-tagged `exr_fixed_input`. The original unversioned sink and fixed
+render options keep their layouts. Existing providers still supply `draw`;
+`exr_fixed_draw_ex` falls back to it with `sink.base`. Original annotation-capable
+input prefixes remain accepted and have a compile-time ABI assertion.
+
+For a host renderer, initialize `sink.struct_size`, retain the original callbacks
+in `base`, and add blend plus paired begin/end layer callbacks. All callbacks use
+`base.context`. A successful begin must be matched by end; commit=0 unwinds and
+discards. A valid end consumes its layer even when reporting an error. PDF blend
+consumers need the pair for isolated page content and Form/AP groups. The original
+PDF draw entry rejects actual non-Normal blend paints and isolated Form groups.
+Inspection consumers may skip primitives, but must acknowledge requested effects.
+
+For built-in rendering no host migration is needed. Gray PDF output now uses an
+RGB working image and converts at the end, subject to the existing 64 MiB RGB
+bitmap ceiling. Isolated layers have a separate 64 MiB aggregate pixel budget;
+combined fill/stroke uses two coverage masks charged to mask_budget. Callers
+using a canvas directly can set the layer budget before entering layers. Layer
+budget failure, cancellation or unbalanced scopes never returns a partial bitmap.
+This is still 0.18.0 development, ABI 1 and schema 6.

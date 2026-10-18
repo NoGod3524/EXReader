@@ -37,10 +37,11 @@ static void texture_sample(const exr_vector_texture *texture,double u,double v,d
     out[3]*=a;
   }
 }
-exr_status exr_vector_texture_paint(exr_bitmap *target,const exr_vector_texture *source,const double m[6],double alpha,
-                                     const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *e) {
+exr_status exr_vector_texture_blend(exr_bitmap *target,const exr_vector_texture *source,const double m[6],double alpha,
+                                     const exr_bitmap *clip,exr_blend_mode mode,size_t *work,const exr_control *control,exr_error *e) {
   size_t local_work=0,i; double det,inv[6],left=1e7,top=1e7,right=-1e7,bottom=-1e7; int x0,y0,x1,y1,x,y;
   const exr_vector_texture *layers[16],*layer=source; size_t depth=0,cost=0;
+  if(mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY) return exr_fail(e,EXR_ARGUMENT,"Invalid affine image blend mode");
   if(!storage(target) || !source || !m || !isfinite(alpha) || alpha<0 || alpha>1 ||
      (clip && (!storage(clip) || clip->channels!=1 || clip->width!=target->width || clip->height!=target->height || overlap(target,clip))))
     return exr_fail(e,EXR_ARGUMENT,"Invalid affine image bitmap, alpha or clip");
@@ -53,6 +54,7 @@ exr_status exr_vector_texture_paint(exr_bitmap *target,const exr_vector_texture 
       return exr_fail(e,EXR_ARGUMENT,"Invalid affine image matte");
     cost+=layer->interpolate ? 24 : 12; layers[depth++]=layer; layer=layer->mask;
   }
+  cost+=mode==EXR_BLEND_NORMAL ? 0 : mode<EXR_BLEND_HUE ? 24 : 64;
   for(i=0;i<6;i++) if(!isfinite(m[i]) || fabs(m[i])>1e7) return exr_fail(e,EXR_ARGUMENT,"Invalid affine image transform");
   if(!work) work=&local_work;
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
@@ -81,7 +83,7 @@ exr_status exr_vector_texture_paint(exr_bitmap *target,const exr_vector_texture 
       }
       if(!sums[3]) continue;
       for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(sums[k]/sums[3]+.5))<<(24-8*k);
-      color|=(uint32_t)fmin(255,floor(sums[3]*alpha/4+.5)); exr_pixel(target,x,y,color,coverage);
+      color|=(uint32_t)fmin(255,floor(sums[3]*alpha/4+.5)); if(mode==EXR_BLEND_NORMAL) exr_pixel(target,x,y,color,coverage);else exr_pixel_blend(target,x,y,color,coverage,mode);
     }
   }
   return exr_fail(e,EXR_OK,"");
@@ -90,4 +92,9 @@ exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const do
                              int interpolate,const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *e) {
   exr_vector_texture texture={0}; if(source) texture.bitmap=*source; texture.interpolate=interpolate!=0;
   return exr_vector_texture_paint(target,&texture,m,alpha,clip,work,control,e);
+}
+
+exr_status exr_vector_texture_paint(exr_bitmap *target,const exr_vector_texture *source,const double matrix[6],double alpha,
+  const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *error) {
+  return exr_vector_texture_blend(target,source,matrix,alpha,clip,EXR_BLEND_NORMAL,work,control,error);
 }
