@@ -166,7 +166,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure the instrumented fuzz driver
-        run: cmake -S . -B build/fuzz -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_BUILD_FUZZ=ON -DEXR_BUILD_TOOLS=OFF
+        run: cmake -S . -B build/fuzz -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_BUILD_FUZZ=ON -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF
       - run: cmake --build build/fuzz --parallel 4
       - name: Bounded parser campaign (seeded, reproducible)
         run: ./build/fuzz/exreader-fuzz --seed 1 --iterations 200000 --save build/fuzz/last.bin tests/fixtures/pdf-blend/nonisolated.pdf tests/fixtures/layout.epub tests/fixtures/comic.cbz tests/fixtures/deep.fb2 tests/fixtures/sample.txt
