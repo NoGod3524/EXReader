@@ -457,7 +457,9 @@ enum {
   EXR_GLYPH_SHAPED = 16, /* Advances/offsets include OpenType positioning. */
   EXR_GLYPH_UNDERLINE = 32, EXR_GLYPH_STRIKE = 64,
   EXR_GLYPH_VERTICAL = 128, /* advance and clipping follow the physical y axis. */
-  EXR_GLYPH_SIDEWAYS = 256  /* Clockwise 90-degree outline in vertical text. */
+  EXR_GLYPH_SIDEWAYS = 256, /* Clockwise 90-degree outline in vertical text. */
+  EXR_GLYPH_GENERATED = 2048 /* Contains generated text, e.g. an automatic hyphen.
+                               Source range may be empty; never append it to source text. */
 };
 typedef enum {
   EXR_WRITING_HORIZONTAL_TB=0, EXR_WRITING_VERTICAL_RL=1, EXR_WRITING_VERTICAL_LR=2
@@ -1114,6 +1116,10 @@ EXR_API exr_status exr_hyphenator_breaks(exr_hyphenator *hyphenator,const char *
   const char *word,size_t size,unsigned char *breaks,const exr_control *control,exr_error *error);
 EXR_API size_t exr_hyphenator_memory_size(const exr_hyphenator *hyphenator);
 EXR_API void exr_hyphenator_free(exr_hyphenator *hyphenator);
+/* Optional dictionaries are retained. Automatic opportunities require CSS
+   hyphens:auto; the CSS default remains manual. Config record/ABI is unchanged. */
+EXR_API exr_status exr_layout_create_hyphenated(const exr_document *doc,exr_font *font,
+  const exr_layout_config *config,exr_hyphenator *hyphenator,exr_layout **out,exr_error *error);
 EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,
                                      const exr_layout_options *options, exr_layout **out,
                                      exr_error *error);
@@ -1138,6 +1144,8 @@ EXR_API exr_status exr_pager_create(const exr_document *doc, exr_font *font,
 EXR_API exr_status exr_pager_next(exr_pager *pager, exr_layout **out, exr_error *error);
 EXR_API exr_status exr_pager_set_control(exr_pager *pager, const exr_control *control,
                                          exr_error *error);
+/* Set/clear before set_cache(), get() or next(). Retains the dictionary. */
+EXR_API exr_status exr_pager_set_hyphenator(exr_pager *pager,exr_hyphenator *hyphenator,exr_error *error);
 /* Alternative borrowed-page mode; cannot be mixed with next(). Cache defaults to
    one page/no byte limit. Evicted pages resume from a retained checkpoint when
    available, otherwise from the beginning.
@@ -1177,6 +1185,8 @@ EXR_API size_t exr_session_cached(const exr_session *session);
    A new entry larger than the budget returns EXR_LIMIT and preserves the old cache.
    Shared sources, fonts, temporary loads and renderer bitmaps are outside this budget. */
 EXR_API exr_status exr_session_set_budget(exr_session *session, size_t bytes, exr_error *error);
+/* Retains the new dictionary and clears cached layouts when changed. */
+EXR_API exr_status exr_session_set_hyphenator(exr_session *session,exr_hyphenator *hyphenator,exr_error *error);
 EXR_API size_t exr_session_cached_bytes(const exr_session *session);
 EXR_API void exr_session_clear(exr_session *session);
 EXR_API void exr_session_free(exr_session *session);

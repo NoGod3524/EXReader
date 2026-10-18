@@ -51,6 +51,7 @@ struct exr_pager {
   exr_style *styles;
   size_t style_count;
   exr_layout *assets;
+  exr_hyphenator *hyphenator;
   exr_line_buffer line; /* Raw source, provisional carry and finalized pending line. */
   exr_inline_bidi bidi;
   frame frames[258];
@@ -99,9 +100,14 @@ static checkpoint *checkpoint_clone(const checkpoint *source) {
   copy->f.floats=&copy->floats;
   copy->frames = NULL;
   copy->streams=NULL;
+  copy->line.word=NULL;
   copy->line.run.glyphs = copy->line.raw.glyphs = copy->line.line.glyphs = NULL;
   destinations[0] = &copy->line.run; destinations[1] = &copy->line.raw;
   destinations[2] = &copy->line.line;
+  if(source->line.word) {
+    copy->line.word=malloc(sizeof(*copy->line.word)); if(!copy->line.word) goto bad;
+    *copy->line.word=*source->line.word;
+  }
   for (i = 0; i < 3; i++) {
     size_t count = sources[i]->glyph_count;
     destinations[i]->glyph_cap = count;
@@ -179,6 +185,7 @@ static size_t context_memory_size(const exr_pager *p) {
   size_t total = sizeof(*p), i;
   const exr_layout *queues[3];
   if (!p) return 0;
+  if(p->line.word) total+=sizeof(*p->line.word);
   total+=p->stream_capacity*sizeof(*p->streams);
   for(i=0;i<p->stream_count;i++) {
     size_t bytes=context_memory_size(p->streams[i].context);
@@ -214,6 +221,7 @@ static void save_checkpoint(exr_pager *p) {
   checkpoint state = {0}, *copy;
   size_t i, bytes = sizeof(state) + p->depth*sizeof(frame);
   const exr_layout *queues[3] = {&p->line.run, &p->line.raw, &p->line.line};
+  if(p->line.word) bytes+=sizeof(*p->line.word);
   if (p->mode != 2 || !p->checkpoint_capacity || p->finished || p->emitted % p->interval) return;
   bytes+=p->stream_count*sizeof(*p->streams);
   for(i=0;i<p->stream_count;i++) {
@@ -1377,6 +1385,7 @@ static void reset_cursor(exr_pager *p) {
   p->f.origin_x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width : 0;
   p->f.doc = doc;
   p->f.font = font;
+  p->f.hyphenator = p->hyphenator;
   p->f.assets = p->assets;
   p->f.config = &p->config;
   p->f.styles = p->styles;
@@ -1486,6 +1495,14 @@ exr_status exr_pager_set_control(exr_pager *p, const exr_control *control, exr_e
   else memset(&p->config.control, 0, sizeof(p->config.control));
   return exr_fail(e, EXR_OK, "");
 }
+exr_status exr_pager_set_hyphenator(exr_pager *p,exr_hyphenator *h,exr_error *e) {
+  exr_status status;
+  if(!p || p->busy || p->mode || p->local) return exr_fail(e,EXR_ARGUMENT,"Set hyphenation before requesting pages");
+  if(h==p->hyphenator) return exr_fail(e,EXR_OK,"");
+  if(h) { status=exr_hyphenator_ref(h,e); if(status!=EXR_OK) return status; }
+  exr_hyphenator_free(p->hyphenator); p->hyphenator=h; p->f.hyphenator=h;
+  return exr_fail(e,EXR_OK,"");
+}
 exr_pager_stats exr_pager_statistics(const exr_pager *p) {
   exr_pager_stats out = {0};
   if (p) out = (exr_pager_stats){p->generated_pages, p->checkpoint_count,
@@ -1508,6 +1525,7 @@ void exr_pager_free(exr_pager *p) {
   if (!p->local) {
     exr_layout_free(p->assets);
     exr_styles_free(p->styles, p->style_count);
+    exr_hyphenator_free(p->hyphenator);
   }
   free((void *)p->config.user_css);
   free(p);
@@ -1559,8 +1577,8 @@ static exr_status append_page(exr_layout *all, exr_layout *page, exr_error *e) {
   }
   return EXR_OK;
 }
-exr_status exr_flow_create(const exr_document *doc, exr_font *font,
-                            const exr_layout_config *config, exr_layout **out, exr_error *e) {
+exr_status exr_layout_create_hyphenated(const exr_document *doc, exr_font *font,
+                            const exr_layout_config *config,exr_hyphenator *hyphenator,exr_layout **out, exr_error *e) {
   exr_pager *pager = NULL;
   exr_layout *all, *page = NULL;
   exr_status status;
@@ -1570,6 +1588,10 @@ exr_status exr_flow_create(const exr_document *doc, exr_font *font,
   status = exr_pager_create(doc, font, config, &pager, e);
   if (status != EXR_OK)
     return status;
+  if(hyphenator) {
+    status=exr_pager_set_hyphenator(pager,hyphenator,e);
+    if(status!=EXR_OK) { exr_pager_free(pager); return status; }
+  }
   all = calloc(1, sizeof(*all));
   if (!all) {
     exr_pager_free(pager);
@@ -1596,4 +1618,7 @@ exr_status exr_flow_create(const exr_document *doc, exr_font *font,
     exr_layout_free(all);
   exr_pager_free(pager);
   return status;
+}
+exr_status exr_flow_create(const exr_document *doc,exr_font *font,const exr_layout_config *config,exr_layout **out,exr_error *e) {
+  return exr_layout_create_hyphenated(doc,font,config,NULL,out,e);
 }

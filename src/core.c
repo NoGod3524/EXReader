@@ -150,6 +150,7 @@ void exr_document_free(exr_document *d) {
   if (d) {
     free(d->text);
     free(d->title);
+    free(d->language);
     free(d->blocks);
     exr_model_free(d);
     free(d);

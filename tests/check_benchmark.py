@@ -9,7 +9,7 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from run_benchmarks import make_epub, validate
+from run_benchmarks import make_epub, validate, nonnegative
 
 
 def main():
@@ -24,9 +24,9 @@ def main():
         make_epub(book, 3, 16384)
         assert before == book.read_bytes(), "fixture generation must be reproducible"
 
-        def run(arguments, ok=True):
+        def run(arguments, ok=True, patterns=None):
             result = subprocess.run([binary, *map(str, arguments)], capture_output=True,
-                                    text=True, encoding="utf-8", timeout=120)
+                                    text=True, encoding="utf-8", timeout=120, input=patterns)
             if not ok:
                 assert result.returncode != 0 and not result.stdout and result.stderr, arguments
                 return None
@@ -60,6 +60,17 @@ def main():
         assert indexed_paged["glyph_count"] == indexed["glyph_count"]
         indexed_partial = run([book, font, "--max-pages", 1, "--paging"])
         assert not indexed_partial["total_pages_known"] and indexed_partial["page_count"] == 2
+        hyphen_book = Path(__file__).resolve().parent / "fixtures" / "hyphen-long.epub"
+        for paging in (False, True):
+            arguments = [hyphen_book, font, "--max-pages", 2]
+            if paging: arguments.append("--paging")
+            disabled = run(arguments)
+            enabled = run(arguments + ["--hyphens", "en"], patterns="aa1aaaa aaaa1aa")
+            assert not disabled["hyphenation_enabled"] and disabled["generated_glyph_count"] == 0
+            assert enabled["hyphenation_enabled"] and enabled["hyphen_dictionary_payload_bytes"] > 0
+            assert enabled["hyphen_dictionary_input_bytes"] == len("aa1aaaa aaaa1aa") and enabled["generated_glyph_count"] > 0
+            assert nonnegative(enabled["hyphen_dictionary_load_ms"])
+        run([hyphen_book, font, "--hyphens", "en"], ok=False, patterns="a/b")
         for arguments in ([], [book], ["--text-bytes", "0", font],
                           ["--text-bytes", "-1", font], ["--text-bytes", "x", font],
                           ["--text-bytes", "67108865", font],

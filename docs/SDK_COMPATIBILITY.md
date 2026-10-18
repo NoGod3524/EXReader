@@ -157,3 +157,18 @@ when Unicode full case folding expands characters. The installed C example is
 built/run independently by desktop CI. No language data or new binary dependency
 is shipped. This step does not enable automatic hyphens in any layout; pager,
 session, CSS and Swift/JNI integration are subsequent work.
+
+Automatic dictionary hyphenation is now opt-in through
+exr_layout_create_hyphenated, exr_pager_set_hyphenator and
+exr_session_set_hyphenator. Set the pager dictionary before choosing cache or
+sequential access mode; changing the session dictionary clears its borrowed
+chapter cache. Objects retain the dictionary, while completed layouts contain
+only resolved glyphs. Existing layout_config/glyph record sizes, ABI epoch 1
+and schema 6 remain unchanged. EXR_GLYPH_GENERATED marks synthetic text; an
+independent generated hyphen has an empty source range at its original UTF-8
+break point. A font-created cluster containing source and generated text can
+retain a nonempty range. Consumers must preserve this flag in snapshots and
+positioned reconstruction; selection/copy use source text, not generated glyph
+characters. Swift/JNI install dictionaries independently per pager before next.
+No language dictionaries are bundled; pattern format limits and separate data
+licenses still apply.

@@ -369,6 +369,39 @@ finish:
   if(status!=EXR_OK || (*env)->ExceptionCheck(env)) { if(p) { exr_pager_free(p->pager); exr_font_free(p->font); free(p); } return 0; }
   p->owner=d; d->refs++; return (jlong)(intptr_t)p;
 }
+JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePagerHyphenation(JNIEnv *env,jclass cls,jlong handle,jobjectArray languages,jobjectArray patterns,jintArray minima,jlong budget) {
+  jni_pager *p=pointer(env,handle); exr_hyphen_pattern_input inputs[64]={{0}}; jint edges[128];
+  exr_hyphenator *h=NULL; exr_error error={0}; exr_status status=EXR_OK; jsize count,i; size_t total=0; (void)cls;
+  if(!p) return;
+  if(!languages || !patterns || !minima || budget<0 || budget>128*1024*1024) { argument(env,"Invalid hyphenation inputs"); return; }
+  count=(*env)->GetArrayLength(env,languages);
+  if(count>64 || (*env)->GetArrayLength(env,patterns)!=count || (*env)->GetArrayLength(env,minima)!=count*2) { argument(env,"Invalid hyphenation array sizes"); return; }
+  if(count) (*env)->GetIntArrayRegion(env,minima,0,count*2,edges);
+  if((*env)->ExceptionCheck(env)) return;
+  for(i=0;i<count;i++) {
+    jbyteArray lang=NULL,data=NULL; size_t n=0;
+    if(edges[i*2]<0 || edges[i*2]>64 || edges[i*2+1]<0 || edges[i*2+1]>64) { argument(env,"Invalid hyphenation minima"); break; }
+    lang=(jbyteArray)(*env)->GetObjectArrayElement(env,languages,i);
+    if((*env)->ExceptionCheck(env)) break;
+    inputs[i].language=input_copy(env,lang,255,&n); if(lang) (*env)->DeleteLocalRef(env,lang);
+    if(!inputs[i].language) break;
+    if(memchr(inputs[i].language,0,n)) { argument(env,"NUL in dictionary language"); break; }
+    data=(jbyteArray)(*env)->GetObjectArrayElement(env,patterns,i);
+    if((*env)->ExceptionCheck(env)) break;
+    inputs[i].patterns=input_copy(env,data,8*1024*1024,&inputs[i].size); if(data) (*env)->DeleteLocalRef(env,data);
+    if(!inputs[i].patterns) break;
+    total+=inputs[i].size;
+    if(total>32*1024*1024) { argument(env,"Dictionary input exceeds 32 MiB"); break; }
+    inputs[i].struct_size=sizeof(inputs[i]); inputs[i].left_min=(unsigned)edges[i*2]; inputs[i].right_min=(unsigned)edges[i*2+1];
+  }
+  if(!(*env)->ExceptionCheck(env)) {
+    if(count) status=exr_hyphenator_create_patterns(inputs,(size_t)count,(size_t)budget,NULL,&h,&error);
+    if(status==EXR_OK) status=exr_pager_set_hyphenator(p->pager,h,&error);
+    if(status!=EXR_OK) engine_error(env,status,&error);
+  }
+  exr_hyphenator_free(h);
+  for(i=0;i<count;i++) { free((void *)inputs[i].language); free((void *)inputs[i].patterns); }
+}
 JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePagerClose(JNIEnv *env,jclass cls,jlong handle) {
   jni_pager *p=pointer(env,handle); (void)cls;
   if(p) { exr_pager_free(p->pager); exr_font_free(p->font); document_release(p->owner); free(p); }

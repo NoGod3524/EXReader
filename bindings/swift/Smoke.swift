@@ -195,6 +195,28 @@ import CEXReader
             }
             precondition(pages > 20 && fragments > 20 && letters == 3350)
         }
-        print("Swift SDK: PDF/audio/metadata, float images, table BFCs, streaming and reflow lifetime passed")
+        do {
+            let publication = try EXReaderPublication(file: root.appendingPathComponent("books/hyphen-long.epub"))
+            let chapter = try publication.load(part: 0)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            var config = EXReaderLayoutConfig()
+            config.page.width = 55; config.page.height = 100; config.page.margin = 10; config.page.font_size = 14
+            config.userCSS = "html,body,p {margin:0;padding:0;font-size:14px;line-height:20px}"
+            let pager = try chapter.pager(font: font, config: config)
+            try pager.setHyphenation([
+                EXReaderHyphenDictionary(language: "en", patterns: Data("aa1aaaa aaaa1aa".utf8), leftMinimum: 1, rightMinimum: 1),
+                EXReaderHyphenDictionary(language: "fr", patterns: Data("bb1bbbb".utf8))])
+            do {
+                try pager.setHyphenation([EXReaderHyphenDictionary(language: "en", patterns: Data("/".utf8))])
+                preconditionFailure("invalid patterns accepted")
+            } catch EXReaderError.engine(let code, _) { precondition(code == 11) }
+            guard let page = try pager.next() else { preconditionFailure("missing hyphenated page") }
+            let inserted = page.glyphs.filter { ($0.flags & 2048) != 0 }
+            precondition(!inserted.isEmpty && inserted.allSatisfy { $0.start == $0.end })
+            let bitmap = try page.render(); precondition(bitmap.width == 55)
+            do { try pager.setHyphenation([]); preconditionFailure("dictionary changed after paging") }
+            catch EXReaderError.engine(let code, _) { precondition(code == 1) }
+        }
+        print("Swift SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed")
     }
 }

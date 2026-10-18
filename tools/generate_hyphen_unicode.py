@@ -18,7 +18,7 @@ def generate(data,unicode):
         mapping[key]=values
     ranges=[]; first=None
     for line in unicode.decode('utf-8').splitlines():
-        fields=line.split(';'); cp=int(fields[0],16); value=1 if fields[2].startswith('L') else 2 if fields[2].startswith('M') else 0
+        fields=line.split(';'); cp=int(fields[0],16); value=1 if fields[2].startswith('L') else 2 if fields[2].startswith('M') else 3 if fields[2].startswith('N') else 0
         if fields[1].endswith(', First>'): first=cp
         elif fields[1].endswith(', Last>'):
             if first is None: raise ValueError('unpaired Unicode range')

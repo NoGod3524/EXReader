@@ -31,6 +31,7 @@ size_t exr_document_memory_size(const exr_document *d) {
      either alias resource metadata or were copied through that same model path. */
   if (d->title && d->format != EXR_CUSTOM)
     total = add(add(total, strlen(d->title)), 1);
+  if(d->language) total=add(add(total,strlen(d->language)),1);
   for (i = 0; i < d->node_count; i++)
     total = array(total, d->nodes[i].attributes, d->nodes[i].attribute_count,
                   sizeof(*d->nodes[i].attributes));

@@ -195,6 +195,27 @@ public final class Smoke {
             }
             check(pages>20 && fragments>20 && letters==3350);
         }
-        System.out.println("JNI SDK: PDF/audio/metadata, float images, table BFCs, streaming and reflow lifetime passed");
+        EXReader.LayoutConfig hyphenConfig=new EXReader.LayoutConfig();
+        hyphenConfig.width=55; hyphenConfig.height=100; hyphenConfig.margin=10; hyphenConfig.fontSize=14;
+        hyphenConfig.userCSS="html,body,p {margin:0;padding:0;font-size:14px;line-height:20px}";
+        byte[] patterns="aa1aaaa aaaa1aa".getBytes(StandardCharsets.UTF_8);
+        EXReader.HyphenDictionary[] dictionaries={new EXReader.HyphenDictionary("en",patterns,1,1),
+            new EXReader.HyphenDictionary("fr","bb1bbbb".getBytes(StandardCharsets.UTF_8),1,1)};
+        Arrays.fill(patterns,(byte)0); // Dictionary input was copied by its value object.
+        try(EXReader.Publication hyphenBook=new EXReader.Publication(root.resolve("books/hyphen-long.epub").toString());
+            EXReader.Document hyphenChapter=hyphenBook.load(0);
+            EXReader.Pager hyphenPager=hyphenChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,hyphenConfig)) {
+            hyphenPager.setHyphenation(dictionaries,0);
+            try { hyphenPager.setHyphenation(new EXReader.HyphenDictionary[]{new EXReader.HyphenDictionary("en",new byte[]{'/'},1,1)},0); throw new AssertionError(); }
+            catch(EXReaderException expected) { check(expected.code==11); }
+            try(EXReader.ReflowPage page=hyphenPager.next()) {
+                check(page!=null); int inserted=0;
+                for(EXReader.Glyph g:page.snapshot().glyphs) if((g.flags&2048)!=0) { check(g.start==g.end); inserted++; }
+                check(inserted>0 && page.render().width==55);
+            }
+            try { hyphenPager.setHyphenation(new EXReader.HyphenDictionary[0],0); throw new AssertionError(); }
+            catch(EXReaderException expected) { check(expected.code==1); }
+        }
+        System.out.println("JNI SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed");
     }
 }

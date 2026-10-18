@@ -13,6 +13,7 @@ foreach(example construct anchor lazy text font page shaping fixed wave pcm comp
 endforeach()
 target_compile_definitions(exreader-compat-example PRIVATE EXR_EXPECTED_ABI=${EXReader_ABI_VERSION})
 if(WIN32)
+  target_link_libraries(exreader-hyphen-example PRIVATE shell32)
   target_link_libraries(exreader-search-example PRIVATE shell32)
   target_link_libraries(exreader-shaping-example PRIVATE shell32)
   target_link_libraries(exreader-fixed-example PRIVATE shell32)

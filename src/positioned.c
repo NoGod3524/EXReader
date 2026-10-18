@@ -86,7 +86,7 @@ exr_status exr_layout_create_positioned(const exr_document *d,exr_font *font,
         if(!(k&255)) { status=exr_control_cancel(&config->control,e); if(status!=EXR_OK) goto failed; }
         if(g->page!=i || g->font_index>=font->count || g->glyph>=(uint64_t)font->faces[g->font_index].face->num_glyphs ||
            g->codepoint>0x10ffff || (g->codepoint>=0xd800 && g->codepoint<=0xdfff) ||
-           (g->node!=SIZE_MAX && g->node>=d->node_count) || (g->flags&~511u) ||
+           (g->node!=SIZE_MAX && g->node>=d->node_count) || (g->flags&~(511u|EXR_GLYPH_GENERATED)) ||
            ((g->flags&EXR_GLYPH_SIDEWAYS) && !(g->flags&EXR_GLYPH_VERTICAL)) ||
            (g->boundaries&~15u) ||
            (g->bidi_level>127 && !(g->bidi_level==UINT_MAX && (g->flags&EXR_GLYPH_HIDDEN))) ||
