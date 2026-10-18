@@ -2715,3 +2715,10 @@ checkpoint ownership and resource limits. No new dependency or public record
 layout is added. The 1 MiB float plus 1,800-row table benchmark records first
 screen, complete traversal and peak process memory in PERFORMANCE.md. Complete
 CSS table fragmentation and per-side decorations remain future work.
+
+
+Commit 5fe3ca9 passed all six jobs in
+[CI run 39097302823](https://github.com/NoGod3524/EXReader/actions/runs/39097302823):
+Windows/Linux/macOS native tests and installed SDKs, desktop JNI, macOS Swift,
+ASan/UBSan, Android ARM64 and Apple device/simulator library builds. Benchmark
+source hashes and the installed DLL were checked against the committed source.
