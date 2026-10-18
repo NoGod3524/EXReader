@@ -180,8 +180,7 @@ callback bytes remain unchanged. Grapheme minima and returned offsets still use
 original text; folded/decomposed interiors never become new source positions.
 A canonically merged pattern preserves max-weight conflict resolution. Consumers
 need no record/ABI/schema migration. The separately versioned Unicode 3.2 PDF
-password preparation is unchanged. Spelling replacement grammars remain
-unsupported by the native parser.
+password preparation is unchanged.
 
 Native UTF-8 pattern input now accepts two NEXTLEVEL rule sets, compound minima
 and NOHYPHEN. No record size, ABI or schema change. Input left/right minima
@@ -195,5 +194,24 @@ NEXTLEVEL to customize whole-word suppression. Inline gathering retains internal
 so providers also see complete compound tokens. Original bytes and source
 positions are unchanged. Structural segmentation may use protected punctuation,
 but final visible opportunities still obey GLUE/grapheme protection. Native
-matching enforces inward minima even for short leaves. Spelling-changing rules
-remain unsupported; the existing provider bitmap cannot express replacement text.
+matching enforces inward minima even for short leaves. The original provider
+bitmap cannot express replacement text; the following query API adds that data.
+
+
+Discretionary replacements add new C records/functions without changing existing
+record sizes, callbacks, ABI epoch 1 or schema 6. exr_hyphenator_query returns an
+owned immutable exr_hyphenation; all strings remain valid until result free,
+independently of source/dictionary/provider lifetimes. The new discretionary
+provider emits synchronously into a copying sink; sink errors are latched even
+when ignored by a provider. Original bitmap providers remain supported.
+
+Native dictionaries now accept pattern/before=after[,start,cut]. Malformed
+ranges are EXR_FORMAT, not silently truncated. Explicit cut=0 is insertion;
+replacement strings are literal, with no automatic casing. Equal-weight plain
+rules win over rewrites; conflicting equal-weight rewrites suppress the point.
+The old breaks API intentionally omits spelling-changing opportunities. Current
+layout/Swift/JNI pager integration still uses that ordinary bitmap path; native
+query support does not yet imply automatic replacement rendering or conditional
+compound rewriting. The installed C example exercises both APIs. An unsupported
+raw TeX command now checks failed installation in Swift/JNI smoke, rather than
+using slash as an unsupported token after slash grammar became supported.

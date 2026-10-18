@@ -207,7 +207,7 @@ import CEXReader
                 EXReaderHyphenDictionary(language: "en", patterns: Data("aa1aaaa aaaa1aa".utf8), leftMinimum: 1, rightMinimum: 1),
                 EXReaderHyphenDictionary(language: "fr", patterns: Data("bb1bbbb".utf8))])
             do {
-                try pager.setHyphenation([EXReaderHyphenDictionary(language: "en", patterns: Data("/".utf8))])
+                try pager.setHyphenation([EXReaderHyphenDictionary(language: "en", patterns: Data("\\patterns{a1b}".utf8))])
                 preconditionFailure("invalid patterns accepted")
             } catch EXReaderError.engine(let code, _) { precondition(code == 11) }
             guard let page = try pager.next() else { preconditionFailure("missing hyphenated page") }

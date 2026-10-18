@@ -1088,13 +1088,33 @@ typedef struct {
   exr_context_release_fn release;
   void *context;
 } exr_hyphen_provider;
+/* One independent discretionary break in the original UTF-8 word. On taking
+   the break, replace [start,end) with before + a display hyphen + after, with
+   after at the start of the next line. Ordinary breaks have start=end=point
+   and empty before/after. Text is literal UTF-8, without automatic case changes. */
+typedef struct {
+  size_t point,start,end;
+  const char *before,*after;
+  size_t before_size,after_size;
+} exr_hyphen_break;
+typedef struct exr_hyphenation exr_hyphenation;
+typedef exr_status (*exr_hyphen_emit_fn)(void *context,const exr_hyphen_break *item,exr_error *error);
+typedef exr_status (*exr_hyphenate_discretionary_fn)(void *context,const char *language,
+  const char *word,size_t size,exr_hyphen_emit_fn emit,void *emit_context,
+  const exr_control *control,exr_error *error);
+typedef struct {
+  size_t struct_size;
+  exr_hyphenate_discretionary_fn hyphenate;
+  exr_context_release_fn release;
+  void *context;
+} exr_hyphen_discretionary_provider;
 /* UTF-8 TeX-style pattern tokens, optional UTF-8 header and HYPHENMIN directives.
    Digits 0..9 give weights, '.' anchors word edges, %/# introduce comments.
    NEXTLEVEL separates recursive compound rules from ordinary rules. Supports
    COMPOUND*HYPHENMIN and NOHYPHEN; without NEXTLEVEL, UTF-8 separators are implicit.
-   Raw TeX commands and spelling-changing replacements are rejected.
-   Providers may read other formats but this API returns break positions only,
-   not spelling-changing replacement text. left/right=0 uses file/default=2. */
+   Supports pattern/before=after[,start,cut] discretionary replacements; start
+   is 1-based Unicode scalar index excluding a leading anchor. Raw TeX commands
+   are rejected. left/right=0 uses file/default=2. */
 typedef struct {
   size_t struct_size;
   const char *language; /* ASCII BCP47-style key; NULL/empty is the untagged key. */
@@ -1103,6 +1123,12 @@ typedef struct {
   unsigned left_min,right_min; /* Minimum graphemes retained at each edge, <=64. */
 } exr_hyphen_pattern_input;
 EXR_API exr_status exr_hyphenator_create(const exr_hyphen_provider *provider,
+  exr_hyphenator **out,exr_error *error);
+/* emit copies all item/text bytes before returning. Emit only during the
+   callback, <=255 distinct points, <=128 scalars/512 bytes of text per item.
+   Emit errors are latched even if the provider ignores them. Ownership of
+   context transfers on successful create only; serialize use/lifetime. */
+EXR_API exr_status exr_hyphenator_create_discretionary(const exr_hyphen_discretionary_provider *provider,
   exr_hyphenator **out,exr_error *error);
 /* 1..64 languages, <=8 MiB each / 32 MiB input total. Payload byte budget is
    0=32 MiB default, <=128 MiB. Input buffers are borrowed only during create. */
@@ -1115,13 +1141,25 @@ EXR_API exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input
    patterns use full Unicode 17 case folding (Turkic overrides for tr/az).
    Native matching uses Unicode 17 NFC -> full fold -> NFC; output offsets and
    minimum graphemes refer to original text. Providers receive original bytes.
-   Serialize use/lifetime per object. */
+   Serialize use/lifetime per object. This bitmap omits all spelling-changing
+   opportunities; use query for complete discretionary data. */
 EXR_API exr_status exr_hyphenator_breaks(exr_hyphenator *hyphenator,const char *language,
   const char *word,size_t size,unsigned char *breaks,const exr_control *control,exr_error *error);
+/* Owned immutable result, independent of word/provider/dictionary lifetime.
+   Items are sorted by original byte point. Rewrite edges must be original
+   grapheme boundaries; normalized/folded interiors cannot erase source spans.
+   Query payload <=256 KiB. On failure *out=NULL; no partial result is returned. */
+EXR_API exr_status exr_hyphenator_query(exr_hyphenator *hyphenator,const char *language,
+  const char *word,size_t size,const exr_control *control,exr_hyphenation **out,exr_error *error);
+EXR_API const exr_hyphen_break *exr_hyphenation_breaks(const exr_hyphenation *result,size_t *count);
+EXR_API size_t exr_hyphenation_memory_size(const exr_hyphenation *result);
+EXR_API void exr_hyphenation_free(exr_hyphenation *result);
 EXR_API size_t exr_hyphenator_memory_size(const exr_hyphenator *hyphenator);
 EXR_API void exr_hyphenator_free(exr_hyphenator *hyphenator);
 /* Optional dictionaries are retained. Automatic opportunities require CSS
-   hyphens:auto; the CSS default remains manual. Config record/ABI is unchanged. */
+   hyphens:auto; the CSS default remains manual. Current layout uses ordinary
+   opportunities only; discretionary rewrite rendering is a separate integration.
+   Config record/ABI is unchanged. */
 EXR_API exr_status exr_layout_create_hyphenated(const exr_document *doc,exr_font *font,
   const exr_layout_config *config,exr_hyphenator *hyphenator,exr_layout **out,exr_error *error);
 EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,

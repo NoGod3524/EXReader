@@ -15,6 +15,21 @@ static int example_main(int argc,char **argv) {
   for(i=0;i<sizeof(word);i++) if(points[i]!=(i==2 || i==6)) { exr_hyphenator_free(hyphenator); return 1; }
   for(i=0;word[i];i++) { if(points[i]) putchar('-'); putchar(word[i]); }
   putchar('\n');
+  {
+    const char replacement[]=".aaaa1aaaa./aa=aaa,4,2";
+    exr_hyphen_pattern_input alternative={sizeof(alternative),"xx",replacement,sizeof(replacement)-1,1,1};
+    exr_hyphenator *rewrites=NULL;exr_hyphenation *result=NULL;size_t count;const exr_hyphen_break *items;
+    if(exr_hyphenator_create_patterns(&alternative,1,0,NULL,&rewrites,&error)!=EXR_OK ||
+       exr_hyphenator_query(rewrites,"xx","aaaaaaaa",8,NULL,&result,&error)!=EXR_OK) {
+      fprintf(stderr,"%s\n",error.message);exr_hyphenator_free(rewrites);exr_hyphenator_free(hyphenator);return 1;
+    }
+    items=exr_hyphenation_breaks(result,&count);
+    if(count!=1 || items[0].point!=4 || items[0].start!=3 || items[0].end!=5 ||
+       strcmp(items[0].before,"aa") || strcmp(items[0].after,"aaa")) {
+      exr_hyphenation_free(result);exr_hyphenator_free(rewrites);exr_hyphenator_free(hyphenator);return 1;
+    }
+    exr_hyphenation_free(result);exr_hyphenator_free(rewrites);
+  }
   if(argc==3) {
     exr_document *doc=NULL;exr_font *font=NULL;exr_layout *layout=NULL;exr_bitmap bitmap={0};exr_status status;
     exr_attribute attrs[]={{"lang","en"},{"style","hyphens:auto"}};

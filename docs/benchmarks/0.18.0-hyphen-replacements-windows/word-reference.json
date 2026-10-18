@@ -1,0 +1,67 @@
+{
+  "oracle": "Pyphen 0.17.2",
+  "seed": 180325,
+  "library_sha256": "7e304ca9854e565d97b4da680b937ff98b0bdaba1dc6e4abb13bd42b751845cd",
+  "dictionaries": [
+    {
+      "language": "en_US",
+      "words": 3106,
+      "breaks": 4793,
+      "dictionary_sha256": "486fb6840b1049d5d252ef784be11cd4dc2be0bf296568b74b41e4f4e17cba7d",
+      "portable_sha256": "486fb6840b1049d5d252ef784be11cd4dc2be0bf296568b74b41e4f4e17cba7d",
+      "input_projection": [],
+      "dictionary_bytes": 106414,
+      "native_payload_bytes": 521728,
+      "left_min": 2,
+      "right_min": 3
+    },
+    {
+      "language": "fr",
+      "words": 4006,
+      "breaks": 8049,
+      "dictionary_sha256": "476ca60b958400c8b3fbe55764b4900df87acf60394ef62362705d9c701db191",
+      "portable_sha256": "476ca60b958400c8b3fbe55764b4900df87acf60394ef62362705d9c701db191",
+      "input_projection": [],
+      "dictionary_bytes": 23631,
+      "native_payload_bytes": 215240,
+      "left_min": 2,
+      "right_min": 2
+    },
+    {
+      "language": "es",
+      "words": 3995,
+      "breaks": 5179,
+      "dictionary_sha256": "b2e170c3c25f5de25447ca0acf6bc8baf9dd761e228e9646e2c25f2e7c47f4f6",
+      "portable_sha256": "b2e170c3c25f5de25447ca0acf6bc8baf9dd761e228e9646e2c25f2e7c47f4f6",
+      "input_projection": [],
+      "dictionary_bytes": 5699,
+      "native_payload_bytes": 31424,
+      "left_min": 2,
+      "right_min": 2
+    },
+    {
+      "language": "it_IT",
+      "words": 3934,
+      "breaks": 2817,
+      "dictionary_sha256": "8c25b6fb62c2fb97586c6f7c6fb48f29f49e90a5c33c09ac9112dba6942b50cd",
+      "portable_sha256": "8c25b6fb62c2fb97586c6f7c6fb48f29f49e90a5c33c09ac9112dba6942b50cd",
+      "input_projection": [],
+      "dictionary_bytes": 2308,
+      "native_payload_bytes": 27636,
+      "left_min": 2,
+      "right_min": 2
+    },
+    {
+      "language": "ru_RU",
+      "words": 4010,
+      "breaks": 5923,
+      "dictionary_sha256": "e9a6ae92765fc7e63d879f2ccf3f50f2b95bc8ed7618a6f31c34ce7d39844c83",
+      "portable_sha256": "e9a6ae92765fc7e63d879f2ccf3f50f2b95bc8ed7618a6f31c34ce7d39844c83",
+      "input_projection": [],
+      "dictionary_bytes": 35415,
+      "native_payload_bytes": 221484,
+      "left_min": 2,
+      "right_min": 2
+    }
+  ]
+}

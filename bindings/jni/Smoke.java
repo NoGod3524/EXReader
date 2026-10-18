@@ -206,7 +206,7 @@ public final class Smoke {
             EXReader.Document hyphenChapter=hyphenBook.load(0);
             EXReader.Pager hyphenPager=hyphenChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,hyphenConfig)) {
             hyphenPager.setHyphenation(dictionaries,0);
-            try { hyphenPager.setHyphenation(new EXReader.HyphenDictionary[]{new EXReader.HyphenDictionary("en",new byte[]{'/'},1,1)},0); throw new AssertionError(); }
+            try { hyphenPager.setHyphenation(new EXReader.HyphenDictionary[]{new EXReader.HyphenDictionary("en","\\patterns{a1b}".getBytes(StandardCharsets.UTF_8),1,1)},0); throw new AssertionError(); }
             catch(EXReaderException expected) { check(expected.code==11); }
             try(EXReader.ReflowPage page=hyphenPager.next()) {
                 check(page!=null); int inserted=0;
