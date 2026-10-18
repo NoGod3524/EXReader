@@ -211,7 +211,7 @@ replacement strings are literal, with no automatic casing. Equal-weight plain
 rules win over rewrites; conflicting equal-weight rewrites suppress the point.
 The old breaks API intentionally omits spelling-changing opportunities. Layout
 now selects the richer query when needed, including Swift/JNI pagers. Conditional
-compound rewriting and rematching changed word remainders remain pending. The installed C example exercises both APIs. An unsupported
+compound rewriting remains pending. Changed word remainders now receive fresh mapped queries. The installed C example exercises both APIs. An unsupported
 raw TeX command now checks failed installation in Swift/JNI smoke, rather than
 using slash as an unsupported token after slash grammar became supported.
 
@@ -227,10 +227,15 @@ Internal U+00B7 now stays inside gathered words, including host-provider input.
 Pending edits and cached word edits are deep-copied with pager checkpoints and
 counted against line/checkpoint payload budgets. The three glyph buffers plus
 owned word/edit capacities share the 16 MiB line budget. Existing public record
-sizes, ABI epoch 1 and schema 6 are unchanged. Changed word remainders retain
-ordinary/emergency opportunities, while their stale dictionary bits are cleared;
-rematching with mapped generated text, full changed-text bidi/boundary analysis
-and language-aware casing remain required work. Installed Swift/JNI smoke now
+sizes, ABI epoch 1 and schema 6 are unchanged. After each committed replacement,
+stale original dictionary bits are cleared and the actual display remainder is
+queried again. Fresh ordinary/replacement opportunities must align with protected
+grapheme/source edges and advance the original source point. Erase ranges may
+start within a generated side; private raw indices preserve the exact display
+range. Candidates whose left context was consumed by an ordinary break are
+dropped with their automatic bit. Generated sides remain atomic to selection.
+Derived tokens exceeding 256 scalars/1024 bytes use ordinary/emergency fallback.
+Full changed-text bidi/boundary analysis and language-aware casing remain required work. Installed Swift/JNI smoke now
 checks actual replacement glyphs with nonempty original source intervals.
 
 A zero-cut after insertion shares its source cluster with the following original

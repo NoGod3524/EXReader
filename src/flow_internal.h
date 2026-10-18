@@ -15,6 +15,8 @@ typedef struct { exr_float items[EXR_MAX_FLOATS]; size_t count; } exr_float_stat
 #define EXR_BOUNDARY_AUTO_HYPHEN 16u /* Private raw-source opportunity, not a shaping boundary. */
 typedef struct {
   size_t point,start,end,word_start,until,before,after;
+  size_t raw_start,raw_point,raw_end;
+  unsigned mapped;
   char text[514];
 } exr_hyphen_edit;
 typedef struct {

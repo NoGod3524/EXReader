@@ -553,6 +553,10 @@ static exr_status line_geometry(flow *f,exr_line_buffer *b,float *width) {
   }
   return EXR_OK;
 }
+static void merge_inserted_cluster(exr_glyph *glyphs,size_t count);
+static const char *node_language(const flow *f,size_t node);
+static int word_joiner(uint32_t cp);
+static size_t word_index(const size_t *offsets,size_t count,size_t byte);
 /* Raw-source candidates may cross a provisional ligature. Reshape the complete
    selected prefix, including the inserted character, then rebuild its carry. */
 static exr_status fit_dictionary(flow *f,exr_line_buffer *b,int *found) {
@@ -586,8 +590,10 @@ static exr_status fit_dictionary(flow *f,exr_line_buffer *b,int *found) {
       size_t prefix=i;const exr_hyphen_edit *edit=rewrite ? &b->edits[rewrite-1] : NULL;
       if(edit) {
         if(edit->start<b->raw.glyphs[0].start) continue;
-        prefix=raw_at(b,edit->start);raw_end=raw_at(b,edit->end);
-        if(prefix>i || raw_end<i || (raw_end==b->raw.glyph_count && b->raw.glyphs[raw_end-1].end<edit->end)) continue;
+        prefix=edit->mapped ? edit->raw_start : raw_at(b,edit->start);
+        raw_end=edit->mapped ? edit->raw_end : raw_at(b,edit->end);
+        if(edit->mapped && edit->raw_point!=i) return exr_fail(f->error,EXR_FORMAT,"Stale mapped hyphenation point");
+        if(prefix>i || raw_end<i || raw_end>b->raw.glyph_count || (raw_end==b->raw.glyph_count && b->raw.glyphs[raw_end-1].end<edit->end)) continue;
       }
       status=copy_glyphs(f,b,&b->line,b->raw.glyphs,prefix);if(status!=EXR_OK) return status;
       status=line_work(f,prefix+1);if(status!=EXR_OK) return status;
@@ -595,6 +601,7 @@ static exr_status fit_dictionary(flow *f,exr_line_buffer *b,int *found) {
         status=generated_text(f,b,&b->line,&b->raw.glyphs[i-1],edit->text,edit->before,edit->start,point);if(status!=EXR_OK) return status;
       }
       status=generated_hyphen(f,b,&b->line,point,edit && !edit->before ? edit->start : point,&b->raw.glyphs[i-1]);if(status!=EXR_OK) return status;
+      if(edit && edit->mapped) merge_inserted_cluster(b->line.glyphs,b->line.glyph_count);
       child.layout=&b->line; status=exr_inline_shape(&child,0,0,0); if(status!=EXR_OK) return status;
       status=line_work(f,b->line.glyph_count); if(status!=EXR_OK) return status;
     } else { status=shape_line_copy(f,b,&b->line,b->raw.glyphs,i,0,0,1); if(status!=EXR_OK) return status; }
@@ -707,6 +714,96 @@ static void prune_edits(exr_line_buffer *b,size_t through) {
   size_t i,n=0;for(i=0;i<b->edit_count;i++) if(b->edits[i].point>through) b->edits[n++]=b->edits[i];
   b->edit_count=n;
 }
+/* Mapped edit indices refer to the unshaped FIFO, not shaped glyph indices.
+   Never turn an edit whose left context was consumed into an ordinary hyphen. */
+static void advance_mapped_edits(exr_line_buffer *b,size_t consumed) {
+  size_t i,n=0;
+  for(i=0;i<b->edit_count;i++) {
+    exr_hyphen_edit edit=b->edits[i];
+    if(edit.mapped) {
+      if(edit.raw_start<consumed || edit.raw_point<consumed || edit.raw_end<consumed) {
+        if(edit.raw_point<b->raw.glyph_count) b->raw.glyphs[edit.raw_point].boundaries&=~EXR_BOUNDARY_AUTO_HYPHEN;
+        continue;
+      }
+      edit.raw_start-=consumed;edit.raw_point-=consumed;edit.raw_end-=consumed;
+    }
+    b->edits[n++]=edit;
+  }
+  b->edit_count=n;
+}
+static exr_status mapped_edit(flow *f,exr_line_buffer *b,const exr_hyphen_edit *edit) {
+  size_t lo=0,hi=b->edit_count;exr_status status;
+  while(lo<hi) { size_t mid=lo+(hi-lo)/2;if(b->edits[mid].point<edit->point) lo=mid+1;else hi=mid; }
+  if(lo<b->edit_count && b->edits[lo].point==edit->point) return EXR_OK;
+  status=edit_reserve(f,b,&b->edits,&b->edit_capacity,b->edit_count+1);if(status!=EXR_OK) return status;
+  memmove(b->edits+lo+1,b->edits+lo,(b->edit_count-lo)*sizeof(*b->edits));
+  b->edits[lo]=*edit;b->edit_count++;return EXR_OK;
+}
+static size_t mapped_edge(const exr_line_buffer *b,size_t at,size_t until) {
+  return at<b->raw.glyph_count && b->raw.glyphs[at].start<until ? b->raw.glyphs[at].start : until;
+}
+static int deleted_placeholder(const exr_glyph *g) {
+  return (g->flags&(EXR_GLYPH_GENERATED|EXR_GLYPH_HIDDEN))==(EXR_GLYPH_GENERATED|EXR_GLYPH_HIDDEN);
+}
+static exr_status rematch_token(flow *f,exr_line_buffer *b,const char *text,size_t bytes,const size_t *offsets,
+                               const size_t *indices,size_t count,size_t origin,size_t until) {
+  char previous[256]={0};int have_previous=0;size_t k;exr_status status;
+  for(k=0;k<count;k++) {
+    const exr_glyph *g=&b->raw.glyphs[indices[k]];char key[256];exr_hyphenation *result=NULL;const exr_hyphen_break *items;size_t n,j;
+    if(g->start<=origin || f->styles[g->node].hyphens!=EXR_HYPHENS_AUTO || !(g->boundaries&EXR_BOUNDARY_GRAPHEME) ||
+       (g->boundaries&EXR_BOUNDARY_GLUE) || !exr_hyphen_language(node_language(f,g->node),key)) continue;
+    if(have_previous && !strcmp(previous,key)) continue;
+    memcpy(previous,key,strlen(key)+1);have_previous=1;
+    status=line_work(f,count+1);if(status!=EXR_OK) return status;
+    status=exr_hyphenator_query(f->hyphenator,key,text,bytes,&f->config->control,&result,f->error);if(status!=EXR_OK) return status;
+    items=exr_hyphenation_breaks(result,&n);
+    for(j=0;j<n;j++) {
+      const exr_hyphen_break *item=&items[j];size_t point=word_index(offsets,count,item->point);const exr_glyph *candidate;char language[256];
+      if(point==SIZE_MAX || point>=count) { status=exr_fail(f->error,EXR_FORMAT,"Unmapped display hyphenation point");break; }
+      candidate=&b->raw.glyphs[indices[point]];
+      if(candidate->start<=origin || !(candidate->boundaries&EXR_BOUNDARY_GRAPHEME) || (candidate->boundaries&EXR_BOUNDARY_GLUE) ||
+         f->styles[candidate->node].hyphens!=EXR_HYPHENS_AUTO ||
+         !exr_hyphen_language(node_language(f,candidate->node),language) || strcmp(language,key)) continue;
+      if(item->start!=item->point || item->end!=item->point || item->before_size || item->after_size) {
+        size_t first=word_index(offsets,count,item->start),last=word_index(offsets,count,item->end);exr_hyphen_edit edit={0};
+        if(first==SIZE_MAX || last==SIZE_MAX) { status=exr_fail(f->error,EXR_FORMAT,"Unmapped display replacement range");break; }
+        edit.point=candidate->start;edit.start=mapped_edge(b,indices[first],until);edit.end=mapped_edge(b,indices[last],until);
+        edit.word_start=b->raw.glyphs[indices[0]].start;edit.until=until;edit.before=item->before_size;edit.after=item->after_size;
+        edit.raw_point=indices[point];edit.raw_start=indices[first];edit.raw_end=indices[last];edit.mapped=1;
+        if(edit.start>edit.point || edit.end<edit.point) { status=exr_fail(f->error,EXR_FORMAT,"Nonmonotonic display replacement range");break; }
+        memcpy(edit.text,item->before,item->before_size);memcpy(edit.text+item->before_size+1,item->after,item->after_size);
+        status=mapped_edit(f,b,&edit);if(status!=EXR_OK) break;
+      }
+      b->raw.glyphs[indices[point]].boundaries|=EXR_BOUNDARY_AUTO_HYPHEN;
+    }
+    exr_hyphenation_free(result);if(status!=EXR_OK) return status;
+  }
+  return EXR_OK;
+}
+static exr_status rematch_remainder(flow *f,exr_line_buffer *b,size_t origin,size_t until) {
+  size_t i=0,end=0;exr_status status;
+  while(end<b->raw.glyph_count && b->raw.glyphs[end].start<until) end++;
+  while(i<end) {
+    char text[1024];size_t bytes=0,count=0,offsets[257],indices[257];int numeric=0,previous=0,oversized=0;
+    if(deleted_placeholder(&b->raw.glyphs[i]) || !exr_hyphen_word_kind(b->raw.glyphs[i].codepoint)) { i++;continue; }
+    for(;i<end;i++) {
+      const exr_glyph *g=&b->raw.glyphs[i];unsigned kind=exr_hyphen_word_kind(g->codepoint);char encoded[5];exr_buffer scalar={encoded,0,sizeof(encoded)};size_t next=i+1;
+      if(deleted_placeholder(g)) continue;
+      while(next<end && deleted_placeholder(&b->raw.glyphs[next])) next++;
+      if(!kind && !(word_joiner(g->codepoint) && previous && next<end && exr_hyphen_word_kind(b->raw.glyphs[next].codepoint))) break;
+      numeric|=kind==3 || (!count && kind!=1);previous=!!kind;
+      if(oversized) continue;
+      if(!exr_codepoint(&scalar,g->codepoint)) return exr_fail(f->error,EXR_ENCODING,"Invalid display word scalar");
+      if(count==256 || scalar.size>sizeof(text)-bytes) { oversized=1;continue; }
+      offsets[count]=bytes;indices[count++]=i;memcpy(text+bytes,scalar.data,scalar.size);bytes+=scalar.size;
+    }
+    if(count && !numeric && !oversized) {
+      offsets[count]=bytes;indices[count]=i;
+      status=rematch_token(f,b,text,bytes,offsets,indices,count,origin,until);if(status!=EXR_OK) return status;
+    }
+  }
+  return EXR_OK;
+}
 /* A zero-cut insertion and the following original grapheme share a source
    start. Keep one complete source cluster: hit testing needs its original end,
    and fitting must consume that grapheme even when the inserted text clips. */
@@ -722,7 +819,7 @@ static void merge_inserted_cluster(exr_glyph *glyphs,size_t count) {
   }
 }
 static exr_status replacement_carry(flow *f,exr_line_buffer *b) {
-  exr_hyphen_edit edit=b->edits[b->rewrite-1];size_t at=raw_at(b,edit.point),prefix=0,i,unready=b->run.glyph_count-b->ready;
+  exr_hyphen_edit edit=b->edits[b->rewrite-1];size_t at=edit.mapped ? edit.raw_point : raw_at(b,edit.point),prefix=0,i,unready=b->run.glyph_count-b->ready;
   size_t extra_cluster=b->cluster_start-b->ready,tail=b->raw.glyph_count-b->raw_end;exr_glyph anchor=b->raw.glyphs[at];exr_status status;
   b->line.glyph_count=0;
   if(edit.after || edit.end>edit.point) {
@@ -734,18 +831,20 @@ static exr_status replacement_carry(flow *f,exr_line_buffer *b) {
   if(prefix) memcpy(b->raw.glyphs,b->line.glyphs,prefix*sizeof(*b->raw.glyphs));
   b->raw.glyph_count=prefix+tail;
   if(prefix && edit.end==edit.point) merge_inserted_cluster(b->raw.glyphs,b->raw.glyph_count);
-  /* Remaining dictionary points were computed for the unmodified word. Do not
-     apply them to changed spelling without a fresh mapped-word query. */
+  /* Future original input must not restore stale points. The complete ready
+     remainder is re-queried below using its actual display spelling. */
   b->blocked_until=edit.until;
   for(i=0;i<b->raw.glyph_count;i++) if(b->raw.glyphs[i].start<edit.until) b->raw.glyphs[i].boundaries&=~EXR_BOUNDARY_AUTO_HYPHEN;
   for(i=b->ready;i<b->run.glyph_count;i++) if(b->run.glyphs[i].start<edit.until) b->run.glyphs[i].boundaries&=~EXR_BOUNDARY_AUTO_HYPHEN;
+  prune_edits(b,edit.until);
+  status=rematch_remainder(f,b,edit.point,edit.until);if(status!=EXR_OK) return status;
   status=shape_line_copy(f,b,&b->line,b->raw.glyphs,b->raw.glyph_count,0,b->after,0);if(status!=EXR_OK) return status;
   status=line_reserve(f,b,&b->run,b->line.glyph_count+unready);if(status!=EXR_OK) return status;
   memmove(b->run.glyphs+b->line.glyph_count,b->run.glyphs+b->ready,unready*sizeof(*b->run.glyphs));
   if(b->line.glyph_count) memcpy(b->run.glyphs,b->line.glyphs,b->line.glyph_count*sizeof(*b->run.glyphs));
   b->ready=b->line.glyph_count;b->run.glyph_count=b->ready+unready;b->cluster_start=b->ready+extra_cluster;b->before=0;
   for(i=b->raw.glyph_count;i;i--) if(!exr_ot_transparent(b->raw.glyphs[i-1].codepoint)) { b->before=b->raw.glyphs[i-1].codepoint;break; }
-  prune_edits(b,edit.until);b->line.glyph_count=0;b->line_ready=0;reset_line_scan(b);return EXR_OK;
+  b->line.glyph_count=0;b->line_ready=0;reset_line_scan(b);return EXR_OK;
 }
 /* Max-content uses the same measured/shaped segments, retaining only joining
    context and one previous glyph. A long paragraph does not become one huge
@@ -834,6 +933,7 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
         continue;
       }
       if(b->raw_end) prune_edits(b,b->raw.glyphs[b->raw_end-1].end);
+      advance_mapped_edits(b,b->raw_end);
       end = b->line_end;
       memmove(b->run.glyphs, b->run.glyphs + end,
                 (b->run.glyph_count - end) * sizeof(*b->run.glyphs));

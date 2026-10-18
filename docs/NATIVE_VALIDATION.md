@@ -3042,3 +3042,50 @@ hashes, three benchmark executable hashes and installed runtime copies match the
 corrected measured binaries. The following verification-record commit changes
 only documentation/metadata. Full changed-word rematching, boundary/bidi/casing
 and the broader PDF/application compatibility goals remain unfinished.
+
+
+## Mapped display-remainder dictionary queries (0.18.0 development)
+
+Each committed spelling replacement now queries the actual remaining display
+word. Generated/deleted sides are mapped through raw scalar indices to original
+source ranges; ordinary opportunities and further replacements can be selected.
+A normal break advances mapped indices. If it consumes an edit's left context,
+that edit and its automatic bit are removed together. Fresh points must advance
+past the last committed source point and respect protected grapheme/source edges.
+Erase edges may lie inside a generated prefix; selection still sees atomic source
+clusters. Empty/deleted markers do not enter dictionary input. Derived tokens keep
+the existing 256-scalar/1024-byte limit, otherwise ordinary/emergency fitting applies.
+UTF-8 reconstruction uses the existing encoder with five bytes of stack storage,
+without allocating once per character. Existing line/checkpoint budgets count the
+larger private edit record; public records and ABI epoch 1/schema 6 are unchanged.
+
+Direct expected-display cases check repeated replacements separated by an ordinary
+break, partial erasure within a generated prefix, invalidated left context, and
+zero-cut insertion with a forbidden same-source candidate. Nine additional original
+EPUBs cover long, RTL, vertical, floating, orthogonal, table, mixed-style, source-gap
+and decomposed canonical text. Full/cached/uncached/backward checkpoint output,
+pixels and hit results agree. The table case gives an atomic five-line row a page
+high enough to contain it. Existing 36 EPUB fixtures remain byte-identical.
+An open provider observes the actual first and second rewritten remainders; errors
+and cancellation specifically during rematching preserve the previous cached page.
+
+Local GCC Release: all 113 CTest tests pass; the automatic-layout executable records
+706,521 checks across 45 original EPUB fixtures and constructed cases. Installed C,
+C++ and JNI -Xcheck:jni pass with matching final DLL hashes. JNI checks a second
+replacement at original bytes 11..12 and a fresh ordinary hyphen at byte 13; the
+installed Swift smoke has the same two-page test for macOS CI. The four independent
+query reports still match their stated reference scopes, including unmodified
+Catalan input and the explicitly classified compound-minimum differences.
+
+Windows DLL: 5,395,597 bytes, SHA256
+9d50cef25bd506d78435f90f9626919bbbe776a0d06d1d34485bfeeb0f539426.
+This is 4,665 bytes above the previous verified reflow snapshot, with no new
+dependency. Two three-process workloads measure ordinary English and an original
+78-character word with repeated replacements and later ordinary opportunities.
+Inputs, dictionary, raw results and source/binary/font provenance are recorded in
+benchmarks/0.18.0-hyphen-rematch-windows.
+
+Full changed-display boundary/bidi analysis, language-aware casing and conditional
+compound rewriting remain open. Broader PDF transparency/color/forms/redaction/OCR,
+platform views/accessibility/TTS/OPDS/authorized LCP and advanced CSS/conversion
+remain in VERSIONING.md; this step does not finish that compatibility roadmap.
