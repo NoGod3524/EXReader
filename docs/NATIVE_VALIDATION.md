@@ -3932,3 +3932,19 @@ C/C++/JNI, sanitizers, Android ARM64, iOS/iPadOS, and the new seeded fuzz campai
 Engine behaviour is unchanged by this batch: the knockout model exists only as the
 independent Decimal reference in `tools/pdf_group_reference.py` (`--self-test`
 checks five invariants), and PDF `K=false` still returns `EXR_UNSUPPORTED`.
+
+## Knockout transparency groups (0.19.0 development, partial)
+
+Commit `e8b5b7c` adds `EXR_GROUP_KNOCKOUT` and maps PDF `/K false` to it. Local Windows
+Release: 120/120 CTests, including six canvas-level knockout cases and the updated
+malformed-group expectations (`K true` now renders as a plain group instead of being
+rejected). End-to-end renders of the four isolation/knockout combinations match the
+Decimal reference: isolated and non-isolated knockout both give the 50% top element over
+the page backdrop (`127,255,127`) while the non-knockout controls accumulate over the
+previous element (`127,128,0`).
+
+CI run 39159736600 passed all seven jobs (Windows/Linux/macOS, sanitizers, Android,
+iOS/iPadOS, fuzz campaign). This is **not** the work-package acceptance: the ≥32 original
+scenes, independent reference masks, cancellation/budget regressions and alternating
+performance sampling are still outstanding, so the support matrix records knockout as
+partial and `docs/KNOCKOUT_DESIGN.md` lists the remaining steps.
