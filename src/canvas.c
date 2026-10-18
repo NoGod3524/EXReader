@@ -274,8 +274,11 @@ exr_status exr_canvas_begin_layer(exr_canvas *c,double opacity,exr_blend_mode mo
 exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
   exr_status status=ready(c,e);exr_canvas_layer layer={0};exr_bitmap next;exr_composite_state *state=NULL;unsigned char *pixels;size_t bytes,count;
   if(status!=EXR_OK) return status;
-  if(!isfinite(opacity) || opacity<0 || opacity>1 || mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY || (flags&~EXR_GROUP_ISOLATED)) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid group parameters"),e);
-  count=(size_t)c->bitmap.width*c->bitmap.height;bytes=count*(flags&EXR_GROUP_ISOLATED ? 4 : 4+5*sizeof(float));
+  unsigned needs_state;
+  if(!isfinite(opacity) || opacity<0 || opacity>1 || mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY ||
+     (flags&~(EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT))) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid group parameters"),e);
+  needs_state=!(flags&EXR_GROUP_ISOLATED) || (flags&EXR_GROUP_KNOCKOUT);
+  count=(size_t)c->bitmap.width*c->bitmap.height;bytes=count*(needs_state ? 4+5*sizeof(float) : 4);
   if(c->layer_depth==32 || bytes>64*1024*1024 || bytes>c->layer_budget-c->layer_bytes) return finish(c,exr_fail(e,EXR_LIMIT,"Group depth/byte budget exceeded"),e);
   if(!exr_grow((void **)&c->layers,&c->layer_capacity,c->layer_depth+1,sizeof(*c->layers))) return finish(c,exr_fail(e,EXR_MEMORY,"Layer stack allocation failed"),e);
   if(c->group_depth) {
@@ -283,12 +286,17 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
     if(!layer.pending_groups) return finish(c,exr_fail(e,EXR_MEMORY,"Layer clip state allocation failed"),e);
     memcpy(layer.pending_groups,c->groups,c->group_depth*sizeof(*c->groups));
   }
-  pixels=calloc(count,4);if(!(flags&EXR_GROUP_ISOLATED)) { state=calloc(1,sizeof(*state));if(state) { state->pixels=calloc(count,5*sizeof(float)); } }
-  if(!pixels || (!(flags&EXR_GROUP_ISOLATED) && (!state || !state->pixels))) {
+  pixels=calloc(count,4);if(needs_state) { state=calloc(1,sizeof(*state));if(state) { state->pixels=calloc(count,5*sizeof(float)); } }
+  if(!pixels || (needs_state && (!state || !state->pixels))) {
     free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,exr_fail(e,EXR_MEMORY,"Group working buffer allocation failed"),e);
   }
   next=c->bitmap;next.channels=4;next.stride=next.width*4;next.pixels=pixels;
-  if(state) status=exr_composite_initialize(&next,state,&c->bitmap,c->composite,&c->work,&c->control,e);
+  if(state) {
+    state->knockout=!!(flags&EXR_GROUP_KNOCKOUT);state->isolated=!!(flags&EXR_GROUP_ISOLATED);
+    /* Isolated groups start transparent, so the parent backdrop is not copied in. */
+    if(!state->isolated) status=exr_composite_initialize(&next,state,&c->bitmap,c->composite,&c->work,&c->control,e);
+    else state->depth=1;
+  }
   if(status!=EXR_OK) { free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,status,e); }
   layer.bitmap=c->bitmap;layer.composite=c->composite;layer.clip=c->clip;layer.pending=c->group;layer.group_depth=c->group_depth;layer.depth=c->depth;
   layer.opacity=opacity;layer.blend=mode;layer.parent_blend=c->blend;c->layers[c->layer_depth++]=layer;c->layer_bytes+=bytes;

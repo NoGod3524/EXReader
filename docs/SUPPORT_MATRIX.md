@@ -59,7 +59,7 @@
 | 元数据 | 支持 | Info/XMP 读取与增量写回 | `native-pdf-metadata-write`、`native-metadata` |
 | 认证 | 部分 | Standard R2–R6、RC4/AES、Crypt filter；**证书 PubSec、EFOpen、加密写回未支持** | `native-pdf-crypto` |
 | 色彩 | 部分 | Device/Indexed/CalGray/CalRGB/Lab、ICCBased v2/v4→sRGB、Separation/All/None/DeviceN、Type 0 函数；**非 RGB 透明组、OutputIntent、Matte 未支持** | `native-pdf-color`、`native-pdf-calculator` |
-| 合成 | 部分 | 16 种 RGB 混合模式、页面隔离、隔离/非隔离 Form/AP；**挖空组、图形状态软遮罩、组区域裁小未支持** | `native-blend`、`native-canvas`、`native-pdf-group-reference` |
+| 合成 | 部分 | 16 种 RGB 混合模式、页面隔离、隔离/非隔离 Form/AP、挖空组（隔离与非隔离，PDF `K false`）；**图形状态软遮罩、组区域裁小未支持**；挖空场景矩阵仍待补齐 | `native-blend`、`native-canvas`、`native-pdf-group-reference` |
 | 标注 | 部分 | Text/Highlight/Underline/StrikeOut/Squiggly 增删改与外观；**其余类型与 AcroForm 未支持** | `native-pdf-markup`、`native-pdf-appearance`、`native-pdf-write` |
 | 安全 redaction | 未支持 | 现有增量删除保留历史原文，不能充当擦除 | — |
 | OCR | 未支持 | 无后端、无文字层 | — |

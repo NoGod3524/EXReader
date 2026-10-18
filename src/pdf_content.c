@@ -152,7 +152,7 @@ static int line_parameter(content_reader *r,const char *name,double value) {
   return 1;
 }
 exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *present,exr_error *e) {
-  uint32_t id;const exr_pdf_value *v;int isolated=0;exr_status status;const char *keys[]={"I","K"};size_t i;
+  uint32_t id;const exr_pdf_value *v;int isolated=0,knockout=0;exr_status status;const char *keys[]={"I","K"};size_t i;
   *present=0;status=resolved(file,group,&group,e);if(status!=EXR_OK) return status;
   v=exr_pdf_value_at(file,group);if(!v || v->kind==EXR_PDF_NULL) return EXR_OK;
   if(v->kind!=EXR_PDF_DICT) return exr_fail(e,EXR_FORMAT,"PDF transparency group is not a dictionary");
@@ -162,13 +162,13 @@ exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *pre
     if(resolved(file,exr_pdf_get(file,group,keys[i]),&id,e)!=EXR_OK) return e->code;
     v=exr_pdf_value_at(file,id);if(!v || v->kind==EXR_PDF_NULL) continue;
     if(v->kind!=EXR_PDF_BOOL) return exr_fail(e,EXR_FORMAT,"PDF group flag is not boolean");
-    if(!i) isolated=v->u.integer!=0;else if(v->u.integer) return exr_fail(e,EXR_UNSUPPORTED,"PDF knockout groups are not implemented yet");
+    if(!i) isolated=v->u.integer!=0;else knockout=v->u.integer==0;
   }
   if(resolved(file,exr_pdf_get(file,group,"CS"),&id,e)!=EXR_OK) return e->code;
   v=exr_pdf_value_at(file,id);
   if(v && v->kind!=EXR_PDF_NULL && !name_is(file,id,"DeviceRGB")) return exr_fail(e,EXR_UNSUPPORTED,"PDF group blending space requires DeviceRGB");
   if(!page && !isolated && v && v->kind!=EXR_PDF_NULL) return exr_fail(e,EXR_FORMAT,"Only isolated PDF groups may specify a blending space");
-  *present=page || isolated ? EXR_PDF_GROUP_ISOLATED : EXR_PDF_GROUP_NONISOLATED;return EXR_OK;
+  *present=(page || isolated ? EXR_PDF_GROUP_ISOLATED : EXR_PDF_GROUP_NONISOLATED) | (knockout ? EXR_PDF_GROUP_KNOCKOUT : 0);return EXR_OK;
 }
 static int blend_name(exr_pdf_file *file,uint32_t id,exr_blend_mode *mode) {
   static const char *names[]={"Normal","Multiply","Screen","Overlay","Darken","Lighten","ColorDodge","ColorBurn",
@@ -367,7 +367,8 @@ static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,
   if(status==EXR_OK && layer) {
     if(!r->callbacks.begin_group || !r->callbacks.end_layer) status=exr_fail(error,EXR_FORMAT,"PDF consumer does not support isolated groups");
     else {
-      status=r->callbacks.begin_group(r->context,r->state.paint.fill.alpha,r->state.paint.blend,layer==EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0,error);
+      status=r->callbacks.begin_group(r->context,r->state.paint.fill.alpha,r->state.paint.blend,
+        (layer&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|(layer&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0),error);
       if(status==EXR_OK && error->code!=EXR_OK) status=error->code;
       if(status==EXR_OK) { started=1;r->state.paint.fill.alpha=r->state.paint.stroke.alpha=1;r->state.paint.blend=EXR_BLEND_NORMAL; }
     }

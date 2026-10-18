@@ -1691,7 +1691,8 @@ ca/CA，调用者的透明度和模式在组结束时仅应用一次。挖空组
 ### 非隔离 RGB 组与绘制回调尾部扩展
 
 `exr_canvas_begin_group(canvas, opacity, mode, flags, error)` 使用 flags=0 创建
-非隔离组，`EXR_GROUP_ISOLATED` 创建隔离组，均由 `exr_canvas_end_layer` 结束。
+非隔离组，`EXR_GROUP_ISOLATED` 创建隔离组，`EXR_GROUP_KNOCKOUT` 创建挖空组
+（可与 ISOLATED 组合），均由 `exr_canvas_end_layer` 结束。
 原 `begin_layer` 等价于带 ISOLATED 的 begin_group，保留原语义。未知 flags 拒绝。
 非隔离组从父背景开始绘制，独立累计组自身 alpha；提交时按 ISO 32000-1
 11.4.4 移除初始背景贡献，再合成至父组。低透明度多次绘制使用浮点工作像素，
@@ -1703,4 +1704,13 @@ ca/CA，调用者的透明度和模式在组结束时仅应用一次。挖空组
 非隔离请求遇到仅有旧回调的消费者返回 `EXR_UNSUPPORTED`。任何 begin 回调都
 要求 end_layer；begin_group 单独配 end_layer 也合法。原有 struct_size 前缀保持
 可用，get_sink_ex 按实际存储大小写入，旧尺寸不会被新尾部覆盖。纯检查型消费者
-仍需明确处理所请求的组合效果。ABI 1、schema 6、版本 0.18.0 均不变。
+仍需明确处理所请求的组合效果。ABI 1、schema 6 均不变。
+
+### 挖空透明组
+
+`EXR_GROUP_KNOCKOUT` 下每个元素与该组的**初始背景**合成，覆盖区内以新元素替换旧结果，
+而不是与累积结果叠加；`EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT` 从透明背景开始。常量
+alpha 与几何覆盖率分开处理，半覆盖边缘不会二次衰减。挖空同时替换覆盖度：组 alpha 跟随
+最上层元素而不是取并集，因此非隔离组提交时按 11.4.4 移除背景仍保持正确覆盖度。
+工作缓冲复用非隔离组的 24 bytes/pixel 结构，不需要额外整画布分配；隔离组只有在挖空或
+非隔离时才分配该状态。PDF 的 `K false` 映射到该标志，`K true`（缺省）表示不挖空。

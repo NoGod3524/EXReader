@@ -632,8 +632,13 @@ EXR_API exr_status exr_canvas_blend(exr_canvas *canvas,exr_blend_mode mode,exr_e
    inherited clip is applied once when committing. Valid end calls consume the
    layer even on failure; commit=0 discards it and unwinds its inner scopes. */
 #define EXR_GROUP_ISOLATED 1u
+/* Knockout: each element composites with the group's initial backdrop instead of
+   the accumulated result, so a later element replaces an earlier one inside its
+   coverage. Combine with ISOLATED; end_layer closes either kind. */
+#define EXR_GROUP_KNOCKOUT 2u
 /* flags=0 inherits the backdrop; ISOLATED starts transparent. end_layer closes
-   either kind. Non-isolated groups maintain an independent source-alpha buffer. */
+   either kind. Non-isolated and knockout groups maintain an independent
+   source-alpha buffer. */
 EXR_API exr_status exr_canvas_begin_group(exr_canvas *canvas,double opacity,exr_blend_mode mode,unsigned flags,exr_error *error);
 EXR_API exr_status exr_canvas_begin_layer(exr_canvas *canvas,double opacity,exr_blend_mode mode,exr_error *error);
 EXR_API exr_status exr_canvas_end_layer(exr_canvas *canvas,unsigned commit,exr_error *error);

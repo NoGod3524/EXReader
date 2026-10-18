@@ -186,7 +186,7 @@ exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex
    alpha. A NULL buffer keeps the original compact 8-bit drawing path. */
 typedef struct exr_composite_state {
   float *pixels;exr_bitmap backdrop;const struct exr_composite_state *backdrop_state;
-  uint32_t left,top,right,bottom;unsigned depth;
+  uint32_t left,top,right,bottom;unsigned depth;unsigned knockout,isolated;
 } exr_composite_state;
 exr_status exr_sink_begin_group(const exr_draw_sink_ex *sink,double opacity,exr_blend_mode mode,unsigned flags,exr_error *error);
 exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state,const exr_bitmap *parent,
