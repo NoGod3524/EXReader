@@ -2990,7 +2990,7 @@ Generated glyphs can therefore have nonempty source ranges. Source document
 bytes, search and copy remain unchanged. Styles/bidi levels inherit from the
 original side; literal strings are not automatically case-adjusted.
 
-The automatic-layout test now has 451,930 checks across 36 original EPUBs and
+The automatic-layout test now has 452,353 checks across 36 original EPUBs and
 constructed trees. Nine new long EPUBs cover plain, RTL, vertical, floating,
 orthogonal, table, styled-inline, source-gap and decomposed-canonical text.
 Whole layouts, cached/uncached pages, backward checkpoint replay, positioned
@@ -3018,3 +3018,14 @@ The current stage renders literal atomic sides; it does not claim arbitrary
 cross-script replacement strings have browser-equivalent paragraph analysis.
 The measured ordinary and original/real-dictionary reading workloads have exact
 source/font/binary/input provenance in that benchmark directory.
+
+
+A further zero-cut insertion regression failed on the original reflow snapshot:
+clicking the original character after generated text returned only the shared
+start offset. The carry now merges that insertion with the complete following
+original grapheme's source cluster, including its end and protected boundaries.
+This also guarantees source progress if a 128-character inserted side clips in
+a narrow line. The regression checks the cursor endpoint, completion, all source
+bytes and positioned pixel reconstruction; ordinary source intervals remain
+unchanged. Benchmark/reference records in the reflow directory are refreshed
+against the corrected DLL rather than attributed to the earlier snapshot.

@@ -232,3 +232,8 @@ ordinary/emergency opportunities, while their stale dictionary bits are cleared;
 rematching with mapped generated text, full changed-text bidi/boundary analysis
 and language-aware casing remain required work. Installed Swift/JNI smoke now
 checks actual replacement glyphs with nonempty original source intervals.
+
+A zero-cut after insertion shares its source cluster with the following original
+grapheme. Its glyph start/end may remain empty, while cluster_end includes that
+grapheme. This preserves cursor access and forward progress when a long inserted
+side clips in a narrow line.
