@@ -380,7 +380,7 @@ size_t exr_layout_hit_test(const exr_layout *l, size_t p, float x, float y) {
     float position = vertical ? y : x;
     float left = vertical ? g->baseline : g->x, right = left + g->advance;
     while (end < line->glyph_start + line->glyph_count &&
-           l->glyphs[end].cluster_start == g->cluster_start) {
+           l->glyphs[end].cluster_start == g->cluster_start && l->glyphs[end].bidi_level == g->bidi_level) {
       float pen = vertical ? l->glyphs[end].baseline : l->glyphs[end].x;
       left = fminf(left, pen);
       right = fmaxf(right, pen + l->glyphs[end].advance);

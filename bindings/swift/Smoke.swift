@@ -296,6 +296,42 @@ import CEXReader
             precondition(glyphs.contains { $0.codepoint == 0x1f1e8 && $0.start == 9 && $0.cluster_start == 9 && $0.cluster_end == 13 && ($0.boundaries & 1) != 0 })
             let bitmap = try page.render(); precondition(bitmap.width == 80)
         }
+        do {
+            let publication = try EXReaderPublication(file: root.appendingPathComponent("books/hyphen-bidi-long.epub"))
+            let chapter = try publication.load(part: 0)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            var config = EXReaderLayoutConfig()
+            config.page.width = 80; config.page.height = 100; config.page.margin = 10; config.page.font_size = 14
+            config.userCSS = "html,body,p {margin:0;padding:0;font-size:14px;line-height:20px}"
+            let pager = try chapter.pager(font: font, config: config)
+            try pager.setHyphenation([EXReaderHyphenDictionary(language: "zb", patterns: Data(".aaaa1aaaaaaaa./ا1中=12ا,4,2".utf8), leftMinimum: 1, rightMinimum: 1)])
+            guard let page = try pager.next() else { preconditionFailure("missing mixed direction page") }
+            let inserted = page.glyphs.filter { ($0.flags & 2048) != 0 && $0.start == 3 && $0.end == 4 }
+            precondition(inserted.map { $0.codepoint } == [49,0x627,0x4e2d])
+            precondition(inserted.map { $0.bidi_level } == [2,1,0])
+            precondition(page.glyphs.allSatisfy { ($0.flags & ~UInt32(2559)) == 0 })
+            for glyph in inserted {
+                precondition(page.hitTest(x: glyph.x + 0.1, y: glyph.baseline - 2) == ((glyph.bidi_level & 1) != 0 ? 4 : 3))
+            }
+            let bitmap = try page.render(); precondition(bitmap.width == 80)
+        }
+        do {
+            let publication = try EXReaderPublication(file: root.appendingPathComponent("books/hyphen-bidi-leading.epub"))
+            let chapter = try publication.load(part: 0)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            var config = EXReaderLayoutConfig()
+            config.page.width = 80; config.page.height = 100; config.page.margin = 10; config.page.font_size = 14
+            config.userCSS = "html,body,p {margin:0;padding:0;font-size:14px;line-height:20px}"
+            let pager = try chapter.pager(font: font, config: config)
+            try pager.setHyphenation([EXReaderHyphenDictionary(language: "ze", patterns: Data(".aaaa1aaaaaaaa./=אב1,1,5".utf8), leftMinimum: 1, rightMinimum: 1)])
+            guard let page = try pager.next() else { preconditionFailure("missing leading neutral page") }
+            precondition(!page.glyphs.isEmpty)
+            for glyph in page.glyphs {
+                precondition(glyph.codepoint == 49 && glyph.bidi_level == 2 && (glyph.flags & ~UInt32(2559)) == 0)
+                precondition(page.hitTest(x: glyph.x + 0.1, y: glyph.baseline - 2) == glyph.cluster_start)
+            }
+            let bitmap = try page.render(); precondition(bitmap.width == 80)
+        }
         print("Swift SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed")
     }
 }

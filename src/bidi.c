@@ -70,6 +70,16 @@ int exr_bidi_complex(uint32_t cp) {
   return type == bidi_R || type == bidi_AL || type == bidi_AN ||
          (removed(type) && type != bidi_BN) || isolate(type) || type == bidi_PDI;
 }
+int exr_bidi_ltr_letter(uint32_t cp) { return classify(cp)==bidi_L; }
+unsigned exr_bidi_strong_type(uint32_t cp) {
+  unsigned char type=classify(cp);
+  return type==bidi_L ? 1u : type==bidi_R ? 2u : type==bidi_AL ? 3u : 0u;
+}
+int exr_bidi_window_safe(uint32_t cp) {
+  unsigned char type=classify(cp);
+  return !bracket(cp) && !(removed(type) && type!=bidi_BN) && !isolate(type) &&
+    type!=bidi_PDI && type!=bidi_B && type!=bidi_S;
+}
 static unsigned char direction(unsigned level) { return level & 1 ? bidi_R : bidi_L; }
 static unsigned char strong(unsigned char type) {
   return type == bidi_EN || type == bidi_AN || type == bidi_AL ? bidi_R : type;
@@ -413,8 +423,23 @@ exr_status exr_bidi_line_levels(const exr_bidi *bidi, size_t first, size_t count
     line_levels(bidi, first, count, out);
   return EXR_OK;
 }
-exr_status exr_bidi_analyze(const char *text, size_t size, exr_direction requested,
-                             exr_bidi **out, exr_error *e) {
+void exr_bidi_override_free(exr_bidi_override *item) {
+  while(item && !--item->refs) { exr_bidi_override *previous=item->previous;free(item);item=previous; }
+}
+exr_direction exr_bidi_override_at(const exr_bidi_override *item,size_t source) {
+  for(;item;item=item->previous) if(source>=item->start && source<item->end) return item->direction;
+  return EXR_DIRECTION_AUTO;
+}
+int exr_bidi_paragraph_end(uint32_t cp) { return classify(cp)==bidi_B; }
+unsigned exr_bidi_p2(uint32_t cp,size_t *depth) {
+  unsigned char type=classify(cp);
+  if(isolate(type)) { (*depth)++;return 0; }
+  if(type==bidi_PDI) { if(*depth) (*depth)--;return 0; }
+  if(*depth) return 0;
+  return type==bidi_L ? 1 : type==bidi_R || type==bidi_AL ? 2 : 0;
+}
+exr_status exr_bidi_analyze_mapped(const char *text,size_t size,exr_direction requested,
+  const size_t *sources,const exr_bidi_override *overrides,exr_bidi **out,exr_error *e) {
   exr_bidi *bidi;
   size_t at = 0, count = 0, i, first;
   uint32_t cp;
@@ -459,7 +484,8 @@ exr_status exr_bidi_analyze(const char *text, size_t size, exr_direction request
       i++;
     } while (i < count && bidi->types[i - 1] != bidi_B);
     status = paragraph(bidi->scalars + first, bidi->types + first, bidi->bases + first,
-                         i - first, requested, e);
+                         i - first, requested==EXR_DIRECTION_AUTO && sources && overrides ?
+                         exr_bidi_override_at(overrides,sources[first]) : requested, e);
     if (status != EXR_OK) {
       exr_bidi_free(bidi);
       return status;
@@ -468,6 +494,9 @@ exr_status exr_bidi_analyze(const char *text, size_t size, exr_direction request
   line_levels(bidi, 0, count, NULL);
   *out = bidi;
   return exr_fail(e, EXR_OK, "");
+}
+exr_status exr_bidi_analyze(const char *text,size_t size,exr_direction requested,exr_bidi **out,exr_error *e) {
+  return exr_bidi_analyze_mapped(text,size,requested,NULL,NULL,out,e);
 }
 const exr_bidi_scalar *exr_bidi_scalars(const exr_bidi *bidi, size_t *count) {
   if (count)
