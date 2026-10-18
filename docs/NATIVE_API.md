@@ -1104,7 +1104,7 @@ inspection_metadata、inspection_chapters、inspection_cover、inspection_durati
 
 Separation 普通命名专色现支持文件声明的 device/CIE alternate 和单输入 Type 2 指数函数、Type 3 分段函数。vector、XObject、inline image、Indexed base 和 ICC Alternate 复用同一转换路径；绘制回调仍输出屏幕 DeviceRGB，既有公开记录不变。默认 tint 为 1，输入先夹到色空间和函数 Domain；输出按各层 Range 再交 alternate。Type 2 处理 C0/C1 默认值、整数/分数与负指数的合法实数域，拒绝非有限中间结果。Type 3 保留半开区间边界、逆向 Encode、子函数 Domain/Range、单段及末尾零宽区间的 Encode 起点规则。
 
-特殊色名 None 不落墨，忽略无需执行的 alternate/tintTransform；填充和描边只在送出 paint 快照时置透明，原图形状态的 alpha 不被改写。图片返回透明像素，q/Q 和后续设备色操作可正常恢复。文字语义与裁切操作仍沿用原路径。多输入 Type 0/三次采样、物理印版/套印与完整透明度语义尚未实现，不能视为完整印刷色彩支持。
+特殊色名 None 不落墨，忽略无需执行的 alternate/tintTransform；填充和描边只在送出 paint 快照时置透明，原图形状态的 alpha 不被改写。图片返回透明像素，q/Q 和后续设备色操作可正常恢复。文字语义与裁切操作仍沿用原路径。物理印版/套印与完整透明度语义尚未实现，不能视为完整印刷色彩支持。
 
 私有函数模型最多 16 层、1024 节点、64 个分段和 1 MiB payload，循环引用/坏维数/非法域直接失败；编译过程支持取消。模型内存计入原颜色缓存，求值复杂度计入原 PDF 图片工作预算；源码对象查找仍使用原 256 Mi 工作上限。不新增运行时依赖，不改变 ABI epoch、版本号或书库 schema。
 
@@ -1113,7 +1113,7 @@ Separation 普通命名专色现支持文件声明的 device/CIE alternate 和�
 
 单输入 FunctionType 0 现支持 Order 1，样本为 MSB-first 的 1/2/4/8/12/16/24/32 位整数，1–4 输出。输入按 Domain→Encode→Size 映射并做相邻样本线性插值，输出再按 Decode→Range 映射；默认 Encode 为 [0 Size−1]，默认 Decode 为 Range。支持反向映射、单样本/零宽域、跨字节和 32 位最低有效字节，采样函数也可作为 Type 3 子函数。
 
-采样表必须来自 stream，经既有无损滤镜解码后精确匹配表长，再复制进函数模型；表数据、节点和映射数组共同受 1 MiB 编译载荷预算限制，节点开销在分配前计入。模型不借用 stream 样本指针，求值费用继续计入 PDF 图片工作预算。当前不支持多输入采样和 Order 3 三次插值。
+采样表必须来自 stream，经既有无损滤镜解码后精确匹配表长，再复制进函数模型；表数据、节点和映射数组共同受 1 MiB 编译载荷预算限制，节点开销在分配前计入。模型不借用 stream 样本指针，求值费用继续计入 PDF 图片工作预算。多输入和 Order 3 的后续实现见下节补充。
 
 ### PDF Type 4 计算器颜色函数（0.18 开发中）
 
@@ -1165,8 +1165,15 @@ GSUB 匹配允许字体明确引用隐藏字符的 glyph ID，包括 ZWJ、标�
 
 ## PDF DeviceN 多通道颜色（0.18 开发补充）
 
-DeviceN 接受 1–32 个色名、device/CIE/ICC alternate 和最多四输出的 Type 4 变换，按色名数组顺序将输入压栈，逐输入应用 Domain，逐输出应用 Range。单通道也可使用已有 Type 0/2/3。默认所有 tint 为 1；路径填充、描边、XObject/内联图片、Indexed 调色板、图片 Decode 和颜色键掩码共用同一模型，绘制快照仍为屏幕 RGB。
+DeviceN 接受 1–32 个色名、device/CIE/ICC alternate 和最多四输出的 Type 0/4 变换，按色名数组顺序将输入压栈，逐输入应用 Domain，逐输出应用 Range。单通道也可使用已有 Type 0/2/3。默认所有 tint 为 1；路径填充、描边、XObject/内联图片、Indexed 调色板、图片 Decode 和颜色键掩码共用同一模型，绘制快照仍为屏幕 RGB。
 
-可选属性字典（包括 Subtype NChannel）按复合色的 tintTransform 输出显示，未模拟 Process/Colorants/InkHints 的物理油墨行为。全部色名为 None 时不落墨；混合 None 仍按文件声明的复合变换处理。拒绝 All、重复的非 None 色名、空列表、超过 32 通道和超过 127 字节的色名。多通道 Type 0 采样、物理分色、套印和完整 ICC 仍待实现；Type 2/3 本身只接受一个输入。
+可选属性字典（包括 Subtype NChannel）按复合色的 tintTransform 输出显示，未模拟 Process/Colorants/InkHints 的物理油墨行为。全部色名为 None 时不落墨；混合 None 仍按文件声明的复合变换处理。拒绝 All、重复的非 None 色名、空列表、超过 32 通道和超过 127 字节的色名。物理分色、套印和完整 ICC 仍待实现；Type 2/3 本身只接受一个输入。
 
 最多 32 输入计入原计算器的 100 项操作数栈，不能再额外占用一套栈；保持 4096 指令、64 KiB 源码、1 MiB 函数图载荷及既有取消和页面工作预算。图片相关 Decode/Mask 缓冲扩到 64 项，逐像素只读写实际通道数；JPEG 继续只接受支持的单通道或三通道解码。不新增依赖或公开结构字段。
+
+
+## PDF 多输入与三次采样（0.18 开发补充）
+
+FunctionType 0 接受 1–32 输入、1–4 输出，按 PDF 定义以首输入轴最快、同一点各输出交错的顺序读取采样表。Order 1 使用多线性插值；Order 3 使用 a=−1/2 的张量积三次卷积，边界复制端点样本，两点轴退化为线性，单点轴保持常值。三次插值允许超调，先 Decode 后 Range 裁剪。各轴独立应用 Domain/Encode/Size，保留反向 Encode、单点、零宽域和所有八种样本位深。DeviceN、Separation、Indexed、XObject 和内联图片复用同一实现。
+
+整个函数图仍受 1 MiB 载荷限制；维数乘法在分配前检查，最坏插值邻点组合最多 65536，超出返回 EXR_LIMIT。单点轴不增加组合数，因此 32 轴的退化网格可正常读取。求值按实际非整数坐标展开，每 256 组合检查取消；最坏计算量计入原页面/图片预算。不新增依赖、公开结构字段或版本号。

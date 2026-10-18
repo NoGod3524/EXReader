@@ -2,13 +2,15 @@
 #include "pdf_function_internal.h"
 #include "pdf_calculator_internal.h"
 struct exr_pdf_function {
-  unsigned type,inputs,outputs,count,has_range,bits;
+  unsigned type,inputs,outputs,count,has_range,bits,order;
   double domain[2*EXR_PDF_MAX_COLORANTS],range[8],exponent,first[4],last[4];
   double *bounds,*encode;
   struct exr_pdf_function **children;
   unsigned char *samples; size_t sample_count;
+  size_t sizes[EXR_PDF_MAX_COLORANTS],strides[EXR_PDF_MAX_COLORANTS];
   double decode[8];
   exr_pdf_calculator *calculator;
+  exr_control control;
   size_t bytes,cost;
 };
 typedef struct {
@@ -65,9 +67,10 @@ static exr_status open_function(function_reader *r,uint32_t id,unsigned inputs,u
   if(sizeof(*f)>(size_t)1024*1024-r->bytes) return exr_fail(r->error,EXR_LIMIT,"PDF function payload exceeds 1 MiB");
   f=calloc(1,sizeof(*f)); if(!f) goto memory;
   f->type=(unsigned)value->u.integer; f->inputs=inputs; f->outputs=outputs; f->bytes=sizeof(*f); r->bytes+=sizeof(*f);
+  if(r->control) f->control=*r->control;
   if(!numbers(r,get(r,id,"Domain"),f->domain,2*inputs)) goto bad;
   for(i=0;i<inputs;i++) if(f->domain[2*i]>f->domain[2*i+1]) goto bad;
-  if(inputs!=1 && f->type!=4) { status=exr_fail(r->error,EXR_FORMAT,"Multi-input PDF functions currently require Type 4"); goto done; }
+  if(inputs!=1 && f->type!=0 && f->type!=4) { status=exr_fail(r->error,EXR_FORMAT,"PDF Type 2/3 functions require one input"); goto done; }
   field=get(r,id,"Range");
   if(field!=EXR_PDF_NONE) {
     f->has_range=1; if(!numbers(r,field,f->range,2*outputs)) goto bad;
@@ -82,31 +85,43 @@ static exr_status open_function(function_reader *r,uint32_t id,unsigned inputs,u
     if(extra>(size_t)1024*1024-r->bytes) { status=exr_fail(r->error,EXR_LIMIT,"PDF function payload exceeds 1 MiB"); goto done; }
     f->bytes+=extra; r->bytes+=extra; f->cost=exr_pdf_calculator_cost(f->calculator)+2*outputs+2*inputs;
   } else if(f->type==0) {
-    const unsigned char *samples; size_t size,needed; uint64_t packed;
-    if(!stream || !f->has_range || !array(r,get(r,id,"Size"),ids,64,&count) || count!=1) goto bad;
-    value=exr_pdf_value_at(r->file,ids[0]);
-    if(!value || value->kind!=EXR_PDF_INT || value->u.integer<=0) goto bad;
-    if((uint64_t)value->u.integer>UINT32_MAX) { status=exr_fail(r->error,EXR_LIMIT,"PDF sample table exceeds size limit"); goto done; }
-    f->sample_count=(size_t)value->u.integer;
+    const unsigned char *samples; size_t size,needed,extra=2*inputs*sizeof(double),corners=1; uint64_t packed;
+    if(!stream || !f->has_range || !array(r,get(r,id,"Size"),ids,64,&count) || count!=inputs) goto bad;
+    f->sample_count=1;
+    for(i=0;i<inputs;i++) {
+      value=exr_pdf_value_at(r->file,ids[i]);
+      if(!value || value->kind!=EXR_PDF_INT || value->u.integer<=0) goto bad;
+      /* Even a one-bit table cannot exceed the function graph payload budget. */
+      if((uint64_t)value->u.integer>UINT32_MAX || (uint64_t)value->u.integer>8388608/f->sample_count) {
+        status=exr_fail(r->error,EXR_LIMIT,"PDF sample table exceeds size limit"); goto done;
+      }
+      f->sizes[i]=(size_t)value->u.integer; f->strides[i]=f->sample_count*outputs; f->sample_count*=f->sizes[i];
+    }
     field=get(r,id,"BitsPerSample"); value=exr_pdf_value_at(r->file,field);
     if(!value || value->kind!=EXR_PDF_INT ||
        (value->u.integer!=1 && value->u.integer!=2 && value->u.integer!=4 && value->u.integer!=8 &&
         value->u.integer!=12 && value->u.integer!=16 && value->u.integer!=24 && value->u.integer!=32)) goto bad;
     f->bits=(unsigned)value->u.integer; packed=(uint64_t)f->sample_count*outputs*f->bits;
-    if(2*sizeof(double)>(size_t)1024*1024-r->bytes || (packed+7)/8>(size_t)1024*1024-r->bytes-2*sizeof(double)) { status=exr_fail(r->error,EXR_LIMIT,"PDF function payload exceeds 1 MiB"); goto done; }
+    if(extra>(size_t)1024*1024-r->bytes || (packed+7)/8>(size_t)1024*1024-r->bytes-extra) { status=exr_fail(r->error,EXR_LIMIT,"PDF function payload exceeds 1 MiB"); goto done; }
     needed=(size_t)((packed+7)/8);
     field=get(r,id,"Order"); value=exr_pdf_value_at(r->file,field);
-    if(field!=EXR_PDF_NONE && (!value || value->kind!=EXR_PDF_INT || value->u.integer!=1)) goto bad;
-    f->encode=calloc(2,sizeof(double)); if(!f->encode) goto memory;
-    f->encode[1]=(double)(f->sample_count-1);
-    field=get(r,id,"Encode"); if(field!=EXR_PDF_NONE && !numbers(r,field,f->encode,2)) goto bad;
+    if(field!=EXR_PDF_NONE && (!value || value->kind!=EXR_PDF_INT || (value->u.integer!=1 && value->u.integer!=3))) goto bad;
+    f->order=field==EXR_PDF_NONE ? 1 : (unsigned)value->u.integer;
+    for(i=0;i<inputs;i++) {
+      size_t width=f->order==3 ? 4 : 2; if(width>f->sizes[i]) width=f->sizes[i];
+      if(corners>65536/width) { status=exr_fail(r->error,EXR_LIMIT,"PDF sample interpolation exceeds 65536 corners"); goto done; }
+      corners*=width;
+    }
+    f->encode=calloc(2*inputs,sizeof(double)); if(!f->encode) goto memory;
+    for(i=0;i<inputs;i++) f->encode[2*i+1]=(double)(f->sizes[i]-1);
+    field=get(r,id,"Encode"); if(field!=EXR_PDF_NONE && !numbers(r,field,f->encode,2*inputs)) goto bad;
     memcpy(f->decode,f->range,2*outputs*sizeof(double));
     field=get(r,id,"Decode"); if(field!=EXR_PDF_NONE && !numbers(r,field,f->decode,2*outputs)) goto bad;
     status=exr_pdf_stream_data(r->file,id,&samples,&size,r->error); if(status!=EXR_OK) goto done;
     if(size!=needed) goto bad;
     f->samples=malloc(needed); if(!f->samples) goto memory;
-    memcpy(f->samples,samples,needed); f->bytes+=needed+2*sizeof(double); r->bytes+=needed+2*sizeof(double);
-    f->cost=16+10*outputs;
+    memcpy(f->samples,samples,needed); f->bytes+=needed+extra; r->bytes+=needed+extra;
+    f->cost=32*inputs+corners*(4*inputs+8*outputs)+4*outputs;
   } else if(f->type==2) {
     double endpoint[2];
     field=get(r,id,"C0"); if(field==EXR_PDF_NONE) { if(outputs!=1) goto bad; } else if(!numbers(r,field,f->first,outputs)) goto bad;
@@ -165,22 +180,56 @@ static double sample_value(const exr_pdf_function *f,size_t index) {
   for(i=0;i<count;i++) value=(value<<8)|f->samples[(size_t)(bit>>3)+i];
   value=(value>>(count*8-skip-f->bits))&mask; return (double)value/(double)mask;
 }
+static exr_status sampled_value(const exr_pdf_function *f,const double *input,double out[4],exr_error *error) {
+  size_t offsets[EXR_PDF_MAX_COLORANTS][4],base=0,corners=1,corner,i; unsigned active=0,widths[EXR_PDF_MAX_COLORANTS];
+  double weights[EXR_PDF_MAX_COLORANTS][4];
+  for(i=0;i<f->inputs;i++) {
+    double encoded=f->encode[2*i],fraction; size_t first;
+    if(f->domain[2*i+1]!=f->domain[2*i]) encoded+=(input[i]-f->domain[2*i])/(f->domain[2*i+1]-f->domain[2*i])*(f->encode[2*i+1]-encoded);
+    encoded=fmax(0,fmin((double)(f->sizes[i]-1),encoded)); first=(size_t)floor(encoded); fraction=encoded-(double)first;
+    if(fraction==0) base+=first*f->strides[i];
+    else {
+      unsigned j,width=2;
+      if(f->order==3 && f->sizes[i]>2) {
+        double t=fraction,t2=t*t,t3=t2*t;
+        double w[4]={-.5*t+t2-.5*t3,1-2.5*t2+1.5*t3,.5*t+2*t2-1.5*t3,-.5*t2+.5*t3};
+        size_t points[4]={first ? first-1 : 0,first,first+1,first+2<f->sizes[i] ? first+2 : first+1};
+        /* Cardinal cubic convolution (a=-1/2); replicate endpoint samples. */
+        width=0;
+        for(j=0;j<4;j++) {
+          size_t offset=points[j]*f->strides[i];
+          if(width && offsets[active][width-1]==offset) weights[active][width-1]+=w[j];
+          else { offsets[active][width]=offset; weights[active][width++]=w[j]; }
+        }
+      } else {
+        offsets[active][0]=first*f->strides[i]; offsets[active][1]=(first+1)*f->strides[i];
+        weights[active][0]=1-fraction; weights[active][1]=fraction;
+      }
+      widths[active++]=width; corners*=width;
+    }
+  }
+  for(i=0;i<f->outputs;i++) out[i]=0;
+  for(corner=0;corner<corners;corner++) {
+    size_t index=base,ordinal=corner; double weight=1; unsigned axis;
+    if(!(corner&255) && exr_control_cancel(&f->control,error)!=EXR_OK) return EXR_CANCELLED;
+    for(axis=0;axis<active;axis++) {
+      unsigned at=(unsigned)(ordinal%widths[axis]); ordinal/=widths[axis];
+      index+=offsets[axis][at]; weight*=weights[axis][at];
+    }
+    for(i=0;i<f->outputs;i++) out[i]+=weight*sample_value(f,index+i);
+  }
+  for(i=0;i<f->outputs;i++) out[i]=f->decode[2*i]+out[i]*(f->decode[2*i+1]-f->decode[2*i]);
+  return EXR_OK;
+}
 exr_status exr_pdf_function_eval_inputs(const exr_pdf_function *f,const double *input,double out[4],exr_error *error) {
   double values[EXR_PDF_MAX_COLORANTS],x; size_t i;
-  if(!f || !input || !out) return exr_fail(error,EXR_ARGUMENT,"Invalid PDF function evaluation");
+  if(!f || !f->inputs || !input || !out) return exr_fail(error,EXR_ARGUMENT,"Invalid PDF function evaluation");
   for(i=0;i<f->inputs;i++) { if(!isfinite(input[i])) return exr_fail(error,EXR_FORMAT,"Nonfinite PDF function input"); values[i]=fmax(f->domain[2*i],fmin(f->domain[2*i+1],input[i])); }
   x=values[0];
   if(f->type==4) {
     exr_status status=exr_pdf_calculator_eval_inputs(f->calculator,values,f->inputs,f->outputs,out,error); if(status!=EXR_OK) return status;
   } else if(f->type==0) {
-    double encoded=f->encode[0],fraction; size_t first,last;
-    if(f->domain[1]!=f->domain[0]) encoded+=(x-f->domain[0])/(f->domain[1]-f->domain[0])*(f->encode[1]-f->encode[0]);
-    encoded=fmax(0,fmin((double)(f->sample_count-1),encoded)); first=(size_t)floor(encoded); last=first+1<f->sample_count ? first+1 : first;
-    fraction=encoded-(double)first;
-    for(i=0;i<f->outputs;i++) {
-      double unit=(1-fraction)*sample_value(f,first*f->outputs+i)+fraction*sample_value(f,last*f->outputs+i);
-      out[i]=f->decode[2*i]+unit*(f->decode[2*i+1]-f->decode[2*i]);
-    }
+    exr_status status=sampled_value(f,values,out,error); if(status!=EXR_OK) return status;
   } else if(f->type==2) {
     double raised=pow(x,f->exponent);
     for(i=0;i<f->outputs;i++) out[i]=f->first[i]+raised*(f->last[i]-f->first[i]);

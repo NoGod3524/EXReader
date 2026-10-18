@@ -300,10 +300,54 @@ static void sampled(const char *directory) {
   scenario="Stitching retains and evaluates a sampled child";
   same_color_extra("[/Separation /Spot /DeviceGray << /FunctionType 3 /Domain [0 1] /Functions [10 0 R] /Bounds [] /Encode [1 0] >>]",".25","/Decode [.25 .25]","\x00",1,NULL,gray191,NULL,NULL,"<< /FunctionType 0 /Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 8 /Filter /AHx /Length 5 >>\nstream\n00ff>\nendstream");
 }
+static void multidimensional_samples(const char *directory) {
+  static const unsigned depths[]={1,2,4,8,12,16,24,32};
+  static const unsigned rgb[]={64,128,32},non_square[]={64,128,32},three[]={64,96,24};
+  size_t k,i; unsigned bit; char function[4096],name[80];
+  for(k=0;k<sizeof(depths)/sizeof(*depths);k++) {
+    unsigned bits=depths[k]; unsigned char packed[48]={0}; char hex[97]; size_t size=(12*bits+7)/8;
+    /* First input varies fastest; each point has interleaved RGB outputs. */
+    for(i=0;i<12;i++) { size_t point=i/3,channel=i%3; int on=channel==0 ? (point&1)!=0 : channel==1 ? (point&2)!=0 : point==3;
+      if(on) for(bit=0;bit<bits;bit++) { size_t at=i*bits+bit; packed[at/8]|=(unsigned char)(1u<<(7-at%8)); }
+    }
+    for(i=0;i<size;i++) snprintf(hex+2*i,sizeof(hex)-2*i,"%02x",packed[i]);
+    snprintf(function,sizeof(function),"<< /FunctionType 0 /Domain [0 1 0 1] /Range [0 1 0 1 0 1] /Size [2 2] /BitsPerSample %u /Filter /AHx /Length %zu >>\nstream\n%s>\nendstream",bits,2*size+1,hex);
+    snprintf(name,sizeof(name),"pdf-color-sampled-two-%u.pdf",bits); scenario=name;
+    same_color_extra("[/DeviceN [/A /B] /DeviceRGB 10 0 R]",".25 .5","/Decode [.25 .25 .5 .5]","\x00\x00",2,NULL,rgb,directory,name,function);
+  }
+  scenario="Non-square sample grid uses first-axis-fastest strides";
+  same_color_extra("[/DeviceN [/A /B] /DeviceRGB 10 0 R]",".25 .75","/Decode [.25 .25 .75 .75]","\x00\x00",2,NULL,non_square,directory,"pdf-color-sampled-nonsquare.pdf",
+    "<< /FunctionType 0 /Domain [0 1 0 1] /Range [0 1 0 1 0 1] /Size [2 3] /BitsPerSample 8 /Filter /AHx /Length 37 >>\nstream\n000000ff0000000000ff000000ff00ffffff>\nendstream");
+  scenario="Independent Domains reversed Encode and Decode";
+  same_color_extra("[/DeviceN [/A /B] /DeviceRGB 10 0 R]",".375 .375","/Decode [.375 .375 .375 .375]","\x00\x00",2,NULL,(const unsigned[3]){191,128,32},NULL,NULL,
+    "<< /FunctionType 0 /Domain [.25 .75 .125 .625] /Range [0 1 0 1 0 1] /Size [2 2] /BitsPerSample 8 /Encode [1 0 0 1] /Decode [0 1 0 1 .5 -.5] /Filter /AHx /Length 25 >>\nstream\n000000ff000000ff00ffffff>\nendstream");
+  scenario="Per-axis sample endpoint clipping";
+  same_color_extra("[/DeviceN [/A /B] /DeviceRGB 10 0 R]","0 1","/Decode [0 0 1 1]","\x00\x00",2,NULL,(const unsigned[3]){0,255,0},NULL,NULL,
+    "<< /FunctionType 0 /Domain [.25 .75 .25 .75] /Range [0 1 0 1 0 1] /Size [2 2] /BitsPerSample 8 /Filter /AHx /Length 25 >>\nstream\n000000ff000000ff00ffffff>\nendstream");
+  scenario="Trilinear sample interpolation";
+  same_color_extra("[/DeviceN [/A /B /C] /DeviceRGB 10 0 R]",".25 .5 .75","/Decode [.25 .25 .5 .5 .75 .75]","\x00\x00\x00",3,NULL,three,directory,"pdf-color-sampled-three.pdf",
+    "<< /FunctionType 0 /Domain [0 1 0 1 0 1] /Range [0 1 0 1 0 1] /Size [2 2 2] /BitsPerSample 8 /Filter /AHx /Length 49 >>\nstream\n000000ff0000000000ff0000000000ff000000ff00ffffff>\nendstream");
+  { char names[1024]="[/DeviceN [",domain[256]="",sizes[128]="",values[256]="",decode[512]="/Decode [",row[32]; unsigned char samples[32]={0};
+    for(i=0;i<32;i++) { snprintf(row,sizeof(row),"/I%zu ",i); strcat(names,row); strcat(domain,i==7 ? ".5 .5 " : "0 1 ");strcat(sizes,i==0 || i==31 ? "2 " : "1 ");strcat(values,i==0 ? ".25 " : ".5 ");strcat(decode,i==0 ? ".25 .25 " : ".5 .5 "); }
+    strcat(names,"] /DeviceRGB 10 0 R]");strcat(decode,"]");
+    snprintf(function,sizeof(function),"<< /FunctionType 0 /Domain [%s] /Range [0 1 0 1 0 1] /Size [%s] /BitsPerSample 8 /Filter /AHx /Length 25 >>\nstream\n000000ff000000ff00ffffff>\nendstream",domain,sizes);
+    scenario="32 axes with singleton dimensions and zero-width domain";
+    same_color_extra(names,values,decode,samples,32,NULL,rgb,NULL,NULL,function);
+  }
+  { static const char *invalid[]={"/Size [2] /Encode [0 1 0 1]","/Size [2 2] /Encode [0 1]","/Size [2 0]","/Size [2 -1]","/Size [2 2.5]","/Size [2 4294967296]","/Size [8388608 8388608]","/Size [2 2] /Order 2"}; buffer c={0};
+    add(&c,"/S cs .5 .5 sc 0 0 8 8 re f");
+    for(i=0;i<sizeof(invalid)/sizeof(*invalid);i++) { buffer b; exr_fixed_document *d; exr_bitmap image={0}; scenario=invalid[i];
+      snprintf(function,sizeof(function),"<< /FunctionType 0 /Domain [0 1 0 1] /Range [0 1] /BitsPerSample 8 %s /Filter /AHx /Length 9 >>\nstream\n000000ff>\nendstream",invalid[i]);
+      b=book_extra("[/DeviceN [/A /B] /DeviceGray 10 0 R]",&c,NULL,"\x00\x00",2,NULL,NULL,function); d=opened(&b);
+      CHECK(exr_fixed_render(d,0,1,NULL,&image,&error)==(i==5 || i==6 ? EXR_LIMIT : EXR_FORMAT) && !image.pixels);exr_fixed_free(d);free(b.data);
+    }
+    free(c.data);
+  }
+}
 static void bad_samples(void) {
   const char *invalid[]={
     "/Domain [0 1] /Size [2] /BitsPerSample 8", "/Domain [0 1] /Range [0 1] /Size [0] /BitsPerSample 8",
-    "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 3", "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 8 /Order 3",
+    "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 3", "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 8 /Order 2",
     "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 8 /Encode [0]", "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 8 /Decode [0]",
     "/Domain [0 1] /Range [0 1] /Size [2] /BitsPerSample 32", "/Domain [0 1] /Range [0 1] /Size [1] /BitsPerSample 8",
     "/Domain [0 1] /Range [1 0] /Size [2] /BitsPerSample 8", "/Domain [0 1] /Range [0 1] /Size [1048576] /BitsPerSample 8",
@@ -318,6 +362,39 @@ static void bad_samples(void) {
     exr_fixed_free(d); free(b.data);
   }
   free(c.data);
+}
+static void cubic_samples(const char *directory) {
+  static const struct { const char *size,*hex,*input,*decode,*extra,*name; unsigned rgb[3]; } cases[]={
+    {"4","0000ff00",".5","/Decode [.5 .5]","","pdf-color-cubic-interior.pdf",{143,143,143}},
+    {"4","0000ff00",".1666666666666667","/Decode [.1666666666666667 .1666666666666667]","","pdf-color-cubic-low.pdf",{0,0,0}},
+    {"4","0000ff00",".8333333333333333","/Decode [.8333333333333333 .8333333333333333]","","pdf-color-cubic-high.pdf",{143,143,143}},
+    {"4","00ffff00",".5","/Decode [.5 .5]","/Decode [0 .5]","pdf-color-cubic-overshoot.pdf",{143,143,143}},
+    {"3","00ff00",".25","/Decode [.25 .25]","","pdf-color-cubic-three.pdf",{143,143,143}},
+    {"2","00ff",".25","/Decode [.25 .25]","","pdf-color-cubic-linear.pdf",{64,64,64}},
+    {"1","80",".5","/Decode [.5 .5]","","pdf-color-cubic-single.pdf",{128,128,128}},
+    {"4","0000ff00","1","/Decode [1 1]","/Encode [3 0]","pdf-color-cubic-reverse.pdf",{0,0,0}}
+  };
+  size_t i; char function[4096];
+  for(i=0;i<sizeof(cases)/sizeof(*cases);i++) {
+    scenario=cases[i].name;
+    snprintf(function,sizeof(function),"<< /FunctionType 0 /Domain [0 1] /Range [0 1] /Size [%s] /BitsPerSample 8 /Order 3 %s /Filter /AHx /Length %zu >>\nstream\n%s>\nendstream",cases[i].size,cases[i].extra,strlen(cases[i].hex)+1,cases[i].hex);
+    same_color_extra("[/Separation /Spot /DeviceGray 10 0 R]",cases[i].input,cases[i].decode,"\x00",1,NULL,cases[i].rgb,directory,cases[i].name,function);
+  }
+  scenario="Tensor cubic sample with distinct axis strides";
+  same_color_extra("[/DeviceN [/A /B] /DeviceGray 10 0 R]",".5 .5","/Decode [.5 .5 .5 .5]","\x00\x00",2,NULL,(const unsigned[3]){81,81,81},directory,"pdf-color-cubic-two.pdf",
+    "<< /FunctionType 0 /Domain [0 1 0 1] /Range [0 1] /Size [4 4] /BitsPerSample 8 /Order 3 /Filter /AHx /Length 33 >>\nstream\n00000000000000000000ff0000000000>\nendstream");
+  /* The sample payload fits, but dimensional interpolation work must be bounded. */
+  { buffer content={0}; unsigned mode; add(&content,"/S cs 0 0 8 8 re f");
+    for(mode=0;mode<2;mode++) {
+      buffer b; exr_fixed_document *d; exr_bitmap image={0}; char names[512]="[/DeviceN [",domain[256]="",sizes[128]="",row[24]; unsigned axes=mode ? 9 : 17,j;
+      for(j=0;j<axes;j++) { snprintf(row,sizeof(row),"/I%u ",j);strcat(names,row);strcat(domain,"0 1 ");strcat(sizes,mode ? "4 " : "2 "); }
+      strcat(names,"] /DeviceGray 10 0 R]");
+      snprintf(function,sizeof(function),"<< /FunctionType 0 /Domain [%s] /Range [0 1] /Size [%s] /BitsPerSample 1 /Order %u /Length 1 >>\nstream\nX\nendstream",domain,sizes,mode ? 3 : 1);
+      scenario="Sample interpolation work limit before reading payload"; b=book_extra(names,&content,NULL,"\x00",1,NULL,NULL,function);d=opened(&b);
+      CHECK(exr_fixed_render(d,0,1,NULL,&image,&error)==EXR_LIMIT && !image.pixels);CHECK(strstr(error.message,"65536 corners"));exr_fixed_free(d);free(b.data);
+    }
+    free(content.data);
+  }
 }
 static void calculator(const char *directory) {
   static const struct { const char *program,*input,*decode,*range,*space,*name; unsigned rgb[3]; } cases[]={
@@ -358,4 +435,4 @@ static void calculator(const char *directory) {
     CHECK(strstr(error.message,"colour computation budget"));exr_fixed_free(d);free(b.data);free(content.data);free(function.data);free(program.data);
   }
 }
-int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); registration(directory); devicen(directory); bad_functions(); function_graphs(); sampled(directory); bad_samples(); calculator(directory); printf("%u native PDF source colour-space checks passed\n",checks); return 0; }
+int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); registration(directory); devicen(directory); bad_functions(); function_graphs(); sampled(directory); multidimensional_samples(directory); bad_samples(); cubic_samples(directory); calculator(directory); printf("%u native PDF source colour-space checks passed\n",checks); return 0; }
