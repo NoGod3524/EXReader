@@ -3100,3 +3100,54 @@ All 174 source hashes match that commit; the 36 previous EPUB fixtures are
 byte-identical. The four reference reports and both three-process measurement
 sets refer to the verified final DLL/benchmark hashes. The following record-only
 commit changes documentation/metadata and skips a duplicate CI run.
+
+
+## Projected display graphemes and format controls (0.18.0 development)
+
+A failing original-snapshot regression showed a replacement combining accent
+retaining its own source cluster instead of joining the preceding original base.
+Generated hidden controls were also conflated with empty-deletion markers when
+rematching; a Word Joiner case failed until those representations were separated.
+Empty deletions now have a private flag stripped before public glyph output.
+Real generated format controls/selectors keep their Unicode semantics and zero
+visible advance. No new public flag or record size is introduced.
+
+Replacement candidates replay the existing Unicode 17 grapheme/line transducer
+before final measurement; committed carry replays both ready raw scalars and the
+pending input tail. A new join across that boundary defers the complete source
+cluster. Future input resumes from the updated state, including RI parity,
+Emoji ZWJ/Indic chains and CSS soft-hyphen handling. Protected source groups may
+merge but do not split into invented source positions. Font selection/measurement
+runs again for the resulting group. Display states are copied by value in existing
+checkpoints; the three existing glyph queues remain the only glyph arrays.
+
+Nine direct cases assert combining-accent joins and cursor end, Prepend joins,
+hidden CGJ/variation selector/ZWJ/WJ, WJ glue versus a literal ZWSP opportunity,
+Indic conjuncts, generated/original RI pairing with the next RI separated, and
+an Emoji sequence crossing ready/pending into future input. Eleven additional
+original EPUBs exercise long, RTL, vertical, floating, orthogonal, table,
+styled-inline, source-gap, decomposed, RI and Emoji text. Full layouts,
+cached/uncached/backward pages, pixels, hit results and positioned reconstruction
+agree. All public flags are checked against the declared public mask; none of the
+private deletion/shaping/ruby bits leak. The previous 45 fixtures are unchanged.
+
+All 113 local GCC Release CTests pass, including the existing Unicode conformance,
+layout, table, float, checkpoint, control and query suites. The automatic-layout
+test records 1,296,007 checks across 56 original EPUBs and constructed cases.
+Installed C/C++ and JNI -Xcheck:jni pass with matching DLL hashes. JNI checks the
+joined source interval 4..9 and following separate interval 9..13 in a real page;
+Swift smoke contains the same installed RI test for macOS CI.
+
+Windows DLL: 5,399,429 bytes (3,832 above the preceding verified snapshot), SHA256
+56f7a77c305404f9274337a7325a3ee43d0723d699768c6f540563c6dbc88809.
+There is no new dependency or owned heap array. Ordinary bitmap dictionaries
+skip display-state replay; replacement-capable dictionaries track line origins,
+and actual changed carry is rescanned within the existing work/payload budgets.
+Three fresh-process workloads and provenance are in
+benchmarks/0.18.0-hyphen-boundaries-windows.
+
+Generated sides still protect one source group: internal display breaks and
+mixed-direction visual subclusters, full changed-paragraph bidi resolution,
+language casing and conditional compound rewriting remain open. Broader PDF,
+platform/SDK/service and advanced CSS/conversion requirements in VERSIONING.md
+remain active; projected graphemes do not complete those compatibility goals.

@@ -11,6 +11,7 @@
 typedef struct { float x,y,width,height; unsigned side; } exr_float;
 typedef struct { exr_float items[EXR_MAX_FLOATS]; size_t count; } exr_float_state;
 #define EXR_GLYPH_TRY_VERTICAL 512u /* Internal UAX #50 Tr probe, cleared before output. */
+#define EXR_GLYPH_DELETED 4096u /* Private empty replacement source marker. */
 #define EXR_GLYPH_RUBY_ITEM 1024u /* Internal atomic inline item, expanded before output. */
 #define EXR_BOUNDARY_AUTO_HYPHEN 16u /* Private raw-source opportunity, not a shaping boundary. */
 typedef struct {
@@ -56,7 +57,10 @@ typedef struct {
 } flow;
 typedef struct {
   exr_layout run, raw, line;
-  exr_text_state text;
+  exr_text_state text, display_origin, display_line;
+  uint32_t display_previous, line_previous;
+  size_t display_node, line_node;
+  int track_display, display_changed;
   uint32_t before, after;
   size_t cluster_start, ready, scan, soft, emergency, line_end, raw_end;
   float scan_width;

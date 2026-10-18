@@ -198,7 +198,7 @@ static exr_status ordinary_fragment(flow *f, exr_glyph *glyphs, size_t count, fl
   line.start=SIZE_MAX;
   for(i=0;i<count;i++) {
     exr_glyph *g=&glyphs[i]; exr_face *face=&f->font->faces[g->font_index];
-    g->boundaries&=15u;
+    g->boundaries&=15u;g->flags&=~EXR_GLYPH_DELETED;
     if(f->intrinsic && !(i&255) && exr_control_cancel(&f->config->control,f->error)!=EXR_OK) return EXR_CANCELLED;
     if(exr_font_size(face,g->size)) return EXR_FONT;
     ascent=fmaxf(ascent,exr_font_ascent(face));

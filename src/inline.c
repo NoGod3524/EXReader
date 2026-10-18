@@ -54,6 +54,21 @@ static size_t next_text(flow *f, size_t node) {
   }
   return SIZE_MAX;
 }
+typedef struct { flow *f; size_t node, at, start; } inline_text_cursor;
+static int following_inline_scalar(void *context, uint32_t *cp) {
+  inline_text_cursor *c = context;
+  while (c->node != SIZE_MAX) {
+    const exr_node *n = &c->f->doc->nodes[c->node];
+    if (c->at<n->end && exr_ruby_node(c->f->doc,c->node)) { c->start=c->at; c->at=n->end; *cp=0xfffc; return 1; }
+    if (c->at < n->end) {
+      c->start=c->at;
+      return exr_next(c->f->doc->text, n->end, &c->at, cp);
+    }
+    c->node = next_text(c->f, following(c->f, c->node));
+    if (c->node != SIZE_MAX) c->at = c->f->doc->nodes[c->node].start;
+  }
+  return 0;
+}
 exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
   size_t node, bytes = 0, count = 0, at, index = 0;
   int complex = f->paragraph->direction == EXR_DIRECTION_RTL;
@@ -418,6 +433,77 @@ static exr_status copy_glyphs(flow *f, exr_line_buffer *b, exr_layout *to,
   to->glyph_count = count;
   return EXR_OK;
 }
+static int deleted_placeholder(const exr_glyph *g);
+typedef struct {
+  const exr_glyph *glyphs;size_t count,at;
+  inline_text_cursor source;
+} display_cursor;
+static int display_next(void *context,uint32_t *cp) {
+  display_cursor *c=context;
+  while(c->at<c->count) {
+    const exr_glyph *g=&c->glyphs[c->at++];
+    if(deleted_placeholder(g)) continue;
+    *cp=g->flags&EXR_GLYPH_RUBY_ITEM ? 0xfffc : g->codepoint;return 1;
+  }
+  return following_inline_scalar(&c->source,cp);
+}
+static display_cursor display_after(flow *f,const exr_layout *l,size_t at) {
+  display_cursor c={l->glyphs,l->glyph_count,at,{f,SIZE_MAX,0,0}};
+  if(l->glyph_count) {
+    const exr_glyph *last=&l->glyphs[l->glyph_count-1];size_t node=last->node,floor=last->end;
+    /* A generated source range can cross several inline nodes. Do not replay
+       erased source from the anchor's following siblings. */
+    while(node!=SIZE_MAX && f->doc->nodes[node].end<=floor) node=next_text(f,following(f,node));
+    c.source.node=node;
+    if(node!=SIZE_MAX) c.source.at=floor>f->doc->nodes[node].start ? floor : f->doc->nodes[node].start;
+  }
+  return c;
+}
+static exr_status display_group(flow *f,exr_layout *l,size_t first,size_t end) {
+  flow child=*f;size_t i;
+  for(i=first;i<end;i++) {
+    exr_glyph *g=&l->glyphs[i];unsigned keep;
+    if(g->flags&EXR_GLYPH_RUBY_ITEM) continue;
+    keep=g->flags&(EXR_GLYPH_GENERATED|EXR_GLYPH_DELETED|EXR_GLYPH_VERTICAL|EXR_GLYPH_SIDEWAYS|EXR_GLYPH_TRY_VERTICAL);
+    g->flags=f->styles[g->node].flags|keep|
+      ((exr_text_hidden(g->codepoint) || g->bidi_level==UINT_MAX) ? EXR_GLYPH_HIDDEN : 0);
+    g->advance=g->offset_x=g->offset_y=0;
+  }
+  child.layout=l;return exr_flow_cluster(&child,first,end);
+}
+/* Reuse Unicode's streaming state for display spelling, retaining atomic source
+   groups. A new grapheme join can enlarge a protected source cluster, never
+   invent a position within an original grapheme or generated replacement side. */
+static exr_status display_scan(flow *f,exr_layout *l,int project,
+                               exr_text_state *state,uint32_t *previous,size_t *node) {
+  size_t i,group=0,old_previous=SIZE_MAX;display_cursor tail=display_after(f,l,0);exr_status status=line_work(f,l->glyph_count);
+  if(status!=EXR_OK) return status;
+  for(i=0;i<l->glyph_count;i++) {
+    exr_glyph *g=&l->glyphs[i];size_t old=g->cluster_start;unsigned flags=g->boundaries;
+    if(!(i&255) && exr_control_cancel(&f->config->control,f->error)!=EXR_OK) return EXR_CANCELLED;
+    if(!deleted_placeholder(g)) {
+      display_cursor next=tail;uint32_t cp=g->flags&EXR_GLYPH_RUBY_ITEM ? 0xfffc : g->codepoint;
+      next.at=i+1;flags=exr_text_step(state,cp,display_next,&next);*previous=cp;*node=g->node;
+    }
+    if(project) {
+      unsigned automatic=g->boundaries&EXR_BOUNDARY_AUTO_HYPHEN;
+      if(!i) flags|=EXR_BOUNDARY_GRAPHEME;
+      else if(old==old_previous) flags=0;
+      if(i && (flags&EXR_BOUNDARY_GRAPHEME)) {
+        status=display_group(f,l,group,i);if(status!=EXR_OK) return status;group=i;
+      }
+      if(!(flags&EXR_BOUNDARY_GRAPHEME) || (flags&EXR_BOUNDARY_GLUE)) automatic=0;
+      g->boundaries=flags|automatic;
+    }
+    old_previous=old;
+  }
+  return project && l->glyph_count ? display_group(f,l,group,l->glyph_count) : EXR_OK;
+}
+static exr_status display_line(flow *f,exr_line_buffer *b,exr_layout *l,int project) {
+  if(!b->track_display) return EXR_OK;
+  b->display_line=b->display_origin;b->line_previous=0;b->line_node=0;
+  return display_scan(f,l,project,&b->display_line,&b->line_previous,&b->line_node);
+}
 static exr_status shape_line_copy(flow *f, exr_line_buffer *b, exr_layout *to, const exr_glyph *from,
                                    size_t count, uint32_t before, uint32_t after, int hyphen) {
   flow child = *f;
@@ -447,7 +533,8 @@ static exr_status shape_line_copy(flow *f, exr_line_buffer *b, exr_layout *to, c
     status = exr_flow_cluster(&child, count - 1, count);
     if (status != EXR_OK) return status;
   }
-  status = exr_inline_shape(&child, 0, before, after);
+  status=display_line(f,b,to,0);
+  if(status==EXR_OK) status = exr_inline_shape(&child, 0, before, after);
   if (soft != SIZE_MAX)
     for (i = 0; i < to->glyph_count; i++)
       if (to->glyphs[i].start == soft) to->glyphs[i].codepoint = 0xad;
@@ -475,8 +562,8 @@ static exr_status generated_text(flow *f,exr_line_buffer *b,exr_layout *to,const
     exr_glyph g=*anchor;uint32_t cp=0x200b;
     if(size && !exr_next(text,size,&at,&cp)) return exr_fail(f->error,EXR_ENCODING,"Invalid generated replacement text");
     g.codepoint=cp;g.start=g.cluster_start=first;g.end=g.cluster_end=last;
-    g.flags=f->styles[g.node].flags|EXR_GLYPH_GENERATED;
-    if(!size) g.flags|=EXR_GLYPH_HIDDEN;
+    g.flags=f->styles[g.node].flags|EXR_GLYPH_GENERATED|(exr_text_hidden(cp) ? EXR_GLYPH_HIDDEN : 0);
+    if(!size) g.flags|=EXR_GLYPH_HIDDEN|EXR_GLYPH_DELETED;
     if(f->writing_mode!=EXR_WRITING_HORIZONTAL_TB) g.flags|=exr_vertical_flags(cp,f->styles[g.node].orientation);
     g.boundaries=to->glyph_count==start ? EXR_BOUNDARY_GRAPHEME : 0;g.offset_x=g.offset_y=g.advance=0;
     status=line_reserve(f,b,to,to->glyph_count+1);if(status!=EXR_OK) return status;
@@ -602,6 +689,7 @@ static exr_status fit_dictionary(flow *f,exr_line_buffer *b,int *found) {
       }
       status=generated_hyphen(f,b,&b->line,point,edit && !edit->before ? edit->start : point,&b->raw.glyphs[i-1]);if(status!=EXR_OK) return status;
       if(edit && edit->mapped) merge_inserted_cluster(b->line.glyphs,b->line.glyph_count);
+      status=display_line(f,b,&b->line,!!edit);if(status!=EXR_OK) return status;
       child.layout=&b->line; status=exr_inline_shape(&child,0,0,0); if(status!=EXR_OK) return status;
       status=line_work(f,b->line.glyph_count); if(status!=EXR_OK) return status;
     } else { status=shape_line_copy(f,b,&b->line,b->raw.glyphs,i,0,0,1); if(status!=EXR_OK) return status; }
@@ -743,7 +831,7 @@ static size_t mapped_edge(const exr_line_buffer *b,size_t at,size_t until) {
   return at<b->raw.glyph_count && b->raw.glyphs[at].start<until ? b->raw.glyphs[at].start : until;
 }
 static int deleted_placeholder(const exr_glyph *g) {
-  return (g->flags&(EXR_GLYPH_GENERATED|EXR_GLYPH_HIDDEN))==(EXR_GLYPH_GENERATED|EXR_GLYPH_HIDDEN);
+  return !!(g->flags&EXR_GLYPH_DELETED);
 }
 static exr_status rematch_token(flow *f,exr_line_buffer *b,const char *text,size_t bytes,const size_t *offsets,
                                const size_t *indices,size_t count,size_t origin,size_t until) {
@@ -818,9 +906,46 @@ static void merge_inserted_cluster(exr_glyph *glyphs,size_t count) {
     for(k=i;k<j;k++) { glyphs[k].cluster_end=end;if(k>i) glyphs[k].boundaries=0; }
   }
 }
+/* Rebuild both the ready FIFO and the not-yet-shaped input tail. A new join
+   across that boundary moves the complete last source cluster back to pending
+   input, so future RI/ZWJ/Indic scalars see the updated display state. */
+static exr_status display_carry(flow *f,exr_line_buffer *b) {
+  size_t unready=b->run.glyph_count-b->ready,ready=b->raw.glyph_count,total,last,i;
+  exr_status status=copy_glyphs(f,b,&b->line,b->raw.glyphs,ready);
+  if(status!=EXR_OK) return status;
+  status=line_reserve(f,b,&b->line,ready+unready);if(status!=EXR_OK) return status;
+  if(unready) memcpy(b->line.glyphs+ready,b->run.glyphs+b->ready,unready*sizeof(*b->line.glyphs));
+  total=b->line.glyph_count=ready+unready;b->text=b->display_origin;
+  b->display_previous=b->line_previous;b->display_node=b->line_node;
+  status=display_scan(f,&b->line,1,&b->text,&b->display_previous,&b->display_node);if(status!=EXR_OK) return status;
+  while(ready && ready<total && b->line.glyphs[ready].cluster_start==b->line.glyphs[ready-1].cluster_start) ready--;
+  last=total;
+  if(!b->finishing && total) {
+    last=total-1;
+    while(last && b->line.glyphs[last-1].cluster_start==b->line.glyphs[total-1].cluster_start) last--;
+  }
+  if(ready) memcpy(b->raw.glyphs,b->line.glyphs,ready*sizeof(*b->raw.glyphs));
+  b->raw.glyph_count=ready;unready=total-ready;
+  status=line_reserve(f,b,&b->run,unready);if(status!=EXR_OK) return status;
+  if(unready) memcpy(b->run.glyphs,b->line.glyphs+ready,unready*sizeof(*b->run.glyphs));
+  b->ready=0;b->run.glyph_count=unready;b->cluster_start=last>=ready ? last-ready : 0;
+  b->after=0;
+  for(i=0;i<unready;i++) if(!exr_ot_transparent(b->run.glyphs[i].codepoint)) { b->after=b->run.glyphs[i].codepoint;break; }
+  return EXR_OK;
+}
+static exr_status display_ready(flow *f,exr_line_buffer *b) {
+  size_t unready=b->run.glyph_count,extra_cluster=b->cluster_start,i;exr_status status;
+  status=shape_line_copy(f,b,&b->line,b->raw.glyphs,b->raw.glyph_count,0,b->after,0);if(status!=EXR_OK) return status;
+  status=line_reserve(f,b,&b->run,b->line.glyph_count+unready);if(status!=EXR_OK) return status;
+  memmove(b->run.glyphs+b->line.glyph_count,b->run.glyphs+b->ready,unready*sizeof(*b->run.glyphs));
+  if(b->line.glyph_count) memcpy(b->run.glyphs,b->line.glyphs,b->line.glyph_count*sizeof(*b->run.glyphs));
+  b->ready=b->line.glyph_count;b->run.glyph_count=b->ready+unready;b->cluster_start=b->ready+extra_cluster;b->before=0;
+  for(i=b->raw.glyph_count;i;i--) if(!exr_ot_transparent(b->raw.glyphs[i-1].codepoint)) { b->before=b->raw.glyphs[i-1].codepoint;break; }
+  b->line.glyph_count=0;b->line_ready=0;reset_line_scan(b);return EXR_OK;
+}
 static exr_status replacement_carry(flow *f,exr_line_buffer *b) {
-  exr_hyphen_edit edit=b->edits[b->rewrite-1];size_t at=edit.mapped ? edit.raw_point : raw_at(b,edit.point),prefix=0,i,unready=b->run.glyph_count-b->ready;
-  size_t extra_cluster=b->cluster_start-b->ready,tail=b->raw.glyph_count-b->raw_end;exr_glyph anchor=b->raw.glyphs[at];exr_status status;
+  exr_hyphen_edit edit=b->edits[b->rewrite-1];size_t at=edit.mapped ? edit.raw_point : raw_at(b,edit.point),prefix=0,i;
+  size_t tail=b->raw.glyph_count-b->raw_end;exr_glyph anchor=b->raw.glyphs[at];exr_status status;
   b->line.glyph_count=0;
   if(edit.after || edit.end>edit.point) {
     status=generated_text(f,b,&b->line,&anchor,edit.text+edit.before+1,edit.after,edit.point,edit.end);if(status!=EXR_OK) return status;
@@ -837,14 +962,10 @@ static exr_status replacement_carry(flow *f,exr_line_buffer *b) {
   for(i=0;i<b->raw.glyph_count;i++) if(b->raw.glyphs[i].start<edit.until) b->raw.glyphs[i].boundaries&=~EXR_BOUNDARY_AUTO_HYPHEN;
   for(i=b->ready;i<b->run.glyph_count;i++) if(b->run.glyphs[i].start<edit.until) b->run.glyphs[i].boundaries&=~EXR_BOUNDARY_AUTO_HYPHEN;
   prune_edits(b,edit.until);
+  b->display_changed=1;
+  status=display_carry(f,b);if(status!=EXR_OK) return status;
   status=rematch_remainder(f,b,edit.point,edit.until);if(status!=EXR_OK) return status;
-  status=shape_line_copy(f,b,&b->line,b->raw.glyphs,b->raw.glyph_count,0,b->after,0);if(status!=EXR_OK) return status;
-  status=line_reserve(f,b,&b->run,b->line.glyph_count+unready);if(status!=EXR_OK) return status;
-  memmove(b->run.glyphs+b->line.glyph_count,b->run.glyphs+b->ready,unready*sizeof(*b->run.glyphs));
-  if(b->line.glyph_count) memcpy(b->run.glyphs,b->line.glyphs,b->line.glyph_count*sizeof(*b->run.glyphs));
-  b->ready=b->line.glyph_count;b->run.glyph_count=b->ready+unready;b->cluster_start=b->ready+extra_cluster;b->before=0;
-  for(i=b->raw.glyph_count;i;i--) if(!exr_ot_transparent(b->raw.glyphs[i-1].codepoint)) { b->before=b->raw.glyphs[i-1].codepoint;break; }
-  b->line.glyph_count=0;b->line_ready=0;reset_line_scan(b);return EXR_OK;
+  return display_ready(f,b);
 }
 /* Max-content uses the same measured/shaped segments, retaining only joining
    context and one previous glyph. A long paragraph does not become one huge
@@ -927,6 +1048,7 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
         status = exr_flow_emit_line(f, b->line.glyphs, end, b->forced, b->final);
         f->x=old_x; f->width=old_width;
         if (status != EXR_OK) return status;
+        if(b->track_display) b->display_origin=b->display_line;
       }
       if(b->rewrite) {
         status=replacement_carry(f,b);if(status!=EXR_OK) return status;
@@ -941,6 +1063,11 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
       memmove(b->raw.glyphs, b->raw.glyphs + b->raw_end,
                 (b->raw.glyph_count - b->raw_end) * sizeof(*b->raw.glyphs));
       b->raw.glyph_count -= b->raw_end;
+      if(b->display_changed && (b->line_previous==0x2010 || b->line_previous=='-')) {
+        status=display_carry(f,b);if(status!=EXR_OK) return status;
+        status=display_ready(f,b);if(status!=EXR_OK) return status;
+        continue;
+      }
       b->line.glyph_count = 0; b->line_ready = 0;
       reset_line_scan(b);
       status = reshape_carry(f, b);
@@ -964,21 +1091,6 @@ exr_status exr_inline_break(flow *f,exr_line_buffer *b) {
   if(!b->ready) return EXR_OK;
   b->line_end=b->ready; b->line_ready=0; b->forced=b->final=0;
   return exr_inline_drain(f,b);
-}
-typedef struct { flow *f; size_t node, at, start; } inline_text_cursor;
-static int following_inline_scalar(void *context, uint32_t *cp) {
-  inline_text_cursor *c = context;
-  while (c->node != SIZE_MAX) {
-    const exr_node *n = &c->f->doc->nodes[c->node];
-    if (c->at<n->end && exr_ruby_node(c->f->doc,c->node)) { c->start=c->at; c->at=n->end; *cp=0xfffc; return 1; }
-    if (c->at < n->end) {
-      c->start=c->at;
-      return exr_next(c->f->doc->text, n->end, &c->at, cp);
-    }
-    c->node = next_text(c->f, following(c->f, c->node));
-    if (c->node != SIZE_MAX) c->at = c->f->doc->nodes[c->node].start;
-  }
-  return 0;
 }
 static const char *node_language(const flow *f,size_t node) {
   for(;node!=SIZE_MAX;node=f->doc->nodes[node].parent) {
@@ -1072,11 +1184,12 @@ static exr_status hyphenate_scalar(flow *f,exr_line_buffer *b,exr_glyph *g) {
 exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
   exr_status status;
   if (!b->initialized) reset_line_scan(b);
+  b->track_display=!!exr_hyphenator_replacements(f->hyphenator);
   {
     inline_text_cursor cursor = {f, g.node, g.end,0};
     g.boundaries = exr_text_step(&b->text, g.codepoint, following_inline_scalar, &cursor);
   }
-  if(b->previous_scalar==0xad && f->styles[b->previous_node].hyphens==EXR_HYPHENS_NONE) g.boundaries&=~EXR_BOUNDARY_LINE;
+  if(b->display_previous==0xad && f->styles[b->display_node].hyphens==EXR_HYPHENS_NONE) g.boundaries&=~EXR_BOUNDARY_LINE;
   if(f->hyphenator && f->intrinsic!=2 && !(g.flags&EXR_GLYPH_RUBY_ITEM)) {
     status=hyphenate_scalar(f,b,&g); if(status!=EXR_OK) return status;
   } else if(f->hyphenator) { b->in_word=0; if(b->word) b->word->until=0; }
@@ -1102,7 +1215,7 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
   status = line_reserve(f, b, &b->run, b->run.glyph_count + 1);
   if (status != EXR_OK) return status;
   b->run.glyphs[b->run.glyph_count++] = g;
-  b->previous_scalar=g.codepoint; b->previous_node=g.node;
+  b->previous_scalar=b->display_previous=g.codepoint; b->previous_node=b->display_node=g.node;
   return exr_inline_drain(f, b);
 }
 exr_status exr_inline_finish(flow *f, exr_line_buffer *b) {
@@ -1116,6 +1229,9 @@ exr_status exr_inline_finish(flow *f, exr_line_buffer *b) {
   status = exr_inline_drain(f, b);
   if (status != EXR_OK) return status;
   memset(&b->text, 0, sizeof(b->text));
+  memset(&b->display_origin,0,sizeof(b->display_origin));
+  memset(&b->display_line,0,sizeof(b->display_line));
+  b->display_previous=b->line_previous=0;b->display_node=b->line_node=0;b->track_display=b->display_changed=0;
   b->raw.glyph_count = 0; b->before = b->after = 0; b->finishing = 0;
   b->measure_width=b->measure_trailing=0; b->measure_has_last=0;
   b->edit_count=b->blocked_until=0;

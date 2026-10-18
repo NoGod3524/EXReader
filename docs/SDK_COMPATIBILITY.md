@@ -235,10 +235,21 @@ start within a generated side; private raw indices preserve the exact display
 range. Candidates whose left context was consumed by an ordinary break are
 dropped with their automatic bit. Generated sides remain atomic to selection.
 Derived tokens exceeding 256 scalars/1024 bytes use ordinary/emergency fallback.
-Full changed-text bidi/boundary analysis and language-aware casing remain required work. Installed Swift/JNI smoke now
+Full changed-paragraph bidi analysis, internal display positions and language-aware casing remain required work. Installed Swift/JNI smoke now
 checks actual replacement glyphs with nonempty original source intervals.
 
 A zero-cut after insertion shares its source cluster with the following original
 grapheme. Its glyph start/end may remain empty, while cluster_end includes that
 grapheme. This preserves cursor access and forward progress when a long inserted
 side clips in a narrow line.
+
+Display boundaries now replay Unicode 17 grapheme/line state for replacement
+sides and the complete queued carry, including pending input. New joins can
+widen cluster_start/end across original source positions (e.g. generated RI plus
+original RI); they never expose positions within an original grapheme or generated
+side. A cluster crossing ready/pending is deferred intact before remeasurement.
+Format controls/selectors are hidden normally. Empty deletions have a distinct
+private flag, omitted from public output, and do not enter Unicode/dictionary input.
+Snapshots include all display states by value; no public record/API size changed.
+Internal display breaks and mixed-direction subclusters within an atomic side,
+full changed-paragraph bidi resolution, casing and conditional compounds remain open.
