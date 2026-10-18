@@ -3964,3 +3964,22 @@ consumer with only `begin_layer` refuses knockout scenes.
 
 Outstanding for the work package: alternating old/new performance sampling and the final
 support-matrix upgrade from partial to supported.
+
+## Knockout nesting and alternating performance sampling (0.19.0 development)
+
+Commit `e057699` makes a group nested inside a knockout group composite with that group's
+initial backdrop and replace the accumulated result, and records the old/new sampling.
+CI run 39162757289 passed all seven jobs. Local Windows Release: 120/120 CTests and
+938,936 blend assertions.
+
+Performance: five alternating rounds (three fresh processes each) over the six ordinary
+scenes, a 10-round / 50-sample repeat for the two scenes above the 10% line, and an A/A
+control that measures the same `bbb18a7` DLL against itself. The control differs by 13.3%
+(median) and 53.9% (p95) on `primitives`, so the observed p95 deltas of up to 11.6% are
+below this host's noise floor and are not regression evidence. Absolute magnitudes are
+also small (`state` is 3-6 ms). Details and the full table are in PERFORMANCE.md.
+
+Work package 1 is complete for the declared scope: 42 original scenes with a Decimal(40)
+reference (difference 0), isolated/non-isolated/nested knockout, cancellation, budget,
+legacy-consumer regressions and alternating sampling. Remaining PDF compositing work
+(graphics-state soft masks, group-area clipping) is tracked separately.
