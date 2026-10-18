@@ -26,7 +26,9 @@
     "memory_regression": "Preceding DLL fails fixed top peak +64 MiB; current three-process medians pass; installed SDK check added to all desktop CI jobs",
     "installed_C_Cpp_JNI": "passed; continued C page visually inspected; C++ forward/backward checkpoints; JNI -Xcheck:jni",
     "source_hash_count": 653,
-    "CI": "pending code-commit CI"
+    "CI": "https://github.com/NoGod3524/EXReader/actions/runs/39138032903",
+    "cross_platform_CI": "All six jobs passed: Windows/Linux/macOS (117 CTests each), installed C/C++/JNI and macOS Swift; all three installed desktop memory regressions; ASan/UBSan/leaks (114 tests); Android ARM64; iOS/iPadOS device/simulator engine libraries plus Swift checks.",
+    "source_hash_verification": "All 653 recorded hashes match exact code-commit Git blob bytes; 111 preceding hyphen EPUBs unchanged; four local runtime copies identical."
   },
   "performance": "Four 1 MiB table workloads and nine preceding hyphen books; first 65 pages, three fresh processes per case/mode, sequential without builds/tests. Prior hyphen input/font/generated counts identical. Before-memory is a separate failure reproduction, not a controlled timing baseline.",
   "known_remaining_performance_work": [
@@ -687,5 +689,6 @@
     "tools/generate_vertical.py": "34aef0e49b563bb600f67d288b294a507c237f946b08b647c011c0573dcd9ccf",
     "tools/generate_vertical_test_fonts.py": "dd633a76520e3c9b24853927c377bcfeedea6f9a4778720e72392ae35f0059d4",
     "tools/run_benchmarks.py": "ec28254ad350e48e75218641037f20253d0fab1fcb7aa1b1b6f89b45d199d85e"
-  }
+  },
+  "validated_code_commit": "4a994c040e26541a34df84f682d806b35a8798fe"
 }
