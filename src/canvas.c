@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "canvas_internal.h"
+#include <stdio.h>
 static exr_status finish(exr_canvas *c,exr_status status,exr_error *e) {
   if(c && status!=EXR_OK && c->failure.code==EXR_OK) {
     if(e) c->failure=*e;
@@ -270,17 +271,27 @@ exr_status exr_sink_soft_mask(const exr_draw_sink_ex *sink,const unsigned char *
   return sink->soft_mask(sink->base.context,mask,width,height,e);
 }
 static exr_status sink_soft_mask(void *context,const unsigned char *mask,size_t width,size_t height,exr_error *e) { return exr_canvas_soft_mask(context,mask,width,height,e); }
+exr_status exr_sink_extent(const exr_draw_sink_ex *sink,unsigned *width,unsigned *height,exr_error *e) {
+  if(!sink->extent) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks a device extent");
+  return sink->extent(sink->base.context,width,height,e);
+}
+static exr_status sink_extent(void *context,unsigned *width,unsigned *height,exr_error *e) {
+  const exr_canvas *c=context;
+  if(!c || !c->bitmap.pixels) return exr_fail(e,EXR_ARGUMENT,"Canvas has no bitmap");
+  *width=c->bitmap.width;*height=c->bitmap.height;return EXR_OK;
+}
 static exr_status sink_end_layer(void *context,unsigned commit,exr_error *e) { return exr_canvas_end_layer(context,commit,e); }
 exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error *e) {
   exr_draw_sink_ex sink={0};size_t size;exr_status status;
   if(!out || out->struct_size<offsetof(exr_draw_sink_ex,blend) || out->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid extended sink output size");
   size=out->struct_size<sizeof(sink) ? out->struct_size : sizeof(sink);
+  if(size>offsetof(exr_draw_sink_ex,extent) && size<offsetof(exr_draw_sink_ex,extent)+sizeof(sink.extent)) size=offsetof(exr_draw_sink_ex,extent);
   if(size>offsetof(exr_draw_sink_ex,soft_mask) && size<offsetof(exr_draw_sink_ex,soft_mask)+sizeof(sink.soft_mask)) size=offsetof(exr_draw_sink_ex,soft_mask);
   if(size>offsetof(exr_draw_sink_ex,begin_group) && size<offsetof(exr_draw_sink_ex,begin_group)+sizeof(sink.begin_group)) size=offsetof(exr_draw_sink_ex,begin_group);
   if(size>offsetof(exr_draw_sink_ex,begin_layer) && size<offsetof(exr_draw_sink_ex,end_layer)+sizeof(sink.end_layer)) size=offsetof(exr_draw_sink_ex,begin_layer);
   if(size>offsetof(exr_draw_sink_ex,blend) && size<offsetof(exr_draw_sink_ex,begin_layer)) size=offsetof(exr_draw_sink_ex,blend);
   status=exr_canvas_get_sink(c,&sink.base,e);if(status!=EXR_OK) return status;
-  sink.struct_size=size;sink.blend=sink_blend;sink.begin_layer=sink_begin_layer;sink.end_layer=sink_end_layer;sink.begin_group=sink_begin_group;sink.soft_mask=sink_soft_mask;
+  sink.struct_size=size;sink.blend=sink_blend;sink.begin_layer=sink_begin_layer;sink.end_layer=sink_end_layer;sink.begin_group=sink_begin_group;sink.soft_mask=sink_soft_mask;sink.extent=sink_extent;
   memset(out,0,out->struct_size);memcpy(out,&sink,size);return EXR_OK;
 }
 exr_status exr_canvas_set_layer_budget(exr_canvas *c,size_t bytes,exr_error *e) {

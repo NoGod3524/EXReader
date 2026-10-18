@@ -34,6 +34,12 @@ static exr_status scope_state(void *context,exr_draw_state state,exr_error *e) {
 }
 /* A page's final clipping path must not affect its annotations. Unwind even a
    malformed stream's unmatched q/BT callbacks before leaving its outer scope. */
+static exr_status scope_soft_mask(void *context,const unsigned char *mask,size_t width,size_t height,exr_error *e) {
+  paint_scope *s=context;return s->target->soft_mask(s->target->base.context,mask,width,height,e);
+}
+static exr_status scope_extent(void *context,unsigned *width,unsigned *height,exr_error *e) {
+  paint_scope *s=context;return s->target->extent(s->target->base.context,width,height,e);
+}
 static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,const double matrix[6],
                              const double *box,unsigned layer,const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,
                              size_t *work,const exr_control *control,exr_error *e) {
@@ -43,6 +49,7 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
   consumer.blend=sink->blend ? scope_blend : NULL;
   consumer.begin_layer=sink->begin_layer ? scope_begin_layer : NULL;consumer.end_layer=sink->end_layer ? scope_end_layer : NULL;
   consumer.begin_group=sink->begin_group ? scope_begin_group : NULL;
+  consumer.soft_mask=sink->soft_mask ? scope_soft_mask : NULL;consumer.extent=sink->extent ? scope_extent : NULL;
   if(sink->base.state) {
     status=sink->base.state(sink->base.context,EXR_DRAW_SAVE,e);
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;

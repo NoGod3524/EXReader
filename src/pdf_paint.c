@@ -1,9 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "pdf_raster_internal.h"
 #include "pdf_face_internal.h"
+#include <stdio.h>
 typedef struct { const exr_pdf_font *key; exr_pdf_face *face; } paint_face;
 typedef struct {
   exr_draw_sink_ex sink; FT_Library library; exr_pdf_program_fn program; void *program_context; const exr_control *control; size_t *work;
+  exr_pdf_file *file; /* mask rendering needs the object arena */
   size_t font_count,font_bytes; paint_face fonts[128];
 } pdf_painter;
 static uint32_t rgba(const exr_pdf_color *c) {
@@ -18,6 +20,23 @@ static void multiply(const double a[6],const double b[6],double out[6]) {
   out[2]=a[0]*b[2]+a[2]*b[3]; out[3]=a[1]*b[2]+a[3]*b[3];
   out[4]=a[0]*b[4]+a[2]*b[5]+a[4]; out[5]=a[1]*b[4]+a[3]*b[5]+a[5];
 }
+/* ISO 32000-1 11.6.5.2: the mask applies to each painted element. It is rebuilt
+   per element for now; caching waits for the scene matrix to settle. */
+static exr_status mask_begin(pdf_painter *r,const exr_pdf_paint_state *paint,unsigned char **mask,exr_error *e) {
+  unsigned width=0,height=0; exr_status status;
+  *mask=NULL;
+  if(paint->smask==EXR_PDF_NONE) return EXR_OK;
+  status=exr_sink_extent(&r->sink,&width,&height,e); if(status!=EXR_OK) return status;
+  status=exr_pdf_soft_mask_build(r->file,paint->smask,paint->smask_matrix,width,height,mask,r->work,r->control,e);
+  if(status!=EXR_OK) return status;
+  return exr_sink_soft_mask(&r->sink,*mask,width,height,e);
+}
+static exr_status mask_end(pdf_painter *r,unsigned char *mask,exr_error *e) {
+  exr_status status=EXR_OK;
+  if(mask) status=exr_sink_soft_mask(&r->sink,NULL,0,0,e);
+  free(mask);
+  return status;
+}
 static exr_status blend_state(pdf_painter *r,exr_blend_mode mode,exr_error *e) {
   if(r->sink.blend) {
     exr_status status=r->sink.blend(r->sink.base.context,mode,e);
@@ -27,11 +46,14 @@ static exr_status blend_state(pdf_painter *r,exr_blend_mode mode,exr_error *e) {
 }
 static exr_status geometry(pdf_painter *r,const exr_vector_segment *segments,size_t count,const double transform[6],
                              const exr_pdf_paint_state *paint,unsigned flags,exr_vector_rule rule,int text_clip,exr_error *e) {
-  exr_draw_style style=exr_draw_style_defaults(); exr_status status=EXR_OK;
+  exr_draw_style style=exr_draw_style_defaults(); exr_status status=EXR_OK; unsigned char *mask=NULL; int painting;
   style.fill=rgba(&paint->fill); style.stroke=rgba(&paint->stroke); style.flags=flags&3; style.rule=rule;
   style.line=paint->line; style.dashes=paint->dashes; style.dash_count=paint->dash_count; style.dash_phase=paint->dash_phase; style.stroke_matrix=paint->matrix;
-  if(style.flags && r->sink.base.path) status=blend_state(r,paint->blend,e);
-  if(status==EXR_OK && style.flags && r->sink.base.path) status=r->sink.base.path(r->sink.base.context,segments,count,transform,&style,e);
+  painting=(style.flags!=0)&&r->sink.base.path;
+  if(painting) status=blend_state(r,paint->blend,e);
+  if(status==EXR_OK && painting) status=mask_begin(r,paint,&mask,e);
+  if(status==EXR_OK && painting) status=r->sink.base.path(r->sink.base.context,segments,count,transform,&style,e);
+  if(status==EXR_OK && painting) status=mask_end(r,mask,e);
   if(status==EXR_OK && (flags&EXR_PDF_CLIP) && r->sink.base.clip) status=r->sink.base.clip(r->sink.base.context,segments,count,transform,rule,text_clip!=0,e);
   return status;
 }
@@ -70,11 +92,13 @@ static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_erro
 }
 static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *e) {
   pdf_painter *r=context; exr_vector_texture *image=NULL; double matrix[6]; const double flip[6]={1,0,0,-1,0,1};
-  exr_status status; if(!r->sink.base.image) return EXR_OK;
+  exr_status status; unsigned char *mask=NULL; if(!r->sink.base.image) return EXR_OK;
   status=exr_pdf_image_load_from(file,id,resource_file,resources,rgba(&paint->fill),&image,r->work,r->control,e);
   multiply(paint->matrix,flip,matrix);
   if(status==EXR_OK) status=blend_state(r,paint->blend,e);
+  if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
   if(status==EXR_OK) status=r->sink.base.image(r->sink.base.context,image,matrix,paint->fill.alpha,e);
+  if(status==EXR_OK) status=mask_end(r,mask,e);
   exr_pdf_image_release(image); return status;
 }
 static exr_status begin_group_event(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
@@ -91,7 +115,7 @@ exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const 
   status=exr_draw_sink_snapshot(sink,&r.sink,e);if(status!=EXR_OK) return status;
   if(!r.sink.base.path && !r.sink.base.image && !r.sink.base.clip && !r.sink.base.state) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint consumer");
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
-  r.program=program; r.program_context=program_context; r.control=control; r.work=work ? work : &local_work;
+  r.program=program; r.program_context=program_context; r.control=control; r.work=work ? work : &local_work; r.file=file;
   if(FT_Init_FreeType(&r.library)) return exr_fail(e,EXR_MEMORY,"PDF font library initialization failed");
   status=exr_pdf_draw_ops(file,resources,content,size,initial,&callbacks,&r,control,e);
   for(i=0;i<r.font_count;i++) exr_pdf_face_close(r.fonts[i].face);
