@@ -3698,8 +3698,8 @@ reference, hits, positioned reconstruction and cancellation/cache-budget
 recovery also pass. Recovery now covers aligned and mixed-content groups.
 
 Installed C renders a continued table page (Arial pixels inspected); C++ visits
-page 20 then rewinds to 2; JNI passes with -Xcheck:jni. Swift/mobile and sanitizer
-validation will be recorded after this code commit's CI completes.
+page 20 then rewinds to 2; JNI passes with -Xcheck:jni. Cross-platform validation
+is recorded below for the exact code commit.
 
 The table benchmark now includes middle alignment and a memory regression:
 its middle/bottom median process peak must be at most the fixed-top peak plus
@@ -3730,3 +3730,16 @@ Automatic min/max-content and exact aligned heights still scan complete cell
 input; their first-page CPU cost remains open. Measurement still retains bounded
 inline state and geometry boxes. The complete PDF/application SDK roadmap
 remains active.
+
+
+Commit 4a994c040e26541a34df84f682d806b35a8798fe passed all six jobs in
+[CI run 39138032903](https://github.com/NoGod3524/EXReader/actions/runs/39138032903):
+Windows/Linux/macOS each passed 117 CTests, installed C/C++/JNI and the installed
+SDK alignment memory regression; macOS Swift passed; ASan/UBSan/leaks passed
+114 tests; Android ARM64 and iOS/iPadOS device/simulator engine libraries and
+Swift checks passed. These mobile jobs validate engine libraries and bindings,
+not delivered mobile apps. All 653 provenance hashes match exact code-commit
+Git blobs; 111 preceding hyphen EPUBs and four current local runtime copies
+were verified. This verification-only record skips redundant CI. Automatic
+intrinsic/full-height scan CPU cost and the complete compatibility/SDK roadmap
+remain open.
