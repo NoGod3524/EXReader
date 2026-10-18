@@ -208,7 +208,13 @@ static void nested(exr_font *font) {
     CHECK(boxes[i].x>=9.98f && boxes[i].y>=9.98f && boxes[i].x+boxes[i].width<=150.02f &&
           boxes[i].y+boxes[i].height<=170.02f);
     if(boxes[i].kind==EXR_BOX_IMAGE) { CHECK(boxes[i].flags==1); images++; }
-    if(boxes[i].kind==EXR_BOX_CELL && boxes[i].node==5) { CHECK(near(boxes[i].width,56)); span++; }
+    if(boxes[i].kind==EXR_BOX_CELL && boxes[i].node==5) {
+      size_t j; float rows=0;
+      for(j=0;j<nb;j++) if(boxes[j].kind==EXR_BOX_CELL && (boxes[j].node==7 || boxes[j].node==10)) {
+        CHECK(boxes[j].page==boxes[i].page); rows+=boxes[j].width;
+      }
+      CHECK(boxes[i].width>=55.98f && near(boxes[i].width,rows)); span++;
+    }
   }
   CHECK(images==1 && span==1); positioned(doc,font,all);
   OK(exr_pager_create(doc,font,&c,&pager,&error)); OK(exr_pager_set_cache(pager,1,128*1024,&error));

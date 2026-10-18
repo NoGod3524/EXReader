@@ -249,6 +249,15 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
   status=exr_flow_page(f,height,logical_start); if(status!=EXR_OK) return status;
   status=exr_inline_reorder(f,glyphs,count); if(status!=EXR_OK) return status;
   baseline=f->y+ascent+(height-ascent-descent)/2;
+  if(!l->has_baseline) {
+    float axis=baseline;
+    if(f->writing_mode!=EXR_WRITING_HORIZONTAL_TB) {
+      if(f->paragraph->orientation!=EXR_ORIENTATION_SIDEWAYS) axis=f->y+height/2;
+      else if(f->writing_mode==EXR_WRITING_VERTICAL_LR) axis=2*f->y+height-baseline;
+    }
+    l->first_baseline=axis;
+    l->has_baseline=1;
+  }
   x=f->x+(base&1 ? 0 : indent);
   if(align==1) x+=fmaxf(0,available-width)/2;
   if(align==2) x+=fmaxf(0,available-width);
@@ -454,6 +463,7 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
 typedef struct {
   size_t node;
   exr_layout *layout;
+  float inset;
 } cell;
 static exr_status copy_cell(flow *f, const cell *c, float x, float y, float height) {
   exr_layout *l = f->layout, *from = c->layout;
@@ -465,8 +475,17 @@ static exr_status copy_cell(flow *f, const cell *c, float x, float y, float heig
   float block = vertical ? physical_width : physical_height;
   float dx = vertical ? (f->writing_mode == EXR_WRITING_VERTICAL_RL ? f->origin_x-y-block : y) : x;
   float dy = vertical ? x : y;
+  float box_dx,box_dy;
   if(f->intrinsic) f->intrinsic_extent=fmax(f->intrinsic_extent,x+(vertical ? physical_height : physical_width)+f->inline_end_inset);
   if (from->writing_mode == EXR_WRITING_VERTICAL_RL) dx += from->flow_block;
+  box_dx=dx; box_dy=dy;
+  if(vertical) dx+=f->writing_mode==EXR_WRITING_VERTICAL_RL ? -c->inset : c->inset;
+  else dy+=c->inset;
+  if(!l->has_baseline && from->has_baseline && vertical==from_vertical) {
+    float baseline=from->first_baseline;
+    if(vertical && from->writing_mode!=f->writing_mode) baseline=block-baseline;
+    l->first_baseline=y+c->inset+baseline; l->has_baseline=1;
+  }
   f->used_inline = fmaxf(f->used_inline, x + (vertical ? physical_height : physical_width) + f->inline_end_inset);
   if (from->glyph_count > EXR_MAX_ITEMS - l->glyph_count ||
       !exr_grow((void **)&l->glyphs, &l->glyph_cap, l->glyph_count + from->glyph_count,
@@ -497,8 +516,9 @@ static exr_status copy_cell(flow *f, const cell *c, float x, float y, float heig
   }
   for (i = 0; i < from->box_count; i++) {
     exr_box v = from->boxes[i];
-    v.x += dx;
-    v.y += dy;
+    int root=v.node==c->node && v.kind==EXR_BOX_CELL;
+    v.x += root ? box_dx : dx;
+    v.y += root ? box_dy : dy;
     v.page = p;
     if (v.node == c->node && v.kind == EXR_BOX_CELL) {
       if (vertical) {
@@ -528,9 +548,10 @@ exr_status exr_layout_validate(const exr_layout_config *config, exr_error *e) {
 }
 
 exr_status exr_flow_copy(flow *f, const exr_layout *from, size_t index,
-                          float x, float y, float height) {
+                          float x, float y, float height,float inset) {
   cell c = {0};
   c.node = index;
   c.layout = (exr_layout *)from;
+  c.inset=inset;
   return copy_cell(f, &c, x, y, height);
 }

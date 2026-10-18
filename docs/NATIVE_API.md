@@ -420,7 +420,7 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 宿主设置 `decode_image`、`release_image` 和 `image_context` 可替换解码器。回调收到资源元数据及编码字节；返回 `channels=4`、非预乘 RGBA、有效 width/height/stride。引擎复制像素，然后无论成功或失败都调用配套 release 回调一次；不得在 release 中释放借用的编码输入。`EXR_FORMAT` 表示占位框，其余非成功状态中止布局。要保留内置 PNG/JPEG 支持，宿主回调可以调用 `exr_image_decode()` 并在 release 中使用 `exr_bitmap_free()`。直接创建完整 layout 时，回调及 context 只需在 create 调用期间有效；使用 pager / session 时需在相应句柄整个生命周期内有效。渲染已有布局不会再次调用它们。
 
-表格支持指定列宽、单元格换行、colspan 和 rowspan，默认按内容测量列宽。CSS 的 col/colgroup/cell 宽度与 HTML width 属性参与列分配，详见“表格指定列宽”补充。具有跨行单元格的相连行组一起分页；高于一页的行组返回 `EXR_LIMIT`。上限为 64 列、4096 行/单元格、8 层嵌套。尚不支持跨页拆分单元格、重复表头、垂直对齐和 border-collapse。单元格的可见边框、背景和内边距由样式控制。
+表格支持指定列宽、单元格换行、colspan 和 rowspan，默认按内容测量列宽。CSS 的 col/colgroup/cell 宽度与 HTML width 属性参与列分配，详见“表格指定列宽”补充。具有跨行单元格的相连行组一起分页；高于一页的行组返回 `EXR_LIMIT`。上限为 64 列、4096 行/单元格、8 层嵌套。尚不支持跨页拆分单元格、重复表头和 border-collapse。单元格的可见边框、背景和内边距由样式控制。
 
 `exr_render_page()` 输出 1 通道灰度；`exr_render_page_color()` 输出 4 通道 RGBA。内置渲染器使用白底、双线性图片缩放、透明合成和 FreeType 字形，整页位图不超过 64 MiB。`stride` 是每行字节数。PNG 支持两种通道并保留输入 alpha；BMP 写为 24 位并将 alpha 合成到白底。写入时 `channels=0` 兼容灰度输入。框架不提供窗口、GPU 或事件循环。
 
@@ -1246,7 +1246,7 @@ col、colgroup 和单元格的 CSS width，以及 table/col/colgroup/cell 的 HT
 
 同一组列边界用于测量、绘制、分页、竖排和命中坐标；checkpoint 复制边界，预算包含完整私有状态及行/单元格数组实际分配容量。列数超出 64 或可用空间不足每列 1px 返回 EXR_LIMIT。行组/嵌套等现有限额继续适用。
 
-以上说明宽度提示的分配；默认 auto 布局还使用下面的 min/max-content 测量。垂直对齐、border-collapse、重复表头和跨页拆分单元格仍待完成。DOCX/RTF 专用 twip 列网格不会自动转换为本步骤的 CSS 宽度提示。
+以上说明宽度提示的分配；默认 auto 布局还使用下面的 min/max-content 测量。border-collapse、重复表头和跨页拆分单元格仍待完成。DOCX/RTF 专用 twip 列网格不会自动转换为本步骤的 CSS 宽度提示。
 
 ## 表格内容测量与 auto/fixed 布局（0.18 开发补充）
 
@@ -1258,6 +1258,18 @@ col、colgroup 和单元格的 CSS width，以及 table/col/colgroup/cell 的 HT
 
 `table-layout:fixed` 在表格 width 已指定时使用列声明和首行单元格宽度，后续行内容不决定列宽。width:auto 时仍走 auto 算法。需要保留旧版全宽等分表现的 HTML 宿主可设置 `table { table-layout:fixed; width:100% }`；没有 HTML 元素名的宿主构造节点可直接设置同样的 style 属性。支持矩阵内的 auto/fixed 不引入新的公开结构或格式专用参数。
 
-原生分页要求列保持页内：最小总宽超过可用宽时，列会按既有规则收缩至至少 1px，实际文字使用既有应急断行/裁剪规则。它不采用浏览器让整张表格横向溢出的策略。内边距、边框和当前图片缩放规则继续适用；完整 CSS 表格格式化（含垂直对齐、边框合并、复杂百分比约束、重复表头和跨页拆分单元格）仍逐项推进。
+原生分页要求列保持页内：最小总宽超过可用宽时，列会按既有规则收缩至至少 1px，实际文字使用既有应急断行/裁剪规则。它不采用浏览器让整张表格横向溢出的策略。内边距、边框和当前图片缩放规则继续适用；完整 CSS 表格格式化（含边框合并、复杂百分比约束、重复表头和跨页拆分单元格）仍逐项推进。
 
 测量计入已有文本/塑形工作预算，复用 16 MiB 行队列上限并支持协作取消。测量上下文是临时工作区，不属于返回页的缓存字节预算；最终列边界及游标状态计入缓存/checkpoint 内存。自动列宽需要检查整张表的内容，固定布局可避开这一步。
+
+## 单元格垂直对齐与基线（0.18 开发补充）
+
+单元格支持 CSS `vertical-align:top/middle/bottom/baseline` 及 inherit。CSS 初始值为 baseline；HTML thead/tbody/tfoot 默认 middle，tr/td/th 继承父级对齐。HTML valign 提供大小写不敏感的呈现提示，作者 CSS 可以覆盖。sub/super/text-top/text-bottom/长度/百分比这些合法值用于单元格时按 baseline 处理，遵循 [CSS 2.2 表格规则](https://www.w3.org/TR/CSS22/tables.html)。行内上/下标和其他行内 vertical-align 排版继续单独补齐。
+
+排版器记录首个 in-flow 行盒的基线，ruby 使用所在主行的基线；以嵌套表格开始的内容使用其首行基线。没有行盒或表格行时按内容底边合成，图片单元格与空单元格也可参与对齐。baseline 单元格对齐到其 rowspan 第一行；没有 baseline 单元格的行，其合成基线来自最低内容底边。混合字号、padding/border、跨行单元格共同决定行组所需高度。
+
+top/middle/bottom 在分配的行或 rowspan 行组中定位内容；文字、行盒、图片、子块背景及命中坐标同步移动。单元格自身背景和边框保持整格位置并扩展至分配高度。竖排沿逻辑块轴执行，upright/mixed 使用中央基线，sideways 使用对应方向的字母基线；vertical-rl/lr 转换时转换基线坐标，正交且没有可共享基线时按内容边缘合成。
+
+单元格 height 是内容高度下限，加上可见 padding/border；行 height 提供行高下限。非空表格的明确 height 作为均分到各行的最小高度基准，实际内容或单元格下限可以让总高更大。百分比行/单元格高度按表格明确声明的最小高度求值，基准未定时不强制百分比高度。复杂百分比高度约束、空表格高度和其他块级高度兼容仍随 CSS 矩阵推进。
+
+没有增加公开记录/回调或格式专用选项；宿主构造的语义树和各内置格式共用这套样式/布局路径。按行基线、单元格测量信息和列边界随 checkpoint 一起复制并计入预算。分页仍以相连 rowspan 行组为不可拆单位。

@@ -37,6 +37,7 @@ enum {
   RUBY_POSITION,
   RUBY_ALIGN,
   TABLE_LAYOUT,
+  VERTICAL_ALIGN,
   PROPERTIES
 };
 typedef struct {
@@ -224,7 +225,7 @@ static int property(const char *s, size_t n) {
       "max-width",    "margin-top",    "margin-right",   "margin-bottom", "margin-left",
       "padding-top",  "padding-right", "padding-bottom", "padding-left",  "background-color",
       "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction",
-      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout"};
+      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -605,6 +606,8 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->indent = parent->indent;
     else if (prop == TABLE_LAYOUT)
       s->table_fixed = parent->table_fixed;
+    else if (prop == VERTICAL_ALIGN)
+      s->vertical_align = parent->vertical_align;
     else
       return 0;
     return 1;
@@ -723,6 +726,14 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->align = 3;
     else
       return 0;
+  } else if (prop == VERTICAL_ALIGN) {
+    if(!strcmp(v,"baseline")) s->vertical_align=EXR_CELL_BASELINE;
+    else if(!strcmp(v,"top")) s->vertical_align=EXR_CELL_TOP;
+    else if(!strcmp(v,"middle")) s->vertical_align=EXR_CELL_MIDDLE;
+    else if(!strcmp(v,"bottom")) s->vertical_align=EXR_CELL_BOTTOM;
+    else if(!strcmp(v,"sub") || !strcmp(v,"super") || !strcmp(v,"text-top") || !strcmp(v,"text-bottom") ||
+            (length(v[0]=='-' ? v+1 : v,s->font_size,root,0,&l) && l.value>=0)) s->vertical_align=EXR_CELL_BASELINE;
+    else return 0;
   } else if (prop == TABLE_LAYOUT) {
     if(!strcmp(v,"fixed")) s->table_fixed=1;
     else if(!strcmp(v,"auto")) s->table_fixed=0;
@@ -892,6 +903,18 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     s->ruby_align = parent->ruby_align;
     s->indent = parent->indent;
     s->display = EXR_CSS_INLINE;
+    /* HTML table defaults; other host-defined elements retain the CSS initial
+       baseline value unless the author explicitly inherits it. */
+    if(!strcmp(name,"thead") || !strcmp(name,"tbody") || !strcmp(name,"tfoot")) s->vertical_align=EXR_CELL_MIDDLE;
+    if(!strcmp(name,"tr") || !strcmp(name,"td") || !strcmp(name,"th")) s->vertical_align=parent->vertical_align;
+    attr=exr_node_attribute(n,"valign");
+    if(attr && (n->kind==EXR_NODE_CELL || n->kind==EXR_NODE_ROW || !strcmp(name,"thead") || !strcmp(name,"tbody") || !strcmp(name,"tfoot"))) {
+      size_t length=strlen(attr);
+      if(equal(attr,length,"top")) s->vertical_align=EXR_CELL_TOP;
+      else if(equal(attr,length,"middle")) s->vertical_align=EXR_CELL_MIDDLE;
+      else if(equal(attr,length,"bottom")) s->vertical_align=EXR_CELL_BOTTOM;
+      else if(equal(attr,length,"baseline")) s->vertical_align=EXR_CELL_BASELINE;
+    }
     if (!strcmp(name,"rtc") || (!strcmp(name,"rt") &&
         (n->parent==SIZE_MAX || strcmp(exr_html_tag(d,&d->nodes[n->parent]),"rtc"))))
       s->font_size=fmaxf(4,parent->font_size*.5f);

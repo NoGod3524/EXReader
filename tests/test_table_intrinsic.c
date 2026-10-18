@@ -75,7 +75,7 @@ static uint32_t random_value(uint32_t *state) { *state=*state*1664525u+101390422
 static void generated(exr_font *f) {
   uint32_t seed=180314u; unsigned iteration;
   for(iteration=0;iteration<500;iteration++) {
-    exr_node_input nodes[128]={{0}}; exr_attribute attrs[128][2]; char styles[128][64],texts[128][32];
+    exr_node_input nodes[128]={{0}}; exr_attribute attrs[128][2]; char styles[128][128],texts[128][32];
     exr_chapter_input chapter={"generated","generated.unit",1,1}; exr_document_input input={"Generated tables",nodes,0,&chapter,1,NULL,0};
     exr_document *d=NULL; exr_layout *l=NULL; exr_layout_config cfg=config(); size_t used=3,row,columns=2+random_value(&seed)%5,i,n,expected=0,actual=0;
     const exr_box *boxes; const exr_glyph *g; const char *source;
@@ -90,16 +90,26 @@ static void generated(exr_font *f) {
         unsigned which=random_value(&seed)%4,letters=1+random_value(&seed)%9,k; size_t length=0;
         snprintf(styles[cell],sizeof(styles[cell]),"width:%u%s;direction:%s",1+random_value(&seed)%200,which==0 ? "%" : "px",iteration%2 ? "rtl" : "ltr");
         if(which==3) strcpy(styles[cell],"width:.01px");
+        { const char *align[]={"baseline","top","middle","bottom"}; size_t used_style=strlen(styles[cell]);
+          snprintf(styles[cell]+used_style,sizeof(styles[cell])-used_style,";vertical-align:%s;font-size:%upx;height:%upx",align[random_value(&seed)%4],14+7*(random_value(&seed)%3),10+random_value(&seed)%71);
+        }
         attrs[cell][0]=(exr_attribute){"style",styles[cell]}; attrs[cell][1]=(exr_attribute){"colspan","2"};
         nodes[cell]=(exr_node_input){EXR_NODE_CELL,parent,"td",NULL,attrs[cell],span==2 ? 2u : 1u};
         for(k=0;k<letters;k++) { texts[text][length++]='A'; if(k+1<letters && iteration%2) texts[text][length++]=' '; } texts[text][length]=0;
         nodes[text]=(exr_node_input){EXR_NODE_TEXT,cell,NULL,texts[text],NULL,0}; column+=span;
       }
     }
-    input.node_count=used; OK(exr_document_create(&input,&d,&error)); OK(exr_layout_create_ex(d,f,&cfg,&l,&error));
+    input.node_count=used; OK(exr_document_create(&input,&d,&error));
+    { exr_status status=exr_layout_create_ex(d,f,&cfg,&l,&error);
+      if(status!=EXR_OK) {
+        fprintf(stderr,"generated case %u viewport %.3f table %s\n",iteration,cfg.page.width,nodes[2].attribute_count ? styles[2] : "auto");
+        for(i=0;i<used;i++) if(nodes[i].kind==EXR_NODE_CELL) fprintf(stderr,"cell %zu span %zu %s text %s\n",i,nodes[i].attribute_count,styles[i],texts[i+1]);
+      }
+      CHECK(status==EXR_OK);
+    }
     source=exr_document_text(d,&n); for(i=0;i<n;i++) expected+=source[i]=='A';
     g=exr_layout_glyphs(l,&n); for(i=0;i<n;i++) actual+=g[i].codepoint=='A'; CHECK(actual==expected);
-    boxes=exr_layout_boxes(l,&n); for(i=0;i<n;i++) CHECK(isfinite(boxes[i].x) && isfinite(boxes[i].width) && boxes[i].x>=9.99f && boxes[i].width>0 && boxes[i].x+boxes[i].width<=cfg.page.width-9.99f);
+    boxes=exr_layout_boxes(l,&n); for(i=0;i<n;i++) CHECK(isfinite(boxes[i].x) && isfinite(boxes[i].width) && isfinite(boxes[i].y) && isfinite(boxes[i].height) && boxes[i].x>=9.99f && boxes[i].y>=9.99f && boxes[i].width>0 && boxes[i].x+boxes[i].width<=cfg.page.width-9.99f && boxes[i].y+boxes[i].height<=cfg.page.height-9.99f);
     exr_layout_free(l); exr_document_free(d);
   }
 }
@@ -124,6 +134,11 @@ int main(int argc,char **argv) {
   widths("table-auto-insets",primary,19,7,0);
   widths("table-auto-break",primary,21,7,0);
   widths("table-auto-script",shaping,10,24,0); /* 700-unit lam-alef ligature, integer FT advances. */
+  { exr_document *d=book("table-column-float-floor"); exr_layout_config cfg=config(); exr_layout *l=NULL; const exr_box *boxes; size_t n,j;
+    OK(exr_layout_create_ex(d,primary,&cfg,&l,&error)); boxes=exr_layout_boxes(l,&n);
+    for(j=0;j<n;j++) if(boxes[j].kind==EXR_BOX_CELL) CHECK(boxes[j].width>=1);
+    exr_layout_free(l); exr_document_free(d);
+  }
   for(i=0;i<2;i++) {
     char path[4096]; FILE *file; long n; snprintf(path,sizeof(path),"%s/fonts/%s.ttf",directory,i ? "fallback" : "primary");
     file=fopen(path,"rb"); CHECK(file && !fseek(file,0,SEEK_END)); n=ftell(file); CHECK(n>0); rewind(file); bytes[i]=malloc((size_t)n); CHECK(bytes[i] && fread(bytes[i],1,(size_t)n,file)==(size_t)n); fclose(file);

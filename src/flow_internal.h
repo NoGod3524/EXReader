@@ -64,7 +64,7 @@ exr_status exr_flow_unit(flow *parent, size_t node, float width,
                           exr_layout **out, float *height);
 exr_status exr_flow_intrinsic(flow *parent,size_t node,float width,int mode,float *out);
 exr_status exr_flow_copy(flow *f, const exr_layout *from, size_t node,
-                          float x, float y, float height);
+                          float x, float y, float height,float inset);
 typedef struct exr_table_cursor exr_table_cursor;
 exr_status exr_table_create(flow *f, size_t node, float x, float width, exr_table_cursor **out);
 exr_status exr_table_step(flow *f, exr_table_cursor *cursor, int *done);

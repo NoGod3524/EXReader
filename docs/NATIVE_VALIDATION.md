@@ -2508,3 +2508,36 @@ PERFORMANCE.md records the measurement cost and peak RSS. Column alignment,
 collapsed borders and remaining CSS/table compatibility stay on the roadmap;
 this checkpoint is not a claim of full CSS table conformance. Platform CI follows
 the feature push.
+
+Intrinsic-width commit a99f125 passed all six jobs in run 39090675225: 104-entry
+desktop/sanitizer suite, installed desktop SDK/JNI/macOS Swift, Android ARM64,
+and iOS/iPadOS device/simulator builds and Swift typechecks.
+
+## Table alignment and height constraints (0.18 development)
+
+Seventeen original alignment EPUBs exercise top/middle/bottom/baseline, mixed
+sizes, image-only/empty cells, rowspan first-row baselines, nested table baselines
+and fallback content edges, ruby main-line baselines, HTML group/valign inheritance
+and CSS precedence, CSS baseline-fallback values, minimum/percentage heights,
+vertical-rl/lr, opposite vertical directions and sideways alphabetic baselines.
+Mode/control cases verify equal whole-cell backgrounds while glyphs, child
+backgrounds and decoded blue image pixels move by the measured content inset.
+Random/backward cached pages compare glyph geometry, hit results and full RGBA
+against checkpoint-free replay and complete layout. Native rendering was also
+visually inspected. The old fixed pixel goldens explicitly request top alignment;
+the orthogonal spanning-cell test checks the actual row union rather than an
+old top-aligned fixed height.
+
+The 500 generated host tables now also vary font size, minimum height and all
+four alignments, checking both axes and complete character preservation. This
+found an independently reproduced rounding bug: adjacent edges around a float
+exponent boundary yielded 0.999996 pixels despite a 1px column floor. An anchored
+reverse edge pass now enforces the floor. A compact 175px five-column fixture
+fails against the saved a99f125 DLL and passes against the fix; the generated
+case is seed 180314, iteration 363. No tolerance was added to bypass validation.
+
+The generator now produces 51 original EPUB table fixtures. All 105 local
+Windows CTest entries pass. Default Release DLL: 5,177,756 -> 5,181,942 bytes
+(+4,186); no runtime dependency, public ABI or schema change. Row baseline arrays
+and per-cell alignment metrics participate in cursor/checkpoint byte accounting.
+Collapsed borders and the remaining CSS/table requirements stay pending.
