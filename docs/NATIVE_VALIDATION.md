@@ -3089,3 +3089,14 @@ Full changed-display boundary/bidi analysis, language-aware casing and condition
 compound rewriting remain open. Broader PDF transparency/color/forms/redaction/OCR,
 platform views/accessibility/TTS/OPDS/authorized LCP and advanced CSS/conversion
 remain in VERSIONING.md; this step does not finish that compatibility roadmap.
+
+
+Commit f27ace2 passed all six jobs in
+[CI run 39110847573](https://github.com/NoGod3524/EXReader/actions/runs/39110847573):
+Windows/Linux/macOS native tests (113 each), installed C/C++ and JNI consumers,
+macOS Swift two-page rematching, ASan/UBSan with leak checks (111 tests), Android
+ARM64, and iOS/iPadOS device/simulator libraries plus Swift type checking.
+All 174 source hashes match that commit; the 36 previous EPUB fixtures are
+byte-identical. The four reference reports and both three-process measurement
+sets refer to the verified final DLL/benchmark hashes. The following record-only
+commit changes documentation/metadata and skips a duplicate CI run.

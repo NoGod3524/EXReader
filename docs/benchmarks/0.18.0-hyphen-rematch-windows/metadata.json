@@ -13,7 +13,7 @@
     "original_EPUB_fixtures": 45,
     "new_rematch_EPUB_fixtures": 9,
     "installed_C_Cpp_JNI": "passed; final runtime copies have matching DLL SHA256",
-    "cross_platform_CI": "pending",
+    "cross_platform_CI": "All six jobs passed: three desktops, ASan/UBSan, Android and Apple mobile",
     "dictionary_checks": 333040,
     "replacement_checks": 643,
     "independent_replacement_queries": 5000,
@@ -23,7 +23,10 @@
     "canonical_original_byte_queries": 47955,
     "independent_compound_queries": 10075,
     "strict_minimum_reference_differences": 780,
-    "real_dictionary_compound_exact_matches": 1015
+    "real_dictionary_compound_exact_matches": 1015,
+    "sanitizer_native_tests": 111,
+    "CI_run": "https://github.com/NoGod3524/EXReader/actions/runs/39110847573",
+    "source_hash_verification": "All 174 hashes verified against validated Git commit; all 36 previous EPUB fixtures byte-identical"
   },
   "scope": "Fresh display-remainder queries, repeated literal replacements, mapped source/grapheme edges, ordinary-break index advance, invalidated-context removal, checkpoint/pixel/hit replay, cancellation/error recovery. Full changed-text boundary/bidi analysis, casing and conditional compound rewriting remain open.",
   "performance": "Three fresh processes per mode, same 1 MiB input and first 65 pages. Unchanged external English US and an original 78-character repeated-rewrite word. Disk cache and system background load uncontrolled.",
@@ -202,5 +205,6 @@
     "tools/generate_hyphen_unicode.py": "988d1864fd5cfe51ca453e0785b0b91c9b635c08e398617c8341bb3821601a5e",
     "tools/generate_normalize_unicode.py": "f39b3a8883f59a10a914bac081ba5570488df336d3e70e30d92d9521ef73a74a",
     "tools/generate_unicode.py": "a6988d10f0110e0ebed13a9a35adc346c927bda170a0d31edbf114e284f0a138"
-  }
+  },
+  "validated_code_commit": "f27ace2ca341c26dd94de055a068013651182e1e"
 }
