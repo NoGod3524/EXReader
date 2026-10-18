@@ -193,8 +193,12 @@ static void source_overlap(void) {
   for(i=0;i<n;i++) { size_t page=exr_layout_page_at(l,g[i].start); if(page!=g[i].page) fprintf(stderr,"source lookup offset %zu expected %zu got %zu\n",g[i].start,g[i].page,page); CHECK(page==g[i].page); }
   positioned(d,l); exr_layout_free(l); exr_document_free(d);
 }
+static void depth_limit(void) {
+  exr_document *d=book("depth-8"); exr_layout *l=layout(d); exr_layout_config c=config(); validate(d,l); exr_layout_free(l); exr_document_free(d);
+  d=book("depth-9"); l=NULL; CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
+}
 int main(int argc,char **argv) {
-  char path[4096]; CHECK(argc==2); directory=argv[1]; snprintf(path,sizeof(path),"%s/fonts/primary.ttf",directory); OK(exr_font_open(path,&font,&error)); pictures(); pages("pages"); pages("orthogonal-pages"); limits(); recovery(); generated(); joining(); cell_baseline(); source_overlap(); exr_font_free(font); printf("%u float checks passed\n",checks); return 0;
+  char path[4096]; CHECK(argc==2); directory=argv[1]; snprintf(path,sizeof(path),"%s/fonts/primary.ttf",directory); OK(exr_font_open(path,&font,&error)); pictures(); pages("pages"); pages("orthogonal-pages"); limits(); recovery(); generated(); joining(); cell_baseline(); source_overlap(); depth_limit(); exr_font_free(font); printf("%u float checks passed\n",checks); return 0;
 }
 
 

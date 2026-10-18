@@ -24,7 +24,7 @@ typedef struct {
   exr_error *error;
   float x, width, y, bottom_inset, origin_x, used_inline, inline_end_inset;
   size_t pending;
-  int first_line, paginate, force_break, table_depth, page_limit, context_depth;
+  int first_line, paginate, force_break, unit_depth, page_limit, context_depth;
   int intrinsic; /* 1: every legal line break, 2: unwrapped streaming measure. */
   double intrinsic_extent;
   size_t border_node;

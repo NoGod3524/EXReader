@@ -65,6 +65,8 @@ epub('max-percent','<div id="floating" style="float:left;width:80%;max-width:30%
 epub('cell-baseline','<table style="width:200px;table-layout:fixed"><tr><td id="cell"><div id="floating" style="float:left;width:60px;height:60px;background:#ffe080">A</div></td><td id="peer">A</td></tr></table>')
 epub('auto-corridor',image('picture','left',140)+'<div id="floating" style="float:left;background:#ffe080">A A A A A A</div><p>'+text()+'</p>')
 epub('source-overlap','<p>'+('A<br/>'*8)+'</p><p><span style="font-size:56px">A</span><span style="float:left;width:40px;height:20px;background:#ffe080">AAA</span>A A A A</p>')
+for depth in (8,9):
+    epub('depth-'+str(depth),('<div style="float:left;width:100px;height:40px;background:#ffe080">'*depth)+'A'+('</div>'*depth)+'<p>'+text()+'</p>')
 print(count,'float fixtures generated')
 
 

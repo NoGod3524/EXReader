@@ -302,6 +302,8 @@ static exr_status context_create(flow *parent, size_t node, float width, float h
   exr_pager *p;
   exr_status status;
   *out = NULL;
+  if(local==2 && parent->unit_depth>=8)
+    return exr_fail(parent->error,EXR_LIMIT,"Flow unit nesting limit exceeded");
   if (parent->context_depth >= 8)
     return exr_fail(parent->error, EXR_LIMIT, "Writing-mode context nesting limit exceeded");
   if (!isfinite(width) || !isfinite(height) || width < 1 || height < 1)
@@ -336,7 +338,7 @@ static exr_status context_create(flow *parent, size_t node, float width, float h
   p->floats.count=0; /* Table cells, floats and orthogonal contexts establish a BFC. */
   p->f.force_break = 0; p->f.paginate = p->f.page_limit = local == 1;
   p->f.context_depth += local == 1;
-  p->f.table_depth += local == 2;
+  p->f.unit_depth += local == 2;
   p->f.writing_mode = mode;
   if(local==1) p->f.intrinsic=0; /* Orthogonal subcontexts measure through their physical fragment. */
   status = push(p, node, 0, width);
