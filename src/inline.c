@@ -21,8 +21,7 @@ unsigned exr_vertical_flags(uint32_t cp, exr_text_orientation orientation) {
 }
 
 void exr_inline_clear(exr_inline_bidi *b) {
-  exr_bidi_free(b->analysis);
-  free(b->offsets);
+  if(!b->refs || !--*b->refs) { exr_bidi_free(b->analysis);free(b->offsets);free(b->refs); }
   memset(b, 0, sizeof(*b));
   b->first_node = SIZE_MAX;
 }
@@ -69,6 +68,7 @@ static int following_inline_scalar(void *context, uint32_t *cp) {
   }
   return 0;
 }
+static const char *node_language(const flow *f,size_t node);
 size_t exr_inline_paragraph_end(flow *f,size_t node,size_t offset) {
   inline_text_cursor cursor={f,node,offset,0};uint32_t cp;
   while(following_inline_scalar(&cursor,&cp)) if(exr_bidi_paragraph_end(cp)) return cursor.at;
@@ -77,16 +77,17 @@ size_t exr_inline_paragraph_end(flow *f,size_t node,size_t offset) {
 exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
   size_t node, bytes = 0, count = 0, at, index = 0;
   const exr_bidi_override *override;
-  int complex = f->paragraph->direction == EXR_DIRECTION_RTL;
+  int complex = f->paragraph->direction == EXR_DIRECTION_RTL;unsigned risks=0;
   for(override=f->auto_bases;override;override=override->previous)
     complex|=override->direction==EXR_DIRECTION_RTL;
   exr_buffer text = {0};
   exr_status status;
   uint32_t cp;
   exr_inline_clear(b);
-  b->first_node = first;
+  b->first_node = first;b->prepared=1;
   for (node = first; node != SIZE_MAX; node = next_text(f, following(f, node))) {
     const exr_node *n = &f->doc->nodes[node];
+    if(f->styles[node].hyphens==EXR_HYPHENS_AUTO) risks|=exr_hyphenator_bidi_risk(f->hyphenator,node_language(f,node));
     if (exr_ruby_node(f->doc,node)) { bytes += 3; count++; continue; }
     bytes += n->end - n->start;
     for (at = n->start; at < n->end;) {
@@ -99,6 +100,7 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
         return EXR_CANCELLED;
     }
   }
+  b->plan_risky=!!(risks&2) || (complex && (risks&1));
   if (!complex)
     return EXR_OK;
   b->offsets = malloc(count * sizeof(*b->offsets));
@@ -126,8 +128,11 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
   free(text.data);
   if (status != EXR_OK)
     exr_inline_clear(b);
-  else
-    b->count = count;
+  else {
+    b->count=count;b->refs=malloc(sizeof(*b->refs));
+    if(!b->refs) { exr_inline_clear(b);return exr_fail(f->error,EXR_MEMORY,"Inline bidi ownership allocation failed"); }
+    *b->refs=1;
+  }
   return status;
 }
 static size_t scalar_at(const exr_inline_bidi *b, size_t offset) {
@@ -412,6 +417,10 @@ static exr_status line_work(flow *f, size_t count) {
 size_t exr_inline_extra_size(const exr_line_buffer *b,int compact) {
   size_t bytes=(compact ? b->edit_count : b->edit_capacity)*sizeof(*b->edits);
   if(b->word) bytes+=sizeof(*b->word)+(compact ? b->word->edit_count : b->word->edit_capacity)*sizeof(*b->word->edits);
+  if(b->plan) bytes+=b->plan->bytes;
+  if(b->plan_pending) bytes+=b->plan_pending->bytes;
+  if(b->plan_prefix) bytes+=b->plan_prefix->total;
+  if(b->plan_suffix) bytes+=b->plan_suffix->bytes;
   if(b->auto_bases) bytes+=b->auto_bases->depth*sizeof(*b->auto_bases);
   return bytes+exr_display_state_size(b->display);
 }
@@ -698,7 +707,7 @@ static exr_status bidi_build(flow *f,exr_line_buffer *b,const exr_display_patch 
     status=bidi_source(f,&builder,&cursor,SIZE_MAX,1);if(status!=EXR_OK) goto done;
   }
   status=line_work(f,2*builder.count+n);if(status!=EXR_OK) goto done;
-  status=exr_display_finish(&builder,direction,f->auto_bases,out,f->error);
+  status=exr_display_finish(&builder,direction,EXR_DIRECTION_AUTO,f->auto_bases,out,f->error);
   if(status==EXR_OK && candidate) {
     exr_text_state text=b->display_origin;const exr_bidi_scalar *scalars=exr_bidi_scalars((*out)->bidi,NULL);
     for(i=*line_first;i<*line_first+*line_count;i++) {
@@ -710,9 +719,30 @@ static exr_status bidi_build(flow *f,exr_line_buffer *b,const exr_display_patch 
 done:
   free(patches);exr_display_builder_clear(&builder);return status;
 }
+static exr_status plan_apply(flow *f,exr_line_buffer *b,exr_layout *l) {
+  exr_status status;size_t i,j;
+  b->line_plan_match=0;b->line_plan_count=0;
+  if(!b->plan || !b->plan_valid) return EXR_OK;
+  if(!b->plan_view) {
+    status=line_work(f,2*b->plan->content.text.count);if(status!=EXR_OK) return status;
+    status=exr_plan_view(b->plan,&f->config->control,&b->plan_view,f->error);if(status!=EXR_OK) return status;
+  }
+  if(!exr_plan_matches(b->plan_view,l->glyphs,l->glyph_count,b->plan_at,&b->line_plan_count)) return EXR_OK;
+  status=exr_display_apply_line(b->plan_view,l->glyphs,l->glyph_count,b->plan_at,b->line_plan_count,f->error);if(status!=EXR_OK) return status;
+  for(i=0;i<l->glyph_count;i=j) {
+    j=i+1;while(j<l->glyph_count && l->glyphs[j].cluster_start==l->glyphs[i].cluster_start) j++;
+    status=display_group(f,l,i,j);if(status!=EXR_OK) return status;
+  }
+  b->line_plan_match=1;return EXR_OK;
+}
 static exr_status bidi_prepare(flow *f,exr_line_buffer *b,exr_layout *l,const exr_hyphen_edit *edit,size_t raw_end) {
   exr_display_state *state=b->display;int safe;exr_status status;size_t i,j,last_strong=SIZE_MAX;
-  if(!b->track_display && !state) return EXR_OK;
+  if(f->plan_probe || b->plan) {
+    exr_display_patch_free(b->plan_pending);b->plan_pending=NULL;
+    status=exr_display_patch_create(f->doc,l->glyphs,l->glyph_count,NULL,&b->plan_pending,f->error);if(status!=EXR_OK) return status;
+    if(line_payload(b)>16*1024*1024) return exr_fail(f->error,EXR_LIMIT,"Paragraph candidate exceeds line budget");
+  }
+  if(!b->track_display && !state) return plan_apply(f,b,l);
   b->line_first_strong=0;b->line_last_hyphen=0;
   for(i=0;i<l->glyph_count;i++) if(!(l->glyphs[i].flags&EXR_GLYPH_DELETED)) {
     unsigned strong=exr_bidi_strong_type(l->glyphs[i].flags&EXR_GLYPH_RUBY_ITEM ? 0xfffc : l->glyphs[i].codepoint);
@@ -720,9 +750,20 @@ static exr_status bidi_prepare(flow *f,exr_line_buffer *b,exr_layout *l,const ex
     if(strong) last_strong=i;
     b->line_last_hyphen=(l->glyphs[i].flags&EXR_GLYPH_GENERATED) && (l->glyphs[i].codepoint=='-' || l->glyphs[i].codepoint==0x2010) ? (int)l->glyphs[i].codepoint : 0;
   }
+  if(f->plan_probe || b->plan) {
+    exr_display_patch_free(b->plan_suffix);b->plan_suffix=NULL;
+    status=exr_display_patch_create(f->doc,l->glyphs ? l->glyphs+(last_strong==SIZE_MAX ? 0 : last_strong) : NULL,
+      l->glyph_count-(last_strong==SIZE_MAX ? 0 : last_strong),last_strong==SIZE_MAX ? b->plan_prefix : NULL,&b->plan_suffix,f->error);
+    if(status!=EXR_OK) return status;
+  }
+  status=plan_apply(f,b,l);if(status!=EXR_OK) return status;
+  /* A trial may use provisional metrics until its displayed prefix matches the
+     previous proposal. No trial is published; acceptance requires every selected
+     line to have been shaped against the complete matching proposal. */
+  if(b->line_plan_match || f->plan_probe) { exr_display_state_free(b->display);b->display=NULL;return EXR_OK; }
   safe=bidi_safe(f,b,l,edit,raw_end);
   if(state) { exr_display_view_free(state->trial);state->trial=NULL;exr_display_patch_free(state->pending);state->pending=NULL;exr_display_patch_free(state->pending_context);state->pending_context=NULL;state->pending_unsafe=0; }
-  if(safe && (!state || !state->history)) return EXR_OK;
+  if(safe && (!state || !state->history)) return plan_apply(f,b,l);
   if(!state) {
     b->display=state=calloc(1,sizeof(*state));if(!state) return exr_fail(f->error,EXR_MEMORY,"Display state allocation failed");
     state->first_node=f->bidi ? f->bidi->first_node : SIZE_MAX;
@@ -747,7 +788,7 @@ static exr_status bidi_prepare(flow *f,exr_line_buffer *b,exr_layout *l,const ex
     j=i+1;while(j<l->glyph_count && l->glyphs[j].cluster_start==l->glyphs[i].cluster_start) j++;
     status=display_group(f,l,i,j);if(status!=EXR_OK) return status;
   }
-  return EXR_OK;
+  return plan_apply(f,b,l);
 }
 static void bidi_commit(exr_line_buffer *b) {
   exr_display_state *state=b->display;
@@ -1280,6 +1321,9 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
   if (!b->initialized) reset_line_scan(b);
   if(f->intrinsic==2) return measure_unwrapped(f,b);
   for (;;) {
+    if(!b->plan && !f->plan_probe && f->plan_resolve) {
+      exr_status status=f->plan_resolve(f->plan_cursor);if(status!=EXR_OK) return status;
+    }
     if (!b->line_end) {
       float indent = f->first_line ? f->paragraph->indent : 0;
       while (b->scan < b->ready) {
@@ -1337,6 +1381,19 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
         }
         f->display_bidi=state && state->pending ? state->trial : NULL;
         if(f->display_bidi) { f->display_first=state->line_first;f->display_count=state->line_count; }
+        if(b->plan && b->line_plan_match) {
+          if(!b->plan_view) {
+    status=line_work(f,2*b->plan->content.text.count);if(status!=EXR_OK) return status;
+    status=exr_plan_view(b->plan,&f->config->control,&b->plan_view,f->error);if(status!=EXR_OK) return status;
+  }
+          f->display_bidi=b->plan_view;f->display_first=b->plan_at;f->display_count=b->line_plan_count;
+        }
+        if(!f->plan_probe && b->plan) {
+          const exr_plan_line *line=b->plan_line<b->plan->content.line_count ? b->plan->content.lines+b->plan_line : NULL;
+          if(!b->line_plan_match || !line || !b->plan_pending || line->end!=b->plan_at+b->line_plan_count ||
+             line->start_source!=b->plan_pending->start || line->end_source!=b->plan_pending->end || line->flags!=(unsigned)((!!b->forced) | ((!!b->final)<<1)))
+            return exr_fail(f->error,EXR_FORMAT,"Paragraph plan changed during replay");
+        }
         if(f->auto_probe) {
           size_t k;exr_bidi_probe *probe=f->auto_probe;
           for(k=0;k<end;k++) {
@@ -1351,10 +1408,27 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
         status = exr_flow_emit_line(f, b->line.glyphs, end, b->forced, b->final);
         f->x=old_x; f->width=old_width;f->display_bidi=old_display;
         if (status != EXR_OK) return status;
+        if(f->plan_probe) {
+          if(!b->plan_pending) return exr_fail(f->error,EXR_FORMAT,"Missing paragraph candidate snapshot");
+          status=exr_plan_append(f->plan_probe,f->doc,b->plan_pending,b->forced,b->final,f->error);if(status!=EXR_OK) return status;
+          if(!b->line_plan_match) f->plan_probe->unmatched=1;
+        }
+        if(b->plan && b->plan_base==EXR_DIRECTION_AUTO && f->display_count && b->plan_view)
+          b->plan_base=exr_bidi_base_level(b->plan_view->bidi,b->plan_at) ? EXR_DIRECTION_RTL : EXR_DIRECTION_LTR;
+        if(b->plan_suffix) {
+          exr_display_patch_free(b->plan_prefix);b->plan_prefix=b->plan_suffix;b->plan_suffix=NULL;
+        }
         if(b->track_display) b->display_origin=b->display_line;
         if(!b->first_strong) b->first_strong=b->line_first_strong;
         b->last_hyphen=b->line_last_hyphen;b->display_committed=1;
         bidi_commit(b);
+        if(b->plan) { if(b->line_plan_match) { b->plan_at+=b->line_plan_count;b->plan_line++; } else b->plan_valid=0; }
+        exr_display_patch_free(b->plan_pending);b->plan_pending=NULL;
+        if(f->plan_probe && !b->final && exr_plan_can_cut(f->plan_probe)) return EXR_BIDI_CUT;
+        if(b->plan && !b->plan->closed && b->plan_valid && b->plan_at==b->plan->content.text.count && b->plan_line==b->plan->content.line_count) {
+          exr_plan_free(b->plan);b->plan=NULL;exr_display_view_free(b->plan_view);b->plan_view=NULL;
+          b->plan_at=b->plan_line=b->line_plan_count=0;b->plan_valid=b->line_plan_match=0;
+        }
       }
       if(b->rewrite) {
         status=replacement_carry(f,b);if(status!=EXR_OK) return status;
@@ -1505,6 +1579,18 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
   if (!b->initialized) reset_line_scan(b);
   b->track_display=!!exr_hyphenator_replacements(f->hyphenator);
   status=bidi_input(f,b,&g);if(status!=EXR_OK) return status;
+  if(b->plan && b->plan_valid) {
+    size_t index;
+    if(!b->plan_view) {
+    status=line_work(f,2*b->plan->content.text.count);if(status!=EXR_OK) return status;
+    status=exr_plan_view(b->plan,&f->config->control,&b->plan_view,f->error);if(status!=EXR_OK) return status;
+  }
+    index=exr_display_original(b->plan_view,g.start);
+    if(index!=SIZE_MAX && exr_bidi_scalars(b->plan_view->bidi,NULL)[index].codepoint==g.codepoint) {
+      g.bidi_level=exr_bidi_scalars(b->plan_view->bidi,NULL)[index].level;g.page=index;g.flags|=EXR_GLYPH_DISPLAY_BIDI;
+      if(g.bidi_level==UINT_MAX) g.flags|=EXR_GLYPH_HIDDEN;
+    }
+  }
   {
     inline_text_cursor cursor = {f, g.node, g.end,0};
     g.boundaries = exr_text_step(&b->text, g.codepoint, following_inline_scalar, &cursor);
@@ -1548,6 +1634,12 @@ exr_status exr_inline_finish(flow *f, exr_line_buffer *b) {
   }
   status = exr_inline_drain(f, b);
   if (status != EXR_OK) return status;
+  if(b->plan && !f->plan_probe && (b->plan_at!=b->plan->content.text.count || b->plan_line!=b->plan->content.line_count))
+    return exr_fail(f->error,EXR_FORMAT,"Incomplete paragraph plan replay");
+  exr_plan_free(b->plan);b->plan=NULL;exr_display_view_free(b->plan_view);b->plan_view=NULL;
+  exr_display_patch_free(b->plan_pending);b->plan_pending=NULL;
+  b->plan_at=b->plan_line=b->line_plan_count=0;b->plan_valid=b->line_plan_match=0;
+  exr_display_patch_free(b->plan_prefix);b->plan_prefix=NULL;exr_display_patch_free(b->plan_suffix);b->plan_suffix=NULL;b->plan_base=EXR_DIRECTION_AUTO;
   memset(&b->text, 0, sizeof(b->text));
   memset(&b->display_origin,0,sizeof(b->display_origin));
   memset(&b->display_line,0,sizeof(b->display_line));
@@ -1566,5 +1658,7 @@ void exr_inline_buffer_clear(exr_line_buffer *b) {
   free(b->run.glyphs); free(b->raw.glyphs); free(b->line.glyphs);
   if(b->word) free(b->word->edits);
   free(b->word);free(b->edits);exr_display_state_free(b->display);exr_bidi_override_free(b->auto_bases);
+  exr_plan_free(b->plan);exr_display_view_free(b->plan_view);exr_display_patch_free(b->plan_pending);
+  exr_display_patch_free(b->plan_prefix);exr_display_patch_free(b->plan_suffix);
   memset(b, 0, sizeof(*b));
 }

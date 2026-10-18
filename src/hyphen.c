@@ -2,6 +2,7 @@
 #include "hyphen_internal.h"
 #include "normalize_internal.h"
 #include "hyphen_unicode_data.h"
+#include "bidi_internal.h"
 
 #define NONE UINT32_MAX
 #define EDGE UINT32_C(0x110000)
@@ -37,7 +38,7 @@ typedef struct {
 typedef struct {
   char language[256];
   unsigned left_override,right_override;
-  int explicit_levels;
+  int explicit_levels,complex,unsafe;
   hy_level levels[2]; /* Compound rules, then ordinary rules. */
 } hy_dictionary;
 struct exr_hyphenator {
@@ -689,6 +690,23 @@ exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs
     for(j=0;j<i;j++) if(!strcmp(h->dictionaries[j].language,h->dictionaries[i].language)) { status=exr_fail(e,EXR_ARGUMENT,"Duplicate hyphenation language key"); goto failed; }
     status=exr_control_poll(control,EXR_STAGE_READ,i,count,e); if(status!=EXR_OK) goto failed;
     status=load(&w,&h->dictionaries[i],&inputs[i]); if(status!=EXR_OK) goto failed;
+    { size_t level,k;
+      for(level=0;level<2;level++) for(k=0;k<h->dictionaries[i].levels[level].trie.change_count;k++) {
+        const hy_change *change=h->dictionaries[i].levels[level].trie.changes+k;size_t at=0;uint32_t cp;
+        if(change->kind!=1) continue;
+        h->dictionaries[i].unsafe|=!change->before || !change->after;
+        while(at<change->before+change->after+1) {
+          if(!exr_next(change->text,change->before+change->after+1,&at,&cp)) break;
+          h->dictionaries[i].complex|=exr_bidi_complex(cp);
+          if(cp) h->dictionaries[i].unsafe|=!exr_bidi_ltr_letter(cp);
+        }
+      }
+      if(h->dictionaries[i].levels[0].trie.change_count || h->dictionaries[i].levels[1].trie.change_count)
+        for(level=0;level<2;level++) for(k=1;k<h->dictionaries[i].levels[level].trie.count;k++) {
+          uint32_t cp=h->dictionaries[i].levels[level].trie.nodes[k].cp;
+          if(cp!=EDGE && cp!='.' && !exr_bidi_ltr_letter(cp)) h->dictionaries[i].unsafe=1;
+        }
+    }
     h->replacements|=h->dictionaries[i].levels[0].trie.change_count!=0 || h->dictionaries[i].levels[1].trie.change_count!=0;
   }
   status=exr_control_poll(control,EXR_STAGE_READ,count,count,e); if(status!=EXR_OK) goto failed;
@@ -779,6 +797,12 @@ void exr_hyphenation_free(exr_hyphenation *result) {
   free(result->items);free(result);
 }
 size_t exr_hyphenator_memory_size(const exr_hyphenator *h) { return h ? h->bytes : 0; }
+unsigned exr_hyphenator_bidi_risk(exr_hyphenator *h,const char *language) {
+  hy_dictionary *d;char key[256];
+  if(!h || !exr_hyphen_language(language,key)) return 0;
+  if(h->discretionary.hyphenate) return 3;
+  d=dictionary(h,key);return d ? (unsigned)d->unsafe | ((unsigned)d->complex<<1) : 0;
+}
 int exr_hyphenator_replacements(const exr_hyphenator *h) {
   return h && (h->replacements || h->discretionary.hyphenate);
 }

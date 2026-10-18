@@ -112,6 +112,7 @@ static float kern(flow *f,const exr_glyph *left,const exr_glyph *g) {
 }
 static exr_status shape(flow *f,size_t first,size_t stop,int base,ruby_text *out) {
   exr_layout *l=calloc(1,sizeof(*l)); exr_inline_bidi bidi={0}; flow child=*f;
+  child.display_bidi=NULL;child.auto_bases=NULL;child.auto_probe=NULL;child.plan_probe=NULL;child.plan_resolve=NULL;child.plan_cursor=NULL;
   exr_buffer text={0}; unsigned char *boundaries=NULL; size_t *bytes=NULL,node,i,j,at=0;
   exr_status status=EXR_OK; unsigned orientation=0; exr_line *line;
   if(!l) return failure(f,EXR_MEMORY,"Ruby shaping allocation failed");

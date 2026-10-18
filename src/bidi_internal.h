@@ -11,6 +11,9 @@ void exr_bidi_override_free(exr_bidi_override *item);
 exr_direction exr_bidi_override_at(const exr_bidi_override *item,size_t source);
 exr_status exr_bidi_analyze_mapped(const char *text,size_t size,exr_direction requested,
   const size_t *sources,const exr_bidi_override *overrides,exr_bidi **out,exr_error *error);
+exr_status exr_bidi_analyze_first(const char *text,size_t size,exr_direction requested,
+  exr_direction first,exr_bidi **out,exr_error *error);
+unsigned exr_bidi_tail_type(uint32_t codepoint);
 int exr_bidi_paragraph_end(uint32_t codepoint);
 /* Advance UAX #9 P2, ignoring the contents of nested isolates. */
 unsigned exr_bidi_p2(uint32_t codepoint,size_t *isolate_depth);

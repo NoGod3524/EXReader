@@ -9,6 +9,7 @@
 #define EXR_REFLOW ((exr_status)101)
 #define EXR_FRAGMENT_SMALL ((exr_status)102)
 #define EXR_BIDI_RESOLVED ((exr_status)103)
+#define EXR_BIDI_CUT ((exr_status)104)
 #define EXR_MAX_FLOATS 128
 typedef struct { float x,y,width,height; unsigned side; } exr_float;
 typedef struct { exr_float items[EXR_MAX_FLOATS]; size_t count; } exr_float_state;
@@ -32,6 +33,8 @@ typedef struct {
   exr_bidi *analysis;
   size_t *offsets, count;
   size_t first_node;
+  int plan_risky,prepared;
+  size_t *refs;
 } exr_inline_bidi;
 typedef struct {
   size_t start,end,isolate_depth;
@@ -61,6 +64,9 @@ typedef struct {
   int fragment_probe;
   exr_inline_bidi *bidi;
   const exr_bidi_override *auto_bases; /* Borrowed from this pager line buffer. */
+  void *plan_cursor;
+  exr_status (*plan_resolve)(void *cursor);
+  exr_plan_builder *plan_probe; /* Borrowed during a complete paragraph trial. */
   exr_bidi_probe *auto_probe; /* Borrowed only by a speculative paragraph cursor. */
   const exr_display_view *display_bidi; /* Borrowed only while emitting a line. */
   size_t display_first,display_count;
@@ -74,6 +80,12 @@ typedef struct {
   int track_display, display_changed;
   exr_display_state *display;
   exr_bidi_override *auto_bases;
+  exr_display_plan *plan;
+  exr_display_view *plan_view;
+  exr_display_patch *plan_pending,*plan_prefix,*plan_suffix;
+  exr_direction plan_base;
+  size_t plan_at,plan_line,line_plan_count;
+  int plan_valid,line_plan_match;
   unsigned first_strong,line_first_strong; /* Safe-window context; full path retains UAX9 P2. */
   int last_hyphen,line_last_hyphen,display_committed;
   uint32_t before, after;

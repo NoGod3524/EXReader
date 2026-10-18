@@ -113,4 +113,16 @@ epub('bidi-leading','<p style="width:49px;text-align:start">'+leading+bidi_words
 epub('bidi-leading-float','<div style="float:left;width:14px;height:100px;background:#ffe080">A</div><p style="width:49px;text-align:start">'+leading+bidi_words+'</p>',attrs='lang="ze"')
 epub('bidi-paragraphs','<p style="width:49px;text-align:start">1111\u2029'+leading+bidi_words+'</p>',attrs='lang="ze"')
 epub('bidi-leading-ruby','<p style="width:49px;text-align:start"><ruby>AA<rt>A</rt></ruby> '+leading+bidi_words+'</p>',attrs='lang="ze"')
+future_neutral='a אב '+('+'*96)+' aaaaaaaaaaaa'
+future_bracket='a אב ('+('1'*96)+' aaaaaaaaaaaa'
+future_isolate='a אב \u2067abc '+('1'*64)+' aaaaaaaaaaaa'
+future_numbers='a ا '+('111,$+1,'*12)+' aaaaaaaaaaaa'
+epub('bidi-future-neutral',('<p style="width:56px">'+future_neutral+'</p>')*12,attrs='lang="zf"')
+epub('bidi-future-bracket',('<p style="width:56px">'+future_bracket+'</p>')*12,attrs='lang="zg"')
+epub('bidi-future-isolate',('<p style="width:56px">'+future_isolate+'</p>')*12,attrs='lang="zh"')
+epub('bidi-future-numbers',('<p style="width:56px">'+future_numbers+'</p>')*12,attrs='lang="zf"')
+epub('bidi-future-float','<div style="float:left;width:14px;height:100px;background:#ffe080">A</div>'+('<p style="width:56px">'+future_neutral+'</p>')*12,attrs='lang="zf"')
+epub('bidi-future-vertical',('<p style="height:56px">'+future_neutral+'</p>')*12,'html {writing-mode:vertical-rl}',attrs='lang="zf"')
+epub('bidi-future-tall-row','<table style="width:56px">'+('<tr><td>'+future_neutral+'</td></tr>')*12+'</table>',attrs='lang="zf"')
+epub('bidi-future-table','<table style="width:56px">'+('<tr><td>a אב +++++++++++++ aaaaaaaaaaaa</td></tr>')*40+'</table>',attrs='lang="zf"')
 print(count,'hyphenation EPUBs and shaping/hyphen.ttf generated')

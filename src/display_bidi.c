@@ -36,10 +36,11 @@ void exr_display_view_free(exr_display_view *v) {
   if(!v) return;
   exr_bidi_free(v->bidi);free(v->sources);free(v->boundaries);free(v);
 }
-exr_status exr_display_finish(exr_display_builder *b,exr_direction direction,const exr_bidi_override *overrides,exr_display_view **out,exr_error *e) {
+exr_status exr_display_finish(exr_display_builder *b,exr_direction direction,exr_direction first,const exr_bidi_override *overrides,exr_display_view **out,exr_error *e) {
   exr_display_view *v=calloc(1,sizeof(*v));unsigned char *boundaries=NULL;exr_status status;size_t i;
   *out=NULL;if(!v) return exr_fail(e,EXR_MEMORY,"Display bidi allocation failed");
-  status=exr_bidi_analyze_mapped(b->text.data ? b->text.data : "",b->text.size,direction,b->sources,overrides,&v->bidi,e);
+  if(first!=EXR_DIRECTION_AUTO) status=exr_bidi_analyze_first(b->text.data ? b->text.data : "",b->text.size,direction,first,&v->bidi,e);
+  else status=exr_bidi_analyze_mapped(b->text.data ? b->text.data : "",b->text.size,direction,b->sources,overrides,&v->bidi,e);
   if(status==EXR_OK) status=exr_text_analyze(b->text.data ? b->text.data : "",b->text.size,&boundaries,e);
   if(status==EXR_OK) {
     const exr_bidi_scalar *s=exr_bidi_scalars(v->bidi,NULL);
@@ -153,4 +154,115 @@ exr_display_state *exr_display_state_clone(const exr_display_state *s) {
 size_t exr_display_state_size(const exr_display_state *s) {
   return s ? sizeof(*s)+(s->history ? s->history->total : 0)+(s->pending ? s->pending->bytes : 0)+
     (s->context ? s->context->total : 0)+(s->pending_context ? s->pending_context->bytes : 0) : 0;
+}
+
+static void plan_feed(exr_plan_builder *b,size_t at) {
+  uint32_t cp;
+  while(exr_next(b->text.text.data,b->text.text.size,&at,&cp)) {
+    unsigned type=exr_bidi_tail_type(cp),original=type,solid=0;
+    if(!exr_bidi_window_safe(cp)) b->safe=0;
+    if(type>=1 && type<=3) { b->last_strong=type;if(!b->first_strong) b->first_strong=type; }
+    if(type==8) continue;
+    if(type==6) type=b->previous;
+    b->previous=type;
+    if(type>=1 && type<=5) {
+      solid=type==1 || (type==4 && b->last_strong==1) ? 1 : 2;
+      b->tail=b->last_dir=solid;b->ambiguous=0;
+    } else if(type!=7 || original==6) { b->tail=0;if(type==9) b->ambiguous=1; }
+  }
+}
+exr_status exr_plan_seed(exr_plan_builder *b,const exr_document *d,const exr_display_patch *prefix,
+  exr_direction direction,exr_direction initial,exr_error *e) {
+  const exr_display_patch **parts=NULL,*p;size_t n=0,i;exr_status status=EXR_OK;
+  b->safe=1;b->direction=direction;b->first_direction=initial;
+  b->last_dir=direction==EXR_DIRECTION_LTR || initial==EXR_DIRECTION_LTR ? 1 :
+    direction==EXR_DIRECTION_RTL || initial==EXR_DIRECTION_RTL ? 2 : 0;
+  if(prefix) {
+    parts=malloc(prefix->depth*sizeof(*parts));if(!parts) return exr_fail(e,EXR_MEMORY,"Paragraph prefix allocation failed");
+    for(p=prefix;p;p=p->previous) parts[n++]=p;
+    for(i=n;i && status==EXR_OK;i--) status=exr_display_patch_append(&b->text,d,parts[i-1],e);
+  }
+  free(parts);if(status!=EXR_OK) return status;
+  b->first=b->text.count;plan_feed(b,0);return EXR_OK;
+}
+int exr_plan_can_cut(const exr_plan_builder *b) {
+  unsigned base=b->direction==EXR_DIRECTION_LTR ? 1 : b->direction==EXR_DIRECTION_RTL ? 2 :
+    b->first_direction==EXR_DIRECTION_LTR ? 1 : b->first_direction==EXR_DIRECTION_RTL ? 2 :
+    b->first_strong==1 ? 1 : b->first_strong ? 2 : 0;
+  if(!b->safe || !base) return 0;
+  if(b->tail) return 1;
+  return !b->ambiguous && b->last_dir==base;
+}
+void exr_plan_builder_clear(exr_plan_builder *b) {
+  exr_display_builder_clear(&b->text);free(b->lines);memset(b,0,sizeof(*b));
+}
+static size_t plan_builder_bytes(const exr_plan_builder *b) {
+  return sizeof(exr_display_plan)+b->text.text.capacity+b->text.capacity*(sizeof(size_t)+1)+b->line_capacity*sizeof(*b->lines);
+}
+exr_status exr_plan_append(exr_plan_builder *b,const exr_document *d,const exr_display_patch *line,
+  int forced,int final,exr_error *e) {
+  size_t old_bytes=b->text.text.size;exr_status status=exr_display_patch_append(&b->text,d,line,e);exr_plan_line *record;
+  if(status!=EXR_OK) return status;
+  if(!exr_grow((void **)&b->lines,&b->line_capacity,b->line_count+1,sizeof(*b->lines)))
+    return exr_fail(e,EXR_MEMORY,"Paragraph line plan allocation failed");
+  record=&b->lines[b->line_count++];memset(record,0,sizeof(*record));
+  record->end=b->text.count;record->start_source=line->start;record->end_source=line->end;
+  record->flags=(!!forced) | ((!!final)<<1);plan_feed(b,old_bytes);
+  if(plan_builder_bytes(b)>24*1024*1024) return exr_fail(e,EXR_LIMIT,"Paragraph trial exceeds 24 MiB");
+  return EXR_OK;
+}
+exr_status exr_plan_finish(exr_plan_builder *b,exr_direction direction,exr_display_plan **out,exr_error *e) {
+  exr_display_plan *p=calloc(1,sizeof(*p));*out=NULL;
+  if(!p) return exr_fail(e,EXR_MEMORY,"Paragraph plan allocation failed");
+  { void *q;
+    if(b->text.count) {
+      int shrunk=1;
+      q=realloc(b->text.sources,b->text.count*sizeof(size_t));if(q) b->text.sources=q;else shrunk=0;
+      q=realloc(b->text.flags,b->text.count);if(q) b->text.flags=q;else shrunk=0;
+      if(shrunk) b->text.capacity=b->text.count;
+    }
+    if(b->text.text.size) { q=realloc(b->text.text.data,b->text.text.size);if(q) { b->text.text.data=q;b->text.text.capacity=b->text.text.size; } }
+    if(b->line_count) { q=realloc(b->lines,b->line_count*sizeof(*b->lines));if(q) { b->lines=q;b->line_capacity=b->line_count; } }
+  }
+  if(plan_builder_bytes(b)>16*1024*1024) { free(p);return exr_fail(e,EXR_LIMIT,"Paragraph plan exceeds 16 MiB"); }
+  p->refs=1;p->direction=direction;p->bytes=plan_builder_bytes(b);p->content=*b;p->first=b->first;p->first_direction=b->first_direction;
+  p->content.text.control=NULL;memset(b,0,sizeof(*b));*out=p;return EXR_OK;
+}
+void exr_plan_free(exr_display_plan *p) {
+  if(p && !--p->refs) { exr_plan_builder_clear(&p->content);free(p); }
+}
+int exr_plan_equal(const exr_display_plan *a,const exr_display_plan *b) {
+  const exr_plan_builder *x=&a->content,*y=&b->content;
+  return a->direction==b->direction && a->first_direction==b->first_direction && a->first==b->first && a->closed==b->closed && x->text.count==y->text.count && x->text.text.size==y->text.text.size &&
+    x->line_count==y->line_count &&
+    (!x->text.text.size || !memcmp(x->text.text.data,y->text.text.data,x->text.text.size)) &&
+    (!x->text.count || (!memcmp(x->text.sources,y->text.sources,x->text.count*sizeof(size_t)) && !memcmp(x->text.flags,y->text.flags,x->text.count))) &&
+    (!x->line_count || !memcmp(x->lines,y->lines,x->line_count*sizeof(*x->lines)));
+}
+exr_status exr_plan_view(const exr_display_plan *p,const exr_control *control,exr_display_view **out,exr_error *e) {
+  const exr_display_builder *source=&p->content.text;exr_display_builder b={0};exr_status status;
+  *out=NULL;
+  b.control=control;b.text.data=source->text.data;b.text.size=source->text.size;
+  if(source->count) {
+    b.sources=malloc(source->count*sizeof(size_t));b.flags=malloc(source->count);
+    if(!b.sources || !b.flags) { free(b.sources);free(b.flags);return exr_fail(e,EXR_MEMORY,"Paragraph projection allocation failed"); }
+    memcpy(b.sources,source->sources,source->count*sizeof(size_t));memcpy(b.flags,source->flags,source->count);
+  }
+  b.count=b.capacity=source->count;
+  status=exr_control_cancel(control,e);
+  if(status==EXR_OK) status=exr_display_finish(&b,p->direction,p->first_direction,NULL,out,e);
+  b.text.data=NULL;b.text.size=0;exr_display_builder_clear(&b);
+  if(status==EXR_OK && exr_control_cancel(control,e)!=EXR_OK) { exr_display_view_free(*out);*out=NULL;status=EXR_CANCELLED; }
+  return status;
+}
+int exr_plan_matches(const exr_display_view *v,const exr_glyph *g,size_t count,size_t first,size_t *scalars) {
+  size_t i,at=first;const exr_bidi_scalar *s=exr_bidi_scalars(v->bidi,NULL);
+  for(i=0;i<count;i++) {
+    uint32_t cp=g[i].flags&EXR_GLYPH_RUBY_ITEM ? 0xfffc : g[i].codepoint;
+    if(g[i].flags&EXR_GLYPH_DELETED) continue;
+    if(at>=v->count || s[at].codepoint!=cp || v->sources[at]!=g[i].start ||
+       !!(v->boundaries[at]&EXR_DISPLAY_GENERATED)!=!!(g[i].flags&EXR_GLYPH_GENERATED)) return 0;
+    at++;
+  }
+  *scalars=at-first;return 1;
 }

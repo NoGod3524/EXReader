@@ -3259,3 +3259,67 @@ benchmark executable. The subsequent record-only commit adds the AUTO stress
 measurement, records the separately reproduced next neutral-context regression
 and final evidence, and skips a redundant CI run. The full compatibility/SDK
 roadmap remains active; this verification does not close the remaining items.
+
+
+### Stable future bidi context before page publication (0.18 development)
+
+The earlier plus-run failure is fixed. Source `a אב +++++++++++++ aaaaaaaaaaaa`
+and `.aaaa1aaaaaaaa./א1中=12א,1,5` now agree with full analysis of the final displayed
+paragraph before any affected page is published. Selected display text, original
+source mapping and line boundaries form an immutable proposal. A replay shapes
+against that actual proposal, and acceptance requires every selected line to
+match plus identical text/mapping/line boundaries. Eight unsuccessful proposals
+return EXR_LIMIT; a changed provider during formal replay returns EXR_FORMAT
+before caching that page. Tests verify both failures and subsequent recovery.
+
+To avoid whole-chapter preflight, safe boundaries finish a proposal once its bidi
+result no longer depends on future text. It retains the exact preceding strong/
+weak suffix, tracks EN/AN, NSM, WS/BN and ambiguous ES/CS/ET, and extends bracket,
+explicit/isolate/B/S contexts instead of truncating them. An explicit first-base
+override preserves an existing AUTO paragraph while later B paragraphs still
+resolve AUTO independently. Native dictionaries cache conservative bidi-change
+risks by language; ordinary dictionaries and proven L-preserving changes bypass
+planning. Original bidi analyses are immutable and shared across trial cursors.
+Ruby shaping clears all borrowed parent display/probe state.
+
+Plans, retained prefixes, pending candidates and glyph buffers share the 16 MiB
+line payload; snapshots charge compact persistent data and rebuild ephemeral
+views. Temporary collectors have a 24 MiB cap; each display view remains limited
+to about 64 MiB. Prefix copying, view analysis and shaping share the common work
+budget, with cancellation. No public record, ABI epoch (1), schema (6), version
+(0.18.0 development), dependency or license change.
+
+All 113 local Release CTests pass. The automatic-layout suite records 2,181,539
+checks: 599 full-paragraph differential cases (including multi-page neutral runs,
+AL/numeric currency/separator combinations, paired brackets, isolate/override
+changes and a later independent AUTO B paragraph), 30 NSM page widths, malformed/
+changing-provider recovery, and 79 generated EPUB fixtures. All 71 earlier EPUB
+blobs remain unchanged. Seven new successful EPUBs cover future context in plain,
+paired-bracket, isolate, numeric, float, vertical and table layouts; full/eager,
+cached, uncached, checkpoint/backward, pixel, positioned and hit results agree.
+The eighth new fixture records the pre-existing tall-row limit: ordinary table
+row/span groups higher than a page are still rejected. The previous verified DLL
+and this code both reproduce it; row-internal fragmentation remains open.
+
+Installed C/C++ and JNI -Xcheck:jni pass. JNI verifies level-1 plus signs and RTL
+hit endpoints on a page with no generated glyphs, before the later discretionary
+replacement that determines their context. Swift smoke includes the equivalent
+installed SDK test for macOS CI. Current performance uses three fresh processes
+per mode, the same four 1 MiB books and first 65 pages:
+
+| Workload | Enabled first visible (ms) | Peak RSS (bytes) | Turn p50 / p95 (ms) |
+| --- | ---: | ---: | ---: |
+| English | 24.1737 | 14618624 | 5.4518 / 8.2077 |
+| Class-preserving rewrites | 26.7647 | 14045184 | 8.9331 / 10.5009 |
+| Latin/Arabic/Han rewrites | 29.1485 | 14532608 | 14.3007 / 15.9645 |
+| First-word deletion changes AUTO to RTL | 38.1108 | 14315520 | 18.9282 / 21.0052 |
+
+Raw records and exact source/binary/font/input hashes are in
+benchmarks/0.18.0-hyphen-context-windows. Disk cache and background load are
+uncontrolled; view/proposal verification adds measured turn work. These workloads
+are not peak-memory upper bounds for arbitrary long weak runs or control/bracket
+contexts. Initial whole-paragraph planning was discarded after an exploratory
+11.6-second first page on the mixed workload. Internal generated-side breaks,
+casing, conditional compounds, tall-row fragmentation and the complete roadmap
+remain open. Final cross-platform results will be recorded against the actual
+validated code commit after CI completes.
