@@ -24,7 +24,7 @@ static exr_canvas *canvas(unsigned width,unsigned height,uint32_t background) {
   exr_canvas_config config={0};exr_canvas *c=NULL;config.width=width;config.height=height;config.background=background;OK(exr_canvas_create(&config,&c,&error));return c;
 }
 static void references(void) {
-  const char *names[]={"flat","primitives","state","groups","compound","ap-groups","nonisolated","ap-nonisolated","knockout","knockout-nonisolated","knockout-shapes","knockout-elements","knockout-edges"};unsigned test,alpha;
+  const char *names[]={"flat","primitives","state","groups","compound","ap-groups","nonisolated","ap-nonisolated","knockout","knockout-nonisolated","knockout-shapes","knockout-elements","knockout-edges","softmask-alpha-grid","softmask-luminosity-grid","softmask-matrix","softmask-bbox"};unsigned test,alpha;
   for(test=0;test<sizeof(names)/sizeof(*names);test++) {
     exr_fixed_document *d=open_book(names[test]);size_t page_count,mask_size;const exr_fixed_page *pages=exr_fixed_pages(d,&page_count);char name[64];unsigned char *mask;
     CHECK(page_count==1);snprintf(name,sizeof(name),"%s.mask",names[test]);mask=load(name,&mask_size);
@@ -354,6 +354,12 @@ static void softmask(void) {
       CHECK(p[0]==cases[i].r && p[1]==cases[i].g && p[2]==cases[i].b && p[3]==255); }
     exr_bitmap_free(&result);exr_fixed_free(d);
   }
+  /* Malformed mask dictionaries are refused, never partially honoured. */
+  { static const exr_status want[]={EXR_FORMAT,EXR_FORMAT,EXR_FORMAT,EXR_FORMAT,EXR_FORMAT,EXR_UNSUPPORTED,EXR_FORMAT,EXR_FORMAT};
+    for(i=0;i<8;i++) { char name[32];exr_fixed_document *d;exr_fixed_render_options options={0};exr_bitmap result={0};exr_status got;
+      snprintf(name,sizeof(name),"softmask-bad-%u",i);d=open_book(name);options.channels=4;options.background=0;
+      got=exr_fixed_render(d,0,1,&options,&result,&error);CHECK(got==want[i] && !result.pixels);exr_fixed_free(d);
+    } }
 }
 static void invalid(void) {
   { exr_fixed_document *d=open_book("group-malformed");exr_bitmap b={0};unsigned i;for(i=0;i<5;i++) CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels);exr_fixed_free(d); }
