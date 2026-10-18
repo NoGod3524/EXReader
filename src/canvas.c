@@ -293,8 +293,14 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   next=c->bitmap;next.channels=4;next.stride=next.width*4;next.pixels=pixels;
   if(state) {
     state->knockout=!!(flags&EXR_GROUP_KNOCKOUT);state->isolated=!!(flags&EXR_GROUP_ISOLATED);
-    /* Isolated groups start transparent, so the parent backdrop is not copied in. */
-    if(!state->isolated) status=exr_composite_initialize(&next,state,&c->bitmap,c->composite,&c->work,&c->control,e);
+    /* Isolated groups start transparent, so the parent backdrop is not copied in.
+       Inside a knockout group every element, including a nested group, composites
+       with that group's initial backdrop rather than with the accumulated result. */
+    if(!state->isolated) {
+      const exr_bitmap *parent=&c->bitmap;const exr_composite_state *parent_state=c->composite;
+      if(c->composite && c->composite->knockout && !c->composite->isolated) { parent=&c->composite->backdrop;parent_state=c->composite->backdrop_state; }
+      status=exr_composite_initialize(&next,state,parent,parent_state,&c->work,&c->control,e);
+    }
     else state->depth=1;
   }
   if(status!=EXR_OK) { free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,status,e); }

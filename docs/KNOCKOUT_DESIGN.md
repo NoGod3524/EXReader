@@ -1,6 +1,6 @@
 # PDF 挖空透明组（工作包 1）设计与参考
 
-状态：**引擎与场景矩阵已完成，剩余取消/预算回归与交替性能采样**。`EXR_GROUP_KNOCKOUT` 在
+状态：**已完成**（引擎、42 场景、嵌套语义、取消/预算/旧消费者回归、交替采样）。`EXR_GROUP_KNOCKOUT` 在
 `canvas.c`/`blend.c` 生效，PDF 的 `K` 已正确映射；`tools/generate_knockout_fixtures.py` 生成
 **42 个原创场景**（16 模式隔离、16 模式非隔离、10 个 alpha/coverage 组合）与 Decimal(40)
 独立参考，`native-blend` 逐像素比对最大差 0。支持矩阵暂记“部分”，直到交替性能采样与全量 CI 记录补齐。

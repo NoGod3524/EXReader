@@ -304,6 +304,16 @@ static void knockout(void) {
     OK(exr_canvas_path(b,p,5,NULL,&style,&error));stop=1;
     CHECK(exr_canvas_end_layer(b,1,&error)==EXR_CANCELLED);exr_canvas_free(b);
   }
+  /* A group nested in a knockout group composites with that group's initial
+     backdrop, not with the accumulated red element. */
+  c=canvas(4,4,0xffffffff);rect(p,4,4);
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));
+  style.fill=0xff0000ff;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));
+  style.fill=0x00ff0080;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+  OK(exr_canvas_end_layer(c,1,&error));OK(exr_canvas_end_layer(c,1,&error));px=exr_canvas_bitmap(c)->pixels;
+  CHECK(px[1]>=253 && px[0]>=125 && px[0]<=130 && px[2]>=125 && px[2]<=130);
+  exr_canvas_free(c);
   /* Isolated knockout starts transparent. */
   c=canvas(4,4,0xffffffff);rect(p,4,4);style.fill=0x00ff0080;
   OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT,&error));
