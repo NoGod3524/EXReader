@@ -181,4 +181,11 @@ exr_status exr_cbz_open_owned(unsigned char *data,size_t size,const char *title,
   const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *error);
 exr_status exr_cbz_open_file(const char *path,const char *title,
   const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *error);
+exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex *out,exr_error *error);
+exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,
+  uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,
+  size_t *work,const exr_control *control,exr_error *error);
+exr_status exr_bitmap_to_gray(exr_bitmap *bitmap,const exr_control *control,exr_error *error);
+exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,double opacity,exr_blend_mode mode,
+  const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *error);
 #endif

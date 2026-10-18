@@ -600,6 +600,13 @@ typedef struct {
      Identity here gives a non-scaling stroke for a transformed path. */
   const double *stroke_matrix;
 } exr_draw_style;
+/* RGB component blend functions from ISO 32000. Normal uses source-over. */
+typedef enum {
+  EXR_BLEND_NORMAL,EXR_BLEND_MULTIPLY,EXR_BLEND_SCREEN,EXR_BLEND_OVERLAY,
+  EXR_BLEND_DARKEN,EXR_BLEND_LIGHTEN,EXR_BLEND_COLOR_DODGE,EXR_BLEND_COLOR_BURN,
+  EXR_BLEND_HARD_LIGHT,EXR_BLEND_SOFT_LIGHT,EXR_BLEND_DIFFERENCE,EXR_BLEND_EXCLUSION,
+  EXR_BLEND_HUE,EXR_BLEND_SATURATION,EXR_BLEND_COLOR,EXR_BLEND_LUMINOSITY
+} exr_blend_mode;
 typedef struct exr_canvas exr_canvas;
 typedef struct {
   uint32_t width,height,channels,background; /* channels 0 -> RGBA */
@@ -616,8 +623,21 @@ EXR_API size_t exr_canvas_memory_size(const exr_canvas *canvas);
 EXR_API const exr_bitmap *exr_canvas_bitmap(const exr_canvas *canvas);
 EXR_API exr_status exr_canvas_take(exr_canvas *canvas,exr_bitmap *out,exr_error *error);
 /* Save/restore the clipping region; paint styles are supplied per draw. */
+/* Blend state is saved/restored with the canvas graphics state. RGB working
+   components use the current RGB backdrop (neutral RGB on a gray canvas);
+   gray canvases convert after each draw. Fixed extended rendering retains RGB
+   throughout the page before converting requested gray output. */
+EXR_API exr_status exr_canvas_blend(exr_canvas *canvas,exr_blend_mode mode,exr_error *error);
+/* Isolated RGB layer, initially transparent with Normal blend state. The
+   inherited clip is applied once when committing. Valid end calls consume the
+   layer even on failure; commit=0 discards it and unwinds its inner scopes. */
+EXR_API exr_status exr_canvas_begin_layer(exr_canvas *canvas,double opacity,exr_blend_mode mode,exr_error *error);
+EXR_API exr_status exr_canvas_end_layer(exr_canvas *canvas,unsigned commit,exr_error *error);
+/* Set before entering layers; zero restores the 64 MiB aggregate default. */
+EXR_API exr_status exr_canvas_set_layer_budget(exr_canvas *canvas,size_t bytes,exr_error *error);
 EXR_API exr_status exr_canvas_save(exr_canvas *canvas,exr_error *error);
 EXR_API exr_status exr_canvas_restore(exr_canvas *canvas,exr_error *error);
+/* Combined fill/stroke is one knockout element; stroke shape replaces fill. */
 EXR_API exr_status exr_canvas_path(exr_canvas *canvas,const exr_path_segment *segments,size_t count,
                                     const double matrix[6],const exr_draw_style *style,exr_error *error);
 EXR_API exr_status exr_canvas_clip(exr_canvas *canvas,const exr_path_segment *segments,size_t count,
@@ -643,6 +663,21 @@ typedef struct {
   exr_draw_state_fn state;
   void *context;
 } exr_draw_sink;
+typedef exr_status (*exr_draw_blend_fn)(void *context,exr_blend_mode mode,exr_error *error);
+/* Versioned consumer. Initialize struct_size; base.context also serves blend.
+   Missing blend permits Normal only when a primitive is painted. Layer callbacks
+   form a pair; PDF page drawing with blend support also needs that pair. */
+typedef exr_status (*exr_draw_layer_begin_fn)(void *context,double opacity,exr_blend_mode mode,exr_error *error);
+typedef exr_status (*exr_draw_layer_end_fn)(void *context,unsigned commit,exr_error *error);
+typedef struct {
+  size_t struct_size;
+  exr_draw_sink base;
+  exr_draw_blend_fn blend;
+  exr_draw_layer_begin_fn begin_layer;
+  exr_draw_layer_end_fn end_layer;
+} exr_draw_sink_ex;
+/* Initialize out->struct_size to the available storage size. */
+EXR_API exr_status exr_canvas_get_sink_ex(exr_canvas *canvas,exr_draw_sink_ex *out,exr_error *error);
 /* The returned sink borrows the canvas until canvas_free. */
 EXR_API exr_status exr_canvas_get_sink(exr_canvas *canvas,exr_draw_sink *out,exr_error *error);
 typedef struct exr_fixed_document exr_fixed_document;
@@ -693,6 +728,8 @@ typedef struct {
 } exr_fixed_page;
 typedef exr_status (*exr_fixed_draw_fn)(void *context,size_t page,const double matrix[6],
                                          const exr_draw_sink *sink,const exr_control *control,exr_error *error);
+typedef exr_status (*exr_fixed_draw_ex_fn)(void *context,size_t page,const double matrix[6],
+  const exr_draw_sink_ex *sink,const exr_control *control,exr_error *error);
 typedef exr_status (*exr_fixed_text_fn)(void *context,size_t page,const exr_control *control,
                                          exr_fixed_text **out,exr_error *error);
 /* UTF-8 key/value metadata, independent of a file format. Provider values are
@@ -731,6 +768,7 @@ typedef struct {
   exr_fixed_text_fn text; /* Optional; appended after the original required prefix. */
   exr_fixed_metadata_fn metadata; /* Optional, lazy document metadata. */
   exr_fixed_annotations_fn annotations; /* Optional, lazy page annotation data. */
+  exr_fixed_draw_ex_fn draw_ex; /* Optional versioned drawing provider; draw remains required. */
 } exr_fixed_input;
 typedef struct {
   uint32_t channels,background; /* channels 0 -> RGBA */
@@ -819,6 +857,9 @@ EXR_API exr_status exr_fixed_load_text(exr_fixed_document *document,size_t page,
    One document cannot be drawn concurrently or reentered from a callback. */
 EXR_API exr_status exr_fixed_draw(exr_fixed_document *document,size_t page,const double matrix[6],
                                    const exr_draw_sink *sink,const exr_control *control,exr_error *error);
+/* Uses draw_ex when supplied, otherwise the original provider with sink.base. */
+EXR_API exr_status exr_fixed_draw_ex(exr_fixed_document *document,size_t page,const double matrix[6],
+  const exr_draw_sink_ex *sink,const exr_control *control,exr_error *error);
 /* Creates a natural-size viewport, clips to it, then paints just this page.
    NULL options default to white RGBA. Failure returns no partial bitmap. */
 EXR_API exr_status exr_fixed_render(exr_fixed_document *document,size_t page,double scale,

@@ -1,17 +1,26 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "pdf_raster_internal.h"
-typedef struct { const exr_draw_sink *target; size_t depth; unsigned text; } paint_scope;
+typedef struct { const exr_draw_sink_ex *target; size_t depth; unsigned text; } paint_scope;
 static exr_status scope_path(void *context,const exr_path_segment *path,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
-  paint_scope *s=context; return s->target->path(s->target->context,path,count,matrix,style,e);
+  paint_scope *s=context; return s->target->base.path(s->target->base.context,path,count,matrix,style,e);
 }
 static exr_status scope_clip(void *context,const exr_path_segment *path,size_t count,const double matrix[6],exr_fill_rule rule,unsigned accumulate,exr_error *e) {
-  paint_scope *s=context; return s->target->clip(s->target->context,path,count,matrix,rule,accumulate,e);
+  paint_scope *s=context; return s->target->base.clip(s->target->base.context,path,count,matrix,rule,accumulate,e);
 }
 static exr_status scope_image(void *context,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
-  paint_scope *s=context; return s->target->image(s->target->context,image,matrix,alpha,e);
+  paint_scope *s=context; return s->target->base.image(s->target->base.context,image,matrix,alpha,e);
+}
+static exr_status scope_blend(void *context,exr_blend_mode mode,exr_error *e) {
+  paint_scope *s=context;return s->target->blend(s->target->base.context,mode,e);
+}
+static exr_status scope_begin_layer(void *context,double opacity,exr_blend_mode mode,exr_error *e) {
+  paint_scope *s=context;return s->target->begin_layer(s->target->base.context,opacity,mode,e);
+}
+static exr_status scope_end_layer(void *context,unsigned commit,exr_error *e) {
+  paint_scope *s=context;return s->target->end_layer(s->target->base.context,commit,e);
 }
 static exr_status scope_state(void *context,exr_draw_state state,exr_error *e) {
-  paint_scope *s=context; exr_status status=s->target->state(s->target->context,state,e);
+  paint_scope *s=context; exr_status status=s->target->base.state(s->target->base.context,state,e);
   if(status==EXR_OK) {
     if(state==EXR_DRAW_SAVE) s->depth++;
     else if(state==EXR_DRAW_RESTORE && s->depth) s->depth--;
@@ -23,38 +32,58 @@ static exr_status scope_state(void *context,exr_draw_state state,exr_error *e) {
 /* A page's final clipping path must not affect its annotations. Unwind even a
    malformed stream's unmatched q/BT callbacks before leaving its outer scope. */
 static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,const double matrix[6],
-                             const double *box,const exr_draw_sink *sink,exr_pdf_program_fn program,void *context,
+                             const double *box,unsigned layer,const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,
                              size_t *work,const exr_control *control,exr_error *e) {
-  paint_scope scope={sink,0,0}; exr_draw_sink consumer=*sink; exr_status status=EXR_OK;
-  consumer.context=&scope; consumer.path=sink->path ? scope_path : NULL; consumer.clip=sink->clip ? scope_clip : NULL;
-  consumer.image=sink->image ? scope_image : NULL; consumer.state=sink->state ? scope_state : NULL;
-  if(sink->state) {
-    status=sink->state(sink->context,EXR_DRAW_SAVE,e);
+  paint_scope scope={sink,0,0}; exr_draw_sink_ex consumer=*sink; exr_status status=EXR_OK;int begun=0;
+  consumer.base.context=&scope; consumer.base.path=sink->base.path ? scope_path : NULL; consumer.base.clip=sink->base.clip ? scope_clip : NULL;
+  consumer.base.image=sink->base.image ? scope_image : NULL; consumer.base.state=sink->base.state ? scope_state : NULL;
+  consumer.blend=sink->blend ? scope_blend : NULL;
+  consumer.begin_layer=sink->begin_layer ? scope_begin_layer : NULL;consumer.end_layer=sink->end_layer ? scope_end_layer : NULL;
+  if(sink->base.state) {
+    status=sink->base.state(sink->base.context,EXR_DRAW_SAVE,e);
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
     if(status!=EXR_OK) return status;
   }
-  if(box && sink->clip) {
+  if(box && sink->base.clip) {
     exr_path_segment boundary[5]={0}; size_t i;
     const double x[4]={box[0],box[2],box[2],box[0]},y[4]={box[1],box[1],box[3],box[3]};
     for(i=0;i<4;i++) { boundary[i].verb=i ? EXR_PATH_LINE : EXR_PATH_MOVE; boundary[i].points[0]=(exr_path_point){x[i],y[i]}; }
     boundary[4].verb=EXR_PATH_CLOSE;
-    status=sink->clip(sink->context,boundary,5,matrix,EXR_FILL_NONZERO,0,e);
+    status=sink->base.clip(sink->base.context,boundary,5,matrix,EXR_FILL_NONZERO,0,e);
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
   }
-  if(status==EXR_OK) status=exr_pdf_paint_content(file,resources,content,size,matrix,&consumer,program,context,work,control,e);
-  if(sink->state) {
-    exr_error cleanup={0}; exr_status restored; size_t restore_count=scope.depth+1;
+  if(status==EXR_OK && layer) {
+    if(!sink->begin_layer) status=exr_fail(e,EXR_FORMAT,"PDF appearance consumer lacks isolated layers");
+    else {
+      status=sink->begin_layer(sink->base.context,1,EXR_BLEND_NORMAL,e);
+      if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
+      if(status==EXR_OK) begun=1;
+    }
+  }
+  if(status==EXR_OK) status=exr_pdf_paint_content_ex(file,resources,content,size,matrix,&consumer,program,context,work,control,e);
+  if(sink->base.state) {
+    exr_error cleanup={0}; exr_status restored; size_t restore_count=scope.depth;
     while(scope.text--) {
-      restored=sink->state(sink->context,EXR_DRAW_END_CLIP,&cleanup);
+      restored=sink->base.state(sink->base.context,EXR_DRAW_END_CLIP,&cleanup);
       if(restored==EXR_OK && cleanup.code!=EXR_OK) restored=cleanup.code;
       if(status==EXR_OK && restored!=EXR_OK) { status=restored; if(e) *e=cleanup; }
     }
     while(restore_count--) {
       memset(&cleanup,0,sizeof(cleanup));
-      restored=sink->state(sink->context,EXR_DRAW_RESTORE,&cleanup);
+      restored=sink->base.state(sink->base.context,EXR_DRAW_RESTORE,&cleanup);
       if(restored==EXR_OK && cleanup.code!=EXR_OK) restored=cleanup.code;
       if(status==EXR_OK && restored!=EXR_OK) { status=restored; if(e) *e=cleanup; }
     }
+  }
+  if(begun) {
+    exr_error cleanup={0};exr_status ended=sink->end_layer(sink->base.context,status==EXR_OK,&cleanup);
+    if(ended==EXR_OK && cleanup.code!=EXR_OK) ended=cleanup.code;
+    if(status==EXR_OK && ended!=EXR_OK) { status=ended;if(e) *e=cleanup; }
+  }
+  if(sink->base.state) {
+    exr_error cleanup={0};exr_status restored=sink->base.state(sink->base.context,EXR_DRAW_RESTORE,&cleanup);
+    if(restored==EXR_OK && cleanup.code!=EXR_OK) restored=cleanup.code;
+    if(status==EXR_OK && restored!=EXR_OK) { status=restored;if(e) *e=cleanup; }
   }
   return status;
 }
@@ -93,9 +122,9 @@ static int multiply(double out[6],const double left[6],const double right[6]) {
   memcpy(out,m,sizeof(m)); return 1;
 }
 static exr_status appearance(exr_pdf_file *file,uint32_t annotation,uint32_t resources,const double initial[6],
-                               const exr_draw_sink *sink,exr_pdf_program_fn program,void *context,size_t *bytes,
+                               const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,size_t *bytes,
                                size_t *work,const exr_control *control,exr_error *e) {
-  uint32_t id,normal,value,state; const exr_pdf_value *v; exr_status status; unsigned flags=0; size_t i,size;
+  uint32_t id,normal,value,state; const exr_pdf_value *v; exr_status status; unsigned flags=0; size_t i,size;int layer=0;
   double rect[4],box[4],matrix[6]={1,0,0,1,0,0},bounds[4]={0},fit[6]={0},transform[6]; const unsigned char *data;
   status=field(file,annotation,"F",&id,e); if(status!=EXR_OK) return status;
   if(!missing(file,id)) {
@@ -128,7 +157,7 @@ static exr_status appearance(exr_pdf_file *file,uint32_t annotation,uint32_t res
   status=field(file,normal,"FormType",&value,e); if(status!=EXR_OK) return status;
   if(!missing(file,value) && (exr_pdf_value_at(file,value)->kind!=EXR_PDF_INT || exr_pdf_value_at(file,value)->u.integer!=1)) return exr_fail(e,EXR_FORMAT,"Invalid PDF appearance FormType");
   status=field(file,normal,"Group",&value,e); if(status!=EXR_OK) return status;
-  if(!missing(file,value)) return exr_fail(e,EXR_FORMAT,"PDF appearance transparency groups are not implemented yet");
+  status=exr_pdf_group_rgb(file,value,0,&layer,e);if(status!=EXR_OK) return status;
   status=field(file,annotation,"Rect",&value,e); if(status==EXR_OK) status=numbers(file,value,rect,4,e); if(status!=EXR_OK) return status;
   for(i=0;i<2;i++) { double a=fmin(rect[i],rect[i+2]),b=fmax(rect[i],rect[i+2]); rect[i]=a; rect[i+2]=b; }
   if(rect[0]==rect[2] || rect[1]==rect[3]) return EXR_OK;
@@ -153,14 +182,32 @@ static exr_status appearance(exr_pdf_file *file,uint32_t annotation,uint32_t res
   status=exr_pdf_stream_data(file,normal,&data,&size,e); if(status!=EXR_OK) return status;
   if(size>(size_t)64*1024*1024-*bytes) return exr_fail(e,EXR_LIMIT,"PDF page appearance streams exceed 64 MiB");
   *bytes+=size;
-  return isolated(file,resources,data,size,transform,box,sink,program,context,work,control,e);
+  return isolated(file,resources,data,size,transform,box,(unsigned)layer,sink,program,context,work,control,e);
 }
-exr_status exr_pdf_paint_page(exr_pdf_file *file,const exr_pdf_page_info *page,const void *content,size_t size,
-                               const double initial[6],const exr_draw_sink *sink,exr_pdf_program_fn program,void *context,
+exr_status exr_pdf_paint_page_ex(exr_pdf_file *file,const exr_pdf_page_info *page,const void *content,size_t size,
+                               const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,
                                size_t *work,const exr_control *control,exr_error *e) {
   const exr_pdf_value *v; uint32_t id,at; size_t count=0,bytes=0,local_work=0; exr_status status;
+  exr_draw_sink_ex consumer;status=exr_draw_sink_snapshot(sink,&consumer,e);if(status!=EXR_OK) return status;sink=&consumer;
   if(!work) work=&local_work;
-  status=isolated(file,page->resources,content,size,initial,NULL,sink,program,context,work,control,e); if(status!=EXR_OK) return status;
+  { int present;uint32_t group;
+    status=exr_pdf_resolve(file,exr_pdf_get(file,page->object,"Group"),&group,e);
+    if(status==EXR_OK) status=exr_pdf_group_rgb(file,group,1,&present,e);
+    if(status!=EXR_OK) return status;
+  }
+  if(sink->blend && !sink->begin_layer) return exr_fail(e,EXR_FORMAT,"PDF blend consumer requires page layer support");
+  if(sink->begin_layer) {
+    status=sink->begin_layer(sink->base.context,1,EXR_BLEND_NORMAL,e);
+    if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
+    if(status!=EXR_OK) return status;
+  }
+  status=isolated(file,page->resources,content,size,initial,NULL,0,sink,program,context,work,control,e);
+  if(sink->end_layer) {
+    exr_error cleanup={0};exr_status ended=sink->end_layer(sink->base.context,status==EXR_OK,&cleanup);
+    if(ended==EXR_OK && cleanup.code!=EXR_OK) ended=cleanup.code;
+    if(status==EXR_OK && ended!=EXR_OK) { status=ended;if(e) *e=cleanup; }
+  }
+  if(status!=EXR_OK) return status;
   status=exr_pdf_resolve(file,page->annotations,&id,e); if(status!=EXR_OK || missing(file,id)) return status;
   v=exr_pdf_value_at(file,id); if(v->kind!=EXR_PDF_ARRAY) return exr_fail(e,EXR_FORMAT,"PDF Annots is not an array");
   at=v->first;
@@ -176,4 +223,11 @@ exr_status exr_pdf_paint_page(exr_pdf_file *file,const exr_pdf_page_info *page,c
     at=next;
   }
   return EXR_OK;
+}
+
+exr_status exr_pdf_paint_page(exr_pdf_file *file,const exr_pdf_page_info *page,const void *content,size_t size,
+  const double initial[6],const exr_draw_sink *sink,exr_pdf_program_fn program,void *context,size_t *work,const exr_control *control,exr_error *e) {
+  exr_draw_sink_ex extended={0};if(!sink) return exr_fail(e,EXR_ARGUMENT,"Missing PDF page consumer");
+  extended.struct_size=sizeof(extended);extended.base=*sink;
+  return exr_pdf_paint_page_ex(file,page,content,size,initial,&extended,program,context,work,control,e);
 }

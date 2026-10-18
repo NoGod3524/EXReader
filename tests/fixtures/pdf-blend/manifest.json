@@ -1,0 +1,294 @@
+{
+  "pymupdf": "1.28.2",
+  "mupdf": "1.28.2",
+  "pypdfium2": "5.14.0",
+  "pdfium": "156.0.8076.0",
+  "scope": "Original RGB scenes. Raw MuPDF/PDFium renders retained separately. Expected samples use PDFium premultiplied alpha plus ISO 32000-1 11.4.7 page isolation; annotation white region uses PDFium white; BM array/null cells use 11.6.3 and 7.3.9 normative results. MuPDF partial-alpha nonseparable blending differs; both engines misselect unknown-first BM array. Font is original GPL-3.0-only fixture.",
+  "modes": [
+    "Normal",
+    "Multiply",
+    "Screen",
+    "Overlay",
+    "Darken",
+    "Lighten",
+    "ColorDodge",
+    "ColorBurn",
+    "HardLight",
+    "SoftLight",
+    "Difference",
+    "Exclusion",
+    "Hue",
+    "Saturation",
+    "Color",
+    "Luminosity"
+  ],
+  "color_cases": [
+    [
+      [
+        51,
+        102,
+        153
+      ],
+      255,
+      [
+        204,
+        77,
+        26
+      ],
+      255
+    ],
+    [
+      [
+        128,
+        32,
+        220
+      ],
+      255,
+      [
+        40,
+        220,
+        150
+      ],
+      128
+    ],
+    [
+      [
+        255,
+        255,
+        255
+      ],
+      255,
+      [
+        255,
+        0,
+        0
+      ],
+      64
+    ],
+    [
+      [
+        0,
+        0,
+        0
+      ],
+      255,
+      [
+        255,
+        255,
+        255
+      ],
+      255
+    ],
+    [
+      [
+        255,
+        255,
+        255
+      ],
+      255,
+      [
+        0,
+        0,
+        0
+      ],
+      255
+    ],
+    [
+      [
+        17,
+        255,
+        127
+      ],
+      128,
+      [
+        240,
+        31,
+        0
+      ],
+      192
+    ],
+    [
+      [
+        255,
+        0,
+        128
+      ],
+      0,
+      [
+        80,
+        127,
+        250
+      ],
+      128
+    ],
+    [
+      [
+        255,
+        0,
+        255
+      ],
+      128,
+      [
+        0,
+        0,
+        0
+      ],
+      0
+    ],
+    [
+      [
+        128,
+        128,
+        128
+      ],
+      255,
+      [
+        210,
+        20,
+        160
+      ],
+      255
+    ],
+    [
+      [
+        128,
+        128,
+        128
+      ],
+      64,
+      [
+        200,
+        200,
+        200
+      ],
+      192
+    ],
+    [
+      [
+        255,
+        0,
+        0
+      ],
+      192,
+      [
+        0,
+        255,
+        0
+      ],
+      64
+    ],
+    [
+      [
+        0,
+        0,
+        255
+      ],
+      128,
+      [
+        0,
+        255,
+        255
+      ],
+      128
+    ],
+    [
+      [
+        0,
+        0,
+        0
+      ],
+      0,
+      [
+        0,
+        0,
+        0
+      ],
+      0
+    ]
+  ],
+  "sizes": {
+    "flat": [
+      256,
+      208
+    ],
+    "primitives": [
+      256,
+      144
+    ],
+    "state": [
+      96,
+      16
+    ],
+    "groups": [
+      256,
+      64
+    ],
+    "compound": [
+      256,
+      48
+    ],
+    "ap-groups": [
+      256,
+      16
+    ]
+  },
+  "sha256": {
+    "ap-groups-alpha.rgba": "71f8c5d667343b679a89afec8fe0dd55d9be5435a9d6f1761ce7dcfb060cf9cf",
+    "ap-groups-mupdf-alpha.rgba": "0b968e3ee4dc290d6c6cbe22a021ae1187885d3d1424d83ff30bcfd35dc720bf",
+    "ap-groups-mupdf-white.rgba": "0b968e3ee4dc290d6c6cbe22a021ae1187885d3d1424d83ff30bcfd35dc720bf",
+    "ap-groups-pdfium-alpha.rgba": "71f8c5d667343b679a89afec8fe0dd55d9be5435a9d6f1761ce7dcfb060cf9cf",
+    "ap-groups-pdfium-white.rgba": "71f8c5d667343b679a89afec8fe0dd55d9be5435a9d6f1761ce7dcfb060cf9cf",
+    "ap-groups-white.rgba": "71f8c5d667343b679a89afec8fe0dd55d9be5435a9d6f1761ce7dcfb060cf9cf",
+    "ap-groups.mask": "3431383721510cf1c211de027cf958c183e16db5fabb6b230eb284c85e196aa9",
+    "ap-groups.pdf": "6a90cefc8cddfbdfdc157adcd8f464e622e15e438297f85f73091da9ed478f89",
+    "bad-0.pdf": "c84540b214e4e2194fea47fb853c4e20a349c8a5fc0dbf63db3a6a7668d029b3",
+    "bad-1.pdf": "bf663d45e2acfe74412e646a92d87bb6bd5f46a7e170d6065c542f7ce47c2503",
+    "bad-2.pdf": "5e03ec2aa99e03b239941460b2014fe2d5079e73e972f00188b173cc2159185e",
+    "compound-alpha.rgba": "e6d6c46341ae6c0d67d038aa7e5f4b00461761f99ccb6d83b2eb42cd5750cbeb",
+    "compound-mupdf-alpha.rgba": "c8258a27ad7a2f22c79a66ab6dfd897e9ea3da422bfcac17c56f02b06a014380",
+    "compound-mupdf-white.rgba": "09dcd1ab09fbb43e1f2a404e87f687e5ec194d1085cd8d748ee2013000573300",
+    "compound-pdfium-alpha.rgba": "e6d6c46341ae6c0d67d038aa7e5f4b00461761f99ccb6d83b2eb42cd5750cbeb",
+    "compound-pdfium-white.rgba": "ab32fe7c7dde140ec94a71a067dbb85222e89770fb49fa4eb609962fc69a29ef",
+    "compound-white.rgba": "d3c2a55253c82335301299254afea3bf236197b8bdd1575bf1ed70e92f6920af",
+    "compound.mask": "68a5dedcd504c737ab6bbb9eca24e4566d44bb00dc9a107d4c78ef66edd97ef1",
+    "compound.pdf": "aac37d895f115c4c4ad1f5d2232c55714def4075b562420bc1bfcd0f5403b0ec",
+    "flat-alpha.rgba": "99fb7b39db5784d03cd735b6f12e2db46871d8dc98a8b4dbd593d0830ccab7ea",
+    "flat-mupdf-alpha.rgba": "760227ff787d0bd69df6fd7f99ca20f80ea29932350853568b337af876e01f4a",
+    "flat-mupdf-white.rgba": "16d9f8f03d185c471c1dfdc6c3dfdb0c3c72680e52cce47e9de229a8f0c9f37f",
+    "flat-pdfium-alpha.rgba": "99fb7b39db5784d03cd735b6f12e2db46871d8dc98a8b4dbd593d0830ccab7ea",
+    "flat-pdfium-white.rgba": "7fa86fb70a5c4a3fa9644460c94c57a1923642f632f89759e1648fe9d1ee549a",
+    "flat-white.rgba": "4a8d526581cc0342e0df86584256cb20a742885873f7546e987d8210faebc88b",
+    "flat.mask": "8a160f6f63eeaa4eaf270a0a559a9ecdb1b10c0100d00adf03d3d191d7bab652",
+    "flat.pdf": "0c5d5a09e5f49aeb3a699219354718ea9bc22c3f43c84e74d9d05bc0485ec861",
+    "group-bad-0.pdf": "5d4f5be151804a5c52a896228b678b44209c55f1e0489d6e5181205d1d2df4bf",
+    "group-bad-1.pdf": "0b7dde5995ab25d06df8b22a1101a05a4923122f8de25a91f39dbf3ae992f8a6",
+    "group-bad-2.pdf": "be534ae398a4d1e13c51825c80152f289ef3efbac325ff55a48db59de7a4cd31",
+    "group-bad-3.pdf": "459a2d94f060c7a1282a1a64208e6577f5c65312c2a8014a8482a94128317eba",
+    "group-bad-4.pdf": "f2ba8028163c9714abbb66d90bf931e572b059a4e83c2a1e68361504356a1db4",
+    "group-malformed.pdf": "bd23139aa1bcca9f67982667c4e7f54c8b81708ca4b8118652c791c2733e26c7",
+    "groups-alpha.rgba": "282f136f82af4f83029f8c2ce056affb32e8504c77b56fa4962d59117f4e2e0e",
+    "groups-mupdf-alpha.rgba": "12474248a80c74fef6d5d49a4c3159ec1da03e2eea51a5dcfdc694643586274f",
+    "groups-mupdf-white.rgba": "1d4879968ce857913ab5d26f32e0b98dc61c69acd03419f05efe3c6278e752c1",
+    "groups-pdfium-alpha.rgba": "282f136f82af4f83029f8c2ce056affb32e8504c77b56fa4962d59117f4e2e0e",
+    "groups-pdfium-white.rgba": "bdb728f519add1870ec6916b861ffc784312aa7fc20a5ebbe6214c08678f5217",
+    "groups-white.rgba": "3bfed0455ccb7ec49e90fa596425b2cc445b210363d4f9842227e10f88fb48c5",
+    "groups.mask": "c9a6b3020260db981a926dd9055d8462ab16c60ced563e5ecf6f101c0c069b40",
+    "groups.pdf": "29451a5c819cb19d9a024d13f1f037861e86c38f89aa5c206fb70e441563cf25",
+    "primitives-alpha.rgba": "02da43d2a988adb8c8e3ca2711dafb2b0859de4501badc4809a86ec500504fcf",
+    "primitives-mupdf-alpha.rgba": "2327ca9a2c466334ab6b6b30e91fc2e6d629b8e6591cece0864ad052c49a2abc",
+    "primitives-mupdf-white.rgba": "f8783d8dd94f87690fcc6aed1a03e3c5b1f1a5d1bb27841bd808a410c7272c6a",
+    "primitives-pdfium-alpha.rgba": "02da43d2a988adb8c8e3ca2711dafb2b0859de4501badc4809a86ec500504fcf",
+    "primitives-pdfium-white.rgba": "765f68604609422467e9e0b56c8d0e99cdebc631e6afdfa4b9fd4db961d10a56",
+    "primitives-white.rgba": "70cda2ae02a6cbea73492a7da8461331e9b334aeb1b5fc46bf3c1b0c62058677",
+    "primitives.mask": "6c9663073076f94e8680d1c846a15d0724f14c6b50435969a70b2b8b4c889fc9",
+    "primitives.pdf": "969b506ae20d43ff2a0a3ccfb787cacff9cb643226c27e6081481385739c127a",
+    "state-alpha.rgba": "dea25af5e08aa01e7568ec9eeb8ab447a084b90297c590b0dd9275a1265aa84a",
+    "state-mupdf-alpha.rgba": "7ab4634f2ed788cd0b13ddd70588cddddc691a354932b0e42dbc8aa48a733fbf",
+    "state-mupdf-white.rgba": "7ab4634f2ed788cd0b13ddd70588cddddc691a354932b0e42dbc8aa48a733fbf",
+    "state-pdfium-alpha.rgba": "313cb738c5b5413b673ecacff93894cae315b1c203c0950927b78531873575e9",
+    "state-pdfium-white.rgba": "313cb738c5b5413b673ecacff93894cae315b1c203c0950927b78531873575e9",
+    "state-white.rgba": "dea25af5e08aa01e7568ec9eeb8ab447a084b90297c590b0dd9275a1265aa84a",
+    "state.mask": "4fd49f9bdb750657b15e232707d8a60711b26d00a9875aa77faf67a6480fa8ea",
+    "state.pdf": "55cbfe5629bcd1ccd73549e377eaa1da0628a27dcd7533a5cc5370ff2e255352"
+  }
+}

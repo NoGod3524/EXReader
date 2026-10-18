@@ -2,7 +2,7 @@
 #include "internal.h"
 struct exr_fixed_document {
   char *title; exr_fixed_page *pages; size_t count,bytes;
-  exr_fixed_draw_fn draw; exr_fixed_text_fn text; exr_fixed_metadata_fn metadata; exr_fixed_annotations_fn annotations; void *context; exr_context_release_fn release; unsigned busy;
+  exr_fixed_draw_ex_fn draw_ex;exr_fixed_draw_fn draw; exr_fixed_text_fn text; exr_fixed_metadata_fn metadata; exr_fixed_annotations_fn annotations; void *context; exr_context_release_fn release; unsigned busy;
 };
 static exr_status copy_string(const char *source,size_t *bytes,const char **out,exr_error *e) {
   size_t n=0,at=0; uint32_t cp;
@@ -50,6 +50,10 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
     for(i=offsetof(exr_fixed_input,annotations);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Truncated annotations provider field");
     snapshot.annotations=NULL;
   }
+  if(input->struct_size>offsetof(exr_fixed_input,draw_ex) && input->struct_size<offsetof(exr_fixed_input,draw_ex)+sizeof(input->draw_ex)) {
+    for(i=offsetof(exr_fixed_input,draw_ex);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Truncated extended draw provider field");
+    snapshot.draw_ex=NULL;
+  }
   if(!input->draw || !input->pages || !input->page_count) return exr_fail(e,EXR_ARGUMENT,"Missing fixed page directory/provider");
   if(input->page_count>10000) return exr_fail(e,EXR_LIMIT,"Fixed document exceeds 10000 pages");
   d=calloc(1,sizeof(*d)); if(!d) return exr_fail(e,EXR_MEMORY,"Fixed document allocation failed");
@@ -71,7 +75,7 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
 done:
   free(ids);
   if(status!=EXR_OK) { exr_fixed_free(d); return status; }
-  d->draw=input->draw; d->text=input->text; d->metadata=input->metadata; d->annotations=input->annotations; d->context=input->context; d->release=input->release; d->bytes=sizeof(*d)+d->count*sizeof(*d->pages)+strings;
+  d->draw=input->draw;d->draw_ex=input->draw_ex; d->text=input->text; d->metadata=input->metadata; d->annotations=input->annotations; d->context=input->context; d->release=input->release; d->bytes=sizeof(*d)+d->count*sizeof(*d->pages)+strings;
   *out=d; return exr_fail(e,EXR_OK,"");
 }
 const char *exr_fixed_title(const exr_fixed_document *d) { return d ? d->title : ""; }
@@ -183,12 +187,27 @@ exr_status exr_fixed_draw(exr_fixed_document *d,size_t page,const double matrix[
   if(status==EXR_OK) status=exr_control_poll(control,EXR_STAGE_RENDER,1,1,&local);
   return provider_end(d,status,&local,e);
 }
+exr_status exr_fixed_draw_ex(exr_fixed_document *d,size_t page,const double matrix[6],const exr_draw_sink_ex *sink,const exr_control *control,exr_error *e) {
+  const double identity[6]={1,0,0,1,0,0};double transform[6];exr_draw_sink_ex consumer;
+  exr_error local={0};exr_status status;size_t i;
+  status=exr_draw_sink_snapshot(sink,&consumer,e);if(status!=EXR_OK) return status;
+  if(!d || page>=d->count || (!consumer.base.path && !consumer.base.image && !consumer.base.clip && !consumer.base.state) || d->busy)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant extended page draw");
+  memcpy(transform,matrix ? matrix : identity,sizeof(transform));
+  for(i=0;i<6;i++) if(!isfinite(transform[i]) || fabs(transform[i])>1e7) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed page drawing matrix");
+  d->busy=1;status=exr_control_poll(control,EXR_STAGE_RENDER,0,1,&local);
+  if(status==EXR_OK) status=d->draw_ex ? d->draw_ex(d->context,page,transform,&consumer,control,&local) : d->draw(d->context,page,transform,&consumer.base,control,&local);
+  if(status==EXR_OK && local.code!=EXR_OK) status=local.code;
+  if(status==EXR_OK) status=exr_control_poll(control,EXR_STAGE_RENDER,1,1,&local);
+  return provider_end(d,status,&local,e);
+}
 exr_status exr_fixed_render(exr_fixed_document *d,size_t page,double scale,const exr_fixed_render_options *options,exr_bitmap *out,exr_error *e) {
-  exr_canvas_config config={0}; exr_canvas *canvas=NULL; exr_draw_sink sink={0}; exr_viewport view; exr_path_segment clip[5]={0}; exr_status status;
+  exr_canvas_config config={0}; exr_canvas *canvas=NULL; exr_draw_sink_ex sink={0}; exr_viewport view; exr_path_segment clip[5]={0}; exr_status status;int gray=0;
   if(out) memset(out,0,sizeof(*out));
   if(!d || page>=d->count || !out || d->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant fixed page render");
   if(options) { config.channels=options->channels; config.background=options->background; config.mask_budget=options->mask_budget; config.control=options->control; }
   else { config.channels=4; config.background=0xffffffff; }
+  if(config.channels==1 && d->draw_ex) { gray=1;config.channels=4;config.background|=255; }
   if(exr_control_cancel(&config.control,e)!=EXR_OK) return EXR_CANCELLED;
   status=exr_viewport_create(&d->pages[page].geometry,scale,&view,e); if(status!=EXR_OK) return status;
   if(view.width>16384 || view.height>16384) return exr_fail(e,EXR_LIMIT,"Fixed page bitmap dimensions exceed 16384");
@@ -198,8 +217,11 @@ exr_status exr_fixed_render(exr_fixed_document *d,size_t page,double scale,const
   clip[2].verb=EXR_PATH_LINE; clip[2].points[0]=(exr_path_point){view.width,view.height};
   clip[3].verb=EXR_PATH_LINE; clip[3].points[0]=(exr_path_point){0,view.height}; clip[4].verb=EXR_PATH_CLOSE;
   status=exr_canvas_clip(canvas,clip,5,NULL,EXR_FILL_NONZERO,e);
-  if(status==EXR_OK) status=exr_canvas_get_sink(canvas,&sink,e);
-  if(status==EXR_OK) status=exr_fixed_draw(d,page,view.matrix,&sink,&config.control,e);
+  sink.struct_size=sizeof(sink);
+  if(status==EXR_OK) status=exr_canvas_get_sink_ex(canvas,&sink,e);
+  if(status==EXR_OK) status=exr_fixed_draw_ex(d,page,view.matrix,&sink,&config.control,e);
   if(status==EXR_OK) status=exr_canvas_take(canvas,out,e);
+  if(status==EXR_OK && gray) status=exr_bitmap_to_gray(out,&config.control,e);
+  if(status!=EXR_OK) exr_bitmap_free(out);
   exr_canvas_free(canvas); return status;
 }

@@ -151,6 +151,47 @@ static int line_parameter(content_reader *r,const char *name,double value) {
   }
   return 1;
 }
+exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *present,exr_error *e) {
+  uint32_t id;const exr_pdf_value *v;int isolated=0;exr_status status;const char *keys[]={"I","K"};size_t i;
+  *present=0;status=resolved(file,group,&group,e);if(status!=EXR_OK) return status;
+  v=exr_pdf_value_at(file,group);if(!v || v->kind==EXR_PDF_NULL) return EXR_OK;
+  if(v->kind!=EXR_PDF_DICT) return exr_fail(e,EXR_FORMAT,"PDF transparency group is not a dictionary");
+  if(resolved(file,exr_pdf_get(file,group,"S"),&id,e)!=EXR_OK) return e->code;
+  if(!name_is(file,id,"Transparency")) return exr_fail(e,EXR_FORMAT,"Invalid PDF transparency group subtype");
+  for(i=0;i<2;i++) {
+    if(resolved(file,exr_pdf_get(file,group,keys[i]),&id,e)!=EXR_OK) return e->code;
+    v=exr_pdf_value_at(file,id);if(!v || v->kind==EXR_PDF_NULL) continue;
+    if(v->kind!=EXR_PDF_BOOL) return exr_fail(e,EXR_FORMAT,"PDF group flag is not boolean");
+    if(!i) isolated=v->u.integer!=0;else if(v->u.integer) return exr_fail(e,EXR_UNSUPPORTED,"PDF knockout groups are not implemented yet");
+  }
+  if(!page && !isolated) return exr_fail(e,EXR_UNSUPPORTED,"PDF non-isolated groups are not implemented yet");
+  if(resolved(file,exr_pdf_get(file,group,"CS"),&id,e)!=EXR_OK) return e->code;
+  v=exr_pdf_value_at(file,id);
+  if(v && v->kind!=EXR_PDF_NULL && !name_is(file,id,"DeviceRGB")) return exr_fail(e,EXR_UNSUPPORTED,"PDF group blending space requires DeviceRGB");
+  *present=1;return EXR_OK;
+}
+static int blend_name(exr_pdf_file *file,uint32_t id,exr_blend_mode *mode) {
+  static const char *names[]={"Normal","Multiply","Screen","Overlay","Darken","Lighten","ColorDodge","ColorBurn",
+    "HardLight","SoftLight","Difference","Exclusion","Hue","Saturation","Color","Luminosity"};size_t i;
+  if(name_is(file,id,"Compatible")) { *mode=EXR_BLEND_NORMAL;return 1; }
+  for(i=0;i<sizeof(names)/sizeof(*names);i++) if(name_is(file,id,names[i])) { *mode=(exr_blend_mode)i;return 1; }
+  return 0;
+}
+static exr_status blend_mode(content_reader *r,uint32_t id,exr_error *error) {
+  const exr_pdf_value *v=exr_pdf_value_at(r->file,id);uint32_t at;int chosen=0;
+  r->state.paint.blend=EXR_BLEND_NORMAL;
+  if(v->kind==EXR_PDF_NAME) { (void)blend_name(r->file,id,&r->state.paint.blend);return EXR_OK; }
+  if(v->kind!=EXR_PDF_ARRAY) return exr_fail(error,EXR_FORMAT,"PDF BM must be a name or name array");
+  for(at=v->first;at!=EXR_PDF_NONE;at=exr_pdf_value_at(r->file,at)->next) {
+    uint32_t candidate;
+    if(++r->operations>1048576) return exr_fail(error,EXR_LIMIT,"PDF blend selection exceeds operation budget");
+    if(!(r->operations&255) && exr_control_cancel(r->control,error)!=EXR_OK) return EXR_CANCELLED;
+    if(resolved(r->file,at,&candidate,error)!=EXR_OK) return error->code;
+    if(!exr_pdf_value_at(r->file,candidate) || exr_pdf_value_at(r->file,candidate)->kind!=EXR_PDF_NAME) return exr_fail(error,EXR_FORMAT,"PDF BM array contains a non-name");
+    if(!chosen && blend_name(r->file,candidate,&r->state.paint.blend)) chosen=1;
+  }
+  return EXR_OK;
+}
 static exr_status apply_ext_state(content_reader *r,uint32_t dictionary,exr_error *error) {
   const char *keys[]={"LW","LC","LJ","ML","CA","ca"}; size_t i; uint32_t id; double value;
   for(i=0;i<6;i++) {
@@ -167,7 +208,7 @@ static exr_status apply_ext_state(content_reader *r,uint32_t dictionary,exr_erro
     if(set_dash(r,r->file,array,phase,error)!=EXR_OK) return error->code;
   }
   if(resolved(r->file,exr_pdf_get(r->file,dictionary,"BM"),&id,error)!=EXR_OK) return error->code;
-  if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL && !name_is(r->file,id,"Normal") && !name_is(r->file,id,"Compatible")) return exr_fail(error,EXR_FORMAT,"PDF blend modes are not implemented yet");
+  if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL && blend_mode(r,id,error)!=EXR_OK) return error->code;
   if(resolved(r->file,exr_pdf_get(r->file,dictionary,"SMask"),&id,error)!=EXR_OK) return error->code;
   if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL && !name_is(r->file,id,"None")) return exr_fail(error,EXR_FORMAT,"PDF soft-mask graphics states are not implemented yet");
   return EXR_OK;
@@ -308,11 +349,11 @@ static exr_status clip_bounds(content_reader *r,const double box[4],exr_error *e
 }
 /* Forms and Type3 CharProcs share one interpreter, recursion guard and work
    budget. A glyph may contain its own BT/ET while the caller stays inside BT. */
-static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,const double ctm[6],const double *box,unsigned glyph,exr_error *error) {
+static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,const double ctm[6],const double *box,unsigned glyph,unsigned layer,exr_error *error) {
   content_state saved=r->state; content_path saved_path; double saved_matrix[6],saved_line[6];
   uint32_t saved_resources=r->resources; size_t saved_floor=r->floor,saved_depth=r->depth,i,n;
   unsigned saved_inside=r->inside,saved_compatibility=r->compatibility,saved_type3=r->type3,saved_declared=r->declared,saved_uncolored=r->uncolored;
-  const unsigned char *data; exr_status status;
+  const unsigned char *data; exr_status status;int started=0;
   if(r->form_depth==32) return exr_fail(error,EXR_LIMIT,"PDF Form/Type3 stream depth exceeds 32");
   for(i=0;i<r->form_depth;i++) if(r->forms[i]==id) return exr_fail(error,EXR_FORMAT,"Cyclic PDF Form/Type3 stream invocation");
   if(exr_control_cancel(r->control,error)!=EXR_OK) return EXR_CANCELLED;
@@ -323,6 +364,14 @@ static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,
   memset(&r->path,0,sizeof(r->path)); r->floor=r->depth; r->inside=0; r->compatibility=0; r->type3=glyph; r->declared=0;
   identity(r->matrix); identity(r->line); r->forms[r->form_depth++]=id;
   if(r->graphics && box) status=clip_bounds(r,box,error);
+  if(status==EXR_OK && layer) {
+    if(!r->callbacks.begin_layer || !r->callbacks.end_layer) status=exr_fail(error,EXR_FORMAT,"PDF consumer does not support isolated groups");
+    else {
+      status=r->callbacks.begin_layer(r->context,r->state.paint.fill.alpha,r->state.paint.blend,error);
+      if(status==EXR_OK && error->code!=EXR_OK) status=error->code;
+      if(status==EXR_OK) { started=1;r->state.paint.fill.alpha=r->state.paint.stroke.alpha=1;r->state.paint.blend=EXR_BLEND_NORMAL; }
+    }
+  }
   if(status==EXR_OK) status=exr_pdf_content_ops_resources(r->file,r->resources,data,n,content_operation,r,&r->inline_work,r->control,error);
   if(status==EXR_OK && glyph && !r->declared) status=exr_fail(error,EXR_FORMAT,"PDF Type3 CharProc requires d0 or d1 metrics");
   if(status==EXR_OK && (r->inside || r->depth!=saved_depth || r->compatibility)) status=exr_fail(error,EXR_FORMAT,"Unbalanced PDF Form/Type3 text/graphics state");
@@ -331,6 +380,11 @@ static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,
      error. A raster canvas may already be failed, but custom sinks can recover. */
   if(r->inside) { exr_error ignored={0}; (void)event(r,EXR_PDF_END_TEXT,&ignored); }
   for(i=r->depth;i>saved_depth;i--) { exr_error ignored={0}; (void)event(r,EXR_PDF_RESTORE,&ignored); }
+  if(started) {
+    exr_error cleanup={0};exr_status ended=r->callbacks.end_layer(r->context,status==EXR_OK,&cleanup);
+    if(ended==EXR_OK && cleanup.code!=EXR_OK) ended=cleanup.code;
+    if(status==EXR_OK && ended!=EXR_OK) { status=ended;*error=cleanup; }
+  }
   r->path_bytes-=r->path.capacity*sizeof(*r->path.segments); free(r->path.segments); r->path=saved_path;
   r->form_depth--; r->state=saved; r->resources=saved_resources; r->floor=saved_floor; r->depth=saved_depth;
   r->inside=saved_inside; r->compatibility=saved_compatibility; r->type3=saved_type3; r->declared=saved_declared; r->uncolored=saved_uncolored;
@@ -341,7 +395,7 @@ static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,
   return status;
 }
 static exr_status form(content_reader *r,uint32_t id,exr_error *error) {
-  double matrix[6],ctm[6],box[4]; uint32_t value,at,resources=EXR_PDF_NONE; size_t i; const exr_pdf_value *v;
+  double matrix[6],ctm[6],box[4]; uint32_t value,at,resources=EXR_PDF_NONE; size_t i; const exr_pdf_value *v;int layer=0;
   if(r->inside) return exr_fail(error,EXR_FORMAT,"PDF Form invoked inside a text object");
   v=exr_pdf_value_at(r->file,id);
   if(!v || v->kind!=EXR_PDF_STREAM) return exr_fail(error,EXR_FORMAT,"PDF Form is not a stream");
@@ -369,7 +423,7 @@ static exr_status form(content_reader *r,uint32_t id,exr_error *error) {
   }
   if(r->graphics) {
     if(resolved(r->file,exr_pdf_get(r->file,id,"Group"),&value,error)!=EXR_OK) return error->code;
-    if(value!=EXR_PDF_NONE && exr_pdf_value_at(r->file,value)->kind!=EXR_PDF_NULL) return exr_fail(error,EXR_FORMAT,"PDF transparency groups are not implemented yet");
+    if(exr_pdf_group_rgb(r->file,value,0,&layer,error)!=EXR_OK) return error->code;
   }
   if(resolved(r->file,exr_pdf_get(r->file,id,"Resources"),&value,error)!=EXR_OK) return error->code;
   if(value!=EXR_PDF_NONE && exr_pdf_value_at(r->file,value)->kind!=EXR_PDF_NULL) {
@@ -377,7 +431,7 @@ static exr_status form(content_reader *r,uint32_t id,exr_error *error) {
     resources=value;
   }
   if(!multiply(ctm,r->state.ctm,matrix)) return exr_fail(error,EXR_LIMIT,"PDF Form transform exceeds coordinate budget");
-  return stream_scope(r,id,resources,ctm,box,0,error);
+  return stream_scope(r,id,resources,ctm,box,0,(unsigned)layer,error);
 invalid:
   if(error->code!=EXR_OK) return error->code;
   return exr_fail(error,EXR_FORMAT,"Invalid PDF Form type, bounding box, matrix or resources");
@@ -387,7 +441,7 @@ static exr_status type3(content_reader *r,const exr_pdf_text_glyph *glyph,exr_er
   status=exr_pdf_font_type3(r->file,glyph->font,glyph->character.cid,&stream,&resources,matrix,error); if(status!=EXR_OK) return status;
   if(stream==EXR_PDF_NONE) return EXR_OK;
   if(!multiply(ctm,glyph->transform,matrix)) return exr_fail(error,EXR_LIMIT,"PDF Type3 glyph transform exceeds coordinate budget");
-  return stream_scope(r,stream,resources,ctm,NULL,1,error);
+  return stream_scope(r,stream,resources,ctm,NULL,1,0,error);
 }
 static exr_status content_operation(void *context,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,exr_error *error) {
   content_reader *r=context; double numbers[6]; size_t i; uint32_t id;

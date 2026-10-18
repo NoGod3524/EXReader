@@ -17,6 +17,10 @@ exr_status exr_pdf_raster_page(exr_pdf_file *file,const exr_pdf_page_info *page,
   if(out) memset(out,0,sizeof(*out));
   if(!file || !out) return exr_fail(e,EXR_ARGUMENT,"Missing PDF page raster input/output");
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+  { uint32_t group;int present;status=exr_pdf_resolve(file,exr_pdf_get(file,page->object,"Group"),&group,e);
+    if(status==EXR_OK) status=exr_pdf_group_rgb(file,group,1,&present,e);
+    if(status!=EXR_OK) return status;
+  }
   status=exr_pdf_page_viewport(page,scale,&view,e); if(status!=EXR_OK) return status;
   if(view.width>16384 || view.height>16384) return exr_fail(e,EXR_LIMIT,"PDF page bitmap dimensions exceed 16384");
   if(config) settings=*config; else { settings.channels=4; settings.background=0xffffffff; }
