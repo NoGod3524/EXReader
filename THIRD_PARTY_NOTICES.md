@@ -241,3 +241,12 @@ its official substring preprocessor. Neither libhyphen, its Perl script nor its
 patterns are linked into or distributed with EXReader. External dictionaries
 retain their separate data licenses; raw input hashes and explicit reference
 preprocessing are recorded in verification output.
+
+
+`tools/check_hyphen_replacements.py` contains an independent literal-overlay
+oracle for discretionary replacement records. Its optional Pyphen comparison
+uses an unmodified external Catalan dictionary and records its hash/counts.
+The external Hungarian dictionary's malformed rules are explicitly rejected,
+not edited and counted as successful input. Neither dictionary nor Pyphen is
+shipped or linked. The installed example uses EXReader's original synthetic
+patterns and no natural-language dictionary payload.

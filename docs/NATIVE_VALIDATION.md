@@ -2901,3 +2901,61 @@ simulator libraries plus Swift type checking. All 151 recorded source hashes
 match that Git snapshot. Three oracle DLL hashes and both benchmark executable
 hashes match the final measured binaries. The following verification-record
 commit changes documentation/metadata only.
+
+
+## Owned discretionary hyphenation queries (0.18.0 development)
+
+The new exr_hyphenator_query returns independent owned records containing the
+original byte point, erased source range, and literal before/after UTF-8 text.
+The original bitmap API deliberately omits spelling-changing opportunities.
+A new synchronous discretionary provider copies emitted text, validates ranges
+and UTF-8/grapheme protection, latches emit errors even if ignored, and returns
+no partial result. Legacy bitmap providers also work through the new query API.
+No existing public record/callback/ABI/schema is changed.
+
+Native patterns accept pattern/before=after[,start,cut], including empty text,
+boundary-adjacent changes and explicit zero-cut insertion. Optional per-trie
+replacement heads/records count against the existing byte budget; plain
+dictionaries do not allocate those arrays. Matching preserves normalized-source
+span mapping. Equal-weight ordinary rules win; conflicting equal-weight
+rewrites suppress the point. Pattern failures report original input byte offsets.
+Common bitmap matching avoids constructing an owned result or initializing the
+emit sink and uses the direct score-overlay loop.
+
+The native replacement test has 643 checks: byte-range/text ownership after
+source/dictionary release, native/provider/legacy behavior, ordering, duplicate
+and conflicting points, UTF-8/control/range rejection, canonical and fold-expansion
+edges, grapheme protection, cancellation, reentry, ignored emit errors and invalid
+provider statuses. It covers the 255-point/128-scalar replacement limits and
+exact dictionary budget versus one byte less. Growth of the trie after the final
+replacement rule checks optional head-array extension. The original dictionary
+test now has 333,040 checks, including legacy-provider query interoperability.
+The unchanged automatic-layout test has 223,015 checks.
+
+All 113 native tests pass on the final local Windows build. The new standard
+library/ctypes literal-overlay oracle checks 5,000 generated words / 8,479
+replacement opportunities (seed 180328). It uses direct string matching and
+associative weight/conflict reduction rather than native tries/records. An
+external Pyphen 0.17.2 comparison agrees on 3,011 words against the complete,
+unmodified UTF-8 Catalan dictionary, including nine spelling-changing outcomes.
+The external Hungarian file is rejected as EXR_FORMAT at the verified byte
+offset of an excess range argument; it also contains multiple odd points in a
+rewrite region and adjacent weights. It is neither edited nor counted as passing.
+
+The five-language ordinary word oracle still agrees on 19,051 words / 26,761
+breaks with unchanged inputs. The canonical-offset oracle passes 47,955 queries;
+the compound literal oracle passes 10,075 queries. The optional libhyphen
+comparison retains its 780 explicitly classified strict-minimum differences
+and 1,015 exact real separator matches. Reports record the final DLL hash.
+Installed C (including actual new-query records), C++ and JNI -Xcheck:jni smoke
+pass against matching installed DLL bytes. Desktop CTest includes both Python
+oracles; sanitizer CTest excludes their unsanitized ctypes hosts and runs the
+111 native tests, including all C replacement/ownership/error cases.
+
+This is the native query/data step. Current EPUB layout, page carry/checkpoints
+and Swift/JNI pagers still consume ordinary bitmap opportunities. Automatic
+replacement rendering, its selection/hit mappings, casing policy and conditional
+rewriting of compound subparts remain required before claiming full layout
+support. Input/output/source/binary provenance is under
+benchmarks/0.18.0-hyphen-replacements-windows. External dictionaries/reference
+libraries remain development inputs, not installed SDK dependencies.

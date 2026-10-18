@@ -140,6 +140,11 @@ static void providers(void) {
   exr_control c={cancelled,NULL,&s};
   p.struct_size=0; CHECK(exr_hyphenator_create(&p,&h,&error)==EXR_ARGUMENT && !h && !s.releases); p.struct_size=sizeof(p);
   OK(exr_hyphenator_create(&p,&h,&error)); s.self=h; breaks(h,"EN-US","abcd",1,SIZE_MAX); CHECK(s.calls==1);
+  { exr_hyphenation *result=NULL;size_t n;const exr_hyphen_break *items;
+    OK(exr_hyphenator_query(h,"EN-US","abcd",4,NULL,&result,&error));items=exr_hyphenation_breaks(result,&n);
+    CHECK(n==1 && items[0].point==1 && items[0].start==1 && items[0].end==1 && !items[0].before_size && !items[0].after_size);
+    exr_hyphenation_free(result);
+  }
   s.mode=1; CHECK(exr_hyphenator_breaks(h,"en-US","abcd",4,out,NULL,&error)==EXR_IO); CHECK(!out[0] && !out[1] && !out[2] && !out[3] && !out[4]);
   s.mode=2; CHECK(exr_hyphenator_breaks(h,"en-US","abcd",4,out,NULL,&error)==EXR_FORMAT && !out[1]);
   s.mode=0; CHECK(exr_hyphenator_breaks(h,"en-US","éé",4,out,NULL,&error)==EXR_FORMAT && !out[1]);
