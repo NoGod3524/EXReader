@@ -40,7 +40,7 @@
     }
   ],
   "strict_minimum_reference_differences": 780,
-  "library_sha256": "f2451ce9751cfc9b383dc67caf7abf0fdb1744f425d9443fb5d9f5425616e7af",
+  "library_sha256": "8f0195efe480f7751dc58a723c5536e9660472dc610f84757182e38776af455c",
   "reference_sha256": "84489b8977769aaa3a7657d11f77a86d6b68fb89142369da4a3b8343b0fe4d36",
   "preprocessor_sha256": "09a7811d80b7b3ecefd56b61a2ea8986669339f4e60c6136742aa6445ac07a72",
   "reference_input": "max-merge duplicate patterns then official substring preprocessing; literal/native inputs unchanged"

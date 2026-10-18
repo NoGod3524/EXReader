@@ -1,7 +1,7 @@
 {
   "oracle": "Pyphen 0.17.2",
   "seed": 180325,
-  "library_sha256": "f2451ce9751cfc9b383dc67caf7abf0fdb1744f425d9443fb5d9f5425616e7af",
+  "library_sha256": "8f0195efe480f7751dc58a723c5536e9660472dc610f84757182e38776af455c",
   "dictionaries": [
     {
       "language": "en_US",

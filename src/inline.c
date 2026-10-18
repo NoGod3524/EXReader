@@ -707,6 +707,20 @@ static void prune_edits(exr_line_buffer *b,size_t through) {
   size_t i,n=0;for(i=0;i<b->edit_count;i++) if(b->edits[i].point>through) b->edits[n++]=b->edits[i];
   b->edit_count=n;
 }
+/* A zero-cut insertion and the following original grapheme share a source
+   start. Keep one complete source cluster: hit testing needs its original end,
+   and fitting must consume that grapheme even when the inserted text clips. */
+static void merge_inserted_cluster(exr_glyph *glyphs,size_t count) {
+  size_t i,j,k;
+  for(i=0;i<count;i=j) {
+    size_t end=glyphs[i].cluster_end;j=i+1;
+    while(j<count && glyphs[j].cluster_start==glyphs[i].cluster_start) {
+      if(glyphs[j].cluster_end>end) end=glyphs[j].cluster_end;
+      j++;
+    }
+    for(k=i;k<j;k++) { glyphs[k].cluster_end=end;if(k>i) glyphs[k].boundaries=0; }
+  }
+}
 static exr_status replacement_carry(flow *f,exr_line_buffer *b) {
   exr_hyphen_edit edit=b->edits[b->rewrite-1];size_t at=raw_at(b,edit.point),prefix=0,i,unready=b->run.glyph_count-b->ready;
   size_t extra_cluster=b->cluster_start-b->ready,tail=b->raw.glyph_count-b->raw_end;exr_glyph anchor=b->raw.glyphs[at];exr_status status;
@@ -719,6 +733,7 @@ static exr_status replacement_carry(flow *f,exr_line_buffer *b) {
   memmove(b->raw.glyphs+prefix,b->raw.glyphs+b->raw_end,tail*sizeof(*b->raw.glyphs));
   if(prefix) memcpy(b->raw.glyphs,b->line.glyphs,prefix*sizeof(*b->raw.glyphs));
   b->raw.glyph_count=prefix+tail;
+  if(prefix && edit.end==edit.point) merge_inserted_cluster(b->raw.glyphs,b->raw.glyph_count);
   /* Remaining dictionary points were computed for the unmodified word. Do not
      apply them to changed spelling without a fresh mapped-word query. */
   b->blocked_until=edit.until;
