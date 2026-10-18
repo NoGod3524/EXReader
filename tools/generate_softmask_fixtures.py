@@ -1,59 +1,184 @@
 
 #!/usr/bin/env python3
-"""Original graphics-state soft-mask fixtures (ISO 32000-1 11.6.5.2)."""
+"""Graphics-state soft-mask scenes (ISO 32000-1 11.6.5.2).
+
+The mask is a solid rectangle or a flat grey, so the expected pixel at every
+probe is analytic: out = m * blend(backdrop, element) + (1 - m) * backdrop.
+"""
 # SPDX-License-Identifier: GPL-3.0-only
 import hashlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / 'tests/fixtures/pdf-blend'
+CELL = 16
+MODES = ['Normal', 'Multiply', 'Screen', 'Darken']
+BG = (255, 0, 0)
+FG = (0, 255, 0)
 
 
-def build(name, objects, page_extra, content):
-    body = content.encode()
-    objects = dict(objects)
-    objects[4] = b'<< /Length ' + str(len(body)).encode() + b' >>\nstream\n' + body + b'\nendstream'
-    out = bytearray(b'%PDF-1.7\n')
-    offsets = {}
-    for i in sorted(objects):
-        offsets[i] = len(out)
-        out += str(i).encode() + b' 0 obj\n' + objects[i] + b'\nendobj\n'
-    xref = len(out)
-    out += b'xref\n0 ' + str(len(objects) + 1).encode() + b'\n0000000000 65535 f \n'
-    for i in sorted(objects):
-        out += ('%010d 00000 n \n' % offsets[i]).encode()
-    out += b'trailer\n<< /Size ' + str(len(objects) + 1).encode() + b' /Root 1 0 R >>\nstartxref\n' + str(xref).encode() + b'\n%%EOF\n'
-    (ROOT / (name + '.pdf')).write_bytes(bytes(out))
-    return hashlib.sha256(bytes(out)).hexdigest()
+def blend_channel(b, s, mode):
+    if mode == 'Normal': return s
+    if mode == 'Multiply': return b * s
+    if mode == 'Screen': return b + s - b * s
+    if mode == 'Darken': return min(b, s)
+    raise ValueError(mode)
 
 
-def form(body, bbox=b'[0 0 16 16]'):
-    data = body.encode()
-    return b'<< /Type /XObject /Subtype /Form /BBox ' + bbox + b' /Group << /S /Transparency /I true >> /Resources << >> /Length ' + str(len(data)).encode() + b' >>\nstream\n' + data + b'\nendstream'
+def cell_pixels(mask_fn, mode='Normal'):
+    bg = tuple(v / 255 for v in BG)
+    fg = tuple(v / 255 for v in FG)
+    blended = tuple(blend_channel(b, s, mode) for b, s in zip(bg, fg))
+    out = []
+    for y in range(CELL):
+        for x in range(CELL):
+            m = mask_fn(x, y)
+            out.append(tuple(m * v + (1 - m) * b for v, b in zip(blended, bg)))
+    return out
 
 
-def page(extra_resources):
-    return (b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 16 16] /Contents 4 0 R '
-            b'/Group << /S /Transparency /CS /DeviceRGB /I true >> /Resources << /ExtGState << ' + extra_resources + b' >> >> >>')
+def write_images(name, cells, width):
+    alpha = bytearray(width * CELL * 4)
+    white = bytearray(width * CELL * 4)
+    for index, pixels in enumerate(cells):
+        for y in range(CELL):
+            for x in range(CELL):
+                v = pixels[y * CELL + x]
+                i = ((CELL - 1 - y) * width + index * CELL + x) * 4
+                for k in range(3):
+                    alpha[i + k] = white[i + k] = int(max(0, min(255, round(v[k] * 255))))
+                alpha[i + 3] = white[i + 3] = 255
+    (ROOT / (name + '-alpha.rgba')).write_bytes(bytes(alpha))
+    (ROOT / (name + '-white.rgba')).write_bytes(bytes(white))
+    (ROOT / (name + '.mask')).write_bytes(bytes([1]) * (width * CELL))
+
+
+class PDF:
+    def __init__(self, width, height):
+        self.w, self.h = width, height
+        self.objects = [b'', b'', b'', b'']
+        self.forms = []
+
+    def add(self, body):
+        self.objects.append(body)
+        return len(self.objects)
+
+    def form(self, body, bbox=b'[0 0 16 16]', group=b'/S /Transparency /I true', matrix=None):
+        data = body.encode() if isinstance(body, str) else body
+        extra = (b' /BBox ' + bbox if bbox else b'') + (b' /Matrix ' + matrix if matrix else b'')
+        return self.add(b'<< /Type /XObject /Subtype /Form' + extra + b' /Group << ' + group +
+                        b' >> /Resources << >> /Length ' + str(len(data)).encode() + b' >>\nstream\n' + data + b'\nendstream')
+
+    def cell(self, mask_dict, content, mode='Normal', bbox=b'[0 0 16 16]'):
+        gs = self.add(('<< /SMask ' + mask_dict + ' /BM /%s >>' % mode).encode())
+        body = content.encode()
+        return self.add(b'<< /Type /XObject /Subtype /Form /BBox ' + bbox + b' /Group << /S /Transparency /I true >> '
+                        b'/Resources << /ExtGState << /GS1 %d 0 R >> >> ' % gs
+                        + b'/Length ' + str(len(body)).encode() + b' >>\nstream\n' + body + b'\nendstream')
+
+    def finish(self, name, content):
+        data = content.encode()
+        self.objects[0] = b'<< /Type /Catalog /Pages 2 0 R >>'
+        self.objects[1] = b'<< /Type /Pages /Count 1 /Kids [3 0 R] >>'
+        self.objects[2] = ('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %d %d] /Contents 4 0 R '
+                           '/Group << /S /Transparency /CS /DeviceRGB /I true >> /Resources << /XObject << %s >> >> >>'
+                           % (self.w, self.h, ' '.join('/Fm%d %d 0 R' % (i, o) for i, o in self.forms))).encode()
+        self.objects[3] = b'<< /Length ' + str(len(data)).encode() + b' >>\nstream\n' + data + b'\nendstream'
+        out = bytearray(b'%PDF-1.7\n%\x80\x81\x82\x83\n')
+        offsets = [0]
+        for i, obj in enumerate(self.objects, 1):
+            offsets.append(len(out))
+            out += ('%d 0 obj\n' % i).encode() + obj + b'\nendobj\n'
+        xref = len(out)
+        out += ('xref\n0 %d\n0000000000 65535 f \n' % len(offsets)).encode()
+        for off in offsets[1:]:
+            out += ('%010d 00000 n \n' % off).encode()
+        out += ('trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n' % (len(offsets), xref)).encode()
+        (ROOT / (name + '.pdf')).write_bytes(bytes(out))
+        return hashlib.sha256(bytes(out)).hexdigest()
+
+
+def grid(name, specs):
+    pdf = PDF(len(specs) * CELL, CELL)
+    content = []
+    for index, spec in enumerate(specs):
+        mask = pdf.form(spec['mask'])
+        cell = pdf.cell(spec['dict'](mask), spec['content'], spec.get('mode', 'Normal'))
+        pdf.forms.append((index, cell))
+        content.append('q 1 0 0 1 %d 0 cm /Fm%d Do Q' % (index * CELL, index))
+    pdf.finish(name, '\n'.join(content))
+    write_images(name, [cell_pixels(spec['expect'], spec.get('mode', 'Normal')) for spec in specs], len(specs) * CELL)
 
 
 def main():
     ROOT.mkdir(parents=True, exist_ok=True)
-    # Alpha: the mask form paints an opaque left half, so only that half keeps the green fill.
-    objects = {
-        1: b'<< /Type /Catalog /Pages 2 0 R >>',
-        2: b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-        3: page(b'/GS1 5 0 R'),
-        5: b'<< /SMask << /S /Alpha /G 6 0 R >> >>',
-        6: form('1 1 1 rg 0 0 8 16 re f'),
-    }
-    build('softmask-alpha', objects, b'', '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 16 16 re f Q')
-    # Luminosity: the same mask but interpreted as luminance with a zero backdrop.
-    objects[5] = b'<< /SMask << /S /Luminosity /G 6 0 R >> >>'
-    build('softmask-luminosity', objects, b'', '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 16 16 re f Q')
-    # Explicit /None restores full painting.
-    objects[5] = b'<< /SMask /None >>'
-    build('softmask-none', objects, b'', '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 16 16 re f Q')
-    print('soft mask fixtures written')
+    shapes = [(0, 0, 16, 16), (0, 0, 8, 16), (8, 0, 16, 16), (4, 4, 12, 12)]
+    alpha = []
+    for mode in MODES:
+        for x0, y0, x1, y1 in shapes:
+            alpha.append({
+                'mask': '1 1 1 rg %d %d %d %d re f' % (x0, 16 - y1, x1 - x0, y1 - y0),
+                'dict': lambda m: '<< /S /Alpha /G %d 0 R >>' % m,
+                'content': '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 16 16 re f Q',
+                'mode': mode,
+                'expect': (lambda a, b, c, d: (lambda x, y: 1.0 if a <= x < c and b <= y < d else 0.0))(x0, y0, x1, y1),
+            })
+    grid('softmask-alpha-grid', alpha)
+
+    grey = [0, 64, 128, 192, 255]
+    bcs = [None, (0.5, 0.5, 0.5), (1.0, 1.0, 1.0)]
+    lum = []
+    for bc in bcs:
+        for level in grey:
+            v = level / 255
+            lum.append({
+                'mask': '%g %g %g rg 0 0 16 16 re f' % (v, v, v),
+                'dict': (lambda mv, bc=bc: '<< /S /Luminosity /G %d 0 R%s >>' % (
+                    mv, '' if bc is None else ' /BC [%g %g %g]' % bc)),
+                'content': '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 16 16 re f Q',
+                'expect': (lambda v: (lambda x, y: v))(v),
+            })
+    lum.append({
+        'mask': '0.5 0.5 0.5 rg 8 0 8 16 re f',
+        'dict': lambda m: '<< /S /Luminosity /G %d 0 R /BC [0 0 0] >>' % m,
+        'content': '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 16 16 re f Q',
+        'expect': lambda x, y: 0.5 if x >= 8 else 0.0,
+    })
+    grid('softmask-luminosity-grid', lum)
+
+    # Matrix: a 8-wide mask shifted by /Matrix [1 0 0 1 4 0] covers x 4..12.
+    pdf = PDF(CELL, CELL)
+    mask = pdf.form('1 1 1 rg 0 0 8 16 re f', bbox=b'[0 0 8 16]', matrix=b'[1 0 0 1 4 0]')
+    cell = pdf.cell('<< /S /Alpha /G %d 0 R >>' % mask, '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 16 16 re f Q')
+    pdf.forms.append((0, cell))
+    pdf.finish('softmask-matrix', 'q 1 0 0 1 0 0 cm /Fm0 Do Q')
+    # The mask moves to x 4..12, so the outer columns stay red.
+    write_images('softmask-matrix', [cell_pixels(lambda x, y: 1.0 if 4 <= x < 12 else 0.0)], CELL)
+    # BBox clips the mask form: content outside the box must not contribute.
+    pdf = PDF(CELL, CELL)
+    mask = pdf.form('1 1 1 rg 0 0 16 16 re f', bbox=b'[0 0 8 16]')
+    cell = pdf.cell('<< /S /Alpha /G %d 0 R >>' % mask, '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 16 16 re f Q')
+    pdf.forms.append((0, cell))
+    pdf.finish('softmask-bbox', 'q 1 0 0 1 0 0 cm /Fm0 Do Q')
+    write_images('softmask-bbox', [cell_pixels(lambda x, y: 1.0 if x < 8 else 0.0)], CELL)
+
+    # Malformed dictionaries: each must be refused, never partially honoured.
+    def bad(name, dict_for, mask_body='1 1 1 rg 0 0 16 16 re f', bbox=b'[0 0 16 16]'):
+        pdf = PDF(CELL, CELL)
+        mask = pdf.form(mask_body, bbox=bbox)
+        text = dict_for(pdf, mask)
+        cell = pdf.cell(text, '1 0 0 rg 0 0 16 16 re f q /GS1 gs 0 1 0 rg 0 0 16 16 re f Q')
+        pdf.forms.append((0, cell))
+        pdf.finish(name, 'q 1 0 0 1 0 0 cm /Fm0 Do Q')
+
+    bad('softmask-bad-0', lambda pdf, m: '%d 0 R' % pdf.add(b'42'))
+    bad('softmask-bad-1', lambda pdf, m: '<< /S /Bad /G %d 0 R >>' % m)
+    bad('softmask-bad-2', lambda pdf, m: '<< /S /Alpha >>')
+    bad('softmask-bad-3', lambda pdf, m: '<< /S /Alpha /G %d 0 R >>' % pdf.add(b'42'))
+    bad('softmask-bad-4', lambda pdf, m: '<< /S /Luminosity /G %d 0 R /BC [1 2] >>' % m)
+    bad('softmask-bad-5', lambda pdf, m: '<< /S /Alpha /G %d 0 R /TR << /FunctionType 2 /Domain [0 1] /C0 [0] /C1 [1] /N 1 >> >>' % m)
+    bad('softmask-bad-6', lambda pdf, m: '<< /S /Alpha /G %d 0 R >>' % m, bbox=None)
+    bad('softmask-bad-7', lambda pdf, m: '<< /S /Alpha /G %d 0 R >>' % m, bbox=b'[16 0 0 16]')
+    print('soft mask scenes written')
 
 
 if __name__ == '__main__':
