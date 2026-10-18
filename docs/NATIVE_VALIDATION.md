@@ -3997,3 +3997,22 @@ Abort (`commit=0` without residual workspace), 32-level depth, cancellation, bud
 per pixel) and legacy-consumer regressions cover the remaining acceptance items. CI run
 39164911938 passed all seven jobs; locally 120/120 CTests and 954,979 blend assertions pass with
 a reference difference of 0 on every scene.
+
+## Graphics-state soft masks (0.19.0 development)
+
+Commits `e2d86b3`, `0b08537` and `4924d8c` implement ISO 32000-1 11.6.5.2 soft masks:
+`/S /Alpha|/Luminosity`, the `G` form rendered into a page-sized mask clipped to its
+transformed `/BBox`, `/BC` backdrops with one, three or four components, exponential
+`/TR` functions (`C0`, `C1`, `N`) and `/None`; the mask rides on the graphics state so
+`q`/`Q` restore it. Masked painting covers paths, glyphs, images and compound fill/stroke.
+
+Scenes in `native-blend`: 16 Alpha (four shapes x four blend modes), 16 Luminosity
+(five grey levels x three backdrops plus a half-coverage cell), a `/Matrix` shift, a
+`/BBox` clip, a transfer-function cell and a `q/Q` restoration cell, plus eight malformed
+dictionaries that are refused with `EXR_FORMAT` (or `EXR_UNSUPPORTED` for an unsupported
+transfer type) and no partial image. Local Windows Release: 120/120 CTests and 1,038,163
+blend assertions; CI run 39168413465 passed all seven jobs.
+
+Open for the work package: the mask form's `/Group /CS` is not validated yet (a non-RGB
+group would be treated as RGB) and there is no scene where the mask is set outside a form
+while the painting happens inside it.
