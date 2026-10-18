@@ -3903,3 +3903,17 @@ CI jobs are recorded in the new benchmark metadata after CI completes.
 Remaining: knockout, graphics-state Alpha/Luminosity masks, non-RGB group spaces,
 cropped working buffers, joint subpixel compound coverage, and the complete
 PDF/EPUB/reading-SDK roadmap. See HANDOFF.md for measurable follow-up gates.
+
+
+Exact code commit ec8d4a98cdd6e63fa10a67e9a8521dfac743dd3e passed all six jobs
+in [CI run 39148719500](https://github.com/NoGod3524/EXReader/actions/runs/39148719500):
+Windows/Linux/macOS each 119 CTests, installed C/C++/JNI, platform-font table
+continuation, installed table memory and new PDF benchmarks; macOS Swift;
+ASan/UBSan/leaks 116 CTests; Android ARM64; iOS/iPadOS arm64 device/simulator
+libraries and Swift checks. All 1237 recorded Git blob hashes, 891 prior fixture
+files, 57 prior blend references, 75 manifest entries and four DLL copies were
+verified. DLL is 5,662,055 bytes, +10,319 versus the isolated-group baseline;
+SHA256 6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4.
+Final records: `benchmarks/0.18.0-pdf-nonisolated-windows/metadata.json`.
+The complete handoff is `HANDOFF.md`; this batch is complete and further feature
+work is paused at the user's request. The overall compatibility goal remains open.

@@ -1,0 +1,25 @@
+{
+  "engine_version": "0.18.0",
+  "open_ms": 0.4701,
+  "first_render_ms": 386.5614,
+  "repaint_ms_samples": [
+    451.3848,
+    436.2633,
+    389.0208,
+    416.5065,
+    382.24,
+    400.9613,
+    425.642,
+    366.8304
+  ],
+  "repaint_p50_ms": 400.9613,
+  "repaint_p95_ms": 451.3848,
+  "baseline_peak_rss_bytes": 25870336,
+  "peak_rss_bytes": 40382464,
+  "incremental_peak_rss_bytes": 14512128,
+  "rgba_sha256": "c2fdcaed3e3934f2066ea2823d69fa5508d28ff29829e525809572791fcb1a0f",
+  "dimensions": [
+    1024,
+    640
+  ]
+}

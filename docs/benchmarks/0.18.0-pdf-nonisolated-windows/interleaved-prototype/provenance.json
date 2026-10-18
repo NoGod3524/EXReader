@@ -1,0 +1,10 @@
+{
+  "scope": "Internal uncommitted interleaved-float prototype, not a released baseline. Native build inputs reproduced by decompressing native.patch.gz and applying native.patch to parent commit; new test/reference inputs are the same as the final batch. Local 119 CTests passed before measurement.",
+  "parent_commit": "2fe46c6c288c3691ca0bf4caedaac90f87300b68",
+  "patch_sha256": "fe6b57f291a429241e8816f84111ac00555612cfa6abf2b49f1225bf32c9dd13",
+  "compressed_patch": {
+    "file": "native.patch.gz",
+    "sha256": "71554525d79cacb6fcb0b7aa990b41d0c4e70fdfa0dea5b83044b76da5955267",
+    "uncompressed_sha256": "fe6b57f291a429241e8816f84111ac00555612cfa6abf2b49f1225bf32c9dd13"
+  }
+}
