@@ -41,7 +41,7 @@ typedef struct {
   exr_bidi *analysis;
   size_t *offsets, count;
   size_t first_node;
-  int plan_risky,prepared;
+  int plan_risky,prepared,window_safe; /* -1 unknown; safety cache belongs to this cursor. */
   size_t *refs;
 } exr_inline_bidi;
 typedef struct {

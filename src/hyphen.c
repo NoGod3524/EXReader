@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "hyphen_internal.h"
 #include "normalize_internal.h"
+#include "case_internal.h"
 #include "hyphen_unicode_data.h"
 #include "bidi_internal.h"
 
@@ -44,6 +45,7 @@ typedef struct {
 struct exr_hyphenator {
   size_t refs,bytes,budget;
   int busy,replacements;
+  exr_hyphen_case_policy case_policy;
   exr_hyphen_provider provider;
   exr_hyphen_discretionary_provider discretionary;
   hy_dictionary *dictionaries;
@@ -553,7 +555,52 @@ static exr_status overlay(hy_work *w,const hy_trie *d,const uint32_t *word,size_
   }
   return EXR_OK;
 }
-static exr_status native_match(hy_work *w,hy_dictionary *d,const uint32_t *scalars,
+/* Map only the generated sides in the complete logical changed-word context.
+   Moving a title initial into generated text also lowercases a displaced original
+   capital; deleting it can pull in the next source grapheme to retain the title. */
+static exr_status case_adjust(hy_work *w,const char *language,const uint32_t *source,const size_t *offsets,
+                               size_t count,const unsigned char *boundaries,unsigned style,size_t initial,
+                               size_t first,size_t last,exr_hyphen_break *item,char buffer[514]) {
+  uint32_t text[WORD_SCALARS+128];size_t nb=0,na=0,at=0,n=first,i,end=last,first_case=SIZE_MAX,bytes=0,output_count=0;
+  exr_status status;
+  if(style==EXR_CASE_LITERAL || !changing(item)) return EXR_OK;
+  memcpy(text,source,first*sizeof(*text));
+  while(at<item->before_size) { if(!exr_next(item->before,item->before_size,&at,text+n)) return exr_fail(w->error,EXR_ENCODING,"Invalid case replacement text");n++;nb++; }
+  at=0;
+  while(at<item->after_size) { if(!exr_next(item->after,item->after_size,&at,text+n)) return exr_fail(w->error,EXR_ENCODING,"Invalid case replacement text");n++;na++; }
+  if(style==EXR_CASE_TITLE && initial>=first) {
+    int generated_cased=0;
+    for(i=first;i<n;i++) generated_cased|=!!(exr_case_properties(text[i])&EXR_CASE_CASED);
+    if((initial<last && !generated_cased) || (initial>=last && generated_cased)) {
+      for(i=last;i<count && !(exr_case_properties(source[i])&EXR_CASE_CASED);i++) {}
+      if(i<count) {
+        end=i+1;while(end<count && !(boundaries[offsets[end]]&EXR_BOUNDARY_GRAPHEME)) end++;
+        item->end=offsets[end];
+      }
+    }
+  }
+  memcpy(text+n,source+last,(count-last)*sizeof(*text));n+=count-last;
+  for(i=0;i<n;i++) if(exr_case_properties(text[i])&EXR_CASE_CASED) { first_case=i;break; }
+  status=work(w,(nb+na+end-last)*n+n+count);if(status!=EXR_OK) return status;
+  for(i=first;i<first+nb+na+end-last;i++) {
+    uint32_t mapped[3];unsigned mode=style==EXR_CASE_TITLE ? (i==first_case ? EXR_CASE_TITLE : EXR_CASE_LOWER) : style;
+    unsigned j,length;
+    if(i==first+nb) { buffer[bytes++]=0;item->before_size=bytes-1; }
+    length=exr_case_map(text,n,i,mode,language,mapped);
+    if(length>128-output_count) return exr_fail(w->error,EXR_LIMIT,"Cased discretionary text exceeds 128 scalars");
+    output_count+=length;
+    for(j=0;j<length;j++) {
+      char encoded[5];exr_buffer scalar={encoded,0,sizeof(encoded)};
+      if(!exr_codepoint(&scalar,mapped[j])) return exr_fail(w->error,EXR_ENCODING,"Invalid cased scalar");
+      if(scalar.size>513-bytes) return exr_fail(w->error,EXR_LIMIT,"Cased discretionary text exceeds 512 bytes");
+      memcpy(buffer+bytes,encoded,scalar.size);bytes+=scalar.size;
+    }
+  }
+  if(!na && end==last) { buffer[bytes++]=0;item->before_size=bytes-1; }
+  item->before=buffer;item->after=buffer+item->before_size+1;item->after_size=bytes-item->before_size-1;
+  buffer[bytes]=0;return EXR_OK;
+}
+static exr_status native_match(hy_work *w,hy_dictionary *d,const char *language,const uint32_t *scalars,
                                 const size_t *offsets,size_t count,const unsigned char *boundaries,unsigned char *out,
                                 hy_choice *choices,hy_choice *chosen,hy_emitter *emit) {
   typedef struct { size_t first,last; } part;
@@ -561,7 +608,8 @@ static exr_status native_match(hy_work *w,hy_dictionary *d,const uint32_t *scala
   uint32_t word[NORMAL_SCALARS];exr_normal_scalar normalized[NORMAL_SCALARS];
   size_t folded_at[WORD_SCALARS+1],original_at[NORMAL_SCALARS+1],n=0,i,j,graphemes[WORD_SCALARS+1]={0};
   unsigned char scores[FOLDED_SCALARS+1]={0},selected[WORD_SCALARS+1]={0};part pending[WORD_SCALARS];size_t pending_count=0;
-  unsigned left,right;int separator=0;
+  unsigned left,right,style=EXR_CASE_LITERAL;size_t initial=SIZE_MAX;int separator=0;
+  if(w->owner->case_policy==EXR_HYPHEN_CASE_WORD && choices) style=exr_case_word(scalars,count,&initial);
   root=&d->levels[0];left=d->left_override ? d->left_override : root->left ? root->left : 2;
   right=d->right_override ? d->right_override : root->right ? root->right : 2;
   status=canonical_fold(w,d->language,scalars,count,normalized,NORMAL_SCALARS,&n);if(status!=EXR_OK) return status;
@@ -622,7 +670,7 @@ publish:
   for(i=1;i<count;i++) if(selected[i] && graphemes[i]>=left && graphemes[count]-graphemes[i]>=right) {
     const hy_choice *choice=chosen ? &chosen[i] : NULL;
     if(choice && choice->change) {
-      size_t first=SIZE_MAX,last=SIZE_MAX;const hy_change *change=choice->change;exr_hyphen_break item;
+      size_t first=SIZE_MAX,last=SIZE_MAX;const hy_change *change=choice->change;exr_hyphen_break item;char cased[514];
       if(change->kind==2) continue;
       for(j=0;j<=count;j++) {
         if(folded_at[j]==choice->first) first=j;
@@ -632,6 +680,7 @@ publish:
           (first && !(boundaries[offsets[first]]&EXR_BOUNDARY_GRAPHEME)) ||
           (last<count && !(boundaries[offsets[last]]&EXR_BOUNDARY_GRAPHEME))) continue;
       item=(exr_hyphen_break){offsets[i],offsets[first],offsets[last],change->text,change->text+change->before+1,change->before,change->after};
+      status=case_adjust(w,language,scalars,offsets,count,boundaries,style,initial,first,last,&item,cased);if(status!=EXR_OK) return status;
       if(emit) { status=emit_break(emit,&item,w->error);if(status!=EXR_OK) return status; }
       else if(!changing(&item)) out[offsets[i]]=1;
     } else out[offsets[i]]=1;
@@ -646,7 +695,7 @@ static exr_status native_breaks(hy_work *w,const char *language,const uint32_t *
     choices=calloc(NORMAL_SCALARS+3+WORD_SCALARS+1,sizeof(*choices));
     if(!choices) return exr_fail(w->error,EXR_MEMORY,"Discretionary matching scratch allocation failed");
   }
-  status=native_match(w,d,scalars,offsets,count,boundaries,out,choices,choices ? choices+NORMAL_SCALARS+3 : NULL,emit);
+  status=native_match(w,d,language,scalars,offsets,count,boundaries,out,choices,choices ? choices+NORMAL_SCALARS+3 : NULL,emit);
   free(choices);return status;
 }
 
@@ -666,12 +715,12 @@ exr_status exr_hyphenator_create_discretionary(const exr_hyphen_discretionary_pr
   h=calloc(1,sizeof(*h));if(!h) return exr_fail(e,EXR_MEMORY,"Hyphenator allocation failed");
   h->discretionary=*provider;h->refs=1;h->bytes=sizeof(*h);*out=h;return exr_fail(e,EXR_OK,"");
 }
-exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs,size_t count,size_t budget,
-                                          const exr_control *control,exr_hyphenator **out,exr_error *e) {
+exr_status exr_hyphenator_create_patterns_ex(const exr_hyphen_pattern_input *inputs,size_t count,size_t budget,
+                                          exr_hyphen_case_policy case_policy,const exr_control *control,exr_hyphenator **out,exr_error *e) {
   exr_hyphenator *h; hy_work w={0}; size_t i,j,total=0; exr_status status=EXR_OK;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing hyphenator output");
   *out=NULL;
-  if(!inputs || !count || count>64 || budget>EXR_MAX_INPUT) return exr_fail(e,EXR_ARGUMENT,"Invalid hyphenation dictionary registry");
+  if((case_policy!=EXR_HYPHEN_CASE_LITERAL && case_policy!=EXR_HYPHEN_CASE_WORD) || !inputs || !count || count>64 || budget>EXR_MAX_INPUT) return exr_fail(e,EXR_ARGUMENT,"Invalid hyphenation dictionary registry");
   for(i=0;i<count;i++) {
     char key[256];
     if(inputs[i].struct_size!=sizeof(*inputs) || (!inputs[i].patterns && inputs[i].size) || !exr_hyphen_language(inputs[i].language,key)) return exr_fail(e,EXR_ARGUMENT,"Invalid hyphenation dictionary input");
@@ -684,6 +733,7 @@ exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs
   if(h->bytes>h->budget || count*sizeof(*h->dictionaries)>h->budget-h->bytes) { status=exr_fail(e,EXR_LIMIT,"Hyphenation registry byte budget exceeded"); goto failed; }
   h->dictionaries=calloc(count,sizeof(*h->dictionaries));
   if(!h->dictionaries) { status=exr_fail(e,EXR_MEMORY,"Hyphenation registry allocation failed"); goto failed; }
+  h->case_policy=case_policy;
   h->count=count; h->bytes+=count*sizeof(*h->dictionaries); w.owner=h; w.control=control; w.error=e;
   for(i=0;i<count;i++) {
     exr_hyphen_language(inputs[i].language,h->dictionaries[i].language);
@@ -713,6 +763,10 @@ exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs
   *out=h; return exr_fail(e,EXR_OK,"");
 failed:
   exr_hyphenator_free(h); return status;
+}
+exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs,size_t count,size_t budget,
+                                          const exr_control *control,exr_hyphenator **out,exr_error *e) {
+  return exr_hyphenator_create_patterns_ex(inputs,count,budget,EXR_HYPHEN_CASE_LITERAL,control,out,e);
 }
 exr_status exr_hyphenator_ref(exr_hyphenator *h,exr_error *e) {
   if(!h || h->refs==SIZE_MAX) return exr_fail(e,EXR_LIMIT,"Invalid hyphenator reference count");
@@ -801,7 +855,7 @@ unsigned exr_hyphenator_bidi_risk(exr_hyphenator *h,const char *language) {
   hy_dictionary *d;char key[256];
   if(!h || !exr_hyphen_language(language,key)) return 0;
   if(h->discretionary.hyphenate) return 3;
-  d=dictionary(h,key);return d ? (unsigned)d->unsafe | ((unsigned)d->complex<<1) : 0;
+  d=dictionary(h,key);return d ? (h->case_policy==EXR_HYPHEN_CASE_WORD && (d->levels[0].trie.change_count || d->levels[1].trie.change_count) ? 3u : (unsigned)d->unsafe | ((unsigned)d->complex<<1)) : 0;
 }
 int exr_hyphenator_replacements(const exr_hyphenator *h) {
   return h && (h->replacements || h->discretionary.hyphenate);

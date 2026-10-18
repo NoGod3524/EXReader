@@ -351,6 +351,24 @@ public final class Smoke {
                 check(inserted>0 && page.render().width==80);
             }
         }
+        try(EXReader.Publication caseBook=new EXReader.Publication(root.resolve("books/hyphen-case-insertion.epub").toString());
+            EXReader.Document caseChapter=caseBook.load(0);
+            EXReader.Pager casePager=caseChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,compoundConfig)) {
+            casePager.setHyphenation(new EXReader.HyphenDictionary[]{new EXReader.HyphenDictionary("de",
+                ".bbbb1bbbb./=abcdefghijklmnop,5,0 .abcd1efghijklmnopbbbb./d=ß,4,2 .ssfg1hijklmnopbbbb./g=ß,4,2 .ssij1klmnopbbbb.".getBytes(StandardCharsets.UTF_8),1,1)},0,EXReader.HyphenCasePolicy.WORD);
+            for(int index=0;index<2;index++) try(EXReader.ReflowPage page=casePager.next()) {
+                check(page!=null);int letters=0;
+                for(EXReader.Glyph g:page.snapshot().glyphs) {
+                    check((g.flags&~2559)==0 && (g.boundaries&~15)==0);
+                    if((g.flags&2048)!=0 && g.codepoint!='-' && g.codepoint!=0x2010) {
+                        check(g.codepoint>='A' && g.codepoint<='Z');letters++;
+                        check(g.start==4 && g.end==4 && g.clusterStart==4 && g.clusterEnd==5);
+                        long hit=page.hitTest(g.x+.1f,g.baseline-2);check(hit==4 || hit==5);
+                    }
+                }
+                check(letters>0 && page.render().width==80);
+            }
+        }
         System.out.println("JNI SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed");
     }
 }

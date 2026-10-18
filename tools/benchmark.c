@@ -166,6 +166,7 @@ static int example_main(int argc, char **argv) {
   exr_pager *pager = NULL;
   exr_hyphenator *hyphenator = NULL;
   const char *hyphen_language = NULL;
+  exr_hyphen_case_policy case_policy=EXR_HYPHEN_CASE_LITERAL;int saw_case=0;
   unsigned char *hyphen_patterns = NULL;
   size_t hyphen_size = 0, inserted = 0;
   double hyphen_ms = 0;
@@ -208,10 +209,14 @@ static int example_main(int argc, char **argv) {
       saw_max = 1;
     } else if (!strcmp(argv[arg], "--hyphens") && !hyphen_language && arg + 1 < argc)
       hyphen_language = argv[++arg];
-    else
+    else if (!strcmp(argv[arg], "--hyphen-case") && !saw_case && arg+1<argc) {
+      const char *value=argv[++arg];saw_case=1;
+      if(!strcmp(value,"word")) case_policy=EXR_HYPHEN_CASE_WORD;
+      else if(strcmp(value,"literal")) goto usage;
+    } else
       goto usage;
   }
-  if (hyphen_language && generated_mode) goto usage;
+  if ((saw_case && !hyphen_language) || (hyphen_language && generated_mode)) goto usage;
   total_pages_known = !paging;
   if (now_ms() < 0 || !peak_rss(&baseline)) {
     fprintf(stderr, "Monotonic clock or process peak RSS unavailable\n");
@@ -268,7 +273,7 @@ static int example_main(int argc, char **argv) {
   if (hyphen_language) {
     exr_hyphen_pattern_input input = {sizeof(input),hyphen_language,hyphen_patterns,hyphen_size,0,0};
     at = now_ms();
-    status = exr_hyphenator_create_patterns(&input,1,0,NULL,&hyphenator,&error);
+    status = exr_hyphenator_create_patterns_ex(&input,1,0,case_policy,NULL,&hyphenator,&error);
     hyphen_ms = now_ms() - at;
     free(hyphen_patterns); hyphen_patterns = NULL;
     if (status != EXR_OK) goto engine_error;
@@ -416,6 +421,7 @@ static int example_main(int argc, char **argv) {
          baseline, peak, peak >= baseline ? peak - baseline : 0);
   printf(",\"hyphenation_enabled\":%s,\"hyphen_dictionary_input_bytes\":%zu,\"hyphen_dictionary_payload_bytes\":%zu,\"hyphen_dictionary_load_ms\":%.6f,\"generated_glyph_count\":%zu",
          hyphenator ? "true" : "false",hyphen_size,exr_hyphenator_memory_size(hyphenator),hyphen_ms,inserted);
+  printf(",\"hyphen_case_policy\":\"%s\"",hyphenator && case_policy==EXR_HYPHEN_CASE_WORD ? "word" : "literal");
   metric_json("turn_layout", samples, sample_count, 0, sorted);
   metric_json("turn_render", samples, sample_count, 1, sorted);
   metric_json("turn_total", samples, sample_count, 2, sorted);
@@ -426,7 +432,7 @@ engine_error:
   fprintf(stderr, "EXReader error %d: %s\n", (int)error.code, error.message);
   goto done;
 usage:
-  fprintf(stderr, "Usage: exreader-benchmark book.epub font.ttf [--max-pages N] [--paging] [--hyphens language]\n"
+  fprintf(stderr, "Usage: exreader-benchmark book.epub font.ttf [--max-pages N] [--paging] [--hyphens language] [--hyphen-case literal|word]\n"
                   "       exreader-benchmark --text-bytes N font.ttf [--max-pages N] [--paging]\n"
                   "N samples: default 64, zero renders all pages after the first paint.\n"
                   "--hyphens reads UTF-8 patterns from stdin; EPUB must opt in with CSS hyphens:auto.\n");

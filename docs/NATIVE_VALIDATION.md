@@ -3411,3 +3411,73 @@ preceding EPUBs are unchanged, and the four local runtime copies agree. All five
 benchmark datasets match the final benchmark executable and recorded input bytes.
 The following record-only commit updates verification and skips redundant CI.
 The remaining layout work and complete PDF/SDK compatibility roadmap stay open.
+
+
+### Explicit Unicode word-case preservation in native dictionaries (0.18 development)
+
+The additive create_patterns_ex constructor accepts LITERAL or WORD. Legacy C,
+Swift and JNI calls retain literal strings; the old JNI native entry point stays
+present. WORD recognizes uniform lower/upper and initial-title cased characters,
+leaving mixed/uncased input literal. Full Unicode 17 mappings include expansions
+and contextual Final_Sigma/tr/az/lt rules in the logical changed word. Title
+preservation can extend the right source range through a retained grapheme; the
+original break point and document bytes remain fixed. Generated sides inherit
+their existing side-anchor style. Additional CLDR lexical tailoring remains a
+host-provider concern. No public record, ABI 1, schema 6, version or runtime
+dependency changes; providers remain literal.
+
+Pinned UnicodeData, SpecialCasing, DerivedCoreProperties and PropList produce
+the committed mapping/properties header and derived default vectors. All 3,037
+default mappings pass 33,785 native checks, including conditional contexts and
+word classification. An independent Node Intl/ICU 78.3 (Unicode 17) comparison
+passes 8,074 cases. On older ICU, CI compares the 2,000 fixed pre-Unicode-14
+context cases while the native pinned vectors still cover all Unicode 17 mappings.
+No ICU component is linked into EXReader; the existing Unicode-3.0 data license
+and full source pins are recorded in THIRD_PARTY_NOTICES.md and the generator.
+
+Native discretionary tests verify literal compatibility, upper/title ß and
+ligature expansions, mixed input, supplementary letters, Turkic/Lithuanian/Greek
+rules, title deletion/insertion and complete-grapheme source extension. Expanded
+text retains the 128-scalar/512-byte cap; overflow clears the result and a later
+valid query succeeds. All 115 local Release CTests pass. Automatic layout records
+2,444,405 checks, including the 599 prior bidi differential cases and 15 new EPUBs
+covering case, locales, NFC/NFD, title deletion, insertion/rematching, RTL, vertical,
+float, orthogonal, table and inline styles. Eager and cached/uncached checkpoint
+replay agree in source positions, hits and pixels. All 87 prior EPUBs are unchanged;
+there are 102 total, including the existing expected tall-row limit.
+
+A 1 MiB Lithuanian stress case exposed source safety being rescanned for each
+unselected temporary candidate view. Original window safety is now classified
+once on demand in cursor-local state; shared original bidi arrays stay immutable.
+Accepted safe display suffixes are retained for temporary views. Checkpoints
+rebuild source safety. The pre-fix case-enabled DLL reproduces EXR_LIMIT at the
+new native test's page-8 request; the final DLL passes forward, eviction, backward
+pixel reconstruction and restored checkpoints. Eagerly classifying source safety
+during every original preparation was discarded after it slowed ordinary opens;
+ordinary reads now keep the preceding fast path. Work/memory caps were not raised.
+
+Installed C/C++ and JNI -Xcheck:jni pass. Both legacy and explicit calls are used;
+Swift/JNI smoke checks uppercase generated strings, repeated original offsets,
+public bits and hits on two pages. Swift execution and final cross-platform/
+sanitizer results will be recorded against this code commit after CI.
+
+Final Windows DLL: 5,598,680 bytes, 166,992 above the preceding verified snapshot;
+SHA256 0f2f5838eb6ac487b5ff1afe795ebe669cfa4d5fa3e53517cdeec5e8dedef8dd.
+Eight 1 MiB text books, first 65 pages, three fresh processes per mode were
+measured sequentially with no concurrent build/tests:
+
+| Workload | Enabled first visible (ms) | Peak RSS (bytes) | Turn p50 / p95 (ms) |
+| --- | ---: | ---: | ---: |
+| English, literal | 22.1036 | 14594048 | 4.6328 / 7.0076 |
+| Class-preserving, literal | 17.9230 | 14008320 | 5.9432 / 8.5702 |
+| Latin/Arabic/Han, literal | 26.1306 | 14467072 | 13.9603 / 16.8820 |
+| AUTO to RTL, literal | 29.2286 | 14331904 | 15.9277 / 17.1530 |
+| 128-scalar insertion, literal | 19.6883 | 14102528 | 6.9047 / 8.8602 |
+| Uppercase word, WORD | 34.2287 | 14684160 | 14.3350 / 15.9345 |
+| Title-initial replacement, WORD | 33.9329 | 14610432 | 15.6378 / 18.0097 |
+| Lithuanian combining marks, WORD | 56.4181 | 14811136 | 17.6293 / 19.5008 |
+
+Exact source/binary/input/font hashes and all records are in
+benchmarks/0.18.0-hyphen-case-windows. The five preceding books and generated counts
+are unchanged. Disk cache/background load are uncontrolled. Conditional compound
+rewrites, tall-row fragmentation and the complete PDF/SDK roadmap remain open.

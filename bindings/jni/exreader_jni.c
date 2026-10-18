@@ -369,11 +369,11 @@ finish:
   if(status!=EXR_OK || (*env)->ExceptionCheck(env)) { if(p) { exr_pager_free(p->pager); exr_font_free(p->font); free(p); } return 0; }
   p->owner=d; d->refs++; return (jlong)(intptr_t)p;
 }
-JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePagerHyphenation(JNIEnv *env,jclass cls,jlong handle,jobjectArray languages,jobjectArray patterns,jintArray minima,jlong budget) {
+static void pager_hyphenation(JNIEnv *env,jlong handle,jobjectArray languages,jobjectArray patterns,jintArray minima,jlong budget,jint case_policy) {
   jni_pager *p=pointer(env,handle); exr_hyphen_pattern_input inputs[64]={{0}}; jint edges[128];
-  exr_hyphenator *h=NULL; exr_error error={0}; exr_status status=EXR_OK; jsize count,i; size_t total=0; (void)cls;
+  exr_hyphenator *h=NULL; exr_error error={0}; exr_status status=EXR_OK; jsize count,i; size_t total=0;
   if(!p) return;
-  if(!languages || !patterns || !minima || budget<0 || budget>128*1024*1024) { argument(env,"Invalid hyphenation inputs"); return; }
+  if((case_policy!=EXR_HYPHEN_CASE_LITERAL && case_policy!=EXR_HYPHEN_CASE_WORD) || !languages || !patterns || !minima || budget<0 || budget>128*1024*1024) { argument(env,"Invalid hyphenation inputs"); return; }
   count=(*env)->GetArrayLength(env,languages);
   if(count>64 || (*env)->GetArrayLength(env,patterns)!=count || (*env)->GetArrayLength(env,minima)!=count*2) { argument(env,"Invalid hyphenation array sizes"); return; }
   if(count) (*env)->GetIntArrayRegion(env,minima,0,count*2,edges);
@@ -395,12 +395,18 @@ JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePagerHyphenation(JNIEnv 
     inputs[i].struct_size=sizeof(inputs[i]); inputs[i].left_min=(unsigned)edges[i*2]; inputs[i].right_min=(unsigned)edges[i*2+1];
   }
   if(!(*env)->ExceptionCheck(env)) {
-    if(count) status=exr_hyphenator_create_patterns(inputs,(size_t)count,(size_t)budget,NULL,&h,&error);
+    if(count) status=exr_hyphenator_create_patterns_ex(inputs,(size_t)count,(size_t)budget,(exr_hyphen_case_policy)case_policy,NULL,&h,&error);
     if(status==EXR_OK) status=exr_pager_set_hyphenator(p->pager,h,&error);
     if(status!=EXR_OK) engine_error(env,status,&error);
   }
   exr_hyphenator_free(h);
   for(i=0;i<count;i++) { free((void *)inputs[i].language); free((void *)inputs[i].patterns); }
+}
+JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePagerHyphenation(JNIEnv *env,jclass cls,jlong handle,jobjectArray languages,jobjectArray patterns,jintArray minima,jlong budget) {
+  (void)cls;pager_hyphenation(env,handle,languages,patterns,minima,budget,EXR_HYPHEN_CASE_LITERAL);
+}
+JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePagerHyphenationCase(JNIEnv *env,jclass cls,jlong handle,jobjectArray languages,jobjectArray patterns,jintArray minima,jlong budget,jint case_policy) {
+  (void)cls;pager_hyphenation(env,handle,languages,patterns,minima,budget,case_policy);
 }
 JNIEXPORT void JNICALL Java_org_exreader_EXReader_nativePagerClose(JNIEnv *env,jclass cls,jlong handle) {
   jni_pager *p=pointer(env,handle); (void)cls;

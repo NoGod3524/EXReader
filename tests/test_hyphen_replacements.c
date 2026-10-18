@@ -73,6 +73,44 @@ static void native(void) {
     count(rules,"aaaa",3,0); /* Nodes grow after the final replacement rule. */
   }
 }
+static void case_one(const char *language,const char *rules,const char *word,size_t point,size_t first,size_t last,const char *before,const char *after) {
+  exr_hyphen_pattern_input input={sizeof(input),language,rules,strlen(rules),1,1};exr_hyphenator *h=NULL;exr_hyphenation *r=NULL;const exr_hyphen_break *items;size_t n;
+  OK(exr_hyphenator_create_patterns_ex(&input,1,0,EXR_HYPHEN_CASE_WORD,NULL,&h,&error));
+  OK(exr_hyphenator_query(h,language,word,strlen(word),NULL,&r,&error));items=exr_hyphenation_breaks(r,&n);
+  if(n!=1 || strcmp(items[0].before,before) || strcmp(items[0].after,after)) fprintf(stderr,"case %s %s: %zu results, %s=%s, expected %s=%s\n",language,word,n,n ? items[0].before : "",n ? items[0].after : "",before,after);
+  CHECK(n==1 && items[0].point==point && items[0].start==first && items[0].end==last);
+  CHECK(items[0].before_size==strlen(before) && items[0].after_size==strlen(after));CHECK(!strcmp(items[0].before,before) && !strcmp(items[0].after,after));
+  exr_hyphenation_free(r);exr_hyphenator_free(h);
+}
+static void casing(void) {
+  const char *rules=".aaaa1aaaa./ß=ﬃ,4,2";
+  case_one("de",rules,"aaaaaaaa",4,3,5,"ß","ﬃ");case_one("de",rules,"AAAAAAAA",4,3,5,"SS","FFI");
+  case_one("de",rules,"Aaaaaaaa",4,3,5,"ß","ﬃ");case_one("de",rules,"AaAAaaaa",4,3,5,"ß","ﬃ");
+  case_one("de",".aaaa1aaaa./ß=ﬃ,1,5","Aaaaaaaa",4,0,5,"Ss","ﬃ");
+  case_one("de",".aaaa1aaaa./=ß,5,0","AAAAAAAA",4,4,4,"","SS");
+  case_one("de",".aaaa1aaaa./=ß,5,0","Aaaaaaaa",4,4,4,"","ß");
+  case_one("en",".aaaa1aaaa./=,1,5","Aaaaaaaa",4,0,6,"","A");
+  case_one("en",".aaaa1ab́cc./=,1,5","Aaaaab́cc",4,0,8,"","B́");
+  case_one("en",".aaaa1中中bb./=,1,5","Aaaa中中bb",4,0,11,"","中B");
+  case_one("en",".中1abbbb./x=y,2,0","中Abbbb",3,3,4,"X","ya");
+  case_one("tr-TR",".ıııı1ıııı./i=ı,4,2","IIIIIIII",4,3,5,"İ","I");
+  case_one("az",".ıııı1ıııı./I=İ,4,2","ıııııııı",8,6,10,"ı","i");
+  case_one("lt",".aaaa1aaaa./Í=J,4,2","aaaaaaaa",4,3,5,"i̇́","j");
+  case_one("lt-LT",".aaaa1aaaa./i̇=j́,4,2","AAAAAAAA",4,3,5,"I","J́");
+  case_one("el",".αααα1αααα./Σ=,4,5","αααααααα",8,6,16,"ς","");
+  case_one("el",".αααα1αααα./Σ=β,4,5","αααααααα",8,6,16,"σ","β");
+  case_one("en",".𐐨𐐨𐐨𐐨1𐐨𐐨𐐨𐐨./𐐨=ß,4,2","𐐀𐐀𐐀𐐀𐐀𐐀𐐀𐐀",16,12,20,"𐐀","SS");
+  {
+    char rules[300]=".aaaa1aaaa./",*at=rules+strlen(rules);size_t i,n;exr_hyphenator *h=NULL;exr_hyphenation *r=(exr_hyphenation *)1;
+    exr_hyphen_pattern_input input={sizeof(input),"de",rules,0,1,1};
+    for(i=0;i<128;i++) { *at++=(char)0xc3;*at++=(char)0x9f; }strcpy(at,"=,4,2");input.size=strlen(rules);
+    CHECK(exr_hyphenator_create_patterns_ex(&input,1,0,(exr_hyphen_case_policy)99,NULL,&h,&error)==EXR_ARGUMENT && !h);
+    OK(exr_hyphenator_create_patterns_ex(&input,1,0,EXR_HYPHEN_CASE_WORD,NULL,&h,&error));
+    CHECK(exr_hyphenator_query(h,"de","AAAAAAAA",8,NULL,&r,&error)==EXR_LIMIT && !r);
+    OK(exr_hyphenator_query(h,"de","aaaaaaaa",8,NULL,&r,&error));CHECK(exr_hyphenation_breaks(r,&n) && n==1);
+    exr_hyphenation_free(r);exr_hyphenator_free(h);
+  }
+}
 static void limits(void) {
   char rules[256]="a1a/",word[257];size_t i,bytes;exr_hyphenator *h=NULL;exr_hyphenation *result;
   exr_hyphen_pattern_input source={sizeof(source),"und",rules,0,1,1};
@@ -151,4 +189,4 @@ static void failures(void) {
     CHECK(exr_hyphenator_create_patterns(&source,1,bytes-1,NULL,&h,&error)==EXR_LIMIT && !h);
   }
 }
-int main(void) { native();limits();providers();failures();printf("%u discretionary hyphenation checks passed\n",checks);return 0; }
+int main(void) { native();casing();limits();providers();failures();printf("%u discretionary hyphenation checks passed\n",checks);return 0; }

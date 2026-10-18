@@ -238,6 +238,7 @@ public final class EXReader {
         @Override public void close() { synchronized(gate) { if(handle!=0) { nativeDocumentClose(handle); handle=0; } } }
     }
     /** Host-owned UTF-8 patterns and their separate dictionary license. No data is downloaded. */
+    public enum HyphenCasePolicy { LITERAL, WORD }
     public static final class HyphenDictionary {
         public final String language;
         private final byte[] patterns;
@@ -257,7 +258,11 @@ public final class EXReader {
         /** Call before next(); empty dictionaries disable hyphenation. CSS hyphens:auto is required.
          * byteBudget: 0 uses 32 MiB, otherwise at most 128 MiB. Compiled data belongs to this pager. */
         public void setHyphenation(HyphenDictionary[] dictionaries,long byteBudget) {
-            Objects.requireNonNull(dictionaries);
+            setHyphenation(dictionaries,byteBudget,HyphenCasePolicy.LITERAL);
+        }
+        /** WORD preserves uniform/initial-title casing with Unicode language/context rules. */
+        public void setHyphenation(HyphenDictionary[] dictionaries,long byteBudget,HyphenCasePolicy casePolicy) {
+            Objects.requireNonNull(casePolicy);Objects.requireNonNull(dictionaries);
             if(dictionaries.length>64 || byteBudget<0 || byteBudget>128L*1024*1024)
                 throw new IllegalArgumentException("Invalid hyphenation budget or language count");
             byte[][] languages=new byte[dictionaries.length][],patterns=new byte[dictionaries.length][];
@@ -269,7 +274,8 @@ public final class EXReader {
             }
             synchronized(gate) {
                 if(handle==0) throw new IllegalStateException("Pager is closed");
-                nativePagerHyphenation(handle,languages,patterns,minima,byteBudget);
+                if(casePolicy==HyphenCasePolicy.LITERAL) nativePagerHyphenation(handle,languages,patterns,minima,byteBudget);
+                else nativePagerHyphenationCase(handle,languages,patterns,minima,byteBudget,casePolicy.ordinal());
             }
         }
         /** null at EOF; an engine error invalidates the pager. */
@@ -371,6 +377,7 @@ public final class EXReader {
     private static native void nativeDocumentClose(long handle);
     private static native long nativePagerCreate(long handle,byte[] font,int face,float[] page,byte[] css,boolean documentCSS,boolean embeddedFonts,int direction);
     private static native void nativePagerHyphenation(long handle,byte[][] languages,byte[][] patterns,int[] minima,long byteBudget);
+    private static native void nativePagerHyphenationCase(long handle,byte[][] languages,byte[][] patterns,int[] minima,long byteBudget,int casePolicy);
     private static native long nativePagerNext(long handle);
     private static native void nativePagerClose(long handle);
     private static native LayoutSnapshot nativePageSnapshot(long handle);

@@ -250,3 +250,15 @@ The external Hungarian dictionary's malformed rules are explicitly rejected,
 not edited and counted as successful input. Neither dictionary nor Pyphen is
 shipped or linked. The installed example uses EXReader's original synthetic
 patterns and no natural-language dictionary payload.
+
+
+## Unicode 17 full case data
+
+`src/case_unicode_data.h` and `tests/fixtures/unicode/CaseMappingTest.txt` derive
+default full lower/title/upper mappings and contextual properties from Unicode
+17.0.0 `UnicodeData.txt`, `SpecialCasing.txt`, `DerivedCoreProperties.txt` and
+`PropList.txt`, under **Unicode-3.0**. The generator pins each official input SHA-256:
+`python tools/generate_case_unicode.py --download --check`. The existing installed
+Unicode license applies. Contextual conversion and the explicit native dictionary
+case policy are EXReader C code; no ICU library is linked. An optional test compares
+results against Node's system ICU through Intl. Node/ICU are test tools only.

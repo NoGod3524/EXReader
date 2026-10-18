@@ -19,6 +19,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('binary',type=Path);parser.add_argument('font',type=Path);parser.add_argument('output',type=Path)
     parser.add_argument('--dictionary',type=Path,required=True);parser.add_argument('--language',required=True)
+    parser.add_argument('--case-policy',choices=('literal','word'),default='literal')
     parser.add_argument('--drop-compound-minima',action='store_true')
     parser.add_argument('--text',help='Optional repeated UTF-8 source fragment (XML escaped), filling 1 MiB')
     parser.add_argument('--runs',type=int,default=3);args=parser.parse_args()
@@ -52,16 +53,19 @@ def main():
       'binary_sha256':hashlib.sha256(args.binary.read_bytes()).hexdigest(),
       'input_sha256':hashlib.sha256(book.read_bytes()).hexdigest(),'dictionary_language':args.language,
       'dictionary_sha256':hashlib.sha256(data).hexdigest(),'portable_sha256':hashlib.sha256(patterns).hexdigest(),
-      'removed_metadata':removed,'text_fragment':args.text,'scope':'Same 1 MiB text-only EPUB, first 65 pages; dictionary construction included in first-visible time. File read from stdin excluded.','cases':{}}
+      'case_policy':args.case_policy,'removed_metadata':removed,'text_fragment':args.text,'scope':'Same 1 MiB text-only EPUB, first 65 pages; dictionary construction included in first-visible time. File read from stdin excluded.','cases':{}}
     for enabled in (False,True):
         records=[];name='enabled' if enabled else 'disabled'
         for index in range(args.runs):
             command=[str(args.binary.resolve()),str(book.resolve()),str(args.font.resolve()),'--paging','--max-pages','64']
-            if enabled: command+=['--hyphens',args.language]
+            if enabled:
+                command+=['--hyphens',args.language]
+                if args.case_policy!='literal': command+=['--hyphen-case',args.case_policy]
             result=subprocess.run(command,input=patterns if enabled else None,capture_output=True,timeout=120)
             if result.returncode: raise RuntimeError(result.stderr.decode('utf-8'))
             record=json.loads(result.stdout);validate(record)
             assert record['hyphenation_enabled']==enabled and bool(record['generated_glyph_count'])==enabled
+            assert record.get('hyphen_case_policy','literal')==(args.case_policy if enabled else 'literal')
             (args.output/f'{name}-{index+1}.json').write_text(json.dumps(record,indent=2)+'\n',encoding='utf-8')
             records.append(record)
         keys=('first_visible_total_ms','peak_rss_bytes','turn_total_p50_ms','turn_total_p95_ms','hyphen_dictionary_load_ms','hyphen_dictionary_payload_bytes','generated_glyph_count')
