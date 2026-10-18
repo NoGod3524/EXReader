@@ -3673,3 +3673,60 @@ local runtime copies agree, and twelve workload sets are pinned. This following
 verification-only commit updates records and skips redundant CI. Automatic
 intrinsic width cost, full-height alignment memory/time, and the complete PDF/
 application SDK roadmap remain active.
+
+
+## Exact table alignment height without retained full glyph arrays (0.18 development)
+
+Aligned groups first probe one full fragment. Completed short cells are reused;
+unfinished cells in a middle/bottom group use exact unpaginated measurement.
+That mode runs actual shaping, wrapping, bidi, ruby, vertical projection and
+BFC geometry, then discards committed glyph/line output after each line/copy.
+The first baseline, extents and boxes remain. Once a group is known taller
+than the page, preceding short-cell snapshots are released and remaining cells
+use height measurement. Cell content height is independent of its paint snapshot,
+so rowspan allocation and vertical insets survive that release. No public API,
+dependency, ABI epoch, schema or version change. This replaces the preceding
+record's retained-full-glyph limitation for alignment.
+
+All 117 local Release CTests pass, including 163,761 table-fragment checks. Four
+new structured EPUBs exercise short aligned rows with ruby, a bottom-aligned
+100-row group, mixed Hebrew/combining/ruby/image/float/nested-table content, and
+vertical-lr aligned cells. All 24 layout cases have identical page counts and
+per-page RGBA signatures against the preceding fb3f76b DLL, using the same test
+executable and fixture font. Cached/uncached/backward/checkpoint, large-page
+reference, hits, positioned reconstruction and cancellation/cache-budget
+recovery also pass. Recovery now covers aligned and mixed-content groups.
+
+Installed C renders a continued table page (Arial pixels inspected); C++ visits
+page 20 then rewinds to 2; JNI passes with -Xcheck:jni. Swift/mobile and sanitizer
+validation will be recorded after this code commit's CI completes.
+
+The table benchmark now includes middle alignment and a memory regression:
+its middle/bottom median process peak must be at most the fixed-top peak plus
+64 MiB. The preceding DLL fails this check at approximately 150 MB; current
+code passes. Desktop CI runs the same check against the installed SDK using
+the fixture font. The threshold applies to this workload, rather than imposing
+a public universal allocation limit. Before-process samples serve as a memory
+regression; they were not collected as a controlled timing comparison.
+
+Windows/GCC 16.2 Release DLL remains 5,619,293 bytes, SHA256
+8699713861fe4b7094aa0e6da7900eb0317adf93ebe7be0e1a1dbf53000fd0e9.
+Four 1 MiB table workloads, Arial, first 65 pages, three fresh processes per
+case; sequential without concurrent builds/tests; disk cache and background
+load uncontrolled:
+
+| Table workload | First visible (ms) | Peak RSS (bytes) | Turn p50 / p95 (ms) |
+| --- | ---: | ---: | ---: |
+| fixed | 38.7098 | 14422016 | 22.8963 / 27.0503 |
+| auto | 5465.8188 | 14688256 | 46.8099 / 56.3872 |
+| middle | 2899.4178 | 14573568 | 23.4863 / 27.5470 |
+| bottom | 2857.1948 | 14516224 | 22.6038 / 27.5956 |
+
+Nine preceding hyphen books/font hashes and generated counts remain unchanged.
+The 111 preceding hyphen EPUB fixtures are unchanged. Raw samples, before/after
+pixel signatures, old-memory regression and source/binary provenance are in
+[table height records](benchmarks/0.18.0-table-height-windows/metadata.json).
+Automatic min/max-content and exact aligned heights still scan complete cell
+input; their first-page CPU cost remains open. Measurement still retains bounded
+inline state and geometry boxes. The complete PDF/application SDK roadmap
+remains active.
