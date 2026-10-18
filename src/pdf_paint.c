@@ -6,7 +6,6 @@ typedef struct { const exr_pdf_font *key; exr_pdf_face *face; } paint_face;
 typedef struct {
   exr_draw_sink_ex sink; FT_Library library; exr_pdf_program_fn program; void *program_context; const exr_control *control; size_t *work;
   exr_pdf_file *file; /* mask rendering needs the object arena */
-  unsigned char *group_mask; /* live while a masked group paints */
   size_t font_count,font_bytes; paint_face fonts[128];
 } pdf_painter;
 static uint32_t rgba(const exr_pdf_color *c) {
@@ -108,17 +107,10 @@ static exr_status begin_group_event(void *context,double opacity,exr_blend_mode 
 static exr_status end_layer_event(void *context,unsigned commit,exr_error *e) {
   pdf_painter *r=context;return r->sink.end_layer ? r->sink.end_layer(r->sink.base.context,commit,e) : exr_fail(e,EXR_FORMAT,"Drawing consumer lacks isolated layers");
 }
-/* A masked group element: the mask is installed before begin_group so the commit
-   stays masked, then cleared after end_layer. */
-static exr_status soft_mask_event(void *context,const exr_pdf_paint_state *paint,unsigned enable,exr_error *e) {
-  pdf_painter *r=context;exr_status status;
-  if(enable) { status=mask_begin(r,paint,&r->group_mask,e);return status; }
-  status=mask_end(r,r->group_mask,e);r->group_mask=NULL;return status;
-}
 exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
                                   const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *program_context,
                                   size_t *work,const exr_control *control,exr_error *e) {
-  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,begin_group_event,end_layer_event,soft_mask_event}; size_t i,local_work=0; exr_status status;
+  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,begin_group_event,end_layer_event}; size_t i,local_work=0; exr_status status;
   if(!file) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint input");
   status=exr_draw_sink_snapshot(sink,&r.sink,e);if(status!=EXR_OK) return status;
   if(!r.sink.base.path && !r.sink.base.image && !r.sink.base.clip && !r.sink.base.state) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint consumer");
