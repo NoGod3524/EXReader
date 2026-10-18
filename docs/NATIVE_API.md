@@ -401,10 +401,11 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 | 文字 | font-family、font-size（4–256）、font-weight（合成粗体）、font-style（合成斜体）、color、line-height、direction（ltr/rtl）、text-align（left/start/center/right/end/justify）、text-indent |
 | 盒模型 | width / max-width、margin / padding 及四边长属性、background-color（background 仅接受颜色）、统一 border-width / border-color / border-style（solid/none/hidden）和 border 简写；表格 border-collapse（collapse/separate/inherit） |
 | 流布局 | display: none/block/inline/table/table-row/table-cell；break-before/after 和 page-break-before/after 的 page/always/auto |
-| 尺寸 | px、pt、em、rem、百分比和零值；margin 可 auto；图片支持 height，普通块的 height 尚未应用 |
+| 浮动 | float: none/left/right/inherit；clear: none/left/right/both/inherit；图片、普通块、表格的逐行避让，范围见下文 |
+| 尺寸 | px、pt、em、rem、百分比和零值；margin 可 auto；图片支持 height；表格单元格和浮动块的 height 提供内容下限，其余普通块尚未普遍应用 |
 | 颜色 | #RGB、#RGBA、#RRGGBB、#RRGGBBAA；black/white/red/green/blue/gray/grey/transparent/navy/yellow/orange/purple |
 
-`rem` 当前以宿主页默认字号为基准。`inherit` 支持文字属性；缩进和边框宽度不支持百分比。所有负尺寸均忽略，外边距不折叠。未知属性、选择器和 at-rule 会被跳过；尚不支持 @import、@media、变量、伪类、属性选择器、flex/grid、浮动、定位、完整空白规则和浏览器式盒模型分片。属性值和单位使用小写。样式表合计上限 1 MiB、4096 条规则、131072 项展开声明、每规则 256 项声明、2000 万次匹配工作；达到上限返回 `EXR_LIMIT`。
+`rem` 当前以宿主页默认字号为基准。`inherit` 支持文字属性；缩进和边框宽度不支持百分比。所有负尺寸均忽略，外边距不折叠。未知属性、选择器和 at-rule 会被跳过；尚不支持 @import、@media、变量、伪类、属性选择器、flex/grid、定位、完整空白规则和浏览器式盒模型分片。属性值和单位使用小写。样式表合计上限 1 MiB、4096 条规则、131072 项展开声明、每规则 256 项声明、2000 万次匹配工作；达到上限返回 `EXR_LIMIT`。
 
 `exr_layout_glyphs()` 按逐行视觉顺序输出字形编号、字号、颜色 `0xRRGGBBAA`、合成粗/斜体标志、基线、源范围和字体索引；混排时文字偏移可能不单调。`cluster_start/end` 为当前源簇的 UTF-8 半开范围，可以跨文本节点和样式，连字可合并多个原始字素。`EXR_GLYPH_SHAPED = 16` 表示 advance / offset 已包含塑形定位；这些条目的 `start/end` 也使用源簇范围，`codepoint/node` 代表簇首源标量 / 节点，不承诺一条 glyph 对应一个标量。未塑形路径仍保留原标量范围。`boundaries` 保留源簇首的 `EXR_BOUNDARY_*`，同簇后续字形为 0。分段和文档使用各自局部偏移，簇索引不是永久标识。
 
@@ -416,7 +417,7 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 ## 图片、表格与像素
 
-内置 `exr_image_decode()` 接受 PNG/JPEG 字节并返回独立 RGBA 像素，用 `exr_bitmap_free()` 释放。布局按资源缓存图片；图片保持纵横比，限制在内容宽度和可用页高之内。width/height 同时存在时按容纳方式缩放，图片当前独占块。缺失、外部、损坏或不支持的图片显示带标志的占位框；资源/解码限制错误会中止布局。解码尺寸上限 8192×8192 且总像素不超过 16 Mi，编码输入上限 32 MiB，stb 临时分配上限 128 MiB，布局图片缓存上限 64 MiB。
+内置 `exr_image_decode()` 接受 PNG/JPEG 字节并返回独立 RGBA 像素，用 `exr_bitmap_free()` 释放。布局按资源缓存图片；图片保持纵横比，限制在内容宽度和可用页高之内。width/height 同时存在时按容纳方式缩放，未声明 float 的图片仍按块处理；浮动图片按下文参与逐行绕排。缺失、外部、损坏或不支持的图片显示带标志的占位框；资源/解码限制错误会中止布局。解码尺寸上限 8192×8192 且总像素不超过 16 Mi，编码输入上限 32 MiB，stb 临时分配上限 128 MiB，布局图片缓存上限 64 MiB。
 
 宿主设置 `decode_image`、`release_image` 和 `image_context` 可替换解码器。回调收到资源元数据及编码字节；返回 `channels=4`、非预乘 RGBA、有效 width/height/stride。引擎复制像素，然后无论成功或失败都调用配套 release 回调一次；不得在 release 中释放借用的编码输入。`EXR_FORMAT` 表示占位框，其余非成功状态中止布局。要保留内置 PNG/JPEG 支持，宿主回调可以调用 `exr_image_decode()` 并在 release 中使用 `exr_bitmap_free()`。直接创建完整 layout 时，回调及 context 只需在 create 调用期间有效；使用 pager / session 时需在相应句柄整个生命周期内有效。渲染已有布局不会再次调用它们。
 
@@ -1286,3 +1287,20 @@ collapse 为每条行列边界计算一个共享边框。hidden 抑制相同边�
 普通单元格盒保留背景与命中几何，border_width 为零。共享边框以 `EXR_BOX_BLOCK` 矩形暴露，`flags == EXR_BOX_BORDER`，node 指向所属表格，background 是实际颜色，border_width 为零。每页普通盒之后，同一 node 的连续边框矩形构成一个图层：先在透明 RGBA 缓冲中以替换方式绘制该组矩形，再把整个图层按 source-over 合成到页面一次。这样共享线、转角和交叉处的半透明颜色不会重复叠加。随后绘制正文。宿主须保留 flags、node 和组内顺序；使用 positioned 布局重建时，把该组盒子作为连续 EXR_PAINT_BOX 命令提交，即可得到同样的原生像素。
 
 内置栅格器按当前边框图层的可见包围盒临时分配 RGBA 缓冲，单层最多 16M 像素 / 64 MiB，超出返回 EXR_LIMIT；图层间顺序复用，结束立即释放，支持取消与总绘制工作量上限。没有共享边框的页面不分配这块缓冲。网格只在 collapse 表格上分配，当前每条边 12 bytes，总量为 `((rows+1)*columns + rows*(columns+1))*12`，受原有 4096 行/单元格、64 列、8 层嵌套约束。网格、单元格半宽和深拷贝 checkpoint 均计入字节预算。
+
+
+## 浮动、逐行绕排与分段恢复（0.18 开发补充）
+
+CSS `float:none/left/right/inherit` 和 `clear:none/left/right/both/inherit` 已接入 C 原生排版。float/clear 默认不继承，显式 inherit 可用；浮动行内元素按块处理，table 保留表格排版。图片、普通文本块、表格使用同一避让矩形模型。指定宽度与 max-width 参与尺寸计算，auto 宽度用原生 min/max-content 在当前可用空间中收缩；内容最小宽度在该行放不下时，浮动向下避让。宽度、max-width 和浮动根的百分比 padding 按外侧包含块求值一次，单位内部使用已分配尺寸，避免重复百分比缩小。margin:auto 在浮动定位中按零处理。
+
+左右浮动按逻辑行内轴避让；横排对应左右，竖排对应 line-left/line-right。多个浮动可并排或下移，后来的浮动不抬到先前浮动上方；clear 可用于浮动、普通块和 br。外边距盒参与避让，图片的 padding/border 由外盒绘制，原图片像素保持自身尺寸与比例。普通图片遇到浮动也查找可容纳其整块的空间；普通流块的背景可在浮动后方，而其文字按逐行可用区排版。当前非浮动表格先清除外部浮动再分页；表格声明 float 时可作为整个浮动单位放置。
+
+行内队列根据当前行实际字体度量、混合字号、ruby、字素和最终塑形结果拟合可用区域；没有容纳首簇的空间时下移至可用区域。双向分析跳过浮动子树；浮动插在文本节点之间不会强制结束文字段落。阿拉伯文跨该位置的连字仍由最终行塑形处理。过晚出现的浮动若无法与前方待提交文字同处一行，会先提交前方文字再定位浮动。glyph、line、图片盒和 `clip_left/right` 一起反映实际位置；source advance 可保留尾随空格或不可拆簇的完整宽度，绘制须遵守 clip。
+
+每个表格单元格、浮动单位和正交排版子上下文拥有独立浮动状态。浮动内容不提供父流的首行基线，单元格只有浮动时仍按内容底边合成基线。状态和待提交单位由 checkpoint 拥有或保留，不借用临时栈上的矩形。页边界清除上一页的避让状态，未提交行在新页重新拟合；当页容不下整块浮动时将它整体移到下一页。高于整页的浮动文本块返回 EXR_LIMIT，尚未实现其内部跨页拆分。原有图片页内缩放规则仍适用。
+
+浮动块与它前面的高字号文字可能分别落在相邻页上，因此 page.start/end 是源文字包络，允许重叠；不能再据此假设所有页面严格分割成相接区间。`exr_layout_page_at` 对有重叠的完整布局扫描实际 glyph 范围，优先包含偏移的较窄范围，避免跨浮动连字的宽范围掩盖浮动自身文字；没有可见匹配时回退到按页起点定位。普通不重叠布局仍走二分查找。重叠查找目前 O(glyph_count)，不另建索引。positioned 输入允许页包络重叠，但 start 仍须单调，逐页 glyph/line/box 仍须在所属页包络内。
+
+每上下文最多 128 个存活浮动，超出返回 EXR_LIMIT。当前 64 位构建的矩形表及计数约 2.6 KiB，包含在上下文/checkpoint 的 sizeof 预算内；字形塑形只借用该表。自动宽度单位在换页或锚点行变化后可重测，图片像素仍复用资源缓存。没有外部浏览器、UI 或新依赖。安装 SDK 的 `examples/books/float-both.epub` 提供左右浮动原始样本，JNI/Swift smoke 检查公开坐标、资源像素与最终绘制。
+
+完整浮动分片、普通表格与外部浮动的并排 BFC、复杂嵌套浮动的固有宽度约束、shape-outside、浮动的完整 break 规则、完整行内图片与 white-space/CSS 格式化继续待补；以上能力不等同于浏览器完整 CSS。

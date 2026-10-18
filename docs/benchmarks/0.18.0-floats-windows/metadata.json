@@ -1,0 +1,43 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "compiler": "GCC 16.2 Release",
+  "source_parent_commit": "57c9f17fb07adc4d71087c788a3cf30cadc6823f",
+  "engine_version": "0.18.0-development",
+  "font_sha256": "ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed",
+  "runs_per_scenario": 3,
+  "disk_cache": "uncontrolled",
+  "roles": {
+    "before": {
+      "dll_bytes": 5205547,
+      "dll_sha256": "964d2f64cccf5efe4d9212d121773e9953ced36c54bd4c6ad22ce39c1e709f85",
+      "benchmark_sha256": "a3514713475c50da85e90dd84aa77451dbe8cf303df11fa46d61ed26b958f56c"
+    },
+    "after": {
+      "dll_bytes": 5218600,
+      "dll_sha256": "9fd46fc13f7fa66285459e74cf9cfd367566fe0d6887a7ae4f5a380572259059",
+      "benchmark_sha256": "6553c69acfdfc0632a38b448f3a0456530dbb667d88a199fcd7c4e263d7da24f"
+    }
+  },
+  "fixtures": {
+    "blocks.epub": "6c92461c5c8deb09b2e41744f6073684e2c3873cbfba1da13088344cb97967c3",
+    "floats.epub": "232db320c830d18b18691d80f6ad43d2f2f65f653d398bb51f992c546e303a17"
+  },
+  "image_workload": {
+    "paragraphs": 600,
+    "image_references": 600,
+    "source_A_characters": 24000
+  },
+  "after_source_sha256": {
+    "CMakeLists.txt": "3ac4a9dcb4f2460460e85d933288af90c94f1391f2eb2946e2b3eb64697ea8a3",
+    "src/flow.c": "7c75e0b95a4e70ce21813d43221305beeabbba4caf6dedfd8e80f763bc80c9f6",
+    "src/floats.c": "7fc0ecdb543ad00bc25ae2ed245e9e299323159869d1120713aa84d1271942db",
+    "src/flow_internal.h": "60f9fffbce7dfceb005be4c3a7a1632038971e818a4b24b1287c7cb84b5ef7e1",
+    "src/inline.c": "fad18c33c3944f3180d9da69c4d7f778cc09c2e63d640e5cbe7175e6e09dd209",
+    "src/internal.h": "853e177004cad38ebdfff66c0fdbdc8398f2450ed0fe73155c29cae41169f921",
+    "src/layout.c": "fa6b9724722de57d08a78bef57d8cab68206eb79ee9f4ddba5f99b2f7380083e",
+    "src/layout_internal.h": "819ed70a9abaa8a0254a858fe0c31d87ccfca83008ad1b66a38163b1febc9fa2",
+    "src/pager.c": "247b0111fb3ea51b334a17de2cb2bb74ad731ef2d7762ecd4b9f3c0a895d84c3",
+    "src/positioned.c": "fdd3fd37b9106077ad7a428193d098b28917935676737a9117d11e8f1a113304",
+    "src/style.c": "abea7fdc3e0e35f386ef7faa16ce1d00939672837b45725b6351940ade08a5e4"
+  }
+}

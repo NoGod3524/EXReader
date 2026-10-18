@@ -47,6 +47,7 @@ exr_status exr_flow_page(flow *f, float height, size_t offset) {
     p->start = p->end = offset == SIZE_MAX ? 0 : offset;
     p->line_start = l->line_count;
     f->y = exr_flow_top(f);
+    f->floats->count=0;
   }
   f->force_break = 0;
   return EXR_OK;
@@ -286,7 +287,7 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
       }
     }
   }
-  l->pages[l->page_count-1].end=logical_end;
+  if(logical_end>l->pages[l->page_count-1].end) l->pages[l->page_count-1].end=logical_end;
   f->y+=height; f->first_line=0; return EXR_OK;
 }
 exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float width, float height,
@@ -410,6 +411,10 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
     if(logical.max_width.percent) logical.max_width.value=-1;
     if(logical.max_height.percent) logical.max_height.value=-1;
   }
+  if(f->unit_assigned && f->unit_node==node && !f->intrinsic) {
+    if(logical.width.value>=0) logical.width=(exr_length){width,0};
+    if(logical.max_width.value>=0) logical.max_width=(exr_length){width,0};
+  }
   const exr_style *s = &logical;
   const exr_bitmap *bitmap;
   size_t resource;
@@ -452,6 +457,7 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
   if (!b)
     return EXR_MEMORY;
   b->resource = resource;
+  b->background=0; b->border_width=0; /* CSS decoration belongs to the image's outer block. */
   if (!bitmap) {
     b->flags = 1;
     b->background = 0xeeeeeeff;
@@ -459,7 +465,8 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
     b->border_color = 0x888888ff;
   }
   f->y += h;
-  f->layout->pages[f->layout->page_count - 1].end = f->doc->nodes[node].end;
+  if(f->doc->nodes[node].end>f->layout->pages[f->layout->page_count - 1].end)
+    f->layout->pages[f->layout->page_count - 1].end = f->doc->nodes[node].end;
   return EXR_OK;
 }
 typedef struct {

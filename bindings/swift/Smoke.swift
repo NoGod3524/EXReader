@@ -142,6 +142,26 @@ import CEXReader
         } catch EXReaderError.engine(let code, _) {
             precondition(code == Int(EXR_ARGUMENT.rawValue))
         }
-        print("Swift SDK: PDF/audio/metadata and reflow nodes, lazy parts, page snapshots, UTF-8 and child lifetime passed")
+        var floatConfig = EXReaderLayoutConfig()
+        floatConfig.page.width = 240; floatConfig.page.height = 240; floatConfig.page.margin = 20
+        floatConfig.page.font_size = 14; floatConfig.page.line_height = 20 / 14; floatConfig.page.paragraph_spacing = 0
+        do {
+            let floats = try EXReaderPublication(file: root.appendingPathComponent("books/float-both.epub"))
+            let chapter = try floats.load(part: 0)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            let pager = try chapter.pager(font: font, config: floatConfig)
+            guard let page = try pager.next() else { preconditionFailure("missing float page") }
+            precondition(!page.glyphs.isEmpty && abs(page.glyphs[0].clip_left - 80) < 0.01 && abs(page.glyphs[0].clip_right - 160) < 0.01)
+            let images = page.boxes.filter { $0.kind == EXR_BOX_IMAGE }
+            precondition(images.count == 2)
+            for box in images {
+                guard let image = try page.image(resource: Int(box.resource)) else { preconditionFailure("missing image") }
+                precondition(image.width == 80 && image.height == 60)
+            }
+            let bitmap = try page.render()
+            let pixel = 30 * bitmap.stride + 30 * 4
+            precondition(bitmap.pixels[pixel] == 0 && bitmap.pixels[pixel + 1] == 128 && bitmap.pixels[pixel + 2] == 255)
+        }
+        print("Swift SDK: PDF/audio/metadata, float image geometry/pixels and reflow lifetime passed")
     }
 }

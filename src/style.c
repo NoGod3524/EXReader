@@ -39,6 +39,8 @@ enum {
   TABLE_LAYOUT,
   VERTICAL_ALIGN,
   BORDER_COLLAPSE,
+  FLOAT_SIDE,
+  CLEAR_SIDE,
   PROPERTIES
 };
 typedef struct {
@@ -226,7 +228,7 @@ static int property(const char *s, size_t n) {
       "max-width",    "margin-top",    "margin-right",   "margin-bottom", "margin-left",
       "padding-top",  "padding-right", "padding-bottom", "padding-left",  "background-color",
       "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction",
-      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align", "border-collapse"};
+      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align", "border-collapse", "float", "clear"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -611,6 +613,10 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->vertical_align = parent->vertical_align;
     else if (prop == BORDER_COLLAPSE)
       s->border_collapse = parent->border_collapse;
+    else if (prop == FLOAT_SIDE)
+      s->float_side = parent->float_side;
+    else if (prop == CLEAR_SIDE)
+      s->clear_side = parent->clear_side;
     else
       return 0;
     return 1;
@@ -737,6 +743,14 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     else if(!strcmp(v,"sub") || !strcmp(v,"super") || !strcmp(v,"text-top") || !strcmp(v,"text-bottom") ||
             (length(v[0]=='-' ? v+1 : v,s->font_size,root,0,&l) && l.value>=0)) s->vertical_align=EXR_CELL_BASELINE;
     else return 0;
+  } else if (prop == FLOAT_SIDE || prop == CLEAR_SIDE) {
+    int side;
+    if(!strcmp(v,"none")) side=0;
+    else if(!strcmp(v,"left")) side=1;
+    else if(!strcmp(v,"right")) side=2;
+    else if(prop==CLEAR_SIDE && !strcmp(v,"both")) side=3;
+    else return 0;
+    if(prop==FLOAT_SIDE) s->float_side=side; else s->clear_side=side;
   } else if (prop == BORDER_COLLAPSE) {
     if(!strcmp(v,"collapse")) s->border_collapse=1;
     else if(!strcmp(v,"separate")) s->border_collapse=0;
@@ -1008,6 +1022,7 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
       if (w[p].value)
         apply(s, parent, p, w[p].value, o->font_size);
     s->writing_declared = w[WRITING_MODE].value != NULL;
+    if(s->float_side && s->display!=EXR_CSS_NONE && s->display!=EXR_CSS_TABLE) s->display=EXR_CSS_BLOCK;
     if (s->writing_mode != EXR_WRITING_HORIZONTAL_TB) {
       if ((n->kind == EXR_NODE_PARAGRAPH || n->kind == EXR_NODE_HEADING) && !w[MB].value) {
         int end = s->writing_mode == EXR_WRITING_VERTICAL_RL ? ML : MR;
