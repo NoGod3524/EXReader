@@ -1,0 +1,8 @@
+{
+  "source_commit": "840efcfdcca2f7070453696a3e9c61a3580c3f5c",
+  "dll_sha256": "fbdd19ca6af7d230c92aad0958607d408788462abf11deb77ce83eea10366105",
+  "binary_sha256": "fd72ce1ad604f458184d5c0345ab1e3a03435f883cc16f4577c4e50a5d3aaacd",
+  "input_sha256": "67d9f5f30c11ce8eabef73a41ca97bfababb3cab0005368fc8bedbadb7730c0e",
+  "font_sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+  "scope": "One fresh process, first 65 pages; uncontrolled disk cache and machine load; intermediate complete-cell measurement baseline"
+}

@@ -145,6 +145,15 @@ static void recovery(const char *directory) {
   OK(exr_pager_set_cache(p,1,262144,&error));OK(exr_pager_get(p,0,&page,&error));CHECK(page);
   exr_pager_free(p);exr_document_free(d);
 }
+static void large_fixed(const char *directory) {
+  char path[4096];exr_document *d=NULL;exr_pager *p=NULL;const exr_layout *page=NULL;exr_layout_config c=config();
+  cancel_state state={0,4096};exr_control control={cancel_after,NULL,&state};size_t count;
+  c.page.width=720;c.page.height=960;snprintf(path,sizeof(path),"%s/table-fragments-large-fixed.epub",directory);
+  OK(exr_document_open(path,&d,&error));OK(exr_pager_create(d,font,&c,&p,&error));OK(exr_pager_set_control(p,&control,&error));
+  OK(exr_pager_get(p,0,&page,&error));CHECK(page && state.calls<4096 && exr_layout_memory_size(page)<512*1024);
+  exr_layout_glyphs(page,&count);CHECK(count>0 && count<10000);
+  fprintf(stderr,"large fixed first-page polls %u\n",state.calls);exr_pager_free(p);exr_document_free(d);
+}
 static void float_budgets(const char *directory) {
   const char *names[]={"float-128","float-129","float-tree-129"};size_t i;char path[4096];
   for(i=0;i<3;i++) {
@@ -157,6 +166,6 @@ static void float_budgets(const char *directory) {
   }
 }
 int main(int argc,char **argv) {
-  char path[4096];CHECK(argc==2);snprintf(path,sizeof(path),"%s/fonts/primary.ttf",argv[1]);OK(exr_font_open(path,&font,&error));
-  alpha_borders();cases(argv[1]);float_budgets(argv[1]);recovery(argv[1]);exr_font_free(font);printf("%u table fragment checks passed\n",checks);return 0;
+  char path[4096];CHECK(argc==2 || argc==3);snprintf(path,sizeof(path),"%s/fonts/primary.ttf",argv[1]);OK(exr_font_open(path,&font,&error));
+  if(argc==3) large_fixed(argv[1]);else { alpha_borders();cases(argv[1]);float_budgets(argv[1]);recovery(argv[1]);large_fixed(argv[1]); }exr_font_free(font);printf("%u table fragment checks passed\n",checks);return 0;
 }

@@ -362,3 +362,18 @@ Source grapheme minima, literal/WORD policy, 128-scalar/512-byte public result c
 ABI 1 and schema 6 stay unchanged. Per-query conditional matching workspace and
 owned stem strings are capped at 1 MiB. Installed C/C++ consumers verify recursive
 breaks 2/4/7/9; Swift/JNI smoke checks the newly enabled source break on a real EPUB.
+
+
+Tall table rows and connected rowspan groups now retain independent cell flow
+cursors. Full lines/images cross pages without a shared canvas crop. Cell/grid
+state and nested cursor allocations participate in checkpoint cloning and byte
+accounting. Multi-column pages can overlap in their original source envelopes;
+use actual glyph/cluster ranges for selection. The 128-float tree limit includes
+cell cursors. Public C/Swift/JNI calls, record sizes, ABI 1 and schema 6 remain
+compatible. Installed examples include a tall rowspan EPUB and use existing
+pager calls; C++ also verifies checkpoint-based backward access.
+
+Top/baseline groups probe one page before committing a tall row. Middle/bottom
+alignment still needs full-height measurement, and auto-width tables still scan
+full min/max-content input. Large-cell cost differences are recorded separately;
+the performance report lists fixed, automatic and bottom-aligned costs separately.

@@ -1,0 +1,35 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "runs_per_case": 3,
+  "disk_cache": "uncontrolled",
+  "font_sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+  "binary_sha256": "ed8f108985ec9490a8bf82226976483afd7f296809f938615c0a5ce5c605c258",
+  "input_sha256": "b86d7a6914fde02e81d0237f512714a0f0f4f21a11956d03d967888003901f8e",
+  "dictionary_language": "en-US",
+  "dictionary_sha256": "486fb6840b1049d5d252ef784be11cd4dc2be0bf296568b74b41e4f4e17cba7d",
+  "portable_sha256": "486fb6840b1049d5d252ef784be11cd4dc2be0bf296568b74b41e4f4e17cba7d",
+  "case_policy": "literal",
+  "removed_metadata": [],
+  "text_fragment": null,
+  "scope": "Same 1 MiB text-only EPUB, first 65 pages; dictionary construction included in first-visible time. File read from stdin excluded.",
+  "cases": {
+    "disabled": {
+      "first_visible_total_ms": 17.1864,
+      "peak_rss_bytes": 13881344,
+      "turn_total_p50_ms": 4.9969,
+      "turn_total_p95_ms": 7.6593,
+      "hyphen_dictionary_load_ms": 0.0,
+      "hyphen_dictionary_payload_bytes": 0,
+      "generated_glyph_count": 0
+    },
+    "enabled": {
+      "first_visible_total_ms": 24.8631,
+      "peak_rss_bytes": 14626816,
+      "turn_total_p50_ms": 5.3001,
+      "turn_total_p95_ms": 7.0246,
+      "hyphen_dictionary_load_ms": 3.9452,
+      "hyphen_dictionary_payload_bytes": 521744,
+      "generated_glyph_count": 775
+    }
+  }
+}
