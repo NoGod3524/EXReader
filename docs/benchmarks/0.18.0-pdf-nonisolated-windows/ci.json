@@ -1,0 +1,65 @@
+{
+  "code_commit": "ec8d4a98cdd6e63fa10a67e9a8521dfac743dd3e",
+  "url": "https://github.com/NoGod3524/EXReader/actions/runs/39148719500",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "name": "sanitizers",
+      "id": 117737794067,
+      "conclusion": "success",
+      "startedAt": "2026-10-18T17:15:20Z",
+      "completedAt": "2026-10-18T17:21:46Z",
+      "ctest_summaries": [
+        "100% tests passed, 0 tests failed out of 116"
+      ],
+      "installed_pdf_benchmark": null
+    },
+    {
+      "name": "desktop (windows-latest)",
+      "id": 117737794204,
+      "conclusion": "success",
+      "startedAt": "2026-10-18T17:15:20Z",
+      "completedAt": "2026-10-18T17:19:40Z",
+      "ctest_summaries": [
+        "100% tests passed out of 119"
+      ],
+      "installed_pdf_benchmark": "success"
+    },
+    {
+      "name": "apple-mobile",
+      "id": 117737794213,
+      "conclusion": "success",
+      "startedAt": "2026-10-18T17:15:26Z",
+      "completedAt": "2026-10-18T17:17:39Z"
+    },
+    {
+      "name": "desktop (macos-15)",
+      "id": 117737794228,
+      "conclusion": "success",
+      "startedAt": "2026-10-18T17:15:26Z",
+      "completedAt": "2026-10-18T17:18:18Z",
+      "ctest_summaries": [
+        "100% tests passed out of 119"
+      ],
+      "installed_pdf_benchmark": "success"
+    },
+    {
+      "name": "android",
+      "id": 117737794366,
+      "conclusion": "success",
+      "startedAt": "2026-10-18T17:15:20Z",
+      "completedAt": "2026-10-18T17:16:27Z"
+    },
+    {
+      "name": "desktop (ubuntu-22.04)",
+      "id": 117737794516,
+      "conclusion": "success",
+      "startedAt": "2026-10-18T17:15:20Z",
+      "completedAt": "2026-10-18T17:16:53Z",
+      "ctest_summaries": [
+        "100% tests passed, 0 tests failed out of 119"
+      ],
+      "installed_pdf_benchmark": "success"
+    }
+  ]
+}

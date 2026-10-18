@@ -1,0 +1,83 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "host": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]",
+  "library_sha256": "6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4",
+  "library_bytes": 5662055,
+  "scale": 4.0,
+  "runs": 3,
+  "scope": "One-page original PDF probes; fresh Python/ctypes processes; RSS includes host; disk cache/background load uncontrolled; repeated repaint, not page navigation.",
+  "cases": {
+    "flat": {
+      "open_ms": 0.3328,
+      "first_render_ms": 76.9589,
+      "repaint_p50_ms": 77.0822,
+      "repaint_p95_ms": 85.7585,
+      "peak_rss_bytes": 34193408,
+      "incremental_peak_rss_bytes": 8269824,
+      "pdf_sha256": "0c5d5a09e5f49aeb3a699219354718ea9bc22c3f43c84e74d9d05bc0485ec861"
+    },
+    "primitives": {
+      "open_ms": 0.3886,
+      "first_render_ms": 67.6273,
+      "repaint_p50_ms": 67.3622,
+      "repaint_p95_ms": 76.5516,
+      "peak_rss_bytes": 32763904,
+      "incremental_peak_rss_bytes": 6795264,
+      "pdf_sha256": "969b506ae20d43ff2a0a3ccfb787cacff9cb643226c27e6081481385739c127a"
+    },
+    "state": {
+      "open_ms": 0.389,
+      "first_render_ms": 2.9183,
+      "repaint_p50_ms": 2.6497,
+      "repaint_p95_ms": 3.8809,
+      "peak_rss_bytes": 26640384,
+      "incremental_peak_rss_bytes": 733184,
+      "pdf_sha256": "55cbfe5629bcd1ccd73549e377eaa1da0628a27dcd7533a5cc5370ff2e255352"
+    },
+    "groups": {
+      "open_ms": 0.5026,
+      "first_render_ms": 116.643,
+      "repaint_p50_ms": 133.6514,
+      "repaint_p95_ms": 139.3494,
+      "peak_rss_bytes": 29949952,
+      "incremental_peak_rss_bytes": 4042752,
+      "pdf_sha256": "29451a5c819cb19d9a024d13f1f037861e86c38f89aa5c206fb70e441563cf25"
+    },
+    "compound": {
+      "open_ms": 0.4876,
+      "first_render_ms": 99.7601,
+      "repaint_p50_ms": 87.778,
+      "repaint_p95_ms": 100.1822,
+      "peak_rss_bytes": 28680192,
+      "incremental_peak_rss_bytes": 2752512,
+      "pdf_sha256": "aac37d895f115c4c4ad1f5d2232c55714def4075b562420bc1bfcd0f5403b0ec"
+    },
+    "ap-groups": {
+      "open_ms": 0.6031,
+      "first_render_ms": 17.8298,
+      "repaint_p50_ms": 19.1063,
+      "repaint_p95_ms": 19.969,
+      "peak_rss_bytes": 27119616,
+      "incremental_peak_rss_bytes": 1212416,
+      "pdf_sha256": "6a90cefc8cddfbdfdc157adcd8f464e622e15e438297f85f73091da9ed478f89"
+    },
+    "nonisolated": {
+      "open_ms": 0.5438,
+      "first_render_ms": 548.0304,
+      "repaint_p50_ms": 582.2979,
+      "repaint_p95_ms": 655.6072,
+      "peak_rss_bytes": 40259584,
+      "incremental_peak_rss_bytes": 14458880,
+      "pdf_sha256": "0e0d2ce9292eb0d6c1e52a6937e64a1325cc7c9671c0effbe1d46183ff0dbe5f"
+    },
+    "ap-nonisolated": {
+      "open_ms": 0.4595,
+      "first_render_ms": 23.8825,
+      "repaint_p50_ms": 23.3268,
+      "repaint_p95_ms": 27.0374,
+      "peak_rss_bytes": 27643904,
+      "incremental_peak_rss_bytes": 1683456,
+      "pdf_sha256": "3eeba1795cfea82993315383692850953657fb463798875c932e097a9d66dd85"
+    }
+  }
+}

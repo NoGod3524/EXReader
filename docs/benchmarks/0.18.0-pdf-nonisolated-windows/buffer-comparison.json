@@ -1,0 +1,175 @@
+{
+  "scope": "Alternating fresh-process internal prototypes, eight same-page repaints at scale 4, source/runtime not release baselines; background load and disk cache uncontrolled.",
+  "library_sha256": {
+    "interleaved": "18135addfe327afedf0ba42a775b98114d24cea593116669e71617f98fa89865",
+    "split": "1bff2273f283597cdff636bcdcfa99d9462e01788e2ff6569e90ba253641d593"
+  },
+  "records": {
+    "interleaved": [
+      {
+        "engine_version": "0.18.0",
+        "open_ms": 1.5635,
+        "first_render_ms": 466.4201,
+        "repaint_ms_samples": [
+          459.5866,
+          517.6902,
+          491.6675,
+          472.4886,
+          470.9584,
+          444.9602,
+          484.9354,
+          501.527
+        ],
+        "repaint_p50_ms": 472.4886,
+        "repaint_p95_ms": 517.6902,
+        "baseline_peak_rss_bytes": 26009600,
+        "peak_rss_bytes": 40382464,
+        "incremental_peak_rss_bytes": 14372864,
+        "rgba_sha256": "c2fdcaed3e3934f2066ea2823d69fa5508d28ff29829e525809572791fcb1a0f",
+        "dimensions": [
+          1024,
+          640
+        ]
+      },
+      {
+        "engine_version": "0.18.0",
+        "open_ms": 0.3644,
+        "first_render_ms": 491.349,
+        "repaint_ms_samples": [
+          435.3986,
+          462.7536,
+          529.6153,
+          514.2443,
+          553.4209,
+          631.9849,
+          577.3855,
+          611.878
+        ],
+        "repaint_p50_ms": 529.6153,
+        "repaint_p95_ms": 631.9849,
+        "baseline_peak_rss_bytes": 25866240,
+        "peak_rss_bytes": 40292352,
+        "incremental_peak_rss_bytes": 14426112,
+        "rgba_sha256": "c2fdcaed3e3934f2066ea2823d69fa5508d28ff29829e525809572791fcb1a0f",
+        "dimensions": [
+          1024,
+          640
+        ]
+      },
+      {
+        "engine_version": "0.18.0",
+        "open_ms": 0.4294,
+        "first_render_ms": 605.7884,
+        "repaint_ms_samples": [
+          581.0029,
+          507.6284,
+          540.1696,
+          522.9793,
+          516.916,
+          536.5438,
+          567.7625,
+          546.4336
+        ],
+        "repaint_p50_ms": 536.5438,
+        "repaint_p95_ms": 581.0029,
+        "baseline_peak_rss_bytes": 25948160,
+        "peak_rss_bytes": 40382464,
+        "incremental_peak_rss_bytes": 14434304,
+        "rgba_sha256": "c2fdcaed3e3934f2066ea2823d69fa5508d28ff29829e525809572791fcb1a0f",
+        "dimensions": [
+          1024,
+          640
+        ]
+      }
+    ],
+    "split": [
+      {
+        "engine_version": "0.18.0",
+        "open_ms": 0.2678,
+        "first_render_ms": 541.5198,
+        "repaint_ms_samples": [
+          529.6859,
+          506.4759,
+          563.6297,
+          672.8015,
+          948.292,
+          774.1148,
+          1512.2392,
+          766.6604
+        ],
+        "repaint_p50_ms": 672.8015,
+        "repaint_p95_ms": 1512.2392,
+        "baseline_peak_rss_bytes": 25927680,
+        "peak_rss_bytes": 40968192,
+        "incremental_peak_rss_bytes": 15040512,
+        "rgba_sha256": "c2fdcaed3e3934f2066ea2823d69fa5508d28ff29829e525809572791fcb1a0f",
+        "dimensions": [
+          1024,
+          640
+        ]
+      },
+      {
+        "engine_version": "0.18.0",
+        "open_ms": 0.2958,
+        "first_render_ms": 543.0952,
+        "repaint_ms_samples": [
+          659.3206,
+          829.2154,
+          553.2977,
+          565.4387,
+          461.9349,
+          497.7783,
+          386.5664,
+          476.5659
+        ],
+        "repaint_p50_ms": 497.7783,
+        "repaint_p95_ms": 829.2154,
+        "baseline_peak_rss_bytes": 25776128,
+        "peak_rss_bytes": 40751104,
+        "incremental_peak_rss_bytes": 14974976,
+        "rgba_sha256": "c2fdcaed3e3934f2066ea2823d69fa5508d28ff29829e525809572791fcb1a0f",
+        "dimensions": [
+          1024,
+          640
+        ]
+      },
+      {
+        "engine_version": "0.18.0",
+        "open_ms": 0.3859,
+        "first_render_ms": 580.6608,
+        "repaint_ms_samples": [
+          523.7228,
+          510.1492,
+          533.2654,
+          541.0998,
+          505.4695,
+          513.21,
+          515.2877,
+          510.0514
+        ],
+        "repaint_p50_ms": 513.21,
+        "repaint_p95_ms": 541.0998,
+        "baseline_peak_rss_bytes": 26034176,
+        "peak_rss_bytes": 41136128,
+        "incremental_peak_rss_bytes": 15101952,
+        "rgba_sha256": "c2fdcaed3e3934f2066ea2823d69fa5508d28ff29829e525809572791fcb1a0f",
+        "dimensions": [
+          1024,
+          640
+        ]
+      }
+    ]
+  },
+  "median": {
+    "interleaved": {
+      "first_render_ms": 491.349,
+      "repaint_p50_ms": 529.6153,
+      "peak_rss_bytes": 40382464
+    },
+    "split": {
+      "first_render_ms": 543.0952,
+      "repaint_p50_ms": 513.21,
+      "peak_rss_bytes": 40968192
+    }
+  }
+}

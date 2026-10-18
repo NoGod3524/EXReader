@@ -1,0 +1,20 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "host": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]",
+  "library_sha256": "18135addfe327afedf0ba42a775b98114d24cea593116669e71617f98fa89865",
+  "library_bytes": 5662055,
+  "scale": 4.0,
+  "runs": 3,
+  "scope": "One-page original PDF probes; fresh Python/ctypes processes; RSS includes host; disk cache/background load uncontrolled; repeated repaint, not page navigation.",
+  "cases": {
+    "nonisolated": {
+      "open_ms": 0.4701,
+      "first_render_ms": 386.3822,
+      "repaint_p50_ms": 395.4065,
+      "repaint_p95_ms": 416.022,
+      "peak_rss_bytes": 40366080,
+      "incremental_peak_rss_bytes": 14483456,
+      "pdf_sha256": "0e0d2ce9292eb0d6c1e52a6937e64a1325cc7c9671c0effbe1d46183ff0dbe5f"
+    }
+  }
+}
