@@ -4031,3 +4031,17 @@ happens inside a form (left red, right white). The soft-mask matrix is now 41 sc
 (16 Alpha, 16 Luminosity, matrix, BBox, transfer, q/Q, grey group, nested) plus eight
 refused dictionaries. Local Windows Release: 120/120 CTests; CI run 39169338940 passed
 all seven jobs.
+
+## Correction: forms inherit the soft mask (2026-10-18)
+
+The paragraph above claimed that a Form starts with the default graphics state for masks
+(ISO 32000-1 8.10.1). That claim was **wrong** and has been reverted. PyMuPDF 1.28.2 was
+installed to settle the question with a reference renderer: a page that sets a fill colour and
+then invokes a form which paints without setting one renders **red** in MuPDF, so forms inherit
+the paint state. A mask set on the page also masks the form's painting in MuPDF.
+
+The engine therefore treats `SMask` like every other paint parameter: a Form inherits it, the
+form's own elements are masked inside, and `end_layer` no longer applies the mask a second time
+(`exr_composite_frame` was reverted, and the per-group mask hook was removed from the content
+walker and the painter). The nested fixture keeps its expectation (left red, right white) but
+now reaches it through inheritance. 120/120 CTests pass.

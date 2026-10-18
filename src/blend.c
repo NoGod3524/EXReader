@@ -166,13 +166,6 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
     for(x=left;x<right;x++) {
       const unsigned char *p=source->pixels+y*source->stride+x*4;unsigned a=(unsigned)floor(p[3]*opacity+.5),coverage=clip ? clip->pixels[y*clip->stride+x] : 255;uint32_t color;
       if(!coverage) continue;
-      if(target_state && target_state->soft_mask) {
-        size_t mx=(size_t)x,my=(size_t)y;
-        unsigned mask=(mx<target_state->soft_mask_width && my<target_state->soft_mask_height) ?
-          target_state->soft_mask[my*target_state->soft_mask_width+mx] : 0u;
-        coverage=(coverage*mask+127)/255;
-        if(!coverage) continue;
-      }
       if(target_state && target_state->knockout) {
         /* A group nested in a knockout group is one element: it composites with the
            knockout group's initial backdrop and replaces the accumulated result. */

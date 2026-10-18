@@ -350,7 +350,7 @@ exr_status exr_canvas_end_layer(exr_canvas *c,unsigned commit,exr_error *e) {
   c->bitmap=layer.bitmap;c->composite=layer.composite;c->clip=layer.clip;c->group=layer.pending;c->group_depth=layer.group_depth;c->blend=layer.parent_blend;
   memset(c->groups,0,sizeof(c->groups));if(layer.group_depth) memcpy(c->groups,layer.pending_groups,layer.group_depth*sizeof(*c->groups));free(layer.pending_groups);
   c->layer_depth--;c->layer_bytes-=(size_t)source.stride*source.height+composite_size(&source,source_state);memset(c->layers+c->layer_depth,0,sizeof(*c->layers));
-  if(commit && status==EXR_OK) status=exr_composite_frame(&c->bitmap,&source,layer.opacity,layer.blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),source_state,&c->work,&c->control,e);
+  if(commit && status==EXR_OK) status=exr_composite_frame(&c->bitmap,&source,layer.opacity,layer.blend,c->clip ? &c->clip->bitmap : NULL,c->composite,source_state,&c->work,&c->control,e);
   composite_free(source_state);free(source.pixels);for(i=c->depth;i<160;i++) c->saved_blend[i]=EXR_BLEND_NORMAL;
   return finish(c,status,e);
 }

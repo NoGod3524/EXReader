@@ -358,7 +358,7 @@ static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,
   content_state saved=r->state; content_path saved_path; double saved_matrix[6],saved_line[6];
   uint32_t saved_resources=r->resources; size_t saved_floor=r->floor,saved_depth=r->depth,i,n;
   unsigned saved_inside=r->inside,saved_compatibility=r->compatibility,saved_type3=r->type3,saved_declared=r->declared,saved_uncolored=r->uncolored;
-  const unsigned char *data; exr_status status;int started=0,masked=0;
+  const unsigned char *data; exr_status status;int started=0;
   if(r->form_depth==32) return exr_fail(error,EXR_LIMIT,"PDF Form/Type3 stream depth exceeds 32");
   for(i=0;i<r->form_depth;i++) if(r->forms[i]==id) return exr_fail(error,EXR_FORMAT,"Cyclic PDF Form/Type3 stream invocation");
   if(exr_control_cancel(r->control,error)!=EXR_OK) return EXR_CANCELLED;
@@ -366,18 +366,12 @@ static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,
   status=event(r,EXR_PDF_SAVE,error); if(status!=EXR_OK) return status;
   memcpy(saved_matrix,r->matrix,sizeof(saved_matrix)); memcpy(saved_line,r->line,sizeof(saved_line)); saved_path=r->path;
   memcpy(r->state.ctm,ctm,sizeof(r->state.ctm)); if(resources!=EXR_PDF_NONE) r->resources=resources;
-  r->state.paint.smask=EXR_PDF_NONE; /* a Form starts with the default graphics state */
   memset(&r->path,0,sizeof(r->path)); r->floor=r->depth; r->inside=0; r->compatibility=0; r->type3=glyph; r->declared=0;
   identity(r->matrix); identity(r->line); r->forms[r->form_depth++]=id;
   if(r->graphics && box) status=clip_bounds(r,box,error);
   if(status==EXR_OK && layer) {
     if(!r->callbacks.begin_group || !r->callbacks.end_layer) status=exr_fail(error,EXR_FORMAT,"PDF consumer does not support isolated groups");
     else {
-      /* The outer paint state carries the mask; the Form body starts without it. */
-      if(r->callbacks.soft_mask && saved.paint.smask!=EXR_PDF_NONE) {
-        status=r->callbacks.soft_mask(r->context,&saved.paint,1,error);
-        if(status==EXR_OK) masked=1;
-      }
       if(status==EXR_OK) status=r->callbacks.begin_group(r->context,r->state.paint.fill.alpha,r->state.paint.blend,
         (layer&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|(layer&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0),error);
       if(status==EXR_OK && error->code!=EXR_OK) status=error->code;
@@ -397,7 +391,6 @@ static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,
     if(ended==EXR_OK && cleanup.code!=EXR_OK) ended=cleanup.code;
     if(status==EXR_OK && ended!=EXR_OK) { status=ended;*error=cleanup; }
   }
-  if(masked) { exr_error ignored={0}; (void)r->callbacks.soft_mask(r->context,&saved.paint,0,&ignored); }
   r->path_bytes-=r->path.capacity*sizeof(*r->path.segments); free(r->path.segments); r->path=saved_path;
   r->form_depth--; r->state=saved; r->resources=saved_resources; r->floor=saved_floor; r->depth=saved_depth;
   r->inside=saved_inside; r->compatibility=saved_compatibility; r->type3=saved_type3; r->declared=saved_declared; r->uncolored=saved_uncolored;
