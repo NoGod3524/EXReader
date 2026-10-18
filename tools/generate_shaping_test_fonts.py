@@ -260,7 +260,7 @@ def context_formats(font):
             feature(table, 'zz%02d' % (4 + position*5 + fmt-2), index)
 
 
-def broken_lookup(source, tag):
+def broken_lookup(source, tag, field=8):
     data = bytearray(source)
     count = struct.unpack_from('>H', data, 4)[0]
     for i in range(count):
@@ -268,9 +268,8 @@ def broken_lookup(source, tag):
         if data[entry:entry+4] == tag.encode('ascii'):
             offset, size = struct.unpack_from('>II', data, entry+8)
             assert size > 10
-            # LookupListOffset is relative to the GSUB/GPOS header; FFFF is outside
-            # this fixture's table. Other sfnt tables stay valid for font loading.
-            struct.pack_into('>H', data, offset+8, 0xFFFF)
+            # Corrupt a relative table offset; outlines/cmap remain loadable.
+            struct.pack_into('>H', data, offset+field, 0xFFFF)
             return data
     raise AssertionError(tag)
 
@@ -293,6 +292,24 @@ feature curs {
 } curs;
 ''')
     build(boundary_features).save(ROOT / 'line-boundary.ttf')
+    flags_features = FEATURES + r"""
+@TOPFILTER = [acute grave fatha];
+feature ss13 { lookupflag IgnoreBaseGlyphs; sub f i by fi; } ss13;
+feature ss14 { lookupflag IgnoreLigatures; sub fi by a; } ss14;
+feature ss15 {
+    lookupflag MarkAttachmentType @TOPFILTER;
+    sub a dot' by grave; sub a acute' by grave;
+} ss15;
+feature ss16 {
+    lookupflag UseMarkFilteringSet @TOPFILTER;
+    sub a dot' by grave; sub a acute' by grave;
+} ss16;
+feature ss17 { lookupflag RightToLeft; sub a by b; } ss17;
+feature ss18 { sub a dot' by grave; } ss18;
+"""
+    build(flags_features).save(ROOT / 'lookup-flags.ttf')
+    (ROOT / 'broken-gdef.ttf').write_bytes(broken_lookup(original, 'GDEF', 4))
+    (ROOT / 'broken-mark-sets.ttf').write_bytes(broken_lookup((ROOT / 'lookup-flags.ttf').read_bytes(), 'GDEF', 12))
     lookups = {}
     for tag in ('GSUB', 'GPOS'):
         lookups[tag] = [{'type': lookup.LookupType,

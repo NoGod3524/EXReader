@@ -315,9 +315,13 @@
     ]
   },
   "sha256": {
+    "broken-gdef.ttf": "46006cb732b1e7db29e8c94e7284060b2a948895f40bec51dcadb558bebedfe3",
     "broken-gpos.ttf": "26dab5361f95599a60718bcc24daf2cfb9e44cfec24530e66cfde2ec10f2976f",
     "broken-gsub.ttf": "c4344121c47273521d2b01bffe066672bf04d913fbdb8c1a482f684da0156587",
+    "broken-mark-sets.ttf": "88b5537667d534607572d0f15454941c6eaf166329b333d00f99f7cd2d267106",
+    "hyphen.ttf": "a6cd2817be0aa1e4c98c08eb0462ccb364838405f39f580064831dc23183d482",
     "line-boundary.ttf": "156db092dcad9b2fd7baed72d91d6b3d77d1e2503816929a8f393666d51daba9",
+    "lookup-flags.ttf": "d6289907f38cb2bb3a7ed38440d42f2ee7846bf2fa8e0bf4920a0ade578a60f0",
     "shaping.ttf": "b66e374ced7db181f0e7aeca113bbc81ce9f56eb02afbd73b805988681a411f5"
   }
 }

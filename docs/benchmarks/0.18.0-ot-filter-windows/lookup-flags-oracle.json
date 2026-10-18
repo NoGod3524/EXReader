@@ -1,0 +1,157 @@
+{
+  "uharfbuzz": "0.56.3",
+  "harfbuzz": "14.6.0",
+  "cases": [
+    {
+      "feature": "ss13",
+      "text": "fi",
+      "glyphs": [
+        4,
+        5
+      ],
+      "clusters": [
+        0,
+        1
+      ],
+      "positions": [
+        [
+          300,
+          0,
+          0
+        ],
+        [
+          200,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "feature": "ss14",
+      "text": "fi",
+      "glyphs": [
+        7
+      ],
+      "clusters": [
+        0
+      ],
+      "positions": [
+        [
+          450,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "feature": "ss15",
+      "text": "ȧ́",
+      "glyphs": [
+        8,
+        17,
+        16
+      ],
+      "clusters": [
+        0,
+        0,
+        0
+      ],
+      "positions": [
+        [
+          500,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "feature": "ss16",
+      "text": "ȧ́",
+      "glyphs": [
+        8,
+        17,
+        16
+      ],
+      "clusters": [
+        0,
+        0,
+        0
+      ],
+      "positions": [
+        [
+          500,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "feature": "ss17",
+      "text": "a",
+      "glyphs": [
+        9
+      ],
+      "clusters": [
+        0
+      ],
+      "positions": [
+        [
+          500,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "feature": "ss18",
+      "text": "ȧ́",
+      "glyphs": [
+        8,
+        16,
+        15
+      ],
+      "clusters": [
+        0,
+        0,
+        0
+      ],
+      "positions": [
+        [
+          500,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ]
+    }
+  ]
+}

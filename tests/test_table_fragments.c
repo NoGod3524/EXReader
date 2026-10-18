@@ -110,7 +110,7 @@ static void cases(const char *directory) {
     if(test==6 || test==7 || test==23) { c.page.width=100;c.page.height=180; }
     { exr_status status=exr_layout_create_ex(d,font,&c,&l,&error);if(status!=EXR_OK) fprintf(stderr,"fragment case %u\n",test);OK(status); }
     fprintf(stderr,"fragment case %u\n",test);
-    if(test!=16) { size_t np;const exr_page *pages=exr_layout_pages(l,&np);CHECK(np && pages[np-1].line_count>0); }
+    { size_t np;const exr_page *pages=exr_layout_pages(l,&np);CHECK(np && (pages[np-1].line_count || pages[np-1].box_count)); }
     signature(l,test);compare(d,l,&c,test==6 || test==7 || test==23);exr_layout_free(l);exr_document_free(d);
   }
 }
@@ -179,6 +179,7 @@ static void float_budgets(const char *directory) {
   }
 }
 int main(int argc,char **argv) {
-  char path[4096];CHECK(argc==2 || argc==3);snprintf(path,sizeof(path),"%s/fonts/primary.ttf",argv[1]);OK(exr_font_open(path,&font,&error));
-  if(argc==3) large_fixed(argv[1]);else { alpha_borders();cases(argv[1]);float_budgets(argv[1]);recovery(argv[1]);large_fixed(argv[1]); }exr_font_free(font);printf("%u table fragment checks passed\n",checks);return 0;
+  char path[4096];CHECK(argc==2 || argc==3 || (argc==4 && !strcmp(argv[2],"--font")));
+  snprintf(path,sizeof(path),"%s/fonts/primary.ttf",argv[1]);OK(exr_font_open(argc==4 ? argv[3] : path,&font,&error));
+  if(argc==4) cases(argv[1]);else if(argc==3) large_fixed(argv[1]);else { alpha_borders();cases(argv[1]);float_budgets(argv[1]);recovery(argv[1]);large_fixed(argv[1]); }exr_font_free(font);printf("%u table fragment checks passed\n",checks);return 0;
 }
