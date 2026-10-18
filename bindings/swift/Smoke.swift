@@ -349,6 +349,28 @@ import CEXReader
             }
             let bitmap = try page.render(); precondition(bitmap.width == 80)
         }
+        do {
+            let publication = try EXReaderPublication(file: root.appendingPathComponent("books/hyphen-insertion-long.epub"))
+            let chapter = try publication.load(part: 0)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            var config = EXReaderLayoutConfig()
+            config.page.width = 80; config.page.height = 100; config.page.margin = 10; config.page.font_size = 14
+            config.userCSS = "html,body,p {margin:0;padding:0;font-size:14px;line-height:20px}"
+            let pager = try chapter.pager(font: font, config: config)
+            try pager.setHyphenation([EXReaderHyphenDictionary(language: "zi", patterns: Data(".aaaa1aaaa./=abcdefghijklmnop,5,0 .abcd1efghijklmnopaaaa./d=xy,4,2 .xyfg1hijklmnopaaaa./g=zz,4,2 .zzij1klmnopaaaa.".utf8), leftMinimum: 1, rightMinimum: 1)])
+            for _ in 0..<2 {
+                guard let page = try pager.next() else { preconditionFailure("missing inserted text page") }
+                precondition(page.glyphs.allSatisfy { ($0.flags & ~UInt32(2559)) == 0 && ($0.boundaries & ~UInt32(15)) == 0 })
+                let inserted = page.glyphs.filter { ($0.flags & 2048) != 0 && $0.start == 4 && $0.codepoint >= 97 && $0.codepoint <= 122 }
+                precondition(!inserted.isEmpty)
+                for glyph in inserted {
+                    precondition(glyph.end == 4 && glyph.cluster_start == 4 && glyph.cluster_end == 5)
+                    let hit = page.hitTest(x: glyph.x + 0.1, y: glyph.baseline - 2)
+                    precondition(hit == 4 || hit == 5)
+                }
+                let bitmap = try page.render(); precondition(bitmap.width == 80)
+            }
+        }
         print("Swift SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed")
     }
 }

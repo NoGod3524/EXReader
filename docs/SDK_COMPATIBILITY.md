@@ -219,8 +219,8 @@ using slash as an unsupported token after slash grammar became supported.
 Layout now renders discretionary before/after strings and includes them in final
 shaping/width measurement. Generated glyph source ranges may be nonempty and
 cover the replaced original text; do not discard them from hit/range mappings
-or copy their characters into source text. Expansion sides are atomic source
-clusters. Empty right-side deletions retain an invisible generated source span.
+or copy their characters into source text. Expansion sides retain protected source
+selection ranges independently of display grapheme identity. Empty right-side deletions retain an invisible generated source span.
 Strings remain literal and inherit their original side's style; display bidi
 resolution is described below.
 Internal U+00B7 now stays inside gathered words, including host-provider input.
@@ -231,19 +231,18 @@ owned word/edit capacities share the 16 MiB line budget. Existing public record
 sizes, ABI epoch 1 and schema 6 are unchanged. After each committed replacement,
 stale original dictionary bits are cleared and the actual display remainder is
 queried again. Fresh ordinary/replacement opportunities must align with protected
-grapheme/source edges and advance the original source point. Erase ranges may
+display grapheme/GLUE boundaries, preserve original graphemes and advance display positions. Multiple generated points may share a source offset. Erase ranges may
 start within a generated side; private raw indices preserve the exact display
 range. Candidates whose left context was consumed by an ordinary break are
 dropped with their automatic bit. Generated sides remain atomic to selection.
 Derived tokens exceeding 256 scalars/1024 bytes use ordinary/emergency fallback.
-Global effects of future unselected edits on earlier lines, internal display
-positions and language-aware casing remain required work. Installed Swift/JNI smoke now
+Future edit context and generated-side wrapping are covered by the supplements below; language-aware casing remains required work. Installed Swift/JNI smoke now
 checks actual replacement glyphs with nonempty original source intervals.
 
 A zero-cut after insertion shares its source cluster with the following original
 grapheme. Its glyph start/end may remain empty, while cluster_end includes that
-grapheme. This preserves cursor access and forward progress when a long inserted
-side clips in a narrow line.
+grapheme. This preserves cursor access while display graphemes wrap a long inserted
+side across lines and pages.
 
 Display boundaries now replay Unicode 17 grapheme/line state for replacement
 sides and the complete queued carry, including pending input. New joins can
@@ -253,7 +252,7 @@ side. A cluster crossing ready/pending is deferred intact before remeasurement.
 Format controls/selectors are hidden normally. Empty deletions have a distinct
 private flag, omitted from public output, and do not enter Unicode/dictionary input.
 Snapshots include all display states by value; no public record/API size changed.
-Internal display breaks, casing and conditional compounds remain open; future
+Casing and conditional compounds remain open; future
 context verification is described in the following supplement.
 
 
@@ -270,7 +269,7 @@ Its bounded two-base retry reports EXR_LIMIT for non-converging discretionary
 layout. Providers must be deterministic and can be queried during preflight.
 Installed JNI/Swift consumers verify actual Latin/Arabic/Han levels, source hits,
 and leading neutral pages whose base changes after a later replacement.
-Internal generated-side line breaks, casing and conditional compounds remain
+Casing and conditional compounds remain
 open; future neutral/bracket context now uses the following proposal supplement.
 
 
@@ -294,3 +293,27 @@ JNI/Swift smoke verifies page-one plus signs at RTL level 1 even though the late
 replacement that determines them is not on that page. Internal generated-side
 breaks, casing, conditional compounds, tall table-row fragmentation and the
 broader VERSIONING.md roadmap remain open.
+
+
+### Generated-side wrapping (0.18 development)
+
+Transient grapheme identities separate display consumption from original source
+affiliation. Committed after strings wrap with Unicode/ordinary dictionary and
+emergency opportunities; their words can receive further spelling rewrites.
+Mapped raw indices distinguish multiple edits at one source byte point. Original
+selection ranges remain protected; no positions inside generated text become
+original offsets. Public flags/boundaries contain no transient identities.
+Before text plus the inserted hyphen remains a fitting left-line candidate: an
+oversized unselected before string uses the existing original-text fallback.
+
+Only private line-buffer state changes; installed record sizes, symbols, ABI 1
+and schema 6 stay unchanged. Identities are copied in checkpoints, bounded and
+charged through the existing glyph buffers; no parallel identity allocation or
+new dependency is introduced. Original source affiliation can span more than one
+page, including zero-cut insertions attached to the following original grapheme.
+
+Pure-L insertion between adjacent L display scalars preserves strong context and
+uses the existing fast path. Empty generated ranges refer to their following
+original L anchor; other cases keep display proposal/analysis. The 1 MiB selected
+and unselected insertion regression checks that ordinary text avoids repeated
+whole-paragraph work without raising resource limits.

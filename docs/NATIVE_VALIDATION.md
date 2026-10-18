@@ -3337,3 +3337,65 @@ Installed runtime copies match; all four measured datasets match the verified
 benchmark executable hash. The following documentation-only commit records
 verification and skips a redundant CI run. The broad compatibility/SDK roadmap
 and the remaining explicit layout items stay active.
+
+
+### Wrapping generated spelling strings without losing source affiliation (0.18 development)
+
+Generated after text now wraps by actual display graphemes instead of treating a
+shared original range as one indivisible display item. Raw/shaped FIFO consumption
+uses transient bounded identities in existing private boundary bits. Ligatures,
+hidden controls, carry reconstruction and checkpoints preserve those identities;
+public output strips them. Line/page ranges include protected source affiliation,
+so zero-cut insertion pages can share the following original grapheme's interval.
+Before text plus the inserted hyphen must still fit its optional left candidate;
+an oversized unselected before string uses the original-text fallback.
+
+Changed generated words can receive further ordinary hyphens and spelling edits.
+Mapped raw indices distinguish multiple opportunities at the same original byte
+point. Stale source edits cannot be selected on generated characters, and consumed
+mapped contexts are discarded with their automatic bit. No public record, ABI 1,
+schema 6, dependency, license or development version changes.
+
+The 128-scalar insertion regression now spans multiple pages. An exact ASCII
+oracle checks ordinary and repeated spelling changes inside its generated side.
+Eighteen payload/width combinations cover spaces, Han, combining marks, RI pairs,
+Emoji ZWJ and NBSP/WJ; full Unicode analysis checks line boundaries and all display
+scalars. A separate shaping font checks Latin ligatures and Arabic shaping. Provider
+I/O failure/cancellation during generated-word rematching returns no failed cached
+page, preserves the preceding page pixels and permits retry.
+
+All 113 local Release CTests pass; automatic layout records 2,323,553 checks. Eight
+new EPUBs cover plain, RTL, vertical, float, orthogonal, styled-inline, table and
+mixed-script insertions: eager layout, cached/uncached and backward/checkpoint
+replay agree in pixels, positions and hits. All 79 prior EPUB blobs are unchanged.
+There are 87 fixtures overall, including the existing expected tall-row limit.
+Installed C/C++ and JNI -Xcheck:jni pass; installed JNI/Swift smoke verifies inserted
+glyphs on two pages, their original range, hits and absence of private bits. Swift
+execution and sanitizer/cross-platform results are pending this commit's CI.
+
+A supplementary 1 MiB stress case exposed repeated whole-paragraph analysis of
+unselected pure-L insertion candidates. Empty source spans had been classified
+as class-changing. Pure-L insertion between adjacent L display scalars now keeps
+strong context; generated empty ranges can use their following original L anchor.
+Other cases retain existing display verification. The earlier pre-fast-path DLL
+reproduces EXR_LIMIT on page 1 of the new native large-context test; the final DLL
+passes selected and unselected cases. Work and memory caps were not increased.
+
+Final Windows DLL: 5,431,688 bytes, 2,096 above the previous verified snapshot;
+SHA256 f2314318b325f5d8c650a55604ebb9e7e030e7593e32663c10512195f3185895.
+Three fresh processes per mode measure five 1 MiB text books and the first 65 pages:
+
+| Workload | Enabled first visible (ms) | Peak RSS (bytes) | Turn p50 / p95 (ms) |
+| --- | ---: | ---: | ---: |
+| English | 21.2808 | 14573568 | 4.3716 / 7.1860 |
+| Class-preserving rewrites | 17.8170 | 14036992 | 5.9274 / 8.8029 |
+| Latin/Arabic/Han rewrites | 26.7888 | 14450688 | 13.5973 / 16.7000 |
+| AUTO to RTL | 28.4992 | 14315520 | 14.3584 / 16.5258 |
+| 128-scalar insertion with internal dictionary breaks | 17.9651 | 14057472 | 6.0855 / 9.3559 |
+
+All raw records, original insertion patterns and exact source/binary/input/font
+hashes are in benchmarks/0.18.0-hyphen-wrap-windows. The four preceding workloads
+retain their generated-glyph counts; the additional expansion workload emits
+19,312 generated glyphs. Disk cache and background load are uncontrolled. Language
+casing, conditional compound rewrites, tall-row fragmentation and the full PDF/SDK
+compatibility roadmap remain open.

@@ -18,6 +18,14 @@ typedef struct { exr_float items[EXR_MAX_FLOATS]; size_t count; } exr_float_stat
 #define EXR_GLYPH_DISPLAY_BIDI 8192u /* Private page field holds a display scalar index. */
 #define EXR_GLYPH_RUBY_ITEM 1024u /* Internal atomic inline item, expanded before output. */
 #define EXR_BOUNDARY_AUTO_HYPHEN 16u /* Private raw-source opportunity, not a shaping boundary. */
+/* Transient display-grapheme identity; output retains only public low bits. */
+#define EXR_DISPLAY_ID_SHIFT 5u
+#define EXR_DISPLAY_ID_MASK (~31u)
+static inline unsigned exr_inline_id(const exr_glyph *g) { return g->boundaries>>EXR_DISPLAY_ID_SHIFT; }
+static inline int exr_inline_same(const exr_glyph *a,const exr_glyph *b) {
+  unsigned x=exr_inline_id(a),y=exr_inline_id(b);
+  return x || y ? x==y : a->cluster_start==b->cluster_start;
+}
 typedef struct {
   size_t point,start,end,word_start,until,before,after;
   size_t raw_start,raw_point,raw_end;
@@ -76,6 +84,7 @@ typedef struct {
   exr_layout run, raw, line;
   exr_text_state text, display_origin, display_line;
   uint32_t display_previous, line_previous;
+  unsigned display_origin_id,display_feed_id,display_line_id;
   size_t display_node, line_node;
   int track_display, display_changed;
   exr_display_state *display;
