@@ -24,7 +24,7 @@ static exr_canvas *canvas(unsigned width,unsigned height,uint32_t background) {
   exr_canvas_config config={0};exr_canvas *c=NULL;config.width=width;config.height=height;config.background=background;OK(exr_canvas_create(&config,&c,&error));return c;
 }
 static void references(void) {
-  const char *names[]={"flat","primitives","state","groups","compound","ap-groups","nonisolated","ap-nonisolated","knockout","knockout-nonisolated","knockout-shapes"};unsigned test,alpha;
+  const char *names[]={"flat","primitives","state","groups","compound","ap-groups","nonisolated","ap-nonisolated","knockout","knockout-nonisolated","knockout-shapes","knockout-elements","knockout-edges"};unsigned test,alpha;
   for(test=0;test<sizeof(names)/sizeof(*names);test++) {
     exr_fixed_document *d=open_book(names[test]);size_t page_count,mask_size;const exr_fixed_page *pages=exr_fixed_pages(d,&page_count);char name[64];unsigned char *mask;
     CHECK(page_count==1);snprintf(name,sizeof(name),"%s.mask",names[test]);mask=load(name,&mask_size);
@@ -290,6 +290,24 @@ static void knockout(void) {
   OK(exr_canvas_end_layer(c,1,&error));px=exr_canvas_bitmap(c)->pixels;
   CHECK(px[1]>=253 && px[3]>=126 && px[3]<=130);
   exr_canvas_free(c);
+  /* Abort (commit=0) discards the group, leaves the pixels untouched and does not
+     grow the canvas on repeated use (the first cycle allocates the layer slots). */
+  { exr_canvas *b=canvas(4,4,0xffffffff);size_t warm;unsigned pass;rect(p,4,4);style.fill=0x00ff0080;
+    for(pass=0;pass<2;pass++) {
+      OK(exr_canvas_begin_group(b,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));
+      OK(exr_canvas_path(b,p,5,NULL,&style,&error));
+      OK(exr_canvas_end_layer(b,0,&error));
+      if(!pass) warm=exr_canvas_memory_size(b); else CHECK(exr_canvas_memory_size(b)==warm);
+    }
+    px=exr_canvas_bitmap(b)->pixels;CHECK(px[0]==255 && px[1]==255 && px[2]==255 && px[3]==255);
+    exr_canvas_free(b);
+  }
+  /* Depth: 32 nested knockout groups are allowed, the 33rd is refused. */
+  { exr_canvas *b=canvas(1,1,0);unsigned i;
+    for(i=0;i<32;i++) OK(exr_canvas_begin_group(b,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));
+    CHECK(exr_canvas_begin_group(b,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error)==EXR_LIMIT);
+    exr_canvas_free(b);
+  }
   /* Budget: a knockout group costs the same 24 bytes/pixel as a non-isolated one. */
   { exr_canvas *b=canvas(1,1,0);OK(exr_canvas_set_layer_budget(b,23,&error));
     CHECK(exr_canvas_begin_group(b,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error)==EXR_LIMIT);exr_canvas_free(b);
