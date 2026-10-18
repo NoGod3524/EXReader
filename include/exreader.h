@@ -459,7 +459,8 @@ enum {
   EXR_GLYPH_VERTICAL = 128, /* advance and clipping follow the physical y axis. */
   EXR_GLYPH_SIDEWAYS = 256, /* Clockwise 90-degree outline in vertical text. */
   EXR_GLYPH_GENERATED = 2048 /* Contains generated text, e.g. an automatic hyphen.
-                               Source range may be empty; never append it to source text. */
+                               Source range may be empty or cover replaced original text.
+                               Copy/selection use original source, not generated spelling. */
 };
 typedef enum {
   EXR_WRITING_HORIZONTAL_TB=0, EXR_WRITING_VERTICAL_RL=1, EXR_WRITING_VERTICAL_LR=2
@@ -1157,9 +1158,10 @@ EXR_API void exr_hyphenation_free(exr_hyphenation *result);
 EXR_API size_t exr_hyphenator_memory_size(const exr_hyphenator *hyphenator);
 EXR_API void exr_hyphenator_free(exr_hyphenator *hyphenator);
 /* Optional dictionaries are retained. Automatic opportunities require CSS
-   hyphens:auto; the CSS default remains manual. Current layout uses ordinary
-   opportunities only; discretionary rewrite rendering is a separate integration.
-   Config record/ABI is unchanged. */
+   hyphens:auto; the CSS default remains manual. Discretionary replacement sides
+   are atomic source clusters retaining original ranges; strings remain literal.
+   Changed word remainders retain ordinary/emergency breaks but are not yet
+   dictionary-hyphenated again. Config record/ABI is unchanged. */
 EXR_API exr_status exr_layout_create_hyphenated(const exr_document *doc,exr_font *font,
   const exr_layout_config *config,exr_hyphenator *hyphenator,exr_layout **out,exr_error *error);
 EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,

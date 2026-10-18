@@ -209,9 +209,26 @@ Native dictionaries now accept pattern/before=after[,start,cut]. Malformed
 ranges are EXR_FORMAT, not silently truncated. Explicit cut=0 is insertion;
 replacement strings are literal, with no automatic casing. Equal-weight plain
 rules win over rewrites; conflicting equal-weight rewrites suppress the point.
-The old breaks API intentionally omits spelling-changing opportunities. Current
-layout/Swift/JNI pager integration still uses that ordinary bitmap path; native
-query support does not yet imply automatic replacement rendering or conditional
-compound rewriting. The installed C example exercises both APIs. An unsupported
+The old breaks API intentionally omits spelling-changing opportunities. Layout
+now selects the richer query when needed, including Swift/JNI pagers. Conditional
+compound rewriting and rematching changed word remainders remain pending. The installed C example exercises both APIs. An unsupported
 raw TeX command now checks failed installation in Swift/JNI smoke, rather than
 using slash as an unsupported token after slash grammar became supported.
+
+
+Layout now renders discretionary before/after strings and includes them in final
+shaping/width measurement. Generated glyph source ranges may be nonempty and
+cover the replaced original text; do not discard them from hit/range mappings
+or copy their characters into source text. Expansion sides are atomic source
+clusters. Empty right-side deletions retain an invisible generated source span.
+Strings remain literal and inherit their original side's style/bidi level.
+Internal U+00B7 now stays inside gathered words, including host-provider input.
+
+Pending edits and cached word edits are deep-copied with pager checkpoints and
+counted against line/checkpoint payload budgets. The three glyph buffers plus
+owned word/edit capacities share the 16 MiB line budget. Existing public record
+sizes, ABI epoch 1 and schema 6 are unchanged. Changed word remainders retain
+ordinary/emergency opportunities, while their stale dictionary bits are cleared;
+rematching with mapped generated text, full changed-text bidi/boundary analysis
+and language-aware casing remain required work. Installed Swift/JNI smoke now
+checks actual replacement glyphs with nonempty original source intervals.

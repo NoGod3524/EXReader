@@ -14,8 +14,13 @@ typedef struct { exr_float items[EXR_MAX_FLOATS]; size_t count; } exr_float_stat
 #define EXR_GLYPH_RUBY_ITEM 1024u /* Internal atomic inline item, expanded before output. */
 #define EXR_BOUNDARY_AUTO_HYPHEN 16u /* Private raw-source opportunity, not a shaping boundary. */
 typedef struct {
+  size_t point,start,end,word_start,until,before,after;
+  char text[514];
+} exr_hyphen_edit;
+typedef struct {
   size_t start,until,count,points[256];
   char language[256];
+  exr_hyphen_edit *edits;size_t edit_count,edit_capacity;
 } exr_hyphen_word;
 typedef struct {
   exr_bidi *analysis;
@@ -63,6 +68,7 @@ typedef struct {
   size_t word_node,word_start,previous_node;
   uint32_t previous_scalar;
   int in_word;
+  exr_hyphen_edit *edits;size_t edit_count,edit_capacity,rewrite,blocked_until;
 } exr_line_buffer;
 void exr_inline_clear(exr_inline_bidi *bidi);
 unsigned exr_vertical_flags(uint32_t codepoint, exr_text_orientation orientation);
@@ -75,6 +81,7 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *buffer, exr_glyph glyph);
 exr_status exr_inline_drain(flow *f, exr_line_buffer *buffer);
 exr_status exr_inline_finish(flow *f, exr_line_buffer *buffer);
 void exr_inline_buffer_clear(exr_line_buffer *buffer);
+size_t exr_inline_extra_size(const exr_line_buffer *buffer,int compact);
 void exr_inline_rescan(exr_line_buffer *buffer);
 exr_status exr_inline_pending(flow *f,exr_line_buffer *buffer,float *width);
 exr_status exr_inline_break(flow *f,exr_line_buffer *buffer);

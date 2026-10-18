@@ -100,13 +100,23 @@ static checkpoint *checkpoint_clone(const checkpoint *source) {
   copy->f.floats=&copy->floats;
   copy->frames = NULL;
   copy->streams=NULL;
-  copy->line.word=NULL;
+  copy->line.word=NULL;copy->line.edits=NULL;copy->line.edit_capacity=source->line.edit_count;
   copy->line.run.glyphs = copy->line.raw.glyphs = copy->line.line.glyphs = NULL;
   destinations[0] = &copy->line.run; destinations[1] = &copy->line.raw;
   destinations[2] = &copy->line.line;
   if(source->line.word) {
     copy->line.word=malloc(sizeof(*copy->line.word)); if(!copy->line.word) goto bad;
-    *copy->line.word=*source->line.word;
+    *copy->line.word=*source->line.word;copy->line.word->edits=NULL;copy->line.word->edit_capacity=source->line.word->edit_count;
+    if(source->line.word->edit_count) {
+      size_t bytes=source->line.word->edit_count*sizeof(*source->line.word->edits);
+      copy->line.word->edits=malloc(bytes);if(!copy->line.word->edits) goto bad;
+      memcpy(copy->line.word->edits,source->line.word->edits,bytes);
+    }
+  }
+  if(source->line.edit_count) {
+    size_t bytes=source->line.edit_count*sizeof(*source->line.edits);
+    copy->line.edits=malloc(bytes);if(!copy->line.edits) goto bad;
+    memcpy(copy->line.edits,source->line.edits,bytes);
   }
   for (i = 0; i < 3; i++) {
     size_t count = sources[i]->glyph_count;
@@ -185,7 +195,7 @@ static size_t context_memory_size(const exr_pager *p) {
   size_t total = sizeof(*p), i;
   const exr_layout *queues[3];
   if (!p) return 0;
-  if(p->line.word) total+=sizeof(*p->line.word);
+  total+=exr_inline_extra_size(&p->line,1);
   total+=p->stream_capacity*sizeof(*p->streams);
   for(i=0;i<p->stream_count;i++) {
     size_t bytes=context_memory_size(p->streams[i].context);
@@ -221,7 +231,7 @@ static void save_checkpoint(exr_pager *p) {
   checkpoint state = {0}, *copy;
   size_t i, bytes = sizeof(state) + p->depth*sizeof(frame);
   const exr_layout *queues[3] = {&p->line.run, &p->line.raw, &p->line.line};
-  if(p->line.word) bytes+=sizeof(*p->line.word);
+  bytes+=exr_inline_extra_size(&p->line,1);
   if (p->mode != 2 || !p->checkpoint_capacity || p->finished || p->emitted % p->interval) return;
   bytes+=p->stream_count*sizeof(*p->streams);
   for(i=0;i<p->stream_count;i++) {
