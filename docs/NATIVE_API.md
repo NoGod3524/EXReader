@@ -1301,6 +1301,6 @@ CSS `float:none/left/right/inherit` 和 `clear:none/left/right/both/inherit` 已
 
 浮动块与它前面的高字号文字可能分别落在相邻页上，因此 page.start/end 是源文字包络，允许重叠；不能再据此假设所有页面严格分割成相接区间。`exr_layout_page_at` 对有重叠的完整布局扫描实际 glyph 范围，优先包含偏移的较窄范围，避免跨浮动连字的宽范围掩盖浮动自身文字；没有可见匹配时回退到按页起点定位。普通不重叠布局仍走二分查找。重叠查找目前 O(glyph_count)，不另建索引。positioned 输入允许页包络重叠，但 start 仍须单调，逐页 glyph/line/box 仍须在所属页包络内。
 
-每上下文最多 128 个存活浮动，超出返回 EXR_LIMIT。当前 64 位构建的矩形表及计数约 2.6 KiB，包含在上下文/checkpoint 的 sizeof 预算内；字形塑形只借用该表。自动宽度单位在换页或锚点行变化后可重测，图片像素仍复用资源缓存。没有外部浏览器、UI 或新依赖。安装 SDK 的 `examples/books/float-both.epub` 提供左右浮动原始样本，JNI/Swift smoke 检查公开坐标、资源像素与最终绘制。
+每上下文最多 128 个存活浮动，单元格/浮动/独立图片等通用流单位最多嵌套 8 层，超出返回 EXR_LIMIT。当前 64 位构建的矩形表及计数约 2.6 KiB，包含在上下文/checkpoint 的 sizeof 预算内；字形塑形只借用该表。自动宽度单位在换页或锚点行变化后可重测，图片像素仍复用资源缓存。没有外部浏览器、UI 或新依赖。安装 SDK 的 `examples/books/float-both.epub` 提供左右浮动原始样本，JNI/Swift smoke 检查公开坐标、资源像素与最终绘制。
 
 完整浮动分片、普通表格与外部浮动的并排 BFC、复杂嵌套浮动的固有宽度约束、shape-outside、浮动的完整 break 规则、完整行内图片与 white-space/CSS 格式化继续待补；以上能力不等同于浏览器完整 CSS。

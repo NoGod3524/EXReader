@@ -2628,3 +2628,12 @@ participate in checkpoint budgets. The 1 MiB text and 600-paragraph image
 measurements record the cost in PERFORMANCE.md. This commit's platform CI is
 recorded after pushing. Long float fragmentation, ordinary-table side-by-side
 BFC geometry and broader CSS formatting remain open; this is not full CSS conformance.
+
+
+A follow-up resource audit makes the old table-unit depth counter explicitly
+format-neutral and checks it whenever any flow unit is created, including nested
+floats without a table. Eight nested original floats succeed; the ninth returns
+EXR_LIMIT with no partial layout. The pre-guard implementation accepted the ninth,
+so the new limit is tested independently. The fixture generator now creates 45
+float EPUBs. This uses the existing private counter and adds no public structure.
+All 107 local tests pass after this guard; Release DLL 5,218,600 bytes.

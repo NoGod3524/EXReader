@@ -361,8 +361,8 @@ exr_status exr_table_create(flow *f, size_t node, float x, float width,
   size_t occupied[64] = {0}, i;
   exr_status status = EXR_OK;
   *out = NULL;
-  if (f->table_depth >= 8)
-    return exr_fail(f->error, EXR_LIMIT, "Nested table limit exceeded");
+  if (f->unit_depth >= 8)
+    return exr_fail(f->error, EXR_LIMIT, "Nested flow unit limit exceeded");
   t = calloc(1, sizeof(*t));
   if (!t)
     return exr_fail(f->error, EXR_MEMORY, "Table cursor allocation failed");
