@@ -4016,3 +4016,18 @@ blend assertions; CI run 39168413465 passed all seven jobs.
 Open for the work package: the mask form's `/Group /CS` is not validated yet (a non-RGB
 group would be treated as RGB) and there is no scene where the mask is set outside a form
 while the painting happens inside it.
+
+## Soft-mask group semantics, colour spaces and nesting (0.19.0 development)
+
+Commit `bf1a646` closes the remaining soft-mask items. The mask form's `/Group /CS` is
+validated (device RGB and grey accepted, anything else `EXR_UNSUPPORTED`); a Form starts
+with the default graphics state for masks (ISO 32000-1 8.10.1) while the mask still
+applies to that form's composite, and `exr_composite_frame` now honours the target mask
+so masked group elements are really masked.
+
+Two scenes were added: a DeviceGray mask group with a one-component `/BC` (luminance 0.5
+gives a 0.5 mask) and a nested case where the mask is set on the page while the painting
+happens inside a form (left red, right white). The soft-mask matrix is now 41 scenes
+(16 Alpha, 16 Luminosity, matrix, BBox, transfer, q/Q, grey group, nested) plus eight
+refused dictionaries. Local Windows Release: 120/120 CTests; CI run 39169338940 passed
+all seven jobs.
