@@ -311,6 +311,17 @@ static exr_status context_create(flow *parent, size_t node, float width, float h
   p->local = local; p->local_root = node; p->writing_mode = mode;
   p->styles = (exr_style *)parent->styles; p->assets = parent->assets;
   p->f = *parent;
+  if(parent->border_override && mode!=parent->writing_mode) {
+    exr_style physical={0},logical; size_t j;
+    size_t map[4]={0,1,2,3};
+    if(parent->writing_mode!=EXR_WRITING_HORIZONTAL_TB) {
+      map[0]=parent->writing_mode==EXR_WRITING_VERTICAL_RL ? 1 : 3;
+      map[1]=2; map[2]=parent->writing_mode==EXR_WRITING_VERTICAL_RL ? 3 : 1; map[3]=0;
+    }
+    for(j=0;j<4;j++) physical.padding[map[j]].value=parent->border_insets[j];
+    logical=exr_flow_style(&physical,mode);
+    for(j=0;j<4;j++) p->f.border_insets[j]=logical.padding[j].value;
+  }
   p->f.layout = NULL; p->f.config = &p->config; p->f.bidi = &p->bidi;
   p->f.origin_x = p->f.used_inline = p->f.x = p->f.y = p->f.bottom_inset = p->f.inline_end_inset = 0;
   p->f.width = width; p->f.pending = 0; p->f.first_line = 1;
@@ -413,12 +424,18 @@ static exr_status advance(exr_pager *p) {
       {
         exr_style box = exr_flow_style(s, f->writing_mode);
         const exr_style *b = &box;
-        float border = s->border_style ? s->border_width : 0;
-        float ml = used(b->margin[3], v->width), mr = used(b->margin[1], v->width);
-        float pl = used(b->padding[3], v->width) + border;
-        float pr = used(b->padding[1], v->width) + border;
-        float content = v->width - ml - mr - pl - pr;
         int cell_root=p->local==2 && v->node==p->local_root && s->display==EXR_CSS_CELL;
+        size_t side;
+        for(side=0;side<4;side++) {
+          if(p->local && v->node==p->local_root && s->display==EXR_CSS_CELL) box.margin[side]=(exr_length){0,0};
+          if(s->display==EXR_CSS_TABLE && s->border_collapse) box.padding[side]=(exr_length){0,0};
+        }
+        float border = s->border_style==1 && !(s->display==EXR_CSS_TABLE && s->border_collapse) ? s->border_width : 0;
+        const float *resolved=f->border_override && v->node==f->border_node ? f->border_insets : NULL;
+        float ml = used(b->margin[3], v->width), mr = used(b->margin[1], v->width);
+        float pl = used(b->padding[3], v->width) + (resolved ? resolved[3] : border);
+        float pr = used(b->padding[1], v->width) + (resolved ? resolved[1] : border);
+        float content = v->width - ml - mr - pl - pr;
         v->old_intrinsic=f->intrinsic;
         /* A table cell's width already contributed to column allocation. Its
            percentage is relative to the table, not a second percentage here. */
@@ -443,8 +460,8 @@ static exr_status advance(exr_pager *p) {
                         (b->margin[1].value < 0 ? 2 : 1);
         v->x = v->outer_x + pl;
         v->width = content;
-        v->pt = used(b->padding[0], f->width) + border;
-        v->pb = used(b->padding[2], f->width) + border;
+        v->pt = used(b->padding[0], f->width) + (resolved ? resolved[0] : border);
+        v->pb = used(b->padding[2], f->width) + (resolved ? resolved[2] : border);
         v->parent_inset = f->bottom_inset;
         v->parent_inline_end = f->inline_end_inset;
         v->inline_end = pr + mr;
@@ -537,7 +554,7 @@ static exr_status advance(exr_pager *p) {
           return failure(p, EXR_MEMORY, "Block fragment allocation failed");
       {
         exr_style box = exr_flow_style(s, f->writing_mode);
-        f->y += used(box.margin[2], v->old_width);
+        if(!(p->local && v->node==p->local_root && s->display==EXR_CSS_CELL)) f->y += used(box.margin[2], v->old_width);
       }
       f->x = v->old_x;
       f->width = v->old_width;
@@ -613,8 +630,17 @@ static exr_status advance(exr_pager *p) {
 }
 static int box_order(const void *a, const void *b) {
   const exr_box *x = a, *y = b;
+  int xb=!!(x->flags&EXR_BOX_BORDER),yb=!!(y->flags&EXR_BOX_BORDER);
+  if(xb!=yb) return xb-yb;
   if (x->node != y->node)
     return x->node < y->node ? -1 : 1;
+  if(xb) {
+    float xw=fminf(x->width,x->height),yw=fminf(y->width,y->height);
+    if(xw!=yw) return xw<yw ? -1 : 1;
+    if(x->y!=y->y) return x->y<y->y ? -1 : 1;
+    if(x->x!=y->x) return x->x<y->x ? -1 : 1;
+    if(x->background!=y->background) return x->background<y->background ? -1 : 1;
+  }
   return (int)x->kind - (int)y->kind;
 }
 static exr_status seal(exr_pager *p, int partial) {

@@ -399,7 +399,7 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 | 范围 | 已实现 |
 | --- | --- |
 | 文字 | font-family、font-size（4–256）、font-weight（合成粗体）、font-style（合成斜体）、color、line-height、direction（ltr/rtl）、text-align（left/start/center/right/end/justify）、text-indent |
-| 盒模型 | width / max-width、margin / padding 及四边长属性、background-color（background 仅接受颜色）、统一 border-width / border-color / border-style（solid/none）和 border 简写 |
+| 盒模型 | width / max-width、margin / padding 及四边长属性、background-color（background 仅接受颜色）、统一 border-width / border-color / border-style（solid/none/hidden）和 border 简写；表格 border-collapse（collapse/separate/inherit） |
 | 流布局 | display: none/block/inline/table/table-row/table-cell；break-before/after 和 page-break-before/after 的 page/always/auto |
 | 尺寸 | px、pt、em、rem、百分比和零值；margin 可 auto；图片支持 height，普通块的 height 尚未应用 |
 | 颜色 | #RGB、#RGBA、#RRGGBB、#RRGGBBAA；black/white/red/green/blue/gray/grey/transparent/navy/yellow/orange/purple |
@@ -410,9 +410,9 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 `EXR_GLYPH_HIDDEN = 4` 标记格式、换行控制、变体选择符等不应绘制的条目，内置栅格器跳过这些字形，自定义绘制也需跳过；它们仍保留源文本范围。`bidi_level` 是解析后的级别，奇数为 RTL，`UINT_MAX` 表示 X9 控制。`offset_x/offset_y` 以 px 表示，y 向上；绘制原点为 `(x + offset_x, baseline - offset_y)`。自定义绘制不再额外应用 GPOS 或 pair kerning。布局不会拆开源簇，也不会在 `GLUE` 边界紧急断行；不可拆的组超过内容宽度时保留整组，`clip_left/right` 指明水平裁切范围。
 
-`exr_layout_hit_test()` 按视觉簇整体宽度和方向返回源簇起点或终点，不返回连字或字素内部偏移。`exr_layout_lines()` 输出行矩形和视觉字形数组范围，其 start/end 仍是逻辑源范围；表格一行可有多个并列文字行。`exr_layout_boxes()` 输出背景块、图片和单元格的页面坐标、边框与背景，按页及节点前序排列。page 的 line/box 范围可直接迭代。坐标单位为逻辑像素，原点在页面左上方。
+`exr_layout_hit_test()` 按视觉簇整体宽度和方向返回源簇起点或终点，不返回连字或字素内部偏移。`exr_layout_lines()` 输出行矩形和视觉字形数组范围，其 start/end 仍是逻辑源范围；表格一行可有多个并列文字行。`exr_layout_boxes()` 输出背景块、图片和单元格的页面坐标、边框与背景，每页先按节点前序输出普通盒子，再按表格节点输出共享边框图层矩形。page 的 line/box 范围可直接迭代。坐标单位为逻辑像素，原点在页面左上方。
 
-宿主可先按 boxes 顺序绘制背景、图片和边框，再绘制文字。`exr_layout_image(layout, resource)` 返回对应资源的解码后 RGBA 借用视图；缺失时返回 NULL。这些输出可直接用于自定义渲染器，不需要创建内置页面位图。
+宿主可先按 boxes 顺序绘制背景、图片和边框，再绘制文字；标有 EXR_BOX_BORDER 的共享边框矩形需要按下文的图层规则合成。`exr_layout_image(layout, resource)` 返回对应资源的解码后 RGBA 借用视图；缺失时返回 NULL。这些输出可直接用于自定义渲染器，不需要创建内置页面位图。
 
 ## 图片、表格与像素
 
@@ -420,7 +420,7 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 宿主设置 `decode_image`、`release_image` 和 `image_context` 可替换解码器。回调收到资源元数据及编码字节；返回 `channels=4`、非预乘 RGBA、有效 width/height/stride。引擎复制像素，然后无论成功或失败都调用配套 release 回调一次；不得在 release 中释放借用的编码输入。`EXR_FORMAT` 表示占位框，其余非成功状态中止布局。要保留内置 PNG/JPEG 支持，宿主回调可以调用 `exr_image_decode()` 并在 release 中使用 `exr_bitmap_free()`。直接创建完整 layout 时，回调及 context 只需在 create 调用期间有效；使用 pager / session 时需在相应句柄整个生命周期内有效。渲染已有布局不会再次调用它们。
 
-表格支持指定列宽、单元格换行、colspan 和 rowspan，默认按内容测量列宽。CSS 的 col/colgroup/cell 宽度与 HTML width 属性参与列分配，详见“表格指定列宽”补充。具有跨行单元格的相连行组一起分页；高于一页的行组返回 `EXR_LIMIT`。上限为 64 列、4096 行/单元格、8 层嵌套。尚不支持跨页拆分单元格、重复表头和 border-collapse。单元格的可见边框、背景和内边距由样式控制。
+表格支持指定列宽、单元格换行、colspan 和 rowspan，默认按内容测量列宽。CSS 的 col/colgroup/cell 宽度与 HTML width 属性参与列分配，详见“表格指定列宽”补充。具有跨行单元格的相连行组一起分页；高于一页的行组返回 `EXR_LIMIT`。上限为 64 列、4096 行/单元格、8 层嵌套。支持当前实线边框子集的 border-collapse，规则见下文；尚不支持跨页拆分单元格和重复表头。单元格的可见边框、背景和内边距由样式控制。
 
 `exr_render_page()` 输出 1 通道灰度；`exr_render_page_color()` 输出 4 通道 RGBA。内置渲染器使用白底、双线性图片缩放、透明合成和 FreeType 字形，整页位图不超过 64 MiB。`stride` 是每行字节数。PNG 支持两种通道并保留输入 alpha；BMP 写为 24 位并将 alpha 合成到白底。写入时 `channels=0` 兼容灰度输入。框架不提供窗口、GPU 或事件循环。
 
@@ -1246,7 +1246,7 @@ col、colgroup 和单元格的 CSS width，以及 table/col/colgroup/cell 的 HT
 
 同一组列边界用于测量、绘制、分页、竖排和命中坐标；checkpoint 复制边界，预算包含完整私有状态及行/单元格数组实际分配容量。列数超出 64 或可用空间不足每列 1px 返回 EXR_LIMIT。行组/嵌套等现有限额继续适用。
 
-以上说明宽度提示的分配；默认 auto 布局还使用下面的 min/max-content 测量。border-collapse、重复表头和跨页拆分单元格仍待完成。DOCX/RTF 专用 twip 列网格不会自动转换为本步骤的 CSS 宽度提示。
+以上说明宽度提示的分配；默认 auto 布局还使用下面的 min/max-content 测量。当前实线边框子集的 border-collapse 见下文；重复表头和跨页拆分单元格仍待完成。DOCX/RTF 专用 twip 列网格不会自动转换为本步骤的 CSS 宽度提示。
 
 ## 表格内容测量与 auto/fixed 布局（0.18 开发补充）
 
@@ -1258,7 +1258,7 @@ col、colgroup 和单元格的 CSS width，以及 table/col/colgroup/cell 的 HT
 
 `table-layout:fixed` 在表格 width 已指定时使用列声明和首行单元格宽度，后续行内容不决定列宽。width:auto 时仍走 auto 算法。需要保留旧版全宽等分表现的 HTML 宿主可设置 `table { table-layout:fixed; width:100% }`；没有 HTML 元素名的宿主构造节点可直接设置同样的 style 属性。支持矩阵内的 auto/fixed 不引入新的公开结构或格式专用参数。
 
-原生分页要求列保持页内：最小总宽超过可用宽时，列会按既有规则收缩至至少 1px，实际文字使用既有应急断行/裁剪规则。它不采用浏览器让整张表格横向溢出的策略。内边距、边框和当前图片缩放规则继续适用；完整 CSS 表格格式化（含边框合并、复杂百分比约束、重复表头和跨页拆分单元格）仍逐项推进。
+原生分页要求列保持页内：最小总宽超过可用宽时，列会按既有规则收缩至至少 1px，实际文字使用既有应急断行/裁剪规则。它不采用浏览器让整张表格横向溢出的策略。内边距、边框和当前图片缩放规则继续适用；当前实线边框子集的合并模型见下文；复杂百分比约束、更多边框样式、重复表头和跨页拆分单元格仍逐项推进。
 
 测量计入已有文本/塑形工作预算，复用 16 MiB 行队列上限并支持协作取消。测量上下文是临时工作区，不属于返回页的缓存字节预算；最终列边界及游标状态计入缓存/checkpoint 内存。自动列宽需要检查整张表的内容，固定布局可避开这一步。
 
@@ -1273,3 +1273,16 @@ top/middle/bottom 在分配的行或 rowspan 行组中定位内容；文字、�
 单元格 height 是内容高度下限，加上可见 padding/border；行 height 提供行高下限。非空表格的明确 height 作为均分到各行的最小高度基准，实际内容或单元格下限可以让总高更大。百分比行/单元格高度按表格明确声明的最小高度求值，基准未定时不强制百分比高度。复杂百分比高度约束、空表格高度和其他块级高度兼容仍随 CSS 矩阵推进。
 
 没有增加公开记录/回调或格式专用选项；宿主构造的语义树和各内置格式共用这套样式/布局路径。按行基线、单元格测量信息和列边界随 checkpoint 一起复制并计入预算。分页仍以相连 rowspan 行组为不可拆单位。
+
+
+## 表格共享实线边框（0.18 开发补充）
+
+`border-collapse:collapse/separate/inherit` 已接入，初始 separate，此属性可继承到嵌套表格；内表可显式重置为 separate。本步沿用统一四边的 `border` / `border-width/color/style` 模型，支持 solid、none、hidden。逐边声明、多值四边简写、double/dashed/dotted 和立体边框样式仍待补齐。
+
+collapse 为每条行列边界计算一个共享边框。hidden 抑制相同边界的所有候选；none 不参与绘制；其他候选先比较宽度，同宽时按 cell > row > HTML row group > col > colgroup > table 选择。同来源同宽时优先上方，行内方向为 ltr 时优先左侧、rtl 时优先右侧。col span 按列应用；colgroup span 表示整个列组。colspan/rowspan 内部格线移除。行组来源目前识别 HTML thead/tbody/tfoot；CSS 自定义 row-group display 类型继续待补。
+
+每侧共享宽度的一半参与单元格内容留白，并用于自动内容测量、指定宽度、行高和基线计算；跨度一侧宽度不同时以该侧最大半宽预留内容。表格外侧的另一半包含在页内范围。auto 宽度和 auto 外边距包含实际共享轮廓。表格在行组边界分页时，两页各保留该边界；同页连续行组只输出一次共享线。不可拆分行组仍须整组容入一页。collapsed table 的 padding、table-cell 的 margin 按不适用属性忽略；border-spacing 尚未接入。
+
+普通单元格盒保留背景与命中几何，border_width 为零。共享边框以 `EXR_BOX_BLOCK` 矩形暴露，`flags == EXR_BOX_BORDER`，node 指向所属表格，background 是实际颜色，border_width 为零。每页普通盒之后，同一 node 的连续边框矩形构成一个图层：先在透明 RGBA 缓冲中以替换方式绘制该组矩形，再把整个图层按 source-over 合成到页面一次。这样共享线、转角和交叉处的半透明颜色不会重复叠加。随后绘制正文。宿主须保留 flags、node 和组内顺序；使用 positioned 布局重建时，把该组盒子作为连续 EXR_PAINT_BOX 命令提交，即可得到同样的原生像素。
+
+内置栅格器按当前边框图层的可见包围盒临时分配 RGBA 缓冲，单层最多 16M 像素 / 64 MiB，超出返回 EXR_LIMIT；图层间顺序复用，结束立即释放，支持取消与总绘制工作量上限。没有共享边框的页面不分配这块缓冲。网格只在 collapse 表格上分配，当前每条边 12 bytes，总量为 `((rows+1)*columns + rows*(columns+1))*12`，受原有 4096 行/单元格、64 列、8 层嵌套约束。网格、单元格半宽和深拷贝 checkpoint 均计入字节预算。

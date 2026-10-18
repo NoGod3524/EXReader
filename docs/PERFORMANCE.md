@@ -176,3 +176,26 @@ Windows x64 / GCC 16.2 Release，用原生 benchmark 对 1000 行、2000 个单�
 ```sh
 exreader-benchmark docs/benchmarks/0.18.0-table-auto-windows/table-auto-1000-rows.epub tests/fixtures/fonts/primary.ttf --max-pages 0 --paging
 ```
+
+
+## 0.18 共享实线边框
+
+同一 Windows x64 / GCC 16.2 Release、原始测试字体，用 1000 行、2000 单元格、4000 个 A 的同内容 EPUB，每模式各跑 3 个独立进程。输入只改变 border-collapse，均声明 2px 半透明黑色边框；表格按内容收缩，属于窄表格负载。磁盘缓存不受控，下面是三轮中位数。两种边框模型占用的几何不同，分别产出 23 / 20 页。
+
+| 页级模式 | separate | collapse |
+| --- | ---: | ---: |
+| EPUB 索引打开 | 1.68 ms | 2.01 ms |
+| 章节解析、建表与首屏排版 | 9.25 ms | 9.89 ms |
+| 首屏绘制 | 0.30 ms | 0.42 ms |
+| 含字体/打开/首画的首屏总耗时 | 11.50 ms | 12.16 ms |
+| 全进程峰值 RSS | 12,652,544 bytes | 12,447,744 bytes |
+| 后续完整翻页 p50 | 0.27 ms | 0.67 ms |
+| 后续完整翻页 p95 | 0.46 ms | 0.96 ms |
+
+边框图层增加绘制成本；页数和单元格留白不同，首屏与 RSS 的小幅差异不能作为速度或内存优化结论。原生布局数据可交给宿主绘制，内置 RGBA 图层只在绘制共享边框时临时创建。其包围盒上限为 16M 像素 / 64 MiB，另受总工作量限制；上述窄表格测量不代表满页/多层表格的最大开销。
+
+输入 EPUB、eager/paged 各三轮原始 JSON、摘要及程序/字体 SHA-256 见 [共享边框基准](benchmarks/0.18.0-table-borders-windows/metadata.json)。复测：
+
+```sh
+exreader-benchmark docs/benchmarks/0.18.0-table-borders-windows/table-collapse-1000-rows.epub tests/fixtures/fonts/primary.ttf --max-pages 0 --paging
+```

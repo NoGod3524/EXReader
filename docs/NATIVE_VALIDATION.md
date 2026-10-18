@@ -2541,3 +2541,44 @@ Windows CTest entries pass. Default Release DLL: 5,177,756 -> 5,181,942 bytes
 (+4,186); no runtime dependency, public ABI or schema change. Row baseline arrays
 and per-cell alignment metrics participate in cursor/checkpoint byte accounting.
 Collapsed borders and the remaining CSS/table requirements stay pending.
+
+
+Alignment commit a0117c7 passed all six jobs in run 39091742470: the 105-entry
+Windows/Linux/macOS/sanitizer suites, installed SDK consumers, JNI/macOS Swift,
+Android ARM64 and iOS/iPadOS device/simulator library builds and Swift typechecks.
+
+## Collapsed solid table borders (0.18 development)
+
+Twenty-one original EPUBs cover shared vs separate geometry, content half-insets,
+unequal widths, hidden-vs-none, table/rowgroup/row/column/cell conflicts, same-width
+LTR/RTL tie breaking, column spans/declarations, rowspan/colspan interior removal,
+inherited vs reset nested tables, inapplicable table padding/cell margins,
+vertical-rl/lr, translucent junctions and multi-page boundaries. Expected basic
+coordinates and exact blue/red/green/gray pixel values are independent assertions.
+A native spanning-table render was visually inspected. The deterministic generator
+now creates 72 EPUB table fixtures.
+
+Five hundred additional generated host tables vary alignment, font/height,
+colspan, fixed/auto/auto-width, LTR/RTL, border widths and solid/hidden/none;
+checks preserve all source A characters and require finite page-bounded geometry.
+Cached/backwards/evicted pages match checkpoint-free and full-layout glyphs,
+hits and every RGBA byte. Public boxes/glyphs/lines rebuild through positioned
+layout with identical pixels, including semi-transparent shared junctions.
+A reversed vertical cell with asymmetric shared edges verifies physical-to-logical
+inset conversion; the saved pre-fix DLL fails this new geometry assertion.
+Invalid flag/kind/stroke combinations are rejected, and the 16M-pixel border-layer
+budget returns EXR_LIMIT with no partial bitmap. The border test has 12,497 checks;
+existing pixel goldens are unchanged.
+
+All 106 local Windows CTest entries pass. Default Release DLL: 5,181,942 ->
+5,205,547 bytes (+23,605). No new runtime dependency or public struct/schema
+change. EXR_BOX_BORDER is an additive block flag; custom renderer grouping and
+migration are documented. Collapse grids and checkpoint copies participate in
+memory accounting; renderer layers are temporary and bounded, not page-cache data.
+The 1000-row separate/collapse measurements in PERFORMANCE.md preserve raw
+samples and hashes. CI status for this commit is recorded after pushing.
+
+Remaining table work includes per-side/multi-value declarations, additional line
+styles and join fidelity, CSS display row-group/column types, border-spacing,
+repeating headers, row splitting, complex percentage constraints and broader CSS
+formatting. Floats/wrapping and language dictionaries remain subsequent goals.

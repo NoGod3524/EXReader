@@ -153,6 +153,7 @@ typedef struct {
   int leading_relative, align, display, before, after, border_style, writing_declared;
   int ruby_position, ruby_align;
   int table_fixed;
+  int border_collapse;
   int vertical_align;
   unsigned flags;
   exr_direction direction;

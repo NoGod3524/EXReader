@@ -38,6 +38,7 @@ enum {
   RUBY_ALIGN,
   TABLE_LAYOUT,
   VERTICAL_ALIGN,
+  BORDER_COLLAPSE,
   PROPERTIES
 };
 typedef struct {
@@ -225,7 +226,7 @@ static int property(const char *s, size_t n) {
       "max-width",    "margin-top",    "margin-right",   "margin-bottom", "margin-left",
       "padding-top",  "padding-right", "padding-bottom", "padding-left",  "background-color",
       "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction",
-      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align"};
+      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align", "border-collapse"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -367,7 +368,7 @@ static int declarations(css *c, const char *s, size_t n, declaration **out, size
           exr_length l;
           uint32_t rgba;
           int which;
-          if (!strcmp(values[t], "solid") || !strcmp(values[t], "none"))
+          if (!strcmp(values[t], "solid") || !strcmp(values[t], "none") || !strcmp(values[t], "hidden"))
             which = 2;
           else if (length(values[t], 1, 1, 0, &l) && !l.percent && l.value >= 0 && l.value <= 1024)
             which = 0;
@@ -608,6 +609,8 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->table_fixed = parent->table_fixed;
     else if (prop == VERTICAL_ALIGN)
       s->vertical_align = parent->vertical_align;
+    else if (prop == BORDER_COLLAPSE)
+      s->border_collapse = parent->border_collapse;
     else
       return 0;
     return 1;
@@ -734,6 +737,10 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     else if(!strcmp(v,"sub") || !strcmp(v,"super") || !strcmp(v,"text-top") || !strcmp(v,"text-bottom") ||
             (length(v[0]=='-' ? v+1 : v,s->font_size,root,0,&l) && l.value>=0)) s->vertical_align=EXR_CELL_BASELINE;
     else return 0;
+  } else if (prop == BORDER_COLLAPSE) {
+    if(!strcmp(v,"collapse")) s->border_collapse=1;
+    else if(!strcmp(v,"separate")) s->border_collapse=0;
+    else return 0;
   } else if (prop == TABLE_LAYOUT) {
     if(!strcmp(v,"fixed")) s->table_fixed=1;
     else if(!strcmp(v,"auto")) s->table_fixed=0;
@@ -756,7 +763,9 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
   } else if (prop == BORDER_STYLE) {
     if (!strcmp(v, "solid"))
       s->border_style = 1;
-    else if (!strcmp(v, "none") || !strcmp(v, "hidden"))
+    else if (!strcmp(v, "hidden"))
+      s->border_style = 2;
+    else if (!strcmp(v, "none"))
       s->border_style = 0;
     else
       return 0;
@@ -902,6 +911,7 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     s->ruby_position = parent->ruby_position;
     s->ruby_align = parent->ruby_align;
     s->indent = parent->indent;
+    s->border_collapse = parent->border_collapse;
     s->display = EXR_CSS_INLINE;
     /* HTML table defaults; other host-defined elements retain the CSS initial
        baseline value unless the author explicitly inherits it. */

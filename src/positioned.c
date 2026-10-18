@@ -112,7 +112,8 @@ exr_status exr_layout_create_positioned(const exr_document *d,exr_font *font,
       if(b->page!=i || b->kind<EXR_BOX_BLOCK || b->kind>EXR_BOX_CELL ||
          (b->node!=SIZE_MAX && b->node>=d->node_count) || !range(d,b->start,b->end) || b->start<c->start || b->end>c->end ||
          !number(b->x) || !number(b->y) || !nonnegative(b->width) || !nonnegative(b->height) || !nonnegative(b->border_width) ||
-         (b->flags&~1u) || (b->kind!=EXR_BOX_IMAGE && b->flags) ||
+         (b->kind==EXR_BOX_IMAGE ? (b->flags&~1u) : b->kind==EXR_BOX_BLOCK ? (b->flags&~EXR_BOX_BORDER) : b->flags) ||
+         ((b->flags&EXR_BOX_BORDER) && b->border_width!=0) ||
          (b->kind==EXR_BOX_IMAGE && !b->flags && b->resource>=d->resource_count)) goto invalid;
       if(!point(&b->x,scale,dx) || !point(&b->y,scale,dy) || !point(&b->width,scale,0) ||
          !point(&b->height,scale,0) || !point(&b->border_width,scale,0)) goto invalid;
