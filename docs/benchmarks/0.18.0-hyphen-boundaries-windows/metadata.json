@@ -2,11 +2,11 @@
   "platform": "Windows 11",
   "compiler": "GCC 16.2 Release",
   "engine_version": "0.18.0-development",
-  "source_parent_commit": "d3c4d75afd120e6d6b99e7576e1d912e5876cc78",
+  "source_parent_commit": "ddeae9735ee33266e0144b2a6496d8f1d19aa8af",
   "source_hash_basis": "Git index blob bytes (LF); raw measurement input hashes are in each summary. The previous rematch dictionary was read from its CRLF Windows checkout, the new boundary dictionary is LF.",
   "dll_bytes": 5399429,
-  "dll_sha256": "56f7a77c305404f9274337a7325a3ee43d0723d699768c6f540563c6dbc88809",
-  "benchmark_sha256": "670a86c75d4db55eaf4ab38c6457b99d3416eedfb3551ec6b3f66cd25562605d",
+  "dll_sha256": "7074f7d616216acfd1de1749eff46786f436a881a24d6cb63ec4bf7a0823d313",
+  "benchmark_sha256": "43824ad4b4ed23360ae1f50288a3870fc3207efd5df1a94cfdf1d69bb80e1127",
   "validation": {
     "native_tests": 113,
     "automatic_layout_checks": 1296007,
@@ -14,10 +14,14 @@
     "new_boundary_EPUB_fixtures": 11,
     "direct_boundary_cases": 9,
     "installed_C_Cpp_JNI": "passed; final DLL copies match; JNI verifies original RI source cluster 4..9 and following separate RI 9..13",
-    "cross_platform_CI": "pending",
+    "cross_platform_CI": "All six jobs passed on the corrected empty-carry snapshot",
     "dictionary_checks": 333040,
     "replacement_checks": 643,
-    "public_private_flag_separation": "all fixture source checks verify public mask 2559"
+    "public_private_flag_separation": "all fixture source checks verify public mask 2559",
+    "initial_CI_failure": "https://github.com/NoGod3524/EXReader/actions/runs/39112561682: five platform jobs passed; UBSan found null source in a zero-length shared shaping copy when the ready FIFO became empty.",
+    "sanitizer_native_tests": 111,
+    "CI_run": "https://github.com/NoGod3524/EXReader/actions/runs/39112952902",
+    "source_hash_verification": "189 Git source hashes match the corrected validated commit; all 45 preexisting EPUB fixtures remain byte-identical"
   },
   "scope": "Unicode 17 grapheme/line-state replay over literal replacement sides and ready/pending carry; source-cluster joins, controls/selectors, deletion markers, checkpoint/pixel/hit replay and unchanged public ABI. Generated sides remain atomic; internal display breaks/mixed-direction subclusters, full changed-paragraph bidi, casing and conditional compounds remain open.",
   "performance": "Three fresh processes per mode, same 1 MiB input and first 65 pages. Ordinary English, original 78-character repeated rewrites, and original combining-accent/Prepend source joins. Disk cache and system background load uncontrolled. No new dependency or owned heap array.",
@@ -91,7 +95,7 @@
     "src/icc_internal.h": "aa916d3d121a39366ceca9bc418297ff30b9dcb3273dc8466619390db8aef6cb",
     "src/images.c": "16b68fdf6f8d9c6ece9b8ea216fddf2f5947951b327ae28adbdd22d077285a4e",
     "src/indic_data.h": "a26fc0fa22b65f96c5e0606731899ca4b838dcd974d6021e6ffdefc0b8436af7",
-    "src/inline.c": "66650219497c4a519c74e6eff006f8e845e4526b1f71e94ca880cc7dcd7e471c",
+    "src/inline.c": "1e255539a77b1b3f69583997f650756293671a3a91a073a5cded5c4df4a4df1e",
     "src/internal.h": "06b0428f4dcfa50d4ad4575bc1d59f7326bbfc6ca7042a97b16c1f9e74abb44a",
     "src/kf8.c": "9c50d5d7bc03bc056a4567ccd29aaa86dedd7c5c84291d63e74f116e97816102",
     "src/layout.c": "faf2253e1008fa239c3457426cadc894f7856e2f7a0e4a560ac48c4f383303cd",
@@ -211,5 +215,8 @@
     "tools/generate_hyphen_unicode.py": "988d1864fd5cfe51ca453e0785b0b91c9b635c08e398617c8341bb3821601a5e",
     "tools/generate_normalize_unicode.py": "f39b3a8883f59a10a914bac081ba5570488df336d3e70e30d92d9521ef73a74a",
     "tools/generate_unicode.py": "a6988d10f0110e0ebed13a9a35adc346c927bda170a0d31edbf114e284f0a138"
-  }
+  },
+  "milestone_base_commit": "d3c4d75afd120e6d6b99e7576e1d912e5876cc78",
+  "measured_code_commit": "fecef3c642112a4ed50d5841429578e77e0e6ef9",
+  "validated_code_commit": "fecef3c642112a4ed50d5841429578e77e0e6ef9"
 }
