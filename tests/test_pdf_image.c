@@ -104,10 +104,51 @@ static void jpeg_cases(const char *dir) {
     CHECK(exr_pdf_image_decode(file,image(file,"Baseline"),resources(file),0,&b,&interp,NULL,NULL,&error)==EXR_FORMAT && !b.pixels && !interp); exr_pdf_close(file); free(data);
   }
 }
+static void cmyk_jpeg_cases(const char *dir) {
+  const char *names[]={"CMYK","Progressive","YCCK","YCCKProgressive","NoAdobe","ICC","Wrapped"};
+  const char *bad[]={"dimensions","channels","truncated","decode","transform"};
+  unsigned char *data; size_t size,i,j; exr_pdf_file *file=NULL; exr_bitmap b;
+  data=load(dir,"pdf-jpeg-cmyk.pdf",&size); OK(exr_pdf_open(data,size,&file,&error));
+  for(i=0;i<sizeof(names)/sizeof(*names);i++) {
+    b=decode(file,names[i]); CHECK(b.width==17 && b.height==9);
+    /* Expected inks C=40 M=80 Y=120 K=32, converted by DeviceCMYK.
+       YCCK has a lossy YCbCr round trip: allow two byte values. */
+    for(j=0;j<(size_t)b.width*b.height;j++) {
+      CHECK(abs((int)b.pixels[j*4]-183)<=2);
+      CHECK(abs((int)b.pixels[j*4+1]-143)<=2);
+      CHECK(abs((int)b.pixels[j*4+2]-103)<=2 && b.pixels[j*4+3]==255);
+    }
+    free(b.pixels);
+  }
+  b=decode(file,"Default"); pixel(&b,0,0,0,0,0,255); free(b.pixels);
+  b=decode(file,"Key"); pixel(&b,0,0,183,143,103,0); free(b.pixels);
+  b=decode(file,"Soft"); pixel(&b,0,0,183,143,103,128); free(b.pixels);
+  for(i=0;i<2;i++) {
+    const unsigned expected[4][3]={{255,0,0},{0,255,0},{0,0,255},{127,127,127}};
+    b=decode(file,i ? "YQuad" : "Quad"); CHECK(b.width==32 && b.height==32);
+    for(j=0;j<4;j++) {
+      const unsigned char *p=b.pixels+(8+(j/2)*16)*b.stride+(8+(j%2)*16)*4; unsigned k;
+      for(k=0;k<3;k++) CHECK(abs((int)p[k]-(int)expected[j][k])<=2);
+      CHECK(p[3]==255);
+    }
+    free(b.pixels);
+  }
+  b=render(file,"8 0 0 8 0 0 cm /CMYK Do"); pixel(&b,4,4,183,143,103,255); free(b.pixels);
+  { exr_control control={0}; int interpolate=1; control.cancelled=cancel;
+    CHECK(exr_pdf_image_decode(file,image(file,"CMYK"),resources(file),0,&b,&interpolate,NULL,&control,&error)==EXR_CANCELLED && !b.pixels && !interpolate);
+  }
+  exr_pdf_close(file); free(data);
+  for(i=0;i<sizeof(bad)/sizeof(*bad);i++) {
+    char name[128]; int interpolate=1; snprintf(name,sizeof(name),"pdf-jpeg-cmyk-bad-%s.pdf",bad[i]);
+    data=load(dir,name,&size); OK(exr_pdf_open(data,size,&file,&error));
+    CHECK(exr_pdf_image_decode(file,image(file,"CMYK"),resources(file),0,&b,&interpolate,NULL,NULL,&error)==EXR_FORMAT && !b.pixels && !interpolate);
+    exr_pdf_close(file); free(data);
+  }
+}
 int main(int argc,char **argv) {
   const char *bad[]={"soft-color","explicit-type","matte-short","palette-short","palette-high","key-range","short","extra","bits","decode-short","decode-extra","space","mask","soft","stencil-space","stencil-bits","stencil-decode","interpolate","zero"};
   size_t size,i; unsigned char *data; exr_pdf_file *file=NULL;
-  CHECK(argc==2); jpeg_cases(argv[1]); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
+  CHECK(argc==2); jpeg_cases(argv[1]); cmyk_jpeg_cases(argv[1]); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
   { exr_vector_texture *texture=NULL; OK(exr_pdf_image_load(file,image(file,"HighMask"),resources(file),0,&texture,NULL,NULL,&error));
     CHECK(texture && texture->bitmap.width==1 && texture->mask && texture->mask->bitmap.width==4); exr_pdf_image_release(texture); exr_pdf_image_release(NULL);
   }

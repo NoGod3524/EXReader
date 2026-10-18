@@ -22,17 +22,20 @@ static void bytes(buffer *b,const void *data,size_t n) { if(n>b->capacity-b->siz
 static void add(buffer *b,const char *text) { bytes(b,text,strlen(text)); }
 static void object(buffer *b,size_t *offset,unsigned id,const char *body) { char row[64]; offset[id]=b->size; snprintf(row,sizeof(row),"%u 0 obj\n",id); add(b,row); add(b,body); add(b,"\nendobj\n"); }
 static void stream(buffer *b,size_t *offset,unsigned id,const char *dict,const void *data,size_t size) { char row[2048]; offset[id]=b->size; snprintf(row,sizeof(row),"%u 0 obj\n<< %s /Length %zu >>\nstream\n",id,dict,size); add(b,row); bytes(b,data,size); add(b,"\nendstream\nendobj\n"); }
-static buffer book_profile(const char *definition,const buffer *content,const char *image_dict,const void *samples,size_t sample_size,const char *icc_dict,const char *form,const char *extra,const void *profile,size_t profile_size) {
+static buffer book_profile_image(const char *definition,const buffer *content,const char *image_dict,const void *samples,size_t sample_size,const char *icc_dict,const char *form,const char *extra,const void *profile,size_t profile_size,unsigned width,unsigned height) {
   buffer b={0}; size_t offset[11],xref; char row[8192]; unsigned i;
   add(&b,"%PDF-1.7\n"); object(&b,offset,1,"<< /Type /Catalog /Pages 2 0 R >>"); object(&b,offset,2,"<< /Type /Pages /Count 1 /Kids [3 0 R] >>");
   snprintf(row,sizeof(row),"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 64 32] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> /XObject << /Im 7 0 R /Fm 8 0 R >> /ColorSpace << /S %s /Alias /S /Base " CG " >> >> >>",definition); object(&b,offset,3,row);
   stream(&b,offset,4,"",content->data,content->size); object(&b,offset,5,"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
   stream(&b,offset,6,icc_dict ? icc_dict : "/N 3",profile,profile_size);
-  snprintf(row,sizeof(row),"/Type /XObject /Subtype /Image /Width 1 /Height 1 /BitsPerComponent 8 /ColorSpace %s %s",definition,image_dict ? image_dict : ""); stream(&b,offset,7,row,samples,sample_size);
+  snprintf(row,sizeof(row),"/Type /XObject /Subtype /Image /Width %u /Height %u /BitsPerComponent 8 /ColorSpace %s %s",width,height,definition,image_dict ? image_dict : ""); stream(&b,offset,7,row,samples,sample_size);
   stream(&b,offset,8,"/Type /XObject /Subtype /Form /BBox [0 0 64 32] /Resources << /ColorSpace << /S 10 0 R /Base " CG2 " >> >>",form,form ? strlen(form) : 0);
   stream(&b,offset,9,"","\x00\x80\xff",3); object(&b,offset,10,extra ? extra : "[/Indexed /Base 0 <80>]");
   xref=b.size; add(&b,"xref\n0 11\n0000000000 65535 f \n"); for(i=1;i<11;i++) { snprintf(row,sizeof(row),"%010zu 00000 n \n",offset[i]); add(&b,row); }
   snprintf(row,sizeof(row),"trailer\n<< /Size 11 /Root 1 0 R >>\nstartxref\n%zu\n%%%%EOF\n",xref); add(&b,row); return b;
+}
+static buffer book_profile(const char *definition,const buffer *content,const char *image_dict,const void *samples,size_t sample_size,const char *icc_dict,const char *form,const char *extra,const void *profile,size_t profile_size) {
+  return book_profile_image(definition,content,image_dict,samples,sample_size,icc_dict,form,extra,profile,profile_size,1,1);
 }
 static buffer book_extra(const char *definition,const buffer *content,const char *image_dict,const void *samples,size_t sample_size,const char *icc_dict,const char *form,const char *extra) {
   return book_profile(definition,content,image_dict,samples,sample_size,icc_dict,form,extra,NULL,0);
@@ -443,6 +446,24 @@ static void calculator(const char *directory) {
   }
 }
 #ifdef EXR_ENABLE_ICC
+static void icc_jpeg_fixture(cmsHPROFILE profile,const char *fixtures) {
+  cmsUInt32Number size=0; void *data,*jpeg; char path[4096]; FILE *f; long length; unsigned i;
+  buffer content={0},b; exr_fixed_document *d; exr_bitmap image;
+  CHECK(cmsSaveProfileToMem(profile,NULL,&size) && size); data=malloc(size); CHECK(data && cmsSaveProfileToMem(profile,data,&size));
+  add(&content,"q 16 0 0 16 0 0 cm /Im Do Q "); label(&content);
+  for(i=0;i<2;i++) {
+    scenario=i ? "YCCK JPEG Decode before real ICC CMYK transform" : "CMYK JPEG Decode before real ICC CMYK transform";
+    snprintf(path,sizeof(path),"%s/pdf-images/%s.jpg",fixtures,i ? "ycck" : "cmyk"); f=fopen(path,"rb"); CHECK(f && !fseek(f,0,SEEK_END)); length=ftell(f); CHECK(length>0); rewind(f);
+    jpeg=malloc((size_t)length); CHECK(jpeg && fread(jpeg,1,(size_t)length,f)==(size_t)length && !fclose(f));
+    b=book_profile_image("[/ICCBased 6 0 R]",&content,"/Filter /DCTDecode /Decode [1 0 1 0 1 0 1 0]",jpeg,(size_t)length,"/N 4 /Alternate /DeviceCMYK",NULL,NULL,data,size,17,9);
+    d=opened(&b); image=rendered(d);
+    /* Authored LUT ignores C/M/Y and maps K=32/255 to neutral luminance.
+       This differs from DeviceCMYK's (183,143,103). */
+    pixel(&image,8,8,(const unsigned[3]){240,240,240},2); text(d);
+    exr_bitmap_free(&image); exr_fixed_free(d); free(jpeg); free(b.data);
+  }
+  free(data); free(content.data);
+}
 static void icc_fixture(cmsHPROFILE profile,const char *dictionary,const char *components,const void *samples,size_t sample_size,const unsigned expected[3],const char *directory,const char *name) {
   cmsUInt32Number size=0;void *data;buffer content={0},b;exr_fixed_document *d;exr_bitmap image;
   CHECK(cmsSaveProfileToMem(profile,NULL,&size) && size);data=malloc(size);CHECK(data && cmsSaveProfileToMem(profile,data,&size));
@@ -451,7 +472,7 @@ static void icc_fixture(cmsHPROFILE profile,const char *dictionary,const char *c
   b=book_profile("[/ICCBased 6 0 R]",&content,NULL,samples,sample_size,dictionary,NULL,NULL,data,size);free(data);d=opened(&b);image=rendered(d);
   pixel(&image,4,4,expected,2);pixel(&image,14,4,expected,2);pixel(&image,24,4,expected,2);pixel(&image,34,4,expected,2);text(d);save(&b,directory,name);exr_bitmap_free(&image);exr_fixed_free(d);free(b.data);free(content.data);
 }
-static void icc_profiles(const char *directory) {
+static void icc_profiles(const char *directory,const char *fixtures) {
   cmsCIExyY white={.3127,.3290,1};cmsCIExyYTRIPLE primaries={{.64,.33,1},{.30,.60,1},{.15,.06,1}};
   cmsToneCurve *linear=cmsBuildGamma(NULL,1),*curves[3]={linear,linear,linear};cmsHPROFILE rgb,gray,cmyk,lab,xyz;
   CHECK(linear);rgb=cmsCreateRGBProfile(&white,&primaries,curves);gray=cmsCreateGrayProfile(&white,linear);CHECK(rgb && gray);cmsFreeToneCurve(linear);
@@ -490,6 +511,7 @@ static void icc_profiles(const char *directory) {
   }
   scenario="ICC four-input sampled LUT and CMYK scale";
   icc_fixture(cmyk,"/N 4","0 0 0 .5019607843137255","\x00\x00\x00\x80",4,(const unsigned[3]){187,187,187},directory,"pdf-color-icc-cmyk-lut.pdf");
+  if(fixtures) icc_jpeg_fixture(cmyk,fixtures);
   /* The built-in PCS identity profiles use abstract class; make them input profiles. */
   lab=cmsCreateLab4Profile(NULL);xyz=cmsCreateXYZProfile();CHECK(lab && xyz);cmsSetDeviceClass(lab,cmsSigInputClass);cmsSetDeviceClass(xyz,cmsSigInputClass);
   scenario="ICC Lab uses physical component units and authored Range";
@@ -501,7 +523,7 @@ static void icc_profiles(const char *directory) {
 #endif
 int main(int argc,char **argv) { const char *directory=argc>1 ? argv[1] : NULL; scenario="start"; calibrated(directory); indexed_icc(directory); state_scopes(directory); bad_cases(); separation(directory); registration(directory); devicen(directory); bad_functions(); function_graphs(); sampled(directory); multidimensional_samples(directory); bad_samples(); cubic_samples(directory); calculator(directory);
 #ifdef EXR_ENABLE_ICC
-  icc_profiles(directory);
+  icc_profiles(directory,argc>2 ? argv[2] : NULL);
 #endif
   printf("%u native PDF source colour-space checks passed\n",checks);return 0;
 }

@@ -469,6 +469,40 @@ jpeg_objects[4]=jpeg_stream((root/'pdf-images'/'gray.jpg').read_bytes(),8,8,b'/D
 jpeg_objects[5]=jpeg_stream(base64.a85encode(baseline)+b'~>',filters=b'[/ASCII85Decode /DCTDecode]',extra=b'/DecodeParms [null null]')
 jpeg_objects[6]=jpeg_stream((root/'pdf-images'/'gray.jpg').read_bytes(),8,8,b'/DeviceGray',extra=b'/Decode [1 0]')
 pdf('pdf-jpeg.pdf',values=jpeg_objects)
+
+inverse=b'/Decode [1 0 1 0 1 0 1 0]'
+cmyk=(root/'pdf-images'/'cmyk.jpg').read_bytes()
+ycck=(root/'pdf-images'/'ycck.jpg').read_bytes()
+four={1:b'<< /Type /Catalog /Pages 20 0 R /Resources << /XObject << /CMYK 2 0 R /Progressive 3 0 R /YCCK 4 0 R /YCCKProgressive 5 0 R /NoAdobe 6 0 R /Default 7 0 R /Key 8 0 R /ICC 9 0 R /Soft 11 0 R /Wrapped 13 0 R /Quad 14 0 R /YQuad 15 0 R >> >> >>',
+      2:jpeg_stream(cmyk,17,9,b'/DeviceCMYK',extra=inverse),
+      3:jpeg_stream((root/'pdf-images'/'cmyk-progressive.jpg').read_bytes(),17,9,b'/DeviceCMYK',extra=inverse),
+      4:jpeg_stream(ycck,17,9,b'/DeviceCMYK',extra=inverse),
+      5:jpeg_stream((root/'pdf-images'/'ycck-progressive.jpg').read_bytes(),17,9,b'/DeviceCMYK',extra=inverse),
+      7:jpeg_stream(cmyk,17,9,b'/DeviceCMYK'),
+      8:jpeg_stream(cmyk,17,9,b'/DeviceCMYK',extra=inverse+b' /Mask [215 215 175 175 135 135 223 223]'),
+      9:jpeg_stream(cmyk,17,9,b'[/ICCBased 10 0 R]',extra=inverse),
+      10:b'<< /N 4 /Alternate /DeviceCMYK /Length 0 >>\nstream\n\nendstream',
+      11:jpeg_stream(cmyk,17,9,b'/DeviceCMYK',extra=inverse+b' /SMask 12 0 R'),
+      12:b'<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Length 1 >>\nstream\n\x80\nendstream',
+      13:jpeg_stream(base64.a85encode(cmyk)+b'~>',17,9,b'/DeviceCMYK',filters=b'[/ASCII85Decode /DCTDecode]',extra=inverse+b' /DecodeParms [null null]'),
+      14:jpeg_stream((root/'pdf-images'/'cmyk-quadrants.jpg').read_bytes(),32,32,b'/DeviceCMYK',extra=inverse),
+      15:jpeg_stream((root/'pdf-images'/'ycck-quadrants.jpg').read_bytes(),32,32,b'/DeviceCMYK',extra=inverse),
+      20:b'<< /Type /Pages /Kids [21 0 R] /Count 1 >>',
+      21:b'<< /Type /Page /Parent 20 0 R /MediaBox [0 0 17 9] /Resources << /XObject << /CMYK 2 0 R >> >> /Contents 22 0 R >>',
+      22:b'<< /Length 25 >>\nstream\n17 0 0 9 0 0 cm /CMYK Do\n\nendstream'}
+# Strip the original APP14 segment: four-channel JPEG without a marker keeps
+# its literal components. Decode alone determines ink inversion.
+assert cmyk[2:4]==b'\xff\xee'
+length=int.from_bytes(cmyk[4:6],'big')
+four[6]=jpeg_stream(cmyk[:2]+cmyk[4+length:],17,9,b'/DeviceCMYK',extra=inverse)
+pdf('pdf-jpeg-cmyk.pdf',values=four)
+for name,value in [
+    ('dimensions',jpeg_stream(cmyk,16,9,b'/DeviceCMYK')),
+    ('channels',jpeg_stream(cmyk,17,9,b'/DeviceRGB')),
+    ('truncated',jpeg_stream(cmyk[:100],17,9,b'/DeviceCMYK')),
+    ('decode',jpeg_stream(cmyk,17,9,b'/DeviceCMYK',extra=b'/Decode [1 0 1 0 1 0]')),
+    ('transform',jpeg_stream(cmyk,17,9,b'/DeviceCMYK',extra=b'/DecodeParms << /ColorTransform 0 >>')),
+]: pdf('pdf-jpeg-cmyk-bad-'+name+'.pdf',values={**four,2:value})
 for name,value in [
  ('dimensions',jpeg_stream(baseline,15,16)),
  ('channels',jpeg_stream(baseline,16,16,b'/DeviceGray')),

@@ -89,6 +89,19 @@ static void jpeg_cases(const char *fixtures,const char *dir) {
   }
   free(c.data);
 }
+static void cmyk_inline_cases(const char *fixtures) {
+  const char *files[]={"cmyk.jpg","cmyk-progressive.jpg","ycck.jpg","ycck-progressive.jpg"}; size_t i;
+  for(i=0;i<4;i++) {
+    char path[128]; buffer c={0},b,j; exr_fixed_document *d; exr_bitmap image; const unsigned char *p;
+    scenario="CMYK/YCCK inline JPEG preserves Decode and following text";
+    snprintf(path,sizeof(path),"pdf-images/%s",files[i]); j=load(fixtures,path);
+    add(&c,"q 16 0 0 16 0 0 cm "); inline_data(&c,"/W 17 /H 9 /BPC 8 /CS /CMYK /F /DCT /D [1 0 1 0 1 0 1 0]",j.data,j.size,NULL);
+    add(&c,"Q "); label(&c); b=build(&c,NULL,NULL,0); d=open_pdf(&b); image=render(d);
+    p=image.pixels+(image.height-5)*image.stride+4*4;
+    CHECK(abs((int)p[0]-183)<=2 && abs((int)p[1]-143)<=2 && abs((int)p[2]-103)<=2 && p[3]==255); text(d,"Z");
+    exr_bitmap_free(&image); exr_fixed_free(d); free(b.data); free(c.data); free(j.data);
+  }
+}
 static void scoped_cases(const char *dir) {
   buffer c={0},f={0},g={0},b; exr_fixed_document *d; exr_bitmap image;
   scenario="Form resources determine raw cardinality and image ColorSpace"; add(&f,"q 16 0 0 8 0 0 cm "); inline_data(&f,"/W 2 /H 1 /BPC 8 /CS /Local","\x40\xc0",2,NULL); add(&f,"Q "); add(&c,"/Fm Do "); label(&c); b=build(&c,&f,NULL,0); d=open_pdf(&b); image=render(d); CHECK(color(&image,4,4)==0x404040 && color(&image,12,4)==0xc0c0c0); text(d,"Z"); save(&b,dir,"pdf-inline-form.pdf"); exr_bitmap_free(&image); exr_fixed_free(d); free(b.data); c.size=f.size=0;
@@ -111,4 +124,4 @@ static void bad_cases(void) {
     free(p.data); free(pixels); }
   free(c.data); free(g.data);
 }
-int main(int argc,char **argv) { const char *dir=argc>2 ? argv[2] : NULL; scenario="arguments"; CHECK(argc>=2); raw_cases(dir); filtered_cases(dir); jpeg_cases(argv[1],dir); scoped_cases(dir); bad_cases(); printf("%u native PDF inline image checks passed\n",checks); return 0; }
+int main(int argc,char **argv) { const char *dir=argc>2 ? argv[2] : NULL; scenario="arguments"; CHECK(argc>=2); raw_cases(dir); filtered_cases(dir); jpeg_cases(argv[1],dir); cmyk_inline_cases(argv[1]); scoped_cases(dir); bad_cases(); printf("%u native PDF inline image checks passed\n",checks); return 0; }
