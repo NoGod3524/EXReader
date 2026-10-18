@@ -1,4 +1,5 @@
-/* Unicode 17.0.0, Unicode-3.0; tools/generate_indic.py. */
+/* SPDX-License-Identifier: GPL-3.0-only
+ * Unicode 17.0.0, Unicode-3.0; tools/generate_indic.py. */
 #ifndef EXR_INDIC_DATA_H
 #define EXR_INDIC_DATA_H
 typedef struct { uint32_t first,last; unsigned char value; } exr_indic_range;

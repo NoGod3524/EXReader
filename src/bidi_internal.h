@@ -18,8 +18,7 @@ int exr_bidi_paragraph_end(uint32_t codepoint);
 /* Advance UAX #9 P2, ignoring the contents of nested isolates. */
 unsigned exr_bidi_p2(uint32_t codepoint,size_t *isolate_depth);
 /* Unicode Bidi_Mirroring_Glyph; unchanged when no mirrored glyph is defined. */
-EXR_API uint32_t exr_bidi_mirror(uint32_t codepoint);
-EXR_API unsigned exr_bidi_base_level(const exr_bidi *bidi, size_t scalar_index);
+/* exr_bidi_mirror() and exr_bidi_base_level() are public API; see exreader.h. */
 int exr_bidi_complex(uint32_t codepoint);
 int exr_bidi_ltr_letter(uint32_t codepoint);
 unsigned exr_bidi_strong_type(uint32_t codepoint); /* 0: other, 1: L, 2: R, 3: AL. */

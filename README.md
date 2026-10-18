@@ -1,8 +1,8 @@
 # EXReader — native C ebook engine
 
-主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.18.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
+主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.19.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
 
-后续按 [兼容目标与验收顺序](docs/VERSIONING.md#后续兼容目标与验收顺序) 推进 PDF、图文排版和应用接入能力。
+当前能力与边界以 [支持矩阵](docs/SUPPORT_MATRIX.md) 为准；后续按 [兼容目标与验收顺序](docs/VERSIONING.md#后续兼容目标与验收顺序) 推进 PDF、图文排版和应用接入能力。
 
 版本按完整功能里程碑编号；旧 0.13–0.100 的开发步骤已归并，见 [版本分配与历史映射](docs/VERSIONING.md)。内部实现步骤和示例验证通过提交记录追踪。
 

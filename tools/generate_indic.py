@@ -67,7 +67,7 @@ def main():
                      - {'Common', 'Inherited'})
     assert len(scripts) < 256
     script_values = {name: i+1 for i, name in enumerate(scripts)}
-    lines = ['/* Unicode 17.0.0, Unicode-3.0; tools/generate_indic.py. */',
+    lines = ['/* SPDX-License-Identifier: GPL-3.0-only\n * Unicode 17.0.0, Unicode-3.0; tools/generate_indic.py. */',
              '#ifndef EXR_INDIC_DATA_H', '#define EXR_INDIC_DATA_H',
              'typedef struct { uint32_t first,last; unsigned char value; } exr_indic_range;']
     lines.append('static const uint32_t exr_indic_script_tags[] = {0,')
