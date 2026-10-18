@@ -59,6 +59,7 @@ struct exr_layout {
   float flow_inline, flow_block; /* Private logical extents of a reusable flow fragment. */
   float first_baseline; /* First line's logical block-axis baseline, including ruby. */
   unsigned has_baseline;
+  int source_overlaps; /* Page source envelopes overlap; consult actual glyph ranges. */
 };
 exr_status exr_layout_image_asset(const exr_document *doc, exr_layout *assets,
                                     const exr_layout_config *config, size_t resource,

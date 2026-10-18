@@ -155,6 +155,7 @@ typedef struct {
   int table_fixed;
   int border_collapse;
   int vertical_align;
+  int float_side,clear_side; /* CSS line-left=1, line-right=2, both=3. */
   unsigned flags;
   exr_direction direction;
   exr_writing_mode writing_mode;

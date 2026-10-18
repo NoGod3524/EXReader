@@ -69,12 +69,13 @@ exr_status exr_layout_create_positioned(const exr_document *d,exr_font *font,
     status=exr_control_poll(&config->control,EXR_STAGE_LAYOUT,i,input->page_count,e); if(status!=EXR_OK) goto failed;
     status=EXR_ARGUMENT;
     if(!number(p->width) || !number(p->height) || p->width<0.001f || p->height<0.001f ||
-       !range(d,c->start,c->end) || c->start<end || c->line_start!=line || c->box_start!=box || p->paint_start!=paint ||
+       !range(d,c->start,c->end) || (i && c->start<l->pages[i-1].start) || c->line_start!=line || c->box_start!=box || p->paint_start!=paint ||
        !span(line,c->line_count,l->line_count) || !span(box,c->box_count,l->box_count) || !span(paint,p->paint_count,l->paint_count)) goto invalid;
     scale=fmin(((double)l->options.width-2*l->options.margin)/p->width,
                  ((double)l->options.height-2*l->options.margin)/p->height);
     dx=((double)l->options.width-p->width*scale)/2; dy=((double)l->options.height-p->height*scale)/2;
     l->pages[i]=*c;
+    if(i && c->start<end) l->source_overlaps=1;
     for(j=line;j<line+c->line_count;j++) {
       exr_line *v=&l->lines[j]; size_t k;
       if(v->page!=i || v->glyph_start!=glyph || !span(glyph,v->glyph_count,l->glyph_count) ||

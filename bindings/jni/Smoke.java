@@ -149,6 +149,22 @@ public final class Smoke {
             EXReader.FontSource source=variablePage.fontSource(0);
             check(source.axes.length==2 && source.axes[0].minimum<source.axes[0].maximum);
         }
-        System.out.println("JNI SDK: PDF/audio/metadata and reflow nodes, lazy parts, page snapshots, UTF-8 and child lifetime passed");
+        EXReader.LayoutConfig floatConfig=new EXReader.LayoutConfig();
+        floatConfig.width=240; floatConfig.height=240; floatConfig.margin=20; floatConfig.fontSize=14;
+        floatConfig.lineHeight=20f/14; floatConfig.paragraphSpacing=0;
+        try(EXReader.Publication floats=new EXReader.Publication(root.resolve("books/float-both.epub").toString());
+            EXReader.Document floatingChapter=floats.load(0);
+            EXReader.Pager floatingPager=floatingChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,floatConfig);
+            EXReader.ReflowPage floatingPage=floatingPager.next()) {
+            check(floatingPage!=null);
+            EXReader.LayoutSnapshot floatingSnapshot=floatingPage.snapshot();
+            check(floatingSnapshot.glyphs.length>0 && Math.abs(floatingSnapshot.glyphs[0].clipLeft-80)<.01f && Math.abs(floatingSnapshot.glyphs[0].clipRight-160)<.01f);
+            int images=0; for(EXReader.Box box:floatingSnapshot.boxes) if(box.kind==2) {
+                images++; EXReader.Bitmap image=floatingPage.image((int)box.resource); check(image!=null && image.width==80 && image.height==60);
+            }
+            check(images==2); EXReader.Bitmap rendered=floatingPage.render(); int pixel=30*rendered.stride+30*4;
+            check(rendered.pixels[pixel]==0 && rendered.pixels[pixel+1]==(byte)128 && rendered.pixels[pixel+2]==(byte)255);
+        }
+        System.out.println("JNI SDK: PDF/audio/metadata, float image geometry/pixels and reflow lifetime passed");
     }
 }

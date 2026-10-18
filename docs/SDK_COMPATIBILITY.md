@@ -122,3 +122,17 @@ positioned renderers implement the same grouping. Older hosts can request
 `table {border-collapse:separate}` until their renderer handles the new flag.
 Only the existing uniform solid/none/hidden border subset is implemented here;
 side-specific and additional border styles remain pending.
+
+
+The float update keeps the C/Swift/JNI record layouts and ABI unchanged, but
+reflows documents that declare float/clear. Bookmarks remain source selectors or
+CFIs. A page's start/end is now a source envelope that can overlap another page:
+a float can stay on one page while earlier large text is carried to the next.
+Do not infer a unique page from disjoint interval assumptions. Use
+exr_layout_page_at for actual source placement; overlapping layouts consult
+actual glyph ranges while ordinary layouts retain binary lookup. Positioned
+reconstruction now permits overlapping envelopes with monotonic starts and
+per-page containment validation. Public inline clips remain authoritative for
+indivisible advances and trailing spaces. Installed JNI/Swift smoke includes a
+shared original float EPUB and checks image geometry/pixels. Long float units
+are not split yet and ordinary tables currently clear external floats.

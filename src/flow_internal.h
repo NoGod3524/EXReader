@@ -4,6 +4,10 @@
 #include "layout_internal.h"
 #include "text_internal.h"
 #define EXR_PAUSE ((exr_status)100)
+#define EXR_REFLOW ((exr_status)101)
+#define EXR_MAX_FLOATS 128
+typedef struct { float x,y,width,height; unsigned side; } exr_float;
+typedef struct { exr_float items[EXR_MAX_FLOATS]; size_t count; } exr_float_state;
 #define EXR_GLYPH_TRY_VERTICAL 512u /* Internal UAX #50 Tr probe, cleared before output. */
 #define EXR_GLYPH_RUBY_ITEM 1024u /* Internal atomic inline item, expanded before output. */
 typedef struct {
@@ -26,6 +30,10 @@ typedef struct {
   size_t border_node;
   float border_insets[4]; /* Logical top/right/bottom/left of a collapsed cell. */
   int border_override;
+  exr_float_state *floats;
+  size_t unit_node;
+  float unit_reference;
+  int unit_assigned;
   exr_inline_bidi *bidi;
   exr_writing_mode writing_mode;
 } flow;
@@ -35,6 +43,7 @@ typedef struct {
   uint32_t before, after;
   size_t cluster_start, ready, scan, soft, emergency, line_end, raw_end;
   float scan_width;
+  float scan_ascent,scan_descent,scan_leading,line_x,line_width;
   int initialized, finishing, forced, final, line_ready;
   unsigned vertical_flags;
   double measure_width, measure_trailing;
@@ -52,6 +61,14 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *buffer, exr_glyph glyph);
 exr_status exr_inline_drain(flow *f, exr_line_buffer *buffer);
 exr_status exr_inline_finish(flow *f, exr_line_buffer *buffer);
 void exr_inline_buffer_clear(exr_line_buffer *buffer);
+void exr_inline_rescan(exr_line_buffer *buffer);
+exr_status exr_inline_pending(flow *f,exr_line_buffer *buffer,float *width);
+exr_status exr_inline_break(flow *f,exr_line_buffer *buffer);
+void exr_flow_clear(flow *f,unsigned side);
+void exr_flow_area(const flow *f,float y,float height,float *x,float *width,float *next);
+exr_status exr_flow_line_slot(flow *f,float height,float minimum,size_t offset,float *x,float *width);
+exr_status exr_flow_float_slot(flow *f,float width,float height,unsigned clear,size_t offset,float *x,float *y);
+exr_status exr_flow_float_add(flow *f,exr_float item);
 float exr_flow_top(const flow *f);
 float exr_flow_bottom(const flow *f);
 float exr_flow_room(const flow *f);

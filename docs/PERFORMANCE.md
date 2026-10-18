@@ -199,3 +199,34 @@ exreader-benchmark docs/benchmarks/0.18.0-table-auto-windows/table-auto-1000-row
 ```sh
 exreader-benchmark docs/benchmarks/0.18.0-table-borders-windows/table-collapse-1000-rows.epub tests/fixtures/fonts/primary.ttf --max-pages 0 --paging
 ```
+
+
+## 0.18 浮动与逐行绕排
+
+Windows x64 / GCC 16.2 Release、仓库 primary.ttf，每模式 3 轮独立进程，磁盘缓存不受控。纯文本用相同的 1 MiB 生成内容，对照 57c9f17 与本次构建，页级采样前 65 页；完整模式均为 1126 页。无浮动时不测量避让区域，也不在每次塑形中复制整张浮动表。
+
+| 1 MiB 纯文本，paged 中位数 | 上一构建 | 浮动构建 |
+| --- | ---: | ---: |
+| 首屏总耗时 | 10.00 ms | 11.26 ms |
+| 全进程峰值 RSS | 17,731,584 bytes | 17,911,808 bytes |
+| 完整翻页 p50 | 1.20 ms | 1.55 ms |
+| 完整翻页 p95 | 2.49 ms | 1.83 ms |
+
+图文负载为同内容的 600 个段落、600 次共享 PNG 引用、24,000 个 A；block 对照仅用 CSS 禁用 float，均使用本次构建，测到 EOF。浮动后行宽和页数不同，数据用于记录实际代价，不能据此声称排版更快。
+
+| 图文负载，paged 中位数 | 块图片 | 浮动图片 |
+| --- | ---: | ---: |
+| 首屏总耗时 | 7.07 ms | 9.60 ms |
+| 全进程峰值 RSS | 11,476,992 bytes | 11,968,512 bytes |
+| 完整翻页 p50 | 2.13 ms | 3.54 ms |
+| 完整翻页 p95 | 2.54 ms | 4.44 ms |
+| 总页数 | 40 | 23 |
+
+浮动复用原有字体、图片缓存与页级队列。每个排版上下文保留最多 128 个避让矩形，当前 64 位构建约 2.6 KiB，并计入上下文及 checkpoint 大小；临时 flow 副本只借用它。跨页重排待提交的行会有额外塑形工作，已落到上述实际翻页计时。字号、脚本、图片尺寸和长浮动块会改变成本；当前超过整页高度的浮动块返回 EXR_LIMIT，尚未拆分。
+
+输入文件、eager/paged 原始三轮 JSON 与程序/字体 SHA-256 见 [浮动基准](benchmarks/0.18.0-floats-windows/metadata.json)。复测：
+
+```sh
+exreader-benchmark --text-bytes 1048576 tests/fixtures/fonts/primary.ttf --max-pages 64 --paging
+exreader-benchmark docs/benchmarks/0.18.0-floats-windows/floats.epub tests/fixtures/fonts/primary.ttf --max-pages 0 --paging
+```

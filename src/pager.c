@@ -21,6 +21,7 @@ typedef struct {
 } cached_page;
 typedef struct {
   flow f;
+  exr_float_state floats;
   exr_line_buffer line;
   frame *frames;
   size_t depth, chapter, position, emitted, work_glyphs, shape_work;
@@ -29,6 +30,7 @@ typedef struct {
 } checkpoint;
 struct exr_pager {
   flow f;
+  exr_float_state floats;
   exr_layout_config config;
   exr_layout_options physical_page;
   exr_writing_mode writing_mode;
@@ -75,6 +77,8 @@ static checkpoint *checkpoint_clone(const checkpoint *source) {
   size_t i;
   if (!copy) return NULL;
   *copy = *source;
+  if(source->f.floats) copy->floats=*source->f.floats;
+  copy->f.floats=&copy->floats;
   copy->frames = NULL;
   copy->line.run.glyphs = copy->line.raw.glyphs = copy->line.line.glyphs = NULL;
   destinations[0] = &copy->line.run; destinations[1] = &copy->line.raw;
@@ -121,6 +125,7 @@ static exr_pager *context_clone(const exr_pager *source) {
   copy = calloc(1, sizeof(*copy));
   if (!copy) { checkpoint_free(saved); return NULL; }
   copy->f = saved->f; copy->line = saved->line; memset(&saved->line, 0, sizeof(saved->line));
+  copy->floats=saved->floats; copy->f.floats=&copy->floats;
   copy->config = source->config; copy->config.user_css = NULL;
   copy->physical_page = source->physical_page; copy->writing_mode = source->writing_mode;
   copy->styles = source->styles; copy->assets = source->assets;
@@ -216,6 +221,7 @@ static exr_status restore_checkpoint(exr_pager *p, const checkpoint *source, exr
   if (!copy) return exr_fail(e, EXR_MEMORY, "Cannot restore pagination checkpoint");
   reset_cursor(p);
   p->f = copy->f;
+  p->floats=copy->floats; p->f.floats=&p->floats;
   p->f.bidi = &p->bidi; p->f.error = e;
   p->line = copy->line; memset(&copy->line, 0, sizeof(copy->line));
   p->depth = copy->depth;
@@ -311,6 +317,8 @@ static exr_status context_create(flow *parent, size_t node, float width, float h
   p->local = local; p->local_root = node; p->writing_mode = mode;
   p->styles = (exr_style *)parent->styles; p->assets = parent->assets;
   p->f = *parent;
+  p->f.floats=&p->floats;
+  p->f.unit_node=node; p->f.unit_reference=parent->width; p->f.unit_assigned=local==2 && !parent->intrinsic;
   if(parent->border_override && mode!=parent->writing_mode) {
     exr_style physical={0},logical; size_t j;
     size_t map[4]={0,1,2,3};
@@ -325,6 +333,7 @@ static exr_status context_create(flow *parent, size_t node, float width, float h
   p->f.layout = NULL; p->f.config = &p->config; p->f.bidi = &p->bidi;
   p->f.origin_x = p->f.used_inline = p->f.x = p->f.y = p->f.bottom_inset = p->f.inline_end_inset = 0;
   p->f.width = width; p->f.pending = 0; p->f.first_line = 1;
+  p->floats.count=0; /* Table cells, floats and orthogonal contexts establish a BFC. */
   p->f.force_break = 0; p->f.paginate = p->f.page_limit = local == 1;
   p->f.context_depth += local == 1;
   p->f.table_depth += local == 2;
@@ -333,6 +342,76 @@ static exr_status context_create(flow *parent, size_t node, float width, float h
   status = push(p, node, 0, width);
   if (status != EXR_OK) { exr_pager_free(p); return status; }
   *out = p; return EXR_OK;
+}
+static exr_status floating(exr_pager *p,frame *v) {
+  flow *f=&p->f; const exr_style *s=&p->styles[v->node];
+  exr_style box=exr_flow_style(s,f->writing_mode);
+  float margins[4],height,pending,x,y,room,next; size_t i,tries,offset;
+  exr_status status;
+  for(i=0;i<4;i++) margins[i]=used(box.margin[i],f->width);
+  if(!s->float_side) { status=finish_run(p); if(status!=EXR_OK) return status; }
+  if(!s->float_side && s->before && f->layout->page_count && f->y>exr_flow_top(f)) f->force_break=1;
+  if(s->float_side && box.width.value<0 && v->fragment) { exr_layout_free(v->fragment); v->fragment=NULL; }
+  for(tries=0;tries<256;tries++) {
+    status=exr_inline_pending(f,&p->line,&pending); if(status!=EXR_OK) return status;
+    offset=f->doc->nodes[v->node].start;
+    if(p->line.ready && p->line.run.glyphs[0].start<offset) offset=p->line.run.glyphs[0].start;
+    if(!v->fragment) {
+      float extent,available=f->width-margins[1]-margins[3];
+      float border=s->border_style==1 && !(s->display==EXR_CSS_TABLE && s->border_collapse) ? s->border_width : 0;
+      float insets=used(box.padding[1],f->width)+used(box.padding[3],f->width)+2*border;
+      if(available<1) return failure(p,EXR_LIMIT,"Float margins leave no inline extent");
+      if(box.width.value>=0) extent=used(box.width,f->width)+insets;
+      else {
+        status=exr_flow_intrinsic(f,v->node,available,2,&extent); if(status!=EXR_OK) return status;
+        if(s->float_side) {
+          float minimum,probe_x,probe_y,probe_width,probe_next;
+          status=exr_flow_intrinsic(f,v->node,available,1,&minimum); if(status!=EXR_OK) return status;
+          if(box.max_width.value>=0) minimum=fminf(minimum,used(box.max_width,f->width)+insets);
+          status=exr_flow_float_slot(f,fminf(available,minimum)+margins[1]+margins[3],1,(unsigned)s->clear_side,offset,&probe_x,&probe_y);
+          if(status!=EXR_OK) return status;
+          exr_flow_area(f,probe_y,1,&probe_x,&probe_width,&probe_next);
+          extent=fmaxf(minimum,fminf(extent,probe_width-margins[1]-margins[3]));
+        }
+      }
+      if(box.max_width.value>=0) extent=fminf(extent,used(box.max_width,f->width)+insets);
+      v->width=fmaxf(1,fminf(extent,available));
+      status=exr_flow_unit(f,v->node,v->width,&v->fragment,&height); if(status!=EXR_OK) return status;
+      v->outer_width=fmaxf(v->width,v->fragment->flow_inline)+margins[1]+margins[3];
+      v->first_y=fmaxf(height,v->fragment->flow_block)+margins[0]+margins[2];
+      if(v->outer_width>f->width+.01f || !isfinite(v->first_y)) return failure(p,EXR_LIMIT,"Floating content exceeds its containing inline extent");
+    }
+    if(s->float_side) status=exr_flow_float_slot(f,v->outer_width,v->first_y,(unsigned)s->clear_side,offset,&x,&y);
+    else {
+      if(s->clear_side) exr_flow_clear(f,(unsigned)s->clear_side);
+      status=exr_flow_line_slot(f,v->first_y,v->outer_width,offset,&x,&room); y=f->y;
+    }
+    if(status!=EXR_OK) return status;
+    exr_flow_area(f,y,v->first_y,&x,&room,&next);
+    if(pending>0 && y==f->y && pending+(f->first_line ? f->paragraph->indent : 0)>room-v->outer_width+.001f) {
+      status=exr_inline_break(f,&p->line); if(status!=EXR_OK) return status;
+      if(s->float_side && box.width.value<0) { exr_layout_free(v->fragment); v->fragment=NULL; }
+      continue;
+    }
+    if(s->float_side==2 || (!s->float_side && (s->align==2 || (box.margin[3].value<0 && box.margin[1].value>=0)))) x+=fmaxf(0,room-v->outer_width);
+    else if(!s->float_side && (s->align==1 || (box.margin[3].value<0 && box.margin[1].value<0))) x+=fmaxf(0,room-v->outer_width)/2;
+    {
+      int baseline=f->layout->has_baseline; float first=f->layout->first_baseline;
+      status=exr_flow_copy(f,v->fragment,v->node,x+margins[3],y+margins[0],
+        v->first_y-margins[0]-margins[2],0);
+      f->layout->has_baseline=baseline; f->layout->first_baseline=first;
+    }
+    if(status!=EXR_OK) return status;
+    if(s->float_side && v->first_y>0) {
+      status=exr_flow_float_add(f,(exr_float){x,y,v->outer_width,v->first_y,(unsigned)s->float_side});
+      if(status!=EXR_OK) return status;
+    }
+    if(!s->float_side) { f->y=y+v->first_y; f->first_line=1; if(s->after) f->force_break=1; }
+    exr_inline_rescan(&p->line);
+    if(f->doc->nodes[v->node].end>p->position) p->position=f->doc->nodes[v->node].end;
+    clear_frame(v); p->depth--; return EXR_OK;
+  }
+  return failure(p,EXR_LIMIT,"Float anchor fitting retry limit exceeded");
 }
 static exr_status advance(exr_pager *p) {
   flow *f = &p->f;
@@ -360,9 +439,11 @@ static exr_status advance(exr_pager *p) {
       if (p->local) {
         status = finish_run(p);
         if (status != EXR_OK) return status;
+        exr_flow_clear(f,3);
         p->finished = 1; p->position = f->doc->nodes[p->local_root].end;
         return EXR_OK;
       }
+      exr_flow_clear(f,3);
       while (p->chapter < f->doc->chapter_count &&
              (!f->doc->chapters[p->chapter].in_spine || !f->doc->chapters[p->chapter].linear))
         p->chapter++;
@@ -388,6 +469,11 @@ static exr_status advance(exr_pager *p) {
         p->depth--;
         break;
       }
+      if(s->float_side && !f->intrinsic && n->kind!=EXR_NODE_TEXT && n->kind!=EXR_NODE_BREAK &&
+          !(p->local && v->node==p->local_root)) {
+        v->phase=50; break;
+      }
+      if(n->kind==EXR_NODE_IMAGE && f->floats->count && !f->intrinsic && !(p->local && v->node==p->local_root)) { v->phase=50; break; }
       if (s->display != EXR_CSS_INLINE && n->kind != EXR_NODE_TEXT && n->kind != EXR_NODE_BREAK &&
           s->writing_mode != f->writing_mode) {
         int perpendicular = (s->writing_mode == EXR_WRITING_HORIZONTAL_TB) !=
@@ -409,7 +495,7 @@ static exr_status advance(exr_pager *p) {
         v->phase = 10;
       } else if (n->kind == EXR_NODE_BREAK)
         v->phase = 11;
-      else if (s->display == EXR_CSS_INLINE && n->kind != EXR_NODE_IMAGE) {
+      else if (s->display == EXR_CSS_INLINE && n->kind != EXR_NODE_IMAGE && !s->float_side) {
         v->child = n->first_child;
         v->phase = 20;
       } else
@@ -419,16 +505,21 @@ static exr_status advance(exr_pager *p) {
       status = finish_run(p);
       if (status != EXR_OK)
         return status;
+      if(s->clear_side && !(p->local && v->node==p->local_root && s->float_side)) exr_flow_clear(f,(unsigned)s->clear_side);
+      /* ponytail: ordinary tables clear outside floats until fragmented BFC
+         side-by-side layout can retain one table rectangle across row groups. */
+      if(s->display==EXR_CSS_TABLE && f->floats->count) exr_flow_clear(f,3);
       if (s->before && f->layout->page_count && f->y > exr_flow_top(f))
         f->force_break = 1;
       {
         exr_style box = exr_flow_style(s, f->writing_mode);
         const exr_style *b = &box;
-        int cell_root=p->local==2 && v->node==p->local_root && s->display==EXR_CSS_CELL;
+        int cell_root=p->local==2 && v->node==p->local_root;
         size_t side;
         for(side=0;side<4;side++) {
-          if(p->local && v->node==p->local_root && s->display==EXR_CSS_CELL) box.margin[side]=(exr_length){0,0};
+          if(p->local && v->node==p->local_root && (p->local==2 || s->display==EXR_CSS_CELL || s->float_side)) box.margin[side]=(exr_length){0,0};
           if(s->display==EXR_CSS_TABLE && s->border_collapse) box.padding[side]=(exr_length){0,0};
+          if(cell_root && (s->float_side || n->kind==EXR_NODE_IMAGE)) box.padding[side]=(exr_length){used(box.padding[side],f->unit_reference),0};
         }
         float border = s->border_style==1 && !(s->display==EXR_CSS_TABLE && s->border_collapse) ? s->border_width : 0;
         const float *resolved=f->border_override && v->node==f->border_node ? f->border_insets : NULL;
@@ -446,7 +537,7 @@ static exr_status advance(exr_pager *p) {
              measuring an ancestor's intrinsic width. */
           f->intrinsic=0;
         }
-        if (b->max_width.value >= 0 && n->kind != EXR_NODE_IMAGE && (!f->intrinsic || !b->max_width.percent))
+        if (b->max_width.value >= 0 && n->kind != EXR_NODE_IMAGE && !cell_root && (!f->intrinsic || !b->max_width.percent))
           content = fminf(content, used(b->max_width, v->width));
         if (content < 1 || !isfinite(content))
           return failure(p, EXR_ARGUMENT, "CSS leaves no content width");
@@ -542,11 +633,16 @@ static exr_status advance(exr_pager *p) {
       status = finish_run(p);
       if (status != EXR_OK)
         return status;
+      if(p->local && v->node==p->local_root) exr_flow_clear(f,3);
       if (f->paginate) {
         f->y = fminf(f->y, exr_flow_bottom(f));
         f->bottom_inset -= v->pb;
       }
       f->y += v->pb;
+      if(p->local && v->node==p->local_root && s->float_side) {
+        exr_style logical=exr_flow_style(s,f->writing_mode);
+        if(logical.height.value>=0) f->y=fmaxf(f->y,v->first_y+v->pt+v->pb+used(logical.height,exr_flow_room(f)));
+      }
       if ((s->background & 255) || (s->border_style && s->border_width > 0) || s->display == EXR_CSS_CELL)
         if (!exr_flow_box(f, v->node, 0, v->outer_x, v->first_y, v->outer_width,
                             f->y - v->first_y,
@@ -554,7 +650,7 @@ static exr_status advance(exr_pager *p) {
           return failure(p, EXR_MEMORY, "Block fragment allocation failed");
       {
         exr_style box = exr_flow_style(s, f->writing_mode);
-        if(!(p->local && v->node==p->local_root && s->display==EXR_CSS_CELL)) f->y += used(box.margin[2], v->old_width);
+        if(!(p->local && v->node==p->local_root && (p->local==2 || s->display==EXR_CSS_CELL || s->float_side))) f->y += used(box.margin[2], v->old_width);
       }
       f->x = v->old_x;
       f->width = v->old_width;
@@ -580,10 +676,14 @@ static exr_status advance(exr_pager *p) {
       status = finish_run(p);
       if (status != EXR_OK)
         return status;
+      if(s->clear_side) exr_flow_clear(f,(unsigned)s->clear_side);
       p->depth--;
       break;
+    case 50:
+      status=floating(p,v); if(status!=EXR_OK) return status;
+      break;
     case 30: {
-      float height;
+      float height,slot_x=f->x,slot_width;
       int perpendicular = (s->writing_mode == EXR_WRITING_HORIZONTAL_TB) !=
                           (f->writing_mode == EXR_WRITING_HORIZONTAL_TB);
       if (!v->fragment) {
@@ -597,9 +697,10 @@ static exr_status advance(exr_pager *p) {
         }
       }
       height = perpendicular ? v->fragment->flow_inline : v->fragment->flow_block;
-      status = exr_flow_page(f, height, v->fragment->pages[0].start);
+      status = exr_flow_line_slot(f,height,perpendicular ? v->fragment->flow_block : v->fragment->flow_inline,
+        v->fragment->pages[0].start,&slot_x,&slot_width);
       if (status != EXR_OK) return status;
-      status = exr_flow_copy(f, v->fragment, v->node, f->x, f->y, height,0);
+      status = exr_flow_copy(f, v->fragment, v->node, slot_x, f->y, height,0);
       if (status != EXR_OK) return status;
       f->y += height; f->first_line = 1;
       if (v->context->position > p->position) p->position = v->context->position;
@@ -799,6 +900,7 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   if (!p)
     return exr_fail(e, EXR_MEMORY, "Pager allocation failed");
   p->config = *config;
+  p->f.floats=&p->floats;
   p->physical_page = config->page;
   p->f.doc = doc;
   p->style_count = doc->node_count;
@@ -873,6 +975,8 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
   p->f.layout = l;
   p->f.error = e;
   p->f.y = p->config.page.margin;
+  p->floats.count=0;
+  exr_inline_rescan(&p->line);
   p->f.used_inline = 0;
   for (i = 0; i < p->depth; i++)
     if (p->frames[i].entered && p->frames[i].sized_inline)
@@ -952,6 +1056,7 @@ static void reset_cursor(exr_pager *p) {
   exr_inline_buffer_clear(&p->line);
   exr_inline_clear(&p->bidi);
   memset(&p->f, 0, sizeof(p->f));
+  memset(&p->floats,0,sizeof(p->floats)); p->f.floats=&p->floats;
   p->f.writing_mode = p->writing_mode;
   p->f.origin_x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width : 0;
   p->f.doc = doc;
@@ -1118,6 +1223,7 @@ static exr_status append_page(exr_layout *all, exr_layout *page, exr_error *e) {
     all->boxes[all->box_count++] = b;
   }
   all->pages[np] = page->pages[0];
+  if(np && all->pages[np].start<all->pages[np-1].end) all->source_overlaps=1;
   all->pages[np].line_start = nl;
   all->pages[np].box_start = nb;
   all->page_count++;

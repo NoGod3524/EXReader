@@ -40,7 +40,7 @@ static size_t following(flow *f, size_t node) {
 static size_t next_text(flow *f, size_t node) {
   while (node != SIZE_MAX) {
     const exr_node *n = &f->doc->nodes[node];
-    if (f->styles[node].display == EXR_CSS_NONE || n->start == SIZE_MAX)
+    if (f->styles[node].display == EXR_CSS_NONE || n->start == SIZE_MAX || f->styles[node].float_side)
       node = following(f, node);
     else if (n->kind == EXR_NODE_TEXT || exr_ruby_node(f->doc,node))
       return node;
@@ -347,7 +347,21 @@ static void reset_line_scan(exr_line_buffer *b) {
   b->scan = b->line_end = 0;
   b->soft = b->emergency = SIZE_MAX;
   b->scan_width = 0;
+  b->scan_ascent=b->scan_descent=b->scan_leading=0;
   b->initialized = 1;
+}
+void exr_inline_rescan(exr_line_buffer *b) {
+  reset_line_scan(b); b->line_ready=0; b->line.glyph_count=0;
+}
+static exr_status line_metric(flow *f,const exr_glyph *g,float *ascent,float *descent,float *leading) {
+  if(g->flags&EXR_GLYPH_RUBY_ITEM) {
+    *ascent=fmaxf(*ascent,g->offset_x); *descent=fmaxf(*descent,g->offset_y);
+  } else {
+    exr_face *face=&f->font->faces[g->font_index];
+    if(exr_font_size(face,g->size)) return exr_fail(f->error,EXR_FONT,"Cannot size inline corridor font");
+    *ascent=fmaxf(*ascent,exr_font_ascent(face)); *descent=fmaxf(*descent,exr_font_descent(face));
+  }
+  *leading=fmaxf(*leading,g->line_height); return EXR_OK;
 }
 static exr_status line_work(flow *f, size_t count) {
   const size_t limit = 64 * 1024 * 1024;
@@ -457,12 +471,12 @@ static exr_status shape_line_segment(flow *f, exr_line_buffer *b, uint32_t after
    across its start, never through it or a GLUE boundary. */
 static exr_status fit_line(flow *f, exr_line_buffer *b) {
   float indent = f->first_line ? f->paragraph->indent : 0;
-  float available = fmaxf(1, f->width - indent);
+  float available;
   size_t tries = 0;
   for (;;) {
     size_t i, source_end = b->run.glyphs[b->line_end - 1].cluster_end;
     size_t low = 0, high = b->raw.glyph_count;
-    float width = 0;
+    float width = 0,ascent=0,descent=0,leading=0,minimum=0,old_y=f->y;
     exr_status status;
     while (low < high) {
       size_t middle = low + (high - low) / 2;
@@ -475,10 +489,20 @@ static exr_status fit_line(flow *f, exr_line_buffer *b) {
     if (status != EXR_OK) return status;
     for (i = 0; i < b->line.glyph_count; i++) {
       exr_glyph *g = &b->line.glyphs[i];
-      if (exr_font_size(&f->font->faces[g->font_index], g->size))
-        return exr_fail(f->error, EXR_FONT, "Cannot size final line font");
+      if(f->floats->count && !f->intrinsic) {
+        status=line_metric(f,g,&ascent,&descent,&leading); if(status!=EXR_OK) return status;
+      } else if(exr_font_size(&f->font->faces[g->font_index],g->size)) return exr_fail(f->error,EXR_FONT,"Cannot size final line font");
       width += g->advance + line_kern(f, i ? g - 1 : NULL, g);
+      if(!i || g->cluster_start==b->line.glyphs[0].cluster_start) minimum=width;
     }
+    b->line_x=f->x; b->line_width=f->width;
+    if(!f->intrinsic && f->floats->count && b->line.glyph_count) {
+      status=exr_flow_line_slot(f,fmaxf(leading,ascent+descent),fmaxf(1,minimum+indent),
+        b->line.glyphs[0].start,&b->line_x,&b->line_width);
+      if(status!=EXR_OK) return status;
+      if(f->y!=old_y) return EXR_REFLOW;
+    }
+    available=fmaxf(1,b->line_width-indent);
     if (f->intrinsic || width <= available + 0.001f) break;
     {
       size_t emergency = 0;
@@ -574,13 +598,18 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
   for (;;) {
     if (!b->line_end) {
       float indent = f->first_line ? f->paragraph->indent : 0;
-      float available = fmaxf(1, f->width - indent);
       while (b->scan < b->ready) {
         size_t i = b->scan;
         exr_glyph *g = &b->run.glyphs[i];
-        float advance;
+        float advance,available=fmaxf(1,f->width-indent);
         if (exr_font_size(&f->font->faces[g->font_index], g->size))
           return exr_fail(f->error, EXR_FONT, "Cannot size line font");
+        if(f->floats->count && !f->intrinsic) {
+          float x,width,next; exr_status status=line_metric(f,g,&b->scan_ascent,&b->scan_descent,&b->scan_leading);
+          if(status!=EXR_OK) return status;
+          exr_flow_area(f,f->y,fmaxf(b->scan_leading,b->scan_ascent+b->scan_descent),&x,&width,&next);
+          available=fmaxf(1,width-indent);
+        }
         if (i && (g->boundaries & EXR_BOUNDARY_MANDATORY)) {
           b->line_end = i; b->forced = 1; b->final = 0; break;
         }
@@ -608,11 +637,15 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
       exr_status status;
       if (!b->line_ready) {
         status = fit_line(f, b);
+        if(status==EXR_REFLOW) { exr_inline_rescan(b); continue; }
         if (status != EXR_OK) return status;
       }
       end = b->line.glyph_count;
       if (end) {
+        float old_x=f->x,old_width=f->width;
+        f->x=b->line_x; f->width=b->line_width;
         status = exr_flow_emit_line(f, b->line.glyphs, end, b->forced, b->final);
+        f->x=old_x; f->width=old_width;
         if (status != EXR_OK) return status;
       }
       end = b->line_end;
@@ -628,6 +661,23 @@ exr_status exr_inline_drain(flow *f, exr_line_buffer *b) {
       if (status != EXR_OK) return status;
     }
   }
+}
+exr_status exr_inline_pending(flow *f,exr_line_buffer *b,float *width) {
+  size_t i; exr_status status=measure_line_cluster(f,b); *width=0;
+  if(status==EXR_OK) status=shape_line_segment(f,b,0);
+  if(status==EXR_OK) status=exr_inline_drain(f,b);
+  if(status!=EXR_OK) return status;
+  for(i=0;i<b->ready;i++) {
+    exr_glyph *g=&b->run.glyphs[i];
+    if(exr_font_size(&f->font->faces[g->font_index],g->size)) return EXR_FONT;
+    *width+=g->advance+line_kern(f,i ? g-1 : NULL,g);
+  }
+  return EXR_OK;
+}
+exr_status exr_inline_break(flow *f,exr_line_buffer *b) {
+  if(!b->ready) return EXR_OK;
+  b->line_end=b->ready; b->line_ready=0; b->forced=b->final=0;
+  return exr_inline_drain(f,b);
 }
 typedef struct { flow *f; size_t node, at; } inline_text_cursor;
 static int following_inline_scalar(void *context, uint32_t *cp) {

@@ -2582,3 +2582,49 @@ Remaining table work includes per-side/multi-value declarations, additional line
 styles and join fidelity, CSS display row-group/column types, border-spacing,
 repeating headers, row splitting, complex percentage constraints and broader CSS
 formatting. Floats/wrapping and language dictionaries remain subsequent goals.
+
+
+Collapsed-border commit 57c9f17 passed all six jobs in run 39092658253: 106-test
+Windows/Linux/macOS/sanitizer suites, installed SDK examples/JNI/macOS Swift,
+Android ARM64 and iOS/iPadOS device/simulator builds and Swift typechecks.
+
+## Float contexts and dynamic inline corridors (0.18 development)
+
+Forty-three original EPUBs cover left/right/multiple floats, ordering, clear
+left/right/both/br, early/late inline anchors, full-width exclusion, fixed/auto
+blocks, floating tables, cell BFC containment and synthesized cell baselines,
+nested floats, minimum heights, empty floats, percentage width/max-width/padding,
+auto shrink-to-fit in a neighboring corridor, margins and border/image pixels,
+normal images and the current clearing behavior for normal tables, mixed font
+heights, ruby, soft hyphens, LTR/RTL and vertical-rl/lr. A lam/float/alef case with
+the original Arabic shaping font matches the no-float control's real ligature.
+Native two-sided image wrapping was visually inspected.
+
+Five hundred generated host documents (seed 180319) vary side, clear, width/auto,
+height, margins, padding, font size, justification and paragraph direction.
+Checks preserve every source A and keep visible clipped line rectangles outside
+floating content. Source advances can include trailing spaces or indivisible
+clusters; overlap checks use the same public clip bounds as the renderer.
+Regular and nested orthogonal long chapters compare backwards/evicted/checkpoint
+pages against replay and whole layout: glyphs, hit results and RGBA bytes agree.
+Public records rebuild via positioned layout with identical pixels.
+
+A narrow source-overlap EPUB independently reproduces a page lookup bug: a float
+can remain on page 0 while earlier large text is carried to page 1. The saved
+pre-fix DLL returns page 1 for source offset 17 actually drawn on page 0. Page
+lookup now uses narrow actual glyph ranges only when page envelopes overlap;
+positioned reconstruction accepts those envelopes and preserves the lookup.
+Cancellation returns no partial layout, a fresh layout succeeds, tiny cache
+budgets return no borrowed result, and oversized/129-live-float cases fail within
+the documented limits. The float test has 105,364 checks. Pixel goldens stay fixed.
+
+All 107 local Windows CTest entries pass. Installed JNI smoke with -Xcheck:jni
+also checks float image coordinates, decoded image bytes and final page pixels.
+The installed books/float-both.epub sample is used by JNI and macOS Swift CI.
+No new dependency, exported function, public record, ABI epoch or schema change.
+Default Release DLL: 5,205,547 -> 5,218,600 bytes (+13,053).
+Float state is private to each BFC; owned copies and deferred immutable units
+participate in checkpoint budgets. The 1 MiB text and 600-paragraph image
+measurements record the cost in PERFORMANCE.md. This commit's platform CI is
+recorded after pushing. Long float fragmentation, ordinary-table side-by-side
+BFC geometry and broader CSS formatting remain open; this is not full CSS conformance.

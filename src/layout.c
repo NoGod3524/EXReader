@@ -322,6 +322,19 @@ size_t exr_layout_page_at(const exr_layout *l, size_t offset) {
   size_t lo = 0, hi;
   if (!l || !l->page_count)
     return SIZE_MAX;
+  if(l->source_overlaps) {
+    /* ponytail: overlap-only linear lookup; add a range index if host seek profiles need one. */
+    size_t i,best=SIZE_MAX,span=SIZE_MAX;
+    for(i=0;i<l->glyph_count;i++) {
+      const exr_glyph *g=&l->glyphs[i];
+      /* A shaped cluster can bridge out-of-flow text in source order. Prefer
+         the narrowest actual range, e.g. a float's own glyph over that cluster. */
+      if(g->start<=offset && offset<g->end && g->end-g->start<span) {
+        best=g->page; span=g->end-g->start;
+      }
+    }
+    if(best!=SIZE_MAX) return best;
+  }
   hi = l->page_count;
   while (lo + 1 < hi) {
     size_t mid = lo + (hi - lo) / 2;
