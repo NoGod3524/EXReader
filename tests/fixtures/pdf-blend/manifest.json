@@ -318,7 +318,9 @@
     "state.pdf": "55cbfe5629bcd1ccd73549e377eaa1da0628a27dcd7533a5cc5370ff2e255352",
     "knockout.pdf": "3d29dd7410814cdaafd4ebf94483b72c57be89bf566344d191b19da84c9de9bd",
     "knockout-nonisolated.pdf": "3427f9b8d2f1743190db089b4b5ae5e010833c8ae684f51a0d595b8de23dcbb5",
-    "knockout-shapes.pdf": "928ad4e5d7c42a78c76b6fdfcab63f46587db5436c8f192a0772b42f39bea0c7"
+    "knockout-shapes.pdf": "928ad4e5d7c42a78c76b6fdfcab63f46587db5436c8f192a0772b42f39bea0c7",
+    "knockout-elements.pdf": "8fed10402e7dfdf57887e8f098292aca00bc1eaec443214718ccfc3622b7f23b",
+    "knockout-edges.pdf": "5d9607551085d6940d490c56c0c8cf60628153b1744c15e70fc2cb5367f1d82a"
   },
   "knockout_scenes": [
     {

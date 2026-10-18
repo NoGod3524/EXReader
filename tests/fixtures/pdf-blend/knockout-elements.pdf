@@ -1,0 +1,155 @@
+%PDF-1.7
+%ÄÅÇÉ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 1 /Kids [3 0 R] >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 96 16] /Contents 4 0 R /Group << /S /Transparency /CS /DeviceRGB /I true >> /Resources << /XObject << /Fm0 11 0 R /Fm1 14 0 R /Fm2 17 0 R /Fm3 20 0 R /Fm4 23 0 R /Fm5 26 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 166 >>
+stream
+q 1 0 0 1 0 0 cm /Fm0 Do Q
+q 1 0 0 1 16 0 cm /Fm1 Do Q
+q 1 0 0 1 32 0 cm /Fm2 Do Q
+q 1 0 0 1 48 0 cm /Fm3 Do Q
+q 1 0 0 1 64 0 cm /Fm4 Do Q
+q 1 0 0 1 80 0 cm /Fm5 Do Q
+endstream
+endobj
+5 0 obj
+<< /Length 28 >>
+stream
+1000 0 d0 0 0 1000 1000 re f
+endstream
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type3 /FontBBox [0 0 1000 1000] /FontMatrix [0.001 0 0 0.001 0 0] /CharProcs << /A 5 0 R >> /Encoding << /Type /Encoding /Differences [65 /A] >> /FirstChar 65 /LastChar 65 /Widths [1000] /Resources << >> >>
+endobj
+7 0 obj
+<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length 3 >>
+stream
+<Z
+endstream
+endobj
+8 0 obj
+<< /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I false >> /Resources << >> /Length 53 >>
+stream
+0.784313725 0.392156863 0.000000000 rg 0 0 16 16 re f
+endstream
+endobj
+9 0 obj
+<< /BM /Normal /ca 1.000000000 /CA 1.000000000 >>
+endobj
+10 0 obj
+<< /BM /Normal /ca 0.501960784 /CA 0.501960784 >>
+endobj
+11 0 obj
+<< /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true /K false /CS /DeviceRGB >> /Resources << /ExtGState << /GS0 9 0 R /GS1 10 0 R >> /Font << /F1 6 0 R >> >> /Length 138 >>
+stream
+/GS0 gs 1.000000000 0.000000000 0.000000000 rg 0 0 16 16 re f
+/GS1 gs 0.039215686 0.784313725 0.156862745 rg BT /F1 16 Tf 0 0 Td (A) Tj ET
+endstream
+endobj
+12 0 obj
+<< /BM /Normal /ca 1.000000000 /CA 1.000000000 >>
+endobj
+13 0 obj
+<< /BM /Multiply /ca 0.501960784 /CA 0.501960784 >>
+endobj
+14 0 obj
+<< /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true /K false /CS /DeviceRGB >> /Resources << /ExtGState << /GS0 12 0 R /GS1 13 0 R >> /Font << /F1 6 0 R >> >> /Length 138 >>
+stream
+/GS0 gs 1.000000000 0.000000000 0.000000000 rg 0 0 16 16 re f
+/GS1 gs 0.039215686 0.784313725 0.156862745 rg BT /F1 16 Tf 0 0 Td (A) Tj ET
+endstream
+endobj
+15 0 obj
+<< /BM /Normal /ca 1.000000000 /CA 1.000000000 >>
+endobj
+16 0 obj
+<< /BM /Normal /ca 0.501960784 /CA 0.501960784 >>
+endobj
+17 0 obj
+<< /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true /K false /CS /DeviceRGB >> /Resources << /ExtGState << /GS0 15 0 R /GS1 16 0 R >> /XObject << /Im1 7 0 R >> >> /Length 98 >>
+stream
+/GS0 gs 1.000000000 0.000000000 0.000000000 rg 0 0 16 16 re f
+/GS1 gs q 16 0 0 16 0 0 cm /Im1 Do Q
+endstream
+endobj
+18 0 obj
+<< /BM /Normal /ca 1.000000000 /CA 1.000000000 >>
+endobj
+19 0 obj
+<< /BM /Multiply /ca 0.501960784 /CA 0.501960784 >>
+endobj
+20 0 obj
+<< /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true /K false /CS /DeviceRGB >> /Resources << /ExtGState << /GS0 18 0 R /GS1 19 0 R >> /XObject << /Im1 7 0 R >> >> /Length 98 >>
+stream
+/GS0 gs 1.000000000 0.000000000 0.000000000 rg 0 0 16 16 re f
+/GS1 gs q 16 0 0 16 0 0 cm /Im1 Do Q
+endstream
+endobj
+21 0 obj
+<< /BM /Normal /ca 1.000000000 /CA 1.000000000 >>
+endobj
+22 0 obj
+<< /BM /Normal /ca 0.501960784 /CA 0.501960784 >>
+endobj
+23 0 obj
+<< /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true /K false /CS /DeviceRGB >> /Resources << /ExtGState << /GS0 21 0 R /GS1 22 0 R >> /XObject << /Nest 8 0 R >> >> /Length 97 >>
+stream
+/GS0 gs 1.000000000 0.000000000 0.000000000 rg 0 0 16 16 re f
+/GS1 gs q 1 0 0 1 0 0 cm /Nest Do Q
+endstream
+endobj
+24 0 obj
+<< /BM /Normal /ca 1.000000000 /CA 1.000000000 >>
+endobj
+25 0 obj
+<< /BM /Multiply /ca 0.501960784 /CA 0.501960784 >>
+endobj
+26 0 obj
+<< /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true /K false /CS /DeviceRGB >> /Resources << /ExtGState << /GS0 24 0 R /GS1 25 0 R >> /XObject << /Nest 8 0 R >> >> /Length 97 >>
+stream
+/GS0 gs 1.000000000 0.000000000 0.000000000 rg 0 0 16 16 re f
+/GS1 gs q 1 0 0 1 0 0 cm /Nest Do Q
+endstream
+endobj
+xref
+0 27
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000363 00000 n 
+0000000580 00000 n 
+0000000658 00000 n 
+0000000905 00000 n 
+0000001050 00000 n 
+0000001257 00000 n 
+0000001322 00000 n 
+0000001388 00000 n 
+0000001767 00000 n 
+0000001833 00000 n 
+0000001901 00000 n 
+0000002281 00000 n 
+0000002347 00000 n 
+0000002413 00000 n 
+0000002756 00000 n 
+0000002822 00000 n 
+0000002890 00000 n 
+0000003233 00000 n 
+0000003299 00000 n 
+0000003365 00000 n 
+0000003708 00000 n 
+0000003774 00000 n 
+0000003842 00000 n 
+trailer
+<< /Size 27 /Root 1 0 R >>
+startxref
+4185
+%%EOF
