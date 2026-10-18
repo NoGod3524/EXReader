@@ -2672,5 +2672,7 @@ complete CSS fragmentation semantics remain outside the supported subset.
 Large auto-width measurement, paragraph bidi analysis and parsed document
 storage can still scale with the source. These are independent of retaining
 only bounded output fragments and cursors. See PERFORMANCE.md for raw timing
-and high-water-memory measurements. Cross-platform CI for this commit is
-recorded separately after it completes.
+and high-water-memory measurements. Commit 9ec2349 passed all six jobs in
+[CI run 39096308241](https://github.com/NoGod3524/EXReader/actions/runs/39096308241):
+Windows, Linux and macOS native/installed-SDK tests, macOS Swift smoke, JNI
+smoke, ASan/UBSan, Android ARM64 and Apple device/simulator library builds.
