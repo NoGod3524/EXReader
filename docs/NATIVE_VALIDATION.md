@@ -2386,3 +2386,28 @@ Swift), Android ARM64, Apple iOS/iPadOS device/simulator builds, and ASan/UBSan.
 This also verifies the Ubuntu decoder-initialization fix. Mobile verification
 remains library builds rather than application/device acceptance. Development
 is paused here as requested; pending features are not marked complete.
+
+
+## PDF CMYK/YCCK JPEG checkpoint (0.18 development)
+
+The four-component adapter reuses the pinned stb entropy/IDCT, row upsamplers
+and YCbCr conversion. It keeps all four samples until PDF Decode, color keys
+and the existing color-space/ICCBased path run. No runtime dependency or public
+ABI record changed. Existing grayscale/RGB decoding retains its path.
+
+Original fixtures cover Adobe CMYK, YCCK, missing APP14, baseline/progressive,
+odd 17x9 dimensions, subsampled four-color quadrants and independent K. The
+PDF image tests check Decode/default inversion, color-key alpha, image SMask,
+ICCBased Alternate, lossless-prefixed DCT, affine drawing and malformed
+dimensions/component counts/truncation/Decode arrays. Inline cases verify both
+rendered pixels and semantic text following CMYK/YCCK JPEG data. A public fixed
+PDF case renders the authored page. Actual CMYK ICC LUT integration is checked
+for CMYK and YCCK: K=32/255 produces neutral sRGB near 240, distinct from the
+DeviceCMYK approximation (183,143,103).
+
+Windows Release build and all 101 local CTest entries pass. The same default
+DLL grows from 4,981,470 to 4,985,111 bytes (+3,641 bytes). Other platform
+validation for this change is not yet recorded here. Explicit ColorTransform
+overrides, 12-bit/non-supported JPEG variants and CMYK image Matte remain
+unsupported. Image SMask support does not imply graphics-state soft masks or
+transparency groups. See VERSIONING.md for the next compatibility milestones.

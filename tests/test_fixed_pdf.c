@@ -97,6 +97,11 @@ static void semantic_text(const char *dir) {
 int main(int argc,char **argv) {
   char path[4096]; exr_fixed_document *d=NULL; exr_bitmap b;
   CHECK(argc==2); semantic_text(argv[1]); public_pages(argv[1]); fallback_and_options(argv[1]);
+  { size_t size; unsigned char *bytes=load(argv[1],"pdf-jpeg-cmyk.pdf",&size);
+    OK(exr_fixed_open_memory(EXR_PDF,bytes,size,NULL,&d,&error)); free(bytes);
+    OK(exr_fixed_render(d,0,1,NULL,&b,&error)); CHECK(b.width==17 && b.height==9); pixel(&b,8,4,183,143,103);
+    exr_bitmap_free(&b); exr_fixed_free(d); d=NULL;
+  }
   snprintf(path,sizeof(path),"%s/pdf-public.pdf",argv[1]); OK(exr_fixed_open(path,NULL,&d,&error)); CHECK(!strcmp(exr_fixed_title(d),"pdf-public.pdf")); OK(exr_fixed_render(d,0,1,NULL,&b,&error)); exr_bitmap_free(&b); exr_fixed_free(d);
   CHECK(exr_fixed_open_memory(EXR_EPUB,"x",1,NULL,&d,&error)==EXR_FORMAT && !d);
   CHECK(exr_fixed_open_memory(EXR_PDF,NULL,1,NULL,&d,&error)==EXR_ARGUMENT && !d);

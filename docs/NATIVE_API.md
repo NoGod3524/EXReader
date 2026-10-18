@@ -1067,7 +1067,7 @@ FreeType 处理可变轮廓、HVAR/VVAR 度量及 avar 归一化；C OpenType �
 
 exr_stretch_* 是不持有 decoder、文件、设备或 player 的流式 WSOLA 处理器。7350–192000 Hz、1–8 声道、0.5–2 倍固定速度；浮点样本交错排列。push/pull 每次最多 65536 帧，push 只接受环形缓冲可用空间，pull 最多一个输出 hop；反复拉取输出后重试输入。不同块切分输出逐样本相同，1 倍速为 bit-exact 旁路。finish 结束输入，再 pull 到 drained；最终样本数按 round(input/reported_rate) 精确计算，reported_rate 是 Q32 实际值。reset 丢弃当前流并更改速度，格式不变。创建后处理路径不再分配，最高配置内存小于 1 MiB；约 20 ms 窗/10 ms hop/±5 ms 搜索，所有声道共享匹配偏移。取消不提交新输出并保留待取样本供重试。短输入/EOF 零延伸；这是低延迟语音/阅读用途算法，瞬态音乐保真不在当前验收范围。宿主可把 PCM、stretch、audio output 串联。
 
-PDF BI/ID/EI 现支持 RAW、DCT JPEG 与现有 Flate/LZW/ASCII85/ASCIIHex/RunLength/predictor 能力及短键/色空间缩写。RAW 按 W/H/BPC/通道精确算行字节；滤镜使用自己的真实终止位置后再验证 EI，不用像素子串搜索。JPEG 按 marker/entropy/FF00/restart 跳到真实 EOI，APP 内的伪 EOI 不结束数据。Form/Type3 资源作用域、Indexed 别名和 stencil 复用现有图片路径，临时 synthetic stream 的解码缓存每张释放；图片无需改变公开 draw ABI。边长 8192、16 Mi 像素、每图 decoded 64 MiB、临时缓存 128 MiB、同页及嵌套 Form/CharProc 累计解压工作 256 MiB。未知首滤镜无法安全定位结束时明确报错。JPEG 像素仍只接受已支持的 gray/RGB8 路径；文字提取可安全跳过 CMYK/ColorTransform override 的 JPEG，像素绘制不支持。
+PDF BI/ID/EI 现支持 RAW、DCT JPEG 与现有 Flate/LZW/ASCII85/ASCIIHex/RunLength/predictor 能力及短键/色空间缩写。RAW 按 W/H/BPC/通道精确算行字节；滤镜使用自己的真实终止位置后再验证 EI，不用像素子串搜索。JPEG 按 marker/entropy/FF00/restart 跳到真实 EOI，APP 内的伪 EOI 不结束数据。Form/Type3 资源作用域、Indexed 别名和 stencil 复用现有图片路径，临时 synthetic stream 的解码缓存每张释放；图片无需改变公开 draw ABI。边长 8192、16 Mi 像素、每图 decoded 64 MiB、临时缓存 128 MiB、同页及嵌套 Form/CharProc 累计解压工作 256 MiB。未知首滤镜无法安全定位结束时明确报错。JPEG 像素支持 gray/RGB8，以及下述 CMYK/YCCK 四分量路径；显式 ColorTransform override 仍不支持，文字提取可安全跳过该图。
 
 
 ## Devanagari、ruby、PDF 色彩与平台分页接口（0.18 开发补充）
@@ -1169,7 +1169,7 @@ DeviceN 接受 1–32 个色名、device/CIE/ICC alternate 和最多四输出的
 
 可选属性字典（包括 Subtype NChannel）按复合色的 tintTransform 输出显示，未模拟 Process/Colorants/InkHints 的物理油墨行为。全部色名为 None 时不落墨；混合 None 仍按文件声明的复合变换处理。拒绝 All、重复的非 None 色名、空列表、超过 32 通道和超过 127 字节的色名。物理分色、套印及其余 ICC/输出意图仍待实现；Type 2/3 本身只接受一个输入。
 
-最多 32 输入计入原计算器的 100 项操作数栈，不能再额外占用一套栈；保持 4096 指令、64 KiB 源码、1 MiB 函数图载荷及既有取消和页面工作预算。图片相关 Decode/Mask 缓冲扩到 64 项，逐像素只读写实际通道数；JPEG 继续只接受支持的单通道或三通道解码。不新增依赖或公开结构字段。
+最多 32 输入计入原计算器的 100 项操作数栈，不能再额外占用一套栈；保持 4096 指令、64 KiB 源码、1 MiB 函数图载荷及既有取消和页面工作预算。图片相关 Decode/Mask 缓冲扩到 64 项，逐像素只读写实际通道数；JPEG 支持单通道、三通道及下述四分量 CMYK/YCCK 解码。不新增依赖或公开结构字段。
 
 
 ## PDF 多输入与三次采样（0.18 开发补充）
@@ -1199,3 +1199,12 @@ Lab 使用真实 L*/a*/b* 单位及文件 Range（通常 [0 100 -128 127 -128 12
 配置数据最多 4 MiB；每个 CMS context 用私有分配器将全部分配及对齐头开销限制为 16 MiB，实际驻留分配计入原页面颜色缓存。配置最多 512 tags、每个被检查的输入 pipeline 最多 64 stages；逐像素费用按 pipeline 规模计入已有页面/图片工作预算。配置编译的分配点及求值支持取消，失败释放 profile/transform/context；不同 context 使用独立状态。
 
 本步未接入 PDF `ri`/图像 Intent 的动态渲染意图、OutputIntent、软打样、透明组混合色空间、物理印版或套印。因此这是 ICCBased 配置读取与转换的完成批次，完整 PDF 印刷色彩仍有后续工作。公开 C 记录、ABI epoch 1、书库 schema 6 和版本 0.18.0 保持不变。
+
+
+## PDF CMYK/YCCK JPEG（0.18 开发补充）
+
+DCTDecode 的四分量 JPEG 先保留 C/M/Y/K 样本，再应用 PDF Decode、颜色键 Mask 和 ColorSpace/ICCBased 转换；黑色分量不作为 alpha 使用。支持基线及渐进式、Adobe APP14 transform=0 的 CMYK、transform=2 的 YCCK，以及无 Adobe 标记的直接四分量 JPEG。YCCK 先重建 CMY，K 保持独立；所有样本的反相由 PDF Decode 明确决定，不根据 Adobe 标记额外自动反相。常见 Adobe 数据使用 Decode [1 0 1 0 1 0 1 0]。
+
+XObject 和 BI/ID/EI 内联图片复用该路径，支持已有颜色键、独立图像软遮罩和插值；可用的 ICC 配置继续转换到固定 sRGB，不可用时按既有 Alternate 规则回退。无配置的 DeviceCMYK 沿用已有屏幕近似，不表示印刷级色彩匹配。显式 DecodeParms ColorTransform override、12-bit JPEG、其他 JPEG 编码类型和 CMYK 图像 Matte 仍返回错误。未增加公开 ABI 字段或运行时依赖。
+
+沿用 32 MiB 编码、8192 边长/16 Mi 像素、128 MiB 解码临时分配和图像/遮罩载荷预算，输出转换使用现有页面工作限额。支持解码前后及输出行重建期间的协作取消；熵解码/IDCT 内部沿用 stb 的同步调用。

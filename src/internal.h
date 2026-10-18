@@ -66,6 +66,10 @@ int exr_next(const char *text, size_t size, size_t *offset, uint32_t *cp);
 FILE *exr_fopen(const char *path, const char *mode);
 exr_status exr_read(const char *path, unsigned char **data, size_t *size, exr_error *error);
 exr_status exr_decode(const void *data, size_t size, exr_buffer *buf, exr_error *error);
+/* Private four-component JPEG samples, before PDF Decode and color conversion.
+   channels==4 stores C/M/Y/K, not RGBA. */
+exr_status exr_jpeg_cmyk_decode(const void *data,size_t size,const exr_control *control,
+                               exr_bitmap *out,exr_error *error);
 exr_status exr_audio_ref(exr_audio *audio,exr_error *error);
 exr_status exr_fixed_anchor_validate(const exr_fixed_anchor *anchor,exr_error *error);
 exr_status exr_anchor_validate(const exr_anchor *anchor, exr_error *error);

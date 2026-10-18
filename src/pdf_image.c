@@ -150,11 +150,11 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   if(codec==EXR_PDF_STREAM_JPEG) {
     exr_status status;
     id=get(&r,parameters,"ColorTransform"); if(r.error.code!=EXR_OK) goto done;
-    if(stencil || indexed || bits!=8 || (channels!=1 && channels!=3) || id!=EXR_PDF_NONE) {
-      exr_fail(&r.error,EXR_FORMAT,"PDF JPEG stencil/CMYK/ColorTransform override is unsupported"); goto done;
+    if(stencil || indexed || bits!=8 || (channels!=1 && channels!=3 && channels!=4) || id!=EXR_PDF_NONE) {
+      exr_fail(&r.error,EXR_FORMAT,"PDF JPEG stencil/indexed/ColorTransform override is unsupported"); goto done;
     }
     if(!jpeg_frame(bytes,size,width,height,channels)) goto invalid;
-    status=exr_image_decode(bytes,size,&bitmap,&r.error);
+    status=channels==4 ? exr_jpeg_cmyk_decode(bytes,size,control,&bitmap,&r.error) : exr_image_decode(bytes,size,&bitmap,&r.error);
     if(status!=EXR_OK) { if(r.error.code==EXR_OK) r.error.code=status; goto done; }
     if(bitmap.width!=width || bitmap.height!=height) goto invalid;
   } else {
