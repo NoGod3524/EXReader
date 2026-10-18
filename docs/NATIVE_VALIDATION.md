@@ -2722,3 +2722,34 @@ Commit 5fe3ca9 passed all six jobs in
 Windows/Linux/macOS native tests and installed SDKs, desktop JNI, macOS Swift,
 ASan/UBSan, Android ARM64 and Apple device/simulator library builds. Benchmark
 source hashes and the installed DLL were checked against the committed source.
+
+
+## Optional hyphenation dictionaries and providers (0.18.0 development)
+
+The standalone C API builds immutable language registries or hosts a caller's
+provider. A packed trie applies max-weight TeX-style patterns. Tests cover edge
+anchors/minima, even suppression, duplicate pattern merging, parent language
+lookup, untagged language isolation, Unicode 17 full folding, Greek final sigma,
+Turkic I, Hebrew marks, emoji ZWJ and fold expansions that cannot split an
+original character. Invalid UTF-8, byte/grapheme interiors, callback statuses,
+reentry, cancellation, failed-create ownership and payload/work budgets are
+checked. A 20,000-root adversarial dictionary terminates at the work limit.
+An independent slow overlay oracle checks 30,000 generated ASCII words against
+100 random pattern sets (seed 180324). The native test has 330,214 checks.
+All 108 native tests pass locally. Unicode data regeneration is byte-exact.
+
+The optional Pyphen 0.17.2 oracle checks 15,046 words and 18,664 break positions
+using English US, Spanish, Italian and Russian dictionaries. The latter three
+input files are unchanged; English COMPOUND minimum metadata is projected out
+explicitly. Full-fold-expansion cases are native tests, not counted as a Pyphen
+lower()-equivalence comparison. Native memory payloads are recorded along with
+external dictionary hashes. No external dictionaries or Pyphen code are shipped.
+The installed SDK C example independently links and prints hy-phen-ation.
+
+Raw results and DLL provenance are under
+benchmarks/0.18.0-hyphen-dictionaries-windows. This is a dictionary-query gate,
+not verification of automatic line-breaking: CSS/language selection, synthetic
+hyphens, final shaping, bidi/vertical drawing and page/checkpoint integration
+remain required. Native compound/spelling-replacement grammars and canonical
+normalization also remain pending. Existing manual soft-hyphen behavior is not
+changed by this standalone module.

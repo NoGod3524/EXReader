@@ -1326,3 +1326,41 @@ BFC 游标由现有 frame/checkpoint 拥有，深克隆和内存预算包含列�
 内容。普通表格保持在正文流中并贡献基线，外部浮动不进入单元格的排版上下文。
 单个不可拆行组仍须能放入一整页；已提交的窄列不自动加宽来救济后续超高行组。
 安装示例 books/float-bfc-stream.epub 由 JNI/Swift 验证长侧栏与普通表格同时续排。
+
+
+## 可选语言词典与断点查询（0.18 开发补充）
+
+`exr_hyphenator` 是独立、不可变的可选对象。`exr_hyphenator_create` 接宿主 provider；
+成功后接管 context，最后释放时调用 release。失败不接管。回调同步执行，使用时
+串行化；不可销毁或重入当前对象。它收到规范化的小写 ASCII 语言键、带长度的
+原始 UTF-8 单词和 size+1 字节输出区；每个 1 表示该 UTF-8 字节之前允许断词。
+
+`exr_hyphenator_create_patterns` 一次载入 1–64 个语言的纯 UTF-8 加权模式，复制并
+压成原生 C trie。每项设置 struct_size，language 为 ASCII BCP47 风格键，NULL/空串
+仅匹配无语言输入；语言查找忽略大小写，按 RFC 4647 方式退到父标签，不拿缺省词典
+猜测已知语言。重复键拒绝。模式中的 0–9 是边界权重，点号锚定词首/词尾，匹配结果
+取最大权重，奇数允许断点、偶数抑制。支持 UTF-8/BOM 头、%/# 注释及
+LEFTHYPHENMIN/RIGHTHYPHENMIN；输入 left/right=0 使用文件值或默认 2，非零覆盖。
+最小保留量以原文的 Unicode 字素计数，而非折叠后字符数。
+
+`exr_hyphenator_breaks` 输出原文 UTF-8 字节位置，不改原文。原生模式与单词均做
+Unicode 17 full case folding，tr/az 用 Turkic I 映射；折叠展开（如 ß→ss）内部断点
+不会变成原文字符内部的断点。不做 NFC/NFKC 归一化。provider 可接自己的规范化、
+分词和词典实现，须返回原文位置。结果与 UAX #29 字素和 GLUE 保护相交；字素内部
+候选清除，非 0/1 或 UTF-8 延续字节候选作为 provider 格式错误拒绝。0/size 始终清零。
+有效大小请求的取消、回调错误或校验错误清空全部输出，不返回部分断点。
+
+单词最多 1,024 字节/256 标量，模式最多 128 原始标量；每词最多三倍 case-fold 展开。
+每词典输入最多 8 MiB，全部输入最多 32 MiB；每词典最多 262,144 个模式、一百万 trie
+节点。构造和查询受 64 Mi 工作预算与取消控制，构造字节预算 0=32 MiB，最多 128 MiB，
+包含语言目录、数组分配容量和 packed edges。`exr_hyphenator_memory_size` 计这些实际
+payload，排除分配器开销、借入源字节、临时栈和宿主自有 provider context。
+
+原生格式当前拒绝 TeX 命令、复合词 NEXTLEVEL/COMPOUND 配置和带拼写替换的模式，
+返回 EXR_UNSUPPORTED，不悄悄忽略。它不是任意 Hunspell/TeX 文件的完整读取器；这些
+能力仍需后续原生实现或对应 provider。词典数据的许可由宿主单独管理，不自动下载。
+安装 SDK 的 `examples/hyphen.c` 可输出 `hy-phen-ation`，使用的是原创演示模式。
+
+本步只提供词典构造、断点查询和开放接口，尚未接入排版器自动插入连字符。CSS
+hyphens、文档语言继承、连字在实际断点的重塑形、双向/竖排绘制、续排与 checkpoint
+一致性仍是接下来的验收内容；现有手工软连字符路径保持原行为。
