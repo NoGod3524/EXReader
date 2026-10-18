@@ -38,7 +38,8 @@ typedef enum {
   EXR_DOCX,
   EXR_RTF,
   EXR_MOBI,
-  EXR_PDF
+  EXR_PDF,
+  EXR_CBZ
 } exr_format;
 typedef struct {
   exr_status code;
@@ -1209,7 +1210,7 @@ EXR_API exr_status exr_library_remove_audio_bookmark(exr_library *library,int64_
 EXR_API exr_status exr_library_clear_audio(exr_library *library,const char *audio_id,exr_error *error);
 EXR_API exr_status exr_library_open(const char *path, exr_library **out, exr_error *error);
 EXR_API void exr_library_close(exr_library *library);
-/* Imports original bytes (including PDF) and the first declared reflow cover-image up to 8 MiB.
+/* Imports original bytes (including PDF/CBZ) and the first declared reflow cover-image up to 8 MiB.
    Larger covers remain in the original source; failed cover reads abort the insert. */
 EXR_API exr_status exr_library_import(exr_library *library, exr_format format, const void *data,
                                       size_t size, const char *title, int64_t *id,

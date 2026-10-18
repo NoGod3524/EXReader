@@ -230,10 +230,11 @@ exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output");
   *out=NULL;
   if(!data || !size || size>EXR_MAX_INPUT) return exr_fail(e,size>EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT,"Invalid fixed document bytes");
-  if(format!=EXR_PDF) return exr_fail(e,EXR_FORMAT,"No built-in fixed reader for this format");
+  if(!exr_format_is_fixed(format)) return exr_fail(e,EXR_FORMAT,"No built-in fixed reader for this format");
   status=open_options(input,&options,e); if(status!=EXR_OK) return status;
   if(exr_control_cancel(&options.control,e)!=EXR_OK) return EXR_CANCELLED;
-  copy=malloc(size); if(!copy) return exr_fail(e,EXR_MEMORY,"PDF input copy allocation failed"); memcpy(copy,data,size);
+  copy=malloc(size); if(!copy) return exr_fail(e,EXR_MEMORY,"Fixed input copy allocation failed"); memcpy(copy,data,size);
+  if(format==EXR_CBZ) return exr_cbz_open_owned(copy,size,"",&options,out,e);
   return open_owned(copy,size,"",&options,out,e);
 }
 exr_status exr_fixed_open(const char *path,const exr_fixed_open_options *input,exr_fixed_document **out,exr_error *e) {
@@ -242,7 +243,9 @@ exr_status exr_fixed_open(const char *path,const exr_fixed_open_options *input,e
   *out=NULL; if(!path) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document path");
   status=open_options(input,&options,e); if(status!=EXR_OK) return status;
   if(exr_control_cancel(&options.control,e)!=EXR_OK) return EXR_CANCELLED;
-  status=exr_read(path,&data,&size,e); if(status!=EXR_OK) return status;
   title=path; for(at=path;*at;at++) if(*at=='/' || *at=='\\') title=at+1;
+  at=strrchr(title,'.');
+  if(at && (at[0]=='.' && (at[1]=='c' || at[1]=='C') && (at[2]=='b' || at[2]=='B') && (at[3]=='z' || at[3]=='Z') && !at[4])) return exr_cbz_open_file(path,title,&options,out,e);
+  status=exr_read(path,&data,&size,e); if(status!=EXR_OK) return status;
   return open_owned(data,size,title,&options,out,e);
 }

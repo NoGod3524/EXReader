@@ -59,15 +59,20 @@ public final class EXReader {
         }
         public String text() { return new String(utf8, StandardCharsets.UTF_8); }
     }
-    public static final class Pdf implements AutoCloseable {
+    public enum FixedFormat {
+        PDF(8), CBZ(9);
+        final int code; FixedFormat(int code) { this.code=code; }
+    }
+    public static class FixedDocument implements AutoCloseable {
         private long handle;
-        public Pdf(byte[] bytes) { this(bytes, null, 0); }
-        public Pdf(byte[] bytes, byte[] fallbackFont, int faceIndex) {
+        public FixedDocument(FixedFormat format,byte[] bytes) { this(format,bytes,null,0); }
+        public FixedDocument(FixedFormat format,byte[] bytes, byte[] fallbackFont, int faceIndex) {
+            Objects.requireNonNull(format);
             Objects.requireNonNull(bytes);
             if(faceIndex<0) throw new IllegalArgumentException("Negative face index");
-            handle=nativePdfOpen(bytes, fallbackFont, faceIndex);
+            handle=nativePdfOpen(bytes, fallbackFont, faceIndex, format.code);
         }
-        private long checked() { if(handle==0) throw new IllegalStateException("PDF is closed"); return handle; }
+        private long checked() { if(handle==0) throw new IllegalStateException("Fixed document is closed"); return handle; }
         public synchronized int pageCount() { return nativePdfCount(checked()); }
         public synchronized MetadataEntry[] metadata() { return metadataValues(nativePdfMetadata(checked())); }
         public synchronized TextPage text(int page) {
@@ -81,6 +86,10 @@ public final class EXReader {
         @Override public synchronized void close() {
             if(handle!=0) { nativePdfClose(handle); handle=0; }
         }
+    }
+    public static final class Pdf extends FixedDocument {
+        public Pdf(byte[] bytes) { super(FixedFormat.PDF,bytes); }
+        public Pdf(byte[] bytes,byte[] fallbackFont,int faceIndex) { super(FixedFormat.PDF,bytes,fallbackFont,faceIndex); }
     }
     public static final class WaveFormat {
         public final int sampleRate,channels,bitsPerSample,validBits,channelMask;
@@ -323,7 +332,7 @@ public final class EXReader {
     private static native AudioBookMetadata nativeReadM4b(byte[] path);
     private static native byte[][] nativeReadXMP(byte[] packet);
     private static native byte[][] nativePdfMetadata(long handle);
-    private static native long nativePdfOpen(byte[] bytes,byte[] font,int faceIndex);
+    private static native long nativePdfOpen(byte[] bytes,byte[] font,int faceIndex,int format);
     private static native int nativePdfCount(long handle);
     private static native TextPage nativePdfText(long handle,int page);
     private static native Bitmap nativePdfRender(long handle,int page,double scale);
