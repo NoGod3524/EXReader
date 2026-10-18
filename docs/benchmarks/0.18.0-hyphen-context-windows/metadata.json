@@ -18,7 +18,10 @@
     "new_preexisting_limit_EPUBs": 1,
     "installed_C_Cpp_JNI": "passed; page-one RTL plus levels/hits before later generated text",
     "provider_failures": "non-converging proposal EXR_LIMIT and changed formal replay EXR_FORMAT, no failed page cached, then successful retry",
-    "CI": "pending exact snapshot"
+    "CI": "https://github.com/NoGod3524/EXReader/actions/runs/39121547861",
+    "cross_platform_CI": "All six jobs passed: Windows/Linux/macOS (113 CTests each), installed C/C++/JNI, macOS Swift future-neutral levels/hits, ASan/UBSan/leaks (111 tests), Android ARM64 and iOS/iPadOS device/simulator builds and Swift checks",
+    "sanitizer_native_tests": 111,
+    "source_hash_verification": "All 214 recorded hashes match exact validated Git blob bytes; all 71 preceding EPUB fixtures unchanged"
   },
   "scope": "Stable selected display/source/line proposals before publishing future-dependent bidi; safe strong/weak context boundaries with ES/CS/ET and NSM protection, full bracket/control fallback, first AUTO base and later independent B paragraphs, checkpoint rebuild, shared immutable original bidi and parent ruby isolation. Eight proposals and common work/resource limits. Internal side breaks, casing, conditional compounds, tall-row fragmentation and broad roadmap stay open.",
   "performance": "Four 1 MiB workloads; first 65 pages; three fresh processes per mode. English, class-preserving, mixed scripts, AUTO-to-RTL. Input/dictionary/font and all raw records included. Disk cache/background load uncontrolled; measured turn work increases with proposal verification.",
@@ -237,5 +240,6 @@
     "tools/generate_hyphen_unicode.py": "988d1864fd5cfe51ca453e0785b0b91c9b635c08e398617c8341bb3821601a5e",
     "tools/generate_normalize_unicode.py": "f39b3a8883f59a10a914bac081ba5570488df336d3e70e30d92d9521ef73a74a",
     "tools/generate_unicode.py": "a6988d10f0110e0ebed13a9a35adc346c927bda170a0d31edbf114e284f0a138"
-  }
+  },
+  "source_validated_commit": "dde7671327a29ce14484ab84e897b2a2821266ea"
 }
