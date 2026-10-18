@@ -42,7 +42,7 @@ typedef struct {
 } hy_dictionary;
 struct exr_hyphenator {
   size_t refs,bytes,budget;
-  int busy;
+  int busy,replacements;
   exr_hyphen_provider provider;
   exr_hyphen_discretionary_provider discretionary;
   hy_dictionary *dictionaries;
@@ -689,6 +689,7 @@ exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs
     for(j=0;j<i;j++) if(!strcmp(h->dictionaries[j].language,h->dictionaries[i].language)) { status=exr_fail(e,EXR_ARGUMENT,"Duplicate hyphenation language key"); goto failed; }
     status=exr_control_poll(control,EXR_STAGE_READ,i,count,e); if(status!=EXR_OK) goto failed;
     status=load(&w,&h->dictionaries[i],&inputs[i]); if(status!=EXR_OK) goto failed;
+    h->replacements|=h->dictionaries[i].levels[0].trie.change_count!=0 || h->dictionaries[i].levels[1].trie.change_count!=0;
   }
   status=exr_control_poll(control,EXR_STAGE_READ,count,count,e); if(status!=EXR_OK) goto failed;
   *out=h; return exr_fail(e,EXR_OK,"");
@@ -778,6 +779,9 @@ void exr_hyphenation_free(exr_hyphenation *result) {
   free(result->items);free(result);
 }
 size_t exr_hyphenator_memory_size(const exr_hyphenator *h) { return h ? h->bytes : 0; }
+int exr_hyphenator_replacements(const exr_hyphenator *h) {
+  return h && (h->replacements || h->discretionary.hyphenate);
+}
 void exr_hyphenator_free(exr_hyphenator *h) {
   size_t i,j,k;
   if(!h || --h->refs) return;

@@ -2970,3 +2970,51 @@ simulator libraries plus Swift type checking. All 154 source hashes match that
 Git snapshot. Four oracle DLL hashes and both benchmark executable hashes match
 the final measured binaries. The following verification-record commit updates
 only documentation/metadata. EPUB replacement rendering remains unfinished.
+
+
+## Discretionary replacement layout and checkpoint carry (0.18.0 development)
+
+Native replacement queries now feed actual line fitting. The selected prefix is
+rebuilt from unshaped source with its before string and display hyphen, then
+font fallback/GSUB/GPOS/width fitting runs on that display text. A fitting final
+line keeps its original spelling and ligatures. A committed replacement
+rebuilds the ready carry with after text while retaining the unshaped input tail.
+Related lookahead is bounded by the existing 256-original-scalar word limit.
+Pending edits are copied only for actual eligible source points; ordinary
+bitmap-only dictionaries retain their allocation-free query path.
+
+Each replacement side maps to the erased original source interval as one atomic
+cluster, including empty-source insertion. An empty before uses the hyphen to
+retain the left deletion span; an empty after retains a hidden generated span.
+Generated glyphs can therefore have nonempty source ranges. Source document
+bytes, search and copy remain unchanged. Styles/bidi levels inherit from the
+original side; literal strings are not automatically case-adjusted.
+
+The automatic-layout test now has 451,930 checks across 36 original EPUBs and
+constructed trees. Nine new long EPUBs cover plain, RTL, vertical, floating,
+orthogonal, table, styled-inline, source-gap and decomposed-canonical text.
+Whole layouts, cached/uncached pages, backward checkpoint replay, positioned
+reconstruction, glyph coordinates, pixels and hit results agree. Source coverage
+includes replacement spans. Direct cases check before/after expansion, deletion,
+zero-cut insertion, replacing a prefix before the provisional overflow point,
+Catalan middle-dot removal, unchanged wide/manual lines, table expansion inputs,
+fi splitting with f/hyphen GPOS width 10.88px, and Arabic ligature re-shaping/RTL.
+An open discretionary provider also renders replacements; callback failure and
+cancellation preserve a cached page, and retry resumes from copied edit state.
+
+The three glyph arrays, word cache and both optional edit-array capacities share
+a 16 MiB line payload budget. Checkpoints deep-copy edit arrays and count their
+actual compact payload. All 113 native tests pass locally; installed C/C++ and
+JNI -Xcheck:jni pass, with JNI verifying actual replacement glyphs spanning bytes
+3..4 and 4..5 of the original text. Swift smoke has the same installed fixture.
+The dictionary/replacement/literal/canonical reference suites still pass against
+the final DLL; their raw reports are in benchmarks/0.18.0-hyphen-reflow-windows.
+
+Changed word remainders do not reuse stale original dictionary opportunities;
+they retain ordinary/emergency boundaries until the next original word.
+Rematching mapped changed text, full changed-text boundary/bidi analysis,
+language-aware casing and conditional compound rewriting remain requirements.
+The current stage renders literal atomic sides; it does not claim arbitrary
+cross-script replacement strings have browser-equivalent paragraph analysis.
+The measured ordinary and original/real-dictionary reading workloads have exact
+source/font/binary/input provenance in that benchmark directory.

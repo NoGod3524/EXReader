@@ -244,6 +244,20 @@ public final class Smoke {
                 check(compoundFirstBreak && page.render().width==80);
             }
         }
+        try(EXReader.Publication rewriteBook=new EXReader.Publication(root.resolve("books/hyphen-rewrite-long.epub").toString());
+            EXReader.Document rewriteChapter=rewriteBook.load(0);
+            EXReader.Pager rewritePager=rewriteChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,compoundConfig)) {
+            rewritePager.setHyphenation(new EXReader.HyphenDictionary[]{new EXReader.HyphenDictionary("zz",
+                ".aaaa1aaaa./aa=aaa,4,2".getBytes(StandardCharsets.UTF_8),1,1)},0);
+            try(EXReader.ReflowPage page=rewritePager.next()) {
+                check(page!=null);boolean leftRewrite=false,rightRewrite=false;
+                for(EXReader.Glyph g:page.snapshot().glyphs) if((g.flags&2048)!=0) {
+                    leftRewrite|=g.start==3 && g.end==4 && g.codepoint=='a';
+                    rightRewrite|=g.start==4 && g.end==5 && g.codepoint=='a';
+                }
+                check(leftRewrite && rightRewrite && page.render().width==80);
+            }
+        }
         System.out.println("JNI SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed");
     }
 }

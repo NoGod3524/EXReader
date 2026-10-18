@@ -1,0 +1,23 @@
+{
+  "reference": "independent literal overlay",
+  "seed": 180328,
+  "generated_queries": 5000,
+  "generated_replacement_opportunities": 8479,
+  "library_sha256": "f2451ce9751cfc9b383dc67caf7abf0fdb1744f425d9443fb5d9f5425616e7af",
+  "rejected_external_input": {
+    "language": "hu_HU",
+    "input_sha256": "354939e518b838dbfe01ab617c25c94586b1accc2d5bdcf57ba07406e8d1fee9",
+    "status": "EXR_FORMAT",
+    "first_rejected_rule": ".mas5sz\u00e1z8s3zok1ni/sz=3,1,1,14",
+    "reason": "extra range argument; file also contains multiple odd rewrite points and adjacent weights"
+  },
+  "real_dictionary": {
+    "reference": "Pyphen 0.17.2",
+    "language": "ca",
+    "queries": 3011,
+    "replacement_opportunities": 9,
+    "input_sha256": "4a4816e93a92df35819c5f4775106577aa279739a12c687291d747a3ce767b8b",
+    "input_projection": [],
+    "native_payload_bytes": 256801
+  }
+}
