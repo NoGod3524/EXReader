@@ -1158,10 +1158,12 @@ EXR_API void exr_hyphenation_free(exr_hyphenation *result);
 EXR_API size_t exr_hyphenator_memory_size(const exr_hyphenator *hyphenator);
 EXR_API void exr_hyphenator_free(exr_hyphenator *hyphenator);
 /* Optional dictionaries are retained. Automatic opportunities require CSS
-   hyphens:auto; the CSS default remains manual. Discretionary replacement sides
-   are atomic source clusters retaining original ranges; strings remain literal.
-   Changed word remainders are re-queried using display spelling. Fresh points
-   must advance original source and respect protected source/grapheme edges. Config record/ABI is unchanged. */
+   hyphens:auto; the CSS default remains manual. Replacement strings are literal
+   and retain protected original selection ranges. Committed after text wraps
+   at display grapheme/line boundaries and can be re-queried for further edits.
+   Fresh points must advance display positions and respect original graphemes;
+   several display points may share one source offset. The before candidate
+   plus hyphen must fit the selected left line. Config record/ABI is unchanged. */
 EXR_API exr_status exr_layout_create_hyphenated(const exr_document *doc,exr_font *font,
   const exr_layout_config *config,exr_hyphenator *hyphenator,exr_layout **out,exr_error *error);
 EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,

@@ -204,8 +204,8 @@ static exr_status ordinary_fragment(flow *f, exr_glyph *glyphs, size_t count, fl
     ascent=fmaxf(ascent,exr_font_ascent(face));
     descent=fmaxf(descent,exr_font_descent(face));
     height=fmaxf(height,g->line_height);
-    if(g->start<line.start) line.start=g->start;
-    if(g->end>line.end) line.end=g->end;
+    if(g->cluster_start<line.start) line.start=g->cluster_start;
+    if(g->cluster_end>line.end) line.end=g->cluster_end;
     g->baseline=baseline; g->clip_left=f->x; g->clip_right=f->x+f->width;
   }
   height=fmaxf(height,ascent+descent);
@@ -223,6 +223,10 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
   unsigned base=exr_inline_base(f->bidi,logical_start);
   if(f->display_bidi) { unsigned projected=exr_bidi_base_level(f->display_bidi->bidi,f->display_first);if(projected!=UINT_MAX) base=projected; }
   exr_status status;
+  for(i=0;i<count;i++) {
+    if(glyphs[i].cluster_start<logical_start) logical_start=glyphs[i].cluster_start;
+    if(glyphs[i].cluster_end>logical_end) logical_end=glyphs[i].cluster_end;
+  }
   if(f->intrinsic) {
     while(count && (glyphs[count-1].codepoint==' ' || glyphs[count-1].codepoint=='\t')) count--;
     if(!count) return EXR_OK;
@@ -241,7 +245,7 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
     }
     width+=g->advance+glyph_kern(f,i ? &glyphs[i-1] : NULL,g);
     height=fmaxf(height,g->line_height);
-    if(g->codepoint==' ' && (i+1==count || glyphs[i+1].cluster_start!=g->cluster_start)) spaces++;
+    if(g->codepoint==' ' && (i+1==count || !exr_inline_same(glyphs+i+1,g))) spaces++;
   }
   height=fmaxf(height,ascent+descent);
   if(f->intrinsic) {
@@ -278,7 +282,7 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
       size_t first=i;
       for(;i<count && !(glyphs[i].flags&EXR_GLYPH_RUBY_ITEM);i++) {
         g=&glyphs[i]; x+=glyph_kern(f,i ? &glyphs[i-1] : NULL,g); g->x=x; x+=g->advance;
-        if(g->codepoint==' ' && (i+1==count || glyphs[i+1].cluster_start!=g->cluster_start)) x+=extra;
+        if(g->codepoint==' ' && (i+1==count || !exr_inline_same(glyphs+i+1,g))) x+=extra;
       }
       status=ordinary_fragment(f,glyphs+first,i-first,baseline); if(status!=EXR_OK) return status;
       /* Keep the original justified line rectangle, including the last space. */

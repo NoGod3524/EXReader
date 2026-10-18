@@ -334,6 +334,23 @@ public final class Smoke {
                 check(pluses>0 && page.render().width==80);
             }
         }
+        try(EXReader.Publication insertedBook=new EXReader.Publication(root.resolve("books/hyphen-insertion-long.epub").toString());
+            EXReader.Document insertedChapter=insertedBook.load(0);
+            EXReader.Pager insertedPager=insertedChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,compoundConfig)) {
+            insertedPager.setHyphenation(new EXReader.HyphenDictionary[]{new EXReader.HyphenDictionary("zi",
+                ".aaaa1aaaa./=abcdefghijklmnop,5,0 .abcd1efghijklmnopaaaa./d=xy,4,2 .xyfg1hijklmnopaaaa./g=zz,4,2 .zzij1klmnopaaaa.".getBytes(StandardCharsets.UTF_8),1,1)},0);
+            for(int index=0;index<2;index++) try(EXReader.ReflowPage page=insertedPager.next()) {
+                check(page!=null);int inserted=0;
+                for(EXReader.Glyph g:page.snapshot().glyphs) {
+                    check((g.flags&~2559)==0 && (g.boundaries&~15)==0);
+                    if((g.flags&2048)!=0 && g.start==4 && g.codepoint>='a' && g.codepoint<='z') {
+                        check(g.end==4 && g.clusterStart==4 && g.clusterEnd==5);inserted++;
+                        long hit=page.hitTest(g.x+.1f,g.baseline-2);check(hit==4 || hit==5);
+                    }
+                }
+                check(inserted>0 && page.render().width==80);
+            }
+        }
         System.out.println("JNI SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed");
     }
 }
