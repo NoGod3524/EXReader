@@ -3029,3 +3029,16 @@ a narrow line. The regression checks the cursor endpoint, completion, all source
 bytes and positioned pixel reconstruction; ordinary source intervals remain
 unchanged. Benchmark/reference records in the reflow directory are refreshed
 against the corrected DLL rather than attributed to the earlier snapshot.
+
+
+Corrected commit 4ee3923 passed all six jobs in
+[CI run 39108949322](https://github.com/NoGod3524/EXReader/actions/runs/39108949322):
+Windows/Linux/macOS native tests (113 each), installed C/C++ consumers, JNI
+replacement rendering, macOS Swift replacement rendering, ASan/UBSan with leak
+checks (111 tests, including zero-cut cursor and long-insertion progress),
+Android ARM64, and iOS/iPadOS device/simulator libraries plus Swift type checking.
+All 164 recorded source hashes match that Git snapshot. The four oracle DLL
+hashes, three benchmark executable hashes and installed runtime copies match the
+corrected measured binaries. The following verification-record commit changes
+only documentation/metadata. Full changed-word rematching, boundary/bidi/casing
+and the broader PDF/application compatibility goals remain unfinished.
