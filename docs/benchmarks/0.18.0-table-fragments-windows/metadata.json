@@ -20,8 +20,11 @@
     "first_page_regression_poll_cap": 4096,
     "intermediate_DLL_regression": "EXR_CANCELLED reproduced with source 840efcf and the same 1 MiB fixed-cell input",
     "installed_C_Cpp_JNI": "passed; C continued page/Arial visual inspection, C++ page 20 then backward 2 with checkpoints, JNI three rowspan pages -Xcheck:jni",
-    "CI": "pending",
-    "source_hash_count": 649
+    "CI": "https://github.com/NoGod3524/EXReader/actions/runs/39136342435",
+    "source_hash_count": 649,
+    "cross_platform_CI": "All six jobs passed: Windows/Linux/macOS (117 CTests each), installed C/C++/JNI and macOS Swift tall-rowspan pages; ASan/UBSan/leaks (114 tests); Android ARM64; iOS/iPadOS device/simulator engine libraries and Swift checks.",
+    "sanitizer_native_tests": 114,
+    "source_hash_verification": "All 649 hashes match exact validated code-commit Git blob bytes; all 111 preceding hyphen EPUBs unchanged; fixed-table before/after book/font identical; four local runtime copies and twelve workload sets verified."
   },
   "scope": "Independent paginated cell cursors for tall rows/connected rowspan groups, transactional geometry, whole lines/images, separate/collapsed border fragments, checkpoints/byte accounting, full-tree 128-float cap. Common top/baseline groups probe one page; true whole-height alignment and automatic intrinsic scans retain measured costs. ABI/schema/version unchanged.",
   "performance": "Twelve workloads, first 65 pages, three fresh processes per case/mode; sequential without builds/tests. Nine preceding hyphen books/fonts/counts unchanged. Fixed/auto/bottom 1 MiB tables recorded separately; machine load and disk cache uncontrolled.",
@@ -679,5 +682,6 @@
     "tools/generate_vertical.py": "34aef0e49b563bb600f67d288b294a507c237f946b08b647c011c0573dcd9ccf",
     "tools/generate_vertical_test_fonts.py": "dd633a76520e3c9b24853927c377bcfeedea6f9a4778720e72392ae35f0059d4",
     "tools/run_benchmarks.py": "ec28254ad350e48e75218641037f20253d0fab1fcb7aa1b1b6f89b45d199d85e"
-  }
+  },
+  "validated_code_commit": "fb3f76b13a95486994ab2198a59136294582bcc5"
 }

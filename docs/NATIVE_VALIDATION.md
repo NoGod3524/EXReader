@@ -3643,8 +3643,7 @@ build/tests. Disk cache and machine/background load are uncontrolled.
 Automatic min/max-content allocation still scans the complete cell; bottom/
 middle alignment still measures complete group heights and retains full cell
 snapshots during that measurement. The measured auto and bottom costs above
-remain open performance work. The fixed-table optimization does not resolve
-those paths. Height-only alignment measurement and reusable intrinsic metrics
+remain open performance work. Height-only alignment measurement and reusable intrinsic metrics
 are the next performance priorities; the complete PDF/SDK roadmap stays active.
 
 Nine preceding hyphenation workloads preserve their input/font hashes and
@@ -3661,3 +3660,16 @@ generated counts:
 | title | 27.4787 | 14630912 | 15.5085 / 16.7071 |
 | lithuanian | 67.3546 | 14766080 | 20.2379 / 22.8048 |
 | conditional | 27.6727 | 14036992 | 10.4571 / 12.8059 |
+
+
+Commit fb3f76b13a95486994ab2198a59136294582bcc5 passed all six jobs in
+[CI run 39136342435](https://github.com/NoGod3524/EXReader/actions/runs/39136342435):
+Windows/Linux/macOS (117 CTests each), installed C/C++/JNI and macOS Swift tall
+rowspan pages, ASan/UBSan/leaks (114 tests), Android ARM64, and iOS/iPadOS
+device/simulator engine libraries plus Swift checks. All 649 recorded hashes
+match the exact validated code-commit Git blob bytes; all 111 preceding hyphen
+EPUBs are unchanged. Fixed-table before/after input/font hashes agree, four
+local runtime copies agree, and twelve workload sets are pinned. This following
+verification-only commit updates records and skips redundant CI. Automatic
+intrinsic width cost, full-height alignment memory/time, and the complete PDF/
+application SDK roadmap remain active.
