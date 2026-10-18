@@ -160,6 +160,18 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
     for(x=left;x<right;x++) {
       const unsigned char *p=source->pixels+y*source->stride+x*4;unsigned a=(unsigned)floor(p[3]*opacity+.5),coverage=clip ? clip->pixels[y*clip->stride+x] : 255;uint32_t color;
       if(!coverage) continue;
+      if(target_state && target_state->knockout) {
+        /* A group nested in a knockout group is one element: it composites with the
+           knockout group's initial backdrop and replaces the accumulated result. */
+        double base[4],painted[4],current[4],out[4],rgb[3],alpha=(p[3]/255.)*opacity,covered=coverage/255.;unsigned k;
+        read_backdrop(target_state,x,y,base);read_rgba(target,target_state,x,y,current);
+        for(k=0;k<3;k++) rgb[k]=p[k]/255.;
+        over_rgba(base,rgb,alpha,mode,painted);
+        for(k=0;k<4;k++) out[k]=covered*painted[k]+(1-covered)*current[k];
+        write_rgba(target,target_state,x,y,out,alpha*covered);
+        if(target_state->pixels) target_state->pixels[(y*target->width+x)*5+4]=(float)fmax(0,fmin(1,out[3]));
+        continue;
+      }
       if((source_state && source_state->pixels && !source_state->isolated) || (target_state && target_state->pixels)) {
         double back[4],rgb[3],out[4],ag=p[3]/255.;unsigned k;
         const float *q=source_state && source_state->pixels && !source_state->isolated ? source_state->pixels+(y*source->width+x)*5 : NULL;
