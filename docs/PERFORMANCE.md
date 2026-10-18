@@ -365,3 +365,31 @@ Windows 11/GCC 16.2 Release/Arial，同一 EPUB 每种模式三次新进程，�
 [NFC 基准记录](benchmarks/0.18.0-hyphen-nfc-windows/metadata.json)。复测工具沿用
 benchmark_hyphen_layout.py，组合文字通过 `--text 'ÉTÉ '` 指定重复片段；原文不会被
 NFC 改写。此前固定缓冲区结果不能用来推算运行时词典的常驻内存。
+
+
+## 原生复合词词典（0.18.0 开发中）
+
+双层复合词规则接入后，Windows/GCC 16.2 Release DLL 为 5,373,693 bytes，比 NFC
+步骤增加 4,810 bytes，无新增链接依赖。普通单词跳过隐式分隔层；带连字符/撇号的
+复合词走分段和词段最小值路径。语言词典继续由宿主按需提供。
+
+同一份 1 MiB EPUB、段宽 360px、Arial、前 65 页，每模式三次新进程中位数，磁盘缓存
+未控制。本次直接使用未修改的 English US UTF-8 词典，保留 COMPOUND 元数据。
+首屏包含词典编译，不包含 stdin 读取；峰值为整个进程的峰值。
+
+| 输入 / 词典 | 首屏 ms | 进程峰值 bytes | 翻页 p50/p95 ms |
+| --- | ---: | ---: | ---: |
+| 英文 / 关闭 | 18.44 | 13,799,424 | 6.00 / 7.00 |
+| 英文 / 开启 | 24.16 | 14,479,360 | 6.56 / 9.41 |
+| 复合词 / 关闭 | 21.02 | 13,848,576 | 4.39 / 6.98 |
+| 复合词 / 开启 | 31.24 | 14,495,744 | 7.65 / 9.02 |
+
+复合词文本重复 `international-compatibility typography–university `。
+英文词典常驻 payload 521,616 bytes，编译中位数分别为 4.02/5.96 ms；前 65 页分别
+生成 775/1,560 个连字符。五份原始参考词典的 payload：英文 521,616，法语 215,128，
+西语 31,312，意大利语 27,524，俄语 221,372 bytes。payload 包括两层 trie 和拥有的
+NOHYPHEN 数据，不包括分配器开销和临时栈。
+
+输入、原始样本、程序/字体/词典哈希和源码来源见
+[复合词基准记录](benchmarks/0.18.0-hyphen-compounds-windows/metadata.json)。两组均使用
+benchmark_hyphen_layout.py，第二组传入上述 `--text`；无需移除 COMPOUND 字段。

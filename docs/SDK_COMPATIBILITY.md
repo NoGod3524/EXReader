@@ -180,5 +180,20 @@ callback bytes remain unchanged. Grapheme minima and returned offsets still use
 original text; folded/decomposed interiors never become new source positions.
 A canonically merged pattern preserves max-weight conflict resolution. Consumers
 need no record/ABI/schema migration. The separately versioned Unicode 3.2 PDF
-password preparation is unchanged. Compound and spelling replacement grammars
-remain unsupported by the native parser.
+password preparation is unchanged. Spelling replacement grammars remain
+unsupported by the native parser.
+
+Native UTF-8 pattern input now accepts two NEXTLEVEL rule sets, compound minima
+and NOHYPHEN. No record size, ABI or schema change. Input left/right minima
+continue to override whole-word minima, while component defaults come from the
+file. File global minima of zero now consistently select the format default 2.
+Without NEXTLEVEL, ordinary rules use implicit hyphen/apostrophe/en-dash/curly
+apostrophe segmentation and suppression; this deliberately changes matching
+of compound tokens. A file without NEXTLEVEL supplies the ordinary level;
+its NOHYPHEN field does not replace the implicit layer's defaults. Use explicit
+NEXTLEVEL to customize whole-word suppression. Inline gathering retains internal joiners,
+so providers also see complete compound tokens. Original bytes and source
+positions are unchanged. Structural segmentation may use protected punctuation,
+but final visible opportunities still obey GLUE/grapheme protection. Native
+matching enforces inward minima even for short leaves. Spelling-changing rules
+remain unsupported; the existing provider bitmap cannot express replacement text.

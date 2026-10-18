@@ -16,11 +16,21 @@ typedef struct {
   unsigned short length;
 } hy_node;
 typedef struct {
-  char language[256];
-  unsigned left,right;
   hy_node *nodes; size_t count,capacity;
   unsigned char *values; size_t value_count,value_capacity;
   uint32_t *edges;
+} hy_trie;
+typedef struct { uint32_t *items;size_t count; } hy_sequence;
+typedef struct {
+  hy_trie trie;
+  unsigned left,right,compound_left,compound_right;
+  hy_sequence *nohyphen;size_t nohyphen_count,nohyphen_capacity;
+} hy_level;
+typedef struct {
+  char language[256];
+  unsigned left_override,right_override;
+  int explicit_levels;
+  hy_level levels[2]; /* Compound rules, then ordinary rules. */
 } hy_dictionary;
 struct exr_hyphenator {
   size_t refs,bytes,budget;
@@ -119,26 +129,26 @@ unsigned exr_hyphen_word_kind(uint32_t cp) {
 static exr_status reserve(hy_work *w,void **out,size_t *capacity,size_t needed,size_t unit) {
   size_t next=*capacity ? *capacity : 64,delta; void *p;
   if(needed<=*capacity) return EXR_OK;
-  while(next<needed) next*=2; /* Counts below 4 Mi items; no size_t overflow. */
+  while(next<needed) next*=2; /* Item limits / 128 MiB payload cap bound doubling. */
   delta=(next-*capacity)*unit;
   if(delta>w->owner->budget-w->owner->bytes) return exr_fail(w->error,EXR_LIMIT,"Hyphenation dictionary byte budget exceeded");
   p=realloc(*out,next*unit); if(!p) return exr_fail(w->error,EXR_MEMORY,"Hyphenation dictionary allocation failed");
   *out=p; *capacity=next; w->owner->bytes+=delta; return EXR_OK;
 }
-static exr_status child(hy_work *w,hy_dictionary *d,uint32_t parent,uint32_t cp,uint32_t *out) {
+static exr_status child(hy_work *w,hy_dictionary *owner,hy_trie *d,uint32_t parent,uint32_t cp,uint32_t *out) {
   uint32_t previous=NONE,current=d->nodes[parent].child; exr_status status;
   while(current!=NONE && d->nodes[current].cp<cp) {
     status=work(w,1); if(status!=EXR_OK) return status;
     previous=current; current=d->nodes[current].next;
   }
   if(current!=NONE && d->nodes[current].cp==cp) { *out=current; return EXR_OK; }
-  if(d->count>=1024*1024) return exr_fail(w->error,EXR_LIMIT,"Hyphenation trie exceeds one million nodes");
+  if(owner->levels[0].trie.count+owner->levels[1].trie.count>=1024*1024) return exr_fail(w->error,EXR_LIMIT,"Hyphenation dictionary exceeds one million trie nodes");
   status=reserve(w,(void **)&d->nodes,&d->capacity,d->count+1,sizeof(*d->nodes)); if(status!=EXR_OK) return status;
   *out=(uint32_t)d->count++; d->nodes[*out]=(hy_node){cp,NONE,current,NONE,0};
   if(previous==NONE) d->nodes[parent].child=*out; else d->nodes[previous].next=*out;
   return EXR_OK;
 }
-static exr_status pattern(hy_work *w,hy_dictionary *d,const char *text,size_t size) {
+static exr_status pattern(hy_work *w,hy_dictionary *owner,hy_trie *d,const char *text,size_t size) {
   uint32_t letters[PATTERN_SCALARS],node=0;unsigned char original[PATTERN_SCALARS+1]={0},scores[NORMAL_PATTERN+1]={0};
   exr_normal_scalar normalized[NORMAL_PATTERN];size_t map[PATTERN_SCALARS+1];
   size_t at=0,count=0,n=0,i;int digit=0;exr_status status;
@@ -155,10 +165,15 @@ static exr_status pattern(hy_work *w,hy_dictionary *d,const char *text,size_t si
     letters[count++]=cp;
   }
   if(!count) return exr_fail(w->error,EXR_FORMAT,"Hyphenation pattern has no letters");
-  status=canonical_fold(w,d->language,letters,count,normalized,NORMAL_PATTERN,&n);if(status!=EXR_OK) return status;
+  status=canonical_fold(w,owner->language,letters,count,normalized,NORMAL_PATTERN,&n);if(status!=EXR_OK) return status;
+  if(!d->count) {
+    if(owner->levels[0].trie.count+owner->levels[1].trie.count>=1024*1024) return exr_fail(w->error,EXR_LIMIT,"Hyphenation dictionary exceeds one million trie nodes");
+    status=reserve(w,(void **)&d->nodes,&d->capacity,1,sizeof(*d->nodes));if(status!=EXR_OK) return status;
+    d->count=1;d->nodes[0]=(hy_node){0,NONE,NONE,NONE,0};
+  }
   original_boundaries(normalized,n,count,map);
   for(i=0;i<=count;i++) if(map[i]!=SIZE_MAX && original[i]>scores[map[i]]) scores[map[i]]=original[i];
-  for(i=0;i<n;i++) { uint32_t cp=normalized[i].cp=='.' ? EDGE : normalized[i].cp;status=child(w,d,node,cp,&node);if(status!=EXR_OK) return status; }
+  for(i=0;i<n;i++) { uint32_t cp=normalized[i].cp=='.' ? EDGE : normalized[i].cp;status=child(w,owner,d,node,cp,&node);if(status!=EXR_OK) return status; }
   if(d->nodes[node].values==NONE) {
     status=reserve(w,(void **)&d->values,&d->value_capacity,d->value_count+n+1,1);if(status!=EXR_OK) return status;
     d->nodes[node].values=(uint32_t)d->value_count;d->nodes[node].length=(unsigned short)(n+1);
@@ -182,42 +197,103 @@ static int token(const char *text,size_t size,size_t *at,size_t *first,size_t *e
   *end=*at; return 1;
 }
 static int matches(const char *text,size_t first,size_t end,const char *key) { return end-first==strlen(key) && !memcmp(text+first,key,end-first); }
-static exr_status load(hy_work *w,hy_dictionary *d,const exr_hyphen_pattern_input *input) {
-  const char *text=input->patterns; size_t at=0,first,end,patterns=0; exr_status status;
-  d->left=input->left_min ? input->left_min : 2; d->right=input->right_min ? input->right_min : 2;
-  status=reserve(w,(void **)&d->nodes,&d->capacity,1,sizeof(*d->nodes)); if(status!=EXR_OK) return status;
-  d->count=1; d->nodes[0]=(hy_node){0,NONE,NONE,NONE,0};
-  if(input->size>=3 && !memcmp(text,"\xef\xbb\xbf",3)) at=3;
-  while(token(text,input->size,&at,&first,&end)) {
-    status=exr_control_poll(w->control,EXR_STAGE_READ,at,input->size,w->error); if(status!=EXR_OK) return status;
-    if(!patterns && matches(text,first,end,"UTF-8")) continue;
-    if(matches(text,first,end,"LEFTHYPHENMIN") || matches(text,first,end,"RIGHTHYPHENMIN")) {
-      unsigned number=0; int left=matches(text,first,end,"LEFTHYPHENMIN"); size_t start;
-      if(!token(text,input->size,&at,&first,&end) || end-first>2) return exr_fail(w->error,EXR_FORMAT,"Missing or invalid HYPHENMIN value");
-      for(start=first;start<end;start++) { if(text[start]<'0' || text[start]>'9') return exr_fail(w->error,EXR_FORMAT,"Invalid HYPHENMIN number"); number=number*10+(unsigned)(text[start]-'0'); }
-      if(number>64) return exr_fail(w->error,EXR_LIMIT,"Hyphenation edge minimum exceeds 64");
-      if(left && !input->left_min) d->left=number;
-      if(!left && !input->right_min) d->right=number;
-      continue;
-    }
-    if(matches(text,first,end,"NEXTLEVEL") || (end-first>=8 && !memcmp(text+first,"COMPOUND",8)))
-      return exr_fail(w->error,EXR_UNSUPPORTED,"Compound hyphenation dictionaries require a provider");
-    if(++patterns>262144) return exr_fail(w->error,EXR_LIMIT,"More than 262144 hyphenation patterns");
-    status=pattern(w,d,text+first,end-first); if(status!=EXR_OK) return status;
+static void nohyphen_clear(hy_work *w,hy_level *level) {
+  size_t i;for(i=0;i<level->nohyphen_count;i++) {
+    w->owner->bytes-=level->nohyphen[i].count*sizeof(uint32_t);free(level->nohyphen[i].items);
   }
+  level->nohyphen_count=0;
+}
+static exr_status nohyphen(hy_work *w,hy_dictionary *d,hy_level *level,const char *text,size_t size) {
+  size_t at=0;nohyphen_clear(w,level);
+  while(at<size) {
+    uint32_t scalars[PATTERN_SCALARS];exr_normal_scalar normalized[NORMAL_PATTERN];size_t count=0,n=0,i;hy_sequence *sequence;exr_status status;
+    while(at<size && text[at]!=',') {
+      uint32_t cp;if(!exr_next(text,size,&at,&cp)) return exr_fail(w->error,EXR_ENCODING,"Invalid NOHYPHEN UTF-8");
+      if(cp<32 || cp==127) return exr_fail(w->error,EXR_FORMAT,"Control character in NOHYPHEN");
+      if(count==PATTERN_SCALARS) return exr_fail(w->error,EXR_LIMIT,"NOHYPHEN sequence exceeds 128 scalars");
+      scalars[count++]=cp;
+    }
+    if(!count || (at<size && ++at==size)) return exr_fail(w->error,EXR_FORMAT,"Empty NOHYPHEN sequence");
+    if(level->nohyphen_count==64) return exr_fail(w->error,EXR_LIMIT,"NOHYPHEN exceeds 64 sequences");
+    status=canonical_fold(w,d->language,scalars,count,normalized,NORMAL_PATTERN,&n);if(status!=EXR_OK) return status;
+    status=reserve(w,(void **)&level->nohyphen,&level->nohyphen_capacity,level->nohyphen_count+1,sizeof(*level->nohyphen));if(status!=EXR_OK) return status;
+    if(n*sizeof(uint32_t)>w->owner->budget-w->owner->bytes) return exr_fail(w->error,EXR_LIMIT,"NOHYPHEN byte budget exceeded");
+    sequence=&level->nohyphen[level->nohyphen_count];sequence->items=malloc(n*sizeof(uint32_t));
+    if(!sequence->items) return exr_fail(w->error,EXR_MEMORY,"NOHYPHEN allocation failed");
+    sequence->count=n;for(i=0;i<n;i++) sequence->items[i]=normalized[i].cp;
+    level->nohyphen_count++;w->owner->bytes+=n*sizeof(uint32_t);
+  }
+  return EXR_OK;
+}
+static exr_status pack(hy_work *w,hy_trie *d) {
   if(d->count>1) {
-    size_t bytes=(d->count-1)*sizeof(*d->edges),i,index=0;
+    size_t bytes=(d->count-1)*sizeof(*d->edges),i,index=0;exr_status status;
     if(bytes>w->owner->budget-w->owner->bytes) return exr_fail(w->error,EXR_LIMIT,"Packed hyphenation trie exceeds byte budget");
-    d->edges=malloc(bytes); if(!d->edges) return exr_fail(w->error,EXR_MEMORY,"Packed hyphenation trie allocation failed");
+    d->edges=malloc(bytes);if(!d->edges) return exr_fail(w->error,EXR_MEMORY,"Packed hyphenation trie allocation failed");
     w->owner->bytes+=bytes;
     for(i=0;i<d->count;i++) {
-      uint32_t next=d->nodes[i].child; size_t start=index;
-      while(next!=NONE) { d->edges[index++]=next; next=d->nodes[next].next; }
-      d->nodes[i].child=(uint32_t)start; d->nodes[i].next=(uint32_t)(index-start);
-      status=work(w,index-start+1); if(status!=EXR_OK) return status;
+      uint32_t next=d->nodes[i].child;size_t start=index;
+      while(next!=NONE) { d->edges[index++]=next;next=d->nodes[next].next; }
+      d->nodes[i].child=(uint32_t)start;d->nodes[i].next=(uint32_t)(index-start);
+      status=work(w,index-start+1);if(status!=EXR_OK) return status;
     }
-  } else { d->nodes[0].child=0; d->nodes[0].next=0; }
+  } else if(d->count) { d->nodes[0].child=0;d->nodes[0].next=0; }
   return EXR_OK;
+}
+static exr_status load(hy_work *w,hy_dictionary *d,const exr_hyphen_pattern_input *input) {
+  const char *text=input->patterns;size_t at=0,first,end,patterns=0;unsigned level=0;int header=1;exr_status status;
+  d->left_override=input->left_min;d->right_override=input->right_min;
+  if(input->size>=3 && !memcmp(text,"\xef\xbb\xbf",3)) at=3;
+  while(token(text,input->size,&at,&first,&end)) {
+    hy_level *current=&d->levels[level];int field=-1;
+    status=exr_control_poll(w->control,EXR_STAGE_READ,at,input->size,w->error);if(status!=EXR_OK) return status;
+    if(header && matches(text,first,end,"UTF-8")) { header=0;continue; }
+    if(header && ((end-first>=4 && !memcmp(text+first,"UTF-",4)) ||
+       (end-first>=7 && !memcmp(text+first,"ISO8859",7)) || matches(text,first,end,"KOI8-R") || matches(text,first,end,"KOI8-U")))
+      return exr_fail(w->error,EXR_UNSUPPORTED,"Only UTF-8 hyphenation dictionaries are supported");
+    header=0;
+    if(matches(text,first,end,"LEFTHYPHENMIN")) field=0;
+    else if(matches(text,first,end,"RIGHTHYPHENMIN")) field=1;
+    else if(matches(text,first,end,"COMPOUNDLEFTHYPHENMIN")) field=2;
+    else if(matches(text,first,end,"COMPOUNDRIGHTHYPHENMIN")) field=3;
+    if(field>=0) {
+      unsigned number=0;size_t start;
+      if(!token(text,input->size,&at,&first,&end) || end-first>2) return exr_fail(w->error,EXR_FORMAT,"Missing or invalid HYPHENMIN value");
+      for(start=first;start<end;start++) { if(text[start]<'0' || text[start]>'9') return exr_fail(w->error,EXR_FORMAT,"Invalid HYPHENMIN number");number=number*10+(unsigned)(text[start]-'0'); }
+      if(number>64) return exr_fail(w->error,EXR_LIMIT,"Hyphenation edge minimum exceeds 64");
+      if(field==0) current->left=number;else if(field==1) current->right=number;
+      else if(field==2) current->compound_left=number;else current->compound_right=number;
+      continue;
+    }
+    if(matches(text,first,end,"NEXTLEVEL")) {
+      if(level) return exr_fail(w->error,EXR_FORMAT,"Only two hyphenation levels are supported");
+      level=1;continue;
+    }
+    if(matches(text,first,end,"NOHYPHEN")) {
+      size_t next=at;while(next<input->size && (text[next]==' ' || text[next]=='\t')) next++;
+      if(next==input->size || text[next]=='\r' || text[next]=='\n' || text[next]=='%' || text[next]=='#') {
+        nohyphen_clear(w,current);continue;
+      }
+      token(text,input->size,&at,&first,&end);
+      status=nohyphen(w,d,current,text+first,end-first);if(status!=EXR_OK) return status;
+      continue;
+    }
+    if((end-first>=8 && !memcmp(text+first,"COMPOUND",8)) || matches(text,first,end,"NEXTWORD"))
+      return exr_fail(w->error,EXR_UNSUPPORTED,"Unknown compound dictionary directive");
+    if(++patterns>262144) return exr_fail(w->error,EXR_LIMIT,"More than 262144 hyphenation patterns");
+    status=pattern(w,d,&current->trie,text+first,end-first);if(status!=EXR_OK) return status;
+  }
+  d->explicit_levels=(int)level;
+  if(!level) {
+    static const char *separators[]={"1-1","1'1","1–1","1’1"};size_t i;
+    d->levels[1]=d->levels[0];memset(&d->levels[0],0,sizeof(d->levels[0]));
+    d->levels[0].left=d->levels[1].left;d->levels[0].right=d->levels[1].right;
+    d->levels[0].compound_left=d->levels[1].compound_left ? d->levels[1].compound_left : d->levels[1].left ? d->levels[1].left : 3;
+    d->levels[0].compound_right=d->levels[1].compound_right ? d->levels[1].compound_right : d->levels[1].right ? d->levels[1].right : 3;
+    for(i=0;i<4;i++) { status=pattern(w,d,&d->levels[0].trie,separators[i],strlen(separators[i]));if(status!=EXR_OK) return status; }
+    status=nohyphen(w,d,&d->levels[0],"-,',–,’",strlen("-,',–,’"));if(status!=EXR_OK) return status;
+  }
+  status=pack(w,&d->levels[0].trie);if(status==EXR_OK) status=pack(w,&d->levels[1].trie);return status;
 }
 static hy_dictionary *dictionary(exr_hyphenator *h,const char *language) {
   char key[256]; size_t i,n=strlen(language); memcpy(key,language,n+1);
@@ -234,37 +310,93 @@ static hy_dictionary *dictionary(exr_hyphenator *h,const char *language) {
     }
   }
 }
-static exr_status native_breaks(hy_work *w,const char *language,const uint32_t *scalars,
-                                const size_t *offsets,size_t count,const unsigned char *boundaries,unsigned char *out) {
-  hy_dictionary *d=dictionary(w->owner,language);
-  uint32_t word[FOLDED_SCALARS];exr_normal_scalar normalized[NORMAL_SCALARS];
-  size_t folded_at[WORD_SCALARS+1],n=0,i,j,graphemes[WORD_SCALARS+1]={0};
-  unsigned char scores[FOLDED_SCALARS+1]={0}; exr_status status;
-  if(!d) return EXR_OK;
-  status=canonical_fold(w,d->language,scalars,count,normalized,NORMAL_SCALARS,&n);if(status!=EXR_OK) return status;
-  original_boundaries(normalized,n,count,folded_at);word[0]=EDGE;
-  for(i=0;i<n;i++) word[i+1]=normalized[i].cp;
-  word[++n]=EDGE;n++;
-  for(i=0;i<count;i++) graphemes[i+1]=graphemes[i]+!!(boundaries[offsets[i]]&EXR_BOUNDARY_GRAPHEME);
-  for(i=0;i<n;i++) {
+/* Pattern scores for one part with virtual word-edge anchors. */
+static exr_status overlay(hy_work *w,const hy_trie *d,const uint32_t *word,size_t first,size_t last,unsigned char *scores) {
+  size_t i,j,length=last-first;exr_status status;
+  memset(scores,0,length+3);if(!d->count) return EXR_OK;
+  for(i=0;i<length+2;i++) {
     uint32_t node=0;
-    for(j=i;j<n;j++) {
-      const hy_node *parent=&d->nodes[node]; size_t lo=parent->child,hi=lo+parent->next,limit=hi;
+    for(j=i;j<length+2;j++) {
+      uint32_t cp=!j || j==length+1 ? EDGE : word[first+j-1];
+      const hy_node *parent=&d->nodes[node];size_t lo=parent->child,hi=lo+parent->next,limit=hi;
       while(lo<hi) {
-        size_t mid=lo+(hi-lo)/2; if(d->nodes[d->edges[mid]].cp<word[j]) lo=mid+1; else hi=mid;
-        status=work(w,1); if(status!=EXR_OK) return status;
+        size_t mid=lo+(hi-lo)/2;if(d->nodes[d->edges[mid]].cp<cp) lo=mid+1;else hi=mid;
+        status=work(w,1);if(status!=EXR_OK) return status;
       }
-      if(lo==limit || d->nodes[d->edges[lo]].cp!=word[j]) break;
+      if(lo==limit || d->nodes[d->edges[lo]].cp!=cp) break;
       node=d->edges[lo];
       if(d->nodes[node].values!=NONE) {
-        size_t k,length=d->nodes[node].length; const unsigned char *values=d->values+d->nodes[node].values;
-        for(k=0;k<length;k++) if(values[k]>scores[i+k]) scores[i+k]=values[k];
-        status=work(w,length); if(status!=EXR_OK) return status;
+        size_t k,n=d->nodes[node].length;const unsigned char *values=d->values+d->nodes[node].values;
+        for(k=0;k<n;k++) if(values[k]>scores[i+k]) scores[i+k]=values[k];
+        status=work(w,n);if(status!=EXR_OK) return status;
       }
     }
   }
-  for(i=1;i<count;i++) if(graphemes[i]>=d->left && graphemes[count]-graphemes[i]>=d->right &&
-      (boundaries[offsets[i]]&EXR_BOUNDARY_GRAPHEME) && folded_at[i]!=SIZE_MAX) out[offsets[i]]=(unsigned char)(scores[folded_at[i]+1]&1);
+  return EXR_OK;
+}
+static exr_status native_breaks(hy_work *w,const char *language,const uint32_t *scalars,
+                                const size_t *offsets,size_t count,const unsigned char *boundaries,unsigned char *out) {
+  typedef struct { size_t first,last; } part;
+  hy_dictionary *d=dictionary(w->owner,language);hy_level *root;exr_status status;
+  uint32_t word[NORMAL_SCALARS];exr_normal_scalar normalized[NORMAL_SCALARS];
+  size_t folded_at[WORD_SCALARS+1],original_at[NORMAL_SCALARS+1],n=0,i,j,graphemes[WORD_SCALARS+1]={0};
+  unsigned char scores[FOLDED_SCALARS+1]={0},selected[WORD_SCALARS+1]={0};part pending[WORD_SCALARS];size_t pending_count=0;
+  unsigned left,right;int separator=0;
+  if(!d) return EXR_OK;
+  root=&d->levels[0];left=d->left_override ? d->left_override : root->left ? root->left : 2;
+  right=d->right_override ? d->right_override : root->right ? root->right : 2;
+  status=canonical_fold(w,d->language,scalars,count,normalized,NORMAL_SCALARS,&n);if(status!=EXR_OK) return status;
+  original_boundaries(normalized,n,count,folded_at);
+  for(i=0;i<n;i++) {
+    uint32_t cp=normalized[i].cp;word[i]=cp;separator|=cp=='-' || cp=='\'' || cp==0x2013 || cp==0x2019;
+  }
+  for(i=0;i<count;i++) graphemes[i+1]=graphemes[i]+!!(boundaries[offsets[i]]&EXR_BOUNDARY_GRAPHEME);
+  /* Ordinary words cannot match the implicit separator layer. Keep their
+     common query path to one overlay and the original-boundary map. */
+  if((!d->explicit_levels && !separator) || (!root->trie.count && !root->nohyphen_count)) {
+    status=overlay(w,&d->levels[1].trie,word,0,n,scores);if(status!=EXR_OK) return status;
+    for(i=1;i<count;i++) if(folded_at[i]!=SIZE_MAX && graphemes[i]>=left && graphemes[count]-graphemes[i]>=right)
+      out[offsets[i]]=(unsigned char)(scores[folded_at[i]+1]&1);
+    return EXR_OK;
+  }
+  for(i=0;i<=n;i++) original_at[i]=SIZE_MAX;
+  /* Protected punctuation can still delimit structural parts. Only the final
+     returned breaks are intersected with GLUE, so an apostrophe can establish
+     compound minima without permitting a visible break beside it. */
+  for(i=0;i<=count;i++) if(folded_at[i]!=SIZE_MAX && (boundaries[offsets[i]]&EXR_BOUNDARY_GRAPHEME)) original_at[folded_at[i]]=i;
+  /* Endpoints are structural even when the text API has no final grapheme bit. */
+  original_at[0]=0;original_at[n]=count;
+  pending[pending_count++]=(part){0,n};
+  while(pending_count) {
+    part current=pending[--pending_count];size_t begin=current.first;int split=0;
+    status=overlay(w,&root->trie,word,current.first,current.last,scores);if(status!=EXR_OK) return status;
+    for(i=current.first+1;i<current.last;i++) if(original_at[i]!=SIZE_MAX && (scores[i-current.first+1]&1)) {
+      if(pending_count==WORD_SCALARS) return exr_fail(w->error,EXR_LIMIT,"Compound part work queue exceeded");
+      selected[original_at[i]]=1;pending[pending_count++]=(part){begin,i};begin=i;split=1;
+    }
+    if(split) {
+      if(pending_count==WORD_SCALARS) return exr_fail(w->error,EXR_LIMIT,"Compound part work queue exceeded");
+      pending[pending_count++]=(part){begin,current.last};continue;
+    }
+    status=overlay(w,&d->levels[1].trie,word,current.first,current.last,scores);if(status!=EXR_OK) return status;
+    for(i=current.first+1;i<current.last;i++) if(original_at[i]!=SIZE_MAX && (scores[i-current.first+1]&1)) {
+      size_t original=original_at[i],first=original_at[current.first],last=original_at[current.last];
+      if((!current.first || graphemes[original]-graphemes[first]>=root->compound_left) &&
+         (current.last==n || graphemes[last]-graphemes[original]>=root->compound_right)) selected[original]=1;
+    }
+  }
+  for(i=0;i<root->nohyphen_count;i++) {
+    const hy_sequence *sequence=&root->nohyphen[i];if(sequence->count>n) continue;
+    for(j=0;j<=n-sequence->count;j++) {
+      size_t k;for(k=0;k<sequence->count && word[j+k]==sequence->items[k];k++) {}
+      status=work(w,k+1);if(status!=EXR_OK) return status;
+      if(k==sequence->count) {
+        if(original_at[j]!=SIZE_MAX) selected[original_at[j]]=0;
+        if(original_at[j+k]!=SIZE_MAX) selected[original_at[j+k]]=0;
+      }
+    }
+  }
+  for(i=1;i<count;i++) if(selected[i] && graphemes[i]>=left && graphemes[count]-graphemes[i]>=right) out[offsets[i]]=1;
   return EXR_OK;
 }
 
@@ -348,9 +480,14 @@ exr_status exr_hyphenator_breaks(exr_hyphenator *h,const char *language,const ch
 }
 size_t exr_hyphenator_memory_size(const exr_hyphenator *h) { return h ? h->bytes : 0; }
 void exr_hyphenator_free(exr_hyphenator *h) {
-  size_t i;
+  size_t i,j,k;
   if(!h || --h->refs) return;
   if(h->provider.release) h->provider.release(h->provider.context);
-  for(i=0;i<h->count;i++) { free(h->dictionaries[i].nodes); free(h->dictionaries[i].edges); free(h->dictionaries[i].values); }
+  for(i=0;i<h->count;i++) for(j=0;j<2;j++) {
+    hy_level *level=&h->dictionaries[i].levels[j];
+    free(level->trie.nodes);free(level->trie.edges);free(level->trie.values);
+    for(k=0;k<level->nohyphen_count;k++) free(level->nohyphen[k].items);
+    free(level->nohyphen);
+  }
   free(h->dictionaries); free(h);
 }

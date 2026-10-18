@@ -1090,7 +1090,9 @@ typedef struct {
 } exr_hyphen_provider;
 /* UTF-8 TeX-style pattern tokens, optional UTF-8 header and HYPHENMIN directives.
    Digits 0..9 give weights, '.' anchors word edges, %/# introduce comments.
-   Raw TeX commands, compound NEXTLEVEL and spelling replacements are rejected.
+   NEXTLEVEL separates recursive compound rules from ordinary rules. Supports
+   COMPOUND*HYPHENMIN and NOHYPHEN; without NEXTLEVEL, UTF-8 separators are implicit.
+   Raw TeX commands and spelling-changing replacements are rejected.
    Providers may read other formats but this API returns break positions only,
    not spelling-changing replacement text. left/right=0 uses file/default=2. */
 typedef struct {

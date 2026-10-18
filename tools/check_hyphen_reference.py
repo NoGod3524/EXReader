@@ -3,8 +3,8 @@
 
 python tools/check_hyphen_reference.py DLL --oracle-dir /private/pyphen-install
 Input dictionaries remain in the external oracle install, with their own licenses.
-Spanish/Italian/Russian inputs are tested unchanged. English US compound-minimum
-metadata is removed explicitly: this tests portable patterns, not compound rules.
+All input dictionaries are tested unchanged. Compound/separator behavior is
+verified separately; this comparison uses standalone alphabetic words.
 """
 # SPDX-License-Identifier: GPL-3.0-only
 import argparse
@@ -34,6 +34,7 @@ def main():
     dll.exr_hyphenator_free.argtypes=[pointer]
     samples={
       'en_US':'hyphenation dictionary international representation computer typography extraordinary compatibility alphabetic university',
+      'fr':'bibliothèque lecture international extraordinaire représentation typographie université connaissance électricité français',
       'es':'biblioteca lectura internacional extraordinario representación tipografía universidad conocimiento electricidad español',
       'it_IT':'biblioteca lettura internazionale rappresentazione straordinario università conoscenza elettricità sillabazione italiano',
       'ru_RU':'библиотека чтение международный представление университет электричество совместимость типография русский автоматический',
@@ -41,10 +42,8 @@ def main():
     reports=[];rng=random.Random(180325)
     for language,sample in samples.items():
         path=root/('hyph_'+language+'.dic');data=path.read_bytes();text=data.decode('utf-8');removed=[]
-        if language=='en_US':
-            lines=text.splitlines();removed=[line for line in lines if line.startswith('COMPOUND')]
-            text='\n'.join(line for line in lines if not line.startswith('COMPOUND'))+'\n'
-        portable=text.encode('utf-8');buffer=c.create_string_buffer(portable);tag=language.replace('_','-').encode()
+        portable=text.encode('utf-8');assert portable==data
+        buffer=c.create_string_buffer(portable);tag=language.replace('_','-').encode()
         left=next((int(x.split()[1]) for x in text.splitlines() if x.startswith('LEFTHYPHENMIN ')),2)
         right=next((int(x.split()[1]) for x in text.splitlines() if x.startswith('RIGHTHYPHENMIN ')),2)
         source=Input(c.sizeof(Input),tag,c.cast(buffer,pointer),len(portable),0,0);h=pointer()

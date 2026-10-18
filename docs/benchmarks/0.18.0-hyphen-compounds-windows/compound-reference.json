@@ -1,0 +1,47 @@
+{
+  "reference": "external libhyphen plus independent literal overlay",
+  "seed": 180327,
+  "queries": 10075,
+  "unchanged_real_dictionaries": [
+    {
+      "language": "en_US",
+      "queries": 203,
+      "input_sha256": "486fb6840b1049d5d252ef784be11cd4dc2be0bf296568b74b41e4f4e17cba7d",
+      "input_projection": [],
+      "reference_projection": "official substring preprocessing"
+    },
+    {
+      "language": "fr",
+      "queries": 203,
+      "input_sha256": "476ca60b958400c8b3fbe55764b4900df87acf60394ef62362705d9c701db191",
+      "input_projection": [],
+      "reference_projection": "official substring preprocessing"
+    },
+    {
+      "language": "es",
+      "queries": 203,
+      "input_sha256": "b2e170c3c25f5de25447ca0acf6bc8baf9dd761e228e9646e2c25f2e7c47f4f6",
+      "input_projection": [],
+      "reference_projection": "official substring preprocessing"
+    },
+    {
+      "language": "it_IT",
+      "queries": 203,
+      "input_sha256": "8c25b6fb62c2fb97586c6f7c6fb48f29f49e90a5c33c09ac9112dba6942b50cd",
+      "input_projection": [],
+      "reference_projection": "official substring preprocessing"
+    },
+    {
+      "language": "ru_RU",
+      "queries": 203,
+      "input_sha256": "e9a6ae92765fc7e63d879f2ccf3f50f2b95bc8ed7618a6f31c34ce7d39844c83",
+      "input_projection": [],
+      "reference_projection": "official substring preprocessing"
+    }
+  ],
+  "strict_minimum_reference_differences": 780,
+  "library_sha256": "7d05c545585e9c2e5aac974cdc861fb7eb61d1870e8143afd6b61048a9fc7478",
+  "reference_sha256": "84489b8977769aaa3a7657d11f77a86d6b68fb89142369da4a3b8343b0fe4d36",
+  "preprocessor_sha256": "09a7811d80b7b3ecefd56b61a2ea8986669339f4e60c6136742aa6445ac07a72",
+  "reference_input": "max-merge duplicate patterns then official substring preprocessing; literal/native inputs unchanged"
+}
