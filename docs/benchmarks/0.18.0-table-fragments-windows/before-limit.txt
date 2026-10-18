@@ -1,0 +1,1 @@
+line 153: (exr_pager_get(p,0,&page,&error))==EXR_OK (9: Operation cancelled)

@@ -3570,3 +3570,94 @@ also verifies all 102 preceding EPUBs are unchanged. Four local runtime copies
 agree, and nine benchmark executable/font/book sets are verified. This following
 verification-only commit updates records and skips redundant CI. Tall-row
 fragmentation and the complete PDF/SDK roadmap remain active.
+
+
+## Tall table rows and connected rowspan groups (0.18 development)
+
+Tall rows and connected rowspan groups retain independent cell BFC cursors.
+Each cell produces complete lines/images; shared row geometry expands at the
+ending row and shifts future rows. Cell fragments/grid are tried before cursor
+and geometry commit. Backgrounds and separate/collapsed border segments follow
+actual fragment intersections, without drawing artificial horizontal borders
+through a continued cell. Collapsed half-widths are reserved at page boundaries.
+Checkpoints clone actual cell/nested cursors and account for their allocations.
+A common final tree check includes cell/external floats in the 128-cursor cap.
+Grid/cell work shares a bounded 64 Mi counter; 4096 rows/cells and 64 columns stay
+unchanged. Auto tables squeezed by floats retain the wider-corridor retry before
+splitting rows that become tall only in the narrow trial.
+
+All 117 local Release CTests pass. New table tests record 146,321 checks; float
+checks and the 2,544,009 automatic hyphenation/layout checks pass. Twenty original
+structured EPUB cases verify mixed sizes, top/middle/bottom, empty cells,
+colspan/rowspan chains, a 101-cell group, nested tables, vertical/opposite flow,
+images/floats and minimum row heights. Native text/glyph/font/range/advance
+sequences agree with a large-page reference. Lines/boxes stay inside the viewport;
+full layout, cached/uncached backward paging, hits, positioned reconstruction and
+checkpoint pixels agree. First-page strips also match the separate whole-row
+rendering path. Independent RGBA/grayscale pixel tests verify translucent uniform
+border corners as a union, including fractional widths; the former renderer
+composited those corner pixels twice. The common raster fix avoids that overlap.
+
+Four earlier expected tall-row limits are now successful: layout-tall,
+float-long-table-unbreakable, float-bfc-unbreakable and
+hyphen-bidi-future-tall-row. The 111 preceding hyphen EPUBs remain unchanged.
+There are 24 new table EPUBs: 20 layout cases, 128/129/cross-tree float budget
+cases (two expected EXR_LIMIT results), and a 1 MiB fixed-cell regression. Native
+cancellation at multiple stages clears failed pages and permits cached-mode
+recovery; cache budget failure likewise recovers after adjustment.
+
+The earlier untaken-compound regression used HTML's legacy plain-text importer.
+It now constructs an explicit host element tree and verifies the earlier source
+break plus float corridor coordinates, while the later spelling edit stays
+untaken. New table fixtures are checked for actual table/cell nodes before
+layout; plain HTML extraction is not used as structured-layout evidence.
+
+A first performance probe exposed 1 MiB fixed-cell opening at 2803.4948 ms and
+150,155,264 peak RSS bytes. Intermediate feature commit
+840efcfdcca2f7070453696a3e9c61a3580c3f5c identifies that implementation. Top/baseline
+groups now probe one page and retain a lower height bound instead of an entire
+cell glyph snapshot. A regression allows 4096 cancellation polls before the first
+page and requires a sub-512 KiB returned layout; final code passes at 2152 polls,
+while the intermediate DLL reproduces EXR_CANCELLED. The first 65 fixed-table
+pages retain the same 73,324 glyphs. The intermediate record is one fresh process;
+final measurements below are medians of three fresh processes per case.
+
+Installed C/C++/JNI smoke passes: C renders a continued rowspan page, C++ uses
+existing pager/checkpoint calls to visit page 20 then rewind to 2, and JNI checks
+three rowspan pages with -Xcheck:jni. An Arial page was visually inspected; the
+geometric primary test font is intentionally a synthetic font. Swift execution
+and the exact cross-platform/sanitizer result follow after CI.
+
+Final local Windows DLL: 5,619,293 bytes (+12,241 over the preceding verified
+snapshot), SHA256 fa28d3c24d9742d9a9ba2dcf5d27ef2574bb0cfd16fca6aa3c110d711014493d. Benchmark source/binary/font/input pins and raw records
+are in benchmarks/0.18.0-table-fragments-windows. All cases use Windows/Arial,
+1 MiB input and the first 65 pages, measured sequentially without concurrent
+build/tests. Disk cache and machine/background load are uncontrolled.
+
+| Table workload | First visible (ms) | Peak RSS (bytes) | Turn p50 / p95 (ms) |
+| --- | ---: | ---: | ---: |
+| fixed | 56.0258 | 14278656 | 30.5986 / 32.9697 |
+| auto | 6589.0552 | 15187968 | 59.6103 / 64.3188 |
+| bottom | 3656.0340 | 150220800 | 29.9841 / 33.6745 |
+
+Automatic min/max-content allocation still scans the complete cell; bottom/
+middle alignment still measures complete group heights and retains full cell
+snapshots during that measurement. The measured auto and bottom costs above
+remain open performance work. The fixed-table optimization does not resolve
+those paths. Height-only alignment measurement and reusable intrinsic metrics
+are the next performance priorities; the complete PDF/SDK roadmap stays active.
+
+Nine preceding hyphenation workloads preserve their input/font hashes and
+generated counts:
+
+| Workload | Enabled first visible (ms) | Peak RSS (bytes) | Turn p50 / p95 (ms) |
+| --- | ---: | ---: | ---: |
+| english | 24.8631 | 14626816 | 5.3001 / 7.0246 |
+| rematch | 18.0795 | 14065664 | 7.1336 / 8.9670 |
+| mixed | 26.1370 | 14524416 | 14.3202 / 17.2901 |
+| auto | 29.6923 | 14311424 | 15.6815 / 19.1975 |
+| insertion | 19.4273 | 14127104 | 5.8600 / 10.1089 |
+| upper | 24.5792 | 14688256 | 11.4444 / 13.7208 |
+| title | 27.4787 | 14630912 | 15.5085 / 16.7071 |
+| lithuanian | 67.3546 | 14766080 | 20.2379 / 22.8048 |
+| conditional | 27.6727 | 14036992 | 10.4571 / 12.8059 |

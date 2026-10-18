@@ -46,4 +46,9 @@ for name,counts,outside in [('float-128',(64,64),False),('float-129',(64,64,1),F
     with ZipFile(root/f'table-fragments-{name}.epub','w') as z:
         for key,data in files.items():
             info=ZipInfo(key,(2026,1,1,0,0,0));info.compress_type=ZIP_STORED if key=='mimetype' else ZIP_DEFLATED;z.writestr(info,data)
-print('23 original table-fragment EPUBs generated')
+files=dict(base);files['style.css']=b'html,body,p,div,table,tr,td {margin:0;padding:0;font-size:14px;line-height:20px}'
+files['chapter.xhtml']=('<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Large fixed table</title><link rel="stylesheet" href="style.css"/></head><body><table style="width:360px;table-layout:fixed"><tr><td>'+('Abc def '*131072)+'</td><td>Peer</td></tr></table></body></html>').encode()
+with ZipFile(root/'table-fragments-large-fixed.epub','w') as z:
+    for key,data in files.items():
+        info=ZipInfo(key,(2026,1,1,0,0,0));info.compress_type=ZIP_STORED if key=='mimetype' else ZIP_DEFLATED;z.writestr(info,data)
+print('24 original table-fragment EPUBs generated')

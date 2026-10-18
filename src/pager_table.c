@@ -470,6 +470,8 @@ bad:
 static exr_status measure(flow *f, exr_table_cursor *t) {
   size_t i, j;
   exr_status status;
+  int probe=f->paginate;
+  float full_room=fmaxf(exr_flow_room(f),f->unit_assigned ? f->unit_block_reference : 0);
   t->end = t->row + 1;
   t->last = t->first;
   /* Cells are in row order. Extending the end discovers the entire rowspan group. */
@@ -483,13 +485,33 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
     float minimum=style.height.percent && !t->min_height ? 0 : length_value(style.height,t->min_height);
     t->heights[i]=fmaxf(t->heights[i],fmaxf(minimum,t->min_height/(float)t->row_count));
   }
+  /* Middle/bottom alignment needs the whole group's intrinsic heights. Other
+     rows need only a bounded first-fragment probe; the grid grows on demand. */
+  for(i=t->first;i<t->last;i++) if(f->styles[t->cells[i].node].vertical_align==EXR_CELL_MIDDLE ||
+      f->styles[t->cells[i].node].vertical_align==EXR_CELL_BOTTOM) probe=0;
   for (i = t->first; i < t->last; i++) {
     table_cell *c = &t->cells[i];
     flow local=cell_flow(f,t,c);
-    status = exr_flow_unit(&local, c->node, t->columns_at[c->column+c->colspan]-t->columns_at[c->column],
+    if(probe) {
+      exr_pager *cursor=NULL;
+      status=exr_flow_fragment(&local,NULL,c->node,t->columns_at[c->column+c->colspan]-t->columns_at[c->column],full_room,0,0,&cursor,&c->layout);
+      if(status==EXR_OK) {
+        int finished=exr_flow_cursor_finished(cursor);
+        c->height=c->layout ? c->layout->flow_block : 0;
+        if(!finished) {
+          if(f->defer_tall_rows) status=EXR_FRAGMENT_SMALL;
+          else c->height=fmaxf(c->height,full_room+1);
+        }
+      }
+      exr_pager_free(cursor);
+      if(status==EXR_FRAGMENT_SMALL && !f->fragment_probe) status=exr_fail(f->error,EXR_LIMIT,"Table cell contains an item larger than a page");
+    } else status = exr_flow_unit(&local, c->node, t->columns_at[c->column+c->colspan]-t->columns_at[c->column],
                            &c->layout, &c->height);
-    if (status != EXR_OK)
-      return status;
+    if (status != EXR_OK) return status;
+    if(!c->layout) {
+      c->layout=calloc(1,sizeof(*c->layout));if(!c->layout) return exr_fail(f->error,EXR_MEMORY,"Empty table cell allocation failed");
+      c->layout->writing_mode=f->writing_mode;
+    }
     {
       exr_style style=exr_flow_style(&f->styles[c->node],f->writing_mode);
       float width=t->columns_at[c->column+c->colspan]-t->columns_at[c->column];
