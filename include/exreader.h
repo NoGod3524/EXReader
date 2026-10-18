@@ -631,6 +631,10 @@ EXR_API exr_status exr_canvas_blend(exr_canvas *canvas,exr_blend_mode mode,exr_e
 /* Isolated RGB layer, initially transparent with Normal blend state. The
    inherited clip is applied once when committing. Valid end calls consume the
    layer even on failure; commit=0 discards it and unwinds its inner scopes. */
+#define EXR_GROUP_ISOLATED 1u
+/* flags=0 inherits the backdrop; ISOLATED starts transparent. end_layer closes
+   either kind. Non-isolated groups maintain an independent source-alpha buffer. */
+EXR_API exr_status exr_canvas_begin_group(exr_canvas *canvas,double opacity,exr_blend_mode mode,unsigned flags,exr_error *error);
 EXR_API exr_status exr_canvas_begin_layer(exr_canvas *canvas,double opacity,exr_blend_mode mode,exr_error *error);
 EXR_API exr_status exr_canvas_end_layer(exr_canvas *canvas,unsigned commit,exr_error *error);
 /* Set before entering layers; zero restores the 64 MiB aggregate default. */
@@ -669,12 +673,15 @@ typedef exr_status (*exr_draw_blend_fn)(void *context,exr_blend_mode mode,exr_er
    form a pair; PDF page drawing with blend support also needs that pair. */
 typedef exr_status (*exr_draw_layer_begin_fn)(void *context,double opacity,exr_blend_mode mode,exr_error *error);
 typedef exr_status (*exr_draw_layer_end_fn)(void *context,unsigned commit,exr_error *error);
+typedef exr_status (*exr_draw_group_begin_fn)(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *error);
+
 typedef struct {
   size_t struct_size;
   exr_draw_sink base;
   exr_draw_blend_fn blend;
   exr_draw_layer_begin_fn begin_layer;
   exr_draw_layer_end_fn end_layer;
+  exr_draw_group_begin_fn begin_group; /* Optional general group begin; shares end_layer. */
 } exr_draw_sink_ex;
 /* Initialize out->struct_size to the available storage size. */
 EXR_API exr_status exr_canvas_get_sink_ex(exr_canvas *canvas,exr_draw_sink_ex *out,exr_error *error);

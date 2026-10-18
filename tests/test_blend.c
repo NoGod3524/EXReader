@@ -24,8 +24,8 @@ static exr_canvas *canvas(unsigned width,unsigned height,uint32_t background) {
   exr_canvas_config config={0};exr_canvas *c=NULL;config.width=width;config.height=height;config.background=background;OK(exr_canvas_create(&config,&c,&error));return c;
 }
 static void references(void) {
-  const char *names[]={"flat","primitives","state","groups","compound","ap-groups"};unsigned test,alpha;
-  for(test=0;test<6;test++) {
+  const char *names[]={"flat","primitives","state","groups","compound","ap-groups","nonisolated","ap-nonisolated"};unsigned test,alpha;
+  for(test=0;test<sizeof(names)/sizeof(*names);test++) {
     exr_fixed_document *d=open_book(names[test]);size_t page_count,mask_size;const exr_fixed_page *pages=exr_fixed_pages(d,&page_count);char name[64];unsigned char *mask;
     CHECK(page_count==1);snprintf(name,sizeof(name),"%s.mask",names[test]);mask=load(name,&mask_size);
     for(alpha=0;alpha<2;alpha++) {
@@ -66,6 +66,9 @@ static exr_status blend(void *context,exr_blend_mode mode,exr_error *e) {
 static exr_status begin_layer(void *context,double opacity,exr_blend_mode mode,exr_error *e) {
   inspect *i=context;(void)opacity;(void)mode;(void)e;i->begins++;return EXR_OK;
 }
+static exr_status begin_group(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
+  CHECK(!(flags&~EXR_GROUP_ISOLATED));return begin_layer(context,opacity,mode,e);
+}
 static exr_status end_layer(void *context,unsigned commit,exr_error *e) {
   inspect *i=context;(void)commit;(void)e;i->ends++;return EXR_OK;
 }
@@ -85,6 +88,10 @@ static void consumers(void) {
   }
   { exr_draw_sink_ex missing=sink;missing.end_layer=NULL;CHECK(exr_fixed_draw_ex(d,0,NULL,&missing,NULL,&error)==EXR_ARGUMENT); }
   exr_fixed_free(d);
+  d=open_book("nonisolated");memset(&state,0,sizeof(state));
+  CHECK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error)==EXR_UNSUPPORTED);CHECK(state.begins==state.ends);
+  memset(&state,0,sizeof(state));sink.begin_group=begin_group;sink.begin_layer=NULL;
+  OK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error));CHECK(state.begins==state.ends && state.paths);exr_fixed_free(d);
   d=open_book("group-malformed");memset(&state,0,sizeof(state));
   CHECK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error)==EXR_FORMAT);CHECK(state.begins==2 && state.ends==2);exr_fixed_free(d);
 }
@@ -106,6 +113,12 @@ static void direct(void) {
     exr_canvas *c=canvas(1,1,0xffffffff);size_t i;memset(&memory,0xa5,sizeof(memory));memory.sink.struct_size=sizeof(prefix);
     OK(exr_canvas_get_sink_ex(c,(exr_draw_sink_ex *)(void *)&memory.sink,&error));CHECK(memory.sink.struct_size==sizeof(prefix));
     for(i=0;i<sizeof(memory.guard);i++) CHECK(memory.guard[i]==0xa5);exr_canvas_free(c);
+  }
+  { typedef struct {size_t struct_size;exr_draw_sink base;exr_draw_blend_fn blend;exr_draw_layer_begin_fn begin_layer;exr_draw_layer_end_fn end_layer;} old_sink;
+    struct {old_sink sink;unsigned char guard[16];} memory;exr_canvas *c=canvas(1,1,0);size_t i;
+    memset(&memory,0xa5,sizeof(memory));memory.sink.struct_size=sizeof(memory.sink);OK(exr_canvas_get_sink_ex(c,(exr_draw_sink_ex *)(void *)&memory.sink,&error));
+    CHECK(memory.sink.struct_size==sizeof(memory.sink) && memory.sink.begin_layer && memory.sink.end_layer);
+    for(i=0;i<16;i++) CHECK(memory.guard[i]==0xa5);exr_canvas_free(c);
   }
   { exr_canvas *c=canvas(1,1,0);exr_bitmap output={0};CHECK(exr_canvas_blend(c,(exr_blend_mode)16,&error)==EXR_ARGUMENT);CHECK(!exr_canvas_bitmap(c));CHECK(exr_canvas_take(c,&output,&error)==EXR_ARGUMENT && !output.pixels);exr_canvas_free(c); }
   { int stop=0;exr_canvas_config cfg={0};exr_canvas *c=NULL;exr_bitmap output={0};cfg.width=cfg.height=1;cfg.control.cancelled=cancelled;cfg.control.context=&stop;
@@ -168,9 +181,70 @@ static void layers(void) {
     OK(exr_canvas_create(&cfg,&c,&error));OK(exr_canvas_begin_layer(c,1,EXR_BLEND_NORMAL,&error));stop=1;CHECK(exr_canvas_end_layer(c,1,&error)==EXR_CANCELLED);exr_canvas_free(c);
   }
 }
+static int cancel_during_copy(void *context) { return ++*(int *)context>3; }
+static void nonisolated(void) {
+  const unsigned alphas[]={0,1,64,128,255};unsigned mode,row;exr_path_segment p[5];exr_draw_style style=exr_draw_style_defaults();rect(p,1,1);
+  for(mode=0;mode<16;mode++) for(row=0;row<sizeof(alphas)/sizeof(*alphas);row++) {
+    exr_canvas *direct=canvas(1,1,0x33669900|alphas[row]),*group=canvas(1,1,0x33669900|alphas[row]);unsigned i,k;
+    OK(exr_canvas_begin_group(group,1,EXR_BLEND_NORMAL,0,&error));
+    for(i=0;i<2;i++) {
+      style.fill=i ? 0x1fc8a040 : 0xcc4d1a80;OK(exr_canvas_blend(direct,(exr_blend_mode)mode,&error));OK(exr_canvas_blend(group,(exr_blend_mode)mode,&error));
+      OK(exr_canvas_path(direct,p,5,NULL,&style,&error));OK(exr_canvas_path(group,p,5,NULL,&style,&error));
+    }
+    OK(exr_canvas_end_layer(group,1,&error));
+    for(k=0;k<4;k++) {
+      const unsigned char *d=exr_canvas_bitmap(direct)->pixels,*g=exr_canvas_bitmap(group)->pixels;
+      unsigned dv=k<3 ? (d[k]*d[3]+127)/255 : d[k],gv=k<3 ? (g[k]*g[3]+127)/255 : g[k];CHECK(dv+2>=gv && gv+2>=dv);
+    }
+    exr_canvas_free(direct);exr_canvas_free(group);
+  }
+  { exr_canvas *c=canvas(1,1,0x336699ff);const unsigned char *px;OK(exr_canvas_begin_group(c,.5,EXR_BLEND_NORMAL,0,&error));
+    OK(exr_canvas_blend(c,EXR_BLEND_MULTIPLY,&error));style.fill=0xcc4d1a80;OK(exr_canvas_path(c,p,5,NULL,&style,&error));OK(exr_canvas_end_layer(c,1,&error));
+    px=exr_canvas_bitmap(c)->pixels;CHECK(px[0]==48 && px[1]==84 && px[2]==119 && px[3]==255);exr_canvas_free(c);
+  }
+  { exr_canvas *c=canvas(1,1,0);unsigned i;OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,0,&error));style.fill=0x0000ff01;
+    for(i=0;i<1000;i++) OK(exr_canvas_path(c,p,5,NULL,&style,&error));OK(exr_canvas_end_layer(c,1,&error));
+    CHECK(exr_canvas_bitmap(c)->pixels[2]==255 && exr_canvas_bitmap(c)->pixels[3]==250);exr_canvas_free(c);
+  }
+  { exr_canvas *c=canvas(1,1,0x33669980);size_t active,after;const unsigned char *px;
+    OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,0,&error));active=exr_canvas_memory_size(c);OK(exr_canvas_end_layer(c,1,&error));after=exr_canvas_memory_size(c);CHECK(active>=after+24);
+    px=exr_canvas_bitmap(c)->pixels;CHECK(px[0]==51 && px[1]==102 && px[2]==153 && px[3]==128);
+    OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,0,&error));OK(exr_canvas_save(c,&error));style.fill=0xff0000ff;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+    OK(exr_canvas_end_layer(c,0,&error));CHECK(exr_canvas_memory_size(c)==after);px=exr_canvas_bitmap(c)->pixels;CHECK(px[0]==51 && px[1]==102 && px[2]==153 && px[3]==128);exr_canvas_free(c);
+  }
+  { exr_canvas *c=canvas(1,1,0);OK(exr_canvas_set_layer_budget(c,27,&error));OK(exr_canvas_begin_layer(c,1,EXR_BLEND_NORMAL,&error));
+    CHECK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,0,&error)==EXR_LIMIT);CHECK(exr_canvas_end_layer(c,0,&error)==EXR_LIMIT);exr_canvas_free(c);
+  }
+  { exr_canvas *c=canvas(1,1,0);unsigned i;style.fill=0x0000ff01;OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,0,&error));
+    for(i=0;i<1000;i++) { OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,0,&error));OK(exr_canvas_path(c,p,5,NULL,&style,&error));OK(exr_canvas_end_layer(c,1,&error)); }
+    OK(exr_canvas_end_layer(c,1,&error));CHECK(exr_canvas_bitmap(c)->pixels[2]==255 && exr_canvas_bitmap(c)->pixels[3]==250);exr_canvas_free(c);
+  }
+  { exr_canvas *c=canvas(1,1,0);unsigned i;for(i=0;i<32;i++) OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,0,&error));
+    style.fill=0xff000080;OK(exr_canvas_path(c,p,5,NULL,&style,&error));for(i=0;i<32;i++) OK(exr_canvas_end_layer(c,1,&error));
+    CHECK(exr_canvas_bitmap(c)->pixels[0]==255 && exr_canvas_bitmap(c)->pixels[3]==128);exr_canvas_free(c);
+  }
+  { exr_canvas_config config={0};exr_canvas *c=NULL;int calls=0;config.width=config.height=2;config.control.cancelled=cancel_during_copy;config.control.context=&calls;
+    OK(exr_canvas_create(&config,&c,&error));CHECK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,0,&error)==EXR_CANCELLED);CHECK(!exr_canvas_bitmap(c));exr_canvas_free(c);
+  }
+  { int stop=0;exr_canvas_config cfg={0};exr_canvas *c=NULL;cfg.width=cfg.height=1;cfg.control.cancelled=cancelled;cfg.control.context=&stop;
+    OK(exr_canvas_create(&cfg,&c,&error));OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,0,&error));stop=1;CHECK(exr_canvas_end_layer(c,1,&error)==EXR_CANCELLED);exr_canvas_free(c);
+  }
+  { exr_canvas *c=canvas(1,1,0x0000ffff);const unsigned char *px;rect(p,.5,1);OK(exr_canvas_clip(c,p,5,NULL,EXR_FILL_NONZERO,&error));rect(p,1,1);
+    OK(exr_canvas_begin_group(c,.5,EXR_BLEND_NORMAL,0,&error));CHECK(exr_canvas_bitmap(c)->pixels[2]==255);style.fill=0xff0000ff;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+    OK(exr_canvas_end_layer(c,1,&error));px=exr_canvas_bitmap(c)->pixels;CHECK(px[0]==64 && px[1]==0 && px[2]==191 && px[3]==255);exr_canvas_free(c);
+  }
+  { unsigned char pixels[]={204,77,26,255},mask_pixels[]={128,128,128,255};exr_image_layer image={0},mask={0};double m[]={1,0,0,1,0,0};unsigned k;
+    exr_canvas *direct=canvas(1,1,0x336699c0),*group=canvas(1,1,0x336699c0);image.bitmap=(exr_bitmap){1,1,4,pixels,4};mask.bitmap=(exr_bitmap){1,1,4,mask_pixels,4};image.mask=&mask;image.mask_mode=EXR_MASK_GRAY;
+    OK(exr_canvas_begin_group(group,1,EXR_BLEND_NORMAL,0,&error));OK(exr_canvas_blend(direct,EXR_BLEND_MULTIPLY,&error));OK(exr_canvas_blend(group,EXR_BLEND_MULTIPLY,&error));
+    OK(exr_canvas_image(direct,&image,m,128./255,&error));OK(exr_canvas_image(group,&image,m,128./255,&error));OK(exr_canvas_end_layer(group,1,&error));
+    for(k=0;k<4;k++) { const unsigned char *d=exr_canvas_bitmap(direct)->pixels,*g=exr_canvas_bitmap(group)->pixels;unsigned dv=k<3 ? (d[k]*d[3]+127)/255 : d[k],gv=k<3 ? (g[k]*g[3]+127)/255 : g[k];CHECK(dv+1>=gv && gv+1>=dv); }
+    exr_canvas_free(direct);exr_canvas_free(group);
+  }
+  { exr_canvas *c=canvas(1,1,0);CHECK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,2,&error)==EXR_ARGUMENT);exr_canvas_free(c); }
+}
 static void invalid(void) {
   { exr_fixed_document *d=open_book("group-malformed");exr_bitmap b={0};unsigned i;for(i=0;i<5;i++) CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels);exr_fixed_free(d); }
-  { unsigned i;for(i=0;i<5;i++) {char name[24];exr_fixed_document *d;exr_bitmap b={0};snprintf(name,sizeof(name),"group-bad-%u",i);d=open_book(name);CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==(i<3 ? EXR_UNSUPPORTED : EXR_FORMAT) && !b.pixels);exr_fixed_free(d);} }
+  { unsigned i;for(i=1;i<6;i++) {char name[24];exr_fixed_document *d;exr_bitmap b={0};snprintf(name,sizeof(name),"group-bad-%u",i);d=open_book(name);CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==(i<3 ? EXR_UNSUPPORTED : EXR_FORMAT) && !b.pixels);exr_fixed_free(d);} }
   unsigned i;for(i=0;i<3;i++) {char name[16];exr_fixed_document *d;exr_bitmap b={0};snprintf(name,sizeof(name),"bad-%u",i);d=open_book(name);CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels);exr_fixed_free(d);}
 }
-int main(int argc,char **argv) {CHECK(argc==2);directory=argv[1];direct();analytic();layers();references();consumers();invalid();printf("%u RGB blend checks passed\n",checks);return 0;}
+int main(int argc,char **argv) {CHECK(argc==2);directory=argv[1];direct();analytic();layers();nonisolated();references();consumers();invalid();printf("%u RGB blend checks passed\n",checks);return 0;}

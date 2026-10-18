@@ -3865,3 +3865,41 @@ coverage masks are current memory/time costs; bounded/cropped group buffers
 remain work. Non-isolated/knockout groups, graphics-state soft masks, non-RGB
 blending spaces, joint subpixel compound coverage and wider transparency/color
 compatibility remain outside this batch.
+
+
+## Non-isolated RGB groups (0.18 development)
+
+Local Windows Release passes all 119 CTests. `native-blend` reports 842005
+checks; new non-isolated Form/AP interior probes differ by at most 1/255 in
+premultiplied channels, while all eight blend scenes remain within 2/255.
+The 57 preceding blend scene/reference files are unchanged. C/C++ installed
+consumers and JNI -Xcheck:jni pass; C renders the actual non-isolated PDF and
+C++ exercises the new canvas API and general group callback.
+
+The independent standard-library Decimal reference uses 40-digit ISO 32000-1
+11.4.4 arithmetic, cross-checks 208 flat samples against raw PDFium (max 2), and
+reproduces 160 group probes exactly. It also supplies AP expectations. Raw
+MuPDF/PDFium output remains separate. PDFium implicitly isolates these Forms;
+MuPDF differs for partial-alpha nonseparable blending and a masked image (alpha
+204 versus ISO/PDFium 200). Those discrepancies remain recorded, without widening
+tolerance. Neither external renderer is linked or bundled.
+
+Checks include all 16 modes on five backdrop alphas; Normal/1 group equivalence;
+analytic half-opacity Multiply; 1000 alpha=1/255 paints and 1000 nested commits
+accumulating alpha 250; 32-level chain and stable backdrop pointers across layer
+array growth; nested isolated children; fractional clip/opacity applied once;
+masked images; parent restoration, abort, byte budgets and memory_size;
+cancellation during initial copy and empty-group commit; old output-prefix
+canaries, old isolated fallback, and new-only begin callback pairing.
+
+Non-isolated buffers reserve 24 bytes/pixel, isolated 4; the aggregate default
+and per-group cap remain 64 MiB. Precision initializes lazily and commit scans
+dirty bounds, but buffers still reserve the full canvas. An alternating internal
+prototype experiment found no consistent split-buffer benefit; the final code
+uses one five-float interleaved allocation. Prototype records are labeled and
+separate from final runtime measurements. Exact source provenance and all six
+CI jobs are recorded in the new benchmark metadata after CI completes.
+
+Remaining: knockout, graphics-state Alpha/Luminosity masks, non-RGB group spaces,
+cropped working buffers, joint subpixel compound coverage, and the complete
+PDF/EPUB/reading-SDK roadmap. See HANDOFF.md for measurable follow-up gates.

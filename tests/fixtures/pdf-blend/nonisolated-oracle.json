@@ -1,0 +1,3205 @@
+{
+  "reference": "Independent Decimal(40) ISO 32000-1 11.4.4 group arithmetic at full-coverage interior probes; MuPDF checked on opaque or separable samples except its masked image alpha result (204 instead of ISO/PDFium 200 in row 2). PDFium renders these non-isolated Forms as isolated; MuPDF partial-alpha nonseparable differences retained.",
+  "probes": [
+    {
+      "row": 0,
+      "mode": "Normal",
+      "premultiplied_expected": [
+        51,
+        81,
+        134,
+        255
+      ],
+      "white_expected": [
+        51,
+        81,
+        134,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 50
+      }
+    },
+    {
+      "row": 0,
+      "mode": "Multiply",
+      "premultiplied_expected": [
+        41,
+        78,
+        126,
+        255
+      ],
+      "white_expected": [
+        41,
+        78,
+        126,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 10
+      }
+    },
+    {
+      "row": 0,
+      "mode": "Screen",
+      "premultiplied_expected": [
+        61,
+        105,
+        161,
+        255
+      ],
+      "white_expected": [
+        61,
+        105,
+        161,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 40
+      }
+    },
+    {
+      "row": 0,
+      "mode": "Overlay",
+      "premultiplied_expected": [
+        43,
+        80,
+        143,
+        255
+      ],
+      "white_expected": [
+        43,
+        80,
+        143,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 20
+      }
+    },
+    {
+      "row": 0,
+      "mode": "Darken",
+      "premultiplied_expected": [
+        51,
+        81,
+        134,
+        255
+      ],
+      "white_expected": [
+        51,
+        81,
+        134,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 12
+      }
+    },
+    {
+      "row": 0,
+      "mode": "Lighten",
+      "premultiplied_expected": [
+        51,
+        102,
+        153,
+        255
+      ],
+      "white_expected": [
+        51,
+        102,
+        153,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 50
+      }
+    },
+    {
+      "row": 0,
+      "mode": "ColorDodge",
+      "premultiplied_expected": [
+        54,
+        104,
+        170,
+        255
+      ],
+      "white_expected": [
+        54,
+        104,
+        170,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 47
+      }
+    },
+    {
+      "row": 0,
+      "mode": "ColorBurn",
+      "premultiplied_expected": [
+        38,
+        76,
+        114,
+        255
+      ],
+      "white_expected": [
+        38,
+        76,
+        114,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 14
+      }
+    },
+    {
+      "row": 0,
+      "mode": "HardLight",
+      "premultiplied_expected": [
+        43,
+        80,
+        138,
+        255
+      ],
+      "white_expected": [
+        43,
+        80,
+        138,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 58
+      }
+    },
+    {
+      "row": 0,
+      "mode": "SoftLight",
+      "premultiplied_expected": [
+        45,
+        89,
+        147,
+        255
+      ],
+      "white_expected": [
+        45,
+        89,
+        147,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 21
+      }
+    },
+    {
+      "row": 0,
+      "mode": "Difference",
+      "premultiplied_expected": [
+        38,
+        97,
+        134,
+        255
+      ],
+      "white_expected": [
+        38,
+        97,
+        134,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 50
+      }
+    },
+    {
+      "row": 0,
+      "mode": "Exclusion",
+      "premultiplied_expected": [
+        59,
+        103,
+        149,
+        255
+      ],
+      "white_expected": [
+        59,
+        103,
+        149,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 29
+      }
+    },
+    {
+      "row": 0,
+      "mode": "Hue",
+      "premultiplied_expected": [
+        68,
+        93,
+        156,
+        255
+      ],
+      "white_expected": [
+        68,
+        93,
+        156,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 18
+      }
+    },
+    {
+      "row": 0,
+      "mode": "Saturation",
+      "premultiplied_expected": [
+        56,
+        101,
+        146,
+        255
+      ],
+      "white_expected": [
+        56,
+        101,
+        146,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 22
+      }
+    },
+    {
+      "row": 0,
+      "mode": "Color",
+      "premultiplied_expected": [
+        65,
+        96,
+        148,
+        255
+      ],
+      "white_expected": [
+        65,
+        96,
+        148,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 29
+      }
+    },
+    {
+      "row": 0,
+      "mode": "Luminosity",
+      "premultiplied_expected": [
+        38,
+        87,
+        137,
+        255
+      ],
+      "white_expected": [
+        38,
+        87,
+        137,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 22
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Normal",
+      "premultiplied_expected": [
+        19,
+        83,
+        57,
+        160
+      ],
+      "white_expected": [
+        114,
+        178,
+        152,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 18
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Multiply",
+      "premultiplied_expected": [
+        19,
+        70,
+        57,
+        160
+      ],
+      "white_expected": [
+        114,
+        165,
+        152,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 12
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Screen",
+      "premultiplied_expected": [
+        26,
+        87,
+        77,
+        160
+      ],
+      "white_expected": [
+        121,
+        182,
+        172,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 14
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Overlay",
+      "premultiplied_expected": [
+        19,
+        79,
+        64,
+        160
+      ],
+      "white_expected": [
+        114,
+        174,
+        159,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 16
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Darken",
+      "premultiplied_expected": [
+        19,
+        74,
+        57,
+        160
+      ],
+      "white_expected": [
+        114,
+        169,
+        152,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 8
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Lighten",
+      "premultiplied_expected": [
+        26,
+        83,
+        77,
+        160
+      ],
+      "white_expected": [
+        121,
+        178,
+        172,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 18
+      }
+    },
+    {
+      "row": 1,
+      "mode": "ColorDodge",
+      "premultiplied_expected": [
+        26,
+        93,
+        77,
+        160
+      ],
+      "white_expected": [
+        121,
+        188,
+        172,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 8
+      }
+    },
+    {
+      "row": 1,
+      "mode": "ColorBurn",
+      "premultiplied_expected": [
+        19,
+        65,
+        57,
+        160
+      ],
+      "white_expected": [
+        114,
+        160,
+        152,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 17
+      }
+    },
+    {
+      "row": 1,
+      "mode": "HardLight",
+      "premultiplied_expected": [
+        19,
+        81,
+        57,
+        160
+      ],
+      "white_expected": [
+        114,
+        176,
+        152,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 20
+      }
+    },
+    {
+      "row": 1,
+      "mode": "SoftLight",
+      "premultiplied_expected": [
+        20,
+        77,
+        69,
+        160
+      ],
+      "white_expected": [
+        115,
+        172,
+        164,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 12
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Difference",
+      "premultiplied_expected": [
+        26,
+        70,
+        77,
+        160
+      ],
+      "white_expected": [
+        121,
+        165,
+        172,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 19
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Exclusion",
+      "premultiplied_expected": [
+        26,
+        78,
+        77,
+        160
+      ],
+      "white_expected": [
+        121,
+        173,
+        172,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 11
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Hue",
+      "premultiplied_expected": [
+        23,
+        78,
+        62,
+        160
+      ],
+      "white_expected": [
+        118,
+        173,
+        157,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 8
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Saturation",
+      "premultiplied_expected": [
+        22,
+        74,
+        83,
+        160
+      ],
+      "white_expected": [
+        117,
+        169,
+        178,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 10
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Color",
+      "premultiplied_expected": [
+        19,
+        80,
+        57,
+        160
+      ],
+      "white_expected": [
+        114,
+        175,
+        152,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 9
+      }
+    },
+    {
+      "row": 1,
+      "mode": "Luminosity",
+      "premultiplied_expected": [
+        27,
+        75,
+        78,
+        160
+      ],
+      "white_expected": [
+        122,
+        170,
+        173,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 5,
+        "pdfium": 14
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Normal",
+      "premultiplied_expected": [
+        44,
+        72,
+        103,
+        200
+      ],
+      "white_expected": [
+        99,
+        127,
+        158,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 14
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Multiply",
+      "premultiplied_expected": [
+        38,
+        70,
+        102,
+        200
+      ],
+      "white_expected": [
+        93,
+        125,
+        157,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 5,
+        "pdfium": 5
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Screen",
+      "premultiplied_expected": [
+        47,
+        81,
+        116,
+        200
+      ],
+      "white_expected": [
+        102,
+        136,
+        171,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 12
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Overlay",
+      "premultiplied_expected": [
+        39,
+        72,
+        107,
+        200
+      ],
+      "white_expected": [
+        94,
+        127,
+        162,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 8
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Darken",
+      "premultiplied_expected": [
+        41,
+        72,
+        103,
+        200
+      ],
+      "white_expected": [
+        96,
+        127,
+        158,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 5
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Lighten",
+      "premultiplied_expected": [
+        44,
+        78,
+        116,
+        200
+      ],
+      "white_expected": [
+        99,
+        133,
+        171,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 14
+      }
+    },
+    {
+      "row": 2,
+      "mode": "ColorDodge",
+      "premultiplied_expected": [
+        43,
+        80,
+        117,
+        200
+      ],
+      "white_expected": [
+        98,
+        135,
+        172,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 20
+      }
+    },
+    {
+      "row": 2,
+      "mode": "ColorBurn",
+      "premultiplied_expected": [
+        36,
+        68,
+        101,
+        200
+      ],
+      "white_expected": [
+        91,
+        123,
+        156,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 6,
+        "pdfium": 3
+      }
+    },
+    {
+      "row": 2,
+      "mode": "HardLight",
+      "premultiplied_expected": [
+        39,
+        72,
+        103,
+        200
+      ],
+      "white_expected": [
+        94,
+        127,
+        158,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 16
+      }
+    },
+    {
+      "row": 2,
+      "mode": "SoftLight",
+      "premultiplied_expected": [
+        40,
+        74,
+        111,
+        200
+      ],
+      "white_expected": [
+        95,
+        129,
+        166,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 7
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Difference",
+      "premultiplied_expected": [
+        39,
+        74,
+        114,
+        200
+      ],
+      "white_expected": [
+        94,
+        129,
+        169,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 14
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Exclusion",
+      "premultiplied_expected": [
+        46,
+        79,
+        115,
+        200
+      ],
+      "white_expected": [
+        101,
+        134,
+        170,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 9
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Hue",
+      "premultiplied_expected": [
+        49,
+        76,
+        105,
+        200
+      ],
+      "white_expected": [
+        105,
+        131,
+        160,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 5,
+        "pdfium": 4
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Saturation",
+      "premultiplied_expected": [
+        42,
+        78,
+        114,
+        200
+      ],
+      "white_expected": [
+        97,
+        133,
+        169,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 6
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Color",
+      "premultiplied_expected": [
+        48,
+        76,
+        107,
+        200
+      ],
+      "white_expected": [
+        103,
+        131,
+        162,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 8
+      }
+    },
+    {
+      "row": 2,
+      "mode": "Luminosity",
+      "premultiplied_expected": [
+        37,
+        74,
+        112,
+        200
+      ],
+      "white_expected": [
+        92,
+        129,
+        167,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 4,
+        "pdfium": 8
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Normal",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Multiply",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Screen",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Overlay",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Darken",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Lighten",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "ColorDodge",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "ColorBurn",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "HardLight",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "SoftLight",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Difference",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Exclusion",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Hue",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 31,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Saturation",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 31,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Color",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 31,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 3,
+      "mode": "Luminosity",
+      "premultiplied_expected": [
+        64,
+        13,
+        32,
+        64
+      ],
+      "white_expected": [
+        255,
+        204,
+        223,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 31,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Normal",
+      "premultiplied_expected": [
+        11,
+        55,
+        34,
+        88
+      ],
+      "white_expected": [
+        178,
+        221,
+        200,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 2
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Multiply",
+      "premultiplied_expected": [
+        11,
+        50,
+        34,
+        88
+      ],
+      "white_expected": [
+        178,
+        217,
+        200,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 2
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Screen",
+      "premultiplied_expected": [
+        13,
+        55,
+        38,
+        88
+      ],
+      "white_expected": [
+        180,
+        221,
+        205,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 2
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Overlay",
+      "premultiplied_expected": [
+        11,
+        53,
+        35,
+        88
+      ],
+      "white_expected": [
+        178,
+        220,
+        202,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Darken",
+      "premultiplied_expected": [
+        11,
+        50,
+        34,
+        88
+      ],
+      "white_expected": [
+        178,
+        217,
+        200,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 2
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Lighten",
+      "premultiplied_expected": [
+        13,
+        55,
+        38,
+        88
+      ],
+      "white_expected": [
+        180,
+        221,
+        205,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 2
+      }
+    },
+    {
+      "row": 4,
+      "mode": "ColorDodge",
+      "premultiplied_expected": [
+        13,
+        55,
+        38,
+        88
+      ],
+      "white_expected": [
+        180,
+        221,
+        205,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 2
+      }
+    },
+    {
+      "row": 4,
+      "mode": "ColorBurn",
+      "premultiplied_expected": [
+        11,
+        50,
+        34,
+        88
+      ],
+      "white_expected": [
+        178,
+        217,
+        200,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 2
+      }
+    },
+    {
+      "row": 4,
+      "mode": "HardLight",
+      "premultiplied_expected": [
+        11,
+        55,
+        34,
+        88
+      ],
+      "white_expected": [
+        178,
+        221,
+        200,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 2
+      }
+    },
+    {
+      "row": 4,
+      "mode": "SoftLight",
+      "premultiplied_expected": [
+        12,
+        52,
+        36,
+        88
+      ],
+      "white_expected": [
+        178,
+        218,
+        203,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 2
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Difference",
+      "premultiplied_expected": [
+        13,
+        51,
+        38,
+        88
+      ],
+      "white_expected": [
+        180,
+        218,
+        205,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Exclusion",
+      "premultiplied_expected": [
+        13,
+        51,
+        38,
+        88
+      ],
+      "white_expected": [
+        180,
+        218,
+        205,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Hue",
+      "premultiplied_expected": [
+        12,
+        51,
+        35,
+        88
+      ],
+      "white_expected": [
+        179,
+        218,
+        202,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 2
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Saturation",
+      "premultiplied_expected": [
+        11,
+        50,
+        41,
+        88
+      ],
+      "white_expected": [
+        178,
+        217,
+        208,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Color",
+      "premultiplied_expected": [
+        11,
+        51,
+        34,
+        88
+      ],
+      "white_expected": [
+        178,
+        218,
+        200,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 4,
+      "mode": "Luminosity",
+      "premultiplied_expected": [
+        15,
+        52,
+        40,
+        88
+      ],
+      "white_expected": [
+        182,
+        218,
+        207,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 2
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Normal",
+      "premultiplied_expected": [
+        38,
+        71,
+        93,
+        204
+      ],
+      "white_expected": [
+        89,
+        122,
+        144,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Multiply",
+      "premultiplied_expected": [
+        34,
+        67,
+        93,
+        204
+      ],
+      "white_expected": [
+        85,
+        118,
+        144,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Screen",
+      "premultiplied_expected": [
+        44,
+        83,
+        115,
+        204
+      ],
+      "white_expected": [
+        95,
+        134,
+        166,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 19
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Overlay",
+      "premultiplied_expected": [
+        35,
+        70,
+        101,
+        204
+      ],
+      "white_expected": [
+        86,
+        121,
+        152,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Darken",
+      "premultiplied_expected": [
+        38,
+        71,
+        93,
+        204
+      ],
+      "white_expected": [
+        89,
+        122,
+        144,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Lighten",
+      "premultiplied_expected": [
+        40,
+        79,
+        115,
+        204
+      ],
+      "white_expected": [
+        91,
+        130,
+        166,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 5,
+      "mode": "ColorDodge",
+      "premultiplied_expected": [
+        41,
+        82,
+        115,
+        204
+      ],
+      "white_expected": [
+        92,
+        133,
+        166,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 33
+      }
+    },
+    {
+      "row": 5,
+      "mode": "ColorBurn",
+      "premultiplied_expected": [
+        33,
+        64,
+        93,
+        204
+      ],
+      "white_expected": [
+        84,
+        115,
+        144,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 17
+      }
+    },
+    {
+      "row": 5,
+      "mode": "HardLight",
+      "premultiplied_expected": [
+        35,
+        70,
+        93,
+        204
+      ],
+      "white_expected": [
+        86,
+        121,
+        144,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 5,
+      "mode": "SoftLight",
+      "premultiplied_expected": [
+        36,
+        73,
+        106,
+        204
+      ],
+      "white_expected": [
+        87,
+        124,
+        158,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Difference",
+      "premultiplied_expected": [
+        35,
+        72,
+        115,
+        204
+      ],
+      "white_expected": [
+        86,
+        123,
+        166,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 18
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Exclusion",
+      "premultiplied_expected": [
+        43,
+        80,
+        115,
+        204
+      ],
+      "white_expected": [
+        94,
+        131,
+        166,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Hue",
+      "premultiplied_expected": [
+        45,
+        80,
+        95,
+        204
+      ],
+      "white_expected": [
+        96,
+        131,
+        146,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 24
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Saturation",
+      "premultiplied_expected": [
+        43,
+        78,
+        110,
+        204
+      ],
+      "white_expected": [
+        94,
+        129,
+        162,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Color",
+      "premultiplied_expected": [
+        45,
+        79,
+        101,
+        204
+      ],
+      "white_expected": [
+        96,
+        130,
+        152,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 5,
+      "mode": "Luminosity",
+      "premultiplied_expected": [
+        33,
+        71,
+        107,
+        204
+      ],
+      "white_expected": [
+        84,
+        122,
+        158,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 3,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Normal",
+      "premultiplied_expected": [
+        42,
+        83,
+        130,
+        255
+      ],
+      "white_expected": [
+        42,
+        83,
+        130,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 4
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Multiply",
+      "premultiplied_expected": [
+        41,
+        83,
+        127,
+        255
+      ],
+      "white_expected": [
+        41,
+        83,
+        127,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 20
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Screen",
+      "premultiplied_expected": [
+        52,
+        102,
+        155,
+        255
+      ],
+      "white_expected": [
+        52,
+        102,
+        155,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 20
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Overlay",
+      "premultiplied_expected": [
+        42,
+        83,
+        138,
+        255
+      ],
+      "white_expected": [
+        42,
+        83,
+        138,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 10
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Darken",
+      "premultiplied_expected": [
+        42,
+        83,
+        130,
+        255
+      ],
+      "white_expected": [
+        42,
+        83,
+        130,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 4
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Lighten",
+      "premultiplied_expected": [
+        51,
+        102,
+        153,
+        255
+      ],
+      "white_expected": [
+        51,
+        102,
+        153,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 0
+      }
+    },
+    {
+      "row": 6,
+      "mode": "ColorDodge",
+      "premultiplied_expected": [
+        51,
+        102,
+        157,
+        255
+      ],
+      "white_expected": [
+        51,
+        102,
+        157,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 46
+      }
+    },
+    {
+      "row": 6,
+      "mode": "ColorBurn",
+      "premultiplied_expected": [
+        41,
+        83,
+        124,
+        255
+      ],
+      "white_expected": [
+        41,
+        83,
+        124,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 33
+      }
+    },
+    {
+      "row": 6,
+      "mode": "HardLight",
+      "premultiplied_expected": [
+        42,
+        83,
+        131,
+        255
+      ],
+      "white_expected": [
+        42,
+        83,
+        131,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 14
+      }
+    },
+    {
+      "row": 6,
+      "mode": "SoftLight",
+      "premultiplied_expected": [
+        43,
+        90,
+        144,
+        255
+      ],
+      "white_expected": [
+        43,
+        90,
+        144,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 6
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Difference",
+      "premultiplied_expected": [
+        50,
+        102,
+        147,
+        255
+      ],
+      "white_expected": [
+        50,
+        102,
+        147,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 52
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Exclusion",
+      "premultiplied_expected": [
+        51,
+        102,
+        152,
+        255
+      ],
+      "white_expected": [
+        51,
+        102,
+        152,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 11
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Hue",
+      "premultiplied_expected": [
+        58,
+        97,
+        158,
+        255
+      ],
+      "white_expected": [
+        58,
+        97,
+        158,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 3
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Saturation",
+      "premultiplied_expected": [
+        56,
+        101,
+        145,
+        255
+      ],
+      "white_expected": [
+        56,
+        101,
+        145,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Color",
+      "premultiplied_expected": [
+        59,
+        99,
+        146,
+        255
+      ],
+      "white_expected": [
+        59,
+        99,
+        146,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 3
+      }
+    },
+    {
+      "row": 6,
+      "mode": "Luminosity",
+      "premultiplied_expected": [
+        41,
+        84,
+        126,
+        255
+      ],
+      "white_expected": [
+        41,
+        84,
+        126,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 11
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Normal",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Multiply",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Screen",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Overlay",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Darken",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Lighten",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "ColorDodge",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "ColorBurn",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "HardLight",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "SoftLight",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Difference",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Exclusion",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Hue",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Saturation",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Color",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 7,
+      "mode": "Luminosity",
+      "premultiplied_expected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "white_expected": [
+        254,
+        254,
+        254,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Normal",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Multiply",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Screen",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Overlay",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Darken",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Lighten",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "ColorDodge",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "ColorBurn",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "HardLight",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "SoftLight",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Difference",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Exclusion",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Hue",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Saturation",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Color",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 8,
+      "mode": "Luminosity",
+      "premultiplied_expected": [
+        26,
+        51,
+        77,
+        128
+      ],
+      "white_expected": [
+        153,
+        178,
+        204,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 2,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Normal",
+      "premultiplied_expected": [
+        51,
+        102,
+        114,
+        255
+      ],
+      "white_expected": [
+        51,
+        102,
+        114,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 50
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Multiply",
+      "premultiplied_expected": [
+        41,
+        87,
+        114,
+        255
+      ],
+      "white_expected": [
+        41,
+        87,
+        114,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 15
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Screen",
+      "premultiplied_expected": [
+        61,
+        117,
+        153,
+        255
+      ],
+      "white_expected": [
+        61,
+        117,
+        153,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 40
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Overlay",
+      "premultiplied_expected": [
+        43,
+        97,
+        127,
+        255
+      ],
+      "white_expected": [
+        43,
+        97,
+        127,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 30
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Darken",
+      "premultiplied_expected": [
+        51,
+        102,
+        114,
+        255
+      ],
+      "white_expected": [
+        51,
+        102,
+        114,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 1
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Lighten",
+      "premultiplied_expected": [
+        51,
+        102,
+        153,
+        255
+      ],
+      "white_expected": [
+        51,
+        102,
+        153,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 50
+      }
+    },
+    {
+      "row": 9,
+      "mode": "ColorDodge",
+      "premultiplied_expected": [
+        54,
+        119,
+        153,
+        255
+      ],
+      "white_expected": [
+        54,
+        119,
+        153,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 47
+      }
+    },
+    {
+      "row": 9,
+      "mode": "ColorBurn",
+      "premultiplied_expected": [
+        38,
+        76,
+        114,
+        255
+      ],
+      "white_expected": [
+        38,
+        76,
+        114,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 26
+      }
+    },
+    {
+      "row": 9,
+      "mode": "HardLight",
+      "premultiplied_expected": [
+        43,
+        97,
+        114,
+        255
+      ],
+      "white_expected": [
+        43,
+        97,
+        114,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 58
+      }
+    },
+    {
+      "row": 9,
+      "mode": "SoftLight",
+      "premultiplied_expected": [
+        45,
+        99,
+        138,
+        255
+      ],
+      "white_expected": [
+        45,
+        99,
+        138,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 21
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Difference",
+      "premultiplied_expected": [
+        38,
+        76,
+        153,
+        255
+      ],
+      "white_expected": [
+        38,
+        76,
+        153,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 50
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Exclusion",
+      "premultiplied_expected": [
+        59,
+        107,
+        153,
+        255
+      ],
+      "white_expected": [
+        59,
+        107,
+        153,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 29
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Hue",
+      "premultiplied_expected": [
+        55,
+        106,
+        119,
+        255
+      ],
+      "white_expected": [
+        55,
+        106,
+        119,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 9
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Saturation",
+      "premultiplied_expected": [
+        51,
+        102,
+        153,
+        255
+      ],
+      "white_expected": [
+        51,
+        102,
+        153,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 19
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Color",
+      "premultiplied_expected": [
+        55,
+        106,
+        119,
+        255
+      ],
+      "white_expected": [
+        55,
+        106,
+        119,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 0,
+        "pdfium": 8
+      }
+    },
+    {
+      "row": 9,
+      "mode": "Luminosity",
+      "premultiplied_expected": [
+        47,
+        98,
+        149,
+        255
+      ],
+      "white_expected": [
+        47,
+        98,
+        149,
+        255
+      ],
+      "raw_max_difference": {
+        "mupdf": 1,
+        "pdfium": 42
+      }
+    }
+  ]
+}

@@ -51,7 +51,8 @@ def measure(library,book,scale):
     engine=c.CDLL(str(library))
     engine.exr_fixed_open.argtypes=[c.c_char_p,c.c_void_p,c.POINTER(c.c_void_p),c.POINTER(Error)]
     engine.exr_fixed_render.argtypes=[c.c_void_p,c.c_size_t,c.c_double,c.c_void_p,c.POINTER(Bitmap),c.POINTER(Error)]
-    engine.exr_fixed_free.argtypes=[c.c_void_p];engine.exr_bitmap_free.argtypes=[c.POINTER(Bitmap)]
+    engine.exr_fixed_free.argtypes=[c.c_void_p];engine.exr_fixed_free.restype=None
+    engine.exr_bitmap_free.argtypes=[c.POINTER(Bitmap)];engine.exr_bitmap_free.restype=None
     engine.exr_version.restype=c.c_char_p
     document=c.c_void_p();error=Error();baseline=peak_rss();start=time.perf_counter_ns()
     status=engine.exr_fixed_open(str(book).encode('utf-8'),None,c.byref(document),c.byref(error))
@@ -86,7 +87,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('library',type=Path);parser.add_argument('fixtures',type=Path);parser.add_argument('output',type=Path)
     parser.add_argument('--runs',type=int,default=3);parser.add_argument('--scale',type=float,default=4)
-    parser.add_argument('--child',metavar='CASE');args=parser.parse_args()
+    parser.add_argument('--case',action='append',choices=('flat','primitives','state','groups','compound','ap-groups','nonisolated','ap-nonisolated'));parser.add_argument('--child',metavar='CASE');args=parser.parse_args()
     if not 1<=args.runs<=20 or not .25<=args.scale<=4:parser.error('runs: 1..20, scale: .25..4')
     args.library=args.library.resolve();args.fixtures=args.fixtures.resolve()
     if args.child:
@@ -95,7 +96,7 @@ def main():
         'library_bytes':args.library.stat().st_size,'scale':args.scale,'runs':args.runs,
         'scope':'One-page original PDF probes; fresh Python/ctypes processes; RSS includes host; disk cache/background load uncontrolled; repeated repaint, not page navigation.', 'cases':{}}
     args.output.mkdir(parents=True,exist_ok=True)
-    for name in ('flat','primitives','state','groups','compound','ap-groups'):
+    for name in (args.case or ('flat','primitives','state','groups','compound','ap-groups','nonisolated','ap-nonisolated')):
         records=[]
         for run in range(args.runs):
             result=subprocess.run([sys.executable,str(Path(__file__).resolve()),str(args.library),str(args.fixtures),str(args.output),

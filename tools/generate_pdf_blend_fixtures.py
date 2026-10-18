@@ -105,20 +105,51 @@ def make_compound():
    ops.append(f'q /B gs {color((51,102,153))} {x} {y} 16 16 re f /{key} gs 1 0 0 rg 0 1 0 RG 4 w {x+2} {y+2} 12 12 re B Q')
  p.finish('compound','\n'.join(ops));return p
 
-def make_ap_groups():
+def make_ap_groups(isolated=True):
  p=PDF(256,16);p.state('B','Normal',192);ops=[]
  for col,mode in enumerate(MODES):
   p.state(f'G{col}',mode,128);x=col*16
   ops.append(f'q /B gs {color((51,102,153))} {x} 0 16 16 re f Q')
-  ap=p.add(stream(f'1 0 0 rg 0 0 16 16 re f /G{col} gs 0 1 0 rg 0 0 16 16 re f',f'/Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true /CS /DeviceRGB >> /Resources {p.resources()}'.encode()))
+  group=' /I true /CS /DeviceRGB' if isolated else ' /I false'
+  prefix='' if isolated else '/B gs '
+  ap=p.add(stream(prefix+f'1 0 0 rg 0 0 16 16 re f /G{col} gs 0 1 0 rg 0 0 16 16 re f',f'/Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency{group} >> /Resources {p.resources()}'.encode()))
   p.annotations.append(p.add(f'<< /Type /Annot /Subtype /Square /Rect [{x} 0 {x+16} 16] /AP << /N {ap} 0 R >> >>'.encode()))
- p.finish('ap-groups','\n'.join(ops));return p
+ p.finish('ap-groups' if isolated else 'ap-nonisolated','\n'.join(ops));return p
+
+def make_nonisolated():
+ p=PDF(256,160);p.state('C','Multiply',128);p.state('Low','ColorDodge',1)
+ p.gs['D']=p.add(b'<< /BM /HardLight /ca 0.752941176 /CA 0.250980392 >>')
+ sm=p.add(stream(bytes((128,)),b'/Type /XObject /Subtype /Image /Width 1 /Height 1 /BitsPerComponent 8 /ColorSpace /DeviceGray'))
+ p.xo['Im']=p.add(stream(bytes((204,77,26)),f'/Type /XObject /Subtype /Image /Width 1 /Height 1 /BitsPerComponent 8 /ColorSpace /DeviceRGB /SMask {sm} 0 R'.encode()))
+ font_data=(ROOT.parent/'shaping/shaping.ttf').read_bytes();font_file=p.add(stream(font_data,b'/Length1 '+str(len(font_data)).encode()))
+ desc=p.add(f'<< /Type /FontDescriptor /FontName /EXRShapingOracle /Flags 32 /FontBBox [0 -200 1000 800] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 800 /StemV 80 /FontFile2 {font_file} 0 R >>'.encode())
+ p.fonts['F']=p.add(f'<< /Type /Font /Subtype /TrueType /BaseFont /EXRShapingOracle /Encoding /WinAnsiEncoding /FirstChar 65 /LastChar 65 /Widths [600] /FontDescriptor {desc} 0 R >>'.encode())
+ def form(content,isolated=False,box='0 0 16 16'):
+  return p.add(stream(content,f'/Type /XObject /Subtype /Form /BBox [{box}] /Group << /S /Transparency /I {str(isolated).lower()} >> /Resources {p.resources()}'.encode()))
+ p.xo['Iso']=form('/C gs 1 0 0 rg 0 0 16 16 re f 0 1 0 rg 0 0 16 16 re f',True)
+ p.xo['Nested']=form('/C gs 0 0 1 rg 0 0 16 16 re f 1 0 0 rg 0 0 16 16 re f')
+ bodies=['/C gs 1 0.2 0.5 rg 0 0 16 16 re f',
+  '/C gs 0 1 0 RG 4 w 2 2 12 12 re S',
+  '/C gs 16 0 0 16 0 0 cm /Im Do',
+  '/C gs 1 0.2 0.5 rg BT /F 20 Tf 1 0 0 1 2 4 Tm (A) Tj ET',
+  '/D gs 1 0 0 rg 0 1 0 RG 4 w 2 2 12 12 re B',
+  '/C gs /Iso Do','/C gs /Nested Do',
+  '/Low gs 0.99 1 0 rg 0 0 16 16 re f','',
+  '/C gs 1 1 0 rg -8 -8 32 32 re f']
+ for row,body in enumerate(bodies):p.xo[f'NI{row}']=form(body,box='2.25 2.25 13.75 13.75' if row==9 else '0 0 16 16')
+ ops=[]
+ for row,ba in enumerate((255,128,192,0,64,192,255,1,128,255)):
+  p.state(f'B{row}','Normal',ba)
+  for col,mode in enumerate(MODES):
+   p.state(f'G{col}',mode,128);x=col*16;y=row*16
+   ops.append(f'q /B{row} gs {color((51,102,153))} {x} {y} 16 16 re f /G{col} gs 1 0 0 1 {x} {y} cm /NI{row} Do Q')
+ p.finish('nonisolated','\n'.join(ops));return p
 
 def main():
  parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--oracle-module-dir',type=Path);args=parser.parse_args()
  if args.oracle_module_dir:sys.path.insert(0,str(args.oracle_module_dir))
  import pymupdf, pypdfium2
- ROOT.mkdir(parents=True,exist_ok=True);pages={'flat':make_flat(),'primitives':make_primitives(),'state':make_state(),'groups':make_groups(),'compound':make_compound(),'ap-groups':make_ap_groups()}
+ ROOT.mkdir(parents=True,exist_ok=True);pages={'flat':make_flat(),'primitives':make_primitives(),'state':make_state(),'groups':make_groups(),'compound':make_compound(),'ap-groups':make_ap_groups(),'nonisolated':make_nonisolated(),'ap-nonisolated':make_ap_groups(False)}
  for name,page in pages.items():
   mask=bytearray([1])*(page.w*page.h)
   if name=='primitives':
@@ -133,6 +164,12 @@ def main():
     for col in range(16):
      for y in range(row*16+4,row*16+12):
       for x in range(col*16+4,col*16+12):mask[(page.h-1-y)*page.w+x]=1
+  if name=='nonisolated':
+   mask=bytearray(page.w*page.h)
+   for row in range(10):
+    for col in range(16):
+     for y in range(row*16+6,row*16+10):
+      for x in range(col*16+(2 if row in (1,4) else 6),col*16+(4 if row in (1,4) else 10)):mask[(page.h-1-y)*page.w+x]=1
   (ROOT/(name+'.mask')).write_bytes(mask)
   with pymupdf.open(ROOT/(name+'.pdf')) as document:
    for alpha in (False,True):
@@ -159,6 +196,35 @@ def main():
     white_data[i+3]=255
    if name=='primitives':white_data[:24*page.w*4]=rendered[False][:24*page.w*4]
    if name=='ap-groups':white_data=rendered[False]
+   if name=='nonisolated':
+    alpha_data=bytearray((ROOT/(name+'-mupdf-alpha.rgba')).read_bytes())
+    white_data=bytearray((ROOT/(name+'-mupdf-white.rgba')).read_bytes())
+    from pdf_group_reference import probe
+    audit=[]
+    raw_oracles={oracle:(ROOT/(name+'-'+oracle+'-alpha.rgba')).read_bytes() for oracle in ('mupdf','pdfium')}
+    for row in range(10):
+     for col,mode in enumerate(MODES):
+      expected_alpha,expected_white=probe(row,mode)
+      deltas={oracle:0 for oracle in ('mupdf','pdfium')}
+      for y in range(row*16+6,row*16+10):
+       for x in range(col*16+(2 if row in (1,4) else 6),col*16+(4 if row in (1,4) else 10)):
+        i=((page.h-1-y)*page.w+x)*4
+        for oracle in deltas:
+         raw=raw_oracles[oracle]
+         deltas[oracle]=max(deltas[oracle],max(abs(a-b) for a,b in zip(expected_alpha,raw[i:i+4])))
+        alpha_data[i:i+4]=expected_alpha;white_data[i:i+4]=expected_white
+      # Opaque/separable samples independently agree with MuPDF; its partial
+      # nonseparable behavior and PDFium's implicit isolation are retained raw.
+      if row!=2 and (row in (0,6,9) or col<12):assert deltas['mupdf']<=3,(row,mode,deltas)
+      audit.append({'row':row,'mode':mode,'premultiplied_expected':list(expected_alpha),'white_expected':list(expected_white),'raw_max_difference':deltas})
+    (ROOT/'nonisolated-oracle.json').write_text(json.dumps({'reference':'Independent Decimal(40) ISO 32000-1 11.4.4 group arithmetic at full-coverage interior probes; MuPDF checked on opaque or separable samples except its masked image alpha result (204 instead of ISO/PDFium 200 in row 2). PDFium renders these non-isolated Forms as isolated; MuPDF partial-alpha nonseparable differences retained.', 'probes':audit},indent=2)+'\n',encoding='utf-8')
+   if name=='ap-nonisolated':
+    from pdf_group_reference import ap_probe
+    for col,mode in enumerate(MODES):
+     ea,ew=ap_probe(mode,False),ap_probe(mode,True)
+     for y in range(16):
+      for x in range(col*16,(col+1)*16):
+       i=(y*page.w+x)*4;alpha_data[i:i+4]=ea;white_data[i:i+4]=ew
    if name=='state':
     # 11.6.3: first recognized BM array name. 7.3.9: null entry is absent.
     for y in range(page.h):
@@ -170,7 +236,8 @@ def main():
   p=PDF(16,16);p.gs['Bad']=p.add(f'<< /BM {mode} >>'.encode());p.finish(f'bad-{i}','/Bad gs 1 0 0 rg 0 0 16 16 re f')
  for i,group in enumerate(('<< /S /Transparency /I false >>','<< /S /Transparency /I true /K true >>','<< /S /Transparency /I true /CS /DeviceCMYK >>','<< /S /Transparency /I 1 >>','<< /S /Missing /I true >>')):
   p=PDF(16,16);p.xo['Fm']=p.add(stream('0 0 16 16 re f',f'/Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group {group} /Resources << >>'.encode()));p.finish(f'group-bad-{i}','/Fm Do')
+ p=PDF(16,16);p.xo['Fm']=p.add(stream('0 0 16 16 re f',b'/Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I false /CS /DeviceRGB >> /Resources << >>'));p.finish('group-bad-5','/Fm Do')
  p=PDF(16,16);p.xo['Fm']=p.add(stream('q BT',b'/Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true >> /Resources << >>'));p.finish('group-malformed','/Fm Do')
- manifest={'pymupdf':pymupdf.VersionBind,'mupdf':pymupdf.VersionFitz,'pypdfium2':str(pypdfium2.PYPDFIUM_INFO),'pdfium':str(pypdfium2.PDFIUM_INFO),'scope':'Original RGB scenes. Raw MuPDF/PDFium renders retained separately. Expected samples use PDFium premultiplied alpha plus ISO 32000-1 11.4.7 page isolation; annotation white region uses PDFium white; BM array/null cells use 11.6.3 and 7.3.9 normative results. MuPDF partial-alpha nonseparable blending differs; both engines misselect unknown-first BM array. Font is original GPL-3.0-only fixture.','modes':MODES,'color_cases':CASES,'sizes':{k:[v.w,v.h] for k,v in pages.items()},'sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(ROOT.iterdir()) if p.name!='manifest.json'}}
+ manifest={'pymupdf':pymupdf.VersionBind,'mupdf':pymupdf.VersionFitz,'pypdfium2':str(pypdfium2.PYPDFIUM_INFO),'pdfium':str(pypdfium2.PDFIUM_INFO),'scope':'Original RGB scenes. Raw MuPDF/PDFium renders retained separately. Expected samples use PDFium premultiplied alpha plus ISO 32000-1 11.4.7 page isolation; annotation white region uses PDFium white; BM array/null cells use 11.6.3 and 7.3.9 normative results. Non-isolated interior samples use independent Decimal(40) ISO group formulas, cross-checked against MuPDF on opaque/separable samples; PDFium implicitly isolates these Forms. MuPDF partial-alpha nonseparable blending differs; both engines misselect unknown-first BM array. Font is original GPL-3.0-only fixture.','modes':MODES,'color_cases':CASES,'sizes':{k:[v.w,v.h] for k,v in pages.items()},'sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(ROOT.iterdir()) if p.name!='manifest.json'}}
  (ROOT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8');print('Original blend fixtures and MuPDF/PDFium references generated',pymupdf.VersionFitz,pypdfium2.PDFIUM_INFO)
 if __name__=='__main__':main()

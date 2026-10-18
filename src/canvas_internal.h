@@ -4,11 +4,11 @@
 #include "vector_internal.h"
 typedef struct { exr_bitmap bitmap; size_t refs; } exr_clip_mask;
 typedef struct {
-  exr_bitmap bitmap;exr_clip_mask *clip,*pending,**pending_groups;
+  exr_bitmap bitmap;exr_composite_state *composite;exr_clip_mask *clip,*pending,**pending_groups;
   size_t depth,group_depth;double opacity;exr_blend_mode blend,parent_blend;
 } exr_canvas_layer;
 struct exr_canvas {
-  exr_bitmap bitmap; exr_control control; exr_error failure;
+  exr_bitmap bitmap;exr_composite_state *composite; exr_control control; exr_error failure;
   exr_clip_mask *clip,*saved[160],*group,*groups[64];
   exr_canvas_layer *layers;size_t layer_depth,layer_capacity,layer_bytes,layer_budget;
   exr_blend_mode blend,saved_blend[160];

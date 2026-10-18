@@ -182,10 +182,20 @@ exr_status exr_cbz_open_owned(unsigned char *data,size_t size,const char *title,
 exr_status exr_cbz_open_file(const char *path,const char *title,
   const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *error);
 exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex *out,exr_error *error);
+/* Non-isolated working pixels: premultiplied RGB, complete alpha, group-only
+   alpha. A NULL buffer keeps the original compact 8-bit drawing path. */
+typedef struct exr_composite_state {
+  float *pixels;exr_bitmap backdrop;const struct exr_composite_state *backdrop_state;
+  uint32_t left,top,right,bottom;unsigned depth;
+} exr_composite_state;
+exr_status exr_sink_begin_group(const exr_draw_sink_ex *sink,double opacity,exr_blend_mode mode,unsigned flags,exr_error *error);
+exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state,const exr_bitmap *parent,
+  const exr_composite_state *parent_state,size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,
-  uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,
+  uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,
   size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_bitmap_to_gray(exr_bitmap *bitmap,const exr_control *control,exr_error *error);
 exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,double opacity,exr_blend_mode mode,
-  const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *error);
+  const exr_bitmap *clip,exr_composite_state *target_state,const exr_composite_state *source_state,
+  size_t *work,const exr_control *control,exr_error *error);
 #endif
