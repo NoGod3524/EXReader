@@ -2377,3 +2377,12 @@ physical overprint are still pending; this is not full print-color conformance.
 No public C layout, ABI epoch, schema or product-version change. Final platform
 CI is checked after pushing this batch; further feature development pauses at
 the user's request after this checkpoint.
+
+ICC implementation 06893f3 passes all six jobs in run 39084326663. Final code
+a4e70f6 additionally hides statically embedded CMS symbols from the shared
+library's public surface and passes all six jobs in run 39084529119:
+Windows/Linux/macOS native and installed SDK tests (including JNI and macOS
+Swift), Android ARM64, Apple iOS/iPadOS device/simulator builds, and ASan/UBSan.
+This also verifies the Ubuntu decoder-initialization fix. Mobile verification
+remains library builds rather than application/device acceptance. Development
+is paused here as requested; pending features are not marked complete.
