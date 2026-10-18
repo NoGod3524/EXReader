@@ -274,6 +274,21 @@ public final class Smoke {
             }
             check(rewrittenAgain && rematchedAgain);
         }
+        try(EXReader.Publication boundaryBook=new EXReader.Publication(root.resolve("books/hyphen-boundary-ri.epub").toString());
+            EXReader.Document boundaryChapter=boundaryBook.load(0);
+            EXReader.Pager boundaryPager=boundaryChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,compoundConfig)) {
+            boundaryPager.setHyphenation(new EXReader.HyphenDictionary[]{new EXReader.HyphenDictionary("zv",
+                ".aaaa1a./=🇺,1,5".getBytes(StandardCharsets.UTF_8),1,1)},0);
+            try(EXReader.ReflowPage page=boundaryPager.next()) {
+                check(page!=null);boolean joined=false,separated=false;
+                for(EXReader.Glyph g:page.snapshot().glyphs) {
+                    check((g.flags&~2559)==0);
+                    if(g.codepoint==0x1f1f8 && g.start==5) { check(g.clusterStart==4 && g.clusterEnd==9 && g.boundaries==0);joined=true; }
+                    if(g.codepoint==0x1f1e8 && g.start==9) { check(g.clusterStart==9 && g.clusterEnd==13 && (g.boundaries&1)!=0);separated=true; }
+                }
+                check(joined && separated && page.render().width==80);
+            }
+        }
         System.out.println("JNI SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed");
     }
 }

@@ -13,10 +13,14 @@ static exr_layout_config config(void) { exr_layout_config c=exr_layout_config_de
 static const char *rematch_rules=
   ".abcd1efghijklmnopqr./d=xy,4,2 "
   ".xyfg1hijklmnopqr. .xyfghijk1lmnopqr./k=zz,8,2 .zzm1nopqr.";
+static const char *boundary_rules=".aaaa1aaaa./\u0301=\u0600,4,2";
+static const char *boundary_canonical=".éaaa1aaaa./\u0301=\u0600,4,2";
+static const char *boundary_ri=".aaaa1a./=🇺,1,5";
+static const char *boundary_emoji=".aaaa1a./=👩‍,1,5";
 static exr_hyphenator *dictionary(void) {
   const char *patterns="aa1aaaa aaaa1aa f1if1if1if1i"; const char *arabic="ل1ال1ال1ا"; const char *french="é1té";const char *compound="aaaa1aaaa .aa1aa. NEXTLEVEL .a1a.";const char *rewrite=".aaaa1aaaa./aa=aaa,4,2";const char *canonical_rewrite=".é1té./é=t,1,2";const char *canonical_rematch=".ébcd1efghijklmnopqr./d=xy,4,2 .xyfg1hijklmnopqr. .xyfghijk1lmnopqr./k=zz,8,2 .zzm1nopqr.";
-  exr_hyphen_pattern_input i[]={{sizeof(*i),"en",patterns,strlen(patterns),1,1},{sizeof(*i),"ar",arabic,strlen(arabic),1,1},{sizeof(*i),"fr",french,strlen(french),1,1},{sizeof(*i),"xx",compound,strlen(compound),1,1},{sizeof(*i),"zz",rewrite,strlen(rewrite),1,1},{sizeof(*i),"zr",canonical_rewrite,strlen(canonical_rewrite),1,1},{sizeof(*i),"zm",rematch_rules,strlen(rematch_rules),1,1},{sizeof(*i),"zn",canonical_rematch,strlen(canonical_rematch),1,1}}; exr_hyphenator *h=NULL;
-  OK(exr_hyphenator_create_patterns(i,8,0,NULL,&h,&error)); return h;
+  exr_hyphen_pattern_input i[]={{sizeof(*i),"en",patterns,strlen(patterns),1,1},{sizeof(*i),"ar",arabic,strlen(arabic),1,1},{sizeof(*i),"fr",french,strlen(french),1,1},{sizeof(*i),"xx",compound,strlen(compound),1,1},{sizeof(*i),"zz",rewrite,strlen(rewrite),1,1},{sizeof(*i),"zr",canonical_rewrite,strlen(canonical_rewrite),1,1},{sizeof(*i),"zm",rematch_rules,strlen(rematch_rules),1,1},{sizeof(*i),"zn",canonical_rematch,strlen(canonical_rematch),1,1},{sizeof(*i),"zp",boundary_rules,strlen(boundary_rules),1,1},{sizeof(*i),"zu",boundary_canonical,strlen(boundary_canonical),1,1},{sizeof(*i),"zv",boundary_ri,strlen(boundary_ri),1,1},{sizeof(*i),"zw",boundary_emoji,strlen(boundary_emoji),1,1}}; exr_hyphenator *h=NULL;
+  OK(exr_hyphenator_create_patterns(i,sizeof(i)/sizeof(*i),0,NULL,&h,&error)); return h;
 }
 static exr_document *constructed(const char *text,const char *lang,const char *style) {
   exr_document *d=NULL; exr_attribute attrs[]={{"lang",lang},{"style",style}};
@@ -31,7 +35,7 @@ static exr_layout *layout(exr_document *d,exr_font *f,exr_hyphenator *h,const ex
 static void source(exr_document *d,const exr_layout *l) {
   size_t size,n,np,i,j; const char *text=exr_document_text(d,&size); const exr_glyph *g=exr_layout_glyphs(l,&n); const exr_page *p=exr_layout_pages(l,&np); unsigned char *covered=calloc(size+1,1); CHECK(covered);
   for(i=0;i<n;i++) {
-    double matrix[6]; CHECK(g[i].page<np && g[i].start>=p[g[i].page].start && g[i].end<=p[g[i].page].end && !(g[i].boundaries&~15u));
+    double matrix[6]; CHECK(!(g[i].flags&~2559u));CHECK(g[i].page<np && g[i].start>=p[g[i].page].start && g[i].end<=p[g[i].page].end && !(g[i].boundaries&~15u));
     OK(exr_glyph_matrix(g+i,matrix,&error));
     for(j=g[i].start;j<g[i].end;j++) covered[j]=1;
   }
@@ -114,6 +118,32 @@ static void rematching(void) {
     exr_layout_config c=config();exr_layout *l; c.page.width=62;l=layout(d,font,h,&c);
     display_lines(l,expected[k]);source(d,l);positioned(d,l,&c);
     exr_layout_free(l);exr_document_free(d);exr_hyphenator_free(h);
+  }
+}
+static void replacement_boundaries(void) {
+  const char *rules[]={".aaaa1aaaa./\u0301=a,4,2", ".aaaa1aaaa./a=\u0600,4,2",
+    ".aaaa1aaaa./\u034f=a,4,2", ".aaaa1aaaa./a=aaa\u2060,4,2",
+    ".aaaa1bककक./a=क्,4,2", ".aaaa1a./=🇺,1,5", ".aaaa1a./=👩‍,1,5", ".aaaa1aaaa./a\ufe0f=a,4,2", ".aaaa1aaaa./a=aaa\u200b,4,2"};
+  const char *words[]={"aaaaaaaa","aaaaaaaa","aaaaaaaa","aaaaaaaa","aaaabककक","aaaaa🇸🇨","aaaaa👩‍💻","aaaaaaaa","aaaaaaaa"};
+  size_t k;
+  for(k=0;k<sizeof(rules)/sizeof(*rules);k++) {
+    exr_hyphenator *h=replacement_dictionary(rules[k]);exr_document *d=constructed(words[k],"zz","hyphens:auto");
+    exr_layout_config c=config();exr_layout *l;size_t i,n;const exr_glyph *g;int seen=0;
+    c.page.width=(k==5 || k==6) ? 48 : 62;l=layout(d,font,h,&c);g=exr_layout_glyphs(l,&n);CHECK(generated(l)>0);
+    for(i=0;i<n;i++) {
+      if(k==0 && g[i].codepoint==0x301) { CHECK(g[i].cluster_start==2 && g[i].cluster_end==4 && !g[i].boundaries);CHECK(exr_layout_hit_test(l,g[i].page,g[i].x+g[i].advance-.1f,g[i].baseline-2)==4);seen=1; }
+      if(k==1 && g[i].start==5) { CHECK(g[i].cluster_start==4 && g[i].cluster_end==6 && !g[i].boundaries);seen=1; }
+      if(k==2 && g[i].codepoint==0x34f) { CHECK((g[i].flags&EXR_GLYPH_HIDDEN) && near(g[i].advance,0));seen=1; }
+      if(k==3 && g[i].start==5) { CHECK((g[i].boundaries&EXR_BOUNDARY_GLUE) && (g[i].boundaries&EXR_BOUNDARY_GRAPHEME));seen=1; }
+      if(k==4 && g[i].start==5) { CHECK(g[i].cluster_start==4 && g[i].cluster_end==8 && !g[i].boundaries);seen=1; }
+      if(k==5 && g[i].codepoint==0x1f1f8) { CHECK(g[i].cluster_start==4 && g[i].cluster_end==9 && !g[i].boundaries);seen=1; }
+      if(k==5 && g[i].codepoint==0x1f1e8) CHECK(g[i].cluster_start==9 && g[i].cluster_end==13 && (g[i].boundaries&EXR_BOUNDARY_GRAPHEME));
+      if(k==6 && g[i].codepoint==0x1f4bb) { CHECK(g[i].cluster_start==4 && g[i].cluster_end==16 && !g[i].boundaries);seen=1; }
+      if(k==7 && g[i].codepoint==0xfe0f) { CHECK((g[i].flags&EXR_GLYPH_HIDDEN) && near(g[i].advance,0) && g[i].cluster_start==3 && g[i].cluster_end==4);seen=1; }
+      if(k==8 && g[i].start==5) { CHECK((g[i].boundaries&EXR_BOUNDARY_LINE) && (g[i].boundaries&EXR_BOUNDARY_GRAPHEME));seen=1; }
+      if((g[i].flags&EXR_GLYPH_GENERATED) && (g[i].codepoint==0x200d || g[i].codepoint==0x2060)) CHECK((g[i].flags&EXR_GLYPH_HIDDEN) && near(g[i].advance,0));
+    }
+    CHECK(seen);source(d,l);positioned(d,l,&c);exr_layout_free(l);exr_document_free(d);exr_hyphenator_free(h);
   }
 }
 static void long_insertion(void) {
@@ -251,7 +281,7 @@ static void replay(const char *name) {
   exr_document *d=book(name); exr_hyphenator *h=dictionary(); exr_layout_config c=config(); exr_layout *all;
   exr_pager *fast=NULL,*slow=NULL; const exr_layout *a,*b; size_t np,i,targets[]={20,15,2,11,0,20,4};
   if(!strcmp(name,"rematch-table")) c.page.height=160;
-  c.page.width=(!strncmp(name,"compound",8) || !strncmp(name,"rewrite",7) || !strncmp(name,"rematch",7)) ? 80 : 55; all=layout(d,font,h,&c); exr_layout_pages(all,&np); CHECK(np>20 && generated(all)>0); source(d,all);
+  c.page.width=(!strncmp(name,"compound",8) || !strncmp(name,"rewrite",7) || !strncmp(name,"rematch",7) || !strncmp(name,"boundary",8)) ? 80 : 55; all=layout(d,font,h,&c); exr_layout_pages(all,&np); CHECK(np>20 && generated(all)>0); source(d,all);
   if(!strcmp(name,"canonical")) {
     size_t count,j,bytes;const exr_glyph *glyphs=exr_layout_glyphs(all,&count);const char *text=exr_document_text(d,&bytes);
     CHECK(bytes==6399 && !memcmp(text,"ÉTÉ ",8));
@@ -364,5 +394,5 @@ static void sessions(void) {
   OK(exr_session_get(session,0,&d,&l,&error));CHECK(!generated(l));exr_session_free(session);
 }
 int main(int argc,char **argv) {
-  char path[4096]; CHECK(argc==2);directory=argv[1];snprintf(path,sizeof(path),"%s/fonts/primary.ttf",directory); OK(exr_font_open(path,&font,&error)); ordinary();replacements();rematching();long_insertion();replacement_intrinsics();replacement_shaping();replacement_recovery();rematch_provider_recovery();fixtures();cascade();joining();word_boundaries();provider_recovery();sessions();replay("long");replay("rtl");replay("vertical");replay("float");replay("orthogonal");replay("canonical");replay("compound");replay("compound-joiner");replay("rewrite-long");replay("rewrite-rtl");replay("rewrite-vertical");replay("rewrite-float");replay("rewrite-orthogonal");replay("rewrite-table");replay("rewrite-inline");replay("rewrite-gap");replay("rewrite-canonical");replay("rematch-long");replay("rematch-rtl");replay("rematch-vertical");replay("rematch-float");replay("rematch-orthogonal");replay("rematch-table");replay("rematch-inline");replay("rematch-gap");replay("rematch-canonical"); exr_font_free(font); printf("%u automatic hyphen layout checks passed\n",checks); return 0;
+  char path[4096]; CHECK(argc==2);directory=argv[1];snprintf(path,sizeof(path),"%s/fonts/primary.ttf",directory); OK(exr_font_open(path,&font,&error)); ordinary();replacements();rematching();replacement_boundaries();long_insertion();replacement_intrinsics();replacement_shaping();replacement_recovery();rematch_provider_recovery();fixtures();cascade();joining();word_boundaries();provider_recovery();sessions();replay("long");replay("rtl");replay("vertical");replay("float");replay("orthogonal");replay("canonical");replay("compound");replay("compound-joiner");replay("rewrite-long");replay("rewrite-rtl");replay("rewrite-vertical");replay("rewrite-float");replay("rewrite-orthogonal");replay("rewrite-table");replay("rewrite-inline");replay("rewrite-gap");replay("rewrite-canonical");replay("rematch-long");replay("rematch-rtl");replay("rematch-vertical");replay("rematch-float");replay("rematch-orthogonal");replay("rematch-table");replay("rematch-inline");replay("rematch-gap");replay("rematch-canonical");replay("boundary-long");replay("boundary-rtl");replay("boundary-vertical");replay("boundary-float");replay("boundary-orthogonal");replay("boundary-table");replay("boundary-inline");replay("boundary-gap");replay("boundary-canonical");replay("boundary-ri");replay("boundary-emoji"); exr_font_free(font); printf("%u automatic hyphen layout checks passed\n",checks); return 0;
 }
