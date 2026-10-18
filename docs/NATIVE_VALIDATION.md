@@ -2304,3 +2304,34 @@ interiors) agree with MuPDF 1.28.2 within one byte per channel. Cubic tests use
 analytical expectations; no independent cubic-renderer equivalence is claimed.
 All 100 local Windows suites pass. No runtime dependency or ABI/schema/version
 change. Platform CI is checked separately after pushing this implementation.
+
+Code commit 3ea8bca passes all six jobs in CI run 39082920611 (Windows/Linux/macOS,
+Android ARM64, Apple device/simulator builds and ASan/UBSan).
+
+## Milestone 0.18 development: CBZ fixed-page reader
+
+The native reader reuses miniz, PNG/JPEG decoding, fixed-page geometry/draw sinks,
+and the SQLite library. File opening retains a random-access file source up to
+2 GiB; memory opening copies at most 128 MiB. Page discovery probes headers in
+4 KiB chunks, capped at 1 MiB per page and 64 MiB of header work. Rendering
+extracts, CRC-validates, decodes and releases just the requested image. No whole
+comic pixel cache or new dependency is added. Unit, pixel-aligned transforms
+preserve exact original pixels rather than applying a smoothing pass.
+
+Regressions cover stored/deflate archives, PNG/JPEG, numerical sorting and
+leading-zero ties, mixed-case extensions, UTF-8 member paths, pixel orientation,
+scaled rendering, multi-chunk JPEG headers, ComicInfo title/author/description,
+empty text snapshots, file/memory ownership, cancellation/retry, malformed XML,
+external-entity rejection, unsupported image formats, unsafe/invalid names,
+duplicate paths and lazy CRC failure confined to its page. Library tests cover
+deduplication, metadata, page progress, page bookmarks and backup/reopening.
+All 101 local Windows suites and an installed C++17 SDK consumer pass. Swift
+and JNI smoke programs add CBZ coverage while retaining existing PDF entry
+points. The 908-byte comic.cbz fixture is original 2x2 RGBA artwork and XML,
+packaged with Python's standard ZIP/zlib libraries; no external artwork.
+
+CBZ supports PNG/JPEG pages; known unsupported image codecs fail explicitly.
+It does not run OCR, apply ComicInfo page semantics, split spreads, apply EXIF
+orientation, automatically extract a cover, or write back ComicInfo. Book cover
+editing uses the existing library API. C ABI epoch 1, schema 6 and product
+version 0.18.0 remain unchanged. Platform CI is checked after push.

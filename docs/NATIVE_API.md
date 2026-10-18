@@ -1177,3 +1177,14 @@ DeviceN 接受 1–32 个色名、device/CIE/ICC alternate 和最多四输出的
 FunctionType 0 接受 1–32 输入、1–4 输出，按 PDF 定义以首输入轴最快、同一点各输出交错的顺序读取采样表。Order 1 使用多线性插值；Order 3 使用 a=−1/2 的张量积三次卷积，边界复制端点样本，两点轴退化为线性，单点轴保持常值。三次插值允许超调，先 Decode 后 Range 裁剪。各轴独立应用 Domain/Encode/Size，保留反向 Encode、单点、零宽域和所有八种样本位深。DeviceN、Separation、Indexed、XObject 和内联图片复用同一实现。
 
 整个函数图仍受 1 MiB 载荷限制；维数乘法在分配前检查，最坏插值邻点组合最多 65536，超出返回 EXR_LIMIT。单点轴不增加组合数，因此 32 轴的退化网格可正常读取。求值按实际非整数坐标展开，每 256 组合检查取消；最坏计算量计入原页面/图片预算。不新增依赖、公开结构字段或版本号。
+
+
+## CBZ 漫画固定页（0.18 开发补充）
+
+`EXR_CBZ` 在既有枚举末尾追加，不更改旧值。内存入口 `exr_fixed_open_memory(EXR_CBZ, ...)` 复制原文件；文件入口 `exr_fixed_open("book.cbz", ...)` 保留随机读取文件源，扩展名不区分 ASCII 大小写。内存输入仍限 128 MiB；文件源限 2 GiB。使用同一 `exr_fixed_document`、viewport、draw sink 和 render 接口，图片像素作为原页面坐标，左上原点、y 向下。页 ID/标签为原始归档路径；按 ASCII 大小写不敏感、数字自然顺序排序，等价项按原始名字字节确定次序。
+
+读取 PNG/JPEG 页；非图片附件和 macOS 隐藏文件跳过。遇到已知但未支持的 WebP/GIF/BMP/AVIF/TIFF 图片返回 EXR_FORMAT，不悄悄丢页。拒绝重复页路径、非法 UTF-8/非规范路径、加密和不支持的 ZIP 压缩；支持 stored/deflate 和已有 miniz ZIP64。最多 10000 个归档成员，每页编码数据 32 MiB、8192 边长、16M 像素。打开时逐页按 4 KiB 块探测图片头，单页头最多 1 MiB、全书头扫描最多 64 MiB；不解码或缓存整书像素。绘制时只提取目标页、校验完整 CRC 后解码，完成即释放。正常比例且对齐像素的绘制保留原始像素，其他变换复用图片插值与页面裁切。
+
+根目录 `ComicInfo.xml`（ASCII 大小写不敏感）最多 1 MiB，拒绝重复和不安全 XML。Title/Writer/Summary/LanguageISO/Publisher 映射为 dcterms 属性；其余直接文本字段保留为 `urn:comicinfo:<原字段名>`。最多 128 值、每值 64 KiB；Pages 等嵌套结构尚未解释。缺省目录顺序不受 ComicInfo/Manga 字段影响；没有自动双页拆分或 EXIF 旋转。书库复用原书保存、元数据编辑、封面设置、精确去重、页进度、固定页书签和备份，schema 仍为 6；未自动选择封面。图片页的文字快照为空，未运行 OCR。
+
+Swift 的 `EXReaderFixedDocument(data: ..., format: .cbz)` 和 Java 的 `new EXReader.FixedDocument(EXReader.FixedFormat.CBZ, bytes)` 复用原有元数据/绘制/文字接口；旧 Swift 缺省 PDF 和 Java `EXReader.Pdf` 构造方式保留。C ABI epoch 1 和版本 0.18.0 不变，无新增运行时依赖。

@@ -177,7 +177,7 @@ exr_status exr_library_import(exr_library *l, exr_format format, const void *dat
   if (!l || !id)
     return exr_fail(e, EXR_ARGUMENT, "Invalid import arguments");
   *id = 0;
-  if(format==EXR_PDF) {
+  if(exr_format_is_fixed(format)) {
     result=exr_fixed_open_memory(format,data,n,NULL,&fixed,e);
     if(result==EXR_OK) { exr_fixed_pages(fixed,&extent); result=exr_fixed_load_metadata(fixed,NULL,&metadata,&metadata_count,e); }
     if(result==EXR_OK) for(i=0;i<metadata_count;i++) {
@@ -217,7 +217,7 @@ exr_status exr_library_import_unique(exr_library *l,exr_format format,const void
   sqlite3_stmt *s=NULL; exr_status status=EXR_OK; int step,transaction=0,inserted=0; int64_t found=0;
   if(id) *id=0;
   if(created) *created=0;
-  if(!l || !id || !created || !data || !n || format<EXR_TXT || format>EXR_PDF)
+  if(!l || !id || !created || !data || !n || format<EXR_TXT || format>EXR_CBZ)
     return exr_fail(e,EXR_ARGUMENT,"Invalid unique import arguments");
   if(n>EXR_MAX_INPUT) return exr_fail(e,EXR_LIMIT,"Unique import exceeds source byte limit");
   sqlite3_mutex_enter(sqlite3_db_mutex(l->db));
@@ -527,7 +527,7 @@ exr_status exr_library_progress(exr_library *l,int64_t book,const exr_anchor *po
   step=sqlite3_step(s); if(step!=SQLITE_ROW) { status=step==SQLITE_DONE ? exr_fail(e,EXR_ARGUMENT,"Book missing") : database_error(l,e); goto finish; }
   if(sqlite3_column_type(s,0)!=SQLITE_INTEGER || !offset_column(s,1,&extent) || extent>EXR_MAX_TEXT) { status=exr_fail(e,EXR_DATABASE,"Invalid stored book extent"); goto finish; }
   format=sqlite3_column_int(s,0);
-  if(format==EXR_PDF) { status=exr_fail(e,EXR_FORMAT,"Text progress selectors do not describe fixed-page positions"); goto finish; }
+  if(exr_format_is_fixed(format)) { status=exr_fail(e,EXR_FORMAT,"Text progress selectors do not describe fixed-page positions"); goto finish; }
   if(format<EXR_TXT || format>EXR_MOBI) { status=exr_fail(e,EXR_DATABASE,"Invalid stored book format"); goto finish; }
   if(point->start>extent) { status=exr_fail(e,EXR_ARGUMENT,"Reading progress is outside the stored text extent"); goto finish; }
   sqlite3_finalize(s); s=NULL;
@@ -548,7 +548,7 @@ exr_status exr_library_progress_get(exr_library *l,int64_t book,exr_anchor *out,
   step=sqlite3_step(s); if(step!=SQLITE_ROW) { status=step==SQLITE_DONE ? exr_fail(e,EXR_ARGUMENT,"Book missing") : database_error(l,e); goto finish; }
   if(sqlite3_column_type(s,0)!=SQLITE_INTEGER || !offset_column(s,1,&position) || !offset_column(s,2,&extent) || position>extent || extent>EXR_MAX_TEXT) { status=exr_fail(e,EXR_DATABASE,"Invalid stored reading position"); goto finish; }
   format=sqlite3_column_int(s,0);
-  if(format==EXR_PDF) { status=exr_fail(e,EXR_FORMAT,"Fixed-page progress uses page positions"); goto finish; }
+  if(exr_format_is_fixed(format)) { status=exr_fail(e,EXR_FORMAT,"Fixed-page progress uses page positions"); goto finish; }
   if(format<EXR_TXT || format>EXR_MOBI) { status=exr_fail(e,EXR_DATABASE,"Invalid stored book format"); goto finish; }
   if(sqlite3_column_type(s,3)==SQLITE_NULL) { a.start=a.end=position; value=EXR_ANCHOR_LEGACY; goto success; }
   if(sqlite3_column_type(s,3)!=SQLITE_INTEGER || sqlite3_column_int64(s,3)!=book || !offset_column(s,4,&a.start) || sqlite3_column_type(s,5)!=SQLITE_INTEGER || (value=sqlite3_column_int(s,5))<0 || value>EXR_ANCHOR_LEGACY) { status=exr_fail(e,EXR_DATABASE,"Invalid stored reading selector"); goto finish; }
@@ -605,7 +605,7 @@ exr_status exr_library_note(exr_library *l, const exr_note *note, int64_t *id, e
     sqlite3_finalize(s);
     return exr_fail(e, EXR_ARGUMENT, "Book missing");
   }
-  if(sqlite3_column_int(s,1)==EXR_PDF) { sqlite3_finalize(s); return exr_fail(e,EXR_FORMAT,"Use fixed-page notes for this book"); }
+  if(exr_format_is_fixed((exr_format)sqlite3_column_int(s,1))) { sqlite3_finalize(s); return exr_fail(e,EXR_FORMAT,"Use fixed-page notes for this book"); }
   if (!offset_column(s, 0, &text_size) || text_size > EXR_MAX_TEXT) {
     sqlite3_finalize(s);
     return exr_fail(e, EXR_DATABASE, "Invalid stored book text size");
@@ -823,7 +823,7 @@ static exr_status read_fixed_note(sqlite3_stmt *s,exr_fixed_note *note,size_t *b
      sqlite3_column_type(s,1)!=SQLITE_INTEGER || (note->book_id=sqlite3_column_int64(s,1))<=0 ||
      !offset_column(s,2,&note->page) || !offset_column(s,3,&note->start) || !offset_column(s,4,&note->end) ||
      !offset_column(s,10,&pages) || !pages || pages>10000 || note->page>=pages || note->start>note->end || note->end>EXR_MAX_TEXT ||
-     sqlite3_column_type(s,11)!=SQLITE_INTEGER || sqlite3_column_int(s,11)!=EXR_PDF) return exr_fail(e,EXR_DATABASE,"Invalid stored fixed note range/book");
+     sqlite3_column_type(s,11)!=SQLITE_INTEGER || !exr_format_is_fixed((exr_format)sqlite3_column_int(s,11))) return exr_fail(e,EXR_DATABASE,"Invalid stored fixed note range/book");
   a->start=note->start; a->end=note->end;
   if((status=fixed_column(s,5,SQLITE_TEXT,(size_t)1024*1024,&note->text,&comment,e))!=EXR_OK ||
      (status=fixed_column(s,6,SQLITE_TEXT,65536,&a->page_id,&page_id,e))!=EXR_OK ||

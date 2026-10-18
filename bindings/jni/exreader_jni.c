@@ -80,7 +80,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_EXReader_nativePdfMetadata(JNIE
   if(status!=EXR_OK) engine_error(env,status,&error); else out=metadata_values(env,entries,count);
   exr_metadata_free(entries,count); return out;
 }
-JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePdfOpen(JNIEnv *env,jclass cls,jbyteArray bytes,jbyteArray font,jint face) {
+JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePdfOpen(JNIEnv *env,jclass cls,jbyteArray bytes,jbyteArray font,jint face,jint format) {
   jbyte *input=NULL,*program=NULL; jsize size,font_size=0; exr_fixed_document *document=NULL; exr_font *fallback=NULL; exr_font_input source={0}; exr_fixed_open_options options={0}; exr_error error={0}; exr_status status=EXR_OK; (void)cls;
   if(!bytes || face<0) { argument(env,"Missing PDF bytes or invalid face index"); return 0; }
   size=(*env)->GetArrayLength(env,bytes); if(size<=0 || size>128*1024*1024) { argument(env,"Invalid PDF input size"); return 0; }
@@ -92,7 +92,7 @@ JNIEXPORT jlong JNICALL Java_org_exreader_EXReader_nativePdfOpen(JNIEnv *env,jcl
     status=exr_font_create_glyphs(&source,1,&fallback,&error); if(status!=EXR_OK) goto finish;
   }
   options.struct_size=sizeof(options); options.fallback_font=fallback;
-  status=exr_fixed_open_memory(EXR_PDF,input,(size_t)size,&options,&document,&error);
+  status=exr_fixed_open_memory((exr_format)format,input,(size_t)size,&options,&document,&error);
 finish:
   if(program) (*env)->ReleaseByteArrayElements(env,font,program,JNI_ABORT);
   (*env)->ReleaseByteArrayElements(env,bytes,input,JNI_ABORT); exr_font_free(fallback);

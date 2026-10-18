@@ -16,6 +16,11 @@ public final class Smoke {
         check(audiobook.entries[0].value.equals("Book 中文😀") && audiobook.entries[1].value.equals("作者") && audiobook.cover.length>0 && audiobook.coverMediaType.equals("image/jpeg"));
         check(EXReader.version().startsWith("0."));
         byte[] pdf=Files.readAllBytes(root.resolve("fixed-pages/pdf-public.pdf"));
+        try(EXReader.FixedDocument comic=new EXReader.FixedDocument(EXReader.FixedFormat.CBZ,Files.readAllBytes(root.resolve("fixed-pages/comic.cbz")))) {
+            check(comic.pageCount()==4 && comic.metadata()[0].value.equals("SDK Comic") && comic.text(0).utf8.length==0);
+            EXReader.Bitmap page=comic.render(0,1);
+            check(page.width==2 && page.height==2 && page.channels==4 && page.pixels.length==16);
+        }
         EXReader.Bitmap bitmap;
         EXReader.TextPage text;
         try(EXReader.Pdf document=new EXReader.Pdf(pdf)) {

@@ -151,11 +151,13 @@ public final class EXReaderPageText {
     }
 }
 
+public enum EXReaderFixedFormat { case pdf, cbz }
+
 public final class EXReaderFixedDocument {
     private let handle: OpaquePointer
     private let lock = NSLock()
     private let fallbackFont: EXReaderFont?
-    public init(data: Data, fallbackFont: EXReaderFont? = nil) throws {
+    public init(data: Data, fallbackFont: EXReaderFont? = nil, format: EXReaderFixedFormat = .pdf) throws {
         var result: OpaquePointer?
         var error = exr_error()
         var options = exr_fixed_open_options()
@@ -163,7 +165,7 @@ public final class EXReaderFixedDocument {
         options.fallback_font = fallbackFont?.handle
         fallbackFont?.gate.lock(); defer { fallbackFont?.gate.unlock() }
         let status = data.withUnsafeBytes { bytes in
-            exr_fixed_open_memory(EXR_PDF, bytes.baseAddress, bytes.count, &options, &result, &error)
+            exr_fixed_open_memory(format == .pdf ? EXR_PDF : EXR_CBZ, bytes.baseAddress, bytes.count, &options, &result, &error)
         }
         try check(status, error)
         guard let result else { throw EXReaderError.invalidResult }

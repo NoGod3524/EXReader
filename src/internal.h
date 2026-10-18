@@ -163,4 +163,11 @@ int exr_family_equal(const char *a, const char *b);
 int exr_parse_font_rule(const char *body, size_t size, const char *base,
                          size_t chapter, exr_font_rule *rule);
 size_t exr_css_delimiter(const char *text, size_t size, char delimiter);
+exr_status exr_image_dimensions(const void *data,size_t size,uint32_t *width,uint32_t *height,exr_error *error);
+static inline int exr_format_is_fixed(exr_format format) { return format==EXR_PDF || format==EXR_CBZ; }
+/* CBZ memory takes ownership of bytes on every path. File keeps a lazy source. */
+exr_status exr_cbz_open_owned(unsigned char *data,size_t size,const char *title,
+  const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *error);
+exr_status exr_cbz_open_file(const char *path,const char *title,
+  const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *error);
 #endif

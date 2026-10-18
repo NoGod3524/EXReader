@@ -5,7 +5,7 @@
 #include <stdlib.h>
 static int example_main(int argc,char **argv) {
   exr_fixed_text *text=NULL; exr_fixed_document *document=NULL; exr_font *font=NULL; exr_fixed_open_options options={0}; exr_bitmap bitmap={0}; exr_error error={0}; exr_status status=EXR_OK; size_t page=0,count=0;
-  if(argc<3 || argc>5) { fprintf(stderr,"usage: exreader-fixed-example book.pdf output.png [page] [font.ttf]\n"); return 2; }
+  if(argc<3 || argc>5) { fprintf(stderr,"usage: exreader-fixed-example book.pdf|book.cbz output.png [page] [font.ttf]\n"); return 2; }
   if(argc>=4) {
     char *end; unsigned long long value; errno=0;
     if(!argv[3][0] || argv[3][0]=='-' || argv[3][0]=='+') return 2;
