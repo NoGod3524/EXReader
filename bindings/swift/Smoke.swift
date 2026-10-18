@@ -162,6 +162,20 @@ import CEXReader
             let pixel = 30 * bitmap.stride + 30 * 4
             precondition(bitmap.pixels[pixel] == 0 && bitmap.pixels[pixel + 1] == 128 && bitmap.pixels[pixel + 2] == 255)
         }
-        print("Swift SDK: PDF/audio/metadata, float image geometry/pixels and reflow lifetime passed")
+        do {
+            let floats = try EXReaderPublication(file: root.appendingPathComponent("books/float-long-main.epub"))
+            let chapter = try floats.load(part: 0)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            let pager = try chapter.pager(font: font, config: floatConfig)
+            var pages = 0, letters = 0
+            while let page = try pager.next() {
+                letters += page.glyphs.filter { $0.codepoint == 65 }.count
+                let bitmap = try page.render()
+                precondition(bitmap.width == 240 && bitmap.height == 240)
+                pages += 1
+            }
+            precondition(pages > 20 && letters == 7500)
+        }
+        print("Swift SDK: PDF/audio/metadata, float image pixels, streaming floats and reflow lifetime passed")
     }
 }

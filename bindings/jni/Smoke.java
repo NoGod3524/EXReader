@@ -165,6 +165,18 @@ public final class Smoke {
             check(images==2); EXReader.Bitmap rendered=floatingPage.render(); int pixel=30*rendered.stride+30*4;
             check(rendered.pixels[pixel]==0 && rendered.pixels[pixel+1]==(byte)128 && rendered.pixels[pixel+2]==(byte)255);
         }
-        System.out.println("JNI SDK: PDF/audio/metadata, float image geometry/pixels and reflow lifetime passed");
+        try(EXReader.Publication floats=new EXReader.Publication(root.resolve("books/float-long-main.epub").toString());
+            EXReader.Document floatingChapter=floats.load(0);
+            EXReader.Pager floatingPager=floatingChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,floatConfig)) {
+            int pages=0,letters=0; EXReader.ReflowPage page;
+            while((page=floatingPager.next())!=null) {
+                try(EXReader.ReflowPage owned=page) {
+                    for(EXReader.Glyph g:owned.snapshot().glyphs) if(g.codepoint==65) letters++;
+                    EXReader.Bitmap pixels=owned.render(); check(pixels.width==240 && pixels.height==240); pages++;
+                }
+            }
+            check(pages>20 && letters==7500);
+        }
+        System.out.println("JNI SDK: PDF/audio/metadata, float image pixels, streaming floats and reflow lifetime passed");
     }
 }

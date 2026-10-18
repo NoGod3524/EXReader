@@ -642,7 +642,7 @@ install(FILES tests/fixtures/shaping/shaping.ttf tests/fixtures/shaping/README.m
 install(FILES tests/fixtures/audio/pcm.wav DESTINATION examples/audio)
 install(FILES tests/fixtures/audio/metadata.m4b DESTINATION examples/audio)
 install(FILES tests/fixtures/layout.epub DESTINATION examples/books)
-install(FILES tests/fixtures/float-both.epub DESTINATION examples/books)
+install(FILES tests/fixtures/float-both.epub tests/fixtures/float-long-main.epub DESTINATION examples/books)
 
 install(FILES include/module.modulemap DESTINATION include)
 install(DIRECTORY bindings/swift DESTINATION bindings)

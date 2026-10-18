@@ -69,7 +69,7 @@ exr_status exr_layout_create_positioned(const exr_document *d,exr_font *font,
     status=exr_control_poll(&config->control,EXR_STAGE_LAYOUT,i,input->page_count,e); if(status!=EXR_OK) goto failed;
     status=EXR_ARGUMENT;
     if(!number(p->width) || !number(p->height) || p->width<0.001f || p->height<0.001f ||
-       !range(d,c->start,c->end) || (i && c->start<l->pages[i-1].start) || c->line_start!=line || c->box_start!=box || p->paint_start!=paint ||
+       !range(d,c->start,c->end) || c->line_start!=line || c->box_start!=box || p->paint_start!=paint ||
        !span(line,c->line_count,l->line_count) || !span(box,c->box_count,l->box_count) || !span(paint,p->paint_count,l->paint_count)) goto invalid;
     scale=fmin(((double)l->options.width-2*l->options.margin)/p->width,
                  ((double)l->options.height-2*l->options.margin)/p->height);

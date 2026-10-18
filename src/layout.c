@@ -334,6 +334,12 @@ size_t exr_layout_page_at(const exr_layout *l, size_t offset) {
       }
     }
     if(best!=SIZE_MAX) return best;
+    { size_t start=0; int found=0; best=0;
+      for(i=0;i<l->page_count;i++) if(l->pages[i].start<=offset && (!found || l->pages[i].start>=start)) {
+        best=i; start=l->pages[i].start; found=1;
+      }
+      return best;
+    }
   }
   hi = l->page_count;
   while (lo + 1 < hi) {

@@ -5,6 +5,7 @@
 #include "text_internal.h"
 #define EXR_PAUSE ((exr_status)100)
 #define EXR_REFLOW ((exr_status)101)
+#define EXR_FRAGMENT_SMALL ((exr_status)102)
 #define EXR_MAX_FLOATS 128
 typedef struct { float x,y,width,height; unsigned side; } exr_float;
 typedef struct { exr_float items[EXR_MAX_FLOATS]; size_t count; } exr_float_state;
@@ -33,7 +34,9 @@ typedef struct {
   exr_float_state *floats;
   size_t unit_node;
   float unit_reference;
+  float unit_block_reference;
   int unit_assigned;
+  int fragment_probe;
   exr_inline_bidi *bidi;
   exr_writing_mode writing_mode;
 } flow;

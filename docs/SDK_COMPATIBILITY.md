@@ -131,8 +131,12 @@ a float can stay on one page while earlier large text is carried to the next.
 Do not infer a unique page from disjoint interval assumptions. Use
 exr_layout_page_at for actual source placement; overlapping layouts consult
 actual glyph ranges while ordinary layouts retain binary lookup. Positioned
-reconstruction now permits overlapping envelopes with monotonic starts and
+reconstruction now permits overlapping and nonmonotonic-start envelopes with
 per-page containment validation. Public inline clips remain authoritative for
 indivisible advances and trailing spaces. Installed JNI/Swift smoke includes a
-shared original float EPUB and checks image geometry/pixels. Long float units
-are not split yet and ordinary tables currently clear external floats.
+shared original image and long-float EPUBs, checking geometry/pixels and all
+7,500 letters through EOF. Long text/table floats now retain independent page
+cursors, including nested floats and fixed orthogonal viewports. Ordinary tables
+currently clear external floats. Unbreakable table row groups still must fit a
+page. Checkpoint cloning owns and budgets all pending continuation contexts;
+no public record size, ABI epoch or schema changes.
