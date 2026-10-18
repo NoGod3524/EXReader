@@ -146,9 +146,9 @@ static void pages(const char *name) {
 }
 static void limits(void) {
   exr_document *d=book("long-unbreakable"); exr_layout_config c=config(); exr_layout *l=NULL; CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
-  d=book("long-table-unbreakable"); CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
+  d=book("long-table-unbreakable"); OK(exr_layout_create_ex(d,font,&c,&l,&error));validate(d,l);exr_layout_free(l);l=NULL;exr_document_free(d);
   d=book("long-cursor-limit"); CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
-  d=book("bfc-unbreakable"); CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
+  d=book("bfc-unbreakable"); OK(exr_layout_create_ex(d,font,&c,&l,&error));validate(d,l);exr_layout_free(l);l=NULL;exr_document_free(d);
   d=book("limit"); c.page.width=2048; CHECK(exr_layout_create_ex(d,font,&c,&l,&error)==EXR_LIMIT && !l); exr_document_free(d);
 }
 typedef struct { unsigned calls; int stop; } cancellation;

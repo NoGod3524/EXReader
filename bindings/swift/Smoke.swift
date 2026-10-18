@@ -405,6 +405,20 @@ import CEXReader
             precondition(page.glyphs.contains { ($0.flags & 2048) != 0 && $0.start == 4 && $0.end == 4 })
             let bitmap = try page.render(); precondition(bitmap.width == 80)
         }
+        do {
+            let publication = try EXReaderPublication(file: root.appendingPathComponent("books/table-fragments-12.epub"))
+            let chapter = try publication.load(part: 0)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            var config = EXReaderLayoutConfig()
+            config.page.width = 180; config.page.height = 100; config.page.margin = 10; config.page.font_size = 14
+            config.userCSS = "html,body,p,table,tr,td {margin:0;padding:0;font-size:14px;line-height:20px}"
+            let pager = try chapter.pager(font: font, config: config)
+            for _ in 0..<3 {
+                guard let page = try pager.next() else { preconditionFailure("missing tall rowspan page") }
+                precondition(!page.glyphs.isEmpty && page.glyphs.allSatisfy { $0.start <= $0.end && ($0.flags & ~UInt32(2559)) == 0 && ($0.boundaries & ~UInt32(15)) == 0 })
+                let bitmap = try page.render(); precondition(bitmap.width == 180)
+            }
+        }
         print("Swift SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed")
     }
 }

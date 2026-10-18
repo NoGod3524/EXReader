@@ -380,6 +380,18 @@ public final class Smoke {
                 check(restoredStemBreak && page.render().width==80);
             }
         }
+        EXReader.LayoutConfig rowConfig=new EXReader.LayoutConfig();
+        rowConfig.width=180;rowConfig.height=100;rowConfig.margin=10;rowConfig.fontSize=14;
+        rowConfig.userCSS="html,body,p,table,tr,td {margin:0;padding:0;font-size:14px;line-height:20px}";
+        try(EXReader.Publication rowBook=new EXReader.Publication(root.resolve("books/table-fragments-12.epub").toString());
+            EXReader.Document rowChapter=rowBook.load(0);
+            EXReader.Pager rowPager=rowChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,rowConfig)) {
+            for(int index=0;index<3;index++) try(EXReader.ReflowPage page=rowPager.next()) {
+                check(page!=null);EXReader.Glyph[] glyphs=page.snapshot().glyphs;check(glyphs.length>0);
+                for(EXReader.Glyph g:glyphs) check(g.start<=g.end && (g.flags&~2559)==0 && (g.boundaries&~15)==0);
+                check(page.render().width==180);
+            }
+        }
         System.out.println("JNI SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed");
     }
 }

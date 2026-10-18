@@ -501,7 +501,8 @@ typedef struct {
   size_t box_start, box_count;
 } exr_page;
 typedef enum { EXR_BOX_BLOCK = 1, EXR_BOX_IMAGE, EXR_BOX_CELL } exr_box_kind;
-/* Solid collapsed-table border rectangles. A contiguous run with one node is
+/* Solid table-border rectangles, including collapsed grids and split cells.
+   A contiguous run with one node is
    one border layer: overlapping rectangles replace within the layer, then the
    layer is composited once. This preserves translucent junction colors. */
 #define EXR_BOX_BORDER 2u

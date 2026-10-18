@@ -73,6 +73,7 @@ static exr_status advance(exr_pager *p);
 static exr_status seal(exr_pager *p,int partial);
 static exr_pager *context_clone(const exr_pager *source);
 static size_t context_memory_size(const exr_pager *p);
+static size_t float_cursors(const exr_pager *p);
 static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e);
 static void streams_free(float_stream *items,size_t count) {
   size_t i; if(!items) return; for(i=0;i<count;i++) exr_pager_free(items[i].context); free(items);
@@ -548,7 +549,7 @@ static void block_extent(exr_pager *p,float height) {
 }
 /* Probe a bounded fragment without advancing the committed source cursor. A
    geometry-only failure can defer it; cancellation and resource errors cannot. */
-static exr_status bfc_fragment(exr_pager *parent,const exr_pager *source,size_t node,float width,
+exr_status exr_flow_fragment(flow *parent,const exr_pager *source,size_t node,float width,
                                   float budget,float bottom,float fixed,exr_pager **out,exr_layout **part) {
   unsigned retry; exr_error error={0}; float extent=budget;
   *out=NULL; *part=NULL;
@@ -556,16 +557,16 @@ static exr_status bfc_fragment(exr_pager *parent,const exr_pager *source,size_t 
     exr_pager *p=NULL; exr_status status;
     if(extent<1) return EXR_FRAGMENT_SMALL;
     if(source) { p=context_clone(source); status=p ? EXR_OK : EXR_MEMORY; }
-    else status=context_create(&parent->f,node,width,fixed>0 ? fixed : extent,parent->f.writing_mode,3,&p);
-    if(status!=EXR_OK) return exr_fail(parent->f.error,status,"Cannot prepare BFC fragment cursor");
+    else status=context_create(parent,node,width,fixed>0 ? fixed : extent,parent->writing_mode,3,&p);
+    if(status!=EXR_OK) return exr_fail(parent->error,status,"Cannot prepare BFC fragment cursor");
     if(source && !fixed) block_extent(p,extent);
-    p->config.control=parent->config.control; p->f.fragment_probe=1;
+    p->config.control=parent->config->control; p->f.fragment_probe=1;
     status=next_page(p,part,&error);
     p->f.fragment_probe=0;
     if(status!=EXR_OK) {
       exr_pager_free(p);
       if(status==EXR_FRAGMENT_SMALL) return status;
-      return exr_fail(parent->f.error,status==EXR_PAUSE ? EXR_FORMAT : status,"%s",error.message[0] ? error.message : "BFC fragment made no progress");
+      return exr_fail(parent->error,status==EXR_PAUSE ? EXR_FORMAT : status,"%s",error.message[0] ? error.message : "BFC fragment made no progress");
     }
     if(!*part || (*part)->flow_block+(p->finished ? bottom : 0)<=budget+.01f) { *out=p; return EXR_OK; }
     if(!fixed && p->finished && (*part)->flow_block<=budget+.01f && bottom>0) {
@@ -575,6 +576,11 @@ static exr_status bfc_fragment(exr_pager *parent,const exr_pager *source,size_t 
   }
   return EXR_FRAGMENT_SMALL;
 }
+exr_pager *exr_flow_cursor_clone(const exr_pager *p) { return context_clone(p); }
+size_t exr_flow_cursor_size(const exr_pager *p) { return context_memory_size(p); }
+size_t exr_flow_cursor_position(const exr_pager *p) { return p ? p->position : 0; }
+int exr_flow_cursor_finished(const exr_pager *p) { return p && p->finished; }
+size_t exr_flow_cursor_floats(const exr_pager *p) { return p ? float_cursors(p) : 0; }
 static exr_status float_copy(flow *f,const exr_layout *part,size_t node,float x,float y,float height) {
   int baseline=f->layout->has_baseline; float first=f->layout->first_baseline;
   exr_status status=exr_flow_copy(f,part,node,x,y,height,0);
@@ -597,7 +603,10 @@ static exr_status wait_floats(exr_pager *p,unsigned sides) {
 static size_t float_cursors(const exr_pager *p) {
   size_t total=p->local==3 && p->styles[p->local_root].float_side,i;
   for(i=0;i<p->stream_count && total<=EXR_MAX_FLOATS;i++) total+=float_cursors(p->streams[i].context);
-  for(i=0;i<p->depth && total<=EXR_MAX_FLOATS;i++) if(p->frames[i].context) total+=float_cursors(p->frames[i].context);
+  for(i=0;i<p->depth && total<=EXR_MAX_FLOATS;i++) {
+    if(p->frames[i].context) total+=float_cursors(p->frames[i].context);
+    if(p->frames[i].table) total+=exr_table_float_cursors(p->frames[i].table);
+  }
   return total;
 }
 static exr_status stream_add(exr_pager *p,frame *v,const float margin[4]) {
@@ -626,7 +635,7 @@ static exr_status resume_floats(exr_pager *p) {
     status=exr_flow_float_slot(f,s->outer_width,1,0,s->context->position,&x,&y);
     if(status==EXR_PAUSE) { status=EXR_OK; break; }
     if(status!=EXR_OK) break;
-    status=bfc_fragment(p,s->context,s->node,s->width,exr_flow_bottom(f)-y,s->margin[2],s->fixed_page,&cursor,&part);
+    status=exr_flow_fragment(&p->f,s->context,s->node,s->width,exr_flow_bottom(f)-y,s->margin[2],s->fixed_page,&cursor,&part);
     if(status==EXR_FRAGMENT_SMALL) {
       status=y>exr_flow_top(f)+.001f ? EXR_OK : failure(p,f->fragment_probe ? EXR_FRAGMENT_SMALL : EXR_LIMIT,"Float continuation cannot fit its first unbreakable item");
       break;
@@ -689,7 +698,7 @@ static exr_status floating(exr_pager *p,frame *v) {
           v->float_fixed=exr_flow_room(f)-margins[0]-margins[2];
           if(v->float_fixed<1) return failure(p,EXR_LIMIT,"Floating margins leave no orthogonal viewport");
         }
-        status=bfc_fragment(p,NULL,v->node,v->width,exr_flow_room(f),0,v->float_fixed,&v->context,&v->fragment);
+        status=exr_flow_fragment(&p->f,NULL,v->node,v->width,exr_flow_room(f),0,v->float_fixed,&v->context,&v->fragment);
         if(status==EXR_FRAGMENT_SMALL) return failure(p,EXR_LIMIT,"Floating content contains an item larger than a page");
         if(status!=EXR_OK) return status;
         height=v->fragment ? v->fragment->flow_block : 0;
@@ -716,7 +725,7 @@ static exr_status floating(exr_pager *p,frame *v) {
       /* Reuse the initial bounded probe when it is already this exact page. */
       if(!v->context || fabsf(budget-exr_flow_room(f))>.001f || v->context->finished) {
         clear_frame(v);
-        status=bfc_fragment(p,NULL,v->node,v->width,budget,margins[2],v->float_fixed,&v->context,&v->fragment);
+        status=exr_flow_fragment(&p->f,NULL,v->node,v->width,budget,margins[2],v->float_fixed,&v->context,&v->fragment);
       }
       if(status==EXR_FRAGMENT_SMALL) {
         if(y>exr_flow_top(f)+.001f) return EXR_PAUSE;
@@ -801,7 +810,10 @@ static exr_status table_beside(exr_pager *p,frame *v) {
     budget=exr_flow_bottom(f)-y-margin[0];
     if(f->paginate && budget<1) return EXR_PAUSE;
     if(f->paginate) {
-      status=bfc_fragment(p,v->context,v->node,width,budget,margin[2],v->float_fixed,&cursor,&part);
+      { flow probe=*f;
+        probe.defer_tall_rows|=!v->context && box.width.value<0 && f->floats->count && width+.001f<v->bfc_max;
+        status=exr_flow_fragment(&probe,v->context,v->node,width,budget,margin[2],v->float_fixed,&cursor,&part);
+      }
       if(status==EXR_FRAGMENT_SMALL) {
         if(y>exr_flow_top(f)+.001f || (!v->context && f->floats->count && width+.001f<v->bfc_max)) return EXR_PAUSE;
         return failure(p,f->fragment_probe ? EXR_FRAGMENT_SMALL : EXR_LIMIT,"Table fragment contains an item larger than a page");
@@ -1441,6 +1453,8 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
   if(status==EXR_OK) status = advance(p);
   if (status == EXR_OK && !l->page_count && !p->emitted && !p->local)
     status = failure(p, EXR_FORMAT, "No layout content");
+  if((status==EXR_OK || status==EXR_PAUSE) && float_cursors(p)>EXR_MAX_FLOATS)
+    status=failure(p,EXR_LIMIT,"More than 128 floating cursors in a pager tree");
   if ((status == EXR_OK || status == EXR_PAUSE) && l->page_count)
     status = seal(p, status == EXR_PAUSE);
   p->busy = 0;

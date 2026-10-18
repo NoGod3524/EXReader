@@ -35,7 +35,7 @@ jobs:
         run: |
           ./stage/bin/exreader-render.exe tests/fixtures/sample.txt C:/Windows/Fonts/arial.ttf stage-page.png
           ./build/sdk-example/Release/exreader-construct-example.exe C:/Windows/Fonts/arial.ttf host-page.png
-          ./build/sdk-cpp/Release/exreader-cpp-test.exe
+          ./build/sdk-cpp/Release/exreader-cpp-test.exe stage/examples/fonts/primary.ttf stage/examples/books/table-fragments-12.epub
           ./build/sdk-example/Release/exreader-search-example.exe tests/fixtures/layout.epub build/host-index.sqlite " "
           ./build/sdk-example/Release/exreader-compat-example.exe
           ./build/sdk-example/Release/exreader-anchor-example.exe
@@ -46,6 +46,7 @@ jobs:
           ./build/sdk-example/Release/exreader-text-example.exe
           ./build/sdk-example/Release/exreader-hyphen-example.exe stage/examples/fonts/primary.ttf hyphen-host-page.png
           ./build/sdk-example/Release/exreader-font-example.exe stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
+          ./build/sdk-example/Release/exreader-page-example.exe stage/examples/books/table-fragments-12.epub stage/examples/fonts/primary.ttf tall-table-host-page.png 1
           ./build/sdk-example/Release/exreader-page-example.exe tests/fixtures/layout.epub C:/Windows/Fonts/arial.ttf pager-host-page.png
           ./build/sdk-example/Release/exreader-lazy-example.exe C:/Windows/Fonts/arial.ttf lazy-host-page.png
           New-Item -ItemType Directory -Path 'build/中文 example' -Force | Out-Null
@@ -66,7 +67,7 @@ jobs:
         run: |
           ./stage/bin/exreader-render tests/fixtures/sample.txt /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf stage-page.png
           ./build/sdk-example/exreader-construct-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf host-page.png
-          ./build/sdk-cpp/exreader-cpp-test
+          ./build/sdk-cpp/exreader-cpp-test stage/examples/fonts/primary.ttf stage/examples/books/table-fragments-12.epub
           ./build/sdk-example/exreader-search-example tests/fixtures/layout.epub build/host-index.sqlite " "
           ./build/sdk-example/exreader-compat-example
           ./build/sdk-example/exreader-anchor-example
@@ -77,6 +78,7 @@ jobs:
           ./build/sdk-example/exreader-text-example
           ./build/sdk-example/exreader-hyphen-example stage/examples/fonts/primary.ttf hyphen-host-page.png
           ./build/sdk-example/exreader-font-example stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
+          ./build/sdk-example/exreader-page-example stage/examples/books/table-fragments-12.epub stage/examples/fonts/primary.ttf tall-table-host-page.png 1
           ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf pager-host-page.png
           ./build/sdk-example/exreader-lazy-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
@@ -86,7 +88,7 @@ jobs:
         run: |
           ./stage/bin/exreader-render tests/fixtures/sample.txt /System/Library/Fonts/Supplemental/Arial.ttf stage-page.png
           ./build/sdk-example/exreader-construct-example /System/Library/Fonts/Supplemental/Arial.ttf host-page.png
-          ./build/sdk-cpp/exreader-cpp-test
+          ./build/sdk-cpp/exreader-cpp-test stage/examples/fonts/primary.ttf stage/examples/books/table-fragments-12.epub
           ./build/sdk-example/exreader-search-example tests/fixtures/layout.epub build/host-index.sqlite " "
           ./build/sdk-example/exreader-compat-example
           ./build/sdk-example/exreader-anchor-example
@@ -97,6 +99,7 @@ jobs:
           ./build/sdk-example/exreader-text-example
           ./build/sdk-example/exreader-hyphen-example stage/examples/fonts/primary.ttf hyphen-host-page.png
           ./build/sdk-example/exreader-font-example stage/examples/fonts/primary.ttf stage/examples/fonts/fallback.ttf font-host-page.png
+          ./build/sdk-example/exreader-page-example stage/examples/books/table-fragments-12.epub stage/examples/fonts/primary.ttf tall-table-host-page.png 1
           ./build/sdk-example/exreader-page-example tests/fixtures/layout.epub /System/Library/Fonts/Supplemental/Arial.ttf pager-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /System/Library/Fonts/Supplemental/Arial.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
