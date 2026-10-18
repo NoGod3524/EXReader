@@ -3,8 +3,7 @@
 状态：**引擎与场景矩阵已完成，剩余取消/预算回归与交替性能采样**。`EXR_GROUP_KNOCKOUT` 在
 `canvas.c`/`blend.c` 生效，PDF 的 `K` 已正确映射；`tools/generate_knockout_fixtures.py` 生成
 **42 个原创场景**（16 模式隔离、16 模式非隔离、10 个 alpha/coverage 组合）与 Decimal(40)
-独立参考，`native-blend` 逐像素比对最大差 0。支持矩阵暂记“部分”，直到取消/预算回归与
-性能采样补齐。
+独立参考，`native-blend` 逐像素比对最大差 0。支持矩阵暂记“部分”，直到交替性能采样与全量 CI 记录补齐。
 
 ## 1. 语义（ISO 32000-1 11.4.5）
 
@@ -83,6 +82,6 @@ backdrop 本来就一直可读**，挖空不需要额外的整画布缓冲。
 下一步：
 
 1. 生成 ≥32 个挖空场景与独立参考掩码（含 16 模式、路径/文字/图像/嵌套）；
-2. 取消/abort/深度/预算与旧 sink 组合回归；
+2. ~~取消/abort/深度/预算与旧 sink 组合回归~~（已完成：预算 23/24 字节、取消、无 begin_group 的消费者）；
 3. 新旧交替性能采样，确认 24 B/px 与 64 MiB 上限未变；
 4. 提交、推送、七作业 CI，更新 HANDOFF/VALIDATION/SUPPORT_MATRIX。
