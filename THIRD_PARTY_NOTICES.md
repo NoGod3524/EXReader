@@ -262,3 +262,12 @@ default full lower/title/upper mappings and contextual properties from Unicode
 Unicode license applies. Contextual conversion and the explicit native dictionary
 case policy are EXReader C code; no ICU library is linked. An optional test compares
 results against Node's system ICU through Intl. Node/ICU are test tools only.
+
+
+`tools/check_hyphen_conditional.py` uses EXReader's original generated patterns
+and an independent source-span model for conditional compound matching. Optional
+external libhyphen comparison uses its caller-supplied substring preprocessor.
+Neither the external library nor preprocessor is linked or shipped. Explicit
+zero-cut insertion, protected source mapping and bounded full restored stems
+are verified against the independent model; external comparison is restricted
+to the documented common semantics. No external pattern text is copied.

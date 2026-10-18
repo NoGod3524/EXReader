@@ -2,6 +2,7 @@
 #include "hyphen_internal.h"
 #include "normalize_internal.h"
 #include "case_internal.h"
+#include "text_internal.h"
 #include "hyphen_unicode_data.h"
 #include "bidi_internal.h"
 
@@ -40,6 +41,7 @@ typedef struct {
   char language[256];
   unsigned left_override,right_override;
   int explicit_levels,complex,unsafe;
+  unsigned root_before_scalars;
   hy_level levels[2]; /* Compound rules, then ordinary rules. */
 } hy_dictionary;
 struct exr_hyphenator {
@@ -171,10 +173,14 @@ static unsigned fold(uint32_t cp,const char *language,uint32_t values[3]) {
 }
 /* NFC -> full fold -> NFC, retaining intervals in the original scalar stream.
    ASCII dictionaries/words need no normalization table searches. */
-static exr_status canonical_non_ascii(hy_work *w,const char *language,const uint32_t *input,size_t count,
-                                      exr_normal_scalar *out,size_t capacity,size_t *written) {
-  exr_normal_scalar scratch[NORMAL_SCALARS];size_t i,n,used=0;exr_status status;
-  for(i=0;i<count;i++) scratch[i]=(exr_normal_scalar){input[i],(unsigned)i,(unsigned)i+1};
+static exr_status canonical_mapped(hy_work *w,const char *language,exr_normal_scalar *scratch,size_t count,
+                                    exr_normal_scalar *out,size_t capacity,size_t *written) {
+  size_t i,n,used=0;exr_status status;
+  for(i=0;i<count && scratch[i].cp<128;i++) {}
+  if(i==count) {
+    for(i=0;i<count;i++) { uint32_t values[3];fold(scratch[i].cp,language,values);out[i]=scratch[i];out[i].cp=values[0]; }
+    status=work(w,count);if(status==EXR_OK) *written=count;return status;
+  }
   status=exr_normalize_nfc(scratch,count,out,capacity,&n,w->control,&w->work,w->error);if(status!=EXR_OK) return status;
   for(i=0;i<n;i++) {
     uint32_t values[3];unsigned j,len=fold(out[i].cp,language,values);
@@ -182,6 +188,12 @@ static exr_status canonical_non_ascii(hy_work *w,const char *language,const uint
     for(j=0;j<len;j++) scratch[used++]=(exr_normal_scalar){values[j],out[i].first,out[i].last};
   }
   return exr_normalize_nfc(scratch,used,out,capacity,written,w->control,&w->work,w->error);
+}
+static exr_status canonical_non_ascii(hy_work *w,const char *language,const uint32_t *input,size_t count,
+                                      exr_normal_scalar *out,size_t capacity,size_t *written) {
+  exr_normal_scalar scratch[NORMAL_SCALARS];size_t i;
+  for(i=0;i<count;i++) scratch[i]=(exr_normal_scalar){input[i],(unsigned)i,(unsigned)i+1};
+  return canonical_mapped(w,language,scratch,count,out,capacity,written);
 }
 static exr_status canonical_fold(hy_work *w,const char *language,const uint32_t *input,size_t count,
                                   exr_normal_scalar *out,size_t capacity,size_t *written) {
@@ -195,8 +207,8 @@ static exr_status canonical_fold(hy_work *w,const char *language,const uint32_t 
 /* A boundary survives only if every output on each side came exclusively from
    that original side. This excludes fold/decomposition interiors and reordered
    or composed spans, without guessing an offset from normalized byte lengths. */
-static void original_boundaries(const exr_normal_scalar *items,size_t count,size_t originals,size_t *map) {
-  unsigned suffix[NORMAL_SCALARS+1],high=0;size_t i;
+static void mapped_boundaries(const exr_normal_scalar *items,size_t count,size_t originals,size_t *map,unsigned *suffix) {
+  unsigned high=0;size_t i;
   for(i=0;i<=originals;i++) map[i]=SIZE_MAX;
   suffix[count]=(unsigned)originals;
   for(i=count;i;i--) suffix[i-1]=items[i-1].first<suffix[i] ? items[i-1].first : suffix[i];
@@ -204,6 +216,9 @@ static void original_boundaries(const exr_normal_scalar *items,size_t count,size
     if(high==suffix[i]) map[high]=i;
     if(i<count && items[i].last>high) high=items[i].last;
   }
+}
+static void original_boundaries(const exr_normal_scalar *items,size_t count,size_t originals,size_t *map) {
+  unsigned suffix[NORMAL_SCALARS+1];mapped_boundaries(items,count,originals,map,suffix);
 }
 unsigned exr_hyphen_word_kind(uint32_t cp) {
   if(cp==0x200c || cp==0x200d) return 2; /* Joining controls stay inside the word. */
@@ -558,11 +573,11 @@ static exr_status overlay(hy_work *w,const hy_trie *d,const uint32_t *word,size_
 /* Map only the generated sides in the complete logical changed-word context.
    Moving a title initial into generated text also lowercases a displaced original
    capital; deleting it can pull in the next source grapheme to retain the title. */
-static exr_status case_adjust(hy_work *w,const char *language,const uint32_t *source,const size_t *offsets,
+static exr_status case_adjust_core(hy_work *w,const char *language,const uint32_t *source,const size_t *offsets,
                                size_t count,const unsigned char *boundaries,unsigned style,size_t initial,
-                               size_t first,size_t last,exr_hyphen_break *item,char buffer[514]) {
+                               size_t first,size_t last,exr_hyphen_break *item,char *buffer,int before_only) {
   uint32_t text[WORD_SCALARS+128];size_t nb=0,na=0,at=0,n=first,i,end=last,first_case=SIZE_MAX,bytes=0,output_count=0;
-  exr_status status;
+  exr_status status;size_t scalar_limit=before_only ? 384 : 128,byte_limit=before_only ? 1536 : 512;
   if(style==EXR_CASE_LITERAL || !changing(item)) return EXR_OK;
   memcpy(text,source,first*sizeof(*text));
   while(at<item->before_size) { if(!exr_next(item->before,item->before_size,&at,text+n)) return exr_fail(w->error,EXR_ENCODING,"Invalid case replacement text");n++;nb++; }
@@ -581,24 +596,43 @@ static exr_status case_adjust(hy_work *w,const char *language,const uint32_t *so
   }
   memcpy(text+n,source+last,(count-last)*sizeof(*text));n+=count-last;
   for(i=0;i<n;i++) if(exr_case_properties(text[i])&EXR_CASE_CASED) { first_case=i;break; }
-  status=work(w,(nb+na+end-last)*n+n+count);if(status!=EXR_OK) return status;
-  for(i=first;i<first+nb+na+end-last;i++) {
+  status=work(w,(nb+(before_only ? 0 : na+end-last))*n+n+count);if(status!=EXR_OK) return status;
+  for(i=first;i<first+nb+(before_only ? 0 : na+end-last);i++) {
     uint32_t mapped[3];unsigned mode=style==EXR_CASE_TITLE ? (i==first_case ? EXR_CASE_TITLE : EXR_CASE_LOWER) : style;
     unsigned j,length;
     if(i==first+nb) { buffer[bytes++]=0;item->before_size=bytes-1; }
     length=exr_case_map(text,n,i,mode,language,mapped);
-    if(length>128-output_count) return exr_fail(w->error,EXR_LIMIT,"Cased discretionary text exceeds 128 scalars");
+    if(length>scalar_limit-output_count) return exr_fail(w->error,EXR_LIMIT,before_only ? "Cased compound stem exceeds 384 scalars" : "Cased discretionary text exceeds 128 scalars");
     output_count+=length;
     for(j=0;j<length;j++) {
       char encoded[5];exr_buffer scalar={encoded,0,sizeof(encoded)};
       if(!exr_codepoint(&scalar,mapped[j])) return exr_fail(w->error,EXR_ENCODING,"Invalid cased scalar");
-      if(scalar.size>513-bytes) return exr_fail(w->error,EXR_LIMIT,"Cased discretionary text exceeds 512 bytes");
+      if(scalar.size>byte_limit+1-bytes) return exr_fail(w->error,EXR_LIMIT,before_only ? "Cased compound stem exceeds 1536 bytes" : "Cased discretionary text exceeds 512 bytes");
       memcpy(buffer+bytes,encoded,scalar.size);bytes+=scalar.size;
     }
   }
-  if(!na && end==last) { buffer[bytes++]=0;item->before_size=bytes-1; }
+  if(before_only || (!na && end==last)) { buffer[bytes++]=0;item->before_size=bytes-1; }
   item->before=buffer;item->after=buffer+item->before_size+1;item->after_size=bytes-item->before_size-1;
   buffer[bytes]=0;return EXR_OK;
+}
+static exr_status case_adjust(hy_work *w,const char *language,const uint32_t *source,const size_t *offsets,
+                               size_t count,const unsigned char *boundaries,unsigned style,size_t initial,
+                               size_t first,size_t last,exr_hyphen_break *item,char buffer[514]) {
+  return case_adjust_core(w,language,source,offsets,count,boundaries,style,initial,first,last,item,buffer,0);
+}
+static exr_status publish_choice(hy_work *w,const char *language,const uint32_t *scalars,const size_t *offsets,
+                                  size_t count,const unsigned char *boundaries,unsigned style,size_t initial,
+                                  size_t point,size_t first,size_t last,const hy_change *change,unsigned char *out,hy_emitter *emit) {
+  exr_hyphen_break item;char cased[514];exr_status status;
+  if(!change) { out[offsets[point]]=1;return EXR_OK; }
+  if(change->kind==2 || first>point || last<point || last>count ||
+     (first && !(boundaries[offsets[first]]&EXR_BOUNDARY_GRAPHEME)) ||
+     (last<count && !(boundaries[offsets[last]]&EXR_BOUNDARY_GRAPHEME))) return EXR_OK;
+  item=(exr_hyphen_break){offsets[point],offsets[first],offsets[last],change->text,change->text+change->before+1,change->before,change->after};
+  status=case_adjust(w,language,scalars,offsets,count,boundaries,style,initial,first,last,&item,cased);if(status!=EXR_OK) return status;
+  if(emit) return emit_break(emit,&item,w->error);
+  if(!changing(&item)) out[offsets[point]]=1;
+  return EXR_OK;
 }
 static exr_status native_match(hy_work *w,hy_dictionary *d,const char *language,const uint32_t *scalars,
                                 const size_t *offsets,size_t count,const unsigned char *boundaries,unsigned char *out,
@@ -668,29 +702,193 @@ static exr_status native_match(hy_work *w,hy_dictionary *d,const char *language,
   }
 publish:
   for(i=1;i<count;i++) if(selected[i] && graphemes[i]>=left && graphemes[count]-graphemes[i]>=right) {
-    const hy_choice *choice=chosen ? &chosen[i] : NULL;
+    const hy_choice *choice=chosen ? &chosen[i] : NULL;size_t first=i,last=i;
     if(choice && choice->change) {
-      size_t first=SIZE_MAX,last=SIZE_MAX;const hy_change *change=choice->change;exr_hyphen_break item;char cased[514];
-      if(change->kind==2) continue;
-      for(j=0;j<=count;j++) {
-        if(folded_at[j]==choice->first) first=j;
-        if(folded_at[j]==choice->last) last=j;
-      }
-      if(first==SIZE_MAX || last==SIZE_MAX || first>i || last<i ||
-          (first && !(boundaries[offsets[first]]&EXR_BOUNDARY_GRAPHEME)) ||
-          (last<count && !(boundaries[offsets[last]]&EXR_BOUNDARY_GRAPHEME))) continue;
-      item=(exr_hyphen_break){offsets[i],offsets[first],offsets[last],change->text,change->text+change->before+1,change->before,change->after};
-      status=case_adjust(w,language,scalars,offsets,count,boundaries,style,initial,first,last,&item,cased);if(status!=EXR_OK) return status;
-      if(emit) { status=emit_break(emit,&item,w->error);if(status!=EXR_OK) return status; }
-      else if(!changing(&item)) out[offsets[i]]=1;
-    } else out[offsets[i]]=1;
+      first=last=SIZE_MAX;
+      for(j=0;j<=count;j++) { if(folded_at[j]==choice->first) first=j;if(folded_at[j]==choice->last) last=j; }
+    }
+    status=publish_choice(w,language,scalars,offsets,count,boundaries,style,initial,i,first,last,choice ? choice->change : NULL,out,emit);
+    if(status!=EXR_OK) return status;
   }
   return EXR_OK;
+}
+/* Compound boundaries can restore a different left stem for recursive matching.
+   This text is a matching context, not an unconditional edit to the source. */
+#define COMPOUND_BYTES (1024u*1024u)
+typedef struct { size_t start,size;char text[]; } hy_tail;
+typedef struct { size_t first,last;const hy_tail *tail; } hy_part;
+typedef struct {
+  size_t bytes,capacity,count;
+  exr_normal_scalar *scratch,*mapped;
+  hy_choice *choices;
+  size_t *original_at;
+  uint32_t *word;
+  unsigned *suffix;
+  unsigned char *scores;
+} hy_compound_view;
+static size_t compound_aligned(size_t bytes) {
+#ifdef _MSC_VER
+  const size_t alignment=16; /* MSVC C headers omit max_align_t. */
+#else
+  const size_t alignment=_Alignof(max_align_t);
+#endif
+  return (bytes+alignment-1)/alignment*alignment;
+}
+static hy_compound_view *compound_allocate(size_t capacity) {
+  size_t normal=compound_aligned(capacity*sizeof(exr_normal_scalar)),choice=compound_aligned((capacity+3)*sizeof(hy_choice));
+  size_t original=compound_aligned((capacity+1)*sizeof(size_t)),word=compound_aligned(capacity*sizeof(uint32_t));
+  size_t suffix=compound_aligned((capacity+1)*sizeof(unsigned)),scores=compound_aligned(capacity+3);
+  size_t bytes=compound_aligned(sizeof(hy_compound_view))+2*normal+choice+original+word+suffix+scores;
+  hy_compound_view *v;unsigned char *at;
+  if(bytes>COMPOUND_BYTES) return NULL;
+  v=calloc(1,bytes);if(!v) return NULL;v->bytes=bytes;v->capacity=capacity;
+  at=(unsigned char *)v+compound_aligned(sizeof(*v));
+  v->scratch=(exr_normal_scalar *)at;at+=normal;v->mapped=(exr_normal_scalar *)at;at+=normal;
+  v->choices=(hy_choice *)at;at+=choice;v->original_at=(size_t *)at;at+=original;
+  v->word=(uint32_t *)at;at+=word;v->suffix=(unsigned *)at;at+=suffix;v->scores=at;
+  return v;
+}
+static exr_status compound_view(hy_work *w,hy_dictionary *d,const uint32_t *source,const size_t *offsets,
+                                  const unsigned char *boundaries,hy_part part,hy_compound_view *v) {
+  size_t i,n=0,prefix=part.tail ? part.tail->start : part.last;exr_text_state state={0};exr_status status;
+  if(prefix<part.first) prefix=part.first;
+  for(i=part.first;i<prefix;i++) v->scratch[n++]=(exr_normal_scalar){source[i],(unsigned)i,(unsigned)i+1};
+  if(part.tail) {
+    size_t at=0;
+    while(at<part.tail->size) {
+      uint32_t cp;if(!exr_next(part.tail->text,part.tail->size,&at,&cp)) return exr_fail(w->error,EXR_ENCODING,"Invalid compound stem UTF-8");
+      if(n==v->capacity) return exr_fail(w->error,EXR_LIMIT,"Compound stem scalar limit exceeded");
+      v->scratch[n++]=(exr_normal_scalar){cp,(unsigned)prefix,(unsigned)part.last};
+    }
+  }
+  status=canonical_mapped(w,d->language,v->scratch,n,v->mapped,v->capacity,&v->count);if(status!=EXR_OK) return status;
+  { size_t folded[WORD_SCALARS+1];
+    mapped_boundaries(v->mapped,v->count,part.last,folded,v->suffix);
+    folded[part.first]=0;folded[part.last]=v->count;
+    for(i=0;i<=v->count;i++) v->original_at[i]=SIZE_MAX;
+    for(i=part.first;i<=part.last;i++) if(folded[i]!=SIZE_MAX &&
+       (i==part.first || i==part.last || (boundaries[offsets[i]]&EXR_BOUNDARY_GRAPHEME))) v->original_at[folded[i]]=i;
+  }
+  for(i=0;i<v->count;i++) {
+    v->word[i]=v->mapped[i].cp;
+    if(!(exr_text_step(&state,v->word[i],NULL,NULL)&EXR_BOUNDARY_GRAPHEME)) v->original_at[i]=SIZE_MAX;
+  }
+  v->original_at[0]=part.first;v->original_at[v->count]=part.last;
+  return work(w,v->count+1);
+}
+static hy_choice compound_choice(const hy_compound_view *v,hy_choice choice,size_t point) {
+  static const hy_change unmappable={.kind=2};
+  if(!choice.change) return (hy_choice){0};
+  if(choice.change->kind==2) return (hy_choice){choice.change,point,point};
+  if(choice.first>v->count || choice.last>v->count || v->original_at[choice.first]==SIZE_MAX ||
+     v->original_at[choice.last]==SIZE_MAX) return (hy_choice){&unmappable,point,point};
+  choice.first=v->original_at[choice.first];choice.last=v->original_at[choice.last];
+  if(choice.first>point || choice.last<point) return (hy_choice){&unmappable,point,point};
+  return choice;
+}
+static exr_status compound_same(hy_work *w,hy_dictionary *d,const uint32_t *source,size_t first,size_t last,
+                                  const char *text,size_t bytes,hy_compound_view *v,int *same) {
+  size_t at=0,n=0,i,expected;exr_status status;
+  *same=0;
+  while(at<bytes) {
+    uint32_t cp;if(!exr_next(text,bytes,&at,&cp)) return exr_fail(w->error,EXR_ENCODING,"Invalid compound replacement UTF-8");
+    if(n==v->capacity) return exr_fail(w->error,EXR_LIMIT,"Compound comparison scalar limit exceeded");
+    v->scratch[n]=(exr_normal_scalar){cp,(unsigned)n,(unsigned)n+1};n++;
+  }
+  status=canonical_mapped(w,d->language,v->scratch,n,v->mapped,v->capacity,&expected);if(status!=EXR_OK) return status;
+  for(i=0;i<expected;i++) v->word[i]=v->mapped[i].cp;
+  for(i=first;i<last;i++) v->scratch[i-first]=(exr_normal_scalar){source[i],(unsigned)i,(unsigned)i+1};
+  status=canonical_mapped(w,d->language,v->scratch,last-first,v->mapped,v->capacity,&n);if(status!=EXR_OK) return status;
+  if(n!=expected) return EXR_OK;
+  for(i=0;i<n && v->word[i]==v->mapped[i].cp;i++) {}
+  *same=i==n;return EXR_OK;
+}
+static exr_status native_compound(hy_work *w,hy_dictionary *d,const char *language,const uint32_t *source,
+                                    const size_t *offsets,size_t count,const unsigned char *boundaries,
+                                    unsigned char *out,hy_emitter *emit) {
+  typedef struct { size_t point;hy_choice choice; } cut;
+  hy_compound_view *v;hy_part pending[WORD_SCALARS];hy_tail *tails[WORD_SCALARS];
+  hy_choice chosen[WORD_SCALARS+1]={{0}};unsigned char selected[WORD_SCALARS+1]={0};
+  size_t pending_count=1,tail_count=0,heap_bytes,i,j,initial=SIZE_MAX,graphemes[WORD_SCALARS+1]={0};
+  unsigned style=EXR_CASE_LITERAL,left,right;exr_status status=EXR_OK;hy_level *root=&d->levels[0];
+  size_t capacity=EXR_CANONICAL_FOLD_FACTOR*(count+d->root_before_scalars*(w->owner->case_policy==EXR_HYPHEN_CASE_WORD ? 3u : 1u));
+  v=compound_allocate(capacity);if(!v) return exr_fail(w->error,EXR_MEMORY,"Compound matching scratch allocation failed");
+  heap_bytes=v->bytes;pending[0]=(hy_part){0,count,NULL};
+  if(w->owner->case_policy==EXR_HYPHEN_CASE_WORD) style=exr_case_word(source,count,&initial);
+  left=d->left_override ? d->left_override : root->left ? root->left : 2;
+  right=d->right_override ? d->right_override : root->right ? root->right : 2;
+  for(i=0;i<count;i++) graphemes[i+1]=graphemes[i]+!!(boundaries[offsets[i]]&EXR_BOUNDARY_GRAPHEME);
+  while(pending_count) {
+    hy_part part=pending[--pending_count];cut cuts[WORD_SCALARS];size_t ncuts=0,begin=part.first;
+    status=compound_view(w,d,source,offsets,boundaries,part,v);if(status!=EXR_OK) goto done;
+    status=overlay(w,&root->trie,v->word,0,v->count,v->scores,v->choices);if(status!=EXR_OK) goto done;
+    for(i=1;i<v->count;i++) if(v->original_at[i]!=SIZE_MAX && (v->scores[i+1]&1)) {
+      size_t point=v->original_at[i];hy_choice choice;
+      if(point<=part.first || point>=part.last) continue;
+      choice=compound_choice(v,v->choices[i+1],point);
+      selected[point]=1;chosen[point]=choice;cuts[ncuts++]=(cut){point,choice};
+    }
+    if(!ncuts) {
+      status=overlay(w,&d->levels[1].trie,v->word,0,v->count,v->scores,v->choices);if(status!=EXR_OK) goto done;
+      for(i=1;i<v->count;i++) if(v->original_at[i]!=SIZE_MAX && (v->scores[i+1]&1)) {
+        size_t point=v->original_at[i];
+        if(point<=part.first || point>=part.last) continue;
+        if((!part.first || graphemes[point]-graphemes[part.first]>=root->compound_left) &&
+           (part.last==count || graphemes[part.last]-graphemes[point]>=root->compound_right)) {
+          selected[point]=1;chosen[point]=compound_choice(v,v->choices[i+1],point);
+        }
+      }
+      continue;
+    }
+    for(i=0;i<ncuts;i++) {
+      const hy_choice *choice=&cuts[i].choice;size_t point=cuts[i].point;const hy_tail *tail=NULL;
+      if(choice->change && choice->change->kind==1) {
+        const hy_change *change=choice->change;exr_hyphen_break item={offsets[point],offsets[choice->first],offsets[choice->last],
+          change->text,change->text+change->before+1,change->before,change->after};char cased[1538];int same;
+        status=case_adjust_core(w,language,source,offsets,count,boundaries,style,initial,choice->first,choice->last,&item,cased,1);if(status!=EXR_OK) goto done;
+        status=compound_same(w,d,source,choice->first,point,item.before,item.before_size,v,&same);if(status!=EXR_OK) goto done;
+        if(!same) {
+          size_t bytes=sizeof(hy_tail)+item.before_size;hy_tail *owned;
+          if(tail_count==WORD_SCALARS || bytes>COMPOUND_BYTES-heap_bytes) { status=exr_fail(w->error,EXR_LIMIT,"Compound context byte budget exceeded");goto done; }
+          owned=malloc(bytes);if(!owned) { status=exr_fail(w->error,EXR_MEMORY,"Compound stem allocation failed");goto done; }
+          owned->start=choice->first<begin ? begin : choice->first;owned->size=item.before_size;
+          if(item.before_size) memcpy(owned->text,item.before,item.before_size);
+          tails[tail_count++]=owned;heap_bytes+=bytes;tail=owned;
+        }
+      }
+      if(pending_count==WORD_SCALARS) { status=exr_fail(w->error,EXR_LIMIT,"Compound part work queue exceeded");goto done; }
+      pending[pending_count++]=(hy_part){begin,point,tail};begin=point;
+    }
+    if(pending_count==WORD_SCALARS) { status=exr_fail(w->error,EXR_LIMIT,"Compound part work queue exceeded");goto done; }
+    pending[pending_count++]=(hy_part){begin,part.last,part.tail};
+  }
+  if(root->nohyphen_count) {
+    status=compound_view(w,d,source,offsets,boundaries,(hy_part){0,count,NULL},v);if(status!=EXR_OK) goto done;
+    for(i=0;i<root->nohyphen_count;i++) {
+      const hy_sequence *sequence=root->nohyphen+i;if(sequence->count>v->count) continue;
+      for(j=0;j<=v->count-sequence->count;j++) {
+        size_t k;for(k=0;k<sequence->count && v->word[j+k]==sequence->items[k];k++) {}
+        status=work(w,k+1);if(status!=EXR_OK) goto done;
+        if(k==sequence->count) {
+          if(v->original_at[j]!=SIZE_MAX) selected[v->original_at[j]]=0;
+          if(v->original_at[j+k]!=SIZE_MAX) selected[v->original_at[j+k]]=0;
+        }
+      }
+    }
+  }
+  for(i=1;i<count;i++) if(selected[i] && graphemes[i]>=left && graphemes[count]-graphemes[i]>=right) {
+    status=publish_choice(w,language,source,offsets,count,boundaries,style,initial,i,chosen[i].first,chosen[i].last,chosen[i].change,out,emit);
+    if(status!=EXR_OK) goto done;
+  }
+done:
+  for(i=0;i<tail_count;i++) free(tails[i]);
+  free(v);return status;
 }
 static exr_status native_breaks(hy_work *w,const char *language,const uint32_t *scalars,
                                 const size_t *offsets,size_t count,const unsigned char *boundaries,unsigned char *out,hy_emitter *emit) {
   hy_dictionary *d=dictionary(w->owner,language);hy_choice *choices=NULL;exr_status status;
   if(!d) return EXR_OK;
+  if(d->explicit_levels && d->levels[0].trie.change_count) return native_compound(w,d,language,scalars,offsets,count,boundaries,out,emit);
   if(d->levels[0].trie.change_count || d->levels[1].trie.change_count) {
     choices=calloc(NORMAL_SCALARS+3+WORD_SCALARS+1,sizeof(*choices));
     if(!choices) return exr_fail(w->error,EXR_MEMORY,"Discretionary matching scratch allocation failed");
@@ -742,14 +940,16 @@ exr_status exr_hyphenator_create_patterns_ex(const exr_hyphen_pattern_input *inp
     status=load(&w,&h->dictionaries[i],&inputs[i]); if(status!=EXR_OK) goto failed;
     { size_t level,k;
       for(level=0;level<2;level++) for(k=0;k<h->dictionaries[i].levels[level].trie.change_count;k++) {
-        const hy_change *change=h->dictionaries[i].levels[level].trie.changes+k;size_t at=0;uint32_t cp;
+        const hy_change *change=h->dictionaries[i].levels[level].trie.changes+k;size_t at=0;unsigned before_scalars=0;uint32_t cp;
         if(change->kind!=1) continue;
         h->dictionaries[i].unsafe|=!change->before || !change->after;
         while(at<change->before+change->after+1) {
+          if(at<change->before) before_scalars++;
           if(!exr_next(change->text,change->before+change->after+1,&at,&cp)) break;
           h->dictionaries[i].complex|=exr_bidi_complex(cp);
           if(cp) h->dictionaries[i].unsafe|=!exr_bidi_ltr_letter(cp);
         }
+        if(!level && before_scalars>h->dictionaries[i].root_before_scalars) h->dictionaries[i].root_before_scalars=before_scalars;
       }
       if(h->dictionaries[i].levels[0].trie.change_count || h->dictionaries[i].levels[1].trie.change_count)
         for(level=0;level<2;level++) for(k=1;k<h->dictionaries[i].levels[level].trie.count;k++) {

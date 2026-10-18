@@ -351,3 +351,14 @@ suffix instead of rescanning the whole source paragraph. Checkpoints rebuild
 original safety and preserve the existing display prefix. The 1 MiB combining-
 mark regression checks forward access, eviction, pixel-stable rewind and restored
 checkpoints; work caps are unchanged.
+
+
+Conditional compound stem reconstruction uses the existing C query/bitmap and
+Swift/JNI pager calls. An explicit NEXTLEVEL dictionary can restore a left stem
+for recursive matching without editing the original document. Only mapped whole
+source intervals are returned; generated spelling has no invented interior source
+positions. Only taking the corresponding line break applies its substitution.
+Source grapheme minima, literal/WORD policy, 128-scalar/512-byte public result cap,
+ABI 1 and schema 6 stay unchanged. Per-query conditional matching workspace and
+owned stem strings are capped at 1 MiB. Installed C/C++ consumers verify recursive
+breaks 2/4/7/9; Swift/JNI smoke checks the newly enabled source break on a real EPUB.

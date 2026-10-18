@@ -607,6 +607,7 @@ if(EXR_BUILD_TESTS)
     if(NOT EXR_SANITIZE)
       add_test(NAME native-hyphen-compound-oracle COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_hyphen_compound.py $<TARGET_FILE:exreader>)
       add_test(NAME native-hyphen-replacement-oracle COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_hyphen_replacements.py $<TARGET_FILE:exreader>)
+      add_test(NAME native-hyphen-conditional-oracle COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_hyphen_conditional.py $<TARGET_FILE:exreader>)
     endif()
     if(EXR_BUILD_TOOLS)
       add_test(NAME native-benchmark COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_benchmark.py $<TARGET_FILE:exreader-benchmark> ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf)
@@ -670,7 +671,7 @@ install(FILES tests/fixtures/shaping/shaping.ttf tests/fixtures/shaping/README.m
 
 install(FILES tests/fixtures/audio/pcm.wav DESTINATION examples/audio)
 install(FILES tests/fixtures/audio/metadata.m4b DESTINATION examples/audio)
-install(FILES tests/fixtures/layout.epub tests/fixtures/hyphen-long.epub tests/fixtures/hyphen-canonical.epub tests/fixtures/hyphen-compound.epub tests/fixtures/hyphen-rewrite-long.epub tests/fixtures/hyphen-rematch-long.epub tests/fixtures/hyphen-boundary-ri.epub tests/fixtures/hyphen-bidi-long.epub tests/fixtures/hyphen-bidi-leading.epub tests/fixtures/hyphen-bidi-future-neutral.epub tests/fixtures/hyphen-insertion-long.epub tests/fixtures/hyphen-case-insertion.epub DESTINATION examples/books)
+install(FILES tests/fixtures/layout.epub tests/fixtures/hyphen-long.epub tests/fixtures/hyphen-canonical.epub tests/fixtures/hyphen-compound.epub tests/fixtures/hyphen-rewrite-long.epub tests/fixtures/hyphen-rematch-long.epub tests/fixtures/hyphen-boundary-ri.epub tests/fixtures/hyphen-bidi-long.epub tests/fixtures/hyphen-bidi-leading.epub tests/fixtures/hyphen-bidi-future-neutral.epub tests/fixtures/hyphen-insertion-long.epub tests/fixtures/hyphen-case-insertion.epub tests/fixtures/hyphen-stem-long.epub tests/fixtures/hyphen-stem-case.epub DESTINATION examples/books)
 install(FILES tests/fixtures/float-both.epub tests/fixtures/float-long-main.epub tests/fixtures/float-bfc-stream.epub DESTINATION examples/books)
 
 install(FILES include/module.modulemap DESTINATION include)
