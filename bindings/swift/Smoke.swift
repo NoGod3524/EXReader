@@ -260,6 +260,26 @@ import CEXReader
             precondition(inserted.contains { $0.start == 4 && $0.end == 5 && $0.codepoint == 97 })
             let bitmap = try page.render(); precondition(bitmap.width == 80)
         }
+        do {
+            let publication = try EXReaderPublication(file: root.appendingPathComponent("books/hyphen-rematch-long.epub"))
+            let chapter = try publication.load(part: 0)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            var config = EXReaderLayoutConfig()
+            config.page.width = 80; config.page.height = 100; config.page.margin = 10; config.page.font_size = 14
+            config.userCSS = "html,body,p {margin:0;padding:0;font-size:14px;line-height:20px}"
+            let pager = try chapter.pager(font: font, config: config)
+            try pager.setHyphenation([EXReaderHyphenDictionary(language: "zm", patterns: Data(".abcd1efghijklmnopqr./d=xy,4,2 .xyfg1hijklmnopqr. .xyfghijk1lmnopqr./k=zz,8,2 .zzm1nopqr.".utf8), leftMinimum: 1, rightMinimum: 1)])
+            var rewrittenAgain = false, rematchedAgain = false
+            for _ in 0..<2 {
+                guard let page = try pager.next() else { preconditionFailure("missing rematched page") }
+                for glyph in page.glyphs where (glyph.flags & 2048) != 0 {
+                    rewrittenAgain = rewrittenAgain || (glyph.start == 11 && glyph.end == 12 && glyph.codepoint == 122)
+                    rematchedAgain = rematchedAgain || (glyph.start == 13 && glyph.end == 13 && (glyph.codepoint == 45 || glyph.codepoint == 0x2010))
+                }
+                let bitmap = try page.render(); precondition(bitmap.width == 80)
+            }
+            precondition(rewrittenAgain && rematchedAgain)
+        }
         print("Swift SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed")
     }
 }

@@ -1160,8 +1160,8 @@ EXR_API void exr_hyphenator_free(exr_hyphenator *hyphenator);
 /* Optional dictionaries are retained. Automatic opportunities require CSS
    hyphens:auto; the CSS default remains manual. Discretionary replacement sides
    are atomic source clusters retaining original ranges; strings remain literal.
-   Changed word remainders retain ordinary/emergency breaks but are not yet
-   dictionary-hyphenated again. Config record/ABI is unchanged. */
+   Changed word remainders are re-queried using display spelling. Fresh points
+   must advance original source and respect protected source/grapheme edges. Config record/ABI is unchanged. */
 EXR_API exr_status exr_layout_create_hyphenated(const exr_document *doc,exr_font *font,
   const exr_layout_config *config,exr_hyphenator *hyphenator,exr_layout **out,exr_error *error);
 EXR_API exr_status exr_layout_create(const exr_document *doc, exr_font *font,

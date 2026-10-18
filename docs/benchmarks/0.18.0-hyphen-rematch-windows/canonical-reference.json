@@ -1,0 +1,8 @@
+{
+  "unicode_version": "17.0.0",
+  "normalization_fixture_sha256": "5019ffd530751a741900c849c0e010332f142a3612234639bd200b82138a87db",
+  "canonical_word_cases": 15985,
+  "original_byte_break_queries": 47955,
+  "scope": "Letter/mark c1/c2/c3 canonical forms with appended z and explicit boundary. NFC core full conformance is a separate native test.",
+  "library_sha256": "9d50cef25bd506d78435f90f9626919bbbe776a0d06d1d34485bfeeb0f539426"
+}

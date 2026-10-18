@@ -258,6 +258,22 @@ public final class Smoke {
                 check(leftRewrite && rightRewrite && page.render().width==80);
             }
         }
+        try(EXReader.Publication rematchBook=new EXReader.Publication(root.resolve("books/hyphen-rematch-long.epub").toString());
+            EXReader.Document rematchChapter=rematchBook.load(0);
+            EXReader.Pager rematchPager=rematchChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,compoundConfig)) {
+            rematchPager.setHyphenation(new EXReader.HyphenDictionary[]{new EXReader.HyphenDictionary("zm",
+                ".abcd1efghijklmnopqr./d=xy,4,2 .xyfg1hijklmnopqr. .xyfghijk1lmnopqr./k=zz,8,2 .zzm1nopqr.".getBytes(StandardCharsets.UTF_8),1,1)},0);
+            boolean rewrittenAgain=false,rematchedAgain=false;
+            for(int i=0;i<2;i++) try(EXReader.ReflowPage page=rematchPager.next()) {
+                check(page!=null);
+                for(EXReader.Glyph g:page.snapshot().glyphs) if((g.flags&2048)!=0) {
+                    rewrittenAgain|=g.start==11 && g.end==12 && g.codepoint=='z';
+                    rematchedAgain|=g.start==13 && g.end==13 && (g.codepoint=='-' || g.codepoint==0x2010);
+                }
+                check(page.render().width==80);
+            }
+            check(rewrittenAgain && rematchedAgain);
+        }
         System.out.println("JNI SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed");
     }
 }
