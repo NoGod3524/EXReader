@@ -177,6 +177,24 @@ public final class Smoke {
             }
             check(pages>20 && letters==7500);
         }
-        System.out.println("JNI SDK: PDF/audio/metadata, float image pixels, streaming floats and reflow lifetime passed");
+        try(EXReader.Publication bookWithTable=new EXReader.Publication(root.resolve("books/float-bfc-stream.epub").toString());
+            EXReader.Document tableChapter=bookWithTable.load(0);
+            EXReader.Pager tablePager=tableChapter.pager(Files.readAllBytes(root.resolve("fonts/primary.ttf")),0,floatConfig)) {
+            EXReader.Node[] tableNodes=tableChapter.nodes(); long table=-1;
+            for(int i=0;i<tableNodes.length;i++) for(EXReader.MetadataEntry attr:tableNodes[i].attributes) if(attr.key.equals("id") && attr.value.equals("ordinary")) table=i;
+            check(table>=0); int pages=0,letters=0,fragments=0; EXReader.ReflowPage page;
+            while((page=tablePager.next())!=null) {
+                try(EXReader.ReflowPage owned=page) {
+                    EXReader.LayoutSnapshot view=owned.snapshot();
+                    for(EXReader.Glyph g:view.glyphs) if(g.codepoint==65) letters++;
+                    for(EXReader.Box b:view.boxes) if(b.node==table && (b.flags&2)==0) {
+                        check(Math.abs(b.x-100)<.01f && Math.abs(b.width-100)<.01f); fragments++;
+                    }
+                    check(owned.render().width==240); pages++;
+                }
+            }
+            check(pages>20 && fragments>20 && letters==3350);
+        }
+        System.out.println("JNI SDK: PDF/audio/metadata, float images, table BFCs, streaming and reflow lifetime passed");
     }
 }

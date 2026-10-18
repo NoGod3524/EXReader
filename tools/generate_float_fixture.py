@@ -93,6 +93,31 @@ epub('long-table-unbreakable',side('<table><tr><td>'+long_body+'</td></tr></tabl
 epub('long-descending',side('<p>'+('A '*1000)+'</p>','height:10000px')+side('A','height:1200px')+'<p>'+text(100)+'</p>')
 inner=''.join('<div style="float:left;width:1px;height:1000px;background:blue"></div>' for _ in range(64))
 epub('long-cursor-limit',side(inner)+side(inner))
+def table(n=1,style='width:100px',cell='A'):
+    return '<table id="ordinary" style="background:#80ffaa;'+style+'">'+('<tr><td>'+cell+'</td><td>AA</td></tr>')*n+'</table>'
+for side_name in ('left','right'):
+    epub('bfc-'+side_name,image('picture',side_name,80)+table()+'<p>'+text(20)+'</p>')
+epub('bfc-both',image('left','left',40)+image('right','right',40)+table()+'<p>'+text(20)+'</p>')
+epub('bfc-auto',image('picture','left',80)+table(style='')+'<p>'+text(20)+'</p>')
+epub('bfc-wide',image('picture','left',80)+table(style='width:160px')+'<p>'+text(20)+'</p>')
+epub('bfc-percent',image('picture','left',80)+table(style='width:40%;padding:5%;border:2px solid blue')+'<p>'+text(20)+'</p>')
+epub('bfc-percent-wide',image('picture','left',80)+table(style='width:50%;padding:5%;border:2px solid blue')+'<p>'+text(20)+'</p>')
+epub('bfc-auto-margin',image('picture','left',80)+table(style='width:80px;margin:0 auto')+'<p>'+text(20)+'</p>')
+epub('bfc-clear',image('picture','left',80)+table(style='width:100px;clear:both')+'<p>'+text(20)+'</p>')
+epub('bfc-later-short',image('first','left',80)+image('second','left',150)+table()+'<p>'+text(20)+'</p>')
+epub('bfc-later-long',image('first','left',80)+image('second','left',150)+table(20)+'<p>'+text(20)+'</p>')
+epub('bfc-later-auto',image('first','left',80)+image('second','left',150)+table(20,style='',cell='AAAA AAAA AAAA AAAA')+'<p>'+text(20)+'</p>')
+epub('bfc-stream',side()+table(250)+'<p>'+text(100)+'</p>')
+epub('bfc-stream-wide',side()+table(250,'width:160px')+'<p>'+text(100)+'</p>')
+epub('bfc-margins',image('picture','left',80)+table(250,'width:80px;padding:3px;border:2px solid blue;margin:5px 7px 9px 11px')+'<p>'+text(20)+'</p>')
+epub('bfc-collapse',image('picture','left',80)+table(250,'width:100px;border-collapse:collapse;border:4px solid blue')+'<p>'+text(20)+'</p>','td {border:2px solid red}')
+epub('bfc-vertical',image('picture','left',80)+table(250,'width:80px;height:100px')+'<p>'+text(20)+'</p>','html {writing-mode:vertical-rl} img {width:auto !important;height:60px}')
+epub('bfc-orthogonal','<p>'+('A<br/>'*7)+'</p>'+image('picture','left',80)+table(250,cell='<div style="writing-mode:vertical-rl">A A A A</div>')+'<p>'+text(20)+'</p>')
+epub('bfc-cell','<table style="width:200px;table-layout:fixed"><tr><td>'+image('picture','left',40)+table(1,'width:40px')+'</td><td>A</td></tr></table>')
+epub('bfc-unbreakable',image('picture','left',80)+table(1,cell='<p>'+('A '*1000)+'</p>'))
+epub('bfc-auto-defer','<div style="float:left;width:80px;height:150px;background:blue">A</div><div style="float:left;width:150px;height:40px;background:blue">A</div>'+table(1,style='',cell='AAAA '*26)+'<p>'+text(20)+'</p>')
+epub('bfc-percent-height',side('','height:180px')+'<p>'+('A<br/>'*7)+'</p>'+table(3,'width:100px;height:250%'))
+epub('bfc-stream-clear',side()+table(250,'width:100px;clear:left')+'<p>'+text(100)+'</p>')
 print(count,'float fixtures generated')
 
 

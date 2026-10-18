@@ -137,6 +137,11 @@ indivisible advances and trailing spaces. Installed JNI/Swift smoke includes a
 shared original image and long-float EPUBs, checking geometry/pixels and all
 7,500 letters through EOF. Long text/table floats now retain independent page
 cursors, including nested floats and fixed orthogonal viewports. Ordinary tables
-currently clear external floats. Unbreakable table row groups still must fit a
+now establish an independent BFC beside external floats: columns are fixed after
+the first committed fragment, while each new page selects a fitting rectangle.
+Width/padding percentages use the original containing block. Clear waits for
+matching continuations. The installed float-bfc-stream.epub smoke counts 3,350
+letters and verifies table coordinates through EOF. Tables without external floats
+keep their existing pagination path. Unbreakable table row groups still must fit a
 page. Checkpoint cloning owns and budgets all pending continuation contexts;
 no public record size, ABI epoch or schema changes.

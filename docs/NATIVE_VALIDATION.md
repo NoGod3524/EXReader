@@ -2667,7 +2667,7 @@ Installed JNI passes -Xcheck:jni and renders the new float-long-main.epub throug
 EOF, counting all 7,500 A characters. Equivalent Swift smoke is part of macOS
 CI. Native margin/border continuation pixels were inspected at 320 by 320.
 
-Ordinary tables still clear external floats; per-side decoration slicing and
+At commit 9ec2349 ordinary tables still cleared external floats; per-side decoration slicing and
 complete CSS fragmentation semantics remain outside the supported subset.
 Large auto-width measurement, paragraph bidi analysis and parsed document
 storage can still scale with the source. These are independent of retaining
@@ -2676,3 +2676,42 @@ and high-water-memory measurements. Commit 9ec2349 passed all six jobs in
 [CI run 39096308241](https://github.com/NoGod3524/EXReader/actions/runs/39096308241):
 Windows, Linux and macOS native/installed-SDK tests, macOS Swift smoke, JNI
 smoke, ASan/UBSan, Android ARM64 and Apple device/simulator library builds.
+
+
+## Ordinary table BFCs beside floats (0.18.0 development)
+
+Ordinary tables now use an independent paginated BFC while external floats are
+active. They contribute a baseline and normal-flow height. Initial probes check
+the actual whole-fragment rectangle, not only its first row; a future float top
+cannot cut through later rows or the table background. Width is selected before
+commit, columns then remain fixed, and the fragment position is recomputed per
+page. A failed narrow auto-width probe may choose a wider first fragment on the
+next page. Explicit clear waits for the selected floating continuations.
+
+Twenty-three new original EPUBs bring the float set to 90: left/right/both,
+auto and declared widths, percent widths/padding, auto margins, clear, future
+float tops, short vs long tables, long float continuations, collapsed borders,
+vertical/orthogonal contexts, cell-local placement, and unbreakable errors.
+A deferred auto table verifies width 200 on page 1 after its first narrow
+attempt fails. A percent-height table started in a partial page keeps all six
+cells at 500/3 pixels rather than recomputing height from remaining space.
+Table backgrounds and cell/glyph arrays remain contained and do not intersect
+external float rectangles. Width is checked across every table fragment.
+
+Three hundred additional host-built documents (seed 180322) vary ordinary
+2-column tables, rowspan groups, fixed/auto/percent width, margins, padding,
+solid/collapsed borders, external float order and vertical writing. They join
+the previous 500 generated float documents. Seven table documents compare
+cached/checkpoint/backward pages against fresh replay, full-layout pixels and
+hit tests; cancellation with an active table and floating cursor restores exact
+pixels. The float test now has 683,956 checks. All 107 native tests pass locally.
+Existing no-float goldens are unchanged. Native collapsed-table/image pixels
+were inspected, and installed JNI -Xcheck:jni counts 3,350 A characters through
+EOF while verifying each ordinary-table fragment's x=100 and width=100.
+Equivalent Swift smoke and mobile builds run in CI.
+
+This reuses the existing page cursor, table column allocator, image/font caches,
+checkpoint ownership and resource limits. No new dependency or public record
+layout is added. The 1 MiB float plus 1,800-row table benchmark records first
+screen, complete traversal and peak process memory in PERFORMANCE.md. Complete
+CSS table fragmentation and per-side decorations remain future work.
