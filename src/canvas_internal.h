@@ -13,7 +13,10 @@ struct exr_canvas {
   exr_canvas_layer *layers;size_t layer_depth,layer_capacity,layer_bytes,layer_budget;
   exr_blend_mode blend,saved_blend[160];
   size_t depth,group_depth,mask_bytes,mask_count,mask_budget,work;
+  const unsigned char *soft_mask;size_t soft_mask_width,soft_mask_height;exr_composite_state mask_state;
 };
+/* Graphics-state soft mask: page-space, one byte per pixel; NULL clears it. */
+exr_status exr_canvas_soft_mask(exr_canvas *canvas,const unsigned char *mask,size_t width,size_t height,exr_error *error);
 /* Clip-union construction is internal until the generic scene API is settled. */
 void exr_canvas_union_abort(exr_canvas *canvas);
 exr_status exr_canvas_union_add(exr_canvas *canvas,const exr_path_segment *segments,size_t count,

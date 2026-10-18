@@ -29,10 +29,24 @@ static exr_status new_mask(exr_canvas *c,exr_clip_mask **out,exr_error *e) {
   if(!mask->bitmap.pixels) { free(mask); return exr_fail(e,EXR_MEMORY,"Canvas clip pixel allocation failed"); }
   mask->refs=1; c->mask_bytes+=bytes; c->mask_count++; *out=mask; return EXR_OK;
 }
+/* The soft mask rides on the composite state so every pixel writer applies it. */
+static exr_composite_state *masked_state(exr_canvas *c) {
+  exr_composite_state *s=c->composite ? c->composite : (c->soft_mask ? &c->mask_state : NULL);
+  if(!s) return NULL;
+  s->soft_mask=c->soft_mask;s->soft_mask_width=c->soft_mask_width;s->soft_mask_height=c->soft_mask_height;
+  return s;
+}
+exr_status exr_canvas_soft_mask(exr_canvas *c,const unsigned char *mask,size_t width,size_t height,exr_error *e) {
+  exr_status status=ready(c,e);if(status!=EXR_OK) return status;
+  if(mask && (width!=c->bitmap.width || height!=c->bitmap.height))
+    return finish(c,exr_fail(e,EXR_ARGUMENT,"Soft mask size must match the canvas"),e);
+  c->soft_mask=mask;c->soft_mask_width=mask ? width : 0;c->soft_mask_height=mask ? height : 0;
+  return EXR_OK;
+}
 static exr_status fill(exr_canvas *c,const exr_vector_polyline *path,exr_fill_rule rule,uint32_t color,
                          exr_bitmap *target,const exr_clip_mask *clip,exr_error *e) {
   exr_vector_edge *edges=NULL; size_t count=0; exr_status status=exr_vector_edges(path,1,&edges,&count,&c->work,&c->control,e);
-  if(status==EXR_OK) status=exr_vector_fill_blend(target,edges,count,rule,color,clip ? &clip->bitmap : NULL,target==&c->bitmap ? c->blend : EXR_BLEND_NORMAL,target==&c->bitmap ? c->composite : NULL,&c->work,&c->control,e);
+  if(status==EXR_OK) status=exr_vector_fill_blend(target,edges,count,rule,color,clip ? &clip->bitmap : NULL,target==&c->bitmap ? c->blend : EXR_BLEND_NORMAL,target==&c->bitmap ? masked_state(c) : NULL,&c->work,&c->control,e);
   free(edges); return status;
 }
 static int inverse(const double *m,double out[6]) {
@@ -141,7 +155,7 @@ exr_status exr_canvas_path(exr_canvas *c,const exr_path_segment *segments,size_t
     if(status==EXR_OK) status=new_mask(c,&sm,e);
     if(status==EXR_OK) status=fill(c,&flat,style->rule,0xffffffff,&fm->bitmap,NULL,e);
     if(status==EXR_OK) status=fill(c,&outline,EXR_FILL_NONZERO,0xffffffff,&sm->bitmap,NULL,e);
-    if(status==EXR_OK) status=exr_composite_compound(&c->bitmap,&fm->bitmap,&sm->bitmap,style->fill,style->stroke,c->blend,c->clip ? &c->clip->bitmap : NULL,c->composite,&c->work,&c->control,e);
+    if(status==EXR_OK) status=exr_composite_compound(&c->bitmap,&fm->bitmap,&sm->bitmap,style->fill,style->stroke,c->blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),&c->work,&c->control,e);
     unref(c,fm);unref(c,sm);
   } else if(status==EXR_OK && (style->flags&EXR_DRAW_FILL)) status=fill(c,&flat,style->rule,style->fill,&c->bitmap,c->clip,e);
   else if(status==EXR_OK && (style->flags&EXR_DRAW_STROKE)) status=fill(c,&outline,EXR_FILL_NONZERO,style->stroke,&c->bitmap,c->clip,e);
@@ -185,7 +199,7 @@ exr_status exr_canvas_union_commit(exr_canvas *c,exr_error *e) {
 }
 exr_status exr_canvas_image(exr_canvas *c,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
   exr_status status=ready(c,e); if(status!=EXR_OK) return status;
-  status=exr_vector_texture_blend(&c->bitmap,image,matrix,alpha,c->clip ? &c->clip->bitmap : NULL,c->blend,c->composite,&c->work,&c->control,e);
+  status=exr_vector_texture_blend(&c->bitmap,image,matrix,alpha,c->clip ? &c->clip->bitmap : NULL,c->blend,masked_state(c),&c->work,&c->control,e);
   return finish(c,status,e);
 }
 static exr_status sink_path(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
@@ -251,16 +265,22 @@ exr_status exr_sink_begin_group(const exr_draw_sink_ex *sink,double opacity,exr_
   return status==EXR_OK && e && e->code!=EXR_OK ? e->code : status;
 }
 static exr_status sink_begin_group(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) { return exr_canvas_begin_group(context,opacity,mode,flags,e); }
+exr_status exr_sink_soft_mask(const exr_draw_sink_ex *sink,const unsigned char *mask,size_t width,size_t height,exr_error *e) {
+  if(!sink->soft_mask) return mask ? exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks soft-mask support") : EXR_OK;
+  return sink->soft_mask(sink->base.context,mask,width,height,e);
+}
+static exr_status sink_soft_mask(void *context,const unsigned char *mask,size_t width,size_t height,exr_error *e) { return exr_canvas_soft_mask(context,mask,width,height,e); }
 static exr_status sink_end_layer(void *context,unsigned commit,exr_error *e) { return exr_canvas_end_layer(context,commit,e); }
 exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error *e) {
   exr_draw_sink_ex sink={0};size_t size;exr_status status;
   if(!out || out->struct_size<offsetof(exr_draw_sink_ex,blend) || out->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid extended sink output size");
   size=out->struct_size<sizeof(sink) ? out->struct_size : sizeof(sink);
+  if(size>offsetof(exr_draw_sink_ex,soft_mask) && size<offsetof(exr_draw_sink_ex,soft_mask)+sizeof(sink.soft_mask)) size=offsetof(exr_draw_sink_ex,soft_mask);
   if(size>offsetof(exr_draw_sink_ex,begin_group) && size<offsetof(exr_draw_sink_ex,begin_group)+sizeof(sink.begin_group)) size=offsetof(exr_draw_sink_ex,begin_group);
   if(size>offsetof(exr_draw_sink_ex,begin_layer) && size<offsetof(exr_draw_sink_ex,end_layer)+sizeof(sink.end_layer)) size=offsetof(exr_draw_sink_ex,begin_layer);
   if(size>offsetof(exr_draw_sink_ex,blend) && size<offsetof(exr_draw_sink_ex,begin_layer)) size=offsetof(exr_draw_sink_ex,blend);
   status=exr_canvas_get_sink(c,&sink.base,e);if(status!=EXR_OK) return status;
-  sink.struct_size=size;sink.blend=sink_blend;sink.begin_layer=sink_begin_layer;sink.end_layer=sink_end_layer;sink.begin_group=sink_begin_group;
+  sink.struct_size=size;sink.blend=sink_blend;sink.begin_layer=sink_begin_layer;sink.end_layer=sink_end_layer;sink.begin_group=sink_begin_group;sink.soft_mask=sink_soft_mask;
   memset(out,0,out->struct_size);memcpy(out,&sink,size);return EXR_OK;
 }
 exr_status exr_canvas_set_layer_budget(exr_canvas *c,size_t bytes,exr_error *e) {
