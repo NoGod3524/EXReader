@@ -48,12 +48,20 @@ static void read_rgba(const exr_bitmap *b,const exr_composite_state *state,size_
   if(state && state->pixels) {
     const float *p=state->pixels+(y*b->width+x)*5;
     if(p[4]>0) for(k=0;k<4;k++) out[k]=p[k];
+    else if(state->isolated) for(k=0;k<4;k++) out[k]=0;
     else read_rgba(&state->backdrop,state->backdrop_state,x,y,out);
   }
   else {
     const unsigned char *p=b->pixels+y*b->stride+x*b->channels;out[3]=b->channels==1 ? 1 : p[3]/255.;
     for(k=0;k<3;k++) out[k]=p[b->channels==1 ? 0 : k]/255.*out[3];
   }
+}
+/* The group's initial backdrop: transparent for isolated groups, otherwise the
+   parent bitmap (or its precision state) captured when the group began. */
+static void read_backdrop(const exr_composite_state *state,size_t x,size_t y,double out[4]) {
+  unsigned k;
+  if(state->isolated) { for(k=0;k<4;k++) out[k]=0; return; }
+  read_rgba(&state->backdrop,state->backdrop_state,x,y,out);
 }
 static void over_rgba(const double back[4],const double source[3],double alpha,exr_blend_mode mode,double out[4]) {
   double b[3],blend[3];unsigned k;
@@ -83,8 +91,23 @@ void exr_pixel_composite(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned 
   double back[4],source[3],out[4],alpha;unsigned k;
   if(!state || !state->pixels) { exr_pixel_blend(bitmap,x,y,color,coverage,mode);return; }
   alpha=(color&255)/255.*coverage/255.;if(!alpha) return;
-  read_rgba(bitmap,state,(size_t)x,(size_t)y,back);
   for(k=0;k<3;k++) source[k]=((color>>(24-8*k))&255)/255.;
+  if(state->knockout) {
+    /* ISO 32000-1 11.4.5: the element composites with the initial backdrop and
+       replaces the accumulated result inside its geometric coverage. Constant
+       alpha and coverage stay separate, otherwise edges decay twice. */
+    double base[4],painted[4],current[4],constant=(color&255)/255.,covered=coverage/255.;
+    read_backdrop(state,(size_t)x,(size_t)y,base);
+    over_rgba(base,source,constant,mode,painted);
+    read_rgba(bitmap,state,(size_t)x,(size_t)y,current);
+    for(k=0;k<4;k++) out[k]=covered*painted[k]+(1-covered)*current[k];
+    write_rgba(bitmap,state,(size_t)x,(size_t)y,out,alpha);
+    /* Knockout replaces coverage as well: the group alpha follows the top element
+       instead of accumulating, so background removal divides by the result alpha. */
+    if(state->pixels) state->pixels[((size_t)y*bitmap->width+(size_t)x)*5+4]=(float)fmax(0,fmin(1,out[3]));
+    return;
+  }
+  read_rgba(bitmap,state,(size_t)x,(size_t)y,back);
   over_rgba(back,source,alpha,mode,out);write_rgba(bitmap,state,(size_t)x,(size_t)y,out,alpha);
 }
 exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state,const exr_bitmap *parent,
@@ -137,9 +160,9 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
     for(x=left;x<right;x++) {
       const unsigned char *p=source->pixels+y*source->stride+x*4;unsigned a=(unsigned)floor(p[3]*opacity+.5),coverage=clip ? clip->pixels[y*clip->stride+x] : 255;uint32_t color;
       if(!coverage) continue;
-      if((source_state && source_state->pixels) || (target_state && target_state->pixels)) {
+      if((source_state && source_state->pixels && !source_state->isolated) || (target_state && target_state->pixels)) {
         double back[4],rgb[3],out[4],ag=p[3]/255.;unsigned k;
-        const float *q=source_state && source_state->pixels ? source_state->pixels+(y*source->width+x)*5 : NULL;
+        const float *q=source_state && source_state->pixels && !source_state->isolated ? source_state->pixels+(y*source->width+x)*5 : NULL;
         if(q) ag=q[4];
         if(!ag || !opacity) continue;
         if(!exr_vector_work(work,cost+32+(target_state ? target_state->depth*4 : 0))) return exr_fail(e,EXR_LIMIT,"Group backdrop removal exceeds work budget");
@@ -177,10 +200,12 @@ exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,cons
       if((!f && !s) || !k) continue;
       if(!exr_vector_work(work,cost+(state ? 64+state->depth*4 : 0))) return exr_fail(e,EXR_LIMIT,"Compound path blend exceeds budget");
       if(state && state->pixels) {
-        double back[4],fc[3],sc[3],fr[4],sr[4],out[4],af=(fill_color&255)/255.,as=(stroke_color&255)/255.;
+        double back[4],base[4],fc[3],sc[3],fr[4],sr[4],out[4],af=(fill_color&255)/255.,as=(stroke_color&255)/255.;
         read_rgba(target,state,x,y,back);
+        /* A knockout group treats fill+stroke as one element over the initial backdrop. */
+        if(state->knockout) read_backdrop(state,x,y,base);else memcpy(base,back,sizeof(base));
         for(channel=0;channel<3;channel++) { fc[channel]=((fill_color>>(24-8*channel))&255)/255.;sc[channel]=((stroke_color>>(24-8*channel))&255)/255.; }
-        over_rgba(back,fc,af,mode,fr);over_rgba(back,sc,as,mode,sr);
+        over_rgba(base,fc,af,mode,fr);over_rgba(base,sc,as,mode,sr);
         for(channel=0;channel<4;channel++) out[channel]=fw*fr[channel]+sw*sr[channel]+bw*back[channel];
         write_rgba(target,state,x,y,out,fw*af+sw*as);continue;
       }

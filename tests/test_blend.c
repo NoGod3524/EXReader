@@ -240,11 +240,67 @@ static void nonisolated(void) {
     for(k=0;k<4;k++) { const unsigned char *d=exr_canvas_bitmap(direct)->pixels,*g=exr_canvas_bitmap(group)->pixels;unsigned dv=k<3 ? (d[k]*d[3]+127)/255 : d[k],gv=k<3 ? (g[k]*g[3]+127)/255 : g[k];CHECK(dv+1>=gv && gv+1>=dv); }
     exr_canvas_free(direct);exr_canvas_free(group);
   }
-  { exr_canvas *c=canvas(1,1,0);CHECK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,2,&error)==EXR_ARGUMENT);exr_canvas_free(c); }
+  { exr_canvas *c=canvas(1,1,0);CHECK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,4,&error)==EXR_ARGUMENT);exr_canvas_free(c); }
+  { exr_canvas *c=canvas(1,1,0);OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));OK(exr_canvas_end_layer(c,0,&error));exr_canvas_free(c); }
+}
+
+static void knockout(void) {
+  exr_path_segment p[5];exr_draw_style style=exr_draw_style_defaults();unsigned char *px;exr_canvas *c,*plain;
+  /* A single knockout element must equal plain painting: no "clear the backdrop" shortcut. */
+  c=canvas(4,4,0xffffffff);plain=canvas(4,4,0xffffffff);rect(p,4,4);style.fill=0x00ff0080;
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));
+  OK(exr_canvas_path(c,p,5,NULL,&style,&error));OK(exr_canvas_end_layer(c,1,&error));
+  OK(exr_canvas_path(plain,p,5,NULL,&style,&error));
+  px=exr_canvas_bitmap(c)->pixels;
+  { const unsigned char *q=exr_canvas_bitmap(plain)->pixels;unsigned k;for(k=0;k<4;k++) CHECK(px[k]+1>=q[k] && q[k]+1>=px[k]); }
+  exr_canvas_free(c);exr_canvas_free(plain);
+  /* Overlapping elements: knockout keeps the newest element over the initial backdrop. */
+  c=canvas(4,4,0xffffffff);rect(p,4,4);
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));
+  style.fill=0xff0000ff;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+  style.fill=0x00ff0080;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+  OK(exr_canvas_end_layer(c,1,&error));px=exr_canvas_bitmap(c)->pixels;
+  CHECK(px[0]>=125 && px[0]<=130 && px[1]>=253 && px[2]>=125 && px[2]<=130);
+  exr_canvas_free(c);
+  /* The same sequence without knockout accumulates over the red element instead. */
+  c=canvas(4,4,0xffffffff);rect(p,4,4);
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,0,&error));
+  style.fill=0xff0000ff;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+  style.fill=0x00ff0080;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+  OK(exr_canvas_end_layer(c,1,&error));px=exr_canvas_bitmap(c)->pixels;
+  CHECK(px[0]>=125 && px[0]<=130 && px[1]>=125 && px[1]<=130 && px[2]<=3);
+  exr_canvas_free(c);
+  /* Zero-coverage elements never knock the group back to its backdrop. */
+  c=canvas(4,4,0xffffffff);rect(p,4,4);
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));
+  style.fill=0x00ff0080;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+  style.fill=0x0000ff00;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+  OK(exr_canvas_end_layer(c,1,&error));px=exr_canvas_bitmap(c)->pixels;
+  CHECK(px[1]>=253 && px[0]>=125 && px[0]<=130);
+  exr_canvas_free(c);
+  /* A transparent backdrop exposes coverage replacement: a later element replaces
+     both the colour and the alpha, so background removal keeps 50% coverage. */
+  c=canvas(4,4,0x00000000);rect(p,4,4);
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));
+  style.fill=0xff0000ff;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+  style.fill=0x00ff0080;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
+  OK(exr_canvas_end_layer(c,1,&error));px=exr_canvas_bitmap(c)->pixels;
+  CHECK(px[1]>=253 && px[3]>=126 && px[3]<=130);
+  exr_canvas_free(c);
+  /* Isolated knockout starts transparent. */
+  c=canvas(4,4,0xffffffff);rect(p,4,4);style.fill=0x00ff0080;
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT,&error));
+  OK(exr_canvas_path(c,p,5,NULL,&style,&error));OK(exr_canvas_end_layer(c,1,&error));
+  px=exr_canvas_bitmap(c)->pixels;CHECK(px[0]>=125 && px[0]<=130 && px[1]>=253 && px[2]>=125 && px[2]<=130);
+  exr_canvas_free(c);
 }
 static void invalid(void) {
   { exr_fixed_document *d=open_book("group-malformed");exr_bitmap b={0};unsigned i;for(i=0;i<5;i++) CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels);exr_fixed_free(d); }
-  { unsigned i;for(i=1;i<6;i++) {char name[24];exr_fixed_document *d;exr_bitmap b={0};snprintf(name,sizeof(name),"group-bad-%u",i);d=open_book(name);CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==(i<3 ? EXR_UNSUPPORTED : EXR_FORMAT) && !b.pixels);exr_fixed_free(d);} }
+  { unsigned i;for(i=1;i<6;i++) {char name[24];exr_fixed_document *d;exr_bitmap b={0};exr_status got;snprintf(name,sizeof(name),"group-bad-%u",i);d=open_book(name);got=exr_fixed_render(d,0,1,NULL,&b,&error);
+      /* K=true is a plain group (11.4.5 default); K=false is knockout and now renders. */
+      if(i==1) { CHECK(got==EXR_OK && b.pixels); exr_bitmap_free(&b); }
+      else CHECK(got==(i==2 ? EXR_UNSUPPORTED : EXR_FORMAT) && !b.pixels);
+      exr_fixed_free(d);} }
   unsigned i;for(i=0;i<3;i++) {char name[16];exr_fixed_document *d;exr_bitmap b={0};snprintf(name,sizeof(name),"bad-%u",i);d=open_book(name);CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels);exr_fixed_free(d);}
 }
-int main(int argc,char **argv) {CHECK(argc==2);directory=argv[1];direct();analytic();layers();nonisolated();references();consumers();invalid();printf("%u RGB blend checks passed\n",checks);return 0;}
+int main(int argc,char **argv) {CHECK(argc==2);directory=argv[1];direct();analytic();layers();nonisolated();references();consumers();knockout();invalid();printf("%u RGB blend checks passed\n",checks);return 0;}
