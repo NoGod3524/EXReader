@@ -114,6 +114,49 @@ static exr_status draw_box(exr_bitmap *out,const exr_layout *l,const exr_box *b,
   }
   return EXR_OK;
 }
+static const exr_box *border_box(const exr_layout *l,const exr_paint *paints,size_t index) {
+  return &l->boxes[paints ? paints[index].index : index];
+}
+static exr_status border_layer(exr_bitmap *out,const exr_layout *l,const exr_paint *paints,
+                               size_t first,size_t end,size_t *work,const exr_control *control,exr_error *e) {
+  int left=(int)out->width,top=(int)out->height,right=0,bottom=0,x,y; size_t i,pixels;
+  unsigned char *layer; size_t stride;
+  for(i=first;i<end;i++) {
+    const exr_box *b=border_box(l,paints,i);
+    left=(int)fminf((float)left,fmaxf(0,floorf(b->x))); top=(int)fminf((float)top,fmaxf(0,floorf(b->y)));
+    right=(int)fmaxf((float)right,fminf((float)out->width,ceilf(b->x+b->width)));
+    bottom=(int)fmaxf((float)bottom,fminf((float)out->height,ceilf(b->y+b->height)));
+  }
+  if(right<=left || bottom<=top) return EXR_OK;
+  pixels=(size_t)(right-left)*(size_t)(bottom-top); stride=(size_t)(right-left)*4;
+  if(pixels>16*1024*1024 || !exr_vector_work(work,pixels))
+    return exr_fail(e,EXR_LIMIT,"Collapsed border layer exceeds raster budget");
+  layer=calloc(pixels,4);
+  if(!layer) return exr_fail(e,EXR_MEMORY,"Collapsed border layer allocation failed");
+  for(i=first;i<end;i++) {
+    const exr_box *b=border_box(l,paints,i);
+    int a=(int)fmaxf((float)left,floorf(b->x)),z=(int)fminf((float)right,ceilf(b->x+b->width));
+    int c=(int)fmaxf((float)top,floorf(b->y)),d=(int)fminf((float)bottom,ceilf(b->y+b->height));
+    if(z<=a || d<=c) continue;
+    if(!exr_vector_work(work,(size_t)(z-a)*(size_t)(d-c))) { free(layer); return exr_fail(e,EXR_LIMIT,"Collapsed border paint work exceeds raster budget"); }
+    for(y=c;y<d;y++) {
+      if(!(y&63) && exr_control_cancel(control,e)!=EXR_OK) { free(layer); return EXR_CANCELLED; }
+      for(x=a;x<z;x++) {
+        unsigned char *p=layer+(size_t)(y-top)*stride+(size_t)(x-left)*4;
+        p[0]=(unsigned char)(b->background>>24); p[1]=(unsigned char)(b->background>>16);
+        p[2]=(unsigned char)(b->background>>8); p[3]=(unsigned char)b->background;
+      }
+    }
+  }
+  for(y=top;y<bottom;y++) {
+    if(!(y&63) && exr_control_cancel(control,e)!=EXR_OK) { free(layer); return EXR_CANCELLED; }
+    for(x=left;x<right;x++) {
+      const unsigned char *p=layer+(size_t)(y-top)*stride+(size_t)(x-left)*4;
+      if(p[3]) exr_pixel(out,x,y,((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|p[3],255);
+    }
+  }
+  free(layer); return EXR_OK;
+}
 static exr_status draw_single_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,int outline_only,size_t *work,const exr_control *control,exr_error *error) {
   exr_face *selected; FT_Face face; FT_GlyphSlot slot; unsigned by,bx; int left,top; size_t charged=0,actual;
   if((g->flags&EXR_GLYPH_HIDDEN) || g->size<1.0f/64) return EXR_OK;
@@ -256,12 +299,25 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
       if(!(i&31) && exr_control_poll(control,EXR_STAGE_RENDER,i,total,e)!=EXR_OK) goto cancelled;
       if(command->kind==EXR_PAINT_GLYPH) {
         status=draw_glyph(out,f,&l->glyphs[command->index],NULL,glyph_line(l,command->index),&glyph_work,control,e); if(status!=EXR_OK) goto font_error;
+      } else if(l->boxes[command->index].flags&EXR_BOX_BORDER) {
+        size_t first=i,node=l->boxes[command->index].node;
+        while(i+1<positioned->paint_count) {
+          const exr_paint *next=&l->paints[positioned->paint_start+i+1];
+          if(next->kind!=EXR_PAINT_BOX || !(l->boxes[next->index].flags&EXR_BOX_BORDER) || l->boxes[next->index].node!=node) break;
+          i++;
+        }
+        status=border_layer(out,l,l->paints,positioned->paint_start+first,positioned->paint_start+i+1,&glyph_work,control,e);
+        if(status!=EXR_OK) goto border_error;
       } else if(draw_box(out,l,&l->boxes[command->index],control,e)!=EXR_OK) goto cancelled;
     }
   } else {
     for(i=p->box_start;i<p->box_start+p->box_count;i++) {
       if(exr_control_poll(control,EXR_STAGE_RENDER,i-p->box_start,total,e)!=EXR_OK) goto cancelled;
-      if(draw_box(out,l,&l->boxes[i],control,e)!=EXR_OK) goto cancelled;
+      if(l->boxes[i].flags&EXR_BOX_BORDER) {
+        size_t first=i,node=l->boxes[i].node;
+        while(i+1<p->box_start+p->box_count && (l->boxes[i+1].flags&EXR_BOX_BORDER) && l->boxes[i+1].node==node) i++;
+        status=border_layer(out,l,NULL,first,i+1,&glyph_work,control,e); if(status!=EXR_OK) goto border_error;
+      } else if(draw_box(out,l,&l->boxes[i],control,e)!=EXR_OK) goto cancelled;
     }
     for(i=p->line_start;i<p->line_start+p->line_count;i++) {
       size_t end=l->lines[i].glyph_start+l->lines[i].glyph_count;
@@ -277,6 +333,8 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
 cancelled:
   exr_bitmap_free(out);
   return exr_fail(e, EXR_CANCELLED, "Operation cancelled");
+border_error:
+  exr_bitmap_free(out); return status;
 font_error:
   if(status==EXR_CANCELLED) goto cancelled;
   exr_bitmap_free(out);

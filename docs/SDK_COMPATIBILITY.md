@@ -111,3 +111,14 @@ host examples now use the imported target; desktop CI configures, builds and run
 them independently from the engine source build. Windows copies the installed DLL
 next to the examples. Swift and JNI remain separate optional adapters over the
 same C contract.
+
+
+The collapse CSS option adds `EXR_BOX_BORDER` (mask value 2) on block rectangles without
+changing the exr_box layout, ABI epoch or library schema. Custom renderers must
+preserve these flags and batch each contiguous same-node border run as one RGBA
+layer, replacing rectangle pixels within the layer before one source-over blend.
+Painting each translucent rectangle independently darkens junctions. Native and
+positioned renderers implement the same grouping. Older hosts can request
+`table {border-collapse:separate}` until their renderer handles the new flag.
+Only the existing uniform solid/none/hidden border subset is implemented here;
+side-specific and additional border styles remain pending.

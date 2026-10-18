@@ -317,7 +317,9 @@ exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float wi
   }
   b->background = s->background;
   b->border_color = s->border_color;
-  b->border_width = s->border_style ? s->border_width : 0;
+  b->border_width = s->border_style == 1 ? s->border_width : 0;
+  if((s->display==EXR_CSS_TABLE && s->border_collapse) ||
+     (f->border_override && node==f->border_node)) b->border_width=0;
   return b;
 }
 exr_status exr_layout_image_asset(const exr_document *doc,exr_layout *l,

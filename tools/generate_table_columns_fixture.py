@@ -85,4 +85,30 @@ epub('table-align-opposite-directions','<table><tr style="width:100px"><td id="s
 epub('table-align-nested-fallback','<table><tr><td><table><tr><td id="inner" style="vertical-align:bottom;height:60px">A</td></tr></table></td><td id="peer">A</td></tr></table>','td {padding:2px;vertical-align:baseline}')
 epub('table-align-baseline-values','<table><tr><td id="small" style="vertical-align:middle;vertical-align:sub">A</td><td id="big" style="font-size:28px">A</td><td id="length" style="vertical-align:middle;vertical-align:-5px">A</td></tr></table>','table {width:300px} td {vertical-align:baseline}')
 epub('table-column-float-floor','<table><tr><td colspan="2" style="width:117px">AA</td><td colspan="2" style="width:.01px">AA</td><td style="width:200px">A</td></tr><tr><td>A</td><td>A</td><td>A</td><td>A</td><td>A</td></tr></table>','table {width:175px;table-layout:fixed}')
-print('51 EPUB table fixtures generated')
+# Collapsed-border cases share the same deterministic package generator.
+body='<table id="table"><tr><td id="a">A</td><td id="b">A</td></tr><tr><td id="c">A</td><td id="d">A</td></tr></table>'
+bordercss='table {width:200px;table-layout:fixed;border-collapse:collapse} td {height:40px;vertical-align:top;border:2px solid blue;background:white}'
+epub('table-border-basic',body,bordercss)
+epub('table-border-inapplicable',body,bordercss+' table {padding:20px} td {margin:10px}')
+epub('table-border-separate',body,bordercss+' table {border-collapse:separate}')
+epub('table-border-mixed',body,bordercss+' #a,#c {border:4px solid red}')
+epub('table-border-alpha',body,bordercss+' td {border-color:#00000080}')
+epub('table-border-hidden',body,bordercss+' #a {border:100px hidden red}')
+epub('table-border-none',body,bordercss+' #a {border:100px none red}')
+epub('table-border-inherit',body,'body {border-collapse:collapse} '+bordercss.replace('border-collapse:collapse','border-collapse:inherit'))
+epub('table-border-vertical',body,bordercss+' html {writing-mode:vertical-rl} table {width:auto;height:200px} td {width:40px;height:auto;text-orientation:upright}')
+epub('table-border-vertical-lr',body,bordercss+' html {writing-mode:vertical-lr} table {width:auto;height:200px} td {width:40px;height:auto;text-orientation:upright}')
+epub('table-border-opposite',body,bordercss+' html {writing-mode:vertical-rl} table {width:auto;height:200px} td {width:40px;height:auto;text-orientation:upright} #a {writing-mode:vertical-lr;margin:10px} #b {border:8px solid blue} #c {border:6px solid red}')
+epub('table-border-tie',body,bordercss+' #a {border-color:red} #b {border-color:green} #c {border-color:blue} #d {border-color:black}')
+epub('table-border-rtl',body,bordercss+' table {direction:rtl} #a {border-color:red} #b {border-color:green} #c {border-color:blue} #d {border-color:black}')
+spanbody='<table id="table"><tr><td id="a" rowspan="2">A</td><td id="b" colspan="2">A</td></tr><tr><td id="c">A</td><td id="d">A</td></tr><tr><td id="e" colspan="3">A</td></tr></table>'
+epub('table-border-spans',spanbody,bordercss+' tr {border:2px solid red}')
+groupbody='<table id="table"><colgroup style="border:6px solid red"><col span="2" style="border:4px solid green"/></colgroup><tbody style="border:6px solid blue"><tr style="border:6px solid black"><td id="a">A</td><td id="b">A</td></tr><tr><td id="c">A</td><td id="d">A</td></tr></tbody></table>'
+epub('table-border-groups',groupbody,bordercss+' td {border:2px solid #ff00ff}')
+epub('table-border-origin',groupbody,bordercss+' td {border:6px solid #ff00ff}')
+epub('table-border-wide-table',groupbody,bordercss+' table {border:8px solid #808000}')
+epub('table-border-nested','<table id="table"><tr><td id="a"><table id="inner"><tr><td id="innercell">A</td></tr></table></td><td id="b">A</td></tr></table>',bordercss+' #inner {width:auto} td {height:auto}')
+epub('table-border-nested-separate','<table id="table"><tr><td id="a"><table id="inner"><tr><td id="innercell">A</td></tr></table></td><td id="b">A</td></tr></table>',bordercss+' #inner {width:auto;border-collapse:separate} td {height:auto}')
+epub('table-border-columns','<table id="table"><col span="3" style="border:2px solid blue"/><tr><td id="a">A</td><td id="b">A</td></tr></table>',bordercss+' td {border:0}')
+epub('table-border-pages','<table id="table">'+''.join('<tr><td id="r'+str(i)+'" style="border:'+str(2+2*(i%3))+'px solid #00000080">A</td><td>A</td></tr>' for i in range(60))+'</table>',bordercss+' td {height:24px}')
+print('72 EPUB table fixtures generated')

@@ -23,6 +23,9 @@ typedef struct {
   int first_line, paginate, force_break, table_depth, page_limit, context_depth;
   int intrinsic; /* 1: every legal line break, 2: unwrapped streaming measure. */
   double intrinsic_extent;
+  size_t border_node;
+  float border_insets[4]; /* Logical top/right/bottom/left of a collapsed cell. */
+  int border_override;
   exr_inline_bidi *bidi;
   exr_writing_mode writing_mode;
 } flow;

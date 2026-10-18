@@ -1,0 +1,16 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "compiler": "GCC 16.2 Release",
+  "source_parent_commit": "a0117c741d5fe7dc2c3270dc5480cf9a15cc8c5c",
+  "engine_version": "0.18.0-development",
+  "dll_bytes": 5205547,
+  "dll_sha256": "964d2f64cccf5efe4d9212d121773e9953ced36c54bd4c6ad22ce39c1e709f85",
+  "benchmark_sha256": "a3514713475c50da85e90dd84aa77451dbe8cf303df11fa46d61ed26b958f56c",
+  "font_sha256": "ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed",
+  "runs_per_scenario": 3,
+  "disk_cache": "uncontrolled",
+  "fixtures": {
+    "table-collapse-1000-rows.epub": "205b6891cf6b7e1d4671baa7c06593b6a129d5c19125a2d58022540b11a05587",
+    "table-separate-1000-rows.epub": "c4646a976f3a9021979b0cb0320e9f214150b94f0f12b5176ecb8ab34f7d0162"
+  }
+}

@@ -498,12 +498,16 @@ typedef struct {
   size_t box_start, box_count;
 } exr_page;
 typedef enum { EXR_BOX_BLOCK = 1, EXR_BOX_IMAGE, EXR_BOX_CELL } exr_box_kind;
+/* Solid collapsed-table border rectangles. A contiguous run with one node is
+   one border layer: overlapping rectangles replace within the layer, then the
+   layer is composited once. This preserves translucent junction colors. */
+#define EXR_BOX_BORDER 2u
 typedef struct {
   exr_box_kind kind;
   size_t node, page, resource, start, end;
   float x, y, width, height, border_width;
   uint32_t background, border_color; /* 0xRRGGBBAA */
-  unsigned flags;                    /* Image bit 1: missing/unsupported image placeholder. */
+  unsigned flags; /* Image bit 1: placeholder. Block EXR_BOX_BORDER: border layer. */
 } exr_box;
 typedef enum { EXR_PAINT_GLYPH=1, EXR_PAINT_BOX=2 } exr_paint_kind;
 typedef struct {
