@@ -19,9 +19,12 @@
     "new_successful_EPUBs": 8,
     "expected_preexisting_tall_row_limit": 1,
     "installed_C_Cpp_JNI": "passed; two pages of generated text, source affiliation and public-bit checks",
-    "CI": "pending",
+    "CI": "https://github.com/NoGod3524/EXReader/actions/runs/39124521075",
     "source_hash_count": 223,
-    "provider_recovery": "generated-word provider I/O/cancellation, preceding cached pixels preserved and retry succeeds"
+    "provider_recovery": "generated-word provider I/O/cancellation, preceding cached pixels preserved and retry succeeds",
+    "cross_platform_CI": "All six jobs passed: Windows/Linux/macOS (113 CTests each), installed C/C++/JNI, macOS Swift two-page generated-text source/hit/public-bit checks, ASan/UBSan/leaks (111 tests), Android ARM64 and iOS/iPadOS device/simulator libraries and Swift checks",
+    "sanitizer_native_tests": 111,
+    "source_hash_verification": "All 223 recorded hashes match exact validated Git blob bytes; all 79 preceding EPUBs unchanged; four local runtime copies and all five benchmark executables/inputs verified"
   },
   "scope": "Display grapheme identities independent of original selection affiliation; generated after strings wrap across pages and receive further hyphenation/spelling rewrites at repeated source offsets. Before plus hyphen remains a fitting optional candidate. Pure-L insertion fast path prevents repeated whole-paragraph analysis; earlier DLL reproduces large-context EXR_LIMIT at page 1. Work/memory limits unchanged. Casing, conditional compounds, tall-row fragmentation and full roadmap remain open.",
   "performance": "Five 1 MiB workloads, first 65 pages, three fresh processes per mode, sequential with no concurrent builds/tests. Disk cache/background load uncontrolled. Four prior workloads retain generated glyph counts; long insertion workload emits 19312 generated glyphs.",
@@ -249,5 +252,6 @@
     "tools/generate_hyphen_unicode.py": "988d1864fd5cfe51ca453e0785b0b91c9b635c08e398617c8341bb3821601a5e",
     "tools/generate_normalize_unicode.py": "f39b3a8883f59a10a914bac081ba5570488df336d3e70e30d92d9521ef73a74a",
     "tools/generate_unicode.py": "a6988d10f0110e0ebed13a9a35adc346c927bda170a0d31edbf114e284f0a138"
-  }
+  },
+  "validated_code_commit": "365f6916d32ee9c7c570e52124c48f36deea90b0"
 }

@@ -3371,7 +3371,7 @@ replay agree in pixels, positions and hits. All 79 prior EPUB blobs are unchange
 There are 87 fixtures overall, including the existing expected tall-row limit.
 Installed C/C++ and JNI -Xcheck:jni pass; installed JNI/Swift smoke verifies inserted
 glyphs on two pages, their original range, hits and absence of private bits. Swift
-execution and sanitizer/cross-platform results are pending this commit's CI.
+execution and sanitizer/cross-platform results are recorded below.
 
 A supplementary 1 MiB stress case exposed repeated whole-paragraph analysis of
 unselected pure-L insertion candidates. Empty source spans had been classified
@@ -3399,3 +3399,15 @@ retain their generated-glyph counts; the additional expansion workload emits
 19,312 generated glyphs. Disk cache and background load are uncontrolled. Language
 casing, conditional compound rewrites, tall-row fragmentation and the full PDF/SDK
 compatibility roadmap remain open.
+
+
+Commit 365f6916d32ee9c7c570e52124c48f36deea90b0 passed all six jobs in
+[CI run 39124521075](https://github.com/NoGod3524/EXReader/actions/runs/39124521075):
+Windows/Linux/macOS (113 CTests each), installed C/C++/JNI, macOS Swift two-page
+generated-text source/hit/public-bit checks, ASan/UBSan/leaks (111 tests), Android
+ARM64, and iOS/iPadOS device/simulator engine libraries plus Swift checks. All
+223 recorded source hashes match the exact validated Git blob bytes, all 79
+preceding EPUBs are unchanged, and the four local runtime copies agree. All five
+benchmark datasets match the final benchmark executable and recorded input bytes.
+The following record-only commit updates verification and skips redundant CI.
+The remaining layout work and complete PDF/SDK compatibility roadmap stay open.
