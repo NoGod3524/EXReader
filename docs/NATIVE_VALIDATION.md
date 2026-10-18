@@ -2836,3 +2836,11 @@ first allocation and rejecting more than 8 MiB. New English and decomposed-word
 measurements are under benchmarks/0.18.0-hyphen-nfc-windows, with exact source and
 binary provenance. Earlier measurements retain their original procedure.
 Compound dictionaries and spelling-changing break replacements remain pending.
+
+Commit 1eb9f0d passed all six jobs in
+[CI run 39101935150](https://github.com/NoGod3524/EXReader/actions/runs/39101935150):
+Windows/Linux/macOS native tests and installed C/C++ SDK consumers, JNI original
+byte mapping, macOS Swift canonical-word rendering, ASan/UBSan with leak checks,
+Android ARM64, and iOS/iPadOS device/simulator libraries and Swift type checking.
+All 146 source hashes match the committed snapshot. Benchmark binary hashes
+match the measured executable; the following record-only commit updates no code.
