@@ -253,8 +253,8 @@ side. A cluster crossing ready/pending is deferred intact before remeasurement.
 Format controls/selectors are hidden normally. Empty deletions have a distinct
 private flag, omitted from public output, and do not enter Unicode/dictionary input.
 Snapshots include all display states by value; no public record/API size changed.
-Internal display breaks, global effects of future unselected edits on earlier
-lines, casing and conditional compounds remain open.
+Internal display breaks, casing and conditional compounds remain open; future
+context verification is described in the following supplement.
 
 
 ### Display bidi after discretionary spelling changes (0.18 development)
@@ -270,6 +270,27 @@ Its bounded two-base retry reports EXR_LIMIT for non-converging discretionary
 layout. Providers must be deterministic and can be queried during preflight.
 Installed JNI/Swift consumers verify actual Latin/Arabic/Han levels, source hits,
 and leading neutral pages whose base changes after a later replacement.
-Internal generated-side line breaks, effects of future unselected edits on
-already-published neutral/bracket context, casing and conditional compounds remain
-open; the broader VERSIONING.md roadmap remains active.
+Internal generated-side line breaks, casing and conditional compounds remain
+open; future neutral/bracket context now uses the following proposal supplement.
+
+
+### Stable display proposals across future edits (0.18 development)
+
+Future spelling edits now participate before an affected row is published.
+Risky contexts collect mapped display proposals and line boundaries, then replay
+with that complete analysis before shaping. Acceptance requires every selected
+line to match its proposal and both text/source mapping and line breaks to stay
+unchanged. Up to eight proposals are allowed (EXR_LIMIT on non-convergence).
+Formal replay rejects a changed provider/proposal with EXR_FORMAT before caching
+the failed page. Deterministic providers can receive repeated queries.
+Safe bidi boundaries keep ordinary mixed text bounded; actual preceding strong/
+weak context is retained, and ES/CS/ET, NSM, brackets, controls and independent
+AUTO B paragraphs are handled explicitly. Plans/prefixes count against the
+16 MiB line/checkpoint payload; a 24 MiB temporary collector and ~64 MiB view cap
+remain separate. Rebuilt views and shared immutable original bidi analyses avoid
+copying complete text into every cursor/checkpoint. Copy/analysis work is charged
+to the common work budget. No public API/record/ABI/schema changes.
+JNI/Swift smoke verifies page-one plus signs at RTL level 1 even though the later
+replacement that determines them is not on that page. Internal generated-side
+breaks, casing, conditional compounds, tall table-row fragmentation and the
+broader VERSIONING.md roadmap remain open.

@@ -332,6 +332,23 @@ import CEXReader
             }
             let bitmap = try page.render(); precondition(bitmap.width == 80)
         }
+        do {
+            let publication = try EXReaderPublication(file: root.appendingPathComponent("books/hyphen-bidi-future-neutral.epub"))
+            let chapter = try publication.load(part: 0)
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            var config = EXReaderLayoutConfig()
+            config.page.width = 80; config.page.height = 100; config.page.margin = 10; config.page.font_size = 14
+            config.userCSS = "html,body,p {margin:0;padding:0;font-size:14px;line-height:20px}"
+            let pager = try chapter.pager(font: font, config: config)
+            try pager.setHyphenation([EXReaderHyphenDictionary(language: "zf", patterns: Data(".aaaa1aaaaaaaa./א1中=12א,1,5".utf8), leftMinimum: 1, rightMinimum: 1)])
+            guard let page = try pager.next() else { preconditionFailure("missing future neutral page") }
+            let pluses = page.glyphs.filter { $0.codepoint == 43 }
+            precondition(!pluses.isEmpty && page.glyphs.allSatisfy { ($0.flags & ~UInt32(2559)) == 0 && ($0.flags & 2048) == 0 })
+            for glyph in pluses {
+                precondition(glyph.bidi_level == 1 && page.hitTest(x: glyph.x + 0.1, y: glyph.baseline - 2) == glyph.cluster_end)
+            }
+            let bitmap = try page.render(); precondition(bitmap.width == 80)
+        }
         print("Swift SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed")
     }
 }

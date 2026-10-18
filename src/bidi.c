@@ -430,6 +430,15 @@ exr_direction exr_bidi_override_at(const exr_bidi_override *item,size_t source) 
   for(;item;item=item->previous) if(source>=item->start && source<item->end) return item->direction;
   return EXR_DIRECTION_AUTO;
 }
+/* Private streaming cut proof: L/R/AL, EN/AN, NSM, WS, BN, ES/CS/ET. */
+unsigned exr_bidi_tail_type(uint32_t cp) {
+  switch(classify(cp)) {
+    case bidi_L:return 1;case bidi_R:return 2;case bidi_AL:return 3;
+    case bidi_EN:return 4;case bidi_AN:return 5;case bidi_NSM:return 6;
+    case bidi_WS:return 7;case bidi_BN:return 8;
+    case bidi_ES:case bidi_CS:case bidi_ET:return 9;default:return 0;
+  }
+}
 int exr_bidi_paragraph_end(uint32_t cp) { return classify(cp)==bidi_B; }
 unsigned exr_bidi_p2(uint32_t cp,size_t *depth) {
   unsigned char type=classify(cp);
@@ -438,8 +447,8 @@ unsigned exr_bidi_p2(uint32_t cp,size_t *depth) {
   if(*depth) return 0;
   return type==bidi_L ? 1 : type==bidi_R || type==bidi_AL ? 2 : 0;
 }
-exr_status exr_bidi_analyze_mapped(const char *text,size_t size,exr_direction requested,
-  const size_t *sources,const exr_bidi_override *overrides,exr_bidi **out,exr_error *e) {
+static exr_status analyze_mapped(const char *text,size_t size,exr_direction requested,
+  const size_t *sources,const exr_bidi_override *overrides,exr_direction initial,exr_bidi **out,exr_error *e) {
   exr_bidi *bidi;
   size_t at = 0, count = 0, i, first;
   uint32_t cp;
@@ -484,7 +493,8 @@ exr_status exr_bidi_analyze_mapped(const char *text,size_t size,exr_direction re
       i++;
     } while (i < count && bidi->types[i - 1] != bidi_B);
     status = paragraph(bidi->scalars + first, bidi->types + first, bidi->bases + first,
-                         i - first, requested==EXR_DIRECTION_AUTO && sources && overrides ?
+                         i - first, requested==EXR_DIRECTION_AUTO && !first && initial!=EXR_DIRECTION_AUTO ? initial :
+                         requested==EXR_DIRECTION_AUTO && sources && overrides ?
                          exr_bidi_override_at(overrides,sources[first]) : requested, e);
     if (status != EXR_OK) {
       exr_bidi_free(bidi);
@@ -494,6 +504,14 @@ exr_status exr_bidi_analyze_mapped(const char *text,size_t size,exr_direction re
   line_levels(bidi, 0, count, NULL);
   *out = bidi;
   return exr_fail(e, EXR_OK, "");
+}
+exr_status exr_bidi_analyze_mapped(const char *text,size_t size,exr_direction requested,
+  const size_t *sources,const exr_bidi_override *overrides,exr_bidi **out,exr_error *e) {
+  return analyze_mapped(text,size,requested,sources,overrides,EXR_DIRECTION_AUTO,out,e);
+}
+exr_status exr_bidi_analyze_first(const char *text,size_t size,exr_direction requested,
+  exr_direction initial,exr_bidi **out,exr_error *e) {
+  return analyze_mapped(text,size,requested,NULL,NULL,initial,out,e);
 }
 exr_status exr_bidi_analyze(const char *text,size_t size,exr_direction requested,exr_bidi **out,exr_error *e) {
   return exr_bidi_analyze_mapped(text,size,requested,NULL,NULL,out,e);

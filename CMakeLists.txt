@@ -663,7 +663,7 @@ install(FILES tests/fixtures/shaping/shaping.ttf tests/fixtures/shaping/README.m
 
 install(FILES tests/fixtures/audio/pcm.wav DESTINATION examples/audio)
 install(FILES tests/fixtures/audio/metadata.m4b DESTINATION examples/audio)
-install(FILES tests/fixtures/layout.epub tests/fixtures/hyphen-long.epub tests/fixtures/hyphen-canonical.epub tests/fixtures/hyphen-compound.epub tests/fixtures/hyphen-rewrite-long.epub tests/fixtures/hyphen-rematch-long.epub tests/fixtures/hyphen-boundary-ri.epub tests/fixtures/hyphen-bidi-long.epub tests/fixtures/hyphen-bidi-leading.epub DESTINATION examples/books)
+install(FILES tests/fixtures/layout.epub tests/fixtures/hyphen-long.epub tests/fixtures/hyphen-canonical.epub tests/fixtures/hyphen-compound.epub tests/fixtures/hyphen-rewrite-long.epub tests/fixtures/hyphen-rematch-long.epub tests/fixtures/hyphen-boundary-ri.epub tests/fixtures/hyphen-bidi-long.epub tests/fixtures/hyphen-bidi-leading.epub tests/fixtures/hyphen-bidi-future-neutral.epub DESTINATION examples/books)
 install(FILES tests/fixtures/float-both.epub tests/fixtures/float-long-main.epub tests/fixtures/float-bfc-stream.epub DESTINATION examples/books)
 
 install(FILES include/module.modulemap DESTINATION include)

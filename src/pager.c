@@ -105,6 +105,11 @@ static checkpoint *checkpoint_clone(const checkpoint *source) {
   copy->frames = NULL;
   copy->streams=NULL;
   if(copy->line.auto_bases) copy->line.auto_bases->refs++;
+  if(copy->line.plan) copy->line.plan->refs++;
+  if(copy->line.plan_pending) copy->line.plan_pending->refs++;
+  if(copy->line.plan_prefix) copy->line.plan_prefix->refs++;
+  if(copy->line.plan_suffix) copy->line.plan_suffix->refs++;
+  copy->line.plan_view=NULL;
   copy->line.display=NULL;copy->line.word=NULL;copy->line.edits=NULL;copy->line.edit_capacity=source->line.edit_count;
   copy->line.run.glyphs = copy->line.raw.glyphs = copy->line.line.glyphs = NULL;
   if(source->line.display) { copy->line.display=exr_display_state_clone(source->line.display);if(!copy->line.display) goto bad; }
@@ -188,8 +193,10 @@ static exr_pager *context_clone(const exr_pager *source) {
   copy->finished = source->finished;copy->auto_stable_end=source->auto_stable_end;
   copy->f.layout = NULL; copy->f.error = NULL;
   copy->f.config = &copy->config; copy->f.bidi = &copy->bidi;
-  copy->f.auto_bases=copy->line.auto_bases;copy->f.auto_probe=NULL;
-  copy->resume_bidi = source->line.text.started;
+  copy->f.auto_bases=copy->line.auto_bases;copy->f.auto_probe=NULL;copy->f.plan_probe=NULL;
+  copy->f.plan_cursor=copy;
+  copy->resume_bidi=source->resume_bidi;
+  if(!source->resume_bidi) { copy->bidi=source->bidi;if(copy->bidi.refs) (*copy->bidi.refs)++; }
   copy->resume_bidi_first = source->resume_bidi ? source->resume_bidi_first : source->bidi.first_node;
   for (i = 0; i < copy->depth; i++) {
     copy->frames[i] = saved->frames[i];
@@ -296,7 +303,7 @@ static exr_status restore_checkpoint(exr_pager *p, const checkpoint *source, exr
   copy->streams=NULL; copy->stream_count=0;
   p->f.bidi = &p->bidi; p->f.display_bidi=NULL; p->f.error = e;
   p->line = copy->line; memset(&copy->line, 0, sizeof(copy->line));
-  p->f.auto_bases=p->line.auto_bases;p->f.auto_probe=NULL;
+  p->f.auto_bases=p->line.auto_bases;p->f.auto_probe=NULL;p->f.plan_probe=NULL;p->f.plan_cursor=p;
   p->depth = copy->depth;
   for (i = 0; i < copy->depth; i++) {
     p->frames[i] = copy->frames[i];
@@ -321,7 +328,7 @@ static exr_status failure(exr_pager *p, exr_status status, const char *message) 
 }
 static exr_status finish_run(exr_pager *p) {
   exr_status status = exr_inline_finish(&p->f, &p->line);
-  if(status==EXR_OK && p->f.auto_probe) return EXR_BIDI_RESOLVED;
+  if(status==EXR_OK && (p->f.auto_probe || p->f.plan_probe)) return EXR_BIDI_RESOLVED;
   if (status == EXR_OK) { exr_inline_clear(&p->bidi);p->auto_stable_end=0; }
   return status;
 }
@@ -340,13 +347,57 @@ static exr_status probe_current_page(exr_pager *trial,const exr_pager *parent) {
   trial->f.layout=NULL;trial->f.error=NULL;exr_layout_free(page);
   return status;
 }
+/* Replay a risky inline paragraph until selected source/display text and line
+   boundaries are unchanged under the complete actual display bidi analysis.
+   Trial pages never escape the cursor; actual replay validates every line. */
+static exr_status resolve_plan(void *cursor) {
+  exr_pager *p=cursor;
+  exr_display_plan *plan=NULL;exr_status status=EXR_OK;unsigned attempt;
+  if(p->f.plan_probe || p->f.auto_probe || p->line.plan ||
+     p->f.intrinsic==2 || !p->bidi.plan_risky) return EXR_OK;
+  for(attempt=0;attempt<8;attempt++) {
+    exr_plan_builder builder={0};exr_display_plan *next=NULL;exr_pager *trial=context_clone(p);int matched;
+    if(!trial) { status=failure(p,EXR_MEMORY,"Paragraph trial cursor allocation failed");break; }
+    trial->line.plan=plan;if(plan) plan->refs++;
+    trial->line.plan_valid=1;trial->line.line_ready=0;
+    trial->line.plan_at=plan ? plan->first : 0;
+    builder.text.control=&p->config.control;trial->f.plan_probe=&builder;
+    status=exr_plan_seed(&builder,p->f.doc,p->line.plan_prefix,p->f.paragraph->direction,p->line.plan_base,p->f.error);
+    if(status==EXR_OK) {
+      size_t work=builder.text.count;
+      if(work>64*1024*1024-p->assets->shape_work) status=failure(p,EXR_LIMIT,"Paragraph prefix work limit exceeded");
+      else p->assets->shape_work+=work;
+    }
+    if(status==EXR_OK) status=probe_current_page(trial,p);
+    while(status==EXR_OK && !trial->finished) {
+      exr_layout *page=NULL;status=next_page(trial,&page,p->f.error);exr_layout_free(page);
+    }
+    exr_pager_free(trial);
+    { int closed=status!=EXR_BIDI_CUT;
+      if(status==EXR_BIDI_RESOLVED || status==EXR_BIDI_CUT) status=EXR_OK;
+      matched=!builder.unmatched;
+      if(status==EXR_OK) status=exr_plan_finish(&builder,p->f.paragraph->direction,&next,p->f.error);
+      if(next) next->closed=closed;
+    }
+    exr_plan_builder_clear(&builder);
+    if(status!=EXR_OK) { exr_plan_free(next);break; }
+    if(plan && matched && exr_plan_equal(plan,next)) {
+      exr_plan_free(next);p->line.plan=plan;p->line.plan_valid=1;p->line.plan_at=plan->first;p->line.line_ready=0;
+      if(exr_inline_extra_size(&p->line,0)+(p->line.run.glyph_cap+p->line.raw.glyph_cap+p->line.line.glyph_cap)*sizeof(exr_glyph)>16*1024*1024) { p->line.plan=NULL;status=failure(p,EXR_LIMIT,"Paragraph plan exceeds line budget");break; }
+      return EXR_OK;
+    }
+    exr_plan_free(plan);plan=next;
+  }
+  exr_plan_free(plan);
+  return status!=EXR_OK ? status : failure(p,EXR_LIMIT,"Discretionary paragraph plan does not converge");
+}
 /* Resolve the displayed P2 direction before publishing leading neutral lines.
    The trial cursor stops at the first strong scalar outside isolates. Its pages
    are discarded; immutable source-range overrides survive page checkpoints. */
 static exr_status resolve_auto(exr_pager *p,size_t node,size_t start) {
   exr_bidi_override *base;exr_status status=EXR_OK;unsigned attempt,expected;
   size_t first=p->bidi.first_node,end;int stable=0;
-  if(p->f.auto_probe || p->f.paragraph->direction!=EXR_DIRECTION_AUTO ||
+  if(p->f.auto_probe || p->f.plan_probe || p->line.plan || p->line.plan_base!=EXR_DIRECTION_AUTO || p->f.paragraph->direction!=EXR_DIRECTION_AUTO ||
      start<p->auto_stable_end || p->f.intrinsic==2 || !exr_hyphenator_replacements(p->f.hyphenator) ||
      exr_bidi_override_at(p->line.auto_bases,start)!=EXR_DIRECTION_AUTO) return EXR_OK;
   if(exr_inline_extra_size(&p->line,0)>16*1024*1024-sizeof(*base))
@@ -389,11 +440,12 @@ static exr_status scalar(exr_pager *p, frame *current) {
   exr_status status;
   uint32_t cp;
   size_t start = current->position;
-  if (!p->line.text.started) {
+  if (!p->line.text.started && !p->bidi.prepared) {
     status = exr_inline_prepare(&p->f, current->node, &p->bidi);
     if (status != EXR_OK)
       return status;
   }
+  status=resolve_plan(p);if(status!=EXR_OK) return status;
   status=resolve_auto(p,current->node,start);if(status!=EXR_OK) return status;
   if (!exr_next(p->f.doc->text, n->end, &current->position, &cp))
     return failure(p, EXR_ENCODING, "Invalid document text");
@@ -451,7 +503,7 @@ static exr_status context_create(flow *parent, size_t node, float width, float h
   }
   p->local = local; p->local_root = node; p->writing_mode = mode;
   p->styles = (exr_style *)parent->styles; p->assets = parent->assets;
-  p->f = *parent;p->f.display_bidi=NULL;p->f.auto_bases=NULL;p->f.auto_probe=NULL;
+  p->f = *parent;p->f.display_bidi=NULL;p->f.auto_bases=NULL;p->f.auto_probe=NULL;p->f.plan_probe=NULL;p->f.plan_cursor=p;p->f.plan_resolve=resolve_plan;
   p->f.floats=&p->floats;
   p->f.unit_node=node; p->f.unit_reference=parent->width;
   p->f.unit_assigned=local!=1 && !parent->intrinsic;
@@ -1107,10 +1159,11 @@ static exr_status advance(exr_pager *p) {
     }
     case 40: {
       exr_glyph item={0}; int done=0;
-      if (!p->line.text.started) {
+      if (!p->line.text.started && !p->bidi.prepared) {
         status=exr_inline_prepare(f,v->node,&p->bidi);
         if(status!=EXR_OK) return status;
       }
+      status=resolve_plan(p);if(status!=EXR_OK) return status;
       status=resolve_auto(p,v->node,n->start);if(status!=EXR_OK) return status;
       status=exr_ruby_item(f,v->node,v->position,&item,&done);
       if(status!=EXR_OK) return status;
@@ -1343,7 +1396,7 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   p->f.font = p->assets->font;
   p->f.config = &p->config;
   p->f.styles = p->styles;
-  p->f.bidi = &p->bidi;
+  p->f.bidi = &p->bidi;p->f.plan_cursor=p;p->f.plan_resolve=resolve_plan;
   p->f.paragraph = &p->styles[0];
   p->f.paginate = p->f.page_limit = 1;
   p->f.x = p->f.y = config->page.margin;
@@ -1393,7 +1446,7 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
   p->busy = 0;
   p->f.layout = NULL;
   p->f.error = NULL;
-  if(status==EXR_BIDI_RESOLVED && p->f.auto_probe) { exr_layout_free(l);return status; }
+  if((status==EXR_BIDI_RESOLVED || status==EXR_BIDI_CUT) && (p->f.auto_probe || p->f.plan_probe)) { exr_layout_free(l);return status; }
   if (status != EXR_OK) {
     p->failed = 1;
     exr_layout_free(l);
@@ -1470,7 +1523,7 @@ static void reset_cursor(exr_pager *p) {
   p->f.assets = p->assets;
   p->f.config = &p->config;
   p->f.styles = p->styles;
-  p->f.bidi = &p->bidi;
+  p->f.bidi = &p->bidi;p->f.plan_cursor=p;p->f.plan_resolve=resolve_plan;
   p->f.paragraph = &p->styles[0];
   p->f.paginate = p->f.page_limit = 1;
   p->f.x = p->f.y = p->config.page.margin;
