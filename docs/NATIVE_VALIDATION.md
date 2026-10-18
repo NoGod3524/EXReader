@@ -2783,8 +2783,7 @@ numeric/oversized words and join/combining controls are covered. Checkpoint
 payload counts its lazily allocated word cache. All 109 native tests pass on
 Windows; the 15,046-word Pyphen oracle still agrees. Installed C and JNI smoke
 pass with actual inserted hyphens, including a rejected replacement dictionary
-that preserves the previously installed data. Swift/device CI is tracked below
-when this source snapshot completes its run.
+that preserves the previously installed data. Swift/device CI passed for the committed snapshot below.
 
 The benchmark now accepts --hyphens LANGUAGE with <=8 MiB UTF-8 patterns on
 stdin. Existing eager/paged validation also tests enabled/disabled results,
@@ -2792,3 +2791,11 @@ dictionary metadata and rejected unsupported patterns. Same-input, fresh-process
 measurements and exact executable/font/source provenance are recorded in
 benchmarks/0.18.0-hyphen-layout-windows. This does not validate compound word
 rules, spelling replacements, normalization or arbitrary dictionary formats.
+
+Commit daa7cc5 passed all six jobs in
+[CI run 39100630401](https://github.com/NoGod3524/EXReader/actions/runs/39100630401):
+Windows/Linux/macOS native tests and installed SDKs, actual C and JNI dictionary
+hyphen rendering, macOS Swift rendering, ASan/UBSan with leak checks, Android
+ARM64, and iOS/iPadOS device/simulator libraries plus Swift type checking.
+All 132 benchmark source hashes match Git blob bytes of that commit. The
+following verification-record commit changes documentation/metadata only.
