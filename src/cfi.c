@@ -225,7 +225,7 @@ exr_status exr_cfi_create_for_part(const exr_document *index,size_t part,const e
   if(!index || part>=index->chapter_count || !d || chapter>=d->chapter_count || !point ||
      index->shared_archive!=d->shared_archive || strcmp(index->chapters[part].path,d->chapters[chapter].path))
     return exr_fail(e,EXR_ARGUMENT,"CFI document does not belong to this publication part");
-  status=exr_epub_package_tree(index,control,&package,e); if(status!=EXR_OK) goto done;
+  status=exr_document_package_tree(index,control,&package,e); if(status!=EXR_OK) goto done;
   status=package_mapping(index,package,part,SIZE_MAX,&mapped,&node,e); if(status!=EXR_OK) goto done;
   { exr_cfi_point p={node,SIZE_MAX,0}; status=exr_document_cfi_path_create(package,0,&p,control,&prefix,e); }
   if(status==EXR_OK) status=context ? exr_document_cfi_path_create_quoted(d,chapter,point,context,control,&suffix,e) : exr_document_cfi_path_create(d,chapter,point,control,&suffix,e);
@@ -260,7 +260,7 @@ exr_status exr_cfi_route(const exr_document *d,const char *cfi,const exr_control
   if(bang==SIZE_MAX || bracket) return invalid(e);
   prefix=exr_copy(cfi+8,bang-8); suffix=exr_copy(cfi+bang+1,n-bang-2);
   if(!prefix || !suffix) { status=exr_fail(e,EXR_MEMORY,"CFI path allocation failed"); goto done; }
-  status=exr_epub_package_tree(d,control,&package,e); if(status!=EXR_OK) goto done;
+  status=exr_document_package_tree(d,control,&package,e); if(status!=EXR_OK) goto done;
   status=exr_document_cfi_path_resolve(package,0,prefix,control,&prefix_point,e); if(status!=EXR_OK) goto done;
   if(prefix_point.offset!=SIZE_MAX || prefix_point.side) { status=invalid(e); goto done; }
   status=package_mapping(d,package,SIZE_MAX,prefix_point.node,&mapped,&node,e); if(status!=EXR_OK) goto done;

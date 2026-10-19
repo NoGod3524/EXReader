@@ -20,6 +20,9 @@ jobs:
         run: cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=ON -DEXR_ENABLE_AAC=OFF
       - name: Build
         run: cmake --build build/native --config Release --parallel 4
+      - name: Verify compiled layer dependencies
+        if: runner.os == 'Linux'
+        run: python3 tools/check_layers.py build/native
       - name: Native parsing, pagination, rendering and bookshelf tests
         run: ctest --test-dir build/native -C Release --output-on-failure
       - name: Table continuation with a platform OpenType font

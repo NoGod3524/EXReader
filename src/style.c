@@ -276,34 +276,6 @@ static int property(const char *s, size_t n) {
     return BACKGROUND;
   return -1;
 }
-/* Find a delimiter outside strings/functions. Unsupported constructs are skipped as units. */
-size_t exr_css_delimiter(const char *s, size_t n, char wanted) {
-  size_t i;
-  int quote = 0, depth = 0;
-  for (i = 0; i < n; i++) {
-    char ch = s[i];
-    if (ch == '\\' && i + 1 < n) {
-      i++;
-      continue;
-    }
-    if (quote) {
-      if (ch == quote)
-        quote = 0;
-      continue;
-    }
-    if (ch == '\'' || ch == '"') {
-      quote = ch;
-      continue;
-    }
-    if (ch == '(' || ch == '[')
-      depth++;
-    else if ((ch == ')' || ch == ']') && depth)
-      depth--;
-    else if (!depth && ch == wanted)
-      return i;
-  }
-  return n;
-}
 static char *clean_css(const char *s, size_t n) {
   char *out = malloc(n + 1);
   size_t i = 0, used = 0;

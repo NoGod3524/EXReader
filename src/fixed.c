@@ -86,11 +86,6 @@ static exr_status provider_end(exr_fixed_document *d,exr_status status,exr_error
   if(status!=EXR_OK) { local->code=status; if(!local->message[0]) exr_fail(local,status,"Fixed page provider failed"); if(e) *e=*local; return status; }
   return exr_fail(e,EXR_OK,"");
 }
-void exr_metadata_free(exr_metadata_entry *entries,size_t count) {
-  size_t i; if(!entries) return;
-  for(i=0;i<count;i++) { free((void *)entries[i].key); free((void *)entries[i].value); }
-  free(entries);
-}
 exr_status exr_fixed_load_metadata(exr_fixed_document *d,const exr_control *control,exr_metadata_entry **out,size_t *count,exr_error *e) {
   const exr_metadata_entry *borrowed=NULL; exr_metadata_entry *entries=NULL; size_t n=0,i,bytes=0;
   exr_error local={0}; exr_status status;

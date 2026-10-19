@@ -14,7 +14,6 @@
 struct exr_library {
   sqlite3 *db;
 };
-void exr_free(void *p) { free(p); }
 static exr_status database_error(exr_library *l, exr_error *e) {
   return exr_fail(e, EXR_DATABASE, "%s", sqlite3_errmsg(l->db));
 }
@@ -210,7 +209,7 @@ cleanup:
   free(authors.data); exr_metadata_free(metadata,metadata_count); free(cover); exr_document_free(d); exr_fixed_free(fixed);
   return result;
 }
-/* ponytail: exact-byte scan, bounded by stored sources of the same size/format.
+/* exact-byte scan, bounded by stored sources of the same size/format.
    Add a digest index only if measured library size makes this scan too costly. */
 exr_status exr_library_import_unique(exr_library *l,exr_format format,const void *data,size_t n,
                                        const char *title,int64_t *id,int *created,exr_error *e) {
