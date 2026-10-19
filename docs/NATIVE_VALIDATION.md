@@ -4325,3 +4325,25 @@ Windows/Linux/macOS各136/136，安装静态组件各4/4，纯核心及安装消
 - 本地证据：[原始汇总](validation/2026-10-19-native-inks.json)、[MuPDF分量对照](validation/2026-10-19-native-inks-mupdf.json)。本批跨平台CI独立记录，之前CI不能代替本批。
 
 DeviceCMYK分项完成；ICCBased/DeviceN到组空间、OutputIntent、其他工作包继续推进。
+
+
+### 3.34.0跨平台CI
+
+代码`9f35fae17d20b424162009e990aa69e5ba55a72f`的[CI39339041417](https://github.com/NoGod3524/EXReader/actions/runs/39339041417)7/7成功。
+三桌面各137/137，sanitizer134/134，20万次变异/5seeds/15434次成功解析无crash；
+安装/纯核心/书库裁剪、JNI、Swift宿主与Android/Apple库交叉编译通过。移动编译不替代设备运行。
+原始作业状态与日志汇总见[本批CI记录](validation/2026-10-19-native-inks-ci.json)。
+
+
+## 3.34.1：嵌套源alpha与组区域缓冲（2026-10-19）
+
+- GCC/MSVC各138/138；新增6194检查，128个Decimal(40)嵌套场景（预乘与白底）最大差1/255。相同输入在3.34.0最大差51/255。
+- 24个区域/变换/软遮罩/丢弃场景，RGB/CMYK、隔离/非隔离/挖空共3层；裁小与整缓冲逐字节一致，工作分配至少减少97%。1000次嵌套scope后payload不增长；独立2MiB成功/超限、空clip1×1均通过。
+- ICC OFF针对性5/5；安装组件4/4和13头C++编译、EXACT C++实际运行3.34.1 ABI1；703项公开布局与3.34.0逐行相同。
+- 旧50场景输入、mask和RGBA期望逐字节重生；修正参考模型中将背景alpha混入组alpha的公式，不改旧golden。
+- 六场景五轮交替首画比率依次1.000/0.958/1.010/0.699/1.064/1.008；重画p95比率0.973/0.949/1.156/0.779/1.053/1.059。state尾延迟触发调查：其代码路径无新组裁小/背景移除，首画仅1.010；保留原始样本，将每轮重画8次增到64次后独立五轮交替，首画0.989、p95 0.970。短至约2ms的八样本p95等于最大值，受调度噪声影响；两次记录均保留。
+- 性能测量使用版本串更新前的同算法开发二进制，原始SHA保留。输入与普通场景RGBA散列前后相同；RSS包含Python宿主。
+- MuPDF1.28.2在新低alpha子集与Decimal仍有最大11/255差异；逐场景记录，不以放宽内部3/255容差消除。软遮罩/AIS及group shape还有下一轮审计。
+- 分层99对象/1025符号/898include，无逆向。
+
+证据：[本地汇总](validation/2026-10-19-nested-groups.json)、[逐场景参考](validation/2026-10-19-nested-groups-reference.json)、[六场景五轮](validation/2026-10-19-nested-benchmark.json)、[state复测](validation/2026-10-19-nested-state-followup.json)。

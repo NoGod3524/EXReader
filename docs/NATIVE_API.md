@@ -1,4 +1,4 @@
-# Native C API 3.34.0
+# Native C API 3.34.1
 
 S013–S100 是保留的历史开发步骤标识，原来被写成 0.13–0.100；产品版本现按 [里程碑映射](VERSIONING.md) 归并。步骤编号用于追溯接口变化，不表示独立发行版本。
 
@@ -880,7 +880,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 
 `EXR_ABI_VERSION` / `exr_abi_version()` 提供从 S091 起的 ABI epoch 1。版本字符串仍用 EXR_VERSION / exr_version。ABI 与库版本、SQLite schema 分别管理；同一 epoch 的数组记录不能追加字段改变步长，带 struct_size 的输入维持原始前缀。完整规则见 [SDK_COMPATIBILITY.md](SDK_COMPATIBILITY.md)。
 
-安装包新增可搬迁的 CMake config：`find_package(EXReader 3.34.0 EXACT CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
+安装包新增可搬迁的 CMake config：`find_package(EXReader 3.34.1 EXACT CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
 
 
 ## 通用持久化全文索引（S092）
