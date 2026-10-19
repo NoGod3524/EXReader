@@ -4066,4 +4066,4 @@ two header rows including a colspan cell repeat together; collapsed and separate
 header borders repeat; paged and whole layouts render identical bytes; a tall
 header cell still repeats on each continuation page.
 
-Local Windows Release: 128/128 CTests. Changes are not yet committed.
+Local Windows Release: 128/128 CTests. Committed as `2a897d1`.
