@@ -63,6 +63,19 @@ int main(int argc,char **argv) {
     CHECK(border_run_row(&image,top+2)>=90);
     exr_bitmap_free(&image); exr_layout_free(l);
   }
+  { /* Block borders use the raster path; a 6px double border is 2px line, 2px gap,
+       2px line, so the third row inside the border is the gap. */
+    int y,top=-1;
+    l=layout("block-border-double"); OK(exr_render_page_color(l,NULL,0,&image,&error));
+    for(y=0;y+4<(int)image.height;y++) if(border_run_row(&image,y)>=90) { top=y; break; }
+    CHECK(top>=0);
+    CHECK(border_run_row(&image,top)>=90);
+    { unsigned gap=border_run_row(&image,top+2);
+      if(gap>=20) fprintf(stderr,"gap row count=%u\n",gap);
+      CHECK(gap<20); }
+    CHECK(border_run_row(&image,top+4)>=90);
+    exr_bitmap_free(&image); exr_layout_free(l);
+  }
   exr_font_free(font);
   printf("%u native table border-style checks passed (solid %u, dashed %u, dotted %u)\n",checks,solid,dashed,dotted);
   return 0;
