@@ -1,10 +1,14 @@
 # 当前检查点与后续顺序
 
-2026-10-19，C11 SDK **0.20.0**，MIT，ABI1，schema6。分支 `codex/framework`。
+2026-10-19，C11 SDK **3.33.0**，MIT，ABI1，schema6。分支 `codex/framework`。
+
+完整历史及旧/新编号映射见[更新日志](../CHANGELOG.md)。
 
 ## 已验证代码
 
 `716235e6ab4c5bb944c2e240b6a173289b3ab725`，[CI39328976671](https://github.com/NoGod3524/EXReader/actions/runs/39328976671) **7/7通过**。三桌面各136/136；各平台安装静态组件4/4、纯核心1/1及其安装消费1/1、无音频/PDF书库2/2；ASan/UBSan133/133；移动库编译和20万次变异通过。准确结果见[组件验证数据](validation/2026-10-19-components.json)和[CI原始摘要](validation/2026-10-19-components-ci.json)。该CI验证的是0.19.0分层实现；0.20.0仅更新版本声明和规则，本次GCC重新编译、ABI1/1、安装组件4/4和0.20.0 EXACT C++消费验证通过，见[NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)。
+
+全历史新编号3.33.0已重新通过本地GCC编译、ABI1/1、安装组件4/4及EXACT包C++消费验证；315个历史提交的归属与版本递增检查通过。记录见[NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)。
 
 此前渲染/ICC审计代码`55089af`的7项CI通过记录继续保留，不能代替本次分层验证。
 
@@ -43,7 +47,7 @@ ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 
 ## 分层整理检查点
 
-公开头、内部头与CMake静态组件已拆分。核心、PDF读取、PDF编辑、音频、书库、索引可分别链接；书库在无音频/PDF时仍支持重排文档。本次分层版本为0.20.0，ABI1；默认总DLL保留304个函数，703项公开记录布局值不变。详见[架构说明](ARCHITECTURE.md)。
+公开头、内部头与CMake静态组件已拆分。核心、PDF读取、PDF编辑、音频、书库、索引可分别链接；书库在无音频/PDF时仍支持重排文档。本次分层按全历史新编号归为3.33.0，ABI1；默认总DLL保留304个函数，703项公开记录布局值不变。详见[架构说明](ARCHITECTURE.md)。
 
 依赖检查覆盖实际编译符号和递归本地include；完整99对象/1021引用/898头依赖、纯核心59对象/586引用/505头依赖，逆向均为0。原有131项回归加5项组件回归，共136项；纯核心/安装消费和各平台结果独立记录于[NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)。本轮还修复了裁剪软遮罩预算与内存报告遗漏，渲染审计现为356检查。
 

@@ -1,7 +1,7 @@
 # EXReader SDK compatibility
 
 ABI epoch **1** was introduced in development step **S091** (original build
-**0.91.0**, commit `7dc8d8a`), now part of milestone **0.18.0**. `EXR_ABI_VERSION` identifies the header's epoch;
+**0.91.0**, commit `7dc8d8a`), now classified as **3.4.0** in the [changelog](../CHANGELOG.md). `EXR_ABI_VERSION` identifies the header's epoch;
 `exr_abi_version()` identifies the loaded library's epoch. `EXR_VERSION` and
 `exr_version()` identify the release. Epoch 1 does not retroactively classify older
 SDK binaries that did not export the ABI query.
@@ -87,7 +87,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 0.20.0 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.33.0 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -452,12 +452,14 @@ DeviceCMYK groups now carry source components into the four-component buffer;
 nested groups inherit the blend space and compound fill+stroke paths composite as
 one CMYK element. Non-separable blend modes inside a CMYK group return
 `EXR_UNSUPPORTED` instead of approximating.
-## Package version 0.20.0
+## Package version 3.33.0
 
-The current tree, header and installed config package report **0.20.0**
+The current tree, header and installed config package report **3.33.0**
 development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
-renumbering. Select this package with `find_package(EXReader 0.20.0 EXACT
+renumbering. The complete historical size-based reclassification is in the
+[changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
+Select this package with `find_package(EXReader 3.33.0 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -501,7 +503,7 @@ compatibility artifact.
 
 Core and optional component release numbers are maintained in
 `cmake/versions.cmake` and exposed by the corresponding public version macros and
-installed CMake target `EXR_COMPONENT_VERSION` properties. They are all 0.20.0
+installed CMake target `EXR_COMPONENT_VERSION` properties. They are all 3.33.0
 for this split and can be released independently. Release
 numbers follow update size: very large updates increment the major number,
 medium updates increment the minor number, and small bug fixes increment the
