@@ -57,7 +57,7 @@ static double transfer(double linear) {
   return linear<=0.0031308 ? 12.92*linear : 1.055*pow(linear,1/2.4)-0.055;
 }
 static double lab_inverse(double value) { return value>=6.0/29 ? value*value*value : (108.0/841)*(value-4.0/29); }
-exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double *values,double rgb[3],exr_error *error) {
+exr_status exr_pdf_colorspace_rgb_intent(const exr_pdf_colorspace *s,const double *values,double rgb[3],unsigned intent,exr_error *error) {
   double v[EXR_PDF_MAX_COLORANTS],xyz[3]={0}; unsigned i,j;
   if(exr_pdf_colorspace_no_paint(s)) { memset(rgb,0,3*sizeof(double)); return EXR_OK; }
   for(i=0;i<s->components;i++) v[i]=clamp(values[i],s->ranges[2*i],s->ranges[2*i+1]);
@@ -69,10 +69,10 @@ exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double *valu
   if(s->kind==SPACE_INDEXED) {
     unsigned index=(unsigned)floor(v[0]+.5); for(i=0;i<3;i++) rgb[i]=s->palette[index*4+i]/255.0; return EXR_OK;
   }
-  if(s->kind==SPACE_ICC) return s->icc ? exr_icc_rgb(s->icc,v,rgb,error) : exr_pdf_colorspace_rgb(s->alternate,v,rgb,error);
+  if(s->kind==SPACE_ICC) return s->icc ? exr_icc_rgb_intent(s->icc,v,rgb,intent,error) : exr_pdf_colorspace_rgb_intent(s->alternate,v,rgb,intent,error);
   if(s->kind==SPACE_TINT) {
     double alternate[4]={0}; exr_status status=exr_pdf_function_eval_inputs(s->function,v,alternate,error);
-    return status==EXR_OK ? exr_pdf_colorspace_rgb(s->alternate,alternate,rgb,error) : status;
+    return status==EXR_OK ? exr_pdf_colorspace_rgb_intent(s->alternate,alternate,rgb,intent,error) : status;
   }
   if(s->kind==SPACE_CALGRAY) {
     double gray=pow(v[0],s->gamma[0]); for(i=0;i<3;i++) xyz[i]=gray*s->matrix[i];
@@ -89,6 +89,10 @@ exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double *valu
     rgb[i]=transfer(linear);
   }
   return EXR_OK;
+}
+/* The default intent is relative colorimetric, as ISO 32000-1 prescribes. */
+exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *s,const double *values,double rgb[3],exr_error *error) {
+  return exr_pdf_colorspace_rgb_intent(s,values,rgb,1,error);
 }
 /* Fixed output policy: Bradford adaptation to D65, relative XYZ black-point
    compensation, linear sRGB conversion and final clipping to its gamut. */

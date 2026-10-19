@@ -209,6 +209,12 @@ static exr_status apply_ext_state(content_reader *r,uint32_t dictionary,exr_erro
   }
   if(resolved(r->file,exr_pdf_get(r->file,dictionary,"BM"),&id,error)!=EXR_OK) return error->code;
   if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL && blend_mode(r,id,error)!=EXR_OK) return error->code;
+  if(resolved(r->file,exr_pdf_get(r->file,dictionary,"RI"),&id,error)!=EXR_OK) return error->code;
+  if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL) {
+    const char *names[4]={"Perceptual","RelativeColorimetric","Saturation","AbsoluteColorimetric"}; unsigned k;int found=0;
+    for(k=0;k<4;k++) if(name_is(r->file,id,names[k])) { r->state.paint.intent=k;found=1;break; }
+    if(!found) return exr_fail(error,EXR_FORMAT,"Invalid PDF rendering intent");
+  }
   if(resolved(r->file,exr_pdf_get(r->file,dictionary,"SMask"),&id,error)!=EXR_OK) return error->code;
   if(id==EXR_PDF_NONE || exr_pdf_value_at(r->file,id)->kind==EXR_PDF_NULL || name_is(r->file,id,"None")) r->state.paint.smask=EXR_PDF_NONE;
   else {
@@ -270,7 +276,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     for(i=0;i<count;i++) if(!numeric(arena,values[i],&numbers[i])) goto invalid;
     if(*source) {
       if(!exr_vector_work(&r->color_work,exr_pdf_colorspace_cost(*source))) return exr_fail(error,EXR_LIMIT,"PDF content colour computation budget exceeded");
-      if(exr_pdf_colorspace_rgb(*source,numbers,color->values,error)!=EXR_OK) return error->code;
+      if(exr_pdf_colorspace_rgb_intent(*source,numbers,color->values,r->state.paint.intent,error)!=EXR_OK) return error->code;
       color->space=EXR_PDF_DEVICE_RGB; color->values[3]=0;
     }
     else { for(i=0;i<count;i++) color->values[i]=fmax(0,fmin(1,numbers[i])); for(;i<4;i++) color->values[i]=0; }
@@ -291,7 +297,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     if(*source) {
       double initial[EXR_PDF_MAX_COLORANTS];
       if(!exr_vector_work(&r->color_work,exr_pdf_colorspace_cost(*source))) return exr_fail(error,EXR_LIMIT,"PDF content colour computation budget exceeded");
-      exr_pdf_colorspace_initial(*source,initial); if(exr_pdf_colorspace_rgb(*source,initial,color->values,error)!=EXR_OK) return error->code;
+      exr_pdf_colorspace_initial(*source,initial); if(exr_pdf_colorspace_rgb_intent(*source,initial,color->values,r->state.paint.intent,error)!=EXR_OK) return error->code;
       color->space=EXR_PDF_DEVICE_RGB;
     }
     else if(color->space==EXR_PDF_DEVICE_CMYK) color->values[3]=1;
