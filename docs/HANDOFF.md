@@ -310,3 +310,7 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 2. **类型 5 的顶点顺序未验证**：2×2 晶格夹具与 MuPDF 结果不一致（MuPDF 只画一角）。
 3. **CMYK 透明组**：当前明确返回 `EXR_UNSUPPORTED`；做真需把组缓冲改成 CMYK，属结构性改动。
 4. **图片尺寸与 `/Rows`**：CCITT 现在缺省取图像 `/Height`；其它过滤器没有同等回退。
+5. **真实网格样本被上游缺口挡住**：语料里只有两个含 `/ShadingType 7` 的文件——
+   `bug1703683_page2_reduced.pdf` 卡在对象流 `/Extends`，`issue13520.pdf` 卡在 CMYK 透明组。
+   也就是说**类型 7 即使实现了，也没法通过这两个样本验证**，必须先补 `/Extends` 与 CMYK 组。
+   语料中其余 6 个含着色的文件都是类型 2/3（已支持）。
