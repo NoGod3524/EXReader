@@ -4045,3 +4045,25 @@ form's own elements are masked inside, and `end_layer` no longer applies the mas
 (`exr_composite_frame` was reverted, and the per-group mask hook was removed from the content
 walker and the painter). The nested fixture keeps its expectation (left red, right white) but
 now reaches it through inheritance. 120/120 CTests pass.
+
+## WP5 independent border sides and repeated table headers (2026-10-19)
+
+`native-border-edges` passes 184 checks over eleven document shapes: four independent
+sides on a block (child inset position and per-side pixels), the `border` and
+`border-top` shorthands with a longhand override, one-to-four-value
+`border-width`/`border-color` expansion, separate table cells, a collapsed grid
+where the wider side wins the shared line, vertical-rl and vertical-lr containers
+(physical sides stay physical in both), a block split across pages (left/right on
+every fragment, top only on the first, bottom only on the last) whose paged and
+whole layouts render identical bytes, a rowspan cell carrying four independent sides
+in a collapsed grid, a block nested in a table cell, translucent sides painted once,
+and a positioned-layout rebuild whose pixels match the original page for page.
+
+`native-table-header` passes 139 checks: a six-page table repeats its one-row
+`<thead>` on every page; the same table without `<thead>` repeats nothing; the
+repeated header consumes page height (more pages than the non-repeating control);
+two header rows including a colspan cell repeat together; collapsed and separate
+header borders repeat; paged and whole layouts render identical bytes; a tall
+header cell still repeats on each continuation page.
+
+Local Windows Release: 128/128 CTests. Changes are not yet committed.

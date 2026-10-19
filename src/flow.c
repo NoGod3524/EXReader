@@ -16,6 +16,9 @@ exr_style exr_flow_style(const exr_style *style, exr_writing_mode mode) {
     for (j = 0; j < 4; j++) {
       result.margin[j] = style->margin[map[j]];
       result.padding[j] = style->padding[map[j]];
+      result.border_width[j] = style->border_width[map[j]];
+      result.border_color[j] = style->border_color[map[j]];
+      result.border_style[j] = style->border_style[map[j]];
     }
   }
   return result;
@@ -327,14 +330,105 @@ exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float wi
     b->y = x; b->width = b->height; b->height = width;
   }
   b->background = s->background;
-  b->border_color = s->border_color;
-  b->border_width = (s->border_style==1 || s->border_style>=3) ? s->border_width : 0;
-  if(s->border_style==3) b->flags|=EXR_BOX_DASHED;
-  if(s->border_style==4) b->flags|=EXR_BOX_DOTTED;
-  if(s->border_style==5) b->flags|=EXR_BOX_DOUBLE;
+  if (exr_border_uniform(s)) {
+    int style = s->border_style[0];
+    b->border_color = s->border_color[0];
+    b->border_width = (style == 1 || style >= 3) ? s->border_width[0] : 0;
+    if (style == 3) b->flags |= EXR_BOX_DASHED;
+    if (style == 4) b->flags |= EXR_BOX_DOTTED;
+    if (style == 5) b->flags |= EXR_BOX_DOUBLE;
+  }
   if((s->display==EXR_CSS_TABLE && s->border_collapse) ||
      (f->border_override && node==f->border_node)) b->border_width=0;
   return b;
+}
+static exr_box *edge_box(flow *f, size_t node, float x, float y, float w, float h) {
+  exr_box *b;
+  if (f->layout->page_count == 0)
+    return NULL;
+  b = exr_flow_box(f, node, f->layout->page_count - 1, x, y, w, h, EXR_BOX_BLOCK);
+  if (b) {
+    b->border_width = 0;
+    b->flags = EXR_BOX_BORDER;
+  }
+  return b;
+}
+/* Emit one border side as filled rectangles. Collapsed tables already use this
+   representation, so per-edge borders share the same layer semantics. */
+exr_status exr_flow_edge(flow *f, size_t node, int style, float width, uint32_t color,
+                         float x, float y, float w, float h) {
+  exr_box *b, *second;
+  size_t pieces = 0;
+  if (!(width > 0) || !(color & 255) || !(w > 0) || !(h > 0))
+    return EXR_OK;
+  if (style == 3 || style == 4) {
+    float dash = style == 4 ? width : 3 * width, gap = 2 * width;
+    if (w >= h) {
+      float at;
+      for (at = x; at < x + w && pieces < 4096; at += dash + gap, pieces++) {
+        float len = fminf(dash, x + w - at);
+        b = edge_box(f, node, at, y, len, h);
+        if (!b) return EXR_LIMIT;
+        b->background = color;
+      }
+    } else {
+      float at;
+      for (at = y; at < y + h && pieces < 4096; at += dash + gap, pieces++) {
+        float len = fminf(dash, y + h - at);
+        b = edge_box(f, node, x, at, w, len);
+        if (!b) return EXR_LIMIT;
+        b->background = color;
+      }
+    }
+    return EXR_OK;
+  }
+  if (style == 5) {
+    float third = width / 3;
+    if (w >= h) {
+      b = edge_box(f, node, x, y, w, third);
+      second = edge_box(f, node, x, y + 2 * third, w, third);
+    } else {
+      b = edge_box(f, node, x, y, third, h);
+      second = edge_box(f, node, x + 2 * third, y, third, h);
+    }
+    if (!b || !second) return EXR_LIMIT;
+    b->background = second->background = color;
+    return EXR_OK;
+  }
+  b = edge_box(f, node, x, y, w, h);
+  if (!b) return EXR_LIMIT;
+  b->background = color;
+  return EXR_OK;
+}
+/* Paint four independent sides of one logical border box. The style passed here
+   uses the flow's logical side order, matching margin and padding. */
+exr_status exr_flow_borders(flow *f, size_t node, const exr_style *s,
+                            float x, float y, float width, float height) {
+  float top = exr_border_extent(s, 0), right = exr_border_extent(s, 1);
+  float bottom = exr_border_extent(s, 2), left = exr_border_extent(s, 3);
+  float inner = fmaxf(0, height - top - bottom);
+  exr_status status;
+  if (top > 0) {
+    status = exr_flow_edge(f, node, s->border_style[0], top, s->border_color[0],
+                           x, y, width, top);
+    if (status != EXR_OK) return status;
+  }
+  if (bottom > 0) {
+    status = exr_flow_edge(f, node, s->border_style[2], bottom, s->border_color[2],
+                           x, y + height - bottom, width, bottom);
+    if (status != EXR_OK) return status;
+  }
+  if (left > 0) {
+    status = exr_flow_edge(f, node, s->border_style[3], left, s->border_color[3],
+                           x, y + top, left, inner);
+    if (status != EXR_OK) return status;
+  }
+  if (right > 0) {
+    status = exr_flow_edge(f, node, s->border_style[1], right, s->border_color[1],
+                           x + width - right, y + top, right, inner);
+    if (status != EXR_OK) return status;
+  }
+  return EXR_OK;
 }
 exr_status exr_layout_image_asset(const exr_document *doc,exr_layout *l,
                                     const exr_layout_config *config,size_t resource,

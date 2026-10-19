@@ -152,11 +152,12 @@ typedef struct {
   size_t chapter;
   unsigned flags;
 } exr_font_rule;
+/* Border sides use CSS physical order: 0 top, 1 right, 2 bottom, 3 left. */
 typedef struct {
-  float font_size, leading, indent, border_width;
+  float font_size, leading, indent, border_width[4];
   const char *family;
   int family_owned;
-  int leading_relative, align, display, before, after, border_style, writing_declared;
+  int leading_relative, align, display, before, after, border_style[4], writing_declared;
   int ruby_position, ruby_align;
   int table_fixed;
   int border_collapse;
@@ -167,9 +168,36 @@ typedef struct {
   exr_direction direction;
   exr_writing_mode writing_mode;
   exr_text_orientation orientation;
-  uint32_t color, background, border_color;
+  uint32_t color, background, border_color[4];
   exr_length width, height, max_width, max_height, margin[4], padding[4];
 } exr_style;
+/* A visible border occupies its width; CSS "hidden" reserves no space outside
+   the collapsing model. */
+static inline float exr_border_extent(const exr_style *s, int side) {
+  int style = s->border_style[side];
+  return style != 0 && style != 2 ? s->border_width[side] : 0;
+}
+static inline int exr_border_any(const exr_style *s) {
+  int side;
+  for (side = 0; side < 4; side++)
+    if (exr_border_extent(s, side) > 0)
+      return 1;
+  return 0;
+}
+/* All four sides share one width, colour and style; the single-border box path
+   can then keep the compact representation. */
+static inline int exr_border_uniform(const exr_style *s) {
+  int side;
+  for (side = 1; side < 4; side++) {
+    if (s->border_style[side] != s->border_style[0])
+      return 0;
+    if (s->border_style[side] &&
+        (s->border_width[side] != s->border_width[0] ||
+         s->border_color[side] != s->border_color[0]))
+      return 0;
+  }
+  return 1;
+}
 exr_status exr_compute_styles(const exr_document *doc, const exr_layout_config *config,
                               exr_style **styles, exr_font_rule **fonts, size_t *font_count,
                               exr_error *error);

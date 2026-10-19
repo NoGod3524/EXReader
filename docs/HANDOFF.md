@@ -279,9 +279,9 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 
 单人或单模型持续工作量估计：挖空组、两种软遮罩、区域裁小各约数天，互相耦合时需合并评估；将 PDF/EPUB 常用路径推进到较完整的可用水平通常仍需数周到数月。完整多平台应用、广泛现实文件兼容与长期稳定性按月计。每完成一个包，用实际失败样本和 CI/采样耗时重新估算，不把生成 token 速度直接换算成完工速度。
 
-## 工作包现状与已知坑（2026-10-19 检查点）
+## 工作包现状与已知坑（2026-10-19 WP5 收尾检查点）
 
-本检查点在 `db70495`，回归 **127/127**，工作区干净。
+本检查点在上一次 `db70495` 之后完成 WP5 收尾，工作区改动尚未提交，回归 **128/128**。
 
 ### 已完成
 
@@ -290,7 +290,7 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 | WP1–WP3 | 框架、排版、组区域裁剪 |
 | WP4 | 轴向/径向渐变、渲染意图、灰度组、色调映射；**网格渐变类型 4/5**（`src/pdf_shading_mesh.c`） |
 | WP4a | Standard 加密；**CCITT G3/G4**（含 `/Rows` 缺省时取 `/Height`） |
-| WP5 | 边框线型 **dashed/dotted**（块级与合并表格边） |
+| WP5 | 边框线型 **dashed/dotted/double**（块级与合并表格边）；**逐边边框**（四边独立 width/style/color，`border`/`border-top` 等简写与 1–4 值长写）；分页表格**重复 `<thead>`** |
 
 ### 未完成
 
@@ -298,7 +298,7 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 | --- | --- |
 | WP4 | 网格类型 **6/7**；CMYK/ICC 透明组（需 CMYK 混合缓冲） |
 | WP4a | 证书加密（PubSec）、EFOpen、JBIG2、JPX |
-| WP5 | 逐边边框（`border-top` 等，需 style 结构扩展）、重复表头 |
+| WP5 | 仅剩 `border-spacing`（矩阵已标不支持，`separate` 表格按 0 间距排列） |
 | WP6–WP16 | 未开始 |
 
 ### 已知坑（下一位务必先读）
@@ -314,6 +314,18 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
    `bug1703683_page2_reduced.pdf` 卡在对象流 `/Extends`，`issue13520.pdf` 卡在 CMYK 透明组。
    也就是说**类型 7 即使实现了，也没法通过这两个样本验证**，必须先补 `/Extends` 与 CMYK 组。
    语料中其余 6 个含着色的文件都是类型 2/3（已支持）。
+6. **逐边边框不写进 `exr_box`**：统一四边仍走紧凑的单边框字段（`border_width` +
+   DASHED/DOTTED/DOUBLE 标志），四边不一致时改为每边一个 `EXR_BOX_BORDER` 盒
+   （块级在 `decorate()`，表格单元格在 `paint_cell_sides()`）。所以"有没有边框"
+   不能只看 `box.border_width==0`，要用 `exr_border_any()` 或数 BORDER 盒。
+7. **单元格逐边边框在表格层绘制**：cell layout 里的根 cell 盒只负责背景与尺寸，
+   四边由 `paint_borders`/`split_borders` 画；`remove_cell_box` 只删 cell 盒，不动内部块。
+8. **重复表头每页重新排版**：`repeat_header()` 用 `exr_flow_unit` 重排 thead 单元格再
+   `exr_flow_copy` 上屏，高度从页面预算扣除（`measure` 的 `full_room` 与 `split_row`
+   的 `budget` 都减了它）。只在**页顶**重复；同页内的行组续排不加表头。
+   `header_cells` 只收完整落在 header 行内的单元格，`rowspan` 跨进 tbody 的表头格不重复。
+9. **`border-style: hidden` 不占布局空间**（非 collapse 时按 none 处理），
+   `solid/dashed/dotted/double` 都按宽度占位；collapse 冲突里 hidden 仍直接胜出。
 
 ## 交接：下一步顺序（2026-10-19 审计后）
 
@@ -324,11 +336,13 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 2. **网格类型 6/7**（WP4）：此时 `bug1703683_page2_reduced.pdf` 与 `issue13520.pdf`
    可以作为验收样本；先做 `flag 0` 的单个面片，再加 `flag 1/2` 的共享边。
 3. **WP4a**：证书加密（PubSec）、EFOpen、JBIG2、JPX。
-4. **WP5 收尾**：逐边边框（需扩展 `exr_style` 的 side 字段）、重复表头。
+4. **WP5 已收尾**（2026-10-19）：逐边边框与重复表头已完成，只剩 `border-spacing`
+   仍标不支持；`native-border-edges` 与 `native-table-header` 已进 CTest。
 5. **WP6–WP16**：按原顺序。
 
 接手须知：
 
+- 本地 Release 回归 **128/128**（新增两项见上）；本检查点改动尚未提交；
 - 网格渐变 `flag 1/2` 与类型 5 的顶点顺序**未经过像素对照**，见审计第 2 节；
 - 语料里只有 8 个文件含着色字典，其中 6 个是类型 2/3；
 - 所有未实现路径都返回 `EXR_UNSUPPORTED`，没有静默错误输出。

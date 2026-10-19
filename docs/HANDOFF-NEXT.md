@@ -1,75 +1,75 @@
-# 交接单（2026-10-19 交给下一个会话）
+# 交接单（2026-10-19 晚，WP5 收尾后交给下一个会话）
 
 ## 仓库状态
 
 | 项 | 值 |
 | --- | --- |
-| 分支 | `codex/framework` @ `444424c` |
-| 工作区 | 干净，已推送 |
-| 回归 | **127 / 127** |
-| CI | 代码基线 `8f3fbc8` 七作业全绿（后续为文档提交，走 `[skip ci]`） |
-| 语料 | pdf.js 120 份中 47 份可比对，平均差 0.513 |
+| 分支 | `codex/framework` |
+| 基点 | `aa59693`（上一份交接提交） |
+| 工作区 | **未提交**：WP5 收尾改动（逐边边框、重复表头、两个新测试、文档） |
+| 回归 | **128 / 128**（新增 `native-border-edges`、`native-table-header`） |
+| CI | 未跑（改动尚未提交） |
 
 ## 这一阶段交付了什么
 
-| 提交 | 内容 |
+| 文件 | 内容 |
 | --- | --- |
-| `d715fb9` | 按要求回退语料兼容工作，只保留 handoff 项（CCITT 重挂） |
-| `dbb9d16` `cbe4d3d` `8f3fbc8` `f4cee53` | **WP5 边框线型**：dashed / dotted / double，块级 + 合并表格两条路径都有像素断言 |
-| `360b081` | **WP4 网格渐变类型 4/5**，与 MuPDF 像素对照一致 |
-| `db70495` | **WP4a CCITT**：缺 `/Rows` 时取图像 `/Height` |
-| `50c0eeb` | **WP4a `/Extends`**：对象流扩展 |
-| `47a7ed1` … `444424c` | 检查点、已知坑、审计、语料基线、矩阵更新 |
+| `src/internal.h` | `exr_style` 的边框字段改成四边数组（物理顺序 T/R/B/L），新增 `exr_border_extent/any/uniform` |
+| `src/style.c` | `border-top/right/bottom/left` 简写、`border-width/color/style` 1–4 值展开；`border` 简写展开成 12 条逐边声明 |
+| `src/flow.c` | 写模式映射（边界数组随 margin/padding 一起映射）；`exr_flow_edge`/`exr_flow_borders`；统一四边仍走旧紧凑路径 |
+| `src/pager.c` | 四边内缩、`decorate()` 在块级生成逐边边框盒（含分页 `seal` 路径） |
+| `src/pager_table.c` | collapse 冲突按边取值；separate 单元格逐边绘制；重复 `<thead>`（`repeat_header`、`header_rows/header_cells`、页面预算扣除） |
+| `tests/test_border_edges.c` | 184 项：块、简写、1–4 值展开、separate/collapse 单元格、rowspan 合并格、两竖排、跨页（含 checkpoint 与整本一致）、嵌套格、半透明、positioned 回读 |
+| `tests/test_table_header.c` | 139 项：每页重复、无 thead 不重复、页面预算、两行表头 + colspan、collapse/separate 表头边框、分页与整本一致、高表头 |
+| docs | `SUPPORT_MATRIX`、`HANDOFF`、`VERSIONING`、`README`、`NATIVE_VALIDATION` 已更新；`AUDIT-2026-10-19.md` 加时点提示 |
+
+设计要点（细节见 `HANDOFF.md` 的「已知坑」6–9）：
+
+- 公共 `exr_box` **没有加字段**（ABI epoch 1 不允许数组元素加字段）。统一四边仍用
+  `border_width` + DASHED/DOTTED/DOUBLE；四边不一致时每边一个 `EXR_BOX_BORDER` 盒。
+- 单元格的四边在表格层画（`paint_cell_sides` / `split_borders`），不放进 cell layout。
+- 重复表头每页用 `exr_flow_unit` 重排 thead 单元格；高度从 `measure` 与 `split_row`
+  的页面预算里扣除，只在页顶重复。
 
 ## 下一步（按依赖排序）
 
-### 1. WP4 收尾：网格渐变类型 6/7
+### 1. WP4：CMYK 透明组
 
-- 结构已知：类型 6 是 12 个控制点（Coons），类型 7 是 16 个（张量积），
-  边标志 0 表示完整面片，1/2/3 复用上一面片的部分控制点（隐式点表见 PDF 参考表 4.35）；
-- **我尝试过两次都回退了**：第一次把 Coons 公式写错（自相矛盾的两行），第二次写完没来得及做像素对照。
-  已写好并验证可编译的两个辅助函数思路保留在下面，供直接取用：
+结构性改动：组缓冲扩成 CMYK 或并行维护，合成回 RGB 时走同一色彩转换。它是两个真实
+`/ShadingType 7` 样本的最后一道墙，必须先做。
 
-```c
-/* 四条边都是三次 Bezier：上 p0-p3，右 p3-p6，下 p9-p6（反向），左 p0-p9 */
-/* Coons: S = (1-v)*top(u) + v*bottom(u) + (1-u)*left(v) + u*right(v) - 双线性角点 */
-/* 张量积: S = Σ_i Σ_j B_i(v) B_j(u) P[i*4+j] */
-```
+### 2. WP4：网格渐变类型 6/7
 
-- 验收样本：`tests/corpus/pdfjs/bug1703683_page2_reduced.pdf`（`/Extends` 已修好，
-  现在卡在 CMYK 组）与 `issue13520.pdf`（卡在 CMYK 组）。
-  **这两个样本都先被 CMYK 组挡住**，所以先做第 2 项更省事。
+`flag 0` 的单个面片先做，再加 `flag 1/2` 的共享边。**续接与类型 5 顶点顺序至今没有
+像素对照**，不要再用自造夹具自我验证（MuPDF 不渲染它们）。
 
-### 2. WP4：CMYK 默认换算
+### 3. WP4a
 
-实测（`tests/fixtures/pdf-color/cmyk-fill.pdf`，`0 1 1 0 k`）：
+证书加密（PubSec）、EFOpen、JBIG2、JPX。
 
-| 来源 | 像素 |
-| --- | --- |
-| 本实现（朴素公式） | (255, 0, 0) |
-| Argyll public domain profile（9⁴ LUT 采样） | (232, 0, 0) |
-| MuPDF（SWOP 系） | (237, 28, 36) |
+### 4. WP6–WP16
 
-- 可用的公开授权 profile：`https://raw.githubusercontent.com/imbo/imbo/main/data/profiles/argyllcms_cmyk.icm`
-  （961,644 字节，ICC v2，同目录有 LICENSE）；
-- 三个打包选项：直接内嵌（~1 MB）、zlib 压缩内嵌（~415 KB）、9⁴ LUT（~20 KB，已实测生成可用）；
-- **需要用户决定**：接受 Argyll profile（有据可依但仍有色差），还是保持朴素公式。
-
-### 3. WP5 剩余
-
-- **逐边边框**：`exr_style` 只有单一 `border_width/color/style`，需加四边字段并接到块级与表格两条路径；
-- **重复表头**：分页时把 `thead` 行重新铺到新页顶部，需要保留表头单元格布局；
-- **`border-spacing`**：已在矩阵里标为不支持（`separate` 表格按 0 间距排列）。
+按原顺序。WP5 只剩 `border-spacing` 不支持（矩阵里明确标注，非阻塞）。
 
 ## 已知坑（务必先读）
 
-1. 网格续接（类型 4 的 `flag 1/2`）、类型 5 的顶点顺序**都没有像素对照**；
+1. 网格续接（类型 4 `flag 1/2`）、类型 5 顶点顺序**都没有像素对照**；
 2. 自造网格夹具 MuPDF 有时**不渲染**，不能拿自己的输出当标准；
 3. CMYK 组一律返回 `EXR_UNSUPPORTED`——这是**有意**的，不是 bug；
-4. 所有未实现路径都返回 `EXR_UNSUPPORTED`，没有静默错误输出（审计 `docs/AUDIT-2026-10-19.md`）。
+4. 所有未实现路径都返回 `EXR_UNSUPPORTED`，没有静默错误输出；
+5. **本仓库路径含中文**：`Ninja` 在 `文档` 路径下 `chdir` 失败，CTest 传 fixture 路径时
+   argv 走 ANSI 代码页也会打不开文件。构建时用 ASCII junction：
+   `mklink /J C:\Users\Oscar\exr "C:\Users\Oscar\OneDrive\文档\ChatGPT\EXReader"`，
+   在 `C:\Users\Oscar\exr-build` 里 configure（Visual Studio 17 2022 生成器）。
+6. **依赖下载走不了 schannel**：CMake `FetchContent` 的下载在本机失败。用 Python
+   `urllib` 把 `cmake/deps.cmake` 里的 8 个包下到本地，再传
+   `-DFETCHCONTENT_SOURCE_DIR_<NAME>=<path>`。依赖缓存现在在 `C:\Users\Oscar\exr-deps`。
+7. `border-style: hidden` 非 collapse 时不占布局空间；`solid/dashed/dotted/double` 占宽。
+8. 判断块有无边框别只看 `box.border_width==0`：逐边边框是单独的 BORDER 盒。
 
 ## 文档入口
 
-1. `docs/AUDIT-2026-10-19.md` —— 12 条显式缺口与测试薄弱处；
-2. `docs/HANDOFF.md` ——「工作包现状与已知坑」「交接：下一步顺序」；
-3. `docs/SUPPORT_MATRIX.md` —— 支持矩阵（含 `border-spacing` 不支持一行）。
+1. `docs/HANDOFF.md` ——「工作包现状与已知坑」「交接：下一步顺序」；
+2. `docs/SUPPORT_MATRIX.md` —— 支持矩阵（含 `border-spacing` 不支持一行）；
+3. `docs/NATIVE_VALIDATION.md` —— 末尾「WP5 independent border sides and repeated table headers」；
+4. `docs/AUDIT-2026-10-19.md` —— 12 条显式缺口与测试薄弱处（`50c0eeb` 时点快照）。

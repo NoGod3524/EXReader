@@ -17,6 +17,7 @@ struct exr_table_cursor {
   size_t cell_count, cell_capacity, columns;
   float *heights, *positions, *baselines;
   size_t row, first, last, end;
+  size_t header_rows, header_cells; /* Leading <thead> rows repeated per page. */
   size_t position;
   float x, width, min_height;
   float columns_at[65]; /* Logical inline edges, preserved by checkpoint clones. */
@@ -39,6 +40,18 @@ static size_t span(const exr_node *node, const char *name, size_t limit) {
   if (*end || end == value || !count)
     return 1;
   return count > limit ? limit : (size_t)count;
+}
+static int header_row(flow *f, size_t row) {
+  size_t at = f->doc->nodes[row].parent;
+  while (at != SIZE_MAX) {
+    const char *name = exr_html_tag(f->doc, &f->doc->nodes[at]);
+    if (!strcmp(name, "thead"))
+      return 1;
+    if (!strcmp(name, "table"))
+      break;
+    at = f->doc->nodes[at].parent;
+  }
+  return 0;
 }
 static int rows(flow *f, exr_table_cursor *t, size_t parent) {
   size_t child;
@@ -85,29 +98,29 @@ static int contains(const exr_document *doc,size_t ancestor,size_t node) {
   for(;node!=SIZE_MAX;node=doc->nodes[node].parent) if(node==ancestor) return 1;
   return 0;
 }
-static void edge_offer(table_edge *edge,const exr_style *s,unsigned origin,
+static void edge_offer(table_edge *edge,const exr_style *s,int side,unsigned origin,
                        size_t row,size_t column,int horizontal,int rtl) {
-  uint32_t order,rank;
-  if(!s->border_style) return;
+  uint32_t order,rank; int style=s->border_style[side]; float width=s->border_width[side];
+  if(!style) return;
   order=horizontal ? (uint32_t)((4096-row)*65+(rtl ? column : 64-column)) :
     (uint32_t)((rtl ? column : 64-column)*4097+4096-row);
-  rank=s->border_style==2 ? UINT32_MAX : (origin<<20)+order;
+  rank=style==2 ? UINT32_MAX : (origin<<20)+order;
   if(rank==UINT32_MAX || (edge->rank!=UINT32_MAX &&
-      (s->border_width>edge->width || (s->border_width==edge->width && rank>edge->rank)))) {
-    edge->width=s->border_style==2 ? 0 : s->border_width;
-    edge->color=s->border_color; edge->rank=rank; edge->style=(unsigned)s->border_style;
+      (width>edge->width || (width==edge->width && rank>edge->rank)))) {
+    edge->width=style==2 ? 0 : width;
+    edge->color=s->border_color[side]; edge->rank=rank; edge->style=(unsigned)style;
   }
 }
 static void perimeter(flow *f,exr_table_cursor *t,size_t node,unsigned origin,
                       size_t row,size_t column,size_t height,size_t width) {
   const exr_style *s=&f->styles[node]; size_t i; int rtl=f->styles[t->node].direction==EXR_DIRECTION_RTL;
   for(i=column;i<column+width;i++) {
-    edge_offer(&t->horizontal[row*t->columns+i],s,origin,row,column,1,rtl);
-    edge_offer(&t->horizontal[(row+height)*t->columns+i],s,origin,row,column,1,rtl);
+    edge_offer(&t->horizontal[row*t->columns+i],s,0,origin,row,column,1,rtl);
+    edge_offer(&t->horizontal[(row+height)*t->columns+i],s,2,origin,row,column,1,rtl);
   }
   for(i=row;i<row+height;i++) {
-    edge_offer(&t->vertical[i*(t->columns+1)+column],s,origin,row,column,0,rtl);
-    edge_offer(&t->vertical[i*(t->columns+1)+column+width],s,origin,row,column,0,rtl);
+    edge_offer(&t->vertical[i*(t->columns+1)+column],s,3,origin,row,column,0,rtl);
+    edge_offer(&t->vertical[i*(t->columns+1)+column+width],s,1,origin,row,column,0,rtl);
   }
 }
 static exr_status column_borders(flow *f,exr_table_cursor *t,size_t parent,size_t *column) {
@@ -235,7 +248,7 @@ static exr_status column_widths(flow *f,exr_table_cursor *t,size_t node) {
     status=exr_control_cancel(&f->config->control,f->error); if(status!=EXR_OK) return status;
     style=exr_flow_style(&f->styles[cell->node],f->writing_mode);
     if(style.width.value>=0) width=length_value(style.width,t->width)+length_value(style.padding[1],t->width)+length_value(style.padding[3],t->width)+
-      (t->collapse ? cell->border[1]+cell->border[3] : style.border_style==1 ? 2*style.border_width : 0);
+      (t->collapse ? cell->border[1]+cell->border[3] : exr_border_extent(&style,1)+exr_border_extent(&style,3));
     width=fminf(width,t->width*64);
     if(!fixed) {
       if(f->intrinsic!=2) { status=exr_flow_intrinsic(&local,cell->node,t->width,1,&minimum); if(status!=EXR_OK) return status; }
@@ -245,7 +258,7 @@ static exr_status column_widths(flow *f,exr_table_cursor *t,size_t node) {
       /* The cell cursor needs one content pixel in addition to its insets,
          including an otherwise empty collapsed-border column. */
       float insets=length_value(style.padding[1],t->width)+length_value(style.padding[3],t->width)+
-        (t->collapse ? cell->border[1]+cell->border[3] : style.border_style==1 ? 2*style.border_width : 0);
+        (t->collapse ? cell->border[1]+cell->border[3] : exr_border_extent(&style,1)+exr_border_extent(&style,3));
       minimum=fmaxf(minimum,insets+1);
     }
     minimum=fmaxf(minimum,width); maximum=fmaxf(fmaxf(minimum,maximum),width);
@@ -451,6 +464,11 @@ exr_status exr_table_create(flow *f, size_t node, float x, float width,
     if(count>t->columns) t->columns=count;
     if(t->columns) { status=collapsed_borders(f,t); if(status!=EXR_OK) goto bad; }
   }
+  while (t->header_rows < t->row_count && header_row(f, t->rows[t->header_rows]))
+    t->header_rows++;
+  while (t->header_cells < t->cell_count &&
+         t->cells[t->header_cells].row + t->cells[t->header_cells].rowspan <= t->header_rows)
+    t->header_cells++;
   status=column_widths(f,t,node); if(status!=EXR_OK) goto bad;
   if (t->columns && t->row_count) {
     t->heights = calloc(t->row_count, sizeof(*t->heights));
@@ -467,11 +485,23 @@ bad:
   exr_table_free(t);
   return failed(f, status);
 }
+static int repeats_header(const flow *f, const exr_table_cursor *t) {
+  return f->paginate && t->header_rows > 0 && t->row > 0 && t->row >= t->header_rows;
+}
+static float header_height(const exr_table_cursor *t) {
+  return t->header_rows ? t->positions[t->header_rows] - t->positions[0] : 0;
+}
+static float boundary(const exr_table_cursor *t,size_t row);
 static exr_status measure(flow *f, exr_table_cursor *t) {
   size_t i, j,retained=t->first;
   exr_status status;
   int probe=f->paginate,exact=0,tall=0;
   float full_room=fmaxf(exr_flow_room(f),f->unit_assigned ? f->unit_block_reference : 0);
+  /* A repeated header occupies the top of every continuation page, so the
+     probed row group must fit in what is left. */
+  if (repeats_header(f, t))
+    full_room = fmaxf(1, full_room - header_height(t) - boundary(t,0) -
+                         boundary(t,t->header_rows));
   t->end = t->row + 1;
   t->last = t->first;
   /* Cells are in row order. Extending the end discovers the entire rowspan group. */
@@ -522,9 +552,8 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
     {
       exr_style style=exr_flow_style(&f->styles[c->node],f->writing_mode);
       float width=t->columns_at[c->column+c->colspan]-t->columns_at[c->column];
-      float border=style.border_style==1 ? style.border_width : 0;
-      float before=length_value(style.padding[0],width)+(t->collapse ? c->border[0] : border);
-      float after=length_value(style.padding[2],width)+(t->collapse ? c->border[2] : border);
+      float before=length_value(style.padding[0],width)+(t->collapse ? c->border[0] : exr_border_extent(&style,0));
+      float after=length_value(style.padding[2],width)+(t->collapse ? c->border[2] : exr_border_extent(&style,2));
       if(style.height.value>=0 && (!style.height.percent || t->min_height>0))
         c->height=fmaxf(c->height,length_value(style.height,t->min_height)+before+after);
       c->content_height=c->layout->flow_block;
@@ -632,9 +661,34 @@ static exr_status solid_edge(flow *f,size_t node,const table_edge *edge,float x,
 static exr_status paint_edge(flow *f,const exr_table_cursor *t,const table_edge *edge,float x,float y,float w,float h) {
   return solid_edge(f,t->node,edge,x,y,w,h);
 }
+static exr_status paint_cell_sides(flow *f,const exr_table_cursor *t,const table_cell *cell,
+                                   float y,float height) {
+  exr_style style=exr_flow_style(&f->styles[cell->node],f->writing_mode);
+  float x=t->x+t->columns_at[cell->column];
+  float w=t->columns_at[cell->column+cell->colspan]-t->columns_at[cell->column];
+  float top=exr_border_extent(&style,0),right=exr_border_extent(&style,1);
+  float bottom=exr_border_extent(&style,2),left=exr_border_extent(&style,3);
+  float inner=fmaxf(0,height-top-bottom);
+  exr_status status;
+  if(top>0) { status=exr_flow_edge(f,cell->node,style.border_style[0],top,style.border_color[0],x,y,w,top); if(status!=EXR_OK) return status; }
+  if(bottom>0) { status=exr_flow_edge(f,cell->node,style.border_style[2],bottom,style.border_color[2],x,y+height-bottom,w,bottom); if(status!=EXR_OK) return status; }
+  if(left>0) { status=exr_flow_edge(f,cell->node,style.border_style[3],left,style.border_color[3],x,y+top,left,inner); if(status!=EXR_OK) return status; }
+  if(right>0) { status=exr_flow_edge(f,cell->node,style.border_style[1],right,style.border_color[1],x+w-right,y+top,right,inner); if(status!=EXR_OK) return status; }
+  return EXR_OK;
+}
 static exr_status paint_borders(flow *f,const exr_table_cursor *t,int top) {
   size_t r,c; exr_status status;
-  if(!t->collapse) return EXR_OK;
+  if(!t->collapse) {
+    size_t i;
+    for(i=t->first;i<t->last;i++) {
+      const table_cell *cell=&t->cells[i];
+      if(exr_border_uniform(&f->styles[cell->node])) continue;
+      status=paint_cell_sides(f,t,cell,f->y+t->positions[cell->row]-t->positions[t->row],
+        t->positions[cell->row+cell->rowspan]-t->positions[cell->row]);
+      if(status!=EXR_OK) return status;
+    }
+    return EXR_OK;
+  }
   for(r=t->row+!top;r<=t->end;r++) for(c=0;c<t->columns;c++) {
     const table_edge *edge=&t->horizontal[r*t->columns+c];
     float left=0,right=0;
@@ -657,6 +711,45 @@ static exr_status paint_borders(flow *f,const exr_table_cursor *t,int top) {
       f->y+t->positions[r]-t->positions[t->row],edge->width,t->heights[r]);
     if(status!=EXR_OK) return status;
   }
+  return EXR_OK;
+}
+/* Re-lay the <thead> rows at the top of a continuation page. Cell layouts are
+   released after each page fragment, so the header is measured again here. */
+static exr_status repeat_header(flow *f, exr_table_cursor *t) {
+  size_t i;
+  float height=header_height(t),top=boundary(t,0),bottom=boundary(t,t->header_rows);
+  exr_status status=EXR_OK;
+  exr_table_cursor view;
+  if(!t->header_rows || !t->header_cells) return EXR_OK;
+  view=*t;
+  view.row=0; view.end=t->header_rows; view.fragmented=0; view.consumed=0;
+  f->y+=top;
+  for(i=0;i<t->header_cells;i++) {
+    table_cell *c=&t->cells[i];
+    exr_layout *layout=NULL; float measured=0;
+    flow local=cell_flow(f,t,c);
+    status=exr_flow_unit(&local,c->node,
+      t->columns_at[c->column+c->colspan]-t->columns_at[c->column],&layout,&measured);
+    if(status!=EXR_OK) { exr_layout_free(layout); return status; }
+    if(layout) {
+      status=exr_flow_copy(f,layout,c->node,t->x+t->columns_at[c->column],
+                           f->y+t->positions[c->row]-t->positions[0],
+                           t->positions[c->row+c->rowspan]-t->positions[c->row],
+                           cell_inset(f,t,c));
+      exr_layout_free(layout);
+      if(status!=EXR_OK) return status;
+    }
+  }
+  if(t->collapse) status=paint_borders(f,&view,1);
+  else for(i=0;i<t->header_cells;i++) {
+    const table_cell *c=&t->cells[i];
+    if(exr_border_uniform(&f->styles[c->node])) continue;
+    status=paint_cell_sides(f,&view,c,f->y+t->positions[c->row]-t->positions[0],
+                            t->positions[c->row+c->rowspan]-t->positions[c->row]);
+    if(status!=EXR_OK) return status;
+  }
+  if(status!=EXR_OK) return status;
+  f->y+=height+bottom;
   return EXR_OK;
 }
 /* A tall row advances each column independently, using the same speculative
@@ -689,16 +782,18 @@ static exr_status split_borders(flow *f,const exr_table_cursor *t,float offset,f
       }
     }
   } else for(c=t->first;c<t->last;c++) {
-    const table_cell *cell=t->cells+c;const exr_style *style=f->styles+cell->node;
+    const table_cell *cell=t->cells+c;
+    exr_style style=exr_flow_style(&f->styles[cell->node],f->writing_mode);
     float begin=t->positions[cell->row]-t->positions[t->row]-offset,end=t->positions[cell->row+cell->rowspan]-t->positions[t->row]-offset;
     float lo=fmaxf(0,begin),hi=fminf(height,end);
-    table_edge edge={style->border_style==1 ? style->border_width : 0,style->border_color,0,(unsigned)style->border_style};
     float x=t->x+t->columns_at[cell->column],w=t->columns_at[cell->column+cell->colspan]-t->columns_at[cell->column];
+    float top_edge=exr_border_extent(&style,0),bottom=exr_border_extent(&style,2);
+    float left=exr_border_extent(&style,3),right=exr_border_extent(&style,1);
     if(hi<=lo) continue;
-    if(begin>=-.001f) { status=solid_edge(f,cell->node,&edge,x,f->y+lo,w,fminf(edge.width,hi-lo));if(status!=EXR_OK) return status; }
-    if(end<=height+.001f) { status=solid_edge(f,cell->node,&edge,x,f->y+fmaxf(lo,hi-edge.width),w,fminf(edge.width,hi-lo));if(status!=EXR_OK) return status; }
-    status=solid_edge(f,cell->node,&edge,x,f->y+lo,edge.width,hi-lo);if(status!=EXR_OK) return status;
-    status=solid_edge(f,cell->node,&edge,x+w-edge.width,f->y+lo,edge.width,hi-lo);if(status!=EXR_OK) return status;
+    if(begin>=-.001f && top_edge>0) { status=exr_flow_edge(f,cell->node,style.border_style[0],top_edge,style.border_color[0],x,f->y+lo,w,fminf(top_edge,hi-lo));if(status!=EXR_OK) return status; }
+    if(end<=height+.001f && bottom>0) { status=exr_flow_edge(f,cell->node,style.border_style[2],bottom,style.border_color[2],x,f->y+fmaxf(lo,hi-bottom),w,fminf(bottom,hi-lo));if(status!=EXR_OK) return status; }
+    if(left>0) { status=exr_flow_edge(f,cell->node,style.border_style[3],left,style.border_color[3],x,f->y+lo,left,hi-lo);if(status!=EXR_OK) return status; }
+    if(right>0) { status=exr_flow_edge(f,cell->node,style.border_style[1],right,style.border_color[1],x+w-right,f->y+lo,right,hi-lo);if(status!=EXR_OK) return status; }
   }
   return EXR_OK;
 }
@@ -712,12 +807,14 @@ static float fragment_border(const exr_table_cursor *t,float offset,int maximum)
 static exr_status split_row(flow *f,exr_table_cursor *t,int *done) {
   typedef struct { exr_pager *cursor;exr_layout *layout;float gap;size_t position;int finished; } trial;
   size_t i,n=t->last-t->first,operations=n+(t->end-t->row+1)*(t->columns+1);exr_status status;trial *parts=NULL;exr_table_cursor view=*t;
-  int paint_top=!t->consumed && (!t->row || f->y==exr_flow_top(f)),last;
+  int paint_top=!t->consumed && (!t->row || f->y==exr_flow_top(f)),last,repeat;
   float top=t->consumed ? fragment_border(t,t->consumed,0) : paint_top ? boundary(t,t->row) : 0;
-  float bottom=fragment_border(t,0,1),budget,height;
+  float bottom=fragment_border(t,0,1),budget,height,header=0;
   view.heights=NULL;view.positions=NULL;
   status=exr_flow_page(f,1,f->doc->nodes[t->rows[t->row]].start);if(status!=EXR_OK) return status;
-  budget=exr_flow_bottom(f)-f->y-top-bottom;
+  repeat=repeats_header(f,t) && f->y<=exr_flow_top(f)+.001f;
+  if(repeat) header=header_height(t)+boundary(t,0)+boundary(t,t->header_rows);
+  budget=exr_flow_bottom(f)-f->y-top-bottom-header;
   if(budget<1) return f->y>exr_flow_top(f)+.01f ? EXR_PAUSE : exr_fail(f->error,f->fragment_probe ? EXR_FRAGMENT_SMALL : EXR_LIMIT,"Table borders leave no row fragment extent");
   if(operations>64u*1024u*1024u-t->fragment_work) return exr_fail(f->error,EXR_LIMIT,"Table fragment work budget exceeded");
   parts=calloc(n ? n : 1,sizeof(*parts));view.heights=malloc(t->row_count*sizeof(*view.heights));view.positions=malloc((t->row_count+1)*sizeof(*view.positions));
@@ -761,6 +858,7 @@ static exr_status split_row(flow *f,exr_table_cursor *t,int *done) {
   last=1;for(i=0;i<n;i++) if(!parts[i].finished) last=0;
   if(t->consumed+height+.01f<view.positions[view.end]-view.positions[view.row]) last=0;
   if(height<.001f && !last) { status=exr_fail(f->error,EXR_LIMIT,"Table row fragment made no progress");goto bad; }
+  if(repeat) { status=repeat_header(f,t); if(status!=EXR_OK) goto bad; }
   f->y+=top;
   for(i=0;i<n;i++) {
     table_cell *c=t->cells+t->first+i;trial *part=parts+i;
@@ -798,7 +896,7 @@ bad:
 exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
   exr_status status;
   size_t i;
-  float height,top,bottom; int paint_top;
+  float height,top,bottom,header=0; int paint_top;
   *done = 0;
   if (!t->columns || t->row == t->row_count) {
     *done = 1;
@@ -810,7 +908,10 @@ exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
     status = measure(f, t);
     if (status != EXR_OK)
       return failed(f, status);
-    if(f->paginate && !f->defer_tall_rows && t->positions[t->end]-t->positions[t->row]+boundary(t,t->row)+boundary(t,t->end)>fmaxf(exr_flow_room(f),f->unit_assigned ? f->unit_block_reference : 0)+.01f) {
+    float room=fmaxf(exr_flow_room(f),f->unit_assigned ? f->unit_block_reference : 0);
+    if(repeats_header(f,t))
+      room=fmaxf(1,room-header_height(t)-boundary(t,0)-boundary(t,t->header_rows));
+    if(f->paginate && !f->defer_tall_rows && t->positions[t->end]-t->positions[t->row]+boundary(t,t->row)+boundary(t,t->end)>room+.01f) {
       t->fragmented=1;t->consumed=0;t->position=previous;
       for(i=t->first;i<t->last;i++) {
         t->cells[i].gap=cell_inset(f,t,t->cells+i);
@@ -821,21 +922,28 @@ exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
     }
   }
   height = t->positions[t->end] - t->positions[t->row];
+  {
+    int eligible = repeats_header(f, t);
+    header = eligible ? header_height(t)+boundary(t,0)+boundary(t,t->header_rows) : 0;
+  }
   paint_top=!t->row || f->y==exr_flow_top(f);
   top=paint_top ? boundary(t,t->row) : 0; bottom=boundary(t,t->end);
   /* Keep the outside half of the boundary inside the page, including a
      continuation fragment. Continuous groups share the same grid coordinate. */
   { size_t pages=f->layout->page_count;
-    status = exr_flow_page(f, height+top+bottom, f->doc->nodes[t->rows[t->row]].start);
+    status = exr_flow_page(f, height+top+bottom+header, f->doc->nodes[t->rows[t->row]].start);
     if(status==EXR_OK && f->layout->page_count!=pages) {
       paint_top=1; top=boundary(t,t->row);
-      status=exr_flow_page(f,height+top+bottom,f->doc->nodes[t->rows[t->row]].start);
+      status=exr_flow_page(f,height+top+bottom+header,f->doc->nodes[t->rows[t->row]].start);
     }
   }
   if (status == EXR_PAUSE)
     return status;
   if (status != EXR_OK)
     return failed(f, status);
+  if(header>0 && f->y<=exr_flow_top(f)+.001f) {
+    status=repeat_header(f,t); if(status!=EXR_OK) return failed(f,status);
+  }
   f->y+=top;
   if(!f->layout->has_baseline) {
     float baseline=t->baselines[t->row]; int aligned=0;

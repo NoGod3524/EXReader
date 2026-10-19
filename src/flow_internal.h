@@ -143,6 +143,10 @@ exr_style exr_flow_style(const exr_style *style, exr_writing_mode mode);
 exr_status exr_flow_page(flow *f, float height, size_t offset);
 exr_box *exr_flow_box(flow *f, size_t node, size_t page, float x, float y,
                        float width, float height, exr_box_kind kind);
+exr_status exr_flow_edge(flow *f, size_t node, int style, float width, uint32_t color,
+                         float x, float y, float w, float h);
+exr_status exr_flow_borders(flow *f, size_t node, const exr_style *s,
+                            float x, float y, float width, float height);
 exr_status exr_flow_cluster(flow *f, size_t start, size_t end);
 exr_status exr_flow_image(flow *f, size_t node, float x, float width);
 exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count,

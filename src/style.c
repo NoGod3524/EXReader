@@ -42,6 +42,21 @@ enum {
   FLOAT_SIDE,
   CLEAR_SIDE,
   HYPHENS,
+  /* Per-side borders, in CSS physical order (top, right, bottom, left) per
+     sub-property. The blocks must stay consecutive: a `border` shorthand
+     expands to all twelve in one run. */
+  BORDER_TOP_WIDTH,
+  BORDER_RIGHT_WIDTH,
+  BORDER_BOTTOM_WIDTH,
+  BORDER_LEFT_WIDTH,
+  BORDER_TOP_COLOR,
+  BORDER_RIGHT_COLOR,
+  BORDER_BOTTOM_COLOR,
+  BORDER_LEFT_COLOR,
+  BORDER_TOP_STYLE,
+  BORDER_RIGHT_STYLE,
+  BORDER_BOTTOM_STYLE,
+  BORDER_LEFT_STYLE,
   PROPERTIES
 };
 typedef struct {
@@ -229,7 +244,10 @@ static int property(const char *s, size_t n) {
       "max-width",    "margin-top",    "margin-right",   "margin-bottom", "margin-left",
       "padding-top",  "padding-right", "padding-bottom", "padding-left",  "background-color",
       "border-width", "border-color",  "border-style",   "break-before",  "break-after", "direction",
-      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align", "border-collapse", "float", "clear", "hyphens"};
+      "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align", "border-collapse", "float", "clear", "hyphens",
+      "border-top-width", "border-right-width", "border-bottom-width", "border-left-width",
+      "border-top-color", "border-right-color", "border-bottom-color", "border-left-color",
+      "border-top-style", "border-right-style", "border-bottom-style", "border-left-style"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -246,6 +264,14 @@ static int property(const char *s, size_t n) {
     return PROPERTIES + 1;
   if (equal(s, n, "border"))
     return PROPERTIES + 2;
+  if (equal(s, n, "border-top"))
+    return PROPERTIES + 3;
+  if (equal(s, n, "border-right"))
+    return PROPERTIES + 4;
+  if (equal(s, n, "border-bottom"))
+    return PROPERTIES + 5;
+  if (equal(s, n, "border-left"))
+    return PROPERTIES + 6;
   if (equal(s, n, "background"))
     return BACKGROUND;
   return -1;
@@ -307,13 +333,22 @@ static char *clean_css(const char *s, size_t n) {
 }
 static int length(const char *s, float em, float rem, int unitless, exr_length *out);
 static int color(const char *s, uint32_t *out);
+static int style_name(const char *v) {
+  if (!strcmp(v, "none")) return 0;
+  if (!strcmp(v, "solid")) return 1;
+  if (!strcmp(v, "hidden")) return 2;
+  if (!strcmp(v, "dashed")) return 3;
+  if (!strcmp(v, "dotted")) return 4;
+  if (!strcmp(v, "double")) return 5;
+  return -1;
+}
 static int declarations(css *c, const char *s, size_t n, declaration **out, size_t *count) {
   size_t pos = 0, cap = 0;
   *out = NULL;
   *count = 0;
   while (pos < n) {
-    size_t end = pos + exr_css_delimiter(s + pos, n - pos, ';'), colon, a, b, k;
-    int prop, important = 0, copies = 1;
+    size_t end = pos + exr_css_delimiter(s + pos, n - pos, ';'), colon, a, b;
+    int prop, important = 0;
     char values[4][128] = {{0}};
     a = pos;
     while (a < end && ws(s[a]))
@@ -345,86 +380,141 @@ static int declarations(css *c, const char *s, size_t n, declaration **out, size
     }
     if (b == a || b - a >= 128)
       continue;
-    if (prop >= PROPERTIES) {
-      size_t v = a;
-      int lengths = 0;
-      while (v < b && lengths < 4) {
-        size_t start;
+    {
+      int targets[12], target_count = 0, t;
+      char produced[12][128];
+      if (prop == BORDER_WIDTH || prop == BORDER_COLOR || prop == BORDER_STYLE ||
+          prop >= PROPERTIES) {
+        size_t v = a;
+        int lengths = 0;
+        while (v < b && lengths < 4) {
+          size_t start;
+          while (v < b && ws(s[v]))
+            v++;
+          start = v;
+          while (v < b && !ws(s[v]))
+            v++;
+          if (v > start)
+            memcpy(values[lengths++], s + start, v - start);
+        }
         while (v < b && ws(s[v]))
           v++;
-        start = v;
-        while (v < b && !ws(s[v]))
-          v++;
-        if (v > start)
-          memcpy(values[lengths++], s + start, v - start);
-      }
-      while (v < b && ws(s[v]))
-        v++;
-      if (!lengths || v < b)
-        continue;
-      if (prop == PROPERTIES + 2) {
-        char border_values[3][128] = {"3px", "black", "none"};
-        int t, seen = 0, valid = 1;
-        if (lengths > 3)
+        if (!lengths || v < b)
           continue;
-        for (t = 0; t < lengths; t++) {
-          exr_length l;
-          uint32_t rgba;
-          int which;
-          if (!strcmp(values[t], "solid") || !strcmp(values[t], "none") || !strcmp(values[t], "hidden") ||
-              !strcmp(values[t], "dashed") || !strcmp(values[t], "dotted") || !strcmp(values[t], "double"))
-            which = 2;
-          else if (length(values[t], 1, 1, 0, &l) && !l.percent && l.value >= 0 && l.value <= 1024)
-            which = 0;
-          else if (color(values[t], &rgba))
-            which = 1;
-          else {
-            valid = 0;
-            break;
+        if (prop == PROPERTIES + 2 || (prop >= PROPERTIES + 3 && prop <= PROPERTIES + 6)) {
+          /* border / border-top …: <width> || <style> || <color>, any order. */
+          char parts[3][128] = {"3px", "black", "none"};
+          int seen = 0, valid = 1;
+          if (lengths > 3)
+            continue;
+          for (t = 0; t < lengths && valid; t++) {
+            exr_length l;
+            uint32_t rgba;
+            int which;
+            if (style_name(values[t]) >= 0)
+              which = 2;
+            else if (length(values[t], 1, 1, 0, &l) && !l.percent && l.value >= 0 && l.value <= 1024)
+              which = 0;
+            else if (color(values[t], &rgba))
+              which = 1;
+            else {
+              valid = 0;
+              break;
+            }
+            if (seen & (1 << which))
+              valid = 0;
+            else {
+              seen |= 1 << which;
+              strcpy(parts[which], values[t]);
+            }
           }
-          if (seen & (1 << which)) {
-            valid = 0;
-            break;
+          if (!valid)
+            continue;
+          if (prop == PROPERTIES + 2) {
+            for (t = 0; t < 4; t++) {
+              targets[target_count] = BORDER_TOP_WIDTH + t;
+              strcpy(produced[target_count++], parts[0]);
+              targets[target_count] = BORDER_TOP_COLOR + t;
+              strcpy(produced[target_count++], parts[1]);
+              targets[target_count] = BORDER_TOP_STYLE + t;
+              strcpy(produced[target_count++], parts[2]);
+            }
+          } else {
+            int side = prop - (PROPERTIES + 3);
+            targets[target_count] = BORDER_TOP_WIDTH + side;
+            strcpy(produced[target_count++], parts[0]);
+            targets[target_count] = BORDER_TOP_COLOR + side;
+            strcpy(produced[target_count++], parts[1]);
+            targets[target_count] = BORDER_TOP_STYLE + side;
+            strcpy(produced[target_count++], parts[2]);
           }
-          seen |= 1 << which;
-          strcpy(border_values[which], values[t]);
+        } else if (prop == BORDER_WIDTH || prop == BORDER_COLOR || prop == BORDER_STYLE) {
+          /* border-width/-color/-style accept one to four values, expanded like
+             margin and padding. */
+          int base = prop == BORDER_WIDTH ? BORDER_TOP_WIDTH :
+                     prop == BORDER_COLOR ? BORDER_TOP_COLOR : BORDER_TOP_STYLE;
+          for (t = 0; t < lengths; t++) {
+            exr_length l;
+            uint32_t rgba;
+            if (prop == BORDER_WIDTH) {
+              if (!length(values[t], 1, 1, 0, &l) || l.percent || l.value < 0 || l.value > 1024)
+                break;
+            } else if (prop == BORDER_COLOR) {
+              if (!color(values[t], &rgba))
+                break;
+            } else if (style_name(values[t]) < 0)
+              break;
+          }
+          if (t != lengths)
+            continue;
+          if (lengths == 1)
+            strcpy(values[1], values[0]);
+          if (lengths < 3)
+            strcpy(values[2], values[0]);
+          if (lengths < 4)
+            strcpy(values[3], values[1]);
+          for (t = 0; t < 4; t++) {
+            targets[target_count] = base + t;
+            strcpy(produced[target_count++], values[t]);
+          }
+        } else {
+          int base = prop == PROPERTIES ? MT : PT;
+          for (t = 0; t < lengths; t++) {
+            exr_length l;
+            if (!length(values[t], 1, 1, 0, &l) || (prop == PROPERTIES + 1 && l.value < 0))
+              break;
+          }
+          if (t != lengths)
+            continue;
+          if (lengths == 1)
+            strcpy(values[1], values[0]);
+          if (lengths < 3)
+            strcpy(values[2], values[0]);
+          if (lengths < 4)
+            strcpy(values[3], values[1]);
+          for (t = 0; t < 4; t++) {
+            targets[target_count] = base + t;
+            strcpy(produced[target_count++], values[t]);
+          }
         }
-        if (!valid)
-          continue;
-        for (t = 0; t < 3; t++)
-          strcpy(values[t], border_values[t]);
-        prop = BORDER_WIDTH;
-        copies = 3;
       } else {
-        int t;
-        exr_length l;
-        for (t = 0; t < lengths; t++)
-          if (!length(values[t], 1, 1, 0, &l) || (prop == PROPERTIES + 1 && l.value < 0))
-            break;
-        if (t != lengths)
-          continue;
-        if (lengths == 1)
-          strcpy(values[1], values[0]);
-        if (lengths < 3)
-          strcpy(values[2], values[0]);
-        if (lengths < 4)
-          strcpy(values[3], values[1]);
-        prop = prop == PROPERTIES ? MT : PT;
-        copies = 4;
+        targets[0] = prop;
+        memcpy(produced[0], s + a, b - a);
+        produced[0][b - a] = 0;
+        target_count = 1;
       }
-    } else
-      memcpy(values[0], s + a, b - a);
-    for (k = 0; k < (size_t)copies; k++) {
-      declaration *v;
-      if (++c->declarations > 131072 || *count >= 256 ||
-          !exr_grow((void **)out, &cap, *count + 1, sizeof(**out))) {
-        c->failed = EXR_LIMIT;
-        return 0;
+      for (t = 0; t < target_count; t++) {
+        declaration *v;
+        if (++c->declarations > 131072 || *count >= 256 ||
+            !exr_grow((void **)out, &cap, *count + 1, sizeof(**out))) {
+          c->failed = EXR_LIMIT;
+          return 0;
+        }
+        v = &(*out)[(*count)++];
+        v->property = targets[t];
+        v->important = important;
+        strcpy(v->value, produced[t]);
       }
-      v = &(*out)[(*count)++];
-      v->property = prop + (int)k;
-      v->important = important;
-      strcpy(v->value, values[k]);
     }
   }
   return 1;
@@ -621,7 +711,15 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->clear_side = parent->clear_side;
     else if (prop == HYPHENS)
       s->hyphens = parent->hyphens;
-    else
+    else if (prop >= BORDER_TOP_WIDTH && prop <= BORDER_LEFT_STYLE) {
+      int kind = (prop - BORDER_TOP_WIDTH) / 4, side = (prop - BORDER_TOP_WIDTH) % 4;
+      if (kind == 0)
+        s->border_width[side] = parent->border_width[side];
+      else if (kind == 1)
+        s->border_color[side] = parent->border_color[side];
+      else
+        s->border_style[side] = parent->border_style[side];
+    } else
       return 0;
     return 1;
   }
@@ -657,6 +755,7 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     else if (!strcmp(v, "rtl")) s->direction = EXR_DIRECTION_RTL;
     else return 0;
   } else if (prop == COLOR || prop == BACKGROUND || prop == BORDER_COLOR) {
+    int side;
     if (!color(v, &rgba))
       return 0;
     if (prop == COLOR)
@@ -664,7 +763,8 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     else if (prop == BACKGROUND)
       s->background = rgba;
     else
-      s->border_color = rgba;
+      for (side = 0; side < 4; side++)
+        s->border_color[side] = rgba;
   } else if (prop == FONT_SIZE) {
     if (!length(v, parent->font_size, root, 0, &l) || l.value < 0)
       return 0;
@@ -784,20 +884,11 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     else
       return 0;
   } else if (prop == BORDER_STYLE) {
-    if (!strcmp(v, "solid"))
-      s->border_style = 1;
-    else if (!strcmp(v, "hidden"))
-      s->border_style = 2;
-    else if (!strcmp(v, "dashed"))
-      s->border_style = 3;
-    else if (!strcmp(v, "dotted"))
-      s->border_style = 4;
-    else if (!strcmp(v, "double"))
-      s->border_style = 5;
-    else if (!strcmp(v, "none"))
-      s->border_style = 0;
-    else
+    int style = style_name(v), side;
+    if (style < 0)
       return 0;
+    for (side = 0; side < 4; side++)
+      s->border_style[side] = style;
   } else if (prop == BEFORE || prop == AFTER) {
     int page = !strcmp(v, "page") || !strcmp(v, "always");
     if (!page && strcmp(v, "auto"))
@@ -806,6 +897,22 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->before = page;
     else
       s->after = page;
+  } else if (prop >= BORDER_TOP_WIDTH && prop <= BORDER_LEFT_STYLE) {
+    int kind = (prop - BORDER_TOP_WIDTH) / 4, side = (prop - BORDER_TOP_WIDTH) % 4;
+    if (kind == 0) {
+      if (!length(v, s->font_size, root, 0, &l) || l.percent || l.value < 0 || l.value > 1024)
+        return 0;
+      s->border_width[side] = l.value;
+    } else if (kind == 1) {
+      if (!color(v, &rgba))
+        return 0;
+      s->border_color[side] = rgba;
+    } else {
+      int style = style_name(v);
+      if (style < 0)
+        return 0;
+      s->border_style[side] = style;
+    }
   } else {
     if (!length(v, s->font_size, root, 0, &l))
       return 0;
@@ -824,12 +931,14 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
         return 0;
       s->padding[prop - PT] = l;
     } else if (prop == INDENT || prop == BORDER_WIDTH) {
+      int side;
       if (l.percent || l.value < 0 || l.value > 1024)
         return 0;
       if (prop == INDENT)
         s->indent = l.value;
       else
-        s->border_width = l.value;
+        for (side = 0; side < 4; side++)
+          s->border_width[side] = l.value;
     } else
       return 0;
   }
@@ -856,11 +965,15 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
   exr_style *styles = NULL, initial = {0};
   const exr_layout_options *o = &config->page;
   size_t i, r, family_bytes = 0;
+  int side;
   initial.font_size = o->font_size;
   initial.leading = o->line_height;
   initial.leading_relative = 1;
-  initial.color = initial.border_color = 255;
-  initial.border_width = 3;
+  initial.color = 255;
+  for (side = 0; side < 4; side++) {
+    initial.border_color[side] = 255;
+    initial.border_width[side] = 3;
+  }
   initial.width.value = initial.height.value = initial.max_width.value = initial.max_height.value = -1;
   initial.display = EXR_CSS_BLOCK;
   initial.direction = config->direction;
