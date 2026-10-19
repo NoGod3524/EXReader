@@ -43,9 +43,11 @@ static void blend_rgb(const double b[3],const double s[3],exr_blend_mode mode,do
     set_lum(blend,mode==EXR_BLEND_LUMINOSITY ? lum(s) : lum(b));
   } else for(k=0;k<3;k++) blend[k]=component(b[k],s[k],mode);
 }
-/* Working buffers may be smaller than the canvas; index them through the origin. */
+/* A region-sized buffer is addressed with local coordinates; the origin maps a
+   local coordinate back to the parent canvas when the backdrop is consulted. */
 static size_t buffer_index(const exr_composite_state *state,size_t width,size_t x,size_t y) {
-  return ((size_t)((int)y-state->origin_y)*width + (size_t)((int)x-state->origin_x));
+  (void)state;
+  return (size_t)y*width + (size_t)x;
 }
 static void read_rgba(const exr_bitmap *b,const exr_composite_state *state,size_t x,size_t y,double out[4]) {
   unsigned k;
@@ -53,7 +55,7 @@ static void read_rgba(const exr_bitmap *b,const exr_composite_state *state,size_
     const float *p=state->pixels+buffer_index(state,b->width,x,y)*5;
     if(p[4]>0) for(k=0;k<4;k++) out[k]=p[k];
     else if(state->isolated) for(k=0;k<4;k++) out[k]=0;
-    else read_rgba(&state->backdrop,state->backdrop_state,x,y,out);
+    else read_rgba(&state->backdrop,state->backdrop_state,x+(size_t)state->origin_x,y+(size_t)state->origin_y,out);
   }
   else {
     const unsigned char *p=b->pixels+y*b->stride+x*b->channels;out[3]=b->channels==1 ? 1 : p[3]/255.;
@@ -65,7 +67,7 @@ static void read_rgba(const exr_bitmap *b,const exr_composite_state *state,size_
 static void read_backdrop(const exr_composite_state *state,size_t x,size_t y,double out[4]) {
   unsigned k;
   if(state->isolated) { for(k=0;k<4;k++) out[k]=0; return; }
-  read_rgba(&state->backdrop,state->backdrop_state,x,y,out);
+  read_rgba(&state->backdrop,state->backdrop_state,x+(size_t)state->origin_x,y+(size_t)state->origin_y,out);
 }
 static void over_rgba(const double back[4],const double source[3],double alpha,exr_blend_mode mode,double out[4]) {
   double b[3],blend[3];unsigned k;
@@ -121,15 +123,17 @@ void exr_pixel_composite(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned 
   over_rgba(back,source,alpha,mode,out);write_rgba(bitmap,state,(size_t)x,(size_t)y,out,alpha);
 }
 exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state,const exr_bitmap *parent,
-  const exr_composite_state *parent_state,size_t *work,const exr_control *control,exr_error *e) {
+  const exr_composite_state *parent_state,int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *e) {
   size_t y,x;
   state->backdrop=*parent;state->backdrop_state=parent_state;state->depth=parent_state ? parent_state->depth+1 : 1;
-  state->left=parent->width;state->top=parent->height;
-  for(y=0;y<parent->height;y++) {
+  state->left=child->width;state->top=child->height;
+  state->origin_x=origin_x;state->origin_y=origin_y;
+  for(y=0;y<child->height;y++) {
+    size_t py=y+(size_t)origin_y;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
-    if(!exr_vector_work(work,parent->width)) return exr_fail(e,EXR_LIMIT,"Group backdrop copy exceeds work budget");
-    if(parent->channels==4) memcpy(child->pixels+y*child->stride,parent->pixels+y*parent->stride,(size_t)parent->width*4);
-    else for(x=0;x<parent->width;x++) { unsigned char *p=child->pixels+y*child->stride+x*4;p[0]=p[1]=p[2]=parent->pixels[y*parent->stride+x];p[3]=255; }
+    if(!exr_vector_work(work,child->width)) return exr_fail(e,EXR_LIMIT,"Group backdrop copy exceeds work budget");
+    if(parent->channels==4) memcpy(child->pixels+y*child->stride,parent->pixels+py*parent->stride+(size_t)origin_x*4,child->width*4);
+    else for(x=0;x<child->width;x++) { unsigned char *p=child->pixels+y*child->stride+x*4;p[0]=p[1]=p[2]=parent->pixels[py*parent->stride+(size_t)origin_x+x];p[3]=255; }
   }
   return EXR_OK;
 }
@@ -160,26 +164,28 @@ exr_status exr_bitmap_to_gray(exr_bitmap *b,const exr_control *control,exr_error
 
 exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,double opacity,exr_blend_mode mode,
   const exr_bitmap *clip,exr_composite_state *target_state,const exr_composite_state *source_state,
-  size_t *work,const exr_control *control,exr_error *e) {
+  int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *e) {
   size_t y,x,left=0,top=0,right=source->width,bottom=source->height;unsigned cost=mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64;
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   if(source_state) { left=source_state->left;top=source_state->top;right=source_state->right;bottom=source_state->bottom; }
   for(y=top;y<bottom;y++) {
+    size_t ty=y+(size_t)origin_y;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,right-left)) return exr_fail(e,EXR_LIMIT,"Layer composite work budget exceeded");
     for(x=left;x<right;x++) {
-      const unsigned char *p=source->pixels+y*source->stride+x*4;unsigned a=(unsigned)floor(p[3]*opacity+.5),coverage=clip ? clip->pixels[y*clip->stride+x] : 255;uint32_t color;
+      size_t tx=x+(size_t)origin_x;
+      const unsigned char *p=source->pixels+y*source->stride+x*4;unsigned a=(unsigned)floor(p[3]*opacity+.5),coverage=clip ? clip->pixels[ty*clip->stride+tx] : 255;uint32_t color;
       if(!coverage) continue;
       if(target_state && target_state->knockout) {
         /* A group nested in a knockout group is one element: it composites with the
            knockout group's initial backdrop and replaces the accumulated result. */
         double base[4],painted[4],current[4],out[4],rgb[3],alpha=(p[3]/255.)*opacity,covered=coverage/255.;unsigned k;
-        read_backdrop(target_state,x,y,base);read_rgba(target,target_state,x,y,current);
+        read_backdrop(target_state,tx,ty,base);read_rgba(target,target_state,tx,ty,current);
         for(k=0;k<3;k++) rgb[k]=p[k]/255.;
         over_rgba(base,rgb,alpha,mode,painted);
         for(k=0;k<4;k++) out[k]=covered*painted[k]+(1-covered)*current[k];
-        write_rgba(target,target_state,x,y,out,alpha*covered);
-        if(target_state->pixels) target_state->pixels[buffer_index(target_state,target->width,x,y)*5+4]=(float)fmax(0,fmin(1,out[3]));
+        write_rgba(target,target_state,tx,ty,out,alpha*covered);
+        if(target_state->pixels) target_state->pixels[buffer_index(target_state,target->width,tx,ty)*5+4]=(float)fmax(0,fmin(1,out[3]));
         continue;
       }
       if((source_state && source_state->pixels && !source_state->isolated) || (target_state && target_state->pixels)) {
@@ -188,14 +194,14 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         if(q) ag=q[4];
         if(!ag || !opacity) continue;
         if(!exr_vector_work(work,cost+32+(target_state ? target_state->depth*4 : 0))) return exr_fail(e,EXR_LIMIT,"Group backdrop removal exceeds work budget");
-        read_rgba(target,target_state,x,y,back);
+        read_rgba(target,target_state,tx,ty,back);
         for(k=0;k<3;k++) rgb[k]=q ? fmax(0,fmin(1,(q[k]-(1-ag)*back[k])/ag)) : p[k]/255.;
-        ag*=opacity*coverage/255.;over_rgba(back,rgb,ag,mode,out);write_rgba(target,target_state,x,y,out,ag);continue;
+        ag*=opacity*coverage/255.;over_rgba(back,rgb,ag,mode,out);write_rgba(target,target_state,tx,ty,out,ag);continue;
       }
       if(!a) continue;
       if(!exr_vector_work(work,cost)) return exr_fail(e,EXR_LIMIT,"Layer blend work budget exceeded");
       color=((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|a;
-      if(mode==EXR_BLEND_NORMAL) exr_pixel(target,(int)x,(int)y,color,coverage);else exr_pixel_blend(target,(int)x,(int)y,color,coverage,mode);
+      if(mode==EXR_BLEND_NORMAL) exr_pixel(target,(int)tx,(int)ty,color,coverage);else exr_pixel_blend(target,(int)tx,(int)ty,color,coverage,mode);
     }
   }
   return EXR_OK;
