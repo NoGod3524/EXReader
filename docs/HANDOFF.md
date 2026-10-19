@@ -288,7 +288,7 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 | 包 | 内容 |
 | --- | --- |
 | WP1–WP3 | 框架、排版、组区域裁剪 |
-| WP4 | 轴向/径向渐变（含 Extend 外推）、渲染意图、灰度组、色调映射；**网格渐变类型 4/5/6/7**（`src/pdf_shading_mesh.c`）；**DeviceCMYK 透明组按 device RGB 合成**（见坑 3） |
+| WP4 | 轴向/径向渐变（含 Extend 外推）、渲染意图、灰度组、色调映射；**网格渐变类型 4/5/6/7**（`src/pdf_shading_mesh.c`）；**画布 CMYK 组四分量缓冲 + `exr_canvas_path_cmyk`**；DeviceCMYK 组在 PDF 层接受（见坑 3） |
 | WP4a | Standard 加密；**CCITT G3/G4**（含 `/Rows` 缺省时取 `/Height`） |
 | WP5 | 边框线型 **dashed/dotted/double**（块级与合并表格边）；**逐边边框**（四边独立 width/style/color，`border`/`border-top` 等简写与 1–4 值长写）；分页表格**重复 `<thead>`** |
 
@@ -296,7 +296,7 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 
 | 包 | 剩余项 |
 | --- | --- |
-| WP4 | **原生 CMYK 组混合缓冲**（当前接受 DeviceCMYK 组但按 RGB 合成）；OutputIntent、Matte |
+| WP4 | **PDF 源 CMYK 送入画布缓冲**（sink 回调）；OutputIntent、Matte |
 | WP4a | 证书加密（PubSec）、EFOpen、JBIG2、JPX |
 | WP5 | 仅剩 `border-spacing`（矩阵已标不支持，`separate` 表格按 0 间距排列） |
 | WP6–WP16 | 未开始 |
@@ -308,10 +308,14 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
    下一步必须先查 PDF 参考 4.6.3 原文的图 4.16/4.17，再找一个**真实含续接**的样本做对照，
    不要再用自造夹具自我验证。
 2. **类型 5 的顶点顺序未验证**：2×2 晶格夹具与 MuPDF 结果不一致（MuPDF 只画一角）。
-3. **CMYK 透明组按 RGB 合成**：`exr_pdf_group_rgb` 现在接受 `DeviceCMYK`/`CMYK`，但画布缓冲仍是
-   RGB——颜色在 PDF 层按内置朴素公式转成 RGB，透明度混合发生在 RGB。**不透明内容**与 CMYK
-   空间渲染器一致；**半透明重叠**与该空间渲染器可能不同。做真需把画布/组缓冲扩成四分量，
-   且要把源 CMYK 值带过绘制接口（目前 `exr_draw_style` 只有 RGB），属结构性改动。
+3. **CMYK 透明组：画布有缓冲，PDF 还没接**：画布层新增 `EXR_GROUP_CMYK` 与四分量缓冲，
+   `exr_canvas_path_cmyk` 直接接收 CMYK 源色，可分离混合模式、软遮罩、挖空都按 CMYK 计算，
+   `end_layer` 用同一朴素公式转回 RGB；`native-canvas-cmyk` 用「富黑 + 白各 50%」证明了
+   结果与 RGB 合成不同（128,128,191 而不是 191,191,191）。**但 PDF 管线尚未把源 CMYK 送进
+   这个缓冲**：`exr_pdf_group_rgb` 只标记组空间，内容仍以 RGB 绘制，所以 PDF 的 CMYK 组
+   半透明重叠仍是近似。下一步是给 `exr_draw_sink_ex` 追加 CMYK path 回调（源值在
+   `exr_pdf_color.values` 里已保留），并让画布 sink 转发到 `exr_canvas_path_cmyk`。
+   嵌套 CMYK 组、CMYK 组内的复合填充/描边、非可分离混合模式当前明确拒绝。
 4. **图片尺寸与 `/Rows`**：CCITT 现在缺省取图像 `/Height`；其它过滤器没有同等回退。
 5. **网格 6/7 的验证方式**：`native-pdf-shading-mesh7` 用四个自造夹具（平面 Coons、平面张量、
    凸起张量、CMYK）与 MuPDF 逐像素对照；平面类型 6 与类型 7 输出**逐字节相同**这个断言
@@ -343,9 +347,9 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 
 按依赖关系排序，而不是按工作包编号：
 
-1. **原生 CMYK 组缓冲**（WP4 剩余）：画布目前是 RGB；要真正在 DeviceCMYK 空间混合，需要
-   四分量缓冲，并把源 CMYK 值带过绘制接口（`exr_draw_style` 只有 RGB）。在这之前，
-   CMYK 组按 RGB 合成，不透明内容正确、半透明重叠是近似。
+1. **PDF 源 CMYK 接入画布缓冲**（WP4 剩余）：画布已有四分量缓冲，缺的是把 `/Group /CS /DeviceCMYK` 内的源 CMYK 经 sink 传进来；需要
+   给 `exr_draw_sink_ex` 追加 CMYK path 回调（`exr_draw_style` 不能加字段）。在这之前，
+   PDF 内的 CMYK 组仍按 RGB 合成，不透明内容正确、半透明重叠是近似（画布 API 本身已支持真 CMYK 混合）。
 2. **DeviceCMYK profile 决定**：Argyll profile 的三种打包方案（内嵌/zlib/LUT）仍待选；
    选定后页面、网格、组共用同一转换，并同步改 `groupcmyk` 与 `shading-mesh7-cmyk` 的断言。
 3. **WP4a**：证书加密（PubSec）、EFOpen、JBIG2、JPX。
