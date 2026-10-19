@@ -69,10 +69,16 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
   if(!emit) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
   if(exr_pdf_resolve(file,value,&value,e)!=EXR_OK) return e->code;
   v=exr_pdf_value_at(file,value);
-  if(!v || v->kind!=EXR_PDF_DICT) return exr_fail(e,EXR_FORMAT,"PDF shading is not a dictionary");
+  /* Mesh shadings are streams; axial and radial shadings are plain dictionaries. */
+  if(!v || (v->kind!=EXR_PDF_DICT && v->kind!=EXR_PDF_STREAM)) return exr_fail(e,EXR_FORMAT,"PDF shading is not a dictionary");
   if(exr_pdf_resolve(file,exr_pdf_get(file,value,"ShadingType"),&id,e)!=EXR_OK) return e->code;
   { double n; if(!number(file,id,&n)) return exr_fail(e,EXR_FORMAT,"Invalid PDF shading type"); type=(int)n; }
-  if(type!=2 && type!=3) return exr_fail(e,EXR_UNSUPPORTED,"Only axial and radial PDF shadings are implemented");
+  if(type==4 || type==5) {
+    status=exr_pdf_shading_mesh(file,value,type,ctm,intent,emit,context,control,e);
+    return status;
+  }
+  if(v->kind!=EXR_PDF_DICT) return exr_fail(e,EXR_FORMAT,"PDF shading is not a dictionary");
+  if(type!=2 && type!=3) return exr_fail(e,EXR_UNSUPPORTED,"Only axial, radial and mesh PDF shadings are implemented");
   ncoords=type==2 ? 4u : 6u;
   if(exr_pdf_resolve(file,exr_pdf_get(file,value,"Coords"),&coords_id,e)!=EXR_OK) return e->code;
   v=exr_pdf_value_at(file,coords_id);
