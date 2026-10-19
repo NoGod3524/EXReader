@@ -79,7 +79,7 @@
 
 ### 3.33.1 — 透明组颜色切换与挖空语义修复
 
-小缺陷修复；2026-10-19；基线`fd408ae`。
+小缺陷修复；2026-10-19；基线`fd408ae`；实现[`d0a0b8d`](https://github.com/NoGod3524/EXReader/commit/d0a0b8d3736c9b25ce0cd42d9eeaf67a31cdc4e7)。
 
 - 修正PDF组字典K极性：true启用挖空，false、null和缺省不挖空。旧输入生成器也写反，现已重新生成50场景PDF，Decimal像素期望不变。
 - 保留显式DeviceRGB与未指定CS的区别；RGB隔离子组独立合成后转换回父CMYK/Gray，正确应用组透明度、混合和裁剪，提交/丢弃均恢复父组。
@@ -87,6 +87,7 @@
 - 修复JNI验证示例仅接受0.x版本的断言，支持三段版本编号。
 - 核心与PDF读取升至3.33.1，其他组件保留3.33.0；ABI1和schema6保持。
 - 本地MSVC/GCC各136/136、ICC-OFF3/3、安装组件4/4及EXACT C++消费通过，组色空间229检查。
+- [跨平台CI39334889967](https://github.com/NoGod3524/EXReader/actions/runs/39334889967)7/7通过：三桌面各136/136、sanitizer133/133、20万次变异、移动库交叉编译及绑定检查通过。
 
 
 

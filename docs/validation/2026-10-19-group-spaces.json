@@ -148,6 +148,22 @@
     "cpp_exact_package": true,
     "layer_inverse_symbols": 0,
     "layer_inverse_includes": 0,
-    "fixture_reproduction": true
+    "fixture_reproduction": true,
+    "new_pdf_fixtures_byte_reproduction": 14
+  },
+  "abi_validation": {
+    "public_declarations": 304,
+    "declarations_identical_to_base": true,
+    "record_measurements": 703,
+    "raw_measurements_identical_to_previous_baseline": true,
+    "gcc_msvc_dll_exports": 304,
+    "export_sets_identical": true
+  },
+  "code_commit": "d0a0b8d3736c9b25ce0cd42d9eeaf67a31cdc4e7",
+  "ci": {
+    "run_id": 39334889967,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39334889967",
+    "conclusion": "success",
+    "successful_jobs": 7
   }
 }
