@@ -5,9 +5,9 @@
 | 项 | 值 |
 | --- | --- |
 | 分支 | `codex/framework` |
-| 基点 | `f0fd4b5`（网格 6/7 + DeviceCMYK 组批次） |
+| 基点 | `a959d79`（画布 CMYK 组缓冲批次） |
 | 工作区 | 干净（本文档是随后的文档提交） |
-| 回归 | **129 / 129**（新增 `native-pdf-shading-mesh7`） |
+| 回归 | **130 / 130**（新增 `native-pdf-shading-mesh7`、`native-canvas-cmyk`） |
 | CI | 未推送，未跑 |
 
 ## 这一阶段交付了什么
@@ -19,22 +19,26 @@
 | `src/pdf_shading.c` | 径向渐变 `Extend` 外推：位图 256→512，四周各扩一个梯度跨度 |
 | `tests/test_pdf_shading_mesh7.c` | 4 个生成夹具：平面 Coons、平面张量、凸起张量、CMYK；平面 6/7 必须逐字节相同；RGB 与 MuPDF 误差 ≤4/255 |
 | `tests/test_pdf_groupcs.c` / `tests/test_blend.c` | 不再把 CMYK 组当 `EXR_UNSUPPORTED`；断言朴素换算下的像素 |
-| `tools/generate_pdf_shading_mesh7_fixture.py` | 重新生成 4 个夹具 |
+| `src/blend.c` / `src/canvas.c` / `src/vector.c` | **画布四分量 CMYK 组缓冲**：`EXR_GROUP_CMYK`、`exr_canvas_path_cmyk`，可分离混合模式、软遮罩、挖空；嵌套/复合/非可分离模式明确拒绝 |\n| `tests/test_canvas_cmyk.c` | 富黑 + 白各 50%：CMYK 空间得 (128,128,191)，RGB 合成会是 (191,191,191)；组外 CMYK 转 RGB；四类拒绝 |\n| `tools/generate_pdf_shading_mesh7_fixture.py` | 重新生成 4 个夹具 |
 
 设计要点（细节见 `HANDOFF.md` 的已知坑 3–9）：
 
 - **网格 patch 的控制点只有 x、y**，颜色是**全部控制点之后**的 4 条角颜色记录（类型 6：12 点；类型 7：16 点）。用读顶点的函数读 patch 点会把颜色位吃掉——这个坑已经踩过一次。
 - 类型 6 与类型 7 的平面正方形必须输出相同像素；这条断言能抓住控制点顺序错误。
-- DeviceCMYK 组**接受但按 RGB 合成**：颜色在 PDF 层按朴素公式转 RGB，透明混合发生在 RGB。不透明内容正确，半透明重叠是近似。
+- **画布已能真 CMYK 混合**（四分量缓冲 + `exr_canvas_path_cmyk`）；**PDF 还没接**：内容仍以 RGB 绘制，PDF 组内半透明重叠仍是近似。不透明内容一致。
 - 径向/轴向 `Extend` 是**有限外推**（各方向一个跨度），不是无限平面。
 
 ## 下一步（按依赖排序）
 
-### 1. 原生 CMYK 组缓冲（WP4 剩余）
+### 1. 把 PDF 源 CMYK 接进画布缓冲（WP4 剩余）
 
-画布/组缓冲目前是 RGB。要真正在 DeviceCMYK 空间混合，需要四分量缓冲，并把源 CMYK 值
-带过绘制接口（`exr_draw_style.fill/stroke` 只有 RGB）——这是结构性改动，做完才能声称
-CMYK 组“完整”。在此之前保持现在的 RGB 合成 + 文档标注。
+画布缓冲已经就绪（`EXR_GROUP_CMYK` + `exr_canvas_path_cmyk`）。缺的是 PDF 侧：
+`exr_pdf_group_rgb` 识别出 `/CS /DeviceCMYK` 后，需要给 `exr_draw_sink_ex` **追加**
+一个 CMYK path 回调（`exr_draw_style` 不能加字段，但 sink 有 `struct_size` 可追加），
+内容层把 `exr_pdf_color.values` 里的源 CMYK 传下来，画布 sink 转发到
+`exr_canvas_path_cmyk`，并把组标志设为 `EXR_GROUP_CMYK`。注意 PDF 里 CMYK 组常嵌套
+（`issue13520` 的页面组 + 多个 Form 组），当前画布拒绝嵌套 CMYK 组，接线时要一并
+处理嵌套（子组继承 CMYK 或提交时做 CMYK→CMYK 合成）。
 
 ### 2. DeviceCMYK profile 决定
 
@@ -56,7 +60,7 @@ CMYK 组“完整”。在此之前保持现在的 RGB 合成 + 文档标注。
 2. `issue13520.pdf` 现在能渲染，与 MuPDF 平均差 **3.39**（37% 像素不同）；差异来自
    DeviceCMYK 朴素换算 + RGB 组合成，**不是网格几何**。`bug1703683_page2_reduced.pdf`
    仍卡在 **ToUnicode** 严格校验（语料宽容此前按要求回退），与网格无关。
-3. 半透明 CMYK 组内容会与 CMYK 空间渲染器不同——不要把它当 bug 修，先做第 1 项。
+3. 画布 CMYK 组已能真混合；**PDF 组仍未接线**，所以 PDF 的半透明 CMYK 重叠仍与 CMYK 空间渲染器不同。不要只改画布就宣称 PDF 组完整——先做第 1 项。
 4. 径向/轴向 Extend 的外推范围有限；裁剪区远超一个跨度时仍会截断。
 5. `border-style: hidden` 非 collapse 时不占布局空间；逐边边框是独立的 BORDER 盒
    （判断有无边框用 `exr_border_any()`，不要只看 `box.border_width`）。
@@ -71,5 +75,5 @@ CMYK 组“完整”。在此之前保持现在的 RGB 合成 + 文档标注。
 
 1. `docs/HANDOFF.md` ——「工作包现状与已知坑」「交接：下一步顺序」；
 2. `docs/SUPPORT_MATRIX.md` —— 支持矩阵（渐变/网格、合成、CMYK 边界）；
-3. `docs/NATIVE_VALIDATION.md` —— 末尾两节：WP5 边框/表头、本批网格 6/7；
-4. `docs/SDK_COMPATIBILITY.md` —— 「Mesh shadings 6/7 and DeviceCMYK groups」。
+3. `docs/NATIVE_VALIDATION.md` —— 末尾三节：WP5 边框/表头、网格 6/7、画布 CMYK 组；
+4. `docs/SDK_COMPATIBILITY.md` —— 「Canvas DeviceCMYK groups」与「Mesh shadings 6/7」。
