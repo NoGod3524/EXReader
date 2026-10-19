@@ -2,6 +2,10 @@
 
 2026-10-19，C11 SDK **0.19.0**，MIT，ABI1，schema6。分支 `codex/framework`。
 
+## 已验证代码
+
+`55089af988820c1b3ee68b9853f7f4dac907e757`，[CI39324045389](https://github.com/NoGod3524/EXReader/actions/runs/39324045389) **7/7通过**。三桌面各131/131；ASan/UBSan128/128；移动库编译和20万次变异通过。后续记录提交只修改文档/验证数据，运行库与性能数据各自的SHA见 [验证记录](validation/2026-10-19.json)。
+
 ## 1. 基线与本次范围
 
 修复前 `8467141` 的 MSVC Release、GCC16.2 完整回归均为 **130/130**。随后审计发现既有测试未覆盖的渲染和内存错误；详见 [审计报告](AUDIT-2026-10-19.md)。新增 `native-render-audit` 后完整集合为131项。当前验证结果见该报告与 [验证记录](NATIVE_VALIDATION.md)。

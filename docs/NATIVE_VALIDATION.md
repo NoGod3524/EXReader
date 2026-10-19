@@ -4195,3 +4195,31 @@ before/after the flag;100,003 independent arithmetic vectors agree with wide
 integer interpolation. Raw input and library hashes are retained in
 [wrap-comparison.json](benchmarks/0.19.0-render-audit-windows/wrap-comparison.json).
 The updated exact-commit CI result is recorded below after completion.
+
+## Final exact-commit validation: 55089af
+
+[CI39324045389](https://github.com/NoGod3524/EXReader/actions/runs/39324045389)
+validates `55089af988820c1b3ee68b9853f7f4dac907e757`: **7/7 jobs successful**.
+
+| Check | Result |
+| --- | --- |
+| Windows / Linux / macOS | Each131/131; installed C/C++/JNI; macOS Swift also passed |
+| ASan / UBSan / leak checking | 128/128, no reported errors |
+| Fuzz | 200,000 mutations over5seeds;15,434 parsed documents; no crash |
+| Android | ARM64 shared SDK build/install |
+| iOS / iPadOS | ARM64 device/simulator libraries and Swift checks |
+| Linux compiled layer graph | 98objects,1019references,0inverse, empty exception list |
+| Public Windows exports | Same304names as8467141; no additions/removals |
+| ICC-OFF payload | Compressed default profile absent from binary |
+
+The three desktop-only Python/ctypes hyphenation oracle tests are excluded from
+ASan because they load the instrumented library into an uninstrumented Python
+host. Their native C counterparts remain enabled, and all three run on desktop
+CI. Mobile results are library compilation/type checks, not application/device
+reading tests.
+
+Source and binary hashes, local results and exact-commit CI metadata are retained
+in [validation record](validation/2026-10-19.json) and
+[CI record](validation/2026-10-19-ci.json). Performance data remain tied to their
+own earlier code/binary hashes; the GNU wrapping comparison retains separate raw
+results. Current MIT scope and optional FAAD2 GPL terms are in THIRD_PARTY_NOTICES.
