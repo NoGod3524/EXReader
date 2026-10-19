@@ -364,9 +364,15 @@ static void softmask(void) {
 static void invalid(void) {
   { exr_fixed_document *d=open_book("group-malformed");exr_bitmap b={0};unsigned i;for(i=0;i<5;i++) CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels);exr_fixed_free(d); }
   { unsigned i;for(i=1;i<6;i++) {char name[24];exr_fixed_document *d;exr_bitmap b={0};exr_status got;snprintf(name,sizeof(name),"group-bad-%u",i);d=open_book(name);got=exr_fixed_render(d,0,1,NULL,&b,&error);
-      /* K=true is a plain group (11.4.5 default); K=false is knockout and now renders. */
+      /* K=true is a plain group (11.4.5 default); K=false is knockout and now renders.
+         A DeviceCMYK form group (2) is accepted and blends in device RGB. */
       if(i==1) { CHECK(got==EXR_OK && b.pixels); exr_bitmap_free(&b); }
-      else CHECK(got==(i==2 ? EXR_UNSUPPORTED : EXR_FORMAT) && !b.pixels);
+      else if(i==2) {
+        CHECK(got==EXR_OK && b.pixels);
+        CHECK(b.pixels[8*b.stride+8*4]<60 && b.pixels[8*b.stride+8*4+1]<60 && b.pixels[8*b.stride+8*4+2]<60);
+        exr_bitmap_free(&b);
+      }
+      else CHECK(got==EXR_FORMAT && !b.pixels);
       exr_fixed_free(d);} }
   unsigned i;for(i=0;i<3;i++) {char name[16];exr_fixed_document *d;exr_bitmap b={0};snprintf(name,sizeof(name),"bad-%u",i);d=open_book(name);CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels);exr_fixed_free(d);}
 }

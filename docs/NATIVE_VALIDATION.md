@@ -4067,3 +4067,26 @@ header borders repeat; paged and whole layouts render identical bytes; a tall
 header cell still repeats on each continuation page.
 
 Local Windows Release: 128/128 CTests. Committed as `2a897d1`.
+
+## Mesh shadings 6/7, DeviceCMYK groups, radial Extend (2026-10-19)
+
+`native-pdf-shading-mesh7` adds four generated fixtures from
+`tools/generate_pdf_shading_mesh7_fixture.py`: a planar Coons patch (type 6), the
+same surface as a tensor-product patch (type 7), a type-7 patch whose interior
+poles are pulled towards the corners, and a type-7 patch in DeviceCMYK. The two
+planar documents must rasterise to **byte-identical** bitmaps; sampled pixels are
+within 4/255 of MuPDF 1.28.2, and the bulged patch also matches MuPDF within
+4/255 at the centre and both flanks. The CMYK fixture asserts the documented
+naive model (centre 127,127,191) rather than a profile renderer's result.
+
+DeviceCMYK transparency groups are no longer rejected: `native-pdf-groupcs` now
+renders `groupcmyk.pdf` and checks the naive red (255,0,0) where MuPDF's SWOP
+profile gives (237,28,36); `native-blend`'s CMYK form-group case renders instead
+of expecting `EXR_UNSUPPORTED`. Radial shadings with `/Extend` grow their emitted
+quad by one gradient span per side; this fixed the missing gloss at the ends of
+`issue13520.pdf`. That corpus file now renders and compares at mean |diff| 3.39,
+worst 243, 37% differing pixels; the residue is DeviceCMYK conversion plus the
+RGB-space group approximation, not mesh geometry. `bug1703683_page2_reduced.pdf`
+still stops at strict ToUnicode validation, which was deliberately reverted.
+
+Local Windows Release: 129/129 CTests; GCC 16 Release builds with `-Werror`.

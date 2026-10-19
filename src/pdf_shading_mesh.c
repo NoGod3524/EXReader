@@ -27,21 +27,29 @@ static double mesh_map(unsigned long raw,unsigned bits,double lo,double hi) {
   double maximum=bits>=32 ? 4294967295.0 : (double)((1UL<<bits)-1);
   return maximum<=0 ? lo : lo+((double)raw/maximum)*(hi-lo);
 }
-static int mesh_read_vertex(mesh_stream *s,mesh_vertex *v,exr_pdf_function *function,
-                       exr_pdf_colorspace *space,unsigned intent,exr_error *e) {
+static int mesh_read_color(mesh_stream *s,double out[3],exr_pdf_function *function,
+                           exr_pdf_colorspace *space,unsigned intent,exr_error *e) {
   double comp[4]={0},rgb[4]={0};unsigned i;
-  v->x=mesh_map(mesh_bits(s,s->coordinate),s->coordinate,s->decode[0],s->decode[1]);
-  v->y=mesh_map(mesh_bits(s,s->coordinate),s->coordinate,s->decode[2],s->decode[3]);
   if(function) {
     double t=mesh_map(mesh_bits(s,s->component),s->component,s->decode[4],s->decode[5]);
     if(exr_pdf_function_eval(function,t,rgb,e)!=EXR_OK) return 0;
-    v->rgb[0]=rgb[0];v->rgb[1]=rgb[1];v->rgb[2]=rgb[2];
   } else {
     for(i=0;i<s->components;i++)
       comp[i]=mesh_map(mesh_bits(s,s->component),s->component,s->decode[4+i*2],s->decode[5+i*2]);
-    if(exr_pdf_colorspace_rgb_intent(space,comp,v->rgb,intent,e)!=EXR_OK) return 0;
+    if(exr_pdf_colorspace_rgb_intent(space,comp,rgb,intent,e)!=EXR_OK) return 0;
   }
+  out[0]=rgb[0];out[1]=rgb[1];out[2]=rgb[2];
   return !s->truncated;
+}
+static int mesh_read_point(mesh_stream *s,mesh_vertex *v) {
+  v->x=mesh_map(mesh_bits(s,s->coordinate),s->coordinate,s->decode[0],s->decode[1]);
+  v->y=mesh_map(mesh_bits(s,s->coordinate),s->coordinate,s->decode[2],s->decode[3]);
+  return !s->truncated;
+}
+static int mesh_read_vertex(mesh_stream *s,mesh_vertex *v,exr_pdf_function *function,
+                       exr_pdf_colorspace *space,unsigned intent,exr_error *e) {
+  if(!mesh_read_point(s,v)) return 0;
+  return mesh_read_color(s,v->rgb,function,space,intent,e);
 }
 static void mesh_triangle(exr_bitmap *bitmap,double left,double top,double scale,
                           const mesh_vertex *a,const mesh_vertex *b,const mesh_vertex *c) {
@@ -94,6 +102,174 @@ static void mesh_matrix(const double ctm[6],const double local[6],double out[6])
   out[4]=ctm[0]*local[4]+ctm[2]*local[5]+ctm[4];
   out[5]=ctm[1]*local[4]+ctm[3]*local[5]+ctm[5];
 }
+/* Types 6 and 7 (PDF 32000-1 8.7.4.5.7-8). A Coons patch carries 12 boundary
+   control points; a tensor-product patch adds four interior points. Patches may
+   share one edge with the previous patch (flag 1/2/3); corner colours are
+   interpolated bilinearly. Each patch starts on a byte boundary. */
+#define MESH_MAX_PATCHES 65536
+#define MESH_MAX_TRIANGLES 2000000
+#define MESH_PATCH_SUBDIV 64
+typedef struct { mesh_vertex p[16],c[4]; } mesh_patch;
+
+static int mesh_patch_read(mesh_stream *s,mesh_patch *cur,const mesh_patch *prev,int tensor,
+                           exr_pdf_function *function,exr_pdf_colorspace *space,unsigned intent,
+                           exr_error *e) {
+  static const unsigned edge_points[4][4]={{0,1,2,3},{3,4,5,6},{6,7,8,9},{9,10,11,0}};
+  static const unsigned edge_colors[4][2]={{0,1},{1,2},{2,3},{3,0}};
+  unsigned flag,k;size_t cstart;
+  if(s->bit>=s->size*8) return 0;
+  flag=(unsigned)(mesh_bits(s,s->flag)&3u);
+  if(s->truncated) return -1;
+  memset(cur,0,sizeof(*cur));
+  if(flag==0) {
+    for(k=0;k<12;k++) if(!mesh_read_point(s,&cur->p[k])) return -1;
+  } else {
+    if(!prev) return -1;
+    for(k=0;k<4;k++) cur->p[k]=prev->p[edge_points[flag][k]];
+    cur->c[0]=prev->c[edge_colors[flag][0]];
+    cur->c[1]=prev->c[edge_colors[flag][1]];
+    for(k=4;k<12;k++) if(!mesh_read_point(s,&cur->p[k])) return -1;
+  }
+  if(tensor) for(k=12;k<16;k++) if(!mesh_read_point(s,&cur->p[k])) return -1;
+  cstart=flag==0 ? 0 : 2;
+  for(k=(unsigned)cstart;k<4;k++) {
+    double rgb[3];
+    if(!mesh_read_color(s,rgb,function,space,intent,e)) return -1;
+    cur->c[k].rgb[0]=rgb[0];cur->c[k].rgb[1]=rgb[1];cur->c[k].rgb[2]=rgb[2];
+  }
+  return 1;
+}
+static double mesh_cubic(double a,double b,double c,double d,double t) {
+  double m=1-t;
+  return m*m*m*a+3*t*m*m*b+3*t*t*m*c+t*t*t*d;
+}
+static void mesh_edge(const mesh_patch *p,unsigned a,unsigned b,unsigned c,unsigned d,double t,
+                      double *x,double *y) {
+  *x=mesh_cubic(p->p[a].x,p->p[b].x,p->p[c].x,p->p[d].x,t);
+  *y=mesh_cubic(p->p[a].y,p->p[b].y,p->p[c].y,p->p[d].y,t);
+}
+static void mesh_patch_point(const mesh_patch *p,int tensor,double u,double v,double *x,double *y) {
+  double c1x,c1y,c2x,c2y,d1x,d1y,d2x,d2y,sbx,sby;
+  if(tensor) {
+    mesh_vertex g[4][4];double bu[4],bv[4],px=0,py=0,mu=1-u,mv=1-v;int i,j;
+    g[0][0]=p->p[0];g[0][1]=p->p[1];g[0][2]=p->p[2];g[0][3]=p->p[3];
+    g[3][0]=p->p[9];g[3][1]=p->p[8];g[3][2]=p->p[7];g[3][3]=p->p[6];
+    g[1][0]=p->p[11];g[2][0]=p->p[10];
+    g[1][3]=p->p[4];g[2][3]=p->p[5];
+    g[1][1]=p->p[12];g[1][2]=p->p[13];g[2][2]=p->p[14];g[2][1]=p->p[15];
+    bu[0]=mu*mu*mu;bu[1]=3*u*mu*mu;bu[2]=3*u*u*mu;bu[3]=u*u*u;
+    bv[0]=mv*mv*mv;bv[1]=3*v*mv*mv;bv[2]=3*v*v*mv;bv[3]=v*v*v;
+    for(i=0;i<4;i++) for(j=0;j<4;j++) {
+      double w=bu[i]*bv[j];
+      px+=w*g[i][j].x;py+=w*g[i][j].y;
+    }
+    *x=px;*y=py;return;
+  }
+  /* Coons: S = (1-v)*bottom(u) + v*top(u) + (1-u)*left(v) + u*right(v) - bilinear */
+  mesh_edge(p,0,11,10,9,u,&c1x,&c1y);
+  mesh_edge(p,3,4,5,6,u,&c2x,&c2y);
+  mesh_edge(p,0,1,2,3,v,&d1x,&d1y);
+  mesh_edge(p,9,8,7,6,v,&d2x,&d2y);
+  sbx=(1-u)*(1-v)*p->p[0].x+(1-u)*v*p->p[3].x+u*v*p->p[6].x+u*(1-v)*p->p[9].x;
+  sby=(1-u)*(1-v)*p->p[0].y+(1-u)*v*p->p[3].y+u*v*p->p[6].y+u*(1-v)*p->p[9].y;
+  *x=(1-v)*c1x+v*c2x+(1-u)*d1x+u*d2x-sbx;
+  *y=(1-v)*c1y+v*c2y+(1-u)*d1y+u*d2y-sby;
+}
+static void mesh_patch_color(const mesh_patch *p,double u,double v,double rgb[3]) {
+  double w0=(1-u)*(1-v),w1=(1-u)*v,w2=u*v,w3=u*(1-v);unsigned k;
+  for(k=0;k<3;k++) rgb[k]=w0*p->c[0].rgb[k]+w1*p->c[1].rgb[k]+w2*p->c[2].rgb[k]+w3*p->c[3].rgb[k];
+}
+static void mesh_patch_paint(exr_bitmap *bitmap,double left,double top,double scale,
+                             const mesh_patch *p,int tensor,mesh_vertex *lattice,size_t *triangles) {
+  double minx=p->p[0].x,maxx=p->p[0].x,miny=p->p[0].y,maxy=p->p[0].y,span;
+  unsigned n,iu,iv,k,points=tensor ? 16u : 12u;
+  for(k=1;k<points;k++) {
+    if(p->p[k].x<minx) minx=p->p[k].x;
+    if(p->p[k].x>maxx) maxx=p->p[k].x;
+    if(p->p[k].y<miny) miny=p->p[k].y;
+    if(p->p[k].y>maxy) maxy=p->p[k].y;
+  }
+  span=fmax(maxx-minx,maxy-miny)*scale;
+  n=(unsigned)ceil(span/6.0);
+  if(n<4) n=4;
+  if(n>MESH_PATCH_SUBDIV) n=MESH_PATCH_SUBDIV;
+  for(iv=0;iv<=n;iv++) for(iu=0;iu<=n;iu++) {
+    mesh_vertex *v=&lattice[iv*(n+1)+iu];
+    double u=(double)iu/n,vv=(double)iv/n,rgb[3];
+    mesh_patch_point(p,tensor,u,vv,&v->x,&v->y);
+    mesh_patch_color(p,u,vv,rgb);
+    v->rgb[0]=rgb[0];v->rgb[1]=rgb[1];v->rgb[2]=rgb[2];
+  }
+  for(iv=0;iv<n;iv++) for(iu=0;iu<n;iu++) {
+    const mesh_vertex *a=&lattice[iv*(n+1)+iu],*b=a+1,*c=&lattice[(iv+1)*(n+1)+iu],*d=c+1;
+    if(*triangles>=MESH_MAX_TRIANGLES) return;
+    mesh_triangle(bitmap,left,top,scale,a,b,c);(*triangles)++;
+    mesh_triangle(bitmap,left,top,scale,b,d,c);(*triangles)++;
+  }
+}
+static exr_status mesh_shading_patches(const double ctm[6],int type,mesh_stream *s,
+                                       exr_pdf_function *function,exr_pdf_colorspace *space,
+                                       unsigned intent,exr_pdf_shading_fn emit,void *context,
+                                       exr_error *error) {
+  mesh_patch cur,prev;int tensor=type==7,have_prev=0;
+  size_t patches=0,triangles=0,k;double minx=0,miny=0,maxx=0,maxy=0;
+  int first=1;exr_bitmap bitmap={0};mesh_vertex *lattice=NULL;
+  double left,top,scale,local[6],matrix[6];exr_status status=EXR_OK;
+  for(;;) {
+    int read=mesh_patch_read(s,&cur,have_prev?&prev:NULL,tensor,function,space,intent,error);
+    unsigned count=tensor ? 16u : 12u;
+    if(read==0) break;
+    if(read<0) {
+      if(error->code!=EXR_OK) return error->code;
+      return exr_fail(error,EXR_FORMAT,"Truncated PDF mesh shading stream at patch %zu (bit %zu of %zu)",patches,s->bit,s->size*8);
+    }
+    for(k=0;k<count;k++) {
+      if(first) { minx=maxx=cur.p[k].x;miny=maxy=cur.p[k].y;first=0; }
+      else {
+        if(cur.p[k].x<minx) minx=cur.p[k].x;
+        if(cur.p[k].x>maxx) maxx=cur.p[k].x;
+        if(cur.p[k].y<miny) miny=cur.p[k].y;
+        if(cur.p[k].y>maxy) maxy=cur.p[k].y;
+      }
+    }
+    prev=cur;have_prev=1;
+    if(++patches>MESH_MAX_PATCHES) return exr_fail(error,EXR_LIMIT,"PDF mesh patch limit exceeded");
+  }
+  if(!patches) return exr_fail(error,EXR_FORMAT,"Empty PDF mesh shading stream");
+  if(!(maxx>minx) || !(maxy>miny)) return exr_fail(error,EXR_FORMAT,"Degenerate PDF mesh shading");
+  scale=1.0;
+  { double span=maxx-minx>maxy-miny ? maxx-minx : maxy-miny; if(span>0) scale=MESH_MAX_SIDE/span; }
+  if(scale<1e-3) scale=1e-3;
+  {
+    unsigned side_x=(unsigned)fmax(1.0,ceil((maxx-minx)*scale));
+    unsigned side_y=(unsigned)fmax(1.0,ceil((maxy-miny)*scale));
+    if(side_x>MESH_MAX_SIDE) side_x=MESH_MAX_SIDE;
+    if(side_y>MESH_MAX_SIDE) side_y=MESH_MAX_SIDE;
+    bitmap.width=side_x;bitmap.height=side_y;bitmap.channels=4;bitmap.stride=side_x*4;
+    bitmap.pixels=calloc((size_t)bitmap.stride*side_y,1);
+    if(!bitmap.pixels) return exr_fail(error,EXR_MEMORY,"PDF mesh shading bitmap allocation failed");
+  }
+  lattice=malloc(((size_t)MESH_PATCH_SUBDIV+1)*((size_t)MESH_PATCH_SUBDIV+1)*sizeof(*lattice));
+  if(!lattice) { free(bitmap.pixels); return exr_fail(error,EXR_MEMORY,"PDF mesh shading allocation failed"); }
+  left=minx;top=miny;
+  local[0]=maxx-minx;local[1]=0;local[2]=0;local[3]=maxy-miny;local[4]=left;local[5]=top;
+  s->bit=0;s->truncated=0;have_prev=0;
+  for(;;) {
+    int read=mesh_patch_read(s,&cur,have_prev?&prev:NULL,tensor,function,space,intent,error);
+    if(read<=0) {
+      if(read<0) status=error->code!=EXR_OK ? error->code : exr_fail(error,EXR_FORMAT,"Truncated PDF mesh shading stream");
+      break;
+    }
+    mesh_patch_paint(&bitmap,left,top,scale,&cur,tensor,lattice,&triangles);
+    prev=cur;have_prev=1;
+  }
+  if(status==EXR_OK) {
+    mesh_matrix(ctm,local,matrix);
+    status=emit(context,&bitmap,matrix,NULL,error);
+  }
+  free(lattice);free(bitmap.pixels);
+  return status;
+}
 exr_status exr_pdf_shading_mesh(exr_pdf_file *file,uint32_t value,int type,
                                 const double ctm[6],unsigned intent,
                                 exr_pdf_shading_fn emit,void *context,
@@ -101,20 +277,20 @@ exr_status exr_pdf_shading_mesh(exr_pdf_file *file,uint32_t value,int type,
   uint32_t id,stream_id,space_id,function_id=EXR_PDF_NONE;
   const exr_pdf_value *array;uint32_t at;
   const unsigned char *data=NULL;size_t size=0;
-  double decode[10]={0,1,0,1,0,1,0,1,0,1};
+  double decode[12]={0,1,0,1,0,1,0,1,0,1,0,1};
   double left,top,scale;unsigned side_x,side_y,vertices_per_row=0;
   exr_pdf_colorspace *space=NULL;exr_pdf_function *function=NULL;
   mesh_vertex *points=NULL;size_t count=0;
   mesh_stream stream;exr_bitmap bitmap={0};exr_status status=EXR_OK;double local[6],matrix[6];
   (void)control;
-  if(type!=4 && type!=5) return exr_fail(error,EXR_UNSUPPORTED,"Only mesh shading types 4 and 5 are implemented");
+  if(type<4 || type>7) return exr_fail(error,EXR_UNSUPPORTED,"Only PDF mesh shading types 4 to 7 are implemented");
   memset(&stream,0,sizeof(stream));
   if(!mesh_integer(file,value,"BitsPerCoordinate",0,&stream.coordinate) || !stream.coordinate)
     return exr_fail(error,EXR_FORMAT,"Invalid PDF mesh shading bits");
   if(!mesh_integer(file,value,"BitsPerComponent",8,&stream.component))
     return exr_fail(error,EXR_FORMAT,"Invalid PDF mesh shading bits");
   stream.flag=0;
-  if(type==4) {
+  if(type==4 || type==6 || type==7) {
     if(!mesh_integer(file,value,"BitsPerFlag",8,&stream.flag) || !stream.flag)
       return exr_fail(error,EXR_FORMAT,"Invalid PDF mesh shading bits");
   } else if(!mesh_integer(file,value,"VerticesPerRow",0,&vertices_per_row) || !vertices_per_row)
@@ -136,8 +312,8 @@ exr_status exr_pdf_shading_mesh(exr_pdf_file *file,uint32_t value,int type,
   if(exr_pdf_resolve(file,exr_pdf_get(file,value,"Decode"),&id,error)!=EXR_OK) { status=error->code; goto done; }
   array=exr_pdf_value_at(file,id);
   if(!array || array->kind!=EXR_PDF_ARRAY) { status=exr_fail(error,EXR_FORMAT,"Invalid PDF mesh shading decode array"); goto done; }
-  { unsigned wanted=function ? 4u : 4u+stream.components*2u;unsigned k;at=array->first;
-    if(wanted>5) wanted=5;
+  { unsigned wanted=function ? 6u : 4u+stream.components*2u;unsigned k;at=array->first;
+    if(wanted>12) wanted=12;
     for(k=0;k<wanted;k++) {
       uint32_t item;
       if(at==EXR_PDF_NONE || exr_pdf_resolve(file,at,&item,error)!=EXR_OK || !mesh_number(file,item,&decode[k])) {
@@ -150,6 +326,10 @@ exr_status exr_pdf_shading_mesh(exr_pdf_file *file,uint32_t value,int type,
   status=exr_pdf_stream_data(file,value,&data,&size,error);
   if(status!=EXR_OK) goto done;
   stream.data=data;stream.size=size;stream.decode=decode;
+  if(type>=6) {
+    status=mesh_shading_patches(ctm,type,&stream,function,space,intent,emit,context,error);
+    goto done;
+  }
   /* First pass: bounding box (and vertex count for the lattice). */
   {
     double minx=0,miny=0,maxx=0,maxy=0;int first_point=1;

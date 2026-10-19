@@ -279,16 +279,16 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 
 单人或单模型持续工作量估计：挖空组、两种软遮罩、区域裁小各约数天，互相耦合时需合并评估；将 PDF/EPUB 常用路径推进到较完整的可用水平通常仍需数周到数月。完整多平台应用、广泛现实文件兼容与长期稳定性按月计。每完成一个包，用实际失败样本和 CI/采样耗时重新估算，不把生成 token 速度直接换算成完工速度。
 
-## 工作包现状与已知坑（2026-10-19 WP5 收尾检查点）
+## 工作包现状与已知坑（2026-10-19 WP4 着色检查点）
 
-本检查点在上一次 `db70495` 之后完成 WP5 收尾，已在 `2a897d1` 提交（本文档随后的文档提交），回归 **128/128**。
+在 WP5 收尾提交 `2a897d1` 之后，本检查点完成网格类型 6/7、DeviceCMYK 透明组接受与径向 Extend 外推。改动提交见下一节；本地回归 **129/129**（新增 `native-pdf-shading-mesh7`）。
 
 ### 已完成
 
 | 包 | 内容 |
 | --- | --- |
 | WP1–WP3 | 框架、排版、组区域裁剪 |
-| WP4 | 轴向/径向渐变、渲染意图、灰度组、色调映射；**网格渐变类型 4/5**（`src/pdf_shading_mesh.c`） |
+| WP4 | 轴向/径向渐变（含 Extend 外推）、渲染意图、灰度组、色调映射；**网格渐变类型 4/5/6/7**（`src/pdf_shading_mesh.c`）；**DeviceCMYK 透明组按 device RGB 合成**（见坑 3） |
 | WP4a | Standard 加密；**CCITT G3/G4**（含 `/Rows` 缺省时取 `/Height`） |
 | WP5 | 边框线型 **dashed/dotted/double**（块级与合并表格边）；**逐边边框**（四边独立 width/style/color，`border`/`border-top` 等简写与 1–4 值长写）；分页表格**重复 `<thead>`** |
 
@@ -296,7 +296,7 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 
 | 包 | 剩余项 |
 | --- | --- |
-| WP4 | 网格类型 **6/7**；CMYK/ICC 透明组（需 CMYK 混合缓冲） |
+| WP4 | **原生 CMYK 组混合缓冲**（当前接受 DeviceCMYK 组但按 RGB 合成）；OutputIntent、Matte |
 | WP4a | 证书加密（PubSec）、EFOpen、JBIG2、JPX |
 | WP5 | 仅剩 `border-spacing`（矩阵已标不支持，`separate` 表格按 0 间距排列） |
 | WP6–WP16 | 未开始 |
@@ -308,43 +308,56 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
    下一步必须先查 PDF 参考 4.6.3 原文的图 4.16/4.17，再找一个**真实含续接**的样本做对照，
    不要再用自造夹具自我验证。
 2. **类型 5 的顶点顺序未验证**：2×2 晶格夹具与 MuPDF 结果不一致（MuPDF 只画一角）。
-3. **CMYK 透明组**：当前明确返回 `EXR_UNSUPPORTED`；做真需把组缓冲改成 CMYK，属结构性改动。
+3. **CMYK 透明组按 RGB 合成**：`exr_pdf_group_rgb` 现在接受 `DeviceCMYK`/`CMYK`，但画布缓冲仍是
+   RGB——颜色在 PDF 层按内置朴素公式转成 RGB，透明度混合发生在 RGB。**不透明内容**与 CMYK
+   空间渲染器一致；**半透明重叠**与该空间渲染器可能不同。做真需把画布/组缓冲扩成四分量，
+   且要把源 CMYK 值带过绘制接口（目前 `exr_draw_style` 只有 RGB），属结构性改动。
 4. **图片尺寸与 `/Rows`**：CCITT 现在缺省取图像 `/Height`；其它过滤器没有同等回退。
-5. **真实网格样本被上游缺口挡住**：语料里只有两个含 `/ShadingType 7` 的文件——
-   `bug1703683_page2_reduced.pdf` 卡在对象流 `/Extends`，`issue13520.pdf` 卡在 CMYK 透明组。
-   也就是说**类型 7 即使实现了，也没法通过这两个样本验证**，必须先补 `/Extends` 与 CMYK 组。
-   语料中其余 6 个含着色的文件都是类型 2/3（已支持）。
-6. **逐边边框不写进 `exr_box`**：统一四边仍走紧凑的单边框字段（`border_width` +
+5. **网格 6/7 的验证方式**：`native-pdf-shading-mesh7` 用四个自造夹具（平面 Coons、平面张量、
+   凸起张量、CMYK）与 MuPDF 逐像素对照；平面类型 6 与类型 7 输出**逐字节相同**这个断言
+   能抓住控制点顺序错误。类型 4 的 `flag 1/2` 续接与类型 5 的顶点顺序**仍未像素验证**。
+6. **真实网格样本现状**：`issue13520.pdf` 现在能渲染（类型 7 + DeviceCMYK 组 + 径向 Extend），
+   与 MuPDF 平均差 **3.39**（37% 像素不同）——差异主要来自 DeviceCMYK 朴素换算与 RGB 组合成，
+   不是网格几何；`bug1703683_page2_reduced.pdf` 仍卡在 **ToUnicode** 严格校验（此前语料宽容
+   已按要求回退），与网格无关。语料其余 6 个含着色的文件都是类型 2/3（已支持）。
+7. **径向 Extend 的有限外推**：类型 3 在 `Extend true` 时把位图四周各扩一个梯度跨度
+   （与轴向的 `AXIAL_EXTEND_SPAN` 同思路）来填充裁剪区；**不是无限平面**，裁剪区超出
+   约一个跨度时仍会截断。轴向同理。
+8. **DeviceCMYK 的默认换算仍未定案**：`HANDOFF` 上面记录的 Argyll profile 三个打包方案
+   仍待用户选择；当前所有 CMYK 路径（页面、网格、组）共用朴素公式，`groupcmyk` 的像素
+   断言就是按这个模型写的，换 profile 时要同步改测试。
+9. **逐边边框不写进 `exr_box`**：统一四边仍走紧凑的单边框字段（`border_width` +
    DASHED/DOTTED/DOUBLE 标志），四边不一致时改为每边一个 `EXR_BOX_BORDER` 盒
    （块级在 `decorate()`，表格单元格在 `paint_cell_sides()`）。所以"有没有边框"
    不能只看 `box.border_width==0`，要用 `exr_border_any()` 或数 BORDER 盒。
-7. **单元格逐边边框在表格层绘制**：cell layout 里的根 cell 盒只负责背景与尺寸，
-   四边由 `paint_borders`/`split_borders` 画；`remove_cell_box` 只删 cell 盒，不动内部块。
-8. **重复表头每页重新排版**：`repeat_header()` 用 `exr_flow_unit` 重排 thead 单元格再
-   `exr_flow_copy` 上屏，高度从页面预算扣除（`measure` 的 `full_room` 与 `split_row`
-   的 `budget` 都减了它）。只在**页顶**重复；同页内的行组续排不加表头。
-   `header_cells` 只收完整落在 header 行内的单元格，`rowspan` 跨进 tbody 的表头格不重复。
-9. **`border-style: hidden` 不占布局空间**（非 collapse 时按 none 处理），
+10. **单元格逐边边框在表格层绘制**：cell layout 里的根 cell 盒只负责背景与尺寸，
+    四边由 `paint_borders`/`split_borders` 画；`remove_cell_box` 只删 cell 盒，不动内部块。
+11. **重复表头每页重新排版**：`repeat_header()` 用 `exr_flow_unit` 重排 thead 单元格再
+    `exr_flow_copy` 上屏，高度从页面预算扣除（`measure` 的 `full_room` 与 `split_row`
+    的 `budget` 都减了它）。只在**页顶**重复；同页内的行组续排不加表头。
+    `header_cells` 只收完整落在 header 行内的单元格，`rowspan` 跨进 tbody 的表头格不重复。
+12. **`border-style: hidden` 不占布局空间**（非 collapse 时按 none 处理），
    `solid/dashed/dotted/double` 都按宽度占位；collapse 冲突里 hidden 仍直接胜出。
 
-## 交接：下一步顺序（2026-10-19 审计后）
+## 交接：下一步顺序（2026-10-19 着色检查点后）
 
 按依赖关系排序，而不是按工作包编号：
 
-1. **CMYK 透明组**（WP4）：它是两个真实 `/ShadingType 7` 样本的最后一道墙；
-   做法是把组缓冲扩成 CMYK 或并行维护，合成回 RGB 时走同一色彩转换。
-2. **网格类型 6/7**（WP4）：此时 `bug1703683_page2_reduced.pdf` 与 `issue13520.pdf`
-   可以作为验收样本；先做 `flag 0` 的单个面片，再加 `flag 1/2` 的共享边。
+1. **原生 CMYK 组缓冲**（WP4 剩余）：画布目前是 RGB；要真正在 DeviceCMYK 空间混合，需要
+   四分量缓冲，并把源 CMYK 值带过绘制接口（`exr_draw_style` 只有 RGB）。在这之前，
+   CMYK 组按 RGB 合成，不透明内容正确、半透明重叠是近似。
+2. **DeviceCMYK profile 决定**：Argyll profile 的三种打包方案（内嵌/zlib/LUT）仍待选；
+   选定后页面、网格、组共用同一转换，并同步改 `groupcmyk` 与 `shading-mesh7-cmyk` 的断言。
 3. **WP4a**：证书加密（PubSec）、EFOpen、JBIG2、JPX。
-4. **WP5 已收尾**（2026-10-19）：逐边边框与重复表头已完成，只剩 `border-spacing`
-   仍标不支持；`native-border-edges` 与 `native-table-header` 已进 CTest。
+4. **WP5 已收尾**：逐边边框与重复表头已完成，只剩 `border-spacing` 仍标不支持。
 5. **WP6–WP16**：按原顺序。
 
 接手须知：
 
-- 本地 Release 回归 **128/128**（新增两项见上）；本检查点改动已提交为 `2a897d1`；
-- 网格渐变 `flag 1/2` 与类型 5 的顶点顺序**未经过像素对照**，见审计第 2 节；
-- 语料里只有 8 个文件含着色字典，其中 6 个是类型 2/3；
+- 本地 Release 回归 **129/129**（新增 `native-pdf-shading-mesh7`）；
+- 网格 6/7 已用自造夹具与 MuPDF 逐像素对照；类型 4 的 `flag 1/2` 与类型 5 的顶点顺序
+  **仍未像素验证**，见已知坑 1–2；
+- `issue13520.pdf` 已能渲染，平均差 3.39，差异来自 CMYK 换算与 RGB 组合成，不是网格几何；
 - 所有未实现路径都返回 `EXR_UNSUPPORTED`，没有静默错误输出。
 
 ### 发现：DeviceCMYK→RGB 的默认换算与参考实现不同（2026-10-19）
@@ -360,8 +373,8 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 参考实现的结果来自色彩管理（SWOP 一类 CMYK profile 经 Lab 转到 sRGB），
 而我们用的是朴素公式 `(1-c)(1-k)`。
 
-影响：所有 CMYK 内容（图像、填充、组）都会偏色；透明组的 `EXR_UNSUPPORTED`
-只是把它显式暴露出来。
+影响：所有 CMYK 内容（图像、填充、网格、组）都会偏色。组之前直接
+`EXR_UNSUPPORTED`，现在接受但按 RGB 合成，所以色差会进入渲染结果而不再被拒绝。
 
 要补齐需要**内置一个自由许可的 CMYK ICC profile**（SWOP/ISO Coated 等常见 profile
 有再分发限制，lcms2 也不自带），或者接受与参考实现的色差并在矩阵里标注。

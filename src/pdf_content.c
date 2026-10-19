@@ -166,8 +166,9 @@ exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *pre
   }
   if(resolved(file,exr_pdf_get(file,group,"CS"),&id,e)!=EXR_OK) return e->code;
   v=exr_pdf_value_at(file,id);
-  if(v && v->kind!=EXR_PDF_NULL && !name_is(file,id,"DeviceRGB") && !name_is(file,id,"DeviceGray") && !name_is(file,id,"G"))
-    return exr_fail(e,EXR_UNSUPPORTED,"PDF group blending space must be device RGB or grey");
+  if(v && v->kind!=EXR_PDF_NULL && !name_is(file,id,"DeviceRGB") && !name_is(file,id,"DeviceGray") &&
+     !name_is(file,id,"G") && !name_is(file,id,"DeviceCMYK") && !name_is(file,id,"CMYK"))
+    return exr_fail(e,EXR_UNSUPPORTED,"PDF group blending space must be a device space");
   if(!page && !isolated && v && v->kind!=EXR_PDF_NULL) return exr_fail(e,EXR_FORMAT,"Only isolated PDF groups may specify a blending space");
   *present=(page || isolated ? EXR_PDF_GROUP_ISOLATED : EXR_PDF_GROUP_NONISOLATED) | (knockout ? EXR_PDF_GROUP_KNOCKOUT : 0);
   if(v && v->kind!=EXR_PDF_NULL && (name_is(file,id,"DeviceGray") || name_is(file,id,"G"))) *present|=EXR_PDF_GROUP_GRAY;
@@ -431,7 +432,11 @@ static exr_status form(content_reader *r,uint32_t id,exr_error *error) {
     if(at==EXR_PDF_NONE || resolved(r->file,at,&number,error)!=EXR_OK || !numeric(r->file,number,&box[i])) goto invalid;
     at=exr_pdf_value_at(r->file,at)->next;
   }
-  if(at!=EXR_PDF_NONE || box[0]>box[2] || box[1]>box[3]) goto invalid;
+  if(at!=EXR_PDF_NONE) goto invalid;
+  /* Real files sometimes store the BBox with reversed corners. The form's clip
+     is the same rectangle, so normalize instead of rejecting the page. */
+  if(box[0]>box[2]) { double t=box[0]; box[0]=box[2]; box[2]=t; }
+  if(box[1]>box[3]) { double t=box[1]; box[1]=box[3]; box[3]=t; }
   identity(matrix);
   if(resolved(r->file,exr_pdf_get(r->file,id,"Matrix"),&value,error)!=EXR_OK) return error->code;
   if(value!=EXR_PDF_NONE && exr_pdf_value_at(r->file,value)->kind!=EXR_PDF_NULL) {
@@ -539,7 +544,8 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
     return exr_fail(error,EXR_FORMAT,"Unsupported PDF text XObject subtype");
   }
   if(!strcmp(name,"Tf")) {
-    if(!r->inside || count!=2 || !numeric(arena,values[1],&numbers[0])) goto invalid;
+    /* Font selection outside BT/ET is malformed; it only changes text state. */
+    if(count!=2 || !numeric(arena,values[1],&numbers[0])) goto invalid;
     if(resource(r,arena,values[0],"Font",&id,error)!=EXR_OK) return error->code;
     return select_font(r,id,numbers[0],error);
   }
@@ -576,7 +582,9 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
     return EXR_OK;
   }
   if(!strcmp(name,"Tc") || !strcmp(name,"Tw") || !strcmp(name,"Tz") || !strcmp(name,"TL") || !strcmp(name,"Ts") || !strcmp(name,"Tr")) {
-    if(!r->inside || count!=1 || !numeric(arena,values[0],&numbers[0])) goto invalid;
+    /* Text state outside BT/ET is malformed but common; it stays harmless as
+       long as no showing operator runs. */
+    if(count!=1 || !numeric(arena,values[0],&numbers[0])) goto invalid;
     if(!strcmp(name,"Tc")) r->state.char_space=numbers[0];
     else if(!strcmp(name,"Tw")) r->state.word_space=numbers[0];
     else if(!strcmp(name,"Tz")) r->state.scale=numbers[0]/100;
@@ -591,7 +599,7 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
   if(r->compatibility) return EXR_OK;
 invalid:
   if(error->code!=EXR_OK) return error->code;
-  return exr_fail(error,EXR_FORMAT,"Invalid or unsupported PDF content operator/operands");
+  return exr_fail(error,EXR_FORMAT,"Invalid or unsupported PDF content operator '%s'",name);
 limit:
   return exr_fail(error,EXR_LIMIT,"PDF content state or coordinate budget exceeded");
 }
