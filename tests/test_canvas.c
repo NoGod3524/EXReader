@@ -79,4 +79,24 @@ static void failures(void) {
   }
   CHECK(!exr_canvas_memory_size(NULL) && !exr_canvas_bitmap(NULL)); exr_canvas_free(NULL);
 }
-int main(void) { clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); printf("%u native canvas checks passed\n",checks); return 0; }
+/* Work package 3: a region-sized group must release its working buffers on every
+   commit and on every discard, so a long-lived canvas does not grow. */
+static void group_churn(void) {
+  exr_canvas_config config={0}; exr_canvas *c=NULL; exr_path_segment clip[5],paint[5];
+  exr_draw_style style=exr_draw_style_defaults(); size_t baseline=0,i;
+  config.width=256; config.height=64; config.background=0xffffffff;
+  OK(exr_canvas_create(&config,&c,&error));
+  rectangle(clip,32,16,32,32);
+  OK(exr_canvas_clip(c,clip,5,NULL,EXR_FILL_NONZERO,&error));
+  baseline=exr_canvas_memory_size(c);
+  for(i=0;i<1000;i++) {
+    rectangle(paint,32,16,32,32);
+    OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,0,&error));
+    style.fill=0x3366ccffu; style.flags=EXR_DRAW_FILL;
+    OK(exr_canvas_path(c,paint,5,NULL,&style,&error));
+    OK(exr_canvas_end_layer(c,i%2,&error));
+    OK(exr_canvas_memory_size(c)==baseline);
+  }
+  exr_canvas_free(c);
+}
+int main(void) { clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); printf("%u native canvas checks passed\n",checks); return 0; }

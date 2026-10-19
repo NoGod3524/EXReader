@@ -338,7 +338,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
      (flags&~(EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT|EXR_GROUP_WHOLE_BUFFER))) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid group parameters"),e);
   needs_state=!(flags&EXR_GROUP_ISOLATED) || (flags&EXR_GROUP_KNOCKOUT);
   region_width=c->bitmap.width;region_height=c->bitmap.height;
-  if(c->layer_depth==0 && needs_state && c->clip && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
+  if(c->layer_depth==0 && c->clip && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
     size_t x0=region_width,y0=region_height,x1=0,y1=0,xx,yy;
     for(yy=0;yy<region_height;yy++) {
       for(xx=0;xx<region_width;xx++) {
