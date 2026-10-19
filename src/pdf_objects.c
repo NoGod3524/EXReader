@@ -1033,6 +1033,8 @@ static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char
          !parameter(f,parms[i],"Rows",65535,0,&rows) ||
          !parameter(f,parms[i],"BlackIs1",1,0,&black) ||
          !parameter(f,parms[i],"EncodedByteAlign",1,0,&align)) { failed(f,EXR_FORMAT,"Invalid CCITT parameters"); goto done; }
+      /* A CCITT stream may omit /Rows; the image height is the row count then. */
+      if(!rows) parameter(f,id,"Height",65535,0,&rows);
       { unsigned char *samples=NULL; size_t count=0;
         if(exr_pdf_ccitt_decode(input,input_size,(long)group,(unsigned)columns,(unsigned)rows,(int)black,(int)align,&samples,&count,&f->error)!=EXR_OK) { free(samples); goto done; }
         free(output.data); output.data=samples; output.size=count; output.capacity=count; ok=1;
