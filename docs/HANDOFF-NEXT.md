@@ -1,10 +1,10 @@
 # 当前检查点与后续顺序
 
-2026-10-19，C11 SDK **0.19.0**，MIT，ABI1，schema6。分支 `codex/framework`。
+2026-10-19，C11 SDK **0.20.0**，MIT，ABI1，schema6。分支 `codex/framework`。
 
 ## 已验证代码
 
-`716235e6ab4c5bb944c2e240b6a173289b3ab725`，[CI39328976671](https://github.com/NoGod3524/EXReader/actions/runs/39328976671) **7/7通过**。三桌面各136/136；各平台安装静态组件4/4、纯核心1/1及其安装消费1/1、无音频/PDF书库2/2；ASan/UBSan133/133；移动库编译和20万次变异通过。准确结果见[组件验证数据](validation/2026-10-19-components.json)和[CI原始摘要](validation/2026-10-19-components-ci.json)。之后若仅更新记录，运行库仍以该SHA为准。
+`716235e6ab4c5bb944c2e240b6a173289b3ab725`，[CI39328976671](https://github.com/NoGod3524/EXReader/actions/runs/39328976671) **7/7通过**。三桌面各136/136；各平台安装静态组件4/4、纯核心1/1及其安装消费1/1、无音频/PDF书库2/2；ASan/UBSan133/133；移动库编译和20万次变异通过。准确结果见[组件验证数据](validation/2026-10-19-components.json)和[CI原始摘要](validation/2026-10-19-components-ci.json)。该CI验证的是0.19.0分层实现；0.20.0仅更新版本声明和规则，本次GCC重新编译、ABI1/1、安装组件4/4和0.20.0 EXACT C++消费验证通过，见[NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)。
 
 此前渲染/ICC审计代码`55089af`的7项CI通过记录继续保留，不能代替本次分层验证。
 
@@ -43,7 +43,7 @@ ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 
 ## 分层整理检查点
 
-公开头、内部头与CMake静态组件已拆分。核心、PDF读取、PDF编辑、音频、书库、索引可分别链接；书库在无音频/PDF时仍支持重排文档。版本保持0.19.0，ABI1；默认总DLL保留304个函数，703项公开记录布局值不变。详见[架构说明](ARCHITECTURE.md)。
+公开头、内部头与CMake静态组件已拆分。核心、PDF读取、PDF编辑、音频、书库、索引可分别链接；书库在无音频/PDF时仍支持重排文档。本次分层版本为0.20.0，ABI1；默认总DLL保留304个函数，703项公开记录布局值不变。详见[架构说明](ARCHITECTURE.md)。
 
 依赖检查覆盖实际编译符号和递归本地include；完整99对象/1021引用/898头依赖、纯核心59对象/586引用/505头依赖，逆向均为0。原有131项回归加5项组件回归，共136项；纯核心/安装消费和各平台结果独立记录于[NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)。本轮还修复了裁剪软遮罩预算与内存报告遗漏，渲染审计现为356检查。
 
@@ -55,4 +55,4 @@ ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 2. **WP4a**：按PubSec、EFOpen、JBIG2、JPX分别冻结输入矩阵；认证项至少10个凭据/损坏/权限/取消场景，图像项至少3正例/2反例。分别交付，保留现有Standard R2–R6回归。
 3. **WP6–WP16**：按 [开发路线](HANDOFF.md) 的量化出口推进；完整阅读SDK、OCR、redaction与手机运行尚未完成。
 
-保留版本0.19.0，不按内部步骤增加版本。公开结构体、符号与所有权规则遵循 [SDK兼容说明](SDK_COMPATIBILITY.md)。包装sink必须完整转发回调；ToUnicode维持严格校验；色彩断言按独立转换更新，原容差不扩大。
+后续按更新规模递增版本：超大更新升主版本，中等更新升次版本，小 bug 修复升补丁版本；规则见[版本分配](VERSIONING.md)。公开结构体、符号与所有权规则遵循 [SDK兼容说明](SDK_COMPATIBILITY.md)。包装sink必须完整转发回调；ToUnicode维持严格校验；色彩断言按独立转换更新，原容差不扩大。

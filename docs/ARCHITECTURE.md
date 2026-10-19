@@ -1,6 +1,6 @@
 # 模块与稳定核心
 
-2026-10-19，C11 SDK0.19.0，MIT，ABI1，schema6。
+2026-10-19，C11 SDK0.20.0，MIT，ABI1，schema6。
 
 ## 核心与可选组件
 
@@ -34,7 +34,7 @@ SQLite仅在书库或索引存在时获取/构建。FAAD2默认关闭；`EXR_ENA
 
 默认`exreader`共享总库直接复用组件对象，Windows显式导出原304个函数；各静态目标自动传递`EXR_STATIC`。应用选择共享总库或静态组件一种接入方式，避免同一对象跨两个运行库实例释放。
 
-版本在`cmake/versions.cmake`、对应头的版本宏和安装CMake目标的`EXR_COMPONENT_VERSION`中给出。核心和五个可选组件初始均为0.19.0，之后可独立发布；内部拆分不增加版本。现有核心签名、记录布局和所有权按ABI1保持兼容。显式关闭整个组件会省略其库和符号；关闭组件内部的编解码功能仍保留原有不可用查询接口。
+版本在`cmake/versions.cmake`、对应头的版本宏和安装CMake目标的`EXR_COMPONENT_VERSION`中给出。核心和五个可选组件初始均为0.20.0，之后可独立发布；版本按更新规模递增，本次分层作为中等更新升至0.20.0。现有核心签名、记录布局和所有权按ABI1保持兼容。显式关闭整个组件会省略其库和符号；关闭组件内部的编解码功能仍保留原有不可用查询接口。
 
 ```cmake
 find_package(EXReader CONFIG REQUIRED COMPONENTS core)
