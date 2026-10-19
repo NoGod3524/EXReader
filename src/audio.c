@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "audio_internal.h"
 struct exr_audio {
   char *title; exr_audio_track *tracks; exr_audio_chapter *chapters; exr_audio_sync *sync;
   uint64_t *starts,duration; size_t track_count,chapter_count,sync_count,bytes,references;

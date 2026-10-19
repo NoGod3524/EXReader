@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "exreader.h"
 #include "../src/pdf_raster_internal.h"
 static exr_error error; static unsigned checks;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)

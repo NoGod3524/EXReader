@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "pdf_raster_internal.h"
-#include "layout_internal.h"
+#include "font_internal.h"
 #include "pdf_crypto.h"
 typedef struct {
   unsigned char *data; size_t size,count; exr_pdf_file *file; exr_pdf_page_info *pages; exr_font *font;

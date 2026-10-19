@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_BMFF_INTERNAL_H
 #define EXR_BMFF_INTERNAL_H
-#include "internal.h"
+#include "audio_internal.h"
 #define EXR_BMFF_TYPE(a,b,c,d) ((uint32_t)(a)<<24|(uint32_t)(b)<<16|(uint32_t)(c)<<8|(uint32_t)(d))
 typedef struct { uint64_t data,end; uint32_t type; } exr_bmff_box;
 typedef struct { const exr_source *source; const exr_control *control; exr_error *error; uint64_t bytes,limit; unsigned boxes; } exr_bmff_reader;

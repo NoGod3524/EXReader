@@ -12,6 +12,30 @@
 
 框架面向通用宿主：宿主可以直接构造文档树和资源，将自己的解析结果交给引擎；文档树、资源、字形、行、图片和单元格坐标均可读取。宿主可以覆盖样式、关闭书内 CSS、替换图片解码器，或直接使用布局数据自行绘制。文档构造、解析和排版可独立于 SQLite 书库使用，UI、账号、同步和平台事件由宿主决定。
 
+## 组件选择
+
+核心接入使用 `#include <exr/core.h>` 和 `EXReader::exr_core`，包含文档模型、文字分析、排版分页、坐标/命中与绘制接口。需要单独模型或文字分析时，也可直接链接 `exr_doc`、`exr_text`。`exreader.h` 和默认总库继续兼容原入口。
+
+| 可选组件 | CMake 目标 | 构建开关 |
+| --- | --- | --- |
+| PDF/CBZ 固定格式读取 | `exr_pdf` | `EXR_ENABLE_PDF` |
+| PDF 标注与元数据编辑 | `exr_pdf_edit` | `EXR_ENABLE_PDF_EDIT` |
+| 有声书、PCM、AAC/M4B 与设备输出 | `exr_audio` | `EXR_ENABLE_AUDIO` |
+| SQLite 书库、进度和笔记存储 | `exr_library` | `EXR_ENABLE_LIBRARY` |
+| 独立全文索引 | `exr_textindex` | `EXR_BUILD_TEXT_INDEX` |
+
+各组件有独立版本字段，当前均为0.19.0。关闭PDF后书库仍支持重排文档；固定格式导入明确返回不可用。关闭音频不影响书库保存宿主提供的续播数据。关闭书库和全文索引后不下载或链接SQLite。AAC默认关闭；启用FAAD2只影响链接音频组件的组合产物，核心代码仍是MIT，包含FAAD2的最终二进制需要遵守GPL。
+
+纯核心静态构建：
+
+```sh
+cmake -S . -B build/core -DEXR_ENABLE_AUDIO=OFF -DEXR_ENABLE_LIBRARY=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF
+cmake --build build/core --parallel 4
+ctest --test-dir build/core --output-on-failure
+```
+
+`EXR_BUILD_SHARED_COMPAT=OFF`关闭旧总DLL；静态组件按调用需求由链接器选取。ICC转换另有`EXR_ENABLE_ICC`开关，关闭时采用已声明的朴素设备色转换。组件依赖与安装示例见 [架构说明](docs/ARCHITECTURE.md)。
+
 ## 当前实现
 
 | 模块 | 当前能力 |

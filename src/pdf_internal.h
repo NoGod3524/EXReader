@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_PDF_INTERNAL_H
 #define EXR_PDF_INTERNAL_H
-#include "internal.h"
+#include "formats_internal.h"
+#include "exr/pdf.h"
 #include "vector_internal.h"
 #define EXR_PDF_NONE UINT32_MAX
 #define EXR_PDF_MAX_VALUES 1048576u
@@ -179,4 +180,11 @@ exr_status exr_pdf_text_ops(exr_pdf_file *file,uint32_t resources,const void *da
 exr_status exr_pdf_draw_ops(exr_pdf_file *file,uint32_t resources,const void *data,size_t size,
                             const double initial[6],const exr_pdf_draw_callbacks *callbacks,void *context,
                             const exr_control *control,exr_error *error);
+/* CBZ memory takes ownership of bytes on every path. File keeps a lazy source. */
+exr_status exr_cbz_open_owned(unsigned char *data,size_t size,const char *title,
+  const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *error);
+exr_status exr_cbz_open_file(const char *path,const char *title,
+  const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *error);
+
+
 #endif

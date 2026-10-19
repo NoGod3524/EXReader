@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "exreader.h"
 #include "../src/pdf_internal.h"
 #include <float.h>
 #include <locale.h>

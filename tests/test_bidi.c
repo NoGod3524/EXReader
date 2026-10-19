@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "exreader.h"
 #include "../src/bidi_internal.h"
 #include <inttypes.h>
 

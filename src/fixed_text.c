@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "document_internal.h"
 struct exr_fixed_text { char *text; size_t size,count,bytes; exr_text_region *regions; };
 void exr_fixed_text_free(exr_fixed_text *text) { if(text) { free(text->text); free(text->regions); free(text); } }
 const char *exr_fixed_text_string(const exr_fixed_text *text,size_t *size) { if(size) *size=text ? text->size : 0; return text ? text->text : NULL; }

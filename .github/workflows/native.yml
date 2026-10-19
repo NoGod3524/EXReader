@@ -34,6 +34,25 @@ jobs:
           "$test" tests/fixtures --font "$font"
       - name: Install portable SDK with license notices
         run: cmake --install build/native --config Release --prefix stage
+      - name: Build and run installed static components
+        run: |
+          cmake -S tests/sdk_components -B build/sdk-components -DEXR_SDK="${{ github.workspace }}/stage" -DEXR_TEST_FONT="${{ github.workspace }}/tests/fixtures/fonts/primary.ttf" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/sdk-components --config Release --parallel 4
+          ctest --test-dir build/sdk-components -C Release --output-on-failure
+      - name: Build and test core without optional components
+        run: |
+          cmake -S . -B build/core-only -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AUDIO=OFF -DEXR_ENABLE_LIBRARY=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF
+          cmake --build build/core-only --config Release --parallel 4
+          ctest --test-dir build/core-only -C Release --output-on-failure
+          cmake --install build/core-only --config Release --prefix stage-core
+          cmake -S tests/sdk_components -B build/sdk-core -DEXR_SDK="${{ github.workspace }}/stage-core" -DEXR_TEST_FONT="${{ github.workspace }}/tests/fixtures/fonts/primary.ttf" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/sdk-core --config Release --parallel 4
+          ctest --test-dir build/sdk-core -C Release --output-on-failure
+      - name: Verify storage without playback or PDF
+        run: |
+          cmake -S . -B build/core-only -DEXR_ENABLE_LIBRARY=ON
+          cmake --build build/core-only --config Release --parallel 4
+          ctest --test-dir build/core-only -C Release --output-on-failure
       - name: Build host examples against the installed SDK
         run: |
           cmake -S stage/examples -B build/sdk-example -DEXR_SDK="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release

@@ -1,6 +1,17 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "formats_internal.h"
+#include "exr/library.h"
 #include <sqlite3.h>
+static exr_status open_fixed(exr_format format,const void *data,size_t size,
+  const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e) {
+#ifdef EXR_ENABLE_PDF
+  return exr_fixed_open_memory(format,data,size,options,out,e);
+#else
+  (void)format;(void)data;(void)size;(void)options;
+  if(out) *out=NULL;
+  return exr_fail(e,EXR_UNSUPPORTED,"Fixed-format import requires the PDF component");
+#endif
+}
 #define FIXED_SCHEMA "CREATE TABLE fixed_notes(id INTEGER PRIMARY KEY,book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE," \
   "page INTEGER NOT NULL CHECK(page>=0),start INTEGER NOT NULL CHECK(start>=0),end INTEGER NOT NULL CHECK(end>=start)," \
   "text TEXT NOT NULL,page_id TEXT NOT NULL,exact BLOB NOT NULL,prefix BLOB NOT NULL,suffix BLOB NOT NULL);" \
@@ -177,7 +188,7 @@ exr_status exr_library_import(exr_library *l, exr_format format, const void *dat
     return exr_fail(e, EXR_ARGUMENT, "Invalid import arguments");
   *id = 0;
   if(exr_format_is_fixed(format)) {
-    result=exr_fixed_open_memory(format,data,n,NULL,&fixed,e);
+    result=open_fixed(format,data,n,NULL,&fixed,e);
     if(result==EXR_OK) { exr_fixed_pages(fixed,&extent); result=exr_fixed_load_metadata(fixed,NULL,&metadata,&metadata_count,e); }
     if(result==EXR_OK) for(i=0;i<metadata_count;i++) {
       if(!strcmp(metadata[i].key,"http://purl.org/dc/terms/title") && !source_title[0]) source_title=metadata[i].value;
@@ -414,7 +425,7 @@ exr_status exr_library_fixed(exr_library *l,int64_t id,const exr_fixed_open_opti
   step=sqlite3_step(s);
   if(step!=SQLITE_ROW) { sqlite3_finalize(s); return step==SQLITE_DONE ? exr_fail(e,EXR_ARGUMENT,"Book missing") : database_error(l,e); }
   if(sqlite3_column_type(s,0)!=SQLITE_INTEGER || sqlite3_column_type(s,1)!=SQLITE_BLOB) status=exr_fail(e,EXR_DATABASE,"Invalid stored fixed document");
-  else status=exr_fixed_open_memory((exr_format)sqlite3_column_int(s,0),sqlite3_column_blob(s,1),(size_t)sqlite3_column_bytes(s,1),options,out,e);
+  else status=open_fixed((exr_format)sqlite3_column_int(s,0),sqlite3_column_blob(s,1),(size_t)sqlite3_column_bytes(s,1),options,out,e);
   sqlite3_finalize(s); return status;
 }
 exr_status exr_library_cover(exr_library *l, int64_t id, const void *data, size_t n, exr_error *e) {

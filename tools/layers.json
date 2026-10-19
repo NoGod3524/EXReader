@@ -16,8 +16,7 @@
       "formats"
     ],
     "layout": [
-      "formats",
-      "pdf"
+      "formats"
     ],
     "render": [
       "layout"
@@ -26,21 +25,24 @@
       "base"
     ],
     "library": [
-      "render",
-      "audio"
+      "formats",
+      "pdf"
     ],
     "textindex": [
-      "library"
+      "base"
     ],
     "graphics": [
       "base"
+    ],
+    "pdf_edit": [
+      "pdf"
     ]
   },
   "files": {
     "aac.c": "audio",
     "affine_image.c": "graphics",
     "anchor.c": "doc",
-    "annotation.c": "library",
+    "annotation.c": "doc",
     "audio.c": "audio",
     "audio_output.c": "audio",
     "audio_player.c": "audio",
@@ -49,7 +51,7 @@
     "bmff.c": "audio",
     "canvas.c": "graphics",
     "case.c": "base",
-    "cbz.c": "formats",
+    "cbz.c": "pdf",
     "cfi.c": "doc",
     "cfi_text.c": "doc",
     "common.c": "base",
@@ -57,7 +59,7 @@
     "core.c": "base",
     "curves.c": "graphics",
     "dash.c": "graphics",
-    "display_bidi.c": "text",
+    "display_bidi.c": "layout",
     "document.c": "doc",
     "docx.c": "formats",
     "epub_write.c": "formats",
@@ -116,7 +118,7 @@
     "pdf_softmask.c": "pdf",
     "pdf_softmask_parse.c": "pdf",
     "pdf_view.c": "pdf",
-    "pdf_write.c": "pdf",
+    "pdf_write.c": "pdf_edit",
     "positioned.c": "layout",
     "publication.c": "layout",
     "raster.c": "render",
@@ -126,7 +128,7 @@
     "stretch.c": "audio",
     "stroke.c": "graphics",
     "style.c": "layout",
-    "text.c": "base",
+    "text.c": "text",
     "text_index.c": "textindex",
     "transfer.c": "base",
     "variable.c": "text",
@@ -134,7 +136,68 @@
     "viewport.c": "base",
     "wave.c": "audio",
     "xmp.c": "formats",
-    "xmp_write.c": "pdf"
+    "xmp_write.c": "pdf_edit",
+    "export_text.c": "formats"
   },
-  "exceptions": []
+  "exceptions": [],
+  "headers": {
+    "src/audio_internal.h": "audio",
+    "src/base_internal.h": "base",
+    "src/bidi_data.h": "text",
+    "src/bidi_internal.h": "text",
+    "src/bmff_internal.h": "audio",
+    "src/canvas_internal.h": "graphics",
+    "src/case_internal.h": "base",
+    "src/case_unicode_data.h": "base",
+    "src/css_internal.h": "base",
+    "src/display_bidi_internal.h": "layout",
+    "src/document_internal.h": "doc",
+    "src/flow_internal.h": "layout",
+    "src/font_internal.h": "text",
+    "src/font_outline_internal.h": "text",
+    "src/formats_internal.h": "formats",
+    "src/graphics_internal.h": "graphics",
+    "src/hyphen_internal.h": "text",
+    "src/hyphen_unicode_data.h": "text",
+    "src/icc_internal.h": "graphics",
+    "src/indic_data.h": "text",
+    "src/layout_internal.h": "layout",
+    "src/memory_internal.h": "base",
+    "src/normalize_data.h": "base",
+    "src/normalize_internal.h": "base",
+    "src/opentype_internal.h": "text",
+    "src/pdf_calculator_internal.h": "pdf",
+    "src/pdf_ccitt_tables.h": "pdf",
+    "src/pdf_crypto.h": "pdf",
+    "src/pdf_face_internal.h": "pdf",
+    "src/pdf_font_data.h": "pdf",
+    "src/pdf_function_internal.h": "pdf",
+    "src/pdf_internal.h": "pdf",
+    "src/pdf_raster_internal.h": "pdf",
+    "src/pdf_saslprep_data.h": "pdf",
+    "src/pixels_internal.h": "graphics",
+    "src/ruby_internal.h": "layout",
+    "src/shaping_data.h": "text",
+    "src/style_internal.h": "layout",
+    "src/text_internal.h": "text",
+    "src/text_line.h": "text",
+    "src/text_line_internal.h": "text",
+    "src/unicode_data.h": "text",
+    "src/variable_internal.h": "text",
+    "src/vector_internal.h": "graphics",
+    "src/vertical_data.h": "text",
+    "include/exr/base.h": "base",
+    "include/exr/graphics.h": "graphics",
+    "include/exr/text.h": "text",
+    "include/exr/document.h": "doc",
+    "include/exr/formats.h": "formats",
+    "include/exr/layout.h": "layout",
+    "include/exr/render.h": "render",
+    "include/exr/core.h": "render",
+    "include/exr/pdf.h": "pdf",
+    "include/exr/pdf_edit.h": "pdf_edit",
+    "include/exr/audio.h": "audio",
+    "include/exr/library.h": "library",
+    "include/exr/textindex.h": "textindex"
+  }
 }

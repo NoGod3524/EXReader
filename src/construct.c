@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "document_internal.h"
 
 /* Construction is atomic: the document remains private until every input is copied and projected.
  */

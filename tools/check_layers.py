@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: MIT
 """Check compiled EXReader object references against the staged layer graph.
 
-Requires GNU/LLVM nm and an unstripped CMake build. This checks external symbol
-references in that configuration, not type/macro dependencies or dead code.
+Requires GNU/LLVM nm and an unstripped CMake build. Checks compiled symbols and
+the local include graph; semantic type ownership and dead code need review.
 """
 import argparse
 import json
@@ -14,9 +14,20 @@ import subprocess
 
 
 def references(build, nm):
-    folder = build / 'CMakeFiles/exreader.dir'
-    objects = sorted(p for p in folder.rglob('*')
-                     if p.name.endswith(('.c.o', '.c.obj')))
+    manifest = build / 'exr-modules.json'
+    if manifest.exists():
+        configured = json.loads(manifest.read_text(encoding='utf-8'))
+        objects = []
+        for layer in configured['layers']:
+            folder = build / f'CMakeFiles/exr_{layer}_objects.dir'
+            names = {name + suffix for name, owner in configured['files'].items()
+                     if owner == layer for suffix in ('.o', '.obj')}
+            objects.extend(p for p in folder.rglob('*') if p.name in names)
+        objects.sort()
+    else:
+        folder = build / 'CMakeFiles/exreader.dir'
+        objects = sorted(p for p in folder.rglob('*')
+                         if p.name.endswith(('.c.o', '.c.obj')))
     if not objects:
         raise ValueError('No EXReader C objects; build the exreader target first')
     # One invocation avoids spawning a process for each source file.
@@ -55,6 +66,32 @@ def permitted(layers, source, target):
     return False
 
 
+def header_references(root, sources, files, layers, headers):
+    edges, inverse = set(), set()
+    for source in sources:
+        origin = root / 'src' / source
+        pending, visited = [origin], set()
+        while pending:
+            path = pending.pop()
+            if path in visited:
+                continue
+            visited.add(path)
+            content = re.sub(r'/\*.*?\*/', '', path.read_text(encoding='utf-8'), flags=re.S)
+            for include in re.findall(r'^\s*#include\s+"([^"\n]+)"', content, re.M):
+                candidates = [path.parent / include, root / 'include' / include]
+                target = next((p.resolve() for p in candidates if p.is_file()), None)
+                if target is None:
+                    continue  # Third-party and build-generated headers are checked by compilation.
+                relative = target.relative_to(root).as_posix()
+                if relative not in headers:
+                    raise ValueError(f'Unclassified local header: {relative}')
+                edges.add((source, relative))
+                if not permitted(layers, files[source], headers[relative]):
+                    inverse.add((source, relative))
+                pending.append(target)
+    return edges, inverse
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('build', type=Path)
@@ -79,9 +116,24 @@ def main():
     if any(layer not in layers for layer in files.values()):
         parser.error('Unknown file layer')
     sources, edges = references(args.build, nm)
+    active = args.build / 'exr-modules.json'
+    if active.exists():
+        enabled = json.loads(active.read_text(encoding='utf-8'))['layers']
+        files = {name: layer for name, layer in files.items() if layer in enabled}
+    if active.exists():
+        configured = json.loads(active.read_text(encoding='utf-8'))['files']
+        if any(configured.get(name) != owner for name, owner in files.items()):
+            parser.error('Configured object ownership differs; reconfigure/build first')
     if sources != files.keys():
         parser.error(f'Source inventory mismatch: new={sorted(sources-files.keys())}, '
                      f'missing={sorted(files.keys()-sources)}')
+    root = Path(__file__).resolve().parent.parent
+    inventory = {p.name for p in (root / 'src').glob('*.c')}
+    if inventory != config['files'].keys():
+        parser.error('Source files on disk differ from the layer manifest')
+    header_edges, header_inverse = header_references(root, sources, files, layers, config['headers'])
+    for source, header in sorted(header_inverse):
+        print(f'INCLUDE: {source} -> {header}')
     inverse = {edge for edge in edges
                if not permitted(layers, files[edge[0]], files[edge[1]])}
     baseline = {tuple(edge) for edge in config['exceptions']}
@@ -93,7 +145,8 @@ def main():
         args.manifest.write_text(json.dumps(config, indent=2) + '\n', encoding='utf-8')
     print(f'{len(sources)} objects, {len(edges)} symbol references, '
           f'{len(inverse)} remaining inverse references, {len(new)} new')
-    return bool(new)
+    print(f"{len(header_edges)} source/header dependencies, {len(header_inverse)} inverse includes")
+    return bool(new or header_inverse)
 
 
 if __name__ == '__main__':

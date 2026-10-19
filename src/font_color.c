@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "layout_internal.h"
+#include "font_internal.h"
 #include FT_TRUETYPE_TABLES_H
 #include "vector_internal.h"
 exr_status exr_font_color_palettes(const exr_font *font,size_t index,size_t *palettes,size_t *entries,exr_error *error) {

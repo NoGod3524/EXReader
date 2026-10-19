@@ -1,17 +1,10 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "base_internal.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
 const char *exr_version(void) { return EXR_VERSION; }
 uint32_t exr_abi_version(void) { return EXR_ABI_VERSION; }
-int exr_pdf_crypto_available(void) {
-#ifdef EXR_ENABLE_PDF_CRYPTO
-  return 1;
-#else
-  return 0;
-#endif
-}
 FILE *exr_fopen(const char *path, const char *mode) {
 #ifdef _WIN32
   int n;

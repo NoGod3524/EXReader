@@ -1,59 +1,66 @@
-# 分层整理：函数引用检查点
+# 模块与稳定核心
 
-2026-10-19，0.19.0、ABI1、schema6。当前交付是**先清理内部函数依赖**；公开总头文件与CMake子库拆分尚未完成。
+2026-10-19，C11 SDK0.19.0，MIT，ABI1，schema6。
 
-## 检查方法
+## 核心与可选组件
 
-`tools/check_layers.py`读取已编译的CMake目标文件，使用GNU/LLVM `nm`取得定义与未定义的`exr_*`符号，按`tools/layers.json`检查引用方向。一次引用以“消费者文件、提供者文件、符号”三元组计数，并非源代码调用次数。当前配置覆盖98个C源文件、1019条跨文件符号引用，**逆向引用0，例外清单为空**。
+`exr_core`是CMake组合目标，选择以下七个静态库；它自身不引入运行时包装层。宿主可直接链接其中更小的库。
+
+| 目标 | 所有权与职责 | 允许依赖 |
+| --- | --- | --- |
+| `exr_base` | 错误/取消、源、内存、UTF/URI/CSS词法、坐标/视口、基本位图生命周期与输出 | 无项目内上层 |
+| `exr_graphics` | 路径/描边、像素合成、画布、图片解码、可选ICC | base |
+| `exr_text` | 字素/断行、双向、字体/字形、OpenType、断词、可变轴 | base、graphics |
+| `exr_doc` | 开放文档树/构造、固定页provider、文本位置/锚点/CFI、文本标注交换 | text及其下层 |
+| `exr_formats` | TXT/HTML/EPUB/FB2/DOCX/RTF/MOBI适配、资源、导航、转换与EPUB元数据 | doc及其下层 |
+| `exr_layout` | 样式、行/表格/浮动/分页、显示文字投影、书内字体、publication/session | formats及其下层 |
+| `exr_render` | 将排版结果适配到原生像素绘制 | layout及其下层 |
+
+`exr_core`目前还组合内置重排格式适配，因为现有排版读取资源/书内字体、publication提供EPUB按章加载。只需模型与文本分析时直接选`exr_doc`/`exr_text`，无需音频、SQLite或PDF。后续若将格式适配再裁细，需先把这些资源访问归还通用文档provider，不能引入反向调用。
+
+| 可选目标 | 内容与开关 | 依赖边界 |
+| --- | --- | --- |
+| `exr_pdf` | PDF/CBZ读取，`EXR_ENABLE_PDF` | formats；私有PDF密码库只挂在这里 |
+| `exr_pdf_edit` | PDF批注与元数据写入，`EXR_ENABLE_PDF_EDIT` | pdf；核心/PDF读取不依赖编辑器 |
+| `exr_audio` | 时间线、WAV/FLAC/MP3/AAC/M4B、PCM/WSOLA、设备输出，`EXR_ENABLE_AUDIO` | base；不依赖文档、字体或SQLite |
+| `exr_library` | SQLite书库、笔记、进度和宿主音频续播数据，`EXR_ENABLE_LIBRARY` | formats；启用PDF时再链接pdf；无音频播放依赖 |
+| `exr_textindex` | 独立SQLite全文索引，`EXR_BUILD_TEXT_INDEX` | base；不依赖书库或文档 |
+
+SQLite仅在书库或索引存在时获取/构建。FAAD2默认关闭；`EXR_ENABLE_AAC=ON`只链接音频目标。核心自有代码保持MIT，包含FAAD2的最终组合二进制仍须遵守GPL，静态归档的分名不会改变该要求。
+
+## 公开接口与版本
+
+`include/exr/`有13个独立头，`core.h`包含阅读核心，`audio.h`、`library.h`、`pdf.h`、`pdf_edit.h`、`textindex.h`各自提供可选接口。原`exreader.h`保留为总入口。
+
+默认`exreader`共享总库直接复用组件对象，Windows显式导出原304个函数；各静态目标自动传递`EXR_STATIC`。应用选择共享总库或静态组件一种接入方式，避免同一对象跨两个运行库实例释放。
+
+版本在`cmake/versions.cmake`、对应头的版本宏和安装CMake目标的`EXR_COMPONENT_VERSION`中给出。核心和五个可选组件初始均为0.19.0，之后可独立发布；内部拆分不增加版本。现有核心签名、记录布局和所有权按ABI1保持兼容。显式关闭整个组件会省略其库和符号；关闭组件内部的编解码功能仍保留原有不可用查询接口。
+
+```cmake
+find_package(EXReader CONFIG REQUIRED COMPONENTS core)
+target_link_libraries(reader PRIVATE EXReader::exr_core)
+# 按需添加：EXReader::exr_audio / exr_library / exr_pdf / exr_pdf_edit / exr_textindex
+```
+
+安装包包含自包含的组件静态归档和必要的第三方私有归档；消费方无需源码目录或第三方头。`tests/sdk_components`以C/C++分别编译头文件并调用安装后的静态组件。`examples`依据已安装组件选择可构建的示例。JNI目前需要音频和PDF组件；纯核心SDK关闭`EXR_BUILD_JNI`。
+
+## 内部头与依赖检查
+
+基础、文档、字体、样式、图形和格式分别拥有私有头，原`src/internal.h`总头已移除。字体对象不再包含布局结构，正文转换也不再藏在基础输出文件。
+
+`display_bidi.c`的调用者均为排版模块，函数处理生成字形、原文映射、文档字段和分页计划，因此归layout；Unicode双向分析本身仍在text。CBZ与固定格式打开分发归pdf组件。这两项是根据类型/职责修正归类，不作为运行时缺陷修复计数。
 
 ```sh
 cmake --build build/native --parallel 4
 python3 tools/check_layers.py build/native
 ```
 
-Linux CI在构建后执行检查。新增未分类目标文件、缺失文件、循环层图或逆向引用会失败。`--prune`只删除已解决的例外，不能新增。负向验证将字体对象临时错误归到base层，检查器按预期报告新增逆向引用并返回失败，仓库配置保持不变。
+检查器读取CMake记录的活动组件/源归属，只扫描实际对应的GNU/LLVM对象，忽略旧构建遗留的其他对象。新增未分类源、错误目标归属、循环、逆向符号调用或本地头包含都会失败。例外清单为空。源与本地头包含图会递归检查引号include的所有分支；第三方及构建生成的头由编译验证。该检查没有推导结构体成员的语义所有权，不能代替代码审查。
 
-检查结果限于当前编译配置的外部符号引用：不覆盖类型、宏、内联后消失的调用或其他配置下未启用的路径，不能代替内部头文件拆分。当前构建仍生成原有总库。
+当前完整配置为99个对象、1021条跨文件符号引用、898条源/头依赖，两个方向的逆向计数都为0。纯核心配置为59个对象、586条符号引用、505条源/头依赖，逆向计数同为0。
 
-## 按实际职责修正后的层图
+## 验证范围
 
-| 层 | 内容 | 可用的下层 |
-| --- | --- | --- |
-| base | 错误/取消、内存与源、UTF/URI/CSS扫描、通用位置/位图文件操作 | 无项目内上层 |
-| graphics | vector/curves/dash/stroke/blend、canvas、affine_image、images、icc | base |
-| text | 字体对象、字形/彩色字体、OpenType、双向、断词、可变轴 | base、graphics |
-| doc | 文档树/构造、固定页provider、文本位置/锚点/CFI | text及其下层 |
-| formats | 文本格式、EPUB资源/包、CBZ、XMP读取、导航/导出 | doc及其下层 |
-| pdf | PDF解析、绘制回调、认证与编辑；当前含固定格式打开分发 | formats及其下层 |
-| layout | 样式、行/表格/浮动/分页、书内字体装载、ruby、publication | formats、pdf及其下层 |
-| render | 依赖字体和布局结果的页面栅格适配 | layout及其下层 |
-| audio | 编解码/容器/时间线/播放/输出、WSOLA stretch | base |
-| library | 书库、标注存储 | render、audio及其下层 |
-| textindex | 书库文本索引 | library及其下层 |
+拆分前后304项函数声明，以及703项公开类型大小、对齐与成员偏移相同。13个头分别通过C/C++编译。原有131项完整回归加上核心、音频、书库、PDF编辑和文本索引的5项独立链接回归，合计136项；裁剪配置另跑相应组件检查。
 
-`canvas`等不读取EPUB布局，是字体位图、PDF和CBZ共用的图形原语，因此放在text/doc下方的graphics层。`ruby.c`处理行盒和页面布局；`stretch.c`处理音频变速。`navigation.c`读取出版物结构而不做页面布局；`xmp_write.c`操作PDF对象，归pdf。
-
-当前PDF固定页打开入口还分发CBZ并读取XMP，因此声明pdf→formats。以后拆窄PDF静态目标时，可将这段格式分发留在总库；不能用循环链接替代职责拆分。
-
-## 已完成迁移与验证
-
-| 步骤 | 结果 | 逆向引用数 |
-| --- | --- | ---: |
-| 原始建议图应用于实际构建 | 建立可复现基线 | 90 |
-| 通用释放 | `exr_free`从library移到memory；metadata释放脱离fixed | 85 |
-| 字体生命周期 | 创建/释放/引用/尺寸/度量/kerning从layout移到fonts | 68 |
-| 文档分发 | 格式打开移到formats；模型释放/查询移到document；core保留基础设施 | 65 |
-| 公共词法/路径和资源 | URI/CSS扫描下移，书内字体资源装载上移；模型/布局内存查询回到各自所有者 | 62 |
-| 职责归类复核 | 建立共享graphics，修正ruby/stretch/navigation/XMP归属与有向关系 | 1 |
-| 包视图接入 | CFI经document的`load_package`回调请求包视图；EPUB生产者设置/继承回调 | 0 |
-
-各次代码迁移后的GCC完整回归均为131/131。最后一批为41.17秒；版本、公开函数签名、公开结构体大小和所有权约定保持不变。重新归类并非代码修复，表中单独列出，不将其冒充删除了61条错误调用。
-
-准确代码提交`55089af`的CI7/7通过：三桌面各131/131，sanitizer128/128，Android与Apple移动库构建、20万次fuzz均通过。原始结果见 [验证记录](validation/2026-10-19-ci.json)。公开导出304个符号与基线相同。内部类型/公开头及CMake子库尚未拆分。
-
-## 后续步骤
-
-1. 拆内部头文件：先把base、graphics、font对象和document结构从公共内部头中分离，记录类型及include边；基础模块的独立编译不能依赖布局私有结构。
-2. 拆公开`exr/*.h`，保留`exreader.h`作为总入口；每个头独立以C/C++编译，并验证旧入口符号、大小、偏移和callback前缀。
-3. 最后拆CMake目标，显式声明依赖并正确保留总库导出；可选audio/library/textindex关闭时保留已声明的ABI策略。静态归档本身不验证所有引用方向，继续使用符号检查。
-4. 对默认/裁剪组合做独立构建、安装消费及六平台验证；当前函数层检查点尚未宣称完成这些拆库验收。
+完整构建、纯核心和无音频/PDF书库组合分别验收；跨平台CI还包括安装消费、sanitizer、fuzz与移动库交叉构建。逐次结果记录在[NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)。代码审计未关闭的PDF色彩/透明度、解析器/字体/媒体等逐路径问题见[审计记录](AUDIT-2026-10-19.md)。

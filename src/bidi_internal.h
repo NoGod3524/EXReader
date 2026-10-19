@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_BIDI_INTERNAL_H
 #define EXR_BIDI_INTERNAL_H
-#include "internal.h"
+#include "base_internal.h"
+#include "exr/text.h"
 typedef struct exr_bidi_override {
   size_t refs,start,end,depth;
   exr_direction direction;

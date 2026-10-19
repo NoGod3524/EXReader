@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "document_internal.h"
+#include "graphics_internal.h"
 struct exr_fixed_document {
   char *title; exr_fixed_page *pages; size_t count,bytes;
   exr_fixed_draw_ex_fn draw_ex;exr_fixed_draw_fn draw; exr_fixed_text_fn text; exr_fixed_metadata_fn metadata; exr_fixed_annotations_fn annotations; void *context; exr_context_release_fn release; unsigned busy;

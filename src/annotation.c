@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "document_internal.h"
 #define JSON_LIMIT ((size_t)1024*1024)
 #define CONTEXT "http://www.w3.org/ns/anno.jsonld"
 typedef struct { const char *data; size_t size,at; exr_status status; } json_reader;

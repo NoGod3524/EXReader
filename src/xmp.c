@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "formats_internal.h"
+#include "graphics_internal.h"
 #include <expat.h>
 #define RDF "http://www.w3.org/1999/02/22-rdf-syntax-ns#|"
 #define XML_LANG "http://www.w3.org/XML/1998/namespace|lang"

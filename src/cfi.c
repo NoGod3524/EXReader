@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "document_internal.h"
 #define CFI_LIMIT 65536u
 static exr_status range_paths(const char *cfi,char **a,char **b,exr_error *e);
 static int put(exr_buffer *b,const char *s) { return exr_append(b,s,strlen(s)); }

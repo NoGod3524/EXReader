@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "graphics_internal.h"
 typedef union {
   size_t size;
 #ifdef _MSC_VER

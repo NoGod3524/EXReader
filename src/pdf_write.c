@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "pdf_internal.h"
+#include "exr/pdf_edit.h"
 #include <inttypes.h>
 static const char *const property_keys[]={
   "http://purl.org/dc/terms/description","http://purl.org/dc/terms/creator",

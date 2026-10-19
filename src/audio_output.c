@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "audio_internal.h"
 #include <errno.h>
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "style_internal.h"
+#include "formats_internal.h"
 #include <ctype.h>
 
 enum {
@@ -1182,4 +1183,49 @@ void exr_styles_free(exr_style *styles, size_t count) {
   for (i = 0; i < count; i++)
     if (styles[i].family_owned) free((void *)styles[i].family);
   free(styles);
+}
+
+static int font_rule_ws(unsigned char c) { return c == ' ' || (c >= 9 && c <= 13); }
+int exr_parse_font_rule(const char *s, size_t n, const char *base,
+                         size_t chapter, exr_font_rule *out) {
+  size_t at = 0;
+  memset(out, 0, sizeof(*out));
+  out->chapter = chapter;
+  if (strlen(base) >= sizeof(out->base)) return 0;
+  strcpy(out->base, base);
+  while (at < n) {
+    size_t end = at + exr_css_delimiter(s + at, n - at, ';');
+    size_t colon = at + exr_css_delimiter(s + at, end - at, ':'), a = at, b = colon;
+    char value[2048];
+    at = end < n ? end + 1 : n;
+    while (a < b && font_rule_ws((unsigned char)s[a])) a++;
+    while (b > a && font_rule_ws((unsigned char)s[b - 1])) b--;
+    if (colon == end) continue;
+    {
+      size_t v = colon + 1, stop = end;
+      while (v < stop && font_rule_ws((unsigned char)s[v])) v++;
+      while (stop > v && font_rule_ws((unsigned char)s[stop - 1])) stop--;
+      if (stop == v || stop - v >= sizeof(value)) continue;
+      memcpy(value, s + v, stop - v); value[stop - v] = 0;
+    }
+    if (equal(s + a, b - a, "font-family")) {
+      size_t position = 0;
+      char extra[128];
+      if (exr_family_next(value, &position, out->family) != 1 ||
+          exr_family_next(value, &position, extra) != 0) return 0;
+    } else if (equal(s + a, b - a, "src")) strcpy(out->source, value);
+    else if (equal(s + a, b - a, "font-weight")) {
+      char *tail;
+      long weight = strtol(value, &tail, 10);
+      if (!strcmp(value, "bold")) out->flags |= 1;
+      else if (!strcmp(value, "normal")) out->flags &= ~1u;
+      else if (*tail || tail == value || weight < 100 || weight > 900) return 0;
+      else out->flags = (out->flags & ~1u) | (weight >= 600 ? 1u : 0u);
+    } else if (equal(s + a, b - a, "font-style")) {
+      if (!strcmp(value, "italic") || !strcmp(value, "oblique")) out->flags |= 2;
+      else if (!strcmp(value, "normal")) out->flags &= ~2u;
+      else return 0;
+    }
+  }
+  return out->family[0] && out->source[0];
 }

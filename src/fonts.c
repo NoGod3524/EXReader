@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "layout_internal.h"
+#include "font_internal.h"
 #include "css_internal.h"
 #include <ctype.h>
 
@@ -277,49 +277,6 @@ int exr_family_next(const char *s, size_t *at, char out[128]) {
   }
   *at = i;
   return 1;
-}
-int exr_parse_font_rule(const char *s, size_t n, const char *base,
-                         size_t chapter, exr_font_rule *out) {
-  size_t at = 0;
-  memset(out, 0, sizeof(*out));
-  out->chapter = chapter;
-  if (strlen(base) >= sizeof(out->base)) return 0;
-  strcpy(out->base, base);
-  while (at < n) {
-    size_t end = at + exr_css_delimiter(s + at, n - at, ';');
-    size_t colon = at + exr_css_delimiter(s + at, end - at, ':'), a = at, b = colon;
-    char value[2048];
-    at = end < n ? end + 1 : n;
-    while (a < b && ws((unsigned char)s[a])) a++;
-    while (b > a && ws((unsigned char)s[b - 1])) b--;
-    if (colon == end) continue;
-    {
-      size_t v = colon + 1, stop = end;
-      while (v < stop && ws((unsigned char)s[v])) v++;
-      while (stop > v && ws((unsigned char)s[stop - 1])) stop--;
-      if (stop == v || stop - v >= sizeof(value)) continue;
-      memcpy(value, s + v, stop - v); value[stop - v] = 0;
-    }
-    if (same(s + a, b - a, "font-family")) {
-      size_t position = 0;
-      char extra[128];
-      if (exr_family_next(value, &position, out->family) != 1 ||
-          exr_family_next(value, &position, extra) != 0) return 0;
-    } else if (same(s + a, b - a, "src")) strcpy(out->source, value);
-    else if (same(s + a, b - a, "font-weight")) {
-      char *tail;
-      long weight = strtol(value, &tail, 10);
-      if (!strcmp(value, "bold")) out->flags |= 1;
-      else if (!strcmp(value, "normal")) out->flags &= ~1u;
-      else if (*tail || tail == value || weight < 100 || weight > 900) return 0;
-      else out->flags = (out->flags & ~1u) | (weight >= 600 ? 1u : 0u);
-    } else if (same(s + a, b - a, "font-style")) {
-      if (!strcmp(value, "italic") || !strcmp(value, "oblique")) out->flags |= 2;
-      else if (!strcmp(value, "normal")) out->flags &= ~2u;
-      else return 0;
-    }
-  }
-  return out->family[0] && out->source[0];
 }
 size_t exr_font_order(const exr_font *f, const char *list, unsigned flags,
                        size_t chapter, size_t order[32]) {

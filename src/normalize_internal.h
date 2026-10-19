@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_NORMALIZE_INTERNAL_H
 #define EXR_NORMALIZE_INTERNAL_H
-#include "internal.h"
+#include "base_internal.h"
 /* Scalar with its contributing original scalar interval. Canonical reordering
    may make these intervals nonmonotonic; composition unions the intervals. */
 typedef struct { uint32_t cp; unsigned first,last; } exr_normal_scalar;

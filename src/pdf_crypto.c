@@ -331,3 +331,11 @@ exr_status exr_pdf_crypt_bytes(const exr_pdf_crypt *c,exr_crypt_method method,ui
   (void)c; (void)method; (void)object; (void)generation; (void)data; (void)size; (void)control; return exr_fail(e,EXR_UNSUPPORTED,"PDF crypto disabled");
 }
 #endif
+
+int exr_pdf_crypto_available(void) {
+#ifdef EXR_ENABLE_PDF_CRYPTO
+  return 1;
+#else
+  return 0;
+#endif
+}

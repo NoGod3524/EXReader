@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#include "../src/internal.h"
+#include "exreader.h"
+#include "../src/graphics_internal.h"
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -91,6 +92,32 @@ static void cropped_groups(void) {
     exr_bitmap_free(&images[0]);exr_bitmap_free(&images[1]);
   }
 }
+static void soft_mask_budget(void) {
+  unsigned limit;
+  for(limit=64;limit<=68;limit+=4) {
+    exr_canvas_config cfg={0};exr_canvas *c=NULL;exr_draw_sink_ex sink={0};
+    unsigned char mask[64];double matrix[6]={.25,0,0,.25,2,2};size_t before;
+    cfg.width=cfg.height=8;cfg.channels=4;cfg.mask_budget=limit;
+    OK(exr_canvas_create(&cfg,&c,&error));
+    OK(exr_canvas_clip(c,rect,5,matrix,EXR_FILL_NONZERO,&error));
+    OK(exr_canvas_begin_layer(c,1,EXR_BLEND_NORMAL,&error));
+    before=exr_canvas_memory_size(c);sink.struct_size=sizeof(sink);
+    OK(exr_canvas_get_sink_ex(c,&sink,&error));memset(mask,128,sizeof(mask));
+    if(limit==64) {
+      CHECK(sink.soft_mask(sink.base.context,mask,8,8,&error)==EXR_LIMIT);
+      CHECK(exr_canvas_memory_size(c)==before);
+    } else {
+      OK(sink.soft_mask(sink.base.context,mask,8,8,&error));
+      CHECK(exr_canvas_memory_size(c)==before+4);
+      OK(sink.soft_mask(sink.base.context,mask,8,8,&error));
+      CHECK(exr_canvas_memory_size(c)==before+4);
+      OK(sink.soft_mask(sink.base.context,NULL,0,0,&error));
+      CHECK(exr_canvas_memory_size(c)==before);
+      OK(exr_canvas_end_layer(c,0,&error));
+    }
+    exr_canvas_free(c);
+  }
+}
 static void prefixes(void) {
   const size_t offsets[]={offsetof(exr_draw_sink_ex,soft_mask),offsetof(exr_draw_sink_ex,extent),
     offsetof(exr_draw_sink_ex,shading),offsetof(exr_draw_sink_ex,path_cmyk)};
@@ -149,7 +176,7 @@ static void pdfs(const char *directory) {
 }
 int main(int argc,char **argv) {
   CHECK(argc==2);if(argc!=2) return 1;
-  cmyk_modes();cropped_groups();prefixes();pdfs(argv[1]);
+  cmyk_modes();cropped_groups();soft_mask_budget();prefixes();pdfs(argv[1]);
   { const double c[4]={0};CHECK(exr_canvas_path_cmyk(NULL,NULL,0,NULL,NULL,c,c,&error)==EXR_ARGUMENT); }
   printf("%u renderer audit checks; %u failures\n",checks,failures);return failures ? 1 : 0;
 }

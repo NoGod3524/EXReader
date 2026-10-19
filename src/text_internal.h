@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_TEXT_INTERNAL_H
 #define EXR_TEXT_INTERNAL_H
-#include "internal.h"
+#include "base_internal.h"
+#include "exr/text.h"
 #include "text_line_internal.h"
 typedef struct {
   int started, previous_gcb;

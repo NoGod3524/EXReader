@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "layout_internal.h"
+#include "font_internal.h"
 #include "vector_internal.h"
 #include FT_TRUETYPE_TABLES_H
 #include FT_OUTLINE_H
