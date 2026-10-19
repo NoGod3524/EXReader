@@ -383,7 +383,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   layer.bitmap=c->bitmap;layer.composite=c->composite;layer.clip=c->clip;layer.pending=c->group;layer.group_depth=c->group_depth;layer.depth=c->depth;
   layer.origin_x=region_x;layer.origin_y=region_y;layer.parent_offset_x=c->offset_x;layer.parent_offset_y=c->offset_y;
   layer.opacity=opacity;layer.blend=mode;layer.parent_blend=c->blend;c->layers[c->layer_depth++]=layer;c->layer_bytes+=bytes;
-  c->bitmap=next;c->composite=state;c->clip=c->group=NULL;c->group_depth=0;c->blend=EXR_BLEND_NORMAL;memset(c->groups,0,sizeof(c->groups));return EXR_OK;
+  c->bitmap=next;c->composite=state;c->clip=c->group=NULL;c->group_depth=0;c->blend=EXR_BLEND_NORMAL;memset(c->groups,0,sizeof(c->groups));
   c->offset_x=region_x;c->offset_y=region_y;
   if(region && layer.clip) {
     /* The inherited clip becomes a region-sized copy in buffer coordinates. */
@@ -396,6 +396,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
       unref(c,c->clip);c->clip=crop;
     }
   }
+  return EXR_OK;
 }
 exr_status exr_canvas_end_layer(exr_canvas *c,unsigned commit,exr_error *e) {
   exr_canvas_layer layer;exr_bitmap source;exr_composite_state *source_state;exr_status status;size_t i;
