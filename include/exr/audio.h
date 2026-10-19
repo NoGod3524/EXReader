@@ -2,7 +2,7 @@
 #ifndef EXR_AUDIO_H
 #define EXR_AUDIO_H
 #include "base.h"
-#define EXR_AUDIO_VERSION "0.20.0"
+#define EXR_AUDIO_VERSION "3.33.0"
 #ifdef __cplusplus
 extern "C" {
 #endif

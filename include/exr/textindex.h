@@ -2,7 +2,7 @@
 #ifndef EXR_TEXTINDEX_H
 #define EXR_TEXTINDEX_H
 #include "base.h"
-#define EXR_TEXTINDEX_VERSION "0.20.0"
+#define EXR_TEXTINDEX_VERSION "3.33.0"
 #ifdef __cplusplus
 extern "C" {
 #endif

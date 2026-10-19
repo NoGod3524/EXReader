@@ -14,9 +14,9 @@
 #else
 #define EXR_API __attribute__((visibility("default")))
 #endif
-#define EXR_VERSION "0.20.0"
+#define EXR_VERSION "3.33.0"
 #define EXR_ABI_VERSION 1u
-#define EXR_CORE_VERSION "0.20.0"
+#define EXR_CORE_VERSION "3.33.0"
 #ifdef __cplusplus
 extern "C" {
 #endif

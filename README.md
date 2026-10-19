@@ -1,12 +1,12 @@
 # EXReader — native C ebook engine
 
-主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.20.0，开发中**。MIT。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
+主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **3.33.0，开发中**。MIT。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
 
 当前能力与边界以 [支持矩阵](docs/SUPPORT_MATRIX.md) 为准；后续按 [兼容目标与验收顺序](docs/VERSIONING.md#后续兼容目标与验收顺序) 推进 PDF、图文排版和应用接入能力。
 
-版本按更新规模递增：超大更新升主版本，中等更新升次版本，小 bug 修复升补丁版本；升级前两段时，后续段归零。旧 0.13–0.100 的开发步骤已归并，见 [版本分配与历史映射](docs/VERSIONING.md)。
+版本按更新规模递增：超大更新升主版本，中等更新升次版本，小 bug 修复升补丁版本；升级前两段时，后续段归零。全部历史已按此规则重编，见 [完整更新日志](CHANGELOG.md)；编号口径见 [版本规则](docs/VERSIONING.md)。
 
-0.12.1 修复全库审计确认的七项缺陷，覆盖长附标塑形、重复章节标注、备注长度、XML 导出、跨行塑形、RTF fallback 和 HTML script/style。每项有独立回归测试与提交；[验证记录](docs/NATIVE_VALIDATION.md#0121-audit-fixes) 列出覆盖范围与资源上限。
+2.4.1（原编号0.12.1）修复全库审计确认的七项缺陷，覆盖长附标塑形、重复章节标注、备注长度、XML 导出、跨行塑形、RTF fallback 和 HTML script/style。每项有独立回归测试与提交；[验证记录](docs/NATIVE_VALIDATION.md#0121-audit-fixes) 列出覆盖范围与资源上限。
 
 文本解码、格式解析、文档模型、CSS 子集、字素边界、双向文字、OpenType 替换与定位、换行、分页、文字位置、命中测试、页面像素合成和书库都在本项目 C 代码中。底层使用 FreeType、Expat、miniz、SQLite 和 stb_image 五个 C 组件，分别处理字体、XML、ZIP、数据库和 PNG/JPEG 解码。MP3 使用可关闭的 CC0 minimp3 C 解码器，按需读取与精确续扫由本框架处理。PDF 密码认证使用可关闭的 Mbed TLS 密码学子集，不引入 TLS 或网络模块。
 
@@ -24,7 +24,7 @@
 | SQLite 书库、进度和笔记存储 | `exr_library` | `EXR_ENABLE_LIBRARY` |
 | 独立全文索引 | `exr_textindex` | `EXR_BUILD_TEXT_INDEX` |
 
-各组件有独立版本字段，当前均为0.20.0。关闭PDF后书库仍支持重排文档；固定格式导入明确返回不可用。关闭音频不影响书库保存宿主提供的续播数据。关闭书库和全文索引后不下载或链接SQLite。AAC默认关闭；启用FAAD2只影响链接音频组件的组合产物，核心代码仍是MIT，包含FAAD2的最终二进制需要遵守GPL。
+各组件有独立版本字段，当前均为3.33.0。关闭PDF后书库仍支持重排文档；固定格式导入明确返回不可用。关闭音频不影响书库保存宿主提供的续播数据。关闭书库和全文索引后不下载或链接SQLite。AAC默认关闭；启用FAAD2只影响链接音频组件的组合产物，核心代码仍是MIT，包含FAAD2的最终二进制需要遵守GPL。
 
 纯核心静态构建：
 
