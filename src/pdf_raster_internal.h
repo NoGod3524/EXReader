@@ -34,7 +34,7 @@ exr_status exr_pdf_image_decode(exr_pdf_file *file,uint32_t image,uint32_t resou
                                  const exr_control *control,exr_error *error);
 exr_status exr_pdf_image_load(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t stencil_color,
                                exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *error);
-exr_status exr_pdf_image_load_from(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t stencil_color,
+exr_status exr_pdf_image_load_from(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t stencil_color,unsigned intent,
                                exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *error);
 void exr_pdf_image_release(exr_vector_texture *texture);
 exr_status exr_pdf_page_viewport(const exr_pdf_page_info *page,double scale,exr_viewport *out,exr_error *error);

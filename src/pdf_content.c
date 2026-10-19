@@ -601,7 +601,7 @@ static exr_status walk_content(exr_pdf_file *file,uint32_t resources,const void 
   r->state.paint.fill.space=r->state.paint.stroke.space=EXR_PDF_DEVICE_GRAY; r->state.paint.fill.alpha=r->state.paint.stroke.alpha=1;
   r->state.paint.line=(exr_vector_stroke_style){1,10,EXR_VECTOR_BUTT,EXR_VECTOR_MITER};
   identity(r->state.ctm); if(initial) memcpy(r->state.ctm,initial,sizeof(r->state.ctm)); identity(r->matrix); identity(r->line);
-  r->state.paint.smask=EXR_PDF_NONE;
+  r->state.paint.smask=EXR_PDF_NONE; r->state.paint.intent=1; /* relative colorimetric is the PDF default */
   status=exr_pdf_content_ops_resources(r->file,r->resources,data,size,content_operation,r,&r->inline_work,control,&local);
   if(status==EXR_OK && (r->inside || r->depth || r->compatibility)) status=exr_fail(&local,EXR_FORMAT,"Unbalanced PDF text/graphics/compatibility state");
   if(status==EXR_OK && graphics && (r->path.count || r->path.pending_clip)) status=exr_fail(&local,EXR_FORMAT,"Unterminated PDF path object");
