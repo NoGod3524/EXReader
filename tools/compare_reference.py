@@ -26,8 +26,36 @@ class Bitmap(c.Structure):
                 ('pixels', c.c_void_p), ('channels', c.c_uint32)]
 
 
+class Control(c.Structure):
+    _fields_ = [('cancelled', c.c_void_p), ('progress', c.c_void_p), ('context', c.c_void_p)]
+
+
+class FontInput(c.Structure):
+    _fields_ = [('data', c.c_void_p), ('size', c.c_size_t), ('face_index', c.c_uint)]
+
+
+class OpenOptions(c.Structure):
+    _fields_ = [('struct_size', c.c_size_t), ('fallback_font', c.c_void_p), ('control', Control),
+                ('pdf_password', c.c_void_p), ('pdf_password_size', c.c_size_t),
+                ('pdf_security', c.c_void_p)]
+
+
 STATUS = {0: 'ok', 1: 'argument', 2: 'memory', 3: 'io', 4: 'encoding', 5: 'format',
           6: 'limit', 7: 'database', 8: 'font', 9: 'cancelled', 10: 'password', 11: 'unsupported'}
+
+
+def make_font(engine, path):
+    """A host font so non-embedded PDF fonts render, as MuPDF does with its own."""
+    raw = Path(path).read_bytes()
+    buffer = c.create_string_buffer(raw, len(raw))
+    source = FontInput(c.cast(buffer, c.c_void_p), len(raw), 0)
+    font = c.c_void_p()
+    error = Error()
+    engine.exr_font_create.argtypes = [c.POINTER(FontInput), c.c_size_t, c.POINTER(c.c_void_p), c.POINTER(Error)]
+    status = engine.exr_font_create(c.byref(source), 1, c.byref(font), c.byref(error))
+    if status:
+        raise RuntimeError('font: ' + error.message.decode('utf-8', 'replace'))
+    return font, buffer
 
 
 def load(library):
@@ -43,10 +71,17 @@ def load(library):
     return engine
 
 
-def ours(engine, path, scale):
+def ours(engine, path, scale, font):
     document = c.c_void_p()
     error = Error()
-    status = engine.exr_fixed_open(str(path).encode('utf-8'), None, c.byref(document), c.byref(error))
+    options = None
+    pointer = None
+    if font:
+        options = OpenOptions()
+        options.struct_size = c.sizeof(OpenOptions)
+        options.fallback_font = font
+        pointer = c.byref(options)
+    status = engine.exr_fixed_open(str(path).encode('utf-8'), pointer, c.byref(document), c.byref(error))
     if status:
         return None, STATUS.get(status, status), error.message.decode('utf-8', 'replace')
     bitmap = Bitmap()
@@ -69,14 +104,14 @@ def reference(path, scale):
     return pix.width, pix.height, pix.samples
 
 
-def compare(path, engine, scale):
+def compare(path, engine, scale, font=None):
     record = {'file': path.name}
     try:
         width, height, raw = reference(path, scale)
     except Exception as exc:                       # noqa: BLE001 - report every failure
         record.update({'result': 'reference-failed', 'detail': str(exc)[:160]})
         return record
-    got, status, detail = ours(engine, path, scale)
+    got, status, detail = ours(engine, path, scale, font)
     if got is None:
         record.update({'result': 'exreader-' + str(status), 'detail': detail[:160]})
         return record
@@ -113,12 +148,17 @@ def main():
     parser.add_argument('--scale', type=float, default=1.0)
     parser.add_argument('--limit', type=int, default=0)
     parser.add_argument('--json', type=Path)
+    parser.add_argument('--font', type=Path, default=None)
     args = parser.parse_args()
     engine = load(args.library)
+    font = None
+    keep = None
+    if args.font:
+        font, keep = make_font(engine, args.font)
     files = sorted(p for p in args.directory.rglob('*.pdf'))
     if args.limit:
         files = files[:args.limit]
-    records = [compare(path, engine, args.scale) for path in files]
+    records = [compare(path, engine, args.scale, font) for path in files]
     counts = {}
     for record in records:
         counts[record['result']] = counts.get(record['result'], 0) + 1
