@@ -8,3 +8,5 @@ test-results/
 playwright-report/
 *.log
 __pycache__/
+# Downloaded compatibility corpus (tools/fetch_corpus.py)
+tests/corpus/
