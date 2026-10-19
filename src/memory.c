@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "base_internal.h"
 #include "memory_internal.h"
 
 void exr_free(void *p) { free(p); }

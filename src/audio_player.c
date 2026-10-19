@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "audio_internal.h"
 struct exr_audio_player {
   exr_audio *audio; exr_audio_backend backend; const exr_audio_track *tracks; size_t count,track;
   uint64_t offset,generation; double rate; int playing,loaded,dirty,touched,busy;

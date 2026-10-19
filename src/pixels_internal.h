@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_PIXELS_INTERNAL_H
 #define EXR_PIXELS_INTERNAL_H
-#include "internal.h"
+#include "graphics_internal.h"
 /* Straight RGBA source-over; callers validate bounds and bitmap storage. */
 static inline void exr_pixel(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage) {
   unsigned alpha=(color&255)*coverage/255,r=color>>24,g=(color>>16)&255,b=(color>>8)&255;

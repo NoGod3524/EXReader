@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "audio_internal.h"
 
 /* Native FLAC bitstream decoder. The Ogg container and MD5 verification are
    separate from decoding; frame/header CRCs are always checked here. */

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "base_internal.h"
+#include "exr/textindex.h"
 #include <sqlite3.h>
 struct exr_text_index { sqlite3 *db; unsigned refs,query,busy; };
 struct exr_text_query {

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_PDF_CALCULATOR_INTERNAL_H
 #define EXR_PDF_CALCULATOR_INTERNAL_H
-#include "internal.h"
+#include "base_internal.h"
 typedef struct exr_pdf_calculator exr_pdf_calculator;
 /* Control context is borrowed for the enclosing synchronous render call. */
 exr_status exr_pdf_calculator_open(const unsigned char *source,size_t size,const exr_control *control,

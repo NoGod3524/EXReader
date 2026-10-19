@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* HUFF/CDIC field semantics: KindleUnpack reference, credited in THIRD_PARTY_NOTICES.md. */
-#include "internal.h"
+#include "formats_internal.h"
+#include "graphics_internal.h"
 typedef struct {
   const unsigned char *encoded,*decoded;
   size_t encoded_size,size;

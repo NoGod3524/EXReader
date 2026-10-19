@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "document_internal.h"
 typedef struct {
   const exr_document *doc; const exr_control *control; exr_error *error; exr_status status;
   exr_buffer text; size_t bytes,visited,position,desired; unsigned whitespace,mapping,found;

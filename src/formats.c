@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "formats_internal.h"
+#include "graphics_internal.h"
 #include <ctype.h>
 #include <expat.h>
 #include <miniz.h>

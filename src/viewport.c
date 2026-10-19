@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "base_internal.h"
 exr_status exr_viewport_create(const exr_page_geometry *page,double scale,exr_viewport *out,exr_error *e) {
   exr_viewport view={0}; double factor,width,height,base[6],rotation[6]={1,0,0,1,0,0},det; size_t i;
   if(out) memset(out,0,sizeof(*out));

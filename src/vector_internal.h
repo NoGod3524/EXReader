@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_VECTOR_INTERNAL_H
 #define EXR_VECTOR_INTERNAL_H
-#include "internal.h"
+#include "graphics_internal.h"
 typedef struct { double x0,y0,x1,y1; } exr_vector_edge;
 typedef exr_fill_rule exr_vector_rule;
 #define EXR_VECTOR_NONZERO EXR_FILL_NONZERO

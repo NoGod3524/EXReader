@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_ICC_INTERNAL_H
 #define EXR_ICC_INTERNAL_H
-#include "internal.h"
+#include "graphics_internal.h"
 typedef struct exr_icc exr_icc;
 /* An unusable profile returns OK/NULL for PDF Alternate fallback. */
 exr_status exr_icc_open(const void *data,size_t size,unsigned channels,const exr_control *control,exr_icc **out,exr_error *error);

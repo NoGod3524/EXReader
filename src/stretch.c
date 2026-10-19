@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "audio_internal.h"
 #define STRETCH_Q UINT64_C(4294967296)
 struct exr_stretch {
   uint32_t sample_rate,channels;

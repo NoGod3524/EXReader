@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "exreader.h"
 #include "../src/pdf_raster_internal.h"
 #include "cmyk_reference.h"
 static exr_error error; static unsigned checks;

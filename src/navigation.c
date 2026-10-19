@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "formats_internal.h"
+#include "graphics_internal.h"
 
 typedef struct { const char *path; size_t part; } nav_path;
 typedef struct {

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "memory_internal.h"
-#include "internal.h"
+#include "document_internal.h"
 #include <expat.h>
 
 static const char *local_name(const char *name) {

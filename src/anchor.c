@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "document_internal.h"
 
 #define ANCHOR_QUOTE_LIMIT ((size_t)65536)
 #define ANCHOR_CONTEXT_BYTES ((size_t)128)

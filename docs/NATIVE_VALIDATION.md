@@ -4223,3 +4223,18 @@ in [validation record](validation/2026-10-19.json) and
 [CI record](validation/2026-10-19-ci.json). Performance data remain tied to their
 own earlier code/binary hashes; the GNU wrapping comparison retains separate raw
 results. Current MIT scope and optional FAAD2 GPL terms are in THIRD_PARTY_NOTICES.
+
+## 2026-10-19 组件拆分本机验收
+
+版本保持0.19.0、ABI1、schema6；此次分层代码的跨平台CI结果另行记录，不沿用此前`55089af`的通过状态。
+
+- MSVC Release与GCC16.2：各136/136，包含原131项与5个独立静态组件测试。
+- 纯核心：关闭audio/library/textindex/pdf/pdf_edit和共享总库，1/1；59个原生源对象，586条符号引用、505条源/头依赖，逆向均为0。
+- 无音频/PDF书库组合：核心与独立书库2/2；可保存重排书籍、备份和宿主音频续播数据，固定格式导入明确不可用。
+- 关闭ICC：新构建的渲染审计、PDF色彩/intent和独立核心4/4；本次为定向验证，没有将旧的完整集结果冒充新构建结果。
+- 安装后静态消费：GCC完整包4/4、纯核心包1/1；MSVC完整包4/4。消费项目只使用安装包，不读取私有头或依赖源码。
+- 13个公开头分别以C与C++编译；304个函数声明与703项记录大小/对齐/成员偏移与拆分前相同；MSVC/GCC总DLL导出均为原304项。
+- 完整依赖检查：99对象、1021符号引用、898源/头依赖，逆向均为0；负例将字体私有头错误归到layout，检查器拒绝7条逆向包含。
+- 软遮罩内存/预算新增失败回归修复后通过，`native-render-audit`现356项检查。
+
+完整桌面CI增加安装组件消费、纯核心安装消费与无音频/PDF书库组合；移动结果仍按库交叉构建/typecheck记录，不记为真机运行。

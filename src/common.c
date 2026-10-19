@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "base_internal.h"
 #include "css_internal.h"
 #include <ctype.h>
 exr_status exr_fail(exr_error *e, exr_status code, const char *fmt, ...) {

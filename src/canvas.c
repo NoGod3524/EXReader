@@ -42,7 +42,11 @@ static exr_composite_state *masked_state(exr_canvas *c) {
 }
 exr_status exr_canvas_soft_mask(exr_canvas *c,const unsigned char *mask,size_t width,size_t height,exr_error *e) {
   exr_status status=ready(c,e);if(status!=EXR_OK) return status;
-  if(c->soft_mask_owned) { free(c->soft_mask_owned); c->soft_mask_owned=NULL; }
+  if(c->soft_mask_owned) {
+    c->mask_bytes-=c->soft_mask_width*c->soft_mask_height;
+    free(c->soft_mask_owned);c->soft_mask_owned=NULL;
+  }
+  c->soft_mask=NULL;c->soft_mask_width=c->soft_mask_height=0;
   if(mask && (width!=c->bitmap.width || height!=c->bitmap.height)) {
     /* A host builds the mask at the device extent; a region-sized working buffer
        needs the matching sub-rectangle. */
@@ -50,10 +54,12 @@ exr_status exr_canvas_soft_mask(exr_canvas *c,const unsigned char *mask,size_t w
     unsigned char *crop;
     if(width!=c->canvas_width || height!=c->canvas_height)
       return finish(c,exr_fail(e,EXR_ARGUMENT,"Soft mask size must match the canvas"),e);
+    if(bw*bh>c->mask_budget-c->mask_bytes)
+      return finish(c,exr_fail(e,EXR_LIMIT,"Canvas soft mask exceeds byte budget"),e);
     crop=malloc(bw*bh); if(!crop) return finish(c,exr_fail(e,EXR_MEMORY,"Soft mask crop allocation failed"),e);
     for(row=0;row<bh;row++)
       memcpy(crop+row*bw,mask+(row+(size_t)c->offset_y)*width+(size_t)c->offset_x,bw);
-    c->soft_mask_owned=crop;c->soft_mask=crop;c->soft_mask_width=bw;c->soft_mask_height=bh;
+    c->mask_bytes+=bw*bh;c->soft_mask_owned=crop;c->soft_mask=crop;c->soft_mask_width=bw;c->soft_mask_height=bh;
     return EXR_OK;
   }
   c->soft_mask=mask;c->soft_mask_width=mask ? width : 0;c->soft_mask_height=mask ? height : 0;

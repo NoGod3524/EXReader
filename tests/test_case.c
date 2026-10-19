@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "exreader.h"
 #include "../src/case_internal.h"
 #include <stdio.h>
 #include <stdlib.h>

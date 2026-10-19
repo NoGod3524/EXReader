@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "layout_internal.h"
+#include "font_internal.h"
 #include "font_outline_internal.h"
 exr_status exr_font_glyph_outline(exr_font *font,size_t index,uint32_t glyph,
                                    exr_path_segment **out,size_t *count,const exr_control *control,exr_error *e) {

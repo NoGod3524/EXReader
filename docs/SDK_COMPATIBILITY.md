@@ -12,7 +12,7 @@ Within one epoch, existing exported C symbols, calling conventions, enum numeric
 values, public record sizes/alignment/member offsets, callback signatures and
 ownership contracts remain compatible on the same operating system, architecture
 and compiler ABI. Removing symbols or changing those layouts requires a new epoch.
-Adding functions does not. Optional build features retain their public symbols;
+Adding functions does not. Codec/algorithm feature gates retain their public symbols;
 for example, `exr_text_index_available()` reports whether FTS indexing is enabled.
 A host using new functions also requires the release
 that first provides them; an epoch alone does not imply that every later symbol
@@ -480,3 +480,32 @@ Shading opacity, blend and soft masks now reach the painter, mesh interpolation
 precedes color conversion, and Matte is undone before ICC conversion. These
 corrections change affected pixels without changing public record layouts,
 symbols, callback signatures, ABI1 or schema6. See AUDIT-2026-10-19.md for scope.
+
+## Component linkage
+
+`exreader.h` remains the full declaration umbrella. `exr/core.h` includes only the
+reading core; the other public headers can each be included independently in C
+and C++. The default compatibility shared library retains all 304 existing
+exports. Static component consumers link `EXReader::exr_core`, `exr_audio`,
+`exr_library`, `exr_pdf`, `exr_pdf_edit` or `exr_textindex`; these targets propagate
+`EXR_STATIC` automatically. Choose either the compatibility shared library or the
+static components within one process, so object ownership stays in one instance.
+
+Component removal is an explicit build profile: an omitted library has no binary
+or exported entry points in that profile. This differs from disabling a codec
+inside an included component (for example AAC OFF still exposes the documented
+unavailable-codec functions). Hosts discover installed components with CMake
+`find_package(EXReader CONFIG REQUIRED COMPONENTS core audio)`; absent required
+components fail configuration. The standard full build remains the ABI1
+compatibility artifact.
+
+Core and optional component release numbers are maintained in
+`cmake/versions.cmake` and exposed by the corresponding public version macros and
+installed CMake target `EXR_COMPONENT_VERSION` properties. They all start at
+0.19.0 for this split and can be released independently. ABI1 freezes existing
+core signatures, records and ownership rules; an internal refactor does not
+increment the release or ABI number.
+
+Static Windows components use the same MSVC runtime setting as the SDK build
+(default `/MT`, `/MTd` for Debug). The installed component consumer examples use
+that setting explicitly.

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "audio_internal.h"
 struct exr_pcm { exr_pcm_info info; exr_pcm_read_fn read; exr_context_release_fn release; void *context; unsigned kind,busy; };
 static int valid(const exr_pcm_info *info) {
   uint32_t mask=info->channel_mask; unsigned n=0;

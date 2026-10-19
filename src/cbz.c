@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "formats_internal.h"
+#include "exr/pdf.h"
+#include "graphics_internal.h"
 #include <miniz.h>
 
 typedef struct { char *name; mz_uint index; uint32_t width,height; } comic_page;

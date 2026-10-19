@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "audio_internal.h"
 struct exr_wave { exr_source source; exr_wave_info info; uint64_t data; uint32_t alignment; int busy; };
 static uint32_t le16(const unsigned char *p) { return (uint32_t)p[0]|(uint32_t)p[1]<<8; }
 static uint32_t le32(const unsigned char *p) { return le16(p)|le16(p+2)<<16; }

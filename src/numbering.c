@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "base_internal.h"
 #include <ctype.h>
 exr_status exr_number_text(exr_buffer *out,int value,const char *format,exr_error *e) {
   char text[100]; int n=value;

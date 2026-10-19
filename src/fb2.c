@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "formats_internal.h"
+#include "graphics_internal.h"
 
 typedef struct { const char *id; size_t resource; } binary;
 typedef struct {

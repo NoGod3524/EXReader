@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "audio_internal.h"
 #if defined(EXR_ENABLE_AAC) && EXR_ENABLE_AAC
 #include <neaacdec.h>
 #define AAC_WORK_SAMPLES UINT64_C(16777216)

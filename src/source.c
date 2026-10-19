@@ -7,7 +7,7 @@
 #define _FILE_OFFSET_BITS 64
 #endif
 #endif
-#include "internal.h"
+#include "base_internal.h"
 
 static size_t file_read(void *context, uint64_t offset, void *buffer, size_t size) {
   FILE *file = context;

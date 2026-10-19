@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_DISPLAY_BIDI_INTERNAL_H
 #define EXR_DISPLAY_BIDI_INTERNAL_H
-#include "layout_internal.h"
+#include "base_internal.h"
+#include "exr/text.h"
 #include "bidi_internal.h"
 
 #define EXR_DISPLAY_GENERATED 32u

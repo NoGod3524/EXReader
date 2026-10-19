@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#include "internal.h"
+#include "formats_internal.h"
+#include "graphics_internal.h"
 #include <miniz.h>
 #include <ctype.h>
 #define W "http://schemas.openxmlformats.org/wordprocessingml/2006/main|"
