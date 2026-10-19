@@ -4,6 +4,7 @@
 #include "vector_internal.h"
 typedef struct { exr_bitmap bitmap; size_t refs; } exr_clip_mask;
 typedef struct {
+  int origin_x,origin_y; /* working-buffer origin in canvas coordinates */
   exr_bitmap bitmap;exr_composite_state *composite;exr_clip_mask *clip,*pending,**pending_groups;
   size_t depth,group_depth;double opacity;exr_blend_mode blend,parent_blend;
 } exr_canvas_layer;

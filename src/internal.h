@@ -187,6 +187,8 @@ exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex
 typedef struct exr_composite_state {
   float *pixels;exr_bitmap backdrop;const struct exr_composite_state *backdrop_state;
   uint32_t left,top,right,bottom;unsigned depth;unsigned knockout,isolated;
+  /* Working buffers may cover only a sub-rectangle of the canvas. */
+  int origin_x,origin_y;
   /* Graphics-state soft mask: one byte per page pixel, 255 = fully visible. */
   const unsigned char *soft_mask;size_t soft_mask_width,soft_mask_height;
 } exr_composite_state;
