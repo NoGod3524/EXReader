@@ -42,7 +42,7 @@
 | 能力 | 状态 | 边界 | 回归 |
 | --- | --- | --- | --- |
 | CSS 子集 | 部分 | 块/行内、字体、颜色、边距、对齐；完整 CSS 未冻结 | `native-complex-layout` |
-| 表格 | 支持 | 指定/auto/fixed/百分比 列宽、top/middle/bottom/baseline、border-collapse（solid/dashed/dotted 线型）、rowspan、跨页续排 | `native-table-*`（6 项）、`native-table-dashed` |
+| 表格 | 支持 | 指定/auto/fixed/百分比 列宽、top/middle/bottom/baseline、border-collapse（solid/dashed/dotted/double 线型）、rowspan、跨页续排 | `native-table-*`（6 项）、`native-table-dashed` |
 | 浮动与绕排 | 支持 | float/clear、逐行绕排、长浮动/嵌套续排 | `native-float`、`native-table-fragments` |
 | 分页与检查点 | 支持 | 页级续排、LRU 1–64 段、缓存字节/页预算、checkpoint 恢复 | `native-pager`、`native-page-cache`、`native-checkpoints` |
 | 定位与命中 | 支持 | UTF-8 源偏移、CFI、TextQuote 锚点、改版后重定位 | `native-cfi-text`、`native-anchor` |
