@@ -76,6 +76,18 @@ static void multiply(const double a[6],const double b[6],double out[6]) {
   out[2]=a[0]*b[2]+a[2]*b[3]; out[3]=a[1]*b[2]+a[3]*b[3];
   out[4]=a[0]*b[4]+a[2]*b[5]+a[4]; out[5]=a[1]*b[4]+a[3]*b[5]+a[5];
 }
+/* DeviceGray groups blend luminance in linear light: sRGB -> linear, Rec.709
+   weights, then the sRGB transfer back, which matches MuPDF's result. */
+static double linear_of(unsigned char v) {
+  double s=v/255.0; return s<=0.04045 ? s/12.92 : pow((s+0.055)/1.055,2.4);
+}
+static unsigned char srgb_of(double l) {
+  double s=l<=0.0031308 ? 12.92*l : 1.055*pow(l,1/2.4)-0.055;
+  return (unsigned char)fmax(0,fmin(255,floor(s*255+.5)));
+}
+static unsigned char gray_of(unsigned char r,unsigned char g,unsigned char b) {
+  return srgb_of(0.2126*linear_of(r)+0.7152*linear_of(g)+0.0722*linear_of(b));
+}
 /* Region-sized groups draw with canvas coordinates shifted to the buffer origin. */
 static const double *shifted(exr_canvas *c,const double transform[6],double out[6]) {
   const double t[6]={1,0,0,1,-(double)c->offset_x,-(double)c->offset_y};
@@ -154,10 +166,21 @@ exr_status exr_canvas_restore(exr_canvas *c,exr_error *e) {
 }
 exr_status exr_canvas_path(exr_canvas *c,const exr_path_segment *segments,size_t count,const double transform_arg[6],const exr_draw_style *style,exr_error *e) {
   const double identity[6]={1,0,0,1,0,0}; exr_draw_style defaults=exr_draw_style_defaults();
-  double offset_matrix[6];const double *transform=transform_arg;
+  double offset_matrix[6];const double *transform=transform_arg;exr_draw_style gray_style;
   exr_vector_polyline flat={0},local={0},dashed={0},outline={0}; exr_status status=ready(c,e);
   if(status!=EXR_OK) return status;
   if(!style) style=&defaults;
+  if(c->gray_groups) {
+    /* A DeviceGray group blends luminance: reduce both paints before rasterising. */
+    exr_draw_style gray=*style; unsigned k;
+    const uint32_t colors[2]={gray.fill,gray.stroke};
+    uint32_t *targets[2]={&gray.fill,&gray.stroke};
+    for(k=0;k<2;k++) {
+      uint32_t v=colors[k]; unsigned lum=gray_of((unsigned char)((v>>24)&255),(unsigned char)((v>>16)&255),(unsigned char)((v>>8)&255));
+      *targets[k]=(v&0xffu)|(lum<<24)|(lum<<16)|(lum<<8);
+    }
+    gray_style=gray;style=&gray_style;
+  }
   transform=shifted(c,transform_arg,offset_matrix);
   if((style->flags&~3u) || (style->rule!=EXR_FILL_NONZERO && style->rule!=EXR_FILL_EVENODD) || (count && !segments))
     return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid canvas path flags/rule/input"),e);
@@ -223,9 +246,22 @@ exr_status exr_canvas_union_commit(exr_canvas *c,exr_error *e) {
 }
 exr_status exr_canvas_image(exr_canvas *c,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
   double local[6];const double *use;
+  exr_image_layer gray_image;exr_bitmap gray_bitmap={0};const exr_image_layer *source=image;
   exr_status status=ready(c,e); if(status!=EXR_OK) return status;
   use=shifted(c,matrix,local);
-  status=exr_vector_texture_blend(&c->bitmap,image,use,alpha,c->clip ? &c->clip->bitmap : NULL,c->blend,masked_state(c),&c->work,&c->control,e);
+  if(c->gray_groups && image && image->bitmap.pixels) {
+    /* A DeviceGray group blends luminance, so the image is reduced first. */
+    size_t count=(size_t)image->bitmap.width*image->bitmap.height,i;
+    gray_bitmap=image->bitmap;gray_bitmap.pixels=malloc(count*4);
+    if(!gray_bitmap.pixels) return finish(c,exr_fail(e,EXR_MEMORY,"Gray group image allocation failed"),e);
+    for(i=0;i<count;i++) {
+      const unsigned char *p=image->bitmap.pixels+i*4;unsigned char *q=gray_bitmap.pixels+i*4;
+      unsigned lum=gray_of(p[0],p[1],p[2]);
+      q[0]=q[1]=q[2]=(unsigned char)lum;q[3]=p[3];
+    }
+    gray_image=*image;gray_image.bitmap=gray_bitmap;source=&gray_image;
+  }
+  status=exr_vector_texture_blend(&c->bitmap,source,use,alpha,c->clip ? &c->clip->bitmap : NULL,c->blend,masked_state(c),&c->work,&c->control,e);
   return finish(c,status,e);
 }
 static exr_status sink_path(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
@@ -335,7 +371,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   if(status!=EXR_OK) return status;
   unsigned needs_state;
   if(!isfinite(opacity) || opacity<0 || opacity>1 || mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY ||
-     (flags&~(EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT|EXR_GROUP_WHOLE_BUFFER))) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid group parameters"),e);
+     (flags&~(EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT|EXR_GROUP_WHOLE_BUFFER|EXR_GROUP_GRAY))) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid group parameters"),e);
   needs_state=!(flags&EXR_GROUP_ISOLATED) || (flags&EXR_GROUP_KNOCKOUT);
   region_width=c->bitmap.width;region_height=c->bitmap.height;
   if(c->layer_depth==0 && c->clip && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
@@ -382,6 +418,8 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   if(status!=EXR_OK) { free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,status,e); }
   layer.bitmap=c->bitmap;layer.composite=c->composite;layer.clip=c->clip;layer.pending=c->group;layer.group_depth=c->group_depth;layer.depth=c->depth;
   layer.origin_x=region_x;layer.origin_y=region_y;layer.parent_offset_x=c->offset_x;layer.parent_offset_y=c->offset_y;
+  layer.parent_gray_groups=c->gray_groups;
+  if(flags&EXR_GROUP_GRAY) c->gray_groups++;
   layer.opacity=opacity;layer.blend=mode;layer.parent_blend=c->blend;c->layers[c->layer_depth++]=layer;c->layer_bytes+=bytes;
   c->bitmap=next;c->composite=state;c->clip=c->group=NULL;c->group_depth=0;c->blend=EXR_BLEND_NORMAL;memset(c->groups,0,sizeof(c->groups));
   c->offset_x=region_x;c->offset_y=region_y;
@@ -408,6 +446,7 @@ exr_status exr_canvas_end_layer(exr_canvas *c,unsigned commit,exr_error *e) {
   while(c->depth>layer.depth) { unref(c,c->saved[--c->depth]);c->saved[c->depth]=NULL; }
   c->bitmap=layer.bitmap;c->composite=layer.composite;c->clip=layer.clip;c->group=layer.pending;c->group_depth=layer.group_depth;c->blend=layer.parent_blend;
   c->offset_x=layer.parent_offset_x;c->offset_y=layer.parent_offset_y;
+  c->gray_groups=layer.parent_gray_groups;
   memset(c->groups,0,sizeof(c->groups));if(layer.group_depth) memcpy(c->groups,layer.pending_groups,layer.group_depth*sizeof(*c->groups));free(layer.pending_groups);
   c->layer_depth--;c->layer_bytes-=(size_t)source.stride*source.height+composite_size(&source,source_state);memset(c->layers+c->layer_depth,0,sizeof(*c->layers));
   if(commit && status==EXR_OK) status=exr_composite_frame(&c->bitmap,&source,layer.opacity,layer.blend,c->clip ? &c->clip->bitmap : NULL,c->composite,source_state,layer.origin_x,layer.origin_y,&c->work,&c->control,e);

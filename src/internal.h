@@ -11,6 +11,9 @@
 #define EXR_DECORATIONS (EXR_GLYPH_UNDERLINE | EXR_GLYPH_STRIKE)
 /* Internal hint: this group's caller relies on whole-canvas buffer semantics. */
 #define EXR_GROUP_WHOLE_BUFFER 0x80u
+/* Internal flag: the group blends in DeviceGray, so painted colours are reduced
+   to luminance before they reach the raster. */
+#define EXR_GROUP_GRAY 0x100u
 #define EXR_MAX_INPUT ((size_t)128 * 1024 * 1024)
 #define EXR_MAX_TEXT ((size_t)64 * 1024 * 1024)
 #define EXR_MAX_ITEMS ((size_t)4 * 1024 * 1024)
