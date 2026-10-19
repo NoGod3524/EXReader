@@ -36,13 +36,16 @@ def pixel(engine, path, white):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('library', type=Path);parser.add_argument('--baseline', type=Path)
+    parser.add_argument('--manifest', default='nested-manifest.json')
     parser.add_argument('--output', type=Path, required=True);args = parser.parse_args()
     root = Path(__file__).resolve().parent.parent/'tests/fixtures/pdf-blend'
-    manifest = json.loads((root/'nested-manifest.json').read_text(encoding='utf-8'))
+    manifest = json.loads((root/args.manifest).read_text(encoding='utf-8'))
     current = load(args.library.resolve());baseline = load(args.baseline.resolve()) if args.baseline else None
-    rows = [];maximum = {'current': 0, 'mupdf': 0, 'baseline': 0}
+    rows = [];maximum = {'current': 0, 'mupdf': 0, 'baseline': 0};by_class = {}
     for scene in manifest['scenes']:
         path = root/scene['file'];row = dict(scene)
+        category = scene.get('probe_type', 'interior')
+        by_class.setdefault(category, {'current': 0, 'mupdf': 0, 'baseline': 0})
         row['comparisons'] = {}
         with pymupdf.open(path) as document:
             for white in [False, True]:
@@ -54,14 +57,16 @@ def main():
                 differences = {name: max(abs(x-y) for x, y in zip(data, scene[key])) for name, data in samples.items()}
                 for name, difference in differences.items():
                     maximum[name] = max(maximum[name], difference)
+                    by_class[category][name] = max(by_class[category][name], difference)
                 row['comparisons'][key] = {'samples': samples, 'differences_from_decimal': differences}
         rows.append(row)
     report = {'reference': 'MuPDF '+pymupdf.VersionBind, 'max_difference_from_decimal': maximum,
+              'max_difference_by_probe_class': by_class,
               'library_sha256': hashlib.sha256(args.library.read_bytes()).hexdigest(),
               'baseline_sha256': hashlib.sha256(args.baseline.read_bytes()).hexdigest() if baseline else None,
               'scenes': rows}
     args.output.write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
-    print('128 nested scenes, max Decimal differences:', maximum)
+    print('%d scenes, max analytic differences:' % len(rows), maximum)
     if maximum['current'] > 3:
         raise SystemExit('Current engine exceeds the frozen Decimal probe limit')
 

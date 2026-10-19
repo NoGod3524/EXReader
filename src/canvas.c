@@ -21,7 +21,7 @@ static void unref(exr_canvas *c,exr_clip_mask *mask) {
   if(mask && !--mask->refs) { c->mask_bytes-=(size_t)mask->bitmap.stride*mask->bitmap.height; c->mask_count--; free(mask->bitmap.pixels); free(mask); }
 }
 static void composite_free(exr_composite_state *state) {
-  if(state) { free(state->cmyk_pixels);free(state->pixels);free(state); }
+  if(state) { free(state->shape);free(state->cmyk_pixels);free(state->pixels);free(state); }
 }
 static exr_status new_mask(exr_canvas *c,exr_clip_mask **out,exr_error *e) {
   size_t bytes=(size_t)c->bitmap.width*c->bitmap.height; exr_clip_mask *mask;
@@ -40,13 +40,16 @@ static exr_composite_state *masked_state(exr_canvas *c) {
   s->soft_mask=c->soft_mask;s->soft_mask_width=c->soft_mask_width;s->soft_mask_height=c->soft_mask_height;
   return s;
 }
-exr_status exr_canvas_soft_mask(exr_canvas *c,const unsigned char *mask,size_t width,size_t height,exr_error *e) {
-  exr_status status=ready(c,e);if(status!=EXR_OK) return status;
+static void clear_soft_mask(exr_canvas *c) {
   if(c->soft_mask_owned) {
     c->mask_bytes-=c->soft_mask_width*c->soft_mask_height;
     free(c->soft_mask_owned);c->soft_mask_owned=NULL;
   }
   c->soft_mask=NULL;c->soft_mask_width=c->soft_mask_height=0;
+}
+exr_status exr_canvas_soft_mask(exr_canvas *c,const unsigned char *mask,size_t width,size_t height,exr_error *e) {
+  exr_status status=ready(c,e);if(status!=EXR_OK) return status;
+  clear_soft_mask(c);
   if(mask && (width!=c->bitmap.width || height!=c->bitmap.height)) {
     /* A host builds the mask at the device extent; a region-sized working buffer
        needs the matching sub-rectangle. */
@@ -137,12 +140,14 @@ void exr_canvas_free(exr_canvas *c) {
     unref(c,l->clip);unref(c,l->pending);
     for(i=0;i<l->group_depth;i++) unref(c,l->pending_groups[i]);
     free(l->pending_groups);composite_free(l->composite);free(l->bitmap.pixels);
+    free(l->soft_mask_owned);
   }
   exr_icc_free(c->cmyk_profile);free(c->soft_mask_owned);free(c->layers);composite_free(c->composite);free(c->bitmap.pixels); free(c);
 }
 static size_t composite_size(const exr_bitmap *b,const exr_composite_state *state) {
   size_t bytes=(size_t)b->width*b->height*5*sizeof(float);
-  return state ? bytes+(state->cmyk_pixels ? (size_t)b->width*b->height*6*sizeof(float) : 0) : 0;
+  return state ? bytes+(state->cmyk_pixels ? (size_t)b->width*b->height*6*sizeof(float) : 0)+
+    (state->shape ? (size_t)b->width*b->height*sizeof(float) : 0) : 0;
 }
 size_t exr_canvas_memory_size(const exr_canvas *c) {
   size_t bytes,i;if(!c) return 0;
@@ -435,7 +440,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   exr_status status=ready(c,e);exr_canvas_layer layer={0};exr_bitmap next;exr_composite_state *state=NULL;unsigned char *pixels;size_t bytes,count;
   size_t region_width,region_height;int region_x=0,region_y=0;
   if(status!=EXR_OK) return status;
-  unsigned needs_state,cmyk,gray,space=flags&(EXR_GROUP_RGB|EXR_GROUP_GRAY|EXR_GROUP_CMYK);
+  unsigned needs_state,cmyk,gray,track_shape=c->composite && (c->composite->knockout || c->composite->shape),space=flags&(EXR_GROUP_RGB|EXR_GROUP_GRAY|EXR_GROUP_CMYK);
   if(!isfinite(opacity) || opacity<0 || opacity>1 || mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY ||
      (flags&~(EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT|EXR_GROUP_WHOLE_BUFFER|EXR_GROUP_GRAY|EXR_GROUP_CMYK|EXR_GROUP_RGB)) ||
      (space && (space&(space-1)))) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid group parameters"),e);
@@ -446,7 +451,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   if((cmyk && (flags&EXR_GROUP_GRAY)) || (c->gray_groups && (flags&EXR_GROUP_CMYK)))
     return finish(c,exr_fail(e,EXR_UNSUPPORTED,"Mixed-device CMYK groups are not supported"),e);
   if(cmyk && !c->cmyk_profile) { status=exr_icc_default_cmyk(&c->control,&c->cmyk_profile,e);if(status!=EXR_OK) return finish(c,status,e); }
-  needs_state=!(flags&EXR_GROUP_ISOLATED) || (flags&EXR_GROUP_KNOCKOUT) || cmyk;
+  needs_state=!(flags&EXR_GROUP_ISOLATED) || (flags&EXR_GROUP_KNOCKOUT) || cmyk || track_shape;
   region_width=c->bitmap.width;region_height=c->bitmap.height;
   if(c->clip && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
     size_t x0=region_width,y0=region_height,x1=0,y1=0,xx,yy;
@@ -466,7 +471,8 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
     }
     else if(x1==0 || y1==0) region_width=region_height=1;
   }
-  count=region_width*region_height;bytes=count*(needs_state ? 4+5*sizeof(float) : 4)+(cmyk ? count*6*sizeof(float) : 0);
+  count=region_width*region_height;bytes=count*(needs_state ? 4+5*sizeof(float) : 4)+(cmyk ? count*6*sizeof(float) : 0)+
+    (track_shape ? count*sizeof(float) : 0);
   if(c->layer_depth==32 || bytes>64*1024*1024 || bytes>c->layer_budget-c->layer_bytes) return finish(c,exr_fail(e,EXR_LIMIT,"Group depth/byte budget exceeded"),e);
   if(!exr_grow((void **)&c->layers,&c->layer_capacity,c->layer_depth+1,sizeof(*c->layers))) return finish(c,exr_fail(e,EXR_MEMORY,"Layer stack allocation failed"),e);
   if(c->group_depth) {
@@ -475,7 +481,8 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
     memcpy(layer.pending_groups,c->groups,c->group_depth*sizeof(*c->groups));
   }
   pixels=calloc(count,4);if(needs_state) { state=calloc(1,sizeof(*state));if(state) { state->pixels=calloc(count,5*sizeof(float));if(cmyk) state->cmyk_pixels=calloc(count,6*sizeof(float)); } }
-  if(!pixels || (needs_state && (!state || !state->pixels || (cmyk && !state->cmyk_pixels)))) {
+  if(state && track_shape) state->shape=calloc(count,sizeof(float));
+  if(!pixels || (needs_state && (!state || !state->pixels || (cmyk && !state->cmyk_pixels) || (track_shape && !state->shape)))) {
     free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,exr_fail(e,EXR_MEMORY,"Group working buffer allocation failed"),e);
   }
   next=c->bitmap;next.channels=4;next.width=(uint32_t)region_width;next.height=(uint32_t)region_height;next.stride=(uint32_t)(region_width*4);next.pixels=pixels;
@@ -506,10 +513,13 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   layer.origin_x=region_x;layer.origin_y=region_y;layer.parent_offset_x=c->offset_x;layer.parent_offset_y=c->offset_y;
   layer.parent_gray_groups=c->gray_groups;
   layer.parent_cmyk_groups=c->cmyk_groups;
+  layer.soft_mask=c->soft_mask;layer.soft_mask_owned=c->soft_mask_owned;
+  layer.soft_mask_width=c->soft_mask_width;layer.soft_mask_height=c->soft_mask_height;
   c->gray_groups=gray;
   c->cmyk_groups=cmyk;
   layer.opacity=opacity;layer.blend=mode;layer.parent_blend=c->blend;c->layers[c->layer_depth++]=layer;c->layer_bytes+=bytes;
   c->bitmap=next;c->composite=state;c->clip=c->group=NULL;c->group_depth=0;c->blend=EXR_BLEND_NORMAL;memset(c->groups,0,sizeof(c->groups));
+  c->soft_mask=c->soft_mask_owned=NULL;c->soft_mask_width=c->soft_mask_height=0;
   c->offset_x=layer.parent_offset_x+region_x;c->offset_y=layer.parent_offset_y+region_y;
   /* Keep the inherited clip on the parent; group commit applies it once. */
   return EXR_OK;
@@ -522,10 +532,13 @@ exr_status exr_canvas_end_layer(exr_canvas *c,unsigned commit,exr_error *e) {
   if(commit && status==EXR_OK && (c->depth!=layer.depth || c->group_depth || c->group)) status=exr_fail(e,EXR_ARGUMENT,"Unbalanced isolated layer scopes");
   unref(c,c->clip);exr_canvas_union_abort(c);while(c->group_depth) unref(c,c->groups[--c->group_depth]);
   while(c->depth>layer.depth) { unref(c,c->saved[--c->depth]);c->saved[c->depth]=NULL; }
+  clear_soft_mask(c);
   c->bitmap=layer.bitmap;c->composite=layer.composite;c->clip=layer.clip;c->group=layer.pending;c->group_depth=layer.group_depth;c->blend=layer.parent_blend;
   c->offset_x=layer.parent_offset_x;c->offset_y=layer.parent_offset_y;
   c->gray_groups=layer.parent_gray_groups;
   c->cmyk_groups=layer.parent_cmyk_groups;
+  c->soft_mask=layer.soft_mask;c->soft_mask_owned=layer.soft_mask_owned;
+  c->soft_mask_width=layer.soft_mask_width;c->soft_mask_height=layer.soft_mask_height;
   memset(c->groups,0,sizeof(c->groups));if(layer.group_depth) memcpy(c->groups,layer.pending_groups,layer.group_depth*sizeof(*c->groups));free(layer.pending_groups);
   c->layer_depth--;c->layer_bytes-=(size_t)source.stride*source.height+composite_size(&source,source_state);memset(c->layers+c->layer_depth,0,sizeof(*c->layers));
   if(commit && status==EXR_OK) status=exr_composite_frame(&c->bitmap,&source,layer.opacity,layer.blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),source_state,layer.origin_x,layer.origin_y,&c->work,&c->control,e);

@@ -222,11 +222,13 @@ static exr_status apply_ext_state(content_reader *r,uint32_t dictionary,exr_erro
     if(!found) return exr_fail(error,EXR_FORMAT,"Invalid PDF rendering intent");
   }
   if(resolved(r->file,exr_pdf_get(r->file,dictionary,"SMask"),&id,error)!=EXR_OK) return error->code;
-  if(id==EXR_PDF_NONE || exr_pdf_value_at(r->file,id)->kind==EXR_PDF_NULL || name_is(r->file,id,"None")) r->state.paint.smask=EXR_PDF_NONE;
-  else {
-    int kind;
-    if(exr_pdf_soft_mask_kind(r->file,id,&kind,error)!=EXR_OK) return error->code;
-    r->state.paint.smask=id;memcpy(r->state.paint.smask_matrix,r->state.ctm,sizeof(r->state.paint.smask_matrix));
+  if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL) {
+    if(name_is(r->file,id,"None")) r->state.paint.smask=EXR_PDF_NONE;
+    else {
+      int kind;
+      if(exr_pdf_soft_mask_kind(r->file,id,&kind,error)!=EXR_OK) return error->code;
+      r->state.paint.smask=id;memcpy(r->state.paint.smask_matrix,r->state.ctm,sizeof(r->state.paint.smask_matrix));
+    }
   }
   return EXR_OK;
 invalid:
@@ -391,12 +393,13 @@ static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,
   if(status==EXR_OK && layer) {
     if(!r->callbacks.begin_group || !r->callbacks.end_layer) status=exr_fail(error,EXR_FORMAT,"PDF consumer does not support isolated groups");
     else {
-      if(status==EXR_OK) status=r->callbacks.begin_group(r->context,r->state.paint.fill.alpha,r->state.paint.blend,
+      exr_pdf_paint_state group_paint=paint_state(r);
+      if(status==EXR_OK) status=r->callbacks.begin_group(r->context,&group_paint,
         (layer&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|(layer&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0)|
         (layer&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|(layer&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0)|
         (layer&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0),error);
       if(status==EXR_OK && error->code!=EXR_OK) status=error->code;
-      if(status==EXR_OK) { started=1;r->state.paint.fill.alpha=r->state.paint.stroke.alpha=1;r->state.paint.blend=EXR_BLEND_NORMAL; }
+      if(status==EXR_OK) { started=1;r->state.paint.fill.alpha=r->state.paint.stroke.alpha=1;r->state.paint.blend=EXR_BLEND_NORMAL;r->state.paint.smask=EXR_PDF_NONE; }
     }
   }
   if(status==EXR_OK) status=exr_pdf_content_ops_resources(r->file,r->resources,data,n,content_operation,r,&r->inline_work,r->control,error);

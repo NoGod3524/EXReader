@@ -4347,3 +4347,28 @@ DeviceCMYK分项完成；ICCBased/DeviceN到组空间、OutputIntent、其他工
 - 分层99对象/1025符号/898include，无逆向。
 
 证据：[本地汇总](validation/2026-10-19-nested-groups.json)、[逐场景参考](validation/2026-10-19-nested-groups-reference.json)、[六场景五轮](validation/2026-10-19-nested-benchmark.json)、[state复测](validation/2026-10-19-nested-state-followup.json)。
+
+
+## 3.34.2：遮罩作用域与组形状修复（2026-10-19）
+
+ExtGState缺省/null的SMask保留当前值，显式None才清除。透明Form内部重置SMask，
+外部遮罩在整组提交时应用一次；画布组进入/退出保存、恢复并释放各自遮罩。
+组在挖空父级内单独累计几何shape，半像素边缘不再作为全覆盖低opacity替换。
+shape平面仅在挖空/shape父级需要时分配，每像素4字节，计入层预算及内存报告。
+PDF绘制器存活遮罩聚合限制64MiB；嵌套遮罩共享绘制工作计数，逐行检查取消和预算。
+
+27个正常场景与3个拒绝输入；独立数学探针最大差1/255，3.34.1最大差144/255。
+MuPDF1.28.2内部探针最大差5；半覆盖边缘差41单独归类，不扩大内部容差。
+GCC/MSVC各139/139、ICC-OFF6/6、安装组件4/4及13头C++独立编译通过；
+EXACT C++实际运行3.34.2 ABI1，703项布局逐行不变，两个DLL均305导出。
+分层99对象/1026符号引用/898include，无逆向。
+
+AIS、图像shape/opacity与自身mask覆盖图形状态mask仍需审计，WP1/WP2尚未整包关闭。
+证据：[汇总](validation/2026-10-19-mask-scope.json)、[逐场景对照](validation/2026-10-19-mask-scope-reference.json)。
+
+### 3.34.1跨平台CI
+
+代码`4cf5a6672f947887131631dfdc04efd59feb4df4`的[CI39340787790](https://github.com/NoGod3524/EXReader/actions/runs/39340787790)7/7成功。
+三桌面各138/138，sanitizer135/135；20万次变异、5种子、15434次成功解析无崩溃。
+安装消费、裁剪配置、JNI/Swift宿主及Android/Apple库交叉编译通过。
+原始数据见[CI记录](validation/2026-10-19-nested-groups-ci.json)。

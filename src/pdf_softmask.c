@@ -65,11 +65,12 @@ static exr_status load_transfer(exr_pdf_file *file, uint32_t mask, mask_transfer
 static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set_matrix[6],
                                    unsigned width, unsigned height, unsigned char **out,
                                    size_t *work, const exr_control *control, exr_error *e) {
-  uint32_t form, id, resources = EXR_PDF_NONE; const unsigned char *data = NULL; size_t size = 0, i;
+  uint32_t form, id, resources = EXR_PDF_NONE; const unsigned char *data = NULL; size_t size = 0, i,local_work=0;
   double matrix[6], local[6], box[4], bc[4] = {0, 0, 0, 0}, clip[4]; unsigned char *pixels = NULL, *result = NULL;
   const exr_pdf_value *v; int kind = 0, count = 0; exr_bitmap bitmap = {0}; exr_pdf_raster_config config = {0}; exr_status status;
   mask_transfer state;
   *out = NULL;
+  if(!work) work=&local_work;
   status = exr_pdf_soft_mask_kind(file, mask, &kind, e); if (status != EXR_OK) return status;
   status = load_transfer(file, mask, &state,e); if (status != EXR_OK) return status;
   if (exr_pdf_resolve(file, mask, &mask, e) != EXR_OK) return e->code;
@@ -109,15 +110,21 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
       else return fail(e, EXR_FORMAT, "Invalid PDF soft mask backdrop length");
     }
   }
-  (void)work;
   config.width = width; config.height = height; config.channels = 4; config.background = 0;
+  config.work=work;
   config.initial_clip = clip; config.mask_budget = 0;
   status = exr_pdf_raster_content(file, resources, data, size, matrix, &config, control, &bitmap, e);
   if (status != EXR_OK) return status;
   result = malloc((size_t)width * height);
   if (!result) { free(bitmap.pixels); return fail(e, EXR_MEMORY, "PDF soft mask allocation failed"); }
   pixels = bitmap.pixels;
-  for (i = 0; i < (size_t)width * height; i++) {
+  for(size_t y=0;y<height;y++) {
+      status=exr_control_cancel(control,e);
+      if(status==EXR_OK && !exr_vector_work(work,(size_t)width*(1+(kind ? 8 : 0)+(state.present ? 16 : 0))))
+        status=exr_fail(e,EXR_LIMIT,"PDF soft mask samples exceed work budget");
+      if(status!=EXR_OK) { free(result);free(bitmap.pixels);return status; }
+    for(size_t x=0;x<width;x++) {
+    i=y*width+x;
     double a = pixels[i * 4 + 3] / 255.;
     if (kind) {
       double v0 = pixels[i * 4] / 255. * a + bc[0] * (1 - a);
@@ -126,6 +133,7 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
       double lum = .3 * v0 + .59 * v1 + .11 * v2;
       result[i] = (unsigned char)fmax(0, fmin(255, floor(transfer(lum,&state) * 255 + .5)));
     } else { double a2 = transfer(a,&state); result[i] = (unsigned char)fmax(0, fmin(255, floor(a2 * 255 + .5))); }
+    }
   }
   free(bitmap.pixels);
   *out = result;

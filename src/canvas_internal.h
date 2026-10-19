@@ -10,6 +10,8 @@ typedef struct {
   unsigned parent_cmyk_groups;
   exr_bitmap bitmap;exr_composite_state *composite;exr_clip_mask *clip,*pending,**pending_groups;
   size_t depth,group_depth;double opacity;exr_blend_mode blend,parent_blend;
+  const unsigned char *soft_mask;unsigned char *soft_mask_owned;
+  size_t soft_mask_width,soft_mask_height;
 } exr_canvas_layer;
 struct exr_canvas {
   struct exr_icc *cmyk_profile;

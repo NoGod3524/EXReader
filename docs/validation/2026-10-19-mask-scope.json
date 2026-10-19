@@ -1,0 +1,48 @@
+{
+  "version": "3.34.2",
+  "abi": 1,
+  "schema": 6,
+  "scenes": 27,
+  "rejected_inputs": 3,
+  "tests": {
+    "gcc": {
+      "count": 139,
+      "failures": 0,
+      "mask_scope_output": "317 mask scope checks; maximum analytic probe difference 1/255\n",
+      "dll_sha256": "60a8a270628ab0165ef351582aab78fdd56ab21b544dcb87d30a333e8a19ab9a"
+    },
+    "msvc": {
+      "count": 139,
+      "failures": 0,
+      "mask_scope_output": "317 mask scope checks; maximum analytic probe difference 1/255\n",
+      "dll_sha256": "1ccd93b81fae62b6a878d9676d40c44de0c65a4d8950218b016bff11897b82c4"
+    }
+  },
+  "icc_off": {
+    "count": 6,
+    "failures": 0
+  },
+  "installed_components": {
+    "count": 4,
+    "failures": 0
+  },
+  "cpp_headers": 13,
+  "cpp_exact_runtime": "3.34.2 ABI 1",
+  "abi_measurements_unchanged": 703,
+  "exports_each": 305,
+  "layers": {
+    "objects": 99,
+    "symbols": 1026,
+    "includes": 898,
+    "inverse": 0
+  },
+  "active_mask_limit_bytes": 67108864,
+  "shape_plane_bytes_per_pixel_when_required": 4,
+  "reference": "2026-10-19-mask-scope-reference.json",
+  "remaining": [
+    "AIS",
+    "image shape/opacity",
+    "image mask precedence",
+    "WP1/WP2 full matrix"
+  ]
+}

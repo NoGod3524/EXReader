@@ -1,0 +1,490 @@
+{
+  "scenes": [
+    {
+      "file": "mask-scope-retain-64.pdf",
+      "sha256": "c2e6596e9231f77034052ff55564b721783ea8027c232826fb62da1992a26efc",
+      "kind": "retain",
+      "mask": 64,
+      "premultiplied": [
+        32,
+        0,
+        0,
+        32
+      ],
+      "white": [
+        255,
+        223,
+        223,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-retain-128.pdf",
+      "sha256": "5b938c6204dc772e972c35a2639897e28cc24ea77b03670ead93be4179d547ce",
+      "kind": "retain",
+      "mask": 128,
+      "premultiplied": [
+        64,
+        0,
+        0,
+        64
+      ],
+      "white": [
+        255,
+        191,
+        191,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-retain-192.pdf",
+      "sha256": "b1fcccb9530f9eaadad610460c2ed01fc82b35344ad79b23a43e23084e5444f8",
+      "kind": "retain",
+      "mask": 192,
+      "premultiplied": [
+        96,
+        0,
+        0,
+        96
+      ],
+      "white": [
+        255,
+        159,
+        159,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-null-64.pdf",
+      "sha256": "9ba6c249cf48785a69e8f1ea057b87bfe6c31228fb3fb2b0bad966eb1b29d9a0",
+      "kind": "null",
+      "mask": 64,
+      "premultiplied": [
+        32,
+        0,
+        0,
+        32
+      ],
+      "white": [
+        255,
+        223,
+        223,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-null-128.pdf",
+      "sha256": "6864b7fbd9478d6ec3d1a65289b6925948a6b099aa81ff8279a50801286bad4c",
+      "kind": "null",
+      "mask": 128,
+      "premultiplied": [
+        64,
+        0,
+        0,
+        64
+      ],
+      "white": [
+        255,
+        191,
+        191,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-null-192.pdf",
+      "sha256": "189f9b117cdcbfd8aaa89919c9795fa3558b8a716ced25a479b72e4cd2037586",
+      "kind": "null",
+      "mask": 192,
+      "premultiplied": [
+        96,
+        0,
+        0,
+        96
+      ],
+      "white": [
+        255,
+        159,
+        159,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-clear-64.pdf",
+      "sha256": "ebbb9bfa0a58bccfdf2538b943b78f2c92c2f566bfe9887c8921943f82e53f7f",
+      "kind": "clear",
+      "mask": 64,
+      "premultiplied": [
+        128,
+        0,
+        0,
+        128
+      ],
+      "white": [
+        255,
+        128,
+        128,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-clear-128.pdf",
+      "sha256": "2319b8d2a88cfea7efc0cabc921ddaefed7aa769ea428f106e1a101eb779fa3a",
+      "kind": "clear",
+      "mask": 128,
+      "premultiplied": [
+        128,
+        0,
+        0,
+        128
+      ],
+      "white": [
+        255,
+        128,
+        128,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-clear-192.pdf",
+      "sha256": "6d42d3db64919a6cfc0a681f240990b04b96d0f7fa13289ab350c1888117c679",
+      "kind": "clear",
+      "mask": 192,
+      "premultiplied": [
+        128,
+        0,
+        0,
+        128
+      ],
+      "white": [
+        255,
+        128,
+        128,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-restore-64.pdf",
+      "sha256": "78ef2b2a5bb92a15518c46fe670ec9008c78c86a9f8ff74ca8295560e2940f65",
+      "kind": "restore",
+      "mask": 64,
+      "premultiplied": [
+        32,
+        0,
+        0,
+        32
+      ],
+      "white": [
+        255,
+        223,
+        223,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-restore-128.pdf",
+      "sha256": "7eb9c6805e2ea742c663ef05b1b59933d3f33d7dffb65de645dfa3fe971c5039",
+      "kind": "restore",
+      "mask": 128,
+      "premultiplied": [
+        64,
+        0,
+        0,
+        64
+      ],
+      "white": [
+        255,
+        191,
+        191,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-restore-192.pdf",
+      "sha256": "da53bffd43422a8d4f57404eb51ce05d191beb7f88edd221499ce946dc78c8e1",
+      "kind": "restore",
+      "mask": 192,
+      "premultiplied": [
+        96,
+        0,
+        0,
+        96
+      ],
+      "white": [
+        255,
+        159,
+        159,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-ordinary-64.pdf",
+      "sha256": "c34dfd77a188e77cea540cb1b009c9454cb5347d29b55c9f3ca426b4e0f97da5",
+      "kind": "ordinary",
+      "mask": 64,
+      "premultiplied": [
+        48,
+        0,
+        64,
+        112
+      ],
+      "white": [
+        191,
+        143,
+        207,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-ordinary-128.pdf",
+      "sha256": "35782ef2f8c1a70e1e16006c4a8472afb6209149367ad688e0c761059535e52f",
+      "kind": "ordinary",
+      "mask": 128,
+      "premultiplied": [
+        64,
+        0,
+        128,
+        192
+      ],
+      "white": [
+        127,
+        63,
+        191,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-ordinary-192.pdf",
+      "sha256": "8712dc8e46ccef13f604f9e1cad0a6e4b73708c1b622daf8d2ef57ad8eda14f2",
+      "kind": "ordinary",
+      "mask": 192,
+      "premultiplied": [
+        47,
+        0,
+        192,
+        239
+      ],
+      "white": [
+        63,
+        16,
+        208,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-group-64.pdf",
+      "sha256": "dc0e71907bf23f76756099c5b0938228d298a04ec7c96f53e7df0705f49f7a82",
+      "kind": "group",
+      "mask": 64,
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-group-128.pdf",
+      "sha256": "2e120d96502cab972f988b482ccbc08a2b9d2bcdce374a1656a4de0bf332a16c",
+      "kind": "group",
+      "mask": 128,
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-group-192.pdf",
+      "sha256": "354d3fe3dcdb10450afdb5778e15ee4def504fedf69906e675812b6211359398",
+      "kind": "group",
+      "mask": 192,
+      "premultiplied": [
+        0,
+        0,
+        192,
+        192
+      ],
+      "white": [
+        63,
+        63,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-inner-alpha-64.pdf",
+      "sha256": "3be3aa2ad8356a4cdf6b2fbd7905fccb1fce28fa0ac8f28f0b9ebcaafc275326",
+      "kind": "inner-alpha",
+      "mask": 64,
+      "premultiplied": [
+        16,
+        0,
+        32,
+        48
+      ],
+      "white": [
+        223,
+        207,
+        239,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-inner-alpha-128.pdf",
+      "sha256": "ddfd44332cec911aa15f4f5d04a59515dfa17df606ac7f07e1867d0694ad93e1",
+      "kind": "inner-alpha",
+      "mask": 128,
+      "premultiplied": [
+        32,
+        0,
+        64,
+        96
+      ],
+      "white": [
+        191,
+        159,
+        223,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-inner-alpha-192.pdf",
+      "sha256": "9b74c70734e6a9ac841ba410ac62dc7b76bb33649a640f51961d89eb265aaa1d",
+      "kind": "inner-alpha",
+      "mask": 192,
+      "premultiplied": [
+        48,
+        0,
+        96,
+        144
+      ],
+      "white": [
+        159,
+        111,
+        207,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-nested-64.pdf",
+      "sha256": "857300f9c6220697040c13ed8487a1ae55ef9d14ba8939e52d02088b6fb8b3dc",
+      "kind": "nested",
+      "mask": 64,
+      "premultiplied": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "white": [
+        223,
+        223,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-nested-128.pdf",
+      "sha256": "74aaa69c5b40020034da8aed278a26301b63061884dfe146941a0c8a78564033",
+      "kind": "nested",
+      "mask": 128,
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-nested-192.pdf",
+      "sha256": "8073c3ecbbc4954edc23042f44e8cd112e846ae25f5d40acaee84862a981b798",
+      "kind": "nested",
+      "mask": 192,
+      "premultiplied": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "white": [
+        159,
+        159,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-shape-iso.pdf",
+      "sha256": "95c36fd86cbb292946541d810400531c12b60c093f359adbde12bf7f75683014",
+      "kind": "shape-iso",
+      "probe_type": "analytic-half-coverage-edge",
+      "premultiplied": [
+        128,
+        0,
+        64,
+        192
+      ],
+      "white": [
+        191,
+        64,
+        128,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-shape-noniso.pdf",
+      "sha256": "731d0f024f7dcdcdffe82f3d39f2f9ee94ebf8f942c9790721b70f5881cf5e51",
+      "kind": "shape-noniso",
+      "probe_type": "analytic-half-coverage-edge",
+      "premultiplied": [
+        128,
+        0,
+        64,
+        192
+      ],
+      "white": [
+        191,
+        64,
+        128,
+        255
+      ]
+    },
+    {
+      "file": "mask-scope-shape-nested.pdf",
+      "sha256": "a4e5fadca4a78cd8f8dc7c29519b1a9986b25e6f1377fa2ec115b72a3c0bdffa",
+      "kind": "shape-nested",
+      "probe_type": "analytic-half-coverage-edge",
+      "premultiplied": [
+        128,
+        0,
+        64,
+        192
+      ],
+      "white": [
+        191,
+        64,
+        128,
+        255
+      ]
+    }
+  ]
+}

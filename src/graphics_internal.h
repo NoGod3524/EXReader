@@ -16,6 +16,7 @@ exr_status exr_jpeg_cmyk_decode(const void *data,size_t size,const exr_control *
    alpha. A NULL buffer keeps the original compact 8-bit drawing path. */
 typedef struct exr_composite_state {
   struct exr_icc *cmyk_profile;float *pixels;float *cmyk_pixels;exr_bitmap backdrop;const struct exr_composite_state *backdrop_state;
+  float *shape; /* Allocated only for groups consumed by a knockout/shape-tracked parent. */
   uint32_t left,top,right,bottom;unsigned depth;unsigned knockout,isolated,gray;
   unsigned backdrop_transparent; /* Non-isolated child of an isolated knockout. */
   /* Working buffers may cover only a sub-rectangle of the canvas. */

@@ -87,7 +87,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.34.1 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.34.2 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -459,7 +459,7 @@ development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.34.1 EXACT
+Select this package with `find_package(EXReader 3.34.2 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -573,3 +573,12 @@ resource-limit outcomes can change. Public layouts and symbols are unchanged fro
 128 new nested scenes match Decimal probes within 1/255; independent MuPDF
 low-alpha differences remain recorded, and soft-mask/AIS/group-shape auditing
 continues. This correction is not a claim of full PDF transparency conformance.
+
+
+## 3.34.2 mask scope corrections
+
+No public function or record layout changes. Transparency groups suspend the parent
+soft mask and restore it for the single group commit. Internal shape tracking is
+allocated only when required by a knockout or shape-tracked parent. Active PDF
+soft masks have a 64 MiB aggregate limit; nested masks share the operation budget.
+Core/PDF reading are 3.34.2; other component versions remain 3.33.0, ABI1/schema6.
