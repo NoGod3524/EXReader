@@ -1020,6 +1020,24 @@ static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char
     else if(name_is(f,filters[i],"ASCIIHexDecode") || name_is(f,filters[i],"AHx")) ok=decode_hex(f,input,input_size,&output,current.capacity,end);
     else if(name_is(f,filters[i],"ASCII85Decode") || name_is(f,filters[i],"A85")) ok=decode_ascii85(f,input,input_size,&output,current.capacity,end);
     else if(name_is(f,filters[i],"RunLengthDecode") || name_is(f,filters[i],"RL")) ok=decode_runlength(f,input,input_size,&output,current.capacity,end);
+    else if(name_is(f,filters[i],"CCITTFaxDecode") || name_is(f,filters[i],"CCF")) {
+      uint64_t columns=1728,rows=0,black=0,align=0; int64_t group=0;
+      uint32_t key_id=exr_pdf_get(f,parms[i],"K");
+      if(key_id!=EXR_PDF_NONE) {
+        uint32_t resolved_key=resolve(f,key_id);
+        const exr_pdf_value *kv=exr_pdf_value_at(f,resolved_key);
+        if(kv && (kv->kind==EXR_PDF_INT || kv->kind==EXR_PDF_REAL))
+          group=kv->kind==EXR_PDF_INT ? kv->u.integer : (int64_t)kv->u.number;
+      }
+      if(!parameter(f,parms[i],"Columns",65535,1728,&columns) ||
+         !parameter(f,parms[i],"Rows",65535,0,&rows) ||
+         !parameter(f,parms[i],"BlackIs1",1,0,&black) ||
+         !parameter(f,parms[i],"EncodedByteAlign",1,0,&align)) { failed(f,EXR_FORMAT,"Invalid CCITT parameters"); goto done; }
+      { unsigned char *samples=NULL; size_t count=0;
+        if(exr_pdf_ccitt_decode(input,input_size,(long)group,(unsigned)columns,(unsigned)rows,(int)black,(int)align,&samples,&count,&f->error)!=EXR_OK) { free(samples); goto done; }
+        free(output.data); output.data=samples; output.size=count; output.capacity=count; ok=1;
+      }
+    }
     else { free(output.data); goto unsupported; }
     if(ok && (is_flate || is_lzw)) ok=undo_predictor(f,parms[i],&output);
     if(!ok || (end && !decode_work(f,encoded_size))) { free(output.data); goto done; }

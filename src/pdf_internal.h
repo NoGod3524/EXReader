@@ -20,6 +20,9 @@ typedef struct exr_pdf_file exr_pdf_file;
 /* The input is borrowed until close. IDs remain stable; value pointers may move
    when another indirect object is resolved. Public access uses the fixed-document adapter. */
 exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_error *error);
+/* CCITT Group 3/4 decode to packed 1-bpp rows (ISO 32000-1 7.4.6). */
+exr_status exr_pdf_ccitt_decode(const unsigned char *data,size_t size,long k,unsigned columns,unsigned rows,
+  int black_is_1,int byte_align,unsigned char **out,size_t *out_size,exr_error *error);
 void exr_pdf_close(exr_pdf_file *file);
 /* Borrowed only for the duration of one synchronous adapter operation. */
 void exr_pdf_control(exr_pdf_file *file,const exr_control *control);
