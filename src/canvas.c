@@ -195,8 +195,6 @@ static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_
   transform=shifted(c,transform_arg,offset_matrix);
   if((style->flags&~3u) || (style->rule!=EXR_FILL_NONZERO && style->rule!=EXR_FILL_EVENODD) || (count && !segments))
     return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid canvas path flags/rule/input"),e);
-  if(c->cmyk_groups && style->flags==(EXR_DRAW_FILL|EXR_DRAW_STROKE))
-    return finish(c,exr_fail(e,EXR_UNSUPPORTED,"Compound fill+stroke paths inside a CMYK group are not supported"),e);
   if(style->flags&EXR_DRAW_FILL) status=exr_vector_flatten(segments,count,transform,.125,&flat,&c->work,&c->control,e);
 
   if(status==EXR_OK && (style->flags&EXR_DRAW_STROKE)) {
@@ -214,7 +212,15 @@ static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_
     if(status==EXR_OK) status=new_mask(c,&sm,e);
     if(status==EXR_OK) status=fill(c,&flat,style->rule,0xffffffff,&fm->bitmap,NULL,e);
     if(status==EXR_OK) status=fill(c,&outline,EXR_FILL_NONZERO,0xffffffff,&sm->bitmap,NULL,e);
-    if(status==EXR_OK) status=exr_composite_compound(&c->bitmap,&fm->bitmap,&sm->bitmap,style->fill,style->stroke,c->blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),&c->work,&c->control,e);
+    if(status==EXR_OK && c->cmyk_groups) {
+      double fc[4],sc[4],frgb[3],srgb[3];unsigned k;
+      if(cmyk_fill) memcpy(fc,cmyk_fill,sizeof(fc));else { for(k=0;k<3;k++) frgb[k]=((style->fill>>(24-8*k))&255)/255.;exr_cmyk_from_rgb(frgb,fc); }
+      if(cmyk_stroke) memcpy(sc,cmyk_stroke,sizeof(sc));else { for(k=0;k<3;k++) srgb[k]=((style->stroke>>(24-8*k))&255)/255.;exr_cmyk_from_rgb(srgb,sc); }
+      status=exr_composite_compound_cmyk(&c->bitmap,&fm->bitmap,&sm->bitmap,fc,sc,
+        (style->fill&255)/255.,(style->stroke&255)/255.,c->blend,c->clip ? &c->clip->bitmap : NULL,
+        masked_state(c),&c->work,&c->control,e);
+    }
+    else if(status==EXR_OK) status=exr_composite_compound(&c->bitmap,&fm->bitmap,&sm->bitmap,style->fill,style->stroke,c->blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),&c->work,&c->control,e);
     unref(c,fm);unref(c,sm);
   } else if(status==EXR_OK && (style->flags&EXR_DRAW_FILL)) {
     status=cmyk_fill ? fill_cmyk(c,&flat,style->rule,cmyk_fill,(style->fill&255)/255.,&c->bitmap,c->clip,e)
@@ -307,6 +313,10 @@ exr_status exr_canvas_image(exr_canvas *c,const exr_image_layer *image,const dou
 static exr_status sink_path(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
   return exr_canvas_path(context,segments,count,matrix,style,e);
 }
+static exr_status sink_path_cmyk(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],
+  const exr_draw_style *style,const double fill[4],const double stroke[4],exr_error *e) {
+  return exr_canvas_path_cmyk(context,segments,count,matrix,style,fill,stroke,e);
+}
 static exr_status sink_image(void *context,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
   return exr_canvas_image(context,image,matrix,alpha,e);
 }
@@ -347,13 +357,13 @@ exr_status exr_canvas_blend(exr_canvas *c,exr_blend_mode mode,exr_error *e) {
 }
 static exr_status sink_blend(void *context,exr_blend_mode mode,exr_error *e) { return exr_canvas_blend(context,mode,e); }
 exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex *out,exr_error *e) {
-  size_t i,j,size,offsets[]={offsetof(exr_draw_sink_ex,blend),offsetof(exr_draw_sink_ex,begin_layer),offsetof(exr_draw_sink_ex,end_layer),offsetof(exr_draw_sink_ex,begin_group)};
-  size_t sizes[]={sizeof(out->blend),sizeof(out->begin_layer),sizeof(out->end_layer),sizeof(out->begin_group)};
+  size_t i,j,size,offsets[]={offsetof(exr_draw_sink_ex,blend),offsetof(exr_draw_sink_ex,begin_layer),offsetof(exr_draw_sink_ex,end_layer),offsetof(exr_draw_sink_ex,begin_group),offsetof(exr_draw_sink_ex,path_cmyk)};
+  size_t sizes[]={sizeof(out->blend),sizeof(out->begin_layer),sizeof(out->end_layer),sizeof(out->begin_group),sizeof(out->path_cmyk)};
   if(!input || input->struct_size<offsets[0] || input->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid extended drawing sink size");
   size=input->struct_size;
   for(i=sizeof(*out);i<size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Unsupported drawing sink extension");
   memset(out,0,sizeof(*out));memcpy(out,input,size<sizeof(*out) ? size : sizeof(*out));
-  for(j=0;j<4;j++) if(size>offsets[j] && size<offsets[j]+sizes[j]) {
+  for(j=0;j<5;j++) if(size>offsets[j] && size<offsets[j]+sizes[j]) {
     for(i=offsets[j];i<size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Truncated drawing effect callback");
     memset((unsigned char *)out+offsets[j],0,sizes[j]);
   }
@@ -402,7 +412,7 @@ exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error 
   if(size>offsetof(exr_draw_sink_ex,begin_layer) && size<offsetof(exr_draw_sink_ex,end_layer)+sizeof(sink.end_layer)) size=offsetof(exr_draw_sink_ex,begin_layer);
   if(size>offsetof(exr_draw_sink_ex,blend) && size<offsetof(exr_draw_sink_ex,begin_layer)) size=offsetof(exr_draw_sink_ex,blend);
   status=exr_canvas_get_sink(c,&sink.base,e);if(status!=EXR_OK) return status;
-  sink.struct_size=size;sink.blend=sink_blend;sink.begin_layer=sink_begin_layer;sink.end_layer=sink_end_layer;sink.begin_group=sink_begin_group;sink.soft_mask=sink_soft_mask;sink.extent=sink_extent;sink.shading=sink_shading;
+  sink.struct_size=size;sink.blend=sink_blend;sink.begin_layer=sink_begin_layer;sink.end_layer=sink_end_layer;sink.begin_group=sink_begin_group;sink.soft_mask=sink_soft_mask;sink.extent=sink_extent;sink.shading=sink_shading;sink.path_cmyk=sink_path_cmyk;
   memset(out,0,out->struct_size);memcpy(out,&sink,size);return EXR_OK;
 }
 exr_status exr_canvas_set_layer_budget(exr_canvas *c,size_t bytes,exr_error *e) {
@@ -420,9 +430,9 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   unsigned needs_state,cmyk;
   if(!isfinite(opacity) || opacity<0 || opacity>1 || mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY ||
      (flags&~(EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT|EXR_GROUP_WHOLE_BUFFER|EXR_GROUP_GRAY|EXR_GROUP_CMYK))) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid group parameters"),e);
-  cmyk=!!(flags&EXR_GROUP_CMYK);
-  if(cmyk && (c->cmyk_groups || (flags&EXR_GROUP_GRAY)))
-    return finish(c,exr_fail(e,EXR_UNSUPPORTED,"Nested or mixed-device CMYK groups are not supported"),e);
+  cmyk=(flags&EXR_GROUP_CMYK) || c->cmyk_groups; /* nested groups inherit the CMYK blend space */
+  if((cmyk && (flags&EXR_GROUP_GRAY)) || (c->gray_groups && (flags&EXR_GROUP_CMYK)))
+    return finish(c,exr_fail(e,EXR_UNSUPPORTED,"Mixed-device CMYK groups are not supported"),e);
   needs_state=!(flags&EXR_GROUP_ISOLATED) || (flags&EXR_GROUP_KNOCKOUT) || cmyk;
   region_width=c->bitmap.width;region_height=c->bitmap.height;
   if(c->layer_depth==0 && c->clip && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
