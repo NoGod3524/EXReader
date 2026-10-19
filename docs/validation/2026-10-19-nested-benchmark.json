@@ -1,0 +1,1662 @@
+{
+  "runs": 5,
+  "scale": 4,
+  "order": "baseline/current on even rounds, reversed on odd rounds",
+  "scope": "fresh Python/ctypes hosts; RSS includes host; disk cache/background load uncontrolled",
+  "libraries": {
+    "baseline": "48fa276af14cd6de00dcee4910a7b23369bbb36aaabee681ab8f759afe283b18",
+    "current": "7c4f18db842dd506329be880ceb47bc2426fcc4ceca498a444080d738be10391"
+  },
+  "cases": {
+    "flat": {
+      "samples": {
+        "baseline": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3562,
+            "first_render_ms": 76.7605,
+            "repaint_ms_samples": [
+              72.8514,
+              74.1429,
+              80.1947,
+              75.453,
+              81.1292,
+              82.5552,
+              73.8085,
+              72.454
+            ],
+            "repaint_p50_ms": 74.1429,
+            "repaint_p95_ms": 82.5552,
+            "baseline_peak_rss_bytes": 24686592,
+            "peak_rss_bytes": 33058816,
+            "incremental_peak_rss_bytes": 8372224,
+            "rgba_sha256": "a61abd06b190618b9435008c0900eb1fdef62f4df2d591cece8c44f62348221f",
+            "dimensions": [
+              1024,
+              832
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3109,
+            "first_render_ms": 79.5399,
+            "repaint_ms_samples": [
+              79.8023,
+              78.0732,
+              80.6012,
+              74.1378,
+              75.4805,
+              84.1595,
+              75.3853,
+              77.0045
+            ],
+            "repaint_p50_ms": 77.0045,
+            "repaint_p95_ms": 84.1595,
+            "baseline_peak_rss_bytes": 24612864,
+            "peak_rss_bytes": 33050624,
+            "incremental_peak_rss_bytes": 8437760,
+            "rgba_sha256": "a61abd06b190618b9435008c0900eb1fdef62f4df2d591cece8c44f62348221f",
+            "dimensions": [
+              1024,
+              832
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3368,
+            "first_render_ms": 88.1477,
+            "repaint_ms_samples": [
+              70.8229,
+              77.3511,
+              80.0025,
+              70.5639,
+              69.0899,
+              84.0396,
+              74.0608,
+              75.1542
+            ],
+            "repaint_p50_ms": 74.0608,
+            "repaint_p95_ms": 84.0396,
+            "baseline_peak_rss_bytes": 24698880,
+            "peak_rss_bytes": 33112064,
+            "incremental_peak_rss_bytes": 8413184,
+            "rgba_sha256": "a61abd06b190618b9435008c0900eb1fdef62f4df2d591cece8c44f62348221f",
+            "dimensions": [
+              1024,
+              832
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3324,
+            "first_render_ms": 74.4401,
+            "repaint_ms_samples": [
+              70.8627,
+              92.9083,
+              81.1608,
+              74.9861,
+              77.0886,
+              79.6237,
+              79.1991,
+              76.2869
+            ],
+            "repaint_p50_ms": 77.0886,
+            "repaint_p95_ms": 92.9083,
+            "baseline_peak_rss_bytes": 24662016,
+            "peak_rss_bytes": 33009664,
+            "incremental_peak_rss_bytes": 8347648,
+            "rgba_sha256": "a61abd06b190618b9435008c0900eb1fdef62f4df2d591cece8c44f62348221f",
+            "dimensions": [
+              1024,
+              832
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2894,
+            "first_render_ms": 76.2898,
+            "repaint_ms_samples": [
+              85.7941,
+              79.7313,
+              80.1664,
+              82.5356,
+              82.6252,
+              88.7528,
+              79.4414,
+              77.1877
+            ],
+            "repaint_p50_ms": 80.1664,
+            "repaint_p95_ms": 88.7528,
+            "baseline_peak_rss_bytes": 24682496,
+            "peak_rss_bytes": 32980992,
+            "incremental_peak_rss_bytes": 8298496,
+            "rgba_sha256": "a61abd06b190618b9435008c0900eb1fdef62f4df2d591cece8c44f62348221f",
+            "dimensions": [
+              1024,
+              832
+            ]
+          }
+        ],
+        "current": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2465,
+            "first_render_ms": 76.7093,
+            "repaint_ms_samples": [
+              76.8132,
+              75.0015,
+              75.798,
+              71.2367,
+              81.8767,
+              75.7802,
+              73.1978,
+              74.6361
+            ],
+            "repaint_p50_ms": 75.0015,
+            "repaint_p95_ms": 81.8767,
+            "baseline_peak_rss_bytes": 24674304,
+            "peak_rss_bytes": 32952320,
+            "incremental_peak_rss_bytes": 8278016,
+            "rgba_sha256": "a61abd06b190618b9435008c0900eb1fdef62f4df2d591cece8c44f62348221f",
+            "dimensions": [
+              1024,
+              832
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2346,
+            "first_render_ms": 76.9575,
+            "repaint_ms_samples": [
+              71.6898,
+              73.9974,
+              74.7015,
+              73.7091,
+              79.3182,
+              71.1089,
+              78.0061,
+              72.263
+            ],
+            "repaint_p50_ms": 73.7091,
+            "repaint_p95_ms": 79.3182,
+            "baseline_peak_rss_bytes": 24580096,
+            "peak_rss_bytes": 32845824,
+            "incremental_peak_rss_bytes": 8265728,
+            "rgba_sha256": "a61abd06b190618b9435008c0900eb1fdef62f4df2d591cece8c44f62348221f",
+            "dimensions": [
+              1024,
+              832
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.8178,
+            "first_render_ms": 74.2684,
+            "repaint_ms_samples": [
+              75.1286,
+              72.9243,
+              80.9149,
+              72.5001,
+              76.8608,
+              75.8279,
+              79.1678,
+              78.1045
+            ],
+            "repaint_p50_ms": 75.8279,
+            "repaint_p95_ms": 80.9149,
+            "baseline_peak_rss_bytes": 24719360,
+            "peak_rss_bytes": 33050624,
+            "incremental_peak_rss_bytes": 8331264,
+            "rgba_sha256": "a61abd06b190618b9435008c0900eb1fdef62f4df2d591cece8c44f62348221f",
+            "dimensions": [
+              1024,
+              832
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.261,
+            "first_render_ms": 76.7778,
+            "repaint_ms_samples": [
+              71.9923,
+              69.8087,
+              70.5075,
+              76.2592,
+              83.8304,
+              73.8742,
+              77.4334,
+              76.6338
+            ],
+            "repaint_p50_ms": 73.8742,
+            "repaint_p95_ms": 83.8304,
+            "baseline_peak_rss_bytes": 24543232,
+            "peak_rss_bytes": 32825344,
+            "incremental_peak_rss_bytes": 8282112,
+            "rgba_sha256": "a61abd06b190618b9435008c0900eb1fdef62f4df2d591cece8c44f62348221f",
+            "dimensions": [
+              1024,
+              832
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2886,
+            "first_render_ms": 79.6656,
+            "repaint_ms_samples": [
+              80.8298,
+              79.5962,
+              81.1258,
+              82.4093,
+              83.4804,
+              81.7416,
+              98.6969,
+              93.6508
+            ],
+            "repaint_p50_ms": 81.7416,
+            "repaint_p95_ms": 98.6969,
+            "baseline_peak_rss_bytes": 24739840,
+            "peak_rss_bytes": 33079296,
+            "incremental_peak_rss_bytes": 8339456,
+            "rgba_sha256": "a61abd06b190618b9435008c0900eb1fdef62f4df2d591cece8c44f62348221f",
+            "dimensions": [
+              1024,
+              832
+            ]
+          }
+        ]
+      },
+      "summary": {
+        "baseline": {
+          "open_ms": 0.3324,
+          "first_render_ms": 76.7605,
+          "repaint_p95_ms": 84.1595,
+          "incremental_peak_rss_bytes": 8372224
+        },
+        "current": {
+          "open_ms": 0.261,
+          "first_render_ms": 76.7778,
+          "repaint_p95_ms": 81.8767,
+          "incremental_peak_rss_bytes": 8282112
+        },
+        "first_render_ratio": 1.0002253763328797,
+        "repaint_p95_ratio": 0.9728753141356591
+      },
+      "pdf_sha256": "0c5d5a09e5f49aeb3a699219354718ea9bc22c3f43c84e74d9d05bc0485ec861"
+    },
+    "primitives": {
+      "samples": {
+        "baseline": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 2.9723,
+            "first_render_ms": 53.8614,
+            "repaint_ms_samples": [
+              52.8561,
+              57.709,
+              54.181,
+              52.4851,
+              58.2428,
+              51.2287,
+              53.1576,
+              53.68
+            ],
+            "repaint_p50_ms": 53.1576,
+            "repaint_p95_ms": 58.2428,
+            "baseline_peak_rss_bytes": 24739840,
+            "peak_rss_bytes": 31547392,
+            "incremental_peak_rss_bytes": 6807552,
+            "rgba_sha256": "c416c0dbbb4fb2aea637c7e3a1d22172900b683950b2686e4f85404aaeb213c7",
+            "dimensions": [
+              1024,
+              576
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3417,
+            "first_render_ms": 64.8312,
+            "repaint_ms_samples": [
+              64.0238,
+              60.6894,
+              58.8264,
+              59.81,
+              59.4857,
+              67.5811,
+              56.9958,
+              57.7671
+            ],
+            "repaint_p50_ms": 59.4857,
+            "repaint_p95_ms": 67.5811,
+            "baseline_peak_rss_bytes": 24731648,
+            "peak_rss_bytes": 31608832,
+            "incremental_peak_rss_bytes": 6877184,
+            "rgba_sha256": "c416c0dbbb4fb2aea637c7e3a1d22172900b683950b2686e4f85404aaeb213c7",
+            "dimensions": [
+              1024,
+              576
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2528,
+            "first_render_ms": 57.9191,
+            "repaint_ms_samples": [
+              55.4038,
+              53.8556,
+              56.5539,
+              59.031,
+              52.4711,
+              58.3558,
+              55.2087,
+              56.0867
+            ],
+            "repaint_p50_ms": 55.4038,
+            "repaint_p95_ms": 59.031,
+            "baseline_peak_rss_bytes": 24629248,
+            "peak_rss_bytes": 31440896,
+            "incremental_peak_rss_bytes": 6811648,
+            "rgba_sha256": "c416c0dbbb4fb2aea637c7e3a1d22172900b683950b2686e4f85404aaeb213c7",
+            "dimensions": [
+              1024,
+              576
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3355,
+            "first_render_ms": 67.8689,
+            "repaint_ms_samples": [
+              66.6242,
+              66.9784,
+              65.6227,
+              65.1952,
+              65.9575,
+              61.3602,
+              64.7263,
+              62.8693
+            ],
+            "repaint_p50_ms": 65.1952,
+            "repaint_p95_ms": 66.9784,
+            "baseline_peak_rss_bytes": 24543232,
+            "peak_rss_bytes": 31440896,
+            "incremental_peak_rss_bytes": 6897664,
+            "rgba_sha256": "c416c0dbbb4fb2aea637c7e3a1d22172900b683950b2686e4f85404aaeb213c7",
+            "dimensions": [
+              1024,
+              576
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3207,
+            "first_render_ms": 60.5125,
+            "repaint_ms_samples": [
+              67.6681,
+              61.4276,
+              60.916,
+              60.8913,
+              59.0929,
+              60.6027,
+              59.6451,
+              59.9079
+            ],
+            "repaint_p50_ms": 60.6027,
+            "repaint_p95_ms": 67.6681,
+            "baseline_peak_rss_bytes": 24756224,
+            "peak_rss_bytes": 31637504,
+            "incremental_peak_rss_bytes": 6881280,
+            "rgba_sha256": "c416c0dbbb4fb2aea637c7e3a1d22172900b683950b2686e4f85404aaeb213c7",
+            "dimensions": [
+              1024,
+              576
+            ]
+          }
+        ],
+        "current": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2535,
+            "first_render_ms": 55.3871,
+            "repaint_ms_samples": [
+              60.48,
+              62.7281,
+              60.5827,
+              51.9656,
+              81.2864,
+              53.7553,
+              57.3765,
+              54.4714
+            ],
+            "repaint_p50_ms": 57.3765,
+            "repaint_p95_ms": 81.2864,
+            "baseline_peak_rss_bytes": 24653824,
+            "peak_rss_bytes": 31502336,
+            "incremental_peak_rss_bytes": 6848512,
+            "rgba_sha256": "c416c0dbbb4fb2aea637c7e3a1d22172900b683950b2686e4f85404aaeb213c7",
+            "dimensions": [
+              1024,
+              576
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3683,
+            "first_render_ms": 59.9189,
+            "repaint_ms_samples": [
+              61.9324,
+              54.961,
+              56.1615,
+              56.1008,
+              59.2172,
+              62.2434,
+              60.7828,
+              63.5444
+            ],
+            "repaint_p50_ms": 59.2172,
+            "repaint_p95_ms": 63.5444,
+            "baseline_peak_rss_bytes": 24313856,
+            "peak_rss_bytes": 31141888,
+            "incremental_peak_rss_bytes": 6828032,
+            "rgba_sha256": "c416c0dbbb4fb2aea637c7e3a1d22172900b683950b2686e4f85404aaeb213c7",
+            "dimensions": [
+              1024,
+              576
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.268,
+            "first_render_ms": 53.1896,
+            "repaint_ms_samples": [
+              54.4898,
+              54.1715,
+              56.3485,
+              55.0753,
+              54.6052,
+              57.0683,
+              59.5109,
+              62.1514
+            ],
+            "repaint_p50_ms": 55.0753,
+            "repaint_p95_ms": 62.1514,
+            "baseline_peak_rss_bytes": 24535040,
+            "peak_rss_bytes": 31399936,
+            "incremental_peak_rss_bytes": 6864896,
+            "rgba_sha256": "c416c0dbbb4fb2aea637c7e3a1d22172900b683950b2686e4f85404aaeb213c7",
+            "dimensions": [
+              1024,
+              576
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3139,
+            "first_render_ms": 63.8666,
+            "repaint_ms_samples": [
+              63.8342,
+              64.0426,
+              66.528,
+              68.6324,
+              67.6847,
+              68.4459,
+              68.6481,
+              70.7379
+            ],
+            "repaint_p50_ms": 67.6847,
+            "repaint_p95_ms": 70.7379,
+            "baseline_peak_rss_bytes": 24514560,
+            "peak_rss_bytes": 31379456,
+            "incremental_peak_rss_bytes": 6864896,
+            "rgba_sha256": "c416c0dbbb4fb2aea637c7e3a1d22172900b683950b2686e4f85404aaeb213c7",
+            "dimensions": [
+              1024,
+              576
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2692,
+            "first_render_ms": 58.0012,
+            "repaint_ms_samples": [
+              58.027,
+              59.0697,
+              59.9567,
+              58.0425,
+              56.8574,
+              61.793,
+              59.3363,
+              61.6287
+            ],
+            "repaint_p50_ms": 59.0697,
+            "repaint_p95_ms": 61.793,
+            "baseline_peak_rss_bytes": 24715264,
+            "peak_rss_bytes": 31543296,
+            "incremental_peak_rss_bytes": 6828032,
+            "rgba_sha256": "c416c0dbbb4fb2aea637c7e3a1d22172900b683950b2686e4f85404aaeb213c7",
+            "dimensions": [
+              1024,
+              576
+            ]
+          }
+        ]
+      },
+      "summary": {
+        "baseline": {
+          "open_ms": 0.3355,
+          "first_render_ms": 60.5125,
+          "repaint_p95_ms": 66.9784,
+          "incremental_peak_rss_bytes": 6877184
+        },
+        "current": {
+          "open_ms": 0.2692,
+          "first_render_ms": 58.0012,
+          "repaint_p95_ms": 63.5444,
+          "incremental_peak_rss_bytes": 6848512
+        },
+        "first_render_ratio": 0.9584994835777731,
+        "repaint_p95_ratio": 0.9487297397369899
+      },
+      "pdf_sha256": "969b506ae20d43ff2a0a3ccfb787cacff9cb643226c27e6081481385739c127a"
+    },
+    "state": {
+      "samples": {
+        "baseline": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.297,
+            "first_render_ms": 2.0189,
+            "repaint_ms_samples": [
+              3.4026,
+              2.1017,
+              1.8571,
+              2.7363,
+              1.9181,
+              1.7996,
+              2.0615,
+              4.1571
+            ],
+            "repaint_p50_ms": 2.0615,
+            "repaint_p95_ms": 4.1571,
+            "baseline_peak_rss_bytes": 24752128,
+            "peak_rss_bytes": 25542656,
+            "incremental_peak_rss_bytes": 790528,
+            "rgba_sha256": "3da4e5cbbcf6f3725f8aff7cd9856834a0f0d86cab20f2965af0bdea8c962633",
+            "dimensions": [
+              384,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3041,
+            "first_render_ms": 1.9374,
+            "repaint_ms_samples": [
+              1.7243,
+              1.6763,
+              1.6726,
+              1.7181,
+              1.7093,
+              1.6706,
+              2.7625,
+              1.8582
+            ],
+            "repaint_p50_ms": 1.7093,
+            "repaint_p95_ms": 2.7625,
+            "baseline_peak_rss_bytes": 24641536,
+            "peak_rss_bytes": 25395200,
+            "incremental_peak_rss_bytes": 753664,
+            "rgba_sha256": "3da4e5cbbcf6f3725f8aff7cd9856834a0f0d86cab20f2965af0bdea8c962633",
+            "dimensions": [
+              384,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.226,
+            "first_render_ms": 2.9811,
+            "repaint_ms_samples": [
+              2.2224,
+              1.7788,
+              1.6965,
+              1.7169,
+              1.6737,
+              1.7778,
+              1.7931,
+              1.7157
+            ],
+            "repaint_p50_ms": 1.7169,
+            "repaint_p95_ms": 2.2224,
+            "baseline_peak_rss_bytes": 24547328,
+            "peak_rss_bytes": 25362432,
+            "incremental_peak_rss_bytes": 815104,
+            "rgba_sha256": "3da4e5cbbcf6f3725f8aff7cd9856834a0f0d86cab20f2965af0bdea8c962633",
+            "dimensions": [
+              384,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2321,
+            "first_render_ms": 1.8227,
+            "repaint_ms_samples": [
+              2.5289,
+              1.7589,
+              1.6372,
+              1.6414,
+              1.7895,
+              1.8791,
+              1.6455,
+              1.6481
+            ],
+            "repaint_p50_ms": 1.6481,
+            "repaint_p95_ms": 2.5289,
+            "baseline_peak_rss_bytes": 24756224,
+            "peak_rss_bytes": 25489408,
+            "incremental_peak_rss_bytes": 733184,
+            "rgba_sha256": "3da4e5cbbcf6f3725f8aff7cd9856834a0f0d86cab20f2965af0bdea8c962633",
+            "dimensions": [
+              384,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2221,
+            "first_render_ms": 1.8375,
+            "repaint_ms_samples": [
+              1.7099,
+              1.7852,
+              2.931,
+              1.9992,
+              1.8162,
+              1.6955,
+              1.7823,
+              2.0549
+            ],
+            "repaint_p50_ms": 1.7852,
+            "repaint_p95_ms": 2.931,
+            "baseline_peak_rss_bytes": 24707072,
+            "peak_rss_bytes": 25440256,
+            "incremental_peak_rss_bytes": 733184,
+            "rgba_sha256": "3da4e5cbbcf6f3725f8aff7cd9856834a0f0d86cab20f2965af0bdea8c962633",
+            "dimensions": [
+              384,
+              64
+            ]
+          }
+        ],
+        "current": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2267,
+            "first_render_ms": 1.9787,
+            "repaint_ms_samples": [
+              1.7323,
+              1.9096,
+              2.9948,
+              2.0019,
+              1.7283,
+              1.9729,
+              2.0027,
+              1.9209
+            ],
+            "repaint_p50_ms": 1.9209,
+            "repaint_p95_ms": 2.9948,
+            "baseline_peak_rss_bytes": 24678400,
+            "peak_rss_bytes": 25407488,
+            "incremental_peak_rss_bytes": 729088,
+            "rgba_sha256": "3da4e5cbbcf6f3725f8aff7cd9856834a0f0d86cab20f2965af0bdea8c962633",
+            "dimensions": [
+              384,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2454,
+            "first_render_ms": 1.9522,
+            "repaint_ms_samples": [
+              1.7706,
+              1.772,
+              1.7632,
+              1.721,
+              4.6059,
+              1.8575,
+              1.782,
+              1.7973
+            ],
+            "repaint_p50_ms": 1.772,
+            "repaint_p95_ms": 4.6059,
+            "baseline_peak_rss_bytes": 24678400,
+            "peak_rss_bytes": 25436160,
+            "incremental_peak_rss_bytes": 757760,
+            "rgba_sha256": "3da4e5cbbcf6f3725f8aff7cd9856834a0f0d86cab20f2965af0bdea8c962633",
+            "dimensions": [
+              384,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3829,
+            "first_render_ms": 2.0677,
+            "repaint_ms_samples": [
+              1.8278,
+              1.6837,
+              1.6654,
+              1.6577,
+              1.6855,
+              1.7059,
+              1.6803,
+              2.492
+            ],
+            "repaint_p50_ms": 1.6837,
+            "repaint_p95_ms": 2.492,
+            "baseline_peak_rss_bytes": 24641536,
+            "peak_rss_bytes": 25399296,
+            "incremental_peak_rss_bytes": 757760,
+            "rgba_sha256": "3da4e5cbbcf6f3725f8aff7cd9856834a0f0d86cab20f2965af0bdea8c962633",
+            "dimensions": [
+              384,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2019,
+            "first_render_ms": 1.8359,
+            "repaint_ms_samples": [
+              1.6775,
+              1.7597,
+              1.9183,
+              3.5333,
+              1.8172,
+              1.6383,
+              1.7143,
+              1.7615
+            ],
+            "repaint_p50_ms": 1.7597,
+            "repaint_p95_ms": 3.5333,
+            "baseline_peak_rss_bytes": 24571904,
+            "peak_rss_bytes": 25337856,
+            "incremental_peak_rss_bytes": 765952,
+            "rgba_sha256": "3da4e5cbbcf6f3725f8aff7cd9856834a0f0d86cab20f2965af0bdea8c962633",
+            "dimensions": [
+              384,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2742,
+            "first_render_ms": 1.9571,
+            "repaint_ms_samples": [
+              1.8965,
+              3.1932,
+              1.8611,
+              1.7413,
+              1.8594,
+              1.79,
+              1.866,
+              1.8737
+            ],
+            "repaint_p50_ms": 1.8611,
+            "repaint_p95_ms": 3.1932,
+            "baseline_peak_rss_bytes": 24752128,
+            "peak_rss_bytes": 25600000,
+            "incremental_peak_rss_bytes": 847872,
+            "rgba_sha256": "3da4e5cbbcf6f3725f8aff7cd9856834a0f0d86cab20f2965af0bdea8c962633",
+            "dimensions": [
+              384,
+              64
+            ]
+          }
+        ]
+      },
+      "summary": {
+        "baseline": {
+          "open_ms": 0.2321,
+          "first_render_ms": 1.9374,
+          "repaint_p95_ms": 2.7625,
+          "incremental_peak_rss_bytes": 753664
+        },
+        "current": {
+          "open_ms": 0.2454,
+          "first_render_ms": 1.9571,
+          "repaint_p95_ms": 3.1932,
+          "incremental_peak_rss_bytes": 757760
+        },
+        "first_render_ratio": 1.0101682667492515,
+        "repaint_p95_ratio": 1.1559095022624435
+      },
+      "pdf_sha256": "55cbfe5629bcd1ccd73549e377eaa1da0628a27dcd7533a5cc5370ff2e255352"
+    },
+    "groups": {
+      "samples": {
+        "baseline": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.4542,
+            "first_render_ms": 74.4474,
+            "repaint_ms_samples": [
+              64.6955,
+              65.4286,
+              68.2634,
+              68.0014,
+              68.8176,
+              69.488,
+              69.4497,
+              70.334
+            ],
+            "repaint_p50_ms": 68.2634,
+            "repaint_p95_ms": 70.334,
+            "baseline_peak_rss_bytes": 24674304,
+            "peak_rss_bytes": 28827648,
+            "incremental_peak_rss_bytes": 4153344,
+            "rgba_sha256": "5c252ab200b3c34e1e1d2dd1dae6020e1fef3e5e7c885e1b453cadabd151957b",
+            "dimensions": [
+              1024,
+              256
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2808,
+            "first_render_ms": 69.8778,
+            "repaint_ms_samples": [
+              65.6058,
+              65.9923,
+              64.6913,
+              68.676,
+              67.3942,
+              67.1119,
+              68.8218,
+              69.9503
+            ],
+            "repaint_p50_ms": 67.1119,
+            "repaint_p95_ms": 69.9503,
+            "baseline_peak_rss_bytes": 24576000,
+            "peak_rss_bytes": 28676096,
+            "incremental_peak_rss_bytes": 4100096,
+            "rgba_sha256": "5c252ab200b3c34e1e1d2dd1dae6020e1fef3e5e7c885e1b453cadabd151957b",
+            "dimensions": [
+              1024,
+              256
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2936,
+            "first_render_ms": 72.3209,
+            "repaint_ms_samples": [
+              77.58,
+              79.8109,
+              81.0209,
+              79.3695,
+              77.5244,
+              76.7044,
+              81.8097,
+              79.5378
+            ],
+            "repaint_p50_ms": 79.3695,
+            "repaint_p95_ms": 81.8097,
+            "baseline_peak_rss_bytes": 24735744,
+            "peak_rss_bytes": 28860416,
+            "incremental_peak_rss_bytes": 4124672,
+            "rgba_sha256": "5c252ab200b3c34e1e1d2dd1dae6020e1fef3e5e7c885e1b453cadabd151957b",
+            "dimensions": [
+              1024,
+              256
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.425,
+            "first_render_ms": 110.808,
+            "repaint_ms_samples": [
+              98.2412,
+              97.0742,
+              95.4117,
+              90.5568,
+              88.6557,
+              84.8166,
+              84.0468,
+              84.1251
+            ],
+            "repaint_p50_ms": 88.6557,
+            "repaint_p95_ms": 98.2412,
+            "baseline_peak_rss_bytes": 24682496,
+            "peak_rss_bytes": 28786688,
+            "incremental_peak_rss_bytes": 4104192,
+            "rgba_sha256": "5c252ab200b3c34e1e1d2dd1dae6020e1fef3e5e7c885e1b453cadabd151957b",
+            "dimensions": [
+              1024,
+              256
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3,
+            "first_render_ms": 77.3449,
+            "repaint_ms_samples": [
+              77.3518,
+              78.4086,
+              76.9098,
+              78.9193,
+              78.0146,
+              77.0592,
+              76.7063,
+              77.1258
+            ],
+            "repaint_p50_ms": 77.1258,
+            "repaint_p95_ms": 78.9193,
+            "baseline_peak_rss_bytes": 24735744,
+            "peak_rss_bytes": 28848128,
+            "incremental_peak_rss_bytes": 4112384,
+            "rgba_sha256": "5c252ab200b3c34e1e1d2dd1dae6020e1fef3e5e7c885e1b453cadabd151957b",
+            "dimensions": [
+              1024,
+              256
+            ]
+          }
+        ],
+        "current": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2071,
+            "first_render_ms": 51.927,
+            "repaint_ms_samples": [
+              55.5572,
+              50.6524,
+              51.0154,
+              51.662,
+              48.2404,
+              49.1416,
+              51.2868,
+              70.8075
+            ],
+            "repaint_p50_ms": 51.0154,
+            "repaint_p95_ms": 70.8075,
+            "baseline_peak_rss_bytes": 24768512,
+            "peak_rss_bytes": 27889664,
+            "incremental_peak_rss_bytes": 3121152,
+            "rgba_sha256": "5c252ab200b3c34e1e1d2dd1dae6020e1fef3e5e7c885e1b453cadabd151957b",
+            "dimensions": [
+              1024,
+              256
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2709,
+            "first_render_ms": 51.8041,
+            "repaint_ms_samples": [
+              50.8395,
+              49.3999,
+              49.5561,
+              48.6364,
+              48.314,
+              47.1614,
+              48.9089,
+              46.9229
+            ],
+            "repaint_p50_ms": 48.6364,
+            "repaint_p95_ms": 50.8395,
+            "baseline_peak_rss_bytes": 24657920,
+            "peak_rss_bytes": 27918336,
+            "incremental_peak_rss_bytes": 3260416,
+            "rgba_sha256": "5c252ab200b3c34e1e1d2dd1dae6020e1fef3e5e7c885e1b453cadabd151957b",
+            "dimensions": [
+              1024,
+              256
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.244,
+            "first_render_ms": 52.0704,
+            "repaint_ms_samples": [
+              52.9088,
+              52.1019,
+              52.4578,
+              52.5166,
+              52.5906,
+              58.9333,
+              53.8628,
+              56.807
+            ],
+            "repaint_p50_ms": 52.5906,
+            "repaint_p95_ms": 58.9333,
+            "baseline_peak_rss_bytes": 24760320,
+            "peak_rss_bytes": 27987968,
+            "incremental_peak_rss_bytes": 3227648,
+            "rgba_sha256": "5c252ab200b3c34e1e1d2dd1dae6020e1fef3e5e7c885e1b453cadabd151957b",
+            "dimensions": [
+              1024,
+              256
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3977,
+            "first_render_ms": 58.0989,
+            "repaint_ms_samples": [
+              65.0569,
+              63.6991,
+              68.4982,
+              125.3462,
+              112.2626,
+              108.4612,
+              80.2847,
+              70.5984
+            ],
+            "repaint_p50_ms": 70.5984,
+            "repaint_p95_ms": 125.3462,
+            "baseline_peak_rss_bytes": 24514560,
+            "peak_rss_bytes": 27783168,
+            "incremental_peak_rss_bytes": 3268608,
+            "rgba_sha256": "5c252ab200b3c34e1e1d2dd1dae6020e1fef3e5e7c885e1b453cadabd151957b",
+            "dimensions": [
+              1024,
+              256
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3287,
+            "first_render_ms": 57.0123,
+            "repaint_ms_samples": [
+              55.8425,
+              56.6595,
+              58.0212,
+              60.3388,
+              61.5075,
+              55.0078,
+              51.822,
+              61.2626
+            ],
+            "repaint_p50_ms": 56.6595,
+            "repaint_p95_ms": 61.5075,
+            "baseline_peak_rss_bytes": 24784896,
+            "peak_rss_bytes": 28020736,
+            "incremental_peak_rss_bytes": 3235840,
+            "rgba_sha256": "5c252ab200b3c34e1e1d2dd1dae6020e1fef3e5e7c885e1b453cadabd151957b",
+            "dimensions": [
+              1024,
+              256
+            ]
+          }
+        ]
+      },
+      "summary": {
+        "baseline": {
+          "open_ms": 0.3,
+          "first_render_ms": 74.4474,
+          "repaint_p95_ms": 78.9193,
+          "incremental_peak_rss_bytes": 4112384
+        },
+        "current": {
+          "open_ms": 0.2709,
+          "first_render_ms": 52.0704,
+          "repaint_p95_ms": 61.5075,
+          "incremental_peak_rss_bytes": 3235840
+        },
+        "first_render_ratio": 0.6994253660974057,
+        "repaint_p95_ratio": 0.7793720927580452
+      },
+      "pdf_sha256": "29451a5c819cb19d9a024d13f1f037861e86c38f89aa5c206fb70e441563cf25"
+    },
+    "compound": {
+      "samples": {
+        "baseline": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3018,
+            "first_render_ms": 59.2444,
+            "repaint_ms_samples": [
+              54.7594,
+              55.051,
+              53.2744,
+              52.8397,
+              52.6979,
+              51.4795,
+              50.7524,
+              52.1359
+            ],
+            "repaint_p50_ms": 52.6979,
+            "repaint_p95_ms": 55.051,
+            "baseline_peak_rss_bytes": 24735744,
+            "peak_rss_bytes": 27488256,
+            "incremental_peak_rss_bytes": 2752512,
+            "rgba_sha256": "4eae3a2c9c28564f0199fad2a1cfed1b341ed56d763f052b5985253baaf7593f",
+            "dimensions": [
+              1024,
+              192
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2553,
+            "first_render_ms": 49.437,
+            "repaint_ms_samples": [
+              50.0212,
+              49.8052,
+              60.4739,
+              52.4039,
+              50.5607,
+              50.6544,
+              48.8871,
+              49.7971
+            ],
+            "repaint_p50_ms": 50.0212,
+            "repaint_p95_ms": 60.4739,
+            "baseline_peak_rss_bytes": 24850432,
+            "peak_rss_bytes": 27631616,
+            "incremental_peak_rss_bytes": 2781184,
+            "rgba_sha256": "4eae3a2c9c28564f0199fad2a1cfed1b341ed56d763f052b5985253baaf7593f",
+            "dimensions": [
+              1024,
+              192
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2601,
+            "first_render_ms": 48.6074,
+            "repaint_ms_samples": [
+              50.2999,
+              50.2399,
+              47.7186,
+              49.7116,
+              48.8739,
+              52.106,
+              51.303,
+              52.5214
+            ],
+            "repaint_p50_ms": 50.2399,
+            "repaint_p95_ms": 52.5214,
+            "baseline_peak_rss_bytes": 24735744,
+            "peak_rss_bytes": 27475968,
+            "incremental_peak_rss_bytes": 2740224,
+            "rgba_sha256": "4eae3a2c9c28564f0199fad2a1cfed1b341ed56d763f052b5985253baaf7593f",
+            "dimensions": [
+              1024,
+              192
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3614,
+            "first_render_ms": 51.9464,
+            "repaint_ms_samples": [
+              51.9494,
+              51.1516,
+              51.3639,
+              50.9225,
+              50.8745,
+              55.4376,
+              53.0383,
+              52.2341
+            ],
+            "repaint_p50_ms": 51.3639,
+            "repaint_p95_ms": 55.4376,
+            "baseline_peak_rss_bytes": 24653824,
+            "peak_rss_bytes": 27324416,
+            "incremental_peak_rss_bytes": 2670592,
+            "rgba_sha256": "4eae3a2c9c28564f0199fad2a1cfed1b341ed56d763f052b5985253baaf7593f",
+            "dimensions": [
+              1024,
+              192
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2843,
+            "first_render_ms": 51.3767,
+            "repaint_ms_samples": [
+              49.7329,
+              51.2963,
+              52.1257,
+              53.8241,
+              56.2169,
+              53.6347,
+              55.4667,
+              52.7609
+            ],
+            "repaint_p50_ms": 52.7609,
+            "repaint_p95_ms": 56.2169,
+            "baseline_peak_rss_bytes": 24801280,
+            "peak_rss_bytes": 27488256,
+            "incremental_peak_rss_bytes": 2686976,
+            "rgba_sha256": "4eae3a2c9c28564f0199fad2a1cfed1b341ed56d763f052b5985253baaf7593f",
+            "dimensions": [
+              1024,
+              192
+            ]
+          }
+        ],
+        "current": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3674,
+            "first_render_ms": 50.9934,
+            "repaint_ms_samples": [
+              52.1278,
+              52.0627,
+              50.2637,
+              49.8313,
+              50.5917,
+              49.8788,
+              54.2374,
+              55.6469
+            ],
+            "repaint_p50_ms": 50.5917,
+            "repaint_p95_ms": 55.6469,
+            "baseline_peak_rss_bytes": 24780800,
+            "peak_rss_bytes": 27557888,
+            "incremental_peak_rss_bytes": 2777088,
+            "rgba_sha256": "4eae3a2c9c28564f0199fad2a1cfed1b341ed56d763f052b5985253baaf7593f",
+            "dimensions": [
+              1024,
+              192
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2738,
+            "first_render_ms": 52.8046,
+            "repaint_ms_samples": [
+              52.3561,
+              50.1035,
+              49.6464,
+              48.2841,
+              49.6632,
+              49.3663,
+              49.8638,
+              49.7494
+            ],
+            "repaint_p50_ms": 49.6632,
+            "repaint_p95_ms": 52.3561,
+            "baseline_peak_rss_bytes": 24678400,
+            "peak_rss_bytes": 27394048,
+            "incremental_peak_rss_bytes": 2715648,
+            "rgba_sha256": "4eae3a2c9c28564f0199fad2a1cfed1b341ed56d763f052b5985253baaf7593f",
+            "dimensions": [
+              1024,
+              192
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2628,
+            "first_render_ms": 54.6674,
+            "repaint_ms_samples": [
+              56.5065,
+              55.7173,
+              58.3628,
+              56.3381,
+              56.9148,
+              57.318,
+              58.9122,
+              68.2755
+            ],
+            "repaint_p50_ms": 56.9148,
+            "repaint_p95_ms": 68.2755,
+            "baseline_peak_rss_bytes": 24797184,
+            "peak_rss_bytes": 27508736,
+            "incremental_peak_rss_bytes": 2711552,
+            "rgba_sha256": "4eae3a2c9c28564f0199fad2a1cfed1b341ed56d763f052b5985253baaf7593f",
+            "dimensions": [
+              1024,
+              192
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2346,
+            "first_render_ms": 56.6394,
+            "repaint_ms_samples": [
+              56.5993,
+              54.3677,
+              56.2346,
+              55.7839,
+              58.3678,
+              55.4564,
+              55.4044,
+              57.4334
+            ],
+            "repaint_p50_ms": 55.7839,
+            "repaint_p95_ms": 58.3678,
+            "baseline_peak_rss_bytes": 24543232,
+            "peak_rss_bytes": 27410432,
+            "incremental_peak_rss_bytes": 2867200,
+            "rgba_sha256": "4eae3a2c9c28564f0199fad2a1cfed1b341ed56d763f052b5985253baaf7593f",
+            "dimensions": [
+              1024,
+              192
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 1.1676,
+            "first_render_ms": 56.2118,
+            "repaint_ms_samples": [
+              56.9768,
+              57.0385,
+              56.4659,
+              61.8103,
+              56.0318,
+              58.3813,
+              56.5597,
+              61.0008
+            ],
+            "repaint_p50_ms": 56.9768,
+            "repaint_p95_ms": 61.8103,
+            "baseline_peak_rss_bytes": 24829952,
+            "peak_rss_bytes": 27615232,
+            "incremental_peak_rss_bytes": 2785280,
+            "rgba_sha256": "4eae3a2c9c28564f0199fad2a1cfed1b341ed56d763f052b5985253baaf7593f",
+            "dimensions": [
+              1024,
+              192
+            ]
+          }
+        ]
+      },
+      "summary": {
+        "baseline": {
+          "open_ms": 0.2843,
+          "first_render_ms": 51.3767,
+          "repaint_p95_ms": 55.4376,
+          "incremental_peak_rss_bytes": 2740224
+        },
+        "current": {
+          "open_ms": 0.2738,
+          "first_render_ms": 54.6674,
+          "repaint_p95_ms": 58.3678,
+          "incremental_peak_rss_bytes": 2777088
+        },
+        "first_render_ratio": 1.0640504353140625,
+        "repaint_p95_ratio": 1.052855823484422
+      },
+      "pdf_sha256": "aac37d895f115c4c4ad1f5d2232c55714def4075b562420bc1bfcd0f5403b0ec"
+    },
+    "ap-groups": {
+      "samples": {
+        "baseline": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3577,
+            "first_render_ms": 11.6068,
+            "repaint_ms_samples": [
+              12.5147,
+              13.042,
+              12.6045,
+              11.1507,
+              12.6305,
+              12.1621,
+              13.0136,
+              11.1475
+            ],
+            "repaint_p50_ms": 12.5147,
+            "repaint_p95_ms": 13.042,
+            "baseline_peak_rss_bytes": 24772608,
+            "peak_rss_bytes": 26005504,
+            "incremental_peak_rss_bytes": 1232896,
+            "rgba_sha256": "f55af08bfb15d744fe9fbe4e30213e26bac6cb1f6372134300e9dbc19a3c6560",
+            "dimensions": [
+              1024,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3672,
+            "first_render_ms": 10.4824,
+            "repaint_ms_samples": [
+              12.9687,
+              12.6747,
+              12.5396,
+              10.2188,
+              11.7337,
+              11.0642,
+              10.1552,
+              11.5151
+            ],
+            "repaint_p50_ms": 11.5151,
+            "repaint_p95_ms": 12.9687,
+            "baseline_peak_rss_bytes": 24629248,
+            "peak_rss_bytes": 25862144,
+            "incremental_peak_rss_bytes": 1232896,
+            "rgba_sha256": "f55af08bfb15d744fe9fbe4e30213e26bac6cb1f6372134300e9dbc19a3c6560",
+            "dimensions": [
+              1024,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.255,
+            "first_render_ms": 11.3478,
+            "repaint_ms_samples": [
+              11.8245,
+              9.8119,
+              11.0407,
+              11.6779,
+              9.7585,
+              11.092,
+              12.6234,
+              12.3434
+            ],
+            "repaint_p50_ms": 11.092,
+            "repaint_p95_ms": 12.6234,
+            "baseline_peak_rss_bytes": 24694784,
+            "peak_rss_bytes": 25944064,
+            "incremental_peak_rss_bytes": 1249280,
+            "rgba_sha256": "f55af08bfb15d744fe9fbe4e30213e26bac6cb1f6372134300e9dbc19a3c6560",
+            "dimensions": [
+              1024,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3209,
+            "first_render_ms": 13.1192,
+            "repaint_ms_samples": [
+              12.6181,
+              12.6462,
+              10.7835,
+              12.9969,
+              13.0446,
+              11.9995,
+              10.989,
+              12.4924
+            ],
+            "repaint_p50_ms": 12.4924,
+            "repaint_p95_ms": 13.0446,
+            "baseline_peak_rss_bytes": 24678400,
+            "peak_rss_bytes": 25903104,
+            "incremental_peak_rss_bytes": 1224704,
+            "rgba_sha256": "f55af08bfb15d744fe9fbe4e30213e26bac6cb1f6372134300e9dbc19a3c6560",
+            "dimensions": [
+              1024,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.291,
+            "first_render_ms": 11.9427,
+            "repaint_ms_samples": [
+              10.6382,
+              12.5161,
+              12.3928,
+              24.5259,
+              16.9261,
+              16.2094,
+              13.5146,
+              12.9874
+            ],
+            "repaint_p50_ms": 12.9874,
+            "repaint_p95_ms": 24.5259,
+            "baseline_peak_rss_bytes": 24768512,
+            "peak_rss_bytes": 26001408,
+            "incremental_peak_rss_bytes": 1232896,
+            "rgba_sha256": "f55af08bfb15d744fe9fbe4e30213e26bac6cb1f6372134300e9dbc19a3c6560",
+            "dimensions": [
+              1024,
+              64
+            ]
+          }
+        ],
+        "current": [
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.4456,
+            "first_render_ms": 11.0115,
+            "repaint_ms_samples": [
+              12.0032,
+              12.5779,
+              10.3041,
+              12.7741,
+              11.8829,
+              11.9864,
+              10.4737,
+              12.4355
+            ],
+            "repaint_p50_ms": 11.9864,
+            "repaint_p95_ms": 12.7741,
+            "baseline_peak_rss_bytes": 24788992,
+            "peak_rss_bytes": 25972736,
+            "incremental_peak_rss_bytes": 1183744,
+            "rgba_sha256": "f55af08bfb15d744fe9fbe4e30213e26bac6cb1f6372134300e9dbc19a3c6560",
+            "dimensions": [
+              1024,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.4671,
+            "first_render_ms": 12.8762,
+            "repaint_ms_samples": [
+              12.0035,
+              12.4334,
+              11.42,
+              18.4392,
+              14.5039,
+              12.13,
+              13.0957,
+              10.2409
+            ],
+            "repaint_p50_ms": 12.13,
+            "repaint_p95_ms": 18.4392,
+            "baseline_peak_rss_bytes": 24616960,
+            "peak_rss_bytes": 25784320,
+            "incremental_peak_rss_bytes": 1167360,
+            "rgba_sha256": "f55af08bfb15d744fe9fbe4e30213e26bac6cb1f6372134300e9dbc19a3c6560",
+            "dimensions": [
+              1024,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.2488,
+            "first_render_ms": 11.5409,
+            "repaint_ms_samples": [
+              10.0034,
+              13.1,
+              11.6595,
+              9.9197,
+              12.1936,
+              13.4277,
+              12.1256,
+              10.9574
+            ],
+            "repaint_p50_ms": 11.6595,
+            "repaint_p95_ms": 13.4277,
+            "baseline_peak_rss_bytes": 24719360,
+            "peak_rss_bytes": 25899008,
+            "incremental_peak_rss_bytes": 1179648,
+            "rgba_sha256": "f55af08bfb15d744fe9fbe4e30213e26bac6cb1f6372134300e9dbc19a3c6560",
+            "dimensions": [
+              1024,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.3177,
+            "first_render_ms": 11.7043,
+            "repaint_ms_samples": [
+              12.6656,
+              13.8116,
+              12.3582,
+              10.6448,
+              12.5006,
+              12.3207,
+              12.472,
+              10.6798
+            ],
+            "repaint_p50_ms": 12.3582,
+            "repaint_p95_ms": 13.8116,
+            "baseline_peak_rss_bytes": 24702976,
+            "peak_rss_bytes": 25911296,
+            "incremental_peak_rss_bytes": 1208320,
+            "rgba_sha256": "f55af08bfb15d744fe9fbe4e30213e26bac6cb1f6372134300e9dbc19a3c6560",
+            "dimensions": [
+              1024,
+              64
+            ]
+          },
+          {
+            "engine_version": "3.34.0",
+            "open_ms": 0.5484,
+            "first_render_ms": 15.3259,
+            "repaint_ms_samples": [
+              12.7895,
+              13.8445,
+              14.1692,
+              13.5013,
+              13.6888,
+              13.169,
+              13.7354,
+              15.1465
+            ],
+            "repaint_p50_ms": 13.6888,
+            "repaint_p95_ms": 15.1465,
+            "baseline_peak_rss_bytes": 24739840,
+            "peak_rss_bytes": 25821184,
+            "incremental_peak_rss_bytes": 1081344,
+            "rgba_sha256": "f55af08bfb15d744fe9fbe4e30213e26bac6cb1f6372134300e9dbc19a3c6560",
+            "dimensions": [
+              1024,
+              64
+            ]
+          }
+        ]
+      },
+      "summary": {
+        "baseline": {
+          "open_ms": 0.3209,
+          "first_render_ms": 11.6068,
+          "repaint_p95_ms": 13.042,
+          "incremental_peak_rss_bytes": 1232896
+        },
+        "current": {
+          "open_ms": 0.4456,
+          "first_render_ms": 11.7043,
+          "repaint_p95_ms": 13.8116,
+          "incremental_peak_rss_bytes": 1179648
+        },
+        "first_render_ratio": 1.0084002481304064,
+        "repaint_p95_ratio": 1.059009354393498
+      },
+      "pdf_sha256": "6a90cefc8cddfbdfdc157adcd8f464e622e15e438297f85f73091da9ed478f89"
+    }
+  }
+}

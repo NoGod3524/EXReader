@@ -1,6 +1,6 @@
 # 当前检查点与后续顺序
 
-2026-10-19，C11 SDK **3.34.0**，MIT，ABI1，schema6。分支 `codex/framework`。
+2026-10-19，C11 SDK **3.34.1**，MIT，ABI1，schema6。分支 `codex/framework`。
 
 完整历史及旧/新编号映射见[更新日志](../CHANGELOG.md)。
 
@@ -42,8 +42,8 @@ ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 
 - 显式DeviceRGB隔离子组的颜色切换已修复；本批另修正PDF组K极性，验收与剩余项见末尾记录。
 - DeviceCMYK图像/2–7型渐变原生分色已补齐；ICCBased/DeviceN到组空间的分色转换仍待扩展。
-- 非隔离/挖空组更多嵌套组合需独立参考覆盖，现有通过的样本不能证明全部正确。
-- 组裁小只用于顶层画布组；多数嵌套Form仍分配完整缓冲。
+- 非隔离/挖空组源alpha、背景移除与逐层坐标已修复，新增128场景；低alpha MuPDF外部差异仍待核验。软遮罩/AIS与组shape需继续审计。
+- 嵌套Form/AP裁小已补齐；24组整缓冲像素一致、工作分配至少减少97%、1000轮内存恒定；跨平台sanitizer待本批CI。
 - 轴向/径向Extend仍有限外推；Domain/BBox/Background尚需逐项核验。
 - 全库安全/格式审计尚未结束；本次已验证范围集中于近期PDF、画布与边框变更。
 
@@ -83,3 +83,16 @@ Java示例取消0.x限制；本批新CI已7/7通过，三桌面JNI实际执行�
 本地GCC/MSVC各137/137、ICC-OFF4/4、安装组件4/4、EXACT C++运行和13头编译通过；
 分色913检查，独立CMS参考最大差0。分层99/1025/898无逆向，原ABI仅版本化sink尾增长，
 旧304导出保留，新增一函数。证据见`validation/2026-10-19-native-inks.json`。
+
+
+## 3.34.1本地检查点
+
+代码修正源alpha/完整alpha混淆、复合元素shape替换、子组初始背景与坐标；嵌套Form/AP可裁小。
+GCC/MSVC各138/138、ICC-OFF5/5、安装组件4/4、EXACT C++运行和13头编译通过。
+6194项新检查；旧50场景golden不变；128场景Decimal最大差1，MuPDF低alpha差异最大11单独保留。
+24组裁小/整图逐字节一致、工作分配至少减少97%，1000轮内存恒定，五轮性能调查有原始样本。
+703项公开布局保持；核心/PDF3.34.1，其余3.33.0。记录见`validation/2026-10-19-nested-groups.json`。
+
+下一轮优先核验软遮罩与挖空的shape/opacity、AIS，以及透明Form进入时SMask应重置、组提交时应用；
+已有临时最小输入证明需要继续核对规范/外部输出。然后回到渐变Extend/Domain/BBox与WP4a。
+仍继续全部WP1–WP16（含4a/12a），移动真机、授权LCP及24 CPU小时fuzz的外部验收分别记录。

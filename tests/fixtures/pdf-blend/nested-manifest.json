@@ -1,0 +1,2565 @@
+{
+  "reference": "Decimal(40), source alpha excludes initial backdrop",
+  "scenes": [
+    {
+      "file": "nested-000.pdf",
+      "sha256": "658143235f97f9196c9eb77d9ecff39ad55faef99a83acaa5e35de24c6d5457a",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Normal",
+      "premultiplied": [
+        12,
+        61,
+        53,
+        102
+      ],
+      "white": [
+        165,
+        214,
+        207,
+        255
+      ]
+    },
+    {
+      "file": "nested-001.pdf",
+      "sha256": "b0e8c3da8f550ad95150dc4f34631aa7e2ba76c6a37842370b25538ba57626aa",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Multiply",
+      "premultiplied": [
+        11,
+        55,
+        51,
+        102
+      ],
+      "white": [
+        165,
+        208,
+        205,
+        255
+      ]
+    },
+    {
+      "file": "nested-002.pdf",
+      "sha256": "0a17fc840d4166bcf04246a80305d89c7a44457f17c866085ae84b0a1a69fd68",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Screen",
+      "premultiplied": [
+        14,
+        62,
+        58,
+        102
+      ],
+      "white": [
+        168,
+        215,
+        211,
+        255
+      ]
+    },
+    {
+      "file": "nested-003.pdf",
+      "sha256": "60e8adebc741af271958ea79c9d9b491df44c4ba26266ac3d7213bbe02b488b9",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Overlay",
+      "premultiplied": [
+        12,
+        59,
+        55,
+        102
+      ],
+      "white": [
+        165,
+        212,
+        208,
+        255
+      ]
+    },
+    {
+      "file": "nested-004.pdf",
+      "sha256": "32a80a104b8ac0fc10c4f521d58d2c1a6368b1b505eb7a4bade14bf300d5ac98",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Darken",
+      "premultiplied": [
+        12,
+        56,
+        53,
+        102
+      ],
+      "white": [
+        165,
+        209,
+        207,
+        255
+      ]
+    },
+    {
+      "file": "nested-005.pdf",
+      "sha256": "02e6408153ae2b2f3331e4c80797a171c8c9a5722638a54b31b68f2deb7236f6",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Lighten",
+      "premultiplied": [
+        14,
+        61,
+        55,
+        102
+      ],
+      "white": [
+        167,
+        214,
+        209,
+        255
+      ]
+    },
+    {
+      "file": "nested-006.pdf",
+      "sha256": "75982b862012df93fc73264c21c7320e252e83c397ebaffcd3c098b9e061c549",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "ColorDodge",
+      "premultiplied": [
+        14,
+        63,
+        60,
+        102
+      ],
+      "white": [
+        167,
+        217,
+        214,
+        255
+      ]
+    },
+    {
+      "file": "nested-007.pdf",
+      "sha256": "436bb8e7922c1746c40d4658dacd82cec84219e0e77a550b4a3cb75daaa1f774",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "ColorBurn",
+      "premultiplied": [
+        11,
+        54,
+        49,
+        102
+      ],
+      "white": [
+        165,
+        207,
+        203,
+        255
+      ]
+    },
+    {
+      "file": "nested-008.pdf",
+      "sha256": "d08493d0795246af9f6945ab9b1ddc0e6dc3093bc6cc80d0b5b1c0d114cf173b",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "HardLight",
+      "premultiplied": [
+        12,
+        60,
+        55,
+        102
+      ],
+      "white": [
+        165,
+        214,
+        208,
+        255
+      ]
+    },
+    {
+      "file": "nested-009.pdf",
+      "sha256": "d9eb0d438b37318eefadb8b4fe1ca8e4e6b0ccf55dbe4508a96cffb02f39b721",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "SoftLight",
+      "premultiplied": [
+        12,
+        58,
+        55,
+        102
+      ],
+      "white": [
+        165,
+        211,
+        208,
+        255
+      ]
+    },
+    {
+      "file": "nested-010.pdf",
+      "sha256": "f3e4e5ce6b23ae403cf50de490210a489fb3c26a513678841ce2046af8fbf188",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Difference",
+      "premultiplied": [
+        14,
+        56,
+        50,
+        102
+      ],
+      "white": [
+        167,
+        209,
+        203,
+        255
+      ]
+    },
+    {
+      "file": "nested-011.pdf",
+      "sha256": "c643482610f7f58ee527e9ab819784f43e4c8d87d424aa8a1d69ae2aa2ce2460",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Exclusion",
+      "premultiplied": [
+        14,
+        58,
+        54,
+        102
+      ],
+      "white": [
+        167,
+        211,
+        208,
+        255
+      ]
+    },
+    {
+      "file": "nested-012.pdf",
+      "sha256": "31d8174f216a476823b7f890f87982cffea745cfcfa90b1fb0ca17a5d5283799",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Hue",
+      "premultiplied": [
+        13,
+        57,
+        52,
+        102
+      ],
+      "white": [
+        166,
+        210,
+        205,
+        255
+      ]
+    },
+    {
+      "file": "nested-013.pdf",
+      "sha256": "c22bb6149eb3bffeba04879afeedf43ba1a2179694e284446bf32ec37154ca59",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Saturation",
+      "premultiplied": [
+        12,
+        56,
+        58,
+        102
+      ],
+      "white": [
+        165,
+        210,
+        211,
+        255
+      ]
+    },
+    {
+      "file": "nested-014.pdf",
+      "sha256": "b151b0bf73b40761c358838b3eff9b1fb2a7c2b081be6eff10147fe84f344680",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Color",
+      "premultiplied": [
+        11,
+        58,
+        52,
+        102
+      ],
+      "white": [
+        165,
+        211,
+        205,
+        255
+      ]
+    },
+    {
+      "file": "nested-015.pdf",
+      "sha256": "ac11022bb878e8a71d702be1e23d7e91977195bd73b258bf2a945a670db33a29",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Luminosity",
+      "premultiplied": [
+        16,
+        58,
+        58,
+        102
+      ],
+      "white": [
+        169,
+        211,
+        211,
+        255
+      ]
+    },
+    {
+      "file": "nested-016.pdf",
+      "sha256": "00c2c8d58b43a06fb60f6d777affc492de5dd272ce6cfcf3289fb80caf51630d",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Normal",
+      "premultiplied": [
+        35,
+        102,
+        120,
+        204
+      ],
+      "white": [
+        86,
+        153,
+        171,
+        255
+      ]
+    },
+    {
+      "file": "nested-017.pdf",
+      "sha256": "189d9cb0ff05913bf40de8d6625700095ed61d17cfb8c6cc28f3bb2e01e2ebef",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Multiply",
+      "premultiplied": [
+        33,
+        84,
+        112,
+        204
+      ],
+      "white": [
+        83,
+        134,
+        162,
+        255
+      ]
+    },
+    {
+      "file": "nested-018.pdf",
+      "sha256": "00ba17b66cd1505bc97821c3c8241f5e005ccd9f6b7175dd44cf7314f44ef780",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Screen",
+      "premultiplied": [
+        42,
+        105,
+        130,
+        204
+      ],
+      "white": [
+        93,
+        156,
+        181,
+        255
+      ]
+    },
+    {
+      "file": "nested-019.pdf",
+      "sha256": "d227bc8ace5a8749c2c36299e0179064d2e175bbef95f2d244658ed5d69acd0e",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Overlay",
+      "premultiplied": [
+        33,
+        96,
+        124,
+        204
+      ],
+      "white": [
+        84,
+        146,
+        174,
+        255
+      ]
+    },
+    {
+      "file": "nested-020.pdf",
+      "sha256": "b31ad0997c7c2b5e62d84ddb67f3f6721a9f1ae3c5e9e965f376d179a49e5619",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Darken",
+      "premultiplied": [
+        35,
+        87,
+        120,
+        204
+      ],
+      "white": [
+        86,
+        137,
+        171,
+        255
+      ]
+    },
+    {
+      "file": "nested-021.pdf",
+      "sha256": "3d6307d330ccf3a216a5c6d7ea1a658c20271e6b385321b5320841647f2dfb8a",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Lighten",
+      "premultiplied": [
+        40,
+        102,
+        122,
+        204
+      ],
+      "white": [
+        90,
+        153,
+        173,
+        255
+      ]
+    },
+    {
+      "file": "nested-022.pdf",
+      "sha256": "c591defd49e74627534ca973a1fd391b758fab5a87a2ab9093613820e3e6edaa",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "ColorDodge",
+      "premultiplied": [
+        40,
+        110,
+        137,
+        204
+      ],
+      "white": [
+        91,
+        160,
+        188,
+        255
+      ]
+    },
+    {
+      "file": "nested-023.pdf",
+      "sha256": "e7cdafb8202afa1004f1440d3747e0b7b3f2de90fd9e962e7d93846c6778b26c",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "ColorBurn",
+      "premultiplied": [
+        32,
+        81,
+        110,
+        204
+      ],
+      "white": [
+        83,
+        132,
+        160,
+        255
+      ]
+    },
+    {
+      "file": "nested-024.pdf",
+      "sha256": "dce7fe4afb33cc1d0d5e72e4ef7025649d10ed89a81c7c8595a1e3f4be56d16c",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "HardLight",
+      "premultiplied": [
+        33,
+        100,
+        124,
+        204
+      ],
+      "white": [
+        84,
+        151,
+        174,
+        255
+      ]
+    },
+    {
+      "file": "nested-025.pdf",
+      "sha256": "0759122815842fcc4883bc353af14e63f5aa082e720de73969fe9bdab4284517",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "SoftLight",
+      "premultiplied": [
+        35,
+        92,
+        123,
+        204
+      ],
+      "white": [
+        85,
+        143,
+        173,
+        255
+      ]
+    },
+    {
+      "file": "nested-026.pdf",
+      "sha256": "9000a0befb0f67efe5bb3782142d9a9487bb7935fe81de625f19b48125f91631",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Difference",
+      "premultiplied": [
+        36,
+        87,
+        101,
+        204
+      ],
+      "white": [
+        87,
+        137,
+        152,
+        255
+      ]
+    },
+    {
+      "file": "nested-027.pdf",
+      "sha256": "d29c66d7be97331d3b4cfb044f90b23675ce7594d9d50034039bd81d43f9a154",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Exclusion",
+      "premultiplied": [
+        42,
+        93,
+        118,
+        204
+      ],
+      "white": [
+        92,
+        143,
+        168,
+        255
+      ]
+    },
+    {
+      "file": "nested-028.pdf",
+      "sha256": "cec250f3cd310c2f42c14d49da62af4811ea29faf82ba9bb7b4c593746b4c419",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Hue",
+      "premultiplied": [
+        36,
+        90,
+        113,
+        204
+      ],
+      "white": [
+        86,
+        141,
+        163,
+        255
+      ]
+    },
+    {
+      "file": "nested-029.pdf",
+      "sha256": "0670bb292056a0346119ab9f71e84fa10ffeeb08b96f9599a983c0b9e74f5dc9",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Saturation",
+      "premultiplied": [
+        35,
+        88,
+        129,
+        204
+      ],
+      "white": [
+        85,
+        138,
+        180,
+        255
+      ]
+    },
+    {
+      "file": "nested-030.pdf",
+      "sha256": "07bd89e852343ebdef3cac55864c41ef74161b4d2ce193623fc2508c11b852e7",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Color",
+      "premultiplied": [
+        32,
+        92,
+        113,
+        204
+      ],
+      "white": [
+        83,
+        143,
+        163,
+        255
+      ]
+    },
+    {
+      "file": "nested-031.pdf",
+      "sha256": "05ee8c1b030ac23b8065e514869cbc47c5bac96b741ac123f1b74550a4b9407c",
+      "isolated": false,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Luminosity",
+      "premultiplied": [
+        47,
+        94,
+        130,
+        204
+      ],
+      "white": [
+        98,
+        145,
+        180,
+        255
+      ]
+    },
+    {
+      "file": "nested-032.pdf",
+      "sha256": "23a0de7159552a45935c1961394a9ccfd216ff2da1810637042294940b8811be",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Normal",
+      "premultiplied": [
+        10,
+        61,
+        51,
+        102
+      ],
+      "white": [
+        164,
+        214,
+        204,
+        255
+      ]
+    },
+    {
+      "file": "nested-033.pdf",
+      "sha256": "a011b77702cea8a76fce09ad37a6868fa9592a4ec6ecfbd4373606edd723b819",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Multiply",
+      "premultiplied": [
+        10,
+        55,
+        49,
+        102
+      ],
+      "white": [
+        164,
+        208,
+        202,
+        255
+      ]
+    },
+    {
+      "file": "nested-034.pdf",
+      "sha256": "c01a034bca00e6511f3170917702a5ea333572ffbfe0c6679f6ba3211d8481fd",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Screen",
+      "premultiplied": [
+        13,
+        62,
+        56,
+        102
+      ],
+      "white": [
+        166,
+        215,
+        209,
+        255
+      ]
+    },
+    {
+      "file": "nested-035.pdf",
+      "sha256": "b6439e59728043ce6ab99dea8db29dc1339c8a62dfcd28161e9653dc8439dc2c",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Overlay",
+      "premultiplied": [
+        10,
+        59,
+        52,
+        102
+      ],
+      "white": [
+        164,
+        212,
+        206,
+        255
+      ]
+    },
+    {
+      "file": "nested-036.pdf",
+      "sha256": "976178056e4f1cd700844796a566b2c706c055d56bb3661d0a0346a2c4d2b805",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Darken",
+      "premultiplied": [
+        10,
+        56,
+        51,
+        102
+      ],
+      "white": [
+        164,
+        209,
+        204,
+        255
+      ]
+    },
+    {
+      "file": "nested-037.pdf",
+      "sha256": "4318277fdba878a88801b3a61ab27416cc6549ba61d5b1b0ef78418707c951ef",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Lighten",
+      "premultiplied": [
+        13,
+        61,
+        53,
+        102
+      ],
+      "white": [
+        166,
+        214,
+        207,
+        255
+      ]
+    },
+    {
+      "file": "nested-038.pdf",
+      "sha256": "8229f7d3c375f78950897c16dbe2e811c015f2dbef1ac9fe72249bbcae42bebe",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "ColorDodge",
+      "premultiplied": [
+        13,
+        63,
+        59,
+        102
+      ],
+      "white": [
+        166,
+        217,
+        212,
+        255
+      ]
+    },
+    {
+      "file": "nested-039.pdf",
+      "sha256": "4c2aca12dfaf4e3d464526e4faf19134bba38c606158cff54d6e7e16d97cb5bf",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "ColorBurn",
+      "premultiplied": [
+        10,
+        54,
+        46,
+        102
+      ],
+      "white": [
+        164,
+        207,
+        199,
+        255
+      ]
+    },
+    {
+      "file": "nested-040.pdf",
+      "sha256": "511f346d4862d5de642f604f6bb887e3a76e1719def10954d2e2373a68727ffc",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "HardLight",
+      "premultiplied": [
+        10,
+        60,
+        52,
+        102
+      ],
+      "white": [
+        164,
+        214,
+        205,
+        255
+      ]
+    },
+    {
+      "file": "nested-041.pdf",
+      "sha256": "3d1847fe0c375b9743e7dde8c168baeab9cdcc51aaf0abfeaab42934f226994a",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "SoftLight",
+      "premultiplied": [
+        11,
+        58,
+        53,
+        102
+      ],
+      "white": [
+        164,
+        211,
+        206,
+        255
+      ]
+    },
+    {
+      "file": "nested-042.pdf",
+      "sha256": "278818d6642fb34ace1ddffd9e33252fb567b6d46f1d6010e1af77e77637fe41",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Difference",
+      "premultiplied": [
+        13,
+        56,
+        48,
+        102
+      ],
+      "white": [
+        166,
+        209,
+        202,
+        255
+      ]
+    },
+    {
+      "file": "nested-043.pdf",
+      "sha256": "848759efdc0cd47de6209ef91f55c5887b4ab7a0e4838aea84a664c3e8b8ec65",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Exclusion",
+      "premultiplied": [
+        13,
+        58,
+        52,
+        102
+      ],
+      "white": [
+        166,
+        211,
+        206,
+        255
+      ]
+    },
+    {
+      "file": "nested-044.pdf",
+      "sha256": "80a0a9208142794ace7618e27e0a87ae7d65f63fc378e5112737df6fe223f9af",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Hue",
+      "premultiplied": [
+        12,
+        57,
+        50,
+        102
+      ],
+      "white": [
+        165,
+        210,
+        203,
+        255
+      ]
+    },
+    {
+      "file": "nested-045.pdf",
+      "sha256": "136fa33e92a7cd3df11ba0c523bd4f6633ba47a1c2b6f56261ce80f2939a50dd",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Saturation",
+      "premultiplied": [
+        11,
+        56,
+        57,
+        102
+      ],
+      "white": [
+        164,
+        210,
+        210,
+        255
+      ]
+    },
+    {
+      "file": "nested-046.pdf",
+      "sha256": "74e2001420a5e68de19e1644c5a2b8328fd80127eb8c19a5f2cf2d120cc1119c",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Color",
+      "premultiplied": [
+        10,
+        58,
+        49,
+        102
+      ],
+      "white": [
+        164,
+        211,
+        203,
+        255
+      ]
+    },
+    {
+      "file": "nested-047.pdf",
+      "sha256": "59f093f1550f2bc3a6587989280e61aadff998e698f2ed5cc02fec5d7f45e7b6",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Luminosity",
+      "premultiplied": [
+        15,
+        58,
+        55,
+        102
+      ],
+      "white": [
+        168,
+        211,
+        209,
+        255
+      ]
+    },
+    {
+      "file": "nested-048.pdf",
+      "sha256": "61b5a1c651f694ea46e734d2fe08cb80e4e5b0cdd33e3e4904e72ce228aecb69",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Normal",
+      "premultiplied": [
+        31,
+        102,
+        113,
+        204
+      ],
+      "white": [
+        81,
+        153,
+        163,
+        255
+      ]
+    },
+    {
+      "file": "nested-049.pdf",
+      "sha256": "1030018a363ad0b477366f5e07d0f354b25769ffe7a729f336590db617ca75bb",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Multiply",
+      "premultiplied": [
+        31,
+        84,
+        107,
+        204
+      ],
+      "white": [
+        81,
+        134,
+        157,
+        255
+      ]
+    },
+    {
+      "file": "nested-050.pdf",
+      "sha256": "a18f16ad55c0cc2c6e4017d47ba23e49d0a869a27527e5f048e750413880f4db",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Screen",
+      "premultiplied": [
+        38,
+        105,
+        126,
+        204
+      ],
+      "white": [
+        89,
+        156,
+        177,
+        255
+      ]
+    },
+    {
+      "file": "nested-051.pdf",
+      "sha256": "a217bbc7c2d1dffa1e65369d3f5a44049a9c25198e0801835340dd8cbccebee4",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Overlay",
+      "premultiplied": [
+        31,
+        96,
+        117,
+        204
+      ],
+      "white": [
+        81,
+        146,
+        168,
+        255
+      ]
+    },
+    {
+      "file": "nested-052.pdf",
+      "sha256": "19db19936c6b118a6c8afa85fcd9513c1d0e3afcaa3e15f1c786e34c7a5b560d",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Darken",
+      "premultiplied": [
+        31,
+        87,
+        113,
+        204
+      ],
+      "white": [
+        81,
+        137,
+        163,
+        255
+      ]
+    },
+    {
+      "file": "nested-053.pdf",
+      "sha256": "dcd36661eb528a6dcb4fddace3f454a617e56ee765b94a88fc077b185ecdf8f9",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Lighten",
+      "premultiplied": [
+        38,
+        102,
+        120,
+        204
+      ],
+      "white": [
+        89,
+        153,
+        171,
+        255
+      ]
+    },
+    {
+      "file": "nested-054.pdf",
+      "sha256": "e52c6731f5e699107bdc73966e1b53d4641258851aae8530239226cb37f0beba",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "ColorDodge",
+      "premultiplied": [
+        38,
+        110,
+        135,
+        204
+      ],
+      "white": [
+        89,
+        160,
+        186,
+        255
+      ]
+    },
+    {
+      "file": "nested-055.pdf",
+      "sha256": "6f775cd0bf233e6206f3a62a8039fb7fa1f76f733ae599a7df88b1844d5180f4",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "ColorBurn",
+      "premultiplied": [
+        31,
+        81,
+        97,
+        204
+      ],
+      "white": [
+        81,
+        132,
+        148,
+        255
+      ]
+    },
+    {
+      "file": "nested-056.pdf",
+      "sha256": "267b64a022244d075028f3160e50b4bdcc09286debc6d5d6aba99e1dac83a352",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "HardLight",
+      "premultiplied": [
+        31,
+        100,
+        116,
+        204
+      ],
+      "white": [
+        81,
+        151,
+        166,
+        255
+      ]
+    },
+    {
+      "file": "nested-057.pdf",
+      "sha256": "07bd6c17e15d170ead288999818c73a32a9ab4c0c8c0d104736f9fb53ef9b135",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "SoftLight",
+      "premultiplied": [
+        32,
+        92,
+        118,
+        204
+      ],
+      "white": [
+        83,
+        143,
+        169,
+        255
+      ]
+    },
+    {
+      "file": "nested-058.pdf",
+      "sha256": "0df4e53d9f8701fb7ccbe0bd5eb5206faf88b53aab9ee021fedf2ee48f13475b",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Difference",
+      "premultiplied": [
+        38,
+        87,
+        105,
+        204
+      ],
+      "white": [
+        89,
+        137,
+        156,
+        255
+      ]
+    },
+    {
+      "file": "nested-059.pdf",
+      "sha256": "c954c30a0d30a55c6461355e9987ecc9f7b5ffc4baecfdbbe297e8037e53ecb6",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Exclusion",
+      "premultiplied": [
+        38,
+        93,
+        117,
+        204
+      ],
+      "white": [
+        89,
+        143,
+        168,
+        255
+      ]
+    },
+    {
+      "file": "nested-060.pdf",
+      "sha256": "fdb6c1b8a0f64f2994238222175ba62fb2bd9ad33baa7b01f676a7c32ca3d8f0",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Hue",
+      "premultiplied": [
+        35,
+        91,
+        109,
+        204
+      ],
+      "white": [
+        85,
+        141,
+        160,
+        255
+      ]
+    },
+    {
+      "file": "nested-061.pdf",
+      "sha256": "766dfedeb09ec2cf6e6005f2037f2f201b5363aa64c1889aa30923ee49045d24",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Saturation",
+      "premultiplied": [
+        32,
+        88,
+        129,
+        204
+      ],
+      "white": [
+        83,
+        139,
+        180,
+        255
+      ]
+    },
+    {
+      "file": "nested-062.pdf",
+      "sha256": "e7f92aa08b5b8094a056c0ec4d6fbe46e1d7c9c31e99f73253eec8ac832e087c",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Color",
+      "premultiplied": [
+        31,
+        93,
+        108,
+        204
+      ],
+      "white": [
+        81,
+        143,
+        159,
+        255
+      ]
+    },
+    {
+      "file": "nested-063.pdf",
+      "sha256": "da82cbb3c149a28d4cb09e0fd23085321282dbb5ffaeb70aaa2beac9aed6badf",
+      "isolated": false,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Luminosity",
+      "premultiplied": [
+        44,
+        93,
+        126,
+        204
+      ],
+      "white": [
+        95,
+        143,
+        177,
+        255
+      ]
+    },
+    {
+      "file": "nested-064.pdf",
+      "sha256": "2062a31eba6d3af17dfded4b8493a1d474f99d03de9a4701d03ee9b7cc84b9ec",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Normal",
+      "premultiplied": [
+        10,
+        61,
+        51,
+        102
+      ],
+      "white": [
+        164,
+        214,
+        204,
+        255
+      ]
+    },
+    {
+      "file": "nested-065.pdf",
+      "sha256": "c53e42aab1ea602698d7b3f8d4027fc932077c95899bac1973e3494b80399335",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Multiply",
+      "premultiplied": [
+        10,
+        55,
+        49,
+        102
+      ],
+      "white": [
+        164,
+        208,
+        202,
+        255
+      ]
+    },
+    {
+      "file": "nested-066.pdf",
+      "sha256": "8462a3ecf82d04af48114fcf7ac915c1c5ea75191dbc732edb641c6599fd18b7",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Screen",
+      "premultiplied": [
+        13,
+        62,
+        56,
+        102
+      ],
+      "white": [
+        166,
+        215,
+        209,
+        255
+      ]
+    },
+    {
+      "file": "nested-067.pdf",
+      "sha256": "7295ffae87b319382b6668269f518dfc3ed9432ae1f7acffff58a08d08e8e469",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Overlay",
+      "premultiplied": [
+        10,
+        59,
+        52,
+        102
+      ],
+      "white": [
+        164,
+        212,
+        206,
+        255
+      ]
+    },
+    {
+      "file": "nested-068.pdf",
+      "sha256": "82aebfd32abb088a7457b06e8e9b6cc5a2fa1f570f04dbdd753f1b924f1c4d98",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Darken",
+      "premultiplied": [
+        10,
+        56,
+        51,
+        102
+      ],
+      "white": [
+        164,
+        209,
+        204,
+        255
+      ]
+    },
+    {
+      "file": "nested-069.pdf",
+      "sha256": "67f84998a92267e6b06f9fbfa9f65eddc48bc5b5ce420f6b5504f58df0a7a524",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Lighten",
+      "premultiplied": [
+        13,
+        61,
+        53,
+        102
+      ],
+      "white": [
+        166,
+        214,
+        207,
+        255
+      ]
+    },
+    {
+      "file": "nested-070.pdf",
+      "sha256": "df7df6681e6fa5634a5a3d0da7225de5ea22f357725e8ef3aeb48d07290bb553",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "ColorDodge",
+      "premultiplied": [
+        13,
+        63,
+        59,
+        102
+      ],
+      "white": [
+        166,
+        217,
+        212,
+        255
+      ]
+    },
+    {
+      "file": "nested-071.pdf",
+      "sha256": "20de5fbfa18d55ba33bbc090418629b00e58e7f7adc3140256cd483bf529968b",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "ColorBurn",
+      "premultiplied": [
+        10,
+        54,
+        46,
+        102
+      ],
+      "white": [
+        164,
+        207,
+        199,
+        255
+      ]
+    },
+    {
+      "file": "nested-072.pdf",
+      "sha256": "20050aed103aa47623923b3e13d2868fc38bf9ec0ecad7aa6a96f08240f2763d",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "HardLight",
+      "premultiplied": [
+        10,
+        60,
+        52,
+        102
+      ],
+      "white": [
+        164,
+        214,
+        205,
+        255
+      ]
+    },
+    {
+      "file": "nested-073.pdf",
+      "sha256": "07d0f663a26061d933a159137a967a51c062e532a7c42792df1d306d16c241f3",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "SoftLight",
+      "premultiplied": [
+        11,
+        58,
+        53,
+        102
+      ],
+      "white": [
+        164,
+        211,
+        206,
+        255
+      ]
+    },
+    {
+      "file": "nested-074.pdf",
+      "sha256": "085ad7228704ba207c920a6a0673f57b17650748951dc01749ae44631d2d24f7",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Difference",
+      "premultiplied": [
+        13,
+        56,
+        48,
+        102
+      ],
+      "white": [
+        166,
+        209,
+        202,
+        255
+      ]
+    },
+    {
+      "file": "nested-075.pdf",
+      "sha256": "81a3397a8300c36701950e00030ce41412f2d12376a3912844f16da8b77f3cb3",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Exclusion",
+      "premultiplied": [
+        13,
+        58,
+        52,
+        102
+      ],
+      "white": [
+        166,
+        211,
+        206,
+        255
+      ]
+    },
+    {
+      "file": "nested-076.pdf",
+      "sha256": "e5662947a936bd6661ae7a7ea075f47d857f120ea2c633a568a6a73afc647423",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Hue",
+      "premultiplied": [
+        12,
+        57,
+        50,
+        102
+      ],
+      "white": [
+        165,
+        210,
+        203,
+        255
+      ]
+    },
+    {
+      "file": "nested-077.pdf",
+      "sha256": "cf4f1bc9f79dcf36ebd15b9744ba72795fc2707618654c0c4f712ae84515269c",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Saturation",
+      "premultiplied": [
+        11,
+        56,
+        57,
+        102
+      ],
+      "white": [
+        164,
+        210,
+        210,
+        255
+      ]
+    },
+    {
+      "file": "nested-078.pdf",
+      "sha256": "8cebfe67bc72aa984344e4ee3443ae6c0cb9e02e170ff3f7578c63da30510e45",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Color",
+      "premultiplied": [
+        10,
+        58,
+        49,
+        102
+      ],
+      "white": [
+        164,
+        211,
+        203,
+        255
+      ]
+    },
+    {
+      "file": "nested-079.pdf",
+      "sha256": "f74a3d359287d2a7979c238dc82f19f3a043445f14953643eb18a312149f973d",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 64,
+      "mode": "Luminosity",
+      "premultiplied": [
+        15,
+        58,
+        55,
+        102
+      ],
+      "white": [
+        168,
+        211,
+        209,
+        255
+      ]
+    },
+    {
+      "file": "nested-080.pdf",
+      "sha256": "c1617404df3a1c2699d0b45aa1cf515421b763324ca4f01f0c7d6d5dc94331e8",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Normal",
+      "premultiplied": [
+        31,
+        102,
+        113,
+        204
+      ],
+      "white": [
+        81,
+        153,
+        163,
+        255
+      ]
+    },
+    {
+      "file": "nested-081.pdf",
+      "sha256": "86a04ad363839bda08270c984e91e17f3225d8b75dc0f7593df6e0ddbddd7d75",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Multiply",
+      "premultiplied": [
+        31,
+        84,
+        107,
+        204
+      ],
+      "white": [
+        81,
+        134,
+        157,
+        255
+      ]
+    },
+    {
+      "file": "nested-082.pdf",
+      "sha256": "7cfceaab5e1dbe261b5e73645e32b106af567cfebd2002c8c4606168f3cac4c5",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Screen",
+      "premultiplied": [
+        38,
+        105,
+        126,
+        204
+      ],
+      "white": [
+        89,
+        156,
+        177,
+        255
+      ]
+    },
+    {
+      "file": "nested-083.pdf",
+      "sha256": "13cbcf1fe94f7ac7b8de045ad19ee4141a93c9dcf3c8c7576e569014e0327908",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Overlay",
+      "premultiplied": [
+        31,
+        96,
+        117,
+        204
+      ],
+      "white": [
+        81,
+        146,
+        168,
+        255
+      ]
+    },
+    {
+      "file": "nested-084.pdf",
+      "sha256": "b68430ac037987f4f5996d77e06d1c763950f7153a141ca1c1bbaafc9515a4bb",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Darken",
+      "premultiplied": [
+        31,
+        87,
+        113,
+        204
+      ],
+      "white": [
+        81,
+        137,
+        163,
+        255
+      ]
+    },
+    {
+      "file": "nested-085.pdf",
+      "sha256": "1fc994514b55c49ae45b90c5552ccfc36c1e1d06eff512e9fed465cd1291e2a2",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Lighten",
+      "premultiplied": [
+        38,
+        102,
+        120,
+        204
+      ],
+      "white": [
+        89,
+        153,
+        171,
+        255
+      ]
+    },
+    {
+      "file": "nested-086.pdf",
+      "sha256": "0fd3f2142e0416870ffee66aaa750b6022950563e991a3f5139ed6ff57264a63",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "ColorDodge",
+      "premultiplied": [
+        38,
+        110,
+        135,
+        204
+      ],
+      "white": [
+        89,
+        160,
+        186,
+        255
+      ]
+    },
+    {
+      "file": "nested-087.pdf",
+      "sha256": "c773c7ebdb3f9afd1e71f53feaa4db05f7f27555c74b2edc753c4557f9dce3fe",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "ColorBurn",
+      "premultiplied": [
+        31,
+        81,
+        97,
+        204
+      ],
+      "white": [
+        81,
+        132,
+        148,
+        255
+      ]
+    },
+    {
+      "file": "nested-088.pdf",
+      "sha256": "822b5ee57d76dd88590bbf6ca75535ef96242e04128651b037daf314f278e517",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "HardLight",
+      "premultiplied": [
+        31,
+        100,
+        116,
+        204
+      ],
+      "white": [
+        81,
+        151,
+        166,
+        255
+      ]
+    },
+    {
+      "file": "nested-089.pdf",
+      "sha256": "8d64a2765a44ef9ac18bc804eaea14dbfa36e97573d900ff7dcbe0a96712e86f",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "SoftLight",
+      "premultiplied": [
+        32,
+        92,
+        118,
+        204
+      ],
+      "white": [
+        83,
+        143,
+        169,
+        255
+      ]
+    },
+    {
+      "file": "nested-090.pdf",
+      "sha256": "1b508ff91fd08ba1e80f6ff395257909af0f8efa749c2af47b9c0a16c8bc3ef8",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Difference",
+      "premultiplied": [
+        38,
+        87,
+        105,
+        204
+      ],
+      "white": [
+        89,
+        137,
+        156,
+        255
+      ]
+    },
+    {
+      "file": "nested-091.pdf",
+      "sha256": "ee61b8f51393a8d1d0865442668c0266b8c5f65e663280870f0b38a8f7a07fd7",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Exclusion",
+      "premultiplied": [
+        38,
+        93,
+        117,
+        204
+      ],
+      "white": [
+        89,
+        143,
+        168,
+        255
+      ]
+    },
+    {
+      "file": "nested-092.pdf",
+      "sha256": "0de755aeabfe8bc9b3dbc484dcb41aa90d14ff2af19b817310f24b7fd1009af3",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Hue",
+      "premultiplied": [
+        35,
+        91,
+        109,
+        204
+      ],
+      "white": [
+        85,
+        141,
+        160,
+        255
+      ]
+    },
+    {
+      "file": "nested-093.pdf",
+      "sha256": "c9d10eca16e9ce0b39c0e7cb056a8604b71e1e440ed36ada6ef2c08a048d268d",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Saturation",
+      "premultiplied": [
+        32,
+        88,
+        129,
+        204
+      ],
+      "white": [
+        83,
+        139,
+        180,
+        255
+      ]
+    },
+    {
+      "file": "nested-094.pdf",
+      "sha256": "8304e8128c3d07075c1db680e653fa598eb2a7b2f9a4d1f682faa689653ef2d5",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Color",
+      "premultiplied": [
+        31,
+        93,
+        108,
+        204
+      ],
+      "white": [
+        81,
+        143,
+        159,
+        255
+      ]
+    },
+    {
+      "file": "nested-095.pdf",
+      "sha256": "54bc7d3d6a03c4a316eadab926c7f0c4ebc18c7779b2576b6ea23afe1d9a3975",
+      "isolated": true,
+      "child_isolated": false,
+      "background_alpha": 192,
+      "mode": "Luminosity",
+      "premultiplied": [
+        44,
+        93,
+        126,
+        204
+      ],
+      "white": [
+        95,
+        143,
+        177,
+        255
+      ]
+    },
+    {
+      "file": "nested-096.pdf",
+      "sha256": "daf318af14b8e24c1e2d8d24f36bbe2a2d34e908b8c4f46ffb04ce2250d85025",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Normal",
+      "premultiplied": [
+        10,
+        61,
+        51,
+        102
+      ],
+      "white": [
+        164,
+        214,
+        204,
+        255
+      ]
+    },
+    {
+      "file": "nested-097.pdf",
+      "sha256": "33938a029aec9754ac18b0f2c770d4585691a41c0b101c4ae80fcd7dd5bd5f80",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Multiply",
+      "premultiplied": [
+        10,
+        55,
+        49,
+        102
+      ],
+      "white": [
+        164,
+        208,
+        202,
+        255
+      ]
+    },
+    {
+      "file": "nested-098.pdf",
+      "sha256": "0ee15f916a5628d8bfe50b16ad9113946cb96332f02cb6400bdfbf60f0114b23",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Screen",
+      "premultiplied": [
+        13,
+        62,
+        56,
+        102
+      ],
+      "white": [
+        166,
+        215,
+        209,
+        255
+      ]
+    },
+    {
+      "file": "nested-099.pdf",
+      "sha256": "4b17f6b906551e0834f94045946646c7e25117806cd07dace7f254fca8ed2568",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Overlay",
+      "premultiplied": [
+        10,
+        59,
+        52,
+        102
+      ],
+      "white": [
+        164,
+        212,
+        206,
+        255
+      ]
+    },
+    {
+      "file": "nested-100.pdf",
+      "sha256": "f33ea0e102b8334e59cdbbdcf97b39616a9c132d6b25a1b88cc75b63e7e79183",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Darken",
+      "premultiplied": [
+        10,
+        56,
+        51,
+        102
+      ],
+      "white": [
+        164,
+        209,
+        204,
+        255
+      ]
+    },
+    {
+      "file": "nested-101.pdf",
+      "sha256": "73b2de9b60f5e3982b3182246490404227dad4c09d464a74d481291976e707b0",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Lighten",
+      "premultiplied": [
+        13,
+        61,
+        53,
+        102
+      ],
+      "white": [
+        166,
+        214,
+        207,
+        255
+      ]
+    },
+    {
+      "file": "nested-102.pdf",
+      "sha256": "b905346bef1b7de1f09bb629cc39824683df591c5fb8848e8c8e1dbd205ecdf2",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "ColorDodge",
+      "premultiplied": [
+        13,
+        63,
+        59,
+        102
+      ],
+      "white": [
+        166,
+        217,
+        212,
+        255
+      ]
+    },
+    {
+      "file": "nested-103.pdf",
+      "sha256": "5103659501d65d66a421e0fe272ac90831f68abc19e7df01cab8d2b51a6c05f0",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "ColorBurn",
+      "premultiplied": [
+        10,
+        54,
+        46,
+        102
+      ],
+      "white": [
+        164,
+        207,
+        199,
+        255
+      ]
+    },
+    {
+      "file": "nested-104.pdf",
+      "sha256": "914d9e955c793d2523b7a9e627082c5aa56861777b029f95cf2acc7bde094968",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "HardLight",
+      "premultiplied": [
+        10,
+        60,
+        52,
+        102
+      ],
+      "white": [
+        164,
+        214,
+        205,
+        255
+      ]
+    },
+    {
+      "file": "nested-105.pdf",
+      "sha256": "b0050cd92da4802c9a4d269559fdf366ef8549b2320f12834e962e9848288569",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "SoftLight",
+      "premultiplied": [
+        11,
+        58,
+        53,
+        102
+      ],
+      "white": [
+        164,
+        211,
+        206,
+        255
+      ]
+    },
+    {
+      "file": "nested-106.pdf",
+      "sha256": "89f1c9d02869276e2b7c535731ec14d8ff64595982edd27bfcc704821ef78fe3",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Difference",
+      "premultiplied": [
+        13,
+        56,
+        48,
+        102
+      ],
+      "white": [
+        166,
+        209,
+        202,
+        255
+      ]
+    },
+    {
+      "file": "nested-107.pdf",
+      "sha256": "2ef48c77e05c50d24a32ab8e2f4194b7403c1bc608d9e50b0c87827f35b42df6",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Exclusion",
+      "premultiplied": [
+        13,
+        58,
+        52,
+        102
+      ],
+      "white": [
+        166,
+        211,
+        206,
+        255
+      ]
+    },
+    {
+      "file": "nested-108.pdf",
+      "sha256": "cddfbc059941deb4151ccce0924879a7513aa3efb12ed4fa6b4ee4fe78c1d774",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Hue",
+      "premultiplied": [
+        12,
+        57,
+        50,
+        102
+      ],
+      "white": [
+        165,
+        210,
+        203,
+        255
+      ]
+    },
+    {
+      "file": "nested-109.pdf",
+      "sha256": "b21bd3a768c2478ab5c3db37fe9d0e171db78f3d20560207ad2f3270792b0e90",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Saturation",
+      "premultiplied": [
+        11,
+        56,
+        57,
+        102
+      ],
+      "white": [
+        164,
+        210,
+        210,
+        255
+      ]
+    },
+    {
+      "file": "nested-110.pdf",
+      "sha256": "86154f03e7d57ae5c1ea8eed8886b8b0d565499f20f15ae58e316d7b82cafc12",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Color",
+      "premultiplied": [
+        10,
+        58,
+        49,
+        102
+      ],
+      "white": [
+        164,
+        211,
+        203,
+        255
+      ]
+    },
+    {
+      "file": "nested-111.pdf",
+      "sha256": "7bbf3194d4ab3f9bc0b8b4ec1d5bc3a4f8572bcff2bdec5db5877d5ca621e82b",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 64,
+      "mode": "Luminosity",
+      "premultiplied": [
+        15,
+        58,
+        55,
+        102
+      ],
+      "white": [
+        168,
+        211,
+        209,
+        255
+      ]
+    },
+    {
+      "file": "nested-112.pdf",
+      "sha256": "8ae1fdead74ff7007c79d644b8a950a8a84529571a22d4fe8ac45fbbb244ac77",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Normal",
+      "premultiplied": [
+        31,
+        102,
+        113,
+        204
+      ],
+      "white": [
+        81,
+        153,
+        163,
+        255
+      ]
+    },
+    {
+      "file": "nested-113.pdf",
+      "sha256": "7dfe42bd925c4766ee37a13c5a345426820d998fffe425cba85e483dc23af27d",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Multiply",
+      "premultiplied": [
+        31,
+        84,
+        107,
+        204
+      ],
+      "white": [
+        81,
+        134,
+        157,
+        255
+      ]
+    },
+    {
+      "file": "nested-114.pdf",
+      "sha256": "c749dc8a4d4b83066e7375cb7c130ed97a139fb8f78cf27e6d15ef2078cc59c2",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Screen",
+      "premultiplied": [
+        38,
+        105,
+        126,
+        204
+      ],
+      "white": [
+        89,
+        156,
+        177,
+        255
+      ]
+    },
+    {
+      "file": "nested-115.pdf",
+      "sha256": "9461086369457e7723e752d3bec7b1216a374d7a2173d15070a0e7cd444728f8",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Overlay",
+      "premultiplied": [
+        31,
+        96,
+        117,
+        204
+      ],
+      "white": [
+        81,
+        146,
+        168,
+        255
+      ]
+    },
+    {
+      "file": "nested-116.pdf",
+      "sha256": "ca0278ad06d70ec2a9a6b63ad1a97f202c39cf8438f56c8f755e6a63f7fbade5",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Darken",
+      "premultiplied": [
+        31,
+        87,
+        113,
+        204
+      ],
+      "white": [
+        81,
+        137,
+        163,
+        255
+      ]
+    },
+    {
+      "file": "nested-117.pdf",
+      "sha256": "96bf4c381a1318a87352640c1dbb1991a7df8c5ef160503ca109e8e8df321b1c",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Lighten",
+      "premultiplied": [
+        38,
+        102,
+        120,
+        204
+      ],
+      "white": [
+        89,
+        153,
+        171,
+        255
+      ]
+    },
+    {
+      "file": "nested-118.pdf",
+      "sha256": "fad2b144a56071103ca09e3f115c171b67e0c096de490a84e98ccc4683fc8b43",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "ColorDodge",
+      "premultiplied": [
+        38,
+        110,
+        135,
+        204
+      ],
+      "white": [
+        89,
+        160,
+        186,
+        255
+      ]
+    },
+    {
+      "file": "nested-119.pdf",
+      "sha256": "4ebad0ecd6d347dd84949ed06b8c0d6de56f4fbb1f4cc8be8f7bc6a7834a9379",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "ColorBurn",
+      "premultiplied": [
+        31,
+        81,
+        97,
+        204
+      ],
+      "white": [
+        81,
+        132,
+        148,
+        255
+      ]
+    },
+    {
+      "file": "nested-120.pdf",
+      "sha256": "9d7761bb8f9856f3a63e78c257c1cad7e08fcd7031bc3765e4481f40eac95ba5",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "HardLight",
+      "premultiplied": [
+        31,
+        100,
+        116,
+        204
+      ],
+      "white": [
+        81,
+        151,
+        166,
+        255
+      ]
+    },
+    {
+      "file": "nested-121.pdf",
+      "sha256": "c6d44877deca3a2b4553ae9678b0ba38c58ab53efe14ac3ebe0057bf6231e792",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "SoftLight",
+      "premultiplied": [
+        32,
+        92,
+        118,
+        204
+      ],
+      "white": [
+        83,
+        143,
+        169,
+        255
+      ]
+    },
+    {
+      "file": "nested-122.pdf",
+      "sha256": "8292b955d1ad4f893322b4b33e37226b75482eb40a26bdd30e367fa57bd79375",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Difference",
+      "premultiplied": [
+        38,
+        87,
+        105,
+        204
+      ],
+      "white": [
+        89,
+        137,
+        156,
+        255
+      ]
+    },
+    {
+      "file": "nested-123.pdf",
+      "sha256": "373e7f2b43246919de87ab1551bef7fd9cb6cc0d652418dbcbb6e0f004ba7ecd",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Exclusion",
+      "premultiplied": [
+        38,
+        93,
+        117,
+        204
+      ],
+      "white": [
+        89,
+        143,
+        168,
+        255
+      ]
+    },
+    {
+      "file": "nested-124.pdf",
+      "sha256": "477a21470becb0566529c1931201f0f4473d31feae79aec547ad04ca7f0045eb",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Hue",
+      "premultiplied": [
+        35,
+        91,
+        109,
+        204
+      ],
+      "white": [
+        85,
+        141,
+        160,
+        255
+      ]
+    },
+    {
+      "file": "nested-125.pdf",
+      "sha256": "7611646a642d2a17eab316feaf5b6538e7ae276ba0bbda12d2fae66302ab10f2",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Saturation",
+      "premultiplied": [
+        32,
+        88,
+        129,
+        204
+      ],
+      "white": [
+        83,
+        139,
+        180,
+        255
+      ]
+    },
+    {
+      "file": "nested-126.pdf",
+      "sha256": "2e3da1e8c287dbdade79d63124a964c55a5bc89b4339adb3c7962d6bdb61a599",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Color",
+      "premultiplied": [
+        31,
+        93,
+        108,
+        204
+      ],
+      "white": [
+        81,
+        143,
+        159,
+        255
+      ]
+    },
+    {
+      "file": "nested-127.pdf",
+      "sha256": "d6d4b657f4e013568e6c2b514aabb48847b6fcd1ea3a6b724a9e912a328a7c0c",
+      "isolated": true,
+      "child_isolated": true,
+      "background_alpha": 192,
+      "mode": "Luminosity",
+      "premultiplied": [
+        44,
+        93,
+        126,
+        204
+      ],
+      "white": [
+        95,
+        143,
+        177,
+        255
+      ]
+    }
+  ]
+}

@@ -158,7 +158,7 @@ def cell_pixel(back, elements, x, y, isolated, knockout):
             src = tuple(D(v) / 255 for v in rgb)
             if knockout:
                 result = over(initial, src, a, mode)
-                group_alpha = result[3]
+                group_alpha = a
             else:
                 result = over(result, src, a, mode)
                 group_alpha += a * (1 - group_alpha)
@@ -178,7 +178,13 @@ def expected_pixels(pdf_w, pdf_h, cells, isolated, knockout, background=None, ma
             for x in range(CELL):
                 straight = cell_pixel(back, elements, x, y, isolated, knockout)
                 a = straight[3]
-                premul = tuple(v * a for v in straight[:3])
+                # Complete the group against its actual initial backdrop;
+                # group-only alpha never includes that backdrop's alpha.
+                if background is not None:
+                    complete = over(back, straight[:3], a, 'Normal')
+                    premul, a = complete[:3], complete[3]
+                else:
+                    premul = tuple(v * a for v in straight[:3])
                 comp = tuple(p + (1 - a) for p in premul)
                 i = ((pdf_h - 1 - (y0 + y)) * pdf_w + (x0 + x)) * 4
                 for k in range(3):

@@ -70,10 +70,12 @@ def group(back,elements,isolated=False,knockout=False):
         if callable(source):
             source,inner_alpha=source(initial if knockout else result);alpha*=inner_alpha
         if knockout:
-            if alpha:result=over(initial,source,alpha,mode)
+            if alpha:
+                result=over(initial,source,alpha,mode)
+                group_alpha=alpha
         else:
             result=over(result,source,alpha,mode)
-        group_alpha+=alpha*(1-group_alpha)
+            group_alpha+=alpha*(1-group_alpha)
     if not group_alpha:return (D(0),)*3,D(0)
     return tuple((v-(1-group_alpha)*b)/group_alpha for v,b in zip(result[:3],initial)),group_alpha
 
@@ -136,10 +138,10 @@ def self_test():
         ba=D(192)/255;back=tuple(v*ba for v in color((51,102,153)))+(ba,)
         elements=[(red,a,'Multiply'),(green,D(1)/255,'Normal'),(blue,a,'Screen')]
         knockout=group(back,elements,knockout=True)
-        # Group alpha is the union of every element's coverage, not just the top one.
-        last_alpha=D(1)/255;a_union=1-(1-a)*(1-last_alpha)*(1-a)
+        # Full geometric coverage replaces earlier group-only alpha. The
+        # backdrop's alpha is never counted as an element's source alpha.
         expected=over(back,blue,a,'Screen')
-        expected=tuple((v-(1-a_union)*b)/a_union for v,b in zip(expected[:3],back)),a_union
+        expected=tuple((v-(1-a)*b)/a for v,b in zip(expected[:3],back)),a
         assert knockout[1]==expected[1]
         for got,want in zip(knockout[0],expected[0]):
             assert abs(got-want)<D('1e-30'),(got,want)
@@ -148,6 +150,7 @@ def self_test():
         swapped=group(back,list(reversed(elements)),knockout=True)
         assert any(abs(x-y)>D('1e-6') for x,y in zip(knockout[0],swapped[0]))
         assert knockout[1]==swapped[1]
+        assert group(back,[(red,a,'Normal'),(green,D(1)/255,'Normal')],knockout=True)[1]==D(1)/255
         covered=group(back,[(red,a,'Normal')],knockout=True)
         zeroed=group(back,[(red,a,'Normal'),(green,D(0),'Normal')],knockout=True)
         assert covered==zeroed

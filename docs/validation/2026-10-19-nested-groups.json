@@ -1,0 +1,48 @@
+{
+  "version": "3.34.1",
+  "abi": 1,
+  "schema": 6,
+  "scenes": 128,
+  "region_scenarios": 24,
+  "scope_cycles": 1000,
+  "minimum_working_allocation_reduction_percent": 97,
+  "tests": {
+    "gcc": {
+      "count": 138,
+      "failures": 0,
+      "nested_output": "24 nested crop scenarios match whole buffers; minimum working allocation reduction 97%\n6194 nested group checks, maximum Decimal probe difference 1/255\n",
+      "dll_sha256": "9a89d6c7dcce2d812416228633228bc3c5cb3651276ac77439a8058137e1d1de"
+    },
+    "msvc": {
+      "count": 138,
+      "failures": 0,
+      "nested_output": "24 nested crop scenarios match whole buffers; minimum working allocation reduction 97%\n6194 nested group checks, maximum Decimal probe difference 1/255\n",
+      "dll_sha256": "46010cc2acdc23ba27a263581453ce5827fa55bee5413c9c2d5ebb57032b7443"
+    }
+  },
+  "icc_off": {
+    "count": 5,
+    "failures": 0
+  },
+  "abi_measurements_unchanged": 703,
+  "layers": {
+    "objects": 99,
+    "symbols": 1025,
+    "includes": 898,
+    "inverse": 0
+  },
+  "external_difference_from_decimal": {
+    "new": 1,
+    "baseline_3_34_0": 51,
+    "mupdf_1_28_2": 11,
+    "status": "MuPDF low-alpha differences remain open"
+  },
+  "performance": {
+    "original_six_cases": "2026-10-19-nested-benchmark.json",
+    "investigated_case": "state",
+    "initial_state_p95_ratio": 1.156,
+    "followup_64_repaints_per_round_p95_ratio": 0.97,
+    "followup": "2026-10-19-nested-state-followup.json",
+    "note": "Performance used the same algorithm before the version-string change; binaries are identified by their original hashes."
+  }
+}

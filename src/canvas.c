@@ -448,9 +448,11 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   if(cmyk && !c->cmyk_profile) { status=exr_icc_default_cmyk(&c->control,&c->cmyk_profile,e);if(status!=EXR_OK) return finish(c,status,e); }
   needs_state=!(flags&EXR_GROUP_ISOLATED) || (flags&EXR_GROUP_KNOCKOUT) || cmyk;
   region_width=c->bitmap.width;region_height=c->bitmap.height;
-  if(c->layer_depth==0 && c->clip && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
+  if(c->clip && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
     size_t x0=region_width,y0=region_height,x1=0,y1=0,xx,yy;
     for(yy=0;yy<region_height;yy++) {
+      if(exr_control_cancel(&c->control,e)!=EXR_OK) return finish(c,EXR_CANCELLED,e);
+      if(!exr_vector_work(&c->work,region_width)) return finish(c,exr_fail(e,EXR_LIMIT,"Group clip scan exceeds work budget"),e);
       for(xx=0;xx<region_width;xx++) {
         if(!c->clip->bitmap.pixels[yy*c->clip->bitmap.stride+xx]) continue;
         if(xx<x0) x0=xx;
@@ -462,6 +464,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
     if(x1>x0 && y1>y0 && (x1-x0)*(y1-y0)<=region_width*region_height/2) {
       region_x=(int)x0;region_y=(int)y0;region_width=x1-x0;region_height=y1-y0;
     }
+    else if(x1==0 || y1==0) region_width=region_height=1;
   }
   count=region_width*region_height;bytes=count*(needs_state ? 4+5*sizeof(float) : 4)+(cmyk ? count*6*sizeof(float) : 0);
   if(c->layer_depth==32 || bytes>64*1024*1024 || bytes>c->layer_budget-c->layer_bytes) return finish(c,exr_fail(e,EXR_LIMIT,"Group depth/byte budget exceeded"),e);
@@ -480,16 +483,23 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
     state->cmyk_profile=c->cmyk_profile;
     state->gray=gray;
     state->knockout=!!(flags&EXR_GROUP_KNOCKOUT);state->isolated=!!(flags&EXR_GROUP_ISOLATED);
+    state->origin_x=region_x;state->origin_y=region_y;
     /* Isolated groups start transparent, so the parent backdrop is not copied in.
        Inside a knockout group every element, including a nested group, composites
        with that group's initial backdrop rather than with the accumulated result. */
     if(!state->isolated) {
       const exr_bitmap *parent=&c->bitmap;const exr_composite_state *parent_state=c->composite;
-      if(c->composite && c->composite->knockout && !c->composite->isolated) { parent=&c->composite->backdrop;parent_state=c->composite->backdrop_state; }
-      status=exr_composite_initialize(&next,state,parent,parent_state,region_x,region_y,&c->work,&c->control,e);
+      int backdrop_x=region_x,backdrop_y=region_y;
+      if(c->composite && c->composite->knockout) {
+        if(c->composite->isolated || c->composite->backdrop_transparent) state->backdrop_transparent=1;
+        else {
+          parent=&c->composite->backdrop;parent_state=c->composite->backdrop_state;
+          backdrop_x+=c->composite->origin_x;backdrop_y+=c->composite->origin_y;
+        }
+      }
+      status=exr_composite_initialize(&next,state,parent,parent_state,backdrop_x,backdrop_y,&c->work,&c->control,e);
     }
     else state->depth=1;
-    state->origin_x=region_x;state->origin_y=region_y;
   }
   if(status!=EXR_OK) { free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,status,e); }
   layer.bitmap=c->bitmap;layer.composite=c->composite;layer.clip=c->clip;layer.pending=c->group;layer.group_depth=c->group_depth;layer.depth=c->depth;

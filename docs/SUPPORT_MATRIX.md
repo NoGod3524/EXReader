@@ -5,7 +5,7 @@
 [NATIVE_API.md](NATIVE_API.md) 与 [PERFORMANCE.md](PERFORMANCE.md)；本表随每批交付更新，
 发行时以本表为准。
 
-- 版本：**3.34.0 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
+- 版本：**3.34.1 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
 - 标记：**支持** = 有公开接口、边界与回归；**部分** = 有实现但覆盖/兼容未完整；**未支持** = 明确拒绝或不存在接口
 - 回归：`ctest` 名称，当前 `EXR_BUILD_FUZZ=ON` 下共 **120** 项；不开启时为 119 项
 
@@ -62,7 +62,7 @@
 | 元数据 | 支持 | Info/XMP 读取与增量写回 | `native-pdf-metadata-write`、`native-metadata` |
 | 认证 | 部分 | Standard R2–R6、RC4/AES、Crypt filter；**证书 PubSec、EFOpen、加密写回未支持** | `native-pdf-crypto` |
 | 色彩 | 部分 | Device/Indexed/CalGray/CalRGB/Lab、ICCBased v2/v4→sRGB、Separation/All/None/DeviceN、Type 0 函数；支持匹配尺寸软遮罩的原生分量Matte还原（先于ICC）；**OutputIntent 未支持**；默认DeviceCMYK完整Argyll ICC按zlib内嵌（414,609字节），不同于SWOP；关闭ICC时使用朴素换算 | `native-pdf-color`、`native-pdf-calculator`、`native-render-audit` |
-| 合成 | 支持（挖空、软遮罩）/ 部分（其余） | 16 种 RGB 混合模式、页面隔离、隔离/非隔离 Form/AP、挖空组（50 个场景）、图形状态软遮罩（Alpha/Luminosity、`BC`、指数 `TR`、矩阵/BBox、嵌套组提交、DeviceGray 组色空间、q/Q/None，41 场景 + 8 拒绝用例）；顶层组按clip区域裁小（嵌套Form仍常用整缓冲）；**非 Identity/指数型之外的 TR 未支持**；**DeviceCMYK 组**：画布四分量缓冲（`EXR_GROUP_CMYK`）+ sink 的 `path_cmyk` 源色回调；PDF 组已把 DeviceCMYK 填充/描边送入缓冲，未指定CS的嵌套组继承CMYK；显式DeviceRGB隔离子组在RGB中合成，提交时转换回父组空间，复合填充+描边按 CMYK 元素处理，DeviceCMYK图像与2–7型渐变通过8位原生分色进入CMYK缓冲（含Decode/Matte/遮罩），RGB组仍用RGBA；ICCBased/DeviceN到组空间的分色转换待扩展；减色可分离及非可分离混合公式已实现，后者独立回归目前覆盖中性CMY/K选择；软遮罩与挖空有组合回归。已修正PDF `/K true`为挖空、false/缺省为普通组，并重建50场景的PDF输入；更广非隔离/挖空组合仍待核验 | `native-blend`、`native-canvas`、`native-canvas-cmyk`、`native-pdf-group-reference`、`native-pdf-groupcs`、`native-inks` |
+| 合成 | 支持（挖空、软遮罩）/ 部分（其余） | 16 种 RGB 混合模式、页面隔离、隔离/非隔离 Form/AP、挖空组（50 个场景）、图形状态软遮罩（Alpha/Luminosity、`BC`、指数 `TR`、矩阵/BBox、嵌套组提交、DeviceGray 组色空间、q/Q/None，41 场景 + 8 拒绝用例）；各层组按clip区域裁小（含嵌套Form/AP）；24组整图逐字节一致，工作分配至少降低97%；**非 Identity/指数型之外的 TR 未支持**；**DeviceCMYK 组**：画布四分量缓冲（`EXR_GROUP_CMYK`）+ sink 的 `path_cmyk` 源色回调；PDF 组已把 DeviceCMYK 填充/描边送入缓冲，未指定CS的嵌套组继承CMYK；显式DeviceRGB隔离子组在RGB中合成，提交时转换回父组空间，复合填充+描边按 CMYK 元素处理，DeviceCMYK图像与2–7型渐变通过8位原生分色进入CMYK缓冲（含Decode/Matte/遮罩），RGB组仍用RGBA；ICCBased/DeviceN到组空间的分色转换待扩展；减色可分离及非可分离混合公式已实现，后者独立回归目前覆盖中性CMY/K选择；软遮罩与挖空有组合回归。已修正PDF `/K true`为挖空、false/缺省为普通组，并重建50场景的PDF输入；新增128组嵌套源alpha参考，最大内部差1/255；低alpha外部MuPDF差异仍待核验 | `native-blend`、`native-canvas`、`native-canvas-cmyk`、`native-pdf-group-reference`、`native-pdf-groupcs`、`native-inks`、`native-nested-groups` |
 | 标注 | 部分 | Text/Highlight/Underline/StrikeOut/Squiggly 增删改与外观；**其余类型与 AcroForm 未支持** | `native-pdf-markup`、`native-pdf-appearance`、`native-pdf-write` |
 | 安全 redaction | 未支持 | 现有增量删除保留历史原文，不能充当擦除 | — |
 | OCR | 未支持 | 无后端、无文字层 | — |
@@ -83,7 +83,7 @@
 | --- | --- | --- | --- |
 | C SDK | 支持 | 303 个 `EXR_API` 函数全部导出、`struct_size` 前缀兼容 | `native-abi`、`native-core` |
 | C++ / Swift / JNI 适配 | 支持 | 安装后消费示例与 `-Xcheck:jni` | `native-fixed-example`、`native-wave-example` |
-| 安装与包配置 | 支持 | `find_package(EXReader 3.34.0 EXACT CONFIG REQUIRED)` | CI 安装作业 |
+| 安装与包配置 | 支持 | `find_package(EXReader 3.34.1 EXACT CONFIG REQUIRED)` | CI 安装作业 |
 | 桌面三平台 | 支持 | Windows/Linux/macOS 全量 CTest + 安装消费 | CI `desktop` |
 | Android / iOS / iPadOS | 部分 | **仅库编译与 Swift 适配检查**，无真机/模拟器阅读验证 | CI `android`、`apple-mobile` |
 | 嵌入阅读视图 / 示例 App / TTS / 无障碍 / OPDS / LCP | 未支持 | 目标见 [VERSIONING.md](VERSIONING.md) | — |

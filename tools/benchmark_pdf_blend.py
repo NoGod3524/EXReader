@@ -46,7 +46,7 @@ def peak_rss():
     return value if sys.platform=='darwin' else value*1024
 
 
-def measure(library,book,scale):
+def measure(library,book,scale,repaints=8):
     directory=os.add_dll_directory(str(library.parent)) if sys.platform=='win32' else None
     engine=c.CDLL(str(library))
     engine.exr_fixed_open.argtypes=[c.c_char_p,c.c_void_p,c.POINTER(c.c_void_p),c.POINTER(Error)]
@@ -60,7 +60,7 @@ def measure(library,book,scale):
     if status:raise RuntimeError(f'{status}: {error.message.decode("utf-8")}')
     timings=[];signature=None
     try:
-        for _ in range(9):
+        for _ in range(repaints+1):
             bitmap=Bitmap();before=time.perf_counter_ns()
             status=engine.exr_fixed_render(document,0,scale,None,c.byref(bitmap),c.byref(error))
             elapsed=(time.perf_counter_ns()-before)/1e6
@@ -87,11 +87,13 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('library',type=Path);parser.add_argument('fixtures',type=Path);parser.add_argument('output',type=Path)
     parser.add_argument('--runs',type=int,default=3);parser.add_argument('--scale',type=float,default=4)
+    parser.add_argument('--repaints',type=int,default=8)
     parser.add_argument('--case',action='append',choices=('flat','primitives','state','groups','compound','ap-groups','nonisolated','ap-nonisolated'));parser.add_argument('--child',metavar='CASE');args=parser.parse_args()
     if not 1<=args.runs<=20 or not .25<=args.scale<=4:parser.error('runs: 1..20, scale: .25..4')
+    if not 8<=args.repaints<=1000:parser.error('repaints: 8..1000')
     args.library=args.library.resolve();args.fixtures=args.fixtures.resolve()
     if args.child:
-        print(json.dumps(measure(args.library,args.fixtures/args.child,args.scale)));return
+        print(json.dumps(measure(args.library,args.fixtures/args.child,args.scale,args.repaints)));return
     report={'platform':platform.platform(),'host':sys.version,'library_sha256':hashlib.sha256(args.library.read_bytes()).hexdigest(),
         'library_bytes':args.library.stat().st_size,'scale':args.scale,'runs':args.runs,
         'scope':'One-page original PDF probes; fresh Python/ctypes processes; RSS includes host; disk cache/background load uncontrolled; repeated repaint, not page navigation.', 'cases':{}}
@@ -100,7 +102,7 @@ def main():
         records=[]
         for run in range(args.runs):
             result=subprocess.run([sys.executable,str(Path(__file__).resolve()),str(args.library),str(args.fixtures),str(args.output),
-                '--scale',str(args.scale),'--child',name+'.pdf'],capture_output=True,text=True,timeout=120)
+                '--scale',str(args.scale),'--repaints',str(args.repaints),'--child',name+'.pdf'],capture_output=True,text=True,timeout=120)
             if result.returncode:raise RuntimeError(result.stderr)
             record=json.loads(result.stdout);records.append(record)
             (args.output/f'{name}-{run+1}.json').write_text(json.dumps(record,indent=2)+'\n',encoding='utf-8')

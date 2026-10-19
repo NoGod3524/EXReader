@@ -84,12 +84,10 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
   }
   if(status==EXR_OK && layer) {
-    /* Appearance groups depend on whole-canvas buffer semantics; keep them out of
-       the region-sized working buffers until that path is reworked. */
     status=exr_sink_begin_group(sink,1,EXR_BLEND_NORMAL,
       (layer&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|(layer&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0)|
       (layer&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|(layer&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0)|
-      (layer&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0)|EXR_GROUP_WHOLE_BUFFER,e);
+      (layer&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0),e);
     if(status==EXR_OK) begun=1;
   }
   if(status==EXR_OK) status=exr_pdf_paint_content_ex(file,resources,content,size,matrix,&consumer,program,context,work,control,e);
