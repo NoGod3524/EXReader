@@ -120,7 +120,8 @@ static void soft_mask_budget(void) {
 }
 static void prefixes(void) {
   const size_t offsets[]={offsetof(exr_draw_sink_ex,soft_mask),offsetof(exr_draw_sink_ex,extent),
-    offsetof(exr_draw_sink_ex,shading),offsetof(exr_draw_sink_ex,path_cmyk)};
+    offsetof(exr_draw_sink_ex,shading),offsetof(exr_draw_sink_ex,path_cmyk),
+    offsetof(exr_draw_sink_ex,image_cmyk),offsetof(exr_draw_sink_ex,image_space)};
   size_t i;exr_canvas *c=canvas(0);
   for(i=0;i<sizeof(offsets)/sizeof(*offsets);i++) {
     exr_draw_sink_ex s={0};unsigned char *bytes=(unsigned char *)&s;

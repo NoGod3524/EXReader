@@ -51,22 +51,23 @@ static void store(exr_bitmap *bitmap,size_t index,const double rgb[3],unsigned c
   p[3]=alpha;
 }
 static exr_status sample(exr_pdf_function *function,exr_pdf_colorspace *space,unsigned intent,
-                         double t,double rgb[3],exr_error *e) {
+                         double t,double rgb[3],exr_bitmap *inks,size_t index,exr_error *e) {
   double out[EXR_PDF_MAX_COLORANTS]={0};
   exr_status status=exr_pdf_function_eval(function,t,out,e);
   if(status!=EXR_OK) return status;
+  if(inks->pixels) { unsigned k;for(k=0;k<4;k++) inks->pixels[index*4+k]=(unsigned char)floor(fmax(0,fmin(1,out[k]))*255+.5); }
   return exr_pdf_colorspace_rgb_intent(space,out,rgb,intent,e);
 }
 
 exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,
                                 uint32_t value,const double ctm[6],const exr_pdf_paint_state *paint,size_t *work,
-                                exr_pdf_shading_fn emit,void *context,
+                                exr_pdf_shading_fn emit,void *context,unsigned native_cmyk,
                                 const exr_control *control,exr_error *e) {
   uint32_t id,coords_id,function_id,cs_id;const exr_pdf_value *v;double coords[6]={0},t;
   unsigned intent=paint->intent;
   int extend0=0,extend1=0,type=0;unsigned i,components=1,ncoords;
   exr_pdf_colorspace *space=NULL;exr_pdf_function *function=NULL;
-  exr_bitmap bitmap={0};double matrix[6],local[6];exr_status status=EXR_OK;
+  exr_bitmap bitmap={0},inks={0};double matrix[6],local[6];exr_status status=EXR_OK;
   if(!emit) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
   if(exr_pdf_resolve(file,value,&value,e)!=EXR_OK) return e->code;
   v=exr_pdf_value_at(file,value);
@@ -75,7 +76,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
   if(exr_pdf_resolve(file,exr_pdf_get(file,value,"ShadingType"),&id,e)!=EXR_OK) return e->code;
   { double n; if(!number(file,id,&n)) return exr_fail(e,EXR_FORMAT,"Invalid PDF shading type"); type=(int)n; }
   if(type>=4 && type<=7) {
-    status=exr_pdf_shading_mesh(file,resource_file,resources,value,type,ctm,paint,work,emit,context,control,e);
+    status=exr_pdf_shading_mesh(file,resource_file,resources,value,type,ctm,paint,work,emit,context,native_cmyk,control,e);
     return status;
   }
   if(v->kind!=EXR_PDF_DICT) return exr_fail(e,EXR_FORMAT,"PDF shading is not a dictionary");
@@ -121,11 +122,15 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
     bitmap.stride=AXIAL_SAMPLES*4;
     bitmap.pixels=calloc((size_t)bitmap.stride,1);
     if(!bitmap.pixels) { exr_pdf_function_free(function);exr_pdf_colorspace_free(space);return exr_fail(e,EXR_MEMORY,"PDF shading bitmap allocation failed"); }
+    if(native_cmyk && exr_pdf_colorspace_device(space)==EXR_PDF_DEVICE_CMYK) {
+      inks=bitmap;inks.pixels=calloc((size_t)bitmap.stride*bitmap.height,1);
+      if(!inks.pixels) { status=exr_fail(e,EXR_MEMORY,"PDF shading ink allocation failed");goto done; }
+    }
     for(i=0;i<AXIAL_SAMPLES && status==EXR_OK;i++) {
       if(exr_control_cancel(control,e)!=EXR_OK) { status=EXR_CANCELLED;break; }
       double rgb[3]={0},u=t0+((double)i+0.5)/AXIAL_SAMPLES*(t1-t0);
       t=u<0 ? 0 : u>1 ? 1 : u;
-      status=sample(function,space,intent,t,rgb,e);
+      status=sample(function,space,intent,t,rgb,&inks,i,e);
       store(&bitmap,i,rgb,((u<0 && !extend0) || (u>1 && !extend1)) ? 0 : 255);
     }
     if(status==EXR_OK) {
@@ -138,7 +143,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
         local[2]=px*2*h;local[3]=py*2*h;
         local[4]=coords[0]+t0*ax-h*px;local[5]=coords[1]+t0*ay-h*py;
         multiply(ctm,local,matrix);
-        status=emit(context,&bitmap,matrix,paint,e);
+        status=emit(context,&bitmap,inks.pixels ? &inks : NULL,matrix,paint,e);
       }
     }
   } else {
@@ -159,6 +164,10 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
     bitmap.stride=RADIAL_SAMPLES*4;
     bitmap.pixels=calloc((size_t)bitmap.stride*RADIAL_SAMPLES,1);
     if(!bitmap.pixels) { exr_pdf_function_free(function);exr_pdf_colorspace_free(space);return exr_fail(e,EXR_MEMORY,"PDF shading bitmap allocation failed"); }
+    if(native_cmyk && exr_pdf_colorspace_device(space)==EXR_PDF_DEVICE_CMYK) {
+      inks=bitmap;inks.pixels=calloc((size_t)bitmap.stride*bitmap.height,1);
+      if(!inks.pixels) { status=exr_fail(e,EXR_MEMORY,"PDF shading ink allocation failed");goto done; }
+    }
     for(i=0;i<RADIAL_SAMPLES*RADIAL_SAMPLES && status==EXR_OK;i++) {
       unsigned row=i/RADIAL_SAMPLES,col=i%RADIAL_SAMPLES;
       if(!col && exr_control_cancel(control,e)!=EXR_OK) { status=EXR_CANCELLED;break; }
@@ -168,17 +177,17 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
       if(!radial_parameter(x,y,coords,&t)) { store(&bitmap,i,rgb,0); continue; }
       if(t<0) { if(!extend0) { store(&bitmap,i,rgb,0); continue; } t=0; }
       if(t>1) { if(!extend1) { store(&bitmap,i,rgb,0); continue; } t=1; }
-      status=sample(function,space,intent,t,rgb,e);
+      status=sample(function,space,intent,t,rgb,&inks,i,e);
       store(&bitmap,i,rgb,255);
     }
     if(status==EXR_OK) {
       local[0]=right-left;local[1]=0;local[2]=0;local[3]=bottom-top;
       local[4]=left;local[5]=top;
       multiply(ctm,local,matrix);
-      status=emit(context,&bitmap,matrix,paint,e);
+      status=emit(context,&bitmap,inks.pixels ? &inks : NULL,matrix,paint,e);
     }
   }
 done:
-  free(bitmap.pixels);exr_pdf_function_free(function);exr_pdf_colorspace_free(space);
+  free(inks.pixels);free(bitmap.pixels);exr_pdf_function_free(function);exr_pdf_colorspace_free(space);
   return status;
 }

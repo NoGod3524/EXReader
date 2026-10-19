@@ -113,24 +113,31 @@ static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_erro
 }
 static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *e) {
   pdf_painter *r=context; exr_vector_texture *image=NULL; double matrix[6]; const double flip[6]={1,0,0,-1,0,1};
-  exr_status status; unsigned char *mask=NULL; if(!r->sink.base.image) return EXR_OK;
+  exr_bitmap inks={0};int native=r->sink.image_cmyk && (!r->sink.image_space || r->sink.image_space(r->sink.base.context)==EXR_GROUP_CMYK);
+  exr_status status; unsigned char *mask=NULL; if(!r->sink.base.image && !native) return EXR_OK;
   if(paint->fill.space==EXR_PDF_DEVICE_CMYK && !r->cmyk_profile) { status=exr_icc_default_cmyk(r->control,&r->cmyk_profile,e);if(status!=EXR_OK) return status; }
-  status=exr_pdf_image_load_from(file,id,resource_file,resources,rgba(r,&paint->fill,paint->intent),paint->intent,&image,r->work,r->control,e);
+  status=exr_pdf_image_load_inks(file,id,resource_file,resources,rgba(r,&paint->fill,paint->intent),paint->intent,&image,native ? &inks : NULL,r->work,r->control,e);
   multiply(paint->matrix,flip,matrix);
   if(status==EXR_OK) status=blend_state(r,paint->blend,e);
   if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
-  if(status==EXR_OK) status=r->sink.base.image(r->sink.base.context,image,matrix,paint->fill.alpha,e);
+  if(status==EXR_OK && inks.pixels) status=r->sink.image_cmyk(r->sink.base.context,image,&inks,matrix,paint->fill.alpha,e);
+  else if(status==EXR_OK && r->sink.base.image) status=r->sink.base.image(r->sink.base.context,image,matrix,paint->fill.alpha,e);
+  else if(status==EXR_OK) status=exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks RGB image support");
   if(mask) status=mask_end(r,mask,status,e);
-  exr_pdf_image_release(image); return status;
+  exr_pdf_image_release(image);free(inks.pixels); return status;
+}
+static unsigned image_space(void *context) {
+  pdf_painter *r=context;
+  return r->sink.image_cmyk && (!r->sink.image_space || r->sink.image_space(r->sink.base.context)==EXR_GROUP_CMYK) ? EXR_GROUP_CMYK : EXR_GROUP_RGB;
 }
 static exr_status begin_group_event(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
   pdf_painter *r=context;return exr_sink_begin_group(&r->sink,opacity,mode,flags,e);
 }
-static exr_status shading_event(void *context,const exr_bitmap *bitmap,const double matrix[6],
+static exr_status shading_event(void *context,const exr_bitmap *bitmap,const exr_bitmap *inks,const double matrix[6],
                                const exr_pdf_paint_state *paint,exr_error *e) {
   pdf_painter *r=context;
   exr_status status;unsigned char *mask=NULL;int begun=0;
-  if(!r->sink.shading) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
+  if(!r->sink.shading && !(inks && r->sink.image_cmyk)) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
   if(paint->fill.alpha!=1) {
     status=exr_sink_begin_group(&r->sink,paint->fill.alpha,paint->blend,EXR_GROUP_ISOLATED,e);
     if(status!=EXR_OK) return status;
@@ -138,7 +145,10 @@ static exr_status shading_event(void *context,const exr_bitmap *bitmap,const dou
   }
   status=blend_state(r,begun ? EXR_BLEND_NORMAL : paint->blend,e);
   if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
-  if(status==EXR_OK) status=r->sink.shading(r->sink.base.context,bitmap,matrix,e);
+  if(status==EXR_OK && inks && r->sink.image_cmyk) {
+    exr_image_layer layer={0};layer.bitmap=*bitmap;layer.interpolate=1;
+    status=r->sink.image_cmyk(r->sink.base.context,&layer,inks,matrix,1,e);
+  } else if(status==EXR_OK) status=r->sink.shading(r->sink.base.context,bitmap,matrix,e);
   if(mask) status=mask_end(r,mask,status,e);
   if(begun) { exr_error cleanup={0};exr_status closed=r->sink.end_layer(r->sink.base.context,status==EXR_OK,status==EXR_OK ? e : &cleanup);if(status==EXR_OK) status=closed; }
   return status;
@@ -149,10 +159,10 @@ static exr_status end_layer_event(void *context,unsigned commit,exr_error *e) {
 exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
                                   const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *program_context,
                                   size_t *work,const exr_control *control,exr_error *e) {
-  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,shading_event,begin_group_event,end_layer_event}; size_t i,local_work=0; exr_status status;
+  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,shading_event,begin_group_event,end_layer_event,image_space}; size_t i,local_work=0; exr_status status;
   if(!file) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint input");
   status=exr_draw_sink_snapshot(sink,&r.sink,e);if(status!=EXR_OK) return status;
-  if(!r.sink.base.path && !r.sink.base.image && !r.sink.base.clip && !r.sink.base.state) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint consumer");
+  if(!r.sink.base.path && !r.sink.base.image && !r.sink.base.clip && !r.sink.base.state && !r.sink.image_cmyk && !r.sink.path_cmyk && !r.sink.shading) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint consumer");
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   r.program=program; r.program_context=program_context; r.control=control; r.work=work ? work : &local_work; r.file=file;
   if(FT_Init_FreeType(&r.library)) return exr_fail(e,EXR_MEMORY,"PDF font library initialization failed");

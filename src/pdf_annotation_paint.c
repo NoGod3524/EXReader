@@ -14,6 +14,12 @@ static exr_status scope_clip(void *context,const exr_path_segment *path,size_t c
 static exr_status scope_image(void *context,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
   paint_scope *s=context; return s->target->base.image(s->target->base.context,image,matrix,alpha,e);
 }
+static exr_status scope_image_cmyk(void *context,const exr_image_layer *image,const exr_bitmap *inks,const double matrix[6],double alpha,exr_error *e) {
+  paint_scope *s=context;return s->target->image_cmyk(s->target->base.context,image,inks,matrix,alpha,e);
+}
+static unsigned scope_image_space(void *context) {
+  paint_scope *s=context;return s->target->image_space(s->target->base.context);
+}
 static exr_status scope_blend(void *context,exr_blend_mode mode,exr_error *e) {
   paint_scope *s=context;return s->target->blend(s->target->base.context,mode,e);
 }
@@ -62,6 +68,8 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
   consumer.soft_mask=sink->soft_mask ? scope_soft_mask : NULL;consumer.extent=sink->extent ? scope_extent : NULL;
   consumer.shading=sink->shading ? scope_shading : NULL;
   consumer.path_cmyk=sink->path_cmyk ? scope_path_cmyk : NULL;
+  consumer.image_cmyk=sink->image_cmyk ? scope_image_cmyk : NULL;
+  consumer.image_space=sink->image_space ? scope_image_space : NULL;
   if(sink->base.state) {
     status=sink->base.state(sink->base.context,EXR_DRAW_SAVE,e);
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;

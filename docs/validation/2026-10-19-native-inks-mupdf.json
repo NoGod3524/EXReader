@@ -1,0 +1,1082 @@
+{
+  "reference": "MuPDF 1.28.2",
+  "space": "native DeviceCMYK, four bytes, no RGB conversion",
+  "probe_pdf": [
+    4.5,
+    4.5
+  ],
+  "scenes": [
+    {
+      "file": "native-image-0-normal.pdf",
+      "sha256": "482b7dc417c81a7ee6f0144f630f99aee7f3a3ce0f2748fc5da98fc130fe2e73",
+      "expected_cmyk": [
+        116,
+        111,
+        117,
+        58
+      ],
+      "mupdf_cmyk": [
+        116,
+        111,
+        117,
+        58
+      ],
+      "max_difference": 0
+    },
+    {
+      "file": "native-image-0-multiply.pdf",
+      "sha256": "4e4cb8a242c94540b29e2dfb5529ee092e3a2ea9eeb836ae0c45640ae79d3944",
+      "expected_cmyk": [
+        123,
+        138,
+        169,
+        66
+      ],
+      "mupdf_cmyk": [
+        124,
+        138,
+        169,
+        67
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-image-0-screen.pdf",
+      "sha256": "8a9334fde686871c85160468655b8bcd5b7229bccd66f29a53b69593cc6b2211",
+      "expected_cmyk": [
+        44,
+        75,
+        101,
+        17
+      ],
+      "mupdf_cmyk": [
+        44,
+        75,
+        101,
+        17
+      ],
+      "max_difference": 0
+    },
+    {
+      "file": "native-image-1-normal.pdf",
+      "sha256": "f3c38dea7feaf11e59165410dcbc596ed15ff9bdea41e2584afa9e4a479778cc",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        113
+      ],
+      "mupdf_cmyk": [
+        26,
+        51,
+        77,
+        113
+      ],
+      "max_difference": 0
+    },
+    {
+      "file": "native-image-1-multiply.pdf",
+      "sha256": "5480f4c3a1a9d7f89222cd68ecc2e709bed6b1c54900f6d293a78df31b7e2e3d",
+      "expected_cmyk": [
+        51,
+        102,
+        153,
+        116
+      ],
+      "mupdf_cmyk": [
+        52,
+        102,
+        153,
+        116
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-image-1-screen.pdf",
+      "sha256": "24fc3e7e4b31b9b691475d74fbb9526b2f6bb3b449bd15c977d18085a7631fda",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        23
+      ],
+      "mupdf_cmyk": [
+        26,
+        51,
+        77,
+        23
+      ],
+      "max_difference": 0
+    },
+    {
+      "file": "native-image-2-normal.pdf",
+      "sha256": "f09b7478fa22e9f6abae3bd2f4fd013cca666db7b1003885d87d9f668acc0c15",
+      "expected_cmyk": [
+        90,
+        115,
+        141,
+        13
+      ],
+      "mupdf_cmyk": [
+        90,
+        115,
+        141,
+        13
+      ],
+      "max_difference": 0
+    },
+    {
+      "file": "native-image-2-multiply.pdf",
+      "sha256": "707a4cd650c6cbbfd5bcbf052dabc378991d1aeb9ea46277e129329886ee3a21",
+      "expected_cmyk": [
+        102,
+        140,
+        179,
+        26
+      ],
+      "mupdf_cmyk": [
+        103,
+        140,
+        179,
+        26
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-image-2-screen.pdf",
+      "sha256": "a9d5580d916e127a9d348c8199e140ccd3f278550d443e567abc6e3cb8f483d6",
+      "expected_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "mupdf_cmyk": [
+        39,
+        77,
+        115,
+        13
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-axial-0-normal.pdf",
+      "sha256": "a75bf2d456a5cf1e0743afcb7822d08793351d56c3a917c50ec6c960f1126a33",
+      "expected_cmyk": [
+        116,
+        111,
+        117,
+        58
+      ],
+      "mupdf_cmyk": [
+        114,
+        110,
+        116,
+        56
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-axial-0-multiply.pdf",
+      "sha256": "3fc9c38c8ae432f77adb6870b5ee6cdd5c04128474d6be1de3a7d7871491e7fc",
+      "expected_cmyk": [
+        123,
+        138,
+        169,
+        66
+      ],
+      "mupdf_cmyk": [
+        122,
+        137,
+        168,
+        64
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-axial-0-screen.pdf",
+      "sha256": "a024675dabb20c67e368f05d84b8583188fd65cbef2504bda3362640ebc7d02c",
+      "expected_cmyk": [
+        44,
+        75,
+        101,
+        17
+      ],
+      "mupdf_cmyk": [
+        44,
+        76,
+        100,
+        17
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-axial-1-normal.pdf",
+      "sha256": "e392caacadac8f5e9d22f8c38e0b2e2c4c489b3ce02f70b917c41a5604d72dc6",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        113
+      ],
+      "mupdf_cmyk": [
+        25,
+        51,
+        77,
+        111
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-axial-1-multiply.pdf",
+      "sha256": "9dfd5e8ab0087e4f2c8908492f5cdf7015c8a9db53acf2cf196e9275d995bb7b",
+      "expected_cmyk": [
+        51,
+        102,
+        153,
+        116
+      ],
+      "mupdf_cmyk": [
+        51,
+        102,
+        153,
+        114
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-axial-1-screen.pdf",
+      "sha256": "6a7275638e4ca04fa174143be30ed60d00a3df28c0045d12cac59f9f181ddbf0",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        23
+      ],
+      "mupdf_cmyk": [
+        26,
+        52,
+        77,
+        23
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-axial-2-normal.pdf",
+      "sha256": "334780affef5dabef3a8c9c733e5253f8c2fad7eeaf07e11222d9282b87ed76d",
+      "expected_cmyk": [
+        90,
+        115,
+        141,
+        13
+      ],
+      "mupdf_cmyk": [
+        88,
+        114,
+        140,
+        12
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-axial-2-multiply.pdf",
+      "sha256": "36cdcf18fdb7a6c5ea0a38e7a3fce6e43d80185bfa0d45033fb2e95895f2e4fd",
+      "expected_cmyk": [
+        102,
+        140,
+        179,
+        26
+      ],
+      "mupdf_cmyk": [
+        101,
+        140,
+        178,
+        25
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-axial-2-screen.pdf",
+      "sha256": "c6ddd6a4822ac9c68213b1c27308192de653a21d68cac9c273f5b87730911c45",
+      "expected_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "mupdf_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "max_difference": 0
+    },
+    {
+      "file": "native-radial-0-normal.pdf",
+      "sha256": "247f62895593f046d7129414eaf243769524b527488c4856aa84ebe8f3dfea1a",
+      "expected_cmyk": [
+        116,
+        111,
+        117,
+        58
+      ],
+      "mupdf_cmyk": [
+        114,
+        110,
+        116,
+        56
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-radial-0-multiply.pdf",
+      "sha256": "d912e7e40b663847904a7912365f941b951ab7af61976e0f2d7f681f24c9f1a7",
+      "expected_cmyk": [
+        123,
+        138,
+        169,
+        66
+      ],
+      "mupdf_cmyk": [
+        122,
+        137,
+        168,
+        64
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-radial-0-screen.pdf",
+      "sha256": "08dcfb62db19dc62041da5ac24489a1585c75331bde8fc040baeae41cc8fdf23",
+      "expected_cmyk": [
+        44,
+        75,
+        101,
+        17
+      ],
+      "mupdf_cmyk": [
+        44,
+        76,
+        100,
+        17
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-radial-1-normal.pdf",
+      "sha256": "251e1cb9023e2bf78e85e77aa4c3ca966ac29a7a983fb6a94d83251f46363b6a",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        113
+      ],
+      "mupdf_cmyk": [
+        25,
+        51,
+        77,
+        111
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-radial-1-multiply.pdf",
+      "sha256": "b787da78a21b30c83f8cab552e2e999c75f9faca918824ff23a98d4063712be3",
+      "expected_cmyk": [
+        51,
+        102,
+        153,
+        116
+      ],
+      "mupdf_cmyk": [
+        51,
+        102,
+        153,
+        114
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-radial-1-screen.pdf",
+      "sha256": "fa1acf001b1c0864f0e3da003797c6435ae1ba616d840bb4389878de02cdc179",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        23
+      ],
+      "mupdf_cmyk": [
+        26,
+        52,
+        77,
+        23
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-radial-2-normal.pdf",
+      "sha256": "caa3a6f788f0dab355567479dd82e00e6f86edfc3e4f143613b08c733662f5aa",
+      "expected_cmyk": [
+        90,
+        115,
+        141,
+        13
+      ],
+      "mupdf_cmyk": [
+        88,
+        114,
+        140,
+        12
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-radial-2-multiply.pdf",
+      "sha256": "c82d51257dbfc5c427114bd6be2288532536b84667441b55d90326f40cf2ff92",
+      "expected_cmyk": [
+        102,
+        140,
+        179,
+        26
+      ],
+      "mupdf_cmyk": [
+        101,
+        140,
+        178,
+        25
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-radial-2-screen.pdf",
+      "sha256": "514904cf638886213e626d42605dc1d27934a2395302c2f083a99681358cada0",
+      "expected_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "mupdf_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "max_difference": 0
+    },
+    {
+      "file": "native-mesh4-0-normal.pdf",
+      "sha256": "807eb51ef33ddf0e26aa0e3f73ae284c1a58198d80d46998c3768f8d79b8d829",
+      "expected_cmyk": [
+        116,
+        111,
+        117,
+        58
+      ],
+      "mupdf_cmyk": [
+        114,
+        110,
+        116,
+        56
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh4-0-multiply.pdf",
+      "sha256": "f8328c22709fb72fb79e41608a5d7e7c99f00b22fc909291d4d5c30be373b6e4",
+      "expected_cmyk": [
+        123,
+        138,
+        169,
+        66
+      ],
+      "mupdf_cmyk": [
+        122,
+        137,
+        168,
+        64
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh4-0-screen.pdf",
+      "sha256": "8103fec3055f89b8d0f25be09375dbb2142345d8487a13a9f020d0ab70c96e4e",
+      "expected_cmyk": [
+        44,
+        75,
+        101,
+        17
+      ],
+      "mupdf_cmyk": [
+        44,
+        76,
+        100,
+        17
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh4-1-normal.pdf",
+      "sha256": "712630f606aa17314597567bd4548003dc4eaeff883cae844c4bdfe0692274f3",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        113
+      ],
+      "mupdf_cmyk": [
+        25,
+        51,
+        77,
+        111
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh4-1-multiply.pdf",
+      "sha256": "8127946b7ea858477fb4390d9bd63dc4a3a39fcd255deede74e2530752c12c88",
+      "expected_cmyk": [
+        51,
+        102,
+        153,
+        116
+      ],
+      "mupdf_cmyk": [
+        51,
+        102,
+        153,
+        114
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh4-1-screen.pdf",
+      "sha256": "40018905a615d102ffc0a9e3e5ffd23dcdbd22ddc3f91469ab966ddd90adad47",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        23
+      ],
+      "mupdf_cmyk": [
+        26,
+        52,
+        77,
+        23
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh4-2-normal.pdf",
+      "sha256": "9b739c44a8bc08cc9e80ec0aacc462308dc644815aebf75ae683560ff7daa6df",
+      "expected_cmyk": [
+        90,
+        115,
+        141,
+        13
+      ],
+      "mupdf_cmyk": [
+        88,
+        114,
+        140,
+        12
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh4-2-multiply.pdf",
+      "sha256": "22f0b9514db62229e1f5973de06c092cab1b86854cf36ff3ccc44463747d2a4f",
+      "expected_cmyk": [
+        102,
+        140,
+        179,
+        26
+      ],
+      "mupdf_cmyk": [
+        101,
+        140,
+        178,
+        25
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh4-2-screen.pdf",
+      "sha256": "33dde5d92dbfb3574cbe605a9c370567aa08d63e690a6eb43e564f91d596e6fd",
+      "expected_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "mupdf_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "max_difference": 0
+    },
+    {
+      "file": "native-mesh5-0-normal.pdf",
+      "sha256": "bfd2da84fa9b5e043c9b887698d98ce3bfa46ddbe23c10d7390015487ba093ff",
+      "expected_cmyk": [
+        116,
+        111,
+        117,
+        58
+      ],
+      "mupdf_cmyk": [
+        114,
+        110,
+        116,
+        56
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh5-0-multiply.pdf",
+      "sha256": "e9817c7be29e16917dae05694bc740788615505b3e830e4adfde26df02a7eaee",
+      "expected_cmyk": [
+        123,
+        138,
+        169,
+        66
+      ],
+      "mupdf_cmyk": [
+        122,
+        137,
+        168,
+        64
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh5-0-screen.pdf",
+      "sha256": "9679007c42386c882cf83b17f970e2391499514398e34c50b6a9d26079d015c3",
+      "expected_cmyk": [
+        44,
+        75,
+        101,
+        17
+      ],
+      "mupdf_cmyk": [
+        44,
+        76,
+        100,
+        17
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh5-1-normal.pdf",
+      "sha256": "5e65718611cefa836efd5d267ca9672377a5a7062e40e2de7e5b43904aa438d5",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        113
+      ],
+      "mupdf_cmyk": [
+        25,
+        51,
+        77,
+        111
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh5-1-multiply.pdf",
+      "sha256": "513bc0a863221e9095ce2b9f06b727cb512f1f5a73a0ae455a66c0469dc4c37f",
+      "expected_cmyk": [
+        51,
+        102,
+        153,
+        116
+      ],
+      "mupdf_cmyk": [
+        51,
+        102,
+        153,
+        114
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh5-1-screen.pdf",
+      "sha256": "c9dcea032a98253ec49a798f41f19728879e78679d2aadea23909281ce934ecf",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        23
+      ],
+      "mupdf_cmyk": [
+        26,
+        52,
+        77,
+        23
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh5-2-normal.pdf",
+      "sha256": "a88dc86a47870d0eaad00f90bd0f9cb1c6baadade9853ba21221026a2f60808a",
+      "expected_cmyk": [
+        90,
+        115,
+        141,
+        13
+      ],
+      "mupdf_cmyk": [
+        88,
+        114,
+        140,
+        12
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh5-2-multiply.pdf",
+      "sha256": "218ec3b810ac3d618ac2aa87b035d10f88e4599410e14f178d089563c05d5d26",
+      "expected_cmyk": [
+        102,
+        140,
+        179,
+        26
+      ],
+      "mupdf_cmyk": [
+        101,
+        140,
+        178,
+        25
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh5-2-screen.pdf",
+      "sha256": "4cd6fed100d42a4005816a64a570db4f5a70913981a77edda51e403766165c7c",
+      "expected_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "mupdf_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "max_difference": 0
+    },
+    {
+      "file": "native-mesh6-0-normal.pdf",
+      "sha256": "414ce1e0263ae9c618dbd4d48a25356368a22a9fa5dcc0d8b56ce0b7d5d05725",
+      "expected_cmyk": [
+        116,
+        111,
+        117,
+        58
+      ],
+      "mupdf_cmyk": [
+        114,
+        110,
+        116,
+        56
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh6-0-multiply.pdf",
+      "sha256": "1750151fc9e2974df960d5a1518d929ad712c0d44911a53ebbb19c34689eb368",
+      "expected_cmyk": [
+        123,
+        138,
+        169,
+        66
+      ],
+      "mupdf_cmyk": [
+        122,
+        137,
+        168,
+        64
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh6-0-screen.pdf",
+      "sha256": "110d0127dd1d1dffd41da24609ad619bba76682a679375babb6f9371df8de69a",
+      "expected_cmyk": [
+        44,
+        75,
+        101,
+        17
+      ],
+      "mupdf_cmyk": [
+        44,
+        76,
+        100,
+        17
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh6-1-normal.pdf",
+      "sha256": "4471c7af4b5ba14a99e6852e35abd18fc0965d9f489ed2f37a75f31244795497",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        113
+      ],
+      "mupdf_cmyk": [
+        25,
+        51,
+        77,
+        111
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh6-1-multiply.pdf",
+      "sha256": "66fb8ddc3ab9e5941fad71f9c89feb51f886101da873ab15d3502a609a598b2a",
+      "expected_cmyk": [
+        51,
+        102,
+        153,
+        116
+      ],
+      "mupdf_cmyk": [
+        51,
+        102,
+        153,
+        114
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh6-1-screen.pdf",
+      "sha256": "b65f96da00e300e40728657e943582e64ad502b1ffbae4a8761249aee157db36",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        23
+      ],
+      "mupdf_cmyk": [
+        26,
+        52,
+        77,
+        23
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh6-2-normal.pdf",
+      "sha256": "abaa5d9a16c71144952a976b07e64e58ca787cbc9e9e25e341e3c3978a9d1dac",
+      "expected_cmyk": [
+        90,
+        115,
+        141,
+        13
+      ],
+      "mupdf_cmyk": [
+        88,
+        114,
+        140,
+        12
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh6-2-multiply.pdf",
+      "sha256": "e7a246c47c8ce4a41b586d4ff4f0d1459fcd175e23b45504f50a5c197d048089",
+      "expected_cmyk": [
+        102,
+        140,
+        179,
+        26
+      ],
+      "mupdf_cmyk": [
+        101,
+        140,
+        178,
+        25
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh6-2-screen.pdf",
+      "sha256": "d4352388d2536629908a2d3619aad90b547a4d49272cb996237cb749c65ac808",
+      "expected_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "mupdf_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "max_difference": 0
+    },
+    {
+      "file": "native-mesh7-0-normal.pdf",
+      "sha256": "9d053378383934f40c14b83a80f219bd49017e51933b9f8f94e853dcd4cabc4c",
+      "expected_cmyk": [
+        116,
+        111,
+        117,
+        58
+      ],
+      "mupdf_cmyk": [
+        114,
+        110,
+        116,
+        56
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh7-0-multiply.pdf",
+      "sha256": "a90e462edd92ce7a862c0972f64a1811da0f57696700a36ea1dbdb30b7441c93",
+      "expected_cmyk": [
+        123,
+        138,
+        169,
+        66
+      ],
+      "mupdf_cmyk": [
+        122,
+        137,
+        168,
+        64
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh7-0-screen.pdf",
+      "sha256": "0c9c1882c87908912e6d3c9aaed1653323bcfb3f89c4b39deba834c5b24593df",
+      "expected_cmyk": [
+        44,
+        75,
+        101,
+        17
+      ],
+      "mupdf_cmyk": [
+        44,
+        76,
+        100,
+        17
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh7-1-normal.pdf",
+      "sha256": "7948493ce705d3e40f2bf06e38a971310862b260c43a11142756d24097bbb4b5",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        113
+      ],
+      "mupdf_cmyk": [
+        25,
+        51,
+        77,
+        111
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh7-1-multiply.pdf",
+      "sha256": "de520206a17028993eaa38101498c964bacdd7a64904967baabc85bacdab5969",
+      "expected_cmyk": [
+        51,
+        102,
+        153,
+        116
+      ],
+      "mupdf_cmyk": [
+        51,
+        102,
+        153,
+        114
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh7-1-screen.pdf",
+      "sha256": "4e07ae3cf02a318644612111fa5ddb6ed74d3e3a0a6ed4d62c34496d72e033dd",
+      "expected_cmyk": [
+        26,
+        51,
+        77,
+        23
+      ],
+      "mupdf_cmyk": [
+        26,
+        52,
+        77,
+        23
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh7-2-normal.pdf",
+      "sha256": "0cb74a210c5385db5d14e04025b531a1ef96a8a012ced1510563ff39dd006d3e",
+      "expected_cmyk": [
+        90,
+        115,
+        141,
+        13
+      ],
+      "mupdf_cmyk": [
+        88,
+        114,
+        140,
+        12
+      ],
+      "max_difference": 2
+    },
+    {
+      "file": "native-mesh7-2-multiply.pdf",
+      "sha256": "bcc02b154236302ff3ecfb65f90ae5cfb6850e5cca8cc7aa3f9c65f20fe68421",
+      "expected_cmyk": [
+        102,
+        140,
+        179,
+        26
+      ],
+      "mupdf_cmyk": [
+        101,
+        140,
+        178,
+        25
+      ],
+      "max_difference": 1
+    },
+    {
+      "file": "native-mesh7-2-screen.pdf",
+      "sha256": "c2bcaec2a82bbd3ab215cbec268c6bb361dcf80082aefe1db7b0b16d31cb6e42",
+      "expected_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "mupdf_cmyk": [
+        38,
+        77,
+        115,
+        13
+      ],
+      "max_difference": 0
+    }
+  ],
+  "max_difference": 2
+}

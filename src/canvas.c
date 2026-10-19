@@ -297,6 +297,20 @@ exr_status exr_canvas_image(exr_canvas *c,const exr_image_layer *image,const dou
   status=exr_vector_texture_blend(&c->bitmap,image,use,alpha,c->clip ? &c->clip->bitmap : NULL,c->blend,masked_state(c),&c->work,&c->control,e);
   return finish(c,status,e);
 }
+exr_status exr_canvas_image_cmyk(exr_canvas *c,const exr_image_layer *image,const exr_bitmap *inks,const double matrix[6],double alpha,exr_error *e) {
+  const double *use;double local[6];exr_status status=ready(c,e);if(status!=EXR_OK) return status;
+  if(!inks) return finish(c,exr_fail(e,EXR_ARGUMENT,"Missing native CMYK image samples"),e);
+  use=shifted(c,matrix,local);
+  status=exr_vector_texture_blend_inks(&c->bitmap,image,inks,use,alpha,c->clip ? &c->clip->bitmap : NULL,
+    c->blend,masked_state(c),&c->work,&c->control,e);
+  return finish(c,status,e);
+}
+static exr_status sink_image_cmyk(void *context,const exr_image_layer *image,const exr_bitmap *inks,const double matrix[6],double alpha,exr_error *e) {
+  return exr_canvas_image_cmyk(context,image,inks,matrix,alpha,e);
+}
+static unsigned sink_image_space(void *context) {
+  const exr_canvas *c=context;return c && c->cmyk_groups ? EXR_GROUP_CMYK : EXR_GROUP_RGB;
+}
 
 static exr_status sink_path(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
   return exr_canvas_path(context,segments,count,matrix,style,e);
@@ -345,8 +359,8 @@ exr_status exr_canvas_blend(exr_canvas *c,exr_blend_mode mode,exr_error *e) {
 }
 static exr_status sink_blend(void *context,exr_blend_mode mode,exr_error *e) { return exr_canvas_blend(context,mode,e); }
 exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex *out,exr_error *e) {
-  size_t i,j,size,offsets[]={offsetof(exr_draw_sink_ex,blend),offsetof(exr_draw_sink_ex,begin_layer),offsetof(exr_draw_sink_ex,end_layer),offsetof(exr_draw_sink_ex,begin_group),offsetof(exr_draw_sink_ex,soft_mask),offsetof(exr_draw_sink_ex,extent),offsetof(exr_draw_sink_ex,shading),offsetof(exr_draw_sink_ex,path_cmyk)};
-  size_t sizes[]={sizeof(out->blend),sizeof(out->begin_layer),sizeof(out->end_layer),sizeof(out->begin_group),sizeof(out->soft_mask),sizeof(out->extent),sizeof(out->shading),sizeof(out->path_cmyk)};
+  size_t i,j,size,offsets[]={offsetof(exr_draw_sink_ex,blend),offsetof(exr_draw_sink_ex,begin_layer),offsetof(exr_draw_sink_ex,end_layer),offsetof(exr_draw_sink_ex,begin_group),offsetof(exr_draw_sink_ex,soft_mask),offsetof(exr_draw_sink_ex,extent),offsetof(exr_draw_sink_ex,shading),offsetof(exr_draw_sink_ex,path_cmyk),offsetof(exr_draw_sink_ex,image_cmyk),offsetof(exr_draw_sink_ex,image_space)};
+  size_t sizes[]={sizeof(out->blend),sizeof(out->begin_layer),sizeof(out->end_layer),sizeof(out->begin_group),sizeof(out->soft_mask),sizeof(out->extent),sizeof(out->shading),sizeof(out->path_cmyk),sizeof(out->image_cmyk),sizeof(out->image_space)};
   if(!input || input->struct_size<offsets[0] || input->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid extended drawing sink size");
   size=input->struct_size;
   for(i=sizeof(*out);i<size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Unsupported drawing sink extension");
@@ -395,6 +409,8 @@ exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error 
   exr_draw_sink_ex sink={0};size_t size;exr_status status;
   if(!out || out->struct_size<offsetof(exr_draw_sink_ex,blend) || out->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid extended sink output size");
   size=out->struct_size<sizeof(sink) ? out->struct_size : sizeof(sink);
+  if(size>offsetof(exr_draw_sink_ex,image_space) && size<offsetof(exr_draw_sink_ex,image_space)+sizeof(sink.image_space)) size=offsetof(exr_draw_sink_ex,image_space);
+  if(size>offsetof(exr_draw_sink_ex,image_cmyk) && size<offsetof(exr_draw_sink_ex,image_cmyk)+sizeof(sink.image_cmyk)) size=offsetof(exr_draw_sink_ex,image_cmyk);
   if(size>offsetof(exr_draw_sink_ex,path_cmyk) && size<offsetof(exr_draw_sink_ex,path_cmyk)+sizeof(sink.path_cmyk)) size=offsetof(exr_draw_sink_ex,path_cmyk);
   if(size>offsetof(exr_draw_sink_ex,shading) && size<offsetof(exr_draw_sink_ex,shading)+sizeof(sink.shading)) size=offsetof(exr_draw_sink_ex,shading);
   if(size>offsetof(exr_draw_sink_ex,extent) && size<offsetof(exr_draw_sink_ex,extent)+sizeof(sink.extent)) size=offsetof(exr_draw_sink_ex,extent);
@@ -404,6 +420,7 @@ exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error 
   if(size>offsetof(exr_draw_sink_ex,blend) && size<offsetof(exr_draw_sink_ex,begin_layer)) size=offsetof(exr_draw_sink_ex,blend);
   status=exr_canvas_get_sink(c,&sink.base,e);if(status!=EXR_OK) return status;
   sink.struct_size=size;sink.blend=sink_blend;sink.begin_layer=sink_begin_layer;sink.end_layer=sink_end_layer;sink.begin_group=sink_begin_group;sink.soft_mask=sink_soft_mask;sink.extent=sink_extent;sink.shading=sink_shading;sink.path_cmyk=sink_path_cmyk;
+  sink.image_cmyk=sink_image_cmyk;sink.image_space=sink_image_space;
   memset(out,0,out->struct_size);memcpy(out,&sink,size);return EXR_OK;
 }
 exr_status exr_canvas_set_layer_budget(exr_canvas *c,size_t bytes,exr_error *e) {

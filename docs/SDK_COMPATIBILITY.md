@@ -87,7 +87,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.33.1 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.34.0 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -459,7 +459,7 @@ development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.33.1 EXACT
+Select this package with `find_package(EXReader 3.34.0 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -503,7 +503,7 @@ compatibility artifact.
 
 Core and optional component release numbers are maintained in
 `cmake/versions.cmake` and exposed by the corresponding public version macros and
-installed CMake target `EXR_COMPONENT_VERSION` properties. Core and PDF reading are 3.33.1; the other components remain 3.33.0
+installed CMake target `EXR_COMPONENT_VERSION` properties. Core and PDF reading are 3.34.0; the other components remain 3.33.0
 after this fix and can be released independently. Release
 numbers follow update size: very large updates increment the major number,
 medium updates increment the minor number, and small bug fixes increment the
@@ -532,4 +532,28 @@ to RGB from Gray/CMYK without isolation is unsupported. PDF non-isolated forms w
 an explicit `/CS` remain invalid under the existing contract. A custom `begin_group`
 consumer must honour the RGB flag or reject it; legacy `begin_layer` supports the
 isolated RGB fallback. No function signatures, exported symbols or record layouts
-change. Images and shadings still lose original ink separations through RGBA.
+change. Images and shadings still lose original ink separations through RGBA at
+that checkpoint; the following update supplies a native path.
+
+## 3.34.0 native image separations
+
+`exr_canvas_image_cmyk` borrows a CMYK byte bitmap and an unchanged
+`exr_image_layer`. The layer supplies the RGB fallback, source alpha, interpolation
+and masks; native inks must already be un-matted. The bitmap has four C/M/Y/K
+bytes per pixel, matching the layer dimensions. CMYK groups sample and blend the
+inks; other spaces use the supplied RGB fallback.
+
+`exr_draw_sink_ex` appends optional `image_cmyk` and `image_space` callbacks.
+The original prefix and existing signatures stay unchanged. The canvas requests
+inks only in an active CMYK group, so RGB pages allocate no extra ink buffer.
+A custom consumer without the query requests inks whenever it supplies
+`image_cmyk`. That callback also receives CMYK gradients as an interpolated layer.
+Wrapping consumers must forward both callbacks with the target's context.
+
+DeviceCMYK PDF images retain samples after Decode and Matte removal, before RGB
+conversion, including JPEG and image/color-key masks. Shadings 2–7 retain evaluated
+or interpolated ink values. Samples are quantized to 8 bits before interpolation.
+ICCBased/DeviceN conversion to CMYK groups and document OutputIntent remain separate
+matrix items. The existing 128 MiB image/mask pixel ceiling includes the native
+buffer. One exported function is added; the previous 304 exports remain. ABI1
+and schema6 stay unchanged; core and PDF reading are version 3.34.0.

@@ -21,6 +21,7 @@ typedef struct {
 typedef struct {
   exr_pdf_function *function;exr_pdf_colorspace *space;unsigned components,intent;
   size_t *work;const exr_control *control;exr_error *error;
+  unsigned native_cmyk;exr_bitmap inks;
 } mesh_painter;
 
 static unsigned long mesh_bits(mesh_stream *s,unsigned bits) {
@@ -85,6 +86,8 @@ static exr_status mesh_triangle(exr_bitmap *bitmap,double left,double top,double
       status=exr_pdf_colorspace_rgb_intent(paint->space,values,rgb,paint->intent,paint->error);if(status!=EXR_OK) return status;
       for(k=0;k<3;k++) p[k]=(unsigned char)fmin(255,fmax(0,floor(rgb[k]*255+.5)));
       p[3]=255;
+      if(paint->inks.pixels) for(k=0;k<4;k++)
+        paint->inks.pixels[(size_t)y*paint->inks.stride+x*4+k]=(unsigned char)floor(fmax(0,fmin(1,values[k]))*255+.5);
     }
     }
   }
@@ -264,6 +267,10 @@ static exr_status mesh_shading_patches(const double ctm[6],int type,mesh_stream 
     bitmap.width=side_x;bitmap.height=side_y;bitmap.channels=4;bitmap.stride=side_x*4;
     bitmap.pixels=calloc((size_t)bitmap.stride*side_y,1);
     if(!bitmap.pixels) return exr_fail(error,EXR_MEMORY,"PDF mesh shading bitmap allocation failed");
+    if(paint->native_cmyk) {
+      paint->inks=bitmap;paint->inks.pixels=calloc((size_t)bitmap.stride*bitmap.height,1);
+      if(!paint->inks.pixels) { free(bitmap.pixels);return exr_fail(error,EXR_MEMORY,"PDF mesh ink allocation failed"); }
+    }
   }
   lattice=malloc(((size_t)MESH_PATCH_SUBDIV+1)*((size_t)MESH_PATCH_SUBDIV+1)*sizeof(*lattice));
   if(!lattice) { free(bitmap.pixels); return exr_fail(error,EXR_MEMORY,"PDF mesh shading allocation failed"); }
@@ -281,14 +288,14 @@ static exr_status mesh_shading_patches(const double ctm[6],int type,mesh_stream 
   }
   if(status==EXR_OK) {
     mesh_matrix(ctm,local,matrix);
-    status=emit(context,&bitmap,matrix,state,error);
+    status=emit(context,&bitmap,paint->inks.pixels ? &paint->inks : NULL,matrix,state,error);
   }
   free(lattice);free(bitmap.pixels);
   return status;
 }
 exr_status exr_pdf_shading_mesh(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,uint32_t value,int type,
                                 const double ctm[6],const exr_pdf_paint_state *state,size_t *work,
-                                exr_pdf_shading_fn emit,void *context,
+                                exr_pdf_shading_fn emit,void *context,unsigned native_cmyk,
                                 const exr_control *control,exr_error *error) {
   uint32_t id,stream_id,space_id,function_id=EXR_PDF_NONE;
   const exr_pdf_value *array;uint32_t at;
@@ -348,7 +355,8 @@ exr_status exr_pdf_shading_mesh(exr_pdf_file *file,exr_pdf_file *resource_file,u
   status=exr_pdf_stream_data(file,value,&data,&size,error);
   if(status!=EXR_OK) goto done;
   stream.data=data;stream.size=size;stream.decode=decode;
-  paint=(mesh_painter){function,space,stream.components,intent,work,control,error};
+  paint=(mesh_painter){function,space,stream.components,intent,work,control,error,
+    native_cmyk && exr_pdf_colorspace_device(space)==EXR_PDF_DEVICE_CMYK,{0}};
   if(type>=6) {
     status=mesh_shading_patches(ctm,type,&stream,function,space,intent,emit,context,error,&paint,state);
     goto done;
@@ -388,6 +396,10 @@ exr_status exr_pdf_shading_mesh(exr_pdf_file *file,exr_pdf_file *resource_file,u
     bitmap.width=side_x;bitmap.height=side_y;bitmap.channels=4;bitmap.stride=side_x*4;
     bitmap.pixels=calloc((size_t)bitmap.stride*side_y,1);
     if(!bitmap.pixels) { status=exr_fail(error,EXR_MEMORY,"PDF mesh shading bitmap allocation failed"); goto done; }
+    if(paint.native_cmyk) {
+      paint.inks=bitmap;paint.inks.pixels=calloc((size_t)bitmap.stride*bitmap.height,1);
+      if(!paint.inks.pixels) { status=exr_fail(error,EXR_MEMORY,"PDF mesh ink allocation failed");goto done; }
+    }
     left=minx;top=miny;
     local[0]=maxx-minx;local[1]=0;local[2]=0;local[3]=maxy-miny;local[4]=left;local[5]=top;
     /* Second pass paints the mesh. */
@@ -436,10 +448,10 @@ exr_status exr_pdf_shading_mesh(exr_pdf_file *file,exr_pdf_file *resource_file,u
       }
     }
     mesh_matrix(ctm,local,matrix);
-    status=emit(context,&bitmap,matrix,state,error);
+    status=emit(context,&bitmap,paint.inks.pixels ? &paint.inks : NULL,matrix,state,error);
   }
 done:
-  free(bitmap.pixels);free(points);
+  free(paint.inks.pixels);free(bitmap.pixels);free(points);
   exr_pdf_function_free(function);exr_pdf_colorspace_free(space);
   return status;
 }

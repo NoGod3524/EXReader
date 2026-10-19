@@ -1,4 +1,4 @@
-# Native C API 3.33.1
+# Native C API 3.34.0
 
 S013–S100 是保留的历史开发步骤标识，原来被写成 0.13–0.100；产品版本现按 [里程碑映射](VERSIONING.md) 归并。步骤编号用于追溯接口变化，不表示独立发行版本。
 
@@ -880,7 +880,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 
 `EXR_ABI_VERSION` / `exr_abi_version()` 提供从 S091 起的 ABI epoch 1。版本字符串仍用 EXR_VERSION / exr_version。ABI 与库版本、SQLite schema 分别管理；同一 epoch 的数组记录不能追加字段改变步长，带 struct_size 的输入维持原始前缀。完整规则见 [SDK_COMPATIBILITY.md](SDK_COMPATIBILITY.md)。
 
-安装包新增可搬迁的 CMake config：`find_package(EXReader 3.33.1 EXACT CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
+安装包新增可搬迁的 CMake config：`find_package(EXReader 3.34.0 EXACT CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
 
 
 ## 通用持久化全文索引（S092）
@@ -1725,3 +1725,13 @@ Form、page及标注外观的显式DeviceRGB声明均转发到sink；旧begin_la
 
 PDF透明组字典K=true才启用挖空，false/null/缺省为普通组，非布尔值拒绝。此前实现及生成器
 同时反写的错误已修复，独立Decimal期望未改。ABI1、schema6及304个导出保持。
+
+
+### 3.34.0：图像与渐变分色
+
+`exr_canvas_image_cmyk(canvas, image, inks, matrix, alpha, error)`借用独立C/M/Y/K字节图
+与既有RGBA图层；二者尺寸一致、每像素四字节。图层提供RGB后备、alpha、插值和mask，
+原生分量需先去Matte。CMYK组使用墨色，其他空间使用RGBA。
+sink尾回调`image_cmyk`也接收渐变，`image_space`按当前混合空间请求原生数据；缺省查询
+表示始终请求。包装sink逐项转发上下文。RGB页无额外分色图，新增缓冲计入128MiB图像/
+遮罩限额。ICCBased/DeviceN到组空间的转换和OutputIntent仍是后续矩阵项。

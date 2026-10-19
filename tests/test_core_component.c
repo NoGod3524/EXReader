@@ -20,5 +20,16 @@ int main(int argc,char **argv) {
   CHECK(exr_layout_hit_test(layout,0,options.margin,options.margin)<3);
   CHECK(exr_render_page_color(layout,font,0,&bitmap,&e)==EXR_OK && bitmap.pixels);
   exr_bitmap_free(&bitmap);exr_layout_free(layout);exr_font_free(font);exr_document_free(doc);
+  { exr_canvas_config config={0};exr_canvas *c=NULL;exr_draw_sink_ex sink={0};exr_image_layer image={0};
+    unsigned char rgba[4]={17,34,51,255},raw[4]={0,0,0,0};
+    const double matrix[6]={1,0,0,1,0,0};exr_bitmap inks={.width=1,.height=1,.stride=4,.pixels=raw,.channels=4};
+    config.width=config.height=1;image.bitmap=inks;image.bitmap.pixels=rgba;
+    CHECK(exr_canvas_create(&config,&c,&e)==EXR_OK);sink.struct_size=sizeof(sink);
+    CHECK(exr_canvas_get_sink_ex(c,&sink,&e)==EXR_OK && sink.image_cmyk && sink.image_space);
+    CHECK(sink.image_space(c)==EXR_GROUP_RGB);
+    CHECK(exr_canvas_image_cmyk(c,&image,&inks,matrix,1,&e)==EXR_OK);
+    CHECK(exr_canvas_take(c,&bitmap,&e)==EXR_OK && bitmap.pixels[0]==17 && bitmap.pixels[3]==255);
+    exr_bitmap_free(&bitmap);exr_canvas_free(c);
+  }
   puts("Independent core component passed");return 0;
 }
