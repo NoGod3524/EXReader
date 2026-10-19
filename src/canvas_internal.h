@@ -15,6 +15,8 @@ struct exr_canvas {
   exr_blend_mode blend,saved_blend[160];
   size_t depth,group_depth,mask_bytes,mask_count,mask_budget,work;
   const unsigned char *soft_mask;size_t soft_mask_width,soft_mask_height;exr_composite_state mask_state;
+  int offset_x,offset_y; /* canvas coordinate of the active working buffer's top-left */
+  size_t canvas_width,canvas_height; /* device extent, independent of the active buffer */
 };
 /* Graphics-state soft mask: page-space, one byte per pixel; NULL clears it. */
 exr_status exr_canvas_soft_mask(exr_canvas *canvas,const unsigned char *mask,size_t width,size_t height,exr_error *error);

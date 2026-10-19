@@ -79,7 +79,8 @@ exr_status exr_canvas_create(const exr_canvas_config *config,exr_canvas **out,ex
   c=calloc(1,sizeof(*c)); if(!c) return exr_fail(e,EXR_MEMORY,"Canvas allocation failed");
   c->layer_budget=64*1024*1024;
   c->control=config->control; c->mask_budget=config->mask_budget ? config->mask_budget : (size_t)64*1024*1024;
-  c->bitmap.width=config->width; c->bitmap.height=config->height; c->bitmap.channels=channels; c->bitmap.stride=config->width*channels;
+  c->bitmap.width=config->width; c->bitmap.height=config->height;
+  c->canvas_width=config->width; c->canvas_height=config->height; c->bitmap.channels=channels; c->bitmap.stride=config->width*channels;
   bytes=(size_t)c->bitmap.stride*c->bitmap.height; c->bitmap.pixels=malloc(bytes);
   if(!c->bitmap.pixels) { free(c); return exr_fail(e,EXR_MEMORY,"Canvas bitmap allocation failed"); }
   if(channels==1) {
@@ -278,7 +279,9 @@ exr_status exr_sink_extent(const exr_draw_sink_ex *sink,unsigned *width,unsigned
 static exr_status sink_extent(void *context,unsigned *width,unsigned *height,exr_error *e) {
   const exr_canvas *c=context;
   if(!c || !c->bitmap.pixels) return exr_fail(e,EXR_ARGUMENT,"Canvas has no bitmap");
-  *width=c->bitmap.width;*height=c->bitmap.height;return EXR_OK;
+  /* Hosts and appearance painters need the device extent, not the size of a
+     region-sized working buffer that happens to be active. */
+  *width=(unsigned)c->canvas_width;*height=(unsigned)c->canvas_height;return EXR_OK;
 }
 static exr_status sink_end_layer(void *context,unsigned commit,exr_error *e) { return exr_canvas_end_layer(context,commit,e); }
 exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error *e) {
