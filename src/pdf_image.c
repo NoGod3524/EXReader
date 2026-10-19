@@ -99,7 +99,8 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     soft=1; id=get(&r,mask,"Matte");
     if(id!=EXR_PDF_NONE) {
       double values[4]={0};
-      if(exr_pdf_colorspace_device(space)!=EXR_PDF_DEVICE_GRAY && exr_pdf_colorspace_device(space)!=EXR_PDF_DEVICE_RGB) { exr_fail(&r.error,EXR_FORMAT,"PDF non-device/CMYK image matte is unsupported"); goto done; }
+      if(exr_pdf_colorspace_device(space)!=EXR_PDF_DEVICE_GRAY && exr_pdf_colorspace_device(space)!=EXR_PDF_DEVICE_RGB &&
+         exr_pdf_colorspace_device(space)!=EXR_PDF_DEVICE_CMYK) { exr_fail(&r.error,EXR_FORMAT,"PDF image matte colour space is unsupported"); goto done; }
       v=exr_pdf_value_at(file,id); if(v->kind!=EXR_PDF_ARRAY) goto invalid; at=v->first;
       for(k=0;k<channels;k++) {
         uint32_t value=resolve(&r,at); v=exr_pdf_value_at(file,value);
