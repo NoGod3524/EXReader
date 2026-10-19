@@ -80,7 +80,7 @@ static void pixel(const raster *r,unsigned x,unsigned y,unsigned red,unsigned gr
 }
 int main(int argc,char **argv) {
   char path[4096]; FILE *input; unsigned char *data; long length; exr_pdf_file *file=NULL; exr_pdf_page_info *pages=NULL; size_t count,i; uint32_t resources; raster r;
-  const char *invalid[]={"1 1 l S","h","1 2 3 re f","0 0 m","BT 1 1 m ET","3 J",".5 M","-1 w","[0 0] 0 d","[1 2] -1 d","1 0 0 g","/Missing cs","/Soft gs"};
+  const char *invalid[]={"1 1 l S","h","1 2 3 re f","0 0 m","BT 1 1 m ET","3 J",".5 M","-1 w","[0 0] 0 d","[1 2] -1 d","1 0 0 g","/Missing cs","/Soft gs","/Shade sh"};
   CHECK(argc==2); snprintf(path,sizeof(path),"%s/pdf-graphics.pdf",argv[1]); input=fopen(path,"rb"); CHECK(input && !fseek(input,0,SEEK_END)); length=ftell(input); CHECK(length>0); rewind(input); data=malloc((size_t)length);
   CHECK(data && fread(data,1,(size_t)length,input)==(size_t)length); fclose(input); OK(exr_pdf_open(data,(size_t)length,&file,&error));
   OK(exr_pdf_pages(file,&pages,&count,&error)); CHECK(count==1); resources=pages[0].resources;
@@ -110,9 +110,6 @@ int main(int argc,char **argv) {
   { const double matrix[6]={2,0,0,2,0,0}; run(file,resources,"1 w 1 2 m 3 2 l S",matrix,&r); pixel(&r,3,3,0,0,0); pixel(&r,3,2,255,255,255); CHECK(r.last.paint.matrix[0]==2); release(&r); }
   { const double matrix[6]={1,0,0,-1,0,8}; run(file,resources,"1 0 0 rg 0 0 1 2 re f",matrix,&r); pixel(&r,0,7,255,0,0); pixel(&r,0,0,255,255,255); release(&r); }
   run(file,resources,"/Blend gs 1 1 2 2 re f",NULL,&r);CHECK(r.last.paint.blend==EXR_BLEND_MULTIPLY);release(&r);
-  /* A valid operator we do not implement is UNSUPPORTED, not malformed input. */
-  { exr_pdf_draw_callbacks cb=callbacks(); reset(&r);
-    CHECK(exr_pdf_draw_ops(file,resources,"/Shade sh",strlen("/Shade sh"),NULL,&cb,&r,NULL,&error)==EXR_UNSUPPORTED); release(&r); }
   for(i=0;i<sizeof(invalid)/sizeof(*invalid);i++) { exr_pdf_draw_callbacks cb=callbacks(); reset(&r); CHECK(exr_pdf_draw_ops(file,resources,invalid[i],strlen(invalid[i]),NULL,&cb,&r,NULL,&error)==EXR_FORMAT); release(&r); }
   { const char content[]="1 1 2 2 re f"; exr_pdf_draw_callbacks cb=callbacks(); cb.path=stop_path; reset(&r); CHECK(exr_pdf_draw_ops(file,resources,content,sizeof(content)-1,NULL,&cb,&r,NULL,&error)==EXR_CANCELLED); release(&r); }
   free(pages); exr_pdf_close(file); free(data); printf("%u native PDF graphics checks passed\n",checks); return 0;

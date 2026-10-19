@@ -40,6 +40,12 @@ static exr_status scope_soft_mask(void *context,const unsigned char *mask,size_t
 static exr_status scope_extent(void *context,unsigned *width,unsigned *height,exr_error *e) {
   paint_scope *s=context;return s->target->extent(s->target->base.context,width,height,e);
 }
+/* The scope owns the sink context, so every optional callback needs a forwarder
+   that unwraps it; copying the target's pointer directly would pass the scope as
+   if it were the consumer. */
+static exr_status scope_shading(void *context,const exr_bitmap *bitmap,const double matrix[6],exr_error *e) {
+  paint_scope *s=context;return s->target->shading(s->target->base.context,bitmap,matrix,e);
+}
 static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,const double matrix[6],
                              const double *box,unsigned layer,const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,
                              size_t *work,const exr_control *control,exr_error *e) {
@@ -50,6 +56,7 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
   consumer.begin_layer=sink->begin_layer ? scope_begin_layer : NULL;consumer.end_layer=sink->end_layer ? scope_end_layer : NULL;
   consumer.begin_group=sink->begin_group ? scope_begin_group : NULL;
   consumer.soft_mask=sink->soft_mask ? scope_soft_mask : NULL;consumer.extent=sink->extent ? scope_extent : NULL;
+  consumer.shading=sink->shading ? scope_shading : NULL;
   if(sink->base.state) {
     status=sink->base.state(sink->base.context,EXR_DRAW_SAVE,e);
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
