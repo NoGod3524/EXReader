@@ -110,6 +110,10 @@ int main(int argc,char **argv) {
   text_cases(file,resources); clip_cases(file,resources); fallback_cases(argv[1],file,resources); drawing_inspection(file,resources);
   config.width=config.height=12; config.channels=4; config.background=0;
   { const char *s="1 0 0 rg 1 1 2 2 re f"; OK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)); CHECK(b.pixels[13*4]==255 && b.pixels[13*4+3]==255 && !b.pixels[3]); free(b.pixels); }
+  { size_t aggregate=256u*1024u*1024u;const char *s="0 0 12 12 re f";config.work=&aggregate;
+    CHECK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)==EXR_LIMIT && !b.pixels);
+    CHECK(aggregate>=256u*1024u*1024u);config.work=NULL;
+  }
   config.width=0; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);
   config.width=12; control.cancelled=cancelled; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,&control,&b,&error)==EXR_CANCELLED && !b.pixels);
   { double clip[4]={0,0,12,12}; config.initial_clip=clip;

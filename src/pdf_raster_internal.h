@@ -23,6 +23,7 @@ typedef struct {
   size_t mask_budget; /* zero -> 64 MiB, shared immutable clips and text union */
   exr_pdf_program_fn program; void *context;
   const double *initial_clip; /* Optional output-coordinate [x0,y0,x1,y1]. */
+  size_t *work; /* Optional aggregate work counter, including nested soft masks. */
 } exr_pdf_raster_config;
 /* Output is owned and empty on failure. Initial maps PDF user space to pixels.
    Unsupported image filters and non-device/transparency features fail. */

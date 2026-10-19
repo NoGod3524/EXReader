@@ -159,6 +159,7 @@ typedef struct {
 typedef enum { EXR_PDF_SAVE,EXR_PDF_RESTORE,EXR_PDF_BEGIN_TEXT,EXR_PDF_END_TEXT } exr_pdf_state_event;
 typedef exr_status (*exr_pdf_path_fn)(void *context,const exr_pdf_path_paint *path,exr_error *error);
 typedef exr_status (*exr_pdf_state_fn)(void *context,exr_pdf_state_event event,exr_error *error);
+typedef exr_status (*exr_pdf_group_begin_fn)(void *context,const exr_pdf_paint_state *paint,unsigned flags,exr_error *error);
 typedef exr_status (*exr_pdf_image_fn)(void *context,exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *error);
 typedef exr_status (*exr_pdf_shading_fn)(void *context,const exr_bitmap *bitmap,const exr_bitmap *inks,const double matrix[6],const exr_pdf_paint_state *paint,exr_error *error);
 exr_status exr_pdf_shading_mesh(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,uint32_t value,int type,const double ctm[6],const exr_pdf_paint_state *paint,size_t *work,
@@ -169,7 +170,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
 typedef struct {
   exr_pdf_text_fn glyph;exr_pdf_path_fn path;exr_pdf_state_fn state;exr_pdf_image_fn image;
   exr_pdf_shading_fn shading; /* optional: PDF sh operator */
-  exr_draw_group_begin_fn begin_group;exr_draw_layer_end_fn end_layer;
+  exr_pdf_group_begin_fn begin_group;exr_draw_layer_end_fn end_layer;
   exr_draw_image_space_fn image_space;
 } exr_pdf_draw_callbacks;
 enum { EXR_PDF_GROUP_ISOLATED=1,EXR_PDF_GROUP_NONISOLATED=2,EXR_PDF_GROUP_KNOCKOUT=4,EXR_PDF_GROUP_GRAY=8,EXR_PDF_GROUP_CMYK=16,EXR_PDF_GROUP_RGB=32 };

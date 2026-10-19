@@ -60,7 +60,9 @@ EXR_API exr_status exr_canvas_take(exr_canvas *canvas,exr_bitmap *out,exr_error 
 EXR_API exr_status exr_canvas_blend(exr_canvas *canvas,exr_blend_mode mode,exr_error *error);
 /* Isolated RGB layer, initially transparent with Normal blend state. The
    inherited clip is applied once when committing. Valid end calls consume the
-   layer even on failure; commit=0 discards it and unwinds its inner scopes. */
+   layer even on failure; commit=0 discards it and unwinds its inner scopes.
+   The current soft mask belongs to the group commit, starts cleared inside the
+   group, and is restored when leaving; inner masks do not replace the parent. */
 #define EXR_GROUP_ISOLATED 1u
 /* Knockout: each element composites with the group's initial backdrop instead of
    the accumulated result, so a later element replaces an earlier one inside its
@@ -132,7 +134,8 @@ typedef exr_status (*exr_draw_layer_begin_fn)(void *context,double opacity,exr_b
 typedef exr_status (*exr_draw_layer_end_fn)(void *context,unsigned commit,exr_error *error);
 typedef exr_status (*exr_draw_group_begin_fn)(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *error);
 /* Graphics-state soft mask: one byte per page pixel, 255 = fully visible, NULL
-   clears it. A consumer without this callback refuses PDF soft masks. */
+   clears it. Group begin saves it for group commit and clears it internally;
+   group end restores it. A consumer without this callback refuses PDF soft masks. */
 typedef exr_status (*exr_draw_soft_mask_fn)(void *context,const unsigned char *mask,size_t width,size_t height,exr_error *error);
 /* Consumer extent in device pixels; required to build page-space soft masks. */
 typedef exr_status (*exr_draw_extent_fn)(void *context,unsigned *width,unsigned *height,exr_error *error);

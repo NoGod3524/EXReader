@@ -19,6 +19,7 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
   if(config->channels==1) { gray=1;settings.channels=4;settings.background|=255; }
   if(control) settings.control=*control;
   status=exr_canvas_create(&settings,&canvas,e); if(status!=EXR_OK) return status;
+  if(config->work) canvas->work=*config->work;
   if(config->initial_clip) {
     const double *b=config->initial_clip; exr_path_segment rect[5]={0};
     rect[0].verb=EXR_PATH_MOVE; rect[0].points[0]=(exr_path_point){b[0],b[1]};
@@ -39,5 +40,6 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
   if(status==EXR_OK && gray) status=exr_bitmap_to_gray(out,control,e);
   if(status!=EXR_OK) { free(out->pixels);memset(out,0,sizeof(*out)); }
 done:
+  if(config->work) *config->work=canvas->work;
   exr_canvas_free(canvas); return status;
 }

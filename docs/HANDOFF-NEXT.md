@@ -1,6 +1,6 @@
 # 当前检查点与后续顺序
 
-2026-10-19，C11 SDK **3.34.1**，MIT，ABI1，schema6。分支 `codex/framework`。
+2026-10-19，C11 SDK **3.34.2**，MIT，ABI1，schema6。分支 `codex/framework`。
 
 完整历史及旧/新编号映射见[更新日志](../CHANGELOG.md)。
 
@@ -32,7 +32,7 @@ cmake --build C:/Users/Oscar/exr-gcc --parallel 8
 ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 ```
 
-当前预期两边均为 **136项**（原131项及5个组件检查）。关闭色彩管理的独立构建使用 `-DEXR_ENABLE_ICC=OFF`，不嵌入默认profile，回到已声明的朴素DeviceCMYK转换。安装消费与平台CI结果独立列出，不能以Windows测试代替其他平台执行。
+当前预期两边均为 **139项**。关闭色彩管理的独立构建使用 `-DEXR_ENABLE_ICC=OFF`，不嵌入默认profile，回到已声明的朴素DeviceCMYK转换。安装消费与平台CI结果独立列出，不能以Windows测试代替其他平台执行。
 
 ## 3. 默认 CMYK 配置
 
@@ -96,3 +96,21 @@ GCC/MSVC各138/138、ICC-OFF5/5、安装组件4/4、EXACT C++运行和13头编�
 下一轮优先核验软遮罩与挖空的shape/opacity、AIS，以及透明Form进入时SMask应重置、组提交时应用；
 已有临时最小输入证明需要继续核对规范/外部输出。然后回到渐变Extend/Domain/BBox与WP4a。
 仍继续全部WP1–WP16（含4a/12a），移动真机、授权LCP及24 CPU小时fuzz的外部验收分别记录。
+
+
+## 3.34.2：遮罩作用域与组形状修复（2026-10-19）
+
+ExtGState缺省/null的SMask保留当前值，显式None才清除。透明Form内部重置SMask，
+外部遮罩在整组提交时应用一次；画布组进入/退出保存、恢复并释放各自遮罩。
+组在挖空父级内单独累计几何shape，半像素边缘不再作为全覆盖低opacity替换。
+shape平面仅在挖空/shape父级需要时分配，每像素4字节，计入层预算及内存报告。
+PDF绘制器存活遮罩聚合限制64MiB；嵌套遮罩共享绘制工作计数，逐行检查取消和预算。
+
+27个正常场景与3个拒绝输入；独立数学探针最大差1/255，3.34.1最大差144/255。
+MuPDF1.28.2内部探针最大差5；半覆盖边缘差41单独归类，不扩大内部容差。
+GCC/MSVC各139/139、ICC-OFF6/6、安装组件4/4及13头C++独立编译通过；
+EXACT C++实际运行3.34.2 ABI1，703项布局逐行不变，两个DLL均305导出。
+分层99对象/1026符号引用/898include，无逆向。
+
+AIS、图像shape/opacity与自身mask覆盖图形状态mask仍需审计，WP1/WP2尚未整包关闭。
+证据：[汇总](validation/2026-10-19-mask-scope.json)、[逐场景对照](validation/2026-10-19-mask-scope-reference.json)。
