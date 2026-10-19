@@ -33,7 +33,7 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
     config->group_present ? config->group_flags : EXR_GROUP_ISOLATED,e);
   if(status==EXR_OK) {
     exr_error cleanup={0};exr_status ended;
-    status=exr_pdf_paint_content_ex(file,resources,content,size,initial,&sink,config->program,config->context,&canvas->work,control,e);
+    status=exr_pdf_paint_content_ex(file,resources,content,size,initial,&sink,config->program,config->context,&canvas->work,config->active_mask_bytes,control,e);
     ended=exr_canvas_end_layer(canvas,status==EXR_OK,&cleanup);
     if(status==EXR_OK && ended!=EXR_OK) { status=ended;if(e) *e=cleanup; }
   }

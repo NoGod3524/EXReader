@@ -142,7 +142,7 @@ typedef struct {
 } exr_pdf_paint_state;
 exr_status exr_pdf_soft_mask_kind(exr_pdf_file *file,uint32_t mask,int *kind,exr_error *error);
 exr_status exr_pdf_soft_mask_build(exr_pdf_file *file,uint32_t mask,const double set_matrix[6],
-  unsigned width,unsigned height,unsigned char **out,size_t *work,const exr_control *control,exr_error *error);
+  unsigned width,unsigned height,unsigned char **out,size_t *work,size_t *active_mask_bytes,const exr_control *control,exr_error *error);
 typedef struct {
   const exr_pdf_font *font; exr_pdf_character character;
   double transform[6]; /* glyph coordinates in 1000 units to output space */

@@ -50,7 +50,7 @@ static exr_status load_transfer(exr_pdf_file *file,uint32_t mask,const exr_contr
 }
 static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set_matrix[6],
                                    unsigned width, unsigned height, unsigned char **out,
-                                   size_t *work, const exr_control *control, exr_error *e) {
+                                   size_t *work,size_t *active_mask_bytes, const exr_control *control, exr_error *e) {
   uint32_t form, id, resources = EXR_PDF_NONE; const unsigned char *data = NULL; size_t size = 0, i,local_work=0;
   double matrix[6], local[6], box[4], bc[4] = {0, 0, 0, 0}; unsigned char *pixels = NULL, *result = NULL;
   const exr_pdf_value *v; int kind = 0, count = 0; exr_bitmap bitmap = {0}; exr_pdf_raster_config config = {0}; exr_status status;
@@ -92,7 +92,7 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
     config.background=255;
     for(unsigned k=0;k<3;k++) config.background|=(uint32_t)fmax(0,fmin(255,floor(bc[k]*255+.5)))<<(24-8*k);
   }
-  config.work=work;
+  config.work=work;config.active_mask_bytes=active_mask_bytes;
   config.initial_clip=box;config.initial_clip_transform=matrix;config.mask_budget=0;
   status = exr_pdf_raster_content(file, resources, data, size, matrix, &config, control, &bitmap, e);
   if (status != EXR_OK) return status;
@@ -140,9 +140,9 @@ static __declspec(thread) unsigned mask_depth;
 static _Thread_local unsigned mask_depth;
 #endif
 exr_status exr_pdf_soft_mask_build(exr_pdf_file *file,uint32_t mask,const double matrix[6],
-  unsigned width,unsigned height,unsigned char **out,size_t *work,const exr_control *control,exr_error *e) {
+  unsigned width,unsigned height,unsigned char **out,size_t *work,size_t *active_mask_bytes,const exr_control *control,exr_error *e) {
   exr_status status;*out=NULL;
   if(mask_depth==16) return exr_fail(e,EXR_LIMIT,"PDF soft mask nesting exceeds 16");
-  mask_depth++;status=build_mask(file,mask,matrix,width,height,out,work,control,e);mask_depth--;
+  mask_depth++;status=build_mask(file,mask,matrix,width,height,out,work,active_mask_bytes,control,e);mask_depth--;
   return status;
 }

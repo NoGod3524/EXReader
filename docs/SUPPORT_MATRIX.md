@@ -5,7 +5,7 @@
 [NATIVE_API.md](NATIVE_API.md) 与 [PERFORMANCE.md](PERFORMANCE.md)；本表随每批交付更新，
 发行时以本表为准。
 
-- 版本：**3.35.0 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
+- 版本：**3.35.1 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
 - 标记：**支持** = 有公开接口、边界与回归；**部分** = 有实现但覆盖/兼容未完整；**未支持** = 明确拒绝或不存在接口
 - 回归：`ctest` 名称，本机完整配置当前140项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
 
@@ -84,7 +84,7 @@
 | --- | --- | --- | --- |
 | C SDK | 支持 | 305 个公开函数导出、`struct_size` 前缀兼容 | `native-abi`、`native-core` |
 | C++ / Swift / JNI 适配 | 支持 | 安装后消费示例与 `-Xcheck:jni` | `native-fixed-example`、`native-wave-example` |
-| 安装与包配置 | 支持 | `find_package(EXReader 3.35.0 EXACT CONFIG REQUIRED)` | CI 安装作业 |
+| 安装与包配置 | 支持 | `find_package(EXReader 3.35.1 EXACT CONFIG REQUIRED)` | CI 安装作业 |
 | 桌面三平台 | 支持 | Windows/Linux/macOS 全量 CTest + 安装消费 | CI `desktop` |
 | Android / iOS / iPadOS | 部分 | **仅库编译与 Swift 适配检查**，无真机/模拟器阅读验证 | CI `android`、`apple-mobile` |
 | 嵌入阅读视图 / 示例 App / TTS / 无障碍 / OPDS / LCP | 未支持 | 目标见 [VERSIONING.md](VERSIONING.md) | — |
