@@ -10,9 +10,9 @@
 | 设备色空间 DeviceGray/RGB/CMYK | 支持 | `pdf_colorspace.c` | — |
 | Indexed / Separation / DeviceN / All / None | 支持 | `pdf_colorspace.c` | 渐变色（Pattern）不支持 |
 | CalGray / CalRGB / Lab | 支持 | `pdf_colorspace.c` | — |
-| ICCBased v2/v4 → sRGB | 支持 | `icc.c:87` | **固定 RelativeColorimetric**，忽略 `/RI` 与图像 `/Intent` |
-| 渲染意图 `/RI`（ExtGState） | **未支持** | 无解析 | 直接按相对比色处理，属静默近似 |
-| 图像 `/Intent` | **未支持** | 无解析 | 同上 |
+| ICCBased v2/v4 → sRGB | 支持 | `icc.c` | 每种渲染意图一个 littleCMS 变换 |
+| 渲染意图 `/RI`（ExtGState） | **支持** | `pdf_content.c` `apply_ext_state` | 四种意图与 MuPDF 差 ≤1/255；未知名字 `EXR_FORMAT` |
+| 图像 `/Intent` | **未支持** | 无解析 | 图像仍按图形状态的意图转换，单图覆盖待做 |
 | 文档 `/OutputIntents` | **未支持** | 无解析 | 印刷文件不会使用其输出意图的 ICC |
 | 图像 `/Matte` | 部分 | `pdf_image.c:99-113` | 仅灰度/RGB；CMYK matte 明确拒绝 |
 | 透明组 `/Group /CS` | 部分 | `pdf_content.c:169` | 只接受 DeviceRGB，其余 `EXR_UNSUPPORTED` |
@@ -40,3 +40,17 @@
 - 不允许“能画但画错”静默通过：解析到但无法正确渲染的参数，要么实现，要么显式 `EXR_UNSUPPORTED`；
 - 每个新矩阵项都必须能在 `tests/fixtures/pdf-color/` 找到正例与反例，并与 littleCMS / PyMuPDF 的独立输出比对；
 - 既有 CMYK/DeviceN/函数样本的像素结果不得退化。
+
+## 已完成项：渲染意图（2026-10-18）
+
+`/RI` 现由 ExtGState 解析进绘制状态，ICC 转换按意图选择变换；相对比色启用黑点补偿（与 MuPDF 一致）。
+
+| 意图 | EXReader | MuPDF 1.28.2 | 差 |
+| --- | --- | --- | ---: |
+| RelativeColorimetric | (175,74,53) | (174,74,53) | 1 |
+| Perceptual | (176,81,63) | (175,80,63) | 1 |
+| Saturation | (176,81,63) | (175,80,63) | 1 |
+| AbsoluteColorimetric | (168,77,61) | (167,76,60) | 1 |
+
+反例：`/RI /Bogus` 与 `/RI 42` 均在渲染时报 `EXR_FORMAT`（打开时不读，因为 ExtGState 只在应用时求值）。
+测试：`native-pdf-intent`，夹具 `tests/fixtures/pdf-color/intent-*.pdf`（内嵌 SWOP CMYK ICC）。

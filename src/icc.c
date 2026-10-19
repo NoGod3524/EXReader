@@ -5,7 +5,7 @@
 #include <lcms2_plugin.h>
 #define ICC_BUDGET ((size_t)16*1024*1024)
 struct exr_icc {
-  cmsContext context;cmsHTRANSFORM transform;cmsColorSpaceSignature space;
+  cmsContext context;cmsHTRANSFORM transform;cmsHTRANSFORM intents[4];cmsColorSpaceSignature space;
   size_t bytes,cost;unsigned channels;int limited,failed,invalid,cancelled;
   exr_control control;
 };
@@ -47,8 +47,9 @@ static void report(cmsContext context,cmsUInt32Number code,const char *message) 
   exr_icc *p=cmsGetContextUserData(context);(void)code;(void)message;if(p) p->invalid=1;
 }
 void exr_icc_free(exr_icc *p) {
+  unsigned i;
   if(!p) return;
-  if(p->transform) cmsDeleteTransform(p->transform);
+  for(i=0;i<4;i++) if(p->intents[i]) cmsDeleteTransform(p->intents[i]);
   if(p->context) cmsDeleteContext(p->context);
   free(p);
 }
@@ -84,7 +85,17 @@ exr_status exr_icc_open(const void *data,size_t size,unsigned channels,const exr
   }
   output=cmsCreate_sRGBProfileTHR(p->context);if(!output) goto done;
   p->invalid=0;
-  p->transform=cmsCreateTransformTHR(p->context,input,format,output,TYPE_RGB_DBL,INTENT_RELATIVE_COLORIMETRIC,cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE);
+  /* ISO 32000-1 8.6.5.8: the rendering intent selects an ICC intent. Keep one
+     transform per intent so /RI does not silently fall back to relative. */
+  { static const cmsUInt32Number table[4]={INTENT_PERCEPTUAL,INTENT_RELATIVE_COLORIMETRIC,INTENT_SATURATION,INTENT_ABSOLUTE_COLORIMETRIC};
+    unsigned i;
+    for(i=0;i<4;i++)
+      /* MuPDF compensates the black point for relative colorimetric; matching it
+         keeps CMYK output within a few levels of the reference. */
+      p->intents[i]=cmsCreateTransformTHR(p->context,input,format,output,TYPE_RGB_DBL,table[i],
+        cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE|(table[i]==INTENT_RELATIVE_COLORIMETRIC ? cmsFLAGS_BLACKPOINTCOMPENSATION : 0));
+    p->transform=p->intents[1];
+  }
 done:
   if(input) cmsCloseProfile(input);
   if(output) cmsCloseProfile(output);
@@ -95,18 +106,24 @@ done:
   if(status==EXR_OK && p->transform && !p->invalid) { *out=p;return EXR_OK; }
   exr_icc_free(p);return status;
 }
-exr_status exr_icc_rgb(exr_icc *p,const double *values,double rgb[3],exr_error *e) {
+exr_status exr_icc_rgb_intent(exr_icc *p,const double *values,double rgb[3],unsigned intent,exr_error *e) {
   double input[4];unsigned i;
+  if(!p) return exr_fail(e,EXR_ARGUMENT,"Missing ICC profile");
+  if(intent>3) return exr_fail(e,EXR_ARGUMENT,"Invalid rendering intent");
+  if(!p->intents[intent]) return exr_fail(e,EXR_FORMAT,"ICC rendering intent is unavailable");
   if(exr_control_cancel(&p->control,e)!=EXR_OK) return EXR_CANCELLED;
   for(i=0;i<p->channels;i++) input[i]=values[i];
   if(p->space==cmsSigCmykData) for(i=0;i<4;i++) input[i]=fmax(0,fmin(1,input[i]))*100;
   else if(p->space==cmsSigLabData) {
     input[0]=fmax(0,fmin(100,input[0]));for(i=1;i<3;i++) input[i]=fmax(-128,fmin(127,input[i]));
   } else for(i=0;i<p->channels;i++) input[i]=fmax(0,fmin(1,input[i]));
-  p->invalid=0;cmsDoTransform(p->transform,input,rgb,1);
+  p->invalid=0;cmsDoTransform(p->intents[intent],input,rgb,1);
   if(p->invalid) return exr_fail(e,EXR_FORMAT,"ICC color conversion failed");
   for(i=0;i<3;i++) { if(!isfinite(rgb[i])) return exr_fail(e,EXR_FORMAT,"Nonfinite ICC result");rgb[i]=fmax(0,fmin(1,rgb[i])); }
   return EXR_OK;
+}
+exr_status exr_icc_rgb(exr_icc *p,const double *values,double rgb[3],exr_error *e) {
+  return exr_icc_rgb_intent(p,values,rgb,1,e);
 }
 size_t exr_icc_memory(const exr_icc *p) { return p ? sizeof(*p)+p->bytes : 0; }
 size_t exr_icc_cost(const exr_icc *p) { return p ? p->cost : 0; }
@@ -117,6 +134,7 @@ exr_status exr_icc_open(const void *data,size_t size,unsigned channels,const exr
 }
 void exr_icc_free(exr_icc *p) { (void)p; }
 exr_status exr_icc_rgb(exr_icc *p,const double *values,double rgb[3],exr_error *e) { (void)p;(void)values;(void)rgb;return exr_fail(e,EXR_FORMAT,"ICC conversion is disabled"); }
+exr_status exr_icc_rgb_intent(exr_icc *p,const double *values,double rgb[3],unsigned intent,exr_error *e) { (void)p;(void)values;(void)rgb;(void)intent;return exr_fail(e,EXR_FORMAT,"ICC conversion is disabled"); }
 size_t exr_icc_memory(const exr_icc *p) { (void)p;return 0; }
 size_t exr_icc_cost(const exr_icc *p) { (void)p;return 0; }
 #endif

@@ -127,12 +127,14 @@ int exr_pdf_colorspace_indexed(const exr_pdf_colorspace *space);
 void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *space,double *ranges);
 void exr_pdf_colorspace_initial(const exr_pdf_colorspace *space,double *values);
 exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *space,const double *values,double rgb[3],exr_error *error);
+exr_status exr_pdf_colorspace_rgb_intent(const exr_pdf_colorspace *space,const double *values,double rgb[3],unsigned intent,exr_error *error);
 int exr_pdf_colorspace_no_paint(const exr_pdf_colorspace *space);
 size_t exr_pdf_colorspace_cost(const exr_pdf_colorspace *space);
 typedef struct {
   exr_pdf_color fill,stroke; exr_vector_stroke_style line;exr_blend_mode blend;
   const double *dashes; size_t dash_count; double dash_phase,matrix[6];
   uint32_t smask; double smask_matrix[6]; /* 11.6.5.2 mask object and the CTM when it was set. */
+  unsigned intent; /* 8.6.5.8 rendering intent: 0 perceptual, 1 relative, 2 saturation, 3 absolute. */
 } exr_pdf_paint_state;
 exr_status exr_pdf_soft_mask_kind(exr_pdf_file *file,uint32_t mask,int *kind,exr_error *error);
 exr_status exr_pdf_soft_mask_build(exr_pdf_file *file,uint32_t mask,const double set_matrix[6],
