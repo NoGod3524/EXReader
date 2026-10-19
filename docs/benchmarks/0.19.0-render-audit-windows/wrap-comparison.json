@@ -1,0 +1,297 @@
+{
+  "scope": "GCC16.2 Release, same implementation before/after defining signed wrap in LittleCMS cmsintrp.c; compare full RGBA buffers and status without changing tolerances.",
+  "libraries": [
+    {
+      "sha256": "a6ef0da2578071e55e02e0c17f997292d56986abf721938295d22367dfaa5a01",
+      "bytes": 6158810
+    },
+    {
+      "sha256": "9e24e32a21f90d2f15e12f60f961d33a9c3e2de9269c05ac9dca698c63fc4990",
+      "bytes": 6150618
+    }
+  ],
+  "files": [
+    {
+      "file": "pdf-color/ccitt-g3.pdf",
+      "input_sha256": "2ec16572b45d16d102416d596271fdbaa8f9ed292a6295d87d1ecbfbf5556041",
+      "status": "ok",
+      "rgba_sha256": "371ea3707d0e4cd7e59f5d98e3e7ee35427b5fcf173d883fcce4ffc94a90b145"
+    },
+    {
+      "file": "pdf-color/ccitt-g4-norows.pdf",
+      "input_sha256": "862a52dc54abb4e9856f41fc0fdabffced4878cb598cb60c595a0e0606a765df",
+      "status": "ok",
+      "rgba_sha256": "371ea3707d0e4cd7e59f5d98e3e7ee35427b5fcf173d883fcce4ffc94a90b145"
+    },
+    {
+      "file": "pdf-color/ccitt-g4-truncated.pdf",
+      "input_sha256": "b1442bd1497aea270f7528f00d152ae770f74fbdf889f187eacfb824605cd52e",
+      "status": "format",
+      "rgba_sha256": null
+    },
+    {
+      "file": "pdf-color/ccitt-g4.pdf",
+      "input_sha256": "082cdf642ec8fdc180142a5b7e02147a6a15a2a4fe4a6c5fdcfad4e4fbc2e5d6",
+      "status": "ok",
+      "rgba_sha256": "371ea3707d0e4cd7e59f5d98e3e7ee35427b5fcf173d883fcce4ffc94a90b145"
+    },
+    {
+      "file": "pdf-color/cmyk-fill.pdf",
+      "input_sha256": "ffa60b77c6efb94101353aa497b96ae09feb7c2accb2bfff3364352147e0b148",
+      "status": "ok",
+      "rgba_sha256": "849d840a7f4c9defa326db5e60044f26d15f325b1dce9f9d7582754bf9790c64"
+    },
+    {
+      "file": "pdf-color/groupcmyk-blend.pdf",
+      "input_sha256": "85d006695482472c4aee93126874415d37b73a006c292253b08507839cfcc050",
+      "status": "ok",
+      "rgba_sha256": "2fe6bf00283d8083d2bb33c62d12fd8b3526fd4f85c894992ead6699981e4907"
+    },
+    {
+      "file": "pdf-color/groupcmyk.pdf",
+      "input_sha256": "440f688453adab37628b727b71e28cab6f8e8e585cd604f67f74e4580c0a7ac6",
+      "status": "ok",
+      "rgba_sha256": "849d840a7f4c9defa326db5e60044f26d15f325b1dce9f9d7582754bf9790c64"
+    },
+    {
+      "file": "pdf-color/groupgray.pdf",
+      "input_sha256": "b4dffbd7b818a25b9a1cadb60e4af294d7aecc87440759dcfdebb0c71f779d3e",
+      "status": "ok",
+      "rgba_sha256": "056b6871e4bbf1659308468a8d604abf7908aab15d5859956fef934561ee953c"
+    },
+    {
+      "file": "pdf-color/grouprgb.pdf",
+      "input_sha256": "12b27eb9fe008b8e4fb313df176199a9ca4a3fbd7619a8902fb8a9884715bbf6",
+      "status": "ok",
+      "rgba_sha256": "71205eb7a329a3ead670c77eee185c0fbeb612f7a2b3d6aadbe2af4f9276b60d"
+    },
+    {
+      "file": "pdf-color/image-intent-bad-type.pdf",
+      "input_sha256": "9defb16b920915f7680cfab735b7a5e390bd45ae08560843157f61727d7c2f44",
+      "status": "format",
+      "rgba_sha256": null
+    },
+    {
+      "file": "pdf-color/image-intent-bad.pdf",
+      "input_sha256": "d60ffb27b5ce50baa8b37d723be27252f4ef60ecc195b576ae896b63fe450fba",
+      "status": "format",
+      "rgba_sha256": null
+    },
+    {
+      "file": "pdf-color/image-intent-default.pdf",
+      "input_sha256": "90d0c35746a7ad98992b4990375a88541b431fff8d007160a68ecf26480d8194",
+      "status": "ok",
+      "rgba_sha256": "53c9560726ed8a01562dc381a9dde9a990e9ddb6965f5e12165a3e9223c74e80"
+    },
+    {
+      "file": "pdf-color/image-intent-perceptual.pdf",
+      "input_sha256": "153d15685b0d4aeb6e85fa1aa0938dd9c0173ea405981b6a686e676b5c191d92",
+      "status": "ok",
+      "rgba_sha256": "fc6f112b54e970be427472c3c6a9ddb9f118a5bcdd105f105c7e576dc1bd9bce"
+    },
+    {
+      "file": "pdf-color/image-intent-saturation.pdf",
+      "input_sha256": "b35dce46b955f946cc14e73fe29dceafef94c42b5a12bac25d20c93278a8b7b9",
+      "status": "ok",
+      "rgba_sha256": "fc6f112b54e970be427472c3c6a9ddb9f118a5bcdd105f105c7e576dc1bd9bce"
+    },
+    {
+      "file": "pdf-color/intent-bad-name.pdf",
+      "input_sha256": "c215d6b0a86e7e38c48615a347e99841de655c72817caff317382852c91305f1",
+      "status": "format",
+      "rgba_sha256": null
+    },
+    {
+      "file": "pdf-color/intent-bad-type.pdf",
+      "input_sha256": "919bffbb59db9dd9513a87fd6f6db256dc66f9ab895851b62af18ea7eda8c41b",
+      "status": "format",
+      "rgba_sha256": null
+    },
+    {
+      "file": "pdf-color/intent-intents.pdf",
+      "input_sha256": "a668602e33a7198c3bcb6f0dafd3e24c77b432e6380f41bb7ebd63d4d940070d",
+      "status": "ok",
+      "rgba_sha256": "909eacff00501fbd354364c95780d5a469886e1a915c9d5e3e8bd208132cb17f"
+    },
+    {
+      "file": "pdf-color/matte-bad-count.pdf",
+      "input_sha256": "54e356c8a3c72735fe2539748236f0de4484c9c741b0204a499dcfd7e092f0bb",
+      "status": "format",
+      "rgba_sha256": null
+    },
+    {
+      "file": "pdf-color/matte-bad-range.pdf",
+      "input_sha256": "e02609b81bfd1018bd6482d9c80090f9bd36cc9e8dd15a830caa3a0fe3fd50a5",
+      "status": "format",
+      "rgba_sha256": null
+    },
+    {
+      "file": "pdf-color/matte-cmyk.pdf",
+      "input_sha256": "72eae069d86328e958ad49a5ed81ab43fb8c4b391342d26c84f6279df88dcb73",
+      "status": "ok",
+      "rgba_sha256": "2b5d7b65e6e4b1a5872e1b0e7a81542529ac4f456d6060511a8eb0cf0115fa15"
+    },
+    {
+      "file": "pdf-color/matte-gray.pdf",
+      "input_sha256": "2d2d3ad5ce2f787780b2e445b35f6de09b39bf94aac2c31b901e68a94d239e95",
+      "status": "ok",
+      "rgba_sha256": "0bdf3666902959060d6d5d5a5cc8b468ecdaaabe967ccc76c6f93d71443f0f8d"
+    },
+    {
+      "file": "pdf-color/matte-rgb.pdf",
+      "input_sha256": "cfdd0ae47ae288895a50fccf48a7380c29e45510964613a7d1cbce05749ad9f9",
+      "status": "ok",
+      "rgba_sha256": "0039abbd75547019c1d77035a0626ed80e879e3f21c473b0b2e755155ef2393e"
+    },
+    {
+      "file": "pdf-color/shading-axial-noextend.pdf",
+      "input_sha256": "055da9f68d40dcaf1b74786d34fca70a19766bd8f713fb926aefbd77428b2e40",
+      "status": "ok",
+      "rgba_sha256": "72390e7e2e92772678c23f9e2c29838ca2cf3021a8fad09587439221cfe0ecae"
+    },
+    {
+      "file": "pdf-color/shading-axial.pdf",
+      "input_sha256": "e0b8b52aa4780a3edb036f88a26f5e84997b90ce97bfdcf741ccb8ba7d09a6ee",
+      "status": "ok",
+      "rgba_sha256": "ad376a60817c40f08aa8bfaa385a07829d223be8e36c151ff525602c285f7aba"
+    },
+    {
+      "file": "pdf-color/shading-bad-coords.pdf",
+      "input_sha256": "1b322b7a91604f29a13c7d9f5c41288dcd227e5dbf7ea7005b833ca0bea7a719",
+      "status": "format",
+      "rgba_sha256": null
+    },
+    {
+      "file": "pdf-color/shading-degenerate.pdf",
+      "input_sha256": "e84c765acedaeca7e969d0a10fe36bb273228fc0e94f6be9db1aefcb72540562",
+      "status": "format",
+      "rgba_sha256": null
+    },
+    {
+      "file": "pdf-color/shading-freeform.pdf",
+      "input_sha256": "195caa9695dee0c9c28ba2eb99ba14a47bb8883e3843d682788392ef7d9f51b2",
+      "status": "unsupported",
+      "rgba_sha256": null
+    },
+    {
+      "file": "pdf-color/shading-mesh4.pdf",
+      "input_sha256": "587a38efcfb6c91493c11e30cc8643b45d07ad7f022598a189ebc4677eb5b2a5",
+      "status": "ok",
+      "rgba_sha256": "de242cd34e8871d472c262a210a4fae327b60e2cfd3f9131035f0414b15db5e4"
+    },
+    {
+      "file": "pdf-color/shading-mesh6.pdf",
+      "input_sha256": "5fd7d1ee0950a830ef1858b0a24f8b630fa69e6746075e70b53e903615fdb72e",
+      "status": "ok",
+      "rgba_sha256": "f364786a8e0d9d5465efc39dd75cb5bc42756e6fb21a17230ea5800391e5a012"
+    },
+    {
+      "file": "pdf-color/shading-mesh7-bulge.pdf",
+      "input_sha256": "9d18110bc8f476e1f3663079740575d53222326a7f71798e2944e26c5f35b347",
+      "status": "ok",
+      "rgba_sha256": "50bf1d1b45a7066f5418ce11c1f0594050e08b75088e2fc4da7d1e58d95eea17"
+    },
+    {
+      "file": "pdf-color/shading-mesh7-cmyk.pdf",
+      "input_sha256": "30dea6d4cd1b3c7e78a430963a2f5990c2c52615c945919dda99006886e690ae",
+      "status": "ok",
+      "rgba_sha256": "3a5eae3e6e827feb790b156037255846c806e61e8343ac6cbb3666089fe89133"
+    },
+    {
+      "file": "pdf-color/shading-mesh7.pdf",
+      "input_sha256": "034bfdcc067b1ed56125e2ee51fe1f4c001ec0db61d406fdb7f5f36a1fdadb4d",
+      "status": "ok",
+      "rgba_sha256": "f364786a8e0d9d5465efc39dd75cb5bc42756e6fb21a17230ea5800391e5a012"
+    },
+    {
+      "file": "pdf-color/shading-radial.pdf",
+      "input_sha256": "c6decc77d47d48947f3c02def56a2f6bbfd93d93383a26eb83a686efb71fe920",
+      "status": "ok",
+      "rgba_sha256": "118ffb629b6c327d578e330d1174c60875c2132bc40800d9cb9e27f9206070ad"
+    },
+    {
+      "file": "render-audit/appearance-cmyk.pdf",
+      "input_sha256": "cd7abc6c0b273fbd205f86c3254ab2b7c57cabf8c94cced781907b59d3969b51",
+      "status": "ok",
+      "rgba_sha256": "0b2b71e5908ecb7d8f2d51703dedb337ddea16964dd493b79655b935a3278c6c"
+    },
+    {
+      "file": "render-audit/gray-image.pdf",
+      "input_sha256": "1328bd2eeeba6c7edbbb69f098186552ba48b89e22ad18cd60f4060a65c87e35",
+      "status": "ok",
+      "rgba_sha256": "d5cd23ed4e001a28c32db72abd7b69e5ad67872d6170bf39732b58f9bca9f77c"
+    },
+    {
+      "file": "render-audit/mask-cycle.pdf",
+      "input_sha256": "42395b26b0db779627037e316f61038e1e4e22464db576fcba86b70c8810f903",
+      "status": "limit",
+      "rgba_sha256": null
+    },
+    {
+      "file": "render-audit/mesh-function-gray.pdf",
+      "input_sha256": "e66f15a203783fdcd296c9e42956ac776f3b2411dfb1eba2601f174db11fb2fa",
+      "status": "ok",
+      "rgba_sha256": "40762eb0afde5939e83569c1c7634d18c9e30e4622779b6d411721a871f3ff3a"
+    },
+    {
+      "file": "render-audit/mesh4-alias.pdf",
+      "input_sha256": "7598c0a5578d7a3e32042fd4a778935d6615b8f67e65f9b30d135955d92c13aa",
+      "status": "ok",
+      "rgba_sha256": "f5e0174b6411cb19aed27dcd0ebc366c5d70cd858b50eb4cdc46a08bf478eaa7"
+    },
+    {
+      "file": "render-audit/mesh4-continue.pdf",
+      "input_sha256": "0826294ae36625c6b3446d58aa5732a8d3b07eca7bdcd5034cc4979e68598986",
+      "status": "ok",
+      "rgba_sha256": "3cdf80e2979fae7b260328d2aaed4adc82e2a6fbc5fe960f4bb6a8d4fb6912be"
+    },
+    {
+      "file": "render-audit/mesh5-incomplete.pdf",
+      "input_sha256": "6ed1087e476df2271729128c2947cb60b18c20f027c0630317d0d0788d6d4bd5",
+      "status": "format",
+      "rgba_sha256": null
+    },
+    {
+      "file": "render-audit/mesh5.pdf",
+      "input_sha256": "1316cbb5f5ebf0fb81495e1da43d5b3dc3eb7662f62f29aa562d9d7549a4daca",
+      "status": "ok",
+      "rgba_sha256": "3cdf80e2979fae7b260328d2aaed4adc82e2a6fbc5fe960f4bb6a8d4fb6912be"
+    },
+    {
+      "file": "render-audit/mesh6-packed.pdf",
+      "input_sha256": "bafb62bfa9787051aa77b9f5df990705c7f5cddcd47c0425584ac94e25f84188",
+      "status": "ok",
+      "rgba_sha256": "989bd897c8f58acbfe4851e8f34d05186ede3c234956685a5fa8afcd1e3e6d09"
+    },
+    {
+      "file": "render-audit/page-cmyk.pdf",
+      "input_sha256": "fb085071c5aa8833a73f266fd2ee0a1bf03fdf2a80a5a90d61d16b3541cbe6cd",
+      "status": "ok",
+      "rgba_sha256": "0b2b71e5908ecb7d8f2d51703dedb337ddea16964dd493b79655b935a3278c6c"
+    },
+    {
+      "file": "render-audit/shading-alpha.pdf",
+      "input_sha256": "f074f1ac5dd8e4bd2d65e13a84f7b0cee3a8ebd1299bde375f212d04a5296f51",
+      "status": "ok",
+      "rgba_sha256": "b8eb23878db3d05ccbd2d7c5b7255f2754380c83cdf1c950dc65f96546a755b6"
+    },
+    {
+      "file": "render-audit/shading-blend.pdf",
+      "input_sha256": "a697b92e5f3d5eb6cbaf6d559f0c82c90b70786288c2c6abe39b8bf5d0055b78",
+      "status": "ok",
+      "rgba_sha256": "4869e9d9079fa372b2685a2b1c54f3262c72fa40078b7d6468ca2a58f4769415"
+    },
+    {
+      "file": "render-audit/shading-mask.pdf",
+      "input_sha256": "77695d1fcb43f91cbd0325e4b25699e37ad69b427ed18e87405b03a79f32bd65",
+      "status": "ok",
+      "rgba_sha256": "b8eb23878db3d05ccbd2d7c5b7255f2754380c83cdf1c950dc65f96546a755b6"
+    }
+  ],
+  "pixel_mismatches": 0,
+  "arithmetic_identity": {
+    "vectors": 100003,
+    "seed": 19,
+    "scope": "16-bit interpolation: explicit signed32 wrap followed by uint16 truncation equals wide-integer arithmetic."
+  }
+}

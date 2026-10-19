@@ -37,6 +37,11 @@ if(EXR_ENABLE_ICC)
   FetchContent_MakeAvailable(lcms)
   file(GLOB exr_lcms_sources CONFIGURE_DEPENDS "${lcms_SOURCE_DIR}/src/cms*.c")
   add_library(exr_lcms STATIC ${exr_lcms_sources})
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    # The upstream 16-bit interpolation deliberately wraps signed products before
+    # truncating to 16 bits. Define that arithmetic for GCC as well as UBSan.
+    set_property(SOURCE "${lcms_SOURCE_DIR}/src/cmsintrp.c" APPEND PROPERTY COMPILE_OPTIONS -fwrapv)
+  endif()
   set_target_properties(exr_lcms PROPERTIES C_VISIBILITY_PRESET hidden)
   target_include_directories(exr_lcms PUBLIC ${lcms_SOURCE_DIR}/include)
   if(NOT WIN32)

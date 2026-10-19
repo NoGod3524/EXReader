@@ -4180,3 +4180,18 @@ All five migration checkpoints passed GCC131/131. The final graph check reports
 98objects,1019references,0inverse references; its exception list is empty. A
 negative configuration test correctly returns failure. Internal type/header and
 physical CMake target separation remain future work, not covered by that count.
+
+## LittleCMS fixed-point interpolation under UBSan
+
+CI39322676904 passed desktopWindows/Linux/macOS, Android, Apple mobile and fuzz,
+but UBSan stopped10 CMYK suites at LittleCMS2.19.1 `cmsintrp.c:604`: signed
+multiplication61938×37030 overflows32-bit int. Upstream marks these interpolation
+routines CMS_NO_SANITIZE for Clang and documents intentional overflow. GCC now
+compiles only that interpolation source with `-fwrapv`, defining the intended
+modular arithmetic in all GNU builds. The sanitizer configuration is unchanged.
+
+GCC131/131 passes. Forty-six original PDFs compare unchanged in fullRGBA/status
+before/after the flag;100,003 independent arithmetic vectors agree with wide
+integer interpolation. Raw input and library hashes are retained in
+[wrap-comparison.json](benchmarks/0.19.0-render-audit-windows/wrap-comparison.json).
+The updated exact-commit CI result is recorded below after completion.
