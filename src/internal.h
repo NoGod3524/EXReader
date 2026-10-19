@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #define EXR_DECORATIONS (EXR_GLYPH_UNDERLINE | EXR_GLYPH_STRIKE)
+/* Internal hint: this group's caller relies on whole-canvas buffer semantics. */
+#define EXR_GROUP_WHOLE_BUFFER 0x80u
 #define EXR_MAX_INPUT ((size_t)128 * 1024 * 1024)
 #define EXR_MAX_TEXT ((size_t)64 * 1024 * 1024)
 #define EXR_MAX_ITEMS ((size_t)4 * 1024 * 1024)
@@ -196,12 +198,12 @@ exr_status exr_sink_begin_group(const exr_draw_sink_ex *sink,double opacity,exr_
 exr_status exr_sink_soft_mask(const exr_draw_sink_ex *sink,const unsigned char *mask,size_t width,size_t height,exr_error *error);
 exr_status exr_sink_extent(const exr_draw_sink_ex *sink,unsigned *width,unsigned *height,exr_error *error);
 exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state,const exr_bitmap *parent,
-  const exr_composite_state *parent_state,size_t *work,const exr_control *control,exr_error *error);
+  const exr_composite_state *parent_state,int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,
   uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,
   size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_bitmap_to_gray(exr_bitmap *bitmap,const exr_control *control,exr_error *error);
 exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,double opacity,exr_blend_mode mode,
   const exr_bitmap *clip,exr_composite_state *target_state,const exr_composite_state *source_state,
-  size_t *work,const exr_control *control,exr_error *error);
+  int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *error);
 #endif

@@ -39,8 +39,20 @@ static exr_composite_state *masked_state(exr_canvas *c) {
 }
 exr_status exr_canvas_soft_mask(exr_canvas *c,const unsigned char *mask,size_t width,size_t height,exr_error *e) {
   exr_status status=ready(c,e);if(status!=EXR_OK) return status;
-  if(mask && (width!=c->bitmap.width || height!=c->bitmap.height))
-    return finish(c,exr_fail(e,EXR_ARGUMENT,"Soft mask size must match the canvas"),e);
+  if(c->soft_mask_owned) { free(c->soft_mask_owned); c->soft_mask_owned=NULL; }
+  if(mask && (width!=c->bitmap.width || height!=c->bitmap.height)) {
+    /* A host builds the mask at the device extent; a region-sized working buffer
+       needs the matching sub-rectangle. */
+    size_t row,bw=c->bitmap.width,bh=c->bitmap.height;
+    unsigned char *crop;
+    if(width!=c->canvas_width || height!=c->canvas_height)
+      return finish(c,exr_fail(e,EXR_ARGUMENT,"Soft mask size must match the canvas"),e);
+    crop=malloc(bw*bh); if(!crop) return finish(c,exr_fail(e,EXR_MEMORY,"Soft mask crop allocation failed"),e);
+    for(row=0;row<bh;row++)
+      memcpy(crop+row*bw,mask+(row+(size_t)c->offset_y)*width+(size_t)c->offset_x,bw);
+    c->soft_mask_owned=crop;c->soft_mask=crop;c->soft_mask_width=bw;c->soft_mask_height=bh;
+    return EXR_OK;
+  }
   c->soft_mask=mask;c->soft_mask_width=mask ? width : 0;c->soft_mask_height=mask ? height : 0;
   return EXR_OK;
 }
@@ -63,6 +75,13 @@ static void multiply(const double a[6],const double b[6],double out[6]) {
   out[0]=a[0]*b[0]+a[2]*b[1]; out[1]=a[1]*b[0]+a[3]*b[1];
   out[2]=a[0]*b[2]+a[2]*b[3]; out[3]=a[1]*b[2]+a[3]*b[3];
   out[4]=a[0]*b[4]+a[2]*b[5]+a[4]; out[5]=a[1]*b[4]+a[3]*b[5]+a[5];
+}
+/* Region-sized groups draw with canvas coordinates shifted to the buffer origin. */
+static const double *shifted(exr_canvas *c,const double transform[6],double out[6]) {
+  const double t[6]={1,0,0,1,-(double)c->offset_x,-(double)c->offset_y};
+  if(!c->offset_x && !c->offset_y) return transform;
+  if(transform) { multiply(t,transform,out); return out; }
+  memcpy(out,t,sizeof(t)); return out;
 }
 exr_draw_style exr_draw_style_defaults(void) {
   exr_draw_style style={0}; style.fill=style.stroke=0x000000ff; style.flags=EXR_DRAW_FILL; style.line.width=1; style.line.miter_limit=10; return style;
@@ -133,11 +152,13 @@ exr_status exr_canvas_restore(exr_canvas *c,exr_error *e) {
   if(!c->depth || (c->layer_depth && c->depth<=c->layers[c->layer_depth-1].depth)) return finish(c,exr_fail(e,EXR_ARGUMENT,"Canvas clip stack underflow"),e);
   unref(c,c->clip); c->blend=c->saved_blend[c->depth-1];c->clip=c->saved[--c->depth]; c->saved[c->depth]=NULL; return exr_fail(e,EXR_OK,"");
 }
-exr_status exr_canvas_path(exr_canvas *c,const exr_path_segment *segments,size_t count,const double transform[6],const exr_draw_style *style,exr_error *e) {
+exr_status exr_canvas_path(exr_canvas *c,const exr_path_segment *segments,size_t count,const double transform_arg[6],const exr_draw_style *style,exr_error *e) {
   const double identity[6]={1,0,0,1,0,0}; exr_draw_style defaults=exr_draw_style_defaults();
+  double offset_matrix[6];const double *transform=transform_arg;
   exr_vector_polyline flat={0},local={0},dashed={0},outline={0}; exr_status status=ready(c,e);
   if(status!=EXR_OK) return status;
   if(!style) style=&defaults;
+  transform=shifted(c,transform_arg,offset_matrix);
   if((style->flags&~3u) || (style->rule!=EXR_FILL_NONZERO && style->rule!=EXR_FILL_EVENODD) || (count && !segments))
     return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid canvas path flags/rule/input"),e);
   if(style->flags&EXR_DRAW_FILL) status=exr_vector_flatten(segments,count,transform,.125,&flat,&c->work,&c->control,e);
@@ -168,7 +189,8 @@ done:
 static exr_status clip_path(exr_canvas *c,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,int group,exr_error *e) {
   exr_vector_polyline flat={0}; exr_clip_mask *mask=NULL; exr_status status=ready(c,e);
   if(status!=EXR_OK) return status;
-  status=exr_vector_flatten(segments,count,matrix,.125,&flat,&c->work,&c->control,e);
+  { double local[6]; const double *use=shifted(c,matrix,local);
+    status=exr_vector_flatten(segments,count,use,.125,&flat,&c->work,&c->control,e); }
   if(status==EXR_OK && group) {
     if(!c->group) status=new_mask(c,&c->group,e);
     if(status==EXR_OK) status=fill(c,&flat,rule,0xffffffff,&c->group->bitmap,NULL,e);
@@ -200,8 +222,10 @@ exr_status exr_canvas_union_commit(exr_canvas *c,exr_error *e) {
   return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_canvas_image(exr_canvas *c,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
+  double local[6];const double *use;
   exr_status status=ready(c,e); if(status!=EXR_OK) return status;
-  status=exr_vector_texture_blend(&c->bitmap,image,matrix,alpha,c->clip ? &c->clip->bitmap : NULL,c->blend,masked_state(c),&c->work,&c->control,e);
+  use=shifted(c,matrix,local);
+  status=exr_vector_texture_blend(&c->bitmap,image,use,alpha,c->clip ? &c->clip->bitmap : NULL,c->blend,masked_state(c),&c->work,&c->control,e);
   return finish(c,status,e);
 }
 static exr_status sink_path(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
@@ -307,12 +331,29 @@ exr_status exr_canvas_begin_layer(exr_canvas *c,double opacity,exr_blend_mode mo
 }
 exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
   exr_status status=ready(c,e);exr_canvas_layer layer={0};exr_bitmap next;exr_composite_state *state=NULL;unsigned char *pixels;size_t bytes,count;
+  size_t region_width,region_height;int region=0,region_x=0,region_y=0;
   if(status!=EXR_OK) return status;
   unsigned needs_state;
   if(!isfinite(opacity) || opacity<0 || opacity>1 || mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY ||
-     (flags&~(EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT))) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid group parameters"),e);
+     (flags&~(EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT|EXR_GROUP_WHOLE_BUFFER))) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid group parameters"),e);
   needs_state=!(flags&EXR_GROUP_ISOLATED) || (flags&EXR_GROUP_KNOCKOUT);
-  count=(size_t)c->bitmap.width*c->bitmap.height;bytes=count*(needs_state ? 4+5*sizeof(float) : 4);
+  region_width=c->bitmap.width;region_height=c->bitmap.height;
+  if(c->layer_depth==0 && needs_state && c->clip && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
+    size_t x0=region_width,y0=region_height,x1=0,y1=0,xx,yy;
+    for(yy=0;yy<region_height;yy++) {
+      for(xx=0;xx<region_width;xx++) {
+        if(!c->clip->bitmap.pixels[yy*c->clip->bitmap.stride+xx]) continue;
+        if(xx<x0) x0=xx;
+        if(xx>=x1) x1=xx+1;
+        if(yy<y0) y0=yy;
+        if(yy>=y1) y1=yy+1;
+      }
+    }
+    if(x1>x0 && y1>y0 && (x1-x0)*(y1-y0)<=region_width*region_height/2) {
+      region_x=(int)x0;region_y=(int)y0;region_width=x1-x0;region_height=y1-y0;region=1;
+    }
+  }
+  count=region_width*region_height;bytes=count*(needs_state ? 4+5*sizeof(float) : 4);
   if(c->layer_depth==32 || bytes>64*1024*1024 || bytes>c->layer_budget-c->layer_bytes) return finish(c,exr_fail(e,EXR_LIMIT,"Group depth/byte budget exceeded"),e);
   if(!exr_grow((void **)&c->layers,&c->layer_capacity,c->layer_depth+1,sizeof(*c->layers))) return finish(c,exr_fail(e,EXR_MEMORY,"Layer stack allocation failed"),e);
   if(c->group_depth) {
@@ -324,7 +365,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   if(!pixels || (needs_state && (!state || !state->pixels))) {
     free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,exr_fail(e,EXR_MEMORY,"Group working buffer allocation failed"),e);
   }
-  next=c->bitmap;next.channels=4;next.stride=next.width*4;next.pixels=pixels;
+  next=c->bitmap;next.channels=4;next.width=region_width;next.height=region_height;next.stride=region_width*4;next.pixels=pixels;
   if(state) {
     state->knockout=!!(flags&EXR_GROUP_KNOCKOUT);state->isolated=!!(flags&EXR_GROUP_ISOLATED);
     /* Isolated groups start transparent, so the parent backdrop is not copied in.
@@ -333,14 +374,28 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
     if(!state->isolated) {
       const exr_bitmap *parent=&c->bitmap;const exr_composite_state *parent_state=c->composite;
       if(c->composite && c->composite->knockout && !c->composite->isolated) { parent=&c->composite->backdrop;parent_state=c->composite->backdrop_state; }
-      status=exr_composite_initialize(&next,state,parent,parent_state,&c->work,&c->control,e);
+      status=exr_composite_initialize(&next,state,parent,parent_state,region_x,region_y,&c->work,&c->control,e);
     }
     else state->depth=1;
+    state->origin_x=region_x;state->origin_y=region_y;
   }
   if(status!=EXR_OK) { free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,status,e); }
   layer.bitmap=c->bitmap;layer.composite=c->composite;layer.clip=c->clip;layer.pending=c->group;layer.group_depth=c->group_depth;layer.depth=c->depth;
+  layer.origin_x=region_x;layer.origin_y=region_y;layer.parent_offset_x=c->offset_x;layer.parent_offset_y=c->offset_y;
   layer.opacity=opacity;layer.blend=mode;layer.parent_blend=c->blend;c->layers[c->layer_depth++]=layer;c->layer_bytes+=bytes;
   c->bitmap=next;c->composite=state;c->clip=c->group=NULL;c->group_depth=0;c->blend=EXR_BLEND_NORMAL;memset(c->groups,0,sizeof(c->groups));return EXR_OK;
+  c->offset_x=region_x;c->offset_y=region_y;
+  if(region && layer.clip) {
+    /* The inherited clip becomes a region-sized copy in buffer coordinates. */
+    exr_clip_mask *crop=NULL;
+    if(new_mask(c,&crop,e)==EXR_OK) {
+      size_t row;
+      for(row=0;row<region_height;row++)
+        memcpy(crop->bitmap.pixels+row*region_width,
+               layer.clip->bitmap.pixels+(row+(size_t)region_y)*layer.clip->bitmap.stride+(size_t)region_x,region_width);
+      unref(c,c->clip);c->clip=crop;
+    }
+  }
 }
 exr_status exr_canvas_end_layer(exr_canvas *c,unsigned commit,exr_error *e) {
   exr_canvas_layer layer;exr_bitmap source;exr_composite_state *source_state;exr_status status;size_t i;
@@ -351,9 +406,10 @@ exr_status exr_canvas_end_layer(exr_canvas *c,unsigned commit,exr_error *e) {
   unref(c,c->clip);exr_canvas_union_abort(c);while(c->group_depth) unref(c,c->groups[--c->group_depth]);
   while(c->depth>layer.depth) { unref(c,c->saved[--c->depth]);c->saved[c->depth]=NULL; }
   c->bitmap=layer.bitmap;c->composite=layer.composite;c->clip=layer.clip;c->group=layer.pending;c->group_depth=layer.group_depth;c->blend=layer.parent_blend;
+  c->offset_x=layer.parent_offset_x;c->offset_y=layer.parent_offset_y;
   memset(c->groups,0,sizeof(c->groups));if(layer.group_depth) memcpy(c->groups,layer.pending_groups,layer.group_depth*sizeof(*c->groups));free(layer.pending_groups);
   c->layer_depth--;c->layer_bytes-=(size_t)source.stride*source.height+composite_size(&source,source_state);memset(c->layers+c->layer_depth,0,sizeof(*c->layers));
-  if(commit && status==EXR_OK) status=exr_composite_frame(&c->bitmap,&source,layer.opacity,layer.blend,c->clip ? &c->clip->bitmap : NULL,c->composite,source_state,&c->work,&c->control,e);
+  if(commit && status==EXR_OK) status=exr_composite_frame(&c->bitmap,&source,layer.opacity,layer.blend,c->clip ? &c->clip->bitmap : NULL,c->composite,source_state,layer.origin_x,layer.origin_y,&c->work,&c->control,e);
   composite_free(source_state);free(source.pixels);for(i=c->depth;i<160;i++) c->saved_blend[i]=EXR_BLEND_NORMAL;
   return finish(c,status,e);
 }
