@@ -281,7 +281,7 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 
 ## 工作包现状与已知坑（2026-10-19 WP5 收尾检查点）
 
-本检查点在上一次 `db70495` 之后完成 WP5 收尾，工作区改动尚未提交，回归 **128/128**。
+本检查点在上一次 `db70495` 之后完成 WP5 收尾，已在 `2a897d1` 提交（本文档随后的文档提交），回归 **128/128**。
 
 ### 已完成
 
@@ -342,7 +342,7 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 
 接手须知：
 
-- 本地 Release 回归 **128/128**（新增两项见上）；本检查点改动尚未提交；
+- 本地 Release 回归 **128/128**（新增两项见上）；本检查点改动已提交为 `2a897d1`；
 - 网格渐变 `flag 1/2` 与类型 5 的顶点顺序**未经过像素对照**，见审计第 2 节；
 - 语料里只有 8 个文件含着色字典，其中 6 个是类型 2/3；
 - 所有未实现路径都返回 `EXR_UNSUPPORTED`，没有静默错误输出。
