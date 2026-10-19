@@ -4238,3 +4238,15 @@ results. Current MIT scope and optional FAAD2 GPL terms are in THIRD_PARTY_NOTIC
 - 软遮罩内存/预算新增失败回归修复后通过，`native-render-audit`现356项检查。
 
 完整桌面CI增加安装组件消费、纯核心安装消费与无音频/PDF书库组合；移动结果仍按库交叉构建/typecheck记录，不记为真机运行。
+
+### 分层代码的跨平台结果
+
+代码`716235e6ab4c5bb944c2e240b6a173289b3ab725`的[CI39328976671](https://github.com/NoGod3524/EXReader/actions/runs/39328976671) **7/7成功**：
+
+- Windows/Linux/macOS各136/136；安装静态组件各4/4。
+- 三桌面纯核心及其安装消费各1/1；无音频/PDF书库各2/2。
+- ASan/UBSan及泄漏检查133/133，无报告错误；三个不能通过未插桩Python加载插桩库的词典oracle继续只在桌面配置执行，对应原生路径仍受sanitizer检查。
+- Fuzz：200,000次变异、5份种子，15,434次进入已解析文档，无崩溃。
+- Android ARM64以及iOS/iPadOS arm64设备/模拟器库构建、安装和语言接口检查通过；移动结果仍不是应用或真机验收。
+
+原始作业/步骤状态与测试摘要见[CI记录](validation/2026-10-19-components-ci.json)，本机详细布局值和二进制哈希见[组件记录](validation/2026-10-19-components.json)。

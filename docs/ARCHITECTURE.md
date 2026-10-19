@@ -64,3 +64,5 @@ python3 tools/check_layers.py build/native
 拆分前后304项函数声明，以及703项公开类型大小、对齐与成员偏移相同。13个头分别通过C/C++编译。原有131项完整回归加上核心、音频、书库、PDF编辑和文本索引的5项独立链接回归，合计136项；裁剪配置另跑相应组件检查。
 
 完整构建、纯核心和无音频/PDF书库组合分别验收；跨平台CI还包括安装消费、sanitizer、fuzz与移动库交叉构建。逐次结果记录在[NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)。代码审计未关闭的PDF色彩/透明度、解析器/字体/媒体等逐路径问题见[审计记录](AUDIT-2026-10-19.md)。
+
+分层代码`716235e`的[CI39328976671](https://github.com/NoGod3524/EXReader/actions/runs/39328976671)已7/7通过：三桌面各136/136，安装/裁剪组合全部通过；sanitizer133/133、20万次fuzz以及Android/Apple移动库构建通过。完整审计仍按未关闭项继续推进。

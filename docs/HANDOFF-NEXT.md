@@ -4,7 +4,9 @@
 
 ## 已验证代码
 
-`55089af988820c1b3ee68b9853f7f4dac907e757`，[CI39324045389](https://github.com/NoGod3524/EXReader/actions/runs/39324045389) **7/7通过**。三桌面各131/131；ASan/UBSan128/128；移动库编译和20万次变异通过。后续记录提交只修改文档/验证数据，运行库与性能数据各自的SHA见 [验证记录](validation/2026-10-19.json)。
+`716235e6ab4c5bb944c2e240b6a173289b3ab725`，[CI39328976671](https://github.com/NoGod3524/EXReader/actions/runs/39328976671) **7/7通过**。三桌面各136/136；各平台安装静态组件4/4、纯核心1/1及其安装消费1/1、无音频/PDF书库2/2；ASan/UBSan133/133；移动库编译和20万次变异通过。准确结果见[组件验证数据](validation/2026-10-19-components.json)和[CI原始摘要](validation/2026-10-19-components-ci.json)。之后若仅更新记录，运行库仍以该SHA为准。
+
+此前渲染/ICC审计代码`55089af`的7项CI通过记录继续保留，不能代替本次分层验证。
 
 ## 1. 基线与本次范围
 
@@ -24,7 +26,7 @@ cmake --build C:/Users/Oscar/exr-gcc --parallel 8
 ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 ```
 
-当前预期两边均为 **131项**。关闭色彩管理的独立构建使用 `-DEXR_ENABLE_ICC=OFF`，不嵌入默认profile，回到已声明的朴素DeviceCMYK转换。安装消费与平台CI结果独立列出，不能以Windows测试代替其他平台执行。
+当前预期两边均为 **136项**（原131项及5个组件检查）。关闭色彩管理的独立构建使用 `-DEXR_ENABLE_ICC=OFF`，不嵌入默认profile，回到已声明的朴素DeviceCMYK转换。安装消费与平台CI结果独立列出，不能以Windows测试代替其他平台执行。
 
 ## 3. 默认 CMYK 配置
 
