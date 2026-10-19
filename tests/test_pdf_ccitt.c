@@ -34,6 +34,16 @@ int main(int argc,char **argv) {
       exr_bitmap_free(&page); exr_fixed_free(d);
     }
   }
+  /* Rows may be omitted; the image height then bounds the decode. */
+  path_of(path,sizeof(path),"ccitt-g4-norows.pdf");
+  OK(exr_fixed_open(path,&options,&d,&error));
+  OK(exr_fixed_render(d,0,1,&render,&page,&error));
+  CHECK(page.width==32 && page.height==8);
+  { const unsigned char *p=page.pixels+(size_t)3*page.stride+8*4;
+    CHECK(p[0]==255 && p[1]==255 && p[2]==255);
+    p=page.pixels+(size_t)3*page.stride+0*4;
+    CHECK(p[0]==0 && p[1]==0 && p[2]==0); }
+  exr_bitmap_free(&page); exr_fixed_free(d);
   /* A truncated Group 4 stream is rejected, not silently drawn. */
   path_of(path,sizeof(path),"ccitt-g4-truncated.pdf");
   OK(exr_fixed_open(path,&options,&d,&error)); CHECK(d);
