@@ -228,7 +228,11 @@ typedef struct exr_composite_state {
 exr_status exr_sink_begin_group(const exr_draw_sink_ex *sink,double opacity,exr_blend_mode mode,unsigned flags,exr_error *error);
 exr_status exr_sink_soft_mask(const exr_draw_sink_ex *sink,const unsigned char *mask,size_t width,size_t height,exr_error *error);
 exr_status exr_sink_extent(const exr_draw_sink_ex *sink,unsigned *width,unsigned *height,exr_error *error);
-exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state,const exr_bitmap *parent,
+/* DeviceCMYK device model shared by page painting, mesh shadings and groups. */
+void exr_cmyk_from_rgb(const double rgb[3],double cmyk[4]);
+exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,
+  const double fill_cmyk[4],const double stroke_cmyk[4],double fill_alpha,double stroke_alpha,exr_blend_mode mode,
+  const exr_bitmap *clip,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error);exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state,const exr_bitmap *parent,
   const exr_composite_state *parent_state,int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,
   uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,

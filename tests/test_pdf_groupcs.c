@@ -40,6 +40,14 @@ int main(int argc,char **argv) {
   p=page.pixels+8*page.stride+8*4;
   CHECK(p[0]==255 && p[1]==0 && p[2]==0);
   exr_bitmap_free(&page);
+  /* Translucent rich black then white, both 50%, blended in DeviceCMYK:
+     (1/3,1/3,0,1/3) at alpha 0.75 -> (128,128,191) over white. RGB compositing
+     would give (191,191,191), so the blue cast proves the four-component path. */
+  page=render("groupcmyk-blend.pdf");
+  p=page.pixels+8*page.stride+8*4;
+  CHECK(abs((int)p[0]-128)<=3 && abs((int)p[1]-128)<=3 && abs((int)p[2]-191)<=3);
+  CHECK(p[2]>p[0]+40);
+  exr_bitmap_free(&page);
   printf("%u native PDF group colour-space checks passed\n",checks);
   return 0;
 }

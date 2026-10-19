@@ -15,6 +15,15 @@ static uint32_t rgba(const exr_pdf_color *c) {
   else { r=(unsigned)floor((1-fmin(1,c->values[0]+c->values[3]))*255+.5); g=(unsigned)floor((1-fmin(1,c->values[1]+c->values[3]))*255+.5); b=(unsigned)floor((1-fmin(1,c->values[2]+c->values[3]))*255+.5); }
   return (r<<24)|(g<<16)|(b<<8)|a;
 }
+static void cmyk_color(const exr_pdf_color *c,double out[4]) {
+  double rgb[3];unsigned k;
+  if(c->space==EXR_PDF_DEVICE_CMYK) { for(k=0;k<4;k++) out[k]=c->values[k];return; }
+  if(c->space==EXR_PDF_DEVICE_GRAY) rgb[0]=rgb[1]=rgb[2]=c->values[0];
+  else if(c->space==EXR_PDF_DEVICE_RGB) { for(k=0;k<3;k++) rgb[k]=c->values[k]; }
+  else for(k=0;k<3;k++) rgb[k]=1-fmin(1,c->values[k]+c->values[3]);
+  out[3]=1-fmax(rgb[0],fmax(rgb[1],rgb[2]));
+  for(k=0;k<3;k++) out[k]=fmax(0,fmin(1,1-rgb[k]-out[3]));
+}
 static void multiply(const double a[6],const double b[6],double out[6]) {
   out[0]=a[0]*b[0]+a[2]*b[1]; out[1]=a[1]*b[0]+a[3]*b[1];
   out[2]=a[0]*b[2]+a[2]*b[3]; out[3]=a[1]*b[2]+a[3]*b[3];
@@ -49,10 +58,15 @@ static exr_status geometry(pdf_painter *r,const exr_vector_segment *segments,siz
   exr_draw_style style=exr_draw_style_defaults(); exr_status status=EXR_OK; unsigned char *mask=NULL; int painting;
   style.fill=rgba(&paint->fill); style.stroke=rgba(&paint->stroke); style.flags=flags&3; style.rule=rule;
   style.line=paint->line; style.dashes=paint->dashes; style.dash_count=paint->dash_count; style.dash_phase=paint->dash_phase; style.stroke_matrix=paint->matrix;
-  painting=(style.flags!=0)&&r->sink.base.path;
+  painting=(style.flags!=0)&&(r->sink.base.path||r->sink.path_cmyk);
   if(painting) status=blend_state(r,paint->blend,e);
   if(status==EXR_OK && painting) status=mask_begin(r,paint,&mask,e);
-  if(status==EXR_OK && painting) status=r->sink.base.path(r->sink.base.context,segments,count,transform,&style,e);
+  if(status==EXR_OK && painting) {
+    if(r->sink.path_cmyk) {
+      double fill[4],stroke[4];cmyk_color(&paint->fill,fill);cmyk_color(&paint->stroke,stroke);
+      status=r->sink.path_cmyk(r->sink.base.context,segments,count,transform,&style,fill,stroke,e);
+    } else status=r->sink.base.path(r->sink.base.context,segments,count,transform,&style,e);
+  }
   if(status==EXR_OK && painting) status=mask_end(r,mask,e);
   if(status==EXR_OK && (flags&EXR_PDF_CLIP) && r->sink.base.clip) status=r->sink.base.clip(r->sink.base.context,segments,count,transform,rule,text_clip!=0,e);
   return status;

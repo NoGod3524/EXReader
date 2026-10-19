@@ -4,6 +4,10 @@ typedef struct { const exr_draw_sink_ex *target; size_t depth; unsigned text; } 
 static exr_status scope_path(void *context,const exr_path_segment *path,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
   paint_scope *s=context; return s->target->base.path(s->target->base.context,path,count,matrix,style,e);
 }
+static exr_status scope_path_cmyk(void *context,const exr_path_segment *path,size_t count,const double matrix[6],
+  const exr_draw_style *style,const double fill[4],const double stroke[4],exr_error *e) {
+  paint_scope *s=context; return s->target->path_cmyk(s->target->base.context,path,count,matrix,style,fill,stroke,e);
+}
 static exr_status scope_clip(void *context,const exr_path_segment *path,size_t count,const double matrix[6],exr_fill_rule rule,unsigned accumulate,exr_error *e) {
   paint_scope *s=context; return s->target->base.clip(s->target->base.context,path,count,matrix,rule,accumulate,e);
 }
@@ -57,6 +61,7 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
   consumer.begin_group=sink->begin_group ? scope_begin_group : NULL;
   consumer.soft_mask=sink->soft_mask ? scope_soft_mask : NULL;consumer.extent=sink->extent ? scope_extent : NULL;
   consumer.shading=sink->shading ? scope_shading : NULL;
+  consumer.path_cmyk=sink->path_cmyk ? scope_path_cmyk : NULL;
   if(sink->base.state) {
     status=sink->base.state(sink->base.context,EXR_DRAW_SAVE,e);
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;

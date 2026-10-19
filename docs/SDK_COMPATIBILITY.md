@@ -444,13 +444,14 @@ side, like the axial path). No public symbol, record size, ABI epoch (1), schema
 (6) or version changes.
 ## Canvas DeviceCMYK groups
 
-`EXR_GROUP_CMYK` and `exr_canvas_path_cmyk` are additive: no existing structure
-changes, `exr_draw_sink_ex` keeps its current fields, and ABI epoch 1, schema 6
-and the package version stay put. A host opts in by passing the flag to
-`exr_canvas_begin_group` and supplying CMYK components through the new function;
-PDF rendering keeps its current RGB group behaviour until a sink-side CMYK paint
-channel is added. Nested groups, compound fill+stroke paths and non-separable
-blend modes inside a CMYK group return `EXR_UNSUPPORTED` instead of approximating.
+`EXR_GROUP_CMYK` and `exr_canvas_path_cmyk` are additive: ABI epoch 1, schema 6
+and the package version stay put. `exr_draw_sink_ex` gained one appended
+`path_cmyk` callback; hosts that initialize `struct_size` to their own (older)
+size keep working and simply leave it NULL. The canvas sink implements it, so PDF
+DeviceCMYK groups now carry source components into the four-component buffer;
+nested groups inherit the blend space and compound fill+stroke paths composite as
+one CMYK element. Non-separable blend modes inside a CMYK group return
+`EXR_UNSUPPORTED` instead of approximating.
 ## Package version 0.19.0
 
 The current tree, header and installed config package report **0.19.0**

@@ -61,21 +61,33 @@ int main(void) {
   CHECK(p[0]==0 && p[1]==0 && p[2]==0 && p[3]==255);
   exr_bitmap_free(&out);
 
-  /* Nested, mixed-device, compound and non-separable paints are refused. */
+  /* Nested CMYK groups inherit the blend space; mixed-device and
+     non-separable paints are refused. */
   c=canvas();
   OK(exr_canvas_begin_group(c,1.0,EXR_BLEND_NORMAL,EXR_GROUP_CMYK,&error));
-  CHECK(exr_canvas_begin_group(c,1.0,EXR_BLEND_NORMAL,EXR_GROUP_CMYK,&error)==EXR_UNSUPPORTED);
-  exr_canvas_free(c);
+  OK(exr_canvas_begin_group(c,1.0,EXR_BLEND_NORMAL,EXR_GROUP_CMYK,&error));
+  { const double rich[4]={1,1,0,1};fill_cmyk(c,rich,0x000000ff); }
+  OK(exr_canvas_end_layer(c,1,&error));
+  OK(exr_canvas_end_layer(c,1,&error));
+  OK(exr_canvas_take(c,&out,&error));exr_canvas_free(c);
+  p=out.pixels+4*out.stride+4*4;
+  CHECK(p[0]==0 && p[1]==0 && p[2]==0 && p[3]==255);
+  exr_bitmap_free(&out);
   c=canvas();
   OK(exr_canvas_begin_group(c,1.0,EXR_BLEND_NORMAL,EXR_GROUP_CMYK,&error));
   CHECK(exr_canvas_blend(c,EXR_BLEND_HUE,&error)==EXR_UNSUPPORTED);
   exr_canvas_free(c);
+  /* Compound fill+stroke is one CMYK element and still paints. */
   c=canvas();
   OK(exr_canvas_begin_group(c,1.0,EXR_BLEND_NORMAL,EXR_GROUP_CMYK,&error));
-  { exr_draw_style style=square_style(EXR_DRAW_FILL|EXR_DRAW_STROKE,0x00000080);
+  { exr_draw_style style=square_style(EXR_DRAW_FILL|EXR_DRAW_STROKE,0x000000ff);
     const double rich[4]={1,1,0,1};
-    CHECK(exr_canvas_path_cmyk(c,square,sizeof(square)/sizeof(*square),NULL,&style,rich,rich,&error)==EXR_UNSUPPORTED); }
-  exr_canvas_free(c);
+    OK(exr_canvas_path_cmyk(c,square,sizeof(square)/sizeof(*square),NULL,&style,rich,rich,&error)); }
+  OK(exr_canvas_end_layer(c,1,&error));
+  OK(exr_canvas_take(c,&out,&error));exr_canvas_free(c);
+  p=out.pixels+4*out.stride+4*4;
+  CHECK(p[0]==0 && p[1]==0 && p[2]==0);
+  exr_bitmap_free(&out);
   printf("%u native canvas CMYK group checks passed\n",checks);
   return 0;
 }

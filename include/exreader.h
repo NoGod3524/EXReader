@@ -706,6 +706,12 @@ typedef exr_status (*exr_draw_extent_fn)(void *context,unsigned *width,unsigned 
    the current clip, alpha and blend. Consumers without this callback reject the
    PDF sh operator instead of silently dropping the gradient. */
 typedef exr_status (*exr_draw_shading_fn)(void *context,const exr_bitmap *bitmap,const double matrix[6],exr_error *error);
+/* DeviceCMYK paint source: fill and stroke components (each 0..1) for a path
+   whose style still carries alpha, dashes, line settings and rule. A consumer
+   may use the components when it blends in a CMYK group and fall back to the
+   style's RGB fields otherwise; the canvas sink accepts both. */
+typedef exr_status (*exr_draw_path_cmyk_fn)(void *context,const exr_path_segment *segments,size_t count,
+  const double matrix[6],const exr_draw_style *style,const double fill[4],const double stroke[4],exr_error *error);
 
 typedef struct {
   size_t struct_size;
@@ -717,6 +723,7 @@ typedef struct {
   exr_draw_soft_mask_fn soft_mask; /* Optional page-space soft mask. */
   exr_draw_extent_fn extent; /* Optional device extent; needed for soft masks. */
   exr_draw_shading_fn shading; /* Optional; PDF sh operator. */
+  exr_draw_path_cmyk_fn path_cmyk; /* Optional; PDF CMYK source components for paths. */
 } exr_draw_sink_ex;
 /* Initialize out->struct_size to the available storage size. */
 EXR_API exr_status exr_canvas_get_sink_ex(exr_canvas *canvas,exr_draw_sink_ex *out,exr_error *error);
