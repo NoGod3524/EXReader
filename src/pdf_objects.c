@@ -390,7 +390,17 @@ static uint32_t compressed_object(exr_pdf_file *f,uint32_t object) {
   dict=resolve(f,ref);
   if(dict==EXR_PDF_NONE || f->values[dict].kind!=EXR_PDF_STREAM || !name_is(f,exr_pdf_get(f,dict,"Type"),"ObjStm")) goto bad;
   index=f->values[dict].u.ref.object;
-  if(exr_pdf_get(f,dict,"Extends")!=EXR_PDF_NONE) { failed(f,EXR_FORMAT,"PDF object stream Extends is not implemented yet"); return EXR_PDF_NONE; }
+  /* ISO 32000-1 7.5.7: /Extends only records that this stream continues another
+     one; the contained object numbers stay explicit, so reading is unchanged. The
+     reference must still point at a stream. */
+  { uint32_t extends=exr_pdf_get(f,dict,"Extends");
+    if(extends!=EXR_PDF_NONE) {
+      uint32_t target=resolve(f,extends);
+      if(target==EXR_PDF_NONE || f->values[target].kind!=EXR_PDF_STREAM) {
+        failed(f,EXR_FORMAT,"PDF object stream Extends is not a stream"); return EXR_PDF_NONE;
+      }
+    }
+  }
   if(exr_pdf_stream_data(f,dict,&data,&n,NULL)!=EXR_OK) return EXR_PDF_NONE;
   if(!f->streams[index].objects) {
     uint32_t *numbers=NULL,*offsets=NULL; unsigned char *seen=NULL;
