@@ -6,6 +6,8 @@
 
 ## 已验证代码
 
+当前3.33.1代码`d0a0b8d3736c9b25ce0cd42d9eeaf67a31cdc4e7`，[CI39334889967](https://github.com/NoGod3524/EXReader/actions/runs/39334889967) **7/7通过**。三桌面各136/136、安装/裁剪/绑定宿主均通过；sanitizer133/133、20万次变异与移动库交叉编译通过。准确计数见[本批CI原始数据](validation/2026-10-19-group-spaces-ci.json)。
+
 `716235e6ab4c5bb944c2e240b6a173289b3ab725`，[CI39328976671](https://github.com/NoGod3524/EXReader/actions/runs/39328976671) **7/7通过**。三桌面各136/136；各平台安装静态组件4/4、纯核心1/1及其安装消费1/1、无音频/PDF书库2/2；ASan/UBSan133/133；移动库编译和20万次变异通过。准确结果见[组件验证数据](validation/2026-10-19-components.json)和[CI原始摘要](validation/2026-10-19-components-ci.json)。该CI验证的是0.19.0分层实现；0.20.0仅更新版本声明和规则，本次GCC重新编译、ABI1/1、安装组件4/4和0.20.0 EXACT C++消费验证通过，见[NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)。
 
 全历史新编号3.33.0已重新通过本地GCC编译、ABI1/1、安装组件4/4及EXACT包C++消费验证；315个历史提交的归属与版本递增检查通过。记录见[NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)。
@@ -65,5 +67,5 @@ ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 
 显式RGB隔离子组切换与PDF K极性已修复；MSVC/GCC各136/136、ICC-OFF3/3、安装组件4/4
 与EXACT C++消费通过，组色空间229检查。50场景输入改为K=true，Decimal期望未改。
-Java示例取消0.x限制；跨平台新CI另行记录。原始证据与剩余项见审计/验证记录。
+Java示例取消0.x限制；本批新CI已7/7通过，三桌面JNI实际执行通过。原始证据与剩余项见审计/验证记录。
 下一步是CMYK组图像/渐变的原始墨色保真，随后继续未关闭的嵌套与区域缓冲问题。

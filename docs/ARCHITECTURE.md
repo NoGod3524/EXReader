@@ -66,3 +66,5 @@ python3 tools/check_layers.py build/native
 完整构建、纯核心和无音频/PDF书库组合分别验收；跨平台CI还包括安装消费、sanitizer、fuzz与移动库交叉构建。逐次结果记录在[NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)。代码审计未关闭的PDF色彩/透明度、解析器/字体/媒体等逐路径问题见[审计记录](AUDIT-2026-10-19.md)。
 
 分层代码`716235e`的[CI39328976671](https://github.com/NoGod3524/EXReader/actions/runs/39328976671)已7/7通过：三桌面各136/136，安装/裁剪组合全部通过；sanitizer133/133、20万次fuzz以及Android/Apple移动库构建通过。完整审计仍按未关闭项继续推进。
+
+3.33.1组语义修复代码`d0a0b8d`的[CI39334889967](https://github.com/NoGod3524/EXReader/actions/runs/39334889967)同样7/7通过，三桌面各136/136、安装/裁剪/绑定及移动交叉编译均通过；结果见[本批原始记录](validation/2026-10-19-group-spaces-ci.json)。
