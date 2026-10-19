@@ -16,6 +16,7 @@
 | 文档 `/OutputIntents` | **未支持** | 无解析 | 见下文调查：缺独立参考，暂缓 |
 | 图像 `/Matte` | **支持** | `pdf_image.c` | 灰度/RGB/CMYK 四分量；分量数或取值不符仍 `EXR_FORMAT` |
 | 透明组 `/Group /CS` | 部分 | `pdf_content.c`、`canvas.c` | DeviceRGB、DeviceGray 支持；**DeviceCMYK 与 ICCBased 组仍 `EXR_UNSUPPORTED`** |
+| Pattern / shading（`sh`） | **未支持** | `pdf_content.c` | 有效操作符但未实现，报 `EXR_UNSUPPORTED`（不再误报 `EXR_FORMAT`） |
 | 图像过滤器 | 部分 | `pdf_objects.c` | Flate/LZW/DCT + PNG 预测器；**JBIG2/JPX/CCITT 未支持** |
 | JPEG `ColorTransform` | 部分 | `pdf_image.c:152` | 只接受 YCbCr 默认；模板/索引覆盖明确拒绝 |
 | 套印（Overprint） | 未支持 | — | 另立子包 |
@@ -117,3 +118,13 @@ CMYK 与 ICC 组空间需要真正的组内色彩混合，列入后续子包。
 **所有** DeviceCMYK 的输出，属于全局行为变更，必须有独立参考才能做。
 
 结论：暂缓，直到找到会对输出意图做出反应的参考实现，并把对象链解析的返回 `NONE` 查清。
+
+## 状态修正：`sh` 的错误码（2026-10-18）
+
+`sh` 是合法的 PDF 运算符，之前报 `EXR_FORMAT`（“文件坏了”）会让宿主把**能力缺口**误判为**数据损坏**。
+现改为 `EXR_UNSUPPORTED`。实现轴向/径向渐变的尝试记录在分支 `codex/wp4-shading`：
+
+- 已写出 `src/pdf_shading.c`（type 2，256 采样，含 `Extend`）与 sink 扩展；
+- 画布层单独调用 `exr_canvas_image` 正常，但页面路径里 painter 收到的 `base.context` 是栈地址而非画布，
+  导致 `ready()` 读到垃圾状态。工厂函数里存的是正确画布指针，说明**中间某次 sink 拷贝丢了上下文**；
+- 未合并，主线保持 123/123 全绿。
