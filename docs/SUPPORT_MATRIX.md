@@ -56,12 +56,13 @@
 | --- | --- | --- | --- |
 | 对象与流解码 | 支持 | 交叉引用/对象流/压缩流，嵌套与长度上限 | `native-pdf-objects` |
 | 字体 | 支持 | Type1/TrueType/Type0/Type3、CID、编码表、字形名 | `native-pdf-font`、`native-pdf-type3` |
-| 路径/图像/内联图 | 支持 | 常见图像过滤器；Pattern/shading 未支持 | `native-pdf-graphics`、`native-pdf-image`、`native-pdf-inline` |
+| 路径/图像/内联图 | 支持 | 常见图像过滤器；Pattern 未支持 | `native-pdf-graphics`、`native-pdf-image`、`native-pdf-inline` |
+| 渐变与网格 | 支持 | 轴向/径向（含 Extend 外推）、网格类型 **4/5/6/7**（Gouraud 三角/晶格、Coons、张量积），32 位坐标与最多 4 个颜色分量 | `native-pdf-shading`、`native-pdf-shading-mesh`、`native-pdf-shading-mesh7` |
 | 文字几何/搜索/选择 | 支持 | 文字位置、搜索、选择、命中 | `native-pdf-text` |
 | 元数据 | 支持 | Info/XMP 读取与增量写回 | `native-pdf-metadata-write`、`native-metadata` |
 | 认证 | 部分 | Standard R2–R6、RC4/AES、Crypt filter；**证书 PubSec、EFOpen、加密写回未支持** | `native-pdf-crypto` |
-| 色彩 | 部分 | Device/Indexed/CalGray/CalRGB/Lab、ICCBased v2/v4→sRGB、Separation/All/None/DeviceN、Type 0 函数；**非 RGB 透明组、OutputIntent、Matte 未支持** | `native-pdf-color`、`native-pdf-calculator` |
-| 合成 | 支持（挖空、软遮罩）/ 部分（其余） | 16 种 RGB 混合模式、页面隔离、隔离/非隔离 Form/AP、挖空组（50 个场景）、图形状态软遮罩（Alpha/Luminosity、`BC`、指数 `TR`、矩阵/BBox、嵌套组提交、DeviceGray 组色空间、q/Q/None，41 场景 + 8 拒绝用例）；**组区域裁小、非 Identity/指数型之外的 TR 未支持** | `native-blend`、`native-canvas`、`native-pdf-group-reference` |
+| 色彩 | 部分 | Device/Indexed/CalGray/CalRGB/Lab、ICCBased v2/v4→sRGB、Separation/All/None/DeviceN、Type 0 函数；**OutputIntent、Matte 未支持**；DeviceCMYK 用内置朴素换算（无 ICC profile，与 SWOP 参考有可量化差异） | `native-pdf-color`、`native-pdf-calculator` |
+| 合成 | 支持（挖空、软遮罩）/ 部分（其余） | 16 种 RGB 混合模式、页面隔离、隔离/非隔离 Form/AP、挖空组（50 个场景）、图形状态软遮罩（Alpha/Luminosity、`BC`、指数 `TR`、矩阵/BBox、嵌套组提交、DeviceGray 组色空间、q/Q/None，41 场景 + 8 拒绝用例）；**组区域裁小、非 Identity/指数型之外的 TR 未支持**；**DeviceCMYK 组接受但按 device RGB 合成**（不透明内容与 CMYK 空间一致，半透明重叠与该空间渲染器可能不同） | `native-blend`、`native-canvas`、`native-pdf-group-reference`、`native-pdf-groupcs` |
 | 标注 | 部分 | Text/Highlight/Underline/StrikeOut/Squiggly 增删改与外观；**其余类型与 AcroForm 未支持** | `native-pdf-markup`、`native-pdf-appearance`、`native-pdf-write` |
 | 安全 redaction | 未支持 | 现有增量删除保留历史原文，不能充当擦除 | — |
 | OCR | 未支持 | 无后端、无文字层 | — |

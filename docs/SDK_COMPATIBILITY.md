@@ -431,6 +431,17 @@ boxes. No public record size, member offset, symbol, ABI epoch (1), schema (6) o
 version changes. Table pagination also repeats leading `<thead>` rows at the top
 of each continuation page; the extra repeated glyphs and boxes carry the header
 source offsets.
+## Mesh shadings 6/7 and DeviceCMYK groups
+
+PDF mesh shadings types 6 (Coons patch) and 7 (tensor-product patch) now render
+through the existing shading callback with the same bitmap-plus-matrix contract;
+no callback or record changes. Transparency groups whose `/CS` is `DeviceCMYK`
+are accepted: colours are converted with the engine's naive DeviceCMYK model and
+the group composites in device RGB, so opaque content matches a CMYK-space
+renderer but translucent overlaps may differ. Radial shadings with `/Extend`
+now paint their extended colour into larger clips (a finite one-span margin per
+side, like the axial path). No public symbol, record size, ABI epoch (1), schema
+(6) or version changes.
 ## Package version 0.19.0
 
 The current tree, header and installed config package report **0.19.0**

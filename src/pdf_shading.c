@@ -7,7 +7,7 @@
 
 #define AXIAL_SAMPLES 512u
 #define AXIAL_EXTEND_SPAN 1.0  /* one axis length of constant colour past each end */
-#define RADIAL_SAMPLES 256u    /* square resolution of the radial bitmap */
+#define RADIAL_SAMPLES 512u    /* square resolution of the radial bitmap */
 
 static int number(exr_pdf_file *file,uint32_t id,double *out) {
   const exr_pdf_value *v=exr_pdf_value_at(file,id);
@@ -73,7 +73,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
   if(!v || (v->kind!=EXR_PDF_DICT && v->kind!=EXR_PDF_STREAM)) return exr_fail(e,EXR_FORMAT,"PDF shading is not a dictionary");
   if(exr_pdf_resolve(file,exr_pdf_get(file,value,"ShadingType"),&id,e)!=EXR_OK) return e->code;
   { double n; if(!number(file,id,&n)) return exr_fail(e,EXR_FORMAT,"Invalid PDF shading type"); type=(int)n; }
-  if(type==4 || type==5) {
+  if(type>=4 && type<=7) {
     status=exr_pdf_shading_mesh(file,value,type,ctm,intent,emit,context,control,e);
     return status;
   }
@@ -146,6 +146,13 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
     double right=fmax(coords[0]+coords[2],coords[3]+coords[5]);
     double bottom=fmax(coords[1]+coords[2],coords[4]+coords[5]);
     if(!(right>left) || !(bottom>top)) return exr_fail(e,EXR_FORMAT,"Degenerate PDF radial shading");
+    /* An extended radial shading has no outer boundary: its last colour covers
+       the whole clip. Grow the emitted quad by one gradient span per side so
+       clipping regions larger than the circles still receive that colour. */
+    if(extend0 || extend1) {
+      double padx=right-left,pady=bottom-top;
+      left-=padx;right+=padx;top-=pady;bottom+=pady;
+    }
     bitmap.width=RADIAL_SAMPLES;bitmap.height=RADIAL_SAMPLES;bitmap.channels=4;
     bitmap.stride=RADIAL_SAMPLES*4;
     bitmap.pixels=calloc((size_t)bitmap.stride*RADIAL_SAMPLES,1);
