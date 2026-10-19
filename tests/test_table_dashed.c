@@ -32,15 +32,19 @@ static unsigned border_run(const exr_bitmap *image) {
   return best;
 }
 int main(int argc,char **argv) {
-  exr_layout *l; exr_bitmap image={0}; unsigned solid,dashed;
+  exr_layout *l; exr_bitmap image={0}; unsigned solid,dashed,dotted;
   CHECK(argc==2); directory=argv[1];
   { char path[4096]; snprintf(path,sizeof(path),"%s/fonts/primary.ttf",directory); OK(exr_font_open(path,&font,&error)); }
   l=layout("table-border-solid"); OK(exr_render_page_color(l,NULL,0,&image,&error));
   solid=border_run(&image); exr_bitmap_free(&image); exr_layout_free(l);
   l=layout("table-border-dashed"); OK(exr_render_page_color(l,NULL,0,&image,&error));
   dashed=border_run(&image); exr_bitmap_free(&image); exr_layout_free(l);
+  l=layout("table-border-dotted"); OK(exr_render_page_color(l,NULL,0,&image,&error));
+  dotted=border_run(&image); exr_bitmap_free(&image); exr_layout_free(l);
+  /* Solid covers the whole span; dashed and dotted leave gaps, dotted the most. */
   CHECK(solid>=90 && dashed>10 && dashed<solid-10);
+  CHECK(dotted>5 && dotted<dashed);
   exr_font_free(font);
-  printf("%u native table dashed-border checks passed (solid %u, dashed %u)\n",checks,solid,dashed);
+  printf("%u native table border-style checks passed (solid %u, dashed %u, dotted %u)\n",checks,solid,dashed,dotted);
   return 0;
 }
