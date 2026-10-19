@@ -362,7 +362,8 @@ static exr_status sink_begin_layer(void *context,double opacity,exr_blend_mode m
 exr_status exr_sink_begin_group(const exr_draw_sink_ex *sink,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
   exr_status status;
   if(sink->begin_group) status=sink->begin_group(sink->base.context,opacity,mode,flags,e);
-  else if(flags==EXR_GROUP_ISOLATED && sink->begin_layer) status=sink->begin_layer(sink->base.context,opacity,mode,e);
+  else if((flags==EXR_GROUP_ISOLATED || flags==(EXR_GROUP_ISOLATED|EXR_GROUP_RGB)) && sink->begin_layer)
+    status=sink->begin_layer(sink->base.context,opacity,mode,e);
   else return exr_fail(e,flags==EXR_GROUP_ISOLATED ? EXR_FORMAT : EXR_UNSUPPORTED,"Drawing consumer lacks requested group support");
   return status==EXR_OK && e && e->code!=EXR_OK ? e->code : status;
 }
@@ -411,16 +412,20 @@ exr_status exr_canvas_set_layer_budget(exr_canvas *c,size_t bytes,exr_error *e) 
   c->layer_budget=bytes ? bytes : 64*1024*1024;return EXR_OK;
 }
 exr_status exr_canvas_begin_layer(exr_canvas *c,double opacity,exr_blend_mode mode,exr_error *e) {
-  return exr_canvas_begin_group(c,opacity,mode,EXR_GROUP_ISOLATED,e);
+  return exr_canvas_begin_group(c,opacity,mode,EXR_GROUP_ISOLATED|EXR_GROUP_RGB,e);
 }
 exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
   exr_status status=ready(c,e);exr_canvas_layer layer={0};exr_bitmap next;exr_composite_state *state=NULL;unsigned char *pixels;size_t bytes,count;
   size_t region_width,region_height;int region_x=0,region_y=0;
   if(status!=EXR_OK) return status;
-  unsigned needs_state,cmyk;
+  unsigned needs_state,cmyk,gray,space=flags&(EXR_GROUP_RGB|EXR_GROUP_GRAY|EXR_GROUP_CMYK);
   if(!isfinite(opacity) || opacity<0 || opacity>1 || mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY ||
-     (flags&~(EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT|EXR_GROUP_WHOLE_BUFFER|EXR_GROUP_GRAY|EXR_GROUP_CMYK))) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid group parameters"),e);
-  cmyk=(flags&EXR_GROUP_CMYK) || c->cmyk_groups; /* nested groups inherit the CMYK blend space */
+     (flags&~(EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT|EXR_GROUP_WHOLE_BUFFER|EXR_GROUP_GRAY|EXR_GROUP_CMYK|EXR_GROUP_RGB)) ||
+     (space && (space&(space-1)))) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid group parameters"),e);
+  if((flags&EXR_GROUP_RGB) && !(flags&EXR_GROUP_ISOLATED) && (c->cmyk_groups || c->gray_groups))
+    return finish(c,exr_fail(e,EXR_UNSUPPORTED,"Changing to RGB requires an isolated group"),e);
+  cmyk=!(flags&EXR_GROUP_RGB) && ((flags&EXR_GROUP_CMYK) || c->cmyk_groups);
+  gray=!(flags&EXR_GROUP_RGB) && ((flags&EXR_GROUP_GRAY) || c->gray_groups);
   if((cmyk && (flags&EXR_GROUP_GRAY)) || (c->gray_groups && (flags&EXR_GROUP_CMYK)))
     return finish(c,exr_fail(e,EXR_UNSUPPORTED,"Mixed-device CMYK groups are not supported"),e);
   if(cmyk && !c->cmyk_profile) { status=exr_icc_default_cmyk(&c->control,&c->cmyk_profile,e);if(status!=EXR_OK) return finish(c,status,e); }
@@ -456,6 +461,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   next=c->bitmap;next.channels=4;next.width=(uint32_t)region_width;next.height=(uint32_t)region_height;next.stride=(uint32_t)(region_width*4);next.pixels=pixels;
   if(state) {
     state->cmyk_profile=c->cmyk_profile;
+    state->gray=gray;
     state->knockout=!!(flags&EXR_GROUP_KNOCKOUT);state->isolated=!!(flags&EXR_GROUP_ISOLATED);
     /* Isolated groups start transparent, so the parent backdrop is not copied in.
        Inside a knockout group every element, including a nested group, composites
@@ -473,8 +479,8 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   layer.origin_x=region_x;layer.origin_y=region_y;layer.parent_offset_x=c->offset_x;layer.parent_offset_y=c->offset_y;
   layer.parent_gray_groups=c->gray_groups;
   layer.parent_cmyk_groups=c->cmyk_groups;
-  if(flags&EXR_GROUP_GRAY) c->gray_groups++;
-  if(cmyk) c->cmyk_groups++;
+  c->gray_groups=gray;
+  c->cmyk_groups=cmyk;
   layer.opacity=opacity;layer.blend=mode;layer.parent_blend=c->blend;c->layers[c->layer_depth++]=layer;c->layer_bytes+=bytes;
   c->bitmap=next;c->composite=state;c->clip=c->group=NULL;c->group_depth=0;c->blend=EXR_BLEND_NORMAL;memset(c->groups,0,sizeof(c->groups));
   c->offset_x=layer.parent_offset_x+region_x;c->offset_y=layer.parent_offset_y+region_y;
@@ -495,7 +501,7 @@ exr_status exr_canvas_end_layer(exr_canvas *c,unsigned commit,exr_error *e) {
   c->cmyk_groups=layer.parent_cmyk_groups;
   memset(c->groups,0,sizeof(c->groups));if(layer.group_depth) memcpy(c->groups,layer.pending_groups,layer.group_depth*sizeof(*c->groups));free(layer.pending_groups);
   c->layer_depth--;c->layer_bytes-=(size_t)source.stride*source.height+composite_size(&source,source_state);memset(c->layers+c->layer_depth,0,sizeof(*c->layers));
-  if(commit && status==EXR_OK) status=exr_composite_frame(&c->bitmap,&source,layer.opacity,layer.blend,c->clip ? &c->clip->bitmap : NULL,c->composite,source_state,layer.origin_x,layer.origin_y,&c->work,&c->control,e);
+  if(commit && status==EXR_OK) status=exr_composite_frame(&c->bitmap,&source,layer.opacity,layer.blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),source_state,layer.origin_x,layer.origin_y,&c->work,&c->control,e);
   composite_free(source_state);free(source.pixels);for(i=c->depth;i<160;i++) c->saved_blend[i]=EXR_BLEND_NORMAL;
   return finish(c,status,e);
 }

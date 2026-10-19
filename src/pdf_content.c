@@ -162,7 +162,7 @@ exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *pre
     if(resolved(file,exr_pdf_get(file,group,keys[i]),&id,e)!=EXR_OK) return e->code;
     v=exr_pdf_value_at(file,id);if(!v || v->kind==EXR_PDF_NULL) continue;
     if(v->kind!=EXR_PDF_BOOL) return exr_fail(e,EXR_FORMAT,"PDF group flag is not boolean");
-    if(!i) isolated=v->u.integer!=0;else knockout=v->u.integer==0;
+    if(!i) isolated=v->u.number!=0;else knockout=v->u.number!=0;
   }
   if(resolved(file,exr_pdf_get(file,group,"CS"),&id,e)!=EXR_OK) return e->code;
   v=exr_pdf_value_at(file,id);
@@ -173,6 +173,7 @@ exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *pre
   *present=(page || isolated ? EXR_PDF_GROUP_ISOLATED : EXR_PDF_GROUP_NONISOLATED) | (knockout ? EXR_PDF_GROUP_KNOCKOUT : 0);
   if(v && v->kind!=EXR_PDF_NULL && (name_is(file,id,"DeviceGray") || name_is(file,id,"G"))) *present|=EXR_PDF_GROUP_GRAY;
   if(v && v->kind!=EXR_PDF_NULL && (name_is(file,id,"DeviceCMYK") || name_is(file,id,"CMYK"))) *present|=EXR_PDF_GROUP_CMYK;
+  if(v && v->kind!=EXR_PDF_NULL && name_is(file,id,"DeviceRGB")) *present|=EXR_PDF_GROUP_RGB;
   return EXR_OK;
 }
 static int blend_name(exr_pdf_file *file,uint32_t id,exr_blend_mode *mode) {
@@ -392,7 +393,8 @@ static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,
     else {
       if(status==EXR_OK) status=r->callbacks.begin_group(r->context,r->state.paint.fill.alpha,r->state.paint.blend,
         (layer&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|(layer&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0)|
-        (layer&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|(layer&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0),error);
+        (layer&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|(layer&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0)|
+        (layer&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0),error);
       if(status==EXR_OK && error->code!=EXR_OK) status=error->code;
       if(status==EXR_OK) { started=1;r->state.paint.fill.alpha=r->state.paint.stroke.alpha=1;r->state.paint.blend=EXR_BLEND_NORMAL; }
     }

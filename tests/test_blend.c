@@ -67,7 +67,7 @@ static exr_status begin_layer(void *context,double opacity,exr_blend_mode mode,e
   inspect *i=context;(void)opacity;(void)mode;(void)e;i->begins++;return EXR_OK;
 }
 static exr_status begin_group(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
-  CHECK(!(flags&~EXR_GROUP_ISOLATED));return begin_layer(context,opacity,mode,e);
+  CHECK(!(flags&~(EXR_GROUP_ISOLATED|EXR_GROUP_RGB)));return begin_layer(context,opacity,mode,e);
 }
 static exr_status end_layer(void *context,unsigned commit,exr_error *e) {
   inspect *i=context;(void)commit;(void)e;i->ends++;return EXR_OK;
@@ -364,8 +364,8 @@ static void softmask(void) {
 static void invalid(void) {
   { exr_fixed_document *d=open_book("group-malformed");exr_bitmap b={0};unsigned i;for(i=0;i<5;i++) CHECK(exr_fixed_render(d,0,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels);exr_fixed_free(d); }
   { unsigned i;for(i=1;i<6;i++) {char name[24];exr_fixed_document *d;exr_bitmap b={0};exr_status got;snprintf(name,sizeof(name),"group-bad-%u",i);d=open_book(name);got=exr_fixed_render(d,0,1,NULL,&b,&error);
-      /* K=true is a plain group (11.4.5 default); K=false is knockout and now renders.
-         A DeviceCMYK form group (2) is accepted and blends in device RGB. */
+      /* K=true enables knockout; K=false or omission is a plain group.
+         A DeviceCMYK form group (2) keeps four blending components. */
       if(i==1) { CHECK(got==EXR_OK && b.pixels); exr_bitmap_free(&b); }
       else if(i==2) {
         CHECK(got==EXR_OK && b.pixels);

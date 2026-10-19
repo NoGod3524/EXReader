@@ -87,7 +87,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.33.0 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.33.1 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -452,14 +452,14 @@ DeviceCMYK groups now carry source components into the four-component buffer;
 nested groups inherit the blend space and compound fill+stroke paths composite as
 one CMYK element. Non-separable blend modes inside a CMYK group return
 `EXR_UNSUPPORTED` instead of approximating.
-## Package version 3.33.0
+## Package version 3.33.1
 
-The current tree, header and installed config package report **3.33.0**
+The current tree, header and installed config package report **3.33.1**
 development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.33.0 EXACT
+Select this package with `find_package(EXReader 3.33.1 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -476,7 +476,7 @@ buffers blend native components, including subtractive separable and nonseparabl
 mode formulas. Earlier descriptions of RGB-only group blending and rejection of
 all nonseparable CMYK modes above describe previous checkpoints. Images and
 shadings still pass through RGBA in CMYK groups, losing original separations.
-Explicit RGB children inside CMYK groups remain an open correctness issue.
+The 3.33.1 correction below supersedes the explicit RGB child issue.
 
 Shading opacity, blend and soft masks now reach the painter, mesh interpolation
 precedes color conversion, and Matte is undone before ICC conversion. These
@@ -503,8 +503,8 @@ compatibility artifact.
 
 Core and optional component release numbers are maintained in
 `cmake/versions.cmake` and exposed by the corresponding public version macros and
-installed CMake target `EXR_COMPONENT_VERSION` properties. They are all 3.33.0
-for this split and can be released independently. Release
+installed CMake target `EXR_COMPONENT_VERSION` properties. Core and PDF reading are 3.33.1; the other components remain 3.33.0
+after this fix and can be released independently. Release
 numbers follow update size: very large updates increment the major number,
 medium updates increment the minor number, and small bug fixes increment the
 patch number. Incrementing major or minor resets the following numbers to zero.
@@ -514,3 +514,22 @@ signatures, records and ownership rules.
 Static Windows components use the same MSVC runtime setting as the SDK build
 (default `/MT`, `/MTd` for Debug). The installed component consumer examples use
 that setting explicitly.
+
+## 3.33.1 group colour spaces and knockout flags
+
+PDF group `/K true` now enables knockout; false, null or omission selects a
+normal group. Earlier implementation and fixture generation inverted this flag.
+The 50-scene PDF inputs have been regenerated with the correct literal flags;
+the independent Decimal pixel references and existing error tolerances remain.
+Affected PDFs can change pixels while the public ABI remains epoch 1.
+
+`EXR_GROUP_RGB` explicitly selects RGB in an isolated Gray/CMYK parent. An omitted
+colour-space flag still inherits. `exr_canvas_begin_layer` follows its documented
+isolated RGB contract. Child output converts at group commit, then group opacity,
+blend and clipping apply in the parent's space. Parent native inks and space are
+restored on both commit and discard. Conflicting space flags are invalid; switching
+to RGB from Gray/CMYK without isolation is unsupported. PDF non-isolated forms with
+an explicit `/CS` remain invalid under the existing contract. A custom `begin_group`
+consumer must honour the RGB flag or reject it; legacy `begin_layer` supports the
+isolated RGB fallback. No function signatures, exported symbols or record layouts
+change. Images and shadings still lose original ink separations through RGBA.

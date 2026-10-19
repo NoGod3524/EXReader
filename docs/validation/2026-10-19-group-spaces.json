@@ -1,0 +1,153 @@
+{
+  "base_commit": "fd408ae",
+  "version": "3.33.1",
+  "mupdf_version": "1.28.2",
+  "dll_sha256": "cc603942c53cb18a87951a38000b16ddd763286fc63e54d0ad163cdbe88a754c",
+  "baseline_failures": {
+    "group-k-true": [
+      127,
+      0,
+      128,
+      255
+    ],
+    "group-k-false": [
+      127,
+      127,
+      255,
+      255
+    ]
+  },
+  "literal_k_cases": [
+    {
+      "fixture": "tests/fixtures/pdf-color/group-k-true.pdf",
+      "sha256": "579e6e425563fd9aabb2619babf8ec8f9394c15fa30688f796c1f4167d6d7b10",
+      "exreader": [
+        127,
+        127,
+        255,
+        255
+      ],
+      "mupdf": [
+        129,
+        129,
+        255
+      ]
+    },
+    {
+      "fixture": "tests/fixtures/pdf-color/group-k-false.pdf",
+      "sha256": "2e3df17fa7432e440165a0b520bb0f0ef27df0451696d9742fbea2952e14ae35",
+      "exreader": [
+        127,
+        0,
+        128,
+        255
+      ],
+      "mupdf": [
+        128,
+        0,
+        126
+      ]
+    },
+    {
+      "fixture": "tests/fixtures/pdf-color/group-k-default.pdf",
+      "sha256": "b0cf108a81a9ecbd74ed5fb9777fe49a7fd980cf30b36c90896c8e5b57798e61",
+      "exreader": [
+        127,
+        0,
+        128,
+        255
+      ],
+      "mupdf": [
+        128,
+        0,
+        126
+      ]
+    },
+    {
+      "fixture": "tests/fixtures/pdf-color/group-k-null.pdf",
+      "sha256": "aedfd871b3c36d60f5e29cc772ebc6717fac12597a31b03068c081d3927fa570",
+      "exreader": [
+        127,
+        0,
+        128,
+        255
+      ],
+      "mupdf": [
+        128,
+        0,
+        126
+      ]
+    }
+  ],
+  "knockout_external_comparison": [
+    {
+      "fixture": "knockout.pdf",
+      "sha256": "5da910ec0bbcb7065e26d85e18ed9d9ee1cb47e2f2568de434b8e1067564909d",
+      "mupdf_vs_decimal_max_channel_delta": {
+        "over_white": 1,
+        "premultiplied_alpha": 2
+      }
+    },
+    {
+      "fixture": "knockout-nonisolated.pdf",
+      "sha256": "af3f20089e4e56d0a5ed1bfb82f77d302fcea5d9618a52d7f052284fe4d86351",
+      "mupdf_vs_decimal_max_channel_delta": {
+        "over_white": 6,
+        "premultiplied_alpha": 6
+      }
+    },
+    {
+      "fixture": "knockout-shapes.pdf",
+      "sha256": "150ef947c781bd32b294c8117683fea2dd505a8f4684468bf064fa41ed528161",
+      "mupdf_vs_decimal_max_channel_delta": {
+        "over_white": 2,
+        "premultiplied_alpha": 2
+      }
+    },
+    {
+      "fixture": "knockout-elements.pdf",
+      "sha256": "c6205067ab44c8e7b8177cee33cb4f82d8524b074dcb68a898a50e711ac71b78",
+      "mupdf_vs_decimal_max_channel_delta": {
+        "over_white": 1,
+        "premultiplied_alpha": 2
+      }
+    },
+    {
+      "fixture": "knockout-edges.pdf",
+      "sha256": "41bbcc270af201776a2d4c8bf8ba9b5621be339b48fcd7867f8d4142e3999a2a",
+      "mupdf_vs_decimal_max_channel_delta": {
+        "over_white": 1,
+        "premultiplied_alpha": 2
+      }
+    }
+  ],
+  "source_sha256": {
+    "src\\canvas.c": "c3700336a3ab4088f6a108d1db8a75af34bbe07bb091c521aea49175aa6d61eb",
+    "src\\blend.c": "c688254ad7193eb9a53336f13f2d29278d8e3150cde26d5fea8195dcb231a800",
+    "src\\pdf_content.c": "16c0a1fcc575ddd38224b618cc80b0643735e894d225df8a69b2b2c471f465a2",
+    "src\\pdf_annotation_paint.c": "8a3f474a8e8193f9fb4ea0b63de4aaf559305d2ae80ce124ea23f8bc29820956"
+  },
+  "local_validation": {
+    "msvc": {
+      "passed": 136,
+      "total": 136
+    },
+    "gcc": {
+      "passed": 136,
+      "total": 136
+    },
+    "icc_off": {
+      "passed": 3,
+      "total": 3
+    },
+    "installed_components": {
+      "passed": 4,
+      "total": 4
+    },
+    "group_colour_checks": 229,
+    "cpp_exact_package": true,
+    "layer_inverse_symbols": 0,
+    "layer_inverse_includes": 0,
+    "fixture_reproduction": true
+  }
+}

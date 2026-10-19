@@ -80,7 +80,8 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
        the region-sized working buffers until that path is reworked. */
     status=exr_sink_begin_group(sink,1,EXR_BLEND_NORMAL,
       (layer&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|(layer&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0)|
-      (layer&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|(layer&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0)|EXR_GROUP_WHOLE_BUFFER,e);
+      (layer&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|(layer&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0)|
+      (layer&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0)|EXR_GROUP_WHOLE_BUFFER,e);
     if(status==EXR_OK) begun=1;
   }
   if(status==EXR_OK) status=exr_pdf_paint_content_ex(file,resources,content,size,matrix,&consumer,program,context,work,control,e);
@@ -218,7 +219,8 @@ exr_status exr_pdf_paint_page_ex(exr_pdf_file *file,const exr_pdf_page_info *pag
     status=exr_pdf_resolve(file,exr_pdf_get(file,page->object,"Group"),&group,e);
     if(status==EXR_OK) status=exr_pdf_group_rgb(file,group,1,&present,e);
     if(status!=EXR_OK) return status;
-    page_flags|=(present&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|(present&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0);
+    page_flags|=(present&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|(present&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0)|
+      (present&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0);
   }
   if(sink->blend && !sink->begin_layer && !sink->begin_group) return exr_fail(e,EXR_FORMAT,"PDF blend consumer requires page layer support");
   if(sink->begin_layer || sink->begin_group) {

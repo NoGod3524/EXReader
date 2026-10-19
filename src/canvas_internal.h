@@ -20,8 +20,8 @@ struct exr_canvas {
   size_t depth,group_depth,mask_bytes,mask_count,mask_budget,work;
   const unsigned char *soft_mask;size_t soft_mask_width,soft_mask_height;exr_composite_state mask_state;
   unsigned char *soft_mask_owned; /* cropped copy while a region buffer is active */
-  unsigned gray_groups; /* nesting depth of DeviceGray blending groups */
-  unsigned cmyk_groups; /* nesting depth of DeviceCMYK blending groups */
+  unsigned gray_groups; /* active group blends in DeviceGray */
+  unsigned cmyk_groups; /* active group blends in DeviceCMYK */
   int offset_x,offset_y; /* canvas coordinate of the active working buffer's top-left */
   size_t canvas_width,canvas_height; /* device extent, independent of the active buffer */
 };
