@@ -4250,3 +4250,15 @@ results. Current MIT scope and optional FAAD2 GPL terms are in THIRD_PARTY_NOTIC
 - Android ARM64以及iOS/iPadOS arm64设备/模拟器库构建、安装和语言接口检查通过；移动结果仍不是应用或真机验收。
 
 原始作业/步骤状态与测试摘要见[CI记录](validation/2026-10-19-components-ci.json)，本机详细布局值和二进制哈希见[组件记录](validation/2026-10-19-components.json)。
+
+## 0.20.0 版本声明与规则（2026-10-19）
+
+本次将已完成分层归为中等更新，SDK及六个组件版本从0.19.0同步到0.20.0，
+按更新规模递增主/次/补丁版本；ABI1、schema6与运行逻辑不变。
+
+- GCC16.2 Release重新编译成功；`native-abi` 1/1通过。
+- 安装SDK后，静态组件消费测试4/4通过，13个公开模块头的C++独立编译通过。
+- C++17消费者通过0.20.0 EXACT包选择、编译和运行，报告`0.20.0 ABI 1`。
+- 安装包版本及核心/PDF/PDF编辑/音频/书库/索引六个目标的版本属性均为0.20.0。
+
+本次未重跑完整跨平台CI；前一实现提交`716235e`的完整结果保留在此前记录中。

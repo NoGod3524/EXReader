@@ -3,7 +3,7 @@
 #define EXR_LIBRARY_H
 #include "pdf.h"
 #include "formats.h"
-#define EXR_LIBRARY_VERSION "0.19.0"
+#define EXR_LIBRARY_VERSION "0.20.0"
 #ifdef __cplusplus
 extern "C" {
 #endif
