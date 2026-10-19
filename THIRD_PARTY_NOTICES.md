@@ -25,6 +25,11 @@ PostScript is a registered trademark of Adobe Systems Incorporated.
 
 CMake verifies every source archive using the SHA-256 values in cmake/deps.cmake. CSS matching, Unicode boundary and bidirectional algorithms, OpenType GSUB/GPOS processing, line breaking, pagination, image placement, table layout, pixel compositing, document positions, the document model and format extraction are EXReader C code. FreeType supplies font access, glyph metrics and rasterization; stb_image supplies decoded image pixels. License texts are included in the installed SDK under share/exreader/licenses.
 
+For GCC builds, CMake compiles LittleCMS `cmsintrp.c` with `-fwrapv`: the
+upstream 16-bit fixed-point interpolation intentionally wraps intermediate
+signed products before truncating to 16 bits. This defines its arithmetic
+under optimization and UBSan; other checks and sources retain their settings.
+
 The old JavaScript framework and reader are retained in Git history and their respective reader branches. They are not linked into this native engine.
 
 The legacy ARC4 key schedule and byte loop in `src/pdf_crypto.c` adapt
