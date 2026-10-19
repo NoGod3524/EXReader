@@ -1,0 +1,140 @@
+{
+  "layers": {
+    "base": [],
+    "text": [
+      "base",
+      "graphics"
+    ],
+    "doc": [
+      "base",
+      "text"
+    ],
+    "formats": [
+      "doc"
+    ],
+    "pdf": [
+      "formats"
+    ],
+    "layout": [
+      "formats",
+      "pdf"
+    ],
+    "render": [
+      "layout"
+    ],
+    "audio": [
+      "base"
+    ],
+    "library": [
+      "render",
+      "audio"
+    ],
+    "textindex": [
+      "library"
+    ],
+    "graphics": [
+      "base"
+    ]
+  },
+  "files": {
+    "aac.c": "audio",
+    "affine_image.c": "graphics",
+    "anchor.c": "doc",
+    "annotation.c": "library",
+    "audio.c": "audio",
+    "audio_output.c": "audio",
+    "audio_player.c": "audio",
+    "bidi.c": "text",
+    "blend.c": "graphics",
+    "bmff.c": "audio",
+    "canvas.c": "graphics",
+    "case.c": "base",
+    "cbz.c": "formats",
+    "cfi.c": "doc",
+    "cfi_text.c": "doc",
+    "common.c": "base",
+    "construct.c": "doc",
+    "core.c": "base",
+    "curves.c": "graphics",
+    "dash.c": "graphics",
+    "display_bidi.c": "text",
+    "document.c": "doc",
+    "docx.c": "formats",
+    "epub_write.c": "formats",
+    "export_epub.c": "formats",
+    "fb2.c": "formats",
+    "fixed.c": "doc",
+    "fixed_text.c": "doc",
+    "flac.c": "audio",
+    "floats.c": "layout",
+    "flow.c": "layout",
+    "font_bitmap.c": "text",
+    "font_color.c": "text",
+    "font_outline.c": "text",
+    "font_path.c": "text",
+    "fonts.c": "text",
+    "formats.c": "formats",
+    "huff.c": "formats",
+    "hyphen.c": "text",
+    "icc.c": "graphics",
+    "images.c": "graphics",
+    "inline.c": "layout",
+    "kf8.c": "formats",
+    "layout.c": "layout",
+    "library.c": "library",
+    "m4b.c": "audio",
+    "m4b_metadata.c": "audio",
+    "memory.c": "base",
+    "mp3.c": "audio",
+    "navigation.c": "formats",
+    "normalize.c": "base",
+    "numbering.c": "base",
+    "opentype.c": "text",
+    "pager.c": "layout",
+    "pager_table.c": "layout",
+    "pcm.c": "audio",
+    "pdf_annotation_paint.c": "pdf",
+    "pdf_annotations.c": "pdf",
+    "pdf_calculator.c": "pdf",
+    "pdf_ccitt.c": "pdf",
+    "pdf_cmap.c": "pdf",
+    "pdf_color.c": "pdf",
+    "pdf_content.c": "pdf",
+    "pdf_crypto.c": "pdf",
+    "pdf_document.c": "pdf",
+    "pdf_encoding.c": "pdf",
+    "pdf_face.c": "pdf",
+    "pdf_font.c": "pdf",
+    "pdf_function.c": "pdf",
+    "pdf_image.c": "pdf",
+    "pdf_objects.c": "pdf",
+    "pdf_pages.c": "pdf",
+    "pdf_paint.c": "pdf",
+    "pdf_raster.c": "pdf",
+    "pdf_shading.c": "pdf",
+    "pdf_shading_mesh.c": "pdf",
+    "pdf_softmask.c": "pdf",
+    "pdf_softmask_parse.c": "pdf",
+    "pdf_view.c": "pdf",
+    "pdf_write.c": "pdf",
+    "positioned.c": "layout",
+    "publication.c": "layout",
+    "raster.c": "render",
+    "rtf.c": "formats",
+    "ruby.c": "layout",
+    "source.c": "base",
+    "stretch.c": "audio",
+    "stroke.c": "graphics",
+    "style.c": "layout",
+    "text.c": "base",
+    "text_index.c": "textindex",
+    "transfer.c": "base",
+    "variable.c": "text",
+    "vector.c": "graphics",
+    "viewport.c": "base",
+    "wave.c": "audio",
+    "xmp.c": "formats",
+    "xmp_write.c": "pdf"
+  },
+  "exceptions": []
+}

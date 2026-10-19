@@ -28,6 +28,7 @@ typedef struct {
   exr_source source;
 } exr_archive_store;
 struct exr_document {
+  exr_status (*load_package)(const exr_document *,const exr_control *,exr_document **,exr_error *);
   char *text, *title,*language; /* Optional publication-level fallback; element lang wins. */
   size_t size, text_capacity;
   exr_block *blocks;
@@ -91,6 +92,7 @@ exr_status exr_cfi_context(const exr_document *doc,size_t chapter,const exr_cfi_
 exr_status exr_cfi_assertion_resolve(const exr_document *doc,size_t chapter,const char *before,const char *after,const exr_control *control,exr_cfi_point *point,exr_error *error);
 exr_status exr_cfi_create_for_part(const exr_document *index,size_t part,const exr_document *doc,size_t chapter,const exr_cfi_point *point,size_t context,const exr_control *control,char **out,exr_error *error);
 exr_status exr_cfi_route(const exr_document *index,const char *cfi,const exr_control *control,size_t *part,char **local,exr_error *error);
+exr_status exr_document_package_tree(const exr_document *doc,const exr_control *control,exr_document **out,exr_error *error);
 exr_status exr_epub_package_tree(const exr_document *doc,const exr_control *control,exr_document **out,exr_error *error);
 exr_status exr_epub_export_check(const exr_document *doc, exr_error *error);
 exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **out,

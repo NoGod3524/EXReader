@@ -4158,9 +4158,25 @@ font fixtures. Other third-party licenses are preserved.
 
 Historical local directory labels were normalized in 537 benchmark JSON files.
 Comparison with the original records confirms identical numeric values, hashes
-and non-path content after path separator normalization. No new contribution
-policy was introduced.
+and non-path content after path separator normalization.
 
 Audit scope, fixes and outstanding rendering errors are listed in
 [AUDIT-2026-10-19.md](AUDIT-2026-10-19.md). This is not a completed full-framework
 security audit or a declaration of complete PDF compatibility.
+
+## 2026-10-19 function-layer cleanup
+
+The rendering/license checkpoint is code commit `ea38802`. The alternating PDF
+performance samples above were collected from that implementation before the
+following structural moves; their binary hashes remain unchanged in the records.
+
+The function-layer cleanup moves release helpers, font lifetime/metrics,
+document dispatch, URI/CSS scanning and book-font resource loading to the owners
+listed in ARCHITECTURE.md. CFI now obtains package views through a per-document
+provider set by EPUB constructors and inherited by chapter snapshots. This adds
+only an internal pointer; no public record or callback layout changes.
+
+All five migration checkpoints passed GCC131/131. The final graph check reports
+98objects,1019references,0inverse references; its exception list is empty. A
+negative configuration test correctly returns failure. Internal type/header and
+physical CMake target separation remain future work, not covered by that count.

@@ -419,88 +419,6 @@ static int package_parse(package *p, const void *data, size_t n) {
   p->parser = NULL;
   return ok == XML_STATUS_OK && !p->failed;
 }
-int exr_uri_path(exr_buffer *b, const char *s) {
-  const unsigned char *p; char hex[4];
-  for (p = (const unsigned char *)s; *p; p++) {
-    if ((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') ||
-        (*p >= '0' && *p <= '9') || strchr("/-._~", *p)) {
-      if (!exr_append(b, p, 1)) return 0;
-    } else {
-      snprintf(hex, sizeof(hex), "%%%02X", *p);
-      if (!exr_append(b, hex, strlen(hex))) return 0;
-    }
-  }
-  return 1;
-}
-int exr_uri_decode(const char *s, size_t n, char out[2048]) {
-  size_t i, used = 0, at = 0;
-  uint32_t cp;
-  if (n >= 2048)
-    return 0;
-  for (i = 0; i < n; i++) {
-    unsigned char c = (unsigned char)s[i];
-    if (c == '%') {
-      unsigned a, b;
-      if (n - i < 3 || !isxdigit((unsigned char)s[i + 1]) || !isxdigit((unsigned char)s[i + 2]))
-        return 0;
-      c = (unsigned char)s[++i];
-      a = (unsigned)(isdigit(c) ? c - '0' : tolower(c) - 'a' + 10);
-      c = (unsigned char)s[++i];
-      b = (unsigned)(isdigit(c) ? c - '0' : tolower(c) - 'a' + 10);
-      c = (unsigned char)(a * 16 + b);
-    }
-    if (c < 32 || c == 127)
-      return 0;
-    out[used++] = (char)c;
-  }
-  out[used] = 0;
-  while (at < used)
-    if (!exr_next(out, used, &at, &cp))
-      return 0;
-  return 1;
-}
-int exr_resolve_path(const char *base, const char *href, char out[2048]) {
-  char joined[2048], decoded[2048];
-  size_t len = 0, i, used = 0, segments[256], depth = 0;
-  size_t href_size = strcspn(href, "#");
-  const char *slash = strrchr(base, '/');
-  if (memchr(href, '?', href_size) || !exr_uri_decode(href, href_size, decoded) || decoded[0] == '/' ||
-      strchr(decoded, ':') || strchr(decoded, '\\'))
-    return 0;
-  if (!decoded[0])
-    len = strlen(base);
-  else if (slash)
-    len = (size_t)(slash - base) + 1;
-  if (len + strlen(decoded) >= sizeof(joined))
-    return 0;
-  memcpy(joined, base, len);
-  strcpy(joined + len, decoded);
-  for (i = 0; joined[i];) {
-    size_t start = i, n;
-    while (joined[i] && joined[i] != '/')
-      i++;
-    n = i - start;
-    if (joined[i])
-      i++;
-    if (!n || (n == 1 && joined[start] == '.'))
-      continue;
-    if (n == 2 && joined[start] == '.' && joined[start + 1] == '.') {
-      if (!depth)
-        return 0;
-      used = segments[--depth];
-      continue;
-    }
-    if (depth >= 256 || used + n + 1 >= 2048)
-      return 0;
-    segments[depth++] = used;
-    if (used)
-      out[used++] = '/';
-    memcpy(out + used, joined + start, n);
-    used += n;
-  }
-  out[used] = 0;
-  return used > 0;
-}
 exr_status exr_document_resource(const exr_document *d, size_t resource, void **out, size_t *size,
                                  exr_error *e) {
   archive z = {0};
@@ -665,6 +583,7 @@ static exr_status archive_copy(exr_document *d, const void *data, size_t n, exr_
   memcpy(store->bytes, data, n);
   store->size = n;
   store->refs = 1;
+  d->load_package = exr_epub_package_tree;
   d->shared_archive = store;
   d->archive = store->bytes;
   d->archive_size = store->size;
@@ -884,6 +803,7 @@ exr_status exr_epub_index_source(const exr_source *source, exr_document **out, e
   if (!d->shared_archive) { free(d); return exr_fail(e, EXR_MEMORY, "Source allocation failed"); }
   d->format = EXR_EPUB;
   d->shared_archive->refs = 1;
+  d->load_package = exr_epub_package_tree;
   d->shared_archive->source = *source;
   d->shared_archive->source.release = NULL; /* Transfer only after public open succeeds. */
   d->archive_size = (size_t)source->size;
@@ -920,6 +840,7 @@ exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **
     return exr_fail(e, EXR_MEMORY, "Chapter allocation failed");
   }
   d->format = EXR_EPUB;
+  d->load_package = index->load_package;
   d->shared_archive = index->shared_archive;
   d->archive = index->archive;
   d->archive_size = index->archive_size;
@@ -1204,4 +1125,82 @@ exr_status exr_parse(exr_document *d, const void *data, size_t n, exr_error *e) 
   default:
     return exr_fail(e, EXR_FORMAT, "This format has no native decoder yet");
   }
+}
+
+exr_status exr_document_open_memory(exr_format f, const void *data, size_t n, exr_document **out,
+                                    exr_error *e) {
+  exr_document *d;
+  exr_status status;
+  if (!out)
+    return exr_fail(e, EXR_ARGUMENT, "Missing output");
+  *out = NULL;
+  if (e)
+    memset(e, 0, sizeof(*e));
+  if (!data || !n || n > EXR_MAX_INPUT)
+    return exr_fail(e, n > EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT, "Invalid document bytes");
+  d = calloc(1, sizeof(*d));
+  if (!d)
+    return exr_fail(e, EXR_MEMORY, "Allocation failed");
+  d->format = f;
+  status = exr_parse(d, data, n, e);
+  if (status == EXR_OK)
+    status = exr_model_finish(d, e);
+  if (status != EXR_OK) {
+    if (e) {
+      e->code = status;
+      if (!e->message[0])
+        snprintf(e->message, sizeof(e->message), "Native parser failed (%d)", (int)status);
+    }
+    exr_document_free(d);
+    return status;
+  }
+  if (!d->count && !d->chapter_count) {
+    exr_document_free(d);
+    return exr_fail(e, EXR_FORMAT, "Document has no supported text content");
+  }
+  *out = d;
+  return exr_fail(e, EXR_OK, "");
+}
+exr_status exr_document_open(const char *path, exr_document **out, exr_error *e) {
+  const char *ext;
+  unsigned char *data;
+  size_t n;
+  exr_status s;
+  exr_format f = 0;
+  char lower[16];
+  size_t i;
+  if (!path || !out)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid path or output");
+  *out = NULL;
+  ext = strrchr(path, '.');
+  if (!ext)
+    return exr_fail(e, EXR_FORMAT, "File has no format extension");
+  ext++;
+  for (i = 0; ext[i] && i < sizeof(lower) - 1; i++)
+    lower[i] = (char)((ext[i] >= 'A' && ext[i] <= 'Z') ? ext[i] + 32 : ext[i]);
+  lower[i] = 0;
+  if (!strcmp(lower, "txt"))
+    f = EXR_TXT;
+  else if (!strcmp(lower, "html") || !strcmp(lower, "htm"))
+    f = EXR_HTML;
+  else if (!strcmp(lower, "epub"))
+    f = EXR_EPUB;
+  else if (!strcmp(lower, "fb2"))
+    f = EXR_FB2;
+  else if (!strcmp(lower, "docx"))
+    f = EXR_DOCX;
+  else if (!strcmp(lower, "rtf"))
+    f = EXR_RTF;
+  else if (!strcmp(lower, "mobi") || !strcmp(lower, "azw3"))
+    f = EXR_MOBI;
+  else if (!strcmp(lower, "pdf"))
+    f = EXR_PDF;
+  if (!f)
+    return exr_fail(e, EXR_FORMAT, "Unsupported format");
+  s = exr_read(path, &data, &n, e);
+  if (s != EXR_OK)
+    return s;
+  s = exr_document_open_memory(f, data, n, out, e);
+  free(data);
+  return s;
 }

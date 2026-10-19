@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "memory_internal.h"
 #include "internal.h"
 #include <expat.h>
 
@@ -516,4 +517,100 @@ exr_status exr_xml_memory_tree(const void *data, size_t size, const char *root,
   status=exr_xml_tree(d,data,size,0,1,1,root,e);
   if(status!=EXR_OK) { exr_document_free(d); return status; }
   *out=d; return EXR_OK;
+}
+
+int exr_add_block(exr_document *d, const char *text, size_t n, unsigned heading) {
+  exr_block *b;
+  while (n && (text[0] == ' ' || text[0] == '\t' || text[0] == '\n' || text[0] == '\r')) {
+    text++;
+    n--;
+  }
+  while (n &&
+         (text[n - 1] == ' ' || text[n - 1] == '\t' || text[n - 1] == '\n' || text[n - 1] == '\r'))
+    n--;
+  if (!n)
+    return 1;
+  if (d->count >= EXR_MAX_ITEMS || n > EXR_MAX_TEXT - d->size - 1)
+    return 0;
+  if (!exr_grow((void **)&d->text, &d->text_capacity, d->size + n + 2, 1) ||
+      !exr_grow((void **)&d->blocks, &d->capacity, d->count + 1, sizeof(*d->blocks)))
+    return 0;
+  if (d->size)
+    d->text[d->size++] = '\n';
+  b = &d->blocks[d->count++];
+  b->start = d->size;
+  b->end = d->size + n;
+  b->heading = heading;
+  memcpy(d->text + d->size, text, n);
+  d->size += n;
+  d->text[d->size] = 0;
+  return 1;
+}
+void exr_document_free(exr_document *d) {
+  if (d) {
+    free(d->text);
+    free(d->title);
+    free(d->language);
+    free(d->blocks);
+    exr_model_free(d);
+    free(d);
+  }
+}
+const char *exr_document_text(const exr_document *d, size_t *n) {
+  if (n)
+    *n = d ? d->size : 0;
+  return d ? d->text : NULL;
+}
+const char *exr_document_title(const exr_document *d) { return d && d->title ? d->title : ""; }
+const exr_block *exr_document_blocks(const exr_document *d, size_t *n) {
+  if (n)
+    *n = d ? d->count : 0;
+  return d ? d->blocks : NULL;
+}
+exr_format exr_document_format(const exr_document *d) { return d ? d->format : 0; }
+exr_status exr_document_find(const exr_document *d, const char *q, size_t from, size_t *start,
+                             size_t *end, exr_error *e) {
+  if(!d) { if(start) *start=SIZE_MAX; if(end) *end=SIZE_MAX; return exr_fail(e,EXR_ARGUMENT,"Missing search document"); }
+  return exr_find_bytes(d->text,d->size,q,q ? strlen(q) : 0,from,NULL,start,end,e);
+}
+
+size_t exr_document_memory_size(const exr_document *d) {
+  size_t total, i;
+  if (!d)
+    return 0;
+  total = sizeof(*d);
+  total = exr_memory_array(total, d->text, d->text_capacity, 1);
+  total = exr_memory_array(total, d->blocks, d->capacity, sizeof(*d->blocks));
+  total = exr_memory_array(total, d->nodes, d->node_capacity, sizeof(*d->nodes));
+  total = exr_memory_array(total, d->last_children, d->last_capacity, sizeof(*d->last_children));
+  total = exr_memory_array(total, d->chapters, d->chapter_capacity, sizeof(*d->chapters));
+  total = exr_memory_array(total, d->resources, d->resource_capacity, sizeof(*d->resources));
+  total = exr_memory_array(total, d->resource_data, d->resource_count, sizeof(*d->resource_data));
+  total = exr_memory_add(total, d->model_bytes);
+  /* Custom construction copies its title through exr_model_copy. Chapter strings
+     either alias resource metadata or were copied through that same model path. */
+  if (d->title && d->format != EXR_CUSTOM)
+    total = exr_memory_add(exr_memory_add(total, strlen(d->title)), 1);
+  if(d->language) total=exr_memory_add(exr_memory_add(total,strlen(d->language)),1);
+  for (i = 0; i < d->node_count; i++)
+    total = exr_memory_array(total, d->nodes[i].attributes, d->nodes[i].attribute_count,
+                  sizeof(*d->nodes[i].attributes));
+  if (d->resource_data)
+    for (i = 0; i < d->resource_count; i++)
+      if (d->resource_data[i].bytes)
+        total = exr_memory_add(total, d->resource_data[i].size ? d->resource_data[i].size : 1);
+  /* Publication indexes and chapter snapshots share their compressed source.
+     Count a private archive only, rather than charging every cache entry. */
+  if (!d->shared_archive)
+    total = exr_memory_array(total, d->archive, d->archive_size, 1);
+  return total;
+}
+
+
+/* The format provider owns package parsing; the model only routes the request. */
+exr_status exr_document_package_tree(const exr_document *d,const exr_control *control,exr_document **out,exr_error *e) {
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing package tree output");
+  *out=NULL;
+  if(!d || !d->load_package) return exr_fail(e,EXR_FORMAT,"Full CFI requires an original EPUB package");
+  return d->load_package(d,control,out,e);
 }
