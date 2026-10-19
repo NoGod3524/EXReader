@@ -314,3 +314,21 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
    `bug1703683_page2_reduced.pdf` 卡在对象流 `/Extends`，`issue13520.pdf` 卡在 CMYK 透明组。
    也就是说**类型 7 即使实现了，也没法通过这两个样本验证**，必须先补 `/Extends` 与 CMYK 组。
    语料中其余 6 个含着色的文件都是类型 2/3（已支持）。
+
+## 交接：下一步顺序（2026-10-19 审计后）
+
+按依赖关系排序，而不是按工作包编号：
+
+1. **CMYK 透明组**（WP4）：它是两个真实 `/ShadingType 7` 样本的最后一道墙；
+   做法是把组缓冲扩成 CMYK 或并行维护，合成回 RGB 时走同一色彩转换。
+2. **网格类型 6/7**（WP4）：此时 `bug1703683_page2_reduced.pdf` 与 `issue13520.pdf`
+   可以作为验收样本；先做 `flag 0` 的单个面片，再加 `flag 1/2` 的共享边。
+3. **WP4a**：证书加密（PubSec）、EFOpen、JBIG2、JPX。
+4. **WP5 收尾**：逐边边框（需扩展 `exr_style` 的 side 字段）、重复表头。
+5. **WP6–WP16**：按原顺序。
+
+接手须知：
+
+- 网格渐变 `flag 1/2` 与类型 5 的顶点顺序**未经过像素对照**，见审计第 2 节；
+- 语料里只有 8 个文件含着色字典，其中 6 个是类型 2/3；
+- 所有未实现路径都返回 `EXR_UNSUPPORTED`，没有静默错误输出。
