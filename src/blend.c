@@ -43,10 +43,14 @@ static void blend_rgb(const double b[3],const double s[3],exr_blend_mode mode,do
     set_lum(blend,mode==EXR_BLEND_LUMINOSITY ? lum(s) : lum(b));
   } else for(k=0;k<3;k++) blend[k]=component(b[k],s[k],mode);
 }
+/* Working buffers may be smaller than the canvas; index them through the origin. */
+static size_t buffer_index(const exr_composite_state *state,size_t width,size_t x,size_t y) {
+  return ((size_t)((int)y-state->origin_y)*width + (size_t)((int)x-state->origin_x));
+}
 static void read_rgba(const exr_bitmap *b,const exr_composite_state *state,size_t x,size_t y,double out[4]) {
   unsigned k;
   if(state && state->pixels) {
-    const float *p=state->pixels+(y*b->width+x)*5;
+    const float *p=state->pixels+buffer_index(state,b->width,x,y)*5;
     if(p[4]>0) for(k=0;k<4;k++) out[k]=p[k];
     else if(state->isolated) for(k=0;k<4;k++) out[k]=0;
     else read_rgba(&state->backdrop,state->backdrop_state,x,y,out);
@@ -72,7 +76,7 @@ static void over_rgba(const double back[4],const double source[3],double alpha,e
 static void write_rgba(exr_bitmap *b,exr_composite_state *state,size_t x,size_t y,const double out[4],double object_alpha) {
   unsigned char *p=b->pixels+y*b->stride+x*b->channels;unsigned k;double a=fmax(0,fmin(1,out[3]));
   if(state && state->pixels) {
-    float *q=state->pixels+(y*b->width+x)*5;for(k=0;k<3;k++) q[k]=(float)fmax(0,fmin(a,out[k]));q[3]=(float)a;
+    float *q=state->pixels+buffer_index(state,b->width,x,y)*5;for(k=0;k<3;k++) q[k]=(float)fmax(0,fmin(a,out[k]));q[3]=(float)a;
     q[4]=(float)fmax(0,fmin(1,object_alpha+(1-object_alpha)*q[4]));
     if(object_alpha>0) {
       if(x<state->left) state->left=(uint32_t)x;
@@ -110,7 +114,7 @@ void exr_pixel_composite(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned 
     write_rgba(bitmap,state,(size_t)x,(size_t)y,out,alpha);
     /* Knockout replaces coverage as well: the group alpha follows the top element
        instead of accumulating, so background removal divides by the result alpha. */
-    if(state->pixels) state->pixels[((size_t)y*bitmap->width+(size_t)x)*5+4]=(float)fmax(0,fmin(1,out[3]));
+    if(state->pixels) state->pixels[buffer_index(state,bitmap->width,(size_t)x,(size_t)y)*5+4]=(float)fmax(0,fmin(1,out[3]));
     return;
   }
   read_rgba(bitmap,state,(size_t)x,(size_t)y,back);
@@ -175,7 +179,7 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         over_rgba(base,rgb,alpha,mode,painted);
         for(k=0;k<4;k++) out[k]=covered*painted[k]+(1-covered)*current[k];
         write_rgba(target,target_state,x,y,out,alpha*covered);
-        if(target_state->pixels) target_state->pixels[(y*target->width+x)*5+4]=(float)fmax(0,fmin(1,out[3]));
+        if(target_state->pixels) target_state->pixels[buffer_index(target_state,target->width,x,y)*5+4]=(float)fmax(0,fmin(1,out[3]));
         continue;
       }
       if((source_state && source_state->pixels && !source_state->isolated) || (target_state && target_state->pixels)) {
