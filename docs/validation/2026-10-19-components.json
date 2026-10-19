@@ -53,6 +53,13 @@
       "header_references": 505,
       "inverse_symbols": 0,
       "inverse_headers": 0
+    },
+    "storage": {
+      "objects": 60,
+      "symbol_references": 611,
+      "header_references": 515,
+      "inverse_symbols": 0,
+      "inverse_headers": 0
     }
   },
   "compatibility": {
@@ -774,5 +781,12 @@
       "bytes": 6150906,
       "sha256": "9a3e6f08ad326cb912b7c71bca3ae62c7a71fa3b500412031366b66575bbe049"
     }
+  },
+  "code_sha": "716235e6ab4c5bb944c2e240b6a173289b3ab725",
+  "ci": {
+    "run_id": 39328976671,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39328976671",
+    "jobs_passed": 7,
+    "jobs_total": 7
   }
 }
