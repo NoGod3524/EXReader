@@ -98,6 +98,16 @@ static exr_status picture(exr_bitmap *out, const exr_box *box, const exr_bitmap 
   }
   return EXR_OK;
 }
+/* One side of a dashed or dotted border: walk the longer axis in dash/gap steps. */
+static void dashed_side(exr_bitmap *out,float x,float y,float w,float h,uint32_t color,float dash,float gap) {
+  if(w>=h) {
+    float at=x;
+    while(at<x+w) { float len=fminf(dash,x+w-at); rectangle(out,at,y,len,h,color); at+=dash+gap; }
+  } else {
+    float at=y;
+    while(at<y+h) { float len=fminf(dash,y+h-at); rectangle(out,x,at,w,len,color); at+=dash+gap; }
+  }
+}
 static exr_status draw_box(exr_bitmap *out,const exr_layout *l,const exr_box *b,
                              const exr_control *control,exr_error *e) {
   size_t j; float bw=fminf(b->border_width,fminf(b->width,b->height)/2);
@@ -110,10 +120,19 @@ static exr_status draw_box(exr_bitmap *out,const exr_layout *l,const exr_box *b,
     /* Rasterize the union once, including fractional-width corner pixels. */
     float top=ceilf(b->y+bw),bottom=fmaxf(top,floorf(b->y+b->height-bw));
     float right=fmaxf(ceilf(b->x+bw),floorf(b->x+b->width-bw));
-    rectangle(out,b->x,b->y,b->width,bw,b->border_color);
-    rectangle(out,b->x,bottom,b->width,ceilf(b->y+b->height)-bottom,b->border_color);
-    rectangle(out,b->x,top,bw,bottom-top,b->border_color);
-    rectangle(out,right,top,ceilf(b->x+b->width)-right,bottom-top,b->border_color);
+    if(b->flags&(EXR_BOX_DASHED|EXR_BOX_DOTTED)) {
+      float dash=(b->flags&EXR_BOX_DOTTED) ? bw : 3*bw;
+      float gap=2*bw;
+      dashed_side(out,b->x,b->y,b->width,bw,b->border_color,dash,gap);
+      dashed_side(out,b->x,bottom,b->width,ceilf(b->y+b->height)-bottom,b->border_color,dash,gap);
+      dashed_side(out,b->x,top,bw,bottom-top,b->border_color,dash,gap);
+      dashed_side(out,right,top,ceilf(b->x+b->width)-right,bottom-top,b->border_color,dash,gap);
+    } else {
+      rectangle(out,b->x,b->y,b->width,bw,b->border_color);
+      rectangle(out,b->x,bottom,b->width,ceilf(b->y+b->height)-bottom,b->border_color);
+      rectangle(out,b->x,top,bw,bottom-top,b->border_color);
+      rectangle(out,right,top,ceilf(b->x+b->width)-right,bottom-top,b->border_color);
+    }
   }
   return EXR_OK;
 }

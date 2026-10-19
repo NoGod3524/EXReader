@@ -506,6 +506,9 @@ typedef enum { EXR_BOX_BLOCK = 1, EXR_BOX_IMAGE, EXR_BOX_CELL } exr_box_kind;
    one border layer: overlapping rectangles replace within the layer, then the
    layer is composited once. This preserves translucent junction colors. */
 #define EXR_BOX_BORDER 2u
+/* Dashed and dotted border layers; the dash pattern scales with the border width. */
+#define EXR_BOX_DASHED 4u
+#define EXR_BOX_DOTTED 8u
 typedef struct {
   exr_box_kind kind;
   size_t node, page, resource, start, end;

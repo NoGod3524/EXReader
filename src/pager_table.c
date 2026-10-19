@@ -10,7 +10,7 @@ typedef struct {
   float height,baseline,content_bottom,content_height;
   float border[4];
 } table_cell;
-typedef struct { float width; uint32_t color,rank; } table_edge;
+typedef struct { float width; uint32_t color,rank; unsigned style; } table_edge;
 struct exr_table_cursor {
   size_t *rows, row_count, row_capacity;
   table_cell *cells;
@@ -95,7 +95,7 @@ static void edge_offer(table_edge *edge,const exr_style *s,unsigned origin,
   if(rank==UINT32_MAX || (edge->rank!=UINT32_MAX &&
       (s->border_width>edge->width || (s->border_width==edge->width && rank>edge->rank)))) {
     edge->width=s->border_style==2 ? 0 : s->border_width;
-    edge->color=s->border_color; edge->rank=rank;
+    edge->color=s->border_color; edge->rank=rank; edge->style=(unsigned)s->border_style;
   }
 }
 static void perimeter(flow *f,exr_table_cursor *t,size_t node,unsigned origin,
@@ -154,9 +154,9 @@ static exr_status collapsed_borders(flow *f,exr_table_cursor *t) {
   for(i=0;i<t->cell_count;i++) {
     const table_cell *c=&t->cells[i];
     for(j=c->row+1;j<c->row+c->rowspan;j++) for(k=c->column;k<c->column+c->colspan;k++)
-      t->horizontal[j*t->columns+k]=(table_edge){0,0,UINT32_MAX};
+      t->horizontal[j*t->columns+k]=(table_edge){0,0,UINT32_MAX,0};
     for(j=c->row;j<c->row+c->rowspan;j++) for(k=c->column+1;k<c->column+c->colspan;k++)
-      t->vertical[j*(t->columns+1)+k]=(table_edge){0,0,UINT32_MAX};
+      t->vertical[j*(t->columns+1)+k]=(table_edge){0,0,UINT32_MAX,0};
   }
   for(i=0;i<t->cell_count;i++) {
     table_cell *c=&t->cells[i];
@@ -581,9 +581,34 @@ static float boundary(const exr_table_cursor *t,size_t row) {
   if(t->collapse) for(i=0;i<t->columns;i++) half=fmaxf(half,t->horizontal[row*t->columns+i].width/2);
   return half;
 }
+/* Dashed and dotted edges become separate border boxes: the collapsed border layer
+   fills each box whole, so the gaps have to be real boxes. */
+static exr_status dashed_edge(flow *f,size_t node,const table_edge *edge,float x,float y,float w,float h) {
+  float dash=edge->style==4 ? edge->width : 3*edge->width;
+  float gap=2*edge->width;
+  size_t pieces=0;
+  if(dash<=0) return EXR_OK;
+  if(w>=h) {
+    float at;
+    for(at=x;at<x+w && pieces<4096;at+=dash+gap,pieces++) {
+      float len=fminf(dash,x+w-at); exr_box *box=exr_flow_box(f,node,f->layout->page_count-1,at,y,len,h,EXR_BOX_BLOCK);
+      if(!box) return EXR_LIMIT;
+      box->background=edge->color; box->border_width=0; box->flags=EXR_BOX_BORDER;
+    }
+  } else {
+    float at;
+    for(at=y;at<y+h && pieces<4096;at+=dash+gap,pieces++) {
+      float len=fminf(dash,y+h-at); exr_box *box=exr_flow_box(f,node,f->layout->page_count-1,x,at,w,len,EXR_BOX_BLOCK);
+      if(!box) return EXR_LIMIT;
+      box->background=edge->color; box->border_width=0; box->flags=EXR_BOX_BORDER;
+    }
+  }
+  return EXR_OK;
+}
 static exr_status solid_edge(flow *f,size_t node,const table_edge *edge,float x,float y,float w,float h) {
   exr_box *box;
   if(!edge->width || !(edge->color&255)) return EXR_OK;
+  if(edge->style==3 || edge->style==4) return dashed_edge(f,node,edge,x,y,w,h);
   box=exr_flow_box(f,node,f->layout->page_count-1,x,y,w,h,EXR_BOX_BLOCK);
   if(!box) return EXR_LIMIT;
   box->background=edge->color; box->border_width=0; box->flags=EXR_BOX_BORDER;
@@ -652,7 +677,7 @@ static exr_status split_borders(flow *f,const exr_table_cursor *t,float offset,f
     const table_cell *cell=t->cells+c;const exr_style *style=f->styles+cell->node;
     float begin=t->positions[cell->row]-t->positions[t->row]-offset,end=t->positions[cell->row+cell->rowspan]-t->positions[t->row]-offset;
     float lo=fmaxf(0,begin),hi=fminf(height,end);
-    table_edge edge={style->border_style==1 ? style->border_width : 0,style->border_color,0};
+    table_edge edge={style->border_style==1 ? style->border_width : 0,style->border_color,0,(unsigned)style->border_style};
     float x=t->x+t->columns_at[cell->column],w=t->columns_at[cell->column+cell->colspan]-t->columns_at[cell->column];
     if(hi<=lo) continue;
     if(begin>=-.001f) { status=solid_edge(f,cell->node,&edge,x,f->y+lo,w,fminf(edge.width,hi-lo));if(status!=EXR_OK) return status; }
