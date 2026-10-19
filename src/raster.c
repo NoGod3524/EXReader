@@ -120,7 +120,20 @@ static exr_status draw_box(exr_bitmap *out,const exr_layout *l,const exr_box *b,
     /* Rasterize the union once, including fractional-width corner pixels. */
     float top=ceilf(b->y+bw),bottom=fmaxf(top,floorf(b->y+b->height-bw));
     float right=fmaxf(ceilf(b->x+bw),floorf(b->x+b->width-bw));
-    if(b->flags&(EXR_BOX_DASHED|EXR_BOX_DOTTED)) {
+    if(b->flags&EXR_BOX_DOUBLE) {
+      /* Two parallel lines of a third of the width, like the CSS double style. */
+      float third=bw/3,inner=.0f;
+      rectangle(out,b->x,b->y,b->width,third,b->border_color);
+      rectangle(out,b->x,b->y+2*third,b->width,third,b->border_color);
+      inner=b->y+b->height-bw;
+      rectangle(out,b->x,inner,b->width,third,b->border_color);
+      rectangle(out,b->x,inner+2*third,b->width,third,b->border_color);
+      inner=b->x+b->width-bw;
+      rectangle(out,b->x,b->y,third,b->height,b->border_color);
+      rectangle(out,b->x+2*third,b->y,third,b->height,b->border_color);
+      rectangle(out,inner,b->y,third,b->height,b->border_color);
+      rectangle(out,inner+2*third,b->y,third,b->height,b->border_color);
+    } else if(b->flags&(EXR_BOX_DASHED|EXR_BOX_DOTTED)) {
       float dash=(b->flags&EXR_BOX_DOTTED) ? bw : 3*bw;
       float gap=2*bw;
       dashed_side(out,b->x,b->y,b->width,bw,b->border_color,dash,gap);

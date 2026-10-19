@@ -19,6 +19,14 @@ static exr_layout *layout(const char *name) {
   return l;
 }
 /* The longest run of border-coloured pixels found in any single row. */
+static unsigned border_run_row(const exr_bitmap *image,int row) {
+  unsigned x,count=0;
+  for(x=0;x<image->width;x++) {
+    const unsigned char *p=image->pixels+(size_t)row*image->stride+x*4;
+    if(p[2]>200 && p[0]<60 && p[1]<60) count++;
+  }
+  return count;
+}
 static unsigned border_run(const exr_bitmap *image) {
   unsigned best=0,x; int y;
   for(y=0;y<(int)image->height;y++) {
@@ -44,6 +52,17 @@ int main(int argc,char **argv) {
   /* Solid covers the whole span; dashed and dotted leave gaps, dotted the most. */
   CHECK(solid>=90 && dashed>10 && dashed<solid-10);
   CHECK(dotted>5 && dotted<dashed);
+  { /* A double border is two thin rules with a gap between them: the row in the
+       middle of the border leaves the border colour. */
+    int y,top=-1;
+    l=layout("table-border-double"); OK(exr_render_page_color(l,NULL,0,&image,&error));
+    for(y=0;y+2<(int)image.height;y++) { if(border_run_row(&image,y)>=90) { top=y; break; } }
+    CHECK(top>=0);
+    CHECK(border_run_row(&image,top)>=90);
+    CHECK(border_run_row(&image,top+1)<=4); /* only the two vertical rules */
+    CHECK(border_run_row(&image,top+2)>=90);
+    exr_bitmap_free(&image); exr_layout_free(l);
+  }
   exr_font_free(font);
   printf("%u native table border-style checks passed (solid %u, dashed %u, dotted %u)\n",checks,solid,dashed,dotted);
   return 0;
