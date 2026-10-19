@@ -41,10 +41,38 @@ def save(target, data, source, licence, manifest):
                      'source': source, 'licence': licence})
 
 
+GITHUB_LIST = 'https://api.github.com/repos/mozilla/pdf.js/contents/test/pdfs'
+
+
+def fetch_pdfjs(limit, max_bytes, manifest):
+    """Valid-ish real-world PDFs from the pdf.js test suite (Apache-2.0 repo)."""
+    request = urllib.request.Request(GITHUB_LIST, headers={'User-Agent': 'exreader-corpus'})
+    with urllib.request.urlopen(request, timeout=60) as response:
+        entries = json.loads(response.read())
+    picked = [e for e in entries
+              if e.get('type') == 'file' and e['name'].lower().endswith('.pdf')
+              and 20000 < e.get('size', 0) <= max_bytes]
+    picked.sort(key=lambda e: e['size'])
+    if limit and len(picked) > limit:
+        stride = len(picked) / limit
+        picked = [picked[int(i * stride)] for i in range(limit)]  # spread across sizes
+    for entry in picked:
+        try:
+            blob = fetch(entry['download_url'])
+        except Exception as exc:                   # noqa: BLE001
+            print('  skipped', entry['name'], str(exc)[:80], flush=True)
+            continue
+        save(ROOT / 'pdfjs' / entry['name'], blob, entry['download_url'],
+             'mozilla/pdf.js test suite (Apache-2.0 repo)', manifest)
+    print('  pdf.js files', len(picked), flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--limit', type=int, default=0, help='cap the archive members per source')
     parser.add_argument('--skip-archives', action='store_true')
+    parser.add_argument('--pdfjs', type=int, default=0, help='also fetch N pdf.js samples')
+    parser.add_argument('--pdfjs-max-bytes', type=int, default=400000)
     args = parser.parse_args()
     ROOT.mkdir(parents=True, exist_ok=True)
     manifest = []
@@ -63,6 +91,9 @@ def main():
                     target = ROOT / name / Path(member.name).name
                     save(target, blob, url + '::' + member.name, licence, manifest)
                 print('  extracted', len(members), 'pdf files', flush=True)
+    if args.pdfjs:
+        print('fetching pdf.js samples', flush=True)
+        fetch_pdfjs(args.pdfjs, args.pdfjs_max_bytes, manifest)
     for filename, url, licence in FILES:
         try:
             blob = fetch(url)
