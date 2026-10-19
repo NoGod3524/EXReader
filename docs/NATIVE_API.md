@@ -1,4 +1,4 @@
-# Native C API 3.33.0
+# Native C API 3.33.1
 
 S013–S100 是保留的历史开发步骤标识，原来被写成 0.13–0.100；产品版本现按 [里程碑映射](VERSIONING.md) 归并。步骤编号用于追溯接口变化，不表示独立发行版本。
 
@@ -880,7 +880,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 
 `EXR_ABI_VERSION` / `exr_abi_version()` 提供从 S091 起的 ABI epoch 1。版本字符串仍用 EXR_VERSION / exr_version。ABI 与库版本、SQLite schema 分别管理；同一 epoch 的数组记录不能追加字段改变步长，带 struct_size 的输入维持原始前缀。完整规则见 [SDK_COMPATIBILITY.md](SDK_COMPATIBILITY.md)。
 
-安装包新增可搬迁的 CMake config：`find_package(EXReader 3.33.0 EXACT CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
+安装包新增可搬迁的 CMake config：`find_package(EXReader 3.33.1 EXACT CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
 
 
 ## 通用持久化全文索引（S092）
@@ -1676,7 +1676,7 @@ PDF 混合消费者必须支持图层回调，以便先隔离页面内容，再�
 PDF `/BM` 支持名字、Compatible、按顺序选择第一个已知名字的数组；全部
 未知时使用 Normal，null 条目相当于缺失，保留原值。数组仍全量校验、计费和
 响应取消。页面及 Form、标注 AP 的 `/Group` 当前接受 `/S /Transparency`、
-`/I true/false`、`/K false`。隔离组接受缺省或 DeviceRGB 色彩空间；非隔离
+`/I true/false`、`/K true`。隔离组接受缺省或 DeviceRGB 色彩空间；非隔离
 Form/AP 继承背景色彩空间，显式 CS 返回 `EXR_FORMAT`。Form 的 I 缺省为
 false；页面 I 按介质合成规范忽略，页面总是隔离。Form 入口重置混合模式与
 ca/CA，调用者的透明度和模式在组结束时仅应用一次。挖空组及其他组色彩空间
@@ -1713,4 +1713,15 @@ ca/CA，调用者的透明度和模式在组结束时仅应用一次。挖空组
 alpha 与几何覆盖率分开处理，半覆盖边缘不会二次衰减。挖空同时替换覆盖度：组 alpha 跟随
 最上层元素而不是取并集，因此非隔离组提交时按 11.4.4 移除背景仍保持正确覆盖度。
 工作缓冲复用非隔离组的 24 bytes/pixel 结构，不需要额外整画布分配；隔离组只有在挖空或
-非隔离时才分配该状态。PDF 的 `K false` 映射到该标志，`K true`（缺省）表示不挖空。
+非隔离时才分配该状态。PDF组字典的`K true`映射到该标志；`K false`或缺省表示不挖空。
+
+### 3.33.1：显式RGB组与K语义
+
+`EXR_GROUP_RGB`使隔离子组明确在RGB中合成，覆盖父Gray/CMYK空间；省略色彩标志的
+`exr_canvas_begin_group`继续继承父空间。`exr_canvas_begin_layer`按其隔离RGB契约工作。
+提交时将完成的子组转换回父空间，父组透明度、混合模式和裁剪在该空间执行；提交/丢弃
+均恢复父组。RGB与CMYK标志互斥；从Gray/CMYK切到非隔离RGB返回`EXR_UNSUPPORTED`。
+Form、page及标注外观的显式DeviceRGB声明均转发到sink；旧begin_layer回调可处理隔离RGB。
+
+PDF透明组字典K=true才启用挖空，false/null/缺省为普通组，非布尔值拒绝。此前实现及生成器
+同时反写的错误已修复，独立Decimal期望未改。ABI1、schema6及304个导出保持。

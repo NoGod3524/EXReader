@@ -350,8 +350,34 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
     if(!exr_vector_work(work,right-left)) return exr_fail(e,EXR_LIMIT,"Layer composite work budget exceeded");
     for(x=left;x<right;x++) {
       size_t tx=x+(size_t)origin_x;
-      const unsigned char *p=source->pixels+y*source->stride+x*4;unsigned a=(unsigned)floor(p[3]*opacity+.5),coverage=clip ? clip->pixels[ty*clip->stride+tx] : 255;uint32_t color;
+      unsigned char gray_pixel[4];const unsigned char *p=source->pixels+y*source->stride+x*4;
+      unsigned a=(unsigned)floor(p[3]*opacity+.5),coverage=clip ? clip->pixels[ty*clip->stride+tx] : 255;uint32_t color;
       if(!coverage) continue;
+      if(target_state && target_state->cmyk_pixels) {
+        /* An isolated RGB child converts only its finished colour, preserving
+           the parent's inks and blending the group opacity in the parent space. */
+        double rgb[3],inks[4],out[5],alpha=p[3]/255.*opacity,covered=coverage/255.;unsigned k;
+        if(!alpha) continue;
+        if(!exr_vector_work(work,cost+96)) return exr_fail(e,EXR_LIMIT,"RGB to CMYK group commit exceeds work budget");
+        for(k=0;k<3;k++) rgb[k]=p[k]/255.;
+        exr_device_cmyk_from_rgb(target_state->cmyk_profile,rgb,inks);
+        if(target_state->knockout) {
+          double base[5],painted[5],current[5];
+          read_cmyk_backdrop(target_state,tx,ty,base);read_cmyk(target,target_state,tx,ty,current);
+          over_cmyk(base,inks,alpha,mode,painted);
+          for(k=0;k<5;k++) out[k]=covered*painted[k]+(1-covered)*current[k];
+          write_cmyk(target,target_state,tx,ty,out,alpha*covered);
+          target_state->cmyk_pixels[cmyk_index(target,tx,ty)*6+5]=(float)fmax(0,fmin(1,out[4]));
+        } else {
+          double back[5];read_cmyk(target,target_state,tx,ty,back);
+          over_cmyk(back,inks,alpha*covered,mode,out);write_cmyk(target,target_state,tx,ty,out,alpha*covered);
+        }
+        continue;
+      }
+      if(target_state && target_state->gray) {
+        color=exr_gray_color(((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|p[3]);
+        gray_pixel[0]=gray_pixel[1]=gray_pixel[2]=(unsigned char)(color>>24);gray_pixel[3]=p[3];p=gray_pixel;
+      }
       if(target_state && target_state->knockout) {
         /* A group nested in a knockout group is one element: it composites with the
            knockout group's initial backdrop and replaces the accumulated result. */

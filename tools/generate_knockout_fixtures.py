@@ -129,7 +129,7 @@ def form(pdf, isolated, knockout, elements):
         else:
             raise ValueError(kind)
     body = '\n'.join(ops).encode()
-    flags = '/I %s /K %s' % ('true' if isolated else 'false', 'false' if knockout else 'true')
+    flags = '/I %s /K %s' % ('true' if isolated else 'false', 'true' if knockout else 'false')
     resources = '/ExtGState << %s >>' % ' '.join(gs)
     if xobjects:
         resources += ' /XObject << %s >>' % ' '.join(xobjects)

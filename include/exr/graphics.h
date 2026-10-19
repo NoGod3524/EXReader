@@ -72,6 +72,9 @@ EXR_API exr_status exr_canvas_blend(exr_canvas *canvas,exr_blend_mode mode,exr_e
    RGB paints and images are converted before blending. Compound fill+stroke
    paths and nested groups inherit the CMYK working space. */
 #define EXR_GROUP_CMYK 0x200u
+/* Explicit DeviceRGB blend space, overriding an inherited Gray/CMYK space.
+   A change from Gray/CMYK requires ISOLATED. Mutually exclusive with CMYK. */
+#define EXR_GROUP_RGB 0x400u
 /* flags=0 inherits the backdrop; ISOLATED starts transparent. end_layer closes
    either kind. Non-isolated and knockout groups maintain an independent
    source-alpha buffer. */
