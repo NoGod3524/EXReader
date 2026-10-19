@@ -1,0 +1,1220 @@
+{
+  "scenes": [
+    {
+      "file": "mask-function-alpha-sampled-64.pdf",
+      "sha256": "a1e12a2925c6700c88d53550a858884d5c775babe4b2e09a186777fa58b2cebc",
+      "premultiplied": [
+        0,
+        0,
+        191,
+        191
+      ],
+      "white": [
+        64,
+        64,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-sampled-128.pdf",
+      "sha256": "21536c7e9cac41cb5b932394c16b8ee1fa8ebb26fbea551e2e61caad6e5d807e",
+      "premultiplied": [
+        0,
+        0,
+        127,
+        127
+      ],
+      "white": [
+        128,
+        128,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-sampled-192.pdf",
+      "sha256": "72cb45046ca696035de91014852fc124bbfb6e6436c51d2dcf80ba6fbb4fca95",
+      "premultiplied": [
+        0,
+        0,
+        63,
+        63
+      ],
+      "white": [
+        192,
+        192,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-exponential-64.pdf",
+      "sha256": "9d6e6f6e7dfbe934dfbc7f17af00bb246c7458f953d80e3628ec5fdd067801b5",
+      "premultiplied": [
+        0,
+        0,
+        191,
+        191
+      ],
+      "white": [
+        64,
+        64,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-exponential-128.pdf",
+      "sha256": "64fdb949528693b75e22e234e0cd4e2cb29c0a580cc718d530e23499e998d18c",
+      "premultiplied": [
+        0,
+        0,
+        127,
+        127
+      ],
+      "white": [
+        128,
+        128,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-exponential-192.pdf",
+      "sha256": "b579d691326acd0af06cf9d9a6a5d408c53308b82db0fa1ba95db4d03158a54b",
+      "premultiplied": [
+        0,
+        0,
+        63,
+        63
+      ],
+      "white": [
+        192,
+        192,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-stitching-64.pdf",
+      "sha256": "5d296a60ebd27f7e3696f3b90629d1ef44174d5f2c8df0b4ee6722e4fab9f0a5",
+      "premultiplied": [
+        0,
+        0,
+        191,
+        191
+      ],
+      "white": [
+        64,
+        64,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-stitching-128.pdf",
+      "sha256": "fd8c32717c0d4903c969f96c1724b5bb4670524532bd2deb17735d900efe9648",
+      "premultiplied": [
+        0,
+        0,
+        127,
+        127
+      ],
+      "white": [
+        128,
+        128,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-stitching-192.pdf",
+      "sha256": "8c8c5652485f0ba0bec42a5b489b0668427c755a76047b01407e98b423f9cccd",
+      "premultiplied": [
+        0,
+        0,
+        63,
+        63
+      ],
+      "white": [
+        192,
+        192,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-calculator-64.pdf",
+      "sha256": "69923bb7fa375dcca0783cb0253fc1228516fcc90b7c991abc8e372f098efc9c",
+      "premultiplied": [
+        0,
+        0,
+        191,
+        191
+      ],
+      "white": [
+        64,
+        64,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-calculator-128.pdf",
+      "sha256": "d92afbd2de793c040c4dc571ee554313a0e33ace4b85d8efbeff110653d4f256",
+      "premultiplied": [
+        0,
+        0,
+        127,
+        127
+      ],
+      "white": [
+        128,
+        128,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-calculator-192.pdf",
+      "sha256": "63ebe4ad845abb24aa4fb4ab4ca7644274eb33ba140ddba19e03435099c62c09",
+      "premultiplied": [
+        0,
+        0,
+        63,
+        63
+      ],
+      "white": [
+        192,
+        192,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-identity-64.pdf",
+      "sha256": "05c6cb26fe72cda3320e95cd78cfb524a80de43ec3a147d0ef37ea5e990a3180",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-identity-128.pdf",
+      "sha256": "f0466115e8c7ef0fe61d20476668306576308ac0eda8ad746672233b149ec6ee",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-identity-192.pdf",
+      "sha256": "8c1067cc273095f87fd7f371f5401a2cedf308377fc1267451050930e202b4d3",
+      "premultiplied": [
+        0,
+        0,
+        192,
+        192
+      ],
+      "white": [
+        63,
+        63,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-domain-64.pdf",
+      "sha256": "0ceeeb2f53cbf7182413599f792667d4ff3e00ff9714b8885b9fe62f3a61124b",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-domain-128.pdf",
+      "sha256": "a0d3bc2c69d5699ae928054c434a5c319fd001cac8876092149d559eb3f05936",
+      "premultiplied": [
+        0,
+        0,
+        102,
+        102
+      ],
+      "white": [
+        153,
+        153,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-domain-192.pdf",
+      "sha256": "12cbee44b6e97b92a1c6dd7a557ca39c46a42fc639f1e2083a26fcf7f0d37fad",
+      "premultiplied": [
+        0,
+        0,
+        102,
+        102
+      ],
+      "white": [
+        153,
+        153,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-square-64.pdf",
+      "sha256": "bcf0ccc93da5cb2ac82c2fb87f6943604b1f7bedc77e5fefeae67289ed61c094",
+      "premultiplied": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "white": [
+        239,
+        239,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-square-128.pdf",
+      "sha256": "bbe17834dc1c3bbef68e08011b97fd2d6ce6a8d3d99ec9601bcae07e45e69989",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-square-192.pdf",
+      "sha256": "b8828876e500260a17f824d5b2b3e4ba781117f17f9c227f9b5949bdf2417d2a",
+      "premultiplied": [
+        0,
+        0,
+        145,
+        145
+      ],
+      "white": [
+        110,
+        110,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-sampled-64.pdf",
+      "sha256": "b2fb5e9e4fc737479db4e87afc51f55103b80b07c3bef71006d3e025f174302d",
+      "premultiplied": [
+        0,
+        0,
+        191,
+        191
+      ],
+      "white": [
+        64,
+        64,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-sampled-128.pdf",
+      "sha256": "a256ba54974b278a337b39b6d8d0834eb3736aa44acf80738386ed3a610a3d97",
+      "premultiplied": [
+        0,
+        0,
+        127,
+        127
+      ],
+      "white": [
+        128,
+        128,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-sampled-192.pdf",
+      "sha256": "e6d55764caaf85d0f337f1210e877b9a22357579d7ac0f060ce524911eada77b",
+      "premultiplied": [
+        0,
+        0,
+        63,
+        63
+      ],
+      "white": [
+        192,
+        192,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-exponential-64.pdf",
+      "sha256": "72c2b07a1e0c9bd4f16b4f8b011e0b1a7c39b619139c72d965eab51adc08d7a4",
+      "premultiplied": [
+        0,
+        0,
+        191,
+        191
+      ],
+      "white": [
+        64,
+        64,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-exponential-128.pdf",
+      "sha256": "a2df1affbc72924f77c8f7a44a15d1708416c7d79eb72ca557520c00e51f3e3a",
+      "premultiplied": [
+        0,
+        0,
+        127,
+        127
+      ],
+      "white": [
+        128,
+        128,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-exponential-192.pdf",
+      "sha256": "4cb9a1c184b1aeea59e0c964b5dbd59a16563f24734dfdb9e94ec63fd95a00bf",
+      "premultiplied": [
+        0,
+        0,
+        63,
+        63
+      ],
+      "white": [
+        192,
+        192,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-stitching-64.pdf",
+      "sha256": "9bda12be61c0ab1edee0f8958011fe919ca110ca2a25dab42ad19d28d573b6c7",
+      "premultiplied": [
+        0,
+        0,
+        191,
+        191
+      ],
+      "white": [
+        64,
+        64,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-stitching-128.pdf",
+      "sha256": "23a6539ecb8632771645ac4107fadff2de4e0497537f90a5778cb0d7d96f429c",
+      "premultiplied": [
+        0,
+        0,
+        127,
+        127
+      ],
+      "white": [
+        128,
+        128,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-stitching-192.pdf",
+      "sha256": "1c3ee3b4755557976a58a1463f9f4212f677b47e4acbbb8404344951cc1d891f",
+      "premultiplied": [
+        0,
+        0,
+        63,
+        63
+      ],
+      "white": [
+        192,
+        192,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-calculator-64.pdf",
+      "sha256": "99408a3d241157be0be8952caf55848f8a92be151fbcc3c2839427cb7d9eb194",
+      "premultiplied": [
+        0,
+        0,
+        191,
+        191
+      ],
+      "white": [
+        64,
+        64,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-calculator-128.pdf",
+      "sha256": "628d7d236db6066d7ccdc6868b6da6ebac098a1d2a7c9b9a5572bc9cac10c2f4",
+      "premultiplied": [
+        0,
+        0,
+        127,
+        127
+      ],
+      "white": [
+        128,
+        128,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-calculator-192.pdf",
+      "sha256": "d54da80fbae81bded173d34327fd568f3ab4503d308cdcd18756fe8e97eecff9",
+      "premultiplied": [
+        0,
+        0,
+        63,
+        63
+      ],
+      "white": [
+        192,
+        192,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-identity-64.pdf",
+      "sha256": "d1de793b7ae2ebf582673eca9c90e3cff0cc7facd047ab8cf2a2e992f21a8634",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-identity-128.pdf",
+      "sha256": "26b4838ed41a7336b939f6cc21bf0cd38f623ab75e882e44409639b8e35c4073",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-identity-192.pdf",
+      "sha256": "29e4009981138de6646e45a57999c50353ce32dac649419c88f0c05fe41c3a6a",
+      "premultiplied": [
+        0,
+        0,
+        192,
+        192
+      ],
+      "white": [
+        63,
+        63,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-domain-64.pdf",
+      "sha256": "a2cc635abeb411c1f3872ad815ffe07bb30a9b3b63c45d08735fc5cc94c18968",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-domain-128.pdf",
+      "sha256": "6cd338bf404373b293b5356da4c08db87a04efe5d6c39408492c551ba3e8c963",
+      "premultiplied": [
+        0,
+        0,
+        102,
+        102
+      ],
+      "white": [
+        153,
+        153,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-domain-192.pdf",
+      "sha256": "83a426070c23ae5af877026b677f9a6fcf431312e50e1496d6f8a5251b15c52b",
+      "premultiplied": [
+        0,
+        0,
+        102,
+        102
+      ],
+      "white": [
+        153,
+        153,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-square-64.pdf",
+      "sha256": "8bd5ab9f9136d6f4f0a16832e5a7f26d40643ae0b1e55eb1c85d0bacc6676f7e",
+      "premultiplied": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "white": [
+        239,
+        239,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-square-128.pdf",
+      "sha256": "750e32e2d978d314952d134b928e9625053bb096341035d060a6dfe135307566",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-square-192.pdf",
+      "sha256": "c6303984717c1935b66e74e10c0f5c8cfe98c7ebb0aa435bc1228d30a271550f",
+      "premultiplied": [
+        0,
+        0,
+        145,
+        145
+      ],
+      "white": [
+        110,
+        110,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-none-64.pdf",
+      "sha256": "e70f2b5b38da2c39785dd8a98b03c0eb09a4e5068903e68d4397a337dc906983",
+      "probe_type": "image-mask-none",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-none-128.pdf",
+      "sha256": "4a6f74606d82316551945e39528239541405c6432d4cbc2b9b86da030c7abe04",
+      "probe_type": "image-mask-none",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-none-192.pdf",
+      "sha256": "349ceca4ce4d4fb207304bab622195350420f0acca262593382a6d58ab093809",
+      "probe_type": "image-mask-none",
+      "premultiplied": [
+        0,
+        0,
+        192,
+        192
+      ],
+      "white": [
+        63,
+        63,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-soft-64.pdf",
+      "sha256": "b98668c3c2b7c64ab608ba1292514d112b18476b810c993909897b3d878d7cf8",
+      "probe_type": "image-mask-soft",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-soft-128.pdf",
+      "sha256": "c6717c87d8b66c53a69af173a493fa822707906efd0973e6e1b7c9cc7bb464d3",
+      "probe_type": "image-mask-soft",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-soft-192.pdf",
+      "sha256": "45cc9db2aee1fa16b1ee2e9179bd34ce6416b6392133286cf64cb53ebc161301",
+      "probe_type": "image-mask-soft",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-explicit-64.pdf",
+      "sha256": "812833edd3dd0d01c300ccd93f8bc3bf33a7ffa9633f456ad57af97f7a275cfd",
+      "probe_type": "image-mask-explicit",
+      "premultiplied": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-explicit-128.pdf",
+      "sha256": "ae924149889b1662ed94585d5c42d23f814802b851c99aa3e2c7eb86f390dd38",
+      "probe_type": "image-mask-explicit",
+      "premultiplied": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-explicit-192.pdf",
+      "sha256": "9b5ff7fbae3069ce009ec3d57b8c3a6e446203c50fe6ef9abdac33127d5e1a5a",
+      "probe_type": "image-mask-explicit",
+      "premultiplied": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-key-visible-64.pdf",
+      "sha256": "8e635ad08658821d58c3b7dc36b1c2bb1ec9a338203dc740b67b3cfb99653d7f",
+      "probe_type": "image-mask-key-visible",
+      "premultiplied": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-key-visible-128.pdf",
+      "sha256": "7f5b6d23309d771bb6d98ea8578a0a658cc05285640518c8f00696ba4422ff86",
+      "probe_type": "image-mask-key-visible",
+      "premultiplied": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-key-visible-192.pdf",
+      "sha256": "78049a740a1bfc99fb84e1650ebd8d8711137033038910d8b1420f56b7a07021",
+      "probe_type": "image-mask-key-visible",
+      "premultiplied": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-key-hidden-64.pdf",
+      "sha256": "d27253edcbf0b72ec2ceb258cb9d479f8e9637650c7ff47545f8981c1d152764",
+      "probe_type": "image-mask-key-hidden",
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-key-hidden-128.pdf",
+      "sha256": "15f8424359e612c92a2a8f5314abb002600409d105d0efa0043caf52ba3784a2",
+      "probe_type": "image-mask-key-hidden",
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-key-hidden-192.pdf",
+      "sha256": "f04234af2c0b8d9f4482f1b563d5835d003f6905578843034efa60aa1cb13d32",
+      "probe_type": "image-mask-key-hidden",
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-both-64.pdf",
+      "sha256": "ac81e38498d182a652ebb95fffd6eb1d844bf58b40707bb3226b1f29c15cb4e1",
+      "probe_type": "image-mask-both",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-both-128.pdf",
+      "sha256": "7ed319c7aca36af819115231053f46398f29fbddded349ae3eef909b2f353493",
+      "probe_type": "image-mask-both",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-image-both-192.pdf",
+      "sha256": "15b455117a0368a46c5332b08074cca9538e4e182bbb46674e519df2d3654000",
+      "probe_type": "image-mask-both",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-rotated-inside.pdf",
+      "sha256": "ab43ca4d2347d9b148f58abfd79b61571d83ed6866785f4269cc90cb983c51bb",
+      "probe_type": "mask-geometry-rotated-inside",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-rotated-outside.pdf",
+      "sha256": "e951f45210b0e40b86a84ea86259cd8fed02fa684dd9142baf007e7fb23ed534",
+      "probe_type": "mask-geometry-rotated-outside",
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-outside-zero.pdf",
+      "sha256": "bfc984b02c0398afe279a3374107d76b23952e1537a4b203e656acd3f93c5cec",
+      "probe_type": "mask-geometry-outside-zero",
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-outside-inverse.pdf",
+      "sha256": "02c4c91d2caca602b4ec4cf82d25bcf61ae91b746ac450a35f9bc042a691ec58",
+      "probe_type": "mask-geometry-outside-inverse",
+      "premultiplied": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-knockout.pdf",
+      "sha256": "541f9f08fe44fa279f7a43e4c3092491a0991b6610a7413f836e065470614cc2",
+      "probe_type": "mask-geometry-knockout",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-alpha-nonisolated.pdf",
+      "sha256": "52d471883f00dd022d5105cf4657309c04990c8390a53e2f65a144189f5fa2c0",
+      "probe_type": "mask-geometry-nonisolated",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-rotated-inside.pdf",
+      "sha256": "7da73fb2d5fb10f158874ff254dfe9b4a741765118cc01c629f1a2cf71c8b061",
+      "probe_type": "mask-geometry-rotated-inside",
+      "premultiplied": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "white": [
+        127,
+        127,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-rotated-outside.pdf",
+      "sha256": "339aa98df995a7f9fab9ef50273ef3c09ab716dd05ccf2846afcd6277744d440",
+      "probe_type": "mask-geometry-rotated-outside",
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-outside-zero.pdf",
+      "sha256": "56ea3380364053fac2a4ecb467bdfa287819a1c81d7eedafcba83dd174d912c6",
+      "probe_type": "mask-geometry-outside-zero",
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-outside-inverse.pdf",
+      "sha256": "ac4c12f728f53e18b545b3ca5bcd56a3abb808ab84d635048ce6f07db0c05010",
+      "probe_type": "mask-geometry-outside-inverse",
+      "premultiplied": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-knockout.pdf",
+      "sha256": "c547e61f90fa4a293da5811b3fc7e03d9864384b937d3a305aec033aa34f93c4",
+      "probe_type": "mask-geometry-knockout",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "mask-function-luminosity-nonisolated.pdf",
+      "sha256": "a1ae4c4017e03450a924bf394a2f60873b8c316d11c63d0aaf5532f4816a890f",
+      "probe_type": "mask-geometry-nonisolated",
+      "premultiplied": [
+        0,
+        0,
+        38,
+        38
+      ],
+      "white": [
+        217,
+        217,
+        255,
+        255
+      ]
+    }
+  ],
+  "rejected": [
+    {
+      "file": "mask-function-bad-name.pdf",
+      "sha256": "68c99a9d978810a61440200e1183089a9087e3caff3a1b355844ad9de61d1135"
+    },
+    {
+      "file": "mask-function-bad-scalar.pdf",
+      "sha256": "55a1f9d0a1a7778fa444782085ea3fbf887b46f59520399a019ef893eb432732"
+    },
+    {
+      "file": "mask-function-bad-outputs.pdf",
+      "sha256": "8c9ed433d2fda1cdd70806bbd5f67e64a5f880f2c15f93db599f939304fb8815"
+    },
+    {
+      "file": "mask-function-bad-domain.pdf",
+      "sha256": "7dbf7c42175b7a6b40ad233125d582459920d6c71bf10707d30d6f455fa3cbed"
+    },
+    {
+      "file": "mask-function-bad-cycle.pdf",
+      "sha256": "0716d5cf827c7164824f59d4198028b30799b2022fa8769c555d68e220454681"
+    },
+    {
+      "file": "mask-function-bad-calculator.pdf",
+      "sha256": "c49034b5c89cc4a7d45f924613139a28d90854fee215f5294fd22d53265f1227"
+    },
+    {
+      "file": "mask-function-bad-samples.pdf",
+      "sha256": "784dbcc1b3335760e8c2836feb0dbbcd681bbdf8fcc917272a9923cf7c2cf91c"
+    },
+    {
+      "file": "mask-function-bad-missing-type.pdf",
+      "sha256": "336c95a23508414531d6a66392834a89addc6585402d5464e32de731fe8989be"
+    }
+  ]
+}

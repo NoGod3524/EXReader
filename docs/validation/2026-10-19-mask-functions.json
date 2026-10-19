@@ -1,0 +1,48 @@
+{
+  "version": "3.35.0",
+  "abi": 1,
+  "schema": 6,
+  "scenes": 72,
+  "rejected_inputs": 8,
+  "tests": {
+    "gcc": {
+      "count": 140,
+      "failures": 0,
+      "mask_output": "821 mask function checks; maximum analytic difference 0/255\n",
+      "raster_output": "179 native PDF raster checks passed\n",
+      "dll_sha256": "f997816b6941c52433e5cf0b19f0b9f5719d61400507ef988cc195b70240442c"
+    },
+    "msvc": {
+      "count": 140,
+      "failures": 0,
+      "mask_output": "821 mask function checks; maximum analytic difference 0/255\n",
+      "raster_output": "179 native PDF raster checks passed\n",
+      "dll_sha256": "60731854725b38a8a413d2683ea1374267c40be642512e286f20ddbe0c1798a3"
+    }
+  },
+  "icc_off": {
+    "count": 8,
+    "failures": 0
+  },
+  "installed_components": {
+    "count": 4,
+    "failures": 0
+  },
+  "cpp_headers": 13,
+  "cpp_exact_runtime": "3.35.0 ABI 1",
+  "abi_measurements_unchanged": 703,
+  "exports_each": 305,
+  "layers": {
+    "objects": 99,
+    "symbols": 1035,
+    "includes": 899,
+    "inverse": 0
+  },
+  "reference": "2026-10-19-mask-functions-reference.json",
+  "remaining": [
+    "AIS",
+    "image shape/opacity",
+    "external mask semantic differences",
+    "full WP1/WP2 matrix"
+  ]
+}

@@ -169,8 +169,10 @@ exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *pre
   if(v && v->kind!=EXR_PDF_NULL && !name_is(file,id,"DeviceRGB") && !name_is(file,id,"DeviceGray") &&
      !name_is(file,id,"G") && !name_is(file,id,"DeviceCMYK") && !name_is(file,id,"CMYK"))
     return exr_fail(e,EXR_UNSUPPORTED,"PDF group blending space must be a device space");
+  /* Context 2 is a soft-mask root, which has no parent to inherit CS from
+     (ISO 32000-1 table 147). Only actual pages force isolation. */
   if(!page && !isolated && v && v->kind!=EXR_PDF_NULL) return exr_fail(e,EXR_FORMAT,"Only isolated PDF groups may specify a blending space");
-  *present=(page || isolated ? EXR_PDF_GROUP_ISOLATED : EXR_PDF_GROUP_NONISOLATED) | (knockout ? EXR_PDF_GROUP_KNOCKOUT : 0);
+  *present=(page==EXR_PDF_GROUP_PAGE_CONTEXT || isolated ? EXR_PDF_GROUP_ISOLATED : EXR_PDF_GROUP_NONISOLATED) | (knockout ? EXR_PDF_GROUP_KNOCKOUT : 0);
   if(v && v->kind!=EXR_PDF_NULL && (name_is(file,id,"DeviceGray") || name_is(file,id,"G"))) *present|=EXR_PDF_GROUP_GRAY;
   if(v && v->kind!=EXR_PDF_NULL && (name_is(file,id,"DeviceCMYK") || name_is(file,id,"CMYK"))) *present|=EXR_PDF_GROUP_CMYK;
   if(v && v->kind!=EXR_PDF_NULL && name_is(file,id,"DeviceRGB")) *present|=EXR_PDF_GROUP_RGB;

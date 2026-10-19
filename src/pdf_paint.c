@@ -119,12 +119,24 @@ static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_erro
 static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *e) {
   pdf_painter *r=context; exr_vector_texture *image=NULL; double matrix[6]; const double flip[6]={1,0,0,-1,0,1};
   exr_bitmap inks={0};int native=r->sink.image_cmyk && (!r->sink.image_space || r->sink.image_space(r->sink.base.context)==EXR_GROUP_CMYK);
+  exr_pdf_paint_state image_paint=*paint;uint32_t own_mask;const exr_pdf_value *v;
   exr_status status; paint_mask mask={0}; if(!r->sink.base.image && !native) return EXR_OK;
   if(paint->fill.space==EXR_PDF_DEVICE_CMYK && !r->cmyk_profile) { status=exr_icc_default_cmyk(r->control,&r->cmyk_profile,e);if(status!=EXR_OK) return status; }
   status=exr_pdf_image_load_inks(file,id,resource_file,resources,rgba(r,&paint->fill,paint->intent),paint->intent,&image,native ? &inks : NULL,r->work,r->control,e);
   multiply(paint->matrix,flip,matrix);
   if(status==EXR_OK) status=blend_state(r,paint->blend,e);
-  if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
+  /* ISO 32000-1 11.6.4.3: either image mask overrides the graphics-state mask. */
+  if(status==EXR_OK) {
+    status=exr_pdf_resolve(file,exr_pdf_get(file,id,"SMask"),&own_mask,e);
+    v=exr_pdf_value_at(file,own_mask);
+    if(status==EXR_OK && v && v->kind==EXR_PDF_STREAM) image_paint.smask=EXR_PDF_NONE;
+    else if(status==EXR_OK) {
+      status=exr_pdf_resolve(file,exr_pdf_get(file,id,"Mask"),&own_mask,e);
+      v=exr_pdf_value_at(file,own_mask);
+      if(status==EXR_OK && v && (v->kind==EXR_PDF_STREAM || v->kind==EXR_PDF_ARRAY)) image_paint.smask=EXR_PDF_NONE;
+    }
+  }
+  if(status==EXR_OK) status=mask_begin(r,&image_paint,&mask,e);
   if(status==EXR_OK && inks.pixels) status=r->sink.image_cmyk(r->sink.base.context,image,&inks,matrix,paint->fill.alpha,e);
   else if(status==EXR_OK && r->sink.base.image) status=r->sink.base.image(r->sink.base.context,image,matrix,paint->fill.alpha,e);
   else if(status==EXR_OK) status=exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks RGB image support");

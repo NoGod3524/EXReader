@@ -104,9 +104,27 @@ static void page_cases(const char *dir) {
   CHECK(exr_pdf_raster_page(file,&pages[0],100000,NULL,NULL,&b,&error)==EXR_LIMIT && !b.pixels);
   free(pages); exr_pdf_close(file); free(data);
 }
+static void mask_controls(const char *dir) {
+  exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;size_t count,size,work=0;uint32_t mask,states,id;
+  unsigned char *data=load(dir,"pdf-blend/mask-function-alpha-calculator-128.pdf",&size),*pixels=NULL;
+  exr_control control={0};double matrix[6]={1,0,0,1,0,0};
+  OK(exr_pdf_open(data,size,&file,&error));OK(exr_pdf_pages(file,&pages,&count,&error));CHECK(count==1);
+  OK(exr_pdf_resolve(file,exr_pdf_get(file,pages[0].resources,"ExtGState"),&states,&error));
+  OK(exr_pdf_resolve(file,exr_pdf_get(file,states,"M"),&id,&error));
+  OK(exr_pdf_resolve(file,exr_pdf_get(file,id,"SMask"),&mask,&error));
+  OK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&work,NULL,&error));CHECK(work>256);free(pixels);pixels=NULL;
+  { size_t used=256u*1024u*1024u-work+1;
+    CHECK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&used,NULL,&error)==EXR_LIMIT && !pixels);
+    CHECK(strstr(error.message,"soft mask samples exceed work budget"));
+  }
+  work=256u*1024u*1024u;CHECK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&work,NULL,&error)==EXR_LIMIT && !pixels);
+  control.cancelled=cancelled;work=0;
+  CHECK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&work,&control,&error)==EXR_CANCELLED && !pixels);
+  free(pages);exr_pdf_close(file);free(data);
+}
 int main(int argc,char **argv) {
   unsigned char *data; size_t size; exr_pdf_file *file=NULL; uint32_t resources; exr_bitmap b; exr_pdf_raster_config config={0}; exr_control control={0};
-  CHECK(argc==2); page_cases(argv[1]); data=load(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
+  CHECK(argc==2); page_cases(argv[1]);mask_controls(argv[1]); data=load(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
   text_cases(file,resources); clip_cases(file,resources); fallback_cases(argv[1],file,resources); drawing_inspection(file,resources);
   config.width=config.height=12; config.channels=4; config.background=0;
   { const char *s="1 0 0 rg 1 1 2 2 re f"; OK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)); CHECK(b.pixels[13*4]==255 && b.pixels[13*4+3]==255 && !b.pixels[3]); free(b.pixels); }

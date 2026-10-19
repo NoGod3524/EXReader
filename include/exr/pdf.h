@@ -2,7 +2,7 @@
 #ifndef EXR_PDF_H
 #define EXR_PDF_H
 #include "document.h"
-#define EXR_PDF_VERSION "3.34.2"
+#define EXR_PDF_VERSION "3.35.0"
 #ifdef __cplusplus
 extern "C" {
 #endif

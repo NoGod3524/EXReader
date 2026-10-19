@@ -1,9 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 /* ISO 32000-1 11.6.5.2 graphics-state soft masks: render the G form into a
    page-sized 8-bit mask. Alpha uses the group alpha; Luminosity composites the
-   group over BC and takes the 0.3/0.59/0.11 luminance. TR supports Identity. */
+   group over BC and takes the 0.3/0.59/0.11 luminance. TR uses the bounded PDF function evaluator. */
 #include "pdf_raster_internal.h"
 #include "icc_internal.h"
+#include "pdf_function_internal.h"
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -33,46 +34,30 @@ static void multiply(const double a[6], const double b[6], double out[6]) {
   out[4] = a[0] * b[4] + a[2] * b[5] + a[4]; out[5] = a[1] * b[4] + a[3] * b[5] + a[5];
 }
 
-/* Exponential transfer function (ISO 32000-1 7.10.2.2): C0 + x^N (C1 - C0). */
-typedef struct { int present; double c0, c1, n; } mask_transfer;
-static double transfer(double x,const mask_transfer *state) {
-  if (!state->present) return x;
-  return state->c0 + pow(fmax(0, fmin(1, x)), state->n) * (state->c1 - state->c0);
-}
-static exr_status load_transfer(exr_pdf_file *file, uint32_t mask, mask_transfer *state,exr_error *e) {
-  uint32_t id, at; const exr_pdf_value *v, *array; size_t i;
-  state->present = 0; state->c0 = 0; state->c1 = 1; state->n = 1;
-  if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "TR"), &id, e) != EXR_OK) return e->code;
-  if (id == EXR_PDF_NONE || exr_pdf_value_at(file, id)->kind == EXR_PDF_NULL) return EXR_OK;
-  if (exr_pdf_value_at(file, id)->kind != EXR_PDF_DICT) return EXR_OK;  /* /Identity */
-  state->present = 1;
-  for (i = 0; i < 2; i++) {
-    const char *key = i ? "C1" : "C0";
-    double *target = i ? &state->c1 : &state->c0;
-    if (exr_pdf_resolve(file, exr_pdf_get(file, id, key), &at, e) != EXR_OK) return e->code;
-    v = exr_pdf_value_at(file, at);
-    if (!v || v->kind == EXR_PDF_NULL) continue;
-    if (v->kind != EXR_PDF_ARRAY) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer function");
-    array = v;
-    { uint32_t first = array->first; if (first == EXR_PDF_NONE) continue; if (exr_pdf_resolve(file, first, &at, e) != EXR_OK || !number(file, at, target)) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer function"); }
+static exr_status load_transfer(exr_pdf_file *file,uint32_t mask,const exr_control *control,
+                                exr_pdf_function **out,exr_error *e) {
+  uint32_t id;const exr_pdf_value *v;size_t size;const unsigned char *name;
+  *out=NULL;
+  if(exr_pdf_resolve(file,exr_pdf_get(file,mask,"TR"),&id,e)!=EXR_OK) return e->code;
+  v=exr_pdf_value_at(file,id);
+  if(!v || v->kind==EXR_PDF_NULL) return EXR_OK;
+  if(v->kind==EXR_PDF_NAME) {
+    name=exr_pdf_bytes(file,id,&size);
+    if(size==8 && !memcmp(name,"Identity",8)) return EXR_OK;
+    return exr_fail(e,EXR_FORMAT,"Invalid PDF soft mask transfer name");
   }
-  if (exr_pdf_resolve(file, exr_pdf_get(file, id, "N"), &at, e) != EXR_OK) return e->code;
-  v = exr_pdf_value_at(file, at);
-  if (v && v->kind != EXR_PDF_NULL && !number(file, at, &state->n)) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer function");
-  if (state->n <= 0) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer exponent");
-  return EXR_OK;
+  return exr_pdf_function_open(file,id,1,control,out,e);
 }
 static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set_matrix[6],
                                    unsigned width, unsigned height, unsigned char **out,
                                    size_t *work, const exr_control *control, exr_error *e) {
   uint32_t form, id, resources = EXR_PDF_NONE; const unsigned char *data = NULL; size_t size = 0, i,local_work=0;
-  double matrix[6], local[6], box[4], bc[4] = {0, 0, 0, 0}, clip[4]; unsigned char *pixels = NULL, *result = NULL;
+  double matrix[6], local[6], box[4], bc[4] = {0, 0, 0, 0}; unsigned char *pixels = NULL, *result = NULL;
   const exr_pdf_value *v; int kind = 0, count = 0; exr_bitmap bitmap = {0}; exr_pdf_raster_config config = {0}; exr_status status;
-  mask_transfer state;
+  exr_pdf_function *function=NULL;size_t sample_cost;int group;
   *out = NULL;
   if(!work) work=&local_work;
   status = exr_pdf_soft_mask_kind(file, mask, &kind, e); if (status != EXR_OK) return status;
-  status = load_transfer(file, mask, &state,e); if (status != EXR_OK) return status;
   if (exr_pdf_resolve(file, mask, &mask, e) != EXR_OK) return e->code;
   if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "G"), &form, e) != EXR_OK) return e->code;
   if (exr_pdf_stream_data(file, form, &data, &size, e) != EXR_OK) return e->code;
@@ -84,20 +69,12 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
   multiply(set_matrix, local, matrix);
   if (exr_pdf_resolve(file, exr_pdf_get(file, form, "Resources"), &resources, e) != EXR_OK) return e->code;
   if (resources == EXR_PDF_NONE || exr_pdf_value_at(file, resources)->kind == EXR_PDF_NULL) resources = EXR_PDF_NONE;
-  /* Device-space clip from the transformed BBox corners. */
-  {
-    double xs[4], ys[4]; int corner;
-    for (corner = 0; corner < 4; corner++) {
-      double x = box[(corner & 1) ? 2 : 0], y = box[(corner & 2) ? 3 : 1];
-      xs[corner] = matrix[0] * x + matrix[2] * y + matrix[4];
-      ys[corner] = matrix[1] * x + matrix[3] * y + matrix[5];
-    }
-    clip[0] = fmax(0, fmin(fmin(xs[0], xs[1]), fmin(xs[2], xs[3])));
-    clip[1] = fmax(0, fmin(fmin(ys[0], ys[1]), fmin(ys[2], ys[3])));
-    clip[2] = fmin((double)width, fmax(fmax(xs[0], xs[1]), fmax(xs[2], xs[3])));
-    clip[3] = fmin((double)height, fmax(fmax(ys[0], ys[1]), fmax(ys[2], ys[3])));
-    if (clip[2] <= clip[0] || clip[3] <= clip[1]) return fail(e, EXR_FORMAT, "PDF soft mask is outside the device area");
-  }
+  if(exr_pdf_resolve(file,exr_pdf_get(file,form,"Group"),&id,e)!=EXR_OK) return e->code;
+  status=exr_pdf_group_rgb(file,id,EXR_PDF_GROUP_MASK_CONTEXT,&group,e);if(status!=EXR_OK) return status;
+  config.group_present=1;
+  config.group_flags=(group&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|
+    (group&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0)|
+    (group&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0)|(group&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0);
   if (kind) {
     if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "BC"), &id, e) != EXR_OK) return e->code;
     if (id != EXR_PDF_NONE && exr_pdf_value_at(file, id)->kind != EXR_PDF_NULL) {
@@ -111,30 +88,46 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
     }
   }
   config.width = width; config.height = height; config.channels = 4; config.background = 0;
+  if(kind) {
+    config.background=255;
+    for(unsigned k=0;k<3;k++) config.background|=(uint32_t)fmax(0,fmin(255,floor(bc[k]*255+.5)))<<(24-8*k);
+  }
   config.work=work;
-  config.initial_clip = clip; config.mask_budget = 0;
+  config.initial_clip=box;config.initial_clip_transform=matrix;config.mask_budget=0;
   status = exr_pdf_raster_content(file, resources, data, size, matrix, &config, control, &bitmap, e);
   if (status != EXR_OK) return status;
+  status=load_transfer(file,mask,control,&function,e);
+  if(status!=EXR_OK) { free(bitmap.pixels);return status; }
+  sample_cost=1+(kind ? 8 : 0)+exr_pdf_function_cost(function);
   result = malloc((size_t)width * height);
-  if (!result) { free(bitmap.pixels); return fail(e, EXR_MEMORY, "PDF soft mask allocation failed"); }
+  if (!result) { exr_pdf_function_free(function);free(bitmap.pixels); return fail(e, EXR_MEMORY, "PDF soft mask allocation failed"); }
   pixels = bitmap.pixels;
   for(size_t y=0;y<height;y++) {
-      status=exr_control_cancel(control,e);
-      if(status==EXR_OK && !exr_vector_work(work,(size_t)width*(1+(kind ? 8 : 0)+(state.present ? 16 : 0))))
-        status=exr_fail(e,EXR_LIMIT,"PDF soft mask samples exceed work budget");
-      if(status!=EXR_OK) { free(result);free(bitmap.pixels);return status; }
+    status=exr_control_cancel(control,e);
+    if(status==EXR_OK && !exr_vector_work(work,(size_t)width*sample_cost))
+      status=exr_fail(e,EXR_LIMIT,"PDF soft mask samples exceed work budget");
+    if(status!=EXR_OK) goto done;
     for(size_t x=0;x<width;x++) {
-    i=y*width+x;
-    double a = pixels[i * 4 + 3] / 255.;
-    if (kind) {
-      double v0 = pixels[i * 4] / 255. * a + bc[0] * (1 - a);
-      double v1 = pixels[i * 4 + 1] / 255. * a + bc[1] * (1 - a);
-      double v2 = pixels[i * 4 + 2] / 255. * a + bc[2] * (1 - a);
-      double lum = .3 * v0 + .59 * v1 + .11 * v2;
-      result[i] = (unsigned char)fmax(0, fmin(255, floor(transfer(lum,&state) * 255 + .5)));
-    } else { double a2 = transfer(a,&state); result[i] = (unsigned char)fmax(0, fmin(255, floor(a2 * 255 + .5))); }
+      double a,value,output[4];i=y*width+x;a=pixels[i*4+3]/255.;
+      value=a;
+      if(kind) {
+        double v0=pixels[i*4]/255.*a+bc[0]*(1-a);
+        double v1=pixels[i*4+1]/255.*a+bc[1]*(1-a);
+        double v2=pixels[i*4+2]/255.*a+bc[2]*(1-a);
+        value=.3*v0+.59*v1+.11*v2;
+      }
+      if(function) {
+        status=exr_pdf_function_eval(function,value,output,e);
+        if(status!=EXR_OK) goto done;
+        value=output[0];
+      }
+      result[i]=(unsigned char)fmax(0,fmin(255,floor(value*255+.5)));
     }
   }
+  status=EXR_OK;
+done:
+  exr_pdf_function_free(function);
+  if(status!=EXR_OK) { free(result);free(bitmap.pixels);return status; }
   free(bitmap.pixels);
   *out = result;
   return EXR_OK;
