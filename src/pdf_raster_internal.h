@@ -10,7 +10,7 @@ exr_status exr_pdf_paint_content(exr_pdf_file *file,uint32_t resources,const voi
                                   size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
   const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,
-  size_t *work,const exr_control *control,exr_error *error);
+  size_t *work,size_t *mask_bytes,const exr_control *control,exr_error *error);
 exr_status exr_pdf_paint_page_ex(exr_pdf_file *file,const exr_pdf_page_info *page,const void *content,size_t size,
   const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,
   size_t *work,const exr_control *control,exr_error *error);
@@ -25,6 +25,7 @@ typedef struct {
   const double *initial_clip; /* Optional output-coordinate [x0,y0,x1,y1]. */
   size_t *work; /* Optional aggregate work counter, including nested soft masks. */
   const double *initial_clip_transform; /* NULL means output coordinates. */
+  size_t *active_mask_bytes; /* Shared across recursive mask G painters. */
   unsigned group_present,group_flags; /* Optional root transparency group. */
 } exr_pdf_raster_config;
 /* Output is owned and empty on failure. Initial maps PDF user space to pixels.

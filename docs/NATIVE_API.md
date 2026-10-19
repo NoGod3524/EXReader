@@ -1,4 +1,4 @@
-# Native C API 3.35.0
+# Native C API 3.35.1
 
 S013–S100 是保留的历史开发步骤标识，原来被写成 0.13–0.100；产品版本现按 [里程碑映射](VERSIONING.md) 归并。步骤编号用于追溯接口变化，不表示独立发行版本。
 
@@ -880,7 +880,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 
 `EXR_ABI_VERSION` / `exr_abi_version()` 提供从 S091 起的 ABI epoch 1。版本字符串仍用 EXR_VERSION / exr_version。ABI 与库版本、SQLite schema 分别管理；同一 epoch 的数组记录不能追加字段改变步长，带 struct_size 的输入维持原始前缀。完整规则见 [SDK_COMPATIBILITY.md](SDK_COMPATIBILITY.md)。
 
-安装包新增可搬迁的 CMake config：`find_package(EXReader 3.35.0 EXACT CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
+安装包新增可搬迁的 CMake config：`find_package(EXReader 3.35.1 EXACT CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
 
 
 ## 通用持久化全文索引（S092）
@@ -1754,3 +1754,22 @@ MuPDF1.28.2、Poppler26.07.0的差异按类别保存；明确未把数学一致�
 规范映射和待核验项见[MASK_SEMANTICS.md](MASK_SEMANTICS.md)。
 
 当前继续AIS、图像形状/透明度；WP1/WP2及其后全部工作包仍在推进。
+
+
+## 3.35.1：几何覆盖率与递归遮罩预算（2026-10-19）
+
+CMYK路径不再把几何覆盖率预乘进常量alpha；图像在需要shape的组内分别累计
+矩形采样覆盖与样本透明度。普通无shape路径保留原取整，无额外像素缓冲。
+48个RGB/CMYK、路径/图像、直接/隔离子组/非隔离子组、半透明/不透明、
+半边/四分之一角组合按独立合成公式验收。旧3.35.0在最小图片半边输入上
+绿色通道191，期望64；新回归通过，未修改已有golden。
+
+此前64MiB仅在单个PDF绘制器内计数，递归G会新建绘制器且绕开父计数。
+现在所有递归G共享活跃mask字节数，渲染G前预留其结果空间，失败/提交/丢弃归还。
+以60MiB预留、64MiB及64MiB+1验证预算错误先于深度错误，失败后计数完整恢复，输出为空。
+此64MiB限制针对mask结果载荷，不代表所有画布/字体/图像工作内存的总和。
+
+GCC/MSVC各140/140，ICC-OFF8/8；安装组件4/4、13头C++与EXACT3.35.1实际运行通过。
+703项ABI逐行不变，两个DLL均305导出；分层99/1035/899，逆向0。
+[原始汇总](validation/2026-10-19-coverage.json)。核心/PDF3.35.1，其余3.33.0。
+AIS、图片内在shape与mask/opacity、外部参考差异仍继续，未关闭整个WP1/WP2。

@@ -1,0 +1,61 @@
+{
+  "version": "3.35.1",
+  "abi": 1,
+  "schema": 6,
+  "edge_combinations": 48,
+  "tests": {
+    "gcc": {
+      "count": 140,
+      "failures": 0,
+      "canvas_cmyk_output": "584 native canvas CMYK group checks passed\n",
+      "raster_output": "197 native PDF raster checks passed\n",
+      "dll_sha256": "dd2869b9d85b06de4173e0869110380dec1a8c031f388cf8aca604b57def4a69",
+      "exports": 305
+    },
+    "msvc": {
+      "count": 140,
+      "failures": 0,
+      "canvas_cmyk_output": "584 native canvas CMYK group checks passed\n",
+      "raster_output": "197 native PDF raster checks passed\n",
+      "dll_sha256": "198478f4ab64100bce2c413ee733f961c03a7f720d8f464df7b74053a4f84ee3",
+      "exports": 305
+    }
+  },
+  "icc_off": {
+    "count": 8,
+    "failures": 0
+  },
+  "installed_components": {
+    "count": 4,
+    "failures": 0
+  },
+  "cpp_headers": 13,
+  "cpp_exact_runtime": "3.35.1 ABI 1",
+  "abi_measurements_unchanged": 703,
+  "layers": {
+    "objects": 99,
+    "symbols": 1035,
+    "includes": 899,
+    "inverse": 0
+  },
+  "regression_before": {
+    "rgb_image_half_edge_green": 191,
+    "expected_green": 64
+  },
+  "mask_budget": {
+    "bytes": 67108864,
+    "scope": "shared across recursive G painters; reserve before rendering",
+    "rejected_preexisting_bytes": [
+      62914560,
+      67108864,
+      67108865
+    ],
+    "counter_restored_after_failure": true
+  },
+  "remaining": [
+    "AIS",
+    "image intrinsic shape versus sample opacity",
+    "external mask semantic differences",
+    "WP1-WP16 full acceptance"
+  ]
+}

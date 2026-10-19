@@ -90,7 +90,7 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
       (layer&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0),e);
     if(status==EXR_OK) begun=1;
   }
-  if(status==EXR_OK) status=exr_pdf_paint_content_ex(file,resources,content,size,matrix,&consumer,program,context,work,control,e);
+  if(status==EXR_OK) status=exr_pdf_paint_content_ex(file,resources,content,size,matrix,&consumer,program,context,work,NULL,control,e);
   if(sink->base.state) {
     exr_error cleanup={0}; exr_status restored; size_t restore_count=scope.depth;
     while(scope.text--) {

@@ -76,7 +76,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
       unsigned alpha=(unsigned)fmin(255,floor(coverage[x]*255/4+.5));
       if(clip) alpha=(alpha*clip->pixels[(size_t)y*clip->stride+(unsigned)left+x]+127)/255;
       if(alpha) {
-        if(cmyk) exr_pixel_composite_cmyk(bitmap,left+(int)x,y,cmyk,cmyk_alpha*alpha/255.,255,mode,state);
+        if(cmyk) exr_pixel_composite_cmyk(bitmap,left+(int)x,y,cmyk,cmyk_alpha,alpha,mode,state);
         else if(state) exr_pixel_composite(bitmap,left+(int)x,y,color,alpha,mode,state);
         else if(mode==EXR_BLEND_NORMAL) exr_pixel(bitmap,left+(int)x,y,color,alpha);
         else exr_pixel_blend(bitmap,left+(int)x,y,color,alpha,mode);
