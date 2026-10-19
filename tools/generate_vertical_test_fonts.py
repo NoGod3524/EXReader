@@ -3,7 +3,7 @@
 
 Developer-only fontTools; normal builds use the committed fonts.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
@@ -41,7 +41,7 @@ def font(kind):
     family = "EXR Vertical " + kind
     b.setupNameTable({"familyName": family, "styleName": "Regular", "uniqueFontIdentifier": family,
                       "fullName": family, "psName": family.replace(" ", ""),
-                      "copyright": "Copyright 2026 EXReader contributors; GPL-3.0-only"})
+                      "copyright": "Copyright 2026 EXReader contributors; MIT"})
     b.setupOS2(sTypoAscender=800, sTypoDescender=-200, usWinAscent=900, usWinDescent=200)
     b.setupPost()
     b.setupMaxp()

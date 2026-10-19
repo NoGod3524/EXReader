@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #ifndef EXR_PDF_INTERNAL_H
 #define EXR_PDF_INTERNAL_H
 #include "internal.h"
@@ -160,10 +160,10 @@ typedef exr_status (*exr_pdf_path_fn)(void *context,const exr_pdf_path_paint *pa
 typedef exr_status (*exr_pdf_state_fn)(void *context,exr_pdf_state_event event,exr_error *error);
 typedef exr_status (*exr_pdf_image_fn)(void *context,exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *error);
 typedef exr_status (*exr_pdf_shading_fn)(void *context,const exr_bitmap *bitmap,const double matrix[6],const exr_pdf_paint_state *paint,exr_error *error);
-exr_status exr_pdf_shading_mesh(exr_pdf_file *file,uint32_t value,int type,const double ctm[6],unsigned intent,
+exr_status exr_pdf_shading_mesh(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,uint32_t value,int type,const double ctm[6],const exr_pdf_paint_state *paint,size_t *work,
   exr_pdf_shading_fn emit,void *context,const exr_control *control,exr_error *error);
 exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,
-  uint32_t value,const double ctm[6],unsigned intent,exr_pdf_shading_fn emit,void *context,
+  uint32_t value,const double ctm[6],const exr_pdf_paint_state *paint,size_t *work,exr_pdf_shading_fn emit,void *context,
   const exr_control *control,exr_error *error);
 typedef struct {
   exr_pdf_text_fn glyph;exr_pdf_path_fn path;exr_pdf_state_fn state;exr_pdf_image_fn image;

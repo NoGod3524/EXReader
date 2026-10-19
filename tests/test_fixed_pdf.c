@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "exreader.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "cmyk_reference.h"
 #define NEAR(a,b) CHECK(fabs((a)-(b))<1e-8)
 static exr_error error; static unsigned checks;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
@@ -14,7 +15,7 @@ static unsigned char *load(const char *dir,const char *name,size_t *size) {
   *size=(size_t)n; bytes=malloc(*size); CHECK(bytes && fread(bytes,1,*size,f)==*size); fclose(f); return bytes;
 }
 static void pixel(const exr_bitmap *b,unsigned x,unsigned y,unsigned r,unsigned g,unsigned blue) {
-  const unsigned char *p=b->pixels+(size_t)y*b->stride+x*4; CHECK(b->channels==4 && p[0]==r && p[1]==g && p[2]==blue && p[3]==255);
+  const unsigned char *p=b->pixels+(size_t)y*b->stride+x*4; if(p[0]!=r || p[1]!=g || p[2]!=blue) fprintf(stderr,"pixel %u,%u got %u,%u,%u expected %u,%u,%u\n",x,y,p[0],p[1],p[2],r,g,blue); CHECK(b->channels==4 && p[0]==r && p[1]==g && p[2]==blue && p[3]==255);
 }
 typedef struct { exr_fixed_document *document; size_t paths,images; int stop; } inspection;
 static exr_status inspect_path(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
@@ -99,7 +100,7 @@ int main(int argc,char **argv) {
   CHECK(argc==2); semantic_text(argv[1]); public_pages(argv[1]); fallback_and_options(argv[1]);
   { size_t size; unsigned char *bytes=load(argv[1],"pdf-jpeg-cmyk.pdf",&size);
     OK(exr_fixed_open_memory(EXR_PDF,bytes,size,NULL,&d,&error)); free(bytes);
-    OK(exr_fixed_render(d,0,1,NULL,&b,&error)); CHECK(b.width==17 && b.height==9); pixel(&b,8,4,183,143,103);
+    OK(exr_fixed_render(d,0,1,NULL,&b,&error)); CHECK(b.width==17 && b.height==9); { unsigned rgb[3];cmyk_reference((const double[4]){40/255.,80/255.,120/255.,32/255.},rgb);pixel(&b,8,4,rgb[0],rgb[1],rgb[2]); }
     exr_bitmap_free(&b); exr_fixed_free(d); d=NULL;
   }
   snprintf(path,sizeof(path),"%s/pdf-public.pdf",argv[1]); OK(exr_fixed_open(path,NULL,&d,&error)); CHECK(!strcmp(exr_fixed_title(d),"pdf-public.pdf")); OK(exr_fixed_render(d,0,1,NULL,&b,&error)); exr_bitmap_free(&b); exr_fixed_free(d);

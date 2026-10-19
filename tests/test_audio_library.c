@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "exreader.h"
 #include <sqlite3.h>
 #include <stdio.h>

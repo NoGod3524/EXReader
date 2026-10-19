@@ -5,7 +5,7 @@ The isolated group paints rich black (C=M=Y=1, K=1) at 50% alpha, then white at
 50% alpha. Blended in DeviceCMYK the result is (1/3,1/3,0,1/3) at alpha 0.75,
 which over white is (128,128,191); RGB compositing would give (191,191,191).
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 from pathlib import Path
 

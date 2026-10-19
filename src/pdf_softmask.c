@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* ISO 32000-1 11.6.5.2 graphics-state soft masks: render the G form into a
    page-sized 8-bit mask. Alpha uses the group alpha; Luminosity composites the
    group over BC and takes the 0.3/0.59/0.11 luminance. TR supports Identity. */
 #include "pdf_raster_internal.h"
+#include "icc_internal.h"
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -34,21 +35,20 @@ static void multiply(const double a[6], const double b[6], double out[6]) {
 
 /* Exponential transfer function (ISO 32000-1 7.10.2.2): C0 + x^N (C1 - C0). */
 typedef struct { int present; double c0, c1, n; } mask_transfer;
-static mask_transfer transfer_state;
-static double transfer(double x) {
-  if (!transfer_state.present) return x;
-  return transfer_state.c0 + pow(fmax(0, fmin(1, x)), transfer_state.n) * (transfer_state.c1 - transfer_state.c0);
+static double transfer(double x,const mask_transfer *state) {
+  if (!state->present) return x;
+  return state->c0 + pow(fmax(0, fmin(1, x)), state->n) * (state->c1 - state->c0);
 }
-static exr_status load_transfer(exr_pdf_file *file, uint32_t mask, exr_error *e) {
+static exr_status load_transfer(exr_pdf_file *file, uint32_t mask, mask_transfer *state,exr_error *e) {
   uint32_t id, at; const exr_pdf_value *v, *array; size_t i;
-  transfer_state.present = 0; transfer_state.c0 = 0; transfer_state.c1 = 1; transfer_state.n = 1;
+  state->present = 0; state->c0 = 0; state->c1 = 1; state->n = 1;
   if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "TR"), &id, e) != EXR_OK) return e->code;
   if (id == EXR_PDF_NONE || exr_pdf_value_at(file, id)->kind == EXR_PDF_NULL) return EXR_OK;
   if (exr_pdf_value_at(file, id)->kind != EXR_PDF_DICT) return EXR_OK;  /* /Identity */
-  transfer_state.present = 1;
+  state->present = 1;
   for (i = 0; i < 2; i++) {
     const char *key = i ? "C1" : "C0";
-    double *target = i ? &transfer_state.c1 : &transfer_state.c0;
+    double *target = i ? &state->c1 : &state->c0;
     if (exr_pdf_resolve(file, exr_pdf_get(file, id, key), &at, e) != EXR_OK) return e->code;
     v = exr_pdf_value_at(file, at);
     if (!v || v->kind == EXR_PDF_NULL) continue;
@@ -58,19 +58,20 @@ static exr_status load_transfer(exr_pdf_file *file, uint32_t mask, exr_error *e)
   }
   if (exr_pdf_resolve(file, exr_pdf_get(file, id, "N"), &at, e) != EXR_OK) return e->code;
   v = exr_pdf_value_at(file, at);
-  if (v && v->kind != EXR_PDF_NULL && !number(file, at, &transfer_state.n)) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer function");
-  if (transfer_state.n <= 0) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer exponent");
+  if (v && v->kind != EXR_PDF_NULL && !number(file, at, &state->n)) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer function");
+  if (state->n <= 0) return fail(e, EXR_FORMAT, "Invalid PDF soft mask transfer exponent");
   return EXR_OK;
 }
-exr_status exr_pdf_soft_mask_build(exr_pdf_file *file, uint32_t mask, const double set_matrix[6],
+static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set_matrix[6],
                                    unsigned width, unsigned height, unsigned char **out,
                                    size_t *work, const exr_control *control, exr_error *e) {
   uint32_t form, id, resources = EXR_PDF_NONE; const unsigned char *data = NULL; size_t size = 0, i;
   double matrix[6], local[6], box[4], bc[4] = {0, 0, 0, 0}, clip[4]; unsigned char *pixels = NULL, *result = NULL;
   const exr_pdf_value *v; int kind = 0, count = 0; exr_bitmap bitmap = {0}; exr_pdf_raster_config config = {0}; exr_status status;
+  mask_transfer state;
   *out = NULL;
   status = exr_pdf_soft_mask_kind(file, mask, &kind, e); if (status != EXR_OK) return status;
-  status = load_transfer(file, mask, e); if (status != EXR_OK) return status;
+  status = load_transfer(file, mask, &state,e); if (status != EXR_OK) return status;
   if (exr_pdf_resolve(file, mask, &mask, e) != EXR_OK) return e->code;
   if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "G"), &form, e) != EXR_OK) return e->code;
   if (exr_pdf_stream_data(file, form, &data, &size, e) != EXR_OK) return e->code;
@@ -104,7 +105,7 @@ exr_status exr_pdf_soft_mask_build(exr_pdf_file *file, uint32_t mask, const doub
       { uint32_t at = v->first; while (at != EXR_PDF_NONE && count < 4) { uint32_t value; if (exr_pdf_resolve(file, at, &value, e) != EXR_OK || !number(file, value, &tmp[count])) return fail(e, EXR_FORMAT, "Invalid PDF soft mask backdrop"); count++; at = exr_pdf_value_at(file, at)->next; } }
       if (count == 1) { bc[0] = bc[1] = bc[2] = tmp[0]; }
       else if (count == 3) { bc[0] = tmp[0]; bc[1] = tmp[1]; bc[2] = tmp[2]; }
-      else if (count == 4) { bc[0] = 1 - fmin(1, tmp[0] + tmp[3]); bc[1] = 1 - fmin(1, tmp[1] + tmp[3]); bc[2] = 1 - fmin(1, tmp[2] + tmp[3]); }
+      else if (count == 4) { exr_icc *profile=NULL;status=exr_icc_default_cmyk(control,&profile,e);if(status!=EXR_OK) return status;exr_device_cmyk_rgb(profile,tmp,bc,1);status=exr_icc_deferred_status(profile,e);exr_icc_free(profile);if(status!=EXR_OK) return status; }
       else return fail(e, EXR_FORMAT, "Invalid PDF soft mask backdrop length");
     }
   }
@@ -123,10 +124,24 @@ exr_status exr_pdf_soft_mask_build(exr_pdf_file *file, uint32_t mask, const doub
       double v1 = pixels[i * 4 + 1] / 255. * a + bc[1] * (1 - a);
       double v2 = pixels[i * 4 + 2] / 255. * a + bc[2] * (1 - a);
       double lum = .3 * v0 + .59 * v1 + .11 * v2;
-      result[i] = (unsigned char)fmax(0, fmin(255, floor(transfer(lum) * 255 + .5)));
-    } else { double a2 = transfer(a); result[i] = (unsigned char)fmax(0, fmin(255, floor(a2 * 255 + .5))); }
+      result[i] = (unsigned char)fmax(0, fmin(255, floor(transfer(lum,&state) * 255 + .5)));
+    } else { double a2 = transfer(a,&state); result[i] = (unsigned char)fmax(0, fmin(255, floor(a2 * 255 + .5))); }
   }
   free(bitmap.pixels);
   *out = result;
   return EXR_OK;
+}
+
+/* Bound recursive mask G/SMask graphs independently on each calling thread. */
+#ifdef _MSC_VER
+static __declspec(thread) unsigned mask_depth;
+#else
+static _Thread_local unsigned mask_depth;
+#endif
+exr_status exr_pdf_soft_mask_build(exr_pdf_file *file,uint32_t mask,const double matrix[6],
+  unsigned width,unsigned height,unsigned char **out,size_t *work,const exr_control *control,exr_error *e) {
+  exr_status status;*out=NULL;
+  if(mask_depth==16) return exr_fail(e,EXR_LIMIT,"PDF soft mask nesting exceeds 16");
+  mask_depth++;status=build_mask(file,mask,matrix,width,height,out,work,control,e);mask_depth--;
+  return status;
 }

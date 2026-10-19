@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* Original 0.2-second sine/noise waves: LC encoded with FFmpeg, SBR/PS
    encoded with a temporary FDK encoder. Only original encoded audio bytes
    are retained; no encoder source or runtime dependency is included. */

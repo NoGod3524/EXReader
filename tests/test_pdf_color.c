@@ -1,10 +1,12 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "exreader.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cmyk_reference.h"
 #ifdef EXR_ENABLE_ICC
+#include <math.h>
 static int cancelled_later(void *context) { unsigned *remaining=context;return (*remaining)--==0; }
 #include <lcms2.h>
 #endif
@@ -87,7 +89,7 @@ static void state_scopes(const char *directory) {
   buffer content={0},b; exr_fixed_document *d; exr_bitmap image; static const unsigned gray188[]={188,188,188},gray129[]={129,129,129},black[]={0,0,0},white[]={255,255,255};
   scenario="q/Q preserves source Indexed state and resets with direct colour"; add(&content,"/S cs 1 sc q 1 0 0 rg Q 2 sc 0 0 8 8 re f /S cs 10 0 8 8 re f "); label(&content); b=book("[/Indexed " CG " 2 9 0 R]",&content,NULL,"\x01",1,NULL,NULL); d=opened(&b); image=rendered(d); pixel(&image,4,4,white,0); pixel(&image,14,4,black,0); text(d); exr_bitmap_free(&image); exr_fixed_free(d); free(b.data); content.size=0;
   scenario="same colour space object resolves bases in each Form resource scope"; add(&content,"/S cs 0 sc 0 0 8 8 re f /Fm Do "); label(&content); b=book("10 0 R",&content,NULL,"\x00",1,NULL,"/S cs 0 sc 10 0 8 8 re f"); d=opened(&b); image=rendered(d); pixel(&image,4,4,gray188,1); pixel(&image,14,4,gray129,1); text(d); save(&b,directory,"pdf-color-form-scope.pdf"); exr_bitmap_free(&image); exr_fixed_free(d); free(b.data); content.size=0;
-  scenario="ICC CMYK initial colour is all-zero white"; add(&content,"/S cs 0 0 8 8 re f /DeviceCMYK cs 10 0 8 8 re f "); label(&content); b=book("[/ICCBased 6 0 R]",&content,NULL,"\x00\x00\x00\x00",4,"/N 4",NULL); d=opened(&b); image=rendered(d); pixel(&image,4,4,white,0); pixel(&image,14,4,black,0); exr_bitmap_free(&image); exr_fixed_free(d); free(b.data); free(content.data);
+  scenario="ICC CMYK initial colour is all-zero white"; add(&content,"/S cs 0 0 8 8 re f /DeviceCMYK cs 10 0 8 8 re f "); label(&content); b=book("[/ICCBased 6 0 R]",&content,NULL,"\x00\x00\x00\x00",4,"/N 4",NULL); d=opened(&b); image=rendered(d); pixel(&image,4,4,white,0); { unsigned rgb[3];cmyk_reference((const double[4]){0,0,0,1},rgb);pixel(&image,14,4,rgb,0); } exr_bitmap_free(&image); exr_fixed_free(d); free(b.data); free(content.data);
 }
 static int cancelled(void *context) { (void)context; return 1; }
 static void bad_cases(void) {
@@ -102,7 +104,8 @@ static void bad_cases(void) {
 #define RED_FUNCTION "<< /FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1 >>"
 #define BLUE_FUNCTION "<< /FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [0 0 1] /N 1 >>"
 static void separation(const char *directory) {
-  static const unsigned pink[]={255,191,191},gray64[]={64,64,64},gray128[]={128,128,128},red128[]={255,127,127};
+  static const unsigned pink[]={255,191,191},gray64[]={64,64,64},gray128[]={128,128,128};
+  unsigned red128[3];cmyk_reference((const double[4]){0,128/255.,128/255.,0},red128);
   static const unsigned blue128[]={128,128,255},blue[]={0,0,255},red64[]={255,64,64};
   scenario="Separation exponential RGB transform for paths/XObject/inline";
   same_color("[/Separation /Spot /DeviceRGB << /FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 2 >>]",".5019607843137255",NULL,"\x80",1,NULL,pink,directory,"pdf-color-spot-exponential.pdf");
@@ -419,7 +422,9 @@ static void calculator(const char *directory) {
     scenario=cases[i].name;
     snprintf(definition,sizeof(definition),"[/Separation /Spot /%s 10 0 R]",cases[i].space);
     snprintf(stream_text,sizeof(stream_text),"<< /FunctionType 4 /Domain [0 1] /Range [%s] /Length %zu >>\nstream\n%s\nendstream",cases[i].range,strlen(cases[i].program),cases[i].program);
-    same_color_extra(definition,cases[i].input,cases[i].decode,"\x80",1,NULL,cases[i].rgb,directory,cases[i].name,stream_text);
+    { unsigned rgb[3];const unsigned *expected=cases[i].rgb;
+      if(!strcmp(cases[i].space,"DeviceCMYK")) { cmyk_reference((const double[4]){1,.5,0,0},rgb);expected=rgb; }
+      same_color_extra(definition,cases[i].input,cases[i].decode,"\x80",1,NULL,expected,directory,cases[i].name,stream_text); }
   }
   { const unsigned rgb[]={128,128,128}; scenario="Calculator Domain/Range clipping and stitching child";
     same_color_extra("[/Separation /Spot /DeviceGray << /FunctionType 3 /Domain [0 1] /Functions [10 0 R] /Bounds [] /Encode [1 0] >>]","1","/Decode [1 1]","\x00",1,NULL,rgb,NULL,NULL,

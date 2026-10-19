@@ -4,7 +4,7 @@
 This evaluates known full-coverage interior probes, not PDF syntax or geometry.
 Raw renderer outputs remain separate. No EXReader code or runtime is loaded.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from decimal import Decimal as D, localcontext
 
 ZERO=(D(0),)*4

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_internal.h"
 typedef struct {
   double ctm[6],size,char_space,word_space,scale,leading,rise;
@@ -349,7 +349,8 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     uint32_t shading=EXR_PDF_NONE;
     if(count!=1 || resource(r,arena,values[0],"Shading",&shading,error)!=EXR_OK) goto invalid;
     if(!r->callbacks.shading) return exr_fail(error,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
-    return exr_pdf_shading_draw(r->file,arena,r->resources,shading,r->state.ctm,r->state.paint.intent,
+    exr_pdf_paint_state paint=paint_state(r);
+    return exr_pdf_shading_draw(r->file,r->file,r->resources,shading,r->state.ctm,&paint,&r->color_work,
       r->callbacks.shading,r->context,r->control,error);
   }
   *handled=0; return EXR_OK;

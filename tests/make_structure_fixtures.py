@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 """Reproducible, original EPUB fixtures for the native document model tests."""
 from pathlib import Path
 import struct

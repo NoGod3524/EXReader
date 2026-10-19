@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 struct exr_audio {
   char *title; exr_audio_track *tracks; exr_audio_chapter *chapters; exr_audio_sync *sync;

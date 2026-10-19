@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_calculator_internal.h"
 static unsigned checks; static exr_error error;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"calculator line %d: %s (%d %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)

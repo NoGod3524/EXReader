@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_function_internal.h"
 #include "pdf_calculator_internal.h"
 struct exr_pdf_function {

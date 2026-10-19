@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #ifndef EXR_DISPLAY_BIDI_INTERNAL_H
 #define EXR_DISPLAY_BIDI_INTERNAL_H
 #include "layout_internal.h"

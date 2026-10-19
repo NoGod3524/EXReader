@@ -4,7 +4,7 @@
 The process high-water mark includes this Python/ctypes host. Compare identical
 hosts and inputs; small one-page fixtures are compositor probes, not book tests.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 import ctypes as c
 import hashlib

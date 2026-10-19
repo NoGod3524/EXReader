@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Deterministic EPUB using only the repository's original geometric fonts."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import zipfile
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Fresh-process table layout measurements, including expensive full-height alignment."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 import hashlib
 import json

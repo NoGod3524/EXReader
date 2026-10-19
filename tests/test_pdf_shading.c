@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* Work package 4: axial shading (type 2). The gradient is evaluated at pixel
    centres, so these expectations are the analytic values of a red->blue ramp over
    0..16; MuPDF samples at pixel corners and is half a pixel off (see COLOR_MATRIX). */

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* WP5: <thead> rows repeat at the top of every table continuation page. */
 #include "exreader.h"
 #include <math.h>

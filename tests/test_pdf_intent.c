@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* Work package 4: the rendering intent must reach the ICC transform instead of
    silently falling back to relative colorimetric. Expected pixels come from
    MuPDF 1.28.2 on the same file (within one level). */
@@ -52,25 +52,45 @@ int main(int argc,char **argv) {
   page=render("intent-intents.pdf");
   CHECK(page.width==128 && page.height==16);
   /* MuPDF: relative (174,74,53), perceptual (175,80,63), saturation (175,80,63), absolute (167,76,60). */
+#ifdef EXR_ENABLE_ICC
   near(&page,16,8,174,74,53,"relative");
   near(&page,48,8,175,80,63,"perceptual");
   near(&page,80,8,175,80,63,"saturation");
   near(&page,112,8,167,76,60,"absolute");
   pixel(&page,16,8,rel); pixel(&page,48,8,per);
   CHECK(memcmp(rel,per,3)!=0); /* the intent must change the result */
+#else
+  near(&page,16,8,179,26,26,"relative alternate");
+  near(&page,48,8,179,26,26,"perceptual alternate");
+  near(&page,80,8,179,26,26,"saturation alternate");
+  near(&page,112,8,179,26,26,"absolute alternate");
+  pixel(&page,16,8,rel);pixel(&page,48,8,per);CHECK(!memcmp(rel,per,3));
+#endif
   exr_bitmap_free(&page);
   rejected("intent-bad-name.pdf");
   rejected("intent-bad-type.pdf");
   /* ISO 32000-1 8.6.5.8: an image's /Intent overrides the graphics-state intent.
      MuPDF 1.28.2 renders the same file as (175,74,53), (175,81,63), (175,81,63). */
   page=render("image-intent-default.pdf");
+#ifdef EXR_ENABLE_ICC
   near(&page,8,8,175,74,53,"image default");
+#else
+  near(&page,8,8,178,25,25,"image default alternate");
+#endif
   exr_bitmap_free(&page);
   page=render("image-intent-perceptual.pdf");
+#ifdef EXR_ENABLE_ICC
   near(&page,8,8,175,81,63,"image perceptual");
+#else
+  near(&page,8,8,178,25,25,"image perceptual alternate");
+#endif
   exr_bitmap_free(&page);
   page=render("image-intent-saturation.pdf");
+#ifdef EXR_ENABLE_ICC
   near(&page,8,8,175,81,63,"image saturation");
+#else
+  near(&page,8,8,178,25,25,"image saturation alternate");
+#endif
   exr_bitmap_free(&page);
   rejected("image-intent-bad.pdf");
   rejected("image-intent-bad-type.pdf");

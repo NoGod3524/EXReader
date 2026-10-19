@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 #define STRETCH_Q UINT64_C(4294967296)
 struct exr_stretch {

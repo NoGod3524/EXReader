@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "layout_internal.h"
 #include <stddef.h>
 static int span(size_t first,size_t count,size_t total) { return first<=total && count<=total-first; }

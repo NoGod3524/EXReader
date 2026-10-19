@@ -610,3 +610,29 @@ scale 4，每次调用 3 个新进程，**5 轮交替**（每轮反转先后顺�
 `state` 的绝对量级只有 3–6 ms（差值约 0.6 ms）。挖空路径只在 `state->knockout` 为真时
 进入，普通场景只多一次分支判断。这台机器无法在不控制背景负载的前提下分辨 <12% 的 p95 差异，
 需要更安静的环境才能给出更强结论。
+
+## 0.19.0 complete CMYK fallback and renderer audit (2026-10-19)
+
+Raw alternating samples: [comparison.json](benchmarks/0.19.0-render-audit-windows/comparison.json).
+Windows MSVC Release, AAC/JNI OFF, ICC ON; baseline8467141 versus the corrected
+working tree. Five fresh processes per version and case, alternating order,
+scale1, first draw plus eight repaints. RSS includes Python; background load and
+disk cache are uncontrolled. These are compositor probes, not book navigation.
+
+DLL grew from4,486,656 to4,904,960 bytes (+418,304; +9.32%), including the414,609-byte
+compressed profile. An8×8 canvas reports3,328bytes before CMYK and526,032bytes
+retained after a CMYK group (includes transform and retained layer-stack space).
+The first group initialization sample was10.66ms; temporary decompression adds
+961,644bytes while opening the profile. Profile allocations are capped per context.
+
+For six ordinary RGB scenes, first-draw medians ranged from0.72× to1.04× baseline;
+repaint p50 from0.67× to1.05×. The initial AP-group repaint p95 was3.80ms versus
+2.61ms; follow-up samples are retained separately. These small-process timings do
+not establish absence of tail-latency regressions.
+
+The100×100 CMYK-page probe changed from1.29ms first draw to37.32ms, repaint p50
+1.10→35.98ms, process peak22.47→27.14MB. The baseline did not propagate its page
+CMYK group correctly and used the naive conversion, so its pixels are not an
+accuracy-equivalent implementation. Full ICC conversion and context initialization
+have a material cost. Caching identical colors and reusing transforms need further
+measurement; this batch is not claimed to improve CMYK speed.

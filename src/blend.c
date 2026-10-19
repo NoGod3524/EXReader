@@ -1,6 +1,16 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pixels_internal.h"
 #include "vector_internal.h"
+#include "icc_internal.h"
+uint32_t exr_gray_color(uint32_t color) {
+  double linear[3],gray;unsigned k,r=(color>>24)&255,g=(color>>16)&255,b=(color>>8)&255,l;
+  if(r==g && g==b) return color;
+  for(k=0;k<3;k++) { double c=((color>>(24-8*k))&255)/255.;linear[k]=c<=.04045 ? c/12.92 : pow((c+.055)/1.055,2.4); }
+  gray=.2126*linear[0]+.7152*linear[1]+.0722*linear[2];
+  gray=gray<=.0031308 ? 12.92*gray : 1.055*pow(gray,1/2.4)-.055;
+  l=(unsigned)fmax(0,fmin(255,floor(gray*255+.5)));
+  return (l<<24)|(l<<16)|(l<<8)|(color&255);
+}
 static double lum(const double c[3]) { return .3*c[0]+.59*c[1]+.11*c[2]; }
 static double saturation(const double c[3]) { return fmax(c[0],fmax(c[1],c[2]))-fmin(c[0],fmin(c[1],c[2])); }
 static void set_lum(double c[3],double l) {
@@ -101,22 +111,35 @@ void exr_cmyk_from_rgb(const double rgb[3],double cmyk[4]) {
   unsigned k;cmyk[3]=fmax(0,fmin(1,1-fmax(rgb[0],fmax(rgb[1],rgb[2]))));
   for(k=0;k<3;k++) cmyk[k]=fmax(0,fmin(1,1-rgb[k]-cmyk[3]));
 }
-static void cmyk_to_rgb(const double cmyk[4],double rgb[3]) {
-  unsigned k;for(k=0;k<3;k++) rgb[k]=1-fmin(1,cmyk[k]+cmyk[3]);
+static void read_cmyk(const exr_bitmap *b,const exr_composite_state *state,size_t x,size_t y,double out[5]);
+static void read_cmyk_backdrop(const exr_composite_state *state,size_t x,size_t y,double out[5]) {
+  unsigned k;
+  if(state->isolated) { memset(out,0,5*sizeof(*out));return; }
+  if(state->backdrop_state && state->backdrop_state->cmyk_pixels) {
+    read_cmyk(&state->backdrop,state->backdrop_state,x+(size_t)state->origin_x,y+(size_t)state->origin_y,out);return;
+  }
+  { double back[4],rgb[3],cmyk[4];
+    read_rgba(&state->backdrop,state->backdrop_state,x+(size_t)state->origin_x,y+(size_t)state->origin_y,back);
+    for(k=0;k<3;k++) rgb[k]=back[3]>0 ? back[k]/back[3] : 0;
+    exr_device_cmyk_from_rgb(state->cmyk_profile,rgb,cmyk);for(k=0;k<4;k++) out[k]=cmyk[k]*back[3];out[4]=back[3];
+  }
 }
 static void read_cmyk(const exr_bitmap *b,const exr_composite_state *state,size_t x,size_t y,double out[5]) {
   const float *p=state->cmyk_pixels+cmyk_index(b,x,y)*6;unsigned k;
-  if(p[4]>0) { for(k=0;k<5;k++) out[k]=p[k]; }
-  else if(state->isolated) { for(k=0;k<5;k++) out[k]=0; }
-  else {
-    double back[4],cmyk[4];read_rgba(&state->backdrop,state->backdrop_state,x+(size_t)state->origin_x,y+(size_t)state->origin_y,back);
-    exr_cmyk_from_rgb(back,cmyk);for(k=0;k<4;k++) out[k]=cmyk[k]*back[3];out[4]=back[3];
-  }
+  if(p[5]>0) { for(k=0;k<5;k++) out[k]=p[k]; }
+  else read_cmyk_backdrop(state,x,y,out);
 }
 static void over_cmyk(const double back[5],const double source[4],double alpha,exr_blend_mode mode,double out[5]) {
   double b[4],blend[4];unsigned k;
   for(k=0;k<4;k++) b[k]=back[4]>0 ? back[k]/back[4] : 0;
-  for(k=0;k<4;k++) blend[k]=component(b[k],source[k],mode);
+  /* ISO 32000-1 11.3.5: blend subtractive components in additive form.
+     Nonseparable CMY uses the RGB formulas; K is selected independently. */
+  if(mode>=EXR_BLEND_HUE) {
+    double brgb[3],srgb[3],rgb[3];
+    for(k=0;k<3;k++) { brgb[k]=1-b[k];srgb[k]=1-source[k]; }
+    blend_rgb(brgb,srgb,mode,rgb);for(k=0;k<3;k++) blend[k]=1-rgb[k];
+    blend[3]=mode==EXR_BLEND_LUMINOSITY ? source[3] : b[3];
+  } else for(k=0;k<4;k++) blend[k]=1-component(1-b[k],1-source[k],mode);
   out[4]=alpha+back[4]*(1-alpha);
   for(k=0;k<4;k++) out[k]=(1-alpha)*back[k]+alpha*((1-back[4])*source[k]+back[4]*blend[k]);
 }
@@ -132,7 +155,7 @@ static void write_cmyk(exr_bitmap *b,exr_composite_state *state,size_t x,size_t 
     if(y>=state->bottom) state->bottom=(uint32_t)y+1;
   }
   for(k=0;k<4;k++) cmyk[k]=a>0 ? out[k]/a : 0;
-  cmyk_to_rgb(cmyk,rgb);
+  exr_device_cmyk_rgb(state->cmyk_profile,cmyk,rgb,1);
   if(state->pixels) {
     float *v=state->pixels+cmyk_index(b,x,y)*5;
     for(k=0;k<3;k++) v[k]=(float)(rgb[k]*a);
@@ -146,7 +169,7 @@ void exr_pixel_composite_cmyk(exr_bitmap *bitmap,int x,int y,const double cmyk[4
   double source[4],back[5],out[5];unsigned k;
   if(!state || !state->cmyk_pixels) {
     double rgb[3];uint32_t color=0;
-    cmyk_to_rgb(cmyk,rgb);
+    exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,cmyk,rgb,1);
     for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(rgb[k]*255+.5))<<(24-8*k);
     color|=(uint32_t)fmin(255,floor(alpha*255+.5));
     exr_pixel_composite(bitmap,x,y,color,coverage,mode,state);return;
@@ -157,12 +180,13 @@ void exr_pixel_composite_cmyk(exr_bitmap *bitmap,int x,int y,const double cmyk[4
       state->soft_mask[my*state->soft_mask_width+mx] : 0u;
     coverage=(coverage*mask+127)/255;
   }
+  { double constant=alpha;
   alpha*=coverage/255.;if(!alpha) return;
   for(k=0;k<4;k++) source[k]=fmax(0,fmin(1,cmyk[k]));
   if(state->knockout) {
     double base[5],painted[5],current[5],covered=coverage/255.;
-    read_backdrop(state,(size_t)x,(size_t)y,back);{ double c[4];exr_cmyk_from_rgb(back,c);for(k=0;k<4;k++) base[k]=c[k]*back[3];base[4]=back[3]; }
-    over_cmyk(base,source,alpha,mode,painted);
+    read_cmyk_backdrop(state,(size_t)x,(size_t)y,base);
+    over_cmyk(base,source,constant,mode,painted);
     read_cmyk(bitmap,state,(size_t)x,(size_t)y,current);
     for(k=0;k<5;k++) out[k]=covered*painted[k]+(1-covered)*current[k];
     write_cmyk(bitmap,state,(size_t)x,(size_t)y,out,alpha);
@@ -171,13 +195,17 @@ void exr_pixel_composite_cmyk(exr_bitmap *bitmap,int x,int y,const double cmyk[4
   }
   read_cmyk(bitmap,state,(size_t)x,(size_t)y,back);
   over_cmyk(back,source,alpha,mode,out);write_cmyk(bitmap,state,(size_t)x,(size_t)y,out,alpha);
+  }
 }
 void exr_pixel_composite(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage,exr_blend_mode mode,exr_composite_state *state) {
   double back[4],source[3],out[4],alpha;unsigned k;
+  if(state && state->gray) {
+    color=exr_gray_color(color);
+  }
   if(state && state->cmyk_pixels) {
     double cmyk[4];
     for(k=0;k<3;k++) source[k]=((color>>(24-8*k))&255)/255.;
-    exr_cmyk_from_rgb(source,cmyk);
+    exr_device_cmyk_from_rgb(state->cmyk_profile,source,cmyk);
     exr_pixel_composite_cmyk(bitmap,x,y,cmyk,(color&255)/255.,coverage,mode,state);
     return;
   }
@@ -221,23 +249,6 @@ exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state
     if(parent->channels==4) memcpy(child->pixels+y*child->stride,parent->pixels+py*parent->stride+(size_t)origin_x*4,child->width*4);
     else for(x=0;x<child->width;x++) { unsigned char *p=child->pixels+y*child->stride+x*4;p[0]=p[1]=p[2]=parent->pixels[py*parent->stride+(size_t)origin_x+x];p[3]=255; }
   }
-  if(state->cmyk_pixels) {
-    for(y=0;y<child->height;y++) {
-      for(x=0;x<child->width;x++) {
-        double back[4],cmyk[4];float *q=state->cmyk_pixels+((size_t)y*child->width+x)*6;unsigned k;
-        if(parent_state && parent_state->cmyk_pixels) {
-          /* Nested CMYK groups copy the true components instead of round-tripping
-             through the RGB preview. */
-          const float *p=parent_state->cmyk_pixels+(((size_t)y+(size_t)origin_y)*parent->width+(size_t)x+(size_t)origin_x)*6;
-          memcpy(q,p,6*sizeof(float));continue;
-        }
-        read_rgba(parent,parent_state,x+(size_t)origin_x,y+(size_t)origin_y,back);
-        exr_cmyk_from_rgb(back,cmyk);
-        for(k=0;k<4;k++) q[k]=(float)(cmyk[k]*back[3]);
-        q[4]=(float)back[3];q[5]=0;
-      }
-    }
-  }
   return EXR_OK;
 }
 void exr_pixel_blend(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage,exr_blend_mode mode) {
@@ -271,6 +282,7 @@ static exr_status frame_cmyk(exr_bitmap *target,const exr_bitmap *source,double 
   size_t y,x,left=source_state->left,top=source_state->top,right=source_state->right,bottom=source_state->bottom;
   unsigned cost=mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64;
   int dst_cmyk=target_state && target_state->cmyk_pixels;
+  if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   for(y=top;y<bottom;y++) {
     size_t ty=y+(size_t)origin_y;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
@@ -288,17 +300,15 @@ static exr_status frame_cmyk(exr_bitmap *target,const exr_bitmap *source,double 
         double rgba[4];
         obj=q[5];if(obj<=0) continue;
         if(dst_cmyk) read_cmyk(target,target_state,tx,ty,back);
-        else { read_rgba(target,target_state,tx,ty,rgba);exr_cmyk_from_rgb(rgba,back);for(k=0;k<4;k++) back[k]*=rgba[3];back[4]=rgba[3]; }
+        else { double rgb[3];read_rgba(target,target_state,tx,ty,rgba);for(k=0;k<3;k++) rgb[k]=rgba[3]>0 ? rgba[k]/rgba[3] : 0;exr_device_cmyk_from_rgb(source_state->cmyk_profile,rgb,back);for(k=0;k<4;k++) back[k]*=rgba[3];back[4]=rgba[3]; }
         for(k=0;k<4;k++) src[k]=fmax(0,fmin(1,(q[k]-(1-obj)*back[k])/obj));
         base_alpha=obj*opacity;
       }
       alpha=base_alpha*covered;
       if(dst_cmyk) {
         if(target_state->knockout) {
-          double base[5],painted[5],current[5],base_color[4],rgba[4];unsigned c;
-          read_backdrop(target_state,tx,ty,rgba);exr_cmyk_from_rgb(rgba,base_color);
-          for(c=0;c<4;c++) base[c]=base_color[c]*rgba[3];
-          base[4]=rgba[3];
+          double base[5],painted[5],current[5];unsigned c;
+          read_cmyk_backdrop(target_state,tx,ty,base);
           read_cmyk(target,target_state,tx,ty,current);
           over_cmyk(base,src,base_alpha,mode,painted);
           for(c=0;c<5;c++) out[c]=covered*painted[c]+(1-covered)*current[c];
@@ -309,7 +319,7 @@ static exr_status frame_cmyk(exr_bitmap *target,const exr_bitmap *source,double 
           write_cmyk(target,target_state,tx,ty,out,alpha);
         }
       } else {
-        double rgb[3];cmyk_to_rgb(src,rgb);
+        double rgb[3];exr_device_cmyk_rgb(source_state->cmyk_profile,src,rgb,1);
         if(target_state && target_state->knockout) {
           double base[4],painted[4],current[4];unsigned c;
           read_backdrop(target_state,tx,ty,base);read_rgba(target,target_state,tx,ty,current);
@@ -424,7 +434,7 @@ exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill
   size_t y,x;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;
   if(!state || !state->cmyk_pixels) {
     double rf[3],rs[3];uint32_t fc=0,sc=0;unsigned c;
-    cmyk_to_rgb(fill_cmyk,rf);cmyk_to_rgb(stroke_cmyk,rs);
+    exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,fill_cmyk,rf,1);exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,stroke_cmyk,rs,1);
     for(c=0;c<3;c++) { fc|=(uint32_t)fmin(255,floor(rf[c]*255+.5))<<(24-8*c);sc|=(uint32_t)fmin(255,floor(rs[c]*255+.5))<<(24-8*c); }
     return exr_composite_compound(target,fill,stroke,fc|(uint32_t)fmin(255,floor(fill_alpha*255+.5)),
       sc|(uint32_t)fmin(255,floor(stroke_alpha*255+.5)),mode,clip,state,work,control,e);
@@ -446,9 +456,7 @@ exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill
       }
       read_cmyk(target,state,x,y,back);
       if(state->knockout) {
-        double rgb[4];read_backdrop(state,x,y,rgb);exr_cmyk_from_rgb(rgb,base);
-        for(c=0;c<4;c++) base[c]*=rgb[3];
-        base[4]=rgb[3];
+        read_cmyk_backdrop(state,x,y,base);
       } else memcpy(base,back,sizeof(base));
       over_cmyk(base,fill_cmyk,fill_alpha,mode,fr);
       over_cmyk(base,stroke_cmyk,stroke_alpha,mode,sr);

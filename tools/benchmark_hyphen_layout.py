@@ -3,7 +3,7 @@
 Example: python tools/benchmark_hyphen_layout.py BENCHMARK FONT OUTPUT --dictionary FILE --language en-US --drop-compound-minima
 The projection flag removes only COMPOUND*HYPHENMIN metadata, not compound patterns.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 import hashlib
 import json

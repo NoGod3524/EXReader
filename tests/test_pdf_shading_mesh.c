@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* WP4: free-form Gouraud mesh shadings (type 4) match the reference renderer. */
 #include "exreader.h"
 #include <stdio.h>

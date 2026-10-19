@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 #define JSON_LIMIT ((size_t)1024*1024)
 #define CONTEXT "http://www.w3.org/ns/anno.jsonld"

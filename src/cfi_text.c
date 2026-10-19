@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 typedef struct {
   const exr_document *doc; const exr_control *control; exr_error *error; exr_status status;

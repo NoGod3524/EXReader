@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original bitmap-only CBDT/CBLC fixture; no external font/image assets."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import struct
 import hashlib

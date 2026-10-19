@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "../src/pdf_internal.h"
 #include <float.h>
 #include <locale.h>

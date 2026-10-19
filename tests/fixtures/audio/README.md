@@ -1,6 +1,6 @@
 # Original audio fixtures
 
-`pcm.wav` is an original short generated waveform, GPL-3.0-only,
+`pcm.wav` is an original short generated waveform, MIT,
 copyright 2026 EXReader contributors. `metadata.m4b` encodes that waveform as AAC
 and copies the original geometric JPEG from `pdf-images/baseline.jpg`; it adds
 UTF-8 title/artist, a JPEG cover, Nero chpl and QuickTime chapter track metadata.

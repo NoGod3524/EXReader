@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original color quadrants/gray JPEG fixtures; Pillow is development-only."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import io
 from PIL import Image

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original PDF object/xref/stream fixtures; no external PDF inputs."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import zlib
 import base64

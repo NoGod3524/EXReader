@@ -1,5 +1,5 @@
 """Original deterministic float/BFC/continuation EPUBs; standard library only."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 from zipfile import ZipFile, ZipInfo, ZIP_STORED, ZIP_DEFLATED
 import struct,zlib

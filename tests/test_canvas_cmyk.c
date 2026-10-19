@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* DeviceCMYK transparency groups blend four device components and convert the
    result back with the page model. Two half-transparent fills of rich black and
    white are the smallest case where that differs from RGB compositing. */
@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cmyk_reference.h"
+#include <math.h>
 static unsigned checks; static exr_error error;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -49,8 +51,10 @@ int main(void) {
   OK(exr_canvas_take(c,&out,&error));exr_canvas_free(c);
   CHECK(out.width==8 && out.height==8 && out.channels==4);
   p=out.pixels+4*out.stride+4*4;
-  CHECK(abs((int)p[0]-128)<=2 && abs((int)p[1]-128)<=2 && abs((int)p[2]-191)<=2);
-  CHECK(p[2]>p[0]+40);   /* visibly not the RGB-composited grey */
+  { unsigned expected[3],k;double a=128/255.,total=a+a-a*a,v=(a*(1-a))/total;
+    cmyk_reference((const double[4]){v,v,0,v},expected);
+    for(k=0;k<3;k++) CHECK(abs((int)p[k]-(int)floor(total*expected[k]+(1-total)*255+.5))<=2); }
+  CHECK(p[2]>p[0]+10);   /* visibly not the RGB-composited grey */
   exr_bitmap_free(&out);
 
   /* Outside a CMYK group the same paint converts to device RGB (rich black). */
@@ -58,7 +62,7 @@ int main(void) {
   { const double rich[4]={1,1,0,1};fill_cmyk(c,rich,0x000000ff); }
   OK(exr_canvas_take(c,&out,&error));exr_canvas_free(c);
   p=out.pixels+4*out.stride+4*4;
-  CHECK(p[0]==0 && p[1]==0 && p[2]==0 && p[3]==255);
+  { unsigned expected[3],k;cmyk_reference((const double[4]){1,1,0,1},expected);for(k=0;k<3;k++) CHECK(abs((int)p[k]-(int)expected[k])<=1);CHECK(p[3]==255); }
   exr_bitmap_free(&out);
 
   /* Nested CMYK groups inherit the blend space; mixed-device and
@@ -71,11 +75,11 @@ int main(void) {
   OK(exr_canvas_end_layer(c,1,&error));
   OK(exr_canvas_take(c,&out,&error));exr_canvas_free(c);
   p=out.pixels+4*out.stride+4*4;
-  CHECK(p[0]==0 && p[1]==0 && p[2]==0 && p[3]==255);
+  { unsigned expected[3],k;cmyk_reference((const double[4]){1,1,0,1},expected);for(k=0;k<3;k++) CHECK(abs((int)p[k]-(int)expected[k])<=1);CHECK(p[3]==255); }
   exr_bitmap_free(&out);
   c=canvas();
   OK(exr_canvas_begin_group(c,1.0,EXR_BLEND_NORMAL,EXR_GROUP_CMYK,&error));
-  CHECK(exr_canvas_blend(c,EXR_BLEND_HUE,&error)==EXR_UNSUPPORTED);
+  OK(exr_canvas_blend(c,EXR_BLEND_HUE,&error));
   exr_canvas_free(c);
   /* Compound fill+stroke is one CMYK element and still paints. */
   c=canvas();
@@ -86,7 +90,7 @@ int main(void) {
   OK(exr_canvas_end_layer(c,1,&error));
   OK(exr_canvas_take(c,&out,&error));exr_canvas_free(c);
   p=out.pixels+4*out.stride+4*4;
-  CHECK(p[0]==0 && p[1]==0 && p[2]==0);
+  { unsigned expected[3],k;cmyk_reference((const double[4]){1,1,0,1},expected);for(k=0;k<3;k++) CHECK(abs((int)p[k]-(int)expected[k])<=1); }
   exr_bitmap_free(&out);
   printf("%u native canvas CMYK group checks passed\n",checks);
   return 0;

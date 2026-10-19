@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "vector_internal.h"
 typedef struct {
   exr_vector_polyline path; const double *matrix; const exr_vector_stroke_style *style;

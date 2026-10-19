@@ -6,7 +6,7 @@ For every PDF in a directory the first page is rendered by both engines at the
 same scale and compared pixel by pixel. The report is the evidence used to
 claim or refute competitive parity; see docs/COMPETITIVE.md.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 import ctypes as c
 import json

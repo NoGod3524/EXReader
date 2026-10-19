@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Run fresh-process EXReader measurements; OS disk caches are uncontrolled."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 import hashlib
 import json

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 struct exr_audio_player {
   exr_audio *audio; exr_audio_backend backend; const exr_audio_track *tracks; size_t count,track;

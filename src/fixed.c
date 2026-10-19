@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 struct exr_fixed_document {
   char *title; exr_fixed_page *pages; size_t count,bytes;

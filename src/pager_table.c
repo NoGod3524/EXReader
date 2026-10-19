@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "flow_internal.h"
 
 typedef struct {
@@ -610,56 +610,8 @@ static float boundary(const exr_table_cursor *t,size_t row) {
   if(t->collapse) for(i=0;i<t->columns;i++) half=fmaxf(half,t->horizontal[row*t->columns+i].width/2);
   return half;
 }
-/* Dashed and dotted edges become separate border boxes: the collapsed border layer
-   fills each box whole, so the gaps have to be real boxes. */
-static exr_status dashed_edge(flow *f,size_t node,const table_edge *edge,float x,float y,float w,float h) {
-  float dash=edge->style==4 ? edge->width : 3*edge->width;
-  float gap=2*edge->width;
-  size_t pieces=0;
-  if(dash<=0) return EXR_OK;
-  if(w>=h) {
-    float at;
-    for(at=x;at<x+w && pieces<4096;at+=dash+gap,pieces++) {
-      float len=fminf(dash,x+w-at); exr_box *box=exr_flow_box(f,node,f->layout->page_count-1,at,y,len,h,EXR_BOX_BLOCK);
-      if(!box) return EXR_LIMIT;
-      box->background=edge->color; box->border_width=0; box->flags=EXR_BOX_BORDER;
-    }
-  } else {
-    float at;
-    for(at=y;at<y+h && pieces<4096;at+=dash+gap,pieces++) {
-      float len=fminf(dash,y+h-at); exr_box *box=exr_flow_box(f,node,f->layout->page_count-1,x,at,w,len,EXR_BOX_BLOCK);
-      if(!box) return EXR_LIMIT;
-      box->background=edge->color; box->border_width=0; box->flags=EXR_BOX_BORDER;
-    }
-  }
-  return EXR_OK;
-}
-static exr_status solid_edge(flow *f,size_t node,const table_edge *edge,float x,float y,float w,float h) {
-  exr_box *box;
-  if(!edge->width || !(edge->color&255)) return EXR_OK;
-  if(edge->style==3 || edge->style==4) return dashed_edge(f,node,edge,x,y,w,h);
-  if(edge->style==5) {
-    /* Two parallel rules, each a third of the edge width. */
-    float third=edge->width/3;exr_box *first,*second;
-    if(w>=h) {
-      first=exr_flow_box(f,node,f->layout->page_count-1,x,y,w,third,EXR_BOX_BLOCK);
-      second=exr_flow_box(f,node,f->layout->page_count-1,x,y+2*third,w,third,EXR_BOX_BLOCK);
-    } else {
-      first=exr_flow_box(f,node,f->layout->page_count-1,x,y,third,h,EXR_BOX_BLOCK);
-      second=exr_flow_box(f,node,f->layout->page_count-1,x+2*third,y,third,h,EXR_BOX_BLOCK);
-    }
-    if(!first || !second) return EXR_LIMIT;
-    first->background=second->background=edge->color;first->border_width=second->border_width=0;
-    first->flags=second->flags=EXR_BOX_BORDER;
-    return EXR_OK;
-  }
-  box=exr_flow_box(f,node,f->layout->page_count-1,x,y,w,h,EXR_BOX_BLOCK);
-  if(!box) return EXR_LIMIT;
-  box->background=edge->color; box->border_width=0; box->flags=EXR_BOX_BORDER;
-  return EXR_OK;
-}
 static exr_status paint_edge(flow *f,const exr_table_cursor *t,const table_edge *edge,float x,float y,float w,float h) {
-  return solid_edge(f,t->node,edge,x,y,w,h);
+  return exr_flow_edge(f,t->node,edge->style,edge->width,edge->color,x,y,w,h);
 }
 static exr_status paint_cell_sides(flow *f,const exr_table_cursor *t,const table_cell *cell,
                                    float y,float height) {

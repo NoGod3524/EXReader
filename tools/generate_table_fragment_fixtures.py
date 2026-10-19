@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original EPUB cases for independent table-cell continuation and shared grids."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 from zipfile import ZipFile, ZipInfo, ZIP_STORED, ZIP_DEFLATED
 

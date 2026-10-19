@@ -7,7 +7,7 @@ pdf_group_reference.py: each element composites with the group's initial
 backdrop and replaces the accumulated result inside its coverage. No external
 renderer is required, so these scenes can be regenerated offline.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import hashlib, json, sys
 from decimal import Decimal as D, localcontext
 from pathlib import Path

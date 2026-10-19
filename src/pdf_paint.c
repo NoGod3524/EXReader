@@ -1,28 +1,30 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_raster_internal.h"
 #include "pdf_face_internal.h"
+#include "icc_internal.h"
 #include <stdio.h>
 typedef struct { const exr_pdf_font *key; exr_pdf_face *face; } paint_face;
 typedef struct {
   exr_draw_sink_ex sink; FT_Library library; exr_pdf_program_fn program; void *program_context; const exr_control *control; size_t *work;
+  exr_icc *cmyk_profile;
   exr_pdf_file *file; /* mask rendering needs the object arena */
   size_t font_count,font_bytes; paint_face fonts[128];
 } pdf_painter;
-static uint32_t rgba(const exr_pdf_color *c) {
+static uint32_t rgba(pdf_painter *paint,const exr_pdf_color *c,unsigned intent) {
   unsigned r,g,b,a=(unsigned)floor(c->alpha*255+.5);
   if(c->space==EXR_PDF_DEVICE_GRAY) r=g=b=(unsigned)floor(c->values[0]*255+.5);
   else if(c->space==EXR_PDF_DEVICE_RGB) { r=(unsigned)floor(c->values[0]*255+.5); g=(unsigned)floor(c->values[1]*255+.5); b=(unsigned)floor(c->values[2]*255+.5); }
-  else { r=(unsigned)floor((1-fmin(1,c->values[0]+c->values[3]))*255+.5); g=(unsigned)floor((1-fmin(1,c->values[1]+c->values[3]))*255+.5); b=(unsigned)floor((1-fmin(1,c->values[2]+c->values[3]))*255+.5); }
+  else { double rgb[3];exr_device_cmyk_rgb(paint->cmyk_profile,c->values,rgb,intent);
+    r=(unsigned)floor(rgb[0]*255+.5);g=(unsigned)floor(rgb[1]*255+.5);b=(unsigned)floor(rgb[2]*255+.5); }
   return (r<<24)|(g<<16)|(b<<8)|a;
 }
-static void cmyk_color(const exr_pdf_color *c,double out[4]) {
+static void cmyk_color(exr_icc *profile,const exr_pdf_color *c,double out[4]) {
   double rgb[3];unsigned k;
   if(c->space==EXR_PDF_DEVICE_CMYK) { for(k=0;k<4;k++) out[k]=c->values[k];return; }
   if(c->space==EXR_PDF_DEVICE_GRAY) rgb[0]=rgb[1]=rgb[2]=c->values[0];
   else if(c->space==EXR_PDF_DEVICE_RGB) { for(k=0;k<3;k++) rgb[k]=c->values[k]; }
   else for(k=0;k<3;k++) rgb[k]=1-fmin(1,c->values[k]+c->values[3]);
-  out[3]=1-fmax(rgb[0],fmax(rgb[1],rgb[2]));
-  for(k=0;k<3;k++) out[k]=fmax(0,fmin(1,1-rgb[k]-out[3]));
+  exr_device_cmyk_from_rgb(profile,rgb,out);
 }
 static void multiply(const double a[6],const double b[6],double out[6]) {
   out[0]=a[0]*b[0]+a[2]*b[1]; out[1]=a[1]*b[0]+a[3]*b[1];
@@ -40,11 +42,12 @@ static exr_status mask_begin(pdf_painter *r,const exr_pdf_paint_state *paint,uns
   if(status!=EXR_OK) return status;
   return exr_sink_soft_mask(&r->sink,*mask,width,height,e);
 }
-static exr_status mask_end(pdf_painter *r,unsigned char *mask,exr_error *e) {
+static exr_status mask_end(pdf_painter *r,unsigned char *mask,exr_status prior,exr_error *e) {
   exr_status status=EXR_OK;
-  if(mask) status=exr_sink_soft_mask(&r->sink,NULL,0,0,e);
+  exr_error cleanup={0};
+  if(mask) status=exr_sink_soft_mask(&r->sink,NULL,0,0,prior==EXR_OK ? e : &cleanup);
   free(mask);
-  return status;
+  return prior==EXR_OK ? status : prior;
 }
 static exr_status blend_state(pdf_painter *r,exr_blend_mode mode,exr_error *e) {
   if(r->sink.blend) {
@@ -56,18 +59,22 @@ static exr_status blend_state(pdf_painter *r,exr_blend_mode mode,exr_error *e) {
 static exr_status geometry(pdf_painter *r,const exr_vector_segment *segments,size_t count,const double transform[6],
                              const exr_pdf_paint_state *paint,unsigned flags,exr_vector_rule rule,int text_clip,exr_error *e) {
   exr_draw_style style=exr_draw_style_defaults(); exr_status status=EXR_OK; unsigned char *mask=NULL; int painting;
-  style.fill=rgba(&paint->fill); style.stroke=rgba(&paint->stroke); style.flags=flags&3; style.rule=rule;
+  int native_cmyk=paint->fill.space==EXR_PDF_DEVICE_CMYK || paint->stroke.space==EXR_PDF_DEVICE_CMYK;
+  if((native_cmyk || (r->sink.path_cmyk && !r->sink.base.path)) && !r->cmyk_profile) {
+    status=exr_icc_default_cmyk(r->control,&r->cmyk_profile,e);if(status!=EXR_OK) return status;
+  }
+  style.fill=rgba(r,&paint->fill,paint->intent); style.stroke=rgba(r,&paint->stroke,paint->intent); style.flags=flags&3; style.rule=rule;
   style.line=paint->line; style.dashes=paint->dashes; style.dash_count=paint->dash_count; style.dash_phase=paint->dash_phase; style.stroke_matrix=paint->matrix;
   painting=(style.flags!=0)&&(r->sink.base.path||r->sink.path_cmyk);
   if(painting) status=blend_state(r,paint->blend,e);
   if(status==EXR_OK && painting) status=mask_begin(r,paint,&mask,e);
   if(status==EXR_OK && painting) {
-    if(r->sink.path_cmyk) {
-      double fill[4],stroke[4];cmyk_color(&paint->fill,fill);cmyk_color(&paint->stroke,stroke);
+    if(r->sink.path_cmyk && (native_cmyk || !r->sink.base.path)) {
+      double fill[4],stroke[4];cmyk_color(r->cmyk_profile,&paint->fill,fill);cmyk_color(r->cmyk_profile,&paint->stroke,stroke);
       status=r->sink.path_cmyk(r->sink.base.context,segments,count,transform,&style,fill,stroke,e);
     } else status=r->sink.base.path(r->sink.base.context,segments,count,transform,&style,e);
   }
-  if(status==EXR_OK && painting) status=mask_end(r,mask,e);
+  if(mask) status=mask_end(r,mask,status,e);
   if(status==EXR_OK && (flags&EXR_PDF_CLIP) && r->sink.base.clip) status=r->sink.base.clip(r->sink.base.context,segments,count,transform,rule,text_clip!=0,e);
   return status;
 }
@@ -107,12 +114,13 @@ static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_erro
 static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *e) {
   pdf_painter *r=context; exr_vector_texture *image=NULL; double matrix[6]; const double flip[6]={1,0,0,-1,0,1};
   exr_status status; unsigned char *mask=NULL; if(!r->sink.base.image) return EXR_OK;
-  status=exr_pdf_image_load_from(file,id,resource_file,resources,rgba(&paint->fill),paint->intent,&image,r->work,r->control,e);
+  if(paint->fill.space==EXR_PDF_DEVICE_CMYK && !r->cmyk_profile) { status=exr_icc_default_cmyk(r->control,&r->cmyk_profile,e);if(status!=EXR_OK) return status; }
+  status=exr_pdf_image_load_from(file,id,resource_file,resources,rgba(r,&paint->fill,paint->intent),paint->intent,&image,r->work,r->control,e);
   multiply(paint->matrix,flip,matrix);
   if(status==EXR_OK) status=blend_state(r,paint->blend,e);
   if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
   if(status==EXR_OK) status=r->sink.base.image(r->sink.base.context,image,matrix,paint->fill.alpha,e);
-  if(status==EXR_OK) status=mask_end(r,mask,e);
+  if(mask) status=mask_end(r,mask,status,e);
   exr_pdf_image_release(image); return status;
 }
 static exr_status begin_group_event(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
@@ -121,9 +129,19 @@ static exr_status begin_group_event(void *context,double opacity,exr_blend_mode 
 static exr_status shading_event(void *context,const exr_bitmap *bitmap,const double matrix[6],
                                const exr_pdf_paint_state *paint,exr_error *e) {
   pdf_painter *r=context;
-  (void)paint;
+  exr_status status;unsigned char *mask=NULL;int begun=0;
   if(!r->sink.shading) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
-  return r->sink.shading(r->sink.base.context,bitmap,matrix,e);
+  if(paint->fill.alpha!=1) {
+    status=exr_sink_begin_group(&r->sink,paint->fill.alpha,paint->blend,EXR_GROUP_ISOLATED,e);
+    if(status!=EXR_OK) return status;
+    begun=1;
+  }
+  status=blend_state(r,begun ? EXR_BLEND_NORMAL : paint->blend,e);
+  if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
+  if(status==EXR_OK) status=r->sink.shading(r->sink.base.context,bitmap,matrix,e);
+  if(mask) status=mask_end(r,mask,status,e);
+  if(begun) { exr_error cleanup={0};exr_status closed=r->sink.end_layer(r->sink.base.context,status==EXR_OK,status==EXR_OK ? e : &cleanup);if(status==EXR_OK) status=closed; }
+  return status;
 }
 static exr_status end_layer_event(void *context,unsigned commit,exr_error *e) {
   pdf_painter *r=context;return r->sink.end_layer ? r->sink.end_layer(r->sink.base.context,commit,e) : exr_fail(e,EXR_FORMAT,"Drawing consumer lacks isolated layers");
@@ -140,7 +158,8 @@ exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const 
   if(FT_Init_FreeType(&r.library)) return exr_fail(e,EXR_MEMORY,"PDF font library initialization failed");
   status=exr_pdf_draw_ops(file,resources,content,size,initial,&callbacks,&r,control,e);
   for(i=0;i<r.font_count;i++) exr_pdf_face_close(r.fonts[i].face);
-  FT_Done_FreeType(r.library); return status;
+  if(status==EXR_OK) status=exr_icc_deferred_status(r.cmyk_profile,e);
+  exr_icc_free(r.cmyk_profile);FT_Done_FreeType(r.library); return status;
 }
 
 exr_status exr_pdf_paint_content(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,

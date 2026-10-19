@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 """Generate original layout samples; Pillow is needed only to encode the JPEG fixture."""
 from pathlib import Path
 from io import BytesIO

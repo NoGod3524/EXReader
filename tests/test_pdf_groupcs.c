@@ -1,13 +1,12 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
-/* Work package 4: transparency group colour spaces. A DeviceGray group blends
-   luminance, so a red fill must come out grey; DeviceRGB stays unchanged. A
-   DeviceCMYK group is accepted and composites in device RGB after the engine's
-   naive CMYK conversion (no ICC profile is bundled), so `0 1 1 0 k` is pure red
-   where a SWOP renderer gives (237, 28, 36). */
+/* SPDX-License-Identifier: MIT */
+/* Transparency group color spaces: DeviceGray uses luminance, DeviceRGB
+   preserves RGB, and DeviceCMYK blends native inks before ICC conversion. */
 #include "exreader.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cmyk_reference.h"
+#include <math.h>
 static unsigned checks; static exr_error error;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -34,19 +33,18 @@ int main(int argc,char **argv) {
   p=page.pixels+8*page.stride+8*4;
   CHECK(p[0]==255 && p[1]==0 && p[2]==0);   /* RGB group untouched */
   exr_bitmap_free(&page);
-  /* `0 1 1 0 k` is pure red under the naive DeviceCMYK model; MuPDF's SWOP
-     profile renders (237, 28, 36) instead. */
+  /* Compare the same inks with an independently constructed ICC transform. */
   page=render("groupcmyk.pdf");
   p=page.pixels+8*page.stride+8*4;
-  CHECK(p[0]==255 && p[1]==0 && p[2]==0);
+  { unsigned rgb[3],k;cmyk_reference((const double[4]){0,1,1,0},rgb);for(k=0;k<3;k++) CHECK(abs((int)p[k]-(int)rgb[k])<=1); }
   exr_bitmap_free(&page);
   /* Translucent rich black then white, both 50%, blended in DeviceCMYK:
-     (1/3,1/3,0,1/3) at alpha 0.75 -> (128,128,191) over white. RGB compositing
-     would give (191,191,191), so the blue cast proves the four-component path. */
+     (1/3,1/3,0,1/3) at alpha 0.75. The blue cast checks the ink-space path. */
   page=render("groupcmyk-blend.pdf");
   p=page.pixels+8*page.stride+8*4;
-  CHECK(abs((int)p[0]-128)<=3 && abs((int)p[1]-128)<=3 && abs((int)p[2]-191)<=3);
-  CHECK(p[2]>p[0]+40);
+  { unsigned rgb[3],k;double a=.5,total=a+a-a*a,v=a*(1-a)/total;
+    cmyk_reference((const double[4]){v,v,0,v},rgb);for(k=0;k<3;k++) CHECK(abs((int)p[k]-(int)floor(total*rgb[k]+(1-total)*255+.5))<=2); }
+  CHECK(p[2]>p[0]+10);
   exr_bitmap_free(&page);
   printf("%u native PDF group colour-space checks passed\n",checks);
   return 0;

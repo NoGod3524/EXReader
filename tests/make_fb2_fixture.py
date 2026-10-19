@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original FB2 fixture with a generated 2x2 PNG; no third-party book content."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import base64, struct, zlib
 

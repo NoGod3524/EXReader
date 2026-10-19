@@ -2,7 +2,7 @@
 """Regenerate independent HarfBuzz expectations for the original Indic fonts.
 Development only: requires uharfbuzz; the native engine and tests do not use it.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import hashlib
 import uharfbuzz as hb

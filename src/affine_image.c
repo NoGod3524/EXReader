@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "vector_internal.h"
 #include "pixels_internal.h"
 static int storage(const exr_bitmap *b) {

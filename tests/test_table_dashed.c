@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* WP5: CSS border-style dashed and dotted reach the raster as real gaps. */
 #include "exreader.h"
 #include <stdio.h>

@@ -1,0 +1,408 @@
+{
+  "probe": [
+    20,
+    70
+  ],
+  "notes": [
+    "Do not run the baseline on mask-cycle.pdf: unbounded recursion.",
+    "Argyll default CMYK differs from the external engines SWOP profile.",
+    "Type4/5 vertices byte-align per ISO; MuPDF1.28.2 differs on packed 2-bit samples.",
+    "Alias resource-name fixture is not claimed to work in external renderers."
+  ],
+  "references": {
+    "MuPDF": "1.28.2",
+    "PDFium": "156.0.8076.0"
+  },
+  "files": {
+    "appearance-cmyk.pdf": {
+      "sha256": "cd7abc6c0b273fbd205f86c3254ab2b7c57cabf8c94cced781907b59d3969b51",
+      "before": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          191,
+          191,
+          191,
+          255
+        ]
+      },
+      "after": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          156,
+          151,
+          172,
+          255
+        ]
+      },
+      "MuPDF": [
+        156,
+        154,
+        179,
+        255
+      ],
+      "PDFium": [
+        191,
+        191,
+        191,
+        255
+      ]
+    },
+    "gray-image.pdf": {
+      "sha256": "1328bd2eeeba6c7edbbb69f098186552ba48b89e22ad18cd60f4060a65c87e35",
+      "before": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          127,
+          127,
+          127,
+          255
+        ]
+      },
+      "after": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          127,
+          127,
+          127,
+          255
+        ]
+      },
+      "MuPDF": [
+        130,
+        130,
+        130,
+        255
+      ],
+      "PDFium": [
+        255,
+        0,
+        0,
+        255
+      ]
+    },
+    "mesh-function-gray.pdf": {
+      "sha256": "e66f15a203783fdcd296c9e42956ac776f3b2411dfb1eba2601f174db11fb2fa",
+      "before": {
+        "status": "format",
+        "message": "Truncated PDF mesh shading stream"
+      },
+      "after": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          64,
+          64,
+          64,
+          255
+        ]
+      },
+      "MuPDF": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "PDFium": [
+        64,
+        64,
+        64,
+        255
+      ]
+    },
+    "mesh4-alias.pdf": {
+      "sha256": "7598c0a5578d7a3e32042fd4a778935d6615b8f67e65f9b30d135955d92c13aa",
+      "before": {
+        "status": "format",
+        "message": "Unsupported or invalid PDF color space"
+      },
+      "after": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          128,
+          52,
+          76,
+          255
+        ]
+      },
+      "MuPDF": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "PDFium": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    "mesh4-continue.pdf": {
+      "sha256": "0826294ae36625c6b3446d58aa5732a8d3b07eca7bdcd5034cc4979e68598986",
+      "before": {
+        "status": "format",
+        "message": "Truncated PDF mesh shading stream"
+      },
+      "after": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          128,
+          52,
+          76,
+          255
+        ]
+      },
+      "MuPDF": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "PDFium": [
+        124,
+        53,
+        76,
+        255
+      ]
+    },
+    "mesh5-incomplete.pdf": {
+      "sha256": "6ed1087e476df2271729128c2947cb60b18c20f027c0630317d0d0788d6d4bd5",
+      "before": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "after": {
+        "status": "format",
+        "message": "Invalid PDF mesh shading lattice"
+      },
+      "MuPDF": [
+        127,
+        50,
+        76,
+        255
+      ],
+      "PDFium": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    "mesh5.pdf": {
+      "sha256": "1316cbb5f5ebf0fb81495e1da43d5b3dc3eb7662f62f29aa562d9d7549a4daca",
+      "before": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          232,
+          52,
+          75,
+          255
+        ]
+      },
+      "after": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          128,
+          52,
+          76,
+          255
+        ]
+      },
+      "MuPDF": [
+        127,
+        50,
+        76,
+        255
+      ],
+      "PDFium": [
+        124,
+        53,
+        76,
+        255
+      ]
+    },
+    "mesh6-packed.pdf": {
+      "sha256": "bafb62bfa9787051aa77b9f5df990705c7f5cddcd47c0425584ac94e25f84188",
+      "before": {
+        "status": "format",
+        "message": "Truncated PDF mesh shading stream at patch 2 (bit 582 of 584)"
+      },
+      "after": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          255,
+          0,
+          0,
+          255
+        ]
+      },
+      "MuPDF": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "PDFium": [
+        255,
+        0,
+        0,
+        255
+      ]
+    },
+    "page-cmyk.pdf": {
+      "sha256": "fb085071c5aa8833a73f266fd2ee0a1bf03fdf2a80a5a90d61d16b3541cbe6cd",
+      "before": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          191,
+          191,
+          191,
+          255
+        ]
+      },
+      "after": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          156,
+          151,
+          172,
+          255
+        ]
+      },
+      "MuPDF": [
+        156,
+        154,
+        179,
+        255
+      ],
+      "PDFium": [
+        191,
+        191,
+        191,
+        255
+      ]
+    },
+    "shading-alpha.pdf": {
+      "sha256": "f074f1ac5dd8e4bd2d65e13a84f7b0cee3a8ebd1299bde375f212d04a5296f51",
+      "before": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          255,
+          0,
+          0,
+          255
+        ]
+      },
+      "after": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          255,
+          191,
+          191,
+          255
+        ]
+      },
+      "MuPDF": [
+        254,
+        192,
+        192,
+        255
+      ],
+      "PDFium": [
+        255,
+        191,
+        191,
+        255
+      ]
+    },
+    "shading-blend.pdf": {
+      "sha256": "a697b92e5f3d5eb6cbaf6d559f0c82c90b70786288c2c6abe39b8bf5d0055b78",
+      "before": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          255,
+          0,
+          0,
+          255
+        ]
+      },
+      "after": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          0,
+          0,
+          0,
+          255
+        ]
+      },
+      "MuPDF": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "PDFium": [
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    "shading-mask.pdf": {
+      "sha256": "77695d1fcb43f91cbd0325e4b25699e37ad69b427ed18e87405b03a79f32bd65",
+      "before": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          255,
+          0,
+          0,
+          255
+        ]
+      },
+      "after": {
+        "status": "ok",
+        "message": "",
+        "rgba": [
+          255,
+          191,
+          191,
+          255
+        ]
+      },
+      "MuPDF": [
+        255,
+        193,
+        193,
+        255
+      ],
+      "PDFium": [
+        255,
+        192,
+        192,
+        255
+      ]
+    }
+  }
+}

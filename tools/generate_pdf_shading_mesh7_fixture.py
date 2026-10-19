@@ -7,7 +7,7 @@ painted in DeviceCMYK. Reference pixels in tests/test_pdf_shading_mesh7.c were
 recorded from MuPDF 1.28.2; the CMYK case documents the engine's naive
 DeviceCMYK conversion instead (no ICC profile is bundled yet).
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 from pathlib import Path
 

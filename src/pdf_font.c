@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_internal.h"
 typedef struct { uint32_t first,last; size_t offset; unsigned constant; } width_range;
 typedef struct { width_range *ranges; size_t count,capacity; double *values; size_t value_count,value_capacity; unsigned dimension; } width_table;

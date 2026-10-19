@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original KF8 skeleton/fragment/TAGX fixtures. No external ebook inputs."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import struct
 root=Path(__file__).resolve().parent/'fixtures'

@@ -5,7 +5,7 @@
 Sources are recorded with their URL and licence note in manifest.json; the
 corpus itself is downloaded, not committed (tests/corpus is git-ignored).
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 import hashlib
 import io

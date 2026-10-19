@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Independent discretionary-rule oracle; optional external Pyphen data stays outside the SDK."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 import ctypes as c
 import hashlib

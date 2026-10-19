@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Check benchmark JSON, real render sample counts, runner output and failures."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import json
 import subprocess
 import sys

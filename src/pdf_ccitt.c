@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* CCITT Group 3/4 fax decoding (ISO 32000-1 7.4.6). Row decoding follows the
    structure of the BSD-licensed Go x/image/ccitt reader: each row is decoded as
    changing elements against the previous row, then packed to one bit per pixel. */

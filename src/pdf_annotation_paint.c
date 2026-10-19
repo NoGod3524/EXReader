@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_raster_internal.h"
 typedef struct { const exr_draw_sink_ex *target; size_t depth; unsigned text; } paint_scope;
 static exr_status scope_path(void *context,const exr_path_segment *path,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
@@ -79,7 +79,8 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
     /* Appearance groups depend on whole-canvas buffer semantics; keep them out of
        the region-sized working buffers until that path is reworked. */
     status=exr_sink_begin_group(sink,1,EXR_BLEND_NORMAL,
-      (layer&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|(layer&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0)|EXR_GROUP_WHOLE_BUFFER,e);
+      (layer&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|(layer&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0)|
+      (layer&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|(layer&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0)|EXR_GROUP_WHOLE_BUFFER,e);
     if(status==EXR_OK) begun=1;
   }
   if(status==EXR_OK) status=exr_pdf_paint_content_ex(file,resources,content,size,matrix,&consumer,program,context,work,control,e);
@@ -212,14 +213,16 @@ exr_status exr_pdf_paint_page_ex(exr_pdf_file *file,const exr_pdf_page_info *pag
   const exr_pdf_value *v; uint32_t id,at; size_t count=0,bytes=0,local_work=0; exr_status status;
   exr_draw_sink_ex consumer;status=exr_draw_sink_snapshot(sink,&consumer,e);if(status!=EXR_OK) return status;sink=&consumer;
   if(!work) work=&local_work;
+  unsigned page_flags=EXR_GROUP_ISOLATED;
   { int present;uint32_t group;
     status=exr_pdf_resolve(file,exr_pdf_get(file,page->object,"Group"),&group,e);
     if(status==EXR_OK) status=exr_pdf_group_rgb(file,group,1,&present,e);
     if(status!=EXR_OK) return status;
+    page_flags|=(present&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|(present&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0);
   }
   if(sink->blend && !sink->begin_layer && !sink->begin_group) return exr_fail(e,EXR_FORMAT,"PDF blend consumer requires page layer support");
   if(sink->begin_layer || sink->begin_group) {
-    status=exr_sink_begin_group(sink,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED,e);
+    status=exr_sink_begin_group(sink,1,EXR_BLEND_NORMAL,page_flags,e);
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
     if(status!=EXR_OK) return status;
   }

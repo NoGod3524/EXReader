@@ -6,7 +6,7 @@ Input dictionaries remain in the external oracle install, with their own license
 All input dictionaries are tested unchanged. Compound/separator behavior is
 verified separately; this comparison uses standalone alphabetic words.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 import ctypes as c
 import hashlib

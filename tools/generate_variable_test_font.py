@@ -3,7 +3,7 @@
 
 Developer-only fontTools; no external font outlines. Normal builds use the fixture.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from fontTools.designspaceLib import DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor
@@ -42,7 +42,7 @@ def master(weight, width):
     builder.setupCharacterMap({32: 'space', 65: 'A', 86: 'V', 0x301: 'acute'})
     builder.setupNameTable(dict(familyName='EXR Variable Test', styleName='Regular',
                                uniqueFontIdentifier='EXR-Variable-Test', fullName='EXR Variable Test',
-                               psName='EXRVariableTest', copyright='Copyright 2026 EXReader contributors; GPL-3.0-only'))
+                               psName='EXRVariableTest', copyright='Copyright 2026 EXReader contributors; MIT'))
     builder.setupOS2(sTypoAscender=900, sTypoDescender=-200, usWinAscent=1000, usWinDescent=200)
     builder.setupPost()
     kern = round(-50 - (weight - 400) / 10 - (width - 100) / 10)

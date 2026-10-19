@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "flow_internal.h"
 #include "bidi_internal.h"
 #include "opentype_internal.h"

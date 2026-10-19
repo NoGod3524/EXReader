@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* WP4: Coons (type 6) and tensor-product (type 7) mesh patches.
    Reference pixels come from MuPDF 1.28.2; DeviceCMYK documents the engine's
    naive DeviceCMYK model, which intentionally differs from a profile renderer. */
@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cmyk_reference.h"
+#include <math.h>
 static unsigned checks; static exr_error error; static const char *directory;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -65,8 +67,10 @@ int main(int argc,char **argv) {
   /* DeviceCMYK uses the documented naive conversion: corner colours are red,
      cyan, blue and white, so the centre averages to (127,127,191). */
   a=render("shading-mesh7-cmyk.pdf");
-  near(&a,50,50,127,127,191,3);
-  { unsigned char corner[3]; pixel(&a,90,90,corner); CHECK(corner[2]>200); }
+  { unsigned rgb[3];double u=.505,v=.505;
+    cmyk_reference((const double[4]){u,(1-u)*(1-v)+u*v,(1-u)*(1-v),0},rgb);
+    near(&a,50,50,(unsigned char)rgb[0],(unsigned char)rgb[1],(unsigned char)rgb[2],3); }
+  { unsigned rgb[3];double u=.905,v=.905;cmyk_reference((const double[4]){v,(1-u)*(1-v)+u*v,(1-u)*(1-v),0},rgb);near(&a,90,90,(unsigned char)rgb[0],(unsigned char)rgb[1],(unsigned char)rgb[2],3); }
   exr_bitmap_free(&a);
   printf("%u native PDF type 6/7 mesh shading checks passed\n",checks);
   return 0;

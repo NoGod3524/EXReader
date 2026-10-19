@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only
+/* SPDX-License-Identifier: MIT
  * Unicode 17.0.0, Unicode-3.0; tools/generate_indic.py. */
 #ifndef EXR_INDIC_DATA_H
 #define EXR_INDIC_DATA_H

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 #define CFI_LIMIT 65536u
 static exr_status range_paths(const char *cfi,char **a,char **b,exr_error *e);

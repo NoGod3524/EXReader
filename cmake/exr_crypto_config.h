@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #define MBEDTLS_AES_C
 #define MBEDTLS_AES_ROM_TABLES
 #define MBEDTLS_CIPHER_MODE_CBC

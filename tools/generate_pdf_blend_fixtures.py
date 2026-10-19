@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original RGB blend PDFs; raw MuPDF/PDFium and explicit ISO page-group references."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse,hashlib,json,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]/'tests/fixtures/pdf-blend'
@@ -238,6 +238,6 @@ def main():
   p=PDF(16,16);p.xo['Fm']=p.add(stream('0 0 16 16 re f',f'/Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group {group} /Resources << >>'.encode()));p.finish(f'group-bad-{i}','/Fm Do')
  p=PDF(16,16);p.xo['Fm']=p.add(stream('0 0 16 16 re f',b'/Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I false /CS /DeviceRGB >> /Resources << >>'));p.finish('group-bad-5','/Fm Do')
  p=PDF(16,16);p.xo['Fm']=p.add(stream('q BT',b'/Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true >> /Resources << >>'));p.finish('group-malformed','/Fm Do')
- manifest={'pymupdf':pymupdf.VersionBind,'mupdf':pymupdf.VersionFitz,'pypdfium2':str(pypdfium2.PYPDFIUM_INFO),'pdfium':str(pypdfium2.PDFIUM_INFO),'scope':'Original RGB scenes. Raw MuPDF/PDFium renders retained separately. Expected samples use PDFium premultiplied alpha plus ISO 32000-1 11.4.7 page isolation; annotation white region uses PDFium white; BM array/null cells use 11.6.3 and 7.3.9 normative results. Non-isolated interior samples use independent Decimal(40) ISO group formulas, cross-checked against MuPDF on opaque/separable samples; PDFium implicitly isolates these Forms. MuPDF partial-alpha nonseparable blending differs; both engines misselect unknown-first BM array. Font is original GPL-3.0-only fixture.','modes':MODES,'color_cases':CASES,'sizes':{k:[v.w,v.h] for k,v in pages.items()},'sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(ROOT.iterdir()) if p.name!='manifest.json'}}
+ manifest={'pymupdf':pymupdf.VersionBind,'mupdf':pymupdf.VersionFitz,'pypdfium2':str(pypdfium2.PYPDFIUM_INFO),'pdfium':str(pypdfium2.PDFIUM_INFO),'scope':'Original RGB scenes. Raw MuPDF/PDFium renders retained separately. Expected samples use PDFium premultiplied alpha plus ISO 32000-1 11.4.7 page isolation; annotation white region uses PDFium white; BM array/null cells use 11.6.3 and 7.3.9 normative results. Non-isolated interior samples use independent Decimal(40) ISO group formulas, cross-checked against MuPDF on opaque/separable samples; PDFium implicitly isolates these Forms. MuPDF partial-alpha nonseparable blending differs; both engines misselect unknown-first BM array. Font is original MIT fixture.','modes':MODES,'color_cases':CASES,'sizes':{k:[v.w,v.h] for k,v in pages.items()},'sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(ROOT.iterdir()) if p.name!='manifest.json'}}
  (ROOT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8');print('Original blend fixtures and MuPDF/PDFium references generated',pymupdf.VersionFitz,pypdfium2.PDFIUM_INFO)
 if __name__=='__main__':main()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original COLR v0/CPAL rectangles; fontTools is a developer-only dependency."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import hashlib
 from fontTools.fontBuilder import FontBuilder
