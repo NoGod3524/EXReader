@@ -336,6 +336,12 @@ exr_status exr_sink_extent(const exr_draw_sink_ex *sink,unsigned *width,unsigned
   if(!sink->extent) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks a device extent");
   return sink->extent(sink->base.context,width,height,e);
 }
+static exr_status sink_shading(void *context,const exr_bitmap *bitmap,const double matrix[6],exr_error *e) {
+  exr_image_layer layer={0};
+  if(!bitmap || !bitmap->pixels) return exr_fail(e,EXR_ARGUMENT,"Missing shading bitmap");
+  layer.bitmap=*bitmap;layer.interpolate=1;
+  return exr_canvas_image(context,&layer,matrix,1.0,e);
+}
 static exr_status sink_extent(void *context,unsigned *width,unsigned *height,exr_error *e) {
   const exr_canvas *c=context;
   if(!c || !c->bitmap.pixels) return exr_fail(e,EXR_ARGUMENT,"Canvas has no bitmap");
@@ -354,7 +360,7 @@ exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error 
   if(size>offsetof(exr_draw_sink_ex,begin_layer) && size<offsetof(exr_draw_sink_ex,end_layer)+sizeof(sink.end_layer)) size=offsetof(exr_draw_sink_ex,begin_layer);
   if(size>offsetof(exr_draw_sink_ex,blend) && size<offsetof(exr_draw_sink_ex,begin_layer)) size=offsetof(exr_draw_sink_ex,blend);
   status=exr_canvas_get_sink(c,&sink.base,e);if(status!=EXR_OK) return status;
-  sink.struct_size=size;sink.blend=sink_blend;sink.begin_layer=sink_begin_layer;sink.end_layer=sink_end_layer;sink.begin_group=sink_begin_group;sink.soft_mask=sink_soft_mask;sink.extent=sink_extent;
+  sink.struct_size=size;sink.blend=sink_blend;sink.begin_layer=sink_begin_layer;sink.end_layer=sink_end_layer;sink.begin_group=sink_begin_group;sink.soft_mask=sink_soft_mask;sink.extent=sink_extent;sink.shading=sink_shading;
   memset(out,0,out->struct_size);memcpy(out,&sink,size);return EXR_OK;
 }
 exr_status exr_canvas_set_layer_budget(exr_canvas *c,size_t bytes,exr_error *e) {

@@ -343,7 +343,13 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     } else for(i=0;i<3;i++) if(!world_point(r,numbers[2*i],numbers[2*i+1],&points[i])) goto limit;
     return append_path(r,EXR_VECTOR_CUBIC,points,error);
   }
-  if(!strcmp(name,"sh")) return exr_fail(error,EXR_UNSUPPORTED,"PDF shading is not implemented yet");
+  if(!strcmp(name,"sh")) {
+    uint32_t shading=EXR_PDF_NONE;
+    if(count!=1 || resource(r,arena,values[0],"Shading",&shading,error)!=EXR_OK) goto invalid;
+    if(!r->callbacks.shading) return exr_fail(error,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
+    return exr_pdf_shading_draw(r->file,arena,r->resources,shading,r->state.ctm,r->state.paint.intent,
+      r->callbacks.shading,r->context,r->control,error);
+  }
   *handled=0; return EXR_OK;
 invalid:
   if(error->code!=EXR_OK) return error->code;
