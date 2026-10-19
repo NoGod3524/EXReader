@@ -609,6 +609,21 @@ static exr_status solid_edge(flow *f,size_t node,const table_edge *edge,float x,
   exr_box *box;
   if(!edge->width || !(edge->color&255)) return EXR_OK;
   if(edge->style==3 || edge->style==4) return dashed_edge(f,node,edge,x,y,w,h);
+  if(edge->style==5) {
+    /* Two parallel rules, each a third of the edge width. */
+    float third=edge->width/3;exr_box *first,*second;
+    if(w>=h) {
+      first=exr_flow_box(f,node,f->layout->page_count-1,x,y,w,third,EXR_BOX_BLOCK);
+      second=exr_flow_box(f,node,f->layout->page_count-1,x,y+2*third,w,third,EXR_BOX_BLOCK);
+    } else {
+      first=exr_flow_box(f,node,f->layout->page_count-1,x,y,third,h,EXR_BOX_BLOCK);
+      second=exr_flow_box(f,node,f->layout->page_count-1,x+2*third,y,third,h,EXR_BOX_BLOCK);
+    }
+    if(!first || !second) return EXR_LIMIT;
+    first->background=second->background=edge->color;first->border_width=second->border_width=0;
+    first->flags=second->flags=EXR_BOX_BORDER;
+    return EXR_OK;
+  }
   box=exr_flow_box(f,node,f->layout->page_count-1,x,y,w,h,EXR_BOX_BLOCK);
   if(!box) return EXR_LIMIT;
   box->background=edge->color; box->border_width=0; box->flags=EXR_BOX_BORDER;

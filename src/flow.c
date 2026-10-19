@@ -331,6 +331,7 @@ exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float wi
   b->border_width = (s->border_style==1 || s->border_style>=3) ? s->border_width : 0;
   if(s->border_style==3) b->flags|=EXR_BOX_DASHED;
   if(s->border_style==4) b->flags|=EXR_BOX_DOTTED;
+  if(s->border_style==5) b->flags|=EXR_BOX_DOUBLE;
   if((s->display==EXR_CSS_TABLE && s->border_collapse) ||
      (f->border_override && node==f->border_node)) b->border_width=0;
   return b;
