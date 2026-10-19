@@ -343,7 +343,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     } else for(i=0;i<3;i++) if(!world_point(r,numbers[2*i],numbers[2*i+1],&points[i])) goto limit;
     return append_path(r,EXR_VECTOR_CUBIC,points,error);
   }
-  if(!strcmp(name,"sh")) return exr_fail(error,EXR_FORMAT,"PDF shading is not implemented yet");
+  if(!strcmp(name,"sh")) return exr_fail(error,EXR_UNSUPPORTED,"PDF shading is not implemented yet");
   *handled=0; return EXR_OK;
 invalid:
   if(error->code!=EXR_OK) return error->code;
