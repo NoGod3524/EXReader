@@ -13,7 +13,7 @@
 | ICCBased v2/v4 → sRGB | 支持 | `icc.c` | 每种渲染意图一个 littleCMS 变换 |
 | 渲染意图 `/RI`（ExtGState） | **支持** | `pdf_content.c` `apply_ext_state` | 四种意图与 MuPDF 差 ≤1/255；未知名字 `EXR_FORMAT` |
 | 图像 `/Intent` | **支持** | `pdf_image.c` | 单图覆盖图形状态意图；未知名字/非名字 `EXR_FORMAT` |
-| 文档 `/OutputIntents` | **未支持** | 无解析 | 印刷文件不会使用其输出意图的 ICC |
+| 文档 `/OutputIntents` | **未支持** | 无解析 | 见下文调查：缺独立参考，暂缓 |
 | 图像 `/Matte` | **支持** | `pdf_image.c` | 灰度/RGB/CMYK 四分量；分量数或取值不符仍 `EXR_FORMAT` |
 | 透明组 `/Group /CS` | 部分 | `pdf_content.c`、`canvas.c` | DeviceRGB、DeviceGray 支持；**DeviceCMYK 与 ICCBased 组仍 `EXR_UNSUPPORTED`** |
 | 图像过滤器 | 部分 | `pdf_objects.c` | Flate/LZW/DCT + PNG 预测器；**JBIG2/JPX/CCITT 未支持** |
@@ -100,3 +100,20 @@ CMYK 与 ICC 组空间需要真正的组内色彩混合，列入后续子包。
 顺带修掉一个自己引入的缺陷：加入 `intent` 字段时绘制状态是 `calloc` 出来的，默认值成了 0（感知），
 而 PDF 的默认是相对比色（1）。这个偏差是**与 MuPDF 对照时才暴露的**——默认路径的像素从
 (175,81,63) 变回 (175,74,53)。
+
+## 调查记录：`/OutputIntents`（2026-10-18，未交付）
+
+目标：当文档带 CMYK 输出意图时，用它的 ICC 解释 DeviceCMYK，而不是 `1-min(1,c+k)`。
+
+实现到一半发现两个问题，回退后记录：
+
+1. **缺少独立参考**：用 SWOP ICC 构造带 `/OutputIntents` 与不带的两份 PDF，MuPDF 1.28.2 的渲染
+   结果是**完全相同的 (184,79,61)**——它并没有用输出意图解释 DeviceCMYK。没有参考结果，就无法
+   验证我们做得对不对。
+2. **对象链解析**：`root` 与 `/OutputIntents` 数组都能取到，但数组首元素的 `exr_pdf_resolve` 返回
+   `EXR_PDF_NONE`。这需要在解析器层面查清，而不是在色彩代码里绕过。
+
+另外，`k` 运算符的颜色在内容解释器里以 CMYK 原值保存、到绘制时才转 RGB；接入文档 ICC 会改变
+**所有** DeviceCMYK 的输出，属于全局行为变更，必须有独立参考才能做。
+
+结论：暂缓，直到找到会对输出意图做出反应的参考实现，并把对象链解析的返回 `NONE` 查清。
