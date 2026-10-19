@@ -104,13 +104,20 @@ static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_p
 static exr_status begin_group_event(void *context,double opacity,exr_blend_mode mode,unsigned flags,exr_error *e) {
   pdf_painter *r=context;return exr_sink_begin_group(&r->sink,opacity,mode,flags,e);
 }
+static exr_status shading_event(void *context,const exr_bitmap *bitmap,const double matrix[6],
+                               const exr_pdf_paint_state *paint,exr_error *e) {
+  pdf_painter *r=context;
+  (void)paint;
+  if(!r->sink.shading) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
+  return r->sink.shading(r->sink.base.context,bitmap,matrix,e);
+}
 static exr_status end_layer_event(void *context,unsigned commit,exr_error *e) {
   pdf_painter *r=context;return r->sink.end_layer ? r->sink.end_layer(r->sink.base.context,commit,e) : exr_fail(e,EXR_FORMAT,"Drawing consumer lacks isolated layers");
 }
 exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
                                   const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *program_context,
                                   size_t *work,const exr_control *control,exr_error *e) {
-  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,begin_group_event,end_layer_event}; size_t i,local_work=0; exr_status status;
+  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,shading_event,begin_group_event,end_layer_event}; size_t i,local_work=0; exr_status status;
   if(!file) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint input");
   status=exr_draw_sink_snapshot(sink,&r.sink,e);if(status!=EXR_OK) return status;
   if(!r.sink.base.path && !r.sink.base.image && !r.sink.base.clip && !r.sink.base.state) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint consumer");
