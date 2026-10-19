@@ -371,7 +371,8 @@ static int declarations(css *c, const char *s, size_t n, declaration **out, size
           exr_length l;
           uint32_t rgba;
           int which;
-          if (!strcmp(values[t], "solid") || !strcmp(values[t], "none") || !strcmp(values[t], "hidden"))
+          if (!strcmp(values[t], "solid") || !strcmp(values[t], "none") || !strcmp(values[t], "hidden") ||
+              !strcmp(values[t], "dashed") || !strcmp(values[t], "dotted"))
             which = 2;
           else if (length(values[t], 1, 1, 0, &l) && !l.percent && l.value >= 0 && l.value <= 1024)
             which = 0;
@@ -787,6 +788,10 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->border_style = 1;
     else if (!strcmp(v, "hidden"))
       s->border_style = 2;
+    else if (!strcmp(v, "dashed"))
+      s->border_style = 3;
+    else if (!strcmp(v, "dotted"))
+      s->border_style = 4;
     else if (!strcmp(v, "none"))
       s->border_style = 0;
     else

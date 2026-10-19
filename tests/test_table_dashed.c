@@ -1,0 +1,46 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/* WP5: CSS border-style dashed and dotted reach the raster as real gaps. */
+#include "exreader.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+static exr_error error; static unsigned checks; static const char *directory; static exr_font *font;
+#define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
+#define OK(x) CHECK((x)==EXR_OK)
+static exr_layout_config config(void) {
+  exr_layout_config c=exr_layout_config_defaults(); c.page=(exr_layout_options){420,180,10,14,1.2f,0}; return c;
+}
+static exr_layout *layout(const char *name) {
+  char path[4096]; exr_document *d=NULL; exr_layout *l=NULL; exr_layout_config c=config();
+  snprintf(path,sizeof(path),"%s/%s.epub",directory,name);
+  OK(exr_document_open(path,&d,&error));
+  OK(exr_layout_create_ex(d,font,&c,&l,&error));
+  exr_document_free(d);
+  return l;
+}
+/* The longest run of border-coloured pixels found in any single row. */
+static unsigned border_run(const exr_bitmap *image) {
+  unsigned best=0,x; int y;
+  for(y=0;y<(int)image->height;y++) {
+    unsigned count=0;
+    for(x=0;x<image->width;x++) {
+      const unsigned char *p=image->pixels+(size_t)y*image->stride+x*4;
+      if(p[2]>200 && p[0]<60 && p[1]<60) count++;
+    }
+    if(count>best) best=count;
+  }
+  return best;
+}
+int main(int argc,char **argv) {
+  exr_layout *l; exr_bitmap image={0}; unsigned solid,dashed;
+  CHECK(argc==2); directory=argv[1];
+  { char path[4096]; snprintf(path,sizeof(path),"%s/fonts/primary.ttf",directory); OK(exr_font_open(path,&font,&error)); }
+  l=layout("table-border-solid"); OK(exr_render_page_color(l,NULL,0,&image,&error));
+  solid=border_run(&image); exr_bitmap_free(&image); exr_layout_free(l);
+  l=layout("table-border-dashed"); OK(exr_render_page_color(l,NULL,0,&image,&error));
+  dashed=border_run(&image); exr_bitmap_free(&image); exr_layout_free(l);
+  CHECK(solid>=90 && dashed>10 && dashed<solid-10);
+  exr_font_free(font);
+  printf("%u native table dashed-border checks passed (solid %u, dashed %u)\n",checks,solid,dashed);
+  return 0;
+}
