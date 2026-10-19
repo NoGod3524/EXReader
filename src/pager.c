@@ -658,6 +658,23 @@ static exr_status resume_floats(exr_pager *p) {
   f->x=old_x; f->width=old_width; f->bottom_inset=old_inset;
   return status;
 }
+/* A block's own background and independent borders. A uniform border stays in the
+   compact exr_box fields; independent sides append one border-layer box each. */
+static exr_status decorate(flow *f, size_t node, const exr_style *s, float x, float y,
+                           float width, float height, exr_box_kind kind) {
+  exr_style logical;
+  exr_box *box;
+  if (!(s->background & 255) && !exr_border_any(s) && s->display != EXR_CSS_CELL)
+    return EXR_OK;
+  box = exr_flow_box(f, node, 0, x, y, width, height, kind);
+  if (!box)
+    return EXR_MEMORY;
+  if (s->display == EXR_CSS_CELL || (s->display == EXR_CSS_TABLE && s->border_collapse) ||
+      (f->border_override && node == f->border_node) || exr_border_uniform(s))
+    return EXR_OK;
+  logical = exr_flow_style(s, f->writing_mode);
+  return exr_flow_borders(f, node, &logical, x, y, width, height);
+}
 static exr_status floating(exr_pager *p,frame *v) {
   flow *f=&p->f; const exr_style *s=&p->styles[v->node];
   exr_style box=exr_flow_style(s,f->writing_mode);
@@ -674,8 +691,9 @@ static exr_status floating(exr_pager *p,frame *v) {
     if(p->line.ready && p->line.run.glyphs[0].start<offset) offset=p->line.run.glyphs[0].start;
     if(!v->fragment) {
       float extent,available=f->width-margins[1]-margins[3];
-      float border=s->border_style==1 && !(s->display==EXR_CSS_TABLE && s->border_collapse) ? s->border_width : 0;
-      float insets=used(box.padding[1],f->width)+used(box.padding[3],f->width)+2*border;
+      float insets=used(box.padding[1],f->width)+used(box.padding[3],f->width);
+      if(!(s->display==EXR_CSS_TABLE && s->border_collapse))
+        insets+=exr_border_extent(&box,1)+exr_border_extent(&box,3);
       if(available<1) return failure(p,EXR_LIMIT,"Float margins leave no inline extent");
       if(box.width.value>=0) extent=used(box.width,f->width)+insets;
       else {
@@ -774,8 +792,8 @@ static exr_status table_beside(exr_pager *p,frame *v) {
   available=f->width-margin[1]-margin[3];
   if(available<1) return failure(p,EXR_LIMIT,"Table margins leave no inline extent");
   if(!v->bfc_sized) {
-    float border=s->border_style==1 && !s->border_collapse ? s->border_width : 0;
-    float insets=s->border_collapse ? 0 : used(box.padding[1],f->width)+used(box.padding[3],f->width)+2*border;
+    float insets=s->border_collapse ? 0 : used(box.padding[1],f->width)+used(box.padding[3],f->width)+
+      exr_border_extent(&box,1)+exr_border_extent(&box,3);
     if(s->before && f->layout->page_count && f->y>exr_flow_top(f)) f->force_break=1;
     if(box.width.value>=0) v->bfc_min=v->bfc_max=used(box.width,f->width)+insets;
     else {
@@ -965,11 +983,15 @@ static exr_status advance(exr_pager *p) {
           if(s->display==EXR_CSS_TABLE && s->border_collapse) box.padding[side]=(exr_length){0,0};
           if(cell_root && (s->float_side || n->kind==EXR_NODE_IMAGE || s->display==EXR_CSS_TABLE)) box.padding[side]=(exr_length){used(box.padding[side],f->unit_reference),0};
         }
-        float border = s->border_style==1 && !(s->display==EXR_CSS_TABLE && s->border_collapse) ? s->border_width : 0;
+        float insets[4];
+        int collapse_table = s->display == EXR_CSS_TABLE && s->border_collapse;
         const float *resolved=f->border_override && v->node==f->border_node ? f->border_insets : NULL;
+        for(side=0;side<4;side++)
+          insets[side] = resolved ? resolved[side] :
+                         collapse_table ? 0 : exr_border_extent(b, (int)side);
         float ml = used(b->margin[3], v->width), mr = used(b->margin[1], v->width);
-        float pl = used(b->padding[3], v->width) + (resolved ? resolved[3] : border);
-        float pr = used(b->padding[1], v->width) + (resolved ? resolved[1] : border);
+        float pl = used(b->padding[3], v->width) + insets[3];
+        float pr = used(b->padding[1], v->width) + insets[1];
         float content = v->width - ml - mr - pl - pr;
         v->old_intrinsic=f->intrinsic;
         /* A table cell's width already contributed to column allocation. Its
@@ -995,14 +1017,14 @@ static exr_status advance(exr_pager *p) {
                         (b->margin[1].value < 0 ? 2 : 1);
         v->x = v->outer_x + pl;
         v->width = content;
-        v->pt = used(b->padding[0], f->width) + (resolved ? resolved[0] : border);
-        v->pb = used(b->padding[2], f->width) + (resolved ? resolved[2] : border);
+        v->pt = used(b->padding[0], f->width) + insets[0];
+        v->pb = used(b->padding[2], f->width) + insets[2];
         v->parent_inset = f->bottom_inset;
         v->parent_inline_end = f->inline_end_inset;
         v->inline_end = pr + mr;
         v->min_inline = v->outer_x + v->outer_width + mr + v->parent_inline_end;
         v->sized_inline = (b->width.value >= 0 && n->kind != EXR_NODE_IMAGE) ||
-                          (s->background & 255) || (s->border_style && s->border_width > 0) ||
+                          (s->background & 255) || exr_border_any(s) ||
                           s->display == EXR_CSS_CELL;
         if(v->old_intrinsic) f->intrinsic_extent=fmax(f->intrinsic_extent,
           f->x+ml+pl+pr+mr+(f->intrinsic ? 0 : content)+f->inline_end_inset);
@@ -1099,11 +1121,14 @@ static exr_status advance(exr_pager *p) {
         f->bottom_inset -= v->pb;
       }
       f->y += v->pb;
-      if ((s->background & 255) || (s->border_style && s->border_width > 0) || s->display == EXR_CSS_CELL)
-        if (!exr_flow_box(f, v->node, 0, v->outer_x, v->first_y, v->outer_width,
-                            f->y - v->first_y,
-                            s->display == EXR_CSS_CELL ? EXR_BOX_CELL : EXR_BOX_BLOCK))
-          return failure(p, EXR_MEMORY, "Block fragment allocation failed");
+      {
+        exr_status dstatus = decorate(f, v->node, s, v->outer_x, v->first_y, v->outer_width,
+                                      f->y - v->first_y,
+                                      s->display == EXR_CSS_CELL ? EXR_BOX_CELL : EXR_BOX_BLOCK);
+        if (dstatus != EXR_OK)
+          return failure(p, dstatus, dstatus == EXR_MEMORY ? "Block fragment allocation failed" :
+                                                             "Border fragment exceeds the work budget");
+      }
       {
         exr_style box = exr_flow_style(s, f->writing_mode);
         if(!(p->local && v->node==p->local_root && (p->local!=1 || s->display==EXR_CSS_CELL || s->float_side))) f->y += used(box.margin[2], v->old_width);
@@ -1218,12 +1243,14 @@ static exr_status seal(exr_pager *p, int partial) {
       const exr_style *s = &p->styles[v->node];
       if (!v->entered)
         continue;
-      if ((s->background & 255) || (s->border_style && s->border_width > 0) || s->display == EXR_CSS_CELL) {
+      if ((s->background & 255) || exr_border_any(s) || s->display == EXR_CSS_CELL) {
         float end = p->config.page.height - p->config.page.margin - v->parent_inset;
-        if (!exr_flow_box(f, v->node, 0, v->outer_x, v->first_y, v->outer_width,
-                            end - v->first_y,
-                            s->display == EXR_CSS_CELL ? EXR_BOX_CELL : EXR_BOX_BLOCK))
-          return failure(p, EXR_MEMORY, "Page fragment allocation failed");
+        exr_status dstatus = decorate(f, v->node, s, v->outer_x, v->first_y, v->outer_width,
+                                      end - v->first_y,
+                                      s->display == EXR_CSS_CELL ? EXR_BOX_CELL : EXR_BOX_BLOCK);
+        if (dstatus != EXR_OK)
+          return failure(p, dstatus, dstatus == EXR_MEMORY ? "Page fragment allocation failed" :
+                                                             "Border fragment exceeds the work budget");
       }
       if(p->local==3 && v->node==p->local_root)
         v->block_consumed+=p->config.page.height-p->config.page.margin-v->parent_inset-v->first_y-v->pb;

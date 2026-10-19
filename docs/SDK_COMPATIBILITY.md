@@ -418,6 +418,19 @@ No additional runtime component is introduced. The PDF Form/AP default I=false
 now renders as non-isolated RGB; explicit CS on a non-isolated Form is malformed.
 Knockout groups and graphics-state soft masks remain pending.
 
+## Independent border sides and repeated table headers
+
+`border-top/right/bottom/left` (width, colour and style) now reach blocks,
+separate cells and collapsed grids. Uniform four-sided borders keep using
+`exr_box.border_width`, `exr_box.border_color` and the DASHED/DOTTED/DOUBLE
+flags, so existing drawing code is unchanged. When the four sides differ, the
+layout appends one `EXR_BOX_BORDER` box per visible side instead of setting
+`exr_box.border_width`; hosts that already paint collapsed-table border layers
+handle them, while a host that only reads `border_width` must also draw border
+boxes. No public record size, member offset, symbol, ABI epoch (1), schema (6) or
+version changes. Table pagination also repeats leading `<thead>` rows at the top
+of each continuation page; the extra repeated glyphs and boxes carry the header
+source offsets.
 ## Package version 0.19.0
 
 The current tree, header and installed config package report **0.19.0**
