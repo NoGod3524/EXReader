@@ -207,10 +207,9 @@ exr_status exr_pdf_shading_mesh(exr_pdf_file *file,uint32_t value,int type,
           a=b;b=c;c=v;
           mesh_triangle(&bitmap,left,top,scale,&a,&b,&c);
         } else if(have_prev && flag==2) {
-          mesh_vertex next=v;
-          mesh_triangle(&bitmap,left,top,scale,&a,&c,&next);
-          a=v; /* the shared edge becomes (c, v) */
-          b=c; c=next;
+          /* PDF reference 4.6.3: flag 2 continues from the edge (va, vc). */
+          mesh_triangle(&bitmap,left,top,scale,&a,&c,&v);
+          b=c; c=v; /* va stays at the shared corner */
         } else { status=exr_fail(error,EXR_FORMAT,"Invalid PDF mesh shading edge flag"); goto done; }
       }
     } else {
