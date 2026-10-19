@@ -158,3 +158,18 @@ CMYK 与 ICC 组空间需要真正的组内色彩混合，列入后续子包。
 中心与外围的差异来自采样约定：我们取像素中心（中心像素距圆心约 0.7，所以是 231 而不是 255），
 MuPDF 取像素角。**径向还有一个已知代价**：位图固定 256×256，放大到大面积时会有轻微阶梯；
 后续可以按设备尺寸自适应分辨率，但那要把画布尺寸传进着色器，属于下一次改动。
+
+
+## DeviceCMYK图像与渐变分色（3.34.0）
+
+| 项目 | 范围 | 验收 |
+| --- | --- | --- |
+| 原生图像 | 四通道字节墨色，Decode/16位/JPEG/Matte/SMask/色键；沿用仿射插值和clip | `native-inks`，三个源色×三种模式；页面/Form/AP |
+| 原生渐变 | 轴向/径向、网格4–7；函数/原生分量插值后保留C/M/Y/K | 三个源色×六类×三种模式 |
+| 边界 | 循环Intent、损坏Decode/SMask、聚合128MiB、参数/取消、旧sink | 拒绝且不发布部分结果 |
+
+75份新PDF及其SHA256在`tests/fixtures/pdf-color/native-ink-manifest.json`。
+`tools/generate_native_ink_fixtures.py`重生输入（JPEG生成使用Pillow12.3.0）。
+独立CMS和分量数学参考最大差0；MuPDF1.28.2原生CMYK最大差2/255，详见验证记录。
+普通RGB页不申请额外分色图。原生样本量化为8位；ICCBased/DeviceN到CMYK组的转换、
+OutputIntent、印刷套印和完整ICC组空间尚未由这项完成替代。

@@ -65,13 +65,14 @@ static int image_name_is(exr_pdf_file *file,uint32_t id,const char *name) {
 }
 static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
                                  unsigned intent,exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e,
-                                 image_chain *chain,unsigned *kind) {
+                                 image_chain *chain,unsigned *kind,exr_bitmap *inks) {
   image_reader r={0}; uint32_t width,height,bits=1,id,key[2*EXR_PDF_MAX_COLORANTS]={0}; unsigned channels=1,k,indexed=0,color_key=0;
   int stencil=0,interpolate=0; double decode[2*EXR_PDF_MAX_COLORANTS]={0,1}; exr_pdf_colorspace *space=NULL;
   const unsigned char *bytes; size_t size,row,y,x,local_work=0,owned=0; exr_bitmap bitmap={0}; exr_vector_texture *mask_texture=NULL; const exr_pdf_value *v;
   uint32_t mask=EXR_PDF_NONE; unsigned soft=0,entered=0,charged=0,matte=0; double matte_rgb[4]={0};
   exr_pdf_stream_codec codec=EXR_PDF_STREAM_RAW; uint32_t parameters=EXR_PDF_NONE;
   if(out) *out=NULL;
+  if(inks) memset(inks,0,sizeof(*inks));
   if(!file || !out) return exr_fail(e,EXR_ARGUMENT,"Missing PDF image input/output");
   r.file=file; if(!work) work=&local_work;
   if(exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
@@ -152,8 +153,14 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   if(r.error.code!=EXR_OK || exr_pdf_image_payload(file,image,&bytes,&size,&codec,&parameters,&r.error)!=EXR_OK) goto done;
   row=((size_t)width*channels*bits+7)/8;
   owned=(size_t)width*height*4;
+  if(inks && exr_pdf_colorspace_device(space)==EXR_PDF_DEVICE_CMYK) owned*=2;
   if(owned>(size_t)128*1024*1024-chain->live) { exr_fail(&r.error,EXR_LIMIT,"PDF image/mask pixels exceed 128 MiB"); goto done; }
   chain->live+=owned; charged=1;
+  if(inks && exr_pdf_colorspace_device(space)==EXR_PDF_DEVICE_CMYK) {
+    inks->width=width;inks->height=height;inks->stride=width*4;inks->channels=4;
+    inks->pixels=malloc((size_t)inks->stride*height);
+    if(!inks->pixels) { exr_fail(&r.error,EXR_MEMORY,"PDF native ink allocation failed");goto done; }
+  }
   if(codec==EXR_PDF_STREAM_JPEG) {
     exr_status status;
     id=get(&r,parameters,"ColorTransform"); if(r.error.code!=EXR_OK) goto done;
@@ -171,7 +178,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   }
   /* ISO 32000-1 8.6.5.8: an image may override the graphics-state intent. */
   { uint32_t ri=EXR_PDF_NONE;
-    if(exr_pdf_resolve(file,exr_pdf_get(file,image,"Intent"),&ri,e)!=EXR_OK) goto done;
+    if(exr_pdf_resolve(file,exr_pdf_get(file,image,"Intent"),&ri,&r.error)!=EXR_OK) goto done;
     if(ri!=EXR_PDF_NONE && exr_pdf_value_at(file,ri)->kind!=EXR_PDF_NULL) {
       const char *names[4]={"Perceptual","RelativeColorimetric","Saturation","AbsoluteColorimetric"}; unsigned n;int found=0;
       for(n=0;n<4;n++) if(image_name_is(file,ri,names[n])) { intent=n;found=1;break; }
@@ -180,7 +187,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   }
   if(mask!=EXR_PDF_NONE) {
     unsigned mask_kind=0;
-    if(decode_image(file,mask,resource_file,resources,0xffffffff,intent,&mask_texture,work,control,&r.error,chain,&mask_kind)!=EXR_OK) goto done;
+    if(decode_image(file,mask,resource_file,resources,0xffffffff,intent,&mask_texture,work,control,&r.error,chain,&mask_kind,NULL)!=EXR_OK) goto done;
     if((soft && mask_kind!=1) || (!soft && mask_kind!=0)) goto invalid;
   }
   if(matte && (!mask_texture || mask_texture->bitmap.width!=width || mask_texture->bitmap.height!=height || mask_texture->mask)) goto invalid;
@@ -199,6 +206,8 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
         double a=mask_texture->bitmap.pixels[y*mask_texture->bitmap.stride+x*4]/255.;
         for(k=0;k<channels;k++) values[k]=a>0 ? fmax(0,fmin(1,matte_rgb[k]+(values[k]-matte_rgb[k])/a)) : 0;
       }
+      if(inks && inks->pixels) for(k=0;k<4;k++)
+        inks->pixels[y*inks->stride+x*4+k]=(unsigned char)floor(fmax(0,fmin(1,values[k]))*255+.5);
       if(stencil) { p[0]=(unsigned char)(color>>24); p[1]=(unsigned char)(color>>16); p[2]=(unsigned char)(color>>8); p[3]=(unsigned char)floor((1-values[0])*255+.5); }
       else {
         double rgb[3]; if(exr_pdf_colorspace_rgb_intent(space,values,rgb,intent,&r.error)!=EXR_OK) goto done;
@@ -222,6 +231,7 @@ done:
   if(entered) chain->depth--;
   if(charged) chain->live-=owned;
   release_texture(mask_texture,chain); free(bitmap.pixels); exr_pdf_colorspace_free(space);
+  if(r.error.code!=EXR_OK && inks) { free(inks->pixels);memset(inks,0,sizeof(*inks)); }
   if(e) *e=r.error;
   return r.error.code;
 }
@@ -232,7 +242,12 @@ exr_status exr_pdf_image_load(exr_pdf_file *file,uint32_t image,uint32_t resourc
 exr_status exr_pdf_image_load_from(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
                                unsigned intent,exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e) {
   image_chain chain={0}; unsigned kind=0;
-  return decode_image(file,image,resource_file,resources,color,intent,out,work,control,e,&chain,&kind);
+  return decode_image(file,image,resource_file,resources,color,intent,out,work,control,e,&chain,&kind,NULL);
+}
+exr_status exr_pdf_image_load_inks(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
+  unsigned intent,exr_vector_texture **out,exr_bitmap *inks,size_t *work,const exr_control *control,exr_error *e) {
+  image_chain chain={0};unsigned kind=0;
+  return decode_image(file,image,resource_file,resources,color,intent,out,work,control,e,&chain,&kind,inks);
 }
 exr_status exr_pdf_image_decode(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t color,
                                  exr_bitmap *out,int *interpolate,size_t *work,const exr_control *control,exr_error *e) {

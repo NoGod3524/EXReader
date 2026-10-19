@@ -352,7 +352,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     if(!r->callbacks.shading) return exr_fail(error,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
     exr_pdf_paint_state paint=paint_state(r);
     return exr_pdf_shading_draw(r->file,r->file,r->resources,shading,r->state.ctm,&paint,&r->color_work,
-      r->callbacks.shading,r->context,r->control,error);
+      r->callbacks.shading,r->context,r->callbacks.image_space && r->callbacks.image_space(r->context)==EXR_GROUP_CMYK,r->control,error);
   }
   *handled=0; return EXR_OK;
 invalid:

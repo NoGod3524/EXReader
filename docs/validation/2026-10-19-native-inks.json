@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-19",
+  "version": "3.34.0",
+  "abi": {
+    "epoch": 1,
+    "original_raw_measurements": 703,
+    "differences": [
+      {
+        "before": "exr_draw_sink_ex.size=112",
+        "after": "exr_draw_sink_ex.size=128"
+      }
+    ],
+    "export_counts": {
+      "gcc": 305,
+      "msvc": 305
+    },
+    "previous_declarations": 304,
+    "missing_old_exports": []
+  },
+  "schema": 6,
+  "pdf_files": 75,
+  "platform": "Windows x64",
+  "tests": {
+    "gcc": {
+      "tests": 137,
+      "failures": 0,
+      "disabled": 0,
+      "native_check_output": "913 native ink checks; max reference difference 0; legacy round-trip difference 10",
+      "dll_sha256": "48fa276af14cd6de00dcee4910a7b23369bbb36aaabee681ab8f759afe283b18"
+    },
+    "msvc": {
+      "tests": 137,
+      "failures": 0,
+      "disabled": 0,
+      "native_check_output": "913 native ink checks; max reference difference 0; legacy round-trip difference 10",
+      "dll_sha256": "670a69b6e924cc05dae251cd2b33aa7d08262d18bee7071ec85bafdd22b04a34"
+    }
+  },
+  "independent_reference": {
+    "engine": "MuPDF 1.28.2",
+    "scenes": 63,
+    "max_native_component_difference": 2,
+    "record": "2026-10-19-native-inks-mupdf.json"
+  },
+  "layers": {
+    "objects": 99,
+    "symbol_references": 1025,
+    "include_dependencies": 898,
+    "inverse_symbols": 0,
+    "inverse_includes": 0
+  },
+  "icc_off": {
+    "targeted_tests": 4,
+    "failures": 0,
+    "native_max_reference_difference": 1
+  },
+  "installed": {
+    "component_tests": 4,
+    "failures": 0,
+    "independent_cpp_headers": 13,
+    "cpp_runtime": "3.34.0 ABI1"
+  }
+}

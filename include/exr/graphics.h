@@ -99,6 +99,12 @@ EXR_API exr_status exr_canvas_clip(exr_canvas *canvas,const exr_path_segment *se
                                     const double matrix[6],exr_fill_rule rule,exr_error *error);
 EXR_API exr_status exr_canvas_image(exr_canvas *canvas,const exr_image_layer *image,const double matrix[6],
                                      double alpha,exr_error *error);
+/* Native DeviceCMYK samples, four unsigned bytes C/M/Y/K per pixel, same size
+   as image->bitmap. image supplies RGB fallback, alpha, interpolation and masks;
+   its matte must already be removed. Samples are borrowed for this call. In a
+   CMYK group inks are sampled before blending; elsewhere the RGB image is used. */
+EXR_API exr_status exr_canvas_image_cmyk(exr_canvas *canvas,const exr_image_layer *image,const exr_bitmap *inks,
+                                      const double matrix[6],double alpha,exr_error *error);
 typedef enum { EXR_DRAW_SAVE,EXR_DRAW_RESTORE,EXR_DRAW_BEGIN_CLIP,EXR_DRAW_END_CLIP } exr_draw_state;
 typedef exr_status (*exr_draw_path_fn)(void *context,const exr_path_segment *segments,size_t count,
                                         const double matrix[6],const exr_draw_style *style,exr_error *error);
@@ -140,6 +146,12 @@ typedef exr_status (*exr_draw_shading_fn)(void *context,const exr_bitmap *bitmap
    style's RGB fields otherwise; the canvas sink accepts both. */
 typedef exr_status (*exr_draw_path_cmyk_fn)(void *context,const exr_path_segment *segments,size_t count,
   const double matrix[6],const exr_draw_style *style,const double fill[4],const double stroke[4],exr_error *error);
+typedef exr_status (*exr_draw_image_cmyk_fn)(void *context,const exr_image_layer *image,const exr_bitmap *inks,
+  const double matrix[6],double alpha,exr_error *error);
+/* Return EXR_GROUP_CMYK to request native ink images/gradients in the current
+   blend space; other values request RGB. Called before decoding, without
+   changing drawing state. Absent query requests inks whenever image_cmyk exists. */
+typedef unsigned (*exr_draw_image_space_fn)(void *context);
 
 typedef struct {
   size_t struct_size;
@@ -152,6 +164,8 @@ typedef struct {
   exr_draw_extent_fn extent; /* Optional device extent; needed for soft masks. */
   exr_draw_shading_fn shading; /* Optional; PDF sh operator. */
   exr_draw_path_cmyk_fn path_cmyk; /* Optional; PDF CMYK source components for paths. */
+  exr_draw_image_cmyk_fn image_cmyk; /* Optional native inks; also receives CMYK gradients. */
+  exr_draw_image_space_fn image_space; /* Optional allocation hint for image_cmyk. */
 } exr_draw_sink_ex;
 /* Initialize out->struct_size to the available storage size. */
 EXR_API exr_status exr_canvas_get_sink_ex(exr_canvas *canvas,exr_draw_sink_ex *out,exr_error *error);

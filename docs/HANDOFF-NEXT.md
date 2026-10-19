@@ -1,6 +1,6 @@
 # 当前检查点与后续顺序
 
-2026-10-19，C11 SDK **3.33.1**，MIT，ABI1，schema6。分支 `codex/framework`。
+2026-10-19，C11 SDK **3.34.0**，MIT，ABI1，schema6。分支 `codex/framework`。
 
 完整历史及旧/新编号映射见[更新日志](../CHANGELOG.md)。
 
@@ -41,7 +41,7 @@ ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 ## 4. 尚未关闭的审计项
 
 - 显式DeviceRGB隔离子组的颜色切换已修复；本批另修正PDF组K极性，验收与剩余项见末尾记录。
-- CMYK组中的图像/渐变经过RGBA，原始墨色分离不保真。
+- DeviceCMYK图像/2–7型渐变原生分色已补齐；ICCBased/DeviceN到组空间的分色转换仍待扩展。
 - 非隔离/挖空组更多嵌套组合需独立参考覆盖，现有通过的样本不能证明全部正确。
 - 组裁小只用于顶层画布组；多数嵌套Form仍分配完整缓冲。
 - 轴向/径向Extend仍有限外推；Domain/BBox/Background尚需逐项核验。
@@ -57,7 +57,7 @@ ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 
 ## 5. 后续顺序与验收目标
 
-1. 显式RGB隔离子组切换已补齐。下一项为CMYK组图像/渐变的原始墨色保真：建立至少3个富黑/纯K/相同RGB不同墨色正例及2个反例，先完成原生分量通道与独立参考再关闭矩阵项。
+1. 显式RGB隔离子组与DeviceCMYK图像/渐变原生分色已补齐。继续非隔离/挖空组嵌套、逐层区域缓冲，以及渐变Extend/Domain/BBox；ICCBased/DeviceN与完整印刷色彩仍按WP4矩阵推进。
 2. **WP4a**：按PubSec、EFOpen、JBIG2、JPX分别冻结输入矩阵；认证项至少10个凭据/损坏/权限/取消场景，图像项至少3正例/2反例。分别交付，保留现有Standard R2–R6回归。
 3. **WP6–WP16**：按 [开发路线](HANDOFF.md) 的量化出口推进；完整阅读SDK、OCR、redaction与手机运行尚未完成。
 
@@ -69,3 +69,17 @@ ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 与EXACT C++消费通过，组色空间229检查。50场景输入改为K=true，Decimal期望未改。
 Java示例取消0.x限制；本批新CI已7/7通过，三桌面JNI实际执行通过。原始证据与剩余项见审计/验证记录。
 下一步是CMYK组图像/渐变的原始墨色保真，随后继续未关闭的嵌套与区域缓冲问题。
+
+
+## 3.34.0分色检查点
+
+新增`exr_canvas_image_cmyk`及sink尾回调`image_cmyk`/`image_space`。旧RGBA图层/bitmap不改布局，
+普通RGB页不分配额外墨色图。DeviceCMYK解码保留Decode/Matte后的分量，2–7型渐变保留
+求值与插值后的分量；以8位C/M/Y/K采样进入组。75份原创PDF中63个颜色/模式场景经MuPDF
+1.28.2原生CMYK独立对照，最大差2/255，详见`validation/2026-10-19-native-inks-mupdf.json`。
+新增循环Intent错误传播、128MiB双图缓冲限额、透明像素插值和旧sink前缀回归。
+用户确认继续全部WP1–WP16，含4a/12a；本子项完成不关闭整个WP4。
+
+本地GCC/MSVC各137/137、ICC-OFF4/4、安装组件4/4、EXACT C++运行和13头编译通过；
+分色913检查，独立CMS参考最大差0。分层99/1025/898无逆向，原ABI仅版本化sink尾增长，
+旧304导出保留，新增一函数。证据见`validation/2026-10-19-native-inks.json`。
