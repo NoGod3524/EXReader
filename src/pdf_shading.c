@@ -6,8 +6,8 @@
 #include "pdf_internal.h"
 #include "pdf_function_internal.h"
 
-#define SHADING_SAMPLES 256u
-#define SHADING_EXTEND_SPAN 64.0 /* axis lengths painted past each end */
+#define SHADING_SAMPLES 512u
+#define SHADING_EXTEND_SPAN 1.0 /* one axis length of constant colour past each end */
 
 static int number(exr_pdf_file *file,uint32_t id,double *out) {
   const exr_pdf_value *v=exr_pdf_value_at(file,id);

@@ -340,9 +340,7 @@ static exr_status sink_shading(void *context,const exr_bitmap *bitmap,const doub
   exr_image_layer layer={0};
   if(!bitmap || !bitmap->pixels) return exr_fail(e,EXR_ARGUMENT,"Missing shading bitmap");
   layer.bitmap=*bitmap;layer.interpolate=1;
-  { exr_status s=exr_canvas_image(context,&layer,matrix,1.0,e);
-    if(getenv("EXR_DEBUG_SHADING")) fprintf(stderr,"shading canvas status %d\n",(int)s);
-    return s; }
+  return exr_canvas_image(context,&layer,matrix,1.0,e);
 }
 static exr_status sink_extent(void *context,unsigned *width,unsigned *height,exr_error *e) {
   const exr_canvas *c=context;
