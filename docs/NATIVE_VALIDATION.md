@@ -4090,3 +4090,25 @@ RGB-space group approximation, not mesh geometry. `bug1703683_page2_reduced.pdf`
 still stops at strict ToUnicode validation, which was deliberately reverted.
 
 Local Windows Release: 129/129 CTests; GCC 16 Release builds with `-Werror`.
+
+## Canvas DeviceCMYK transparency groups (2026-10-19)
+
+`exr_canvas_begin_group(..., EXR_GROUP_CMYK)` allocates a four-component buffer
+([C M Y K A object] floats per pixel, premultiplied) in addition to the RGBA
+preview. `exr_canvas_path_cmyk` feeds source DeviceCMYK components; RGB paints,
+images and shadings are converted on write. Separable blend modes, soft masks
+and knockout composite the four components; `end_layer` converts the group
+result back with the same `1-min(1,c+k)` device model as page painting.
+
+`native-canvas-cmyk` is the controlled case: a half-transparent rich black
+(C=M=Y=1, K=1) followed by half-transparent white leaves straight CMYK
+(1/3,1/3,0,1/3) at alpha 0.75, which over white is (128,128,191); RGB
+compositing of the same colours would give (191,191,191). The test also pins
+that a CMYK paint outside a CMYK group converts to device RGB (rich black is
+black) and that nested/mixed CMYK groups, non-separable blend modes and
+compound fill+stroke paths are refused with `EXR_UNSUPPORTED`.
+
+The PDF pipeline is not wired to this buffer yet: `/Group /CS /DeviceCMYK` is
+accepted, but content is painted in RGB, so translucent overlaps inside PDF CMYK
+groups remain an approximation. Wiring needs an additive sink callback that
+passes the source CMYK values (already retained in `exr_pdf_color.values`).

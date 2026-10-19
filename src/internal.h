@@ -218,7 +218,7 @@ exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex
 /* Non-isolated working pixels: premultiplied RGB, complete alpha, group-only
    alpha. A NULL buffer keeps the original compact 8-bit drawing path. */
 typedef struct exr_composite_state {
-  float *pixels;exr_bitmap backdrop;const struct exr_composite_state *backdrop_state;
+  float *pixels;float *cmyk_pixels;exr_bitmap backdrop;const struct exr_composite_state *backdrop_state;
   uint32_t left,top,right,bottom;unsigned depth;unsigned knockout,isolated;
   /* Working buffers may cover only a sub-rectangle of the canvas. */
   int origin_x,origin_y;

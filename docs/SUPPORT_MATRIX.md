@@ -62,7 +62,7 @@
 | 元数据 | 支持 | Info/XMP 读取与增量写回 | `native-pdf-metadata-write`、`native-metadata` |
 | 认证 | 部分 | Standard R2–R6、RC4/AES、Crypt filter；**证书 PubSec、EFOpen、加密写回未支持** | `native-pdf-crypto` |
 | 色彩 | 部分 | Device/Indexed/CalGray/CalRGB/Lab、ICCBased v2/v4→sRGB、Separation/All/None/DeviceN、Type 0 函数；**OutputIntent、Matte 未支持**；DeviceCMYK 用内置朴素换算（无 ICC profile，与 SWOP 参考有可量化差异） | `native-pdf-color`、`native-pdf-calculator` |
-| 合成 | 支持（挖空、软遮罩）/ 部分（其余） | 16 种 RGB 混合模式、页面隔离、隔离/非隔离 Form/AP、挖空组（50 个场景）、图形状态软遮罩（Alpha/Luminosity、`BC`、指数 `TR`、矩阵/BBox、嵌套组提交、DeviceGray 组色空间、q/Q/None，41 场景 + 8 拒绝用例）；**组区域裁小、非 Identity/指数型之外的 TR 未支持**；**DeviceCMYK 组接受但按 device RGB 合成**（不透明内容与 CMYK 空间一致，半透明重叠与该空间渲染器可能不同） | `native-blend`、`native-canvas`、`native-pdf-group-reference`、`native-pdf-groupcs` |
+| 合成 | 支持（挖空、软遮罩）/ 部分（其余） | 16 种 RGB 混合模式、页面隔离、隔离/非隔离 Form/AP、挖空组（50 个场景）、图形状态软遮罩（Alpha/Luminosity、`BC`、指数 `TR`、矩阵/BBox、嵌套组提交、DeviceGray 组色空间、q/Q/None，41 场景 + 8 拒绝用例）；**组区域裁小、非 Identity/指数型之外的 TR 未支持**；**DeviceCMYK 组**：画布已有四分量缓冲（`EXR_GROUP_CMYK` + `exr_canvas_path_cmyk`，可分离混合模式、软遮罩、挖空），PDF 管线尚未把源 CMYK 传入该缓冲，组内半透明重叠仍是 RGB 近似；不透明内容与 CMYK 空间一致 | `native-blend`、`native-canvas`、`native-canvas-cmyk`、`native-pdf-group-reference`、`native-pdf-groupcs` |
 | 标注 | 部分 | Text/Highlight/Underline/StrikeOut/Squiggly 增删改与外观；**其余类型与 AcroForm 未支持** | `native-pdf-markup`、`native-pdf-appearance`、`native-pdf-write` |
 | 安全 redaction | 未支持 | 现有增量删除保留历史原文，不能充当擦除 | — |
 | OCR | 未支持 | 无后端、无文字层 | — |
