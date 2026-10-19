@@ -156,8 +156,13 @@ typedef enum { EXR_PDF_SAVE,EXR_PDF_RESTORE,EXR_PDF_BEGIN_TEXT,EXR_PDF_END_TEXT 
 typedef exr_status (*exr_pdf_path_fn)(void *context,const exr_pdf_path_paint *path,exr_error *error);
 typedef exr_status (*exr_pdf_state_fn)(void *context,exr_pdf_state_event event,exr_error *error);
 typedef exr_status (*exr_pdf_image_fn)(void *context,exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *error);
+typedef exr_status (*exr_pdf_shading_fn)(void *context,const exr_bitmap *bitmap,const double matrix[6],const exr_pdf_paint_state *paint,exr_error *error);
+exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,
+  uint32_t value,const double ctm[6],unsigned intent,exr_pdf_shading_fn emit,void *context,
+  const exr_control *control,exr_error *error);
 typedef struct {
   exr_pdf_text_fn glyph;exr_pdf_path_fn path;exr_pdf_state_fn state;exr_pdf_image_fn image;
+  exr_pdf_shading_fn shading; /* optional: PDF sh operator */
   exr_draw_group_begin_fn begin_group;exr_draw_layer_end_fn end_layer;
 } exr_pdf_draw_callbacks;
 enum { EXR_PDF_GROUP_ISOLATED=1,EXR_PDF_GROUP_NONISOLATED=2,EXR_PDF_GROUP_KNOCKOUT=4,EXR_PDF_GROUP_GRAY=8 };
