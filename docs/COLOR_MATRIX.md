@@ -12,7 +12,7 @@
 | CalGray / CalRGB / Lab | 支持 | `pdf_colorspace.c` | — |
 | ICCBased v2/v4 → sRGB | 支持 | `icc.c` | 每种渲染意图一个 littleCMS 变换 |
 | 渲染意图 `/RI`（ExtGState） | **支持** | `pdf_content.c` `apply_ext_state` | 四种意图与 MuPDF 差 ≤1/255；未知名字 `EXR_FORMAT` |
-| 图像 `/Intent` | **未支持** | 无解析 | 图像仍按图形状态的意图转换，单图覆盖待做 |
+| 图像 `/Intent` | **支持** | `pdf_image.c` | 单图覆盖图形状态意图；未知名字/非名字 `EXR_FORMAT` |
 | 文档 `/OutputIntents` | **未支持** | 无解析 | 印刷文件不会使用其输出意图的 ICC |
 | 图像 `/Matte` | **支持** | `pdf_image.c` | 灰度/RGB/CMYK 四分量；分量数或取值不符仍 `EXR_FORMAT` |
 | 透明组 `/Group /CS` | 部分 | `pdf_content.c`、`canvas.c` | DeviceRGB、DeviceGray 支持；**DeviceCMYK 与 ICCBased 组仍 `EXR_UNSUPPORTED`** |
@@ -85,3 +85,18 @@
 **语料影响**：pdf.js 120 份样本里仍有 7 份因组色空间失败，但核对后它们用的是
 `/DeviceCMYK` 或间接 `ICCBased`，不是灰度——所以本次改动没有让语料通过率变化（45/120）。
 CMYK 与 ICC 组空间需要真正的组内色彩混合，列入后续子包。
+
+## 已完成项：图像 `/Intent`（2026-10-18）
+
+图像字典的 `/Intent` 会覆盖图形状态的意图，只作用于该图。与 MuPDF 1.28.2 完全一致：
+
+| 用例 | EXReader | MuPDF |
+| --- | --- | --- |
+| 无 `/Intent`（默认相对比色） | (175,74,53) | (175,74,53) |
+| `/Intent /Perceptual` | (175,81,63) | (175,81,63) |
+| `/Intent /Saturation` | (175,81,63) | (175,81,63) |
+| `/Intent /Bogus`、`/Intent 42` | `EXR_FORMAT` | — |
+
+顺带修掉一个自己引入的缺陷：加入 `intent` 字段时绘制状态是 `calloc` 出来的，默认值成了 0（感知），
+而 PDF 的默认是相对比色（1）。这个偏差是**与 MuPDF 对照时才暴露的**——默认路径的像素从
+(175,81,63) 变回 (175,74,53)。

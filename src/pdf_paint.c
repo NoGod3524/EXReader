@@ -93,7 +93,7 @@ static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_erro
 static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *e) {
   pdf_painter *r=context; exr_vector_texture *image=NULL; double matrix[6]; const double flip[6]={1,0,0,-1,0,1};
   exr_status status; unsigned char *mask=NULL; if(!r->sink.base.image) return EXR_OK;
-  status=exr_pdf_image_load_from(file,id,resource_file,resources,rgba(&paint->fill),&image,r->work,r->control,e);
+  status=exr_pdf_image_load_from(file,id,resource_file,resources,rgba(&paint->fill),paint->intent,&image,r->work,r->control,e);
   multiply(paint->matrix,flip,matrix);
   if(status==EXR_OK) status=blend_state(r,paint->blend,e);
   if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);

@@ -61,6 +61,19 @@ int main(int argc,char **argv) {
   exr_bitmap_free(&page);
   rejected("intent-bad-name.pdf");
   rejected("intent-bad-type.pdf");
+  /* ISO 32000-1 8.6.5.8: an image's /Intent overrides the graphics-state intent.
+     MuPDF 1.28.2 renders the same file as (175,74,53), (175,81,63), (175,81,63). */
+  page=render("image-intent-default.pdf");
+  near(&page,8,8,175,74,53,"image default");
+  exr_bitmap_free(&page);
+  page=render("image-intent-perceptual.pdf");
+  near(&page,8,8,175,81,63,"image perceptual");
+  exr_bitmap_free(&page);
+  page=render("image-intent-saturation.pdf");
+  near(&page,8,8,175,81,63,"image saturation");
+  exr_bitmap_free(&page);
+  rejected("image-intent-bad.pdf");
+  rejected("image-intent-bad-type.pdf");
   printf("%u native PDF rendering-intent checks passed\n",checks);
   return 0;
 }
