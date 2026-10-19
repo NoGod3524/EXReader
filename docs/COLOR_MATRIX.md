@@ -14,7 +14,7 @@
 | 渲染意图 `/RI`（ExtGState） | **支持** | `pdf_content.c` `apply_ext_state` | 四种意图与 MuPDF 差 ≤1/255；未知名字 `EXR_FORMAT` |
 | 图像 `/Intent` | **未支持** | 无解析 | 图像仍按图形状态的意图转换，单图覆盖待做 |
 | 文档 `/OutputIntents` | **未支持** | 无解析 | 印刷文件不会使用其输出意图的 ICC |
-| 图像 `/Matte` | 部分 | `pdf_image.c:99-113` | 仅灰度/RGB；CMYK matte 明确拒绝 |
+| 图像 `/Matte` | **支持** | `pdf_image.c` | 灰度/RGB/CMYK 四分量；分量数或取值不符仍 `EXR_FORMAT` |
 | 透明组 `/Group /CS` | 部分 | `pdf_content.c:169` | 只接受 DeviceRGB，其余 `EXR_UNSUPPORTED` |
 | 图像过滤器 | 部分 | `pdf_objects.c` | Flate/LZW/DCT + PNG 预测器；**JBIG2/JPX/CCITT 未支持** |
 | JPEG `ColorTransform` | 部分 | `pdf_image.c:152` | 只接受 YCbCr 默认；模板/索引覆盖明确拒绝 |
@@ -54,3 +54,19 @@
 
 反例：`/RI /Bogus` 与 `/RI 42` 均在渲染时报 `EXR_FORMAT`（打开时不读，因为 ExtGState 只在应用时求值）。
 测试：`native-pdf-intent`，夹具 `tests/fixtures/pdf-color/intent-*.pdf`（内嵌 SWOP CMYK ICC）。
+
+## 已完成项：CMYK 图像 matte（2026-10-18）
+
+`/Matte` 之前只接受灰度与 RGB，CMYK 基图直接拒绝。现在四分量 matte 会走与采样相同的色空间
+转换路径得到 RGB，再交给仿射图像的反预乘。
+
+| 用例 | 期望 | 结果 |
+| --- | --- | --- |
+| `matte-gray.pdf` | (128,128,128) 不透明 | 通过 |
+| `matte-rgb.pdf` | (200,60,40) | 通过 |
+| `matte-cmyk.pdf` | (205,45,65)（CMYK 20/180/160/30） | 通过 |
+| `matte-bad-count.pdf`（两分量 matte） | `EXR_FORMAT` | 通过 |
+| `matte-bad-range.pdf`（1.5 越界） | `EXR_FORMAT` | 通过 |
+
+测试：`native-pdf-matte`。**未覆盖**：半透明边缘上 matte 反预乘的数值（由既有 RGB matte 场景覆盖），
+以及 matte 与渲染意图的交叉。
