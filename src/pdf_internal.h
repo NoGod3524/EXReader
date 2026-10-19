@@ -160,7 +160,7 @@ typedef struct {
   exr_pdf_text_fn glyph;exr_pdf_path_fn path;exr_pdf_state_fn state;exr_pdf_image_fn image;
   exr_draw_group_begin_fn begin_group;exr_draw_layer_end_fn end_layer;
 } exr_pdf_draw_callbacks;
-enum { EXR_PDF_GROUP_ISOLATED=1,EXR_PDF_GROUP_NONISOLATED=2,EXR_PDF_GROUP_KNOCKOUT=4 };
+enum { EXR_PDF_GROUP_ISOLATED=1,EXR_PDF_GROUP_NONISOLATED=2,EXR_PDF_GROUP_KNOCKOUT=4,EXR_PDF_GROUP_GRAY=8 };
 exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *present,exr_error *error);
 exr_status exr_pdf_text_ops(exr_pdf_file *file,uint32_t resources,const void *data,size_t size,
                             exr_pdf_text_fn glyph,void *context,const exr_control *control,exr_error *error);

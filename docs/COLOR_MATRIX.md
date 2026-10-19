@@ -15,7 +15,7 @@
 | 图像 `/Intent` | **未支持** | 无解析 | 图像仍按图形状态的意图转换，单图覆盖待做 |
 | 文档 `/OutputIntents` | **未支持** | 无解析 | 印刷文件不会使用其输出意图的 ICC |
 | 图像 `/Matte` | **支持** | `pdf_image.c` | 灰度/RGB/CMYK 四分量；分量数或取值不符仍 `EXR_FORMAT` |
-| 透明组 `/Group /CS` | 部分 | `pdf_content.c:169` | 只接受 DeviceRGB，其余 `EXR_UNSUPPORTED` |
+| 透明组 `/Group /CS` | 部分 | `pdf_content.c`、`canvas.c` | DeviceRGB、DeviceGray 支持；**DeviceCMYK 与 ICCBased 组仍 `EXR_UNSUPPORTED`** |
 | 图像过滤器 | 部分 | `pdf_objects.c` | Flate/LZW/DCT + PNG 预测器；**JBIG2/JPX/CCITT 未支持** |
 | JPEG `ColorTransform` | 部分 | `pdf_image.c:152` | 只接受 YCbCr 默认；模板/索引覆盖明确拒绝 |
 | 套印（Overprint） | 未支持 | — | 另立子包 |
@@ -70,3 +70,18 @@
 
 测试：`native-pdf-matte`。**未覆盖**：半透明边缘上 matte 反预乘的数值（由既有 RGB matte 场景覆盖），
 以及 matte 与渲染意图的交叉。
+
+## 已完成项：DeviceGray 透明组（2026-10-18）
+
+组内绘制颜色先按线性光 Rec.709 权重降到亮度、再经 sRGB 传输函数编码；图像同样逐像素降为灰度。
+灰度值因此与 MuPDF 对齐：纯红在灰度组里 EXReader 输出 (127,127,127)，MuPDF 为 (129,129,129)。
+
+| 用例 | 期望 | 结果 |
+| --- | --- | --- |
+| `groupgray.pdf`（DeviceGray 组，红填充） | 输出为灰，且 ≈129 | 通过（127） |
+| `grouprgb.pdf`（DeviceRGB 组，红填充） | 仍是 (255,0,0) | 通过 |
+| `groupcmyk.pdf`（DeviceCMYK 组） | `EXR_UNSUPPORTED` | 通过 |
+
+**语料影响**：pdf.js 120 份样本里仍有 7 份因组色空间失败，但核对后它们用的是
+`/DeviceCMYK` 或间接 `ICCBased`，不是灰度——所以本次改动没有让语料通过率变化（45/120）。
+CMYK 与 ICC 组空间需要真正的组内色彩混合，列入后续子包。

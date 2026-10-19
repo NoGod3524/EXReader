@@ -6,6 +6,7 @@ typedef struct { exr_bitmap bitmap; size_t refs; } exr_clip_mask;
 typedef struct {
   int origin_x,origin_y; /* working-buffer origin in canvas coordinates */
   int parent_offset_x,parent_offset_y;
+  unsigned parent_gray_groups;
   exr_bitmap bitmap;exr_composite_state *composite;exr_clip_mask *clip,*pending,**pending_groups;
   size_t depth,group_depth;double opacity;exr_blend_mode blend,parent_blend;
 } exr_canvas_layer;
@@ -17,6 +18,7 @@ struct exr_canvas {
   size_t depth,group_depth,mask_bytes,mask_count,mask_budget,work;
   const unsigned char *soft_mask;size_t soft_mask_width,soft_mask_height;exr_composite_state mask_state;
   unsigned char *soft_mask_owned; /* cropped copy while a region buffer is active */
+  unsigned gray_groups; /* nesting depth of DeviceGray blending groups */
   int offset_x,offset_y; /* canvas coordinate of the active working buffer's top-left */
   size_t canvas_width,canvas_height; /* device extent, independent of the active buffer */
 };

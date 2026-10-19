@@ -166,9 +166,12 @@ exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *pre
   }
   if(resolved(file,exr_pdf_get(file,group,"CS"),&id,e)!=EXR_OK) return e->code;
   v=exr_pdf_value_at(file,id);
-  if(v && v->kind!=EXR_PDF_NULL && !name_is(file,id,"DeviceRGB")) return exr_fail(e,EXR_UNSUPPORTED,"PDF group blending space requires DeviceRGB");
+  if(v && v->kind!=EXR_PDF_NULL && !name_is(file,id,"DeviceRGB") && !name_is(file,id,"DeviceGray") && !name_is(file,id,"G"))
+    return exr_fail(e,EXR_UNSUPPORTED,"PDF group blending space must be device RGB or grey");
   if(!page && !isolated && v && v->kind!=EXR_PDF_NULL) return exr_fail(e,EXR_FORMAT,"Only isolated PDF groups may specify a blending space");
-  *present=(page || isolated ? EXR_PDF_GROUP_ISOLATED : EXR_PDF_GROUP_NONISOLATED) | (knockout ? EXR_PDF_GROUP_KNOCKOUT : 0);return EXR_OK;
+  *present=(page || isolated ? EXR_PDF_GROUP_ISOLATED : EXR_PDF_GROUP_NONISOLATED) | (knockout ? EXR_PDF_GROUP_KNOCKOUT : 0);
+  if(v && v->kind!=EXR_PDF_NULL && (name_is(file,id,"DeviceGray") || name_is(file,id,"G"))) *present|=EXR_PDF_GROUP_GRAY;
+  return EXR_OK;
 }
 static int blend_name(exr_pdf_file *file,uint32_t id,exr_blend_mode *mode) {
   static const char *names[]={"Normal","Multiply","Screen","Overlay","Darken","Lighten","ColorDodge","ColorBurn",
@@ -379,7 +382,8 @@ static exr_status stream_scope(content_reader *r,uint32_t id,uint32_t resources,
     if(!r->callbacks.begin_group || !r->callbacks.end_layer) status=exr_fail(error,EXR_FORMAT,"PDF consumer does not support isolated groups");
     else {
       if(status==EXR_OK) status=r->callbacks.begin_group(r->context,r->state.paint.fill.alpha,r->state.paint.blend,
-        (layer&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|(layer&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0),error);
+        (layer&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|(layer&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0)|
+        (layer&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0),error);
       if(status==EXR_OK && error->code!=EXR_OK) status=error->code;
       if(status==EXR_OK) { started=1;r->state.paint.fill.alpha=r->state.paint.stroke.alpha=1;r->state.paint.blend=EXR_BLEND_NORMAL; }
     }
