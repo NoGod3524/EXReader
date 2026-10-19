@@ -332,3 +332,23 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 - 网格渐变 `flag 1/2` 与类型 5 的顶点顺序**未经过像素对照**，见审计第 2 节；
 - 语料里只有 8 个文件含着色字典，其中 6 个是类型 2/3；
 - 所有未实现路径都返回 `EXR_UNSUPPORTED`，没有静默错误输出。
+
+### 发现：DeviceCMYK→RGB 的默认换算与参考实现不同（2026-10-19）
+
+用一个最简单的色块验证（`0 1 1 0 k` 填充 16×16，无透明组）：
+
+| 实现 | 像素 |
+| --- | --- |
+| MuPDF | **(237, 28, 36)** |
+| 本实现 | **(255, 0, 0)** |
+
+结论：**这不是透明组的问题，是全局的 DeviceCMYK 默认换算差异**。
+参考实现的结果来自色彩管理（SWOP 一类 CMYK profile 经 Lab 转到 sRGB），
+而我们用的是朴素公式 `(1-c)(1-k)`。
+
+影响：所有 CMYK 内容（图像、填充、组）都会偏色；透明组的 `EXR_UNSUPPORTED`
+只是把它显式暴露出来。
+
+要补齐需要**内置一个自由许可的 CMYK ICC profile**（SWOP/ISO Coated 等常见 profile
+有再分发限制，lcms2 也不自带），或者接受与参考实现的色差并在矩阵里标注。
+这是 WP4 色彩精度的前置决策，未定之前先不做 CMYK 组。
