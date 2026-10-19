@@ -24,6 +24,8 @@ typedef struct {
   exr_pdf_program_fn program; void *context;
   const double *initial_clip; /* Optional output-coordinate [x0,y0,x1,y1]. */
   size_t *work; /* Optional aggregate work counter, including nested soft masks. */
+  const double *initial_clip_transform; /* NULL means output coordinates. */
+  unsigned group_present,group_flags; /* Optional root transparency group. */
 } exr_pdf_raster_config;
 /* Output is owned and empty on failure. Initial maps PDF user space to pixels.
    Unsupported image filters and non-device/transparency features fail. */

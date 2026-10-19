@@ -4372,3 +4372,28 @@ AIS、图像shape/opacity与自身mask覆盖图形状态mask仍需审计，WP1/W
 三桌面各138/138，sanitizer135/135；20万次变异、5种子、15434次成功解析无崩溃。
 安装消费、裁剪配置、JNI/Swift宿主及Android/Apple库交叉编译通过。
 原始数据见[CI记录](validation/2026-10-19-nested-groups-ci.json)。
+
+
+## 3.35.0：完整标量TR与遮罩组几何（2026-10-19）
+
+复用现有有界PDF函数求值器，软遮罩TR支持Identity及Type 0/2/3/4，
+按Domain/Range和最终[0,1]裁剪；错误函数、递归、样本不足与计算栈错误明确失败。
+转换费用计入共享工作预算，新增接近耗尽/已耗尽和取消的清理回归。
+图片SMask/Mask覆盖图形状态遮罩；覆盖顺序与外部引擎的差异仍单列核验。
+软遮罩G按实际变换BBox裁剪，处理完全落在画布外的遮罩；按K/I创建组，
+Luminosity的BC作为真实背景参与组内混合，软遮罩根允许非隔离显式CS（表147）。
+
+72份正常PDF、8份错误输入，透明预乘/白底576通道期望全部吻合。
+GCC/MSVC各140/140、ICC-OFF8/8、安装组件4/4、13头C++和EXACT3.35.0实际运行通过。
+703项ABI测量逐行保持，两个DLL各305导出；分层99/1035/899，逆向0。
+[本地汇总](validation/2026-10-19-mask-functions.json)与[逐场景对照](validation/2026-10-19-mask-functions-reference.json)。
+MuPDF1.28.2、Poppler26.07.0的差异按类别保存；明确未把数学一致写成完整兼容。
+规范映射和待核验项见[MASK_SEMANTICS.md](MASK_SEMANTICS.md)。
+
+当前继续AIS、图像形状/透明度；WP1/WP2及其后全部工作包仍在推进。
+
+### 3.34.2跨平台CI
+
+代码`7a60f36f8a5f8ec336c4b6e22c695494a41b0074`的[CI39342750378](https://github.com/NoGod3524/EXReader/actions/runs/39342750378)7/7成功。
+三桌面各139/139，ASan/UBSan136/136，20万次变异/5种子/15434次解析无崩溃。
+安装/裁剪/绑定宿主和移动库交叉编译通过；[原始数据](validation/2026-10-19-mask-scope-ci.json)。

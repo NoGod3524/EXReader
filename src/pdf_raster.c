@@ -26,10 +26,11 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
     rect[1].verb=EXR_PATH_LINE; rect[1].points[0]=(exr_path_point){b[2],b[1]};
     rect[2].verb=EXR_PATH_LINE; rect[2].points[0]=(exr_path_point){b[2],b[3]};
     rect[3].verb=EXR_PATH_LINE; rect[3].points[0]=(exr_path_point){b[0],b[3]}; rect[4].verb=EXR_PATH_CLOSE;
-    status=exr_canvas_clip(canvas,rect,5,NULL,EXR_FILL_NONZERO,e); if(status!=EXR_OK) goto done;
+    status=exr_canvas_clip(canvas,rect,5,config->initial_clip_transform,EXR_FILL_NONZERO,e); if(status!=EXR_OK) goto done;
   }
   sink.struct_size=sizeof(sink);status=exr_canvas_get_sink_ex(canvas,&sink,e);
-  if(status==EXR_OK) status=exr_canvas_begin_layer(canvas,1,EXR_BLEND_NORMAL,e);
+  if(status==EXR_OK) status=exr_canvas_begin_group(canvas,1,EXR_BLEND_NORMAL,
+    config->group_present ? config->group_flags : EXR_GROUP_ISOLATED,e);
   if(status==EXR_OK) {
     exr_error cleanup={0};exr_status ended;
     status=exr_pdf_paint_content_ex(file,resources,content,size,initial,&sink,config->program,config->context,&canvas->work,control,e);

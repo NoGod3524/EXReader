@@ -174,6 +174,7 @@ typedef struct {
   exr_draw_image_space_fn image_space;
 } exr_pdf_draw_callbacks;
 enum { EXR_PDF_GROUP_ISOLATED=1,EXR_PDF_GROUP_NONISOLATED=2,EXR_PDF_GROUP_KNOCKOUT=4,EXR_PDF_GROUP_GRAY=8,EXR_PDF_GROUP_CMYK=16,EXR_PDF_GROUP_RGB=32 };
+enum { EXR_PDF_GROUP_FORM_CONTEXT=0,EXR_PDF_GROUP_PAGE_CONTEXT=1,EXR_PDF_GROUP_MASK_CONTEXT=2 };
 exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *present,exr_error *error);
 exr_status exr_pdf_text_ops(exr_pdf_file *file,uint32_t resources,const void *data,size_t size,
                             exr_pdf_text_fn glyph,void *context,const exr_control *control,exr_error *error);
