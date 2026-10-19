@@ -52,7 +52,12 @@ int main(int argc,char **argv) {
   near(&page,15,8,255,255,255,0,"noextend right outside");
   near(&page,8,8,112,0,144,3,"noextend middle");
   exr_bitmap_free(&page);
-  rejected("shading-radial.pdf",EXR_UNSUPPORTED);
+  /* Radial type 3, sampled per texel at pixel centres. */
+  page=render("shading-radial.pdf");
+  near(&page,8,8,231,0,24,4,"radial centre");
+  near(&page,8,2,79,0,176,4,"radial outer");
+  exr_bitmap_free(&page);
+  rejected("shading-freeform.pdf",EXR_UNSUPPORTED);
   rejected("shading-bad-coords.pdf",EXR_FORMAT);
   rejected("shading-degenerate.pdf",EXR_FORMAT);
   printf("%u native PDF shading checks passed\n",checks);
