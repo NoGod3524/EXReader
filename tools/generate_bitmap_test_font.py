@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original PNG/JPEG sbix strikes based on EXReader's own rectangle font."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 from io import BytesIO
 import hashlib

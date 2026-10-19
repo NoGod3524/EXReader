@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 #if defined(EXR_ENABLE_MP3) && EXR_ENABLE_MP3
 #define MINIMP3_ONLY_MP3

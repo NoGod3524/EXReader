@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* Deterministic structure-mutating fuzz driver for the memory parsers.
  *
  * No external fuzzing runtime is required: one process mutates seed inputs with

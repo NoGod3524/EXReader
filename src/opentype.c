@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "opentype_internal.h"
 #include "text_internal.h"
 #include "shaping_data.h"

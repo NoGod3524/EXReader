@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: MIT
 package org.exreader;
 public final class EXReaderException extends RuntimeException {
     public final int code;

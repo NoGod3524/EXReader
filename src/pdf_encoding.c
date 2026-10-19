@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_internal.h"
 typedef struct { uint16_t name,offset,count; } pdf_name_mapping;
 typedef struct { const char *name; const uint16_t *glyphs; } pdf_encoding_vector;

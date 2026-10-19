@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 struct exr_pcm { exr_pcm_info info; exr_pcm_read_fn read; exr_context_release_fn release; void *context; unsigned kind,busy; };
 static int valid(const exr_pcm_info *info) {

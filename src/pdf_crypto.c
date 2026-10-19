@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_crypto.h"
 void exr_pdf_secret_clear(void *data,size_t size) {
   volatile unsigned char *p=data; while(size--) *p++=0;

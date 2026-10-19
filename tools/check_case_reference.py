@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Compare native contextual case conversion against the system ICU via Node Intl."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse,json,random,subprocess
 from pathlib import Path
 

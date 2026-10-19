@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* Include after static int example_main(int, char **). Windows argv uses the
    process code page, so read the Unicode command line and pass UTF-8 to the SDK. */
 #ifdef _WIN32

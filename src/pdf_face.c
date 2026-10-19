@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_face_internal.h"
 #include FT_CID_H
 typedef struct { uint32_t cid,glyph; } cid_entry;

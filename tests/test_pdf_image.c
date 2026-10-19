@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "../src/pdf_raster_internal.h"
+#include "cmyk_reference.h"
 static exr_error error; static unsigned checks;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -11,7 +12,7 @@ static unsigned char *load(const char *dir,const char *name,size_t *size) {
 static uint32_t resources(exr_pdf_file *file) { uint32_t id; OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&id,&error)); return id; }
 static uint32_t image(exr_pdf_file *file,const char *name) { uint32_t dict; OK(exr_pdf_resolve(file,exr_pdf_get(file,resources(file),"XObject"),&dict,&error)); return exr_pdf_get(file,dict,name); }
 static void pixel(const exr_bitmap *b,unsigned x,unsigned y,unsigned red,unsigned green,unsigned blue,unsigned alpha) {
-  const unsigned char *p=b->pixels+(size_t)y*b->stride+x*4; CHECK(p[0]==red && p[1]==green && p[2]==blue && p[3]==alpha);
+  const unsigned char *p=b->pixels+(size_t)y*b->stride+x*4; if(p[0]!=red || p[1]!=green || p[2]!=blue || p[3]!=alpha) fprintf(stderr,"image pixel got %u,%u,%u,%u expected %u,%u,%u,%u\n",p[0],p[1],p[2],p[3],red,green,blue,alpha);CHECK(p[0]==red && p[1]==green && p[2]==blue && p[3]==alpha);
 }
 static exr_bitmap decode(exr_pdf_file *file,const char *name) {
   exr_bitmap b={0}; int interpolate=0; OK(exr_pdf_image_decode(file,image(file,name),resources(file),0x0000ffff,&b,&interpolate,NULL,NULL,&error)); CHECK(!interpolate); return b;
@@ -25,7 +26,7 @@ static void decoded(exr_pdf_file *file) {
   b=decode(file,"Gray"); pixel(&b,0,0,255,255,255,255); pixel(&b,1,0,0,0,0,255); free(b.pixels);
   b=decode(file,"Gray16"); pixel(&b,0,0,0,0,0,255); pixel(&b,1,0,255,255,255,255); free(b.pixels);
   b=decode(file,"RGB4"); pixel(&b,0,0,255,0,136,255); free(b.pixels);
-  b=decode(file,"CMYK2"); pixel(&b,0,0,255,0,255,255); free(b.pixels);
+  b=decode(file,"CMYK2"); { unsigned rgb[3];cmyk_reference((const double[4]){0,1,0,0},rgb);pixel(&b,0,0,rgb[0],rgb[1],rgb[2],255); } free(b.pixels);
   b=decode(file,"Stencil"); pixel(&b,0,0,0,0,255,255); pixel(&b,1,0,0,0,255,0); free(b.pixels);
   b=decode(file,"Rows1"); pixel(&b,0,0,255,255,255,255); pixel(&b,1,0,0,0,0,255); pixel(&b,1,1,255,255,255,255); pixel(&b,0,1,0,0,0,255); free(b.pixels);
   b=decode(file,"Alias"); pixel(&b,0,0,255,0,0,255); free(b.pixels);
@@ -108,32 +109,39 @@ static void cmyk_jpeg_cases(const char *dir) {
   const char *names[]={"CMYK","Progressive","YCCK","YCCKProgressive","NoAdobe","ICC","Wrapped"};
   const char *bad[]={"dimensions","channels","truncated","decode","transform"};
   unsigned char *data; size_t size,i,j; exr_pdf_file *file=NULL; exr_bitmap b;
+  unsigned reference[3];cmyk_reference((const double[4]){40/255.,80/255.,120/255.,32/255.},reference);
   data=load(dir,"pdf-jpeg-cmyk.pdf",&size); OK(exr_pdf_open(data,size,&file,&error));
   for(i=0;i<sizeof(names)/sizeof(*names);i++) {
     b=decode(file,names[i]); CHECK(b.width==17 && b.height==9);
     /* Expected inks C=40 M=80 Y=120 K=32, converted by DeviceCMYK.
        YCCK has a lossy YCbCr round trip: allow two byte values. */
     for(j=0;j<(size_t)b.width*b.height;j++) {
-      CHECK(abs((int)b.pixels[j*4]-183)<=2);
-      CHECK(abs((int)b.pixels[j*4+1]-143)<=2);
-      CHECK(abs((int)b.pixels[j*4+2]-103)<=2 && b.pixels[j*4+3]==255);
+      CHECK(abs((int)b.pixels[j*4]-(int)reference[0])<=2);
+      CHECK(abs((int)b.pixels[j*4+1]-(int)reference[1])<=2);
+      CHECK(abs((int)b.pixels[j*4+2]-(int)reference[2])<=2 && b.pixels[j*4+3]==255);
     }
     free(b.pixels);
   }
-  b=decode(file,"Default"); pixel(&b,0,0,0,0,0,255); free(b.pixels);
-  b=decode(file,"Key"); pixel(&b,0,0,183,143,103,0); free(b.pixels);
-  b=decode(file,"Soft"); pixel(&b,0,0,183,143,103,128); free(b.pixels);
+  b=decode(file,"Default"); { unsigned black[3];cmyk_reference((const double[4]){215/255.,175/255.,135/255.,223/255.},black);pixel(&b,0,0,black[0],black[1],black[2],255); } free(b.pixels);
+  b=decode(file,"Key"); pixel(&b,0,0,reference[0],reference[1],reference[2],0); free(b.pixels);
+  b=decode(file,"Soft"); pixel(&b,0,0,reference[0],reference[1],reference[2],128); free(b.pixels);
   for(i=0;i<2;i++) {
-    const unsigned expected[4][3]={{255,0,0},{0,255,0},{0,0,255},{127,127,127}};
+    const double inks[4][4]={{0,1,1,0},{1,0,1,0},{1,1,0,0},{0,0,0,128/255.}};unsigned expected[4][3];
+    for(j=0;j<4;j++) cmyk_reference(inks[j],expected[j]);
+    if(i) { /* Independent libjpeg/Pillow decoded inks of this lossy YCCK fixture. */
+      cmyk_reference((const double[4]){0,1,254/255.,0},expected[0]);
+      cmyk_reference((const double[4]){254/255.,0,254/255.,0},expected[1]);
+      cmyk_reference((const double[4]){253/255.,1,0,0},expected[2]);
+    }
     b=decode(file,i ? "YQuad" : "Quad"); CHECK(b.width==32 && b.height==32);
     for(j=0;j<4;j++) {
       const unsigned char *p=b.pixels+(8+(j/2)*16)*b.stride+(8+(j%2)*16)*4; unsigned k;
-      for(k=0;k<3;k++) CHECK(abs((int)p[k]-(int)expected[j][k])<=2);
+      for(k=0;k<3;k++) { if(abs((int)p[k]-(int)expected[j][k])>2) fprintf(stderr,"quad %zu/%zu channel %u got %u expected %u\n",i,j,k,p[k],expected[j][k]);CHECK(abs((int)p[k]-(int)expected[j][k])<=2); }
       CHECK(p[3]==255);
     }
     free(b.pixels);
   }
-  b=render(file,"8 0 0 8 0 0 cm /CMYK Do"); pixel(&b,4,4,183,143,103,255); free(b.pixels);
+  b=render(file,"8 0 0 8 0 0 cm /CMYK Do"); pixel(&b,4,4,reference[0],reference[1],reference[2],255); free(b.pixels);
   { exr_control control={0}; int interpolate=1; control.cancelled=cancel;
     CHECK(exr_pdf_image_decode(file,image(file,"CMYK"),resources(file),0,&b,&interpolate,NULL,&control,&error)==EXR_CANCELLED && !b.pixels && !interpolate);
   }

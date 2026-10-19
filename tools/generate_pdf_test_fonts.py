@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original PDF glyph-selection/outline fixtures; fontTools is development-only."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
@@ -41,7 +41,7 @@ def build(cff=False, cid=False):
     builder.setupCharacterMap({32:names[4], 65:names[1], 81:names[3], 0xfb01:names[2]})
     builder.setupNameTable({'familyName':'EXR PDF Test', 'styleName':'Regular',
         'uniqueFontIdentifier':'EXRPDFTest', 'fullName':'EXR PDF Test', 'psName':'EXRPDFTest',
-        'copyright':'Copyright 2026 EXReader contributors; GPL-3.0-only'})
+        'copyright':'Copyright 2026 EXReader contributors; MIT'})
     builder.setupOS2(sTypoAscender=units, sTypoDescender=0, usWinAscent=units, usWinDescent=0)
     builder.setupPost()
     if cff:

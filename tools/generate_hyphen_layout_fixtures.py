@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original XHTML/CSS hyphenation cases and a derived original shaping font."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 from zipfile import ZipFile,ZipInfo,ZIP_STORED,ZIP_DEFLATED
 from fontTools.ttLib import TTFont

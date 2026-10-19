@@ -1,6 +1,6 @@
 # EXReader — native C ebook engine
 
-主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.19.0，开发中**。GPL-3.0-only。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
+主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **0.19.0，开发中**。MIT。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
 
 当前能力与边界以 [支持矩阵](docs/SUPPORT_MATRIX.md) 为准；后续按 [兼容目标与验收顺序](docs/VERSIONING.md#后续兼容目标与验收顺序) 推进 PDF、图文排版和应用接入能力。
 
@@ -195,7 +195,7 @@ exreader-lazy-example font.ttf epub-part.png book.epub 0
 
 当前默认开发线直接使用 C 工程。此前的 [JavaScript 框架](https://github.com/NoGod3524/EXReader/commit/4533185)、[带 UI 的阅读器](https://github.com/NoGod3524/EXReader/tree/codex/reader-app) 和 [MIT 版 0.1.1](https://github.com/NoGod3524/EXReader/tree/codex/reader-0.1.1) 保留为历史版本。现有下载页仍是 0.1.1 阅读器；原生引擎目前与旧 UI、IndexedDB 书库和旧标注尚未接通。
 
-Copyright (c) 2026 EXReader contributors. 自有代码为 GPL-3.0-only，第三方组件保留原许可；既有版本的 MIT 授权不撤回。
+Copyright (c) 2026 EXReader contributors. 自有代码和原创测试资源使用 [MIT 协议](LICENSE)，允许商用、修改和再分发；第三方组件保留原许可。默认构建与 CI 关闭 GPL 依赖 FAAD2；手动启用 `EXR_ENABLE_AAC=ON` 的链接产物需遵守 GPL。
 
 
 固定页面宿主示例（仅使用公开 SDK）：

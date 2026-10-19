@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_raster_internal.h"
 exr_status exr_pdf_page_viewport(const exr_pdf_page_info *page,double scale,exr_viewport *out,exr_error *e) {
   exr_page_geometry geometry={0}; size_t i;

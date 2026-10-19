@@ -1,13 +1,15 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "icc_internal.h"
 #ifdef EXR_ENABLE_ICC
 #include <lcms2.h>
 #include <lcms2_plugin.h>
+#include "miniz.h"
+#include "default_cmyk_profile.h"
 #define ICC_BUDGET ((size_t)16*1024*1024)
 struct exr_icc {
   cmsContext context;cmsHTRANSFORM transform;cmsHTRANSFORM intents[4];cmsColorSpaceSignature space;
   size_t bytes,cost;unsigned channels;int limited,failed,invalid,cancelled;
-  exr_control control;
+  exr_control control;cmsHTRANSFORM reverse;exr_error deferred;
 };
 typedef union {
   struct { size_t size;exr_icc *owner; } value;
@@ -50,10 +52,11 @@ void exr_icc_free(exr_icc *p) {
   unsigned i;
   if(!p) return;
   for(i=0;i<4;i++) if(p->intents[i]) cmsDeleteTransform(p->intents[i]);
+  if(p->reverse) cmsDeleteTransform(p->reverse);
   if(p->context) cmsDeleteContext(p->context);
   free(p);
 }
-exr_status exr_icc_open(const void *data,size_t size,unsigned channels,const exr_control *control,exr_icc **out,exr_error *e) {
+static exr_status open_profile(const void *data,size_t size,unsigned channels,const exr_control *control,unsigned reverse,exr_icc **out,exr_error *e) {
   cmsPluginMemHandler memory={{cmsPluginMagicNumber,LCMS_VERSION,cmsPluginMemHandlerSig,NULL},allocate,deallocate,resize,NULL,NULL,NULL};
   exr_icc *p,*previous;cmsHPROFILE input=NULL,output=NULL;cmsUInt32Number format=0;exr_status status=EXR_OK;
   *out=NULL;if(!size) return EXR_OK;
@@ -95,6 +98,8 @@ exr_status exr_icc_open(const void *data,size_t size,unsigned channels,const exr
       p->intents[i]=cmsCreateTransformTHR(p->context,input,format,output,TYPE_RGB_DBL,table[i],
         cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE|(table[i]==INTENT_RELATIVE_COLORIMETRIC ? cmsFLAGS_BLACKPOINTCOMPENSATION : 0));
     p->transform=p->intents[1];
+    if(reverse) p->reverse=cmsCreateTransformTHR(p->context,output,TYPE_RGB_DBL,input,TYPE_CMYK_DBL,
+      INTENT_RELATIVE_COLORIMETRIC,cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE|cmsFLAGS_BLACKPOINTCOMPENSATION);
   }
 done:
   if(input) cmsCloseProfile(input);
@@ -103,8 +108,45 @@ done:
   else if(p->limited) status=exr_fail(e,EXR_LIMIT,"ICC profile processing exceeds 16 MiB");
   else if(p->failed || !p->context) status=exr_fail(e,EXR_MEMORY,"ICC processing allocation failed");
   else if(status==EXR_OK) status=exr_control_cancel(control,e);
-  if(status==EXR_OK && p->transform && !p->invalid) { *out=p;return EXR_OK; }
+  if(status==EXR_OK && p->transform && (!reverse || p->reverse) && !p->invalid) { *out=p;return EXR_OK; }
   exr_icc_free(p);return status;
+}
+exr_status exr_icc_open(const void *data,size_t size,unsigned channels,const exr_control *control,exr_icc **out,exr_error *e) {
+  return open_profile(data,size,channels,control,0,out,e);
+}
+exr_status exr_icc_default_cmyk(const exr_control *control,exr_icc **out,exr_error *e) {
+  unsigned char *raw; mz_ulong size=961644;exr_status status;*out=NULL;
+  if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+  raw=malloc((size_t)size);if(!raw) return exr_fail(e,EXR_MEMORY,"Default CMYK profile allocation failed");
+  if(mz_uncompress(raw,&size,default_cmyk_data,sizeof(default_cmyk_data))!=MZ_OK || size!=961644) {
+    free(raw);return exr_fail(e,EXR_FORMAT,"Invalid bundled CMYK profile");
+  }
+  status=open_profile(raw,(size_t)size,4,control,1,out,e);free(raw);
+  if(status==EXR_OK && !*out) return exr_fail(e,EXR_FORMAT,"Bundled CMYK profile could not be opened");
+  /* Raster loops already poll their active control, without retaining a callback
+     to a completed PDF operation in the cached transform. */
+  if(*out) memset(&(*out)->control,0,sizeof((*out)->control));
+  return status;
+}
+void exr_device_cmyk_rgb(exr_icc *p,const double values[4],double rgb[3],unsigned intent) {
+  unsigned k;
+  if(!p) { for(k=0;k<3;k++) rgb[k]=1-fmin(1,values[k]+values[3]);return; }
+  if(p->deferred.code!=EXR_OK) { memset(rgb,0,3*sizeof(*rgb));return; }
+  (void)exr_icc_rgb_intent(p,values,rgb,intent,&p->deferred);
+}
+void exr_device_cmyk_from_rgb(exr_icc *p,const double rgb[3],double out[4]) {
+  unsigned k;
+  if(!p) {
+    out[3]=fmax(0,fmin(1,1-fmax(rgb[0],fmax(rgb[1],rgb[2]))));
+    for(k=0;k<3;k++) out[k]=fmax(0,fmin(1,1-rgb[k]-out[3]));
+    return;
+  }
+  p->invalid=0;cmsDoTransform(p->reverse,rgb,out,1);
+  if(p->invalid) (void)exr_fail(&p->deferred,EXR_FORMAT,"Default CMYK inverse conversion failed");
+  for(k=0;k<4;k++) { if(!isfinite(out[k])) { out[k]=0;(void)exr_fail(&p->deferred,EXR_FORMAT,"Nonfinite CMYK conversion result"); }out[k]=fmax(0,fmin(1,out[k]/100)); }
+}
+exr_status exr_icc_deferred_status(const exr_icc *p,exr_error *e) {
+  if(p && p->deferred.code!=EXR_OK) { if(e) *e=p->deferred;return p->deferred.code; }return EXR_OK;
 }
 exr_status exr_icc_rgb_intent(exr_icc *p,const double *values,double rgb[3],unsigned intent,exr_error *e) {
   double input[4];unsigned i;
@@ -129,6 +171,13 @@ size_t exr_icc_memory(const exr_icc *p) { return p ? sizeof(*p)+p->bytes : 0; }
 size_t exr_icc_cost(const exr_icc *p) { return p ? p->cost : 0; }
 #else
 struct exr_icc { unsigned unused; };
+exr_status exr_icc_default_cmyk(const exr_control *control,exr_icc **out,exr_error *e) { *out=NULL;return exr_control_cancel(control,e); }
+void exr_device_cmyk_rgb(exr_icc *p,const double values[4],double rgb[3],unsigned intent) { unsigned k;(void)p;(void)intent;for(k=0;k<3;k++) rgb[k]=1-fmin(1,values[k]+values[3]); }
+void exr_device_cmyk_from_rgb(exr_icc *p,const double rgb[3],double out[4]) {
+  unsigned k;(void)p;out[3]=fmax(0,fmin(1,1-fmax(rgb[0],fmax(rgb[1],rgb[2]))));
+  for(k=0;k<3;k++) out[k]=fmax(0,fmin(1,1-rgb[k]-out[3]));
+}
+exr_status exr_icc_deferred_status(const exr_icc *p,exr_error *e) { (void)p;(void)e;return EXR_OK; }
 exr_status exr_icc_open(const void *data,size_t size,unsigned channels,const exr_control *control,exr_icc **out,exr_error *e) {
   (void)data;(void)size;(void)channels;(void)control;(void)e;*out=NULL;return EXR_OK;
 }

@@ -1053,7 +1053,7 @@ EXR_ENABLE_AAC 默认 OFF；启用后用固定版本 FAAD2 C codec 解码，关�
 
 exr_m4b_* 支持普通未分片 M4A/M4B 的 mp4a AAC，按需读取 sample/chunk/time 表及音频包，不常驻复制 mdat 或完整 sample 表。支持 stsz/stz2、stco/co64、单段 rate=1 audio edit 与可选 leading empty edit，正确处理 priming、末包短 duration 和前导静音；movie edit 终点按半开区间向上取样本边界并与精确 media 尾界相交。拒绝加密、外部 data reference、多 sample description、分片、多段/变速 edit 和非零 composition offsets。章节/封面元数据尚未从 M4B 导入。
 
-AAC/M4B 为精确跳播保留当前完整解码器状态，后退从头重放；每次 read 最多 65536 帧，重放至多 16M 帧，输入工作量有界。EXR_LIMIT 后同一目标可续扫，不能当作快速随机状态快照。PCM 自动识别已接 ADTS、带 ID3 的 AAC 和常见 ISO-BMFF 首 box；自有 demux/边界/ownership 与第三方解码算法分别记录在许可证清单。六平台 CI 将显式开启可选 codec 验证，默认轻核构建仍关闭 AAC。
+AAC/M4B 为精确跳播保留当前完整解码器状态，后退从头重放；每次 read 最多 65536 帧，重放至多 16M 帧，输入工作量有界。EXR_LIMIT 后同一目标可续扫，不能当作快速随机状态快照。PCM 自动识别已接 ADTS、带 ID3 的 AAC 和常见 ISO-BMFF 首 box；自有 demux/边界/ownership 与第三方解码算法分别记录在许可证清单。默认构建与六平台 CI 关闭 AAC。手动开启 FAAD2 会引入 GPL 链接许可，不能将该二进制仅按 MIT 分发；M4B 元数据读取不依赖 AAC 解码器。
 
 exr_epub_metadata_write 编辑单个本地 OPF 的 DC title/creator/subject/description/publisher/contributor/date/type/format/source/language/relation/coverage/rights，key 使用 dcterms URI。缺省不改，整 key 的多值及传递 refinements 一起替换，保留首个原 id；NULL 删除可选属性，普通空串保留，title/language 不能空或删除。identifier 不提供写入，避免破坏字体混淆标识。未知结构和命名空间保留语义，XML 统一 UTF-8 序列化。
 

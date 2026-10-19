@@ -8,7 +8,7 @@ python tools/generate_pdf_crypto_fixtures.py
 
 Generated with pypdf 6.16.1 and cryptography 50.0.2. These are development
 dependencies, not SDK or test-run dependencies. All text, graphics and metadata
-are original test content (GPL-3.0-only); no third-party PDF is bundled.
+are original test content (MIT); no third-party PDF is bundled.
 The generator deliberately replaces entropy with a deterministic sequence only
 while creating fixtures. Never use that sequence to encrypt real documents.
 

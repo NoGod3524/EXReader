@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original cmap 14 variant/default mappings, with no GSUB or GPOS tables."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import hashlib
 from fontTools.ttLib import TTFont

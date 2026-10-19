@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 
 #define ANCHOR_QUOTE_LIMIT ((size_t)65536)

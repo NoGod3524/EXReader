@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_raster_internal.h"
 typedef struct { exr_pdf_file *file; exr_error error; } image_reader;
 typedef struct { uint32_t active[16]; size_t depth,live; } image_chain;
@@ -116,7 +116,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
         at=exr_pdf_value_at(file,at)->next;
       }
       if(at!=EXR_PDF_NONE) goto invalid;
-      for(k=0;k<3;k++) matte_rgb[k]=channels==1 ? values[0] : values[k];
+      for(k=0;k<channels;k++) matte_rgb[k]=values[k];
       matte=1;
     }
   }
@@ -178,6 +178,12 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
       if(!found) { exr_fail(&r.error,EXR_FORMAT,"Invalid PDF image rendering intent"); goto done; }
     }
   }
+  if(mask!=EXR_PDF_NONE) {
+    unsigned mask_kind=0;
+    if(decode_image(file,mask,resource_file,resources,0xffffffff,intent,&mask_texture,work,control,&r.error,chain,&mask_kind)!=EXR_OK) goto done;
+    if((soft && mask_kind!=1) || (!soft && mask_kind!=0)) goto invalid;
+  }
+  if(matte && (!mask_texture || mask_texture->bitmap.width!=width || mask_texture->bitmap.height!=height || mask_texture->mask)) goto invalid;
   for(y=0;y<height;y++) {
     if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
     if(!exr_vector_work(work,(size_t)width*(stencil ? 1 : exr_pdf_colorspace_cost(space)))) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
@@ -189,6 +195,10 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
         if(color_key && (raw<key[2*k] || raw>key[2*k+1])) transparent=0;
         values[k]=decode[2*k]+unit*(decode[2*k+1]-decode[2*k]);
       }
+      if(matte) {
+        double a=mask_texture->bitmap.pixels[y*mask_texture->bitmap.stride+x*4]/255.;
+        for(k=0;k<channels;k++) values[k]=a>0 ? fmax(0,fmin(1,matte_rgb[k]+(values[k]-matte_rgb[k])/a)) : 0;
+      }
       if(stencil) { p[0]=(unsigned char)(color>>24); p[1]=(unsigned char)(color>>16); p[2]=(unsigned char)(color>>8); p[3]=(unsigned char)floor((1-values[0])*255+.5); }
       else {
         double rgb[3]; if(exr_pdf_colorspace_rgb_intent(space,values,rgb,intent,&r.error)!=EXR_OK) goto done;
@@ -198,16 +208,11 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
       }
     }
   }
-  if(mask!=EXR_PDF_NONE) {
-    unsigned mask_kind=0;
-    if(decode_image(file,mask,resource_file,resources,0xffffffff,intent,&mask_texture,work,control,&r.error,chain,&mask_kind)!=EXR_OK) goto done;
-    if((soft && mask_kind!=1) || (!soft && mask_kind!=0)) goto invalid;
-  }
   if(r.error.code==EXR_OK && exr_control_cancel(control,&r.error)==EXR_OK) {
     exr_vector_texture *texture=calloc(1,sizeof(*texture));
     if(!texture) { exr_fail(&r.error,EXR_MEMORY,"PDF image layer allocation failed"); goto done; }
     texture->bitmap=bitmap; texture->mask=mask_texture; texture->interpolate=interpolate!=0;
-    texture->mask_mode=soft ? 1 : 2; texture->has_matte=matte; memcpy(texture->matte,matte_rgb,3*sizeof(double));
+    texture->mask_mode=soft ? 1 : 2; texture->has_matte=0;
     *kind=stencil ? 0 : exr_pdf_colorspace_device(space) ? (unsigned)exr_pdf_colorspace_device(space) : 5; *out=texture; memset(&bitmap,0,sizeof(bitmap)); mask_texture=NULL; charged=0;
   }
   goto done;

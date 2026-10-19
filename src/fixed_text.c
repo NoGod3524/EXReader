@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 struct exr_fixed_text { char *text; size_t size,count,bytes; exr_text_region *regions; };
 void exr_fixed_text_free(exr_fixed_text *text) { if(text) { free(text->text); free(text->regions); free(text); } }

@@ -4,7 +4,7 @@
   "mode": "indexed_epub",
   "layout_mode": "paged",
   "layout_scope": "first_reading_order_part",
-  "input": "C:\\Users\\Oscar\\OneDrive\\\u6587\u6863\\ChatGPT\\EXReader\\docs\\benchmarks\\0.18.0-hyphen-stems-windows\\english\\hyphen-1048576.epub",
+  "input": "${WORKSPACE}\\docs\\benchmarks\\0.18.0-hyphen-stems-windows\\english\\hyphen-1048576.epub",
   "font": "C:\\Windows\\Fonts\\arial.ttf",
   "clock": "monotonic",
   "disk_cache": "uncontrolled",

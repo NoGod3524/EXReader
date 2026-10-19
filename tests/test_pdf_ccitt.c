@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* WP4a image filters: CCITT Group 4 decoding against a Pillow-produced strip. */
 #include "exreader.h"
 #include <stdio.h>

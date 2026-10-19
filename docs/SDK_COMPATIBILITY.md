@@ -460,3 +460,23 @@ symbol, record layout, enum value or callback signature moves with this
 renumbering. Select this package with `find_package(EXReader 0.19.0 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
+
+## 0.19.0 rendering corrections and license
+
+The original EXReader code and fixtures now use MIT. Third-party notices retain
+their own terms. Default and CI builds exclude FAAD2; explicitly enabling that
+GPL codec produces a linked binary that cannot be distributed under MIT alone.
+Existing releases retain the permissions already granted with them.
+
+With ICC enabled, DeviceCMYK uses the complete bundled Argyll fallback profile;
+ICC-disabled builds retain the documented simple device conversion. CMYK group
+buffers blend native components, including subtractive separable and nonseparable
+mode formulas. Earlier descriptions of RGB-only group blending and rejection of
+all nonseparable CMYK modes above describe previous checkpoints. Images and
+shadings still pass through RGBA in CMYK groups, losing original separations.
+Explicit RGB children inside CMYK groups remain an open correctness issue.
+
+Shading opacity, blend and soft masks now reach the painter, mesh interpolation
+precedes color conversion, and Matte is undone before ICC conversion. These
+corrections change affected pixels without changing public record layouts,
+symbols, callback signatures, ABI1 or schema6. See AUDIT-2026-10-19.md for scope.

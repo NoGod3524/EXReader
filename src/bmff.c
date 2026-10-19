@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "bmff_internal.h"
 uint32_t exr_bmff_be16(const unsigned char *p) { return (uint32_t)p[0]<<8|p[1]; }
 uint32_t exr_bmff_be32(const unsigned char *p) { return exr_bmff_be16(p)<<16|exr_bmff_be16(p+2); }

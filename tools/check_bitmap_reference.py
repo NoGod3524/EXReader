@@ -4,7 +4,7 @@
 Usage: python check_bitmap_reference.py shared_library cbdt_font [emoji-test.txt]
 Dependencies are for this check only, never part of the SDK.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import ctypes as c
 import hashlib
 import io

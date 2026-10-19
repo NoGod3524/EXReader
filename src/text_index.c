@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 #include <sqlite3.h>
 struct exr_text_index { sqlite3 *db; unsigned refs,query,busy; };

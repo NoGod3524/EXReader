@@ -1,9 +1,11 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "exreader.h"
 #include <miniz.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cmyk_reference.h"
+#include <math.h>
 static exr_error error; static unsigned checks; static const char *scenario;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"%s line %d: %s (%d: %s)\n",scenario,__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -98,7 +100,7 @@ static void cmyk_inline_cases(const char *fixtures) {
     add(&c,"q 16 0 0 16 0 0 cm "); inline_data(&c,"/W 17 /H 9 /BPC 8 /CS /CMYK /F /DCT /D [1 0 1 0 1 0 1 0]",j.data,j.size,NULL);
     add(&c,"Q "); label(&c); b=build(&c,NULL,NULL,0); d=open_pdf(&b); image=render(d);
     p=image.pixels+(image.height-5)*image.stride+4*4;
-    CHECK(abs((int)p[0]-183)<=2 && abs((int)p[1]-143)<=2 && abs((int)p[2]-103)<=2 && p[3]==255); text(d,"Z");
+    { unsigned rgb[3],k;cmyk_reference((const double[4]){40/255.,80/255.,120/255.,32/255.},rgb);for(k=0;k<3;k++) CHECK(abs((int)p[k]-(int)rgb[k])<=2);CHECK(p[3]==255); } text(d,"Z");
     exr_bitmap_free(&image); exr_fixed_free(d); free(b.data); free(c.data); free(j.data);
   }
 }

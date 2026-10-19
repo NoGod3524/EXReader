@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original, deterministic EPUB 2/3 navigation fixtures."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import zipfile
 

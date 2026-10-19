@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 #include <ctype.h>
 exr_status exr_number_text(exr_buffer *out,int value,const char *format,exr_error *e) {

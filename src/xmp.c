@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 #include <expat.h>
 #define RDF "http://www.w3.org/1999/02/22-rdf-syntax-ns#|"

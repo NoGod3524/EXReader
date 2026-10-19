@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* ISO 32000-1 8.7.4.5: axial (type 2) and radial (type 3) shadings. Each is baked
    into an RGBA bitmap that the caller paints with the current clip, alpha and
    blend, so clipping and transparency keep using the existing paths. */
@@ -59,10 +59,11 @@ static exr_status sample(exr_pdf_function *function,exr_pdf_colorspace *space,un
 }
 
 exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,
-                                uint32_t value,const double ctm[6],unsigned intent,
+                                uint32_t value,const double ctm[6],const exr_pdf_paint_state *paint,size_t *work,
                                 exr_pdf_shading_fn emit,void *context,
                                 const exr_control *control,exr_error *e) {
   uint32_t id,coords_id,function_id,cs_id;const exr_pdf_value *v;double coords[6]={0},t;
+  unsigned intent=paint->intent;
   int extend0=0,extend1=0,type=0;unsigned i,components=1,ncoords;
   exr_pdf_colorspace *space=NULL;exr_pdf_function *function=NULL;
   exr_bitmap bitmap={0};double matrix[6],local[6];exr_status status=EXR_OK;
@@ -74,7 +75,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
   if(exr_pdf_resolve(file,exr_pdf_get(file,value,"ShadingType"),&id,e)!=EXR_OK) return e->code;
   { double n; if(!number(file,id,&n)) return exr_fail(e,EXR_FORMAT,"Invalid PDF shading type"); type=(int)n; }
   if(type>=4 && type<=7) {
-    status=exr_pdf_shading_mesh(file,value,type,ctm,intent,emit,context,control,e);
+    status=exr_pdf_shading_mesh(file,resource_file,resources,value,type,ctm,paint,work,emit,context,control,e);
     return status;
   }
   if(v->kind!=EXR_PDF_DICT) return exr_fail(e,EXR_FORMAT,"PDF shading is not a dictionary");
@@ -121,6 +122,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
     bitmap.pixels=calloc((size_t)bitmap.stride,1);
     if(!bitmap.pixels) { exr_pdf_function_free(function);exr_pdf_colorspace_free(space);return exr_fail(e,EXR_MEMORY,"PDF shading bitmap allocation failed"); }
     for(i=0;i<AXIAL_SAMPLES && status==EXR_OK;i++) {
+      if(exr_control_cancel(control,e)!=EXR_OK) { status=EXR_CANCELLED;break; }
       double rgb[3]={0},u=t0+((double)i+0.5)/AXIAL_SAMPLES*(t1-t0);
       t=u<0 ? 0 : u>1 ? 1 : u;
       status=sample(function,space,intent,t,rgb,e);
@@ -136,7 +138,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
         local[2]=px*2*h;local[3]=py*2*h;
         local[4]=coords[0]+t0*ax-h*px;local[5]=coords[1]+t0*ay-h*py;
         multiply(ctm,local,matrix);
-        status=emit(context,&bitmap,matrix,NULL,e);
+        status=emit(context,&bitmap,matrix,paint,e);
       }
     }
   } else {
@@ -145,7 +147,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
     double top=fmin(coords[1]-coords[2],coords[4]-coords[5]);
     double right=fmax(coords[0]+coords[2],coords[3]+coords[5]);
     double bottom=fmax(coords[1]+coords[2],coords[4]+coords[5]);
-    if(!(right>left) || !(bottom>top)) return exr_fail(e,EXR_FORMAT,"Degenerate PDF radial shading");
+    if(!(right>left) || !(bottom>top)) { status=exr_fail(e,EXR_FORMAT,"Degenerate PDF radial shading");goto done; }
     /* An extended radial shading has no outer boundary: its last colour covers
        the whole clip. Grow the emitted quad by one gradient span per side so
        clipping regions larger than the circles still receive that colour. */
@@ -159,6 +161,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
     if(!bitmap.pixels) { exr_pdf_function_free(function);exr_pdf_colorspace_free(space);return exr_fail(e,EXR_MEMORY,"PDF shading bitmap allocation failed"); }
     for(i=0;i<RADIAL_SAMPLES*RADIAL_SAMPLES && status==EXR_OK;i++) {
       unsigned row=i/RADIAL_SAMPLES,col=i%RADIAL_SAMPLES;
+      if(!col && exr_control_cancel(control,e)!=EXR_OK) { status=EXR_CANCELLED;break; }
       double x=left+((double)col+0.5)/RADIAL_SAMPLES*(right-left);
       double y=top+((double)row+0.5)/RADIAL_SAMPLES*(bottom-top);
       double rgb[3]={0};
@@ -172,9 +175,10 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
       local[0]=right-left;local[1]=0;local[2]=0;local[3]=bottom-top;
       local[4]=left;local[5]=top;
       multiply(ctm,local,matrix);
-      status=emit(context,&bitmap,matrix,NULL,e);
+      status=emit(context,&bitmap,matrix,paint,e);
     }
   }
+done:
   free(bitmap.pixels);exr_pdf_function_free(function);exr_pdf_colorspace_free(space);
   return status;
 }

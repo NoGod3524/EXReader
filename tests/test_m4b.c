@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* Original sine-wave AAC in FFmpeg-created M4B containers. */
 #include "exreader.h"
 #include <math.h>

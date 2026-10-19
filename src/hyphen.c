@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "hyphen_internal.h"
 #include "normalize_internal.h"
 #include "case_internal.h"

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "layout_internal.h"
 #include "font_outline_internal.h"
 exr_status exr_font_glyph_outline(exr_font *font,size_t index,uint32_t glyph,

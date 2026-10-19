@@ -1,130 +1,36 @@
-# EXReader 原生框架交接
+# EXReader 开发状态与路线
 
-交接日期：2026 年 10 月 18 日。当前交付为无 UI 的 C11 电子书 SDK，GPL-3.0-only，0.18.0 开发版，ABI epoch 1，书库 schema 6。本次停止点是非隔离 RGB PDF 透明组这一可独立验收批次；完整 PDF、EPUB 排版及阅读 SDK 的目标仍有后续工作。用户要求本批完成后暂停，当前已暂停，未经后续继续指令不启动下一批。
+更新日期：2026-10-19。当前为无 UI 的 C11 SDK，MIT，版本 **0.19.0**、ABI epoch **1**、书库 schema **6**。
 
-版本号已在本记录之后提升为 **0.19.0 开发版**（ABI epoch 1、书库 schema 6 不变）；下文所有运行库哈希、CI 运行与采样仍对应 0.18.0 的已验证代码提交 `ec8d4a98`。
+仓库：https://github.com/NoGod3524/EXReader 。开发分支：`codex/framework`。本次修复与验证入口见 [HANDOFF-NEXT.md](HANDOFF-NEXT.md)，审计发现见 [AUDIT-2026-10-19.md](AUDIT-2026-10-19.md)。
 
-## 代码与交付位置
+旧阅读器保留于 `codex/reader-app`，旧 MIT 版保留于 `codex/reader-0.1.1`。其 UI、IndexedDB 数据与旧标注尚未接入 C SDK。
 
-| 项目 | 当前值 |
-| --- | --- |
-| 仓库 | https://github.com/NoGod3524/EXReader |
-| 开发分支 | `codex/framework` |
-| 本批代码提交 | `ec8d4a98cdd6e63fa10a67e9a8521dfac743dd3e` |
-| 本批 CI | https://github.com/NoGod3524/EXReader/actions/runs/39148719500 |
-| 代码提交前基线 | `2fe46c6c288c3691ca0bf4caedaac90f87300b68`，其中原生实现为 `a1411afc9547c61950ecb424049a8f7be43b0d11` |
-| 原生公开入口 | `include/exreader.h` |
-| 能力细节 | [NATIVE_API.md](NATIVE_API.md) |
-| 兼容与迁移 | [SDK_COMPATIBILITY.md](SDK_COMPATIBILITY.md) |
-| 验证记录 | [NATIVE_VALIDATION.md](NATIVE_VALIDATION.md) |
-| 性能口径与历史 | [PERFORMANCE.md](PERFORMANCE.md) |
-| 版本映射与长期目标 | [VERSIONING.md](VERSIONING.md) |
-| 本批原始数据与来源 | [metadata.json](benchmarks/0.18.0-pdf-nonisolated-windows/metadata.json)、[summary.json](benchmarks/0.18.0-pdf-nonisolated-windows/summary.json) |
+## 目标与完成定义
 
-代码提交和后续交接记录提交分开；最终记录提交只更新文档及采样，使用 `[skip ci]`；可用 `git log -1` 读取记录提交，不将其混作运行库构建提交。运行库对应代码提交以 metadata 的 `validated_code_commit` 为准。0.13–0.100 的旧内部步骤已归并为 0.13–0.18 功能里程碑；本批沿用 0.18.0，没有新增发行标签。
+提供开放、可嵌入、尽量不绑定宿主和格式的 C 框架，面向 Windows、Linux、macOS、iOS/iPadOS 和 Android。文档树、位置、分页、资源和绘制后端向宿主开放；网络、系统字体、语音及应用界面由适配层提供。
 
-旧 UI 阅读器保留在 `codex/reader-app`，旧 MIT 版保留在 `codex/reader-0.1.1`，历史 preview-0.1.0/0.1.1 下载仍是旧阅读器。原生 C 核心与旧 UI、IndexedDB 数据及旧标注尚未连通。工作区中残留的 `dist/`、`src-tauri/`、`node_modules/` 等忽略目录不属于当前原生验收产物，恢复工作时不依赖它们。
+每项能力以接口、支持矩阵、可复现输入和回归结果验收；打开成功不能代替正确绘制、保存或定位。手机交叉编译与设备运行分别记录。当前仍是开发 SDK，后续目标没有全部完成。
 
-## 产品目标与完成定义
+## 当前能力
 
-目标是开放、可嵌入、尽量不绑定宿主或特定格式的 C 框架，覆盖 Windows、Linux、macOS、iOS/iPadOS、Android。文档树、文字位置、分页、固定页、资源、绘制和播放后端保持开放；UI、网络、系统语音、OCR 模型和受保护出版物适配按需接入。书库具有导入、编辑书名/封面、组织、阅读进度、标注和备份能力。
-
-整体完成需要同时满足：
-
-1. 每项支持能力都有公开接口、支持边界、可复现输入和对应回归；未支持特性返回明确结果。
-2. EPUB 完整布局与页级续排在页数、源范围、命中、选择及 checkpoint 恢复上保持一致；缓存计费有上限。
-3. PDF 透明、颜色、表单、安全擦除和 OCR 分别完成以下工作包的验收，不能用打开成功代替正确绘制或保存。
-4. 三桌面通过测试与安装后 SDK 消费；手机库交叉编译之外还需要设备/模拟器运行、阅读视图与无障碍验证。
-5. 发行附版本化接口、迁移说明、示例、许可、二进制和性能记录。当前仍是开发 SDK，未完成整体发行验收。
-
-不以单一百分比表示总体进度：尚未冻结完整 CSS、PDF 扩展和脚本语言的兼容矩阵。下面按已交付能力和具有明确出口的工作包跟踪。
-
-## 当前功能与边界
-
-| 领域 | 已有实现 | 仍需完成 |
+| 领域 | 已有实现 | 主要缺口 |
 | --- | --- | --- |
-| 流式文档格式 | TXT、严格 XHTML/HTML、FB2、EPUB、DOCX、RTF、MOBI/KF8；章节、树、资源、导航及各格式支持的样式/图片/链接 | HTML5 错误恢复、完整 Word 样式/打印版面、更多现实文件兼容；内置解析仍有整章/整文件路径 |
-| 开放模型 | 通用文档构造、宿主分段 loader、随机读取源、布局输出、字体/图片/固定页绘制接入 | 章内增量解析；更完整的能力发现和面向应用的接口文档 |
-| 字体与文字 | 宿主字体集、书内 @font-face、FreeType 栅格；OpenType、阿拉伯预处理、双向文字、Devanagari deva/dev2、竖排/混轴、ruby、可变轴 | 其他 Indic/东南亚脚本专用处理；跨字号附标等细节；系统字体发现由宿主处理 |
-| Unicode 与断词 | Unicode 17 默认断行/字素、软连字符、语言模式/provider、NFC 与源字节映射、复合词、NOHYPHEN、拼写替换、改写后再匹配、WORD/LITERAL 大小写策略及检查点 | 更广语言词典实测和额外语言特例；不自动下载或内置所有词典 |
-| 彩色字体 | COLR v0/CPAL、sbix PNG/JPEG、CBDT/CBLC PNG、cmap 14 变体 | COLR v1、SVG 字体，其他位图图像格式 |
-| EPUB 布局 | CSS 子集、图片、指定/自动/fixed 列宽、top/middle/bottom/baseline、共享 solid/hidden 边框、合并格；float/clear、逐行绕排、长浮动与嵌套续排；高行/rowspan 单元格独立续排 | 完整 CSS；逐边/更多边框线型、重复表头、复杂百分比与溢出行为；auto 列宽和对齐测量首屏成本 |
-| 页与位置 | 页级续排、缓存页数/字节预算、检查点、随机回读、命中/选择、EPUB CFI、TextQuote 锚点、书库重定位、全文索引 | 章内解析内存与时间；更广真实书籍定位回归；复杂转换后标注迁移 |
-| PDF 阅读 | 固定页 API、对象/流解码、字体/Type3、路径/图像/内联图、文字几何/搜索/选择、Info/XMP、原生标注读取 | 更多 PDF 图像过滤器、Pattern/其他绘制特性；完整现实文档兼容语料与持续模糊测试 |
-| PDF 认证 | Standard R2–R6 用户/所有者/空密码、RC4/AES、Crypt filter、对象流/元数据解密、可重试密码、权限快照 | 证书 PubSec、EFOpen 专用附件认证、加密写回；当前编辑入口拒绝加密输入 |
-| PDF 色彩 | Device/Indexed/CalGray/CalRGB/Lab、ICCBased v2/v4 至 sRGB、Separation/All/None/DeviceN、Type 0 多输入线性/三次采样和 2/3/4 函数；CMYK/YCCK JPEG | 非 RGB 透明组色空间、OutputIntent、动态渲染意图、Matte 扩展、Pattern/套印等；完整印刷色彩 |
-| PDF 合成 | 16 种 RGB 模式、页面隔离组、隔离/非隔离/嵌套挖空组、隔离和非隔离 Form/AP 组、图形状态 Alpha/Luminosity 软遮罩（BC、指数 TR、矩阵/BBox、q/Q/None）、填充/描边单一透明元素、通用扩展 sink、取消/预算/清理 | 组区域裁小、非指数型 TR、联合子像素覆盖 |
-| PDF 编辑 | Text/Highlight/Underline/StrikeOut/Squiggly 新增/修改/删除与外观；元数据增量写回 | 其余标注编辑、AcroForm；增量删除保留历史原文，安全 redaction 尚未实现 |
-| CBZ | PNG/JPEG、自然排序、ComicInfo、按页读取/解码、固定页/书库书签 | WebP/GIF/BMP/AVIF/TIFF 等页图，不支持时明确拒绝 |
-| 书库 | SQLite 原书、元数据/封面、标签/收藏/已读、文本和固定页进度/标注、音频书签、精确去重、事务备份 | 旧 UI 数据迁移、流式大媒体导入、应用级同步/冲突和多设备体验 |
-| 格式转换 | 六种正文格式；树和资源保真的 EPUB 导出、HTML 资源 ZIP；PDF/EPUB 原书元数据编辑 | 更多格式高保真往返、跨格式图片/复杂样式/批注保留；完整阅读格式与完整转换格式不是同一集合 |
-| 音频 | 时间线/同步/后端、WAV/FLAC、可选 MP3/AAC/M4A/M4B、PCM、WSOLA 变速、六平台输出适配 | 移动音频会话、打断/后台行为及真机验收；EPUB 系统 TTS 尚未实现 |
-| 应用 SDK | C/C++ 安装消费示例、Swift/JNI 基础适配、桌面运行及移动编译 | 可嵌入阅读视图、完整示例 App、TTS、无障碍、OPDS、授权 LCP；手机库可编译不等于手机阅读器可用 |
-| OCR | 尚未实现 | 可选后端、语言模型、文字/字格位置、置信度、预算/取消、搜索选择和文本层 |
+| 文档与模型 | TXT、XHTML/HTML、FB2、EPUB、DOCX、RTF、MOBI/KF8；通用构造、分段 loader、随机读取源、树与资源 | HTML5 错误恢复、完整 Word 版面、章内增量解析 |
+| 排版与位置 | CSS 子集、float/clear 和逐行绕排、表格列宽/合并/垂直对齐/逐边边框/重复表头；页级续排、缓存字节预算、检查点、CFI、TextQuote、命中选择 | 完整 CSS、border-spacing、复杂百分比与溢出、大章解析成本 |
+| 文字与字体 | Unicode17、双向、OpenType、阿拉伯、Devanagari、竖排、ruby、可变轴、词典/provider 断词；COLRv0、sbix、CBDT、cmap14 | 更多 Indic/东南亚脚本、COLRv1、SVG 字体、更多语言实测 |
+| PDF | 固定页与文字几何、搜索选择、字体/Type3、图像与 CMYK/YCCK JPEG、渐变2–7、ICC v2/v4、16种混合、隔离/非隔离/挖空组、软遮罩 | 审计列出的组合错误和限界；Pattern、JPX/JBIG2、OutputIntent、完整印刷色彩 |
+| PDF 认证与编辑 | Standard R2–R6、RC4/AES、可重试认证、权限快照；基础标注与元数据增量保存 | PubSec、EFOpen、加密写回、AcroForm、安全 redaction；增量删除保留历史原文 |
+| 色彩修复批次 | 完整默认 CMYK ICC 压缩内嵌；修正减色混合、网格记录/插值、Matte 处理顺序、透明度与遮罩传递 | 图像/渐变仍经 RGBA 进入 CMYK 组，墨色分离不保真；显式 RGB 子组切换未完成 |
+| 书库与转换 | SQLite 原书/封面/元数据/标签/收藏/进度/标注/音频书签/备份；六种正文转换，EPUB和HTML资源导出 | 大媒体流式导入、同步、旧 UI 迁移、更多高保真往返 |
+| CBZ与音频 | CBZ PNG/JPEG、自然排序、ComicInfo；WAV/FLAC、可选MP3/AAC/M4B、时间线、WSOLA、输出适配 | 更多CBZ图像、移动音频会话/后台/真机验收 |
+| 应用 SDK | C/C++消费示例、Swift/JNI基础适配；三桌面历史CI与移动库交叉编译 | 嵌入视图、完整应用、TTS、无障碍、OPDS、LCP、OCR |
 
-接口文档按历史开发顺序累积；早期 S 节中的限制可能由后文更新覆盖。当前表格跨页和断词替换现状以本表及 API 最后的补充节为准，后续应整理成统一版本化矩阵。
-
-## 本批透明组的实现与验收
-
-### 可使用的行为
-
-- `exr_canvas_begin_group(..., flags=0, ...)` 从父背景开始；`EXR_GROUP_ISOLATED` 从透明背景开始。原 `begin_layer` 仍表示隔离层，两者用 `end_layer` 结束。
-- `exr_draw_sink_ex` 在大小标记尾部增加 `begin_group`，优先调用新回调；隔离请求可回退旧 begin_layer，非隔离请求遇到旧消费者返回 `EXR_UNSUPPORTED`。任何 begin 都要求 end_layer。旧尺寸输入/输出和原无标记 sink 保持兼容。
-- PDF Form/AP 的 I 缺省 false；非隔离 Form 继承色彩空间，显式 CS 拒绝为 `EXR_FORMAT`。页面总是隔离。调用者 opacity/blend 和继承 clip 在提交时各用一次。
-- 非隔离组独立累计组 alpha，以浮点预乘 RGB/完整 alpha/组 alpha 计算背景移除；公开 bitmap 仍即时更新为 RGBA8。背景精度延迟读取，提交遍历脏区域。
-- 状态单独堆分配，避免层数组扩容使父状态指针失效。abort/失败/取消释放工作区并恢复父作用域；失败不会返回部分渲染图。
-
-### 已跑通的量化检查
-
-| 检查 | 当前结果 |
-| --- | --- |
-| 本地 Windows CTest | 119/119 通过 |
-| 原生混合断言 | 842,005 项通过 |
-| 新非隔离 Form/AP 对参考像素最大差 | 1/255，预乘通道 |
-| 八个场景参考掩码内最大差 | 2/255；测试容差保持 3/255 |
-| 独立 Decimal 40 位规范参考 | 208 个 flat 样本与原始 PDFium 最大差 2；160 个 group 样本精确重现 |
-| 低 alpha 累积 | 1/255 连续绘制 1,000 次，以及 1,000 次组提交，结果 alpha 250 |
-| 深度与状态 | 32 层链、扩容、嵌套隔离/非隔离、fractional clip、父状态、空组、取消、abort 通过 |
-| 安装消费 | C 渲染实际非隔离 PDF；C++ 新 API/回调与分页示例；JNI `-Xcheck:jni` 通过 |
-| 历史输入不变 | 57 个旧混合参考文件、891 个旧 fixture 文件哈希一致 |
-| 来源核验 | 1,237 个代码/输入 Git blob 哈希；75 个 manifest 文件；4 份运行库拷贝一致 |
-
-原始 MuPDF/PDFium 输出与规范期望分开保存。PDFium 在这些 Form 场景隐式隔离；MuPDF 的半透明非分离混合和 masked image alpha 存在差异，后者为 204，规范/PDFium 为 200。参考实现使用 ISO 32000-1 11.4.4 的独立 Decimal 算法，不把外部程序的所有像素自动当作正确答案。
-
-CI 已完成，准确代码 SHA 的六个作业全部成功：
-
-| 作业 | 最终结果 |
-| --- | --- |
-| Windows / Linux / macOS | 各119项CTest通过；安装后C/C++/JNI、系统字体表格、表格内存与新增PDF性能采样通过；macOS另通过Swift |
-| ASan / UBSan / leak | 116项CTest通过，无本次运行报告的sanitizer错误 |
-| Android | ARM64共享引擎库构建与安装通过 |
-| iOS / iPadOS | arm64设备与模拟器引擎库、对应Swift适配检查通过 |
-
-ASan 的 116 项比桌面的 119 项少 3 项：`native-hyphen-compound-oracle`、`native-hyphen-replacement-oracle` 与 `native-hyphen-conditional-oracle` 通过 ctypes 把运行库载入未插桩的 Python，ASan 运行库无法这样装载（`CMakeLists.txt` 中的 `if(NOT EXR_SANITIZE)` 分支）；对应的原生 C 复合词、队列与预算回归仍在 ASan 下运行。
-
-作业ID、起止时间和实际CTest汇总见 [ci.json](benchmarks/0.18.0-pdf-nonisolated-windows/ci.json)。当前无失败测试待修。
-
-### 性能与轻量化现状
-
-本地 Windows 11、GCC 16.2 Release、JNI ON、AAC OFF，DLL **5,662,055 bytes**，比前一批增加 **10,319 bytes**，约 **0.183%**。SHA-256：`6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4`。本批无新增运行时依赖。
-
-| scale 4 测试场景 | 打开 ms | 首画 ms | 重画 p50 ms | 重画 p95 ms | 进程峰值 bytes |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| nonisolated | 0.5438 | 548.0304 | 582.2979 | 655.6072 | 40,259,584 |
-| ap-nonisolated | 0.4595 | 23.8825 | 23.3268 | 27.0374 | 27,643,904 |
-| flat | 0.3328 | 76.9589 | 77.0822 | 85.7585 | 34,193,408 |
-
-每场景 3 个新进程，各首画后重画 8 次，表中为进程指标的中位数。RSS 包含 Python/ctypes 及运行库；这是同页重画，不是翻页。背景负载和磁盘缓存未控制。若干旧场景比历史样本慢，归因前需相同负载下新旧版本交替测量。该项属于未关闭的性能调查，不能将本批描述为所有既有路径性能已无回退。
-
-非隔离组按整画布保留 **24 bytes/pixel**，隔离组为 **4 bytes/pixel**；活动子组工作像素合计和单组各限 64 MiB，另计基础页图、遮罩和状态。1000×1500 的单个非隔离组预留 36,000,000 bytes；2000×3000 需 144,000,000 bytes，将触及当前单组上限。脏区域提交尚未解决完整预留带来的高分辨率限制。缓存预算也不等于全进程内存上限。
-
-内部比较过拆分和交错浮点缓冲，像素相同，拆分没有稳定时间收益且首画/峰值更差，最终保留一次分配的五 float 交错实现。实验数据位于 `interleaved-prototype/` 与 `buffer-comparison.json`，不能混作最终提交的基准。
-
-最近 EPUB 大表格基线为 OpenType 优化批次的 1 MiB 单格、Arial、前 65 页、3 新进程中位数：fixed 首屏 40.75 ms、峰值 14,442,496 bytes、翻页 p50/p95 23.46/27.60 ms；auto 首屏 4434.30 ms、峰值 14,700,544 bytes；middle/bottom 首屏约 2.4 s。自动列宽和完整高度测量仍扫描输入。本批没有改动 EPUB 排版；这些是既有基线，不是本批重新采样结果。
+精确支持范围见 [SUPPORT_MATRIX.md](SUPPORT_MATRIX.md)。历史性能和验证记录保留于 [PERFORMANCE.md](PERFORMANCE.md) 与 [NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)，历史结果以对应代码 SHA 和运行库哈希为准。
 
 ## 后续工作包与量化出口
 
-以下数字是接手后的验收目标。每包先做输入矩阵，再实现、验证、记录并提交；不按新增函数数量升级版本。保持现有 119 项桌面测试全绿，并将新增测试加入相应矩阵。
+下表为目标清单；已有部分实现不等于整包完成。WP1–WP5 的现状以支持矩阵和审计记录为准。优先关闭已复现错误，再继续 WP4a。保持现有全量测试并增加针对性回归。
 
 | 顺序 | 工作包 | 可量化验收条件 |
 | --- | --- | --- |
@@ -147,7 +53,6 @@ ASan 的 116 项比桌面的 119 项少 3 项：`native-hyphen-compound-oracle`�
 | 15 | OPDS 与 LCP | OPDS1/2 各≥10个分页/搜索/认证/获取/坏数据样本；网络与凭据由宿主控制。LCP 使用授权测试出版物完成打开/失效/续期/错误密码等路径，明确官方实现许可与分发条件；不把未授权 DRM 解密纳入核心 |
 | 16 | 发行 SDK 和可靠性 | 统一当前支持矩阵、版本化文档和迁移实例，全部六个 CI 作业通过；增加解析/字体/布局的 sanitizer fuzz 目标，每目标固定种子持续≥24 CPU 小时且所有 crash 入回归。发布前验证默认及裁剪配置符号/安装消费，并附6平台产物、依赖许可和基准 |
 
-工作包 3 是轻量化优先项，可在 1/2 的架构需要时提前，但一次只交付一包并保留可复现对照。执行前先做两项纯重构并保持 119 项全绿：拆分 `src/pager.c` 的 `advance`（339 行单函数）与把 108 份自带 `main`/`CHECK` 的测试脚手架收敛为共享头文件。发行支持以冻结的矩阵条目为单位。
 
 ## 总体验收的语料与标准目标
 
@@ -155,264 +60,31 @@ ASan 的 116 项比桌面的 119 项少 3 项：`native-hyphen-compound-oracle`�
 
 EPUB以EPUB3.3阅读链路、CSS2.2布局与所声明的CSS Text/Writing Modes/Ruby/Fonts模块为支持矩阵基准，列出每条规范行为的用例与实现状态。完整CSS目标通过扩展此矩阵推进，不能用一个总开关宣告完成。发行前给出矩阵条目总数/通过数及真实书籍失败表。PDF以ISO32000条目矩阵及上述四个对标项目的固定版本行为作对照，规范差异单独记录。
 
-## 未来各批共同验收
+## 构建、兼容与数据口径
 
-- 代码、当前 API、迁移、支持范围、回归和性能记录同时提交。源码 SHA、运行库 SHA、输入/字体 SHA、工具版本和原始样本必须能对应同一代码提交。
-- 保持 ABI 1 的既有符号、枚举值和无大小标记记录的大小/偏移；仅向大小标记输入/输出增加可选尾部。关闭可选组件仍保留符号并报告不可用。
-- Windows/Linux/macOS 各通过完整 CTest 和安装后 C/C++/JNI；macOS Swift；ASan/UBSan/leaks；Android ARM64、iOS/iPadOS device/simulator 库及 Swift 检查。新增测试数不同于本次计数时列明原因。
-- EPUB 对比完整/续排、缓存驱逐、随机回读、checkpoint、源区间/CFI、选择/命中、横竖排，禁止只验顺序第一页。
-- 每个新分配路径计费、检查溢出，测试超限/取消/失败清理；记录预算是否包含字体、原书、解析树、临时工作区和宿主。核心同步调用，无后台工作线程；同一可变句柄及共享 archive 图由宿主串行，回调不得释放/重入当前对象。借用视图和返回独立对象按 API 的所有权规则释放。
-- 时间使用同机、同输入/字体/配置、交替新旧版本≥5轮，给出中位数/p95及所有样本；峰值与常驻内存分开，重绘与真正翻页分开；体积给出依赖开关。
-
-## 源码定位
-
-| 路径 | 接手用途 |
-| --- | --- |
-| `src/canvas.c`、`canvas_internal.h`、`blend.c` | 组生命周期、计费、背景移除、组 alpha、脏区域、失败清理 |
-| `src/vector.c`、`affine_image.c`、`pixels_internal.h` | 路径/字形/图像的紧凑与精度像素路径，裁剪/覆盖率 |
-| `src/pdf_content.c`、`pdf_internal.h` | Group/BM 解析、Form 作用域、图形状态和预算 |
-| `src/pdf_paint.c`、`pdf_annotation_paint.c` | PDF→扩展 sink、页面隔离、原生标注 AP 与回调转发 |
-| `tests/test_blend.c`、`test_abi.c`、`test_pdf_appearance.c` | 本批像素/解析/预算/接口回归 |
-| `tests/fixtures/pdf-blend/` | 原创 PDF、mask、预期 RGBA、外部原始像素、manifest/oracle |
-| `tools/pdf_group_reference.py` | 独立 Decimal 规范参考及可运行核验 |
-| `tools/generate_pdf_blend_fixtures.py` | 原创场景及开发期参考生成；外部工具仅用于此流程 |
-| `tools/generate_knockout_fixtures.py` | 42 个挖空场景与 Decimal(40) 独立参考，`--check` 可重现 |
-| `tools/benchmark_pdf_blend.py` | 单页打开/首画/重画/峰值，支持 --case 与新进程重复 |
-| `tests/fuzz_parse.c`、`docs/FUZZING.md` | 确定性解析器 fuzz 驱动（种子变异、崩溃输入落盘、CI `fuzz` 作业） |
-| `src/flow.c`、`pager.c`、`pager_table.c`、`floats.c`、`layout.c` | EPUB 行排版、检查点、表格/浮动续排与布局 |
-| `src/hyphen.c`、`display_bidi.c`、`opentype.c` | 断词/改写/显示方向、字体 lookup |
-| `bindings/swift/`、`bindings/jni/`、`examples/`、`tests/sdk_cpp/` | 安装后宿主和语言适配 |
-| `cmake/deps.cmake`、`.github/workflows/native.yml` | 固定依赖、安装/跨平台/性能与 sanitizer 流程 |
-
-## 构建与测试复现
-
-### 通用干净环境
-
-需要 C11 编译器与 CMake≥3.24；首次配置会按固定 URL/SHA 下载组件。SDK 默认不开 AAC；CI 开 AAC，测试数量和 DLL 体积可能不同。字体由宿主提供；不要提交系统字体。
+快速验证见 [HANDOFF-NEXT.md](HANDOFF-NEXT.md)。通用新构建：
 
 ```sh
-cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=ON
+cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release
 cmake --build build/native --config Release --parallel 4
 ctest --test-dir build/native -C Release --output-on-failure
 cmake --install build/native --config Release --prefix stage
-cmake -S stage/examples -B build/sdk-example -DEXR_SDK=/absolute/path/to/stage -DCMAKE_BUILD_TYPE=Release
+cmake -S stage/examples -B build/sdk-example -DEXR_SDK=/absolute/path/to/stage
 cmake --build build/sdk-example --config Release --parallel 4
-cmake -S tests/sdk_cpp -B build/sdk-cpp -DEXR_SDK=/absolute/path/to/stage -DCMAKE_BUILD_TYPE=Release
-cmake --build build/sdk-cpp --config Release --parallel 4
-python tools/pdf_group_reference.py tests/fixtures/pdf-blend
 ```
 
-SDK 消费使用 `find_package(EXReader 0.19.0 EXACT CONFIG REQUIRED)`，防止选到旧编号更大的开发包。Windows MSVC 是 CI 路径；本地 MinGW 通过 ASCII junction 避开中文路径。动态库分别为 MSVC `exreader.dll`、MinGW `libexreader.dll`、Linux `libexreader.so`、macOS `libexreader.dylib`。
+公开无大小标记结构体维持原大小/偏移。扩展回调使用 `struct_size`，包装 sink 逐项转发可选回调。取消、预算和失败清理纳入回归。ToUnicode 保持严格校验。
 
-### 本机已验证环境
+历史基准中的本机目录已归一化为 `${WORKSPACE}` 和 `${LOCAL_BUILD}` 标签；它们表示原记录路径的角色，不是新的实际测量位置。测量值、输入/字体/运行库哈希及原代码 SHA 保持原值。旧源码清单中的 Git blob 哈希仍指向当时提交，不能用来验证本次文档改动。
 
-| 位置 | 路径 |
+## 源码地图
+
+| 路径 | 用途 |
 | --- | --- |
-| 工作区 | `C:/Users/Oscar/OneDrive/文档/ChatGPT/EXReader` |
-| ASCII 源码 junction | `C:/Users/Oscar/.codex/build-links/exreader-c` |
-| Release 构建 | `C:/Users/Oscar/.codex/build/exreader-c` |
-| 安装 SDK | `C:/Users/Oscar/.codex/build/exreader-crypto-stage` |
-| 安装 C / C++ 宿主 | `C:/Users/Oscar/.codex/build/exreader-hyphen-host` / `exreader-hyphen-cpp` |
-| JDK | `C:/Users/Oscar/.codex/build/exreader-jdk/jdk-21.0.12.1+1` |
-| JNI classes | `C:/Users/Oscar/.codex/build/exreader-jni-java` |
-| 可选开发参考模块 | `C:/Users/Oscar/.codex/tmp/exreader-pdf-blend-oracle` |
-
-目录名称中的 crypto/hyphen 仅为历史沿用。工具版本：本地 GCC 16.2、Python 3.14.7、JDK21；参考生成使用 PyMuPDF/MuPDF 1.28.2、pypdfium2 5.14.0/PDFium 156.0.8076.0。ISO 参考为 [PDF32000_2008.pdf](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf)，透明组背景移除/隔离/挖空/页面分别见 11.4.4–11.4.7。
-
-```powershell
-cmake --build C:/Users/Oscar/.codex/build/exreader-c --parallel 4
-ctest --test-dir C:/Users/Oscar/.codex/build/exreader-c --output-on-failure --parallel 4
-cmake --install C:/Users/Oscar/.codex/build/exreader-c --prefix C:/Users/Oscar/.codex/build/exreader-crypto-stage
-cmake --build C:/Users/Oscar/.codex/build/exreader-hyphen-host --parallel 4
-cmake --build C:/Users/Oscar/.codex/build/exreader-hyphen-cpp --parallel 4
-& C:/Users/Oscar/.codex/build/exreader-c/exreader-blend-test.exe C:/Users/Oscar/.codex/build-links/exreader-c/tests/fixtures/pdf-blend
-& C:/Users/Oscar/.codex/build/exreader-hyphen-cpp/exreader-cpp-test.exe C:/Users/Oscar/.codex/build/exreader-crypto-stage/examples/fonts/primary.ttf C:/Users/Oscar/.codex/build/exreader-crypto-stage/examples/books/table-fragments-12.epub
-& C:/Users/Oscar/.codex/build/exreader-hyphen-host/exreader-fixed-example.exe C:/Users/Oscar/.codex/build-links/exreader-c/tests/fixtures/pdf-blend/nonisolated.pdf C:/Users/Oscar/.codex/tmp/exreader-nonisolated-installed.png
-```
-
-每条构建/测试命令成功后再执行依赖它的下一步。编译时不修改源码、头文件、fixture、构建脚本等输入。性能采样时不并行跑编译和测试。
-
-```powershell
-$env:PATH='C:/Users/Oscar/.codex/build/exreader-crypto-stage/bin;'+$env:PATH
-& 'C:/Users/Oscar/.codex/build/exreader-jdk/jdk-21.0.12.1+1/bin/java.exe' -Xcheck:jni '-Djava.library.path=C:/Users/Oscar/.codex/build/exreader-crypto-stage/bin' -cp C:/Users/Oscar/.codex/build/exreader-jni-java org.exreader.Smoke C:/Users/Oscar/.codex/build/exreader-crypto-stage/examples C:/Users/Oscar/.codex/tmp/exreader-nonisolated-jni
-python tools/benchmark_pdf_blend.py C:/Users/Oscar/.codex/build/exreader-c/libexreader.dll tests/fixtures/pdf-blend C:/Users/Oscar/.codex/tmp/exreader-next-pdf-benchmark --runs 3 --scale 4
-```
-
-正常 CTest 无需安装外部 PDF 参考程序；Decimal reference 只用标准库。只有重新生成原始外部参考时才使用：
-
-```powershell
-python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.codex/tmp/exreader-pdf-blend-oracle
-```
-
-生成后核对 manifest 与历史未改输入，不能无差别接受外部参考变动。来源哈希从提交的 Git blob 读取，不能将 CRLF 工作区字节和 Git LF 字节混用。四份本地 DLL 必须与 benchmark/runtime hash 一致；避免 C++/JNI 从旧目录装入旧 DLL。
-
-## CI 产物与保存
-
-本次 workflow 上传三桌面安装包、Android ARM64、iOS/iPadOS device/simulator 库和三桌面性能记录。workflow 现共七个作业：上面六个之外新增 `fuzz`（ASan/UBSan + `EXR_BUILD_FUZZ=ON`，每次推送 20 万次种子迭代，失败时上传触发输入）；开启 `EXR_BUILD_FUZZ=ON` 的构建本地 CTest 为 120 项（新增 `native-fuzz-smoke`）。可用 `gh run download 39148719500 --dir <本地目录>` 获取全部产物，或按 artifact 名称筛选。CI 产物有平台保留期，不代替正式 release；已提交的原始性能和来源记录长期随 Git 保留。提交/发布时不要将本地 AAC OFF 的5.66 MB库体积当作所有 CI 配置的体积。
-
-## 依赖与许可
-
-核心沿用固定版本 C 组件：FreeType 2.14.1、Expat 2.9.0、miniz 3.1.2、SQLite 3.54.0、固定 stb 提交。可选 minimp3、FAAD2、LittleCMS 2.19.1、Mbed TLS 3.6.7 的最小算法子集。下载 URL/哈希以 `cmake/deps.cmake` 为准；许可见 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 和 `licenses/`。FreeType、CMS、密码学和可选音频解码并非全部从零自研。MuPDF/PDFium 仅作为开发参考，不链接/打包，不复制其实现。
-
-默认 FTS/MP3/ICC/PDF_CRYPTO 开，AAC 关；JNI 默认随 Android 开，其他平台可显式启用。裁剪开关不是全模块微内核分拆，减少默认依赖仍可另做体积目标。OCR/词典模型/网络/TTS/LCP 不应无条件进入核心分发。
-
-## 恢复工作与停止规则
-
-1. 用户要求继续后，先读取本文件、API 最后透明组节、VERSIONING 后续目标，以及当前 `git status`/HEAD。核对新的交接记录是否改变代码基线。
-2. 第一包默认为挖空组：先建立 shape/alpha 与初始 backdrop 的规范参考，再选最小通用内部表示；不得把现有非隔离组简单清空背景当作挖空。
-3. 保留 24 bytes/pixel、整画布分配和 64 MiB 上限的约束，评估是否需要先做裁小；同一批只验收一个完整行为。
-4. 完成共同验收后提交、推送、等准确 SHA 的六个 CI 作业结束，再记来源与 handoff。若 CI 失败，修复并重跑相关验证；保留失败原因与最终结果。
-5. 不自动添加 UI、切换许可证、提升版本、创建新分支/任务或引入新后端。新增依赖按许可、体积与是否可选决定。按现有指示不派生子代理。
-6. 本批结束后停止编码与自动续做，现有全局目标保持暂停。下一次从单个工作包继续。停止时没有本批仍在运行的编译、测试或CI任务，也没有活动子代理；工作区应为干净状态。
-
-## 当前未关闭问题
-
-1. 非隔离主场景首画约548 ms，部分旧场景比历史采样慢，缺少受控交替归因。下一轮优化从此处保留对照数据。
-2. 整画布24字节预留导致大页面单组超过64 MiB时拒绝渲染，不能仅提高预算后宣称轻量化完成。
-3. auto表格和middle/bottom精确高度测量需扫描完整输入，存在秒级首屏成本；解析和双向数据也不由页面缓存上限包住。
-4. 当前公开文档含历史步骤叙述；已新增 [SUPPORT_MATRIX.md](SUPPORT_MATRIX.md) 作为单一当前状态入口，发行前仍需把早期“未支持”段落并入该表并删除重复叙述。
-5. iOS/iPadOS和Android当前验证层级仍是库编译/适配检查；移动视图、后台音频、手势、无障碍和真机运行尚未交付。
-6. CI目前提示checkout/upload-artifact v4使用的Node20已退役并强制在Node24运行；当前任务成功，后续可单独升级actions并跑相同矩阵。
-7. 本批验证集中于透明组及完整现有回归；安全redaction、OCR、完整CSS与全部PDF文件兼容仍按上面的独立目标推进。
-
-## 工作量估计
-
-单人或单模型持续工作量估计：挖空组、两种软遮罩、区域裁小各约数天，互相耦合时需合并评估；将 PDF/EPUB 常用路径推进到较完整的可用水平通常仍需数周到数月。完整多平台应用、广泛现实文件兼容与长期稳定性按月计。每完成一个包，用实际失败样本和 CI/采样耗时重新估算，不把生成 token 速度直接换算成完工速度。
-
-## 工作包现状与已知坑（2026-10-19 WP4 着色检查点）
-
-在 WP5 收尾提交 `2a897d1` 之后，本检查点完成网格类型 6/7、DeviceCMYK 透明组接受与径向 Extend 外推。改动提交见下一节；本地回归 **129/129**（新增 `native-pdf-shading-mesh7`）。
-
-### 已完成
-
-| 包 | 内容 |
-| --- | --- |
-| WP1–WP3 | 框架、排版、组区域裁剪 |
-| WP4 | 轴向/径向渐变（含 Extend 外推）、渲染意图、灰度组、色调映射；**网格渐变类型 4/5/6/7**（`src/pdf_shading_mesh.c`）；**DeviceCMYK 组端到端**：画布四分量缓冲 + `exr_canvas_path_cmyk` + sink `path_cmyk`（见坑 3） |
-| WP4a | Standard 加密；**CCITT G3/G4**（含 `/Rows` 缺省时取 `/Height`） |
-| WP5 | 边框线型 **dashed/dotted/double**（块级与合并表格边）；**逐边边框**（四边独立 width/style/color，`border`/`border-top` 等简写与 1–4 值长写）；分页表格**重复 `<thead>`** |
-
-### 未完成
-
-| 包 | 剩余项 |
-| --- | --- |
-| WP4 | **DeviceCMYK ICC profile 决定**；OutputIntent、Matte |
-| WP4a | 证书加密（PubSec）、EFOpen、JBIG2、JPX |
-| WP5 | 仅剩 `border-spacing`（矩阵已标不支持，`separate` 表格按 0 间距排列） |
-| WP6–WP16 | 未开始 |
-
-### 已知坑（下一位务必先读）
-
-1. **网格渐变续接未验证**：类型 4 的 `flag 1/2` 续接三角形，自造夹具 MuPDF **不渲染**，
-   说明夹具或 flag 语义仍有问题；`native-pdf-shading-mesh` 目前只覆盖 `flag 0` 的单个三角形。
-   下一步必须先查 PDF 参考 4.6.3 原文的图 4.16/4.17，再找一个**真实含续接**的样本做对照，
-   不要再用自造夹具自我验证。
-2. **类型 5 的顶点顺序未验证**：2×2 晶格夹具与 MuPDF 结果不一致（MuPDF 只画一角）。
-3. **CMYK 透明组已端到端**：画布的四分量缓冲（`EXR_GROUP_CMYK`）通过 `exr_canvas_path_cmyk`
-   接收源色；PDF 侧用追加的 `exr_draw_sink_ex.path_cmyk` 把 `exr_pdf_color.values` 里的
-   DeviceCMYK 填充/描边直接送下来，`exr_pdf_group_rgb` 标记 `EXR_PDF_GROUP_CMYK`，嵌套组
-   继承 CMYK，复合填充+描边走 `exr_composite_compound_cmyk`，组内图像/着色按同一设备模型
-   转 CMYK。`groupcmyk-blend.pdf` 用「富黑 + 白各 50%」断言 (128,128,191)（RGB 合成会是
-   191,191,191）。**限制**：非可分离混合模式（Hue/Saturation/Color/Luminosity）在 CMYK 组内
-   明确返回 `EXR_UNSUPPORTED`（ISO 32000 只对 RGB 定义这些函数）；DeviceCMYK 仍是朴素换算，
-   没有 ICC profile。
-4. **图片尺寸与 `/Rows`**：CCITT 现在缺省取图像 `/Height`；其它过滤器没有同等回退。
-5. **网格 6/7 的验证方式**：`native-pdf-shading-mesh7` 用四个自造夹具（平面 Coons、平面张量、
-   凸起张量、CMYK）与 MuPDF 逐像素对照；平面类型 6 与类型 7 输出**逐字节相同**这个断言
-   能抓住控制点顺序错误。类型 4 的 `flag 1/2` 续接与类型 5 的顶点顺序**仍未像素验证**。
-6. **真实网格样本现状**：`issue13520.pdf` 现在能渲染（类型 7 + DeviceCMYK 组 + 径向 Extend），
-   与 MuPDF 平均差 **3.39**（37% 像素不同）——差异主要来自 DeviceCMYK 朴素换算与 RGB 组合成，
-   不是网格几何；`bug1703683_page2_reduced.pdf` 仍卡在 **ToUnicode** 严格校验（此前语料宽容
-   已按要求回退），与网格无关。语料其余 6 个含着色的文件都是类型 2/3（已支持）。
-7. **径向 Extend 的有限外推**：类型 3 在 `Extend true` 时把位图四周各扩一个梯度跨度
-   （与轴向的 `AXIAL_EXTEND_SPAN` 同思路）来填充裁剪区；**不是无限平面**，裁剪区超出
-   约一个跨度时仍会截断。轴向同理。
-8. **DeviceCMYK 的默认换算仍未定案**：`HANDOFF` 上面记录的 Argyll profile 三个打包方案
-   仍待用户选择；当前所有 CMYK 路径（页面、网格、组）共用朴素公式，`groupcmyk` 的像素
-   断言就是按这个模型写的，换 profile 时要同步改测试。
-9. **逐边边框不写进 `exr_box`**：统一四边仍走紧凑的单边框字段（`border_width` +
-   DASHED/DOTTED/DOUBLE 标志），四边不一致时改为每边一个 `EXR_BOX_BORDER` 盒
-   （块级在 `decorate()`，表格单元格在 `paint_cell_sides()`）。所以"有没有边框"
-   不能只看 `box.border_width==0`，要用 `exr_border_any()` 或数 BORDER 盒。
-10. **单元格逐边边框在表格层绘制**：cell layout 里的根 cell 盒只负责背景与尺寸，
-    四边由 `paint_borders`/`split_borders` 画；`remove_cell_box` 只删 cell 盒，不动内部块。
-11. **重复表头每页重新排版**：`repeat_header()` 用 `exr_flow_unit` 重排 thead 单元格再
-    `exr_flow_copy` 上屏，高度从页面预算扣除（`measure` 的 `full_room` 与 `split_row`
-    的 `budget` 都减了它）。只在**页顶**重复；同页内的行组续排不加表头。
-    `header_cells` 只收完整落在 header 行内的单元格，`rowspan` 跨进 tbody 的表头格不重复。
-12. **`border-style: hidden` 不占布局空间**（非 collapse 时按 none 处理），
-   `solid/dashed/dotted/double` 都按宽度占位；collapse 冲突里 hidden 仍直接胜出。
-
-## 交接：下一步顺序（2026-10-19 着色检查点后）
-
-按依赖关系排序，而不是按工作包编号：
-
-1. **DeviceCMYK ICC profile 决定**（WP4 剩余）：Argyll profile 的三种打包方案（内嵌 ~1 MB /
-   zlib ~415 KB / 9⁴ LUT ~20 KB）仍待选；选定后页面、网格、组共用同一转换，并同步改
-   `groupcmyk`、`groupcmyk-blend`、`shading-mesh7-cmyk` 的断言。
-3. **WP4a**：证书加密（PubSec）、EFOpen、JBIG2、JPX。
-4. **WP5 已收尾**：逐边边框与重复表头已完成，只剩 `border-spacing` 仍标不支持。
-5. **WP6–WP16**：按原顺序。
-
-接手须知：
-
-- 本地 Release 回归 **130/130**（新增 `native-pdf-shading-mesh7`、`native-canvas-cmyk`）；
-- 网格 6/7 已用自造夹具与 MuPDF 逐像素对照；类型 4 的 `flag 1/2` 与类型 5 的顶点顺序
-  **仍未像素验证**，见已知坑 1–2；
-- `issue13520.pdf` 已能渲染，平均差 3.39，差异来自 CMYK 换算与 RGB 组合成，不是网格几何；
-- 所有未实现路径都返回 `EXR_UNSUPPORTED`，没有静默错误输出。
-
-### 发现：DeviceCMYK→RGB 的默认换算与参考实现不同（2026-10-19）
-
-用一个最简单的色块验证（`0 1 1 0 k` 填充 16×16，无透明组）：
-
-| 实现 | 像素 |
-| --- | --- |
-| MuPDF | **(237, 28, 36)** |
-| 本实现 | **(255, 0, 0)** |
-
-结论：**这不是透明组的问题，是全局的 DeviceCMYK 默认换算差异**。
-参考实现的结果来自色彩管理（SWOP 一类 CMYK profile 经 Lab 转到 sRGB），
-而我们用的是朴素公式 `(1-c)(1-k)`。
-
-影响：所有 CMYK 内容（图像、填充、网格、组）都会偏色。组之前直接
-`EXR_UNSUPPORTED`，现在接受但按 RGB 合成，所以色差会进入渲染结果而不再被拒绝。
-
-要补齐需要**内置一个自由许可的 CMYK ICC profile**（SWOP/ISO Coated 等常见 profile
-有再分发限制，lcms2 也不自带），或者接受与参考实现的色差并在矩阵里标注。
-这是 WP4 色彩精度的前置决策，未定之前先不做 CMYK 组。
-
-### CMYK 默认换算：profile 已找到（2026-10-19）
-
-上节记录的“需要一个可再分发的 CMYK profile”，答案有了：
-
-- **ArgyllCMS 的 public domain CMYK profile**，作者 Graeme Gill 明确声明可用作
-  "free fallback CMYK profile"（B2A 表按 sRGB 源准备）；
-- 实际文件（961,644 字节，ICC v2，头部大小字段校验通过）：
-  `https://raw.githubusercontent.com/imbo/imbo/main/data/profiles/argyllcms_cmyk.icm`，
-  同目录的 `argyllcms_cmyk.LICENSE` 说明其来源与公有领域状态。
-
-**待决**：0.94 MB 的二进制怎么进仓库与构建。三个选项：
-
-1. 直接放 `src/icc/cmyk.icm`，CMake 用 `file(READ ... HEX)` 生成 C 数组（构建期多几秒，
-   仓库多 ~1 MB）；
-2. 用 zlib 压缩后内嵌（预计 200–300 KB），运行时解压一次建 lcms profile；
-3. 在离线阶段把这个 profile 采样成 9³×9 的 LUT（约 20 KB）内嵌，运行时四线性插值
-   （精度略降，但体积与构建复杂度最小）。
-
-选 1 最直接，选 3 最省事；无论哪种，换算后的数值与参考实现的 SWOP 系 profile
-仍会有可量化差异，需要在支持矩阵里如实标注。
-
-### 回退后的语料基线（2026-10-19 复测）
-
-按用户要求回退语料兼容工作后的实际数字（pdf.js 120 份，scale 1）：
-
-| 指标 | 值 |
-| --- | --- |
-| 可比对 | **47 / 120** |
-| 平均差 | **0.513** |
-| 最差 | `issue11144_reduced.pdf` 6.052 |
-| 其余 | 格式错误 64、显式不支持 8、参考实现失败 1 |
-
-作为对照：回退前（含 ToUnicode 容错与宽容打开）是 53 / 120、平均差 0.464。
-这两项属于 handoff 末尾的“语料驱动补强”，回退是用户要求，不是回归。
+| `src/canvas.c`、`blend.c`、`vector.c`、`affine_image.c` | 画布、组、合成、路径和图像 |
+| `src/pdf_content.c`、`pdf_paint.c`、`pdf_annotation_paint.c`、`pdf_softmask.c` | PDF解释、绘制、外观和遮罩 |
+| `src/pdf_color.c`、`icc.c`、`pdf_shading_mesh.c` | 色彩转换与网格 |
+| `src/flow.c`、`pager.c`、`pager_table.c`、`floats.c` | EPUB排版、表格、浮动和续排 |
+| `tests/test_render_audit.c`、`tools/generate_render_audit_fixtures.py` | 本次审计回归及原创输入 |
+| `bindings/`、`examples/`、`tests/sdk_cpp/` | 语言适配与安装消费 |
+| `.github/workflows/native.yml` | 桌面、sanitizer、fuzz、移动构建 |

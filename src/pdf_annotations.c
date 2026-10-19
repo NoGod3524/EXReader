@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_internal.h"
 #define BUDGET ((size_t)8*1024*1024)
 static exr_status charge(size_t *bytes,size_t n,exr_error *e) {

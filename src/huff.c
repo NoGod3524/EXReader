@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* HUFF/CDIC field semantics: KindleUnpack reference, credited in THIRD_PARTY_NOTICES.md. */
 #include "internal.h"
 typedef struct {

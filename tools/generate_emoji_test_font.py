@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original emoji substitution rules on the original bitmap-only fixture."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import hashlib
 from fontTools.ttLib import TTFont

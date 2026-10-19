@@ -5,7 +5,7 @@
 The mask is a solid rectangle or a flat grey, so the expected pixel at every
 probe is analytic: out = m * blend(backdrop, element) + (1 - m) * backdrop.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import hashlib
 from pathlib import Path
 

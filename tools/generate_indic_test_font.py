@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original geometric Devanagari fonts, with distinct basic-form GSUB stages."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
@@ -45,7 +45,7 @@ def generate(legacy):
     builder.setupCharacterMap(CMAP)
     builder.setupNameTable(dict(familyName='EXR Indic Test',styleName='Legacy' if legacy else 'Modern',
         uniqueFontIdentifier='EXR-Indic-'+str(legacy),fullName='EXR Indic Test',psName='EXRIndicTest'+str(legacy),
-        copyright='Copyright 2026 EXReader contributors; GPL-3.0-only'))
+        copyright='Copyright 2026 EXReader contributors; MIT'))
     builder.setupOS2(sTypoAscender=900,sTypoDescender=-200,usWinAscent=1000,usWinDescent=200)
     builder.setupPost()
     scripts = 'languagesystem deva dflt;' if legacy else 'languagesystem dev2 dflt; languagesystem deva dflt;'

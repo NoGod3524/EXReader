@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "layout_internal.h"
 #include FT_TRUETYPE_TABLES_H
 #include "vector_internal.h"

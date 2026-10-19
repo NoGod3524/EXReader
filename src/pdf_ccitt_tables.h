@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* CCITT T.4/T.6 decode tables generated from the Go x/image/ccitt package
    (BSD-3-Clause). Each entry is a binary tree node: a positive value is the
    next node index, a negative value is a leaf holding the complement of its

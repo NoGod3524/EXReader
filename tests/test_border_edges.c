@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* WP5: independent border sides on blocks, separate cells and collapsed grids.
    Side order is CSS physical top, right, bottom, left. */
 #include "exreader.h"
@@ -377,12 +377,21 @@ static void translucent(void) {
   exr_layout_free(l); exr_document_free(d);
 }
 
+static void double_growth(void) {
+  builder b={0};exr_layout_config c=config();exr_document *d;exr_layout *l;size_t i,n;const exr_box *boxes;
+  add(&b,EXR_NODE_DOCUMENT,SIZE_MAX,NULL,NULL,NULL,NULL);add(&b,EXR_NODE_CHAPTER,0,NULL,NULL,NULL,NULL);
+  for(i=0;i<80;i++) add(&b,EXR_NODE_PARAGRAPH,1,"div",NULL,"height:1px;width:80px;border-top:3px double red",NULL);
+  d=open(&b);l=layout(d,&c);boxes=exr_layout_boxes(l,&n);
+  for(i=0;i<n;i++) if(boxes[i].flags&EXR_BOX_BORDER) CHECK(boxes[i].background==0xff0000ff);
+  CHECK(n>=160);positioned(d,l);exr_layout_free(l);exr_document_free(d);
+}
+
 int main(int argc,char **argv) {
   char path[4096];
   CHECK(argc==2);
   snprintf(path,sizeof(path),"%s/fonts/primary.ttf",argv[1]);
   OK(exr_font_open(path,&font,&error));
-  four_sides(); shorthand(); width_expansion(); separate_cells(); collapsed_sides();
+  double_growth();four_sides(); shorthand(); width_expansion(); separate_cells(); collapsed_sides();
   vertical("writing-mode:vertical-rl",1);
   vertical("writing-mode:vertical-lr",0);
   split_pages(); nested_cell(); merged_cell(); translucent();

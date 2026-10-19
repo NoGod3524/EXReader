@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #ifndef EXR_CANVAS_INTERNAL_H
 #define EXR_CANVAS_INTERNAL_H
 #include "vector_internal.h"
@@ -12,6 +12,7 @@ typedef struct {
   size_t depth,group_depth;double opacity;exr_blend_mode blend,parent_blend;
 } exr_canvas_layer;
 struct exr_canvas {
+  struct exr_icc *cmyk_profile;
   exr_bitmap bitmap;exr_composite_state *composite; exr_control control; exr_error failure;
   exr_clip_mask *clip,*saved[160],*group,*groups[64];
   exr_canvas_layer *layers;size_t layer_depth,layer_capacity,layer_bytes,layer_budget;

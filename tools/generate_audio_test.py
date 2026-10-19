@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 """Generate the original 400 Hz PCM host-example fixture using only stdlib."""
 from pathlib import Path
 import math

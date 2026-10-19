@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "flow_internal.h"
 
 void exr_flow_area(const flow *f,float y,float height,float *x,float *width,float *next) {

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "bmff_internal.h"
 #if defined(EXR_ENABLE_AAC) && EXR_ENABLE_AAC
 #include <neaacdec.h>

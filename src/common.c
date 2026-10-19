@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "internal.h"
 exr_status exr_fail(exr_error *e, exr_status code, const char *fmt, ...) {
   if (e) {

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* Validation of ISO 32000-1 11.6.5.2 soft-mask dictionaries; no raster deps. */
 #include "pdf_internal.h"
 #include <math.h>

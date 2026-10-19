@@ -4,7 +4,7 @@
 Developer-only: requires fontTools. Normal builds use the committed fixtures.
 No system fonts or third-party font outlines are copied.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
@@ -39,7 +39,7 @@ def font(name, cmap, width, ascent, descent, kern):
     builder.setupNameTable({'familyName': name, 'styleName': 'Regular',
                             'uniqueFontIdentifier': name, 'fullName': name,
                             'psName': name.replace(' ', ''),
-                            'copyright': 'Copyright 2026 EXReader contributors; GPL-3.0-only'})
+                            'copyright': 'Copyright 2026 EXReader contributors; MIT'})
     builder.setupOS2(sTypoAscender=ascent, sTypoDescender=-descent,
                     usWinAscent=ascent, usWinDescent=descent)
     builder.setupPost()

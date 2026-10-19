@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #ifndef EXR_FONT_OUTLINE_INTERNAL_H
 #define EXR_FONT_OUTLINE_INTERNAL_H
 #include "vector_internal.h"

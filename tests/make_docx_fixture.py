@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original DOCX fixture: styles, images, links, merges and alternate content."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import base64, zipfile, xml.etree.ElementTree as ET
 root=Path(__file__).resolve().parent/'fixtures'

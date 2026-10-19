@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Independent conditional-compound oracle. External libhyphen is test-only."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 import ctypes as c
 import hashlib

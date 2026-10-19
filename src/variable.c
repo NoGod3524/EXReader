@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "variable_internal.h"
 #include FT_MULTIPLE_MASTERS_H
 static exr_status axes(const exr_font *font,size_t index,FT_MM_Var **out,exr_error *e) {

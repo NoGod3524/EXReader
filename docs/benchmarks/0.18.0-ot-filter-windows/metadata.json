@@ -8,10 +8,10 @@
   "dll_bytes": 5616795,
   "dll_sha256": "b1e166c7e0110f0c892139794c602313b41f0c2e9fd2ce53fc43c881a614c157",
   "runtime_copies_sha256": {
-    "C:/Users/Oscar/.codex/build/exreader-c/libexreader.dll": "b1e166c7e0110f0c892139794c602313b41f0c2e9fd2ce53fc43c881a614c157",
-    "C:/Users/Oscar/.codex/build/exreader-crypto-stage/bin/libexreader.dll": "b1e166c7e0110f0c892139794c602313b41f0c2e9fd2ce53fc43c881a614c157",
-    "C:/Users/Oscar/.codex/build/exreader-hyphen-host/libexreader.dll": "b1e166c7e0110f0c892139794c602313b41f0c2e9fd2ce53fc43c881a614c157",
-    "C:/Users/Oscar/.codex/build/exreader-hyphen-cpp/libexreader.dll": "b1e166c7e0110f0c892139794c602313b41f0c2e9fd2ce53fc43c881a614c157"
+    "${LOCAL_BUILD}/build/exreader-c/libexreader.dll": "b1e166c7e0110f0c892139794c602313b41f0c2e9fd2ce53fc43c881a614c157",
+    "${LOCAL_BUILD}/build/exreader-crypto-stage/bin/libexreader.dll": "b1e166c7e0110f0c892139794c602313b41f0c2e9fd2ce53fc43c881a614c157",
+    "${LOCAL_BUILD}/build/exreader-hyphen-host/libexreader.dll": "b1e166c7e0110f0c892139794c602313b41f0c2e9fd2ce53fc43c881a614c157",
+    "${LOCAL_BUILD}/build/exreader-hyphen-cpp/libexreader.dll": "b1e166c7e0110f0c892139794c602313b41f0c2e9fd2ce53fc43c881a614c157"
   },
   "benchmark_sha256": "654956edd0918f5edf6491dd4fa20bce1706d7604cb2fb69ca0fd246412bde06",
   "before_DLL_commit": "4a994c040e26541a34df84f682d806b35a8798fe",

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "bmff_internal.h"
 #define BOX EXR_BMFF_TYPE
 #define DC "http://purl.org/dc/terms/"

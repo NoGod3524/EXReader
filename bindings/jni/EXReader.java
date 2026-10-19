@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: MIT
 package org.exreader;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;

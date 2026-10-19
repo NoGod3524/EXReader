@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #ifndef EXR_INTERNAL_H
 #define EXR_INTERNAL_H
 #include "exreader.h"
@@ -218,8 +218,8 @@ exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex
 /* Non-isolated working pixels: premultiplied RGB, complete alpha, group-only
    alpha. A NULL buffer keeps the original compact 8-bit drawing path. */
 typedef struct exr_composite_state {
-  float *pixels;float *cmyk_pixels;exr_bitmap backdrop;const struct exr_composite_state *backdrop_state;
-  uint32_t left,top,right,bottom;unsigned depth;unsigned knockout,isolated;
+  struct exr_icc *cmyk_profile;float *pixels;float *cmyk_pixels;exr_bitmap backdrop;const struct exr_composite_state *backdrop_state;
+  uint32_t left,top,right,bottom;unsigned depth;unsigned knockout,isolated,gray;
   /* Working buffers may cover only a sub-rectangle of the canvas. */
   int origin_x,origin_y;
   /* Graphics-state soft mask: one byte per page pixel, 255 = fully visible. */
@@ -229,6 +229,7 @@ exr_status exr_sink_begin_group(const exr_draw_sink_ex *sink,double opacity,exr_
 exr_status exr_sink_soft_mask(const exr_draw_sink_ex *sink,const unsigned char *mask,size_t width,size_t height,exr_error *error);
 exr_status exr_sink_extent(const exr_draw_sink_ex *sink,unsigned *width,unsigned *height,exr_error *error);
 /* DeviceCMYK device model shared by page painting, mesh shadings and groups. */
+uint32_t exr_gray_color(uint32_t color);
 void exr_cmyk_from_rgb(const double rgb[3],double cmyk[4]);
 exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,
   const double fill_cmyk[4],const double stroke_cmyk[4],double fill_alpha,double stroke_alpha,exr_blend_mode mode,

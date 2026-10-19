@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Original library cover-import fixtures, including bounded large covers."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import base64,xml.etree.ElementTree as ET,zipfile
 root=Path(__file__).resolve().parent/'fixtures'

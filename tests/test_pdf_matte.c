@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* Work package 4: image mattes. Gray and RGB mattes existed; a CMYK base image
    states its matte in four components and must convert through the same path as
    the samples instead of rejecting the file. */
@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cmyk_reference.h"
+#include <math.h>
 static unsigned checks; static exr_error error;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -45,7 +47,7 @@ int main(int argc,char **argv) {
      blended edge, which the existing RGB matte coverage exercises. */
   page=render("matte-gray.pdf"); opaque(&page,8,12,128,128,128,"gray"); exr_bitmap_free(&page);
   page=render("matte-rgb.pdf");  opaque(&page,8,12,200,60,40,"rgb");   exr_bitmap_free(&page);
-  page=render("matte-cmyk.pdf"); opaque(&page,8,12,205,45,65,"cmyk");  exr_bitmap_free(&page);
+  page=render("matte-cmyk.pdf"); { unsigned rgb[3];cmyk_reference((const double[4]){20/255.,180/255.,160/255.,30/255.},rgb);opaque(&page,8,12,rgb[0],rgb[1],rgb[2],"cmyk"); }  exr_bitmap_free(&page);
   rejected("matte-bad-count.pdf");
   rejected("matte-bad-range.pdf");
   printf("%u native PDF image matte checks passed\n",checks);

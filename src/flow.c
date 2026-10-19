@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "flow_internal.h"
 #include "bidi_internal.h"
 #include "ruby_internal.h"
@@ -371,6 +371,7 @@ exr_status exr_flow_edge(flow *f, size_t node, int style, float width, uint32_t 
         if (!b) return EXR_LIMIT;
         b->background = color;
       }
+      if(at < x + w) return EXR_LIMIT;
     } else {
       float at;
       for (at = y; at < y + h && pieces < 4096; at += dash + gap, pieces++) {
@@ -379,10 +380,12 @@ exr_status exr_flow_edge(flow *f, size_t node, int style, float width, uint32_t 
         if (!b) return EXR_LIMIT;
         b->background = color;
       }
+      if(at < y + h) return EXR_LIMIT;
     }
     return EXR_OK;
   }
   if (style == 5) {
+    size_t first = f->layout->box_count;
     float third = width / 3;
     if (w >= h) {
       b = edge_box(f, node, x, y, w, third);
@@ -392,6 +395,8 @@ exr_status exr_flow_edge(flow *f, size_t node, int style, float width, uint32_t 
       second = edge_box(f, node, x + 2 * third, y, third, h);
     }
     if (!b || !second) return EXR_LIMIT;
+    /* The second append may have moved the box array. */
+    b = f->layout->boxes + first;second = b + 1;
     b->background = second->background = color;
     return EXR_OK;
   }

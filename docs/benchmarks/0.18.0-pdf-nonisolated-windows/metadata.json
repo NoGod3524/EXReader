@@ -1275,9 +1275,9 @@
     "tools/run_benchmarks.py": "ec28254ad350e48e75218641037f20253d0fab1fcb7aa1b1b6f89b45d199d85e"
   },
   "runtime_copies_sha256": {
-    "C:/Users/Oscar/.codex/build/exreader-c/libexreader.dll": "6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4",
-    "C:/Users/Oscar/.codex/build/exreader-crypto-stage/bin/libexreader.dll": "6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4",
-    "C:/Users/Oscar/.codex/build/exreader-hyphen-host/libexreader.dll": "6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4",
-    "C:/Users/Oscar/.codex/build/exreader-hyphen-cpp/libexreader.dll": "6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4"
+    "${LOCAL_BUILD}/build/exreader-c/libexreader.dll": "6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4",
+    "${LOCAL_BUILD}/build/exreader-crypto-stage/bin/libexreader.dll": "6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4",
+    "${LOCAL_BUILD}/build/exreader-hyphen-host/libexreader.dll": "6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4",
+    "${LOCAL_BUILD}/build/exreader-hyphen-cpp/libexreader.dll": "6126a892cb2c579b6da79845596adac4019503ea053eff7cd9ba27303a182fc4"
   }
 }

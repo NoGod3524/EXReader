@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_internal.h"
 typedef struct { uint32_t first,last; unsigned bytes; size_t offset,length; } cmap_range;
 struct exr_pdf_cmap {

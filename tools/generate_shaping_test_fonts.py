@@ -3,7 +3,7 @@
 
 No system font outlines are used. The committed fonts are sufficient for C tests.
 """
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import hashlib
 import json
 from pathlib import Path
@@ -145,7 +145,7 @@ def build(features=FEATURES):
         'familyName': 'EXR Shaping Oracle', 'styleName': 'Regular',
         'uniqueFontIdentifier': 'EXRShapingOracle', 'fullName': 'EXR Shaping Oracle',
         'psName': 'EXRShapingOracle',
-        'copyright': 'Copyright 2026 EXReader contributors; GPL-3.0-only',
+        'copyright': 'Copyright 2026 EXReader contributors; MIT',
     })
     builder.setupOS2(sTypoAscender=800, sTypoDescender=-200,
                      usWinAscent=800, usWinDescent=200)

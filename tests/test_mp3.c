@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 /* Original 0.2-second sine waves, encoded with FFmpeg/libmp3lame for these
    tests. No third-party music or upstream codec test corpus is included. */
 #include "exreader.h"

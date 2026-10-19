@@ -4134,3 +4134,33 @@ not a SWOP renderer. Non-separable blend modes inside a CMYK group return
 `EXR_UNSUPPORTED` instead of silently approximating.
 
 Local Windows Release: 130/130 CTests on MSVC and GCC, zero warnings.
+
+## 2026-10-19 rendering audit and complete CMYK fallback
+
+Baseline `8467141` passed 130/130 on MSVC and GCC before changes. The corrected
+code passes **131/131** on MSVC Release, GCC16.2 Release and GCC with ICC disabled.
+The new renderer audit has **339 checks**, zero failures. GCC uses the existing
+-Wall/-Wextra/-Wpedantic/-Werror configuration. Both default builds disable AAC
+and JNI. Installed C and C++ consumers run against the updated SDK, render the
+CMYK-page fixture, and retain version0.19.0/ABI1; installed notices include the
+profile's original license and the root MIT grant.
+
+ICC-OFF uncovered an existing intent-test assumption: it required ICC pixels
+although the build intentionally uses Alternate. The test now checks the same
+fixture's analytic DeviceCMYK Alternate values and equal intent outputs when
+ICC is disabled; malformed names/types are still rejected in both builds.
+
+Original source/fixture licenses changed to MIT at the owner's request. The
+FAAD2 option remains explicitly GPL, disabled in default and current CI builds.
+Prior validation records, embedded original-font labels and historical hashes
+retain their provenance; the current root MIT grant also covers those original
+font fixtures. Other third-party licenses are preserved.
+
+Historical local directory labels were normalized in 537 benchmark JSON files.
+Comparison with the original records confirms identical numeric values, hashes
+and non-path content after path separator normalization. No new contribution
+policy was introduced.
+
+Audit scope, fixes and outstanding rendering errors are listed in
+[AUDIT-2026-10-19.md](AUDIT-2026-10-19.md). This is not a completed full-framework
+security audit or a declaration of complete PDF compatibility.

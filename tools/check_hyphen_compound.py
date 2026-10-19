@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Optional development oracle against an externally built libhyphen. Not an SDK dependency."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 import argparse
 import ctypes as c
 import hashlib

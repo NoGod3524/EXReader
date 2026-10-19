@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Create an original short audiobook with FFmpeg; no runtime tool dependency."""
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 import hashlib
 import subprocess

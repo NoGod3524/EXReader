@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "case_internal.h"
 #include "case_unicode_data.h"
 #include <string.h>

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #ifndef EXREADER_H
 #define EXREADER_H
 #include <stddef.h>
@@ -645,7 +645,7 @@ EXR_API exr_status exr_canvas_blend(exr_canvas *canvas,exr_blend_mode mode,exr_e
    them with the same CMYK model as page painting; end_layer converts the result
    back to device RGB. Use exr_canvas_path_cmyk to supply CMYK source colours;
    RGB paints and images are converted before blending. Compound fill+stroke
-   paths and nested groups inside this group are not supported. */
+   paths and nested groups inherit the CMYK working space. */
 #define EXR_GROUP_CMYK 0x200u
 /* flags=0 inherits the backdrop; ISOLATED starts transparent. end_layer closes
    either kind. Non-isolated and knockout groups maintain an independent
@@ -663,7 +663,7 @@ EXR_API exr_status exr_canvas_path(exr_canvas *canvas,const exr_path_segment *se
 /* Explicit DeviceCMYK fill/stroke colours (each component 0..1). The style's
    flags, alpha byte, dash and line settings apply; its RGB colour fields are
    ignored. Outside a CMYK group the colours are converted to device RGB first.
-   A request with both fill and stroke is rejected inside a CMYK group. */
+   Compound fill and stroke remain a single transparency element. */
 EXR_API exr_status exr_canvas_path_cmyk(exr_canvas *canvas,const exr_path_segment *segments,size_t count,
                                          const double matrix[6],const exr_draw_style *style,
                                          const double fill[4],const double stroke[4],exr_error *error);

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "layout_internal.h"
 #include "variable_internal.h"
 #include <ctype.h>

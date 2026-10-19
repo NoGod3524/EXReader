@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-only */
+/* SPDX-License-Identifier: MIT */
 #include "pdf_internal.h"
 #include "pdf_function_internal.h"
 #include "icc_internal.h"
@@ -65,7 +65,9 @@ exr_status exr_pdf_colorspace_rgb_intent(const exr_pdf_colorspace *s,const doubl
   /* All is an ink tint on every output colorant; additive sRGB inverts it. */
   if(s->kind==SPACE_ALL) { rgb[0]=rgb[1]=rgb[2]=1-v[0]; return EXR_OK; }
   if(s->kind==SPACE_RGB) { memcpy(rgb,v,3*sizeof(double)); return EXR_OK; }
-  if(s->kind==SPACE_CMYK) { for(i=0;i<3;i++) rgb[i]=1-fmin(1,v[i]+v[3]); return EXR_OK; }
+  if(s->kind==SPACE_CMYK) {
+    exr_device_cmyk_rgb(s->icc,v,rgb,intent);return exr_icc_deferred_status(s->icc,error);
+  }
   if(s->kind==SPACE_INDEXED) {
     unsigned index=(unsigned)floor(v[0]+.5); for(i=0;i<3;i++) rgb[i]=s->palette[index*4+i]/255.0; return EXR_OK;
   }
@@ -139,6 +141,7 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
   if(name_is(file,id,"DeviceGray") || name_is(file,id,"DeviceRGB") || name_is(file,id,"DeviceCMYK")) {
     channels=name_is(file,id,"DeviceGray") ? 1 : name_is(file,id,"DeviceRGB") ? 3 : 4;
     s=device(channels==1 ? SPACE_GRAY : channels==3 ? SPACE_RGB : SPACE_CMYK,channels); if(!s) goto memory;
+    if(channels==4) { exr_status status=exr_icc_default_cmyk(r->control,&s->icc,r->error);if(status!=EXR_OK) { exr_pdf_colorspace_free(s);return status; } }
     *out=s; return EXR_OK;
   }
   if(v->kind==EXR_PDF_NAME) {
@@ -233,7 +236,8 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
     }
 #endif
     alternate=get(r,file,ids[1],"Alternate");
-    if(alternate==EXR_PDF_NONE) { s->alternate=device(channels==1 ? SPACE_GRAY : channels==3 ? SPACE_RGB : SPACE_CMYK,channels); if(!s->alternate) goto memory; }
+    if(alternate==EXR_PDF_NONE) { s->alternate=device(channels==1 ? SPACE_GRAY : channels==3 ? SPACE_RGB : SPACE_CMYK,channels); if(!s->alternate) goto memory;
+      if(channels==4) { status=exr_icc_default_cmyk(r->control,&s->alternate->icc,r->error);if(status!=EXR_OK) goto done; } }
     else { status=open_space(r,file,alternate,depth+1,&s->alternate); if(status!=EXR_OK) goto done; }
     if(s->alternate->components!=channels) goto bad;
     *out=s; return EXR_OK;
