@@ -352,3 +352,24 @@ python tools/generate_pdf_blend_fixtures.py --oracle-module-dir C:/Users/Oscar/.
 要补齐需要**内置一个自由许可的 CMYK ICC profile**（SWOP/ISO Coated 等常见 profile
 有再分发限制，lcms2 也不自带），或者接受与参考实现的色差并在矩阵里标注。
 这是 WP4 色彩精度的前置决策，未定之前先不做 CMYK 组。
+
+### CMYK 默认换算：profile 已找到（2026-10-19）
+
+上节记录的“需要一个可再分发的 CMYK profile”，答案有了：
+
+- **ArgyllCMS 的 public domain CMYK profile**，作者 Graeme Gill 明确声明可用作
+  "free fallback CMYK profile"（B2A 表按 sRGB 源准备）；
+- 实际文件（961,644 字节，ICC v2，头部大小字段校验通过）：
+  `https://raw.githubusercontent.com/imbo/imbo/main/data/profiles/argyllcms_cmyk.icm`，
+  同目录的 `argyllcms_cmyk.LICENSE` 说明其来源与公有领域状态。
+
+**待决**：0.94 MB 的二进制怎么进仓库与构建。三个选项：
+
+1. 直接放 `src/icc/cmyk.icm`，CMake 用 `file(READ ... HEX)` 生成 C 数组（构建期多几秒，
+   仓库多 ~1 MB）；
+2. 用 zlib 压缩后内嵌（预计 200–300 KB），运行时解压一次建 lcms profile；
+3. 在离线阶段把这个 profile 采样成 9³×9 的 LUT（约 20 KB）内嵌，运行时四线性插值
+   （精度略降，但体积与构建复杂度最小）。
+
+选 1 最直接，选 3 最省事；无论哪种，换算后的数值与参考实现的 SWOP 系 profile
+仍会有可量化差异，需要在支持矩阵里如实标注。
