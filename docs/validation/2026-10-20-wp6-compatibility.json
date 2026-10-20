@@ -233,21 +233,81 @@
     }
   },
   "ci": {
-    "run_id": 39481807260,
-    "source_sha": "5bde5eda12825495a6f77afcfccbaed0346ccc45",
-    "status": "in_progress",
-    "conclusion": "",
+    "run_id": 39483277303,
+    "source_sha": "46ae209df77b38bd76b80a7bcf66ef2bec763cb1",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs_passed": 7,
+    "jobs_total": 7,
     "status_file": {
-      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-ci-status-initial.json",
-      "sha256": "e3262d3bd49db1b1bf26431d6804f3335c6c2652a16b9aefaca7dd440fd10259"
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-followup-ci-completed.json",
+      "sha256": "6ebed6e3ea7a0231ed8854e44b5a7d71e096f9b0a4ab4405e056d9924fff17eb"
     },
-    "sanitizer_passed": false
+    "sanitizer_passed": true,
+    "full_log": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-followup-ci-full.log",
+      "sha256": "19019e3fbf74c43009fba39d5b0bb627c6b9c19fb7da6163596c0163e69d6208"
+    },
+    "artifact_inventory": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39483277303\\inventory.json",
+      "sha256": "e75be587ab645b26326ad34083c194f3daf902f7fcc0348b13618f89d8823846"
+    },
+    "reference_hosts": [
+      {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39483277303\\EXReader-reference-Windows\\report.json",
+        "sha256": "097286ab1902e7277d8acf2588278dde46ecd704c81845a194a01060365ba53f",
+        "checks": 26,
+        "visually_inspected_this_batch": false
+      },
+      {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39483277303\\EXReader-reference-macOS\\apple-host-evidence\\report.json",
+        "sha256": "88921668f640c5436a3d04235ffbfa99cc359e3ba1c302dbda1f79650b02c39d",
+        "checks": 21,
+        "visually_inspected_this_batch": false
+      },
+      {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39483277303\\EXReader-reference-iPhone-iPad\\ipad-host-evidence\\report.json",
+        "sha256": "5fcd71270e76f54c4638d63c1238dfed751f413be4262f391e47b6a68c1e7ff2",
+        "checks": 21,
+        "visually_inspected_this_batch": false
+      },
+      {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39483277303\\EXReader-reference-iPhone-iPad\\iphone-host-evidence\\report.json",
+        "sha256": "5fcd71270e76f54c4638d63c1238dfed751f413be4262f391e47b6a68c1e7ff2",
+        "checks": 21,
+        "visually_inspected_this_batch": false
+      }
+    ],
+    "downloaded_smoke_reaggregation": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39483277303\\local-strict-smoke-summary.json",
+      "sha256": "33681ba74e7a05f21d546e7b4ee0cd1b47834a10aaee11ec40fa3aef203d4cb7"
+    },
+    "targeted_tests": {
+      "native-table-intrinsic": [
+        "sanitizers\tRun ctest --test-dir build/asan --output-on-failure\t2026-10-20T19:29:33.6740136Z  17/142 Test  #17: native-table-intrinsic ...........   Passed    1.92 sec",
+        "desktop (macos-15)\tNative parsing, pagination, rendering and bookshelf tests\t2026-10-20T19:26:57.7672650Z  17/145 Test  #17: native-table-intrinsic .............   Passed    0.11 sec",
+        "desktop (windows-latest)\tNative parsing, pagination, rendering and bookshelf tests\t2026-10-20T19:28:08.2611599Z  17/145 Test  #17: native-table-intrinsic .............   Passed    0.22 sec",
+        "desktop (ubuntu-22.04)\tNative parsing, pagination, rendering and bookshelf tests\t2026-10-20T19:27:06.5972896Z  17/145 Test  #17: native-table-intrinsic .............   Passed    0.21 sec"
+      ],
+      "native-corpus-triage": [
+        "sanitizers\tRun ctest --test-dir build/asan --output-on-failure\t2026-10-20T19:33:18.8752857Z 135/142 Test #135: native-corpus-triage .............   Passed    2.96 sec",
+        "desktop (macos-15)\tNative parsing, pagination, rendering and bookshelf tests\t2026-10-20T19:27:38.2463990Z 138/145 Test #138: native-corpus-triage ...............   Passed    1.25 sec",
+        "desktop (windows-latest)\tNative parsing, pagination, rendering and bookshelf tests\t2026-10-20T19:29:05.5249084Z 138/145 Test #138: native-corpus-triage ...............   Passed    1.52 sec",
+        "desktop (ubuntu-22.04)\tNative parsing, pagination, rendering and bookshelf tests\t2026-10-20T19:27:56.3160522Z 138/145 Test #138: native-corpus-triage ...............   Passed    0.96 sec"
+      ],
+      "native-document-probe": [
+        "sanitizers\tRun ctest --test-dir build/asan --output-on-failure\t2026-10-20T19:33:15.9166399Z 134/142 Test #134: native-document-probe ............   Passed   22.51 sec",
+        "desktop (macos-15)\tNative parsing, pagination, rendering and bookshelf tests\t2026-10-20T19:27:36.9983600Z 137/145 Test #137: native-document-probe ..............   Passed    4.05 sec",
+        "desktop (windows-latest)\tNative parsing, pagination, rendering and bookshelf tests\t2026-10-20T19:29:04.0077844Z 137/145 Test #137: native-document-probe ..............   Passed    5.12 sec",
+        "desktop (ubuntu-22.04)\tNative parsing, pagination, rendering and bookshelf tests\t2026-10-20T19:27:55.3566151Z 137/145 Test #137: native-document-probe ..............   Passed    3.33 sec"
+      ]
+    }
   },
   "reliability_prior_source": {
     "run_id": 39451039706,
     "source_sha": "f719bd4590df4dfb7ef04b5ac5a58d49a7b9a310",
     "snapshot": {
-      "path": "C:\\Users\\Oscar\\exr-gcc\\status-39451039706-20261020T190444Z.json",
+      "path": "C:\\Users\\Oscar\\exr-gcc\\status-39451039706-20261020T194108Z.json",
       "sha256": "765fe6043acef59d60f824a5bf31dd5aa0f1d6263057687cd1ad9a5c61d83555"
     },
     "partial_audit": {
@@ -255,7 +315,20 @@
       "sha256": "12c573ab19292d6939acaeacb93080f601961450cf9113eb184b4dbebe7853ee"
     },
     "full_acceptance": false,
-    "applies_to_current_source": false
+    "applies_to_current_source": false,
+    "cross_source_refusal": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\reliability-39451039706-partial-20261020T190444Z\\cross-source-audit.json",
+      "sha256": "3f8537e65f14b5de79e8bfb7bdefdbe6a100a713001d3c78e2be70d44c49de75"
+    },
+    "previous_snapshot": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\status-39451039706-20261020T190444Z.json",
+      "sha256": "765fe6043acef59d60f824a5bf31dd5aa0f1d6263057687cd1ad9a5c61d83555"
+    },
+    "observed_job_counts": {
+      "completed_success": 25,
+      "in_progress": 8,
+      "queued": 64
+    }
   },
   "wp6_complete": false,
   "wp16_complete": false,
@@ -263,7 +336,6 @@
   "remaining": [
     "bounded incremental parsing within one chapter",
     "10/50/100 MiB single-chapter sequential and random recovery with <=32 MiB parsed-residency growth",
-    "final-source native CI, Linux sanitizer and six-platform artifacts",
     "WP7/WP8/WP12a return commits and integration",
     "four-target 24 CPU hour evidence on the final frozen source",
     "remaining corpus/specification/fidelity and platform application requirements in docs/HANDOFF.md"
@@ -272,7 +344,37 @@
     "docs/validation/2026-10-19-shading-extent-ci.json": "a955abda1e35fd456172b2e78e1d687799e4ab5f1f977dec0efd7684aae9fdc1",
     "src/internal.h": "c951b04a1611008b2e97437d6877bebabf29ec2c374a1c8166c9aca14f34e904"
   },
-  "code_source_sha": "5bde5eda12825495a6f77afcfccbaed0346ccc45",
+  "code_source_sha": "46ae209df77b38bd76b80a7bcf66ef2bec763cb1",
   "engine_source_sha": "5bde5eda12825495a6f77afcfccbaed0346ccc45",
-  "diagnostic_followup_source_sha": null
+  "diagnostic_followup_source_sha": "46ae209df77b38bd76b80a7bcf66ef2bec763cb1",
+  "engine_ci": {
+    "run_id": 39481807260,
+    "source_sha": "5bde5eda12825495a6f77afcfccbaed0346ccc45",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs_passed": 7,
+    "jobs_total": 7,
+    "snapshot": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-ci-first-completed.json",
+      "sha256": "9f4a43bc24d5c8ac37a5e0e328be605fd7669834246562aa1ecb1fd1e74b69ed"
+    },
+    "full_log": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-native-ci-first-full.log",
+      "sha256": "73e376c92643ce1ad0b03920b36bae0773c8239e3bd4857da20073b16556a79e"
+    },
+    "artifact_inventory": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39481807260\\inventory.json",
+      "sha256": "2b9dd5878783ec89a5b6d9c6d486eabd307823fb5bd49ceed85e0af9d98ec6b4"
+    },
+    "downloaded_smoke_reaggregation": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39481807260\\local-strict-smoke-summary.json",
+      "sha256": "9302421442ea422ee69f3fb269d67c1df8483d1ae8313d9209e08247235a6cfc"
+    }
+  },
+  "engine_unchanged_in_diagnostic_followup": true,
+  "current_batch_native_ci_complete": true,
+  "source_audit_log": {
+    "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-final-source-audit.log",
+    "sha256": "a74079a9e2a4e6362435e170b6df48ef99348cd68cadb3886fe7a40597012fb1"
+  }
 }

@@ -15,6 +15,7 @@ Windows本地与CI各26项。默认/裁剪桌面安装消费、移动交叉编�
 500本EPUB整批已结束，483本完成、17本未完成，未验收；PDF独立参考分类不改原预期。
 WP6普通Latin表格专项已达到五轮交替首屏降低50%的出口，章内增量目标仍未完成。
 本批范围与证据见 `docs/validation/2026-10-20-wp6-compatibility.json`。
+3.38.2本批GCC/MSVC各152/152、最新CI七作业全部通过，平台SDK/许可、模拟器应用报告与短测重汇总已归档。
 WP7、WP8、WP12a的分支、独立目录和完整出口分别见 `docs/WP7-HANDOFF.md`、`docs/WP8-HANDOFF.md`、`docs/WP12A-HANDOFF.md`。
 
 ## 目标与完成定义

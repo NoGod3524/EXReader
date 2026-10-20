@@ -754,7 +754,7 @@
       "conclusion": "",
       "jobs_passed": 25,
       "jobs_total": 97,
-      "status_file": "C:/Users/Oscar/exr-gcc/status-39451039706-20261020T190444Z.json",
+      "status_file": "C:\\Users\\Oscar\\exr-gcc\\status-39451039706-20261020T194108Z.json",
       "status_sha256": "765fe6043acef59d60f824a5bf31dd5aa0f1d6263057687cd1ad9a5c61d83555",
       "passed": false,
       "required_cpu_hours_per_target": 24,
@@ -765,13 +765,19 @@
         "render"
       ],
       "shards_per_target": 24,
-      "observation_utc": "20261020T190444Z",
+      "observation_utc": "20261020T194108Z",
       "previous_status_file": "C:\\Users\\Oscar\\exr-gcc\\acceptance-39451039706-status-20261020T164122Z.json",
       "previous_status_sha256": "d16c17faf6759d67a403ecb566bebe635238c7958caee6d318e5bdee675a7ca6",
       "partial_download_audit": {
         "path": "C:\\Users\\Oscar\\exr-gcc\\reliability-39451039706-partial-20261020T190444Z\\partial-audit.json",
         "sha256": "12c573ab19292d6939acaeacb93080f601961450cf9113eb184b4dbebe7853ee"
-      }
+      },
+      "additional_status_snapshots": [
+        {
+          "path": "C:/Users/Oscar/exr-gcc/status-39451039706-20261020T190444Z.json",
+          "sha256": "765fe6043acef59d60f824a5bf31dd5aa0f1d6263057687cd1ad9a5c61d83555"
+        }
+      ]
     },
     "initial_native": {
       "run_id": 39447640866,
