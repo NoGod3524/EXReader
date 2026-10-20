@@ -856,17 +856,20 @@ static void run_job(cv_job *job, const exr_control *control) {
   if (g_cancelled) { cancel_job(job, "read"); return; }
   {
     char hash[65];
-    if (!cv_sha256_file(job->result.input, hash, &error) ||
-        !cv_file_size(job->result.input, &input_size, &error)) {
-      fail_job(job, "read", EXR_IO, error ? error : duplicate_string("Cannot hash input"));
+    if (!cv_file_size(job->result.input, &input_size, &error)) {
+      fail_job(job, "read", EXR_IO, error ? error : duplicate_string("Cannot size input"));
       return;
     }
-    memcpy(job->result.input_sha, hash, sizeof(hash));
     job->result.input_bytes = input_size;
     if (input_size > CV_SIZE_LIMIT) {
       fail_job(job, "read", EXR_LIMIT, duplicate_string("Input exceeds the 512 MiB tool limit"));
       return;
     }
+    if (!cv_sha256_file(job->result.input, hash, &error)) {
+      fail_job(job, "read", EXR_IO, error ? error : duplicate_string("Cannot hash input"));
+      return;
+    }
+    memcpy(job->result.input_sha, hash, sizeof(hash));
   }
   if (job->declared->format == EXR_MOBI) {
     unsigned char *prefix = malloc(1u << 20);

@@ -195,3 +195,24 @@ python -X utf8 tests/check_convert_benchmark.py <tool> <corpus> <work> <json>
 组合矩阵、工具场景、preserve 渲染与基准证据分别在
 `docs/validation/wp12-lite-conversion-matrix.json`、`wp12-lite-cli-scenarios.json`、
 `wp12-lite-preserve-render.json`、`wp12-lite-conversion-benchmark.json`。
+
+## 12. 量化验收表（本包）
+
+| 组合 | 预期 | 实际 | 通过 | 拒绝 | 未完成 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| text 六类输入×六类输出 | 360 | 360 | 360 | 0 | 0 |
+| MOBI 输入×六目标 | 60 | 60 | 60 | 0 | 0 |
+| KF8 输入×六目标 | 60 | 60 | 60 | 0 | 0 |
+| preserve 四组合×10 | 40 | 40 | 40 | 0 | 0 |
+| preserve 渲染回归（同路径像素/坐标/源范围） | 20 | 20 | 20 | 0 | 0 |
+| CLI 工具场景 | 37 | 37 | 37 | 0 | 0 |
+
+- text 矩阵的 6 个同格式项单独计入 360，不代替 30 个跨格式方向。
+- MOBI/KF8 各 10 个真实、散列不同的输入；变体由字节判定。
+- 证据：`docs/validation/wp12-lite-conversion-matrix.json`、
+  `docs/validation/wp12-lite-preserve-render.json`、
+  `docs/validation/wp12-lite-cli-scenarios.json`、
+  `docs/validation/wp12-lite-conversion-benchmark.json`、
+  `docs/validation/wp12-lite-builds.json`、`docs/validation/wp12-lite-baseline.json`。
+- 未完成项：Linux ASan/UBSan 本机不可运行；完整 WP12 的高保真全格式往返、旧 UI 数据迁移
+  仍按路线表独立跟踪，不能由本子包标记完成。

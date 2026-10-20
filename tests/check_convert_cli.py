@@ -165,6 +165,24 @@ def scenario_preserve(r):
                                "--output", r.work / "unsupported.epub"])
     ok = code == 3 and not (r.work / "unsupported.epub").exists()
     r.record("preserve-unsupported", "reject, no text fallback", code, ok, out, err)
+    # Missing resource must fail atomically and leave no output.
+    import zipfile
+    broken = r.work / "missing-resource.epub"
+    with zipfile.ZipFile(epubs[0], "r") as source_zip, zipfile.ZipFile(broken, "w") as target_zip:
+        for info in source_zip.infolist():
+            if info.filename.endswith("images/a/pic.png"):
+                continue
+            target_zip.writestr(info, source_zip.read(info.filename))
+    broken_out = r.work / "missing-resource-out.epub"
+    code, out, err, _ = r.run(["--input", broken, "--to", "epub", "--profile", "preserve",
+                               "--output", broken_out, "--report", r.work / "missing-resource.json"])
+    ok = code == 3 and not broken_out.exists()
+    detail = ""
+    if (r.work / "missing-resource.json").exists():
+        item = r.report(r.work / "missing-resource.json")["items"][0]
+        ok = ok and item["status"] == "failed" and item["published"] is False
+        detail = "stage=%s error=%s" % (item["stage"], item["error"])
+    r.record("preserve-missing-resource", "atomic failure, no published output", code, ok, out, err, detail)
 
 def scenario_batch(r):
     a = r.work / "batch" / "a.txt"
