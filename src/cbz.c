@@ -60,40 +60,112 @@ static exr_status archive_error(comic *d,exr_error *e,const char *message) {
   if(d->io_error.code!=EXR_OK) { if(e) *e=d->io_error;return d->io_error.code; }
   return exr_fail(e,EXR_FORMAT,"%s",message);
 }
-static exr_status header(comic *d,comic_page *page,size_t size,size_t *work,exr_error *e) {
-  mz_zip_reader_extract_iter_state *iter;unsigned char *data;size_t n=0,limit=size<1048576 ? size : 1048576,capacity=limit<4096 ? limit : 4096;exr_status status=EXR_FORMAT;
-  iter=mz_zip_reader_extract_iter_new(&d->zip,page->index,0);
-  if(!iter) return archive_error(d,e,"Cannot open CBZ image stream");
-  data=malloc(capacity);if(!data) { mz_zip_reader_extract_iter_free(iter);return exr_fail(e,EXR_MEMORY,"CBZ header allocation failed"); }
-  while(n<limit) {
-    size_t chunk,got;
-    if(n==capacity) {
-      size_t next=capacity*2;unsigned char *grown;if(next>limit) next=limit;
-      grown=realloc(data,next);if(!grown) { status=exr_fail(e,EXR_MEMORY,"CBZ header growth failed");break; }
-      data=grown;capacity=next;
-    }
-    chunk=capacity-n;if(chunk>4096) chunk=4096;
-    if(chunk>(size_t)64*1024*1024-*work) { status=exr_fail(e,EXR_LIMIT,"CBZ image headers exceed 64 MiB work budget");break; }
-    status=exr_control_cancel(d->control,e);if(status!=EXR_OK) break;
-    got=mz_zip_reader_extract_iter_read(iter,data+n,chunk);*work+=got;n+=got;
-    if(!got) { status=archive_error(d,e,"Truncated CBZ image header");break; }
-    status=exr_image_dimensions(data,n,&page->width,&page->height,e);
-    if(status!=EXR_FORMAT) break;
+static unsigned get16(const unsigned char *p) { return (unsigned)p[0]|((unsigned)p[1]<<8); }
+static uint32_t get32(const unsigned char *p) { return (uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24); }
+static int read_at(comic *d,uint64_t offset,void *buffer,size_t size) {
+  if(offset>d->source.size || (uint64_t)size>d->source.size-offset) {
+    exr_fail(&d->io_error,EXR_FORMAT,"CBZ member exceeds archive bounds");return 0;
   }
-  if(status==EXR_FORMAT && n==limit && limit<size) status=exr_fail(e,EXR_LIMIT,"CBZ image header exceeds 1 MiB");
-  /* An incomplete iterator has not checked CRC yet; full rendering does. */
-  { mz_bool valid=mz_zip_reader_extract_iter_free(iter);if(n==size && !valid && status==EXR_OK) status=archive_error(d,e,"Invalid CBZ image CRC"); }
+  if(!size) return 1;
+  if(d->data) { memcpy(buffer,d->data+(size_t)offset,size);return 1; }
+  return read_source(d,offset,buffer,size)==size;
+}
+/* The local header describes the bytes that follow it; the central directory is
+   only an index. Using the central sizes for extraction lets a corrupted index
+   truncate the stream, and miniz's iterator can then fail to make progress. */
+typedef struct { uint64_t data_ofs;uint32_t csize,usize,crc;unsigned method; } member_layout;
+static exr_status member_layout_of(comic *d,const mz_zip_archive_file_stat *st,member_layout *m,exr_error *e) {
+  unsigned char lh[30];unsigned flags;
+  memset(m,0,sizeof(*m));
+  if(st->m_local_header_ofs>d->source.size || d->source.size-st->m_local_header_ofs<sizeof(lh))
+    return exr_fail(e,EXR_FORMAT,"CBZ local header exceeds archive bounds");
+  if(!read_at(d,st->m_local_header_ofs,lh,sizeof(lh))) return archive_error(d,e,"Cannot read CBZ local header");
+  if(get32(lh)!=0x04034b50u) return exr_fail(e,EXR_FORMAT,"Invalid CBZ local header signature");
+  flags=get16(lh+6);m->method=get16(lh+8);m->crc=get32(lh+14);m->csize=get32(lh+18);m->usize=get32(lh+22);
+  m->data_ofs=st->m_local_header_ofs+sizeof(lh)+get16(lh+26)+get16(lh+28);
+  if(flags&8u) {
+    /* A data descriptor leaves the local sizes zero; the central directory has them. */
+    if(st->m_comp_size>0xffffffffu || st->m_uncomp_size>0xffffffffu)
+      return exr_fail(e,EXR_LIMIT,"CBZ member metadata exceeds 32-bit limits");
+    m->csize=(uint32_t)st->m_comp_size;m->usize=(uint32_t)st->m_uncomp_size;m->crc=st->m_crc32;
+  } else {
+    if(m->csize==0xffffffffu || m->usize==0xffffffffu) {
+      if(st->m_comp_size>0xffffffffu || st->m_uncomp_size>0xffffffffu)
+        return exr_fail(e,EXR_LIMIT,"CBZ member metadata exceeds 32-bit limits");
+      m->csize=(uint32_t)st->m_comp_size;m->usize=(uint32_t)st->m_uncomp_size;
+    }
+    if(!m->csize && st->m_comp_size) m->csize=(uint32_t)st->m_comp_size;
+    if(!m->usize && st->m_uncomp_size) m->usize=(uint32_t)st->m_uncomp_size;
+  }
+  if(m->method!=st->m_method) return exr_fail(e,EXR_FORMAT,"CBZ member method disagrees with the central directory");
+  if(m->data_ofs>d->source.size || (uint64_t)m->csize>d->source.size-m->data_ofs)
+    return exr_fail(e,EXR_FORMAT,"CBZ member data exceeds archive bounds");
+  return EXR_OK;
+}
+static exr_status member_bytes(comic *d,const mz_zip_archive_file_stat *st,size_t cap,int complete,
+                               unsigned char **out,size_t *size,size_t *work,exr_error *e) {
+  member_layout m;unsigned char *src=NULL,*dst=NULL;size_t limit,produced=0;exr_status status;
+  *out=NULL;*size=0;
+  status=member_layout_of(d,st,&m,e);if(status!=EXR_OK) return status;
+  if(!m.usize) return exr_fail(e,EXR_FORMAT,"Empty CBZ member");
+  limit=m.usize<cap?m.usize:cap;
+  if(!limit) return exr_fail(e,EXR_FORMAT,"Empty CBZ member");
+  dst=malloc(limit);if(!dst) return exr_fail(e,EXR_MEMORY,"CBZ member allocation failed");
+  if(m.method==0) {
+    if(m.csize<m.usize) { free(dst);return exr_fail(e,EXR_FORMAT,"Truncated CBZ stored member"); }
+    if(!read_at(d,m.data_ofs,dst,limit)) { free(dst);return archive_error(d,e,"Cannot read CBZ member data"); }
+    produced=limit;
+  } else if(m.method==8) {
+    tinfl_decompressor dec;size_t in_pos=0;
+    if(m.csize>(uint32_t)64*1024*1024) { free(dst);return exr_fail(e,EXR_LIMIT,"CBZ compressed member exceeds 64 MiB"); }
+    src=malloc(m.csize?m.csize:1);if(!src) { free(dst);return exr_fail(e,EXR_MEMORY,"CBZ member allocation failed"); }
+    if(!read_at(d,m.data_ofs,src,m.csize)) { free(src);free(dst);return archive_error(d,e,"Cannot read CBZ member data"); }
+    tinfl_init(&dec);
+    for(;;) {
+      size_t in_avail=(size_t)m.csize-in_pos,out_avail=limit-produced;
+      size_t consumed,made;
+      tinfl_status ts=tinfl_decompress(&dec,src+in_pos,&in_avail,dst,dst+produced,&out_avail,
+        TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF|((in_pos<m.csize)?TINFL_FLAG_HAS_MORE_INPUT:0));
+      consumed=in_avail;made=out_avail;
+      in_pos+=consumed;produced+=made;if(work) *work+=made;
+      if(ts==TINFL_STATUS_DONE) break;
+      if(produced==limit) break;
+      if(ts==TINFL_STATUS_FAILED || ts==TINFL_STATUS_FAILED_CANNOT_MAKE_PROGRESS) {
+        status=exr_fail(e,EXR_FORMAT,"Invalid or truncated CBZ image stream");break;
+      }
+      if(!consumed && !made) { status=exr_fail(e,EXR_FORMAT,"Truncated CBZ image stream");break; }
+    }
+    free(src);
+    if(status==EXR_OK && complete && produced!=m.usize) status=exr_fail(e,EXR_FORMAT,"CBZ member size mismatch");
+  } else {
+    free(dst);return exr_fail(e,EXR_FORMAT,"Unsupported CBZ member compression");
+  }
+  if(status==EXR_OK && complete && mz_crc32(0,dst,(size_t)produced)!=(mz_uint32)m.crc) {
+    free(dst);return archive_error(d,e,"Invalid CBZ member CRC");
+  }
+  if(status!=EXR_OK) { free(dst);return status; }
+  *out=dst;*size=produced;return EXR_OK;
+}
+static exr_status header(comic *d,comic_page *page,const mz_zip_archive_file_stat *st,size_t size,size_t *work,exr_error *e) {
+  unsigned char *data=NULL;size_t n=0,limit=size<1048576 ? size : 1048576;exr_status status;
+  status=member_bytes(d,st,limit,0,&data,&n,work,e);
+  if(status==EXR_OK && work && *work>(size_t)64*1024*1024) status=exr_fail(e,EXR_LIMIT,"CBZ image headers exceed 64 MiB work budget");
+  if(status==EXR_OK) {
+    status=exr_image_dimensions(data,n,&page->width,&page->height,e);
+    if(status==EXR_FORMAT && n==limit && limit<size) status=exr_fail(e,EXR_LIMIT,"CBZ image header exceeds 1 MiB");
+  }
   free(data);return status;
 }
 static exr_status member(comic *d,mz_uint index,size_t maximum,void **out,size_t *size,exr_error *e) {
-  mz_zip_archive_file_stat st;*out=NULL;*size=0;
+  mz_zip_archive_file_stat st;size_t work=0;exr_status status;unsigned char *data=NULL;size_t n=0;
+  *out=NULL;*size=0;
   if(!mz_zip_reader_file_stat(&d->zip,index,&st) || !mz_zip_reader_is_file_supported(&d->zip,index)) return archive_error(d,e,"Unsupported CBZ member");
   if(!st.m_uncomp_size || st.m_uncomp_size>maximum) return exr_fail(e,EXR_LIMIT,"CBZ member exceeds byte limit");
   if(exr_control_cancel(d->control,e)!=EXR_OK) return EXR_CANCELLED;
-  *out=mz_zip_reader_extract_to_heap(&d->zip,index,size,0);
-  if(!*out) return archive_error(d,e,"Invalid CBZ member data or CRC");
-  if(exr_control_cancel(d->control,e)!=EXR_OK) { mz_free(*out);*out=NULL;*size=0;return EXR_CANCELLED; }
-  return EXR_OK;
+  status=member_bytes(d,&st,(size_t)st.m_uncomp_size,1,&data,&n,&work,e);
+  if(status!=EXR_OK) return status;
+  if(exr_control_cancel(d->control,e)!=EXR_OK) { free(data);return EXR_CANCELLED; }
+  *out=data;*size=n;return EXR_OK;
 }
 static exr_status metadata_entry(comic *d,const char *key,const char *value,size_t size,exr_error *e) {
   char *k,*v;exr_metadata_entry *entries;
@@ -182,7 +254,7 @@ static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_opt
     if(!st.m_uncomp_size || st.m_uncomp_size>(size_t)32*1024*1024) { status=exr_fail(e,EXR_LIMIT,"CBZ encoded page exceeds 32 MiB");goto done; }
     d->pages[d->count].name=exr_copy(name,length-1);if(!d->pages[d->count].name) { status=exr_fail(e,EXR_MEMORY,"CBZ member name allocation failed");goto done; }
     d->pages[d->count].index=i;d->count++;
-    status=header(d,d->pages+d->count-1,(size_t)st.m_uncomp_size,&work,e);if(status!=EXR_OK) goto done;
+    status=header(d,d->pages+d->count-1,&st,(size_t)st.m_uncomp_size,&work,e);if(status!=EXR_OK) goto done;
   }
   if(!d->count) { status=exr_fail(e,EXR_FORMAT,"CBZ contains no PNG/JPEG pages");goto done; }
   qsort(d->pages,d->count,sizeof(*d->pages),compare_pages);

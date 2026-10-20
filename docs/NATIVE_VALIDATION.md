@@ -4554,3 +4554,35 @@ GCC/MSVC各143项覆盖通过：首次142通过，1处测试复用损坏尾字�
 同机五轮交替、scale4、每轮64次重画，六场景全部RGBA散列保持。首画比率flat1.059、primitives1.139、state1.013、groups0.969、compound0.968、ap-groups1.021；重画p95分别0.945、0.944、0.759、1.059、1.047、1.027。primitives首次首画超10%，另保留五轮独立复测：首画1.051、重画p951.088，首次回退未稳定复现。四个绘制入口的指令助记符序列保持，但未比较所有操作数和整个流水线。
 
 [首轮全部原始样本](validation/2026-10-19-shading-extent-benchmark.json)、[异常项复测](validation/2026-10-19-shading-extent-followup.json)。空画布载荷仍为3740字节，未新增临时像素平面。
+
+## Fuzz driver save/replay and bounded CBZ extraction (2026-10-19)
+
+The deterministic parser driver now truncates the saved record after writing
+(Windows `_chsize_s`, POSIX `ftruncate`), so a shorter mutation cannot leave the
+previous input's tail behind, and it writes the parser name to `<save>.format`
+before parsing. `--replay` reads that record and does not mutate; `--format`
+overrides it. Parser selection follows the seed (`.cbz` → CBZ, `.epub` / bare
+ZIP → EPUB) instead of re-sniffing the mutated header, and damaged headers still
+reach the parser the seed selected.
+
+A 908-byte CBZ mutation (`tests/fixtures/fuzz-cbz-truncated.bin`, SHA-256
+`449011aa8cdd09984120b894e94309570113d7d6f7ccbbced27792824f9f48a7`) stalled the
+200k campaign: its central directory understated one entry's compressed size,
+so miniz's extract iterator consumed a truncated deflate stream and spun inside
+`mz_zip_reader_extract_iter_read`. `src/cbz.c` now reads the local file header
+(the authoritative data description), falls back to the central directory only
+for data descriptors, and inflates with a bounded `tinfl_decompress` loop that
+requires progress every round and caps output at the header/member limits; full
+members are CRC checked. `native-fuzz-driver` pins the sample as an explicit
+`EXR_FORMAT` result, and the valid `comic.cbz` still parses (4 pages) with a
+successful replay on both compilers.
+
+Local verification: MSVC Release and GCC Release both build; `native-fuzz-driver`
+(28 checks) and `native-fuzz-smoke` pass; full suites 145/145 on both. The
+five-seed, seed-1, 200,000-iteration campaign completed with 15,919 parsed
+documents and no crash: txt 39,948/10,431, fb2 40,010/0, epub 40,023/1,147,
+pdf 39,784/3,484, cbz 40,235/857 (attempts/parsed). Campaign record hash
+`40bde6c29e3b92f1b6214af3970bdd6b044e417719a7599f60bbc6c44209bfc0`, GCC
+`exreader-fuzz.exe` hash `f8e2ca03226275c61bbc181d9b405cbf0d8c59253d21c9a5a8a9d63fbed2a86d`,
+`libexreader.dll` hash `fdd37959ae957d047ba041ee066d07249b819ccd23961a7e6174cfa3ee2e85a9`.
+CI/sanitizer results are pending the push; no sanitizer run was recorded locally.

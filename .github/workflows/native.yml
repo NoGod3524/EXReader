@@ -190,6 +190,11 @@ jobs:
       - name: Configure the instrumented fuzz driver
         run: cmake -S . -B build/fuzz -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_BUILD_FUZZ=ON -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF
       - run: cmake --build build/fuzz --parallel 4
+      - name: Verify exact crash records and parser routing
+        run: ./build/fuzz/exreader-fuzz-test tests/fixtures
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
       - name: Bounded parser campaign (seeded, reproducible)
         run: ./build/fuzz/exreader-fuzz --seed 1 --iterations 200000 --save build/fuzz/last.bin tests/fixtures/pdf-blend/nonisolated.pdf tests/fixtures/layout.epub tests/fixtures/comic.cbz tests/fixtures/deep.fb2 tests/fixtures/sample.txt
         env:
@@ -200,7 +205,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: fuzz-last-input
-          path: build/fuzz/last.bin
+          path: |
+            build/fuzz/last.bin
+            build/fuzz/last.bin.format
   android:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
