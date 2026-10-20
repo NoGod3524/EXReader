@@ -1,0 +1,245 @@
+{
+  "package": "WP7",
+  "branch": "codex/wp7-scripts",
+  "baseline_commit": "245484870f2059a548e5951dc8f28c5e62c08540",
+  "date": "2026-10-20",
+  "scope": [
+    "Bengali",
+    "Tamil",
+    "Telugu",
+    "Kannada",
+    "Malayalam",
+    "Thai",
+    "Khmer",
+    "Myanmar"
+  ],
+  "environment": {
+    "os": "Windows",
+    "compiler": "gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+    "cmake": "4.4.2",
+    "reference_harfbuzz": "14.6.0",
+    "reference_uharfbuzz": "0.56.3",
+    "harfbuzz_runtime_dependency": false,
+    "dependency_cache": "C:/Users/Oscar/exr-deps (read-only reuse)"
+  },
+  "build": {
+    "directory": "C:/Users/Oscar/exr-wp7-build",
+    "config": "Release",
+    "abi": "1",
+    "schema": "6",
+    "tests_total": 145,
+    "tests_passed": 145
+  },
+  "wp7_test": {
+    "name": "native-wp7",
+    "checks": 18739,
+    "reference_cases": 800,
+    "real_font_cases": 400,
+    "synthetic_font_cases": 400
+  },
+  "corpus": {
+    "cases_file_sha256": "50db6e6f03d694d2be70680f6bb334122e43aeaf9e5db0720fa55526775c5a02",
+    "reference_file_sha256": "ad65d422bf0e9dff78d5dcf7a7bafa98d1f109621648dc7d97b1adf3da1125e5",
+    "sequences_per_script": 50,
+    "glyph_mismatch": 0,
+    "cluster_containment_failures": 0,
+    "advance_offset_tolerance_px": 1.5,
+    "max_metric_delta_px": 1.4,
+    "note": "HarfBuzz cluster starts are checked inside EXReader syllable ranges; cluster ranges are an engine mapping, not an OpenType-prescribed value."
+  },
+  "per_script_real": {
+    "beng-real": {
+      "cases": 50,
+      "glyphs": 116,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 13,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 24,
+      "max_metric_delta_px": 1.2
+    },
+    "taml-real": {
+      "cases": 50,
+      "glyphs": 99,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 21,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 21,
+      "max_metric_delta_px": 1.2
+    },
+    "telu-real": {
+      "cases": 50,
+      "glyphs": 83,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 1,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 1,
+      "max_metric_delta_px": 0.8
+    },
+    "knda-real": {
+      "cases": 50,
+      "glyphs": 94,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 1,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 1,
+      "max_metric_delta_px": 1.4
+    },
+    "mlym-real": {
+      "cases": 50,
+      "glyphs": 121,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 20,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 34,
+      "max_metric_delta_px": 1.2
+    },
+    "thai-real": {
+      "cases": 50,
+      "glyphs": 144,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 0,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 0,
+      "max_metric_delta_px": 1.4
+    },
+    "khmr-real": {
+      "cases": 50,
+      "glyphs": 106,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 0,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 0,
+      "max_metric_delta_px": 1.0
+    },
+    "mymr-real": {
+      "cases": 50,
+      "glyphs": 92,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 0,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 0,
+      "max_metric_delta_px": 0.8
+    }
+  },
+  "per_script_synthetic": {
+    "beng-synthetic": {
+      "cases": 50,
+      "glyphs": 115,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 14,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 26,
+      "max_metric_delta_px": 0
+    },
+    "taml-synthetic": {
+      "cases": 50,
+      "glyphs": 117,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 15,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 28,
+      "max_metric_delta_px": 0
+    },
+    "telu-synthetic": {
+      "cases": 50,
+      "glyphs": 118,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 20,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 33,
+      "max_metric_delta_px": 0
+    },
+    "knda-synthetic": {
+      "cases": 50,
+      "glyphs": 121,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 16,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 27,
+      "max_metric_delta_px": 0
+    },
+    "mlym-synthetic": {
+      "cases": 50,
+      "glyphs": 119,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 18,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 32,
+      "max_metric_delta_px": 0
+    },
+    "thai-synthetic": {
+      "cases": 50,
+      "glyphs": 144,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 0,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 0,
+      "max_metric_delta_px": 0
+    },
+    "khmr-synthetic": {
+      "cases": 50,
+      "glyphs": 125,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 9,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 18,
+      "max_metric_delta_px": 0
+    },
+    "mymr-synthetic": {
+      "cases": 50,
+      "glyphs": 94,
+      "glyph_mismatch": 0,
+      "cluster_start_mismatch": 7,
+      "cluster_containment_failures": 0,
+      "cluster_end_mismatch": 13,
+      "max_metric_delta_px": 0
+    }
+  },
+  "font_sha256": {
+    "beng-real.ttf": "dcd42978094e584a849c84a51450eeac40c8826057d566ea6d4b9627a403a05a",
+    "beng-synthetic.ttf": "96b3202be9f63a93af881e074847c6bc60a1952b908ff5af66fef1f7ab5da613",
+    "khmr-real.ttf": "f37a8431a0c5d5ed2f81a767417546aca576a81fb7eff9c924d46aecf828f2ca",
+    "khmr-synthetic.ttf": "e3ea13ad2775ee4c3807ee3039c226b5b4b5020ed6703172ddd08dc51162ea96",
+    "knda-real.ttf": "cca4f3b3a8cb12fb261f1b43baf5d2f7f59d90fe123d41f0065ed3a183997ec9",
+    "knda-synthetic.ttf": "c36b0327d1c09f87548d8b9abe61544eeecc5fd878168db07b514741eae557dd",
+    "mlym-real.ttf": "312e0e7c3cc15fa09eb42a8f749eeb246b593ed420e3c81aafe8d910c3a6fb56",
+    "mlym-synthetic.ttf": "88bcde6bcd0d575b39fbba404e57c35312eb5715292a70142e71538faf0cd74f",
+    "mymr-real.ttf": "7abbbfbe2514105d7ce94937aee3feb2ba89b73a256c8b77b5866bd9b83e32ec",
+    "mymr-synthetic.ttf": "4c5a4a89c1ec2ce57046f6f9910bf140f8823cc9894b3afdb09ed08b418242c6",
+    "taml-real.ttf": "aa3a9b321f4b0bb2c40203ffbde9af89713227866e0e13f76e5b9eeea727cf88",
+    "taml-synthetic.ttf": "77e1605066f60f035d2d73813014bdff6cfba5950025c548d61703d5e07d0c60",
+    "telu-real.ttf": "e618af7bf999df192ed4f388eba2e563f2b5015034e9cbb317b5bd793bd7334d",
+    "telu-synthetic.ttf": "a7e95534e152b51f3d6597af7e396a246869202d295d845bf512c91c9fb7d6b2",
+    "thai-real.ttf": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8",
+    "thai-synthetic.ttf": "923470cd65bb7617daaf5a1ca7a3b2cfb934bc19ab9493c99d3353f5cb7786f6"
+  },
+  "sanitizer": {
+    "linux_asan_ubsan": "not run: host has no Linux or WSL installation",
+    "mingw_asan_attempt": "failed before test execution: MinGW gcc 16.2.0 lacks libsanitizer.spec",
+    "windows_plain": "145/145 ctest passed"
+  },
+  "known_limits": [
+    "Thai/Lao legacy PUA fallback not implemented; Unicode SARA AM decomposition is implemented and Noto/GSUB fonts are covered.",
+    "Khmer/Myanmar broken clusters do not synthesize a dotted circle in this branch.",
+    "Malayalam U+0D4E dot repha orders correctly but one GPOS y-offset differs from HarfBuzz; it is outside the fixed 50-sequence corpus.",
+    "Only the eight declared scripts are covered; other Indic/SEA scripts remain outside this package."
+  ],
+  "files": [
+    "src/opentype.c",
+    "CMakeLists.txt",
+    "tests/test_wp7_scripts.c",
+    "tests/fixtures/wp7/cases.json",
+    "tests/fixtures/wp7/reference.h",
+    "tests/fixtures/wp7/README.md",
+    "tests/fixtures/wp7/fonts/",
+    "tools/wp7_sequences.py",
+    "tools/generate_wp7_test_fonts.py",
+    "tools/generate_wp7_reference.py",
+    "docs/WP7-SCRIPTS.md",
+    "docs/SUPPORT_MATRIX.md",
+    "docs/validation/wp7-windows.json",
+    "licenses/noto-sans-test-fonts.txt",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "code_commit": "a119ae645e1aac0189d95c95f69b5ecd10091136"
+}
