@@ -724,7 +724,7 @@
     }
   },
   "source_snapshots": {
-    "cmake/deps.cmake": "13db349e54bf2e24593424bbdb99a3ef6ceb3c759cf636b3affaaac793b81690",
+    "cmake/deps.cmake": "11e3b29e95d2caa41e3d122b0beca317e7b5afe16a118cb12049478299f68f0a",
     "THIRD_PARTY_NOTICES.md": "d9dcce0381f94767c8c53168c065084acab3f15ac65eacf91c93aba7cb0bd2fc",
     "tests/check_fuzz_pipelines.py": "6cd465d9fdfceaf61b4fe7b792b44e13aca96b73214d024989eafd685bd1a5a9",
     "tests/fixtures/font-cff-regression.bin": "4e5d2e3d59d1aaef53c59a46abaad0200e59baf75b0ced79af14491fa9e47f2e",
@@ -743,6 +743,17 @@
     "acceptance": {
       "status": "not_started",
       "passed": false
+    },
+    "initial_native": {
+      "run_id": 39447640866,
+      "source_sha": "9b49ab41a7a2638a5b746ffa7dce16e389522d15",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39447640866",
+      "status": "in_progress",
+      "fuzz_job": "success",
+      "macos_installed_consumer": "failed",
+      "macos_diagnostic": "C:/Users/Oscar/exr-gcc/font-reliability-macos-job-full.log",
+      "macos_diagnostic_sha256": "8304d22ecf7c2b6d094f0dfd86e8b813d121e9c452a00134b4809cf8bd211f9a",
+      "correction": "Keep the new optional HVF font backend disabled consistently across platforms, matching the supported font matrix and packaged dependency set."
     }
   },
   "wp16_complete": false,
