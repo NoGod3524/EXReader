@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "package": "WP12-lite",
+  "kind": "baseline",
+  "source_commit": "45e21b3",
+  "worktree": "C:/Users/Oscar/exr-wp12-lite-baseline-src",
+  "build": "C:/Users/Oscar/exr-wp12-lite-baseline-gcc",
+  "tests": {
+    "expected": 4,
+    "actual": 4,
+    "passed": 4,
+    "failed": 0,
+    "names": [
+      "native-core",
+      "native-export-xml",
+      "native-export-html",
+      "native-export-epub"
+    ],
+    "log": "C:/Users/Oscar/exr-wp12-lite-baseline-ctest.log"
+  },
+  "note": "An earlier regex also selected an unbuilt component test; the exact export/core subset is recorded here."
+}

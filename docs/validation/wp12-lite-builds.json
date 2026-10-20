@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "package": "WP12-lite",
+  "kind": "builds",
+  "environment": {
+    "source_commit": "de01129c55134d76d808dbc3744a0607c6ab5d7e",
+    "worktree_dirty": false,
+    "engine_version": "3.38.2",
+    "abi": 1,
+    "platform": "Windows x64",
+    "python": "3.14.7",
+    "gcc": "16.2.0 (WinLibs POSIX UCRT)",
+    "cmake": "4.4.2",
+    "tools": {
+      "native-convert": "tests/test_convert.c",
+      "native-convert-cli": "tests/check_convert_cli.py",
+      "native-convert-benchmark": "tests/check_convert_benchmark.py"
+    }
+  },
+  "gcc": {
+    "build": "C:/Users/Oscar/exr-wp12-lite-gcc",
+    "config": "Release/Ninja",
+    "tool_sha256": "27be8655f35dd83c4f87d2b75de14805c0134dac1f08a3994f69a54bb9d3451d",
+    "runtime_sha256": "e02237779a1235761cbf72f44afa84bdeec10465f4d696bdf4cd7a9979f7ec25",
+    "ctest": {
+      "expected": 149,
+      "actual": 149,
+      "passed": 149,
+      "failed": 0,
+      "log": "C:/Users/Oscar/exr-wp12-lite-full-ctest.log",
+      "final_log": "C:/Users/Oscar/exr-wp12-lite-final-ctest-43bd475.log"
+    }
+  },
+  "msvc": {
+    "build": "C:/Users/Oscar/exr-wp12-lite-msvc",
+    "config": "Release/x64",
+    "matrix": {
+      "expected": 520,
+      "actual": 520,
+      "passed": 520,
+      "failed": 0,
+      "render": {
+        "expected": 20,
+        "passed": 20
+      }
+    },
+    "cli_scenarios": "37/37 passed",
+    "cli_evidence": "C:/Users/Oscar/exr-wp12-lite-cli-scenarios-msvc.json"
+  },
+  "install_default": {
+    "prefix": "C:/Users/Oscar/exr-wp12-lite-stage",
+    "consumer": "C:/Users/Oscar/exr-wp12-lite-consumer",
+    "ctest": "5/5 passed",
+    "includes_installed_convert": true
+  },
+  "install_trimmed": {
+    "prefix": "C:/Users/Oscar/exr-wp12-lite-stage-trim",
+    "build": "C:/Users/Oscar/exr-wp12-lite-trim",
+    "consumer": "C:/Users/Oscar/exr-wp12-lite-consumer-trim",
+    "options": {
+      "EXR_BUILD_TOOLS": false,
+      "EXR_ENABLE_PDF": false,
+      "EXR_ENABLE_PDF_EDIT": false,
+      "EXR_ENABLE_AUDIO": false,
+      "EXR_ENABLE_LIBRARY": false,
+      "EXR_BUILD_TEXT_INDEX": false,
+      "EXR_ENABLE_ICC": false
+    },
+    "ctest": "1/1 passed",
+    "includes_installed_convert": true
+  },
+  "linux_sanitizers": {
+    "status": "not run",
+    "reason": "no Linux host/WSL available locally"
+  },
+  "unmet": [
+    "Linux ASan/UBSan results are not locally available.",
+    "Full WP12 high-fidelity round-trip and old-UI migration remain separate work packages."
+  ]
+}

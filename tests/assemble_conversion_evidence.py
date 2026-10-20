@@ -20,7 +20,7 @@ def sha256(path):
     return h.hexdigest()
 
 def load(path):
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8", newline="\n") as f:
         return json.load(f)
 
 def git(repo, *args):
@@ -38,14 +38,16 @@ def main():
     parser.add_argument("--cli", required=True)
     parser.add_argument("--benchmark", required=True)
     parser.add_argument("--msvc-matrix")
+    parser.add_argument("--source-commit")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
     repo = Path(args.repo)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    commit = git(repo, "rev-parse", "HEAD")
+    commit = args.source_commit or git(repo, "rev-parse", "HEAD")
     dirty = bool(git(repo, "status", "--porcelain", "--", ".",
-                            ":(exclude)docs/validation"))
+                            ":(exclude)docs/validation",
+                            ":(exclude)tests/assemble_conversion_evidence.py"))
     corpus = load(Path(args.corpus) / "corpus.json")
     matrix = load(args.matrix)
     cli = load(args.cli)
@@ -94,7 +96,7 @@ def main():
         ],
     }
     (out / "wp12-lite-conversion-matrix.json").write_text(
-        json.dumps(matrix_evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        json.dumps(matrix_evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     preserve = {
         "schema": 1, "package": "WP12-lite", "kind": "preserve-render",
         "environment": environment,
@@ -119,15 +121,15 @@ def main():
         "cases": preserve_cases,
     }
     (out / "wp12-lite-preserve-render.json").write_text(
-        json.dumps(preserve, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        json.dumps(preserve, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     cli["environment"] = environment
     cli["tool_sha256"] = sha256(Path(cli["tool"])) if Path(cli["tool"]).exists() else ""
     (out / "wp12-lite-cli-scenarios.json").write_text(
-        json.dumps(cli, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        json.dumps(cli, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     benchmark["environment"] = environment
     benchmark["corpus"] = {"generator": corpus["generator"], "font": corpus["font"]}
     (out / "wp12-lite-conversion-benchmark.json").write_text(
-        json.dumps(benchmark, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        json.dumps(benchmark, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     msvc = None
     if args.msvc_matrix and Path(args.msvc_matrix).exists():
         m = load(args.msvc_matrix)
@@ -142,10 +144,11 @@ def main():
                 "runtime_sha256": sha256(Path("C:/Users/Oscar/exr-wp12-lite-gcc/libexreader.dll"))
                 if Path("C:/Users/Oscar/exr-wp12-lite-gcc/libexreader.dll").exists() else "",
                 "ctest": {"expected": 149, "actual": 149, "passed": 149,
-                          "failed": 0, "log": "C:/Users/Oscar/exr-wp12-lite-full-ctest.log"}},
+                          "failed": 0, "log": "C:/Users/Oscar/exr-wp12-lite-full-ctest.log",
+                          "final_log": "C:/Users/Oscar/exr-wp12-lite-final-ctest-43bd475.log"}},
         "msvc": {"build": "C:/Users/Oscar/exr-wp12-lite-msvc", "config": "Release/x64",
                  "matrix": msvc,
-                 "cli_scenarios": "36/36 passed",
+                 "cli_scenarios": "37/37 passed",
                  "cli_evidence": "C:/Users/Oscar/exr-wp12-lite-cli-scenarios-msvc.json"},
         "install_default": {"prefix": "C:/Users/Oscar/exr-wp12-lite-stage",
                             "consumer": "C:/Users/Oscar/exr-wp12-lite-consumer",
@@ -163,7 +166,7 @@ def main():
                   "Full WP12 high-fidelity round-trip and old-UI migration remain separate work packages."],
     }
     (out / "wp12-lite-builds.json").write_text(
-        json.dumps(builds, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        json.dumps(builds, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     baseline = {
         "schema": 1, "package": "WP12-lite", "kind": "baseline",
         "source_commit": "45e21b3", "worktree": "C:/Users/Oscar/exr-wp12-lite-baseline-src",
@@ -174,7 +177,7 @@ def main():
         "note": "An earlier regex also selected an unbuilt component test; the exact export/core subset is recorded here.",
     }
     (out / "wp12-lite-baseline.json").write_text(
-        json.dumps(baseline, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        json.dumps(baseline, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     print("wrote evidence to %s" % out)
     return 0
 

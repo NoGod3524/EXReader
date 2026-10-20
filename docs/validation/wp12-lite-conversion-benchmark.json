@@ -1,0 +1,301 @@
+{
+  "schema": 1,
+  "kind": "conversion-benchmark",
+  "tool": "C:\\Users\\Oscar\\exr-wp12-lite-gcc\\exreader-convert.exe",
+  "tool_sha256": "27be8655f35dd83c4f87d2b75de14805c0134dac1f08a3994f69a54bb9d3451d",
+  "engine_version": "3.38.2",
+  "runtime": {
+    "libexreader.dll": {
+      "path": "C:\\Users\\Oscar\\exr-wp12-lite-gcc\\libexreader.dll",
+      "sha256": "e02237779a1235761cbf72f44afa84bdeec10465f4d696bdf4cd7a9979f7ec25"
+    }
+  },
+  "small": [
+    {
+      "theme": "ascii",
+      "input": "C:\\Users\\Oscar\\exr-wp12-lite-corpus\\text\\txt\\ascii.txt",
+      "input_sha256": "64ad119fcba8f5124b0af0d3f6759333b41015e45fc8112a93d1a9e64a780219",
+      "input_bytes": 137,
+      "samples": [
+        {
+          "elapsed_seconds": 0.036809,
+          "peak_rss_bytes": 7528448,
+          "output_bytes": 1504
+        },
+        {
+          "elapsed_seconds": 0.055238,
+          "peak_rss_bytes": 7540736,
+          "output_bytes": 1504
+        },
+        {
+          "elapsed_seconds": 0.077026,
+          "peak_rss_bytes": 7528448,
+          "output_bytes": 1504
+        }
+      ]
+    },
+    {
+      "theme": "chinese",
+      "input": "C:\\Users\\Oscar\\exr-wp12-lite-corpus\\text\\txt\\chinese.txt",
+      "input_sha256": "01486e21380f0fe3cf29ca226708434e665bb966af3a40678fbc1c21c8386edd",
+      "input_bytes": 157,
+      "samples": [
+        {
+          "elapsed_seconds": 0.047186,
+          "peak_rss_bytes": 7450624,
+          "output_bytes": 1568
+        },
+        {
+          "elapsed_seconds": 0.046879,
+          "peak_rss_bytes": 7491584,
+          "output_bytes": 1568
+        },
+        {
+          "elapsed_seconds": 0.083651,
+          "peak_rss_bytes": 7450624,
+          "output_bytes": 1568
+        }
+      ]
+    },
+    {
+      "theme": "rtl",
+      "input": "C:\\Users\\Oscar\\exr-wp12-lite-corpus\\text\\txt\\rtl.txt",
+      "input_sha256": "c0bea052fcb1485c169616c1093f819d61423ab64d54338dc73226f64d2d4371",
+      "input_bytes": 197,
+      "samples": [
+        {
+          "elapsed_seconds": 0.042655,
+          "peak_rss_bytes": 7471104,
+          "output_bytes": 1559
+        },
+        {
+          "elapsed_seconds": 0.044983,
+          "peak_rss_bytes": 7479296,
+          "output_bytes": 1559
+        },
+        {
+          "elapsed_seconds": 0.092087,
+          "peak_rss_bytes": 7548928,
+          "output_bytes": 1559
+        }
+      ]
+    },
+    {
+      "theme": "supplementary",
+      "input": "C:\\Users\\Oscar\\exr-wp12-lite-corpus\\text\\txt\\supplementary.txt",
+      "input_sha256": "143e6b9dd0f39701973f11e10e30213c8949ae70f4dc35cd63b9fdd71e05d781",
+      "input_bytes": 167,
+      "samples": [
+        {
+          "elapsed_seconds": 0.068442,
+          "peak_rss_bytes": 7471104,
+          "output_bytes": 1569
+        },
+        {
+          "elapsed_seconds": 0.092596,
+          "peak_rss_bytes": 7467008,
+          "output_bytes": 1569
+        },
+        {
+          "elapsed_seconds": 0.044962,
+          "peak_rss_bytes": 7479296,
+          "output_bytes": 1569
+        }
+      ]
+    },
+    {
+      "theme": "special",
+      "input": "C:\\Users\\Oscar\\exr-wp12-lite-corpus\\text\\txt\\special.txt",
+      "input_sha256": "9872dab83c31d96c8f5dc483a68340351344857b14ec9febc584b8c50547b39b",
+      "input_bytes": 163,
+      "samples": [
+        {
+          "elapsed_seconds": 0.048222,
+          "peak_rss_bytes": 7524352,
+          "output_bytes": 1546
+        },
+        {
+          "elapsed_seconds": 0.029951,
+          "peak_rss_bytes": 7528448,
+          "output_bytes": 1546
+        },
+        {
+          "elapsed_seconds": 0.030073,
+          "peak_rss_bytes": 7524352,
+          "output_bytes": 1546
+        }
+      ]
+    },
+    {
+      "theme": "whitespace",
+      "input": "C:\\Users\\Oscar\\exr-wp12-lite-corpus\\text\\txt\\whitespace.txt",
+      "input_sha256": "b1dcb3e85eb1ee92a11b207b832ffc4b6893fbece1ab9e7895cf9c7acba768f8",
+      "input_bytes": 182,
+      "samples": [
+        {
+          "elapsed_seconds": 0.040443,
+          "peak_rss_bytes": 7467008,
+          "output_bytes": 1525
+        },
+        {
+          "elapsed_seconds": 0.111836,
+          "peak_rss_bytes": 7553024,
+          "output_bytes": 1525
+        },
+        {
+          "elapsed_seconds": 0.077561,
+          "peak_rss_bytes": 7450624,
+          "output_bytes": 1525
+        }
+      ]
+    },
+    {
+      "theme": "structure",
+      "input": "C:\\Users\\Oscar\\exr-wp12-lite-corpus\\text\\txt\\structure.txt",
+      "input_sha256": "42c1cbb8e4f2e5fc35c0ea4b3c59ef817bf9b9c43c46373a935c327ebaa6e189",
+      "input_bytes": 131,
+      "samples": [
+        {
+          "elapsed_seconds": 0.057622,
+          "peak_rss_bytes": 7520256,
+          "output_bytes": 1494
+        },
+        {
+          "elapsed_seconds": 0.042462,
+          "peak_rss_bytes": 7516160,
+          "output_bytes": 1494
+        },
+        {
+          "elapsed_seconds": 0.039709,
+          "peak_rss_bytes": 7524352,
+          "output_bytes": 1494
+        }
+      ]
+    },
+    {
+      "theme": "multichapter",
+      "input": "C:\\Users\\Oscar\\exr-wp12-lite-corpus\\text\\txt\\multichapter.txt",
+      "input_sha256": "7b6b1fd9baaeeced21252d6a3d081cc5426d1e15f0deb76e10651c2fe97ec571",
+      "input_bytes": 113,
+      "samples": [
+        {
+          "elapsed_seconds": 0.117318,
+          "peak_rss_bytes": 7499776,
+          "output_bytes": 1468
+        },
+        {
+          "elapsed_seconds": 0.065054,
+          "peak_rss_bytes": 7503872,
+          "output_bytes": 1468
+        },
+        {
+          "elapsed_seconds": 0.034243,
+          "peak_rss_bytes": 7516160,
+          "output_bytes": 1468
+        }
+      ]
+    },
+    {
+      "theme": "long",
+      "input": "C:\\Users\\Oscar\\exr-wp12-lite-corpus\\text\\txt\\long.txt",
+      "input_sha256": "c1735552b23e67b3e7c71db6fcf366d7fd8751e6ff193cb64a75091f77fed83d",
+      "input_bytes": 231,
+      "samples": [
+        {
+          "elapsed_seconds": 0.046989,
+          "peak_rss_bytes": 7516160,
+          "output_bytes": 1608
+        },
+        {
+          "elapsed_seconds": 0.095273,
+          "peak_rss_bytes": 7491584,
+          "output_bytes": 1608
+        },
+        {
+          "elapsed_seconds": 0.071567,
+          "peak_rss_bytes": 7479296,
+          "output_bytes": 1608
+        }
+      ]
+    },
+    {
+      "theme": "metadata",
+      "input": "C:\\Users\\Oscar\\exr-wp12-lite-corpus\\text\\txt\\metadata.txt",
+      "input_sha256": "ecef45366eabcf13297542b8d82356cf7fd3670b2a8e18cb43202203d8b007b5",
+      "input_bytes": 167,
+      "samples": [
+        {
+          "elapsed_seconds": 0.039804,
+          "peak_rss_bytes": 7544832,
+          "output_bytes": 1542
+        },
+        {
+          "elapsed_seconds": 0.017127,
+          "peak_rss_bytes": 7499776,
+          "output_bytes": 1542
+        },
+        {
+          "elapsed_seconds": 0.018753,
+          "peak_rss_bytes": 7503872,
+          "output_bytes": 1542
+        }
+      ]
+    }
+  ],
+  "one_mib": {
+    "input": "C:\\Users\\Oscar\\exr-wp12-lite-corpus\\long\\one-mib.txt",
+    "input_sha256": "dc7eb6f0d742bf8e7e87dfd54b0bc5bfe7ded61109ac74395b4ff57a89e7f8c5",
+    "input_bytes": 1048576,
+    "samples": [
+      {
+        "elapsed_seconds": 0.125316,
+        "peak_rss_bytes": 28504064,
+        "output_bytes": 53856
+      },
+      {
+        "elapsed_seconds": 0.182217,
+        "peak_rss_bytes": 27422720,
+        "output_bytes": 53856
+      },
+      {
+        "elapsed_seconds": 0.154686,
+        "peak_rss_bytes": 27594752,
+        "output_bytes": 53856
+      }
+    ]
+  },
+  "batch_100": {
+    "items": 100,
+    "elapsed_seconds": 29.585326,
+    "peak_rss_bytes": 29569024,
+    "output_bytes": 5385678,
+    "single_peak_rss_bytes": 28504064,
+    "peak_delta_bytes": 1064960,
+    "queue_note": "manifest is loaded once; items are converted and released one at a time; no 100-document queue",
+    "unfinished": 0,
+    "failed": 0
+  },
+  "temporary_files_remaining": 0,
+  "environment": {
+    "source_commit": "de01129c55134d76d808dbc3744a0607c6ab5d7e",
+    "worktree_dirty": false,
+    "engine_version": "3.38.2",
+    "abi": 1,
+    "platform": "Windows x64",
+    "python": "3.14.7",
+    "gcc": "16.2.0 (WinLibs POSIX UCRT)",
+    "cmake": "4.4.2",
+    "tools": {
+      "native-convert": "tests/test_convert.c",
+      "native-convert-cli": "tests/check_convert_cli.py",
+      "native-convert-benchmark": "tests/check_convert_benchmark.py"
+    }
+  },
+  "corpus": {
+    "generator": "tools/generate_conversion_corpus.py",
+    "font": {
+      "path": "tests/fixtures/fonts/primary.ttf",
+      "sha256": "ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed"
+    }
+  }
+}
