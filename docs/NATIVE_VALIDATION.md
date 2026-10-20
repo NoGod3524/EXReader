@@ -4585,4 +4585,4 @@ pdf 39,784/3,484, cbz 40,235/857 (attempts/parsed). Campaign record hash
 `40bde6c29e3b92f1b6214af3970bdd6b044e417719a7599f60bbc6c44209bfc0`, GCC
 `exreader-fuzz.exe` hash `f8e2ca03226275c61bbc181d9b405cbf0d8c59253d21c9a5a8a9d63fbed2a86d`,
 `libexreader.dll` hash `fdd37959ae957d047ba041ee066d07249b819ccd23961a7e6174cfa3ee2e85a9`.
-CI/sanitizer results are pending the push; no sanitizer run was recorded locally.
+CI run [39363962576](https://github.com/NoGod3524/EXReader/actions/runs/39363962576) passed 7/7 on head `ff97fd1`: the `fuzz` job ran `exreader-fuzz-test` under ASan/UBSan on Linux (POSIX `ftruncate` path) and the 200k campaign; the failure-artifact path now includes `last.bin.format` but was not exercised by this green run.
