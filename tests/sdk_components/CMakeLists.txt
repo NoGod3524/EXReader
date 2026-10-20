@@ -45,7 +45,8 @@ endif()
 if(TARGET EXReader::exreader)
   add_executable(convert-consumer ../test_convert_component.c)
   target_link_libraries(convert-consumer PRIVATE EXReader::exreader)
-  if(WIN32)
+  get_target_property(exr_consumer_library_type EXReader::exreader TYPE)
+  if(WIN32 AND exr_consumer_library_type STREQUAL "SHARED_LIBRARY")
     add_custom_command(TARGET convert-consumer POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "$<TARGET_FILE:EXReader::exreader>" "$<TARGET_FILE_DIR:convert-consumer>")

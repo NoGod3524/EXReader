@@ -4,7 +4,6 @@
 recovery, cancellation and report consistency. Runs the installed tool as a
 real process; it does not call SDK internals."""
 import argparse
-import ctypes
 import hashlib
 import json
 import os
@@ -249,9 +248,12 @@ def scenario_protection(r):
         ok = ok and item["status"] == "rejected" and item["published"] is False
     r.record("source-equals-target", "reject same file", code, ok, stdout, err)
     case_alias = r.work / "protect" / "A.TXT"
+    case_same = case_alias.exists() and os.path.samefile(source, case_alias)
     code, stdout, err, _ = r.run(["--input", source, "--to", "epub", "--output", case_alias])
-    ok = code == 3 and sha256(source) == original
-    r.record("source-target-case-alias", "reject case alias", code, ok, stdout, err)
+    ok = code == (3 if case_same else 0) and sha256(source) == original
+    if not case_same:
+        ok = ok and case_alias.is_file() and case_alias.read_bytes()[:2] == b"PK"
+    r.record("source-target-case-alias", "reject same file; allow distinct case-sensitive path", code, ok, stdout, err)
     link = r.work / "protect" / "link.txt"
     try:
         os.link(source, link)
@@ -328,10 +330,6 @@ def scenario_paths_and_limit(r):
     big.unlink()
 
 def scenario_cancel(r):
-    if os.name != "nt":
-        r.record("cancel-batch", "cancellation", "skipped: Windows-only signal harness", False,
-                 detail="not run on this platform")
-        return
     source = r.corpus / "long" / "one-mib.txt"
     out = r.work / "cancel-out"
     out.mkdir()
@@ -344,14 +342,18 @@ def scenario_cancel(r):
     report = r.work / "cancel-report.json"
     proc = subprocess.Popen([r.tool, "--batch", str(m), "--report", str(report)],
                             cwd=str(r.work), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
-    time.sleep(3.0)
-    ctypes.windll.kernel32.GenerateConsoleCtrlEvent(1, proc.pid)  # CTRL_BREAK_EVENT
+                            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0)
+    deadline = time.monotonic() + 120
+    while proc.poll() is None and not any(out.glob("c*.epub")) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    published_before_cancel = any(out.glob("c*.epub"))
+    if proc.poll() is None:
+        proc.send_signal(signal.CTRL_BREAK_EVENT if os.name == "nt" else signal.SIGINT)
     stdout, stderr = proc.communicate(timeout=300)
     stdout = stdout.decode("utf-8", "replace")
     stderr = stderr.decode("utf-8", "replace")
     code = proc.returncode
-    ok = code == 3 and report.exists()
+    ok = code == 3 and report.exists() and published_before_cancel
     detail = ""
     if ok:
         data = r.report(report)
@@ -365,7 +367,7 @@ def scenario_cancel(r):
                 path = Path(item["output"])
                 ok = ok and path.is_file() and path.stat().st_size > 0
         detail = "statuses=%s" % {s: statuses.count(s) for s in set(statuses)}
-    r.record("cancel-batch", "ctrl-break leaves report and no temp files", code, ok, stdout, stderr, detail)
+    r.record("cancel-batch", "signal leaves report and no temp files", code, ok, stdout, stderr, detail)
 
 def main():
     parser = argparse.ArgumentParser()
