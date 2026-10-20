@@ -148,7 +148,7 @@ static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_p
 }
 static unsigned image_space(void *context) {
   pdf_painter *r=context;
-  return r->sink.image_cmyk && (!r->sink.image_space || r->sink.image_space(r->sink.base.context)==EXR_GROUP_CMYK) ? EXR_GROUP_CMYK : EXR_GROUP_RGB;
+  return (r->sink.image_cmyk || r->sink.paint) && (r->sink.image_space ? r->sink.image_space(r->sink.base.context)==EXR_GROUP_CMYK : r->sink.image_cmyk!=NULL) ? EXR_GROUP_CMYK : EXR_GROUP_RGB;
 }
 static exr_status begin_group_event(void *context,const exr_pdf_paint_state *paint,unsigned flags,exr_error *e) {
   pdf_painter *r=context;paint_mask mask={0};exr_status status;
@@ -187,16 +187,28 @@ static exr_status end_layer_event(void *context,unsigned commit,exr_error *e) {
   status=r->sink.end_layer ? r->sink.end_layer(r->sink.base.context,commit,e) : exr_fail(e,EXR_FORMAT,"Drawing consumer lacks isolated layers");
   return mask.pixels ? mask_end(r,&mask,status,e) : status;
 }
+static exr_status source_event(void *context,const exr_paint_source *source,const double matrix[6],
+                               const exr_pdf_paint_state *paint,exr_error *e) {
+  pdf_painter *r=context;paint_mask mask={0};exr_status status;
+  status=exr_sink_alpha_source(&r->sink,paint->alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0,e);
+  if(status==EXR_OK) status=blend_state(r,paint->blend,e);
+  if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
+  if(status==EXR_OK) status=r->sink.paint(r->sink.base.context,source,matrix,paint->fill.alpha,e);
+  if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
+  if(mask.pixels) status=mask_end(r,&mask,status,e);
+  return status;
+}
 exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
                                   const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *program_context,
                                   size_t *work,size_t *mask_bytes,const exr_control *control,exr_error *e) {
-  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,shading_event,begin_group_event,end_layer_event,image_space,NULL}; size_t i,local_work=0,local_mask_bytes=0; exr_status status;
+  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,shading_event,begin_group_event,end_layer_event,image_space,NULL,NULL}; size_t i,local_work=0,local_mask_bytes=0; exr_status status;
   if(!file) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint input");
   status=exr_draw_sink_snapshot(sink,&r.sink,e);if(status!=EXR_OK) return status;
-  if(!r.sink.base.path && !r.sink.base.image && !r.sink.base.clip && !r.sink.base.state && !r.sink.image_cmyk && !r.sink.path_cmyk && !r.sink.shading) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint consumer");
+  if(!r.sink.base.path && !r.sink.base.image && !r.sink.base.clip && !r.sink.base.state && !r.sink.image_cmyk && !r.sink.path_cmyk && !r.sink.shading && !r.sink.paint) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint consumer");
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   r.program=program; r.program_context=program_context; r.control=control; r.work=work ? work : &local_work; r.file=file;r.mask_bytes=mask_bytes ? mask_bytes : &local_mask_bytes;
   callbacks.work=r.work;
+  callbacks.source=r.sink.paint ? source_event : NULL;
   if(FT_Init_FreeType(&r.library)) return exr_fail(e,EXR_MEMORY,"PDF font library initialization failed");
   status=exr_pdf_draw_ops(file,resources,content,size,initial,&callbacks,&r,control,e);
   while(r.group_depth) { exr_error cleanup={0};exr_status closed=end_layer_event(&r,0,&cleanup);if(status==EXR_OK && closed!=EXR_OK) { status=closed;if(e) *e=cleanup; } }

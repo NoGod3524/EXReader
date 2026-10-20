@@ -360,7 +360,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
   if(!strcmp(name,"sh")) {
     uint32_t shading=EXR_PDF_NONE;
     if(count!=1 || resource(r,arena,values[0],"Shading",&shading,error)!=EXR_OK) goto invalid;
-    if(!r->callbacks.shading) return exr_fail(error,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
+    if(!r->callbacks.shading && !r->callbacks.source) return exr_fail(error,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
     return shading_operation(r,shading,error);
   }
   *handled=0; return EXR_OK;
@@ -404,7 +404,7 @@ static exr_status shading_operation(content_reader *r,uint32_t shading,exr_error
     clipped=1;status=clip_bounds(r,box,error);
   }
   if(status==EXR_OK) status=exr_pdf_shading_draw(r->file,r->file,r->resources,shading,r->state.ctm,&paint,r->color_work,
-    r->callbacks.shading,r->context,r->callbacks.image_space && r->callbacks.image_space(r->context)==EXR_GROUP_CMYK,r->control,error);
+    r->callbacks.shading,r->callbacks.source,r->context,r->callbacks.image_space && r->callbacks.image_space(r->context)==EXR_GROUP_CMYK,r->control,error);
   if(clipped) {
     exr_error cleanup={0};exr_status restored=event(r,EXR_PDF_RESTORE,&cleanup);
     if(status==EXR_OK && restored!=EXR_OK) { status=restored;*error=cleanup; }
@@ -652,7 +652,7 @@ static exr_status walk_content(exr_pdf_file *file,uint32_t resources,const void 
                                   const double initial[6],const exr_pdf_draw_callbacks *callbacks,unsigned graphics,void *context,
                                   const exr_control *control,exr_error *error) {
   content_reader *r; exr_error local={0}; exr_status status; size_t i;
-  if(!file || !callbacks || (!callbacks->glyph && !callbacks->path && !callbacks->state && !callbacks->image) || (!data && size))
+  if(!file || !callbacks || (!callbacks->glyph && !callbacks->path && !callbacks->state && !callbacks->image && !callbacks->shading && !callbacks->source) || (!data && size))
     return exr_fail(error,EXR_ARGUMENT,"Missing PDF content input or callbacks");
   if(initial) for(i=0;i<6;i++) if(!isfinite(initial[i]) || fabs(initial[i])>1e7) return exr_fail(error,EXR_ARGUMENT,"Invalid initial PDF drawing transform");
   r=calloc(1,sizeof(*r)); if(!r) return exr_fail(error,EXR_MEMORY,"PDF content state allocation failed");

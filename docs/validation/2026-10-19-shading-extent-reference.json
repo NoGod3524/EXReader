@@ -1,0 +1,4309 @@
+{
+  "reference": "MuPDF 1.28.2",
+  "max_difference_from_decimal": {
+    "current": 0,
+    "mupdf": 9,
+    "baseline": 255,
+    "poppler_white": 7
+  },
+  "max_difference_by_probe_class": {
+    "clip-wide-2": {
+      "current": 0,
+      "mupdf": 9,
+      "baseline": 255,
+      "poppler_white": 7
+    },
+    "clip-wide-3": {
+      "current": 0,
+      "mupdf": 2,
+      "baseline": 255,
+      "poppler_white": 0
+    }
+  },
+  "baseline_failed_renderings": 0,
+  "poppler_version": "pdftoppm version 26.07.0\r\nCopyright 2005-2026 The Poppler Developers - http://poppler.freedesktop.org\r\nCopyright 1996-2011, 2022 Glyph & Cog, LLC",
+  "library_sha256": "8709eb1c4d44bd6b2cc150a795c01165917ce98bba2c971ce8ad1f65093a81e7",
+  "baseline_sha256": "53d68f15fd71314bf7b93a5e4155da4151380ae8bca96f568b134b21739b13ec",
+  "scenes": [
+    {
+      "file": "shading-extent-0.pdf",
+      "sha256": "fd79e28a4b571dbb75ea688b18d3b3b339bb72e306f5886560b8afda05f63c6a",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 0 .01 0",
+      "extend": [
+        false,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-1.pdf",
+      "sha256": "f12991f529c2898ddcc57f69f71cc0b5b9012207a8e57cf89a153d5a3a37a8ae",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 0 .01 0",
+      "extend": [
+        true,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-2.pdf",
+      "sha256": "447de2e5fd02bba952b9c84e674c14ac24e0f2a8a7ac6a597e0cfec33ea35f5b",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 0 .01 0",
+      "extend": [
+        false,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-3.pdf",
+      "sha256": "10f698cf1c14e5bb8e013275c91cf852deb9ae2d772c3cf3efb1b259a5f7a21a",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 0 .01 0",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-4.pdf",
+      "sha256": "d39f4a9ca8e19e0811529826c52cbcc2fa768e125668663f08254ceb32e632c4",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "100 0 101 0",
+      "extend": [
+        false,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-5.pdf",
+      "sha256": "c81ff48b6c74e1a9548a5c7d1d62de578a9a7ed0ab38a947016f2394df34fbe9",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "kind": 2,
+      "coords": "100 0 101 0",
+      "extend": [
+        true,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "9503245a0161a939de15c2414db2d336e761822fa6cff8136e4148f58f1f782e",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-6.pdf",
+      "sha256": "ececc98677d40a860b85e499584b93bd5cfde6320b0b34243cef87d9327bdec0",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "100 0 101 0",
+      "extend": [
+        false,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-7.pdf",
+      "sha256": "6da9e417672a885f1bd5e4284e857893378985b0ac5a3548db0aaf0299ef4c5a",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "kind": 2,
+      "coords": "100 0 101 0",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "9503245a0161a939de15c2414db2d336e761822fa6cff8136e4148f58f1f782e",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-8.pdf",
+      "sha256": "d58b41e84fab9b453c77a11c8b682c4617be6c059694e2f852ebace430087c54",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 100000 16 100000",
+      "extend": [
+        false,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "cb413df03580bb9f29f48aebd9d632dc969a900965d1e59217ce262be898203e",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              135,
+              135,
+              135,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 9,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              135,
+              135,
+              135,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 9,
+            "baseline": 120,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-9.pdf",
+      "sha256": "5ed392985a59c9800e091ff5a113bc35552a2560b4745f0044a7ad5f698cec51",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 100000 16 100000",
+      "extend": [
+        true,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "cb413df03580bb9f29f48aebd9d632dc969a900965d1e59217ce262be898203e",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              135,
+              135,
+              135,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 9,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              135,
+              135,
+              135,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 9,
+            "baseline": 120,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-10.pdf",
+      "sha256": "dd4c03fe3d0028944bbad717719dc32b1e90c8163077a5325bad55f6214c575c",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 100000 16 100000",
+      "extend": [
+        false,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "cb413df03580bb9f29f48aebd9d632dc969a900965d1e59217ce262be898203e",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              135,
+              135,
+              135,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 9,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              135,
+              135,
+              135,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 9,
+            "baseline": 120,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-11.pdf",
+      "sha256": "ed9f0a84cb1af5723a115ca6db1bc09633e4b40c62707522cd3dfddb491bfb5e",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 100000 16 100000",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "cb413df03580bb9f29f48aebd9d632dc969a900965d1e59217ce262be898203e",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              135,
+              135,
+              135,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 9,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              135,
+              135,
+              135,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 9,
+            "baseline": 120,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-12.pdf",
+      "sha256": "09ea3665b075e532dd19267c1c8c3361eed94bfee9cb9dfbcfe14fc99983251c",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 0 0 0 0 .01",
+      "extend": [
+        false,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-13.pdf",
+      "sha256": "284c091f3871de50538a4369e8ff129b967e1d646b8b7c84b320d64fca0afd79",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 0 0 0 0 .01",
+      "extend": [
+        true,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-14.pdf",
+      "sha256": "2854761784de4f73904d19dd27a512f2afe85289c95751519e297431c154e89e",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 0 0 0 0 .01",
+      "extend": [
+        false,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-15.pdf",
+      "sha256": "2b774670d9877df102ea33243f9cfb219cb72b42e3e0ef9dd7ff8157bc2bf349",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 0 0 0 0 .01",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-16.pdf",
+      "sha256": "d42ed3c7eda753e050c7f64278d15b597aa883c2313fb0c07e7ac01c93e1f9bb",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "100 100 20 100 100 10",
+      "extend": [
+        false,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-17.pdf",
+      "sha256": "49bff843ff29a9a818f98a5d2e2cf03a52783274125e06fc0bff7302eab54f01",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "kind": 3,
+      "coords": "100 100 20 100 100 10",
+      "extend": [
+        true,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "9503245a0161a939de15c2414db2d336e761822fa6cff8136e4148f58f1f782e",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-18.pdf",
+      "sha256": "6adb63dce5ef9345d7fb9f4225476211daad80467e179d4602558d596ffa4c88",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "100 100 20 100 100 10",
+      "extend": [
+        false,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-19.pdf",
+      "sha256": "6d94598313fc0ca3a6dfd6ed3c35ca1328cd3b1ce1d83a7e7b9414f53f358df7",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "kind": 3,
+      "coords": "100 100 20 100 100 10",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "9503245a0161a939de15c2414db2d336e761822fa6cff8136e4148f58f1f782e",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-20.pdf",
+      "sha256": "ce661b415fee8d894a4bcb6b97c27c0a6cb36ca145d31cee5b498a6b66893148",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 8.5 .01 1 8.5 .01",
+      "extend": [
+        false,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-21.pdf",
+      "sha256": "21550a8b3325c07cef2aa489b1074e4de4f0856d7501fb817439b499093091fb",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 8.5 .01 1 8.5 .01",
+      "extend": [
+        true,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-22.pdf",
+      "sha256": "660fd49d781a3184b16f7414b51b3a4c026d0d3361c993406484cbe7895b36a5",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 8.5 .01 1 8.5 .01",
+      "extend": [
+        false,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-23.pdf",
+      "sha256": "0187deb03824b09b643fac06aa59c3685be2e102d55ec42c555889d432a90836",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 8.5 .01 1 8.5 .01",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-24.pdf",
+      "sha256": "3e4a05eb889777bf00a6ed0d5107b46391e7fd99c91d8d5858e8b5fabdf5d1a2",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 8.5 20 1 8.5 20",
+      "extend": [
+        false,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-25.pdf",
+      "sha256": "36ebcfb4bf4cbc71d7db334784ba41fb50a50534054d8e600407df002617c7f5",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 8.5 20 1 8.5 20",
+      "extend": [
+        true,
+        false
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "9503245a0161a939de15c2414db2d336e761822fa6cff8136e4148f58f1f782e",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "poppler_white": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-26.pdf",
+      "sha256": "08ed39efaa24b38aeb5c18ffe3058eb0f13abf0124e27023ff64e0185d9e4bb9",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 8.5 20 1 8.5 20",
+      "extend": [
+        false,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-27.pdf",
+      "sha256": "648df3daaf194ed04d5181625084f8f81149aaaa029cc74eed94d500b72a2f82",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 8.5 20 1 8.5 20",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-28.pdf",
+      "sha256": "c20942b3a56abb687c58dfb3acb078f0a28fa720b9b2509103d65de196cf28e3",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 0 .01 0",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "0",
+        "2",
+        "-2",
+        "0",
+        "16",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-29.pdf",
+      "sha256": "2c1e78bc9b2f854e9b3ef377f47812b40141b070ce497a1f1d7498c74a8043a9",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 0 .01 0",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0.25",
+        "0.5",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "53e2658613f23f08dc91018ada2b7b5bfa63ffb6cd40a858900f86e52c6674d1",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-30.pdf",
+      "sha256": "730f301060c63d02e3ebde2539190c4610d277d756110e3e40a26e75675e08d9",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        255,
+        255,
+        255,
+        64
+      ],
+      "premultiplied": [
+        64,
+        64,
+        64,
+        64
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 0 .01 0",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "0.25",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "8c69ad4db8c67b66fec4d0bb27397b2d8fbcec0e4818c60e934b32128713d538",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              64,
+              64,
+              64,
+              64
+            ],
+            "mupdf": [
+              62,
+              62,
+              62,
+              62
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 2,
+            "baseline": 64
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              254,
+              254,
+              254
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-31.pdf",
+      "sha256": "702a65fe2256457f38d326fc5f8e56378506b049de022004d2df0f4eaec76453",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 0 .01 0",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "53d6b7a469339e6b779a2c18a8c099c33e3bbbdb755d2d69588295dfd45b74b8",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-32.pdf",
+      "sha256": "27f7f4b0ac69a06da01d4cdfccb25bb09795b6f1b19b0bcaf08f8828248ba2a3",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 0 .01 0",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": true,
+      "group": false,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-33.pdf",
+      "sha256": "0db56303909320960bb7cb9bdf18efc8ed368bdba1ef5651c0e8f2041e6afeae",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-2",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 2,
+      "coords": "0 0 .01 0",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": true,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-34.pdf",
+      "sha256": "9bb6fca8d7f687ba52f6beffc16d7bf15222e855a6bdc89abd547742d0d51706",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 0 0 0 0 .01",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "0",
+        "2",
+        "-2",
+        "0",
+        "16",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-35.pdf",
+      "sha256": "22757ceba6e3acfc8313a9a4c6c80bb7687d0c3c28bcd1ad71ac874779e087f8",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 0 0 0 0 .01",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0.25",
+        "0.5",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-36.pdf",
+      "sha256": "8104a75d706d24ce09878c53f417ea7222527585374abc4cc2fb764e2de8ee2b",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        255,
+        255,
+        255,
+        64
+      ],
+      "premultiplied": [
+        64,
+        64,
+        64,
+        64
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 0 0 0 0 .01",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "0.25",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "8c69ad4db8c67b66fec4d0bb27397b2d8fbcec0e4818c60e934b32128713d538",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              64,
+              64,
+              64,
+              64
+            ],
+            "mupdf": [
+              62,
+              62,
+              62,
+              62
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 2,
+            "baseline": 64
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              254,
+              254,
+              254
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-37.pdf",
+      "sha256": "a16c222c4b337ba31fd120c135207252369b65d35af030fbc53d94a767a68ae5",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 0 0 0 0 .01",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": false,
+      "rgba_sha256": "53d6b7a469339e6b779a2c18a8c099c33e3bbbdb755d2d69588295dfd45b74b8",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-38.pdf",
+      "sha256": "3f53c467999881dea50d3baadc6786f41f4375f1edbc78c4cd76799c13a4fc83",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 0 0 0 0 .01",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": true,
+      "group": false,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-extent-39.pdf",
+      "sha256": "9a42f920be73fa27cc8d80addec08e6088907ef8067dcf34291aad1b0fd29768",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "clip-wide-3",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "kind": 3,
+      "coords": "0 0 0 0 0 .01",
+      "extend": [
+        true,
+        true
+      ],
+      "matrix": [
+        "1",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0"
+      ],
+      "alpha": "1",
+      "appearance": false,
+      "group": true,
+      "rgba_sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2",
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    }
+  ]
+}

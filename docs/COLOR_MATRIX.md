@@ -9,7 +9,7 @@
 DeviceCMYK组及路径/图像/渐变原生分色、CMYK/YCCK JPEG、CCITT、1–7型渐变及分量函数数组已实现。
 Matte在原生分量内还原，先于ICC转换；早期先转RGB的记录保留在下面。
 渐变支持Domain映射、临时BBox裁剪与径向有效最大根，采样共用总工作预算；
-完整Extend、自适应采样、Pattern、OutputIntent、ICCBased组、JBIG2和JPX仍待继续。
+原生轴向/径向已支持完整Extend，旧宿主需接入paint回调；自适应采样、Pattern、OutputIntent、ICCBased组、JBIG2和JPX仍待继续。
 
 ## 历史状态（2026-10-18）
 

@@ -23,6 +23,9 @@ static unsigned scope_image_space(void *context) {
 static exr_status scope_alpha_source(void *context,unsigned flags,exr_error *e) {
   paint_scope *s=context;return s->target->alpha_source(s->target->base.context,flags,e);
 }
+static exr_status scope_paint(void *context,const exr_paint_source *source,const double matrix[6],double alpha,exr_error *e) {
+  paint_scope *s=context;return s->target->paint(s->target->base.context,source,matrix,alpha,e);
+}
 static exr_status scope_blend(void *context,exr_blend_mode mode,exr_error *e) {
   paint_scope *s=context;return s->target->blend(s->target->base.context,mode,e);
 }
@@ -74,6 +77,7 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
   consumer.image_cmyk=sink->image_cmyk ? scope_image_cmyk : NULL;
   consumer.image_space=sink->image_space ? scope_image_space : NULL;
   consumer.alpha_source=sink->alpha_source ? scope_alpha_source : NULL;
+  consumer.paint=sink->paint ? scope_paint : NULL;
   if(sink->base.state) {
     status=sink->base.state(sink->base.context,EXR_DRAW_SAVE,e);
     if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;

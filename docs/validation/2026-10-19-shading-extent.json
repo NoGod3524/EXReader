@@ -1,0 +1,123 @@
+{
+  "version": "3.38.0",
+  "core_version": "3.37.0",
+  "pdf_version": "3.38.0",
+  "abi": 1,
+  "schema": 6,
+  "tests": {
+    "gcc": {
+      "covered": 143,
+      "initial_passed": 142,
+      "initial_failed": [
+        "native-pdf-shading: test reused a deliberately malformed tail without clearing it"
+      ],
+      "corrected_test_rerun_passed": 1,
+      "remaining_failures": 0,
+      "dll_sha256": "8709eb1c4d44bd6b2cc150a795c01165917ce98bba2c971ce8ad1f65093a81e7",
+      "exports": 306
+    },
+    "msvc": {
+      "covered": 143,
+      "initial_passed": 142,
+      "initial_failed": [
+        "native-pdf-shading: test reused a deliberately malformed tail without clearing it"
+      ],
+      "corrected_test_rerun_passed": 1,
+      "remaining_failures": 0,
+      "dll_sha256": "3ee789051937fcdbe065404440e840e6f0679d4ee0c97633176ee5bba444387d",
+      "exports": 306
+    }
+  },
+  "icc_off": {
+    "count": 12,
+    "failures": 0,
+    "initial_setup_issue": "The old blend test executable interpreted the new callback slot as an unknown future tail. All selected consumers were rebuilt against the new headers before the final 12/12 run."
+  },
+  "installed_components": {
+    "count": 4,
+    "failures": 0
+  },
+  "cpp_headers": 13,
+  "cpp_exact_runtime": "3.38.0 ABI 1",
+  "abi_measurements": {
+    "count": 703,
+    "unchanged": 702,
+    "changed": {
+      "exr_draw_sink_ex.size": {
+        "before": 136,
+        "after": 144
+      }
+    },
+    "old_offsets_unchanged": true,
+    "new_source_size_x64": 24,
+    "new_source_offsets_x64": {
+      "struct_size": 0,
+      "sample": 8,
+      "context": 16
+    }
+  },
+  "layers": {
+    "objects": 99,
+    "symbols": 1050,
+    "includes": 901,
+    "inverse": 0
+  },
+  "scenes": 40,
+  "reference_pixels": 10240,
+  "regenerated_files_identical": 42,
+  "public_paint_checks": 272,
+  "pdf_shading_checks": 41933,
+  "reference": "2026-10-19-shading-extent-reference.json",
+  "performance": {
+    "original": "2026-10-19-shading-extent-benchmark.json",
+    "initial_primitives_first_ratio": 1.1385444921749186,
+    "followup": "2026-10-19-shading-extent-followup.json",
+    "followup_primitives_first_ratio": 1.051,
+    "followup_primitives_p95_ratio": 1.088,
+    "inspection": {
+      "exr_canvas_path": {
+        "instruction_counts": [
+          15,
+          15
+        ],
+        "same_mnemonic_sequence": true
+      },
+      "exr_vector_fill_blend": {
+        "instruction_counts": [
+          29,
+          29
+        ],
+        "same_mnemonic_sequence": true
+      },
+      "exr_pixel_object": {
+        "instruction_counts": [
+          283,
+          283
+        ],
+        "same_mnemonic_sequence": true
+      },
+      "exr_vector_texture_blend": {
+        "instruction_counts": [
+          26,
+          26
+        ],
+        "same_mnemonic_sequence": true
+      }
+    },
+    "inspection_scope": "Four entry points have identical instruction mnemonic sequences; operands and the entire pipeline were not compared.",
+    "conclusion": "The initial >10% first-render ratio did not persist in the separate five-round campaign. All raw samples are retained."
+  },
+  "memory": {
+    "one_pixel_canvas_bytes_before": 3740,
+    "one_pixel_canvas_bytes_after": 3740,
+    "new_temporary_pixel_planes": 0,
+    "rgb_table_bytes": 12288,
+    "optional_cmyk_table_bytes": 2048,
+    "scope": "Payload sizes, excluding allocator overhead, function graphs and ICC profiles."
+  },
+  "remaining": [
+    "Legacy drawing consumers without paint retain the finite bitmap shading path",
+    "Adaptive colour sampling and Type1/mesh sampling",
+    "Other colour-space matrices and all remaining WP1-WP16 acceptance gates"
+  ]
+}

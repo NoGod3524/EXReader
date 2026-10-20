@@ -87,7 +87,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.37.1 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.38.0 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -459,7 +459,7 @@ development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.37.1 EXACT
+Select this package with `find_package(EXReader 3.38.0 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -620,3 +620,34 @@ only for native CMYK consumers. Complete Extend and adaptive sampling remain pen
 
 The SDK/PDF versions are 3.37.1; the core component is 3.36.3. ABI1/schema6, public signatures and record layouts remain unchanged.
 A zero-opacity primitive or subgroup retains its geometric shape when a knockout or shape-tracked parent needs it. Constant-shape zero and intrinsic zero shape remain no-ops. This corrects earlier path/image/CMYK/group inconsistencies; see MASK_SEMANTICS.md for the ISO mapping and external-renderer differences.
+
+## 3.38.0 procedural paint sources
+
+The core component is 3.37.0 and the SDK/PDF components are 3.38.0.
+`exr_canvas_paint` synchronously consumes a size-tagged `exr_paint_source`.
+Its sampler receives source coordinates, the requested RGB/CMYK blend space,
+and separate component, shape and opacity outputs. The transform maps source
+coordinates to the complete canvas, including inside a cropped working group.
+The source owns its context; the canvas retains no source pointers after return.
+Callbacks must not mutate the active canvas. A failing callback, a success return
+with a nonzero error, invalid samples, cancellation and exhausted work budget
+all fail the draw and prevent taking partial output.
+
+The canvas averages four subpixel samples per pixel, weighting straight colours
+by source alpha. Clip coverage, constant alpha, soft masks, AIS and knockout
+composition reuse the existing pixel writer. No temporary pixel plane is added.
+The callback's own work and memory must be bounded by its provider.
+
+`exr_draw_sink_ex` appends `paint`; its Windows x64 size grows from 136 to 144
+bytes while all earlier offsets and prefixes remain valid. The source record is
+24 bytes on that ABI. Wrapping consumers must forward the callback through their
+own context. A missing `paint` retains the existing bounded bitmap shading path;
+hosts must implement this callback to obtain clip-wide axial/radial extension.
+
+The native PDF painter uses a 512-entry RGB colour table (12,288 bytes), plus a
+2,048-byte ink table when a CMYK consumer requests it, instead of a 512×512 radial
+bitmap. Geometry is evaluated at actual device samples through the full clip;
+colour functions and ICC are evaluated once per table entry. Type 1 and mesh
+shadings retain their bitmap paths. Fixed colour-table resolution is still a
+limit for sharply varying functions; adaptive sampling remains pending.
+The new export is additive; ABI epoch 1 and schema 6 remain unchanged.
