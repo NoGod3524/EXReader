@@ -94,7 +94,7 @@
     }
   },
   "result": "pass",
-  "source_commit_at_capture": "8bfb63cee12704670a536abf9cc248430ecdc154",
+  "source_commit_at_capture": "1c84c20b8abc92e349455de9a74dd47e52657b2b",
   "streaming_formats": [
     "EXR_CBZ",
     "EXR_PDF"
