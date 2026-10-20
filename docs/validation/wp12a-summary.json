@@ -123,8 +123,7 @@
   },
   "commit_plan": "implementation + evidence committed locally; no push or merge to codex/framework",
   "commits": {
-    "evidence": "84987ed8547347f6c2553f51a4d451d5f99d96bd",
-    "implementation": "093775db04401c802f7719e4326beb551b8ac5e1"
+    "implementation": "1c84c20b8abc92e349455de9a74dd47e52657b2b"
   },
   "evidence": {
     "format_rules": "docs/WP12A-FORMATS.md",

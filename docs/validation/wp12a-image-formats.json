@@ -1073,7 +1073,7 @@
     "os": "Windows"
   },
   "sdk_version": "3.38.1",
-  "source_commit_at_capture": "8bfb63cee12704670a536abf9cc248430ecdc154",
+  "source_commit_at_capture": "1c84c20b8abc92e349455de9a74dd47e52657b2b",
   "tests": {
     "cbz_format_checks": 4472,
     "default_ctest": "147/147 passed",
