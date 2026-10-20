@@ -40,8 +40,8 @@
 | --- | --- | --- | --- |
 | Unicode 17 字素/断行 | 支持 | UAX #29 / UAX #14 默认规则，官方测试全量回归 | `native-line-boundary`、`native-case-reference` |
 | 双向文字 | 支持 | UAX #9 段落分析 + L1/L2 重排；公开 `exr_bidi_*` 查询（含镜像与基级） | `native-bidi` |
-| OpenType 塑形 | 支持 | GSUB/GPOS、连字、标记、字距、可变轴；阿拉伯预处理；Devanagari deva/dev2 | `native-shaping`、`native-ot-variation` |
-| 其他 Indic / 东南亚脚本 | 未支持 | Bengali/Tamil/Thai/Khmer 等无专用处理，按默认断行回退 | — |
+| OpenType 塑形 | 支持 | GSUB/GPOS、连字、标记、字距、可变轴；阿拉伯预处理；Devanagari deva/dev2；Bengali/Tamil/Telugu/Kannada/Malayalam/Thai/Khmer/Myanmar 专用塑形 | `native-shaping`、`native-ot-variation`、`native-wp7` |
+| 其他 Indic / 东南亚脚本 | 支持 | Bengali、Tamil、Telugu、Kannada、Malayalam、Thai、Khmer、Myanmar；每脚本 50 序列、真实+合成字体、HarfBuzz 14.6.0 对照；边界/已知差异见 [WP7-SCRIPTS.md](WP7-SCRIPTS.md) | `native-wp7` |
 | 竖排 / 混轴 | 支持 | 统一页面竖排 + 横竖混排块续排 | `native-vertical`、`native-orthogonal` |
 | Ruby | 支持 | 注音不参与 AUTO 方向快速判定 | `native-ruby` |
 | 断词 | 支持 | C provider、词典可选、复合词、NOHYPHEN、大小写条件、拼写替换后再匹配、检查点 | `native-hyphen*`（6 项） |
