@@ -12,12 +12,13 @@ from fontTools.varLib.builder import buildVarStore, buildVarData, buildVarRegion
 
 def build_variable_font():
     """PaintVarSolid alpha 0.25 plus a +0.5 delta at wght=900."""
-    order = ['.notdef', 'space', 'box', 'var_solid', 'static']
+    order = ['.notdef', 'space', 'box', 'var_solid', 'static', 'var_translate']
     font = FontBuilder(1000, isTTF=True)
     font.setupGlyphOrder(order)
     font.setupCharacterMap({65: 'var_solid', 66: 'static'})
     font.setupGlyf({'.notdef': glyph((0, 0, 10, 10)), 'space': glyph(None),
-                    'box': glyph((0, 0, 800, 800)), 'var_solid': glyph(None), 'static': glyph(None)})
+                    'box': glyph((0, 0, 800, 800)), 'var_solid': glyph(None), 'static': glyph(None),
+                    'var_translate': glyph(None)})
     font.setupHorizontalMetrics({n: (900, 0) for n in order})
     font.setupHorizontalHeader(ascent=900, descent=-100)
     font.setupOS2(sTypoAscender=900, sTypoDescender=-100, usWinAscent=1000, usWinDescent=200)
@@ -29,13 +30,17 @@ def build_variable_font():
     font.setupMaxp()
     font.setupFvar([('wght', 100, 400, 900, 'Weight')],
                    [{'location': {'wght': 400}, 'stylename': 'Regular'}])
-    store = buildVarStore(buildVarRegionList([{'wght': (0, 1, 1)}], ['wght']),
-                          [buildVarData([0], [[8192]])])
+    regions = buildVarRegionList([{'wght': (0, 1, 1)}], ['wght'])
+    store = buildVarStore(regions, [buildVarData([0], [[8192], [200], [0]])])
     var_paint = {'Format': ot.PaintFormat.PaintVarSolid, 'PaletteIndex': 0,
                  'Alpha': 0.25, 'VarIndexBase': 0}
+    var_translate = {'Format': ot.PaintFormat.PaintVarTranslate,
+                     'Paint': paint_glyph('box', solid(0)),
+                     'dx': 0, 'dy': 0, 'VarIndexBase': 1}
     font.font['COLR'] = buildCOLR({
         'var_solid': paint_glyph('box', var_paint),
         'static': paint_glyph('box', solid(0, .25)),
+        'var_translate': var_translate,
     }, version=1, glyphMap=font.font.getReverseGlyphMap(), varStore=store)
     font.font['CPAL'] = buildCPAL([PALETTE])
     font.font['head'].created = font.font['head'].modified = 2082844800
@@ -196,6 +201,10 @@ SCENES = [
     ('deep', None, None),
     ('many', None, None),
     ('outline_only', None, None),
+    # Negative fixtures appended so existing glyph IDs stay stable.
+    ('many_stops', None, None),
+    ('missing_colr_glyph', {'Format': ot.PaintFormat.PaintColrGlyph, 'Glyph': 'box'}, None),
+    ('bad_clipbox', paint_glyph('box', solid(0)), (700, 700, 100, 100)),
 ]
 
 OUTLINE_GLYPHS = ['.notdef', 'space', 'box', 'inner', 'left', 'right', 'circle']
@@ -223,6 +232,10 @@ def main():
             paint = build_deep()
         elif name == 'many':
             paint = build_many()
+        elif name == 'many_stops':
+            stops = [{'StopOffset': i/256.0, 'PaletteIndex': i % 3, 'Alpha': 1.0}
+                     for i in range(257)]
+            paint = linear('box', 0, 0, 800, 0, stops=stops)
         elif name == 'outline_only':
             continue
         colors[name] = paint

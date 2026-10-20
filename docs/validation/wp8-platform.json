@@ -17,10 +17,10 @@
   "tests": {
     "command": "ctest --test-dir C:/Users/Oscar/exr-wp8-build -C Release",
     "total": 146,
-    "result": "146/146 passed (221.82 s)",
+    "result": "146/146 passed (242.39 s)",
     "wp8": {
-      "native-font-color-v1": "pass (167 assertions)",
-      "native-font-svg": "pass (159 assertions)"
+      "native-font-color-v1": "pass (259 assertions)",
+      "native-font-svg": "pass (171 assertions)"
     },
     "existing": {
       "native-font-color": "pass",
@@ -44,5 +44,19 @@
   "notes": [
     "Windows is the only native host measured for WP8; Linux sanitizer and image-reference records are separate and must not be replaced by this file.",
     "An earlier full run overlapped a rebuild; two audio tests failed with Windows sharing-violation status codes and passed immediately when rerun. The clean run above was executed without any concurrent build."
-  ]
+  ],
+  "consumption": {
+    "default_install": {
+      "prefix": "C:/Users/Oscar/exr-wp8-stage",
+      "examples": "examples/ built with find_package(EXReader 3.38.1 EXACT)",
+      "font_example": "exreader-font-example colrv1.ttf primary.ttf font-example.png -> exit 0, PNG 5393 bytes",
+      "new_api_consumer": "compiled against stage/include+lib, exr_font_color_info_get -> kind=2 variable=0"
+    },
+    "trimmed_install": {
+      "prefix": "C:/Users/Oscar/exr-wp8-min-stage",
+      "configuration": "EXR_ENABLE_PDF=OFF EXR_ENABLE_PDF_EDIT=OFF EXR_ENABLE_AUDIO=OFF EXR_ENABLE_LIBRARY=OFF EXR_BUILD_TEXT_INDEX=OFF EXR_BUILD_JNI=OFF EXR_BUILD_TOOLS=OFF",
+      "note": "The standalone check-document tool is PDF-bound; trimmed SDK consumption uses the installed library/headers directly.",
+      "new_api_consumer": "compiled against stage/include+lib, exr_font_color_info_get -> kind=2 variable=0"
+    }
+  }
 }

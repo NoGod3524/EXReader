@@ -1,59 +1,18 @@
 {
-  "package": "WP8",
-  "feature": "SVG fonts",
-  "branch": "codex/wp8-color-fonts",
   "abi_epoch": 1,
-  "library_schema": 6,
-  "fixture": {
-    "tests/fixtures/fonts/svgfont.ttf": {
-      "sha256": "1cecdcdc66da3ccd5996582b44d401e9f968ee53c565605fbc2dfc46f988d1a2",
-      "bytes": 96924
-    }
-  },
-  "generator": {
-    "tools/generate_svg_test_fonts.py": {
-      "sha256": "5a9720c4593c219854254ec89fcbc71123ba59fee27e77c14a313a26d1c1ca22",
-      "dependency": "fontTools 4.63.0 (developer only)"
-    }
-  },
-  "table": {
-    "version": 0,
-    "max_document_bytes": 4194304,
-    "max_table_bytes": 8388608,
-    "max_records": 4096,
-    "gzip": true,
-    "shared_document_id": "glyph<gid>"
-  },
-  "elements_supported": [
-    "svg",
-    "g",
-    "defs",
-    "path",
-    "rect",
-    "circle",
-    "ellipse",
-    "line",
-    "polyline",
-    "polygon"
-  ],
-  "elements_rejected": [
-    "image",
-    "use",
-    "text",
+  "attributes_rejected": [
     "style",
-    "script",
-    "a",
-    "switch",
-    "symbol",
-    "marker",
     "mask",
-    "clipPath",
+    "clip-path",
     "filter",
-    "pattern",
-    "linearGradient",
-    "radialGradient",
-    "animate*",
-    "foreignObject"
+    "marker-start",
+    "marker-mid",
+    "marker-end",
+    "stroke-dasharray",
+    "stroke-dashoffset",
+    "paint-order",
+    "vector-effect",
+    "rect rx/ry"
   ],
   "attributes_supported": [
     "fill",
@@ -73,47 +32,69 @@
     "viewBox",
     "preserveAspectRatio=none"
   ],
-  "attributes_rejected": [
+  "branch": "codex/wp8-color-fonts",
+  "dependencies": {
+    "freetype": "VER-2-15-0 SHA256 87c7f1f8699b91e89f773f7dcfa505b044e1dae67f62a55d4e29c3afdcac4fb8",
+    "miniz": "3.1.2 SHA256 98468f8924934b723276680f85238b6c78bf1f8b49b4459cc9b7214a20e2e9fb"
+  },
+  "elements_rejected": [
+    "image",
+    "use",
+    "text",
     "style",
+    "script",
+    "a",
+    "switch",
+    "symbol",
+    "marker",
     "mask",
-    "clip-path",
+    "clipPath",
     "filter",
-    "marker-start",
-    "marker-mid",
-    "marker-end",
-    "stroke-dasharray",
-    "stroke-dashoffset",
-    "paint-order",
-    "vector-effect",
-    "rect rx/ry"
+    "pattern",
+    "linearGradient",
+    "radialGradient",
+    "animate*",
+    "foreignObject"
   ],
+  "elements_supported": [
+    "svg",
+    "g",
+    "defs",
+    "path",
+    "rect",
+    "circle",
+    "ellipse",
+    "line",
+    "polyline",
+    "polygon"
+  ],
+  "feature": "SVG fonts",
+  "fixture": {
+    "tests/fixtures/fonts/svgfont.ttf": {
+      "bytes": 378852,
+      "sha256": "d4bdaeac0b2b43ddc3c3e250ff562890f26fbd344d6e0683fdc03d79f919f961"
+    }
+  },
+  "generator": {
+    "tools/generate_svg_test_fonts.py": {
+      "dependency": "fontTools 4.63.0 (developer only)",
+      "sha256": "8346176ab77bde08d328ce325b137074944cc4ee32b8cb6f90feefba95c153dd"
+    }
+  },
+  "glyph_mapping": "tests/fixtures/fonts/svgfont.json",
+  "library_schema": 6,
   "limits": {
-    "elements": 2048,
-    "depth": 32,
-    "attributes_per_element": 24,
     "attribute_bytes": 262144,
+    "attribute_value_bytes": 512,
+    "attributes_per_element": 24,
+    "depth": 32,
+    "elements": 2048,
     "path_segments": 65536,
-    "surface_max_side_px": 8192,
+    "shared_work_units": 268435456,
     "surface_max_pixels": 8388608,
-    "shared_work_units": 268435456
+    "surface_max_side_px": 8192
   },
-  "rejections": {
-    "bad_doctype": "EXR_UNSUPPORTED",
-    "bad_script": "EXR_UNSUPPORTED",
-    "bad_image": "EXR_UNSUPPORTED",
-    "bad_use": "EXR_UNSUPPORTED",
-    "bad_gradient": "EXR_UNSUPPORTED",
-    "bad_style": "EXR_UNSUPPORTED",
-    "bad_mask": "EXR_UNSUPPORTED",
-    "bad_external_image": "EXR_UNSUPPORTED",
-    "bad_parse": "EXR_FORMAT",
-    "bad_entity": "EXR_UNSUPPORTED",
-    "bad_preserve": "EXR_UNSUPPORTED",
-    "bad_nested": "EXR_LIMIT",
-    "bad_many_elements": "EXR_LIMIT",
-    "bad_rounded": "EXR_UNSUPPORTED",
-    "bad_transform": "EXR_UNSUPPORTED"
-  },
+  "package": "WP8",
   "positive_scenes": [
     "rect",
     "two_rects",
@@ -140,12 +121,64 @@
     "shared_a",
     "shared_b"
   ],
-  "tests": {
-    "native-font-svg": {
-      "assertions": 159,
-      "result": "pass"
+  "reference": "docs/validation/wp8-reference.json",
+  "rejections": {
+    "bad_attr_size": "EXR_LIMIT",
+    "bad_attrs": "EXR_LIMIT",
+    "bad_circle": "EXR_FORMAT",
+    "bad_dash": "EXR_UNSUPPORTED",
+    "bad_doctype": "EXR_UNSUPPORTED",
+    "bad_entity": "EXR_UNSUPPORTED",
+    "bad_external_image": "EXR_UNSUPPORTED",
+    "bad_gradient": "EXR_UNSUPPORTED",
+    "bad_image": "EXR_UNSUPPORTED",
+    "bad_many_elements": "EXR_LIMIT",
+    "bad_mask": "EXR_UNSUPPORTED",
+    "bad_nested": "EXR_LIMIT",
+    "bad_parse": "EXR_FORMAT",
+    "bad_preserve": "EXR_UNSUPPORTED",
+    "bad_rounded": "EXR_UNSUPPORTED",
+    "bad_script": "EXR_UNSUPPORTED",
+    "bad_segments": "EXR_LIMIT",
+    "bad_style": "EXR_UNSUPPORTED",
+    "bad_transform": "EXR_UNSUPPORTED",
+    "bad_use": "EXR_UNSUPPORTED",
+    "bad_viewbox": "EXR_UNSUPPORTED"
+  },
+  "sources": {
+    "include/exr/text.h": {
+      "bytes": 17375,
+      "sha256": "c6fb1adda319b620179177ec6775b1098628444d5cc40f61163d34ab3ae159cf"
+    },
+    "src/font_internal.h": {
+      "bytes": 3248,
+      "sha256": "ada52706d58685d88fd5a0b1dc523d122838106bb713dd993baade20d96c35c7"
+    },
+    "src/font_svg.c": {
+      "bytes": 62920,
+      "sha256": "f953990000911df90aba7bc717b8e6047c3d51f033b323f1ae7020d39720acd9"
+    },
+    "src/raster.c": {
+      "bytes": 24368,
+      "sha256": "8c36d43dcde99ea18a4ba0d7149aecd734c3124eebbe25573f395f04c52d9b6c"
+    },
+    "tests/test_font_svg.c": {
+      "bytes": 12533,
+      "sha256": "05dd10f7fa0e39dbc3a5ca43b62173acc7d69327b437121ef90e5e362621e05e"
     }
   },
-  "reference": "docs/validation/wp8-reference.json",
-  "glyph_mapping": "tests/fixtures/fonts/svgfont.json"
+  "table": {
+    "gzip": true,
+    "max_document_bytes": 4194304,
+    "max_records": 4096,
+    "max_table_bytes": 8388608,
+    "shared_document_id": "glyph<gid>",
+    "version": 0
+  },
+  "tests": {
+    "native-font-svg": {
+      "assertions": 171,
+      "result": "pass"
+    }
+  }
 }

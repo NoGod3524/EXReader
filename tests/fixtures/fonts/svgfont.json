@@ -1,8 +1,20 @@
 {
+ "extra": [
+  "bad_attr_size",
+  "bad_attrs",
+  "bad_circle",
+  "bad_dash",
+  "bad_segments",
+  "bad_viewbox"
+ ],
  "font": "svgfont.ttf",
  "glyphs": {
   ".notdef": 0,
   "arc": 17,
+  "bad_attr_size": 42,
+  "bad_attrs": 41,
+  "bad_circle": 44,
+  "bad_dash": 45,
   "bad_doctype": 24,
   "bad_entity": 33,
   "bad_external_image": 31,
@@ -15,9 +27,11 @@
   "bad_preserve": 34,
   "bad_rounded": 37,
   "bad_script": 25,
+  "bad_segments": 46,
   "bad_style": 29,
   "bad_transform": 38,
   "bad_use": 27,
+  "bad_viewbox": 43,
   "circle": 5,
   "current_color": 13,
   "defs_ignored": 21,
@@ -44,6 +58,10 @@
   "viewbox_scaled": 16
  },
  "rejections": [
+  "bad_attr_size",
+  "bad_attrs",
+  "bad_circle",
+  "bad_dash",
   "bad_doctype",
   "bad_entity",
   "bad_external_image",
@@ -56,9 +74,11 @@
   "bad_preserve",
   "bad_rounded",
   "bad_script",
+  "bad_segments",
   "bad_style",
   "bad_transform",
-  "bad_use"
+  "bad_use",
+  "bad_viewbox"
  ],
  "scenes": [
   "arc",
@@ -99,7 +119,7 @@
   "two_rects",
   "viewbox_scaled"
  ],
- "sha256": "1cecdcdc66da3ccd5996582b44d401e9f968ee53c565605fbc2dfc46f988d1a2",
+ "sha256": "d4bdaeac0b2b43ddc3c3e250ff562890f26fbd344d6e0683fdc03d79f919f961",
  "shared": {
   "doc": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1000 1000\"><g id=\"glyph39\"><rect x=\"100\" y=\"100\" width=\"800\" height=\"800\" fill=\"#c02020\"/></g><g id=\"glyph40\"><circle cx=\"500\" cy=\"500\" r=\"300\" fill=\"#2020c0\"/></g></svg>",
   "first": 39,

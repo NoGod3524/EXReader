@@ -26,6 +26,88 @@ static exr_font *open_font(const char *directory, const char *name) {
 
 static exr_bitmap render_glyph(exr_font *font, uint32_t id, float size, uint32_t color,
                                unsigned flags, float clip_left, float clip_right,
+                               const exr_control *control, exr_status *status);
+
+static unsigned char *read_font(const char *directory, const char *name, size_t *size) {
+  char path[4096];
+  FILE *file;
+  unsigned char *data;
+  long length;
+  snprintf(path, sizeof(path), "%s/%s", directory, name);
+  file = fopen(path, "rb");
+  CHECK(file != NULL);
+  fseek(file, 0, SEEK_END);
+  length = ftell(file);
+  rewind(file);
+  data = malloc((size_t)length);
+  CHECK(data && fread(data, 1, (size_t)length, file) == (size_t)length);
+  fclose(file);
+  *size = (size_t)length;
+  return data;
+}
+
+static uint32_t be32(const unsigned char *p) {
+  return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3];
+}
+
+static unsigned be16(const unsigned char *p) {
+  return (unsigned)p[0] << 8 | p[1];
+}
+
+static size_t sfnt_table(const unsigned char *data, size_t size, uint32_t tag) {
+  unsigned count = be16(data + 4), i;
+  CHECK(size >= 12);
+  for (i = 0; i < count; i++) {
+    const unsigned char *record = data + 12 + (size_t)i*16;
+    CHECK(12 + (size_t)count*16 <= size);
+    if (be32(record) == tag) return (size_t)be32(record + 8);
+  }
+  return 0;
+}
+
+/* Offset of a COLR v1 base glyph's root Paint inside the font bytes. */
+static size_t colr_paint(const unsigned char *data, size_t size, uint32_t glyph) {
+  size_t table = sfnt_table(data, size, EXR_TAG('C','O','L','R'));
+  size_t list;
+  unsigned count, i;
+  CHECK(table && table + 34 <= size);
+  list = table + be32(data + table + 14);
+  CHECK(list + 4 <= size);
+  count = be32(data + list);
+  CHECK(count < 65536 && list + 4 + (size_t)count*6 <= size);
+  for (i = 0; i < count; i++) {
+    const unsigned char *record = data + list + 4 + (size_t)i*6;
+    if (be16(record) == glyph) {
+      size_t paint = list + be32(record + 2);
+      CHECK(paint + 1 <= size);
+      return paint;
+    }
+  }
+  return 0;
+}
+
+static exr_status render_bytes(unsigned char *data, size_t size, uint32_t glyph,
+                               const char *directory) {
+  char path[4096];
+  exr_font *font = NULL;
+  exr_status status;
+  exr_bitmap image;
+  snprintf(path, sizeof(path), "%s/wp8-mutated.ttf", directory);
+  {
+    FILE *file = fopen(path, "wb");
+    CHECK(file != NULL);
+    CHECK(fwrite(data, 1, size, file) == size);
+    fclose(file);
+  }
+  OK(exr_font_open(path, &font, &error));
+  image = render_glyph(font, glyph, 100, 0x000000ff, 0, 0, 440, NULL, &status);
+  if (image.pixels) exr_bitmap_free(&image);
+  exr_font_free(font);
+  return status;
+}
+
+static exr_bitmap render_glyph(exr_font *font, uint32_t id, float size, uint32_t color,
+                               unsigned flags, float clip_left, float clip_right,
                                const exr_control *control, exr_status *status) {
   exr_document *document = NULL;
   exr_layout *layout = NULL;
@@ -418,6 +500,11 @@ static void variable(const char *directory) {
   CHECK(status == EXR_OK);
   near(&image, 250, 150, 255, 191, 191, 2);
   exr_bitmap_free(&image);
+  image = render_glyph(font, 5, 100, 0x000000ff, 0, 0, 440, NULL, &status);
+  CHECK(status == EXR_OK);
+  near(&image, 250, 150, 255, 0, 0, 0);
+  white(&image, 315, 150);
+  exr_bitmap_free(&image);
   exr_font_free(font);
   coordinate.value = 900;
   OK(exr_font_create_variable(&input, 1, &coordinate, 1, &font, &error));
@@ -428,6 +515,10 @@ static void variable(const char *directory) {
   image = render_glyph(font, 4, 100, 0x000000ff, 0, 0, 440, NULL, &status);
   CHECK(status == EXR_OK);
   near(&image, 250, 150, 255, 191, 191, 2);
+  exr_bitmap_free(&image);
+  image = render_glyph(font, 5, 100, 0x000000ff, 0, 0, 440, NULL, &status);
+  CHECK(status == EXR_OK);
+  near(&image, 315, 150, 255, 0, 0, 0);
   exr_bitmap_free(&image);
   exr_font_free(font);
   free(data);
@@ -474,6 +565,91 @@ static void layout_identity(exr_font *font) {
   exr_document_free(document);
 }
 
+static void malformed_paint(const char *directory, const char *work) {
+  size_t size;
+  unsigned char *data = read_font(directory, "colrv1.ttf", &size);
+  size_t paint, child;
+  exr_status status;
+  /* Unknown Paint format at the root. */
+  paint = colr_paint(data, size, 7);
+  CHECK(paint != 0);
+  data[paint] = 200;
+  status = render_bytes(data, size, 7, work);
+  CHECK(status == EXR_UNSUPPORTED || status == EXR_FONT);
+  data = read_font(directory, "colrv1.ttf", &size);
+  /* PaintGlyph child offset beyond the table. */
+  paint = colr_paint(data, size, 7);
+  child = paint + 1;
+  data[child] = 0xff; data[child+1] = 0xff; data[child+2] = 0xff;
+  CHECK(render_bytes(data, size, 7, work) == EXR_FONT);
+  data = read_font(directory, "colrv1.ttf", &size);
+  /* Linear gradient stop offset > 1 (skip the wrapping PaintGlyph). */
+  paint = colr_paint(data, size, 12);
+  CHECK(paint != 0 && data[paint] == 10);
+  paint += ((size_t)data[paint+1] << 16) | ((size_t)data[paint+2] << 8) | data[paint+3];
+  CHECK(data[paint] == 4);
+  paint += ((size_t)data[paint+1] << 16) | ((size_t)data[paint+2] << 8) | data[paint+3];
+  CHECK(be16(data + paint + 1) == 3);
+  data[paint + 3] = 0x7f; data[paint + 4] = 0xff;
+  CHECK(render_bytes(data, size, 12, work) == EXR_FONT);
+  data = read_font(directory, "colrv1.ttf", &size);
+  /* Unknown composite mode: the spec maps it to CLEAR, which is rejected. */
+  paint = colr_paint(data, size, 32);
+  CHECK(paint != 0);
+  data[paint + 4] = 0xff;
+  status = render_bytes(data, size, 32, work);
+  CHECK(status == EXR_UNSUPPORTED || status == EXR_FONT);
+  data = read_font(directory, "colrv1.ttf", &size);
+  /* Stop count above the 256 limit. */
+  paint = colr_paint(data, size, 46);
+  CHECK(paint != 0 && data[paint] == 10);
+  paint += ((size_t)data[paint+1] << 16) | ((size_t)data[paint+2] << 8) | data[paint+3];
+  CHECK(data[paint] == 4);
+  paint += ((size_t)data[paint+1] << 16) | ((size_t)data[paint+2] << 8) | data[paint+3];
+  CHECK(be16(data + paint + 1) > 256);
+  CHECK(render_bytes(data, size, 46, work) == EXR_LIMIT);
+  free(data);
+}
+
+static void page_recovery(exr_font *font) {
+  exr_document *document = NULL;
+  exr_layout *fresh = NULL;
+  const exr_layout *part = NULL;
+  size_t pages = 0;
+  exr_pager *pager = NULL;
+  exr_layout_config config = exr_layout_config_defaults();
+  exr_bitmap expected = {0}, actual = {0};
+  exr_pager_stats stats;
+  char text[42];
+  unsigned i;
+  for (i = 0; i < 20; i++) { text[i*2] = 'A'; text[i*2 + 1] = ' '; }
+  text[40] = 0;
+  config.page = (exr_layout_options){200, 200, 0, 100, 1, 0};
+  OK(exr_document_open_memory(EXR_TXT, text, 40, &document, &error));
+  OK(exr_layout_create_ex(document, font, &config, &fresh, &error));
+  CHECK(exr_layout_pages(fresh, &pages) != NULL && pages >= 6);
+  OK(exr_render_page_color(fresh, NULL, 3, &expected, &error));
+  OK(exr_pager_create(document, font, &config, &pager, &error));
+  OK(exr_pager_set_checkpoints(pager, 4, 4*1024*1024, 1, &error));
+  OK(exr_pager_set_cache(pager, 2, 8*1024*1024, &error));
+  OK(exr_pager_get(pager, 0, &part, &error));
+  OK(exr_pager_get(pager, 5, &part, &error));
+  OK(exr_render_page_color(part, NULL, 0, &actual, &error));
+  exr_bitmap_free(&actual);
+  OK(exr_pager_get(pager, 0, &part, &error));
+  OK(exr_pager_get(pager, 3, &part, &error));
+  OK(exr_render_page_color(part, NULL, 0, &actual, &error));
+  CHECK(expected.width == actual.width && expected.height == actual.height &&
+        !memcmp(expected.pixels, actual.pixels, (size_t)expected.stride*expected.height));
+  stats = exr_pager_statistics(pager);
+  CHECK(stats.generated_pages >= 4 && stats.checkpoint_count >= 1 && stats.restored_checkpoints >= 1);
+  exr_bitmap_free(&actual);
+  exr_bitmap_free(&expected);
+  exr_pager_free(pager);
+  exr_layout_free(fresh);
+  exr_document_free(document);
+}
+
 int main(int argc, char **argv) {
   exr_font *font;
   exr_document *document = NULL;
@@ -488,6 +664,8 @@ int main(int argc, char **argv) {
   transform_scenes(font);
   composite_scenes(font);
   failures(font);
+  malformed_paint(argv[1], argv[2]);
+  page_recovery(font);
   orientation(font);
   layout_identity(font);
   exr_font_free(font);

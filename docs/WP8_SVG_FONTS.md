@@ -86,6 +86,7 @@ references are decoded.
 | Elements per document | 2048 | `EXR_LIMIT` |
 | Nesting depth | 32 | `EXR_LIMIT` |
 | Attributes per element | 24 | `EXR_LIMIT` |
+| Attribute value | 512 bytes | `EXR_LIMIT` |
 | Attribute bytes per document | 256 KiB | `EXR_LIMIT` |
 | Path segments per document | 65536 | `EXR_LIMIT` |
 | Rendered region | 8192 px per side, 8 Mi pixels | `EXR_LIMIT` |
@@ -101,10 +102,12 @@ with `exr_bitmap_free()`.
 
 ## Verification
 
-- `native-font-svg`: 26 positive documents (shapes, paths/arcs, transforms,
+- `native-font-svg`: 24 positive documents (shapes, paths/arcs, transforms,
   viewBox scaling, opacity, currentColor, defs, gzip, shared-document `id`
-  selection) and 15 rejection documents with exact status assertions, plus
-  cancellation, alpha/sideways and layout/hit identity. 159 assertions.
+  selection) and 21 rejection documents with exact status assertions,
+  including 25 attributes, oversized attribute value, invalid viewBox,
+  zero-radius circle, dash arrays and a 70,000-segment path; plus
+  cancellation, alpha/sideways and layout/hit identity. 171 assertions.
 - `tests/fixtures/fonts/svgfont.ttf` is built by
   `tools/generate_svg_test_fonts.py`; its SHA-256 is recorded in
   `docs/validation/wp8-svg.json`.
