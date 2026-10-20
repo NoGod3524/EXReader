@@ -21,7 +21,7 @@ typedef struct {
   double matrix[6],line[6]; unsigned inside,compatibility;
   unsigned type3,declared,uncolored;
   cached_font fonts[128];
-  cached_color colors[128]; size_t color_count,color_bytes,color_work;
+  cached_color colors[128]; size_t color_count,color_bytes,local_color_work,*color_work;
 } content_reader;
 static void identity(double matrix[6]) { memset(matrix,0,6*sizeof(double)); matrix[0]=matrix[3]=1; }
 static int multiply(double out[6],const double left[6],const double right[6]) {
@@ -291,7 +291,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     if(count!=(*source ? exr_pdf_colorspace_components(*source) : (size_t)color->space)) goto invalid;
     for(i=0;i<count;i++) if(!numeric(arena,values[i],&numbers[i])) goto invalid;
     if(*source) {
-      if(!exr_vector_work(&r->color_work,exr_pdf_colorspace_cost(*source))) return exr_fail(error,EXR_LIMIT,"PDF content colour computation budget exceeded");
+      if(!exr_vector_work(r->color_work,exr_pdf_colorspace_cost(*source))) return exr_fail(error,EXR_LIMIT,"PDF content colour computation budget exceeded");
       if(exr_pdf_colorspace_rgb_intent(*source,numbers,color->values,r->state.paint.intent,error)!=EXR_OK) return error->code;
       color->space=EXR_PDF_DEVICE_RGB; color->values[3]=0;
     }
@@ -312,7 +312,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     memset(color->values,0,sizeof(color->values));
     if(*source) {
       double initial[EXR_PDF_MAX_COLORANTS];
-      if(!exr_vector_work(&r->color_work,exr_pdf_colorspace_cost(*source))) return exr_fail(error,EXR_LIMIT,"PDF content colour computation budget exceeded");
+      if(!exr_vector_work(r->color_work,exr_pdf_colorspace_cost(*source))) return exr_fail(error,EXR_LIMIT,"PDF content colour computation budget exceeded");
       exr_pdf_colorspace_initial(*source,initial); if(exr_pdf_colorspace_rgb_intent(*source,initial,color->values,r->state.paint.intent,error)!=EXR_OK) return error->code;
       color->space=EXR_PDF_DEVICE_RGB;
     }
@@ -361,7 +361,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     if(count!=1 || resource(r,arena,values[0],"Shading",&shading,error)!=EXR_OK) goto invalid;
     if(!r->callbacks.shading) return exr_fail(error,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
     exr_pdf_paint_state paint=paint_state(r);
-    return exr_pdf_shading_draw(r->file,r->file,r->resources,shading,r->state.ctm,&paint,&r->color_work,
+    return exr_pdf_shading_draw(r->file,r->file,r->resources,shading,r->state.ctm,&paint,r->color_work,
       r->callbacks.shading,r->context,r->callbacks.image_space && r->callbacks.image_space(r->context)==EXR_GROUP_CMYK,r->control,error);
   }
   *handled=0; return EXR_OK;
@@ -627,6 +627,7 @@ static exr_status walk_content(exr_pdf_file *file,uint32_t resources,const void 
   if(initial) for(i=0;i<6;i++) if(!isfinite(initial[i]) || fabs(initial[i])>1e7) return exr_fail(error,EXR_ARGUMENT,"Invalid initial PDF drawing transform");
   r=calloc(1,sizeof(*r)); if(!r) return exr_fail(error,EXR_MEMORY,"PDF content state allocation failed");
   r->file=file; r->resources=resources; r->control=control; r->callbacks=*callbacks; r->context=context; r->state.scale=1; r->graphics=graphics;
+  r->color_work=callbacks->work ? callbacks->work : &r->local_color_work;
   r->state.paint.fill.space=r->state.paint.stroke.space=EXR_PDF_DEVICE_GRAY; r->state.paint.fill.alpha=r->state.paint.stroke.alpha=1;
   r->state.paint.line=(exr_vector_stroke_style){1,10,EXR_VECTOR_BUTT,EXR_VECTOR_MITER};
   identity(r->state.ctm); if(initial) memcpy(r->state.ctm,initial,sizeof(r->state.ctm)); identity(r->matrix); identity(r->line);

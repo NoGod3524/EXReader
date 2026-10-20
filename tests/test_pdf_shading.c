@@ -38,9 +38,19 @@ static void rejected(const char *name,exr_status expected) {
   CHECK(!out.pixels);
   exr_fixed_free(d);
 }
+static void domains(void) {
+  unsigned char expected[9][4];char path[4096];FILE *f;unsigned i;
+  snprintf(path,sizeof(path),"%s/pdf-color/shading-domain-oracle.bin",directory);f=fopen(path,"rb");CHECK(f);
+  CHECK(fread(expected,1,sizeof(expected),f)==sizeof(expected));CHECK(fgetc(f)==EOF);fclose(f);
+  for(i=0;i<9;i++) {
+    exr_bitmap b;snprintf(path,sizeof(path),"shading-domain-%u.pdf",i);b=render(path);
+    near(&b,8,8,expected[i][0],expected[i][1],expected[i][2],1,path);exr_bitmap_free(&b);
+  }
+  for(i=0;i<11;i++) { snprintf(path,sizeof(path),"shading-domain-bad-%u.pdf",i);rejected(path,EXR_FORMAT); }
+}
 int main(int argc,char **argv) {
   exr_bitmap page; const unsigned char *p;
-  CHECK(argc==2); directory=argv[1];
+  CHECK(argc==2); directory=argv[1];domains();
   page=render("shading-axial.pdf");
   near(&page,0,8,247,0,8,3,"axial left");
   near(&page,8,8,120,0,135,3,"axial middle");

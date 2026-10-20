@@ -1,7 +1,7 @@
 # 当前检查点与后续顺序
 
-2026-10-19，C11 SDK **3.36.0**，MIT，ABI1，schema6。分支 `codex/framework`。
-核心与PDF读取3.36.0，其余组件3.33.0。完整工作范围为WP1–WP16，包含4a、12a。
+2026-10-19，C11 SDK **3.36.1**，MIT，ABI1，schema6。分支 `codex/framework`。
+核心与PDF读取3.36.1，其余组件3.33.0。完整工作范围为WP1–WP16，包含4a、12a。
 目标和量化出口保留在[开发路线](HANDOFF.md)，历史编号见[更新日志](../CHANGELOG.md)。
 
 ## 1. 当前验证
@@ -14,6 +14,8 @@
 - 3.35.0代码`04f7e7be1131e7adcd17b67b578bae5c07abdd86`的[CI39343939083](https://github.com/NoGod3524/EXReader/actions/runs/39343939083)7/7成功：三桌面各140/140，sanitizer137/137；[作业记录](validation/2026-10-19-mask-functions-ci.json)。
 - 3.35.1代码`c33e758a39a1e0ac89a80202c0bb3fdd3c6d94a4`的[CI39344775219](https://github.com/NoGod3524/EXReader/actions/runs/39344775219)7/7成功，三桌面各140/140、sanitizer137/137；[作业记录](validation/2026-10-19-coverage-ci.json)。
 - 3.36.0普通六场景RGBA散列保持；初次flat/state重画p95超10%，保留原样本后用256次/轮复测，分别1.023/1.029。空画布固定载荷增加648字节，无新像素平面。
+- 3.36.0代码`2fb652f489c85acd5942068f7bc181321bc05fbe`的[CI39348054966](https://github.com/NoGod3524/EXReader/actions/runs/39348054966)7/7成功：三桌面各141/141、sanitizer138/138；[作业记录](validation/2026-10-19-alpha-source-ci.json)。
+- 3.36.1：GCC/MSVC各141/141；渐变Domain、严格字段校验与共享采样工作预算已修复。[逐场景对照](validation/2026-10-19-shading-domain-reference.json)。
 
 ## 2. 快速验证
 
@@ -47,13 +49,13 @@ ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 - WP1/WP2：AIS与图像shape/opacity已接入；继续核验零opacity在挖空中的行为、更多组色空间、外部差异和全部组合矩阵。
 - 外部差异：低alpha嵌套、可见色键与图形状态mask、画布外反相mask、非隔离亮度组等；[规范与对照口径](MASK_SEMANTICS.md)。不能以内部探针吻合替代外部兼容。
 - WP4：ICCBased/DeviceN到组空间、OutputIntent、其他ICC/图像与印刷色彩矩阵。
-- 渐变Extend/Domain/BBox/Background、WP4a的PubSec/EFOpen/加密写回/JPX/JBIG2/Pattern，以及全库安全审计。
+- 渐变完整Extend/BBox/径向根选择、WP4a的PubSec/EFOpen/加密写回/JPX/JBIG2/Pattern，以及全库安全审计。sh操作按规范忽略Background，后续Pattern需单独处理。
 - WP5–WP16仍按开发路线逐包交付。移动真机、授权LCP出版物和每fuzz目标24 CPU小时的验收尚未完成。
 
 ## 5. 后续顺序
 
 1. 收齐当前批次CI；AIS与图片shape/opacity已有166场景及192个公开画布组合，继续对照已记录的外部差异及剩余边界；包装sink完整转发，保留旧前缀与公开记录布局。
-2. 回到渐变Extend/Domain/BBox/Background；ICCBased/DeviceN、OutputIntent按WP4矩阵逐项验收。
+2. 渐变Domain已修复，继续完整Extend、BBox、径向根选择；ICCBased/DeviceN、OutputIntent按WP4矩阵逐项验收。
 3. WP4a按PubSec、EFOpen、加密写回、JBIG2、JPX、Pattern分别冻结范围。认证项各至少10个凭据/损坏/权限/取消输入；图像/绘制项各至少3正例、2反例。
 4. 继续[开发路线](HANDOFF.md)的全部WP5–WP16（含12a），保留已有通过项及每次失败回归。
 

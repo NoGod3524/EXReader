@@ -137,9 +137,39 @@ static void mask_recursion_budget(const char *dir) {
   }
   free(pages);exr_pdf_close(file);free(data);
 }
+static exr_status shading_count(void *ctx,const exr_bitmap *bitmap,const exr_bitmap *inks,const double matrix[6],const exr_pdf_paint_state *paint,exr_error *e) {
+  unsigned *count=ctx;(void)inks;(void)matrix;(void)paint;(void)e;
+  CHECK(bitmap && bitmap->pixels);(*count)++;return EXR_OK;
+}
+static void shading_budget(const char *dir) {
+  exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;size_t count,size,work=0;uint32_t shadings,id;
+  unsigned emits=0;exr_pdf_paint_state paint={0};exr_control control={0};double matrix[6]={1,0,0,1,0,0};
+  unsigned char *data=load(dir,"pdf-color/shading-domain-0.pdf",&size);
+  OK(exr_pdf_open(data,size,&file,&error));OK(exr_pdf_pages(file,&pages,&count,&error));CHECK(count==1);
+  OK(exr_pdf_resolve(file,exr_pdf_get(file,pages[0].resources,"Shading"),&shadings,&error));
+  OK(exr_pdf_resolve(file,exr_pdf_get(file,shadings,"Sh"),&id,&error));
+  OK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,&emits,0,NULL,&error));CHECK(emits==1 && work>512);
+  { size_t near_limit=256u*1024u*1024u-work/2;emits=0;
+    CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&near_limit,shading_count,&emits,0,NULL,&error)==EXR_LIMIT);
+    CHECK(!emits && strstr(error.message,"shading samples exceed work budget"));
+  }
+  work=256u*1024u*1024u;emits=0;
+  CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,&emits,0,NULL,&error)==EXR_LIMIT && !emits);
+  control.cancelled=cancelled;work=0;
+  CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,&emits,0,&control,&error)==EXR_CANCELLED && !emits);
+  { exr_pdf_raster_config config={0};exr_bitmap b={0};const char *content="/Sh sh";size_t total=0;
+    config.width=config.height=16;config.channels=4;config.work=&total;
+    OK(exr_pdf_raster_content(file,pages[0].resources,content,strlen(content),NULL,&config,NULL,&b,&error));
+    CHECK(total>512);free(b.pixels);
+    total=256u*1024u*1024u-1;
+    CHECK(exr_pdf_raster_content(file,pages[0].resources,content,strlen(content),NULL,&config,NULL,&b,&error)==EXR_LIMIT && !b.pixels);
+    CHECK(strstr(error.message,"shading samples exceed work budget"));
+  }
+  free(pages);exr_pdf_close(file);free(data);
+}
 int main(int argc,char **argv) {
   unsigned char *data; size_t size; exr_pdf_file *file=NULL; uint32_t resources; exr_bitmap b; exr_pdf_raster_config config={0}; exr_control control={0};
-  CHECK(argc==2); page_cases(argv[1]);mask_controls(argv[1]);mask_recursion_budget(argv[1]); data=load(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
+  CHECK(argc==2); page_cases(argv[1]);mask_controls(argv[1]);mask_recursion_budget(argv[1]);shading_budget(argv[1]); data=load(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
   text_cases(file,resources); clip_cases(file,resources); fallback_cases(argv[1],file,resources); drawing_inspection(file,resources);
   config.width=config.height=12; config.channels=4; config.background=0;
   { const char *s="1 0 0 rg 1 1 2 2 re f"; OK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)); CHECK(b.pixels[13*4]==255 && b.pixels[13*4+3]==255 && !b.pixels[3]); free(b.pixels); }

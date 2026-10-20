@@ -39,9 +39,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('library', type=Path);parser.add_argument('--baseline', type=Path)
     parser.add_argument('--manifest', default='nested-manifest.json')
+    parser.add_argument('--fixtures', type=Path, help='Fixture folder; defaults to tests/fixtures/pdf-blend')
     parser.add_argument('--poppler', action='store_true', help='Also record white-background probes from pdftoppm')
     parser.add_argument('--output', type=Path, required=True);args = parser.parse_args()
-    root = Path(__file__).resolve().parent.parent/'tests/fixtures/pdf-blend'
+    root = args.fixtures or Path(__file__).resolve().parent.parent/'tests/fixtures/pdf-blend'
     manifest = json.loads((root/args.manifest).read_text(encoding='utf-8'))
     current = load(args.library.resolve());baseline = load(args.baseline.resolve()) if args.baseline else None
     rows = [];maximum = {'current': 0, 'mupdf': 0, 'baseline': 0};by_class = {};baseline_errors = 0

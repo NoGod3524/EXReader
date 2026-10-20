@@ -1,0 +1,293 @@
+{
+  "scenes": [
+    {
+      "file": "shading-domain-0.pdf",
+      "sha256": "a77f46298f734bfcd13360af5049b97fc6a3e73d183d96b5a8fb8fbb7041e4a3",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ]
+    },
+    {
+      "file": "shading-domain-1.pdf",
+      "sha256": "44746c8ed6ff0d9b1723cb8b75eb99e69e36cd85db3239850d865dbf1a355f1a",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ]
+    },
+    {
+      "file": "shading-domain-2.pdf",
+      "sha256": "9309cc2a3822db4805c684abe4839b2b826d254d74e593727436d52324e81f8e",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ]
+    },
+    {
+      "file": "shading-domain-3.pdf",
+      "sha256": "5f2ea569b2276c9fa4b541fe30ffc6db83d847699a7966187ade37f559fba254",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ]
+    },
+    {
+      "file": "shading-domain-4.pdf",
+      "sha256": "6c4989e61d2b122284bc8ca698a1ff9ec85c73ac9a24a0cf3998e88a0ea36b3e",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ]
+    },
+    {
+      "file": "shading-domain-5.pdf",
+      "sha256": "94a3b042cec8f1a331d48644ed1171a3c7698cc1648c77039fa30ca58ac16bcb",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        151,
+        151,
+        151,
+        255
+      ],
+      "premultiplied": [
+        151,
+        151,
+        151,
+        255
+      ],
+      "white": [
+        151,
+        151,
+        151,
+        255
+      ]
+    },
+    {
+      "file": "shading-domain-6.pdf",
+      "sha256": "f9c3e17023b9a82b5cb45562abbd28b2094b2afcce486c5bde7a05a73a18d335",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "shading-domain-7.pdf",
+      "sha256": "0e71bd991e11eb936b9cc6553094489995e99755ed6631fdd5f905f2e6c6c406",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "premultiplied": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "white": [
+        128,
+        128,
+        128,
+        255
+      ]
+    },
+    {
+      "file": "shading-domain-8.pdf",
+      "sha256": "93b55fd8651f170f11c72b2784db6343e7dc8979586fcb7789acae1e3c7a31ac",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ]
+    }
+  ],
+  "rejected": [
+    {
+      "file": "shading-domain-bad-0.pdf",
+      "sha256": "9d103f8ce11194819e31521b50aba50f98775d3d75c169783bdcd6236cb891d5"
+    },
+    {
+      "file": "shading-domain-bad-1.pdf",
+      "sha256": "c540bac8739f1cc7bedf19ef6457611aa101c2f6d9c41797290d738ff6557e70"
+    },
+    {
+      "file": "shading-domain-bad-2.pdf",
+      "sha256": "11414cbc43d105672d41842f3cfe6ad3f5f248261e34991ab5dd1957a12a647b"
+    },
+    {
+      "file": "shading-domain-bad-3.pdf",
+      "sha256": "a8121c602490c7915fad5545be002942d14708a77f6e5be3bb1aec217ff50d72"
+    },
+    {
+      "file": "shading-domain-bad-4.pdf",
+      "sha256": "2ec648a8eed6291a68723bc2917b6b5d939f4151619b4719a955fdc3120aaf22"
+    },
+    {
+      "file": "shading-domain-bad-5.pdf",
+      "sha256": "184a0f2cbbd57f85514042e3db73d65f4ed574cdacaf1c0cdd72c417ea35a117"
+    },
+    {
+      "file": "shading-domain-bad-6.pdf",
+      "sha256": "6960c685e81b4235b9ae141bb661df6180623727b5547ae6987cdd52043dd210"
+    },
+    {
+      "file": "shading-domain-bad-7.pdf",
+      "sha256": "67c23957d70a90563ce89966e3f3e70b1a170e25769ce0689bf2bf8261762c5b"
+    },
+    {
+      "file": "shading-domain-bad-8.pdf",
+      "sha256": "71771b9515fc49235aee615b285d06b323f7dd8f9455e91f9acac459077c8533"
+    },
+    {
+      "file": "shading-domain-bad-9.pdf",
+      "sha256": "5567e4814bc079fe9158997ca3c6f3279850ac326422f012d86531f1061f43d0"
+    },
+    {
+      "file": "shading-domain-bad-10.pdf",
+      "sha256": "a8f0121c498b800a2dc25ed7bb12d62770e99a27fd6f66049b61085e8dbf3166"
+    }
+  ]
+}

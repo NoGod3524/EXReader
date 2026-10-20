@@ -1,0 +1,824 @@
+{
+  "reference": "MuPDF 1.28.2",
+  "max_difference_from_decimal": {
+    "current": 1,
+    "mupdf": 255,
+    "baseline": 135,
+    "poppler_white": 23
+  },
+  "max_difference_by_probe_class": {
+    "axial-ramp-sampling": {
+      "current": 1,
+      "mupdf": 255,
+      "baseline": 135,
+      "poppler_white": 23
+    }
+  },
+  "baseline_failed_renderings": 0,
+  "poppler_version": "pdftoppm version 26.07.0\r\nCopyright 2005-2026 The Poppler Developers - http://poppler.freedesktop.org\r\nCopyright 1996-2011, 2022 Glyph & Cog, LLC",
+  "library_sha256": "7ac9d16a1401fc0fc379d31de639708225fecd144d09c69abaad8b02625a6c7e",
+  "baseline_sha256": "22586a351810df6a53bf836ba1f8484387574f27172dd28868fbb8a5ff82bf4c",
+  "scenes": [
+    {
+      "file": "shading-domain-0.pdf",
+      "sha256": "a77f46298f734bfcd13360af5049b97fc6a3e73d183d96b5a8fb8fbb7041e4a3",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 135
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "poppler_white": [
+              127,
+              127,
+              127,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 135,
+            "poppler_white": 8
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-domain-1.pdf",
+      "sha256": "44746c8ed6ff0d9b1723cb8b75eb99e69e36cd85db3239850d865dbf1a355f1a",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134,
+              255
+            ],
+            "baseline": [
+              195,
+              195,
+              195,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 60
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134
+            ],
+            "baseline": [
+              195,
+              195,
+              195,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 60,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-domain-2.pdf",
+      "sha256": "9309cc2a3822db4805c684abe4839b2b826d254d74e593727436d52324e81f8e",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 135
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 135,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-domain-3.pdf",
+      "sha256": "5f2ea569b2276c9fa4b541fe30ffc6db83d847699a7966187ade37f559fba254",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134,
+              255
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-domain-4.pdf",
+      "sha256": "6c4989e61d2b122284bc8ca698a1ff9ec85c73ac9a24a0cf3998e88a0ea36b3e",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134,
+              255
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-domain-5.pdf",
+      "sha256": "94a3b042cec8f1a331d48644ed1171a3c7698cc1648c77039fa30ca58ac16bcb",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        151,
+        151,
+        151,
+        255
+      ],
+      "premultiplied": [
+        151,
+        151,
+        151,
+        255
+      ],
+      "white": [
+        151,
+        151,
+        151,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              152,
+              152,
+              152,
+              255
+            ],
+            "mupdf": [
+              149,
+              150,
+              149,
+              255
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 2,
+            "baseline": 15
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              152,
+              152,
+              152,
+              255
+            ],
+            "mupdf": [
+              149,
+              150,
+              149
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 2,
+            "baseline": 15,
+            "poppler_white": 23
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-domain-6.pdf",
+      "sha256": "f9c3e17023b9a82b5cb45562abbd28b2094b2afcce486c5bde7a05a73a18d335",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 255,
+            "baseline": 119
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 255,
+            "baseline": 119,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-domain-7.pdf",
+      "sha256": "0e71bd991e11eb936b9cc6553094489995e99755ed6631fdd5f905f2e6c6c406",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "premultiplied": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "white": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              128,
+              128,
+              128,
+              255
+            ],
+            "mupdf": [
+              127,
+              127,
+              127,
+              255
+            ],
+            "baseline": [
+              14,
+              14,
+              14,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "baseline": 114
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              128,
+              128,
+              128,
+              255
+            ],
+            "mupdf": [
+              127,
+              127,
+              127
+            ],
+            "baseline": [
+              14,
+              14,
+              14,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "baseline": 114,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-domain-8.pdf",
+      "sha256": "93b55fd8651f170f11c72b2784db6343e7dc8979586fcb7789acae1e3c7a31ac",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "axial-ramp-sampling",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134,
+              255
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              134,
+              135,
+              134
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1,
+            "poppler_white": 7
+          }
+        }
+      }
+    }
+  ]
+}

@@ -4455,3 +4455,24 @@ MuPDF/Poppler的opacity-mask、图片采样及复合填描差异单独保留，�
 新/旧二进制均按最终版本字符串实测，散列保留；1×1空RGBA画布的计数载荷3092→3740字节，
 固定增加648字节，没有新像素平面。该数值是引擎载荷计数，不是分配器或进程RSS。
 [初始六场景](validation/2026-10-19-alpha-benchmark.json)、[256次复测](validation/2026-10-19-alpha-followup.json)、[固定载荷](validation/2026-10-19-alpha-memory.json)。
+
+
+## 3.36.1：渐变Domain、字段安全与共享采样预算（2026-10-19）
+
+轴向/径向渐变先把几何参数映射到Domain，再调用有界函数；凸组合避免大端点相减溢出。
+严格校验ShadingType及Coords/Domain/Extend，避免超大real转int和lazy resolve后的旧arena指针。
+颜色/函数采样与径向扫描使用画布和递归G的共享工作计数。新增接近耗尽、已耗尽、取消和实际raster入口回归；失败不提交位图。
+
+9份正常、11份错误输入；独立数值探针最大差1/255，3.36.0最大差135/255。
+MuPDF对通常范围最大差2；超大等端点样本差255，Poppler最大差23，按原样保存，不用于放宽内部容差。
+GCC/MSVC各141/141，ICC-OFF10/10，安装4/4、13头C++及EXACT3.36.1运行通过。
+703项公开测量不变，两个DLL各305导出；分层99对象/1041符号引用/899include，逆向0。
+[本地汇总](validation/2026-10-19-shading-domain.json)、[逐场景参考](validation/2026-10-19-shading-domain-reference.json)。
+完整Extend、BBox、径向根选择及函数数组继续处理。
+
+
+### 3.36.0跨平台CI
+
+代码2fb652f489c85acd5942068f7bc181321bc05fbe的[CI39348054966](https://github.com/NoGod3524/EXReader/actions/runs/39348054966)7/7成功：三桌面各141/141，sanitizer138/138。
+20万次变异、5种子、15434次成功解析，无崩溃；安装/裁剪、JNI/Swift宿主与移动库交叉编译通过。
+[作业记录](validation/2026-10-19-alpha-source-ci.json)。
