@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if !defined(_WIN32) && !defined(_XOPEN_SOURCE)
+#define _XOPEN_SOURCE 700
+#endif
 #include "convert_io.h"
 #include <errno.h>
 #include <stdio.h>

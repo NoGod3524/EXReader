@@ -376,7 +376,7 @@ finish:
 static exr_status stream_import_values(exr_library *l,exr_format format,const exr_source *source,
                                         const char *chosen_title,const char *author,size_t extent,
                                         int unique,int64_t *id,int *created,exr_error *e) {
-  exr_status status;int64_t found=0;int tx=0,inserted=0;
+  exr_status status=EXR_OK;int64_t found=0;int tx=0,inserted=0;
   if(id) *id=0;
   if(created) *created=0;
   if(!l || !id || !source || !source->read_at || !source->size || format<EXR_TXT || format>EXR_CBZ)
@@ -408,8 +408,9 @@ static exr_status stream_import_values(exr_library *l,exr_format format,const ex
   }
   *id=found?found:*id;if(created) *created=inserted;
 unlock:
+  if(tx && sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL)!=SQLITE_OK && status==EXR_OK) status=database_error(l,e);
+  if(status!=EXR_OK) { *id=0;if(created) *created=0; }
   sqlite3_mutex_leave(sqlite3_db_mutex(l->db));
-  if(status==EXR_OK && tx) { if(sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL)!=SQLITE_OK) status=database_error(l,e);tx=0; }
   return status;
 }
 static exr_status stream_import(exr_library *l,exr_format format,const exr_source *source,const char *title,
@@ -432,6 +433,7 @@ exr_status exr_library_import_source(exr_library *l,exr_format format,const exr_
 }
 exr_status exr_library_import_source_unique(exr_library *l,exr_format format,const exr_source *source,
                                             const char *title,int64_t *id,int *created,exr_error *e) {
+  if(id) *id=0;
   if(!created) return exr_fail(e,EXR_ARGUMENT,"Missing created output");
   return stream_import(l,format,source,title,1,id,created,e);
 }
@@ -469,7 +471,8 @@ static exr_status import_file_pdf(exr_library *l,exr_format format,const char *p
 exr_status exr_library_import_file(exr_library *l,exr_format format,const char *path,const char *title,
                                    int64_t *id,exr_error *e) {
   exr_source source;exr_status status;
-  if(!path) return exr_fail(e,EXR_ARGUMENT,"Missing streaming import path");
+  if(id) *id=0;
+  if(!l || !id || !path) return exr_fail(e,EXR_ARGUMENT,"Invalid streaming file import arguments");
   if(format==EXR_PDF) return import_file_pdf(l,format,path,title,0,id,NULL,e);
   status=exr_file_source_limit(path,EXR_STREAM_MAX,&source,e);
   if(status!=EXR_OK) return status;
@@ -480,7 +483,9 @@ exr_status exr_library_import_file(exr_library *l,exr_format format,const char *
 exr_status exr_library_import_file_unique(exr_library *l,exr_format format,const char *path,const char *title,
                                           int64_t *id,int *created,exr_error *e) {
   exr_source source;exr_status status;
-  if(!path) return exr_fail(e,EXR_ARGUMENT,"Missing streaming import path");
+  if(id) *id=0;
+  if(created) *created=0;
+  if(!l || !id || !created || !path) return exr_fail(e,EXR_ARGUMENT,"Invalid streaming unique file import arguments");
   if(format==EXR_PDF) return import_file_pdf(l,format,path,title,1,id,created,e);
   status=exr_file_source_limit(path,EXR_STREAM_MAX,&source,e);
   if(status!=EXR_OK) return status;
@@ -492,10 +497,13 @@ exr_status exr_library_fixed_source(exr_library *l,int64_t id,const exr_fixed_op
                                     exr_fixed_document **out,exr_error *e) {
   sqlite3_stmt *s=NULL;exr_fixed_open_options options={0};stream_blob *context=NULL;exr_source source;int step,format;int64_t length;
   if(out) *out=NULL;
-  if(!l || id<=0 || !out || (input && input->struct_size<sizeof(size_t))) return exr_fail(e,EXR_ARGUMENT,"Invalid streaming fixed lookup");
+  if(!l || id<=0 || !out) return exr_fail(e,EXR_ARGUMENT,"Invalid streaming fixed lookup");
 #ifndef EXR_ENABLE_PDF
   return exr_fail(e,EXR_UNSUPPORTED,"Streaming fixed reading requires the PDF component");
+#else
+  { exr_status status=exr_fixed_open_options_copy(input,&options,e);if(status!=EXR_OK) return status; }
 #endif
+  options.struct_size=sizeof(options);
   if(!prepare(l,"SELECT format,length(source) FROM books WHERE id=?1",&s) || sqlite3_bind_int64(s,1,id)!=SQLITE_OK) { sqlite3_finalize(s);return database_error(l,e); }
   step=sqlite3_step(s);
   if(step!=SQLITE_ROW) { sqlite3_finalize(s);return step==SQLITE_DONE ? exr_fail(e,EXR_ARGUMENT,"Book missing") : database_error(l,e); }
@@ -504,8 +512,6 @@ exr_status exr_library_fixed_source(exr_library *l,int64_t id,const exr_fixed_op
   if((format!=EXR_CBZ && format!=EXR_PDF) || sqlite3_column_type(s,1)!=SQLITE_INTEGER || length<=0 || (uint64_t)length>EXR_STREAM_MAX) {
     sqlite3_finalize(s);return exr_fail(e,EXR_UNSUPPORTED,"Streaming fixed reading is available for CBZ and PDF originals");
   }
-  if(input) options=*input; else { options.struct_size=sizeof(options); }
-  if(options.struct_size<sizeof(size_t) || options.struct_size>sizeof(options)) { sqlite3_finalize(s);return exr_fail(e,EXR_ARGUMENT,"Invalid fixed open options"); }
   if(format==EXR_PDF) {
     exr_mapping mapping={0};uint64_t at=0;exr_status status;
     sqlite3_finalize(s);s=NULL;
@@ -517,6 +523,7 @@ exr_status exr_library_fixed_source(exr_library *l,int64_t id,const exr_fixed_op
     if(sqlite3_blob_open(l->db,"main","books","source",id,0,&context->blob)!=SQLITE_OK) { free(context);exr_unmap(&mapping);return exr_fail(e,EXR_DATABASE,"Cannot open stored source blob"); }
     while(at<(uint64_t)length) {
       size_t n=(size_t)((uint64_t)length-at<EXR_STREAM_CHUNK ? (uint64_t)length-at : EXR_STREAM_CHUNK);
+      if(exr_control_cancel(&options.control,e)!=EXR_OK) { stream_blob_release(context);exr_unmap(&mapping);return EXR_CANCELLED; }
       if(sqlite3_blob_read(context->blob,(unsigned char *)mapping.address+at,(int)n,(int)at)!=SQLITE_OK) {
         stream_blob_release(context);exr_unmap(&mapping);return exr_fail(e,EXR_DATABASE,"Cannot read stored PDF source");
       }

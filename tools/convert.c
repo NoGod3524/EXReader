@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
 /* exreader-convert: small, installable single-file/batch conversion driver.
    All decoding, conversion and structure-preserving export happens through the
    EXReader SDK; this file only owns arguments, file protection and reporting. */

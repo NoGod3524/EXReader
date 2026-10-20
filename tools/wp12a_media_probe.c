@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
 /* WP12a large-media evidence probe. Not part of the installed SDK. */
 #include "exreader.h"
 #include <stdio.h>

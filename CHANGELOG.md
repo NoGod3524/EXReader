@@ -14,6 +14,11 @@ WP12-lite提供可安装转换工具、正文与preserve配置及可取消导出
 两项新增导出保持ABI1/schema6；范围文档随默认和裁剪SDK安装。
 主线联合验收记录见 `docs/validation/2026-10-20-parallel-integration.json`。
 
+3.39.0同批集成WP12a：CBZ新增GIF/BMP及可选WebP/TIFF/AVIF，保留帧/页顺序；
+书库支持CBZ源与CBZ/PDF文件分块导入，存储的PDF采用映射回读。
+核心3.38.0、PDF3.38.2、书库组件3.34.0，ABI1/schema6不变；
+原分支1GiB实测和主线联合回归分开记录。主线补强去重失败回滚、失败输出和旧尺寸参数记录兼容。
+
 3.38.3：EPUB章节从ZIP回调分块送入XML解析器，取消整章解压临时副本；
 同一内部解析器供原整块入口复用，TEXT节点、CFI和源字节位置不随输入分块变化。
 保留32MiB成员及128MiB累计展开限制，CRC/取消/解析失败不返回部分文档。

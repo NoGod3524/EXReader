@@ -3,7 +3,7 @@
   "date": "2026-10-20",
   "sdk_version": "3.39.0",
   "core_version": "3.38.0",
-  "pdf_version": "3.38.1",
+  "pdf_version": "3.38.2",
   "abi": 1,
   "library_schema": 6,
   "packages": {
@@ -53,6 +53,35 @@
       "scope": "Lightweight text and preserve profiles, CLI and controlled export",
       "functional_delivery_accepted": true,
       "full_WP12_complete": false
+    },
+    "WP12a": {
+      "delivery_commits": [
+        "093775d",
+        "84987ed",
+        "d35e1a6",
+        "8bfb63c",
+        "1c84c20",
+        "7d5b14e",
+        "a60f3b2",
+        "1158a55",
+        "2e368fa",
+        "b796c65"
+      ],
+      "mainline_commits": [
+        "19e8a13",
+        "e77111d",
+        "03a5ce0",
+        "37e556a",
+        "5bf1b21",
+        "1b16551",
+        "58840c9",
+        "9cb7632",
+        "6d508c5",
+        "55698bf"
+      ],
+      "scope": "Declared WebP/GIF/BMP/AVIF/TIFF matrices, CBZ/PDF streaming originals; original 1GiB measurements preserved, large audio measurement is WAV only",
+      "functional_delivery_accepted": true,
+      "linux_sanitizer": "pending"
     }
   },
   "original_evidence": {
@@ -99,6 +128,30 @@
     "wp12-lite-baseline.json": {
       "path": "docs/validation/wp12-lite-baseline.json",
       "sha256": "1635b49fc06287a3d1a2ce89d03026ebf05b2ea68920a861dc1925cba51b4a96"
+    },
+    "wp12a-summary.json": {
+      "path": "docs/validation/wp12a-summary.json",
+      "sha256": "10aef078ee37c4116be14f368cb073196c7a0c39d76d94d3527761f8c2615eb8"
+    },
+    "wp12a-image-formats.json": {
+      "path": "docs/validation/wp12a-image-formats.json",
+      "sha256": "26f6da9da7367ebf2a98edc0fc9fd5664031d747701688235059f690f8a81837"
+    },
+    "wp12a-streaming.json": {
+      "path": "docs/validation/wp12a-streaming.json",
+      "sha256": "4415114220a6103b28c95e424d34a2ca6fe1587fe016ca5124e13c34d01b6c04"
+    },
+    "wp12a-large-book.json": {
+      "path": "docs/validation/wp12a-large-book.json",
+      "sha256": "9b2028916d0e1dde5ff39d501df1a64a4df52d47679501c2085a10d29441a651"
+    },
+    "wp12a-large-audio.json": {
+      "path": "docs/validation/wp12a-large-audio.json",
+      "sha256": "dcb285257e8b8c28291a5c4ae6d7a5b8a00c19232104e4880230363fd120bd7b"
+    },
+    "wp12a-large-baseline.json": {
+      "path": "docs/validation/wp12a-large-baseline.json",
+      "sha256": "08d1751cb54575b39257664b4dd1e960d0b64eb366b87ed2220639397e65fdc2"
     }
   },
   "delivery_hash_audit": {
@@ -128,6 +181,10 @@
       "images_verified": true,
       "record_sha256": "1b102c1f15eecc2c403b51d504f3809a45ab19caefca0ed5bb16ee8e37d876e4",
       "note": "Original reference uses earlier positive-scene fonts. Final fixture fonts require mainline rerun; original images and records retained."
+    },
+    "WP12a": {
+      "case_files_verified": 84,
+      "all_match": true
     }
   },
   "mainline_changes": [
@@ -135,7 +192,10 @@
     "Bound short SVG compression-signature inspection.",
     "Install scope documents and exercise two additive APIs through default/trimmed installed core consumers.",
     "Extend font campaign corpus, query and bounded color rendering; preserve sanitizer test artifact.",
-    "Make independent reference renderer and Chrome paths explicit; fail process on rejected comparison."
+    "Make independent reference renderer and Chrome paths explicit; fail process on rejected comparison.",
+    "Expose POSIX declarations for conversion and media probe; enable Linux anonymous mapping declarations.",
+    "Initialize unique-import status and roll back every open transaction before unlocking; reset failed outputs.",
+    "Reuse existing fixed-options prefix validator and observe cancellation during stored PDF chunk reads."
   ],
   "source_files": {
     ".github/workflows/native.yml": {
@@ -144,15 +204,23 @@
     },
     "CMakeLists.txt": {
       "path": "CMakeLists.txt",
-      "sha256": "789c59c22ef580fe426fbc74fbce9fda5d50643588ec30f2f66cd5e1d993cf35"
+      "sha256": "ab0891fd8cf92e6e618f9c0a745bfb8584d2e829e0ee6734fdf005e89f74173b"
+    },
+    "cmake/deps.cmake": {
+      "path": "cmake/deps.cmake",
+      "sha256": "ef7e17a503df6a90e27389c2b3d311a1892a26606f522acb5e2f96740c351daa"
+    },
+    "cmake/install_dependencies.cmake": {
+      "path": "cmake/install_dependencies.cmake",
+      "sha256": "66753925c0f33cc4a7ed3d442202bc50cb8982c1c3f356d690c3f34de00d5b46"
     },
     "cmake/modules.cmake": {
       "path": "cmake/modules.cmake",
-      "sha256": "018a2b4b38ba4555e439af220795cd3da8651af710a73633735aa3f99b5a6610"
+      "sha256": "9b04662802456d14b13865026e6eac1f3ad758421534428c8e6e75546faa1a18"
     },
     "cmake/versions.cmake": {
       "path": "cmake/versions.cmake",
-      "sha256": "f28023261528c559fd197fab56d1338485c3688cc376ea20b6da0e308c70d96d"
+      "sha256": "b145aadc9d48622375751a22a246dc2618c2befdc29efa4a7d7313e8187de495"
     },
     "include/exr/base.h": {
       "path": "include/exr/base.h",
@@ -162,9 +230,29 @@
       "path": "include/exr/formats.h",
       "sha256": "d432fdf3339eca7ba2bb203bf4f58c421cc854e4504538f5e4996bb94fa52a67"
     },
+    "include/exr/graphics.h": {
+      "path": "include/exr/graphics.h",
+      "sha256": "3b383a57d542fdbc9553334ba33e4abf8274b3b5c4090b8a0f8d78b45c4f74b1"
+    },
+    "include/exr/library.h": {
+      "path": "include/exr/library.h",
+      "sha256": "277e707af559b3c79ae50fc51e8fdbb0fac8e0f11498f6b6197c5512272f6c5e"
+    },
+    "include/exr/pdf.h": {
+      "path": "include/exr/pdf.h",
+      "sha256": "9a0d4f4f8cde35ebaa3fc20f900389d539926e9434a07417091742b1939bc6ae"
+    },
     "include/exr/text.h": {
       "path": "include/exr/text.h",
       "sha256": "c6fb1adda319b620179177ec6775b1098628444d5cc40f61163d34ab3ae159cf"
+    },
+    "src/base_internal.h": {
+      "path": "src/base_internal.h",
+      "sha256": "ab24868337de8517c73cb254d84afefbac89997be1805d2d52dcd9122565defe"
+    },
+    "src/cbz.c": {
+      "path": "src/cbz.c",
+      "sha256": "8ea9d0b197415e63700c4b39599f926bf26f84079cce595de6d84659398b8d4f"
     },
     "src/export_text.c": {
       "path": "src/export_text.c",
@@ -190,9 +278,37 @@
       "path": "src/formats.c",
       "sha256": "45b690a7679144e81d76f92404756919e8d5533096b104986da0492046ed8c0f"
     },
+    "src/graphics_internal.h": {
+      "path": "src/graphics_internal.h",
+      "sha256": "850a39c5de13fa4aabe017ca2fa55c3ee688ebcc75e994214365d55a74a5c4b1"
+    },
+    "src/image_formats.c": {
+      "path": "src/image_formats.c",
+      "sha256": "d7dc5d59fdf99298587679dba7a424d6c7daea36d2206928b2f00920b5d22d24"
+    },
+    "src/images.c": {
+      "path": "src/images.c",
+      "sha256": "5ddc4fa595f01246bae5616ed5cf15b7a22fc4b4566f2cc444cbb0a57843b156"
+    },
+    "src/library.c": {
+      "path": "src/library.c",
+      "sha256": "91441cd23a3fefd9d2c60c9c277dc853e5ab84953c6480c069d961649769469a"
+    },
+    "src/map.c": {
+      "path": "src/map.c",
+      "sha256": "6129d40beaf648b69d2d3864d78259b089c63d1c2ecd690c0f2f87e4f9e0e73b"
+    },
     "src/opentype.c": {
       "path": "src/opentype.c",
       "sha256": "27e1b5757f85d0cfbb4399b8212b10c6ac6055058f26d71ab19e54dbe79a6fc1"
+    },
+    "src/pdf_document.c": {
+      "path": "src/pdf_document.c",
+      "sha256": "8488edad0dc1dfb32b771ad8212d32c5c8e525413f97d42f76a7bbf9ca94532f"
+    },
+    "src/pdf_internal.h": {
+      "path": "src/pdf_internal.h",
+      "sha256": "9b20c2237ead49fb6ee843006f1740a5273f8dd2a2a9e3a163841a911e7ef833"
     },
     "src/raster.c": {
       "path": "src/raster.c",
@@ -208,7 +324,7 @@
     },
     "tests/check_convert_cli.py": {
       "path": "tests/check_convert_cli.py",
-      "sha256": "a2f1f4a3a6eda643484841067e829b73f628d308847898c96be8833bb11a8afb"
+      "sha256": "1a40ec4176583b386825f3d88e560294db759c6a1245af3b20fc6a2b0adf474c"
     },
     "tests/check_fuzz_pipelines.py": {
       "path": "tests/check_fuzz_pipelines.py",
@@ -229,6 +345,346 @@
     "tests/fixtures/fonts/svgfont.ttf": {
       "path": "tests/fixtures/fonts/svgfont.ttf",
       "sha256": "d4bdaeac0b2b43ddc3c3e250ff562890f26fbd344d6e0683fdc03d79f919f961"
+    },
+    "tests/fixtures/images/MANIFEST.json": {
+      "path": "tests/fixtures/images/MANIFEST.json",
+      "sha256": "2e92c24b767000b38356c698bf5bf679c709e9476d348cfedb67b305ee6064f3"
+    },
+    "tests/fixtures/images/avif/alpha.avif": {
+      "path": "tests/fixtures/images/avif/alpha.avif",
+      "sha256": "e740533904ef52fd31145476c7fab51ec8af18f514c712aec8d2cc7e0dafdd2d"
+    },
+    "tests/fixtures/images/avif/animation.avif": {
+      "path": "tests/fixtures/images/avif/animation.avif",
+      "sha256": "6937242ace2f0e8d8f91bddb8b9b0e0b0dbbcb6db26b170466df86ef7c30e4a6"
+    },
+    "tests/fixtures/images/avif/badmagic.avif": {
+      "path": "tests/fixtures/images/avif/badmagic.avif",
+      "sha256": "5464533c9647b67eb320c40ccc5959537c09102ae75388f6a7675b433e745c9d"
+    },
+    "tests/fixtures/images/avif/checker.avif": {
+      "path": "tests/fixtures/images/avif/checker.avif",
+      "sha256": "e6e6ffd95c74e91e75e723a3c62e427f01f25d9100c2ec0e37a30928fd7aecff"
+    },
+    "tests/fixtures/images/avif/gradient.avif": {
+      "path": "tests/fixtures/images/avif/gradient.avif",
+      "sha256": "193ae71d9c71e7f25445e9cbbbc0888343ec932e48776b96d5a1f83378a35e0c"
+    },
+    "tests/fixtures/images/avif/gray.avif": {
+      "path": "tests/fixtures/images/avif/gray.avif",
+      "sha256": "4ebfbb098e960967cb5b62f40eb54f62c3bdcffdece460c36806c7876c0e04d2"
+    },
+    "tests/fixtures/images/avif/odd.avif": {
+      "path": "tests/fixtures/images/avif/odd.avif",
+      "sha256": "87651ef0a49f545001ad0e57c1599d299b76a46cb79bb06d4122ef1511a494c2"
+    },
+    "tests/fixtures/images/avif/one.avif": {
+      "path": "tests/fixtures/images/avif/one.avif",
+      "sha256": "a6258182583bb7953c350c4059da11eee21a632b41d8770eed2e78d5dbad5e34"
+    },
+    "tests/fixtures/images/avif/palette.avif": {
+      "path": "tests/fixtures/images/avif/palette.avif",
+      "sha256": "6e95175693efa8451ef818c6245eec6e2b9155fd322cb0c0b581c4a1d4efb044"
+    },
+    "tests/fixtures/images/avif/solid.avif": {
+      "path": "tests/fixtures/images/avif/solid.avif",
+      "sha256": "e62572a1bd88a8f4c4f85a51f6bdb9d53ede095227bd99592d3f57016a5daa7b"
+    },
+    "tests/fixtures/images/avif/tall.avif": {
+      "path": "tests/fixtures/images/avif/tall.avif",
+      "sha256": "8f3daba129ca5a14d63f4b559762f2c9547c7137eea70c47ed9cecea0f3e06ac"
+    },
+    "tests/fixtures/images/avif/transparent.avif": {
+      "path": "tests/fixtures/images/avif/transparent.avif",
+      "sha256": "5c16f973a6f432baa508521051c2c3297595d46ff06713ec5487da8ba91b8b59"
+    },
+    "tests/fixtures/images/avif/truncated.avif": {
+      "path": "tests/fixtures/images/avif/truncated.avif",
+      "sha256": "1ba8794ed960abee96933e58024ee57adaac222908a3ece994d4728dae9d25d5"
+    },
+    "tests/fixtures/images/avif/wide.avif": {
+      "path": "tests/fixtures/images/avif/wide.avif",
+      "sha256": "446b7f934832a1c4f432ded0134dfe270df8c355ff73414b24c100d4b3fc11c5"
+    },
+    "tests/fixtures/images/bmp/alpha.bmp": {
+      "path": "tests/fixtures/images/bmp/alpha.bmp",
+      "sha256": "cd8fd2f65d599cc67cd8e5e689776b932db2c1102bdfdf9050b96ecdf5104871"
+    },
+    "tests/fixtures/images/bmp/alpha32.bmp": {
+      "path": "tests/fixtures/images/bmp/alpha32.bmp",
+      "sha256": "300676d52773957e3b426e6085d7e1299f1728c266a4f3c98f0caeb152a96c24"
+    },
+    "tests/fixtures/images/bmp/badmagic.bmp": {
+      "path": "tests/fixtures/images/bmp/badmagic.bmp",
+      "sha256": "5464533c9647b67eb320c40ccc5959537c09102ae75388f6a7675b433e745c9d"
+    },
+    "tests/fixtures/images/bmp/checker.bmp": {
+      "path": "tests/fixtures/images/bmp/checker.bmp",
+      "sha256": "9e48a5ca458c57a8554cefec03b905b57f7bb4fc3f132762a3d1b2a9fe3af640"
+    },
+    "tests/fixtures/images/bmp/gradient.bmp": {
+      "path": "tests/fixtures/images/bmp/gradient.bmp",
+      "sha256": "344ce25cb9e795a2a19d12ef1d109768cd62c3a600daecc582fa32b1dd2d9c3d"
+    },
+    "tests/fixtures/images/bmp/gray.bmp": {
+      "path": "tests/fixtures/images/bmp/gray.bmp",
+      "sha256": "410bc2dae2acabe1c7dae2568d72ceeea61daf405003289ff825a39fe9e2a09e"
+    },
+    "tests/fixtures/images/bmp/odd.bmp": {
+      "path": "tests/fixtures/images/bmp/odd.bmp",
+      "sha256": "dc52bed9020296520015d4fc0b810c6dbef9f6b79466f8763c49fe23ad344228"
+    },
+    "tests/fixtures/images/bmp/one.bmp": {
+      "path": "tests/fixtures/images/bmp/one.bmp",
+      "sha256": "348a03755adbf2d798ab4780981fd584de0dc7a3cd7d009732585cd6e9e5da39"
+    },
+    "tests/fixtures/images/bmp/palette.bmp": {
+      "path": "tests/fixtures/images/bmp/palette.bmp",
+      "sha256": "295af2a65c94432a950c36d8d20ac67b894fbc0675aca94273b8f93cbba7c87f"
+    },
+    "tests/fixtures/images/bmp/solid.bmp": {
+      "path": "tests/fixtures/images/bmp/solid.bmp",
+      "sha256": "fd44427e758e3275d3c68272788d986d96914ff9b6ec63bc57bbbf0111822ae0"
+    },
+    "tests/fixtures/images/bmp/tall.bmp": {
+      "path": "tests/fixtures/images/bmp/tall.bmp",
+      "sha256": "7386c2f5d678b0e7d19a0b6146bdbde873f138b436e1b49ffbb24605f17e742a"
+    },
+    "tests/fixtures/images/bmp/truncated.bmp": {
+      "path": "tests/fixtures/images/bmp/truncated.bmp",
+      "sha256": "ede2b9119c00c8ef8a72842c9818e460154ec95edf00c2336f072414913b7acc"
+    },
+    "tests/fixtures/images/bmp/wide.bmp": {
+      "path": "tests/fixtures/images/bmp/wide.bmp",
+      "sha256": "cbe54ef22ff21e55ddfdb71d38a9bf475abe613248253c7323e77d656b03e28c"
+    },
+    "tests/fixtures/images/gif/alpha.gif": {
+      "path": "tests/fixtures/images/gif/alpha.gif",
+      "sha256": "a1a1924b89d7d1d814ca3487c6188572b5046a7de0ef5d0a07cf197f01758c3e"
+    },
+    "tests/fixtures/images/gif/animation.gif": {
+      "path": "tests/fixtures/images/gif/animation.gif",
+      "sha256": "0eee480b978b295e57f1c4409da13285e4164552578136bbc28df295fb1d2994"
+    },
+    "tests/fixtures/images/gif/badmagic.gif": {
+      "path": "tests/fixtures/images/gif/badmagic.gif",
+      "sha256": "5464533c9647b67eb320c40ccc5959537c09102ae75388f6a7675b433e745c9d"
+    },
+    "tests/fixtures/images/gif/checker.gif": {
+      "path": "tests/fixtures/images/gif/checker.gif",
+      "sha256": "9df24c67a04a260dccf769b5e4e3b3e9f612bed8077ed651d725acd641b1c50c"
+    },
+    "tests/fixtures/images/gif/expansion.gif": {
+      "path": "tests/fixtures/images/gif/expansion.gif",
+      "sha256": "eda30056e87345156bcce2a6bcf65020a1fc5624411f1e4ae14d3bdb36505bf7"
+    },
+    "tests/fixtures/images/gif/gradient.gif": {
+      "path": "tests/fixtures/images/gif/gradient.gif",
+      "sha256": "a7bcc16c4ced1087d16ddded83fbe47427f16c9d06d17ffb6b7c78c138645766"
+    },
+    "tests/fixtures/images/gif/gray.gif": {
+      "path": "tests/fixtures/images/gif/gray.gif",
+      "sha256": "37d62c73e9cd83bb6633f0b38b2d013e3f81d2e8a0ebac71d4e4aa857443327b"
+    },
+    "tests/fixtures/images/gif/odd.gif": {
+      "path": "tests/fixtures/images/gif/odd.gif",
+      "sha256": "5f9d06ea0ecabc8e6990d0f344a06143efb2b7a772602e911ca1cc0c9262d405"
+    },
+    "tests/fixtures/images/gif/one.gif": {
+      "path": "tests/fixtures/images/gif/one.gif",
+      "sha256": "64250758d1004587d0c9523f01ba75fe11b562071343f61bb7edf1e9e6e796a7"
+    },
+    "tests/fixtures/images/gif/palette.gif": {
+      "path": "tests/fixtures/images/gif/palette.gif",
+      "sha256": "5f5667c60bad63bda76f9c890adde357a4fd33f5f591153a17f85ccd9a29727f"
+    },
+    "tests/fixtures/images/gif/solid.gif": {
+      "path": "tests/fixtures/images/gif/solid.gif",
+      "sha256": "54dc01f10617dc09eb86e1947cda7d0d2c7843ff5a4a17b53fa5e8e2d31a36dd"
+    },
+    "tests/fixtures/images/gif/tall.gif": {
+      "path": "tests/fixtures/images/gif/tall.gif",
+      "sha256": "ece5e8961c3bad2b6d531ace80e62e066963b241c2182a7b10f77a21df19b88a"
+    },
+    "tests/fixtures/images/gif/transparent.gif": {
+      "path": "tests/fixtures/images/gif/transparent.gif",
+      "sha256": "c3acb5e5e3940746d0fd2737d78a580d820800edded06adab76f657e30042f88"
+    },
+    "tests/fixtures/images/gif/truncated.gif": {
+      "path": "tests/fixtures/images/gif/truncated.gif",
+      "sha256": "59995b4994f786dadbfa2aecc840eceb12612ae634a934761c37758a32bd3407"
+    },
+    "tests/fixtures/images/gif/wide.gif": {
+      "path": "tests/fixtures/images/gif/wide.gif",
+      "sha256": "47ca345f186c492517e89add065dd41c00292cdd2338060878de4c289103e70b"
+    },
+    "tests/fixtures/images/png/alpha.png": {
+      "path": "tests/fixtures/images/png/alpha.png",
+      "sha256": "4d4a7dd5e6633aa3ac99315b8504772b170abf47cec90b5341e109582a84af61"
+    },
+    "tests/fixtures/images/png/badmagic.png": {
+      "path": "tests/fixtures/images/png/badmagic.png",
+      "sha256": "5464533c9647b67eb320c40ccc5959537c09102ae75388f6a7675b433e745c9d"
+    },
+    "tests/fixtures/images/png/checker.png": {
+      "path": "tests/fixtures/images/png/checker.png",
+      "sha256": "3bf3cc20224c44fbd0738592978a0cb71141e879ecc7734cfdf2537a96a6bf31"
+    },
+    "tests/fixtures/images/png/gradient.png": {
+      "path": "tests/fixtures/images/png/gradient.png",
+      "sha256": "a0c69d8af52ae06d93a9f9a5b3291bb40a721a5cb4bdd3da740b242a126a3c83"
+    },
+    "tests/fixtures/images/png/gray.png": {
+      "path": "tests/fixtures/images/png/gray.png",
+      "sha256": "05a72b06395f2f2a065fed40bc75bb433deabb4aa5a96e8fdbdddb253b2f8a54"
+    },
+    "tests/fixtures/images/png/huge.png": {
+      "path": "tests/fixtures/images/png/huge.png",
+      "sha256": "29a49d8f09efdac33108e002212014f25deda57114958d06fc84f3b776f65571"
+    },
+    "tests/fixtures/images/png/odd.png": {
+      "path": "tests/fixtures/images/png/odd.png",
+      "sha256": "2363ca39fcdd3b9ed94197e5d8c1be52c007a85468b808a5a9b3e573ff945a74"
+    },
+    "tests/fixtures/images/png/one.png": {
+      "path": "tests/fixtures/images/png/one.png",
+      "sha256": "3c5b6a0cc8a50ec551aa02af4546cd50a6db8a180ea3bf04fc0c628b2d4d2095"
+    },
+    "tests/fixtures/images/png/palette.png": {
+      "path": "tests/fixtures/images/png/palette.png",
+      "sha256": "267d3127f7873591ef5d73e9c6aaade02879eecba313b8296d1c55c8b12c5542"
+    },
+    "tests/fixtures/images/png/solid.png": {
+      "path": "tests/fixtures/images/png/solid.png",
+      "sha256": "3895aff2ca6834efa81dff5e7401e91517dd8835f45a930a4d76639677d60159"
+    },
+    "tests/fixtures/images/png/tall.png": {
+      "path": "tests/fixtures/images/png/tall.png",
+      "sha256": "85b83b91439163819860239302d8d15ae4d20b267e1809f80a362bfefaab9b01"
+    },
+    "tests/fixtures/images/png/transparent.png": {
+      "path": "tests/fixtures/images/png/transparent.png",
+      "sha256": "425f366113c3075c3f1023cd62746b0f1b2a4656ff6261f5c05160c16fe3008f"
+    },
+    "tests/fixtures/images/png/truncated.png": {
+      "path": "tests/fixtures/images/png/truncated.png",
+      "sha256": "58e2bd16d18ce61e59f8f593fca7dcf90ae2cc237b66d8c2b2be82b4bafd94a2"
+    },
+    "tests/fixtures/images/png/wide.png": {
+      "path": "tests/fixtures/images/png/wide.png",
+      "sha256": "1d3b4ba353b65fee7f3a1cdfc606fa34f4316705d46cfcd6de2099da4a022c42"
+    },
+    "tests/fixtures/images/tiff/alpha.tif": {
+      "path": "tests/fixtures/images/tiff/alpha.tif",
+      "sha256": "419bc7ab6719063be89b68cc064efd8696e2f1e7a9417998bee379cbb25a5c3e"
+    },
+    "tests/fixtures/images/tiff/animation.tif": {
+      "path": "tests/fixtures/images/tiff/animation.tif",
+      "sha256": "ac430d20182e5968105e2bc1cab8ef312a6250ac702726781df661a072262119"
+    },
+    "tests/fixtures/images/tiff/badmagic.tif": {
+      "path": "tests/fixtures/images/tiff/badmagic.tif",
+      "sha256": "5464533c9647b67eb320c40ccc5959537c09102ae75388f6a7675b433e745c9d"
+    },
+    "tests/fixtures/images/tiff/checker.tif": {
+      "path": "tests/fixtures/images/tiff/checker.tif",
+      "sha256": "993e04d3e33eb6eca7987605879b6bc1bd096c402de6b1c4b130fe94d6e0fae2"
+    },
+    "tests/fixtures/images/tiff/gradient.tif": {
+      "path": "tests/fixtures/images/tiff/gradient.tif",
+      "sha256": "6a8076fd4cc99338b90490c5126443aa80957dc4ccbb5d6a5304e19969e94b2d"
+    },
+    "tests/fixtures/images/tiff/gray.tif": {
+      "path": "tests/fixtures/images/tiff/gray.tif",
+      "sha256": "1991d942334ec1cda6b6553310acaf65b5a1b1e626964b86d6830955375609d5"
+    },
+    "tests/fixtures/images/tiff/odd.tif": {
+      "path": "tests/fixtures/images/tiff/odd.tif",
+      "sha256": "93244fe6521961061e954eef94b42428ab58e80d1c239382183d6d32643ab767"
+    },
+    "tests/fixtures/images/tiff/one.tif": {
+      "path": "tests/fixtures/images/tiff/one.tif",
+      "sha256": "5ccce537689bdd0f879be3869dd56cc43cbc4a2108413c1cb468b53f13496feb"
+    },
+    "tests/fixtures/images/tiff/palette.tif": {
+      "path": "tests/fixtures/images/tiff/palette.tif",
+      "sha256": "3d0b3cc17c1a667f8176ce9d98264c7a59739cf303a78cf1f14ca9703cc4cbf2"
+    },
+    "tests/fixtures/images/tiff/solid.tif": {
+      "path": "tests/fixtures/images/tiff/solid.tif",
+      "sha256": "725b0e4f75725ca88ca1a87811ce294186a474d1b3ecf3e3eeda07c47f2b2be5"
+    },
+    "tests/fixtures/images/tiff/tall.tif": {
+      "path": "tests/fixtures/images/tiff/tall.tif",
+      "sha256": "1048a731e4a33d1d80ed59e9ee570caf60d440d356899e02b6e43b82ee5df005"
+    },
+    "tests/fixtures/images/tiff/transparent.tif": {
+      "path": "tests/fixtures/images/tiff/transparent.tif",
+      "sha256": "8960891d1376beda15a022f0cb7daa85ada0dd521214151aa2c15933669b348a"
+    },
+    "tests/fixtures/images/tiff/truncated.tif": {
+      "path": "tests/fixtures/images/tiff/truncated.tif",
+      "sha256": "823ce0fe24bb7f27fa381dd8fd114640eef0fa113f462bd0dd319383d20b9ecc"
+    },
+    "tests/fixtures/images/tiff/wide.tif": {
+      "path": "tests/fixtures/images/tiff/wide.tif",
+      "sha256": "da32090b3ba9c0abe1fde8910325e4166b903cb6f67b55e2ada1088beba59b07"
+    },
+    "tests/fixtures/images/webp/alpha.webp": {
+      "path": "tests/fixtures/images/webp/alpha.webp",
+      "sha256": "ef82fe6e8c96862ab142248a41c7b2326e76397fd2b7fcbf674b8786e6d9e5fb"
+    },
+    "tests/fixtures/images/webp/animation.webp": {
+      "path": "tests/fixtures/images/webp/animation.webp",
+      "sha256": "8c3dafad42c99e35d0e35321a2f3c92ee224cd6779ccf93b5690e22e284fe127"
+    },
+    "tests/fixtures/images/webp/badmagic.webp": {
+      "path": "tests/fixtures/images/webp/badmagic.webp",
+      "sha256": "5464533c9647b67eb320c40ccc5959537c09102ae75388f6a7675b433e745c9d"
+    },
+    "tests/fixtures/images/webp/checker.webp": {
+      "path": "tests/fixtures/images/webp/checker.webp",
+      "sha256": "db71d4515eaf4fbad785fba4298ccbf7e52d5d00822b10f68914b80dffd53e58"
+    },
+    "tests/fixtures/images/webp/gradient.webp": {
+      "path": "tests/fixtures/images/webp/gradient.webp",
+      "sha256": "0c1a328e3d71c3b2bf907985304fc9f9e8d5560d04631a09dbb28be521bbef4e"
+    },
+    "tests/fixtures/images/webp/gray.webp": {
+      "path": "tests/fixtures/images/webp/gray.webp",
+      "sha256": "86449b10a90e525791e891f54a9faae514c62be0a2feeff1057b399f7e4e434c"
+    },
+    "tests/fixtures/images/webp/odd.webp": {
+      "path": "tests/fixtures/images/webp/odd.webp",
+      "sha256": "373659e3ef42136e2851cdfc4663a072ff1fc4d7ccfa09f7dffa2e3a5c1f9761"
+    },
+    "tests/fixtures/images/webp/one.webp": {
+      "path": "tests/fixtures/images/webp/one.webp",
+      "sha256": "e80035df6f8006a66b60d79819c999c1b2134e298a25f52bb09c669d71e80acb"
+    },
+    "tests/fixtures/images/webp/palette.webp": {
+      "path": "tests/fixtures/images/webp/palette.webp",
+      "sha256": "15e37ab149519694a6fb8297b7d454acc2e408d8c3767a3549811df9e7ae141b"
+    },
+    "tests/fixtures/images/webp/solid.webp": {
+      "path": "tests/fixtures/images/webp/solid.webp",
+      "sha256": "4a24be41858d7ce8a59c811b01f89e26ea0543a4cc12783c4488781260259f7a"
+    },
+    "tests/fixtures/images/webp/tall.webp": {
+      "path": "tests/fixtures/images/webp/tall.webp",
+      "sha256": "328fd74365e2b62ea933f085d0d83ab3e7f694056fbb5553769664c683ea957f"
+    },
+    "tests/fixtures/images/webp/transparent.webp": {
+      "path": "tests/fixtures/images/webp/transparent.webp",
+      "sha256": "1ebfb232be8f0669147ffd79ac8aebb42bc8f5b178f283d3bd6dc306e316a28e"
+    },
+    "tests/fixtures/images/webp/truncated.webp": {
+      "path": "tests/fixtures/images/webp/truncated.webp",
+      "sha256": "3c31f6cf557a4084929882c24ad4f7751c33743747b75cbe8a08dd023bb5a680"
+    },
+    "tests/fixtures/images/webp/wide.webp": {
+      "path": "tests/fixtures/images/webp/wide.webp",
+      "sha256": "698648f6ca52ae7cfa286c77b4128cc7c4ef2ffbedf8fba6d49a900999c93c91"
     },
     "tests/fixtures/wp7/README.md": {
       "path": "tests/fixtures/wp7/README.md",
@@ -308,15 +764,23 @@
     },
     "tests/fuzz_pipeline.c": {
       "path": "tests/fuzz_pipeline.c",
-      "sha256": "89c3d247868b597f5d29a5626023257d7388d15cf4d292cda9b81d900cbb6cdc"
+      "sha256": "25561f7dad123c27d1bb84fab2eff1617a287f7053ad6c3a382ea536cb5c1b1e"
     },
     "tests/sdk_components/CMakeLists.txt": {
       "path": "tests/sdk_components/CMakeLists.txt",
-      "sha256": "43be89e467d36641c52c13ab9d21dfcb35684c94b6a834d38a4c9d93611ce798"
+      "sha256": "feab15ee6ccca92696d0e9f6ebc28b7c7ce3e0d4cdbd363196aa78d47aa904da"
     },
     "tests/sdk_cpp/CMakeLists.txt": {
       "path": "tests/sdk_cpp/CMakeLists.txt",
       "sha256": "8a06e759e2eb145a634eb75f2a860ded79d58fd1b3450c00dd37d83dbd40d6b5"
+    },
+    "tests/test_cbz.c": {
+      "path": "tests/test_cbz.c",
+      "sha256": "74308de890af4f0ae3149652bf6889f9bf1be84493127554218f5d04f493a051"
+    },
+    "tests/test_cbz_formats.c": {
+      "path": "tests/test_cbz_formats.c",
+      "sha256": "530b607d955900488cf1b5e0bf86ab88f299613acbcb4592d48c43aac0fbc01b"
     },
     "tests/test_convert.c": {
       "path": "tests/test_convert.c",
@@ -328,7 +792,7 @@
     },
     "tests/test_core_component.c": {
       "path": "tests/test_core_component.c",
-      "sha256": "975ac1bf8b5b8b656f574d3f4c326b8936ffe4c24cee12495c7c839807c0c4c3"
+      "sha256": "f2bacaaaef7654ad2238ba85d711dc9f6f23f4fe9ddc68511ce5c5c0eb9d7298"
     },
     "tests/test_export_xml.c": {
       "path": "tests/test_export_xml.c",
@@ -342,21 +806,37 @@
       "path": "tests/test_font_svg.c",
       "sha256": "823d8e07913ee808f34fd127330af57f7f7317446e017fe52d99ffc0fafdb2f9"
     },
+    "tests/test_image_formats.c": {
+      "path": "tests/test_image_formats.c",
+      "sha256": "35dc508251c36c8a328306aff3d2429078b059bd3dd758745807335ce6f32669"
+    },
+    "tests/test_library_component.c": {
+      "path": "tests/test_library_component.c",
+      "sha256": "a9c1e68c93a0e825e5d0c4a7522abe7f56d78f4da312c1f0e211ba788d7634b5"
+    },
+    "tests/test_library_stream.c": {
+      "path": "tests/test_library_stream.c",
+      "sha256": "037a6024fe104a67cb88a793e1bcfbf8c8ae17031c5251c6b23dad3f3638a223"
+    },
     "tests/test_wp7_scripts.c": {
       "path": "tests/test_wp7_scripts.c",
       "sha256": "8a1b6f2e08b59a89c009cb618862c67a5ab4aa3d468fb50aecda23a36fe6e465"
     },
+    "tools/assemble_wp12a_evidence.py": {
+      "path": "tools/assemble_wp12a_evidence.py",
+      "sha256": "ec12b575f39994396da57923ccd7c9ede31e5a5197e40b81bc6422226453ad9e"
+    },
     "tools/check_color_font_reference.py": {
       "path": "tools/check_color_font_reference.py",
-      "sha256": "8fd62c239cf9a74f79c75acdfd82dbf4435b5957bc9a1899b4fe9f1ed6bfc714"
+      "sha256": "4eaaa27e4a8f05abcae738da98a92c5ff6f87c7cf78c67d7280f2f255775e15a"
     },
     "tools/convert.c": {
       "path": "tools/convert.c",
-      "sha256": "19f2cea51aa2577287016817d0183f9f72f0b99acca58fe658627c5ec66a05c1"
+      "sha256": "ec9c0f1055b13f3b572010a7a0ee0ed0bc19d41019e7e4291d542c6b909ef765"
     },
     "tools/convert_io.c": {
       "path": "tools/convert_io.c",
-      "sha256": "fbc9ff7405cc7e0f4598be4e034b3baa6860563d71a2d45df8ffc639e62974de"
+      "sha256": "921620260251f5091016f974430fd0a2fafc151019c50bb63b6c95101a1360bc"
     },
     "tools/convert_io.h": {
       "path": "tools/convert_io.h",
@@ -386,6 +866,14 @@
       "path": "tools/generate_conversion_corpus.py",
       "sha256": "de32413878734fd0181369183a86c4444c7039b1f3c2fc0026a85b5ece01e04f"
     },
+    "tools/generate_image_format_fixtures.py": {
+      "path": "tools/generate_image_format_fixtures.py",
+      "sha256": "e55a6fbf63155746e5e40945e7f652947a6b8720a4788c7f14c277ff91fa852d"
+    },
+    "tools/generate_large_media.py": {
+      "path": "tools/generate_large_media.py",
+      "sha256": "272bc10cfdc9204aa3768de720df89f19fdaa9bd4eb98a18d659b2e163cebbed"
+    },
     "tools/generate_svg_test_fonts.py": {
       "path": "tools/generate_svg_test_fonts.py",
       "sha256": "8346176ab77bde08d328ce325b137074944cc4ee32b8cb6f90feefba95c153dd"
@@ -400,7 +888,7 @@
     },
     "tools/layers.json": {
       "path": "tools/layers.json",
-      "sha256": "b406dbf6349e527f4a50bbbafa0c5e5ff99d00ee9b1bf89a07198d66d3838bd7"
+      "sha256": "9acba24cf6f976577f3d1067b2eb7d5c6518b1c21f70dc070497312fb4fc809b"
     },
     "tools/render_color_font.c": {
       "path": "tools/render_color_font.c",
@@ -409,6 +897,10 @@
     "tools/run_reliability_campaign.py": {
       "path": "tools/run_reliability_campaign.py",
       "sha256": "600d450d3ce55a3f3b7f44b321a21d7b3c9349b952b4f6ac5ac30377e7f7366c"
+    },
+    "tools/wp12a_media_probe.c": {
+      "path": "tools/wp12a_media_probe.c",
+      "sha256": "7e63c7524888ac1b1fc4ff488a525f1672da2dfdb14bc30706763d0a26b0ab99"
     },
     "tools/wp7_sequences.py": {
       "path": "tools/wp7_sequences.py",
@@ -431,18 +923,82 @@
     "covers_later_changes": false
   },
   "joint_suites": {
-    "status": "pending"
+    "status": "pending four-package suite",
+    "prior_three_package_suite": {
+      "passed": 158,
+      "total": 160,
+      "log": {
+        "path": "build/wp7-integration-20261020/final-tests.log",
+        "sha256": "6f840d7fc01193f2a9e635dc88534379eb4e1d48b74115360f79c34242ae1712"
+      },
+      "failed_tests": [
+        "native-convert-cli",
+        "native-fuzz-pipeline-contract"
+      ]
+    },
+    "repair_check": {
+      "passed": 4,
+      "total": 4,
+      "log": {
+        "path": "build/wp7-integration-20261020/repaired-tests.log",
+        "sha256": "617399ffea778b84d6d262e23b45c3abc6250b337a5e0870885c78b1c5f278b5"
+      },
+      "scope": "Includes fixture generation, CLI cancellation, SVG boundary and font pipeline contract; before WP12a"
+    }
   },
   "reference_rerun": {
-    "status": "pending",
+    "status": "passed",
+    "passed": 56,
+    "total": 56,
     "original_records_preserved": true,
-    "tolerances_changed": false
+    "tolerances_changed": false,
+    "report": {
+      "path": "build/wp7-integration-20261020/reference-r3/reference.json",
+      "sha256": "9d4387667e9b3cf75ceeafc52186ee146a7fde0f9a0b874036a50f0530c83053"
+    },
+    "log": {
+      "path": "build/wp7-integration-20261020/reference-check-r3.log",
+      "sha256": "4f91b1d199c85d303c78e17717c134eeb2dff10c53dd1787a73a46f61a513f89"
+    },
+    "scope": "Final WP8 fixtures and mainline font renderer before WP12a integration; image formats integration requires separate regression",
+    "failed_attempt_logs": [
+      {
+        "path": "build/wp7-integration-20261020/reference-check.log",
+        "sha256": "c22290d015040e490f843eb30b4489a2817282bae4df7a3df289fa54b4e01c7b"
+      },
+      {
+        "path": "build/wp7-integration-20261020/reference-check-r2.log",
+        "sha256": "015a7fc2f22b3c2cbcc7f88501514cb2a112aa9213a3dda1fa7bef4499a03ff7"
+      }
+    ]
   },
   "installed_consumption": {
     "status": "pending"
   },
   "ci": {
-    "status": "pending"
+    "status": "pending four-package source",
+    "prior_run": {
+      "id": 39502831145,
+      "source_sha": "bdf5b62",
+      "accepted": false,
+      "logs": [
+        {
+          "path": "build/wp7-integration-20261020/ci-sanitizers-job.log",
+          "sha256": "5893f1c377d13e39e1574858d1458255f86b047d68e0caa2f8994e41633fccd0"
+        },
+        {
+          "path": "build/wp7-integration-20261020/ci-linux-job.log",
+          "sha256": "473cbc7762fdc2fcc1c37c693f02a9771f9a932854448b90a49c8dcf93a6ede2"
+        }
+      ],
+      "classification": "POSIX declarations missing in converter; no Linux acceptance from this run",
+      "status": "completed",
+      "conclusion": "failure",
+      "status_record": {
+        "path": "build/wp7-integration-20261020/ci-status-final-first-run.json",
+        "sha256": "e83091b3d02afedae66ba1921a201dfb7705d38b970f59164f2db98190600698"
+      }
+    }
   },
   "linux_asan_ubsan": {
     "status": "pending",
@@ -455,5 +1011,14 @@
     "Final engine-source four-target 24 CPU hour reliability acceptance",
     "WP16 final package/platform ledger on final source"
   ],
-  "complete": false
+  "complete": false,
+  "library_version": "3.34.0",
+  "mainline_wp12a_repair": {
+    "passed": true,
+    "log": {
+      "path": "build/wp7-integration-20261020/stream-repair.log",
+      "sha256": "4571c4539685b8c86083259661733e3da5677ff8a7dd195e68c94b754d41c218"
+    },
+    "scope": "Unique cancellation and source failure rollback, failed file-import output, old-prefix fixed options and stored-PDF cancellation"
+  }
 }
