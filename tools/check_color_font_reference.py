@@ -45,7 +45,8 @@ def glyph_names(path):
 
 def colrv1_scenes():
     order, by_name = glyph_names(FONTS / 'colrv1.ttf')
-    skip = {'composite_src', 'composite_clear', 'cycle', 'palette_oob', 'deep', 'many', 'outline_only'}
+    skip = {'composite_src', 'composite_clear', 'cycle', 'palette_oob', 'deep', 'many',
+            'many_stops', 'missing_colr_glyph', 'bad_clipbox', 'outline_only'}
     scenes = []
     for name in order[7:]:
         if name in skip or name not in by_name:

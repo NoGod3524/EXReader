@@ -78,7 +78,21 @@ SCENES = {
 SHARED = ('<g id="glyph{first}"><rect x="100" y="100" width="800" height="800" fill="#c02020"/></g>'
           '<g id="glyph{second}"><circle cx="500" cy="500" r="300" fill="#2020c0"/></g>')
 
-ORDER = ['.notdef', 'space'] + list(SCENES.keys()) + ['shared_a', 'shared_b']
+# Appended after the shared-document glyphs so existing glyph IDs stay stable.
+EXTRA_SCENES = {
+    'bad_attrs': doc('<rect ' + ' '.join(f'data-a{i}="1"' for i in range(25)) +
+                     ' x="100" y="100" width="800" height="800"/>'),
+    'bad_attr_size': doc('<rect x="100" y="100" width="800" height="800" fill="' +
+                         'a' * 600 + '"/>'),
+    'bad_viewbox': doc('<rect x="100" y="100" width="800" height="800"/>',
+                       view_box='0 0 1000'),
+    'bad_circle': doc('<circle cx="500" cy="500" r="0" fill="#ff0000"/>'),
+    'bad_dash': doc('<line x1="100" y1="500" x2="900" y2="500" stroke="#000" '
+                    'stroke-dasharray="10 10"/>'),
+    'bad_segments': doc('<path d="M0 0' + 'l1 0' * 70000 + '" fill="none" stroke="#000"/>'),
+}
+
+ORDER = ['.notdef', 'space'] + list(SCENES.keys()) + ['shared_a', 'shared_b'] + list(EXTRA_SCENES.keys())
 
 
 def empty_glyph():
@@ -107,13 +121,13 @@ def main():
     glyphs = font.font.getReverseGlyphMap()
     svg = table_S_V_G_()
     docs = []
-    for name, body in SCENES.items():
+    for name, body in {**SCENES, **EXTRA_SCENES}.items():
         gid = glyphs[name]
         docs.append(SVGDocument(body, gid, gid, compressed=(name == 'gzip_rect')))
     first, second = glyphs['shared_a'], glyphs['shared_b']
     shared = doc(SHARED.format(first=first, second=second))
     docs.append(SVGDocument(shared, first, second, compressed=False))
-    svg.docList = docs
+    svg.docList = sorted(docs, key=lambda item: item.startGlyphID)
     font.font['SVG '] = svg
     font.font['head'].created = font.font['head'].modified = 2082844800
     font.font.recalcTimestamp = False
@@ -125,7 +139,8 @@ def main():
         'glyphs': {name: glyphs[name] for name in ORDER},
         'scenes': sorted(SCENES),
         'shared': {'first': first, 'second': second, 'doc': shared},
-        'rejections': sorted(n for n in SCENES if n.startswith('bad_')),
+        'extra': sorted(EXTRA_SCENES),
+        'rejections': sorted(n for n in {**SCENES, **EXTRA_SCENES} if n.startswith('bad_')),
     }
     (ROOT / 'svgfont.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     print(path.name, path.stat().st_size, manifest['sha256'])

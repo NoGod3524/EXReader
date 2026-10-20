@@ -105,9 +105,10 @@ FreeType resolves `PaintVar*` values and `VarColorLine`/colour-stop deltas
 against the face's active design coordinates (set through
 `exr_font_create_variable`). EXReader adds no interpolation of its own.
 `exr_font_color_info_get().variable` is set when the COLR v1 header has a
-non-zero variation index map or item variation store. The variable fixture
-uses a `PaintVarSolid` alpha delta: alpha is 0.25 at wght=400 and 0.75 at
-wght=900; both are asserted by `native-font-color-v1`.
+non-zero variation index map or item variation store. The variable fixture uses two shared variation items: a `PaintVarSolid`
+alpha delta (alpha 0.25 at wght=400, 0.75 at wght=900) and a
+`PaintVarTranslate` dx delta (+200 font units at wght=900). Both, and the
+unaffected static control, are asserted by `native-font-color-v1`.
 
 ## Limits, cancellation and ownership
 
@@ -118,6 +119,9 @@ wght=900; both are asserted by `native-font-color-v1`.
 | Colour stops per gradient | 256 | `EXR_LIMIT` |
 | Nested `PaintColrGlyph` recursion | 16 | `EXR_LIMIT` |
 | Cyclic `PaintColrGlyph` | detected | `EXR_FONT` |
+| Broken child paint offset / missing nested glyph | table bounds checked | `EXR_FONT` |
+| Invalid stop offset / zero stops | rejected | `EXR_FONT` |
+| Invalid clip box | rejected | `EXR_FONT` |
 | Glyph surface | 8192 px per side, 8 Mi pixels | `EXR_LIMIT` |
 | Shared raster work | 256 MiB units per page | `EXR_LIMIT` |
 | Cancellation | polled per 64 nodes, per outline block and per canvas row | `EXR_CANCELLED` |
@@ -138,9 +142,11 @@ exceed the per-glyph surface limits are rejected rather than silently clipped.
 
 - `native-font-color-v1`: palette/foreground, all paint families, transforms,
   gradients, composites, variable instance, orientation/sideways clipping,
-  decoration, failures (`cycle`, `palette_oob`, `deep`, `many`,
-  `composite_src`, `composite_clear`), cancellation, pager/layout/hit
-  identity. 167 assertions.
+  decoration, failures (`cycle`, `palette_oob`, `deep`, `many`, `many_stops`,
+  `missing_colr_glyph`, `bad_clipbox`, `composite_src`, `composite_clear`),
+  byte-level malformed paints (unknown format, broken child offset, stop
+  offset > 1, unknown composite mode), cancellation, page-cache/checkpoint
+  recovery, pager/layout/hit identity. 259 assertions.
 - `native-font-color`: existing COLR v0/sbix/CBDT/cmap14 regression.
 - `tools/generate_colrv1_test_fonts.py` builds `colrv1.ttf` and
   `colrv1-var.ttf`; hashes are recorded in
