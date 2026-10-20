@@ -2,6 +2,9 @@
 #if !defined(_WIN32) && !defined(_XOPEN_SOURCE)
 #define _XOPEN_SOURCE 700
 #endif
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE
+#endif
 #include "convert_io.h"
 #include <errno.h>
 #include <stdio.h>
@@ -549,8 +552,13 @@ int cv_publish(const char *temp, const char *target, int overwrite, char **error
 }
 size_t cv_peak_rss(void) {
   struct rusage usage;
-  if (getrusage(RUSAGE_SELF, &usage) == 0)
+  if (getrusage(RUSAGE_SELF, &usage) == 0) {
+#ifdef __APPLE__
+    return (size_t)usage.ru_maxrss;
+#else
     return (size_t)usage.ru_maxrss * 1024u;
+#endif
+  }
   return 0;
 }
 int cv_file_size(const char *path, uint64_t *size, char **error) {
