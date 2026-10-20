@@ -1,0 +1,311 @@
+{
+  "package": "WP8",
+  "feature": "COLR v1",
+  "branch": "codex/wp8-color-fonts",
+  "sdk_version": "3.38.1 (global version not changed by this branch)",
+  "abi_epoch": 1,
+  "library_schema": 6,
+  "freetype": "VER-2-15-0, FT_DISABLE_HVF=ON, TT_CONFIG_OPTION_COLOR_LAYERS",
+  "fixtures": {
+    "tests/fixtures/fonts/colrv1.ttf": {
+      "sha256": "ebb3c338b6190b97650aed862c118e2b56f86bf6a96d61f20f0da972cc1181a6",
+      "bytes": 5148
+    },
+    "tests/fixtures/fonts/colrv1-var.ttf": {
+      "sha256": "84e96a6f7c32cc44b72ba53f598caf2df529a8a291998b3f9b9884119088291e",
+      "bytes": 1396
+    }
+  },
+  "generators": {
+    "tools/generate_colrv1_test_fonts.py": {
+      "sha256": "ac268b6686be90a3bd23b060431802cdd0ac62c7029c074d590fc23580ceaf36",
+      "dependency": "fontTools 4.63.0 (developer only)"
+    }
+  },
+  "paint_formats": {
+    "1 PaintColrLayers": {
+      "status": "supported",
+      "positive": [
+        "layers",
+        "layers_overlap"
+      ]
+    },
+    "2 PaintSolid": {
+      "status": "supported",
+      "positive": [
+        "solid",
+        "solid_fg",
+        "solid_half"
+      ]
+    },
+    "3 PaintVarSolid": {
+      "status": "supported",
+      "positive": [
+        "var_solid"
+      ],
+      "note": "resolved by FreeType"
+    },
+    "4 PaintLinearGradient": {
+      "status": "supported",
+      "positive": [
+        "linear",
+        "linear_p2",
+        "linear_shear"
+      ]
+    },
+    "5 PaintVarLinearGradient": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType; matrix slot declared"
+    },
+    "6 PaintRadialGradient": {
+      "status": "supported",
+      "positive": [
+        "radial",
+        "radial_offset"
+      ]
+    },
+    "7 PaintVarRadialGradient": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "8 PaintSweepGradient": {
+      "status": "supported",
+      "positive": [
+        "sweep"
+      ]
+    },
+    "9 PaintVarSweepGradient": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "10 PaintGlyph": {
+      "status": "supported",
+      "positive": [
+        "solid",
+        "clipbox"
+      ]
+    },
+    "11 PaintColrGlyph": {
+      "status": "supported",
+      "positive": [
+        "colr_glyph"
+      ],
+      "negative": [
+        "cycle"
+      ]
+    },
+    "12 PaintTransform": {
+      "status": "supported",
+      "positive": [
+        "transform"
+      ]
+    },
+    "13 PaintVarTransform": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "14 PaintTranslate": {
+      "status": "supported",
+      "positive": [
+        "translate"
+      ]
+    },
+    "15 PaintVarTranslate": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "16 PaintScale": {
+      "status": "supported",
+      "positive": [
+        "scale"
+      ]
+    },
+    "17 PaintVarScale": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "18 PaintScaleAroundCenter": {
+      "status": "supported",
+      "positive": [
+        "scale_center"
+      ]
+    },
+    "19 PaintVarScaleAroundCenter": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "20 PaintScaleUniform": {
+      "status": "supported",
+      "positive": [
+        "scale_uniform"
+      ]
+    },
+    "21 PaintVarScaleUniform": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "22 PaintScaleUniformAroundCenter": {
+      "status": "supported",
+      "positive": [
+        "scale_center"
+      ]
+    },
+    "23 PaintVarScaleUniformAroundCenter": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "24 PaintRotate": {
+      "status": "supported",
+      "positive": [
+        "rotate"
+      ]
+    },
+    "25 PaintVarRotate": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "26 PaintRotateAroundCenter": {
+      "status": "supported",
+      "positive": [
+        "rotate_center",
+        "rotate_half"
+      ]
+    },
+    "27 PaintVarRotateAroundCenter": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "28 PaintSkew": {
+      "status": "supported",
+      "positive": [
+        "skew",
+        "skew_y"
+      ]
+    },
+    "29 PaintVarSkew": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "30 PaintSkewAroundCenter": {
+      "status": "supported",
+      "positive": [
+        "skew"
+      ]
+    },
+    "31 PaintVarSkewAroundCenter": {
+      "status": "supported",
+      "positive": [],
+      "note": "resolved by FreeType"
+    },
+    "32 PaintComposite": {
+      "status": "partial",
+      "positive": [
+        "composite_normal",
+        "composite_multiply",
+        "composite_screen",
+        "composite_difference",
+        "composite_luminosity"
+      ],
+      "negative": [
+        "composite_src",
+        "composite_clear"
+      ]
+    }
+  },
+  "composites": {
+    "supported": [
+      "SRC_OVER",
+      "SCREEN",
+      "OVERLAY",
+      "DARKEN",
+      "LIGHTEN",
+      "COLOR_DODGE",
+      "COLOR_BURN",
+      "HARD_LIGHT",
+      "SOFT_LIGHT",
+      "DIFFERENCE",
+      "EXCLUSION",
+      "MULTIPLY",
+      "HSL_HUE",
+      "HSL_SATURATION",
+      "HSL_COLOR",
+      "HSL_LUMINOSITY"
+    ],
+    "rejected": {
+      "modes": [
+        "CLEAR",
+        "SRC",
+        "DEST",
+        "DEST_OVER",
+        "SRC_IN",
+        "DEST_IN",
+        "SRC_OUT",
+        "DEST_OUT",
+        "SRC_ATOP",
+        "DEST_ATOP",
+        "XOR",
+        "PLUS"
+      ],
+      "status": "EXR_UNSUPPORTED"
+    }
+  },
+  "limits": {
+    "depth": 64,
+    "nodes_per_pass": 4096,
+    "color_stops": 256,
+    "nested_color_glyphs": 16,
+    "surface_max_side_px": 8192,
+    "surface_max_pixels": 8388608,
+    "shared_work_units": 268435456,
+    "cancellation": "per 64 nodes, per outline block, per canvas row"
+  },
+  "observed_failures": {
+    "cycle": "EXR_FONT",
+    "palette_oob": "EXR_FONT",
+    "deep": "EXR_LIMIT",
+    "many": "EXR_LIMIT",
+    "composite_src": "EXR_UNSUPPORTED",
+    "composite_clear": "EXR_UNSUPPORTED",
+    "size_4000": "EXR_LIMIT"
+  },
+  "variable": {
+    "axis": "wght 100..900, default 400",
+    "mechanism": "FreeType resolves PaintVarSolid and colour-stop deltas at the face coordinates",
+    "observed_alpha": {
+      "wght=400": 0.25,
+      "wght=900": 0.75
+    },
+    "static_control": "static PaintSolid stays at alpha 0.25 at both coordinates"
+  },
+  "tests": {
+    "native-font-color-v1": {
+      "assertions": 167,
+      "result": "pass"
+    },
+    "native-font-color": {
+      "result": "pass",
+      "note": "COLR v0/sbix/CBDT/cmap14"
+    }
+  },
+  "reference": "docs/validation/wp8-reference.json",
+  "reference_tools": {
+    "tools/check_color_font_reference.py": {
+      "sha256": "3bb6c328a7d328443937a38d8666724e683318b90d51a886cfbdd3bda5e0aa5c"
+    },
+    "tools/render_color_font.c": {
+      "sha256": "0758afaa9c9187bfe6d287e27552cf714ed7da6cad13c21df8d488a1b8ba472a"
+    }
+  }
+}

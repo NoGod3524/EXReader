@@ -267,6 +267,33 @@ static exr_status draw_bitmap_glyph(exr_bitmap *out,const exr_glyph *g,const exr
   }
   return EXR_OK;
 }
+static exr_status draw_color_surface(exr_bitmap *out,const exr_glyph *g,const exr_color_surface *surface,
+                                     size_t *work,const exr_control *control,exr_error *error) {
+  const exr_bitmap *src=&surface->bitmap; unsigned fg=g->color&255,x,y;
+  int sideways=!!(g->flags&EXR_GLYPH_SIDEWAYS);
+  int left=sideways ? (int)lroundf(g->x+g->offset_y)-(int)lroundf(surface->top)-1
+                    : (int)lroundf(g->x+g->offset_x)+(int)lroundf(surface->left);
+  int top=sideways ? (int)lroundf(g->baseline+g->offset_x)+(int)lroundf(surface->left)
+                   : (int)lroundf(g->baseline-g->offset_y)+(int)lroundf(surface->top);
+  if(!src->pixels || !fg) return EXR_OK;
+  if(!exr_vector_work(work,(size_t)src->width*src->height)) return exr_fail(error,EXR_LIMIT,"Color glyph paint work exceeds budget");
+  for(y=0;y<src->height;y++) {
+    if(!(y&63) && exr_control_cancel(control,error)!=EXR_OK) return EXR_CANCELLED;
+    for(x=0;x<src->width;x++) {
+      const unsigned char *p=src->pixels+(size_t)y*src->stride+(size_t)x*4;
+      unsigned alpha=(unsigned)p[3]*fg/255;
+      int dx,dy; float inline_position;
+      if(!alpha) continue;
+      if(sideways) { dx=left-(int)y; dy=top+(int)x; }
+      else { dx=left+(int)x; dy=top+(int)y; }
+      if(dx<0 || dy<0 || (uint32_t)dx>=out->width || (uint32_t)dy>=out->height) continue;
+      inline_position=(float)((g->flags&EXR_GLYPH_VERTICAL) ? dy : dx);
+      if(inline_position<g->clip_left || inline_position>=g->clip_right) continue;
+      exr_pixel(out,dx,dy,((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|alpha,255);
+    }
+  }
+  return EXR_OK;
+}
 static exr_status draw_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,const exr_glyph *next,const exr_line *line,
                              size_t *work,const exr_control *control,exr_error *error) {
   exr_font_color_layer layers[256]; exr_glyph_image image={0}; size_t n=0,i; exr_status status;
@@ -277,6 +304,22 @@ static exr_status draw_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,c
     status=draw_bitmap_glyph(out,g,&image,work,control,error); exr_bitmap_free(&image.bitmap); if(status!=EXR_OK) return status;
     if(image.flags&EXR_GLYPH_IMAGE_OUTLINE_OVERLAY) { status=draw_single_glyph(out,font,g,1,work,control,error); if(status!=EXR_OK) return status; }
     goto decorations;
+  }
+  { exr_color_surface color={0};
+    status=exr_font_colrv1(font->faces+g->font_index,g->glyph,g->size,g->color,&color,work,control,error);
+    if(status!=EXR_OK) return status;
+    if(color.bitmap.pixels) {
+      status=draw_color_surface(out,g,&color,work,control,error); exr_bitmap_free(&color.bitmap);
+      if(status!=EXR_OK) return status;
+      goto decorations;
+    }
+    status=exr_font_svg(font->faces+g->font_index,g->glyph,g->size,g->color,&color,work,control,error);
+    if(status!=EXR_OK) return status;
+    if(color.bitmap.pixels) {
+      status=draw_color_surface(out,g,&color,work,control,error); exr_bitmap_free(&color.bitmap);
+      if(status!=EXR_OK) return status;
+      goto decorations;
+    }
   }
   status=exr_font_colr(font->faces+g->font_index,g->glyph,0,g->color,layers,&n,work); if(status!=EXR_OK) return status;
   if(n) for(i=0;i<n;i++) {
