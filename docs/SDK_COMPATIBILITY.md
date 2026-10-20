@@ -679,3 +679,6 @@ signatures remain unchanged. Hosts need no migration; rebuild and select the
 new exact package version as shown above. The 32 MiB ZIP member and 128 MiB
 aggregate expansion limits are unchanged. This removes an extraction copy;
 it does not provide a bounded chapter window or random-access chapter parser.
+The installed SDK now includes `docs/SUPPORT_MATRIX.md`; component-consumer
+configuration rejects a package that omits it. Existing binaries and ABI are
+unchanged by this packaging correction.
