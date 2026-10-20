@@ -95,8 +95,8 @@ License 1.1；完整许可 `licenses/noto-sans-test-fonts.txt`。合成字体为
   等带 Thai GSUB 的字体不受影响。
 - Khmer/Myanmar 的 broken cluster 当前不自动插入 dotted circle；固定 50
   序列不含孤立组合标记。
-- Malayalam `U+0D4E` dot repha 的排序与 HarfBuzz 一致，但 GPOS y offset
-  仍有一次差异（不在固定 50 序列中）；作为后续修正项保留。
+- Malayalam `U+0D4E` dot repha 不在固定 50 序列中，但另有专项回归：
+  排序、advance 与 GPOS offset 均与 HarfBuzz 14.6.0 在固定容差内一致。
 - 未实现 Zawgyi、Sinhala、Gurmukhi/Gujarati/Oriya 的专属验收；本包只声明
   第 1 节八个脚本。
 - 未改 ABI1/schema6、未改公开结构布局、未改全局版本；HarfBuzz 不进入运行依赖。

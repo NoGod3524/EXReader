@@ -32,7 +32,7 @@
   },
   "wp7_test": {
     "name": "native-wp7",
-    "checks": 18745,
+    "checks": 18750,
     "reference_cases": 800,
     "real_font_cases": 400,
     "synthetic_font_cases": 400
@@ -221,7 +221,7 @@
   "known_limits": [
     "Thai/Lao legacy PUA fallback not implemented; Unicode SARA AM decomposition is implemented and Noto/GSUB fonts are covered.",
     "Khmer/Myanmar broken clusters do not synthesize a dotted circle in this branch.",
-    "Malayalam U+0D4E dot repha orders correctly but one GPOS y-offset differs from HarfBuzz; it is outside the fixed 50-sequence corpus.",
+    "Malayalam U+0D4E dot repha is covered by a separate regression outside the 50-sequence corpus and matches HarfBuzz within the fixed metric tolerance.",
     "Only the eight declared scripts are covered; other Indic/SEA scripts remain outside this package."
   ],
   "files": [
