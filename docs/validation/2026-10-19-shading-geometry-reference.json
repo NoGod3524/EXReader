@@ -1,0 +1,1821 @@
+{
+  "reference": "MuPDF 1.28.2",
+  "max_difference_from_decimal": {
+    "current": 1,
+    "mupdf": 255,
+    "baseline": 255,
+    "poppler_white": 63
+  },
+  "max_difference_by_probe_class": {
+    "radial-root": {
+      "current": 0,
+      "mupdf": 8,
+      "baseline": 255,
+      "poppler_white": 8
+    },
+    "scaled-large-radial": {
+      "current": 0,
+      "mupdf": 255,
+      "baseline": 0,
+      "poppler_white": 63
+    },
+    "bbox": {
+      "current": 1,
+      "mupdf": 9,
+      "baseline": 255,
+      "poppler_white": 7
+    }
+  },
+  "baseline_failed_renderings": 4,
+  "poppler_version": "pdftoppm version 26.07.0\r\nCopyright 2005-2026 The Poppler Developers - http://poppler.freedesktop.org\r\nCopyright 1996-2011, 2022 Glyph & Cog, LLC",
+  "library_sha256": "c497fe61531f7fb6b7e3e0a29e607e528a97f5201c3b3a991a132a49724cda45",
+  "baseline_sha256": "7ac9d16a1401fc0fc379d31de639708225fecd144d09c69abaad8b02625a6c7e",
+  "scenes": [
+    {
+      "file": "shading-geometry-0.pdf",
+      "sha256": "0251e26020416632644c66a0c0f4421828ba6eddc21aed2b58bb5bf37d466d66",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "radial-root",
+      "rgba": [
+        199,
+        199,
+        199,
+        255
+      ],
+      "premultiplied": [
+        199,
+        199,
+        199,
+        255
+      ],
+      "white": [
+        199,
+        199,
+        199,
+        255
+      ],
+      "tolerance": 3,
+      "additional_probes": [],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              199,
+              199,
+              199,
+              255
+            ],
+            "mupdf": [
+              191,
+              192,
+              191,
+              255
+            ],
+            "baseline": [
+              72,
+              72,
+              72,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 8,
+            "baseline": 127
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              199,
+              199,
+              199,
+              255
+            ],
+            "mupdf": [
+              191,
+              192,
+              191
+            ],
+            "baseline": [
+              72,
+              72,
+              72,
+              255
+            ],
+            "poppler_white": [
+              191,
+              191,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 8,
+            "baseline": 127,
+            "poppler_white": 8
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-1.pdf",
+      "sha256": "b048a7304f8739982cf1357ea40bcd1e8d295032faa90f726583d701f99ffb1a",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "radial-root",
+      "rgba": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "tolerance": 3,
+      "additional_probes": [],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-2.pdf",
+      "sha256": "01d3a5108f0a8ec8889837237f1839562158f39fa4dbbf5fb26215815b22c5e3",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "radial-root",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "tolerance": 3,
+      "additional_probes": [],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-3.pdf",
+      "sha256": "e41a5e35ea5a18b0c3d4e3013a985520acc94b9dede88979768b24c77695cc7c",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "radial-root",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "tolerance": 0,
+      "additional_probes": [],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-4.pdf",
+      "sha256": "bc31c5534b3745e44f66753a24ecc7903455e5149b6c2d7e7c7e730dbd59ec82",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "radial-root",
+      "rgba": [
+        68,
+        68,
+        68,
+        255
+      ],
+      "premultiplied": [
+        68,
+        68,
+        68,
+        255
+      ],
+      "white": [
+        68,
+        68,
+        68,
+        255
+      ],
+      "tolerance": 3,
+      "additional_probes": [],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              68,
+              68,
+              68,
+              255
+            ],
+            "mupdf": [
+              64,
+              65,
+              64,
+              255
+            ],
+            "baseline": [
+              68,
+              68,
+              68,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 4,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              68,
+              68,
+              68,
+              255
+            ],
+            "mupdf": [
+              64,
+              65,
+              64
+            ],
+            "baseline": [
+              68,
+              68,
+              68,
+              255
+            ],
+            "poppler_white": [
+              64,
+              64,
+              64,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 4,
+            "baseline": 0,
+            "poppler_white": 4
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-5.pdf",
+      "sha256": "0f6c3466a5521a89361205682e85208e5b81bf52a89d87c9378931dc867417e2",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "radial-root",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "tolerance": 0,
+      "additional_probes": [],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Degenerate PDF radial shading",
+        "white": "Degenerate PDF radial shading"
+      }
+    },
+    {
+      "file": "shading-geometry-6.pdf",
+      "sha256": "8039a79780f34037d8de8b9093cc23d55e6110b8ab404ad0dc90b12e44cca1bb",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "radial-root",
+      "rgba": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "premultiplied": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "tolerance": 3,
+      "additional_probes": [],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-7.pdf",
+      "sha256": "1992f9a529709d9689e136d4695cdba82fd874b39ef7d9f1747b1097ce132316",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "scaled-large-radial",
+      "rgba": [
+        192,
+        192,
+        192,
+        255
+      ],
+      "premultiplied": [
+        192,
+        192,
+        192,
+        255
+      ],
+      "white": [
+        192,
+        192,
+        192,
+        255
+      ],
+      "tolerance": 3,
+      "additional_probes": [],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              192,
+              192,
+              192,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              192,
+              192,
+              192,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 63,
+            "poppler_white": 63
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "PDF integer overflow",
+        "white": "PDF integer overflow"
+      }
+    },
+    {
+      "file": "shading-geometry-8.pdf",
+      "sha256": "9714c750487de3ae6d0aca351881d4d4285a39d499f37d5c3bc6fd204f4206e6",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "bbox",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "tolerance": 3,
+      "additional_probes": [
+        [
+          1,
+          1,
+          255,
+          0
+        ]
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              135,
+              136,
+              135,
+              255
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              135,
+              136,
+              135
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-9.pdf",
+      "sha256": "7c42fcf4c252d151a2058e7440b37a17a3412b30e7304197e42c2a66df6c24a7",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "bbox",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "tolerance": 3,
+      "additional_probes": [
+        [
+          1,
+          1,
+          255,
+          0
+        ]
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              135,
+              136,
+              135,
+              255
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              135,
+              136,
+              135
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-10.pdf",
+      "sha256": "2be07fcac4c8cf16ad3998313b84a02b15bfde8aa1ae2c3114ee3c62c39f921a",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "bbox",
+      "rgba": [
+        77,
+        77,
+        77,
+        255
+      ],
+      "premultiplied": [
+        77,
+        77,
+        77,
+        255
+      ],
+      "white": [
+        77,
+        77,
+        77,
+        255
+      ],
+      "tolerance": 3,
+      "additional_probes": [
+        [
+          1,
+          1,
+          255,
+          0
+        ]
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              77,
+              77,
+              77,
+              255
+            ],
+            "mupdf": [
+              75,
+              76,
+              75,
+              255
+            ],
+            "baseline": [
+              77,
+              77,
+              77,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 2,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              77,
+              77,
+              77,
+              255
+            ],
+            "mupdf": [
+              75,
+              76,
+              75
+            ],
+            "baseline": [
+              77,
+              77,
+              77,
+              255
+            ],
+            "poppler_white": [
+              73,
+              73,
+              73,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 2,
+            "baseline": 0,
+            "poppler_white": 4
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-11.pdf",
+      "sha256": "2b82255d6a1e63d1a19e67ac528b9bce1b5cbc2d23fe4596bab60bcdf4df7be7",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "bbox",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "tolerance": 3,
+      "additional_probes": [
+        [
+          1,
+          1,
+          255,
+          0
+        ]
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126,
+              255
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 9,
+            "baseline": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 9,
+            "baseline": 1,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-12.pdf",
+      "sha256": "a51bfad83419b717a4e6dee528143d91dd4954004250df95bd4b1a441b222696",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "bbox",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "tolerance": 3,
+      "additional_probes": [
+        [
+          1,
+          1,
+          255,
+          0
+        ]
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 119,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-13.pdf",
+      "sha256": "452be78372c19efb420ffd3691458e9e3f0a6ef9cd4c26844dfa5245b13f8e88",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "bbox",
+      "rgba": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "white": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "tolerance": 0,
+      "additional_probes": [
+        [
+          1,
+          1,
+          0,
+          0
+        ]
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "mupdf": [
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "poppler_white": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 0,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-14.pdf",
+      "sha256": "2d93f0da43d4508e45d4cee8b00ac70c14580bf56c41d6458e54a1d04d9b8430",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "bbox",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "tolerance": 1,
+      "additional_probes": [
+        [
+          1,
+          1,
+          255,
+          0
+        ]
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              135,
+              136,
+              135,
+              255
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              135,
+              136,
+              135
+            ],
+            "baseline": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 1,
+            "baseline": 1,
+            "poppler_white": 7
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-15.pdf",
+      "sha256": "8d32b365e1ab6d5d6a1e71f10f3cf2bb76bfd34776fea8d54406c451206bcb36",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "bbox",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "tolerance": 0,
+      "additional_probes": [
+        [
+          1,
+          1,
+          0,
+          3
+        ]
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-16.pdf",
+      "sha256": "10937bb02220f66f27975f964f49bafd0facf7930617f523f119ec8cd136b512",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "bbox",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "tolerance": 0,
+      "additional_probes": [
+        [
+          1,
+          1,
+          0,
+          3
+        ]
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-17.pdf",
+      "sha256": "623e93ee3a5461af8bc59c15b866d403d559cd4978990c622a6bca953b9d71e7",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "bbox",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "tolerance": 0,
+      "additional_probes": [
+        [
+          1,
+          1,
+          0,
+          3
+        ]
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255,
+            "poppler_white": 0
+          }
+        }
+      }
+    },
+    {
+      "file": "shading-geometry-18.pdf",
+      "sha256": "09b8f2d041f398227c9b3ce3f410ca8c8859c97e18c652e5db6ff0cb4c6c4c7e",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "bbox",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "tolerance": 0,
+      "additional_probes": [
+        [
+          1,
+          1,
+          0,
+          3
+        ]
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "baseline": [
+              0,
+              0,
+              0,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "baseline": 255,
+            "poppler_white": 0
+          }
+        }
+      }
+    }
+  ]
+}

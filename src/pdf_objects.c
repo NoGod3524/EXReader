@@ -172,8 +172,16 @@ static uint32_t parse_value(parser *p,unsigned depth) {
   if(!digits || (p->at<p->size && !delimiter(p->data[p->at]))) goto bad;
   end=p->at;
   if(!real && !negative && n<=PDF_MAX_OBJECTS) {
-    uint64_t generation;
-    if(integer_token(p,&generation) && generation<=65535 && word(p,"R")) {
+    uint64_t generation=0;int valid=1;size_t start;
+    /* This is speculative reference lookahead: the next token may instead be
+       a real with hundreds of digits. Do not run the checked integer parser. */
+    if(!skip(p)) return EXR_PDF_NONE;
+    start=p->at;
+    while(p->at<p->size && p->data[p->at]>='0' && p->data[p->at]<='9') {
+      generation=generation*10+(p->data[p->at++]-'0');
+      if(generation>65535 || p->at-start>384) { valid=0;break; }
+    }
+    if(valid && p->at>start && (p->at==p->size || delimiter(p->data[p->at])) && word(p,"R")) {
       id=value_new(f,EXR_PDF_REF);
       if(id!=EXR_PDF_NONE) { f->values[id].u.ref.object=(uint32_t)n; f->values[id].u.ref.generation=(uint32_t)generation; }
       return id;

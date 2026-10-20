@@ -167,9 +167,36 @@ static void shading_budget(const char *dir) {
   }
   free(pages);exr_pdf_close(file);free(data);
 }
+typedef struct { unsigned depth,saves,restores,clips,shadings,fail; } shading_scope;
+static exr_status scope_state(void *ctx,exr_draw_state state,exr_error *e) {
+  shading_scope *s=ctx;(void)e;
+  if(state==EXR_DRAW_SAVE) { s->saves++;s->depth++; }
+  else if(state==EXR_DRAW_RESTORE) { CHECK(s->depth);s->restores++;s->depth--; }
+  return EXR_OK;
+}
+static exr_status scope_clip(void *ctx,const exr_path_segment *p,size_t n,const double m[6],exr_fill_rule rule,unsigned accumulate,exr_error *e) {
+  shading_scope *s=ctx;(void)m;(void)e;CHECK(p && n==5 && rule==EXR_FILL_NONZERO && !accumulate && s->depth==1);s->clips++;
+  return s->fail==1 ? EXR_CANCELLED : EXR_OK;
+}
+static exr_status scope_shading(void *ctx,const exr_bitmap *b,const double m[6],exr_error *e) {
+  shading_scope *s=ctx;(void)m;(void)e;CHECK(b && b->pixels && s->depth==1);s->shadings++;
+  return s->fail==2 ? EXR_CANCELLED : EXR_OK;
+}
+static void shading_cleanup(const char *dir) {
+  exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;size_t size,count;
+  unsigned char *data=load(dir,"pdf-color/shading-geometry-8.pdf",&size);exr_draw_sink_ex sink={0};
+  OK(exr_pdf_open(data,size,&file,&error));OK(exr_pdf_pages(file,&pages,&count,&error));
+  sink.struct_size=sizeof(sink);sink.base.state=scope_state;sink.base.clip=scope_clip;sink.shading=scope_shading;
+  for(unsigned fail=0;fail<3;fail++) {
+    shading_scope s={0};s.fail=fail;sink.base.context=&s;
+    CHECK(exr_pdf_paint_content_ex(file,pages[0].resources,"/Sh sh",6,NULL,&sink,NULL,NULL,NULL,NULL,NULL,&error)==(fail ? EXR_CANCELLED : EXR_OK));
+    CHECK(s.saves==1 && s.restores==1 && !s.depth && s.clips==1 && s.shadings==(fail!=1));
+  }
+  free(pages);exr_pdf_close(file);free(data);
+}
 int main(int argc,char **argv) {
   unsigned char *data; size_t size; exr_pdf_file *file=NULL; uint32_t resources; exr_bitmap b; exr_pdf_raster_config config={0}; exr_control control={0};
-  CHECK(argc==2); page_cases(argv[1]);mask_controls(argv[1]);mask_recursion_budget(argv[1]);shading_budget(argv[1]); data=load(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
+  CHECK(argc==2); page_cases(argv[1]);mask_controls(argv[1]);mask_recursion_budget(argv[1]);shading_budget(argv[1]);shading_cleanup(argv[1]); data=load(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
   text_cases(file,resources); clip_cases(file,resources); fallback_cases(argv[1],file,resources); drawing_inspection(file,resources);
   config.width=config.height=12; config.channels=4; config.background=0;
   { const char *s="1 0 0 rg 1 1 2 2 re f"; OK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)); CHECK(b.pixels[13*4]==255 && b.pixels[13*4+3]==255 && !b.pixels[3]); free(b.pixels); }

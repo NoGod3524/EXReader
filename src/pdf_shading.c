@@ -5,6 +5,7 @@
 #include "pdf_internal.h"
 #include "pdf_function_internal.h"
 #include <limits.h>
+#include <float.h>
 
 #define AXIAL_SAMPLES 512u
 #define AXIAL_EXTEND_SPAN 1.0  /* one axis length of constant colour past each end */
@@ -36,27 +37,34 @@ static void multiply(const double a[6],const double b[6],double out[6]) {
   out[4]=a[0]*b[4]+a[2]*b[5]+a[4]; out[5]=a[1]*b[4]+a[3]*b[5]+a[5];
 }
 /* Parameter t of the cone through the two circles; 0 when the point misses it. */
-static int radial_parameter(double px,double py,const double coords[6],double *out) {
-  const double x0=coords[0],y0=coords[1],r0=coords[2],x1=coords[3],y1=coords[4],r1=coords[5];
-  const double dx=x1-x0,dy=y1-y0,dr=r1-r0;
-  const double ox=px-x0,oy=py-y0;
-  const double a=dx*dx+dy*dy-dr*dr;
-  const double b=-2*(ox*dx+oy*dy+r0*dr);
-  const double c=ox*ox+oy*oy-r0*r0;
-  if(fabs(a)<1e-12) {
-    if(fabs(b)<1e-12) return 0;
-    *out=-c/b;
-    return 1;
-  }
-  { double disc=b*b-4*a*c,lo,hi; int roots=0;
+static int radial_parameter(double px,double py,const double coords[6],int extend0,int extend1,double *out) {
+  double scale=fmax(fabs(px),fabs(py)),c[6],roots[2],a,b,d,dx,dy,dr,ox,oy;unsigned i,n=0;int found=0;
+  /* Normalize before subtracting or squaring, including large coordinates that
+     a small CTM maps into an ordinary device viewport. */
+  for(i=0;i<6;i++) scale=fmax(scale,fabs(coords[i]));
+  if(!scale) return 0;
+  for(i=0;i<6;i++) c[i]=coords[i]/scale;
+  dx=c[3]-c[0];dy=c[4]-c[1];dr=c[5]-c[2];ox=px/scale-c[0];oy=py/scale-c[1];
+  a=dx*dx+dy*dy-dr*dr;b=-2*(ox*dx+oy*dy+c[2]*dr);d=ox*ox+oy*oy-c[2]*c[2];
+  if(!a) { if(b) roots[n++]=-d/b; }
+  else {
+    double product=4*a*d,disc=b*b-product;
+    if(disc<0 && disc>=-8*DBL_EPSILON*(b*b+fabs(product))) disc=0;
     if(disc<0) return 0;
-    disc=sqrt(disc);
-    lo=(-b-disc)/(2*a);hi=(-b+disc)/(2*a);
-    roots=1;
-    if(lo>hi) { double swap=lo;lo=hi;hi=swap; }
-    if(lo>=0) *out=lo; else if(hi>=0) *out=hi; else return 0;
-    return roots;
+    if(!disc) roots[n++]=-b/(2*a);
+    else {
+      double q=-.5*(b+copysign(sqrt(disc),b));
+      roots[n++]=q/a;roots[n++]=d/q;
+    }
   }
+  /* ISO 32000-1 8.7.4.5.4: the last admissible circle wins. Reject negative
+     radii and disabled extensions before selecting, rather than after. */
+  for(i=0;i<n;i++) {
+    double t=roots[i],radius=fma(t,dr,c[2]);
+    if(!isfinite(t) || !isfinite(radius) || radius<0 || (t<0 && !extend0) || (t>1 && !extend1)) continue;
+    if(!found || t>*out) { *out=t;found=1; }
+  }
+  return found;
 }
 static void store(exr_bitmap *bitmap,size_t index,const double rgb[3],unsigned char alpha) {
   unsigned char *p=bitmap->pixels+index*4;
@@ -139,6 +147,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
   if(exr_pdf_resolve(file,exr_pdf_get(file,value,"Function"),&function_id,e)!=EXR_OK) { exr_pdf_colorspace_free(space); return e->code; }
   status=exr_pdf_function_open(file,function_id,components,control,&function,e);
   if(status!=EXR_OK) { exr_pdf_colorspace_free(space); return status; }
+  if(type==3 && !coords[2] && !coords[5]) goto done;
 
   if(type==2) {
     double t0=extend0 ? -AXIAL_EXTEND_SPAN : 0.0, t1=extend1 ? 1.0+AXIAL_EXTEND_SPAN : 1.0;
@@ -199,7 +208,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
       double x=left+((double)col+0.5)/RADIAL_SAMPLES*(right-left);
       double y=top+((double)row+0.5)/RADIAL_SAMPLES*(bottom-top);
       double rgb[3]={0};
-      if(!radial_parameter(x,y,coords,&t)) { store(&bitmap,i,rgb,0); continue; }
+      if(!radial_parameter(x,y,coords,extend0,extend1,&t)) { store(&bitmap,i,rgb,0); continue; }
       if(t<0) { if(!extend0) { store(&bitmap,i,rgb,0); continue; } t=0; }
       if(t>1) { if(!extend1) { store(&bitmap,i,rgb,0); continue; } t=1; }
       status=sample(function,space,intent,domain[0]*(1-t)+domain[1]*t,rgb,&inks,i,work,e);

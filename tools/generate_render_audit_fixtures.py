@@ -9,10 +9,10 @@ def stream(dictionary, data):
     return b'<< ' + dictionary + b' /Length %d >>\nstream\n' % len(data) + data + b'\nendstream'
 
 
-def pdf(path, content, shading, extras=(), resources=b'', page_extra=b''):
+def pdf(path, content, shading, extras=(), resources=b'', page_extra=b'', media_box=b'0 0 100 100'):
     objects = [b'<< /Type /Catalog /Pages 2 0 R >>',
                b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-               b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Contents 4 0 R '
+               b'<< /Type /Page /Parent 2 0 R /MediaBox ['+media_box+b'] /Contents 4 0 R '
                b'/Resources << /Shading << /Sh 5 0 R >> ' + resources + b' >> ' + page_extra + b' >>',
                stream(b'', content), shading, *extras]
     out = bytearray(b'%PDF-1.7\n'); offsets = [0]

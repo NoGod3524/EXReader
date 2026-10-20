@@ -273,6 +273,7 @@ static exr_status finish_path(content_reader *r,unsigned flags,exr_vector_rule r
   if(status==EXR_OK && r->path.pending_clip) status=path_event(r,r->path.segments,r->path.count,EXR_PDF_CLIP,r->path.clip_rule,error);
   r->path.count=0; r->path.has_point=r->path.pending_clip=0; return status;
 }
+static exr_status shading_operation(content_reader *r,uint32_t shading,exr_error *error);
 static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,int *handled,exr_error *error) {
   double numbers[EXR_PDF_MAX_COLORANTS]; size_t i,expected; exr_vector_point points[4]; exr_vector_verb verb; uint32_t id;
   *handled=1;
@@ -360,9 +361,7 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     uint32_t shading=EXR_PDF_NONE;
     if(count!=1 || resource(r,arena,values[0],"Shading",&shading,error)!=EXR_OK) goto invalid;
     if(!r->callbacks.shading) return exr_fail(error,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
-    exr_pdf_paint_state paint=paint_state(r);
-    return exr_pdf_shading_draw(r->file,r->file,r->resources,shading,r->state.ctm,&paint,r->color_work,
-      r->callbacks.shading,r->context,r->callbacks.image_space && r->callbacks.image_space(r->context)==EXR_GROUP_CMYK,r->control,error);
+    return shading_operation(r,shading,error);
   }
   *handled=0; return EXR_OK;
 invalid:
@@ -380,6 +379,37 @@ static exr_status clip_bounds(content_reader *r,const double box[4],exr_error *e
   }
   boundary[4].verb=EXR_VECTOR_CLOSE;
   return path_event(r,boundary,5,EXR_PDF_CLIP,EXR_VECTOR_NONZERO,error);
+}
+static exr_status shading_operation(content_reader *r,uint32_t shading,exr_error *error) {
+  uint32_t id;double box[4];int clipped=0;const exr_pdf_value *v;
+  exr_pdf_paint_state paint=paint_state(r);exr_status status;
+  status=resolved(r->file,exr_pdf_get(r->file,shading,"BBox"),&id,error);if(status!=EXR_OK) return status;
+  v=exr_pdf_value_at(r->file,id);
+  if(v && v->kind!=EXR_PDF_NULL) {
+    uint32_t at=v->first;
+    if(v->kind!=EXR_PDF_ARRAY) return exr_fail(error,EXR_FORMAT,"PDF shading BBox is not a rectangle");
+    for(unsigned i=0;i<4;i++) {
+      uint32_t item,next;v=exr_pdf_value_at(r->file,at);
+      if(!v) return exr_fail(error,EXR_FORMAT,"PDF shading BBox has too few values");
+      next=v->next;status=resolved(r->file,at,&item,error);if(status!=EXR_OK) return status;
+      v=exr_pdf_value_at(r->file,item);
+      if(!v || (v->kind!=EXR_PDF_INT && v->kind!=EXR_PDF_REAL)) return exr_fail(error,EXR_FORMAT,"Invalid PDF shading BBox coordinate");
+      box[i]=v->kind==EXR_PDF_INT ? (double)v->u.integer : v->u.number;
+      if(!isfinite(box[i])) return exr_fail(error,EXR_FORMAT,"Nonfinite PDF shading BBox coordinate");
+      at=next;
+    }
+    if(at!=EXR_PDF_NONE) return exr_fail(error,EXR_FORMAT,"PDF shading BBox has too many values");
+    for(unsigned i=0;i<2;i++) if(box[i]>box[i+2]) { double t=box[i];box[i]=box[i+2];box[i+2]=t; }
+    status=event(r,EXR_PDF_SAVE,error);if(status!=EXR_OK) return status;
+    clipped=1;status=clip_bounds(r,box,error);
+  }
+  if(status==EXR_OK) status=exr_pdf_shading_draw(r->file,r->file,r->resources,shading,r->state.ctm,&paint,r->color_work,
+    r->callbacks.shading,r->context,r->callbacks.image_space && r->callbacks.image_space(r->context)==EXR_GROUP_CMYK,r->control,error);
+  if(clipped) {
+    exr_error cleanup={0};exr_status restored=event(r,EXR_PDF_RESTORE,&cleanup);
+    if(status==EXR_OK && restored!=EXR_OK) { status=restored;*error=cleanup; }
+  }
+  return status;
 }
 /* Forms and Type3 CharProcs share one interpreter, recursion guard and work
    budget. A glyph may contain its own BT/ET while the caller stays inside BT. */
