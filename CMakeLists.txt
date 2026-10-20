@@ -810,7 +810,7 @@ install(FILES tests/fixtures/unicode/LICENSE.txt DESTINATION share/exreader/lice
 install(FILES licenses/adobe-glyph-list.txt licenses/pdfjs.txt DESTINATION share/exreader/licenses/pdf-font-data)
 
 install(FILES README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md DESTINATION .)
-install(FILES docs/VERSIONING.md docs/SDK_COMPATIBILITY.md docs/NATIVE_API.md docs/NATIVE_VALIDATION.md docs/PERFORMANCE.md docs/native-page.png docs/styled-page.png docs/complex-text.png DESTINATION docs)
+install(FILES docs/VERSIONING.md docs/SDK_COMPATIBILITY.md docs/SUPPORT_MATRIX.md docs/NATIVE_API.md docs/NATIVE_VALIDATION.md docs/PERFORMANCE.md docs/native-page.png docs/styled-page.png docs/complex-text.png DESTINATION docs)
 install(DIRECTORY examples DESTINATION .)
 install(FILES tests/fixtures/pdf-public.pdf tests/fixtures/pdf-public-text.pdf DESTINATION examples/fixed-pages)
 install(FILES tests/fixtures/comic.cbz DESTINATION examples/fixed-pages)

@@ -11,6 +11,10 @@ replays and the WP16 release ledger are recorded separately in
 `docs/validation/2026-10-20-wp6-input-stream.json`.
 Complete DOM/text retention and the 50/100 MiB chapter rejection remain;
 neither bounded parser residency nor random chapter restoration is accepted.
+Package inspection found that the current support matrix was absent from the
+installation list. The follow-up adds it and makes installed-component
+configuration reject that omission. Both the rejected package and its audit
+logs remain available through the same validation record.
 
 ## Table measurement and compatibility classification (3.38.2)
 
