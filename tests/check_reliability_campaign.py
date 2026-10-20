@@ -183,6 +183,7 @@ def main():
                                target='parser', seed=1, cpu_seconds=1, wall_seconds=1, require_clean=False)
         raw = b'synthetic child timeout output'
         with patch('run_reliability_campaign.source_state', return_value=(SOURCE, True)), \
+             patch('run_reliability_campaign.platform.platform', return_value='synthetic-only'), \
              patch('run_reliability_campaign.subprocess.run', side_effect=subprocess.TimeoutExpired('child', 1, output=raw)), \
              contextlib.redirect_stdout(io.StringIO()):
             assert run(args) == 1
