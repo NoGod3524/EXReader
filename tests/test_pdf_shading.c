@@ -58,9 +58,19 @@ static void geometry(void) {
   CHECK(!ferror(f));fclose(f);
   for(unsigned i=0;i<4;i++) { snprintf(path,sizeof(path),"shading-geometry-bad-%u.pdf",i);rejected(path,EXR_FORMAT); }
 }
+static void functions(void) {
+  unsigned char probe[6];char path[4096];FILE *f;size_t n;
+  snprintf(path,sizeof(path),"%s/pdf-color/shading-function-oracle.bin",directory);f=fopen(path,"rb");CHECK(f);
+  while((n=fread(probe,1,sizeof(probe),f))!=0) {
+    CHECK(n==sizeof(probe));snprintf(path,sizeof(path),"shading-function-%u.pdf",probe[0]);
+    if(probe[1]) rejected(path,(exr_status)probe[1]);
+    else { exr_bitmap b=render(path);near(&b,8,8,probe[2],probe[3],probe[4],2,path);exr_bitmap_free(&b); }
+  }
+  CHECK(!ferror(f));fclose(f);
+}
 int main(int argc,char **argv) {
   exr_bitmap page; const unsigned char *p;
-  CHECK(argc==2); directory=argv[1];domains();geometry();
+  CHECK(argc==2); directory=argv[1];domains();geometry();functions();
   page=render("shading-axial.pdf");
   near(&page,0,8,247,0,8,3,"axial left");
   near(&page,8,8,120,0,135,3,"axial middle");

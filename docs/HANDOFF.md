@@ -1,6 +1,6 @@
 # EXReader 开发状态与路线
 
-更新日期：2026-10-19。当前为无 UI 的 C11 SDK，MIT，版本 **3.36.2**、ABI epoch **1**、书库 schema **6**。
+更新日期：2026-10-19。当前为无 UI 的 C11 SDK，MIT，版本 **3.37.0**、ABI epoch **1**、书库 schema **6**。
 
 仓库：https://github.com/NoGod3524/EXReader 。开发分支：`codex/framework`。本次修复与验证入口见 [HANDOFF-NEXT.md](HANDOFF-NEXT.md)，审计发现见 [AUDIT-2026-10-19.md](AUDIT-2026-10-19.md)。
 
@@ -19,7 +19,7 @@
 | 文档与模型 | TXT、XHTML/HTML、FB2、EPUB、DOCX、RTF、MOBI/KF8；通用构造、分段 loader、随机读取源、树与资源 | HTML5 错误恢复、完整 Word 版面、章内增量解析 |
 | 排版与位置 | CSS 子集、float/clear 和逐行绕排、表格列宽/合并/垂直对齐/逐边边框/重复表头；页级续排、缓存字节预算、检查点、CFI、TextQuote、命中选择 | 完整 CSS、border-spacing、复杂百分比与溢出、大章解析成本 |
 | 文字与字体 | Unicode17、双向、OpenType、阿拉伯、Devanagari、竖排、ruby、可变轴、词典/provider 断词；COLRv0、sbix、CBDT、cmap14 | 更多 Indic/东南亚脚本、COLRv1、SVG 字体、更多语言实测 |
-| PDF | 固定页与文字几何、搜索选择、字体/Type3、图像与 CMYK/YCCK JPEG、渐变2–7、ICC v2/v4、16种混合、隔离/非隔离/挖空组、软遮罩 | 审计列出的组合错误和限界；Pattern、JPX/JBIG2、OutputIntent、完整印刷色彩 |
+| PDF | 固定页与文字几何、搜索选择、字体/Type3、图像与 CMYK/YCCK JPEG、渐变1–7及分量函数数组、ICC v2/v4、16种混合、隔离/非隔离/挖空组、软遮罩 | 审计列出的组合错误和限界；完整渐变Extend、自适应采样、Pattern、JPX/JBIG2、OutputIntent、完整印刷色彩 |
 | PDF 认证与编辑 | Standard R2–R6、RC4/AES、可重试认证、权限快照；基础标注与元数据增量保存 | PubSec、EFOpen、加密写回、AcroForm、安全 redaction；增量删除保留历史原文 |
 | 色彩修复批次 | 完整默认 CMYK ICC 压缩内嵌；修正减色混合、网格记录/插值、Matte 处理顺序、透明度与遮罩传递 | DeviceCMYK图像/渐变原生分色与显式RGB子组切换已实现；其他ICC/印刷色彩及嵌套组合继续验收 |
 | 书库与转换 | SQLite 原书/封面/元数据/标签/收藏/进度/标注/音频书签/备份；六种正文转换，EPUB和HTML资源导出 | 大媒体流式导入、同步、旧 UI 迁移、更多高保真往返 |

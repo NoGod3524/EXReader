@@ -87,7 +87,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.36.2 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.37.0 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -459,7 +459,7 @@ development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.36.2 EXACT
+Select this package with `find_package(EXReader 3.37.0 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -603,3 +603,14 @@ constant-shape semantics with `EXR_UNSUPPORTED`. Nonzero truncated pointers and
 unknown canvas flags are rejected. Callback error values are propagated even
 when a callback returns success. No new pixel plane is allocated; the measured
 one-pixel canvas payload increases by 648 bytes for fixed state.
+
+## 3.37.0 PDF component update
+
+The SDK version and `exr_version()` are 3.37.0; the PDF component is 3.37.0,
+the unchanged core component remains 3.36.2, and other components remain 3.33.0.
+Public signatures, the 703 measured ABI properties and 305 exports stay unchanged.
+Type 1 two-input function shadings and per-component function arrays reuse the
+existing bounded evaluator. Array children share one 1 MiB/16-level/1024-node
+graph budget; their evaluation costs accumulate in the shared drawing budget.
+Type 1 currently uses a 512×512 bitmap, with an additional same-size ink bitmap
+only for native CMYK consumers. Complete Extend and adaptive sampling remain pending.

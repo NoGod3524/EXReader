@@ -332,7 +332,7 @@ exr_status exr_pdf_shading_mesh(exr_pdf_file *file,exr_pdf_file *resource_file,u
   stream.components=exr_pdf_colorspace_components(space);
   if(stream.components<1 || stream.components>4) { exr_pdf_colorspace_free(space); return exr_fail(error,EXR_UNSUPPORTED,"Unsupported PDF mesh shading colour space"); }
   if(function_id!=EXR_PDF_NONE) {
-    status=exr_pdf_function_open(file,function_id,stream.components,control,&function,error);
+    status=exr_pdf_function_open_components(file,function_id,1,stream.components,control,&function,error);
     if(status!=EXR_OK) { exr_pdf_colorspace_free(space); return status; }
   }
   /* Decode holds x/y ranges plus one pair per colour component (or a single
