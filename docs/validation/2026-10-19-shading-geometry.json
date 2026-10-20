@@ -1,0 +1,53 @@
+{
+  "version": "3.36.2",
+  "abi": 1,
+  "schema": 6,
+  "scenes": 19,
+  "rejected": 4,
+  "tests": {
+    "gcc": {
+      "count": 141,
+      "failures": 0,
+      "dll_sha256": "c497fe61531f7fb6b7e3e0a29e607e528a97f5201c3b3a991a132a49724cda45",
+      "exports": 305,
+      "shading_output": "422 native PDF shading checks passed\n"
+    },
+    "msvc": {
+      "count": 141,
+      "failures": 0,
+      "dll_sha256": "a42c0d727c1b1384c88d144d9233705a15cff8262abab7dfe62a9952be2788ea",
+      "exports": 305,
+      "shading_output": "422 native PDF shading checks passed\n"
+    }
+  },
+  "icc_off": {
+    "count": 10,
+    "failures": 0
+  },
+  "installed_components": {
+    "count": 4,
+    "failures": 0
+  },
+  "cpp_headers": 13,
+  "cpp_exact_runtime": "3.36.2 ABI 1",
+  "abi_measurements_unchanged": 703,
+  "layers": {
+    "objects": 99,
+    "symbols": 1041,
+    "includes": 899,
+    "inverse": 0
+  },
+  "reference": "2026-10-19-shading-geometry-reference.json",
+  "remaining": [
+    "full Extend",
+    "shading function arrays",
+    "WP1-WP16 acceptance"
+  ],
+  "geometry_probes": 30,
+  "regenerated_identical_files": 47,
+  "bbox_cleanup": {
+    "success": true,
+    "clip_failure_restores": true,
+    "shading_failure_restores": true
+  }
+}

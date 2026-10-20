@@ -152,7 +152,7 @@ static exr_status serialize_operand(void *context,exr_pdf_file *arena,const char
   (void)name; CHECK(count==1); return exr_pdf_serialize(arena,values[0],NULL,0,context,NULL,e);
 }
 static void serialization(void) {
-  const char input[]="<< /Bin <00FF2380> /Name /A#00#23#2F /Values [null true false -9223372036854775808 9223372036854775807 0.00000000125 1000000000000000000000000000000000000000000000000000000000000.0] /Nested << /Annots /Keep >> >> Check";
+  const char input[]="<< /Bin <00FF2380> /Name /A#00#23#2F /Values [null true false -9223372036854775808 9223372036854775807 0.00000000125 0 1000000000000000000000000000000000000000000000000000000000000.0] /Nested << /Annots /Keep >> >> Check";
   const double reals[]={0.0,-0.0,1.25,1e-9,1e60,1e-300,DBL_MIN,DBL_MAX};
   const char *locales[]={"de_DE.UTF-8","de-DE","German_Germany.1252","fr_FR.UTF-8"};
   exr_buffer first={0},second={0},real={0}; char *saved; size_t size,i;
