@@ -11,7 +11,7 @@
     "tests/fuzz_pipeline.c": "d7a224b8f229b092b447320c4301c6742f0899d8364da864e0d9ed1a18ebacd1",
     "tests/test_fuzz_driver.c": "5f509f2b0614dddf137385555f94d3fc8ddd0bd5360ce4ff87b2d05c1feb6631",
     "tests/check_fuzz_pipelines.py": "a671dc39bba41687ca638d77b94016cdf207fee498f8e84f6f11dff45faa06a8",
-    "tests/check_reliability_campaign.py": "434ac1bb62c423792c6b0ea973494098df91f1118995511e354f3ed758ae8536",
+    "tests/check_reliability_campaign.py": "91dc4a574cab15885b5c41a2ea124bd8203d1da1830936e323d5516e5c1e9d6a",
     "tools/run_reliability_campaign.py": "44c2cc2a649a695998bea16254307b6f8f2cb3b02ccb1c097ce6c3b934ff0f34",
     "CMakeLists.txt": "03afff1dcec1a7f7ae4c3f966ec9c2b69c88eecb591845305372284955290997",
     ".github/workflows/native.yml": "2e15ec0a9ab0c8c733d85bb210aa091bc465c1dd3d0a41c6c581c3c1449d6887",
@@ -101,6 +101,10 @@
       "passed": true,
       "log": "C:/Users/Oscar/exr-gcc/reliability-workflows-20261020-final.log",
       "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "accounting_portability_recheck": {
+      "checks_passed": 127,
+      "log": "C:/Users/Oscar/exr-gcc/reliability-accounting-portability-20261020.log"
     }
   },
   "ci": {
@@ -113,7 +117,26 @@
     "acceptance_24_cpu_hours_per_target": {
       "status": "not_started",
       "passed": false
-    }
+    },
+    "initial_failures": [
+      {
+        "workflow": "native.yml",
+        "run_id": 39369012229,
+        "source_sha": "31b3c8848a06e4539be16d0dfb28af09ba090474",
+        "affected_job": "fuzz",
+        "reason": "Synthetic timeout mock also intercepted Linux platform discovery",
+        "status": "fuzz_failed_other_jobs_pending"
+      },
+      {
+        "workflow": "reliability.yml",
+        "run_id": 39369035294,
+        "source_sha": "31b3c8848a06e4539be16d0dfb28af09ba090474",
+        "profile": "smoke",
+        "status": "failed",
+        "reason": "Same synthetic timeout test isolation error",
+        "raw_log": "C:/Users/Oscar/exr-gcc/reliability-manual-39369035294-failed.log"
+      }
+    ]
   },
   "wp16_release_complete": false,
   "remaining_release_requirements": "docs/HANDOFF.md",
@@ -122,5 +145,5 @@
     "sha256": "a955abda1e35fd456172b2e78e1d687799e4ab5f1f977dec0efd7684aae9fdc1",
     "include_in_commit": false
   },
-  "post_verification_changes": "Trailing blank lines removed from three text files; no behavior changes."
+  "post_verification_changes": "Synthetic timeout test now isolates platform discovery across Windows and Linux; accounting rechecked after the change."
 }
