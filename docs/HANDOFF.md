@@ -1,10 +1,16 @@
 # EXReader 开发状态与路线
 
-更新日期：2026-10-19。当前为无 UI 的 C11 SDK，MIT，版本 **3.38.0**、ABI epoch **1**、书库 schema **6**。
+更新日期：2026-10-20。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.38.1**、ABI epoch **1**、书库 schema **6**。
 
 仓库：https://github.com/NoGod3524/EXReader 。开发分支：`codex/framework`。本次修复与验证入口见 [HANDOFF-NEXT.md](HANDOFF-NEXT.md)，审计发现见 [AUDIT-2026-10-19.md](AUDIT-2026-10-19.md)。
 
 旧阅读器保留于 `codex/reader-app`，旧 MIT 版保留于 `codex/reader-0.1.1`。其 UI、IndexedDB 数据与旧标注尚未接入 C SDK。
+
+本轮参考应用的CI七作业全部成功，macOS/iPhone模拟器/iPad模拟器各21项自动自检通过；
+Windows本地与CI各26项。默认/裁剪桌面安装消费、移动交叉编译及带许可的SDK产物已归档。
+用户现阶段暂缓iPhone/iPad真机安装。96分片可靠性续批仍在运行；语料、单章增量解析、
+应用完整验收及下表未完成能力继续保留。记录见 `docs/RELIABILITY-HANDOFF.md`、
+`docs/validation/2026-10-20-native-hosts.json`、`docs/validation/2026-10-20-corpus-performance.json`。
 
 ## 目标与完成定义
 
@@ -24,7 +30,7 @@
 | 色彩修复批次 | 完整默认 CMYK ICC 压缩内嵌；修正减色混合、网格记录/插值、Matte 处理顺序、透明度与遮罩传递 | DeviceCMYK图像/渐变原生分色与显式RGB子组切换已实现；其他ICC/印刷色彩及嵌套组合继续验收 |
 | 书库与转换 | SQLite 原书/封面/元数据/标签/收藏/进度/标注/音频书签/备份；六种正文转换，EPUB和HTML资源导出 | 大媒体流式导入、同步、旧 UI 迁移、更多高保真往返 |
 | CBZ与音频 | CBZ PNG/JPEG、自然排序、ComicInfo；WAV/FLAC、可选MP3/AAC/M4B、时间线、WSOLA、输出适配 | 更多CBZ图像、移动音频会话/后台/真机验收 |
-| 应用 SDK | C/C++消费示例、Swift/JNI基础适配；三桌面历史CI与移动库交叉编译 | 嵌入视图、完整应用、TTS、无障碍、OPDS、LCP、OCR |
+| 应用 SDK | C/C++消费示例、Swift/JNI适配；Windows/macOS/iPhone/iPad原生参考阅读应用及自动自检；桌面CI与移动库交叉编译 | Linux/Android原生参考应用、完整生命周期/真机验收、标注导航、TTS、无障碍、OPDS、LCP、OCR |
 
 精确支持范围见 [SUPPORT_MATRIX.md](SUPPORT_MATRIX.md)。历史性能和验证记录保留于 [PERFORMANCE.md](PERFORMANCE.md) 与 [NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)，历史结果以对应代码 SHA 和运行库哈希为准。
 

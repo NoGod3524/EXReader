@@ -112,15 +112,22 @@ def main():
     parser.add_argument("--paging", action="store_true", help="use resumable one-page layout")
     parser.add_argument("--short-bytes", type=positive, default=16 * 1024)
     parser.add_argument("--long-bytes", type=positive, default=1024 * 1024)
+    parser.add_argument("--long-multiple-paragraphs", action="store_true",
+                        help="split the large single chapter into 512-byte paragraphs")
     parser.add_argument("--parts", type=positive, default=32)
     parser.add_argument("--part-bytes", type=positive, default=32 * 1024)
+    parser.add_argument("--timeout", type=float, default=300, help="per-process wall-clock limit")
     args = parser.parse_args()
     if args.max_pages < 0:
         parser.error("--max-pages must be nonnegative")
+    if not math.isfinite(args.timeout) or args.timeout <= 0:
+        parser.error("--timeout must be positive and finite")
     binary, font, output = args.binary.resolve(), args.font.resolve(), args.output.resolve()
     if not binary.is_file() or not font.is_file():
         parser.error("binary and font must be existing files")
-    output.mkdir(parents=True, exist_ok=True)
+    if output.exists():
+        parser.error("Choose a new output directory to preserve earlier measurements")
+    output.mkdir(parents=True)
     cases = (("short", 1, args.short_bytes), ("long-single-chapter", 1, args.long_bytes),
              ("many-chapters", args.parts, args.part_bytes))
     summary = {"schema_version": 2, "platform": platform.platform(), "machine": platform.machine(),
@@ -134,45 +141,76 @@ def main():
                "turn_total_scope": "page request, continuation if paged, previous layout release, render and bitmap free",
                "page_count_scope": "produced pages; total only when total_pages_known is true",
                "percentile_method": "nearest rank", "runs_per_case": args.runs, "cases": {}}
+    runtimes = sorted(set(list(binary.parent.glob("*.dll")) +
+                         list(binary.parent.glob("libexreader*.so*")) +
+                         list(binary.parent.glob("libexreader*.dylib")) +
+                         list((binary.parent.parent/"lib").glob("libexreader*.so*")) +
+                         list((binary.parent.parent/"lib").glob("libexreader*.dylib"))))
+    summary["runtime_sha256"] = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in runtimes}
+    summary["runner_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     for name, parts, size in cases:
         book = output / f"{name}.epub"
-        make_epub(book, parts, size, single_paragraph=name == "long-single-chapter")
-        records = []
+        single_paragraph = name == "long-single-chapter" and not args.long_multiple_paragraphs
+        make_epub(book, parts, size, single_paragraph=single_paragraph)
+        records, attempts = [], []
         for run in range(args.runs):
             command = [str(binary), str(book), str(font), "--max-pages", str(args.max_pages)]
             if args.paging:
                 command.append("--paging")
-            completed = subprocess.run(command,
-                                       capture_output=True, text=True, encoding="utf-8", timeout=300)
             detail = output / f"{name}-{run+1}.json"
-            detail.write_text(completed.stdout, encoding="utf-8")
-            if completed.returncode:
-                raise RuntimeError(f"{name} run {run+1} failed: {completed.stderr.strip()}")
-            record = json.loads(completed.stdout)
-            validate(record)
-            records.append(record)
+            log = output / f"{name}-{run+1}.stderr.log"
+            attempt = {"command": command, "stdout": detail.name, "stderr": log.name, "passed": False}
+            try:
+                with detail.open("wb") as stdout, log.open("wb") as stderr:
+                    completed = subprocess.run(command, stdout=stdout, stderr=stderr, timeout=args.timeout)
+                attempt["exit_code"] = completed.returncode
+                if completed.returncode:
+                    attempt["failure"] = "process_failure"
+                else:
+                    try:
+                        record = json.loads(detail.read_text(encoding="utf-8"))
+                        validate(record)
+                        records.append(record)
+                        attempt["passed"] = True
+                    except (AssertionError, ValueError, KeyError, TypeError):
+                        attempt["failure"] = "invalid_report"
+            except subprocess.TimeoutExpired:
+                attempt["failure"] = "timeout"
+            attempt["stdout_sha256"] = hashlib.sha256(detail.read_bytes()).hexdigest()
+            attempt["stderr_sha256"] = hashlib.sha256(log.read_bytes()).hexdigest()
+            attempts.append(attempt)
         metrics = ("font_open_ms", "publication_open_ms", "first_layout_ms", "first_paint_ms",
                    "first_visible_total_ms", "turn_layout_p50_ms", "turn_layout_p95_ms",
                    "turn_render_p50_ms", "turn_render_p95_ms", "turn_total_p50_ms", "turn_total_p95_ms", "peak_rss_bytes",
                    "incremental_peak_rss_bytes")
         summary["cases"][name] = {"input_bytes": book.stat().st_size, "part_count": parts,
                                   "body_bytes_per_part": size,
-                                  "single_paragraph": name == "long-single-chapter",
-                                  "page_count": records[0]["page_count"], "glyph_count": records[0]["glyph_count"],
-                                  "total_pages_known": records[0]["total_pages_known"],
+                                  "single_paragraph": single_paragraph,
+                                  "page_count": records[0]["page_count"] if records else None,
+                                  "glyph_count": records[0]["glyph_count"] if records else None,
+                                  "total_pages_known": records[0]["total_pages_known"] if records else None,
                                   "input_sha256": hashlib.sha256(book.read_bytes()).hexdigest(),
-                                  "runs": [f"{name}-{run+1}.json" for run in range(args.runs)],
+                                  "runs": [a["stdout"] for a in attempts if a["passed"]],
+                                  "attempts": attempts, "passed": len(records) == args.runs,
                                   "median": {metric: statistics.median(r[metric] for r in records)
-                                             for metric in metrics}}
-        summary["engine_version"] = records[0]["engine_version"]
+                                             for metric in metrics} if records else None}
+        if records:
+            summary["engine_version"] = records[0]["engine_version"]
+    summary["identities_unchanged"] = (
+        summary["binary_sha256"] == hashlib.sha256(binary.read_bytes()).hexdigest() and
+        summary["font_sha256"] == hashlib.sha256(font.read_bytes()).hexdigest() and
+        all(hashlib.sha256(Path(p).read_bytes()).hexdigest() == sha
+            for p, sha in summary["runtime_sha256"].items()))
+    summary["passed"] = summary["identities_unchanged"] and all(c["passed"] for c in summary["cases"].values())
     (output / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
                                          encoding="utf-8")
     print(f"Saved {len(cases)*args.runs} fresh-process measurements and summary.json")
+    return 0 if summary["passed"] else 1
 
 
 if __name__ == "__main__":
     try:
-        main()
+        sys.exit(main())
     except (AssertionError, OSError, RuntimeError, ValueError, subprocess.TimeoutExpired) as error:
         print(f"Benchmark failed: {error}", file=sys.stderr)
         sys.exit(1)
