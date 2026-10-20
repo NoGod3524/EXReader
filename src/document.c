@@ -159,7 +159,7 @@ static exr_node_kind element_kind(const char *name) {
     return EXR_NODE_BREAK;
   return EXR_NODE_ELEMENT;
 }
-typedef struct {
+typedef struct exr_xml_tree_parser {
   exr_document *doc;
   XML_Parser parser;
   size_t chapter, stack[257], depth;
@@ -168,6 +168,9 @@ typedef struct {
   const char *root_name;
   exr_xml_position_fn position;
   void *position_context;
+  exr_error *error;
+  size_t fed;
+  int finished;
 } tree_parser;
 static void stop(tree_parser *p, exr_status code) {
   p->failed = code;
@@ -263,28 +266,40 @@ static void XMLCALL tree_entity(void *user, const XML_Char *name, int parameter,
   (void)notation;
   stop(p, EXR_FORMAT);
 }
-static exr_status xml_tree(exr_document *d, const void *data, size_t n, size_t resource, int in_spine,
-                            int linear, const char *root_name, exr_xml_position_fn position,
-                            void *context, exr_error *e) {
-  tree_parser p = {0};
+void exr_xml_tree_free(exr_xml_tree_parser *p) {
+  if(!p) return;
+  if(p->parser) XML_ParserFree(p->parser);
+  free(p->text.data);free(p);
+}
+exr_status exr_xml_tree_begin(exr_document *d,size_t resource,int in_spine,int linear,
+                              const char *root_name,exr_xml_position_fn position,void *context,
+                              exr_xml_tree_parser **out,exr_error *e) {
+  tree_parser *p;
   exr_chapter *chapter;
-  enum XML_Status parsed;
   exr_status result = EXR_OK;
   size_t root;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing XML parser output");
+  *out=NULL;
+  if(!d || resource>=d->resource_count || !root_name || !root_name[0])
+    return exr_fail(e,EXR_ARGUMENT,"Invalid XML tree input");
+  p=calloc(1,sizeof(*p));
+  if(!p) return exr_fail(e,EXR_MEMORY,"XML state allocation failed");
   if (!d->node_count &&
-      exr_model_node(d, SIZE_MAX, SIZE_MAX, EXR_NODE_DOCUMENT, NULL, NULL, 0) == SIZE_MAX)
-    return EXR_MEMORY;
+      exr_model_node(d, SIZE_MAX, SIZE_MAX, EXR_NODE_DOCUMENT, NULL, NULL, 0) == SIZE_MAX) {
+    result=EXR_MEMORY;goto failed;
+  }
   if (d->chapter_count >= 10000 || !exr_grow((void **)&d->chapters, &d->chapter_capacity,
-                                             d->chapter_count + 1, sizeof(*d->chapters)))
-    return exr_fail(e, EXR_LIMIT, "Chapter limit exceeded");
-  p.doc = d;
-  p.root_name = root_name;
-  p.position = position;
-  p.position_context = context;
-  p.chapter = d->chapter_count;
-  root = exr_model_node(d, 0, p.chapter, EXR_NODE_CHAPTER, NULL, NULL, 0);
-  if (root == SIZE_MAX)
-    return EXR_LIMIT;
+                                             d->chapter_count + 1, sizeof(*d->chapters))) {
+    result=exr_fail(e,EXR_LIMIT,"Chapter limit exceeded");goto failed;
+  }
+  p->doc = d;
+  p->root_name = root_name;
+  p->position = position;
+  p->position_context = context;
+  p->chapter = d->chapter_count;
+  p->error=e;
+  root = exr_model_node(d, 0, p->chapter, EXR_NODE_CHAPTER, NULL, NULL, 0);
+  if (root == SIZE_MAX) { result=EXR_LIMIT;goto failed; }
   chapter = &d->chapters[d->chapter_count++];
   chapter->root = root;
   chapter->resource = resource;
@@ -292,22 +307,48 @@ static exr_status xml_tree(exr_document *d, const void *data, size_t n, size_t r
   chapter->path = d->resources[resource].path;
   chapter->in_spine = in_spine;
   chapter->linear = linear;
-  p.stack[0] = root;
-  p.parser = XML_ParserCreateNS(NULL, '|');
-  if (!p.parser)
-    return exr_fail(e, EXR_MEMORY, "XML allocation failed");
-  XML_SetUserData(p.parser, &p);
-  XML_SetElementHandler(p.parser, tree_start, tree_end);
-  XML_SetCharacterDataHandler(p.parser, tree_text);
-  XML_SetEntityDeclHandler(p.parser, tree_entity);
-  XML_SetParamEntityParsing(p.parser, XML_PARAM_ENTITY_PARSING_NEVER);
-  parsed = XML_Parse(p.parser, data, (int)n, XML_TRUE);
-  if (parsed != XML_STATUS_OK || p.failed)
-    result = exr_fail(e, p.failed ? p.failed : EXR_FORMAT, "XML tree rejected: %s",
-                      XML_ErrorString(XML_GetErrorCode(p.parser)));
-  XML_ParserFree(p.parser);
-  free(p.text.data);
+  p->stack[0] = root;
+  p->parser = XML_ParserCreateNS(NULL, '|');
+  if (!p->parser) { result=exr_fail(e,EXR_MEMORY,"XML allocation failed");goto failed; }
+  XML_SetUserData(p->parser,p);
+  XML_SetElementHandler(p->parser,tree_start,tree_end);
+  XML_SetCharacterDataHandler(p->parser,tree_text);
+  XML_SetEntityDeclHandler(p->parser,tree_entity);
+  XML_SetParamEntityParsing(p->parser,XML_PARAM_ENTITY_PARSING_NEVER);
+  *out=p;return EXR_OK;
+failed:
+  exr_xml_tree_free(p);
   return result;
+}
+exr_status exr_xml_tree_feed(exr_xml_tree_parser *p,const void *data,size_t n,int final) {
+  size_t at=0;
+  if(!p) return EXR_ARGUMENT;
+  if(p->failed) return p->failed;
+  if(p->finished || (!data && n)) return exr_fail(p->error,EXR_ARGUMENT,"Invalid XML feed state");
+  if(n>EXR_MAX_INPUT-p->fed) {
+    p->failed=exr_fail(p->error,EXR_LIMIT,"XML input exceeds 128 MiB");return p->failed;
+  }
+  do {
+    size_t chunk=n-at>32768 ? 32768 : n-at;
+    enum XML_Status parsed=XML_Parse(p->parser,data ? (const char *)data+at : NULL,
+                                     (int)chunk,final && at+chunk==n);
+    p->fed+=chunk;at+=chunk;
+    if(parsed!=XML_STATUS_OK || p->failed) {
+      p->failed=exr_fail(p->error,p->failed ? p->failed : EXR_FORMAT,"XML tree rejected: %s",
+                         XML_ErrorString(XML_GetErrorCode(p->parser)));
+      return p->failed;
+    }
+  } while(at<n);
+  p->finished=final!=0;
+  return EXR_OK;
+}
+static exr_status xml_tree(exr_document *d,const void *data,size_t n,size_t resource,int in_spine,
+                            int linear,const char *root_name,exr_xml_position_fn position,
+                            void *context,exr_error *e) {
+  exr_xml_tree_parser *p=NULL;
+  exr_status status=exr_xml_tree_begin(d,resource,in_spine,linear,root_name,position,context,&p,e);
+  if(status==EXR_OK) status=exr_xml_tree_feed(p,data,n,1);
+  exr_xml_tree_free(p);return status;
 }
 exr_status exr_xml_tree(exr_document *d, const void *data, size_t n, size_t resource, int in_spine,
                          int linear, const char *root_name, exr_error *e) {
