@@ -366,7 +366,7 @@
       "collection_failed": 228
     },
     "rights_scope": "Public domain in the USA; original embedded Gutenberg terms retained",
-    "pipeline_status": "running",
+    "pipeline_status": "completed",
     "pipeline_output": "C:/Users/Oscar/exr-corpus-v1/epub-500-full",
     "timeout_seconds": 120,
     "workers": 4,
@@ -382,7 +382,18 @@
       },
       "accepted": false
     },
-    "active_session_id": 75502
+    "active_session_id": null,
+    "final_summary": {
+      "path": "C:\\Users\\Oscar\\exr-corpus-v1\\epub-500-full\\summary.json",
+      "sha256": "4a4d3652789f923e1e9cd3b0d97976cbe63721c91481ac2d66beae5097fddfc2"
+    },
+    "final_counts": {
+      "passed": 483,
+      "timeout": 11,
+      "unexpected_outcome": 6
+    },
+    "completed_documents": 483,
+    "accepted": false
   },
   "epub_initial_probe": {
     "summary": {
@@ -438,5 +449,6 @@
   "evidence_reference_audit": {
     "path": "C:\\Users\\Oscar\\exr-gcc\\evidence-reference-audit-20261020.json",
     "sha256": "5b68af3f1c8b374e32a3fc29dfa2ae860df41f898a38fd37c6916dc82eabc5d3"
-  }
+  },
+  "classification_followup": "docs/validation/2026-10-20-wp6-compatibility.json"
 }

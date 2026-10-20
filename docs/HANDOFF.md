@@ -1,6 +1,6 @@
 # EXReader 开发状态与路线
 
-更新日期：2026-10-20。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.38.1**、ABI epoch **1**、书库 schema **6**。
+更新日期：2026-10-20。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.38.2**、ABI epoch **1**、书库 schema **6**。
 
 仓库：https://github.com/NoGod3524/EXReader 。开发分支：`codex/framework`。本次修复与验证入口见 [HANDOFF-NEXT.md](HANDOFF-NEXT.md)，审计发现见 [AUDIT-2026-10-19.md](AUDIT-2026-10-19.md)。
 
@@ -11,6 +11,11 @@ Windows本地与CI各26项。默认/裁剪桌面安装消费、移动交叉编�
 用户现阶段暂缓iPhone/iPad真机安装。96分片可靠性续批仍在运行；语料、单章增量解析、
 应用完整验收及下表未完成能力继续保留。记录见 `docs/RELIABILITY-HANDOFF.md`、
 `docs/validation/2026-10-20-native-hosts.json`、`docs/validation/2026-10-20-corpus-performance.json`。
+
+500本EPUB整批已结束，483本完成、17本未完成，未验收；PDF独立参考分类不改原预期。
+WP6普通Latin表格专项已达到五轮交替首屏降低50%的出口，章内增量目标仍未完成。
+本批范围与证据见 `docs/validation/2026-10-20-wp6-compatibility.json`。
+WP7、WP8、WP12a的分支、独立目录和完整出口分别见 `docs/WP7-HANDOFF.md`、`docs/WP8-HANDOFF.md`、`docs/WP12A-HANDOFF.md`。
 
 ## 目标与完成定义
 

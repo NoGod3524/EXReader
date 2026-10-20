@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "flow_internal.h"
+#include "opentype_internal.h"
 
 typedef struct {
   size_t node, row, column, colspan, rowspan;
@@ -230,6 +231,85 @@ static exr_status column_hints(flow *f,exr_table_cursor *t,size_t parent,exr_len
   }
   return EXR_OK;
 }
+/* Exact min/max-content scan for a plain Latin cell without OpenType shaping.
+   Rich trees/scripts keep the general two-pass algorithm below. The pair cache
+   is bounded independently of the amount of text. */
+static exr_status plain_widths(flow *f,const exr_table_cursor *t,const table_cell *cell,
+                                float *minimum,float *maximum,int *handled) {
+  const exr_node *node=&f->doc->nodes[cell->node],*text;
+  const exr_style *style;
+  struct { exr_face *face; uint32_t glyph; float advance; int ready; } metrics[128]={{0}};
+  size_t child=node->first_child,at,order[32],ordered,i;
+  float *kern=NULL,word=0,first_indent,left,right;
+  unsigned char *known=NULL;unsigned previous=0,word_previous=0;int first=1;
+  double total;exr_status status=EXR_OK;
+  *handled=0;
+  if(f->intrinsic || f->writing_mode!=EXR_WRITING_HORIZONTAL_TB || f->auto_bases || child==SIZE_MAX) return EXR_OK;
+  text=&f->doc->nodes[child];style=&f->styles[child];
+  if(text->kind!=EXR_NODE_TEXT || text->next_sibling!=SIZE_MAX || text->start==SIZE_MAX ||
+     text->end<=text->start || style->display!=EXR_CSS_INLINE || style->float_side ||
+     style->direction==EXR_DIRECTION_RTL || style->writing_mode!=EXR_WRITING_HORIZONTAL_TB ||
+     (f->hyphenator && style->hyphens==EXR_HYPHENS_AUTO)) return EXR_OK;
+  for(i=0;i<f->font->count;i++) if(exr_ot_present(&f->font->faces[i]) || f->font->faces[i].bitmap_only) return EXR_OK;
+  for(at=text->start;at<text->end;at++) {
+    unsigned char c=(unsigned char)f->doc->text[at];
+    if((at&1023)==0 && exr_control_cancel(&f->config->control,f->error)!=EXR_OK) return EXR_CANCELLED;
+    /* Whitespace trimming/collapsing belongs to the general line algorithm. */
+    if(c==' ') {
+      if(at==text->start || at+1==text->end || f->doc->text[at-1]==' ') return EXR_OK;
+      continue;
+    }
+    if((c>='A' && c<='Z') || (c>='a' && c<='z') || (c>='0' && c<='9')) continue;
+    if(!c || !strchr(".,!?:;",c) || (at+1<text->end && f->doc->text[at+1]!=' ')) return EXR_OK;
+  }
+  left=length_value(f->styles[cell->node].padding[3],t->width)+(t->collapse ? cell->border[3] : exr_border_extent(&f->styles[cell->node],3));
+  right=length_value(f->styles[cell->node].padding[1],t->width)+(t->collapse ? cell->border[1] : exr_border_extent(&f->styles[cell->node],1));
+  if(left+right+1>t->width) return EXR_OK;
+  kern=calloc(128*128,sizeof(*kern));known=calloc(128*128,1);
+  if(!kern || !known) { free(kern);free(known);return EXR_OK; }
+  *handled=1;*minimum=left+right;
+  first_indent=fmaxf(0,f->styles[cell->node].indent);total=first_indent;
+  ordered=exr_font_order(f->font,style->family,style->flags,text->chapter,order);
+  for(at=text->start;at<text->end;at++) {
+    unsigned c=(unsigned char)f->doc->text[at];float spacing=0,word_spacing=0;
+    if(++f->assets->work_glyphs>EXR_MAX_ITEMS) { status=exr_fail(f->error,EXR_LIMIT,"Text work limit exceeded");break; }
+    if(!(f->assets->work_glyphs&255)) {
+      status=exr_control_poll(&f->config->control,EXR_STAGE_LAYOUT,at,f->doc->size,f->error);
+      if(status!=EXR_OK) break;
+    }
+    if(!metrics[c].ready) {
+      size_t face=0;
+      for(i=0;i<ordered;i++) if(exr_font_has_glyph(f->font,order[i],c)) { face=order[i];break; }
+      metrics[c].face=&f->font->faces[face];metrics[c].glyph=FT_Get_Char_Index(metrics[c].face->face,c);
+      if(exr_font_size(metrics[c].face,style->font_size) ||
+         exr_measure(metrics[c].face,metrics[c].glyph,style->flags&~metrics[c].face->style_flags,&metrics[c].advance)) {
+        status=exr_fail(f->error,EXR_FONT,"Cannot measure intrinsic cell font");break;
+      }
+      metrics[c].ready=1;
+    }
+    if(previous && metrics[previous].face==metrics[c].face) {
+      size_t pair=previous*128+c;
+      if(!known[pair]) { kern[pair]=exr_kern(metrics[c].face,metrics[previous].glyph,metrics[c].glyph);known[pair]=1; }
+      spacing=kern[pair];
+    }
+    total+=metrics[c].advance+spacing;
+    if(c==' ') {
+      *minimum=fmaxf(*minimum,left+word+(first ? first_indent : 0)+right);
+      if(word_previous) first=0;
+      word=0;word_previous=0;
+    } else {
+      if(word_previous && metrics[word_previous].face==metrics[c].face) word_spacing=kern[word_previous*128+c];
+      word+=metrics[c].advance+word_spacing;word_previous=c;
+    }
+    previous=c;
+  }
+  if(status==EXR_OK) {
+    *minimum=fmaxf(*minimum,left+word+(first ? first_indent : 0)+right);
+    *maximum=(float)(left+total+right);
+    if(!isfinite(*maximum) || *maximum>1e9) status=exr_fail(f->error,EXR_LIMIT,"Intrinsic table width exceeds coordinate budget");
+  }
+  free(kern);free(known);return status;
+}
 static exr_status column_widths(flow *f,exr_table_cursor *t,size_t node) {
   float widths[64]={0},preferred[64]={0},total=0,available=t->width; unsigned kinds[64]={0},lowest=2;
   size_t column=0,i,n,automatic=0; exr_status status;
@@ -251,8 +331,12 @@ static exr_status column_widths(flow *f,exr_table_cursor *t,size_t node) {
       (t->collapse ? cell->border[1]+cell->border[3] : exr_border_extent(&style,1)+exr_border_extent(&style,3));
     width=fminf(width,t->width*64);
     if(!fixed) {
-      if(f->intrinsic!=2) { status=exr_flow_intrinsic(&local,cell->node,t->width,1,&minimum); if(status!=EXR_OK) return status; }
-      if(f->intrinsic!=1) { status=exr_flow_intrinsic(&local,cell->node,t->width,2,&maximum); if(status!=EXR_OK) return status; }
+      int handled=0;
+      status=plain_widths(&local,t,cell,&minimum,&maximum,&handled);if(status!=EXR_OK) return status;
+      if(!handled) {
+        if(f->intrinsic!=2) { status=exr_flow_intrinsic(&local,cell->node,t->width,1,&minimum); if(status!=EXR_OK) return status; }
+        if(f->intrinsic!=1) { status=exr_flow_intrinsic(&local,cell->node,t->width,2,&maximum); if(status!=EXR_OK) return status; }
+      }
     }
     if(!fixed) {
       /* The cell cursor needs one content pixel in addition to its insets,

@@ -94,7 +94,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.38.1 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.38.2 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -466,7 +466,7 @@ development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.38.1 EXACT
+Select this package with `find_package(EXReader 3.38.2 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -658,3 +658,14 @@ colour functions and ICC are evaluated once per table entry. Type 1 and mesh
 shadings retain their bitmap paths. Fixed colour-table resolution is still a
 limit for sharply varying functions; adaptive sampling remains pending.
 The new export is additive; ABI epoch 1 and schema 6 remain unchanged.
+
+## 3.38.2 table measurement and corpus diagnostics
+
+The SDK is 3.38.2 and the core is 3.37.2; PDF remains 3.38.1.
+ABI1/schema6 and all public layouts and signatures remain unchanged.
+Plain horizontal Latin table cells can measure min/max content in one bounded
+scan when their fonts require no OpenType shaping. Rich content, other scripts,
+bitmap fonts and ambiguous whitespace retain the existing general algorithm.
+The optimization does not implement incremental chapter parsing.
+Corpus diagnostics retain baseline expectations and never grant acceptance.
+Their independent PDF probe is an optional validation tool, not an SDK dependency.

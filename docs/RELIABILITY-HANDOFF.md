@@ -14,12 +14,16 @@ Apple三类宿主各21项自动检查，Windows本地及CI各26项。
 记录见 `docs/validation/2026-10-20-native-hosts.json`。
 
 已补整本遍历工具与逐文件隔离/证据驱动，GCC/MSVC专项各2/2通过。
-真实公版EPUB已收齐500本，保留RDF、原书条款、散列与全部收集失败记录，正在逐本验证。
-本地完整验证使用`C:/Users/Oscar/exr-corpus-v1/epub-500-full`，工具会话75502，4进程、每本120秒墙钟上限。
-接手先检查该目录的`summary.json`或已有进程，不重复启动同一批；阶段性快照已封存并在验证JSON中引用。
+真实公版EPUB已收齐500本，保留RDF、原书条款、散列与全部收集失败记录；整批验证已结束。
+原始结果在`C:/Users/Oscar/exr-corpus-v1/epub-500-full/summary.json`：483本完成、11本超时、6本非预期，整批拒绝验收。
+原批4进程、每本120秒墙钟；不要重跑覆盖。失败重放区分3本图像缓存预算、2本表格布局预算、1本内容区宽度错误。
 122份外部PDF中49份完整完成，66份返回格式错误，7份返回不支持；未冻结逐文件能力预期，整批不验收。
 10MiB多段单章完成首屏和采样翻页，50/100MiB单章仍受现有限制；WP6和首版完整交付均未完成。
 范围和路径见 `docs/CORPUS_VALIDATION.md`、`docs/validation/2026-10-20-corpus-performance.json`。
+
+WP6普通Latin表格宽度优化与兼容分类见 `docs/validation/2026-10-20-wp6-compatibility.json`。
+SDK3.38.2、核心3.37.2、PDF3.38.1，ABI1/schema6；字体塑形/复杂内容继续使用原通用测量。
+该优化不改变章内增量的未完成状态。WP7/WP8/WP12a使用各自HANDOFF文档中的独立分支和目录。
 
 以下保留历史现场，版本、测试数及进度以各批次代码和独立验证JSON为准。
 

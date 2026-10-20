@@ -1,0 +1,252 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "base_source_sha": "245484870f2059a548e5951dc8f28c5e62c08540",
+  "sdk_version": "3.38.2",
+  "core_version": "3.37.2",
+  "pdf_version": "3.38.1",
+  "abi": 1,
+  "library_schema": 6,
+  "source_snapshot": {
+    "src\\pager_table.c": "976fa750bf6f5b6e7f99a4d07a371f5ab5d9351dd29d87e6335f4b36f06ea621",
+    "tests\\test_table_intrinsic.c": "75e9396add9b4fd65753c75a63b4c4c87441f263588753d9a4d93b9860b07ef3",
+    "tools\\check_document.c": "70b5adacf285321ed18c5c52f51864939205bafe61a5fd3cc89b0402ec9ecd1b",
+    "tools\\check_pdf_reference.py": "10abdbfe8992c126458ffc8a17e4ef04fbf84c42a198c7305f62d12eccba220d",
+    "tools\\triage_corpus.py": "c70733890a8d8ac4ea8ed10f94ce224854ad8717ce2960e0c4c12cd65f9852ba",
+    "tools\\compare_table_performance.py": "7b083c834d5aecbc86e74b8a7c45023691f3eb52d37127db4b44daeef72a8402",
+    "tests\\check_corpus_triage.py": "15025f7ff2ddf9ed7278261b898d0d56dc6d73685ddd0c41fa80d26f2e3f5dcf",
+    "CMakeLists.txt": "f9ad19b54c7fda251d074963f5595738d806c19b27fe29ed176002d393875f34",
+    "include\\exr\\base.h": "fda2021d09b53d205a98ba6c45264c086c00da6c25c8e56fe88399aed355cc6d",
+    "cmake\\versions.cmake": "f4a281026ba65ba29bacc179199913ef241d7ec5f6db6367fcf96e56cc89540e"
+  },
+  "table_measurement": {
+    "scope": "plain horizontal Latin, one TEXT child, no OpenType shaping or bitmap fonts; generic two-pass path retained for all other content",
+    "bounded_pair_cache_bytes": 81920,
+    "equivalence_pairs": 160,
+    "coordinate_tolerance_px": 0.01,
+    "rgba_comparison": "exact full-page bytes",
+    "compared_fields": [
+      "glyph",
+      "source_range",
+      "font_index",
+      "flags",
+      "color",
+      "x",
+      "baseline",
+      "advance"
+    ],
+    "baseline_engine_source_sha": "fc1b00f056fdde9266d37e8b3f6888872d2f573d",
+    "baseline_identity": {
+      "path": "C:\\Users\\Oscar\\exr-wp6-baseline-runtime\\identity.json",
+      "sha256": "effa455c82e30bd2e550294e82788384c05b583df99f130b6669a235614bd657"
+    },
+    "initial_five_rounds": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-auto-table-five-rounds\\comparison.json",
+      "sha256": "5847200251d4e55e44e425c0e7d383d18cfbca28c6a09fb2ab0a6ca8a3f0a9cb"
+    },
+    "boundary_revision_five_rounds": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-auto-table-five-rounds-r3\\comparison.json",
+      "sha256": "cbc4d9fdee21d871ab9f25f9d2854a784d30b42d150e573ae3e686d5e848d53b"
+    },
+    "final_five_rounds": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-auto-table-final-3.38.2\\comparison.json",
+      "sha256": "576bbd548a867f225a106c0953aa50c441d22bafe48c93bfada21caf4f4f59c1"
+    },
+    "failure_rejection_selfcheck": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-auto-table-incomplete-selfcheck\\comparison.json",
+      "sha256": "3769c7c8f250621e50224c30a15943f1fce916e96f49aec2ae54945a405281ef"
+    },
+    "acceptance_condition": "all ten samples complete with one continuation; identities unchanged; candidate first-visible median <= 50% baseline",
+    "disk_cache": "uncontrolled",
+    "performance_subgoal_passed": true,
+    "chapter_incremental_complete": false,
+    "final_medians": {
+      "baseline": {
+        "first_visible_total_ms": 980.942,
+        "first_layout_ms": 976.142,
+        "peak_rss_bytes": 11907072
+      },
+      "candidate": {
+        "first_visible_total_ms": 34.2111,
+        "first_layout_ms": 28.8245,
+        "peak_rss_bytes": 12120064
+      }
+    },
+    "final_first_visible_ratio": 0.0348757622774843,
+    "failure_selfcheck_expected_exit": 1
+  },
+  "corpus_classification": {
+    "expectations_changed": false,
+    "corpus_acceptance_granted": false,
+    "epub": {
+      "classification": {
+        "path": "C:\\Users\\Oscar\\exr-corpus-v1\\epub-classification-r3\\classification.json",
+        "sha256": "2d3a10b4a19f448d81846c847755faa9f94f3ecd93e0ec66a80384b460baa09d"
+      },
+      "baseline_summary": {
+        "path": "C:\\Users\\Oscar\\exr-corpus-v1\\epub-500-full\\summary.json",
+        "sha256": "4a4d3652789f923e1e9cd3b0d97976cbe63721c91481ac2d66beae5097fddfc2"
+      },
+      "counts": {
+        "completed": 483,
+        "timeout_120_seconds": 11,
+        "decoded_image_cache_budget": 3,
+        "table_layout_budget": 2,
+        "content_width_argument": 1
+      }
+    },
+    "pdf": {
+      "classification": {
+        "path": "C:\\Users\\Oscar\\exr-corpus-v1\\pdf-classification-r3\\classification.json",
+        "sha256": "83798c44bddaf91f8522a54bf39df87dbf1134479c61b22babf92226d8ad9f58"
+      },
+      "baseline_summary": {
+        "path": "C:\\Users\\Oscar\\exr-corpus-v1\\pdf-full-e65c1f9\\summary.json",
+        "sha256": "1b6d4e9cffe4182168100acd1b0aeeb9a6e50cf986aeefd19a2af79f4ce1cc21"
+      },
+      "counts": {
+        "completed": 49,
+        "reference_completed_primary_rejected": 54,
+        "reference_repaired_input": 8,
+        "requires_review": 4,
+        "unsupported_feature": 7
+      }
+    },
+    "reference_scope": "independent open/render/text; completion does not establish specification validity, pixel fidelity or a primary-engine defect",
+    "selfcheck": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\compat-reference-selfcheck-r4\\checks.json",
+      "sha256": "d05ede13fa30138df075e16db83b44da1ef1d439eb2c9476ad398fc1d7360e79"
+    },
+    "selfcheck_log": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\compat-reference-selfcheck-r4.log",
+      "sha256": "f7cac024d985bc9b04601596051a087f524297aa6dc619008b0b08d1105817d8"
+    },
+    "classification_runs_use_archived_tool_snapshots": true
+  },
+  "local_checks": {
+    "gcc": {
+      "pre_version_tests_passed": 152,
+      "pre_version_tests_total": 152,
+      "pre_version_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-gcc-full-test.log",
+        "sha256": "1e16e341586fba8de72f896ce648f1ee703c1b5cc676da15cc61ccdda88240e8"
+      },
+      "final_version_status": "passed",
+      "final_version_tests_passed": 152,
+      "final_version_tests_total": 152,
+      "final_version_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-gcc-final-test.log",
+        "sha256": "9fdd39e044c1da57642f6fcb91004f0b766abafe5693443a8782ec185acdb4cd"
+      },
+      "final_version_build_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-gcc-final-build.log",
+        "sha256": "c9e514632387391e640b9d428e9bdf607faa3ca20edd29cd5f141a72996d18ec"
+      },
+      "final_diagnostic_guard_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-triage-final-guard-gcc.log",
+        "sha256": "5406da969c4dd70c4fa8c6eca17b93107c2dc73fac248eccc128458e1aa9cd54"
+      },
+      "test_timing_note": "The final diagnostic operational-exit guard was added after the full suite; its current test passed again independently on each compiler."
+    },
+    "msvc": {
+      "pre_version_tests_passed": 152,
+      "pre_version_tests_total": 152,
+      "pre_version_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-msvc-test.log",
+        "sha256": "6078e4b307bb6be0d882d8e59abbdb71acfd7683d6d9bc6a752a13bc7b9de0b3"
+      },
+      "final_version_status": "passed",
+      "final_version_tests_passed": 152,
+      "final_version_tests_total": 152,
+      "final_version_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-msvc-final-test.log",
+        "sha256": "a36736b80e64023c94e04a395999cad52e347b101e7b5b0bbd9c9b1333bdefa2"
+      },
+      "final_version_build_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-msvc-final-build.log",
+        "sha256": "e3d72d82287d3d84250567d5646908a69ca11cd96a6944a7395fa5937fba9a1f"
+      },
+      "final_diagnostic_guard_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-triage-final-guard-msvc.log",
+        "sha256": "d63cb78980c5e5c6f211c4c7a62253afad34f8d888bba99bb47eda3fcfbc5016"
+      },
+      "test_timing_note": "The final diagnostic operational-exit guard was added after the full suite; its current test passed again independently on each compiler."
+    },
+    "installed_consumers": {
+      "default_passed": 4,
+      "default_total": 4,
+      "trimmed_passed": 1,
+      "trimmed_total": 1,
+      "default_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-default-consumer-r2-test.log",
+        "sha256": "be8ca79e31ad47328aea593424c98157f22025e38cbbbb65f2b903e30290c6d7"
+      },
+      "trimmed_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-trimmed-consumer-test.log",
+        "sha256": "60d85eb25f972896761a70bc4140ef885122a3fe00366e9c1c6eea24d47a7ca8"
+      },
+      "trimmed_build_test_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-trimmed-test.log",
+        "sha256": "8114ef0dda03796a92dc15c9fb0e3abef331e3c835124310efff9409ddb28754"
+      },
+      "cpp_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-cpp-r2-test.log",
+        "sha256": "6d262a841d55392c6a0c413f6d50230157364b488e1f3b33dcad66a28c109805"
+      },
+      "cpp_exact_sdk": "3.38.2",
+      "initial_failures": {
+        "reason": "Ninja narrow source-path handling; successful rerun used the existing ASCII junction",
+        "default_build_log": {
+          "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-default-consumer-build.log",
+          "sha256": "26f7896fda9e5c81af602934fe199ee03be441217f3ce17ab78273646d1afa95"
+        },
+        "cpp_build_log": {
+          "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-cpp-build.log",
+          "sha256": "124516461d17b636678ef008a40c13cb80c82a18dfe71ac768989579de3a9c51"
+        }
+      }
+    },
+    "layers": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-layers.log",
+      "sha256": "409db06d5b43e62f2e0876c6086fa2992f846c80e31be95e472a6dc10e67f891"
+    },
+    "public_exports": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-export-check.json",
+      "sha256": "c089f969179e6a9766c84bb84466f4db8ef4e6adba8ba3ea1b7196b4b803f8d6"
+    }
+  },
+  "ci": {
+    "status": "not_started",
+    "source_sha": null,
+    "sanitizer_passed": false
+  },
+  "reliability_prior_source": {
+    "run_id": 39451039706,
+    "source_sha": "f719bd4590df4dfb7ef04b5ac5a58d49a7b9a310",
+    "snapshot": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\status-39451039706-20261020T190444Z.json",
+      "sha256": "765fe6043acef59d60f824a5bf31dd5aa0f1d6263057687cd1ad9a5c61d83555"
+    },
+    "partial_audit": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\reliability-39451039706-partial-20261020T190444Z\\partial-audit.json",
+      "sha256": "12c573ab19292d6939acaeacb93080f601961450cf9113eb184b4dbebe7853ee"
+    },
+    "full_acceptance": false,
+    "applies_to_current_source": false
+  },
+  "wp6_complete": false,
+  "wp16_complete": false,
+  "first_sdk_complete": false,
+  "remaining": [
+    "bounded incremental parsing within one chapter",
+    "10/50/100 MiB single-chapter sequential and random recovery with <=32 MiB parsed-residency growth",
+    "final-source native CI, Linux sanitizer and six-platform artifacts",
+    "WP7/WP8/WP12a return commits and integration",
+    "four-target 24 CPU hour evidence on the final frozen source",
+    "remaining corpus/specification/fidelity and platform application requirements in docs/HANDOFF.md"
+  ],
+  "preserved_untracked_files": {
+    "docs/validation/2026-10-19-shading-extent-ci.json": "a955abda1e35fd456172b2e78e1d687799e4ab5f1f977dec0efd7684aae9fdc1",
+    "src/internal.h": "c951b04a1611008b2e97437d6877bebabf29ec2c374a1c8166c9aca14f34e904"
+  }
+}
