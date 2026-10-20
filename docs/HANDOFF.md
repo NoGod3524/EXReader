@@ -6,6 +6,10 @@ WP7六个交付提交已集成：八个声明脚本的功能和Windows验收按�
 主线Linux ASan/UBSan结果与最终关闭状态见 `docs/validation/2026-10-20-wp7-integration.json`。
 PUA fallback、broken-cluster dotted circle和其他脚本沿用声明边界；本包不另设功能缺口。
 
+WP8与WP12-lite交付也已接入同批3.39.0：彩色字体按声明子集、转换按轻量产品范围验收。
+主线联合回归、安装消费、Linux sanitizer及CI状态见 `docs/validation/2026-10-20-parallel-integration.json`。
+完整WP12高保真、迁移及宿主入口继续独立跟踪，WP12a仍等待交付。
+
 3.38.3移除EPUB整章解压临时副本，保留完整DOM/正文投影及原资源上限。
 分块输入不等于有界章内解析；WP6的10→100MiB解析驻留增量和章内随机恢复仍未验收。
 本批代码、回归、兼容失败复核和WP16逐项状态见 `docs/validation/2026-10-20-wp6-input-stream.json`。

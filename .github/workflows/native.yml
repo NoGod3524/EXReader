@@ -36,7 +36,7 @@ jobs:
         run: cmake --install build/native --config Release --prefix stage
       - name: Build and run installed static components
         run: |
-          cmake -S tests/sdk_components -B build/sdk-components -DEXR_SDK="${{ github.workspace }}/stage" -DEXR_TEST_FONT="${{ github.workspace }}/tests/fixtures/fonts/primary.ttf" -DCMAKE_BUILD_TYPE=Release
+          cmake -S tests/sdk_components -B build/sdk-components -DEXR_SDK="${{ github.workspace }}/stage" -DEXR_TEST_FONT="${{ github.workspace }}/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="${{ github.workspace }}/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="${{ github.workspace }}/tests/fixtures" -DCMAKE_BUILD_TYPE=Release
           cmake --build build/sdk-components --config Release --parallel 4
           ctest --test-dir build/sdk-components -C Release --output-on-failure
       - name: Build and test core without optional components
@@ -45,7 +45,7 @@ jobs:
           cmake --build build/core-only --config Release --parallel 4
           ctest --test-dir build/core-only -C Release --output-on-failure
           cmake --install build/core-only --config Release --prefix stage-core
-          cmake -S tests/sdk_components -B build/sdk-core -DEXR_SDK="${{ github.workspace }}/stage-core" -DEXR_TEST_FONT="${{ github.workspace }}/tests/fixtures/fonts/primary.ttf" -DCMAKE_BUILD_TYPE=Release
+          cmake -S tests/sdk_components -B build/sdk-core -DEXR_SDK="${{ github.workspace }}/stage-core" -DEXR_TEST_FONT="${{ github.workspace }}/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="${{ github.workspace }}/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="${{ github.workspace }}/tests/fixtures" -DCMAKE_BUILD_TYPE=Release
           cmake --build build/sdk-core --config Release --parallel 4
           ctest --test-dir build/sdk-core -C Release --output-on-failure
       - name: Verify storage without playback or PDF
@@ -208,6 +208,13 @@ jobs:
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+      - name: Preserve sanitizer test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanitizer-native-tests
+          path: build/asan/Testing/
+          if-no-files-found: warn
   fuzz:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
@@ -235,7 +242,7 @@ jobs:
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
       - name: Bounded font, layout and rendering campaigns
         run: |
-          ./build/fuzz/exreader-fuzz-font --seed 20261019 --iterations 20000 --save build/fuzz/font.bin tests/fixtures/fonts/primary.ttf tests/fixtures/fonts/pdf-cubic.otf tests/fixtures/fonts/color.ttf tests/fixtures/fonts/bitmap.ttf tests/fixtures/fonts/cbdt.ttf tests/fixtures/fonts/variable.ttf tests/fixtures/shaping/shaping.ttf
+          ./build/fuzz/exreader-fuzz-font --seed 20261019 --iterations 20000 --save build/fuzz/font.bin tests/fixtures/fonts/primary.ttf tests/fixtures/fonts/pdf-cubic.otf tests/fixtures/fonts/color.ttf tests/fixtures/fonts/bitmap.ttf tests/fixtures/fonts/cbdt.ttf tests/fixtures/fonts/variable.ttf tests/fixtures/shaping/shaping.ttf tests/fixtures/fonts/colrv1.ttf tests/fixtures/fonts/colrv1-var.ttf tests/fixtures/fonts/svgfont.ttf
           ./build/fuzz/exreader-fuzz-layout --font tests/fixtures/fonts/primary.ttf --seed 20261019 --iterations 2000 --save build/fuzz/layout.bin tests/fixtures/sample.txt tests/fixtures/layout.epub tests/fixtures/float-both.epub tests/fixtures/table-fragments-12.epub
           ./build/fuzz/exreader-fuzz-render --font tests/fixtures/fonts/primary.ttf --seed 20261019 --iterations 2000 --save build/fuzz/render.bin tests/fixtures/comic.cbz tests/fixtures/pdf-color/shading-axial.pdf tests/fixtures/layout.epub
         env:

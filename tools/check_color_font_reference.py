@@ -7,6 +7,7 @@ bounding box, aligned with a small shift search, and compared on flat interior
 pixels so antialiasing differences are reported separately.
 """
 # SPDX-License-Identifier: MIT
+import argparse
 import base64
 import hashlib
 import json
@@ -279,9 +280,16 @@ def save_diff_sheet(tiles, path):
 
 
 def main():
-    work = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(r'C:/Users/Oscar/exr-wp8-build/reference')
+    global CHROME
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('output', type=Path)
+    parser.add_argument('--renderer', type=Path, required=True)
+    parser.add_argument('--chrome', type=Path, default=CHROME)
+    args = parser.parse_args()
+    CHROME = args.chrome.absolute()
+    work = args.output.absolute()
     work.mkdir(parents=True, exist_ok=True)
-    tool = Path(r'C:/Users/Oscar/exr-wp8-build/render-color-font.exe')
+    tool = args.renderer.absolute()
     report = {'reference': 'Google Chrome 152.0.7977.42 (Skia)', 'size_px': SIZE,
               'flat_tolerance': FLAT_TOLERANCE, 'mean_tolerance': MEAN_TOLERANCE,
               'bbox_tolerance': BBOX_TOLERANCE, 'fonts': {}, 'scenes': {}}
@@ -324,7 +332,8 @@ def main():
               f'interior={result.get("interior_fraction", 0):.2f} flat={result.get("flat_pixels", 0)} '
               f'{result.get("reason", "")}')
     print(f'{report["passed"]}/{report["total"]} reference scenes pass')
+    return 0 if report['passed'] == report['total'] else 1
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

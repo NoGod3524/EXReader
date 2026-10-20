@@ -9,6 +9,11 @@ glyph严格相等、cluster按声明的包含口径、advance/offset固定1.5px@
 SDK3.39.0、核心3.38.0、PDF3.38.1，ABI1/schema6不变；HarfBuzz仅为开发期参考工具。
 范围边界见 `docs/WP7-SCRIPTS.md`，主线集成与Linux sanitizer证据见 `docs/validation/2026-10-20-wp7-integration.json`。
 
+3.39.0同批加入WP8的COLRv1/SVG字体声明子集和大小标记颜色查询；
+WP12-lite提供可安装转换工具、正文与preserve配置及可取消导出。
+两项新增导出保持ABI1/schema6；范围文档随默认和裁剪SDK安装。
+主线联合验收记录见 `docs/validation/2026-10-20-parallel-integration.json`。
+
 3.38.3：EPUB章节从ZIP回调分块送入XML解析器，取消整章解压临时副本；
 同一内部解析器供原整块入口复用，TEXT节点、CFI和源字节位置不随输入分块变化。
 保留32MiB成员及128MiB累计展开限制，CRC/取消/解析失败不返回部分文档。

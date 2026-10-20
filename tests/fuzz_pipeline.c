@@ -42,7 +42,7 @@ static void bitmap_check(exr_status status,const exr_bitmap *b,unsigned channels
   volatile unsigned char sample=b->pixels[(size_t)(b->height-1)*b->stride+(size_t)(b->width-1)*channels];(void)sample;
 }
 static exr_status font_exercise(const unsigned char *data,size_t size,exr_control control) {
-  const char text[]="AV ffi a\xcc\x81 \xd8\xa8\xd9\x84\xd8\xa7 \xe0\xa4\x95\xe0\xa4\xbf \xe0\xb8\x81 \xe7\x94\xb2 \xf0\x9f\x98\x80";
+  const char text[]="ABC AV ffi a\xcc\x81 \xd8\xa8\xd9\x84\xd8\xa7 \xe0\xa4\x95\xe0\xa4\xbf \xe0\xb8\x81 \xe7\x94\xb2 \xf0\x9f\x98\x80";
   exr_font *font=NULL;exr_font_input input={data,size,0};exr_error error={0};exr_status status;
   exr_font_axis *axes=NULL;size_t axes_count=0;
   status=exr_font_create_glyphs(&input,1,&font,&error);require((status==EXR_OK)==!!font,"font open ownership");
@@ -60,9 +60,11 @@ static exr_status font_exercise(const unsigned char *data,size_t size,exr_contro
       for(size_t i=0;i<count && status==EXR_OK;i++) {
         exr_path_segment *outline=NULL;size_t segments=0;exr_glyph_image image={0};exr_font_color_layer *layers=NULL;size_t layer_count=0;
         const exr_shaped_glyph *g=glyphs+i;
+        exr_font_color_info color={0};color.struct_size=sizeof(color);
         require(g->start<=g->end && g->end<sizeof(text),"shaping source range");
         require(isfinite(g->advance_x) && isfinite(g->advance_y) && isfinite(g->offset_x) && isfinite(g->offset_y),"non-finite shaped glyph");
-        status=exr_font_glyph_outline(font,0,g->glyph,&outline,&segments,&control,&error);
+        status=exr_font_color_info_get(font,0,g->glyph,&color,&control,&error);
+        if(status==EXR_OK) status=exr_font_glyph_outline(font,0,g->glyph,&outline,&segments,&control,&error);
         if(status==EXR_OK) for(size_t j=0;j<segments;j++) {
           require(outline[j].verb>=EXR_PATH_MOVE && outline[j].verb<=EXR_PATH_CLOSE,"outline verb");
           unsigned points=outline[j].verb==EXR_PATH_CUBIC ? 3 : outline[j].verb==EXR_PATH_QUAD ? 2 : outline[j].verb==EXR_PATH_CLOSE ? 0 : 1;
@@ -78,6 +80,15 @@ static exr_status font_exercise(const unsigned char *data,size_t size,exr_contro
       }
     }
     exr_free(glyphs);
+  }
+  if(status==EXR_OK) {
+    exr_document *doc=NULL;exr_layout *layout=NULL;exr_bitmap bitmap={0};
+    exr_layout_config config=exr_layout_config_defaults();config.page=(exr_layout_options){192,256,8,16,1.25f,0};config.control=control;
+    status=exr_document_open_memory(EXR_TXT,text,sizeof(text)-1,&doc,&error);
+    if(status==EXR_OK) status=exr_layout_create_ex(doc,font,&config,&layout,&error);
+    require((status==EXR_OK)==!!layout,"font render layout ownership");
+    if(status==EXR_OK) { status=exr_render_page_ex(layout,font,0,4,&control,&bitmap,&error);bitmap_check(status,&bitmap,4); }
+    exr_bitmap_free(&bitmap);exr_layout_free(layout);exr_document_free(doc);
   }
   exr_font_free(font);return status;
 }

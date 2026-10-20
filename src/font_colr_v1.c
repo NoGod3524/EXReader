@@ -672,10 +672,12 @@ exr_status exr_font_color_info_get(exr_font *font, size_t index, uint32_t glyph,
     if (FT_Get_Color_Glyph_Layer(face->face, glyph, &layer, &color, &iterator)) {
       out->kind = EXR_FONT_COLOR_COLR_V0;
       if (iterator.num_layers > 256) return exr_fail(error, EXR_LIMIT, "Color glyph exceeds 256 layers");
-    } else if (exr_font_svg_covers(face, glyph, &local_work, control, error)) {
-      out->kind = EXR_FONT_COLOR_SVG;
     } else {
-      return exr_fail(error, EXR_OK, "");
+      int covers = 0;
+      status = exr_font_svg_covers(face, glyph, &covers, &local_work, control, error);
+      if (status != EXR_OK) return status;
+      if (covers) out->kind = EXR_FONT_COLOR_SVG;
+      else return exr_fail(error, EXR_OK, "");
     }
   }
   if (out->kind != EXR_FONT_COLOR_COLR_V1) return exr_fail(error, EXR_OK, "");
