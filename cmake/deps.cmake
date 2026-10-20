@@ -47,8 +47,13 @@ if(EXR_ENABLE_IMAGE_TIFF)
   # libtiff's FindZLIB path needs both zlib.h and the generated zconf.h. Point it
   # at the pinned sources and use the built zlibstatic target for every config.
   set(ZLIB_INCLUDE_DIR "${zlib_SOURCE_DIR}" CACHE PATH "" FORCE)
-  set(ZLIB_LIBRARY_RELEASE "${zlib_BINARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}zlibstatic${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE FILEPATH "" FORCE)
-  set(ZLIB_LIBRARY_DEBUG "${ZLIB_LIBRARY_RELEASE}" CACHE FILEPATH "" FORCE)
+  set(ZLIB_LIBRARY zlibstatic)
+  if(NOT TARGET ZLIB::ZLIB)
+    add_library(ZLIB::ZLIB INTERFACE IMPORTED GLOBAL)
+    set_target_properties(ZLIB::ZLIB PROPERTIES
+      INTERFACE_LINK_LIBRARIES zlibstatic
+      INTERFACE_INCLUDE_DIRECTORIES "${zlib_SOURCE_DIR};${zlib_BINARY_DIR}")
+  endif()
   set(tiff-tools OFF CACHE BOOL "" FORCE)
   set(tiff-tests OFF CACHE BOOL "" FORCE)
   set(tiff-contrib OFF CACHE BOOL "" FORCE)
@@ -66,10 +71,6 @@ if(EXR_ENABLE_IMAGE_TIFF)
   if(TARGET tiff)
     target_include_directories(tiff PRIVATE "${zlib_BINARY_DIR}")
   endif()
-  if(TARGET ZLIB::ZLIB)
-    set_target_properties(ZLIB::ZLIB PROPERTIES IMPORTED_LOCATION "$<TARGET_FILE:zlibstatic>")
-    set_property(TARGET ZLIB::ZLIB PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${zlib_SOURCE_DIR};${zlib_BINARY_DIR}")
-  endif()
 endif()
 if(EXR_ENABLE_IMAGE_AVIF)
   find_program(EXR_PERL_EXECUTABLE NAMES perl)
@@ -85,6 +86,7 @@ if(EXR_ENABLE_IMAGE_AVIF)
   set(CONFIG_AV1_DECODER 1 CACHE STRING "" FORCE)
   set(CONFIG_MULTITHREAD 0 CACHE STRING "" FORCE)
   set(ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+  set(ENABLE_APPS OFF CACHE BOOL "" FORCE)
   set(ENABLE_EXAMPLES OFF CACHE BOOL "" FORCE)
   set(ENABLE_DOCS OFF CACHE BOOL "" FORCE)
   set(ENABLE_TOOLS OFF CACHE BOOL "" FORCE)
@@ -93,30 +95,19 @@ if(EXR_ENABLE_IMAGE_AVIF)
   # libaom appends its warning flags (-Wundef, -Wmissing-prototypes, ...) to the
   # directory-wide CMAKE_*_FLAGS. Keep them for aom's own targets but restore
   # EXReader's stricter, warning-free baseline for every other target.
-  set(EXR_SAVED_C_FLAGS "${CMAKE_C_FLAGS}")
-  set(EXR_SAVED_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-  set(EXR_SAVED_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-  set(EXR_SAVED_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-  set(EXR_SAVED_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL}")
-  set(EXR_SAVED_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  set(EXR_SAVED_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-  set(EXR_SAVED_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+  set(exr_aom_flag_variables CMAKE_C_FLAGS CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_DEBUG
+    CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_C_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS
+    CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELWITHDEBINFO
+    CMAKE_CXX_FLAGS_MINSIZEREL)
+  foreach(flag_variable IN LISTS exr_aom_flag_variables)
+    set(EXR_SAVED_${flag_variable} "${${flag_variable}}")
+  endforeach()
   FetchContent_MakeAvailable(libaom)
-  set(CMAKE_C_FLAGS "${EXR_SAVED_C_FLAGS}")
-  set(CMAKE_C_FLAGS_RELEASE "${EXR_SAVED_C_FLAGS_RELEASE}")
-  set(CMAKE_C_FLAGS_DEBUG "${EXR_SAVED_C_FLAGS_DEBUG}")
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "${EXR_SAVED_C_FLAGS_RELWITHDEBINFO}")
-  set(CMAKE_C_FLAGS_MINSIZEREL "${EXR_SAVED_C_FLAGS_MINSIZEREL}")
-  set(CMAKE_CXX_FLAGS "${EXR_SAVED_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS_RELEASE "${EXR_SAVED_CXX_FLAGS_RELEASE}")
-  set(CMAKE_CXX_FLAGS_DEBUG "${EXR_SAVED_CXX_FLAGS_DEBUG}")
-  # Existing build directories can already contain the appended flags in their
-  # cache; strip the libaom-only warning set explicitly so reconfiguration is
-  # idempotent.
-  foreach(exr_flags_var CMAKE_C_FLAGS CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_C_FLAGS_MINSIZEREL)
-    foreach(exr_aom_flag "-Wdisabled-optimization" "-Wfloat-conversion" "-Wformat=2" "-Wimplicit-function-declaration" "-Wlogical-op" "-Wmissing-declarations" "-Wmissing-prototypes" "-Wpointer-arith" "-Wshadow" "-Wsign-compare" "-Wtype-limits" "-Wundef" "-Wuninitialized" "-Wunused" "-Wvla" "-Wstack-usage=100000")
-      string(REPLACE " ${exr_aom_flag}" "" ${exr_flags_var} "${${exr_flags_var}}")
-    endforeach()
+  # Restore the cache too: libaom writes it with FORCE, so normal variables alone
+  # would leak its flags into the next configuration and rebuild unrelated code.
+  foreach(flag_variable IN LISTS exr_aom_flag_variables)
+    set(${flag_variable} "${EXR_SAVED_${flag_variable}}" CACHE STRING "Compiler flags" FORCE)
+    set(${flag_variable} "${EXR_SAVED_${flag_variable}}")
   endforeach()
   if(TARGET aom)
     target_include_directories(aom INTERFACE "$<BUILD_INTERFACE:${libaom_SOURCE_DIR}>")
