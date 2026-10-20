@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "package": "WP7",
+  "date": "2026-10-20",
+  "sdk_version": "3.39.0",
+  "core_version": "3.38.0",
+  "pdf_version": "3.38.1",
+  "abi": 1,
+  "library_schema": 6,
+  "delivery_commits": [
+    "a119ae645e1aac0189d95c95f69b5ecd10091136",
+    "378ac41f118973ebca5a92450998ba21a39a22c1",
+    "b66339af6673e3ca1c9314499bcaf36775c8b9ee",
+    "6a0299315c23ec5e25624c4e6460eede6dbde010",
+    "e650776dda3f3123e4a37d917b05af9afef73bb4",
+    "ffbfa0360f050bf0674e41da9eb44b0e00208972"
+  ],
+  "mainline_cherry_picks": [
+    "184df64",
+    "a83c3f4",
+    "3476b0a",
+    "1d6f97b",
+    "8851456",
+    "d052605"
+  ],
+  "acceptance": {
+    "scope": [
+      "Bengali",
+      "Tamil",
+      "Telugu",
+      "Kannada",
+      "Malayalam",
+      "Thai",
+      "Khmer",
+      "Myanmar"
+    ],
+    "cases_per_script_per_font": 50,
+    "reference_cases": 800,
+    "harfbuzz_version": "14.6.0",
+    "glyph_policy": "exact",
+    "cluster_policy": "declared containment, monotonic ranges",
+    "metric_tolerance_px_at_200px": 1.5,
+    "observed_max_metric_delta_px_at_200px": 1.4,
+    "harfbuzz_runtime_dependency": false,
+    "scope_expanded": false,
+    "tolerance_changed": false
+  },
+  "fixture_hashes_verified": true,
+  "original_windows_evidence": {
+    "path": "C:\\Users\\Oscar\\exr\\docs\\validation\\wp7-windows.json",
+    "sha256": "cb8110dad749d5353d01ca2ba375449299dabf945d870def319775898fde0218"
+  },
+  "mainline_wp7": {
+    "checks": 18750,
+    "passed": true,
+    "log": {
+      "path": "C:\\Users\\Oscar\\exr\\build\\wp7-integration-20261020\\gcc-initial-last-test.log",
+      "sha256": "500bf15a7b8986115ea63f2b2662bf8dc650d9970a66f6ef21fe6ffae03e2a21"
+    }
+  },
+  "mainline_full_suites": {
+    "compiler": "GCC 16.2.0",
+    "passed": true,
+    "tests": 154,
+    "seconds": 215.27,
+    "log": {
+      "path": "build/wp7-integration-20261020/gcc-tests-r2.log",
+      "sha256": "6e7bbb8a5f106a40d1fe99178f6308d8654a979ed53a4df475701e2d30d2c57e"
+    },
+    "initial_rejected_log": "build/wp7-integration-20261020/gcc-tests.log",
+    "temp_directory_selfcheck": "build/wp7-integration-20261020/temp-selfcheck.log",
+    "combined_wp8_requires_rerun": true
+  },
+  "linux_asan_ubsan": {
+    "status": "pending",
+    "passed": false
+  },
+  "ci": {
+    "status": "pending"
+  },
+  "functional_exit_complete": true,
+  "delivery_windows_acceptance_complete": true,
+  "complete": false,
+  "remaining_gate": [
+    "Linux ASan/UBSan on integrated source"
+  ],
+  "declared_boundaries": [
+    "Thai/Lao legacy PUA fallback not implemented; Unicode SARA AM decomposition is implemented and Noto/GSUB fonts are covered.",
+    "Khmer/Myanmar broken clusters do not synthesize a dotted circle in this branch.",
+    "Malayalam U+0D4E dot repha is covered by a separate regression outside the 50-sequence corpus and matches HarfBuzz within the fixed metric tolerance.",
+    "Only the eight declared scripts are covered; other Indic/SEA scripts remain outside this package."
+  ],
+  "packaging": {
+    "scope_document_installed": true,
+    "ofl_notice_installed": true,
+    "test_fonts_installed": false
+  },
+  "protected_untracked_files": {
+    "docs/validation/2026-10-19-shading-extent-ci.json": "a955abda1e35fd456172b2e78e1d687799e4ab5f1f977dec0efd7684aae9fdc1",
+    "src/internal.h": "c951b04a1611008b2e97437d6877bebabf29ec2c374a1c8166c9aca14f34e904"
+  }
+}

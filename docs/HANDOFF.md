@@ -1,6 +1,10 @@
 # EXReader 开发状态与路线
 
-更新日期：2026-10-20。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.38.3**、ABI epoch **1**、书库 schema **6**。
+更新日期：2026-10-20。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.39.0**、ABI epoch **1**、书库 schema **6**。
+
+WP7六个交付提交已集成：八个声明脚本的功能和Windows验收按固定800例口径接收。
+主线Linux ASan/UBSan结果与最终关闭状态见 `docs/validation/2026-10-20-wp7-integration.json`。
+PUA fallback、broken-cluster dotted circle和其他脚本沿用声明边界；本包不另设功能缺口。
 
 3.38.3移除EPUB整章解压临时副本，保留完整DOM/正文投影及原资源上限。
 分块输入不等于有界章内解析；WP6的10→100MiB解析驻留增量和章内随机恢复仍未验收。
@@ -38,7 +42,7 @@ WP7、WP8、WP12a的分支、独立目录和完整出口分别见 `docs/WP7-HAND
 | --- | --- | --- |
 | 文档与模型 | TXT、XHTML/HTML、FB2、EPUB、DOCX、RTF、MOBI/KF8；通用构造、分段 loader、随机读取源、树与资源 | HTML5 错误恢复、完整 Word 版面、章内增量解析 |
 | 排版与位置 | CSS 子集、float/clear 和逐行绕排、表格列宽/合并/垂直对齐/逐边边框/重复表头；页级续排、缓存字节预算、检查点、CFI、TextQuote、命中选择 | 完整 CSS、border-spacing、复杂百分比与溢出、大章解析成本 |
-| 文字与字体 | Unicode17、双向、OpenType、阿拉伯、Devanagari、竖排、ruby、可变轴、词典/provider 断词；COLRv0、sbix、CBDT、cmap14 | 更多 Indic/东南亚脚本、COLRv1、SVG 字体、更多语言实测 |
+| 文字与字体 | Unicode17、双向、OpenType、阿拉伯、Devanagari及WP7八个声明脚本、竖排、ruby、可变轴、词典/provider 断词；COLRv0、sbix、CBDT、cmap14 | 其他脚本未声明；COLRv1、SVG字体及更多语言实测独立跟踪 |
 | PDF | 固定页与文字几何、搜索选择、字体/Type3、图像与 CMYK/YCCK JPEG、渐变1–7及分量函数数组、ICC v2/v4、16种混合、隔离/非隔离/挖空组、软遮罩 | 审计列出的组合错误和限界；旧宿主有限外推、自适应采样、Pattern、JPX/JBIG2、OutputIntent、完整印刷色彩 |
 | PDF 认证与编辑 | Standard R2–R6、RC4/AES、可重试认证、权限快照；基础标注与元数据增量保存 | PubSec、EFOpen、加密写回、AcroForm、安全 redaction；增量删除保留历史原文 |
 | 色彩修复批次 | 完整默认 CMYK ICC 压缩内嵌；修正减色混合、网格记录/插值、Matte 处理顺序、透明度与遮罩传递 | DeviceCMYK图像/渐变原生分色与显式RGB子组切换已实现；其他ICC/印刷色彩及嵌套组合继续验收 |

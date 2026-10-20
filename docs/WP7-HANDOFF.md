@@ -1,5 +1,8 @@
 # WP7：其他文字脚本完整交接
 
+2026-10-20交付已接收并集成主线。八个声明脚本的功能和Windows验收按固定800例口径完成；
+主线Linux ASan/UBSan和最终状态见 `docs/validation/2026-10-20-wp7-integration.json`。
+
 ## 工作目录与职责
 
 - 分支：`codex/wp7-scripts`。

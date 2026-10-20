@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(EXReader VERSION 3.38.3 LANGUAGES C)
+project(EXReader VERSION 3.39.0 LANGUAGES C)
 set(EXR_ABI_VERSION 1)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -817,7 +817,8 @@ install(FILES tests/fixtures/unicode/LICENSE.txt DESTINATION share/exreader/lice
 install(FILES licenses/adobe-glyph-list.txt licenses/pdfjs.txt DESTINATION share/exreader/licenses/pdf-font-data)
 
 install(FILES README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md DESTINATION .)
-install(FILES docs/VERSIONING.md docs/SDK_COMPATIBILITY.md docs/SUPPORT_MATRIX.md docs/NATIVE_API.md docs/NATIVE_VALIDATION.md docs/PERFORMANCE.md docs/native-page.png docs/styled-page.png docs/complex-text.png DESTINATION docs)
+install(FILES docs/VERSIONING.md docs/SDK_COMPATIBILITY.md docs/SUPPORT_MATRIX.md docs/WP7-SCRIPTS.md docs/NATIVE_API.md docs/NATIVE_VALIDATION.md docs/PERFORMANCE.md docs/native-page.png docs/styled-page.png docs/complex-text.png DESTINATION docs)
+install(FILES licenses/noto-sans-test-fonts.txt DESTINATION share/exreader/licenses/wp7-fonts)
 install(DIRECTORY examples DESTINATION .)
 install(FILES tests/fixtures/pdf-public.pdf tests/fixtures/pdf-public-text.pdf DESTINATION examples/fixed-pages)
 install(FILES tests/fixtures/comic.cbz DESTINATION examples/fixed-pages)

@@ -1,6 +1,6 @@
 # EXReader — native C ebook engine
 
-主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **3.38.3，开发中**。MIT。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
+主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **3.39.0，开发中**。MIT。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
 
 原生参考阅读器：Windows入口为`examples/reader.c`，macOS/iPhone/iPad入口为
 `examples/apple/ReaderApp.swift`。Windows可打开文件、翻页、选文和保存进度；Apple宿主
@@ -31,7 +31,7 @@ iOS设备包需使用设备所有者的签名环境安装；模拟器与真机�
 | SQLite 书库、进度和笔记存储 | `exr_library` | `EXR_ENABLE_LIBRARY` |
 | 独立全文索引 | `exr_textindex` | `EXR_BUILD_TEXT_INDEX` |
 
-各组件有独立版本字段，核心为3.37.3，PDF读取为3.38.1，其余组件为3.33.0。关闭PDF后书库仍支持重排文档；固定格式导入明确返回不可用。关闭音频不影响书库保存宿主提供的续播数据。关闭书库和全文索引后不下载或链接SQLite。AAC默认关闭；启用FAAD2只影响链接音频组件的组合产物，核心代码仍是MIT，包含FAAD2的最终二进制需要遵守GPL。
+各组件有独立版本字段，核心为3.38.0，PDF读取为3.38.1，其余组件为3.33.0。关闭PDF后书库仍支持重排文档；固定格式导入明确返回不可用。关闭音频不影响书库保存宿主提供的续播数据。关闭书库和全文索引后不下载或链接SQLite。AAC默认关闭；启用FAAD2只影响链接音频组件的组合产物，核心代码仍是MIT，包含FAAD2的最终二进制需要遵守GPL。
 
 纯核心静态构建：
 

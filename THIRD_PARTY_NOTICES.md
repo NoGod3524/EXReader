@@ -38,6 +38,8 @@ per-file SHA-256 values are in `licenses/noto-sans-test-fonts.txt` and
 `tests/fixtures/wp7/README.md`. The accompanying `*-synthetic.ttf` files are
 original EXReader rectangles under MIT. These are test assets; they are not a
 runtime dependency and are not installed as part of the SDK.
+The SDK retains their license notice under
+`share/exreader/licenses/wp7-fonts/noto-sans-test-fonts.txt`.
 
 For GCC builds, CMake compiles LittleCMS `cmsintrp.c` with `-fwrapv`: the
 upstream 16-bit fixed-point interpolation intentionally wraps intermediate

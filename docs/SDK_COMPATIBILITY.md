@@ -94,7 +94,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.38.3 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.39.0 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -466,7 +466,7 @@ development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.38.3 EXACT
+Select this package with `find_package(EXReader 3.39.0 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -682,3 +682,15 @@ it does not provide a bounded chapter window or random-access chapter parser.
 The installed SDK now includes `docs/SUPPORT_MATRIX.md`; component-consumer
 configuration rejects a package that omits it. Existing binaries and ABI are
 unchanged by this packaging correction.
+
+## 3.39.0 declared WP7 scripts
+
+SDK3.39.0/core3.38.0 add Bengali, Tamil, Telugu, Kannada, Malayalam, Thai,
+Khmer and Myanmar shaping; PDF remains 3.38.1. ABI1/schema6 and public layouts,
+signatures and ownership remain unchanged. Rebuild and select the new exact SDK
+version shown above; no host API migration is required.
+The fixed oracle has 50 sequences per script against real and synthetic fonts
+(800 cases), HarfBuzz14.6.0, exact glyph IDs, cluster containment and fixed
+1.5 px metric tolerance at 200 px. HarfBuzz is not a runtime dependency.
+Scope and boundaries are in the installed `docs/WP7-SCRIPTS.md`. Test fonts are
+not installed; their OFL notice is included under `share/exreader/licenses/wp7-fonts`.

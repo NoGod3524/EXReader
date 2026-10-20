@@ -3,6 +3,9 @@
 更新日期：2026-10-20。分支 `codex/wp7-scripts`，基线提交 `2454848`。
 本包只声明下列八个脚本；其他 WP 的状态不变。
 
+主线按下述八脚本和固定口径集成，保留原Windows交付证据。
+主线回归、Linux ASan/UBSan及最终状态见 `docs/validation/2026-10-20-wp7-integration.json`。
+
 ## 1. 逐脚本状态
 
 | 脚本 | 塑形 | 真实字体 | 合成字体 | 50 序列 | glyph 差异 | 最大 advance/offset 差异 @200px |
