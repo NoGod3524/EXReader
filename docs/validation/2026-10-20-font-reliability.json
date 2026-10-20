@@ -754,7 +754,7 @@
       "conclusion": "",
       "jobs_passed": 1,
       "jobs_total": 97,
-      "status_file": "C:\\Users\\Oscar\\exr-gcc\\run-39451039706-status.json",
+      "status_file": "C:\\Users\\Oscar\\exr-gcc\\acceptance-39451039706-status-20261020T164122Z.json",
       "status_sha256": "d16c17faf6759d67a403ecb566bebe635238c7958caee6d318e5bdee675a7ca6",
       "passed": false,
       "required_cpu_hours_per_target": 24,
@@ -765,7 +765,7 @@
         "render"
       ],
       "shards_per_target": 24,
-      "observation_utc": "2026-10-20T16:12:37.713407+00:00"
+      "observation_utc": "20261020T164122Z"
     },
     "initial_native": {
       "run_id": 39447640866,

@@ -27,8 +27,8 @@
   },
   "pdf_external_full_probe": {
     "summary": {
-      "path": "C:\\Users\\Oscar\\exr-corpus-v1\\pdf-full-final\\summary.json",
-      "sha256": "0fd4799c44397821141ec185cd505eaeb7805b3c1b96de5ba9340280bad90010"
+      "path": "C:\\Users\\Oscar\\exr-corpus-v1\\pdf-full-e65c1f9\\summary.json",
+      "sha256": "1b6d4e9cffe4182168100acd1b0aeeb9a6e50cf986aeefd19a2af79f4ce1cc21"
     },
     "inputs": 122,
     "fully_completed": 49,
@@ -59,7 +59,12 @@
       }
     ],
     "accepted": false,
-    "reason": "Capability expectations not frozen per file; no fidelity/save claim"
+    "reason": "Capability expectations not frozen per file; no fidelity/save claim",
+    "source_sha": "e65c1f90e478d258301d8402bed3800c4867e663",
+    "tool_hashes": {
+      "tools\\check_corpus.py": "0057937ad69db836b5928f7138cc81cf23ca61710ccbd97589d8330a26a8cc6e",
+      "tools\\check_document.c": "efe24055e310c2129188c89acd2243d648608d0d8f0238f50badc1e5d6701c92"
+    }
   },
   "performance": [
     {
@@ -363,7 +368,20 @@
     "pipeline_status": "running",
     "pipeline_output": "C:/Users/Oscar/exr-corpus-v1/epub-500-full",
     "timeout_seconds": 120,
-    "workers": 4
+    "workers": 4,
+    "latest_progress": {
+      "path": "C:\\Users\\Oscar\\exr-corpus-v1\\epub-500-full\\progress-20261020T164547Z.json",
+      "sha256": "4103fca06a52d872c9873dd7f2a183d74d920bd87966fc403c40dafec4d006ac",
+      "observed_utc": "20261020T164547Z",
+      "completed_processes": 130,
+      "counts": {
+        "passed": 121,
+        "timeout": 8,
+        "unexpected_outcome": 1
+      },
+      "accepted": false
+    },
+    "active_session_id": 75502
   },
   "epub_initial_probe": {
     "summary": {
@@ -383,5 +401,37 @@
     "report": "C:\\Users\\Oscar\\exr-gcc\\document-installed-probe.json",
     "sha256": "e8489eee586f05efeadc7d95695f0d87e43ee2d1729b5764043cd2514a0aef80",
     "passed": true
+  },
+  "ci": {
+    "run_id": 39458141104,
+    "source_sha": "e65c1f90e478d258301d8402bed3800c4867e663",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs_passed": 7,
+    "jobs_total": 7,
+    "status_file": "C:\\Users\\Oscar\\exr-gcc\\corpus-tools-ci-39458141104-completed.json",
+    "status_sha256": "2a4ec6c98918e92141796635a67fc77831b3dddab4da08ad684b1e9934303419",
+    "log": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\corpus-tools-ci-full.log",
+      "sha256": "016f8b46783252637d955acbd7fb275040f07925057e769869be956ef19ca4be"
+    },
+    "document_probe_tests": [
+      {
+        "job": "sanitizers",
+        "result": "2026-10-20T16:40:45.5143407Z 134/141 Test #134: native-document-probe ............   Passed   30.11 sec"
+      },
+      {
+        "job": "desktop (ubuntu-22.04)",
+        "result": "2026-10-20T16:33:19.3225426Z 137/144 Test #137: native-document-probe ..............   Passed    2.44 sec"
+      },
+      {
+        "job": "desktop (macos-15)",
+        "result": "2026-10-20T16:33:03.7750890Z 137/144 Test #137: native-document-probe ..............   Passed    2.99 sec"
+      },
+      {
+        "job": "desktop (windows-latest)",
+        "result": "2026-10-20T16:35:55.9879520Z 137/144 Test #137: native-document-probe ..............   Passed    6.56 sec"
+      }
+    ]
   }
 }

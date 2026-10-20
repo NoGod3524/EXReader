@@ -116,5 +116,46 @@
       "iPadOS ARM64"
     ],
     "note": "iOS/iPadOS share one device SDK; simulator is a separate architecture environment; native.yml checks default/trimmed consumption on desktops"
+  },
+  "subsequent_tools_ci": {
+    "run_id": 39458141104,
+    "source_sha": "e65c1f90e478d258301d8402bed3800c4867e663",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs_passed": 7,
+    "jobs_total": 7,
+    "status_file": "C:\\Users\\Oscar\\exr-gcc\\corpus-tools-ci-39458141104-completed.json",
+    "status_sha256": "2a4ec6c98918e92141796635a67fc77831b3dddab4da08ad684b1e9934303419",
+    "artifact_inventory": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39458141104\\inventory.json",
+      "sha256": "7af6bd1cfea3cac55843cdc25949aa0542f98b709f59e7d12704f8a38f7a6d93",
+      "artifact_count": 8
+    },
+    "host_reports": [
+      {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39458141104\\EXReader-reference-iPhone-iPad\\ipad-host-evidence\\report.json",
+        "sha256": "8f2eece47cbc373b971ee3c6b02edf931e05e1147455916ae7948963a064fb61",
+        "passed": true,
+        "checks": 21
+      },
+      {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39458141104\\EXReader-reference-iPhone-iPad\\iphone-host-evidence\\report.json",
+        "sha256": "8f2eece47cbc373b971ee3c6b02edf931e05e1147455916ae7948963a064fb61",
+        "passed": true,
+        "checks": 21
+      },
+      {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39458141104\\EXReader-reference-macOS\\apple-host-evidence\\report.json",
+        "sha256": "01600b20d1989617ca08eaaac95333722b31fdf663cfae716609f030d26fded4",
+        "passed": true,
+        "checks": 21
+      },
+      {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-39458141104\\EXReader-reference-Windows\\report.json",
+        "sha256": "33303b3c4d9951026b35f7ae4dd2d963fc91b96738024fbfc08e6eb33e017fd8",
+        "passed": true,
+        "checks": 26
+      }
+    ]
   }
 }

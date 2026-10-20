@@ -154,6 +154,10 @@ python tools/run_benchmarks.py stage/bin/exreader-benchmark /path/to/font.ttf bu
 
 Windows 使用 `stage/bin/exreader-benchmark.exe`。Python runner 生成固定的短书、单段长章和多章 EPUB，每轮启动新进程并保存明细与汇总。测量口径、复现方法和已归档的 0.10 / 0.11 / 0.12 实测结果见 [性能记录](docs/PERFORMANCE.md)。
 
+整本兼容检查使用安装包中的 `exreader-check-document`，逐部分、逐页绘制和提取；
+`tools/check_corpus.py`隔离进程并保存成功、错误及超时证据。输入清单、完整/受限覆盖和拒绝条件见
+[整本兼容验证](docs/CORPUS_VALIDATION.md)。
+
 ## C 接入
 
 ```c
