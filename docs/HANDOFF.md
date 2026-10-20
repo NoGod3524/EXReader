@@ -1,6 +1,10 @@
 # EXReader 开发状态与路线
 
-更新日期：2026-10-20。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.38.2**、ABI epoch **1**、书库 schema **6**。
+更新日期：2026-10-20。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.38.3**、ABI epoch **1**、书库 schema **6**。
+
+3.38.3移除EPUB整章解压临时副本，保留完整DOM/正文投影及原资源上限。
+分块输入不等于有界章内解析；WP6的10→100MiB解析驻留增量和章内随机恢复仍未验收。
+本批代码、回归、兼容失败复核和WP16逐项状态见 `docs/validation/2026-10-20-wp6-input-stream.json`。
 
 仓库：https://github.com/NoGod3524/EXReader 。开发分支：`codex/framework`。本次修复与验证入口见 [HANDOFF-NEXT.md](HANDOFF-NEXT.md)，审计发现见 [AUDIT-2026-10-19.md](AUDIT-2026-10-19.md)。
 

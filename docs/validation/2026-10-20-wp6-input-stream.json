@@ -1,0 +1,348 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "sdk_version": "3.38.3",
+  "core_version": "3.37.3",
+  "pdf_version": "3.38.1",
+  "abi": 1,
+  "schema_version": 6,
+  "engine_source_sha": "524de4f46fa14bc5d9475daca9f85900560fb229",
+  "source_files": {
+    "CMakeLists.txt": {
+      "path": "C:\\Users\\Oscar\\exr\\CMakeLists.txt",
+      "sha256": "328d2bc7990ccc4bece082576de0ff7158dbca9cb3adc1f9e9b8b0753dde8dea"
+    },
+    "cmake/versions.cmake": {
+      "path": "C:\\Users\\Oscar\\exr\\cmake\\versions.cmake",
+      "sha256": "48177cbcceae9ad3fa9aab67f8e665732aa108e8d3efb58895903db2980c3b98"
+    },
+    "include/exr/base.h": {
+      "path": "C:\\Users\\Oscar\\exr\\include\\exr\\base.h",
+      "sha256": "2d7fa4d6495c5191cc4e8364026c68b9c97e63e2a8c2f67356d636cfa974d6cc"
+    },
+    "src/document.c": {
+      "path": "C:\\Users\\Oscar\\exr\\src\\document.c",
+      "sha256": "d68c09c776c6e7616d7ac328602366f767952901f20d38314d250721526df0e9"
+    },
+    "src/document_internal.h": {
+      "path": "C:\\Users\\Oscar\\exr\\src\\document_internal.h",
+      "sha256": "fa657a3b4232343b13495ffb5c23c59a05b807731832ceb1b4e3b07fbaa3f1b1"
+    },
+    "src/formats.c": {
+      "path": "C:\\Users\\Oscar\\exr\\src\\formats.c",
+      "sha256": "01b75311b12bd2c535027dcf75a783a2903f366917811a932ae371b625d87951"
+    },
+    "tests/test_xml_input.c": {
+      "path": "C:\\Users\\Oscar\\exr\\tests\\test_xml_input.c",
+      "sha256": "d13b05317c1e870f78ab57fb66579888c4014ca6533e9b8681785e803f9e1dbd"
+    },
+    "examples/CMakeLists.txt": {
+      "path": "C:\\Users\\Oscar\\exr\\examples\\CMakeLists.txt",
+      "sha256": "db99a0a7e38961328aff48eea804505332df777b0c628030ddd0f2883105a1cb"
+    },
+    "tests/sdk_cpp/CMakeLists.txt": {
+      "path": "C:\\Users\\Oscar\\exr\\tests\\sdk_cpp\\CMakeLists.txt",
+      "sha256": "922e05e3efda0841b243f3847d7a9dccad78b866a53ec4390e42ab53677fbdd9"
+    }
+  },
+  "scope": "EPUB chapter input copy removal, failure reclassification and WP16 release ledger",
+  "changes": {
+    "xml_input_chunk_max_bytes": 32768,
+    "zip_member_limit_bytes": 33554432,
+    "zip_aggregate_limit_bytes": 134217728,
+    "complete_dom_retained": true,
+    "public_signatures_changed": false,
+    "public_snapshot_lifetime_changed": false,
+    "xml_text_node_boundary_depends_on_input_chunks": false
+  },
+  "tests": {
+    "gcc": {
+      "passed": 153,
+      "total": 153,
+      "log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-gcc-full-test.log",
+        "sha256": "ffc38ae1c7c605ac40b16b23dadb5840cccb5e5ada5bf2465346dde1def7df7c"
+      }
+    },
+    "msvc": {
+      "passed": 153,
+      "total": 153,
+      "log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-msvc-full-test-r2.log",
+        "sha256": "a1f0474d126d4f6e45ec5a6b872d60bd80570e05a20654632b2d4faf77f62c98"
+      }
+    },
+    "trimmed": {
+      "passed": 2,
+      "total": 2,
+      "log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-trimmed-test.log",
+        "sha256": "f08a07f7f5533b6927a03cd943460e270e20bbfd0b5869427a7e12442803b6fb"
+      }
+    },
+    "installed_default": {
+      "passed": 4,
+      "total": 4,
+      "log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-consumer-test.log",
+        "sha256": "77e2973196ac34454573e6295fd6b3ffe8d5d85f1e5518673942cb94865a89f9"
+      }
+    },
+    "installed_trimmed": {
+      "passed": 1,
+      "total": 1,
+      "log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-trimmed-consumer-test.log",
+        "sha256": "33c8b80042802be7ff82f61b6589ec0527f5bd6ad6a92369b84ea84bdf82182b"
+      }
+    },
+    "cpp_exact_version": {
+      "passed": true,
+      "sdk": "3.38.3",
+      "log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-cpp-test.log",
+        "sha256": "9b9db66dcccf7bcce8ef54075471f9934d793f0b29ffee133348c7e77f8ae36d"
+      }
+    },
+    "public_exports": {
+      "passed": true,
+      "count": 306,
+      "ordinals_unchanged": true,
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-export-check.json",
+        "sha256": "85d984cd25a0bdc798426495a146c87e7a4ea68d690204fd810d9c6686b68922"
+      }
+    },
+    "compiled_layers": {
+      "passed": true,
+      "new_inverse_dependencies": 0,
+      "log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-layers.log",
+        "sha256": "61d913c04dc5761c45eead1b17dc48c48ae00e32dd272acbede2e801143867aa"
+      }
+    }
+  },
+  "ci": {
+    "status": "pending",
+    "reason": "Current versioned documents and evidence must be packaged by the final native run",
+    "initial_code_run": {
+      "run_id": 39490506900,
+      "status_file": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-ci-initial.json",
+        "sha256": "d901779078cf9272ae68b37119938304a5be3ef19161169bbe6b798de47417dd"
+      }
+    },
+    "sanitizer_passed": false,
+    "artifacts_verified": false
+  },
+  "load_memory": {
+    "evidence": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-load-memory\\summary.json",
+      "sha256": "95e024a4fed138c138ca08d615953e63e3770af7c7133ef84f7d88dcc9c7c6c6"
+    },
+    "probe_source": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-load-memory\\probe.c",
+      "sha256": "e7292716e93131c75d6a239c0de8d9d7bc57e3f16e967f21c6709003c1e20c3a"
+    },
+    "controller": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-load-memory\\run.py",
+      "sha256": "8f52cad6e96856ce92ccf29c13ad1c101902bfa5cf809a608d7c1a2e9c0b26f2"
+    },
+    "rounds_per_runtime_and_case": 5,
+    "medians": {
+      "multi10-baseline": {
+        "document_owned_bytes": 34476984,
+        "load_ms": 175.4305,
+        "loaded_rss_bytes": 33042432,
+        "peak_rss_bytes": 42819584
+      },
+      "multi10-candidate": {
+        "document_owned_bytes": 34476984,
+        "load_ms": 177.0045,
+        "loaded_rss_bytes": 33288192,
+        "peak_rss_bytes": 39583744
+      },
+      "single10-baseline": {
+        "document_owned_bytes": 27275224,
+        "load_ms": 162.1471,
+        "loaded_rss_bytes": 27357184,
+        "peak_rss_bytes": 47345664
+      },
+      "single10-candidate": {
+        "document_owned_bytes": 27275224,
+        "load_ms": 178.878,
+        "loaded_rss_bytes": 26337280,
+        "peak_rss_bytes": 32632832
+      }
+    },
+    "owned_document_bytes_equal": true,
+    "identities_unchanged": true,
+    "scope": "chapter load only; complete DOM retained; no paging/random recovery acceptance",
+    "metric": "OS process live working set and high-water mark; not isolated parser allocation",
+    "disk_cache": "uncontrolled",
+    "background_load": "uncontrolled",
+    "large_chapter_status": {
+      "multi50": 6,
+      "multi100": 6
+    },
+    "wp6_residency_accepted": false
+  },
+  "first_screen_and_sampled_turns": {
+    "evidence": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-performance-10MiB\\summary.json",
+      "sha256": "33433ad590e71f6768f350f8f9e1ca009df7a7c6b424986de3f5974aa2b47900"
+    },
+    "runs_per_case": 3,
+    "max_sampled_turns": 16,
+    "all_cases_passed": true,
+    "single_chapter_10MiB_median": {
+      "font_open_ms": 0.2614,
+      "publication_open_ms": 2.2782,
+      "first_layout_ms": 196.9004,
+      "first_paint_ms": 3.188,
+      "first_visible_total_ms": 202.6308,
+      "turn_layout_p50_ms": 0.6437,
+      "turn_layout_p95_ms": 2.1136,
+      "turn_render_p50_ms": 2.6429,
+      "turn_render_p95_ms": 6.8767,
+      "turn_total_p50_ms": 3.3163,
+      "turn_total_p95_ms": 7.9157,
+      "peak_rss_bytes": 47771648,
+      "incremental_peak_rss_bytes": 41766912
+    },
+    "scope": "First reading-order part and sequential sampled turns; no full-book/random recovery acceptance"
+  },
+  "compatibility": {
+    "epub_original": {
+      "path": "C:\\Users\\Oscar\\exr-corpus-v1\\epub-500-full\\summary.json",
+      "sha256": "4a4d3652789f923e1e9cd3b0d97976cbe63721c91481ac2d66beae5097fddfc2"
+    },
+    "epub_reclassification": {
+      "path": "C:\\Users\\Oscar\\exr-corpus-v1\\epub-classification-input-r6\\classification.json",
+      "sha256": "2dc3b5a5d02a6d1699628bcecd305fd0c28b54d8939f24837a25209c866b685f"
+    },
+    "entries": 500,
+    "replayed": 6,
+    "counts": {
+      "baseline_completed": 483,
+      "engine_argument_failure": 1,
+      "not_completed_within_baseline_timeout": 11,
+      "resource_limit": 5
+    },
+    "baseline_unchanged": true,
+    "accepted": false,
+    "timeout_policy": "Preserve 11 original timeout outcomes; these six non-timeout failures were replayed",
+    "pdf_prior_classification": {
+      "path": "C:\\Users\\Oscar\\exr-corpus-v1\\pdf-classification-r4\\classification.json",
+      "sha256": "3d0252578f249565b7dd27196246d18c14dd14cdff472e5b8a9f8f20cf9f7bfa"
+    },
+    "pdf_replayed_this_batch": false,
+    "expectations_changed": false
+  },
+  "reliability": {
+    "run_id": 39451039706,
+    "source_sha": "f719bd4590df4dfb7ef04b5ac5a58d49a7b9a310",
+    "partial_audit": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\reliability-39451039706-partial-20261020T201122Z\\partial-audit.json",
+      "sha256": "7a5393b12e291d1503ee0f47a89ab69c4dec52b2f304667f1842daffa18d9d24"
+    },
+    "validated_shards": {
+      "font": 7,
+      "parser": 24
+    },
+    "process_cpu_nanoseconds": {
+      "font": 25200001956365,
+      "parser": 86400015121400
+    },
+    "strict_summary_exit": 1,
+    "strict_summary_generated": false,
+    "cross_source_rejected": true,
+    "cross_source_log": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\reliability-39451039706-partial-20261020T201122Z\\cross-source-summary.log",
+      "sha256": "8903a2cec058ba4ca035eb446b4bfc1aa17ae39850433f84ec50b771c8ab3f3e"
+    },
+    "current_source_accepted": false,
+    "complete_campaign_accepted": false,
+    "historical_failed_campaign_retained": "C:/Users/Oscar/exr-gcc/reliability-acceptance-39370107827"
+  },
+  "wp6": {
+    "complete": false,
+    "table_subgoal_previously_accepted": true,
+    "table_evidence": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-auto-table-final-3.38.2\\comparison.json",
+      "sha256": "576bbd548a867f225a106c0953aa50c441d22bafe48c93bfada21caf4f4f59c1"
+    },
+    "remaining": [
+      "Bounded chapter DOM/projection windows without changing snapshot lifetimes",
+      "10/50/100 MiB single and segmented chapters: sequential and random restoration",
+      "Isolate parser allocations and prove 10-to-100 MiB retained increase <=32 MiB",
+      "Keep CSS/paragraph continuity, source positions, CFI and page/checkpoint equivalence"
+    ]
+  },
+  "wp16": {
+    "complete": false,
+    "gates": [
+      {
+        "id": "versioned_support_and_migration_docs",
+        "passed": true,
+        "files": [
+          "docs/SUPPORT_MATRIX.md",
+          "docs/SDK_COMPATIBILITY.md",
+          "README.md",
+          "CHANGELOG.md"
+        ]
+      },
+      {
+        "id": "local_default_trimmed_cpp_and_exports",
+        "passed": true
+      },
+      {
+        "id": "seven_native_ci_jobs",
+        "passed": false
+      },
+      {
+        "id": "linux_sanitizer_regressions",
+        "passed": false
+      },
+      {
+        "id": "six_platform_artifacts_licenses_benchmarks",
+        "passed": false
+      },
+      {
+        "id": "same_source_four_target_24cpu_hours",
+        "passed": false,
+        "reason": "Long run is incomplete and fixes an earlier source; final integration must freeze its own acceptance source"
+      }
+    ],
+    "physical_device_execution": false,
+    "physical_device_policy": "Deferred by user; simulator evidence remains separate"
+  },
+  "first_release_complete": false,
+  "retained_setup_failures": [
+    {
+      "log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-msvc-configure.log",
+        "sha256": "ef30a9f7c224b81f1fbbb3f39cec975a521558b9dc4560984bbccb3a2393e882"
+      },
+      "reason": "Dependency-cache selection missed MINIMP3; retried using the existing pinned cache"
+    },
+    {
+      "log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-compatibility-replay.log",
+        "sha256": "7bcbedf1e7378b97c5d59da492c66c3a92a2d3db6f3c2c661ea51a1909448e9b"
+      },
+      "reason": "Incorrect corpus root; corrected to gutenberg and used a new output directory"
+    },
+    {
+      "log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-partial-audit.log",
+        "sha256": "ec006f75dfa00647cf30179cd05a591c244a26827cb375056b530cd29ad1df8f"
+      },
+      "reason": "Artifact archive is nested below the artifact name; corrected archive path"
+    }
+  ],
+  "protected_untracked_files": {
+    "docs/validation/2026-10-19-shading-extent-ci.json": "a955abda1e35fd456172b2e78e1d687799e4ab5f1f977dec0efd7684aae9fdc1",
+    "src/internal.h": "c951b04a1611008b2e97437d6877bebabf29ec2c374a1c8166c9aca14f34e904"
+  }
+}
