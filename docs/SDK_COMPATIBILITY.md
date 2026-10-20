@@ -704,8 +704,8 @@ callback signatures keep their layouts. Callers initialize
 `struct_size = sizeof(exr_font_color_info)`; smaller records are rejected and
 unknown nonzero trailing bytes are refused. The function changes per-face
 palette caches like the other colour-font queries, so the existing font
-serialization rule applies. ABI epoch 1, schema 6 and the package version are
-unchanged; the branch adds one export (307 in the generated `.def`).
+serialization rule applies. ABI epoch 1 and schema 6 are unchanged; mainline
+ships this additive API in SDK3.39.0/core3.38.0 alongside controlled export.
 
 The built-in renderer now paints COLR v1 before COLR v0 and paints an SVG
 font document when the face has no COLR v1 glyph. sbix/CBDT strikes still win.
@@ -726,3 +726,13 @@ are in [WP8_SVG_FONTS.md](WP8_SVG_FONTS.md). Both features keep the glyph
 advance, source clusters, bidi levels and hit-test results unchanged; only
 intrinsic colour pixels are added. Registrations for `native-font-color-v1`
 and `native-font-svg` accompany the existing `native-font-color` run.
+
+## 3.39.0 lightweight conversion
+
+`exr_document_export_control()` adds cooperative cancellation to the existing
+text-profile exporter. `exr_document_export()` delegates with a NULL control;
+existing signatures, ownership and public layouts remain unchanged. New callers
+must select SDK3.39.0 or later. Installed `docs/CONVERSION.md` defines profiles,
+format aliases, cancellation granularity, CLI publication and report semantics.
+`exreader-convert` is installed when tools are enabled. Core-only builds retain
+the public export API; the CLI is tested through the installed default SDK.

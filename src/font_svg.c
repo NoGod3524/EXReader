@@ -1000,7 +1000,7 @@ static exr_status svg_load_document(svg_document *doc, exr_face *face, uint32_t 
   if (!record->length) { free(data); return exr_fail(error, EXR_FONT, "Empty SVG document"); }
   doc->document = data;
   doc->document_size = record->length;
-  if (data[0] == 0x1f && data[1] == 0x8b) {
+  if (record->length >= 2 && data[0] == 0x1f && data[1] == 0x8b) {
     size_t header = 10, trailer = 8, output_size;
     unsigned flags;
     unsigned char *output;
@@ -1070,13 +1070,15 @@ static exr_status svg_load_document(svg_document *doc, exr_face *face, uint32_t 
   return EXR_OK;
 }
 
-int exr_font_svg_covers(exr_face *face, uint32_t glyph, size_t *work, const exr_control *control, exr_error *error) {
+exr_status exr_font_svg_covers(exr_face *face, uint32_t glyph, int *covers, size_t *work, const exr_control *control, exr_error *error) {
   size_t local = 0;
   exr_status status;
-  if (!face) return 0;
+  *covers = 0;
+  if (!face) return exr_fail(error, EXR_ARGUMENT, "Missing SVG font face");
   status = svg_directory(face, work ? work : &local, control, error);
-  if (status != EXR_OK) return 0;
-  return svg_lookup(face, glyph) != NULL;
+  if (status != EXR_OK) return status;
+  *covers = svg_lookup(face, glyph) != NULL;
+  return EXR_OK;
 }
 
 void exr_font_svg_free(exr_face *face) {

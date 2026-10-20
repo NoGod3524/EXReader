@@ -142,7 +142,7 @@ Windows路径修复已验证。原runner的resolve将ASCII入口展开成中文�
 ## 5. 当前覆盖与界限
 
 - font：TTF/OTF/TTC的face0；可变轴查询；混合文字LTR/RTL/竖排塑形，轮廓、位图和COLRv0层。
-  尚不遍历TTC全部face，不构造轴极值实例，没有WOFF/COLRv1/SVG覆盖。
+  尚不遍历TTC全部face，不构造轴极值实例，没有WOFF覆盖。3.39.0主线增加COLRv1/SVG种子、颜色信息查询和有界页绘制；联合验收见 `validation/2026-10-20-parallel-integration.json`，旧长测不追溯获得新覆盖。
 - layout：解析后分页，最多前4页，源范围与有限坐标检查。
 - render：最多前4页，灰度和RGBA；重排192×256，PDF/CBZ按unit_scale缩至256像素内。
 - 每次exercise最多4096次取消轮询；复杂有效文件可因限界返回取消，不代表完整绘制。

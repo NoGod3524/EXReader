@@ -24,6 +24,9 @@ def main():
                 (font, fixtures/'fonts/pdf-cubic.otf', []),
                 (font, fixtures/'fonts/variable.ttf', []),
                 (font, fixtures/'fonts/bitmap.ttf', []),
+                (font, fixtures/'fonts/colrv1.ttf', []),
+                (font, fixtures/'fonts/colrv1-var.ttf', []),
+                (font, fixtures/'fonts/svgfont.ttf', []),
                 (layout, fixtures/'layout.epub', ['--font', host]),
                 (render, fixtures/'layout.epub', ['--font', host]),
                 (render, fixtures/'comic.cbz', ['--font', host]),
@@ -34,7 +37,7 @@ def main():
         checks += 1
     with tempfile.TemporaryDirectory(prefix='exreader-pipelines-') as temporary:
         folder = Path(temporary)
-        for binary, source, extra in [positive[0], positive[4], positive[6]]:
+        for binary, source, extra in [positive[0], positive[7], positive[9]]:
             saved = folder/(binary.stem+'.bin')
             first = run(binary, '--seed', 17, '--iterations', 100, '--save', saved, *extra, source)
             original = saved.read_bytes();record = Path(str(saved)+'.format').read_bytes()

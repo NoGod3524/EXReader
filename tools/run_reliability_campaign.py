@@ -16,7 +16,8 @@ import time
 CORPUS = {
     'parser': ['pdf-blend/nonisolated.pdf', 'layout.epub', 'comic.cbz', 'deep.fb2', 'sample.txt'],
     'font': ['fonts/primary.ttf', 'fonts/collection.ttc', 'fonts/pdf-cubic.otf', 'fonts/color.ttf',
-             'fonts/bitmap.ttf', 'fonts/cbdt.ttf', 'fonts/variable.ttf', 'shaping/shaping.ttf'],
+             'fonts/bitmap.ttf', 'fonts/cbdt.ttf', 'fonts/variable.ttf', 'shaping/shaping.ttf',
+             'fonts/colrv1.ttf', 'fonts/colrv1-var.ttf', 'fonts/svgfont.ttf'],
     'layout': ['sample.txt', 'layout.epub', 'float-both.epub', 'table-fragments-12.epub'],
     'render': ['comic.cbz', 'pdf-color/shading-axial.pdf', 'layout.epub', 'pdf-blend/flat.pdf'],
 }

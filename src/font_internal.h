@@ -46,7 +46,7 @@ exr_status exr_font_colrv1(exr_face *face,uint32_t glyph,float pixels,uint32_t f
 exr_status exr_font_svg(exr_face *face,uint32_t glyph,float pixels,uint32_t foreground,
                         exr_color_surface *out,size_t *work,const exr_control *control,exr_error *error);
 void exr_font_svg_free(exr_face *face);
-int exr_font_svg_covers(exr_face *face,uint32_t glyph,size_t *work,const exr_control *control,exr_error *error);
+exr_status exr_font_svg_covers(exr_face *face,uint32_t glyph,int *covers,size_t *work,const exr_control *control,exr_error *error);
 void exr_font_bitmaps_free(exr_face *face);
 exr_status exr_font_image(exr_face *face,uint32_t glyph,float pixels,exr_glyph_image *out,
                                size_t *work,const exr_control *control,exr_error *error);

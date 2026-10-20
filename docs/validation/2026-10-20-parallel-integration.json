@@ -1,0 +1,459 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "sdk_version": "3.39.0",
+  "core_version": "3.38.0",
+  "pdf_version": "3.38.1",
+  "abi": 1,
+  "library_schema": 6,
+  "packages": {
+    "WP7": {
+      "delivery_commits": [
+        "a119ae6",
+        "378ac41",
+        "b66339a",
+        "6a02993",
+        "e650776",
+        "ffbfa03"
+      ],
+      "mainline_commits": [
+        "184df64",
+        "a83c3f4",
+        "3476b0a",
+        "1d6f97b",
+        "8851456",
+        "d052605"
+      ],
+      "scope": "Eight declared scripts; 800 HarfBuzz14.6.0 cases; exact glyphs, cluster containment, unchanged 1.5px at 200px",
+      "functional_delivery_accepted": true
+    },
+    "WP8": {
+      "delivery_commits": [
+        "57ff5ae",
+        "8ed6e40"
+      ],
+      "mainline_commits": [
+        "f4d9309",
+        "cc5865b"
+      ],
+      "scope": "Frozen COLRv1 and SVG subsets; original 56-scene reference criteria unchanged",
+      "functional_delivery_accepted": true
+    },
+    "WP12-lite": {
+      "delivery_commits": [
+        "24d2c96",
+        "de01129",
+        "23d13b1"
+      ],
+      "mainline_commits": [
+        "7180fad",
+        "08176d3",
+        "5a38957"
+      ],
+      "scope": "Lightweight text and preserve profiles, CLI and controlled export",
+      "functional_delivery_accepted": true,
+      "full_WP12_complete": false
+    }
+  },
+  "original_evidence": {
+    "wp7-windows.json": {
+      "path": "docs/validation/wp7-windows.json",
+      "sha256": "cb8110dad749d5353d01ca2ba375449299dabf945d870def319775898fde0218"
+    },
+    "wp8-colrv1.json": {
+      "path": "docs/validation/wp8-colrv1.json",
+      "sha256": "6d1ba7d86feb67e8f51aac4d9afff8bce498b948bd7dae49159a935f25940b08"
+    },
+    "wp8-svg.json": {
+      "path": "docs/validation/wp8-svg.json",
+      "sha256": "436c04791463ef6ead5d10e4fe756aa8ff614efd909be7b6b0e41fe12e20ed2c"
+    },
+    "wp8-reference.json": {
+      "path": "docs/validation/wp8-reference.json",
+      "sha256": "1b102c1f15eecc2c403b51d504f3809a45ab19caefca0ed5bb16ee8e37d876e4"
+    },
+    "wp8-platform.json": {
+      "path": "docs/validation/wp8-platform.json",
+      "sha256": "ed7612f6f203e7c428beb71525b2463fa3e1b71350ab4ffbff2d77e8b03f1524"
+    },
+    "wp12-lite-builds.json": {
+      "path": "docs/validation/wp12-lite-builds.json",
+      "sha256": "c0c9027479587d6311e623af580444e73aea588a9e786c4d9b3eac2279034397"
+    },
+    "wp12-lite-conversion-matrix.json": {
+      "path": "docs/validation/wp12-lite-conversion-matrix.json",
+      "sha256": "8973ededb6e7a563d4b912ae49a960f864451a3336e33c9499c2463e91f13bdd"
+    },
+    "wp12-lite-preserve-render.json": {
+      "path": "docs/validation/wp12-lite-preserve-render.json",
+      "sha256": "88828a234498e499b01b4b9ffb52fefa691f66458a6d0bab5e71621e74c08068"
+    },
+    "wp12-lite-cli-scenarios.json": {
+      "path": "docs/validation/wp12-lite-cli-scenarios.json",
+      "sha256": "5ac248f74f5590bc6bc3ead89a8ef7c8299a5c05e69e08ce743bcd808e061057"
+    },
+    "wp12-lite-conversion-benchmark.json": {
+      "path": "docs/validation/wp12-lite-conversion-benchmark.json",
+      "sha256": "1371da3561ffc1cb1e9d8228c7603ef98a593dcf63e13ec7a4db2556ad8bb056"
+    },
+    "wp12-lite-baseline.json": {
+      "path": "docs/validation/wp12-lite-baseline.json",
+      "sha256": "1635b49fc06287a3d1a2ce89d03026ebf05b2ea68920a861dc1925cba51b4a96"
+    }
+  },
+  "delivery_hash_audit": {
+    "wp8-colrv1": {
+      "fixture_hashes": {
+        "tests/fixtures/fonts/colrv1-var.ttf": {
+          "expected": "2be8aea25d8e1af0a91f93837bea4ff85c34648463c04bebab40444ef7bad7ba",
+          "actual": "2be8aea25d8e1af0a91f93837bea4ff85c34648463c04bebab40444ef7bad7ba"
+        },
+        "tests/fixtures/fonts/colrv1.ttf": {
+          "expected": "6f2d20017ee066e049ff54d8285e67720360cc72182f569f20d111bfe41651b0",
+          "actual": "6f2d20017ee066e049ff54d8285e67720360cc72182f569f20d111bfe41651b0"
+        }
+      },
+      "delivery_record_sha256": "6d1ba7d86feb67e8f51aac4d9afff8bce498b948bd7dae49159a935f25940b08"
+    },
+    "wp8-svg": {
+      "fixture_hashes": {
+        "tests/fixtures/fonts/svgfont.ttf": {
+          "expected": "d4bdaeac0b2b43ddc3c3e250ff562890f26fbd344d6e0683fdc03d79f919f961",
+          "actual": "d4bdaeac0b2b43ddc3c3e250ff562890f26fbd344d6e0683fdc03d79f919f961"
+        }
+      },
+      "delivery_record_sha256": "436c04791463ef6ead5d10e4fe756aa8ff614efd909be7b6b0e41fe12e20ed2c"
+    },
+    "wp8-reference": {
+      "images_verified": true,
+      "record_sha256": "1b102c1f15eecc2c403b51d504f3809a45ab19caefca0ed5bb16ee8e37d876e4",
+      "note": "Original reference uses earlier positive-scene fonts. Final fixture fonts require mainline rerun; original images and records retained."
+    }
+  },
+  "mainline_changes": [
+    "Propagate SVG directory errors through color query with or without error record.",
+    "Bound short SVG compression-signature inspection.",
+    "Install scope documents and exercise two additive APIs through default/trimmed installed core consumers.",
+    "Extend font campaign corpus, query and bounded color rendering; preserve sanitizer test artifact.",
+    "Make independent reference renderer and Chrome paths explicit; fail process on rejected comparison."
+  ],
+  "source_files": {
+    ".github/workflows/native.yml": {
+      "path": ".github/workflows/native.yml",
+      "sha256": "4202990f841bcf020abfeac0d09f5d2cc6525c6e8b3f4fe7ab88610d55d7bc8f"
+    },
+    "CMakeLists.txt": {
+      "path": "CMakeLists.txt",
+      "sha256": "789c59c22ef580fe426fbc74fbce9fda5d50643588ec30f2f66cd5e1d993cf35"
+    },
+    "cmake/modules.cmake": {
+      "path": "cmake/modules.cmake",
+      "sha256": "018a2b4b38ba4555e439af220795cd3da8651af710a73633735aa3f99b5a6610"
+    },
+    "cmake/versions.cmake": {
+      "path": "cmake/versions.cmake",
+      "sha256": "f28023261528c559fd197fab56d1338485c3688cc376ea20b6da0e308c70d96d"
+    },
+    "include/exr/base.h": {
+      "path": "include/exr/base.h",
+      "sha256": "b6550dd4d558dd90b587ffa9ac8a9c36707b0ab2265aac232a9ddd480987be19"
+    },
+    "include/exr/formats.h": {
+      "path": "include/exr/formats.h",
+      "sha256": "d432fdf3339eca7ba2bb203bf4f58c421cc854e4504538f5e4996bb94fa52a67"
+    },
+    "include/exr/text.h": {
+      "path": "include/exr/text.h",
+      "sha256": "c6fb1adda319b620179177ec6775b1098628444d5cc40f61163d34ab3ae159cf"
+    },
+    "src/export_text.c": {
+      "path": "src/export_text.c",
+      "sha256": "d02169b4d906d96594136342f4fb02401dbc75ce77e69237cf5ca3de3953d9fd"
+    },
+    "src/font_colr_v1.c": {
+      "path": "src/font_colr_v1.c",
+      "sha256": "a79454fba566f64c79f2d3dc4425f5792be3f37d42285b9f5b1d59521d166453"
+    },
+    "src/font_internal.h": {
+      "path": "src/font_internal.h",
+      "sha256": "060ecd32420443d70b646eb59ecab856fcafb286b55c1f92892390a729fda824"
+    },
+    "src/font_svg.c": {
+      "path": "src/font_svg.c",
+      "sha256": "98674692474ff83952a3454a03a995f44dc06cafc4c62692cd744635ab093c73"
+    },
+    "src/fonts.c": {
+      "path": "src/fonts.c",
+      "sha256": "3f493dce8152c9498c933f2e2b635af37061febe7c9d8baef5ebd7b821802b4f"
+    },
+    "src/formats.c": {
+      "path": "src/formats.c",
+      "sha256": "45b690a7679144e81d76f92404756919e8d5533096b104986da0492046ed8c0f"
+    },
+    "src/opentype.c": {
+      "path": "src/opentype.c",
+      "sha256": "27e1b5757f85d0cfbb4399b8212b10c6ac6055058f26d71ab19e54dbe79a6fc1"
+    },
+    "src/raster.c": {
+      "path": "src/raster.c",
+      "sha256": "8c36d43dcde99ea18a4ba0d7149aecd734c3124eebbe25573f395f04c52d9b6c"
+    },
+    "tests/assemble_conversion_evidence.py": {
+      "path": "tests/assemble_conversion_evidence.py",
+      "sha256": "11d5a38dccbb38529358be3b2733c1eda5f7d6b19dcbc2aef6c6f42e7b9fefa8"
+    },
+    "tests/check_convert_benchmark.py": {
+      "path": "tests/check_convert_benchmark.py",
+      "sha256": "55bf2363fcf248d235d4764ddc4b24d6a46b52b362a6b8ee67b6492a2cc96d41"
+    },
+    "tests/check_convert_cli.py": {
+      "path": "tests/check_convert_cli.py",
+      "sha256": "a2f1f4a3a6eda643484841067e829b73f628d308847898c96be8833bb11a8afb"
+    },
+    "tests/check_fuzz_pipelines.py": {
+      "path": "tests/check_fuzz_pipelines.py",
+      "sha256": "646d0e66f8e98586da6e18a0de6f1609d70635b1001c0d9798ec3c01788ed928"
+    },
+    "tests/fixtures/fonts/colrv1-var.ttf": {
+      "path": "tests/fixtures/fonts/colrv1-var.ttf",
+      "sha256": "2be8aea25d8e1af0a91f93837bea4ff85c34648463c04bebab40444ef7bad7ba"
+    },
+    "tests/fixtures/fonts/colrv1.ttf": {
+      "path": "tests/fixtures/fonts/colrv1.ttf",
+      "sha256": "6f2d20017ee066e049ff54d8285e67720360cc72182f569f20d111bfe41651b0"
+    },
+    "tests/fixtures/fonts/svgfont.json": {
+      "path": "tests/fixtures/fonts/svgfont.json",
+      "sha256": "78591304a32bdf948de112afda536de1ff9ddf8f8534646585d549c33720f8e7"
+    },
+    "tests/fixtures/fonts/svgfont.ttf": {
+      "path": "tests/fixtures/fonts/svgfont.ttf",
+      "sha256": "d4bdaeac0b2b43ddc3c3e250ff562890f26fbd344d6e0683fdc03d79f919f961"
+    },
+    "tests/fixtures/wp7/README.md": {
+      "path": "tests/fixtures/wp7/README.md",
+      "sha256": "e04111c141e5be94e72e1c635860bb0830f08f70aab708d48e4e397405c29b0d"
+    },
+    "tests/fixtures/wp7/cases.json": {
+      "path": "tests/fixtures/wp7/cases.json",
+      "sha256": "50db6e6f03d694d2be70680f6bb334122e43aeaf9e5db0720fa55526775c5a02"
+    },
+    "tests/fixtures/wp7/fonts/beng-real.ttf": {
+      "path": "tests/fixtures/wp7/fonts/beng-real.ttf",
+      "sha256": "dcd42978094e584a849c84a51450eeac40c8826057d566ea6d4b9627a403a05a"
+    },
+    "tests/fixtures/wp7/fonts/beng-synthetic.ttf": {
+      "path": "tests/fixtures/wp7/fonts/beng-synthetic.ttf",
+      "sha256": "96b3202be9f63a93af881e074847c6bc60a1952b908ff5af66fef1f7ab5da613"
+    },
+    "tests/fixtures/wp7/fonts/khmr-real.ttf": {
+      "path": "tests/fixtures/wp7/fonts/khmr-real.ttf",
+      "sha256": "f37a8431a0c5d5ed2f81a767417546aca576a81fb7eff9c924d46aecf828f2ca"
+    },
+    "tests/fixtures/wp7/fonts/khmr-synthetic.ttf": {
+      "path": "tests/fixtures/wp7/fonts/khmr-synthetic.ttf",
+      "sha256": "e3ea13ad2775ee4c3807ee3039c226b5b4b5020ed6703172ddd08dc51162ea96"
+    },
+    "tests/fixtures/wp7/fonts/knda-real.ttf": {
+      "path": "tests/fixtures/wp7/fonts/knda-real.ttf",
+      "sha256": "cca4f3b3a8cb12fb261f1b43baf5d2f7f59d90fe123d41f0065ed3a183997ec9"
+    },
+    "tests/fixtures/wp7/fonts/knda-synthetic.ttf": {
+      "path": "tests/fixtures/wp7/fonts/knda-synthetic.ttf",
+      "sha256": "c36b0327d1c09f87548d8b9abe61544eeecc5fd878168db07b514741eae557dd"
+    },
+    "tests/fixtures/wp7/fonts/mlym-real.ttf": {
+      "path": "tests/fixtures/wp7/fonts/mlym-real.ttf",
+      "sha256": "312e0e7c3cc15fa09eb42a8f749eeb246b593ed420e3c81aafe8d910c3a6fb56"
+    },
+    "tests/fixtures/wp7/fonts/mlym-synthetic.ttf": {
+      "path": "tests/fixtures/wp7/fonts/mlym-synthetic.ttf",
+      "sha256": "88bcde6bcd0d575b39fbba404e57c35312eb5715292a70142e71538faf0cd74f"
+    },
+    "tests/fixtures/wp7/fonts/mymr-real.ttf": {
+      "path": "tests/fixtures/wp7/fonts/mymr-real.ttf",
+      "sha256": "7abbbfbe2514105d7ce94937aee3feb2ba89b73a256c8b77b5866bd9b83e32ec"
+    },
+    "tests/fixtures/wp7/fonts/mymr-synthetic.ttf": {
+      "path": "tests/fixtures/wp7/fonts/mymr-synthetic.ttf",
+      "sha256": "4c5a4a89c1ec2ce57046f6f9910bf140f8823cc9894b3afdb09ed08b418242c6"
+    },
+    "tests/fixtures/wp7/fonts/taml-real.ttf": {
+      "path": "tests/fixtures/wp7/fonts/taml-real.ttf",
+      "sha256": "aa3a9b321f4b0bb2c40203ffbde9af89713227866e0e13f76e5b9eeea727cf88"
+    },
+    "tests/fixtures/wp7/fonts/taml-synthetic.ttf": {
+      "path": "tests/fixtures/wp7/fonts/taml-synthetic.ttf",
+      "sha256": "77e1605066f60f035d2d73813014bdff6cfba5950025c548d61703d5e07d0c60"
+    },
+    "tests/fixtures/wp7/fonts/telu-real.ttf": {
+      "path": "tests/fixtures/wp7/fonts/telu-real.ttf",
+      "sha256": "e618af7bf999df192ed4f388eba2e563f2b5015034e9cbb317b5bd793bd7334d"
+    },
+    "tests/fixtures/wp7/fonts/telu-synthetic.ttf": {
+      "path": "tests/fixtures/wp7/fonts/telu-synthetic.ttf",
+      "sha256": "a7e95534e152b51f3d6597af7e396a246869202d295d845bf512c91c9fb7d6b2"
+    },
+    "tests/fixtures/wp7/fonts/thai-real.ttf": {
+      "path": "tests/fixtures/wp7/fonts/thai-real.ttf",
+      "sha256": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8"
+    },
+    "tests/fixtures/wp7/fonts/thai-synthetic.ttf": {
+      "path": "tests/fixtures/wp7/fonts/thai-synthetic.ttf",
+      "sha256": "923470cd65bb7617daaf5a1ca7a3b2cfb934bc19ab9493c99d3353f5cb7786f6"
+    },
+    "tests/fixtures/wp7/reference.h": {
+      "path": "tests/fixtures/wp7/reference.h",
+      "sha256": "e768235db0833f0649881fac89da0ac952e36a4184c8f89a393a3251ebab4e8b"
+    },
+    "tests/fuzz_pipeline.c": {
+      "path": "tests/fuzz_pipeline.c",
+      "sha256": "89c3d247868b597f5d29a5626023257d7388d15cf4d292cda9b81d900cbb6cdc"
+    },
+    "tests/sdk_components/CMakeLists.txt": {
+      "path": "tests/sdk_components/CMakeLists.txt",
+      "sha256": "43be89e467d36641c52c13ab9d21dfcb35684c94b6a834d38a4c9d93611ce798"
+    },
+    "tests/sdk_cpp/CMakeLists.txt": {
+      "path": "tests/sdk_cpp/CMakeLists.txt",
+      "sha256": "8a06e759e2eb145a634eb75f2a860ded79d58fd1b3450c00dd37d83dbd40d6b5"
+    },
+    "tests/test_convert.c": {
+      "path": "tests/test_convert.c",
+      "sha256": "92bb49f20ca4b25c5a09687c973a1150af7fa01028b1e92051aa0f2ecff81e61"
+    },
+    "tests/test_convert_component.c": {
+      "path": "tests/test_convert_component.c",
+      "sha256": "0041329f848dbd50a98d7500af6bf33e00bd7c168e87b3052a738a58eb34838a"
+    },
+    "tests/test_core_component.c": {
+      "path": "tests/test_core_component.c",
+      "sha256": "975ac1bf8b5b8b656f574d3f4c326b8936ffe4c24cee12495c7c839807c0c4c3"
+    },
+    "tests/test_export_xml.c": {
+      "path": "tests/test_export_xml.c",
+      "sha256": "5049550ba87e9b18d008503f1a60b09fb5bb70d9f9a4c3adfdafc6e8075021d7"
+    },
+    "tests/test_font_color_v1.c": {
+      "path": "tests/test_font_color_v1.c",
+      "sha256": "c047a51343018501be41abc5bd85696e4d0936679bc730c14cb28031040c58af"
+    },
+    "tests/test_font_svg.c": {
+      "path": "tests/test_font_svg.c",
+      "sha256": "823d8e07913ee808f34fd127330af57f7f7317446e017fe52d99ffc0fafdb2f9"
+    },
+    "tests/test_wp7_scripts.c": {
+      "path": "tests/test_wp7_scripts.c",
+      "sha256": "8a1b6f2e08b59a89c009cb618862c67a5ab4aa3d468fb50aecda23a36fe6e465"
+    },
+    "tools/check_color_font_reference.py": {
+      "path": "tools/check_color_font_reference.py",
+      "sha256": "8fd62c239cf9a74f79c75acdfd82dbf4435b5957bc9a1899b4fe9f1ed6bfc714"
+    },
+    "tools/convert.c": {
+      "path": "tools/convert.c",
+      "sha256": "19f2cea51aa2577287016817d0183f9f72f0b99acca58fe658627c5ec66a05c1"
+    },
+    "tools/convert_io.c": {
+      "path": "tools/convert_io.c",
+      "sha256": "fbc9ff7405cc7e0f4598be4e034b3baa6860563d71a2d45df8ffc639e62974de"
+    },
+    "tools/convert_io.h": {
+      "path": "tools/convert_io.h",
+      "sha256": "2c9ead889f076b1da0c10bd31f423a39579fc7600db2436b95d7a8af18bbc18c"
+    },
+    "tools/convert_json.c": {
+      "path": "tools/convert_json.c",
+      "sha256": "7f0a91493bd99bb65034968b11fbdf8e010a2e058fd3b1c5cdc05e897425d9a0"
+    },
+    "tools/convert_json.h": {
+      "path": "tools/convert_json.h",
+      "sha256": "337f09e46cff0efb69ca81a16c661402bde068395bf6f4c48cc5c5ea463785ca"
+    },
+    "tools/convert_report.c": {
+      "path": "tools/convert_report.c",
+      "sha256": "b3a3398fa1112b046bb6c1ae9aa5928cff81346dfa287d4072267e6fc710e4ad"
+    },
+    "tools/convert_report.h": {
+      "path": "tools/convert_report.h",
+      "sha256": "1774b5f18e29d3b7efe32ebe0d23e3ed905ee6ed698575ff62191f5521fd3577"
+    },
+    "tools/generate_colrv1_test_fonts.py": {
+      "path": "tools/generate_colrv1_test_fonts.py",
+      "sha256": "85f33d92f0c6cf8477f9873c7a8b2c65e126dcaa5906a75fe1b2dc9134f8aff2"
+    },
+    "tools/generate_conversion_corpus.py": {
+      "path": "tools/generate_conversion_corpus.py",
+      "sha256": "de32413878734fd0181369183a86c4444c7039b1f3c2fc0026a85b5ece01e04f"
+    },
+    "tools/generate_svg_test_fonts.py": {
+      "path": "tools/generate_svg_test_fonts.py",
+      "sha256": "8346176ab77bde08d328ce325b137074944cc4ee32b8cb6f90feefba95c153dd"
+    },
+    "tools/generate_wp7_reference.py": {
+      "path": "tools/generate_wp7_reference.py",
+      "sha256": "50fc3ef2f49a87d47d1db93c22270fd758de229b2ad9c48fcbc0d4a25bbf4b8e"
+    },
+    "tools/generate_wp7_test_fonts.py": {
+      "path": "tools/generate_wp7_test_fonts.py",
+      "sha256": "285d19d00142928ec77a95c71bc39a3ca54b207e47118dfadf96ad83d3b0ed38"
+    },
+    "tools/layers.json": {
+      "path": "tools/layers.json",
+      "sha256": "b406dbf6349e527f4a50bbbafa0c5e5ff99d00ee9b1bf89a07198d66d3838bd7"
+    },
+    "tools/render_color_font.c": {
+      "path": "tools/render_color_font.c",
+      "sha256": "0758afaa9c9187bfe6d287e27552cf714ed7da6cad13c21df8d488a1b8ba472a"
+    },
+    "tools/run_reliability_campaign.py": {
+      "path": "tools/run_reliability_campaign.py",
+      "sha256": "600d450d3ce55a3f3b7f44b321a21d7b3c9349b952b4f6ac5ac30377e7f7366c"
+    },
+    "tools/wp7_sequences.py": {
+      "path": "tools/wp7_sequences.py",
+      "sha256": "05bd127ce55233dbd4f97eed9963a3fad9a029b831531f13de56acbe7f9b1ec9"
+    }
+  },
+  "initial_wp7_wp8_suite": {
+    "source_commit": "cc5865b",
+    "passed": 156,
+    "total": 156,
+    "seconds": 115.12,
+    "log": {
+      "path": "build/wp7-integration-20261020/combined-tests.log",
+      "sha256": "5e8240f71e0e904ce8663595142f14dcbee8ed1562fc456d4c447b4e6293723a"
+    },
+    "last_test": {
+      "path": "build/wp7-integration-20261020/wp7-wp8-initial-last-test.log",
+      "sha256": "11becff6f65763db0f8f15d6b9efc039a5fb3d65041216775a409daea50b083b"
+    },
+    "covers_later_changes": false
+  },
+  "joint_suites": {
+    "status": "pending"
+  },
+  "reference_rerun": {
+    "status": "pending",
+    "original_records_preserved": true,
+    "tolerances_changed": false
+  },
+  "installed_consumption": {
+    "status": "pending"
+  },
+  "ci": {
+    "status": "pending"
+  },
+  "linux_asan_ubsan": {
+    "status": "pending",
+    "passed": false
+  },
+  "WP6_complete": false,
+  "WP16_complete": false,
+  "remaining_release_gates": [
+    "WP6 bounded chapter residency and random recovery",
+    "Final engine-source four-target 24 CPU hour reliability acceptance",
+    "WP16 final package/platform ledger on final source"
+  ],
+  "complete": false
+}

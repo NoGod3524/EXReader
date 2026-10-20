@@ -120,6 +120,60 @@ static void information(const char *directory) {
   exr_font_free(colr);
 }
 
+static unsigned read16(const unsigned char *p) { return (unsigned)p[0] << 8 | p[1]; }
+static uint32_t read32(const unsigned char *p) {
+  return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3];
+}
+
+static void directory_failures(const char *directory) {
+  char path[4096];
+  FILE *file;
+  long length;
+  unsigned char *bytes;
+  size_t table = 0, list, record;
+  unsigned i, variant;
+  snprintf(path, sizeof(path), "%s/svgfont.ttf", directory);
+  file = fopen(path, "rb"); CHECK(file != NULL);
+  CHECK(!fseek(file, 0, SEEK_END)); length = ftell(file); CHECK(length > 12);
+  rewind(file); bytes = malloc((size_t)length); CHECK(bytes != NULL);
+  CHECK(fread(bytes, 1, (size_t)length, file) == (size_t)length); fclose(file);
+  for (i = 0; i < read16(bytes + 4); i++) {
+    size_t at = 12 + (size_t)i*16;
+    CHECK(at + 16 <= (size_t)length);
+    if (!memcmp(bytes + at, "SVG ", 4)) table = read32(bytes + at + 8);
+  }
+  CHECK(table && table + 12 <= (size_t)length);
+  list = table + read32(bytes + table + 2);
+  CHECK(list + 14 <= (size_t)length);
+  record = list + 2;
+  for (variant = 0; variant < 2; variant++) {
+    exr_font *font = NULL;
+    exr_font_input input = {bytes, (size_t)length, 0};
+    exr_font_color_info info = {0};
+    if (!variant) bytes[table + 6] = 1;
+    else {
+      size_t document = list + read32(bytes + record + 4);
+      CHECK(document < (size_t)length);
+      bytes[table + 6] = 0;
+      memset(bytes + record + 8, 0, 4); bytes[record + 11] = 1;
+      bytes[document] = 0x1f;
+    }
+    OK(exr_font_create_glyphs(&input, 1, &font, &error));
+    info.struct_size = sizeof(info);
+    if (!variant) {
+      CHECK(exr_font_color_info_get(font, 0, GID_RECT, &info, NULL, &error) == EXR_FONT);
+      CHECK(info.kind == EXR_FONT_COLOR_NONE);
+      CHECK(exr_font_color_info_get(font, 0, GID_RECT, &info, NULL, NULL) == EXR_FONT);
+    } else {
+      exr_status status;
+      exr_bitmap image = render_glyph(font, GID_RECT, 100, 0x000000ff, 0, NULL, &status);
+      CHECK(status == EXR_FORMAT && !image.pixels);
+    }
+    exr_font_free(font);
+  }
+  free(bytes);
+}
+
 static void shapes(exr_font *font) {
   exr_bitmap image;
   image = scene(font, GID_RECT);
@@ -307,6 +361,7 @@ int main(int argc, char **argv) {
   CHECK(argc == 3);
   font = open_font(argv[1], "svgfont.ttf");
   information(argv[1]);
+  directory_failures(argv[1]);
   shapes(font);
   style(font);
   transforms(font);
