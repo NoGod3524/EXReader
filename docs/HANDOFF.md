@@ -17,6 +17,7 @@ WP6普通Latin表格专项已达到五轮交替首屏降低50%的出口，章内
 本批范围与证据见 `docs/validation/2026-10-20-wp6-compatibility.json`。
 3.38.2本批GCC/MSVC各152/152、最新CI七作业全部通过，平台SDK/许可、模拟器应用报告与短测重汇总已归档。
 WP7、WP8、WP12a的分支、独立目录和完整出口分别见 `docs/WP7-HANDOFF.md`、`docs/WP8-HANDOFF.md`、`docs/WP12A-HANDOFF.md`。
+轻量转换独立子包WP12-lite的范围、分支、工作目录与量化出口见 `docs/WP12-LITE-HANDOFF.md`；完整WP12高保真和迁移条件仍按下表跟踪。
 
 ## 目标与完成定义
 
