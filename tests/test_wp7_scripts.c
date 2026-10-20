@@ -243,6 +243,8 @@ static void pagination_recovery(void) {
     g = exr_layout_glyphs(got,&n); CHECK(n);
     CHECK(g[0].start == starts[(i*7+3)%pages]);
   }
+  CHECK(exr_pager_cached_bytes(pager) <= 256*1024);
+  CHECK(exr_pager_cached_count(pager) <= 4);
   free(starts); exr_pager_free(pager); exr_document_free(doc);
 }
 
