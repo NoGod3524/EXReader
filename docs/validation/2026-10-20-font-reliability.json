@@ -1,0 +1,754 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "sdk_version": "3.38.1",
+  "core_version": "3.37.1",
+  "pdf_version": "3.38.1",
+  "abi": 1,
+  "library_schema": 6,
+  "previous_acceptance": {
+    "run_id": 39370107827,
+    "source_sha": "81712848972a9745d6a86558742c6ec10cf6426a",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39370107827",
+    "passed": false,
+    "successful_shards": 72,
+    "failed_font_shards": 24,
+    "reports": [
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-0\\font-0\\report.json",
+        "sha256": "a413d9f52f56ccf2de44c7b21c50a3066daf4239994c0d1282e9647adec8490a",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-1\\font-1\\report.json",
+        "sha256": "35f5be9c7de65af523650f75fc9d3a7ffee2fd4a6b0b4e1d22afa45853fd8dd7",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-10\\font-10\\report.json",
+        "sha256": "4dc3a471c334c5fccee39819c3a3c8e1adef7a64cd49b3ee22ea7ada3a8f2284",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-11\\font-11\\report.json",
+        "sha256": "0f1b3832b2a4aaa02dc73b907c5d5d0c7a095cd0f998ad0af2a0f15791457a47",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-12\\font-12\\report.json",
+        "sha256": "7f2fe8c68d57c8e772d052e98e5d30c2c5abb6e3115d67ce1bc8c8074e83495c",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-13\\font-13\\report.json",
+        "sha256": "56ee4a9c48e9c1be23dd1650dcb6bc491793f4096cd57adcb831aa8a8dd1f731",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-14\\font-14\\report.json",
+        "sha256": "ade34c3c564f6b219eb9a4d24fd867b3f980f56016e996d09b7d6a9d3d5995e0",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-15\\font-15\\report.json",
+        "sha256": "30dfb30a916414959941b9725363bfd92d3e57ea94337433a11aa5903c457816",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-16\\font-16\\report.json",
+        "sha256": "1bf277289325a24c3cfcddbe6c01a5628d6a2ed358439cc24d6330940963fb6f",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-17\\font-17\\report.json",
+        "sha256": "81383022b75fa49075bbad9af7b559bcd21ffcffd5c0e1705fa3958960f4d60d",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-18\\font-18\\report.json",
+        "sha256": "0c2a5923733d36d786eca8410fc4d89d88682b92aaea74e3d033df7f9083760b",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-19\\font-19\\report.json",
+        "sha256": "b3e7829958f3d59e72256682858d02d0f16c87773def192d54d1f7fc56b30e87",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-2\\font-2\\report.json",
+        "sha256": "b2727947213a7b70b0d8a5ac03a2255c63f0bce9743414287b1ef32bb50c21d1",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-20\\font-20\\report.json",
+        "sha256": "7c7f8f6fce02fcb2aef761b2a39985d96ab775e4379a9293716f3ae3384ee7be",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-21\\font-21\\report.json",
+        "sha256": "8c1992ebe02892fcfdd44a0da4db7ab5587d97108e1440757dedf16094ef3a86",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-22\\font-22\\report.json",
+        "sha256": "11ddcef97f59353177d4fccb98ab03483359b7bc7f2118899f54eee4911859f4",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-23\\font-23\\report.json",
+        "sha256": "51f4981c5244480c0c3a393bff45b721df34e074abf0f0d1b9a48ae5b8196b0f",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-3\\font-3\\report.json",
+        "sha256": "cc44e4902450e1676f7a6e015699564b0314b1abb09687cc986c90b1a0d7d70c",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-4\\font-4\\report.json",
+        "sha256": "601a17c4567ffcf1f14653a4569ad99d904ae523fa88e8d6b81aec7d5aa17ba6",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-5\\font-5\\report.json",
+        "sha256": "49ad671bf0c9688377726ef848d8201ea13064084408f0134271c686747b73d9",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-6\\font-6\\report.json",
+        "sha256": "7719603496e3842f279f81b9cac1335f73bd11fbb861ab4b0255b8071dbd52ae",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-7\\font-7\\report.json",
+        "sha256": "61b62047b62a4a354eedb756d0f15ba8ba0b72beed33a4ad7cb0cf84ed57a8d6",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-8\\font-8\\report.json",
+        "sha256": "d674d5279dff835b360985ccd7281e6f310285fd50da0a9f349552259bcc9a72",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-font-9\\font-9\\report.json",
+        "sha256": "a7284629dbd5274340584fce2811c9f9de46a96fee333d8969382b80ba889274",
+        "target": "font",
+        "passed": false,
+        "process_cpu_nanoseconds": null
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-0\\layout-0\\report.json",
+        "sha256": "ab0e62aacea4ec3c3299b23429be95538700276b59f21a65f1f342eda381a7cf",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600003601624
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-1\\layout-1\\report.json",
+        "sha256": "a01a04847773ebd612f79d60a79283b9183ab2dc295c2df8c4941a76c49b1c38",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600002066554
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-10\\layout-10\\report.json",
+        "sha256": "02c445ba7d4d8a9b283ffb0cdaf5b69ccbc23815adcfe0e1b920266f67d651d4",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600002103281
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-11\\layout-11\\report.json",
+        "sha256": "79209e59f186500386bd9e0473aca0582e060578c49bcaaface7ab825b342e34",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600005264698
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-12\\layout-12\\report.json",
+        "sha256": "d8c06fc8f5692ada7bcd472dc439a6f63d204b8a5ceb9dcb4ad46168a3c56d32",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000118722
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-13\\layout-13\\report.json",
+        "sha256": "c7dc175bc3ec03a6952b6a5f820faaf51755978be74ff9e2bf133b664e343de0",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600003009715
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-14\\layout-14\\report.json",
+        "sha256": "8004104084f446035eca6b9653572d9825659876c429bcb352bb11a3f04e9f70",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600001951124
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-15\\layout-15\\report.json",
+        "sha256": "1815520a6ed260f9dec79b7081f81990d5b828dc65beaf0b370ce9bce1acd2c1",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000485401
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-16\\layout-16\\report.json",
+        "sha256": "d2812514bc19215cda21c9d4e9715a8c80621fa88386123582b42a8986c98fee",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000207892
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-17\\layout-17\\report.json",
+        "sha256": "4ba4ab09912554a43b875db30c2aad793e471389fca123dedc712a959dfc3f5b",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000596632
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-18\\layout-18\\report.json",
+        "sha256": "30d55f8ab47c54575098d526b47def801c7ca7b7860e6fd607a4fff680b676a4",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600001449283
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-19\\layout-19\\report.json",
+        "sha256": "6d00a9fd5912c27bf4935fc9331b4f75ed8ae932f047a7e430c829f3bc8eff40",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600004716168
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-2\\layout-2\\report.json",
+        "sha256": "da7eec90fcc36e13971a66657e7564f19fd102cb687d4f7a38a358711f4e50e9",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600015690977
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-20\\layout-20\\report.json",
+        "sha256": "60d2c1cda7ed2261fe14313a179f555c9160f182ba8531db565261a67a956326",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000463193
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-21\\layout-21\\report.json",
+        "sha256": "0a259bdb47080e5bdf85e06d69e2249939cc3231256449669863f327ae0e427f",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600001253566
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-22\\layout-22\\report.json",
+        "sha256": "6d625d3b23073d5c14b1b72e2b99934dd07d1e989ac5437573039d594efab813",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600002404648
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-23\\layout-23\\report.json",
+        "sha256": "94e43b688af052c761f31be56c15f9e4e8bf3c2b8789be9b280a300e5200dea8",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600002933494
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-3\\layout-3\\report.json",
+        "sha256": "3831b2a973ac182b17d6844085dfd310ab3c853d7882aedc1cdd05b6d0ae5b8a",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600027072051
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-4\\layout-4\\report.json",
+        "sha256": "716e9e5913a04fe460102d66d3e4c55819a51475dd2e9970f6f1c4a24f2fb016",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600003139331
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-5\\layout-5\\report.json",
+        "sha256": "520dc94ae9c05904626f175cdf1f420bcecccf5ee04540c1b8cdcf62f7f50ebd",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600004242075
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-6\\layout-6\\report.json",
+        "sha256": "a8dff5566a6600529a989d18e04b84cf3d267c2418063358e38a8515f94661e3",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600003893009
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-7\\layout-7\\report.json",
+        "sha256": "5bc60ec50f2cdd75759220d7cd5642058d865f30191fecca572070278f8d9710",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600006191478
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-8\\layout-8\\report.json",
+        "sha256": "ff3c5236605d9484b7def2e55aae61d66b56c491d3db96619164fbc80a826ca9",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000253156
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-layout-9\\layout-9\\report.json",
+        "sha256": "1e9560d354386abe395124f3dc37b48ee09a6c557203da758b3b5e35f9429684",
+        "target": "layout",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000240792
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-0\\parser-0\\report.json",
+        "sha256": "8aaf23c7c81d4f760967dff7a649534f17de710235e2098391a1da6e6121c7f3",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000814139
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-1\\parser-1\\report.json",
+        "sha256": "ef2cc06210f4d778615c773c5730b53a7296202dae39bd13cd2d68e4ff4af7c0",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000171689
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-10\\parser-10\\report.json",
+        "sha256": "d27d5716b0fcce1c7afcef657d578f776b346eefcb03c0c0c3b83d2d8a7865fc",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000840498
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-11\\parser-11\\report.json",
+        "sha256": "bb0d731bbbd662b46e4b13b7d2b62a02042474796968a7f77646b8491ce28212",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000026121
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-12\\parser-12\\report.json",
+        "sha256": "8feb4c7fc7e414ad2f16e590d68b5266bb56adbdecb81cb952cfe992eccdc8d2",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000226253
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-13\\parser-13\\report.json",
+        "sha256": "2791e14e6d4072bdce4948eb9db884b7865ae34fa67d66da17e431cc95f64d51",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000275673
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-14\\parser-14\\report.json",
+        "sha256": "da2e87bf9056ff1026900dd8c8cd2ea55bea1d52246929bebfd3c9217256fbf1",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000139250
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-15\\parser-15\\report.json",
+        "sha256": "6f2a82d56a16ac23d79370e2801d841ac8d55d7d419671948c159b50f18d044c",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000696045
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-16\\parser-16\\report.json",
+        "sha256": "66ed8ec259bb47d52d4d4326d3290ccab9be43c23f6809e063ef36eed649fdc0",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000185294
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-17\\parser-17\\report.json",
+        "sha256": "52a8b60f5fcf70e3e80cdc74e86a7108cf123bfd118a05e99a87513954b98264",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000382624
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-18\\parser-18\\report.json",
+        "sha256": "92594263f3fdd6066c0d2cedfcabdad648010d735ec962cb22aad118a0f215e0",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000042595
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-19\\parser-19\\report.json",
+        "sha256": "2cfacbad03305d8e45f6157057b8973a8e468384a5e5345ae0b352573f9ef730",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000059134
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-2\\parser-2\\report.json",
+        "sha256": "b47849f9760250a2205665a3dee4c487d40592e19013a377d0f590c9334bfbe3",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000118022
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-20\\parser-20\\report.json",
+        "sha256": "dea8cc163d1324dcd6cc6504de1d5583534ebcec0016850503e97936ed24040b",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000638919
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-21\\parser-21\\report.json",
+        "sha256": "c044e32c5f2e980124bdf0ea8e33b267b79ca9d8bc99f77628b4f4e8ef62c763",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000003271
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-22\\parser-22\\report.json",
+        "sha256": "f8a9c3620ee8caa32884e458646f48bd71cbce226b7485935779319d9d8b04bd",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000419314
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-23\\parser-23\\report.json",
+        "sha256": "255da1ae1ae27554470811ea55178756bc37e5a1153b384ea98dc1df4bb97e35",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000255462
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-3\\parser-3\\report.json",
+        "sha256": "1a481438de8bbfa0d2239d4896084b922a3ed2f0f06bfc568bd3c3c1c04e1730",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000199327
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-4\\parser-4\\report.json",
+        "sha256": "d32c5fd0bca30d96fe8cd151c4561ee2472fda6dcfedd3047a3c7cadba6fa955",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000132451
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-5\\parser-5\\report.json",
+        "sha256": "0ad4e3cdb883d17d3680a4171a53ec0a36efc3b3887a7bd4d5851d451dc77178",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000169285
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-6\\parser-6\\report.json",
+        "sha256": "b20578529d39a54d52f99ef5de95c3763826905734f4006c1e18ee3badd0d351",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000057595
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-7\\parser-7\\report.json",
+        "sha256": "6659869d674682b434ac682da946d2b4ecd37fb1912d2b65bf4d53e2ebd8c44a",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000335987
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-8\\parser-8\\report.json",
+        "sha256": "de333dc639edd25dddef1a69457c6d0b38ec88cc60b6cc1d06709dd85c78e4e8",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000117123
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-parser-9\\parser-9\\report.json",
+        "sha256": "e3c6f6f567abce5496d162ef1cce277fa272132880c9b2f3caf85a2f3ddbf145",
+        "target": "parser",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000246713
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-0\\render-0\\report.json",
+        "sha256": "48ca33b24bbe7dd475102d81d2926de3405ada66ab31395df337979728a7ae81",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600005061332
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-1\\render-1\\report.json",
+        "sha256": "92ee6c534ac65b0a13ac07ae3838a2ef3449e4bf51393a4cfbb2cd5e32084386",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600034542427
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-10\\render-10\\report.json",
+        "sha256": "9b84f2dbfadc7eb640e2c8570873b87414b71d3a52f15b522b0104c1f69dcbe8",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600021838638
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-11\\render-11\\report.json",
+        "sha256": "cdb85a319d209bf4541cabe2a96ec4d1b8af2a3ffb7caf51d6ded89b929c024b",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600007525530
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-12\\render-12\\report.json",
+        "sha256": "eac581e606b1daa471654692004dec9f699f296ca7d27810a1446076f6b4931f",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000510137
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-13\\render-13\\report.json",
+        "sha256": "1b75b070d90cf44a5e5e4432b311fe0e3fafc678856729f729539e323a730790",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000226664
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-14\\render-14\\report.json",
+        "sha256": "4a80adc2ecaecdf8b98c665c5555ec6ce16145f8e7590f0b578689dc133d5e19",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600002095656
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-15\\render-15\\report.json",
+        "sha256": "cb1b29065b331b7bd19baad81ee41a24be4f91bf3128bd6f5c66069bd07b4604",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600007713794
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-16\\render-16\\report.json",
+        "sha256": "6a349a94c93da5d304ff039befda3043074ad8420e85dafb23c70fe96baddbe9",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600005299917
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-17\\render-17\\report.json",
+        "sha256": "4a774e607ef67b4ea59fd322fc8cbace4229738ea997796b22f9eb2edaf89eeb",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600005906783
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-18\\render-18\\report.json",
+        "sha256": "21560a09cf9f8d43ae0e03ea663d86c7eb3ed7190b5c7c8f043b2d97d0a2f56a",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600003010989
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-19\\render-19\\report.json",
+        "sha256": "aa683c33006a7e9b0941cea25f4fb61b87c72505745f80dad83843097784784b",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600017317892
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-2\\render-2\\report.json",
+        "sha256": "ffb42382736b2890d9c07515e82c386c23dfef12a2fdb2ae3f3e0b8af4c0a92a",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600010370309
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-20\\render-20\\report.json",
+        "sha256": "e28bbea4e2de28d00f086dbf4c3cde8b19088d29cdf98f4835195a7767c2e8df",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600009029996
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-21\\render-21\\report.json",
+        "sha256": "bcefb4130680ab2c61d177fa18c79f166bc9465c07c9c7bfeb1cc48b7e9029f4",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600001538506
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-22\\render-22\\report.json",
+        "sha256": "7d2938935ce20fdb5e38da0b3ca258a4410d3c9bcc94ee4ff3ce9160c54f33d9",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600013360822
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-23\\render-23\\report.json",
+        "sha256": "e953019dfbf94de0dc0bb2ff8bd8c10c356557fa8c2fa956b1f717fd6eea3a62",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600003755401
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-3\\render-3\\report.json",
+        "sha256": "fcefe81e9020b2ecc9faac4f227e06e6841233e9b8537a492e96f429f2f347da",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600001134768
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-4\\render-4\\report.json",
+        "sha256": "ce63b61a07f2f7d2f5103d4ff18e5a401345c5851b12c9cce5408019b7b33b11",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600007931821
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-5\\render-5\\report.json",
+        "sha256": "0c936e6562f7d79444413efcaad37ff8cd5edd3d54ac83a0482d0c212566c5c5",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600001838152
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-6\\render-6\\report.json",
+        "sha256": "6028932bed857c894cb8dbfed995b4eb2cd8d62374d1d270598009144c834ee6",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600007681880
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-7\\render-7\\report.json",
+        "sha256": "a33da91373716f4ffa434ccee04596cb0680cbffc495bf961b553d50bf0cbf95",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600000025473
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-8\\render-8\\report.json",
+        "sha256": "acd4e1f77d629c5629160c675cd30df97478d4ae354f6d7a69d2e5eacb070686",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600013425549
+      },
+      {
+        "file": "C:\\Users\\Oscar\\exr-gcc\\reliability-acceptance-39370107827\\evidence\\reliability-shard-render-9\\render-9\\report.json",
+        "sha256": "09e8fc8e77af645a5656217c35faa2c986f075b8c39cb8215f1ce43833e89812",
+        "target": "render",
+        "passed": true,
+        "process_cpu_nanoseconds": 3600007038569
+      }
+    ]
+  },
+  "dependency": {
+    "name": "FreeType",
+    "version": "VER-2-15-0",
+    "archive_sha256": "87c7f1f8699b91e89f773f7dcfa505b044e1dae67f62a55d4e29c3afdcac4fb8",
+    "license": "FreeType License",
+    "original_cache_preserved": true
+  },
+  "regression": {
+    "file": "tests/fixtures/font-cff-regression.bin",
+    "sha256": "4e5d2e3d59d1aaef53c59a46abaad0200e59baf75b0ced79af14491fa9e47f2e",
+    "replayed_original_inputs": 24,
+    "all_exit_normally": true,
+    "replay_record": "C:\\Users\\Oscar\\exr-gcc\\font-replay-2.15.0.json",
+    "replay_record_sha256": "51d87e7d099ca0863fd6fc205bdac4568a9f044ce07084b5ac40ea91dc98ec8a"
+  },
+  "local": {
+    "gcc": {
+      "passed": 150,
+      "total": 150,
+      "wall_seconds": 134.14,
+      "log": "C:\\Users\\Oscar\\exr-gcc\\reliability-next-gcc-full.log",
+      "log_sha256": "f5aa31f470f89c19be71535a728a2b3218a0dc9b8fa28185e5e65f4cb62a0e25",
+      "build_sdk_version": "3.38.0",
+      "version_metadata_update_after_tests": true
+    },
+    "msvc": {
+      "passed": 150,
+      "total": 150,
+      "wall_seconds": 142.83,
+      "log": "C:\\Users\\Oscar\\exr-gcc\\reliability-next-msvc-full.log",
+      "log_sha256": "6b621732417b2af391eb272facc2e4bcfc2148abba2391fa7ba7564439bd7f95",
+      "build_sdk_version": "3.38.0",
+      "version_metadata_update_after_tests": true
+    }
+  },
+  "source_snapshots": {
+    "cmake/deps.cmake": "13db349e54bf2e24593424bbdb99a3ef6ceb3c759cf636b3affaaac793b81690",
+    "THIRD_PARTY_NOTICES.md": "d9dcce0381f94767c8c53168c065084acab3f15ac65eacf91c93aba7cb0bd2fc",
+    "tests/check_fuzz_pipelines.py": "6cd465d9fdfceaf61b4fe7b792b44e13aca96b73214d024989eafd685bd1a5a9",
+    "tests/fixtures/font-cff-regression.bin": "4e5d2e3d59d1aaef53c59a46abaad0200e59baf75b0ced79af14491fa9e47f2e",
+    ".github/workflows/native.yml": "4ca9050763a0f31f5313bda39f6fe7ab22aff27f53c702b3337e13670bad0c91",
+    "CMakeLists.txt": "04a998ae3e870e5748d67f3fc059b565c609c5673dfbdcd0057b765a9638907c",
+    "include/exr/base.h": "1956684356c401d638164e53423a979ee274b8dd62f1e59b9a95326e449b6ed2",
+    "include/exr/pdf.h": "25435ff6b8c881163dfb15b94670a282562d0fb6ac1d49c9cb6a236654923707",
+    "cmake/versions.cmake": "62b26dbc0065b81f6279cf79eaae50867b393b89f0247d17cb8c27c2161821bf",
+    "examples/CMakeLists.txt": "85fee5fd8ecd9a93acdd949374879ef4ba6c9c4aa341491a1ff9a9f1e07ee800",
+    "tests/sdk_cpp/CMakeLists.txt": "a735c0261f30959bb4d93677b1242cb59d50ceabd1bd04340f533a8a4465aee5"
+  },
+  "ci": {
+    "native": {
+      "status": "pending"
+    },
+    "acceptance": {
+      "status": "not_started",
+      "passed": false
+    }
+  },
+  "wp16_complete": false,
+  "first_sdk_complete": false,
+  "preserved_untracked_files": {
+    "docs/validation/2026-10-19-shading-extent-ci.json": "a955abda1e35fd456172b2e78e1d687799e4ab5f1f977dec0efd7684aae9fdc1",
+    "src/internal.h": "c951b04a1611008b2e97437d6877bebabf29ec2c374a1c8166c9aca14f34e904"
+  }
+}

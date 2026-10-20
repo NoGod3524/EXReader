@@ -1,5 +1,18 @@
 # Native C validation
 
+## Font dependency reliability repair (2026-10-20)
+
+Acceptance 39370107827 completed with 72 successful shards and 24 failed font
+shards, so the complete acceptance remains failed. All original artifacts are
+retained. FreeType VER-2-15-0 is pinned with its archive hash and existing license
+selection. The fixed input is retained in `tests/fixtures/font-cff-regression.bin`
+and replayed by the pipeline contract under sanitizers.
+
+With the updated dependency, all 24 retained font inputs exit normally and GCC
+and MSVC full suites pass 150/150. These local builds precede the version-string
+update to SDK/PDF 3.38.1 and core 3.37.1; exact-commit Linux and release evidence
+are tracked in `docs/validation/2026-10-20-font-reliability.json`.
+
 ## Reliability CPU accounting and evidence (2026-10-20)
 
 The four drivers measure process CPU time with integer nanoseconds on Windows

@@ -1,5 +1,14 @@
 # SDK 可靠性交付交接
 
+## 字体长测修正续批
+
+长测39370107827已结束：parser/layout/render各24片通过，font24片失败，整体拒绝验收。
+全部96份原始证据下载至`C:/Users/Oscar/exr-gcc/reliability-acceptance-39370107827`。
+固定FreeType更新为VER-2-15-0；保留全部输入并增加`tests/fixtures/font-cff-regression.bin`回归。
+新依赖下24份字体输入均正常结束，GCC/MSVC完整测试各150/150。
+SDK/PDF补丁版本3.38.1、核心3.37.1，ABI1/schema6；版本声明更新后的准确CI结果继续补录。
+记录见`docs/validation/2026-10-20-font-reliability.json`。原失败证据不得覆盖或计入新批时长。
+
 ## 2026-10-20续批进度
 
 本轮继续第6节的计量、证据、CI与拒绝条件。下方原现场保留用于区分历史结果。

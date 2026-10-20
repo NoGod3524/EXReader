@@ -14,7 +14,7 @@ PostScript is a registered trademark of Adobe Systems Incorporated.
 
 | Component | Pinned source | License | Use |
 | --- | --- | --- | --- |
-| FreeType | VER-2-14-1, freetype/freetype | FreeType License OR GPL-2.0-only; FreeType License selected | Font loading, glyph metrics and rasterization |
+| FreeType | VER-2-15-0, freetype/freetype | FreeType License OR GPL-2.0-only; FreeType License selected | Font loading, glyph metrics and rasterization |
 | Expat | R_2_9_0, libexpat/libexpat | MIT | XML parsing with external entity resolution disabled |
 | miniz | 3.1.2, richgel999/miniz | MIT | ZIP containers and decompression |
 | SQLite | 3.54.0 amalgamation, sqlite.org | Public domain | Local bookshelf and annotations |
