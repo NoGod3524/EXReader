@@ -280,13 +280,15 @@ def save_diff_sheet(tiles, path):
 
 
 def main():
-    global CHROME
+    global CHROME, FONTS
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output', type=Path)
     parser.add_argument('--renderer', type=Path, required=True)
     parser.add_argument('--chrome', type=Path, default=CHROME)
+    parser.add_argument('--fonts', type=Path, default=FONTS)
     args = parser.parse_args()
     CHROME = args.chrome.absolute()
+    FONTS = args.fonts.absolute()
     work = args.output.absolute()
     work.mkdir(parents=True, exist_ok=True)
     tool = args.renderer.absolute()
