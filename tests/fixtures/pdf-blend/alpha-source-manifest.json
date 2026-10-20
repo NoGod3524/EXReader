@@ -1,0 +1,2844 @@
+{
+  "scenes": [
+    {
+      "file": "alpha-source-noniso-opacity-path-64.pdf",
+      "sha256": "da4f5170dcb9fa0f1c57b3e702c9c61e506f1777d1d7f3ad39eadfa6256c64f4",
+      "probe_type": "opacity-path",
+      "premultiplied": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "white": [
+        223,
+        223,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-path-128.pdf",
+      "sha256": "3e3f2f360845249c1001d6f31b13d004738672f03f67b1e2badfad8e13bdf5a7",
+      "probe_type": "opacity-path",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-path-192.pdf",
+      "sha256": "6982de1efef98a1c605d62db098de17440ea1e46184b3c58fb5ecedb2226d84b",
+      "probe_type": "opacity-path",
+      "premultiplied": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "white": [
+        159,
+        159,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-text-64.pdf",
+      "sha256": "609f92208a6918b14a6343a9022768ad435626d2bce907ca936705b504bff615",
+      "probe_type": "opacity-text",
+      "premultiplied": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "white": [
+        223,
+        223,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-text-128.pdf",
+      "sha256": "590d9e93fe1432c0340374b032765af9c84f87ad04b6e5fee8a2273e6cade419",
+      "probe_type": "opacity-text",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-text-192.pdf",
+      "sha256": "2bd697b357c0f3f35014fae40ce0bfe4300226c8ee8dfd0499c4068648f61361",
+      "probe_type": "opacity-text",
+      "premultiplied": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "white": [
+        159,
+        159,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-group-64.pdf",
+      "sha256": "c9e26ea86d8ebdccd3610f4af3f366bc2699a073e64f8163512a6824745edfdd",
+      "probe_type": "opacity-group",
+      "premultiplied": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "white": [
+        223,
+        223,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-group-128.pdf",
+      "sha256": "ba37acc772b5d69741ebe0a8a85be69015d746e92f4d09992be68bba71d72233",
+      "probe_type": "opacity-group",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-group-192.pdf",
+      "sha256": "eefa36451f704e2830a9b7e1aace224eb8ca4bf6c709c4c61998095b9a928719",
+      "probe_type": "opacity-group",
+      "premultiplied": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "white": [
+        159,
+        159,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-shading-64.pdf",
+      "sha256": "73a5e5daa0c3f513203ecd1d15d62b3ec2d4b5eec77502b08528e3c03cca90d9",
+      "probe_type": "opacity-shading",
+      "premultiplied": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "white": [
+        223,
+        223,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-shading-128.pdf",
+      "sha256": "ee13b4e2184fe012296eabfb2f739a3b37ba72658086790b8516a08815b86f7c",
+      "probe_type": "opacity-shading",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-shading-192.pdf",
+      "sha256": "36194d44ab0800e72776667cdbc20467d8876e92a90af478db1fd99832f1eef6",
+      "probe_type": "opacity-shading",
+      "premultiplied": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "white": [
+        159,
+        159,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-soft-64.pdf",
+      "sha256": "99e0fe36adcbc51aecc9ae2d29f67bb003c841d7db47b4a380224654c9ce0adf",
+      "probe_type": "opacity-soft",
+      "premultiplied": [
+        0,
+        0,
+        36,
+        36
+      ],
+      "white": [
+        219,
+        219,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-soft-128.pdf",
+      "sha256": "6944dfa420184bcf332d454961bd4554f2dfa15ef8bd66e72dad383d5a0262c3",
+      "probe_type": "opacity-soft",
+      "premultiplied": [
+        0,
+        0,
+        72,
+        72
+      ],
+      "white": [
+        183,
+        183,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-soft-192.pdf",
+      "sha256": "c6fab1c28b89e60303053e8510ceef46a2fef36c92a04931efcee0a7cfc9a4f0",
+      "probe_type": "opacity-soft",
+      "premultiplied": [
+        0,
+        0,
+        108,
+        108
+      ],
+      "white": [
+        147,
+        147,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-explicit-64.pdf",
+      "sha256": "b36742676abe75f69dd9ce14336a57ecea2c12e83382091f90d6f7db019247c8",
+      "probe_type": "opacity-explicit",
+      "premultiplied": [
+        112,
+        0,
+        36,
+        148
+      ],
+      "white": [
+        219,
+        107,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-explicit-128.pdf",
+      "sha256": "c271d3f8862e4a627edae37c9851bc056a797f75424a3c1f3636447469f74182",
+      "probe_type": "opacity-explicit",
+      "premultiplied": [
+        112,
+        0,
+        72,
+        184
+      ],
+      "white": [
+        183,
+        71,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-explicit-192.pdf",
+      "sha256": "a09dcbe216c0134df4fba65125c4f7c02e31e986d78155b5432eed342ca04b2b",
+      "probe_type": "opacity-explicit",
+      "premultiplied": [
+        112,
+        0,
+        108,
+        220
+      ],
+      "white": [
+        147,
+        35,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-key-64.pdf",
+      "sha256": "d20eacda0e326f6f5e9347fc9a6cd62b34a54ff7edfc4d536f9fdfda8dbd4a41",
+      "probe_type": "opacity-key",
+      "premultiplied": [
+        112,
+        0,
+        36,
+        148
+      ],
+      "white": [
+        219,
+        107,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-key-128.pdf",
+      "sha256": "d6a0e7a96792f98a3c369cac3a84c90d15213a27815c3c562f156163cf9f3337",
+      "probe_type": "opacity-key",
+      "premultiplied": [
+        112,
+        0,
+        72,
+        184
+      ],
+      "white": [
+        183,
+        71,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-key-192.pdf",
+      "sha256": "bfa62d924439c68fefe1540413f6c32d50a409993f5c9ed0dbdf33f598339eed",
+      "probe_type": "opacity-key",
+      "premultiplied": [
+        112,
+        0,
+        108,
+        220
+      ],
+      "white": [
+        147,
+        35,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-compound-64.pdf",
+      "sha256": "27cf92da94374c030fefe1e961a8f1f052f802ba7b68d9ef3fe055fb0e043343",
+      "probe_type": "opacity-compound",
+      "premultiplied": [
+        0,
+        16,
+        0,
+        16
+      ],
+      "white": [
+        239,
+        255,
+        239,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-compound-128.pdf",
+      "sha256": "c321d69fcdf4298bb383828aa4bc679453fdb116c31497995a7d03d3dbad1f09",
+      "probe_type": "opacity-compound",
+      "premultiplied": [
+        0,
+        32,
+        0,
+        32
+      ],
+      "white": [
+        223,
+        255,
+        223,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-opacity-compound-192.pdf",
+      "sha256": "153dee5b8d60978413be81f0f3607332a092a0c785fc84b843b87ba65f602683",
+      "probe_type": "opacity-compound",
+      "premultiplied": [
+        0,
+        48,
+        0,
+        48
+      ],
+      "white": [
+        207,
+        255,
+        207,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-path-64.pdf",
+      "sha256": "16883bdd5d33a436cd1c42aea05956ac18f92fdcf739e91013972dfd46bcc3fd",
+      "probe_type": "shape-path",
+      "premultiplied": [
+        223,
+        0,
+        32,
+        255
+      ],
+      "white": [
+        223,
+        0,
+        32,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-path-128.pdf",
+      "sha256": "b819113ba1660a2fbc6bb0f7789fba5411633c5aa703a05f4fd5d4537770f24f",
+      "probe_type": "shape-path",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-path-192.pdf",
+      "sha256": "7ec805b248143bc5376c0c5bd3c0c670144d148e215980e9826e09a3634aba64",
+      "probe_type": "shape-path",
+      "premultiplied": [
+        159,
+        0,
+        96,
+        255
+      ],
+      "white": [
+        159,
+        0,
+        96,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-text-64.pdf",
+      "sha256": "84316f6de329642fb376b5b499459d585307319db68b01bdf4b0562eb64e514d",
+      "probe_type": "shape-text",
+      "premultiplied": [
+        223,
+        0,
+        32,
+        255
+      ],
+      "white": [
+        223,
+        0,
+        32,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-text-128.pdf",
+      "sha256": "d4ce2357ecbb794473a4fcb9c511f704eb78a6ad276c99456b7963282a002fb2",
+      "probe_type": "shape-text",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-text-192.pdf",
+      "sha256": "894a6fae53a9f82259203324ff62c3d9d1a6b770d9ad36953dd7854ef66e15df",
+      "probe_type": "shape-text",
+      "premultiplied": [
+        159,
+        0,
+        96,
+        255
+      ],
+      "white": [
+        159,
+        0,
+        96,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-group-64.pdf",
+      "sha256": "15061a3be49402903067cc0ac127eda4ae4e1242730ad2e5e2926032c33d70a6",
+      "probe_type": "shape-group",
+      "premultiplied": [
+        223,
+        0,
+        32,
+        255
+      ],
+      "white": [
+        223,
+        0,
+        32,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-group-128.pdf",
+      "sha256": "a49ef08e630d60cc0cfabc35c77d3327169fcced758e38fa7c53a7b22247cb58",
+      "probe_type": "shape-group",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-group-192.pdf",
+      "sha256": "5c1618639ccc886855557d99f40bda303d23be4a568517d03c802b35c82bd2f4",
+      "probe_type": "shape-group",
+      "premultiplied": [
+        159,
+        0,
+        96,
+        255
+      ],
+      "white": [
+        159,
+        0,
+        96,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-shading-64.pdf",
+      "sha256": "fefb6badda4020db26bd4f9d036d328da526de38922b78e9daaf1b6a8b1a1132",
+      "probe_type": "shape-shading",
+      "premultiplied": [
+        223,
+        0,
+        32,
+        255
+      ],
+      "white": [
+        223,
+        0,
+        32,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-shading-128.pdf",
+      "sha256": "887b2067d617d1f2df271223de6f7c7d9df8a1eebc65e75b143d7b6060694b06",
+      "probe_type": "shape-shading",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-shading-192.pdf",
+      "sha256": "718ba2bfb9570e7b5eec0a7c7869efd055b8f1a6dd48f28293a094a24cf9ff76",
+      "probe_type": "shape-shading",
+      "premultiplied": [
+        159,
+        0,
+        96,
+        255
+      ],
+      "white": [
+        159,
+        0,
+        96,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-soft-64.pdf",
+      "sha256": "9452b182ab24561da21aa2318d10c7feb278204f889c0878e44b28c1b9380f52",
+      "probe_type": "shape-soft",
+      "premultiplied": [
+        219,
+        0,
+        36,
+        255
+      ],
+      "white": [
+        219,
+        0,
+        36,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-soft-128.pdf",
+      "sha256": "a2cc82c0ef0386fe7ad64da1f8747252b2c88de563718efe771d8fb0a7de9c20",
+      "probe_type": "shape-soft",
+      "premultiplied": [
+        183,
+        0,
+        72,
+        255
+      ],
+      "white": [
+        183,
+        0,
+        72,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-soft-192.pdf",
+      "sha256": "e60ab95014a7b3085661fe8c5c8732f1b87c0b5cc2bde10f0336d165d8251163",
+      "probe_type": "shape-soft",
+      "premultiplied": [
+        147,
+        0,
+        108,
+        255
+      ],
+      "white": [
+        147,
+        0,
+        108,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-explicit-64.pdf",
+      "sha256": "458431ef02db3c65b86032723a56dd71fa413822182631f69a475661ae5d647a",
+      "probe_type": "shape-explicit",
+      "premultiplied": [
+        219,
+        0,
+        36,
+        255
+      ],
+      "white": [
+        219,
+        0,
+        36,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-explicit-128.pdf",
+      "sha256": "d5334a408f77216063d6569852bf3037a7368ae2e3313bc669a36092ad6e38ee",
+      "probe_type": "shape-explicit",
+      "premultiplied": [
+        183,
+        0,
+        72,
+        255
+      ],
+      "white": [
+        183,
+        0,
+        72,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-explicit-192.pdf",
+      "sha256": "1b38d7251f78226d55d5c04b7979616e929becafe161dbd2ccdf1f9d03627509",
+      "probe_type": "shape-explicit",
+      "premultiplied": [
+        147,
+        0,
+        108,
+        255
+      ],
+      "white": [
+        147,
+        0,
+        108,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-key-64.pdf",
+      "sha256": "382d8c271ce0ca16653db4bf0d75ab7d0671e26aaa30dcb814e567675a247320",
+      "probe_type": "shape-key",
+      "premultiplied": [
+        219,
+        0,
+        36,
+        255
+      ],
+      "white": [
+        219,
+        0,
+        36,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-key-128.pdf",
+      "sha256": "bbde70225b9c159224b586d22771e6388a0e4e6874f129cd6ad363a5e6c03a9c",
+      "probe_type": "shape-key",
+      "premultiplied": [
+        183,
+        0,
+        72,
+        255
+      ],
+      "white": [
+        183,
+        0,
+        72,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-key-192.pdf",
+      "sha256": "dd1e9d267d6d3f91fed76d770301eddef203f76454e6a6531565ce29208fe48c",
+      "probe_type": "shape-key",
+      "premultiplied": [
+        147,
+        0,
+        108,
+        255
+      ],
+      "white": [
+        147,
+        0,
+        108,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-compound-64.pdf",
+      "sha256": "ff58c6679976d80d70f0729a9b4fcf593f93b6d6c913cb26f1e9d03f2a446caf",
+      "probe_type": "shape-compound",
+      "premultiplied": [
+        211,
+        16,
+        28,
+        255
+      ],
+      "white": [
+        211,
+        16,
+        28,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-compound-128.pdf",
+      "sha256": "276d4a1a21e4215854ee7a96907f0aa132ac30d6aea6421a34a97a1931906260",
+      "probe_type": "shape-compound",
+      "premultiplied": [
+        175,
+        32,
+        48,
+        255
+      ],
+      "white": [
+        175,
+        32,
+        48,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-noniso-shape-compound-192.pdf",
+      "sha256": "63d1a277f1200b97df7940e4a9fe966f7a88eba139779d25fc95dd73cb69d295",
+      "probe_type": "shape-compound",
+      "premultiplied": [
+        147,
+        48,
+        60,
+        255
+      ],
+      "white": [
+        147,
+        48,
+        60,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-path-64.pdf",
+      "sha256": "91b744e35f2fe22ac82f80aff67a51e213c7d790b4338962862d444b15bbc106",
+      "probe_type": "opacity-path",
+      "premultiplied": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "white": [
+        223,
+        223,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-path-128.pdf",
+      "sha256": "ccaf0a5da20d114fa25f2dc91d7499418266076f1a5854b367d6e8776cc011a5",
+      "probe_type": "opacity-path",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-path-192.pdf",
+      "sha256": "bbf4db6e42e747631c5a716ca6c841f85d769e5e28cdc6e48371245801de2d96",
+      "probe_type": "opacity-path",
+      "premultiplied": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "white": [
+        159,
+        159,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-text-64.pdf",
+      "sha256": "634b94628337febcdb088913cf0dccedc53a494b259f36aebcf6a53745ea79ae",
+      "probe_type": "opacity-text",
+      "premultiplied": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "white": [
+        223,
+        223,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-text-128.pdf",
+      "sha256": "9fd87bb324ff72e3bbc87cc5ae0d10e62bc3e6413faddcf16165331cb5bf3463",
+      "probe_type": "opacity-text",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-text-192.pdf",
+      "sha256": "76da8ecaaa5a996682a97a90d1eb3805a63cda85981de9b20058804bd533ea4c",
+      "probe_type": "opacity-text",
+      "premultiplied": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "white": [
+        159,
+        159,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-group-64.pdf",
+      "sha256": "c1548a3d33e5da2725251d360764cc7d98b077111ace4eec003790ab99148906",
+      "probe_type": "opacity-group",
+      "premultiplied": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "white": [
+        223,
+        223,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-group-128.pdf",
+      "sha256": "7aa29a7b17b9ba7edea625966421253bd9056e460d229d42aecad6cacb3d87b8",
+      "probe_type": "opacity-group",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-group-192.pdf",
+      "sha256": "722072ecbdcff81717749f9c02c403afcc498a3bb6588aea295e3e0dea82d12d",
+      "probe_type": "opacity-group",
+      "premultiplied": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "white": [
+        159,
+        159,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-shading-64.pdf",
+      "sha256": "2c2725f1992350ef91d3df2fb7da75f1e376745d1f4ec4b9f0c69e4ba1807477",
+      "probe_type": "opacity-shading",
+      "premultiplied": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "white": [
+        223,
+        223,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-shading-128.pdf",
+      "sha256": "96c9783457e2be8cafabdd05ff4f6d18d7758d685a85d697f568c897c6a248e3",
+      "probe_type": "opacity-shading",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-shading-192.pdf",
+      "sha256": "8167d5fc5acd73bc8ec63b6ccb737ea1a072ef13c23b0ebc07e6b8d7f0bb7ea7",
+      "probe_type": "opacity-shading",
+      "premultiplied": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "white": [
+        159,
+        159,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-soft-64.pdf",
+      "sha256": "8ca345ea5dba345305dd8a4e95b041b9718fabc05475902bed3e028b2887ad83",
+      "probe_type": "opacity-soft",
+      "premultiplied": [
+        0,
+        0,
+        36,
+        36
+      ],
+      "white": [
+        219,
+        219,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-soft-128.pdf",
+      "sha256": "7812a986d68f27460a3135c53bef2feca75c16645a03c18cb9a2c390556f2e11",
+      "probe_type": "opacity-soft",
+      "premultiplied": [
+        0,
+        0,
+        72,
+        72
+      ],
+      "white": [
+        183,
+        183,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-soft-192.pdf",
+      "sha256": "584548cd86feb86e1f42d3728a9ff129ab168697ab76b6b0ced170f781955c38",
+      "probe_type": "opacity-soft",
+      "premultiplied": [
+        0,
+        0,
+        108,
+        108
+      ],
+      "white": [
+        147,
+        147,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-explicit-64.pdf",
+      "sha256": "2a9dcc28207bae4b1af193922346138e2562704332a8d82e1d0092e1f6dfb727",
+      "probe_type": "opacity-explicit",
+      "premultiplied": [
+        112,
+        0,
+        36,
+        148
+      ],
+      "white": [
+        219,
+        107,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-explicit-128.pdf",
+      "sha256": "5a499c0e1e7bdaa4ef0554adef7673ddd9e99c2a58cf150c2478c426f0bc4ffa",
+      "probe_type": "opacity-explicit",
+      "premultiplied": [
+        112,
+        0,
+        72,
+        184
+      ],
+      "white": [
+        183,
+        71,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-explicit-192.pdf",
+      "sha256": "f7b81e34e0e12247e53169c86e4aae20b6bf0a9bf522bcd42912a66a0a3c8b6c",
+      "probe_type": "opacity-explicit",
+      "premultiplied": [
+        112,
+        0,
+        108,
+        220
+      ],
+      "white": [
+        147,
+        35,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-key-64.pdf",
+      "sha256": "bdaa930bda26db3abe509c192f4966b1f03d336259a8e21ff7f60df026893173",
+      "probe_type": "opacity-key",
+      "premultiplied": [
+        112,
+        0,
+        36,
+        148
+      ],
+      "white": [
+        219,
+        107,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-key-128.pdf",
+      "sha256": "cd3b9d6e1b97a450ea628c53c5d65a95def35f99d68e831371fbf95675be754a",
+      "probe_type": "opacity-key",
+      "premultiplied": [
+        112,
+        0,
+        72,
+        184
+      ],
+      "white": [
+        183,
+        71,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-key-192.pdf",
+      "sha256": "2fc52862a00377074cb197ba8ae70fbd8dbaf519f2e3e5b70f3452d3ce9e0008",
+      "probe_type": "opacity-key",
+      "premultiplied": [
+        112,
+        0,
+        108,
+        220
+      ],
+      "white": [
+        147,
+        35,
+        143,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-compound-64.pdf",
+      "sha256": "2bf4e5e48a970bf9e46df65c9da9c42b7d762c8655c6105b07ccc5b6db23dd11",
+      "probe_type": "opacity-compound",
+      "premultiplied": [
+        0,
+        16,
+        0,
+        16
+      ],
+      "white": [
+        239,
+        255,
+        239,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-compound-128.pdf",
+      "sha256": "1e4bb0e14a9c75da3a9c6a89c4a1da29f4659d7f5171dc32cd0d9af8f0e62dd2",
+      "probe_type": "opacity-compound",
+      "premultiplied": [
+        0,
+        32,
+        0,
+        32
+      ],
+      "white": [
+        223,
+        255,
+        223,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-opacity-compound-192.pdf",
+      "sha256": "fe625f55d23f77e6cf9cfd4b5ebb0bf1d49f902fef3f5ea1745349a9ed5c2faa",
+      "probe_type": "opacity-compound",
+      "premultiplied": [
+        0,
+        48,
+        0,
+        48
+      ],
+      "white": [
+        207,
+        255,
+        207,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-path-64.pdf",
+      "sha256": "8c6b61ae96414760f5cb0747840e97841d0c3361df54a568dcb325c78cc1a5cf",
+      "probe_type": "shape-path",
+      "premultiplied": [
+        223,
+        0,
+        32,
+        255
+      ],
+      "white": [
+        223,
+        0,
+        32,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-path-128.pdf",
+      "sha256": "2399d6bd6732ab0e68a4645a7b7db1a58d1c266133916a63ea9d4ee07b422b68",
+      "probe_type": "shape-path",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-path-192.pdf",
+      "sha256": "6d966e08487c66028edf15a133852bd39925b22cb65064d081b58ca41a9cadf2",
+      "probe_type": "shape-path",
+      "premultiplied": [
+        159,
+        0,
+        96,
+        255
+      ],
+      "white": [
+        159,
+        0,
+        96,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-text-64.pdf",
+      "sha256": "b3c91c990bf64b045e4eab19bb11f307d9f3e55feb1b49fb9eed9f769e948d39",
+      "probe_type": "shape-text",
+      "premultiplied": [
+        223,
+        0,
+        32,
+        255
+      ],
+      "white": [
+        223,
+        0,
+        32,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-text-128.pdf",
+      "sha256": "f9c217ab69d6b1a2f96584cf14d0c14d6b96c035f3316c0e1c8612ea580f80a9",
+      "probe_type": "shape-text",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-text-192.pdf",
+      "sha256": "828e273dfa4c1edd2951116a8670e2ef93998114a5d60d09e2428ffc08c6b588",
+      "probe_type": "shape-text",
+      "premultiplied": [
+        159,
+        0,
+        96,
+        255
+      ],
+      "white": [
+        159,
+        0,
+        96,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-group-64.pdf",
+      "sha256": "028dddbebb01e6a513c3387bfbaa516dc8db60e3d1bde840faac98a97de9ec72",
+      "probe_type": "shape-group",
+      "premultiplied": [
+        223,
+        0,
+        32,
+        255
+      ],
+      "white": [
+        223,
+        0,
+        32,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-group-128.pdf",
+      "sha256": "d8e662dd7d951a15137723d5a1499699c84797282f4791485cef743d54703bf0",
+      "probe_type": "shape-group",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-group-192.pdf",
+      "sha256": "5ae88ddceeb00fe0ccd17458cdd1b5f864106dec8597be2b16bdb305abc29f43",
+      "probe_type": "shape-group",
+      "premultiplied": [
+        159,
+        0,
+        96,
+        255
+      ],
+      "white": [
+        159,
+        0,
+        96,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-shading-64.pdf",
+      "sha256": "e01511d8c3df22f0704cfc2cda7bf4162b00ae39f4decff8c1fbd0fd77bf5ea6",
+      "probe_type": "shape-shading",
+      "premultiplied": [
+        223,
+        0,
+        32,
+        255
+      ],
+      "white": [
+        223,
+        0,
+        32,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-shading-128.pdf",
+      "sha256": "f22cd1c83916a15167d0f156c979725265584dbafc6ee32f9a8bcc06401ae567",
+      "probe_type": "shape-shading",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-shading-192.pdf",
+      "sha256": "cddbfe8e1679c85d089d77c2e181afb62cf76a0f4f06fcaeaf57cca8c51b07d5",
+      "probe_type": "shape-shading",
+      "premultiplied": [
+        159,
+        0,
+        96,
+        255
+      ],
+      "white": [
+        159,
+        0,
+        96,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-soft-64.pdf",
+      "sha256": "3f8b2853f727b72be472898c6430e0ed7e710e7eca8418754a873d6f159f616d",
+      "probe_type": "shape-soft",
+      "premultiplied": [
+        219,
+        0,
+        36,
+        255
+      ],
+      "white": [
+        219,
+        0,
+        36,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-soft-128.pdf",
+      "sha256": "9bc5e4aa69d24b98c401b3473ea363e17c07be1a60c4c79d94b14d31ad71597d",
+      "probe_type": "shape-soft",
+      "premultiplied": [
+        183,
+        0,
+        72,
+        255
+      ],
+      "white": [
+        183,
+        0,
+        72,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-soft-192.pdf",
+      "sha256": "903f28269bf22b2268ecf733fe1611eaf5388d0c379d1a73de16f84d42a25322",
+      "probe_type": "shape-soft",
+      "premultiplied": [
+        147,
+        0,
+        108,
+        255
+      ],
+      "white": [
+        147,
+        0,
+        108,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-explicit-64.pdf",
+      "sha256": "861faab1ea0cdf262c75b12ec284d54f0ce2741296cc6e323174587d8ad8e024",
+      "probe_type": "shape-explicit",
+      "premultiplied": [
+        219,
+        0,
+        36,
+        255
+      ],
+      "white": [
+        219,
+        0,
+        36,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-explicit-128.pdf",
+      "sha256": "b556317a7215f15fcd6bd697b077f73f36c71772a2766c04c780ca0242a7d1ad",
+      "probe_type": "shape-explicit",
+      "premultiplied": [
+        183,
+        0,
+        72,
+        255
+      ],
+      "white": [
+        183,
+        0,
+        72,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-explicit-192.pdf",
+      "sha256": "821d0656738c4d4109a53b9eaa4ba473412aa199f0dbf7d72e59e8359909d979",
+      "probe_type": "shape-explicit",
+      "premultiplied": [
+        147,
+        0,
+        108,
+        255
+      ],
+      "white": [
+        147,
+        0,
+        108,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-key-64.pdf",
+      "sha256": "8516579b9adffa410e8da365b9a618d1ebb7bb5233009d7bc79e4ac976787bff",
+      "probe_type": "shape-key",
+      "premultiplied": [
+        219,
+        0,
+        36,
+        255
+      ],
+      "white": [
+        219,
+        0,
+        36,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-key-128.pdf",
+      "sha256": "cdc8e19c4afe9fc9709f906349ee199243783cf896f30798224b57d3278f27e2",
+      "probe_type": "shape-key",
+      "premultiplied": [
+        183,
+        0,
+        72,
+        255
+      ],
+      "white": [
+        183,
+        0,
+        72,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-key-192.pdf",
+      "sha256": "63b43e8beb9b8e725c538bf98e2f3e1edd64de324a391513b5432b2671a75145",
+      "probe_type": "shape-key",
+      "premultiplied": [
+        147,
+        0,
+        108,
+        255
+      ],
+      "white": [
+        147,
+        0,
+        108,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-compound-64.pdf",
+      "sha256": "73288a3e1c0fa7f51c5bcdd06bcda287e206d95207d1ad386e640dddc23f8828",
+      "probe_type": "shape-compound",
+      "premultiplied": [
+        211,
+        16,
+        28,
+        255
+      ],
+      "white": [
+        211,
+        16,
+        28,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-compound-128.pdf",
+      "sha256": "5389db8f7fa63dc9ac045a2e77cb41146c8fe0a09dd8a0cfa098ecdf475a1325",
+      "probe_type": "shape-compound",
+      "premultiplied": [
+        175,
+        32,
+        48,
+        255
+      ],
+      "white": [
+        175,
+        32,
+        48,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-iso-shape-compound-192.pdf",
+      "sha256": "e6b76182d07ac3267cd975289a4cf60602354fe1b9853ce7024cca818409e0ec",
+      "probe_type": "shape-compound",
+      "premultiplied": [
+        147,
+        48,
+        60,
+        255
+      ],
+      "white": [
+        147,
+        48,
+        60,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-state-opacity-restore.pdf",
+      "sha256": "25706fd39bebb9223e15e03f8396469276ec61d07c2583c03e9541d196744b38",
+      "probe_type": "state-restore",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-state-opacity-retain.pdf",
+      "sha256": "4754d5a90955ac09ca1a6951b8cb5c855906d7fc0f22ccd4be653f45e0701b00",
+      "probe_type": "state-retain",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-state-opacity-null.pdf",
+      "sha256": "9bac9ce49977b39e01cadb6dc6a21aad4da04815abe5c575304e6f1d026f9352",
+      "probe_type": "state-null",
+      "premultiplied": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "white": [
+        191,
+        191,
+        255,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-state-shape-restore.pdf",
+      "sha256": "4ef15018209a980c98bef8c73492ac6fb369d92b5746ed6246fcaa37bd48e033",
+      "probe_type": "state-restore",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-state-shape-retain.pdf",
+      "sha256": "4f0518751c97f741211e3182294b289e48d3113ef9d39515fabcc1cbd0ec4f32",
+      "probe_type": "state-retain",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-state-shape-null.pdf",
+      "sha256": "bc5654229932bafbb99239d95f6162c4ed7f99a05b01b9bd17c3e6321ce366c8",
+      "probe_type": "state-null",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Normal.pdf",
+      "sha256": "b869e57b7e86c9b6d024017a94bea30398133e1fc516ae342e82cf1e8d348fc2",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        38,
+        76,
+        179,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Multiply.pdf",
+      "sha256": "4bb758eaaf94dcaa81b78f788c76db52722a89010c49bb2608d478c8ffcf3bfa",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        38,
+        76,
+        153,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        153,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Screen.pdf",
+      "sha256": "02743857399662066db1abc2df82a2507b73b17337b8e5de3c4f2889959bff7e",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        51,
+        102,
+        179,
+        255
+      ],
+      "white": [
+        51,
+        102,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Overlay.pdf",
+      "sha256": "1ebce2174836ef5d18e1b6254909b3a0d9235469e024bb8ba4a9a6045fff592f",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        38,
+        76,
+        179,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Darken.pdf",
+      "sha256": "c9d17828ca3806a35b9548e367a86484f29e76b28f3bef9c793086e156bd77f2",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        38,
+        76,
+        153,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        153,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Lighten.pdf",
+      "sha256": "4821eb36d24ea0c48cd8e4452530e6b6e5a7f986ede342496dad7624243ec4a3",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        51,
+        102,
+        179,
+        255
+      ],
+      "white": [
+        51,
+        102,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-ColorDodge.pdf",
+      "sha256": "cd7d22599c769cfd7c58af0aa27486e4754ab031595476e20d308719a882c755",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        51,
+        102,
+        179,
+        255
+      ],
+      "white": [
+        51,
+        102,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-ColorBurn.pdf",
+      "sha256": "9f1a1d950d961a70278ef6ed9b3e1dffbf8fa2af495cb6de810e1351101a3755",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        38,
+        76,
+        153,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        153,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-HardLight.pdf",
+      "sha256": "5b31344a7a1b1767f0292a88686f2dfc6fdec9c8368ca83faec07d85ca0777e7",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        38,
+        76,
+        179,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-SoftLight.pdf",
+      "sha256": "986da61ad87ecc163ed6b9730cc12217cb157588bd8f8c9364c2cb9bfe8f3778",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        41,
+        87,
+        164,
+        255
+      ],
+      "white": [
+        41,
+        87,
+        164,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Difference.pdf",
+      "sha256": "bdab29d43e27b3650b7799ad85c2b4d44939879f383525c20255bea8cb1d2952",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        51,
+        102,
+        140,
+        255
+      ],
+      "white": [
+        51,
+        102,
+        140,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Exclusion.pdf",
+      "sha256": "a7ea2439739a20ef44a5a826d6528a1614d60b3701be7c0aa5cf9f4f70af92ef",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        51,
+        102,
+        140,
+        255
+      ],
+      "white": [
+        51,
+        102,
+        140,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Hue.pdf",
+      "sha256": "b87c3bded0b7d1d808d5174a199772d074f4842178b2b14fa6dff30783efc5eb",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        59,
+        97,
+        161,
+        255
+      ],
+      "white": [
+        59,
+        97,
+        161,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Saturation.pdf",
+      "sha256": "5ed70a93c3276cd15099057925815beb11d88e0921286db6f7df74a0af004179",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        38,
+        105,
+        172,
+        255
+      ],
+      "white": [
+        38,
+        105,
+        172,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Color.pdf",
+      "sha256": "1156dba9a6251abefd2adbff28282e3819cbc768d09d268649176b402b0d7f05",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        56,
+        94,
+        179,
+        255
+      ],
+      "white": [
+        56,
+        94,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-path-Luminosity.pdf",
+      "sha256": "0f0a6137c2ec8e656ee4b0dee1d65d2269a8f12e83c5c014ee3ddbabea1b8f3a",
+      "probe_type": "blend-opacity-path",
+      "premultiplied": [
+        38,
+        85,
+        132,
+        255
+      ],
+      "white": [
+        38,
+        85,
+        132,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Normal.pdf",
+      "sha256": "d48a0022449e7d3dc1a5e5fdbad41911bc8def3a002e5b025ddcb381e2933549",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        38,
+        76,
+        179,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Multiply.pdf",
+      "sha256": "72bddea8fa6eba9be7f1e83a44d5b1734e6ea0c577c12e6652fcbeb6a3fea6c1",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        38,
+        76,
+        153,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        153,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Screen.pdf",
+      "sha256": "935635fd261dc12d3d4d32b7db99bb2b4f764b77bae9b1f44fc811d1cc42c99a",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        51,
+        102,
+        179,
+        255
+      ],
+      "white": [
+        51,
+        102,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Overlay.pdf",
+      "sha256": "1c76a47885c2f2db8fe409c61ea032401ef027a20f6e0e5aec67f94bec878afa",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        38,
+        76,
+        179,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Darken.pdf",
+      "sha256": "5c02bac81ea5d13721a29f54899a7448cd94041aab3afac24436b4426b207786",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        38,
+        76,
+        153,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        153,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Lighten.pdf",
+      "sha256": "490ac7e599f200c23fc97648eeb3e6462129f13e755911ae42374a307f8d376a",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        51,
+        102,
+        179,
+        255
+      ],
+      "white": [
+        51,
+        102,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-ColorDodge.pdf",
+      "sha256": "c8616e54ff36bd056a5bb721af2c11af8d8b789b0a04da5715c602f087b60530",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        51,
+        102,
+        179,
+        255
+      ],
+      "white": [
+        51,
+        102,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-ColorBurn.pdf",
+      "sha256": "4a68aa891c881e3c751a4c331b8fbf8338f04c56b405bca5f378f317fa0b81ae",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        38,
+        76,
+        153,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        153,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-HardLight.pdf",
+      "sha256": "6f47e93f1c6b9f1cc8f874250a03353236e35a25c1f33ba10eac3d3647a24444",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        38,
+        76,
+        179,
+        255
+      ],
+      "white": [
+        38,
+        76,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-SoftLight.pdf",
+      "sha256": "b247c564f5153270f3796ff706a39f2db5191c326400bab684a76d3b6dbb81b7",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        41,
+        87,
+        164,
+        255
+      ],
+      "white": [
+        41,
+        87,
+        164,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Difference.pdf",
+      "sha256": "e95da0d11136404f706d2ee264701e70361c7e74ecec347a2d384223961ab026",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        51,
+        102,
+        140,
+        255
+      ],
+      "white": [
+        51,
+        102,
+        140,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Exclusion.pdf",
+      "sha256": "2bfd2d93da4e1c886ec0ddc31793c20039bbe6c0ccf369d1cc5b8aa488471b9e",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        51,
+        102,
+        140,
+        255
+      ],
+      "white": [
+        51,
+        102,
+        140,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Hue.pdf",
+      "sha256": "78f4485d455d942654afccf89be78197d36ad0180268fcad35c7a638159637df",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        59,
+        97,
+        161,
+        255
+      ],
+      "white": [
+        59,
+        97,
+        161,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Saturation.pdf",
+      "sha256": "69a7aa87dc163e0455aabeabad5e111e982b06b90d97d78d97d302428bcac48b",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        38,
+        105,
+        172,
+        255
+      ],
+      "white": [
+        38,
+        105,
+        172,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Color.pdf",
+      "sha256": "b6bf9e3b970d5e4dd76926d8cc1c8f37d0b0ed456a7eba99a9e704af9609538f",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        56,
+        94,
+        179,
+        255
+      ],
+      "white": [
+        56,
+        94,
+        179,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-opacity-group-Luminosity.pdf",
+      "sha256": "f41522cf6df738ac181291c06f7970ff1e77f2d4f0d1c23dbcd56e842dc92bcc",
+      "probe_type": "blend-opacity-group",
+      "premultiplied": [
+        38,
+        85,
+        132,
+        255
+      ],
+      "white": [
+        38,
+        85,
+        132,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Normal.pdf",
+      "sha256": "78b608ef94e457d24368ade6eebf7d508e51ac11cad5e1f534287ffe81a88813",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Multiply.pdf",
+      "sha256": "cf5c22de297575285749fb38f353789e693ac3d94aeae4e2181d27f82c2ecc2d",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        191,
+        0,
+        39,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        39,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Screen.pdf",
+      "sha256": "6b4dc34a7cbd7e8a487eaac2f06e34416cd572c8d1fafbde9ed88d5dbedb2272",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        204,
+        26,
+        64,
+        255
+      ],
+      "white": [
+        204,
+        26,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Overlay.pdf",
+      "sha256": "68aadacbada51c8a916d5b27735e06bbac3334a69ce528d25efb79a295ba464b",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Darken.pdf",
+      "sha256": "e5ee9b8fcce1c6733b751e999d49c49db97b12558e5abc902aa17ff0c2b7d914",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        191,
+        0,
+        39,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        39,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Lighten.pdf",
+      "sha256": "fedf71fbe2f19ce8417031b0310223778fee0740ad9118da4076d72bfee8bb33",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        204,
+        26,
+        64,
+        255
+      ],
+      "white": [
+        204,
+        26,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-ColorDodge.pdf",
+      "sha256": "62f2b49d051b236f506692730496f5229fb911954843fe6035e38c3feb24c1cf",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        204,
+        26,
+        64,
+        255
+      ],
+      "white": [
+        204,
+        26,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-ColorBurn.pdf",
+      "sha256": "091fe53832b76fa3b59964e24476da2573410ce286d7802a7348b93d762a79e7",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        191,
+        0,
+        39,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        39,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-HardLight.pdf",
+      "sha256": "20b0a9ea1880ec0c1efbdc226ca4ec519b910bcbac775f7419d23e55b19e7df0",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-SoftLight.pdf",
+      "sha256": "36f737ba62352a4e67559b7fc62f971225c3a8f7851860af13e310fa4ffcb65d",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        193,
+        10,
+        50,
+        255
+      ],
+      "white": [
+        193,
+        10,
+        50,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Difference.pdf",
+      "sha256": "f200d329e0a122db81d4168fa20f619ff3195a119ab6b9f6b12f225e3341c34f",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        204,
+        26,
+        26,
+        255
+      ],
+      "white": [
+        204,
+        26,
+        26,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Exclusion.pdf",
+      "sha256": "f3d2022d0230eb5940762df87b3076852551f20c212e70c4b1707efe68437819",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        204,
+        26,
+        26,
+        255
+      ],
+      "white": [
+        204,
+        26,
+        26,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Hue.pdf",
+      "sha256": "0ae278b0e6cece42e9057385e525ff1a700a3f25c3a470024567eb44f82252c7",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        211,
+        20,
+        46,
+        255
+      ],
+      "white": [
+        211,
+        20,
+        46,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Saturation.pdf",
+      "sha256": "70790b9054f3865a6110ec016f679ed7c7fc0773398581ddf08cf7742faaf0f1",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        191,
+        29,
+        57,
+        255
+      ],
+      "white": [
+        191,
+        29,
+        57,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Color.pdf",
+      "sha256": "2d7b095cc67ff513f9d3c02ff1b9b43d2648dd55c1a0ae49d776df421c946422",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        209,
+        18,
+        64,
+        255
+      ],
+      "white": [
+        209,
+        18,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-path-Luminosity.pdf",
+      "sha256": "28169c04190046e8092395d852f55cc272321aeb0f990e973b0aa8b7415cbfbd",
+      "probe_type": "blend-shape-path",
+      "premultiplied": [
+        191,
+        9,
+        17,
+        255
+      ],
+      "white": [
+        191,
+        9,
+        17,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Normal.pdf",
+      "sha256": "15f1c3e39a636fca103966ecd86e4fea3a5b809e6ba584226f3b0182190ae671",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Multiply.pdf",
+      "sha256": "23b79bee442084cf02a500bc64b972dd774a5253fa1dce32bdaeeda6a55bdaa4",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        191,
+        0,
+        39,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        39,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Screen.pdf",
+      "sha256": "a7286cf9cbaa4687b6e6486427708fbac6304c3f9fb0984aec654f778e1c5a1a",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        204,
+        26,
+        64,
+        255
+      ],
+      "white": [
+        204,
+        26,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Overlay.pdf",
+      "sha256": "f8e7d09b5365440dc583718707db47da046dd3a513d87343b54ac86cda94e622",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Darken.pdf",
+      "sha256": "5bc2a76c897a4cf5e336fa19c455438b220c7634ed4236da7eeda14ae0523650",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        191,
+        0,
+        39,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        39,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Lighten.pdf",
+      "sha256": "9fb7d734539afef9da0e8a1e0f23e2f8226e82a70fed6b5134f58de249984cb2",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        204,
+        26,
+        64,
+        255
+      ],
+      "white": [
+        204,
+        26,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-ColorDodge.pdf",
+      "sha256": "8d25a3056ee892f01f4dc4401a9ac1ad40042d19c3aba28ec1a1abd2380d6974",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        204,
+        26,
+        64,
+        255
+      ],
+      "white": [
+        204,
+        26,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-ColorBurn.pdf",
+      "sha256": "95c89ebdaa963082f0cf2703ca8eca184edf7f47a3597c9eb5e11dcf68382111",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        191,
+        0,
+        39,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        39,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-HardLight.pdf",
+      "sha256": "546d3ba8dca478473cec06fd125464424671614138eca810e03dc6bd3d674007",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        191,
+        0,
+        64,
+        255
+      ],
+      "white": [
+        191,
+        0,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-SoftLight.pdf",
+      "sha256": "6e7c506ad64c2aed0b0fe7142e54601b34605eb868e785c89811e1a34f11460e",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        193,
+        10,
+        50,
+        255
+      ],
+      "white": [
+        193,
+        10,
+        50,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Difference.pdf",
+      "sha256": "9e6180be36b1c1cb0f48585bc9fc2816d9e0406bf5efc60761dce2eac1fc36ba",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        204,
+        26,
+        26,
+        255
+      ],
+      "white": [
+        204,
+        26,
+        26,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Exclusion.pdf",
+      "sha256": "45dd583c34c3af6928a914de4a3c43805801ebe02f547cc995c4f57cde8911eb",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        204,
+        26,
+        26,
+        255
+      ],
+      "white": [
+        204,
+        26,
+        26,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Hue.pdf",
+      "sha256": "46b253376e2cb778814fe3a45d394870809dd373384f492dc470620da76c987e",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        211,
+        20,
+        46,
+        255
+      ],
+      "white": [
+        211,
+        20,
+        46,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Saturation.pdf",
+      "sha256": "8cca2611e0454c2d45d6d12a180808352572b33c382d45a2cac9bd1be9f220b4",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        191,
+        29,
+        57,
+        255
+      ],
+      "white": [
+        191,
+        29,
+        57,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Color.pdf",
+      "sha256": "4fcaa2fc7437b860890745e725d9e16d609a5ae526d4db6f9b421c5cacc16d24",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        209,
+        18,
+        64,
+        255
+      ],
+      "white": [
+        209,
+        18,
+        64,
+        255
+      ]
+    },
+    {
+      "file": "alpha-source-blend-shape-group-Luminosity.pdf",
+      "sha256": "a068e80a46ad161ffeb979df189648b5eb392608825521d9756b763c3582c985",
+      "probe_type": "blend-shape-group",
+      "premultiplied": [
+        191,
+        9,
+        17,
+        255
+      ],
+      "white": [
+        191,
+        9,
+        17,
+        255
+      ]
+    }
+  ],
+  "rejected": [
+    {
+      "file": "alpha-source-bad-0.pdf",
+      "sha256": "f3d7247acb7fd637af8c871fda6e215b262b46cf61e8be1d52fb321a10afb7d2"
+    },
+    {
+      "file": "alpha-source-bad-1.pdf",
+      "sha256": "ff93d3929c6651ff9b16df096abc586f301832b0ee74e0c7ddd4f8e40009f4e0"
+    },
+    {
+      "file": "alpha-source-bad-2.pdf",
+      "sha256": "9622230682b8cbf79a488b868eec56621f89e8516f0eb1daaa3aa09aa6ac1af7"
+    },
+    {
+      "file": "alpha-source-bad-3.pdf",
+      "sha256": "23d8c89507724dd3a672fc6d82d112ba686dde652d33540d66eb13f080437cf4"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-# Native C API 3.35.1
+# Native C API 3.36.0
 
 S013–S100 是保留的历史开发步骤标识，原来被写成 0.13–0.100；产品版本现按 [里程碑映射](VERSIONING.md) 归并。步骤编号用于追溯接口变化，不表示独立发行版本。
 
@@ -880,7 +880,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 
 `EXR_ABI_VERSION` / `exr_abi_version()` 提供从 S091 起的 ABI epoch 1。版本字符串仍用 EXR_VERSION / exr_version。ABI 与库版本、SQLite schema 分别管理；同一 epoch 的数组记录不能追加字段改变步长，带 struct_size 的输入维持原始前缀。完整规则见 [SDK_COMPATIBILITY.md](SDK_COMPATIBILITY.md)。
 
-安装包新增可搬迁的 CMake config：`find_package(EXReader 3.35.1 EXACT CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
+安装包新增可搬迁的 CMake config：`find_package(EXReader 3.36.0 EXACT CONFIG REQUIRED)`，宿主链接 `EXReader::exreader`，由导入目标提供头文件和对应平台的动态库/导入库路径。全部安装后示例已改用该入口，compat 示例核对 package/header/runtime 的 ABI 和 release。引擎自身继续只需要 C 编译器；独立的 C++17 消费者验证不会引入 C++ 运行时到引擎。
 
 
 ## 通用持久化全文索引（S092）
@@ -1773,3 +1773,23 @@ GCC/MSVC各140/140，ICC-OFF8/8；安装组件4/4、13头C++与EXACT3.35.1实际
 703项ABI逐行不变，两个DLL均305导出；分层99/1035/899，逆向0。
 [原始汇总](validation/2026-10-19-coverage.json)。核心/PDF3.35.1，其余3.33.0。
 AIS、图片内在shape与mask/opacity、外部参考差异仍继续，未关闭整个WP1/WP2。
+
+
+## 3.36.0：通用alpha源与PDF AIS（2026-10-19）
+
+版本化sink尾追加`alpha_source(context, flags, error)`：`EXR_ALPHA_CONSTANT_SHAPE`
+把常量alpha与图形状态mask作为shape，缺省作为opacity；`EXR_ALPHA_IMAGE_SHAPE`
+把bitmap alpha作为图片内在shape。显式图片mask始终限制shape，soft mask遵循AIS。
+图片矩形几何覆盖、采样alpha、mask与常量分别处理，不再把所有alpha混成shape。
+路径/文字、复合填描、RGB/CMYK和组提交复用该规则；透明Form仍只在外部应用一次状态。
+保存/恢复、组进入/退出与标注/page包装sink完整转发。旧消费者可保留原图片解释，
+请求constant-shape而缺少回调时明确拒绝，截断非零指针与错误回调均有回归。
+
+166份原创正常PDF、4份错误AIS值，含16模式和8类绘制、q/Q/缺省/null；
+192个公开画布组合覆盖RGB/CMYK、路径/图片、直接/隔离子组/非隔离子组、
+两种alpha与两种边缘、AIS/软mask开关。旧golden未改，普通图片不新增像素平面。
+GCC/MSVC各141/141，ICC-OFF9/9，安装组件4/4，13头C++与EXACT3.36.0运行通过。
+703项公开测量仅版本化sink总大小128→136，全部旧偏移保持；两个DLL均305导出。
+分层99对象/1039符号引用/899include，逆向0。当前核心/PDF3.36.0，其余3.33.0。
+[本地记录](validation/2026-10-19-alpha-source.json)、[逐场景参考](validation/2026-10-19-alpha-source-reference.json)。
+MuPDF/Poppler的opacity-mask、图片采样及复合填描差异单独保留，内部容差未放宽。

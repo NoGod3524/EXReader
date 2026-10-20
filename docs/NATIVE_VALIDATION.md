@@ -4416,3 +4416,42 @@ GCC/MSVC各140/140，ICC-OFF8/8；安装组件4/4、13头C++与EXACT3.35.1实际
 703项ABI逐行不变，两个DLL均305导出；分层99/1035/899，逆向0。
 [原始汇总](validation/2026-10-19-coverage.json)。核心/PDF3.35.1，其余3.33.0。
 AIS、图片内在shape与mask/opacity、外部参考差异仍继续，未关闭整个WP1/WP2。
+
+
+## 3.36.0：通用alpha源与PDF AIS（2026-10-19）
+
+版本化sink尾追加`alpha_source(context, flags, error)`：`EXR_ALPHA_CONSTANT_SHAPE`
+把常量alpha与图形状态mask作为shape，缺省作为opacity；`EXR_ALPHA_IMAGE_SHAPE`
+把bitmap alpha作为图片内在shape。显式图片mask始终限制shape，soft mask遵循AIS。
+图片矩形几何覆盖、采样alpha、mask与常量分别处理，不再把所有alpha混成shape。
+路径/文字、复合填描、RGB/CMYK和组提交复用该规则；透明Form仍只在外部应用一次状态。
+保存/恢复、组进入/退出与标注/page包装sink完整转发。旧消费者可保留原图片解释，
+请求constant-shape而缺少回调时明确拒绝，截断非零指针与错误回调均有回归。
+
+166份原创正常PDF、4份错误AIS值，含16模式和8类绘制、q/Q/缺省/null；
+192个公开画布组合覆盖RGB/CMYK、路径/图片、直接/隔离子组/非隔离子组、
+两种alpha与两种边缘、AIS/软mask开关。旧golden未改，普通图片不新增像素平面。
+GCC/MSVC各141/141，ICC-OFF9/9，安装组件4/4，13头C++与EXACT3.36.0运行通过。
+703项公开测量仅版本化sink总大小128→136，全部旧偏移保持；两个DLL均305导出。
+分层99对象/1039符号引用/899include，逆向0。当前核心/PDF3.36.0，其余3.33.0。
+[本地记录](validation/2026-10-19-alpha-source.json)、[逐场景参考](validation/2026-10-19-alpha-source-reference.json)。
+MuPDF/Poppler的opacity-mask、图片采样及复合填描差异单独保留，内部容差未放宽。
+
+### 3.35.0与3.35.1跨平台CI
+
+3.35.0代码`04f7e7be1131e7adcd17b67b578bae5c07abdd86`：[CI39343939083](https://github.com/NoGod3524/EXReader/actions/runs/39343939083)7/7成功，[作业记录](validation/2026-10-19-mask-functions-ci.json)。
+3.35.1代码`c33e758a39a1e0ac89a80202c0bb3fdd3c6d94a4`：[CI39344775219](https://github.com/NoGod3524/EXReader/actions/runs/39344775219)7/7成功，[作业记录](validation/2026-10-19-coverage-ci.json)。
+两批均三桌面各140/140、sanitizer137/137、20万次变异/5种子/15434次解析无崩溃；
+安装/裁剪、JNI/Swift宿主和Android/Apple库交叉编译通过。
+
+### 3.36.0性能与固定载荷
+
+六场景、五轮交替、每轮64次重画；首画比率0.998/0.995/0.649/0.982/1.025/0.943，
+重画p95比率1.223/1.076/1.134/0.996/1.090/1.038。flat和state超过10%触发调查；
+普通像素blend/矢量fill的汇编规模与调用情况保持。保留所有64次原样本，再对这两场景
+每轮256次、五轮交替：flat首画1.082、p95 1.023；state首画1.024、p95 1.029。
+没有删除原始超限数据或放宽阈值。全部普通场景RGBA散列前后一致。
+
+新/旧二进制均按最终版本字符串实测，散列保留；1×1空RGBA画布的计数载荷3092→3740字节，
+固定增加648字节，没有新像素平面。该数值是引擎载荷计数，不是分配器或进程RSS。
+[初始六场景](validation/2026-10-19-alpha-benchmark.json)、[256次复测](validation/2026-10-19-alpha-followup.json)、[固定载荷](validation/2026-10-19-alpha-memory.json)。

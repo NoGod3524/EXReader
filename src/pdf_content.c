@@ -223,6 +223,12 @@ static exr_status apply_ext_state(content_reader *r,uint32_t dictionary,exr_erro
     for(k=0;k<4;k++) if(name_is(r->file,id,names[k])) { r->state.paint.intent=k;found=1;break; }
     if(!found) return exr_fail(error,EXR_FORMAT,"Invalid PDF rendering intent");
   }
+  if(resolved(r->file,exr_pdf_get(r->file,dictionary,"AIS"),&id,error)!=EXR_OK) return error->code;
+  if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL) {
+    const exr_pdf_value *v=exr_pdf_value_at(r->file,id);
+    if(v->kind!=EXR_PDF_BOOL) return exr_fail(error,EXR_FORMAT,"PDF AIS must be boolean");
+    r->state.paint.alpha_is_shape=v->u.integer!=0;
+  }
   if(resolved(r->file,exr_pdf_get(r->file,dictionary,"SMask"),&id,error)!=EXR_OK) return error->code;
   if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL) {
     if(name_is(r->file,id,"None")) r->state.paint.smask=EXR_PDF_NONE;

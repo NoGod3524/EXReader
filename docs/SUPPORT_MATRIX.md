@@ -5,9 +5,9 @@
 [NATIVE_API.md](NATIVE_API.md) 与 [PERFORMANCE.md](PERFORMANCE.md)；本表随每批交付更新，
 发行时以本表为准。
 
-- 版本：**3.35.1 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
+- 版本：**3.36.0 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
 - 标记：**支持** = 有公开接口、边界与回归；**部分** = 有实现但覆盖/兼容未完整；**未支持** = 明确拒绝或不存在接口
-- 回归：`ctest` 名称，本机完整配置当前140项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
+- 回归：`ctest` 名称，本机完整配置当前141项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
 
 ## 输入格式
 
@@ -62,8 +62,8 @@
 | 元数据 | 支持 | Info/XMP 读取与增量写回 | `native-pdf-metadata-write`、`native-metadata` |
 | 认证 | 部分 | Standard R2–R6、RC4/AES、Crypt filter；**证书 PubSec、EFOpen、加密写回未支持** | `native-pdf-crypto` |
 | 色彩 | 部分 | Device/Indexed/CalGray/CalRGB/Lab、ICCBased v2/v4→sRGB、Separation/All/None/DeviceN、Type 0 函数；支持匹配尺寸软遮罩的原生分量Matte还原（先于ICC）；**OutputIntent 未支持**；默认DeviceCMYK完整Argyll ICC按zlib内嵌（414,609字节），不同于SWOP；关闭ICC时使用朴素换算 | `native-pdf-color`、`native-pdf-calculator`、`native-render-audit` |
-| 合成 | 部分 | 16种混合、RGB/Gray/CMYK、隔离/非隔离/挖空及区域缓冲；128个嵌套探针、24组整图对照。DeviceCMYK路径/图像/2–7型渐变保留原生墨色；ICCBased/DeviceN到组空间、AIS与图像shape/opacity仍待扩展 | `native-blend`、`native-nested-groups`、`native-inks` |
-| 图形状态软遮罩 | 部分 | Alpha/Luminosity、BC、Identity及Type 0/2/3/4 TR、精确变换BBox、K/I、q/Q/None和单次整组提交；活跃mask聚合64MiB，嵌套共享工作预算。原41场景+8拒绝、作用域27+3、新函数/图像/几何72+8。外部参考差异逐项记录，AIS尚未完成 | `native-mask-scope`、`native-mask-functions`、`native-pdf-raster`；[对照口径](MASK_SEMANTICS.md) |
+| 合成 | 部分 | 16种混合、RGB/Gray/CMYK、隔离/非隔离/挖空及区域缓冲；128个嵌套探针、24组整图对照。DeviceCMYK路径/图像/2–7型渐变保留原生墨色；ICCBased/DeviceN到组空间和零opacity等边界仍待扩展 | `native-blend`、`native-nested-groups`、`native-inks` |
+| 图形状态软遮罩 | 部分 | Alpha/Luminosity、BC、Identity及Type 0/2/3/4 TR、精确变换BBox、K/I、q/Q/None和单次整组提交；活跃mask聚合64MiB，嵌套共享工作预算。原41场景+8拒绝、作用域27+3、新函数/图像/几何72+8。AIS及图片内在shape/opacity已接入，新增166场景+4拒绝值与192个画布组合；外部参考差异逐项记录 | `native-mask-scope`、`native-mask-functions`、`native-pdf-raster`；[对照口径](MASK_SEMANTICS.md) |
 | 标注 | 部分 | Text/Highlight/Underline/StrikeOut/Squiggly 增删改与外观；**其余类型与 AcroForm 未支持** | `native-pdf-markup`、`native-pdf-appearance`、`native-pdf-write` |
 | 安全 redaction | 未支持 | 现有增量删除保留历史原文，不能充当擦除 | — |
 | OCR | 未支持 | 无后端、无文字层 | — |
@@ -84,7 +84,7 @@
 | --- | --- | --- | --- |
 | C SDK | 支持 | 305 个公开函数导出、`struct_size` 前缀兼容 | `native-abi`、`native-core` |
 | C++ / Swift / JNI 适配 | 支持 | 安装后消费示例与 `-Xcheck:jni` | `native-fixed-example`、`native-wave-example` |
-| 安装与包配置 | 支持 | `find_package(EXReader 3.35.1 EXACT CONFIG REQUIRED)` | CI 安装作业 |
+| 安装与包配置 | 支持 | `find_package(EXReader 3.36.0 EXACT CONFIG REQUIRED)` | CI 安装作业 |
 | 桌面三平台 | 支持 | Windows/Linux/macOS 全量 CTest + 安装消费 | CI `desktop` |
 | Android / iOS / iPadOS | 部分 | **仅库编译与 Swift 适配检查**，无真机/模拟器阅读验证 | CI `android`、`apple-mobile` |
 | 嵌入阅读视图 / 示例 App / TTS / 无障碍 / OPDS / LCP | 未支持 | 目标见 [VERSIONING.md](VERSIONING.md) | — |

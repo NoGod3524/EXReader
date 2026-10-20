@@ -26,20 +26,22 @@ static void sample(const exr_bitmap *b,double u,double v,int interpolate,double 
     for(i=0;i<4;i++) { double a=p[i][3]*weights[i]; out[3]+=a; for(k=0;k<3;k++) out[k]+=p[i][k]*a; }
   }
 }
-static void texture_sample(const exr_vector_texture *texture,double u,double v,double out[4]) {
+static void texture_sample(const exr_vector_texture *texture,double u,double v,double out[4],double *shape,unsigned flags) {
   unsigned k; sample(&texture->bitmap,u,v,(int)texture->interpolate,out);
+  if(shape) *shape=flags&EXR_ALPHA_IMAGE_SHAPE ? out[3]/255. : 1;
   if(texture->mask) {
-    double mask[4],a; texture_sample(texture->mask,u,v,mask);
+    double mask[4],a; texture_sample(texture->mask,u,v,mask,NULL,0);
     a=(texture->mask_mode==1 ? mask[0]/255 : mask[3])/255;
     if(texture->has_matte && out[3]) {
       for(k=0;k<3;k++) out[k]=a ? fmax(0,fmin(255,(out[k]/out[3]-(1-a)*texture->matte[k]*255)/a))*out[3]*a : 0;
     } else for(k=0;k<3;k++) out[k]*=a;
     out[3]*=a;
+    if(shape && (texture->mask_mode==2 || (flags&EXR_ALPHA_CONSTANT_SHAPE))) *shape*=a;
   }
 }
-static void ink_sample(const exr_vector_texture *source,const exr_bitmap *inks,double u,double v,double out[5]) {
+static void ink_sample(const exr_vector_texture *source,const exr_bitmap *inks,double u,double v,double out[5],double *shape,unsigned flags) {
   double rgba[4],weights[4]={1,0,0,0},a=0;unsigned i,k,n=1;uint32_t xs[4],ys[4];
-  texture_sample(source,u,v,rgba);memset(out,0,5*sizeof(*out));
+  texture_sample(source,u,v,rgba,shape,flags);memset(out,0,5*sizeof(*out));
   if(source->interpolate) {
     double x=fmax(0,fmin(inks->width-1,u*inks->width-.5)),y=fmax(0,fmin(inks->height-1,v*inks->height-.5));
     double wx=x-floor(x),wy=y-floor(y);n=4;
@@ -98,30 +100,38 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,(size_t)(x1>x0 ? x1-x0 : 0)*cost)) return exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");
     for(x=x0;x<x1;x++) {
-      double sums[5]={0}; unsigned sx,sy,k,hits=0,coverage=clip ? clip->pixels[(size_t)y*clip->stride+(unsigned)x] : 255; uint32_t color=0;
+      double sums[5]={0},shape_sum=0; unsigned sx,sy,k,coverage=clip ? clip->pixels[(size_t)y*clip->stride+(unsigned)x] : 255; uint32_t color=0;
       if(!coverage) continue;
       for(sy=0;sy<2;sy++) for(sx=0;sx<2;sx++) {
-        double px=x+.25+.5*sx,py=y+.25+.5*sy,u=inv[0]*px+inv[2]*py+inv[4],v=inv[1]*px+inv[3]*py+inv[5],s[5];
+        double px=x+.25+.5*sx,py=y+.25+.5*sy,u=inv[0]*px+inv[2]*py+inv[4],v=inv[1]*px+inv[3]*py+inv[5],s[5],sample_shape;
         if(!isfinite(u) || !isfinite(v)) return exr_fail(e,EXR_LIMIT,"Affine image sample exceeds precision");
         if(u<0 || u>=1 || v<0 || v>=1) continue;
-        hits++;
-        if(inks) ink_sample(source,inks,u,v,s);else texture_sample(source,u,v,s);
+        if(inks) ink_sample(source,inks,u,v,s,&sample_shape,state ? state->alpha_flags : 0);
+        else texture_sample(source,u,v,s,&sample_shape,state ? state->alpha_flags : 0);
+        shape_sum+=sample_shape;
         for(k=0;k<(inks ? 5u : 4u);k++) sums[k]+=s[k];
       }
-      /* Rectangle coverage is shape, independent of the sampled opacity. Keep
-         the compact path's rounding for consumers that do not need shape. */
       if(state && (state->knockout || state->shape)) {
-        if(!hits) continue;
-        coverage=(coverage*hits+2)/4;
-      } else hits=4;
+        double object_alpha,shape,source_alpha=sums[inks ? 4 : 3]/(4*255.);
+        exr_pixel_alpha_shape(state,(size_t)x,(size_t)y,source_alpha,shape_sum/4,alpha,coverage,&object_alpha,&shape);
+        if(!source_alpha || !shape) continue;
+        if(inks) {
+          double cmyk[4];for(k=0;k<4;k++) cmyk[k]=sums[k]/(255*sums[4]);
+          exr_pixel_object_cmyk(target,x,y,cmyk,object_alpha,shape,mode,state);
+        } else {
+          for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(sums[k]/sums[3]+.5))<<(24-8*k);
+          exr_pixel_object(target,x,y,color,object_alpha,shape,mode,state);
+        }
+        continue;
+      }
       if(inks) {
         double cmyk[4];if(!sums[4]) continue;
         for(k=0;k<4;k++) cmyk[k]=sums[k]/(255*sums[4]);
-        exr_pixel_composite_cmyk(target,x,y,cmyk,sums[4]*alpha/(hits*255),coverage,mode,state);continue;
+        exr_pixel_composite_cmyk(target,x,y,cmyk,sums[4]*alpha/(4*255),coverage,mode,state);continue;
       }
       if(!sums[3]) continue;
       for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(sums[k]/sums[3]+.5))<<(24-8*k);
-      color|=(uint32_t)fmin(255,floor(sums[3]*alpha/hits+.5)); if(state) exr_pixel_composite(target,x,y,color,coverage,mode,state);else if(mode==EXR_BLEND_NORMAL) exr_pixel(target,x,y,color,coverage);else exr_pixel_blend(target,x,y,color,coverage,mode);
+      color|=(uint32_t)fmin(255,floor(sums[3]*alpha/4+.5)); if(state) exr_pixel_composite(target,x,y,color,coverage,mode,state);else if(mode==EXR_BLEND_NORMAL) exr_pixel(target,x,y,color,coverage);else exr_pixel_blend(target,x,y,color,coverage,mode);
     }
   }
   return exr_fail(e,EXR_OK,"");
