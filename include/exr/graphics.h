@@ -202,9 +202,23 @@ typedef struct {
 EXR_API exr_status exr_canvas_get_sink_ex(exr_canvas *canvas,exr_draw_sink_ex *out,exr_error *error);
 /* The returned sink borrows the canvas until canvas_free. */
 EXR_API exr_status exr_canvas_get_sink(exr_canvas *canvas,exr_draw_sink *out,exr_error *error);
-/* Built-in PNG/JPEG decoder; owns its output pixels, freed with exr_bitmap_free(). */
+/* Built-in image decoder; owns its output pixels, freed with exr_bitmap_free().
+   PNG/JPEG are always available; GIF/BMP are built in; WebP/TIFF/AVIF are
+   build options and report EXR_UNSUPPORTED when disabled. exr_image_decode()
+   returns page 0 of an animation or multi-page file. */
 EXR_API exr_status exr_image_decode(const void *data, size_t size, exr_bitmap *rgba,
                                     exr_error *error);
+/* Source-order page/frame enumeration. page indices are zero-based; pages are
+   never reordered or silently dropped. Counts above 4096, dimensions above
+   8192, more than 16 million pixels or an over-budget expansion return
+   EXR_LIMIT. Damaged input returns EXR_FORMAT and unavailable codecs
+   EXR_UNSUPPORTED. */
+EXR_API exr_status exr_image_page_count(const void *data,size_t size,size_t *count,
+                                        exr_error *error);
+EXR_API exr_status exr_image_page_dimensions(const void *data,size_t size,size_t page,
+                                             uint32_t *width,uint32_t *height,exr_error *error);
+EXR_API exr_status exr_image_decode_page(const void *data,size_t size,size_t page,
+                                          exr_bitmap *rgba,exr_error *error);
 #ifdef __cplusplus
 }
 #endif

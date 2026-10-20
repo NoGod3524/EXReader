@@ -64,10 +64,10 @@ static void *image_reallocate(void *memory, size_t n) {
 #define STBI_REALLOC image_reallocate
 #define STBI_FREE image_free
 #define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_STATIC
 #define STBI_ONLY_PNG
 #define STBI_ONLY_JPEG
-#define STBI_NO_GIF
+#define STBI_ONLY_BMP
+#define STBI_ONLY_GIF
 #define STBI_NO_STDIO
 #define STBI_MAX_DIMENSIONS INT_MAX /* Dimensions are checked after reading the header. */
 #include <stb_image.h>
@@ -132,43 +132,25 @@ done:
   return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_image_dimensions(const void *data,size_t n,uint32_t *width,uint32_t *height,exr_error *e) {
-  int w,h,channels;
+  uint32_t w=0,h=0; exr_status status;
   if(width) *width=0;
   if(height) *height=0;
   if(!data || !n || !width || !height) return exr_fail(e,EXR_ARGUMENT,"Invalid image header input/output");
   if(n>32*1024*1024) return exr_fail(e,EXR_LIMIT,"Encoded image exceeds 32 MiB");
   allocation_limited=allocation_failed=0;
-  if(!stbi_info_from_memory(data,(int)n,&w,&h,&channels))
-    return exr_fail(e,allocation_failed ? EXR_MEMORY : EXR_FORMAT,"Unsupported or damaged PNG/JPEG image header");
-  if(w<=0 || h<=0 || w>8192 || h>8192 || (size_t)w*(size_t)h>16*1024*1024)
-    return exr_fail(e,EXR_LIMIT,"Image exceeds 16 million pixels");
-  *width=(uint32_t)w; *height=(uint32_t)h; return exr_fail(e,EXR_OK,"");
+  status=exr_image_page_dimensions(data,n,0,&w,&h,e);
+  if(status!=EXR_OK) return status;
+  *width=w; *height=h; return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_image_decode(const void *data, size_t n, exr_bitmap *out, exr_error *e) {
-  int w, h, channels; uint32_t width,height; exr_status status;
-  unsigned char *pixels;
-  if (!out)
-    return exr_fail(e, EXR_ARGUMENT, "Missing image output");
+  exr_status status;
+  if (!out) return exr_fail(e, EXR_ARGUMENT, "Missing image output");
   memset(out, 0, sizeof(*out));
-  status=exr_image_dimensions(data,n,&width,&height,e); if(status!=EXR_OK) return status;
-  w=(int)width;h=(int)height;
-  pixels = stbi_load_from_memory(data, (int)n, &w, &h, &channels, 4);
-  if (!pixels)
-    return exr_fail(e,
-                    allocation_limited  ? EXR_LIMIT
-                    : allocation_failed ? EXR_MEMORY
-                                        : EXR_FORMAT,
-                    "PNG/JPEG decoding failed");
-  out->pixels = malloc((size_t)w * (size_t)h * 4);
-  if (!out->pixels) {
-    stbi_image_free(pixels);
-    return exr_fail(e, EXR_MEMORY, "Image pixel allocation failed");
-  }
-  memcpy(out->pixels, pixels, (size_t)w * (size_t)h * 4);
-  stbi_image_free(pixels);
-  out->width = (uint32_t)w;
-  out->height = (uint32_t)h;
-  out->stride = (uint32_t)w * 4;
-  out->channels = 4;
-  return EXR_OK;
+  if(!data || !n) return exr_fail(e,EXR_ARGUMENT,"Invalid image input");
+  if(n>32*1024*1024) return exr_fail(e,EXR_LIMIT,"Encoded image exceeds 32 MiB");
+  allocation_limited=allocation_failed=0;
+  status=exr_image_decode_page_control(data,n,0,NULL,out,e);
+  if(status==EXR_FORMAT && allocation_limited) status=exr_fail(e,EXR_LIMIT,"Image decoding exceeds the working budget");
+  else if(status==EXR_FORMAT && allocation_failed) status=exr_fail(e,EXR_MEMORY,"Image decoding allocation failed");
+  return status;
 }

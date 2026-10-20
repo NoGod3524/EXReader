@@ -1,0 +1,149 @@
+{
+  "abi_epoch": 1,
+  "artifacts": {
+    "exreader-cbz-formats-test.exe": {
+      "bytes": 184361,
+      "sha256": "f1193e068305493b8c5257ade8e78860197e6891664920ec91bbd1c558a89f9f"
+    },
+    "exreader-image-formats-test.exe": {
+      "bytes": 73736,
+      "sha256": "8204ae7cc5c06468f7ebb9f8da619124db3121dbdbc6515cfe0966f261d715ce"
+    },
+    "exreader-library-stream-test.exe": {
+      "bytes": 1935126,
+      "sha256": "1ea7e2aaf64824794c0bd89ab1aa6daca2c867a8111b7be404f38cebe5082c66"
+    },
+    "exreader-wp12a-media-probe.exe": {
+      "bytes": 73527,
+      "sha256": "57f4cdb806978cc8d1fa73629e7ccec96c57bf241835ed75c0ab78c6cf944619"
+    },
+    "libexreader.dll": {
+      "bytes": 9628542,
+      "sha256": "9a4b6c925e4cc3d48b3d927ca6f17a8498514d85653d3ab4362ce2ee292a4417"
+    }
+  },
+  "branch": "codex/wp12a-media",
+  "budgets": {
+    "encoded_member_bytes": 33554432,
+    "header_bytes_png_jpeg_bmp": 1048576,
+    "header_work_bytes": 100663296,
+    "max_archive_pages": 10000,
+    "max_dimension": 8192,
+    "max_expanded_rgba": 268435456,
+    "max_frames_per_image": 4096,
+    "max_gif_frames_rgba": 100663296,
+    "max_pixels": 16777216
+  },
+  "core_version": "3.37.1",
+  "dependencies": {
+    "libaom": {
+      "default": true,
+      "license": "BSD-2-Clause + AOM patent",
+      "option": "EXR_ENABLE_IMAGE_AVIF",
+      "sha256": "a606215ed62ee1aaffc1360867c637b0ccafbc1a0c1c8430e2412257b8baa62a",
+      "version": "3.15.2 / af3dc9a"
+    },
+    "libavif": {
+      "default": true,
+      "license": "BSD-2-Clause",
+      "option": "EXR_ENABLE_IMAGE_AVIF",
+      "sha256": "2182f4900d1a9617cee89746922a58dd825f2a3547f23907b8d78dc3685f7d8c",
+      "version": "1.2.0"
+    },
+    "libtiff": {
+      "default": true,
+      "license": "libtiff BSD-style",
+      "option": "EXR_ENABLE_IMAGE_TIFF",
+      "sha256": "8f568a0dfac2e514074b04d7368c22e8afc1009af29780762a2536fd4d111e16",
+      "version": "4.7.0"
+    },
+    "libwebp": {
+      "default": true,
+      "license": "BSD-3-Clause",
+      "option": "EXR_ENABLE_IMAGE_WEBP",
+      "sha256": "668c9aba45565e24c27e17f7aaf7060a399f7f31dba6c97a044e1feacb930f37",
+      "version": "1.5.0"
+    },
+    "stb_image": {
+      "default": "always",
+      "license": "MIT/public domain",
+      "sha256": "9a955b1b49a4410088a2e0ee2a9c057c3c907d0c1d75454144cb980aca0ba515",
+      "version": "2c980bb59875b0d32144a71867fbdebb2f77cd20"
+    },
+    "zlib": {
+      "default": true,
+      "license": "zlib",
+      "option": "EXR_ENABLE_IMAGE_TIFF",
+      "sha256": "17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c",
+      "version": "1.3.1"
+    }
+  },
+  "fixtures": {
+    "generator": "tools/generate_image_format_fixtures.py",
+    "manifest": "tests/fixtures/images/MANIFEST.json",
+    "manifest_sha256": "416deff3b50e65aa9441c2bf7f295629dd5947e367c8f6d8f1ca69801482ba25",
+    "provenance": "original generated patterns, MIT"
+  },
+  "formats": {
+    "avif": {
+      "animation_pages": 4,
+      "matrix_cases": 11,
+      "option": "EXR_ENABLE_IMAGE_AVIF",
+      "result": "pass",
+      "still_pages": 1
+    },
+    "bmp": {
+      "matrix_cases": 11,
+      "option": "built-in",
+      "pages": 1,
+      "result": "pass"
+    },
+    "gif": {
+      "animation_pages": 4,
+      "matrix_cases": 11,
+      "option": "built-in",
+      "oversize_expansion_rejected": true,
+      "result": "pass",
+      "still_pages": 1
+    },
+    "tiff": {
+      "compressions_tested": [
+        "deflate",
+        "lzw"
+      ],
+      "matrix_cases": 11,
+      "multipage_pages": 4,
+      "option": "EXR_ENABLE_IMAGE_TIFF",
+      "result": "pass",
+      "still_pages": 1
+    },
+    "webp": {
+      "animation_pages": 4,
+      "matrix_cases": 11,
+      "option": "EXR_ENABLE_IMAGE_WEBP",
+      "result": "pass",
+      "still_pages": 1
+    }
+  },
+  "library_schema": 6,
+  "platform": {
+    "arch": "x86_64",
+    "cmake": "4.4.2",
+    "compiler": "MinGW GCC 16.2.0",
+    "os": "Windows"
+  },
+  "sdk_version": "3.38.1",
+  "source_commit_at_capture": "245484870f2059a548e5951dc8f28c5e62c08540",
+  "tests": {
+    "cbz_format_checks": 4472,
+    "default_ctest": "147/147 passed",
+    "image_matrix_checks": 927,
+    "names": [
+      "native-image-formats",
+      "native-cbz-formats",
+      "native-cbz"
+    ],
+    "trimmed_codecs_off_ctest": "147/147 passed"
+  },
+  "work_package": "WP12a"
+}

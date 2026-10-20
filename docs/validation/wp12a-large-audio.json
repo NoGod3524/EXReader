@@ -1,0 +1,20 @@
+{
+  "kind": "audio",
+  "source_bytes": 1073741868,
+  "sample_rate": 8000,
+  "channels": 1,
+  "frames": 536870912,
+  "reads": 3,
+  "frames_read": 12288,
+  "elapsed_seconds": 0.000961,
+    "baseline_private": 765952,
+    "peak_private": 765952,
+    "baseline_working": 4145152,
+    "peak_working": 4145152,
+    "added_private_peak": 0,
+    "added_working_peak": 0,
+    "process_peak_private": 765952,
+    "process_peak_working": 4145152,
+  "read_buffer_bytes": 16384,
+  "wave_stack_buffer_bytes": 4096
+}

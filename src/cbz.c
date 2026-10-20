@@ -4,26 +4,31 @@
 #include "graphics_internal.h"
 #include <miniz.h>
 
-typedef struct { char *name; mz_uint index; uint32_t width,height; } comic_page;
+typedef struct { char *name,*id; mz_uint index; uint32_t frame,width,height; } comic_page;
 typedef struct {
   mz_zip_archive zip; exr_source source; unsigned char *data;
   comic_page *pages; size_t count;
   exr_metadata_entry *metadata; size_t metadata_count;
-  const exr_control *control; exr_error io_error;
+  const exr_control *control; exr_error io_error; int borrowed;
 } comic;
 static unsigned lower(unsigned c) { return c>='A' && c<='Z' ? c+32 : c; }
 static int equal(const char *a,const char *b) {
   while(*a && lower((unsigned char)*a)==lower((unsigned char)*b)) { a++;b++; }
   return !*a && !*b;
 }
+/* Candidate pages are selected by extension only; the decoder sniffs the
+   actual bytes. A supported extension with unsupported/corrupt content is an
+   explicit error, not a silently skipped page. */
 static int image_kind(const char *name) {
   const char *ext=strrchr(name,'.'); if(!ext) return 0;
-  if(equal(ext,".png") || equal(ext,".jpg") || equal(ext,".jpeg")) return 1;
-  return equal(ext,".gif") || equal(ext,".webp") || equal(ext,".bmp") || equal(ext,".avif") || equal(ext,".tif") || equal(ext,".tiff") ? -1 : 0;
+  return equal(ext,".png") || equal(ext,".jpg") || equal(ext,".jpeg") || equal(ext,".gif") ||
+         equal(ext,".webp") || equal(ext,".bmp") || equal(ext,".avif") || equal(ext,".tif") ||
+         equal(ext,".tiff");
 }
 static int digit(unsigned c) { return c>='0' && c<='9'; }
 static int compare_pages(const void *left,const void *right) {
-  const char *a=((const comic_page *)left)->name,*b=((const comic_page *)right)->name,*original_a=a,*original_b=b;
+  const comic_page *la=left,*lb=right;
+  const char *a=la->name,*b=lb->name,*original_a=a,*original_b=b;
   while(*a && *b) {
     if(digit((unsigned char)*a) && digit((unsigned char)*b)) {
       const char *ae,*be; size_t an,bn; int order;
@@ -40,13 +45,14 @@ static int compare_pages(const void *left,const void *right) {
     }
   }
   if(*a || *b) return *a ? 1 : -1;
+  if(la->frame != lb->frame) return la->frame < lb->frame ? -1 : 1;
   return strcmp(original_a,original_b);
 }
 static void release(void *context) {
   comic *d=context;size_t i;if(!d) return;
   mz_zip_reader_end(&d->zip);
-  if(d->source.release) d->source.release(d->source.context);
-  for(i=0;i<d->count;i++) free(d->pages[i].name);
+  if(!d->borrowed && d->source.release) d->source.release(d->source.context);
+  for(i=0;i<d->count;i++) { free(d->pages[i].name); free(d->pages[i].id); }
   exr_metadata_free(d->metadata,d->metadata_count);free(d->pages);free(d->data);free(d);
 }
 static size_t read_source(void *context,mz_uint64 offset,void *buffer,size_t size) {
@@ -146,15 +152,51 @@ static exr_status member_bytes(comic *d,const mz_zip_archive_file_stat *st,size_
   if(status!=EXR_OK) { free(dst);return status; }
   *out=dst;*size=produced;return EXR_OK;
 }
-static exr_status header(comic *d,comic_page *page,const mz_zip_archive_file_stat *st,size_t size,size_t *work,exr_error *e) {
-  unsigned char *data=NULL;size_t n=0,limit=size<1048576 ? size : 1048576;exr_status status;
+static int full_header(const char *name) {
+  const char *ext=strrchr(name,'.'); if(!ext) return 0;
+  return equal(ext,".gif") || equal(ext,".webp") || equal(ext,".tif") || equal(ext,".tiff") || equal(ext,".avif");
+}
+/* Expands one archive member into its source-order pages. A multi-frame GIF,
+   animated WebP/AVIF or multi-directory TIFF contributes frame 0..N-1; no
+   frame is skipped. Page 0 keeps the member name as its ID. Later frames use
+   "<name>#<n>" so existing single-page CBZ IDs remain stable. */
+static exr_status member_pages(comic *d,mz_uint index,const mz_zip_archive_file_stat *st,const char *name,size_t size,size_t *work,comic_page **out,size_t *count,exr_error *e) {
+  unsigned char *data=NULL;size_t n=0,limit,page_count=0,i;exr_status status;
+  *out=NULL;*count=0;
+  limit=full_header(name) ? size : (size<1048576 ? size : 1048576);
   status=member_bytes(d,st,limit,0,&data,&n,work,e);
-  if(status==EXR_OK && work && *work>(size_t)64*1024*1024) status=exr_fail(e,EXR_LIMIT,"CBZ image headers exceed 64 MiB work budget");
+  if(status==EXR_OK && work && *work>(size_t)96*1024*1024) status=exr_fail(e,EXR_LIMIT,"CBZ image headers exceed 96 MiB work budget");
   if(status==EXR_OK) {
-    status=exr_image_dimensions(data,n,&page->width,&page->height,e);
+    status=exr_image_page_count(data,n,&page_count,e);
     if(status==EXR_FORMAT && n==limit && limit<size) status=exr_fail(e,EXR_LIMIT,"CBZ image header exceeds 1 MiB");
   }
-  free(data);return status;
+  if(status==EXR_OK && (!page_count || page_count>(size_t)4096)) status=exr_fail(e,EXR_LIMIT,"CBZ image exceeds 4096 frames");
+  if(status==EXR_OK) {
+    *out=calloc(page_count,sizeof(**out));
+    if(!*out) status=exr_fail(e,EXR_MEMORY,"CBZ page directory allocation failed");
+  }
+  for(i=0;status==EXR_OK && i<page_count;i++) {
+    comic_page *p=&(*out)[i];char suffix[32];
+    p->index=index; p->frame=(uint32_t)i;
+    status=exr_image_page_dimensions(data,n,i,&p->width,&p->height,e);
+    if(status==EXR_OK) {
+      p->name=exr_copy(name,strlen(name));
+      if(!p->name) status=exr_fail(e,EXR_MEMORY,"CBZ page name allocation failed");
+    }
+    if(status==EXR_OK) {
+      if(page_count==1) p->id=exr_copy(name,strlen(name));
+      else if(!i) { size_t len=strlen(name)+24; p->id=malloc(len); if(p->id) snprintf(p->id,len,"%s",name); }
+      else { size_t len=strlen(name)+24; snprintf(suffix,sizeof(suffix),"#%zu",i); p->id=malloc(len); if(p->id) snprintf(p->id,len,"%s%s",name,suffix); }
+      if(!p->id) status=exr_fail(e,EXR_MEMORY,"CBZ page id allocation failed");
+    }
+    if(status==EXR_OK) status=exr_control_poll(d->control,EXR_STAGE_READ,i,page_count,e);
+  }
+  free(data);
+  if(status!=EXR_OK) {
+    for(i=0;i<page_count;i++) { free((*out)[i].name); free((*out)[i].id); }
+    free(*out); *out=NULL; return status;
+  }
+  *count=page_count; return EXR_OK;
 }
 static exr_status member(comic *d,mz_uint index,size_t maximum,void **out,size_t *size,exr_error *e) {
   mz_zip_archive_file_stat st;size_t work=0;exr_status status;unsigned char *data=NULL;size_t n=0;
@@ -207,7 +249,7 @@ static exr_status draw(void *context,size_t page,const double m[6],const exr_dra
   if(!sink->image) return EXR_OK;
   d->control=control;memset(&d->io_error,0,sizeof(d->io_error));
   status=member(d,p->index,(size_t)32*1024*1024,&data,&size,e);
-  if(status==EXR_OK) status=exr_image_decode(data,size,&image.bitmap,e);
+  if(status==EXR_OK) status=exr_image_decode_page_control(data,size,p->frame,control,&image.bitmap,e);
   mz_free(data);
   if(status==EXR_OK && (image.bitmap.width!=p->width || image.bitmap.height!=p->height)) status=exr_fail(e,EXR_FORMAT,"CBZ page dimensions changed");
   if(status==EXR_OK) status=exr_control_cancel(control,e);
@@ -227,14 +269,14 @@ static exr_status metadata(void *context,const exr_control *control,const exr_me
   comic *d=context;*out=d->metadata;*count=d->metadata_count;return exr_control_cancel(control,e);
 }
 static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e) {
-  mz_uint i,total,info=UINT_MAX;size_t work=0;exr_fixed_page *pages=NULL;exr_fixed_input input={0};exr_status status=EXR_OK;
+  mz_uint i,total,info=UINT_MAX;size_t work=0,capacity;exr_fixed_page *pages=NULL;exr_fixed_input input={0};exr_status status=EXR_OK;
   d->control=&options->control;
   if(exr_control_cancel(d->control,e)!=EXR_OK) { status=EXR_CANCELLED;goto done; }
   if(d->data) { if(!mz_zip_reader_init_mem(&d->zip,d->data,(size_t)d->source.size,0)) { status=archive_error(d,e,"Invalid CBZ ZIP archive");goto done; } }
   else { d->zip.m_pRead=read_source;d->zip.m_pIO_opaque=d;if(!mz_zip_reader_init(&d->zip,d->source.size,0)) { status=archive_error(d,e,"Invalid CBZ ZIP source");goto done; } }
   total=mz_zip_reader_get_num_files(&d->zip);
   if(total>10000) { status=exr_fail(e,EXR_LIMIT,"CBZ exceeds 10000 archive members");goto done; }
-  d->pages=calloc(total ? total : 1,sizeof(*d->pages));if(!d->pages) { status=exr_fail(e,EXR_MEMORY,"CBZ page directory allocation failed");goto done; }
+  capacity=total ? total : 1;d->pages=calloc(capacity,sizeof(*d->pages));if(!d->pages) { status=exr_fail(e,EXR_MEMORY,"CBZ page directory allocation failed");goto done; }
   for(i=0;i<total;i++) {
     mz_zip_archive_file_stat st;char name[2049];mz_uint length;int kind;size_t at=0;uint32_t cp;
     status=exr_control_poll(d->control,EXR_STAGE_READ,i,total,e);if(status!=EXR_OK) goto done;
@@ -248,21 +290,28 @@ static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_opt
     if(!kind && !equal(name,"ComicInfo.xml")) continue;
     if(!exr_canonical_path(name)) { status=exr_fail(e,EXR_FORMAT,"Unsafe CBZ member path");goto done; }
     while(at<length-1) if(!exr_next(name,length-1,&at,&cp)) { status=exr_fail(e,EXR_ENCODING,"CBZ member name is not UTF-8");goto done; }
-    if(kind<0) { status=exr_fail(e,EXR_FORMAT,"CBZ contains unsupported image format; PNG/JPEG required");goto done; }
     if(!mz_zip_reader_is_file_supported(&d->zip,i)) { status=exr_fail(e,EXR_FORMAT,"Encrypted or unsupported CBZ compression");goto done; }
     if(!kind) { if(info!=UINT_MAX) { status=exr_fail(e,EXR_FORMAT,"Duplicate ComicInfo.xml");goto done; }info=i;continue; }
     if(!st.m_uncomp_size || st.m_uncomp_size>(size_t)32*1024*1024) { status=exr_fail(e,EXR_LIMIT,"CBZ encoded page exceeds 32 MiB");goto done; }
-    d->pages[d->count].name=exr_copy(name,length-1);if(!d->pages[d->count].name) { status=exr_fail(e,EXR_MEMORY,"CBZ member name allocation failed");goto done; }
-    d->pages[d->count].index=i;d->count++;
-    status=header(d,d->pages+d->count-1,&st,(size_t)st.m_uncomp_size,&work,e);if(status!=EXR_OK) goto done;
+    { comic_page *expanded=NULL;size_t expanded_count=0;
+      status=member_pages(d,i,&st,name,(size_t)st.m_uncomp_size,&work,&expanded,&expanded_count,e);
+      if(status!=EXR_OK) goto done;
+      if(d->count>(size_t)10000-expanded_count) { free(expanded);status=exr_fail(e,EXR_LIMIT,"CBZ exceeds 10000 pages after frame expansion");goto done; }
+      if(d->count+expanded_count>capacity) {
+        comic_page *grown=realloc(d->pages,(d->count+expanded_count)*sizeof(*grown));
+        if(!grown) { free(expanded);status=exr_fail(e,EXR_MEMORY,"CBZ page directory allocation failed");goto done; }
+        d->pages=grown;capacity=d->count+expanded_count;
+      }
+      memcpy(d->pages+d->count,expanded,expanded_count*sizeof(*expanded));free(expanded);d->count+=expanded_count;
+    }
   }
-  if(!d->count) { status=exr_fail(e,EXR_FORMAT,"CBZ contains no PNG/JPEG pages");goto done; }
+  if(!d->count) { status=exr_fail(e,EXR_FORMAT,"CBZ contains no supported image pages");goto done; }
   qsort(d->pages,d->count,sizeof(*d->pages),compare_pages);
-  for(i=1;i<d->count;i++) if(!strcmp(d->pages[i-1].name,d->pages[i].name)) { status=exr_fail(e,EXR_FORMAT,"Duplicate CBZ page path");goto done; }
+  for(i=1;i<d->count;i++) if(!strcmp(d->pages[i-1].id,d->pages[i].id)) { status=exr_fail(e,EXR_FORMAT,"Duplicate CBZ page path or frame id");goto done; }
   if(info!=UINT_MAX) { status=comic_info(d,info,e);if(status!=EXR_OK) goto done; }
   for(i=0;i<d->metadata_count;i++) if(!strcmp(d->metadata[i].key,"http://purl.org/dc/terms/title")) { title=d->metadata[i].value;break; }
   pages=calloc(d->count,sizeof(*pages));if(!pages) { status=exr_fail(e,EXR_MEMORY,"CBZ fixed pages allocation failed");goto done; }
-  for(i=0;i<d->count;i++) { pages[i].id=pages[i].label=d->pages[i].name;pages[i].geometry.bounds[2]=d->pages[i].width;pages[i].geometry.bounds[3]=d->pages[i].height;pages[i].geometry.unit_scale=1;pages[i].geometry.y_down=1; }
+  for(i=0;i<d->count;i++) { pages[i].id=pages[i].label=d->pages[i].id;pages[i].geometry.bounds[2]=d->pages[i].width;pages[i].geometry.bounds[3]=d->pages[i].height;pages[i].geometry.unit_scale=1;pages[i].geometry.y_down=1; }
   input.struct_size=sizeof(input);input.title=title;input.pages=pages;input.page_count=d->count;input.context=d;input.release=release;input.draw=draw;input.text=text;input.metadata=metadata;
   status=exr_control_poll(d->control,EXR_STAGE_READ,total,total,e);
   if(status==EXR_OK) status=exr_fixed_create(&input,out,e);
@@ -277,5 +326,17 @@ exr_status exr_cbz_open_file(const char *path,const char *title,const exr_fixed_
   comic *d=calloc(1,sizeof(*d));exr_status status;if(!d) return exr_fail(e,EXR_MEMORY,"CBZ allocation failed");
   status=exr_file_source_limit(path,UINT64_C(2147483648),&d->source,e);
   if(status!=EXR_OK) { release(d);return status; }
+  return open_comic(d,title,options,out,e);
+}
+/* Borrows the seekable source for the lifetime of the fixed document unless
+   take_ownership is set; the CBZ reader never copies the whole archive. */
+exr_status exr_cbz_open_source(const exr_source *source,const char *title,const exr_fixed_open_options *options,
+                               int take_ownership,exr_fixed_document **out,exr_error *e) {
+  comic *d;
+  if(out) *out=NULL;
+  if(!source || !source->read_at || !source->size) return exr_fail(e,EXR_ARGUMENT,"Invalid CBZ source");
+  d=calloc(1,sizeof(*d));
+  if(!d) { if(take_ownership && source->release) source->release(source->context);return exr_fail(e,EXR_MEMORY,"CBZ allocation failed"); }
+  d->source=*source;d->borrowed=!take_ownership;
   return open_comic(d,title,options,out,e);
 }

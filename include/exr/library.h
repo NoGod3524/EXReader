@@ -51,6 +51,27 @@ EXR_API exr_status exr_library_import(exr_library *library, exr_format format, c
    failure clears id/created. Ordinary import still permits duplicate records. */
 EXR_API exr_status exr_library_import_unique(exr_library *library,exr_format format,const void *data,
                                              size_t size,const char *title,int64_t *id,int *created,exr_error *error);
+/* Streaming counterparts for large originals. The seekable source is borrowed
+   only for the call; bytes are copied into SQLite in 64 KiB chunks, so the
+   host never needs a contiguous copy. CBZ is the currently supported original
+   format (other formats return EXR_UNSUPPORTED). The source control callback is
+   honored between chunks and beside archive header reads. A failed or
+   cancelled write rolls back the book row and its blob; unique imports compare
+   same-size stored sources byte-for-byte before reusing the oldest ID. */
+EXR_API exr_status exr_library_import_source(exr_library *library,exr_format format,const exr_source *source,
+                                             const char *title,int64_t *id,exr_error *error);
+EXR_API exr_status exr_library_import_source_unique(exr_library *library,exr_format format,const exr_source *source,
+                                                    const char *title,int64_t *id,int *created,exr_error *error);
+/* Opens the path as a bounded source; no whole-file allocation is performed. */
+EXR_API exr_status exr_library_import_file(exr_library *library,exr_format format,const char *path,
+                                           const char *title,int64_t *id,exr_error *error);
+EXR_API exr_status exr_library_import_file_unique(exr_library *library,exr_format format,const char *path,
+                                                  const char *title,int64_t *id,int *created,exr_error *error);
+/* Fixed reader over the stored CBZ blob. Pages are read on demand through
+   SQLite blob I/O; the book is not materialized as one buffer. Falls back to
+   EXR_UNSUPPORTED for formats without a streaming fixed reader. */
+EXR_API exr_status exr_library_fixed_source(exr_library *library,int64_t id,const exr_fixed_open_options *options,
+                                            exr_fixed_document **out,exr_error *error);
 EXR_API exr_status exr_library_books(exr_library *library, const char *query, exr_book **books,
                                      size_t *count, exr_error *error);
 EXR_API void exr_books_free(exr_book *books, size_t count);

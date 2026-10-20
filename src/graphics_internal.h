@@ -46,5 +46,11 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
 
 exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex *out,exr_error *error);
 exr_status exr_image_dimensions(const void *data,size_t size,uint32_t *width,uint32_t *height,exr_error *error);
+/* Multi-page/animated decoding shared by CBZ and public wrappers. page is
+   zero-based and preserves source order. Cancellation is page/row granular. */
+exr_status exr_image_decode_page_control(const void *data,size_t size,size_t page,
+  const exr_control *control,exr_bitmap *out,exr_error *error);
+exr_status exr_image_decode_control(const void *data,size_t size,const exr_control *control,
+  exr_bitmap *out,exr_error *error);
 
 #endif

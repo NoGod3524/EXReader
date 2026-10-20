@@ -419,9 +419,9 @@ status = exr_layout_create_ex(doc, font, &config, &layout, &error);
 
 ## 图片、表格与像素
 
-内置 `exr_image_decode()` 接受 PNG/JPEG 字节并返回独立 RGBA 像素，用 `exr_bitmap_free()` 释放。布局按资源缓存图片；图片保持纵横比，限制在内容宽度和可用页高之内。width/height 同时存在时按容纳方式缩放，未声明 float 的图片仍按块处理；浮动图片按下文参与逐行绕排。缺失、外部、损坏或不支持的图片显示带标志的占位框；资源/解码限制错误会中止布局。解码尺寸上限 8192×8192 且总像素不超过 16 Mi，编码输入上限 32 MiB，stb 临时分配上限 128 MiB，布局图片缓存上限 64 MiB。
+内置 `exr_image_decode()` 接受 PNG/JPEG/BMP/GIF 以及默认开启的 WebP/TIFF/AVIF 字节并返回独立 RGBA 像素（动画/多页文件取第 0 页），用 `exr_bitmap_free()` 释放。`exr_image_page_count()`、`exr_image_page_dimensions()` 和 `exr_image_decode_page()` 按原始页序枚举/解码任意帧；页号越界返回 `EXR_LIMIT`，关闭某 codec 时该格式返回 `EXR_UNSUPPORTED`。规则与预算见 [WP12A-FORMATS.md](WP12A-FORMATS.md)。布局按资源缓存图片；图片保持纵横比，限制在内容宽度和可用页高之内。width/height 同时存在时按容纳方式缩放，未声明 float 的图片仍按块处理；浮动图片按下文参与逐行绕排。缺失、外部、损坏或不支持的图片显示带标志的占位框；资源/解码限制错误会中止布局。解码尺寸上限 8192×8192 且总像素不超过 16 Mi，编码输入上限 32 MiB，stb 临时分配上限 128 MiB，布局图片缓存上限 64 MiB。
 
-宿主设置 `decode_image`、`release_image` 和 `image_context` 可替换解码器。回调收到资源元数据及编码字节；返回 `channels=4`、非预乘 RGBA、有效 width/height/stride。引擎复制像素，然后无论成功或失败都调用配套 release 回调一次；不得在 release 中释放借用的编码输入。`EXR_FORMAT` 表示占位框，其余非成功状态中止布局。要保留内置 PNG/JPEG 支持，宿主回调可以调用 `exr_image_decode()` 并在 release 中使用 `exr_bitmap_free()`。直接创建完整 layout 时，回调及 context 只需在 create 调用期间有效；使用 pager / session 时需在相应句柄整个生命周期内有效。渲染已有布局不会再次调用它们。
+宿主设置 `decode_image`、`release_image` 和 `image_context` 可替换解码器。回调收到资源元数据及编码字节；返回 `channels=4`、非预乘 RGBA、有效 width/height/stride。引擎复制像素，然后无论成功或失败都调用配套 release 回调一次；不得在 release 中释放借用的编码输入。`EXR_FORMAT` 表示占位框，其余非成功状态中止布局。要保留内置图片支持，宿主回调可以调用 `exr_image_decode()`（或 `exr_image_decode_page()`）并在 release 中使用 `exr_bitmap_free()`。直接创建完整 layout 时，回调及 context 只需在 create 调用期间有效；使用 pager / session 时需在相应句柄整个生命周期内有效。渲染已有布局不会再次调用它们。
 
 表格支持指定列宽、单元格换行、colspan 和 rowspan，默认按内容测量列宽。CSS 的 col/colgroup/cell 宽度与 HTML width 属性参与列分配，详见“表格指定列宽”补充。具有跨行单元格的相连行组一起分页；高于一页的行组返回 `EXR_LIMIT`。上限为 64 列、4096 行/单元格、8 层嵌套。支持当前实线边框子集的 border-collapse，规则见下文；尚不支持跨页拆分单元格和重复表头。单元格的可见边框、背景和内边距由样式控制。
 
@@ -825,6 +825,12 @@ ls/ilvl 现在构造通用 ol/ul 与 li，保留列表实例 ID 和 0–8 级层
 `exr_library_import_unique` 按格式与原文件全部字节查找重复，命中时返回最小的已有正 ID、created=0；不改已有书名、作者、进度、封面或标注。没有重复时调用既有解析与封面导入，成功提交后返回新 ID、created=1。旧 import 继续允许多个副本。
 
 查询、插入和提交使用同一写事务，跨连接同时导入不会增加两个副本；SQLite 连接互斥量保护同一连接上的整个操作。失败时 id/created 清零，回滚新增数据。沿用 128 MiB 原文件上限与 schema 4，不增加数据库迁移或常驻索引。当前先按格式和字节数筛选，再作精确 BLOB 比较；大书库查询成本随候选文件总字节数增加。不同编码、重新打包、转换格式或仅正文相同的文件视为不同来源。
+
+## 大原书流式导入（WP12a）
+
+`exr_library_import_source()/exr_library_import_source_unique()` 从宿主提供的随机读取源导入，`exr_library_import_file()/exr_library_import_file_unique()` 以有界文件源打开路径。CBZ 原书按 64 KiB 分块写入 SQLite zeroblob，源只借用本次调用，失败/取消/存储错误回滚书籍行与 blob；unique 版本对同格式同长度候选逐字节比较后复用最旧 ID。单条原书上限为 2 GiB - 1（SQLite blob 接口），当前支持 CBZ；其他格式的流式入口返回 `EXR_UNSUPPORTED`，原内存 API 不变。
+
+`exr_library_fixed_source()` 通过 SQLite 只读 blob 句柄包装存储的原书，CBZ 页目录与解码按需读取，不把 1 GiB 原书整体复制到进程。缓冲口径、1 GiB 实测与失败恢复见 [WP12A-STREAMING.md](WP12A-STREAMING.md) 和 `docs/validation/wp12a-streaming.json`。
 
 
 ## 章节 CFI 内容路径（S086）
