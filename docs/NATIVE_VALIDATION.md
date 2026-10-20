@@ -16,6 +16,17 @@ installation list. The follow-up adds it and makes installed-component
 configuration reject that omission. Both the rejected package and its audit
 logs remain available through the same validation record.
 
+Final engine suites pass 153/153 on both GCC and MSVC; trimmed core passes 2/2.
+Installed default/trimmed consumers pass 4/4 and 1/1, the exact-version C++
+consumer passes, and all 306 public PE export names/ordinals remain unchanged.
+The package follow-up passes all seven CI jobs. Six SDK configurations cover
+Windows/Linux/macOS/Android/iOS/iPadOS; the 934-file inventory checks versions,
+support/migration documents, license text and host reports (26/21/21/21 checks).
+Downloaded four-target CPU smoke evidence also passes independent strict aggregation.
+The separate prior-source campaign has 24 parser and 14 font reports validated;
+a lost-runner shard has no completed driver report and contributes no CPU time.
+Complete and cross-source aggregation remain rejected; WP6/WP16 remain open.
+
 ## Table measurement and compatibility classification (3.38.2)
 
 The pre-version-change GCC/MSVC suites both pass 152/152, including 160 pairs
