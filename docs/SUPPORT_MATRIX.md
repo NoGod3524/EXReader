@@ -5,9 +5,9 @@
 [NATIVE_API.md](NATIVE_API.md) 与 [PERFORMANCE.md](PERFORMANCE.md)；本表随每批交付更新，
 发行时以本表为准。
 
-- 版本：**3.38.3 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
+- 版本：**3.39.0 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
 - 标记：**支持** = 有公开接口、边界与回归；**部分** = 有实现但覆盖/兼容未完整；**未支持** = 明确拒绝或不存在接口
-- 回归：`ctest` 名称，本机完整配置含 fuzz 当前153项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
+- 回归：`ctest` 名称，本机完整配置含 fuzz 当前154项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
 
 本轮平台应用、真实语料和性能结果见 `docs/validation/2026-10-20-native-hosts.json`、
 `docs/validation/2026-10-20-corpus-performance.json`。Windows/macOS/iPhone模拟器/iPad模拟器
@@ -19,6 +19,9 @@
 3.38.3章输入采用ZIP回调和每次最多32KiB的XML输入，仍创建完整DOM和正文投影。
 32MiB单成员、128MiB累计展开上限及公开快照生命周期不变；没有章内窗口或有界随机恢复。
 分块不变性、取消/CRC清理、加载内存和失败复核见 `docs/validation/2026-10-20-wp6-input-stream.json`。
+
+3.39.0集成WP7的八个声明脚本及固定800例口径；主线Linux sanitizer与Windows结果分别记录于
+`docs/validation/2026-10-20-wp7-integration.json`，原分支Windows证据保留于 `docs/validation/wp7-windows.json`。
 
 ## 输入格式
 

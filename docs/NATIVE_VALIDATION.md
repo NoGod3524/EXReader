@@ -1,5 +1,16 @@
 # Native C validation
 
+## WP7 mainline integration (3.39.0)
+
+The six WP7 delivery commits are integrated with the fixed eight-script scope:
+50 real-font and 50 synthetic-font sequences per script, HarfBuzz14.6.0,
+exact glyph IDs, declared cluster containment and unchanged 1.5 px metric
+tolerance at 200 px. `native-wp7` reports 18,750 checks on the integrated code.
+Original Windows delivery evidence remains in `docs/validation/wp7-windows.json`;
+mainline compiler suites and Linux ASan/UBSan are tracked separately in
+`docs/validation/2026-10-20-wp7-integration.json`. Declared PUA, broken-cluster
+and other-script boundaries remain as recorded in `docs/WP7-SCRIPTS.md`.
+
 ## Chapter input chunks (3.38.3)
 
 EPUB extraction now feeds the shared XML tree parser without a whole-chapter

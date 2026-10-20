@@ -1,6 +1,13 @@
 # 更新日志
 
-最新版本：**3.38.3**。整理日期：2026-10-20。
+最新版本：**3.39.0**。整理日期：2026-10-20。
+
+3.39.0：集成WP7的Bengali、Tamil、Telugu、Kannada、Malayalam、Thai、Khmer、Myanmar专用塑形。
+每脚本50条真实字体及50条合成字体序列，固定HarfBuzz14.6.0参考共800例；
+glyph严格相等、cluster按声明的包含口径、advance/offset固定1.5px@200px容差。
+断词、双向、字体回退、选文、分页恢复与缓存预算、取消/超限/所有权纳入专项。
+SDK3.39.0、核心3.38.0、PDF3.38.1，ABI1/schema6不变；HarfBuzz仅为开发期参考工具。
+范围边界见 `docs/WP7-SCRIPTS.md`，主线集成与Linux sanitizer证据见 `docs/validation/2026-10-20-wp7-integration.json`。
 
 3.38.3：EPUB章节从ZIP回调分块送入XML解析器，取消整章解压临时副本；
 同一内部解析器供原整块入口复用，TEXT节点、CFI和源字节位置不随输入分块变化。
