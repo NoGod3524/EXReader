@@ -49,7 +49,8 @@ python tools/triage_corpus.py original/summary.json exreader-check-document font
 
 PDF参考使用可选PyMuPDF独立进程，逐页绘制/提取，区分普通完成、参考修复、密码要求及未完成。
 参考完成不证明规范正确、像素一致或主引擎存在错误；观察结果不得自动转成预期拒绝。
-SDK不依赖PyMuPDF。`native-corpus-triage`覆盖分类证据完整性和不授予验收；安装PyMuPDF时再执行参考自检。
+SDK不依赖PyMuPDF。参考身份包括扩展模块和其独立DLL/共享库，运行前后核对散列。
+`native-corpus-triage`覆盖分类证据完整性和不授予验收；安装PyMuPDF时再执行参考自检。
 
 500本EPUB最终483本完成、11本120秒内未完成、5本资源限制、1本参数状态；原批未通过。
 5本限制进一步区分为3本解码图像缓存预算、2本表格布局预算。参数状态来自内容区宽度不足。

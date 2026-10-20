@@ -12,9 +12,9 @@
     "tests\\test_table_intrinsic.c": "75e9396add9b4fd65753c75a63b4c4c87441f263588753d9a4d93b9860b07ef3",
     "tools\\check_document.c": "70b5adacf285321ed18c5c52f51864939205bafe61a5fd3cc89b0402ec9ecd1b",
     "tools\\check_pdf_reference.py": "10abdbfe8992c126458ffc8a17e4ef04fbf84c42a198c7305f62d12eccba220d",
-    "tools\\triage_corpus.py": "c70733890a8d8ac4ea8ed10f94ce224854ad8717ce2960e0c4c12cd65f9852ba",
+    "tools\\triage_corpus.py": "2ba60957c362029b287a20e06359c9aafb9db87fe7a9cf0c4f104de5db8144f6",
     "tools\\compare_table_performance.py": "7b083c834d5aecbc86e74b8a7c45023691f3eb52d37127db4b44daeef72a8402",
-    "tests\\check_corpus_triage.py": "15025f7ff2ddf9ed7278261b898d0d56dc6d73685ddd0c41fa80d26f2e3f5dcf",
+    "tests\\check_corpus_triage.py": "7fabaa068ae2b0262007f118b5e0ac417b569239228492fc71c0064f57a8162e",
     "CMakeLists.txt": "f9ad19b54c7fda251d074963f5595738d806c19b27fe29ed176002d393875f34",
     "include\\exr\\base.h": "fda2021d09b53d205a98ba6c45264c086c00da6c25c8e56fe88399aed355cc6d",
     "cmake\\versions.cmake": "f4a281026ba65ba29bacc179199913ef241d7ec5f6db6367fcf96e56cc89540e"
@@ -80,8 +80,8 @@
     "corpus_acceptance_granted": false,
     "epub": {
       "classification": {
-        "path": "C:\\Users\\Oscar\\exr-corpus-v1\\epub-classification-r3\\classification.json",
-        "sha256": "2d3a10b4a19f448d81846c847755faa9f94f3ecd93e0ec66a80384b460baa09d"
+        "path": "C:\\Users\\Oscar\\exr-corpus-v1\\epub-classification-r4\\classification.json",
+        "sha256": "daa35817862ed78f31a3b5cf6adc924be53bbbf10c0d7626ea8f8894647753e3"
       },
       "baseline_summary": {
         "path": "C:\\Users\\Oscar\\exr-corpus-v1\\epub-500-full\\summary.json",
@@ -93,12 +93,16 @@
         "decoded_image_cache_budget": 3,
         "table_layout_budget": 2,
         "content_width_argument": 1
+      },
+      "previous_classification": {
+        "path": "C:\\Users\\Oscar\\exr-corpus-v1\\epub-classification-r3\\classification.json",
+        "sha256": "2d3a10b4a19f448d81846c847755faa9f94f3ecd93e0ec66a80384b460baa09d"
       }
     },
     "pdf": {
       "classification": {
-        "path": "C:\\Users\\Oscar\\exr-corpus-v1\\pdf-classification-r3\\classification.json",
-        "sha256": "83798c44bddaf91f8522a54bf39df87dbf1134479c61b22babf92226d8ad9f58"
+        "path": "C:\\Users\\Oscar\\exr-corpus-v1\\pdf-classification-r4\\classification.json",
+        "sha256": "3d0252578f249565b7dd27196246d18c14dd14cdff472e5b8a9f8f20cf9f7bfa"
       },
       "baseline_summary": {
         "path": "C:\\Users\\Oscar\\exr-corpus-v1\\pdf-full-e65c1f9\\summary.json",
@@ -110,18 +114,23 @@
         "reference_repaired_input": 8,
         "requires_review": 4,
         "unsupported_feature": 7
+      },
+      "previous_classification": {
+        "path": "C:\\Users\\Oscar\\exr-corpus-v1\\pdf-classification-r3\\classification.json",
+        "sha256": "83798c44bddaf91f8522a54bf39df87dbf1134479c61b22babf92226d8ad9f58"
       }
     },
     "reference_scope": "independent open/render/text; completion does not establish specification validity, pixel fidelity or a primary-engine defect",
     "selfcheck": {
-      "path": "C:\\Users\\Oscar\\exr-gcc\\compat-reference-selfcheck-r4\\checks.json",
+      "path": "C:\\Users\\Oscar\\exr-gcc\\compat-reference-selfcheck-r5\\checks.json",
       "sha256": "d05ede13fa30138df075e16db83b44da1ef1d439eb2c9476ad398fc1d7360e79"
     },
     "selfcheck_log": {
-      "path": "C:\\Users\\Oscar\\exr-gcc\\compat-reference-selfcheck-r4.log",
+      "path": "C:\\Users\\Oscar\\exr-gcc\\compat-reference-selfcheck-r5.log",
       "sha256": "f7cac024d985bc9b04601596051a087f524297aa6dc619008b0b08d1105817d8"
     },
-    "classification_runs_use_archived_tool_snapshots": true
+    "classification_runs_use_archived_tool_snapshots": true,
+    "runtime_identity_followup": "Native reference identities now include separate DLL/shared libraries as well as extension modules; checked before and after the diagnostic processes."
   },
   "local_checks": {
     "gcc": {
@@ -146,7 +155,11 @@
         "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-triage-final-guard-gcc.log",
         "sha256": "5406da969c4dd70c4fa8c6eca17b93107c2dc73fac248eccc128458e1aa9cd54"
       },
-      "test_timing_note": "The final diagnostic operational-exit guard was added after the full suite; its current test passed again independently on each compiler."
+      "test_timing_note": "The final diagnostic operational-exit guard was added after the full suite; its current test passed again independently on each compiler.",
+      "reference_runtime_identity_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-triage-runtime-gcc.log",
+        "sha256": "9b48378b6a5be65b07f0d0c4ab1f68a284027136ba95bac10c568b0cdc932085"
+      }
     },
     "msvc": {
       "pre_version_tests_passed": 152,
@@ -170,7 +183,11 @@
         "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-triage-final-guard-msvc.log",
         "sha256": "d63cb78980c5e5c6f211c4c7a62253afad34f8d888bba99bb47eda3fcfbc5016"
       },
-      "test_timing_note": "The final diagnostic operational-exit guard was added after the full suite; its current test passed again independently on each compiler."
+      "test_timing_note": "The final diagnostic operational-exit guard was added after the full suite; its current test passed again independently on each compiler.",
+      "reference_runtime_identity_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-triage-runtime-msvc.log",
+        "sha256": "bea182719a67652350be5ff2a18de69726b504a00dbe13da463f5af9068eef4b"
+      }
     },
     "installed_consumers": {
       "default_passed": 4,
@@ -216,8 +233,14 @@
     }
   },
   "ci": {
-    "status": "not_started",
-    "source_sha": null,
+    "run_id": 39481807260,
+    "source_sha": "5bde5eda12825495a6f77afcfccbaed0346ccc45",
+    "status": "in_progress",
+    "conclusion": "",
+    "status_file": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-ci-status-initial.json",
+      "sha256": "e3262d3bd49db1b1bf26431d6804f3335c6c2652a16b9aefaca7dd440fd10259"
+    },
     "sanitizer_passed": false
   },
   "reliability_prior_source": {
@@ -248,5 +271,8 @@
   "preserved_untracked_files": {
     "docs/validation/2026-10-19-shading-extent-ci.json": "a955abda1e35fd456172b2e78e1d687799e4ab5f1f977dec0efd7684aae9fdc1",
     "src/internal.h": "c951b04a1611008b2e97437d6877bebabf29ec2c374a1c8166c9aca14f34e904"
-  }
+  },
+  "code_source_sha": "5bde5eda12825495a6f77afcfccbaed0346ccc45",
+  "engine_source_sha": "5bde5eda12825495a6f77afcfccbaed0346ccc45",
+  "diagnostic_followup_source_sha": null
 }
