@@ -1,0 +1,48 @@
+{
+  "package": "WP8",
+  "branch": "codex/wp8-color-fonts",
+  "platform": {
+    "os": "Microsoft Windows 11 Home 10.0.26200 (64-bit)",
+    "arch": "x86_64"
+  },
+  "toolchain": {
+    "generator": "Ninja",
+    "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, Brecht Sanders r1) 16.2.0",
+    "cmake": "4.4.2",
+    "python": "3.14.7 (reference/fixture tools only)",
+    "build_directory": "C:/Users/Oscar/exr-wp8-build",
+    "configuration": "Release",
+    "dependencies": "C:/Users/Oscar/exr-deps (read-only source cache; FreeType VER-2-15-0, HVF off)"
+  },
+  "tests": {
+    "command": "ctest --test-dir C:/Users/Oscar/exr-wp8-build -C Release",
+    "total": 146,
+    "result": "146/146 passed (221.82 s)",
+    "wp8": {
+      "native-font-color-v1": "pass (167 assertions)",
+      "native-font-svg": "pass (159 assertions)"
+    },
+    "existing": {
+      "native-font-color": "pass",
+      "native-font": "pass",
+      "native-font-path": "pass",
+      "native-ot-variation": "pass",
+      "native-vertical": "pass"
+    },
+    "date": "2026-10-20"
+  },
+  "sanitizer": {
+    "status": "not run",
+    "reason": "This host has no Linux environment and MinGW does not provide a usable AddressSanitizer runtime. The Linux sanitizer job must be recorded by the mainline after merge; Windows results here do not substitute for it."
+  },
+  "reference": {
+    "program": "Google Chrome 152.0.7977.42 (Skia)",
+    "mode": "headless=new, --force-device-scale-factor=1, --virtual-time-budget=3000",
+    "scenes": 56,
+    "evidence": "docs/validation/wp8-reference.json"
+  },
+  "notes": [
+    "Windows is the only native host measured for WP8; Linux sanitizer and image-reference records are separate and must not be replaced by this file.",
+    "An earlier full run overlapped a rebuild; two audio tests failed with Windows sharing-violation status codes and passed immediately when rerun. The clean run above was executed without any concurrent build."
+  ]
+}

@@ -48,7 +48,9 @@
 | 竖排 / 混轴 | 支持 | 统一页面竖排 + 横竖混排块续排 | `native-vertical`、`native-orthogonal` |
 | Ruby | 支持 | 注音不参与 AUTO 方向快速判定 | `native-ruby` |
 | 断词 | 支持 | C provider、词典可选、复合词、NOHYPHEN、大小写条件、拼写替换后再匹配、检查点 | `native-hyphen*`（6 项） |
-| 彩色字体 | 部分 | COLR v0/CPAL、sbix、CBDT/CBLC、cmap 14；**COLR v1 与 SVG 字体未支持** | `native-font-color` |
+| COLR v0/CPAL、sbix、CBDT/CBLC、cmap 14 | 支持 | 层数/调色板/回退与位图 strike 规则保持；字形图像与调色板查询见 [text.h](../include/exr/text.h) | `native-font-color` |
+| COLR v1 | 部分 | Paint 1–32 全部实现；paint 深度 64、节点 4096、stop 256、嵌套颜色字形 16 且拒绝环；单字形 8192 px/8 Mi 像素、共享工作预算与取消。复合仅支持 SRC_OVER 与 16 种混合模式，12 种 Porter-Duff 明确 `EXR_UNSUPPORTED`；可变 `PaintVar*` 由 FreeType 按当前设计坐标解析。矩阵与差异见 [WP8_COLR_V1.md](WP8_COLR_V1.md) | `native-font-color-v1` |
+| SVG 字体 | 部分 | 冻结子集：`svg/g/defs/path/rect/circle/ellipse/line/polyline/polygon`、solid fill/stroke、transform、viewBox、组透明度、`currentColor`、gzip，以及 `id="glyph<gid>"` 选择；明确拒绝外部引用、脚本、image/use/text、渐变/pattern、mask/clipPath/filter、DTD/实体与 style 属性。边界见 [WP8_SVG_FONTS.md](WP8_SVG_FONTS.md) | `native-font-svg` |
 | 宿主字体集 | 支持 | 1–32 个内存字体、整簇覆盖优先、逐标量回退；系统字体发现由宿主负责 | `native-font`、`native-book-font` |
 
 ## EPUB / 流式文档排版
@@ -96,7 +98,7 @@
 
 | 能力 | 状态 | 边界 | 回归 |
 | --- | --- | --- | --- |
-| C SDK | 支持 | 305 个公开函数导出、`struct_size` 前缀兼容 | `native-abi`、`native-core` |
+| C SDK | 支持 | 307 个公开函数导出、`struct_size` 前缀兼容 | `native-abi`、`native-core` |
 | C++ / Swift / JNI 适配 | 支持 | 安装后消费示例与 `-Xcheck:jni` | `native-fixed-example`、`native-wave-example` |
 | 安装与包配置 | 支持 | `find_package(EXReader 3.38.0 EXACT CONFIG REQUIRED)` | CI 安装作业 |
 | 桌面三平台 | 支持 | Windows/Linux/macOS 全量 CTest + 安装消费 | CI `desktop` |
@@ -107,7 +109,7 @@
 
 | 项 | 当前值 |
 | --- | --- |
-| 桌面 CTest | 119（开启 fuzz 驱动为 120） |
+| 桌面 CTest | 146（本分支 Windows 全量配置；fuzz 驱动另计） |
 | Sanitizer | ASan/UBSan/leak 116（少 3 项 ctypes oracle，见 [HANDOFF.md](HANDOFF.md)） |
 | 编译器门槛 | `-Wall -Wextra -Wpedantic -Werror` |
 | Fuzz | 确定性种子变异驱动，CI 每推送 20 万次迭代；24 CPU 小时为目标，见 [FUZZING.md](FUZZING.md) |

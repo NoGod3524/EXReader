@@ -1,0 +1,151 @@
+{
+  "package": "WP8",
+  "feature": "SVG fonts",
+  "branch": "codex/wp8-color-fonts",
+  "abi_epoch": 1,
+  "library_schema": 6,
+  "fixture": {
+    "tests/fixtures/fonts/svgfont.ttf": {
+      "sha256": "1cecdcdc66da3ccd5996582b44d401e9f968ee53c565605fbc2dfc46f988d1a2",
+      "bytes": 96924
+    }
+  },
+  "generator": {
+    "tools/generate_svg_test_fonts.py": {
+      "sha256": "5a9720c4593c219854254ec89fcbc71123ba59fee27e77c14a313a26d1c1ca22",
+      "dependency": "fontTools 4.63.0 (developer only)"
+    }
+  },
+  "table": {
+    "version": 0,
+    "max_document_bytes": 4194304,
+    "max_table_bytes": 8388608,
+    "max_records": 4096,
+    "gzip": true,
+    "shared_document_id": "glyph<gid>"
+  },
+  "elements_supported": [
+    "svg",
+    "g",
+    "defs",
+    "path",
+    "rect",
+    "circle",
+    "ellipse",
+    "line",
+    "polyline",
+    "polygon"
+  ],
+  "elements_rejected": [
+    "image",
+    "use",
+    "text",
+    "style",
+    "script",
+    "a",
+    "switch",
+    "symbol",
+    "marker",
+    "mask",
+    "clipPath",
+    "filter",
+    "pattern",
+    "linearGradient",
+    "radialGradient",
+    "animate*",
+    "foreignObject"
+  ],
+  "attributes_supported": [
+    "fill",
+    "stroke",
+    "fill-opacity",
+    "stroke-opacity",
+    "fill-rule",
+    "opacity",
+    "stroke-width",
+    "stroke-linecap",
+    "stroke-linejoin",
+    "stroke-miterlimit",
+    "transform",
+    "color",
+    "display",
+    "visibility",
+    "viewBox",
+    "preserveAspectRatio=none"
+  ],
+  "attributes_rejected": [
+    "style",
+    "mask",
+    "clip-path",
+    "filter",
+    "marker-start",
+    "marker-mid",
+    "marker-end",
+    "stroke-dasharray",
+    "stroke-dashoffset",
+    "paint-order",
+    "vector-effect",
+    "rect rx/ry"
+  ],
+  "limits": {
+    "elements": 2048,
+    "depth": 32,
+    "attributes_per_element": 24,
+    "attribute_bytes": 262144,
+    "path_segments": 65536,
+    "surface_max_side_px": 8192,
+    "surface_max_pixels": 8388608,
+    "shared_work_units": 268435456
+  },
+  "rejections": {
+    "bad_doctype": "EXR_UNSUPPORTED",
+    "bad_script": "EXR_UNSUPPORTED",
+    "bad_image": "EXR_UNSUPPORTED",
+    "bad_use": "EXR_UNSUPPORTED",
+    "bad_gradient": "EXR_UNSUPPORTED",
+    "bad_style": "EXR_UNSUPPORTED",
+    "bad_mask": "EXR_UNSUPPORTED",
+    "bad_external_image": "EXR_UNSUPPORTED",
+    "bad_parse": "EXR_FORMAT",
+    "bad_entity": "EXR_UNSUPPORTED",
+    "bad_preserve": "EXR_UNSUPPORTED",
+    "bad_nested": "EXR_LIMIT",
+    "bad_many_elements": "EXR_LIMIT",
+    "bad_rounded": "EXR_UNSUPPORTED",
+    "bad_transform": "EXR_UNSUPPORTED"
+  },
+  "positive_scenes": [
+    "rect",
+    "two_rects",
+    "path_curve",
+    "circle",
+    "ellipse",
+    "polygon",
+    "polyline",
+    "stroke_caps",
+    "evenodd",
+    "group_opacity",
+    "fill_opacity",
+    "current_color",
+    "transform_matrix",
+    "transform_rotate",
+    "viewbox_scaled",
+    "arc",
+    "named_color",
+    "rgb_color",
+    "nested_groups",
+    "defs_ignored",
+    "no_viewbox",
+    "gzip_rect",
+    "shared_a",
+    "shared_b"
+  ],
+  "tests": {
+    "native-font-svg": {
+      "assertions": 159,
+      "result": "pass"
+    }
+  },
+  "reference": "docs/validation/wp8-reference.json",
+  "glyph_mapping": "tests/fixtures/fonts/svgfont.json"
+}

@@ -64,6 +64,7 @@
     "docx.c": "formats",
     "epub_write.c": "formats",
     "export_epub.c": "formats",
+    "export_text.c": "formats",
     "fb2.c": "formats",
     "fixed.c": "doc",
     "fixed_text.c": "doc",
@@ -72,8 +73,10 @@
     "flow.c": "layout",
     "font_bitmap.c": "text",
     "font_color.c": "text",
+    "font_colr_v1.c": "text",
     "font_outline.c": "text",
     "font_path.c": "text",
+    "font_svg.c": "text",
     "fonts.c": "text",
     "formats.c": "formats",
     "huff.c": "formats",
@@ -136,8 +139,7 @@
     "viewport.c": "base",
     "wave.c": "audio",
     "xmp.c": "formats",
-    "xmp_write.c": "pdf_edit",
-    "export_text.c": "formats"
+    "xmp_write.c": "pdf_edit"
   },
   "exceptions": [],
   "headers": {

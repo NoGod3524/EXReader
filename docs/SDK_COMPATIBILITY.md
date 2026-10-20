@@ -694,3 +694,35 @@ The fixed oracle has 50 sequences per script against real and synthetic fonts
 1.5 px metric tolerance at 200 px. HarfBuzz is not a runtime dependency.
 Scope and boundaries are in the installed `docs/WP7-SCRIPTS.md`. Test fonts are
 not installed; their OFL notice is included under `share/exreader/licenses/wp7-fonts`.
+
+## COLR v1 and SVG fonts (WP8)
+
+`exr_font_color_info_get()` is a new export and
+`exr_font_color_info` is a new size-tagged output record. Existing
+`exr_font_color_layers()`, `exr_font_glyph_image()`, glyph records and all
+callback signatures keep their layouts. Callers initialize
+`struct_size = sizeof(exr_font_color_info)`; smaller records are rejected and
+unknown nonzero trailing bytes are refused. The function changes per-face
+palette caches like the other colour-font queries, so the existing font
+serialization rule applies. ABI epoch 1, schema 6 and the package version are
+unchanged; the branch adds one export (307 in the generated `.def`).
+
+The built-in renderer now paints COLR v1 before COLR v0 and paints an SVG
+font document when the face has no COLR v1 glyph. sbix/CBDT strikes still win.
+The COLR v1 subset covers paint formats 1–32 with the limits, composite subset
+and variable-paint delegation documented in
+[WP8_COLR_V1.md](WP8_COLR_V1.md). Unsupported paint formats, unsupported
+Porter-Duff composite modes, malformed palette/stop data and the declared
+size/depth/node limits return `EXR_UNSUPPORTED`/`EXR_FONT`/`EXR_LIMIT`;
+they never produce partial pixels. The text foreground alpha is applied once
+when the completed glyph surface is composited, and palette index 0xffff keeps
+the COLR v0 foreground rule.
+
+SVG-in-OpenType is a frozen subset implemented in-tree; no new runtime
+component is linked (gzip documents reuse the existing miniz, and the XML
+reader rejects DTDs, entities, scripts and external references instead of
+fetching them). The element/attribute/rejection matrix and coordinate mapping
+are in [WP8_SVG_FONTS.md](WP8_SVG_FONTS.md). Both features keep the glyph
+advance, source clusters, bidi levels and hit-test results unchanged; only
+intrinsic colour pixels are added. Registrations for `native-font-color-v1`
+and `native-font-svg` accompany the existing `native-font-color` run.

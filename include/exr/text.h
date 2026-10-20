@@ -138,6 +138,21 @@ typedef struct { uint32_t glyph,color; } exr_font_color_layer;
 EXR_API exr_status exr_font_color_layers(exr_font *font,size_t font_index,uint32_t glyph,
   size_t palette,uint32_t foreground,exr_font_color_layer **out,size_t *count,
   const exr_control *control,exr_error *error);
+/* Intrinsic color source of one glyph. COLR v1 is reported before COLR v0 and
+   before an SVG description; bitmap strikes stay with exr_font_glyph_image. */
+enum { EXR_FONT_COLOR_NONE=0,EXR_FONT_COLOR_COLR_V0=1,EXR_FONT_COLOR_COLR_V1=2,
+       EXR_FONT_COLOR_SVG=3 };
+typedef struct {
+  size_t struct_size; /* Initialize to sizeof(exr_font_color_info). */
+  unsigned kind;      /* One of EXR_FONT_COLOR_*; zero when the glyph has none. */
+  unsigned variable;  /* COLR v1 carries a variation store resolved by FreeType. */
+  unsigned has_clip_box;
+  float clip_box[4];  /* x0,y0,x1,y1 in 1000-em units, y up; only for COLR v1. */
+} exr_font_color_info;
+/* Does not render or allocate a surface. Palette selection may update per-face
+   caches, so the same serialization rule as other font queries applies. */
+EXR_API exr_status exr_font_color_info_get(exr_font *font,size_t font_index,uint32_t glyph,
+  exr_font_color_info *out,const exr_control *control,exr_error *error);
 enum { EXR_GLYPH_IMAGE_OUTLINE_OVERLAY=1 };
 typedef struct {
   exr_bitmap bitmap;

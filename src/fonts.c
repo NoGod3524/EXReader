@@ -149,6 +149,7 @@ void exr_font_free(exr_font *f) {
       exr_face *face = &f->faces[i];
       exr_ot_free(face);
       exr_font_bitmaps_free(face);
+      exr_font_svg_free(face);
       if (face->face)
         FT_Done_Face(face->face);
       free(face->advances);
