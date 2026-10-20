@@ -31,6 +31,14 @@ SIL Open Font License 1.1. `tools/host_font.py` pins the font and license hashes
 each host bundle includes the original license. This asset is separate from the
 SDK engine and its original geometric test fonts.
 
+The WP7 script fixtures additionally include unmodified Noto Sans Bengali,
+Tamil, Telugu, Kannada, Malayalam, Thai, Khmer and Myanmar variable fonts from
+Google Fonts, under the SIL Open Font License 1.1; the complete license and
+per-file SHA-256 values are in `licenses/noto-sans-test-fonts.txt` and
+`tests/fixtures/wp7/README.md`. The accompanying `*-synthetic.ttf` files are
+original EXReader rectangles under MIT. These are test assets; they are not a
+runtime dependency and are not installed as part of the SDK.
+
 For GCC builds, CMake compiles LittleCMS `cmsintrp.c` with `-fwrapv`: the
 upstream 16-bit fixed-point interpolation intentionally wraps intermediate
 signed products before truncating to 16 bits. This defines its arithmetic

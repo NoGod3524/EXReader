@@ -10,6 +10,7 @@
 #define OT_DEPTH 16u
 #define OT_TABLE_LIMIT ((size_t)64 * 1024 * 1024)
 typedef struct { unsigned char *data; size_t size; } ot_table;
+struct indic_config;
 struct exr_ot_state { ot_table gsub, gpos, gdef; unsigned variations; };
 typedef struct {
   exr_shaped_glyph out;
@@ -36,7 +37,9 @@ struct ot_work {
   FT_Fixed coordinates[64];
   unsigned axis_count;
   int positioning;
+  const struct indic_config *indic_cfg;
   int indic, indic_old, per_syllable, probing;
+  int thai, khmer, myanmar;
   int rtl;
   int vertical;
   size_t next_scan;
@@ -163,7 +166,7 @@ int exr_ot_transparent(uint32_t codepoint) { return joining(codepoint) == 5; }
 static unsigned item_class(ot_work *w, size_t at) {
   unsigned cls = 0;
   if (w->gdef.p) cls = glyph_class(optional16(w->gdef, 4), w->items[at].out.glyph);
-  if (!cls && !w->indic && joining(w->items[at].cp) == 5) cls = 3;
+  if (!cls && !w->indic && !w->khmer && !w->myanmar && !w->thai && joining(w->items[at].cp) == 5) cls = 3;
   return cls;
 }
 static int ignored_properties(ot_work *w, size_t at, unsigned flags, unsigned filtering) {
@@ -832,6 +835,11 @@ static ot_view tag_table(ot_view records, size_t field, uint32_t tag) {
       return required16(records, field+(size_t)i*6+4);
   return empty;
 }
+typedef struct indic_config indic_config;
+struct indic_config {
+  uint32_t modern, old, virama, reph;
+  unsigned reph_pos, reph_mode, blwf_mode, old_spec;
+};
 static ot_view language(ot_work *w, ot_view table, uint32_t script, uint32_t lang) {
   ot_view scripts, selected, empty = {NULL,0,w};
   if (u16(table, 0) != 1 || u16(table, 2) > 1) { w->status = EXR_FONT; return empty; }
@@ -841,12 +849,18 @@ static ot_view language(ot_work *w, ot_view table, uint32_t script, uint32_t lan
     w->status = EXR_FONT; return empty;
   }
   if (!bounds(w->lookups, 2, u16(w->lookups, 0), 2)) return empty;
-  if (w->indic) {
-    selected = tag_table(scripts, 0, EXR_TAG('d','e','v','2'));
-    if (!selected.p) {
-      selected = tag_table(scripts, 0, EXR_TAG('d','e','v','a'));
+  if (w->indic_cfg) {
+    selected = tag_table(scripts, 0, w->indic_cfg->modern);
+    if (selected.p) {
+      if (!w->positioning) w->indic_old = 0;
+    } else if (w->indic_cfg->old) {
+      selected = tag_table(scripts, 0, w->indic_cfg->old);
       if (!w->positioning) w->indic_old = selected.p != NULL;
     }
+    if (!selected.p && !w->positioning) w->indic_old = 1;
+  } else if (w->myanmar) {
+    selected = tag_table(scripts, 0, EXR_TAG('m','y','m','2'));
+    if (!selected.p) selected = tag_table(scripts, 0, EXR_TAG('m','y','m','r'));
   } else selected = tag_table(scripts, 0, script);
   if (!selected.p) selected = tag_table(scripts, 0, EXR_TAG('D','F','L','T'));
   if (!selected.p) return empty;
@@ -970,29 +984,123 @@ static int feature_tag(ot_work *w, ot_view features, ot_view lang, uint32_t tag,
   return found;
 }
 
-enum { IC_OTHER, IC_C, IC_V, IC_N, IC_H, IC_M, IC_SM, IC_VD, IC_ZWJ, IC_ZWNJ, IC_CIRCLE, IC_PLACE };
-enum { IP_REPH, IP_PRE_M, IP_PRE_C, IP_BASE, IP_MAIN, IP_BELOW, IP_SUB, IP_BEFORE_POST, IP_POST, IP_AFTER_POST, IP_SMVD };
-enum { IM_RPHF=16, IM_PREF=32, IM_BLWF=64, IM_ABVF=128, IM_HALF=256, IM_PSTF=512, IM_INIT=1024 };
+enum { IC_OTHER, IC_C, IC_V, IC_N, IC_H, IC_M, IC_SM, IC_VD, IC_ZWJ, IC_ZWNJ, IC_CIRCLE, IC_PLACE,
+       IC_CS, IC_CM, IC_RS, IC_REPHA, IC_SYMBOL, IC_MPST, IC_SMPST, IC_A };
+enum { IP_START, IP_REPH, IP_PRE_M, IP_PRE_C, IP_BASE, IP_MAIN, IP_ABOVE, IP_BEFORE_SUB,
+       IP_BELOW, IP_SUB, IP_BEFORE_POST, IP_POST, IP_AFTER_POST, IP_SMVD, IP_END };
+enum { IM_RPHF=16, IM_PREF=32, IM_BLWF=64, IM_ABVF=128, IM_HALF=256, IM_PSTF=512, IM_INIT=1024, IM_CFAR=2048 };
 enum { IF_SUBSTITUTED=1, IF_LIGATED=2, IF_MULTIPLIED=4 };
-static unsigned indic_category(uint32_t cp) {
-  if (cp == 0x25cc) return IC_CIRCLE;
-  if (cp == 0xa0 || cp == 0xd7) return IC_PLACE;
-  switch (INDIC_PROPERTY(isc, cp)) {
-    case EXR_ISC_CONSONANT: case EXR_ISC_CONSONANT_WITH_STACKER: return IC_C;
-    case EXR_ISC_VOWEL_INDEPENDENT: return IC_V;
-    case EXR_ISC_NUKTA: return IC_N;
-    case EXR_ISC_VIRAMA: return IC_H;
-    case EXR_ISC_VOWEL_DEPENDENT: return IC_M;
-    case EXR_ISC_BINDU: case EXR_ISC_VISARGA: return IC_SM;
-    case EXR_ISC_CANTILLATION_MARK: case EXR_ISC_TONE_MARK: case EXR_ISC_SYLLABLE_MODIFIER: return IC_VD;
-    case EXR_ISC_JOINER: return IC_ZWJ;
-    case EXR_ISC_NON_JOINER: return IC_ZWNJ;
-    case EXR_ISC_CONSONANT_PLACEHOLDER: return IC_PLACE;
-    default: return IC_OTHER;
+/* Per-script Indic configuration.  Positions use the public reordering
+   classes above; the order is the OpenType/USP10 order used by HarfBuzz. */
+enum { RM_IMPLICIT, RM_EXPLICIT, RM_LOG_REPHA };
+enum { BM_PRE_AND_POST, BM_POST_ONLY };
+static const indic_config indic_configs[] = {
+  {EXR_TAG('d','e','v','2'),EXR_TAG('d','e','v','a'),0x094d,0x0930,IP_BEFORE_POST,RM_IMPLICIT,BM_PRE_AND_POST,1},
+  {EXR_TAG('b','n','g','2'),EXR_TAG('b','e','n','g'),0x09cd,0x09b0,IP_SUB,  RM_IMPLICIT,BM_PRE_AND_POST,1},
+  {EXR_TAG('g','u','r','2'),EXR_TAG('g','u','r','u'),0x0a4d,0x0a30,IP_BEFORE_SUB, RM_IMPLICIT,BM_PRE_AND_POST,1},
+  {EXR_TAG('g','j','r','2'),EXR_TAG('g','u','j','r'),0x0acd,0x0ab0,IP_BEFORE_POST,RM_IMPLICIT,BM_PRE_AND_POST,1},
+  {EXR_TAG('o','r','y','2'),EXR_TAG('o','r','y','a'),0x0b4d,0x0b30,IP_MAIN,      RM_IMPLICIT,BM_PRE_AND_POST,1},
+  {EXR_TAG('t','m','l','2'),EXR_TAG('t','a','m','l'),0x0bcd,0x0bb0,IP_AFTER_POST,RM_IMPLICIT,BM_PRE_AND_POST,1},
+  {EXR_TAG('t','e','l','2'),EXR_TAG('t','e','l','u'),0x0c4d,0x0c30,IP_AFTER_POST,RM_EXPLICIT,BM_POST_ONLY,1},
+  {EXR_TAG('k','n','d','2'),EXR_TAG('k','n','d','a'),0x0ccd,0x0cb0,IP_AFTER_POST,RM_IMPLICIT,BM_POST_ONLY,1},
+  {EXR_TAG('m','l','m','2'),EXR_TAG('m','l','y','m'),0x0d4d,0x0d30,IP_MAIN,      RM_LOG_REPHA,BM_PRE_AND_POST,1},
+};
+static const indic_config *indic_config_for(uint32_t script) {
+  size_t i;
+  for (i = 0; i < sizeof(indic_configs)/sizeof(*indic_configs); i++)
+    if (script == indic_configs[i].modern || script == indic_configs[i].old)
+      return &indic_configs[i];
+  return NULL;
+}
+static unsigned indic_matra_position(uint32_t cp, unsigned ipc, uint32_t script) {
+  if (ipc == EXR_IPC_LEFT || ipc == EXR_IPC_VISUAL_ORDER_LEFT) return IP_PRE_M;
+  if (script == EXR_TAG('b','n','g','2') || script == EXR_TAG('b','e','n','g'))
+    return (ipc == EXR_IPC_RIGHT) ? IP_AFTER_POST : IP_SUB;
+  if (script == EXR_TAG('t','m','l','2') || script == EXR_TAG('t','a','m','l'))
+    return (ipc == EXR_IPC_BOTTOM) ? IP_AFTER_POST : IP_SUB;
+  if (script == EXR_TAG('t','e','l','2') || script == EXR_TAG('t','e','l','u')) {
+    if (ipc == EXR_IPC_RIGHT) return cp <= 0x0c42 ? IP_BEFORE_SUB : IP_SUB;
+    return IP_BEFORE_SUB;
+  }
+  if (script == EXR_TAG('k','n','d','2') || script == EXR_TAG('k','n','d','a')) {
+    if (ipc == EXR_IPC_RIGHT) return (cp < 0x0cc3 || cp > 0x0cd6) ? IP_BEFORE_SUB : IP_SUB;
+    return IP_BEFORE_SUB;
+  }
+  if (script == EXR_TAG('m','l','m','2') || script == EXR_TAG('m','l','y','m'))
+    return (ipc == EXR_IPC_BOTTOM) ? IP_AFTER_POST : IP_SUB;
+  return (ipc == EXR_IPC_BOTTOM || ipc == EXR_IPC_TOP) ? IP_SUB : IP_AFTER_POST;
+}
+static void indic_classify(uint32_t cp, uint32_t script, unsigned *category, unsigned *position) {
+  unsigned isc = INDIC_PROPERTY(isc, cp), ipc = INDIC_PROPERTY(ipc, cp), cat = IC_OTHER, pos = IP_END;
+  switch (isc) {
+    case EXR_ISC_CONSONANT: case EXR_ISC_CONSONANT_DEAD:
+    case EXR_ISC_CONSONANT_HEAD_LETTER: case EXR_ISC_CONSONANT_INITIAL_POSTFIXED: cat = IC_C; break;
+    case EXR_ISC_CONSONANT_WITH_STACKER: cat = IC_CS; break;
+    case EXR_ISC_CONSONANT_MEDIAL: case EXR_ISC_CONSONANT_FINAL:
+    case EXR_ISC_CONSONANT_SUBJOINED: case EXR_ISC_CONSONANT_SUCCEEDING_REPHA: cat = IC_CM; break;
+    case EXR_ISC_CONSONANT_PRECEDING_REPHA: cat = IC_REPHA; break;
+    case EXR_ISC_CONSONANT_PLACEHOLDER: case EXR_ISC_NUMBER:
+    case EXR_ISC_NUMBER_JOINER: case EXR_ISC_BRAHMI_JOINING_NUMBER: cat = IC_PLACE; break;
+    case EXR_ISC_VOWEL: case EXR_ISC_VOWEL_INDEPENDENT: cat = IC_V; break;
+    case EXR_ISC_VOWEL_DEPENDENT: cat = IC_M; break;
+    case EXR_ISC_VIRAMA: case EXR_ISC_INVISIBLE_STACKER: cat = IC_H; break;
+    case EXR_ISC_NUKTA: cat = IC_N; break;
+    case EXR_ISC_BINDU: case EXR_ISC_VISARGA: case EXR_ISC_GEMINATION_MARK:
+    case EXR_ISC_SYLLABLE_MODIFIER: case EXR_ISC_TONE_MARK: cat = IC_SM; break;
+    case EXR_ISC_CANTILLATION_MARK: cat = IC_A; break;
+    case EXR_ISC_JOINER: cat = IC_ZWJ; break;
+    case EXR_ISC_NON_JOINER: cat = IC_ZWNJ; break;
+    case EXR_ISC_REGISTER_SHIFTER: cat = IC_RS; break;
+    case EXR_ISC_PURE_KILLER: case EXR_ISC_CONSONANT_KILLER: cat = IC_MPST; break;
+    case EXR_ISC_AVAGRAHA: case EXR_ISC_MODIFYING_LETTER: cat = IC_SYMBOL; break;
+    default: cat = IC_OTHER; break;
+  }
+  if (cp == 0x25cc) cat = IC_CIRCLE;
+  else if (cp == 0x00a0 || cp == 0x00d7) cat = IC_PLACE;
+  if (cp == 0x09b0 || cp == 0x09f0 || cp == 0x0bb0 || cp == 0x0c30 ||
+      cp == 0x0cb0 || cp == 0x0d30 || cp == 0x179a) cat = IC_C;
+  if (cp == 0x09fc || cp == 0x0c80 || cp == 0x0d04) cat = IC_PLACE;
+  if (cat == IC_C || cat == IC_V || cat == IC_CIRCLE || cat == IC_PLACE ||
+      cat == IC_CS || cat == IC_CM || cat == IC_REPHA) pos = IP_BASE;
+  else if (cat == IC_M || cat == IC_MPST) pos = indic_matra_position(cp, ipc, script);
+  else if (cat == IC_SM || cat == IC_A || cat == IC_SYMBOL || cat == IC_SMPST) pos = IP_SMVD;
+  else if (cat == IC_H || cat == IC_N || cat == IC_RS) {
+    if (ipc == EXR_IPC_LEFT) pos = IP_PRE_C;
+    else if (ipc == EXR_IPC_TOP) pos = IP_ABOVE;
+    else if (ipc == EXR_IPC_BOTTOM) pos = IP_BELOW;
+    else if (ipc == EXR_IPC_RIGHT) pos = IP_POST;
+    else pos = IP_END;
+  } else pos = IP_END;
+  *category = cat; *position = pos;
+}
+static unsigned indic_decompose(uint32_t cp, uint32_t *out) {
+  /* Canonical split matras used by the five WP7 Indic scripts.  Composition
+     exclusions that HarfBuzz keeps intact (09DC/09DD/0B94) are not listed. */
+  switch (cp) {
+    case 0x09cb: out[0]=0x09c7; out[1]=0x09be; return 2;
+    case 0x09cc: out[0]=0x09c7; out[1]=0x09d7; return 2;
+    case 0x0bca: out[0]=0x0bc6; out[1]=0x0bbe; return 2;
+    case 0x0bcb: out[0]=0x0bc7; out[1]=0x0bbe; return 2;
+    case 0x0bcc: out[0]=0x0bc6; out[1]=0x0bd7; return 2;
+    case 0x0c48: out[0]=0x0c46; out[1]=0x0c56; return 2;
+    case 0x0cc0: out[0]=0x0cbf; out[1]=0x0cd5; return 2;
+    case 0x0cc7: out[0]=0x0cc6; out[1]=0x0cd5; return 2;
+    case 0x0cc8: out[0]=0x0cc6; out[1]=0x0cd6; return 2;
+    case 0x0cca: out[0]=0x0cc6; out[1]=0x0cc2; return 2;
+    case 0x0ccb: out[0]=0x0cc6; out[1]=0x0cc2; out[2]=0x0cd5; return 3;
+    case 0x0d4a: out[0]=0x0d46; out[1]=0x0d3e; return 2;
+    case 0x0d4b: out[0]=0x0d47; out[1]=0x0d3e; return 2;
+    case 0x0d4c: out[0]=0x0d46; out[1]=0x0d57; return 2;
+    default: out[0]=cp; return 1;
   }
 }
+static int thai_above_mark(uint32_t cp) {
+  return cp == 0x0e31 || (cp >= 0x0e34 && cp <= 0x0e37) || (cp >= 0x0e47 && cp <= 0x0e4e) ||
+         cp == 0x0eb1 || (cp >= 0x0eb4 && cp <= 0x0eb7) || (cp >= 0x0ec8 && cp <= 0x0ece);
+}
 static int indic_consonant(const ot_item *item) {
-  return item->category == IC_C || item->category == IC_V || item->category == IC_CIRCLE || item->category == IC_PLACE;
+  return item->category == IC_C || item->category == IC_V || item->category == IC_CIRCLE ||
+         item->category == IC_PLACE || item->category == IC_CS || item->category == IC_CM;
 }
 static int indic_joiner(const ot_item *item) { return item->category == IC_ZWJ || item->category == IC_ZWNJ; }
 static int indic_halant(const ot_item *item) { return item->category == IC_H && !(item->indic_flags & IF_LIGATED); }
@@ -1040,17 +1148,23 @@ static void indic_setup(ot_work *w) {
     }
     indic_move(w, i, target);
   }
-  for (i = 0; i < w->count; i++) w->items[i].category = indic_category(w->items[i].cp);
+  for (i = 0; i < w->count; i++) {
+    unsigned position;
+    indic_classify(w->items[i].cp, w->indic_cfg->modern, &w->items[i].category, &position);
+    w->items[i].position = position;
+  }
   for (start = 0; start < w->count && w->status == EXR_OK;) {
     size_t end = start+1, j, source_start = w->items[start].out.start, source_end = w->items[start].out.end;
     unsigned first = w->items[start].category;
-    int pending = first == IC_H, broken = first == IC_N || first == IC_H || first == IC_M || first == IC_SM || first == IC_VD;
+    int pending = first == IC_H || first == IC_REPHA, broken = first == IC_N || first == IC_H || first == IC_M || first == IC_SM ||
+      first == IC_VD || first == IC_MPST || first == IC_A || first == IC_SMPST || first == IC_RS;
     if (first != IC_OTHER && first != IC_ZWJ && first != IC_ZWNJ) {
       while (end < w->count && work(w, 1)) {
         unsigned category = w->items[end].category;
         if (indic_consonant(&w->items[end])) { if (!pending) break; pending = 0; }
         else if (category == IC_H) pending = 1;
-        else if (category == IC_M || category == IC_SM || category == IC_VD) pending = 0;
+        else if (category == IC_M || category == IC_SM || category == IC_VD || category == IC_MPST ||
+                 category == IC_A || category == IC_SMPST) pending = 0;
         else if (category == IC_ZWNJ && pending) { end++; break; }
         else if (category != IC_N && category != IC_ZWJ && category != IC_ZWNJ) break;
         end++;
@@ -1105,103 +1219,157 @@ static int indic_pair(ot_work *w, ot_view features, ot_view lang, uint32_t tag, 
 static int indic_form_pair(ot_work *w, ot_view features, ot_view lang, uint32_t tag, unsigned glyph, unsigned virama) {
   return indic_pair(w, features, lang, tag, virama, glyph) || indic_pair(w, features, lang, tag, glyph, virama);
 }
+static size_t indic_base(ot_work *w, size_t start, size_t end);
 static void indic_initial(ot_work *w, ot_view features, ot_view lang) {
-  size_t start;
-  unsigned virama = FT_Get_Char_Index(w->face->face, 0x94d);
+  const indic_config *cfg = w->indic_cfg;
+  size_t start, probe;
+  unsigned virama = FT_Get_Char_Index(w->face->face, cfg->virama);
+  if (virama) for (probe = 0; probe < w->count && w->status == EXR_OK; probe++)
+    if (w->items[probe].position == IP_BASE && indic_consonant(&w->items[probe])) {
+      unsigned glyph = w->items[probe].out.glyph;
+      if (indic_form_pair(w, features, lang, EXR_TAG('b','l','w','f'), glyph, virama) ||
+          indic_form_pair(w, features, lang, EXR_TAG('v','a','t','u'), glyph, virama))
+        w->items[probe].position = IP_BELOW;
+      else if (indic_form_pair(w, features, lang, EXR_TAG('p','s','t','f'), glyph, virama) ||
+               indic_form_pair(w, features, lang, EXR_TAG('p','r','e','f'), glyph, virama))
+        w->items[probe].position = IP_POST;
+    }
   for (start = 0; start < w->count && w->status == EXR_OK;) {
-    size_t end = start+1, i, base = SIZE_MAX, limit = start;
+    size_t end = start+1, i, base, limit;
     int reph = 0, seen_below = 0;
     while (end < w->count && w->items[end].syllable == w->items[start].syllable) end++;
     if (!work(w, end-start)) return;
-    if (end-start >= 3 && w->items[start].cp == 0x930 && w->items[start+1].category == IC_H &&
-        !indic_joiner(&w->items[start+2]) &&
-        indic_pair(w, features, lang, EXR_TAG('r','p','h','f'), w->items[start].out.glyph, w->items[start+1].out.glyph)) {
-      reph = 1; limit += 2;
+    for (i = start; i < end; i++) w->items[i].form = 0;
+    limit = start;
+    if (cfg->reph_mode == RM_LOG_REPHA && w->items[start].category == IC_REPHA) {
+      limit++;
+      while (limit < end && indic_joiner(&w->items[limit])) limit++;
+      reph = 1;
+    } else if (start + 3 <= end && w->items[start].cp == cfg->reph &&
+               w->items[start+1].category == IC_H &&
+               ((cfg->reph_mode == RM_IMPLICIT && !indic_joiner(&w->items[start+2])) ||
+                (cfg->reph_mode == RM_EXPLICIT && w->items[start+2].category == IC_ZWJ)) &&
+               indic_pair(w, features, lang, EXR_TAG('r','p','h','f'),
+                          w->items[start].out.glyph, w->items[start+1].out.glyph)) {
+      limit += 2;
+      while (limit < end && indic_joiner(&w->items[limit])) limit++;
+      reph = 1;
     }
-    for (i = start; i < end && w->status == EXR_OK; i++) {
-      ot_item *item = &w->items[i];
-      item->position = IP_BASE; item->form &= 15;
-      if (item->category == IC_SM || item->category == IC_VD) item->position = IP_SMVD;
-      else if (item->category == IC_M) {
-        unsigned position = INDIC_PROPERTY(ipc, item->cp);
-        item->position = position == EXR_IPC_LEFT ? IP_PRE_M : position == EXR_IPC_BOTTOM ? IP_SUB : IP_AFTER_POST;
-      } else if (item->category == IC_C && virama) {
-        unsigned glyph = item->out.glyph;
-        if (indic_form_pair(w, features, lang, EXR_TAG('b','l','w','f'), glyph, virama) ||
-            indic_form_pair(w, features, lang, EXR_TAG('v','a','t','u'), glyph, virama)) item->position = IP_BELOW;
-        else if (indic_form_pair(w, features, lang, EXR_TAG('p','s','t','f'), glyph, virama) ||
-                 indic_form_pair(w, features, lang, EXR_TAG('p','r','e','f'), glyph, virama)) item->position = IP_POST;
-      }
-    }
+    base = reph ? start : end;
     for (i = end; i > limit;) {
-      ot_item *item = &w->items[--i];
-      if (indic_consonant(item)) {
+      i--;
+      if (indic_consonant(&w->items[i])) {
+        if (w->items[i].position != IP_BELOW &&
+            (w->items[i].position != IP_POST || seen_below)) { base = i; break; }
+        if (w->items[i].position == IP_BELOW) seen_below = 1;
         base = i;
-        if (item->position != IP_BELOW && (item->position != IP_POST || seen_below)) break;
-        if (item->position == IP_BELOW) seen_below = 1;
-      } else if (item->category == IC_ZWJ && i > start && w->items[i-1].category == IC_H) break;
+      } else if (i > start && w->items[i].category == IC_ZWJ &&
+                 w->items[i-1].category == IC_H) break;
     }
-    if (base == SIZE_MAX) { reph = 0; base = start; }
-    for (i = start; i < base; i++) if (w->items[i].position > IP_PRE_C) w->items[i].position = IP_PRE_C;
-    w->items[base].position = IP_BASE;
-    if (reph) w->items[start].position = w->items[start+1].position = IP_REPH;
+    if (reph && base == start && limit - base <= 2) reph = 0;
+    if (base == end) base = start;
+    for (i = start; i < base; i++)
+      if (w->items[i].position > IP_PRE_C) w->items[i].position = IP_PRE_C;
+    if (base < end) w->items[base].position = IP_BASE;
+    if (reph) w->items[start].position = IP_REPH;
     if (w->indic_old) {
+      int disallow_double = cfg->modern == EXR_TAG('k','n','d','2') ||
+                            cfg->modern == EXR_TAG('k','n','d','a');
       for (i = base+1; i < end; i++) if (w->items[i].category == IC_H) {
-        size_t last = end;
-        while (last > i+1 && !indic_consonant(&w->items[last-1])) last--;
-        if (last > i+1) indic_move(w, i, last-1);
+        size_t j = end;
+        while (j > i+1 && !indic_consonant(&w->items[j-1]) &&
+               !(disallow_double && w->items[j-1].category == IC_H)) j--;
+        if (w->items[j-1].category != IC_H && j > i+1) indic_move(w, i, j-1);
         break;
       }
     }
-    /* Virama/nukta/joiners travel with their owner. A post-base consonant
-       instead owns its preceding virama so H+Ra remains available to rkrf. */
     {
-      unsigned previous = IP_BASE;
-      size_t last = base;
+      unsigned last = IP_START;
       for (i = start; i < end; i++) {
         ot_item *item = &w->items[i];
-        if (item->category == IC_N || item->category == IC_H || indic_joiner(item)) {
-          item->position = previous == IP_PRE_M && item->category == IC_H ? IP_BASE : previous;
-        } else if (item->position != IP_SMVD) previous = item->position;
+        if (item->category == IC_N || item->category == IC_H || item->category == IC_RS ||
+            item->category == IC_CM || indic_joiner(item)) {
+          item->position = last;
+          if (item->category == IC_H && item->position == IP_PRE_M) {
+            size_t j;
+            for (j = i; j > start; j--)
+              if (w->items[j-1].position != IP_PRE_M) { item->position = w->items[j-1].position; break; }
+          }
+        } else if (item->position != IP_SMVD) {
+          if (item->category == IC_MPST && i > start && w->items[i-1].category == IC_SM)
+            w->items[i-1].position = item->position;
+          last = item->position;
+        }
       }
+    }
+    {
+      size_t last = base;
       for (i = base+1; i < end; i++) {
         if (indic_consonant(&w->items[i])) {
           size_t j;
-          for (j = last+1; j < i; j++) if (w->items[j].position < IP_SMVD) w->items[j].position = w->items[i].position;
+          for (j = last+1; j < i; j++)
+            if (w->items[j].position < IP_SMVD) w->items[j].position = w->items[i].position;
           last = i;
-        } else if (w->items[i].category == IC_M) last = i;
+        } else if (w->items[i].category == IC_M || w->items[i].category == IC_MPST) last = i;
       }
     }
-    /* At most eleven position buckets; this stable counting sort is linear
-       even for a deliberately long repeated-mark syllable. */
     {
       ot_item *sorted = malloc((end-start)*sizeof(*sorted));
-      size_t counts[IP_SMVD+1] = {0}, positions[IP_SMVD+1], j, cursor = 0;
+      size_t counts[IP_END+1] = {0}, positions[IP_END+1], j, cursor = 0;
       if (!sorted) { w->status = EXR_MEMORY; return; }
       for (i = start; i < end; i++) counts[w->items[i].position]++;
-      for (j = 0; j <= IP_SMVD; j++) { positions[j] = cursor; cursor += counts[j]; }
+      for (j = 0; j <= IP_END; j++) { positions[j] = cursor; cursor += counts[j]; }
       for (i = start; i < end; i++) sorted[positions[w->items[i].position]++] = w->items[i];
       memcpy(w->items+start, sorted, (end-start)*sizeof(*sorted)); free(sorted);
     }
-    base = end;
-    for (i = start; i < end; i++) if (w->items[i].position == IP_BASE) { base = i; break; }
-    for (i = start; i < end; i++) {
-      ot_item *item = &w->items[i];
-      if (item->position == IP_REPH) item->form |= IM_RPHF;
-      if (i < base) item->form |= IM_HALF | (w->indic_old ? 0u : IM_BLWF);
-      else if (i > base) item->form |= IM_BLWF | IM_ABVF | IM_PSTF;
+    base = indic_base(w, start, end);
+    {
+      size_t first_left = end, last_left = end;
+      for (i = start; i < end; i++) {
+        if (w->items[i].position == IP_BASE) { base = i; break; }
+        if (w->items[i].position == IP_PRE_M) {
+          if (first_left == end) first_left = i;
+          last_left = i;
+        }
+      }
+      if (first_left < last_left) {
+        size_t lo = first_left, hi = last_left;
+        while (lo < hi) { ot_item t = w->items[lo]; w->items[lo++] = w->items[hi]; w->items[hi--] = t; }
+        for (lo = first_left, i = first_left; i <= last_left; i++)
+          if (w->items[i].category == IC_M || w->items[i].category == IC_MPST) {
+            size_t x = lo, y = i;
+            while (x < y) { ot_item t = w->items[x]; w->items[x++] = w->items[y]; w->items[y--] = t; }
+            lo = i+1;
+          }
+      }
+    }
+    for (i = start; i < end && w->items[i].position == IP_REPH; i++) w->items[i].form |= IM_RPHF;
+    {
+      unsigned mask = IM_HALF;
+      if (!w->indic_old && cfg->blwf_mode == BM_PRE_AND_POST) mask |= IM_BLWF;
+      for (i = start; i < base; i++) w->items[i].form |= mask;
+      mask = IM_BLWF | IM_ABVF | IM_PSTF;
+      for (i = base+1; i < end; i++) w->items[i].form |= mask;
+    }
+    if (w->indic_old && cfg->modern == EXR_TAG('d','e','v','2')) {
+      for (i = start; i+1 < base; i++)
+        if (w->items[i].cp == 0x0930 && w->items[i+1].category == IC_H &&
+            (i+2 == base || w->items[i+2].category != IC_ZWJ)) {
+          w->items[i].form |= IM_BLWF; w->items[i+1].form |= IM_BLWF;
+        }
     }
     for (i = base+1; i+1 < end && w->status == EXR_OK; i++)
-      if (indic_pair(w, features, lang, EXR_TAG('p','r','e','f'), w->items[i].out.glyph, w->items[i+1].out.glyph)) {
+      if (indic_pair(w, features, lang, EXR_TAG('p','r','e','f'),
+                     w->items[i].out.glyph, w->items[i+1].out.glyph)) {
         w->items[i].form |= IM_PREF; w->items[i+1].form |= IM_PREF; break;
       }
-    if (w->indic_old) for (i = start; i+1 < base; i++)
-      if (w->items[i].cp == 0x930 && w->items[i+1].category == IC_H &&
-          (i+2 == base || w->items[i+2].category != IC_ZWJ))
-        w->items[i].form |= IM_BLWF, w->items[i+1].form |= IM_BLWF;
-    for (i = start; i < end; i++) if (w->items[i].category == IC_ZWNJ) {
+    for (i = start+1; i < end; i++) if (indic_joiner(&w->items[i])) {
+      int non_joiner = w->items[i].category == IC_ZWNJ;
       size_t j = i;
-      while (j > start) { j--; w->items[j].form &= ~IM_HALF; if (indic_consonant(&w->items[j])) break; }
+      do {
+        j--;
+        if (non_joiner) w->items[j].form &= ~IM_HALF;
+      } while (j > start && !indic_consonant(&w->items[j]));
     }
     start = end;
   }
@@ -1212,47 +1380,145 @@ static size_t indic_base(ot_work *w, size_t start, size_t end) {
   return end;
 }
 static void indic_final(ot_work *w) {
+  const indic_config *cfg = w->indic_cfg;
+  unsigned virama_glyph = FT_Get_Char_Index(w->face->face, cfg->virama);
   size_t start;
   for (start = 0; start < w->count && w->status == EXR_OK;) {
-    size_t end = start+1, base, i, target;
+    size_t end = start+1, base, i, new_pos;
+    int try_pref = 1;
     while (end < w->count && w->items[end].syllable == w->items[start].syllable) end++;
-    base = indic_base(w, start, end);
-    /* Unsubstituted explicit viramas delimit the last half-form group. A ZWJ
-       requests the half form and keeps the matra to the left of that group. */
-    target = start;
-    for (i = start; i < base; i++) if (indic_halant(&w->items[i]) && w->items[i].position != IP_PRE_M &&
-        (i+1 >= end || w->items[i+1].category != IC_ZWJ)) target = i;
-    for (i = target; i > start; i--) if (w->items[i-1].position == IP_PRE_M) {
-      indic_move(w, i-1, target); target--;
+    if (virama_glyph) {
+      for (i = start; i < end; i++)
+        if (w->items[i].cp == cfg->virama &&
+            (w->items[i].indic_flags & (IF_LIGATED|IF_MULTIPLIED)) == (IF_LIGATED|IF_MULTIPLIED)) {
+          w->items[i].category = IC_H;
+          w->items[i].indic_flags &= ~(IF_LIGATED|IF_MULTIPLIED);
+        }
     }
     base = indic_base(w, start, end);
-    if (w->items[start].position == IP_REPH &&
-        (w->items[start].indic_flags & (IF_LIGATED|IF_MULTIPLIED)) == IF_LIGATED) {
-      target = SIZE_MAX;
-      for (i = start+1; i < base; i++) if (indic_halant(&w->items[i])) {
-        target = i; if (i+1 < base && indic_joiner(&w->items[i+1])) target++; break;
+    if (try_pref && base+1 < end) {
+      for (i = base+1; i < end; i++) if (w->items[i].form & IM_PREF) {
+        if (!(w->items[i].indic_flags & IF_LIGATED)) {
+          base = i;
+          while (base < end && indic_halant(&w->items[base])) base++;
+          if (base < end) w->items[base].position = IP_BASE;
+          try_pref = 0;
+        }
+        break;
       }
-      if (target == SIZE_MAX) {
-        target = end-1;
-        while (target > start && w->items[target].position == IP_SMVD) target--;
-        if (indic_halant(&w->items[target])) {
-          for (i = base+1; i < target; i++) if (w->items[i].category == IC_M) { target--; break; }
+    }
+    if (cfg->modern == EXR_TAG('m','l','m','2') || cfg->modern == EXR_TAG('m','l','y','m')) {
+      for (i = base+1; i < end; i++) {
+        while (i < end && indic_joiner(&w->items[i])) i++;
+        if (i == end || !indic_halant(&w->items[i])) break;
+        i++;
+        while (i < end && indic_joiner(&w->items[i])) i++;
+        if (i < end && indic_consonant(&w->items[i]) && w->items[i].position == IP_BELOW) {
+          base = i; w->items[base].position = IP_BASE;
         }
       }
-      indic_move(w, start, target);
     }
-    base = indic_base(w, start, end);
-    for (i = base < end ? base+1 : end; i < end; i++) if (w->items[i].form & IM_PREF) {
-      if ((w->items[i].indic_flags & (IF_LIGATED|IF_MULTIPLIED)) == IF_LIGATED) {
-        target = base;
-        while (target > start && w->items[target-1].category != IC_M && !indic_halant(&w->items[target-1])) target--;
-        if (target > start && indic_halant(&w->items[target-1]) && target < end && indic_joiner(&w->items[target])) target++;
-        indic_move(w, i, target);
+    if (start < base && base < end && w->items[base].position > IP_BASE) base--;
+    if (base == end && start < base && w->items[base-1].category == IC_ZWJ) base--;
+    if (base < end)
+      while (start < base && (w->items[base].category == IC_N || w->items[base].category == IC_H)) base--;
+    if (start+1 < end && start < base) {
+      new_pos = base ? base-1 : start;
+      if (cfg->modern != EXR_TAG('m','l','m','2') && cfg->modern != EXR_TAG('m','l','y','m') &&
+          cfg->modern != EXR_TAG('t','m','l','2') && cfg->modern != EXR_TAG('t','a','m','l')) {
+        for (;;) {
+          while (new_pos > start &&
+                 !(w->items[new_pos].category == IC_M || w->items[new_pos].category == IC_MPST ||
+                   w->items[new_pos].category == IC_H)) new_pos--;
+          if (indic_halant(&w->items[new_pos]) && w->items[new_pos].position != IP_PRE_M) {
+            if (new_pos+1 < end && w->items[new_pos+1].category == IC_ZWJ && new_pos > start) {
+              new_pos--;
+              continue;
+            }
+            break;
+          }
+          new_pos = start;
+          break;
+        }
       }
-      break;
+      if (start < new_pos && w->items[new_pos].position != IP_PRE_M) {
+        for (i = new_pos; i > start; i--)
+          if (w->items[i-1].position == IP_PRE_M) {
+            indic_move(w, i-1, new_pos);
+            new_pos--;
+          }
+      }
+    }
+    if (start+1 < end && w->items[start].position == IP_REPH &&
+        (cfg->reph_mode == RM_LOG_REPHA ? (w->items[start].category == IC_REPHA) :
+         ((w->items[start].category == IC_REPHA) ^
+          ((w->items[start].indic_flags & IF_LIGATED) != 0)))) {
+      size_t target = SIZE_MAX;
+      if (cfg->reph_pos != IP_AFTER_POST) {
+        target = start+1;
+        while (target < base && !indic_halant(&w->items[target])) target++;
+        if (target < base && indic_halant(&w->items[target])) {
+          if (target+1 < base && indic_joiner(&w->items[target+1])) target++;
+          goto reph_move;
+        }
+      }
+      if (cfg->reph_pos == IP_MAIN) {
+        target = base;
+        while (target+1 < end && w->items[target+1].position <= IP_MAIN) target++;
+        if (target < end) goto reph_move;
+      }
+      if (cfg->reph_pos == IP_SUB) {
+        target = base;
+        while (target+1 < end &&
+               !(w->items[target+1].position == IP_POST ||
+                 w->items[target+1].position == IP_AFTER_POST ||
+                 w->items[target+1].position == IP_SMVD)) target++;
+        if (target < end) goto reph_move;
+      }
+      if (cfg->reph_pos == IP_BEFORE_POST) {
+        target = base;
+        while (target+1 < end &&
+               !(w->items[target+1].position == IP_POST ||
+                 w->items[target+1].position == IP_AFTER_POST ||
+                 w->items[target+1].position == IP_SMVD)) target++;
+        if (target < end) goto reph_move;
+      }
+      target = start+1;
+      while (target < base && !indic_halant(&w->items[target])) target++;
+      if (target < base && indic_halant(&w->items[target])) {
+        if (target+1 < base && indic_joiner(&w->items[target+1])) target++;
+        goto reph_move;
+      }
+      target = end-1;
+      while (target > start && w->items[target].position >= IP_SMVD) target--;
+      if (indic_halant(&w->items[target]))
+        for (i = base+1; i < target; i++)
+          if (w->items[i].category == IC_M || w->items[i].category == IC_MPST) target--;
+reph_move:
+      indic_move(w, start, target);
+      if (start < base && base <= target) base--;
+    }
+    if (try_pref && base+1 < end) {
+      for (i = base+1; i < end; i++) if (w->items[i].form & IM_PREF) {
+        if (w->items[i].indic_flags & IF_LIGATED) {
+          size_t target = base;
+          if (cfg->modern != EXR_TAG('m','l','m','2') && cfg->modern != EXR_TAG('m','l','y','m') &&
+              cfg->modern != EXR_TAG('t','m','l','2') && cfg->modern != EXR_TAG('t','a','m','l')) {
+            while (target > start &&
+                   !(w->items[target-1].category == IC_M || w->items[target-1].category == IC_MPST ||
+                     w->items[target-1].category == IC_H)) target--;
+          }
+          if (target > start && indic_halant(&w->items[target-1]) &&
+              target < end && indic_joiner(&w->items[target])) target++;
+          indic_move(w, i, target);
+          if (target <= base && base < i) base++;
+        }
+        break;
+      }
     }
     if (w->items[start].position == IP_PRE_M &&
-        (!start || w->items[start-1].category == IC_OTHER)) w->items[start].form |= IM_INIT;
+        (!start || w->items[start-1].category == IC_OTHER))
+      w->items[start].form |= IM_INIT;
     start = end;
   }
 }
@@ -1290,6 +1556,283 @@ static void indic_substitution(ot_work *w, ot_view features, ot_view lang) {
   }
   w->per_syllable = 0;
 }
+/* Khmer and Myanmar use the same OpenType lookup engine but their own
+   syllable grammars and reordering classes (USP10 Khmer/Myanmar). */
+enum { K_C=1,K_V=2,K_H=4,K_ZWNJ=5,K_ZWJ=6,K_PLACE=10,K_CIRCLE=11,K_RA=15,
+       K_VABV=20,K_VBLW=21,K_VPRE=22,K_VPST=23,K_ROB=25,K_XG=26,K_YG=27 };
+static unsigned khmer_class(uint32_t cp) {
+  unsigned isc = INDIC_PROPERTY(isc, cp), ipc = INDIC_PROPERTY(ipc, cp);
+  if (cp == 0x25cc) return K_CIRCLE;
+  if (cp == 0x17d2) return K_H;
+  if (cp == 0x179a) return K_RA;
+  if (cp == 0x17c9 || cp == 0x17ca || cp == 0x17cc) return K_ROB;
+  if (cp == 0x17c6 || cp == 0x17cb || (cp >= 0x17cd && cp <= 0x17d1)) return K_XG;
+  if (cp == 0x17c7 || cp == 0x17c8 || cp == 0x17dd || cp == 0x17d3) return K_YG;
+  if (cp == 0x17d9) return K_PLACE;
+  if (isc == EXR_ISC_CONSONANT || isc == EXR_ISC_CONSONANT_DEAD ||
+      isc == EXR_ISC_CONSONANT_HEAD_LETTER || isc == EXR_ISC_CONSONANT_SUBJOINED) return K_C;
+  if (isc == EXR_ISC_VOWEL || isc == EXR_ISC_VOWEL_INDEPENDENT) return K_V;
+  if (isc == EXR_ISC_JOINER) return K_ZWJ;
+  if (isc == EXR_ISC_NON_JOINER) return K_ZWNJ;
+  if (isc == EXR_ISC_VOWEL_DEPENDENT || isc == EXR_ISC_BINDU || isc == EXR_ISC_VISARGA ||
+      isc == EXR_ISC_SYLLABLE_MODIFIER || isc == EXR_ISC_TONE_MARK ||
+      isc == EXR_ISC_CANTILLATION_MARK || isc == EXR_ISC_NUKTA) {
+    if (ipc == EXR_IPC_LEFT) return K_VPRE;
+    if (ipc == EXR_IPC_TOP) return K_VABV;
+    if (ipc == EXR_IPC_BOTTOM) return K_VBLW;
+    return K_VPST;
+  }
+  return IC_OTHER;
+}
+static int khmer_base(unsigned cat) { return cat == K_C || cat == K_RA || cat == K_V; }
+static size_t khmer_end(ot_work *w, size_t start) {
+  size_t i = start;
+  if (i < w->count && (khmer_base(w->items[i].category) || w->items[i].category == K_PLACE ||
+                       w->items[i].category == K_CIRCLE)) i++;
+  else return start+1;
+  if (i < w->count && (w->items[i].category == K_ZWJ || w->items[i].category == K_ZWNJ) &&
+      i+1 < w->count && w->items[i+1].category == K_ROB) i += 2;
+  else if (i < w->count && w->items[i].category == K_ROB) i++;
+  while (i < w->count && work(w, 1)) {
+    unsigned cat = w->items[i].category;
+    if (cat == K_H && i+1 < w->count && khmer_base(w->items[i+1].category)) {
+      i += 2;
+      if (i < w->count && (w->items[i].category == K_ZWJ || w->items[i].category == K_ZWNJ) &&
+          i+1 < w->count && w->items[i+1].category == K_ROB) i += 2;
+      continue;
+    }
+    if (cat == K_H) { i++; break; }
+    if (cat == K_VPRE || cat == K_VABV || cat == K_VBLW || cat == K_VPST ||
+        cat == K_ROB || cat == K_XG || cat == K_YG || cat == K_ZWJ || cat == K_ZWNJ) { i++; continue; }
+    break;
+  }
+  return i;
+}
+static void khmer_setup(ot_work *w) {
+  size_t i, start, serial = 0;
+  for (i = 0; i < w->count; i++) w->items[i].category = khmer_class(w->items[i].cp);
+  for (start = 0; start < w->count && w->status == EXR_OK;) {
+    size_t end = khmer_end(w, start), j, lo, hi;
+    if (end <= start) end = start+1;
+    lo = w->items[start].out.start; hi = w->items[start].out.end;
+    for (j = start+1; j < end; j++) {
+      if (w->items[j].out.start < lo) lo = w->items[j].out.start;
+      if (w->items[j].out.end > hi) hi = w->items[j].out.end;
+    }
+    serial++;
+    for (j = start; j < end; j++) {
+      w->items[j].syllable = serial;
+      w->items[j].out.start = lo; w->items[j].out.end = hi;
+    }
+    start = end;
+  }
+}
+static void khmer_move2(ot_work *w, size_t from, size_t to) {
+  ot_item a, b;
+  if (from <= to || from+1 >= w->count || !work(w, from-to)) return;
+  a = w->items[from]; b = w->items[from+1];
+  memmove(w->items+to+2, w->items+to, (from-to)*sizeof(*w->items));
+  w->items[to] = a; w->items[to+1] = b;
+}
+static void khmer_reorder(ot_work *w) {
+  size_t start;
+  for (start = 0; start < w->count && w->status == EXR_OK;) {
+    size_t end = start+1, i;
+    unsigned coengs = 0;
+    while (end < w->count && w->items[end].syllable == w->items[start].syllable) end++;
+    for (i = start+1; i < end; i++) w->items[i].form |= IM_BLWF | IM_ABVF | IM_PSTF;
+    for (i = start+1; i < end && w->status == EXR_OK; i++) {
+      if (w->items[i].category == K_H && coengs <= 2 && i+1 < end) {
+        coengs++;
+        if (w->items[i+1].category == K_RA) {
+          size_t j;
+          w->items[i].form |= IM_PREF; w->items[i+1].form |= IM_PREF;
+          khmer_move2(w, i, start);
+          for (j = i+2; j < end; j++) w->items[j].form |= IM_CFAR;
+          coengs = 2;
+        }
+      } else if (w->items[i].category == K_VPRE) {
+        indic_move(w, i, start);
+      }
+    }
+    start = end;
+  }
+}
+static void khmer_substitution(ot_work *w, ot_view features, ot_view lang) {
+  static const struct { uint32_t tag; unsigned mask; } stages[] = {
+    {EXR_TAG('p','r','e','f'),IM_PREF},{EXR_TAG('b','l','w','f'),IM_BLWF},
+    {EXR_TAG('a','b','v','f'),IM_ABVF},{EXR_TAG('p','s','t','f'),IM_PSTF},
+    {EXR_TAG('c','f','a','r'),IM_CFAR},{EXR_TAG('p','r','e','s'),0},
+    {EXR_TAG('a','b','v','s'),0},{EXR_TAG('b','l','w','s'),0},{EXR_TAG('p','s','t','s'),0},
+    {EXR_TAG('c','l','i','g'),0}};
+  size_t i;
+  w->per_syllable = 1;
+  feature_tag(w, features, lang, EXR_TAG('l','o','c','l'), 0, feature_value(w->options, EXR_TAG('l','o','c','l'), 1));
+  feature_tag(w, features, lang, EXR_TAG('c','c','m','p'), 0, feature_value(w->options, EXR_TAG('c','c','m','p'), 1));
+  khmer_reorder(w);
+  for (i = 0; i < sizeof(stages)/sizeof(*stages) && w->status == EXR_OK; i++)
+    feature_tag(w, features, lang, stages[i].tag, stages[i].mask, feature_value(w->options, stages[i].tag, 1));
+  w->per_syllable = 0;
+}
+
+enum { M_C=1,M_IV=2,M_DB=3,M_H=4,M_ZWNJ=5,M_ZWJ=6,M_SM=8,M_A=9,M_GB=10,M_CIRCLE=11,
+       M_RA=15,M_CS=18,M_VABV=20,M_VBLW=21,M_VPRE=22,M_VPST=23,M_AS=32,M_MH=35,
+       M_MR=36,M_MW=37,M_MY=38,M_PT=39,M_VS=40,M_ML=41 };
+static unsigned myanmar_class(uint32_t cp) {
+  unsigned isc = INDIC_PROPERTY(isc, cp), ipc = INDIC_PROPERTY(ipc, cp);
+  if (cp >= 0xfe00 && cp <= 0xfe0f) return M_VS;
+  if (cp == 0x25cc) return M_CIRCLE;
+  if (cp == 0x104e || cp == 0x1040) return cp == 0x104e ? M_C : M_GB;
+  if (cp == 0x1004 || cp == 0x101b || cp == 0x105a) return M_RA;
+  if (cp == 0x1032 || cp == 0x1036) return M_A;
+  if (cp == 0x103a) return M_AS;
+  if (cp == 0x103e) return M_MH;
+  if (cp == 0x1060) return M_ML;
+  if (cp == 0x103c) return M_MR;
+  if (cp == 0x103d || cp == 0x1082) return M_MW;
+  if (cp == 0x103b || cp == 0x105e || cp == 0x105f) return M_MY;
+  if (cp == 0x1063 || cp == 0x1064 || (cp >= 0x1069 && cp <= 0x106d) || cp == 0xaa7b) return M_PT;
+  if (cp == 0x1038 || (cp >= 0x1087 && cp <= 0x108d) || cp == 0x108f ||
+      (cp >= 0x109a && cp <= 0x109c) || cp == 0x1090) return M_SM;
+  if (cp == 0x104a) return M_GB;
+  if (isc == EXR_ISC_CONSONANT || isc == EXR_ISC_CONSONANT_DEAD ||
+      isc == EXR_ISC_CONSONANT_HEAD_LETTER || isc == EXR_ISC_CONSONANT_SUBJOINED) return M_C;
+  if (isc == EXR_ISC_VOWEL || isc == EXR_ISC_VOWEL_INDEPENDENT) return M_IV;
+  if (isc == EXR_ISC_VIRAMA || isc == EXR_ISC_INVISIBLE_STACKER) return M_H;
+  if (isc == EXR_ISC_NUKTA) return M_DB;
+  if (isc == EXR_ISC_JOINER) return M_ZWJ;
+  if (isc == EXR_ISC_NON_JOINER) return M_ZWNJ;
+  if (isc == EXR_ISC_VOWEL_DEPENDENT) {
+    if (ipc == EXR_IPC_LEFT) return M_VPRE;
+    if (ipc == EXR_IPC_TOP) return M_VABV;
+    if (ipc == EXR_IPC_BOTTOM) return M_VBLW;
+    return M_VPST;
+  }
+  if (isc == EXR_ISC_BINDU || isc == EXR_ISC_VISARGA || isc == EXR_ISC_SYLLABLE_MODIFIER ||
+      isc == EXR_ISC_TONE_MARK) return M_SM;
+  if (isc == EXR_ISC_CANTILLATION_MARK) return M_A;
+  if (isc == EXR_ISC_CONSONANT_PLACEHOLDER || isc == EXR_ISC_NUMBER) return M_GB;
+  return IC_OTHER;
+}
+static int myanmar_consonant(unsigned cat) {
+  return cat == M_C || cat == M_RA || cat == M_IV || cat == M_GB || cat == M_CIRCLE;
+}
+static size_t myanmar_end(ot_work *w, size_t start) {
+  size_t i = start;
+  if (i+2 < w->count && w->items[i].category == M_RA && w->items[i+1].category == M_AS &&
+      w->items[i+2].category == M_H) i += 3;
+  if (i < w->count && myanmar_consonant(w->items[i].category)) {
+    i++;
+    if (i < w->count && w->items[i].category == M_VS) i++;
+  } else return start+1;
+  while (i < w->count && work(w, 1)) {
+    unsigned cat = w->items[i].category;
+    if (cat == M_H && i+1 < w->count && (w->items[i+1].category == M_C || w->items[i+1].category == M_RA)) {
+      i += 2;
+      if (i < w->count && w->items[i].category == M_VS) i++;
+      continue;
+    }
+    if (cat == M_H || cat == M_AS || cat == M_VS || cat == M_MH || cat == M_MR || cat == M_MW ||
+        cat == M_MY || cat == M_ML || cat == M_VPRE || cat == M_VABV || cat == M_VBLW ||
+        cat == M_VPST || cat == M_A || cat == M_DB || cat == M_SM || cat == M_PT) { i++; continue; }
+    break;
+  }
+  return i;
+}
+static void myanmar_setup(ot_work *w) {
+  size_t i, start, serial = 0;
+  for (i = 0; i < w->count; i++) w->items[i].category = myanmar_class(w->items[i].cp);
+  for (start = 0; start < w->count && w->status == EXR_OK;) {
+    size_t end = myanmar_end(w, start), j, lo, hi;
+    if (end <= start) end = start+1;
+    lo = w->items[start].out.start; hi = w->items[start].out.end;
+    for (j = start+1; j < end; j++) {
+      if (w->items[j].out.start < lo) lo = w->items[j].out.start;
+      if (w->items[j].out.end > hi) hi = w->items[j].out.end;
+    }
+    serial++;
+    for (j = start; j < end; j++) {
+      w->items[j].syllable = serial;
+      w->items[j].out.start = lo; w->items[j].out.end = hi;
+    }
+    start = end;
+  }
+}
+static void myanmar_reorder(ot_work *w) {
+  size_t start;
+  for (start = 0; start < w->count && w->status == EXR_OK;) {
+    size_t end = start+1, i, base, limit;
+    unsigned pos;
+    int has_reph = 0;
+    while (end < w->count && w->items[end].syllable == w->items[start].syllable) end++;
+    limit = start;
+    if (start+3 <= end && w->items[start].category == M_RA &&
+        w->items[start+1].category == M_AS && w->items[start+2].category == M_H) {
+      limit += 3; base = start; has_reph = 1;
+    } else {
+      base = limit;
+      for (i = limit; i < end; i++)
+        if (myanmar_consonant(w->items[i].category)) { base = i; break; }
+    }
+    i = start;
+    for (; i < start + (has_reph ? 3u : 0u); i++) w->items[i].position = IP_MAIN;
+    for (; i < base; i++) w->items[i].position = IP_PRE_C;
+    if (i < end) { w->items[i].position = IP_BASE; i++; }
+    pos = IP_MAIN;
+    for (; i < end; i++) {
+      unsigned cat = w->items[i].category;
+      if (cat == M_MR) { w->items[i].position = IP_PRE_C; continue; }
+      if (cat == M_VPRE) { w->items[i].position = IP_PRE_M; continue; }
+      if (cat == M_VS) { w->items[i].position = w->items[i-1].position; continue; }
+      if (pos == IP_MAIN && cat == M_VBLW) { pos = IP_BELOW; w->items[i].position = pos; continue; }
+      if (pos == IP_BELOW && cat == M_A) { w->items[i].position = IP_BEFORE_SUB; continue; }
+      if (pos == IP_BELOW && cat == M_VBLW) { w->items[i].position = pos; continue; }
+      if (pos == IP_BELOW && cat != M_A) { pos = IP_SUB; w->items[i].position = pos; continue; }
+      w->items[i].position = pos;
+    }
+    for (i = start+1; i < end; i++) {
+      ot_item key = w->items[i];
+      size_t j = i;
+      while (j > start && w->items[j-1].position > key.position) { w->items[j] = w->items[j-1]; j--; }
+      w->items[j] = key;
+    }
+    {
+      size_t first_left = end, last_left = end;
+      for (i = start; i < end; i++)
+        if (w->items[i].position == IP_PRE_M) {
+          if (first_left == end) first_left = i;
+          last_left = i;
+        }
+      if (first_left < last_left) {
+        size_t lo = first_left, hi = last_left;
+        while (lo < hi) { ot_item t = w->items[lo]; w->items[lo++] = w->items[hi]; w->items[hi--] = t; }
+        for (lo = first_left, i = first_left; i <= last_left; i++)
+          if (w->items[i].category == M_VPRE) {
+            size_t x = lo, y = i;
+            while (x < y) { ot_item t = w->items[x]; w->items[x++] = w->items[y]; w->items[y--] = t; }
+            lo = i+1;
+          }
+      }
+    }
+    start = end;
+  }
+}
+static void myanmar_substitution(ot_work *w, ot_view features, ot_view lang) {
+  static const uint32_t basic[] = {EXR_TAG('r','p','h','f'),EXR_TAG('p','r','e','f'),
+    EXR_TAG('b','l','w','f'),EXR_TAG('p','s','t','f')};
+  static const uint32_t other[] = {EXR_TAG('p','r','e','s'),EXR_TAG('a','b','v','s'),
+    EXR_TAG('b','l','w','s'),EXR_TAG('p','s','t','s')};
+  size_t i;
+  w->per_syllable = 1;
+  feature_tag(w, features, lang, EXR_TAG('l','o','c','l'), 0, feature_value(w->options, EXR_TAG('l','o','c','l'), 1));
+  feature_tag(w, features, lang, EXR_TAG('c','c','m','p'), 0, feature_value(w->options, EXR_TAG('c','c','m','p'), 1));
+  myanmar_reorder(w);
+  for (i = 0; i < sizeof(basic)/sizeof(*basic) && w->status == EXR_OK; i++)
+    feature_tag(w, features, lang, basic[i], 0, feature_value(w->options, basic[i], 1));
+  w->per_syllable = 0;
+  for (i = 0; i < sizeof(other)/sizeof(*other) && w->status == EXR_OK; i++)
+    feature_tag(w, features, lang, other[i], 0, feature_value(w->options, other[i], 1));
+}
 static void apply_table(ot_work *w, ot_table *source, uint32_t script, int positioning, int *has_kern) {
   static const uint32_t substitution_tags[] = {
     EXR_TAG('c','c','m','p'), EXR_TAG('l','o','c','l'), EXR_TAG('i','s','o','l'),
@@ -1323,6 +1866,8 @@ static void apply_table(ot_work *w, ot_table *source, uint32_t script, int posit
   }
   if (required != 0xffff && !required_early) feature_index(w, features, required, 0, 1);
   if (!positioning && w->indic) { indic_substitution(w, features, lang); return; }
+  if (!positioning && w->khmer) { khmer_substitution(w, features, lang); return; }
+  if (!positioning && w->myanmar) { myanmar_substitution(w, features, lang); return; }
   for (i = 0; i < count && w->status == EXR_OK; i++) {
     unsigned mask = 0, enabled;
     if (!positioning && i >= 2 && i <= 5) {
@@ -1470,25 +2015,62 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
       }
     }
     previous_scalar=cp;
-    if (!resize_items(&w, w.count+1)) goto done;
+    if (!script) script = exr_ot_script(cp);
     if (start >= cluster_end) {
       cluster_start = start; cluster_end = at;
       while (cluster_end < size && !(boundaries[cluster_end] & EXR_BOUNDARY_GRAPHEME)) cluster_end++;
     }
-    item = &w.items[w.count++]; memset(item, 0, sizeof(*item));
-    item->out.start = cluster_start; item->out.end = cluster_end;
-    item->out.glyph = FT_Get_Char_Index(w.face->face, cp); item->cp = cp; item->parent = SIZE_MAX;
-    item->out.flags = options->style_flags;
-    if (vertical) item->out.flags |= EXR_GLYPH_VERTICAL;
-    if (exr_text_hidden(cp)) item->out.flags |= EXR_GLYPH_HIDDEN;
-    else if (!item->out.glyph) item->out.flags |= EXR_GLYPH_MISSING;
-    if (!script) {
-      script = exr_ot_script(cp);
+    {
+      uint32_t parts[4] = {cp, 0, 0, 0};
+      unsigned nparts = 1, part;
+      if (script == EXR_TAG('t','h','a','i') && (cp == 0x0e33 || cp == 0x0eb3)) {
+        parts[0] = cp == 0x0e33 ? 0x0e4d : 0x0ecd;
+        parts[1] = cp - 1;
+        nparts = 2;
+      } else if (script == EXR_TAG('k','h','m','r') &&
+                 (cp == 0x17be || cp == 0x17bf || cp == 0x17c0 || cp == 0x17c4 || cp == 0x17c5)) {
+        parts[0] = 0x17c1; parts[1] = cp; nparts = 2;
+      } else if (script && indic_config_for(script)) {
+        nparts = indic_decompose(cp, parts);
+      }
+      if (!resize_items(&w, w.count+nparts)) goto done;
+      for (part = 0; part < nparts; part++) {
+        item = &w.items[w.count++]; memset(item, 0, sizeof(*item));
+        item->out.start = cluster_start; item->out.end = cluster_end;
+        item->out.glyph = FT_Get_Char_Index(w.face->face, parts[part]);
+        item->cp = parts[part]; item->parent = SIZE_MAX;
+        item->out.flags = options->style_flags;
+        if (vertical) item->out.flags |= EXR_GLYPH_VERTICAL;
+        if (exr_text_hidden(parts[part])) item->out.flags |= EXR_GLYPH_HIDDEN;
+        else if (!item->out.glyph) item->out.flags |= EXR_GLYPH_MISSING;
+      }
     }
   }
   if (!script) script = EXR_TAG('D','F','L','T');
-  w.indic = script == EXR_TAG('d','e','v','a') || script == EXR_TAG('d','e','v','2');
-  if (w.indic) indic_setup(&w);
+  w.thai = script == EXR_TAG('t','h','a','i');
+  if (w.thai) {
+    for (i = 1; i < w.count; i++)
+      if (w.items[i].cp == 0x0e4d || w.items[i].cp == 0x0ecd) {
+        size_t j = i, lo = w.items[i].out.start, hi = w.items[i].out.end;
+        while (j > 0 && thai_above_mark(w.items[j-1].cp)) {
+          j--;
+          if (w.items[j].out.start < lo) lo = w.items[j].out.start;
+          if (w.items[j].out.end > hi) hi = w.items[j].out.end;
+        }
+        if (j < i) {
+          size_t k;
+          for (k = j; k <= i; k++) { w.items[k].out.start = lo; w.items[k].out.end = hi; }
+          indic_move(&w, i, j);
+        }
+      }
+  }
+  w.indic_cfg = indic_config_for(script);
+  w.indic = w.indic_cfg != NULL;
+  w.khmer = script == EXR_TAG('k','h','m','r');
+  w.myanmar = script == EXR_TAG('m','y','m','r');
+  if (w.indic) { w.indic_old = w.indic_cfg->old_spec; indic_setup(&w); }
+  else if (w.khmer) khmer_setup(&w);
+  else if (w.myanmar) myanmar_setup(&w);
   if (w.status != EXR_OK) goto done;
   w.rtl = options->direction == EXR_DIRECTION_RTL ||
           (options->direction == EXR_DIRECTION_AUTO &&
@@ -1512,7 +2094,7 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
       else w.items[i].out.advance_x = advance;
     }
     cls = item_class(&w, i);
-    if (cls == 3 && !w.indic) w.items[i].out.advance_x = w.items[i].out.advance_y = 0;
+    if (cls == 3 && !w.indic && !w.khmer) w.items[i].out.advance_x = w.items[i].out.advance_y = 0;
     /* GPOS cannot change glyph classes. Cache predecessors once, so a long
        combining sequence does not rescan the same mark run for each glyph. */
     w.items[i].previous_visible = previous_visible;
