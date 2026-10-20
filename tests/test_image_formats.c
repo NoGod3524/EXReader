@@ -44,7 +44,7 @@ static void matrix(const char *root,const char *format,const char *extension,uns
     CHECK(bitmap.width==v->w && bitmap.height==v->h && bitmap.channels==4 && bitmap.stride==v->w*4);
     if(!strcmp(v->name,"solid")) close_rgba(&bitmap,220,30,40,255);
     if(!strcmp(v->name,"one")) close_rgba(&bitmap,255,0,255,255);
-    if(!strcmp(v->name,"transparent") && strcmp(format,"gif") && strcmp(format,"bmp")) CHECK(bitmap.pixels[3]==0);
+    if(!strcmp(v->name,"transparent") && strcmp(format,"bmp")) CHECK(bitmap.pixels[3]==0);
     if(!strcmp(v->name,"alpha") && strcmp(format,"gif") && strcmp(format,"bmp")) {
       CHECK(bitmap.pixels[3]<=tolerance);
       CHECK(abs((int)bitmap.pixels[(v->w-1)*4+3]-255)<=tolerance);
@@ -114,5 +114,8 @@ int main(int argc,char **argv) {
       CHECK(bitmap.width==8 && bitmap.height==8); }
     else CHECK(status==EXR_UNSUPPORTED);
     free(data);(void)bitmap; }
+  { char path[4096];exr_bitmap alpha={0};snprintf(path,sizeof(path),"%s/bmp/alpha32.bmp",argv[1]);data=read_file(path,&size);
+    OK(exr_image_decode(data,size,&alpha,&error));CHECK(alpha.width==5 && alpha.height==5 && alpha.pixels[3]==0 && alpha.pixels[4*4+3]==255);
+    exr_bitmap_free(&alpha);free(data); }
   printf("%u image-format checks passed\n",checks);return 0;
 }

@@ -10,8 +10,8 @@ pixel output are unchanged for single-page files.
 | --- | --- | --- | --- | --- |
 | PNG | always built | ON | 1 | Existing path, byte-identical pixels |
 | JPEG | always built | ON | 1 | Existing path, including CMYK JPEG through the PDF adapter |
-| BMP | always built | ON | 1 | Uncompressed/indexed/RLE BMP through the pinned stb_image |
-| GIF | always built | ON | 1..4096 | All frames in source order; GIF disposal is composited by stb_image |
+| BMP | always built | ON | 1 | Uncompressed/indexed/RLE BMP through the pinned stb_image; 32-bit BITMAPV4 alpha masks preserve alpha |
+| GIF | always built | ON | 1..4096 | All frames in source order; GIF disposal is composited by stb_image; transparency index preserves alpha |
 | WebP | `EXR_ENABLE_IMAGE_WEBP` | ON | 1..4096 | Lossy/lossless still and animated WebP through libwebp/demux |
 | TIFF | `EXR_ENABLE_IMAGE_TIFF` | ON | 1..4096 | Baseline/Deflate/LZW/PackBits strips and tiles, palette/alpha/16-bit via libtiff |
 | AVIF | `EXR_ENABLE_IMAGE_AVIF` | ON | 1..4096 | 8/10/12-bit still, grid and image sequences through libavif + libaom |
@@ -112,8 +112,8 @@ patterns under `tests/fixtures/images` with MIT provenance and SHA-256 values in
 
 - `native-image-formats`: 11 matrix cases per format (color, alpha, checker,
   odd/1x1/255x1/1x255 sizes, gray, palette, transparent, gradient), animation
-  pages 0..3, truncated/bad-magic/huge/expansion/33 MiB rejection and page-index
-  bounds.
+  pages 0..3, transparent GIF and 32-bit BMP alpha, truncated/bad-magic/huge/
+  expansion/33 MiB rejection and page-index bounds (956 checks).
 - `native-cbz-formats`: one archive mixing PNG/GIF/WebP/BMP/multi-page TIFF/
   AVIF/JPEG, asserting the expanded directory order, IDs, geometry, per-frame
   pixels, ComicInfo title and damaged-content rejection.

@@ -53,9 +53,10 @@ EXR_API exr_status exr_library_import_unique(exr_library *library,exr_format for
                                              size_t size,const char *title,int64_t *id,int *created,exr_error *error);
 /* Streaming counterparts for large originals. The seekable source is borrowed
    only for the call; bytes are copied into SQLite in 64 KiB chunks, so the
-   host never needs a contiguous copy. CBZ is the currently supported original
-   format (other formats return EXR_UNSUPPORTED). The source control callback is
-   honored between chunks and beside archive header reads. A failed or
+   host never needs a contiguous copy. Source import supports CBZ; file import
+   additionally supports PDF, whose metadata is read through a read-only file
+   mapping. Other formats return EXR_UNSUPPORTED. The source control callback is
+   honored between chunks and beside archive/PDF header reads. A failed or
    cancelled write rolls back the book row and its blob; unique imports compare
    same-size stored sources byte-for-byte before reusing the oldest ID. */
 EXR_API exr_status exr_library_import_source(exr_library *library,exr_format format,const exr_source *source,
@@ -67,8 +68,9 @@ EXR_API exr_status exr_library_import_file(exr_library *library,exr_format forma
                                            const char *title,int64_t *id,exr_error *error);
 EXR_API exr_status exr_library_import_file_unique(exr_library *library,exr_format format,const char *path,
                                                   const char *title,int64_t *id,int *created,exr_error *error);
-/* Fixed reader over the stored CBZ blob. Pages are read on demand through
-   SQLite blob I/O; the book is not materialized as one buffer. Falls back to
+/* Fixed reader over the stored original. CBZ pages are read on demand through
+   SQLite blob I/O. PDF bytes are paged into an anonymous mapping and parsed
+   there, so the book is not materialized as one heap buffer. Falls back to
    EXR_UNSUPPORTED for formats without a streaming fixed reader. */
 EXR_API exr_status exr_library_fixed_source(exr_library *library,int64_t id,const exr_fixed_open_options *options,
                                             exr_fixed_document **out,exr_error *error);

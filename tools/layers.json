@@ -90,6 +90,7 @@
     "library.c": "library",
     "m4b.c": "audio",
     "m4b_metadata.c": "audio",
+    "map.c": "base",
     "memory.c": "base",
     "mp3.c": "audio",
     "navigation.c": "formats",

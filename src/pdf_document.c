@@ -6,13 +6,15 @@ typedef struct {
   unsigned char *data; size_t size,count; exr_pdf_file *file; exr_pdf_page_info *pages; exr_font *font;
   exr_metadata_entry *metadata; size_t metadata_count;
   exr_page_annotation *annotations; size_t annotation_count;
-  exr_pdf_crypt crypt;
+  exr_pdf_crypt crypt; exr_mapping mapping; int mapped;
 } pdf_document;
 static void discard_reader(pdf_document *d) { free(d->pages); d->pages=NULL; exr_pdf_close(d->file); d->file=NULL; }
 static void release(void *context) {
   pdf_document *d=context; if(!d) return; discard_reader(d); exr_font_free(d->font);
   exr_metadata_free(d->metadata,d->metadata_count); exr_page_annotations_free(d->annotations,d->annotation_count);
-  exr_pdf_secret_clear(&d->crypt,sizeof(d->crypt)); free(d->data); free(d);
+  exr_pdf_secret_clear(&d->crypt,sizeof(d->crypt));
+  if(d->mapped) exr_unmap(&d->mapping); else free(d->data);
+  free(d);
 }
 static exr_status reader(pdf_document *d,exr_error *e) {
   exr_status status; size_t count=0;
@@ -225,11 +227,21 @@ static exr_status open_options(const exr_fixed_open_options *input,exr_fixed_ope
   return EXR_OK;
 }
 /* Takes bytes on every path; no second whole-file copy for file-based opens. */
-static exr_status open_owned(unsigned char *data,size_t size,const char *title,const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e) {
+static exr_status open_data(unsigned char *data,size_t size,const char *title,const exr_fixed_open_options *options,
+                            exr_mapping *mapping,int mapped,exr_fixed_document **out,exr_error *e) {
   pdf_document *d=NULL; exr_fixed_page *pages=NULL; exr_fixed_input input={0}; exr_status status; size_t i;
-  if(exr_control_cancel(&options->control,e)!=EXR_OK) { free(data); return EXR_CANCELLED; }
-  d=calloc(1,sizeof(*d)); if(!d) { free(data); return exr_fail(e,EXR_MEMORY,"PDF document allocation failed"); }
-  d->data=data; d->size=size; d->font=options->fallback_font; exr_font_ref(d->font);
+  if(exr_control_cancel(&options->control,e)!=EXR_OK) {
+    if(mapped) exr_unmap(mapping); else free(data);
+    return EXR_CANCELLED;
+  }
+  d=calloc(1,sizeof(*d));
+  if(!d) {
+    if(mapped) exr_unmap(mapping); else free(data);
+    return exr_fail(e,EXR_MEMORY,"PDF document allocation failed");
+  }
+  d->data=data; d->size=size; d->mapped=mapped;
+  if(mapped) { d->mapping=*mapping; memset(mapping,0,sizeof(*mapping)); }
+  d->font=options->fallback_font; exr_font_ref(d->font);
   status=exr_pdf_open_password(data,size,options->pdf_password,options->pdf_password_size,NULL,&options->control,&d->file,e);
   if(status==EXR_ARGUMENT) status=exr_fail(e,EXR_FORMAT,"Invalid PDF bytes");
   if(status!=EXR_OK) goto done;
@@ -268,10 +280,23 @@ exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
   if(exr_control_cancel(&options.control,e)!=EXR_OK) return EXR_CANCELLED;
   copy=malloc(size); if(!copy) return exr_fail(e,EXR_MEMORY,"Fixed input copy allocation failed"); memcpy(copy,data,size);
   if(format==EXR_CBZ) return exr_cbz_open_owned(copy,size,"",&options,out,e);
-  return open_owned(copy,size,"",&options,out,e);
+  return open_data(copy,size,"",&options,NULL,0,out,e);
+}
+/* Takes ownership of mapping on every path. Used by the streaming library for
+   a stored PDF whose bytes were paged into an anonymous mapping. */
+exr_status exr_fixed_open_mapped(exr_format format,exr_mapping *mapping,const exr_fixed_open_options *input,
+                                 exr_fixed_document **out,exr_error *e) {
+  exr_fixed_open_options options; exr_status status;
+  if(out) *out=NULL;
+  if(!mapping || !mapping->address || !mapping->size) return exr_fail(e,EXR_ARGUMENT,"Invalid mapped fixed document");
+  if(format!=EXR_PDF) { exr_unmap(mapping);return exr_fail(e,EXR_UNSUPPORTED,"Mapped fixed reading is available for PDF"); }
+  if(!out) { exr_unmap(mapping);return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output"); }
+  status=open_options(input,&options,e);
+  if(status!=EXR_OK) { exr_unmap(mapping);return status; }
+  return open_data((unsigned char *)mapping->address,mapping->size,"",&options,mapping,1,out,e);
 }
 exr_status exr_fixed_open(const char *path,const exr_fixed_open_options *input,exr_fixed_document **out,exr_error *e) {
-  exr_fixed_open_options options; unsigned char *data=NULL; size_t size=0; exr_status status; const char *title,*at;
+  exr_fixed_open_options options; unsigned char *data=NULL; size_t size=0; exr_status status; const char *title,*at; exr_mapping mapping={0};
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output");
   *out=NULL; if(!path) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document path");
   status=open_options(input,&options,e); if(status!=EXR_OK) return status;
@@ -279,6 +304,8 @@ exr_status exr_fixed_open(const char *path,const exr_fixed_open_options *input,e
   title=path; for(at=path;*at;at++) if(*at=='/' || *at=='\\') title=at+1;
   at=strrchr(title,'.');
   if(at && (at[0]=='.' && (at[1]=='c' || at[1]=='C') && (at[2]=='b' || at[2]=='B') && (at[3]=='z' || at[3]=='Z') && !at[4])) return exr_cbz_open_file(path,title,&options,out,e);
+  status=exr_map_file(path,&mapping,e);
+  if(status==EXR_OK) return open_data((unsigned char *)mapping.address,mapping.size,title,&options,&mapping,1,out,e);
   status=exr_read(path,&data,&size,e); if(status!=EXR_OK) return status;
-  return open_owned(data,size,title,&options,out,e);
+  return open_data(data,size,title,&options,NULL,0,out,e);
 }

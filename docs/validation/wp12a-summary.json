@@ -24,6 +24,13 @@
       "matrix": "11 still cases + animation/multipage + truncated/badmagic/huge/expansion per format",
       "regression": "native-image-formats, native-cbz-formats, native-cbz",
       "tiff": "pass",
+      "transparency": {
+        "avif": "alpha plane",
+        "bmp": "32-bit BITMAPV4 alpha",
+        "gif": "transparency index",
+        "tiff": "ExtraSamples alpha",
+        "webp": "lossless alpha"
+      },
       "webp": "pass"
     },
     "frame_page_rules": {
@@ -35,16 +42,26 @@
     "large_media": {
       "book_bytes": 1073742306,
       "ceiling": 33554432,
-      "legacy_64MiB_baseline_added_private": 67444736,
+      "duplicate_seconds": 16.03747,
+      "first_import_seconds": 16.074905,
+      "legacy_64MiB_baseline_added_private": 67489792,
+      "pdf_path": "mapped metadata input + anonymous pagefile mapping for stored PDF; small PDF import/dedup/reopen covered by native-library-stream",
+      "process_peak_private": 1097728,
+      "process_peak_working": 6025216,
       "status": "pass",
-      "stream_added_private_peak": 4595712,
-      "transaction_cancel_read_failure_lock": "native-library-stream",
+      "stream_added_private_peak": 4657152,
+      "streaming_formats": [
+        "EXR_CBZ",
+        "EXR_PDF"
+      ],
+      "transaction_cancel_read_failure_lock": "native-library-stream (cancel, source I/O failure, exclusive lock, read-only database)",
       "wav_bytes": 1073741868
     },
     "linux_sanitizer": {
       "reason": "validation host has no Linux, WSL or container runtime; mainline CI owns ASan/UBSan",
       "status": "not run"
     },
+    "per_case_evidence": "docs/validation/wp12a-image-formats.json includes cases[] with file, bytes, sha256, dimensions, pages, expected class and pass result",
     "static_components": {
       "examples": [
         "compat",
@@ -93,7 +110,9 @@
     "streaming_library": [
       "src/library.c",
       "include/exr/library.h",
-      "src/pdf_internal.h"
+      "src/pdf_internal.h",
+      "src/map.c",
+      "src/pdf_document.c"
     ],
     "tests": [
       "tests/test_image_formats.c",
@@ -119,8 +138,9 @@
   },
   "unmet_or_deferred": [
     "Linux ASan/UBSan was not run on this host; no Linux/WSL/container runtime is available.",
-    "Streaming source import currently accepts CBZ originals only; other formats return EXR_UNSUPPORTED and keep the existing in-memory APIs.",
+    "Streaming source import accepts CBZ and file import accepts PDF; EPUB/MOBI/DOCX/RTF/FB2/HTML remain on the existing in-memory APIs.",
     "AVIF builds require Perl for libaom RTCD generation; configure fails with an instruction to install Perl or disable AVIF.",
+    "The 1 GiB audio measurement uses WAV; FLAC/MP3/AAC/M4B retain bounded random-access implementations but were not measured with 1 GiB files.",
     "Mobile audio session/background/device acceptance remains outside WP12a and unchanged."
   ],
   "version_contract": {

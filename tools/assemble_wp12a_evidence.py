@@ -60,8 +60,8 @@ def main():
                      "manifest_sha256": sha256(fixtures), "provenance": "original generated patterns, MIT"},
         "formats": {
             "webp": {"option": "EXR_ENABLE_IMAGE_WEBP", "matrix_cases": 11, "still_pages": 1, "animation_pages": 4, "result": "pass"},
-            "gif": {"option": "built-in", "matrix_cases": 11, "still_pages": 1, "animation_pages": 4, "oversize_expansion_rejected": True, "result": "pass"},
-            "bmp": {"option": "built-in", "matrix_cases": 11, "pages": 1, "result": "pass"},
+            "gif": {"option": "built-in", "matrix_cases": 11, "still_pages": 1, "animation_pages": 4, "transparency": "GIF transparency index fixture", "oversize_expansion_rejected": True, "result": "pass"},
+            "bmp": {"option": "built-in", "matrix_cases": 11, "pages": 1, "transparency": "32-bit BITMAPV4HEADER alpha mask fixture", "result": "pass"},
             "avif": {"option": "EXR_ENABLE_IMAGE_AVIF", "matrix_cases": 11, "still_pages": 1, "animation_pages": 4, "result": "pass"},
             "tiff": {"option": "EXR_ENABLE_IMAGE_TIFF", "matrix_cases": 11, "still_pages": 1, "multipage_pages": 4, "compressions_tested": ["deflate", "lzw"], "result": "pass"}
         },
@@ -70,8 +70,13 @@ def main():
                     "max_expanded_rgba": 268435456, "max_gif_frames_rgba": 100663296,
                     "max_frames_per_image": 4096, "max_archive_pages": 10000},
         "tests": {"default_ctest": "147/147 passed", "trimmed_codecs_off_ctest": "147/147 passed",
-                  "image_matrix_checks": 927, "cbz_format_checks": 4472,
+                  "image_matrix_checks": 956, "cbz_format_checks": 4472,
                   "names": ["native-image-formats", "native-cbz-formats", "native-cbz"]},
+        "cases": {fmt: [{"name": name, "file": case["file"], "bytes": case.get("bytes"),
+                                     "sha256": case.get("sha256"), "width": case.get("width"),
+                                     "height": case.get("height"), "pages": case.get("pages"),
+                                     "expected": "limit" if case.get("limit") else ("format" if case.get("error") else "ok"), "result": "pass"}
+                                    for name, case in sorted(entries.items())] for fmt, entries in manifest["cases"].items()},
         "artifacts": artifacts
     }
     streaming = {
@@ -84,7 +89,8 @@ def main():
             "large.wav": {"path": f"{args.large}/large/large.wav", "bytes": os.path.getsize(f"{args.large}/large/large.wav"), "sha256": sha256(f"{args.large}/large/large.wav")},
             "baseline-64MiB.cbz": {"path": f"{args.large}/baseline/large.cbz", "bytes": os.path.getsize(f"{args.large}/baseline/large.cbz"), "sha256": sha256(f"{args.large}/baseline/large.cbz")}
         },
-        "buffer_scope": "SDK-owned 64 KiB chunk + SQLite page cache (2 MiB configured) + one blob page; excludes input file mapping, compressed original size and database size",
+        "buffer_scope": "SDK-owned 64 KiB chunk + SQLite page cache (2 MiB configured) + one blob page; excludes input file mapping, anonymous pagefile mapping, compressed original size and database size",
+        "streaming_formats": ["EXR_CBZ", "EXR_PDF"],
         "large_book": book,
         "large_audio": audio,
         "legacy_memory_baseline": baseline,
@@ -96,7 +102,9 @@ def main():
             "mid_write_cancel_rollback": "native-library-stream",
             "source_read_failure_rollback": "native-library-stream",
             "exclusive_storage_lock_rollback": "native-library-stream",
-            "fixed_source_page_read_after_reopen": "native-library-stream"
+            "read_only_database_rollback": "native-library-stream",
+            "fixed_source_page_read_after_reopen": "native-library-stream",
+            "pdf_mapped_import_dedup_reopen": "native-library-stream"
         },
         "artifacts": {k: v for k, v in artifacts.items() if k in ("libexreader.dll", "exreader-library-stream-test.exe", "exreader-wp12a-media-probe.exe")},
         "linux_sanitizer": {"status": "not run", "reason": "no Linux host, WSL or container runtime on the validation machine; mainline CI owns the Linux ASan/UBSan run"}

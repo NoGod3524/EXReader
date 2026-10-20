@@ -3,6 +3,11 @@
 #include <miniz.h>
 #include <sqlite3.h>
 #include <stdio.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/stat.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 static exr_error error;static unsigned checks;
@@ -33,7 +38,7 @@ static int64_t count_books(exr_library *library) { exr_book *books=NULL;size_t n
 int main(int argc,char **argv) {
   char path[4096];void *bytes;size_t size,n=0;int64_t id=0,dup=0;int created=0;
   exr_library *library=NULL;exr_source source={0};memory_source memory={0};exr_fixed_document *doc=NULL;exr_bitmap bitmap={0};
-  CHECK(argc==3);
+  CHECK(argc==4);
   bytes=archive(argv[1],&size,2*1024*1024);CHECK(bytes && size>1024*1024);
   snprintf(path,sizeof(path),"%s/stream.sqlite",argv[2]);remove(path);
   OK(exr_library_open(path,&library,&error));
@@ -77,5 +82,35 @@ int main(int argc,char **argv) {
   OK(exr_library_open(path,&library,&error));CHECK(count_books(library)==1);
   OK(exr_library_fixed_source(library,id,NULL,&doc,&error));CHECK(doc && exr_fixed_pages(doc,&n) && n==1);exr_fixed_free(doc);doc=NULL;
   exr_library_close(library);
+  /* A read-only database is a storage failure: the transaction rolls back. */
+  { char dbpath[4096];snprintf(dbpath,sizeof(dbpath),"%s/stream.sqlite",argv[2]);
+#ifdef _WIN32
+    CHECK(SetFileAttributesA(dbpath,FILE_ATTRIBUTE_READONLY));
+#else
+    CHECK(chmod(dbpath,0444)==0);
+#endif
+    OK(exr_library_open(dbpath,&library,&error));
+    memory.reads=0;memory.cancel_after=0;memory.fail_at=(size_t)-1;
+    CHECK(exr_library_import_source(library,EXR_CBZ,&source,"Readonly",&dup,&error)==EXR_DATABASE);
+    exr_library_close(library);
+#ifdef _WIN32
+    CHECK(SetFileAttributesA(dbpath,FILE_ATTRIBUTE_NORMAL));
+#else
+    CHECK(chmod(dbpath,0644)==0);
+#endif
+    OK(exr_library_open(dbpath,&library,&error));CHECK(count_books(library)==1);
+  }
+  exr_library_close(library);
+  /* PDF uses mapped files for metadata and an anonymous pagefile mapping for
+     re-reading the stored blob; neither path materializes a heap-sized copy. */
+  { char pdfpath[4096],pdfdb[4096];exr_library *pdf=NULL;exr_fixed_document *pdoc=NULL;size_t pdf_pages=0;int64_t pdfid=0,pdfdup=0;int pdf_created=0;
+    snprintf(pdfpath,sizeof(pdfpath),"%s",argv[3]);snprintf(pdfdb,sizeof(pdfdb),"%s/pdf-stream.sqlite",argv[2]);remove(pdfdb);
+    OK(exr_library_open(pdfdb,&pdf,&error));
+    OK(exr_library_import_file_unique(pdf,EXR_PDF,pdfpath,"PDF stream",&pdfid,&pdf_created,&error));CHECK(pdfid>0 && pdf_created);
+    OK(exr_library_import_file_unique(pdf,EXR_PDF,pdfpath,"PDF stream",&pdfdup,&created,&error));CHECK(pdfdup==pdfid && !created);
+    OK(exr_library_fixed_source(pdf,pdfid,NULL,&pdoc,&error));CHECK(exr_fixed_pages(pdoc,&pdf_pages) && pdf_pages>0);exr_fixed_free(pdoc);
+    exr_library_close(pdf);OK(exr_library_open(pdfdb,&pdf,&error));OK(exr_library_fixed_source(pdf,pdfid,NULL,&pdoc,&error));
+    CHECK(exr_fixed_pages(pdoc,&pdf_pages) && pdf_pages>0);exr_fixed_free(pdoc);exr_library_close(pdf);
+  }
   free(bytes);printf("%u streaming library checks passed\n",checks);return 0;
 }

@@ -14,7 +14,7 @@
         "file": "tests/fixtures/images/avif/animation.avif",
         "height": 8,
         "pages": 4,
-        "sha256": "564ae43bb6495d560a0d2855a276b86a563efa956ae779ce40d9914c3aef1842",
+        "sha256": "6937242ace2f0e8d8f91bddb8b9b0e0b0dbbcb6db26b170466df86ef7c30e4a6",
         "width": 8
       },
       "badmagic": {
@@ -118,6 +118,14 @@
         "pages": 1,
         "sha256": "cd8fd2f65d599cc67cd8e5e689776b932db2c1102bdfdf9050b96ecdf5104871",
         "width": 8
+      },
+      "alpha32": {
+        "bytes": 222,
+        "file": "tests/fixtures/images/bmp/alpha32.bmp",
+        "height": 5,
+        "pages": 1,
+        "sha256": "300676d52773957e3b426e6085d7e1299f1728c266a4f3c98f0caeb152a96c24",
+        "width": 5
       },
       "badmagic": {
         "bytes": 12,
@@ -300,11 +308,11 @@
         "width": 1
       },
       "transparent": {
-        "bytes": 134,
+        "bytes": 819,
         "file": "tests/fixtures/images/gif/transparent.gif",
         "height": 5,
         "pages": 1,
-        "sha256": "e2a7359d363261f9f4bb82272ac11c962480d61ea738ec3146118963be302572",
+        "sha256": "c3acb5e5e3940746d0fd2737d78a580d820800edded06adab76f657e30042f88",
         "width": 5
       },
       "truncated": {
