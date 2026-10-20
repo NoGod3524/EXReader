@@ -1,0 +1,5006 @@
+{
+  "schema": 1,
+  "package": "WP12-lite",
+  "kind": "conversion-matrix",
+  "environment": {
+    "source_commit": "de01129c55134d76d808dbc3744a0607c6ab5d7e",
+    "worktree_dirty": false,
+    "engine_version": "3.38.2",
+    "abi": 1,
+    "platform": "Windows x64",
+    "python": "3.14.7",
+    "gcc": "16.2.0 (WinLibs POSIX UCRT)",
+    "cmake": "4.4.2",
+    "tools": {
+      "native-convert": "tests/test_convert.c",
+      "native-convert-cli": "tests/check_convert_cli.py",
+      "native-convert-benchmark": "tests/check_convert_benchmark.py"
+    }
+  },
+  "corpus": {
+    "generator": "tools/generate_conversion_corpus.py",
+    "license": "MIT; all text original; font tests/fixtures/fonts/primary.ttf (MIT)",
+    "font": {
+      "path": "tests/fixtures/fonts/primary.ttf",
+      "sha256": "ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed"
+    },
+    "entries": 101,
+    "input_hashes": [
+      {
+        "path": "text/txt/ascii.txt",
+        "sha256": "64ad119fcba8f5124b0af0d3f6759333b41015e45fc8112a93d1a9e64a780219",
+        "bytes": 137
+      },
+      {
+        "path": "text/txt/chinese.txt",
+        "sha256": "01486e21380f0fe3cf29ca226708434e665bb966af3a40678fbc1c21c8386edd",
+        "bytes": 157
+      },
+      {
+        "path": "text/txt/rtl.txt",
+        "sha256": "c0bea052fcb1485c169616c1093f819d61423ab64d54338dc73226f64d2d4371",
+        "bytes": 197
+      },
+      {
+        "path": "text/txt/supplementary.txt",
+        "sha256": "143e6b9dd0f39701973f11e10e30213c8949ae70f4dc35cd63b9fdd71e05d781",
+        "bytes": 167
+      },
+      {
+        "path": "text/txt/special.txt",
+        "sha256": "9872dab83c31d96c8f5dc483a68340351344857b14ec9febc584b8c50547b39b",
+        "bytes": 163
+      },
+      {
+        "path": "text/txt/whitespace.txt",
+        "sha256": "b1dcb3e85eb1ee92a11b207b832ffc4b6893fbece1ab9e7895cf9c7acba768f8",
+        "bytes": 182
+      },
+      {
+        "path": "text/txt/structure.txt",
+        "sha256": "42c1cbb8e4f2e5fc35c0ea4b3c59ef817bf9b9c43c46373a935c327ebaa6e189",
+        "bytes": 131
+      },
+      {
+        "path": "text/txt/multichapter.txt",
+        "sha256": "7b6b1fd9baaeeced21252d6a3d081cc5426d1e15f0deb76e10651c2fe97ec571",
+        "bytes": 113
+      },
+      {
+        "path": "text/txt/long.txt",
+        "sha256": "c1735552b23e67b3e7c71db6fcf366d7fd8751e6ff193cb64a75091f77fed83d",
+        "bytes": 231
+      },
+      {
+        "path": "text/txt/metadata.txt",
+        "sha256": "ecef45366eabcf13297542b8d82356cf7fd3670b2a8e18cb43202203d8b007b5",
+        "bytes": 167
+      },
+      {
+        "path": "text/html/ascii.html",
+        "sha256": "192b790c11569654f891f34d8fff4fcc7b69ba9cca54e92671fe121878802ea2",
+        "bytes": 376
+      },
+      {
+        "path": "text/html/chinese.html",
+        "sha256": "a8ebccd9509a306ba437d0c474cd148d8225fb7fb1495ab084016f5058b8c76b",
+        "bytes": 391
+      },
+      {
+        "path": "text/html/rtl.html",
+        "sha256": "b747e636629ea01ce63a262767f8770c7e028493a0df2e54a8427331e561937b",
+        "bytes": 440
+      },
+      {
+        "path": "text/html/supplementary.html",
+        "sha256": "9cf82529e5ecbb0b5ba6837dab2607406b3e9c5b276e28b2d669782ff489db85",
+        "bytes": 398
+      },
+      {
+        "path": "text/html/special.html",
+        "sha256": "ee5dbbef4a3e44935ab88c984367b1c14f9d4f49f300ad18d89f3503506cf310",
+        "bytes": 422
+      },
+      {
+        "path": "text/html/whitespace.html",
+        "sha256": "c5de8fc05e453b72ed55634beb50a928ab57ff48805d6772c449994f8d3ee983",
+        "bytes": 425
+      },
+      {
+        "path": "text/html/structure.html",
+        "sha256": "07f48e78e07dfaaef352f529009a826cc43b619ebd57755a46ad8ee4abfc9ccb",
+        "bytes": 370
+      },
+      {
+        "path": "text/html/multichapter.html",
+        "sha256": "56e4e2327aa4e8806581fb455e22c18a774aad2b6ca91cead5b04c9cbac9536b",
+        "bytes": 483
+      },
+      {
+        "path": "text/html/long.html",
+        "sha256": "b5bd3d7843f285172912c5b08d605710f3caef054d586596fb331120458a4b6a",
+        "bytes": 465
+      },
+      {
+        "path": "text/html/metadata.html",
+        "sha256": "cb292274ff460bf555fa02c4dafe2f78ea5b980c55999cdf1d7fa0e6437e05a1",
+        "bytes": 437
+      },
+      {
+        "path": "text/fb2/ascii.fb2",
+        "sha256": "a72daa67b6339bbf047af0611df4f3bf0dc4d6bd716dc18d8e2d7d3efa325152",
+        "bytes": 496
+      },
+      {
+        "path": "text/fb2/chinese.fb2",
+        "sha256": "7726f77e10cd7e5fb46091026349b2ca71fe4e9ec65e310e1080efb76631b12c",
+        "bytes": 516
+      },
+      {
+        "path": "text/fb2/rtl.fb2",
+        "sha256": "09f60fcd84fda58630995c188851cc449f3d819f2e927313f2646dc23e886326",
+        "bytes": 556
+      },
+      {
+        "path": "text/fb2/supplementary.fb2",
+        "sha256": "b3e2723f6f818598132caf0f33f67069a22c90af2123f1554bdad6138f47d9a0",
+        "bytes": 526
+      },
+      {
+        "path": "text/fb2/special.fb2",
+        "sha256": "6f0e356af077e54ef27d612eeedb4274091bb7174af84f495ec97a17ae55b1a2",
+        "bytes": 540
+      },
+      {
+        "path": "text/fb2/whitespace.fb2",
+        "sha256": "1954b24e13ba66bc42260b90ae62701bf5af2d9a35f5766d03b634804c995ab6",
+        "bytes": 546
+      },
+      {
+        "path": "text/fb2/structure.fb2",
+        "sha256": "72b4edbe62ad9dcf2421db3767dc6f575c2da672f76bf0ffb70fc132ef56eba6",
+        "bytes": 490
+      },
+      {
+        "path": "text/fb2/multichapter.fb2",
+        "sha256": "820bcbd2c27af79c4be51bcf1fc89c60f7cfddfc711cc8daab444f8285f996aa",
+        "bytes": 584
+      },
+      {
+        "path": "text/fb2/long.fb2",
+        "sha256": "5548d5e172708e5244041a5e582af78043d1f9bb0aec02b31093091c927fd9c8",
+        "bytes": 590
+      },
+      {
+        "path": "text/fb2/metadata.fb2",
+        "sha256": "60c9f3d5764f2b7b649e5eacee8f90868b45a1547821b14ff0c7d5a14b0159d4",
+        "bytes": 546
+      },
+      {
+        "path": "text/epub/ascii.epub",
+        "sha256": "158ca59c73cd53c774f8d938eeb51f367e364c8852f9fb2b7dd64df5201f235a",
+        "bytes": 1709
+      },
+      {
+        "path": "text/epub/chinese.epub",
+        "sha256": "878e15bc18990412286b697c3fb25f6ec8db625ee5166939dfbc19a4616cc5cd",
+        "bytes": 1801
+      },
+      {
+        "path": "text/epub/rtl.epub",
+        "sha256": "62614d7f90a7b580c1fa336febbc24084a775f9ce521883515f37a835e45a8dc",
+        "bytes": 1799
+      },
+      {
+        "path": "text/epub/supplementary.epub",
+        "sha256": "9deded14a90d60ef6f3d816ce1651d6854b356c1e5e4a3451c9999c52cdf339a",
+        "bytes": 1768
+      },
+      {
+        "path": "text/epub/special.epub",
+        "sha256": "66544226e4d21b7e2c5188bccd172beb908419ddea51ead76553e6d6800708e8",
+        "bytes": 1755
+      },
+      {
+        "path": "text/epub/whitespace.epub",
+        "sha256": "4d885297913ddfa342a048391d813ce10fb115be624450490badad42cf73020d",
+        "bytes": 1736
+      },
+      {
+        "path": "text/epub/structure.epub",
+        "sha256": "241b2deff8d5bd1ca6aca6b2817c051e3f8538dae13479f5c352cd2198ae030c",
+        "bytes": 1697
+      },
+      {
+        "path": "text/epub/multichapter.epub",
+        "sha256": "c137eafa8ab3ea1a376becc94cc03b4ea18d4ad902eceb0d5e6709ff07b789ce",
+        "bytes": 2326
+      },
+      {
+        "path": "text/epub/long.epub",
+        "sha256": "9cbae81d1fa2734bb46658a97c1f5c83e82e0807917739bccb48a52782166e67",
+        "bytes": 1817
+      },
+      {
+        "path": "text/epub/metadata.epub",
+        "sha256": "267a1739ca666376e7f5c228211fd87e86d63ff25007d07dd7c17f1b5474b3d2",
+        "bytes": 1764
+      },
+      {
+        "path": "text/docx/ascii.docx",
+        "sha256": "30043d76bb70948b72a65fd979fe0001933b8f9bc3d353924cab136dadd3e78f",
+        "bytes": 982
+      },
+      {
+        "path": "text/docx/chinese.docx",
+        "sha256": "3465c604e04e6cb33dfc48dbc0271d1df002a37011f220aa0cf541bd530cc8ff",
+        "bytes": 1061
+      },
+      {
+        "path": "text/docx/rtl.docx",
+        "sha256": "860de5ed5f434f29cf92543236cf1df5c884912c7af181549b7440c2dfd76969",
+        "bytes": 1055
+      },
+      {
+        "path": "text/docx/supplementary.docx",
+        "sha256": "76b8b8197f96eb65b76ca449f83e3f8d1195b72a4c8b6a570ebb793e3ec11d2a",
+        "bytes": 1047
+      },
+      {
+        "path": "text/docx/special.docx",
+        "sha256": "8898c1ced7c36b6413992aea484b97b60446756f2e1362145663f64dd5cbada2",
+        "bytes": 1021
+      },
+      {
+        "path": "text/docx/whitespace.docx",
+        "sha256": "47a8ad3a49cacfce72f7e951ae01ab81f51aef8fc0146feeee9c28d083115d56",
+        "bytes": 1005
+      },
+      {
+        "path": "text/docx/structure.docx",
+        "sha256": "8c7b62758539eaf09de76503f51f3d956664df724dca131620676982acdccb2b",
+        "bytes": 972
+      },
+      {
+        "path": "text/docx/multichapter.docx",
+        "sha256": "2890ceb8853329fbe6321d3c2677fd83ebbfe95fc18e5e020b7fffc94c6d4034",
+        "bytes": 968
+      },
+      {
+        "path": "text/docx/long.docx",
+        "sha256": "3190fa8e4ad2d7e7d8c1f53c925a8be0e77628f32a0ac240a9bf19416571a0b5",
+        "bytes": 1095
+      },
+      {
+        "path": "text/docx/metadata.docx",
+        "sha256": "a9441d5c9027c2d5d6f0b8b1950e326256e9f45839dec67381bd17ccde518f0b",
+        "bytes": 1020
+      },
+      {
+        "path": "text/rtf/ascii.rtf",
+        "sha256": "f651651dd2b589b16a0f72ef5240fc80851d70c8891b4f136ebb615124401d08",
+        "bytes": 223
+      },
+      {
+        "path": "text/rtf/chinese.rtf",
+        "sha256": "4c507cdfb98cd5870181da3508ac8df4d6334386ef4667a35ad0993783e6c2cb",
+        "bytes": 505
+      },
+      {
+        "path": "text/rtf/rtl.rtf",
+        "sha256": "c29b548f9435d7c8b4a8c2bdaad11d7160372ed336876abf473216c59f181f6e",
+        "bytes": 713
+      },
+      {
+        "path": "text/rtf/supplementary.rtf",
+        "sha256": "dbc6e9ad5b6989a618f115ab08b9c7e04eac1298d1ae8c3bce0bc1709cd84a92",
+        "bytes": 388
+      },
+      {
+        "path": "text/rtf/special.rtf",
+        "sha256": "28ae750de88bb9e528047c9e0f552c75406f073c636165298e2727f0303d2b01",
+        "bytes": 254
+      },
+      {
+        "path": "text/rtf/whitespace.rtf",
+        "sha256": "a71e9a95623628dd3a5654a7fad0139b0fc5c76f15851dcf8a9e6cd23a4efb75",
+        "bytes": 271
+      },
+      {
+        "path": "text/rtf/structure.rtf",
+        "sha256": "c2984663eab735e8ccf11ce2cde292c868bf26a4e3cdd3866796f44da8ceaaff",
+        "bytes": 217
+      },
+      {
+        "path": "text/rtf/multichapter.rtf",
+        "sha256": "994a55ef477c6b430b8cdaa43fd5a5ea64b009c878fdf300eca0a6490700aa4c",
+        "bytes": 255
+      },
+      {
+        "path": "text/rtf/long.rtf",
+        "sha256": "e4ee16b06f1de9172790724be375f6af53b36a92e02e7212ae39093acd066bca",
+        "bytes": 429
+      },
+      {
+        "path": "text/rtf/metadata.rtf",
+        "sha256": "e92bdbeae65066df605a7d8804cab359f0b3ed64eba613b7634d6eab5a1dda9e",
+        "bytes": 258
+      },
+      {
+        "path": "preserve/epub/ascii.epub",
+        "sha256": "af64492921d89c44902e9ee58495211422bf2cf2186375674a2635fbbcc9a036",
+        "bytes": 3968
+      },
+      {
+        "path": "preserve/epub/chinese.epub",
+        "sha256": "503d25ff0c5ad0bc154f5496847298067d54858914388d5bec527ee52203c68c",
+        "bytes": 4085
+      },
+      {
+        "path": "preserve/epub/rtl.epub",
+        "sha256": "a4fb85f4c801261cd531ffa541ba96899efeed221e8366498a7e1953b3ecc269",
+        "bytes": 4082
+      },
+      {
+        "path": "preserve/epub/supplementary.epub",
+        "sha256": "eb45d81eddfa53c60efd83658e38388e87037efaf13afb088b39b8f2a9b4758b",
+        "bytes": 4015
+      },
+      {
+        "path": "preserve/epub/special.epub",
+        "sha256": "1b7666d7b267c1f40b94bff41c7e0b980f30b9874099de564056ee360eb0018d",
+        "bytes": 4012
+      },
+      {
+        "path": "preserve/epub/whitespace.epub",
+        "sha256": "c5dd7ae6ecd6bc8d8df65e75352147146b988c68309f87577f5357c13f3470aa",
+        "bytes": 3988
+      },
+      {
+        "path": "preserve/epub/structure.epub",
+        "sha256": "d604044f55bd6f633b27df56827586a5bde68b556f07e702a21ef26fe9a9cb0f",
+        "bytes": 3936
+      },
+      {
+        "path": "preserve/epub/multichapter.epub",
+        "sha256": "db251dab03348938bb805f5a84cefcd26b9a4422dcf6bb34ee5142fe2f48a1b3",
+        "bytes": 3839
+      },
+      {
+        "path": "preserve/epub/long.epub",
+        "sha256": "20dda7afa82c19f41147bca22e62c37ea7936bd68ffc82a803a3ed896a48ba25",
+        "bytes": 4065
+      },
+      {
+        "path": "preserve/epub/metadata.epub",
+        "sha256": "1906ca40e9541c63846bfb3ed26a02666d24152422176652b404f13a778fc675",
+        "bytes": 4053
+      },
+      {
+        "path": "preserve/xhtml/ascii.xhtml",
+        "sha256": "7b6b7f06356e868a8f23e9038569a7a22ab100b01443a2ea910c35e71fc3b6df",
+        "bytes": 862
+      },
+      {
+        "path": "preserve/xhtml/chinese.xhtml",
+        "sha256": "0353a1a1647cb062c40f511b059654813b1672058b64c8d33e8cd852b67f4c8b",
+        "bytes": 877
+      },
+      {
+        "path": "preserve/xhtml/rtl.xhtml",
+        "sha256": "66490d71848bf11f5d8818d35d89529ca0744d1be187dc1cab89a225f70fce52",
+        "bytes": 926
+      },
+      {
+        "path": "preserve/xhtml/supplementary.xhtml",
+        "sha256": "3ef28c5e01c10deda2a06358f566484ff4e975575930b6feb76827109ba70506",
+        "bytes": 884
+      },
+      {
+        "path": "preserve/xhtml/special.xhtml",
+        "sha256": "bb097713eac082d040b244138f03b7b5801b6d6289907d52db9cd2df4aa8e702",
+        "bytes": 908
+      },
+      {
+        "path": "preserve/xhtml/whitespace.xhtml",
+        "sha256": "c1393364ce8fd072d9a8879b99c8a79959819ba64f691f5157846f2646f32390",
+        "bytes": 911
+      },
+      {
+        "path": "preserve/xhtml/structure.xhtml",
+        "sha256": "067a60f4957585f77a8a8e1ec48513265ac5a03d4052fce0271ae5d825080a76",
+        "bytes": 856
+      },
+      {
+        "path": "preserve/xhtml/multichapter.xhtml",
+        "sha256": "9616bc39e870a1630a0cab12f2f1fa4056d0e89a76bea05d920bba6cf2b379cd",
+        "bytes": 831
+      },
+      {
+        "path": "preserve/xhtml/long.xhtml",
+        "sha256": "6d2d3d123544a78b045f2e60ddab058c3f7736b37c6cef5b1d84712fddb5c528",
+        "bytes": 951
+      },
+      {
+        "path": "preserve/xhtml/metadata.xhtml",
+        "sha256": "5725148d5db7fe808dad802763c0783965802a690c784840953f5d22aae5d0da",
+        "bytes": 923
+      },
+      {
+        "path": "mobile/mobi/mobi-01.mobi",
+        "sha256": "2a3d3b81e652a6ef7a7daedb131d0ec38827e431ffc6e3b8a4c1bf2ee8510bed",
+        "bytes": 279
+      },
+      {
+        "path": "mobile/mobi/mobi-02.mobi",
+        "sha256": "a37d4964b7f19dc74cdb34c4c41e3f23f96bb9f2cf1e77040b5c14a5df942474",
+        "bytes": 3015
+      },
+      {
+        "path": "mobile/mobi/mobi-03.mobi",
+        "sha256": "e2c4fe9c1cfa9bdcc468ea4ca7c94ad9e7abdc84440f12f171f9d9c08366222d",
+        "bytes": 3175
+      },
+      {
+        "path": "mobile/mobi/mobi-04.mobi",
+        "sha256": "ea61151c81c6190bd361e2f0e367ae9c0654b5ea0004badab35304692ae2b59d",
+        "bytes": 3023
+      },
+      {
+        "path": "mobile/mobi/mobi-05.mobi",
+        "sha256": "841fe4f9c3b5451ef2aefe3dd2222abd42e29569d00ee12b608689ca0b9e8b0a",
+        "bytes": 3029
+      },
+      {
+        "path": "mobile/mobi/mobi-06.mobi",
+        "sha256": "5a9c4cea388f4323a893ac110c9aa70641df3fdd46b11f502b63d290dea8faec",
+        "bytes": 407
+      },
+      {
+        "path": "mobile/mobi/mobi-07.mobi",
+        "sha256": "262f3b2fa2fbe44dfa871d58492f9beb3d07ee8027c883811f35a8c268c0f51f",
+        "bytes": 407
+      },
+      {
+        "path": "mobile/mobi/mobi-08.mobi",
+        "sha256": "bbececcdc3a928543fb92c65472fd7ce21a9e552089b0de8037ef998af6846b3",
+        "bytes": 2965
+      },
+      {
+        "path": "mobile/mobi/mobi-09.mobi",
+        "sha256": "a3e840e4c83d4c13cf1e32362b5c1fb4548eb5368ed65ebd7ea5974191d712d0",
+        "bytes": 341
+      },
+      {
+        "path": "mobile/mobi/mobi-10.mobi",
+        "sha256": "a62d7395805cb7bfefbcb0be8f914e1609cbf5a5b1a52c346d4f334047a78432",
+        "bytes": 2970
+      },
+      {
+        "path": "mobile/kf8/kf8-01.azw3",
+        "sha256": "3ba6f3e1f8d42f454195fd32170c42362662bce7e786821740eb2b1636bcc047",
+        "bytes": 1512
+      },
+      {
+        "path": "mobile/kf8/kf8-02.azw3",
+        "sha256": "b043a2ae942b2c2f3387cedcf0b468ad52181c7e8e064cf0df13de7a4f12b7c1",
+        "bytes": 2893
+      },
+      {
+        "path": "mobile/kf8/kf8-03.azw3",
+        "sha256": "cb744698ff00295b7c5425659db0ac41df4558427176da3a72ff80c0c09d1e24",
+        "bytes": 1835
+      },
+      {
+        "path": "mobile/kf8/kf8-04.azw3",
+        "sha256": "ed79ab33fabf25b599297ffa0f35130579e75b620f3597a1eeee610532b3b8df",
+        "bytes": 2168
+      },
+      {
+        "path": "mobile/kf8/kf8-05.azw3",
+        "sha256": "a4b0ddd3637d8078487dd8ba2787283986bfe95aa637c3d44cde5d17f17d755a",
+        "bytes": 1569
+      },
+      {
+        "path": "mobile/kf8/kf8-06.azw3",
+        "sha256": "b3b7e52c1fa5ff03b9f990d332267144e1aa690846849c45226d29dbf65d8abe",
+        "bytes": 499
+      },
+      {
+        "path": "mobile/kf8/kf8-07.azw3",
+        "sha256": "92f5c1e0a506e7996a5b0efb58a0c6a324c95a36d35901d2127d50f5013602b7",
+        "bytes": 1358
+      },
+      {
+        "path": "mobile/kf8/kf8-08.azw3",
+        "sha256": "0069c081f82372bcb5fc3c86222d4513cade61f72762f3ff51e19a6afe5992af",
+        "bytes": 1718
+      },
+      {
+        "path": "mobile/kf8/kf8-09.azw3",
+        "sha256": "8875d7ce9aac1a5076b515294da551c65df7832ac53062f7056d6a0a14ac3530",
+        "bytes": 1518
+      },
+      {
+        "path": "mobile/kf8/kf8-10.azw3",
+        "sha256": "3c7d8d085bf7eb022469f9b8ac8d8db45adb9fff427980b87ffb174b67629184",
+        "bytes": 2059
+      },
+      {
+        "path": "long/one-mib.txt",
+        "sha256": "dc7eb6f0d742bf8e7e87dfd54b0bc5bfe7ded61109ac74395b4ff57a89e7f8c5",
+        "bytes": 1048576
+      }
+    ]
+  },
+  "expected": {
+    "text": 360,
+    "mobile": 120,
+    "preserve": 40,
+    "render": 20
+  },
+  "actual": {
+    "text": 360,
+    "mobile": 120,
+    "preserve": 40,
+    "render": 20
+  },
+  "passed": {
+    "text": 360,
+    "mobile": 120,
+    "preserve": 40,
+    "render": 20
+  },
+  "rejected": 0,
+  "unfinished": 0,
+  "text_combos": [
+    {
+      "input": "txt",
+      "output": "txt",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "txt",
+      "output": "html",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "txt",
+      "output": "fb2",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "txt",
+      "output": "epub",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "txt",
+      "output": "docx",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "txt",
+      "output": "rtf",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "html",
+      "output": "txt",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "html",
+      "output": "html",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "html",
+      "output": "fb2",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "html",
+      "output": "epub",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "html",
+      "output": "docx",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "html",
+      "output": "rtf",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "fb2",
+      "output": "txt",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "fb2",
+      "output": "html",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "fb2",
+      "output": "fb2",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "fb2",
+      "output": "epub",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "fb2",
+      "output": "docx",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "fb2",
+      "output": "rtf",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "epub",
+      "output": "txt",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "epub",
+      "output": "html",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "epub",
+      "output": "fb2",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "epub",
+      "output": "epub",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "epub",
+      "output": "docx",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "epub",
+      "output": "rtf",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "docx",
+      "output": "txt",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "docx",
+      "output": "html",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "docx",
+      "output": "fb2",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "docx",
+      "output": "epub",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "docx",
+      "output": "docx",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "docx",
+      "output": "rtf",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "rtf",
+      "output": "txt",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "rtf",
+      "output": "html",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "rtf",
+      "output": "fb2",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "rtf",
+      "output": "epub",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "rtf",
+      "output": "docx",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "rtf",
+      "output": "rtf",
+      "expected": 10,
+      "passed": 10
+    }
+  ],
+  "mobile_combos": [
+    {
+      "input": "mobi/kf8",
+      "output": "txt",
+      "expected": 20,
+      "passed": 20
+    },
+    {
+      "input": "mobi/kf8",
+      "output": "html",
+      "expected": 20,
+      "passed": 20
+    },
+    {
+      "input": "mobi/kf8",
+      "output": "fb2",
+      "expected": 20,
+      "passed": 20
+    },
+    {
+      "input": "mobi/kf8",
+      "output": "epub",
+      "expected": 20,
+      "passed": 20
+    },
+    {
+      "input": "mobi/kf8",
+      "output": "docx",
+      "expected": 20,
+      "passed": 20
+    },
+    {
+      "input": "mobi/kf8",
+      "output": "rtf",
+      "expected": 20,
+      "passed": 20
+    }
+  ],
+  "preserve_combos": [
+    {
+      "input": "epub",
+      "output": "epub",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "epub",
+      "output": "html",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "xhtml",
+      "output": "epub",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "xhtml",
+      "output": "html",
+      "expected": 10,
+      "passed": 10
+    }
+  ],
+  "cases": [
+    {
+      "case": "txt-ascii",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-ascii",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-ascii",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-ascii",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-ascii",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-ascii",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-chinese",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-chinese",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-chinese",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-chinese",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-chinese",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-chinese",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-rtl",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-rtl",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-rtl",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-rtl",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-rtl",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-rtl",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-supplementary",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-supplementary",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-supplementary",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-supplementary",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-supplementary",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-supplementary",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-special",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-special",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-special",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-special",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-special",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-special",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-whitespace",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-whitespace",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-whitespace",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-whitespace",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-whitespace",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-whitespace",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-structure",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-structure",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-structure",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-structure",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-structure",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-structure",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-multichapter",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-multichapter",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-multichapter",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-multichapter",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-multichapter",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-multichapter",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-long",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-long",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-long",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-long",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-long",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-long",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-metadata",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-metadata",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-metadata",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-metadata",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-metadata",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "txt-metadata",
+      "profile": "text",
+      "input_format": "txt",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-ascii",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-ascii",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-ascii",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-ascii",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-ascii",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-ascii",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-chinese",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-chinese",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-chinese",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-chinese",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-chinese",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-chinese",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-rtl",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-rtl",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-rtl",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-rtl",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-rtl",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-rtl",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-supplementary",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-supplementary",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-supplementary",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-supplementary",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-supplementary",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-supplementary",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-special",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-special",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-special",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-special",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-special",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-special",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-whitespace",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-whitespace",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-whitespace",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-whitespace",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-whitespace",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-whitespace",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-structure",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-structure",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-structure",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-structure",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-structure",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-structure",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-multichapter",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-multichapter",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-multichapter",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-multichapter",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-multichapter",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-multichapter",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-long",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-long",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-long",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-long",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-long",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-long",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-metadata",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-metadata",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-metadata",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-metadata",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-metadata",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "html-metadata",
+      "profile": "text",
+      "input_format": "html",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-ascii",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-ascii",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-ascii",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-ascii",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-ascii",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-ascii",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-chinese",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-chinese",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-chinese",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-chinese",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-chinese",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-chinese",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-rtl",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-rtl",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-rtl",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-rtl",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-rtl",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-rtl",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-supplementary",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-supplementary",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-supplementary",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-supplementary",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-supplementary",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-supplementary",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-special",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-special",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-special",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-special",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-special",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-special",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-whitespace",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-whitespace",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-whitespace",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-whitespace",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-whitespace",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-whitespace",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-structure",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-structure",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-structure",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-structure",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-structure",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-structure",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-multichapter",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-multichapter",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-multichapter",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-multichapter",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-multichapter",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-multichapter",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-long",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-long",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-long",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-long",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-long",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-long",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-metadata",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-metadata",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-metadata",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-metadata",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-metadata",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "fb2-metadata",
+      "profile": "text",
+      "input_format": "fb2",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-ascii",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-ascii",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-ascii",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-ascii",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-ascii",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-ascii",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-chinese",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-chinese",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-chinese",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-chinese",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-chinese",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-chinese",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-rtl",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-rtl",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-rtl",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-rtl",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-rtl",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-rtl",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-supplementary",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-supplementary",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-supplementary",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-supplementary",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-supplementary",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-supplementary",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-special",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-special",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-special",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-special",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-special",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-special",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-whitespace",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-whitespace",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-whitespace",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-whitespace",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-whitespace",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-whitespace",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-structure",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-structure",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-structure",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-structure",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-structure",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-structure",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-multichapter",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-multichapter",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-multichapter",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-multichapter",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-multichapter",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-multichapter",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-long",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-long",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-long",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-long",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-long",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-long",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-metadata",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-metadata",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-metadata",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-metadata",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-metadata",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "epub-metadata",
+      "profile": "text",
+      "input_format": "epub",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-ascii",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-ascii",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-ascii",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-ascii",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-ascii",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-ascii",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-chinese",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-chinese",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-chinese",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-chinese",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-chinese",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-chinese",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-rtl",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-rtl",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-rtl",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-rtl",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-rtl",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-rtl",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-supplementary",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-supplementary",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-supplementary",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-supplementary",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-supplementary",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-supplementary",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-special",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-special",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-special",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-special",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-special",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-special",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-whitespace",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-whitespace",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-whitespace",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-whitespace",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-whitespace",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-whitespace",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-structure",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-structure",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-structure",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-structure",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-structure",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-structure",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-multichapter",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-multichapter",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-multichapter",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-multichapter",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-multichapter",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-multichapter",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-long",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-long",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-long",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-long",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-long",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-long",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-metadata",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-metadata",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-metadata",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-metadata",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-metadata",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "docx-metadata",
+      "profile": "text",
+      "input_format": "docx",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-ascii",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-ascii",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-ascii",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-ascii",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-ascii",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-ascii",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-chinese",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-chinese",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-chinese",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-chinese",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-chinese",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-chinese",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-rtl",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-rtl",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-rtl",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-rtl",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-rtl",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-rtl",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-supplementary",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-supplementary",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-supplementary",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-supplementary",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-supplementary",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-supplementary",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-special",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-special",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-special",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-special",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-special",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-special",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-whitespace",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-whitespace",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-whitespace",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-whitespace",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-whitespace",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-whitespace",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-structure",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-structure",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-structure",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-structure",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-structure",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-structure",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-multichapter",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-multichapter",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-multichapter",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-multichapter",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-multichapter",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-multichapter",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-long",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-long",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-long",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-long",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-long",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-long",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-metadata",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-metadata",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-metadata",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-metadata",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-metadata",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "rtf-metadata",
+      "profile": "text",
+      "input_format": "rtf",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-sample.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-sample.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-sample.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-sample.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-sample.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-sample.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-split.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-split.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-split.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-split.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-split.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-split.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-many-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-many-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-many-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-many-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-many-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-many-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-raw-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-raw-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-raw-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-raw-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-raw-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-raw-trailers.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-cp1252.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-cp1252.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-cp1252.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-cp1252.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-cp1252.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-cp1252.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-overlap.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-overlap.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-overlap.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-overlap.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-overlap.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-palmdoc-overlap.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-recursive.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-recursive.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-recursive.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-recursive.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-recursive.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-mobi-mobi-huff-recursive.mobi",
+      "profile": "text",
+      "input_format": "mobi",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-basic.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-basic.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-basic.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-basic.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-basic.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-basic.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-metadata.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-metadata.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-metadata.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-metadata.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-metadata.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-metadata.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-hybrid.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-hybrid.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-hybrid.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-hybrid.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-hybrid.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-hybrid.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-navigation.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-navigation.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-navigation.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-navigation.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-navigation.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-navigation.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-flows.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-flows.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-flows.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-flows.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-flows.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-flows.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-unsplit.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-unsplit.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-unsplit.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-unsplit.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-unsplit.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-unsplit.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-two-inserts.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-two-inserts.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-two-inserts.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-two-inserts.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-two-inserts.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-two-inserts.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multirecord.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multirecord.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multirecord.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multirecord.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multirecord.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multirecord.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multicontrol.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multicontrol.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multicontrol.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multicontrol.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multicontrol.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-multicontrol.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-positions.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "txt",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-positions.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-positions.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "fb2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-positions.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-positions.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "docx",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "mobile-kf8-kf8-positions.azw3",
+      "profile": "text",
+      "input_format": "kf8",
+      "output_format": "rtf",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-ascii",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-ascii",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-ascii",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-ascii",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-chinese",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-chinese",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-chinese",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-chinese",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-rtl",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-rtl",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-rtl",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-rtl",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-supplementary",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-supplementary",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-supplementary",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-supplementary",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-special",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-special",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-special",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-special",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-whitespace",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-whitespace",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-whitespace",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-whitespace",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-structure",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-structure",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-structure",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-structure",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-multichapter",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-multichapter",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-multichapter",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-multichapter",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-long",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-long",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-long",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-long",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-metadata",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-metadata",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-metadata",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-metadata",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    }
+  ],
+  "failures": [],
+  "notes": [
+    "Text read-back rule: TXT byte-identical; other targets normalized ASCII-whitespace equality plus source block content in order.",
+    "MOBI and KF8 are real, hash-distinct fixtures; variant is detected from bytes, not extension.",
+    "Preserve covers epub->epub, epub->html, xhtml->epub, xhtml->html; HTML output is one ZIP with entry_path."
+  ]
+}

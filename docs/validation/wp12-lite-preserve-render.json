@@ -1,0 +1,393 @@
+{
+  "schema": 1,
+  "package": "WP12-lite",
+  "kind": "preserve-render",
+  "environment": {
+    "source_commit": "de01129c55134d76d808dbc3744a0607c6ab5d7e",
+    "worktree_dirty": false,
+    "engine_version": "3.38.2",
+    "abi": 1,
+    "platform": "Windows x64",
+    "python": "3.14.7",
+    "gcc": "16.2.0 (WinLibs POSIX UCRT)",
+    "cmake": "4.4.2",
+    "tools": {
+      "native-convert": "tests/test_convert.c",
+      "native-convert-cli": "tests/check_convert_cli.py",
+      "native-convert-benchmark": "tests/check_convert_benchmark.py"
+    }
+  },
+  "expected": {
+    "preserve": 40,
+    "render": 20
+  },
+  "actual": {
+    "preserve": 40,
+    "render": 20
+  },
+  "passed": {
+    "preserve": 40,
+    "render": 20
+  },
+  "combinations": [
+    {
+      "input": "epub",
+      "output": "epub",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "epub",
+      "output": "html",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "xhtml",
+      "output": "epub",
+      "expected": 10,
+      "passed": 10
+    },
+    {
+      "input": "xhtml",
+      "output": "html",
+      "expected": 10,
+      "passed": 10
+    }
+  ],
+  "comparison": {
+    "page_count": "equal",
+    "source_ranges": "page start/end equal",
+    "coordinates": "glyph x/baseline/advance/size within 0.01 px",
+    "pixels": "byte-identical full page for the same path",
+    "resource_bytes": "non-XHTML resources byte-identical; chapter XHTML reserialized and covered by text/spine checks",
+    "entry_path": "HTML bundle entry opens as XHTML and every chapter/resource path is present"
+  },
+  "known_normalization": [
+    "Standalone XHTML input has no authored package path; the exported EPUB uses a collision-free generated chapter path.",
+    "Package metadata beyond title/language is regenerated; reported as degraded, not preserved.",
+    "HTML bundle has no package metadata container; reported as unsupported."
+  ],
+  "cases": [
+    {
+      "case": "preserve-epub-ascii",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-ascii",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-ascii",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-ascii",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-chinese",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-chinese",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-chinese",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-chinese",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-rtl",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-rtl",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-rtl",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-rtl",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-supplementary",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-supplementary",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-supplementary",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-supplementary",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-special",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-special",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-special",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-special",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-whitespace",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-whitespace",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-whitespace",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-whitespace",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-structure",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-structure",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-structure",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-structure",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-multichapter",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-multichapter",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-multichapter",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-multichapter",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-long",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-long",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-long",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-long",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-metadata",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-epub-metadata",
+      "profile": "preserve",
+      "input_format": "epub",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-metadata",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "epub",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "case": "preserve-xhtml-metadata",
+      "profile": "preserve",
+      "input_format": "xhtml",
+      "output_format": "html",
+      "status": "pass",
+      "detail": ""
+    }
+  ]
+}
