@@ -12,6 +12,17 @@ promotes diagnostic results to acceptance. Optional independent PDF checks cover
 completion, repair, rejection and password requirements; PyMuPDF is not an SDK dependency.
 Incremental chapter parsing and the complete WP16 release remain open.
 
+Final SDK3.38.2 GCC/MSVC suites each pass 152/152. Installed default components
+pass 4/4, trimmed core consumption 1/1, and the exact-version C++ consumer passes.
+All 306 PE public export names and ordinals are unchanged; compiled layer checks
+find no inverse dependencies. Both the SDK code and diagnostic-runtime follow-up
+pass all seven native CI jobs separately. The latest source, raw logs, downloaded
+SDK/license inventories, four host reports and strict smoke reaggregation are
+indexed in `docs/validation/2026-10-20-wp6-compatibility.json`.
+The prior-source 24 parser CPU-hour reports pass individual validation, while
+complete and cross-source summaries are refused as required; no release acceptance
+is inferred from the partial campaign.
+
 ## Native reference hosts and complete-document probes (2026-10-20)
 
 The complete-document tooling commit e65c1f9 also passes all seven native CI
