@@ -87,6 +87,7 @@ static int inspect_main(int argc,char **argv) {
     }
   }
 done:
+  if(status!=EXR_OK && error.message[0]) fprintf(stderr,"%s\n",error.message);
   exr_bitmap_free(&bitmap);exr_layout_free(page);exr_pager_free(pager);
   exr_document_free(document);exr_fixed_text_free(text);exr_fixed_free(fixed);
   exr_publication_free(publication);exr_font_free(font);

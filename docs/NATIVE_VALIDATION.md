@@ -1,5 +1,17 @@
 # Native C validation
 
+## Table measurement and compatibility classification (3.38.2)
+
+The pre-version-change GCC/MSVC suites both pass 152/152, including 160 pairs
+of direct text and a neutral inline wrapper. They compare glyph/source/font/flags,
+coordinates within 0.01 px and exact full-page RGBA. Final-version results and
+the exact five-round baseline/candidate benchmark are recorded in
+`docs/validation/2026-10-20-wp6-compatibility.json`.
+The new corpus classification test rejects changed attachments/inputs and never
+promotes diagnostic results to acceptance. Optional independent PDF checks cover
+completion, repair, rejection and password requirements; PyMuPDF is not an SDK dependency.
+Incremental chapter parsing and the complete WP16 release remain open.
+
 ## Native reference hosts and complete-document probes (2026-10-20)
 
 The complete-document tooling commit e65c1f9 also passes all seven native CI

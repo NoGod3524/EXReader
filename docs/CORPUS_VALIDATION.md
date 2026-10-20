@@ -37,3 +37,21 @@ pwsh -NoProfile -File tools/fetch_gutenberg_corpus.ps1 -Output C:/corpus/gutenbe
 
 当前结果、原始报告路径及明确未通过的项目见 `docs/validation/2026-10-20-corpus-performance.json`。
 完整数量与规范/保真目标沿用 `docs/HANDOFF.md`，合成语料和真实书籍分别统计。
+
+`tools/triage_corpus.py`核对原批逐文件结果、stdout/stderr附件和输入散列，重放非超时失败。
+它保留原预期与超时结果，输出始终`accepted:false`；重放异常和参考工具异常分别记录。
+运行前后核对来源、工具和参考程序身份，工具源码副本随证据封存；输出目录禁止覆盖。
+
+```sh
+python tools/triage_corpus.py original/summary.json exreader-check-document font.otf diagnostic-output --root corpus
+python tools/triage_corpus.py original/summary.json exreader-check-document font.otf pdf-diagnostics --root corpus --pdf-reference
+```
+
+PDF参考使用可选PyMuPDF独立进程，逐页绘制/提取，区分普通完成、参考修复、密码要求及未完成。
+参考完成不证明规范正确、像素一致或主引擎存在错误；观察结果不得自动转成预期拒绝。
+SDK不依赖PyMuPDF。`native-corpus-triage`覆盖分类证据完整性和不授予验收；安装PyMuPDF时再执行参考自检。
+
+500本EPUB最终483本完成、11本120秒内未完成、5本资源限制、1本参数状态；原批未通过。
+5本限制进一步区分为3本解码图像缓存预算、2本表格布局预算。参数状态来自内容区宽度不足。
+122份PDF中49份完成；余下73份分类为54份参考完成但主引擎拒绝、8份参考修复、4份仍待审查、7份不支持。
+逐项结果与全部原始附件见 `docs/validation/2026-10-20-wp6-compatibility.json`。

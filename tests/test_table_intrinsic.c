@@ -113,6 +113,43 @@ static void generated(exr_font *f) {
     exr_layout_free(l); exr_document_free(d);
   }
 }
+static void plain_pair_equivalence(exr_font *f) {
+  const char *styles[]={"", "padding:2px 3px", "text-indent:14px", "text-indent:-5px",
+    "font-size:17px", "font-weight:bold", "border:2px solid red", "padding:5%;text-indent:7px",
+    "font-style:italic", "direction:rtl", "writing-mode:vertical-rl", "border-collapse:collapse",
+    "text-align:center", "width:30%;padding:1px", "text-indent:100px", "font-size:13.25px"};
+  const char *phrases[]={"AV AVA LA Reading portable books. More words!", "A AAA AAAAA AAA A.",
+    "Some words, other words: and more words?", "AV 123 AAA; 456 AVA.",
+    " AV AVA ", "AV  AVA   LA", "AV&#160;AVA", "AV.AVA and 1,234", "! AV ? AVA", "AV&#173;AVA"};
+  size_t a,b;
+  for(a=0;a<sizeof(styles)/sizeof(*styles);a++) for(b=0;b<sizeof(phrases)/sizeof(*phrases);b++) {
+    exr_document *docs[2]={NULL,NULL};exr_layout *layouts[2]={NULL,NULL};exr_layout_config cfg=config();
+    size_t variant,pages[2],page;char html[2048];
+    for(variant=0;variant<2;variant++) {
+      int length=snprintf(html,sizeof(html),"<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><style>td{%s}</style></head>"
+        "<body><table style=\"width:210px\"><tr><td>%s%s%s</td><td>Peer</td></tr></table></body></html>",
+        styles[a],variant ? "<span>" : "",phrases[b],variant ? "</span>" : "");
+      CHECK(length>0 && (size_t)length<sizeof(html));
+      OK(exr_document_open_memory(EXR_HTML,html,(size_t)length,&docs[variant],&error));
+      OK(exr_layout_create_ex(docs[variant],f,&cfg,&layouts[variant],&error));
+      exr_layout_pages(layouts[variant],&pages[variant]);
+    }
+    CHECK(pages[0]==pages[1]);
+    { size_t n,m,i;const exr_glyph *x=exr_layout_glyphs(layouts[0],&n),*y=exr_layout_glyphs(layouts[1],&m);
+      CHECK(n==m);
+      for(i=0;i<n;i++) CHECK(x[i].glyph==y[i].glyph && x[i].start==y[i].start && x[i].end==y[i].end &&
+        x[i].font_index==y[i].font_index && x[i].flags==y[i].flags && x[i].color==y[i].color &&
+        fabsf(x[i].x-y[i].x)<=.01f && fabsf(x[i].baseline-y[i].baseline)<=.01f && fabsf(x[i].advance-y[i].advance)<=.01f);
+    }
+    for(page=0;page<pages[0];page++) {
+      exr_bitmap x={0},y={0};OK(exr_render_page_color(layouts[0],NULL,page,&x,&error));
+      OK(exr_render_page_color(layouts[1],NULL,page,&y,&error));
+      CHECK(x.stride==y.stride && x.height==y.height && !memcmp(x.pixels,y.pixels,(size_t)x.stride*x.height));
+      exr_bitmap_free(&x);exr_bitmap_free(&y);
+    }
+    for(variant=0;variant<2;variant++) { exr_layout_free(layouts[variant]);exr_document_free(docs[variant]); }
+  }
+}
 int main(int argc,char **argv) {
   exr_font *primary,*shaping,*fallback=NULL; exr_font_input sources[2]={{0}}; unsigned char *bytes[2]={0}; size_t i;
   CHECK(argc==2); directory=argv[1]; primary=font("fonts/primary.ttf"); shaping=font("shaping/shaping.ttf");
@@ -150,6 +187,7 @@ int main(int argc,char **argv) {
   { exr_document *d=book("table-auto-vertical"); exr_layout_config cfg=config(); exr_layout *l=NULL;
     OK(exr_layout_create_ex(d,primary,&cfg,&l,&error)); CHECK(near(named(d,l,"a")->height,7) && near(named(d,l,"b")->height,21)); exr_layout_free(l); exr_document_free(d);
   }
+  plain_pair_equivalence(primary);
   generated(primary); cancel_measurement(primary); pages(primary); streaming(primary); exr_font_free(fallback); exr_font_free(primary); exr_font_free(shaping);
   printf("%u intrinsic table checks passed\n",checks); return 0;
 }
