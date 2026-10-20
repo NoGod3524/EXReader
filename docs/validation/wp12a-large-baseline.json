@@ -2,10 +2,10 @@
   "kind": "book-memory",
   "source_bytes": 67109346,
   "book_id": 1,
-  "elapsed_seconds": 0.378472,
-    "baseline_private": 745472,
-    "loaded_private": 68202496,
-    "after_private": 70578176,
+  "elapsed_seconds": 0.239331,
+    "baseline_private": 737280,
+    "loaded_private": 68227072,
+    "after_private": 70553600,
   "file_buffer_bytes": 67109346,
   "database_bytes": 67219456
 }

@@ -1,36 +1,36 @@
 {
   "artifacts": {
     "exreader-library-stream-test.exe": {
-      "bytes": 1935126,
-      "sha256": "1ea7e2aaf64824794c0bd89ab1aa6daca2c867a8111b7be404f38cebe5082c66"
+      "bytes": 1938598,
+      "sha256": "d4d05179ec905cd050042305b81f674d6a37d6d6b33dac864c0e5d50af3315bb"
     },
     "exreader-wp12a-media-probe.exe": {
       "bytes": 73527,
-      "sha256": "57f4cdb806978cc8d1fa73629e7ccec96c57bf241835ed75c0ab78c6cf944619"
+      "sha256": "9b276bac910dfa6e5bf4f404cef099294562458b87c0896ee4ae7ebbf6c5da84"
     },
     "libexreader.dll": {
-      "bytes": 9628542,
-      "sha256": "9a4b6c925e4cc3d48b3d927ca6f17a8498514d85653d3ab4362ce2ee292a4417"
+      "bytes": 9633253,
+      "sha256": "5074ff3651e7bbd4be04702bb20ca6a5b09b94458459478daecd5a4a046d04f6"
     }
   },
-  "buffer_scope": "SDK-owned 64 KiB chunk + SQLite page cache (2 MiB configured) + one blob page; excludes input file mapping, compressed original size and database size",
+  "buffer_scope": "SDK-owned 64 KiB chunk + SQLite page cache (2 MiB configured) + one blob page; excludes input file mapping, anonymous pagefile mapping, compressed original size and database size",
   "ceiling_bytes": 33554432,
   "generator": "tools/generate_large_media.py",
   "generator_sha256": "272bc10cfdc9204aa3768de720df89f19fdaa9bd4eb98a18d659b2e163cebbed",
   "large_audio": {
     "added_private_peak": 0,
     "added_working_peak": 0,
-    "baseline_private": 765952,
-    "baseline_working": 4145152,
+    "baseline_private": 761856,
+    "baseline_working": 4136960,
     "channels": 1,
-    "elapsed_seconds": 0.000961,
+    "elapsed_seconds": 0.001206,
     "frames": 536870912,
     "frames_read": 12288,
     "kind": "audio",
-    "peak_private": 765952,
-    "peak_working": 4145152,
-    "process_peak_private": 765952,
-    "process_peak_working": 4145152,
+    "peak_private": 761856,
+    "peak_working": 4136960,
+    "process_peak_private": 761856,
+    "process_peak_working": 4136960,
     "read_buffer_bytes": 16384,
     "reads": 3,
     "sample_rate": 8000,
@@ -38,38 +38,38 @@
     "wave_stack_buffer_bytes": 4096
   },
   "large_book": {
-    "added_private_peak": 4595712,
-    "added_working_peak": 3919872,
-    "baseline_private": 987136,
-    "baseline_working": 5423104,
+    "added_private_peak": 4657152,
+    "added_working_peak": 3907584,
+    "baseline_private": 1032192,
+    "baseline_working": 6025216,
     "book_id": 1,
     "chunk_bytes": 65536,
     "created": 1,
     "database_bytes": 1074839552,
     "duplicate_created": 0,
     "duplicate_id": 1,
-    "duplicate_seconds": 3.02908,
-    "first_import_seconds": 13.364412,
+    "duplicate_seconds": 16.03747,
+    "first_import_seconds": 16.074905,
     "kind": "book",
     "page_pixels": 4,
     "pages": 2,
-    "peak_private": 987136,
-    "peak_working": 5423104,
-    "post_import_private": 3403776,
-    "process_peak_private": 1052672,
-    "process_peak_working": 5423104,
+    "peak_private": 1032192,
+    "peak_working": 6025216,
+    "post_import_private": 3448832,
+    "process_peak_private": 1097728,
+    "process_peak_working": 6025216,
     "source_bytes": 1073742306,
     "sqlite_cache_bytes": 2097152
   },
   "legacy_memory_baseline": {
-    "after_private": 70578176,
-    "baseline_private": 745472,
+    "after_private": 70553600,
+    "baseline_private": 737280,
     "book_id": 1,
     "database_bytes": 67219456,
-    "elapsed_seconds": 0.378472,
+    "elapsed_seconds": 0.239331,
     "file_buffer_bytes": 67109346,
     "kind": "book-memory",
-    "loaded_private": 68202496,
+    "loaded_private": 68227072,
     "source_bytes": 67109346
   },
   "linux_sanitizer": {
@@ -94,11 +94,17 @@
     }
   },
   "result": "pass",
-  "source_commit_at_capture": "093775db04401c802f7719e4326beb551b8ac5e1",
+  "source_commit_at_capture": "8bfb63cee12704670a536abf9cc248430ecdc154",
+  "streaming_formats": [
+    "EXR_CBZ",
+    "EXR_PDF"
+  ],
   "transaction_tests": {
     "exclusive_storage_lock_rollback": "native-library-stream",
     "fixed_source_page_read_after_reopen": "native-library-stream",
     "mid_write_cancel_rollback": "native-library-stream",
+    "pdf_mapped_import_dedup_reopen": "native-library-stream",
+    "read_only_database_rollback": "native-library-stream",
     "source_read_failure_rollback": "native-library-stream",
     "successful_import_and_reopen": "native-library-stream",
     "unique_dedup_same_id": "native-library-stream"

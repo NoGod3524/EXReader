@@ -373,17 +373,15 @@ finish:
   if(status!=EXR_OK) *id=0;
   return status;
 }
-static exr_status stream_import(exr_library *l,exr_format format,const exr_source *source,const char *title,
-                                int unique,int64_t *id,int *created,exr_error *e) {
-  char *source_title=NULL,*author=NULL,*chosen_title=NULL;size_t extent=0;exr_status status;int64_t found=0;int tx=0,inserted=0;
+static exr_status stream_import_values(exr_library *l,exr_format format,const exr_source *source,
+                                        const char *chosen_title,const char *author,size_t extent,
+                                        int unique,int64_t *id,int *created,exr_error *e) {
+  exr_status status;int64_t found=0;int tx=0,inserted=0;
   if(id) *id=0;
   if(created) *created=0;
   if(!l || !id || !source || !source->read_at || !source->size || format<EXR_TXT || format>EXR_CBZ)
     return exr_fail(e,EXR_ARGUMENT,"Invalid streaming import arguments");
   if(source->size>EXR_STREAM_MAX) return exr_fail(e,EXR_LIMIT,"Streaming import exceeds the 2 GiB blob-I/O limit");
-  status=stream_metadata(format,source,&source_title,&author,&extent,e);
-  if(status!=EXR_OK) goto finish;
-  chosen_title=(char *)(title && title[0] ? title : source_title);
   sqlite3_mutex_enter(sqlite3_db_mutex(l->db));
   if(unique) {
     sqlite3_stmt *s=NULL;int step;
@@ -412,6 +410,18 @@ static exr_status stream_import(exr_library *l,exr_format format,const exr_sourc
 unlock:
   sqlite3_mutex_leave(sqlite3_db_mutex(l->db));
   if(status==EXR_OK && tx) { if(sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL)!=SQLITE_OK) status=database_error(l,e);tx=0; }
+  return status;
+}
+static exr_status stream_import(exr_library *l,exr_format format,const exr_source *source,const char *title,
+                                int unique,int64_t *id,int *created,exr_error *e) {
+  char *source_title=NULL,*author=NULL;size_t extent=0;exr_status status;
+  if(id) *id=0;
+  if(created) *created=0;
+  if(!l || !id || !source || !source->read_at || !source->size || format<EXR_TXT || format>EXR_CBZ)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid streaming import arguments");
+  status=stream_metadata(format,source,&source_title,&author,&extent,e);
+  if(status!=EXR_OK) goto finish;
+  status=stream_import_values(l,format,source,title && title[0] ? title : source_title,author,extent,unique,id,created,e);
 finish:
   free(source_title);free(author);
   return status;
@@ -425,10 +435,42 @@ exr_status exr_library_import_source_unique(exr_library *l,exr_format format,con
   if(!created) return exr_fail(e,EXR_ARGUMENT,"Missing created output");
   return stream_import(l,format,source,title,1,id,created,e);
 }
+static exr_status import_file_pdf(exr_library *l,exr_format format,const char *path,const char *title,
+                                     int unique,int64_t *id,int *created,exr_error *e) {
+#ifndef EXR_ENABLE_PDF
+  (void)l;(void)format;(void)path;(void)title;(void)unique;(void)id;(void)created;
+  return exr_fail(e,EXR_UNSUPPORTED,"PDF streaming import requires the PDF component");
+#else
+  exr_fixed_open_options options={0};exr_fixed_document *doc=NULL;exr_metadata_entry *metadata=NULL;
+  exr_buffer source_title={0},author={0};size_t count=0,pages=0,i;exr_source source;exr_status status;
+  options.struct_size=sizeof(options);
+  status=exr_fixed_open(path,&options,&doc,e);
+  if(status==EXR_OK) { exr_fixed_pages(doc,&pages);status=exr_fixed_load_metadata(doc,NULL,&metadata,&count,e); }
+  for(i=0;status==EXR_OK && i<count;i++) {
+    if(!strcmp(metadata[i].key,"http://purl.org/dc/terms/title") && !source_title.data && metadata[i].value[0]) {
+      if(!exr_append(&source_title,metadata[i].value,strlen(metadata[i].value))) status=exr_fail(e,EXR_MEMORY,"Book title allocation failed");
+    }
+    if(!strcmp(metadata[i].key,"http://purl.org/dc/terms/creator") && metadata[i].value[0]) {
+      if((author.size && !exr_append(&author,"; ",2)) || !exr_append(&author,metadata[i].value,strlen(metadata[i].value)))
+        status=exr_fail(e,EXR_MEMORY,"Book author allocation failed");
+    }
+  }
+  exr_metadata_free(metadata,count);exr_fixed_free(doc);doc=NULL;
+  if(status==EXR_OK) status=exr_file_source_limit(path,EXR_STREAM_MAX,&source,e);
+  if(status==EXR_OK) {
+    status=stream_import_values(l,format,&source,title && title[0] ? title : (source_title.data ? source_title.data : "Untitled"),
+                                author.data ? author.data : "",pages,unique,id,created,e);
+    source.release(source.context);
+  }
+  free(source_title.data);free(author.data);
+  return status;
+#endif
+}
 exr_status exr_library_import_file(exr_library *l,exr_format format,const char *path,const char *title,
                                    int64_t *id,exr_error *e) {
   exr_source source;exr_status status;
   if(!path) return exr_fail(e,EXR_ARGUMENT,"Missing streaming import path");
+  if(format==EXR_PDF) return import_file_pdf(l,format,path,title,0,id,NULL,e);
   status=exr_file_source_limit(path,EXR_STREAM_MAX,&source,e);
   if(status!=EXR_OK) return status;
   status=exr_library_import_source(l,format,&source,title,id,e);
@@ -439,6 +481,7 @@ exr_status exr_library_import_file_unique(exr_library *l,exr_format format,const
                                           int64_t *id,int *created,exr_error *e) {
   exr_source source;exr_status status;
   if(!path) return exr_fail(e,EXR_ARGUMENT,"Missing streaming import path");
+  if(format==EXR_PDF) return import_file_pdf(l,format,path,title,1,id,created,e);
   status=exr_file_source_limit(path,EXR_STREAM_MAX,&source,e);
   if(status!=EXR_OK) return status;
   status=exr_library_import_source_unique(l,format,&source,title,id,created,e);
@@ -447,22 +490,45 @@ exr_status exr_library_import_file_unique(exr_library *l,exr_format format,const
 }
 exr_status exr_library_fixed_source(exr_library *l,int64_t id,const exr_fixed_open_options *input,
                                     exr_fixed_document **out,exr_error *e) {
-  sqlite3_stmt *s=NULL;exr_fixed_open_options options={0};stream_blob *context=NULL;exr_source source;int step,format;
+  sqlite3_stmt *s=NULL;exr_fixed_open_options options={0};stream_blob *context=NULL;exr_source source;int step,format;int64_t length;
   if(out) *out=NULL;
   if(!l || id<=0 || !out || (input && input->struct_size<sizeof(size_t))) return exr_fail(e,EXR_ARGUMENT,"Invalid streaming fixed lookup");
+#ifndef EXR_ENABLE_PDF
+  return exr_fail(e,EXR_UNSUPPORTED,"Streaming fixed reading requires the PDF component");
+#endif
   if(!prepare(l,"SELECT format,length(source) FROM books WHERE id=?1",&s) || sqlite3_bind_int64(s,1,id)!=SQLITE_OK) { sqlite3_finalize(s);return database_error(l,e); }
   step=sqlite3_step(s);
   if(step!=SQLITE_ROW) { sqlite3_finalize(s);return step==SQLITE_DONE ? exr_fail(e,EXR_ARGUMENT,"Book missing") : database_error(l,e); }
   format=sqlite3_column_int(s,0);
-  if(format!=EXR_CBZ || sqlite3_column_type(s,1)!=SQLITE_INTEGER || sqlite3_column_int64(s,1)<=0 || (uint64_t)sqlite3_column_int64(s,1)>EXR_STREAM_MAX) {
-    sqlite3_finalize(s);return exr_fail(e,EXR_UNSUPPORTED,"Streaming fixed reading is available for CBZ originals");
+  length=sqlite3_column_int64(s,1);
+  if((format!=EXR_CBZ && format!=EXR_PDF) || sqlite3_column_type(s,1)!=SQLITE_INTEGER || length<=0 || (uint64_t)length>EXR_STREAM_MAX) {
+    sqlite3_finalize(s);return exr_fail(e,EXR_UNSUPPORTED,"Streaming fixed reading is available for CBZ and PDF originals");
+  }
+  if(input) options=*input; else { options.struct_size=sizeof(options); }
+  if(options.struct_size<sizeof(size_t) || options.struct_size>sizeof(options)) { sqlite3_finalize(s);return exr_fail(e,EXR_ARGUMENT,"Invalid fixed open options"); }
+  if(format==EXR_PDF) {
+    exr_mapping mapping={0};uint64_t at=0;exr_status status;
+    sqlite3_finalize(s);s=NULL;
+    status=exr_map_anonymous((size_t)length,&mapping,e);
+    if(status!=EXR_OK) return status;
+    context=calloc(1,sizeof(*context));
+    if(!context) { exr_unmap(&mapping);return exr_fail(e,EXR_MEMORY,"Streaming source allocation failed"); }
+    context->db=l->db;
+    if(sqlite3_blob_open(l->db,"main","books","source",id,0,&context->blob)!=SQLITE_OK) { free(context);exr_unmap(&mapping);return exr_fail(e,EXR_DATABASE,"Cannot open stored source blob"); }
+    while(at<(uint64_t)length) {
+      size_t n=(size_t)((uint64_t)length-at<EXR_STREAM_CHUNK ? (uint64_t)length-at : EXR_STREAM_CHUNK);
+      if(sqlite3_blob_read(context->blob,(unsigned char *)mapping.address+at,(int)n,(int)at)!=SQLITE_OK) {
+        stream_blob_release(context);exr_unmap(&mapping);return exr_fail(e,EXR_DATABASE,"Cannot read stored PDF source");
+      }
+      at+=n;
+    }
+    stream_blob_release(context);
+    return exr_fixed_open_mapped(EXR_PDF,&mapping,&options,out,e);
   }
   context=calloc(1,sizeof(*context));if(!context) { sqlite3_finalize(s);return exr_fail(e,EXR_MEMORY,"Streaming source allocation failed"); }
   context->db=l->db;
   if(sqlite3_blob_open(l->db,"main","books","source",id,0,&context->blob)!=SQLITE_OK) { sqlite3_finalize(s);free(context);return exr_fail(e,EXR_DATABASE,"Cannot open stored source blob"); }
   memset(&source,0,sizeof(source));source.size=(uint64_t)sqlite3_blob_bytes(context->blob);source.read_at=stream_blob_read;source.release=stream_blob_release;source.context=context;
-  if(input) options=*input; else { options.struct_size=sizeof(options); }
-  if(options.struct_size<sizeof(size_t) || options.struct_size>sizeof(options)) { sqlite3_finalize(s);stream_blob_release(context);return exr_fail(e,EXR_ARGUMENT,"Invalid fixed open options"); }
   sqlite3_finalize(s);
   return exr_cbz_open_source(&source,"",&options,1,out,e);
 }

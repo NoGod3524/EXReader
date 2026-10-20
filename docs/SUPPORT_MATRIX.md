@@ -88,7 +88,7 @@
 
 | 能力 | 状态 | 边界 | 回归 |
 | --- | --- | --- | --- |
-| 书库 | 支持 | SQLite、元数据/封面、标签/收藏/已读、文本与固定页进度、标注、音频书签、精确去重、事务备份；CBZ 原书支持 64 KiB 分块流式导入/去重与 blob 随机读取（单条≤2 GiB），1 GiB 实测新增缓冲峰值 64 KiB | `native-library-unique`、`native-library-stream`、`native-progress-library`、`native-page-annotations` |
+| 书库 | 支持 | SQLite、元数据/封面、标签/收藏/已读、文本与固定页进度、标注、音频书签、精确去重、事务备份；CBZ 原书支持 64 KiB 分块流式导入/去重与 blob 随机读取；PDF 通过只读文件映射解析元数据、匿名映射回读存储原书（单条≤2 GiB）。1 GiB 实测新增缓冲峰值 64 KiB | `native-library-unique`、`native-library-stream`、`native-progress-library`、`native-page-annotations` |
 | 旧 UI 数据迁移 | 未支持 | 旧 IndexedDB/Tauri 数据未接入 | — |
 | 转换/导出 | 部分 | 六种正文格式 36 向互转及 MOBI/KF8 输入→六目标（text profile，仅声明正文/段落/顺序/Unicode，非无损）；EPUB/XHTML→EPUB/HTML 资源包 preserve profile；**完整 WP12 高保真全格式往返、批注/复杂样式和旧 UI 迁移未覆盖**；MOBI/KF8/PDF/CBZ 写回未支持。契约见 [CONVERSION.md](CONVERSION.md) | `native-export-epub`、`native-export-html`、`native-export-xml`、`native-convert`、`native-convert-cli`、`native-convert-benchmark` |
 | 音频 | 支持 | WAV/FLAC、可选 MP3/AAC/M4A/M4B、PCM、WSOLA 变速、六平台输出；随机读取源在 1 GiB WAV 上验证，WAV 读取使用 4 KiB 栈缓冲且不整文件驻留 | `native-audio`、`native-wave`、`native-flac`、`native-mp3`、`native-aac`、`native-stretch` |

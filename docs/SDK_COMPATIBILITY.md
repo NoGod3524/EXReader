@@ -756,11 +756,13 @@ The library adds source-based imports:
 `exr_library_import_source()`, `exr_library_import_source_unique()`,
 `exr_library_import_file()`, `exr_library_import_file_unique()` and
 `exr_library_fixed_source()`. The source is borrowed for the call; CBZ bytes
-are copied into SQLite in 64 KiB chunks. `exr_library_fixed_source()` reads the
-stored CBZ through SQLite blob I/O. A single stored original is limited to
-2 GiB - 1 by the blob API and `SQLITE_MAX_LENGTH` (raised from the 1e9 default
-to INT_MAX). Other formats keep the existing in-memory APIs and streaming
-entry points return `EXR_UNSUPPORTED`. See [WP12A-STREAMING.md](WP12A-STREAMING.md).
+are copied into SQLite in 64 KiB chunks. `import_file` also accepts PDF,
+parsing metadata through a read-only file mapping. `exr_library_fixed_source()`
+reads a stored CBZ through SQLite blob I/O and pages a stored PDF into an
+anonymous pagefile mapping before parsing. A single stored original is limited
+to 2 GiB - 1 by the blob API and `SQLITE_MAX_LENGTH` (raised from the 1e9
+default to INT_MAX). Other formats keep the existing in-memory APIs and
+streaming entry points return `EXR_UNSUPPORTED`. See [WP12A-STREAMING.md](WP12A-STREAMING.md).
 
 Contract notes for hosts:
 

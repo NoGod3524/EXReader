@@ -828,9 +828,9 @@ ls/ilvl 现在构造通用 ol/ul 与 li，保留列表实例 ID 和 0–8 级层
 
 ## 大原书流式导入（WP12a）
 
-`exr_library_import_source()/exr_library_import_source_unique()` 从宿主提供的随机读取源导入，`exr_library_import_file()/exr_library_import_file_unique()` 以有界文件源打开路径。CBZ 原书按 64 KiB 分块写入 SQLite zeroblob，源只借用本次调用，失败/取消/存储错误回滚书籍行与 blob；unique 版本对同格式同长度候选逐字节比较后复用最旧 ID。单条原书上限为 2 GiB - 1（SQLite blob 接口），当前支持 CBZ；其他格式的流式入口返回 `EXR_UNSUPPORTED`，原内存 API 不变。
+`exr_library_import_source()/exr_library_import_source_unique()` 从宿主提供的随机读取源导入，`exr_library_import_file()/exr_library_import_file_unique()` 以有界文件源打开路径。CBZ 原书按 64 KiB 分块写入 SQLite zeroblob，源只借用本次调用，失败/取消/存储错误回滚书籍行与 blob；unique 版本对同格式同长度候选逐字节比较后复用最旧 ID。`import_file` 另支持 PDF：元数据通过只读文件映射读取，字节仍按块写入。单条原书上限为 2 GiB - 1（SQLite blob 接口）；其他格式的流式入口返回 `EXR_UNSUPPORTED`，原内存 API 不变。
 
-`exr_library_fixed_source()` 通过 SQLite 只读 blob 句柄包装存储的原书，CBZ 页目录与解码按需读取，不把 1 GiB 原书整体复制到进程。缓冲口径、1 GiB 实测与失败恢复见 [WP12A-STREAMING.md](WP12A-STREAMING.md) 和 `docs/validation/wp12a-streaming.json`。
+`exr_library_fixed_source()` 通过 SQLite 只读 blob 句柄包装存储的 CBZ，页目录与解码按需读取；PDF 则先把 blob 分页读入匿名映射再交给解析器，不把 1 GiB 原书整体复制到堆。缓冲口径、1 GiB 实测与失败恢复见 [WP12A-STREAMING.md](WP12A-STREAMING.md) 和 `docs/validation/wp12a-streaming.json`。
 
 
 ## 章节 CFI 内容路径（S086）

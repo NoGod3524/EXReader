@@ -41,4 +41,11 @@ int exr_resolve_path(const char *base, const char *href, char out[2048]);
 exr_status exr_file_source_limit(const char *path,uint64_t maximum,exr_source *source,exr_error *error);
 exr_status exr_file_source(const char *path,exr_source *source,exr_error *error);
 
+/* Read-only file mapping and pagefile-backed anonymous mapping. Mapping bytes
+   are file/pagefile backed, not an SDK heap buffer. exr_unmap releases both. */
+typedef struct { void *address; size_t size; void *file; void *mapping; } exr_mapping;
+exr_status exr_map_file(const char *path,exr_mapping *mapping,exr_error *error);
+exr_status exr_map_anonymous(size_t size,exr_mapping *mapping,exr_error *error);
+void exr_unmap(exr_mapping *mapping);
+
 #endif

@@ -3,8 +3,9 @@
 
 Requires Pillow (WebP and AVIF plugins included in the pinned development
 environment). Outputs are original test patterns, MIT, and are written under
-tests/fixtures/images. Re-running this script with the same Pillow build
-reproduces byte-identical files; MANIFEST.json records SHA-256 values.
+tests/fixtures/images. MANIFEST.json records the committed file hashes; some
+lossy encoders (notably AVIF) may emit different bytes across Pillow builds, so
+pin the encoder build when regenerating and update the manifest.
 """
 import hashlib
 import json
@@ -41,6 +42,22 @@ def cases():
         "transparent": (5, 5, lambda x, y: (x * 40, y * 40, 128, 0)),
         "gradient": (100, 100, lambda x, y: (x * 255 // 99, y * 255 // 99, (x + y) & 255, 255)),
     }
+
+
+def write_bmp32(path, width, height, fn):
+    """BITMAPV4HEADER + BI_BITFIELDS, 32-bit BGRA with an explicit alpha mask."""
+    header = struct.pack("<2sIHHI", b"BM", 14 + 108 + width * height * 4, 0, 0, 14 + 108)
+    header += struct.pack("<IiiHHIIiiII", 108, width, height, 1, 32, 3, width * height * 4, 2835, 2835, 0, 0)
+    header += struct.pack("<IIII", 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+    header += struct.pack("<I", 0x73524742) + b"\0" * 36 + struct.pack("<III", 0, 0, 0)
+    rows = []
+    for y in range(height - 1, -1, -1):
+        row = bytearray()
+        for x in range(width):
+            r, g, b, a = fn(x, y)
+            row += bytes((b, g, r, a))
+        rows.append(bytes(row))
+    open(path, "wb").write(header + b"".join(rows))
 
 
 def frame_images():
@@ -82,7 +99,13 @@ def main():
             if fmt in ("bmp",):
                 image.convert("RGB").save(path)
             elif fmt == "gif":
-                image.convert("P", palette=Image.Palette.ADAPTIVE, colors=32).save(path, optimize=False)
+                if name == "transparent":
+                    palette = Image.new("P", (w, h))
+                    palette.putpalette([20, 120, 220, 0, 0, 0] + [0, 0, 0] * 254)
+                    palette.putdata([0 if x == 0 else 1 for y in range(h) for x in range(w)])
+                    palette.save(path, transparency=0, disposal=2, optimize=False)
+                else:
+                    image.convert("P", palette=Image.Palette.ADAPTIVE, colors=32).save(path, optimize=False)
             elif fmt == "tiff":
                 compression = "tiff_deflate" if name in ("checker", "gradient") else "tiff_lzw"
                 image.save(path, compression=compression)
@@ -98,6 +121,10 @@ def main():
             path = os.path.join(directory, "animation" + ext)
             save_all(fmt, "animation", frames[0], path, frames=frames[1:])
             entries["animation"] = {"file": os.path.relpath(path, ROOT).replace("\\", "/"), "width": 8, "height": 8, "pages": 4}
+        if fmt == "bmp":
+            path = os.path.join(directory, "alpha32.bmp")
+            write_bmp32(path, 5, 5, lambda x, y: (x * 40, y * 40, 128, 0 if x == 0 else 255))
+            entries["alpha32"] = {"file": os.path.relpath(path, ROOT).replace("\\", "/"), "width": 5, "height": 5, "pages": 1}
         if fmt == "gif":
             # Four 2600x2600 frames expand past the 96 MiB GIF budget while the
             # encoded file stays small; the decoder must reject before allocating.
