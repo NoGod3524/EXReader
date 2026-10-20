@@ -62,6 +62,13 @@ metadata remains private; public array strides and ABI epoch stay unchanged.
 
 ## Ownership and execution
 
+The Swift adapter adds indexed `EXReaderPager.get(page:)`, returning owned bitmap
+bytes and a UTF-8 source range. Do not mix this cached mode with `next()` on the
+same pager. The returned snapshot survives later cache eviction. Fixed-document
+rendering optionally accepts `maximumDimension`; omitting it retains the existing
+scale contract. Native reference hosts use the installed SDK and record host,
+runtime, font and output evidence separately.
+
 Opaque handles are released with their matching `*_free`/close function. Allocated
 arrays and nested records use their documented typed free routine. Plain returned
 allocations use `exr_free`; never free SDK allocations through a host CRT. Borrowed

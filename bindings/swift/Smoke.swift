@@ -419,6 +419,19 @@ import CEXReader
                 let bitmap = try page.render(); precondition(bitmap.width == 180)
             }
         }
+        do {
+            let document = try EXReaderDocument(file: root.appendingPathComponent("books/table-fragments-12.epub"))
+            let font = try EXReaderFont(data: Data(contentsOf: root.appendingPathComponent("fonts/primary.ttf")))
+            var config = EXReaderLayoutConfig()
+            config.page.width = 180; config.page.height = 100; config.page.margin = 10; config.page.font_size = 14
+            let pager = try document.pager(font: font, config: config)
+            let first = try pager.get(page: 0)
+            _ = try pager.get(page: 2)
+            let restored = try pager.get(page: 0)
+            precondition(first.bitmap.pixels == restored.bitmap.pixels && first.sourceRange == restored.sourceRange)
+            do { _ = try pager.get(page: -1); preconditionFailure("negative index accepted") }
+            catch EXReaderError.invalidInput {}
+        }
         print("Swift SDK: PDF/audio/metadata, floats, table BFCs, dictionary hyphenation and reflow lifetime passed")
     }
 }

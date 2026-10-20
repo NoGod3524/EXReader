@@ -2,6 +2,13 @@
 
 主项目已从 JavaScript 阅读框架重建为 **C11 原生阅读引擎**，当前版本 **3.38.1，开发中**。MIT。直接编译成 DLL / SO / dylib，以 C 接口供宿主调用。
 
+原生参考阅读器：Windows入口为`examples/reader.c`，macOS/iPhone/iPad入口为
+`examples/apple/ReaderApp.swift`。Windows可打开文件、翻页、选文和保存进度；Apple宿主
+还包含书架和本页摘录。宿主示例限制单个输入32MiB，使用固定散列的Noto字体并附OFL。
+构建与验证分别使用`tools/build_windows_host.py`、`tools/build_apple_host.py`和
+`tools/check_apple_host.py`，证据见`docs/validation/2026-10-20-native-hosts.json`。
+iOS设备包需使用设备所有者的签名环境安装；模拟器与真机结果分别记录。
+
 当前能力与边界以 [支持矩阵](docs/SUPPORT_MATRIX.md) 为准；后续按 [兼容目标与验收顺序](docs/VERSIONING.md#后续兼容目标与验收顺序) 推进 PDF、图文排版和应用接入能力。
 
 版本按更新规模递增：超大更新升主版本，中等更新升次版本，小 bug 修复升补丁版本；升级前两段时，后续段归零。全部历史已按此规则重编，见 [完整更新日志](CHANGELOG.md)；编号口径见 [版本规则](docs/VERSIONING.md)。

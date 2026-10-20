@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "base_source_sha": "f719bd4590df4dfb7ef04b5ac5a58d49a7b9a310",
+  "sdk_version": "3.38.1",
+  "source_snapshots": {
+    "examples/reader.c": "a4c1f4b61e2702140619b198e23ac54ae15534d08927def30dff36223dff59b9",
+    "examples/CMakeLists.txt": "4127472825146719afa1a1b32723a141d79dd15df8a3f3cb1f1003ab3e16e4b9",
+    "examples/apple/ReaderApp.swift": "f656f6dd99d8d212873ad9a35f99b402ef0850d24938082d89b6f44d668cdbf0",
+    "bindings/swift/EXReader.swift": "46ff13eef371dd08a7e8893f7be563df99b03ddd3753fef97452656cd1109f0e",
+    "bindings/swift/Smoke.swift": "28f52def26114cd9693ede1fe6cfe98532a53f6b14ead17e50d4d3e34d071789",
+    "tools/build_apple_host.py": "9bceb583da3c1e50d96cad5173fadec7cca4b7463691529f69cbbafb50001173",
+    "tools/check_apple_host.py": "c8f6cfd63f560fac68a1435c499f96a0c4d4d6fe270fe2f18372921648023b10",
+    "tools/build_windows_host.py": "0c4f608d48da21e3a9d724ea6445089f09d049ddb36c586199943d6bdc29f329",
+    "tools/host_font.py": "410ba3481bf14c58ba60f2ce64ee2687562120d5b5d95ec116b9cfb6d9420f5a",
+    ".github/workflows/native.yml": "79836807aaf2aa0c35a8241f538185a09dc7d74d2c33d2b5717e5ecabf914ca8"
+  },
+  "windows": {
+    "checks": 26,
+    "passed": true,
+    "package": "C:/Users/Oscar/exr-msvc-next/windows-host-r3/EXReader-Windows.zip",
+    "package_sha256": "05319cfceb427327f0c42c41e81e4cddfb6484f23282026caf667f3790b4130b",
+    "report": "C:/Users/Oscar/exr-msvc-next/windows-host-r3/report.json",
+    "report_sha256": "33303b3c4d9951026b35f7ae4dd2d963fc91b96738024fbfc08e6eb33e017fd8",
+    "render": "C:/Users/Oscar/exr-msvc-next/windows-host-r3/page.png",
+    "render_sha256": "48ace7d48c57caa5f5707a5a4599f448c4cc800d3afe688304d31050a8690bba",
+    "render_visually_inspected": true
+  },
+  "macos": {
+    "status": "pending"
+  },
+  "iphone_simulator": {
+    "status": "pending"
+  },
+  "ipad_simulator": {
+    "status": "pending"
+  },
+  "iphone_device": {
+    "status": "awaiting_owner_signing_and_device_run"
+  },
+  "ipad_device": {
+    "status": "awaiting_owner_signing_and_device_run"
+  },
+  "physical_devices_available": [
+    "Windows",
+    "iPhone",
+    "iPad"
+  ],
+  "font": {
+    "revision": "f8d157532fbfaeda587e826d4cd5b21a49186f7c",
+    "file_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "license": "SIL Open Font License 1.1"
+  },
+  "first_sdk_complete": false,
+  "wp16_complete": false
+}
