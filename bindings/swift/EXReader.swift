@@ -109,6 +109,10 @@ public struct EXReaderBitmap {
     public let channels: Int
     public let pixels: Data
 }
+public struct EXReaderRenderedPage {
+    public let bitmap: EXReaderBitmap
+    public let sourceRange: Range<Int>
+}
 public struct EXReaderFontSource {
     public let data: Data
     public let faceIndex: UInt32
@@ -218,13 +222,25 @@ public final class EXReaderFixedDocument {
         guard let result else { throw EXReaderError.invalidResult }
         return EXReaderPageText(handle: result)
     }
-    public func render(page: Int, scale: Double = 1) throws -> EXReaderBitmap {
+    public func render(page: Int, scale: Double = 1, maximumDimension: Int? = nil) throws -> EXReaderBitmap {
         guard page >= 0 else { throw EXReaderError.invalidInput }
         lock.lock(); defer { lock.unlock() }
         fallbackFont?.gate.lock(); defer { fallbackFont?.gate.unlock() }
         var bitmap = exr_bitmap()
         var error = exr_error()
-        let status = exr_fixed_render(handle, page, scale, nil, &bitmap, &error)
+        var actualScale = scale
+        if let maximumDimension {
+            var count = 0
+            guard maximumDimension > 0, let pages = exr_fixed_pages(handle, &count), page < count else {
+                throw EXReaderError.invalidInput
+            }
+            let geometry = pages[page].geometry
+            let width = (geometry.bounds.2 - geometry.bounds.0) * geometry.unit_scale
+            let height = (geometry.bounds.3 - geometry.bounds.1) * geometry.unit_scale
+            guard width.isFinite, height.isFinite, width > 0, height > 0 else { throw EXReaderError.invalidResult }
+            actualScale = min(scale, Double(maximumDimension) / max(width, height))
+        }
+        let status = exr_fixed_render(handle, page, actualScale, nil, &bitmap, &error)
         defer { exr_bitmap_free(&bitmap) }
         try check(status, error)
         guard let pixels = bitmap.pixels else { throw EXReaderError.invalidResult }
@@ -517,6 +533,25 @@ public final class EXReaderPager {
         }
         try check(status, error)
         try check(exr_pager_set_hyphenator(handle, result, &error), error)
+    }
+    /** Indexed mode; do not mix with next(). The returned pixels survive cache eviction. */
+    public func get(page index: Int) throws -> EXReaderRenderedPage {
+        guard index >= 0 else { throw EXReaderError.invalidInput }
+        document.gate.lock(); defer { document.gate.unlock() }
+        font.gate.lock(); defer { font.gate.unlock() }
+        guard let handle else { throw EXReaderError.invalidInput }
+        var page: OpaquePointer?
+        var error = exr_error()
+        try check(exr_pager_get(handle, index, &page, &error), error)
+        guard let page, let content = exr_layout_pages(page, nil) else { throw EXReaderError.invalidResult }
+        var bitmap = exr_bitmap()
+        defer { exr_bitmap_free(&bitmap) }
+        try check(exr_render_page_color(page, exr_layout_font(page), 0, &bitmap, &error), error)
+        guard let pixels = bitmap.pixels else { throw EXReaderError.invalidResult }
+        return EXReaderRenderedPage(bitmap: EXReaderBitmap(width: Int(bitmap.width), height: Int(bitmap.height),
+            stride: Int(bitmap.stride), channels: Int(bitmap.channels),
+            pixels: Data(bytes: pixels, count: Int(bitmap.stride) * Int(bitmap.height))),
+            sourceRange: content.pointee.start..<content.pointee.end)
     }
     /** nil at EOF. An engine error invalidates this pager; construct another to retry. */
     public func next() throws -> EXReaderReflowPage? {

@@ -112,6 +112,9 @@ jobs:
           ./build/sdk-example/exreader-lazy-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf lazy-host-page.png
           ./build/sdk-example/exreader-lazy-example /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf lazy-epub-page.png tests/fixtures/layout.epub 1
           python3 tools/run_benchmarks.py ./stage/bin/exreader-benchmark /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf build/performance --runs 1 --max-pages 8 --paging
+      - name: Package and check the Windows reference reader
+        if: runner.os == 'Windows'
+        run: python tools/build_windows_host.py --sdk stage --binary build/sdk-example/Release/exreader-reader-example.exe --output build/windows-host
       - name: Run the installed macOS SDK
         if: runner.os == 'macOS'
         run: |
@@ -158,6 +161,29 @@ jobs:
         run: |
           swiftc -I stage/include -L stage/lib -lexreader -Xlinker -rpath -Xlinker "$PWD/stage/lib" bindings/swift/EXReader.swift bindings/swift/Smoke.swift -o build/swift-sdk-example
           ./build/swift-sdk-example stage/examples
+          python3 tools/build_apple_host.py --sdk stage --platform macos --output build/apple-host
+          python3 tools/check_apple_host.py --bundle build/apple-host/EXReader.app --device macos --output build/apple-host-evidence
+          ditto -c -k --sequesterRsrc --keepParent build/apple-host/EXReader.app build/EXReader-macOS.zip
+      - uses: actions/upload-artifact@v4
+        if: always() && runner.os == 'Windows'
+        with:
+          name: EXReader-reference-Windows
+          path: |
+            build/windows-host/EXReader-Windows.zip
+            build/windows-host/report.json
+            build/windows-host/build.json
+            build/windows-host/page.png
+            build/windows-host/application.log
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always() && runner.os == 'macOS'
+        with:
+          name: EXReader-reference-macOS
+          path: |
+            build/EXReader-macOS.zip
+            build/apple-host/build.json
+            build/apple-host-evidence/
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         with:
           name: EXReader-performance-${{ runner.os }}
@@ -263,7 +289,7 @@ jobs:
           path: stage/
   apple-mobile:
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Build iOS and iPadOS device and simulator libraries
@@ -276,6 +302,23 @@ jobs:
             if [ "$sdk" = iphoneos ]; then target=arm64-apple-ios14.0; else target=arm64-apple-ios14.0-simulator; fi
             xcrun --sdk "$sdk" swiftc -target "$target" -sdk "$(xcrun --sdk "$sdk" --show-sdk-path)" -I "stage/$sdk/include" -typecheck bindings/swift/EXReader.swift
           done
+      - name: Build and run the iPhone and iPad reference host
+        run: |
+          python3 tools/build_apple_host.py --sdk stage/iphonesimulator --platform simulator --output build/apple-simulator-host
+          python3 tools/check_apple_host.py --bundle build/apple-simulator-host/EXReader.app --device iphone --output build/iphone-host-evidence
+          python3 tools/check_apple_host.py --bundle build/apple-simulator-host/EXReader.app --device ipad --output build/ipad-host-evidence
+          python3 tools/build_apple_host.py --sdk stage/iphoneos --platform iphoneos --output build/apple-device-host
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: EXReader-reference-iPhone-iPad
+          path: |
+            build/apple-device-host/EXReader-iOS-unsigned.ipa
+            build/apple-device-host/build.json
+            build/apple-simulator-host/build.json
+            build/iphone-host-evidence/
+            build/ipad-host-evidence/
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         with:
           name: EXReader-C-iOS-iPadOS-arm64

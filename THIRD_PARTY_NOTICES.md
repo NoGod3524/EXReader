@@ -25,6 +25,12 @@ PostScript is a registered trademark of Adobe Systems Incorporated.
 
 CMake verifies every source archive using the SHA-256 values in cmake/deps.cmake. CSS matching, Unicode boundary and bidirectional algorithms, OpenType GSUB/GPOS processing, line breaking, pagination, image placement, table layout, pixel compositing, document positions, the document model and format extraction are EXReader C code. FreeType supplies font access, glyph metrics and rasterization; stb_image supplies decoded image pixels. License texts are included in the installed SDK under share/exreader/licenses.
 
+Native reference hosts additionally bundle Noto Sans CJK SC Regular, from
+notofonts/noto-cjk revision `f8d157532fbfaeda587e826d4cd5b21a49186f7c`, under the
+SIL Open Font License 1.1. `tools/host_font.py` pins the font and license hashes;
+each host bundle includes the original license. This asset is separate from the
+SDK engine and its original geometric test fonts.
+
 For GCC builds, CMake compiles LittleCMS `cmsintrp.c` with `-fwrapv`: the
 upstream 16-bit fixed-point interpolation intentionally wraps intermediate
 signed products before truncating to 16 bits. This defines its arithmetic
