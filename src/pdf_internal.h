@@ -173,6 +173,7 @@ typedef struct {
   exr_pdf_shading_fn shading; /* optional: PDF sh operator */
   exr_pdf_group_begin_fn begin_group;exr_draw_layer_end_fn end_layer;
   exr_draw_image_space_fn image_space;
+  size_t *work; /* Shared with the canvas and recursive soft-mask painters. */
 } exr_pdf_draw_callbacks;
 enum { EXR_PDF_GROUP_ISOLATED=1,EXR_PDF_GROUP_NONISOLATED=2,EXR_PDF_GROUP_KNOCKOUT=4,EXR_PDF_GROUP_GRAY=8,EXR_PDF_GROUP_CMYK=16,EXR_PDF_GROUP_RGB=32 };
 enum { EXR_PDF_GROUP_FORM_CONTEXT=0,EXR_PDF_GROUP_PAGE_CONTEXT=1,EXR_PDF_GROUP_MASK_CONTEXT=2 };

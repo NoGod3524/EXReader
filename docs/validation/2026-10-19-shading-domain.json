@@ -1,0 +1,48 @@
+{
+  "version": "3.36.1",
+  "abi": 1,
+  "schema": 6,
+  "scenes": 9,
+  "rejected": 11,
+  "tests": {
+    "gcc": {
+      "count": 141,
+      "failures": 0,
+      "dll_sha256": "7ac9d16a1401fc0fc379d31de639708225fecd144d09c69abaad8b02625a6c7e",
+      "exports": 305,
+      "shading_output": "164 native PDF shading checks passed\n"
+    },
+    "msvc": {
+      "count": 141,
+      "failures": 0,
+      "dll_sha256": "3498c0cf805754df762cd66f8dd519b993668ba4587ffe8ad6f8a4c3b5bf422a",
+      "exports": 305,
+      "shading_output": "164 native PDF shading checks passed\n"
+    }
+  },
+  "icc_off": {
+    "count": 10,
+    "failures": 0
+  },
+  "installed_components": {
+    "count": 4,
+    "failures": 0
+  },
+  "cpp_headers": 13,
+  "cpp_exact_runtime": "3.36.1 ABI 1",
+  "abi_measurements_unchanged": 703,
+  "layers": {
+    "objects": 99,
+    "symbols": 1041,
+    "includes": 899,
+    "inverse": 0
+  },
+  "reference": "2026-10-19-shading-domain-reference.json",
+  "remaining": [
+    "full Extend",
+    "BBox",
+    "radial root selection",
+    "shading function arrays",
+    "WP1-WP16 acceptance"
+  ]
+}

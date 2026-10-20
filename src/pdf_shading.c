@@ -4,6 +4,7 @@
    blend, so clipping and transparency keep using the existing paths. */
 #include "pdf_internal.h"
 #include "pdf_function_internal.h"
+#include <limits.h>
 
 #define AXIAL_SAMPLES 512u
 #define AXIAL_EXTEND_SPAN 1.0  /* one axis length of constant colour past each end */
@@ -14,6 +15,20 @@ static int number(exr_pdf_file *file,uint32_t id,double *out) {
   if(!v || (v->kind!=EXR_PDF_INT && v->kind!=EXR_PDF_REAL)) return 0;
   *out=v->kind==EXR_PDF_INT ? (double)v->u.integer : v->u.number;
   return isfinite(*out);
+}
+static exr_status numbers(exr_pdf_file *file,uint32_t id,double *out,unsigned count,exr_error *e) {
+  const exr_pdf_value *v=exr_pdf_value_at(file,id);uint32_t at;
+  if(!v || v->kind!=EXR_PDF_ARRAY) return exr_fail(e,EXR_FORMAT,"PDF shading field must be a numeric array");
+  at=v->first;
+  for(unsigned i=0;i<count;i++) {
+    uint32_t item,next;v=exr_pdf_value_at(file,at);
+    if(!v) return exr_fail(e,EXR_FORMAT,"PDF shading array has too few values");
+    next=v->next;
+    if(exr_pdf_resolve(file,at,&item,e)!=EXR_OK) return e->code;
+    if(!number(file,item,out+i)) return exr_fail(e,EXR_FORMAT,"Invalid PDF shading numeric value");
+    at=next;
+  }
+  return at==EXR_PDF_NONE ? EXR_OK : exr_fail(e,EXR_FORMAT,"PDF shading array has too many values");
 }
 static void multiply(const double a[6],const double b[6],double out[6]) {
   out[0]=a[0]*b[0]+a[2]*b[1]; out[1]=a[1]*b[0]+a[3]*b[1];
@@ -51,8 +66,10 @@ static void store(exr_bitmap *bitmap,size_t index,const double rgb[3],unsigned c
   p[3]=alpha;
 }
 static exr_status sample(exr_pdf_function *function,exr_pdf_colorspace *space,unsigned intent,
-                         double t,double rgb[3],exr_bitmap *inks,size_t index,exr_error *e) {
+                         double t,double rgb[3],exr_bitmap *inks,size_t index,size_t *work,exr_error *e) {
   double out[EXR_PDF_MAX_COLORANTS]={0};
+  if(!exr_vector_work(work,exr_pdf_function_cost(function)+exr_pdf_colorspace_cost(space)))
+    return exr_fail(e,EXR_LIMIT,"PDF shading samples exceed work budget");
   exr_status status=exr_pdf_function_eval(function,t,out,e);
   if(status!=EXR_OK) return status;
   if(inks->pixels) { unsigned k;for(k=0;k<4;k++) inks->pixels[index*4+k]=(unsigned char)floor(fmax(0,fmin(1,out[k]))*255+.5); }
@@ -63,50 +80,57 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
                                 uint32_t value,const double ctm[6],const exr_pdf_paint_state *paint,size_t *work,
                                 exr_pdf_shading_fn emit,void *context,unsigned native_cmyk,
                                 const exr_control *control,exr_error *e) {
-  uint32_t id,coords_id,function_id,cs_id;const exr_pdf_value *v;double coords[6]={0},t;
+  uint32_t id,coords_id,function_id,cs_id;const exr_pdf_value *v;double coords[6]={0},domain[2]={0,1},t;
+  size_t local_work=0;int stream;
   unsigned intent=paint->intent;
   int extend0=0,extend1=0,type=0;unsigned i,components=1,ncoords;
   exr_pdf_colorspace *space=NULL;exr_pdf_function *function=NULL;
   exr_bitmap bitmap={0},inks={0};double matrix[6],local[6];exr_status status=EXR_OK;
   if(!emit) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
+  if(!work) work=&local_work;
   if(exr_pdf_resolve(file,value,&value,e)!=EXR_OK) return e->code;
   v=exr_pdf_value_at(file,value);
   /* Mesh shadings are streams; axial and radial shadings are plain dictionaries. */
   if(!v || (v->kind!=EXR_PDF_DICT && v->kind!=EXR_PDF_STREAM)) return exr_fail(e,EXR_FORMAT,"PDF shading is not a dictionary");
+  stream=v->kind==EXR_PDF_STREAM;
   if(exr_pdf_resolve(file,exr_pdf_get(file,value,"ShadingType"),&id,e)!=EXR_OK) return e->code;
-  { double n; if(!number(file,id,&n)) return exr_fail(e,EXR_FORMAT,"Invalid PDF shading type"); type=(int)n; }
+  { double n;
+    if(!number(file,id,&n) || n<1 || n>INT_MAX || n!=floor(n)) return exr_fail(e,EXR_FORMAT,"Invalid PDF shading type");
+    if(n>7) return exr_fail(e,EXR_UNSUPPORTED,"Unsupported PDF shading type");
+    type=(int)n;
+  }
   if(type>=4 && type<=7) {
     status=exr_pdf_shading_mesh(file,resource_file,resources,value,type,ctm,paint,work,emit,context,native_cmyk,control,e);
     return status;
   }
-  if(v->kind!=EXR_PDF_DICT) return exr_fail(e,EXR_FORMAT,"PDF shading is not a dictionary");
+  if(stream) return exr_fail(e,EXR_FORMAT,"PDF shading is not a dictionary");
   if(type!=2 && type!=3) return exr_fail(e,EXR_UNSUPPORTED,"Only axial, radial and mesh PDF shadings are implemented");
   ncoords=type==2 ? 4u : 6u;
   if(exr_pdf_resolve(file,exr_pdf_get(file,value,"Coords"),&coords_id,e)!=EXR_OK) return e->code;
-  v=exr_pdf_value_at(file,coords_id);
-  if(!v || v->kind!=EXR_PDF_ARRAY) return exr_fail(e,EXR_FORMAT,"Invalid PDF shading coordinates");
-  { uint32_t at=v->first;
-    for(i=0;i<ncoords;i++) {
-      uint32_t item;
-      if(at==EXR_PDF_NONE || exr_pdf_resolve(file,at,&item,e)!=EXR_OK) return exr_fail(e,EXR_FORMAT,"Invalid PDF shading coordinates");
-      if(!number(file,item,&coords[i])) return exr_fail(e,EXR_FORMAT,"Invalid PDF shading coordinates");
-      at=exr_pdf_value_at(file,at)->next;
-    }
+  status=numbers(file,coords_id,coords,ncoords,e);if(status!=EXR_OK) return status;
+  if(exr_pdf_resolve(file,exr_pdf_get(file,value,"Domain"),&id,e)!=EXR_OK) return e->code;
+  v=exr_pdf_value_at(file,id);
+  if(v && v->kind!=EXR_PDF_NULL) {
+    status=numbers(file,id,domain,2,e);if(status!=EXR_OK) return status;
+    if(domain[0]>domain[1]) return exr_fail(e,EXR_FORMAT,"Invalid PDF shading domain order");
   }
   if(type==3 && (coords[2]<0 || coords[5]<0)) return exr_fail(e,EXR_FORMAT,"Invalid PDF radial shading radii");
-  if(exr_pdf_get(file,value,"Extend")!=EXR_PDF_NONE) {
-    if(exr_pdf_resolve(file,exr_pdf_get(file,value,"Extend"),&id,e)!=EXR_OK) return e->code;
-    v=exr_pdf_value_at(file,id);
-    if(v && v->kind==EXR_PDF_ARRAY) {
-      uint32_t at=v->first;
-      for(i=0;i<2 && at!=EXR_PDF_NONE;i++) {
-        uint32_t item;const exr_pdf_value *flag;
-        if(exr_pdf_resolve(file,at,&item,e)!=EXR_OK) break;
-        flag=exr_pdf_value_at(file,item);
-        if(flag && flag->kind==EXR_PDF_BOOL) { if(i==0) extend0=flag->u.integer!=0; else extend1=flag->u.integer!=0; }
-        at=exr_pdf_value_at(file,at)->next;
-      }
+  if(exr_pdf_resolve(file,exr_pdf_get(file,value,"Extend"),&id,e)!=EXR_OK) return e->code;
+  v=exr_pdf_value_at(file,id);
+  if(v && v->kind!=EXR_PDF_NULL) {
+    uint32_t at=v->first;
+    if(v->kind!=EXR_PDF_ARRAY) return exr_fail(e,EXR_FORMAT,"PDF shading Extend must contain two booleans");
+    for(i=0;i<2;i++) {
+      uint32_t item,next;v=exr_pdf_value_at(file,at);
+      if(!v) return exr_fail(e,EXR_FORMAT,"PDF shading Extend has too few values");
+      next=v->next;
+      if(exr_pdf_resolve(file,at,&item,e)!=EXR_OK) return e->code;
+      v=exr_pdf_value_at(file,item);
+      if(!v || v->kind!=EXR_PDF_BOOL) return exr_fail(e,EXR_FORMAT,"PDF shading Extend values must be boolean");
+      if(!i) extend0=v->u.integer!=0;else extend1=v->u.integer!=0;
+      at=next;
     }
+    if(at!=EXR_PDF_NONE) return exr_fail(e,EXR_FORMAT,"PDF shading Extend has too many values");
   }
   if(exr_pdf_resolve(file,exr_pdf_get(file,value,"ColorSpace"),&cs_id,e)!=EXR_OK) return e->code;
   status=exr_pdf_colorspace_open(file,cs_id,resource_file,resources,control,&space,e);
@@ -130,7 +154,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
       if(exr_control_cancel(control,e)!=EXR_OK) { status=EXR_CANCELLED;break; }
       double rgb[3]={0},u=t0+((double)i+0.5)/AXIAL_SAMPLES*(t1-t0);
       t=u<0 ? 0 : u>1 ? 1 : u;
-      status=sample(function,space,intent,t,rgb,&inks,i,e);
+      status=sample(function,space,intent,domain[0]*(1-t)+domain[1]*t,rgb,&inks,i,work,e);
       store(&bitmap,i,rgb,((u<0 && !extend0) || (u>1 && !extend1)) ? 0 : 255);
     }
     if(status==EXR_OK) {
@@ -171,13 +195,14 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
     for(i=0;i<RADIAL_SAMPLES*RADIAL_SAMPLES && status==EXR_OK;i++) {
       unsigned row=i/RADIAL_SAMPLES,col=i%RADIAL_SAMPLES;
       if(!col && exr_control_cancel(control,e)!=EXR_OK) { status=EXR_CANCELLED;break; }
+      if(!col && !exr_vector_work(work,RADIAL_SAMPLES)) { status=exr_fail(e,EXR_LIMIT,"PDF radial shading scan exceeds work budget");break; }
       double x=left+((double)col+0.5)/RADIAL_SAMPLES*(right-left);
       double y=top+((double)row+0.5)/RADIAL_SAMPLES*(bottom-top);
       double rgb[3]={0};
       if(!radial_parameter(x,y,coords,&t)) { store(&bitmap,i,rgb,0); continue; }
       if(t<0) { if(!extend0) { store(&bitmap,i,rgb,0); continue; } t=0; }
       if(t>1) { if(!extend1) { store(&bitmap,i,rgb,0); continue; } t=1; }
-      status=sample(function,space,intent,t,rgb,&inks,i,e);
+      status=sample(function,space,intent,domain[0]*(1-t)+domain[1]*t,rgb,&inks,i,work,e);
       store(&bitmap,i,rgb,255);
     }
     if(status==EXR_OK) {

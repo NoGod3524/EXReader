@@ -190,12 +190,13 @@ static exr_status end_layer_event(void *context,unsigned commit,exr_error *e) {
 exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
                                   const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *program_context,
                                   size_t *work,size_t *mask_bytes,const exr_control *control,exr_error *e) {
-  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,shading_event,begin_group_event,end_layer_event,image_space}; size_t i,local_work=0,local_mask_bytes=0; exr_status status;
+  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,shading_event,begin_group_event,end_layer_event,image_space,NULL}; size_t i,local_work=0,local_mask_bytes=0; exr_status status;
   if(!file) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint input");
   status=exr_draw_sink_snapshot(sink,&r.sink,e);if(status!=EXR_OK) return status;
   if(!r.sink.base.path && !r.sink.base.image && !r.sink.base.clip && !r.sink.base.state && !r.sink.image_cmyk && !r.sink.path_cmyk && !r.sink.shading) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint consumer");
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   r.program=program; r.program_context=program_context; r.control=control; r.work=work ? work : &local_work; r.file=file;r.mask_bytes=mask_bytes ? mask_bytes : &local_mask_bytes;
+  callbacks.work=r.work;
   if(FT_Init_FreeType(&r.library)) return exr_fail(e,EXR_MEMORY,"PDF font library initialization failed");
   status=exr_pdf_draw_ops(file,resources,content,size,initial,&callbacks,&r,control,e);
   while(r.group_depth) { exr_error cleanup={0};exr_status closed=end_layer_event(&r,0,&cleanup);if(status==EXR_OK && closed!=EXR_OK) { status=closed;if(e) *e=cleanup; } }
