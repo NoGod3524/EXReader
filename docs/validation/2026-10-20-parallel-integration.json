@@ -195,7 +195,9 @@
     "Make independent reference renderer and Chrome paths explicit; fail process on rejected comparison.",
     "Expose POSIX declarations for conversion and media probe; enable Linux anonymous mapping declarations.",
     "Initialize unique-import status and roll back every open transaction before unlocking; reset failed outputs.",
-    "Reuse existing fixed-options prefix validator and observe cancellation during stored PDF chunk reads."
+    "Reuse existing fixed-options prefix validator and observe cancellation during stored PDF chunk reads.",
+    "Keep libaom include path inside BUILD_INTERFACE; fix in-tree FetchContent SDK generation.",
+    "Freeze TIFF compression dependencies to the declared built-in codecs and pinned zlib, independent of host libraries."
   ],
   "source_files": {
     ".github/workflows/native.yml": {
@@ -208,7 +210,7 @@
     },
     "cmake/deps.cmake": {
       "path": "cmake/deps.cmake",
-      "sha256": "ef7e17a503df6a90e27389c2b3d311a1892a26606f522acb5e2f96740c351daa"
+      "sha256": "aea36f3f868cfbc9d43634acf89c5354054932a0386e2229c2333237c118d6e5"
     },
     "cmake/install_dependencies.cmake": {
       "path": "cmake/install_dependencies.cmake",
@@ -923,7 +925,7 @@
     "covers_later_changes": false
   },
   "joint_suites": {
-    "status": "pending four-package suite",
+    "status": "passed full four-package Windows GCC suite; dependency packaging recheck pending",
     "prior_three_package_suite": {
       "passed": 158,
       "total": 160,
@@ -944,6 +946,37 @@
         "sha256": "617399ffea778b84d6d262e23b45c3abc6250b337a5e0870885c78b1c5f278b5"
       },
       "scope": "Includes fixture generation, CLI cancellation, SVG boundary and font pipeline contract; before WP12a"
+    },
+    "gcc": {
+      "passed": 163,
+      "total": 163,
+      "seconds": 228.66,
+      "log": {
+        "path": "build/wp7-integration-20261020/four-package-tests-r2.log",
+        "sha256": "d57e32a49604fb93a8ede743a063bf0e626b799acfdc6a4f0739bca2f647e2c9"
+      },
+      "last_test": {
+        "path": "build/wp7-integration-20261020/four-package-last-test.log",
+        "sha256": "f514c8ecc18e17bd8cc92aa9a9215a393a0f4c6a004f94399f11a288511d61a7"
+      },
+      "engine_source_sha": "3df656f",
+      "environment": "Workspace TEMP/TMP; build/ctest required unsandboxed execution for Git Perl during libaom generation"
+    },
+    "conversion": {
+      "matrix_passed": 520,
+      "render_passed": 20,
+      "cli_passed": 37,
+      "cli_total": 37,
+      "reports": [
+        {
+          "path": "build/wp7-integration-20261020/gcc/native-convert.json",
+          "sha256": "94a058fcafa46c3107cc5e864efc2c99f69ef65c3ca93756a8ec182d95eb4c6f"
+        },
+        {
+          "path": "build/wp7-integration-20261020/gcc/native-convert-cli.json",
+          "sha256": "650df24d4e5b93a3575bb1f5c2d7f425cd5bac6fe72195cc065d7a7db1dbac08"
+        }
+      ]
     }
   },
   "reference_rerun": {
@@ -973,7 +1006,22 @@
     ]
   },
   "installed_consumption": {
-    "status": "pending"
+    "status": "pending",
+    "trimmed": {
+      "passed": true,
+      "tests": 2,
+      "static_core": true,
+      "optional_components_disabled": true,
+      "webp_tiff_avif_disabled": true,
+      "log": {
+        "path": "build/wp7-integration-20261020/consumer-four-trim-tests.log",
+        "sha256": "626bd453cf8a6476f51ffa983aed7aa5a901a8644c69b7a2c9754184f5d7ca86"
+      },
+      "trimmed_engine_tests": {
+        "path": "build/wp7-integration-20261020/four-trim-tests.log",
+        "sha256": "a10505d2ee407ba0d8cff556f42c5da60dcd82d5faf5e8cf651b6ef63da3970e"
+      }
+    }
   },
   "ci": {
     "status": "pending four-package source",
@@ -998,6 +1046,22 @@
         "path": "build/wp7-integration-20261020/ci-status-final-first-run.json",
         "sha256": "e83091b3d02afedae66ba1921a201dfb7705d38b970f59164f2db98190600698"
       }
+    },
+    "four_package_first_run": {
+      "id": 39504743947,
+      "source_sha": "3df656f",
+      "accepted": false,
+      "reason": "libaom build-source include path escaped into its install export; host TIFF codec discovery also required pinning",
+      "failure_logs": [
+        {
+          "path": "build/wp7-integration-20261020/ci-four-sanitizer-failed.log",
+          "sha256": "51ece4091d24a52e842469a314425ce21658d7a53edde81e2ca37d5e24ecbf58"
+        },
+        {
+          "path": "build/wp7-integration-20261020/ci-four-fuzz-failed.log",
+          "sha256": "e0b289c5f31f5fe267011b371cda0e7102f820ca8caaf6df9eef1abf4a33a35c"
+        }
+      ]
     }
   },
   "linux_asan_ubsan": {
