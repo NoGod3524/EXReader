@@ -32,7 +32,7 @@
   },
   "wp7_test": {
     "name": "native-wp7",
-    "checks": 18739,
+    "checks": 18743,
     "reference_cases": 800,
     "real_font_cases": 400,
     "synthetic_font_cases": 400

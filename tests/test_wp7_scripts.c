@@ -136,6 +136,39 @@ static void bidi_and_breaks(void) {
   (void)i;
 }
 
+static int hyphen_point;
+static exr_status hyphen_provide(void *context, const char *language, const char *word, size_t size,
+                                 exr_hyphen_emit_fn emit, void *emit_context,
+                                 const exr_control *control, exr_error *error) {
+  exr_hyphen_break item = {0};
+  (void)context; (void)language; (void)word; (void)size; (void)control;
+  item.point = item.start = item.end = (size_t)hyphen_point;
+  return emit(emit_context, &item, error);
+}
+static void hyphenation(void) {
+  exr_hyphen_discretionary_provider provider = {sizeof(provider), hyphen_provide, NULL, NULL};
+  exr_hyphenator *hyphenator = NULL;
+  exr_hyphenation *result = NULL;
+  const exr_hyphen_break *breaks;
+  size_t count = 0;
+  const char word[] = "\xe0\xa6\x95\xe0\xa6\xbf\xe0\xa6\x95\xe0\xa6\xbf";
+  hyphen_point = 6;
+  OK(exr_hyphenator_create_discretionary(&provider,&hyphenator,&error));
+  OK(exr_hyphenator_query(hyphenator,"bn",word,sizeof(word)-1,NULL,&result,&error));
+  breaks = exr_hyphenation_breaks(result,&count);
+  CHECK(count == 1 && breaks[0].point == 6);
+  exr_hyphenation_free(result); result = NULL;
+  hyphen_point = 3; /* Inside the first Bengali grapheme. */
+  if (exr_hyphenator_query(hyphenator,"bn",word,sizeof(word)-1,NULL,&result,&error) == EXR_OK) {
+    breaks = exr_hyphenation_breaks(result,&count);
+    CHECK(count == 0 && !breaks);
+    exr_hyphenation_free(result);
+  } else {
+    CHECK(!result);
+  }
+  exr_hyphenator_free(hyphenator);
+}
+
 static void fallback_and_selection(void) {
   const char *names[] = {"beng-real.ttf","thai-real.ttf"};
   exr_font_input inputs[2];
@@ -219,6 +252,7 @@ int main(int argc, char **argv) {
   reference_cases();
   controls();
   bidi_and_breaks();
+  hyphenation();
   fallback_and_selection();
   pagination_recovery();
   for (i = 0; i < cache_count; i++) exr_font_free(cache[i].font);
