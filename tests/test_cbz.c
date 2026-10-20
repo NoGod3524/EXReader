@@ -72,7 +72,7 @@ int main(int argc,char **argv) {
   OK(exr_library_fixed(library,id,NULL,&d,&error));pixels(d,3,&original);exr_fixed_free(d);d=NULL;
   OK(exr_library_backup(library,backup,&error));exr_library_close(library);OK(exr_library_open(backup,&restored,&error));
   OK(exr_library_books(restored,NULL,&books,&count,&error));CHECK(count==1 && books[0].position==3 && books[0].favorite);exr_books_free(books,count);exr_library_close(restored);
-  invalid("empty.txt","",0,EXR_FORMAT);invalid("page.webp",png,png_size,EXR_FORMAT);invalid("folder\\page.png",png,png_size,EXR_FORMAT);invalid("page.png","bad",3,EXR_FORMAT);
+  invalid("empty.txt","",0,EXR_FORMAT);invalid("page.webp","bad",3,EXR_FORMAT);invalid("folder\\page.png",png,png_size,EXR_FORMAT);invalid("page.png","bad",3,EXR_FORMAT);
   invalid("page\xff.png",png,png_size,EXR_ENCODING);
   { unsigned char *extended=calloc(1,jpeg_size+8194);void *large;size_t n;CHECK(extended && jpeg_size>2);
     memcpy(extended,"\xff\xd8\xff\xe1\x20\x00",6);memcpy(extended+8196,(unsigned char *)jpeg+2,jpeg_size-2);

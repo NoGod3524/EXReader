@@ -83,6 +83,7 @@
     "hyphen.c": "text",
     "icc.c": "graphics",
     "images.c": "graphics",
+    "image_formats.c": "graphics",
     "inline.c": "layout",
     "kf8.c": "formats",
     "layout.c": "layout",

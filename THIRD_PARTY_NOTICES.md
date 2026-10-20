@@ -18,12 +18,24 @@ PostScript is a registered trademark of Adobe Systems Incorporated.
 | Expat | R_2_9_0, libexpat/libexpat | MIT | XML parsing with external entity resolution disabled |
 | miniz | 3.1.2, richgel999/miniz | MIT | ZIP containers and decompression |
 | SQLite | 3.54.0 amalgamation, sqlite.org | Public domain | Local bookshelf and annotations |
-| stb_image | 2c980bb59875b0d32144a71867fbdebb2f77cd20, nothings/stb | MIT OR public domain; MIT selected | PNG/JPEG decoding only |
+| stb_image | 2c980bb59875b0d32144a71867fbdebb2f77cd20, nothings/stb | MIT OR public domain; MIT selected | PNG/JPEG/BMP/GIF decoding |
+| libwebp | 1.5.0, webmproject/libwebp | BSD-3-Clause | WebP still and animated decoding; EXR_ENABLE_IMAGE_WEBP |
+| zlib | 1.3.1, madler/zlib | zlib | TIFF Deflate filters; EXR_ENABLE_IMAGE_TIFF |
+| libtiff | 4.7.0, libsdl-org/libtiff | libtiff BSD-style license | Multi-directory TIFF decoding; EXR_ENABLE_IMAGE_TIFF |
+| libaom | 3.15.2, official tag mirrored at arthenica/libaom commit af3dc9a | BSD-2-Clause AND AOM Patent License 1.0 | AV1 decoder used by AVIF; EXR_ENABLE_IMAGE_AVIF |
+| libavif | 1.2.0, AOMediaCodec/libavif | BSD-2-Clause | AVIF container parsing and YUV-to-RGBA conversion; EXR_ENABLE_IMAGE_AVIF |
 | Argyll fallback CMYK profile | Graeme Gill; full 961,644-byte ICC, zlib embedded | Public domain; original notice in licenses/default-cmyk-profile.txt | Default DeviceCMYK and inverse conversion when EXR_ENABLE_ICC is enabled |
 | LittleCMS | lcms2.19.1, mm2/Little-CMS | MIT | Optional ICCBased profile-to-sRGB conversion; EXR_ENABLE_ICC |
 | Mbed TLS crypto subset | mbedtls-3.6.7, Mbed-TLS/mbedtls | Apache-2.0 OR GPL-2.0-or-later; Apache-2.0 selected | Optional PDF MD5/SHA-256/384/512 and AES-CBC/ECB; EXR_ENABLE_PDF_CRYPTO |
 
-CMake verifies every source archive using the SHA-256 values in cmake/deps.cmake. CSS matching, Unicode boundary and bidirectional algorithms, OpenType GSUB/GPOS processing, line breaking, pagination, image placement, table layout, pixel compositing, document positions, the document model and format extraction are EXReader C code. FreeType supplies font access, glyph metrics and rasterization; stb_image supplies decoded image pixels. License texts are included in the installed SDK under share/exreader/licenses.
+CMake verifies every source archive using the SHA-256 values in cmake/deps.cmake.
+The WP12a image-codec archives are pinned as follows: libwebp
+`668c9aba45565e24c27e17f7aaf7060a399f7f31dba6c97a044e1feacb930f37`,
+zlib `17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c`,
+libtiff `8f568a0dfac2e514074b04d7368c22e8afc1009af29780762a2536fd4d111e16`,
+libaom `a606215ed62ee1aaffc1360867c637b0ccafbc1a0c1c8430e2412257b8baa62a`,
+libavif `2182f4900d1a9617cee89746922a58dd825f2a3547f23907b8d78dc3685f7d8c`.
+Their licenses are installed under `share/exreader/licenses`. CSS matching, Unicode boundary and bidirectional algorithms, OpenType GSUB/GPOS processing, line breaking, pagination, image placement, table layout, pixel compositing, document positions, the document model and format extraction are EXReader C code. FreeType supplies font access, glyph metrics and rasterization; stb_image supplies decoded image pixels. License texts are included in the installed SDK under share/exreader/licenses.
 
 Native reference hosts additionally bundle Noto Sans CJK SC Regular, from
 notofonts/noto-cjk revision `f8d157532fbfaeda587e826d4cd5b21a49186f7c`, under the

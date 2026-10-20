@@ -736,3 +736,42 @@ must select SDK3.39.0 or later. Installed `docs/CONVERSION.md` defines profiles,
 format aliases, cancellation granularity, CLI publication and report semantics.
 `exreader-convert` is installed when tools are enabled. Core-only builds retain
 the public export API; the CLI is tested through the installed default SDK.
+
+## 3.38.1 WP12a image codecs and streaming library imports
+
+This branch keeps SDK/core versions 3.38.1, ABI epoch 1 and library schema 6.
+It adds symbols; it does not change any existing exported signature, enum value,
+record layout or callback contract.
+
+The image entry points remain:
+`exr_image_decode()` (page 0), plus new `exr_image_page_count()`,
+`exr_image_page_dimensions()` and `exr_image_decode_page()`. PNG/JPEG/BMP/GIF
+are built in; WebP/TIFF/AVIF are default-on build options
+(`EXR_ENABLE_IMAGE_WEBP/TIFF/AVIF`). A disabled codec returns
+`EXR_UNSUPPORTED` and keeps the symbols. Multi-frame GIF/WebP/AVIF and
+multi-directory TIFF expand in source order; CBZ page IDs for existing
+single-page PNG/JPEG files are unchanged. See [WP12A-FORMATS.md](WP12A-FORMATS.md).
+
+The library adds source-based imports:
+`exr_library_import_source()`, `exr_library_import_source_unique()`,
+`exr_library_import_file()`, `exr_library_import_file_unique()` and
+`exr_library_fixed_source()`. The source is borrowed for the call; CBZ bytes
+are copied into SQLite in 64 KiB chunks. `exr_library_fixed_source()` reads the
+stored CBZ through SQLite blob I/O. A single stored original is limited to
+2 GiB - 1 by the blob API and `SQLITE_MAX_LENGTH` (raised from the 1e9 default
+to INT_MAX). Other formats keep the existing in-memory APIs and streaming
+entry points return `EXR_UNSUPPORTED`. See [WP12A-STREAMING.md](WP12A-STREAMING.md).
+
+Contract notes for hosts:
+
+- `exr_image_decode()` returns page 0; a page index at or beyond the count
+  returns `EXR_LIMIT` with a zeroed bitmap. Damaged input is `EXR_FORMAT`;
+  a build-time disabled codec is `EXR_UNSUPPORTED`.
+- Multi-page CBZ labels are `<member>` for frame 0 and `<member>#N` for later
+  frames. Existing single-page IDs, natural ordering and ComicInfo remain.
+- Streaming imports keep the existing unique-import serialization and
+  exact-byte dedup. Failure or cancellation rolls back both row and blob.
+- The installed package exports each codec's static libraries as private
+  `EXReader::vendor_*` targets; the legacy shared `EXReader::exreader` remains
+  the compatibility artifact. Configuring with all three codec options OFF
+  still installs and consumes normally.

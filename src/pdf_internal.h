@@ -192,6 +192,8 @@ exr_status exr_cbz_open_owned(unsigned char *data,size_t size,const char *title,
   const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *error);
 exr_status exr_cbz_open_file(const char *path,const char *title,
   const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *error);
+exr_status exr_cbz_open_source(const exr_source *source,const char *title,
+  const exr_fixed_open_options *options,int take_ownership,exr_fixed_document **out,exr_error *error);
 
 
 #endif

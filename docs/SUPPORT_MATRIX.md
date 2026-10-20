@@ -34,7 +34,7 @@
 | DOCX | 支持 | 段落/样式/表格/图片/关系；**不覆盖**完整 Word 打印版面 | `native-docx` |
 | RTF | 支持 | 表格、列表、脚注、编号、fallback 字体 | `native-rtf`、`native-rtf-table`、`native-rtf-note` |
 | MOBI / KF8 | 支持 | PalmDOC/Huff 解码、KF8 结构与资源 | `native-mobi`、`native-kf8` |
-| CBZ | 支持 | PNG/JPEG、自然排序、ComicInfo；**拒绝** WebP/GIF/BMP/AVIF/TIFF | `native-cbz` |
+| CBZ | 支持 | PNG/JPEG/GIF/BMP 内置；WebP/TIFF/AVIF 为默认开启的构建选项。GIF/WebP/AVIF动画与多目录TIFF按原始页序展开（ID 为原名或原名`#N`），单图≤4096帧、整包≤10000页，不静默丢页；自然排序、ComicInfo、单页PNG/JPEG像素不变。编码/展开/页数预算见 [WP12A-FORMATS.md](WP12A-FORMATS.md) | `native-cbz`、`native-cbz-formats`、`native-image-formats` |
 | PDF | 支持 | 见 PDF 各节；不支持的特性明确返回 `EXR_UNSUPPORTED`/`EXR_FORMAT` | `native-pdf-*` |
 
 ## 文本与字体
@@ -88,17 +88,17 @@
 
 | 能力 | 状态 | 边界 | 回归 |
 | --- | --- | --- | --- |
-| 书库 | 支持 | SQLite、元数据/封面、标签/收藏/已读、文本与固定页进度、标注、音频书签、精确去重、事务备份 | `native-library-unique`、`native-progress-library`、`native-page-annotations` |
+| 书库 | 支持 | SQLite、元数据/封面、标签/收藏/已读、文本与固定页进度、标注、音频书签、精确去重、事务备份；CBZ 原书支持 64 KiB 分块流式导入/去重与 blob 随机读取（单条≤2 GiB），1 GiB 实测新增缓冲峰值 64 KiB | `native-library-unique`、`native-library-stream`、`native-progress-library`、`native-page-annotations` |
 | 旧 UI 数据迁移 | 未支持 | 旧 IndexedDB/Tauri 数据未接入 | — |
 | 转换/导出 | 部分 | 六种正文格式 36 向互转及 MOBI/KF8 输入→六目标（text profile，仅声明正文/段落/顺序/Unicode，非无损）；EPUB/XHTML→EPUB/HTML 资源包 preserve profile；**完整 WP12 高保真全格式往返、批注/复杂样式和旧 UI 迁移未覆盖**；MOBI/KF8/PDF/CBZ 写回未支持。契约见 [CONVERSION.md](CONVERSION.md) | `native-export-epub`、`native-export-html`、`native-export-xml`、`native-convert`、`native-convert-cli`、`native-convert-benchmark` |
-| 音频 | 支持 | WAV/FLAC、可选 MP3/AAC/M4A/M4B、PCM、WSOLA 变速、六平台输出 | `native-audio`、`native-wave`、`native-flac`、`native-mp3`、`native-aac`、`native-stretch` |
+| 音频 | 支持 | WAV/FLAC、可选 MP3/AAC/M4A/M4B、PCM、WSOLA 变速、六平台输出；随机读取源在 1 GiB WAV 上验证，WAV 读取使用 4 KiB 栈缓冲且不整文件驻留 | `native-audio`、`native-wave`、`native-flac`、`native-mp3`、`native-aac`、`native-stretch` |
 | 移动音频会话 | 未支持 | 打断/后台/真机未验收 | — |
 
 ## SDK 与平台
 
 | 能力 | 状态 | 边界 | 回归 |
 | --- | --- | --- | --- |
-| C SDK | 支持 | 307 个公开函数导出、`struct_size` 前缀兼容 | `native-abi`、`native-core` |
+| C SDK | 支持 | 316 个公开函数导出、`struct_size` 前缀兼容 | `native-abi`、`native-core` |
 | C++ / Swift / JNI 适配 | 支持 | 安装后消费示例与 `-Xcheck:jni` | `native-fixed-example`、`native-wave-example` |
 | 安装与包配置 | 支持 | `find_package(EXReader 3.38.0 EXACT CONFIG REQUIRED)` | CI 安装作业 |
 | 桌面三平台 | 支持 | Windows/Linux/macOS 全量 CTest + 安装消费 | CI `desktop` |
@@ -109,11 +109,11 @@
 
 | 项 | 当前值 |
 | --- | --- |
-| 桌面 CTest | 146（本分支 Windows 全量配置；fuzz 驱动另计） |
+| 桌面 CTest | 主线联合测试与各分支原始验收分开记录，见 `validation/2026-10-20-parallel-integration.json` |
 | Sanitizer | ASan/UBSan/leak 116（少 3 项 ctypes oracle，见 [HANDOFF.md](HANDOFF.md)） |
 | 编译器门槛 | `-Wall -Wextra -Wpedantic -Werror` |
 | Fuzz | 确定性种子变异驱动，CI 每推送 20 万次迭代；24 CPU 小时为目标，见 [FUZZING.md](FUZZING.md) |
-| 依赖 | 9 个第三方组件，全部 SHA-256 固定 |
+| 依赖 | 14 个第三方组件，全部 SHA-256 固定；WebP/TIFF/AVIF 为默认开启的可选构建项 |
 
 ## 更新规则
 

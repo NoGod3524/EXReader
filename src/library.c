@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "formats_internal.h"
+#include "pdf_internal.h"
 #include "exr/library.h"
 #include <sqlite3.h>
 static exr_status open_fixed(exr_format format,const void *data,size_t size,
@@ -251,6 +252,221 @@ finish:
   sqlite3_mutex_leave(sqlite3_db_mutex(l->db));
   return status==EXR_OK ? exr_fail(e,EXR_OK,"") : status;
 }
+/* Streaming originals: the archive bytes are copied into SQLite in bounded
+   chunks instead of being retained as one host/SDK blob. Only CBZ has a
+   source-based fixed reader; other formats keep the in-memory API. */
+#define EXR_STREAM_CHUNK ((size_t)64 * 1024)
+#define EXR_STREAM_MAX (UINT64_C(2) * 1024 * 1024 * 1024 - 1)
+typedef struct { sqlite3 *db; sqlite3_blob *blob; } stream_blob;
+static size_t stream_blob_read(void *context,uint64_t offset,void *buffer,size_t size) {
+  stream_blob *b=context;int n;
+  if(!b || !b->blob || offset>INT_MAX || size>INT_MAX || offset+size>(uint64_t)sqlite3_blob_bytes(b->blob)) return 0;
+  n=(int)size;
+  return sqlite3_blob_read(b->blob,buffer,n,(int)offset)==SQLITE_OK ? size : 0;
+}
+static void stream_blob_release(void *context) {
+  stream_blob *b=context;if(!b) return;
+  if(b->blob) sqlite3_blob_close(b->blob);
+  free(b);
+}
+static exr_status stream_read(const exr_source *source,uint64_t offset,void *buffer,size_t size,
+                              const exr_control *control,exr_error *e) {
+  size_t done=0;
+  if(offset>source->size || size>source->size-offset) return exr_fail(e,EXR_IO,"Streaming source ended early");
+  while(done<size) {
+    size_t got;
+    if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+    got=source->read_at(source->context,offset+done,(unsigned char *)buffer+done,size-done);
+    if(!got || got>size-done) return exr_fail(e,EXR_IO,"Streaming source returned an invalid read");
+    done+=got;
+  }
+  return EXR_OK;
+}
+static exr_status stream_metadata(exr_format format,const exr_source *source,char **title,char **author,
+                                  size_t *extent,exr_error *e) {
+#ifdef EXR_ENABLE_PDF
+  exr_fixed_open_options options={0};exr_fixed_document *doc=NULL;exr_metadata_entry *metadata=NULL;
+  exr_buffer titlebuf={0},authorbuf={0};size_t count=0,i;exr_status status;
+  *title=NULL;*author=NULL;*extent=0;
+  if(format!=EXR_CBZ) return exr_fail(e,EXR_UNSUPPORTED,"Streaming import currently supports CBZ originals");
+  options.struct_size=sizeof(options);options.control=source->control;
+  status=exr_cbz_open_source(source,"",&options,0,&doc,e);
+  if(status==EXR_OK) status=exr_fixed_load_metadata(doc,&source->control,&metadata,&count,e);
+  if(status==EXR_OK) exr_fixed_pages(doc,extent);
+  for(i=0;status==EXR_OK && i<count;i++) {
+    if(!strcmp(metadata[i].key,"http://purl.org/dc/terms/title") && !titlebuf.data && metadata[i].value[0]) {
+      if(!exr_append(&titlebuf,metadata[i].value,strlen(metadata[i].value))) status=exr_fail(e,EXR_MEMORY,"Book title allocation failed");
+    }
+    if(!strcmp(metadata[i].key,"http://purl.org/dc/terms/creator") && metadata[i].value[0]) {
+      if((authorbuf.size && !exr_append(&authorbuf,"; ",2)) || !exr_append(&authorbuf,metadata[i].value,strlen(metadata[i].value)))
+        status=exr_fail(e,EXR_MEMORY,"Book author allocation failed");
+    }
+  }
+  exr_metadata_free(metadata,count);exr_fixed_free(doc);
+  if(status==EXR_OK) {
+    if(!titlebuf.data) { titlebuf.data=exr_copy("Untitled",8); titlebuf.size=8; if(!titlebuf.data) status=exr_fail(e,EXR_MEMORY,"Book title allocation failed"); }
+    if(status==EXR_OK) { *title=titlebuf.data;titlebuf.data=NULL; }
+  }
+  if(status==EXR_OK) { *author=authorbuf.data;authorbuf.data=NULL; }
+  free(titlebuf.data);free(authorbuf.data);
+  return status;
+#else
+  (void)format;(void)source;(void)title;(void)author;(void)extent;
+  return exr_fail(e,EXR_UNSUPPORTED,"Streaming import requires the PDF/CBZ component");
+#endif
+}
+static exr_status stream_compare(sqlite3 *db,int64_t id,const exr_source *source,int *equal,exr_error *e) {
+  sqlite3_blob *blob=NULL;unsigned char *from_source=NULL,*from_db=NULL;uint64_t at=0;exr_status status=EXR_OK;int result;
+  *equal=0;
+  result=sqlite3_blob_open(db,"main","books","source",id,0,&blob);
+  if(result!=SQLITE_OK) return exr_fail(e,EXR_DATABASE,"Cannot open stored source for comparison");
+  if((uint64_t)sqlite3_blob_bytes(blob)!=source->size) { sqlite3_blob_close(blob);return EXR_OK; }
+  from_source=malloc(EXR_STREAM_CHUNK);from_db=malloc(EXR_STREAM_CHUNK);
+  if(!from_source || !from_db) status=exr_fail(e,EXR_MEMORY,"Streaming compare allocation failed");
+  while(status==EXR_OK && at<source->size) {
+    size_t n=(size_t)(source->size-at<EXR_STREAM_CHUNK ? source->size-at : EXR_STREAM_CHUNK);
+    if(exr_control_cancel(&source->control,e)!=EXR_OK) { status=EXR_CANCELLED; break; }
+    status=stream_read(source,at,from_source,n,&source->control,e); if(status!=EXR_OK) break;
+    if(sqlite3_blob_read(blob,from_db,(int)n,(int)at)!=SQLITE_OK) { status=exr_fail(e,EXR_DATABASE,"Cannot read stored source for comparison"); break; }
+    if(memcmp(from_source,from_db,n)) break;
+    at+=n;
+  }
+  if(status==EXR_OK && at==source->size) *equal=1;
+  free(from_source);free(from_db);sqlite3_blob_close(blob);
+  return status;
+}
+static exr_status stream_insert(exr_library *l,exr_format format,const exr_source *source,size_t extent,
+                                const char *title,const char *author,int own_transaction,int64_t *id,exr_error *e) {
+  sqlite3_stmt *s=NULL;sqlite3_blob *blob=NULL;unsigned char *buffer=NULL;uint64_t at=0;exr_status status=EXR_OK;int tx=0;
+  *id=0;
+  if(source->size>EXR_STREAM_MAX) return exr_fail(e,EXR_LIMIT,"Streaming import exceeds the 2 GiB blob-I/O limit");
+  buffer=malloc(EXR_STREAM_CHUNK);if(!buffer) return exr_fail(e,EXR_MEMORY,"Streaming buffer allocation failed");
+  if(own_transaction) {
+    if(sqlite3_exec(l->db,"BEGIN IMMEDIATE",NULL,NULL,NULL)!=SQLITE_OK) { status=database_error(l,e);goto finish; }
+    tx=1;
+  }
+  if(!prepare(l,"INSERT INTO books(format,title,text_size,source,cover,author)VALUES(?1,?2,?3,zeroblob(?4),NULL,?5)",&s) ||
+     sqlite3_bind_int(s,1,format)!=SQLITE_OK || !bind_text(s,2,title) || sqlite3_bind_int64(s,3,(sqlite3_int64)extent)!=SQLITE_OK ||
+     sqlite3_bind_int64(s,4,(sqlite3_int64)source->size)!=SQLITE_OK || !bind_text(s,5,author)) {
+    status=database_error(l,e);goto finish;
+  }
+  status=done(l,s,e);s=NULL;if(status!=EXR_OK) goto finish;
+  *id=sqlite3_last_insert_rowid(l->db);
+  if(sqlite3_blob_open(l->db,"main","books","source",*id,1,&blob)!=SQLITE_OK) { status=exr_fail(e,EXR_DATABASE,"Cannot open new source blob");goto finish; }
+  while(status==EXR_OK && at<source->size) {
+    size_t n=(size_t)(source->size-at<EXR_STREAM_CHUNK ? source->size-at : EXR_STREAM_CHUNK);
+    if(exr_control_cancel(&source->control,e)!=EXR_OK) { status=EXR_CANCELLED;break; }
+    status=stream_read(source,at,buffer,n,&source->control,e);if(status!=EXR_OK) break;
+    if(sqlite3_blob_write(blob,buffer,(int)n,(int)at)!=SQLITE_OK) { status=exr_fail(e,EXR_DATABASE,"Cannot write stored source: %s (bytes=%d at=%d n=%d size=%llu)",sqlite3_errmsg(l->db),sqlite3_blob_bytes(blob),(int)at,(int)n,(unsigned long long)source->size);break; }
+    at+=n;
+  }
+  if(blob) { sqlite3_blob_close(blob);blob=NULL; }
+  if(status==EXR_OK && own_transaction) {
+    if(sqlite3_exec(l->db,"COMMIT",NULL,NULL,NULL)!=SQLITE_OK) status=database_error(l,e);
+    else tx=0;
+  }
+finish:
+  if(blob) sqlite3_blob_close(blob);
+  sqlite3_finalize(s);
+  if(tx) sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL);
+  free(buffer);
+  if(status!=EXR_OK) *id=0;
+  return status;
+}
+static exr_status stream_import(exr_library *l,exr_format format,const exr_source *source,const char *title,
+                                int unique,int64_t *id,int *created,exr_error *e) {
+  char *source_title=NULL,*author=NULL,*chosen_title=NULL;size_t extent=0;exr_status status;int64_t found=0;int tx=0,inserted=0;
+  if(id) *id=0;
+  if(created) *created=0;
+  if(!l || !id || !source || !source->read_at || !source->size || format<EXR_TXT || format>EXR_CBZ)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid streaming import arguments");
+  if(source->size>EXR_STREAM_MAX) return exr_fail(e,EXR_LIMIT,"Streaming import exceeds the 2 GiB blob-I/O limit");
+  status=stream_metadata(format,source,&source_title,&author,&extent,e);
+  if(status!=EXR_OK) goto finish;
+  chosen_title=(char *)(title && title[0] ? title : source_title);
+  sqlite3_mutex_enter(sqlite3_db_mutex(l->db));
+  if(unique) {
+    sqlite3_stmt *s=NULL;int step;
+    if(sqlite3_exec(l->db,"BEGIN IMMEDIATE",NULL,NULL,NULL)!=SQLITE_OK) { status=database_error(l,e);goto unlock; }
+    tx=1;
+    if(!prepare(l,"SELECT id FROM books WHERE format=?1 AND length(source)=?2 ORDER BY id",&s) ||
+       sqlite3_bind_int(s,1,format)!=SQLITE_OK || sqlite3_bind_int64(s,2,(sqlite3_int64)source->size)!=SQLITE_OK) {
+      sqlite3_finalize(s);status=database_error(l,e);goto unlock;
+    }
+    while((step=sqlite3_step(s))==SQLITE_ROW) {
+      int64_t candidate;
+      if(sqlite3_column_type(s,0)!=SQLITE_INTEGER || (candidate=sqlite3_column_int64(s,0))<=0) { sqlite3_finalize(s);status=exr_fail(e,EXR_DATABASE,"Invalid duplicate book ID");goto unlock; }
+      { int equal=0;status=stream_compare(l->db,candidate,source,&equal,e);if(status!=EXR_OK) { sqlite3_finalize(s);goto unlock; }if(equal) { found=candidate;break; } }
+    }
+    if(step!=SQLITE_ROW && step!=SQLITE_DONE && status==EXR_OK) { sqlite3_finalize(s);status=database_error(l,e);goto unlock; }
+    sqlite3_finalize(s);
+    if(found) { if(sqlite3_exec(l->db,"COMMIT",NULL,NULL,NULL)!=SQLITE_OK) { status=database_error(l,e);goto unlock; }tx=0; }
+    else { status=stream_insert(l,format,source,extent,chosen_title,author?author:"",0,id,e);if(status!=EXR_OK) goto unlock;
+      if(sqlite3_exec(l->db,"COMMIT",NULL,NULL,NULL)!=SQLITE_OK) { status=database_error(l,e);goto unlock; }tx=0;inserted=1; }
+  } else {
+    status=stream_insert(l,format,source,extent,chosen_title,author?author:"",1,id,e);
+    if(status!=EXR_OK) goto unlock;
+    inserted=1;
+  }
+  *id=found?found:*id;if(created) *created=inserted;
+unlock:
+  sqlite3_mutex_leave(sqlite3_db_mutex(l->db));
+  if(status==EXR_OK && tx) { if(sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL)!=SQLITE_OK) status=database_error(l,e);tx=0; }
+finish:
+  free(source_title);free(author);
+  return status;
+}
+exr_status exr_library_import_source(exr_library *l,exr_format format,const exr_source *source,
+                                     const char *title,int64_t *id,exr_error *e) {
+  return stream_import(l,format,source,title,0,id,NULL,e);
+}
+exr_status exr_library_import_source_unique(exr_library *l,exr_format format,const exr_source *source,
+                                            const char *title,int64_t *id,int *created,exr_error *e) {
+  if(!created) return exr_fail(e,EXR_ARGUMENT,"Missing created output");
+  return stream_import(l,format,source,title,1,id,created,e);
+}
+exr_status exr_library_import_file(exr_library *l,exr_format format,const char *path,const char *title,
+                                   int64_t *id,exr_error *e) {
+  exr_source source;exr_status status;
+  if(!path) return exr_fail(e,EXR_ARGUMENT,"Missing streaming import path");
+  status=exr_file_source_limit(path,EXR_STREAM_MAX,&source,e);
+  if(status!=EXR_OK) return status;
+  status=exr_library_import_source(l,format,&source,title,id,e);
+  source.release(source.context);
+  return status;
+}
+exr_status exr_library_import_file_unique(exr_library *l,exr_format format,const char *path,const char *title,
+                                          int64_t *id,int *created,exr_error *e) {
+  exr_source source;exr_status status;
+  if(!path) return exr_fail(e,EXR_ARGUMENT,"Missing streaming import path");
+  status=exr_file_source_limit(path,EXR_STREAM_MAX,&source,e);
+  if(status!=EXR_OK) return status;
+  status=exr_library_import_source_unique(l,format,&source,title,id,created,e);
+  source.release(source.context);
+  return status;
+}
+exr_status exr_library_fixed_source(exr_library *l,int64_t id,const exr_fixed_open_options *input,
+                                    exr_fixed_document **out,exr_error *e) {
+  sqlite3_stmt *s=NULL;exr_fixed_open_options options={0};stream_blob *context=NULL;exr_source source;int step,format;
+  if(out) *out=NULL;
+  if(!l || id<=0 || !out || (input && input->struct_size<sizeof(size_t))) return exr_fail(e,EXR_ARGUMENT,"Invalid streaming fixed lookup");
+  if(!prepare(l,"SELECT format,length(source) FROM books WHERE id=?1",&s) || sqlite3_bind_int64(s,1,id)!=SQLITE_OK) { sqlite3_finalize(s);return database_error(l,e); }
+  step=sqlite3_step(s);
+  if(step!=SQLITE_ROW) { sqlite3_finalize(s);return step==SQLITE_DONE ? exr_fail(e,EXR_ARGUMENT,"Book missing") : database_error(l,e); }
+  format=sqlite3_column_int(s,0);
+  if(format!=EXR_CBZ || sqlite3_column_type(s,1)!=SQLITE_INTEGER || sqlite3_column_int64(s,1)<=0 || (uint64_t)sqlite3_column_int64(s,1)>EXR_STREAM_MAX) {
+    sqlite3_finalize(s);return exr_fail(e,EXR_UNSUPPORTED,"Streaming fixed reading is available for CBZ originals");
+  }
+  context=calloc(1,sizeof(*context));if(!context) { sqlite3_finalize(s);return exr_fail(e,EXR_MEMORY,"Streaming source allocation failed"); }
+  context->db=l->db;
+  if(sqlite3_blob_open(l->db,"main","books","source",id,0,&context->blob)!=SQLITE_OK) { sqlite3_finalize(s);free(context);return exr_fail(e,EXR_DATABASE,"Cannot open stored source blob"); }
+  memset(&source,0,sizeof(source));source.size=(uint64_t)sqlite3_blob_bytes(context->blob);source.read_at=stream_blob_read;source.release=stream_blob_release;source.context=context;
+  if(input) options=*input; else { options.struct_size=sizeof(options); }
+  if(options.struct_size<sizeof(size_t) || options.struct_size>sizeof(options)) { sqlite3_finalize(s);stream_blob_release(context);return exr_fail(e,EXR_ARGUMENT,"Invalid fixed open options"); }
+  sqlite3_finalize(s);
+  return exr_cbz_open_source(&source,"",&options,1,out,e);
+}
+
 void exr_books_free(exr_book *books, size_t n) {
   size_t i;
   for (i = 0; i < n; i++) {
