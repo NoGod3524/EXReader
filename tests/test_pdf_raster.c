@@ -141,10 +141,10 @@ static exr_status shading_count(void *ctx,const exr_bitmap *bitmap,const exr_bit
   unsigned *count=ctx;(void)inks;(void)matrix;(void)paint;(void)e;
   CHECK(bitmap && bitmap->pixels);(*count)++;return EXR_OK;
 }
-static void shading_budget(const char *dir) {
+static void shading_budget(const char *dir,const char *name) {
   exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;size_t count,size,work=0;uint32_t shadings,id;
   unsigned emits=0;exr_pdf_paint_state paint={0};exr_control control={0};double matrix[6]={1,0,0,1,0,0};
-  unsigned char *data=load(dir,"pdf-color/shading-domain-0.pdf",&size);
+  unsigned char *data=load(dir,name,&size);
   OK(exr_pdf_open(data,size,&file,&error));OK(exr_pdf_pages(file,&pages,&count,&error));CHECK(count==1);
   OK(exr_pdf_resolve(file,exr_pdf_get(file,pages[0].resources,"Shading"),&shadings,&error));
   OK(exr_pdf_resolve(file,exr_pdf_get(file,shadings,"Sh"),&id,&error));
@@ -168,6 +168,21 @@ static void shading_budget(const char *dir) {
   free(pages);exr_pdf_close(file);free(data);
 }
 typedef struct { unsigned depth,saves,restores,clips,shadings,fail; } shading_scope;
+static exr_status shading_native_inks(void *ctx,const exr_bitmap *bitmap,const exr_bitmap *inks,const double matrix[6],const exr_pdf_paint_state *paint,exr_error *e) {
+  const unsigned char expected[4]={64,128,191,32};unsigned *emits=ctx;(void)matrix;(void)paint;(void)e;
+  CHECK(bitmap && inks && inks->pixels && bitmap->width==inks->width && bitmap->height==inks->height && inks->channels==4);
+  for(unsigned y=0;y<inks->height;y++) for(unsigned x=0;x<inks->width;x++) CHECK(!memcmp(inks->pixels+(size_t)y*inks->stride+x*4,expected,4));
+  (*emits)++;return EXR_OK;
+}
+static void function_inks(const char *dir) {
+  exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;size_t size,count,work=0;uint32_t shadings,id;unsigned emits=0;
+  exr_pdf_paint_state paint={0};double matrix[6]={1,0,0,1,0,0};unsigned char *data=load(dir,"pdf-color/shading-function-inks.pdf",&size);
+  OK(exr_pdf_open(data,size,&file,&error));OK(exr_pdf_pages(file,&pages,&count,&error));
+  OK(exr_pdf_resolve(file,exr_pdf_get(file,pages[0].resources,"Shading"),&shadings,&error));
+  OK(exr_pdf_resolve(file,exr_pdf_get(file,shadings,"Sh"),&id,&error));
+  OK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_native_inks,&emits,1,NULL,&error));CHECK(emits==1);
+  free(pages);exr_pdf_close(file);free(data);
+}
 static exr_status scope_state(void *ctx,exr_draw_state state,exr_error *e) {
   shading_scope *s=ctx;(void)e;
   if(state==EXR_DRAW_SAVE) { s->saves++;s->depth++; }
@@ -196,7 +211,10 @@ static void shading_cleanup(const char *dir) {
 }
 int main(int argc,char **argv) {
   unsigned char *data; size_t size; exr_pdf_file *file=NULL; uint32_t resources; exr_bitmap b; exr_pdf_raster_config config={0}; exr_control control={0};
-  CHECK(argc==2); page_cases(argv[1]);mask_controls(argv[1]);mask_recursion_budget(argv[1]);shading_budget(argv[1]);shading_cleanup(argv[1]); data=load(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
+  CHECK(argc==2); page_cases(argv[1]);mask_controls(argv[1]);mask_recursion_budget(argv[1]);
+  shading_budget(argv[1],"pdf-color/shading-domain-0.pdf");shading_budget(argv[1],"pdf-color/shading-function-0.pdf");
+  shading_budget(argv[1],"pdf-color/shading-function-4.pdf");shading_budget(argv[1],"pdf-color/shading-function-7.pdf");
+  shading_cleanup(argv[1]);function_inks(argv[1]); data=load(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Resources"),&resources,&error));
   text_cases(file,resources); clip_cases(file,resources); fallback_cases(argv[1],file,resources); drawing_inspection(file,resources);
   config.width=config.height=12; config.channels=4; config.background=0;
   { const char *s="1 0 0 rg 1 1 2 2 re f"; OK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)); CHECK(b.pixels[13*4]==255 && b.pixels[13*4+3]==255 && !b.pixels[3]); free(b.pixels); }

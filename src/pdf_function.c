@@ -174,6 +174,30 @@ exr_status exr_pdf_function_open_inputs(exr_pdf_file *file,uint32_t value,unsign
 exr_status exr_pdf_function_open(exr_pdf_file *file,uint32_t value,unsigned outputs,const exr_control *control,exr_pdf_function **out,exr_error *error) {
   return exr_pdf_function_open_inputs(file,value,1,outputs,control,out,error);
 }
+exr_status exr_pdf_function_open_components(exr_pdf_file *file,uint32_t value,unsigned inputs,unsigned outputs,
+  const exr_control *control,exr_pdf_function **out,exr_error *error) {
+  exr_error local={0};function_reader r={0};const exr_pdf_value *v;uint32_t ids[4];size_t count;exr_pdf_function *f;exr_status status;
+  if(out) *out=NULL;
+  if(!file || !out || !inputs || inputs>EXR_PDF_MAX_COLORANTS || !outputs || outputs>4) return exr_fail(error,EXR_ARGUMENT,"Invalid PDF component function input/output");
+  r.file=file;r.control=control;r.error=error ? error : &local;memset(r.error,0,sizeof(*r.error));
+  status=exr_pdf_resolve(file,value,&value,r.error);if(status!=EXR_OK) return status;
+  v=exr_pdf_value_at(file,value);
+  if(!v || v->kind!=EXR_PDF_ARRAY) return open_function(&r,value,inputs,outputs,0,out);
+  if(!array(&r,value,ids,4,&count) || count!=outputs) return r.error->code!=EXR_OK ? r.error->code : exr_fail(r.error,EXR_FORMAT,"PDF component function array has wrong length");
+  f=calloc(1,sizeof(*f));if(!f) return exr_fail(r.error,EXR_MEMORY,"PDF component function allocation failed");
+  /* Internal type 5 is a component bundle, never a PDF FunctionType. Child
+     functions retain their own Domain/Range and share graph limits. */
+  f->type=5;f->inputs=inputs;f->outputs=f->count=outputs;f->cost=outputs;
+  f->bytes=sizeof(*f)+outputs*sizeof(*f->children);r.bytes=f->bytes;r.nodes=1;r.active[0]=value;
+  f->children=calloc(outputs,sizeof(*f->children));
+  if(!f->children) { exr_pdf_function_free(f);return exr_fail(r.error,EXR_MEMORY,"PDF component function children allocation failed"); }
+  for(unsigned i=0;i<outputs;i++) {
+    status=open_function(&r,ids[i],inputs,1,1,f->children+i);
+    if(status!=EXR_OK) { exr_pdf_function_free(f);return status; }
+    f->bytes+=f->children[i]->bytes;f->cost+=f->children[i]->cost;
+  }
+  *out=f;return EXR_OK;
+}
 static double sample_value(const exr_pdf_function *f,size_t index) {
   uint64_t bit=(uint64_t)index*f->bits,value=0,mask=(UINT64_C(1)<<f->bits)-1;
   unsigned skip=(unsigned)(bit&7),count=(skip+f->bits+7)/8,i;
@@ -224,6 +248,14 @@ static exr_status sampled_value(const exr_pdf_function *f,const double *input,do
 exr_status exr_pdf_function_eval_inputs(const exr_pdf_function *f,const double *input,double out[4],exr_error *error) {
   double values[EXR_PDF_MAX_COLORANTS],x; size_t i;
   if(!f || !f->inputs || !input || !out) return exr_fail(error,EXR_ARGUMENT,"Invalid PDF function evaluation");
+  if(f->type==5) {
+    for(i=0;i<f->outputs;i++) {
+      double scalar[4];exr_status status=exr_pdf_function_eval_inputs(f->children[i],input,scalar,error);
+      if(status!=EXR_OK) return status;
+      out[i]=scalar[0];
+    }
+    return EXR_OK;
+  }
   for(i=0;i<f->inputs;i++) { if(!isfinite(input[i])) return exr_fail(error,EXR_FORMAT,"Nonfinite PDF function input"); values[i]=fmax(f->domain[2*i],fmin(f->domain[2*i+1],input[i])); }
   x=values[0];
   if(f->type==4) {

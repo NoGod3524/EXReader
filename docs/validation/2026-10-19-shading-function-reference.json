@@ -1,0 +1,2482 @@
+{
+  "reference": "MuPDF 1.28.2",
+  "max_difference_from_decimal": {
+    "current": 1,
+    "mupdf": 13,
+    "baseline": 0,
+    "poppler_white": 12
+  },
+  "max_difference_by_probe_class": {
+    "function2d-default": {
+      "current": 1,
+      "mupdf": 8,
+      "baseline": 0,
+      "poppler_white": 7
+    },
+    "function2d-domain": {
+      "current": 1,
+      "mupdf": 8,
+      "baseline": 0,
+      "poppler_white": 7
+    },
+    "function2d-null": {
+      "current": 1,
+      "mupdf": 8,
+      "baseline": 0,
+      "poppler_white": 7
+    },
+    "function2d-sampled": {
+      "current": 1,
+      "mupdf": 8,
+      "baseline": 0,
+      "poppler_white": 7
+    },
+    "function2d-array": {
+      "current": 1,
+      "mupdf": 8,
+      "baseline": 0,
+      "poppler_white": 7
+    },
+    "function2d-nonunit": {
+      "current": 1,
+      "mupdf": 8,
+      "baseline": 0,
+      "poppler_white": 7
+    },
+    "function2d-rotated": {
+      "current": 1,
+      "mupdf": 8,
+      "baseline": 0,
+      "poppler_white": 8
+    },
+    "component-array-2": {
+      "current": 1,
+      "mupdf": 8,
+      "baseline": 0,
+      "poppler_white": 7
+    },
+    "component-array-3": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 12
+    },
+    "component-array-4": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "component-array-5": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "component-array-6": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "component-array-7": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "component-gray-2": {
+      "current": 1,
+      "mupdf": 9,
+      "baseline": 0,
+      "poppler_white": 7
+    },
+    "component-mixed-2": {
+      "current": 0,
+      "mupdf": 7,
+      "baseline": 0,
+      "poppler_white": 8
+    },
+    "component-gray-3": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 12
+    },
+    "component-mixed-3": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 12
+    },
+    "component-gray-4": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "component-mixed-4": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "component-gray-5": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "component-mixed-5": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "component-gray-6": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "component-mixed-6": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "component-gray-7": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "component-mixed-7": {
+      "current": 0,
+      "mupdf": 1,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "function2d-shear": {
+      "current": 0,
+      "mupdf": 13,
+      "baseline": 0,
+      "poppler_white": 7
+    },
+    "function2d-bbox": {
+      "current": 0,
+      "mupdf": 0,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "function2d-empty-domain": {
+      "current": 0,
+      "mupdf": 0,
+      "baseline": 0,
+      "poppler_white": 0
+    },
+    "function2d-singular": {
+      "current": 0,
+      "mupdf": 0,
+      "baseline": 0,
+      "poppler_white": 0
+    }
+  },
+  "baseline_failed_renderings": 58,
+  "poppler_version": "pdftoppm version 26.07.0\r\nCopyright 2005-2026 The Poppler Developers - http://poppler.freedesktop.org\r\nCopyright 1996-2011, 2022 Glyph & Cog, LLC",
+  "library_sha256": "40920c97a028e5c787136eb181abf5539d747dc82bd1d25ffa3a2fd31b792d19",
+  "baseline_sha256": "c497fe61531f7fb6b7e3e0a29e607e528a97f5201c3b3a991a132a49724cda45",
+  "scenes": [
+    {
+      "file": "shading-function-0.pdf",
+      "sha256": "bd731d9e2d5fde7a45a9f41f4f47995f0f96547a9103ad33ca4be753a2975996",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "function2d-default",
+      "rgba": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              0,
+              255
+            ],
+            "mupdf": [
+              142,
+              127,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              0,
+              255
+            ],
+            "mupdf": [
+              142,
+              127,
+              0
+            ],
+            "poppler_white": [
+              128,
+              128,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8,
+            "poppler_white": 7
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Only axial, radial and mesh PDF shadings are implemented",
+        "white": "Only axial, radial and mesh PDF shadings are implemented"
+      }
+    },
+    {
+      "file": "shading-function-1.pdf",
+      "sha256": "16fd2d80de404bdf5325b2636c7ac0cd167508793bc0f912d9a135b233a8168a",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "function2d-domain",
+      "rgba": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              0,
+              255
+            ],
+            "mupdf": [
+              142,
+              127,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              0,
+              255
+            ],
+            "mupdf": [
+              142,
+              127,
+              0
+            ],
+            "poppler_white": [
+              128,
+              128,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8,
+            "poppler_white": 7
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Only axial, radial and mesh PDF shadings are implemented",
+        "white": "Only axial, radial and mesh PDF shadings are implemented"
+      }
+    },
+    {
+      "file": "shading-function-2.pdf",
+      "sha256": "eb736b1455041058b858accf5ed5c234acedcefdddb6b7f68ca965ad15da6891",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "function2d-null",
+      "rgba": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              0,
+              255
+            ],
+            "mupdf": [
+              142,
+              127,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              0,
+              255
+            ],
+            "mupdf": [
+              142,
+              127,
+              0
+            ],
+            "poppler_white": [
+              128,
+              128,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8,
+            "poppler_white": 7
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Only axial, radial and mesh PDF shadings are implemented",
+        "white": "Only axial, radial and mesh PDF shadings are implemented"
+      }
+    },
+    {
+      "file": "shading-function-3.pdf",
+      "sha256": "b8af86f41add4b79f040013553210fb7e6b5eff52683808ac9090e8514d88722",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "function2d-sampled",
+      "rgba": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        0,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              0,
+              255
+            ],
+            "mupdf": [
+              142,
+              127,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              0,
+              255
+            ],
+            "mupdf": [
+              142,
+              127,
+              0
+            ],
+            "poppler_white": [
+              128,
+              128,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8,
+            "poppler_white": 7
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Only axial, radial and mesh PDF shadings are implemented",
+        "white": "Only axial, radial and mesh PDF shadings are implemented"
+      }
+    },
+    {
+      "file": "shading-function-4.pdf",
+      "sha256": "0f0ee43086d79eb2f9ddbf799a9a4e54625405b21aaf1671bcdbefba357af066",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "function2d-array",
+      "rgba": [
+        135,
+        135,
+        64,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        64,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        64,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              64,
+              255
+            ],
+            "mupdf": [
+              127,
+              142,
+              63,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              64,
+              255
+            ],
+            "mupdf": [
+              127,
+              142,
+              63
+            ],
+            "poppler_white": [
+              128,
+              128,
+              64,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8,
+            "poppler_white": 7
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Only axial, radial and mesh PDF shadings are implemented",
+        "white": "Only axial, radial and mesh PDF shadings are implemented"
+      }
+    },
+    {
+      "file": "shading-function-5.pdf",
+      "sha256": "25864c4063942f85d195152452416bc14ae650c0a0be9a9f5c5c4632bd83a4de",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "function2d-nonunit",
+      "rgba": [
+        135,
+        135,
+        64,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        64,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        64,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              64,
+              255
+            ],
+            "mupdf": [
+              142,
+              127,
+              63,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              64,
+              255
+            ],
+            "mupdf": [
+              142,
+              127,
+              63
+            ],
+            "poppler_white": [
+              128,
+              128,
+              64,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8,
+            "poppler_white": 7
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Only axial, radial and mesh PDF shadings are implemented",
+        "white": "Only axial, radial and mesh PDF shadings are implemented"
+      }
+    },
+    {
+      "file": "shading-function-6.pdf",
+      "sha256": "46f672c7be8bc3ecf78273eb4150c4d3108e3db70afb96d9e24243f947553842",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "function2d-rotated",
+      "rgba": [
+        135,
+        120,
+        0,
+        255
+      ],
+      "premultiplied": [
+        135,
+        120,
+        0,
+        255
+      ],
+      "white": [
+        135,
+        120,
+        0,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              120,
+              0,
+              255
+            ],
+            "mupdf": [
+              127,
+              112,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              120,
+              0,
+              255
+            ],
+            "mupdf": [
+              127,
+              112,
+              0
+            ],
+            "poppler_white": [
+              128,
+              128,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8,
+            "poppler_white": 8
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Only axial, radial and mesh PDF shadings are implemented",
+        "white": "Only axial, radial and mesh PDF shadings are implemented"
+      }
+    },
+    {
+      "file": "shading-function-7.pdf",
+      "sha256": "cfb48a64b773966bbaeecd6e9403f1de81a6ecbc0f8a10ae3ec24a3ef659619e",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-array-2",
+      "rgba": [
+        135,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        135,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        135,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              127,
+              63,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              127,
+              63,
+              191
+            ],
+            "poppler_white": [
+              128,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 8,
+            "poppler_white": 7
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-8.pdf",
+      "sha256": "9d89e027754c2023580a1f10949a1010b97dd1d8cc015409a9d5a7c3bafd8313",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-array-3",
+      "rgba": [
+        192,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        192,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        192,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              192,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              192,
+              63,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              192,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              192,
+              63,
+              191
+            ],
+            "poppler_white": [
+              180,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 12
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-9.pdf",
+      "sha256": "4369e5024ea0b5321f20c4db5b8c53b3720718c0169fa7a1e57ea451fed7de70",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-array-4",
+      "rgba": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              128,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              128,
+              63,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              128,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              128,
+              63,
+              191
+            ],
+            "poppler_white": [
+              128,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-10.pdf",
+      "sha256": "babcefbdfc328c8e2f42228b45dc96aa4cdabafe2f3988c3142d221d31d94f58",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-array-5",
+      "rgba": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              128,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              128,
+              63,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              128,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              128,
+              63,
+              191
+            ],
+            "poppler_white": [
+              128,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-11.pdf",
+      "sha256": "b2e1b0c3e3c1a4a5f15474a48f76c1d9614618ae29bece67b1faf2be54348980",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-array-6",
+      "rgba": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              128,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              128,
+              63,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              128,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              128,
+              63,
+              191
+            ],
+            "poppler_white": [
+              128,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-12.pdf",
+      "sha256": "7b8e35944322d7a52cc91faf5009219eb566a04e524d6be805b1a6136f7f6c7a",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-array-7",
+      "rgba": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        128,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              128,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              128,
+              63,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              128,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              128,
+              63,
+              191
+            ],
+            "poppler_white": [
+              128,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-13.pdf",
+      "sha256": "e9ffc908d2023998b2c408ad0280800457b9e94812a144294d0b3285d8aeac61",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-gray-2",
+      "rgba": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "premultiplied": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "white": [
+        135,
+        135,
+        135,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 9
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              136,
+              136,
+              136,
+              255
+            ],
+            "mupdf": [
+              126,
+              127,
+              126
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 1,
+            "mupdf": 9,
+            "poppler_white": 7
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-14.pdf",
+      "sha256": "fda6bf622711bd5245c4fe9c6b391f29b12c4869b83342bafec89c24ebbfc6f7",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-mixed-2",
+      "rgba": [
+        120,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        120,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        120,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              120,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              127,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 7
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              120,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              127,
+              64,
+              191
+            ],
+            "poppler_white": [
+              128,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 7,
+            "poppler_white": 8
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-17.pdf",
+      "sha256": "2e8af32f8a18c77258f09c25327b2b76aec002be3066cfa73b87ff7d5c13bff4",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-gray-3",
+      "rgba": [
+        192,
+        192,
+        192,
+        255
+      ],
+      "premultiplied": [
+        192,
+        192,
+        192,
+        255
+      ],
+      "white": [
+        192,
+        192,
+        192,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              192,
+              192,
+              192,
+              255
+            ],
+            "mupdf": [
+              191,
+              192,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              192,
+              192,
+              192,
+              255
+            ],
+            "mupdf": [
+              191,
+              192,
+              191
+            ],
+            "poppler_white": [
+              180,
+              180,
+              180,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 12
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-18.pdf",
+      "sha256": "5829d3c935b238662b9ed0eb9f1d9af47ae487653a574967c8c2eff053a750bd",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-mixed-3",
+      "rgba": [
+        63,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        63,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        63,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              63,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              62,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              63,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              62,
+              64,
+              191
+            ],
+            "poppler_white": [
+              75,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 12
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-21.pdf",
+      "sha256": "41e59c51f700b5cd9f415c789d56ef445077264a63a2e2b9d203d10bd1a98c15",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-gray-4",
+      "rgba": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "premultiplied": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "white": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              128,
+              128,
+              128,
+              255
+            ],
+            "mupdf": [
+              127,
+              128,
+              127,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              128,
+              128,
+              128,
+              255
+            ],
+            "mupdf": [
+              127,
+              128,
+              127
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-22.pdf",
+      "sha256": "e96865439fd51ede9ab19115a79fa1972f40b6d7aaf7dbab386438fdcf298cd7",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-mixed-4",
+      "rgba": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              127,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              126,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              127,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              126,
+              64,
+              191
+            ],
+            "poppler_white": [
+              127,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-25.pdf",
+      "sha256": "67498670375910c43a973ca05ad0b67499bbacd005705ffd1a4ff46d7bbeaacb",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-gray-5",
+      "rgba": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "premultiplied": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "white": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              128,
+              128,
+              128,
+              255
+            ],
+            "mupdf": [
+              127,
+              128,
+              127,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              128,
+              128,
+              128,
+              255
+            ],
+            "mupdf": [
+              127,
+              128,
+              127
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-26.pdf",
+      "sha256": "ee41c576a873caabdc7cb0c07773268b060e5d5550c7729265a21bf0337e621d",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-mixed-5",
+      "rgba": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              127,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              126,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              127,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              126,
+              64,
+              191
+            ],
+            "poppler_white": [
+              127,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-29.pdf",
+      "sha256": "210200a28309918c0203c1dc01e1cd2582fa7cd84a116b833fd89761fe7b7c0a",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-gray-6",
+      "rgba": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "premultiplied": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "white": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              128,
+              128,
+              128,
+              255
+            ],
+            "mupdf": [
+              127,
+              128,
+              127,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              128,
+              128,
+              128,
+              255
+            ],
+            "mupdf": [
+              127,
+              128,
+              127
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-30.pdf",
+      "sha256": "adedbe5d532b306f1406d60b78c0a7d3431210abc16533197853566e56fb247b",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-mixed-6",
+      "rgba": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              127,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              126,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              127,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              126,
+              64,
+              191
+            ],
+            "poppler_white": [
+              127,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-33.pdf",
+      "sha256": "d1caacf78a02bd5f494e5d325a61ea5f256537c3d7bf05c515e0aecf5cb1cb13",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-gray-7",
+      "rgba": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "premultiplied": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "white": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              128,
+              128,
+              128,
+              255
+            ],
+            "mupdf": [
+              127,
+              128,
+              127,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              128,
+              128,
+              128,
+              255
+            ],
+            "mupdf": [
+              127,
+              128,
+              127
+            ],
+            "poppler_white": [
+              128,
+              128,
+              128,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-34.pdf",
+      "sha256": "4e935a1b1f77dd12938fb35f6552f84f1fbd831f44c2187ae809c2e5ec87fc52",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "component-mixed-7",
+      "rgba": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "premultiplied": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "white": [
+        127,
+        64,
+        191,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              127,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              126,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              127,
+              64,
+              191,
+              255
+            ],
+            "mupdf": [
+              126,
+              64,
+              191
+            ],
+            "poppler_white": [
+              127,
+              64,
+              191,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 1,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Unsupported or invalid PDF function",
+        "white": "Unsupported or invalid PDF function"
+      }
+    },
+    {
+      "file": "shading-function-52.pdf",
+      "sha256": "f23d37b433fc6d41357ec0ecd999ca8e023cafa17092b608d7bb0c7aaa3b1662",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "function2d-shear",
+      "rgba": [
+        77,
+        116,
+        0,
+        255
+      ],
+      "premultiplied": [
+        77,
+        116,
+        0,
+        255
+      ],
+      "white": [
+        77,
+        116,
+        0,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              77,
+              116,
+              0,
+              255
+            ],
+            "mupdf": [
+              90,
+              104,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 13
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              77,
+              116,
+              0,
+              255
+            ],
+            "mupdf": [
+              90,
+              104,
+              0
+            ],
+            "poppler_white": [
+              73,
+              109,
+              0,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 13,
+            "poppler_white": 7
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Only axial, radial and mesh PDF shadings are implemented",
+        "white": "Only axial, radial and mesh PDF shadings are implemented"
+      }
+    },
+    {
+      "file": "shading-function-53.pdf",
+      "sha256": "37e2077dae6227d43f9879d70d70d7a4089e2efc78b81b4af146442433fac3e2",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "function2d-bbox",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Only axial, radial and mesh PDF shadings are implemented",
+        "white": "Only axial, radial and mesh PDF shadings are implemented"
+      }
+    },
+    {
+      "file": "shading-function-54.pdf",
+      "sha256": "e93ba1abe55324d2bff890898c95506fb9bb625ca9028815c3a3a8a9334cd131",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "function2d-empty-domain",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Only axial, radial and mesh PDF shadings are implemented",
+        "white": "Only axial, radial and mesh PDF shadings are implemented"
+      }
+    },
+    {
+      "file": "shading-function-55.pdf",
+      "sha256": "23ff030a121b864a00a01cef59a007cd739d692c7964c6f2dfa50a9f9cfe5f99",
+      "probe": [
+        8,
+        8
+      ],
+      "probe_type": "function2d-singular",
+      "rgba": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "premultiplied": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "white": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "comparisons": {
+        "premultiplied": {
+          "samples": {
+            "current": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "mupdf": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0
+          }
+        },
+        "white": {
+          "samples": {
+            "current": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "mupdf": [
+              255,
+              255,
+              255
+            ],
+            "poppler_white": [
+              255,
+              255,
+              255,
+              255
+            ]
+          },
+          "differences_from_decimal": {
+            "current": 0,
+            "mupdf": 0,
+            "poppler_white": 0
+          }
+        }
+      },
+      "baseline_errors": {
+        "premultiplied": "Only axial, radial and mesh PDF shadings are implemented",
+        "white": "Only axial, radial and mesh PDF shadings are implemented"
+      }
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "version": "3.37.0",
+  "abi": 1,
+  "schema": 6,
+  "scenes": 29,
+  "rejected": 29,
+  "tests": {
+    "gcc": {
+      "count": 141,
+      "failures": 0,
+      "dll_sha256": "40920c97a028e5c787136eb181abf5539d747dc82bd1d25ffa3a2fd31b792d19",
+      "exports": 305,
+      "shading_output": "801 native PDF shading checks passed\n"
+    },
+    "msvc": {
+      "count": 141,
+      "failures": 0,
+      "dll_sha256": "5b37769616fa2a23a248cf3d794becf883a0cb60d3690966bff942f93f46b82e",
+      "exports": 305,
+      "shading_output": "801 native PDF shading checks passed\n"
+    }
+  },
+  "icc_off": {
+    "count": 10,
+    "failures": 0
+  },
+  "installed_components": {
+    "count": 4,
+    "failures": 0
+  },
+  "cpp_headers": 13,
+  "cpp_exact_runtime": "3.37.0 ABI 1",
+  "abi_measurements_unchanged": 703,
+  "layers": {
+    "objects": 99,
+    "symbols": 1042,
+    "includes": 899,
+    "inverse": 0
+  },
+  "reference": "2026-10-19-shading-function-reference.json",
+  "remaining": [
+    "full Extend",
+    "adaptive shading sampling",
+    "WP1-WP16 acceptance"
+  ],
+  "regenerated_identical_files": 61,
+  "core_version": "3.36.2",
+  "pdf_version": "3.37.0",
+  "native_ink_pixels": 262144,
+  "function_array_graph_limits": {
+    "bytes": 1048576,
+    "depth": 16,
+    "nodes": 1024,
+    "shared_between_components": true
+  }
+}
