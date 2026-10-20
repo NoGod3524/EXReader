@@ -1223,7 +1223,7 @@ exr_status exr_document_open(const char *path, exr_document **out, exr_error *e)
   lower[i] = 0;
   if (!strcmp(lower, "txt"))
     f = EXR_TXT;
-  else if (!strcmp(lower, "html") || !strcmp(lower, "htm"))
+  else if (!strcmp(lower, "html") || !strcmp(lower, "htm") || !strcmp(lower, "xhtml"))
     f = EXR_HTML;
   else if (!strcmp(lower, "epub"))
     f = EXR_EPUB;
@@ -1233,7 +1233,8 @@ exr_status exr_document_open(const char *path, exr_document **out, exr_error *e)
     f = EXR_DOCX;
   else if (!strcmp(lower, "rtf"))
     f = EXR_RTF;
-  else if (!strcmp(lower, "mobi") || !strcmp(lower, "azw3"))
+  else if (!strcmp(lower, "mobi") || !strcmp(lower, "azw3") || !strcmp(lower, "azw") ||
+           !strcmp(lower, "prc") || !strcmp(lower, "kf8"))
     f = EXR_MOBI;
   else if (!strcmp(lower, "pdf"))
     f = EXR_PDF;

@@ -90,7 +90,7 @@
 | --- | --- | --- | --- |
 | 书库 | 支持 | SQLite、元数据/封面、标签/收藏/已读、文本与固定页进度、标注、音频书签、精确去重、事务备份 | `native-library-unique`、`native-progress-library`、`native-page-annotations` |
 | 旧 UI 数据迁移 | 未支持 | 旧 IndexedDB/Tauri 数据未接入 | — |
-| 转换/导出 | 部分 | 六种正文格式互转；EPUB/HTML 资源保真导出；**跨格式批注/复杂样式未覆盖** | `native-export-epub`、`native-export-html`、`native-export-xml` |
+| 转换/导出 | 部分 | 六种正文格式 36 向互转及 MOBI/KF8 输入→六目标（text profile，仅声明正文/段落/顺序/Unicode，非无损）；EPUB/XHTML→EPUB/HTML 资源包 preserve profile；**完整 WP12 高保真全格式往返、批注/复杂样式和旧 UI 迁移未覆盖**；MOBI/KF8/PDF/CBZ 写回未支持。契约见 [CONVERSION.md](CONVERSION.md) | `native-export-epub`、`native-export-html`、`native-export-xml`、`native-convert`、`native-convert-cli`、`native-convert-benchmark` |
 | 音频 | 支持 | WAV/FLAC、可选 MP3/AAC/M4A/M4B、PCM、WSOLA 变速、六平台输出 | `native-audio`、`native-wave`、`native-flac`、`native-mp3`、`native-aac`、`native-stretch` |
 | 移动音频会话 | 未支持 | 打断/后台/真机未验收 | — |
 

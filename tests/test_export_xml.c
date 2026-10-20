@@ -128,7 +128,25 @@ static void allowed(void) {
   }
 }
 
+static int cancel_export(void *context) { (void)context; return 1; }
+
 int main(void) {
+  {
+    /* The additive controlled entry shares the legacy block/UTF-8 behavior and
+       clears both outputs on cancellation. */
+    exr_document *doc = document("Controlled", "Body");
+    exr_control control = {0};
+    void *bytes = (void *)(uintptr_t)1;
+    size_t size = 9;
+    control.cancelled = cancel_export;
+    CHECK(exr_document_export_control(doc, EXR_EPUB, &control, &bytes, &size, &error) == EXR_CANCELLED);
+    CHECK(!bytes && !size);
+    bytes = NULL; size = 0;
+    OK(exr_document_export_control(doc, EXR_TXT, NULL, &bytes, &size, &error));
+    CHECK(bytes && size == 4 && !memcmp(bytes, "Body", 4));
+    exr_free(bytes);
+    exr_document_free(doc);
+  }
   forbidden();
   allowed();
   printf("export XML: %u checks\n", checks);

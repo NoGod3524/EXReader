@@ -123,6 +123,21 @@ if(EXR_BUILD_TOOLS)
     set_target_properties(exreader-check-document PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
   endif()
   install(TARGETS exreader-check-document RUNTIME DESTINATION bin)
+  add_executable(exreader-convert tools/convert.c tools/convert_io.c tools/convert_json.c
+    tools/convert_report.c)
+  target_link_libraries(exreader-convert PRIVATE exreader miniz)
+  if(WIN32)
+    target_link_libraries(exreader-convert PRIVATE psapi shell32)
+  endif()
+  if(NOT MSVC)
+    target_link_libraries(exreader-convert PRIVATE m)
+  endif()
+  if(APPLE)
+    set_target_properties(exreader-convert PROPERTIES INSTALL_RPATH "@loader_path/../lib")
+  elseif(UNIX)
+    set_target_properties(exreader-convert PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
+  endif()
+  install(TARGETS exreader-convert RUNTIME DESTINATION bin)
   install(FILES tools/run_benchmarks.py DESTINATION share/exreader/benchmarks)
 endif()
 if(EXR_FULL_TESTS)
@@ -637,6 +652,11 @@ if(EXR_FULL_TESTS)
   add_executable(exreader-export-epub-test tests/test_export_epub.c)
   target_link_libraries(exreader-export-epub-test PRIVATE exreader miniz)
   add_test(NAME native-export-epub COMMAND exreader-export-epub-test ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
+  add_executable(exreader-convert-test tests/test_convert.c)
+  target_link_libraries(exreader-convert-test PRIVATE exreader miniz)
+  if(NOT MSVC)
+    target_link_libraries(exreader-convert-test PRIVATE m)
+  endif()
   add_executable(exreader-navigation-test tests/test_navigation.c)
   target_link_libraries(exreader-navigation-test PRIVATE exreader)
   add_test(NAME native-navigation COMMAND exreader-navigation-test ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
@@ -704,6 +724,32 @@ if(EXR_FULL_TESTS)
     endif()
   endforeach()
   if(Python3_FOUND)
+    add_test(NAME native-convert-corpus COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_conversion_corpus.py
+      --out ${CMAKE_CURRENT_BINARY_DIR}/convert-corpus
+      --fixtures ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
+    set_tests_properties(native-convert-corpus PROPERTIES FIXTURES_SETUP convert-corpus)
+    add_test(NAME native-convert COMMAND exreader-convert-test
+      ${CMAKE_CURRENT_BINARY_DIR}/convert-corpus
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf
+      ${CMAKE_CURRENT_BINARY_DIR}/native-convert.json)
+    set_tests_properties(native-convert PROPERTIES FIXTURES_REQUIRED convert-corpus)
+    if(EXR_BUILD_TOOLS)
+      add_test(NAME native-convert-cli COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_convert_cli.py
+        $<TARGET_FILE:exreader-convert>
+        ${CMAKE_CURRENT_BINARY_DIR}/convert-corpus
+        ${CMAKE_CURRENT_BINARY_DIR}/convert-cli-work
+        ${CMAKE_CURRENT_BINARY_DIR}/native-convert-cli.json)
+      set_tests_properties(native-convert-cli PROPERTIES FIXTURES_REQUIRED convert-corpus)
+      add_test(NAME native-convert-benchmark COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_convert_benchmark.py
+        $<TARGET_FILE:exreader-convert>
+        ${CMAKE_CURRENT_BINARY_DIR}/convert-corpus
+        ${CMAKE_CURRENT_BINARY_DIR}/convert-benchmark-work
+        ${CMAKE_CURRENT_BINARY_DIR}/native-convert-benchmark.json)
+      set_tests_properties(native-convert-benchmark PROPERTIES FIXTURES_REQUIRED convert-corpus)
+    endif()
     add_test(NAME native-pdf-group-reference COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pdf_group_reference.py ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pdf-blend)
     find_program(EXR_NODE_EXECUTABLE NAMES node)
     if(EXR_NODE_EXECUTABLE)

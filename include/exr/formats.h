@@ -55,6 +55,13 @@ EXR_API exr_status exr_document_export_html_bundle(const exr_document *doc,const
                                                    void **data,size_t *size,char **entry_path,exr_error *error);
 EXR_API exr_status exr_document_export(const exr_document *doc, exr_format format, void **data,
                                        size_t *size, exr_error *error);
+/* Text-profile export with cooperative cancellation. The original export() is
+   this call with control=NULL. Cancellation is observed before each block batch
+   (64 blocks), around RTF scalar loops (4096 scalars) and before archive
+   publication; it is not a per-byte hook. EXR_CANCELLED clears the output pointer and size. */
+EXR_API exr_status exr_document_export_control(const exr_document *doc, exr_format format,
+                                               const exr_control *control, void **data,
+                                               size_t *size, exr_error *error);
 #ifdef __cplusplus
 }
 #endif
