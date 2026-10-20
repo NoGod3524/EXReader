@@ -135,7 +135,7 @@ def main():
                               'interpreter': evidence(Path(sys.executable))}
         import pymupdf
         reference_identity['version'] = pymupdf.VersionBind
-        reference_identity['native_modules'] = {str(p): digest(p) for pattern in ('*.pyd', '*.so*')
+        reference_identity['native_modules'] = {str(p): digest(p) for pattern in ('*.pyd', '*.so*', '*.dll', '*.dylib')
             for p in Path(pymupdf.__file__).parent.glob(pattern)}
     else:
         reference_identity = None

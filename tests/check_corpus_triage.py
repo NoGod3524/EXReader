@@ -93,6 +93,13 @@ def check(binary, fixtures, output):
     reference_checked = False
     if importlib.util.find_spec('pymupdf'):
         import pymupdf
+        runtime_args = [output/'good-baseline/summary.json', binary, font, output/'reference-runtime-ledger',
+                        '--root', output, '--pdf-reference']
+        run('tools/triage_corpus.py', runtime_args, 'reference-runtime-ledger', 0)
+        identity = json.loads((output/'reference-runtime-ledger/classification.json').read_text())['reference_identity']
+        native = {str(p): digest(p) for pattern in ('*.pyd', '*.so*', '*.dll', '*.dylib')
+                  for p in Path(pymupdf.__file__).parent.glob(pattern)}
+        assert native and identity['native_modules'] == native
         with pymupdf.open() as document:
             document.new_page().insert_text((40, 40), 'Independent reference check')
             good = document.tobytes()
