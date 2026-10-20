@@ -2,6 +2,12 @@
 
 ## Native reference hosts and complete-document probes (2026-10-20)
 
+The complete-document tooling commit e65c1f9 also passes all seven native CI
+jobs in run 39458141104, including the new probe under Linux sanitizers.
+Its SDK/reference-host artifacts and full log have been downloaded separately;
+the preceding host build remains retained. Exact completed-CI snapshots and
+artifact inventories are recorded in the validation JSONs below.
+
 Native CI 39452391457 on source f233c0e passes all seven jobs. Windows has 26
 application checks; macOS, iPhone simulator and iPad simulator each pass 21.
 Reports and screenshots have been downloaded and inspected. The device IPA
