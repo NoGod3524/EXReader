@@ -1,5 +1,24 @@
 # Native C validation
 
+## Reliability CPU accounting and evidence (2026-10-20)
+
+The four drivers measure process CPU time with integer nanoseconds on Windows
+and POSIX. Schema2 reports bind the sealed build, ordered corpus, actual CPU
+budget, driver accounting, sanitizer options and retained evidence files.
+Aggregation rejects incomplete or inconsistent evidence and requires the exact
+shard count and seed schedule. Linux acceptance checks ASan/UBSan symbols in
+every archived driver and SDK runtime; relocated execution is part of CI.
+
+Latest GCC and MSVC Release native-fuzz suites both pass 7/7, including 31 driver,
+51 pipeline and 127 synthetic accounting checks. Four fresh local GCC campaigns
+each meet a one-second process CPU budget. These Windows builds are unsanitized
+and the checkout is dirty; these are local tool checks, not long acceptance.
+The SDK remains 3.38.0; engine sources and public interfaces are unchanged.
+
+File hashes, precise local logs, reports and pending CI/24CPU-hour status are in
+`docs/validation/2026-10-20-reliability.json`. The existing broader WP16 release
+conditions remain in `docs/HANDOFF.md`; this tooling does not complete them.
+
 Historical sections S013–S100 refer to development steps, formerly numbered
 0.13–0.100. The [milestone version map](VERSIONING.md) defines the current release
 numbering. Original binary versions, measurement labels, commit IDs and CI results

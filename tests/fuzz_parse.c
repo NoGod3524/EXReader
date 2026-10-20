@@ -24,8 +24,10 @@
 #include <inttypes.h>
 #if defined(_WIN32)
 #include <io.h>
+#include <windows.h>
 #else
 #include <unistd.h>
+#include <time.h>
 #endif
 
 typedef struct { unsigned char *data; size_t size; const char *name;exr_format format; } seed;
@@ -62,6 +64,19 @@ static int save_input(FILE *file,const void *data,size_t size) {
   return ftruncate(fileno(file),(off_t)size)==0;
 #endif
 }
+/* Integer nanoseconds keep the budget and reported duration in the same units. */
+static uint64_t cpu_nanoseconds(void) {
+#if defined(_WIN32)
+  FILETIME created,exited,kernel,user;ULARGE_INTEGER k,u;
+  if(!GetProcessTimes(GetCurrentProcess(),&created,&exited,&kernel,&user)) return UINT64_MAX;
+  k.LowPart=kernel.dwLowDateTime;k.HighPart=kernel.dwHighDateTime;
+  u.LowPart=user.dwLowDateTime;u.HighPart=user.dwHighDateTime;
+  return (k.QuadPart+u.QuadPart)*100;
+#else
+  struct timespec value;if(clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&value)) return UINT64_MAX;
+  return (uint64_t)value.tv_sec*1000000000+(uint64_t)value.tv_nsec;
+#endif
+}
 
 static uint64_t state = 0x9E3779B97F4A7C15u;
 static uint64_t next_random(void) {
@@ -83,6 +98,7 @@ static unsigned char *read_file(const char *path, size_t *size) {
 }
 
 /* Parsers accept untrusted bytes; a failed open must always be a clean EXR_* status. */
+#ifndef EXR_FUZZ_PROCESS
 static exr_status parse(exr_format format,const unsigned char *data, size_t size) {
   exr_error error; exr_document *doc = NULL; exr_fixed_document *fixed = NULL;
   size_t count = 0, i;exr_status status;
@@ -112,6 +128,17 @@ static exr_status parse(exr_format format,const unsigned char *data, size_t size
   }
   return status;
 }
+#define EXR_FUZZ_PROCESS parse
+#endif
+#ifndef EXR_FUZZ_RECORD_NAME
+#define EXR_FUZZ_RECORD_NAME format_name
+#endif
+#ifndef EXR_FUZZ_RECORD_PARSE
+#define EXR_FUZZ_RECORD_PARSE named_format
+#endif
+#ifndef EXR_FUZZ_RESULT_LABEL
+#define EXR_FUZZ_RESULT_LABEL "reached a parsed document"
+#endif
 
 static void mutate(unsigned char **buf, size_t *size, size_t capacity, const seed *seeds, size_t seed_count) {
   unsigned rounds = 1 + (unsigned)below(8), r;
@@ -157,23 +184,25 @@ int main(int argc, char **argv) {
   seed *seeds; size_t seed_count = 0, capacity = 1u << 20, size, i;
   unsigned char *buf=NULL; const char *save = "fuzz-last.bin",*replay=NULL;char metadata[4096];exr_format forced=EXR_CUSTOM;
   uint64_t iterations=10000,parsed_count=0,iteration,attempts[EXR_CBZ+1]={0},success[EXR_CBZ+1]={0};
+  uint64_t cpu_budget=0,cpu_start=0,cpu_end=0;int explicit_iterations=0;
   FILE *sink=NULL,*type_file=NULL;
   int a,result=2;
   seeds = calloc((size_t)argc + 1, sizeof(*seeds));
   if (!seeds) { fprintf(stderr, "fuzz: allocation failed\n"); return 2; }
   for (a = 1; a < argc; a++) {
-    if((!strcmp(argv[a],"--seed") || !strcmp(argv[a],"--iterations") || !strcmp(argv[a],"--max-bytes")) && a+1<argc) {
+    if((!strcmp(argv[a],"--seed") || !strcmp(argv[a],"--iterations") || !strcmp(argv[a],"--max-bytes") || !strcmp(argv[a],"--cpu-seconds")) && a+1<argc) {
       const char *option=argv[a++];uint64_t number;
       if(!argument_number(argv[a],&number)) { fprintf(stderr,"fuzz: invalid numeric argument\n");goto done; }
       if(!strcmp(option,"--seed")) state=number|1u;
-      else if(!strcmp(option,"--iterations")) iterations=number;
+      else if(!strcmp(option,"--iterations")) { iterations=number;explicit_iterations=1; }
+      else if(!strcmp(option,"--cpu-seconds")) { if(!number || number>UINT64_MAX/1000000000) { fprintf(stderr,"fuzz: invalid CPU duration\n");goto done; }cpu_budget=number; }
       else { if(!number || number>SIZE_MAX) { fprintf(stderr,"fuzz: invalid byte limit\n");goto done; }capacity=(size_t)number; }
       continue;
     }
     if (!strcmp(argv[a], "--save") && a + 1 < argc) { save = argv[++a]; continue; }
     if (!strcmp(argv[a], "--replay") && a + 1 < argc) { replay=argv[++a];continue; }
     if (!strcmp(argv[a], "--format") && a + 1 < argc) {
-      forced=named_format(argv[++a]);if(!forced) { fprintf(stderr,"fuzz: unknown format %s\n",argv[a]);goto done; }continue;
+      forced=EXR_FUZZ_RECORD_PARSE(argv[++a]);if(!forced) { fprintf(stderr,"fuzz: unknown format %s\n",argv[a]);goto done; }continue;
     }
     if (argv[a][0] == '-') { fprintf(stderr, "fuzz: unknown option %s\n", argv[a]);goto done; }
     seeds[seed_count].name = argv[a];
@@ -194,12 +223,12 @@ int main(int argc, char **argv) {
         type_file=NULL;
         if(memchr(type,0,nread)) failed=1;
         while(nread && (type[nread-1]=='\r' || type[nread-1]=='\n')) nread--;
-        type[nread]=0;forced=named_format(type);
+        type[nread]=0;forced=EXR_FUZZ_RECORD_PARSE(type);
         if(failed || more!=EOF || !forced) { fprintf(stderr,"fuzz: invalid replay format record\n");goto done; }
       } else if(errno!=ENOENT) { fprintf(stderr,"fuzz: cannot read replay format record\n");goto done; }
     }
-    format=forced ? forced : input_format(replay,buf,size);status=parse(format,buf,size);
-    printf("replay: format=%s bytes=%zu status=%d\n",format_name(format),size,(int)status);
+    format=forced ? forced : input_format(replay,buf,size);status=EXR_FUZZ_PROCESS(format,buf,size);
+    printf("replay: format=%s bytes=%zu status=%d\n",EXR_FUZZ_RECORD_NAME(format),size,(int)status);
     result=0;goto done;
   }
   if (!seed_count || !iterations) { fprintf(stderr, "fuzz: need at least one seed file and non-zero iterations\n");goto done; }
@@ -211,24 +240,33 @@ int main(int argc, char **argv) {
     if(n<0 || (size_t)n>=sizeof(metadata)) goto done;
   }
   type_file=fopen(metadata,"wb");if(!type_file) { fprintf(stderr,"fuzz: cannot create format record\n");goto done; }
+  cpu_start=cpu_nanoseconds();if(cpu_start==UINT64_MAX) { fprintf(stderr,"fuzz: process CPU clock unavailable\n");goto done; }
+  if(cpu_budget && !explicit_iterations) iterations=UINT64_MAX;
   for(i=0;i<seed_count;i++) seeds[i].format=forced ? forced : input_format(seeds[i].name,seeds[i].data,seeds[i].size);
   for (iteration=0;iteration<iterations;iteration++) {
+    if(cpu_budget) {
+      uint64_t now=cpu_nanoseconds();if(now==UINT64_MAX || now<cpu_start) { fprintf(stderr,"fuzz: process CPU clock failed\n");goto done; }
+      if(now-cpu_start>=cpu_budget*1000000000) break;
+    }
     const seed *base = &seeds[below(seed_count)];
     size = base->size < capacity ? base->size : capacity;
     memcpy(buf, base->data, size);
     mutate(&buf, &size, capacity, seeds, seed_count);
     /* Keep the exact bytes on disk before parsing so a crash is reproducible. */
-    if(!save_input(sink,buf,size) || !save_input(type_file,format_name(base->format),strlen(format_name(base->format)))) {
+    if(!save_input(sink,buf,size) || !save_input(type_file,EXR_FUZZ_RECORD_NAME(base->format),strlen(EXR_FUZZ_RECORD_NAME(base->format)))) {
       fprintf(stderr,"fuzz: cannot persist triggering input and format\n");goto done;
     }
     attempts[base->format]++;
-    if(parse(base->format,buf,size)==EXR_OK) { parsed_count++;success[base->format]++; }
+    if(EXR_FUZZ_PROCESS(base->format,buf,size)==EXR_OK) { parsed_count++;success[base->format]++; }
     if ((iteration+1)%10000==0) fprintf(stderr,"fuzz: %" PRIu64 " iterations, %" PRIu64 " parsed\n",iteration+1,parsed_count);
   }
-  printf("fuzz: %" PRIu64 " iterations over %zu seeds, %" PRIu64 " reached a parsed document, no crash\n",
-         iterations, seed_count, parsed_count);
+  cpu_end=cpu_nanoseconds();if(cpu_end==UINT64_MAX || cpu_end<cpu_start) { fprintf(stderr,"fuzz: invalid process CPU clock\n");goto done; }
+  printf("fuzz: %" PRIu64 " iterations over %zu seeds, %" PRIu64 " " EXR_FUZZ_RESULT_LABEL ", no crash\n",
+         iteration, seed_count, parsed_count);
+  printf("process_cpu_seconds=%" PRIu64 ".%09" PRIu64 " requested_cpu_seconds=%" PRIu64 "\n",
+         (cpu_end-cpu_start)/1000000000,(cpu_end-cpu_start)%1000000000,cpu_budget);
   for(unsigned format=EXR_TXT;format<=EXR_CBZ;format++) if(attempts[format])
-    printf("format=%s attempts=%" PRIu64 " parsed=%" PRIu64 "\n",format_name((exr_format)format),attempts[format],success[format]);
+    printf("format=%s attempts=%" PRIu64 " parsed=%" PRIu64 "\n",EXR_FUZZ_RECORD_NAME((exr_format)format),attempts[format],success[format]);
   result=0;
 done:
   if(sink && fclose(sink)) result=2;
