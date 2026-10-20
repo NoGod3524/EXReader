@@ -698,16 +698,21 @@ endif()
 option(EXR_BUILD_FUZZ "Build the deterministic parser fuzz driver" OFF)
 if(EXR_BUILD_FUZZ)
   add_executable(exreader-fuzz tests/fuzz_parse.c)
+  add_executable(exreader-fuzz-test tests/test_fuzz_driver.c)
   target_link_libraries(exreader-fuzz PRIVATE exreader)
+  target_link_libraries(exreader-fuzz-test PRIVATE exreader)
   if(NOT MSVC)
     target_compile_options(exreader-fuzz PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(exreader-fuzz-test PRIVATE -Wall -Wextra -Wpedantic -Werror)
   endif()
   if(EXR_FULL_TESTS)
+    add_test(NAME native-fuzz-driver COMMAND exreader-fuzz-test ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
     # Bounded smoke run; long campaigns use the same driver with a larger --iterations.
     add_test(NAME native-fuzz-smoke COMMAND exreader-fuzz --seed 1 --iterations 500
       --save ${CMAKE_CURRENT_BINARY_DIR}/fuzz-last.bin
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pdf-blend/nonisolated.pdf
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/layout.epub
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/comic.cbz
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/sample.txt)
   endif()
 endif()
