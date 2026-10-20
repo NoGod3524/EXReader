@@ -94,7 +94,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.38.2 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.38.3 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -466,7 +466,7 @@ development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.38.2 EXACT
+Select this package with `find_package(EXReader 3.38.3 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -669,3 +669,13 @@ bitmap fonts and ambiguous whitespace retain the existing general algorithm.
 The optimization does not implement incremental chapter parsing.
 Corpus diagnostics retain baseline expectations and never grant acceptance.
 Their independent PDF probe is an optional validation tool, not an SDK dependency.
+
+## 3.38.3 chapter input chunks
+
+SDK3.38.3/core3.37.3 retain ABI1/schema6; PDF remains 3.38.1.
+EPUB chapter extraction feeds the existing XML tree through bounded input calls.
+The complete document tree, normalized text, borrowed-view lifetime and public
+signatures remain unchanged. Hosts need no migration; rebuild and select the
+new exact package version as shown above. The 32 MiB ZIP member and 128 MiB
+aggregate expansion limits are unchanged. This removes an extraction copy;
+it does not provide a bounded chapter window or random-access chapter parser.

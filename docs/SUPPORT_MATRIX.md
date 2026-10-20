@@ -5,9 +5,9 @@
 [NATIVE_API.md](NATIVE_API.md) 与 [PERFORMANCE.md](PERFORMANCE.md)；本表随每批交付更新，
 发行时以本表为准。
 
-- 版本：**3.38.2 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
+- 版本：**3.38.3 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
 - 标记：**支持** = 有公开接口、边界与回归；**部分** = 有实现但覆盖/兼容未完整；**未支持** = 明确拒绝或不存在接口
-- 回归：`ctest` 名称，本机完整配置含 fuzz 当前152项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
+- 回归：`ctest` 名称，本机完整配置含 fuzz 当前153项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
 
 本轮平台应用、真实语料和性能结果见 `docs/validation/2026-10-20-native-hosts.json`、
 `docs/validation/2026-10-20-corpus-performance.json`。Windows/macOS/iPhone模拟器/iPad模拟器
@@ -16,6 +16,10 @@
 普通水平Latin表格单TEXT内容在无OpenType塑形/位图字体等条件下复用一次有界宽度扫描；
 其余内容保留通用算法，章内增量仍未支持。本批对照与分类见 `docs/validation/2026-10-20-wp6-compatibility.json`。
 
+3.38.3章输入采用ZIP回调和每次最多32KiB的XML输入，仍创建完整DOM和正文投影。
+32MiB单成员、128MiB累计展开上限及公开快照生命周期不变；没有章内窗口或有界随机恢复。
+分块不变性、取消/CRC清理、加载内存和失败复核见 `docs/validation/2026-10-20-wp6-input-stream.json`。
+
 ## 输入格式
 
 | 能力 | 状态 | 边界 | 回归 |
@@ -23,7 +27,7 @@
 | TXT | 支持 | 编码探测、行/段落切分 | `native-text` |
 | 严格 XHTML / HTML | 支持 | 只接受良构标记；**不做** HTML5 错误恢复 | `native-html-raw` |
 | FB2 | 支持 | 命名空间、注释、内嵌图片 | `native-fb2` |
-| EPUB 2/3 | 支持 | OPF/NCX/nav、资源、CFI；CSS 为子集（见下） | `native-navigation`、`native-cfi` |
+| EPUB 2/3 | 支持 | OPF/NCX/nav、资源、CFI；章输入分块但完整DOM仍驻留；CSS 为子集（见下） | `native-navigation`、`native-cfi`、`native-xml-input` |
 | DOCX | 支持 | 段落/样式/表格/图片/关系；**不覆盖**完整 Word 打印版面 | `native-docx` |
 | RTF | 支持 | 表格、列表、脚注、编号、fallback 字体 | `native-rtf`、`native-rtf-table`、`native-rtf-note` |
 | MOBI / KF8 | 支持 | PalmDOC/Huff 解码、KF8 结构与资源 | `native-mobi`、`native-kf8` |

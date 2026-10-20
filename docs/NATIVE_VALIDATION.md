@@ -1,5 +1,17 @@
 # Native C validation
 
+## Chapter input chunks (3.38.3)
+
+EPUB extraction now feeds the shared XML tree parser without a whole-chapter
+decompression buffer. `native-xml-input` checks input boundaries, text/tree/CFI
+and source byte positions, both ZIP modes, cancellation, CRC failure and output
+cleanup. Existing limits and public snapshot lifetimes remain unchanged.
+Compiler suites, package consumption, native CI, memory measurements, corpus
+replays and the WP16 release ledger are recorded separately in
+`docs/validation/2026-10-20-wp6-input-stream.json`.
+Complete DOM/text retention and the 50/100 MiB chapter rejection remain;
+neither bounded parser residency nor random chapter restoration is accepted.
+
 ## Table measurement and compatibility classification (3.38.2)
 
 The pre-version-change GCC/MSVC suites both pass 152/152, including 160 pairs
