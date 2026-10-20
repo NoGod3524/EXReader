@@ -3,7 +3,7 @@
 ## 1. 工作目录、基线与职责
 
 - 分支：`codex/wp12-lite-convert`。
-- 工作目录：`C:/Users/Oscar/.codex/worktrees/wp12-lite-convert/EXReader`。
+- 工作目录：`C:/Users/Oscar/.codex/worktrees/wp12-lite-convert-0514/EXReader`。
 - 独立构建/证据目录前缀：`C:/Users/Oscar/exr-wp12-lite-`。
 - 功能基线：`539b3b1cd7721548869859afb33c73457eb4608f`；实际工作起点还包含本文的交接提交。
 - SDK3.38.2、核心3.37.2、PDF3.38.1，MIT、C11、ABI1、书库schema6。
