@@ -45,6 +45,15 @@
       "reason": "validation host has no Linux, WSL or container runtime; mainline CI owns ASan/UBSan",
       "status": "not run"
     },
+    "static_components": {
+      "examples": [
+        "compat",
+        "fixed",
+        "wave"
+      ],
+      "install_consume": "pass",
+      "options": "EXR_BUILD_SHARED_COMPAT=OFF EXR_BUILD_TESTS=OFF"
+    },
     "trimmed_build": {
       "ctest": "147/147",
       "install_consume": "pass",
@@ -95,8 +104,8 @@
   },
   "commit_plan": "implementation + evidence committed locally; no push or merge to codex/framework",
   "commits": {
-    "implementation": "093775db04401c802f7719e4326beb551b8ac5e1",
-    "evidence": "84987ed8547347f6c2553f51a4d451d5f99d96bd"
+    "evidence": "84987ed8547347f6c2553f51a4d451d5f99d96bd",
+    "implementation": "093775db04401c802f7719e4326beb551b8ac5e1"
   },
   "evidence": {
     "format_rules": "docs/WP12A-FORMATS.md",
