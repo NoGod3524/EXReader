@@ -31,7 +31,7 @@ static void references(void) {
     for(alpha=0;alpha<2;alpha++) {
       exr_fixed_render_options options={0};exr_bitmap result={0},replayed={0};exr_canvas *c;exr_draw_sink_ex sink={0};exr_viewport view;size_t size,i;unsigned char *expected;unsigned maximum=0;
       options.channels=4;options.background=alpha ? 0 : 0xffffffff;OK(exr_fixed_render(d,0,1,&options,&result,&error));CHECK(mask_size==(size_t)result.width*result.height);
-      snprintf(name,sizeof(name),"%s-%s.rgba",names[test],alpha ? "alpha" : "white");expected=load(name,&size);CHECK(size==mask_size*4);
+      snprintf(name,sizeof(name),"%s%s-%s.rgba",names[test],!strcmp(names[test],"knockout-shapes") ? "-zero-opacity" : "",alpha ? "alpha" : "white");expected=load(name,&size);CHECK(size==mask_size*4);
       for(i=0;i<mask_size;i++) if(mask[i]) {
         unsigned k;const unsigned char *p=result.pixels+(i/result.width)*result.stride+(i%result.width)*4;
         for(k=0;k<4;k++) {
@@ -273,13 +273,13 @@ static void knockout(void) {
   OK(exr_canvas_end_layer(c,1,&error));px=exr_canvas_bitmap(c)->pixels;
   CHECK(px[0]>=125 && px[0]<=130 && px[1]>=125 && px[1]<=130 && px[2]<=3);
   exr_canvas_free(c);
-  /* Zero-coverage elements never knock the group back to its backdrop. */
+  /* Zero opacity retains geometric shape and knocks back to the initial white backdrop. */
   c=canvas(4,4,0xffffffff);rect(p,4,4);
   OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_KNOCKOUT,&error));
   style.fill=0x00ff0080;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
   style.fill=0x0000ff00;OK(exr_canvas_path(c,p,5,NULL,&style,&error));
   OK(exr_canvas_end_layer(c,1,&error));px=exr_canvas_bitmap(c)->pixels;
-  CHECK(px[1]>=253 && px[0]>=125 && px[0]<=130);
+  CHECK(px[0]==255 && px[1]==255 && px[2]==255 && px[3]==255);
   exr_canvas_free(c);
   /* A transparent backdrop exposes coverage replacement: a later element replaces
      both the colour and the alpha, so background removal keeps 50% coverage. */

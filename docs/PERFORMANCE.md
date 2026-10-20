@@ -636,3 +636,9 @@ CMYK group correctly and used the naive conversion, so its pixels are not an
 accuracy-equivalent implementation. Full ICC conversion and context initialization
 have a material cost. Caching identical colors and reusing transforms need further
 measurement; this batch is not claimed to improve CMYK speed.
+
+
+### 3.37.1普通RGB性能复测
+
+同机五轮交替、每轮64次重画、scale4；六场景全部RGBA散列相同。首画比率flat1.009、primitives0.992、state0.962、groups1.052、compound0.920、ap-groups1.032；重画p95分别0.994、1.075、1.015、1.028、0.897、1.061。未触发本批10%调查阈值。68个新输入与参考重生逐字节相同。
+[原始样本](validation/2026-10-19-zero-opacity-benchmark.json)。

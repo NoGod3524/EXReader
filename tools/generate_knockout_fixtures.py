@@ -2,10 +2,12 @@
 #!/usr/bin/env python3
 """Original knockout-group PDF scenes and an independent Decimal(40) reference.
 
-The reference implements ISO 32000-1 11.4.5 on the same arithmetic as
+The reference implements ISO 32000-1 11.4.5/11.4.6 on the same arithmetic as
 pdf_group_reference.py: each element composites with the group's initial
 backdrop and replaces the accumulated result inside its coverage. No external
-renderer is required, so these scenes can be regenerated offline.
+renderer is required, so these scenes can be regenerated offline. The historical
+writer explicitly retains its old zero-opacity reference; current corrected
+reference files are emitted by generate_zero_opacity_fixtures.py.
 """
 # SPDX-License-Identifier: MIT
 import hashlib, json, sys
@@ -141,7 +143,7 @@ def form(pdf, isolated, knockout, elements):
                    + b' /Length ' + str(len(body)).encode() + b' >>\nstream\n' + body + b'\nendstream')
 
 
-def cell_pixel(back, elements, x, y, isolated, knockout):
+def cell_pixel(back, elements, x, y, isolated, knockout, zero_opacity_shape=True):
     """Group result at one covered pixel; coverage is binary, no antialiasing."""
     with localcontext() as ctx:
         ctx.prec = 40
@@ -153,8 +155,8 @@ def cell_pixel(back, elements, x, y, isolated, knockout):
             if not (rect[0] <= x < rect[2] and rect[1] <= y < rect[3]):
                 continue  # outside this element's coverage
             a = D(alpha) / 255
-            if not a:
-                continue  # fully transparent: paints nothing, knocks nothing out
+            if not a and not (zero_opacity_shape and knockout):
+                continue  # Legacy reference; corrected zero-opacity fixtures opt in below.
             src = tuple(D(v) / 255 for v in rgb)
             if knockout:
                 result = over(initial, src, a, mode)
@@ -168,7 +170,7 @@ def cell_pixel(back, elements, x, y, isolated, knockout):
         return straight + (group_alpha,)
 
 
-def expected_pixels(pdf_w, pdf_h, cells, isolated, knockout, background=None, mask=None):
+def expected_pixels(pdf_w, pdf_h, cells, isolated, knockout, background=None, mask=None, zero_opacity_shape=True):
     """Premultiplied (alpha) and straight-over-white byte images, per pixel."""
     alpha = bytearray(pdf_w * pdf_h * 4)
     white = bytearray(pdf_w * pdf_h * 4)
@@ -176,7 +178,7 @@ def expected_pixels(pdf_w, pdf_h, cells, isolated, knockout, background=None, ma
     for index, (x0, y0, elements) in enumerate(cells):
         for y in range(CELL):
             for x in range(CELL):
-                straight = cell_pixel(back, elements, x, y, isolated, knockout)
+                straight = cell_pixel(back, elements, x, y, isolated, knockout, zero_opacity_shape)
                 a = straight[3]
                 # Complete the group against its actual initial backdrop;
                 # group-only alpha never includes that backdrop's alpha.
@@ -228,7 +230,9 @@ def build(name, cells, isolated, knockout, background=None, width=None, height=C
                 if inside:
                     mask_bytes[(height - 1 - (y0 + y)) * width + (x0 + x)] = 1
     (dest / (name + '.mask')).write_bytes(bytes(mask_bytes))
-    alpha, white = expected_pixels(width, height, cells, isolated, knockout, background)
+    # Preserve the published historical reference bytes; the current corrected
+    # reference is generated separately by generate_zero_opacity_fixtures.py.
+    alpha, white = expected_pixels(width, height, cells, isolated, knockout, background, zero_opacity_shape=False)
     (dest / (name + '-alpha.rgba')).write_bytes(alpha)
     (dest / (name + '-white.rgba')).write_bytes(white)
     return digest

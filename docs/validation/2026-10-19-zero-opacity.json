@@ -1,0 +1,90 @@
+{
+  "version": "3.37.1",
+  "abi": 1,
+  "schema": 6,
+  "scenes": 64,
+  "tests": {
+    "gcc": {
+      "count": 142,
+      "failures": 0,
+      "dll_sha256": "53d68f15fd71314bf7b93a5e4155da4151380ae8bca96f568b134b21739b13ec",
+      "exports": 305,
+      "zero_opacity_output": "2500 zero-opacity checks passed\n"
+    },
+    "msvc": {
+      "count": 142,
+      "failures": 0,
+      "dll_sha256": "33ec761d7a9baeb08a2709d6daffd3ee77865296473c71ec42aaa24c2d9a8f68",
+      "exports": 305,
+      "zero_opacity_output": "2500 zero-opacity checks passed\n"
+    }
+  },
+  "icc_off": {
+    "count": 11,
+    "failures": 0
+  },
+  "installed_components": {
+    "count": 4,
+    "failures": 0
+  },
+  "cpp_headers": 13,
+  "cpp_exact_runtime": "3.37.1 ABI 1",
+  "abi_measurements_unchanged": 703,
+  "layers": {
+    "objects": 99,
+    "symbols": 1042,
+    "includes": 899,
+    "inverse": 0
+  },
+  "reference": "2026-10-19-zero-opacity-reference.json",
+  "remaining": [
+    "external renderer differences",
+    "full WP1/WP2 matrices",
+    "full Extend and subsequent WP1-WP16 acceptance"
+  ],
+  "core_version": "3.36.3",
+  "pdf_version": "3.37.1",
+  "canvas_combinations": 192,
+  "performance": "2026-10-19-zero-opacity-benchmark.json",
+  "corrected_legacy_reference": {
+    "alpha": {
+      "file": "knockout-shapes-zero-opacity-alpha.rgba",
+      "sha256": "b610e047e4b586c2b02c3ac72e3816e7827d71cecbda728c2d77395ae3d58a19",
+      "legacy_sha256": "845e0f1a42de5f6902e78517c0d39b9d2b2d3ce08fa0aa229db4697026f66983",
+      "changed_pixels": 384
+    },
+    "white": {
+      "file": "knockout-shapes-zero-opacity-white.rgba",
+      "sha256": "a5717a03ccbe38a277f6c0fd3ea192139c51bd6495be00e4b10104bd7e1f7a28",
+      "legacy_sha256": "17ac1226c48c96171d57ddc13309a3b7a3a68d7c9a6c9dadf1d5cd3c08af59f4",
+      "changed_pixels": 384
+    }
+  },
+  "regenerated_identical_files": 68,
+  "performance_ratios": {
+    "flat": {
+      "first": 1.0094639965349717,
+      "repaint_p95": 0.9941812487826879
+    },
+    "primitives": {
+      "first": 0.9923507267642223,
+      "repaint_p95": 1.0751455902408726
+    },
+    "state": {
+      "first": 0.9618277644169267,
+      "repaint_p95": 1.0148272865522485
+    },
+    "groups": {
+      "first": 1.051877115799476,
+      "repaint_p95": 1.028382215725462
+    },
+    "compound": {
+      "first": 0.9199390014912368,
+      "repaint_p95": 0.8970300595109183
+    },
+    "ap-groups": {
+      "first": 1.0319502493783577,
+      "repaint_p95": 1.0605443354794024
+    }
+  }
+}

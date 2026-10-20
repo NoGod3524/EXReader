@@ -86,7 +86,7 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
   if(!work) work=&local_work;
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   det=m[0]*m[3]-m[1]*m[2];
-  if(!det || !alpha) return exr_fail(e,EXR_OK,"");
+  if(!det || (!alpha && (!state || !(state->knockout || state->shape) || (state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE)))) return exr_fail(e,EXR_OK,"");
   inv[0]=m[3]/det; inv[1]=-m[1]/det; inv[2]=-m[2]/det; inv[3]=m[0]/det;
   inv[4]=-(inv[0]*m[4]+inv[2]*m[5]); inv[5]=-(inv[1]*m[4]+inv[3]*m[5]);
   for(i=0;i<6;i++) if(!isfinite(inv[i])) return exr_fail(e,EXR_LIMIT,"Affine image inverse exceeds precision");
@@ -114,12 +114,12 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
       if(state && (state->knockout || state->shape)) {
         double object_alpha,shape,source_alpha=sums[inks ? 4 : 3]/(4*255.);
         exr_pixel_alpha_shape(state,(size_t)x,(size_t)y,source_alpha,shape_sum/4,alpha,coverage,&object_alpha,&shape);
-        if(!source_alpha || !shape) continue;
+        if(!shape) continue;
         if(inks) {
-          double cmyk[4];for(k=0;k<4;k++) cmyk[k]=sums[k]/(255*sums[4]);
+          double cmyk[4];for(k=0;k<4;k++) cmyk[k]=source_alpha ? sums[k]/(255*sums[4]) : 0;
           exr_pixel_object_cmyk(target,x,y,cmyk,object_alpha,shape,mode,state);
         } else {
-          for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(sums[k]/sums[3]+.5))<<(24-8*k);
+          if(source_alpha) for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(sums[k]/sums[3]+.5))<<(24-8*k);
           exr_pixel_object(target,x,y,color,object_alpha,shape,mode,state);
         }
         continue;

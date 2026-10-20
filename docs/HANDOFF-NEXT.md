@@ -1,15 +1,15 @@
 # 当前检查点与后续顺序
 
-2026-10-19，C11 SDK **3.37.0**，MIT，ABI1，schema6。分支 `codex/framework`。
-核心3.36.2、PDF读取3.37.0，其余组件3.33.0。完整工作范围为WP1–WP16，包含4a、12a。
+2026-10-19，C11 SDK **3.37.1**，MIT，ABI1，schema6。分支 `codex/framework`。
+核心3.36.3、PDF读取3.37.1，其余组件3.33.0。完整工作范围为WP1–WP16，包含4a、12a。
 目标和量化出口保留在[开发路线](HANDOFF.md)，历史编号见[更新日志](../CHANGELOG.md)。
 
 ## 1. 当前验证
 
-- 本地GCC16.2、MSVC Release各141/141；ICC-OFF专项10/10。
-- 安装静态组件4/4，13个模块头独立C++编译；EXACT C++实际运行3.37.0 ABI1。
+- 本地GCC16.2、MSVC Release各142/142；ICC-OFF专项11/11。
+- 安装静态组件4/4，13个模块头独立C++编译；EXACT C++实际运行3.37.1 ABI1。
 - 703项公开测量与3.36.0逐行相同，两个DLL均305导出；分层99对象/1042符号引用/899本地include，逆向0。
-- 本批[原始记录](validation/2026-10-19-shading-function.json)，完整[验证历史](NATIVE_VALIDATION.md)。
+- 本批[原始记录](validation/2026-10-19-zero-opacity.json)，完整[验证历史](NATIVE_VALIDATION.md)。
 - 3.34.2代码`7a60f36f8a5f8ec336c4b6e22c695494a41b0074`的[CI39342750378](https://github.com/NoGod3524/EXReader/actions/runs/39342750378)7/7成功：三桌面各139/139，sanitizer136/136，20万次变异无崩溃；[作业记录](validation/2026-10-19-mask-scope-ci.json)。该结果不代替后续版本CI。
 - 3.35.0代码`04f7e7be1131e7adcd17b67b578bae5c07abdd86`的[CI39343939083](https://github.com/NoGod3524/EXReader/actions/runs/39343939083)7/7成功：三桌面各140/140，sanitizer137/137；[作业记录](validation/2026-10-19-mask-functions-ci.json)。
 - 3.35.1代码`c33e758a39a1e0ac89a80202c0bb3fdd3c6d94a4`的[CI39344775219](https://github.com/NoGod3524/EXReader/actions/runs/39344775219)7/7成功，三桌面各140/140、sanitizer137/137；[作业记录](validation/2026-10-19-coverage-ci.json)。
@@ -20,6 +20,8 @@
 - 3.36.2：径向最大有效根、先归一化再求根、临时BBox和超大实数的引用试探解析已修复；19场景/30探针/4拒绝，成功与失败均恢复裁剪。[逐场景参考](validation/2026-10-19-shading-geometry-reference.json)。
 - 3.36.2的[CI39350915545](https://github.com/NoGod3524/EXReader/actions/runs/39350915545)6/7成功；Ubuntu GCC12的条件输出读取告警使严格编译中止，现用已初始化的局部best根替代，随3.37.0复验。[原始失败记录](validation/2026-10-19-shading-geometry-ci.json)。
 - 3.37.0：Type1二维函数渐变、1–7型分量函数数组及共享函数图限界；29正常/29拒绝、262144个原始CMYK像素，61文件重生相同。[逐场景参考](validation/2026-10-19-shading-function-reference.json)。
+- 3.37.0代码`62f059786be92003f76515d0ca6d253d524d90a4`的[CI39352336301](https://github.com/NoGod3524/EXReader/actions/runs/39352336301)7/7成功，三桌面各141/141、sanitizer138/138，Ubuntu严格编译通过；[作业记录](validation/2026-10-19-shading-function-ci.json)。
+- 3.37.1：按ISO11.4.6保留零opacity的shape，修正路径/图片/复合填描及RGB/CMYK子组；64份PDF、192个公开画布组合，本地2500检查。旧参考中跳过零alpha的假设已修正，原文件及容差保留，新旧各384像素差异有散列记录。[逐场景参考](validation/2026-10-19-zero-opacity-reference.json)。
 
 ## 2. 快速验证
 
@@ -33,7 +35,7 @@ cmake --build C:/Users/Oscar/exr-gcc --parallel 6
 ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 ```
 
-当前完整配置两边均预期141项，测试数随裁剪与工具配置变化。
+当前完整配置两边均预期142项，测试数随裁剪与工具配置变化。
 关闭ICC使用`-DEXR_ENABLE_ICC=OFF`，回到已声明的朴素DeviceCMYK换算。
 安装与移动设备验收分别记录，交叉编译不替代真机运行。
 
@@ -50,7 +52,7 @@ ctest --test-dir C:/Users/Oscar/exr-gcc --output-on-failure
 
 ## 4. 未关闭项
 
-- WP1/WP2：AIS与图像shape/opacity已接入；继续核验零opacity在挖空中的行为、更多组色空间、外部差异和全部组合矩阵。
+- WP1/WP2：AIS与图像shape/opacity已接入；零opacity已按11.4.6公式修复，继续更多组色空间、外部差异和全部组合矩阵。
 - 外部差异：低alpha嵌套、可见色键与图形状态mask、画布外反相mask、非隔离亮度组等；[规范与对照口径](MASK_SEMANTICS.md)。不能以内部探针吻合替代外部兼容。
 - WP4：ICCBased/DeviceN到组空间、OutputIntent、其他ICC/图像与印刷色彩矩阵。
 - 渐变完整Extend/自适应采样、WP4a的PubSec/EFOpen/加密写回/JPX/JBIG2/Pattern，以及全库安全审计。sh操作按规范忽略Background，后续Pattern需单独处理。
