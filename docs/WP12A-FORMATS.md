@@ -119,3 +119,10 @@ patterns under `tests/fixtures/images` with MIT provenance and SHA-256 values in
   pixels, ComicInfo title and damaged-content rejection.
 - `native-cbz`: existing natural sorting, ComicInfo, duplicate path, CRC,
   library import/dedup/backup and cancellation regressions.
+
+## Mainline dependency configuration
+
+Mainline freezes TIFF to the declared built-in/Deflate/LZW/PackBits subset and
+pinned zlib. Host JPEG/JBIG/LERC/LZMA/ZSTD/WebP/libdeflate discovery is disabled;
+build and installed capabilities do not vary with host packages. The libaom
+source include path is a build interface and is excluded from install exports.
