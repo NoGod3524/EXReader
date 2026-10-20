@@ -169,6 +169,20 @@ static void hyphenation(void) {
   exr_hyphenator_free(hyphenator);
 }
 
+static void malayalam_dot_repha(void) {
+  exr_font *font = open_font("mlym-real.ttf");
+  exr_shape_options o = exr_shape_defaults();
+  exr_shaped_glyph *g = NULL;
+  size_t n = 0;
+  o.font_size = 200.0f; o.script = EXR_TAG('m','l','y','m');
+  OK(exr_shape(font,0,"\xe0\xb5\x8e\xe0\xb4\x95",6,&o,&g,&n,&error));
+  CHECK(n == 2 && g[0].glyph == 23 && g[1].glyph == 78);
+  CHECK(near(g[0].advance_x,207.0f));
+  CHECK(near(g[1].advance_x,0.0f));
+  CHECK(near(g[1].offset_x,-48.2f) && near(g[1].offset_y,30.8f));
+  exr_free(g);
+}
+
 static void fallback_and_selection(void) {
   const char *names[] = {"beng-real.ttf","thai-real.ttf"};
   exr_font_input inputs[2];
@@ -255,6 +269,7 @@ int main(int argc, char **argv) {
   controls();
   bidi_and_breaks();
   hyphenation();
+  malayalam_dot_repha();
   fallback_and_selection();
   pagination_recovery();
   for (i = 0; i < cache_count; i++) exr_font_free(cache[i].font);
