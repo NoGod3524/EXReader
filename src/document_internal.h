@@ -37,6 +37,14 @@ struct exr_document {
 };
 
 typedef exr_status (*exr_xml_position_fn)(void *context, size_t offset, size_t node);
+/* Incremental XML input, preserving the same complete DOM/text snapshot.
+   The document and error object outlive the parser; free it after success/error. */
+typedef struct exr_xml_tree_parser exr_xml_tree_parser;
+exr_status exr_xml_tree_begin(exr_document *doc,size_t resource,int in_spine,int linear,
+  const char *root_name,exr_xml_position_fn position,void *context,
+  exr_xml_tree_parser **out,exr_error *error);
+exr_status exr_xml_tree_feed(exr_xml_tree_parser *parser,const void *data,size_t size,int final);
+void exr_xml_tree_free(exr_xml_tree_parser *parser);
 exr_status exr_fixed_anchor_validate(const exr_fixed_anchor *anchor,exr_error *error);
 exr_status exr_anchor_validate(const exr_anchor *anchor, exr_error *error);
 exr_status exr_cfi_context(const exr_document *doc,size_t chapter,const exr_cfi_point *point,size_t context,const exr_control *control,char **before,char **after,exr_error *error);

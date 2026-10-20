@@ -267,21 +267,26 @@ static size_t source_read(void *context, mz_uint64 offset, void *buffer, size_t 
   if (z->status != EXR_OK) return 0;
   return done;
 }
-static void *member(archive *z, const char *name, size_t *size, exr_error *e) {
+static int member_info(archive *z,const char *name,mz_zip_archive_file_stat *stat,exr_error *e) {
   int index = mz_zip_reader_locate_file(&z->archive, name, NULL, MZ_ZIP_FLAG_CASE_SENSITIVE);
-  mz_zip_archive_file_stat stat;
-  void *p;
-  if (index < 0 || !mz_zip_reader_file_stat(&z->archive, (mz_uint)index, &stat)) {
+  if (index < 0 || !mz_zip_reader_file_stat(&z->archive, (mz_uint)index, stat)) {
     z->status = EXR_FORMAT;
     exr_fail(e, EXR_FORMAT, "ZIP member missing: %s", name);
-    return NULL;
+    return -1;
   }
-  if (stat.m_uncomp_size > 32 * 1024 * 1024 || stat.m_uncomp_size > EXR_MAX_INPUT - z->expanded ||
-      stat.m_is_encrypted) {
+  if (stat->m_uncomp_size > 32 * 1024 * 1024 || stat->m_uncomp_size > EXR_MAX_INPUT - z->expanded ||
+      stat->m_is_encrypted) {
     z->status = EXR_LIMIT;
     exr_fail(e, EXR_LIMIT, "ZIP member is encrypted or exceeds extraction limit");
-    return NULL;
+    return -1;
   }
+  return index;
+}
+static void *member(archive *z, const char *name, size_t *size, exr_error *e) {
+  mz_zip_archive_file_stat stat;
+  int index=member_info(z,name,&stat,e);
+  void *p;
+  if(index<0) return NULL;
   p = mz_zip_reader_extract_to_heap(&z->archive, (mz_uint)index, size, 0);
   if (!p) {
     if (z->status == EXR_OK) z->status = exr_fail(e, EXR_FORMAT, "ZIP member decompression failed");
@@ -748,15 +753,51 @@ done:
   package_free(&p);
   return result;
 }
+typedef struct {
+  archive *archive;
+  exr_xml_tree_parser *parser;
+  exr_error *error;
+  size_t fed,size;
+  exr_status status;
+} chapter_input;
+static size_t chapter_feed(void *context,mz_uint64 offset,const void *data,size_t size) {
+  chapter_input *input=context;
+  size_t at=0;
+  if(offset!=input->fed || size>input->size-input->fed) {
+    input->status=exr_fail(input->error,EXR_FORMAT,"Inconsistent chapter extraction extent");return 0;
+  }
+  while(at<size) {
+    size_t chunk=size-at>32768 ? 32768 : size-at;
+    if(input->archive->source) {
+      input->status=exr_control_poll(&input->archive->source->control,EXR_STAGE_READ,
+                                     input->fed,input->size,input->error);
+      if(input->status!=EXR_OK) return 0;
+    }
+    input->status=exr_xml_tree_feed(input->parser,(const char *)data+at,chunk,0);
+    if(input->status!=EXR_OK) return 0;
+    input->fed+=chunk;at+=chunk;
+  }
+  return size;
+}
 static exr_status epub_parse_chapter(exr_document *d, archive *z, size_t resource,
                                      int in_spine, int linear, exr_error *e) {
-  size_t size = 0;
-  void *bytes = member(z, d->resources[resource].path, &size, e);
+  mz_zip_archive_file_stat stat;
+  int index=member_info(z,d->resources[resource].path,&stat,e);
+  chapter_input input={0};
   exr_status result;
-  if (!bytes)
-    return z->status;
-  result = exr_xhtml(d, bytes, size, resource, in_spine, linear, e);
-  mz_free(bytes);
+  if(index<0) return z->status;
+  input.archive=z;input.error=e;input.size=(size_t)stat.m_uncomp_size;
+  result=exr_xml_tree_begin(d,resource,in_spine,linear,"html",NULL,NULL,&input.parser,e);
+  if(result!=EXR_OK) return result;
+  if(!mz_zip_reader_extract_to_callback(&z->archive,(mz_uint)index,chapter_feed,&input,0) ||
+     input.fed!=input.size) {
+    result=z->status!=EXR_OK ? z->status : input.status!=EXR_OK ? input.status :
+      exr_fail(e,EXR_FORMAT,"ZIP member decompression failed");
+  } else {
+    z->expanded+=input.fed;
+    result=exr_xml_tree_feed(input.parser,NULL,0,1);
+  }
+  exr_xml_tree_free(input.parser);
   return result;
 }
 exr_status exr_epub_index(const void *data, size_t n, exr_document **out, exr_error *e) {
