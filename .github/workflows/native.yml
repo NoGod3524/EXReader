@@ -225,6 +225,7 @@ jobs:
             python3 tools/run_reliability_campaign.py run --source . --build build/fuzz --target "$target" --seed 2026101901 --cpu-seconds 1 --wall-seconds 120 --require-clean --output "build/evidence/$target-0"
           done
           python3 tools/run_reliability_campaign.py summarize --reports build/evidence --minimum-cpu-hours 0.0002777777777777778 --expected-shards 1 --first-seed 2026101901 --expected-source-sha "${{ github.sha }}" --build-manifest build/fuzz/build-manifest.json --output build/reliability-smoke-summary.json
+          python3 tools/run_reliability_campaign.py run --source . --build build/fuzz --target font --seed 2026101901 --cpu-seconds 60 --wall-seconds 360 --require-clean --output build/font-endurance
       - name: Preserve measured evidence on success and failure
         if: always()
         uses: actions/upload-artifact@v4
@@ -234,6 +235,7 @@ jobs:
             build/evidence/
             build/fuzz/build-manifest.json
             build/reliability-smoke-summary.json
+            build/font-endurance/
           if-no-files-found: warn
       - name: Keep the triggering input when the campaign fails
         if: failure()

@@ -27,7 +27,8 @@ def main():
                 (layout, fixtures/'layout.epub', ['--font', host]),
                 (render, fixtures/'layout.epub', ['--font', host]),
                 (render, fixtures/'comic.cbz', ['--font', host]),
-                (render, fixtures/'pdf-color/shading-axial.pdf', ['--font', host])]
+                (render, fixtures/'pdf-color/shading-axial.pdf', ['--font', host]),
+                (font, fixtures/'font-cff-regression.bin', [])]
     for binary, source, extra in positive:
         assert 'status=0' in run(binary, '--replay', source, *extra)
         checks += 1
