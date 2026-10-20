@@ -43,7 +43,11 @@
     "exe_sha256": "f8e2ca03226275c61bbc181d9b405cbf0d8c59253d21c9a5a8a9d63fbed2a86d",
     "dll_sha256": "fdd37959ae957d047ba041ee066d07249b819ccd23961a7e6174cfa3ee2e85a9"
   },
-  "pending": [
-    "CI sanitizer run and POSIX truncation path verification after push"
-  ]
+  "ci": {
+    "run": 39363962576,
+    "head_sha": "ff97fd1bd2c7",
+    "conclusion": "success",
+    "jobs": "7/7 success",
+    "notes": "The fuzz job runs exreader-fuzz-test under ASan/UBSan on ubuntu-22.04 (POSIX ftruncate path) and the 200k campaign; the failure-artifact path includes last.bin.format but was not exercised by this green run."
+  }
 }
