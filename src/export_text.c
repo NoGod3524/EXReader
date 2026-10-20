@@ -31,21 +31,31 @@ static int escaped(exr_buffer *b, const char *text, size_t n) {
   return 1;
 }
 static int literal(exr_buffer *b, const char *s) { return exr_append(b, s, strlen(s)); }
-static int body(exr_buffer *b, const exr_document *d, const char *before, const char *after) {
+/* The text exporter has no per-byte control hook. Cancellation is observed
+   before/after each block batch and before publication; see CONVERSION.md. */
+static int body(exr_buffer *b, const exr_document *d, const char *before, const char *after,
+                const exr_control *control, exr_error *e, exr_status *status) {
   size_t i;
   for (i = 0; i < d->count; i++) {
+    if (!(i & 63)) {
+      *status = exr_control_poll(control, EXR_STAGE_EXPORT, i, d->count, e);
+      if (*status != EXR_OK)
+        return 0;
+    }
     if (!literal(b, before) ||
         !escaped(b, d->text + d->blocks[i].start, d->blocks[i].end - d->blocks[i].start) ||
         !literal(b, after))
       return 0;
   }
-  return 1;
+  *status = exr_control_poll(control, EXR_STAGE_EXPORT, d->count, d->count, e);
+  return *status == EXR_OK;
 }
 static int add(mz_zip_archive *z, const char *name, const char *data, size_t n, int level) {
   return mz_zip_writer_add_mem(z, name, data, n, (mz_uint)level);
 }
-exr_status exr_document_export(const exr_document *d, exr_format f, void **out, size_t *n,
-                               exr_error *e) {
+exr_status exr_document_export_control(const exr_document *d, exr_format f,
+                                       const exr_control *control, void **out, size_t *n,
+                                       exr_error *e) {
   exr_buffer b = {0}, meta = {0};
   mz_zip_archive zip = {0};
   int zip_open = 0;
@@ -53,14 +63,18 @@ exr_status exr_document_export(const exr_document *d, exr_format f, void **out, 
   size_t size = 0, i;
   const char *title;
   char modified[32];
+  exr_status status;
   if (!d || !out || !n)
     return exr_fail(e, EXR_ARGUMENT, "Invalid export arguments");
   *out = NULL;
   *n = 0;
+  status = exr_control_cancel(control, e);
+  if (status != EXR_OK)
+    return status;
   if (exr_export_time(modified, e) != EXR_OK) return e ? e->code : EXR_IO;
   title = d->title && d->title[0] ? d->title : "Untitled";
   if (f == EXR_HTML || f == EXR_FB2 || f == EXR_EPUB || f == EXR_DOCX) {
-    exr_status status = f == EXR_DOCX ? EXR_OK : exr_xml_text(title, strlen(title), "title", e);
+    status = f == EXR_DOCX ? EXR_OK : exr_xml_text(title, strlen(title), "title", e);
     if (status == EXR_OK)
       status = exr_xml_text(d->text, d->size, "document text", e);
     if (status != EXR_OK)
@@ -78,7 +92,8 @@ exr_status exr_document_export(const exr_document *d, exr_format f, void **out, 
     if (!literal(&b, "<?xml version=\"1.0\" encoding=\"UTF-8\"?><html "
                      "xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>") ||
         !escaped(&b, title, strlen(title)) || !literal(&b, "</title></head><body>") ||
-        !body(&b, d, "<p>", "</p>\n") || !literal(&b, "</body></html>"))
+        !body(&b, d, "<p>", "</p>\n", control, e, &status) ||
+        !literal(&b, "</body></html>"))
       goto failed;
   } else if (f == EXR_FB2) {
     if (!literal(&b, "<?xml version=\"1.0\" encoding=\"UTF-8\"?><FictionBook "
@@ -89,15 +104,21 @@ exr_status exr_document_export(const exr_document *d, exr_format f, void **out, 
         !escaped(&b, title, strlen(title)) ||
         !literal(&b, "</book-title><lang>und</lang></title-info></"
                      "description><body><section>") ||
-        !body(&b, d, "<p>", "</p>\n") || !literal(&b, "</section></body></FictionBook>"))
+        !body(&b, d, "<p>", "</p>\n", control, e, &status) ||
+        !literal(&b, "</section></body></FictionBook>"))
       goto failed;
   } else if (f == EXR_RTF) {
-    size_t at = 0;
+    size_t at = 0, scalars = 0;
     uint32_t cp;
     if (!literal(&b, "{\\rtf1\\ansi\\ansicpg1252\\uc1 "))
       goto failed;
     while (at < d->size) {
       char value[48];
+      if (!(scalars++ & 4095)) {
+        status = exr_control_cancel(control, e);
+        if (status != EXR_OK)
+          goto failed;
+      }
       if (!exr_next(d->text, d->size, &at, &cp))
         goto failed;
       if (cp == '\n') {
@@ -129,11 +150,15 @@ exr_status exr_document_export(const exr_document *d, exr_format f, void **out, 
     if (!literal(&b, "<?xml version=\"1.0\" encoding=\"UTF-8\"?><w:document "
                      "xmlns:w=\"http://schemas.openxmlformats.org/"
                      "wordprocessingml/2006/main\"><w:body>") ||
-        !body(&b, d, "<w:p><w:r><w:t xml:space=\"preserve\">", "</w:t></w:r></w:p>\n") ||
+        !body(&b, d, "<w:p><w:r><w:t xml:space=\"preserve\">", "</w:t></w:r></w:p>\n",
+              control, e, &status) ||
         !literal(&b, "<w:sectPr/></w:body></w:document>"))
       goto failed;
   } else
     return exr_fail(e, EXR_FORMAT, "This export format is not implemented");
+  status = exr_control_poll(control, EXR_STAGE_EXPORT, 1, 1, e);
+  if (status != EXR_OK)
+    goto failed;
   if (f != EXR_EPUB && f != EXR_DOCX) {
     *out = b.data;
     *n = b.size;
@@ -204,6 +229,9 @@ exr_status exr_document_export(const exr_document *d, exr_format f, void **out, 
         !add(&zip, "OEBPS/text.xhtml", b.data, b.size, 6))
       goto failed;
   }
+  status = exr_control_poll(control, EXR_STAGE_EXPORT, 1, 1, e);
+  if (status != EXR_OK)
+    goto failed;
   if (!mz_zip_writer_finalize_heap_archive(&zip, &bytes, &size) || size > EXR_MAX_INPUT)
     goto failed;
   *out = malloc(size);
@@ -224,5 +252,12 @@ failed:
     mz_zip_writer_end(&zip);
   free(b.data);
   free(meta.data);
+  if (status == EXR_CANCELLED)
+    return status;
   return exr_fail(e, EXR_LIMIT, "Export allocation or size limit exceeded");
+}
+
+exr_status exr_document_export(const exr_document *d, exr_format f, void **out, size_t *n,
+                               exr_error *e) {
+  return exr_document_export_control(d, f, NULL, out, n, e);
 }
