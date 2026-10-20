@@ -123,6 +123,7 @@
   },
   "commit_plan": "implementation + evidence committed locally; no push or merge to codex/framework",
   "commits": {
+    "evidence": "7d5b14e1a7e5e90e36ca694d0bfe003c1f1dd335",
     "implementation": "1c84c20b8abc92e349455de9a74dd47e52657b2b"
   },
   "evidence": {
