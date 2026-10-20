@@ -5,7 +5,7 @@
 [NATIVE_API.md](NATIVE_API.md) 与 [PERFORMANCE.md](PERFORMANCE.md)；本表随每批交付更新，
 发行时以本表为准。
 
-- 版本：**3.37.1 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
+- 版本：**3.38.0 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
 - 标记：**支持** = 有公开接口、边界与回归；**部分** = 有实现但覆盖/兼容未完整；**未支持** = 明确拒绝或不存在接口
 - 回归：`ctest` 名称，本机完整配置当前141项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
 
@@ -57,7 +57,7 @@
 | 对象与流解码 | 支持 | 交叉引用/对象流/压缩流，嵌套与长度上限 | `native-pdf-objects` |
 | 字体 | 支持 | Type1/TrueType/Type0/Type3、CID、编码表、字形名 | `native-pdf-font`、`native-pdf-type3` |
 | 路径/图像/内联图 | 支持 | 常见图像过滤器；Pattern 未支持 | `native-pdf-graphics`、`native-pdf-image`、`native-pdf-inline` |
-| 渐变与网格 | 部分 | 二维函数/轴向/径向及Domain映射、网格类型 **4/5/6/7**（Gouraud 三角/晶格、Coons、张量积），32 位坐标与最多 4 个颜色分量；采样计入共享工作预算。支持临时BBox裁剪和径向有效最大根；各分量函数数组共用1MiB/16层/1024节点限界；Type1使用512×512采样，完整Extend与自适应采样仍待实现；sh按规范忽略Background | `native-pdf-shading`、`native-pdf-shading-mesh`、`native-pdf-shading-mesh7`、`native-pdf-raster` |
+| 渐变与网格 | 部分 | 二维函数/轴向/径向及Domain映射、网格类型 **4/5/6/7**（Gouraud 三角/晶格、Coons、张量积），32 位坐标与最多 4 个颜色分量；采样计入共享工作预算。支持临时BBox裁剪和径向有效最大根；各分量函数数组共用1MiB/16层/1024节点限界；原生轴向/径向按实际裁剪区四点采样，使用512项色表并支持完整Extend；旧宿主未提供paint时仍走有限位图外推；Type1使用512×512采样，自适应采样待实现；sh按规范忽略Background | `native-pdf-shading`、`native-pdf-shading-mesh`、`native-pdf-shading-mesh7`、`native-pdf-raster` |
 | 文字几何/搜索/选择 | 支持 | 文字位置、搜索、选择、命中 | `native-pdf-text` |
 | 元数据 | 支持 | Info/XMP 读取与增量写回 | `native-pdf-metadata-write`、`native-metadata` |
 | 认证 | 部分 | Standard R2–R6、RC4/AES、Crypt filter；**证书 PubSec、EFOpen、加密写回未支持** | `native-pdf-crypto` |
@@ -84,7 +84,7 @@
 | --- | --- | --- | --- |
 | C SDK | 支持 | 305 个公开函数导出、`struct_size` 前缀兼容 | `native-abi`、`native-core` |
 | C++ / Swift / JNI 适配 | 支持 | 安装后消费示例与 `-Xcheck:jni` | `native-fixed-example`、`native-wave-example` |
-| 安装与包配置 | 支持 | `find_package(EXReader 3.37.1 EXACT CONFIG REQUIRED)` | CI 安装作业 |
+| 安装与包配置 | 支持 | `find_package(EXReader 3.38.0 EXACT CONFIG REQUIRED)` | CI 安装作业 |
 | 桌面三平台 | 支持 | Windows/Linux/macOS 全量 CTest + 安装消费 | CI `desktop` |
 | Android / iOS / iPadOS | 部分 | **仅库编译与 Swift 适配检查**，无真机/模拟器阅读验证 | CI `android`、`apple-mobile` |
 | 嵌入阅读视图 / 示例 App / TTS / 无障碍 / OPDS / LCP | 未支持 | 目标见 [VERSIONING.md](VERSIONING.md) | — |

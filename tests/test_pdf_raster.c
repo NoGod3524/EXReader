@@ -148,15 +148,15 @@ static void shading_budget(const char *dir,const char *name) {
   OK(exr_pdf_open(data,size,&file,&error));OK(exr_pdf_pages(file,&pages,&count,&error));CHECK(count==1);
   OK(exr_pdf_resolve(file,exr_pdf_get(file,pages[0].resources,"Shading"),&shadings,&error));
   OK(exr_pdf_resolve(file,exr_pdf_get(file,shadings,"Sh"),&id,&error));
-  OK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,&emits,0,NULL,&error));CHECK(emits==1 && work>512);
+  OK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,NULL,&emits,0,NULL,&error));CHECK(emits==1 && work>512);
   { size_t near_limit=256u*1024u*1024u-work/2;emits=0;
-    CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&near_limit,shading_count,&emits,0,NULL,&error)==EXR_LIMIT);
+    CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&near_limit,shading_count,NULL,&emits,0,NULL,&error)==EXR_LIMIT);
     CHECK(!emits && strstr(error.message,"shading samples exceed work budget"));
   }
   work=256u*1024u*1024u;emits=0;
-  CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,&emits,0,NULL,&error)==EXR_LIMIT && !emits);
+  CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,NULL,&emits,0,NULL,&error)==EXR_LIMIT && !emits);
   control.cancelled=cancelled;work=0;
-  CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,&emits,0,&control,&error)==EXR_CANCELLED && !emits);
+  CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,NULL,&emits,0,&control,&error)==EXR_CANCELLED && !emits);
   { exr_pdf_raster_config config={0};exr_bitmap b={0};const char *content="/Sh sh";size_t total=0;
     config.width=config.height=16;config.channels=4;config.work=&total;
     OK(exr_pdf_raster_content(file,pages[0].resources,content,strlen(content),NULL,&config,NULL,&b,&error));
@@ -180,7 +180,7 @@ static void function_inks(const char *dir) {
   OK(exr_pdf_open(data,size,&file,&error));OK(exr_pdf_pages(file,&pages,&count,&error));
   OK(exr_pdf_resolve(file,exr_pdf_get(file,pages[0].resources,"Shading"),&shadings,&error));
   OK(exr_pdf_resolve(file,exr_pdf_get(file,shadings,"Sh"),&id,&error));
-  OK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_native_inks,&emits,1,NULL,&error));CHECK(emits==1);
+  OK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_native_inks,NULL,&emits,1,NULL,&error));CHECK(emits==1);
   free(pages);exr_pdf_close(file);free(data);
 }
 static exr_status scope_state(void *ctx,exr_draw_state state,exr_error *e) {

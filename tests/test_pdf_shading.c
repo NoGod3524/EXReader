@@ -68,9 +68,39 @@ static void functions(void) {
   }
   CHECK(!ferror(f));fclose(f);
 }
+static void extents(void) {
+  unsigned char expected[16*16*4];char path[4096];FILE *f;size_t n;unsigned index=0;
+  snprintf(path,sizeof(path),"%s/pdf-color/shading-extent-oracle.rgba",directory);f=fopen(path,"rb");CHECK(f);
+  while((n=fread(expected,1,sizeof(expected),f))!=0) {
+    exr_fixed_document *d=NULL;exr_bitmap b={0};exr_fixed_render_options options={0};CHECK(n==sizeof(expected));
+    snprintf(path,sizeof(path),"%s/pdf-color/shading-extent-%u.pdf",directory,index++);
+    OK(exr_fixed_open(path,NULL,&d,&error));options.channels=4;OK(exr_fixed_render(d,0,1,&options,&b,&error));
+    CHECK(b.width==16 && b.height==16);
+    for(unsigned y=0;y<16;y++) for(unsigned x=0;x<16;x++) for(unsigned k=0;k<4;k++) {
+      unsigned char got=b.pixels[y*b.stride+x*4+k],want=expected[(y*16+x)*4+k];
+      if(abs((int)got-want)>2) fprintf(stderr,"%s (%u,%u) channel %u: %u != %u\n",path,x,y,k,got,want);
+      CHECK(abs((int)got-want)<=2);
+    }
+    exr_bitmap_free(&b);exr_fixed_free(d);
+  }
+  CHECK(index==40 && !ferror(f));fclose(f);
+  {
+    exr_fixed_document *d=NULL;exr_canvas *c=NULL;exr_canvas_config config={0};exr_draw_sink_ex sink={0};
+    snprintf(path,sizeof(path),"%s/pdf-color/shading-extent-5.pdf",directory);OK(exr_fixed_open(path,NULL,&d,&error));
+    config.width=config.height=16;OK(exr_canvas_create(&config,&c,&error));
+    sink.struct_size=offsetof(exr_draw_sink_ex,paint)+1;
+    ((unsigned char *)&sink)[offsetof(exr_draw_sink_ex,paint)]=1;
+    CHECK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error)==EXR_ARGUMENT);
+    memset(&sink,0,sizeof(sink));sink.struct_size=offsetof(exr_draw_sink_ex,paint);OK(exr_canvas_get_sink_ex(c,&sink,&error));CHECK(!sink.paint);
+    OK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error));CHECK(exr_canvas_bitmap(c)->pixels[8*64+8*4+3]==0);
+    sink.struct_size=sizeof(sink);OK(exr_canvas_get_sink_ex(c,&sink,&error));
+    OK(exr_fixed_draw_ex(d,0,NULL,&sink,NULL,&error));CHECK(exr_canvas_bitmap(c)->pixels[8*64+8*4+3]==255);
+    exr_canvas_free(c);exr_fixed_free(d);
+  }
+}
 int main(int argc,char **argv) {
   exr_bitmap page; const unsigned char *p;
-  CHECK(argc==2); directory=argv[1];domains();geometry();functions();
+  CHECK(argc==2); directory=argv[1];domains();geometry();functions();extents();
   page=render("shading-axial.pdf");
   near(&page,0,8,247,0,8,3,"axial left");
   near(&page,8,8,120,0,135,3,"axial middle");

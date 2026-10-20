@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-/* ISO 32000-1 8.7.4.5: function (1), axial (2) and radial (3) shadings. Each is baked
-   into an RGBA bitmap that the caller paints with the current clip, alpha and
-   blend, so clipping and transparency keep using the existing paths. */
+/* ISO 32000-1 8.7.4.5. Axial/radial sources sample the actual device clip.
+   The bitmap path remains available for legacy drawing consumers. */
 #include "pdf_internal.h"
 #include "pdf_function_internal.h"
+#include "icc_internal.h"
 #include <limits.h>
 #include <float.h>
 
@@ -85,9 +85,68 @@ static exr_status sample(exr_pdf_function *function,exr_pdf_colorspace *space,un
   return exr_pdf_colorspace_rgb_intent(space,out,rgb,intent,e);
 }
 
+typedef struct {
+  double coords[6];const double *rgb;const unsigned char *inks;size_t *work;
+  unsigned type,extend0,extend1;
+} shading_source;
+static exr_status source_sample(void *context,double x,double y,unsigned space,double color[4],double *shape,double *opacity,exr_error *e) {
+  shading_source *s=context;double t=0;unsigned index,count=space==EXR_GROUP_CMYK ? 4 : 3;double fraction;
+  if(!exr_vector_work(s->work,s->type==2 ? 1 : 2)) return exr_fail(e,EXR_LIMIT,"PDF shading scan exceeds work budget");
+  *shape=0;*opacity=1;
+  if(s->type==2) {
+    double scale=fmax(fabs(x),fabs(y)),c[4],dx,dy,len;
+    for(unsigned k=0;k<4;k++) scale=fmax(scale,fabs(s->coords[k]));
+    for(unsigned k=0;k<4;k++) c[k]=s->coords[k]/scale;
+    dx=c[2]-c[0];dy=c[3]-c[1];len=hypot(dx,dy);
+    if(!len) return exr_fail(e,EXR_LIMIT,"PDF axial shading exceeds coordinate precision");
+    t=((x/scale-c[0])*(dx/len)+(y/scale-c[1])*(dy/len))/len;
+    if(!isfinite(t)) return exr_fail(e,EXR_LIMIT,"PDF axial shading exceeds coordinate precision");
+    if((t<0 && !s->extend0) || (t>1 && !s->extend1)) return EXR_OK;
+  } else if(!radial_parameter(x,y,s->coords,s->extend0,s->extend1,&t)) return EXR_OK;
+  t=fmax(0,fmin(1,t))*(AXIAL_SAMPLES-1);index=(unsigned)floor(t);fraction=t-index;
+  if(index==AXIAL_SAMPLES-1) { index--;fraction=1; }
+  if(space==EXR_GROUP_CMYK && !s->inks) return exr_fail(e,EXR_UNSUPPORTED,"PDF shading source lacks native CMYK samples");
+  for(unsigned k=0;k<count;k++) {
+    double a=space==EXR_GROUP_CMYK ? s->inks[index*4+k]/255. : s->rgb[index*3+k];
+    double b=space==EXR_GROUP_CMYK ? s->inks[(index+1)*4+k]/255. : s->rgb[(index+1)*3+k];
+    color[k]=fmax(0,fmin(1,a*(1-fraction)+b*fraction));
+  }
+  *shape=1;return EXR_OK;
+}
+static exr_status source_draw(exr_pdf_function *function,exr_pdf_colorspace *space,unsigned intent,
+  unsigned type,const double coords[6],const double domain[4],int extend0,int extend1,
+  const double matrix[6],const exr_pdf_paint_state *paint,size_t *work,exr_pdf_source_fn emit,void *context,
+  unsigned native_cmyk,const exr_control *control,exr_error *e) {
+  shading_source data={0};exr_paint_source source={sizeof(source),source_sample,&data};exr_bitmap inks={0};exr_status status=EXR_OK;exr_icc *profile=NULL;
+  unsigned device=exr_pdf_colorspace_device(space);
+  double *rgb=malloc(AXIAL_SAMPLES*3*sizeof(*rgb));
+  if(!rgb) return exr_fail(e,EXR_MEMORY,"PDF shading colour table allocation failed");
+  if(native_cmyk) {
+    inks.pixels=malloc(AXIAL_SAMPLES*4);
+    if(!inks.pixels) { free(rgb);return exr_fail(e,EXR_MEMORY,"PDF shading ink table allocation failed"); }
+  }
+  if(native_cmyk && device!=EXR_PDF_DEVICE_CMYK) status=exr_icc_default_cmyk(control,&profile,e);
+  for(unsigned i=0;i<AXIAL_SAMPLES && status==EXR_OK;i++) {
+    double t=(double)i/(AXIAL_SAMPLES-1),input=domain[0]*(1-t)+domain[1]*t;
+    status=exr_control_cancel(control,e);if(status!=EXR_OK) break;
+    status=sample(function,space,intent,&input,rgb+i*3,&inks,i,work,e);if(status!=EXR_OK) break;
+    if(native_cmyk && device!=EXR_PDF_DEVICE_CMYK) {
+      if(!exr_vector_work(work,exr_icc_cost(profile))) { status=exr_fail(e,EXR_LIMIT,"PDF shading conversion exceeds work budget");break; }
+      double cmyk[4];exr_device_cmyk_from_rgb(profile,rgb+i*3,cmyk);
+      for(unsigned k=0;k<4;k++) inks.pixels[i*4+k]=(unsigned char)floor(fmax(0,fmin(1,cmyk[k]))*255+.5);
+    }
+  }
+  if(status==EXR_OK) status=exr_icc_deferred_status(profile,e);
+  if(status==EXR_OK) {
+    memcpy(data.coords,coords,sizeof(data.coords));data.type=type;data.extend0=extend0;data.extend1=extend1;
+    data.work=work;data.rgb=rgb;data.inks=inks.pixels;
+    status=emit(context,&source,matrix,paint,e);
+  }
+  exr_icc_free(profile);free(inks.pixels);free(rgb);return status;
+}
 exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,
                                 uint32_t value,const double ctm[6],const exr_pdf_paint_state *paint,size_t *work,
-                                exr_pdf_shading_fn emit,void *context,unsigned native_cmyk,
+                                exr_pdf_shading_fn emit,exr_pdf_source_fn source,void *context,unsigned native_cmyk,
                                 const exr_control *control,exr_error *e) {
   uint32_t id,coords_id,function_id,cs_id;const exr_pdf_value *v;double coords[6]={0},domain[4]={0,1,0,1},t;
   double function_matrix[6]={1,0,0,1,0,0};
@@ -96,7 +155,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
   int extend0=0,extend1=0,type=0;unsigned i,components=1,ncoords;
   exr_pdf_colorspace *space=NULL;exr_pdf_function *function=NULL;
   exr_bitmap bitmap={0},inks={0};double matrix[6],local[6];exr_status status=EXR_OK;
-  if(!emit) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
+  if(!emit && !source) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
   if(!work) work=&local_work;
   if(exr_pdf_resolve(file,value,&value,e)!=EXR_OK) return e->code;
   v=exr_pdf_value_at(file,value);
@@ -110,6 +169,7 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
     type=(int)n;
   }
   if(type>=4 && type<=7) {
+    if(!emit) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks bitmap shading support");
     status=exr_pdf_shading_mesh(file,resource_file,resources,value,type,ctm,paint,work,emit,context,native_cmyk,control,e);
     return status;
   }
@@ -157,6 +217,12 @@ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,u
   status=exr_pdf_function_open_components(file,function_id,type==1 ? 2 : 1,components,control,&function,e);
   if(status!=EXR_OK) { exr_pdf_colorspace_free(space); return status; }
   if(type==3 && !coords[2] && !coords[5]) goto done;
+  if(type==2 && coords[0]==coords[2] && coords[1]==coords[3]) { status=exr_fail(e,EXR_FORMAT,"Degenerate PDF axial shading");goto done; }
+  if(type!=1 && source) {
+    status=source_draw(function,space,intent,(unsigned)type,coords,domain,extend0,extend1,ctm,paint,work,source,context,native_cmyk,control,e);
+    goto done;
+  }
+  if(!emit) { status=exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks bitmap shading support");goto done; }
 
   if(type==1) {
     double combined[6],edge[6];

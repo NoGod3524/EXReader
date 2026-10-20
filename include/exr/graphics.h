@@ -163,6 +163,25 @@ typedef unsigned (*exr_draw_image_space_fn)(void *context);
 enum { EXR_ALPHA_CONSTANT_SHAPE=1u,EXR_ALPHA_IMAGE_SHAPE=2u };
 typedef exr_status (*exr_draw_alpha_source_fn)(void *context,unsigned flags,exr_error *error);
 
+/* A borrowed, format-independent paint source. x/y are in source coordinates;
+   space is EXR_GROUP_RGB (3 components) or EXR_GROUP_CMYK (4). Components,
+   shape and opacity must be finite in [0,1]. Zero opacity can retain shape.
+   Callbacks must not mutate the canvas being painted or retain output pointers. */
+typedef exr_status (*exr_paint_sample_fn)(void *context,double x,double y,unsigned space,
+  double components[4],double *shape,double *opacity,exr_error *error);
+typedef struct {
+  size_t struct_size;
+  exr_paint_sample_fn sample;
+  void *context;
+} exr_paint_source;
+/* Paint the current clip with four subpixel samples per device pixel. matrix
+   maps source to canvas coordinates (NULL means identity); alpha is a constant.
+   Sources are consumed synchronously. Failure makes the canvas unusable. */
+EXR_API exr_status exr_canvas_paint(exr_canvas *canvas,const exr_paint_source *source,
+  const double matrix[6],double alpha,exr_error *error);
+typedef exr_status (*exr_draw_paint_fn)(void *context,const exr_paint_source *source,
+  const double matrix[6],double alpha,exr_error *error);
+
 typedef struct {
   size_t struct_size;
   exr_draw_sink base;
@@ -177,6 +196,7 @@ typedef struct {
   exr_draw_image_cmyk_fn image_cmyk; /* Optional native inks; also receives CMYK gradients. */
   exr_draw_image_space_fn image_space; /* Optional allocation hint for image_cmyk. */
   exr_draw_alpha_source_fn alpha_source; /* Optional shape/opacity interpretation. */
+  exr_draw_paint_fn paint; /* Optional procedural paint source, through current clip. */
 } exr_draw_sink_ex;
 /* Initialize out->struct_size to the available storage size. */
 EXR_API exr_status exr_canvas_get_sink_ex(exr_canvas *canvas,exr_draw_sink_ex *out,exr_error *error);

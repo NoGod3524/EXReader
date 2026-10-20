@@ -642,3 +642,10 @@ measurement; this batch is not claimed to improve CMYK speed.
 
 同机五轮交替、每轮64次重画、scale4；六场景全部RGBA散列相同。首画比率flat1.009、primitives0.992、state0.962、groups1.052、compound0.920、ap-groups1.032；重画p95分别0.994、1.075、1.015、1.028、0.897、1.061。未触发本批10%调查阈值。68个新输入与参考重生逐字节相同。
 [原始样本](validation/2026-10-19-zero-opacity-benchmark.json)。
+
+
+### 3.38.0普通RGB性能复测
+
+同机五轮交替、scale4、每轮64次重画，六场景全部RGBA散列保持。首画比率flat1.059、primitives1.139、state1.013、groups0.969、compound0.968、ap-groups1.021；重画p95分别0.945、0.944、0.759、1.059、1.047、1.027。primitives首次首画超10%，另保留五轮独立复测：首画1.051、重画p951.088，首次回退未稳定复现。四个绘制入口的指令助记符序列保持，但未比较所有操作数和整个流水线。
+
+[首轮全部原始样本](validation/2026-10-19-shading-extent-benchmark.json)、[异常项复测](validation/2026-10-19-shading-extent-followup.json)。空画布载荷仍为3740字节，未新增临时像素平面。
