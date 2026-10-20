@@ -369,7 +369,7 @@ static exr_status svg_parse(svg_document *doc) {
       size_t name_length;
       int self_closing = 0, element;
       svg_node *node, *parent;
-      if (!svg_name_start(*q)) return exr_fail(doc->error, EXR_FORMAT, "Invalid SVG element name");
+      if (q >= end || !svg_name_start(*q)) return exr_fail(doc->error, EXR_FORMAT, "Invalid SVG element name");
       name = q;
       while (q < end && svg_name_char(*q)) q++;
       name_length = (size_t)(q - name);
@@ -413,6 +413,7 @@ static exr_status svg_parse(svg_document *doc) {
             svg_attribute *attribute = &node->attributes[node->attribute_count];
             exr_status status;
             memset(attribute, 0, sizeof(*attribute));
+            node->attribute_count++;
             attribute->name = malloc(aname_length + 1);
             if (!attribute->name) return exr_fail(doc->error, EXR_MEMORY, "SVG attribute allocation failed");
             memcpy(attribute->name, aname, aname_length);
@@ -423,7 +424,6 @@ static exr_status svg_parse(svg_document *doc) {
             if (doc->attribute_bytes > SVG_MAX_ATTRIBUTE_BYTES)
               return exr_fail(doc->error, EXR_LIMIT, "SVG attribute data exceeds 256 KiB");
           }
-          node->attribute_count++;
           q++;
         }
       }
