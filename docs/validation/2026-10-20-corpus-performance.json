@@ -16,14 +16,15 @@
   "local_tool_tests": {
     "gcc": {
       "path": "C:\\Users\\Oscar\\exr-gcc\\document-benchmark-gcc-final.log",
-      "sha256": "f48d58ca4df28235b600b05a54a394b379833e4f7d568c037747438d78c4c065"
+      "sha256": "82914eb98d11662fbeabb538f76c60ace07aa0e73f987673726d2c0cc1b6092d"
     },
     "msvc": {
       "path": "C:\\Users\\Oscar\\exr-gcc\\document-benchmark-msvc-final.log",
       "sha256": "d48d1ef5966b8f282c3ff1108840a8512855f1a9e5079fbc17f8212f98dd5dd6"
     },
     "tests_passed_per_compiler": 2,
-    "status": "passed"
+    "status": "passed",
+    "hash_recording_note": "Hashes finalized after both tool suites completed; earlier progress hashes are superseded."
   },
   "pdf_external_full_probe": {
     "summary": {
@@ -433,5 +434,9 @@
         "result": "2026-10-20T16:35:55.9879520Z 137/144 Test #137: native-document-probe ..............   Passed    6.56 sec"
       }
     ]
+  },
+  "evidence_reference_audit": {
+    "path": "C:\\Users\\Oscar\\exr-gcc\\evidence-reference-audit-20261020.json",
+    "sha256": "5b68af3f1c8b374e32a3fc29dfa2ae860df41f898a38fd37c6916dc82eabc5d3"
   }
 }
