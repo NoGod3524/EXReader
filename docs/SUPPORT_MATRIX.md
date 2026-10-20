@@ -7,7 +7,7 @@
 
 - 版本：**3.39.0 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
 - 标记：**支持** = 有公开接口、边界与回归；**部分** = 有实现但覆盖/兼容未完整；**未支持** = 明确拒绝或不存在接口
-- 回归：`ctest` 名称，本机完整配置含 fuzz 当前160项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
+- 回归：`ctest` 名称，本机完整配置含 fuzz 当前163项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
 
 本轮平台应用、真实语料和性能结果见 `docs/validation/2026-10-20-native-hosts.json`、
 `docs/validation/2026-10-20-corpus-performance.json`。Windows/macOS/iPhone模拟器/iPad模拟器
@@ -100,9 +100,9 @@
 | --- | --- | --- | --- |
 | C SDK | 支持 | 316 个公开函数导出、`struct_size` 前缀兼容 | `native-abi`、`native-core` |
 | C++ / Swift / JNI 适配 | 支持 | 安装后消费示例与 `-Xcheck:jni` | `native-fixed-example`、`native-wave-example` |
-| 安装与包配置 | 支持 | `find_package(EXReader 3.38.0 EXACT CONFIG REQUIRED)` | CI 安装作业 |
+| 安装与包配置 | 支持 | `find_package(EXReader 3.39.0 EXACT CONFIG REQUIRED)` | CI 安装作业 |
 | 桌面三平台 | 支持 | Windows/Linux/macOS 全量 CTest + 安装消费 | CI `desktop` |
-| Android / iOS / iPadOS | 部分 | **仅库编译与 Swift 适配检查**，无真机/模拟器阅读验证 | CI `android`、`apple-mobile` |
+| Android / iOS / iPadOS | 部分 | 库交叉编译、Swift适配、iPhone/iPad模拟器阅读自检；真机安装暂缓 | CI `android`、`apple-mobile` |
 | 嵌入阅读视图 / 示例 App / TTS / 无障碍 / OPDS / LCP | 未支持 | 目标见 [VERSIONING.md](VERSIONING.md) | — |
 
 ## 质量口径
@@ -110,7 +110,7 @@
 | 项 | 当前值 |
 | --- | --- |
 | 桌面 CTest | 主线联合测试与各分支原始验收分开记录，见 `validation/2026-10-20-parallel-integration.json` |
-| Sanitizer | ASan/UBSan/leak 116（少 3 项 ctypes oracle，见 [HANDOFF.md](HANDOFF.md)） |
+| Sanitizer | 当前源码的ASan/UBSan结果独立记录于 `validation/2026-10-20-parallel-integration.json` |
 | 编译器门槛 | `-Wall -Wextra -Wpedantic -Werror` |
 | Fuzz | 确定性种子变异驱动，CI 每推送 20 万次迭代；24 CPU 小时为目标，见 [FUZZING.md](FUZZING.md) |
 | 依赖 | 14 个第三方组件，全部 SHA-256 固定；WebP/TIFF/AVIF 为默认开启的可选构建项 |

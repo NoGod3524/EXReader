@@ -25,6 +25,7 @@ static size_t mem_read(void *context,uint64_t offset,void *buffer,size_t size) {
   n=size;memcpy(buffer,m->data+(size_t)offset,n);return n;
 }
 static int mem_cancel(void *context) { memory_source *m=context;return m->cancel_after && m->reads>=m->cancel_after; }
+static int always_cancel(void *context) { (void)context;return 1; }
 static void put(mz_zip_archive *zip,const char *name,const void *data,size_t size) { CHECK(mz_zip_writer_add_mem(zip,name,data,size,MZ_NO_COMPRESSION)); }
 static void *archive(const char *fixtures,size_t *size,int pad) {
   mz_zip_archive zip;void *out=NULL;unsigned char *png;size_t png_size;void *padding;
@@ -42,12 +43,37 @@ int main(int argc,char **argv) {
   bytes=archive(argv[1],&size,2*1024*1024);CHECK(bytes && size>1024*1024);
   snprintf(path,sizeof(path),"%s/stream.sqlite",argv[2]);remove(path);
   OK(exr_library_open(path,&library,&error));
+  { char missing[4096];int64_t failed=99;int was_created=1;
+    snprintf(missing,sizeof(missing),"%s/missing.cbz",argv[2]);
+    CHECK(exr_library_import_file_unique(library,EXR_CBZ,missing,NULL,&failed,&was_created,&error)==EXR_IO);
+    CHECK(!failed && !was_created);
+    failed=99;was_created=1;
+    CHECK(exr_library_import_file_unique(library,EXR_PDF,missing,NULL,&failed,&was_created,&error)==EXR_IO);
+    CHECK(!failed && !was_created);
+  }
   memory.data=bytes;memory.size=size;memory.fail_at=(size_t)-1;
   source.size=size;source.read_at=mem_read;source.context=&memory;
   OK(exr_library_import_source_unique(library,EXR_CBZ,&source,"Streamed", &id,&created,&error));CHECK(id>0 && created==1);
   CHECK(count_books(library)==1);
   memory.reads=0;OK(exr_library_import_source_unique(library,EXR_CBZ,&source,"Streamed",&dup,&created,&error));CHECK(dup==id && !created);
   CHECK(count_books(library)==1);
+  /* Failures during unique comparison and insertion must release their transaction. */
+  memory.reads=0;memory.cancel_after=12;source.control.cancelled=mem_cancel;source.control.context=&memory;
+  dup=99;created=1;
+  CHECK(exr_library_import_source_unique(library,EXR_CBZ,&source,"Cancel unique",&dup,&created,&error)==EXR_CANCELLED);
+  CHECK(!dup && !created && count_books(library)==1);
+  memory.reads=0;memory.cancel_after=0;source.control.cancelled=NULL;source.control.context=NULL;
+  ((unsigned char *)bytes)[8192]^=1;memory.fail_at=16;
+  dup=99;created=1;
+  CHECK(exr_library_import_source_unique(library,EXR_CBZ,&source,"Broken unique",&dup,&created,&error)==EXR_IO);
+  CHECK(!dup && !created && count_books(library)==1);
+  ((unsigned char *)bytes)[8192]^=1;memory.reads=0;memory.fail_at=(size_t)-1;
+  OK(exr_library_import_source_unique(library,EXR_CBZ,&source,"Streamed",&dup,&created,&error));CHECK(dup==id && !created);
+  { struct legacy_options { size_t struct_size;exr_font *font;exr_control control; } *legacy;
+    legacy=calloc(1,sizeof(*legacy));CHECK(legacy!=NULL);legacy->struct_size=sizeof(*legacy);
+    OK(exr_library_fixed_source(library,id,(const exr_fixed_open_options *)legacy,&doc,&error));
+    exr_fixed_free(doc);doc=NULL;free(legacy);
+  }
   OK(exr_library_fixed_source(library,id,NULL,&doc,&error));
   { const exr_fixed_page *pages;size_t count2;pages=exr_fixed_pages(doc,&count2);CHECK(count2==1);
     OK(exr_fixed_render(doc,0,1,NULL,&bitmap,&error));CHECK(bitmap.width>0 && bitmap.height>0);exr_bitmap_free(&bitmap); }
@@ -108,6 +134,9 @@ int main(int argc,char **argv) {
     OK(exr_library_open(pdfdb,&pdf,&error));
     OK(exr_library_import_file_unique(pdf,EXR_PDF,pdfpath,"PDF stream",&pdfid,&pdf_created,&error));CHECK(pdfid>0 && pdf_created);
     OK(exr_library_import_file_unique(pdf,EXR_PDF,pdfpath,"PDF stream",&pdfdup,&created,&error));CHECK(pdfdup==pdfid && !created);
+    { exr_fixed_open_options cancelled={0};cancelled.struct_size=sizeof(cancelled);cancelled.control.cancelled=always_cancel;
+      CHECK(exr_library_fixed_source(pdf,pdfid,&cancelled,&pdoc,&error)==EXR_CANCELLED && !pdoc);
+    }
     OK(exr_library_fixed_source(pdf,pdfid,NULL,&pdoc,&error));CHECK(exr_fixed_pages(pdoc,&pdf_pages) && pdf_pages>0);exr_fixed_free(pdoc);
     exr_library_close(pdf);OK(exr_library_open(pdfdb,&pdf,&error));OK(exr_library_fixed_source(pdf,pdfid,NULL,&pdoc,&error));
     CHECK(exr_fixed_pages(pdoc,&pdf_pages) && pdf_pages>0);exr_fixed_free(pdoc);exr_library_close(pdf);

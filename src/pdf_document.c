@@ -210,7 +210,7 @@ static exr_status annotations(void *context,size_t page,const exr_control *contr
   if(status!=EXR_OK) discard_reader(d); else { exr_pdf_control(d->file,NULL); *out=d->annotations; *count=d->annotation_count; }
   return status;
 }
-static exr_status open_options(const exr_fixed_open_options *input,exr_fixed_open_options *out,exr_error *e) {
+exr_status exr_fixed_open_options_copy(const exr_fixed_open_options *input,exr_fixed_open_options *out,exr_error *e) {
   size_t i,minimum=offsetof(exr_fixed_open_options,control)+sizeof(out->control); memset(out,0,sizeof(*out));
   if(!input) return EXR_OK;
   if(input->struct_size<minimum || input->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid fixed open options size");
@@ -276,7 +276,7 @@ exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
   *out=NULL;
   if(!data || !size || size>EXR_MAX_INPUT) return exr_fail(e,size>EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT,"Invalid fixed document bytes");
   if(!exr_format_is_fixed(format)) return exr_fail(e,EXR_FORMAT,"No built-in fixed reader for this format");
-  status=open_options(input,&options,e); if(status!=EXR_OK) return status;
+  status=exr_fixed_open_options_copy(input,&options,e); if(status!=EXR_OK) return status;
   if(exr_control_cancel(&options.control,e)!=EXR_OK) return EXR_CANCELLED;
   copy=malloc(size); if(!copy) return exr_fail(e,EXR_MEMORY,"Fixed input copy allocation failed"); memcpy(copy,data,size);
   if(format==EXR_CBZ) return exr_cbz_open_owned(copy,size,"",&options,out,e);
@@ -291,7 +291,7 @@ exr_status exr_fixed_open_mapped(exr_format format,exr_mapping *mapping,const ex
   if(!mapping || !mapping->address || !mapping->size) return exr_fail(e,EXR_ARGUMENT,"Invalid mapped fixed document");
   if(format!=EXR_PDF) { exr_unmap(mapping);return exr_fail(e,EXR_UNSUPPORTED,"Mapped fixed reading is available for PDF"); }
   if(!out) { exr_unmap(mapping);return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output"); }
-  status=open_options(input,&options,e);
+  status=exr_fixed_open_options_copy(input,&options,e);
   if(status!=EXR_OK) { exr_unmap(mapping);return status; }
   return open_data((unsigned char *)mapping->address,mapping->size,"",&options,mapping,1,out,e);
 }
@@ -299,7 +299,7 @@ exr_status exr_fixed_open(const char *path,const exr_fixed_open_options *input,e
   exr_fixed_open_options options; unsigned char *data=NULL; size_t size=0; exr_status status; const char *title,*at; exr_mapping mapping={0};
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output");
   *out=NULL; if(!path) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document path");
-  status=open_options(input,&options,e); if(status!=EXR_OK) return status;
+  status=exr_fixed_open_options_copy(input,&options,e); if(status!=EXR_OK) return status;
   if(exr_control_cancel(&options.control,e)!=EXR_OK) return EXR_CANCELLED;
   title=path; for(at=path;*at;at++) if(*at=='/' || *at=='\\') title=at+1;
   at=strrchr(title,'.');

@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(__linux__) && !defined(_DEFAULT_SOURCE)
+#define _DEFAULT_SOURCE
+#endif
 #include "base_internal.h"
 #ifdef _WIN32
 #include <windows.h>

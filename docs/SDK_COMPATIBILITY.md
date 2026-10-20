@@ -737,9 +737,9 @@ format aliases, cancellation granularity, CLI publication and report semantics.
 `exreader-convert` is installed when tools are enabled. Core-only builds retain
 the public export API; the CLI is tested through the installed default SDK.
 
-## 3.38.1 WP12a image codecs and streaming library imports
+## 3.39.0 WP12a image codecs and streaming library imports
 
-This branch keeps SDK/core versions 3.38.1, ABI epoch 1 and library schema 6.
+Mainline assigns SDK3.39.0/core3.38.0, PDF3.38.2 and library3.34.0; ABI epoch 1 and library schema 6 remain unchanged.
 It adds symbols; it does not change any existing exported signature, enum value,
 record layout or callback contract.
 

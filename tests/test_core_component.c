@@ -11,6 +11,11 @@ int main(int argc,char **argv) {
   exr_bitmap bitmap={0};exr_bidi *bidi=NULL;unsigned char *boundaries=NULL;size_t count=0;
   exr_layout_options options=exr_layout_defaults();
   CHECK((argc==2 || argc==3) && exr_abi_version()==1 && !strcmp(exr_version(),EXR_VERSION));
+  { size_t pages=99;uint32_t width=99,height=99;exr_bitmap image={0};
+    CHECK(exr_image_page_count(NULL,0,&pages,&e)==EXR_ARGUMENT && !pages);
+    CHECK(exr_image_page_dimensions(NULL,0,0,&width,&height,&e)==EXR_ARGUMENT && !width && !height);
+    CHECK(exr_image_decode_page(NULL,0,0,&image,&e)==EXR_ARGUMENT && !image.pixels);
+  }
   CHECK(exr_text_analyze("abc",3,&boundaries,&e)==EXR_OK && (boundaries[3]&EXR_BOUNDARY_MANDATORY));exr_free(boundaries);
   CHECK(exr_bidi_analyze("abc",3,EXR_DIRECTION_AUTO,&bidi,&e)==EXR_OK);exr_bidi_free(bidi);
   CHECK(exr_document_open_memory(EXR_TXT,"abc",3,&doc,&e)==EXR_OK);

@@ -1,6 +1,6 @@
 # Native C validation
 
-## WP7, WP8 and WP12-lite joint integration (3.39.0)
+## WP7, WP8, WP12-lite and WP12a joint integration (3.39.0)
 
 Mainline preserves all delivery records and fixed acceptance scopes. Joint
 engine suites, default/trimmed installed consumers, new exports, updated
@@ -8,7 +8,9 @@ colour-font reference and Linux ASan/UBSan are recorded separately in
 `docs/validation/2026-10-20-parallel-integration.json`. SVG query failures and
 short document reads have dedicated mainline regressions; the font campaign
 now queries the new colour API and renders a bounded page with intrinsic
-colour fonts. These results do not close WP6 bounded chapter residency or
+colour fonts. WP12a adds image codecs and streaming originals; mainline adds unique-import
+rollback, old-prefix options and failed-output regressions. PDF3.38.2 and
+library3.34.0 accompany SDK3.39.0/core3.38.0. These results do not close WP6 bounded chapter residency or
 the final-source 24 CPU hour campaigns required by WP16.
 
 ## WP7 mainline integration (3.39.0)
