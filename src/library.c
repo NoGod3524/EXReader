@@ -288,7 +288,7 @@ static exr_status stream_metadata(exr_format format,const exr_source *source,cha
   exr_fixed_open_options options={0};exr_fixed_document *doc=NULL;exr_metadata_entry *metadata=NULL;
   exr_buffer titlebuf={0},authorbuf={0};size_t count=0,i;exr_status status;
   *title=NULL;*author=NULL;*extent=0;
-  if(format!=EXR_CBZ) return exr_fail(e,EXR_UNSUPPORTED,"Streaming import currently supports CBZ originals");
+  if(format!=EXR_CBZ) return exr_fail(e,EXR_UNSUPPORTED,"Source-based streaming import supports CBZ; use exr_library_import_file for PDF");
   options.struct_size=sizeof(options);options.control=source->control;
   status=exr_cbz_open_source(source,"",&options,0,&doc,e);
   if(status==EXR_OK) status=exr_fixed_load_metadata(doc,&source->control,&metadata,&count,e);

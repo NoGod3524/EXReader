@@ -3,23 +3,23 @@
   "artifacts": {
     "exreader-cbz-formats-test.exe": {
       "bytes": 184361,
-      "sha256": "481aec113a8813e3dd73f0a4e4e7c9d1794d43a7b82077e800d2117ea9ebe210"
+      "sha256": "5aa1fd84905c7d5f7015e3078db4056f9032cc544b0f050471c7f18b80882183"
     },
     "exreader-image-formats-test.exe": {
       "bytes": 74248,
-      "sha256": "2ae67d903dc24a2f8c811b0166ff4724de06900c966def09f497506f459c9225"
+      "sha256": "1334317a61ddbb2867d70bdf85f3a4d75fca6637c5aacfa75d131ee130c29948"
     },
     "exreader-library-stream-test.exe": {
       "bytes": 1938598,
-      "sha256": "d4d05179ec905cd050042305b81f674d6a37d6d6b33dac864c0e5d50af3315bb"
+      "sha256": "7ee9221fa77cc01db33e542989b1d9c150cb05699429a11e2ddecefbf45735ae"
     },
     "exreader-wp12a-media-probe.exe": {
       "bytes": 73527,
-      "sha256": "9b276bac910dfa6e5bf4f404cef099294562458b87c0896ee4ae7ebbf6c5da84"
+      "sha256": "5ce870ee9634521ce6ce23bb69e79476c57bc82377f99533a2356cc66eafc8a9"
     },
     "libexreader.dll": {
       "bytes": 9633253,
-      "sha256": "5074ff3651e7bbd4be04702bb20ca6a5b09b94458459478daecd5a4a046d04f6"
+      "sha256": "891f36b89a1819cd7c48a2b4bae173b0a73d29024741d96b2b0a16d5fa455801"
     }
   },
   "branch": "codex/wp12a-media",
@@ -1073,7 +1073,7 @@
     "os": "Windows"
   },
   "sdk_version": "3.38.1",
-  "source_commit_at_capture": "1c84c20b8abc92e349455de9a74dd47e52657b2b",
+  "source_commit_at_capture": "a60f3b23d00b6502ade9c50ba991a929eef9543b",
   "tests": {
     "cbz_format_checks": 4472,
     "default_ctest": "147/147 passed",
