@@ -112,6 +112,29 @@ def main():
                     record = json.loads((output / detail).read_text(encoding="utf-8"))
                     validate(record)
                     assert record["layout_mode"] == summary["layout_mode"]
+        failed_output = root/"runner-timeouts"
+        result = subprocess.run([sys.executable, str(runner), binary, font, str(failed_output),
+                                 "--runs", "1", "--short-bytes", "512", "--long-bytes", "4096",
+                                 "--parts", "2", "--part-bytes", "512", "--timeout", "0.000000001"],
+                                capture_output=True, timeout=30)
+        assert result.returncode == 1
+        summary = json.loads((failed_output/"summary.json").read_text(encoding="utf-8"))
+        assert not summary["passed"] and len(summary["cases"]) == 3
+        for case in summary["cases"].values():
+            assert not case["passed"] and case["median"] is None
+            assert case["attempts"][0]["failure"] == "timeout"
+            assert (failed_output/case["attempts"][0]["stderr"]).is_file()
+        output = root/"runner-paragraphs"
+        result = subprocess.run([sys.executable, str(runner), binary, font, str(output),
+                                 "--runs", "1", "--short-bytes", "512", "--long-bytes", "4096",
+                                 "--parts", "2", "--part-bytes", "512", "--paging", "--max-pages", "2",
+                                 "--long-multiple-paragraphs"], capture_output=True, timeout=30)
+        assert result.returncode == 0
+        summary = json.loads((output/"summary.json").read_text(encoding="utf-8"))
+        assert summary["passed"] and summary["identities_unchanged"]
+        assert not summary["cases"]["long-single-chapter"]["single_paragraph"]
+        with zipfile.ZipFile(output/"long-single-chapter.epub") as archive:
+            assert archive.read("OPS/c0.xhtml").count(b"<p>") == 8
     print("Benchmark eager/paged JSON, bounded continuation, render samples, runner and invalid arguments verified")
 
 

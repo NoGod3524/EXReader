@@ -738,22 +738,50 @@
   },
   "ci": {
     "native": {
-      "status": "pending"
+      "run_id": 39449036946,
+      "source_sha": "f719bd4590df4dfb7ef04b5ac5a58d49a7b9a310",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs_passed": 7,
+      "jobs_total": 7,
+      "status_file": "C:\\Users\\Oscar\\exr-gcc\\run-39449036946-status.json",
+      "status_sha256": "3374eaa7885a0bc85e448aedb9866239112f3ac7d04bf3d43eb317bee4612cb2"
     },
     "acceptance": {
-      "status": "not_started",
-      "passed": false
+      "run_id": 39451039706,
+      "source_sha": "f719bd4590df4dfb7ef04b5ac5a58d49a7b9a310",
+      "status": "queued",
+      "conclusion": "",
+      "jobs_passed": 1,
+      "jobs_total": 97,
+      "status_file": "C:\\Users\\Oscar\\exr-gcc\\run-39451039706-status.json",
+      "status_sha256": "d16c17faf6759d67a403ecb566bebe635238c7958caee6d318e5bdee675a7ca6",
+      "passed": false,
+      "required_cpu_hours_per_target": 24,
+      "targets": [
+        "parser",
+        "font",
+        "layout",
+        "render"
+      ],
+      "shards_per_target": 24,
+      "observation_utc": "2026-10-20T16:12:37.713407+00:00"
     },
     "initial_native": {
       "run_id": 39447640866,
       "source_sha": "9b49ab41a7a2638a5b746ffa7dce16e389522d15",
       "url": "https://github.com/NoGod3524/EXReader/actions/runs/39447640866",
-      "status": "in_progress",
+      "status": "completed",
       "fuzz_job": "success",
       "macos_installed_consumer": "failed",
       "macos_diagnostic": "C:/Users/Oscar/exr-gcc/font-reliability-macos-job-full.log",
       "macos_diagnostic_sha256": "8304d22ecf7c2b6d094f0dfd86e8b813d121e9c452a00134b4809cf8bd211f9a",
-      "correction": "Keep the new optional HVF font backend disabled consistently across platforms, matching the supported font matrix and packaged dependency set."
+      "correction": "Keep the new optional HVF font backend disabled consistently across platforms, matching the supported font matrix and packaged dependency set.",
+      "conclusion": "failure",
+      "jobs_passed": 6,
+      "jobs_total": 7,
+      "status_file": "C:\\Users\\Oscar\\exr-gcc\\run-39447640866-status.json",
+      "status_sha256": "c3357aadcd1d8249a8a8757d977245cbf649fce29134d3ecf89e991eeb9e1f18"
     }
   },
   "wp16_complete": false,

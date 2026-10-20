@@ -1,5 +1,34 @@
 # Native C validation
 
+## Native reference hosts and complete-document probes (2026-10-20)
+
+Native CI 39452391457 on source f233c0e passes all seven jobs. Windows has 26
+application checks; macOS, iPhone simulator and iPad simulator each pass 21.
+Reports and screenshots have been downloaded and inspected. The device IPA
+requires owner signing; the user deferred physical installation. Six-platform
+SDK archives and license inventories are retained, with iOS/iPadOS sharing a
+device SDK. Exact paths and hashes: `docs/validation/2026-10-20-native-hosts.json`.
+These automated application checks do not complete the WP13/WP14 manual matrix.
+
+The new `native-document-probe` test covers complete reflow/fixed documents,
+caps, Unicode paths, precise exhaustion, expected rejection and corpus evidence.
+The corpus runner rejects incomplete collections, subsets, duplicate paths,
+missing/changed input or runtime identities, invalid reports and untriaged results.
+GCC/MSVC tool checks each pass 2/2; full configured suites now contain 151 tests.
+The native engine and SDK ABI are unchanged by these tools.
+
+122 external PDFs were traversed completely where supported: 49 finished,
+66 returned EXR_FORMAT and seven EXR_UNSUPPORTED. They remain untriaged against
+per-file capability declarations; this is not accepted compatibility coverage.
+500 actual Gutenberg EPUB3 books and their original rights metadata are frozen
+for the ongoing complete-book probe. Synthetic fixture totals remain separate.
+Measurements and failures for 10/50/100 MiB chapter cases are retained in
+`docs/validation/2026-10-20-corpus-performance.json`; WP6 remains incomplete.
+
+The font repair's corrected native CI 39449036946 passes 7/7. Its new 96-shard
+acceptance is still running; the earlier failed acceptance remains rejected.
+Subsequent sections preserve historical source and measurement boundaries.
+
 ## Font dependency reliability repair (2026-10-20)
 
 Acceptance 39370107827 completed with 72 successful shards and 24 failed font

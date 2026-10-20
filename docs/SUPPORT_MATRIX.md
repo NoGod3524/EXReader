@@ -5,9 +5,14 @@
 [NATIVE_API.md](NATIVE_API.md) 与 [PERFORMANCE.md](PERFORMANCE.md)；本表随每批交付更新，
 发行时以本表为准。
 
-- 版本：**3.38.0 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
+- 版本：**3.38.1 开发版**，ABI epoch **1**，书库 schema **6**（三者独立管理）
 - 标记：**支持** = 有公开接口、边界与回归；**部分** = 有实现但覆盖/兼容未完整；**未支持** = 明确拒绝或不存在接口
-- 回归：`ctest` 名称，本机完整配置当前141项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
+- 回归：`ctest` 名称，本机完整配置含 fuzz 当前151项；测试数随组件、fuzz和参考工具配置变化，以对应验证记录为准
+
+本轮平台应用、真实语料和性能结果见 `docs/validation/2026-10-20-native-hosts.json`、
+`docs/validation/2026-10-20-corpus-performance.json`。Windows/macOS/iPhone模拟器/iPad模拟器
+已有原生参考阅读应用；应用自动自检与完整生命周期、无障碍和真机验收分别记录。
+整本检查范围及拒绝条件见 `docs/CORPUS_VALIDATION.md`。
 
 ## 输入格式
 

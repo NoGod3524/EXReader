@@ -1,0 +1,387 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "base_source_sha": "f233c0e123a4f70c2ef848d025fa841a9610e712",
+  "sdk_version": "3.38.1",
+  "engine_changed": false,
+  "tool_source_hashes": {
+    "tools/check_document.c": "efe24055e310c2129188c89acd2243d648608d0d8f0238f50badc1e5d6701c92",
+    "tools/check_corpus.py": "0057937ad69db836b5928f7138cc81cf23ca61710ccbd97589d8330a26a8cc6e",
+    "tools/fetch_gutenberg_corpus.ps1": "6ab0be8db213d6d4c42fe9e8eb838dc81b2d4f86b86bdfe64082a461d6766075",
+    "tests/check_document_probe.py": "171049548c3753766d3b15f7562a5d0425f732c4c1e3ae656ddc2af68820ea17",
+    "tools/run_benchmarks.py": "a4c909d653086b4162ef9c9e4fe0deb01c3215b8dd3cd5415f20c036ab6f3be3",
+    "tests/check_benchmark.py": "22055eb50a73bfc1209efed1c03238e18562cb088da6719f14e51b82d376cf87",
+    "CMakeLists.txt": "188e781b02b9f0b95ca45b907250e5d55d98538cbd17393c9c01aec7f346dbc6"
+  },
+  "local_tool_tests": {
+    "gcc": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\document-benchmark-gcc-final.log",
+      "sha256": "f48d58ca4df28235b600b05a54a394b379833e4f7d568c037747438d78c4c065"
+    },
+    "msvc": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\document-benchmark-msvc-final.log",
+      "sha256": "d48d1ef5966b8f282c3ff1108840a8512855f1a9e5079fbc17f8212f98dd5dd6"
+    },
+    "tests_passed_per_compiler": 2,
+    "status": "passed"
+  },
+  "pdf_external_full_probe": {
+    "summary": {
+      "path": "C:\\Users\\Oscar\\exr-corpus-v1\\pdf-full-final\\summary.json",
+      "sha256": "0fd4799c44397821141ec185cd505eaeb7805b3c1b96de5ba9340280bad90010"
+    },
+    "inputs": 122,
+    "fully_completed": 49,
+    "outcomes": [
+      {
+        "status": 0,
+        "stage": "text",
+        "complete": true,
+        "count": 49
+      },
+      {
+        "status": 11,
+        "stage": "render",
+        "complete": false,
+        "count": 7
+      },
+      {
+        "status": 5,
+        "stage": "open",
+        "complete": false,
+        "count": 18
+      },
+      {
+        "status": 5,
+        "stage": "render",
+        "complete": false,
+        "count": 48
+      }
+    ],
+    "accepted": false,
+    "reason": "Capability expectations not frozen per file; no fidelity/save claim"
+  },
+  "performance": [
+    {
+      "chapter_body_MiB": 10,
+      "variant": "single",
+      "summary": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\performance-final-single-10MiB\\summary.json",
+        "sha256": "4c4a22840ff3041952a1b11e4449c3c0138e5d63cb2e40bc8550fa43da834af9"
+      },
+      "runtime_sha256": {
+        "C:\\Users\\Oscar\\exr-msvc-next\\Release\\exreader.dll": "9f3e07fb8fa58f023cfba25beb443d095ff26f22142ab894547e002f021305bd"
+      },
+      "cases": {
+        "short": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 61.2031,
+            "turn_total_p95_ms": 50.1493,
+            "peak_rss_bytes": 40595456,
+            "incremental_peak_rss_bytes": 34361344
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        },
+        "long-single-chapter": {
+          "passed": false,
+          "median": null,
+          "attempted_runs": 3,
+          "successful_runs": 0,
+          "failures": {
+            "process_failure": 3
+          }
+        },
+        "many-chapters": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 123.6362,
+            "turn_total_p95_ms": 64.5641,
+            "peak_rss_bytes": 40595456,
+            "incremental_peak_rss_bytes": 34365440
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        }
+      }
+    },
+    {
+      "chapter_body_MiB": 50,
+      "variant": "single",
+      "summary": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\performance-final-single-50MiB\\summary.json",
+        "sha256": "43938cb3a5b88ef0bb1022753dfbe94f4cda7e012fc526f5217245e81db2c282"
+      },
+      "runtime_sha256": {
+        "C:\\Users\\Oscar\\exr-msvc-next\\Release\\exreader.dll": "9f3e07fb8fa58f023cfba25beb443d095ff26f22142ab894547e002f021305bd"
+      },
+      "cases": {
+        "short": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 90.6589,
+            "turn_total_p95_ms": 63.109,
+            "peak_rss_bytes": 40595456,
+            "incremental_peak_rss_bytes": 34361344
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        },
+        "long-single-chapter": {
+          "passed": false,
+          "median": null,
+          "attempted_runs": 3,
+          "successful_runs": 0,
+          "failures": {
+            "process_failure": 3
+          }
+        },
+        "many-chapters": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 74.0621,
+            "turn_total_p95_ms": 53.4555,
+            "peak_rss_bytes": 40599552,
+            "incremental_peak_rss_bytes": 34365440
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        }
+      }
+    },
+    {
+      "chapter_body_MiB": 100,
+      "variant": "single",
+      "summary": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\performance-final-single-100MiB\\summary.json",
+        "sha256": "cbfb1a33710b9eb85ebb81a3b6145e7ac31bd8caa0fbec531ccc35d56de825b3"
+      },
+      "runtime_sha256": {
+        "C:\\Users\\Oscar\\exr-msvc-next\\Release\\exreader.dll": "9f3e07fb8fa58f023cfba25beb443d095ff26f22142ab894547e002f021305bd"
+      },
+      "cases": {
+        "short": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 62.8476,
+            "turn_total_p95_ms": 61.2108,
+            "peak_rss_bytes": 40599552,
+            "incremental_peak_rss_bytes": 34365440
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        },
+        "long-single-chapter": {
+          "passed": false,
+          "median": null,
+          "attempted_runs": 3,
+          "successful_runs": 0,
+          "failures": {
+            "process_failure": 3
+          }
+        },
+        "many-chapters": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 73.8781,
+            "turn_total_p95_ms": 48.9239,
+            "peak_rss_bytes": 40607744,
+            "incremental_peak_rss_bytes": 34365440
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        }
+      }
+    },
+    {
+      "chapter_body_MiB": 10,
+      "variant": "paragraphs",
+      "summary": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\performance-final-paragraphs-10MiB\\summary.json",
+        "sha256": "94036ea9a88cc3a848426c4b5d8103b625f1c72cc198ec57d2bc0300ed79da14"
+      },
+      "runtime_sha256": {
+        "C:\\Users\\Oscar\\exr-msvc-next\\Release\\exreader.dll": "9f3e07fb8fa58f023cfba25beb443d095ff26f22142ab894547e002f021305bd"
+      },
+      "cases": {
+        "short": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 82.7699,
+            "turn_total_p95_ms": 49.0355,
+            "peak_rss_bytes": 40599552,
+            "incremental_peak_rss_bytes": 34361344
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        },
+        "long-single-chapter": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 211.8333,
+            "turn_total_p95_ms": 51.2618,
+            "peak_rss_bytes": 65433600,
+            "incremental_peak_rss_bytes": 59219968
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        },
+        "many-chapters": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 76.1443,
+            "turn_total_p95_ms": 53.4297,
+            "peak_rss_bytes": 40591360,
+            "incremental_peak_rss_bytes": 34373632
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        }
+      }
+    },
+    {
+      "chapter_body_MiB": 50,
+      "variant": "paragraphs",
+      "summary": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\performance-final-paragraphs-50MiB\\summary.json",
+        "sha256": "135dedc6ef25dcdc8ac9f49bd000ad13d88131e55a12e8797dee93a41bbb975d"
+      },
+      "runtime_sha256": {
+        "C:\\Users\\Oscar\\exr-msvc-next\\Release\\exreader.dll": "9f3e07fb8fa58f023cfba25beb443d095ff26f22142ab894547e002f021305bd"
+      },
+      "cases": {
+        "short": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 60.3687,
+            "turn_total_p95_ms": 57.9185,
+            "peak_rss_bytes": 40595456,
+            "incremental_peak_rss_bytes": 34361344
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        },
+        "long-single-chapter": {
+          "passed": false,
+          "median": null,
+          "attempted_runs": 3,
+          "successful_runs": 0,
+          "failures": {
+            "process_failure": 3
+          }
+        },
+        "many-chapters": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 79.1602,
+            "turn_total_p95_ms": 50.6821,
+            "peak_rss_bytes": 40574976,
+            "incremental_peak_rss_bytes": 34365440
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        }
+      }
+    },
+    {
+      "chapter_body_MiB": 100,
+      "variant": "paragraphs",
+      "summary": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\performance-final-paragraphs-100MiB\\summary.json",
+        "sha256": "49dd452dba96ac09606496ed8e617b4c84336f864ec17ab5f7b3e80ad4aa0e97"
+      },
+      "runtime_sha256": {
+        "C:\\Users\\Oscar\\exr-msvc-next\\Release\\exreader.dll": "9f3e07fb8fa58f023cfba25beb443d095ff26f22142ab894547e002f021305bd"
+      },
+      "cases": {
+        "short": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 60.585,
+            "turn_total_p95_ms": 49.0449,
+            "peak_rss_bytes": 40599552,
+            "incremental_peak_rss_bytes": 34361344
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        },
+        "long-single-chapter": {
+          "passed": false,
+          "median": null,
+          "attempted_runs": 3,
+          "successful_runs": 0,
+          "failures": {
+            "process_failure": 3
+          }
+        },
+        "many-chapters": {
+          "passed": true,
+          "median": {
+            "first_visible_total_ms": 107.7221,
+            "turn_total_p95_ms": 91.3364,
+            "peak_rss_bytes": 40591360,
+            "incremental_peak_rss_bytes": 34377728
+          },
+          "attempted_runs": 3,
+          "successful_runs": 3,
+          "failures": {}
+        }
+      }
+    }
+  ],
+  "wp6_complete": false,
+  "wp16_complete": false,
+  "first_sdk_complete": false,
+  "gutenberg_collection": {
+    "manifest": {
+      "path": "C:\\Users\\Oscar\\exr-corpus-v1\\gutenberg\\manifest.json",
+      "sha256": "be8d376ce1b237ec38205fbc23eab440ea5ab581aad5f8e2829bd38fde09ef61"
+    },
+    "collected": 500,
+    "complete": true,
+    "attempted_ids": 769,
+    "attempt_counts": {
+      "collected": 500,
+      "rights_not_selected": 30,
+      "epub3_not_available": 11,
+      "collection_failed": 228
+    },
+    "rights_scope": "Public domain in the USA; original embedded Gutenberg terms retained",
+    "pipeline_status": "running",
+    "pipeline_output": "C:/Users/Oscar/exr-corpus-v1/epub-500-full",
+    "timeout_seconds": 120,
+    "workers": 4
+  },
+  "epub_initial_probe": {
+    "summary": {
+      "path": "C:\\Users\\Oscar\\exr-corpus-v1\\epub-full-first-pass\\summary.json",
+      "sha256": "e8e000012cec971a67447c2fa4bb739985d8f40b280f59c824950e6d2b4d9e01"
+    },
+    "checked": 50,
+    "counts": {
+      "passed": 25,
+      "timeout": 24,
+      "unexpected_outcome": 1
+    },
+    "accepted": false,
+    "timeout_seconds": 20
+  },
+  "installed_tool_check": {
+    "report": "C:\\Users\\Oscar\\exr-gcc\\document-installed-probe.json",
+    "sha256": "e8489eee586f05efeadc7d95695f0d87e43ee2d1729b5764043cd2514a0aef80",
+    "passed": true
+  }
+}

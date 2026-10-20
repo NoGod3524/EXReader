@@ -24,22 +24,51 @@
     "report_sha256": "33303b3c4d9951026b35f7ae4dd2d963fc91b96738024fbfc08e6eb33e017fd8",
     "render": "C:/Users/Oscar/exr-msvc-next/windows-host-r3/page.png",
     "render_sha256": "48ace7d48c57caa5f5707a5a4599f448c4cc800d3afe688304d31050a8690bba",
-    "render_visually_inspected": true
+    "render_visually_inspected": true,
+    "ci_report": "C:\\Users\\Oscar\\exr-gcc\\native-hosts-39452391457\\EXReader-reference-Windows\\report.json",
+    "ci_report_sha256": "33303b3c4d9951026b35f7ae4dd2d963fc91b96738024fbfc08e6eb33e017fd8",
+    "ci_checks": 26
   },
   "macos": {
-    "status": "pending"
+    "status": "passed",
+    "check_count": 21,
+    "source_sha": "f233c0e123a4f70c2ef848d025fa841a9610e712",
+    "report": "C:\\Users\\Oscar\\exr-gcc\\native-hosts-39452391457\\EXReader-reference-macOS\\apple-host-evidence\\report.json",
+    "report_sha256": "292651fd25d0c95338682e0442c9af6660a1638bb4b48f01e284d78dd37a75ba",
+    "screen": "C:\\Users\\Oscar\\exr-gcc\\native-hosts-39452391457\\EXReader-reference-macOS\\apple-host-evidence\\screen.png",
+    "screen_sha256": "07bb0e838647da8f897f0067e7e9d64fdcbf1924f5ffeb23b49983736aa5da04",
+    "screen_visually_inspected": true,
+    "scope": "automated application self-check; manual lifecycle/accessibility acceptance remains separate"
   },
   "iphone_simulator": {
-    "status": "pending"
+    "status": "passed",
+    "check_count": 21,
+    "source_sha": "f233c0e123a4f70c2ef848d025fa841a9610e712",
+    "report": "C:\\Users\\Oscar\\exr-gcc\\native-hosts-39452391457\\EXReader-reference-iPhone-iPad\\iphone-host-evidence\\report.json",
+    "report_sha256": "5b28bbafcc24baf8ba44935c8801d9427fcb8b708c7af04c1277f60772613266",
+    "screen": "C:\\Users\\Oscar\\exr-gcc\\native-hosts-39452391457\\EXReader-reference-iPhone-iPad\\iphone-host-evidence\\screen.png",
+    "screen_sha256": "f965082507f0b79ceee7ca66a8924565a6023098fb9748ac400465f82499e943",
+    "screen_visually_inspected": true,
+    "scope": "automated application self-check; manual lifecycle/accessibility acceptance remains separate"
   },
   "ipad_simulator": {
-    "status": "pending"
+    "status": "passed",
+    "check_count": 21,
+    "source_sha": "f233c0e123a4f70c2ef848d025fa841a9610e712",
+    "report": "C:\\Users\\Oscar\\exr-gcc\\native-hosts-39452391457\\EXReader-reference-iPhone-iPad\\ipad-host-evidence\\report.json",
+    "report_sha256": "5b28bbafcc24baf8ba44935c8801d9427fcb8b708c7af04c1277f60772613266",
+    "screen": "C:\\Users\\Oscar\\exr-gcc\\native-hosts-39452391457\\EXReader-reference-iPhone-iPad\\ipad-host-evidence\\screen.png",
+    "screen_sha256": "0ce44a8d18f36da938f1710b36deae7bfb0e8eca96298394f73696d2cae15ce8",
+    "screen_visually_inspected": true,
+    "scope": "automated application self-check; manual lifecycle/accessibility acceptance remains separate"
   },
   "iphone_device": {
-    "status": "awaiting_owner_signing_and_device_run"
+    "status": "deferred_by_user",
+    "reason": "User requested code and simulator acceptance first; no physical installation attempted"
   },
   "ipad_device": {
-    "status": "awaiting_owner_signing_and_device_run"
+    "status": "deferred_by_user",
+    "reason": "User requested code and simulator acceptance first; no physical installation attempted"
   },
   "physical_devices_available": [
     "Windows",
@@ -52,5 +81,40 @@
     "license": "SIL Open Font License 1.1"
   },
   "first_sdk_complete": false,
-  "wp16_complete": false
+  "wp16_complete": false,
+  "ci": {
+    "run_id": 39452391457,
+    "source_sha": "f233c0e123a4f70c2ef848d025fa841a9610e712",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs_passed": 7,
+    "jobs_total": 7,
+    "status_file": "C:\\Users\\Oscar\\exr-gcc\\run-39452391457-status.json",
+    "status_sha256": "dc223fe880f53d5b912bacccf89cef5f64011a6c6548a75eadd83e0233fc06c0"
+  },
+  "ios_device_package": {
+    "path": "C:\\Users\\Oscar\\exr-gcc\\native-hosts-39452391457\\EXReader-reference-iPhone-iPad\\apple-device-host\\EXReader-iOS-unsigned.ipa",
+    "sha256": "4742c58166425df1c7fdb655f6c58f91c57ca375189c94baf785f26d6f9902f3",
+    "installation_status": "owner_signing_required"
+  },
+  "sdk_artifacts": {
+    "inventory": "C:\\Users\\Oscar\\exr-gcc\\native-sdk-39452391457\\inventory.json",
+    "sha256": "d255eaad02b6b82960355e12d1fab4a86083c5281448a1ef77c672e99f95150a",
+    "artifact_names": [
+      "EXReader-C-Android-arm64",
+      "EXReader-C-iOS-iPadOS-arm64",
+      "EXReader-C-Linux",
+      "EXReader-C-macOS",
+      "EXReader-C-Windows"
+    ],
+    "platforms": [
+      "Windows",
+      "Linux",
+      "macOS",
+      "Android ARM64",
+      "iOS ARM64",
+      "iPadOS ARM64"
+    ],
+    "note": "iOS/iPadOS share one device SDK; simulator is a separate architecture environment; native.yml checks default/trimmed consumption on desktops"
+  }
 }
