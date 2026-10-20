@@ -697,17 +697,61 @@ if(EXR_FULL_TESTS)
 endif()
 option(EXR_BUILD_FUZZ "Build the deterministic parser fuzz driver" OFF)
 if(EXR_BUILD_FUZZ)
+  # Keep archived drivers loadable after extraction on another CI runner.
+  set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
+  set_target_properties(exreader PROPERTIES BUILD_RPATH_USE_ORIGIN ON)
   add_executable(exreader-fuzz tests/fuzz_parse.c)
   add_executable(exreader-fuzz-test tests/test_fuzz_driver.c)
   target_link_libraries(exreader-fuzz PRIVATE exreader)
   target_link_libraries(exreader-fuzz-test PRIVATE exreader)
+  set(exr_pipeline_index 0)
+  foreach(pipeline font layout render)
+    math(EXPR exr_pipeline_index "${exr_pipeline_index}+1")
+    add_executable(exreader-fuzz-${pipeline} tests/fuzz_pipeline.c)
+    target_compile_definitions(exreader-fuzz-${pipeline} PRIVATE EXR_FUZZ_PIPELINE=${exr_pipeline_index})
+    target_link_libraries(exreader-fuzz-${pipeline} PRIVATE exreader)
+    if(UNIX)
+      target_link_libraries(exreader-fuzz-${pipeline} PRIVATE m)
+    endif()
+    if(NOT MSVC)
+      target_compile_options(exreader-fuzz-${pipeline} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    endif()
+  endforeach()
   if(NOT MSVC)
     target_compile_options(exreader-fuzz PRIVATE -Wall -Wextra -Wpedantic -Werror)
     target_compile_options(exreader-fuzz-test PRIVATE -Wall -Wextra -Wpedantic -Werror)
   endif()
   if(EXR_FULL_TESTS)
     add_test(NAME native-fuzz-driver COMMAND exreader-fuzz-test ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
-    # Bounded smoke run; long campaigns use the same driver with a larger --iterations.
+    add_test(NAME native-fuzz-font COMMAND exreader-fuzz-font --seed 1 --iterations 300
+      --save ${CMAKE_CURRENT_BINARY_DIR}/fuzz-font.bin
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/pdf-cubic.otf
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/variable.ttf
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/shaping/shaping.ttf)
+    add_test(NAME native-fuzz-layout COMMAND exreader-fuzz-layout --seed 1 --iterations 100
+      --font ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf
+      --save ${CMAKE_CURRENT_BINARY_DIR}/fuzz-layout.bin
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/sample.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/layout.epub)
+    add_test(NAME native-fuzz-render COMMAND exreader-fuzz-render --seed 1 --iterations 100
+      --font ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf
+      --save ${CMAKE_CURRENT_BINARY_DIR}/fuzz-render.bin
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/comic.cbz
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pdf-color/shading-axial.pdf
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/layout.epub)
+    set_tests_properties(native-fuzz-driver native-fuzz-font native-fuzz-layout native-fuzz-render PROPERTIES TIMEOUT 120)
+    if(Python3_FOUND)
+      add_test(NAME native-fuzz-pipeline-contract COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_fuzz_pipelines.py
+        $<TARGET_FILE:exreader-fuzz> $<TARGET_FILE:exreader-fuzz-font>
+        $<TARGET_FILE:exreader-fuzz-layout> $<TARGET_FILE:exreader-fuzz-render>
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
+      set_tests_properties(native-fuzz-pipeline-contract PROPERTIES TIMEOUT 180)
+      add_test(NAME native-fuzz-accounting COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_reliability_campaign.py)
+    endif()
+    # Bounded smoke run; long campaigns use the same driver with --cpu-seconds.
     add_test(NAME native-fuzz-smoke COMMAND exreader-fuzz --seed 1 --iterations 500
       --save ${CMAKE_CURRENT_BINARY_DIR}/fuzz-last.bin
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pdf-blend/nonisolated.pdf

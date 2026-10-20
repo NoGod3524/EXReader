@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "scope": "Reliability CPU accounting, evidence and CI tooling",
+  "sdk_version": "3.38.0",
+  "engine_or_public_api_changed": false,
+  "base_source_sha": "43daf5b58ea4edec07b8f14ffc6729763b6b3cf5",
+  "working_tree_clean": false,
+  "source_snapshots": {
+    "tests/fuzz_parse.c": "cec08ca50aefd54a043fccbe7eea08088cf300acdc65acbf2ba1baa7ad78fd40",
+    "tests/fuzz_pipeline.c": "d7a224b8f229b092b447320c4301c6742f0899d8364da864e0d9ed1a18ebacd1",
+    "tests/test_fuzz_driver.c": "5f509f2b0614dddf137385555f94d3fc8ddd0bd5360ce4ff87b2d05c1feb6631",
+    "tests/check_fuzz_pipelines.py": "a671dc39bba41687ca638d77b94016cdf207fee498f8e84f6f11dff45faa06a8",
+    "tests/check_reliability_campaign.py": "434ac1bb62c423792c6b0ea973494098df91f1118995511e354f3ed758ae8536",
+    "tools/run_reliability_campaign.py": "44c2cc2a649a695998bea16254307b6f8f2cb3b02ccb1c097ce6c3b934ff0f34",
+    "CMakeLists.txt": "03afff1dcec1a7f7ae4c3f966ec9c2b69c88eecb591845305372284955290997",
+    ".github/workflows/native.yml": "2e15ec0a9ab0c8c733d85bb210aa091bc465c1dd3d0a41c6c581c3c1449d6887",
+    ".github/workflows/reliability.yml": "654a32de0d6e22f115c419feba53ae7fa7e28666282bd7cfb897ecef7d6fa08c"
+  },
+  "local": {
+    "gcc": {
+      "configuration": "Release",
+      "native_fuzz_tests_passed": 7,
+      "native_fuzz_tests_total": 7,
+      "elapsed_wall_seconds": 10.28,
+      "driver_checks": 31,
+      "pipeline_checks": 51,
+      "synthetic_accounting_checks": 127,
+      "log": "C:\\Users\\Oscar\\exr-gcc\\reliability-ctest-20261020-r3.log",
+      "log_sha256": "cb7ca91768138785d0cf6b3cb7e5006877a8cfde7969b382c45d49c8fcd448e8",
+      "sanitized": false,
+      "binaries": {
+        "C:\\Users\\Oscar\\exr-gcc\\exreader-fuzz.exe": "442d079afc428eec76068c5a665d6ccf2a1e5a3c992f0d4677c39b47f01fee0f",
+        "C:\\Users\\Oscar\\exr-gcc\\exreader-fuzz-font.exe": "3168c10d9db1fc1b3a731aec282d56bf1de92ded9d4ddb2896bf725d59bc20ec",
+        "C:\\Users\\Oscar\\exr-gcc\\exreader-fuzz-layout.exe": "80e490ab787be2d45c4ca41dd97de0e75ea3c3274a1f7e2c898fa9c60640acc7",
+        "C:\\Users\\Oscar\\exr-gcc\\exreader-fuzz-render.exe": "853527954db245e36bd5dcf2252a6b616593458f2cf21a82ca44259d5c2fe6c7",
+        "C:\\Users\\Oscar\\exr-gcc\\exreader-fuzz-test.exe": "cd2f7a5b4eade8f36839163b7f56ecb6d0cb0cf2f2f48cfc4f17a4392ca2b9c1",
+        "C:\\Users\\Oscar\\exr-gcc\\libexreader.dll": "63b2e4256731dd9d242462fe1853af54f16b9e10178c29de72080430ec6a021c"
+      }
+    },
+    "msvc": {
+      "configuration": "Release",
+      "native_fuzz_tests_passed": 7,
+      "native_fuzz_tests_total": 7,
+      "elapsed_wall_seconds": 10.28,
+      "driver_checks": 31,
+      "pipeline_checks": 51,
+      "synthetic_accounting_checks": 127,
+      "log": "C:\\Users\\Oscar\\exr-build\\reliability-ctest-20261020-r3.log",
+      "log_sha256": "923d8ef242bd9fa4802b87b86aa6cd30f93b1a7bd92d236fdc68450fbf5c4e51",
+      "sanitized": false,
+      "binaries": {
+        "C:\\Users\\Oscar\\exr-build\\Release\\exreader-fuzz.exe": "a7fa4f3ab001a32da2e5dd4061e885f4e3c28fd688405abeefb3e5422f02982d",
+        "C:\\Users\\Oscar\\exr-build\\Release\\exreader-fuzz-font.exe": "1fc2de4072fe941e0c45cb7bcf9361fb2136cf98717af6bb170371b458ff2d58",
+        "C:\\Users\\Oscar\\exr-build\\Release\\exreader-fuzz-layout.exe": "7fd057b92bf7e7fe3bf97f6111710c0e9b8e0ee83b4260de73650f99a2a83caa",
+        "C:\\Users\\Oscar\\exr-build\\Release\\exreader-fuzz-render.exe": "e22595d64b8c701b77387aca9dc4c80ae509dc682904131d345b8a342b8b053b",
+        "C:\\Users\\Oscar\\exr-build\\Release\\exreader-fuzz-test.exe": "7a38ce5723908159ca63578489398d03c9ac0831ce4ba5ba5aae0a355d91323a",
+        "C:\\Users\\Oscar\\exr-build\\Release\\exreader.dll": "5e0b81154cb1e0144aaec673c75a44ce6af59227adc2a0d4ac12facb8855ceb0"
+      }
+    },
+    "cpu_smoke": {
+      "parser": {
+        "report": "C:\\Users\\Oscar\\exr-gcc\\reliability-20261020-r3-parser\\report.json",
+        "report_sha256": "a32bd0b19cce6fdf767cafc1c8b1a273f73f1d0a860ae529dd4b12abf5639c03",
+        "process_cpu_nanoseconds": 1000000000,
+        "iterations": 7781,
+        "completed_exercises": 641,
+        "passed": true,
+        "is_long_acceptance": false
+      },
+      "font": {
+        "report": "C:\\Users\\Oscar\\exr-gcc\\reliability-20261020-r3-font\\report.json",
+        "report_sha256": "01639aa1fe06c2ecd23a75418305b2a94f9ea1478cd2023f21fdd4cba31633d9",
+        "process_cpu_nanoseconds": 1000000000,
+        "iterations": 8292,
+        "completed_exercises": 2648,
+        "passed": true,
+        "is_long_acceptance": false
+      },
+      "layout": {
+        "report": "C:\\Users\\Oscar\\exr-gcc\\reliability-20261020-r3-layout\\report.json",
+        "report_sha256": "5def4ee5dc42aac47244489279b3b5850ac4c840fa7e77e3662999a4bae7c1ac",
+        "process_cpu_nanoseconds": 1000000000,
+        "iterations": 6533,
+        "completed_exercises": 421,
+        "passed": true,
+        "is_long_acceptance": false
+      },
+      "render": {
+        "report": "C:\\Users\\Oscar\\exr-gcc\\reliability-20261020-r3-render\\report.json",
+        "report_sha256": "3c5aef75b9a341d0ecd75628c4fffff1a3e3c3e8edbb4e8131d8d6ba87f853f3",
+        "process_cpu_nanoseconds": 1000000000,
+        "iterations": 4323,
+        "completed_exercises": 44,
+        "passed": true,
+        "is_long_acceptance": false
+      }
+    },
+    "workflow_static_validation": {
+      "tool": "actionlint 1.7.12",
+      "passed": true,
+      "log": "C:/Users/Oscar/exr-gcc/reliability-workflows-20261020-final.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "ci": {
+    "native": {
+      "status": "pending"
+    },
+    "manual_packaging_smoke": {
+      "status": "pending"
+    },
+    "acceptance_24_cpu_hours_per_target": {
+      "status": "not_started",
+      "passed": false
+    }
+  },
+  "wp16_release_complete": false,
+  "remaining_release_requirements": "docs/HANDOFF.md",
+  "protected_untracked_file": {
+    "file": "docs/validation/2026-10-19-shading-extent-ci.json",
+    "sha256": "a955abda1e35fd456172b2e78e1d687799e4ab5f1f977dec0efd7684aae9fdc1",
+    "include_in_commit": false
+  },
+  "post_verification_changes": "Trailing blank lines removed from three text files; no behavior changes."
+}

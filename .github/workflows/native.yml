@@ -200,14 +200,49 @@ jobs:
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+      - name: Verify font, pagination and rendering pipeline contracts
+        run: |
+          python3 tests/check_reliability_campaign.py
+          python3 tests/check_fuzz_pipelines.py build/fuzz/exreader-fuzz build/fuzz/exreader-fuzz-font build/fuzz/exreader-fuzz-layout build/fuzz/exreader-fuzz-render tests/fixtures
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+      - name: Bounded font, layout and rendering campaigns
+        run: |
+          ./build/fuzz/exreader-fuzz-font --seed 20261019 --iterations 20000 --save build/fuzz/font.bin tests/fixtures/fonts/primary.ttf tests/fixtures/fonts/pdf-cubic.otf tests/fixtures/fonts/color.ttf tests/fixtures/fonts/bitmap.ttf tests/fixtures/fonts/cbdt.ttf tests/fixtures/fonts/variable.ttf tests/fixtures/shaping/shaping.ttf
+          ./build/fuzz/exreader-fuzz-layout --font tests/fixtures/fonts/primary.ttf --seed 20261019 --iterations 2000 --save build/fuzz/layout.bin tests/fixtures/sample.txt tests/fixtures/layout.epub tests/fixtures/float-both.epub tests/fixtures/table-fragments-12.epub
+          ./build/fuzz/exreader-fuzz-render --font tests/fixtures/fonts/primary.ttf --seed 20261019 --iterations 2000 --save build/fuzz/render.bin tests/fixtures/comic.cbz tests/fixtures/pdf-color/shading-axial.pdf tests/fixtures/layout.epub
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+      - name: Verify measured CPU evidence and strict aggregation on all four targets
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          python3 tools/run_reliability_campaign.py seal-build --source . --build build/fuzz --require-clean
+          for target in parser font layout render; do
+            python3 tools/run_reliability_campaign.py run --source . --build build/fuzz --target "$target" --seed 2026101901 --cpu-seconds 1 --wall-seconds 120 --require-clean --output "build/evidence/$target-0"
+          done
+          python3 tools/run_reliability_campaign.py summarize --reports build/evidence --minimum-cpu-hours 0.0002777777777777778 --expected-shards 1 --first-seed 2026101901 --expected-source-sha "${{ github.sha }}" --build-manifest build/fuzz/build-manifest.json --output build/reliability-smoke-summary.json
+      - name: Preserve measured evidence on success and failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reliability-native-smoke
+          path: |
+            build/evidence/
+            build/fuzz/build-manifest.json
+            build/reliability-smoke-summary.json
+          if-no-files-found: warn
       - name: Keep the triggering input when the campaign fails
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: fuzz-last-input
           path: |
-            build/fuzz/last.bin
-            build/fuzz/last.bin.format
+            build/fuzz/*.bin
+            build/fuzz/*.bin.format
   android:
     runs-on: ubuntu-22.04
     timeout-minutes: 20

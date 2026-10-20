@@ -6,7 +6,7 @@ static unsigned checks;
 #define CHECK(x) do { checks++;if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x);exit(1); } } while(0)
 int main(int argc,char **argv) {
   unsigned char long_record[4096],short_record[3]={0,255,7},readback[4096];size_t size;FILE *file;char path[4096];uint64_t value;
-  CHECK(argc==2);memset(long_record,42,sizeof(long_record));file=tmpfile();CHECK(file);
+  CHECK(argc==2);CHECK(cpu_nanoseconds()!=UINT64_MAX);memset(long_record,42,sizeof(long_record));file=tmpfile();CHECK(file);
   CHECK(save_input(file,long_record,sizeof(long_record)));CHECK(save_input(file,short_record,sizeof(short_record)));
   CHECK(!fseek(file,0,SEEK_SET));CHECK(fread(readback,1,sizeof(readback),file)==sizeof(short_record));CHECK(!memcmp(readback,short_record,sizeof(short_record)));
   CHECK(!ferror(file) && feof(file));CHECK(save_input(file,short_record,0));CHECK(!fseek(file,0,SEEK_END) && ftell(file)==0);CHECK(!fclose(file));

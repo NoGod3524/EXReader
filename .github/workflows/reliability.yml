@@ -1,0 +1,125 @@
+name: SDK reliability acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      smoke:
+        description: Validate packaging and evidence only (not 24 CPU hour acceptance)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: reliability-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+  UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build/fuzz -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_BUILD_FUZZ=ON -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF
+      - run: cmake --build build/fuzz --parallel 4
+      - name: Check the drivers before the long campaigns
+        run: |
+          ./build/fuzz/exreader-fuzz-test tests/fixtures
+          python3 tests/check_reliability_campaign.py
+          python3 tests/check_fuzz_pipelines.py build/fuzz/exreader-fuzz build/fuzz/exreader-fuzz-font build/fuzz/exreader-fuzz-layout build/fuzz/exreader-fuzz-render tests/fixtures
+      - name: Seal the clean instrumented build
+        run: python3 tools/run_reliability_campaign.py seal-build --source . --build build/fuzz --require-clean
+      - name: Preserve one instrumented build for every shard
+        working-directory: build/fuzz
+        run: tar -czf ../reliability-runtime.tar.gz CMakeCache.txt build-manifest.json exreader-fuzz exreader-fuzz-font exreader-fuzz-layout exreader-fuzz-render libexreader.so*
+      - name: Verify the archived runtime after relocation
+        run: |
+          mkdir -p build/relocated
+          tar -xzf build/reliability-runtime.tar.gz -C build/relocated
+          for target in parser font layout render; do
+            python3 tools/run_reliability_campaign.py run --source . --build build/relocated --target "$target" --seed 1 --cpu-seconds 1 --wall-seconds 120 --require-clean --output "build/relocation-evidence/$target"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reliability-runtime
+          path: build/reliability-runtime.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reliability-build-evidence
+          path: |
+            build/relocation-evidence/
+            build/fuzz/build-manifest.json
+          if-no-files-found: warn
+          retention-days: 30
+  campaign:
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 280
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        target: [parser, font, layout, render]
+        shard: ${{ fromJSON(inputs.smoke && '[0]' || '[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: reliability-runtime
+          path: build
+      - run: |
+          mkdir -p build/fuzz
+          tar -xzf build/reliability-runtime.tar.gz -C build/fuzz
+      - name: Run the measured process CPU budget with a distinct effective seed
+        env:
+          CPU_SECONDS: ${{ inputs.smoke && '1' || '3600' }}
+        run: python3 tools/run_reliability_campaign.py run --source . --build build/fuzz --target '${{ matrix.target }}' --seed "$((2026101901 + 2 * ${{ matrix.shard }}))" --cpu-seconds "$CPU_SECONDS" --wall-seconds 15600 --require-clean --output 'build/evidence/${{ matrix.target }}-${{ matrix.shard }}'
+      - name: Preserve reports and evidence even after failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reliability-shard-${{ matrix.target }}-${{ matrix.shard }}
+          path: build/evidence/
+          if-no-files-found: error
+          retention-days: 30
+  summarize:
+    needs: [build, campaign]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reliability-shard-*
+          path: build/evidence
+          # Preserve artifact directories to avoid overwriting same-named evidence.
+          merge-multiple: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: reliability-runtime
+          path: build
+      - run: |
+          mkdir -p build/proof
+          tar -xzf build/reliability-runtime.tar.gz -C build/proof build-manifest.json
+      - name: Reject any failed or missing upstream job
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          CAMPAIGN_RESULT: ${{ needs.campaign.result }}
+        run: test "$BUILD_RESULT" = success && test "$CAMPAIGN_RESULT" = success
+      - name: Require the exact shard schedule, build and CPU budget for every target
+        env:
+          MINIMUM_HOURS: ${{ inputs.smoke && '0.0002777777777777778' || '24' }}
+          EXPECTED_SHARDS: ${{ inputs.smoke && '1' || '24' }}
+        run: python3 tools/run_reliability_campaign.py summarize --reports build/evidence --minimum-cpu-hours "$MINIMUM_HOURS" --expected-shards "$EXPECTED_SHARDS" --first-seed 2026101901 --expected-source-sha "${{ github.sha }}" --build-manifest build/proof/build-manifest.json --output build/reliability-summary.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reliability-summary
+          path: build/reliability-summary.json
+          if-no-files-found: warn
+          retention-days: 30
