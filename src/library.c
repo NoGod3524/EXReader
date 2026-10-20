@@ -499,6 +499,7 @@ exr_status exr_library_fixed_source(exr_library *l,int64_t id,const exr_fixed_op
   if(out) *out=NULL;
   if(!l || id<=0 || !out) return exr_fail(e,EXR_ARGUMENT,"Invalid streaming fixed lookup");
 #ifndef EXR_ENABLE_PDF
+  (void)input;
   return exr_fail(e,EXR_UNSUPPORTED,"Streaming fixed reading requires the PDF component");
 #else
   { exr_status status=exr_fixed_open_options_copy(input,&options,e);if(status!=EXR_OK) return status; }

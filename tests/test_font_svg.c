@@ -146,7 +146,7 @@ static void directory_failures(const char *directory) {
   list = table + read32(bytes + table + 2);
   CHECK(list + 14 <= (size_t)length);
   record = list + 2;
-  for (variant = 0; variant < 2; variant++) {
+  for (variant = 0; variant < 4; variant++) {
     exr_font *font = NULL;
     exr_font_input input = {bytes, (size_t)length, 0};
     exr_font_color_info info = {0};
@@ -155,8 +155,16 @@ static void directory_failures(const char *directory) {
       size_t document = list + read32(bytes + record + 4);
       CHECK(document < (size_t)length);
       bytes[table + 6] = 0;
-      memset(bytes + record + 8, 0, 4); bytes[record + 11] = 1;
-      bytes[document] = 0x1f;
+      if (variant == 1) {
+        memset(bytes + record + 8, 0, 4); bytes[record + 11] = 1;
+        bytes[document] = 0x1f;
+      } else {
+        const char *content = variant == 2 ? "<svg id='&unknown;'/>" : "<svg/><";
+        size_t size = strlen(content);
+        CHECK(document + size <= (size_t)length && size < 256);
+        memcpy(bytes + document, content, size);
+        memset(bytes + record + 8, 0, 4); bytes[record + 11] = (unsigned char)size;
+      }
     }
     OK(exr_font_create_glyphs(&input, 1, &font, &error));
     info.struct_size = sizeof(info);
@@ -167,7 +175,7 @@ static void directory_failures(const char *directory) {
     } else {
       exr_status status;
       exr_bitmap image = render_glyph(font, GID_RECT, 100, 0x000000ff, 0, NULL, &status);
-      CHECK(status == EXR_FORMAT && !image.pixels);
+      CHECK(status == (variant == 2 ? EXR_UNSUPPORTED : EXR_FORMAT) && !image.pixels);
     }
     exr_font_free(font);
   }
