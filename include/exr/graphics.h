@@ -155,6 +155,13 @@ typedef exr_status (*exr_draw_image_cmyk_fn)(void *context,const exr_image_layer
    blend space; other values request RGB. Called before decoding, without
    changing drawing state. Absent query requests inks whenever image_cmyk exists. */
 typedef unsigned (*exr_draw_image_space_fn)(void *context);
+/* Alpha sources default to opacity. CONSTANT_SHAPE also interprets the current
+   graphics-state soft mask as shape. IMAGE_SHAPE treats bitmap alpha as intrinsic
+   image shape; explicit image masks are always shape. Save/restore and groups
+   preserve this state. Unrecognised bits must be refused. Older consumers without
+   this callback retain their image interpretation; CONSTANT_SHAPE is refused. */
+enum { EXR_ALPHA_CONSTANT_SHAPE=1u,EXR_ALPHA_IMAGE_SHAPE=2u };
+typedef exr_status (*exr_draw_alpha_source_fn)(void *context,unsigned flags,exr_error *error);
 
 typedef struct {
   size_t struct_size;
@@ -169,6 +176,7 @@ typedef struct {
   exr_draw_path_cmyk_fn path_cmyk; /* Optional; PDF CMYK source components for paths. */
   exr_draw_image_cmyk_fn image_cmyk; /* Optional native inks; also receives CMYK gradients. */
   exr_draw_image_space_fn image_space; /* Optional allocation hint for image_cmyk. */
+  exr_draw_alpha_source_fn alpha_source; /* Optional shape/opacity interpretation. */
 } exr_draw_sink_ex;
 /* Initialize out->struct_size to the available storage size. */
 EXR_API exr_status exr_canvas_get_sink_ex(exr_canvas *canvas,exr_draw_sink_ex *out,exr_error *error);

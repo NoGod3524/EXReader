@@ -1,0 +1,56 @@
+{
+  "version": "3.36.0",
+  "abi": 1,
+  "schema": 6,
+  "pdf_scenes": 166,
+  "rejected_ais_values": 4,
+  "canvas_combinations": 192,
+  "tests": {
+    "gcc": {
+      "count": 141,
+      "failures": 0,
+      "exports": 305,
+      "dll_sha256": "22586a351810df6a53bf836ba1f8484387574f27172dd28868fbb8a5ff82bf4c",
+      "alpha_output": "1834 alpha source checks; maximum Decimal difference 0/255\n",
+      "canvas_output": "2696 native canvas CMYK group checks passed\n"
+    },
+    "msvc": {
+      "count": 141,
+      "failures": 0,
+      "exports": 305,
+      "dll_sha256": "477c0ae612a7baad1a2f3e104f0b10ca5f0ac9cea70ec9d8e1076fe374ed66c1",
+      "alpha_output": "1834 alpha source checks; maximum Decimal difference 0/255\n",
+      "canvas_output": "2696 native canvas CMYK group checks passed\n"
+    }
+  },
+  "icc_off": { "count": 9, "failures": 0 },
+  "installed_components": { "count": 4, "failures": 0 },
+  "cpp_headers": 13,
+  "cpp_exact_runtime": "3.36.0 ABI 1",
+  "abi_measurements": {
+    "count": 703,
+    "unchanged": 702,
+    "changed": { "exr_draw_sink_ex.size": { "before": 128, "after": 136 } },
+    "old_offsets_unchanged": true
+  },
+  "layers": { "objects": 99, "symbols": 1039, "includes": 899, "inverse": 0 },
+  "memory": "2026-10-19-alpha-memory.json",
+  "reference": "2026-10-19-alpha-source-reference.json",
+  "performance": {
+    "original": "2026-10-19-alpha-benchmark.json",
+    "original_flat_p95_ratio": 1.223,
+    "original_state_p95_ratio": 1.134,
+    "followup": "2026-10-19-alpha-followup.json",
+    "followup_repaints": 256,
+    "followup_flat_first_ratio": 1.082,
+    "followup_flat_p95_ratio": 1.023,
+    "followup_state_first_ratio": 1.024,
+    "followup_state_p95_ratio": 1.029,
+    "investigation": "Ordinary pixel blend and vector fill assembly sizes/call patterns remain unchanged; preserve initial outliers and report the longer alternating campaign. No tolerance or timing samples were discarded."
+  },
+  "remaining": [
+    "zero opacity and other declared boundaries",
+    "MuPDF/Poppler mask and sampling differences",
+    "full WP1/WP2 acceptance and subsequent work packages"
+  ]
+}

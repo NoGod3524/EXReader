@@ -37,15 +37,21 @@ static void fill_cmyk(exr_canvas *c,const double fill[4],uint32_t rgba) {
   OK(exr_canvas_path_cmyk(c,square,sizeof(square)/sizeof(*square),NULL,&style,fill,fill,&error));
 }
 static void knockout_edges(void) {
-  unsigned space,image,nested,opaque,corner,k;
+  unsigned space,image,nested,opaque,corner,shape_alpha,mask,k;
+  for(shape_alpha=0;shape_alpha<2;shape_alpha++) for(mask=0;mask<2;mask++)
   for(space=0;space<2;space++) for(image=0;image<2;image++) for(nested=0;nested<3;nested++) for(opaque=0;opaque<2;opaque++) for(corner=0;corner<2;corner++) {
     exr_canvas *c=canvas();exr_bitmap b={0};exr_draw_style style=square_style(EXR_DRAW_FILL,0xff0000ff);
-    const double red[4]={0,1,1,0},blue[4]={1,1,0,0};double alpha=opaque ? 1 : 128/255.,shape=corner ? .25 : .5,total=1-shape+shape*alpha;
+    const double red[4]={0,1,1,0},blue[4]={1,1,0,0};double alpha=opaque ? 1 : 128/255.,shape=corner ? .25 : .5,object_alpha,total;
+    exr_draw_sink_ex sink={0};unsigned char soft_mask[64];
+    object_alpha=shape*alpha*(mask ? 128/255. : 1);if(shape_alpha) shape=object_alpha;total=1-shape+object_alpha;
     unsigned expected[3];const unsigned char *p;
     OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT|(space ? EXR_GROUP_CMYK : EXR_GROUP_RGB),&error));
     rectangle(0,0,8,8);
     if(space) fill_cmyk(c,red,style.fill);else OK(exr_canvas_path(c,square,5,NULL,&style,&error));
     if(nested) OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,nested==1 ? EXR_GROUP_ISOLATED : 0,&error));
+    sink.struct_size=sizeof(sink);OK(exr_canvas_get_sink_ex(c,&sink,&error));
+    OK(sink.alpha_source(sink.base.context,shape_alpha ? EXR_ALPHA_CONSTANT_SHAPE : 0,&error));
+    if(mask) { memset(soft_mask,128,sizeof(soft_mask));OK(sink.soft_mask(sink.base.context,soft_mask,8,8,&error)); }
     if(image) {
       unsigned char rgba[4]={0,0,255,255},ink_bytes[4]={255,255,0,0};
       exr_image_layer layer={0};exr_bitmap inks={1,1,4,ink_bytes,4};double matrix[6]={4.5,0,0,corner ? 4.5 : 8,0,0};
@@ -59,12 +65,12 @@ static void knockout_edges(void) {
     if(nested) OK(exr_canvas_end_layer(c,1,&error));
     OK(exr_canvas_end_layer(c,1,&error));OK(exr_canvas_take(c,&b,&error));exr_canvas_free(c);
     if(space) {
-      double ink[4];for(k=0;k<4;k++) ink[k]=((1-shape)*red[k]+shape*alpha*blue[k])/total;
+      double ink[4];for(k=0;k<4;k++) ink[k]=((1-shape)*red[k]+object_alpha*blue[k])/total;
       cmyk_reference(ink,expected);
       for(k=0;k<3;k++) expected[k]=(unsigned)floor(total*expected[k]+(1-total)*255+.5);
     } else {
-      expected[0]=(unsigned)floor((1-shape*alpha)*255+.5);
-      expected[1]=(unsigned)floor((1-total)*255+.5);expected[2]=(unsigned)floor(shape*255+.5);
+      expected[0]=(unsigned)floor((1-shape+1-total)*255+.5);
+      expected[1]=(unsigned)floor((1-total)*255+.5);expected[2]=(unsigned)floor((object_alpha+1-total)*255+.5);
     }
     p=b.pixels+4*b.stride+4*4;
     for(k=0;k<3;k++) { if(abs((int)p[k]-(int)expected[k])>2) fprintf(stderr,"space %u image %u nested %u opaque %u corner %u channel %u got %u want %u\n",space,image,nested,opaque,corner,k,p[k],expected[k]);CHECK(abs((int)p[k]-(int)expected[k])<=2); }

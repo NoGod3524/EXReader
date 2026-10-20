@@ -87,7 +87,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.35.1 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.36.0 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -459,7 +459,7 @@ development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.35.1 EXACT
+Select this package with `find_package(EXReader 3.36.0 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -582,3 +582,24 @@ soft mask and restore it for the single group commit. Internal shape tracking is
 allocated only when required by a knockout or shape-tracked parent. Active PDF
 soft masks have a 64 MiB aggregate limit; nested masks share the operation budget.
 Core/PDF reading are 3.34.2; other component versions remain 3.33.0, ABI1/schema6.
+
+## 3.36.0 alpha source extension
+
+`exr_draw_sink_ex` appends `alpha_source(context, flags, error)`. Its size is
+136 bytes on the verified Windows x64 ABI; the previous 128-byte prefix remains
+accepted, all old offsets and unversioned records stay unchanged, and the DLL
+still exports 305 functions. ABI1/schema6 remain; core/PDF reading are 3.36.0.
+
+`EXR_ALPHA_CONSTANT_SHAPE` interprets primitive/group alpha constants and the
+current graphics-state soft mask as shape rather than opacity. `EXR_ALPHA_IMAGE_SHAPE`
+interprets bitmap alpha as intrinsic image shape; explicit image masks always
+constrain shape. Soft image masks follow the constant-shape setting. Save/restore
+and group scopes preserve the flags, while group interiors start with default
+flags and receive the state of their own primitives. Wrapping sinks must forward
+the callback through their own context, just like the existing effect callbacks.
+
+Missing callbacks retain the older image interpretation and reject requested
+constant-shape semantics with `EXR_UNSUPPORTED`. Nonzero truncated pointers and
+unknown canvas flags are rejected. Callback error values are propagated even
+when a callback returns success. No new pixel plane is allocated; the measured
+one-pixel canvas payload increases by 648 bytes for fixed state.

@@ -166,73 +166,78 @@ static void write_cmyk(exr_bitmap *b,exr_composite_state *state,size_t x,size_t 
   for(k=0;k<3;k++) p[k]=(unsigned char)fmax(0,fmin(255,floor(rgb[k]*255+.5)));
   p[3]=(unsigned char)floor(a*255+.5);
 }
+void exr_pixel_alpha_shape(const exr_composite_state *state,size_t x,size_t y,double alpha,double shape,
+                           double constant,unsigned coverage,double *out_alpha,double *out_shape) {
+  double mask=1,clip=coverage/255.;
+  if(state && state->soft_mask) mask=x<state->soft_mask_width && y<state->soft_mask_height ?
+    state->soft_mask[y*state->soft_mask_width+x]/255. : 0;
+  *out_alpha=alpha*constant*mask*clip;
+  *out_shape=shape*clip*(state && (state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE) ? constant*mask : 1);
+}
+void exr_pixel_object_cmyk(exr_bitmap *bitmap,int x,int y,const double source[4],double alpha,double shape,
+                            exr_blend_mode mode,exr_composite_state *state) {
+  double back[5],out[5];unsigned k;
+  if(!shape || !alpha) return;
+  if(!state || !state->cmyk_pixels) {
+    double rgb[3];uint32_t color=0;
+    exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,source,rgb,1);
+    for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(rgb[k]*255+.5))<<(24-8*k);
+    exr_pixel_object(bitmap,x,y,color,alpha,shape,mode,state);return;
+  }
+  if(state->knockout) {
+    double base[5],painted[5],current[5];
+    read_cmyk_backdrop(state,(size_t)x,(size_t)y,base);over_cmyk(base,source,alpha/shape,mode,painted);
+    read_cmyk(bitmap,state,(size_t)x,(size_t)y,current);
+    for(k=0;k<5;k++) out[k]=shape*painted[k]+(1-shape)*current[k];
+  } else { read_cmyk(bitmap,state,(size_t)x,(size_t)y,back);over_cmyk(back,source,alpha,mode,out); }
+  write_cmyk(bitmap,state,(size_t)x,(size_t)y,out,alpha,shape);
+}
+void exr_pixel_object(exr_bitmap *bitmap,int x,int y,uint32_t color,double alpha,double shape,
+                       exr_blend_mode mode,exr_composite_state *state) {
+  double back[4],source[3],out[4];unsigned k;
+  if(!shape || !alpha) return;
+  if(state && state->gray) color=exr_gray_color(color);
+  for(k=0;k<3;k++) source[k]=((color>>(24-8*k))&255)/255.;
+  if(state && state->cmyk_pixels) {
+    double cmyk[4];exr_device_cmyk_from_rgb(state->cmyk_profile,source,cmyk);
+    exr_pixel_object_cmyk(bitmap,x,y,cmyk,alpha,shape,mode,state);return;
+  }
+  if(!state || !state->pixels) {
+    color=(color&0xffffff00u)|(unsigned)fmin(255,floor(alpha*255+.5));exr_pixel_blend(bitmap,x,y,color,255,mode);return;
+  }
+  if(state->knockout) {
+    double base[4],painted[4],current[4];
+    read_backdrop(state,(size_t)x,(size_t)y,base);over_rgba(base,source,alpha/shape,mode,painted);
+    read_rgba(bitmap,state,(size_t)x,(size_t)y,current);
+    for(k=0;k<4;k++) out[k]=shape*painted[k]+(1-shape)*current[k];
+  } else { read_rgba(bitmap,state,(size_t)x,(size_t)y,back);over_rgba(back,source,alpha,mode,out); }
+  write_rgba(bitmap,state,(size_t)x,(size_t)y,out,alpha,shape);
+}
 void exr_pixel_composite_cmyk(exr_bitmap *bitmap,int x,int y,const double cmyk[4],double alpha,unsigned coverage,
                               exr_blend_mode mode,exr_composite_state *state) {
-  double source[4],back[5],out[5];unsigned k;
+  double source[4],object_alpha,shape;unsigned k;
   if(!state || !state->cmyk_pixels) {
     double rgb[3];uint32_t color=0;
     exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,cmyk,rgb,1);
     for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(rgb[k]*255+.5))<<(24-8*k);
-    color|=(uint32_t)fmin(255,floor(alpha*255+.5));
-    exr_pixel_composite(bitmap,x,y,color,coverage,mode,state);return;
+    color|=(uint32_t)fmin(255,floor(alpha*255+.5));exr_pixel_composite(bitmap,x,y,color,coverage,mode,state);return;
   }
-  if(state->soft_mask) {
-    size_t mx=(size_t)x,my=(size_t)y;
-    unsigned mask=(mx<state->soft_mask_width && my<state->soft_mask_height) ?
-      state->soft_mask[my*state->soft_mask_width+mx] : 0u;
-    coverage=(coverage*mask+127)/255;
-  }
-  { double constant=alpha;
-  alpha*=coverage/255.;if(!alpha) return;
+  exr_pixel_alpha_shape(state,(size_t)x,(size_t)y,1,1,alpha,coverage,&object_alpha,&shape);
   for(k=0;k<4;k++) source[k]=fmax(0,fmin(1,cmyk[k]));
-  if(state->knockout) {
-    double base[5],painted[5],current[5],covered=coverage/255.;
-    read_cmyk_backdrop(state,(size_t)x,(size_t)y,base);
-    over_cmyk(base,source,constant,mode,painted);
-    read_cmyk(bitmap,state,(size_t)x,(size_t)y,current);
-    for(k=0;k<5;k++) out[k]=covered*painted[k]+(1-covered)*current[k];
-    write_cmyk(bitmap,state,(size_t)x,(size_t)y,out,alpha,coverage/255.);
-    return;
-  }
-  read_cmyk(bitmap,state,(size_t)x,(size_t)y,back);
-  over_cmyk(back,source,alpha,mode,out);write_cmyk(bitmap,state,(size_t)x,(size_t)y,out,alpha,coverage/255.);
-  }
+  exr_pixel_object_cmyk(bitmap,x,y,source,object_alpha,shape,mode,state);
 }
 void exr_pixel_composite(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage,exr_blend_mode mode,exr_composite_state *state) {
-  double back[4],source[3],out[4],alpha;unsigned k;
-  if(state && state->gray) {
-    color=exr_gray_color(color);
+  double alpha,shape;
+  if(!state || (!state->pixels && !state->cmyk_pixels)) {
+    if(state && state->gray) color=exr_gray_color(color);
+    if(state && state->soft_mask) {
+      size_t mx=(size_t)x,my=(size_t)y;unsigned mask=mx<state->soft_mask_width && my<state->soft_mask_height ? state->soft_mask[my*state->soft_mask_width+mx] : 0;
+      coverage=(coverage*mask+127)/255;
+    }
+    exr_pixel_blend(bitmap,x,y,color,coverage,mode);return;
   }
-  if(state && state->cmyk_pixels) {
-    double cmyk[4];
-    for(k=0;k<3;k++) source[k]=((color>>(24-8*k))&255)/255.;
-    exr_device_cmyk_from_rgb(state->cmyk_profile,source,cmyk);
-    exr_pixel_composite_cmyk(bitmap,x,y,cmyk,(color&255)/255.,coverage,mode,state);
-    return;
-  }
-  if(state && state->soft_mask) {
-    size_t mx=(size_t)x,my=(size_t)y;
-    unsigned mask=(mx<state->soft_mask_width && my<state->soft_mask_height) ?
-      state->soft_mask[my*state->soft_mask_width+mx] : 0u;
-    coverage=(coverage*mask+127)/255;
-  }
-  if(!state || !state->pixels) { exr_pixel_blend(bitmap,x,y,color,coverage,mode);return; }
-  alpha=(color&255)/255.*coverage/255.;if(!alpha) return;
-  for(k=0;k<3;k++) source[k]=((color>>(24-8*k))&255)/255.;
-  if(state->knockout) {
-    /* ISO 32000-1 11.4.5: the element composites with the initial backdrop and
-       replaces the accumulated result inside its geometric coverage. Constant
-       alpha and coverage stay separate, otherwise edges decay twice. */
-    double base[4],painted[4],current[4],constant=(color&255)/255.,covered=coverage/255.;
-    read_backdrop(state,(size_t)x,(size_t)y,base);
-    over_rgba(base,source,constant,mode,painted);
-    read_rgba(bitmap,state,(size_t)x,(size_t)y,current);
-    for(k=0;k<4;k++) out[k]=covered*painted[k]+(1-covered)*current[k];
-    write_rgba(bitmap,state,(size_t)x,(size_t)y,out,alpha,coverage/255.);
-    return;
-  }
-  read_rgba(bitmap,state,(size_t)x,(size_t)y,back);
-  over_rgba(back,source,alpha,mode,out);write_rgba(bitmap,state,(size_t)x,(size_t)y,out,alpha,coverage/255.);
+  exr_pixel_alpha_shape(state,(size_t)x,(size_t)y,1,1,(color&255)/255.,coverage,&alpha,&shape);
+  exr_pixel_object(bitmap,x,y,color,alpha,shape,mode,state);
 }
 exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state,const exr_bitmap *parent,
   const exr_composite_state *parent_state,int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *e) {
@@ -290,19 +295,20 @@ static exr_status frame_cmyk(exr_bitmap *target,const exr_bitmap *source,double 
       size_t tx=x+(size_t)origin_x;
       const float *q=source_state->cmyk_pixels+((size_t)y*source->width+x)*6;
       double covered=clip ? clip->pixels[ty*clip->stride+tx]/255. : 1,base_alpha,alpha,src[4],back[5],out[5],obj;
-      double shape=source_state->shape ? source_state->shape[y*source->width+x] : 1;unsigned k;
-      if(target_state && target_state->soft_mask) covered*=
+      double shape=source_state->shape ? source_state->shape[y*source->width+x] : 1,object_opacity=opacity;unsigned k;
+      if(target_state && target_state->soft_mask) object_opacity*=
         tx<target_state->soft_mask_width && ty<target_state->soft_mask_height ? target_state->soft_mask[ty*target_state->soft_mask_width+tx]/255. : 0;
-      if(!covered || !opacity || !shape) continue;
+      if(target_state && (target_state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE)) shape*=object_opacity;
+      if(!covered || !object_opacity || !shape) continue;
       if(source_state->isolated) {
-        base_alpha=q[4]*opacity;
+        base_alpha=q[4]*object_opacity;
         if(base_alpha<=0) continue;
         for(k=0;k<4;k++) src[k]=fmax(0,fmin(1,q[k]/q[4]));
       } else {
         obj=q[5];if(obj<=0) continue;
         read_cmyk_backdrop(source_state,x,y,back);
         for(k=0;k<4;k++) src[k]=fmax(0,fmin(1,(q[k]-(1-obj)*back[k])/obj));
-        base_alpha=obj*opacity;
+        base_alpha=obj*object_opacity;
       }
       alpha=base_alpha*covered;
       if(dst_cmyk) {
@@ -351,17 +357,19 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
     for(x=left;x<right;x++) {
       size_t tx=x+(size_t)origin_x;
       unsigned char gray_pixel[4];const unsigned char *p=source->pixels+y*source->stride+x*4;
-      unsigned a=(unsigned)floor(p[3]*opacity+.5),coverage=clip ? clip->pixels[ty*clip->stride+tx] : 255;uint32_t color;
-      double shape=source_state && source_state->shape ? source_state->shape[y*source->width+x] : 1;
+      unsigned a,coverage=clip ? clip->pixels[ty*clip->stride+tx] : 255;uint32_t color;
+      double shape=source_state && source_state->shape ? source_state->shape[y*source->width+x] : 1,object_opacity=opacity;
       if(target_state && target_state->soft_mask) {
         unsigned mask=tx<target_state->soft_mask_width && ty<target_state->soft_mask_height ? target_state->soft_mask[ty*target_state->soft_mask_width+tx] : 0;
-        coverage=(coverage*mask+127)/255;
+        object_opacity*=mask/255.;
       }
+      if(target_state && (target_state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE)) shape*=object_opacity;
+      a=(unsigned)floor(p[3]*object_opacity+.5);
       if(!coverage || !shape) continue;
       if(target_state && target_state->cmyk_pixels) {
         /* An isolated RGB child converts only its finished colour, preserving
            the parent's inks and blending the group opacity in the parent space. */
-        double rgb[3],inks[4],out[5],alpha=p[3]/255.*opacity,covered=coverage/255.;unsigned k;
+        double rgb[3],inks[4],out[5],alpha=p[3]/255.*object_opacity,covered=coverage/255.;unsigned k;
         if(!alpha) continue;
         if(!exr_vector_work(work,cost+96)) return exr_fail(e,EXR_LIMIT,"RGB to CMYK group commit exceeds work budget");
         for(k=0;k<3;k++) rgb[k]=p[k]/255.;
@@ -385,14 +393,14 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
       if(target_state && target_state->knockout) {
         /* A group nested in a knockout group is one element: it composites with the
            knockout group's initial backdrop and replaces the accumulated result. */
-        double base[4],painted[4],current[4],out[4],rgb[3],alpha=(p[3]/255.)*opacity,covered=coverage/255.;unsigned k;
+        double base[4],painted[4],current[4],out[4],rgb[3],alpha=(p[3]/255.)*object_opacity,covered=coverage/255.;unsigned k;
         read_backdrop(target_state,tx,ty,base);read_rgba(target,target_state,tx,ty,current);
         if(source_state && source_state->pixels && !source_state->isolated) {
           const float *q=source_state->pixels+(y*source->width+x)*5;double initial[4],ag=q[4];
           if(!ag) continue;
           read_backdrop(source_state,x,y,initial);
           for(k=0;k<3;k++) rgb[k]=fmax(0,fmin(1,(q[k]-(1-ag)*initial[k])/ag));
-          alpha=ag*opacity;
+          alpha=ag*object_opacity;
         } else for(k=0;k<3;k++) rgb[k]=p[k]/255.;
         over_rgba(base,rgb,alpha/shape,mode,painted);
         for(k=0;k<4;k++) out[k]=covered*shape*painted[k]+(1-covered*shape)*current[k];
@@ -403,12 +411,12 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         double back[4],rgb[3],out[4],ag=p[3]/255.;unsigned k;
         const float *q=source_state && source_state->pixels && !source_state->isolated ? source_state->pixels+(y*source->width+x)*5 : NULL;
         if(q) ag=q[4];
-        if(!ag || !opacity) continue;
+        if(!ag || !object_opacity) continue;
         if(!exr_vector_work(work,cost+32+(target_state ? target_state->depth*4 : 0))) return exr_fail(e,EXR_LIMIT,"Group backdrop removal exceeds work budget");
         read_rgba(target,target_state,tx,ty,back);
         { double initial[4];if(q) read_backdrop(source_state,x,y,initial);
           for(k=0;k<3;k++) rgb[k]=q ? fmax(0,fmin(1,(q[k]-(1-ag)*initial[k])/ag)) : p[k]/255.; }
-        ag*=opacity*coverage/255.;over_rgba(back,rgb,ag,mode,out);write_rgba(target,target_state,tx,ty,out,ag,shape*coverage/255.);continue;
+        ag*=object_opacity*coverage/255.;over_rgba(back,rgb,ag,mode,out);write_rgba(target,target_state,tx,ty,out,ag,shape*coverage/255.);continue;
       }
       if(!a) continue;
       if(!exr_vector_work(work,cost)) return exr_fail(e,EXR_LIMIT,"Layer blend work budget exceeded");
@@ -445,15 +453,20 @@ exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,cons
           state->soft_mask[(size_t)y*state->soft_mask_width+(size_t)x]/255. : 0;
         if(!m) continue;
       }
-      if(state && state->pixels) {
+      if(state && (state->pixels || (state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE))) {
         double back[4],base[4],fc[3],sc[3],fr[4],sr[4],out[4],af=(fill_color&255)/255.,as=(stroke_color&255)/255.;
+        double opacity_mask=m,shape_mask=1;
+        if(state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE) {
+          f*=af;s*=as;af=as=1;opacity_mask=1;shape_mask=m;
+          fw=f*(1-s)*k;sw=s*k;bw=1-fw-sw;
+        }
         read_rgba(target,state,x,y,back);
         /* A knockout group treats fill+stroke as one element over the initial backdrop. */
         if(state->knockout) read_backdrop(state,x,y,base);else memcpy(base,back,sizeof(base));
         for(channel=0;channel<3;channel++) { fc[channel]=((fill_color>>(24-8*channel))&255)/255.;sc[channel]=((stroke_color>>(24-8*channel))&255)/255.; }
-        over_rgba(base,fc,af,mode,fr);over_rgba(base,sc,as,mode,sr);
-        for(channel=0;channel<4;channel++) out[channel]=m*(fw*fr[channel]+sw*sr[channel])+(m*bw+(1-m))*back[channel];
-        write_rgba(target,state,x,y,out,m*(fw*af+sw*as),m*(fw+sw));continue;
+        over_rgba(base,fc,af*opacity_mask,mode,fr);over_rgba(base,sc,as*opacity_mask,mode,sr);
+        for(channel=0;channel<4;channel++) out[channel]=shape_mask*(fw*fr[channel]+sw*sr[channel])+(shape_mask*bw+(1-shape_mask))*back[channel];
+        write_rgba(target,state,x,y,out,shape_mask*opacity_mask*(fw*af+sw*as),shape_mask*(fw+sw));continue;
       }
       memcpy(fp,p,target->channels);memcpy(sp,p,target->channels);
       exr_pixel_blend(&first,0,0,fill_color,255,mode);exr_pixel_blend(&second,0,0,stroke_color,255,mode);
@@ -481,7 +494,7 @@ exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill
     if(!exr_vector_work(work,target->width)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
     for(x=0;x<target->width;x++) {
       double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
-      double fw,sw,bw,m=1,back[5],base[5],fr[5],sr[5],out[5];unsigned c;
+      double fw,sw,bw,m=1,back[5],base[5],fr[5],sr[5],out[5],af=fill_alpha,as=stroke_alpha,opacity_mask,shape_mask=1;unsigned c;
       if(fill_alpha<=0) f=0;
       if(stroke_alpha<=0) s=0;
       fw=f*(1-s)*k;sw=s*k;bw=1-fw-sw;
@@ -492,14 +505,19 @@ exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill
           state->soft_mask[(size_t)y*state->soft_mask_width+(size_t)x]/255. : 0;
         if(!m) continue;
       }
+      opacity_mask=m;
+      if(state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE) {
+        f*=af;s*=as;af=as=1;opacity_mask=1;shape_mask=m;
+        fw=f*(1-s)*k;sw=s*k;bw=1-fw-sw;
+      }
       read_cmyk(target,state,x,y,back);
       if(state->knockout) {
         read_cmyk_backdrop(state,x,y,base);
       } else memcpy(base,back,sizeof(base));
-      over_cmyk(base,fill_cmyk,fill_alpha,mode,fr);
-      over_cmyk(base,stroke_cmyk,stroke_alpha,mode,sr);
-      for(c=0;c<5;c++) out[c]=m*(fw*fr[c]+sw*sr[c])+(m*bw+(1-m))*back[c];
-      write_cmyk(target,state,x,y,out,m*(fw*fill_alpha+sw*stroke_alpha),m*(fw+sw));
+      over_cmyk(base,fill_cmyk,af*opacity_mask,mode,fr);
+      over_cmyk(base,stroke_cmyk,as*opacity_mask,mode,sr);
+      for(c=0;c<5;c++) out[c]=shape_mask*(fw*fr[c]+sw*sr[c])+(shape_mask*bw+(1-shape_mask))*back[c];
+      write_cmyk(target,state,x,y,out,shape_mask*opacity_mask*(fw*af+sw*as),shape_mask*(fw+sw));
     }
   }
   return EXR_OK;

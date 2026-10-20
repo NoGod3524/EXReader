@@ -48,3 +48,27 @@ python tools/validate_nested_groups.py /path/to/library --manifest mask-function
 ```
 
 后续：AIS、图片固有shape与mask/opacity的分离、更多组色空间和全库安全审计。
+
+## 3.36.0：shape/opacity源
+
+公开`alpha_source`尾回调提供两个独立标志：常量与图形状态mask作为shape、bitmap alpha
+作为图片内在shape。缺省均按opacity，显式图片mask始终限制shape；PDF AIS设置第一个
+标志，图片适配器设置第二个标志。宿主可直接实现这套状态，不依赖PDF对象。
+
+合成前先分离内在alpha、内在shape、常量和图形状态mask：
+
+```
+object_alpha = intrinsic_alpha * constant * mask * geometric_coverage
+object_shape = intrinsic_shape * geometric_coverage * (AIS ? constant * mask : 1)
+```
+
+图片内在量包含其自身mask；自身mask覆盖图形状态mask时后者取1。组提交使用组累计
+alpha与shape，再应用外部常量/mask。透明Form内重置的项目及AIS继承分别遵循11.6.6。
+
+新增166个Decimal(40)场景，预乘/白底共1328通道，最大差0；192个公开画布组合覆盖
+RGB/CMYK、直接/隔离/非隔离子组、图片/路径、两种边缘和AIS/softmask开关。
+缺省/null、q/Q、4个错误值、旧sink前缀、截断指针和错误回调另有回归。
+[逐场景数据](validation/2026-10-19-alpha-source-reference.json)保留MuPDF/Poppler实际输出，
+opacity-mask与knockout、图片采样、复合填描仍有明显差异，不宣告整体兼容完成。
+
+后续继续核验零opacity边界、组色空间、渐变边界与全部工作包的验收矩阵。

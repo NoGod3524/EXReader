@@ -34,9 +34,9 @@ static exr_status new_mask(exr_canvas *c,exr_clip_mask **out,exr_error *e) {
 }
 /* The soft mask rides on the composite state so every pixel writer applies it. */
 static exr_composite_state *masked_state(exr_canvas *c) {
-  exr_composite_state *s=c->composite ? c->composite : ((c->soft_mask || c->gray_groups) ? &c->mask_state : NULL);
+  exr_composite_state *s=c->composite ? c->composite : ((c->soft_mask || c->gray_groups || (c->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE)) ? &c->mask_state : NULL);
   if(!s) return NULL;
-  s->gray=c->gray_groups!=0;
+  s->gray=c->gray_groups!=0;s->alpha_flags=c->alpha_flags;
   s->soft_mask=c->soft_mask;s->soft_mask_width=c->soft_mask_width;s->soft_mask_height=c->soft_mask_height;
   return s;
 }
@@ -168,13 +168,13 @@ exr_status exr_canvas_take(exr_canvas *c,exr_bitmap *out,exr_error *e) {
 exr_status exr_canvas_save(exr_canvas *c,exr_error *e) {
   exr_status status=ready(c,e); if(status!=EXR_OK) return status;
   if(c->depth==160) return finish(c,exr_fail(e,EXR_LIMIT,"Canvas clip stack exceeds 160"),e);
-  c->saved_blend[c->depth]=c->blend;
+  c->saved_blend[c->depth]=c->blend;c->saved_alpha_flags[c->depth]=c->alpha_flags;
   c->saved[c->depth++]=c->clip; if(c->clip) c->clip->refs++; return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_canvas_restore(exr_canvas *c,exr_error *e) {
   exr_status status=ready(c,e); if(status!=EXR_OK) return status;
   if(!c->depth || (c->layer_depth && c->depth<=c->layers[c->layer_depth-1].depth)) return finish(c,exr_fail(e,EXR_ARGUMENT,"Canvas clip stack underflow"),e);
-  unref(c,c->clip); c->blend=c->saved_blend[c->depth-1];c->clip=c->saved[--c->depth]; c->saved[c->depth]=NULL; return exr_fail(e,EXR_OK,"");
+  unref(c,c->clip); c->blend=c->saved_blend[c->depth-1];c->alpha_flags=c->saved_alpha_flags[c->depth-1];c->clip=c->saved[--c->depth]; c->saved[c->depth]=NULL; return exr_fail(e,EXR_OK,"");
 }
 static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_t count,const double transform_arg[6],
                             const exr_draw_style *style,const double *cmyk_fill,const double *cmyk_stroke,exr_error *e) {
@@ -364,8 +364,8 @@ exr_status exr_canvas_blend(exr_canvas *c,exr_blend_mode mode,exr_error *e) {
 }
 static exr_status sink_blend(void *context,exr_blend_mode mode,exr_error *e) { return exr_canvas_blend(context,mode,e); }
 exr_status exr_draw_sink_snapshot(const exr_draw_sink_ex *input,exr_draw_sink_ex *out,exr_error *e) {
-  size_t i,j,size,offsets[]={offsetof(exr_draw_sink_ex,blend),offsetof(exr_draw_sink_ex,begin_layer),offsetof(exr_draw_sink_ex,end_layer),offsetof(exr_draw_sink_ex,begin_group),offsetof(exr_draw_sink_ex,soft_mask),offsetof(exr_draw_sink_ex,extent),offsetof(exr_draw_sink_ex,shading),offsetof(exr_draw_sink_ex,path_cmyk),offsetof(exr_draw_sink_ex,image_cmyk),offsetof(exr_draw_sink_ex,image_space)};
-  size_t sizes[]={sizeof(out->blend),sizeof(out->begin_layer),sizeof(out->end_layer),sizeof(out->begin_group),sizeof(out->soft_mask),sizeof(out->extent),sizeof(out->shading),sizeof(out->path_cmyk),sizeof(out->image_cmyk),sizeof(out->image_space)};
+  size_t i,j,size,offsets[]={offsetof(exr_draw_sink_ex,blend),offsetof(exr_draw_sink_ex,begin_layer),offsetof(exr_draw_sink_ex,end_layer),offsetof(exr_draw_sink_ex,begin_group),offsetof(exr_draw_sink_ex,soft_mask),offsetof(exr_draw_sink_ex,extent),offsetof(exr_draw_sink_ex,shading),offsetof(exr_draw_sink_ex,path_cmyk),offsetof(exr_draw_sink_ex,image_cmyk),offsetof(exr_draw_sink_ex,image_space),offsetof(exr_draw_sink_ex,alpha_source)};
+  size_t sizes[]={sizeof(out->blend),sizeof(out->begin_layer),sizeof(out->end_layer),sizeof(out->begin_group),sizeof(out->soft_mask),sizeof(out->extent),sizeof(out->shading),sizeof(out->path_cmyk),sizeof(out->image_cmyk),sizeof(out->image_space),sizeof(out->alpha_source)};
   if(!input || input->struct_size<offsets[0] || input->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid extended drawing sink size");
   size=input->struct_size;
   for(i=sizeof(*out);i<size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Unsupported drawing sink extension");
@@ -409,11 +409,24 @@ static exr_status sink_extent(void *context,unsigned *width,unsigned *height,exr
      region-sized working buffer that happens to be active. */
   *width=(unsigned)c->canvas_width;*height=(unsigned)c->canvas_height;return EXR_OK;
 }
+exr_status exr_sink_alpha_source(const exr_draw_sink_ex *sink,unsigned flags,exr_error *e) {
+  if(sink->alpha_source) {
+    exr_status status=sink->alpha_source(sink->base.context,flags,e);
+    return status==EXR_OK && e && e->code!=EXR_OK ? e->code : status;
+  }
+  return flags&EXR_ALPHA_CONSTANT_SHAPE ? exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks shape alpha support") : EXR_OK;
+}
+static exr_status sink_alpha_source(void *context,unsigned flags,exr_error *e) {
+  exr_canvas *c=context;exr_status status=ready(c,e);if(status!=EXR_OK) return status;
+  if(flags&~(EXR_ALPHA_CONSTANT_SHAPE|EXR_ALPHA_IMAGE_SHAPE)) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid alpha source flags"),e);
+  c->alpha_flags=flags;return EXR_OK;
+}
 static exr_status sink_end_layer(void *context,unsigned commit,exr_error *e) { return exr_canvas_end_layer(context,commit,e); }
 exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error *e) {
   exr_draw_sink_ex sink={0};size_t size;exr_status status;
   if(!out || out->struct_size<offsetof(exr_draw_sink_ex,blend) || out->struct_size>4096) return exr_fail(e,EXR_ARGUMENT,"Invalid extended sink output size");
   size=out->struct_size<sizeof(sink) ? out->struct_size : sizeof(sink);
+  if(size>offsetof(exr_draw_sink_ex,alpha_source) && size<offsetof(exr_draw_sink_ex,alpha_source)+sizeof(sink.alpha_source)) size=offsetof(exr_draw_sink_ex,alpha_source);
   if(size>offsetof(exr_draw_sink_ex,image_space) && size<offsetof(exr_draw_sink_ex,image_space)+sizeof(sink.image_space)) size=offsetof(exr_draw_sink_ex,image_space);
   if(size>offsetof(exr_draw_sink_ex,image_cmyk) && size<offsetof(exr_draw_sink_ex,image_cmyk)+sizeof(sink.image_cmyk)) size=offsetof(exr_draw_sink_ex,image_cmyk);
   if(size>offsetof(exr_draw_sink_ex,path_cmyk) && size<offsetof(exr_draw_sink_ex,path_cmyk)+sizeof(sink.path_cmyk)) size=offsetof(exr_draw_sink_ex,path_cmyk);
@@ -425,7 +438,7 @@ exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error 
   if(size>offsetof(exr_draw_sink_ex,blend) && size<offsetof(exr_draw_sink_ex,begin_layer)) size=offsetof(exr_draw_sink_ex,blend);
   status=exr_canvas_get_sink(c,&sink.base,e);if(status!=EXR_OK) return status;
   sink.struct_size=size;sink.blend=sink_blend;sink.begin_layer=sink_begin_layer;sink.end_layer=sink_end_layer;sink.begin_group=sink_begin_group;sink.soft_mask=sink_soft_mask;sink.extent=sink_extent;sink.shading=sink_shading;sink.path_cmyk=sink_path_cmyk;
-  sink.image_cmyk=sink_image_cmyk;sink.image_space=sink_image_space;
+  sink.image_cmyk=sink_image_cmyk;sink.image_space=sink_image_space;sink.alpha_source=sink_alpha_source;
   memset(out,0,out->struct_size);memcpy(out,&sink,size);return EXR_OK;
 }
 exr_status exr_canvas_set_layer_budget(exr_canvas *c,size_t bytes,exr_error *e) {
@@ -512,10 +525,10 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   layer.bitmap=c->bitmap;layer.composite=c->composite;layer.clip=c->clip;layer.pending=c->group;layer.group_depth=c->group_depth;layer.depth=c->depth;
   layer.origin_x=region_x;layer.origin_y=region_y;layer.parent_offset_x=c->offset_x;layer.parent_offset_y=c->offset_y;
   layer.parent_gray_groups=c->gray_groups;
-  layer.parent_cmyk_groups=c->cmyk_groups;
+  layer.parent_cmyk_groups=c->cmyk_groups;layer.parent_alpha_flags=c->alpha_flags;
   layer.soft_mask=c->soft_mask;layer.soft_mask_owned=c->soft_mask_owned;
   layer.soft_mask_width=c->soft_mask_width;layer.soft_mask_height=c->soft_mask_height;
-  c->gray_groups=gray;
+  c->gray_groups=gray;c->alpha_flags=0;
   c->cmyk_groups=cmyk;
   layer.opacity=opacity;layer.blend=mode;layer.parent_blend=c->blend;c->layers[c->layer_depth++]=layer;c->layer_bytes+=bytes;
   c->bitmap=next;c->composite=state;c->clip=c->group=NULL;c->group_depth=0;c->blend=EXR_BLEND_NORMAL;memset(c->groups,0,sizeof(c->groups));
@@ -536,7 +549,7 @@ exr_status exr_canvas_end_layer(exr_canvas *c,unsigned commit,exr_error *e) {
   c->bitmap=layer.bitmap;c->composite=layer.composite;c->clip=layer.clip;c->group=layer.pending;c->group_depth=layer.group_depth;c->blend=layer.parent_blend;
   c->offset_x=layer.parent_offset_x;c->offset_y=layer.parent_offset_y;
   c->gray_groups=layer.parent_gray_groups;
-  c->cmyk_groups=layer.parent_cmyk_groups;
+  c->cmyk_groups=layer.parent_cmyk_groups;c->alpha_flags=layer.parent_alpha_flags;
   c->soft_mask=layer.soft_mask;c->soft_mask_owned=layer.soft_mask_owned;
   c->soft_mask_width=layer.soft_mask_width;c->soft_mask_height=layer.soft_mask_height;
   memset(c->groups,0,sizeof(c->groups));if(layer.group_depth) memcpy(c->groups,layer.pending_groups,layer.group_depth*sizeof(*c->groups));free(layer.pending_groups);

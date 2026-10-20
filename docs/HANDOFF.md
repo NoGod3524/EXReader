@@ -1,6 +1,6 @@
 # EXReader 开发状态与路线
 
-更新日期：2026-10-19。当前为无 UI 的 C11 SDK，MIT，版本 **3.35.1**、ABI epoch **1**、书库 schema **6**。
+更新日期：2026-10-19。当前为无 UI 的 C11 SDK，MIT，版本 **3.36.0**、ABI epoch **1**、书库 schema **6**。
 
 仓库：https://github.com/NoGod3524/EXReader 。开发分支：`codex/framework`。本次修复与验证入口见 [HANDOFF-NEXT.md](HANDOFF-NEXT.md)，审计发现见 [AUDIT-2026-10-19.md](AUDIT-2026-10-19.md)。
 

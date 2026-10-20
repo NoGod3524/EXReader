@@ -18,6 +18,7 @@ typedef struct exr_composite_state {
   struct exr_icc *cmyk_profile;float *pixels;float *cmyk_pixels;exr_bitmap backdrop;const struct exr_composite_state *backdrop_state;
   float *shape; /* Allocated only for groups consumed by a knockout/shape-tracked parent. */
   uint32_t left,top,right,bottom;unsigned depth;unsigned knockout,isolated,gray;
+  unsigned alpha_flags;
   unsigned backdrop_transparent; /* Non-isolated child of an isolated knockout. */
   /* Working buffers may cover only a sub-rectangle of the canvas. */
   int origin_x,origin_y;
@@ -26,6 +27,7 @@ typedef struct exr_composite_state {
 } exr_composite_state;
 exr_status exr_sink_begin_group(const exr_draw_sink_ex *sink,double opacity,exr_blend_mode mode,unsigned flags,exr_error *error);
 exr_status exr_sink_soft_mask(const exr_draw_sink_ex *sink,const unsigned char *mask,size_t width,size_t height,exr_error *error);
+exr_status exr_sink_alpha_source(const exr_draw_sink_ex *sink,unsigned flags,exr_error *error);
 exr_status exr_sink_extent(const exr_draw_sink_ex *sink,unsigned *width,unsigned *height,exr_error *error);
 /* DeviceCMYK device model shared by page painting, mesh shadings and groups. */
 uint32_t exr_gray_color(uint32_t color);

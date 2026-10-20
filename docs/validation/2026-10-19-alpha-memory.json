@@ -1,0 +1,11 @@
+{
+  "baseline": {
+    "one_pixel_canvas_payload_bytes": 3092,
+    "dll_sha256": "dd2869b9d85b06de4173e0869110380dec1a8c031f388cf8aca604b57def4a69"
+  },
+  "current": {
+    "one_pixel_canvas_payload_bytes": 3740,
+    "dll_sha256": "22586a351810df6a53bf836ba1f8484387574f27172dd28868fbb8a5ff82bf4c"
+  },
+  "payload_difference_bytes": 648
+}

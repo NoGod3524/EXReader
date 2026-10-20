@@ -72,7 +72,8 @@ static exr_status geometry(pdf_painter *r,const exr_vector_segment *segments,siz
   style.fill=rgba(r,&paint->fill,paint->intent); style.stroke=rgba(r,&paint->stroke,paint->intent); style.flags=flags&3; style.rule=rule;
   style.line=paint->line; style.dashes=paint->dashes; style.dash_count=paint->dash_count; style.dash_phase=paint->dash_phase; style.stroke_matrix=paint->matrix;
   painting=(style.flags!=0)&&(r->sink.base.path||r->sink.path_cmyk);
-  if(painting) status=blend_state(r,paint->blend,e);
+  if(painting) status=exr_sink_alpha_source(&r->sink,paint->alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0,e);
+  if(status==EXR_OK && painting) status=blend_state(r,paint->blend,e);
   if(status==EXR_OK && painting) status=mask_begin(r,paint,&mask,e);
   if(status==EXR_OK && painting) {
     if(r->sink.path_cmyk && (native_cmyk || !r->sink.base.path)) {
@@ -125,6 +126,7 @@ static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_p
   if(paint->fill.space==EXR_PDF_DEVICE_CMYK && !r->cmyk_profile) { status=exr_icc_default_cmyk(r->control,&r->cmyk_profile,e);if(status!=EXR_OK) return status; }
   status=exr_pdf_image_load_inks(file,id,resource_file,resources,rgba(r,&paint->fill,paint->intent),paint->intent,&image,native ? &inks : NULL,r->work,r->control,e);
   multiply(paint->matrix,flip,matrix);
+  if(status==EXR_OK) status=exr_sink_alpha_source(&r->sink,EXR_ALPHA_IMAGE_SHAPE|(paint->alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0),e);
   if(status==EXR_OK) status=blend_state(r,paint->blend,e);
   /* ISO 32000-1 11.6.4.3: either image mask overrides the graphics-state mask. */
   if(status==EXR_OK) {
@@ -151,7 +153,8 @@ static unsigned image_space(void *context) {
 static exr_status begin_group_event(void *context,const exr_pdf_paint_state *paint,unsigned flags,exr_error *e) {
   pdf_painter *r=context;paint_mask mask={0};exr_status status;
   if(r->group_depth==32) return exr_fail(e,EXR_LIMIT,"PDF paint group mask depth exceeds 32");
-  status=mask_begin(r,paint,&mask,e);
+  status=exr_sink_alpha_source(&r->sink,paint->alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0,e);
+  if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
   if(status==EXR_OK) status=exr_sink_begin_group(&r->sink,paint->fill.alpha,paint->blend,flags,e);
   if(status==EXR_OK) r->group_masks[r->group_depth++]=mask;
   else if(mask.pixels) status=mask_end(r,&mask,status,e);
@@ -162,19 +165,19 @@ static exr_status shading_event(void *context,const exr_bitmap *bitmap,const exr
   pdf_painter *r=context;
   exr_status status;paint_mask mask={0};int begun=0;
   if(!r->sink.shading && !(inks && r->sink.image_cmyk)) return exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer does not support PDF shadings");
-  if(paint->fill.alpha!=1) {
-    status=exr_sink_begin_group(&r->sink,paint->fill.alpha,paint->blend,EXR_GROUP_ISOLATED,e);
-    if(status!=EXR_OK) return status;
-    begun=1;
-  }
-  status=blend_state(r,begun ? EXR_BLEND_NORMAL : paint->blend,e);
+  status=exr_sink_alpha_source(&r->sink,EXR_ALPHA_IMAGE_SHAPE|(paint->alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0),e);
   if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
+  if(status==EXR_OK && paint->fill.alpha!=1) {
+    status=exr_sink_begin_group(&r->sink,paint->fill.alpha,paint->blend,EXR_GROUP_ISOLATED,e);
+    if(status==EXR_OK) { begun=1;status=exr_sink_alpha_source(&r->sink,EXR_ALPHA_IMAGE_SHAPE,e); }
+  }
+  if(status==EXR_OK) status=blend_state(r,begun ? EXR_BLEND_NORMAL : paint->blend,e);
   if(status==EXR_OK && inks && r->sink.image_cmyk) {
     exr_image_layer layer={0};layer.bitmap=*bitmap;layer.interpolate=1;
     status=r->sink.image_cmyk(r->sink.base.context,&layer,inks,matrix,1,e);
   } else if(status==EXR_OK) status=r->sink.shading(r->sink.base.context,bitmap,matrix,e);
-  if(mask.pixels) status=mask_end(r,&mask,status,e);
   if(begun) { exr_error cleanup={0};exr_status closed=r->sink.end_layer(r->sink.base.context,status==EXR_OK,status==EXR_OK ? e : &cleanup);if(status==EXR_OK) status=closed; }
+  if(mask.pixels) status=mask_end(r,&mask,status,e);
   return status;
 }
 static exr_status end_layer_event(void *context,unsigned commit,exr_error *e) {

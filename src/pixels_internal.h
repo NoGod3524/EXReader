@@ -20,6 +20,11 @@ static inline void exr_pixel(exr_bitmap *bitmap,int x,int y,uint32_t color,unsig
     p[3]=(unsigned char)((denominator+127)/255);
   }
 }
+/* Fully factored object alpha/shape, without reapplying masks or constants. */
+void exr_pixel_object(exr_bitmap *bitmap,int x,int y,uint32_t color,double alpha,double shape,exr_blend_mode mode,exr_composite_state *state);
+void exr_pixel_object_cmyk(exr_bitmap *bitmap,int x,int y,const double cmyk[4],double alpha,double shape,exr_blend_mode mode,exr_composite_state *state);
+void exr_pixel_alpha_shape(const exr_composite_state *state,size_t x,size_t y,double alpha,double shape,double constant,
+                           unsigned coverage,double *out_alpha,double *out_shape);
 void exr_pixel_blend(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage,exr_blend_mode mode);
 void exr_pixel_composite(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage,exr_blend_mode mode,exr_composite_state *state);
 /* DeviceCMYK source into a CMYK group buffer; converts to RGBA when the active
