@@ -39,7 +39,7 @@
   },
   "corpus": {
     "cases_file_sha256": "50db6e6f03d694d2be70680f6bb334122e43aeaf9e5db0720fa55526775c5a02",
-    "reference_file_sha256": "ad65d422bf0e9dff78d5dcf7a7bafa98d1f109621648dc7d97b1adf3da1125e5",
+    "reference_file_sha256": "e768235db0833f0649881fac89da0ac952e36a4184c8f89a393a3251ebab4e8b",
     "sequences_per_script": 50,
     "glyph_mismatch": 0,
     "cluster_containment_failures": 0,
@@ -241,5 +241,10 @@
     "licenses/noto-sans-test-fonts.txt",
     "THIRD_PARTY_NOTICES.md"
   ],
-  "code_commit": "a119ae645e1aac0189d95c95f69b5ecd10091136"
+  "code_commit": "a119ae645e1aac0189d95c95f69b5ecd10091136",
+  "docs_commit": "378ac41f118973ebca5a92450998ba21a39a22c1",
+  "delivery_commits": [
+    "a119ae645e1aac0189d95c95f69b5ecd10091136",
+    "378ac41f118973ebca5a92450998ba21a39a22c1"
+  ]
 }
