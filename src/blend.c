@@ -91,7 +91,7 @@ static void write_rgba(exr_bitmap *b,exr_composite_state *state,size_t x,size_t 
     float *q=state->pixels+buffer_index(state,b->width,x,y)*5;for(k=0;k<3;k++) q[k]=(float)fmax(0,fmin(a,out[k]));q[3]=(float)a;
     q[4]=(float)fmax(0,fmin(1,object_alpha+(1-(state->knockout ? shape : object_alpha))*q[4]));
     if(state->shape) { float *f=state->shape+buffer_index(state,b->width,x,y);*f=(float)fmax(0,fmin(1,shape+(1-shape)*(*f))); }
-    if(object_alpha>0) {
+    if(object_alpha>0 || (shape>0 && state->shape)) {
       if(x<state->left) state->left=(uint32_t)x;
       if(y<state->top) state->top=(uint32_t)y;
       if(x>=state->right) state->right=(uint32_t)x+1;
@@ -150,7 +150,7 @@ static void write_cmyk(exr_bitmap *b,exr_composite_state *state,size_t x,size_t 
   for(k=0;k<5;k++) q[k]=(float)fmax(0,fmin(1,out[k]));
   q[5]=(float)fmax(0,fmin(1,object_alpha+(1-(state->knockout ? shape : object_alpha))*q[5]));
   if(state->shape) { float *f=state->shape+cmyk_index(b,x,y);*f=(float)fmax(0,fmin(1,shape+(1-shape)*(*f))); }
-  if(object_alpha>0) {
+  if(object_alpha>0 || (shape>0 && state->shape)) {
     if(x<state->left) state->left=(uint32_t)x;
     if(y<state->top) state->top=(uint32_t)y;
     if(x>=state->right) state->right=(uint32_t)x+1;
@@ -177,7 +177,7 @@ void exr_pixel_alpha_shape(const exr_composite_state *state,size_t x,size_t y,do
 void exr_pixel_object_cmyk(exr_bitmap *bitmap,int x,int y,const double source[4],double alpha,double shape,
                             exr_blend_mode mode,exr_composite_state *state) {
   double back[5],out[5];unsigned k;
-  if(!shape || !alpha) return;
+  if(!shape || (!alpha && !(state && (state->knockout || state->shape)))) return;
   if(!state || !state->cmyk_pixels) {
     double rgb[3];uint32_t color=0;
     exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,source,rgb,1);
@@ -195,7 +195,7 @@ void exr_pixel_object_cmyk(exr_bitmap *bitmap,int x,int y,const double source[4]
 void exr_pixel_object(exr_bitmap *bitmap,int x,int y,uint32_t color,double alpha,double shape,
                        exr_blend_mode mode,exr_composite_state *state) {
   double back[4],source[3],out[4];unsigned k;
-  if(!shape || !alpha) return;
+  if(!shape || (!alpha && !(state && (state->knockout || state->shape)))) return;
   if(state && state->gray) color=exr_gray_color(color);
   for(k=0;k<3;k++) source[k]=((color>>(24-8*k))&255)/255.;
   if(state && state->cmyk_pixels) {
@@ -299,15 +299,16 @@ static exr_status frame_cmyk(exr_bitmap *target,const exr_bitmap *source,double 
       if(target_state && target_state->soft_mask) object_opacity*=
         tx<target_state->soft_mask_width && ty<target_state->soft_mask_height ? target_state->soft_mask[ty*target_state->soft_mask_width+tx]/255. : 0;
       if(target_state && (target_state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE)) shape*=object_opacity;
-      if(!covered || !object_opacity || !shape) continue;
+      if(!covered || !shape) continue;
+      if(!object_opacity && !(target_state && (target_state->knockout || target_state->shape))) continue;
       if(source_state->isolated) {
         base_alpha=q[4]*object_opacity;
-        if(base_alpha<=0) continue;
-        for(k=0;k<4;k++) src[k]=fmax(0,fmin(1,q[k]/q[4]));
+        if(base_alpha<=0 && !(target_state && (target_state->knockout || target_state->shape))) continue;
+        for(k=0;k<4;k++) src[k]=q[4]>0 ? fmax(0,fmin(1,q[k]/q[4])) : 0;
       } else {
-        obj=q[5];if(obj<=0) continue;
+        obj=q[5];if(obj<=0 && !(target_state && (target_state->knockout || target_state->shape))) continue;
         read_cmyk_backdrop(source_state,x,y,back);
-        for(k=0;k<4;k++) src[k]=fmax(0,fmin(1,(q[k]-(1-obj)*back[k])/obj));
+        for(k=0;k<4;k++) src[k]=obj>0 ? fmax(0,fmin(1,(q[k]-(1-obj)*back[k])/obj)) : 0;
         base_alpha=obj*object_opacity;
       }
       alpha=base_alpha*covered;
@@ -370,7 +371,7 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         /* An isolated RGB child converts only its finished colour, preserving
            the parent's inks and blending the group opacity in the parent space. */
         double rgb[3],inks[4],out[5],alpha=p[3]/255.*object_opacity,covered=coverage/255.;unsigned k;
-        if(!alpha) continue;
+        if(!alpha && !(target_state->knockout || target_state->shape)) continue;
         if(!exr_vector_work(work,cost+96)) return exr_fail(e,EXR_LIMIT,"RGB to CMYK group commit exceeds work budget");
         for(k=0;k<3;k++) rgb[k]=p[k]/255.;
         exr_device_cmyk_from_rgb(target_state->cmyk_profile,rgb,inks);
@@ -397,9 +398,8 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         read_backdrop(target_state,tx,ty,base);read_rgba(target,target_state,tx,ty,current);
         if(source_state && source_state->pixels && !source_state->isolated) {
           const float *q=source_state->pixels+(y*source->width+x)*5;double initial[4],ag=q[4];
-          if(!ag) continue;
           read_backdrop(source_state,x,y,initial);
-          for(k=0;k<3;k++) rgb[k]=fmax(0,fmin(1,(q[k]-(1-ag)*initial[k])/ag));
+          for(k=0;k<3;k++) rgb[k]=ag>0 ? fmax(0,fmin(1,(q[k]-(1-ag)*initial[k])/ag)) : 0;
           alpha=ag*object_opacity;
         } else for(k=0;k<3;k++) rgb[k]=p[k]/255.;
         over_rgba(base,rgb,alpha/shape,mode,painted);
@@ -411,11 +411,11 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         double back[4],rgb[3],out[4],ag=p[3]/255.;unsigned k;
         const float *q=source_state && source_state->pixels && !source_state->isolated ? source_state->pixels+(y*source->width+x)*5 : NULL;
         if(q) ag=q[4];
-        if(!ag || !object_opacity) continue;
+        if((!ag || !object_opacity) && !(target_state && target_state->shape)) continue;
         if(!exr_vector_work(work,cost+32+(target_state ? target_state->depth*4 : 0))) return exr_fail(e,EXR_LIMIT,"Group backdrop removal exceeds work budget");
         read_rgba(target,target_state,tx,ty,back);
         { double initial[4];if(q) read_backdrop(source_state,x,y,initial);
-          for(k=0;k<3;k++) rgb[k]=q ? fmax(0,fmin(1,(q[k]-(1-ag)*initial[k])/ag)) : p[k]/255.; }
+          for(k=0;k<3;k++) rgb[k]=q ? (ag>0 ? fmax(0,fmin(1,(q[k]-(1-ag)*initial[k])/ag)) : 0) : p[k]/255.; }
         ag*=object_opacity*coverage/255.;over_rgba(back,rgb,ag,mode,out);write_rgba(target,target_state,tx,ty,out,ag,shape*coverage/255.);continue;
       }
       if(!a) continue;
@@ -429,7 +429,8 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
 
 /* ISO 32000-1 11.6.2: fill+stroke form one transparency element. Each
    visible subobject sees the original backdrop; visible stroke shape replaces
-   fill. Zero-opacity strokes do not mark the element (MuPDF/PDFium behavior).
+   fill. A zero-opacity stroke does not hide a visible fill. An entirely
+   zero-opacity element still has shape when a knockout/shape parent needs it.
    Clip covers the resulting element once. */
 exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,
   uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,
@@ -443,15 +444,17 @@ exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,cons
       double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
       double fw,sw,bw,fa,sa,ba,a,m=1;unsigned channel;
       exr_bitmap first={1,1,target->channels,fp,target->channels},second={1,1,target->channels,sp,target->channels};
-      if(!(fill_color&255)) f=0;
-      if(!(stroke_color&255)) s=0;
+      if((fill_color&255) || (stroke_color&255) || !(state && (state->knockout || state->shape))) {
+        if(!(fill_color&255)) f=0;
+        if(!(stroke_color&255)) s=0;
+      }
       fw=f*(1-s)*k;sw=s*k;bw=1-fw-sw;
       if((!f && !s) || !k) continue;
       if(!exr_vector_work(work,cost+(state ? 64+state->depth*4 : 0))) return exr_fail(e,EXR_LIMIT,"Compound path blend exceeds budget");
       if(state && state->soft_mask) {
         m=((size_t)x<state->soft_mask_width && (size_t)y<state->soft_mask_height) ?
           state->soft_mask[(size_t)y*state->soft_mask_width+(size_t)x]/255. : 0;
-        if(!m) continue;
+        if(!m && (!(state->knockout || state->shape) || (state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE))) continue;
       }
       if(state && (state->pixels || (state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE))) {
         double back[4],base[4],fc[3],sc[3],fr[4],sr[4],out[4],af=(fill_color&255)/255.,as=(stroke_color&255)/255.;
@@ -495,15 +498,17 @@ exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill
     for(x=0;x<target->width;x++) {
       double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
       double fw,sw,bw,m=1,back[5],base[5],fr[5],sr[5],out[5],af=fill_alpha,as=stroke_alpha,opacity_mask,shape_mask=1;unsigned c;
-      if(fill_alpha<=0) f=0;
-      if(stroke_alpha<=0) s=0;
+      if(fill_alpha>0 || stroke_alpha>0 || !(state->knockout || state->shape)) {
+        if(fill_alpha<=0) f=0;
+        if(stroke_alpha<=0) s=0;
+      }
       fw=f*(1-s)*k;sw=s*k;bw=1-fw-sw;
       if((!f && !s) || !k) continue;
       if(!exr_vector_work(work,cost+64+(size_t)state->depth*4)) return exr_fail(e,EXR_LIMIT,"Compound path blend exceeds budget");
       if(state->soft_mask) {
         m=((size_t)x<state->soft_mask_width && (size_t)y<state->soft_mask_height) ?
           state->soft_mask[(size_t)y*state->soft_mask_width+(size_t)x]/255. : 0;
-        if(!m) continue;
+        if(!m && (!(state->knockout || state->shape) || (state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE))) continue;
       }
       opacity_mask=m;
       if(state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE) {

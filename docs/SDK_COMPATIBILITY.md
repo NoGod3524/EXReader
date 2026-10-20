@@ -87,7 +87,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.37.0 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.37.1 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -459,7 +459,7 @@ development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.37.0 EXACT
+Select this package with `find_package(EXReader 3.37.1 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -614,3 +614,9 @@ existing bounded evaluator. Array children share one 1 MiB/16-level/1024-node
 graph budget; their evaluation costs accumulate in the shared drawing budget.
 Type 1 currently uses a 512×512 bitmap, with an additional same-size ink bitmap
 only for native CMYK consumers. Complete Extend and adaptive sampling remain pending.
+
+
+## 3.37.1 zero-opacity correction
+
+The SDK/PDF versions are 3.37.1; the core component is 3.36.3. ABI1/schema6, public signatures and record layouts remain unchanged.
+A zero-opacity primitive or subgroup retains its geometric shape when a knockout or shape-tracked parent needs it. Constant-shape zero and intrinsic zero shape remain no-ops. This corrects earlier path/image/CMYK/group inconsistencies; see MASK_SEMANTICS.md for the ISO mapping and external-renderer differences.

@@ -4510,3 +4510,27 @@ GCC/MSVC各141/141、ICC-OFF10/10、安装4/4、13头C++和EXACT3.37.0实际运�
 [本地汇总](validation/2026-10-19-shading-function.json)、[逐场景对照](validation/2026-10-19-shading-function-reference.json)。
 
 3.36.2的CI39350915545为6/7成功：Ubuntu GCC12对径向根的条件输出读取产生maybe-uninitialized告警，严格编译中止；Windows/macOS、sanitizer、移动库和fuzz成功。3.37.0改用初始化的局部best，找到有效根才写出输出；[失败作业原始记录](validation/2026-10-19-shading-geometry-ci.json)。完整Extend与自适应采样继续推进。
+
+
+### 3.37.0跨平台CI
+
+代码62f059786be92003f76515d0ca6d253d524d90a4的[CI39352336301](https://github.com/NoGod3524/EXReader/actions/runs/39352336301)7/7成功。
+三桌面各141/141、sanitizer138/138，20万次变异、5种子、15434次解析无崩溃；安装/裁剪、JNI/Swift宿主与移动库交叉编译通过。
+Ubuntu GCC12严格编译通过，关闭上批的maybe-uninitialized构建问题。[作业记录](validation/2026-10-19-shading-function-ci.json)。
+
+
+## 3.37.1：零opacity与非零shape（2026-10-19）
+
+依据ISO32000-1 11.4.6，零opacity仍与初始背景合成，再按shape覆盖先前结果。路径、图片、复合填描及RGB/CMYK组不再把零alpha直接当作零shape；需要传递shape的子组记录无颜色贡献的边界。背景移除在源alpha为零时使用未定义源色的安全值，避免除以零。普通不跟踪shape的路径和AIS常量shape为零时保留快速返回，无新像素平面。
+
+64份PDF覆盖零常量、零图形状态mask、图片自有mask覆盖和AIS；192个画布组合覆盖RGB/CMYK、两种父组隔离状态、四种嵌套、两种AIS和六种输入。2500检查通过。独立Decimal参考最大差1/255，3.37.0及MuPDF/Poppler最大差204，按原始输出保存。
+旧独立参考曾显式跳过零alpha，现以修正的公式生成新命名的两份RGBA参考，各384个像素变化。原RGBA及历史测量不改，3/255容差保持，历史50场景仍可重生。
+
+GCC/MSVC各142/142、ICC-OFF11/11、安装4/4、13头C++和EXACT3.37.1运行通过。703项ABI测量逐行保持，两个DLL各305导出，分层99/1042/899无逆向。SDK/PDF3.37.1，核心3.36.3，其余3.33.0，ABI1/schema6。
+[汇总](validation/2026-10-19-zero-opacity.json)、[逐场景对照](validation/2026-10-19-zero-opacity-reference.json)、[普通六场景交替基准](validation/2026-10-19-zero-opacity-benchmark.json)。完整WP1/WP2与其余工作包继续推进。
+
+
+### 3.37.1普通RGB性能复测
+
+同机五轮交替、每轮64次重画、scale4；六场景全部RGBA散列相同。首画比率flat1.009、primitives0.992、state0.962、groups1.052、compound0.920、ap-groups1.032；重画p95分别0.994、1.075、1.015、1.028、0.897、1.061。未触发本批10%调查阈值。68个新输入与参考重生逐字节相同。
+[原始样本](validation/2026-10-19-zero-opacity-benchmark.json)。

@@ -10,7 +10,7 @@ from pdf_group_reference import color, over
 PRIMITIVES = ['path', 'text', 'group', 'shading', 'soft', 'explicit', 'key', 'compound']
 
 
-def scene(name, isolated, shape, primitive, rate, ais=None, tail='', mode='Normal', backdrop=False):
+def scene(name, isolated, shape, primitive, rate, ais=None, tail='', mode='Normal', backdrop=False, mask_rate=128):
     a = rate/255
     bodies = {
         'path': '0 0 16 16 re f', 'text': 'BT /Glyph 16 Tf (A) Tj ET',
@@ -31,7 +31,7 @@ def scene(name, isolated, shape, primitive, rate, ais=None, tail='', mode='Norma
                '/Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /K true /I %s %s >> /Resources << %s >>' %
                ('true' if isolated else 'false', '/CS /DeviceRGB' if isolated else '', resources)),
         stream('/A gs 1 g 0 0 16 16 re f', '/Type /XObject /Subtype /Form /BBox [0 0 16 16] '
-               '/Group << /S /Transparency /I true /CS /DeviceRGB >> /Resources << /ExtGState << /A << /ca %.12g >> >> >>' % (128/255)),
+               '/Group << /S /Transparency /I true /CS /DeviceRGB >> /Resources << /ExtGState << /A << /ca %.12g >> >> >>' % (mask_rate/255)),
         stream('0 0 1 rg 0 0 16 16 re f', '/Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true /CS /DeviceRGB >> /Resources << >>'),
         b'null',
         stream(b'\0\0\xff\0\0\xff', '/Type /XObject /Subtype /Image /Width 2 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Interpolate true /SMask 15 0 R'),

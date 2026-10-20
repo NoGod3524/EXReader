@@ -43,7 +43,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
     if(edge->y0!=edge->y1) { low=fmin(low,fmin(edge->y0,edge->y1)); high=fmax(high,fmax(edge->y0,edge->y1)); }
   }
   status=exr_control_cancel(control,error); if(status!=EXR_OK) return status;
-  if(!(cmyk ? cmyk_alpha>0 : (color&255)) || high<=0 || low>=bitmap->height || low>=high || right_bound<=0 || left_bound>=bitmap->width || left_bound>=right_bound) return exr_fail(error,EXR_OK,"");
+  if((!(cmyk ? cmyk_alpha>0 : (color&255)) && (!state || !(state->knockout || state->shape) || (state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE))) || high<=0 || low>=bitmap->height || low>=high || right_bound<=0 || left_bound>=bitmap->width || left_bound>=right_bound) return exr_fail(error,EXR_OK,"");
   top=(int)fmax(0,floor(low)); bottom=(int)fmin(bitmap->height,ceil(high));
   left=(int)fmax(0,floor(left_bound)); right=(int)fmin(bitmap->width,ceil(right_bound)); row_width=(uint32_t)(right-left);
   crossings=malloc(count*sizeof(*crossings)); coverage=calloc(row_width,sizeof(*coverage));
