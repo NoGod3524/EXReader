@@ -22,12 +22,12 @@
       "configuration": "Release",
       "native_fuzz_tests_passed": 7,
       "native_fuzz_tests_total": 7,
-      "elapsed_wall_seconds": 10.28,
+      "elapsed_wall_seconds": 6.4,
       "driver_checks": 31,
       "pipeline_checks": 51,
       "synthetic_accounting_checks": 127,
-      "log": "C:\\Users\\Oscar\\exr-gcc\\reliability-ctest-20261020-r3.log",
-      "log_sha256": "cb7ca91768138785d0cf6b3cb7e5006877a8cfde7969b382c45d49c8fcd448e8",
+      "log": "C:\\Users\\Oscar\\exr-gcc\\reliability-ctest-20261020-portability.log",
+      "log_sha256": "7981280a09e719f0dd3b7365509b99d809db5573f6b1cb49f1b82bd2c08fd614",
       "sanitized": false,
       "binaries": {
         "C:\\Users\\Oscar\\exr-gcc\\exreader-fuzz.exe": "442d079afc428eec76068c5a665d6ccf2a1e5a3c992f0d4677c39b47f01fee0f",
@@ -42,12 +42,12 @@
       "configuration": "Release",
       "native_fuzz_tests_passed": 7,
       "native_fuzz_tests_total": 7,
-      "elapsed_wall_seconds": 10.28,
+      "elapsed_wall_seconds": 6.32,
       "driver_checks": 31,
       "pipeline_checks": 51,
       "synthetic_accounting_checks": 127,
-      "log": "C:\\Users\\Oscar\\exr-build\\reliability-ctest-20261020-r3.log",
-      "log_sha256": "923d8ef242bd9fa4802b87b86aa6cd30f93b1a7bd92d236fdc68450fbf5c4e51",
+      "log": "C:\\Users\\Oscar\\exr-build\\reliability-ctest-20261020-portability.log",
+      "log_sha256": "eddcfb62f5a6eec35a63c7d56968213892dc4329dd4248deecf720db57486088",
       "sanitized": false,
       "binaries": {
         "C:\\Users\\Oscar\\exr-build\\Release\\exreader-fuzz.exe": "a7fa4f3ab001a32da2e5dd4061e885f4e3c28fd688405abeefb3e5422f02982d",
@@ -109,14 +109,61 @@
   },
   "ci": {
     "native": {
-      "status": "pending"
+      "run_id": 39369264866,
+      "source_sha": "81712848972a9745d6a86558742c6ec10cf6426a",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39369264866",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs_passed": 7,
+      "jobs_total": 7,
+      "status_file": "C:\\Users\\Oscar\\exr-gcc\\reliability-native-r2-status.json",
+      "artifact_inventory": "C:\\Users\\Oscar\\exr-gcc\\reliability-native-39369264866-artifacts.json",
+      "downloaded_evidence": "C:\\Users\\Oscar\\exr-gcc\\reliability-native-39369264866-evidence",
+      "independent_local_summary": "C:\\Users\\Oscar\\exr-gcc\\reliability-native-39369264866-local-summary.json",
+      "independent_local_summary_sha256": "f69fb13262cc1e37b3dc81e737fc47c3932a5581d67816b1a935dba19a4dcb5a"
     },
     "manual_packaging_smoke": {
-      "status": "pending"
+      "run_id": 39369283006,
+      "source_sha": "81712848972a9745d6a86558742c6ec10cf6426a",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39369283006",
+      "profile": "smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs_passed": 6,
+      "jobs_total": 6,
+      "relocated_runtime_verified": true,
+      "downloaded_evidence": "C:\\Users\\Oscar\\exr-gcc\\reliability-ci-39369283006\\evidence",
+      "ci_summary": "C:\\Users\\Oscar\\exr-gcc\\reliability-ci-39369283006\\summary\\reliability-summary.json",
+      "ci_summary_sha256": "382dd2fb67f34cf750e37b5afe874c071ac5285b8646c0fe8ce2ef1dfe5b6565",
+      "independent_local_summary": "C:\\Users\\Oscar\\exr-gcc\\reliability-ci-39369283006\\local-summary.json",
+      "independent_local_summary_sha256": "3efdcdcca0d33ea3271338820a812312c684c94b90ce9ca5124848fc943147e8",
+      "report_fingerprints_and_cpu_totals_equal": true,
+      "is_long_acceptance": false
     },
     "acceptance_24_cpu_hours_per_target": {
-      "status": "not_started",
-      "passed": false
+      "run_id": 39370107827,
+      "source_sha": "81712848972a9745d6a86558742c6ec10cf6426a",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39370107827",
+      "profile": "acceptance",
+      "status": "queued",
+      "observed_at_utc": "2026-10-20T04:34:42.551223+00:00",
+      "planned_targets": [
+        "parser",
+        "font",
+        "layout",
+        "render"
+      ],
+      "planned_shards_per_target": 24,
+      "requested_process_cpu_seconds_per_shard": 3600,
+      "required_process_cpu_hours_per_target": 24,
+      "passed": false,
+      "summary": null,
+      "phase": "campaigns_running",
+      "build_passed": true,
+      "observed_campaign_jobs": 96,
+      "observed_in_progress_shards": 8,
+      "observed_completed_shards": 0,
+      "status_file": "C:/Users/Oscar/exr-gcc/reliability-acceptance-status.json"
     },
     "initial_failures": [
       {
@@ -125,7 +172,16 @@
         "source_sha": "31b3c8848a06e4539be16d0dfb28af09ba090474",
         "affected_job": "fuzz",
         "reason": "Synthetic timeout mock also intercepted Linux platform discovery",
-        "status": "fuzz_failed_other_jobs_pending"
+        "status": "completed",
+        "conclusion": "failure",
+        "raw_log": "C:\\Users\\Oscar\\exr-gcc\\reliability-native-39369012229-complete-failed.log",
+        "downloaded_failure_artifact": "C:\\Users\\Oscar\\exr-gcc\\reliability-native-39369012229-failure",
+        "failure_artifact_upload_and_download_verified": true,
+        "raw_log_sha256": "459ed16c3919741b88463cf0b343039326b7a3af3db6e673a0aee1da65e5e465",
+        "downloaded_failure_artifact_sha256": {
+          "last.bin": "3d0dfdbf70609139522311508b129658c14a7fbe53e420b6a82032b42e55b19f",
+          "last.bin.format": "83e895b8f0af41ca0905b4e89c6979eab60b36a62bdb8efc4730dfd446aded7f"
+        }
       },
       {
         "workflow": "reliability.yml",
@@ -134,16 +190,18 @@
         "profile": "smoke",
         "status": "failed",
         "reason": "Same synthetic timeout test isolation error",
-        "raw_log": "C:/Users/Oscar/exr-gcc/reliability-manual-39369035294-failed.log"
+        "raw_log": "C:/Users/Oscar/exr-gcc/reliability-manual-39369035294-failed.log",
+        "raw_log_sha256": "4e5c30c433969d49634b47fc9efa9b3756eae323cbe68a8c62eb7afe1c981d49"
       }
     ]
   },
   "wp16_release_complete": false,
-  "remaining_release_requirements": "docs/HANDOFF.md",
+  "remaining_release_requirements": "24 CPU hour summary plus the complete versioned documentation, platform delivery, device consumption, licensing and benchmark conditions in docs/HANDOFF.md",
   "protected_untracked_file": {
     "file": "docs/validation/2026-10-19-shading-extent-ci.json",
     "sha256": "a955abda1e35fd456172b2e78e1d687799e4ab5f1f977dec0efd7684aae9fdc1",
     "include_in_commit": false
   },
-  "post_verification_changes": "Synthetic timeout test now isolates platform discovery across Windows and Linux; accounting rechecked after the change."
+  "post_verification_changes": "Synthetic timeout isolation was corrected and revalidated locally and on Linux CI. Subsequent record updates change documentation only.",
+  "validated_source_sha": "81712848972a9745d6a86558742c6ec10cf6426a"
 }

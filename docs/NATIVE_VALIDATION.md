@@ -15,9 +15,16 @@ each meet a one-second process CPU budget. These Windows builds are unsanitized
 and the checkout is dirty; these are local tool checks, not long acceptance.
 The SDK remains 3.38.0; engine sources and public interfaces are unchanged.
 
-File hashes, precise local logs, reports and pending CI/24CPU-hour status are in
+File hashes, precise local logs, reports and CI/24CPU-hour status are in
 `docs/validation/2026-10-20-reliability.json`. The existing broader WP16 release
 conditions remain in `docs/HANDOFF.md`; this tooling does not complete them.
+
+On source `8171284`, native CI passes all 7 jobs and manual packaging smoke
+passes all 6 jobs. Downloaded four-target evidence from both workflows passes
+independent local aggregation. The first Linux synthetic timeout isolation
+failure and its uploaded artifacts are retained separately. Acceptance run
+39370107827 is in progress with 24 one-CPU-hour shards per target; no long
+acceptance summary has passed yet. Full run links are in the evidence JSON.
 
 Historical sections S013–S100 refer to development steps, formerly numbered
 0.13–0.100. The [milestone version map](VERSIONING.md) defines the current release
