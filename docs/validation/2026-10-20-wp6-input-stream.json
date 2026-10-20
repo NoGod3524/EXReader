@@ -7,10 +7,12 @@
   "abi": 1,
   "schema_version": 6,
   "engine_source_sha": "524de4f46fa14bc5d9475daca9f85900560fb229",
+  "package_source_sha": "38ceedb39990c44d14c9314fb06ed2a8a355f266",
+  "source_files_scope": "Current files; engine suites and memory probes use engine_source_sha; only install packaging changed afterward",
   "source_files": {
     "CMakeLists.txt": {
       "path": "C:\\Users\\Oscar\\exr\\CMakeLists.txt",
-      "sha256": "328d2bc7990ccc4bece082576de0ff7158dbca9cb3adc1f9e9b8b0753dde8dea"
+      "sha256": "c4db2ae1997ef0440c3cf8486d88e5cce4ed6cfc20fe2c66c659ca4edc7baa09"
     },
     "cmake/versions.cmake": {
       "path": "C:\\Users\\Oscar\\exr\\cmake\\versions.cmake",
@@ -123,17 +125,77 @@
     }
   },
   "ci": {
-    "status": "pending",
-    "reason": "Current versioned documents and evidence must be packaged by the final native run",
-    "initial_code_run": {
-      "run_id": 39490506900,
-      "status_file": {
-        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-ci-initial.json",
-        "sha256": "d901779078cf9272ae68b37119938304a5be3ef19161169bbe6b798de47417dd"
-      }
+    "run_id": 39493376950,
+    "source_sha": "38ceedb39990c44d14c9314fb06ed2a8a355f266",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs_passed": 7,
+    "jobs_total": 7,
+    "status_file": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-package-ci-completed.json",
+      "sha256": "ee4b42c42a96433e866e8736dc95f0a45a7dde2f255915eabbb96dda2344154a"
     },
-    "sanitizer_passed": false,
-    "artifacts_verified": false
+    "full_log": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-package-ci-full.log",
+      "sha256": "d0422decd018850a24f2e9a8fa1fb1a3776103116c7dd127bf67b6b3cdde0cbe"
+    },
+    "sanitizer_passed": true,
+    "artifacts_verified": true,
+    "artifact_inventory": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-wp6-package\\inventory.json",
+      "sha256": "94e2631a5f526bc36e59fc96ee398566b86d305a2a55581d3532c3378a6bf17b"
+    },
+    "strict_smoke_reaggregation": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-wp6-package\\local-strict-smoke-summary.json",
+      "sha256": "ac024f88cc4b63e6669ea65ae66b1aca71c22655b85aeccbdeb4c4baff29ea61"
+    },
+    "prior_code_ci": {
+      "run_id": 39490988772,
+      "status_file": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-ci-completed.json",
+        "sha256": "2b6d591b0418e70d888b0acc4d8cc540c103832cca40db49b3a4dc4d31e1b230"
+      },
+      "jobs_passed": 7,
+      "artifacts_accepted": false,
+      "rejected_inventory": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\native-artifacts-wp6-input\\rejected-inventory.json",
+        "sha256": "0d64aabaa50243e1b9fed3f7a21fe8629a770673036d74424b25ed765d167b68"
+      },
+      "reason": "Installed support matrix missing; fixed by the package follow-up"
+    },
+    "superseded_code_only_run": {
+      "run_id": 39490506900,
+      "reason": "Replaced to package current versioned documents and the initial validation record",
+      "status_before_replacement": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-code-ci-before-supersede.json",
+        "sha256": "a9824561f62a30021b0b8647b0f3de683e4f3fd71fa5efc15f74dbaf2393e92e"
+      },
+      "cancellation_log": {
+        "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-code-ci-cancel.log",
+        "sha256": "8de12bec071a2138ab4b39c51d3a6147b3dafe4206bb2bb9e5efb2d62860f905"
+      }
+    }
+  },
+  "packaging_followup": {
+    "engine_runtime_changed": false,
+    "support_matrix_installed": true,
+    "consumer_guard_source": {
+      "path": "C:\\Users\\Oscar\\exr\\tests\\sdk_components\\CMakeLists.txt",
+      "sha256": "ff4871a1b5f118782d4ae5cd26a9a468aa44f1b4ed700abdddd854e7ac4b6eaf"
+    },
+    "missing_matrix_rejected": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-input-missing-docs-rejection.log",
+      "sha256": "19ea132ab86e5282a120007ad141bc7b01f2a24f6f844d1396c8c85ed644bfd2"
+    },
+    "default_consumer": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-package-default-consumer-test.log",
+      "sha256": "52951f05c42b1e2bbc99a70718aa214954ce8bc37dc5703702381cc706351cae"
+    },
+    "trimmed_consumer": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\wp6-package-trimmed-consumer-test.log",
+      "sha256": "cfa203e48b9ce8787752029473aa7cebde3f8eb1242594f799681156a3e256d7"
+    },
+    "audit_license_policy": "Exact decoded license text with universal newlines; keep raw artifact hashes"
   },
   "load_memory": {
     "evidence": {
@@ -242,24 +304,54 @@
   "reliability": {
     "run_id": 39451039706,
     "source_sha": "f719bd4590df4dfb7ef04b5ac5a58d49a7b9a310",
+    "execution_location": "GitHub Actions ubuntu-22.04; independent of local Windows uptime",
     "partial_audit": {
-      "path": "C:\\Users\\Oscar\\exr-gcc\\reliability-39451039706-partial-20261020T201122Z\\partial-audit.json",
-      "sha256": "7a5393b12e291d1503ee0f47a89ab69c4dec52b2f304667f1842daffa18d9d24"
+      "path": "C:\\Users\\Oscar\\exr-gcc\\reliability-39451039706-partial-20261020T205844Z\\partial-audit.json",
+      "sha256": "d383f6276be867db8af9d8942ec38dec9ef3a14e261fd73c0590ea50063f8430"
     },
     "validated_shards": {
-      "font": 7,
+      "font": 14,
       "parser": 24
     },
     "process_cpu_nanoseconds": {
-      "font": 25200001956365,
+      "font": 50400005172666,
       "parser": 86400015121400
     },
     "strict_summary_exit": 1,
     "strict_summary_generated": false,
     "cross_source_rejected": true,
     "cross_source_log": {
-      "path": "C:\\Users\\Oscar\\exr-gcc\\reliability-39451039706-partial-20261020T201122Z\\cross-source-summary.log",
+      "path": "C:\\Users\\Oscar\\exr-gcc\\reliability-39451039706-partial-20261020T205844Z\\cross-source-summary.log",
       "sha256": "8903a2cec058ba4ca035eb446b4bfc1aa17ae39850433f84ec50b771c8ab3f3e"
+    },
+    "release_source_rejected": true,
+    "release_source_sha": "6164239d809b20ce0d54f473f65864ecd027bd7e",
+    "release_source_log": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\reliability-39451039706-partial-20261020T205844Z\\cross-source-release-summary.log",
+      "sha256": "8903a2cec058ba4ca035eb446b4bfc1aa17ae39850433f84ec50b771c8ab3f3e"
+    },
+    "package_source_rejected": true,
+    "package_source_sha": "38ceedb39990c44d14c9314fb06ed2a8a355f266",
+    "package_source_log": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\reliability-39451039706-partial-20261020T205844Z\\cross-source-package-summary.log",
+      "sha256": "8903a2cec058ba4ca035eb446b4bfc1aa17ae39850433f84ec50b771c8ab3f3e"
+    },
+    "runner_failure": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\long-39451039706-font4-classification.json",
+      "sha256": "64b0ff8f60060db0a88c424c781727a7d754250e496a6e0c1523db9fda5803e3"
+    },
+    "runner_recovery": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\long-39451039706-font4-recovery.json",
+      "sha256": "4cceaa78f702b5ab8a05d254e43387da54b6667db6d2088a2de20cbbca1c6dd4"
+    },
+    "runner_review": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\long-39451039706-font4-review.json",
+      "sha256": "1ce87a7c291d4ba5ecb02a0837a197b0f5bd5b32e5cb28edeea9bc3ec2d38faf"
+    },
+    "failed_shard_cpu_counted_nanoseconds": 0,
+    "latest_status": {
+      "path": "C:\\Users\\Oscar\\exr-gcc\\status-39451039706-20261020T205757Z.json",
+      "sha256": "00a779482f67b84eb254f695ba62b73be7cfac9d08b94d4a371505d58ba72128"
     },
     "current_source_accepted": false,
     "complete_campaign_accepted": false,
@@ -298,15 +390,15 @@
       },
       {
         "id": "seven_native_ci_jobs",
-        "passed": false
+        "passed": true
       },
       {
         "id": "linux_sanitizer_regressions",
-        "passed": false
+        "passed": true
       },
       {
         "id": "six_platform_artifacts_licenses_benchmarks",
-        "passed": false
+        "passed": true
       },
       {
         "id": "same_source_four_target_24cpu_hours",

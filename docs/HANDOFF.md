@@ -5,6 +5,9 @@
 3.38.3移除EPUB整章解压临时副本，保留完整DOM/正文投影及原资源上限。
 分块输入不等于有界章内解析；WP6的10→100MiB解析驻留增量和章内随机恢复仍未验收。
 本批代码、回归、兼容失败复核和WP16逐项状态见 `docs/validation/2026-10-20-wp6-input-stream.json`。
+本批GCC/MSVC各153/153；安装包支持矩阵缺失已修复并增加拒绝检查。
+修正包CI七作业、六配置产物/许可、四份参考宿主报告及四入口短测重汇总通过。
+旧源码长测的失联分片保留为失败且CPU计入0，最终长测和WP6驻留/随机恢复条件仍未满足。
 
 仓库：https://github.com/NoGod3524/EXReader 。开发分支：`codex/framework`。本次修复与验证入口见 [HANDOFF-NEXT.md](HANDOFF-NEXT.md)，审计发现见 [AUDIT-2026-10-19.md](AUDIT-2026-10-19.md)。
 
@@ -19,7 +22,7 @@ Windows本地与CI各26项。默认/裁剪桌面安装消费、移动交叉编�
 500本EPUB整批已结束，483本完成、17本未完成，未验收；PDF独立参考分类不改原预期。
 WP6普通Latin表格专项已达到五轮交替首屏降低50%的出口，章内增量目标仍未完成。
 本批范围与证据见 `docs/validation/2026-10-20-wp6-compatibility.json`。
-3.38.2本批GCC/MSVC各152/152、最新CI七作业全部通过，平台SDK/许可、模拟器应用报告与短测重汇总已归档。
+上一批3.38.2的GCC/MSVC各152/152、CI七作业全部通过，平台SDK/许可、模拟器应用报告与短测重汇总已归档。
 WP7、WP8、WP12a的分支、独立目录和完整出口分别见 `docs/WP7-HANDOFF.md`、`docs/WP8-HANDOFF.md`、`docs/WP12A-HANDOFF.md`。
 轻量转换独立子包WP12-lite的范围、分支、工作目录与量化出口见 `docs/WP12-LITE-HANDOFF.md`；完整WP12高保真和迁移条件仍按下表跟踪。
 
