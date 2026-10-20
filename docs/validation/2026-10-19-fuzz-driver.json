@@ -1,0 +1,49 @@
+{
+  "task": "fuzz driver save/replay and bounded CBZ extraction",
+  "date": "2026-10-19",
+  "commit": "c8aa950",
+  "environment": {
+    "host": "Windows",
+    "gcc": "16.2 (WinLibs POSIX UCRT), C:/Users/Oscar/exr-gcc",
+    "msvc": "Visual Studio 17 2022 Release, C:/Users/Oscar/exr-build"
+  },
+  "root_cause": "The saved CBZ mutation had a central-directory compressed size (71) smaller than the local-header size (77). mz_zip_reader_extract_iter_read used the central size, fed tinfl a truncated deflate stream, and looped without copying or consuming further input.",
+  "fix": "src/cbz.c reads the local file header for member data offset and sizes (central only for data descriptors), and inflates with a bounded tinfl_decompress loop using TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF; each round must consume input or produce output, output is capped at 1 MiB for headers / 32 MiB for members, and full members are CRC checked.",
+  "regression": {
+    "fixture": "tests/fixtures/fuzz-cbz-truncated.bin",
+    "bytes": 908,
+    "sha256": "449011aa8cdd09984120b894e94309570113d7d6f7ccbbced27792824f9f48a7",
+    "expected": "EXR_FORMAT",
+    "test": "native-fuzz-driver"
+  },
+  "replay": {
+    "valid_cbz": "tests/fixtures/comic.cbz",
+    "valid_cbz_status_gcc": 0,
+    "valid_cbz_status_msvc": 0,
+    "stalled_status": 5
+  },
+  "tests": {
+    "gcc": {"native-fuzz-driver": "pass", "native-fuzz-smoke": "pass", "full": "145/145"},
+    "msvc": {"native-fuzz-driver": "pass", "native-fuzz-smoke": "pass", "full": "145/145"}
+  },
+  "campaign": {
+    "seed": 1,
+    "iterations": 200000,
+    "seed_count": 5,
+    "parsed": 15919,
+    "no_crash": true,
+    "formats": {
+      "txt": {"attempts": 39948, "parsed": 10431},
+      "fb2": {"attempts": 40010, "parsed": 0},
+      "epub": {"attempts": 40023, "parsed": 1147},
+      "pdf": {"attempts": 39784, "parsed": 3484},
+      "cbz": {"attempts": 40235, "parsed": 857}
+    },
+    "record_sha256": "40bde6c29e3b92f1b6214af3970bdd6b044e417719a7599f60bbc6c44209bfc0",
+    "exe_sha256": "f8e2ca03226275c61bbc181d9b405cbf0d8c59253d21c9a5a8a9d63fbed2a86d",
+    "dll_sha256": "fdd37959ae957d047ba041ee066d07249b819ccd23961a7e6174cfa3ee2e85a9"
+  },
+  "pending": [
+    "CI sanitizer run and POSIX truncation path verification after push"
+  ]
+}
