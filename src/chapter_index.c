@@ -62,7 +62,7 @@ static const char *local(const char *name) {
 static int white(unsigned char c) { return c == ' ' || c == '\n' || c == '\r' || c == '\t'; }
 static void stop(exr_chapter_index *p, exr_status status, const char *message) {
   if (!p->failed) p->failed = exr_fail(p->error, status, "%s", message);
-  XML_StopParser(p->parser, XML_FALSE);
+  if(p->parser) XML_StopParser(p->parser, XML_FALSE);
 }
 static exr_chapter_entry *entry(exr_chapter_index *p, size_t node) {
   return &p->chunks[node / INDEX_CHUNK][node % INDEX_CHUNK];
@@ -122,7 +122,7 @@ static void propagate(exr_chapter_index *p, uint32_t id) {
   }
 }
 static void flush_text(exr_chapter_index *p) {
-  if (p->text_node == EXR_CHAPTER_NONE) return;
+  if (p->failed || p->text_node == EXR_CHAPTER_NONE) return;
   if (!p->stack[p->depth].hidden) {
     exr_chapter_entry *n = entry(p, p->text_node);
     if (n->start == EXR_CHAPTER_NONE) n->start = (uint32_t)p->text_size;
@@ -147,7 +147,9 @@ static void XMLCALL start_element(void *context, const char *name, const char **
   const char *tag = local(name);
   size_t i, count = 0;
   uint32_t id;
-  int hidden = p->stack[p->depth].hidden || !strcmp(tag,"head") || !strcmp(tag,"script") ||
+  int hidden;
+  if(p->failed) return;
+  hidden = p->stack[p->depth].hidden || !strcmp(tag,"head") || !strcmp(tag,"script") ||
     !strcmp(tag,"style") || !strcmp(tag,"object") || !strcmp(tag,"template");
   flush_text(p);
   if (p->depth == 256) { stop(p, EXR_LIMIT, "Chapter XML depth exceeds limit"); return; }
@@ -173,6 +175,10 @@ static void XMLCALL end_element(void *context, const char *name) {
   index_frame *f;
   exr_chapter_entry *n;
   (void)name;
+  /* Expat may still deliver the matching end callback after a self-closing
+     element's start handler stops parsing. Never consume a rejected frame. */
+  if(p->failed) return;
+  if(!p->depth) { stop(p,EXR_FORMAT,"Unexpected chapter closing element");return; }
   flush_text(p);
   f = &p->stack[p->depth]; n = entry(p, f->node);
   n->source_end = (uint32_t)(XML_GetCurrentByteIndex64(p->parser) + XML_GetCurrentByteCount64(p->parser));
