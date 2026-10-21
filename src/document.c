@@ -449,6 +449,29 @@ static int project_node(projection *p, size_t index, unsigned heading) {
     end_block(p);
   return 1;
 }
+/* A parsed document is immutable after finish, so the geometric growth slack of
+   the text, node, block and directory arrays is dead weight in the retained parse
+   workspace.  Return it to the allocator; append paths grow again from the exact
+   size if a later format step adds content. */
+static void shrink_array(void **data, size_t *capacity, size_t count, size_t element) {
+  void *smaller;
+  if (!*data || !count || *capacity <= count || !element || count > SIZE_MAX / element)
+    return;
+  smaller = realloc(*data, count * element);
+  if (smaller) {
+    *data = smaller;
+    *capacity = count;
+  }
+}
+static void model_shrink(exr_document *d) {
+  shrink_array((void **)&d->text, &d->text_capacity, d->size + 1, 1);
+  shrink_array((void **)&d->nodes, &d->node_capacity, d->node_count, sizeof(*d->nodes));
+  shrink_array((void **)&d->blocks, &d->capacity, d->count, sizeof(*d->blocks));
+  shrink_array((void **)&d->chapters, &d->chapter_capacity, d->chapter_count,
+               sizeof(*d->chapters));
+  shrink_array((void **)&d->resources, &d->resource_capacity, d->resource_count,
+               sizeof(*d->resources));
+}
 exr_status exr_model_finish(exr_document *d, exr_error *e) {
   size_t i;
   if (d->node_count) {
@@ -511,6 +534,7 @@ exr_status exr_model_finish(exr_document *d, exr_error *e) {
   free(d->last_children);
   d->last_children = NULL;
   d->last_capacity = 0;
+  model_shrink(d);
   return EXR_OK;
 }
 
