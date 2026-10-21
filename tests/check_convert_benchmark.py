@@ -34,6 +34,8 @@ def main():
     parser.add_argument("corpus")
     parser.add_argument("work")
     parser.add_argument("json")
+    parser.add_argument("--instrumented", action="store_true",
+                        help="Record sanitizer RSS without using its quarantine as a product memory measurement")
     args = parser.parse_args()
     tool = str(Path(args.tool).resolve())
     corpus = Path(args.corpus)
@@ -86,6 +88,11 @@ def main():
     evidence = {
         "schema": 1, "kind": "conversion-benchmark", "tool": tool,
         "tool_sha256": sha256(tool), "engine_version": batch_report["engine_version"],
+        "instrumented": args.instrumented,
+        "memory_budget_evaluated": not args.instrumented,
+        "memory_budget_bytes": 32 * 1024 * 1024,
+        "memory_budget_passed": None if args.instrumented else batch_peak <= single_peak + 32 * 1024 * 1024,
+        "memory_scope": "instrumentation RSS only; release builds enforce the product budget" if args.instrumented else "uninstrumented process peak RSS",
         "runtime": runtime, "small": small, "one_mib": {
             "input": str(long_source), "input_sha256": sha256(long_source),
             "input_bytes": long_source.stat().st_size, "samples": long_samples},
@@ -103,11 +110,12 @@ def main():
     Path(args.json).write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print("small=%d one_mib_peak=%d batch_peak=%d outputs_batch=%d" %
           (len(small), single_peak, batch_peak, evidence["batch_100"]["output_bytes"]))
-    if batch_report["counts"]["unfinished"] or evidence["batch_100"]["failed"]:
+    if (batch_report["counts"]["unfinished"] or evidence["batch_100"]["failed"] or
+            evidence["temporary_files_remaining"] or single_peak <= 0 or batch_peak <= 0):
         return 1
     # A 100-item batch must not keep 100 documents resident. Allow the report
     # accumulator and allocator variance, not 100x document memory.
-    if batch_peak > single_peak + 32 * 1024 * 1024:
+    if not args.instrumented and batch_peak > single_peak + 32 * 1024 * 1024:
         print("batch peak regression: %d > %d + 32 MiB" % (batch_peak, single_peak), file=sys.stderr)
         return 1
     return 0

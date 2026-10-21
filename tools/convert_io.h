@@ -43,6 +43,7 @@ int cv_publish(const char *temp, const char *target, int overwrite, char **error
 void cv_remove(const char *path);
 int cv_is_absolute(const char *path);
 size_t cv_peak_rss(void);
+void cv_release_unused_memory(void);
 uint64_t cv_now_ms(void);
 void cv_sha256_hex(const void *data, size_t size, char hex[65]);
 #ifdef __cplusplus

@@ -1349,6 +1349,7 @@ static int convert_main(int argc, char **argv) {
       memset(&control, 0, sizeof(control));
       control.cancelled = cancelled_callback;
       run_job(&jobs[i], &control);
+      cv_release_unused_memory();
       if (g_cancelled) jobs[i].result.cancel_requested = 1;
     }
     if (report) {

@@ -12,6 +12,9 @@
 #include <string.h>
 #include <time.h>
 #include <wctype.h>
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#endif
 #ifdef _WIN32
 #include <windows.h>
 #include <psapi.h>
@@ -22,6 +25,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 #endif
+
+void cv_release_unused_memory(void) {
+#ifdef __APPLE__
+  (void)malloc_zone_pressure_relief(NULL, 0);
+#endif
+}
 
 static char *copy_bytes(const char *s, size_t n) {
   char *p = malloc(n + 1);

@@ -197,20 +197,22 @@
     "Initialize unique-import status and roll back every open transaction before unlocking; reset failed outputs.",
     "Reuse existing fixed-options prefix validator and observe cancellation during stored PDF chunk reads.",
     "Keep libaom include path inside BUILD_INTERFACE; fix in-tree FetchContent SDK generation.",
-    "Freeze TIFF compression dependencies to the declared built-in codecs and pinned zlib, independent of host libraries."
+    "Freeze TIFF compression dependencies to the declared built-in codecs and pinned zlib, independent of host libraries.",
+    "Register partial SVG attribute ownership before decoding so all errors free the current attribute.",
+    "Guard incomplete SVG element names and preserve no-PDF storage builds under strict warnings."
   ],
   "source_files": {
     ".github/workflows/native.yml": {
       "path": ".github/workflows/native.yml",
-      "sha256": "4202990f841bcf020abfeac0d09f5d2cc6525c6e8b3f4fe7ab88610d55d7bc8f"
+      "sha256": "d2111b7602a9cb3f03e38c35003285eb86f9452d5b45ac7042af0b1791e1cd9d"
     },
     "CMakeLists.txt": {
       "path": "CMakeLists.txt",
-      "sha256": "ab0891fd8cf92e6e618f9c0a745bfb8584d2e829e0ee6734fdf005e89f74173b"
+      "sha256": "96357fe7deb44eb3ec38b2d6263e9865315b66c7eca0b4bd1255b922ce20c764"
     },
     "cmake/deps.cmake": {
       "path": "cmake/deps.cmake",
-      "sha256": "aea36f3f868cfbc9d43634acf89c5354054932a0386e2229c2333237c118d6e5"
+      "sha256": "5e9d95b4fd4f36aac7cc1c98ed741c250dce0dc5c4f525c42a9437fe8213ee20"
     },
     "cmake/install_dependencies.cmake": {
       "path": "cmake/install_dependencies.cmake",
@@ -270,7 +272,7 @@
     },
     "src/font_svg.c": {
       "path": "src/font_svg.c",
-      "sha256": "98674692474ff83952a3454a03a995f44dc06cafc4c62692cd744635ab093c73"
+      "sha256": "6aa2b9ba82d09a592974a6f543f3422d74d444949cc97f523647c629f195680f"
     },
     "src/fonts.c": {
       "path": "src/fonts.c",
@@ -286,7 +288,7 @@
     },
     "src/image_formats.c": {
       "path": "src/image_formats.c",
-      "sha256": "d7dc5d59fdf99298587679dba7a424d6c7daea36d2206928b2f00920b5d22d24"
+      "sha256": "4477edabd1c526c383980807609e6ee3b2a6eb56b20401b0ce4fc054b8b6eefe"
     },
     "src/images.c": {
       "path": "src/images.c",
@@ -294,7 +296,7 @@
     },
     "src/library.c": {
       "path": "src/library.c",
-      "sha256": "91441cd23a3fefd9d2c60c9c277dc853e5ab84953c6480c069d961649769469a"
+      "sha256": "b907cabf4da8e042a1ea4435d9fd76fc96860fd81892a763d6de08e56cad21a8"
     },
     "src/map.c": {
       "path": "src/map.c",
@@ -322,7 +324,7 @@
     },
     "tests/check_convert_benchmark.py": {
       "path": "tests/check_convert_benchmark.py",
-      "sha256": "55bf2363fcf248d235d4764ddc4b24d6a46b52b362a6b8ee67b6492a2cc96d41"
+      "sha256": "c1e175132db5a105f9ee49775c53e26d1bfda40b3e9a925a3fafecf67fe886ab"
     },
     "tests/check_convert_cli.py": {
       "path": "tests/check_convert_cli.py",
@@ -802,11 +804,11 @@
     },
     "tests/test_font_color_v1.c": {
       "path": "tests/test_font_color_v1.c",
-      "sha256": "c047a51343018501be41abc5bd85696e4d0936679bc730c14cb28031040c58af"
+      "sha256": "40af8af1249fb75ea172cb3c6521d14774cc9176a6b7a447f8398cec82f1f0be"
     },
     "tests/test_font_svg.c": {
       "path": "tests/test_font_svg.c",
-      "sha256": "823d8e07913ee808f34fd127330af57f7f7317446e017fe52d99ffc0fafdb2f9"
+      "sha256": "685188ccad829323fa2c76ab14bd35965f1eb328f13144cb738b84462346c1ab"
     },
     "tests/test_image_formats.c": {
       "path": "tests/test_image_formats.c",
@@ -834,15 +836,15 @@
     },
     "tools/convert.c": {
       "path": "tools/convert.c",
-      "sha256": "ec9c0f1055b13f3b572010a7a0ee0ed0bc19d41019e7e4291d542c6b909ef765"
+      "sha256": "31729983e07da9cb213eaadacd83e4398b9af8d80744b5e87ac1f6bcc8b93f7c"
     },
     "tools/convert_io.c": {
       "path": "tools/convert_io.c",
-      "sha256": "921620260251f5091016f974430fd0a2fafc151019c50bb63b6c95101a1360bc"
+      "sha256": "67aec502a9312a1b738da8dc53126e296ec86856242297bc5d1a844fe2146de5"
     },
     "tools/convert_io.h": {
       "path": "tools/convert_io.h",
-      "sha256": "2c9ead889f076b1da0c10bd31f423a39579fc7600db2436b95d7a8af18bbc18c"
+      "sha256": "baa3270340c39b010776a3ae6bcedf29ae1a48c01f2e528788e4a1693fd67a8a"
     },
     "tools/convert_json.c": {
       "path": "tools/convert_json.c",
@@ -977,6 +979,39 @@
           "sha256": "650df24d4e5b93a3575bb1f5c2d7f425cd5bac6fe72195cc065d7a7db1dbac08"
         }
       ]
+    },
+    "cleanup_followup": {
+      "source_sha": "a199a643b85679bd53f1af47901f5712d1f22c7b",
+      "suite_log": {
+        "path": "build/wp7-integration-20261020/cleanup-full-tests.log",
+        "sha256": "26249d9ec4ea0213ca7c934336d363ede24f160400c4bcb078e9fe6f681112c8"
+      },
+      "passed": 161,
+      "total": 163,
+      "environment_failures": [
+        "CLI old work directory cleanup denied",
+        "Benchmark old work directory cleanup denied"
+      ],
+      "failed_setup_logs": [
+        {
+          "path": "build/wp7-integration-20261020/cleanup-convert-tests-r2.log",
+          "sha256": "a4ddfca38a4866566eec25c1c78ac9cb741d3596646dfda83454e9f8d03e836f"
+        }
+      ],
+      "fresh_directory_retests": {
+        "cli_passed": 37,
+        "cli_total": 37,
+        "cli_log": {
+          "path": "build/wp7-integration-20261020/cleanup-cli-r3.log",
+          "sha256": "ffc80066434cce63a075d89394b7c5939f3072f32a287f7cbdf7f2fb911e2327"
+        },
+        "benchmark_passed": true,
+        "benchmark_report": {
+          "path": "build/wp7-integration-20261020/cleanup-bench-r3.json",
+          "sha256": "2fa5b22753946e0768103a3606c0cf5e9dc5f57ae9b3b2dfd9188da4ec196947"
+        }
+      },
+      "budgets_changed": false
     }
   },
   "reference_rerun": {
@@ -1003,10 +1038,18 @@
         "path": "build/wp7-integration-20261020/reference-check-r2.log",
         "sha256": "015a7fc2f22b3c2cbcc7f88501514cb2a112aa9213a3dda1fa7bef4499a03ff7"
       }
-    ]
+    ],
+    "current_cleanup_pixel_identity": {
+      "passed": 56,
+      "total": 56,
+      "report": {
+        "path": "build/wp7-integration-20261020/reference-cleanup/comparison.json",
+        "sha256": "8d3f57ba661410f30016dc7cd28306b072b15c899a674ae86b482979c0e5eee6"
+      }
+    }
   },
   "installed_consumption": {
-    "status": "pending",
+    "status": "passed before cleanup-only engine followup",
     "trimmed": {
       "passed": true,
       "tests": 2,
@@ -1020,6 +1063,54 @@
       "trimmed_engine_tests": {
         "path": "build/wp7-integration-20261020/four-trim-tests.log",
         "sha256": "a10505d2ee407ba0d8cff556f42c5da60dcd82d5faf5e8cf651b6ef63da3970e"
+      }
+    },
+    "default": {
+      "tests": 5,
+      "passed": true,
+      "log": {
+        "path": "build/wp7-integration-20261020/consumer-r5-tests.log",
+        "sha256": "970e33514671117e869df2ed28e92a861dc2c093a5b357cd5bf5b4310621ac90"
+      }
+    },
+    "cpp": {
+      "passed": true,
+      "log": {
+        "path": "build/wp7-integration-20261020/cpp-four-tests.log",
+        "sha256": "2c492bf6a0a2f818077a9537a923e1966221c303f4ff7bca87225d6a07117b5c"
+      }
+    },
+    "installed_cli": {
+      "passed": true,
+      "report": {
+        "path": "build/wp7-integration-20261020/installed-convert-r5.json",
+        "sha256": "87b15856757910e58ccc5bafd45cbb69e4b250c38bb2503f5e1a9517076b238d"
+      }
+    },
+    "exports": {
+      "passed": true,
+      "public_names": 316,
+      "baseline_names": 306,
+      "additive": 10,
+      "report": {
+        "path": "build/wp7-integration-20261020/export-check-r5.json",
+        "sha256": "9eabf9d1e0ed5269917ddf423ee7bc86b6f6e1e3069a73091e5733dc3dd55a33"
+      }
+    },
+    "storage_without_pdf": {
+      "passed": true,
+      "tests": 3,
+      "log": {
+        "path": "build/wp7-integration-20261020/storage-trim-tests.log",
+        "sha256": "289350d985b6849079b791b43c6e53704eb8f5323c9cb83b62148f6ff6fad565"
+      }
+    },
+    "msvc_codec_compile": {
+      "passed": true,
+      "target": "avif",
+      "log": {
+        "path": "build/wp7-integration-20261020/msvc-avif-check.log",
+        "sha256": "7708d15c834df24e2280e70d6242f4188e409c4d98c12584028aec08c1850840"
       }
     }
   },
@@ -1062,6 +1153,11 @@
           "sha256": "e0b289c5f31f5fe267011b371cda0e7102f820ca8caaf6df9eef1abf4a33a35c"
         }
       ]
+    },
+    "current_run": {
+      "id": 39507839626,
+      "source_sha": "9dce08c1204f98c533de52b3c62eec82e431334c",
+      "status": "pending"
     }
   },
   "linux_asan_ubsan": {
@@ -1084,5 +1180,116 @@
       "sha256": "4571c4539685b8c86083259661733e3da5677ff8a7dd195e68c94b754d41c218"
     },
     "scope": "Unique cancellation and source failure rollback, failed file-import output, old-prefix fixed options and stored-PDF cancellation"
+  },
+  "font_endurance_rejection": {
+    "accepted": false,
+    "source_sha": "b4e344776cec020bded7b886359c5fbd74e2e92a",
+    "run_id": 39505857375,
+    "cpu_counted_for_acceptance": 0,
+    "classification": "LeakSanitizer: partial SVG attribute ownership on value decoding failure",
+    "evidence": {
+      "path": "build/wp7-integration-20261020/rejected-smoke-b4/font-endurance/report.json",
+      "sha256": "812264ad3a460415108e41837a52f5050cc1eea1d410ac51fa68d5a400448750"
+    },
+    "log": {
+      "path": "build/wp7-integration-20261020/rejected-smoke-b4/font-endurance/run.log",
+      "sha256": "284d6b7b0c1fbd5361b98c15fe97c4545bfb66f9859e816fbf87c539efb1bda5"
+    },
+    "regression": "tests/test_font_svg.c",
+    "fixed": true,
+    "sanitizer_rerun": {
+      "passed": true,
+      "source_sha": "a199a643b85679bd53f1af47901f5712d1f22c7b",
+      "run_id": 39506913608,
+      "cpu_nanoseconds": 60000011800,
+      "cpu_budget_seconds": 60,
+      "report": {
+        "path": "build/wp7-integration-20261020/accepted-smoke-a199/font-endurance/report.json",
+        "sha256": "67b0b38cebc3182697ee9b3204c6ee361b7c563bb8487fbe9dfc03ba45a6a0c0"
+      },
+      "release_source_acceptance": false
+    },
+    "budgets_or_tolerances_changed": false
+  },
+  "compatibility": {
+    "epub": {
+      "report": {
+        "path": "build/wp7-integration-20261020/epub-classification/classification.json",
+        "sha256": "35b3cf01bb93504cbde2f63c75d9ff4b10b5ee2cd50bd0335e1d9b9a910ea00d"
+      },
+      "entries": 500,
+      "replayed": 6,
+      "counts": {
+        "baseline_completed": 483,
+        "engine_argument_failure": 1,
+        "not_completed_within_baseline_timeout": 11,
+        "resource_limit": 5
+      },
+      "baseline_unchanged": true,
+      "expectations_changed": false,
+      "accepted": false
+    },
+    "pdf": {
+      "report": {
+        "path": "build/wp7-integration-20261020/pdf-classification-r2/classification.json",
+        "sha256": "2978d84d1d40b015366d41acb13ed0ff346287808e72ad23a8668f2a59e8597e"
+      },
+      "entries": 122,
+      "replayed": 73,
+      "counts": {
+        "baseline_completed": 49,
+        "reference_completed_primary_rejected": 54,
+        "reference_repaired_input": 8,
+        "requires_review": 4,
+        "unsupported_feature": 7
+      },
+      "baseline_unchanged": true,
+      "expectations_changed": false,
+      "accepted": false
+    }
+  },
+  "real_report_cross_source_refusal": {
+    "report": {
+      "path": "build/wp7-integration-20261020/cross-source-refusal.json",
+      "sha256": "f49178bf476304a7a2bf9e177b6097b37a5153cd4bd975817e4649d4af18e146"
+    },
+    "log": {
+      "path": "build/wp7-integration-20261020/cross-source-refusal.log",
+      "sha256": "8903a2cec058ba4ca035eb446b4bfc1aa17ae39850433f84ec50b771c8ab3f3e"
+    },
+    "passed": true
+  },
+  "full_sanitizer_rejection": {
+    "source_sha": "9dce08c",
+    "run_id": 39507839626,
+    "accepted": false,
+    "log": {
+      "path": "build/wp7-integration-20261020/ci-darwin-sanitizer-failed.log",
+      "sha256": "3ef45473f5525ac2d89a5b5533ff05a6a03692d6dcec0618156b94a1a775b0f2"
+    },
+    "causes": [
+      "Four test-owned font buffers were not freed in native-font-color-v1.",
+      "ASan quarantine RSS was evaluated as uninstrumented process memory."
+    ],
+    "changes": [
+      "Free each test buffer before replacement.",
+      "Keep all 100 instrumented conversions and cleanup checks; record RSS with memory_budget_passed=null.",
+      "Require all three release desktop jobs to pass the unchanged 32MiB incremental peak RSS bound and upload their raw reports."
+    ],
+    "budgets_changed": false
+  },
+  "macos_memory_rejection": {
+    "source_sha": "9dce08c",
+    "run_id": 39507839626,
+    "accepted": false,
+    "log": {
+      "path": "build/wp7-integration-20261020/ci-darwin-macos-failed.log",
+      "sha256": "bb7a89af6b47b4398dc592d45aeddef102d7897dd48c045c5f4d6f2328b69a37"
+    },
+    "single_peak_rss_bytes": 28524544,
+    "batch_peak_rss_bytes": 76316672,
+    "maximum_increment_bytes": 33554432,
+    "fix": "Release unused allocator cache pages after each item using malloc_zone_pressure_relief; no threshold change",
+    "rerun": "pending"
   }
 }
