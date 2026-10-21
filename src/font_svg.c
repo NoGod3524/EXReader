@@ -1325,9 +1325,9 @@ static exr_status svg_node_walk(svg_render *render, svg_node *node, const svg_st
     if (status != EXR_OK) { render->depth--; return status; }
   }
   if (state.hidden) { render->depth--; return EXR_OK; }
-  if (node->element == SVG_DEFS) { render->depth--; return EXR_OK; }
+  if (node->element == SVG_DEFS && (!target || node == target)) { render->depth--; return EXR_OK; }
   if (node == target) target = NULL;
-  if (node->element == SVG_GROUP || node->element == SVG_ROOT) {
+  if (node->element == SVG_GROUP || node->element == SVG_ROOT || node->element == SVG_DEFS) {
     svg_node *child, *selected = target;
     /* Walk the selected glyph's ancestors so their state and isolated layers
        apply, without painting siblings from a shared glyph document. */
