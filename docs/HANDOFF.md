@@ -6,8 +6,13 @@
 本批实现与验证入口：`docs/WP6-BOUNDED-READER.md`、`docs/validation/2026-10-20-wp6-window-reader.json`。
 WP6固定出口已通过：50/100MiB单章打开，10→100MiB索引与解析/续排峰值增量19.3MiB，
 真实窗口逐出后随机恢复、2/4MiB窗口全章逐页哈希一致；普通表格优化沿用既有独立验收。
-最终七作业CI和Linux ASan/UBSan通过，六配置SDK、许可、基准与四宿主报告已下载独立核验。
-WP16仅剩最终源码的四目标24CPU小时长测汇总；当前已启动，未将运行中分片计为通过。
+PNG修复源码的七作业CI和Linux ASan/UBSan 159/159通过；六配置SDK、许可、基准、
+四宿主报告及三平台章解析/转换结果已下载独立核验，清单含1385文件（含19份下载身份记录）。
+WP16首次最终源码长测因PNG依赖的空读取问题拒绝，72份已通过报告与失败现场均已归档。
+共享修复和固定回归已落地；同一修正源码的四目标各24CPU小时长测已启动，旧源码时长不拼接。
+修复版Windows默认/关闭可选图像解码器各169/169、18次计量和全章遍历、默认/裁剪安装消费均通过。
+WP16保持未完成，等待本批96分片及独立严格汇总。
+本次修正证据见 `docs/validation/2026-10-21-png-reliability.json`。
 下列旧批次数字与未完成记录按当时源码保留。
 
 WP7六个交付提交已集成：八个声明脚本的功能和Windows验收按固定800例口径接收。
@@ -53,8 +58,8 @@ WP7、WP8、WP12a的分支、独立目录和完整出口分别见 `docs/WP7-HAND
 
 | 领域 | 已有实现 | 主要缺口 |
 | --- | --- | --- |
-| 文档与模型 | TXT、XHTML/HTML、FB2、EPUB、DOCX、RTF、MOBI/KF8；通用构造、分段 loader、随机读取源、树与资源 | HTML5 错误恢复、完整 Word 版面、章内增量解析 |
-| 排版与位置 | CSS 子集、float/clear 和逐行绕排、表格列宽/合并/垂直对齐/逐边边框/重复表头；页级续排、缓存字节预算、检查点、CFI、TextQuote、命中选择 | 完整 CSS、border-spacing、复杂百分比与溢出、大章解析成本 |
+| 文档与模型 | TXT、XHTML/HTML、FB2、EPUB、DOCX、RTF、MOBI/KF8；通用构造、分段 loader、随机读取源、树与资源；EPUB独立有界章阅读 | HTML5 错误恢复、完整 Word 版面、其余格式章内增量解析 |
+| 排版与位置 | CSS 子集、float/clear 和逐行绕排、表格列宽/合并/垂直对齐/逐边边框/重复表头；页级续排、缓存字节预算、检查点、CFI、TextQuote、命中选择；EPUB跨窗续排与恢复 | 完整 CSS、border-spacing、复杂百分比与溢出、全量快照及其余格式的大章解析成本 |
 | 文字与字体 | Unicode17、双向、OpenType、阿拉伯、Devanagari及WP7八个声明脚本、竖排、ruby、可变轴、词典/provider 断词；COLRv0、COLRv1、SVG字体子集、sbix、CBDT、cmap14 | 其他脚本及更多语言实测；彩色字体声明范围见WP8矩阵 |
 | PDF | 固定页与文字几何、搜索选择、字体/Type3、图像与 CMYK/YCCK JPEG、渐变1–7及分量函数数组、ICC v2/v4、16种混合、隔离/非隔离/挖空组、软遮罩 | 审计列出的组合错误和限界；旧宿主有限外推、自适应采样、Pattern、JPX/JBIG2、OutputIntent、完整印刷色彩 |
 | PDF 认证与编辑 | Standard R2–R6、RC4/AES、可重试认证、权限快照；基础标注与元数据增量保存 | PubSec、EFOpen、加密写回、AcroForm、安全 redaction；增量删除保留历史原文 |

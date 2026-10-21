@@ -1,14 +1,31 @@
 # Native C validation
 
+## PNG dependency reliability correction (3.40.0 pre-release)
+
+The first final-source campaign was rejected by a font shard. Its PNG decoder
+performed an undefined zero-length library read. All produced evidence and 72
+valid historical shard reports are retained; their CPU time is not credited
+to a replacement source. The pinned decoder now receives two local corrections
+in a generated build-directory header, preserving the original cache, license,
+valid PNG semantics and budgets. Image tests cover valid empty data chunks and
+failure cleanup; a fixed font replay must complete its normal API return.
+
+Windows image/font/pipeline and optional-codec/PDF checks pass. The replacement
+source passes all seven native CI jobs, including Linux ASan/UBSan 159/159.
+Its platform packages, r4 quantitative runs, full chapter traversal and installed
+consumers have independent evidence. The four-target 24-CPU-hour replacement
+campaign is running and WP16 remains incomplete. Current and retained prior
+source identities are in `docs/validation/2026-10-21-png-reliability.json` and
+`docs/validation/2026-10-20-wp6-window-reader.json`.
+
 ## Bounded EPUB chapters (3.40.0)
 
-The accepted engine is `0e1ded4c1bf2320ad1068038072d40bb9d8df660`.
-Final ordinary CI and reliability evidence use
-`c9ea20fab9d43d4063b1d8225fae4d2430912bcd`; engine, headers and build
-configuration are identical between these commits. All seven native jobs pass,
+The current measurement, ordinary CI and reliability campaign source is
+`635225fe6ceb7759a948a1d8cede0ab18ea1cee9`. Earlier measurement and acceptance
+rounds remain in the evidence JSON. All seven native jobs pass,
 including Linux ASan/UBSan 159/159 and iPhone/iPad simulator host checks.
-Windows default and codec-disabled suites pass 169/169 each; the final-source
-driver suite passes 7/7. Installed GCC/MSVC core, default C and exact-version
+Windows default and codec-disabled suites pass 169/169 each; the pipeline
+contract suite passes 83 checks. Installed GCC/MSVC core, default C and exact-version
 C++ consumers pass. Named PE exports retain all 316 prior names and add eight;
 the older package-B count included import aliases and remains historical.
 
@@ -20,11 +37,12 @@ remain covered, and restored checkpoints survive actual window eviction.
 The corrected callback and pending-allocation failure paths have dedicated
 budget regressions and pass the Linux sanitizer suite.
 
-The independently checked platform inventory contains 1,366 files, six SDK
+The independently checked platform inventory contains 1,385 files (including
+19 download identity records), six SDK
 configurations, four host reports, licenses, benchmarks, conversion results and
 three-platform chapter evidence. Schema-3 smoke evidence reaggregates strictly;
-layout/render must each complete an actual bounded-reader page. Final-source
-24-CPU-hour campaigns are running and are not accepted yet. Current evidence:
+layout/render must each complete an actual bounded-reader page. The first
+24-CPU-hour campaign was rejected; its replacement is running. Evidence:
 `docs/validation/2026-10-20-wp6-window-reader.json`.
 
 ## Seven audited corrections (3.39.1)
