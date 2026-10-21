@@ -6,7 +6,7 @@
   "core": "3.39.0",
   "abi": 1,
   "library_schema": 6,
-  "engine_commit": null,
+  "engine_commit": "b29e8263a7c185401aebbcb9d00ceecb9d92fa94",
   "status": "validation_in_progress",
   "wp6_accepted": false,
   "wp16_accepted": false,
@@ -17,7 +17,7 @@
     "build/audit-fixes/wp6-ci-status-r3.json"
   ],
   "local": {
-    "window_acceptance_summary": "build/wp6-window-acceptance-r1/summary.json",
+    "window_acceptance_summary": "build/wp6-window-acceptance-r2/summary.json",
     "window_acceptance": {
       "accepted": true,
       "all_cases_pass": true,
@@ -49,6 +49,38 @@
         "POSIX clock feature macro missing in probe",
         "Existing chapter-bounds test lacked final newline"
       ]
+    },
+    "negative_page_budget_regression": {
+      "expected_exit": 1,
+      "actual_exit": 1,
+      "original_runtime": "build/wp6-window-runtime-r1/libexreader.dll",
+      "log": "build/wp6-regression-before-r1/result.log"
+    },
+    "page_budget_regression": {
+      "passed": true,
+      "log": "build/audit-codecs-off/wp6-page-budget-tests.log",
+      "coverage": "complete more than 4 Mi glyphs under unchanged per-page work counters"
+    },
+    "ci_plan_original": {
+      "run": 39538232847,
+      "accepted": false,
+      "reason": "64 sampled pages did not leave the original 64 KiB window with the fixed font; strict eviction gate correctly rejected the measurements."
+    },
+    "ci_plan_corrected": {
+      "summary": "build/wp6-ci-plan-local-r1/summary.json",
+      "window_bytes": 16384,
+      "sample_pages": 64,
+      "accepted": true
+    },
+    "trimmed_core": {
+      "build": true,
+      "ctest_passed": 2,
+      "ctest_expected": 2,
+      "log": "build/audit-fixes/wp6-core-tests.log"
+    },
+    "msvc_core": {
+      "build": true,
+      "log": "build/audit-fixes/wp6-msvc-core-build.log"
     }
   },
   "pending": [
