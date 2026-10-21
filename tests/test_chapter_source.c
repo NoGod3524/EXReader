@@ -7,7 +7,7 @@ static exr_error error;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"chapter source line %d: %s (%d)\n",__LINE__,#x,error.code);exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
 typedef struct { size_t used,peak,budget,calls,fail_at,rejected; } ledger;
-typedef struct { max_align_t alignment; size_t size; } allocation;
+typedef struct { exr_allocation_alignment alignment; size_t size; } allocation;
 static void *allocate(void *context,size_t size) {
   ledger *l=context;allocation *a;
   l->calls++;

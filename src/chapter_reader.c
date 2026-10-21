@@ -48,7 +48,7 @@ static size_t available_bytes(const chapter_reader *r) {
 static void peak(chapter_reader *r) {
   size_t bytes=workspace_bytes(r);if(bytes>r->peak_workspace) r->peak_workspace=bytes;
 }
-typedef struct { max_align_t alignment;size_t bytes; } source_allocation;
+typedef struct { exr_allocation_alignment alignment;size_t bytes; } source_allocation;
 static void *source_allocate(void *context,size_t size) {
   chapter_reader *r=context;source_allocation *allocation;
   if(size>SIZE_MAX-sizeof(*allocation) || size+sizeof(*allocation)>r->io_budget-r->io_bytes) {

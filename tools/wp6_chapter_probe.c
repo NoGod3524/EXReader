@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
 /* WP6 bounded-chapter probe.  Separates the chapter parse workspace from the
    book bytes, the publication index, the page cache and an explicit snapshot,
    then measures first-screen and per-turn cost for one chapter.  The sequential

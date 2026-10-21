@@ -140,6 +140,36 @@ static exr_publication *book(int vertical,book_source *source) {
   free(xml);return publication;
 }
 static int cancelled(void *context) { (void)context;return 1; }
+static void page_work_budget(exr_font *font) {
+  const size_t paragraphs=16386,letters=256;
+  const char *container="<container><rootfiles><rootfile full-path='book.opf'/></rootfiles></container>";
+  const char *package="<package><metadata/><manifest><item id='c' href='c.xhtml' media-type='application/xhtml+xml'/></manifest><spine><itemref idref='c'/></spine></package>";
+  mz_zip_archive zip={0};void *data=NULL;size_t size=0,at=0,i,total=0,pages=0,count;
+  char *xml=malloc(paragraphs*(letters+7)+100);
+  exr_publication *publication=NULL;exr_pager *pager=NULL;exr_layout *page=NULL;
+  exr_layout_config config=exr_layout_config_defaults();
+  exr_chapter_options options=exr_chapter_options_defaults();
+  CHECK(xml!=NULL);at+=(size_t)sprintf(xml+at,"<html><body>");
+  for(i=0;i<paragraphs;i++) {
+    memcpy(xml+at,"<p>",3);at+=3;memset(xml+at,'a',letters);at+=letters;memcpy(xml+at,"</p>",4);at+=4;
+  }
+  at+=(size_t)sprintf(xml+at,"</body></html>");
+  CHECK(mz_zip_writer_init_heap(&zip,0,0));add(&zip,"mimetype","application/epub+zip");
+  add(&zip,"META-INF/container.xml",container);add(&zip,"book.opf",package);add(&zip,"c.xhtml",xml);
+  CHECK(mz_zip_writer_finalize_heap_archive(&zip,&data,&size));CHECK(mz_zip_writer_end(&zip));free(xml);
+  OK(exr_publication_open_memory(EXR_EPUB,data,size,&publication,&error));mz_free(data);
+  config.page=(exr_layout_options){1024,1024,16,8,1.25f,0};config.document_css=0;
+  options.window_bytes=2*1024*1024;
+  OK(exr_publication_pager_create(publication,0,font,&config,&options,&pager,&error));exr_publication_free(publication);
+  for(;;) {
+    OK(exr_pager_next(pager,&page,&error));if(!page) break;
+    exr_layout_glyphs(page,&count);total+=count;pages++;
+    CHECK(pages<10000);exr_layout_free(page);page=NULL;
+  }
+  CHECK(total==paragraphs*letters && total>4*1024*1024);
+  CHECK(exr_pager_chapter_statistics(pager).windows_evicted>0);
+  exr_pager_free(pager);
+}
 typedef struct { const char *expected;size_t offset,end,calls;exr_pager *pager;int reject; } text_check;
 static exr_status text_sink(void *context,const char *text,size_t size,exr_error *e) {
   text_check *s=context;exr_layout *page=NULL;
@@ -278,6 +308,6 @@ int main(int argc,char **argv) {
   }
   publication=book(0,NULL);options.workspace_budget=1024*1024;
   CHECK(exr_publication_pager_create(publication,0,font,&config,&options,&pager,&error)==EXR_LIMIT);CHECK(pager==NULL);
-  exr_publication_free(publication);exr_font_free(font);
+  exr_publication_free(publication);page_work_budget(font);exr_font_free(font);
   printf("%u chapter reader equivalence and recovery checks passed\n",checks);return 0;
 }

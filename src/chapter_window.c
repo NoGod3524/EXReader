@@ -25,7 +25,7 @@ typedef struct {
 } window_parser;
 static int visit_emit(window_parser *p,int final);
 static void account_peak(window_parser *p) { if (p->bytes > p->peak_bytes) p->peak_bytes = p->bytes; }
-typedef struct { max_align_t alignment; window_parser *owner; size_t bytes; } window_xml_allocation;
+typedef struct { exr_allocation_alignment alignment; window_parser *owner; size_t bytes; } window_xml_allocation;
 #ifdef _MSC_VER
 static __declspec(thread) window_parser *window_owner;
 #else

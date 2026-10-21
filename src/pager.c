@@ -1484,6 +1484,9 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
     return exr_fail(e, EXR_ARGUMENT, "Invalid, failed or reentrant pager");
   if (p->finished)
     return exr_fail(e, EXR_OK, "");
+  /* An independent chapter reader budgets one public page operation. Local
+     speculative/float/table cursors share this budget and never reset it. */
+  if(p->owned_chapter) p->assets->work_glyphs=p->assets->shape_work=0;
   l = calloc(1, sizeof(*l));
   if (!l)
     return exr_fail(e, EXR_MEMORY, "Page allocation failed");
