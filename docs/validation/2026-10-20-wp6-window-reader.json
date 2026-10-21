@@ -37,7 +37,7 @@
       "single_50_100_open": true
     },
     "reader_log": {
-      "path": "build/audit-codecs-off/Testing/Temporary/LastTest.log",
+      "path": "build/audit-fixes/wp6-codecs-off-lasttest-r3.log",
       "sha256": "54a7df5fcc3d9165d3effc8f0c735bb804d71f03e45d054a76f1b876617ef65a"
     },
     "layer_log": {
