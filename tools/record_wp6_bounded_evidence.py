@@ -45,6 +45,8 @@ def main(argv=None):
     parser.add_argument("--candidate-dll", type=Path, required=True)
     parser.add_argument("--baseline-dll", type=Path, required=True)
     parser.add_argument("--compiler", default="")
+    parser.add_argument("--verification", type=Path,
+                        help="JSON merged into the record for checks run outside the probe")
     parser.add_argument("--main-repo", type=Path, required=True,
                         help="checkout holding the two protected untracked files")
     args = parser.parse_args(argv)
@@ -114,7 +116,8 @@ def main(argv=None):
         "package": "B",
         "work_package": "WP6 bounded in-chapter parsing",
         "branch": "codex/wp6-bounded-chapters",
-        "source_sha": args.source_sha,
+        "engine_source_sha": args.source_sha,
+        "record_policy": "The evidence record is committed after the engine commit it validates; package_source_sha is reported in the package handoff.",
         "base_source_sha": args.base_sha,
         "sdk_version": "3.39.0",
         "abi": 1,
@@ -205,10 +208,19 @@ def main(argv=None):
             "10->100 MiB parse-residency increment cannot be measured until 100 MiB opens",
             "Checkpoint/random restore across window eviction is not implemented",
             "Cross-window CSS inheritance and CFI/selection/export continuity are not implemented",
-            "Linux ASan/UBSan, installed-consumer and full native CI were not run in this package",
         ],
     }
-    args.out.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if args.verification:
+        verification = dict(load(args.verification))
+        extra_acceptance = verification.pop("acceptance", {}) or {}
+        extra_unmet = verification.pop("unmet", []) or []
+        record.update(verification)
+        record["acceptance"].update(extra_acceptance)
+        for item in extra_unmet:
+            if item not in record["unmet"]:
+                record["unmet"].append(item)
+    with args.out.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(record, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"ctest_passed": passed, "ctest_total": total,
                       "single10_owned": single10, "single100_owned": single100}, indent=2))
     return 0

@@ -240,8 +240,8 @@ def main(argv=None):
             })
             print("%s %d bytes sha256=%s" % (path.name, path.stat().st_size,
                                              manifest["cases"][-1]["sha256"]))
-    (args.output / "manifest.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    with (args.output / "manifest.json").open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     return 0
 
 
