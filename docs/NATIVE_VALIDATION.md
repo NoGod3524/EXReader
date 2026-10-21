@@ -1,5 +1,30 @@
 # Native C validation
 
+## Seven audited corrections (3.39.1)
+
+CBZ failure cleanup, source short reads and member/frame order, TIFF alpha,
+and SVG default stroke, percentage opacity and root/ancestor opacity have
+dedicated before/after regressions. The SVG suite also covers selected glyphs
+inside definitions. Fixed fixtures, reference thresholds and resource budgets
+are unchanged. Windows GCC passes 156/156; image/CBZ/stream/SVG suites report
+1553/4506/84/908 checks. Linux ASan/UBSan passes 153/153 on engine/package
+commit `29092645f1e4e0ffb0125d08055505dca028e9e3`.
+
+The fixed 56-scene Chrome comparison passes after correcting the existing
+3px interior mask to treat pixels outside a tight crop as empty. The initial
+55/56 comparison and both independent boundary diagnoses remain available.
+TIFF visible white-background difference drops from 54 to 0; low-alpha raw
+RGB retains libtiff's 8-bit association quantization. Installed C/C++ consumers
+and optional-codec results, exact source hashes and individual CI results are
+indexed in `docs/validation/2026-10-20-audit-fixes.json`.
+
+The macOS job's sole failure is the separately handed-off conversion batch
+memory benchmark; all four media/SVG suites pass there. This repair record
+also verifies the later conversion delivery `599667e` at 7/7 CI, with all
+three platforms passing CLI37, matrix520, render20 and the original memory
+budget. That delivery is not integrated into this repair branch. Joint-source
+acceptance, WP6 and WP16 final-source campaigns remain separate.
+
 ## WP7, WP8, WP12-lite and WP12a joint integration (3.39.0)
 
 Mainline preserves all delivery records and fixed acceptance scopes. Joint
