@@ -21,7 +21,7 @@ CORPUS = {
     'layout': ['sample.txt', 'layout.epub', 'float-both.epub', 'table-fragments-12.epub'],
     'render': ['comic.cbz', 'pdf-color/shading-axial.pdf', 'layout.epub', 'pdf-blend/flat.pdf'],
 }
-SCHEMA = 2
+SCHEMA = 3
 MAX_CPU_SECONDS = (2**64-1)//10**9
 SANITIZER_ENV = {'ASAN_OPTIONS': 'detect_leaks=1:halt_on_error=1',
                  'UBSAN_OPTIONS': 'halt_on_error=1:print_stacktrace=1'}
@@ -124,7 +124,7 @@ def seal_build(args):
     return 0
 
 
-def log_metrics(raw):
+def log_metrics(raw, target):
     text = raw.decode('utf-8', 'strict').replace('\r\n', '\n')
     counts = re.findall(r'^fuzz: (\d+) iterations over (\d+) seeds, (\d+) '
                         r'(?:reached a parsed document|completed the selected pipeline), no crash$', text, re.M)
@@ -133,7 +133,17 @@ def log_metrics(raw):
     iterations, seeds, completed = map(int, counts[0])
     whole, fraction = clocks[0][0].split('.')
     nanos = int(whole)*10**9+int(fraction)
-    return {'iterations': iterations, 'corpus_count': seeds, 'completed_exercises': completed,
+    routes = re.findall(r'^bounded_chapter_attempts=(\d+) bounded_chapter_completed=(\d+)$', text, re.M)
+    bounded = {}
+    if target in ('layout', 'render'):
+        require(len(routes) == 1, 'Missing or ambiguous bounded chapter accounting')
+        attempts, finished = map(int, routes[0])
+        require(0 < finished <= attempts <= iterations and finished <= completed,
+                'Bounded chapter path did not complete a page or has invalid counts')
+        bounded = {'bounded_chapter_attempts': attempts, 'bounded_chapter_completed': finished}
+    else:
+        require(not routes, 'Unexpected bounded chapter accounting')
+    return {**bounded, 'iterations': iterations, 'corpus_count': seeds, 'completed_exercises': completed,
             'process_cpu_nanoseconds': nanos, 'process_cpu_seconds': nanos/10**9,
             'requested_cpu_seconds': int(clocks[0][1])}
 
@@ -185,7 +195,7 @@ def run(args):
     wall = time.monotonic()-started
     (output/'run.log').write_bytes(raw)
     try:
-        metrics = log_metrics(raw)
+        metrics = log_metrics(raw, args.target)
     except (ValueError, UnicodeError):
         metrics = dict.fromkeys(('iterations', 'corpus_count', 'completed_exercises',
                                  'process_cpu_seconds', 'process_cpu_nanoseconds', 'requested_cpu_seconds'))
@@ -242,6 +252,14 @@ def validate_report(path):
     require(row['requested_cpu_seconds'] <= MAX_CPU_SECONDS and
             row['process_cpu_nanoseconds'] >= row['requested_cpu_seconds']*10**9 and
             row['completed_exercises'] <= row['iterations'], 'Invalid CPU budget or exercise count')
+    if target in ('layout', 'render'):
+        for field in ('bounded_chapter_attempts', 'bounded_chapter_completed'):
+            require(type(row.get(field)) is int and row[field] > 0, 'Invalid bounded chapter accounting: '+field)
+        require(row['bounded_chapter_completed'] <= row['bounded_chapter_attempts'] <= row['iterations'] and
+                row['bounded_chapter_completed'] <= row['completed_exercises'], 'Invalid bounded chapter counts')
+    else:
+        require('bounded_chapter_attempts' not in row and 'bounded_chapter_completed' not in row,
+                'Unexpected bounded chapter report')
     require(positive(row.get('process_cpu_seconds')) and positive(row.get('wall_seconds')) and
             row['process_cpu_seconds'] == row['process_cpu_nanoseconds']/10**9, 'Invalid duration')
     require(isinstance(row.get('platform'), str) and bool(row['platform']), 'Missing platform')
@@ -257,7 +275,7 @@ def validate_report(path):
                         ('last.bin.format', 'last_format_sha256'), ('build-manifest.json', 'build_manifest_sha256')]:
         require(hash_value(row.get(field)) and (folder/name).is_file() and digest(folder/name) == row[field],
                 'Missing or changed evidence file: '+str(folder/name))
-    metrics = log_metrics((folder/'run.log').read_bytes())
+    metrics = log_metrics((folder/'run.log').read_bytes(), target)
     require(all(row.get(k) == v for k, v in metrics.items()), 'Report disagrees with driver accounting')
     label = (folder/'last.bin.format').read_text(encoding='ascii')
     formats = ('txt', 'html', 'fb2', 'epub', 'docx', 'rtf', 'mobi', 'pdf', 'cbz')
@@ -302,6 +320,9 @@ def summarize(args):
         require(nanos >= math.ceil(args.minimum_cpu_hours*3600*10**9), target+': insufficient process CPU time')
         totals[target] = {'shards': len(rows), 'process_cpu_nanoseconds': nanos,
                           'process_cpu_seconds': nanos/10**9, 'iterations': sum(r['iterations'] for r in rows)}
+        if target in ('layout', 'render'):
+            totals[target].update({key: sum(r[key] for r in rows) for key in
+                                  ('bounded_chapter_attempts', 'bounded_chapter_completed')})
     summary = {'schema': SCHEMA, 'passed': True, 'source_sha': reports[0]['source_sha'],
                'build_manifest_sha256': reports[0]['build_manifest_sha256'],
                'minimum_cpu_hours': args.minimum_cpu_hours, 'targets': totals,
