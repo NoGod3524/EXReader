@@ -20,6 +20,7 @@ static exr_format record_format(const char *);
 #include <math.h>
 
 static exr_font *host_font;
+static uint64_t bounded_chapter_attempts,bounded_chapter_completed;
 static const char *stage(void) { return EXR_FUZZ_PIPELINE==1 ? "font" : EXR_FUZZ_PIPELINE==2 ? "layout" : "render"; }
 static const char *record_name(exr_format format) {
   static char name[32];
@@ -145,6 +146,7 @@ static exr_status chapter_exercise(const unsigned char *data,size_t size,exr_con
   exr_error error={0};exr_status status;size_t count=0,part;
   exr_layout_config config=exr_layout_config_defaults();
   exr_chapter_options options=exr_chapter_options_defaults();
+  int produced_page=0;
   config.page=(exr_layout_options){192,256,8,16,1.25f,0};config.control=control;
   options.workspace_budget=16*1024*1024;options.window_bytes=32768;
   status=exr_publication_open_memory(EXR_EPUB,data,size,&publication,&error);
@@ -160,6 +162,7 @@ static exr_status chapter_exercise(const unsigned char *data,size_t size,exr_con
     status=exr_pager_next(pager,&page,&error);
     if(status!=EXR_OK) { require(!page,"failed chapter pager output");break; }
     if(!page) break;
+    produced_page=1;
     layout_check(page,exr_pager_chapter_statistics(pager).projection_bytes);
     if(EXR_FUZZ_PIPELINE==3) for(unsigned channels=1;channels<=4 && status==EXR_OK;channels+=3) {
       exr_bitmap bitmap={0};status=exr_render_page_ex(page,exr_layout_font(page),0,channels,&control,&bitmap,&error);
@@ -167,7 +170,9 @@ static exr_status chapter_exercise(const unsigned char *data,size_t size,exr_con
     }
     exr_layout_free(page);page=NULL;
   }
-  exr_layout_free(page);exr_pager_free(pager);return status;
+  exr_layout_free(page);exr_pager_free(pager);
+  if(status==EXR_OK && produced_page) bounded_chapter_completed++;
+  return status;
 }
 static exr_status exercise(exr_format format,const unsigned char *data,size_t size) {
   unsigned polls=0;exr_control control={cancelled,NULL,&polls};
@@ -175,7 +180,10 @@ static exr_status exercise(exr_format format,const unsigned char *data,size_t si
   if(format==EXR_PDF || format==EXR_CBZ) return EXR_FUZZ_PIPELINE==3 ? fixed_exercise(format,data,size,control) : EXR_UNSUPPORTED;
   /* Alternate EPUB reading contracts by input extent. Both paths retain the
      original per-exercise poll/work limits instead of spending them twice. */
-  if(format==EXR_EPUB && !(size&1)) return chapter_exercise(data,size,control);
+  if(format==EXR_EPUB && !(size&1)) {
+    bounded_chapter_attempts++;
+    return chapter_exercise(data,size,control);
+  }
   return reflow_exercise(format,data,size,control);
 }
 int main(int argc,char **argv) {
@@ -185,7 +193,14 @@ int main(int argc,char **argv) {
     else argv[count++]=argv[i];
   }
   if(EXR_FUZZ_PIPELINE!=1) {
-    if(!font_path || exr_font_open(font_path,&host_font,&error)!=EXR_OK) { fprintf(stderr,"%s requires a valid --font: %s\n",stage(),error.message);return 2; }
+    if(!font_path || exr_font_open(font_path,&host_font,&error)!=EXR_OK) {
+      fprintf(stderr,"%s requires a valid --font: %s\n",stage(),error.message);result=2;goto done;
+    }
   }
-  result=pipeline_runner(count,argv);exr_font_free(host_font);return result;
+  result=pipeline_runner(count,argv);
+done:
+  if(EXR_FUZZ_PIPELINE!=1)
+    printf("bounded_chapter_attempts=%" PRIu64 " bounded_chapter_completed=%" PRIu64 "\n",
+      bounded_chapter_attempts,bounded_chapter_completed);
+  exr_font_free(host_font);return result;
 }

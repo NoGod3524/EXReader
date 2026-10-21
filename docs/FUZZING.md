@@ -89,7 +89,8 @@ CPU秒数最大为18446744073，超过整数纳秒范围会被拒绝。
 layout/render 必须给出 `--font <宿主字体>`。重排视口192×256，固定页按 unit scale
 缩至不超过256像素；每次 exercise 最多4096次取消轮询。超限/取消可干净拒绝，
 不代表完整文档绘制成功。可变字体目前查询轴，不构造轴极值实例；TTC 不遍历所有 face。
-当前没有 WOFF 专用种子或解码覆盖，也没有 COLRv1/SVG 字体覆盖。
+当前没有 WOFF 专用种子或解码覆盖。字体计划包含 COLRv1、可变 COLRv1 和 SVG 字体种子，
+执行颜色信息查询及有界页绘制。EPUB 按输入长度奇偶分流到快照或有界章阅读，两条路径共享原单次工作上限。
 
 ```sh
 ./build/fuzz/exreader-fuzz-font --seed 1 --iterations 20000 --save build/fuzz/font.bin tests/fixtures/fonts/primary.ttf tests/fixtures/fonts/variable.ttf
@@ -125,9 +126,12 @@ python3 tools/run_reliability_campaign.py summarize --reports build/evidence \
 需选用 ASCII 路径或 junction，以兼容驱动的窄字符文件入口。
 汇总要求四个目标齐全、同一提交、干净且开启sanitizer、输入/二进制不变、每目标同一语料与构建、
 有效种子不重复、全部分片成功且CPU足额；失败或缺失分片不能换算成通过时长。
-schema2要求每片同时保存`report.json`、`run.log`、`last.bin`、`last.bin.format`和
+schema3要求每片同时保存`report.json`、`run.log`、`last.bin`、`last.bin.format`和
 `build-manifest.json`。汇总逐项核对散列、原始日志计量、目标标签、语料顺序与数量、
 计数范围和字段类型，拒绝缺字段、重复JSON键、非有限数字、布尔值冒充数字和旧schema。
+layout/render 每片还须记录 `bounded_chapter_attempts` 和 `bounded_chapter_completed`，
+完成数仅计返回成功且实际生成页面的有界章操作；两项都须非零，并与原始日志、总尝试数和总成功数一致。
+快照路径的成功不能代替有界章路径的成功。
 构建清单包含四个程序、SDK运行库和CMakeCache的散列；Linux验收还检查各程序及运行库的
 ASan/UBSan导入符号。运行时固定sanitizer失败即停，并记录实际使用的选项。
 清单只生成一次；运行前后核对构建与输入，汇总对照独立下载的构建清单。

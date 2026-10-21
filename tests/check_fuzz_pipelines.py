@@ -16,8 +16,20 @@ def main():
         nonlocal checks
         result = subprocess.run([str(binary), *map(str, args)], capture_output=True, text=True, timeout=30)
         assert result.returncode == expected, (binary.name, result.returncode, result.stdout, result.stderr)
+        counts = re.findall(r'^bounded_chapter_attempts=(\d+) bounded_chapter_completed=(\d+)$',
+                            result.stdout, re.M)
+        if binary in (layout, render):
+            assert len(counts) == 1, (binary.name, 'missing or repeated bounded accounting')
+            attempts, completed = map(int, counts[0])
+            assert 0 <= completed <= attempts < 2**64
+        else:
+            assert not counts, (binary.name, 'unexpected bounded accounting')
         checks += 1
         return result.stdout
+
+    def bounded_counts(output):
+        return tuple(map(int, re.search(
+            r'^bounded_chapter_attempts=(\d+) bounded_chapter_completed=(\d+)$', output, re.M).groups()))
 
     host = fixtures/'fonts/primary.ttf'
     positive = [(font, fixtures/'fonts/primary.ttf', []),
@@ -33,7 +45,12 @@ def main():
                 (render, fixtures/'pdf-color/shading-axial.pdf', ['--font', host]),
                 (font, fixtures/'font-cff-regression.bin', [])]
     for binary, source, extra in positive:
-        assert 'status=0' in run(binary, '--replay', source, *extra)
+        output = run(binary, '--replay', source, *extra)
+        assert 'status=0' in output
+        if binary in (layout, render):
+            selected = int(source.suffix == '.epub' and source.stat().st_size % 2 == 0)
+            assert bounded_counts(output) == (selected, selected)
+            checks += 1
         checks += 1
     with tempfile.TemporaryDirectory(prefix='exreader-pipelines-') as temporary:
         folder = Path(temporary)
@@ -42,8 +59,11 @@ def main():
         alternate=folder/'alternate.epub'
         alternate.write_bytes((fixtures/'layout.epub').read_bytes()+b'\0')
         for binary in (layout,render):
-            assert 'status=0' in run(binary,'--replay',alternate,'--font',host)
-            checks+=1
+            output = run(binary,'--replay',alternate,'--font',host)
+            assert 'status=0' in output
+            selected = int(alternate.stat().st_size % 2 == 0)
+            assert bounded_counts(output) == (selected, selected)
+            checks+=2
         for binary, source, extra in [positive[0], positive[7], positive[9]]:
             saved = folder/(binary.stem+'.bin')
             first = run(binary, '--seed', 17, '--iterations', 100, '--save', saved, *extra, source)
@@ -54,6 +74,12 @@ def main():
             repeated = run(binary, '--seed', 17, '--iterations', 100, '--save', saved, *extra, source)
             assert original == saved.read_bytes() and record == Path(str(saved)+'.format').read_bytes()
             assert re.search(r'format=.*attempts=.*', first).group() == re.search(r'format=.*attempts=.*', repeated).group()
+            if binary in (layout, render):
+                assert bounded_counts(first) == bounded_counts(repeated)
+                attempts, completed = bounded_counts(replay)
+                selected = int(record.endswith(b':epub') and len(original) % 2 == 0)
+                assert attempts == selected and completed == int(selected and 'status=0' in replay)
+                checks += 2
             run(parser, '--replay', saved, expected=2)
             other = render if binary == layout else layout
             run(other, '--replay', saved, '--font', host, expected=2)
@@ -69,6 +95,15 @@ def main():
         assert 'fuzz: 1 iterations over 1 seeds' in output
         assert float(re.search(r'process_cpu_seconds=([0-9.]+)', output).group(1)) < 60
         checks += 2
+        for binary in (layout, render):
+            output = run(binary, '--seed', 17, '--cpu-seconds', 1,
+                         '--save', folder/('cpu-'+binary.stem+'.bin'),
+                         '--font', host, fixtures/'layout.epub', alternate)
+            attempts, completed = bounded_counts(output)
+            assert 0 < completed <= attempts
+            assert float(re.search(r'process_cpu_seconds=([0-9.]+)', output).group(1)) >= 1
+            assert 'requested_cpu_seconds=1' in output
+            checks += 3
     print('%d pipeline checks passed' % checks)
 
 
