@@ -6,18 +6,25 @@
   "core": "3.39.0",
   "abi": 1,
   "library_schema": 6,
-  "engine_commit": "b29e8263a7c185401aebbcb9d00ceecb9d92fa94",
-  "status": "validation_in_progress",
-  "wp6_accepted": false,
+  "engine_commit": "0e1ded4c1bf2320ad1068038072d40bb9d8df660",
+  "status": "wp6_accepted_reliability_pending",
+  "wp6_accepted": true,
   "wp16_accepted": false,
   "historical_evidence": [
     "docs/validation/wp6-bounded-chapters.json",
     "docs/validation/2026-10-20-audit-fixes.json",
     "build/wp6-full-sequential-r1/summary.json",
-    "build/audit-fixes/wp6-ci-status-r3.json"
+    "build/audit-fixes/wp6-ci-status-r3.json",
+    "build/wp6-window-acceptance-r2/summary.json",
+    "build/wp6-full-sequential-r2/summary.json",
+    "build/wp6-ci3-sanitizer-r1",
+    "build/audit-fixes/wp6-ci3-sanitizer-job.log"
   ],
   "local": {
-    "window_acceptance_summary": "build/wp6-window-acceptance-r2/summary.json",
+    "window_acceptance_summary": {
+      "path": "build/wp6-window-acceptance-r3/summary.json",
+      "sha256": "fe8db955471444b586e7049f75f73cec30e9c409ecc7cd8a99ee68a8d6db8ede"
+    },
     "window_acceptance": {
       "accepted": true,
       "all_cases_pass": true,
@@ -29,12 +36,19 @@
       "single_10_to_100_peak_residency_increment_bytes": 20269292,
       "single_50_100_open": true
     },
-    "reader_log": "build/audit-codecs-off/wp6-final-reader-tests.log",
-    "layer_log": "build/audit-codecs-off/wp6-layers-r2.log",
+    "reader_log": {
+      "path": "build/audit-codecs-off/Testing/Temporary/LastTest.log",
+      "sha256": "54a7df5fcc3d9165d3effc8f0c735bb804d71f03e45d054a76f1b876617ef65a"
+    },
+    "layer_log": {
+      "path": "build/audit-codecs-off/wp6-layers-r3.log",
+      "sha256": "4cd10ab1ed07a45a46f3571e176e63d289f813a2ec8004c695488b092995ec9f"
+    },
     "installed_default_components": {
+      "path": "build/audit-fixes/wp6-default-consumer-tests-r3.log",
+      "sha256": "9e3400b3f2606c4f0a6ea13edde72803ac9a80893c43a2f8a073016f44034706",
       "passed": 6,
-      "expected": 6,
-      "log": "build/audit-fixes/wp6-components-tests.log"
+      "expected": 6
     },
     "pre_fix_full_enumeration": {
       "accepted": false,
@@ -73,26 +87,324 @@
       "accepted": true
     },
     "trimmed_core": {
-      "build": true,
-      "ctest_passed": 2,
-      "ctest_expected": 2,
-      "log": "build/audit-fixes/wp6-core-tests.log"
+      "path": "build/audit-fixes/wp6-core-tests-r3.log",
+      "sha256": "cc8e3cc4906acf00da1997b308efe3d2f3d7b485f37c1ad08ce38bd9ba62a8c5",
+      "passed": 2,
+      "expected": 2
     },
     "msvc_core": {
-      "build": true,
-      "log": "build/audit-fixes/wp6-msvc-core-build.log"
-    }
+      "path": "build/audit-fixes/wp6-msvc-core-tests-r3.log",
+      "sha256": "86a9603396f6cb0ee94df31b4a67da6ae9cedcb83ee4340b16c0e79cedbbc24f",
+      "passed": 2,
+      "expected": 2
+    },
+    "window_repetitions": 3,
+    "full_sequential": {
+      "path": "build/wp6-full-sequential-r3/summary.json",
+      "sha256": "aaed172c59f09de2e4d7e20779d800ac6406382dd6fe28bc9cd415a5b365412e",
+      "accepted": true,
+      "first_256_page_hashes_match": true,
+      "original_snapshot_limit_preserved": true,
+      "runtime_immutable": true,
+      "results": [
+        {
+          "name": "single-10-window-0-cap-1000000",
+          "mib": 10,
+          "window": 0,
+          "cap": 1000000,
+          "exit": 1,
+          "status": 6,
+          "enumerated": 4919,
+          "all_pages_hash": "2ea11f60d11ee9a7",
+          "reached_eof": false
+        },
+        {
+          "name": "single-10-window-2097152-cap-4919",
+          "mib": 10,
+          "window": 2097152,
+          "cap": 4919,
+          "exit": 0,
+          "status": 0,
+          "enumerated": 4919,
+          "all_pages_hash": "2ea11f60d11ee9a7",
+          "reached_eof": false
+        },
+        {
+          "name": "single-10-window-2097152-cap-1000000",
+          "mib": 10,
+          "window": 2097152,
+          "cap": 1000000,
+          "exit": 0,
+          "status": 0,
+          "enumerated": 12018,
+          "all_pages_hash": "07de38f7055c85f6",
+          "reached_eof": true
+        },
+        {
+          "name": "single-10-window-4194304-cap-1000000",
+          "mib": 10,
+          "window": 4194304,
+          "cap": 1000000,
+          "exit": 0,
+          "status": 0,
+          "enumerated": 12018,
+          "all_pages_hash": "07de38f7055c85f6",
+          "reached_eof": true
+        },
+        {
+          "name": "single-50-window-2097152-cap-1000000",
+          "mib": 50,
+          "window": 2097152,
+          "cap": 1000000,
+          "exit": 0,
+          "status": 0,
+          "enumerated": 60088,
+          "all_pages_hash": "b5bb644fdbd8a452",
+          "reached_eof": true
+        },
+        {
+          "name": "single-50-window-4194304-cap-1000000",
+          "mib": 50,
+          "window": 4194304,
+          "cap": 1000000,
+          "exit": 0,
+          "status": 0,
+          "enumerated": 60088,
+          "all_pages_hash": "b5bb644fdbd8a452",
+          "reached_eof": true
+        },
+        {
+          "name": "single-100-window-2097152-cap-1000000",
+          "mib": 100,
+          "window": 2097152,
+          "cap": 1000000,
+          "exit": 0,
+          "status": 0,
+          "enumerated": 120177,
+          "all_pages_hash": "fda685f4b7f9caab",
+          "reached_eof": true
+        },
+        {
+          "name": "single-100-window-4194304-cap-1000000",
+          "mib": 100,
+          "window": 4194304,
+          "cap": 1000000,
+          "exit": 0,
+          "status": 0,
+          "enumerated": 120177,
+          "all_pages_hash": "fda685f4b7f9caab",
+          "reached_eof": true
+        }
+      ]
+    },
+    "default_full": {
+      "path": "build/audit-fixes/wp6-default-ctest-r3.log",
+      "sha256": "b0395411381c5b0cd36e8c81a03e1c221e9494ae46dd41b8cff7c7a55c376671",
+      "passed": 169,
+      "expected": 169,
+      "engine_commit": "0e1ded4c1bf2320ad1068038072d40bb9d8df660",
+      "seconds": 183.45
+    },
+    "codecs_off_full": {
+      "path": "build/audit-codecs-off/wp6-final-ctest-r3.log",
+      "sha256": "628943311650d7dfff8f0effccb18e7d45e27f13b956d9eb1f60a5184faab630",
+      "passed": 169,
+      "expected": 169,
+      "source_commit": "c9ea20fab9d43d4063b1d8225fae4d2430912bcd",
+      "seconds": 131.26
+    },
+    "fuzz_final_source": {
+      "path": "build/audit-fixes/wp6-schema3-fuzz-tests.log",
+      "sha256": "bb8128d179225d8239cf9be0f3ba2f88fe8888f05f446ea9bd2b0e14e00a50bd",
+      "passed": 7,
+      "expected": 7
+    },
+    "bounded_pipeline_checks": {
+      "path": "build/audit-fixes/wp6-bounded-pipeline-tests-r1.log",
+      "sha256": "2cbf77144de3ecc887213e1a0a492c54f336ad913d2c44b009379469055e4172",
+      "passed": 81
+    },
+    "synthetic_accounting": {
+      "path": "build/audit-fixes/wp6-accounting-r3.log",
+      "sha256": "9c008291eb8e1ac45f2a93fda5202a2ddb4b1254888f6b91ae1803db80d9812c",
+      "passed": 164,
+      "acceptance_evidence": false
+    },
+    "bounded_test_checks": {
+      "index": 23910,
+      "window": 62924,
+      "style_budget": 153,
+      "source": 180,
+      "reader": 9480
+    },
+    "public_exports": {
+      "path": "build/audit-fixes/wp6-export-comparison-r3-final.json",
+      "sha256": "993e97d64a205dc3147ed1a19b3ba12f2737b827fd9cdfc3ab06b8d280bf3236",
+      "baseline_count": 316,
+      "candidate_count": 324,
+      "removed": [],
+      "added": [
+        "exr_chapter_options_defaults",
+        "exr_pager_anchor_create",
+        "exr_pager_anchor_resolve",
+        "exr_pager_cfi_create",
+        "exr_pager_cfi_resolve",
+        "exr_pager_chapter_statistics",
+        "exr_pager_read_text",
+        "exr_publication_pager_create"
+      ],
+      "passed": true,
+      "note": "PE named exports counted once. Earlier package B report counted 632 import-symbol entries; retained unchanged as historical evidence."
+    },
+    "installed_cpp_exact": {
+      "path": "build/audit-fixes/wp6-cpp-run-r3.log",
+      "sha256": "ab89d075c80f9e41eab00bd2d610925d4de951327109dc7c6fc921975bae3230",
+      "passed": true,
+      "version": "3.40.0",
+      "abi": 1
+    },
+    "installed_gcc_core_components": {
+      "path": "build/audit-fixes/wp6-core-consumer-tests-r3.log",
+      "sha256": "895615acb7fc750ca1327799660823d6105038a6f76edd4d0c756a6119f4be1b",
+      "passed": 3,
+      "expected": 3
+    },
+    "installed_msvc_core_components": {
+      "path": "build/audit-fixes/wp6-msvc-consumer-tests-r3b.log",
+      "sha256": "624c3098bfe4f5a23a24df7a22929fe7ec5c5ecc2d5a69734f697e338c2d905c",
+      "passed": 3,
+      "expected": 3
+    },
+    "installed_license_inventory": {
+      "path": "build/audit-fixes/wp6-local-install-license-r3.json",
+      "sha256": "5233db7466bae253b285b65b45fe0bf0c4a72eacf784f124bab9cdcdcd536629"
+    },
+    "retained_consumer_setup_failure": {
+      "path": "build/audit-fixes/wp6-msvc-core-consumer-build-r3.log",
+      "sha256": "77d986937433f3fdeef7dac1548dad3c121e2c46d1ed83172a528352baf3da0b",
+      "reason": "Default Ninja generator selected GCC for an MSVC static package; rebuilt in fresh directory with explicit Visual Studio generator."
+    },
+    "schema3_measured_smoke": {
+      "parser": {
+        "path": "build/wp6-local-schema3-parser/report.json",
+        "sha256": "14ab296302a2a1dce284de0509188e31189845a476214062f55d27181e7c6b06"
+      },
+      "font": {
+        "path": "build/wp6-local-schema3-font/report.json",
+        "sha256": "e54620d81649180a11fbaf31407ef3dbad2d5a9fa961e133f6fd48a7cf245289"
+      },
+      "layout": {
+        "path": "build/wp6-local-schema3-layout/report.json",
+        "sha256": "5b8d27fa444376ca21c177c2fa44cbeea551cbd98e9e206a494a53505eff50dc"
+      },
+      "render": {
+        "path": "build/wp6-local-schema3-render/report.json",
+        "sha256": "5a1d5c568180dd088890ebe720e467fa8344cdfbb3ad9edd6ac8f87d278009d1"
+      }
+    },
+    "schema3_measured_smoke_is_linux_sanitizer_acceptance": false
   },
   "pending": [
-    "final unified Windows rerun",
-    "default and trimmed installed C/C++ consumers",
-    "native seven-job CI and Linux sanitizer",
-    "full sequential window-size comparison",
     "final-source measured reliability acceptance"
   ],
   "notes": [
     "Historical source reports are not reused as current-source acceptance.",
     "Window peak is a conservative bound including transient allocation overlap.",
-    "No physical device installation."
-  ]
+    "No physical device installation.",
+    "All local timing measurements ran alongside other work; they are not controlled speed comparisons.",
+    "CI and local ZIP compressed hashes differ with platform zlib and line endings; the six corpora have identical canonical uncompressed member hashes.",
+    "The final ordinary CI and full reliability campaign use the acceptance source; its engine/include/build files exactly match the quantitative measurement source."
+  ],
+  "acceptance_source": "c9ea20fab9d43d4063b1d8225fae4d2430912bcd",
+  "updated_utc": "2026-10-21T04:04:28.956794+00:00",
+  "engine_unchanged_between_measurement_and_acceptance_source": true,
+  "reliability_evidence_schema": 3,
+  "native_ci": {
+    "path": "build/audit-fixes/wp6-ci5-completed.json",
+    "sha256": "125aced1707df931575c022b2705831225852a7d164d3ebdd6db0a0ba0db088c",
+    "run": 39540754449,
+    "source_commit": "c9ea20fab9d43d4063b1d8225fae4d2430912bcd",
+    "jobs_passed": 7,
+    "linux_asan_ubsan_passed": true,
+    "linux_asan_ubsan_tests": 159
+  },
+  "platform_inventory": {
+    "path": "build/wp6-ci5-artifacts/inventory.json",
+    "sha256": "79788571fe608b5d67c6efca093c55bb876731a439d6a85e5a2801bf15ca3cdb"
+  },
+  "reference_hosts": [
+    {
+      "path": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\wp6-ci5-artifacts\\EXReader-reference-Windows\\report.json",
+      "sha256": "6c49b9cfa8e4ee678b7793ae59f1ae204f76ece2df56406ff7963816aab24c5c",
+      "checks": 26,
+      "physical_device_execution": false
+    },
+    {
+      "path": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\wp6-ci5-artifacts\\EXReader-reference-macOS\\apple-host-evidence\\report.json",
+      "sha256": "70eab62710e0638148d979dd3fe7e64b2c817c0e455534f689ccb7c90f2f0e34",
+      "checks": 21,
+      "physical_device_execution": false
+    },
+    {
+      "path": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\wp6-ci5-artifacts\\EXReader-reference-iPhone-iPad\\iphone-host-evidence\\report.json",
+      "sha256": "f2a9ae17869d0c042d6e7da2b2d4eb8f9c51fae2ae2b3943af41b2f55c1378ed",
+      "checks": 21,
+      "physical_device_execution": false
+    },
+    {
+      "path": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\wp6-ci5-artifacts\\EXReader-reference-iPhone-iPad\\ipad-host-evidence\\report.json",
+      "sha256": "f2a9ae17869d0c042d6e7da2b2d4eb8f9c51fae2ae2b3943af41b2f55c1378ed",
+      "checks": 21,
+      "physical_device_execution": false
+    }
+  ],
+  "wp16": {
+    "complete": false,
+    "gates": [
+      {
+        "id": "versioned_support_and_migration_docs",
+        "passed": true,
+        "paths": [
+          "docs/SUPPORT_MATRIX.md",
+          "docs/SDK_COMPATIBILITY.md",
+          "examples/window.c"
+        ]
+      },
+      {
+        "id": "local_default_trimmed_cpp_exports",
+        "passed": true
+      },
+      {
+        "id": "seven_native_ci_jobs_and_linux_sanitizers",
+        "passed": true
+      },
+      {
+        "id": "six_platform_artifacts_licenses_benchmarks",
+        "passed": true
+      },
+      {
+        "id": "same_source_four_target_24cpu_hours",
+        "passed": false
+      }
+    ],
+    "physical_device_execution": false
+  },
+  "final_reliability": {
+    "run": 39541947423,
+    "source_commit": "c9ea20fab9d43d4063b1d8225fae4d2430912bcd",
+    "targets": [
+      "parser",
+      "font",
+      "layout",
+      "render"
+    ],
+    "shards_per_target": 24,
+    "requested_cpu_seconds_per_shard": 3600,
+    "max_parallel": 8,
+    "accepted": false,
+    "dispatch_evidence": {
+      "path": "build/audit-fixes/wp6-final-reliability-status-r1.json",
+      "sha256": "e44f1317b01de95330b2c64fdd702bbcb35bed8325b93a262e6042964d4f841b"
+    }
+  }
 }
