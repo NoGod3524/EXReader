@@ -31,7 +31,14 @@ jobs:
           cat build/diag/memdiag.log
           (cd build/diag && rm -f out/* && EXR_CONVERT_MEM_DIAG=1 leaks --atExit -- "$T" --batch batch.json >leaks-report.log 2>leaks-stderr.log; true)
           (cd build/diag && "$T" --input ../corpus/long/one-mib.txt --to epub --output one.epub >single.json; /usr/bin/time -l "$T" --input ../corpus/long/one-mib.txt --to epub --output one2.epub 2>time-single.log >/dev/null; rm -f out/*; /usr/bin/time -l "$T" --batch batch.json 2>time-batch.log >/dev/null; true)
-          (cd build/diag && rm -f out/* && "$T" --batch batch.json >/dev/null 2>&1 & P=$!; sleep 4; vmmap -summary $P > vmmap-mid.log 2>&1; vmmap -interleaved $P 2>/dev/null | grep -E "MALLOC_LARGE|MALLOC_REUSABLE" | head -40 > vmmap-large.log; wait $P; true)
+          cd build/diag && rm -f out/*
+          "$T" --batch batch.json >/dev/null 2>&1 &
+          P=$!
+          sleep 4
+          vmmap -summary $P > vmmap-mid.log 2>&1
+          vmmap $P 2>/dev/null | grep -E "MALLOC_LARGE|MALLOC_REUSABLE|MALLOC_SMALL|MALLOC_TINY|MALLOC_NANO" | head -60 > vmmap-large.log
+          wait $P
+          cd ../..
           grep -E "maximum resident|peak memory" build/diag/time-*.log
       - uses: actions/upload-artifact@v4
         if: always()
