@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated_utc": "2026-10-21T20:02:26.638673+00:00",
+  "updated_utc": "2026-10-21T20:09:42.357563+00:00",
   "scope": "PNG dependency correction found by final-source font reliability campaign",
   "sdk": "3.40.0",
   "abi": 1,
@@ -112,12 +112,27 @@
     "shards_per_target": 24,
     "requested_cpu_seconds_per_shard": 3600,
     "max_parallel": 8,
-    "root": "build/wp6-final-reliability-r2",
     "dispatch_evidence": {
       "path": "build/audit-fixes/wp6-final-reliability-r2-dispatch.json",
       "sha256": "68f900107bc752a86c9336b45f112572cc9c50eb2136dec1d9547e58b37e7bf7"
     },
-    "prior_source_cpu_credit_nanoseconds": 0
+    "prior_source_cpu_credit_nanoseconds": 0,
+    "execution": {
+      "campaign_host": "GitHub Actions ubuntu-22.04",
+      "strict_summary_host": "GitHub Actions ubuntu-22.04",
+      "workflow": ".github/workflows/reliability.yml",
+      "local_long_test_processes": false,
+      "local_polling_stopped": true,
+      "local_polling_stopped_utc": "2026-10-21T20:09:42.357563+00:00",
+      "cloud_artifact_retention_days": 30,
+      "cloud_artifact_names": [
+        "reliability-runtime",
+        "reliability-build-evidence",
+        "reliability-shard-*",
+        "reliability-summary"
+      ]
+    },
+    "initial_local_progress_archive": "build/wp6-final-reliability-r2"
   },
   "notes": [
     "All prior-source reports remain historical; no CPU time is transferred.",
