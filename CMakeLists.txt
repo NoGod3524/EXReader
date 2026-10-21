@@ -764,12 +764,16 @@ if(EXR_FULL_TESTS)
         ${CMAKE_CURRENT_BINARY_DIR}/convert-cli-work
         ${CMAKE_CURRENT_BINARY_DIR}/native-convert-cli.json)
       set_tests_properties(native-convert-cli PROPERTIES FIXTURES_REQUIRED convert-corpus)
+      set(exr_convert_benchmark_options)
+      if(EXR_SANITIZE AND NOT MSVC)
+        list(APPEND exr_convert_benchmark_options --instrumented)
+      endif()
       add_test(NAME native-convert-benchmark COMMAND ${Python3_EXECUTABLE}
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_convert_benchmark.py
         $<TARGET_FILE:exreader-convert>
         ${CMAKE_CURRENT_BINARY_DIR}/convert-corpus
         ${CMAKE_CURRENT_BINARY_DIR}/convert-benchmark-work
-        ${CMAKE_CURRENT_BINARY_DIR}/native-convert-benchmark.json)
+        ${CMAKE_CURRENT_BINARY_DIR}/native-convert-benchmark.json ${exr_convert_benchmark_options})
       set_tests_properties(native-convert-benchmark PROPERTIES FIXTURES_REQUIRED convert-corpus)
     endif()
     add_test(NAME native-pdf-group-reference COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pdf_group_reference.py ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pdf-blend)

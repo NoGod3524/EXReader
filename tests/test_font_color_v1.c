@@ -576,12 +576,14 @@ static void malformed_paint(const char *directory, const char *work) {
   data[paint] = 200;
   status = render_bytes(data, size, 7, work);
   CHECK(status == EXR_UNSUPPORTED || status == EXR_FONT);
+  free(data);
   data = read_font(directory, "colrv1.ttf", &size);
   /* PaintGlyph child offset beyond the table. */
   paint = colr_paint(data, size, 7);
   child = paint + 1;
   data[child] = 0xff; data[child+1] = 0xff; data[child+2] = 0xff;
   CHECK(render_bytes(data, size, 7, work) == EXR_FONT);
+  free(data);
   data = read_font(directory, "colrv1.ttf", &size);
   /* Linear gradient stop offset > 1 (skip the wrapping PaintGlyph). */
   paint = colr_paint(data, size, 12);
@@ -592,6 +594,7 @@ static void malformed_paint(const char *directory, const char *work) {
   CHECK(be16(data + paint + 1) == 3);
   data[paint + 3] = 0x7f; data[paint + 4] = 0xff;
   CHECK(render_bytes(data, size, 12, work) == EXR_FONT);
+  free(data);
   data = read_font(directory, "colrv1.ttf", &size);
   /* Unknown composite mode: the spec maps it to CLEAR, which is rejected. */
   paint = colr_paint(data, size, 32);
@@ -599,6 +602,7 @@ static void malformed_paint(const char *directory, const char *work) {
   data[paint + 4] = 0xff;
   status = render_bytes(data, size, 32, work);
   CHECK(status == EXR_UNSUPPORTED || status == EXR_FONT);
+  free(data);
   data = read_font(directory, "colrv1.ttf", &size);
   /* Stop count above the 256 limit. */
   paint = colr_paint(data, size, 46);

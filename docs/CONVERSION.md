@@ -216,3 +216,15 @@ python -X utf8 tests/check_convert_benchmark.py <tool> <corpus> <work> <json>
   `docs/validation/wp12-lite-builds.json`、`docs/validation/wp12-lite-baseline.json`。
 - 未完成项：Linux ASan/UBSan 本机不可运行；完整 WP12 的高保真全格式往返、旧 UI 数据迁移
   仍按路线表独立跟踪，不能由本子包标记完成。
+
+## 主线跨平台量测
+
+批处理每项完成后释放正文、导出及重开校验对象；macOS另调用系统分配器的
+pressure relief 归还已经释放的缓存页，避免跨项堆缓存增加驻留。Windows/Linux/macOS
+非插桩构建继续按单项峰值加32MiB的原上限验收100项批处理；零计量、未完成项、
+失败项或残留临时文件均拒绝。
+
+ASan构建仍执行相同100项转换及清理检查并保留原始RSS，但隔离区/影子内存不是
+产品驻留量测。该报告标记 `instrumented=true`、`memory_budget_evaluated=false`、
+`memory_budget_passed=null`，不能作为内存预算通过证据。三个非插桩桌面CI分别
+保存并验收相同32MiB上限，原始插桩与macOS拒绝日志保留于主线集成记录。

@@ -189,6 +189,12 @@ jobs:
           name: EXReader-performance-${{ runner.os }}
           path: build/performance/
       - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: EXReader-conversion-${{ runner.os }}
+          path: build/native/native-convert*.json
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
         with:
           name: EXReader-C-${{ runner.os }}
           path: stage/
@@ -213,7 +219,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sanitizer-native-tests
-          path: build/asan/Testing/
+          path: |
+            build/asan/Testing/
+            build/asan/native-convert*.json
           if-no-files-found: warn
   fuzz:
     runs-on: ubuntu-22.04
