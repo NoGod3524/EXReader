@@ -39,6 +39,15 @@ jobs:
           vmmap $P 2>/dev/null | grep -E "MALLOC_LARGE|MALLOC_REUSABLE|MALLOC_SMALL|MALLOC_TINY|MALLOC_NANO" | head -60 > vmmap-large.log
           wait $P
           cd ../..
+          man malloc 2>/dev/null | col -b > build/diag/man-malloc.log
+          strings /usr/lib/system/libsystem_malloc.dylib 2>/dev/null | grep -E "^Malloc[A-Za-z]+" | sort -u > build/diag/malloc-env-names.log
+          cd build/diag
+          for v in "X=1" "MallocSpaceEfficient=1" "MallocXzoneMadvise=0" "MallocLargeCache=0" "MallocDisableXzone=1" "MallocXzoneEnabled=0" "MallocNanoZone=0 MallocSpaceEfficient=1"; do
+            rm -f out/*
+            env $v /usr/bin/time -l "$T" --batch batch.json 2>time-env.tmp >/dev/null
+            echo "$v: $(grep -E 'maximum resident' time-env.tmp | tr -s ' ') / $(grep -E 'peak memory' time-env.tmp | tr -s ' ')" | tee -a env-matrix.log
+          done
+          cd ../..
           grep -E "maximum resident|peak memory" build/diag/time-*.log
       - uses: actions/upload-artifact@v4
         if: always()
