@@ -17,12 +17,13 @@ static void *read_file(const char *path,size_t *size) {
   FILE *f=fopen(path,"rb");long n;void *data;CHECK(f && !fseek(f,0,SEEK_END));n=ftell(f);CHECK(n>=0);rewind(f);
   *size=(size_t)n;data=malloc(*size ? *size : 1);CHECK(data && fread(data,1,*size,f)==*size && !fclose(f));return data;
 }
-typedef struct { const unsigned char *data;size_t size;size_t reads,fail_at,cancel_after; } memory_source;
+typedef struct { const unsigned char *data;size_t size;size_t reads,fail_at,cancel_after,chunk;int overread; } memory_source;
 static size_t mem_read(void *context,uint64_t offset,void *buffer,size_t size) {
   memory_source *m=context;size_t n;
   if(m->reads++>=m->fail_at) return 0;
+  if(m->overread) return size+1;
   if(offset>m->size || size>m->size-offset) return 0;
-  n=size;memcpy(buffer,m->data+(size_t)offset,n);return n;
+  n=size;if(m->chunk && n>m->chunk) n=m->chunk;memcpy(buffer,m->data+(size_t)offset,n);return n;
 }
 static int mem_cancel(void *context) { memory_source *m=context;return m->cancel_after && m->reads>=m->cancel_after; }
 static int always_cancel(void *context) { (void)context;return 1; }
@@ -36,11 +37,27 @@ static void *archive(const char *fixtures,size_t *size,int pad) {
   CHECK(mz_zip_writer_finalize_heap_archive(&zip,&out,size));CHECK(mz_zip_writer_end(&zip));return out;
 }
 static int64_t count_books(exr_library *library) { exr_book *books=NULL;size_t n=0;int64_t id=0;OK(exr_library_books(library,NULL,&books,&n,&error));if(n) id=books[0].id;exr_books_free(books,n);return id; }
+static void short_reads(const void *bytes,size_t size) {
+  memory_source memory={0};exr_source source={0};exr_library *library=NULL;int64_t id=99;
+  memory.data=bytes;memory.size=size;memory.fail_at=(size_t)-1;memory.chunk=7;
+  source.size=size;source.read_at=mem_read;source.context=&memory;
+  OK(exr_library_open(":memory:",&library,&error));
+  OK(exr_library_import_source(library,EXR_CBZ,&source,"Short reads",&id,&error));CHECK(id>0);
+  memory.reads=0;memory.fail_at=1;id=99;
+  CHECK(exr_library_import_source(library,EXR_CBZ,&source,"Early end",&id,&error)==EXR_IO && !id);
+  memory.reads=0;memory.fail_at=(size_t)-1;memory.overread=1;id=99;
+  CHECK(exr_library_import_source(library,EXR_CBZ,&source,"Invalid read",&id,&error)==EXR_IO && !id);
+  memory.reads=0;memory.overread=0;memory.cancel_after=4;id=99;
+  source.control.cancelled=mem_cancel;source.control.context=&memory;
+  CHECK(exr_library_import_source(library,EXR_CBZ,&source,"Cancelled read",&id,&error)==EXR_CANCELLED && !id);
+  CHECK(count_books(library)==1);exr_library_close(library);
+}
 int main(int argc,char **argv) {
   char path[4096];void *bytes;size_t size,n=0;int64_t id=0,dup=0;int created=0;
   exr_library *library=NULL;exr_source source={0};memory_source memory={0};exr_fixed_document *doc=NULL;exr_bitmap bitmap={0};
   CHECK(argc==4);
   bytes=archive(argv[1],&size,2*1024*1024);CHECK(bytes && size>1024*1024);
+  short_reads(bytes,size);
   snprintf(path,sizeof(path),"%s/stream.sqlite",argv[2]);remove(path);
   OK(exr_library_open(path,&library,&error));
   { char missing[4096];int64_t failed=99;int was_created=1;

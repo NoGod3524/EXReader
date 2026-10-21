@@ -28,6 +28,35 @@ static void close_rgba(const exr_bitmap *bitmap,int r,int g,int b,int a) {
   CHECK(abs((int)bitmap->pixels[0]-r)<=16 && abs((int)bitmap->pixels[1]-g)<=16 &&
         abs((int)bitmap->pixels[2]-b)<=16 && abs((int)bitmap->pixels[3]-a)<=16);
 }
+static void tiff_alpha(const char *root) {
+  char path[4096];size_t size,x,y,k;void *data;exr_bitmap tiff={0},png={0};exr_status status;
+  snprintf(path,sizeof(path),"%s/tiff/alpha.tif",root);data=read_file(path,&size);
+  status=exr_image_decode(data,size,&tiff,&error);free(data);
+  if(status==EXR_UNSUPPORTED) return;
+  CHECK(status==EXR_OK);read_rgba(root,"png","alpha.png",&png);
+  CHECK(tiff.width==png.width && tiff.height==png.height);
+  for(y=0;y<png.height;y++) for(x=0;x<png.width;x++) {
+    const unsigned char *a=png.pixels+y*png.stride+x*4,*b=tiff.pixels+y*tiff.stride+x*4;
+    CHECK(a[3]==b[3]);
+    /* libtiff's 8-bit associated-alpha raster has one quantization step.
+       Compare premultiplied contributions rather than undefined alpha-zero RGB. */
+    for(k=0;k<3;k++) CHECK(abs((int)((a[k]*a[3]+127)/255)-(int)((b[k]*b[3]+127)/255))<=1);
+  }
+  { unsigned backgrounds[]={0xffffffffu,0x203040ffu};size_t i;
+    for(i=0;i<2;i++) {
+      exr_canvas_config config={0};exr_canvas *a=NULL,*b=NULL;exr_bitmap pa={0},pb={0};exr_image_layer layer={0};
+      double matrix[6]={png.width,0,0,png.height,0,0};
+      config.width=png.width;config.height=png.height;config.channels=4;config.background=backgrounds[i];
+      OK(exr_canvas_create(&config,&a,&error));OK(exr_canvas_create(&config,&b,&error));
+      layer.bitmap=png;OK(exr_canvas_image(a,&layer,matrix,1,&error));
+      layer.bitmap=tiff;OK(exr_canvas_image(b,&layer,matrix,1,&error));
+      OK(exr_canvas_take(a,&pa,&error));OK(exr_canvas_take(b,&pb,&error));
+      for(y=0;y<pa.height;y++) for(x=0;x<pa.width*4;x++) CHECK(abs((int)pa.pixels[y*pa.stride+x]-(int)pb.pixels[y*pb.stride+x])<=1);
+      exr_bitmap_free(&pa);exr_bitmap_free(&pb);exr_canvas_free(a);exr_canvas_free(b);
+    }
+  }
+  exr_bitmap_free(&png);exr_bitmap_free(&tiff);
+}
 static void matrix(const char *root,const char *format,const char *extension,unsigned tolerance) {
   size_t i;
   { char path[4096];size_t size,pages=0;void *data;snprintf(path,sizeof(path),"%s/%s/solid.%s",root,format,extension);
@@ -96,6 +125,7 @@ static void matrix(const char *root,const char *format,const char *extension,uns
 int main(int argc,char **argv) {
   size_t size;void *data;exr_bitmap bitmap={0};size_t pages=0;
   CHECK(argc==2 || argc==3);
+  tiff_alpha(argv[1]);
   if(argc==2 || !strcmp(argv[2],"png")) matrix(argv[1],"png","png",0);
   if(argc==2 || !strcmp(argv[2],"bmp")) matrix(argv[1],"bmp","bmp",0);
   if(argc==2 || !strcmp(argv[2],"gif")) matrix(argv[1],"gif","gif",16);
