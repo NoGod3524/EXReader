@@ -160,6 +160,31 @@ static void failure(void) {
   CHECK(d->resources && d->text && !strcmp(d->text,"text & more"));
   exr_chapter_window_free(&w); exr_chapter_index_free(index); exr_document_free(d);
 }
+static void pending_failure_budget(void) {
+  char name[1025], xml[2200];
+  size_t budget, limited = 0, passed = 0;
+  exr_document *d;
+  exr_chapter_index *index;
+  source s;
+  memset(name,'a',sizeof(name) - 1); name[sizeof(name) - 1] = 0;
+  (void)snprintf(xml,sizeof(xml),"<html><body><%s id='pending' lang='en'/></body></html>",name);
+  d = snapshot(xml); index = make_index(xml);
+  s = (source){xml,strlen(xml),32768,0,1,0};
+  /* Exercise adjacent allocation boundaries, including an unselected pending
+     name that cannot fit although its smaller attribute array could fit.
+     LeakSanitizer verifies ownership on each rejected parse. */
+  for (budget = 32768; budget <= 65536; budget += 16) {
+    exr_chapter_window w = {0};
+    exr_status status = exr_chapter_window_load(index,d,0,0,0,pump,&s,budget,NULL,&w,&error);
+    CHECK(status == EXR_OK || status == EXR_LIMIT);
+    if (status == EXR_LIMIT) {
+      limited++; CHECK(!w.document && !w.global_nodes && !w.memory_bytes);
+    } else { passed++; CHECK(w.document && w.memory_bytes <= budget); }
+    exr_chapter_window_free(&w);
+  }
+  CHECK(limited && passed);
+  exr_chapter_index_free(index); exr_document_free(d);
+}
 static void large_text(void) {
   size_t size = 1024*1024, first, last;
   char *xml = malloc(size + 128);
@@ -367,7 +392,7 @@ static void visit_batches(void) {
   exr_chapter_index_free(index); exr_document_free(d);
 }
 int main(void) {
-  selection(); failure(); large_text(); leading_empty_ranges(); boundaries(); streamed_window(50); streamed_window(100); visit_batches();
+  selection(); failure(); pending_failure_budget(); large_text(); leading_empty_ranges(); boundaries(); streamed_window(50); streamed_window(100); visit_batches();
   printf("%zu chapter window checks passed\n",checks);
   return 0;
 }

@@ -70,6 +70,7 @@ static void fail(window_parser *p,exr_status status,const char *message) {
 }
 static void *allocate(window_parser *p,size_t bytes) {
   void *data;
+  if(p->failed) return NULL;
   if (bytes > p->budget - p->bytes) { fail(p,EXR_LIMIT,"Chapter window exceeds budget"); return NULL; }
   data = calloc(bytes ? bytes : 1,1);
   if (!data) { fail(p,EXR_MEMORY,"Chapter window allocation failed"); return NULL; }
@@ -78,6 +79,7 @@ static void *allocate(window_parser *p,size_t bytes) {
 static int grow(window_parser *p,void **data,size_t *capacity,size_t count,size_t unit) {
   size_t next = *capacity ? *capacity : 64, extra;
   void *replacement;
+  if(p->failed) return 0;
   if (count <= *capacity) return 1;
   while (next < count) {
     if (next > SIZE_MAX / 2) { fail(p,EXR_LIMIT,"Chapter window capacity overflow"); return 0; }
@@ -128,7 +130,9 @@ static size_t existing(const window_parser *p,uint32_t global) {
 }
 static int attributes(window_parser *p,exr_node *node,const char **attrs,size_t count) {
   size_t i;
-  exr_attribute *a = count ? allocate(p,count * sizeof(*a)) : NULL;
+  exr_attribute *a;
+  if(p->failed) return 0;
+  a = count ? allocate(p,count * sizeof(*a)) : NULL;
   if (p->failed) return 0;
   node->attributes = a; node->attribute_count = count;
   for (i = 0; i < count; i++) {
@@ -240,6 +244,7 @@ static void XMLCALL start(void *context,const char *name,const char **attrs) {
     if (pending) {
       exr_node *node = &p->stack[p->depth].pending;
       node->kind = kind; node->name = copy(p,name,strlen(name));
+      if(p->failed) return;
       (void)attributes(p,node,attrs,count);
     }
   }
