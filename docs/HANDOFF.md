@@ -1,6 +1,6 @@
 # EXReader 开发状态与路线
 
-更新日期：2026-10-20。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.39.0**、ABI epoch **1**、书库 schema **6**。
+更新日期：2026-10-20。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.39.1**、ABI epoch **1**、书库 schema **6**。
 
 WP7六个交付提交已集成：八个声明脚本的功能和Windows验收按固定800例口径接收。
 主线Linux ASan/UBSan结果与最终关闭状态见 `docs/validation/2026-10-20-wp7-integration.json`。
