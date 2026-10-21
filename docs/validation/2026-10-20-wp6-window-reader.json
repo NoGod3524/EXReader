@@ -7,7 +7,7 @@
   "abi": 1,
   "library_schema": 6,
   "engine_commit": "0e1ded4c1bf2320ad1068038072d40bb9d8df660",
-  "status": "wp6_accepted_reliability_pending",
+  "status": "reliability_defect_fix_in_progress",
   "wp6_accepted": true,
   "wp16_accepted": false,
   "historical_evidence": [
@@ -305,7 +305,9 @@
     "schema3_measured_smoke_is_linux_sanitizer_acceptance": false
   },
   "pending": [
-    "final-source measured reliability acceptance"
+    "PNG dependency zero-length read fix and Linux sanitizer verification",
+    "replacement-source native CI, SDK artifacts and installation consumption",
+    "replacement-source four-target 24CPU-hour campaign and strict aggregation"
   ],
   "notes": [
     "Historical source reports are not reused as current-source acceptance.",
@@ -405,6 +407,18 @@
     "dispatch_evidence": {
       "path": "build/audit-fixes/wp6-final-reliability-status-r1.json",
       "sha256": "e44f1317b01de95330b2c64fdd702bbcb35bed8325b93a262e6042964d4f841b"
-    }
+    },
+    "status": "cancelled_after_confirmed_ubsan_failure",
+    "failure_target": "font",
+    "failure_shard": 2,
+    "failed_report": {
+      "path": "build/wp6-long-first-failure/font-2/font-2/report.json",
+      "sha256": "44c0b0650e76a20445789ed7ad67883e2e5be6146ac36b3c5c830df40f9bcb1d"
+    },
+    "historical_inventory": {
+      "path": "build/wp6-long-first-failure/inventory.json",
+      "sha256": "92566a3814e341f7987368b6dd9d9ed0b68aa41050bbf0405905e007232bc909"
+    },
+    "replacement_source_cpu_credit_nanoseconds": 0
   }
 }

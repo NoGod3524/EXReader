@@ -29,6 +29,10 @@ PostScript is a registered trademark of Adobe Systems Incorporated.
 | Mbed TLS crypto subset | mbedtls-3.6.7, Mbed-TLS/mbedtls | Apache-2.0 OR GPL-2.0-or-later; Apache-2.0 selected | Optional PDF MD5/SHA-256/384/512 and AES-CBC/ECB; EXR_ENABLE_PDF_CRYPTO |
 
 CMake verifies every source archive using the SHA-256 values in cmake/deps.cmake.
+The build creates a private copy of the pinned stb_image header with a local
+zero-length read correction: no copy or destination pointer is needed for an
+empty read, including a valid empty PNG data chunk. The original source and
+license remain unchanged; this correction adds no input allocation or budget.
 The WP12a image-codec archives are pinned as follows: libwebp
 `668c9aba45565e24c27e17f7aaf7060a399f7f31dba6c97a044e1feacb930f37`,
 zlib `17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c`,

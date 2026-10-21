@@ -52,6 +52,11 @@ def main():
             assert bounded_counts(output) == (selected, selected)
             checks += 1
         checks += 1
+    regression = fixtures/'font-image-regression.bin'
+    output = run(font, '--replay', regression)
+    assert re.search(r'^replay: format=font bytes=%d status=5$' % regression.stat().st_size,
+                     output, re.M), 'image regression did not complete its normal format rejection'
+    checks += 1
     with tempfile.TemporaryDirectory(prefix='exreader-pipelines-') as temporary:
         folder = Path(temporary)
         # A harmless trailing byte keeps the ZIP readable while selecting the
