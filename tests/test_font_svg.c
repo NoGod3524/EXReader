@@ -211,6 +211,12 @@ static void presentation_regressions(const char *directory) {
                        SVG_START "><g opacity='0.5' transform='translate(100,50)' fill='red'>" SVG_RECT "</g></svg>");
   same_document_pixels(directory, SVG_START "opacity='0.5' fill='red'><g transform='translate(100,50)'><rect id='glyph2' x='100' y='100' width='600' height='600'/><rect width='1000' height='1000' fill='blue'/></g></svg>",
                        SVG_START "opacity='0.5' fill='red'><g transform='translate(100,50)'>" SVG_RECT "</g></svg>");
+  same_document_pixels(directory,
+      SVG_START "opacity='0.5' fill='red'><defs><g transform='translate(100,50)' opacity='0.5'><g id='glyph2'>" SVG_RECT "</g><rect width='1000' height='1000' fill='blue'/></g></defs><rect width='1000' height='1000' fill='green'/></svg>",
+      SVG_START "opacity='0.5' fill='red'><g transform='translate(100,50)' opacity='0.5'>" SVG_RECT "</g></svg>");
+  same_document_pixels(directory,
+      SVG_START "fill='red'><defs><g><rect width='1000' height='1000' fill='blue'/></g></defs>" SVG_RECT "</svg>",
+      SVG_START "fill='red'>" SVG_RECT "</svg>");
   image = document_scene(directory, SVG_START "transform='translate(100,50)' fill='red'>" SVG_RECT "</svg>");
   white(&image, 232, 150); near(&image, 245, 150, 255, 0, 0, 0);
   exr_bitmap_free(&image);
