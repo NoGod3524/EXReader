@@ -45,8 +45,7 @@ void cv_memory_diag(const char *label, size_t index) {
   malloc_zone_statistics(NULL, &stats);
   if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &count) != KERN_SUCCESS)
     memset(&info, 0, sizeof(info));
-  fprintf(stderr, "mem-diag item=%zu %s resident=%llu peak=%llu malloc_in_use=%zu malloc_allocated=%zu blocks=%u
-",
+  fprintf(stderr, "mem-diag item=%zu %s resident=%llu peak=%llu malloc_in_use=%zu malloc_allocated=%zu blocks=%u\n",
           index, label, (unsigned long long)info.resident_size,
           (unsigned long long)cv_peak_rss(), stats.size_in_use, stats.size_allocated,
           stats.blocks_in_use);
