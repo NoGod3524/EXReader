@@ -38,7 +38,7 @@ jobs:
           if [ "${{ runner.os }}" = Windows ]; then probe=build/native/Release/exreader-wp6-chapter-probe.exe;
           else probe=build/native/exreader-wp6-chapter-probe; fi
           python3 tools/generate_bounded_chapter_corpus.py build/wp6-corpus
-          python3 tools/run_wp6_bounded_probe.py "$probe" tests/fixtures/fonts/primary.ttf build/wp6-corpus build/wp6-evidence --window-bytes 65536 --sample-pages 64 --random-count 8 --repeats 1
+          python3 tools/run_wp6_bounded_probe.py "$probe" tests/fixtures/fonts/primary.ttf build/wp6-corpus build/wp6-evidence --window-bytes 16384 --sample-pages 64 --random-count 8 --repeats 1
       - name: Preserve bounded chapter measurements
         if: always()
         uses: actions/upload-artifact@v4
