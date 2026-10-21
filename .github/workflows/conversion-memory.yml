@@ -1,0 +1,28 @@
+name: Conversion memory diagnostics
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build/memory -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_AAC=OFF
+      - run: cmake --build build/memory --target exreader-convert --parallel 4
+      - run: python3 tools/generate_conversion_corpus.py --out build/corpus
+      - name: Compare allocator configurations under the unchanged memory gate
+        shell: bash
+        run: |
+          set +e
+          python3 tests/check_convert_benchmark.py "$PWD/build/memory/exreader-convert" "$PWD/build/corpus" "$PWD/build/default" "$PWD/build/default.json"
+          MallocAggressiveMadvise=1 python3 tests/check_convert_benchmark.py "$PWD/build/memory/exreader-convert" "$PWD/build/corpus" "$PWD/build/aggressive" "$PWD/build/aggressive.json"
+          MallocNanoZone=0 python3 tests/check_convert_benchmark.py "$PWD/build/memory/exreader-convert" "$PWD/build/corpus" "$PWD/build/nano-off" "$PWD/build/nano-off.json"
+          MallocAggressiveMadvise=1 MallocNanoZone=0 python3 tests/check_convert_benchmark.py "$PWD/build/memory/exreader-convert" "$PWD/build/corpus" "$PWD/build/both" "$PWD/build/both.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conversion-memory-diagnostics
+          path: build/*.json
+          if-no-files-found: warn
