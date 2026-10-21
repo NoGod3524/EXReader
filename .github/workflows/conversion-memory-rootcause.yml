@@ -1,6 +1,9 @@
 name: Conversion memory root cause
 on:
   workflow_dispatch:
+  push:
+    branches: [codex/reliability-convert-memory]
+    paths: [.github/workflows/conversion-memory-rootcause.yml]
 permissions:
   contents: read
 jobs:
