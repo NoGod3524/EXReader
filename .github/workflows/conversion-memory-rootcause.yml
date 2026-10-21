@@ -1,0 +1,37 @@
+name: Conversion memory root cause
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build/memory -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_AAC=OFF
+      - run: cmake --build build/memory --target exreader-convert --parallel 4
+      - run: python3 tools/generate_conversion_corpus.py --out build/corpus
+      - name: Per-item allocator statistics and leak scan
+        shell: bash
+        run: |
+          set +e
+          mkdir -p build/diag/out
+          python3 - <<'PY'
+          import json,os
+          c=os.path.abspath("build/corpus/long/one-mib.txt")
+          items=[{"id":"b%03d"%i,"input":c,"to":"epub","output":"b%03d.epub"%i} for i in range(100)]
+          json.dump({"schema":1,"output_root":"out","items":items},open("build/diag/batch.json","w"))
+          PY
+          T="$PWD/build/memory/exreader-convert"
+          (cd build/diag && EXR_CONVERT_MEM_DIAG=1 "$T" --batch batch.json >report.json 2>memdiag.log)
+          cat build/diag/memdiag.log
+          (cd build/diag && rm -f out/* && EXR_CONVERT_MEM_DIAG=1 leaks --atExit -- "$T" --batch batch.json >leaks-report.log 2>leaks-stderr.log; true)
+          (cd build/diag && "$T" --input ../corpus/long/one-mib.txt --to epub --output one.epub >single.json; /usr/bin/time -l "$T" --input ../corpus/long/one-mib.txt --to epub --output one2.epub 2>time-single.log >/dev/null; rm -f out/*; /usr/bin/time -l "$T" --batch batch.json 2>time-batch.log >/dev/null; true)
+          grep -E "maximum resident|peak memory" build/diag/time-*.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conversion-memory-rootcause
+          path: build/diag/*.log
+          if-no-files-found: warn
