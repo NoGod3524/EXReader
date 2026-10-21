@@ -11,6 +11,7 @@ typedef struct {
   size_t *sources,count,capacity;
   unsigned char *boundaries;
 } exr_display_view;
+size_t exr_display_view_size(const exr_display_view *view);
 typedef struct {
   exr_buffer text;
   size_t *sources,count,capacity;

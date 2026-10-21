@@ -37,6 +37,13 @@ def main():
         checks += 1
     with tempfile.TemporaryDirectory(prefix='exreader-pipelines-') as temporary:
         folder = Path(temporary)
+        # A harmless trailing byte keeps the ZIP readable while selecting the
+        # other EPUB path; both contracts must reach a successful page render.
+        alternate=folder/'alternate.epub'
+        alternate.write_bytes((fixtures/'layout.epub').read_bytes()+b'\0')
+        for binary in (layout,render):
+            assert 'status=0' in run(binary,'--replay',alternate,'--font',host)
+            checks+=1
         for binary, source, extra in [positive[0], positive[7], positive[9]]:
             saved = folder/(binary.stem+'.bin')
             first = run(binary, '--seed', 17, '--iterations', 100, '--save', saved, *extra, source)

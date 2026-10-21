@@ -26,6 +26,7 @@ typedef struct {
   const char *book, *font;
   size_t part, turns, random_pages, max_pages, cache_pages, cache_bytes;
   size_t checkpoint_capacity, checkpoint_bytes, checkpoint_interval;
+  size_t window_bytes;
   unsigned long long seed;
   int render;
 } options;
@@ -219,10 +220,11 @@ static int parse(options *o, int argc, char **argv) {
     else if (!strcmp(k, "--checkpoints")) o->checkpoint_capacity = (size_t)strtoull(v, NULL, 10);
     else if (!strcmp(k, "--checkpoint-budget")) o->checkpoint_bytes = (size_t)strtoull(v, NULL, 10);
     else if (!strcmp(k, "--checkpoint-interval")) o->checkpoint_interval = (size_t)strtoull(v, NULL, 10);
+    else if (!strcmp(k, "--window-bytes")) o->window_bytes = (size_t)strtoull(v, NULL, 10);
     else if (!strcmp(k, "--seed")) o->seed = strtoull(v, NULL, 10);
     else return 0;
   }
-  return o->max_pages > 0 && o->turns <= o->max_pages;
+  return o->max_pages > 0 && o->turns <= o->max_pages && o->turns<=64 && o->random_pages<=64;
 }
 
 static int run(options *o) {
@@ -234,6 +236,8 @@ static int run(options *o) {
   exr_bitmap bitmap = {0};
   exr_error error = {0};
   exr_layout_config config = exr_layout_config_defaults();
+  exr_chapter_options chapter_options=exr_chapter_options_defaults();
+  exr_chapter_stats chapter_stats={0};
   exr_status status = EXR_OK;
   const char *stage = "font";
   size_t resident = 0, peak = 0, base_resident = 0, baseline_peak = 0;
@@ -244,8 +248,10 @@ static int run(options *o) {
   size_t attributes = 0;
   size_t chapters = 0, resources = 0, chapter_strings = 0, resource_strings = 0;
   size_t cache_bytes = 0, restored = 0, generated = 0, enumerated = 0, turns = 0;
-  double font_ms, open_ms, load_ms, create_ms = 0, first_page_ms = 0, paint_ms = 0;
-  double turn_layout[64], turn_render[64];
+  double font_ms=0, open_ms=0, load_ms=0, create_ms = 0, first_page_ms = 0, paint_ms = 0;
+  double turn_layout[64]={0}, turn_render[64]={0};
+  uint64_t all_pages_hash=1469598103934665603ULL;
+  int reached_eof=0;
   page_sample reference[256];
   size_t reference_count = 0, random_total = 0, mismatches = 0;
   long long random_plan[64];
@@ -268,11 +274,14 @@ static int run(options *o) {
   if (o->part >= parts) { status = EXR_ARGUMENT; goto done; }
   stage = "load";
   load_ms = now_ms();
-  status = exr_publication_load(publication, o->part, &document, &error);
+  chapter_options.window_bytes=o->window_bytes ? o->window_bytes : chapter_options.window_bytes;
+  if(o->window_bytes)
+    status=exr_publication_pager_create(publication,o->part,font,&config,&chapter_options,&pager,&error);
+  else status = exr_publication_load(publication, o->part, &document, &error);
   load_ms = now_ms() - load_ms;
   process_memory(&load_resident, &load_peak);
   if (status != EXR_OK) goto done;
-  {
+  if(document) {
     const exr_node *node_list = exr_document_nodes(document, &nodes);
     const exr_chapter *chapter_list = exr_document_chapters(document, &chapters);
     const exr_resource *resource_list = exr_document_resources(document, &resources);
@@ -303,9 +312,14 @@ static int run(options *o) {
       if (resource_list[i].properties) resource_strings += strlen(resource_list[i].properties) + 1;
     }
   }
+  if(o->window_bytes) {
+    chapter_stats=exr_pager_chapter_statistics(pager);
+    nodes=chapter_stats.node_count;text_bytes=chapter_stats.projection_bytes;
+    owned=chapter_stats.parse_workspace_bytes;
+  }
   stage = "sequential";
   create_ms = now_ms();
-  status = exr_pager_create(document, font, &config, &pager, &error);
+  if(!o->window_bytes) status = exr_pager_create(document, font, &config, &pager, &error);
   create_ms = now_ms() - create_ms;
   if (status != EXR_OK) goto done;
   for (;;) {
@@ -313,9 +327,10 @@ static int run(options *o) {
     size_t index = enumerated;
     status = exr_pager_next(pager, &page, &error);
     if (status != EXR_OK) goto done;
-    if (!page) break;
+    if (!page) { reached_eof=1;break; }
     {
       page_sample s = hash_layout(page);
+      all_pages_hash=fnv_u64(all_pages_hash,s.hash);
       double render_ms = 0;
       if (index < o->turns) {
         turn_layout[index] = now_ms() - at;
@@ -323,7 +338,7 @@ static int run(options *o) {
       }
       if (index < 256) reference[index] = s;
       if (index < 256) reference_count++;
-      if ((index < o->turns) || (o->render && index == 0)) {
+      if (o->render && ((index < o->turns) || index == 0)) {
         double started = now_ms();
         exr_status render = exr_render_page_color(page, exr_layout_font(page), 0, &bitmap, &error);
         render_ms = now_ms() - started;
@@ -331,7 +346,7 @@ static int run(options *o) {
         exr_bitmap_free(&bitmap);
       }
       if (index < o->turns) turn_render[index] = render_ms;
-      if (index == 0) { first_page_ms = turn_layout[0]; paint_ms = render_ms; }
+      if (index == 0) { first_page_ms = now_ms()-at-render_ms; paint_ms = render_ms; }
     }
     exr_layout_free(page);
     page = NULL;
@@ -339,6 +354,7 @@ static int run(options *o) {
     if (enumerated >= o->max_pages) break;
   }
   process_memory(&first_resident, &first_peak);
+  if(o->window_bytes) chapter_stats=exr_pager_chapter_statistics(pager);
   exr_pager_free(pager);
   pager = NULL;
   stage = "random";
@@ -352,7 +368,9 @@ static int run(options *o) {
         if ((size_t)random_plan[i] == candidate) { seen = 1; break; }
       if (!seen) random_plan[random_total++] = (long long)candidate;
     }
-    status = exr_pager_create(document, font, &config, &pager, &error);
+    if(o->window_bytes)
+      status=exr_publication_pager_create(publication,o->part,font,&config,&chapter_options,&pager,&error);
+    else status = exr_pager_create(document, font, &config, &pager, &error);
     if (status != EXR_OK) goto done;
     status = exr_pager_set_cache(pager, o->cache_pages, o->cache_bytes, &error);
     if (status != EXR_OK) goto done;
@@ -372,6 +390,7 @@ static int run(options *o) {
     { exr_pager_stats stats = exr_pager_statistics(pager);
       restored = stats.restored_checkpoints;
       generated = stats.generated_pages; }
+    if(o->window_bytes) chapter_stats=exr_pager_chapter_statistics(pager);
     exr_pager_free(pager);
     pager = NULL;
   }
@@ -391,14 +410,18 @@ done:
           file_bytes(o->book), o->part, parts);
   }
   fprintf(stdout, "\"text_bytes\":%zu,\"nodes\":%zu,\"blocks\":%zu,", text_bytes, nodes, blocks);
+  if(o->window_bytes) fprintf(stdout,
+    "\"bounded\":{\"index_bytes\":%zu,\"parse_workspace_bytes\":%zu,\"peak_parse_workspace_bytes\":%zu,\"windows_loaded\":%zu,\"windows_evicted\":%zu,\"window_bytes\":%zu},",
+    chapter_stats.index_bytes,chapter_stats.parse_workspace_bytes,chapter_stats.peak_parse_workspace_bytes,
+    chapter_stats.windows_loaded,chapter_stats.windows_evicted,o->window_bytes);
   fprintf(stdout, "\"parse_workspace\":{\"document_owned_bytes\":%zu,\"projection_bytes\":%zu,",
-          owned, text_bytes);
+          document ? owned : 0, text_bytes);
   fprintf(stdout, "\"node_array_bytes\":%zu,\"attribute_array_bytes\":%zu,",
-          nodes * sizeof(exr_node), attribute_arrays);
+          document ? nodes * sizeof(exr_node) : 0, attribute_arrays);
   fprintf(stdout, "\"block_array_bytes\":%zu,", blocks * sizeof(exr_block));
   {
     size_t measured = nodes * sizeof(exr_node) + attribute_arrays + blocks * sizeof(exr_block);
-    fprintf(stdout, "\"other_bytes\":%zu},", owned > measured ? owned - measured : 0);
+    fprintf(stdout, "\"other_bytes\":%zu},", document && owned > measured ? owned - measured : 0);
   }
   fprintf(stdout, "\"strings\":{\"node_text_bytes\":%zu,\"node_name_bytes\":%zu,",
           node_text, node_names);
@@ -419,8 +442,8 @@ done:
   fprintf(stdout, "\"first_page_layout_ms\":%.6f,\"first_paint_ms\":%.6f,", first_page_ms, paint_ms);
   fprintf(stdout, "\"first_visible_total_ms\":%.6f},",
           font_ms + open_ms + load_ms + create_ms + first_page_ms + paint_ms);
-  fprintf(stdout, "\"sequential\":{\"turns\":%zu,\"enumerated\":%zu,\"turn_layout_ms\":[", turns,
-          enumerated);
+  fprintf(stdout, "\"sequential\":{\"turns\":%zu,\"enumerated\":%zu,\"reached_eof\":%s,\"all_pages_hash\":\"%016llx\",\"turn_layout_ms\":[", turns,
+          enumerated,reached_eof ? "true" : "false",(unsigned long long)all_pages_hash);
   for (j = 0; j < turns; j++) fprintf(stdout, "%s%.6f", j ? "," : "", turn_layout[j]);
   fprintf(stdout, "],\"turn_render_ms\":[");
   for (j = 0; j < turns; j++) fprintf(stdout, "%s%.6f", j ? "," : "", turn_render[j]);

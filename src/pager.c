@@ -41,6 +41,9 @@ typedef struct {
   int bidi_active;
 } checkpoint;
 struct exr_pager {
+  void *owned_chapter;
+  void (*chapter_release)(void *);
+  exr_chapter_stats (*chapter_statistics)(const void *);
   flow f;
   exr_float_state floats;
   float_stream *streams;
@@ -210,7 +213,9 @@ static size_t context_memory_size(const exr_pager *p) {
   size_t total = sizeof(*p), i;
   const exr_layout *queues[3];
   if (!p) return 0;
-  total+=exr_inline_extra_size(&p->line,1);
+  total+=exr_inline_extra_size(&p->line,0);
+  total+=exr_bidi_memory_size(p->bidi.analysis)+p->bidi.count*sizeof(*p->bidi.offsets)+(p->bidi.refs ? sizeof(*p->bidi.refs) : 0);
+  if(p->config.user_css) total+=strlen(p->config.user_css)+1;
   total+=p->stream_capacity*sizeof(*p->streams);
   for(i=0;i<p->stream_count;i++) {
     size_t bytes=context_memory_size(p->streams[i].context);
@@ -219,8 +224,8 @@ static size_t context_memory_size(const exr_pager *p) {
   }
   queues[0] = &p->line.run; queues[1] = &p->line.raw; queues[2] = &p->line.line;
   for (i = 0; i < 3; i++) {
-    if (queues[i]->glyph_count > (SIZE_MAX-total)/sizeof(exr_glyph)) return SIZE_MAX;
-    total += queues[i]->glyph_count*sizeof(exr_glyph);
+    if (queues[i]->glyph_cap > (SIZE_MAX-total)/sizeof(exr_glyph)) return SIZE_MAX;
+    total += queues[i]->glyph_cap*sizeof(exr_glyph);
   }
   for (i = 0; i < p->depth; i++) {
     size_t bytes = exr_table_memory_size(p->frames[i].table);
@@ -313,6 +318,9 @@ static exr_status restore_checkpoint(exr_pager *p, const checkpoint *source, exr
   p->chapter = copy->chapter; p->position = copy->position; p->emitted = copy->emitted;p->auto_stable_end=copy->auto_stable_end;
   p->assets->work_glyphs = copy->work_glyphs; p->assets->shape_work = copy->shape_work;
   if (copy->bidi_active)
+    status = p->f.doc->view ? p->f.doc->view->prepare(p->f.doc->view->context,
+      copy->bidi_first,&p->config.control,e) : EXR_OK;
+  if (copy->bidi_active && status==EXR_OK)
     status = exr_inline_prepare(&p->f, copy->bidi_first, &p->bidi);
   p->f.error = NULL;
   checkpoint_free(copy);
@@ -435,8 +443,8 @@ static exr_status resolve_auto(exr_pager *p,size_t node,size_t start) {
   return status;
 }
 static exr_status scalar(exr_pager *p, frame *current) {
-  const exr_node *n = &p->f.doc->nodes[current->node];
-  const exr_style *s = &p->styles[current->node];
+  const exr_node *n = (const exr_node[]){exr_doc_node(p->f.doc,current->node)};
+  const exr_style *s = exr_doc_style(p->f.doc,p->styles,current->node);
   exr_glyph g = {0};
   exr_status status;
   uint32_t cp;
@@ -448,7 +456,7 @@ static exr_status scalar(exr_pager *p, frame *current) {
   }
   status=resolve_plan(p);if(status!=EXR_OK) return status;
   status=resolve_auto(p,current->node,start);if(status!=EXR_OK) return status;
-  if (!exr_next(p->f.doc->text, n->end, &current->position, &cp))
+  if (!exr_doc_next(p->f.doc, n->end, &current->position, &cp))
     return failure(p, EXR_ENCODING, "Invalid document text");
   if(exr_bidi_paragraph_end(cp)) p->auto_stable_end=0;
   if (++p->assets->work_glyphs > EXR_MAX_ITEMS)
@@ -536,9 +544,9 @@ static exr_status context_create(flow *parent, size_t node, float width, float h
 }
 static int orthogonal_tree(const flow *f,size_t node) {
   size_t child;
-  if(f->styles[node].display==EXR_CSS_NONE) return 0;
-  if((f->styles[node].writing_mode==EXR_WRITING_HORIZONTAL_TB)!=(f->writing_mode==EXR_WRITING_HORIZONTAL_TB)) return 1;
-  for(child=f->doc->nodes[node].first_child;child!=SIZE_MAX;child=f->doc->nodes[child].next_sibling)
+  if((*exr_doc_style(f->doc,f->styles,node)).display==EXR_CSS_NONE) return 0;
+  if(((*exr_doc_style(f->doc,f->styles,node)).writing_mode==EXR_WRITING_HORIZONTAL_TB)!=(f->writing_mode==EXR_WRITING_HORIZONTAL_TB)) return 1;
+  for(child=exr_doc_node(f->doc,node).first_child;child!=SIZE_MAX;child=exr_doc_node(f->doc,child).next_sibling)
     if(orthogonal_tree(f,child)) return 1;
   return 0;
 }
@@ -588,7 +596,7 @@ static exr_status float_copy(flow *f,const exr_layout *part,size_t node,float x,
   return status;
 }
 static int continuing(const exr_pager *p,unsigned sides) {
-  size_t i; for(i=0;i<p->stream_count;i++) if((unsigned)p->styles[p->streams[i].node].float_side&sides) return 1;
+  size_t i; for(i=0;i<p->stream_count;i++) if((unsigned)(*exr_doc_style(p->f.doc,p->styles,p->streams[i].node)).float_side&sides) return 1;
   return 0;
 }
 static exr_status wait_floats(exr_pager *p,unsigned sides) {
@@ -601,7 +609,7 @@ static exr_status wait_floats(exr_pager *p,unsigned sides) {
 /* Count committed and pending cursors together, including nested BFCs. Stop as
    soon as the tree exceeds its cap, before allocating another owning queue. */
 static size_t float_cursors(const exr_pager *p) {
-  size_t total=p->local==3 && p->styles[p->local_root].float_side,i;
+  size_t total=p->local==3 && (*exr_doc_style(p->f.doc,p->styles,p->local_root)).float_side,i;
   for(i=0;i<p->stream_count && total<=EXR_MAX_FLOATS;i++) total+=float_cursors(p->streams[i].context);
   for(i=0;i<p->depth && total<=EXR_MAX_FLOATS;i++) {
     if(p->frames[i].context) total+=float_cursors(p->frames[i].context);
@@ -644,9 +652,9 @@ static exr_status resume_floats(exr_pager *p) {
     height=part ? part->flow_block+(cursor->finished ? s->margin[2] : 0) : 0;
     if(part) {
       exr_flow_area(f,y,height,&x,&room,&next);
-      if(p->styles[s->node].float_side==2) x+=fmaxf(0,room-s->outer_width);
+      if((*exr_doc_style(p->f.doc,p->styles,s->node)).float_side==2) x+=fmaxf(0,room-s->outer_width);
       status=float_copy(f,part,s->node,x+s->margin[3],y,part->flow_block);
-      if(status==EXR_OK && height>0) status=exr_flow_float_add(f,(exr_float){x,y,s->outer_width,height,(unsigned)p->styles[s->node].float_side});
+      if(status==EXR_OK && height>0) status=exr_flow_float_add(f,(exr_float){x,y,s->outer_width,height,(unsigned)(*exr_doc_style(p->f.doc,p->styles,s->node)).float_side});
       exr_layout_free(part);
     }
     if(status!=EXR_OK) { exr_pager_free(cursor); break; }
@@ -676,7 +684,7 @@ static exr_status decorate(flow *f, size_t node, const exr_style *s, float x, fl
   return exr_flow_borders(f, node, &logical, x, y, width, height);
 }
 static exr_status floating(exr_pager *p,frame *v) {
-  flow *f=&p->f; const exr_style *s=&p->styles[v->node];
+  flow *f=&p->f; const exr_style *s=exr_doc_style(p->f.doc,p->styles,v->node);
   exr_style box=exr_flow_style(s,f->writing_mode);
   float margins[4],height,pending,x,y,room,next; size_t i,tries,offset;
   exr_status status;
@@ -687,7 +695,7 @@ static exr_status floating(exr_pager *p,frame *v) {
   if(s->float_side && (box.width.value<0 || v->float_long)) clear_frame(v);
   for(tries=0;tries<256;tries++) {
     status=exr_inline_pending(f,&p->line,&pending); if(status!=EXR_OK) return status;
-    offset=f->doc->nodes[v->node].start;
+    offset=exr_doc_node(f->doc,v->node).start;
     if(p->line.ready && p->line.run.glyphs[0].start<offset) offset=p->line.run.glyphs[0].start;
     if(!v->fragment) {
       float extent,available=f->width-margins[1]-margins[3];
@@ -710,7 +718,7 @@ static exr_status floating(exr_pager *p,frame *v) {
       }
       if(box.max_width.value>=0) extent=fminf(extent,used(box.max_width,f->width)+insets);
       v->width=fmaxf(1,fminf(extent,available));
-      if(s->float_side && f->paginate && f->doc->nodes[v->node].kind!=EXR_NODE_IMAGE) {
+      if(s->float_side && f->paginate && exr_doc_node(f->doc,v->node).kind!=EXR_NODE_IMAGE) {
         v->float_fixed=0;
         if(orthogonal_tree(f,v->node)) {
           v->float_fixed=exr_flow_room(f)-margins[0]-margins[2];
@@ -770,7 +778,7 @@ static exr_status floating(exr_pager *p,frame *v) {
     if(v->context && !v->context->finished) { status=stream_add(p,v,margins); if(status!=EXR_OK) return status; }
     if(!s->float_side) { f->y=y+v->first_y; f->first_line=1; if(s->after) f->force_break=1; }
     exr_inline_rescan(&p->line);
-    if(f->doc->nodes[v->node].end>p->position) p->position=f->doc->nodes[v->node].end;
+    if(exr_doc_node(f->doc,v->node).end>p->position) p->position=exr_doc_node(f->doc,v->node).end;
     clear_frame(v); p->depth--; return EXR_OK;
   }
   return failure(p,EXR_LIMIT,"Float anchor fitting retry limit exceeded");
@@ -778,7 +786,7 @@ static exr_status floating(exr_pager *p,frame *v) {
 /* A nonfloating table establishes a BFC. Measure its width once, then retain
    columns while each page fragment searches for one nonoverlapping rectangle. */
 static exr_status table_beside(exr_pager *p,frame *v) {
-  flow *f=&p->f; const exr_style *s=&p->styles[v->node];
+  flow *f=&p->f; const exr_style *s=exr_doc_style(p->f.doc,p->styles,v->node);
   exr_style box=exr_flow_style(s,f->writing_mode);
   float margin[4],available,min_outer,preferred,x,y,room,next; size_t i,tries;
   exr_status status=finish_run(p);
@@ -816,7 +824,7 @@ static exr_status table_beside(exr_pager *p,frame *v) {
   preferred=v->bfc_max;
   /* The line slot also works for ordinary flow: unlike float placement, later
      float tops do not force this preceding table rectangle downward. */
-  status=exr_flow_line_slot(f,1,min_outer,f->doc->nodes[v->node].start,&x,&room);
+  status=exr_flow_line_slot(f,1,min_outer,exr_doc_node(f->doc,v->node).start,&x,&room);
   if(status!=EXR_OK) return status;
   y=f->y;
   for(tries=0;tries<256;tries++) {
@@ -858,7 +866,7 @@ static exr_status table_beside(exr_pager *p,frame *v) {
       return failure(p,EXR_LIMIT,"Table fragment exceeds its containing inline extent");
     }
     if(box.margin[3].value<0) x+=fmaxf(0,room-width-margin[1]-margin[3])/(box.margin[1].value<0 ? 2 : 1);
-    status=exr_flow_page(f,height,f->doc->nodes[v->node].start);
+    status=exr_flow_page(f,height,exr_doc_node(f->doc,v->node).start);
     if(status==EXR_OK) status=exr_flow_copy(f,part,v->node,x+margin[3],y+margin[0],part->flow_block,0);
     exr_layout_free(part);
     if(status!=EXR_OK) { exr_pager_free(cursor); return status; }
@@ -866,7 +874,7 @@ static exr_status table_beside(exr_pager *p,frame *v) {
     exr_pager_free(v->context); v->context=cursor; v->width=width;
     if(cursor && cursor->position>p->position) p->position=cursor->position;
     if(!finished) return EXR_PAUSE;
-    if(f->doc->nodes[v->node].end>p->position) p->position=f->doc->nodes[v->node].end;
+    if(exr_doc_node(f->doc,v->node).end>p->position) p->position=exr_doc_node(f->doc,v->node).end;
     clear_frame(v); p->depth--; if(s->after) f->force_break=1;
     return EXR_OK;
   }
@@ -877,6 +885,11 @@ static exr_status advance(exr_pager *p) {
   exr_status status = exr_control_poll(&p->config.control, EXR_STAGE_LAYOUT, p->position,
                                        p->f.doc->size, p->f.error);
   if (status != EXR_OK) return status;
+  if(f->doc->view && p->depth) {
+    status=f->doc->view->prepare(f->doc->view->context,p->frames[p->depth-1].node,
+                                &p->config.control,p->f.error);
+    if(status!=EXR_OK) return status;
+  }
   if (p->resume_bidi) {
     status = exr_inline_prepare(f, p->resume_bidi_first, &p->bidi);
     if (status != EXR_OK) return status;
@@ -900,7 +913,7 @@ static exr_status advance(exr_pager *p) {
         status = finish_run(p);
         if (status != EXR_OK) return status;
         exr_flow_clear(f,3);
-        p->finished = 1; p->position = f->doc->nodes[p->local_root].end;
+        p->finished = 1; p->position = exr_doc_node(f->doc,p->local_root).end;
         return EXR_OK;
       }
       exr_flow_clear(f,3);
@@ -921,8 +934,14 @@ static exr_status advance(exr_pager *p) {
         return status;
     }
     v = &p->frames[p->depth - 1];
-    n = &f->doc->nodes[v->node];
-    s = &p->styles[v->node];
+    if(f->doc->view) {
+      if(!v->phase && (exr_doc_style(f->doc,p->styles,v->node)->display==EXR_CSS_NONE ||
+         exr_doc_node(f->doc,v->node).start==SIZE_MAX)) { p->depth--;continue; }
+      status=f->doc->view->prepare(f->doc->view->context,v->node,&p->config.control,f->error);
+      if(status!=EXR_OK) return status;
+    }
+    n = (const exr_node[]){exr_doc_node(f->doc,v->node)};
+    s = exr_doc_style(p->f.doc,p->styles,v->node);
     switch (v->phase) {
     case 0:
       if (s->display == EXR_CSS_NONE || n->start == SIZE_MAX) {
@@ -1089,7 +1108,7 @@ static exr_status advance(exr_pager *p) {
           v->phase = 5;
       } else {
         size_t child = v->child;
-        v->child = f->doc->nodes[child].next_sibling;
+        v->child = exr_doc_node(f->doc,child).next_sibling;
         status = push(p, child, f->x, f->width);
         if (status != EXR_OK)
           return status;
@@ -1240,7 +1259,7 @@ static exr_status seal(exr_pager *p, int partial) {
   if (partial)
     for (i = 0; i < p->depth; i++) {
       frame *v = &p->frames[i];
-      const exr_style *s = &p->styles[v->node];
+      const exr_style *s = exr_doc_style(p->f.doc,p->styles,v->node);
       if (!v->entered)
         continue;
       if ((s->background & 255) || exr_border_any(s) || s->display == EXR_CSS_CELL) {
@@ -1257,7 +1276,7 @@ static exr_status seal(exr_pager *p, int partial) {
       v->first_y = p->config.page.margin;
     }
   else
-    l->pages[0].end = p->local ? p->f.doc->nodes[p->local_root].end : p->f.doc->size;
+    l->pages[0].end = p->local ? exr_doc_node(p->f.doc,p->local_root).end : p->f.doc->size;
   /* A block decoration belongs to this fragment's source range, so the public
      arrays can be rebuilt through the same positioned-layout validation. */
   for (i = 0; i < l->box_count; i++) {
@@ -1310,12 +1329,13 @@ static exr_status seal(exr_pager *p, int partial) {
 /* Anonymous document/chapter wrappers follow their single visible block.
    An explicit outer declaration fixes the viewport, leaving inner changes local. */
 static int substantive(const exr_pager *p, size_t node) {
-  const exr_node *n = &p->f.doc->nodes[node];
+  const exr_node *n = (const exr_node[]){exr_doc_node(p->f.doc,node)};
   size_t at;
-  if (p->styles[node].display == EXR_CSS_NONE || n->start == SIZE_MAX) return 0;
+  if ((*exr_doc_style(p->f.doc,p->styles,node)).display == EXR_CSS_NONE || n->start == SIZE_MAX) return 0;
+  if(p->f.doc->view) return n->kind==EXR_NODE_IMAGE || n->end>n->start;
   if (n->kind != EXR_NODE_TEXT) return 1;
   for (at = n->start; at < n->end; at++) {
-    unsigned char c = (unsigned char)p->f.doc->text[at];
+    unsigned char c = exr_doc_byte(p->f.doc,at);
     if (c != ' ' && c != '\t' && c != '\r' && c != '\n' && c != '\f') return 1;
   }
   return 0;
@@ -1328,8 +1348,8 @@ static exr_status writing_mode(exr_pager *p, exr_error *e) {
   /* Parents precede children in the document model. One temporary bit per node
      identifies visible content without repeatedly walking every subtree. */
   for (at = p->style_count; at; at--) {
-    size_t node = at-1, parent = p->f.doc->nodes[node].parent;
-    const exr_node *n = &p->f.doc->nodes[node];
+    size_t node = at-1, parent = exr_doc_node(p->f.doc,node).parent;
+    const exr_node *n = (const exr_node[]){exr_doc_node(p->f.doc,node)};
     if (!(node & 255) && exr_control_cancel(&p->config.control, e) != EXR_OK) { free(visible); return EXR_CANCELLED; }
     if ((n->kind == EXR_NODE_TEXT || n->kind == EXR_NODE_IMAGE) && substantive(p,node))
       visible[node/CHAR_BIT] |= (unsigned char)(1u << (node%CHAR_BIT));
@@ -1347,20 +1367,25 @@ static exr_status writing_mode(exr_pager *p, exr_error *e) {
         free(visible); return exr_fail(e, EXR_LIMIT, "Writing-mode viewport depth exceeded");
       }
       chain[count++] = node;
-      if (p->styles[node].writing_declared) break;
-      for (child = p->f.doc->nodes[node].first_child; child != SIZE_MAX;
-           child = p->f.doc->nodes[child].next_sibling) {
+      if ((*exr_doc_style(p->f.doc,p->styles,node)).writing_declared) break;
+      for (child = exr_doc_node(p->f.doc,node).first_child; child != SIZE_MAX;
+           child = exr_doc_node(p->f.doc,child).next_sibling) {
         if (!(visible[child/CHAR_BIT] & (1u << (child%CHAR_BIT)))) continue;
         if (single != SIZE_MAX) { single = SIZE_MAX; break; }
         single = child;
       }
-      if (single == SIZE_MAX || p->styles[single].display == EXR_CSS_INLINE ||
-          p->f.doc->nodes[single].kind == EXR_NODE_IMAGE) break;
+      if (single == SIZE_MAX || (*exr_doc_style(p->f.doc,p->styles,single)).display == EXR_CSS_INLINE ||
+          exr_doc_node(p->f.doc,single).kind == EXR_NODE_IMAGE) break;
       node = single;
       if (exr_control_cancel(&p->config.control, e) != EXR_OK) { free(visible); return EXR_CANCELLED; }
     }
-    mode = p->styles[node].writing_mode;
-    for (i = 0; i < count; i++) p->styles[chain[i]].writing_mode = mode;
+    mode = (*exr_doc_style(p->f.doc,p->styles,node)).writing_mode;
+    for (i = 0; i < count; i++) {
+      if(p->f.doc->view) {
+        exr_status status=p->f.doc->view->writing(p->f.doc->view->context,chain[i],mode,e);
+        if(status!=EXR_OK) { free(visible);return status; }
+      } else p->styles[chain[i]].writing_mode = mode;
+    }
     if (!found) { p->writing_mode = mode; found = 1; }
   }
   free(visible);
@@ -1412,23 +1437,24 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
       return exr_fail(e, EXR_MEMORY, "Pager CSS allocation failed");
     }
   }
-  status = exr_compute_styles(doc, &p->config, &p->styles, &font_rules, &font_count, e);
+  if(doc->view) { status=EXR_OK;font_rules=(exr_font_rule *)doc->view->font_rules;font_count=doc->view->font_count; }
+  else status = exr_compute_styles(doc, &p->config, &p->styles, &font_rules, &font_count, e);
   if (status != EXR_OK) {
     exr_pager_free(p);
     return status;
   }
   status = writing_mode(p, e);
-  if (status != EXR_OK) { free(font_rules); exr_pager_free(p); return status; }
+  if (status != EXR_OK) { if(!doc->view) free(font_rules); exr_pager_free(p); return status; }
   p->assets = calloc(1, sizeof(*p->assets));
   if (!p->assets) {
-    free(font_rules);
+    if(!doc->view) free(font_rules);
     exr_pager_free(p);
     return exr_fail(e, EXR_MEMORY, "Pager asset allocation failed");
   }
   p->assets->options = p->config.page;
   status = exr_book_fonts(doc, font, p->styles, font_rules, font_count, &p->config.control,
                            &p->assets->font, e);
-  free(font_rules);
+  if(!doc->view) free(font_rules);
   if (status != EXR_OK) { exr_pager_free(p); return status; }
   p->f.assets = p->assets;
   p->f.doc = doc;
@@ -1436,7 +1462,7 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   p->f.config = &p->config;
   p->f.styles = p->styles;
   p->f.bidi = &p->bidi;p->f.plan_cursor=p;p->f.plan_resolve=resolve_plan;
-  p->f.paragraph = &p->styles[0];
+  p->f.paragraph = exr_doc_style(p->f.doc,p->styles,0);
   p->f.paginate = p->f.page_limit = 1;
   p->f.x = p->f.y = config->page.margin;
   p->f.width = p->config.page.width - 2 * config->page.margin;
@@ -1478,6 +1504,10 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
   p->busy = 1;
   status = resume_floats(p);
   if(status==EXR_OK) status = advance(p);
+  if(p->f.doc->view) {
+    exr_status view_status=p->f.doc->view->status(p->f.doc->view->context,e);
+    if(view_status!=EXR_OK) status=view_status;
+  }
   if (status == EXR_OK && !l->page_count && !p->emitted && !p->local)
     status = failure(p, EXR_FORMAT, "No layout content");
   if((status==EXR_OK || status==EXR_PAUSE) && float_cursors(p)>EXR_MAX_FLOATS)
@@ -1565,7 +1595,7 @@ static void reset_cursor(exr_pager *p) {
   p->f.config = &p->config;
   p->f.styles = p->styles;
   p->f.bidi = &p->bidi;p->f.plan_cursor=p;p->f.plan_resolve=resolve_plan;
-  p->f.paragraph = &p->styles[0];
+  p->f.paragraph = exr_doc_style(p->f.doc,p->styles,0);
   p->f.paginate = p->f.page_limit = 1;
   p->f.x = p->f.y = p->config.page.margin;
   p->f.width = p->config.page.width - 2 * p->config.page.margin;
@@ -1685,6 +1715,105 @@ exr_pager_stats exr_pager_statistics(const exr_pager *p) {
   return out;
 }
 size_t exr_pager_position(const exr_pager *p) { return p ? p->position : 0; }
+size_t exr_pager_continuation_bytes(const exr_pager *p) { return context_memory_size(p); }
+void exr_pager_adopt_chapter(exr_pager *p,void *chapter,void (*release)(void *),
+                            exr_chapter_stats (*statistics)(const void *)) {
+  p->owned_chapter=chapter;p->chapter_release=release;p->chapter_statistics=statistics;
+}
+exr_chapter_stats exr_pager_chapter_statistics(const exr_pager *p) {
+  exr_chapter_stats stats={0};
+  if(p && p->owned_chapter) {
+    stats=p->chapter_statistics(p->owned_chapter);
+    if(stats.parse_workspace_bytes>stats.peak_parse_workspace_bytes)
+      stats.peak_parse_workspace_bytes=stats.parse_workspace_bytes;
+    stats.page_cache_bytes=p->cache_bytes;stats.checkpoint_bytes=p->checkpoint_bytes;
+  }
+  return stats;
+}
+static exr_status query_begin(exr_pager *p,const exr_control *control,exr_error *e) {
+  exr_status status;
+  if(!p || !p->owned_chapter || p->busy || p->failed)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid, failed or reentrant chapter pager query");
+  p->busy=1;
+  status=p->f.doc->view->prepare(p->f.doc->view->context,0,control ? control : &p->config.control,e);
+  if(status!=EXR_OK) p->busy=0;
+  return status;
+}
+static exr_status query_end(exr_pager *p,exr_status status,exr_error *e) {
+  exr_status accessed=p->f.doc->view->status(p->f.doc->view->context,e);
+  p->busy=0;
+  return accessed==EXR_OK ? status : accessed;
+}
+exr_status exr_pager_cfi_create(exr_pager *p,const exr_cfi_point *point,size_t scalars,
+  const exr_control *control,char **cfi,exr_error *e) {
+  exr_status status;
+  if(!cfi) return exr_fail(e,EXR_ARGUMENT,"Missing CFI output");
+  *cfi=NULL;
+  status=query_begin(p,control,e);if(status!=EXR_OK) return status;
+  status=exr_chapter_cfi_create(p->owned_chapter,point,scalars,control,cfi,e);
+  status=query_end(p,status,e);
+  if(status!=EXR_OK) { free(*cfi);*cfi=NULL; }
+  return status;
+}
+exr_status exr_pager_cfi_resolve(exr_pager *p,const char *cfi,const exr_control *control,
+  exr_cfi_point *point,exr_error *e) {
+  exr_status status;
+  if(!point) return exr_fail(e,EXR_ARGUMENT,"Missing CFI point output");
+  *point=(exr_cfi_point){SIZE_MAX,SIZE_MAX,0};
+  status=query_begin(p,control,e);if(status!=EXR_OK) return status;
+  status=exr_chapter_cfi_resolve(p->owned_chapter,cfi,control,point,e);
+  status=query_end(p,status,e);
+  if(status!=EXR_OK) *point=(exr_cfi_point){SIZE_MAX,SIZE_MAX,0};
+  return status;
+}
+exr_status exr_pager_anchor_create(exr_pager *p,size_t start,size_t end,
+  const exr_control *control,exr_anchor *anchor,exr_error *e) {
+  exr_status status;
+  if(!anchor) return exr_fail(e,EXR_ARGUMENT,"Missing anchor output");
+  memset(anchor,0,sizeof(*anchor));
+  status=query_begin(p,control,e);if(status!=EXR_OK) return status;
+  status=exr_anchor_create(p->f.doc,start,end,anchor,e);
+  status=query_end(p,status,e);
+  if(status!=EXR_OK) exr_anchor_free(anchor);
+  return status;
+}
+exr_status exr_pager_anchor_resolve(exr_pager *p,const exr_anchor *anchor,
+  const exr_control *control,exr_anchor_match *match,exr_error *e) {
+  exr_status status;
+  if(!match) return exr_fail(e,EXR_ARGUMENT,"Missing anchor match output");
+  *match=(exr_anchor_match){EXR_ANCHOR_MISSING,SIZE_MAX,SIZE_MAX};
+  status=query_begin(p,control,e);if(status!=EXR_OK) return status;
+  status=exr_anchor_resolve_ex(p->f.doc,anchor,control,match,e);
+  status=query_end(p,status,e);
+  if(status!=EXR_OK) *match=(exr_anchor_match){EXR_ANCHOR_MISSING,SIZE_MAX,SIZE_MAX};
+  return status;
+}
+exr_status exr_pager_read_text(exr_pager *p,size_t start,size_t end,exr_text_sink_fn sink,
+  void *context,const exr_control *control,exr_error *e) {
+  exr_status status;
+  size_t at=start;
+  status=query_begin(p,control,e);if(status!=EXR_OK) return status;
+  if(!sink || start>end || end>p->f.doc->size ||
+     (start<p->f.doc->size && (exr_doc_byte(p->f.doc,start)&0xc0)==0x80) ||
+     (end<p->f.doc->size && (exr_doc_byte(p->f.doc,end)&0xc0)==0x80))
+    status=exr_fail(e,EXR_ARGUMENT,"Text selection must use chapter UTF-8 boundaries");
+  while(status==EXR_OK && at<end) {
+    size_t available,size;const char *text;
+    status=exr_control_poll(control,EXR_STAGE_READ,at-start,end-start,e);
+    if(status!=EXR_OK) break;
+    text=exr_doc_span(p->f.doc,at,&available);
+    status=p->f.doc->view->status(p->f.doc->view->context,e);
+    if(status!=EXR_OK) break;
+    if(!text || !available) { status=exr_fail(e,EXR_FORMAT,"Missing chapter text span");break; }
+    size=end-at<available ? end-at : available;
+    if(size>32768) size=32768;
+    if(size<available) while(size && ((unsigned char)text[size]&0xc0)==0x80) size--;
+    if(!size) { status=exr_fail(e,EXR_ENCODING,"Incomplete chapter UTF-8 span");break; }
+    status=sink(context,text,size,e);at+=size;
+  }
+  if(status==EXR_OK) status=exr_control_cancel(control,e);
+  return query_end(p,status,e);
+}
 void exr_pager_free(exr_pager *p) {
   size_t i;
   if (!p)
@@ -1703,6 +1832,7 @@ void exr_pager_free(exr_pager *p) {
     exr_hyphenator_free(p->hyphenator);
   }
   free((void *)p->config.user_css);
+  if(p->chapter_release) p->chapter_release(p->owned_chapter);
   free(p);
 }
 static exr_status append_page(exr_layout *all, exr_layout *page, exr_error *e) {
