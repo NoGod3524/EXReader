@@ -57,6 +57,48 @@ static void tiff_alpha(const char *root) {
   }
   exr_bitmap_free(&png);exr_bitmap_free(&tiff);
 }
+static unsigned png_length(const unsigned char *p) {
+  return (unsigned)p[0]<<24 | (unsigned)p[1]<<16 | (unsigned)p[2]<<8 | p[3];
+}
+static void png_empty_data(const char *root) {
+  static const unsigned char empty[]={0,0,0,0,'I','D','A','T',0x35,0xaf,0x06,0x1e};
+  char path[4096];size_t size,at,first=0,last=0,i;
+  unsigned char *data,*copy;
+  exr_bitmap original={0};
+  snprintf(path,sizeof(path),"%s/png/solid.png",root);data=read_file(path,&size);
+  OK(exr_image_decode(data,size,&original,&error));
+  for(at=8;at+12<=size;) {
+    size_t length=png_length(data+at);
+    CHECK(length<=size-at-12);
+    if(!memcmp(data+at+4,"IDAT",4)) { if(!first) first=at;last=at+length+12; }
+    at+=length+12;
+  }
+  CHECK(first && last && size>=12 && !memcmp(data+size-8,"IEND",4));
+  copy=malloc(size+3*sizeof(empty));CHECK(copy!=NULL);
+  for(i=0;i<3;i++) {
+    size_t offset=i==2 ? last : first,n=i==1 ? 3 : 1,k;
+    exr_bitmap decoded={0};
+    memcpy(copy,data,offset);
+    for(k=0;k<n;k++) memcpy(copy+offset+k*sizeof(empty),empty,sizeof(empty));
+    memcpy(copy+offset+n*sizeof(empty),data+offset,size-offset);
+    OK(exr_image_decode(copy,size+n*sizeof(empty),&decoded,&error));
+    CHECK(decoded.width==original.width && decoded.height==original.height && decoded.stride==original.stride && decoded.channels==4);
+    CHECK(!memcmp(decoded.pixels,original.pixels,original.stride*original.height));
+    exr_bitmap_free(&decoded);
+  }
+  memcpy(copy,data,first);memcpy(copy+first,empty,sizeof(empty));
+  memcpy(copy+first+sizeof(empty),data+size-12,12);
+  {
+    exr_bitmap decoded={0};
+    CHECK(exr_image_decode(copy,first+sizeof(empty)+12,&decoded,&error)==EXR_FORMAT);
+    CHECK(!decoded.pixels && !decoded.width && !decoded.height && !decoded.stride && !decoded.channels);
+    exr_bitmap_free(&decoded);
+    CHECK(exr_image_decode(copy,first+8,&decoded,&error)==EXR_FORMAT);
+    CHECK(!decoded.pixels && !decoded.width && !decoded.height);
+    exr_bitmap_free(&decoded);
+  }
+  exr_bitmap_free(&original);free(copy);free(data);
+}
 static void matrix(const char *root,const char *format,const char *extension,unsigned tolerance) {
   size_t i;
   { char path[4096];size_t size,pages=0;void *data;snprintf(path,sizeof(path),"%s/%s/solid.%s",root,format,extension);
@@ -125,6 +167,7 @@ static void matrix(const char *root,const char *format,const char *extension,uns
 int main(int argc,char **argv) {
   size_t size;void *data;exr_bitmap bitmap={0};size_t pages=0;
   CHECK(argc==2 || argc==3);
+  png_empty_data(argv[1]);
   tiff_alpha(argv[1]);
   if(argc==2 || !strcmp(argv[2],"png")) matrix(argv[1],"png","png",0);
   if(argc==2 || !strcmp(argv[2],"bmp")) matrix(argv[1],"bmp","bmp",0);
