@@ -228,3 +228,7 @@ ASan构建仍执行相同100项转换及清理检查并保留原始RSS，但隔�
 产品驻留量测。该报告标记 `instrumented=true`、`memory_budget_evaluated=false`、
 `memory_budget_passed=null`，不能作为内存预算通过证据。三个非插桩桌面CI分别
 保存并验收相同32MiB上限，原始插桩与macOS拒绝日志保留于主线集成记录。
+
+## macOS batch memory
+
+On macOS 15 the default allocator keeps freed medium blocks as reusable pages that still count in RSS. The tool therefore sets `MallocSpaceEfficient=1` and re-executes itself once at startup (a caller-provided value is respected). Evidence: `docs/validation/conversion-memory-followup.json`.
