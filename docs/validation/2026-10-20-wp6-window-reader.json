@@ -12,7 +12,9 @@
   "wp16_accepted": false,
   "historical_evidence": [
     "docs/validation/wp6-bounded-chapters.json",
-    "docs/validation/2026-10-20-audit-fixes.json"
+    "docs/validation/2026-10-20-audit-fixes.json",
+    "build/wp6-full-sequential-r1/summary.json",
+    "build/audit-fixes/wp6-ci-status-r3.json"
   ],
   "local": {
     "window_acceptance_summary": "build/wp6-window-acceptance-r1/summary.json",
@@ -33,6 +35,20 @@
       "passed": 6,
       "expected": 6,
       "log": "build/audit-fixes/wp6-components-tests.log"
+    },
+    "pre_fix_full_enumeration": {
+      "accepted": false,
+      "reason": "Cumulative work limit reached before EOF; preserved and fixed by page-operation accounting in bounded reader."
+    },
+    "initial_native_ci": {
+      "run": 39537592783,
+      "source_commit": "78f0450a545ae1b83781c9d9e04fba69f054fbe1",
+      "accepted": false,
+      "issues": [
+        "MSVC C headers lack max_align_t",
+        "POSIX clock feature macro missing in probe",
+        "Existing chapter-bounds test lacked final newline"
+      ]
     }
   },
   "pending": [

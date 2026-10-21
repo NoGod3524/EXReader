@@ -23,7 +23,7 @@ struct exr_chapter_index {
   int block, pending_space, finished, allocation_limited;
 };
 static void memory_peak(exr_chapter_index *p) { if(p->bytes>p->peak_bytes) p->peak_bytes=p->bytes; }
-typedef struct { max_align_t alignment; exr_chapter_index *owner; size_t bytes; } xml_allocation;
+typedef struct { exr_allocation_alignment alignment; exr_chapter_index *owner; size_t bytes; } xml_allocation;
 #ifdef _MSC_VER
 static __declspec(thread) exr_chapter_index *xml_owner;
 #else

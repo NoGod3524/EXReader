@@ -12,6 +12,9 @@
 #define EXR_MAX_TEXT ((size_t)64 * 1024 * 1024)
 #define EXR_MAX_ITEMS ((size_t)4 * 1024 * 1024)
 #define EXR_MAX_NODES ((size_t)262144)
+/* MSVC's C headers do not provide max_align_t. These allocator payloads hold
+   ordinary scalar/aggregate C objects; the union preserves their alignment. */
+typedef union { long double number; void *pointer; int64_t integer; } exr_allocation_alignment;
 typedef struct {
   char *data;
   size_t size, capacity;
