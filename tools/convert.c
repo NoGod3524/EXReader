@@ -1348,8 +1348,11 @@ static int convert_main(int argc, char **argv) {
       exr_control control;
       memset(&control, 0, sizeof(control));
       control.cancelled = cancelled_callback;
+      if (i == 0) cv_memory_diag("before", i);
       run_job(&jobs[i], &control);
+      if (i < 3 || i % 10 == 9) cv_memory_diag("after-job", i);
       cv_release_unused_memory();
+      if (i < 3 || i % 10 == 9) cv_memory_diag("after-release", i);
       if (g_cancelled) jobs[i].result.cancel_requested = 1;
     }
     if (report) {

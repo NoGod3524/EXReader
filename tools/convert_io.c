@@ -13,6 +13,7 @@
 #include <time.h>
 #include <wctype.h>
 #ifdef __APPLE__
+#include <mach/mach.h>
 #include <malloc/malloc.h>
 #endif
 #ifdef _WIN32
@@ -29,6 +30,28 @@
 void cv_release_unused_memory(void) {
 #ifdef __APPLE__
   (void)malloc_zone_pressure_relief(NULL, 0);
+#endif
+}
+
+/* Opt-in allocator diagnostics (EXR_CONVERT_MEM_DIAG=1): stderr only, never part of the report. */
+void cv_memory_diag(const char *label, size_t index) {
+#ifdef __APPLE__
+  mach_task_basic_info_data_t info;
+  mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
+  malloc_statistics_t stats;
+  const char *on = getenv("EXR_CONVERT_MEM_DIAG");
+  if (!on || !*on || *on == '0') return;
+  memset(&stats, 0, sizeof(stats));
+  malloc_zone_statistics(NULL, &stats);
+  if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &count) != KERN_SUCCESS)
+    memset(&info, 0, sizeof(info));
+  fprintf(stderr, "mem-diag item=%zu %s resident=%llu peak=%llu malloc_in_use=%zu malloc_allocated=%zu blocks=%u
+",
+          index, label, (unsigned long long)info.resident_size,
+          (unsigned long long)cv_peak_rss(), stats.size_in_use, stats.size_allocated,
+          stats.blocks_in_use);
+#else
+  (void)label; (void)index;
 #endif
 }
 
