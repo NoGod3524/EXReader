@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "updated_utc": "2026-10-21T20:02:26.638673+00:00",
+  "scope": "PNG dependency correction found by final-source font reliability campaign",
+  "sdk": "3.40.0",
+  "abi": 1,
+  "library_schema": 6,
+  "fix_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+  "status": "native_ci_accepted_replacement_campaign_in_progress",
+  "wp16_accepted": false,
+  "original_failure": {
+    "run": 39541947423,
+    "source_commit": "c9ea20fab9d43d4063b1d8225fae4d2430912bcd",
+    "target": "font",
+    "shard": 2,
+    "report": {
+      "path": "build/wp6-long-first-failure/font-2/font-2/report.json",
+      "sha256": "44c0b0650e76a20445789ed7ad67883e2e5be6146ac36b3c5c830df40f9bcb1d"
+    },
+    "inventory": {
+      "path": "build/wp6-long-first-failure/inventory.json",
+      "sha256": "92566a3814e341f7987368b6dd9d9ed0b68aa41050bbf0405905e007232bc909"
+    },
+    "replacement_source_cpu_credit_nanoseconds": 0
+  },
+  "correction": {
+    "configuration": {
+      "path": "cmake/deps.cmake",
+      "sha256": "8dcb29fe51dba1866be97aa315b3cf20cecf08ec35337f434c98024e883e7ac9"
+    },
+    "pinned_stb_revision": "2c980bb59875b0d32144a71867fbdebb2f77cd20",
+    "original_header_sha256": "594c2fe35d49488b4382dbfaec8f98366defca819d916ac95becf3e75f4200b3",
+    "generated_header": {
+      "path": "build/audit-fixes/exr-stb/stb_image.h",
+      "sha256": "1a6d86940c0654b128189b2d458cbf95c73edc02e9344bfbe000657da21b3319"
+    },
+    "exactly_two_replacements_verified": true,
+    "source_cache_modified": false,
+    "input_copy_added": false,
+    "budgets_or_png_semantics_relaxed": false,
+    "fixture": {
+      "path": "tests/fixtures/font-image-regression.bin",
+      "sha256": "c6f688b58a5bb22a255b8f4c8f2455ae9a583d3ab5ee86291a49d4902bc5dc16"
+    }
+  },
+  "windows": {
+    "image_checks": 1575,
+    "font_color_checks": 80703,
+    "pipeline_checks": 83,
+    "codec_disabled_image_checks": 490,
+    "pdf_tests_passed": 2,
+    "logs": [
+      {
+        "path": "build/audit-fixes/font-image-fix-tests-r1.log",
+        "sha256": "4f61e8b3fe8f3d009017271d439ef05f7114af17111eaa23cf9b898c53e93b12"
+      },
+      {
+        "path": "build/audit-fixes/font-image-fix-pipelines-r1.log",
+        "sha256": "b5d4217de1842b3b3a4067115f6a9257580381bc25eab1fd976698ec6e71b467"
+      },
+      {
+        "path": "build/audit-fixes/font-image-fix-core-tests-r1.log",
+        "sha256": "44e32aa3941ea0ea4ef0dfc5547ad84de3e2c1fdfaa1e29fdb0eee7218011251"
+      },
+      {
+        "path": "build/audit-fixes/font-image-fix-pdf-tests-r1.log",
+        "sha256": "e6b5210913a8e0836afeec325f48032d781092755ddfa5429f9cefd7daef686b"
+      }
+    ],
+    "default_full": {
+      "path": "build/audit-fixes/wp6-default-ctest-r4.log",
+      "sha256": "a814f732e33f40f72466fd3f1aa86f649bbad076b365373cf262e58e57fe8223",
+      "passed": 169,
+      "expected": 169,
+      "seconds": 154.59
+    },
+    "codecs_off_full": {
+      "path": "build/audit-fixes/wp6-codecs-off-ctest-r4.log",
+      "sha256": "a4d75d2210ade5b218209e9998e9afe7fccea00bbfbea0aa09b885dac4bb7e5d",
+      "passed": 169,
+      "expected": 169,
+      "seconds": 141.3
+    },
+    "installed_consumers": {
+      "path": "build/audit-fixes/wp6-install-r4-summary.json",
+      "sha256": "199f1b17827e8be487de55a9c9a093c4926e70a1bc1b8d1cac35f4ecaa8b5a38"
+    }
+  },
+  "linux_sanitizer": {
+    "passed": true,
+    "pending": false,
+    "source_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+    "run": 39614694252,
+    "tests_passed": 159,
+    "tests_expected": 159,
+    "original_log": {
+      "path": "build/wp6-png-ci-artifacts/sanitizer-native-tests/Testing/Temporary/LastTest.log",
+      "sha256": "935e3d3de5c8314d1d88911296ab6ee8310116d7787642cf87caaaa08ca7c3a3"
+    }
+  },
+  "replacement_campaign": {
+    "run": 39666440519,
+    "source_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+    "status": "in_progress",
+    "accepted": false,
+    "targets": [
+      "parser",
+      "font",
+      "layout",
+      "render"
+    ],
+    "shards_per_target": 24,
+    "requested_cpu_seconds_per_shard": 3600,
+    "max_parallel": 8,
+    "root": "build/wp6-final-reliability-r2",
+    "dispatch_evidence": {
+      "path": "build/audit-fixes/wp6-final-reliability-r2-dispatch.json",
+      "sha256": "68f900107bc752a86c9336b45f112572cc9c50eb2136dec1d9547e58b37e7bf7"
+    },
+    "prior_source_cpu_credit_nanoseconds": 0
+  },
+  "notes": [
+    "All prior-source reports remain historical; no CPU time is transferred.",
+    "Fixed regression requires normal API replay completion, so a sanitizer exit cannot masquerade as an expected format rejection."
+  ],
+  "native_ci": {
+    "path": "build/audit-fixes/wp6-png-ci-completed.json",
+    "sha256": "7cc57ec7c7ad21d3ec59c7d661a39d14cc108df5983189358d61f9b88031e24a",
+    "run": 39614694252,
+    "source_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+    "jobs_passed": 7,
+    "linux_asan_ubsan_passed": true,
+    "linux_asan_ubsan_tests": 159,
+    "sanitizer_log": {
+      "path": "build/wp6-png-ci-artifacts/sanitizer-native-tests/Testing/Temporary/LastTest.log",
+      "sha256": "935e3d3de5c8314d1d88911296ab6ee8310116d7787642cf87caaaa08ca7c3a3"
+    }
+  },
+  "platform_inventory": {
+    "path": "build/wp6-png-ci-artifacts/inventory.json",
+    "sha256": "6480603fe30fdb887d74c45687d2a9aa8308207996405b1e29364aabfe814c76"
+  },
+  "wp6_r4_quantitative": {
+    "path": "build/wp6-window-acceptance-r4/summary.json",
+    "sha256": "aed63a9ff5911d45682bc918a3f6302edf504c89aae359437de886ee0b3daf44"
+  },
+  "wp6_r4_full_sequential": {
+    "path": "build/wp6-full-sequential-r4/summary.json",
+    "sha256": "af6fca4f3fa2c5cf58a456739736c75f9b63d2b221a14f91f3c7c87fd080b84a"
+  }
+}
