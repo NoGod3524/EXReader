@@ -94,7 +94,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.39.0 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.39.1 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -466,7 +466,7 @@ development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.39.0 EXACT
+Select this package with `find_package(EXReader 3.39.1 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -777,3 +777,12 @@ Contract notes for hosts:
   `EXReader::vendor_*` targets; the legacy shared `EXReader::exreader` remains
   the compatibility artifact. Configuring with all three codec options OFF
   still installs and consumes normally.
+
+## 3.39.1 audited image, CBZ and SVG corrections
+
+SDK3.39.1/core3.38.1/PDF3.38.3 correct failure cleanup, source short-read retries,
+member-before-frame ordering, TIFF straight RGBA output and SVG stroke/opacity defaults.
+TIFF normalizes libtiff's associated 8-bit raster in place; its original quantization
+is preserved, so low-alpha straight RGB need not reproduce pre-association values.
+No public signatures, ABI epoch 1, library schema 6, existing goldens or budgets change.
+Independent before/after evidence is recorded in `validation/2026-10-20-audit-fixes.json`.
