@@ -39,6 +39,9 @@
     ]
   },
   "files": {
+    "chapter_index.c": "doc",
+    "chapter_reader.c": "layout",
+    "chapter_window.c": "doc",
     "aac.c": "audio",
     "affine_image.c": "graphics",
     "anchor.c": "doc",
@@ -202,6 +205,7 @@
     "include/exr/pdf_edit.h": "pdf_edit",
     "include/exr/audio.h": "audio",
     "include/exr/library.h": "library",
-    "include/exr/textindex.h": "textindex"
+    "include/exr/textindex.h": "textindex",
+    "src/chapter_internal.h": "doc"
   }
 }

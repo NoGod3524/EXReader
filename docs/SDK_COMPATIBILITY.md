@@ -94,7 +94,7 @@ schema versions and supported input-format subsets are tracked separately.
 An installed SDK contains a relocatable config package:
 
 ```cmake
-find_package(EXReader 3.39.1 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED)
 target_link_libraries(my_host PRIVATE EXReader::exreader)
 ```
 
@@ -466,7 +466,7 @@ development. ABI epoch 1 and library schema 6 are unchanged: no exported
 symbol, record layout, enum value or callback signature moves with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.39.1 EXACT
+Select this package with `find_package(EXReader 3.40.0 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
@@ -786,3 +786,7 @@ TIFF normalizes libtiff's associated 8-bit raster in place; its original quantiz
 is preserved, so low-alpha straight RGB need not reproduce pre-association values.
 No public signatures, ABI epoch 1, library schema 6, existing goldens or budgets change.
 Independent before/after evidence is recorded in `validation/2026-10-20-audit-fixes.json`.
+
+## 3.40.0 bounded chapter reading
+
+New chapter options/stats and pager query functions are additive. Existing public record layouts and functions retain ABI1; schema6 is unchanged. The publication is retained, and ordinary pager font/callback ownership applies. Full document snapshot pointers keep their original lifetime. See `docs/WP6-BOUNDED-READER.md` and installed `examples/window.c`.

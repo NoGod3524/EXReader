@@ -77,8 +77,8 @@ exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
     if (g->bidi_level != UINT_MAX && (g->bidi_level & 1)) cp = exr_bidi_mirror(cp);
     if (g->flags & EXR_GLYPH_HIDDEN)
       continue;
-    count = exr_font_order(f->font, f->styles[g->node].family, f->styles[g->node].flags,
-                            f->doc->nodes[g->node].chapter, order);
+    count = exr_font_order(f->font, (*exr_doc_style(f->doc,f->styles,g->node)).family, (*exr_doc_style(f->doc,f->styles,g->node)).flags,
+                            exr_doc_node(f->doc,g->node).chapter, order);
     for (at = 0; at < count; at++) allowed |= UINT32_C(1) << order[at];
     candidates &= allowed;
     for (face = 0; face < f->font->count; face++)
@@ -96,9 +96,9 @@ exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
     for(face=0;face<f->font->count;face++) if((candidates&(UINT32_C(1)<<face)) && FT_Face_GetCharVariantIndex(f->font->faces[face].face,base,cp)) supported|=UINT32_C(1)<<face;
     if(supported) candidates=supported;
   }
-  count = exr_font_order(f->font, f->styles[l->glyphs[start].node].family,
-                          f->styles[l->glyphs[start].node].flags,
-                          f->doc->nodes[l->glyphs[start].node].chapter, order);
+  count = exr_font_order(f->font, (*exr_doc_style(f->doc,f->styles,l->glyphs[start].node)).family,
+                          (*exr_doc_style(f->doc,f->styles,l->glyphs[start].node)).flags,
+                          exr_doc_node(f->doc,l->glyphs[start].node).chapter, order);
   for (at = 0; at < count; at++)
     if (candidates & (UINT32_C(1) << order[at])) {
       common = order[at];
@@ -115,8 +115,8 @@ exr_status exr_flow_cluster(flow *f, size_t start, size_t end) {
       continue;
     face = common;
     if (face == SIZE_MAX) {
-      count = exr_font_order(f->font, f->styles[g->node].family, f->styles[g->node].flags,
-                              f->doc->nodes[g->node].chapter, order);
+      count = exr_font_order(f->font, (*exr_doc_style(f->doc,f->styles,g->node)).family, (*exr_doc_style(f->doc,f->styles,g->node)).flags,
+                              exr_doc_node(f->doc,g->node).chapter, order);
       for (at = 0; at < count; at++) {
         face = order[at];
         if (exr_font_has_glyph(f->font, face, cp))
@@ -306,7 +306,7 @@ exr_status exr_flow_emit_line(flow *f, exr_glyph *glyphs, size_t count, int forc
 exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float width, float height,
                     exr_box_kind kind) {
   exr_layout *l = f->layout;
-  const exr_style *s = &f->styles[node];
+  const exr_style *s = exr_doc_style(f->doc,f->styles,node);
   exr_box *b;
   if (l->box_count >= EXR_MAX_ITEMS ||
       !exr_grow((void **)&l->boxes, &l->box_cap, l->box_count + 1, sizeof(*b)))
@@ -317,8 +317,8 @@ exr_box *exr_flow_box(flow *f, size_t node, size_t p, float x, float y, float wi
   b->node = node;
   b->page = p;
   b->resource = SIZE_MAX;
-  b->start = f->doc->nodes[node].start;
-  b->end = f->doc->nodes[node].end;
+  b->start = exr_doc_node(f->doc,node).start;
+  b->end = exr_doc_node(f->doc,node).end;
   b->x = x;
   b->y = y;
   b->width = width;
@@ -501,7 +501,7 @@ static exr_status image_asset(flow *f, size_t node, size_t *resource, const exr_
   size_t target;
   exr_error ignored = {0};
   exr_status status;
-  const exr_node *n = &f->doc->nodes[node];
+  const exr_node *n = (const exr_node[]){exr_doc_node(f->doc,node)};
   const char *src = exr_node_attribute(n, "src");
   *bitmap = NULL;
   *resource = SIZE_MAX;
@@ -516,7 +516,7 @@ static exr_status image_asset(flow *f, size_t node, size_t *resource, const exr_
   return status==EXR_OK ? EXR_OK : fail(f,status,ignored.message[0] ? ignored.message : "Image decoding failed");
 }
 exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
-  exr_style logical = exr_flow_style(&f->styles[node], f->writing_mode);
+  exr_style logical = exr_flow_style(exr_doc_style(f->doc,f->styles,node), f->writing_mode);
   if(f->intrinsic) {
     if(logical.width.percent) logical.width.value=-1;
     if(logical.height.percent) logical.height.value=-1;
@@ -556,7 +556,7 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
     scale = fminf(scale, used(s->max_height, exr_flow_room(f)) / h);
   w *= scale;
   h *= scale;
-  status = exr_flow_page(f, h, f->doc->nodes[node].start);
+  status = exr_flow_page(f, h, exr_doc_node(f->doc,node).start);
   if (status != EXR_OK)
     return status;
   if (s->margin[3].value < 0)
@@ -577,8 +577,8 @@ exr_status exr_flow_image(flow *f, size_t node, float x, float width) {
     b->border_color = 0x888888ff;
   }
   f->y += h;
-  if(f->doc->nodes[node].end>f->layout->pages[f->layout->page_count - 1].end)
-    f->layout->pages[f->layout->page_count - 1].end = f->doc->nodes[node].end;
+  if(exr_doc_node(f->doc,node).end>f->layout->pages[f->layout->page_count - 1].end)
+    f->layout->pages[f->layout->page_count - 1].end = exr_doc_node(f->doc,node).end;
   return EXR_OK;
 }
 typedef struct {

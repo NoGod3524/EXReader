@@ -3,8 +3,8 @@
 
 The summary keeps every raw record, the runtime/corpus hashes and the exact
 command lines.  It never rewrites earlier measurements: the output directory
-must be new.  acceptance is reported, not asserted, because the current engine
-still rejects chapters above the 32 MiB member limit.
+must be new. The snapshot plan retains its original rejection semantics.
+--window-bytes selects the independent bounded reader and its measured gate.
 """
 # SPDX-License-Identifier: MIT
 import argparse
@@ -32,7 +32,7 @@ def sha256(path):
 
 
 def run_case(probe, font, book, out, stem, part, max_pages, turns, random, repeat,
-             render=True):
+             render=True, window_bytes=0):
     command = [str(probe), str(book), str(font), "--part", str(part),
                "--max-pages", str(max_pages), "--turns", str(turns),
                "--random", str(random), "--cache", "1", "--budget", str(2 * MIB),
@@ -40,6 +40,8 @@ def run_case(probe, font, book, out, stem, part, max_pages, turns, random, repea
                "--checkpoint-interval", "8", "--seed", "20261020"]
     if render:
         command.append("--render")
+    if window_bytes:
+        command.extend(["--window-bytes",str(window_bytes)])
     name = "%s-%d" % (stem, repeat)
     stdout_path = out / (name + ".json")
     stderr_path = out / (name + ".stderr.log")
@@ -69,9 +71,14 @@ def main(argv=None):
     parser.add_argument("corpus", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--repeats", type=int, default=3)
+    parser.add_argument("--window-bytes",type=int,default=0)
+    parser.add_argument("--sample-pages",type=int,default=256)
+    parser.add_argument("--random-count",type=int,default=16)
     parser.add_argument("--enumerate", type=int, default=0,
                         help="page cap for one full sequential pass per loading case (0 = skip)")
     args = parser.parse_args(argv)
+    if args.repeats<1 or args.window_bytes<0 or args.sample_pages<16 or not 1<=args.random_count<=64:
+        parser.error("repeats must be positive; window bytes must be nonnegative")
     for path in (args.probe, args.font, args.corpus / "manifest.json"):
         if not path.is_file():
             parser.error("missing input: %s" % path)
@@ -85,9 +92,13 @@ def main(argv=None):
         book = args.corpus / name
         if not book.is_file():
             parser.error("missing corpus member: %s" % book)
-        repeats = args.repeats if stem in ("single10", "segmented10") else 1
+        if sha256(book)!=books[name]["sha256"]:
+            parser.error("corpus hash mismatch: %s" % book)
+        if args.window_bytes:
+            max_pages,turns,random=args.sample_pages,16,args.random_count
+        repeats = args.repeats if args.window_bytes or stem in ("single10", "segmented10") else 1
         runs = [run_case(args.probe, args.font, book, args.output, stem, part,
-                         max_pages, turns, random, repeat) for repeat in range(repeats)]
+                         max_pages, turns, random, repeat,window_bytes=args.window_bytes) for repeat in range(repeats)]
         records.extend(runs)
         good = [r for r in runs if r["report"] and r["report"].get("status") == 0]
         case = {
@@ -128,13 +139,20 @@ def main(argv=None):
             case["page_hashes"] = [entry["hash"] for entry in good[0]["report"]["sequential"]["page_hashes"]]
             case["page_ranges"] = [[entry["start"], entry["end"]]
                                    for entry in good[0]["report"]["sequential"]["page_hashes"]]
+            if args.window_bytes:
+                case["bounded_runs"]=[r["report"]["bounded"] for r in runs]
+                case["medians"]["indexed_and_workspace_bytes"]=median(runs,lambda r:r["bounded"]["index_bytes"]+r["bounded"]["parse_workspace_bytes"])
+                case["medians"]["peak_indexed_and_workspace_bytes"]=median(runs,lambda r:r["bounded"]["index_bytes"]+r["bounded"]["peak_parse_workspace_bytes"])
         if args.enumerate and case["passed"]:
             run = run_case(args.probe, args.font, book, args.output, stem + "-enumerate",
-                           part, args.enumerate, 1, 0, 0, render=False)
+                           part, args.enumerate, 1, 0, 0, render=False,
+                           window_bytes=max(args.window_bytes,2*MIB) if args.window_bytes else 0)
             report = run["report"]
             case["enumerated"] = {
                 "passed": bool(report) and report.get("status") == 0,
                 "pages": report["sequential"]["enumerated"] if report else None,
+                "reached_eof": report["sequential"].get("reached_eof",False) if report else False,
+                "all_pages_hash": report["sequential"].get("all_pages_hash") if report else None,
                 "hashes": [entry["hash"] for entry in report["sequential"]["page_hashes"]]
                 if report else [],
                 "ranges": [[entry["start"], entry["end"]]
@@ -142,6 +160,7 @@ def main(argv=None):
                 "stdout": run["stdout"],
                 "stdout_sha256": run["stdout_sha256"],
             }
+            records.append(run)
             bad = [r for r in runs + [run] if not r["report"]]
             if bad:
                 parser.error("unparseable probe output: %s" % bad[0]["stdout"])
@@ -158,6 +177,9 @@ def main(argv=None):
         "python": sys.version.split()[0],
         "probe_sha256": sha256(args.probe),
         "font_sha256": sha256(args.font),
+        "runtime_dll_sha256":{p.name:sha256(p) for p in sorted(args.probe.parent.glob("*.dll"))},
+        "runner_sha256":sha256(Path(__file__)),
+        "window_bytes":args.window_bytes,
         "corpus_manifest_sha256": sha256(args.corpus / "manifest.json"),
         "corpus_generator_sha256": corpus["generator_sha256"],
         "peak_metric": "OS process high-water and live working set; the deterministic parse workspace is document_owned_bytes",
@@ -178,9 +200,26 @@ def main(argv=None):
         "accepted": False,
         "reason": "10->100 MiB single-chapter residency and open are still unmet; see cases and docs",
     }
+    if args.window_bytes:
+        metric="peak_indexed_and_workspace_bytes"
+        first=cases["single10"].get("medians",{}).get(metric)
+        last=cases["single100"].get("medians",{}).get(metric)
+        delta=last-first if first is not None and last is not None else None
+        all_pass=all(c["passed"] for c in cases.values())
+        random_ok=all_pass and all(r["report"]["random"]["mismatches"]==0 and
+            r["report"]["random"]["restored_checkpoints"]>0 and
+            r["report"]["bounded"]["windows_evicted"]>0 for r in records if "-enumerate" not in r["stem"])
+        full_ok=not args.enumerate or all(c.get("enumerated",{}).get("reached_eof") for c in cases.values())
+        deterministic=all_pass and all(len({tuple(p["hash"] for p in r["report"]["sequential"]["page_hashes"]) for r in records if r["stem"]==name})==1 for name in cases)
+        accepted=all_pass and delta is not None and delta<=32*MIB and random_ok and full_ok and deterministic
+        summary["acceptance"]={"single_10_to_100_peak_residency_increment_bytes":delta,"limit_bytes":32*MIB,
+            "single_50_100_open":cases["single50"]["passed"] and cases["single100"]["passed"],
+            "all_cases_pass":all_pass,"evicted_window_random_recovery":random_ok,
+            "repeat_page_hashes_equal":deterministic,"requested_full_enumeration":bool(args.enumerate),
+            "full_enumeration_pass":full_ok,"accepted":accepted}
     (args.output / "summary.json").write_text(
         json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return 0
+    return 0 if not args.window_bytes or summary["acceptance"]["accepted"] else 1
 
 
 if __name__ == "__main__":

@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "scope": "WP6 independent bounded EPUB reader and integrated audit/package A/B validation",
+  "sdk": "3.40.0",
+  "core": "3.39.0",
+  "abi": 1,
+  "library_schema": 6,
+  "engine_commit": null,
+  "status": "validation_in_progress",
+  "wp6_accepted": false,
+  "wp16_accepted": false,
+  "historical_evidence": [
+    "docs/validation/wp6-bounded-chapters.json",
+    "docs/validation/2026-10-20-audit-fixes.json"
+  ],
+  "local": {
+    "window_acceptance_summary": "build/wp6-window-acceptance-r1/summary.json",
+    "window_acceptance": {
+      "accepted": true,
+      "all_cases_pass": true,
+      "evicted_window_random_recovery": true,
+      "full_enumeration_pass": true,
+      "limit_bytes": 33554432,
+      "repeat_page_hashes_equal": true,
+      "requested_full_enumeration": false,
+      "single_10_to_100_peak_residency_increment_bytes": 20269292,
+      "single_50_100_open": true
+    },
+    "reader_log": "build/audit-codecs-off/wp6-final-reader-tests.log",
+    "layer_log": "build/audit-codecs-off/wp6-layers-r2.log",
+    "installed_default_components": {
+      "passed": 6,
+      "expected": 6,
+      "log": "build/audit-fixes/wp6-components-tests.log"
+    }
+  },
+  "pending": [
+    "final unified Windows rerun",
+    "default and trimmed installed C/C++ consumers",
+    "native seven-job CI and Linux sanitizer",
+    "full sequential window-size comparison",
+    "final-source measured reliability acceptance"
+  ],
+  "notes": [
+    "Historical source reports are not reused as current-source acceptance.",
+    "Window peak is a conservative bound including transient allocation overlap.",
+    "No physical device installation."
+  ]
+}

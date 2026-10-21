@@ -153,6 +153,49 @@ EXR_API exr_status exr_layout_create_positioned(const exr_document *doc, exr_fon
 EXR_API exr_status exr_pager_create(const exr_document *doc, exr_font *font,
                                      const exr_layout_config *config, exr_pager **out,
                                      exr_error *error);
+/* Independent bounded EPUB reading path; complete-document snapshot limits and
+   borrowed arrays retain their existing contract. The publication is retained.
+   The caller's font and callback contexts follow the ordinary pager lifetime. */
+/* workspace_budget bounds the chapter index, XML/window and CSS allocations.
+   Source ZIP work reserves at most 1 MiB within it. window_bytes is a preferred
+   source span: indivisible paragraphs/tables/ruby/floats still require room.
+   Fonts/images, page payloads and replay checkpoints retain separate budgets. */
+typedef struct {
+  size_t size, workspace_budget, window_bytes;
+} exr_chapter_options;
+/* Live sizes include owned capacities; parse workspace also includes the pager's
+   live continuation state. Its peak is a conservative upper bound including
+   XML/CSS/source scratch and projection array growth overlap. Shared fonts and
+   the compressed source payload are separate; book_bytes is its logical size. */
+typedef struct {
+  size_t book_bytes, index_bytes, parse_workspace_bytes, peak_parse_workspace_bytes;
+  size_t node_count, projection_bytes;
+  size_t page_cache_bytes, checkpoint_bytes, explicit_snapshot_bytes;
+  size_t windows_loaded, windows_evicted;
+} exr_chapter_stats;
+EXR_API exr_chapter_options exr_chapter_options_defaults(void);
+EXR_API exr_status exr_publication_pager_create(exr_publication *publication,size_t part,
+  exr_font *font,const exr_layout_config *config,const exr_chapter_options *options,
+  exr_pager **out,exr_error *error);
+EXR_API exr_chapter_stats exr_pager_chapter_statistics(const exr_pager *pager);
+/* Bounded-pager queries use stable chapter-local node IDs / normalized UTF-8
+   offsets. They may evict the active window without changing page traversal.
+   Full CFIs retain the publication's original spine route; context is 0..32.
+   Query calls and sink callbacks must not reenter or destroy this pager. */
+EXR_API exr_status exr_pager_cfi_create(exr_pager *pager,const exr_cfi_point *point,
+  size_t context_scalars,const exr_control *control,char **cfi,exr_error *error);
+EXR_API exr_status exr_pager_cfi_resolve(exr_pager *pager,const char *cfi,
+  const exr_control *control,exr_cfi_point *point,exr_error *error);
+EXR_API exr_status exr_pager_anchor_create(exr_pager *pager,size_t start,size_t end,
+  const exr_control *control,exr_anchor *anchor,exr_error *error);
+EXR_API exr_status exr_pager_anchor_resolve(exr_pager *pager,const exr_anchor *anchor,
+  const exr_control *control,exr_anchor_match *match,exr_error *error);
+/* Streams normalized selected text (whole chapter: 0..projection_bytes), in
+   complete UTF-8 chunks up to 32 KiB, borrowed only during sink. On error the
+   sink may have received a prefix; atomic file publication belongs to the host. */
+typedef exr_status (*exr_text_sink_fn)(void *context,const char *utf8,size_t size,exr_error *error);
+EXR_API exr_status exr_pager_read_text(exr_pager *pager,size_t start,size_t end,
+  exr_text_sink_fn sink,void *context,const exr_control *control,exr_error *error);
 EXR_API exr_status exr_pager_next(exr_pager *pager, exr_layout **out, exr_error *error);
 EXR_API exr_status exr_pager_set_control(exr_pager *pager, const exr_control *control,
                                          exr_error *error);
