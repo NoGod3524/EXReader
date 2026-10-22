@@ -1,33 +1,48 @@
 # 并行交付集成验收
 
-本分支 `codex/parallel-integration` 从 `feda26381a7b05c6a1ce3db91a440ca0094e06c5` 开始，保留各交付分支的原始历史。它是待联合验收的集成候选；独立交付的成功记录不替代本分支验证。
+本分支 `codex/parallel-integration` 从 `feda26381a7b05c6a1ce3db91a440ca0094e06c5` 开始，保留各交付分支的原始历史。集成源码 `9e4b595ed7e10dcb2d78f5547e4e6a11a04ba3a1` 已通过八组同源云端验收及严格汇总。验收后的提交只补充文档和证据记录；实际受测源码以该 SHA 为准。
 
 ## 已纳入的原始交付
 
 | 包 | 原始交付 HEAD | 独立验收源码 | 当前集成状态 |
 | --- | --- | --- | --- |
-| 可选 OCR 适配器 | `bbe7139862e1705e7e8954b97c0b9dfbb639287e` | `09c4a54913e5c4211ca44de813ea54a30e241abb` | 已合入；待同源云端重验 |
-| 兼容语料协议 | `c8292c885d6b3ac1c27eec646eba3bd3d14ef712` | `5af959aa1b19991f9b8b56528058cfc921adf961` | 已合入并保留首次登记祖先；待同源云端重验 |
-| Windows 宿主 | `2d99fcd3a912eb05ad6df8257a13a6c929c860a8` | `40c45799131b3e7f2927d5cdb09a1bf72d9452db` | 原始交付及两组审计修复已合入；待同源云端重验 |
-| Linux 宿主 | `8ae82da506f4c7a1616f25a4544fe3ba77e90f08` | `44e546296862e3258ad885a3706652319c266a56` | 原始交付及审计修复已合入；待同源云端重验 |
+| 可选 OCR 适配器 | `bbe7139862e1705e7e8954b97c0b9dfbb639287e` | `09c4a54913e5c4211ca44de813ea54a30e241abb` | 同源云端验收通过 |
+| 兼容语料协议 | `c8292c885d6b3ac1c27eec646eba3bd3d14ef712` | `5af959aa1b19991f9b8b56528058cfc921adf961` | 保留首次登记祖先；协议通过，真实语料验收未通过 |
+| Windows 宿主 | `2d99fcd3a912eb05ad6df8257a13a6c929c860a8` | `40c45799131b3e7f2927d5cdb09a1bf72d9452db` | 原始交付及两组审计修复同源验收通过 |
+| Linux 宿主 | `8ae82da506f4c7a1616f25a4544fe3ba77e90f08` | `44e546296862e3258ad885a3706652319c266a56` | 原始交付及审计修复同源验收通过 |
+| 旧数据迁移 | `6515640` | `c2d23c29a3b2096c2236fdb414dcd1e66d3243b4`（审计修复） | 原始交付及审计修复同源验收通过 |
+| OPDS | `45cff9e4853229a2affe6b8c5ddcfe55f8ac2b4a` | `ce5bfc75b20a0cb4faa22c3ca01ae5fbc910f88c`（审计修复） | 原始交付及审计修复同源验收通过 |
 
 语料首次登记提交 `00a8838cf6089e67a730ca6fd4956cb45d09c27d` 必须保持为集成源码的祖先，不能用重写后的提交冒充原登记。
 
-已纳入的审计修复：Linux `175adc9155836209b6a951b2a46c59fee88a1298`（验收源码 `af0fef29c5c61caf3607012965173db1e540330a`），Windows 证据检查器 `70868f85ff195b5a544c4fa40a10006e3671412d`（验收源码 `53890584cf67e3c92c63cf5d7bcc8537283e7c1e`）。两者独立云端复验通过，仍需本集成分支同源联合验收。
+已纳入的审计修复：Linux `175adc9155836209b6a951b2a46c59fee88a1298`（独立验收源码 `af0fef29c5c61caf3607012965173db1e540330a`），Windows 证据检查器 `70868f85ff195b5a544c4fa40a10006e3671412d`（独立验收源码 `53890584cf67e3c92c63cf5d7bcc8537283e7c1e`）。两者独立复验及本次同源联合验收均通过。
 
 Windows 任务修复 `f24fad18ed2dae30038afa4bf26f1e1cb35c29bd` 已合入，独立验收源码 `32f4f77cd69be5dcd2a66ed31701c5812997a78a`：原 26/158/8 保持通过，新增候选 11/11、旧基线 11/11 反向拒绝。
 
-迁移原始交付 `6515640` 及审计候选 `a17b277` 已暂存；候选可执行源码 `c2d23c29a3b2096c2236fdb414dcd1e66d3243b4` 的最终两平台汇总尚待完成。OPDS 原始交付 `45cff9e4853229a2affe6b8c5ddcfe55f8ac2b4a` 及通过两平台复验的修复交付 `9a98f3256f4b1af457521ad188759812266cf0a2` 是本轮最后纳入的代码包，仍需联合验收。OPDS 的声明范围不含 HTTPS 实现、DRM 与宿主接入；迁移范围不含高保真格式转换，未定位内容保留于账本。
+迁移审计代码随 `a17b277` 纳入受测源码；其独立最终两平台汇总已通过，验收后的文档提交 `b048e5a094253d2625254bc098bbe24daaf9a0b9` 另行合入。OPDS 修复交付为 `9a98f3256f4b1af457521ad188759812266cf0a2`。两包同源联合验收均通过。OPDS 的声明范围不含 HTTPS 实现、DRM 与宿主接入；迁移范围不含高保真格式转换，未定位内容保留于账本。
 
 ## 修复与验收门槛
 
-- Windows 任务修复已通过独立复验：串行任务取消、候选会话提交、失败恢复、书籍身份、标注操作和持久化错误传播；联合验收仍待运行。
-- Windows 证据修复已通过独立复验：50 项证据回归、原 26 项检查、158 步 UI、8 张截图；联合验收仍待运行。
-- Linux 修复已通过独立复验：原 20 步 UI 及标注读取故障、退出码、非默认字号恢复负向回归；联合验收仍待运行。
+- Windows 任务修复已通过独立及同源联合复验：串行任务取消、候选会话提交、失败恢复、书籍身份、标注操作和持久化错误传播；候选 11/11、旧基线 11/11 反向拒绝。
+- Windows 证据修复已通过独立及同源联合复验：50 项证据回归、原 26 项检查、158 步 UI、8 张截图。
+- Linux 修复已通过独立及同源联合复验：原 20 步 UI 及标注读取故障、退出码、非默认字号恢复负向回归。
 - 联合云端验证：同一集成提交上的原生 CI、安装后的默认示例、修复后的 Windows/Linux UI、可选 OCR 安装消费者、语料协议与登记历史。
 - 所有构建、测试、UI、语料生成及证据汇总只在 GitHub Actions 执行。原失败记录和交付证据保留；新增结果另存。
 
-八组同源工作流为 native、ocr、corpus、linux、windows_evidence、windows_worker、migration、opds。`tools/check_parallel_integration.py` 与 `.github/workflows/parallel-integration.yml` 在云端核对完整分页、每组固定作业数、源码、运行状态、必需工件与散列元数据；协议的 15 项正反例已通过，尚未执行八组同源严格汇总。协议通过不授予集成验收。
+八组同源工作流及结果：
+
+| 组 | 云端 run | 作业结果 |
+| --- | --- | --- |
+| native | `39716695522` | 7/7；含 Linux ASan/UBSan、安装消费及 iPhone/iPad 各 21 项自检 |
+| ocr | `39716697514` | 3/3；release、sanitizers、audit |
+| corpus | `39716699709` | 1/1；46 项协议检查，`corpus_accepted=false` |
+| linux | `39716702306` | 1/1 |
+| windows_evidence | `39716704453` | 1/1 |
+| windows_worker | `39716706879` | 1/1 |
+| migration | `39716710104` | 3/3；双平台各 65 场景/135 检查、31 项回归、17 项浏览器检查；29 项汇总门禁正反例 |
+| opds | `39716712439` | 2/2；各平台 65 场景、8 条消费者链、38 项门禁 |
+
+严格汇总 run `39718130711` 的 protocol、summarize 两作业均成功。`tools/check_parallel_integration.py` 与 `.github/workflows/parallel-integration.yml` 在云端核对完整分页、19 个上游作业、源码、运行状态、必需工件与散列元数据；协议 15 项正反例通过，汇总输出 `accepted=true`。云端工件 `parallel-integration-summary` 保存完整结果，身份见 `docs/validation/parallel-integration.json`。本地只登记云端结论，未下载工件或重新汇总。
 
 OPDS 在最后合入前冻结集成基线；其工作流用该已审计祖先检查本次 OPDS 差异仅属于约定路径。原始包相对 handoff 的独立所有权记录保留；SDK 保护树仍逐项与固定 `a2552d7feb786cd2345d2b0b3eb894777b3254db` 对照。
 
@@ -41,6 +56,6 @@ Linux 宿主声明为不超过 8 MiB 的重排原书。Windows 宿主尚未接�
 
 ## 与可靠性长测的关系
 
-既有云端长测仍固定源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9`，不因本分支合入应用或可选工具而转移 CPU 时长。长测结论只授予该固定引擎候选；本分支需另行完成集成验收。WP16 在严格云端汇总接受前保持未完成。
+既有云端长测仍固定源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9`，不因本分支合入应用或可选工具而转移 CPU 时长。长测结论只授予该固定引擎候选；本次包集成验收不授予长测通过。汇总明确 `complete_product=false`、`wp16_accepted=false`、`wp16_cpu_credit_seconds=0`。WP16 在可靠性长测严格云端汇总接受前保持未完成。
 
 依据：`docs/RELIABILITY-HANDOFF.md` 第 6 节、`docs/validation/2026-10-21-png-reliability.json`、`.github/workflows/reliability.yml`。
