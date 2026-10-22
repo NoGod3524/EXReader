@@ -72,7 +72,7 @@ static const char *trim_dup(struct opds_arena *a, const opds_buf *b) {
   size_t s = 0, e = b->size;
   while (s < e && is_space(b->data[s])) s++;
   while (e > s && is_space(b->data[e - 1])) e--;
-  return arena_strndup(a, (const char *)b->data + s, e - s);
+  return arena_strndup(a, b->data ? (const char *)b->data + s : "", e - s);
 }
 
 opds_status opds_xml_parse(struct opds_arena *arena, const char *d, size_t n,
