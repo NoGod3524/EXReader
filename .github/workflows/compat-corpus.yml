@@ -34,7 +34,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   protocol:
-    if: github.ref == 'refs/heads/codex/compat-corpus-manifest'
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/codex/compat-corpus-manifest'
     runs-on: ubuntu-22.04
     timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.manifest != '' && 360 || 30 }}
     steps:
