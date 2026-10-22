@@ -12,7 +12,7 @@ import zipfile
 import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
-SDK_BASE = 'a2552d7feb786cd2345d2b0b3eb894777b3254db'
+SDK_BASE = 'd46ff370cb3c5ce9a0ceb4dc1f8b099209149280'
 REVIEW_BASE = '9b57cc64094a9c5fc0474ec87ca660d2dc935b74'
 WALKTHROUGH_IDS = '''cold_start_shelf picker_cancel import_epub open_epub page_next page_prev font_increase font_decrease touch_select copy_selection note_add notes_read note_edit note_navigate rotate_landscape rotate_portrait activity_rebuild background_resume process_restart_reflow notes_after_restart note_delete import_txt open_txt import_pdf open_pdf pdf_next pdf_prev pdf_zoom pdf_select_copy pdf_note_add pdf_process_restart pdf_note_delete import_bigchapter open_bigchapter bigchapter_next import_ambiguous ambiguous_restore corrupt_import retry_import duplicate_import too_large cancel_large_import book_switch accessibility_semantics native_metrics'''.split()
 REVIEW_IDS = '''duplicate_cancel_keeps_original new_copy_cancel_cleans_file late_insert_cancel_rolls_back_new_book duplicate_late_cancel_keeps_original late_cancel_after_commit_reports_success failed_open_preserves_reader failed_progress_preserves_frame selection_invalidated_while_busy unicode_comment_round_trip destroyed_activity_releases_worker'''.split()

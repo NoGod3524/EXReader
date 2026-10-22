@@ -22,7 +22,12 @@ WORKFLOWS = {
 
 # New capabilities introduced by the integrated core, verified at the same source and kept
 # outside the ten-package threshold instead of replacing any package check.
-SUPPLEMENTAL = {'acroform': ('acroform.yml', 3), 'spacing': ('wp5-border-spacing.yml', 2)}
+SUPPLEMENTAL = {'acroform': ('acroform.yml', 5), 'spacing': ('wp5-border-spacing.yml', 2)}
+SUPPLEMENTAL_ARTIFACTS = {
+    'acroform': {'EXReader-acroform-corpus', 'EXReader-acroform-Linux',
+                 'EXReader-acroform-Windows', 'EXReader-acroform-sanitizer'},
+    'spacing': set(),
+}
 REQUIRED_RUNS = dict(WORKFLOWS, **SUPPLEMENTAL)
 
 # Public SDK surface shared by every package that consumes the default SDK install.
@@ -37,10 +42,11 @@ BASELINE_EVIDENCE = {
 # Every package-level SDK guard must name the registered baseline, not a mutable HEAD.
 # The Android guard joins this list as soon as its delivery is in the tree; the registry
 # records it as pending until then, and a pending guard that already exists is refused.
+ANDROID_CONTRACT = ('tools/android_host_evidence.py', r"SDK_BASE\s*=\s*'([0-9a-f]{40})'")
 BASELINE_CONTRACTS = (
     ('.github/workflows/wp15-opds.yml', r'BASELINE:\s*([0-9a-f]{40})'),
+    ANDROID_CONTRACT,
 )
-ANDROID_CONTRACT = ('tools/android_host_evidence.py', r"SDK_BASE\s*=\s*'([0-9a-f]{40})'")
 
 
 def require(value, message):
@@ -86,13 +92,22 @@ def verify(kind, source, run, jobs, artifacts):
             'jobs': len(jobs), 'artifacts': [{key: artifact[key] for key in ('id', 'name', 'digest', 'size_in_bytes')} for artifact in artifacts]}
 
 
-def verify_supplemental(kind, source, run, jobs):
+def verify_supplemental(kind, source, run, jobs, artifacts):
     workflow, expected_jobs = SUPPLEMENTAL[kind]
     require(run['head_sha'] == source and run['status'] == 'completed' and run['conclusion'] == 'success', kind + ': supplemental run did not succeed at the required source')
     require(run['path'].split('@')[0] == '.github/workflows/' + workflow, kind + ': wrong supplemental workflow')
     require(len(jobs) == expected_jobs and len({job['id'] for job in jobs}) == expected_jobs, kind + ': missing or duplicate supplemental jobs')
     require(all(job['head_sha'] == source and job['status'] == 'completed' and job['conclusion'] == 'success' for job in jobs), kind + ': failed, incomplete or cross-source supplemental job')
-    return {'run_id': run['id'], 'attempt': run['run_attempt'], 'workflow': workflow, 'jobs': expected_jobs}
+    names = {artifact['name'] for artifact in artifacts}
+    require(SUPPLEMENTAL_ARTIFACTS[kind] <= names, kind + ': required capability evidence missing')
+    require(len({artifact['id'] for artifact in artifacts}) == len(artifacts), kind + ': duplicate capability artifacts')
+    for artifact in artifacts:
+        require(artifact['expired'] is False and artifact['size_in_bytes'] > 0 and
+                artifact['workflow_run']['head_sha'] == source and artifact['workflow_run']['id'] == run['id'] and
+                re.fullmatch('sha256:[0-9a-f]{64}', artifact.get('digest', '')) is not None,
+                kind + ': expired, empty or mismatched capability artifact')
+    return {'run_id': run['id'], 'attempt': run['run_attempt'], 'workflow': workflow, 'jobs': expected_jobs,
+            'artifacts': [{key: artifact[key] for key in ('id', 'name', 'digest', 'size_in_bytes')} for artifact in artifacts]}
 
 
 def fetch(path):
@@ -218,28 +233,39 @@ def selftest():
         raise AssertionError('Android ' + failure + ' was accepted')
     checked += 2
     acroform_run = dict(run, path='.github/workflows/acroform.yml')
-    acroform_jobs = [dict(jobs[0], id=800 + i) for i in range(3)]
-    verify_supplemental('acroform', source, acroform_run, acroform_jobs)
+    acroform_jobs = [dict(jobs[0], id=800 + i) for i in range(5)]
+    acroform_artifacts = [dict(artifacts[0], id=1000 + i, name=name)
+                          for i, name in enumerate(sorted(SUPPLEMENTAL_ARTIFACTS['acroform']))]
+    verify_supplemental('acroform', source, acroform_run, acroform_jobs, acroform_artifacts)
     checked += 1
     spacing_run = dict(run, path='.github/workflows/wp5-border-spacing.yml')
     spacing_jobs = [dict(jobs[0], id=700 + i) for i in range(2)]
-    verify_supplemental('spacing', source, spacing_run, spacing_jobs)
+    verify_supplemental('spacing', source, spacing_run, spacing_jobs, [])
     checked += 1
-    for failure in ('missing supplemental job', 'failed supplemental job', 'wrong supplemental workflow', 'supplemental at another source'):
-        copied = copy.deepcopy((acroform_run, acroform_jobs))
+    for failure in ('missing supplemental job', 'failed supplemental job', 'wrong supplemental workflow',
+                    'supplemental at another source', 'missing capability artifact', 'expired capability artifact',
+                    'capability artifact from another run'):
+        r, j, a = copy.deepcopy((acroform_run, acroform_jobs, acroform_artifacts))
         if failure == 'missing supplemental job':
-            copied[1].pop()
+            j.pop()
         elif failure == 'failed supplemental job':
-            copied[1][0]['conclusion'] = 'failure'
+            j[0]['conclusion'] = 'failure'
         elif failure == 'wrong supplemental workflow':
-            copied[0]['path'] = '.github/workflows/native.yml'
+            r['path'] = '.github/workflows/native.yml'
+        elif failure == 'supplemental at another source':
+            r['head_sha'] = '0' * 40
+        elif failure == 'missing capability artifact':
+            a.pop()
+        elif failure == 'expired capability artifact':
+            a[0]['expired'] = True
         else:
-            copied[0]['head_sha'] = '0' * 40
+            a[0]['workflow_run']['id'] = 124
         try:
-            verify_supplemental('acroform', source, copied[0], copied[1])
+            verify_supplemental('acroform', source, r, j, a)
         except ValueError:
             continue
         raise AssertionError('Supplemental ' + failure + ' was accepted')
+    checked += 7
     baseline = 'c' * 40
     trees = {path: 'd' * 40 for path in PROTECTED_TREES}
     registry = {'sdk_baseline': baseline, 'protected_trees': dict(trees),
@@ -265,9 +291,8 @@ def selftest():
             continue
         raise AssertionError('SDK baseline: ' + name + ' was accepted')
     checked += 1 + len(baseline_changes)
-    baseline_problems(registry, source, trees, contracts, (ANDROID_CONTRACT[0],))
     checked += 1
-    for name, pending, extra in (('a pending guard is also active', (ANDROID_CONTRACT[0],), [ANDROID_CONTRACT[0]]),
+    for name, pending, extra in (('a pending guard is also active', (ANDROID_CONTRACT[0],), []),
                                  ('a foreign guard is pending', ('tools/other_guard.py',), [])):
         try:
             baseline_problems(registry, source, trees, contracts + [(path, baseline) for path in extra], pending)
@@ -353,10 +378,10 @@ def main():
                 path = f'actions/runs/{run_id}'
                 run = fetch(path)
                 jobs = pages(path + f"/attempts/{run['run_attempt']}/jobs", 'jobs')
-                if kind in SUPPLEMENTAL:
-                    report['supplemental'][kind] = verify_supplemental(kind, source, run, jobs)
-                    continue
                 artifacts = pages(path + '/artifacts', 'artifacts')
+                if kind in SUPPLEMENTAL:
+                    report['supplemental'][kind] = verify_supplemental(kind, source, run, jobs, artifacts)
+                    continue
                 report['runs'][kind] = verify(kind, source, run, jobs, artifacts)
             report['accepted'] = True
         except (ValueError, KeyError, TypeError, OSError) as error:

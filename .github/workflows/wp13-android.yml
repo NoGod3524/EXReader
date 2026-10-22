@@ -24,8 +24,9 @@ jobs:
     timeout-minutes: 120
     runs-on: ubuntu-latest
     env:
-      # Standalone review uses HEAD. Integration may pin its accepted Android commit here.
-      ANDROID_OWNERSHIP_HEAD: ''
+      # Accepted Android delivery source; the audit boundary stops here so later
+      # integration commits cannot be attributed to the Android package.
+      ANDROID_OWNERSHIP_HEAD: 8a6636ed8ac6db06ab84e174f5a01c49d12511dc
     steps:
       - uses: actions/checkout@v4
         with:
