@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "dataset_id": "reading-core-synthetic-smoke-v1",
+  "baseline_source_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+  "input_root": "tests/fixtures",
+  "complete": true,
+  "target": 9,
+  "kind": "synthetic",
+  "scope": "open, all-page render, text extraction; no fidelity/save/performance claim",
+  "selection": {
+    "method": "Existing original positive fixtures, selected from native test contracts before this smoke run",
+    "engine_results_used": false,
+    "real_document_credit": 0
+  },
+  "source": {
+    "creator": "EXReader contributors",
+    "license": "MIT",
+    "origin": "original_test_fixture",
+    "evidence": "README.md license section and native test fixture contracts"
+  },
+  "files": [
+    {
+      "id": "smoke-txt",
+      "path": "sample.txt",
+      "bytes": 10635,
+      "sha256": "fe0e65a92ff83503015b42253a17ac643e4894058a062bb532ba61aaf5bf583b",
+      "format": "txt",
+      "kind": "synthetic",
+      "scope": "supported",
+      "expectation_basis": "tests/test_core.c:test_formats; tests/check_document_probe.py",
+      "expected": {"status": 0, "complete": true}
+    },
+    {
+      "id": "smoke-html",
+      "path": "sample.html",
+      "bytes": 228,
+      "sha256": "84ebc6d4e40f98bed2508da58af36e41b8a1f82d0d927fbc583f8711f196e780",
+      "format": "html",
+      "kind": "synthetic",
+      "scope": "supported",
+      "expectation_basis": "tests/test_core.c:test_formats",
+      "expected": {"status": 0, "complete": true}
+    },
+    {
+      "id": "smoke-fb2",
+      "path": "sample.fb2",
+      "bytes": 279,
+      "sha256": "f3e4be6678d5ac24a6cced469953120c400f43046240474d525d44c229f0007c",
+      "format": "fb2",
+      "kind": "synthetic",
+      "scope": "supported",
+      "expectation_basis": "tests/test_core.c:test_formats",
+      "expected": {"status": 0, "complete": true}
+    },
+    {
+      "id": "smoke-epub",
+      "path": "sample.epub",
+      "bytes": 1084,
+      "sha256": "0f871f4448ad9afe70c8c47c355310c43260d2d5d792c5aac43ea3285e9473ee",
+      "format": "epub",
+      "kind": "synthetic",
+      "scope": "supported",
+      "expectation_basis": "tests/test_core.c:test_formats (two spine items in declared order)",
+      "expected": {"status": 0, "complete": true}
+    },
+    {
+      "id": "smoke-docx",
+      "path": "sample.docx",
+      "bytes": 307,
+      "sha256": "1abfda17db19d48555806c2b09f4f1133dd037415ac8b163eb7859342f3cd0b6",
+      "format": "docx",
+      "kind": "synthetic",
+      "scope": "supported",
+      "expectation_basis": "tests/test_core.c:test_formats",
+      "expected": {"status": 0, "complete": true}
+    },
+    {
+      "id": "smoke-rtf",
+      "path": "sample.rtf",
+      "bytes": 121,
+      "sha256": "b562f2d11654d60850a8b57715ee7160771918519c71152c7cc2048750cb20e9",
+      "format": "rtf",
+      "kind": "synthetic",
+      "scope": "supported",
+      "expectation_basis": "tests/test_core.c:test_formats",
+      "expected": {"status": 0, "complete": true}
+    },
+    {
+      "id": "smoke-mobi",
+      "path": "sample.mobi",
+      "bytes": 279,
+      "sha256": "2a3d3b81e652a6ef7a7daedb131d0ec38827e431ffc6e3b8a4c1bf2ee8510bed",
+      "format": "mobi",
+      "kind": "synthetic",
+      "scope": "supported",
+      "expectation_basis": "tests/test_core.c:test_formats",
+      "expected": {"status": 0, "complete": true}
+    },
+    {
+      "id": "smoke-cbz",
+      "path": "comic.cbz",
+      "bytes": 908,
+      "sha256": "08df7ceb8771ab82610651c2299072b8fc299d3f8fba3996ee6e12054ea6701f",
+      "format": "cbz",
+      "kind": "synthetic",
+      "scope": "supported",
+      "expectation_basis": "tests/test_cbz.c; tests/check_document_probe.py (complete traversal)",
+      "expected": {"status": 0, "complete": true}
+    },
+    {
+      "id": "smoke-pdf",
+      "path": "pdf-color/shading-axial.pdf",
+      "bytes": 655,
+      "sha256": "e0b8b52aa4780a3edb036f88a26f5e84997b90ce97bfdcf741ccb8ba7d09a6ee",
+      "format": "pdf",
+      "kind": "synthetic",
+      "scope": "supported",
+      "expectation_basis": "tests/check_document_probe.py (complete one-page PDF)",
+      "expected": {"status": 0, "complete": true}
+    }
+  ]
+}
