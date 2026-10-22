@@ -23,8 +23,11 @@ static exr_status open_fixed(exr_format format,const void *data,size_t size,
 #define PROGRESS_SCHEMA "CREATE TABLE book_progress(book_id INTEGER PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,position INTEGER NOT NULL CHECK(position>=0),state INTEGER NOT NULL CHECK(state BETWEEN 0 AND 3),prefix TEXT,suffix TEXT,chapter TEXT);" \
   "CREATE TRIGGER books_progress_changed AFTER UPDATE OF position ON books WHEN OLD.position<>NEW.position BEGIN DELETE FROM book_progress WHERE book_id=NEW.id;END;"
 #define LOCATION_SCHEMA "ALTER TABLE notes ADD COLUMN location_state INTEGER NOT NULL DEFAULT 1 CHECK(location_state BETWEEN 0 AND 3);"
+typedef struct library_source library_source;
 struct exr_library {
   sqlite3 *db;
+  size_t references;
+  library_source *sources;
 };
 static exr_status database_error(exr_library *l, exr_error *e) {
   return exr_fail(e, EXR_DATABASE, "%s", sqlite3_errmsg(l->db));
@@ -72,6 +75,7 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
   l = calloc(1, sizeof(*l));
   if (!l)
     return exr_fail(e, EXR_MEMORY, "Library allocation failed");
+  l->references = 1;
   result = sqlite3_open_v2(
       path, &l->db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
   if (result != SQLITE_OK) {
@@ -153,10 +157,91 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
 }
 void exr_library_close(exr_library *l) {
   if (l) {
-    if (l->db)
-      sqlite3_close_v2(l->db);
-    free(l);
+    sqlite3 *db=l->db;
+    sqlite3_mutex *mutex=db ? sqlite3_db_mutex(db) : NULL;
+    int last;
+    sqlite3_mutex_enter(mutex);
+    last=!--l->references;
+    sqlite3_mutex_leave(mutex);
+    if(last) { if(db) sqlite3_close_v2(db);free(l); }
   }
+}
+
+/* Originals are immutable through this API. Each read holds the owner's mutex
+   only for its blob cursor, so progress/metadata writes cannot expire a cursor
+   between calls. The source retains the owner, including in-memory databases. */
+struct library_source {
+  exr_library *owner;
+  library_source *next;
+  int64_t id;
+  uint64_t size;
+  int version,valid;
+};
+static size_t library_source_read(void *context,uint64_t offset,void *buffer,size_t size) {
+  library_source *source=context;sqlite3_blob *blob=NULL;sqlite3_mutex *mutex;size_t result=0;
+  if(!source || !buffer || !size) return 0;
+  mutex=sqlite3_db_mutex(source->owner->db);sqlite3_mutex_enter(mutex);
+  if(!source->valid || offset>source->size || size>source->size-offset ||
+     offset>INT_MAX || size>INT_MAX) goto finish;
+  if(scalar(source->owner->db,"PRAGMA data_version")!=source->version) {
+    source->valid=0;goto finish;
+  }
+  if(sqlite3_blob_open(source->owner->db,"main","books","source",source->id,0,&blob)!=SQLITE_OK ||
+     (uint64_t)sqlite3_blob_bytes(blob)!=source->size ||
+     sqlite3_blob_read(blob,buffer,(int)size,(int)offset)!=SQLITE_OK) {
+    source->valid=0;goto finish;
+  }
+  result=size;
+finish:
+  if(blob) sqlite3_blob_close(blob);
+  if(result && scalar(source->owner->db,"PRAGMA data_version")!=source->version) {
+    source->valid=0;result=0;
+  }
+  sqlite3_mutex_leave(mutex);return result;
+}
+static void library_source_release(void *context) {
+  library_source *source=context,**at;exr_library *owner;sqlite3_mutex *mutex;
+  if(!source) return;
+  owner=source->owner;mutex=sqlite3_db_mutex(owner->db);sqlite3_mutex_enter(mutex);
+  for(at=&owner->sources;*at && *at!=source;at=&(*at)->next) {}
+  if(*at) *at=source->next;
+  sqlite3_mutex_leave(mutex);free(source);exr_library_close(owner);
+}
+exr_status exr_library_source(exr_library *l,int64_t id,exr_source *out,exr_error *e) {
+  sqlite3_stmt *statement=NULL;library_source *source=NULL;sqlite3_mutex *mutex;
+  exr_status status=EXR_OK;int step,version;sqlite3_int64 size;
+  const unsigned char *storage;
+  if(out) memset(out,0,sizeof(*out));
+  if(!l || id<=0 || !out) return exr_fail(e,EXR_ARGUMENT,"Invalid stored source lookup");
+  mutex=sqlite3_db_mutex(l->db);sqlite3_mutex_enter(mutex);
+  version=scalar(l->db,"PRAGMA data_version");
+  if(version<0 || !prepare(l,"SELECT length(source),typeof(source) FROM books WHERE id=?1",&statement) ||
+     sqlite3_bind_int64(statement,1,id)!=SQLITE_OK) { status=database_error(l,e);goto finish; }
+  step=sqlite3_step(statement);
+  if(step!=SQLITE_ROW) {
+    status=step==SQLITE_DONE ? exr_fail(e,EXR_ARGUMENT,"Book missing") : database_error(l,e);goto finish;
+  }
+  size=sqlite3_column_int64(statement,0);
+  storage=sqlite3_column_text(statement,1);
+  if(sqlite3_column_type(statement,0)!=SQLITE_INTEGER || size<=0 ||
+     !storage || strcmp((const char *)storage,"blob")) {
+    status=exr_fail(e,EXR_DATABASE,"Invalid stored source");goto finish;
+  }
+  if(size>INT_MAX || l->references==SIZE_MAX) {
+    status=exr_fail(e,EXR_LIMIT,"Stored source exceeds supported size");goto finish;
+  }
+  sqlite3_finalize(statement);statement=NULL;
+  if(scalar(l->db,"PRAGMA data_version")!=version) {
+    status=exr_fail(e,EXR_DATABASE,"Library changed while opening source");goto finish;
+  }
+  source=calloc(1,sizeof(*source));
+  if(!source) { status=exr_fail(e,EXR_MEMORY,"Stored source allocation failed");goto finish; }
+  source->owner=l;source->id=id;source->size=(uint64_t)size;source->version=version;source->valid=1;
+  source->next=l->sources;l->sources=source;l->references++;
+  out->size=source->size;out->context=source;out->read_at=library_source_read;out->release=library_source_release;
+finish:
+  sqlite3_finalize(statement);sqlite3_mutex_leave(mutex);
+  return status==EXR_OK ? exr_fail(e,EXR_OK,"") : status;
 }
 static exr_status import_cover(const exr_document *doc,void **data,size_t *size,exr_error *e) {
   size_t i; *data=NULL; *size=0;
@@ -1049,7 +1134,13 @@ static exr_status remove_id(exr_library *l, int64_t id, int note, exr_error *e) 
   return done(l, s, e);
 }
 exr_status exr_library_delete(exr_library *l, int64_t id, exr_error *e) {
-  return remove_id(l, id, 0, e);
+  exr_status status;sqlite3_mutex *mutex;library_source *source;
+  if(!l) return exr_fail(e,EXR_ARGUMENT,"Invalid library");
+  mutex=sqlite3_db_mutex(l->db);sqlite3_mutex_enter(mutex);
+  status=remove_id(l,id,0,e);
+  if(status==EXR_OK) for(source=l->sources;source;source=source->next)
+    if(source->id==id) source->valid=0;
+  sqlite3_mutex_leave(mutex);return status;
 }
 exr_status exr_library_remove_note(exr_library *l, int64_t id, exr_error *e) {
   return remove_id(l, id, 1, e);
