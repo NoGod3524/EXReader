@@ -46,10 +46,15 @@ static exr_document *two_scopes(const char *first,const char *second) {
     nodes[root].kind=EXR_NODE_CHAPTER;nodes[root].parent=0;
     nodes[root+1].kind=EXR_NODE_PARAGRAPH;nodes[root+1].parent=root;
     nodes[root+2].kind=EXR_NODE_TEXT;nodes[root+2].parent=root+1;nodes[root+2].text=texts[i];
-    chapters[i].path="same.xhtml";chapters[i].root=root;chapters[i].in_reading_order=1;
+    chapters[i].path=i ? "next.xhtml" : "same.xhtml";chapters[i].root=root;chapters[i].in_reading_order=1;
   }
   input.nodes=nodes;input.node_count=7;input.chapters=chapters;input.chapter_count=2;
-  OK(exr_document_create(&input,&document,&error));return document;
+  OK(exr_document_create(&input,&document,&error));
+  /* The public constructor requires unique paths. The EPUB parser can retain
+     repeated spine entries, so represent that private state explicitly. */
+  free((void *)document->chapters[1].path);
+  document->chapters[1].path=exr_copy("same.xhtml",10);
+  CHECK(document->chapters[1].path!=NULL);return document;
 }
 static void scope_semantics(void) {
   exr_document *document=NULL;exr_anchor anchor={0};exr_anchor_match match;
