@@ -5,6 +5,19 @@
 只消费安装后的公开 SDK；`bindings/jni/**` 保持只读，书库、选择器和标注由
 `examples/android/app/src/main/cpp/exreader_host_jni.c` 这一小型本地桥接提供。
 
+## 云端验收结果
+
+- 实现提交：`6f6bfb77e946d145245d90c7165188566b300e50`（分支 `codex/wp13-android`）。
+- 工作流运行：[WP13 Android host #39723075163](https://github.com/NoGod3524/EXReader/actions/runs/39723075163)，
+  全部步骤成功；SDK/JNI/app、静态检查、模拟器、证据聚合与上传均通过。
+- 模拟器：Android API 34，`system-images;android-34;default;x86_64`，x86_64，KVM 加速；
+  设备报告 `Android SDK built for x86_64`，`physical_device_execution=false`。
+- 结果：45/45 case 通过，0 失败，0 跳过；测试总时长约 114 s。
+- APK：`app-debug.apk`，21,880,638 字节，
+  sha256 `55e79775e7391920d72d7eb8d44b44d768eb8bbba371ee9e0144f453a0b9feb9`。
+- 证据：`docs/validation/wp13-android.json` 与本次 artifact
+  `EXReader-WP13-Android`（APK、原生日志、逐 case JSON、45 张截图、`build.json`）。
+
 ## 范围与边界
 
 - 阅读重排 EPUB（以及 TXT/HTML/FB2/DOCX/RTF/MOBI 的同一重排入口）与固定页 PDF/CBZ。
@@ -24,11 +37,11 @@
 | SDK / core / 书库 schema | 3.40.0 / 3.39.0 / 6 |
 | ABI epoch | 1 |
 | NDK | 27.0.12077973 |
-| CMake | 3.22.1 |
+| CMake | 3.22.1（app externalNativeBuild）；云端宿主构建为 3.31.6 |
 | AGP / Gradle / JDK | 8.6.1 / 8.9 / 17 |
 | compileSdk / minSdk / targetSdk | 35 / 26 / 35 |
 | 打包 ABI | x86_64（模拟器实际加载的库） |
-| 模拟器 | API 34，x86_64，default 镜像 |
+| 模拟器 | API 34，x86_64，default 镜像，KVM 加速，4 GB RAM / 4 cores |
 
 `tools/build_android_host.py` 交叉编译并安装 Android x86_64 SDK（书库、PDF、JNI
 开启；WebP/TIFF/AVIF/PDF 密码/AAC 关闭），把带 `SOVERSION` 的引擎运行时改写为
