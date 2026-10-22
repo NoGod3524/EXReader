@@ -358,7 +358,7 @@ final class HostPager {
     }
 
     init(publication: HostPublication, part: Int, font: HostFont, width: Double, height: Double,
-         fontSize: Double, box: HostCancelBox) throws {
+         fontSize: Double, box: HostCancelBox, windowBytes: Int = 16384) throws {
         document = nil; self.publication = publication; self.font = font; self.box = box
         _ = try publication.route(part)
         try publication.bind(box)
@@ -367,7 +367,7 @@ final class HostPager {
         config.page.margin = 36; config.page.font_size = Float(fontSize)
         config.document_css = 1; config.embedded_fonts = 1; config.control = hostControl(box)
         var options = exr_chapter_options_defaults()
-        options.workspace_budget = 16 * 1024 * 1024; options.window_bytes = 16384
+        options.workspace_budget = 16 * 1024 * 1024; options.window_bytes = windowBytes
         var result: OpaquePointer?, error = exr_error()
         try hostCheck(exr_publication_pager_create(publication.handle, part, font.handle, &config, &options, &result, &error), error)
         guard let result else { throw HostError.invalidResult("有界章节无法创建") }

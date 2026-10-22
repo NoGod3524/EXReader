@@ -9,6 +9,10 @@ env:
   H9_SDK_BASELINE: ce5d664c9f76d0613df6d79b27568a7039c4a81e
 jobs:
   diagnose:
+    strategy:
+      fail-fast: false
+      matrix:
+        window: [16384, 65536]
     runs-on: macos-15
     timeout-minutes: 20
     steps:
@@ -30,6 +34,8 @@ jobs:
       - name: Diagnose the consumer with a smaller nonacceptance budget
         id: probe
         continue-on-error: true
+        env:
+          H9_DIAGNOSTIC_REPEATED_WINDOW: ${{ matrix.window }}
         run: |
           python3 tests/apple_host/run_bounded_review.py --sdk stage/macos \
             --resources build/apple-resources --output build/apple-diagnostic --timeout 180
@@ -41,7 +47,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: EXReader-R5-Apple-Diagnostic
+          name: EXReader-R5-Apple-Diagnostic-${{ matrix.window }}
           path: build/apple-diagnostic/
           if-no-files-found: error
           retention-days: 30
