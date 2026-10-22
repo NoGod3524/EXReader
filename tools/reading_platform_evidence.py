@@ -208,7 +208,10 @@ def toolchain(label, build, host, problems):
         if not Path(linker).is_file():
             problems.append(f'toolchain-path: {label} linker {linker} does not exist')
             continue
-        record['linker_probes'][linker] = probe([linker] if host == 'Windows' else [linker, '-v'])
+        resolved = str(Path(linker).resolve())  # CMake may record 8.3 and long spellings of one file
+        if resolved not in record['linker_probes']:
+            record['linker_probes'][resolved] = probe([linker] if host == 'Windows' else [linker, '-v'])
+        record['linker_probes'][resolved].setdefault('cmake_spellings', []).append(linker)
     if host == 'Windows':
         vc = os.environ.get('VCToolsInstallDir')
         version = os.environ.get('VCToolsVersion', '')
@@ -238,9 +241,14 @@ def toolchain(label, build, host, problems):
         for linker, result in record['linker_probes'].items():
             match = re.search(r'Incremental Linker Version (\S+)', result['raw_output'])
             result['version'] = match.group(1) if match else None
-            if not match or not version or not match.group(1).startswith(version):
-                problems.append(f'toolchain-version: {label} linker {linker} banner version '
-                                f'{result["version"]} does not match VCToolsVersion {version}')
+            # The toolset directory (VCToolsVersion 14.44.35207) and tool build (14.44.35229) differ;
+            # require the toolset major.minor and the same build number as the selected cl.
+            banner = (result['version'] or '').split('.')
+            builds = {((detected.get(f'{language}_COMPILER_VERSION') or '').split('.') + ['', '', ''])[2]
+                      for language in ('C', 'CXX')}
+            if len(banner) < 3 or banner[:2] != version.split('.')[:2] or builds != {banner[2]}:
+                problems.append(f'toolchain-version: {label} linker {linker} banner version {result["version"]} '
+                                f'does not match VCToolsVersion {version} and cl build {sorted(builds)}')
         # Observation only: every link.exe on PATH, in order, so shadowing is visible.
         record['path_link_candidates'] = [str(Path(d)/'link.exe') for d in os.environ.get('PATH', '').split(os.pathsep)
                                           if d and (Path(d)/'link.exe').is_file()]

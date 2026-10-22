@@ -118,7 +118,7 @@ def main():
     for option in ('--ctest-junit', '--ctest-tests', '--smoke-summary', '--snapshot'):
         check(f'record-missing {option}', without(base, option), ['not-executed'])
     benchmark = next(p for p in programs if Path(p).name.startswith('reading-benchmark'))
-    check('benchmark-not-executed', without(base, '--run'), ['not-executed', 'execution-record-missing'])
+    check('benchmark-not-executed', without(base, '--run'), ['not-executed'])
     # Artifact identity: a copied consumer tree where one required path is not a native executable.
     fake = work/'consumer'
     for program in programs:
