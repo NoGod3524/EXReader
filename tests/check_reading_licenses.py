@@ -119,6 +119,13 @@ def source_statement(root, build, stage, manifest):
     update_statement(root, stage, manifest, data)
 
 
+def repository_material(root, build, stage, manifest):
+    manifest[0]['files'].append(licenses.repo('licenses/notice.txt', LICENSES + 'alpha/notice.txt', sha256(NOTICE)))
+    (stage / LICENSES / 'alpha/notice.txt').write_bytes(NOTICE)
+    with (root / 'CMakeLists.txt').open('a') as stream:
+        stream.write('install(FILES licenses/notice.txt DESTINATION share/exreader/licenses/alpha)\n')
+
+
 CASES = [
     ('missing license file', 'missing installed license',
      lambda r, b, s, m: (s / LICENSES / 'alpha/LICENSE').unlink()),
@@ -207,7 +214,7 @@ def main():
     if not report['materials_check_passed'] or report['release_ready'] or \
             not any('PATENTS' in item for item in report['mandatory_missing']) or report['pending'] != report['mandatory_missing']:
         raise RuntimeError(f'Uninstalled upstream notice did not block release: {report}')
-    for mutate in (source_statement,
+    for mutate in (source_statement, repository_material,
                    lambda r, b, s, m: add_notice(r, b, s, m, 'COPYING', 'alpha/upstream-root/COPYING')):
         report = run(mutate)
         if not report['materials_check_passed'] or not report['release_ready'] or report['mandatory_missing']:
@@ -226,7 +233,7 @@ def main():
         if licenses.enabled(by_id['sqlite']['when'], switches) != (profile == 'reading-library'):
             raise RuntimeError(f'{profile} SQLite selection differs from the bookshelf profile')
     print(json.dumps({'license_checker_self_check': True, 'negative_cases': len(CASES),
-                      'mandatory_missing_cases': 1, 'source_statement_positive_cases': 2,
+                      'mandatory_missing_cases': 1, 'source_material_positive_cases': 3,
                       'manifest_components': len(licenses.COMPONENTS)}))
 
 

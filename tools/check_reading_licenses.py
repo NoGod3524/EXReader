@@ -421,7 +421,8 @@ def check(profile, root, build, stage, components=COMPONENTS):
                     failures.append(f'{name}: {path.relative_to(stage).as_posix()} must not be installed')
         for item in component['files']:
             installs = enabled(component['when'] if item['when'] is None else item['when'], switches)
-            installed, original = inside(stage, item['installed']), inside(source_dir, item['path'])
+            installed = inside(stage, item['installed'])
+            original = inside(root if item['origin'] == 'repository' else source_dir, item['path'])
             if installed is None or original is None:
                 failures.append(f'{name}: invalid manifest path {item["path"]} -> {item["installed"]}')
                 continue

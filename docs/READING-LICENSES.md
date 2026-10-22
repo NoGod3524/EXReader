@@ -105,7 +105,7 @@ python3 tests/check_reading_licenses.py
 4. zlib 只保留自身目录中的 LICENSE；旧 `libtiff/LICENSE` 出现在干净 stage 时作为未登记材料拒绝。
 
 原 23 项拒绝回归完整保留，增加 8 项材料／摘录／来源／版本回归；原“未安装上游 PATENTS 只 pending”用例
-改为同时证明库存结果可为真但 `release_ready=false`。补充两个声明／根 notice 正控。
+改为同时证明库存结果可为真但 `release_ready=false`。补充三个声明／根 notice／下载组件附带仓库材料正控。
 工作流的 `pin_materials_only=true` 只输出源文件散列，不构建、不运行验收，不授予 `release_ready`。
 
 本轮新结果在两 preset 完成同源云端构建、安装、严格检查与回归后登记；此前不授予新候选通过。
