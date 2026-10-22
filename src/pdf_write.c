@@ -908,7 +908,7 @@ static void form_text_appearance(pdf_writer *p,const char *text,double width,dou
     exr_shaped_glyph *glyphs=NULL; size_t count=0,scalar_count=0; exr_shape_options shape=exr_shape_defaults(); exr_bidi *bidi=NULL;
     const exr_bidi_scalar *scalars;
     p->status=exr_bidi_analyze(text,n,EXR_DIRECTION_LTR,&bidi,p->error); scalars=exr_bidi_scalars(bidi,&scalar_count);
-    for(i=0;i<scalar_count && p->status==EXR_OK;i++) if(scalars[i].level)
+    for(i=0;i<scalar_count && p->status==EXR_OK;i++) if(scalars[i].level!=UINT_MAX && scalars[i].level)
       p->status=exr_fail(p->error,EXR_UNSUPPORTED,"PDF form directional runs require a bidirectional appearance layout");
     exr_bidi_free(bidi); if(p->status!=EXR_OK) return;
     shape.font_size=100; shape.control=options->control;
