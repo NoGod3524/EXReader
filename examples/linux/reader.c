@@ -6,7 +6,7 @@
 
 /* ponytail: a small reflow reference host, with explicit 8 MiB snapshot input.
    Large EPUBs should use the separate publication/window reader consumer. */
-#define MAX_INPUT (8u*1024u*1024u)
+#define EXR_HOST_INPUT_LIMIT (8u*1024u*1024u)
 static GtkWidget *window,*image,*label,*shelf,*notes,*text,*comment,*stack;
 static exr_library *library;
 static exr_font *font;
@@ -152,11 +152,11 @@ static void import_path(const char *path) {
   if(format==EXR_CUSTOM) { status(EXR_UNSUPPORTED,"Choose EPUB, TXT, HTML, FB2, RTF, DOCX or MOBI");return; }
   FILE *file=fopen(path,"rb");if(!file) { status(EXR_IO,"Could not read file");return; }
   /* Read once with a fixed cap; do not trust a prior path stat after opening. */
-  unsigned char *data=g_try_malloc(MAX_INPUT+1u);
+  unsigned char *data=g_try_malloc(EXR_HOST_INPUT_LIMIT+1u);
   if(!data) { fclose(file);status(EXR_MEMORY,"Not enough memory");return; }
-  size_t n=fread(data,1,MAX_INPUT+1u,file);int failed=ferror(file);fclose(file);
-  if(failed || !n || n>MAX_INPUT) {
-    g_free(data);status(n>MAX_INPUT?EXR_LIMIT:EXR_IO,"File must be nonempty and no larger than 8 MiB");return;
+  size_t n=fread(data,1,EXR_HOST_INPUT_LIMIT+1u,file);int failed=ferror(file);fclose(file);
+  if(failed || !n || n>EXR_HOST_INPUT_LIMIT) {
+    g_free(data);status(n>EXR_HOST_INPUT_LIMIT?EXR_LIMIT:EXR_IO,"File must be nonempty and no larger than 8 MiB");return;
   }
   char *title=g_path_get_basename(path);
   exr_status s=exr_library_import_unique(library,format,data,n,title,&id,&created,&error);
@@ -236,6 +236,7 @@ static void action(GtkWidget *widget,gpointer name) {
 static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
   (void)w;(void)unused;
   static const char *names[]={"import","shelf","previous","next","bigger","smaller","text","note","notes","delete","comment"};
+  if(event->state & (GDK_CONTROL_MASK|GDK_MOD1_MASK|GDK_SUPER_MASK)) return FALSE;
   if(event->keyval>=GDK_KEY_F1 && event->keyval<=GDK_KEY_F11) { action(NULL,(gpointer)names[event->keyval-GDK_KEY_F1]);return TRUE; }
   return FALSE;
 }
@@ -276,15 +277,20 @@ int main(int argc,char **argv) {
   label=gtk_label_new("Import a book to start reading");gtk_box_pack_start(GTK_BOX(root),label,FALSE,FALSE,0);
   stack=gtk_stack_new();gtk_box_pack_start(GTK_BOX(root),stack,TRUE,TRUE,0);
   shelf=gtk_list_box_new();gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(shelf),TRUE);
+  atk_object_set_name(gtk_widget_get_accessible(shelf),"Bookshelf");
   gtk_stack_add_named(GTK_STACK(stack),scroll(shelf),"shelf");
   GtkWidget *reader=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,8),*right=gtk_box_new(GTK_ORIENTATION_VERTICAL,6);
   image=gtk_image_new();gtk_box_pack_start(GTK_BOX(reader),scroll(image),TRUE,TRUE,0);
+  atk_object_set_name(gtk_widget_get_accessible(image),"Rendered page; selectable text is in the adjacent panel");
   text=gtk_text_view_new();gtk_text_view_set_editable(GTK_TEXT_VIEW(text),FALSE);
+  atk_object_set_name(gtk_widget_get_accessible(text),"Selectable page text");
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text),GTK_WRAP_WORD_CHAR);gtk_widget_set_size_request(text,320,250);
   gtk_box_pack_start(GTK_BOX(right),scroll(text),TRUE,TRUE,0);
   comment=gtk_entry_new();gtk_entry_set_placeholder_text(GTK_ENTRY(comment),"Comment (F11); select text, then Add note");
+  atk_object_set_name(gtk_widget_get_accessible(comment),"Annotation comment");
   gtk_box_pack_start(GTK_BOX(right),comment,FALSE,FALSE,0);
   notes=gtk_list_box_new();gtk_widget_set_size_request(notes,320,120);
+  atk_object_set_name(gtk_widget_get_accessible(notes),"Saved notes; activate to return to selected text");
   gtk_box_pack_start(GTK_BOX(right),scroll(notes),TRUE,TRUE,0);gtk_box_pack_start(GTK_BOX(reader),right,FALSE,FALSE,0);
   gtk_stack_add_named(GTK_STACK(stack),reader,"reader");
   g_signal_connect(window,"key-press-event",G_CALLBACK(key),NULL);
