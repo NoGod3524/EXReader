@@ -1,0 +1,129 @@
+name: WP13 Apple review artifact diagnostics
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Inspect the preserved failed-run artifacts on this cloud runner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, plistlib, re, sys, urllib.error, urllib.parse, urllib.request, zipfile
+
+          REPO = 'NoGod3524/EXReader'
+          RUN = 39723870532
+          SOURCE = '943601376973b8eb04cdd1afc40a0b6715018eea'
+          API = 'https://api.github.com/repos/' + REPO
+          LIMIT = 256 * 1024 * 1024
+          HEADERS = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                     'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28',
+                     'User-Agent': 'EXReader-cloud-artifact-diagnostic'}
+
+          def require(condition, message):
+              if not condition:
+                  raise ValueError(message)
+
+          def api(path):
+              request = urllib.request.Request(API + path, headers=HEADERS)
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  return json.load(response)
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, request, stream, code, message, headers, url):
+                  return None
+
+          def artifact(artifact_id, name):
+              metadata = api('/actions/artifacts/' + str(artifact_id))
+              identity = metadata.get('workflow_run', {})
+              require(metadata.get('id') == artifact_id and metadata.get('name') == name and
+                      metadata.get('expired') is False and identity.get('id') == RUN and
+                      identity.get('head_sha') == SOURCE, 'artifact API identity mismatch')
+              require(0 < metadata.get('size_in_bytes', 0) <= LIMIT, 'artifact size outside diagnostic budget')
+              request = urllib.request.Request(API + '/actions/artifacts/' + str(artifact_id) + '/zip', headers=HEADERS)
+              try:
+                  response = urllib.request.build_opener(NoRedirect).open(request, timeout=60)
+              except urllib.error.HTTPError as error:
+                  require(error.code == 302, 'artifact download did not return its signed redirect')
+                  location = error.headers.get('Location', '')
+                  target = urllib.parse.urlparse(location)
+                  require(target.scheme == 'https' and target.hostname and not target.username and not target.password,
+                          'artifact redirect is not HTTPS')
+                  # The signed artifact-store request deliberately carries no GitHub credential.
+                  response = urllib.request.urlopen(urllib.request.Request(location, headers={
+                      'User-Agent': HEADERS['User-Agent']}), timeout=60)
+              with response:
+                  raw = response.read(LIMIT + 1)
+              require(len(raw) <= LIMIT, 'artifact download exceeded diagnostic budget')
+              digest = 'sha256:' + hashlib.sha256(raw).hexdigest()
+              require(metadata.get('digest') == digest, 'artifact ZIP differs from the API digest')
+              return zipfile.ZipFile(io.BytesIO(raw)), {'id': artifact_id, 'name': name, 'digest': digest}
+
+          def one(archive, suffix):
+              names = [name for name in archive.namelist() if name.endswith(suffix)]
+              require(len(names) == 1, 'required artifact entry is missing or ambiguous: ' + suffix)
+              return names[0], archive.read(names[0])
+
+          def identity(value, job):
+              require(value.get('source_sha') == SOURCE and value.get('run_id') == str(RUN) and
+                      value.get('attempt') == '1' and value.get('job') == job,
+                      'report identity differs from the preserved run')
+
+          def main():
+              require(os.environ.get('GITHUB_REPOSITORY') == REPO, 'unexpected diagnostic repository')
+              run = api('/actions/runs/' + str(RUN))
+              require(run.get('id') == RUN and run.get('head_sha') == SOURCE and run.get('run_attempt') == 1 and
+                      run.get('status') == 'completed' and run.get('conclusion') == 'failure', 'failed run API identity mismatch')
+              package, package_identity = artifact(12402279574, 'wp13-apple-package')
+              _, raw = one(package, 'model-review/model-review.json')
+              model = json.loads(raw)
+              identity(model, 'package')
+              checks = model.get('checks', [])
+              require(len(checks) == 18 and all(isinstance(item.get('name'), str) and
+                      type(item.get('passed')) is bool for item in checks), 'model check report is incomplete')
+              model_status = [{'name': item['name'], 'passed': item['passed'],
+                               **({'error': str(item['error']).replace('\n', ' ')[:400]} if item.get('error') else {})}
+                              for item in checks]
+
+              mac, mac_identity = artifact(12403190814, 'wp13-apple-macos')
+              _, raw = one(mac, 'evidence/macos/evidence.json')
+              evidence = json.loads(raw)
+              environment = evidence.get('environment', {})
+              identity(environment, 'uitest')
+              require(evidence.get('source_sha') == SOURCE and environment.get('platform') == 'macos',
+                      'macOS report source/platform mismatch')
+              plist_path, raw = one(mac, 'program/EXReaderHost.app/Contents/Info.plist')
+              info = plistlib.loads(raw)
+              actual_plist = hashlib.sha256(raw).hexdigest()
+              app_prefix = plist_path[:-len('Contents/Info.plist')]
+              executable = mac.read(app_prefix + 'Contents/MacOS/EXReaderHost')
+              actual_executable = hashlib.sha256(executable).hexdigest()
+              inventory = {name[len(app_prefix):]: hashlib.sha256(mac.read(name)).hexdigest()
+                           for name in sorted(mac.namelist()) if name.startswith(app_prefix) and not name.endswith('/')}
+              actual_tree = hashlib.sha256(json.dumps(inventory, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+              declared = environment.get('app', {})
+              print(json.dumps({'diagnostic_only': True, 'accepted': False,
+                  'target': {'repository': REPO, 'run_id': RUN, 'attempt': 1, 'source_sha': SOURCE},
+                  'model': {'artifact': package_identity, 'accepted_in_original_report': model.get('accepted'),
+                            'checks': model_status},
+                  'macos': {'artifact': mac_identity, 'environment_source_sha': environment['source_sha'],
+                      'CFBundleIdentifier': info.get('CFBundleIdentifier'), 'EXRSourceSHA': info.get('EXRSourceSHA'),
+                      'declared_executable_sha256': declared.get('executable_sha256'),
+                      'actual_executable_sha256': actual_executable,
+                      'declared_info_plist_sha256': declared.get('info_plist_sha256'),
+                      'actual_info_plist_sha256': actual_plist,
+                      'actual_app_tree_sha256': actual_tree,
+                      'program_inventory_matches': evidence.get('program_files_sha256') == inventory}}, ensure_ascii=True))
+
+          try:
+              main()
+          except Exception as error:
+              print(json.dumps({'diagnostic_only': True, 'accepted': False,
+                                'diagnostic_error': type(error).__name__ + ': ' + str(error).replace('\n', ' ')[:400]}))
+              sys.exit(1)
+          PY
