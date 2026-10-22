@@ -687,7 +687,7 @@ struct HostNoteRow: Identifiable {
     let end: Int
     let state: String
     var location: HostEPUBLocation? = nil
-    var isResolved: Bool { state == "精确" || state == "待定位" }
+    var isResolved: Bool { state == "精确" }
     var storage: String { location != nil ? "epub" : (page >= 0 ? "fixed" : "global") }
 }
 

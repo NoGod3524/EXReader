@@ -31,3 +31,10 @@ host-state升级schema2并与SQL逐项比较。新增缺marker、缺point、错�
 进程RSS由独立消费者子进程的high-water采集，包含字体、accepted/candidate frame和分配器；编译器排除。
 
 真机安装/签名、VoiceOver、全格式有界化与产品完成仍独立跟踪。`complete_product=false`。
+
+## 保留的候选运行
+
+`62b9d116ea046b6c3cc79babc6d87584272d163e` / run `39864500523`：三个SDK构建成功，
+原SDK桥接21项与Model18项成功；新增bounded消费者编译失败，原始`compile.log`保留在package工件。
+该候选未通过。后继将消费者的throwing短路表达式拆成明确的先取值后比较，并让编译失败诊断直接进入云端日志；
+同时追加source中途取消/晚到回滚和schema6兼容检查。运行结果不拼接。
