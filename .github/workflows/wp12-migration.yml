@@ -1,0 +1,136 @@
+name: WP12 legacy migration
+# Dedicated cloud validation for extras/migration. Not scheduled; does not touch native.yml/reliability.yml.
+on:
+  push:
+    branches: ['codex/wp12-legacy-migration']
+    paths:
+      - 'extras/migration/**'
+      - 'tests/migration/**'
+      - 'tools/check_legacy_migration.py'
+      - '.github/workflows/wp12-migration.yml'
+  workflow_dispatch:
+concurrency:
+  group: wp12-migration-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+env:
+  LEGACY_REF: 24a3e04b6fc456fa3fa68fa7bd6d9cc3b5c4e383
+defaults:
+  run:
+    shell: bash
+jobs:
+  migration:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-22.04, label: linux, py: python3, exe: build/migration/exreader-legacy-migrate }
+          - { os: windows-latest, label: windows, py: python, exe: build/migration/Release/exreader-legacy-migrate.exe }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare evidence directory
+        run: mkdir -p build/evidence build/logs
+      - name: Build and install a trimmed SDK (core + PDF + library)
+        run: |
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF \
+            -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF \
+            -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/logs/sdk-configure-${{ matrix.label }}.txt
+          cmake --build build/sdk --config Release --parallel 4 2>&1 | tee build/logs/sdk-build-${{ matrix.label }}.txt
+          cmake --install build/sdk --config Release --prefix "${{ github.workspace }}/stage" 2>&1 | tee build/logs/sdk-install-${{ matrix.label }}.txt
+      - name: Build the migration tool against the installed SDK
+        run: |
+          cmake -S extras/migration -B build/migration -DEXR_SDK="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/logs/tool-configure-${{ matrix.label }}.txt
+          cmake --build build/migration --config Release --parallel 4 2>&1 | tee build/logs/tool-build-${{ matrix.label }}.txt
+          test -f "${{ matrix.exe }}"
+          "${{ matrix.exe }}" --version
+      - name: Named migration scenarios
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/run_cases.py --tool "${{ matrix.exe }}" --out build/evidence/scenarios-${{ matrix.label }}.json \
+            --workdir build/scenario-work --label ${{ matrix.label }} 2>&1 | tee build/logs/scenarios-${{ matrix.label }}.txt
+      - name: Fetch the pinned legacy reader sources (test input only; not committed or redistributed)
+        if: always()
+        run: |
+          git fetch --no-tags --depth=1 origin "$LEGACY_REF"
+          test "$(git rev-parse FETCH_HEAD)" = "$LEGACY_REF"
+          mkdir -p build/legacy-src
+          for f in store library registry; do git show "FETCH_HEAD:src/$f.js" > "build/legacy-src/$f.js"; done
+          git show "FETCH_HEAD:package.json" | ${{ matrix.py }} -c "import json,sys; print('legacy package', json.load(sys.stdin)['version'])"
+      - name: 'Real browser - create IndexedDB v1 and export with the shipped exporter'
+        if: always()
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/e2e/make_dataset.py build/e2e-data
+          mkdir -p build/e2e-run && cd build/e2e-run
+          npm init -y > /dev/null
+          npm install playwright@1.49.1 2>&1 | tail -3
+          npx playwright install --with-deps chromium 2>&1 | tail -3
+          node ../../tests/migration/e2e/export_e2e.mjs ../e2e-data/spec.json ../legacy-src ../../extras/migration/exporter/exr-legacy-export.js ../e2e-out 2>&1 | tee ../logs/e2e-export-${{ matrix.label }}.txt
+      - name: Migrate the exported pack and reopen in new processes
+        if: always()
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/e2e/check_e2e.py --tool "${{ matrix.exe }}" --export-dir build/e2e-out --work build/e2e-work \
+            --out build/evidence/e2e-${{ matrix.label }}.json 2>&1 | tee build/logs/e2e-check-${{ matrix.label }}.txt
+      - name: Record artifact identities
+        if: always()
+        run: |
+          cp build/e2e-out/e2e-export.json build/evidence/e2e-export-${{ matrix.label }}.json || true
+          cp build/e2e-out/legacy.exrpack build/evidence/legacy-${{ matrix.label }}.exrpack || true
+          ${{ matrix.py }} tools/check_legacy_migration.py identity --out build/evidence/identity-${{ matrix.label }}.json --label ${{ matrix.label }} \
+            --tool "${{ matrix.exe }}" --sdk stage --exporter extras/migration/exporter/exr-legacy-export.js \
+            --inputs build/e2e-out/legacy.exrpack build/legacy-src/store.js build/legacy-src/library.js build/legacy-src/registry.js tests/migration/legacy_data.py
+      - name: Preserve evidence and raw logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wp12-evidence-${{ matrix.label }}
+          path: |
+            build/evidence/
+            build/logs/
+          if-no-files-found: warn
+
+  record:
+    needs: migration
+    if: always() && github.event_name == 'push'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wp12-evidence-*
+          path: build/artifacts
+          merge-multiple: true
+      - name: Gate the combined evidence
+        id: gate
+        continue-on-error: true
+        run: |
+          ev="$(find build/artifacts -type d -name evidence | head -1)"
+          echo "evidence directory: $ev"
+          python3 tools/check_legacy_migration.py gate --evidence "$ev" --require linux windows --out build/summary.json
+      - name: Commit evidence (kept even when the gate fails)
+        run: |
+          dir="docs/validation/wp12-migration-run${{ github.run_id }}-a${{ github.run_attempt }}"
+          mkdir -p "$dir"
+          ev="$(find build/artifacts -type d -name evidence | head -1)"
+          lg="$(find build/artifacts -type d -name logs | head -1)"
+          if [ -n "$ev" ]; then cp -r "$ev"/. "$dir"/; fi
+          if [ -n "$lg" ]; then cp -r "$lg" "$dir"/logs; fi
+          cp build/summary.json "$dir"/summary.json || true
+          cp build/summary.json "docs/validation/wp12-migration-run${{ github.run_id }}-a${{ github.run_attempt }}.json" || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/validation
+          git commit -m "Record WP12 migration cloud evidence for run ${{ github.run_id }} (gate: ${{ steps.gate.outcome }})" || exit 0
+          git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}"
+      - name: Fail when the gate failed
+        if: steps.gate.outcome != 'success'
+        run: exit 1
