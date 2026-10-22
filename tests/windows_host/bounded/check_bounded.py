@@ -127,7 +127,7 @@ def main():
             rejection_profiles[kind] = rejected
         b = run('pilot', 'B', [
             'wait_idle', 'check|bounded|1', 'check|part|3', 'check|notes|2', 'state|restored',
-            'note_select|1', 'note|Route updated', 'update_note', 'state|updated', 'delete_note', 'check|notes|1',
+            'note_select|1', 'note|Route updated', 'update_note', 'wait_idle', 'state|updated', 'delete_note', 'check|notes|1',
             'prev', 'check|part|2', 'state|previous_chapter_tail', 'chapter_home', 'check|page|1',
             'next', 'next', 'state|before_long_restart', 'quit'], data)
         c = run('pilot', 'C', [
@@ -220,6 +220,12 @@ def main():
         require(all(base.digest(Path(p)) == sha for p, sha in identities.items()), 'all-sealed-inputs-unchanged')
     except (OSError, ValueError, KeyError, IndexError, sqlite3.Error, subprocess.SubprocessError) as caught:
         error = type(caught).__name__+': '+str(caught)
+        for name, result in records.items():
+            print('H8-FAILED-CHECK-STATE '+json.dumps({'run': name,
+                'states': {key: {field: value for field, value in state.items()
+                    if field in ('book_id', 'part', 'page', 'offset', 'notes', 'status', 'progress_record_preserved')}
+                    for key, state in result['states'].items()},
+                'notes': result['notes']}, ensure_ascii=True), flush=True)
     evidence = {'schema': 1, 'source_sha': source, 'sdk_candidate': '6f0d7592ea431394d175d221b04b054facf4a26c',
                 'run_id': os.environ.get('GITHUB_RUN_ID'), 'accepted': error is None and bool(checks) and all(x['passed'] for x in checks),
                 'checks': checks, 'failures': [] if error is None else [error], 'identities': identities, 'runs': records,
