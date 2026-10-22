@@ -345,7 +345,8 @@ public final class HostWalkthroughTest {
         });
 
         step("pdf_process_restart", "PDF page progress and notes survive restart", () -> {
-            click("selection_cancel");
+            assertTrue("saving the annotation must clear its selection", find("selection_status") == null);
+            assertTrue("saving the annotation must leave selection mode", find("selection_cancel") == null);
             tapReader(1);
             assertTrue("pdf page 2 not reached", waitLabelContains("PDF p.2/5", 15000));
             String position = pagePosition(), anchor = pageAnchor(), title = text("book_title");
