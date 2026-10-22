@@ -1,0 +1,166 @@
+{
+ "schema": 1,
+ "kind": "wp12-legacy-migration-e2e",
+ "browser": "131.0.6778.33",
+ "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/131.0.6778.33 Safari/537.36",
+ "indexeddb": {
+  "database": "exreader",
+  "version": 1,
+  "stores": [
+   "books",
+   "files",
+   "notes"
+  ],
+  "books": 5,
+  "notes": 15,
+  "files": 5
+ },
+ "exporter_sha256": "abaf9daf150e2fcbeb481ff3db25f92c52c3f9a5bca156db9b0f5f51124cc759",
+ "legacy_sources": {
+  "store.js": "545a169c24cf65ef0ffd2e6c1a8a23080531c849dd772acf958409714fa33550",
+  "library.js": "27846cb640bb0c0a5719f195ad9416aadee57c99e633f6133df461fecaac9dab",
+  "registry.js": "33abd6e8c8bad0da75494d04253c5a7baef7498cb34838bd4f07340d8b248082"
+ },
+ "pack": {
+  "path": "legacy.exrpack",
+  "bytes": 9491,
+  "sha256": "1e9032f4a48ed2f6a11c26cb660c281917851d2d8b86c3f8d24c419c9f009aa4"
+ },
+ "tool_sha256": "2883126887a5ff1d7aeca9d48ee4d6a636bca7527824ecf10c5267b60db31062",
+ "sdk_version": "3.40.0",
+ "first_run": {
+  "counts": {
+   "books_expected": 5,
+   "books_created": 4,
+   "books_existing": 0,
+   "books_merged": 0,
+   "books_skipped": 0,
+   "books_audio_positions_only": 1,
+   "books_accounted": 5,
+   "notes_expected": 15,
+   "notes_created": 10,
+   "notes_existing": 0,
+   "notes_unlocated": 5,
+   "notes_skipped": 0,
+   "notes_accounted": 15,
+   "entries": {
+    "info": 4,
+    "warning": 1,
+    "approximate": 2,
+    "unlocated": 5,
+    "dropped": 1,
+    "unsupported": 1,
+    "conflict": 0
+   }
+  },
+  "memory": {
+   "peak_rss_bytes": 16777216,
+   "max_original_bytes": 1642,
+   "imported_bytes": 3390,
+   "manifest_bytes": 5857
+  }
+ },
+ "second_run": {
+  "counts": {
+   "books_expected": 5,
+   "books_created": 0,
+   "books_existing": 4,
+   "books_merged": 0,
+   "books_skipped": 0,
+   "books_audio_positions_only": 1,
+   "books_accounted": 5,
+   "notes_expected": 15,
+   "notes_created": 0,
+   "notes_existing": 10,
+   "notes_unlocated": 5,
+   "notes_skipped": 0,
+   "notes_accounted": 15,
+   "entries": {
+    "info": 10,
+    "warning": 0,
+    "approximate": 0,
+    "unlocated": 0,
+    "dropped": 0,
+    "unsupported": 1,
+    "conflict": 0
+   }
+  },
+  "memory": {
+   "peak_rss_bytes": 16908288,
+   "max_original_bytes": 1642,
+   "imported_bytes": 3390,
+   "manifest_bytes": 5857
+  }
+ },
+ "checks": [
+  {
+   "check": "the page really created IndexedDB 'exreader' version 1 with books/files/notes",
+   "ok": true
+  },
+  {
+   "check": "source database snapshot identical before and after the export (read-only)",
+   "ok": true
+  },
+  {
+   "check": "exporting a missing database fails without creating it",
+   "ok": true
+  },
+  {
+   "check": "exporter summary: 5 books, 15 notes: {'database': 'exreader', 'version': 1, 'books': 5, 'notes': 15, 'originals': 5, 'orphan_files': 0, 'max_original_bytes': 1642, 'total_original_bytes': 3570, 'manifest_sha256': 'eb274e5dce9e13d20dbc84bee2c4107762468e55656d84387c9b76ca42c04e4d', 'bytes': 9491}",
+   "ok": true
+  },
+  {
+   "check": "inspect classifies the exported originals: {'b-audio': 'audio-positions-only', 'b-cbz': 'convertible', 'b-epub': 'convertible', 'b-pdf': 'convertible', 'b-txt': 'convertible'}",
+   "ok": true
+  },
+  {
+   "check": "strict migration is rejected because an audio original cannot be stored; nothing published",
+   "ok": true
+  },
+  {
+   "check": "migration with --allow-partial succeeds: published and verified",
+   "ok": true
+  },
+  {
+   "check": "reopened library holds byte-identical originals",
+   "ok": true
+  },
+  {
+   "check": "titles survive: ['Comic', 'Lighthouse Chronicle', 'Scan', 'The Tale']",
+   "ok": true
+  },
+  {
+   "check": "fixed-page positions (page 2 -> index 1; 0.5 of 3 pages -> index 1)",
+   "ok": true
+  },
+  {
+   "check": "CFI range note and CFI progress resolved through the exporter's data",
+   "ok": true
+  },
+  {
+   "check": "PDF quote note and page bookmark present",
+   "ok": true
+  },
+  {
+   "check": "audio resume and bookmarks",
+   "ok": true
+  },
+  {
+   "check": "unlocated annotations: ['n-epub-ambiguous', 'n-pdf-missing', 'n-txt-ambiguous', 'n-txt-bookmark', 'n-txt-missing']",
+   "ok": true
+  },
+  {
+   "check": "ledger lists every exported book and annotation",
+   "ok": true
+  },
+  {
+   "check": "second migration is a no-op (same library content and IDs): {'books_expected': 5, 'books_created': 0, 'books_existing': 4, 'books_merged': 0, 'books_skipped': 0, 'books_audio_positions_only': 1, 'books_accounted': 5, 'notes_expected': 15, 'notes_created': 0, 'notes_existing': 10, 'notes_unlocated': 5, 'notes_skipped': 0, 'notes_accounted': 15, 'entries': {'info': 10, 'warning': 0, 'approximate': 0, 'unlocated': 0, 'dropped': 0, 'unsupported': 1, 'conflict': 0}}",
+   "ok": true
+  },
+  {
+   "check": "verify in a new process agrees",
+   "ok": true
+  }
+ ],
+ "passed": true
+}
