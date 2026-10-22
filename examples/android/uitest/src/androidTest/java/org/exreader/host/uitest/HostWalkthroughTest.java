@@ -87,7 +87,7 @@ public final class HostWalkthroughTest {
         step("picker_cancel", "System picker cancel returns to the shelf", () -> {
             click("import_button");
             waitPicker();
-            device.pressBack();
+            leavePicker();
             assertTrue("cancel status missing", waitTextContains("Selection canceled", 10000));
             assertFalse("cancel added a book", bookExists("Sample.epub"));
         });
@@ -555,6 +555,14 @@ public final class HostWalkthroughTest {
         throw new AssertionError("system picker did not open");
     }
 
+    private void leavePicker() {
+        for (int attempt = 0; attempt < 4; attempt++) {
+            if (device.hasObject(By.pkg(APP))) return;
+            device.pressBack();
+            SystemClock.sleep(600);
+        }
+    }
+
     private void pickFile(String name) throws Exception {
         click("import_button");
         waitPicker();
@@ -566,10 +574,11 @@ public final class HostWalkthroughTest {
                 device.wait(Until.hasObject(By.pkg(APP)), 10000);
                 return;
             }
-            UiObject2 downloads = findLabel("Downloads");
-            if (downloads != null) {
-                downloads.click();
-                SystemClock.sleep(500);
+            UiObject2 folder = findLabel("Download");
+            if (folder == null) folder = findLabel("Downloads");
+            if (folder != null && folder.getVisibleBounds().width() > 0) {
+                folder.click();
+                SystemClock.sleep(700);
                 continue;
             }
             UiObject2 roots = device.findObject(By.descContains("Show roots"));
