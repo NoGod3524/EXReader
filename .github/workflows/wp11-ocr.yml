@@ -77,3 +77,38 @@ jobs:
           name: WP11-OCR-${{ matrix.mode }}
           path: evidence/
           if-no-files-found: error
+  audit:
+    needs: ocr
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: WP11-OCR-*
+          path: all-evidence
+      - name: Check both installed configurations and frozen identities
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          root=pathlib.Path('all-evidence');records=[]
+          for mode in ('release','sanitizers'):
+            p=root/f'WP11-OCR-{mode}';d=json.loads((p/'results/summary.json').read_text())
+            assert d['accepted'] is True and d['source']==os.environ['GITHUB_SHA'] and len(d['pages'])==30
+            assert d['coordinate_roundtrip_checks']>0
+            assert sum(x['contracts'] for x in d['pages'])==11
+            assert (p/'programs.sha256').stat().st_size>0
+            assert (p/'fonts/DejaVu-LICENSE').stat().st_size>0 and (p/'fonts/Noto-LICENSE').stat().st_size>0
+            assert (p/'models/LICENSE').stat().st_size>0
+            for name,digest in d['model_identity']['files'].items():assert hashlib.sha256((p/'models'/name).read_bytes()).hexdigest()==digest
+            records.append(d)
+          assert records[0]['fonts']==records[1]['fonts']
+          assert records[0]['model_identity']==records[1]['model_identity']
+          assert [(p['id'],p['input_sha256']) for p in records[0]['pages']]==[(p['id'],p['input_sha256']) for p in records[1]['pages']]
+          summary={'accepted':True,'source':os.environ['GITHUB_SHA'],'modes':[{k:d[k] for k in ('aggregate','coordinate_roundtrip_checks','complete_wp11')} for d in records]}
+          pathlib.Path('wp11-cloud-audit.json').write_text(json.dumps(summary,indent=2));print(json.dumps(summary))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WP11-OCR-cloud-audit
+          path: wp11-cloud-audit.json
+          if-no-files-found: error

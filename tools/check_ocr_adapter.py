@@ -68,7 +68,10 @@ def main():
  for lang in ('en','zh','mixed'):
   group=[r for r in records if r['language']==lang]
   aggregate[lang]={"pages":len(group),"cer":sum(r['cer_errors'] for r in group)/sum(r['cer_characters'] for r in group),
-                   "wer":sum(r['wer_errors'] for r in group)/sum(r['wer_words'] for r in group)}
+                   "wer":sum(r['wer_errors'] for r in group)/sum(r['wer_words'] for r in group),
+                   "matched_character_boxes":sum(r['matched_character_boxes'] for r in group),
+                   "box_edge_error_px_max":max(r['box_edge_error_px_max'] or 0 for r in group),
+                   "box_edge_error_px_mean_across_pages":statistics.mean(r['box_edge_error_px_mean'] for r in group if r['box_edge_error_px_mean'] is not None)}
  accepted=aggregate['en']['cer']<=.03 and aggregate['zh']['cer']<=.05
  report={"schema":1,"source":__import__('os').environ['GITHUB_SHA'],"accepted":accepted,"complete_wp11":False,
    "corpus_kind":manifest['kind'],"dpi":300,"pages":records,"aggregate":aggregate,"coordinate_roundtrip_checks":checks,
