@@ -269,6 +269,19 @@ int lm_replace(const char *from, const char *to) {
   return rename(from, to) == 0;
 #endif
 }
+int lm_publish_new(const char *from, const char *to) {
+#ifdef _WIN32
+  wchar_t *a = widen(from), *b = widen(to);
+  int ok = a && b && MoveFileExW(a, b, MOVEFILE_WRITE_THROUGH);
+  free(a); free(b);
+  return ok;
+#else
+  /* Same-directory publication must never replace a destination created meanwhile. */
+  if (link(from, to)) return 0;
+  (void)unlink(from); /* cleanup() also removes any remaining stage link. */
+  return 1;
+#endif
+}
 int lm_seek(FILE *f, uint64_t offset) {
 #ifdef _WIN32
   return _fseeki64(f, (long long)offset, SEEK_SET) == 0;
