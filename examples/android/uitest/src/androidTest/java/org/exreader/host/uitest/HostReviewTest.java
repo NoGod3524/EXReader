@@ -420,9 +420,11 @@ public final class HostReviewTest {
         return false;
     }
     private boolean waitButtonText(String needle, long timeout) {
+        // Material button styles upper-case their label, so compare the button text case-insensitively.
+        String expected = needle.toUpperCase(java.util.Locale.ROOT);
         long deadline = SystemClock.uptimeMillis() + timeout;
         while (SystemClock.uptimeMillis() < deadline) {
-            if (text("notes_button").contains(needle)) return true;
+            if (text("notes_button").toUpperCase(java.util.Locale.ROOT).contains(expected)) return true;
             SystemClock.sleep(150);
         }
         return false;
