@@ -29,23 +29,28 @@ SOURCE_PATHS = ['CMakeLists.txt', 'src', 'include', 'cmake', 'bindings/jni', 'ex
 def ownership():
     command = ['git', '-C', str(ROOT)]
     tested = subprocess.check_output([*command, 'rev-parse', 'HEAD'], text=True).strip()
+    candidate_base = os.environ.get('ANDROID_CANDIDATE_SDK_BASE')
+    sdk_base = candidate_base or SDK_BASE
+    review_base = candidate_base or REVIEW_BASE
     boundary = os.environ.get('ANDROID_OWNERSHIP_HEAD') or tested
     require(re.fullmatch(r'[0-9a-f]{40}', boundary), 'ownership boundary must be a complete commit identity')
-    require(subprocess.run([*command, 'merge-base', '--is-ancestor', REVIEW_BASE, boundary],
+    require(subprocess.run([*command, 'merge-base', '--is-ancestor', review_base, boundary],
                            capture_output=True).returncode == 0, 'delivery is not an ancestor of the reviewed source')
     require(subprocess.run([*command, 'merge-base', '--is-ancestor', boundary, tested],
                            capture_output=True).returncode == 0, 'reviewed Android source is not an ancestor of the tested source')
-    require(subprocess.run([*command, 'diff', '--quiet', SDK_BASE, 'HEAD', '--',
+    require(subprocess.run([*command, 'diff', '--quiet', sdk_base, 'HEAD', '--',
                            'src', 'include', 'bindings', 'cmake', 'CMakeLists.txt'],
                            capture_output=True).returncode == 0, 'installed SDK source differs from the frozen baseline')
-    changed = subprocess.check_output([*command, 'diff', '--name-only', REVIEW_BASE, boundary], text=True).splitlines()
+    changed = subprocess.check_output([*command, 'diff', '--name-only', review_base, boundary], text=True).splitlines()
     prefixes = ('examples/android/', 'tests/android_host/')
     files = {'tools/check_android_host.py', 'tools/build_android_host.py', 'tools/android_host_evidence.py',
              'tools/run_android_host_evidence.py', '.github/workflows/wp13-android.yml',
              '.github/workflows/wp13-android-diagnostics.yml',
+             '.github/workflows/r5-android-bounded-candidate.yml', 'docs/R5-ANDROID-BOUNDED.md',
              'docs/WP13-ANDROID.md', 'docs/WP13-ANDROID-REVIEW.md', 'docs/validation/wp13-android-review.json'}
     require(all(name.startswith(prefixes) or name in files for name in changed), 'review changes exceed the Android package ownership')
-    return {'sdk_base': SDK_BASE, 'review_base': REVIEW_BASE, 'ownership_head': boundary,
+    return {'sdk_base': sdk_base, 'review_base': review_base, 'ownership_head': boundary,
+            'candidate_only': bool(candidate_base),
             'tested_source': tested, 'changed_files': changed}
 
 
@@ -268,7 +273,7 @@ def check_evidence(evidence, build_path, stage, upstream, expected=None):
     require(build.get('source_files_sha256') == source_files(), 'tested source files differ from the build')
     require(build.get('ownership') == ownership(), 'build ownership proof mismatch')
     require(build.get('sdk_files_sha256') == inventory(stage), 'installed SDK bytes differ from the build')
-    require(build.get('abi') == 'x86_64' and build.get('abi_version') == 1 and build.get('library_schema') == 6 and
+    require(build.get('abi') == 'x86_64' and build.get('abi_version') == 1 and build.get('library_schema') == 7 and
             build.get('ndk') == '27.0.12077973' and build.get('gradle') == '8.9', 'SDK/toolchain identity mismatch')
     header = (ROOT/'include/exr/base.h').read_text()
     require(build.get('sdk_version') == re.search(r'#define EXR_VERSION "([^"]+)"', header)[1], 'SDK version mismatch')

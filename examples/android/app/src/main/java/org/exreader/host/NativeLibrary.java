@@ -54,6 +54,7 @@ public final class NativeLibrary implements AutoCloseable {
         public final long end;
         public final String comment;
         public final String selected;
+        public String[] location;
 
         Note(long id, long start, long end, String comment, String selected) {
             this.id = id;
@@ -129,6 +130,7 @@ public final class NativeLibrary implements AutoCloseable {
         for (int i = 0; i < rows.length; i++) {
             String[] row = rows[i];
             notes[i] = new Note(parseLong(row[0]), parseLong(row[1]), parseLong(row[2]), row[3], row[4]);
+            if(row.length==13) notes[i].location=java.util.Arrays.copyOfRange(row,5,13);
         }
         return notes;
     }
@@ -177,7 +179,9 @@ public final class NativeLibrary implements AutoCloseable {
         nativeDeleteBook(checked(), bookId);
     }
 
-    private long checked() {
+    boolean bounded(long bookId) { return nativeBounded(checked(),bookId); }
+
+    long checked() {
         if (handle == 0) throw new IllegalStateException("Library is closed");
         return handle;
     }
@@ -207,6 +211,7 @@ public final class NativeLibrary implements AutoCloseable {
     }
 
     private static native String nativeIdentity();
+    private static native boolean nativeBounded(long handle,long bookId);
     private static native long nativeOpen(String path);
     private static native void nativeClose(long handle);
     private static native String[][] nativeBooks(long handle);

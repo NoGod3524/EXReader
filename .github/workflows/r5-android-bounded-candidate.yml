@@ -1,0 +1,55 @@
+name: R5 Android bounded candidate (no acceptance)
+on:
+  push:
+    branches: [codex/r5-android-bounded]
+    paths:
+      - examples/android/**
+      - tools/*android*.py
+      - tests/android_host/**
+      - .github/workflows/r5-android-bounded-candidate.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      ANDROID_CANDIDATE_SDK_BASE: fd210224a4eba206762c08de435a5e9edfdf2a90
+      ANDROID_OWNERSHIP_HEAD: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install Android build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y patchelf
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1"
+      - name: Build candidate SDK and APKs in cloud
+        run: |
+          mkdir -p build/android-host
+          set -o pipefail
+          python3 tools/build_android_host.py --stage stage/android-x86_64 --build-dir build/android-host --gradle gradle 2>&1 | tee build/android-host/build.log
+      - name: Candidate scope only
+        if: always()
+        run: |
+          echo 'candidate_only=true; accepted=false; formal SDK K and Windows pilot are pending'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: R5-Android-bounded-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/android-host/build.log
+            build/android-host/build.json
+            build/android-host/artifacts/
+          if-no-files-found: error

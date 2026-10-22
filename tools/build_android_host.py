@@ -406,7 +406,7 @@ def main():
         'core_version': header_version(stage / 'include/exr/base.h', 'EXR_CORE_VERSION'),
         'library_version': header_version(stage / 'include/exr/library.h', 'EXR_LIBRARY_VERSION'),
         'abi_version': 1,
-        'library_schema': 6,
+        'library_schema': 7,
         'abi': 'x86_64',
         'android_platform': 'android-' + str(MIN_SDK),
         'compile_sdk': COMPILE_SDK,

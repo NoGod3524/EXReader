@@ -8,6 +8,8 @@ import java.util.List;
 /** Worker-thread facade over the SDK library; no call is made from the UI thread. */
 final class BookStore implements AutoCloseable {
     private final NativeLibrary library;
+    NativeLibrary nativeLibrary() { return library; }
+    boolean bounded(long bookId) { return library.bounded(bookId); }
 
     BookStore(File database) {
         library = new NativeLibrary(database.getAbsolutePath());
