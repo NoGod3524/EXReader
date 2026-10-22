@@ -108,6 +108,8 @@ def gate(a):
                 problems.append("%s: missing %s" % (label, os.path.basename(path)))
                 continue
             entry[kind] = json.load(open(path, encoding="utf-8"))
+            if not isinstance(entry[kind], dict) or not entry[kind]:
+                problems.append('%s: empty or invalid %s evidence' % (label, kind))
         s = entry["scenarios"]
         if s:
             names = {c["name"]: c for c in s["cases"]}
@@ -136,7 +138,7 @@ def gate(a):
                 problems.append("%s: areas missing: %s" % (label, sorted(REQUIRED_AREAS - set(s["summary"]["areas"]))))
         e = entry["e2e"]
         if e:
-            if not e["passed"]:
+            if e["passed"] is not True:
                 problems.append("%s: browser end-to-end chain failed" % label)
             if e["indexeddb"]["version"] != 1:
                 problems.append("%s: IndexedDB version is %s, not 1" % (label, e["indexeddb"]["version"]))
