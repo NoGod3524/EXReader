@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "package": "legacy migration audit fixes",
+  "branch": "codex/wp12-migration-review",
+  "original_delivery": "6515640",
+  "acceptance_source": "c2d23c29a3b2096c2236fdb414dcd1e66d3243b4",
+  "cloud_run": 39715864350,
+  "jobs": {"windows": 119617901229, "linux": 119617901603, "summary": 119620626055},
+  "jobs_passed": 3,
+  "expected_jobs": 3,
+  "accepted_scope": "legacy migration tool and retained mapping only",
+  "accepted": true,
+  "integrated_acceptance": false,
+  "per_platform": {"original_cases": 65, "original_checks": 135, "review_checks": 31, "browser_checks": 17},
+  "summary_gate_checks": 29,
+  "summary_problems": [],
+  "artifacts": [
+    {"id": 12398348575, "platform": "Linux", "bytes": 98854, "sha256": "eae94d96c0bc4471416ce419e93d25a18577fbf45717eb8012f191b60cecac9d"},
+    {"id": 12399426643, "platform": "Windows", "bytes": 99596, "sha256": "52e28f611cbe3c2f3f2e3192a94adb62078a3c22b73f6d4863e3c38fde009516"},
+    {"id": 12399591361, "platform": "combined summary", "bytes": 1657, "sha256": "222a54cd09678db62a142ef73f61b9e3aa27f9595566dc2a236aa0749980e998"}
+  ],
+  "digest_origin": "GitHub artifact metadata and cloud upload logs; no local archive download or independent archive rehash",
+  "local_tests_executed": false,
+  "complete_wp12": false,
+  "wp16_cpu_credit_seconds": 0,
+  "remaining": ["same-source multi-package integration acceptance", "original unlocated/audio-original/large-file/browser/platform boundaries remain declared"]
+}
