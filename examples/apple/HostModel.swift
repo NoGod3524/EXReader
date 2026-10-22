@@ -157,11 +157,7 @@ final class HostSession {
                                      fontSize: size, box: cancel)
         pager = newPager
         if let anchor {
-            if let match = try? document.resolve(anchor), let range = match.range {
-                page = (try? newPager.pageIndex(for: range.lowerBound)) ?? 0
-            } else {
-                page = (try? newPager.pageIndex(for: anchor.start)) ?? 0
-            }
+            page = (try? newPager.pageIndex(for: anchor.start)) ?? 0
         }
         if (try? newPager.pageRange(page)) == nil { page = 0 }
     }
