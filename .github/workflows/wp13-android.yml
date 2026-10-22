@@ -24,8 +24,8 @@ jobs:
     timeout-minutes: 120
     runs-on: ubuntu-latest
     env:
-      # Validate every Android change from the frozen reading SDK to this source.
-      ANDROID_OWNERSHIP_HEAD: ${{ github.sha }}
+      # Freeze Android ownership before other package scopes join the tested source.
+      ANDROID_OWNERSHIP_HEAD: 797c47fc8d5c397fd7c960afe91eb6f851ec07f1
     steps:
       - uses: actions/checkout@v4
         with:
