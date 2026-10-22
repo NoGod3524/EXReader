@@ -601,7 +601,7 @@ static int note_comment_read(char *out, size_t capacity) {
   char *utf8;
   out[0] = 0;
   if (!g.note_edit) return 1;
-  if (GetWindowTextLengthW(g.note_edit) >= 65535) {
+  if (GetWindowTextLengthW(g.note_edit) > 65535) {
     set_status(L"批注超出长度上限，未保存。"); return 0;
   }
   length = GetWindowTextW(g.note_edit, wide, 65536);
@@ -643,6 +643,7 @@ struct host_job {
   int zoom_percent;
   exr_anchor anchor;
   int has_anchor;
+  int anchor_host_owned;
   HANDLE thread;
   exr_status status;
   exr_error error;
@@ -710,7 +711,11 @@ static void job_free(host_job *job) {
   if (!job) return;
   if (job->thread) CloseHandle(job->thread);
   frame_clear(&job->frame);
-  if (job->has_anchor) exr_anchor_free(&job->anchor);
+  if (job->has_anchor) {
+    if (job->anchor_host_owned) {
+      free(job->anchor.exact); free(job->anchor.prefix); free(job->anchor.suffix); free(job->anchor.chapter);
+    } else exr_anchor_free(&job->anchor);
+  }
   session_clear(&job->candidate);
   exr_pager_free(job->candidate_pager);
   free(job->comment);
@@ -2225,6 +2230,7 @@ static void jump_selected_note(void) {
     } else {
       job->anchor = note->anchor;
       job->has_anchor = 1;
+      job->anchor_host_owned = 1;
       job->anchor.exact = note->anchor.exact ? host_strdup(note->anchor.exact) : NULL;
       job->anchor.prefix = note->anchor.prefix ? host_strdup(note->anchor.prefix) : NULL;
       job->anchor.suffix = note->anchor.suffix ? host_strdup(note->anchor.suffix) : NULL;
@@ -2390,7 +2396,12 @@ static void host_update_controls(void) {
 
 static void handle_job_complete(host_job *job) {
   if (job->kind == JOB_ROLLBACK || job->rollback_failed) {
-    if (reload_shelf() != EXR_OK) return;
+    exr_status refreshed = reload_shelf();
+    if ((job->rollback_failed || refreshed != EXR_OK) && g.closing) {
+      g.closing = 0; KillTimer(g.window, 2);
+      if (g.drive_mode) SetTimer(g.window, 1, 30, NULL);
+    }
+    if (refreshed != EXR_OK) return;
     if (job->rollback_failed) set_status(job->message);
     else set_status(L"导入已取消；新建书架条目已回滚。");
     g.auto_open_imported = 0;
@@ -2412,6 +2423,7 @@ static void handle_job_complete(host_job *job) {
   }
   if (job->status == EXR_OK && (job_cancel_flag(job) || g.closing) &&
       (job->kind == JOB_OPEN || job->kind == JOB_GO || job->kind == JOB_LAYOUT)) job->status = EXR_CANCELLED;
+  if (job->status != EXR_OK) g.pending_selection = 0;
   if (job->status == EXR_OK) {
     if (job->kind == JOB_OPEN) {
       int index = shelf_index(job->book_id);
@@ -2424,6 +2436,7 @@ static void handle_job_complete(host_job *job) {
           g.active_book_id = g.current.id;
           frame_move(&g.frame, &job->frame);
           memset(&g.selection, 0, sizeof(g.selection));
+          g.pending_selection = 0;
           g.session.page = g.frame.page;
           update_page_label();
           settings_save();
@@ -2457,7 +2470,7 @@ static void handle_job_complete(host_job *job) {
         if (job->zoom_percent > 0) g.zoom_percent = job->zoom_percent;
         update_page_label();
         settings_save();
-        if (!save_progress()) return;
+        if (!save_progress()) { g.pending_selection = 0; return; }
         if (job->message[0]) set_status(job->message);
         else set_statusf(L"第 %llu 页。", (unsigned long long)(g.frame.page + 1));
         if (job->resolved_selection) { g.pending_start = job->note_start; g.pending_end = job->note_end; }
@@ -3652,7 +3665,7 @@ static void host_cleanup(void) {
 #endif
   if (g.job) {
     InterlockedExchange(&g.job->cancel, 1);
-    if (g.job->thread) WaitForSingleObject(g.job->thread, 20000);
+    if (g.job->thread && WaitForSingleObject(g.job->thread, 20000) != WAIT_OBJECT_0) ExitProcess(1);
     job_release(g.job);
     g.job = NULL;
   }
