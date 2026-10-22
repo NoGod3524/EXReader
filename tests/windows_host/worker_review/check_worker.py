@@ -162,7 +162,7 @@ class App:
             return db.execute(sql, values).fetchone()[0]
 
     def position(self, book=None, connection=None):
-        sql = 'SELECT start FROM epub_progress' if self.bounded else 'SELECT position FROM books'
+        sql = 'SELECT position FROM epub_progress' if self.bounded else 'SELECT position FROM books'
         values = () if book is None else (book,)
         sql += ' LIMIT 1' if book is None else (' WHERE book_id=?' if self.bounded else ' WHERE id=?')
         if connection is not None:

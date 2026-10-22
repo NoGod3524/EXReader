@@ -2767,7 +2767,7 @@ static void host_update_controls(void) {
   EnableWindow(g.import_button, !busy);
   EnableWindow(g.open_button, g.shelf_count > 0);
   EnableWindow(g.delete_button, !busy && g.shelf_count > 0);
-  EnableWindow(g.prev_button, !busy && has && g.frame.page > 0);
+  EnableWindow(g.prev_button, !busy && has && (g.frame.page > 0 || (g.session.bounded && g.frame.part > 0)));
   EnableWindow(g.next_button, !busy && has);
   EnableWindow(g.select_button, !busy && has);
   EnableWindow(g.copy_button, !busy && has);
@@ -3493,6 +3493,10 @@ static int drive_execute(void) {
   } else if (!strcmp(action, "prev")) {
     SendMessageW(g.prev_button, BM_CLICK, 0, 0);
     launches = 1;
+  } else if (!strcmp(action, "chapter_end")) {
+    page_step(1000000); launches = 1;
+  } else if (!strcmp(action, "chapter_home")) {
+    page_step(-1000000); launches = 1;
   } else if (!strcmp(action, "font_inc")) {
     SendMessageW(g.font_inc, BM_CLICK, 0, 0);
     launches = 1;
@@ -3574,7 +3578,13 @@ static int drive_execute(void) {
     const char *what = drive_args[1];
     int pass = 0;
     char number[64];
-    if (!strcmp(what, "page")) {
+    if (!strcmp(what, "part")) {
+      pass = g.frame.valid && g.frame.part == (size_t)atoi(drive_args[2]);
+      snprintf(number, sizeof(number), "%llu", (unsigned long long)g.frame.part); detail_add(detail, sizeof(detail), "part", number);
+    } else if (!strcmp(what, "bounded")) {
+      pass = g.session.active && g.session.bounded == atoi(drive_args[2]);
+      snprintf(number, sizeof(number), "%d", g.session.bounded); detail_add(detail, sizeof(detail), "bounded", number);
+    } else if (!strcmp(what, "page")) {
       pass = g.frame.valid && g.frame.page + 1 == (size_t)atoi(drive_args[2]);
       snprintf(number, sizeof(number), "%llu", (unsigned long long)(g.frame.valid ? g.frame.page + 1 : 0));
       detail_add(detail, sizeof(detail), "page", number);
@@ -4026,6 +4036,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       g.job = NULL;
       handle_job_complete(job);
       job_release(job);
+      InvalidateRect(g.page, NULL, FALSE);
       if (!g.job && g.pending) {
         host_job *next = g.pending;
         g.pending = NULL;
