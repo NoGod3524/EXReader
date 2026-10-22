@@ -263,7 +263,7 @@ def main():
     foreign = [n for n in changed if not n.startswith(OWNED)]
     check("only_owned_paths_changed", rc == 0 and not foreign, ",".join(foreign[:10]))
     rc, head, _ = git(repo, "rev-parse", "HEAD")
-    ident.update(head=head, base=a.base, sdk_version=ver, sdk_abi=abi, trees=trees)
+    ident.update(head=head, base=a.base, ownership_base=a.handoff or a.base, sdk_version=ver, sdk_abi=abi, trees=trees)
 
     # ---- runtime identity ----
     files = [test_exe, cons_exe, publish_exe] + [p for p in a.identity if os.path.isfile(p)]
