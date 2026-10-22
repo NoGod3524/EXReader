@@ -16,8 +16,9 @@ for lang in ("en","zh","mixed"):
  for n in range(10):
   image=Image.new('L',(1600,900),255);draw=ImageDraw.Draw(image)
   font=ImageFont.truetype(str(fonts['en' if lang=='en' else 'zh']),48)
+  lines=texts[lang]+[f'Page {n+1} of the reading record.' if lang=='en' else f'阅读记录 第{"一二三四五六七八九十"[n]}页']
   truth=[]
-  for row,text in enumerate(texts[lang]):
+  for row,text in enumerate(lines):
    x,y=100,90+row*170
    draw.text((x,y),text,font=font,fill=0)
    for i,char in enumerate(text):
@@ -30,5 +31,5 @@ for lang in ("en","zh","mixed"):
   path=root/f'{lang}-{n:02}.pgm';image.save(path)
   manifest['pages'].append({"id":path.stem,"path":path.name,"sha256":sha(path),"bytes":path.stat().st_size,
      "language":lang,"rotation":rotation,"correction":(-rotation)%360,"original_size":[1600,900],
-     "input_size":list(image.size),"lines":texts[lang],"characters":truth})
+     "input_size":list(image.size),"lines":lines,"characters":truth})
 (root/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf8')

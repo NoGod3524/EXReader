@@ -57,7 +57,7 @@ extern "C" exr_status exr_ocr_recognize(exr_ocr *p,const exr_bitmap *b,const exr
   if(!p || !b || !o || !out || !b->pixels || !b->width || !b->height ||
      (b->channels!=1 && b->channels!=4) || b->width>INT32_MAX || b->height>INT32_MAX ||
      b->width>SIZE_MAX/b->channels || b->stride<static_cast<size_t>(b->width)*b->channels ||
-     b->height>SIZE_MAX/b->stride || o->clockwise>270 || o->clockwise%90 || !o->timeout_ms ||
+     b->height>SIZE_MAX/b->stride || o->clockwise>270 || o->clockwise%90 || !o->timeout_ms || o->timeout_ms>INT32_MAX ||
      o->dpi<70 || o->dpi>2400 || !o->max_pixels || !o->max_items || !o->max_output_bytes)
     return fail(e,EXR_ARGUMENT,"Invalid OCR bitmap/options");
   for(double v:o->pixel_to_page) if(!std::isfinite(v) || std::fabs(v)>1e7) return fail(e,EXR_ARGUMENT,"Invalid OCR transform");
