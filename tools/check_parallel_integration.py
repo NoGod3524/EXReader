@@ -16,6 +16,7 @@ WORKFLOWS = {
     'windows_worker': ('wp13-windows-worker.yml', 1),
     'migration': ('wp12-migration.yml', 3), 'opds': ('wp15-opds.yml', 2),
     'apple': ('wp13-apple.yml', 8),
+    'android': ('wp13-android.yml', 1),
 }
 
 
@@ -40,6 +41,7 @@ def required_artifacts(kind, source, run):
         'apple': {'wp13-apple-sdk-macos', 'wp13-apple-sdk-iphonesimulator',
                   'wp13-apple-sdk-iphoneos', 'wp13-apple-macos', 'wp13-apple-iphone',
                   'wp13-apple-ipad', 'wp13-apple-package', 'wp13-apple-validation'},
+        'android': {'EXReader-WP13-Android'},
     }[kind]
 
 
@@ -131,7 +133,22 @@ def selftest():
         except ValueError:
             continue
         raise AssertionError('Apple ' + kind + ' was accepted')
-    return {'passed': True, 'checks': 4 + len(changes), 'integration_accepted': False,
+    android_run = dict(run, path='.github/workflows/wp13-android.yml')
+    android_jobs = [dict(jobs[0], id=900)]
+    android_artifacts = [dict(artifacts[0], id=900, name='EXReader-WP13-Android')]
+    verify('android', source, android_run, android_jobs, android_artifacts)
+    for failure in ('missing acceptance artifact', 'failed host'):
+        copied_jobs, copied_artifacts = copy.deepcopy((android_jobs, android_artifacts))
+        if failure == 'missing acceptance artifact':
+            copied_artifacts.clear()
+        else:
+            copied_jobs[0]['conclusion'] = 'failure'
+        try:
+            verify('android', source, android_run, copied_jobs, copied_artifacts)
+        except ValueError:
+            continue
+        raise AssertionError('Android ' + failure + ' was accepted')
+    return {'passed': True, 'checks': 7 + len(changes), 'integration_accepted': False,
             'source_sha': os.environ['GITHUB_SHA'], 'scope': 'gate protocol only'}
 
 
@@ -150,7 +167,7 @@ def main():
             require(re.fullmatch('[0-9a-f]{40}', source) is not None, 'Require an immutable full source SHA')
             requested = json.loads(os.environ['SOURCE_RUNS'])
             require(set(requested) == set(WORKFLOWS) and len(set(requested.values())) == len(WORKFLOWS) and
-                    all(type(value) is int and value > 0 for value in requested.values()), 'Require all nine distinct workflow run IDs')
+                    all(type(value) is int and value > 0 for value in requested.values()), 'Require all ten distinct workflow run IDs')
             for kind, run_id in requested.items():
                 path = f'actions/runs/{run_id}'
                 run = fetch(path)
