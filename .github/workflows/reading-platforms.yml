@@ -1,7 +1,7 @@
 name: Native reading profiles on Windows and macOS
 on:
   push:
-    branches: ['claude/reading-h1-platforms']
+    branches: ['handoff/reading-h6-platform-gate']
   workflow_dispatch:
 permissions:
   contents: read
@@ -75,20 +75,33 @@ jobs:
           if [ "$PROFILE" = reading-library ]; then library=ON; fi
           cmake -S tests/reading_core -B build/reading-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/$PROFILE/stage" -DEXR_EXPECT_LIBRARY="$library" -DEXR_TEST_FONT="$WS/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$WS/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$WS/tests/fixtures" 2>&1 | tee "build/$PROFILE/consumer-configure.log"
           cmake --build build/reading-consumer --parallel 4 2>&1 | tee "build/$PROFILE/consumer-build.log"
-      - name: Run installed consumer tests
+      - name: Declare and hash the exact consumer program set
+        id: programs
         if: always() && steps.consumer.outcome == 'success'
+        run: |
+          names="reading-document reading-benchmark components/core-consumer components/chapter-consumer components/convert-consumer"
+          if [ "$PROFILE" = reading-library ]; then names="$names components/library-consumer"; fi
+          args=""; for name in $names; do args="$args --program build/reading-consumer/$name$EXE"; done
+          echo "PROGRAM_ARGS=$args" >> "$GITHUB_ENV"
+          python tools/reading_platform_evidence.py snapshot "build/$PROFILE/program-snapshot.json" $args
+          ctest --test-dir build/reading-consumer --show-only=json-v1 > "build/$PROFILE/ctest-tests.json"
+      - name: Run installed consumer tests
+        if: always() && steps.programs.outcome == 'success'
         run: ctest --test-dir build/reading-consumer --output-on-failure --no-tests=error --output-junit "$WS/build/$PROFILE/consumer-tests.xml"
       - name: Run predeclared nine-format fixture smoke
-        if: always() && steps.consumer.outcome == 'success'
+        if: always() && steps.programs.outcome == 'success'
         run: python tools/check_corpus.py "build/reading-consumer/reading-document$EXE" tests/fixtures/fonts/primary.ttf tools/reading_core/smoke-manifest.json "build/$PROFILE/corpus" --root tests/fixtures --timeout 60
-      - name: Record installed files and native runtime dependencies
+      - name: Run the benchmark program once on a fixture (loader evidence, no performance claim)
+        if: always() && steps.programs.outcome == 'success'
+        run: python tools/reading_platform_evidence.py run "build/$PROFILE/benchmark-run.json" -- "build/reading-consumer/reading-benchmark$EXE" tests/fixtures/table-fragments-12.epub tests/fixtures/fonts/primary.ttf --max-pages 1
+      - name: Gate installed files, program identity, dependencies, executions and toolchain
+        id: evidence
         if: always() && steps.install.outcome == 'success'
         run: |
-          programs=()
-          for name in reading-document reading-benchmark components/core-consumer components/chapter-consumer components/convert-consumer components/library-consumer; do
-            if [ -f "build/reading-consumer/$name$EXE" ]; then programs+=(--program "build/reading-consumer/$name$EXE"); fi
-          done
-          python tools/reading_platform_evidence.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/platform-evidence.json" "${programs[@]}" --input tests/fixtures/fonts/primary.ttf --input tests/fixtures/fonts/colrv1.ttf --input tools/reading_core/smoke-manifest.json --toolchain "build/$PROFILE/toolchain.txt"
+          python tools/reading_platform_evidence.py verify "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" build/reading-consumer "build/$PROFILE/platform-evidence.json" --platform "$RUNNER_OS" $PROGRAM_ARGS --snapshot "build/$PROFILE/program-snapshot.json" --ctest-tests "build/$PROFILE/ctest-tests.json" --ctest-junit "build/$PROFILE/consumer-tests.xml" --smoke-summary "build/$PROFILE/corpus/summary.json" --run "build/$PROFILE/benchmark-run.json" --input tests/fixtures/fonts/primary.ttf --input tests/fixtures/fonts/colrv1.ttf --input tools/reading_core/smoke-manifest.json --input tests/fixtures/table-fragments-12.epub --toolchain "build/$PROFILE/toolchain.txt"
+      - name: Rejection regression for the evidence gate
+        if: always() && steps.evidence.outcome == 'success'
+        run: python tests/check_reading_platform_evidence.py "build/$PROFILE/platform-evidence.json" "build/$PROFILE/rejection-regression.json"
       - name: Preserve source-bound evidence and installed SDK
         if: always()
         uses: actions/upload-artifact@v4
@@ -98,7 +111,7 @@ jobs:
             build/${{ matrix.profile }}/stage/
             build/${{ matrix.profile }}/*.log
             build/${{ matrix.profile }}/toolchain.txt
-            build/${{ matrix.profile }}/platform-evidence.json
+            build/${{ matrix.profile }}/*.json
             build/${{ matrix.profile }}/consumer-tests.xml
             build/${{ matrix.profile }}/corpus/
             build/${{ matrix.profile }}/CMakeCache.txt
