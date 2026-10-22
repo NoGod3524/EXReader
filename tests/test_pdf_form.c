@@ -7,7 +7,7 @@
 #include <stdarg.h>
 static exr_error error;
 static unsigned checks;
-#define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"form check line %d failed (%d: %s)\n",__LINE__,error.code,error.message); exit(1); } } while(0)
+#define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"form check line %d failed: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
 static unsigned char pdf[262144],original[262144];
 static size_t length,offset[256];

@@ -906,11 +906,11 @@ static void form_text_appearance(pdf_writer *p,const char *text,double width,dou
   if(p->status!=EXR_OK) return;
   if(options->font) {
     exr_shaped_glyph *glyphs=NULL; size_t count=0; exr_shape_options shape=exr_shape_defaults();
-    shape.font_size=1000; shape.control=options->control;
+    shape.font_size=100; shape.control=options->control;
     p->status=exr_shape(options->font,options->font_index,text,n,&shape,&glyphs,&count,p->error);
     for(i=0;i<count && p->status==EXR_OK;i++) {
       if(!glyphs[i].glyph) p->status=exr_fail(p->error,EXR_UNSUPPORTED,"PDF form appearance font lacks a glyph");
-      advance+=glyphs[i].advance_x;
+      advance+=glyphs[i].advance_x*10;
     }
     if(advance>0) size=fmin(size,fmax(.01,(width-4)*1000/advance));
     if(justification==1) x=(width-advance*size/1000)*.5;
@@ -920,17 +920,17 @@ static void form_text_appearance(pdf_writer *p,const char *text,double width,dou
       p->status=exr_font_glyph_outline(options->font,options->font_index,glyphs[i].glyph,&segments,&segment_count,p->control,p->error);
       if(segment_count>1048576-*work) p->status=exr_fail(p->error,EXR_LIMIT,"PDF form appearance outline budget exceeded");
       else *work+=segment_count;
-      literal(p,"q "); number(p,size/1000); literal(p," 0 0 "); number(p,size/1000); literal(p," "); number(p,x+glyphs[i].offset_x*size/1000);
-      literal(p," "); number(p,y+glyphs[i].offset_y*size/1000); literal(p," cm\n"); form_outline(p,segments,segment_count); literal(p,"Q\n");
-      free(segments); x+=glyphs[i].advance_x*size/1000;
+      literal(p,"q "); number(p,size/1000); literal(p," 0 0 "); number(p,size/1000); literal(p," "); number(p,x+glyphs[i].offset_x*size/100);
+      literal(p," "); number(p,y+glyphs[i].offset_y*size/100); literal(p," cm\n"); form_outline(p,segments,segment_count); literal(p,"Q\n");
+      free(segments); x+=glyphs[i].advance_x*size/100;
     }
     free(glyphs);
   } else {
     static const char hex[]="0123456789ABCDEF";
     for(i=0;i<n;i++) {
-      double w; char glyph_name[2]={text[i],0};
+      double w;
       if((unsigned char)text[i]<32 || (unsigned char)text[i]>126) { p->status=exr_fail(p->error,EXR_UNSUPPORTED,"Unicode PDF form appearance requires a font"); return; }
-      if(!exr_pdf_standard_width("Helvetica",text[i]==' ' ? "space" : glyph_name,&w)) w=600;
+      if(!exr_pdf_standard_width("Helvetica",exr_pdf_encoding_glyph("StandardEncoding",(unsigned char)text[i]),&w)) w=600;
       advance+=w;
     }
     if(advance>0) size=fmin(size,fmax(.01,(width-4)*1000/advance));
@@ -1044,12 +1044,14 @@ exr_status exr_pdf_form_write(const void *data,size_t size,const exr_pdf_form_ch
       if(button) form_appearance(&w,on,f,j,&changes[i],1,justification,&config,&work);
       form_widget_write(&w,&r,index,j,off,on,&changes[i]);
     }
+    if(w.status!=EXR_OK) { status=w.status; goto done; }
     for(k=0;k<entry->widget_count;k++) if(entry->widgets[k]==entry->id) break;
     if(k==entry->widget_count) {
       status=exr_pdf_object_identity(w.file,entry->id,&object,&generation,e); if(status!=EXR_OK) goto done;
       begin_object(&w,object,generation); dictionary(&w,entry->id,value_skip,2); form_value_write(&w,f,&changes[i]); literal(&w," >>\nendobj\n");
     }
   }
+  if(w.status!=EXR_OK) { status=w.status; goto done; }
   form_raw=exr_pdf_get(w.file,exr_pdf_root(w.file),"AcroForm");
   if(form_kind(&r,form_raw,EXR_PDF_REF)) {
     status=exr_pdf_object_identity(w.file,form_raw,&object,&generation,e); if(status!=EXR_OK) goto done;
