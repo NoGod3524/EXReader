@@ -494,8 +494,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         finishTask(gen);
         current = load.snapshot;
         pageBusy = false;
-        readerView.setPage(current);
         readerView.setSelectMode(false);
+        readerView.setPage(current);
         selectButton.setText("Select");
         selectionBar.setVisibility(View.GONE);
         selectionStatus.setText("");
@@ -510,7 +510,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         zoomDown.setVisibility(isFixed ? View.VISIBLE : View.GONE);
         zoomUp.setVisibility(isFixed ? View.VISIBLE : View.GONE);
         zoomLabel.setVisibility(isFixed ? View.VISIBLE : View.GONE);
-        if (notice != null) setStatus(notice);
+        if (notice != null || current.restoreNotice!=null) setStatus(notice!=null?notice:current.restoreNotice);
         Log.i(TAG, "metric {\"event\":\"page\",\"book\":" + bookId + ",\"page\":" + (current.index + 1)
                 + ",\"fixed\":" + isFixed + ",\"bytes\":" + current.bitmapBytes
                 + ",\"ms\":" + load.millis + "}");

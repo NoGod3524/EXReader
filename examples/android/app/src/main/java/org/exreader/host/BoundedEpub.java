@@ -26,6 +26,8 @@ final class BoundedEpub implements AutoCloseable {
     long start, nextCalls, recoveryCalls;
     float size;
     boolean closed;
+    boolean unresolvedProgress;
+    String unresolvedNotice;
 
     BoundedEpub(NativeLibrary library,long book,byte[] font,float size) {
         this.library=library; this.book=book; this.font=font; this.size=size;
@@ -92,7 +94,7 @@ final class BoundedEpub implements AutoCloseable {
             PageSnapshot page=snapshot(frame,index+1,part);
             page.boundedHandle=handle;
             return new PageLoad(page,(System.nanoTime()-began)/1000000L,
-                    ()->{ index=page.index; chapterPage++; start=page.start; log(); }, this::recover);
+                    ()->{ index=page.index; chapterPage++; start=page.start; unresolvedProgress=false; log(); }, this::recover);
         } catch(Exception|Error error) { recover(); throw error; }
     }
     PageLoad previous(HostTask task) throws Exception {
@@ -102,7 +104,9 @@ final class BoundedEpub implements AutoCloseable {
         return previous<0?null:prepare(previous,index-1,-2,-1,size,task);
     }
     PageLoad font(float value,HostTask task) throws Exception {
-        return prepare(part,index,-1,start,value,task);
+        PageLoad load=prepare(part,index,-1,start,value,task);
+        if(unresolvedProgress) { load.snapshot.preserveProgress=true; load.snapshot.restoreNotice=unresolvedNotice; }
+        return load;
     }
     private PageLoad prepare(int target,int display,int pageTarget,long offset,float value,HostTask task) throws Exception {
         if(closed) throw new IllegalStateException("Reader is closed");
@@ -125,6 +129,7 @@ final class BoundedEpub implements AutoCloseable {
             PageLoad result=new PageLoad(snapshot,(System.nanoTime()-began)/1000000L,()->{
                 if(handle!=0) nativeClose(handle);
                 handle=accepted; part=target; index=snapshot.index; chapterPage=at; start=snapshot.start; size=value; log();
+                unresolvedProgress=snapshot.preserveProgress; unresolvedNotice=snapshot.restoreNotice;
             },()->nativeClose(accepted));
             transferred=true; return result;
         } finally { if(!transferred) nativeClose(candidate); }
