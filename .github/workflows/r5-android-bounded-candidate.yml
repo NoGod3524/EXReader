@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      ANDROID_CANDIDATE_SDK_BASE: fd210224a4eba206762c08de435a5e9edfdf2a90
+      ANDROID_CANDIDATE_SDK_BASE: ce5d664c9f76d0613df6d79b27568a7039c4a81e
       ANDROID_OWNERSHIP_HEAD: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
