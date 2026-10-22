@@ -73,7 +73,7 @@ jobs:
         if: always()
         run: |
           set -o pipefail
-          ${{ matrix.py }} tests/migration/e2e/check_e2e.py --tool "${{ matrix.exe }}" --export-dir build/e2e-out --work build/e2e-work \
+          ${{ matrix.py }} tests/migration/e2e/check_e2e.py --tool "${{ matrix.exe }}" --export-dir build/e2e-out --spec build/e2e-data/spec.json --work build/e2e-work \
             --out build/evidence/e2e-${{ matrix.label }}.json 2>&1 | tee build/logs/e2e-check-${{ matrix.label }}.txt
       - name: Record artifact identities
         if: always()
