@@ -55,10 +55,12 @@ def main():
         ('missing-legacy-source', 'e2e', lambda d: d['legacy_sources'].pop('store.js')),
         ('missing-browser-check', 'e2e', lambda d: d['checks'].pop()),
         ('duplicate-browser-check', 'e2e', lambda d: d['checks'].__setitem__(1, d['checks'][0])),
+        ('unknown-browser-check', 'e2e', lambda d: d['checks'][0].update(id='unknown')),
         ('failed-browser-check', 'e2e', lambda d: d['checks'][0].update(ok=False)),
         ('review-source-mismatch', 'review', lambda d: d.update(source_sha='0' * 40)),
         ('missing-review-check', 'review', lambda d: d['checks'].pop()),
         ('duplicate-review-check', 'review', lambda d: d['checks'].__setitem__(1, d['checks'][0])),
+        ('unknown-review-check', 'review', lambda d: d['checks'][0].update(name='unknown')),
     ]
     for name, kind, change in changes:
         with tempfile.TemporaryDirectory(prefix='migration-gate-review-') as temporary:
