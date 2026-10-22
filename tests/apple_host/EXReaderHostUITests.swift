@@ -38,6 +38,11 @@ final class EXReaderHostUITests: XCTestCase {
         args += extra
         app.launchArguments = args
         app.launch()
+        XCTAssertTrue(waitUntil(90) {
+            (self.element("reader.page").exists && !self.element("reader.busy").exists) ||
+            (self.element("library.title").exists && !self.element("library.busy").exists &&
+             self.element("library.import.epub").isEnabled)
+        }, "host did not finish startup and saved-book restoration")
     }
 
     private func element(_ identifier: String) -> XCUIElement {
@@ -90,6 +95,12 @@ final class EXReaderHostUITests: XCTestCase {
         }
     }
 
+    private func waitReaderIdle(_ timeout: TimeInterval = 45) -> Bool {
+        waitUntil(timeout) {
+            !self.element("reader.busy").exists && self.element("reader.next").isEnabled
+        }
+    }
+
     private func step(_ name: String, _ body: () throws -> Void) rethrows {
         Self.recordedSteps.append(name)
         try XCTContext.runActivity(named: name) { _ in try body() }
@@ -120,11 +131,12 @@ final class EXReaderHostUITests: XCTestCase {
     }
 
     private func openLibrary() {
-        if element("library.title").waitForExistence(timeout: 2) { return }
+        if element("library.title").exists && !element("library.busy").exists { return }
         if element("reader.back").waitForExistence(timeout: 5) {
             element("reader.back").tap()
         }
         _ = waitElement("library.title", 20)
+        XCTAssertTrue(waitUntil(45) { !self.element("library.busy").exists })
     }
 
     private func ensureReader(_ title: String) throws {
@@ -537,6 +549,192 @@ final class EXReaderHostUITests: XCTestCase {
             XCTAssertTrue(waitElement("reader.next").exists)
             XCTAssertTrue(waitElement("reader.location").exists)
             attach("27-dynamic-type")
+        }
+    }
+
+    func test08BusyImportGuardsAndCancellationRecovery() throws {
+        var count = 0
+        try step("regression01_busy_import_disables_competing_actions") {
+            launch(extra: ["-EXRHostDelayMs", "8000"])
+            openLibrary()
+            count = bookRows().count
+            XCTAssertGreaterThanOrEqual(count, 2)
+            waitElement("library.import.large").tap()
+            _ = waitElement("library.cancel", 5)
+            XCTAssertTrue(waitUntil(3) {
+                !self.element("library.import.epub").isEnabled &&
+                !self.element("library.import.pdf").isEnabled &&
+                !self.element("library.import.picker").isEnabled &&
+                self.bookRows().allSatisfy { !$0.isEnabled }
+            })
+            attach("28-busy-import-guards")
+        }
+        try step("regression02_cancel_restores_real_shelf") {
+            waitElement("library.cancel").tap()
+            XCTAssertTrue(waitLabel("library.status", contains: "已取消", 40))
+            XCTAssertEqual(bookRows().count, count)
+            XCTAssertTrue(waitUntil(10) { self.bookRows().allSatisfy { $0.isEnabled } })
+            XCTAssertTrue(element("library.import.epub").isEnabled)
+        }
+        try step("regression03_cancel_then_open_and_turn") {
+            bookRow("Sample.epub").tap()
+            _ = waitElement("reader.page", 90)
+            XCTAssertTrue(waitLabel("reader.status", contains: "就绪", 40))
+            waitElement("reader.first").tap()
+            XCTAssertTrue(waitLabel("reader.location", contains: "第 1 页", 40))
+            XCTAssertTrue(waitReaderIdle())
+            waitElement("reader.next").tap()
+            XCTAssertTrue(waitLabel("reader.location", contains: "第 2 页", 40))
+            attach("29-after-cancel-real-page")
+        }
+    }
+
+    func test09BusyReadingBackAndBookOwnership() throws {
+        try step("regression04_reading_busy_guards") {
+            launch(extra: ["-EXRHostDelayMs", "5000"])
+            try ensureReader("Sample.epub")
+            XCTAssertTrue(waitLabel("reader.status", contains: "就绪", 40))
+            waitElement("reader.next").tap()
+            _ = waitElement("reader.cancel", 5)
+            XCTAssertTrue(waitUntil(3) {
+                !self.element("reader.next").isEnabled && !self.element("reader.select").isEnabled &&
+                !self.element("reader.font.increase").isEnabled && !self.element("reader.notes").isEnabled
+            })
+            XCTAssertTrue(element("reader.back").isEnabled)
+        }
+        try step("regression05_back_cancels_before_other_book") {
+            waitElement("reader.back").tap()
+            _ = waitElement("library.title", 40)
+            XCTAssertTrue(waitUntil(40) { self.bookRow("Sample.pdf").isEnabled })
+            bookRow("Sample.pdf").tap()
+            XCTAssertTrue(waitLabel("reader.title", contains: "Sample.pdf", 90))
+            XCTAssertTrue(waitLabel("reader.status", contains: "就绪", 40))
+            attach("30-other-book-after-back")
+        }
+        try step("regression06_other_book_remains_owner_after_prior_completion") {
+            Thread.sleep(forTimeInterval: 6)
+            XCTAssertTrue(text("reader.title").contains("Sample.pdf"))
+            XCTAssertTrue(text("reader.location").contains("/"))
+            waitElement("reader.first").tap()
+            XCTAssertTrue(waitLabel("reader.location", contains: "第 1 /", 40))
+            XCTAssertTrue(waitReaderIdle())
+            waitElement("reader.next").tap()
+            XCTAssertTrue(waitLabel("reader.location", contains: "第 2 /", 40))
+        }
+    }
+
+    func test10UnicodeSelectionAndCrossBookIsolation() throws {
+        var originalNotes = ""
+        try step("regression07_capture_original_book_notes") {
+            launch()
+            try ensureReader("Sample.epub")
+            originalNotes = text("reader.notes")
+            openLibrary()
+            waitElement("library.import.unicode").tap()
+            XCTAssertTrue(waitLabelAny("library.status", ["已导入", "已存在"], 90))
+            bookRow("Unicode.epub").tap()
+            XCTAssertTrue(waitLabel("reader.title", contains: "Unicode.epub", 90))
+        }
+        try step("regression08_select_and_copy_complete_unicode_scalars") {
+            clearNotes()
+            waitElement("reader.select").tap()
+            _ = waitElement("selection.title", 20)
+            waitElement("selection.all").tap()
+            XCTAssertTrue(waitLabel("selection.quote", contains: "A😀é中", 20))
+            XCTAssertFalse(text("selection.quote").contains("\u{FFFD}"))
+            waitElement("selection.copy").tap()
+            waitElement("selection.verifyPaste").tap()
+            XCTAssertTrue(waitLabel("selection.clipboard", contains: "👩🏽‍💻 🇺🇳", 20))
+            XCTAssertFalse(text("selection.clipboard").contains("\u{FFFD}"))
+            attach("31-unicode-native-selection")
+        }
+        try step("regression09_unicode_annotation_matches_selected_source") {
+            waitElement("selection.annotate").tap()
+            XCTAssertTrue(waitLabel("reader.notes", contains: "标注 1", 40))
+            waitElement("reader.notes").tap()
+            XCTAssertTrue(waitLabel("notes.quote.0", contains: "A😀é中", 30))
+            XCTAssertTrue(text("notes.quote.0").contains("👩🏽‍💻 🇺🇳"))
+            XCTAssertFalse(text("notes.quote.0").contains("\u{FFFD}"))
+            waitElement("notes.close").tap()
+        }
+        try step("regression10_unicode_selection_never_writes_other_book") {
+            openLibrary()
+            bookRow("Sample.epub").tap()
+            XCTAssertTrue(waitLabel("reader.title", contains: "Sample.epub", 90))
+            XCTAssertEqual(text("reader.notes"), originalNotes)
+            waitElement("reader.select").tap()
+            _ = waitElement("selection.title", 20)
+            XCTAssertEqual(text("selection.quote"), "尚未选择文字")
+            waitElement("selection.close").tap()
+            attach("32-cross-book-selection-cleared")
+        }
+    }
+
+    func test11SelectionInvalidatedByViewportChange() throws {
+        try step("regression11_select_before_viewport_change") {
+            launch()
+            try ensureReader("Sample.epub")
+            waitElement("reader.select").tap()
+            _ = waitElement("selection.title", 20)
+            waitElement("selection.all").tap()
+            XCTAssertTrue(waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 20))
+        }
+        try step("regression12_changed_frame_rejects_old_selection") {
+#if os(iOS)
+            XCUIDevice.shared.orientation = .landscapeLeft
+#else
+            resizeWindow(dx: -160, dy: -100)
+#endif
+            XCTAssertTrue(waitLabel("selection.hint", contains: "页面已变化", 40))
+            XCTAssertEqual(text("selection.quote"), "尚未选择文字")
+            XCTAssertFalse(element("selection.annotate").isEnabled)
+            XCTAssertFalse(element("selection.copy").isEnabled)
+            attach("33-old-frame-selection-rejected")
+        }
+        try step("regression13_new_frame_requires_fresh_selection") {
+            waitElement("selection.close").tap()
+#if os(iOS)
+            XCUIDevice.shared.orientation = .portrait
+#else
+            resizeWindow(dx: 160, dy: 100)
+#endif
+            Thread.sleep(forTimeInterval: 1.5)
+            XCTAssertTrue(waitReaderIdle())
+            waitElement("reader.select").tap()
+            _ = waitElement("selection.title", 20)
+            XCTAssertEqual(text("selection.quote"), "尚未选择文字")
+            waitElement("selection.all").tap()
+            XCTAssertTrue(waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 20))
+            waitElement("selection.close").tap()
+        }
+    }
+
+    func test12NondefaultFontAndExactProgressRelaunch() throws {
+        var font = "", location = ""
+        try step("regression14_save_nondefault_font_and_progress") {
+            launch()
+            try ensureReader("Sample.epub")
+            let priorFont = text("reader.font.value")
+            waitElement("reader.font.increase").tap()
+            XCTAssertTrue(waitUntil(40) { self.text("reader.font.value") != priorFont })
+            XCTAssertTrue(waitReaderIdle())
+            font = text("reader.font.value")
+            XCTAssertFalse(font.isEmpty)
+            waitElement("reader.first").tap()
+            XCTAssertTrue(waitLabel("reader.location", contains: "第 1 页", 40))
+            XCTAssertTrue(waitReaderIdle())
+            waitElement("reader.next").tap()
+            XCTAssertTrue(waitLabel("reader.location", contains: "第 2 页", 40))
+            location = text("reader.location")
+        }
+        try step("regression15_real_process_relaunch_restores_font_and_page") {
+            app.terminate()
+            launch()
+            _ = waitElement("reader.page", 90)
+            XCTAssertTrue(waitUntil(30) {
+                self.text("reader.font.value") == font && self.text("reader.location") == location
+            })
+            attach("34-nondefault-font-restored")
         }
     }
 }

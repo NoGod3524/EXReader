@@ -1,7 +1,7 @@
 name: WP13 Apple host
 on:
   push:
-    branches: ['codex/wp13-apple']
+    branches: ['codex/wp13-apple', 'codex/wp13-apple-review']
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,7 +20,7 @@ jobs:
         id: sdk-cache
         with:
           path: stage/${{ matrix.target }}
-          key: exreader-sdk-${{ matrix.target }}-${{ hashFiles('CMakeLists.txt', 'src/**', 'include/**', 'cmake/**') }}
+          key: exreader-wp13-review-v2-${{ matrix.target }}-${{ github.sha }}
       - name: Build and install the ${{ matrix.target }} SDK
         if: steps.sdk-cache.outputs.cache-hit != 'true'
         run: |
@@ -40,19 +40,9 @@ jobs:
           test -f "stage/$target/lib/libexreader.dylib"
       - name: Record SDK identity
         run: |
-          python3 - <<'PY'
-          import json, pathlib, re
-          base = pathlib.Path('stage/macos/include/exr/base.h')
-          if not base.exists():
-              base = next(pathlib.Path('stage').glob('*/include/exr/base.h'))
-          text = base.read_text()
-          version = re.search(r'#define EXR_VERSION "([^"]+)"', text).group(1)
-          abi = re.search(r'#define EXR_ABI_VERSION (\d+)u', text).group(1)
-          pathlib.Path('build').mkdir(exist_ok=True)
-          pathlib.Path('build/sdk-identity.json').write_text(
-              json.dumps({'sdk_version': version, 'abi': int(abi)}, indent=2) + '\n')
-          print(version, abi)
-          PY
+          python3 tests/apple_host/evidence_contract.py sdk \
+            --root "stage/${{ matrix.target }}" --platform "${{ matrix.target }}" \
+            --output build/sdk-identity.json
       - uses: actions/upload-artifact@v4
         with:
           name: wp13-apple-sdk-${{ matrix.target }}
@@ -153,73 +143,33 @@ jobs:
             -default-test-execution-time-allowance 180 \
             -maximum-test-execution-time-allowance 300 \
             EXR_SDK_DIR="$sdk_dir" \
+            INFOPLIST_KEY_EXRSourceSHA="$GITHUB_SHA" \
             CODE_SIGNING_ALLOWED="$signing" \
             2>&1 | tee "build/results/${platform}-xcodebuild.log"
       - name: Collect per-case evidence and persisted state
+        id: collect
         if: always()
+        continue-on-error: true
         run: |
           set -euo pipefail
           platform="${{ matrix.platform }}"
           udid=$(sed -n '2p' build/destination.txt)
           if [ "$platform" = macos ]; then
             container="$HOME/Library/Application Support/EXReader"
+            sdk_target=macos
+            app=build/DerivedData/Build/Products/Debug/EXReaderHost.app
           else
-            xcrun simctl boot "$udid" >/dev/null 2>&1 || true
-            xcrun simctl bootstatus "$udid" -b >/dev/null 2>&1 || true
-            container=$(xcrun simctl get_app_container "$udid" org.exreader.host data || true)
+            container=$(xcrun simctl get_app_container "$udid" org.exreader.host data)
+            sdk_target=iphonesimulator
+            app=build/DerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
           fi
-          python3 - "$platform" "$container" <<'PY'
-          import json, pathlib, platform as host_platform, subprocess, sys, datetime
-          platform, container = sys.argv[1], sys.argv[2]
-          lines = pathlib.Path('build/destination.txt').read_text().splitlines()
-          identity_path = next(pathlib.Path('sdk-artifact').glob('*/build/sdk-identity.json'))
-          sdk = json.loads(identity_path.read_text())
-          manifest = json.loads(pathlib.Path('build/apple-resources/manifest.json').read_text())
-          xcode = subprocess.check_output(['xcodebuild', '-version'], text=True).strip()
-          sw_vers = subprocess.check_output(['sw_vers'], text=True).strip()
-          import hashlib
-          def sha(path):
-              return hashlib.sha256(path.read_bytes()).hexdigest()
-          apps = list(pathlib.Path('build/DerivedData/Build/Products').glob('**/EXReaderHost.app'))
-          app_info = {}
-          if apps:
-              bundle = apps[0]
-              exe = bundle / 'Contents/MacOS/EXReaderHost'
-              if not exe.exists():
-                  exe = bundle / 'EXReaderHost'
-              app_info = {'bundle': str(bundle),
-                          'executable_sha256': sha(exe) if exe.exists() else '',
-                          'info_plist_sha256': sha(bundle / 'Contents/Info.plist')
-                          if (bundle / 'Contents/Info.plist').exists()
-                          else sha(bundle / 'Info.plist')
-                          if (bundle / 'Info.plist').exists() else ''}
-          identity = {
-              'platform': platform,
-              'destination': lines[0] if lines else '',
-              'device': lines[2] if len(lines) > 2 else '',
-              'runtime': lines[3] if len(lines) > 3 else '',
-              'container': container,
-              'date': datetime.datetime.now(datetime.timezone.utc).isoformat(),
-              'source_sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
-              'run_id': '${{ github.run_id }}',
-              'run_url': '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              'xcode': xcode,
-              'host': host_platform.platform(),
-              'sw_vers': sw_vers,
-              'sdk': sdk,
-              'app': app_info,
-              'input_driver': 'XCUITest tap/doubleTap/typeText/drag and simulator orientation',
-              'font_sha256': manifest.get('Reader.otf', ''),
-              'fixtures': manifest,
-          }
-          pathlib.Path('build/identity.json').write_text(json.dumps(identity, indent=2) + '\n')
-          PY
           python3 tests/apple_host/collect_evidence.py \
-            --platform "$platform" \
-            --xcresult "build/results/${platform}.xcresult" \
-            --output "build/evidence/${platform}" \
-            --container "$container" \
-            --identity build/identity.json || true
+            --platform "$platform" --xcresult "build/results/${platform}.xcresult" \
+            --output "build/evidence/${platform}" --container "$container" \
+            --sdk-root "stage/$sdk_target" \
+            --sdk-identity "sdk-artifact/wp13-apple-sdk-$sdk_target/build/sdk-identity.json" \
+            --app "$app" --fixtures build/apple-resources/manifest.json \
+            --destination-file build/destination.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -227,13 +177,12 @@ jobs:
           path: |
             build/results/
             build/evidence/
-            build/identity.json
             build/destination.txt
             build/apple-resources/manifest.json
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 30
-      - name: Enforce the UI acceptance result
-        if: steps.uitest.outcome != 'success'
+      - name: Enforce the UI and evidence results
+        if: always() && (steps.uitest.outcome != 'success' || steps.collect.outcome != 'success')
         run: |
           echo "UI acceptance failed for ${{ matrix.platform }}"
           exit 1
@@ -254,6 +203,16 @@ jobs:
           mkdir -p stage
           cp -R sdk-artifact/*/stage/* stage/
           ls stage
+      - name: Build shared fixtures and run the real SDK bridge review
+        run: |
+          set -euo pipefail
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          python3 tests/apple_host/run_sdk_review.py --sdk stage/macos \
+            --resources build/apple-resources --out build/package/sdk-review
+      - name: Run the real session and persistence review
+        run: |
+          python3 tools/check_apple_model_review.py --sdk stage/macos \
+            --resources build/apple-resources --output build/package/model-review
       - name: Build and self-check the macOS reference host
         run: |
           set -euo pipefail
@@ -272,10 +231,62 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/build_apple_host.py --sdk stage/iphoneos --platform iphoneos --output build/package/device
+      - name: Bind the package to this cloud run and attempt
+        run: |
+          python3 tests/apple_host/evidence_contract.py identity --platform package \
+            --output build/package/package-identity.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: wp13-apple-package
           path: build/package/
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 30
+
+  summary:
+    needs: [sdk, uitest, package]
+    if: always()
+    runs-on: macos-15
+    timeout-minutes: 25
+    env:
+      WP13_APPLE_UPSTREAM_RESULTS: ${{ toJSON(needs) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wp13-apple-*
+          path: build/artifacts
+      - name: Revalidate all platform, program, SDK, state and package evidence
+        id: gate
+        continue-on-error: true
+        run: |
+          python3 tests/apple_host/assemble_validation.py --artifacts build/artifacts \
+            --output build/validation --source-sha "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
+      - name: Reject missing, mismatched and failed evidence using real cloud outputs
+        id: regressions
+        continue-on-error: true
+        if: steps.gate.outcome == 'success'
+        run: |
+          python3 tests/apple_host/review_evidence_gate.py --artifacts build/artifacts \
+            --output build/validation/wp13-apple-gate-review.json
+      - name: Bind the final acceptance to the gate regression result
+        id: final
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 tests/apple_host/assemble_validation.py --artifacts build/artifacts \
+            --output build/validation --source-sha "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
+            --require-gate-review build/validation/wp13-apple-gate-review.json
+      - name: Preserve the strict acceptance result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wp13-apple-validation
+          path: build/validation/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Enforce the combined evidence result
+        if: always() && (steps.gate.outcome != 'success' || steps.regressions.outcome != 'success' || steps.final.outcome != 'success')
+        run: exit 1

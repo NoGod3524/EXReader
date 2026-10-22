@@ -3,6 +3,14 @@ import Foundation
 import CoreGraphics
 import CryptoKit
 import CEXReader
+import Combine
+
+struct HostSelectionContext: Equatable {
+    let bookID: Int64
+    let frameCount: Int
+    let baseOffset: Int
+    let text: String
+}
 
 struct HostBookRow: Identifiable, Equatable {
     let id: Int64
@@ -62,6 +70,10 @@ final class HostSession {
 
     var currentViewport: CGSize { viewport }
 
+    func matches(_ context: HostSelectionContext) -> Bool {
+        book?.id == context.bookID && pageText == context.text && pageRange.lowerBound == context.baseOffset
+    }
+
     func listBooks() throws -> [HostBookRow] {
         try library.books().map { book in
             let detail = "\(book.formatLabel) · 位置 \(book.position)"
@@ -74,8 +86,28 @@ final class HostSession {
         currentCancel?.cancel()
     }
 
-    private func begin(_ cancel: HostCancelBox) {
+    private func begin(_ cancel: HostCancelBox) throws {
+        try cancel.check()
         currentCancel = cancel
+    }
+
+    func candidate() -> HostSession {
+        HostSession(library: library, font: font, slowDelay: slowDelay,
+                    viewport: viewport, fontSize: fontSize)
+    }
+
+    // Keep the last usable frame/session if parsing, seeking, rendering or saving fails.
+    private func changing(_ cancel: HostCancelBox, _ operation: () throws -> HostSnapshot) throws -> HostSnapshot {
+        let old = (book, document, pager, fixed, page, readingOffset, fontSize, viewport, pageText, pageRange, currentCancel)
+        try begin(cancel)
+        do {
+            if slowDelay > 0 { try waitCancellable(cancel, seconds: slowDelay) }
+            return try operation()
+        }
+        catch {
+            (book, document, pager, fixed, page, readingOffset, fontSize, viewport, pageText, pageRange, currentCancel) = old
+            throw error
+        }
     }
 
     private func waitCancellable(_ cancel: HostCancelBox, seconds: Double) throws {
@@ -101,133 +133,144 @@ final class HostSession {
     }
 
     func importBook(url: URL, cancel: HostCancelBox) throws -> (Int64, Bool) {
-        begin(cancel)
+        try begin(cancel)
         if slowDelay > 0 { try waitCancellable(cancel, seconds: slowDelay) }
         let title = url.lastPathComponent
-        let (id, created) = try library.importUnique(file: url, title: title)
+        let (id, created) = try library.importUnique(file: url, title: title, cancel: cancel)
         return (id, created)
     }
 
     func open(bookID: Int64, cancel: HostCancelBox) throws -> HostSnapshot {
+        try cancel.check()
         guard let target = try library.books().first(where: { $0.id == bookID }) else {
             throw HostError.invalidInput("书籍不存在")
         }
-        return try open(book: target, cancel: cancel)
+        return try changing(cancel) { try open(book: target, cancel: cancel) }
     }
 
     private func open(book target: HostBook, cancel: HostCancelBox) throws -> HostSnapshot {
-        begin(cancel)
+        try begin(cancel)
         closeDocument()
         book = target
         if target.isFixed {
-            let fixed = try library.fixed(bookID: target.id, font: font)
+            let fixed = try library.fixed(bookID: target.id, font: font, cancel: cancel)
             self.fixed = fixed
             page = min(max(0, target.position), max(0, fixed.pageCount - 1))
         } else {
-            let document = try library.document(bookID: target.id)
+            let document = try library.document(bookID: target.id, cancel: cancel)
             self.document = document
             page = 0
-            readingOffset = 0
-            if let saved = try? library.progress(bookID: target.id),
-               saved.state == EXR_ANCHOR_FOUND || saved.state == EXR_ANCHOR_LEGACY {
+            readingOffset = target.position
+            let saved = try library.progress(bookID: target.id)
+            if saved.state == EXR_ANCHOR_FOUND || saved.state == EXR_ANCHOR_LEGACY {
                 readingOffset = saved.anchor.start
             }
             try rebuildPager(width: Double(viewport.width), height: Double(viewport.height),
                              font: fontSize, cancel: cancel)
         }
-        do {
-            return try renderSnapshot()
-        } catch {
-            if let failure = pager?.failure {
-                throw HostError.invalidInput("分页失败（\(Int(viewport.width))x\(Int(viewport.height))）：\(failure)")
-            }
-            throw error
-        }
+        return try renderSnapshot()
     }
 
     private func rebuildPager(width: Double, height: Double, font size: Double,
                               cancel: HostCancelBox) throws {
         guard let document else { return }
-        begin(cancel)
-        let anchor = try? document.makeAnchor(start: readingOffset, end: readingOffset)
+        try begin(cancel)
+        guard width.isFinite, height.isFinite, size.isFinite else {
+            throw HostError.invalidInput("页面尺寸或字号无效")
+        }
+        let anchor = try document.makeAnchor(start: readingOffset, end: readingOffset)
         viewport = CGSize(width: width, height: height)
         fontSize = size
         let newPager = try HostPager(document: document, font: font, width: width, height: height,
                                      fontSize: size, box: cancel)
         pager = newPager
-        if let anchor {
-            page = (try? newPager.pageIndex(for: anchor.start)) ?? 0
-        }
-        if (try? newPager.pageRange(page)) == nil { page = 0 }
+        page = try newPager.pageIndex(for: anchor.start, cancel: cancel)
+        _ = try newPager.pageRange(page, cancel: cancel)
     }
 
     func resize(width: Double, height: Double, cancel: HostCancelBox) throws -> HostSnapshot {
-        begin(cancel)
-        guard fixed == nil, document != nil else { return try renderSnapshot() }
-        try rebuildPager(width: width, height: height, font: fontSize, cancel: cancel)
-        return try renderSnapshot()
+        try changing(cancel) {
+            if fixed == nil, document != nil {
+                try rebuildPager(width: width, height: height, font: fontSize, cancel: cancel)
+            }
+            return try renderSnapshot()
+        }
     }
 
     func changeFont(delta: Double, cancel: HostCancelBox) throws -> HostSnapshot {
-        begin(cancel)
-        guard fixed == nil, document != nil else { return try renderSnapshot() }
-        let next = min(48, max(18, fontSize + delta))
-        guard next != fontSize else { return try renderSnapshot() }
-        try rebuildPager(width: Double(viewport.width), height: Double(viewport.height),
-                         font: next, cancel: cancel)
-        return try renderSnapshot()
+        try changing(cancel) {
+            guard delta.isFinite else { throw HostError.invalidInput("字号无效") }
+            if fixed == nil, document != nil {
+                let next = min(48, max(18, fontSize + delta))
+                if next != fontSize {
+                    try rebuildPager(width: Double(viewport.width), height: Double(viewport.height),
+                                     font: next, cancel: cancel)
+                }
+            }
+            return try renderSnapshot()
+        }
     }
 
     func turn(_ direction: Int, cancel: HostCancelBox) throws -> HostSnapshot {
-        begin(cancel)
-        guard let book else { throw HostError.invalidInput("没有打开的书") }
-        if let fixed {
-            let next = page + direction
-            page = min(max(0, next), max(0, fixed.pageCount - 1))
-        } else {
-            guard pager != nil else { throw HostError.invalidInput("分页尚未就绪") }
-            let next = page + direction
-            if next >= 0, (try? pager?.pageRange(next)) != nil {
-                page = next
+        try changing(cancel) {
+            guard book != nil else { throw HostError.invalidInput("没有打开的书") }
+            guard direction == -1 || direction == 1 else { throw HostError.invalidInput("翻页方向无效") }
+            if let fixed {
+                page = min(max(0, page + direction), max(0, fixed.pageCount - 1))
+            } else {
+                guard let pager else { throw HostError.invalidInput("分页尚未就绪") }
+                let next = page + direction
+                if next >= 0, try pager.existingRange(next, cancel: cancel) != nil { page = next }
             }
+            return try renderSnapshot(userMove: true)
         }
-        _ = book
-        return try renderSnapshot(userMove: true)
     }
 
     func firstPage(cancel: HostCancelBox) throws -> HostSnapshot {
-        begin(cancel)
-        page = 0
-        return try renderSnapshot(userMove: true)
+        try changing(cancel) {
+            page = 0
+            return try renderSnapshot(userMove: true)
+        }
     }
 
     func renderSnapshot(userMove: Bool = false) throws -> HostSnapshot {
         guard let book else { throw HostError.invalidInput("没有打开的书") }
+        let cancel = currentCancel ?? HostCancelBox()
+        try cancel.check()
         if let fixed {
-            let bitmap = try fixed.render(page: page, maximumDimension: 2200)
-            let text = try fixed.text(page: page).text
-            pageText = text
+            let bitmap = try fixed.render(page: page, maximumDimension: 2200, cancel: cancel)
+            let text = try fixed.text(page: page, cancel: cancel).text
+            guard let image = makeCGImage(bitmap) else { throw HostError.invalidResult("页面图像无法创建") }
             let total = max(1, fixed.pageCount)
             let percent = Int((Double(page + 1) / Double(total) * 100).rounded())
             let location = "第 \(page + 1) / \(total) 页"
-            pageRange = 0..<0
-            try persist(book: book, fixed: fixed)
-            return HostSnapshot(book: book, image: makeCGImage(bitmap), location: location,
+            try cancel.commit {
+                try library.updatePosition(book: book, position: page)
+                pageText = text
+                pageRange = 0..<0
+            }
+            return HostSnapshot(book: book, image: image, location: location,
                                 progress: "\(percent)% · 固定版式", pageText: text, pageIndex: page,
                                 pageRange: 0..<0, pageCount: total, fontSize: Int(fontSize),
                                 pageAccessibilityLabel: pageLabel(text: text, page: page + 1))
         }
         guard let document, let pager else { throw HostError.invalidInput("分页尚未就绪") }
-        let range = try pager.pageRange(page)
-        if userMove { readingOffset = range.lowerBound }
-        let bitmap = try pager.render(page)
+        let range = try pager.pageRange(page, cancel: cancel)
+        let nextOffset = userMove ? range.lowerBound : readingOffset
+        let bitmap = try pager.render(page, cancel: cancel)
+        guard let image = makeCGImage(bitmap) else { throw HostError.invalidResult("页面图像无法创建") }
         let text = slice(document.text, range)
-        pageRange = range
-        pageText = text
         let totalBytes = max(1, document.text.count)
         let percent = min(100, Int((Double(range.upperBound) / Double(totalBytes) * 100).rounded()))
-        try persist(book: book, fixed: nil, document: document, range: range)
-        return HostSnapshot(book: book, image: makeCGImage(bitmap),
+        let anchor = try document.makeAnchor(start: nextOffset, end: nextOffset)
+        try cancel.commit {
+            // This SDK call updates numeric position and selector in one transaction.
+            try library.setProgress(bookID: book.id, anchor: anchor)
+            readingOffset = nextOffset
+            pageRange = range
+            pageText = text
+        }
+        return HostSnapshot(book: book, image: image,
                             location: "第 \(page + 1) 页", progress: "\(percent)%",
                             pageText: text, pageIndex: page, pageRange: range, pageCount: nil,
                             fontSize: Int(fontSize),
@@ -246,21 +289,6 @@ final class HostSession {
         return String(decoding: data[range], as: UTF8.self)
     }
 
-    private func persist(book: HostBook, fixed: HostFixed?) throws {
-        if fixed != nil {
-            try library.updatePosition(book: book, position: page)
-        } else if let document {
-            let anchor = try document.makeAnchor(start: readingOffset, end: readingOffset)
-            try library.setProgress(bookID: book.id, anchor: anchor)
-        }
-    }
-
-    private func persist(book: HostBook, fixed: HostFixed?, document: HostDocument, range: Range<Int>) throws {
-        try library.updatePosition(book: book, position: readingOffset)
-        let anchor = try document.makeAnchor(start: readingOffset, end: readingOffset)
-        try library.setProgress(bookID: book.id, anchor: anchor)
-    }
-
     func notes() throws -> [HostNoteRow] {
         guard let book else { return [] }
         if let fixed { return try library.fixedNotes(bookID: book.id, fixed: fixed) }
@@ -269,49 +297,65 @@ final class HostSession {
     }
 
     func addNote(start: Int, end: Int, comment: String, cancel: HostCancelBox) throws {
-        begin(cancel)
+        try begin(cancel)
         guard let book else { throw HostError.invalidInput("没有打开的书") }
-        if fixed != nil {
-            _ = try library.addFixedNote(bookID: book.id, page: page, start: start, end: end, text: comment)
-        } else {
-            _ = try library.addNote(bookID: book.id, start: start, end: end, text: comment)
+        guard start >= 0, end > start else { throw HostError.invalidInput("选文范围无效") }
+        try cancel.commit {
+            if fixed != nil {
+                _ = try library.addFixedNote(bookID: book.id, page: page, start: start, end: end, text: comment)
+            } else {
+                _ = try library.addNote(bookID: book.id, start: start, end: end, text: comment)
+            }
         }
     }
 
     func updateNote(noteID: Int64, text: String, cancel: HostCancelBox) throws {
-        begin(cancel)
-        try library.updateNoteText(noteID: noteID, text: text)
+        try begin(cancel)
+        guard let book else { throw HostError.invalidInput("没有打开的书") }
+        guard try notes().contains(where: { $0.id == noteID }) else { throw HostError.invalidInput("标注已不属于当前书籍") }
+        try cancel.commit {
+            if fixed != nil { try library.updateFixedNoteText(bookID: book.id, noteID: noteID, text: text) }
+            else { try library.updateNoteText(noteID: noteID, text: text) }
+        }
     }
 
     func deleteNote(_ note: HostNoteRow, cancel: HostCancelBox) throws {
-        begin(cancel)
-        if note.page >= 0 {
-            try library.removeFixedNote(noteID: note.id)
-        } else {
-            try library.removeNote(noteID: note.id)
+        try begin(cancel)
+        guard note.bookID == book?.id else { throw HostError.invalidInput("标注已不属于当前书籍") }
+        guard try notes().contains(where: { $0.id == note.id && $0.page == note.page }) else {
+            throw HostError.invalidInput("标注已不属于当前书籍")
+        }
+        try cancel.commit {
+            if note.page >= 0 { try library.removeFixedNote(noteID: note.id) }
+            else { try library.removeNote(noteID: note.id) }
         }
     }
 
     func jump(to note: HostNoteRow, cancel: HostCancelBox) throws -> HostSnapshot {
-        begin(cancel)
-        guard note.isResolved else { throw HostError.invalidInput("该标注无法精确恢复") }
-        if let fixed {
-            page = min(max(0, note.page), max(0, fixed.pageCount - 1))
+        try changing(cancel) {
+            guard note.bookID == book?.id else { throw HostError.invalidInput("标注已不属于当前书籍") }
+            guard let stored = try notes().first(where: { $0.id == note.id && $0.page == note.page }), stored.isResolved else {
+                throw HostError.invalidInput("该标注无法精确恢复")
+            }
+            if let fixed {
+                guard stored.page >= 0, stored.page < fixed.pageCount else { throw HostError.invalidInput("标注页码无效") }
+                page = stored.page
+            } else {
+                guard let pager else { throw HostError.invalidInput("分页尚未就绪") }
+                page = try pager.pageIndex(for: stored.start, cancel: cancel)
+                readingOffset = stored.start
+            }
             return try renderSnapshot()
         }
-        guard let pager else { throw HostError.invalidInput("分页尚未就绪") }
-        page = try pager.pageIndex(for: note.start)
-        return try renderSnapshot(userMove: true)
     }
 
-    func persistCurrent() {
+    func persistCurrent() throws {
         guard let book else { return }
         if let fixed {
-            try? library.updatePosition(book: book, position: page)
+            try library.updatePosition(book: book, position: page)
         } else if let document {
-            if let anchor = try? document.makeAnchor(start: readingOffset, end: readingOffset) {
-                try? library.setProgress(bookID: book.id, anchor: anchor)
-            }
+            let anchor = try document.makeAnchor(start: readingOffset, end: readingOffset)
+            try library.setProgress(bookID: book.id, anchor: anchor)
         }
     }
 
@@ -385,6 +429,7 @@ final class HostReaderModel: ObservableObject {
     private var started = false
     private var lastViewport = CGSize.zero
     private var viewportWork: DispatchWorkItem?
+    private var pendingViewport: CGSize?
     private let defaults = UserDefaults.standard
     private let testFixtures = ProcessInfo.processInfo.arguments.contains("-EXRUITestFixtures")
     private let freshState = ProcessInfo.processInfo.arguments.contains("-EXRFreshState")
@@ -392,9 +437,24 @@ final class HostReaderModel: ObservableObject {
 
     var showsTestFixtures: Bool { testFixtures }
 
+    var selectionContext: HostSelectionContext? {
+        guard let current, !busy else { return nil }
+        return HostSelectionContext(bookID: current.id, frameCount: frameCount,
+                                    baseOffset: pageBaseOffset, text: pageText)
+    }
+
+    func reportImportFailure(_ error: Error) {
+        guard !busy else { return }
+        let failure = error as NSError
+        guard failure.domain != NSCocoaErrorDomain || failure.code != NSUserCancelledError else { return }
+        errorText = describe(error)
+        statusText = "导入失败"
+    }
+
     func start() {
         guard !started else { return }
         started = true
+        busy = true
         if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "-EXRHostDelayMs"),
            index + 1 < ProcessInfo.processInfo.arguments.count,
            let value = Double(ProcessInfo.processInfo.arguments[index + 1]) {
@@ -431,6 +491,7 @@ final class HostReaderModel: ObservableObject {
                 let lastID = (self.defaults.object(forKey: "EXRLastBook") as? NSNumber)?.int64Value
                 DispatchQueue.main.async {
                     self.books = rows
+                    self.busy = false
                     if let lastID, rows.contains(where: { $0.id == lastID }) {
                         self.openBook(id: lastID)
                     } else {
@@ -470,6 +531,7 @@ final class HostReaderModel: ObservableObject {
     }
 
     private func begin() -> (Int, HostCancelBox) {
+        activeCancel?.cancel()
         token += 1
         let box = HostCancelBox()
         activeCancel = box
@@ -480,6 +542,66 @@ final class HostReaderModel: ObservableObject {
 
     private func finish() {
         busy = false
+        activeCancel = nil
+        if let size = pendingViewport {
+            pendingViewport = nil
+            DispatchQueue.main.async { [weak self] in self?.applyViewport(size) }
+        }
+    }
+
+    private func requireBook(_ id: Int64, session: HostSession, cancel: HostCancelBox) throws {
+        try cancel.check()
+        guard session.book?.id == id else { throw HostError.invalidInput("书籍已切换，请重试操作") }
+    }
+
+    @discardableResult
+    private func completeFrame(_ snapshot: HostSnapshot, session: HostSession, token: Int,
+                               status: String, opening: Bool = false) -> Bool {
+        let notes = Result { try session.notes() }
+        let hash = Result { try session.stateHash() }
+        let viewport = session.currentViewport
+        var warnings: [String] = []
+        if case .failure(let error) = notes { warnings.append("标注刷新失败：\(describe(error))") }
+        if case .failure(let error) = hash { warnings.append("状态刷新失败：\(describe(error))") }
+        do { try writeState(session: session) }
+        catch { warnings.append("状态记录失败：\(describe(error))") }
+        let warning = warnings.joined(separator: "；")
+        return DispatchQueue.main.sync {
+            guard token == self.token else { return false }
+            self.apply(snapshot)
+            if opening { self.showLibrary = false }
+            if case .success(let rows) = notes { self.notes = rows }
+            if case .success(let value) = hash { self.stateHash = value }
+            self.defaults.set(Double(viewport.width), forKey: "EXRViewportWidth")
+            self.defaults.set(Double(viewport.height), forKey: "EXRViewportHeight")
+            self.statusText = warning.isEmpty ? status : "页面已更新，状态刷新失败"
+            self.errorText = warning
+            self.finish()
+            return true
+        }
+    }
+
+    private func completeMutation(session: HostSession, token: Int, status: String, imported: Bool = false) {
+        let books = Result { try session.listBooks() }
+        let notes = Result { try session.notes() }
+        let hash = Result { try session.stateHash() }
+        var warnings: [String] = []
+        if case .failure(let error) = books { warnings.append("书架刷新失败：\(describe(error))") }
+        if case .failure(let error) = notes { warnings.append("标注刷新失败：\(describe(error))") }
+        if case .failure(let error) = hash { warnings.append("状态刷新失败：\(describe(error))") }
+        do { try writeState(session: session) }
+        catch { warnings.append("状态记录失败：\(describe(error))") }
+        let warning = warnings.joined(separator: "；")
+        DispatchQueue.main.async {
+            guard token == self.token else { return }
+            if case .success(let rows) = books { self.books = rows }
+            if case .success(let rows) = notes { self.notes = rows }
+            if case .success(let value) = hash { self.stateHash = value }
+            if imported { self.showLibrary = true }
+            self.statusText = warning.isEmpty ? status : "\(status)，刷新失败"
+            self.errorText = warning
+            self.finish()
+        }
     }
 
     private func apply(_ snapshot: HostSnapshot) {
@@ -505,6 +627,7 @@ final class HostReaderModel: ObservableObject {
     }
 
     func refreshState() {
+        guard !busy else { return }
         let (myToken, _) = begin()
         queue.async {
             do {
@@ -534,22 +657,17 @@ final class HostReaderModel: ObservableObject {
     }
 
     func openBook(_ row: HostBookRow) {
+        guard !busy else { return }
         let (myToken, box) = begin()
         statusText = "正在打开…"
         queue.async {
             do {
                 guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
-                let snapshot = try session.open(bookID: row.id, cancel: box)
-                let notes = try session.notes()
-                let hash = try session.stateHash()
-                try? self.writeState(session: session)
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.apply(snapshot)
-                    self.showLibrary = false
-                    self.publishNotes(notes, hash: hash)
-                    self.statusText = box.isCancelled ? "已取消" : "就绪"
-                    self.finish()
+                let candidate = session.candidate()
+                let snapshot = try candidate.open(bookID: row.id, cancel: box)
+                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "就绪", opening: true) {
+                    // Only the accepted candidate replaces SDK handles, on their serial owner queue.
+                    self.session = candidate
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -561,6 +679,7 @@ final class HostReaderModel: ObservableObject {
     }
 
     func importFile(_ url: URL) {
+        guard !busy else { return }
         let (myToken, box) = begin()
         statusText = "正在导入…"
         queue.async {
@@ -569,24 +688,14 @@ final class HostReaderModel: ObservableObject {
             do {
                 guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
                 let (bookID, created) = try session.importBook(url: url, cancel: box)
-                let rows = try session.listBooks()
-                let hash = try session.stateHash()
-                try? self.writeState(session: session)
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.books = rows
-                    self.showLibrary = true
-                    self.stateHash = hash
-                    if box.isCancelled {
-                        self.statusText = "已取消"
-                    } else if created {
-                        let name = rows.first(where: { $0.id == bookID })?.title ?? "书籍"
-                        self.statusText = "已导入 \(name)"
-                    } else {
-                        self.statusText = "已存在，复用书架记录"
-                    }
-                    self.finish()
+                do { try box.commit {} }
+                catch {
+                    if created { try session.library.delete(bookID: bookID) }
+                    throw error
                 }
+                self.completeMutation(session: session, token: myToken,
+                                      status: created ? "已导入 \(url.lastPathComponent)" : "已存在，复用书架记录",
+                                      imported: true)
             } catch {
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
@@ -605,19 +714,14 @@ final class HostReaderModel: ObservableObject {
     }
 
     func turn(_ delta: Int) {
+        guard !busy, let bookID = current?.id else { return }
         let (myToken, box) = begin()
         queue.async {
             do {
                 guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
+                try self.requireBook(bookID, session: session, cancel: box)
                 let snapshot = try session.turn(delta, cancel: box)
-                let hash = try session.stateHash()
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.apply(snapshot)
-                    self.stateHash = hash
-                    self.statusText = box.isCancelled ? "已取消" : "就绪"
-                    self.finish()
-                }
+                self.completeFrame(snapshot, session: session, token: myToken, status: "就绪")
             } catch {
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
@@ -628,19 +732,14 @@ final class HostReaderModel: ObservableObject {
     }
 
     func firstPage() {
+        guard !busy, let bookID = current?.id else { return }
         let (myToken, box) = begin()
         queue.async {
             do {
                 guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
+                try self.requireBook(bookID, session: session, cancel: box)
                 let snapshot = try session.firstPage(cancel: box)
-                let hash = try session.stateHash()
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.apply(snapshot)
-                    self.stateHash = hash
-                    self.statusText = "就绪"
-                    self.finish()
-                }
+                self.completeFrame(snapshot, session: session, token: myToken, status: "就绪")
             } catch {
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
@@ -651,19 +750,15 @@ final class HostReaderModel: ObservableObject {
     }
 
     func changeFont(_ delta: Int) {
+        guard !busy, let bookID = current?.id else { return }
         let (myToken, box) = begin()
         queue.async {
             do {
                 guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
+                try self.requireBook(bookID, session: session, cancel: box)
                 let snapshot = try session.changeFont(delta: Double(delta), cancel: box)
-                let hash = try session.stateHash()
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.apply(snapshot)
-                    self.stateHash = hash
-                    self.statusText = snapshot.pageCount == nil ? "字号 \(snapshot.fontSize)" : "固定版式"
-                    self.finish()
-                }
+                self.completeFrame(snapshot, session: session, token: myToken,
+                                   status: snapshot.pageCount == nil ? "字号 \(snapshot.fontSize)" : "固定版式")
             } catch {
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
@@ -685,18 +780,126 @@ final class HostReaderModel: ObservableObject {
 
     private func applyViewport(_ size: CGSize) {
         guard let current, !current.isFixed else { return }
-        defaults.set(Double(size.width), forKey: "EXRViewportWidth")
-        defaults.set(Double(size.height), forKey: "EXRViewportHeight")
+        guard !busy else { pendingViewport = size; return }
+        let bookID = current.id
         let (myToken, box) = begin()
         queue.async {
             do {
                 guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
+                try self.requireBook(bookID, session: session, cancel: box)
                 let snapshot = try session.resize(width: Double(size.width), height: Double(size.height), cancel: box)
-                let hash = try session.stateHash()
+                self.completeFrame(snapshot, session: session, token: myToken, status: "就绪")
+            } catch {
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
-                    self.apply(snapshot)
-                    self.stateHash = hash
+                    self.fail(error)
+                }
+            }
+        }
+    }
+
+    func addNote(start: Int, end: Int, comment: String, expectedContext: HostSelectionContext? = nil) {
+        guard !busy, let context = expectedContext ?? selectionContext, context == selectionContext,
+              start >= context.baseOffset, end > start,
+              end - context.baseOffset <= context.text.utf8.count else {
+            errorText = "选文已失效，请重新选择"
+            return
+        }
+        let (myToken, box) = begin()
+        queue.async {
+            do {
+                guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
+                try self.requireBook(context.bookID, session: session, cancel: box)
+                guard session.matches(context) else { throw HostError.invalidInput("选文页面已变化，请重新选择") }
+                try session.addNote(start: start, end: end, comment: comment, cancel: box)
+                self.completeMutation(session: session, token: myToken, status: "已保存标注")
+            } catch {
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.fail(error)
+                }
+            }
+        }
+    }
+
+    func updateNote(_ note: HostNoteRow, text: String) {
+        guard !busy, let bookID = current?.id, note.bookID == bookID else { return }
+        let (myToken, box) = begin()
+        queue.async {
+            do {
+                guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
+                try self.requireBook(bookID, session: session, cancel: box)
+                try session.updateNote(noteID: note.id, text: text, cancel: box)
+                self.completeMutation(session: session, token: myToken, status: "标注已更新")
+            } catch {
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.fail(error)
+                }
+            }
+        }
+    }
+
+    func deleteNote(_ note: HostNoteRow) {
+        guard !busy, let bookID = current?.id, note.bookID == bookID else { return }
+        let (myToken, box) = begin()
+        queue.async {
+            do {
+                guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
+                try self.requireBook(bookID, session: session, cancel: box)
+                try session.deleteNote(note, cancel: box)
+                self.completeMutation(session: session, token: myToken, status: "标注已删除")
+            } catch {
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.fail(error)
+                }
+            }
+        }
+    }
+
+    func jump(to note: HostNoteRow) {
+        guard !busy, let bookID = current?.id, note.bookID == bookID else { return }
+        let (myToken, box) = begin()
+        queue.async {
+            do {
+                guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
+                try self.requireBook(bookID, session: session, cancel: box)
+                let snapshot = try session.jump(to: note, cancel: box)
+                self.completeFrame(snapshot, session: session, token: myToken, status: "已定位标注")
+            } catch {
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.fail(error)
+                }
+            }
+        }
+    }
+
+    func backToLibrary() {
+        token += 1
+        let myToken = token
+        activeCancel?.cancel()
+        viewportWork?.cancel()
+        pendingViewport = nil
+        busy = true
+        statusText = "正在保存…"
+        queue.async {
+            do {
+                try self.session?.persistCurrent()
+                let rows = try self.session?.listBooks() ?? []
+                try self.writeState(session: self.session)
+                self.session?.close()
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.books = rows
+                    self.showLibrary = true
+                    self.current = nil
+                    self.image = nil
+                    self.pageText = ""
+                    self.notes = []
+                    self.defaults.removeObject(forKey: "EXRLastBook")
+                    self.errorText = ""
                     self.statusText = "就绪"
                     self.finish()
                 }
@@ -709,134 +912,31 @@ final class HostReaderModel: ObservableObject {
         }
     }
 
-    func addNote(start: Int, end: Int, comment: String) {
-        let (myToken, box) = begin()
-        queue.async {
-            do {
-                guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
-                try session.addNote(start: start, end: end, comment: comment, cancel: box)
-                let notes = try session.notes()
-                let hash = try session.stateHash()
-                try? self.writeState(session: session)
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.publishNotes(notes, hash: hash)
-                    self.statusText = "已保存标注"
-                    self.finish()
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.fail(error)
-                }
-            }
-        }
-    }
-
-    func updateNote(_ note: HostNoteRow, text: String) {
-        let (myToken, box) = begin()
-        queue.async {
-            do {
-                guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
-                try session.updateNote(noteID: note.id, text: text, cancel: box)
-                let notes = try session.notes()
-                let hash = try session.stateHash()
-                try? self.writeState(session: session)
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.publishNotes(notes, hash: hash)
-                    self.statusText = "标注已更新"
-                    self.finish()
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.fail(error)
-                }
-            }
-        }
-    }
-
-    func deleteNote(_ note: HostNoteRow) {
-        let (myToken, box) = begin()
-        queue.async {
-            do {
-                guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
-                try session.deleteNote(note, cancel: box)
-                let notes = try session.notes()
-                let hash = try session.stateHash()
-                try? self.writeState(session: session)
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.publishNotes(notes, hash: hash)
-                    self.statusText = "标注已删除"
-                    self.finish()
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.fail(error)
-                }
-            }
-        }
-    }
-
-    func jump(to note: HostNoteRow) {
-        let (myToken, box) = begin()
-        queue.async {
-            do {
-                guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
-                let snapshot = try session.jump(to: note, cancel: box)
-                let hash = try session.stateHash()
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.apply(snapshot)
-                    self.stateHash = hash
-                    self.statusText = "已定位标注"
-                    self.finish()
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    guard myToken == self.token else { return }
-                    self.fail(error)
-                }
-            }
-        }
-    }
-
-    func backToLibrary() {
-        token += 1
-        activeCancel?.cancel()
-        busy = false
-        showLibrary = true
-        current = nil
-        image = nil
-        queue.async {
-            self.session?.persistCurrent()
-            self.session?.close()
-            if let rows = try? self.session?.listBooks() {
-                DispatchQueue.main.async { self.books = rows }
-            }
-        }
-    }
-
     func cancelWork() {
         activeCancel?.cancel()
         statusText = "正在取消…"
     }
 
     func persistNow() {
+        let myToken = token
         queue.async {
-            self.session?.persistCurrent()
-            try? self.writeState(session: self.session)
+            do {
+                try self.session?.persistCurrent()
+                try self.writeState(session: self.session)
+            } catch {
+                self.appendLog("persistence failed: \(self.describe(error))")
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.errorText = "保存失败：\(self.describe(error))"
+                    self.statusText = "保存失败，请重试"
+                }
+            }
         }
     }
 
     func detach() {
         activeCancel?.cancel()
-        queue.async {
-            self.session?.persistCurrent()
-        }
+        persistNow()
     }
 
     private func appendLog(_ text: String) {

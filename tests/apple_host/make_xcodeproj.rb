@@ -44,6 +44,7 @@ def app_settings(target, platform, deployment)
     settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'org.exreader.host'
     settings['GENERATE_INFOPLIST_FILE'] = 'YES'
     settings['INFOPLIST_KEY_CFBundleDisplayName'] = 'EXReader'
+    settings['INFOPLIST_KEY_EXRSourceSHA'] = ENV.fetch('GITHUB_SHA')
     settings['CURRENT_PROJECT_VERSION'] = '1'
     settings['MARKETING_VERSION'] = '1.0'
     settings['CODE_SIGN_STYLE'] = 'Manual'

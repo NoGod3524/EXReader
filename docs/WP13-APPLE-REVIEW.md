@@ -1,0 +1,26 @@
+# Apple 宿主独立审计修复
+
+原始交付 `3bd85cd97efc04e46b10bfd1bc8bb80c45b6dab7`、原受测源码 `960b6653e231cc5095deb6e71932061e8a32a8fb` 及其云端 run `39717882847` 保留。修复分支为 `codex/wp13-apple-review`。本分支尚待云端复验，不使用原交付全绿替代修复验收。
+
+## 已修复的行为
+
+- 阅读进度使用 SDK 的原子点锚点写入；固定页位置更新读取最新书籍记录，保留标签、收藏、状态、标题和作者。
+- 翻页、定位、渲染和固定页文字提取使用当前任务的取消控制；只把明确的文档终点作为正常结束，其他分页错误向上传播。导入先限制读取，再以有界块读取并检查取消；新建记录在提交前取消时回滚，回滚失败单独报告。
+- 开书使用候选会话；失败不替换原会话。翻页、字号和视口变化在解析、渲染或保存失败时恢复原状态。后台及返回书架时的持久化错误显示在 UI 中。
+- 固定页标注的评论写入固定页表，保留选择器，不再写入重排标注表。标注和选文携带书籍身份；选文还绑定页面版本、文本和基础偏移。旧帧、旧书或不完整 UTF-16 标量的范围被拒绝。
+- 忙态限制竞争操作；异步原生选文回调绑定文本与页面版本，失效后清空。系统文件选择器错误向用户显示。
+- 证据检查按平台、源码、run、attempt、实际程序、SDK、字体与夹具绑定；完整具名用例、步骤、附件、数据库、状态、原 21 项自检和未签名包均为必需证据，缺失或上游失败时拒绝。
+
+## 验证入口
+
+原 7 个 UI 用例、46 个具名步骤及 macOS/iPhone/iPad 各 21 项自检保持。新增 5 个 UI 用例、15 个步骤；新增 21 项公开 SDK 桥接回归及 14 项会话回归，后者包含实际 SQLite 写入失败。严格汇总和证据拒绝回归在同一次云端运行执行。
+
+实现：`examples/apple/HostModel.swift`、`examples/apple/HostSDK.swift`、`examples/apple/HostViews.swift`、`examples/apple/SelectableText.swift`。
+
+验收：`tests/apple_host/EXReaderHostUITests.swift`、`tests/apple_host/sdk_review/SDKReview.swift`、`tests/apple_host/review/ModelReview.swift`、`tests/apple_host/evidence_contract.py`、`tests/apple_host/collect_evidence.py`、`tests/apple_host/assemble_validation.py`、`.github/workflows/wp13-apple.yml`。
+
+构建、测试、模拟器、夹具生成和证据汇总均只在 GitHub Actions 执行；本地只编辑和检查源码、文档及 Git 差异。
+
+## 保持的范围
+
+单原件上限 32 MiB；重排书仍使用完整文档快照，未接有界章入口。公开接口不支持控制回调的快照解析和标注写入不能在其内部中断，取消在调用前后或提交边界处理。真机安装暂缓；系统文件选择器的系统进程操作和 VoiceOver 人工走查未验收。本包不授予 WP16 长测 CPU 时长，也不改变 ABI1/schema6。

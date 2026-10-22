@@ -1,24 +1,57 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Assemble WP13 Apple acceptance JSON from downloaded cloud artifacts."""
+"""Accept only complete, same-run Apple evidence whose actual files revalidate."""
 import argparse
-import hashlib
+import datetime
 import json
+import os
 from pathlib import Path
+import sqlite3
+import subprocess
+import zipfile
 
-PLATFORMS = {'macos': 'macOS', 'iphone': 'iPhone simulator', 'ipad': 'iPad simulator'}
-
-
-def digest(path):
-    sha = hashlib.sha256()
-    with open(path, 'rb') as stream:
-        for chunk in iter(lambda: stream.read(1 << 20), b''):
-            sha.update(chunk)
-    return sha.hexdigest()
+from evidence_contract import (PLATFORMS, SDK_TARGET, cloud_identity, digest, load, require,
+    validate_identity, validate_package, validate_platform, validate_review_reports, validate_sdk)
 
 
-def load(path):
-    return json.loads(Path(path).read_text())
+def assemble(args):
+    expected = cloud_identity('summary')
+    validate_identity(expected, args.source_sha, args.run_id, args.attempt, 'summary', 'summary')
+    upstream = json.loads(args.upstream_results)
+    require(set(upstream) == {'sdk', 'uitest', 'package'} and
+            all(upstream[key].get('result') == 'success' for key in upstream),
+            'upstream SDK, UI or package job did not succeed')
+    sdks = {}
+    for target in ('macos', 'iphonesimulator', 'iphoneos'):
+        artifact = args.artifacts/('wp13-apple-sdk-' + target)
+        sdk = load(artifact/'build/sdk-identity.json')
+        validate_sdk(artifact/'stage'/target, sdk, args.source_sha, args.run_id, args.attempt, target)
+        sdks[target] = sdk
+    platforms = {}
+    fixtures = None
+    for platform in PLATFORMS:
+        artifact = args.artifacts/('wp13-apple-' + platform)
+        evidence = validate_platform(artifact/'evidence'/platform, platform,
+            args.source_sha, args.run_id, args.attempt, sdks[SDK_TARGET[platform]], artifact/'results')
+        manifest = load(artifact/'apple-resources/manifest.json')
+        require(manifest == evidence['environment']['fixtures'], 'published fixture manifest mismatch')
+        require(fixtures is None or manifest == fixtures, 'fixture identities differ across platforms')
+        fixtures = manifest
+        platforms[platform] = evidence
+    package = args.package or args.artifacts/'wp13-apple-package'
+    legacy, device = validate_package(package, args.source_sha, args.run_id, args.attempt, sdks)
+    reviews = validate_review_reports(package, args.source_sha, args.run_id, args.attempt, sdks['macos'], fixtures)
+    return {'schema': 2, 'package': 'WP13 Apple host', 'accepted': True,
+        'source_sha': args.source_sha, 'date': args.date,
+        'run': {'id': args.run_id, 'attempt': args.attempt, 'url': expected['run_url']},
+        'platforms': {key: {'totals': value['totals'], 'attachment_count': value['attachments']['count'],
+            'evidence_sha256': digest(args.artifacts/('wp13-apple-' + key)/'evidence'/key/'evidence.json')}
+            for key, value in platforms.items()},
+        'legacy_self_checks': legacy, 'device_package': device, 'review_suites': reviews,
+        'physical_device_execution': False,
+        'limitations': ['Device installation awaits owner signing.',
+            'The system document picker is not driven by XCUITest.',
+            'Library opens retain the 32 MiB host input limit.']}, platforms
 
 
 def main():
@@ -28,103 +61,31 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--source-sha', required=True)
     parser.add_argument('--run-id', required=True)
-    parser.add_argument('--run-url', required=True)
-    parser.add_argument('--date', required=True)
+    parser.add_argument('--attempt', required=True)
+    parser.add_argument('--run-url')
+    parser.add_argument('--date', default=datetime.datetime.now(datetime.timezone.utc).date().isoformat())
+    parser.add_argument('--upstream-results', default=os.environ.get('WP13_APPLE_UPSTREAM_RESULTS', '{}'))
+    parser.add_argument('--require-gate-review', type=Path)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    legacy = {}
-    device_package = {}
-    if args.package and args.package.exists():
-        for name, device in [('evidence-macos', 'macos'), ('evidence-iphone', 'iphone'),
-                             ('evidence-ipad', 'ipad')]:
-            report = args.package/name/'report.json'
-            if report.exists():
-                payload = load(report)
-                legacy[device] = {'checks': payload.get('check_count', 0),
-                                  'passed': payload.get('passed') is True,
-                                  'sha256': digest(report),
-                                  'path': str(report.relative_to(args.package))}
-        build = args.package/'device'/'build.json'
-        ipa = args.package/'device'/'EXReader-iOS-unsigned.ipa'
-        if build.exists():
-            device_package = {'build': str(build.relative_to(args.package)),
-                              'sha256': digest(build),
-                              'installation_status': 'owner_signing_required'}
-        if ipa.exists():
-            device_package['ipa_sha256'] = digest(ipa)
-    platforms = {}
-    for key, label in PLATFORMS.items():
-        evidence_path = args.artifacts/key/'evidence'/key/'evidence.json'
-        if not evidence_path.exists():
-            continue
-        evidence = load(evidence_path)
-        environment = evidence.get('environment', {})
-        attachments = evidence.get('attachments', {})
-        screenshots = [name for name in attachments.get('files', []) if name.endswith('.png')]
-        entry = {
-            'schema': 1,
-            'package': 'WP13-APPLE',
-            'platform': key,
-            'platform_label': label,
-            'date': args.date,
-            'source_sha': args.source_sha,
-            'run': {'id': args.run_id, 'url': args.run_url, 'job': environment.get('platform', '')},
-            'environment': {
-                'xcode': environment.get('xcode', ''),
-                'host': environment.get('host', ''),
-                'device': environment.get('device', ''),
-                'runtime': environment.get('runtime', ''),
-                'destination': environment.get('destination', ''),
-                'sdk': environment.get('sdk', {}),
-                'app': environment.get('app', {}),
-                'font_sha256': environment.get('font_sha256', ''),
-                'input_driver': environment.get('input_driver', ''),
-                'fixtures': environment.get('fixtures', {}),
-            },
-            'tests': evidence.get('tests', []),
-            'totals': evidence.get('totals', {}),
-            'state': evidence.get('state', {}),
-            'artifacts': {
-                'attachment_files': attachments.get('file_count', 0),
-                'screenshots': screenshots[:40],
-                'element_tree_present': any('tree' in str(name) for name in attachments.get('files', [])),
-                'xcresult': 'build/results/%s.xcresult' % key,
-                'xcodebuild_log': 'build/results/%s-xcodebuild.log' % key,
-            },
-            'physical_device_execution': False,
-            'scope': 'real controls, touches and keyboard events on macOS and both simulators',
-        }
-        if key in legacy:
-            entry['legacy_self_checks'] = legacy[key]
-        platforms[key] = entry
-        (args.output/('wp13-apple-%s.json' % key)).write_text(
-            json.dumps(entry, indent=2, sort_keys=True) + '\n')
-    summary = {
-        'schema': 1,
-        'package': 'WP13 Apple host',
-        'branch': 'codex/wp13-apple',
-        'source_sha': args.source_sha,
-        'date': args.date,
-        'run': {'id': args.run_id, 'url': args.run_url},
-        'platforms': {key: {'cases': entry['totals'].get('cases', 0),
-                            'passed': entry['totals'].get('passed', 0),
-                            'failed': entry['totals'].get('failed', 0),
-                            'steps': entry['totals'].get('steps', 0),
-                            'legacy_checks': entry.get('legacy_self_checks', {}).get('checks')}
-                      for key, entry in platforms.items()},
-        'legacy_self_checks': legacy,
-        'device_package': device_package,
-        'physical_device_execution': False,
-        'limitations': [
-            'Physical device installation is deferred by user request; the unsigned package stays uninstalled.',
-            'The system document picker is not driven by XCUITest; fixture import exercises the same host import path.',
-            'Whole-document library opens are bounded by the 32 MiB host input limit.',
-        ],
-    }
-    (args.output/'wp13-apple-summary.json').write_text(
-        json.dumps(summary, indent=2, sort_keys=True) + '\n')
-    print(json.dumps(summary['platforms'], indent=2))
+    try:
+        summary, platforms = assemble(args)
+        if args.require_gate_review:
+            from review_evidence_gate import validate_review_result
+            validate_review_result(args.require_gate_review)
+            summary['gate_review_sha256'] = digest(args.require_gate_review)
+        for key, value in platforms.items():
+            value['legacy_self_checks'] = summary['legacy_self_checks'][key]
+            (args.output/('wp13-apple-' + key + '.json')).write_text(json.dumps(value, indent=2, sort_keys=True) + '\n')
+    except Exception as error:
+        summary = {'schema': 2, 'accepted': False, 'source_sha': args.source_sha,
+            'run': {'id': args.run_id, 'attempt': args.attempt},
+            'problems': [type(error).__name__ + ': ' + str(error)[:500]]}
+    (args.output/'wp13-apple-summary.json').write_text(json.dumps(summary, indent=2, sort_keys=True) + '\n')
+    print(json.dumps({'accepted': summary['accepted'], 'platforms': summary.get('platforms'),
+                      'problems': summary.get('problems', [])}))
+    return 0 if summary['accepted'] else 1
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())
