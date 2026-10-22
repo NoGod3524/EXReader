@@ -41,7 +41,8 @@ final class BoundedEpub implements AutoCloseable {
     }
     private long open(int target,float fontSize,HostTask task) throws Exception {
         task.check();
-        return nativeOpen(library.checked(),book,target,font,fontSize,task);
+        long began=System.nanoTime(); long opened=nativeOpen(library.checked(),book,target,font,fontSize,task);
+        Log.i("EXRHost","bounded open part="+target+" elapsed_ms="+((System.nanoTime()-began)/1000000L)); return opened;
     }
     private Frame next(long pager,HostTask task,boolean recovery,boolean render) throws Exception {
         task.check(); long before=nativeCalls(pager);
@@ -55,32 +56,28 @@ final class BoundedEpub implements AutoCloseable {
     PageLoad restore(int displayIndex,HostTask task) throws Exception {
         String[] location=nativeProgress(library.checked(),book);
         if(location==null) return prepare(part,0,0,-1,size,task);
-        int target=Integer.parseInt(location[0]);
-        long resolver=open(target,size,task); long[] match;
-        try { match=nativeResolve(resolver,location,task); } finally { nativeClose(resolver); }
-        boolean exact=match[0]==1;
-        long offset=exact?match[1]:Math.max(0,Long.parseLong(location[2]));
-        PageLoad load=prepare(target,Math.max(0,displayIndex),-1,offset,size,task);
-        if(!exact) {
-            load.snapshot.preserveProgress=true;
-            load.snapshot.restoreNotice="Saved position is not exact (state "+match[0]+"); opened at stored chapter offset "+offset+". Original selector retained.";
-        }
-        return load;
+        return resolvedPage(location,Math.max(0,displayIndex),size,task,true,false);
     }
     PageLoad seek(NativeLibrary.Note note,HostTask task) throws Exception {
         if(note.location==null) throw new IllegalArgumentException("Missing chapter annotation route");
-        int target=Integer.parseInt(note.location[0]);
-        long[] match=resolve(target,note.location,task);
-        PageLoad load=prepare(target,0,-1,match[1],size,task);
-        load.snapshot.highlightStart=match[1]; load.snapshot.highlightEnd=match[2]; return load;
+        return resolvedPage(note.location,0,size,task,false,false);
     }
-    private long[] resolve(int target,String[] location,HostTask task) throws Exception {
-        long candidate=open(target,size,task);
+    private PageLoad resolvedPage(String[] location,int display,float value,HostTask task,boolean fallback,boolean recovery) throws Exception {
+        int target=Integer.parseInt(location[0]); long candidate=open(target,value,task);
         try {
             long[] match=nativeResolve(candidate,location,task);
-            if(match[0]!=1) throw new IllegalArgumentException("Saved position is not exact (state "+match[0]+")");
-            return match;
-        } finally { nativeClose(candidate); }
+            boolean exact=match[0]==1;
+            if(!exact && !fallback) throw new IllegalArgumentException("Annotation is not exact (state "+match[0]+")");
+            long offset=exact?match[1]:Math.max(0,Long.parseLong(location[2]));
+            if(!exact && offset>=nativeExtent(candidate)) offset=0;
+            long ready=candidate; candidate=0;
+            PageLoad load=prepareOn(ready,target,display,-1,offset,value,task,recovery);
+            if(!exact) {
+                load.snapshot.preserveProgress=true;
+                load.snapshot.restoreNotice="Saved position is not exact (state "+match[0]+"); opened at stored chapter offset "+offset+". Original selector retained.";
+            } else if(!fallback) { load.snapshot.highlightStart=match[1]; load.snapshot.highlightEnd=match[2]; }
+            return load;
+        } finally { if(candidate!=0) nativeClose(candidate); }
     }
     PageLoad next(HostTask task) throws Exception {
         if(handle==0) return prepare(part,index+1,chapterPage+1,-1,size,task);
@@ -114,15 +111,19 @@ final class BoundedEpub implements AutoCloseable {
     }
     private PageLoad prepare(int target,int display,int pageTarget,long offset,float value,HostTask task,boolean recovery) throws Exception {
         if(closed) throw new IllegalStateException("Reader is closed");
-        long candidate=open(target,value,task),began=System.nanoTime();
+        return prepareOn(open(target,value,task),target,display,pageTarget,offset,value,task,recovery);
+    }
+    private PageLoad prepareOn(long candidate,int target,int display,int pageTarget,long offset,float value,HostTask task,boolean recovery) throws Exception {
+        long began=System.nanoTime(),extent=nativeExtent(candidate);
         boolean transferred=false;
         try {
             Frame selected=null; int selectedPage=-1;
             for(int p=0;p<20000;p++) {
                 Frame frame=next(candidate,task,recovery,false);
                 if(frame==null) break;
+                if(p>0 && p%16==0) Log.i("EXRHost","bounded scan part="+target+" pages="+(p+1));
                 if(pageTarget==-2) { selected=frame; selectedPage=p; continue; }
-                if(pageTarget>=0?p!=pageTarget:!(offset>=frame.meta[0] && offset<frame.meta[1])) continue;
+                if(pageTarget>=0?p!=pageTarget:!(offset>=frame.meta[0] && (offset<frame.meta[1] || (offset==frame.meta[1] && offset==extent)))) continue;
                 selected=frame; selectedPage=p; break;
             }
             if(selected==null) throw new IllegalArgumentException("Chapter position has no page");
@@ -154,16 +155,7 @@ final class BoundedEpub implements AutoCloseable {
     }
     void refresh() { recover(); }
     PageLoad retryFrame(PageSnapshot previous,HostTask task) throws Exception {
-        float value=previous.layoutFont;
-        long resolver=open(previous.part,value,task); long[] match;
-        try { match=nativeResolve(resolver,previous.boundedLocation,task); } finally { nativeClose(resolver); }
-        boolean exact=match[0]==1;
-        PageLoad load=prepare(previous.part,previous.index,-1,exact?match[1]:previous.start,value,task,true);
-        if(!exact) {
-            load.snapshot.preserveProgress=true;
-            load.snapshot.restoreNotice="Saved position is not exact (state "+match[0]+"); rebuilt at stored chapter offset. Original selector retained.";
-        }
-        return load;
+        return resolvedPage(previous.boundedLocation,previous.index,previous.layoutFont,task,true,true);
     }
     void saveProgress(PageSnapshot page) {
         nativeSaveProgress(page.boundedHandle,library.checked(),book,page.part,page.start);
@@ -203,6 +195,7 @@ final class BoundedEpub implements AutoCloseable {
     private static native Frame nativeNext(long handle,HostTask task,boolean render);
     private static native Frame nativeRender(long handle,HostTask task);
     private static native long nativeCalls(long handle);
+    private static native long nativeExtent(long handle);
     private static native String[] nativeCapture(long handle,int part,long offset);
     private static native void nativeClose(long handle);
     private static native String[] nativeProgress(long library,long book);

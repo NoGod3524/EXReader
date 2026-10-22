@@ -214,6 +214,10 @@ JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeCalls(JNIEnv *e
   host_epub *reader=(host_epub *)(intptr_t)handle; (void)env; (void)type;
   return reader?(jlong)reader->next_calls:0;
 }
+JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeExtent(JNIEnv *env,jclass type,jlong handle) {
+  host_epub *reader=(host_epub *)(intptr_t)handle; (void)env; (void)type;
+  return reader?(jlong)exr_pager_chapter_statistics(reader->pager).projection_bytes:0;
+}
 JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_BoundedEpub_nativeProgress(JNIEnv *env,jclass type,jlong owner,jlong book) {
   exr_library *store=library(env,owner); exr_epub_location location={0}; int present=0; exr_error error={0};
   exr_status status; jobjectArray row=NULL; (void)type;

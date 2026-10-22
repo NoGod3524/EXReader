@@ -35,10 +35,17 @@ jobs:
           print('diagnostic_only=true; accepted=false')
           for path in Path('cloud-diagnostic').rglob('validation.json'):
               report=json.loads(path.read_text())
-              print(json.dumps({'path':str(path),'source':report.get('source_sha'),'suite':report.get('suite'),'summary':report.get('summary')}))
+              print(json.dumps({'path':str(path),'source':report.get('source_sha'),'suite':report.get('suite'),'summary':report.get('summary'),'sequence':report.get('sequence')}))
               for case in report.get('cases',[]):
                   if case.get('status')!='pass':
                       print(json.dumps({'id':case.get('id'),'status':case.get('status'),'error':case.get('error'),'detail':case.get('detail')}))
+          for path in Path('cloud-diagnostic').rglob('review-logcat.txt'):
+              lines=path.read_text(errors='replace').splitlines()
+              begins=[i for i,line in enumerate(lines) if 'case start destroyed_activity_releases_worker' in line]
+              selected=lines[begins[-1]:] if begins else lines
+              selected=[line for line in selected if 'EXRHost' in line and any(word in line for word in
+                  ('status ','storage mode','paging {','progress attempt','bounded open','bounded scan','handle ','worker shutdown'))]
+              for line in selected[-40:]: print(line)
           PY
   candidate-build:
     if: ${{ !inputs.inspect_run_id }}
@@ -96,7 +103,7 @@ jobs:
           from pathlib import Path
           for path in Path('build/android-host/evidence').glob('*/validation.json'):
               report=json.loads(path.read_text())
-              print(json.dumps({'suite':report.get('suite'),'summary':report.get('summary')}))
+              print(json.dumps({'suite':report.get('suite'),'summary':report.get('summary'),'sequence':report.get('sequence')}))
               for case in report.get('cases',[]):
                   if case.get('status')!='pass':
                       print(json.dumps({'id':case.get('id'),'status':case.get('status'),'error':case.get('error'),'detail':case.get('detail')}))

@@ -17,3 +17,15 @@ run `39864510415` 的 SDK／三 APK 云端构建通过；该首轮没有运行�
 seek／恢复扫描不栅格化前页；新增专项及模拟器闭环仍须完整执行。
 
 范围仍为 API 34 x86_64 模拟器，`physical_device_execution=false`；真机／签名／TalkBack 单独验收。
+
+## 保留的首个完整运行
+
+源码 `a01259117c2600c6805abf36c33bcef892dc87d8`，run `39865644335` 未通过；云端诊断
+`39867475035` 只读取原 run 的材料，不授予验收。原 walkthrough 44/45：`cancel_large_import`
+在快速 package-only 导入后未观察到 Cancel；原 review 9/10：`destroyed_activity_releases_worker`
+的新 owner 未在原 20 秒观察窗进入 page-49 progress attempt；新增 bounded 8/8。
+原 48 与额外 16 门禁因 preflight 拒绝而未通过，不拼接旧结果。
+
+接续让取消用例使用真实复制后的既有 debug gate；恢复复用 resolve 的同一 pager，避免重复章节建索引，
+并记录 open/scan 耗时。跨 owner 提交造成的 pending source 失效会重开、解析、重绘后发布，
+真实重建 next 计入 recovery；数据库 code 7 拒绝不重试。以上仍须新源码整轮云端复验。
