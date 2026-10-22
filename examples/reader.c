@@ -738,13 +738,17 @@ static void job_cancel_button(void) {
 /* ------------------------------------------------------------------ */
 
 static void session_configure(host_session *session, int font_percent) {
+  /* exr_layout_options.font_size is a point size, not a scale: the preserved
+     self-test uses 28 points with 1.5 line height. Percent maps onto that base. */
+  if (font_percent < HOST_FONT_MIN) font_percent = HOST_FONT_MIN;
+  if (font_percent > HOST_FONT_MAX) font_percent = HOST_FONT_MAX;
   session->config = exr_layout_config_defaults();
   session->config.page.width = 720;
   session->config.page.height = 1040;
   session->config.page.margin = 36;
-  session->config.page.font_size = (float)font_percent / 100.0f;
-  session->config.page.line_height = 10;
-  session->config.page.paragraph_spacing = 12;
+  session->config.page.font_size = 28.0f * (float)font_percent / 100.0f;
+  session->config.page.line_height = 1.5f;
+  session->config.page.paragraph_spacing = 10;
 }
 
 static exr_status render_reflow(host_session *session, size_t page, host_frame *out,
@@ -1131,7 +1135,7 @@ static exr_status job_layout(host_job *job) {
   if (!g.session.active || g.session.fixed || !g.session.document) return EXR_ARGUMENT;
   if (job->book_id && job->book_id != g.session.book_id) return EXR_CANCELLED;
   config = g.session.config;
-  config.page.font_size = (float)job->font_percent / 100.0f;
+  config.page.font_size = 28.0f * (float)job->font_percent / 100.0f;
   config.control.cancelled = host_cancel_check;
   config.control.context = NULL;
   status = exr_pager_create(g.session.document, g.font, &config, &pager, &error);
@@ -2992,6 +2996,9 @@ static int drive_execute(void) {
       pass = g.frame.valid && g.frame.page + 1 == (size_t)atoi(drive_args[2]);
       snprintf(number, sizeof(number), "%llu", (unsigned long long)(g.frame.valid ? g.frame.page + 1 : 0));
       detail_add(detail, sizeof(detail), "page", number);
+      snprintf(number, sizeof(number), "%llu", (unsigned long long)(g.frame.valid ? g.frame.page_count : 0));
+      detail_add(detail, sizeof(detail), "page_count", number);
+      detail_add(detail, sizeof(detail), "kind", g.frame.valid ? (g.frame.fixed ? "fixed" : "reflow") : "none");
     } else if (!strcmp(what, "status")) {
       pass = check_status_contains(drive_args[3]);
       detail_add(detail, sizeof(detail), "needle", drive_args[3]);
@@ -3045,6 +3052,11 @@ static int drive_execute(void) {
     } else {
       drive_step_finish(0, "unknown check");
       return 0;
+    }
+    {
+      char *current = host_utf8(g.status_text);
+      detail_add(detail, sizeof(detail), "window_status", current ? current : "");
+      free(current);
     }
     drive_step_finish(pass, detail);
     return 0;
