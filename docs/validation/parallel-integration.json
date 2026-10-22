@@ -2,8 +2,11 @@
   "schema": 1,
   "branch": "codex/parallel-integration",
   "base_commit": "feda26381a7b05c6a1ce3db91a440ca0094e06c5",
-  "status": "integration_pending_audit_fixes_and_cloud_acceptance",
-  "accepted": false,
+  "status": "declared_package_scopes_accepted_by_cloud_summary",
+  "accepted": true,
+  "validated_source": "9e4b595ed7e10dcb2d78f5547e4e6a11a04ba3a1",
+  "post_acceptance_changes": "Documentation and cloud evidence records only; validated_source identifies the executed code",
+  "complete_product": false,
   "packages": {
     "ocr_adapter": "bbe7139862e1705e7e8954b97c0b9dfbb639287e",
     "corpus_protocol": "c8292c885d6b3ac1c27eec646eba3bd3d14ef712",
@@ -12,11 +15,37 @@
     "linux_host_review": "175adc9155836209b6a951b2a46c59fee88a1298",
     "windows_evidence_review": "70868f85ff195b5a544c4fa40a10006e3671412d",
     "windows_worker_review": "f24fad18ed2dae30038afa4bf26f1e1cb35c29bd",
-    "legacy_migration_candidate": "a17b277",
-    "opds_review_candidate": "9a98f3256f4b1af457521ad188759812266cf0a2"
+    "legacy_migration_code": "c2d23c29a3b2096c2236fdb414dcd1e66d3243b4",
+    "legacy_migration_final_documentation": "b048e5a094253d2625254bc098bbe24daaf9a0b9",
+    "opds_review": "9a98f3256f4b1af457521ad188759812266cf0a2"
   },
   "corpus_original_registration": "00a8838cf6089e67a730ca6fd4956cb45d09c27d",
-  "cloud_runs": [],
+  "cloud_runs": {
+    "native": {"run": 39716695522, "attempt": 1, "jobs": 7, "conclusion": "success"},
+    "ocr": {"run": 39716697514, "attempt": 1, "jobs": 3, "conclusion": "success"},
+    "corpus": {"run": 39716699709, "attempt": 1, "jobs": 1, "conclusion": "success", "protocol_checks": 46, "corpus_accepted": false},
+    "linux": {"run": 39716702306, "attempt": 1, "jobs": 1, "conclusion": "success"},
+    "windows_evidence": {"run": 39716704453, "attempt": 1, "jobs": 1, "conclusion": "success"},
+    "windows_worker": {"run": 39716706879, "attempt": 1, "jobs": 1, "conclusion": "success"},
+    "migration": {"run": 39716710104, "attempt": 1, "jobs": 3, "conclusion": "success"},
+    "opds": {"run": 39716712439, "attempt": 1, "jobs": 2, "conclusion": "success"}
+  },
+  "cloud_summary": {
+    "run": 39718130711,
+    "attempt": 1,
+    "source_sha": "9e4b595ed7e10dcb2d78f5547e4e6a11a04ba3a1",
+    "conclusion": "success",
+    "protocol_job": 119625073847,
+    "summary_job": 119625136176,
+    "protocol_checks": 15,
+    "producer_jobs": 19,
+    "accepted": true,
+    "artifacts": [
+      {"id": 12399917026, "name": "parallel-integration-summary", "bytes": 2468, "digest": "sha256:2deca05bb9c60860073497a86b9379e12576f2a069b8ff4f476ef03a558dcb26", "expired": false},
+      {"id": 12399379384, "name": "parallel-integration-gate-protocol", "bytes": 303, "digest": "sha256:748de3d3d5a11b532fbc337917d5165e6643fe5e653cb7743d331a281c9aa33a", "expired": false}
+    ],
+    "evidence_origin": "Cloud summary output and GitHub artifact metadata/upload logs; no local artifact download, rehash or reaggregation"
+  },
   "gate_protocol": {
     "source_sha": "394a64cfb5a7e87e17bb50d14d7727896d122451",
     "run": 39716157063,
@@ -29,8 +58,12 @@
   "reliability_run": 39666440519,
   "wp16_accepted": false,
   "wp16_transferred_cpu_seconds": 0,
-  "pending": [
-    "Final standalone legacy migration cloud acceptance",
-    "Cloud acceptance at one integrated source commit"
+  "remaining": [
+    "WP16 fixed-engine-source reliability run and strict cloud summary",
+    "Real compatibility corpus registration remains 0/1710",
+    "OCR adapter does not include PDF text-layer or search/selection/annotation integration",
+    "Windows host does not use the bounded chapter entry; Linux host scope remains reflow originals up to 8 MiB",
+    "OPDS host UI, TLS implementation and LCP remain outside accepted scope",
+    "Migration host UI, unlocated library annotations, audio originals and original platform/size boundaries remain outside accepted scope"
   ]
 }

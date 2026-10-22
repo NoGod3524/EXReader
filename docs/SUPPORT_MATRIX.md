@@ -9,9 +9,11 @@
 - 标记：**支持** = 有公开接口、边界与回归；**部分** = 有实现但覆盖/兼容未完整；**未支持** = 明确拒绝或不存在接口
 - 回归：`ctest` 名称。3.40.0 的 Windows GCC 默认及关闭可选图像解码器配置（均含 fuzz）各169/169，Linux ASan/UBSan 配置159/159；测试数随组件、fuzz和参考工具配置变化，见 `docs/validation/2026-10-21-png-reliability.json`
 
-本轮平台应用、真实语料和性能结果见 `docs/validation/2026-10-20-native-hosts.json`、
-`docs/validation/2026-10-20-corpus-performance.json`。Windows/macOS/iPhone模拟器/iPad模拟器
-已有原生参考阅读应用；应用自动自检与完整生命周期、无障碍和真机验收分别记录。
+本轮包集成同源验收见 `docs/PARALLEL-INTEGRATION.md`、`docs/validation/parallel-integration.json`；
+受测源码为 `9e4b595ed7e10dcb2d78f5547e4e6a11a04ba3a1`。Windows/Linux 已有独立原生参考宿主；
+macOS/iPhone模拟器/iPad模拟器保留最小阅读应用与自动自检。各宿主范围、生命周期、无障碍和真机验收分别记录。
+历史平台、真实语料和性能结果见 `docs/validation/2026-10-20-native-hosts.json`、
+`docs/validation/2026-10-20-corpus-performance.json`。本次兼容语料协议通过，新增登记真实语料为 `0/1710`。
 整本检查范围及拒绝条件见 `docs/CORPUS_VALIDATION.md`。
 普通水平Latin表格单TEXT内容在无OpenType塑形/位图字体等条件下复用一次有界宽度扫描；
 其余内容保留通用算法。本批对照与分类见 `docs/validation/2026-10-20-wp6-compatibility.json`。
@@ -88,15 +90,15 @@ WP6已验收，WP16仍等待同一源码的四目标各24 CPU小时及严格汇�
 | 图形状态软遮罩 | 部分 | Alpha/Luminosity、BC、Identity及Type 0/2/3/4 TR、精确变换BBox、K/I、q/Q/None和单次整组提交；活跃mask聚合64MiB，嵌套共享工作预算。原41场景+8拒绝、作用域27+3、新函数/图像/几何72+8。AIS及图片内在shape/opacity已接入，新增166场景+4拒绝值与192个画布组合；外部参考差异逐项记录 | `native-mask-scope`、`native-mask-functions`、`native-pdf-raster`；[对照口径](MASK_SEMANTICS.md) |
 | 标注 | 部分 | Text/Highlight/Underline/StrikeOut/Squiggly 增删改与外观；**其余类型与 AcroForm 未支持** | `native-pdf-markup`、`native-pdf-appearance`、`native-pdf-write` |
 | 安全 redaction | 未支持 | 现有增量删除保留历史原文，不能充当擦除 | — |
-| OCR | 未支持 | 无后端、无文字层 | — |
+| OCR | 部分 | 独立可选 Tesseract 5 适配器，不进入默认 SDK；清晰数字印刷中英/混排、显式旋转、文字/置信度/字框与页坐标映射已验收；真实扫描、高精度字框、自动方向检测、PDF文字层写回及搜索/选文/标注闭环未完成 | `docs/validation/wp11-ocr-adapter.json` |
 
 ## 书库、转换与音频
 
 | 能力 | 状态 | 边界 | 回归 |
 | --- | --- | --- | --- |
 | 书库 | 支持 | SQLite、元数据/封面、标签/收藏/已读、文本与固定页进度、标注、音频书签、精确去重、事务备份；CBZ 原书支持 64 KiB 分块流式导入/去重与 blob 随机读取；PDF 通过只读文件映射解析元数据、匿名映射回读存储原书（单条≤2 GiB−1字节）。64 KiB是单次I/O缓冲；1 GiB CBZ原始实测新增私有峰值4,657,152字节，见 `docs/validation/wp12a-streaming.json` | `native-library-unique`、`native-library-stream`、`native-progress-library`、`native-page-annotations` |
-| 旧 UI 数据迁移 | 未支持 | 旧 IndexedDB/Tauri 数据未接入 | — |
-| 转换/导出 | 部分 | 六种正文格式 36 向互转及 MOBI/KF8 输入→六目标（text profile，仅声明正文/段落/顺序/Unicode，非无损）；EPUB/XHTML→EPUB/HTML 资源包 preserve profile；**完整 WP12 高保真全格式往返、批注/复杂样式和旧 UI 迁移未覆盖**；MOBI/KF8/PDF/CBZ 写回未支持。契约见 [CONVERSION.md](CONVERSION.md) | `native-export-epub`、`native-export-html`、`native-export-xml`、`native-convert`、`native-convert-cli`、`native-convert-benchmark` |
+| 旧 UI 数据迁移 | 部分 | 旧 IndexedDB v1 只读导出器及旧备份 ZIP→迁移包→独立 CLI→schema6书库；事务发布、重复/冲突、取消与重开复核已验收；未定位标注保留在账本，音频原件不入库；新宿主一键入口、真实 Tauri 窗口、macOS和真实用户库未验收，原件上限128MiB | `docs/validation/wp12-migration-review.json` |
+| 转换/导出 | 部分 | 六种正文格式 36 向互转及 MOBI/KF8 输入→六目标（text profile，仅声明正文/段落/顺序/Unicode，非无损）；EPUB/XHTML→EPUB/HTML 资源包 preserve profile；**完整 WP12 高保真全格式往返、批注/复杂样式未覆盖；旧 UI 数据迁移由独立工具提供，见上一行**；MOBI/KF8/PDF/CBZ 写回未支持。契约见 [CONVERSION.md](CONVERSION.md) | `native-export-epub`、`native-export-html`、`native-export-xml`、`native-convert`、`native-convert-cli`、`native-convert-benchmark` |
 | 音频 | 支持 | WAV/FLAC、可选 MP3/AAC/M4A/M4B、PCM、WSOLA 变速、六平台输出；随机读取源在 1 GiB WAV 上验证，WAV 读取使用 4 KiB 栈缓冲且不整文件驻留 | `native-audio`、`native-wave`、`native-flac`、`native-mp3`、`native-aac`、`native-stretch` |
 | 移动音频会话 | 未支持 | 打断/后台/真机未验收 | — |
 
@@ -109,17 +111,18 @@ WP6已验收，WP16仍等待同一源码的四目标各24 CPU小时及严格汇�
 | 安装与包配置 | 支持 | `find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED)` | CI 安装作业 |
 | 桌面三平台 | 支持 | Windows/Linux/macOS 全量 CTest + 安装消费 | CI `desktop` |
 | Android / iOS / iPadOS | 部分 | 库交叉编译、Swift适配、iPhone/iPad模拟器阅读自检；真机安装暂缓 | CI `android`、`apple-mobile` |
-| 原生参考阅读 App | 部分 | Windows/macOS/iPhone模拟器/iPad模拟器已有最小阅读应用及自动自检；完整生命周期、无障碍和移动真机验收未完成 | `docs/validation/2026-10-20-wp6-window-reader.json` 的四份宿主报告 |
-| 可嵌入平台阅读视图 / TTS / 无障碍 / OPDS / LCP | 未支持 | 可嵌入平台组件与这些服务尚未验收；目标见 [VERSIONING.md](VERSIONING.md) | — |
+| 原生参考阅读 App | 部分 | Windows宿主覆盖书架、重排/固定页、选文标注、进度恢复及后台任务，但未接有界大章入口；Linux GTK宿主覆盖≤8MiB原书的重排阅读、书架、标注与恢复；macOS/iPhone/iPad仍为最小参考应用；完整跨平台生命周期、无障碍和移动真机验收未完成 | `docs/validation/wp13-windows-worker-review.json`、`docs/validation/wp13-windows-evidence-review.json`、`docs/validation/wp13-linux-review.json`；Apple自检见 `docs/validation/parallel-integration.json` |
+| OPDS | 部分 | 独立 OPDS1/2 客户端与安装SDK消费者，Linux/Windows目录、搜索、分页、认证、获取及原子发布已验收；默认SDK不引入网络运行时；宿主UI未接入，参考传输仅HTTP，HTTPS需宿主TLS；facets、indirect acquisition、借阅/支付/LCP未实现 | `docs/validation/wp15-opds-review.json` |
+| 可嵌入平台阅读视图 / TTS / 无障碍 / LCP | 未支持 | 可嵌入平台组件与这些服务尚未验收；目标见 [VERSIONING.md](VERSIONING.md) | — |
 
 ## 质量口径
 
 | 项 | 当前值 |
 | --- | --- |
-| 桌面 CTest | 3.40.0当前源码与配置结果见 `validation/2026-10-20-wp6-window-reader.json`、`validation/2026-10-21-png-reliability.json`；3.39.0联合记录保留于 `validation/2026-10-20-parallel-integration.json` |
+| 桌面 CTest | 同源包集成的原生CI及七组包验收已通过严格云端汇总，见 `validation/parallel-integration.json`；引擎原验收见 `validation/2026-10-20-wp6-window-reader.json`、`validation/2026-10-21-png-reliability.json`；3.39.0联合记录保留于 `validation/2026-10-20-parallel-integration.json` |
 | Sanitizer | 3.40.0源码的Linux ASan/UBSan 159/159见 `validation/2026-10-21-png-reliability.json`；当前源码普通CI不替代WP16长测 |
 | 编译器门槛 | `-Wall -Wextra -Wpedantic -Werror` |
-| Fuzz | 原生CI短测与四目标各24 CPU小时长测分开验收；当前最终源码长测及严格汇总尚未完成，见 [FUZZING.md](FUZZING.md) 与 `validation/2026-10-21-png-reliability.json` |
+| Fuzz | 原生CI短测与四目标各24 CPU小时长测分开验收；固定引擎源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9` 的长测及严格汇总尚未完成，见 [FUZZING.md](FUZZING.md) 与 `validation/2026-10-21-png-reliability.json` |
 | 依赖 | 14 个第三方组件，全部 SHA-256 固定；WebP/TIFF/AVIF 为默认开启的可选构建项 |
 
 ## 更新规则
