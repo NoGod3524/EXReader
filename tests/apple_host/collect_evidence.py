@@ -117,7 +117,7 @@ def main():
         validate_platform(output, args.platform, identity['source_sha'], identity['run_id'], identity['attempt'],
                           sdk, args.xcresult.parent)
     except Exception as error:
-        evidence.update({'accepted': False, 'collector_status': 1, 'errors': [type(error).__name__ + ': ' + str(error)[:500]]})
+        evidence.update({'accepted': False, 'collector_status': 1, 'errors': [type(error).__name__ + ': ' + str(error)[:1500]]})
     (output/'evidence.json').write_text(json.dumps(evidence, indent=2, sort_keys=True) + '\n')
     print(json.dumps({'platform': args.platform, 'accepted': evidence['accepted'],
                       'totals': evidence.get('totals'), 'errors': evidence['errors']}))

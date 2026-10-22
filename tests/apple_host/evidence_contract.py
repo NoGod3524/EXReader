@@ -155,19 +155,31 @@ def attachment_records(directory):
             path = directory/filename
             require(path.is_file() and path.stat().st_size > 0, 'missing attachment bytes')
             name = item.get('suggestedHumanReadableName', '')
-            if name.startswith('steps-'):
+            # xcresulttool appends the export occurrence and attachment UUID to
+            # the XCTest name. Strip that exact envelope, never a name prefix.
+            match = re.fullmatch(r'(.+)_(?:0|[1-9]\d*)_[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-'
+                                 r'[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\.(png|txt|json)', name)
+            require(match is not None,
+                    'invalid attachment export name: owner=%s suggested=%r' % (owner, name))
+            declared_name, extension = match.groups()
+            if declared_name.startswith('steps-'):
                 payload = load(path)
                 key = case_key(payload.get('test'))
-                require(key == owner and payload.get('steps') == CASES[key], 'attachment step identity mismatch')
+                require(extension == 'json' and case_key(declared_name) == owner and key == owner and
+                        payload.get('steps') == CASES[key],
+                        'attachment step identity mismatch: owner=%s suggested=%r' % (owner, name))
                 require(key not in step_payloads, 'duplicate test step attachment')
                 step_payloads[key] = payload['steps']
                 role = 'steps-' + key
             else:
-                role = re.sub(r'\.(png|txt|text|json)$', '', name, flags=re.I)
-                require(ATTACHMENTS.get(role) == owner, 'unknown or misattributed attachment')
+                role = declared_name
+                require(ATTACHMENTS.get(role) == owner,
+                        'unknown or misattributed attachment: role=%r owner=%s suggested=%r' % (role, owner, name))
                 if 'tree' in role:
+                    require(extension == 'txt', 'element tree attachment type mismatch: ' + role)
                     require('Application' in path.read_text(encoding='utf-8'), 'empty element tree attachment')
                 else:
+                    require(extension == 'png', 'screenshot attachment type mismatch: ' + role)
                     raw = path.read_bytes()
                     require(raw[:8] == b'\x89PNG\r\n\x1a\n' and len(raw) > 24 and
                             int.from_bytes(raw[16:20], 'big') > 0 and int.from_bytes(raw[20:24], 'big') > 0,
@@ -176,7 +188,9 @@ def attachment_records(directory):
             roles.add(role)
             records.append({'test': owner, 'role': role, 'file': filename,
                             'bytes': path.stat().st_size, 'sha256': digest(path)})
-    require(roles == set(ATTACHMENTS) | {'steps-' + key for key in CASES}, 'incomplete attachment set')
+    expected = set(ATTACHMENTS) | {'steps-' + key for key in CASES}
+    require(roles == expected, 'incomplete attachment set: missing=%s extra=%s' %
+            (sorted(expected - roles), sorted(roles - expected)))
     require(set(inventory(directory)) == filenames | {'manifest.json'}, 'unmanifested attachment files')
     return sorted(records, key=lambda item: item['role']), step_payloads
 

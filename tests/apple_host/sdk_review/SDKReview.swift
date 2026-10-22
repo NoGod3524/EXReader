@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Cloud-only installed public-SDK consumer. No SwiftUI, app driver or private API.
 import Foundation
+import Dispatch
 import CEXReader
 import SQLite3
 
@@ -297,6 +298,52 @@ func withBook(_ library: HostLibrary, _ id: Int64,
             catch ReviewFailure.contract { }
             failed.cancel()
             try require(failed.isCancelled, "failed commit became uncancellable")
+
+            let writing = HostCancelBox()
+            let entered = DispatchSemaphore(value: 0)
+            let release = DispatchSemaphore(value: 0)
+            let finished = DispatchSemaphore(value: 0)
+            let succeeded = DispatchSemaphore(value: 0)
+            var released = false
+            var joined = false
+            DispatchQueue.global().async {
+                do {
+                    try writing.commit { entered.signal(); release.wait() }
+                    succeeded.signal()
+                } catch { }
+                finished.signal()
+            }
+            defer {
+                if !released { release.signal() }
+                if !joined { _ = finished.wait(timeout: .now() + 5) }
+            }
+            try require(entered.wait(timeout: .now() + 5) == .success,
+                        "publication body was not reached")
+            let cancelReturned = DispatchSemaphore(value: 0)
+            DispatchQueue.global().async { writing.cancel(); cancelReturned.signal() }
+            try require(cancelReturned.wait(timeout: .now() + 5) == .success,
+                        "UI cancellation waited for the blocked publication body")
+            try writing.check()
+            try require(!writing.isCancelled, "cancel crossed the publication boundary")
+            let secondFinished = DispatchSemaphore(value: 0)
+            let secondRejected = DispatchSemaphore(value: 0)
+            DispatchQueue.global().async {
+                do { try writing.commit {} }
+                catch HostError.invalidResult { secondRejected.signal() }
+                catch { }
+                secondFinished.signal()
+            }
+            try require(secondFinished.wait(timeout: .now() + 5) == .success &&
+                        secondRejected.wait(timeout: .now()) == .success,
+                        "concurrent publication was not promptly rejected")
+            release.signal()
+            released = true
+            let didFinish = finished.wait(timeout: .now() + 5) == .success
+            joined = didFinish
+            try require(didFinish && succeeded.wait(timeout: .now()) == .success,
+                        "publication did not complete after release")
+            writing.cancel()
+            try require(!writing.isCancelled, "late cancellation relabeled successful publication")
         }
         test("embedded-nul-note-is-rejected") {
             do { _ = try library.addNote(bookID: imported.id, start: 0, end: 3, text: "before\0after") }
