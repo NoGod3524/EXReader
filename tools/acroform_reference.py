@@ -126,13 +126,13 @@ def read_fields(path):
         appearance = resolve(widget.get('/AP'))
         if is_dictionary(appearance):
             normal = resolve(appearance.get('/N'))
-            if is_dictionary(normal):
+            if normal is not None and hasattr(normal, 'get_data'):
+                info['ap'] = normal.get_data()
+            elif is_dictionary(normal):
                 for key in normal.keys():
                     text = str(key).lstrip('/')
                     if text != 'Off' and text not in info['states']:
                         info['states'].append(text)
-            elif normal is not None and hasattr(normal, 'get_data'):
-                info['ap'] = normal.get_data()
         return info
 
     def walk(node, prefix, inherited):

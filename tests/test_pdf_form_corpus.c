@@ -418,6 +418,14 @@ static void run_entry(size_t index,const char *corpus,const char *outdir,
       dump_need(index,"in",file); dump_annots(index,"in",file); exr_pdf_close(file);
     }
   }
+  { exr_pdf_file *file=NULL;
+    if(exr_pdf_open(input,size,&file,&error)==EXR_OK) {
+      exr_pdf_revision_info revision;
+      exr_pdf_revision(file,&revision);
+      fprintf(results,"REV\t%zu\t%zu\t%zu\n",index,revision.size,revision.startxref);
+      exr_pdf_close(file);
+    }
+  }
   status=exr_pdf_form_read(input,size,NULL,&fields,&count,&error);
   fprintf(results,"R\t%zu\tin\t%s\t%d\t%zu\t0\n",index,status_name(status),status,
     status==EXR_OK ? count : 0);

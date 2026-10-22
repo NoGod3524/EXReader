@@ -479,10 +479,18 @@ def deep_chain(depth):
 
 
 def basic_text(name='person.name', value=None, widget=None, **kw):
-    spec = F(t=name, ft='Tx', widget=widget or W(), **kw)
+    """Build a text field whose qualified name may contain dots.
+
+    A PDF partial name may not contain a dot, so the dotted name becomes a
+    parent chain and the leaf carries the type, flags and widget.
+    """
+    parts = name.split('.')
+    node = F(t=parts[-1], ft='Tx', widget=widget or W(), **kw)
     if value is not None:
-        spec['v'] = ('text', value)
-    return spec
+        node['v'] = ('text', value)
+    for part in reversed(parts[:-1]):
+        node = F(t=part, kids=[node])
+    return node
 
 
 def build_mixed_batch():
@@ -853,7 +861,7 @@ FILES = [
         'id': '23', 'slug': 'choice-labels', 'category': 'choice/labels',
         'expect': 'accept', 'op': 'write', 'font': 0,
         'build': build_choice_label,
-        'changes': [('country', ['Mexico'])],
+        'changes': [('country', ['MX'])],
         'notes': 'Export value and display label differ; the appearance must show the label, not the export value.',
     },
     {
