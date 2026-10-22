@@ -46,6 +46,7 @@ def main():
     if result.returncode:
         print((out/'run.log').read_text(), flush=True)
         print(result.stderr, flush=True)
+        raise SystemExit(result.returncode)
     report = load(out/'consumer/bounded-review.json')
     checks = report.get('checks', [])
     print(json.dumps({'bounded_checks': checks, 'exit_code': result.returncode}), flush=True)
