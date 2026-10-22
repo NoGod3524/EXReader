@@ -35,7 +35,8 @@ CORE_PROGRAMS = ('reading-document', 'reading-benchmark', 'components/core-consu
                  'components/chapter-consumer', 'components/convert-consumer')
 REQUIRED_PROGRAMS = {
     'reading-core': CORE_PROGRAMS,
-    'reading-library': CORE_PROGRAMS + ('components/library-consumer',),
+    'reading-library': CORE_PROGRAMS + ('components/library-consumer',
+                                       'reading-library-source', 'reading-library-chapter-probe'),
 }
 HOSTS = {'Windows': 'Windows', 'Darwin': 'macOS'}
 ARCHES = {'amd64': 'x64', 'x86_64': 'x64', 'arm64': 'arm64', 'aarch64': 'arm64'}
