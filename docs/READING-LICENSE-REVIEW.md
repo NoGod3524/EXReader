@@ -1,11 +1,15 @@
 # H5 阅读包许可证材料独立复核
 
 H5 原交付的两份 Linux preset 登记清单一致性检查通过，但留有发布材料缺口。
-后续修补`72c1e89`已纳入固定SDK `ce5d664`，两preset在共同源码上再次严格通过。
+后续修补`72c1e89`已纳入当前固定SDK `9c69bc4`，两preset在共同源码上再次严格通过。
+当前复验run[39871878859](https://github.com/NoGod3524/EXReader/actions/runs/39871878859)，attempt1，
+core job`120148001859`、library job`120148001971`全部成功；两份同源工件
+`12466378150`（80653B）、`12467270858`（81549B）非空、未过期、Actions digest合法。
+两preset均`materials_check_passed=true`、`release_ready=true`，既有材料拒绝与正控保留。
 下文保留原交付的问题与身份，修补结果另列。
 本复核只读云端源码、作业日志和工件身份元数据，并核对本工作树安装规则；未下载工件或执行本地检查。
 
-共同源码复验为run [39864537874](https://github.com/NoGod3524/EXReader/actions/runs/39864537874)，attempt 1，
+原`ce5d664`共同源码复验为run [39864537874](https://github.com/NoGod3524/EXReader/actions/runs/39864537874)，attempt 1，
 core job `120123313261`、library job `120123312978`同源成功，严格字段与31+1+3回归均通过。
 两份同源有效工件为`12463452097`（80653B）与`12463636517`（81548B）。
 下文保留原交付及修补迭代，不将旧源码结果拼入本次验收。
