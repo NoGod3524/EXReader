@@ -380,6 +380,12 @@ def main():
                                       for problem in record['problems'])
             continue
 
+        if entry['op'] == 'read':
+            record['checks'].append('read-only document')
+            report['files'].append(record)
+            report['failures'].extend('%s: %s' % (entry['id'], problem)
+                                      for problem in record['problems'])
+            continue
         output = None
         if arguments.edited:
             output = arguments.edited / (source.stem + '.edited.pdf')
@@ -455,7 +461,7 @@ def main():
                 record['appearance_text'] = {'expected': wanted_text,
                                              'streams': len(blobs), 'found': len(texts)}
                 for text in wanted_text:
-                    if text and text.encode('utf-8') not in joined:
+                    if text.strip() and text.encode('utf-8') not in joined:
                         record['problems'].append('%s: appearance stream lacks text %r' %
                                                   (change['field'], text))
                 record['checks'].append('appearance stream text')
