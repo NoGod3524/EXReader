@@ -5,7 +5,8 @@
 给独立 AI 的小包：把现有两个原生阅读 preset 的构建与安装消费验证扩展到 Windows/macOS，
 不改引擎或 SDK 接口。按 [交接索引](reading-simple-index.md) 核对主线最新完整 SHA，
 从该 SHA 新建独立分支和工作树，保留已联合验收祖先 S=`686ce2fe6c3463ef1b917569677ee9933e22faa9`。
-主线首轮 `39852907619` 在测量自验失败；采用后续修复和新源码验收记录，不重置其他工作树。
+Linux 通过源码为 `54d8c592ed4f48e2f5ddb7811de213c95e41243c`，run `39853356309`。
+原失败 `39852907619` 保留；不重置其他工作树，不将 Linux 结果代替本包平台验收。
 
 阅读 `CMakePresets.json`、`tests/reading_core/CMakeLists.txt`、`.github/workflows/reading-core.yml`、
 `tools/reading_core/smoke-manifest.json`，以及 `docs/READING-CORE-START.md`。

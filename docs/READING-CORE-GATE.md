@@ -20,6 +20,10 @@
 
 ## 最小落地顺序
 
+首轮 Linux 运行已完成：受测 `54d8c592`，run `39853356309`，两个实际 check 为
+`reading (reading-core)`、`reading (reading-library)`，均成功。范围与工件见 [启动记录](READING-CORE-START.md)。
+它们尚未配置为 GitHub required checks；以下发布/保护步骤仍需执行。
+
 1. 在共同源码上运行 `.github/workflows/reading-core.yml`，验证 `reading-core` 与 `reading-library` 两个 profile。前者保留多格式和 PDF，后者增加 SQLite 书库。
 2. 首轮云端完成后登记实际生成的 check 名称、workflow 路径和工件名。完成的检查才加入 GitHub 必需检查，名称不依据文档猜测；必需 workflow 应覆盖目标分支的 PR，避免路径过滤导致检查缺席。
 3. 核心发布复用同源码的现有 native 回归、安装消费、sanitizer 和层检查；按下表附加变更涉及的组件验收。GitHub required checks 配置与发布流程接线是后续执行项。
