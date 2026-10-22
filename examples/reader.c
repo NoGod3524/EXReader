@@ -631,6 +631,13 @@ static int job_cancel_check(void *context) {
   return job_cancel_flag((host_job *)context);
 }
 
+/* Long-lived pager configs must not retain a job pointer: completed jobs are
+   freed. This callback always consults the current serialized job instead. */
+static int host_cancel_check(void *context) {
+  (void)context;
+  return g.job ? job_cancel_flag(g.job) : 0;
+}
+
 static void job_pause(host_job *job) {
   int remaining = g.delay_ms;
   while (remaining > 0 && !job_cancel_flag(job)) {
@@ -1042,8 +1049,8 @@ static exr_status job_open(host_job *job) {
     }
   } else {
     session_configure(&session, job->font_percent > 0 ? job->font_percent : g.font_percent);
-    session.config.control.cancelled = job_cancel_check;
-    session.config.control.context = job;
+    session.config.control.cancelled = host_cancel_check;
+    session.config.control.context = NULL;
     EnterCriticalSection(&g.library_lock);
     status = exr_library_document(g.library, book.id, &session.document, &error);
     LeaveCriticalSection(&g.library_lock);
@@ -1125,8 +1132,8 @@ static exr_status job_layout(host_job *job) {
   if (job->book_id && job->book_id != g.session.book_id) return EXR_CANCELLED;
   config = g.session.config;
   config.page.font_size = (float)job->font_percent / 100.0f;
-  config.control.cancelled = job_cancel_check;
-  config.control.context = job;
+  config.control.cancelled = host_cancel_check;
+  config.control.context = NULL;
   status = exr_pager_create(g.session.document, g.font, &config, &pager, &error);
   if (status == EXR_OK) status = exr_pager_set_cache(pager, 2, 0, &error);
   if (status == EXR_OK) status = exr_pager_set_checkpoints(pager, 8, 4 * 1024 * 1024, 8, &error);
