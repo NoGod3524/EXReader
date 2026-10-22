@@ -233,14 +233,23 @@ final class EXReaderHostUITests: XCTestCase {
         XCTAssertTrue(waitUntil(10) { self.screenSnapshot()?.elements["selection.copy"]?.isEnabled == true },
                       "selection sheet must still own a stable frame before native word selection")
         let view = selectionTextView()
-        view.tap()
 #if os(iOS)
-        view.doubleTap()
+        // Hit the fixed fixture's first visible text line. The centre of the
+        // larger iPad text view can be blank space below the native text.
+        let word = view.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: 30, dy: 22))
+        word.tap()
+        word.doubleTap()
 #else
+        view.tap()
         view.doubleClick()
 #endif
         if !waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 5) {
+#if os(iOS)
+            word.press(forDuration: 1.2)
+#else
             view.press(forDuration: 1.2)
+#endif
         }
     }
 
