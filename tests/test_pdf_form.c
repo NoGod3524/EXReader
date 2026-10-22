@@ -18,7 +18,7 @@ static void object(unsigned id,const char *body) { offset[id]=length; fmt("%u 0 
    39 widgets, radio exports, pair options, multiple selection and two pages. */
 static void source(unsigned mode) {
   unsigned i,page; char text[8192]; size_t at,xref; length=0; memset(offset,0,sizeof(offset)); add("%PDF-1.7\n");
-  object(1,mode==9 ? "<< /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [6 0 R 44 0 R 45 0 R 46 0 R 47 0 R 48 0 R 49 0 R 50 0 R 51 0 R 52 0 R 53 0 R 54 0 R 55 0 R] /NeedAppearances true >> >>" : "<< /Type /Catalog /Pages 2 0 R /AcroForm 5 0 R >>");
+  object(1,mode==17 ? "<< /Type /Catalog /Pages 2 0 R >>" : mode==9 ? "<< /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [6 0 R 44 0 R 45 0 R 46 0 R 47 0 R 48 0 R 49 0 R 50 0 R 51 0 R 52 0 R 53 0 R 54 0 R 55 0 R] /NeedAppearances true >> >>" : mode==16 ? "<< /Type /Catalog /Pages 2 0 R /AcroForm 5 0 R /Perms << /DocMDP 54 0 R >> >>" : "<< /Type /Catalog /Pages 2 0 R /AcroForm 5 0 R >>");
   object(2,"<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>");
   for(page=0;page<2;page++) {
     at=(size_t)snprintf(text,sizeof(text),"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 120 80] /Annots [");
@@ -28,17 +28,19 @@ static void source(unsigned mode) {
   snprintf(text,sizeof(text),"<< /Fields [6 0 R 44 0 R 45 0 R 46 0 R 47 0 R 48 0 R 49 0 R 50 0 R 51 0 R 52 0 R 53 0 R 54 0 R 55 0 R] /NeedAppearances true %s >>",mode==6 ? "/XFA (record only)" : ""); object(5,text);
   at=(size_t)snprintf(text,sizeof(text),"<< /T (person) /FT /Tx /Ff 0 /MaxLen 12 /V (inherited) /DV (default) /DA (/Helv 10 Tf 0 g) /Q 1 %s /Kids [",mode==7 ? "/AA << /K << /S /JavaScript /JS (never executed) >> >>" : "");
   for(i=20;i<44;i++) at+=(size_t)snprintf(text+at,sizeof(text)-at,"%u 0 R ",i);
-  snprintf(text+at,sizeof(text)-at,"%s] >>",mode==2 ? "6 0 R" : ""); object(6,text);
+  snprintf(text+at,sizeof(text)-at,"%s] >>",mode==2 ? "6 0 R" : mode==21 ? "<< /Parent 6 0 R /T (direct) /FT /Tx >>" : ""); object(6,text);
   object(7,"<< /Type /XObject /Subtype /Form /BBox [0 0 100 20] /Length 0 >>\nstream\nendstream");
   for(i=20;i<44;i++) {
-    snprintf(text,sizeof(text),"<< /Parent 6 0 R /T (text%02u) %s %s %s >>",i-20,
+    static const char *const unsupported[]={"/Ff 4096","/Ff 8192","/Ff 16777216","/Ff 33554432","/Ff 1048576"};
+    const char *constraint=i==21 && mode==1 ? "/FT 42" : i==21 && mode==3 ? "/Ff 1" : i==21 && mode==4 ? "/Ff 2" : i==21 && mode==5 ? "/MaxLen 2" : i==21 && mode>=10 && mode<=14 ? unsupported[mode-10] : "";
+    snprintf(text,sizeof(text),"<< /Parent %u 0 R /T (text%02u) %s %s %s >>",i==21 && mode==20 ? 5 : 6,i==21 && mode==19 ? 0 : i-20,
       i==20 ? "/Kids [100 0 R 101 0 R]" : "/Type /Annot /Subtype /Widget /Rect [10 10 110 30] /AP << /N 7 0 R >>",
-      i==21 && mode==1 ? "/FT 42" : i==21 && mode==3 ? "/Ff 1" : i==21 && mode==4 ? "/Ff 2" : i==21 && mode==5 ? "/MaxLen 2" : "",
+      constraint,
       i==21 && mode==8 ? "/MK << /R 90 >>" : ""); object(i,text);
   }
   for(i=44;i<48;i++) { snprintf(text,sizeof(text),"<< /FT /Btn /T (check%u) /Type /Annot /Subtype /Widget /Rect [10 35 30 55] /V /Off /AP << /N << /Off 7 0 R /Yes 7 0 R >> >> >>",i-44); object(i,text); }
   for(i=48;i<50;i++) { snprintf(text,sizeof(text),"<< /FT /Btn /Ff 32768 /T (radio%u) /Kids [%u 0 R %u 0 R] /V /Off >>",i-48,102+(i-48)*2,103+(i-48)*2); object(i,text); }
-  for(i=50;i<54;i++) { snprintf(text,sizeof(text),"<< /FT /Ch /Ff %u /T (choice%u) /Type /Annot /Subtype /Widget /Rect [10 10 110 30] /Opt [(A) [(B) (V)]] /V (A) /AP << /N 7 0 R >> >>",i==52 ? 2097152u : i==53 ? 131072u : 0u,i-50); object(i,text); }
+  for(i=50;i<54;i++) { snprintf(text,sizeof(text),"<< /FT /Ch /Ff %u /T (choice%u) /Type /Annot /Subtype /Widget /Rect [10 10 110 30] /Opt [(A) [(B) (V)]] /V (A) /AP << /N 7 0 R >> >>",i==50 && mode==15 ? 393216u : i==52 ? 2097152u : i==53 ? 131072u : 0u,i-50); object(i,text); }
   object(54,"<< /FT /Sig /T (signature) /Type /Annot /Subtype /Widget /Rect [10 10 110 30] >>");
   object(55,"<< /FT /Btn /Ff 65536 /T (push) /Type /Annot /Subtype /Widget /Rect [10 10 110 30] >>");
   for(i=100;i<106;i++) {
@@ -58,6 +60,7 @@ static const exr_pdf_form_field *named(const exr_pdf_form_field *f,size_t n,cons
 }
 static int cancelled(void *context) { return *(int *)context; }
 static void final_cancel(void *context,exr_stage stage,uint64_t done,uint64_t total) { if(stage==EXR_STAGE_EXPORT && done==total) *(int *)context=1; }
+static void shape_cancel(void *context,exr_stage stage,uint64_t done,uint64_t total) { (void)done; (void)total; if(stage==EXR_STAGE_SHAPE) *(int *)context=1; }
 static void failure(unsigned mode,const char *name,const char *value,exr_status expected) {
   const char *values[]={value}; exr_pdf_form_change c={name,values,1}; void *out=(void *)1; size_t n=99; source(mode);
   CHECK(exr_pdf_form_write(pdf,length,&c,1,NULL,&out,&n,&error)==expected); CHECK(!out && !n && !memcmp(pdf,original,length));
@@ -130,12 +133,20 @@ int main(int argc,char **argv) {
   failure(0,"signature","A",EXR_UNSUPPORTED); failure(0,"push","A",EXR_UNSUPPORTED); failure(0,"missing","A",EXR_ARGUMENT);
   failure(0,"choice0","absent",EXR_ARGUMENT); failure(0,"check0","absent",EXR_ARGUMENT); failure(0,"person.text00","\xff",EXR_ENCODING);
   failure(0,"person.text00","\xe7\x94\xb2",EXR_UNSUPPORTED);
+  for(i=10;i<=14;i++) failure((unsigned)i,"person.text01","A",EXR_UNSUPPORTED);
+  failure(15,"choice0","A",EXR_UNSUPPORTED); failure(16,"person.text00","A",EXR_FORMAT); failure(21,"person.direct","A",EXR_UNSUPPORTED);
   for(i=1;i<=2;i++) { source((unsigned)i); fields=(exr_pdf_form_field *)1; n=99; CHECK(exr_pdf_form_read(pdf,length,NULL,&fields,&n,&error)==EXR_FORMAT && !fields && !n); }
+  for(i=19;i<=20;i++) { source((unsigned)i); fields=(exr_pdf_form_field *)1; n=99; CHECK(exr_pdf_form_read(pdf,length,NULL,&fields,&n,&error)==EXR_FORMAT && !fields && !n); }
+  source(17); fields=(exr_pdf_form_field *)1; n=99; OK(exr_pdf_form_read(pdf,length,NULL,&fields,&n,&error)); CHECK(!fields && !n);
   source(0);
+  { exr_pdf_form_change duplicate[]={changes[0],changes[0]}; CHECK(exr_pdf_form_write(pdf,length,duplicate,2,NULL,&output,&output_size,&error)==EXR_ARGUMENT && !output && !output_size); }
+  { const char *missing[]={"B"}; exr_pdf_form_change c={"person.text00",missing,1}; options=exr_pdf_form_write_defaults(); options.font=font;
+    CHECK(exr_pdf_form_write(pdf,length,&c,1,&options,&output,&output_size,&error)==EXR_UNSUPPORTED && error.code==EXR_UNSUPPORTED && !output && !output_size && !memcmp(pdf,original,length)); }
   { exr_pdf_form_options limits=exr_pdf_form_defaults(); limits.max_fields=30; CHECK(exr_pdf_form_read(pdf,length,&limits,&fields,&n,&error)==EXR_LIMIT && !fields && !n); limits=exr_pdf_form_defaults(); limits.max_widgets=1; CHECK(exr_pdf_form_read(pdf,length,&limits,&fields,&n,&error)==EXR_LIMIT && !fields && !n); limits=exr_pdf_form_defaults(); limits.max_text_bytes=16; CHECK(exr_pdf_form_read(pdf,length,&limits,&fields,&n,&error)==EXR_LIMIT && !fields && !n); }
   { int stop=1; options=exr_pdf_form_write_defaults(); options.control.cancelled=cancelled; options.control.context=&stop; output=(void *)1; output_size=99;
     CHECK(exr_pdf_form_write(pdf,length,changes,1,&options,&output,&output_size,&error)==EXR_CANCELLED && !output && !output_size);
     stop=0; options.control.progress=final_cancel; CHECK(exr_pdf_form_write(pdf,length,changes,1,&options,&output,&output_size,&error)==EXR_CANCELLED && !output && !output_size && !memcmp(pdf,original,length));
+    stop=0; options.font=font; options.control.progress=shape_cancel; CHECK(exr_pdf_form_write(pdf,length,changes,1,&options,&output,&output_size,&error)==EXR_CANCELLED && error.code==EXR_CANCELLED && !output && !output_size && !memcmp(pdf,original,length));
   }
   deep_source(); CHECK(exr_pdf_form_read(pdf,length,NULL,&fields,&n,&error)==EXR_LIMIT && !fields && !n);
   exr_font_free(font); printf("AcroForm: %u checks; 36 fields, 39 widgets, 2 pages\n",checks); return 0;

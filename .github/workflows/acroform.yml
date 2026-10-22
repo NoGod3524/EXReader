@@ -23,7 +23,7 @@ jobs:
       - name: Build actual C implementation and regression tests
         run: cmake --build build/form --config Debug --parallel 4 --target exreader-pdf-form-test exreader-pdf-write-test exreader-pdf-metadata-write-test exreader-pdf-appearance-test
       - name: Enumerate, edit, reopen and render generated original corpus
-        run: ctest --test-dir build/form -C Debug --output-on-failure -R "native-pdf-(form|write|metadata-write|appearance)$"
+        run: ctest --test-dir build/form -C Debug --verbose --output-on-failure -R "native-pdf-(form|write|metadata-write|appearance)$"
       - name: Verify compiled layer dependencies
         if: runner.os == 'Linux'
         run: python3 tools/check_layers.py build/form
@@ -35,7 +35,7 @@ jobs:
       - run: git rev-parse HEAD
       - run: cmake -S . -B build/form -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_BUILD_JNI=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_MP3=OFF
       - run: cmake --build build/form --parallel 4 --target exreader-pdf-form-test
-      - run: ctest --test-dir build/form --output-on-failure -R '^native-pdf-form$'
+      - run: ctest --test-dir build/form --verbose --output-on-failure -R '^native-pdf-form$'
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1
