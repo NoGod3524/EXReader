@@ -184,6 +184,11 @@ jobs:
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1
+      - name: Verify measurements under sanitizers
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tools/check_acroform_corpus.py --corpus build/corpus --edited build/form/acroform-edited --results build/form/acroform-results.tsv --out build/evidence --platform sanitizer
       - name: Preserve sanitizer evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -192,6 +197,7 @@ jobs:
           path: |
             build/form/acroform-edited/
             build/form/acroform-results.tsv
+            build/evidence/
             build/corpus/manifest.json
           if-no-files-found: warn
 
