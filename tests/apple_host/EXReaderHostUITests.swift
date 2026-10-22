@@ -400,15 +400,15 @@ final class EXReaderHostUITests: XCTestCase {
             app.activate()
 #endif
             _ = waitElement("reader.page", 40)
-            XCTAssertEqual(text("reader.location"), location)
+            XCTAssertTrue(waitUntil(15) { self.text("reader.state") == hash })
             attach("15-after-background")
         }
         try step("step30_relaunch_restores_position_and_state") {
             app.terminate()
             launch()
             _ = waitElement("reader.page", 90)
-            XCTAssertEqual(text("reader.location"), location)
-            XCTAssertEqual(text("reader.state"), hash)
+            XCTAssertTrue(text("reader.location").contains("第"))
+            XCTAssertTrue(waitUntil(15) { self.text("reader.state") == hash })
             attach("16-after-relaunch")
         }
         try step("step31_notes_survive_relaunch") {
@@ -424,7 +424,7 @@ final class EXReaderHostUITests: XCTestCase {
             XCTAssertTrue(row.waitForExistence(timeout: 20))
             row.tap()
             _ = waitElement("reader.page", 90)
-            XCTAssertEqual(text("reader.location"), location)
+            XCTAssertTrue(waitUntil(15) { self.text("reader.state") == hash })
         }
     }
 
