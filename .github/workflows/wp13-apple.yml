@@ -49,6 +49,10 @@ jobs:
           path: |
             stage/${{ matrix.target }}/
             build/sdk-identity.json
+          # The installed SDK ships examples/, and the Android example keeps a
+          # .gitignore there. Dropping hidden files would change the downloaded
+          # tree and break the recorded SDK file identity.
+          include-hidden-files: true
           retention-days: 30
 
   uitest:
