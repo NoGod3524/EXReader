@@ -140,21 +140,46 @@ final class EXReaderHostUITests: XCTestCase {
     private func waitLabel(_ identifier: String, contains text: String,
                            _ timeout: TimeInterval = 30) -> Bool {
         _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
-        return waitUntil(timeout) { self.text(identifier).contains(text) }
+        let matched = waitUntil(timeout) { self.text(identifier).contains(text) }
+        if !matched { reportWaitFailure(identifier, expected: text) }
+        return matched
     }
 
     private func waitLabelAny(_ identifier: String, _ texts: [String],
                               _ timeout: TimeInterval = 30) -> Bool {
         _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
-        return waitUntil(timeout) { texts.contains(where: { self.text(identifier).contains($0) }) }
+        let matched = waitUntil(timeout) { texts.contains(where: { self.text(identifier).contains($0) }) }
+        if !matched { reportWaitFailure(identifier, expected: texts.joined(separator: "|")) }
+        return matched
     }
 
     private func waitLabelFilled(_ identifier: String, excluding: [String],
                                  _ timeout: TimeInterval = 15) -> Bool {
         _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
-        return waitUntil(timeout) {
+        let matched = waitUntil(timeout) {
             let value = text(identifier)
             return !value.isEmpty && !excluding.contains(value)
+        }
+        if !matched { reportWaitFailure(identifier, expected: "nonempty, excluding " + excluding.joined(separator: "|")) }
+        return matched
+    }
+
+    private func reportWaitFailure(_ identifier: String, expected: String) {
+        guard let state = screenSnapshot() else { return }
+        var observed: [String: Any] = ["identifier": identifier, "expected": expected,
+            "book_count": state.bookCount]
+        for key in [identifier, "library.status", "library.error", "library.busy",
+                    "reader.status", "reader.busy", "reader.location", "reader.state", "selection.hint"] {
+            observed[key] = String((state.text(key) ?? "<absent>").prefix(400))
+        }
+        for key in ["library.import.epub", "selection.text", "selection.copy"] {
+            if let node = state.elements[key] {
+                observed[key] = ["enabled": node.isEnabled, "frame": String(describing: node.frame)]
+            }
+        }
+        if let data = try? JSONSerialization.data(withJSONObject: observed, options: [.sortedKeys]),
+           let json = String(data: data, encoding: .utf8) {
+            print("EXR_UI_WAIT_FAILED " + json)
         }
     }
 

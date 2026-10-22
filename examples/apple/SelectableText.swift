@@ -35,7 +35,7 @@ struct SelectableText: UIViewRepresentable {
 
     func makeUIView(context: Context) -> UITextView {
         let view = UITextView()
-        view.isEditable = true
+        view.isEditable = false
         view.isSelectable = true
         view.isScrollEnabled = true
         view.alwaysBounceVertical = true
@@ -46,8 +46,6 @@ struct SelectableText: UIViewRepresentable {
         view.smartDashesType = .no
         view.font = UIFont.preferredFont(forTextStyle: .body)
         view.textContainerInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        // Keep hardware-keyboard selection testable without a software keyboard covering the actions.
-        view.inputView = UIView(frame: CGRect(x: 0, y: 0, width: 1, height: 1))
         view.text = text
         view.delegate = context.coordinator
         view.accessibilityIdentifier = "selection.text"
