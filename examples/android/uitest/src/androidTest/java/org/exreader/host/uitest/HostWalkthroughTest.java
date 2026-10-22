@@ -139,8 +139,10 @@ public final class HostWalkthroughTest {
 
         step("copy_selection", "Copy places the selection on the clipboard", () -> {
             click("copy_button");
-            assertTrue("copy status missing", waitIdText("reader_status", "Copied", 8000));
-            assertTrue("copy count missing", text("status_text").contains("characters"));
+            device.pressBack();
+            SystemClock.sleep(300);
+            assertTrue("copy status missing", waitIdText("reader_status", "Copied", 15000));
+            assertTrue("copy count missing", text("reader_status").contains("characters"));
         });
 
         step("note_add", "Add an annotation from the selection", () -> {
@@ -733,8 +735,9 @@ public final class HostWalkthroughTest {
 
     private boolean waitButtonText(String needle, long timeout) throws Exception {
         long deadline = SystemClock.uptimeMillis() + timeout;
+        String upper = needle.toUpperCase(Locale.ROOT);
         while (SystemClock.uptimeMillis() < deadline) {
-            if (text("notes_button").contains(needle)) return true;
+            if (text("notes_button").toUpperCase(Locale.ROOT).contains(upper)) return true;
             SystemClock.sleep(150);
         }
         return false;

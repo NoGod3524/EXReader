@@ -371,7 +371,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     long seek = savedOffset;
                     if (seek < 0) seek = target.position;
                     if (seek < 0) seek = 0;
-                    if (requestedOffset < 0 && state >= 0 && state != 1) {
+                    boolean exact = state == 1 || (state == 3 && seek == 0);
+                    if (requestedOffset < 0 && state >= 0 && !exact) {
                         notice = "Saved position is not exact (state " + state
                                 + "); opened at stored offset " + seek + ".";
                     }
