@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import CoreGraphics
 import CryptoKit
 import CEXReader
 
