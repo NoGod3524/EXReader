@@ -14,7 +14,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import hashlib, io, json, os, re, subprocess, sys, tempfile, urllib.error, urllib.parse, urllib.request, zipfile
+          import hashlib, io, json, os, plistlib, re, subprocess, sys, tempfile, urllib.error, urllib.parse, urllib.request, zipfile
           from pathlib import Path, PurePosixPath
 
           REPO = 'NoGod3524/EXReader'
@@ -106,6 +106,32 @@ jobs:
                   for child in value:
                       yield from nested(child)
 
+          def snapshot_observations(payload):
+              value = plistlib.loads(payload)
+              objects = value.get('$objects', []) if isinstance(value, dict) else []
+              def resolve(item, depth=0, seen=frozenset()):
+                  if depth > 12:
+                      return '<depth-bound>'
+                  if isinstance(item, plistlib.UID):
+                      if item.data in seen or item.data >= len(objects):
+                          return '<object-reference>'
+                      return resolve(objects[item.data], depth + 1, seen | {item.data})
+                  if isinstance(item, dict):
+                      return {str(key): resolve(child, depth + 1, seen) for key, child in item.items()}
+                  if isinstance(item, list):
+                      return [resolve(child, depth + 1, seen) for child in item[:1000]]
+                  if isinstance(item, bytes):
+                      return '<binary:%d>' % len(item)
+                  return item
+              decoded = resolve(value)
+              observations = []
+              for node in nested(decoded):
+                  fields = {key: child for key, child in node.items() if isinstance(child, (str, int, float, bool))}
+                  if any(re.search(r'selection\.|library\.(status|import|book|busy)|reader\.(title|location|busy)|尚未选择|已导入|已存在', str(child))
+                         for child in fields.values()):
+                      observations.append({key: bounded(child, 500) for key, child in fields.items()})
+              return observations[:32]
+
           def export_result(bundle, section, test_id=None):
               arguments = ['xcrun', 'xcresulttool', 'get', 'test-results', section,
                            '--path', str(bundle), '--format', 'json']
@@ -154,7 +180,7 @@ jobs:
               require(isinstance(manifest, list), 'attachment manifest is invalid')
               attachment_prefix = next(name for name in names if name.endswith('evidence/ipad/attachments/manifest.json'))[:-len('manifest.json')]
               for test, line in TARGETS.items():
-                  observation = {'source_line': line, 'steps': [], 'text_attachments': []}
+                  observation = {'source_line': line, 'steps': [], 'text_attachments': [], 'attachment_inventory': []}
                   for group in manifest:
                       owner = str(group.get('testIdentifier') or group.get('testName', ''))
                       if test not in owner:
@@ -166,9 +192,23 @@ jobs:
                           if name not in names:
                               continue
                           label = item.get('suggestedHumanReadableName', '')
+                          metadata = {'name': bounded(label, 160), 'path': name,
+                                      'bytes': archive.getinfo(name).file_size,
+                                      'type': item.get('uniformTypeIdentifier')}
+                          observation['attachment_inventory'].append(metadata)
+                          if re.search(r'spindump|stack|crash|diagnostic|\.ips\b', label, re.I):
+                              metadata['excluded_from_text_output'] = True
+                              continue
                           if archive.getinfo(name).file_size > 8 * 1024**2:
                               continue
                           payload = archive.read(name)
+                          metadata['signature'] = payload[:8].hex()
+                          if 'snapshot' in label.lower() and payload.startswith((b'bplist00', b'<?xml')):
+                              try:
+                                  metadata['snapshot_fields'] = snapshot_observations(payload)
+                              except Exception as error:
+                                  metadata['snapshot_decode_error'] = type(error).__name__
+                              continue
                           if not (filename.lower().endswith(('.txt', '.json')) or
                                   'snapshot' in label.lower() or 'tree' in label.lower() or 'steps-' in label):
                               continue
@@ -230,6 +270,8 @@ jobs:
                           fragments = []
                           for item in nested(value):
                               title = str(item.get('title') or item.get('name') or item.get('message') or '')
+                              if re.search(r'closure #|partial apply|@objc|test\d+.*\(\)$', title):
+                                  continue
                               if re.search(r'selection\.|library\.status|Double Tap|Press|Tap|Failed|failed|XCTAssert|Select', title):
                                   fragments.append(bounded(title, 550))
                           observation[section + '_relevant'] = fragments[-22:]
