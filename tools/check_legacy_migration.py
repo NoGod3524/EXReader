@@ -36,6 +36,20 @@ ledger_publish_failure_rolls_back_library failed_rollback_is_reported_and_pre_im
 new_target_failure_leaves_nothing legacy_backup_zip_converts_to_equivalent_pack inspect_command verify_detects_a_pack_that_was_not_migrated
 """.split()
 REQUIRED_AREAS = {"metadata", "originals", "progress", "annotations", "fixed", "audio", "fields", "idempotence", "conflicts", "corrupt", "target", "atomicity", "commands"}
+E2E_CHECK_IDS = ('indexeddb', 'readonly', 'missing-db', 'export-counts', 'inspect', 'strict',
+                 'migrate', 'originals', 'titles', 'fixed-progress', 'cfi', 'pdf-notes', 'audio',
+                 'unlocated', 'ledger-counts', 'idempotence', 'verify')
+REVIEW_CHECK_NAMES = {
+    'verify rejects same note identity with changed pack content',
+    'partial conflict preserves note owned by earlier pack',
+    'existing note with owner outside current pack is verified and reused',
+    'verify does not create missing target', 'dump does not create missing target',
+    'late cancellation refuses publication',
+} | {'damaged ledger refused: ' + mode for mode in ('retained-unlocated', 'stored-identity', 'owner', 'kind')} | {
+    prefix + mode for prefix in ('verify rejects public API edit: ', 'verification preserves edited library and ledger: ')
+    for mode in ('reflow-text', 'fixed-text', 'fixed-range')
+} | {prefix + mode for prefix in ('publication preserves concurrent change: ', 'no stage or lock left: ')
+     for mode in ('ledger-content', 'ledger-created', 'target-created')}
 NOT_EXECUTED = [
     "Originals above 128 MiB (the SDK in-memory import bound) are rejected as limit-exceeded; streaming migration is not implemented and was not exercised.",
     "Unlocated annotations cannot be stored in the library because no public API accepts an unresolved range; they are preserved only in the ledger sidecar.",
@@ -120,7 +134,8 @@ def gate(a):
                 problems.append("%s: browser end-to-end chain failed" % label)
             if e["indexeddb"]["version"] != 1:
                 problems.append("%s: IndexedDB version is %s, not 1" % (label, e["indexeddb"]["version"]))
-            if (len(e['checks']) != 17 or len({check['check'] for check in e['checks']}) != 17 or
+            if (len(e['checks']) != len(E2E_CHECK_IDS) or tuple(check.get('id') for check in e['checks']) != E2E_CHECK_IDS or
+                    len({check['check'] for check in e['checks']}) != len(E2E_CHECK_IDS) or
                     not all(check['ok'] is True for check in e['checks'])):
                 problems.append('%s: incomplete browser-chain checks' % label)
         identity = entry['identity']
@@ -147,8 +162,8 @@ def gate(a):
                 record = json.load(open(review, encoding='utf-8'))
                 if (record.get('passed') is not True or record.get('source_sha') != os.environ['GITHUB_SHA'] or
                         record.get('run_id') != os.environ['GITHUB_RUN_ID'] or
-                        record.get('tool_sha256') != identity['tool']['sha256'] or len(record.get('checks', [])) != 22 or
-                        len({check['name'] for check in record.get('checks', [])}) != 22 or
+                        record.get('tool_sha256') != identity['tool']['sha256'] or len(record.get('checks', [])) != len(REVIEW_CHECK_NAMES) or
+                        {check['name'] for check in record.get('checks', [])} != REVIEW_CHECK_NAMES or
                         not all(check['passed'] is True for check in record['checks'])):
                     problems.append('%s: incomplete or mismatched migration review regressions' % label)
         platforms[label] = {

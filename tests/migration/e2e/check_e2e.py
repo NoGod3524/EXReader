@@ -11,12 +11,14 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import legacy_data as L  # noqa: E402
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "tools"))
+from check_legacy_migration import E2E_CHECK_IDS
 
 checks = []
 
 
 def check(ok, text):
-    checks.append({"check": text, "ok": bool(ok)})
+    checks.append({"id": E2E_CHECK_IDS[len(checks)], "check": text, "ok": bool(ok)})
     print(("ok   " if ok else "FAIL ") + text, flush=True)
 
 
