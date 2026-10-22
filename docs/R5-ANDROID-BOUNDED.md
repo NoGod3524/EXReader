@@ -8,8 +8,11 @@ bounded 书从同一书库 owner 的 `exr_library_source` 打开 publication/cha
 进度采用 part/path/章内 selector；恢复先 resolve，不精确时明确显示 stored-offset fallback 并保留原记录。
 新 notes 使用独立 EPUB API，评论修改不重抓选区，导航只接受 FOUND。legacy EPUB／其他重排与 PDF/CBZ 保留原入口。
 
-候选工作流 `r5-android-bounded-candidate.yml` 只验证候选 SDK/APK 能否构建，固定 `candidate_only=true, accepted=false`。
+候选工作流 `r5-android-bounded-candidate.yml` 首轮源码 `50af703c38dd192533a8672ea79fa31315572459`，
+run `39864510415` 的 SDK／三 APK 云端构建通过；该首轮没有运行模拟器。
+接续候选增加原 45+10 和独立 bounded 8、原 48 与额外 16 项门禁，固定 `candidate_only=true, accepted=false`。
 `ANDROID_CANDIDATE_SDK_BASE` 只用于候选来源检查，不替代正式 `SDK_BASE`；正式验收等待固定 K。
-原 45+10 IDs、49 页／49 actual next／0 recovery、48 门禁不删减，新增专项及模拟器闭环仍须完整执行。
+原 45+10 IDs、49 页／49 actual next／0 recovery、48 门禁不删减；真实 next 在 C 调用点计数，
+seek／恢复扫描不栅格化前页；新增专项及模拟器闭环仍须完整执行。
 
 范围仍为 API 34 x86_64 模拟器，`physical_device_execution=false`；真机／签名／TalkBack 单独验收。

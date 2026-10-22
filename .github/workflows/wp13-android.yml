@@ -129,11 +129,20 @@ jobs:
             --stage stage/android-x86_64 \
             --output build/android-host/gate-review.json
 
+      - name: Prove bounded evidence gate rejects altered inputs
+        id: bounded_gate
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
+        run: |
+          python3 tests/android_host/check_bounded_evidence_gate.py \
+            --evidence build/android-host/evidence --build build/android-host/build.json \
+            --stage stage/android-x86_64 --output build/android-host/bounded-gate-review.json
+
       - name: Final fail-closed acceptance
         if: always()
         env:
           ANDROID_HOST_UPSTREAM: '{"build":"${{ steps.build.outcome }}","static":"${{ steps.static.outcome }}","emulator":"${{ steps.emulator.outcome }}"}'
           ANDROID_GATE_OUTCOME: '${{ steps.gate_review.outcome }}'
+          ANDROID_BOUNDED_GATE_OUTCOME: '${{ steps.bounded_gate.outcome }}'
         run: |
           python3 tools/check_android_host.py \
             --repo . \
@@ -141,6 +150,7 @@ jobs:
             --build build/android-host/build.json \
             --stage stage/android-x86_64 \
             --gate-review build/android-host/gate-review.json \
+            --bounded-gate-review build/android-host/bounded-gate-review.json \
             --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             --output docs/validation/wp13-android.json
 
@@ -154,6 +164,7 @@ jobs:
             build/android-host/build.json
             build/android-host/build.log
             build/android-host/gate-review.json
+            build/android-host/bounded-gate-review.json
             build/android-host/fixtures/
             build/android-host/artifacts/
             build/android-host/evidence/

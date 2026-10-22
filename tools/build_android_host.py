@@ -14,6 +14,7 @@ import subprocess
 import sys
 import zipfile
 from pathlib import Path
+from urllib.parse import quote
 from android_host_evidence import apk_native, cloud_identity, inventory, ownership, source_files
 
 ROOT = Path(__file__).absolute().parents[1]
@@ -129,21 +130,23 @@ def patch_android_libraries(stage):
     return target
 
 
-def epub(path, title, chapters, stored=False):
+def epub(path, title, chapters, stored=False, paths=None, order=None):
     """Deterministic EPUB 3 writer used for fixtures."""
     path.parent.mkdir(parents=True, exist_ok=True)
     manifest = []
     spine = []
     files = {}
     for index, body in enumerate(chapters, start=1):
-        name = 'ch%02d.xhtml' % index
-        manifest.append('<item id="c%d" href="%s" media-type="application/xhtml+xml"/>' % (index, name))
+        name = paths[index-1] if paths else 'ch%02d.xhtml' % index
+        manifest.append('<item id="c%d" href="%s" media-type="application/xhtml+xml"/>' % (index, quote(name)))
         spine.append('<itemref idref="c%d"/>' % index)
         files['OEBPS/' + name] = ('<?xml version="1.0" encoding="utf-8"?>\n'
                                   '<!DOCTYPE html>\n'
                                   '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">'
                                   '<head><title>%s</title></head><body>%s</body></html>'
                                   % (escape(title), body)).encode('utf-8')
+    if order is not None:
+        spine = ['<itemref idref="c%d"/>' % index for index in order]
     files['META-INF/container.xml'] = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
@@ -153,7 +156,7 @@ def epub(path, title, chapters, stored=False):
         '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n'
         '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">'
         '<head><title>Contents</title></head><body><nav epub:type="toc"><ol>'
-        + ''.join('<li><a href="ch%02d.xhtml">Chapter %d</a></li>' % (i, i)
+        + ''.join('<li><a href="%s">Chapter %d</a></li>' % (quote(paths[i-1]) if paths else 'ch%02d.xhtml' % i, i)
                   for i in range(1, len(chapters) + 1)) +
         '</ol></nav></body></html>').encode('utf-8')
     files['OEBPS/content.opf'] = (
@@ -217,6 +220,14 @@ def write_fixtures(folder):
         '<h1>Second sample</h1><p>Second sample book. This is the second title in the shelf.</p>',
         '<h1>Second chapter</h1><p>Another paragraph for navigation.</p>'
     ])
+    epub(folder / 'Cross.epub', 'Cross Chapter', [
+        '<h1>EXReader first unique</h1><p>First chapter alpha source and selectable Unicode 中文 😀.</p>',
+        '<h1>EXReader second unique</h1><p>Second chapter beta source and distinct quote content.</p>',
+        '<h1>EXReader third unique</h1><p>Third chapter gamma finishes the native chapter chain.</p>'])
+    epub(folder / 'DuplicateSpine.epub', 'Duplicate Routes', [
+        '<h1>EXReader repeated route</h1><p>Same resource appears twice in the original spine.</p>',
+        '<h1>EXReader middle unique</h1><p>Middle chapter has an independent part route.</p>'],
+        paths=['chapter%#1.xhtml','middle.xhtml'],order=[1,2,1])
     big = []
     block = ('Lorem ipsum dolor sit amet, consectetur adipiscing elit. ' * 18)
     for index in range(2000):

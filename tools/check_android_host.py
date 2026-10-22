@@ -35,6 +35,7 @@ def static_checks():
     view = (APP/'java/org/exreader/host/ReaderView.java').read_text()
     native = (APP/'java/org/exreader/host/NativeLibrary.java').read_text()
     bridge = (APP/'cpp/exreader_host_jni.c').read_text()
+    bounded_bridge = (APP/'cpp/bounded_epub_jni.inc').read_text()
     app_gradle = (ROOT/'examples/android/app/build.gradle').read_text()
     test, workflow, doc = TEST.read_text(), WORKFLOW.read_text(), DOC.read_text()
     layout = (APP/'res/layout/activity_main.xml').read_text()
@@ -52,6 +53,13 @@ def static_checks():
                    'exr_library_progress', 'exr_anchor_create', 'exr_library_notes'):
         if symbol not in bridge:
             problems.append('JNI bridge lacks ' + symbol)
+    for symbol in ('exr_library_source', 'exr_publication_open_source', 'exr_publication_pager_create',
+                   'exr_pager_read_text', 'exr_pager_anchor_resolve', 'exr_library_epub_progress',
+                   'exr_library_epub_note', 'exr_library_epub_notes'):
+        if symbol not in bounded_bridge:
+            problems.append('bounded JNI bridge lacks ' + symbol)
+    if any(symbol in bounded_bridge for symbol in ('exr_library_document', 'exr_publication_load', 'exr_document_open')):
+        problems.append('bounded JNI bridge must not use document snapshots')
     if 'androidx' in app_gradle or "abiFilters 'x86_64'" not in app_gradle or 'ndkVersion' not in app_gradle:
         problems.append('app dependency, ABI or NDK contract changed')
     for control in ('import_button', 'book_list', 'reader_view', 'page_label', 'select_button',
@@ -77,9 +85,9 @@ def static_checks():
     return problems, {'cases_declared': len(ids), 'unique_cases': len(set(ids))}
 
 
-def check_gate_review(path, expected):
+def check_gate_review(path, expected, script_name='check_evidence_gate.py'):
     from importlib.util import module_from_spec, spec_from_file_location
-    script = ROOT/'tests/android_host/check_evidence_gate.py'
+    script = ROOT/'tests/android_host'/script_name
     spec = spec_from_file_location('android_gate_review', script)
     module = module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -109,6 +117,7 @@ def main():
     parser.add_argument('--workflow', default='wp13-android')
     parser.add_argument('--upstream', default=os.environ.get('ANDROID_HOST_UPSTREAM', '{}'))
     parser.add_argument('--gate-review', type=Path)
+    parser.add_argument('--bounded-gate-review', type=Path)
     args = parser.parse_args()
     summary, problems = {}, []
     try:
@@ -127,15 +136,23 @@ def main():
                 require(os.environ.get('ANDROID_GATE_OUTCOME') == 'success', 'gate regression step did not succeed')
                 check_gate_review(args.gate_review, expected)
                 summary['gate_review_sha256'] = sha256(args.gate_review)
+                require(args.bounded_gate_review is not None and os.environ.get('ANDROID_BOUNDED_GATE_OUTCOME')=='success',
+                        'bounded gate regression step did not succeed')
+                check_gate_review(args.bounded_gate_review,expected,'check_bounded_evidence_gate.py')
+                summary['bounded_gate_review_sha256']=sha256(args.bounded_gate_review)
     except Exception as error:
         problems.append(type(error).__name__ + ': ' + str(error)[:1200])
-    report = {'schema': 2, 'accepted': not problems, 'ok': not problems, 'problems': problems, 'summary': summary}
+    candidate_only=bool(os.environ.get('ANDROID_CANDIDATE_SDK_BASE'))
+    report = {'schema': 2, 'accepted': not problems and not candidate_only, 'ok': not problems,
+              'candidate_only': candidate_only, 'candidate_validated': candidate_only and not problems,
+              'problems': problems, 'summary': summary}
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
     print(json.dumps({'accepted': report['accepted'], 'problems': problems,
+                      'candidate_only':candidate_only,'candidate_validated':report['candidate_validated'],
                       'walkthrough': summary.get('summary'), 'review': summary.get('review', {}).get('summary')}))
-    return 0 if report['accepted'] else 1
+    return 0 if report['ok'] else 1
 
 
 if __name__ == '__main__':

@@ -42,8 +42,9 @@ final class BoundedEpub implements AutoCloseable {
         return nativeOpen(library.checked(),book,target,font,fontSize,task);
     }
     private Frame next(long pager,HostTask task,boolean recovery,boolean render) throws Exception {
-        task.check(); nextCalls++; if(recovery) recoveryCalls++;
-        return nativeNext(pager,task,render);
+        task.check(); long before=nativeCalls(pager);
+        try { return nativeNext(pager,task,render); }
+        finally { long calls=nativeCalls(pager)-before; nextCalls+=calls; if(recovery) recoveryCalls+=calls; }
     }
     private void log() {
         Log.i("EXRHost","paging {\"book\":"+book+",\"index\":"+index+",\"part\":"+part+
@@ -67,14 +68,16 @@ final class BoundedEpub implements AutoCloseable {
     PageLoad seek(NativeLibrary.Note note,HostTask task) throws Exception {
         if(note.location==null) throw new IllegalArgumentException("Missing chapter annotation route");
         int target=Integer.parseInt(note.location[0]);
-        return prepare(target,0,-1,resolve(target,note.location,task),size,task);
+        long[] match=resolve(target,note.location,task);
+        PageLoad load=prepare(target,0,-1,match[1],size,task);
+        load.snapshot.highlightStart=match[1]; load.snapshot.highlightEnd=match[2]; return load;
     }
-    private long resolve(int target,String[] location,HostTask task) throws Exception {
+    private long[] resolve(int target,String[] location,HostTask task) throws Exception {
         long candidate=open(target,size,task);
         try {
             long[] match=nativeResolve(candidate,location,task);
             if(match[0]!=1) throw new IllegalArgumentException("Saved position is not exact (state "+match[0]+")");
-            return match[1];
+            return match;
         } finally { nativeClose(candidate); }
     }
     PageLoad next(HostTask task) throws Exception {
@@ -176,6 +179,7 @@ final class BoundedEpub implements AutoCloseable {
     private static native long nativeOpen(long library,long book,int part,byte[] font,float size,HostTask task);
     private static native Frame nativeNext(long handle,HostTask task,boolean render);
     private static native Frame nativeRender(long handle,HostTask task);
+    private static native long nativeCalls(long handle);
     private static native void nativeClose(long handle);
     private static native String[] nativeProgress(long library,long book);
     private static native long[] nativeResolve(long handle,String[] location,HostTask task);
