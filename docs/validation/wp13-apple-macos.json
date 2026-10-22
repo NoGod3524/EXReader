@@ -1,0 +1,240 @@
+{
+  "artifacts": {
+    "attachment_files": 35,
+    "element_tree_present": false,
+    "screenshots": [
+      "096A40DF-F42F-426D-80A3-3C3D9725EB22.png",
+      "0A47C7E1-DDD0-44F7-9BF0-588361461FCD.png",
+      "171242D6-4490-448A-9804-7D43C6E6752F.png",
+      "1F9F9BC1-6101-4F29-ADA2-C23A098AB554.png",
+      "23B61E21-6E22-4140-88C8-B4C3D5D911BF.png",
+      "248B419F-FE44-4C23-9C21-10420419F293.png",
+      "27CEB226-8CEB-489C-894A-CD19FBDF4132.png",
+      "3B6EF889-B85F-48FE-9AC2-F28DA776823E.png",
+      "4C02BBC2-CB43-4B25-8A1E-C3E20682FB43.png",
+      "4C3D573C-986F-4472-B3AC-9848B9F08ACB.png",
+      "552B962C-8C05-4137-9E01-54FCC0D66E3F.png",
+      "57674982-E2FA-49B9-AE05-863ACEC64D85.png",
+      "859403C5-E300-41C0-9E4E-B83BEA809101.png",
+      "A8C78264-61FD-4696-A35C-EB8274AD797A.png",
+      "B24C5A52-F75E-4678-BA22-EEAA6CBFEE8A.png",
+      "C36FE20F-5189-44C5-A5E8-B5E320AA1EC7.png",
+      "CBB84B71-89E9-4D9A-A5C9-D691D0D6DC56.png",
+      "D56D17C4-4131-41B4-9707-025BD7D28C68.png",
+      "DC4E0323-A0E3-4311-A6BD-967234CB66EF.png",
+      "E2189162-7776-443E-B31E-19EEFA782B7E.png",
+      "E7AB8338-E423-4821-B97F-7533D64DB07A.png",
+      "F0D08EBF-F891-4416-B000-AB1D74B2F88B.png",
+      "F21675CD-EF3F-438B-BCB9-C357176C96EC.png"
+    ],
+    "xcodebuild_log": "build/results/macos-xcodebuild.log",
+    "xcresult": "build/results/macos.xcresult"
+  },
+  "date": "2026-10-22",
+  "environment": {
+    "app": {
+      "bundle": "build/DerivedData/Build/Products/Debug/EXReaderHost.app",
+      "executable_sha256": "be4b4579fd2cbd8749c4550a1a5e5938e4bacc5c6a361fdea04ba59e3f6f2215",
+      "info_plist_sha256": "dd0b578319cab0d4229ba86418547d59eb15eb07e8f56448343b84eebd14ae36"
+    },
+    "destination": "platform=macOS",
+    "device": "macOS host",
+    "fixtures": {
+      "Broken.epub": "cc3a09739ee6201acade6316ba570c7f208ae4f0f755efa236cf01837fe59a7d",
+      "Large.epub": "d6c457e2ee019d663b1aea8ff5ef08d29a0629daf226258b472e35459781cb46",
+      "OFL.txt": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "Sample.epub": "acad327c574da58993c69278b6c455287cdce387fe4da9c94f93386760027cfd",
+      "Sample.pdf": "4f6fdc7b4dc13363aae532953ccf863c6be853c3c8b63de4718bc45dafbeb49d"
+    },
+    "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "host": "macOS-15.7.9-arm64-arm-64bit-Mach-O",
+    "input_driver": "XCUITest tap/doubleTap/typeText/drag and simulator orientation",
+    "runtime": "macOS",
+    "sdk": {
+      "abi": 1,
+      "sdk_version": "3.40.0"
+    },
+    "xcode": "Xcode 16.4\nBuild version 16F6"
+  },
+  "legacy_self_checks": {
+    "checks": 21,
+    "passed": true,
+    "path": "evidence-macos\\report.json",
+    "sha256": "51a55ada0225272bdc0e670a7a90fa46bb7a5b7e70c93ec9dfe865f4d6a95d0b"
+  },
+  "package": "WP13-APPLE",
+  "physical_device_execution": false,
+  "platform": "macos",
+  "platform_label": "macOS",
+  "run": {
+    "id": "39717882847",
+    "job": "macos",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39717882847"
+  },
+  "schema": 1,
+  "scope": "real controls, touches and keyboard events on macOS and both simulators",
+  "source_sha": "960b6653e231cc5095deb6e71932061e8a32a8fb",
+  "state": {
+    "database": {
+      "bytes": 57344,
+      "rows": {
+        "book_progress": 1,
+        "books": 2,
+        "fixed_notes": 1,
+        "notes": 1
+      },
+      "sha256": "60739bf685648173d5d1b8a83217d0f52084cc1a528e300b00e4134b14b8f7d0",
+      "source_name": "library.sqlite",
+      "status": "copied"
+    },
+    "host_state": {
+      "log_sha256": "d28fd2f0303d5c8b771176dc7f393af82fa17b3f2bd86f61da07a78c407d7268",
+      "payload": {
+        "abi_version": 1,
+        "books": [
+          {
+            "format": "PDF",
+            "id": 2,
+            "position": 1,
+            "title": "Sample.pdf"
+          },
+          {
+            "format": "EPUB",
+            "id": 1,
+            "notes": [
+              {
+                "comment": "\u6458\u5f55\uff1aEach",
+                "id": 1,
+                "page": -1,
+                "quote": "Each",
+                "start": 9223372036854775807,
+                "state": "\u6b67\u4e49"
+              }
+            ],
+            "page": 2,
+            "page_text_sha256": "774e32763f48a503e260852851de8d6a668fbfa33154f7ffefdfb310ff851b58",
+            "position": 1035,
+            "title": "Sample.epub"
+          }
+        ],
+        "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+        "schema": 1,
+        "sdk_version": "3.40.0",
+        "state_hash": "b402c7a4"
+      },
+      "sha256": "85d83a8cd2ccc87f92514e5a3833669568c06c8bc3b8bd9eb64b6fe2f7549fcb",
+      "status": "copied"
+    }
+  },
+  "tests": [
+    {
+      "duration": "21s",
+      "name": "test01ImportDeduplicateAndErrors()",
+      "result": "Passed",
+      "step_count": 7,
+      "steps": [
+        "step01_launch_fresh_state",
+        "step02_import_epub_fixture",
+        "step03_duplicate_import_reuses_row",
+        "step04_import_pdf_fixture",
+        "step05_broken_import_error_is_recoverable",
+        "step06_reopen_epub_after_error",
+        "step07_element_tree_import"
+      ]
+    },
+    {
+      "duration": "26s",
+      "name": "test02PagingTypographyAndLayout()",
+      "result": "Passed",
+      "step_count": 11,
+      "steps": [
+        "step08_launch_and_open_reader",
+        "step09_first_page",
+        "step10_next_page_progress",
+        "step11_next_page_again",
+        "step12_previous_page",
+        "step13_font_increase_repaginates",
+        "step14_font_decrease_restores_size",
+        "step15_rotate_or_resize_viewport",
+        "step16_layout_fits_new_size",
+        "step17_restore_original_orientation",
+        "step18_element_tree_reader"
+      ]
+    },
+    {
+      "duration": "36s",
+      "name": "test03SelectionCopyAnnotation()",
+      "result": "Passed",
+      "step_count": 8,
+      "steps": [
+        "step19_open_selection_sheet",
+        "step20_keyboard_select_text",
+        "step21_copy_selection",
+        "step22_create_annotation",
+        "step23_annotation_list_navigation",
+        "step24_edit_annotation",
+        "step25_jump_to_annotation",
+        "step26_delete_annotation"
+      ]
+    },
+    {
+      "duration": "33s",
+      "name": "test04LifecycleAndPersistence()",
+      "result": "Passed",
+      "step_count": 6,
+      "steps": [
+        "step27_open_and_navigate",
+        "step28_create_note_and_read_state",
+        "step29_background_and_foreground",
+        "step30_relaunch_restores_position_and_state",
+        "step31_notes_survive_relaunch",
+        "step32_view_rebuild_via_library"
+      ]
+    },
+    {
+      "duration": "19s",
+      "name": "test05CancellationAndRecovery()",
+      "result": "Passed",
+      "step_count": 5,
+      "steps": [
+        "step33_launch_with_deterministic_slow_import",
+        "step34_cancel_in_flight_import",
+        "step35_recover_with_valid_import",
+        "step36_reader_remains_usable",
+        "step37_state_tree_after_cancel"
+      ]
+    },
+    {
+      "duration": "33s",
+      "name": "test06FixedPagePdfAndAnchor()",
+      "result": "Passed",
+      "step_count": 5,
+      "steps": [
+        "step38_open_pdf_fixed_layout",
+        "step39_fixed_page_navigation",
+        "step40_fixed_annotation",
+        "step41_fixed_annotation_jump",
+        "step42_fixed_progress_survives_relaunch"
+      ]
+    },
+    {
+      "duration": "21s",
+      "name": "test07AccessibilityAndDynamicType()",
+      "result": "Passed",
+      "step_count": 4,
+      "steps": [
+        "step43_identifiers_and_labels",
+        "step44_reading_order",
+        "step45_element_tree",
+        "step46_dynamic_type_launch"
+      ]
+    }
+  ],
+  "totals": {
+    "cases": 7,
+    "failed": 0,
+    "passed": 7,
+    "steps": 46
+  }
+}
