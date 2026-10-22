@@ -77,7 +77,13 @@ def main():
         require(all(base.digest(Path(p)) == sha for p, sha in identities.items()), group+'/'+phase+'/sealed-inputs')
         code, elapsed, pid = base.run_phase(exe, script, root, phase, data, package, 600)
         base.EXPECTED_SHOTS[phase] = {x['parameters'][0] for x in plan if x['action'] == 'snapshot'}
-        parsed = base.parse_log(root / phase / 'drive.log', plan, phase, '3.40.0', pid)
+        try:
+            parsed = base.parse_log(root / phase / 'drive.log', plan, phase, '3.40.0', pid)
+        except ValueError:
+            for raw in (root / phase / 'drive.log').read_text(encoding='utf-8', errors='replace').splitlines():
+                if '\tFAIL\t' in raw or raw.startswith('STATE\t'):
+                    print('H8-REJECTED-DIAGNOSTIC '+group+'/'+phase+' '+raw, flush=True)
+            raise
         steps, states, shelf, notes, shots, done, host = parsed
         require(code == 0 and len(steps) == len(plan) and bool(done), group+'/'+phase+'/complete-actions')
         require(base.digest(script) == script_hash, group+'/'+phase+'/sealed-script')

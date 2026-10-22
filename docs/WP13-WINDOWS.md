@@ -1,13 +1,16 @@
 # WP13 Windows native host
 
-Status: implementation and cloud acceptance package for branch `codex/wp13-windows`.
+Status: the original package remains recorded below; default bounded EPUB adoption
+is implemented on `codex/r5-windows-bounded` and awaits its complete same-source cloud acceptance.
 This package closes the Windows host loop only; it is not a whole-WP13 or product
 acceptance and does not include migration, OPDS, TTS or other platform hosts.
 
 ## Baseline
 
 - Implementation baseline: `a2552d7feb786cd2345d2b0b3eb894777b3254db`.
-- SDK: 3.40.0 (core 3.39.0, ABI 1, library schema 6) consumed from an installed prefix.
+- SDK: 3.40.0 (core 3.39.0, ABI 1, library schema 7) consumed from an installed prefix.
+- H8 initial SDK candidate: `96c4f2c035a737ccf3f5be890d127d6efdd946f8`;
+  final SDK candidate and host source must receive their own cloud results.
 - Source: `examples/reader.c` (Win32, one translation unit) with an independent
   consumer build in `examples/windows/`.
 
@@ -68,10 +71,11 @@ notices and the sample books, and is zipped by `tools/build_windows_host.py`.
 
 | Format | Path | Notes |
 | --- | --- | --- |
-| EPUB | reflow | `exr_library_document` + `exr_pager`; full stored snapshot, not the bounded chapter entry |
+| New EPUB | bounded reflow | Controlled source import → SQLite original → publication → chapter pager; part/path/point progress and `epub_notes` |
+| Legacy memory-import EPUB | snapshot reflow | Existing mode preserved on open and exact deduplication; original global progress and notes remain separate |
 | TXT/HTML/FB2/DOCX/RTF/MOBI/AZW3 | reflow | as reported by the installed SDK decoders |
-| PDF | fixed | `exr_library_fixed`; text selection when the page exposes text |
-| CBZ | fixed | `exr_library_fixed`; image pages have no selectable text |
+| PDF | fixed | `exr_library_fixed_source`; anonymous mapping, text selection when the page exposes text |
+| CBZ | fixed | `exr_library_fixed_source`; retained library source, image pages have no selectable text |
 
 Host limits: import file size 96 MiB (single cancellable read); SDK snapshot limits
 still apply (64 MiB normalized text). Fixed render is capped at 4096 pixels per side;
@@ -79,9 +83,34 @@ font 80-300% of the 28-point base (1.5 line height), zoom 25-400%. Over-limit or
 unsupported input is displayed, never silently clamped. Encrypted PDFs are reported as `EXR_PASSWORD`; there is no password
 prompt in this package.
 
-The bounded chapter entry (`exr_publication_pager_create`) is **not** used by this host.
-It stays available for a future large-chapter host; a chapter that exceeds the stored
-snapshot limit fails with `EXR_LIMIT` and the host shows the SDK error.
+The default EPUB path uses `exr_publication_pager_create`: 8 MiB chapter workspace,
+64 KiB preferred source windows, two cached pages / 8 MiB, and eight checkpoints /
+4 MiB. These are independent SDK budgets. The owned frame holds at most 1 MiB
+UTF-8 page text and 65,536 glyph records; bitmap and Win32 DIB bytes are reported
+separately. Exceeding a budget produces a visible error.
+
+Chapter-local offsets never enter legacy global tables. Previous/next navigation
+skips auxiliary parts while preserving repeated spine routes by part plus path.
+Only normal pager EOF may cross a chapter; I/O, limits and malformed chapters remain
+errors. Font changes and note jumps publish candidates only after unique anchor
+resolution. Missing/ambiguous bounded progress is rejected without overwriting the
+stored selector. New EPUB notes use `exr_library_epub_note/notes/remove_epub_note`;
+cross-chapter single-note selection is unsupported.
+
+Page text, clipboard input, highlights and evidence previews share the accepted
+frame's owned data. Bounded drag hits run on the serialized worker with book,
+part, page, frame generation and gesture guards. Down and up cannot be replaced
+by coalesced move events. Point selectors are captured on the worker, and only
+accepted frames enqueue an owned save job. That job completes before queued
+navigation/close; failure retains the visible position and blocks silent close.
+
+H8 acceptance preserves all original 26 self-test checks, 158 UI actions, eight
+screenshots, evidence-refusal tests and worker candidate/baseline reverse tests.
+`tests/windows_host/bounded/check_bounded.py` adds long-chapter eviction, cross-part
+notes/restore, duplicate paths, missing chapter errors, selector rejection, and a
+public memory-import compatibility fixture using the normal distributed binary.
+First run `39862590539` compiled the SDK/host and passed 26 checks but failed the UI
+gate; that failure and its artifact remain retained. No H8 acceptance is claimed yet.
 
 ## Controls, focus and names
 

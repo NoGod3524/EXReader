@@ -166,6 +166,7 @@ typedef struct {
   int64_t pending_book;
   int progress_failed;
   unsigned long saved_generation;
+  unsigned long frame_sequence;
 } host_state;
 
 static host_state g;
@@ -935,7 +936,7 @@ static exr_status render_reflow(host_session *session, size_t page, host_frame *
   out->text = session->bounded ? NULL : host_wide(out->utf8, out->text_bytes);
   if (!session->bounded && !out->text) { frame_clear(out); return EXR_MEMORY; }
   out->bounded = session->bounded; out->part = session->part;
-  out->generation = g.frame.generation + 1;
+  out->generation = ++g.frame_sequence;
   out->text_bytes = info->end - info->start;
   out->page = page;
   out->range_start = info->start;
@@ -1058,6 +1059,7 @@ static exr_status render_fixed(host_session *session, size_t page, int zoom_perc
   out->page_count = count;
   out->valid = 1;
   out->fixed = 1;
+  out->generation = ++g.frame_sequence;
   out->render_scale = scale;
   out->book_id = session->book_id;
   {
@@ -2066,7 +2068,7 @@ static void bounded_mouse(int x, int y, int down, int up) {
   }
   if (!dragging) return;
   bounded_hit((float)((x - g.view.dx) / g.view.scale), (float)((y - g.view.dy) / g.view.scale), down, up);
-  if (up && GetCapture() == g.page) ReleaseCapture();
+  if (up) { dragging = 0; if (GetCapture() == g.page) ReleaseCapture(); }
 }
 
 static void selection_report(void) {
@@ -2220,7 +2222,7 @@ static int save_progress(void) {
     if (!job) { g.progress_failed = 1; set_status(L"内存不足，未保存阅读位置。"); return 0; }
     job->book_id = g.frame.book_id; job->target_part = g.frame.part; job->generation = g.frame.generation;
     job->part_path = host_strdup(parts[g.frame.part].path);
-    job->has_anchor = 1;
+    job->has_anchor = 1; job->anchor_host_owned = 1;
     if (!job->part_path || !host_anchor_copy(&job->anchor, &g.frame.point)) {
       job_release(job); g.progress_failed = 1; set_status(L"内存不足，未保存阅读位置。"); return 0;
     }
@@ -3166,6 +3168,8 @@ static void drive_state(const char *name) {
       detail_add(detail, sizeof(detail), "owned_frame_text_geometry_bytes", number);
       snprintf(number, sizeof(number), "%llu", (unsigned long long)((size_t)g.frame.bitmap.stride * g.frame.bitmap.height));
       detail_add(detail, sizeof(detail), "bitmap_bytes", number);
+      snprintf(number, sizeof(number), "%llu", (unsigned long long)((size_t)g.frame.bitmap.width * g.frame.bitmap.height * sizeof(uint32_t)));
+      detail_add(detail, sizeof(detail), "dib_bytes", number);
     }
   }
   detail_add(detail, sizeof(detail), "state", name);
