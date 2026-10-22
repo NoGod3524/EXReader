@@ -103,6 +103,15 @@ def collect_database(container, output):
 def copy_state(container, output):
     if not container:
         return {'status': 'container-not-provided'}
+    result = {'status': 'missing'}
+    for candidate in [Path(container)/'Documents/host-log.txt',
+                      Path(container)/'host-log.txt',
+                      Path(container)/'EXReader/host-log.txt']:
+        if candidate.exists():
+            target = output/'host-log.txt'
+            shutil.copyfile(candidate, target)
+            result['log_sha256'] = digest(target)
+            break
     for candidate in [Path(container)/'Documents/host-state.json',
                       Path(container)/'host-state.json',
                       Path(container)/'EXReader/host-state.json']:
@@ -113,8 +122,9 @@ def copy_state(container, output):
                 payload = json.loads(target.read_text())
             except json.JSONDecodeError:
                 payload = {}
-            return {'status': 'copied', 'sha256': digest(target), 'payload': payload}
-    return {'status': 'missing'}
+            result.update({'status': 'copied', 'sha256': digest(target), 'payload': payload})
+            break
+    return result
 
 
 def main():
