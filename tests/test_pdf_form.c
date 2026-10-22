@@ -42,7 +42,7 @@ static void source(unsigned mode) {
   object(54,"<< /FT /Sig /T (signature) /Type /Annot /Subtype /Widget /Rect [10 10 110 30] >>");
   object(55,"<< /FT /Btn /Ff 65536 /T (push) /Type /Annot /Subtype /Widget /Rect [10 10 110 30] >>");
   for(i=100;i<106;i++) {
-    snprintf(text,sizeof(text),"<< /Type /Annot /Subtype /Widget /Parent %u 0 R /Rect [10 10 110 30] /AP << /N %s >> >>",i<102 ? 20 : i<104 ? 48 : 49,
+    snprintf(text,sizeof(text),"<< /Type /Annot /Subtype /Widget /Parent %u 0 R /Rect %s /AP << /N %s >> >>",i<102 ? 20 : i<104 ? 48 : 49,i<102 ? "[10 10 110 30]" : "[10 40 110 60]",
       i<102 ? "7 0 R" : i%2 ? "<< /Off 7 0 R /Blue 7 0 R >>" : "<< /Off 7 0 R /Red 7 0 R >>"); object(i,text);
   }
   xref=length; add("xref\n0 106\n0000000000 65535 f \n");
@@ -82,12 +82,12 @@ static void appearances(const void *data,size_t size) {
   }
   CHECK(seen==37); free(pages); exr_pdf_close(file);
 }
-static void render(const void *data,size_t size,exr_font *font) {
+static void render(const void *data,size_t size,exr_font *font,int expect_ink) {
   exr_fixed_open_options options={0}; exr_fixed_document *doc=NULL; exr_bitmap bitmap={0}; size_t page,x,y,ink;
   options.struct_size=sizeof(options); options.fallback_font=font; OK(exr_fixed_open_memory(EXR_PDF,data,size,&options,&doc,&error));
   for(page=0;page<2;page++) { OK(exr_fixed_render(doc,page,1,NULL,&bitmap,&error)); ink=0;
     for(y=52;y<68;y++) for(x=15;x<105;x++) if(bitmap.pixels[y*bitmap.stride+x*bitmap.channels]<100) ink++;
-    CHECK(ink>0); exr_bitmap_free(&bitmap);
+    CHECK((ink>0)==expect_ink); exr_bitmap_free(&bitmap);
   }
   exr_fixed_free(doc);
 }
@@ -114,10 +114,16 @@ int main(int argc,char **argv) {
   options.font=font; OK(exr_pdf_form_write(pdf,length,changes,34,&options,&output,&output_size,&error)); CHECK(output_size>length && !memcmp(output,pdf,length)); CHECK(!memcmp(pdf,original,length));
   fields=read_fields(output,output_size,&n); CHECK(n==36);
   for(i=0;i<34;i++) { field=named(fields,n,names[i]); CHECK(field->value_count==changes[i].value_count && !strcmp(field->values[0],values[i][0])); }
-  exr_pdf_form_free(fields,n); appearances(output,output_size); render(output,output_size,font);
+  exr_pdf_form_free(fields,n); appearances(output,output_size); render(output,output_size,font,1);
   values[0][0]="\xe7\x94\xb2\xe4\xb9\x99\xf0\x9f\x98\x80"; OK(exr_pdf_form_write(output,output_size,changes,1,&options,&second,&second_size,&error));
-  fields=read_fields(second,second_size,&n); CHECK(!strcmp(named(fields,n,"person.text00")->values[0],values[0][0])); exr_pdf_form_free(fields,n); render(second,second_size,font); exr_free(second); exr_free(output); output=NULL;
-  source(9); values[0][0]="AVA"; OK(exr_pdf_form_write(pdf,length,changes,1,NULL,&output,&output_size,&error)); fields=read_fields(output,output_size,&n); CHECK(!strcmp(fields[0].values[0],"AVA")); exr_pdf_form_free(fields,n); exr_free(output);
+  fields=read_fields(second,second_size,&n); CHECK(!strcmp(named(fields,n,"person.text00")->values[0],values[0][0])); exr_pdf_form_free(fields,n); render(second,second_size,font,1); exr_free(second); exr_free(output); output=NULL;
+  /* Only this field has painted content, so the ink check cannot be satisfied
+     by another field. Unicode outlines reopen without the borrowed font. */
+  source(9); OK(exr_pdf_form_write(pdf,length,changes,1,&options,&output,&output_size,&error));
+  fields=read_fields(output,output_size,&n); CHECK(!strcmp(fields[0].values[0],values[0][0])); exr_pdf_form_free(fields,n); render(output,output_size,NULL,1);
+  changes[0].value_count=0; OK(exr_pdf_form_write(output,output_size,changes,1,NULL,&second,&second_size,&error)); render(second,second_size,NULL,0);
+  fields=read_fields(second,second_size,&n); CHECK(named(fields,n,"person.text00")->value_count==1 && !*named(fields,n,"person.text00")->values[0]); exr_pdf_form_free(fields,n); exr_free(second); exr_free(output);
+  changes[0].value_count=1; values[0][0]="AVA"; source(9); OK(exr_pdf_form_write(pdf,length,changes,1,NULL,&output,&output_size,&error)); render(output,output_size,font,1); exr_free(output);
   source(0); OK(exr_pdf_form_write(pdf,length,NULL,0,NULL,&output,&output_size,&error)); CHECK(output_size==length && output!=pdf && !memcmp(output,pdf,length)); exr_free(output);
   failure(3,"person.text01","A",EXR_ARGUMENT); failure(4,"person.text01","",EXR_ARGUMENT); failure(5,"person.text01","AVA",EXR_ARGUMENT);
   failure(6,"person.text00","A",EXR_UNSUPPORTED); failure(7,"person.text00","A",EXR_UNSUPPORTED); failure(8,"person.text01","A",EXR_UNSUPPORTED);
