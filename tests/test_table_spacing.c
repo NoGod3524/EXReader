@@ -56,6 +56,7 @@ static const exr_box *box(exr_document *d,const exr_layout *l,const char *name) 
 static void grid(const char *css,const char *parent,float horizontal,float vertical) {
   exr_document *d=document(css,parent,2,0,0,0); exr_layout_config cfg=config(); exr_layout *l=NULL;
   const exr_box *a,*b,*c,*e; size_t n,i; const exr_box *all;
+  fprintf(stderr,"grid: %s / %s\n",css,parent ? parent : "");
   OK(exr_layout_create_ex(d,font,&cfg,&l,&error)); a=box(d,l,"a"); b=box(d,l,"b"); c=box(d,l,"c"); e=box(d,l,"d");
   CHECK(near(a->x,10+horizontal) && near(a->y,10+vertical));
   CHECK(near(a->width,(200-3*horizontal)/2) && near(a->height,30));
@@ -99,14 +100,29 @@ static void same_page(const exr_layout *whole,size_t page,const exr_layout *one)
 }
 static void pages(int header,int tall,int vertical_mode) {
   exr_document *d=document("border-spacing:7px 11px",vertical_mode ? "writing-mode:vertical-rl" : NULL,60,0,header,tall);
-  exr_layout_config cfg=config(); exr_layout *whole=NULL; exr_pager *fast=NULL,*slow=NULL; size_t np,i,targets[7];
+  exr_layout_config cfg=config(); exr_layout *whole=NULL; exr_pager *fast=NULL,*slow=NULL; size_t np,i,targets[19]; uint32_t seed=52026;
+  fprintf(stderr,"pages: header=%d tall=%d vertical=%d\n",header,tall,vertical_mode);
   if(vertical_mode) { cfg.page.width=180; cfg.page.height=420; cfg.user_css="table {height:200px;table-layout:fixed} td {width:30px;vertical-align:top;text-orientation:upright;background:#c0d0e0}"; }
   OK(exr_layout_create_ex(d,font,&cfg,&whole,&error)); exr_layout_pages(whole,&np); CHECK(np>5);
+  if(header || tall) {
+    size_t n,j,p,fragments=0,first=id(d,"a"),second=id(d,"b"); const exr_box *b=exr_layout_boxes(whole,&n);
+    for(j=0;j<n;j++) if(b[j].kind==EXR_BOX_CELL && b[j].node==first) fragments++;
+    if(tall) CHECK(fragments>=3);
+    if(header) for(p=0;p<np;p++) {
+      float bottom=0,body=10000;
+      for(j=0;j<n;j++) if(b[j].page==p && b[j].kind==EXR_BOX_CELL) {
+        if(b[j].node==first) { CHECK(near(b[j].y,21)); bottom=b[j].y+b[j].height; }
+        else if(b[j].node!=second) body=fminf(body,b[j].y);
+      }
+      CHECK(bottom>0 && near(body-bottom,11));
+    }
+  }
   OK(exr_pager_create(d,font,&cfg,&fast,&error)); OK(exr_pager_create(d,font,&cfg,&slow,&error));
   OK(exr_pager_set_cache(fast,1,262144,&error)); OK(exr_pager_set_checkpoints(fast,32,8*1024*1024,1,&error));
   OK(exr_pager_set_checkpoints(slow,0,0,0,&error));
   targets[0]=np-1; targets[1]=np/2; targets[2]=0; targets[3]=np-2; targets[4]=1; targets[5]=np/3; targets[6]=np-1;
-  for(i=0;i<7;i++) { const exr_layout *a=NULL,*b=NULL; OK(exr_pager_get(fast,targets[i],&a,&error)); OK(exr_pager_get(slow,targets[i],&b,&error)); CHECK(a && b); same_page(whole,targets[i],a); same_page(a,0,b); }
+  for(i=7;i<19;i++) { seed=seed*1664525u+1013904223u; targets[i]=seed%np; }
+  for(i=0;i<19;i++) { const exr_layout *a=NULL,*b=NULL; OK(exr_pager_get(fast,targets[i],&a,&error)); OK(exr_pager_get(slow,targets[i],&b,&error)); CHECK(a && b); same_page(whole,targets[i],a); same_page(a,0,b); }
   CHECK(exr_pager_statistics(fast).restored_checkpoints>0);
   exr_pager_free(fast); exr_pager_free(slow); exr_layout_free(whole); exr_document_free(d);
 }

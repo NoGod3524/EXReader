@@ -601,7 +601,7 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
      probed row group must fit in what is left. */
   if (repeats_header(f, t))
     full_room = fmaxf(1, full_room - header_height(t) - boundary(t,0) -
-                         boundary(t,t->header_rows) - t->block_spacing);
+                         boundary(t,t->header_rows));
   t->end = t->row + 1;
   t->last = t->first;
   /* Cells are in row order. Extending the end discovers the entire rowspan group. */
@@ -769,7 +769,9 @@ static exr_status paint_borders(flow *f,const exr_table_cursor *t,int top) {
    released after each page fragment, so the header is measured again here. */
 static exr_status repeat_header(flow *f, exr_table_cursor *t) {
   size_t i;
-  float height=header_height(t),top=boundary(t,0)+t->block_spacing,bottom=boundary(t,t->header_rows);
+  /* The body's top spacing is reserved by its caller; the header's trailing
+     row spacing supplies the one gap between header and body. */
+  float height=header_height(t),top=boundary(t,0),bottom=boundary(t,t->header_rows);
   exr_status status=EXR_OK;
   exr_table_cursor view;
   if(!t->header_rows || !t->header_cells) return EXR_OK;
@@ -865,7 +867,7 @@ static exr_status split_row(flow *f,exr_table_cursor *t,int *done) {
   view.heights=NULL;view.positions=NULL;
   status=exr_flow_page(f,1,(exr_doc_node(f->doc,t->rows[t->row])).start);if(status!=EXR_OK) return status;
   repeat=repeats_header(f,t) && f->y<=exr_flow_top(f)+.001f;
-  if(repeat) header=header_height(t)+boundary(t,0)+boundary(t,t->header_rows)+t->block_spacing;
+  if(repeat) header=header_height(t)+boundary(t,0)+boundary(t,t->header_rows)+(t->consumed ? t->block_spacing : 0);
   budget=exr_flow_bottom(f)-f->y-top-bottom-header;
   if(budget<1) return f->y>exr_flow_top(f)+.01f ? EXR_PAUSE : exr_fail(f->error,f->fragment_probe ? EXR_FRAGMENT_SMALL : EXR_LIMIT,"Table borders leave no row fragment extent");
   if(operations>64u*1024u*1024u-t->fragment_work) return exr_fail(f->error,EXR_LIMIT,"Table fragment work budget exceeded");
@@ -910,7 +912,7 @@ static exr_status split_row(flow *f,exr_table_cursor *t,int *done) {
   last=1;for(i=0;i<n;i++) if(!parts[i].finished) last=0;
   if(t->consumed+height+.01f<view.positions[view.end]-view.positions[view.row]) last=0;
   if(height<.001f && !last) { status=exr_fail(f->error,EXR_LIMIT,"Table row fragment made no progress");goto bad; }
-  if(repeat) { status=repeat_header(f,t); if(status!=EXR_OK) goto bad; }
+  if(repeat) { f->y+=t->block_spacing; top=fmaxf(0,top-t->block_spacing); status=repeat_header(f,t); if(status!=EXR_OK) goto bad; }
   f->y+=top;
   for(i=0;i<n;i++) {
     table_cell *c=t->cells+t->first+i;trial *part=parts+i;
@@ -962,7 +964,7 @@ exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
       return failed(f, status);
     float room=fmaxf(exr_flow_room(f),f->unit_assigned ? f->unit_block_reference : 0);
     if(repeats_header(f,t))
-      room=fmaxf(1,room-header_height(t)-boundary(t,0)-boundary(t,t->header_rows)-t->block_spacing);
+      room=fmaxf(1,room-header_height(t)-boundary(t,0)-boundary(t,t->header_rows));
     if(f->paginate && !f->defer_tall_rows && t->positions[t->end]-t->positions[t->row]+boundary(t,t->row)+boundary(t,t->end)+t->block_spacing>room+.01f) {
       t->fragmented=1;t->consumed=0;t->position=previous;
       for(i=t->first;i<t->last;i++) {
@@ -976,7 +978,7 @@ exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
   height = t->positions[t->end] - t->positions[t->row];
   {
     int eligible = repeats_header(f, t);
-    header = eligible ? header_height(t)+boundary(t,0)+boundary(t,t->header_rows)+t->block_spacing : 0;
+    header = eligible ? header_height(t)+boundary(t,0)+boundary(t,t->header_rows) : 0;
   }
   paint_top=!t->row || f->y==exr_flow_top(f);
   top=paint_top ? boundary(t,t->row)+t->block_spacing : 0; bottom=boundary(t,t->end);
@@ -994,6 +996,7 @@ exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
   if (status != EXR_OK)
     return failed(f, status);
   if(header>0 && f->y<=exr_flow_top(f)+.001f) {
+    f->y+=t->block_spacing; top=fmaxf(0,top-t->block_spacing);
     status=repeat_header(f,t); if(status!=EXR_OK) return failed(f,status);
   }
   f->y+=top;
