@@ -1,0 +1,106 @@
+name: Native reading profiles on Windows and macOS
+on:
+  push:
+    branches: ['claude/reading-h1-platforms']
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  profile:
+    name: reading ${{ matrix.os }} (${{ matrix.profile }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, macos-15]
+        profile: [reading-core, reading-library]
+    env:
+      PROFILE: ${{ matrix.profile }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify accepted integration ancestor
+        run: |
+          git fetch --no-tags origin 686ce2fe6c3463ef1b917569677ee9933e22faa9
+          git merge-base --is-ancestor 686ce2fe6c3463ef1b917569677ee9933e22faa9 HEAD
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned Ninja
+        run: python -m pip install ninja==1.11.1.1
+      - name: Enter MSVC x64 developer environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path $bat)) { throw "vcvars64.bat not found under $vs" }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          "CC=cl" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "CXX=cl" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record toolchain and workspace paths
+        run: |
+          mkdir -p "build/$PROFILE"
+          log="build/$PROFILE/toolchain.txt"
+          if [ "$RUNNER_OS" = Windows ]; then
+            echo "WS=$(cygpath -m "$PWD")" >> "$GITHUB_ENV"; echo "EXE=.exe" >> "$GITHUB_ENV"
+            { echo "## cl"; (cl 2>&1 || true) | head -n 2; echo "## where"; where cl link dumpbin cmake ninja python || true
+              echo "## VS"; echo "VSINSTALLDIR=$VSINSTALLDIR VCToolsVersion=$VCToolsVersion WindowsSDKVersion=$WindowsSDKVersion"; cmd //c ver; } > "$log" 2>&1
+          else
+            echo "WS=$PWD" >> "$GITHUB_ENV"; echo "EXE=" >> "$GITHUB_ENV"
+            { echo "## xcode"; xcodebuild -version; xcode-select -p; echo "## clang"; clang --version; echo "## os"; sw_vers; uname -m; } > "$log" 2>&1
+          fi
+          { echo "## cmake"; cmake --version; echo "## ninja"; ninja --version; echo "## python"; python --version
+            echo "## runner"; echo "ImageOS=$ImageOS ImageVersion=$ImageVersion RUNNER_ARCH=$RUNNER_ARCH"; } >> "$log" 2>&1
+          cat "$log"
+      - name: Configure explicit reading preset
+        id: configure
+        run: cmake --preset "$PROFILE" 2>&1 | tee "build/$PROFILE/configure.log"
+      - name: Build and install selected components
+        id: install
+        run: |
+          cmake --build --preset "$PROFILE" 2>&1 | tee "build/$PROFILE/build.log"
+          cmake --install "build/$PROFILE" 2>&1 | tee "build/$PROFILE/install.log"
+      - name: Compile installed C consumers and C++ headers
+        id: consumer
+        run: |
+          library=OFF
+          if [ "$PROFILE" = reading-library ]; then library=ON; fi
+          cmake -S tests/reading_core -B build/reading-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/$PROFILE/stage" -DEXR_EXPECT_LIBRARY="$library" -DEXR_TEST_FONT="$WS/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$WS/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$WS/tests/fixtures" 2>&1 | tee "build/$PROFILE/consumer-configure.log"
+          cmake --build build/reading-consumer --parallel 4 2>&1 | tee "build/$PROFILE/consumer-build.log"
+      - name: Run installed consumer tests
+        if: always() && steps.consumer.outcome == 'success'
+        run: ctest --test-dir build/reading-consumer --output-on-failure --no-tests=error --output-junit "$WS/build/$PROFILE/consumer-tests.xml"
+      - name: Run predeclared nine-format fixture smoke
+        if: always() && steps.consumer.outcome == 'success'
+        run: python tools/check_corpus.py "build/reading-consumer/reading-document$EXE" tests/fixtures/fonts/primary.ttf tools/reading_core/smoke-manifest.json "build/$PROFILE/corpus" --root tests/fixtures --timeout 60
+      - name: Record installed files and native runtime dependencies
+        if: always() && steps.install.outcome == 'success'
+        run: |
+          programs=()
+          for name in reading-document reading-benchmark components/core-consumer components/chapter-consumer components/convert-consumer components/library-consumer; do
+            if [ -f "build/reading-consumer/$name$EXE" ]; then programs+=(--program "build/reading-consumer/$name$EXE"); fi
+          done
+          python tools/reading_platform_evidence.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/platform-evidence.json" "${programs[@]}" --input tests/fixtures/fonts/primary.ttf --input tests/fixtures/fonts/colrv1.ttf --input tools/reading_core/smoke-manifest.json --toolchain "build/$PROFILE/toolchain.txt"
+      - name: Preserve source-bound evidence and installed SDK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reading-platform-${{ runner.os }}-${{ matrix.profile }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/${{ matrix.profile }}/stage/
+            build/${{ matrix.profile }}/*.log
+            build/${{ matrix.profile }}/toolchain.txt
+            build/${{ matrix.profile }}/platform-evidence.json
+            build/${{ matrix.profile }}/consumer-tests.xml
+            build/${{ matrix.profile }}/corpus/
+            build/${{ matrix.profile }}/CMakeCache.txt
+            build/reading-consumer/Testing/Temporary/LastTest.log
+          if-no-files-found: error
