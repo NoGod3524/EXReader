@@ -596,6 +596,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 task.check();
                 if (sessionBookId != owner) throw new IllegalStateException("The reading book changed");
                 reviewGate("page-before-render", task);
+                if(BuildConfig.DEBUG && getIntent().hasExtra("review_chapter_budget")) {
+                    int budget=getIntent().getIntExtra("review_chapter_budget",8*1024*1024);
+                    getIntent().removeExtra("review_chapter_budget");
+                    if(reflow!=null) reflow.reviewChapterBudget(budget);
+                }
                 if(BuildConfig.DEBUG && getIntent().getBooleanExtra("review_external_commit",false)) {
                     getIntent().removeExtra("review_external_commit");
                     try(android.database.sqlite.SQLiteDatabase changed=android.database.sqlite.SQLiteDatabase.openDatabase(
@@ -633,6 +638,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     finally { fault.close(); }
                 }
                 if (load != null) load.close();
+                if(reflow!=null) reflow.reviewChapterBudget(8*1024*1024);
                 if(fault!=null && reflow!=null) reflow.refreshSource();
             }
         });
@@ -690,6 +696,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         synchronized (PROGRESS_LOCK) {
             if (destroyed || ownerEpoch != OWNER_EPOCH.get()) throw new HostTask.Cancelled();
             reviewGate("progress-before-write", task);
+            if(snapshot.bounded) BoundedEpub.checkSource(snapshot);
             if (snapshot.fixed) {
                 store.setPosition(snapshot.bookId, snapshot.index);
             } else if(snapshot.bounded && !snapshot.preserveProgress) {
@@ -961,6 +968,21 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         super.onNewIntent(intent);
         setIntent(intent);
         if (!BuildConfig.DEBUG || !intent.getBooleanExtra("exr_review", false)) return;
+        if(intent.hasExtra("review_progress_identity")) {
+            String label=intent.getStringExtra("review_progress_identity");
+            intent.removeExtra("review_progress_identity");
+            if(worker==null || current==null) return;
+            final long selected=current.bookId;
+            worker.execute(()->{
+                try {
+                    String identity=BoundedEpub.progressIdentity(store.nativeLibrary(),selected);
+                    String digest=hex(MessageDigest.getInstance("SHA-256").digest(identity.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+                    Log.i(TAG,"bounded stored selector "+label+" sha256="+digest);
+                    postUi(()->setStatus("Review selector "+label+" "+digest));
+                } catch(Throwable error) { Log.e(TAG,"Review selector read failed: "+message(error)); }
+            });
+            return;
+        }
         if(intent.getBooleanExtra("review_schema6",false)) {
             intent.removeExtra("review_schema6");
             HostTask task=beginTask(4); long gen=generation;

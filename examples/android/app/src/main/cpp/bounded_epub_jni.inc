@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* App-local public-API bridge. Included after the common JNI string helpers. */
+#include <time.h>
 typedef struct {
   exr_library *library;
   exr_source source;
@@ -11,16 +12,23 @@ typedef struct {
   size_t part;
   uint64_t next_calls;
 } host_epub;
-typedef struct { JNIEnv *env; jobject task; jmethodID check; } host_control;
+typedef struct { JNIEnv *env; jobject task; jmethodID check; uint64_t deadline_ns; int expired; } host_control;
+static uint64_t host_now_ns(void) {
+  struct timespec value; clock_gettime(CLOCK_MONOTONIC,&value);
+  return (uint64_t)value.tv_sec*1000000000u+(uint64_t)value.tv_nsec;
+}
 static int host_cancelled(void *context) {
   host_control *control=context;
   if((*control->env)->ExceptionCheck(control->env)) return 1;
   (*control->env)->CallVoidMethod(control->env,control->task,control->check);
-  return (*control->env)->ExceptionCheck(control->env)!=0;
+  if((*control->env)->ExceptionCheck(control->env)) return 1;
+  if(control->deadline_ns && host_now_ns()>=control->deadline_ns) { control->expired=1; return 1; }
+  return 0;
 }
 static exr_control host_task_control(JNIEnv *env,jobject task,host_control *context) {
   exr_control control={0}; jclass type=(*env)->GetObjectClass(env,task);
   context->env=env; context->task=task;
+  context->deadline_ns=0; context->expired=0;
   context->check=type?(*env)->GetMethodID(env,type,"check","()V"):NULL;
   if(type) (*env)->DeleteLocalRef(env,type);
   control.cancelled=host_cancelled; control.context=context; return control;
@@ -101,14 +109,14 @@ static void host_epub_free(host_epub *reader) {
     exr_font_free(reader->font); free(reader);
   }
 }
-JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeOpen(JNIEnv *env,jclass type,jlong owner,jlong book,jint part,jbyteArray font,jfloat size,jobject task) {
+JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeOpen(JNIEnv *env,jclass type,jlong owner,jlong book,jint part,jbyteArray font,jfloat size,jlong budget,jobject task) {
   host_epub *reader=NULL; exr_library *store=library(env,owner); exr_error error={0};
   exr_status status=EXR_OK; exr_layout_config config=exr_layout_config_defaults();
   exr_chapter_options options=exr_chapter_options_defaults(); exr_font_input input={0};
   host_control context; exr_control control=host_task_control(env,task,&context);
   jbyte *bytes=NULL; jsize length=font?(*env)->GetArrayLength(env,font):0; (void)type;
   if(!store || (*env)->ExceptionCheck(env)) return 0;
-  if(part<0 || size<18 || size>40 || length<=0 || length>64*1024*1024) { throw_argument(env,"Invalid chapter font/configuration"); return 0; }
+  if(part<0 || size<18 || size>40 || length<=0 || length>64*1024*1024 || budget<1024*1024 || budget>8*1024*1024) { throw_argument(env,"Invalid chapter font/configuration"); return 0; }
   reader=calloc(1,sizeof(*reader)); if(!reader) { status=EXR_MEMORY; goto done; }
   reader->library=store; reader->book=(int64_t)book; reader->part=(size_t)part;
   status=exr_library_source(store,(int64_t)book,&reader->source,&error); if(status!=EXR_OK) goto done;
@@ -121,7 +129,7 @@ JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeOpen(JNIEnv *en
   status=exr_font_create(&input,1,&reader->font,&error); if(status!=EXR_OK) goto done;
   config.page.width=600; config.page.height=860; config.page.margin=32; config.page.font_size=size;
   config.page.line_height=1.6f; config.page.paragraph_spacing=12; config.document_css=1; config.embedded_fonts=1;
-  config.control=control; options.workspace_budget=8*1024*1024; options.window_bytes=64*1024;
+  config.control=control; options.workspace_budget=(size_t)budget; options.window_bytes=64*1024;
   status=exr_publication_pager_create(reader->publication,(size_t)part,reader->font,&config,&options,&reader->pager,&error);
   if(status==EXR_OK) status=exr_pager_set_control(reader->pager,NULL,&error);
 done:
@@ -227,7 +235,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_BoundedEpub_nativeProgress
   else if(present) { row=new_row(env,8); if(row) location_cells(env,row,0,&location); }
   exr_epub_location_free(&location); return (*env)->ExceptionCheck(env)?NULL:row;
 }
-JNIEXPORT jlongArray JNICALL Java_org_exreader_host_BoundedEpub_nativeResolve(JNIEnv *env,jclass type,jlong handle,jobjectArray values,jobject task) {
+JNIEXPORT jlongArray JNICALL Java_org_exreader_host_BoundedEpub_nativeResolve(JNIEnv *env,jclass type,jlong handle,jobjectArray values,jlong budget_ms,jobject task) {
   host_epub *reader=(host_epub *)(intptr_t)handle; char *strings[8]={0}; size_t i,count=0;
   exr_anchor anchor={0}; exr_anchor_match match={0}; exr_error error={0}; exr_status status=EXR_OK;
   host_control context; exr_control control=host_task_control(env,task,&context);
@@ -239,9 +247,14 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_BoundedEpub_nativeResolve(JN
   anchor.start=(size_t)strtoull(strings[2],NULL,10); anchor.end=(size_t)strtoull(strings[3],NULL,10);
   anchor.exact=strings[4]; anchor.prefix=strings[5]; anchor.suffix=strings[6]; anchor.chapter=strings[7];
   if(!anchor.chapter[0]) anchor.chapter=NULL;
+  if(budget_ms>0) context.deadline_ns=host_now_ns()+(uint64_t)budget_ms*1000000u;
   status=exr_pager_anchor_resolve(reader->pager,&anchor,&control,&match,&error);
-  if(status!=EXR_OK) goto done;
-  result[0]=match.state; result[1]=match.start==SIZE_MAX?-1:(jlong)match.start; result[2]=match.end==SIZE_MAX?-1:(jlong)match.end;
+  if(status==EXR_CANCELLED && context.expired && !(*env)->ExceptionCheck(env)) {
+    status=EXR_OK; result[0]=-2; result[1]=result[2]=-1;
+  } else {
+    if(status!=EXR_OK) goto done;
+    result[0]=match.state; result[1]=match.start==SIZE_MAX?-1:(jlong)match.start; result[2]=match.end==SIZE_MAX?-1:(jlong)match.end;
+  }
   out=(*env)->NewLongArray(env,3); if(out) (*env)->SetLongArrayRegion(env,out,0,3,result);
 done:
   for(i=0;i<8;i++) free(strings[i]);

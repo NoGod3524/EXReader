@@ -1,12 +1,5 @@
 name: R5 Android bounded candidate (no acceptance)
 on:
-  push:
-    branches: [codex/r5-android-bounded]
-    paths:
-      - examples/android/**
-      - tools/*android*.py
-      - tests/android_host/**
-      - .github/workflows/r5-android-bounded-candidate.yml
   workflow_dispatch:
     inputs:
       inspect_run_id:
@@ -83,7 +76,7 @@ jobs:
         run: python3 tools/check_android_host.py --repo .
       - name: Enable KVM
         run: sudo chmod 666 /dev/kvm
-      - name: Run original 45, review 10 and bounded 8 on API34 x86_64
+      - name: Run original 45, review 10 and bounded 11 on API34 x86_64
         id: emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -137,7 +130,7 @@ jobs:
       - name: Candidate scope only
         if: always()
         run: |
-          echo 'candidate_only=true; accepted=false; formal SDK K and Windows pilot are pending'
+          echo 'candidate_only=true; accepted=false; formal acceptance runs separately in wp13-android.yml'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

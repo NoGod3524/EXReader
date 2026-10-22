@@ -46,6 +46,7 @@ final class ReflowSession implements AutoCloseable {
     void saveProgress(PageSnapshot page) { bounded.saveProgress(page); }
     void saveBoundedNote(long id,long start,long end,String text) { bounded.saveNote(id,start,end,text); }
     void refreshSource() { if(bounded!=null) bounded.refresh(); }
+    void reviewChapterBudget(long bytes) { if(bounded!=null) bounded.chapterBudget=bytes; }
 
     ReflowSession(long bookId, String path, byte[] font, float size) {
         this.bookId = bookId;

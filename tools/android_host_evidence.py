@@ -16,7 +16,7 @@ SDK_BASE = 'ce5d664c9f76d0613df6d79b27568a7039c4a81e'
 REVIEW_BASE = 'ce5d664c9f76d0613df6d79b27568a7039c4a81e'
 WALKTHROUGH_IDS = '''cold_start_shelf picker_cancel import_epub open_epub page_next page_prev font_increase font_decrease touch_select copy_selection note_add notes_read note_edit note_navigate rotate_landscape rotate_portrait activity_rebuild background_resume process_restart_reflow notes_after_restart note_delete import_txt open_txt import_pdf open_pdf pdf_next pdf_prev pdf_zoom pdf_select_copy pdf_note_add pdf_process_restart pdf_note_delete import_bigchapter open_bigchapter bigchapter_next import_ambiguous ambiguous_restore corrupt_import retry_import duplicate_import too_large cancel_large_import book_switch accessibility_semantics native_metrics'''.split()
 REVIEW_IDS = '''duplicate_cancel_keeps_original new_copy_cancel_cleans_file late_insert_cancel_rolls_back_new_book duplicate_late_cancel_keeps_original late_cancel_after_commit_reports_success failed_open_preserves_reader failed_progress_preserves_frame selection_invalidated_while_busy unicode_comment_round_trip destroyed_activity_releases_worker'''.split()
-BOUNDED_IDS = '''bounded_source_delete_restore bounded_cross_chapter_font bounded_note_domain_restart bounded_duplicate_spine bounded_legacy_dedup bounded_schema6_upgrade bounded_progress_write_reject bounded_external_commit_reopen'''.split()
+BOUNDED_IDS = '''bounded_source_delete_restore bounded_cross_chapter_font bounded_note_domain_restart bounded_duplicate_spine bounded_legacy_dedup bounded_schema6_upgrade bounded_progress_write_reject bounded_external_commit_reopen bounded_damaged_next_preserves_frame bounded_budget_limit_preserves_frame bounded_empty_next_explicit_error'''.split()
 SUITES = {'walkthrough': ('HostWalkthroughTest', 'walkthrough', 'device', WALKTHROUGH_IDS),
           'review': ('HostReviewTest', 'review', 'review', REVIEW_IDS),
           'bounded': ('HostReviewTest', 'bounded', 'bounded', BOUNDED_IDS)}
@@ -264,7 +264,8 @@ def check_suite(evidence, suite, expected, build):
         source = (ROOT/'examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/HostReviewTest.java').read_text()
         require(re.findall(r'boundedCase\("([a-z0-9_]+)"', source) == BOUNDED_IDS, 'bounded case source contract changed')
         require('bounded page {' in log and 'storage mode book=' in log and
-                'host-review' in log and 'code 7' in log and 'code 3' in log,
+                'host-review' in log and all(code in log for code in ('code 7','code 3','code 5','code 6')) and
+                'Empty reading chapter is not supported' in log,
                 'bounded storage/native page/real write rejection/external-source evidence incomplete')
     return report
 

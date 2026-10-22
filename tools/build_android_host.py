@@ -130,7 +130,7 @@ def patch_android_libraries(stage):
     return target
 
 
-def epub(path, title, chapters, stored=False, paths=None, order=None):
+def epub(path, title, chapters, stored=False, paths=None, order=None, raw_parts=None):
     """Deterministic EPUB 3 writer used for fixtures."""
     path.parent.mkdir(parents=True, exist_ok=True)
     manifest = []
@@ -147,6 +147,9 @@ def epub(path, title, chapters, stored=False, paths=None, order=None):
                                   % (escape(title), body)).encode('utf-8')
     if order is not None:
         spine = ['<itemref idref="c%d"/>' % index for index in order]
+    for index, data in (raw_parts or {}).items():
+        name = paths[index-1] if paths else 'ch%02d.xhtml' % index
+        files['OEBPS/' + name] = data
     files['META-INF/container.xml'] = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
@@ -228,6 +231,13 @@ def write_fixtures(folder):
         '<h1>EXReader repeated route</h1><p>Same resource appears twice in the original spine.</p>',
         '<h1>EXReader middle unique</h1><p>Middle chapter has an independent part route.</p>'],
         paths=['chapter%#1.xhtml','middle.xhtml'],order=[1,2,1])
+    boundary_first='<h1>EXReader boundary accepted</h1><p>Keep this accepted frame and stored position.</p>'
+    boundary_last='<h1>EXReader boundary forbidden jump</h1><p>This chapter must not hide the prior error.</p>'
+    epub(folder / 'DamagedNext.epub', 'Damaged Chapter', [boundary_first,'',boundary_last],
+         raw_parts={2:b'<html xmlns="http://www.w3.org/1999/xhtml"><body><p>incomplete</body></html>'})
+    epub(folder / 'BudgetNext.epub', 'Budget Chapter', [boundary_first,
+         '<h1>EXReader budget chapter</h1>'+''.join('<p>Budget node %d.</p>'%i for i in range(4000)),boundary_last])
+    epub(folder / 'EmptyNext.epub', 'Empty Chapter', [boundary_first,'',boundary_last])
     big = []
     block = ('Lorem ipsum dolor sit amet, consectetur adipiscing elit. ' * 18)
     for index in range(2000):
