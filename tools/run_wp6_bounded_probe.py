@@ -31,8 +31,25 @@ def sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def library_record_ok(record, source_bytes):
+    report = record.get("report") or {}
+    library = report.get("library") or {}
+    pages = report.get("sequential", {}).get("page_hashes", [])
+    required = ("imported", "progress_stored", "reopened", "resolved", "page_hash_equal", "tail_checked")
+    return (record.get("exit") == 0 and report.get("status") == 0 and
+            all(library.get(key) is True for key in required) and
+            type(library.get("source_bytes")) is int and library["source_bytes"] == source_bytes and
+            type(library.get("reference_page")) is int and library["reference_page"] == 0 and
+            library.get("reopened_source_bytes") == source_bytes and
+            bool(pages) and isinstance(library.get("reference_hash"), str) and
+            library["reference_hash"] == library.get("reopened_hash") == pages[0].get("hash") and
+            library.get("saved_chapter_offset") == library.get("resolved_offset") == pages[0].get("start") and
+            library.get("resolved_state") == 1 and library.get("progress_present") is True and
+            type(library.get("tail_bytes_checked")) is int and 0 < library["tail_bytes_checked"] <= 128)
+
+
 def run_case(probe, font, book, out, stem, part, max_pages, turns, random, repeat,
-             render=True, window_bytes=0):
+             render=True, window_bytes=0, library=False):
     command = [str(probe), str(book), str(font), "--part", str(part),
                "--max-pages", str(max_pages), "--turns", str(turns),
                "--random", str(random), "--cache", "1", "--budget", str(2 * MIB),
@@ -43,6 +60,8 @@ def run_case(probe, font, book, out, stem, part, max_pages, turns, random, repea
     if window_bytes:
         command.extend(["--window-bytes",str(window_bytes)])
     name = "%s-%d" % (stem, repeat)
+    if library:
+        command.extend(["--library", str((out / (name + ".sqlite")).absolute())])
     stdout_path = out / (name + ".json")
     stderr_path = out / (name + ".stderr.log")
     with stdout_path.open("wb") as stdout, stderr_path.open("wb") as stderr:
@@ -74,11 +93,14 @@ def main(argv=None):
     parser.add_argument("--window-bytes",type=int,default=0)
     parser.add_argument("--sample-pages",type=int,default=256)
     parser.add_argument("--random-count",type=int,default=16)
+    parser.add_argument("--library", action="store_true", help="use the library-enabled probe and verify persisted chapter positions")
     parser.add_argument("--enumerate", type=int, default=0,
                         help="page cap for one full sequential pass per loading case (0 = skip)")
     args = parser.parse_args(argv)
     if args.repeats<1 or args.window_bytes<0 or args.sample_pages<16 or not 1<=args.random_count<=64:
         parser.error("repeats must be positive; window bytes must be nonnegative")
+    if args.library and not args.window_bytes:
+        parser.error("library measurements require the bounded reader")
     for path in (args.probe, args.font, args.corpus / "manifest.json"):
         if not path.is_file():
             parser.error("missing input: %s" % path)
@@ -98,7 +120,7 @@ def main(argv=None):
             max_pages,turns,random=args.sample_pages,16,args.random_count
         repeats = args.repeats if args.window_bytes or stem in ("single10", "segmented10") else 1
         runs = [run_case(args.probe, args.font, book, args.output, stem, part,
-                         max_pages, turns, random, repeat,window_bytes=args.window_bytes) for repeat in range(repeats)]
+                         max_pages, turns, random, repeat,window_bytes=args.window_bytes,library=args.library) for repeat in range(repeats)]
         records.extend(runs)
         good = [r for r in runs if r["report"] and r["report"].get("status") == 0]
         case = {
@@ -114,6 +136,10 @@ def main(argv=None):
             "errors": [r["report"]["error"] if r["report"] else None for r in runs],
             "passed": len(good) == len(runs),
         }
+        if args.library:
+            case["library_roundtrip_pass"] = all(library_record_ok(r, books[name]["file_bytes"]) for r in runs)
+            case["passed"] = case["passed"] and case["library_roundtrip_pass"]
+            case["library_runs"] = [r["report"].get("library") if r["report"] else None for r in runs]
         if good:
             case["medians"] = {
                 "text_bytes": median(runs, lambda r: r["text_bytes"]),
@@ -146,10 +172,11 @@ def main(argv=None):
         if args.enumerate and case["passed"]:
             run = run_case(args.probe, args.font, book, args.output, stem + "-enumerate",
                            part, args.enumerate, 1, 0, 0, render=False,
-                           window_bytes=max(args.window_bytes,2*MIB) if args.window_bytes else 0)
+                           window_bytes=max(args.window_bytes,2*MIB) if args.window_bytes else 0,library=args.library)
             report = run["report"]
             case["enumerated"] = {
-                "passed": bool(report) and report.get("status") == 0,
+                "passed": bool(report) and report.get("status") == 0 and
+                          (not args.library or library_record_ok(run, books[name]["file_bytes"])),
                 "pages": report["sequential"]["enumerated"] if report else None,
                 "reached_eof": report["sequential"].get("reached_eof",False) if report else False,
                 "all_pages_hash": report["sequential"].get("all_pages_hash") if report else None,
@@ -217,6 +244,11 @@ def main(argv=None):
             "all_cases_pass":all_pass,"evicted_window_random_recovery":random_ok,
             "repeat_page_hashes_equal":deterministic,"requested_full_enumeration":bool(args.enumerate),
             "full_enumeration_pass":full_ok,"accepted":accepted}
+    if args.library:
+        summary["scope"] = "Stored EPUB bounded chapters, real eviction/random recovery, and persisted chapter-local positions"
+        summary["acceptance"]["library_roundtrip_pass"] = all(c.get("library_roundtrip_pass", False) for c in cases.values())
+        summary["acceptance"]["accepted"] = (summary["acceptance"]["accepted"] and
+                                               summary["acceptance"]["library_roundtrip_pass"])
     (args.output / "summary.json").write_text(
         json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return 0 if not args.window_bytes or summary["acceptance"]["accepted"] else 1

@@ -27,6 +27,9 @@
 
 typedef struct {
   const char *book, *font;
+#ifdef EXR_PROBE_LIBRARY
+  const char *library_path;
+#endif
   size_t part, turns, random_pages, max_pages, cache_pages, cache_bytes;
   size_t checkpoint_capacity, checkpoint_bytes, checkpoint_interval;
   size_t window_bytes;
@@ -225,10 +228,42 @@ static int parse(options *o, int argc, char **argv) {
     else if (!strcmp(k, "--checkpoint-interval")) o->checkpoint_interval = (size_t)strtoull(v, NULL, 10);
     else if (!strcmp(k, "--window-bytes")) o->window_bytes = (size_t)strtoull(v, NULL, 10);
     else if (!strcmp(k, "--seed")) o->seed = strtoull(v, NULL, 10);
+#ifdef EXR_PROBE_LIBRARY
+    else if (!strcmp(k, "--library")) o->library_path = v;
+#endif
     else return 0;
   }
+#ifdef EXR_PROBE_LIBRARY
+  if (!o->library_path || !o->library_path[0] || !o->window_bytes) return 0;
+#endif
   return o->max_pages > 0 && o->turns <= o->max_pages && o->turns<=64 && o->random_pages<=64;
 }
+
+#ifdef EXR_PROBE_LIBRARY
+/* Retain the library-owned source only through a successful public open. */
+static exr_status library_publication(exr_library *library,int64_t id,
+  exr_publication **publication,size_t *bytes,exr_error *error) {
+  exr_source source={0};
+  exr_status status=exr_library_source(library,id,&source,error);
+  if(status!=EXR_OK) return status;
+  *bytes=(size_t)source.size;
+  status=exr_publication_open_source(&source,publication,error);
+  if(status!=EXR_OK) source.release(source.context);
+  return status;
+}
+static exr_status library_failure(exr_error *error,const char *message) {
+  error->code=EXR_FORMAT;
+  snprintf(error->message,sizeof(error->message),"%s",message);
+  return EXR_FORMAT;
+}
+typedef struct { const char *expected;size_t size,seen; } library_tail;
+static exr_status library_tail_sink(void *context,const char *text,size_t size,exr_error *error) {
+  library_tail *tail=context;
+  if(tail->seen>tail->size || size>tail->size-tail->seen || memcmp(text,tail->expected+tail->seen,size))
+    return library_failure(error,"Stored chapter tail differs from its bounded anchor prefix");
+  tail->seen+=size;return EXR_OK;
+}
+#endif
 
 static int run(options *o) {
   exr_font *font = NULL;
@@ -260,7 +295,44 @@ static int run(options *o) {
   long long random_plan[64];
   unsigned long long random_state;
   size_t i, j;
+#ifdef EXR_PROBE_LIBRARY
+  exr_library *library=NULL;
+  exr_epub_location captured={0},saved={0};
+  exr_anchor tail_anchor={0};
+  exr_anchor_match resumed={EXR_ANCHOR_MISSING,SIZE_MAX,SIZE_MAX};
+  int64_t library_book_id=0;
+  size_t source_bytes=0,reopened_source_bytes=0,import_resident=0,import_peak=0;
+  size_t resume_peak_workspace=0,tail_bytes_checked=0;
+  uint64_t resume_hash=0;
+  double import_ms=0,resume_ms=0,roundtrip_ms=0,import_started=0,resume_started=0,roundtrip_started=0;
+  int created=0,imported=0,progress_saved=0,library_reopened=0,progress_present=0,resume_page_equal=0;
+  int progress_resolved=0,tail_checked=0;
+#endif
   process_memory(&base_resident, &baseline_peak);
+#ifdef EXR_PROBE_LIBRARY
+  stage="library_import";
+  import_started=now_ms();
+  {
+    FILE *fresh=fopen(o->library_path,"wbx");
+    exr_library_epub_info info={0};
+    if(!fresh) { status=library_failure(&error,"Library probe requires a new database path");goto done; }
+    if(fclose(fresh)) { status=EXR_IO;goto done; }
+    status=exr_library_open(o->library_path,&library,&error);
+    if(status==EXR_OK) status=exr_library_import_file_unique(library,EXR_EPUB,o->book,NULL,
+                                                           &library_book_id,&created,&error);
+    if(status==EXR_OK) {
+      info.struct_size=sizeof(info);
+      status=exr_library_epub_info_get(library,library_book_id,&info,&error);
+      if(status==EXR_OK && (!created || !info.bounded_storage || info.global_extent_known))
+        status=library_failure(&error,"EPUB import did not create bounded storage");
+    }
+  }
+  import_ms=now_ms()-import_started;
+  process_memory(&import_resident,&import_peak);
+  if(status!=EXR_OK) goto done;
+  imported=1;
+  stage="font";
+#endif
   config.page = (exr_layout_options){720, 1040, 36, 28, 1.5f, 10};
   font_ms = now_ms();
   status = exr_font_open(o->font, &font, &error);
@@ -269,7 +341,13 @@ static int run(options *o) {
   if (status != EXR_OK) goto done;
   stage = "open";
   open_ms = now_ms();
+#ifdef EXR_PROBE_LIBRARY
+  status = library_publication(library,library_book_id,&publication,&source_bytes,&error);
+  if(status==EXR_OK && source_bytes!=file_bytes(o->book))
+    status=library_failure(&error,"Stored original byte extent differs from input");
+#else
   status = exr_publication_open(o->book, &publication, &error);
+#endif
   open_ms = now_ms() - open_ms;
   process_memory(&index_resident, &index_peak);
   if (status != EXR_OK) goto done;
@@ -397,8 +475,95 @@ static int run(options *o) {
     exr_pager_free(pager);
     pager = NULL;
   }
+#ifdef EXR_PROBE_LIBRARY
+  stage="library_progress_capture";
+  roundtrip_started=now_ms();
+  if(!reference_count || mismatches) {
+    status=library_failure(&error,"Library probe requires verified sequential/random pages");goto done;
+  }
+  {
+    const exr_part *routes=exr_publication_parts(publication,&parts);
+    const exr_layout *restored_page=NULL;
+    size_t path_size;
+    page_sample actual;
+    if(!routes || o->part>=parts || !routes[o->part].path) {
+      status=library_failure(&error,"Publication route missing during progress capture");goto done;
+    }
+    captured.part=o->part;
+    path_size=strlen(routes[o->part].path);
+    captured.path=malloc(path_size+1);
+    if(!captured.path) { status=EXR_MEMORY;goto done; }
+    memcpy(captured.path,routes[o->part].path,path_size+1);
+    status=exr_publication_pager_create(publication,o->part,font,&config,&chapter_options,&pager,&error);
+    if(status==EXR_OK) status=exr_pager_anchor_create(pager,reference[0].start,reference[0].start,
+                                                    NULL,&captured.selector,&error);
+    if(status!=EXR_OK) goto done;
+    stage="library_tail_query";
+    status=exr_pager_anchor_create(pager,text_bytes,text_bytes,NULL,&tail_anchor,&error);
+    if(status!=EXR_OK) goto done;
+    {
+      library_tail tail={tail_anchor.prefix,tail_anchor.prefix ? strlen(tail_anchor.prefix) : 0,0};
+      if(!tail.size || tail.size>text_bytes) {
+        status=library_failure(&error,"Long chapter tail anchor has no complete prefix");goto done;
+      }
+      status=exr_pager_read_text(pager,text_bytes-tail.size,text_bytes,library_tail_sink,&tail,NULL,&error);
+      if(status!=EXR_OK) goto done;
+      tail_bytes_checked=tail.seen;
+      tail_checked=tail.seen==tail.size;
+      if(!tail_checked) { status=library_failure(&error,"Stored chapter tail query was incomplete");goto done; }
+    }
+    stage="library_progress_store";
+    status=exr_library_epub_progress(library,library_book_id,&captured,&error);
+    if(status!=EXR_OK) goto done;
+    progress_saved=1;
+    /* No original reader/source survives the database close/reopen. */
+    exr_pager_free(pager);pager=NULL;
+    exr_publication_free(publication);publication=NULL;
+    exr_library_close(library);library=NULL;
+    resume_started=now_ms();
+    stage="library_progress_reopen";
+    status=exr_library_open(o->library_path,&library,&error);
+    if(status!=EXR_OK) goto done;
+    library_reopened=1;
+    status=exr_library_epub_progress_get(library,library_book_id,&saved,&progress_present,&error);
+    if(status!=EXR_OK) goto done;
+    if(!progress_present || saved.part!=captured.part || !saved.path || strcmp(saved.path,captured.path) ||
+       saved.selector.start!=captured.selector.start || saved.selector.end!=captured.selector.end) {
+      status=library_failure(&error,"Persisted chapter-local progress differs after reopening");goto done;
+    }
+    status=library_publication(library,library_book_id,&publication,&reopened_source_bytes,&error);
+    if(status!=EXR_OK) goto done;
+    if(source_bytes!=reopened_source_bytes) {
+      status=library_failure(&error,"Stored original byte extent changed after reopening");goto done;
+    }
+    status=exr_publication_pager_create(publication,saved.part,font,&config,&chapter_options,&pager,&error);
+    if(status!=EXR_OK) goto done;
+    stage="library_progress_resolve";
+    status=exr_pager_anchor_resolve(pager,&saved.selector,NULL,&resumed,&error);
+    if(status!=EXR_OK) goto done;
+    if(resumed.state!=EXR_ANCHOR_FOUND || resumed.start!=captured.selector.start || resumed.end!=resumed.start) {
+      status=library_failure(&error,"Persisted point did not resolve uniquely to its chapter offset");goto done;
+    }
+    progress_resolved=1;
+    status=exr_pager_get(pager,0,&restored_page,&error);
+    if(status!=EXR_OK) goto done;
+    actual=hash_layout(restored_page);
+    resume_hash=actual.hash;
+    resume_page_equal=actual.hash==reference[0].hash && actual.start==reference[0].start && actual.end==reference[0].end;
+    if(!resume_page_equal) { status=library_failure(&error,"Reopened page differs from the sequential reference");goto done; }
+    resume_peak_workspace=exr_pager_chapter_statistics(pager).peak_parse_workspace_bytes;
+  }
+  resume_ms=now_ms()-resume_started;
+  roundtrip_ms=now_ms()-roundtrip_started;
+  stage="library_complete";
+#endif
   status = EXR_OK;
 done:
+#ifdef EXR_PROBE_LIBRARY
+  if(!imported && import_started) import_ms=now_ms()-import_started;
+  if(resume_started) resume_ms=now_ms()-resume_started;
+  if(roundtrip_started) roundtrip_ms=now_ms()-roundtrip_started;
+#endif
   process_memory(&resident, &peak);
   {
     char book_path[1024], error_text[512];
@@ -413,6 +578,28 @@ done:
           file_bytes(o->book), o->part, parts);
   }
   fprintf(stdout, "\"text_bytes\":%zu,\"nodes\":%zu,\"blocks\":%zu,", text_bytes, nodes, blocks);
+#ifdef EXR_PROBE_LIBRARY
+  {
+    char database_path[1024];
+    json_text(o->library_path,database_path,sizeof(database_path));
+    fprintf(stdout,"\"library\":{\"source\":\"sqlite-original-random-source\",\"database\":\"%s\","
+      "\"book_id\":%lld,\"created\":%s,\"imported\":%s,\"bounded_storage\":%s,\"source_bytes\":%zu,"
+      "\"reopened_source_bytes\":%zu,\"import_ms\":%.6f,\"import_resident_bytes\":%zu,\"import_peak_rss_bytes\":%zu,"
+      "\"progress_stored\":%s,\"reopened\":%s,\"progress_present\":%s,\"part\":%zu,"
+      "\"reference_page\":0,\"saved_chapter_offset\":%zu,\"resolved_state\":%d,\"resolved_offset\":%zu,"
+      "\"resolved\":%s,\"page_hash_equal\":%s,\"tail_checked\":%s,\"tail_bytes_checked\":%zu,"
+      "\"reference_hash\":\"%016llx\",\"reopened_hash\":\"%016llx\","
+      "\"resume_ms\":%.6f,\"persistence_roundtrip_ms\":%.6f,\"resume_peak_parse_workspace_bytes\":%zu},",
+      database_path,(long long)library_book_id,created ? "true":"false",imported ? "true":"false",
+      imported ? "true":"false",source_bytes,
+      reopened_source_bytes,import_ms,import_resident,import_peak,progress_saved ? "true":"false",
+      library_reopened ? "true":"false",progress_present ? "true":"false",o->part,captured.selector.start,
+      (int)resumed.state,resumed.start,progress_resolved ? "true":"false",resume_page_equal ? "true":"false",
+      tail_checked ? "true":"false",tail_bytes_checked,
+      (unsigned long long)(reference_count ? reference[0].hash : 0),(unsigned long long)resume_hash,
+      resume_ms,roundtrip_ms,resume_peak_workspace);
+  }
+#endif
   if(o->window_bytes) fprintf(stdout,
     "\"bounded\":{\"index_bytes\":%zu,\"parse_workspace_bytes\":%zu,\"peak_parse_workspace_bytes\":%zu,\"windows_loaded\":%zu,\"windows_evicted\":%zu,\"window_bytes\":%zu},",
     chapter_stats.index_bytes,chapter_stats.parse_workspace_bytes,chapter_stats.peak_parse_workspace_bytes,
@@ -444,7 +631,11 @@ done:
   fprintf(stdout, "\"chapter_load_ms\":%.6f,\"pager_create_ms\":%.6f,", load_ms, create_ms);
   fprintf(stdout, "\"first_page_layout_ms\":%.6f,\"first_paint_ms\":%.6f,", first_page_ms, paint_ms);
   fprintf(stdout, "\"first_visible_total_ms\":%.6f},",
-          font_ms + open_ms + load_ms + create_ms + first_page_ms + paint_ms);
+          font_ms + open_ms + load_ms + create_ms + first_page_ms + paint_ms
+#ifdef EXR_PROBE_LIBRARY
+          + import_ms
+#endif
+          );
   fprintf(stdout, "\"sequential\":{\"turns\":%zu,\"enumerated\":%zu,\"reached_eof\":%s,\"all_pages_hash\":\"%016llx\",\"turn_layout_ms\":[", turns,
           enumerated,reached_eof ? "true" : "false",(unsigned long long)all_pages_hash);
   for (j = 0; j < turns; j++) fprintf(stdout, "%s%.6f", j ? "," : "", turn_layout[j]);
@@ -475,6 +666,12 @@ done:
   exr_pager_free(pager);
   exr_document_free(document);
   exr_publication_free(publication);
+#ifdef EXR_PROBE_LIBRARY
+  exr_epub_location_free(&captured);
+  exr_epub_location_free(&saved);
+  exr_anchor_free(&tail_anchor);
+  exr_library_close(library);
+#endif
   exr_font_free(font);
   return status == EXR_OK ? 0 : 1;
 }
