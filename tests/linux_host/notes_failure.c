@@ -93,7 +93,7 @@ int main(int argc,char **argv) {
   host_job *retry=g_async_queue_pop(queue);host_result *saved=g_new0(host_result,1);
   saved->action=READER_COMMIT;saved->generation=retry->generation;
   linux_reader_execute(reader,&retry->command,&saved->value);job_free(retry);apply_result(saved);
-  require(!save_failed && !saving && !busy && !reader->has_pending && reader->current.font==28,
+  require(!save_failed && !saving && !busy && !reader->has_pending && reader->current.font==28 && last_error==EXR_OK,
           "successful retry promotes exact accepted pending cursor");
   linux_reader_close(reader);g_async_queue_unref(queue);g_key_file_free(settings);g_free(settings_path);g_free(home);g_free(page_text);
   printf("{\"passed\":true,\"checks\":%u,\"kind\":\"GTK note query fault regression\"}\n",checks);return 0;

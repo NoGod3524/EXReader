@@ -39,6 +39,8 @@ static void state(void) {
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
 }
 static void status(exr_status code,const char *message) {
+  g_print("STATUS code=%d book=%"G_GINT64_FORMAT" part=%zu page=%zu busy=%d saving=%d generation=%d message=%s\n",
+    (int)code,book_id,part,page_number,busy,saving,g_atomic_int_get(&generation),message);
   last_error=(int)code;gtk_label_set_text(GTK_LABEL(label),message);state();
 }
 static gboolean save_settings(void) {
@@ -86,9 +88,10 @@ static gboolean apply_result(gpointer data) {
   busy=FALSE;
   if(result->has_shelf) shelf_present(result);
   if(done->action==READER_COMMIT) {
+    gboolean retrying=save_failed;
     saving=FALSE;save_failed=result->status!=EXR_OK;
     if(save_failed) { close_after_save=FALSE;status(result->status,"Position save failed; F12 retries, book switch and close are blocked"); }
-    else { state();if(close_after_save) stop_worker(); }
+    else { if(retrying) status(EXR_OK,"Position saved");else state();if(close_after_save) stop_worker(); }
     goto free_result;
   }
   if(result->status!=EXR_OK) { status(result->status,result->message);goto free_result; }

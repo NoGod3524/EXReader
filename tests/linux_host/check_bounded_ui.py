@@ -187,7 +187,7 @@ def main():
         require(elapsed < 2000 and responding['book'] == broken['book'], 'GTK dispatches real input while worker is busy',
                 {'input_response_ms': elapsed, 'state': responding})
         command('xdotool', 'key', '--clearmodifiers', 'Escape')
-        cancelled = raw_wait(lambda s: not s['busy'] and s['error'] != 0)
+        cancelled = raw_wait(lambda s: not s['busy'] and s['error'] == 9)
         time.sleep(1)
         settled = host.read()
         require(all(settled[k] == broken[k] for k in ('book', 'part', 'start', 'position'))
