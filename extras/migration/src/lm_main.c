@@ -1045,6 +1045,10 @@ static int verify_library(ctx *c, exr_library *lib, int check_metadata) {
     if (!note->touched) continue;
     record = note->retained ? lm_json_parse(note->retained, strlen(note->retained), error, sizeof(error)) : NULL;
     if (!record || record->t != J_OBJ) { lm_json_free(record); fail(c, O_FAILED, "verify-failed", "retained annotation is not a record"); return 0; }
+    if (note->located && (!note->book_legacy || !lm_get_str(record, "bookId") ||
+                         strcmp(note->book_legacy, lm_get_str(record, "bookId")))) {
+      lm_json_free(record); fail(c, O_FAILED, "verify-failed", "retained annotation owner differs from its mapping"); return 0;
+    }
     lm_sb_init(&canonical);
     lm_json_write(&canonical, record);
     lm_sha_bytes(canonical.p ? canonical.p : "", canonical.n, fingerprint);
@@ -1052,10 +1056,11 @@ static int verify_library(ctx *c, exr_library *lib, int check_metadata) {
     if (strcmp(fingerprint, note->fp)) { fail(c, O_FAILED, "verify-failed", "retained annotation fingerprint differs from the ledger"); return 0; }
     if (note->located && (note->new_id <= 0 || !note->book_legacy ||
         !lm_hm_get(&c->ledger.book_index, note->book_legacy, &owner) ||
-        !c->ledger.books[owner].touched || c->ledger.books[owner].kind != note->kind ||
+        c->ledger.books[owner].kind != note->kind ||
         (note->kind != K_AUDIO && c->ledger.books[owner].book_id <= 0))) {
       fail(c, O_FAILED, "verify-failed", "located annotation lacks a valid mapped owner or stored identity"); return 0;
     }
+    if (note->located) c->ledger.books[owner].touched = 1;
   }
   if (exr_library_books(lib, "", &books, &count, &c->err) != EXR_OK) { sdk_fail(c, "listing library"); return 0; }
   for (i = 0; i < count; i++) {
@@ -1414,20 +1419,36 @@ static int run_migrate(ctx *c) {
     const jv *jn = c->pack.notes->items[i];
     const char *id = lm_get_str(jn, "legacy_id");
     lm_note *ln;
+    lm_sb canonical;
+    char fingerprint[65];
     if (note_book[i] != SIZE_MAX) continue;
     if (!tick(c)) break;
+    lm_sb_init(&canonical);
+    lm_json_write(&canonical, lm_get(jn, "record"));
+    lm_sha_bytes(canonical.p ? canonical.p : "", canonical.n, fingerprint);
+    lm_sb_free(&canonical);
+    ln = lm_ledger_note(&c->ledger, id, 0);
+    if (ln) {
+      ln->touched = 1;
+      if (strcmp(ln->fp, fingerprint)) {
+        entry(c, S_CONFLICT, "note-changed", "note", id, "existing legacy annotation differs; earlier result retained");
+        c->notes_skipped++;
+        note_item(c, id, ln->book_legacy ? ln->book_legacy : "", kind_name(ln->kind), "skipped", ln->new_id, NULL, "note-changed");
+      } else if (ln->located) {
+        c->notes_existing++;
+        note_item(c, id, ln->book_legacy ? ln->book_legacy : "", kind_name(ln->kind), "existing", ln->new_id, "ledger", NULL);
+      } else {
+        c->notes_unlocated++;
+        note_item(c, id, "", kind_name(ln->kind), "unlocated", 0, ln->method, ln->reason);
+      }
+      continue;
+    }
     ln = lm_ledger_note(&c->ledger, id, 1);
     ln->touched = 1;
     set_str(&ln->reason, "orphan-note");
     free(ln->retained);
     ln->retained = record_json(lm_get(jn, "record"), 0);
-    {
-      lm_sb fb;
-      lm_sb_init(&fb);
-      lm_json_write(&fb, lm_get(jn, "record"));
-      lm_sha_bytes(fb.p ? fb.p : "", fb.n, ln->fp);
-      lm_sb_free(&fb);
-    }
+    strcpy(ln->fp, fingerprint);
     entry(c, S_UNLOCATED, "orphan-note", "note", id, "the annotation refers to a book that is not in the export; preserved in the ledger only");
     c->notes_unlocated++;
     note_item(c, id, "", "reflow", "unlocated", 0, NULL, "orphan-note");
