@@ -63,6 +63,10 @@ typedef struct {
   int64_t book_id;
   wchar_t title[256];
   double render_scale;
+  /* Independent UI selection data, never a borrowed pager-cache entry. */
+  exr_layout *hit_layout;
+  exr_fixed_text *fixed_text;
+  exr_page_geometry geometry;
 } host_frame;
 
 typedef struct {
@@ -79,13 +83,8 @@ typedef struct {
   exr_pager *pager;
   exr_fixed_document *fixed_document;
   exr_layout_config config;
-  exr_page_geometry geometry;
-  double fixed_scale;
   size_t page;
   size_t page_count;
-  const exr_layout *layout;
-  exr_fixed_text *fixed_text;
-  size_t fixed_text_page;
 } host_session;
 
 typedef struct host_job host_job;
@@ -111,6 +110,7 @@ typedef struct {
   size_t reflow_note_count;
   exr_fixed_note *fixed_notes;
   size_t fixed_note_count;
+  int64_t notes_book_id;
   exr_book current;
   int has_current;
   host_session session;
@@ -145,9 +145,14 @@ typedef struct {
   int pending_selection;
   size_t pending_start, pending_end;
   int64_t pending_book;
+  int progress_failed;
 } host_state;
 
 static host_state g;
+static int dragging;
+#ifdef EXR_HOST_WORKER_REVIEW
+static int review_query_failure(int kind);
+#endif
 
 typedef exr_status (*host_progress_fn)(void *context, unsigned percent);
 
@@ -327,6 +332,8 @@ static int format_for_path(const wchar_t *path, exr_format *format) {
 }
 
 static void frame_clear(host_frame *frame) {
+  exr_layout_free(frame->hit_layout);
+  exr_fixed_text_free(frame->fixed_text);
   exr_bitmap_free(&frame->bitmap);
   free(frame->dib);
   free(frame->text);
@@ -360,7 +367,6 @@ static int book_copy(exr_book *dst, const exr_book *src) {
 }
 
 static void session_clear(host_session *session) {
-  if (session->fixed_text) exr_fixed_text_free(session->fixed_text);
   if (session->fixed_document) exr_fixed_free(session->fixed_document);
   if (session->pager) exr_pager_free(session->pager);
   if (session->document) exr_document_free(session->document);
@@ -417,6 +423,7 @@ static void notes_clear(void) {
   g.reflow_note_count = 0;
   g.fixed_notes = NULL;
   g.fixed_note_count = 0;
+  g.notes_book_id = 0;
 }
 
 static size_t current_note_count(void) {
@@ -459,6 +466,10 @@ static exr_status reload_shelf(void) {
   exr_status status;
   size_t i;
   EnterCriticalSection(&g.library_lock);
+#ifdef EXR_HOST_WORKER_REVIEW
+  if (review_query_failure(2)) status = EXR_DATABASE;
+  else
+#endif
   status = exr_library_books(g.library, "", &books, &count, &error);
   LeaveCriticalSection(&g.library_lock);
   if (status != EXR_OK) {
@@ -504,23 +515,42 @@ static int shelf_index_for_title(const wchar_t *needle) {
 static exr_status reload_notes(void) {
   exr_error error = {0};
   exr_status status = EXR_OK;
-  notes_clear();
-  if (g.notes) SendMessageW(g.notes, LB_RESETCONTENT, 0, 0);
-  if (!g.has_current || !g.session.active) return EXR_OK;
+  exr_note *reflow = NULL;
+  exr_fixed_note *fixed = NULL;
+  size_t count = 0;
+  if (!g.has_current || !g.session.active) {
+    notes_clear();
+    if (g.notes) SendMessageW(g.notes, LB_RESETCONTENT, 0, 0);
+    return EXR_OK;
+  }
   EnterCriticalSection(&g.library_lock);
-  if (g.session.fixed)
-    status = exr_library_fixed_notes(g.library, g.current.id, &g.fixed_notes, &g.fixed_note_count, &error);
+#ifdef EXR_HOST_WORKER_REVIEW
+  if (review_query_failure(1)) status = EXR_DATABASE;
   else
-    status = exr_library_notes(g.library, g.current.id, &g.reflow_notes, &g.reflow_note_count, &error);
+#endif
+  if (g.session.fixed)
+    status = exr_library_fixed_notes(g.library, g.current.id, &fixed, &count, &error);
+  else
+    status = exr_library_notes(g.library, g.current.id, &reflow, &count, &error);
   LeaveCriticalSection(&g.library_lock);
   if (status != EXR_OK) {
     wchar_t message[512];
+    if (g.notes_book_id != g.current.id) {
+      notes_clear();
+      if (g.notes) SendMessageW(g.notes, LB_RESETCONTENT, 0, 0);
+    }
     describe_error(message, 512, L"读取标注失败", status, &error);
     set_status(message);
     return status;
   }
+  notes_clear();
+  g.notes_book_id = g.current.id;
+  g.reflow_notes = reflow; g.fixed_notes = fixed;
+  if (g.session.fixed) g.fixed_note_count = count;
+  else g.reflow_note_count = count;
   if (g.notes) {
     size_t i;
+    SendMessageW(g.notes, LB_RESETCONTENT, 0, 0);
     for (i = 0; i < current_note_count(); i++) {
       wchar_t line[512];
       char quote[128];
@@ -565,20 +595,26 @@ static int notes_selected(void) {
   return (int)index;
 }
 
-static void note_comment_read(char *out, size_t capacity) {
+static int note_comment_read(char *out, size_t capacity) {
   wchar_t wide[65536];
   int length;
   char *utf8;
   out[0] = 0;
-  if (!g.note_edit) return;
-  length = GetWindowTextW(g.note_edit, wide, 65535);
-  if (length <= 0) return;
+  if (!g.note_edit) return 1;
+  if (GetWindowTextLengthW(g.note_edit) > 65535) {
+    set_status(L"批注超出长度上限，未保存。"); return 0;
+  }
+  length = GetWindowTextW(g.note_edit, wide, 65536);
+  if (length <= 0) return 1;
   wide[length] = 0;
   utf8 = host_utf8(wide);
-  if (!utf8) return;
-  strncpy(out, utf8, capacity - 1);
-  out[capacity - 1] = 0;
+  if (!utf8) { set_status(L"批注包含无效文字，未保存。"); return 0; }
+  if (strlen(utf8) >= capacity) {
+    free(utf8); set_status(L"批注 UTF-8 超出 65535 字节上限，未保存。"); return 0;
+  }
+  strcpy(out, utf8);
   free(utf8);
+  return 1;
 }
 
 static void note_comment_write(const char *utf8) {
@@ -591,7 +627,7 @@ static void note_comment_write(const char *utf8) {
 /* Jobs: one SDK-owning worker at a time                               */
 /* ------------------------------------------------------------------ */
 
-enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT };
+enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB_NOTE_UPDATE, JOB_ROLLBACK };
 
 struct host_job {
   LONG refs;
@@ -607,6 +643,7 @@ struct host_job {
   int zoom_percent;
   exr_anchor anchor;
   int has_anchor;
+  int anchor_host_owned;
   HANDLE thread;
   exr_status status;
   exr_error error;
@@ -621,11 +658,26 @@ struct host_job {
   wchar_t message[512];
   volatile LONG progress;
   int session_swapped;
+  host_session candidate;
+  exr_pager *candidate_pager;
+  exr_layout_config candidate_config;
+  char *comment;
+  int64_t note_id;
+  size_t note_start, note_end;
+  int rollback_failed;
+  int note_fixed;
+  int resolved_selection;
 };
 
 static int job_cancel_flag(host_job *job) {
   return job && InterlockedCompareExchange((volatile LONG *)&job->cancel, 0, 0) != 0;
 }
+#ifdef EXR_HOST_WORKER_REVIEW
+#include EXR_HOST_WORKER_REVIEW_HEADER
+#define OFFSET_GET(pager,index,out,error) review_offset_get(pager,index,out,error)
+#else
+#define OFFSET_GET(pager,index,out,error) exr_pager_get(pager,index,out,error)
+#endif
 
 static int job_cancel_check(void *context) {
   return job_cancel_flag((host_job *)context);
@@ -659,7 +711,14 @@ static void job_free(host_job *job) {
   if (!job) return;
   if (job->thread) CloseHandle(job->thread);
   frame_clear(&job->frame);
-  if (job->has_anchor) exr_anchor_free(&job->anchor);
+  if (job->has_anchor) {
+    if (job->anchor_host_owned) {
+      free(job->anchor.exact); free(job->anchor.prefix); free(job->anchor.suffix); free(job->anchor.chapter);
+    } else exr_anchor_free(&job->anchor);
+  }
+  session_clear(&job->candidate);
+  exr_pager_free(job->candidate_pager);
+  free(job->comment);
   free(job);
 }
 
@@ -676,6 +735,8 @@ static void job_start(host_job *job) {
   uintptr_t handle;
   unsigned thread_id = 0;
   g.job = job;
+  dragging = 0;
+  if (GetCapture() == g.page) ReleaseCapture();
   memset(&g.selection, 0, sizeof(g.selection));
   if (g.page) InvalidateRect(g.page, NULL, TRUE);
   InterlockedIncrement(&job->refs);
@@ -802,8 +863,24 @@ static exr_status render_reflow(host_session *session, size_t page, host_frame *
       out->dib[i] = (r << 16) | (g << 8) | b;
     }
   }
-  session->layout = layout;
-  session->page = page;
+  {
+    exr_positioned_page positioned = {0};
+    exr_positioned_input input = {0};
+    exr_layout_config hit = exr_layout_config_defaults();
+    positioned.width = (float)out->bitmap.width;
+    positioned.height = (float)out->bitmap.height;
+    positioned.content = *info;
+    positioned.content.box_start = positioned.content.box_count = 0;
+    input.struct_size = sizeof(input);
+    input.pages = &positioned; input.page_count = 1;
+    input.glyphs = exr_layout_glyphs(layout, &input.glyph_count);
+    input.lines = exr_layout_lines(layout, &input.line_count);
+    hit.page.width = positioned.width; hit.page.height = positioned.height; hit.page.margin = 0;
+    if (control) hit.control = *control;
+    status = exr_layout_create_positioned(session->document, exr_layout_font(layout), &input, &hit,
+                                          &out->hit_layout, error);
+    if (status != EXR_OK) { frame_clear(out); return status; }
+  }
   return EXR_OK;
 }
 
@@ -892,13 +969,8 @@ static exr_status render_fixed(host_session *session, size_t page, int zoom_perc
       out->dib[i] = (r << 16) | (gg << 8) | b;
     }
   }
-  if (session->fixed_text) exr_fixed_text_free(session->fixed_text);
-  session->fixed_text = text;
-  session->fixed_text_page = page;
-  session->geometry = pages[page].geometry;
-  session->fixed_scale = scale;
-  session->page = page;
-  session->page_count = count;
+  out->fixed_text = text;
+  out->geometry = pages[page].geometry;
   return EXR_OK;
 }
 
@@ -911,7 +983,7 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
   size_t count = 0, lo = 0, hi = 1, guard = 0;
   exr_status status;
   int bounded = 0;
-  status = exr_pager_get(session->pager, 0, &layout, error);
+  status = OFFSET_GET(session->pager, 0, &layout, error);
   if (status != EXR_OK) return status;
   info = exr_layout_pages(layout, &count);
   if (!info || count < 1) return EXR_FORMAT;
@@ -923,8 +995,9 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
   }
   while (guard++ < 64) {
     size_t next = hi * 2;
-    status = exr_pager_get(session->pager, hi, &layout, error);
+    status = OFFSET_GET(session->pager, hi, &layout, error);
     if (status != EXR_OK) {
+      if (status != EXR_ARGUMENT) return status;
       memset(error, 0, sizeof(*error));
       bounded = 1;
       break;
@@ -942,7 +1015,8 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
   (void)bounded;
   while (lo + 1 < hi) {
     size_t mid = lo + (hi - lo) / 2;
-    status = exr_pager_get(session->pager, mid, &layout, error);
+    status = OFFSET_GET(session->pager, mid, &layout, error);
+    if (status != EXR_OK && status != EXR_ARGUMENT) return status;
     if (status == EXR_OK && exr_layout_pages(layout, &count) != NULL && count > 0 &&
         exr_layout_pages(layout, &count)[0].start <= offset) {
       lo = mid;
@@ -951,10 +1025,16 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
     }
     memset(error, 0, sizeof(*error));
   }
-  status = exr_pager_get(session->pager, lo, &layout, error);
+  status = OFFSET_GET(session->pager, lo, &layout, error);
   if (status != EXR_OK) return status;
   info = exr_layout_pages(layout, &count);
   if (!info || count < 1) return EXR_FORMAT;
+  {
+    size_t extent = 0;
+    exr_document_text(session->document, &extent);
+    if (offset < info->start || (offset >= info->end && !(offset == extent && info->end == extent)))
+      return EXR_ARGUMENT;
+  }
   if (page) *page = lo;
   if (start) *start = info->start;
   if (end) *end = info->end;
@@ -974,14 +1054,14 @@ static exr_status reflow_restore(host_session *session, const exr_control *contr
   status = exr_library_progress_get(g.library, session->book_id, &anchor, &state, &error);
   LeaveCriticalSection(&g.library_lock);
   if (status != EXR_OK) {
-    memset(&error, 0, sizeof(error));
-    if (note && note_capacity) copy_wstring(note, note_capacity, L"无法读取上次进度，从第一页开始。");
-    *page = 0;
-    return EXR_OK;
+    exr_anchor_free(&anchor);
+    if (note && note_capacity) copy_wstring(note, note_capacity, L"无法读取上次进度，未覆盖原位置，请重试。");
+    return status;
   }
   offset = anchor.start;
   if (state == EXR_ANCHOR_FOUND) {
     status = exr_anchor_resolve_ex(session->document, &anchor, control, &match, &error);
+    if (status != EXR_OK) { exr_anchor_free(&anchor); return status; }
     if (status == EXR_OK && match.state == EXR_ANCHOR_FOUND) {
       offset = match.start;
       if (note && note_capacity) copy_wstring(note, note_capacity, L"已按文本锚点恢复到上次位置。");
@@ -1079,8 +1159,7 @@ static exr_status job_open(host_job *job) {
     job->have_frame = 1;
     job->page_count = session.page_count;
     job->session_swapped = 1;
-    session_clear(&g.session);
-    g.session = session;
+    job->candidate = session;
     {
       const char *title = book.title ? book.title : "Untitled";
       wchar_t *wide = host_wide(title, strlen(title));
@@ -1103,12 +1182,25 @@ static exr_status job_go(host_job *job) {
     size_t count = g.session.page_count;
     if (!count) return EXR_FORMAT;
     if (job->target_page >= count) return EXR_ARGUMENT;
+    exr_control control = {job_cancel_check, NULL, job};
     status = render_fixed(&g.session, job->target_page,
                           job->zoom_percent > 0 ? job->zoom_percent : g.zoom_percent,
-                          &job->frame, NULL, &error);
+                          &job->frame, &control, &error);
   } else {
     exr_control control = {job_cancel_check, NULL, job};
     size_t page = job->target_page;
+    if (job->use_offset && job->has_anchor) {
+      exr_anchor_match match;
+      status = exr_anchor_resolve_ex(g.session.document, &job->anchor, &control, &match, &error);
+      if (status != EXR_OK) return status;
+      if (match.state != EXR_ANCHOR_FOUND) {
+        copy_wstring(job->message, 512, match.state == EXR_ANCHOR_AMBIGUOUS ?
+          L"标注定位存在歧义，未跳转。" : L"标注原文未匹配，未跳转。");
+        return EXR_ARGUMENT;
+      }
+      job->target_offset = match.start; job->note_start = match.start; job->note_end = match.end;
+      job->resolved_selection = 1;
+    }
     if (job->use_offset) {
       status = page_for_offset(&g.session, job->target_offset, &control, &page, NULL, NULL, &error);
     } else {
@@ -1144,6 +1236,7 @@ static exr_status job_layout(host_job *job) {
   if (status == EXR_OK && job->has_anchor) {
     exr_anchor_match match;
     exr_status resolved = exr_anchor_resolve_ex(g.session.document, &job->anchor, &control, &match, &error);
+    if (resolved != EXR_OK) { exr_pager_free(pager); return resolved; }
     if (resolved == EXR_OK && match.state == EXR_ANCHOR_FOUND)
       offset = match.start;
     else if (resolved == EXR_OK && match.state == EXR_ANCHOR_AMBIGUOUS)
@@ -1153,25 +1246,18 @@ static exr_status job_layout(host_job *job) {
     memset(&error, 0, sizeof(error));
   }
   if (status == EXR_OK) {
-    /* Search and render with the new pager before discarding the old one. */
-    exr_pager *previous = g.session.pager;
-    exr_layout_config previous_config = g.session.config;
-    g.session.pager = pager;
-    pager = NULL;
-    g.session.config = config;
-    status = page_for_offset(&g.session, offset, &control, &page, NULL, NULL, &error);
+    host_session candidate = g.session;
+    candidate.pager = pager;
+    candidate.config = config;
+    status = page_for_offset(&candidate, offset, &control, &page, NULL, NULL, &error);
     if (status == EXR_OK)
-      status = render_reflow(&g.session, page, &job->frame, &control, &error);
+      status = render_reflow(&candidate, page, &job->frame, &control, &error);
     if (status == EXR_OK) {
-      exr_pager_free(previous);
+      job->candidate_pager = pager; pager = NULL;
+      job->candidate_config = config;
       job->have_frame = 1;
       job->applied_page = page;
       job->session_swapped = 0;
-    } else {
-      exr_pager *failed = g.session.pager;
-      g.session.pager = previous;
-      g.session.config = previous_config;
-      if (failed) exr_pager_free(failed);
     }
   }
   if (pager) exr_pager_free(pager);
@@ -1234,6 +1320,49 @@ static exr_status read_import_file(host_job *job, void **data, size_t *size, exr
   return EXR_OK;
 }
 
+static exr_status rollback_import(host_job *job) {
+  exr_status status = EXR_OK;
+  if (job->created && job->imported_id > 0) {
+    EnterCriticalSection(&g.library_lock);
+    status = exr_library_delete(g.library, job->imported_id, &job->error);
+    LeaveCriticalSection(&g.library_lock);
+    if (status != EXR_OK) {
+      job->rollback_failed = 1;
+      copy_wstring(job->message, 512, L"取消导入后删除失败；新书仍在数据库中，请重试删除。");
+      return status;
+    }
+    job->created = 0;
+  }
+  job->imported = 0;
+  return EXR_CANCELLED;
+}
+
+static exr_status job_note(host_job *job) {
+  exr_status status;
+  exr_control control = {job_cancel_check, NULL, job};
+  if (job_cancel_flag(job)) return EXR_CANCELLED;
+  if (!g.session.active || job->book_id != g.session.book_id) return EXR_CANCELLED;
+  EnterCriticalSection(&g.library_lock);
+  if (job->note_fixed) {
+    exr_fixed_note note = {0};
+    note.id = job->note_id; note.book_id = job->book_id;
+    note.page = job->target_page; note.start = job->note_start; note.end = job->note_end; note.text = job->comment;
+#ifdef EXR_HOST_WORKER_REVIEW
+    review_pause(1, job);
+#endif
+    status = exr_library_fixed_note(g.library, &note, &control, &job->note_id, &job->error);
+  } else if (job->kind == JOB_NOTE_UPDATE) {
+    status = exr_library_note_text(g.library, job->note_id, job->comment, &job->error);
+  } else {
+    exr_note note = {0};
+    note.book_id = job->book_id; note.start = job->note_start; note.end = job->note_end;
+    note.text = job->comment; note.anchor = job->anchor;
+    status = exr_library_note(g.library, &note, &job->note_id, &job->error);
+  }
+  LeaveCriticalSection(&g.library_lock);
+  return status;
+}
+
 static exr_status job_import(host_job *job) {
   exr_format format;
   exr_error error = {0};
@@ -1264,30 +1393,31 @@ static exr_status job_import(host_job *job) {
   LeaveCriticalSection(&g.library_lock);
   free(path);
   free(data);
-  if (status == EXR_OK && job_cancel_flag(job)) {
-    if (created && id > 0) {
-      exr_error discard = {0};
-      EnterCriticalSection(&g.library_lock);
-      exr_library_delete(g.library, id, &discard);
-      LeaveCriticalSection(&g.library_lock);
-    }
-    return EXR_CANCELLED;
-  }
   if (status == EXR_OK) {
     job->imported = 1;
     job->imported_id = id;
     job->created = created;
+#ifdef EXR_HOST_WORKER_REVIEW
+    review_pause(3, job);
+#endif
+    if (job_cancel_flag(job)) return rollback_import(job);
   }
+  if (status != EXR_OK) job->error = error;
   return status;
 }
 
 static unsigned __stdcall job_thread(void *context) {
   host_job *job = context;
   job_pause(job);
-  if (job_cancel_flag(job))
+  if (job_cancel_flag(job) && job->kind != JOB_ROLLBACK)
     job->status = EXR_CANCELLED;
   else
     job->status = job_run(job);
+#ifdef EXR_HOST_WORKER_REVIEW
+  if (job->status == EXR_OK) review_pause(job->kind == JOB_OPEN ? 4 : job->kind == JOB_GO ? 2 : 0, job);
+#endif
+  if (job->status == EXR_OK && job_cancel_flag(job) && job->kind != JOB_NOTE_ADD && job->kind != JOB_NOTE_UPDATE)
+    job->status = job->kind == JOB_IMPORT ? rollback_import(job) : EXR_CANCELLED;
   if (job->status == EXR_CANCELLED) frame_clear(&job->frame);
   if (!PostMessageW(g.window, WM_HOST_COMPLETE, 0, (LPARAM)job)) {
     /* Window gone; the UI-side reference is released during shutdown. */
@@ -1302,6 +1432,8 @@ static exr_status job_run(host_job *job) {
     case JOB_GO: return job_go(job);
     case JOB_LAYOUT: return job_layout(job);
     case JOB_IMPORT: return job_import(job);
+    case JOB_NOTE_ADD: case JOB_NOTE_UPDATE: return job_note(job);
+    case JOB_ROLLBACK: return rollback_import(job);
     default: return EXR_ARGUMENT;
   }
 }
@@ -1323,11 +1455,9 @@ static void jump_selected_note(void);
 static void open_selected_book(void);
 static void delete_selected_book(void);
 static void import_path(const wchar_t *path, int dialog_fallback);
-static void save_progress(void);
+static int save_progress(void);
 static void update_page_label(void);
 static void handle_job_complete(host_job *job);
-
-static int dragging;
 
 static HWND make_button(HWND parent, int id, const wchar_t *text) {
   HWND window = CreateWindowExW(0, L"BUTTON", text,
@@ -1460,15 +1590,15 @@ static void selection_bounds(size_t *start, size_t *end) {
 
 static void paint_selection(HDC dc) {
   size_t start, end;
-  if (!g.selection.active || !g.frame.valid) return;
+  if (g.job || g.pending || !g.selection.active || !g.frame.valid) return;
   if (g.session.book_id != g.frame.book_id) return;
   selection_bounds(&start, &end);
   if (start == end) return;
   if (!g.frame.fixed) {
     const exr_glyph *glyphs;
     size_t count = 0, i;
-    if (!g.session.layout || g.session.page != g.frame.page) return;
-    glyphs = exr_layout_glyphs(g.session.layout, &count);
+    if (!g.frame.hit_layout || g.session.page != g.frame.page) return;
+    glyphs = exr_layout_glyphs(g.frame.hit_layout, &count);
     if (!glyphs) return;
     for (i = 0; i < count; i++) {
       const exr_glyph *glyph = &glyphs[i];
@@ -1488,10 +1618,10 @@ static void paint_selection(HDC dc) {
     size_t count = 0, i;
     exr_error error = {0};
     exr_viewport viewport;
-    if (!g.session.fixed_text || g.session.fixed_text_page != g.frame.page) return;
-    if (exr_fixed_text_select(g.session.fixed_text, start, end, NULL, &regions, &count, &error) != EXR_OK)
+    if (!g.frame.fixed_text || g.session.page != g.frame.page) return;
+    if (exr_fixed_text_select(g.frame.fixed_text, start, end, NULL, &regions, &count, &error) != EXR_OK)
       return;
-    if (exr_viewport_create(&g.session.geometry, g.frame.render_scale, &viewport, &error) != EXR_OK) {
+    if (exr_viewport_create(&g.frame.geometry, g.frame.render_scale, &viewport, &error) != EXR_OK) {
       exr_free(regions);
       return;
     }
@@ -1555,6 +1685,7 @@ static void paint_page_view(HWND window) {
 
 static size_t point_offset(int x, int y, int at_end) {
   float lx, ly;
+  if (g.job || g.pending) return SIZE_MAX;
   if (!g.view.valid && !compute_view()) return SIZE_MAX;
   if (g.session.book_id != g.frame.book_id) return SIZE_MAX;
   lx = (float)((x - g.view.dx) / g.view.scale);
@@ -1562,8 +1693,8 @@ static size_t point_offset(int x, int y, int at_end) {
   if (lx < 0 || ly < 0 || lx > g.frame.bitmap.width || ly > g.frame.bitmap.height) return SIZE_MAX;
   if (!g.frame.fixed) {
     size_t offset;
-    if (!g.session.layout || g.session.page != g.frame.page) return SIZE_MAX;
-    offset = exr_layout_hit_test(g.session.layout, 0, lx, ly);
+    if (!g.frame.hit_layout || g.session.page != g.frame.page) return SIZE_MAX;
+    offset = exr_layout_hit_test(g.frame.hit_layout, 0, lx, ly);
     if (offset == SIZE_MAX) return SIZE_MAX;
     if (offset < g.frame.range_start) offset = g.frame.range_start;
     if (offset > g.frame.range_end) offset = g.frame.range_end;
@@ -1574,15 +1705,15 @@ static size_t point_offset(int x, int y, int at_end) {
     const exr_text_region *regions;
     size_t count = 0, region = SIZE_MAX;
     double sx, sy;
-    if (!g.session.fixed_text || g.session.fixed_text_page != g.frame.page) return SIZE_MAX;
-    if (exr_viewport_create(&g.session.geometry, g.frame.render_scale, &viewport, &error) != EXR_OK)
+    if (!g.frame.fixed_text || g.session.page != g.frame.page) return SIZE_MAX;
+    if (exr_viewport_create(&g.frame.geometry, g.frame.render_scale, &viewport, &error) != EXR_OK)
       return SIZE_MAX;
     sx = viewport.inverse[0] * lx + viewport.inverse[2] * ly + viewport.inverse[4];
     sy = viewport.inverse[1] * lx + viewport.inverse[3] * ly + viewport.inverse[5];
-    if (exr_fixed_text_hit(g.session.fixed_text, sx, sy, 80.0, EXR_REGION_INVISIBLE, NULL,
+    if (exr_fixed_text_hit(g.frame.fixed_text, sx, sy, 80.0, EXR_REGION_INVISIBLE, NULL,
                            &region, &error) != EXR_OK || region == SIZE_MAX)
       return SIZE_MAX;
-    regions = exr_fixed_text_regions(g.session.fixed_text, &count);
+    regions = exr_fixed_text_regions(g.frame.fixed_text, &count);
     if (!regions || region >= count) return SIZE_MAX;
     return at_end ? regions[region].end : regions[region].start;
   }
@@ -1631,6 +1762,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       }
       return 0;
     case WM_MOUSEMOVE:
+      if (g.job || g.pending) return 0;
       if (dragging) {
         size_t offset = point_offset((short)LOWORD(lparam), (short)HIWORD(lparam), 1);
         if (offset != SIZE_MAX && offset != g.selection.end) {
@@ -1640,6 +1772,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       }
       return 0;
     case WM_LBUTTONUP:
+      if (g.job || g.pending) { dragging = 0; if (GetCapture() == window) ReleaseCapture(); return 0; }
       if (dragging) {
         size_t offset = point_offset((short)LOWORD(lparam), (short)HIWORD(lparam), 1);
         if (offset != SIZE_MAX) g.selection.end = offset;
@@ -1714,10 +1847,14 @@ static void update_page_label(void) {
   }
 }
 
-static void save_progress(void) {
+static int save_progress(void) {
   exr_error error = {0};
   exr_status status;
-  if (!g.has_current || !g.session.active || !g.frame.valid || g.job || g.pending) return;
+  if (!g.has_current || !g.session.active || !g.frame.valid || g.job || g.pending) return 1;
+  if (g.session.book_id != g.current.id || g.frame.book_id != g.current.id || g.frame.fixed != g.session.fixed) {
+    g.progress_failed = 1; set_status(L"书籍状态不一致，未覆盖原进度。"); return 0;
+  }
+  status = EXR_MEMORY;
   EnterCriticalSection(&g.library_lock);
   if (g.session.fixed) {
     exr_book snapshot;
@@ -1725,7 +1862,6 @@ static void save_progress(void) {
       snapshot.position = g.frame.page;
       status = exr_library_update(g.library, &snapshot, &error);
       book_clear(&snapshot);
-      (void)status;
     }
   } else {
     exr_anchor anchor = {0};
@@ -1735,18 +1871,19 @@ static void save_progress(void) {
       status = exr_library_progress(g.library, g.current.id, &anchor, &error);
       exr_anchor_free(&anchor);
     }
-    if (status != EXR_OK) {
-      exr_book snapshot;
-      memset(&error, 0, sizeof(error));
-      if (book_copy(&snapshot, &g.current)) {
-        snapshot.position = g.frame.range_start;
-        status = exr_library_update(g.library, &snapshot, &error);
-        book_clear(&snapshot);
-        (void)status;
-      }
-    }
   }
   LeaveCriticalSection(&g.library_lock);
+  g.progress_failed = status != EXR_OK;
+  if (status != EXR_OK) {
+    wchar_t message[512]; describe_error(message, 512, L"保存进度失败，请重试", status, &error); set_status(message);
+    return 0;
+  }
+  g.current.position = g.frame.fixed ? g.frame.page : g.frame.range_start;
+  {
+    int index = shelf_index(g.current.id);
+    if (index >= 0) g.shelf[index].position = g.current.position;
+  }
+  return 1;
 }
 
 static void apply_pending_selection(void) {
@@ -1860,8 +1997,8 @@ static size_t selection_bytes(char **text) {
   if (g.frame.fixed) {
     const char *bytes;
     size_t size = 0;
-    if (!g.session.fixed_text || g.session.fixed_text_page != g.frame.page) return 0;
-    bytes = exr_fixed_text_string(g.session.fixed_text, &size);
+    if (!g.frame.fixed_text || g.session.page != g.frame.page) return 0;
+    bytes = exr_fixed_text_string(g.frame.fixed_text, &size);
     if (!bytes || end > size) return 0;
     *text = malloc(end - start + 1);
     if (!*text) return 0;
@@ -1981,83 +2118,49 @@ static void copy_quote(void) {
 
 static void add_note(void) {
   char comment[65536];
-  int64_t id = 0;
   exr_error error = {0};
-  exr_status status;
+  host_job *job;
+  if (g.job || g.pending) return;
   if (!g.has_current || !g.frame.valid) { set_status(L"请先打开一本书。"); return; }
   if (!g.selection.active) { set_status(L"请先选择文字，再添加标注。"); return; }
-  note_comment_read(comment, sizeof(comment));
-  EnterCriticalSection(&g.library_lock);
-  if (g.session.fixed) {
-    exr_fixed_note note;
-    memset(&note, 0, sizeof(note));
-    note.book_id = g.current.id;
-    note.page = g.selection.page;
-    note.start = g.selection.start;
-    note.end = g.selection.end;
-    note.text = comment;
-    status = exr_library_fixed_note(g.library, &note, NULL, &id, &error);
-  } else {
-    exr_note note;
-    exr_anchor anchor = {0};
-    memset(&note, 0, sizeof(note));
-    status = exr_anchor_create(g.session.document, g.selection.start, g.selection.end,
-                               &anchor, &error);
-    if (status == EXR_OK) {
-      note.book_id = g.current.id;
-      note.start = g.selection.start;
-      note.end = g.selection.end;
-      note.text = comment;
-      note.anchor = anchor;
-      status = exr_library_note(g.library, &note, &id, &error);
-      exr_anchor_free(&anchor);
-    }
+  if (!note_comment_read(comment, sizeof(comment))) return;
+  job = job_new(JOB_NOTE_ADD);
+  if (!job) { set_status(L"内存不足，未添加标注。"); return; }
+  job->book_id = g.current.id; job->target_page = g.selection.page; job->note_fixed = g.frame.fixed;
+  selection_bounds(&job->note_start, &job->note_end);
+  job->comment = host_strdup(comment);
+  if (!job->comment || (!job->note_fixed && exr_anchor_create(g.session.document, job->note_start, job->note_end,
+                                                               &job->anchor, &error) != EXR_OK)) {
+    job_release(job); set_status(L"无法建立标注，未保存。"); return;
   }
-  LeaveCriticalSection(&g.library_lock);
-  if (status != EXR_OK) {
-    wchar_t message[512];
-    describe_error(message, 512, L"添加标注失败", status, &error);
-    set_status(message);
-    return;
-  }
-  reload_notes();
-  if (g.notes && current_note_count()) {
-    SendMessageW(g.notes, LB_SETCURSEL, (WPARAM)(current_note_count() - 1), 0);
-  }
-  set_statusf(L"已添加标注 #%lld。", (long long)id);
+  job->has_anchor = !job->note_fixed;
+  job_submit(job);
 }
 
 static void update_note(void) {
   int index = notes_selected();
   char comment[65536];
-  exr_error error = {0};
-  exr_status status;
+  host_job *job;
+  if (g.job || g.pending) return;
   if (index < 0) { set_status(L"请先在标注列表中选择一条标注。"); return; }
-  note_comment_read(comment, sizeof(comment));
-  EnterCriticalSection(&g.library_lock);
-  if (g.session.fixed) {
-    exr_fixed_note note = g.fixed_notes[index];
-    note.text = comment;
-    status = exr_library_fixed_note(g.library, &note, NULL, &note.id, &error);
-  } else {
-    status = exr_library_note_text(g.library, g.reflow_notes[index].id, comment, &error);
-  }
-  LeaveCriticalSection(&g.library_lock);
-  if (status != EXR_OK) {
-    wchar_t message[512];
-    describe_error(message, 512, L"更新标注失败", status, &error);
-    set_status(message);
-    return;
-  }
-  reload_notes();
-  if (g.notes) SendMessageW(g.notes, LB_SETCURSEL, (WPARAM)index, 0);
-  set_status(L"已更新标注。");
+  if (!note_comment_read(comment, sizeof(comment))) return;
+  job = job_new(JOB_NOTE_UPDATE);
+  if (!job) { set_status(L"内存不足，未更新标注。"); return; }
+  job->book_id = g.current.id; job->note_fixed = g.frame.fixed;
+  if (job->note_fixed) {
+    job->note_id = g.fixed_notes[index].id; job->target_page = g.fixed_notes[index].page;
+    job->note_start = g.fixed_notes[index].start; job->note_end = g.fixed_notes[index].end;
+  } else job->note_id = g.reflow_notes[index].id;
+  job->comment = host_strdup(comment);
+  if (!job->comment) { job_release(job); set_status(L"内存不足，未更新标注。"); return; }
+  job_submit(job);
 }
 
 static void delete_note(void) {
   int index = notes_selected();
   exr_error error = {0};
   exr_status status;
+  if (g.job || g.pending) return;
   if (index < 0) { set_status(L"请先在标注列表中选择一条标注。"); return; }
   EnterCriticalSection(&g.library_lock);
   if (g.session.fixed)
@@ -2071,7 +2174,7 @@ static void delete_note(void) {
     set_status(message);
     return;
   }
-  reload_notes();
+  if (reload_notes() != EXR_OK) return;
   if (g.notes && current_note_count()) {
     size_t selected = (size_t)index < current_note_count() ? (size_t)index : current_note_count() - 1;
     SendMessageW(g.notes, LB_SETCURSEL, (WPARAM)selected, 0);
@@ -2115,38 +2218,29 @@ static void jump_selected_note(void) {
   }
   {
     const exr_note *note = &g.reflow_notes[index];
-    exr_anchor_match match;
-    exr_error error = {0};
     size_t offset;
     size_t target_start = note->start, target_end = note->end;
     if (!g.session.document) return;
+    job = job_new(JOB_GO);
+    if (!job) return;
     if (!note->anchor.exact) {
-      if (note->start == SIZE_MAX) { set_status(L"该标注没有可用的文本锚点。"); return; }
+      if (note->start == SIZE_MAX) { job_release(job); set_status(L"该标注没有可用的文本锚点。"); return; }
       offset = note->start;
       set_status(L"旧版标注：按保存的文本偏移跳转。");
     } else {
-      if (exr_anchor_resolve(g.session.document, &note->anchor, &match, &error) != EXR_OK) {
-        set_status(L"标注锚点解析失败。");
-        return;
+      job->anchor = note->anchor;
+      job->has_anchor = 1;
+      job->anchor_host_owned = 1;
+      job->anchor.exact = note->anchor.exact ? host_strdup(note->anchor.exact) : NULL;
+      job->anchor.prefix = note->anchor.prefix ? host_strdup(note->anchor.prefix) : NULL;
+      job->anchor.suffix = note->anchor.suffix ? host_strdup(note->anchor.suffix) : NULL;
+      job->anchor.chapter = note->anchor.chapter ? host_strdup(note->anchor.chapter) : NULL;
+      if (!job->anchor.exact || (note->anchor.prefix && !job->anchor.prefix) ||
+          (note->anchor.suffix && !job->anchor.suffix) || (note->anchor.chapter && !job->anchor.chapter)) {
+        job_release(job); set_status(L"内存不足，标注未跳转。"); return;
       }
-      if (match.state == EXR_ANCHOR_AMBIGUOUS) {
-        set_status(L"标注定位存在歧义：同一文本出现多处，未跳转。");
-        return;
-      }
-      if (match.state == EXR_ANCHOR_MISSING) {
-        set_status(L"标注原文已不存在，未跳转。");
-        return;
-      }
-      if (match.state == EXR_ANCHOR_LEGACY) {
-        set_status(L"标注没有文本锚点，未跳转。");
-        return;
-      }
-      offset = match.start;
-      target_start = match.start;
-      target_end = match.end;
+      offset = note->anchor.start;
     }
-    job = job_new(JOB_GO);
-    if (!job) return;
     job->book_id = g.current.id;
     job->use_offset = 1;
     job->target_offset = offset;
@@ -2168,7 +2262,7 @@ static void open_selected_book(void) {
     set_status(L"请先在书架中选择一本书。");
     return;
   }
-  if (!g.job && !g.pending) save_progress();
+  if (!g.job && !g.pending && !save_progress()) return;
   job = job_new(JOB_OPEN);
   if (!job) { set_status(L"内存不足，无法打开书籍。"); return; }
   job->book_id = g.shelf[index].id;
@@ -2211,7 +2305,7 @@ static void delete_selected_book(void) {
     update_page_label();
     InvalidateRect(g.page, NULL, TRUE);
   }
-  reload_shelf();
+  if (reload_shelf() != EXR_OK) return;
   host_update_controls();
   set_status(L"已删除书籍及其标注。");
 }
@@ -2246,7 +2340,7 @@ static void import_path(const wchar_t *path, int dialog_fallback) {
   job_submit(job);
 }
 
-static void import_title_fallback(const wchar_t *path, int64_t id) {
+static int import_title_fallback(const wchar_t *path, int64_t id) {
   int index = shelf_index(id);
   exr_book *row;
   exr_book copy;
@@ -2255,25 +2349,28 @@ static void import_title_fallback(const wchar_t *path, int64_t id) {
   wchar_t *dot;
   char *utf8;
   exr_error error = {0};
-  if (index < 0) return;
+  if (index < 0) { set_status(L"导入后的书架条目不可用，请刷新书架。"); return 0; }
   row = &g.shelf[index];
-  if (row->title && row->title[0] && strcmp(row->title, "Untitled")) return;
+  if (row->title && row->title[0] && strcmp(row->title, "Untitled")) return 1;
   base = wcsrchr(path, L'\\');
   base = base ? base + 1 : path;
   copy_wstring(stem, HOST_PATH, base);
   dot = wcsrchr(stem, L'.');
   if (dot && dot != stem) *dot = 0;
-  if (!stem[0]) return;
+  if (!stem[0]) return 1;
   utf8 = host_utf8(stem);
-  if (!utf8) return;
-  if (!book_copy(&copy, row)) { free(utf8); return; }
+  if (!utf8) { set_status(L"无法更新导入书籍标题。"); return 0; }
+  if (!book_copy(&copy, row)) { free(utf8); set_status(L"内存不足，无法更新书籍标题。"); return 0; }
   free(copy.title);
   copy.title = utf8;
   EnterCriticalSection(&g.library_lock);
-  exr_library_update(g.library, &copy, &error);
-  LeaveCriticalSection(&g.library_lock);
-  book_clear(&copy);
-  reload_shelf();
+  {
+    exr_status status = exr_library_update(g.library, &copy, &error);
+    LeaveCriticalSection(&g.library_lock);
+    book_clear(&copy);
+    if (status != EXR_OK) { set_status(L"书籍已导入，但更新标题失败，请重试。"); return 0; }
+  }
+  return reload_shelf() == EXR_OK;
 }
 
 static void host_update_controls(void) {
@@ -2298,20 +2395,53 @@ static void host_update_controls(void) {
 }
 
 static void handle_job_complete(host_job *job) {
+  if (job->kind == JOB_ROLLBACK || job->rollback_failed) {
+    exr_status refreshed = reload_shelf();
+    if ((job->rollback_failed || refreshed != EXR_OK) && g.closing) {
+      g.closing = 0; KillTimer(g.window, 2);
+      if (g.drive_mode) SetTimer(g.window, 1, 30, NULL);
+    }
+    if (refreshed != EXR_OK) return;
+    if (job->rollback_failed) set_status(job->message);
+    else set_status(L"导入已取消；新建书架条目已回滚。");
+    g.auto_open_imported = 0;
+    return;
+  }
+  if (job->status == EXR_OK && job_cancel_flag(job) && job->kind == JOB_IMPORT) {
+    if (job->created && job->imported_id > 0) {
+      host_job *rollback = job_new(JOB_ROLLBACK);
+      if (!rollback) {
+        reload_shelf(); set_status(L"取消导入后无法启动回滚；新书仍在数据库中，请删除。");
+      } else {
+        rollback->created = 1; rollback->imported_id = job->imported_id;
+        job_start(rollback);
+      }
+      g.auto_open_imported = 0;
+      return;
+    }
+    job->status = EXR_CANCELLED;
+  }
+  if (job->status == EXR_OK && (job_cancel_flag(job) || g.closing) &&
+      (job->kind == JOB_OPEN || job->kind == JOB_GO || job->kind == JOB_LAYOUT)) job->status = EXR_CANCELLED;
+  if (job->status != EXR_OK) g.pending_selection = 0;
   if (job->status == EXR_OK) {
     if (job->kind == JOB_OPEN) {
       int index = shelf_index(job->book_id);
-      if (job->session_swapped && job->have_frame && index >= 0) {
-        book_clear(&g.current);
-        if (book_copy(&g.current, &g.shelf[index])) {
+      if (job->session_swapped && job->have_frame && index >= 0 && job->candidate.book_id == job->book_id && job->frame.book_id == job->book_id) {
+        exr_book next = {0};
+        if (book_copy(&next, &g.shelf[index])) {
+          session_clear(&g.session); g.session = job->candidate; memset(&job->candidate, 0, sizeof(job->candidate));
+          book_clear(&g.current); g.current = next;
           g.has_current = 1;
           g.active_book_id = g.current.id;
           frame_move(&g.frame, &job->frame);
           memset(&g.selection, 0, sizeof(g.selection));
+          g.pending_selection = 0;
           g.session.page = g.frame.page;
-          reload_notes();
           update_page_label();
           settings_save();
+          if (reload_notes() != EXR_OK) { save_progress(); return; }
+          if (!save_progress()) return;
           {
             wchar_t *title = g.current.title ? host_wide(g.current.title, strlen(g.current.title)) : NULL;
             if (job->message[0])
@@ -2320,7 +2450,6 @@ static void handle_job_complete(host_job *job) {
               set_statusf(L"已打开《%ls》。", title ? title : L"Untitled");
             free(title);
           }
-          save_progress();
         } else {
           set_status(L"内存不足，无法保存当前书籍信息。");
         }
@@ -2328,24 +2457,30 @@ static void handle_job_complete(host_job *job) {
         set_status(L"打开书籍失败：任务结果不完整。");
       }
     } else if (job->kind == JOB_GO || job->kind == JOB_LAYOUT) {
-      if (job->have_frame) {
+      if (job->have_frame && g.has_current && job->book_id == g.current.id &&
+          job->frame.book_id == g.current.id && g.session.book_id == g.current.id) {
+        if (job->candidate_pager) {
+          exr_pager_free(g.session.pager); g.session.pager = job->candidate_pager; job->candidate_pager = NULL;
+          g.session.config = job->candidate_config;
+        }
         frame_move(&g.frame, &job->frame);
         memset(&g.selection, 0, sizeof(g.selection));
         g.session.page = g.frame.page;
         if (job->kind == JOB_LAYOUT && job->font_percent > 0) g.font_percent = job->font_percent;
         if (job->zoom_percent > 0) g.zoom_percent = job->zoom_percent;
-        save_progress();
         update_page_label();
         settings_save();
+        if (!save_progress()) { g.pending_selection = 0; return; }
         if (job->message[0]) set_status(job->message);
         else set_statusf(L"第 %llu 页。", (unsigned long long)(g.frame.page + 1));
+        if (job->resolved_selection) { g.pending_start = job->note_start; g.pending_end = job->note_end; }
         apply_pending_selection();
       } else {
         set_status(L"翻页失败：任务没有生成画面。");
       }
     } else if (job->kind == JOB_IMPORT) {
-      reload_shelf();
-      if (job->created) import_title_fallback(job->path, job->imported_id);
+      if (reload_shelf() != EXR_OK) return;
+      if (job->created && !import_title_fallback(job->path, job->imported_id)) return;
       {
         int index = shelf_index(job->imported_id);
         if (index >= 0 && g.books) SendMessageW(g.books, LB_SETCURSEL, (WPARAM)index, 0);
@@ -2367,6 +2502,17 @@ static void handle_job_complete(host_job *job) {
           open->font_percent = g.font_percent;
           job_submit(open);
         }
+      }
+    } else if (job->kind == JOB_NOTE_ADD || job->kind == JOB_NOTE_UPDATE) {
+      if (g.has_current && job->book_id == g.current.id && reload_notes() == EXR_OK) {
+        size_t i;
+        for (i = 0; i < current_note_count(); i++) {
+          int64_t id = g.session.fixed ? g.fixed_notes[i].id : g.reflow_notes[i].id;
+          if (id == job->note_id && g.notes) SendMessageW(g.notes, LB_SETCURSEL, (WPARAM)i, 0);
+        }
+        if (job_cancel_flag(job)) set_status(L"标注已保存；取消到达保存之后。");
+        else if (job->kind == JOB_NOTE_ADD) set_statusf(L"已添加标注 #%lld。", (long long)job->note_id);
+        else set_status(L"已更新标注。");
       }
     }
   } else if (job->status == EXR_CANCELLED) {
@@ -2488,8 +2634,8 @@ static int page_text_snapshot(char *out, size_t capacity) {
   const char *bytes = NULL;
   if (!g.frame.valid) { if (capacity) out[0] = 0; return 0; }
   if (g.frame.fixed) {
-    if (g.session.fixed_text) {
-      bytes = exr_fixed_text_string(g.session.fixed_text, &size);
+    if (g.frame.fixed_text) {
+      bytes = exr_fixed_text_string(g.frame.fixed_text, &size);
       start = 0;
       end = size;
     } else {
@@ -2538,9 +2684,9 @@ static void drive_state(const char *name) {
         page_hash = fnv1a(bytes + g.frame.range_start, g.frame.range_end - g.frame.range_start);
         hashed_length = g.frame.range_end - g.frame.range_start;
       }
-    } else if (g.session.fixed_text) {
+    } else if (g.frame.fixed_text) {
       size_t size = 0;
-      const char *bytes = exr_fixed_text_string(g.session.fixed_text, &size);
+      const char *bytes = exr_fixed_text_string(g.frame.fixed_text, &size);
       if (bytes) {
         page_hash = fnv1a(bytes, size);
         hashed_length = size;
@@ -2556,9 +2702,9 @@ static void drive_state(const char *name) {
       if (bytes && g.frame.range_start <= size)
         truncate_utf8(offset_text, sizeof(offset_text), bytes + g.frame.range_start,
                       size - g.frame.range_start < 64 ? size - g.frame.range_start : 64);
-    } else if (g.session.fixed_text) {
+    } else if (g.frame.fixed_text) {
       size_t size = 0;
-      const char *bytes = exr_fixed_text_string(g.session.fixed_text, &size);
+      const char *bytes = exr_fixed_text_string(g.frame.fixed_text, &size);
       truncate_utf8(offset_text, sizeof(offset_text), bytes, size < 64 ? size : 64);
     }
   }
@@ -3369,7 +3515,23 @@ done:
 /* Main window procedure and entry point                               */
 /* ------------------------------------------------------------------ */
 
+static void finish_close(HWND window) {
+  if (g.job || g.pending) return;
+  KillTimer(window, 2);
+  if (!save_progress()) {
+    g.closing = 0;
+    if (g.drive_mode) SetTimer(window, 1, 30, NULL);
+    host_update_controls();
+    return;
+  }
+  settings_save();
+  DestroyWindow(window);
+}
+
 static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+#ifdef EXR_HOST_WORKER_REVIEW
+  if (message == WM_APP + 30) return review_message(window, wparam, lparam);
+#endif
   switch (message) {
     case WM_CREATE:
       g.window = window;
@@ -3399,6 +3561,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
         return 0;
       }
       if (id == IDC_NOTES && code == LBN_SELCHANGE) {
+        if (g.job || g.pending || g.notes_book_id != g.current.id) return 0;
         int index = notes_selected();
         if (index >= 0) {
           if (g.session.fixed) note_comment_write(g.fixed_notes[index].text);
@@ -3420,20 +3583,24 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_HOST_COMPLETE: {
       host_job *job = (host_job *)lparam;
       if (!job || job != g.job) return 0;
+      /* The completion is posted after all SDK work; join only the final ref
+         release before the UI accepts/frees the job's owned candidates. */
+      WaitForSingleObject(job->thread, INFINITE);
       g.job = NULL;
       handle_job_complete(job);
       job_release(job);
-      if (g.pending) {
+      if (!g.job && g.pending) {
         host_job *next = g.pending;
         g.pending = NULL;
         job_start(next);
       } else {
         host_update_controls();
       }
-      if (g.closing) DestroyWindow(window);
+      if (g.closing) finish_close(window);
       return 0;
     }
     case WM_TIMER:
+      if (wparam == 2 && g.closing && g.job) { ExitProcess(1); return 0; }
       if (wparam == 1 && g.drive_mode) drive_tick();
       return 0;
     case WM_CLOSE:
@@ -3446,16 +3613,11 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       }
       if (g.job) {
         InterlockedExchange(&g.job->cancel, 1);
-        if (WaitForSingleObject(g.job->thread, 20000) != WAIT_OBJECT_0) {
-          /* Cooperative cancellation failed; do not free SDK objects in use. */
-          ExitProcess(0);
-        }
-        g.discard = g.job;
-        g.job = NULL;
+        SetTimer(window, 2, 20000, NULL);
+        host_update_controls();
+        return 0;
       }
-      if (g.has_current && g.session.active && g.frame.valid) save_progress();
-      settings_save();
-      DestroyWindow(window);
+      finish_close(window);
       return 0;
     case WM_DESTROY:
       KillTimer(window, 1);
@@ -3498,9 +3660,12 @@ static int message_loop(void) {
 }
 
 static void host_cleanup(void) {
+#ifdef EXR_HOST_WORKER_REVIEW
+  review_shutdown();
+#endif
   if (g.job) {
     InterlockedExchange(&g.job->cancel, 1);
-    if (g.job->thread) WaitForSingleObject(g.job->thread, 20000);
+    if (g.job->thread && WaitForSingleObject(g.job->thread, 20000) != WAIT_OBJECT_0) ExitProcess(1);
     job_release(g.job);
     g.job = NULL;
   }
