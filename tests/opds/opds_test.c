@@ -502,14 +502,21 @@ static int o2_publication_metadata(void) {
 }
 static int o2_groups_facets(void) {
   opds_client *c; opds_feed f; opds_config cf = cfg(); const opds_entry *e;
+  const opds_facet *facets; size_t facet_count;
   c = mk(&cf); in_file("o2/groups.json");
   CHECK_ST(fetch_path(c, "/c/o2/groups.json", &f), OPDS_OK);
   CHECK(f.entry_count == 3);
   e = EN(&f, "Top Nav"); CHECK(e && !e->group);
   e = EN(&f, "Featured One"); CHECK(e && e->is_publication); CHECK_STR(e->group, "Featured");
   e = EN(&f, "Group Nav"); CHECK(e && !e->is_publication); CHECK_STR(e->group, "Browse");
+  facets = opds_feed_facets(&f, &facet_count);
+  CHECK(facets && facet_count == 1 && facets[0].choice_count == 1);
+  CHECK_STR(facets[0].title, "Language");
+  CHECK_STR(facets[0].choices[0].link.title, "English");
+  CHECK(strstr(facets[0].choices[0].link.href, "/o2/all?lang=en") != NULL);
+  CHECK(!facets[0].choices[0].active && facets[0].choices[0].number_of_items == -1);
   opds_feed_free(&f); opds_client_free(c);
-  return 0; /* facets are ignored by design (see the support table) */
+  return 0;
 }
 static int o2_pagination_follow(void) {
   opds_client *c; opds_feed f, n; opds_config cf = cfg(); int has = 0; size_t pages = 1, total;

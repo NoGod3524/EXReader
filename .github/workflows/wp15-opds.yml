@@ -1,7 +1,7 @@
 name: WP15 OPDS client
 on:
   push:
-    branches: ['codex/wp15-opds-review']
+    branches: ['codex/wp15-opds-review', 'codex/wp15-catalog-features']
     paths:
       - 'extras/opds/**'
       - 'tests/opds/**'
@@ -15,7 +15,7 @@ env:
   BASELINE: a2552d7feb786cd2345d2b0b3eb894777b3254db
   # Reviewed integrated ancestor immediately before the OPDS merge; original
   # standalone handoff ownership evidence is retained in the delivery history.
-  HANDOFF: a6407dea6540e498dee05270d0e0fe42e380e125
+  HANDOFF: 29537848eaa9b9f819cdbd4514946de911a58030
 jobs:
   opds:
     timeout-minutes: 45
@@ -40,6 +40,8 @@ jobs:
         run: |
           cmake -S extras/opds -B build/opds -DEXR_SDK="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release
           cmake --build build/opds --config Release --parallel 4
+      - name: Run facet model, budgets, malformed input and public API cases
+        run: ctest --test-dir build/opds -C Release --output-on-failure
       - name: Run the fixed local service, acceptance cases and consumer example
         shell: bash
         run: |
@@ -52,6 +54,8 @@ jobs:
         with:
           name: wp15-opds-${{ runner.os }}
           path: |
+            build/opds/facet-result.json
+            build/opds/Testing/Temporary/LastTest.log
             build/wp15-evidence/*.json
             build/wp15-evidence/*.jsonl
             build/wp15-evidence/*.txt
