@@ -12,16 +12,21 @@ bundled font and the XDG user data directory's `exreader` folder. Optional
 `exreader-linux FONT STATE_DIRECTORY` arguments choose an explicit profile. The
 directory holds `library.sqlite` and `reader.ini`; originals, progress anchors
 and notes are stored through the public SQLite library API. Settings retain the
-last book and font size. Closing or losing focus saves the current page's text
-anchor, and a restart reopens the saved book without the original source file.
+last book and font size. Each accepted frame commits its chapter-local text
+anchor on the worker before another reading operation is allowed. A restart
+reopens the saved book without the original source file.
 
-Import supports EPUB, TXT, HTML/XHTML, FB2, RTF, DOCX and MOBI snapshots, up to
-8 MiB of original bytes. A fixed-cap read enforces that host limit; the engine's
-existing decoded-document limits still apply. Fixed-page, audio, DRM, OPDS and
-large windowed EPUB reading are outside this reference host's product scope.
+New EPUB imports use the public source-unique API, source-backed publication,
+and bounded chapter pager. They do not allocate a full-book input/text snapshot
+or silently retry the document API after failure. Existing snapshot records
+retain their explicit compatibility route. TXT, HTML/XHTML, FB2, RTF, DOCX and
+MOBI imports retain the 8 MiB original-byte host cap and SDK document limits.
+EPUB follows the public source/chapter SDK budgets. Fixed-page, audio, DRM and
+OPDS UI are outside this reference host's product scope.
 No format outside the seven listed routes is silently treated as plain text.
 The page cache holds at most three pages / 8 MiB; a seek is capped at 20,000
-pages, and font controls stay between 12 and 48 px. Hitting a page/work limit
+pages, the chapter window preference is 16 KiB with the SDK's 64 MiB workspace
+budget, and font controls stay between 12 and 48 px. Hitting a page/work limit
 reports failure and retains the previously displayed page.
 
 The page image is rendered by EXReader. A native selectable text panel exposes
@@ -32,14 +37,23 @@ selected note. This is a text-panel selection UI, not an image-overlay selector.
 
 Toolbar actions also have F1–F11 keys: import, shelf, previous, next, larger,
 smaller, text focus, add note, notes focus, delete note, comment focus.
+Escape requests cancellation of a reading task; F12 retries a failed position
+save. Saving cannot be cancelled, and a failed save blocks switching and close
+until the accepted pending frame is saved.
 GTK controls provide keyboard navigation and standard clipboard selection.
 The fixed 520×640 content viewport is scrollable when the window is small;
 window resize does not repaginate or alter the saved source location.
 
-Operations execute synchronously on the GTK event loop under the declared small
-snapshot scope. This package does not claim cancellation, background import or
-responsive large-book parsing. Host input buffers and page payloads are bounded
-separately; these limits do not substitute for an overall RSS guarantee.
+One serial worker owns all SDK handles and executes reading/import/rendering.
+GTK receives owned current-page UTF-8 text and pixels. Generation and book/part
+guards reject stale work; cancellation and failure retain the accepted frame.
+Forward/back navigation crosses reading-order chapter boundaries. A saved exact
+in-page position survives font changes and process reopen. Non-unique progress
+quotes show an explicit validated-offset fallback and retain the original saved
+record; note jumps require a unique FOUND match.
+The application uses native GTK controls without a WebView. Page payloads and
+SDK workspace accounting have separate budgets; these are not an overall RSS
+guarantee.
 
 ## Build and acceptance
 
@@ -119,3 +133,48 @@ incomplete attempts and remaining scope are recorded in
 `docs/validation/wp13-linux-review.json`. The dedicated workflow permits manual
 dispatch on the integration branch; automatic pushes are restricted to the
 review branch. The original delivery JSON remains unchanged.
+
+## H11 bounded EPUB adoption
+
+The sole production host is now `examples/linux/reader.c`, backed by
+`reading.c`/`reading.h`; the temporary asynchronous duplicate and the old
+uncompiled synchronous host have been removed. Source
+`f42cfa2e23b4f43bb3417ebd0ca9272b8be45201` passed run `39869717148`, attempt 1,
+job `120140792044`, against frozen SDK
+`ce5d664c9f76d0613df6d79b27568a7039c4a81e`.
+
+All original twenty GTK cases passed without removing assertions. The driver
+waits for each asynchronous operation and SAVE to finish before issuing the
+next scripted user action. Native chooser input waits for file-location
+resolution; the main reader no longer intercepts the modal chooser's Escape.
+Four regression groups passed, including 26 real GTK/backend fault assertions
+and the original font-restore mutant rejected at check 13 after its twelve
+positive operations. Fault checks cover note-query failures, candidate discard,
+save failure/retry, blocked switching, non-cancellable SAVE and the busy state
+inside the actual GTK text-publication callback. A successful save retry also
+clears the previous error indicator.
+
+`tests/linux_host/check_bounded_ui.py` passed 37 checks through the normal
+packaged application and real X11 input. These include separate chapter routes,
+UTF-8 clipboard and chapter-local notes, 65 long-chapter page turns, window
+eviction, exact-position font changes, cross-chapter note jumps, deleted-source
+process reopen, repeated resource/spine recovery, missing-chapter preservation,
+input during a large-source worker operation, Escape cancellation, stale-result
+rejection and a subsequent book switch. It also checks package hashes and the
+frozen SDK ancestor/eight protected trees. The installed backend independently
+passed 82 assertions, including an in-page byte offset of 30 through font and
+library reopen.
+
+This run observed 1,279,999 projected chapter bytes, 789,460 index bytes,
+2,296,896 peak parse-workspace bytes, zero explicit snapshot bytes and six
+evicted windows after 65 page turns. F2 input was handled in 18.60 ms while the
+worker remained busy; Escape returned `EXR_CANCELLED`. These are observations
+on this cloud runner, not an end-to-end memory or latency ceiling.
+
+The sealed artifact contains the runnable package/build manifest, original
+20-case report and screenshot, fault/mutant evidence, H11 per-check JSON and
+two screenshots, application logs and profile databases, and the backend log.
+Identity, digest and preserved failed attempts are recorded in
+`docs/validation/r5-linux-bounded.json`. H11 covers native GTK/X11 bounded EPUB
+adoption; PDF/CBZ UI, physical/Wayland accessibility, per-format legacy fixture
+coverage and overall RSS/performance gates remain separate work.
