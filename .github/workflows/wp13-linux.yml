@@ -1,7 +1,7 @@
 name: WP13 Linux native host
 on:
   push:
-    branches: [codex/wp13-linux-host, codex/wp13-linux-review]
+    branches: [codex/wp13-linux-review]
     paths:
       - 'examples/linux/**'
       - 'tools/build_linux_host.py'
