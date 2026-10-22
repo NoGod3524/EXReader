@@ -1,0 +1,2 @@
+{"metadata": {"title": "Required variable"}, "links": [
+  {"rel": "search", "href": "/o2/search?q={searchTerms}&token={foo}", "type": "application/opds+json", "templated": true}]}
