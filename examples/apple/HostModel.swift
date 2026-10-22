@@ -146,8 +146,8 @@ final class HostSession {
         let anchor: HostAnchor?
         if restore, let saved = try? library.progress(bookID: documentID()) {
             anchor = saved.state == EXR_ANCHOR_FOUND || saved.state == EXR_ANCHOR_LEGACY ? saved.anchor : nil
-        } else if !restore, let old = pager, pageRange.lowerBound <= pageRange.upperBound {
-            anchor = try? old.makeAnchor(start: pageRange.lowerBound, end: pageRange.lowerBound)
+        } else if !restore, pageRange.lowerBound <= pageRange.upperBound {
+            anchor = try? document.makeAnchor(start: pageRange.lowerBound, end: pageRange.lowerBound)
         } else {
             anchor = nil
         }
@@ -157,7 +157,7 @@ final class HostSession {
                                      fontSize: size, box: cancel)
         pager = newPager
         if let anchor {
-            if let match = try? newPager.resolve(anchor), let range = match.range {
+            if let match = try? document.resolve(anchor), let range = match.range {
                 page = (try? newPager.pageIndex(for: range.lowerBound)) ?? 0
             } else {
                 page = (try? newPager.pageIndex(for: anchor.start)) ?? 0
@@ -232,7 +232,7 @@ final class HostSession {
         pageText = text
         let totalBytes = max(1, document.text.count)
         let percent = min(100, Int((Double(range.upperBound) / Double(totalBytes) * 100).rounded()))
-        try persist(book: book, fixed: nil, pager: pager, range: range)
+        try persist(book: book, fixed: nil, document: document, range: range)
         return HostSnapshot(book: book, image: makeCGImage(bitmap),
                             location: "第 \(page + 1) 页", progress: "\(percent)%",
                             pageText: text, pageIndex: page, pageRange: range, pageCount: nil,
@@ -255,15 +255,15 @@ final class HostSession {
     private func persist(book: HostBook, fixed: HostFixed?) throws {
         if fixed != nil {
             try library.updatePosition(book: book, position: page)
-        } else if let pager {
-            let anchor = try pager.makeAnchor(start: pageRange.lowerBound, end: pageRange.lowerBound)
+        } else if let document {
+            let anchor = try document.makeAnchor(start: pageRange.lowerBound, end: pageRange.lowerBound)
             try library.setProgress(bookID: book.id, anchor: anchor)
         }
     }
 
-    private func persist(book: HostBook, fixed: HostFixed?, pager: HostPager, range: Range<Int>) throws {
+    private func persist(book: HostBook, fixed: HostFixed?, document: HostDocument, range: Range<Int>) throws {
         try library.updatePosition(book: book, position: range.lowerBound)
-        let anchor = try pager.makeAnchor(start: range.lowerBound, end: range.lowerBound)
+        let anchor = try document.makeAnchor(start: range.lowerBound, end: range.lowerBound)
         try library.setProgress(bookID: book.id, anchor: anchor)
     }
 
@@ -314,8 +314,8 @@ final class HostSession {
         guard let book else { return }
         if let fixed {
             try? library.updatePosition(book: book, position: page)
-        } else if let pager, pageRange.lowerBound <= pageRange.upperBound {
-            if let anchor = try? pager.makeAnchor(start: pageRange.lowerBound, end: pageRange.lowerBound) {
+        } else if let document, pageRange.lowerBound <= pageRange.upperBound {
+            if let anchor = try? document.makeAnchor(start: pageRange.lowerBound, end: pageRange.lowerBound) {
                 try? library.setProgress(bookID: book.id, anchor: anchor)
             }
         }
