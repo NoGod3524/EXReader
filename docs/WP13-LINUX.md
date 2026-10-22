@@ -88,3 +88,34 @@ standalone distro package or an assertion of compatibility with every distro.
 Physical desktop/Wayland accessibility and additional format fixtures remain
 separate acceptance extensions. This package cannot inherit the unrelated
 frozen WP16 long-test run's results.
+
+## Review repairs and negative acceptance
+
+The follow-up review branch `codex/wp13-linux-review` preserves the original
+delivery and its evidence above. Source `af0fef29c5c61caf3607012965173db1e540330a`
+passed cloud run `39713302962`, job `119609451216`: the same twenty real X11
+operations plus new negative regressions. No original case was removed.
+
+Failed note queries now preserve the current list/count and remain visible as
+errors after add/delete. Opening a candidate book prepares its notes before
+replacing the active document, pager or pixels. A GTK consumer using the real
+public SDK and SQLite injects only note-read failures and checks thirteen
+conditions, including unchanged old book/frame, retained persisted notes,
+correct deletion and recovery. The test-only query substitution does not enter
+the packaged application.
+
+The UI checker rejects nonzero exit codes even when a child exited before
+`close()`. Separate real already-exited children check both rejected nonzero
+and accepted zero exits. Restart acceptance now leaves 26px selected and checks
+that exact nondefault value. A separate deliberately faulty host ignores stored
+font settings; the real UI verifier passes its first twelve operations, then
+rejects that host during restart when 24px appears instead of 26px. That expected
+negative report remains in the artifact and is not counted as a successful
+twenty-case application run.
+
+The accepted artifact includes `linux-host-evidence/report.json` and
+`linux-review-evidence/regressions.json`. IDs, archive/report hashes, earlier
+incomplete attempts and remaining scope are recorded in
+`docs/validation/wp13-linux-review.json`. The dedicated workflow permits manual
+dispatch on the integration branch; automatic pushes are restricted to the
+review branch. The original delivery JSON remains unchanged.

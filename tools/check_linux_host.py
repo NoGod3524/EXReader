@@ -98,10 +98,11 @@ class Session:
         raise TimeoutError('Native import dialog did not close')
 
     def close(self):
-        if self.process and self.process.poll() is None:
-            command('xdotool', 'windowactivate', '--sync', self.window)
-            self.key('alt+F4')
-            self.process.wait(timeout=20)
+        if self.process:
+            if self.process.poll() is None:
+                command('xdotool', 'windowactivate', '--sync', self.window)
+                self.key('alt+F4')
+                self.process.wait(timeout=20)
             if self.process.returncode != 0:
                 raise RuntimeError('Host close failed')
         if self.log:
@@ -188,14 +189,19 @@ def main():
                 and note[1] == state['selection_end'] and note[2] == 'Cloud UI note: 中文 café' and bool(note[3]))
         host.key('F4', 'F4', 'F9', 'Home', 'Return')
         checked('12 note activation navigates and selects', host.wait(lambda s: s['page'] == 0 and s['selected'] > 0)['notes'] == 1)
+        # Persist a nondefault value: restoring defaults must fail this check.
+        host.key('F5')
+        host.wait(lambda s: s['font'] == 26 and s['error'] == 0)
         host.key('F4', 'F4')
         saved = host.wait(lambda s: s['page'] == 2)
+        report['restart_expected'] = saved
         book.unlink()
         host.close()
         host.launch()
         restored = host.wait(lambda s: s['book'] == first and s['page'] == 2)
         checked('13 graceful restart restores source progress font notes',
-                restored['start'] == saved['start'] and restored['notes'] == 1 and restored['font'] == 24)
+                restored['start'] == saved['start'] and restored['notes'] == 1
+                and saved['font'] != 24 and restored['font'] == saved['font'])
         command('xdotool', 'windowminimize', host.window)
         time.sleep(.3)
         command('xdotool', 'windowmap', host.window)
