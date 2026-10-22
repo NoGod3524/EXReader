@@ -208,6 +208,10 @@ def main():
         (output/'report.json').write_text(json.dumps(report, indent=2, ensure_ascii=False)+'\n')
     if not report['passed']:
         raise RuntimeError('Linux host acceptance incomplete')
+    print(json.dumps({'acceptance': 'wp13-linux', 'passed': True, 'checks': len(checks),
+                      'names': [case['name'] for case in checks], 'source_sha': report['source_sha'],
+                      'run_id': report['run_id'], 'report_sha256': hashlib.sha256((output/'report.json').read_bytes()).hexdigest(),
+                      'screenshot_sha256': report['files']['reader.png']}, sort_keys=True), flush=True)
 
 
 if __name__ == '__main__':
