@@ -1,0 +1,51 @@
+name: Native PDF CBZ measurement baseline
+on:
+  push:
+    branches: ['codex/r3-pdf-measurements']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-measurement:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify accepted reading baseline ancestor
+        run: git merge-base --is-ancestor b529513b7e8e8992786f8c679c0ec6c92110b035 HEAD
+      - name: Build and install native reading SDK
+        run: |
+          cmake --preset reading-core -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build --preset reading-core
+          cmake --install build/reading-core
+      - name: Build native installed public SDK consumer
+        run: |
+          cmake -S tests/reading_pdf -B build/reading-pdf-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-core/stage" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build/reading-pdf-consumer --parallel 4
+      - name: Freeze distinct-page synthetic rules and verify deterministic bytes
+        run: |
+          python3 tests/reading_pdf/generate.py build/reading-pdf-inputs
+          python3 tests/reading_pdf/generate.py build/reading-pdf-inputs-repeat
+          diff -r build/reading-pdf-inputs build/reading-pdf-inputs-repeat
+      - name: Check evidence refusal and native failure reporting
+        run: python3 tests/check_reading_pdf_measurements.py --binary build/reading-pdf-consumer/reading-pdf-benchmark --generated-root build/reading-pdf-inputs
+      - name: Measure fixed PDF CBZ cases in fresh native processes
+        run: python3 tools/measure_reading_pdf.py build/reading-pdf-consumer/reading-pdf-benchmark tests/fixtures/fonts/primary.ttf build/reading-pdf-measurements --source-sha "$GITHUB_SHA" --compiler cc --generated-root build/reading-pdf-inputs
+      - name: Preserve exact-source evidence including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reading-pdf-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/reading-pdf-measurements/
+            build/reading-pdf-selfcheck/
+            build/reading-pdf-inputs/
+            build/reading-pdf-inputs-repeat/
+            build/reading-pdf-consumer/reading-pdf-benchmark
+            build/reading-pdf-consumer/CMakeCache.txt
+            build/reading-pdf-consumer/compile_commands.json
+            build/reading-core/CMakeCache.txt
+            build/reading-core/compile_commands.json
+          if-no-files-found: error
