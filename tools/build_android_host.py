@@ -125,6 +125,12 @@ def patch_android_libraries(stage):
     link = stage / 'lib/libexreader.so'
     if link != engine and not link.exists():
         shutil.copyfile(engine, link)
+    # Some CMake exports still name the versioned location. Provide harmless
+    # aliases so the imported target resolves on every toolchain layout.
+    for alias in ('libexreader.so.1', 'libexreader.so.3.40.0'):
+        path = stage / 'lib' / alias
+        if not path.exists():
+            shutil.copyfile(engine, path)
     return target
 
 
