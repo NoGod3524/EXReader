@@ -170,7 +170,10 @@ def main():
         host.key('F1')
         dialog = command('xdotool', 'search', '--sync', '--onlyvisible', '--name', '^Import book$').splitlines()[-1]
         command('xdotool', 'windowactivate', '--sync', dialog); host.key('ctrl+l'); host.paste(str(huge))
-        command('xdotool', 'key', '--clearmodifiers', 'Return')
+        host.key('Return')
+        if subprocess.run(['xdotool', 'search', '--onlyvisible', '--name', '^Import book$'],
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+            command('xdotool', 'key', '--clearmodifiers', 'Return')
         running = raw_wait(lambda s: s['busy'] and not s['saving'])
         sent = time.monotonic(); command('xdotool', 'key', '--clearmodifiers', 'F2')
         responding = raw_wait(lambda s: s['sequence'] > running['sequence'] and s['reader_visible'] == 0 and s['busy'])
