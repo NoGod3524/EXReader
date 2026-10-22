@@ -81,14 +81,14 @@ int main(int argc, char **argv) {
   if (!plan) plan = fopen("plan.tsv", "rb");
   if (!plan) { fprintf(stderr, "cannot open plan.tsv\n"); return 1; }
   while (fgets(line, sizeof(line), plan)) {
-    char *cells[8]; int cells_count; char *base;
+    char *cells[8]; int cells_count; char base[256];
     char *changes[6]; int change_count;
     unsigned char *input; size_t size = 0;
     if (line[0] != 'P') continue;
     cells_count = split(line, cells, 8);
     if (cells_count < 5) continue;
     if (strcmp(cells[3], "write")) continue;
-    base = cells[2];
+    snprintf(base, sizeof(base), "%s", cells[2]);
     if (!fgets(line, sizeof(line), plan)) break;
     if (line[0] != 'C') continue;
     change_count = split(line, changes, 6);
