@@ -1,13 +1,14 @@
 {
   "schema": 1,
-  "updated_utc": "2026-10-21T20:09:42.357563+00:00",
+  "updated_utc": "2026-10-22T08:05:22Z",
   "scope": "PNG dependency correction found by final-source font reliability campaign",
   "sdk": "3.40.0",
   "abi": 1,
   "library_schema": 6,
   "fix_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
-  "status": "native_ci_accepted_replacement_campaign_in_progress",
-  "wp16_accepted": false,
+  "status": "frozen_sdk_candidate_native_ci_and_reliability_accepted",
+  "wp16_accepted": true,
+  "wp16_scope": "Frozen SDK candidate 635225fe6ceb7759a948a1d8cede0ab18ea1cee9; later host and optional-package revisions remain independent",
   "original_failure": {
     "run": 39541947423,
     "source_commit": "c9ea20fab9d43d4063b1d8225fae4d2430912bcd",
@@ -101,8 +102,9 @@
   "replacement_campaign": {
     "run": 39666440519,
     "source_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
-    "status": "in_progress",
-    "accepted": false,
+    "status": "completed",
+    "accepted": true,
+    "cloud_acceptance_record": "docs/validation/2026-10-22-reliability-cloud.json",
     "targets": [
       "parser",
       "font",
