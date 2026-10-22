@@ -10,7 +10,8 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from measure_reading_pdf import CASES, FONT_SHA256, ROOT, evaluate, require, sha256, validate
+from measure_reading_pdf import (CASES, GENERATED_CASES, FONT_SHA256, ROOT, color_hash, evaluate,
+                                 generated_cases, require, sha256, validate)
 
 
 def sample(case):
@@ -28,9 +29,14 @@ def sample(case):
         random = (random * 1664525 + 1013904223) & 0xffffffff
         plan.append(("random", random % case["pages"]))
     for phase, page in plan:
-        record["samples"].append({"phase": phase, "page": page, "status": 0, "render_ms": 1,
-                                  "width": 2, "height": 2, "channels": 4, "pixel_bytes": 16,
-                                  "pixel_hash": f"{page + 1:016x}"})
+        item = {"phase": phase, "page": page, "status": 0, "render_ms": 1,
+                "width": 2, "height": 2, "channels": 4, "pixel_bytes": 16,
+                "pixel_hash": f"{page + 1:016x}"}
+        if "expected_rgba" in case:
+            rgba = case["expected_rgba"][page]
+            item.update(width=32, height=32, pixel_bytes=4096, first_rgba=rgba, uniform_rgba=True,
+                        pixel_hash=color_hash(rgba, 32, 32))
+        record["samples"].append(item)
     return record
 
 
@@ -45,6 +51,7 @@ def rejected(function, *args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=Path)
+    parser.add_argument("--generated-root", type=Path)
     parser.add_argument("--output", type=Path, default=ROOT / "build/reading-pdf-selfcheck")
     args = parser.parse_args()
     checks = 0
@@ -67,6 +74,30 @@ def main():
         invalid["samples"][1]["pixel_hash"] = "0" * 16
         rejected(validate, invalid, case)
         checks += 1
+    for case in GENERATED_CASES.values():
+        valid = sample(case)
+        validate(valid, case)
+        # A stable but permuted renderer must fail the independent color oracle.
+        invalid = copy.deepcopy(valid)
+        for item in invalid["samples"]:
+            rgba = case["expected_rgba"][(item["page"] + 1) % case["pages"]]
+            item.update(first_rgba=rgba, pixel_hash=color_hash(rgba, 32, 32))
+        rejected(validate, invalid, case)
+        checks += 1
+        for field, value in (("page", (valid["samples"][-1]["page"] + 1) % case["pages"]),
+                             ("pixel_hash", "0" * 16), ("uniform_rgba", False), ("first_rgba", "000000ff")):
+            invalid = copy.deepcopy(valid)
+            invalid["samples"][-1][field] = value
+            rejected(validate, invalid, case)
+            checks += 1
+    if args.generated_root:
+        manifest = json.loads((args.generated_root / "manifest.json").read_text())
+        generated_cases(manifest)
+        for name in GENERATED_CASES:
+            invalid = copy.deepcopy(manifest)
+            invalid["cases"][name]["expected_rgba"][0] = "000000ff"
+            rejected(generated_cases, invalid)
+            checks += 1
     with tempfile.TemporaryDirectory() as directory:
         output = Path(directory)
         identity = {"source_sha": "a" * 40, "source_clean": True, "font_sha256": FONT_SHA256,

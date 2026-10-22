@@ -85,3 +85,37 @@ SHA-256 `e3165ddf36d8f9d624a75821923e44e286b5efc4b88d86ad5c1244e96fb3a740`，
 绑定上述 run/source，过期时间 `2027-01-20T21:10:39Z`。
 包含六份进程报告、六份 stderr、汇总、原生失败 JSON/stderr、消费者和两套构建元数据。
 首轮没有失败迭代；本地未构建、运行或下载工件。
+
+## 第二工作负载：可区分页面的随机回读
+
+保留上述两个案例的原始输入及全部预期，额外加入两份独立合成文档。
+`tests/reading_pdf/generate.py` 在调用引擎之前写出文档及 manifest，预期由源码中的
+`GENERATED_CASES` 固定，不读取引擎结果：
+
+| 文档 | 页数 | 每页尺寸 | 依次预期的全页 RGBA |
+| --- | ---: | --- | --- |
+| `distinct-pages.pdf` | 3 | 32×32 | 红 `ff0000ff`、绿 `00ff00ff`、蓝 `0000ffff` |
+| `distinct-pages.cbz` | 4 | 32×32 | 红、绿、蓝、黄 `ffff00ff` |
+
+PDF 为直接构造的对象图和整页矩形填充；CBZ 是 stdlib 编码 PNG 的定时戳 ZIP。
+生成器不依赖 SDK。云端生成两次并对整个目录逐字节比较；manifest 先登记来源为 synthetic、
+生成器散列、字节数、输入 SHA-256、页数、尺寸、像素类别。
+没有真实语料计数或性能达标承诺。
+
+原生探针额外记录每次实际图像的首个 RGBA 和“全部像素是否一致”。校验器要求完整页色与预期一致，
+活跃像素 FNV 散列等于独立从预期色/尺寸计算的结果，且首次、顺序和随机重画与同页基准一致。
+随机16次必须实际覆盖所有页面；每进程先顺序访问所有页。
+错误页号、错误 hash、错误颜色、非均匀图像，以及把所有页内容稳定错位的模拟报告都必须拒绝。
+
+上述云端命令新增：
+
+```sh
+python3 tests/reading_pdf/generate.py build/reading-pdf-inputs
+python3 tests/reading_pdf/generate.py build/reading-pdf-inputs-repeat
+diff -r build/reading-pdf-inputs build/reading-pdf-inputs-repeat
+python3 tests/check_reading_pdf_measurements.py --binary build/reading-pdf-consumer/reading-pdf-benchmark --generated-root build/reading-pdf-inputs
+python3 tools/measure_reading_pdf.py build/reading-pdf-consumer/reading-pdf-benchmark tests/fixtures/fonts/primary.ttf build/reading-pdf-measurements --source-sha "$GITHUB_SHA" --compiler cc --generated-root build/reading-pdf-inputs
+```
+
+新工作负载必须与两个旧案例在同一源码/run中全部通过，才授予可区分页面的合成随机回读验收。
+首轮 `3cd7bdf` / `39855093753` 的证据保持原样，不与新结果拼接。

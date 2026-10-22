@@ -16,7 +16,8 @@ typedef struct {
   double render_ms;
   uint32_t width,height,channels;
   uint64_t pixel_bytes,pixel_hash;
-  int status;
+  uint32_t first_rgba;
+  int status,uniform_rgba;
 } sample;
 
 static double now_ms(void) {
@@ -59,8 +60,12 @@ static int paint(exr_fixed_document *document,size_t page,const char *phase,
     item->status=EXR_LIMIT;exr_bitmap_free(&bitmap);return 0;
   }
   item->pixel_bytes=(uint64_t)row*bitmap.height;
+  item->uniform_rgba=1;
+  item->first_rgba=((uint32_t)bitmap.pixels[0]<<24)|((uint32_t)bitmap.pixels[1]<<16)|
+                   ((uint32_t)bitmap.pixels[2]<<8)|bitmap.pixels[3];
   /* Hash only active RGBA bytes, excluding allocator stride padding. */
   for(y=0;y<bitmap.height;y++) for(x=0;x<row;x++) {
+    if(bitmap.pixels[y*bitmap.stride+x]!=bitmap.pixels[x%4]) item->uniform_rgba=0;
     hash^=bitmap.pixels[y*bitmap.stride+x];hash*=UINT64_C(1099511628211);
   }
   item->pixel_hash=hash;
@@ -129,8 +134,10 @@ done:
     sample *s=&samples[i];
     printf("%s{\"phase\":",i?",":"");json_string(s->phase);
     printf(",\"page\":%zu,\"status\":%d,\"render_ms\":%.6f,\"width\":%u,\"height\":%u,"
-           "\"channels\":%u,\"pixel_bytes\":%" PRIu64 ",\"pixel_hash\":\"%016" PRIx64 "\"}",
-           s->page,s->status,s->render_ms,s->width,s->height,s->channels,s->pixel_bytes,s->pixel_hash);
+           "\"channels\":%u,\"pixel_bytes\":%" PRIu64 ",\"pixel_hash\":\"%016" PRIx64 "\","
+           "\"first_rgba\":\"%08" PRIx32 "\",\"uniform_rgba\":%s}",
+           s->page,s->status,s->render_ms,s->width,s->height,s->channels,s->pixel_bytes,s->pixel_hash,
+           s->first_rgba,s->uniform_rgba?"true":"false");
   }
   printf("]}\n");
   if(!success) fprintf(stderr,"Probe failed at %s (status %d)\n",stage,status);
