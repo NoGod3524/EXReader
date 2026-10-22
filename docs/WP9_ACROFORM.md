@@ -35,7 +35,7 @@ Widget 通过页面 Annots 映射到零起始页码，Rect 保留 PDF 原始坐�
 | 单选组 | V、每个 Widget AS、独立 Off/导出名外观 | 导出名属于组；NoToggleToOff 不允许全部关闭 |
 | 列表/组合框 | V、I、显示标签外观 | 单/多选数量、选项成员、重复导出值与重复输入值 |
 
-多选 V/I 按 Opt 顺序写入。每次变更同时更新全部关联 Widget，并将
+多选 V/I 按 Opt 顺序写入。每次变更同时更新全部关联 Widget。
 保留原 NeedAppearances 请求，局部更新不能取消其他字段的外观重建。已有其他字段值和未替换的字典项继续保留。
 AcroForm 本身可为直接或间接字典；要改动的字段和 Widget 必须有间接对象身份。
 
@@ -75,7 +75,8 @@ AcroForm 本身可为直接或间接字典；要改动的字段和 Widget 必须
 
 独立审查修复候选 `7e44ae59d47a578dac3116154b0de5a67efb0163` 的完整云端 run 为
 `39817023587`。它保留 NeedAppearances，并对没有 RadiosInUnison 的重复 radio 导出值返回
-UNSUPPORTED；该标志设置时允许同组选中并逐 widget 校验 AS。新候选需要独立通过，
-上文 `72ca373` 的成功记录只作为历史，不能授予新候选验收。
+UNSUPPORTED；该标志设置时允许同组选中并逐 widget 校验 AS。该候选已独立通过三个云端作业：
+Linux/Windows 各 4/4、ASan/UBSan 1/1，各 9394 次 CHECK 执行；上文 `72ca373` 的结果保留为历史。
+当前输入定义 24 种；30 份独立文档出口仍未满足。
 
 精确源码 SHA、运行 ID、平台结果以同目录 `validation/wp9-acroform.json` 为准。
