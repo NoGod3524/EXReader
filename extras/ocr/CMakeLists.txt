@@ -9,6 +9,8 @@ target_include_directories(exreader_ocr PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT
 target_link_libraries(exreader_ocr PUBLIC EXReader::exr_core PkgConfig::TESS)
 install(TARGETS exreader_ocr EXPORT EXReaderOCRTargets ARCHIVE DESTINATION lib)
 install(FILES exr_ocr.h DESTINATION include)
+install(FILES ../../LICENSE DESTINATION share/exreader-ocr RENAME LICENSE)
+install(FILES ../../docs/WP11-OCR-ADAPTER.md DESTINATION share/exreader-ocr)
 install(EXPORT EXReaderOCRTargets NAMESPACE EXReader:: DESTINATION lib/cmake/EXReaderOCR)
 configure_file(EXReaderOCRConfig.cmake.in EXReaderOCRConfig.cmake @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/EXReaderOCRConfig.cmake DESTINATION lib/cmake/EXReaderOCR)
