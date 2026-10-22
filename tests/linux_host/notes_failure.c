@@ -23,14 +23,20 @@ static exr_status query_notes(exr_library *library,int64_t id,exr_note **out,siz
 #include "../../examples/linux/reader_async.c"
 #undef main
 static unsigned checks;
+static unsigned publication_events;
 static void require(int condition,const char *name) {
   if(!condition) { fprintf(stderr,"FAIL %s\n",name);exit(1); } checks++;
 }
 static unsigned rows(void) {
   GList *children=gtk_container_get_children(GTK_CONTAINER(notes));unsigned n=g_list_length(children);g_list_free(children);return n;
 }
+static void publication_changed(GtkTextBuffer *buffer,gpointer unused) {
+  (void)buffer;(void)unused;
+  require(busy,"frame publication cannot advertise idle before SAVE");publication_events++;
+}
 static void apply(linux_reader *reader,reader_command command) {
   host_result *result=g_new0(host_result,1);result->action=command.action;result->generation=g_atomic_int_get(&generation);
+  busy=TRUE;
   linux_reader_execute(reader,&command,&result->value);apply_result(result);
   if(saving) {
     host_job *job=g_async_queue_pop(queue);host_result *saved=g_new0(host_result,1);
@@ -47,6 +53,7 @@ int main(int argc,char **argv) {
   require(linux_reader_open(database,argv[1],NULL,&reader,&error)==EXR_OK,"open installed SDK reader");g_free(database);
   queue=g_async_queue_new();window=gtk_window_new(GTK_WINDOW_TOPLEVEL);label=gtk_label_new("");image=gtk_image_new();
   text=gtk_text_view_new();comment=gtk_entry_new();notes=gtk_list_box_new();shelf=gtk_list_box_new();stack=gtk_stack_new();
+  g_signal_connect(gtk_text_view_get_buffer(GTK_TEXT_VIEW(text)),"changed",G_CALLBACK(publication_changed),NULL);
   gtk_stack_add_named(GTK_STACK(stack),gtk_label_new("reader"),"reader");
   const char *body="Reader note body with stable original bytes.";int64_t first=0,second=0,note_id=0;
   require(exr_library_import(reader->library,EXR_TXT,body,strlen(body),"Original",&first,&error)==EXR_OK,"import original");
@@ -95,6 +102,7 @@ int main(int argc,char **argv) {
   linux_reader_execute(reader,&retry->command,&saved->value);job_free(retry);apply_result(saved);
   require(!save_failed && !saving && !busy && !reader->has_pending && reader->current.font==28 && last_error==EXR_OK,
           "successful retry promotes exact accepted pending cursor");
+  require(publication_events>=3,"real GTK frame publication ordering observed");
   linux_reader_close(reader);g_async_queue_unref(queue);g_key_file_free(settings);g_free(settings_path);g_free(home);g_free(page_text);
   printf("{\"passed\":true,\"checks\":%u,\"kind\":\"GTK note query fault regression\"}\n",checks);return 0;
 }
