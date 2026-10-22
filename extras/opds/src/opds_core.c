@@ -27,7 +27,8 @@ void *arena_alloc(struct opds_arena *a, size_t size) {
 char *arena_strndup(struct opds_arena *a, const char *s, size_t n) {
   char *p = (char *)arena_alloc(a, n + 1);
   if (!p) return NULL;
-  memcpy(p, s, n); p[n] = 0;
+  if (n) memcpy(p, s, n);
+  p[n] = 0;
   return p;
 }
 char *arena_strdup(struct opds_arena *a, const char *s) { return arena_strndup(a, s, strlen(s)); }
