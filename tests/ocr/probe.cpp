@@ -3,6 +3,7 @@
 #include <tesseract/baseapi.h>
 #include <cstdio>
 #include <cstdlib>
+#include <cmath>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -23,8 +24,20 @@ int main(int argc,char **argv) {
   exr_bitmap bitmap{w,h,w,pixels.data(),1};exr_ocr_options options{};exr_ocr_options_default(&options);
   options.clockwise=std::strtoul(argv[5],nullptr,10);
   /* Source page origin=(13,29), y up; 300 dpi pixels -> 72 dpi page units. */
-  options.pixel_to_page[0]=0.24;options.pixel_to_page[3]=-0.24;
-  options.pixel_to_page[4]=13;options.pixel_to_page[5]=29+h*0.24;
+  exr_page_geometry geometry{{13,29,13+w*.24,29+h*.24},1,0,0};exr_viewport viewport{};
+  if(exr_viewport_create(&geometry,1/.24,&viewport,&error)!=EXR_OK) return 6;
+  std::memcpy(options.pixel_to_page,viewport.inverse,sizeof(viewport.inverse));
+  for(unsigned rotation=0;rotation<360;rotation+=90) {
+    geometry.rotation=rotation;
+    if(exr_viewport_create(&geometry,1/.24,&viewport,&error)!=EXR_OK) return 7;
+    for(unsigned i=0;i<4;i++) {
+      double x=geometry.bounds[(i&1)?2:0],y=geometry.bounds[(i&2)?3:1];
+      double px=viewport.matrix[0]*x+viewport.matrix[2]*y+viewport.matrix[4];
+      double py=viewport.matrix[1]*x+viewport.matrix[3]*y+viewport.matrix[5];
+      if(std::fabs(viewport.inverse[0]*px+viewport.inverse[2]*py+viewport.inverse[4]-x)>1e-8 ||
+         std::fabs(viewport.inverse[1]*px+viewport.inverse[3]*py+viewport.inverse[5]-y)>1e-8) return 8;
+    }
+  }
   exr_ocr_result result{};
   exr_status status=exr_ocr_recognize(ctx,&bitmap,&options,&result,&error);
   if(status!=EXR_OK) { exr_ocr_close(ctx); return 10+status; }
@@ -38,6 +51,7 @@ int main(int argc,char **argv) {
     for(size_t j=0;j<r.text_bytes;j++) { unsigned c=static_cast<unsigned char>(result.text[r.text_offset+j]);out<<hex[c>>4]<<hex[c&15]; }
     out<<'\n';
   }
+  std::string baseline(result.text,result.text_bytes);size_t baseline_count=result.count;
   exr_ocr_result_free(&result);
   if(std::strcmp(argv[6],"contracts")==0) {
     auto verify=[&](exr_status expected) {
@@ -62,7 +76,7 @@ int main(int argc,char **argv) {
     for(size_t i=0;i<pixels.size();i++) { rgba[4*i]=rgba[4*i+1]=rgba[4*i+2]=pixels[i];rgba[4*i+3]=255; }
     bitmap.pixels=rgba.data();bitmap.stride=w*4;bitmap.channels=4;
     status=exr_ocr_recognize(ctx,&bitmap,&options,&result,&error);
-    if(status!=EXR_OK||!result.count) return 40;
+    if(status!=EXR_OK||result.count!=baseline_count||std::string(result.text,result.text_bytes)!=baseline) return 40;
     exr_ocr_result_free(&result);
     out<<"contracts\t11\n";
   }
