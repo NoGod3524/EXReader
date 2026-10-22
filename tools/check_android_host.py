@@ -45,6 +45,7 @@ def static_checks():
         APP / 'cpp/CMakeLists.txt',
         ROOT / 'examples/android/app/build.gradle',
         ROOT / 'examples/android/uitest/build.gradle',
+        ROOT / 'examples/android/ci/emulator.sh',
         TEST,
         WORKFLOW,
         DOC,
@@ -63,6 +64,7 @@ def static_checks():
     app_gradle = read(ROOT / 'examples/android/app/build.gradle')
     test = read(TEST)
     workflow = read(WORKFLOW)
+    emulator = read(ROOT / 'examples/android/ci/emulator.sh')
     doc = read(DOC)
     layout = read(APP / 'res/layout/activity_main.xml')
 
@@ -103,10 +105,14 @@ def static_checks():
                    'physical_device_execution']:
         if needle not in test:
             problems.append('walkthrough lacks ' + needle)
-    for needle in ['android-emulator-runner', 'api-level: 34', 'arch: x86_64', 'am instrument',
-                   'upload-artifact', 'workflow_dispatch', 'x86_64']:
+    for needle in ['android-emulator-runner', 'api-level: 34', 'arch: x86_64',
+                   'upload-artifact', 'workflow_dispatch', 'x86_64',
+                   'examples/android/ci/emulator.sh']:
         if needle not in workflow:
             problems.append('workflow lacks ' + needle)
+    for needle in ['am instrument', 'adb install', 'adb pull', '/sdcard/Download']:
+        if needle not in emulator:
+            problems.append('emulator script lacks ' + needle)
     if 'physical_device_execution' not in doc or 'x86_64' not in doc:
         problems.append('documentation must state the device scope and ABI')
     stats = {'cases_declared': len(ids), 'unique_cases': len(set(ids))}
