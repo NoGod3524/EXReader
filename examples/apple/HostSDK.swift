@@ -156,6 +156,13 @@ final class HostDocument {
         let range: Range<Int>? = match.state == EXR_ANCHOR_FOUND ? Int(match.start)..<Int(match.end) : nil
         return HostAnchorMatch(state: match.state, range: range)
     }
+
+    func makeAnchor(start: Int, end: Int) throws -> HostAnchor {
+        var anchor = exr_anchor()
+        var error = exr_error()
+        try hostCheck(exr_anchor_create(handle, start, end, &anchor, &error), error)
+        return HostAnchor(adopting: anchor)
+    }
 }
 
 final class HostPager {
