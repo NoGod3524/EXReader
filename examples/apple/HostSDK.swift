@@ -60,9 +60,10 @@ final class HostCancelBox {
     private let lock = NSLock()
     private var cancelled = false
     private var committed = false
+    private var committing = false
     func cancel() {
         lock.lock()
-        if !committed { cancelled = true }
+        if !committing && !committed { cancelled = true }
         lock.unlock()
     }
     var isCancelled: Bool {
@@ -75,15 +76,27 @@ final class HostCancelBox {
         if isCancelled { throw HostError.cancelled }
     }
 
-    // The short publication body must not reenter this token or render with it.
-    // A concurrent cancel is ordered before or after the successful commit.
+    // Entering publication is the cancellation boundary. SQLite may wait for a
+    // writer, so the UI's cancel/check must never wait for the publication body.
     func commit<T>(_ operation: () throws -> T) throws -> T {
         lock.lock()
-        defer { lock.unlock() }
-        if cancelled { throw HostError.cancelled }
-        let value = try operation()
-        committed = true
-        return value
+        if cancelled { lock.unlock(); throw HostError.cancelled }
+        if committing { lock.unlock(); throw HostError.invalidResult("操作正在提交，不能重入") }
+        committing = true
+        lock.unlock()
+        do {
+            let value = try operation()
+            lock.lock()
+            committing = false
+            committed = true
+            lock.unlock()
+            return value
+        } catch {
+            lock.lock()
+            committing = false
+            lock.unlock()
+            throw error
+        }
     }
 }
 

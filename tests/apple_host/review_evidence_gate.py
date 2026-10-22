@@ -46,6 +46,15 @@ def attachment(root, kind):
     return directory/'attachments'/record['file']
 
 
+def alter_export_name(root, prefix):
+    path = root/'wp13-apple-macos/evidence/macos/attachments/manifest.json'
+    def change(groups):
+        item = next(item for group in groups for item in group['attachments']
+                    if item['suggestedHumanReadableName'].endswith('.png'))
+        item['suggestedHumanReadableName'] = prefix + '_0_00000000-0000-0000-0000-000000000000.png'
+    edit(path, change)
+
+
 def accepted(args):
     try:
         return assemble(args)[0]['accepted'] is True
@@ -119,6 +128,8 @@ def mutations():
         ('step attachment identity mismatch', lambda r: edit(attachment(r, 'steps'), lambda d: d.update(test='test00Unknown'))),
         ('step attachment incomplete', lambda r: edit(attachment(r, 'steps'), lambda d: d['steps'].pop())),
         ('attachment export failure', lambda r: edit(r/report, lambda d: d['attachments'].update(status=1))),
+        ('attachment name prefix is not identity', lambda r: alter_export_name(r, '01-empty-library-extra')),
+        ('attachment owner mismatch', lambda r: alter_export_name(r, '34-nondefault-font-restored')),
         ('missing program', lambda r: shutil.rmtree(r/ui/'program')),
         ('changed executable bytes', lambda r: replace(r/ui/'program/EXReaderHost.app/Contents/MacOS/EXReaderHost', b'changed executable')),
         ('wrong program hash', lambda r: edit(r/report, lambda d: d['environment']['app'].update(executable_sha256='0'*64))),

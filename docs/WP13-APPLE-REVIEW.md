@@ -9,6 +9,7 @@
 - 开书使用候选会话；失败不替换原会话。翻页、字号和视口变化在解析、渲染或保存失败时恢复原状态。后台及返回书架时的持久化错误显示在 UI 中。
 - 固定页标注的评论写入固定页表，保留选择器，不再写入重排标注表。标注和选文携带书籍身份；选文还绑定页面版本、文本和基础偏移。旧帧、旧书或不完整 UTF-16 标量的范围被拒绝。
 - 忙态限制竞争操作；异步原生选文回调绑定文本与页面版本，失效后清空。系统文件选择器错误向用户显示。
+- 取消令牌只用短锁切换提交状态，数据库提交不持有该锁；提交期间取消调用可立即返回，越过提交边界后按实际提交结果显示。
 - 证据检查按平台、源码、run、attempt、实际程序、SDK、字体与夹具绑定；完整具名用例、步骤、附件、数据库、状态、原 21 项自检和未签名包均为必需证据，缺失或上游失败时拒绝。
 
 ## 验证入口
@@ -20,6 +21,8 @@
 验收：`tests/apple_host/EXReaderHostUITests.swift`、`tests/apple_host/sdk_review/SDKReview.swift`、`tests/apple_host/review/ModelReview.swift`、`tests/apple_host/evidence_contract.py`、`tests/apple_host/collect_evidence.py`、`tests/apple_host/assemble_validation.py`、`.github/workflows/wp13-apple.yml`。
 
 构建、测试、模拟器、夹具生成和证据汇总均只在 GitHub Actions 执行；本地只编辑和检查源码、文档及 Git 差异。
+
+首轮修复源码 `829903cbc2257304fd5bac77e7b9f38a654a3bad` 的 run `39720374560` 被证据门禁拒绝，未授予验收。macOS 原 7 个及新增 5 个 UI 用例均通过，但 Xcode 导出附件的序号/UUID 外壳未被映射。独立云端诊断 run `39721443070` 读取保留的清单确认格式；检查器只剥离该明确外壳，随后仍精确验证具名附件、归属和步骤内容。原失败与诊断工件保留，修正后使用新源码重新跑完整验收。
 
 ## 保持的范围
 
