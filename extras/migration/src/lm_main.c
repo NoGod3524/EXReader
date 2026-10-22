@@ -7,6 +7,7 @@
 #endif
 #include "lm_ledger.h"
 #include <ctype.h>
+#include <errno.h>
 #include <math.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -471,6 +472,9 @@ static void process_note(ctx *c, bctx *b, lm_book *mb, const jv *jn) {
     if (seconds < 0) {
       loc.reason = "audio-note-without-seconds";
     } else {
+      if (seconds * 1000.0 + 0.5 >= 9223372036854775808.0) {
+        fail(c, O_REJECTED, "audio-position-limit", "audio bookmark exceeds the stored checkpoint range"); return;
+      }
       uint64_t ms = (uint64_t)floor(seconds * 1000.0 + 0.5);
       const char *label = comment[0] ? comment : quote;
       char *copy = lm_xdup(label);
@@ -731,18 +735,25 @@ static void process_book(ctx *c, const jv *jb, const jv *pack_notes, const size_
       mb->audio_id = audio_id;
     }
     entry(c, S_UNSUPPORTED, "audio-original-not-storable", "book", id, "the library has no audio original format; positions and bookmarks are migrated under audio_id, the file stays in the pack");
-    if (seconds >= 0) {
-      memset(&current, 0, sizeof(current));
-      if (exr_library_audio_resume_get(c->lib, mb->audio_id, &current, &found, &c->err) != EXR_OK) { sdk_fail(c, "reading audio resume"); goto done; }
-      exr_audio_checkpoint_free(&current);
-      if (!found) {
+    memset(&current, 0, sizeof(current));
+    if (exr_library_audio_resume_get(c->lib, mb->audio_id, &current, &found, &c->err) != EXR_OK) { sdk_fail(c, "reading audio resume"); goto done; }
+    if (seconds >= 0 && !found) {
+        if (seconds * 1000.0 + 0.5 >= 9223372036854775808.0) {
+          exr_audio_checkpoint_free(&current);
+          fail(c, O_REJECTED, "audio-position-limit", "audio position exceeds the stored checkpoint range"); goto done;
+        }
         resume.track_id = (char *)id;
         resume.offset_ms = (uint64_t)floor(seconds * 1000.0 + 0.5);
         resume.rate = 1.0;
         if (exr_library_audio_resume(c->lib, mb->audio_id, &resume, &c->err) != EXR_OK) { sdk_fail(c, "writing audio resume"); goto done; }
         mb->audio_seconds = seconds;
-      } else entry(c, S_INFO, "resume-exists", "book", id, "an audio resume point already exists; it is kept");
+        current.track_id = lm_xdup(id); current.offset_ms = resume.offset_ms; current.rate = resume.rate; found = 1;
+    } else if (seconds >= 0 && found) {
+      entry(c, S_INFO, "resume-exists", "book", id, "an audio resume point already exists; it is kept");
     }
+    exr_audio_checkpoint_free(&mb->audio_expected);
+    mb->audio_expectation_set = 1; mb->audio_resume_found = found;
+    mb->audio_expected = current;
     c->books_audio++;
     if (!bctx_load(c, &bc, mb)) goto done;
     assign_ids(c, &bc, mb, jb, pack_notes, order, first, last);
@@ -921,6 +932,22 @@ static int sidecar_load(ctx *c, const char *path) {
     lm_json_uint(lm_get(e, "book_id"), &book_id);
     if (book_id > 0) lm_ledger_set_id(&c->ledger, b, (int64_t)book_id);
     if (lm_get_str(e, "audio_id")) b->audio_id = lm_xdup(lm_get_str(e, "audio_id"));
+    if (b->kind == K_AUDIO && lm_get(e, "resume_expected")) {
+      const jv *expected = lm_get(e, "resume_expected"), *present = lm_get(expected, "present"), *rate = lm_get(expected, "rate");
+      const char *ms = lm_get_str(expected, "offset_ms"), *track = lm_get_str(expected, "track");
+      char *end = NULL;
+      unsigned long long offset_ms = 0;
+      int valid = present && present->t == J_BOOL;
+      if (valid && present->b) {
+        errno = 0;
+        if (ms && *ms && strspn(ms, "0123456789") == strlen(ms)) offset_ms = strtoull(ms, &end, 10);
+        valid = ms && *ms && end && !*end && !errno && offset_ms <= INT64_MAX && track &&
+                rate && rate->t == J_NUM && isfinite(rate->num) && rate->num > 0;
+      }
+      if (!valid) { fail(c, O_REJECTED, "ledger-invalid", "invalid expected audio checkpoint"); lm_json_free(root); return 0; }
+      b->audio_expectation_set = 1; b->audio_resume_found = present->b;
+      if (present->b) { b->audio_expected.track_id = lm_xdup(track); b->audio_expected.offset_ms = (uint64_t)offset_ms; b->audio_expected.rate = rate->num; }
+    }
     lm_sb_init(&raw);
     if (r) lm_json_write(&raw, r); else lm_sb_str(&raw, "{}");
     b->retained = lm_xdup(raw.p);
@@ -977,6 +1004,14 @@ static void sidecar_text(ctx *c, lm_sb *b) {
     if (k->book_id > 0) lm_sb_fmt(b, "%lld", (long long)k->book_id); else lm_sb_str(b, "null");
     lm_sb_str(b, ",\"audio_id\":");
     if (k->audio_id) lm_sb_json(b, k->audio_id, strlen(k->audio_id)); else lm_sb_str(b, "null");
+    if (k->kind == K_AUDIO && k->audio_expectation_set) {
+      lm_sb_fmt(b, ",\"resume_expected\":{\"present\":%s", k->audio_resume_found ? "true" : "false");
+      if (k->audio_resume_found) {
+        lm_sb_str(b, ",\"track\":"); lm_sb_json(b, k->audio_expected.track_id, strlen(k->audio_expected.track_id));
+        lm_sb_fmt(b, ",\"offset_ms\":\"%llu\",\"rate\":%.17g", (unsigned long long)k->audio_expected.offset_ms, k->audio_expected.rate);
+      }
+      lm_sb_str(b, "}");
+    }
     lm_sb_str(b, ",\"retained\":");
     lm_sb_str(b, k->retained ? k->retained : "{}");
     lm_sb_str(b, "}");
@@ -1084,13 +1119,13 @@ static int verify_library(ctx *c, exr_library *lib, int check_metadata) {
       exr_audio_checkpoint p;
       int found = 0;
       memset(&p, 0, sizeof(p));
-      if (b->audio_seconds > 0 || b->created) {
-        if (b->audio_seconds > 0) {
-          if (exr_library_audio_resume_get(lib, b->audio_id, &p, &found, &c->err) != EXR_OK) { sdk_fail(c, "verify audio"); break; }
-          exr_audio_checkpoint_free(&p);
-          if (!found) { bad++; entry(c, S_CONFLICT, "verify-audio-resume", "verify", b->legacy, "audio resume point missing after reopen"); }
-        }
+      if (!b->audio_id || !b->audio_expectation_set) { fail(c, O_FAILED, "verify-failed", "audio checkpoint expectation missing; rerun migration to register retained state"); break; }
+      if (exr_library_audio_resume_get(lib, b->audio_id, &p, &found, &c->err) != EXR_OK) { sdk_fail(c, "verify audio"); break; }
+      if (found != b->audio_resume_found || (found && (p.offset_ms != b->audio_expected.offset_ms ||
+          p.rate != b->audio_expected.rate || !p.track_id || strcmp(p.track_id, b->audio_expected.track_id)))) {
+        bad++; entry(c, S_CONFLICT, "verify-audio-resume", "verify", b->legacy, "stored audio checkpoint differs from registered retained state");
       }
+      exr_audio_checkpoint_free(&p);
     } else {
       void *blob = NULL;
       size_t blob_size = 0;
@@ -1117,7 +1152,29 @@ static int verify_library(ctx *c, exr_library *lib, int check_metadata) {
     if (c->out != O_NONE) break;
     for (at = head[i]; at != SIZE_MAX; at = next[at]) {
       lm_note *nn = &c->ledger.notes[at];
-      if (!nn->located || nn->new_id <= 0 || b->kind == K_AUDIO) continue;
+      if (!nn->located || nn->new_id <= 0) continue;
+      if (b->kind == K_AUDIO) {
+        exr_audio_bookmark *marks = NULL;
+        size_t count = 0, j;
+        int found = 0;
+        char *expected_text = verified_note_text(nn);
+        if (!expected_text) { fail(c, O_FAILED, "verify-failed", "invalid retained audio bookmark"); break; }
+        if (!*expected_text) {
+          char error[160];
+          jv *record = lm_json_parse(nn->retained, strlen(nn->retained), error, sizeof(error));
+          const char *quote = lm_get_str(record, "quote"), *trimmed;
+          size_t length;
+          if (quote) { trim(quote, strlen(quote), &trimmed, &length); free(expected_text); expected_text = lm_xdup(trimmed); }
+          lm_json_free(record);
+        }
+        if (exr_library_audio_bookmarks(lib, b->audio_id, &marks, &count, &c->err) != EXR_OK) { free(expected_text); sdk_fail(c, "verify audio bookmarks"); break; }
+        for (j = 0; j < count; j++) if (marks[j].id == nn->new_id && marks[j].position.offset_ms == nn->start &&
+            marks[j].position.rate == 1.0 && marks[j].position.track_id && !strcmp(marks[j].position.track_id, b->legacy) &&
+            !strcmp(marks[j].label, expected_text)) found = 1;
+        free(expected_text); exr_audio_bookmarks_free(marks, count);
+        if (!found) { bad++; entry(c, S_CONFLICT, "verify-note", "verify", nn->legacy, "stored audio bookmark differs from its mapping"); }
+        continue;
+      }
       if (b->kind == K_REFLOW) {
         exr_note *notes = NULL;
         size_t m, j;

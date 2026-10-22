@@ -73,6 +73,8 @@ typedef struct {
   size_t position;
   int anchored;
   double audio_seconds;
+  int audio_expectation_set, audio_resume_found;
+  exr_audio_checkpoint audio_expected;
 } lm_book;
 typedef struct {
   char *legacy, *book_legacy, *method, *reason, *retained;
