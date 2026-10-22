@@ -88,6 +88,13 @@ class Session:
             self.key('ctrl+l')
             self.paste(str(path))
             self.key('Return')
+            # GTK's location entry first resolves/selects the file asynchronously.
+            # If the chooser remains mapped, activate that selection with Enter.
+            time.sleep(.3)
+            visible = subprocess.run(['xdotool', 'search', '--onlyvisible', '--name', '^Import book$'],
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+            if visible.returncode == 0:
+                self.key('Return')
         self.wait(lambda s: s['sequence'] > before)
         end = time.monotonic()+30
         while time.monotonic() < end:
