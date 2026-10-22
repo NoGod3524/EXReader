@@ -1,0 +1,127 @@
+name: WP13 Android host
+
+on:
+  push:
+    branches: [codex/wp13-android]
+    paths:
+      - 'examples/android/**'
+      - 'tools/build_android_host.py'
+      - 'tools/check_android_host.py'
+      - 'tests/android_host/**'
+      - '.github/workflows/wp13-android.yml'
+      - 'docs/WP13-ANDROID.md'
+      - 'docs/validation/wp13-android*.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-host:
+    timeout-minutes: 120
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install pinned Android packages
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" \
+            "ndk;27.0.12077973" "cmake;3.22.1" "emulator" \
+            "system-images;android-34;default;x86_64"
+
+      - name: Install patchelf
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y patchelf
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build x86_64 SDK, host APK and fixtures
+        run: |
+          python3 tools/build_android_host.py \
+            --stage stage/android-x86_64 \
+            --build-dir build/android-host \
+            --gradle gradle
+
+      - name: Static source and ownership checks
+        run: python3 tools/check_android_host.py --repo .
+
+      - name: Boot emulator and run the instrumented walkthrough
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            set -e
+            adb wait-for-device
+            adb shell settings put global window_animation_scale 0
+            adb shell settings put global transition_animation_scale 0
+            adb shell settings put global animator_duration_scale 0
+            adb install -r build/android-host/artifacts/app-debug.apk
+            adb install -r build/android-host/artifacts/uitest-debug.apk
+            adb install -r build/android-host/artifacts/uitest-debug-androidTest.apk
+            adb shell mkdir -p /sdcard/Download
+            for file in build/android-host/fixtures/*; do
+              case "$file" in
+                *.epub|*.pdf|*.txt) adb push "$file" /sdcard/Download/ ;;
+              esac
+            done
+            adb shell pm clear org.exreader.host
+            adb shell rm -rf /sdcard/Android/data/org.exreader.host.uitest/files/evidence
+            mkdir -p build/android-host/evidence
+            set +e
+            adb shell am instrument -w -e disableAnalytics true \
+              org.exreader.host.uitest.test/androidx.test.runner.AndroidJUnitRunner \
+              | tee build/android-host/evidence/instrumentation.txt
+            set -e
+            adb logcat -d > build/android-host/evidence/logcat.txt
+            adb pull /sdcard/Android/data/org.exreader.host.uitest/files/evidence \
+              build/android-host/evidence/device || true
+            adb shell dumpsys package org.exreader.host > build/android-host/evidence/package.txt || true
+
+      - name: Aggregate and verify evidence
+        if: always()
+        run: |
+          mkdir -p build/android-host/evidence/artifacts
+          cp build/android-host/artifacts/*.apk build/android-host/evidence/artifacts/ || true
+          python3 tools/check_android_host.py \
+            --repo . \
+            --evidence build/android-host/evidence \
+            --build build/android-host/build.json \
+            --api 34 \
+            --target default \
+            --image "system-images;android-34;default;x86_64" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --workflow wp13-android \
+            --output docs/validation/wp13-android.json
+
+      - name: Upload host APKs, native logs and per-case evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-WP13-Android
+          if-no-files-found: warn
+          path: |
+            build/android-host/build.json
+            build/android-host/fixtures/fixtures.json
+            build/android-host/artifacts/
+            build/android-host/evidence/
+            docs/validation/wp13-android.json
