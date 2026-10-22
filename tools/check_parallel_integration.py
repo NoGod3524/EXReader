@@ -35,10 +35,12 @@ BASELINE_EVIDENCE = {
     'spacing': '.github/workflows/wp5-border-spacing.yml',
 }
 # Every package-level SDK guard must name the registered baseline, not a mutable HEAD.
+# The Android guard joins this list as soon as its delivery is in the tree; the registry
+# records it as pending until then, and a pending guard that already exists is refused.
 BASELINE_CONTRACTS = (
     ('.github/workflows/wp15-opds.yml', r'BASELINE:\s*([0-9a-f]{40})'),
-    ('tools/android_host_evidence.py', r"SDK_BASE\s*=\s*'([0-9a-f]{40})'"),
 )
+ANDROID_CONTRACT = ('tools/android_host_evidence.py', r"SDK_BASE\s*=\s*'([0-9a-f]{40})'")
 
 
 def require(value, message):
@@ -132,13 +134,15 @@ def tree_at(ref, path, cache):
     return current
 
 
-def baseline_problems(registry, source, protected, contracts):
+def baseline_problems(registry, source, protected, contracts, pending=()):
     """Pure comparison against the registered SDK baseline candidate."""
     baseline = registry.get('sdk_baseline') or ''
     require(re.fullmatch('[0-9a-f]{40}', baseline) is not None, 'baseline: require an immutable full SHA')
     require(baseline != source, 'baseline: must be separately accepted, not the summarised source')
     require(set(registry.get('protected_trees') or {}) == set(PROTECTED_TREES), 'baseline: protected tree set drifted')
     require(set(registry.get('evidence') or {}) == set(BASELINE_EVIDENCE), 'baseline: evidence set drifted')
+    require(set(pending) <= {ANDROID_CONTRACT[0]}, 'baseline: only the Android guard may be pending')
+    require(not (set(pending) & {path for path, _ in contracts}), 'baseline: a contract cannot be active and pending')
     for path in PROTECTED_TREES:
         require(protected.get(path) == registry['protected_trees'][path], 'baseline: ' + path + ' differs from the accepted SDK candidate')
     for path, expected in contracts:
@@ -261,6 +265,16 @@ def selftest():
             continue
         raise AssertionError('SDK baseline: ' + name + ' was accepted')
     checked += 1 + len(baseline_changes)
+    baseline_problems(registry, source, trees, contracts, (ANDROID_CONTRACT[0],))
+    checked += 1
+    for name, pending, extra in (('a pending guard is also active', (ANDROID_CONTRACT[0],), [ANDROID_CONTRACT[0]]),
+                                 ('a foreign guard is pending', ('tools/other_guard.py',), [])):
+        try:
+            baseline_problems(registry, source, trees, contracts + [(path, baseline) for path in extra], pending)
+        except ValueError:
+            continue
+        raise AssertionError('SDK baseline: ' + name + ' was accepted')
+    checked += 2
     return {'passed': True, 'checks': checked,
             'integration_accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
             'scope': 'gate protocol only'}
@@ -275,13 +289,16 @@ def verify_baseline(source):
             'baseline: source does not descend from the accepted SDK candidate')
     cache = {}
     protected = {path: tree_at(source, path, cache) for path in PROTECTED_TREES}
+    pending = tuple(registry.get('pending_contracts') or ())
+    for path in pending:
+        require(not Path(path).exists(), 'baseline contract: ' + path + ' is present but still registered as pending')
     contracts = []
     for path, pattern in BASELINE_CONTRACTS:
-        text = Path(path).read_text(encoding='utf-8')
-        found = re.search(pattern, text, re.MULTILINE)
+        require(Path(path).is_file(), 'baseline contract: missing ' + path)
+        found = re.search(pattern, Path(path).read_text(encoding='utf-8'), re.MULTILINE)
         require(found is not None, 'baseline contract: no fixed SDK baseline in ' + path)
         contracts.append((path, found.group(1)))
-    baseline = baseline_problems(registry, source, protected, contracts)
+    baseline = baseline_problems(registry, source, protected, contracts, pending)
     evidence, seen = {}, set()
     for kind, workflow in BASELINE_EVIDENCE.items():
         run_id = registry['evidence'][kind]
@@ -298,7 +315,8 @@ def verify_baseline(source):
     require(version is not None and abi is not None, 'baseline: no public version or ABI declaration')
     require(registry.get('sdk_version') == version.group(1) and registry.get('sdk_abi') == int(abi.group(1)),
             'baseline: registered SDK version or ABI does not match the candidate headers')
-    return {'candidate': baseline, 'protected_trees': protected, 'contracts': dict(contracts), 'evidence': evidence,
+    return {'candidate': baseline, 'protected_trees': protected, 'contracts': dict(contracts),
+            'pending_contracts': list(pending), 'evidence': evidence,
             'sdk_version': version.group(1), 'sdk_abi': int(abi.group(1))}
 
 
@@ -309,6 +327,16 @@ def main():
     output.parent.mkdir(parents=True, exist_ok=True)
     if sys.argv[1] == 'selftest':
         report = selftest()
+    elif sys.argv[1] == 'baseline':
+        source = os.environ['EXPECTED_SOURCE']
+        report = {'accepted': False, 'source_sha': source, 'scope': 'registered SDK baseline chain only',
+                  'complete_product': False, 'wp16_accepted': False, 'wp16_cpu_credit_seconds': 0}
+        try:
+            require(re.fullmatch('[0-9a-f]{40}', source) is not None, 'Require an immutable full source SHA')
+            report['sdk_baseline'] = verify_baseline(source)
+            report['accepted'] = True
+        except (ValueError, KeyError, TypeError, OSError) as error:
+            report['refusal'] = str(error)
     else:
         source = os.environ['EXPECTED_SOURCE']
         report = {'accepted': False, 'source_sha': source, 'scope': 'declared integrated package scopes only',
@@ -334,7 +362,7 @@ def main():
         except (ValueError, KeyError, TypeError, OSError) as error:
             report['refusal'] = str(error)
     output.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
-    print(json.dumps({key: value for key, value in report.items() if key not in ('runs', 'sdk_baseline')}))
+    print(json.dumps({key: value for key, value in report.items() if key not in ('runs',)}))
     return 0 if report.get('accepted', report.get('passed', False)) else 1
 
 

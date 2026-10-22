@@ -25,5 +25,9 @@
   "consumer_contract": "Existing public headers, installed consumers, trimmed component builds, JNI and Swift bindings keep building; ABI stays 1 and the SDK version keeps 3.40.0",
   "package_rule": "A host or optional package passes only when it keeps every protected tree identical to K and proves it with its own cloud run",
   "refreeze_trigger": "Any later change to a protected tree, including package B final corpus or engine work and the accepted Android delivery, requires a new candidate and new evidence",
-  "history_note": "The previous baseline and its 98-job reliability campaign stay bound to their own source and are not carried over"
+  "history_note": "The previous baseline and its 98-job reliability campaign stay bound to their own source and are not carried over",
+  "pending_contracts": [
+    "tools/android_host_evidence.py"
+  ],
+  "pending_note": "The Android SDK guard does not exist in this tree until the accepted Android delivery is merged; it must then be registered as an active contract naming this candidate."
 }
