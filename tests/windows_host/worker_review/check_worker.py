@@ -18,7 +18,6 @@ U.GetDlgItem.restype = W.HWND
 U.SendMessageTimeoutW.argtypes = [W.HWND, W.UINT, W.WPARAM, W.LPARAM, W.UINT, W.UINT, C.POINTER(C.c_size_t)]
 U.SendMessageTimeoutW.restype = W.LPARAM
 U.PostMessageW.argtypes = [W.HWND, W.UINT, W.WPARAM, W.LPARAM]
-U.SetWindowTextW.argtypes = [W.HWND, W.LPCWSTR]
 U.GetWindowThreadProcessId.argtypes = [W.HWND, C.POINTER(W.DWORD)]
 U.GetClassNameW.argtypes = [W.HWND, W.LPWSTR, C.c_int]
 ENUM = C.WINFUNCTYPE(W.BOOL, W.HWND, W.LPARAM)
@@ -41,6 +40,16 @@ def send(window, message, wparam=0, lparam=0, timeout=2000):
     if not U.SendMessageTimeoutW(window, message, wparam, lparam, 2, timeout, C.byref(result)):
         raise TimeoutError('UI message not serviced: message=%d wparam=%d winerror=%d' % (message, wparam, C.get_last_error()))
     return result.value
+
+
+def set_text(window, text):
+    # SetWindowText cannot edit another process's child control. WM_SETTEXT is
+    # a system message, so Windows marshals this Unicode buffer to the reader.
+    value = C.create_unicode_buffer(text)
+    assert send(window, 0xC, 0, C.addressof(value)), 'Edit rejected WM_SETTEXT'
+    actual = C.create_unicode_buffer(len(text.encode('utf-16-le'))//2+1)
+    send(window, 0xD, len(actual), C.addressof(actual))
+    assert actual.value == text, 'Edit text differs from requested Unicode input'
 
 
 class App:
@@ -112,7 +121,7 @@ class App:
         raise AssertionError('Expected book row missing: '+title)
 
     def import_file(self, path):
-        U.SetWindowTextW(self.control('path'), str(path))
+        set_text(self.control('path'), str(path))
         self.click('import')
         self.wait_idle()
 
@@ -124,7 +133,7 @@ class App:
 
     def note(self, comment, wait=True):
         self.click('select')
-        U.SetWindowTextW(self.control('comment'), comment)
+        set_text(self.control('comment'), comment)
         self.click('add')
         if wait:
             self.wait_idle()
@@ -204,7 +213,7 @@ def main():
             app.note('original comment')
             send(app.control('notes'), 0x186, 0)
         app.click('select')
-        U.SetWindowTextW(app.control('comment'), 'replacement comment')
+        set_text(app.control('comment'), 'replacement comment')
         app.gate(1)
         responsive = True
         try:
@@ -242,7 +251,7 @@ def main():
     def rollback(app):
         setup_text(app)
         app.gate(3)
-        U.SetWindowTextW(app.control('path'), str(extra))
+        set_text(app.control('path'), str(extra))
         app.click('import')
         app.stage(3)
         lock = sqlite3.connect(app.db, timeout=1)
