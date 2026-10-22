@@ -245,14 +245,23 @@ done:
   return (*env)->ExceptionCheck(env)?NULL:out;
 }
 static exr_status host_location(host_epub *reader,jint part,jlong start,jlong end,exr_epub_location *location,exr_error *error) {
-  const exr_part *parts; size_t count=0; exr_status status;
+  const exr_part *parts; size_t count=0; exr_status status; unsigned char byte;
   if(!reader || part<0 || (size_t)part!=reader->part || start<0 || end<start || (uint64_t)end>=SIZE_MAX) return EXR_ARGUMENT;
+  if(reader->source.read_at(reader->source.context,0,&byte,1)!=1) return EXR_IO;
   parts=exr_publication_parts(reader->publication,&count); if(reader->part>=count) return EXR_ARGUMENT;
   status=exr_pager_anchor_create(reader->pager,(size_t)start,(size_t)end,NULL,&location->selector,error);
   if(status!=EXR_OK) return status;
   location->part=reader->part; location->path=copy_string(parts[reader->part].path);
   if(!location->path) { exr_epub_location_free(location); return EXR_MEMORY; }
   return EXR_OK;
+}
+JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_BoundedEpub_nativeCapture(JNIEnv *env,jclass type,jlong handle,jint part,jlong offset) {
+  host_epub *reader=(host_epub *)(intptr_t)handle; exr_epub_location location={0}; exr_error error={0};
+  exr_status status=host_location(reader,part,offset,offset,&location,&error); jobjectArray row=NULL; (void)type;
+  if(status==EXR_OK) { row=new_row(env,8); if(row) location_cells(env,row,0,&location); }
+  exr_epub_location_free(&location);
+  if(status!=EXR_OK) throw_status(env,status,&error,"Cannot capture current chapter point");
+  return (*env)->ExceptionCheck(env)?NULL:row;
 }
 JNIEXPORT void JNICALL Java_org_exreader_host_BoundedEpub_nativeSaveProgress(JNIEnv *env,jclass type,jlong handle,jlong owner,jlong book,jint part,jlong offset) {
   host_epub *reader=(host_epub *)(intptr_t)handle; exr_library *store=library(env,owner);
