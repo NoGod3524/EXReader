@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 120
     env:
       ANDROID_CANDIDATE_SDK_BASE: 9c69bc4c7efb0cff68ced27562709fe597189041
-      ANDROID_OWNERSHIP_HEAD: ${{ github.sha }}
+      ANDROID_OWNERSHIP_HEAD: 797c47fc8d5c397fd7c960afe91eb6f851ec07f1
     steps:
       - uses: actions/checkout@v4
         with:
