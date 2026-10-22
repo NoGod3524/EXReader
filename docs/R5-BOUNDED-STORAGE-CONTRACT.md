@@ -1,8 +1,8 @@
 # R5：有界 EPUB 书库最小存储契约草案
 
-这是后续实现设计，未实现、未通过云端验证。本轮仅核对源码；当前分支新增的
-`exr_library_source` 解决存储原件随机读取，尚未解决 EPUB 有界导入与位置存储。
-首个目标是“导入 EPUB → 书架 → 有界阅读 → 保存章内进度 → 重开”，随后补同章选文标注。
+这是候选实现的存储契约，尚未通过本阶段云端验证。随机读第一阶段源码 `a0c35f5`
+的独立专项已通过；当前候选进一步实现 EPUB 有界导入、章内进度与同章标注。
+冻结前必须完成“导入 EPUB → 书架 → 有界阅读 → 进度/同章标注 → 重开”的同源验证。
 
 ## 已有实现与边界
 
@@ -34,16 +34,17 @@
 
 ## 最小 schema 7
 
-保持既有表和字段含义，第一阶段只新增两个小表；不修改 `exr_book`、`exr_note` 的 ABI 布局。
+保持既有表和字段含义，本候选新增三个小表；不修改 `exr_book`、`exr_note` 的 ABI 布局。
 下面是数据契约，最终 SQL 由实现包补齐类型、范围与外键检查。
 
 | 新表 | 最小内容 |
 | --- | --- |
 | `epub_bounded_books` | `book_id` 主键/外键，标记通过新有界导入路径创建、全书 extent 未知的 EPUB |
 | `epub_progress` | `book_id` 主键/外键；`part`、规范 `path`、章内 `start` 点、`prefix/suffix` |
+| `epub_notes` | 独立 ID、book 外键；part/path、章内范围与 quote/context、评论 |
 
-两表均随 book 删除级联清理。`epub_notes` 留到笔记单包实施时随独立 schema 增量加入，
-不在第一阶段预建空表或提前固定笔记 ABI。不要新增一份持久章节目录；每次开书复用已有 OPF 索引。
+三表均随 book 删除级联清理。schema 7 尚未发布，因此在首个候选一次纳入同章标注，
+避免宿主切换后丢失已有功能。不要新增一份持久章节目录；每次开书复用已有 OPF 索引。
 `part` 和 `path` 一起校验：OPF spine 可能重复引用同一资源，路径本身不能唯一标识阅读顺序中的一次出现。
 原件在 SDK 内不可变，因此同一 book 的 part 序号可稳定复用；不支持在 SQL 外部替换原件后继续沿用旧位置。
 
@@ -83,11 +84,11 @@ schema 6 升级只创建空表，不扫描原书、不改旧字段、不把旧�
 
 ## 公共接口草案
 
-名称与尺寸待实现时定稿；以下不是已存在接口。
+下列为候选接口；以同时交付的 `include/exr/library.h` 为准，云端通过前不授予冻结。
 
 ```c
 typedef struct {
-  size_t size;
+  size_t struct_size;
   int bounded_storage, global_extent_known;
 } exr_library_epub_info;
 
@@ -117,11 +118,11 @@ info 使用尺寸前缀；location 为独立新类型，不向旧数组记录尾
 MISSING/AMBIGUOUS/LEGACY 明确显示并保留旧记录。选择 fallback 首章或用户指定位置时，不能标为精确恢复。
 所有失败输出清零；`present=false` 与数据库/不支持错误分开。
 
-第二个实现步骤增加 `exr_epub_note` 新类型及 `exr_library_epub_note/notes/remove_epub_note`、数组释放函数：
+同一候选增加 `exr_epub_note` 新类型及 `exr_library_epub_note/epub_notes/remove_epub_note`、`exr_epub_notes_free`：
 note 包含自己的 ID、book ID、上述 location 与评论。显式 selector 必填，支持同章非空范围，
 沿用现有字符串/评论上限、所有权检查与事务；评论修改不重抓 selector。
-届时增加 `epub_notes` 表：独立 `id`、book 外键、part/path、章内范围、quote/context 与评论；
-使用下一个明确的 schema 增量，不往 schema 7 数据库静默加表。
+schema 7 同次创建 `epub_notes`：独立 `id`、book 外键、part/path、章内范围、quote/context 与评论。
+后续已发布 schema 的变更仍须明确升级，不静默新增表。
 新旧 note ID 分属不同接口域，宿主列表须带类型，不能用新 ID 调旧删除接口。
 首版不加入跨章单条标注、CFI/quote 双重真值、全文导出或修订重定位系统。
 
@@ -169,14 +170,14 @@ note 包含自己的 ID、book ID、上述 location 与评论。显式 selector 
 
 ## 第一阶段实施顺序与实际接入点
 
-第一阶段新增公共符号仅四个：`exr_library_epub_info_get`、`exr_epub_location_free`、
-`exr_library_epub_progress`、`exr_library_epub_progress_get`。继续使用原 source/file import 和
+本候选新增公共符号八个：`exr_library_epub_info_get`、`exr_epub_location_free`、
+`exr_library_epub_progress`、`exr_library_epub_progress_get`，以及上述四个笔记符号。继续使用原 source/file import 和
 `exr_library_source` → `exr_publication_open_source`，不增加 publication 快捷包装、全书 extent 查询、
-作者/封面新接口、笔记接口或自动旧坐标转换接口。
+作者/封面新接口或自动旧坐标转换接口。
 
 | 顺序 | 当前实际代码/SQL | 最小改动与提交出口 |
 | --- | --- | --- |
-| 1. 固定 schema 和模式 | `exr_library_open` 中新库 SQL 及版本 1–6 分支 | 加两个表及 6→7 路径；每个版本分支当前成功即提前 `return`，须统一进入新终点，不能仅修改新库 `user_version` |
+| 1. 固定 schema 和模式 | `exr_library_open` 中新库 SQL 及版本 1–6 分支 | 加三个表及 6→7 路径；每个版本分支统一进入新终点，不能仅修改新库 `user_version` |
 | 2. 守住旧入口 | `exr_library_update` 的 `UPDATE books ... position=?6 ... ?6<=text_size`；`progress/get/clear_progress`、`note/notes`、`reanchor` | 新模式先查 marker；拒绝旧位置操作，保留 metadata 更新位置为 0 的路径；新 progress 不写旧 `books.position`，避免触发 `books_progress_changed` |
 | 3. 最小导入 | `stream_metadata`、`stream_import`、`stream_import_values`、`stream_insert`；`import_file`/`import_file_unique` | EPUB 使用 package 索引而非 XHTML；沿用 64 KiB source 复制和 exact compare；marker 与新 row 一次提交 |
 | 4. 位置存取 | `store_progress` 仅作现有事务/字符串绑定范例，不改变其 global 含义 | 在新表单独 INSERT/UPSERT 和 SELECT；验证 part/path 只访问 package，不建正文 DOM；getter 不重锚 |
