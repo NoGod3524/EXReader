@@ -126,6 +126,7 @@ jobs:
             build/form/acroform-edited/
             build/form/acroform-results.tsv
             build/reference-outputs.json
+            build/reference-pages/
             build/evidence/
             build/corpus/manifest.json
             build/sdk-components/installed-form.json

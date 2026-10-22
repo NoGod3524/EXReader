@@ -311,7 +311,7 @@ static void dump_fields(size_t index,const char *phase,const exr_pdf_form_field 
     for(j=0;j<field->widget_count;j++) {
       const exr_pdf_field_widget *widget=&field->widgets[j];
       int k;
-      if(j) fputc(',',results);
+      if(j) fputc(';',results);
       if(widget->page==SIZE_MAX) fprintf(results,"-1"); else fprintf(results,"%zu",widget->page);
       for(k=0;k<4;k++) fprintf(results,",%ld",(long)llround(widget->bounds[k]*1000.0));
       fputc(',',results);
@@ -331,7 +331,9 @@ static long ink_count(const void *data,size_t size,size_t page,const double boun
   memset(&options,0,sizeof(options)); options.struct_size=sizeof(options);
   memset(&bitmap,0,sizeof(bitmap));
   if(exr_fixed_open_memory(EXR_PDF,data,size,&options,&doc,&error)!=EXR_OK) return -1;
-  if(exr_fixed_render(doc,page,1,NULL,&bitmap,&error)!=EXR_OK) { exr_fixed_free(doc); return -1; }
+  if(exr_fixed_render(doc,page,1,NULL,&bitmap,&error)!=EXR_OK) {
+    exr_bitmap_free(&bitmap); exr_fixed_free(doc); return -1;
+  }
   x0=(long)(bounds[0]+inset); x1=(long)(bounds[2]-inset);
   y0=(long)bitmap.height-(long)(bounds[3]-inset); y1=(long)bitmap.height-(long)(bounds[1]+inset);
   if(x0<0) x0=0;
@@ -518,8 +520,19 @@ int main(int argc,char **argv) {
   fprintf(results,"META\tfont_text\t%s\n",argv[4]);
   fprintf(results,"META\tfont_bitmap\t%s\n",argv[5]);
   for(i=0;i<plan_count;i++) run_entry(i,argv[1],argv[2],text_font,bitmap_font);
-  fprintf(results,"META	checks	%u\n",checks);
+  fprintf(results,"META\tchecks\t%u\n",checks);
   fclose(results);
+  for(i=0;i<plan_count;i++) {
+    size_t j,k;
+    for(j=0;j<plan[i].count;j++) {
+      for(k=0;k<plan[i].items[j].value_count;k++) free(plan[i].items[j].values[k]);
+      free(plan[i].items[j].values); free(plan[i].items[j].value_sizes);
+      free(plan[i].items[j].field);
+    }
+    free(plan[i].items);
+  }
+  free(plan);
+
   exr_font_free(text_font); exr_font_free(bitmap_font);
   printf("AcroForm corpus: %zu documents, %u harness checks\n",plan_count,checks);
   return 0;
