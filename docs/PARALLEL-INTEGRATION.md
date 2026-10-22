@@ -31,6 +31,26 @@ OPDS 常量、pending Android 守卫、K 的三组证据运行及版本/ABI。�
 B 之后可能的 K 重冻结、所有权祖先 H、十组同源联合验收。本候选只验收上述声明范围，
 `complete_product=false`、`wp16_accepted=false`，冻结 SDK 长测不转移到新源码。
 
+## 交付合并与 SDK 候选重冻结（阶段三，已云端通过）
+
+A（Android）与 B（AcroForm 独立文档语料）按原历史合入本分支，未 rebase 受测历史：
+
+| 包 | 受测源码 | 交付 HEAD | 独立 run | 结果 |
+| --- | --- | --- | --- | --- |
+| A Android | `8a6636ed8ac6db06ab84e174f5a01c49d12511dc` | `31b36f305085cb8b1468b1d9b9b1ea2d67ee1656` | `39831715741` | 45/45 与 10/10 零失败零跳过、49 页、48 项门禁 `accepted=true`；唯一工件 `12449232819`（149127088 B、digest 有效） |
+| B AcroForm 语料 | `a326fd38bbbb481da74657d682f649b1f45f7e2c` | `97e33452a96f1c042dcc98510b51f3e4af7253ef` | `39833769030` | 5/5 作业、四份工件同源；三平台各 75/75 文档、严格汇总 `problems=[]` |
+
+B 改动了受保护集合中的顶层 `CMakeLists.txt`，原候选 K 因此不能沿用。在合并后源码
+`d46ff370cb3c5ce9a0ceb4dc1f8b099209149280` 上重跑三组同源验证：native 7/7（`39837151097`）、
+acroform 5/5（`39837165548`）、spacing 2/2（`39837179303`），据此重冻结候选 K = `d46ff37…`。
+SDK 仍为 3.40.0、ABI 1；`src`、`include`、`cmake`、`tests/fixtures`、`bindings` 与两条受保护工作流未变，
+只有 `CMakeLists.txt` 更新。OPDS 的 `BASELINE` 与 Android 的 `SDK_BASE` 都指向 K；
+Android 的 `ANDROID_OWNERSHIP_HEAD` 固定到 A 的受测源码，只作为宿主变更审计终点，不替代 SDK 口径。
+
+联合门禁同步更新：`acroform` 期望 5 个作业并核验四份能力工件（`EXReader-acroform-corpus`、
+`EXReader-acroform-Linux`、`-Windows`、`-sanitizer`）的 run/source/大小/过期/digest；`spacing` 仍为 2 个作业。
+十二组共 35 个上游作业（28 + 5 + 2），十组门槛未变。
+
 ## 下一轮 Apple/Android 集成（原候选，已被本轮取代）
 
 > 本节保留历史候选与失败记录；当前交付身份以 `docs/handoffs/2026-10-22-parallel-index.md`、`docs/handoffs/2026-10-22-A-android.md`、`2026-10-22-B-acroform-corpus.md` 与上面阶段一记录为准。
