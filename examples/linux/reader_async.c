@@ -7,6 +7,7 @@
 
 static GtkWidget *window,*image,*label,*shelf,*notes,*text,*comment,*stack;
 static size_t book_count,page_number,page_start,page_end,note_count,selection_start,selection_end,part;
+static size_t position,projection_bytes,index_bytes,workspace_bytes,windows_evicted,snapshot_bytes;
 static int64_t book_id;
 static int font_size=24,last_error,bounded;
 static guint sequence;
@@ -31,6 +32,10 @@ static void state(void) {
     ++sequence,last_error,book_id,book_count,page_number,page_start,page_end,font_size,note_count,selected,
     selection_start,selection_end,gtk_widget_get_visible(window),gtk_window_is_active(GTK_WINDOW(window)),
     bounded,part,busy,saving,g_atomic_int_get(&generation),save_failed);
+  char *metrics=g_strdup_printf("position=%zu\nprojection_bytes=%zu\nindex_bytes=%zu\nworkspace_bytes=%zu\nwindows_evicted=%zu\nsnapshot_bytes=%zu\nreader_visible=%d\n",
+    position,projection_bytes,index_bytes,workspace_bytes,windows_evicted,snapshot_bytes,
+    !strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"reader"));
+  char *complete=g_strconcat(data,metrics,NULL);g_free(data);g_free(metrics);data=complete;
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
 }
 static void status(exr_status code,const char *message) {
@@ -95,6 +100,9 @@ static gboolean apply_result(gpointer data) {
     result->pixels=NULL;gtk_image_set_from_pixbuf(GTK_IMAGE(image),pixels);g_object_unref(pixels);
     book_id=result->book;part=result->part;bounded=result->bounded;font_size=result->font;
     page_number=result->page;page_start=result->start;page_end=result->end;selection_start=selection_end=0;
+    position=result->position;projection_bytes=result->chapter.projection_bytes;index_bytes=result->chapter.index_bytes;
+    workspace_bytes=result->chapter.peak_parse_workspace_bytes;windows_evicted=result->chapter.windows_evicted;
+    snapshot_bytes=result->chapter.explicit_snapshot_bytes;
     g_free(page_text);page_text=result->text;result->text=NULL;
     gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(text)),page_text,(int)result->text_size);
     gtk_stack_set_visible_child_name(GTK_STACK(stack),"reader");
