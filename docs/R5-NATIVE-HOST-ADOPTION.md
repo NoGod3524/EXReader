@@ -4,8 +4,9 @@
 `686ce2fe6c3463ef1b917569677ee9933e22faa9`。Android 另只读核对独立交付工作树
 `wp13-android-review/EXReader`，HEAD 为 `31b36f305085cb8b1468b1d9b9b1ea2d67ee1656`。
 
-后续SDK已冻结到`ce5d664c9f76d0613df6d79b27568a7039c4a81e`，原件出口、有界导入、章内进度/notes均已实现；
-Windows H8通过，Apple/Android/Linux正按该SDK接续。当前身份与同源出口见[SDK冻结记录](R5-SDK-FREEZE.md)。
+后续SDK已重新冻结到`9c69bc4c7efb0cff68ced27562709fe597189041`，原件出口、有界导入、章内进度/notes均已实现，
+并修复Apple接续发现的窗口单元递归。Windows H8和Linux H11在新实现上通过，Apple/Android最终复验中。
+当前身份与同源出口见[SDK冻结记录](R5-SDK-FREEZE.md)。
 下列共同缺口表描述S时的旧接口，不能用来判断当前SDK是否已实现。
 
 目标是让 EPUB 进入已有窗口分页路径，PDF/CBZ 进入已有原书按需读取路径。

@@ -134,8 +134,8 @@ PDF 已有固定页绘制、文字几何、搜索选择、标准密码认证、�
 | 已完成 | 受测源码 `54d8c592`，run [39853356309](https://github.com/NoGod3524/EXReader/actions/runs/39853356309) 2/2 作业成功：Linux 上 `reading-core`、`reading-library` 的构建、安装、安装后消费者、九格式合成 smoke、组成判定与 1 MiB TXT/32 次翻页初始采样。前一源码 `61aa183` 的 run `39852907619` 因测量自验 mock 失败，记录保留 |
 | 已完成 | H1：Windows/macOS 两 preset，受测源码 `9b968a16`，run [39854485070](https://github.com/NoGod3524/EXReader/actions/runs/39854485070) 4/4 作业成功（构建、安装、消费者 3/3 或 4/4、smoke 9/9）；门禁加固由 H6 另行跟踪 |
 | 已完成 | R3 初始 PDF/CBZ 测量（合成）：源码 `3cd7bdf1` 的 run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753) 测 1 页 PDF 与 4 页 CBZ 极小 fixture；可区分页面候选 `4b6f562c` 的 run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765) 加入 3 页 PDF/4 页 CBZ 合成文档，12 进程/240 次绘制，2026-10-22 只读核对为 success，见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md) |
-| 重新验证 | 阅读SDK原`ce5d664`六组18执行作业/30工件通过记录保留；Apple发现窗口单元递归超时，冻结已撤回，修复后重新冻结。见[SDK冻结记录](docs/R5-SDK-FREEZE.md) |
-| 运行中 | Windows H8有界宿主已通过；Apple、Android、Linux继续接续，宿主须随新SDK复验。H5/H6/H7/R3已整合 |
+| 已验证 | 阅读SDK重新固定`9c69bc4`：窗口单元递归已修复，六组18执行作业/30工件同源通过，保留旧冻结撤回与失败记录。见[SDK冻结记录](docs/R5-SDK-FREEZE.md) |
+| 运行中 | Windows H8与Linux H11已独立通过新SDK实现；Apple、Android最终复验中，四宿主共同源码待验。H5/H6/H7/R3已整合 |
 | 未完成 | 真实多页 PDF 与真实语料性能、真实 EPUB/PDF 语料（仍为 0/1710）、硬性能预算、R4 热点优化、各平台 R5 有界宿主验收、默认分支必需检查与发布接线 |
 
 初始 TXT 与 PDF/CBZ 采样只针对极小合成工作负载，证明测量流程可运行，不是成熟性能基线，也不代表真实语料或任何性能预算已达标；RSS 增量为 0 只表示未超过进程先前高水位，不表示没有分配。新 profile 也不继承 S 的联合验收或旧源码长测。详见 [首轮启动记录](docs/READING-CORE-START.md) 与 [发布门槛映射](docs/READING-CORE-GATE.md)。所有构建、测试及证据汇总在 GitHub Actions 执行。
