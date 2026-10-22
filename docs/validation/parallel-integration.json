@@ -5,7 +5,15 @@
   "status": "declared_package_scopes_accepted_by_cloud_summary",
   "accepted": true,
   "validated_source": "9e4b595ed7e10dcb2d78f5547e4e6a11a04ba3a1",
-  "post_acceptance_changes": "Documentation and cloud evidence records only; validated_source identifies the executed code",
+  "post_acceptance_changes": "Nine-workflow Apple gate preparation; accepted and validated_source below remain scoped to the earlier eight-workflow cloud acceptance",
+  "next_integration": {
+    "status": "apple_standalone_acceptance_pending",
+    "apple_source": "245164f144871fd9bc25491b5cb3457972cd2c13",
+    "apple_run": 39722504792,
+    "expected_workflows": 9,
+    "expected_producer_jobs": 27,
+    "accepted": false
+  },
   "complete_product": false,
   "packages": {
     "ocr_adapter": "bbe7139862e1705e7e8954b97c0b9dfbb639287e",

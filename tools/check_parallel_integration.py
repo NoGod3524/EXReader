@@ -15,6 +15,7 @@ WORKFLOWS = {
     'windows_evidence': ('wp13-windows-evidence.yml', 1),
     'windows_worker': ('wp13-windows-worker.yml', 1),
     'migration': ('wp12-migration.yml', 3), 'opds': ('wp15-opds.yml', 2),
+    'apple': ('wp13-apple.yml', 8),
 }
 
 
@@ -36,6 +37,9 @@ def required_artifacts(kind, source, run):
         'windows_worker': {'EXReader-WP13-Windows-WorkerReview'},
         'migration': {'wp12-evidence-linux', 'wp12-evidence-windows', 'wp12-migration-review-summary'},
         'opds': {'wp15-opds-Linux', 'wp15-opds-Windows'},
+        'apple': {'wp13-apple-sdk-macos', 'wp13-apple-sdk-iphonesimulator',
+                  'wp13-apple-sdk-iphoneos', 'wp13-apple-macos', 'wp13-apple-iphone',
+                  'wp13-apple-ipad', 'wp13-apple-package', 'wp13-apple-validation'},
     }[kind]
 
 
@@ -111,7 +115,23 @@ def selftest():
         except ValueError:
             continue
         raise AssertionError(name + ' was accepted')
-    return {'passed': True, 'checks': 1 + len(changes), 'integration_accepted': False,
+    apple_run = dict(run, path='.github/workflows/wp13-apple.yml')
+    apple_jobs = [dict(jobs[0], id=i) for i in range(8)]
+    apple_artifacts = [dict(artifacts[0], id=i, name=name) for i, name in
+                       enumerate(sorted(required_artifacts('apple', source, apple_run)))]
+    verify('apple', source, apple_run, apple_jobs, apple_artifacts)
+    for kind in ('summary missing', 'summary failed'):
+        copied_jobs, copied_artifacts = copy.deepcopy((apple_jobs, apple_artifacts))
+        if kind == 'summary missing':
+            copied_artifacts = [a for a in copied_artifacts if a['name'] != 'wp13-apple-validation']
+        else:
+            copied_jobs[-1]['conclusion'] = 'failure'
+        try:
+            verify('apple', source, apple_run, copied_jobs, copied_artifacts)
+        except ValueError:
+            continue
+        raise AssertionError('Apple ' + kind + ' was accepted')
+    return {'passed': True, 'checks': 4 + len(changes), 'integration_accepted': False,
             'source_sha': os.environ['GITHUB_SHA'], 'scope': 'gate protocol only'}
 
 
@@ -130,7 +150,7 @@ def main():
             require(re.fullmatch('[0-9a-f]{40}', source) is not None, 'Require an immutable full source SHA')
             requested = json.loads(os.environ['SOURCE_RUNS'])
             require(set(requested) == set(WORKFLOWS) and len(set(requested.values())) == len(WORKFLOWS) and
-                    all(type(value) is int and value > 0 for value in requested.values()), 'Require all eight distinct workflow run IDs')
+                    all(type(value) is int and value > 0 for value in requested.values()), 'Require all nine distinct workflow run IDs')
             for kind, run_id in requested.items():
                 path = f'actions/runs/{run_id}'
                 run = fetch(path)
