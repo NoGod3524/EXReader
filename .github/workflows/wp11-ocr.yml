@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   ocr:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -50,7 +50,7 @@ jobs:
           cmake --build build/consumer --parallel 4
       - name: Freeze original 30 page corpus and input identities
         run: |
-          python3 tests/ocr/generate.py evidence/corpus
+          /usr/bin/python3 tests/ocr/generate.py evidence/corpus
           mkdir -p evidence/fonts
           cp /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf evidence/fonts/
           cp /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc evidence/fonts/
@@ -79,7 +79,7 @@ jobs:
           if-no-files-found: error
   audit:
     needs: ocr
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/download-artifact@v4
