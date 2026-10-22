@@ -34,15 +34,21 @@ UI、系统事件、账户、同步和平台服务由宿主负责。
 | --- | --- | --- |
 | 冻结 SDK 可靠性 | 源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9`，run `39666440519`：98/98 作业、99 同源工件、四目标各至少 24 实际进程 CPU 小时 | 后续核心改动不继承旧源码 CPU 额度；整项目发布状态另行收口 |
 | WP6 有界 EPUB 章阅读 | 50/100 MiB 单章、10→100 MiB 索引/解析续排峰值增量 19.3 MiB、检查点及随机恢复固定出口已验收 | 新宿主接入仍单独推进 |
-| 表格 border-spacing | 源码 `ee76f5b`，run `39816051738`，Windows/Linux 各 163/163 | 已纳入集成候选，待共同源码复验；不代表完整 CSS 已完成 |
-| 基础 AcroForm | 源码 `7e44ae5`，run `39817023587`：Windows/Linux 各 4/4、ASan/UBSan 1/1，各 9394 次 CHECK | 24 种进程内输入、0 份独立 PDF；至少 30 文件出口仍未满足，完整 WP9 未完成 |
-| Apple 宿主审计 | 源码 `b3f28ca`，run `39813162880`：8/8 作业、8 工件，三平台各 12 用例/61 步/46 附件，严格汇总通过 | 已纳入集成候选，待共同源码复验；真机/VoiceOver 仍独立跟踪 |
+| 表格 border-spacing | 源码 `ee76f5b`，run `39816051738`，Windows/Linux 各 163/163；纳入 K 后专用 run `39821213939` 2/2 成功，native 全量回归通过 | 最终 S 仍须同源复验；完整 CSS 仍有缺口 |
+| 基础 AcroForm | 源码 `7e44ae5`，run `39817023587`：Windows/Linux 各 4/4、ASan/UBSan 1/1，各 9394 次 CHECK；纳入 K 后专用 run `39821209875` 3/3 成功，native 全量回归通过 | 24 种进程内输入、0 份独立 PDF；至少 30 文件出口仍未满足，完整 WP9 未完成 |
+| Apple 宿主审计 | 源码 `b3f28ca`，run `39813162880`：8/8 作业、8 工件，三平台各 12 用例/61 步/46 附件，严格汇总通过；已合入 K，native SDK/绑定构建通过 | K 上未重跑 Apple UI 专用验收，最终 S 仍须完整同源复验；真机/VoiceOver 仍独立跟踪 |
 | Android 宿主审计 | 已登记候选 `ac7aecc` 的 run `39816104855` 最终失败 | 包 A 负责定位新一轮逐项失败并完整复验；旧源的 45/45 + 独立 4/10 不可拼接为新源通过 |
 | OPDS facets | 独立分支源码 `757e2f3`，run `39815167314`：双平台各 65/65、facet 回归与 Linux sanitizer 通过 | 独立分支待最终集成；计数 profile、HTTPS、间接获取、借阅/支付/LCP 等边界保持 |
+| SDK 预集成与基线 K | `4729f7fc7d908d249704d96ee61cc74ee778a27f`：native run `39821205425` 7/7、AcroForm 3/3、spacing 2/2；native 19 份工件同源、非空、未过期且具有 SHA-256 digest | C 阶段一/二完成；A/B 固定交付、必要的 K 重冻结、OPDS 合入及最终联合验收待完成 |
 
 主要证据见 [冻结 SDK 记录](validation/2026-10-22-reliability-cloud.json)、
 [表格间距](WP5_BORDER_SPACING.md)、[AcroForm](WP9_ACROFORM.md)、[Apple 审计](WP13-APPLE-REVIEW.md)，
 Android/OPDS 独立候选的完整身份见 [总 handoff](handoffs/2026-10-22-after-deadline.md)。
+
+K 的登记及最新阶段记录见集成分支固定提交 `b81f138` 中的
+[SDK 基线](https://github.com/NoGod3524/EXReader/blob/b81f13869bb49b1138e4862faf64daae01d5fd01/docs/validation/sdk-baseline.json)、
+[预集成证据](https://github.com/NoGod3524/EXReader/blob/b81f13869bb49b1138e4862faf64daae01d5fd01/docs/validation/2026-10-22-preintegration.json) 与
+[联合验收说明](https://github.com/NoGod3524/EXReader/blob/b81f13869bb49b1138e4862faf64daae01d5fd01/docs/PARALLEL-INTEGRATION.md)。
 
 ## 五项工程质量目标
 
@@ -50,7 +56,7 @@ Android/OPDS 独立候选的完整身份见 [总 handoff](handoffs/2026-10-22-af
 
 | 目标 | 已有工作 | 尚未闭合的出口 |
 | --- | --- | --- |
-| 默认分支必须通过的 CI 与可信构建基线 | `native.yml` 在默认分支 `codex/framework` push 和 PR 上运行；已有默认/裁剪 SDK 安装消费、ABI/分层检查及十组同源联合协议 | 2026-10-22 只读核对时默认分支 `protected=false`、required checks 为空、rulesets 为空。需配置必需检查与合并/发布门槛，并冻结可追溯的新 SDK 基线；有 CI 不能等同于强制门禁 |
+| 默认分支必须通过的 CI 与可信构建基线 | `native.yml` 在默认分支 `codex/framework` push 和 PR 上运行；已有默认/裁剪 SDK 安装消费、ABI/分层检查；K 已同源验证并固定八条受保护树，12 组联合协议及基线门禁自验通过 | 2026-10-22 只读核对时默认分支 `protected=false`、required checks 为空、rulesets 为空。仍需配置必需检查与合并/发布门槛，并完成最终 S 的联合验收 |
 | EPUB 超时、PDF 打开/渲染失败闭环 | 整本文档探针、逐进程超时/失败保留、独立分类与回归工具；已有针对性引擎修复 | 历史 EPUB 500 本仅 483 完成，另有 11 超时、5 限制、1 参数状态；PDF 122 份中 49 完成，其余 73 留有分类，不能全部视作同一故障。原批未整体验收；新协议可复现真实语料登记仍为 0/1710 |
 | 成熟引擎差分、像素与性能回归 | WP7 有 HarfBuzz 对照，彩色字体有 Chrome 对照，PDF 部分颜色/绘制有 MuPDF 独立参考；已有像素、页面 hash、分页与转换基准 | 统一固定工具/字体/采样口径、语料、容差及资源阈值，覆盖真实 EPUB/PDF 故障，并接入必需 CI；专项对照不替代全格式差分验收 |
 | 内存峰值、长章节和恶意输入专项 | WP6 有界章出口、1 GiB CBZ 原书导入、1 GiB WAV 随机读取、取消/限界/sanitizer 与四目标可靠性长测 | 每次核心变更绑定新源码复验；其他格式大文件、其他音频 1 GiB 实测和全部宿主有界接入仍未覆盖 |
@@ -66,7 +72,17 @@ Android/OPDS 独立候选的完整身份见 [总 handoff](handoffs/2026-10-22-af
 | --- | --- | --- |
 | [A：Android 修复](handoffs/2026-10-22-A-android.md) | 修复失败行为/驱动，完成同一新源码的 45+10、分页计量和严格证据门禁 | 交付固定源码与完整云端验收 |
 | [B：AcroForm 语料](handoffs/2026-10-22-B-acroform-corpus.md) | 补至少 30 份独立 PDF、保存重开和外观验证；必要时修复表单缺陷 | 交付固定源码、逐文件证据与回归 |
-| [C：SDK 集成](handoffs/2026-10-22-C-integration.md) | 可先做预集成、SDK 基线、安装消费与门禁准备 | 最终冻结等 A/B 交付，再跑十组共 28 个上游作业与严格汇总 |
+| [C：SDK 集成](handoffs/2026-10-22-C-integration.md) | 阶段一/二完成：合入 AcroForm、spacing、Apple 修复，云端验证 K 并登记基线与严格门禁 | 阶段三/四等 A/B 固定交付；最终 S 跑原十组 28 作业，加 AcroForm 3 作业和 spacing 2 作业，共 12 组 33 个上游作业及严格汇总 |
+
+C 的 protocol 自验 run `39823812435` 成功；dispatch run `39823842117` 的 protocol、baseline 成功，
+受检源码为 `82f88966c0ca2bbca93837861270b8cb57ebb184`，summarize 按设计跳过。当前门禁核对 K 的祖先关系、
+八条受保护树、基线证据及版本/ABI，并要求 OPDS `BASELINE` 和合入后的 Android `SDK_BASE` 指向 K。
+Android 守卫尚登记为 pending；文件合入时必须转为有效契约。
+
+后续顺序：A/B 交付 → 若受保护树改变则重验并冻结新 K → 登记 Android 基线与所有权源码 →
+冻结非 OPDS 祖先 H → 最后合入 OPDS facets 并登记 `HANDOFF=H` → 冻结 S →
+在 S 上重跑 12 组并提交 12 个 run ID，严格汇总 `accepted=true` 后授予联合验收。
+33 个上游作业之外，联合门禁自身另有 protocol、baseline 和 summarize 作业。
 
 三包是当前功能与集成子任务，不替代上述五项质量目标。C 直接覆盖 SDK 基线与联合验证，B 覆盖表单专项输入；
 EPUB/PDF 历史失败闭环、通用差分门禁和完整发布制度尚未成为这三包中可独立验收的完整任务。
