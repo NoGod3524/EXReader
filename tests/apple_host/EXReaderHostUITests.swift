@@ -39,8 +39,37 @@ final class EXReaderHostUITests: XCTestCase {
         app.launchArguments = args
         app.launch()
         XCTAssertTrue(waitStableState(90) {
-            self.readerIdleIdentity() ?? self.libraryIdleIdentity()
+            guard let state = self.screenSnapshot() else { return nil }
+            return self.readerIdleIdentity(state) ?? self.libraryIdleIdentity(state)
         }, "host did not finish startup and saved-book restoration")
+    }
+
+    private struct ScreenSnapshot {
+        let elements: [String: XCUIElementSnapshot]
+        let bookCount: Int
+
+        init(_ root: XCUIElementSnapshot) {
+            var indexed: [String: XCUIElementSnapshot] = [:]
+            var books = 0
+            func visit(_ node: XCUIElementSnapshot) {
+                if !node.identifier.isEmpty && indexed[node.identifier] == nil { indexed[node.identifier] = node }
+                if node.elementType == .button && node.identifier.hasPrefix("library.book.") { books += 1 }
+                for child in node.children { visit(child) }
+            }
+            visit(root)
+            elements = indexed
+            bookCount = books
+        }
+
+        func text(_ identifier: String) -> String? {
+            guard let node = elements[identifier] else { return nil }
+            return node.label.isEmpty ? (node.value as? String) ?? "" : node.label
+        }
+    }
+
+    private func screenSnapshot() -> ScreenSnapshot? {
+        guard let snapshot = try? app.snapshot() else { return nil }
+        return ScreenSnapshot(snapshot)
     }
 
     private func element(_ identifier: String) -> XCUIElement {
@@ -57,10 +86,7 @@ final class EXReaderHostUITests: XCTestCase {
     }
 
     private func text(_ identifier: String) -> String {
-        let target = element(identifier)
-        let label = target.label
-        if !label.isEmpty { return label }
-        return (target.value as? String) ?? ""
+        screenSnapshot()?.text(identifier) ?? ""
     }
 
     private func waitUntil(_ timeout: TimeInterval, _ condition: () -> Bool) -> Bool {
@@ -96,18 +122,19 @@ final class EXReaderHostUITests: XCTestCase {
         return false
     }
 
-    private func readerIdleIdentity() -> String? {
-        guard element("reader.page").exists, !element("reader.busy").exists,
-              element("reader.next").isEnabled else { return nil }
-        let identity = [text("reader.title"), text("reader.location"), text("reader.font.value"),
-                        text("reader.state"), String(describing: element("reader.page").frame)].joined(separator: "|")
-        return element("reader.busy").exists ? nil : identity
+    private func readerIdleIdentity(_ state: ScreenSnapshot) -> String? {
+        guard let page = state.elements["reader.page"], state.elements["reader.busy"] == nil,
+              state.elements["reader.next"]?.isEnabled == true,
+              let title = state.text("reader.title"), let location = state.text("reader.location"),
+              let font = state.text("reader.font.value"), let hash = state.text("reader.state") else { return nil }
+        return "reader|" + [title, location, font, hash, String(describing: page.frame)].joined(separator: "|")
     }
 
-    private func libraryIdleIdentity() -> String? {
-        guard element("library.title").exists, !element("library.busy").exists,
-              element("library.import.epub").isEnabled else { return nil }
-        return "library|\(bookRows().count)|\(text("library.status"))"
+    private func libraryIdleIdentity(_ state: ScreenSnapshot) -> String? {
+        guard state.elements["library.title"] != nil, state.elements["library.busy"] == nil,
+              state.elements["library.import.epub"]?.isEnabled == true,
+              let status = state.text("library.status") else { return nil }
+        return "library|\(state.bookCount)|\(status)"
     }
 
     private func waitLabel(_ identifier: String, contains text: String,
@@ -132,7 +159,7 @@ final class EXReaderHostUITests: XCTestCase {
     }
 
     private func waitReaderIdle(_ timeout: TimeInterval = 45) -> Bool {
-        waitStableState(timeout) { self.readerIdleIdentity() }
+        waitStableState(timeout) { self.screenSnapshot().flatMap { self.readerIdleIdentity($0) } }
     }
 
     private func step(_ name: String, _ body: () throws -> Void) rethrows {
@@ -169,7 +196,7 @@ final class EXReaderHostUITests: XCTestCase {
             element("reader.back").tap()
         }
         _ = waitElement("library.title", 20)
-        XCTAssertTrue(waitStableState(45) { self.libraryIdleIdentity() })
+        XCTAssertTrue(waitStableState(45) { self.screenSnapshot().flatMap { self.libraryIdleIdentity($0) } })
     }
 
     private func ensureReader(_ title: String) throws {
@@ -203,7 +230,7 @@ final class EXReaderHostUITests: XCTestCase {
     }
 
     private func selectWord() {
-        XCTAssertTrue(waitUntil(10) { self.element("selection.copy").isEnabled },
+        XCTAssertTrue(waitUntil(10) { self.screenSnapshot()?.elements["selection.copy"]?.isEnabled == true },
                       "selection sheet must still own a stable frame before native word selection")
         let view = selectionTextView()
         view.tap()
