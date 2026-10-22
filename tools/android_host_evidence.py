@@ -42,6 +42,7 @@ def ownership():
     prefixes = ('examples/android/', 'tests/android_host/')
     files = {'tools/check_android_host.py', 'tools/build_android_host.py', 'tools/android_host_evidence.py',
              'tools/run_android_host_evidence.py', '.github/workflows/wp13-android.yml',
+             '.github/workflows/wp13-android-diagnostics.yml',
              'docs/WP13-ANDROID.md', 'docs/WP13-ANDROID-REVIEW.md', 'docs/validation/wp13-android-review.json'}
     require(all(name.startswith(prefixes) or name in files for name in changed), 'review changes exceed the Android package ownership')
     return {'sdk_base': SDK_BASE, 'review_base': REVIEW_BASE, 'ownership_head': boundary,

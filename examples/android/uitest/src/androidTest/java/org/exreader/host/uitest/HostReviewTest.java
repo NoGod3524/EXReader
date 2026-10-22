@@ -235,6 +235,7 @@ public final class HostReviewTest {
     }
 
     private void run(String id, Body body) throws Exception {
+        android.util.Log.i("EXRReview", "case start " + id);
         JSONObject result = new JSONObject().put("id", id).put("status", "fail");
         List<String> assertions = new ArrayList<>(); long begin = SystemClock.elapsedRealtime();
         try { body.run(assertions); result.put("status", "pass"); }
@@ -255,19 +256,32 @@ public final class HostReviewTest {
         device.executeShellCommand("am force-stop " + APP); launch(""); assertNotNull(waitId("shelf_panel", 15000));
     }
     private void launch(String flags) throws Exception {
-        device.executeShellCommand("am start -W -n " + APP + "/.MainActivity --ez exr_review true " + flags);
+        // am start -W can wait indefinitely for a failed launch; observe UI below.
+        device.executeShellCommand("am start -n " + APP + "/.MainActivity --ez exr_review true " + flags);
         assertNotNull(device.wait(Until.findObject(By.pkg(APP)), 15000));
     }
     private void configure(String flags) throws Exception {
-        device.executeShellCommand("am start -W --activity-single-top -n " + APP + "/.MainActivity --ez exr_review true " + flags);
+        device.executeShellCommand("am start --activity-single-top -n " + APP + "/.MainActivity --ez exr_review true " + flags);
         device.waitForIdle();
     }
     private void pick(String name) throws Exception {
         click("import_button");
         long deadline = SystemClock.uptimeMillis() + 30000;
         while (SystemClock.uptimeMillis() < deadline) {
-            UiObject2 file = device.findObject(By.text(name));
-            if (file != null) { file.click(); return; }
+            UiObject2 file = device.findObject(By.textContains(name));
+            if (file != null && file.isEnabled()) {
+                file.click();
+                assertTrue("picker must return to the reader", device.wait(Until.hasObject(By.pkg(APP)), 10000));
+                return;
+            }
+            // The preceding suite may leave Downloads scrolled past this file.
+            // Match the actual file list before clicking a Downloads root label.
+            if (device.hasObject(By.textContains("Files in Download"))) {
+                device.swipe(device.getDisplayWidth()/2, device.getDisplayHeight()*3/4,
+                        device.getDisplayWidth()/2, device.getDisplayHeight()/4, 24);
+                SystemClock.sleep(600);
+                continue;
+            }
             UiObject2 folder = device.findObject(By.text("Download"));
             if (folder == null) folder = device.findObject(By.text("Downloads"));
             if (folder != null) folder.click();
