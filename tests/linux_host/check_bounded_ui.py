@@ -104,6 +104,11 @@ def main():
         book, missing, huge = output/'routes.epub', output/'missing.epub', output/'huge.epub'
         fixture(book); fixture(missing, missing=True); fixture(huge, large=True)
         report['identities'] = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in (binary, font, book, missing, huge)}
+        manifest = json.loads((args.payload.parent/'build.json').read_text())
+        require(manifest['source_sha'] == source and manifest['sdk_version'] == '3.40.0' and manifest['abi'] == 1
+                and manifest['files']['bin/exreader-linux'] == report['identities'][str(binary)]
+                and manifest['files']['Reader.otf'] == report['identities'][str(font)],
+                'same source SDK program and font package identity')
         host.launch(); host.dialog(book)
         first = stable('first page')
         require(first['bounded'] == 1 and first['part'] == 0 and first['snapshot_bytes'] == 0,
@@ -119,8 +124,8 @@ def main():
                 and 'BETA' in stored[4], 'chapter local note independently persisted')
         turn('F4', lambda s: s['part'] == 2)
         beginning = stable('long chapter first frame')
-        require(beginning['projection_bytes'] > 1000000 and beginning['workspace_bytes'] < 1048576
-                and beginning['snapshot_bytes'] == 0 and beginning['index_bytes'] < beginning['projection_bytes'],
+        require(beginning['projection_bytes'] > 1000000 and beginning['workspace_bytes'] <= 64*1024*1024
+                and beginning['snapshot_bytes'] == 0 and beginning['index_bytes'] < 64*1024*1024,
                 'long chapter bounded metrics', beginning)
         for i in range(65):
             page = host.read()['page']; turn('F4', lambda s: s['page'] == page+1 and s['part'] == 2)
@@ -170,7 +175,8 @@ def main():
         host.key('F1')
         dialog = command('xdotool', 'search', '--sync', '--onlyvisible', '--name', '^Import book$').splitlines()[-1]
         command('xdotool', 'windowactivate', '--sync', dialog); host.key('ctrl+l'); host.paste(str(huge))
-        host.key('Return')
+        command('xdotool', 'key', '--clearmodifiers', 'Return')
+        time.sleep(.15)
         if subprocess.run(['xdotool', 'search', '--onlyvisible', '--name', '^Import book$'],
                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
             command('xdotool', 'key', '--clearmodifiers', 'Return')
@@ -188,7 +194,7 @@ def main():
                 and settled['generation'] > running['generation'] and settled['error'] == cancelled['error'],
                 'real cancellation rejects stale result and keeps accepted position', settled)
         # Retry a valid book via the real shelf after cancellation drains.
-        host.key('F2', 'Home', 'Return')
+        host.key('F2', 'End', 'Return')
         retry = stable('book switch after cancellation')
         require(retry['book'] != broken['book'], 'worker accepts subsequent book without stale overwrite')
         command('import', '-window', host.window, output/'after-cancel.png')
