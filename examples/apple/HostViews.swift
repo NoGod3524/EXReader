@@ -105,7 +105,7 @@ struct LibraryScreen: View {
                             }
                             .buttonStyle(.plain)
                             .accessibilityIdentifier("library.book.\(index)")
-                            .accessibilityLabel("\(book.title)，\(book.detail)")
+                            .accessibilityLabel(Text("\(book.title)，\(book.detail)"))
                         }
                     }
                     .padding(.horizontal)
@@ -186,8 +186,8 @@ struct ReaderScreen: View {
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityIdentifier("reader.page")
-                .accessibilityLabel(model.pageAccessibilityLabel)
-                .accessibilityValue(model.location)
+                .accessibilityLabel(Text(model.pageAccessibilityLabel))
+                .accessibilityValue(Text(model.location))
                 .onAppear { model.updateViewport(geometry.size) }
                 .onChange(of: geometry.size) { value in model.updateViewport(value) }
             }

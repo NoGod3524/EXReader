@@ -435,12 +435,18 @@ final class HostLibrary {
         guard let format = HostLibrary.format(forExtension: file.pathExtension) else {
             throw HostError.invalidInput("不支持的格式：\(file.pathExtension)")
         }
+        let data = try Data(contentsOf: file)
+        guard !data.isEmpty, data.count <= 32 * 1024 * 1024 else {
+            throw HostError.invalidInput("文件为空或超过 32 MiB")
+        }
         var id: Int64 = 0
         var created: Int32 = 0
         var error = exr_error()
-        try file.path.withCString { path in
+        try data.withUnsafeBytes { bytes in
             try title.withCString { name in
-                try hostCheck(exr_library_import_file_unique(handle, format, path, name, &id, &created, &error), error)
+                try hostCheck(exr_library_import_unique(handle, format, bytes.baseAddress,
+                                                        bytes.count, name, &id, &created, &error),
+                              error)
             }
         }
         return (id, created != 0)
