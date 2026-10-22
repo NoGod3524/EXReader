@@ -63,6 +63,29 @@ def main():
     check('existing note with owner outside current pack is verified and reused',
           result.code == 0 and result.rep['counts']['notes_existing'] == 1 and before == c.dump(target))
 
+    def audio_seed(name):
+        c = Ctx(args.tool, str(args.output), name)
+        book = L.entry(L.book_record('audio', 'audio.mp3', audio=True, seconds=0), L.AUDIO)
+        note = L.note_record('audio-note', 'audio', 'zero', 'bookmark comment', seconds=0, bookmark=True)
+        pack = c.pack([book], [note])
+        target = c.path('library.sqlite')
+        assert c.migrate(pack, target, '--allow-partial').code == 0
+        return c, pack, target
+
+    c, pack, target = audio_seed('zero-audio-positive')
+    check('zero audio checkpoint and bookmark verify in a new process', c.tool_run('verify', '--pack', pack, '--target', target).code == 0)
+    for mode in ('audio-resume-offset', 'audio-resume-track', 'audio-resume-rate',
+                 'audio-bookmark-remove', 'audio-bookmark-text', 'audio-bookmark-offset'):
+        c, pack, target = audio_seed(mode)
+        subprocess.run([args.editor, target, mode], check=True)
+        result = c.tool_run('verify', '--pack', pack, '--target', target)
+        check('verify rejects public API edit: ' + mode, result.code == 3 and result.codename == 'verify-failed')
+    c, pack, target = audio_seed('preserve-existing-audio')
+    subprocess.run([args.editor, target, 'audio-resume-offset'], check=True)
+    result = c.migrate(pack, target, '--allow-partial')
+    check('migration preserves an existing audio checkpoint different from legacy', result.code == 0 and c.dump(target)['audio'][0]['resume_ms'] == 250)
+    check('verification uses the registered retained audio checkpoint', c.tool_run('verify', '--pack', pack, '--target', target).code == 0)
+
     for mutation in ('retained-unlocated', 'stored-identity', 'owner', 'kind'):
         c, _, _, pack, target = seeded('ledger-' + mutation, unlocated=mutation == 'retained-unlocated')
         ledger = Path(target + '.legacy-map.json')

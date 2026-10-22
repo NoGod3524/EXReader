@@ -45,9 +45,15 @@ REVIEW_CHECK_NAMES = {
     'existing note with owner outside current pack is verified and reused',
     'verify does not create missing target', 'dump does not create missing target',
     'late cancellation refuses publication',
+    'zero audio checkpoint and bookmark verify in a new process',
+    'migration preserves an existing audio checkpoint different from legacy',
+    'verification uses the registered retained audio checkpoint',
 } | {'damaged ledger refused: ' + mode for mode in ('retained-unlocated', 'stored-identity', 'owner', 'kind')} | {
     prefix + mode for prefix in ('verify rejects public API edit: ', 'verification preserves edited library and ledger: ')
     for mode in ('reflow-text', 'fixed-text', 'fixed-range')
+} | {'verify rejects public API edit: ' + mode for mode in (
+    'audio-resume-offset', 'audio-resume-track', 'audio-resume-rate',
+    'audio-bookmark-remove', 'audio-bookmark-text', 'audio-bookmark-offset')
 } | {prefix + mode for prefix in ('publication preserves concurrent change: ', 'no stage or lock left: ')
      for mode in ('ledger-content', 'ledger-created', 'target-created')}
 NOT_EXECUTED = [
