@@ -273,6 +273,7 @@ def database_state(root, environment):
         actual = {row[0]: row[1:] for row in con.execute('SELECT id,title,position FROM books')}
         seen = set()
         parts, notes = [], []
+        current_frame = None
         bounded_ids = {r[0] for r in con.execute('SELECT book_id FROM epub_bounded_books')}
         routes = {}
         for key, format_id, original, title, extent, position in con.execute('SELECT id,format,source,title,text_size,position FROM books'):
@@ -327,9 +328,17 @@ def database_state(root, environment):
                             require((note.get('start'), note.get('end')) == record[2:4], 'resolved EPUB range mismatch')
                 if bounded:
                     require(book.get('part') in range(len(routes[key])) and routes[key][book['part']] == book.get('path'), 'current frame route mismatch')
+                    require(isinstance(book.get('reading_offset'), int) and book['reading_offset'] >= 0, 'current frame offset missing')
+                    require(isinstance(book.get('unresolved_progress'), bool), 'current frame recovery state missing')
+                    if not book['unresolved_progress']:
+                        require(saved is not None and saved[:3] == (book['part'], book['path'], book['reading_offset']),
+                                'accepted frame and persisted chapter point differ')
+                    current_frame = 'f%s:%s:%s:%s' % (key, book['part'], book['path'], book['reading_offset'])
                     memory = book.get('bounded_memory', {})
                     require(memory.get('explicit_snapshot_bytes') == 0 and memory.get('peak_parse_workspace_bytes', 1 << 60) <= 16 * 1024 * 1024 and
                             memory.get('swift_page_text_bytes', 1 << 60) <= 2 * 1024 * 1024, 'bounded frame memory contract missing')
+        if current_frame is not None:
+            parts.append(current_frame)
         parts.extend('n%s:%s:%s:%s:%s:%s:%s:%s' % (n['storage'], n['id'], n['part'], n['path'], n['page'], n['start'], n['state'], n['comment']) for n in notes)
         require(state.get('state_hash') == hashlib.sha256('|'.join(parts).encode()).hexdigest()[:8],
                 'host state hash mismatch')

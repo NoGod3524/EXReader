@@ -31,11 +31,15 @@ def main():
                '-Xlinker', '-rpath', '-Xlinker', str(sdk/'lib'),
                *[str(ROOT/p) for p in sources], '-o', str(out/'bounded-review')]
     with (out/'compile.log').open('w') as log:
-        subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=180)
+        compiled = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, timeout=180)
+    if compiled.returncode:
+        print((out/'compile.log').read_text(), flush=True)
+        raise SystemExit(compiled.returncode)
     result = subprocess.run([sys.executable, __file__, '--measure-child', str(out/'bounded-review'), str(fixtures), str(out/'consumer'), str(out/'run.log')],
                             capture_output=True, text=True, timeout=920)
     report = load(out/'consumer/bounded-review.json')
     checks = report.get('checks', [])
+    print(json.dumps({'bounded_checks': checks, 'exit_code': result.returncode}), flush=True)
     require(result.returncode == 0 and report.get('accepted') is True and
             [c.get('name') for c in checks] == BOUNDED_CHECKS and all(c.get('passed') is True for c in checks),
             'bounded consumer failed or omitted checks')

@@ -399,7 +399,8 @@ final class HostSession {
     func jump(to note: HostNoteRow, cancel: HostCancelBox) throws -> HostSnapshot {
         try changing(cancel) {
             guard note.bookID == book?.id else { throw HostError.invalidInput("标注已不属于当前书籍") }
-            guard let stored = try notes().first(where: { $0.id == note.id && $0.page == note.page && $0.storage == note.storage }), stored.isResolved else {
+            guard let stored = try notes().first(where: { $0.id == note.id && $0.page == note.page && $0.storage == note.storage }),
+                  stored.isResolved || (stored.location != nil && stored.state == "待定位") else {
                 throw HostError.invalidInput("该标注无法精确恢复")
             }
             if let location = stored.location, let publication {
@@ -448,6 +449,7 @@ final class HostSession {
                 parts.append("p\(book.id):\(saved.part):\(saved.path):\(saved.raw.selector.start)")
             }
         }
+        if publication != nil, let book { parts.append("f\(book.id):\(part):\(currentPath):\(readingOffset)") }
         for note in try notes() {
             parts.append("n\(note.storage):\(note.id):\(note.location?.part ?? -1):\(note.location?.path ?? ""):\(note.page):\(note.start):\(note.state):\(note.comment)")
         }
