@@ -1,0 +1,14 @@
+{
+  "metadata": {"title": "Grouped"},
+  "links": [{"rel": "self", "href": "groups.json", "type": "application/opds+json"}],
+  "navigation": [{"href": "/o2/all?page=1", "title": "Top Nav", "type": "application/opds+json"}],
+  "groups": [
+    {"metadata": {"title": "Featured"}, "publications": [
+      {"metadata": {"title": "Featured One"}, "links": [{"rel": "http://opds-spec.org/acquisition/open-access", "href": "/dl/book.epub", "type": "application/epub+zip"}]}
+    ]},
+    {"metadata": {"title": "Browse"}, "navigation": [
+      {"href": "/o2/all?page=1", "title": "Group Nav", "type": "application/opds+json", "rel": "subsection"}
+    ]}
+  ],
+  "facets": [{"metadata": {"title": "Language"}, "links": [{"href": "/o2/all?lang=en", "title": "English"}]}]
+}

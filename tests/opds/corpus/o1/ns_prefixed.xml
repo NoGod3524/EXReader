@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<a:feed xmlns:a="http://www.w3.org/2005/Atom" xmlns:d="http://purl.org/dc/elements/1.1/" xmlns:o="http://opds-spec.org/2010/catalog">
+  <a:id>urn:ns</a:id><a:title>Prefixed</a:title><a:updated>2026-01-01T00:00:00Z</a:updated>
+  <a:entry><a:title>Pref Book</a:title><a:id>urn:ns:1</a:id><d:identifier>urn:isbn:1</d:identifier><d:language>de</d:language>
+    <a:author><a:name>A. Author</a:name></a:author>
+    <a:link rel="http://opds-spec.org/acquisition" href="/dl/book.epub" type="application/epub+zip"/>
+  </a:entry>
+</a:feed>

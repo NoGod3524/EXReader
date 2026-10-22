@@ -1,0 +1,55 @@
+name: WP15 OPDS client
+on:
+  push:
+    branches: ['codex/wp15-opds']
+    paths:
+      - 'extras/opds/**'
+      - 'tests/opds/**'
+      - 'tools/check_opds.py'
+      - 'docs/WP15-OPDS.md'
+      - '.github/workflows/wp15-opds.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  BASELINE: a2552d7feb786cd2345d2b0b3eb894777b3254db
+  HANDOFF: feda26381a7b05c6a1ce3db91a440ca0094e06c5
+jobs:
+  opds:
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build and install the unmodified core SDK from this checkout
+        run: |
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AUDIO=OFF -DEXR_ENABLE_LIBRARY=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/sdk --config Release --parallel 4
+          cmake --install build/sdk --config Release --prefix stage
+      - name: Build the OPDS module, consumer example and acceptance driver against the installed SDK
+        run: |
+          cmake -S extras/opds -B build/opds -DEXR_SDK="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/opds --config Release --parallel 4
+      - name: Run the fixed local service, acceptance cases and consumer example
+        shell: bash
+        run: |
+          libs=$(find stage/lib -maxdepth 1 -type f \( -name '*.a' -o -name '*.lib' \) | sort | tr '\n' ' ')
+          python tools/check_opds.py --build build/opds --repo . --out build/wp15-evidence --base "$BASELINE" --handoff "$HANDOFF" --identity $libs
+      - name: Preserve evidence and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wp15-opds-${{ runner.os }}
+          path: |
+            build/wp15-evidence/*.json
+            build/wp15-evidence/*.jsonl
+            build/wp15-evidence/*.txt
+          if-no-files-found: warn

@@ -1,0 +1,24 @@
+{
+  "metadata": {"title": "Acquisition Variants"},
+  "links": [],
+  "publications": [
+    {"metadata": {"title": "Open Book"}, "links": [
+      {"rel": "http://opds-spec.org/acquisition/open-access", "href": "/dl/book.pdf", "type": "application/pdf"},
+      {"rel": "http://opds-spec.org/acquisition/open-access", "href": "/dl/book.epub", "type": "application/epub+zip"}]},
+    {"metadata": {"title": "Sample Only"}, "links": [
+      {"rel": "http://opds-spec.org/acquisition/sample", "href": "/dl/book.epub", "type": "application/epub+zip"}]},
+    {"metadata": {"title": "Borrow Book"}, "links": [
+      {"rel": "http://opds-spec.org/acquisition/borrow", "href": "/borrow/3", "type": "application/opds-publication+json"}]},
+    {"metadata": {"title": "LCP Book"}, "links": [
+      {"rel": "http://opds-spec.org/acquisition", "href": "/dl/book.lcpl", "type": "application/vnd.readium.lcp.license.v1.0+json"}]},
+    {"metadata": {"title": "Adept Book"}, "links": [
+      {"rel": "http://opds-spec.org/acquisition", "href": "/dl/adept.acsm", "type": "application/vnd.adobe.adept+xml",
+       "properties": {"indirectAcquisition": [{"type": "application/epub+zip"}]}}]},
+    {"metadata": {"title": "Priced Book"}, "links": [
+      {"rel": "http://opds-spec.org/acquisition/buy", "href": "/buy/6", "type": "application/epub+zip",
+       "properties": {"price": {"currency": "USD", "value": 9.99}}}]},
+    {"metadata": {"title": "Priced Generic"}, "links": [
+      {"rel": "http://opds-spec.org/acquisition", "href": "/dl/book.epub", "type": "application/epub+zip",
+       "properties": {"price": {"currency": "EUR", "value": 1}}}]}
+  ]
+}
