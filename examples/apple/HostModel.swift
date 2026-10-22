@@ -93,7 +93,11 @@ final class HostSession {
 
     func listBooks() throws -> [HostBookRow] {
         try library.books().map { book in
-            let detail = "\(book.formatLabel) · 位置 \(book.position)"
+            let detail: String
+            if try library.isBoundedEPUB(book: book) {
+                if let saved = try library.epubProgress(bookID: book.id) { detail = "EPUB · 第 \(saved.part + 1) 章" }
+                else { detail = "EPUB · 有界章节阅读" }
+            } else { detail = "\(book.formatLabel) · 位置 \(book.position)" }
             return HostBookRow(id: book.id, title: book.title.isEmpty ? "未命名书籍" : book.title,
                                detail: detail, isFixed: book.isFixed, position: book.position)
         }
@@ -344,12 +348,6 @@ final class HostSession {
         return snippet.isEmpty ? "第 \(page) 页" : "第 \(page) 页：\(snippet)"
     }
 
-    private func slice(_ data: Data, _ range: Range<Int>) -> String {
-        guard range.lowerBound >= 0, range.upperBound <= data.count,
-              range.lowerBound <= range.upperBound else { return "" }
-        return String(decoding: data[range], as: UTF8.self)
-    }
-
     func notes() throws -> [HostNoteRow] {
         guard let book else { return [] }
         if let fixed { return try library.fixedNotes(bookID: book.id, fixed: fixed) }
@@ -388,20 +386,20 @@ final class HostSession {
     func deleteNote(_ note: HostNoteRow, cancel: HostCancelBox) throws {
         try begin(cancel)
         guard note.bookID == book?.id else { throw HostError.invalidInput("标注已不属于当前书籍") }
-        guard try notes().contains(where: { $0.id == note.id && $0.page == note.page }) else {
+        guard let stored = try notes().first(where: { $0.id == note.id && $0.page == note.page && $0.storage == note.storage }) else {
             throw HostError.invalidInput("标注已不属于当前书籍")
         }
         try cancel.commit {
-            if note.location != nil { try library.removeEPUBNote(noteID: note.id) }
-            else if note.page >= 0 { try library.removeFixedNote(noteID: note.id) }
-            else { try library.removeNote(noteID: note.id) }
+            if stored.location != nil { try library.removeEPUBNote(noteID: stored.id) }
+            else if stored.page >= 0 { try library.removeFixedNote(noteID: stored.id) }
+            else { try library.removeNote(noteID: stored.id) }
         }
     }
 
     func jump(to note: HostNoteRow, cancel: HostCancelBox) throws -> HostSnapshot {
         try changing(cancel) {
             guard note.bookID == book?.id else { throw HostError.invalidInput("标注已不属于当前书籍") }
-            guard let stored = try notes().first(where: { $0.id == note.id && $0.page == note.page }), stored.isResolved else {
+            guard let stored = try notes().first(where: { $0.id == note.id && $0.page == note.page && $0.storage == note.storage }), stored.isResolved else {
                 throw HostError.invalidInput("该标注无法精确恢复")
             }
             if let location = stored.location, let publication {

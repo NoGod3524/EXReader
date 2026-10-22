@@ -454,8 +454,8 @@ final class HostPager {
 
     func makeAnchor(start: Int, end: Int, cancel: HostCancelBox? = nil) throws -> HostAnchor {
         try bind(cancel)
-        // This host creates snapshot pagers. The pager_anchor_* APIs are only
-        // valid for the separate bounded chapter entry, not exr_pager_create.
+        // Snapshot pagers retain document selectors; bounded pagers use only
+        // their chapter query entry points.
         if let document { return try document.makeAnchor(start: start, end: end, cancel: box) }
         var anchor = exr_anchor(), error = exr_error(), control = hostControl(box)
         try hostCheck(exr_pager_anchor_create(pager, start, end, &control, &anchor, &error), error)
@@ -891,7 +891,9 @@ final class HostLibrary {
             // slot so notes_free cannot free the strings a second time.
             let location = HostEPUBLocation(adopting: list[i].location)
             list[i].location = exr_epub_location()
-            let match = location.part == part ? try pager.resolveLocation(location, cancel: cancel) : nil
+            let match: HostAnchorMatch?
+            if location.part == part { match = try pager.resolveLocation(location, cancel: cancel) }
+            else { match = nil }
             rows.append(HostNoteRow(id: list[i].id, bookID: list[i].book_id,
                                     quote: hostString(location.raw.selector.exact), comment: hostString(list[i].text),
                                     page: -1, start: match?.range?.lowerBound ?? Int.max,
