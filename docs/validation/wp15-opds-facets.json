@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "package": "WP15-OPDS-facets",
+  "recorded_at_utc": "2026-10-22T16:39:00Z",
+  "source": "757e2f33271b358715ea8f83f44a3c779ad660e8",
+  "branch": "codex/wp15-catalog-features",
+  "run_id": 39815167314,
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/39815167314",
+  "accepted": false,
+  "state": "pending_github_final_conclusions",
+  "observed_cloud_logs": {
+    "linux": {
+      "job_id": 119951700328,
+      "acceptance_cases": {
+        "passed": 65,
+        "failed": 0
+      },
+      "facet_ctest": "1/1 passed",
+      "facet_asan_ubsan_ctest": "1/1 passed",
+      "orchestrator_result": "passed"
+    },
+    "windows": {
+      "job_id": 119951699726,
+      "acceptance_cases": {
+        "passed": 65,
+        "failed": 0
+      },
+      "facet_ctest": "1/1 passed",
+      "orchestrator_result": "passed"
+    }
+  },
+  "github_metadata_at_observation": {
+    "run_status": "queued",
+    "conclusion": null,
+    "jobs": [
+      {
+        "id": 119951700328,
+        "status": "queued",
+        "conclusion": null
+      },
+      {
+        "id": 119951699726,
+        "status": "queued",
+        "conclusion": null
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "id": 12442331530,
+      "name": "wp15-opds-Windows",
+      "bytes": 17983,
+      "source": "757e2f33271b358715ea8f83f44a3c779ad660e8",
+      "digest": "sha256:fed74bb14e8473db121457eda8137aa26cc05f68c312e137ceb38333948d4d42",
+      "expired": false
+    },
+    {
+      "id": 12441717141,
+      "name": "wp15-opds-Linux",
+      "bytes": 17579,
+      "source": "757e2f33271b358715ea8f83f44a3c779ad660e8",
+      "digest": "sha256:68d789361bc7be2467c68eb46ff426c3f62b26666e5d4c0071e2136c3bcf8e3c",
+      "expired": false
+    }
+  ],
+  "evidence_method": "Read GitHub job logs and artifact metadata; no artifact download, local test execution or local evidence reaggregation.",
+  "prior_runs": [
+    {
+      "run_id": 39814364498,
+      "source": "5c7d8d3ebe7298f113ac71a0108d74c477649bfe",
+      "scope": "Initial release facet coverage, retained separately."
+    },
+    {
+      "run_id": 39814703030,
+      "source": "86d7a1483bdbc596b9cc2b1d21519746b9886295",
+      "observed": "Linux release passed; UBSan rejected empty XML text handling. Failure retained and fixed in final candidate."
+    }
+  ],
+  "scope": {
+    "implemented": [
+      "OPDS1 facetGroup/activeFacet/thr:count",
+      "OPDS2 facets/self/properties.numberOfItems",
+      "Borrowed facet query without changes to existing public model sizes",
+      "Group/choice budgets, malformed input cleanup, network facet navigation"
+    ],
+    "not_completed": [
+      "HTTPS transport",
+      "Indirect acquisition resolution",
+      "Borrow/payment/DRM/LCP",
+      "Host UI integration",
+      "Full WP15"
+    ]
+  },
+  "completion_rule": "Require both final job conclusions and run conclusion success at this source with valid same-run artifacts. Old source results do not substitute."
+}
