@@ -11,7 +11,7 @@ acceptance and does not include migration, OPDS, TTS or other platform hosts.
 - SDK: 3.40.0 (core 3.39.0, ABI 1, library schema 7) consumed from an installed prefix.
 - H8 initial SDK candidate: `96c4f2c035a737ccf3f5be890d127d6efdd946f8`;
   final SDK candidate and host source must receive their own cloud results.
-- Current development SDK candidate: `6f0d7592ea431394d175d221b04b054facf4a26c`
+- Current final SDK candidate: `ce5d664c9f76d0613df6d79b27568a7039c4a81e`
   (merged without changing public APIs; full native SDK acceptance remains pending).
 - Source: `examples/reader.c` (Win32, one translation unit) with an independent
   consumer build in `examples/windows/`.
