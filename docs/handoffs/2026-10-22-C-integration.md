@@ -1,7 +1,13 @@
 # 包 C：SDK 预集成、合法基线与同源联合验收
 
+最新登记：阶段一/二已完成，K=`4729f7fc7d908d249704d96ee61cc74ee778a27f`，
+native/acroform/spacing 同源分别 7/3/2 作业成功，基线门禁自验通过；证据见 [项目概述](../PROJECT_OVERVIEW.md)。
+下面阶段一/二保留实现要求，勿重复预集成；阶段三/四等待 A/B 最新固定交付。
+当前组合仍需 12 组/33 上游作业。未来核心/可选组件发布门禁拆分由 [R6](../CORE-ROADMAP.md) 实现并验证，
+本次文档不改变现有组合通过条件。
+
 供独立 AI 执行的任务说明。用户把本文件交给你要求执行时，负责本包与最终汇合；A 修 Android，B 补 AcroForm 文档语料。
-你现在就可以准备和预集成，最终源码冻结与完整验收等 A/B 的固定交付。此前限时轮次已结束，本文件编制时未恢复工程工作。
+阶段一/二已有交付，后续只接续阶段三/四；最终源码冻结与完整验收等 A/B 的固定交付。
 
 ## 工作树与输入
 
@@ -18,9 +24,10 @@
 | `codex/wp15-catalog-features` | `47d8fda0bea9aca6eb1f3f595344b31c0ec51d08` | `757e2f33271b358715ea8f83f44a3c779ad660e8` | `39815167314`：双平台各 65/65、facet 与 Linux sanitizer 通过 |
 | `codex/wp13-android-review` | `05048cccd84532509e0d6039feb3b7769824ec1a` | `ac7aecc4d3c2e6e65a6797ab556cd31546ca3a5c` | `39816104855` 最终 failure；等待 A 的新通过交付 |
 
-上述包尚未联合纳入本分支。文档 HEAD 与实际受测源码分开，不把独立旧运行当作共同源码验收。
+上表为原交接输入；AcroForm 基础、spacing、Apple 已纳入 K，Android/OPDS 等待后续冻结顺序。
+文档 HEAD 与实际受测源码分开，不把独立旧运行当作共同源码验收。
 
-## 阶段一：不用等待 A/B 即可开始
+## 阶段一：已完成要求记录
 
 1. 读取 `docs/PARALLEL-INTEGRATION.md`、本次总 handoff 和各包 review/validation，核对 ancestry 与干净状态。
    优先保留原提交历史；兼容语料首次登记 `00a8838cf6089e67a730ca6fd4956cb45d09c27d` 必须仍为祖先。
@@ -32,7 +39,7 @@
 
 本阶段可交付可复现的预集成 SDK 候选及通过/失败记录，不必等待 Android 修完才做这些工作。
 
-## 阶段二：新的 SDK 基线必须有证据
+## 阶段二：已完成基线要求记录
 
 多个可选包/宿主的旧 SDK 保护规则以 `a2552d7feb786cd2345d2b0b3eb894777b3254db` 为基线，
 Android/OPDS 明确核对 `src/include/bindings/cmake/CMakeLists.txt` 等树。合入 AcroForm/CSS 后这些树会合法改变。
@@ -58,7 +65,7 @@ Android 的 `ANDROID_OWNERSHIP_HEAD` 只用于固定宿主变更审计终点，�
 
 ## 阶段四：共同源码云端验收
 
-现有 `tools/check_parallel_integration.py` 要求十组、28 个上游作业：
+当前 `tools/check_parallel_integration.py` 要求原十组 28 作业及两组补充作业，共 12 组、33 个上游作业：
 
 | key | workflow | jobs |
 | --- | --- | ---: |
@@ -72,12 +79,14 @@ Android 的 `ANDROID_OWNERSHIP_HEAD` 只用于固定宿主变更审计终点，�
 | opds | `wp15-opds.yml` | 2 |
 | apple | `wp13-apple.yml` | 8 |
 | android | `wp13-android.yml` | 1 |
+| acroform | `acroform.yml` | 3 |
+| spacing | `wp5-border-spacing.yml` | 2 |
 
 这些工作流全部跑同一 S。确保 native 或补充的同源检查实际执行 AcroForm/spacing/B 新语料及所需 sanitizer，
 不能让原十组形式成功却漏掉新能力验证。若增加专用同源工作流，单独登记它与 S 的身份，保留上述十组完整门槛。
 
 所有生产者成功后，云端 dispatch `.github/workflows/parallel-integration.yml`，
-`source_sha=S`，`runs_json` 为十个 key 对应的实际 run ID；不指定执行端本地汇总。
+`source_sha=S`，`runs_json` 为上述十二个 key 对应的实际 run ID；不指定执行端本地汇总。
 只运行 protocol/selftest 的成功不能授予联合验收。
 
 严格条件：run 和每个 job 同源、完整计数、全部 success；工件同 run/source、非空、未过期且有有效 digest；
