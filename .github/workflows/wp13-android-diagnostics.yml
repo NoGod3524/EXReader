@@ -19,12 +19,12 @@ jobs:
           import hashlib, io, json, os, re, urllib.error, urllib.parse, urllib.request, zipfile
           from pathlib import Path, PurePosixPath
           API = 'https://api.github.com/repos/NoGod3524/EXReader'
-          RUN = 39822511089
-          SOURCE = '376f06f851cf1aa107eb71b871432d8454455e6e'
-          JOB = 119977177884
-          ARTIFACT = 12445263129
-          SIZE = 149651194
-          DIGEST = 'sha256:0c258b21073c9fa71e233b66ddf63eac00c8c8b382cf51a2e05d51edd160de69'
+          RUN = 39829911895
+          SOURCE = '9f6a23d836baa0e85b8c062fe708ebcd624cc147'
+          JOB = 120003000158
+          ARTIFACT = 12449107276
+          SIZE = 149413622
+          DIGEST = 'sha256:051d88208e0b62ca5d2de1d6069a4c3b3ac0afcd8b8c25e3f9230c25d938ba00'
           HEADERS = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json',
                      'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'EXReader-cloud-diagnostic'}
           def require(value, message):
