@@ -1,0 +1,49 @@
+name: WP13 Linux native host
+on:
+  push:
+    branches: [codex/wp13-linux-host]
+    paths:
+      - 'examples/linux/**'
+      - 'tools/build_linux_host.py'
+      - 'tools/check_linux_host.py'
+      - 'tests/linux_host/**'
+      - '.github/workflows/wp13-linux.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  host:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native desktop and UI input tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev at-spi2-core xvfb openbox xdotool xclip x11-utils imagemagick python3-pil
+      - name: Build and install frozen public SDK
+        run: |
+          cmake -S . -B build/linux-sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_LIBRARY=ON -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
+          cmake --build build/linux-sdk --parallel 4
+          cmake --install build/linux-sdk --prefix "$PWD/build/linux-stage"
+      - name: Compile and package installed SDK consumer
+        run: python3 tools/build_linux_host.py --sdk build/linux-stage --output build/linux-host
+      - name: Twenty real desktop operations and lifecycle checks
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox >build/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tools/check_linux_host.py --payload build/linux-host/EXReader-Linux --output build/linux-host-evidence
+          '
+      - name: Preserve application, screenshot and per-operation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: WP13-Linux-${{ github.sha }}
+          path: |
+            build/linux-host/build.json
+            build/linux-host/EXReader-Linux.tar.gz
+            build/linux-host-evidence/
+            build/openbox.log
+          if-no-files-found: error
