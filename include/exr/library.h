@@ -135,7 +135,10 @@ EXR_API exr_status exr_library_import_file(exr_library *library,exr_format forma
 EXR_API exr_status exr_library_import_file_unique(exr_library *library,exr_format format,const char *path,
                                                   const char *title,int64_t *id,int *created,exr_error *error);
 /* Fixed reader over the stored original. CBZ pages are read on demand through
-   SQLite blob I/O. PDF bytes are paged into an anonymous mapping and parsed
+   exr_library_source and retain its library owner after exr_library_close.
+   Metadata/progress writes through that owner preserve the open reader;
+   deleting its book or a commit through another connection invalidates the
+   source and requires reopening the reader. PDF bytes are paged into an anonymous mapping and parsed
    there, so the book is not materialized as one heap buffer. Falls back to
    EXR_UNSUPPORTED for formats without a streaming fixed reader. */
 EXR_API exr_status exr_library_fixed_source(exr_library *library,int64_t id,const exr_fixed_open_options *options,
