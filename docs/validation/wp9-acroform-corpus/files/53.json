@@ -1,0 +1,12 @@
+{
+ "base": "53-reject-pushbutton.pdf",
+ "id": "53",
+ "category": "reject/pushbutton",
+ "expect": "reject",
+ "size": 585,
+ "sha256": "0772c8b58ff16a1c62e06ea25081edcac7e00a8e403dcc362d3c7aec644bc73d",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

@@ -1,0 +1,12 @@
+{
+ "base": "59-reject-invalid-utf8.pdf",
+ "id": "59",
+ "category": "reject/encoding",
+ "expect": "reject",
+ "size": 663,
+ "sha256": "e1aea77071a8042ee7092c8ae97d33c495abcfc8874426b43c920e8cac22127a",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

@@ -1,0 +1,12 @@
+{
+ "base": "18-radio-two-pages.pdf",
+ "id": "18",
+ "category": "radio/multipage",
+ "expect": "accept",
+ "size": 1696,
+ "sha256": "8adfd4774277aa1d8167a5ff71395c9089516a2b844ffea96ea4896e67ea8169",
+ "edited_sha256": "c1df71c7d03c35306041cf5ff3db5dbf88d8020e79302c893518f9b912733de3",
+ "assertions": 38,
+ "result": "pass",
+ "failures": []
+}

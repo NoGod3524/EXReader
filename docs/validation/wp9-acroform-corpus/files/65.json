@@ -1,0 +1,12 @@
+{
+ "base": "65-cancel-entry.pdf",
+ "id": "65",
+ "category": "cancel/entry",
+ "expect": "cancel",
+ "size": 663,
+ "sha256": "e647a086fb1a40dbe1f06afe851fb8715c43b8d6f84f13e80f100c80b1db977e",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

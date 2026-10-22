@@ -1,0 +1,12 @@
+{
+ "base": "51-reject-radio-notoggle.pdf",
+ "id": "51",
+ "category": "reject/radio-notoggle",
+ "expect": "reject",
+ "size": 1584,
+ "sha256": "c938b2aaeb18fa3b506442558d0f51c77e1fc5efdf2d33ac843f48c5b835e8c9",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

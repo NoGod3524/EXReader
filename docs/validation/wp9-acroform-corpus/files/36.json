@@ -1,0 +1,12 @@
+{
+ "base": "36-reject-readonly.pdf",
+ "id": "36",
+ "category": "reject/readonly",
+ "expect": "reject",
+ "size": 669,
+ "sha256": "a2934981b4fa0e8c02e9677f1d4655fc92f9401138566afd4448d095eceb0b3a",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

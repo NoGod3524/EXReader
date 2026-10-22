@@ -1,0 +1,12 @@
+{
+ "base": "22-choice-combo.pdf",
+ "id": "22",
+ "category": "choice/combo",
+ "expect": "accept",
+ "size": 623,
+ "sha256": "eeec614e9789369e02a2536a6b889d3e3d440f0d59d802fb9acb72f1540beae6",
+ "edited_sha256": "b1b2c48771d63695a35a01c13389bdaa373dfe286d185211e0ea4a3d59428162",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}
