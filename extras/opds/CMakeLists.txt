@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.24)
 #   cmake -S extras/opds -B build/opds [-DEXR_SDK=<installed SDK prefix>]
 # Without EXR_SDK only the network-free client library is built; with it the SDK glue,
 # the consumer example and the acceptance driver are built against the installed SDK.
-project(EXReaderOPDS VERSION 0.1.0 LANGUAGES C)
+project(EXReaderOPDS VERSION 0.2.0 LANGUAGES C)
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   add_compile_options(/utf-8)
@@ -19,6 +19,11 @@ endif()
 if(NOT MSVC)
   target_compile_options(opds PRIVATE -Wall -Wextra -Wno-unused-parameter)
 endif()
+
+enable_testing()
+add_executable(opds-facet-test ../../tests/opds/facet_test.c)
+target_link_libraries(opds-facet-test PRIVATE opds)
+add_test(NAME opds-facets COMMAND opds-facet-test "${CMAKE_BINARY_DIR}/facet-result.json")
 
 if(EXR_SDK)
   list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")

@@ -93,6 +93,7 @@ def main():
     test_exe = find_binary(a.build, "opds-test", a.config)
     cons_exe = find_binary(a.build, "opds-consume", a.config)
     publish_exe = find_binary(a.build, "opds-publish-fault-test", a.config)
+    facet_exe = find_binary(a.build, "opds-facet-test", a.config)
     ports_file = os.path.join(out, "ports.json")
     log_file = os.path.join(out, "server-requests.jsonl")
     server = subprocess.Popen([sys.executable, os.path.join(repo, "tests", "opds", "server.py"),
@@ -265,8 +266,18 @@ def main():
     rc, head, _ = git(repo, "rev-parse", "HEAD")
     ident.update(head=head, base=a.base, sdk_version=ver, sdk_abi=abi, trees=trees)
 
+    # Facet model is tested by CTest in the same job before this orchestrator.
+    try:
+        with open(os.path.join(a.build, "facet-result.json"), encoding="utf-8") as f:
+            facets = json.load(f)
+    except (OSError, ValueError):
+        facets = {}
+    check("facet_model_passed", facets.get("passed") is True and facets.get("failures") == 0
+          and isinstance(facets.get("checks"), int) and facets["checks"] >= 70)
+    report["facets"] = facets
+
     # ---- runtime identity ----
-    files = [test_exe, cons_exe, publish_exe] + [p for p in a.identity if os.path.isfile(p)]
+    files = [test_exe, cons_exe, publish_exe, facet_exe] + [p for p in a.identity if os.path.isfile(p)]
     ident["files"] = {os.path.basename(p): {"sha256": sha256_file(p), "bytes": os.path.getsize(p)} for p in files}
     ident["runner"] = {"os": platform.platform(), "machine": platform.machine(), "python": platform.python_version(),
                        "github_run_id": os.environ.get("GITHUB_RUN_ID", ""), "github_job": os.environ.get("GITHUB_JOB", ""),
