@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "date": "2026-10-21",
+  "package": "WP16-D",
+  "scope": "Release documentation and SDK consistency review",
+  "baseline_commit": "a2552d7feb786cd2345d2b0b3eb894777b3254db",
+  "engine_evidence_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+  "branch": "codex/wp16-doc-audit",
+  "result": "confirmed_documentation_errors_corrected",
+  "findings": [
+    {
+      "id": "D1",
+      "document": "docs/SUPPORT_MATRIX.md",
+      "correction": "Complete-package named public exports: 316 to 324; all 316 previous names retained and eight bounded chapter functions added.",
+      "sources": ["include/exr/layout.h", "docs/validation/2026-10-20-wp6-window-reader.json"],
+      "source_review": "324 distinct EXR_API function declarations in include/exr/*.h; archived public_exports comparison records baseline_count=316, candidate_count=324, removed=[]."
+    },
+    {
+      "id": "D2",
+      "document": "docs/SUPPORT_MATRIX.md",
+      "correction": "Replace unqualified 163-test current count with configuration-specific recorded results: Windows GCC default and optional-image-codecs-off, both with fuzz, 169/169; Linux ASan/UBSan 159/159. Remove stale hard-coded hyphen/table family counts.",
+      "sources": ["CMakeLists.txt", "docs/validation/2026-10-21-png-reliability.json"]
+    },
+    {
+      "id": "D3",
+      "document": "docs/SUPPORT_MATRIX.md",
+      "correction": "Separate existing native reference applications, marked partial, from unsupported platform embedding/TTS/accessibility/OPDS/LCP. Preserve simulator versus physical-device and complete-lifecycle boundaries.",
+      "sources": ["examples/reader.c", "examples/apple/ReaderApp.swift", "docs/validation/2026-10-20-native-hosts.json", "docs/validation/2026-10-20-wp6-window-reader.json"]
+    },
+    {
+      "id": "D4",
+      "document": "docs/HANDOFF-NEXT.md",
+      "correction": "Add current 3.40.0/core3.39.0/PDF3.38.3 entry and classify the retained 3.38.0, 143-test, 306-export narrative and local commands as historical. Current execution remains cloud-only.",
+      "sources": ["include/exr/base.h", "cmake/versions.cmake", "docs/WP6-BOUNDED-READER.md", "docs/validation/2026-10-21-png-reliability.json"]
+    },
+    {
+      "id": "D5",
+      "document": "docs/SUPPORT_MATRIX.md",
+      "correction": "State the WP7 fixed scope precisely: eight declared scripts, 50 real-font plus 50 synthetic-font sequences per script, 800 total reference cases.",
+      "sources": ["docs/WP7-SCRIPTS.md", "docs/validation/2026-10-20-wp7-integration.json"]
+    },
+    {
+      "id": "D6",
+      "document": "docs/SUPPORT_MATRIX.md",
+      "correction": "Distinguish the 65,536-byte I/O chunk from the recorded 4,657,152-byte additional private peak in the 1 GiB CBZ measurement; preserve the 2 GiB minus one byte stored-original boundary.",
+      "sources": ["docs/validation/wp12a-streaming.json", "docs/SDK_COMPATIBILITY.md"]
+    },
+    {
+      "id": "D7",
+      "document": "docs/SDK_COMPATIBILITY.md",
+      "correction": "Add current SDK/export context and mark the 3.33.1 package section as historical rather than claiming the current tree reports that version.",
+      "sources": ["include/exr/base.h", "cmake/versions.cmake", "docs/validation/2026-10-20-wp6-window-reader.json"]
+    },
+    {
+      "id": "D8",
+      "document": "docs/SUPPORT_MATRIX.md",
+      "correction": "Point current tests/sanitizer claims to 3.40.0 evidence and retain 3.39.0 joint-integration records as historical. Keep WP6 accepted and WP16 incomplete as separate states.",
+      "sources": ["docs/validation/2026-10-20-wp6-window-reader.json", "docs/validation/2026-10-21-png-reliability.json"]
+    }
+  ],
+  "verification": {
+    "method": "Local source/document review and Git diff review only; no executable validation",
+    "new_local_builds_or_tests": false,
+    "local_campaigns_or_polling": false,
+    "downloads_or_local_reaggregation": false,
+    "existing_acceptance_records_modified": false,
+    "new_cloud_workflow_dispatched": false,
+    "recorded_cloud_validation": {
+      "evidence": "docs/validation/2026-10-21-png-reliability.json",
+      "source_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+      "native_run": 39614694252,
+      "jobs_passed": 7,
+      "linux_sanitizer_tests_passed": 159,
+      "note": "Existing recorded engine validation, not a new run of this documentation branch."
+    }
+  },
+  "remaining": {
+    "wp16_accepted": false,
+    "campaign_status_at_baseline": "in_progress",
+    "campaign_run": 39666440519,
+    "campaign_source": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+    "condition": "Await the same-source 96 shards and GitHub strict summary; do not transfer earlier-source CPU time.",
+    "other_product_boundaries": "Full WP12, platform embedding, lifecycle/accessibility acceptance and physical-device installation retain their existing open status."
+  }
+}

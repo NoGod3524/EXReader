@@ -1,5 +1,11 @@
 # EXReader SDK compatibility
 
+Current development SDK: **3.40.0**, core **3.39.0**, ABI epoch **1**, library
+schema **6**. The default complete package has 324 named public function exports;
+the 316 previous names remain and bounded chapter reading adds eight. Versioned
+sections below describe their own historical checkpoints. Current package and
+consumer evidence is in `validation/2026-10-20-wp6-window-reader.json`.
+
 ABI epoch **1** was introduced in development step **S091** (original build
 **0.91.0**, commit `7dc8d8a`), now classified as **3.4.0** in the [changelog](../CHANGELOG.md). `EXR_ABI_VERSION` identifies the header's epoch;
 `exr_abi_version()` identifies the loaded library's epoch. `EXR_VERSION` and
@@ -459,14 +465,14 @@ DeviceCMYK groups now carry source components into the four-component buffer;
 nested groups inherit the blend space and compound fill+stroke paths composite as
 one CMYK element. Non-separable blend modes inside a CMYK group return
 `EXR_UNSUPPORTED` instead of approximating.
-## Package version 3.33.1
+## Historical package version 3.33.1
 
-The current tree, header and installed config package report **3.33.1**
-development. ABI epoch 1 and library schema 6 are unchanged: no exported
-symbol, record layout, enum value or callback signature moves with this
+At this checkpoint, the tree, header and installed config package reported
+**3.33.1** development. ABI epoch 1 and library schema 6 were unchanged: no exported
+symbol, record layout, enum value or callback signature moved with this
 renumbering. The complete historical size-based reclassification is in the
 [changelog](../CHANGELOG.md); the previous 0.20.0 component split is now 3.33.0.
-Select this package with `find_package(EXReader 3.40.0 EXACT
+Select the current package with `find_package(EXReader 3.40.0 EXACT
 CONFIG REQUIRED)`. The 0.18.0 records (code commit `ec8d4a98`, DLL SHA-256,
 CI run 39148719500 and the benchmark samples) keep their original number.
 
