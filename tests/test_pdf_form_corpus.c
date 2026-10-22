@@ -465,7 +465,9 @@ static void run_entry(size_t index,const char *corpus,const char *outdir,
                 field->kind==EXR_PDF_FIELD_CHECKBOX || field->kind==EXR_PDF_FIELD_RADIO);
               fprintf(results,"INK\t%zu\tout\t",index);
               emit_hex(entry->items[i].field,entry->items[i].field_size);
-              fprintf(results,"\t%zu\t%zu\t%ld\n",w,widget->page,dark);
+              fprintf(results,"\t%zu\t%zu\t%ld\t",w,widget->page,dark);
+              emit_hex((const unsigned char *)error.message,strlen(error.message));
+              fputc('\n',results);
             }
           }
         }
@@ -477,7 +479,8 @@ static void run_entry(size_t index,const char *corpus,const char *outdir,
     exr_status first,second,noop;
     size_t noop_size=0; void *noop_out=NULL;
     first=exr_pdf_form_write(input,size,changes,entry->count,&options,&out,&out_size,&error);
-    emit_write(index,entry->op,first,out_size,0,0,entry->count,target);
+    same=!memcmp(input,pristine,size);
+    emit_write(index,entry->op,first,out_size,0,same,entry->count,target);
     exr_free(out); out=NULL; out_size=0;
     second=exr_pdf_form_write(input,size,changes,entry->count,&options,&out,&out_size,&error);
     exr_free(out); out=NULL; out_size=0;
