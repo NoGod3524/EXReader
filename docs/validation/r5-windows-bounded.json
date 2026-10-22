@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "package": "H8 Windows bounded EPUB pilot",
+  "status": "passed declared Windows scope",
+  "source_sha": "2a9dcff8131543f27cad358fe254b6d4253423c0",
+  "sdk_candidate": "ce5d664c9f76d0613df6d79b27568a7039c4a81e",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "library_schema": 7,
+  "run_id": 39865943512,
+  "run_attempt": 1,
+  "job_id": 120129784734,
+  "workflow": ".github/workflows/wp13-windows.yml",
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/39865943512",
+  "run_conclusion": "success",
+  "all_steps_success": true,
+  "counts": {
+    "native_original_selftest": 26,
+    "ui_positive_actions": 158,
+    "ui_positive_passed": 158,
+    "ui_positive_failed": 0,
+    "ui_screenshots": 8,
+    "evidence_refusal_checks": 51,
+    "h8_checks": 80,
+    "h8_accepted": true,
+    "worker_candidate_passed": 11,
+    "worker_baseline_rejected": 11,
+    "worker_reverse_verification": true
+  },
+  "sdk_identity": {
+    "candidate_ancestor_checked_in_cloud": true,
+    "protected_tree_count": 8,
+    "all_protected_trees_equal": true,
+    "tree_hashes_recorded_in": "h8-evidence/h8-evidence.json"
+  },
+  "fixture_scope": {
+    "native_selftest_original": "Sample.epub",
+    "ui_positive": "Sample-positive.epub",
+    "original_158_actions_assertions_and_eight_screenshots_preserved": true,
+    "positive_navigation_binds_part_page_and_range": true,
+    "original_repeated_epub_retained_for_ambiguity_refusal": true,
+    "original_byte_158_ui_pass_claimed": false,
+    "long_ui_fixture": "6000 numbered paragraphs; multi-window synthetic EPUB",
+    "sdk_10_50_100_mib_results_transferred_to_ui": false
+  },
+  "artifact": {
+    "id": 12464188909,
+    "name": "EXReader-WP13-Windows",
+    "size_in_bytes": 39607521,
+    "digest": "sha256:a920f5d5db09baefeff2b34c08347a8065f64111af2096bbc814e53a621561bf",
+    "expired_at_verification": false,
+    "expires_at": "2027-01-20T22:34:28Z",
+    "same_run_and_source": true,
+    "paths": [
+      "wp13-windows/build.json",
+      "wp13-windows/report.json",
+      "wp13-evidence/wp13-windows-evidence.json",
+      "wp13-negative-evidence/checks.json",
+      "h8-evidence/h8-evidence.json",
+      "wp13-worker-review-evidence/worker-review.json"
+    ]
+  },
+  "retained_failed_runs": [39862590539, 39863379537, 39864142767, 39864506016],
+  "earlier_passing_development_run": {
+    "id": 39865681259,
+    "source_sha": "4a6f7e71e07e87280b571198b4ec24e6ad4aebe1",
+    "sdk_candidate": "6f0d7592ea431394d175d221b04b054facf4a26c",
+    "substituted_for_final_run": false
+  },
+  "scope": "Default bounded EPUB import/read/selection/notes/progress/reopen in the Windows native host, legacy storage compatibility, retained fixed-source readers and worker/evidence gates",
+  "complete_product": false,
+  "performance_budget_accepted": false,
+  "wp16_accepted": false,
+  "local_test_execution": false,
+  "artifacts_downloaded_locally": false
+}
