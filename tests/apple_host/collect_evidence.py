@@ -101,13 +101,15 @@ def main():
         shutil.copytree(bundle, program)
         evidence['program_files_sha256'] = inventory(program)
         copy_persisted(args.container, output)
-        evidence['xcresult_sha256'] = tree_digest(args.xcresult)
         evidence['xcodebuild_log_sha256'] = digest(args.xcresult.parent/(args.platform + '-xcodebuild.log'))
         evidence['state'] = database_state(output, identity)
         cases = load_results(args.xcresult)
         attachments = output/'attachments'
         subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', str(args.xcresult),
                         '--output-path', str(attachments)], check=True, capture_output=True, text=True)
+        # xcresulttool may materialize bundle metadata while reading/exporting.
+        # Bind the final raw bundle only after its last xcresulttool operation.
+        evidence['xcresult_sha256'] = tree_digest(args.xcresult)
         records, steps = attachment_records(attachments)
         for case in cases:
             case['steps'] = steps[case_key(case['name'])]
