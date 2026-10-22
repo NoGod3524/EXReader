@@ -113,6 +113,27 @@ static jstring output_string(JNIEnv *env, const char *text) {
   return result;
 }
 
+static unsigned char *read_entire_file(const char *path, size_t *size) {
+  FILE *file;
+  long length;
+  unsigned char *data;
+  size_t read;
+  *size = 0;
+  file = fopen(path, "rb");
+  if (!file) return NULL;
+  if (fseek(file, 0, SEEK_END) != 0) { fclose(file); return NULL; }
+  length = ftell(file);
+  if (length < 0 || (unsigned long)length > 128u * 1024u * 1024u) { fclose(file); return NULL; }
+  if (fseek(file, 0, SEEK_SET) != 0) { fclose(file); return NULL; }
+  data = (unsigned char *)malloc((size_t)length ? (size_t)length : 1);
+  if (!data) { fclose(file); return NULL; }
+  read = fread(data, 1, (size_t)length, file);
+  fclose(file);
+  if (read != (size_t)length) { free(data); return NULL; }
+  *size = (size_t)length;
+  return data;
+}
+
 static exr_library *library(JNIEnv *env, jlong handle) {
   if (!handle) {
     jclass type = (*env)->FindClass(env, "java/lang/IllegalStateException");
@@ -266,7 +287,20 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFi
       return NULL;
     }
   }
-  status = exr_library_import_file_unique(store, (exr_format)format, file, name, &id, &created, &error);
+  if (format == EXR_PDF || format == EXR_CBZ) {
+    status = exr_library_import_file_unique(store, (exr_format)format, file, name, &id, &created, &error);
+  } else {
+    size_t size = 0;
+    unsigned char *data = read_entire_file(file, &size);
+    if (!data) {
+      free(file);
+      free(name);
+      throw_status(env, EXR_IO, NULL, "Cannot read the selected book");
+      return NULL;
+    }
+    status = exr_library_import_unique(store, (exr_format)format, data, size, name, &id, &created, &error);
+    free(data);
+  }
   free(file);
   free(name);
   if (status != EXR_OK) {

@@ -102,7 +102,7 @@ public final class HostWalkthroughTest {
             clickBookRow("Sample.epub");
             assertNotNull("reader missing", waitId("reader_panel", 20000));
             assertTrue("page label missing", waitLabelContains("p.1", 15000));
-            assertTrue("open status missing", text("status_text").contains("Opened Sample.epub"));
+            assertTrue("open status missing", text("reader_status").contains("Opened Sample.epub"));
         });
 
         step("page_next", "Tap the right zone to turn forward", () -> {
@@ -117,29 +117,29 @@ public final class HostWalkthroughTest {
 
         step("font_increase", "Font increase reflows and keeps the position", () -> {
             click("font_up");
-            assertTrue("font status missing", waitTextContains("Font size 28", 15000));
+            assertTrue("font status missing", waitIdText("reader_status", "Font size 28", 15000));
             assertTrue("page label lost", text("page_label").contains("p."));
         });
 
         step("font_decrease", "Font decrease reflows back", () -> {
             click("font_down");
-            assertTrue("font status missing", waitTextContains("Font size 24", 15000));
+            assertTrue("font status missing", waitIdText("reader_status", "Font size 24", 15000));
         });
 
         step("touch_select", "Touch drag selects real page text", () -> {
             click("select_button");
-            assertTrue("select mode status missing", waitTextContains("Select mode on", 5000));
+            assertTrue("select mode status missing", waitIdText("reader_status", "Select mode on", 5000));
             UiObject2 line = findLineNode("EXReader");
             assertNotNull("no accessible text line on the page", line);
             Rect bounds = line.getVisibleBounds();
             device.swipe(bounds.left + 6, bounds.centerY(), bounds.right - 6, bounds.centerY(), 24);
-            assertTrue("selection status missing", waitTextContains("Selected:", 8000));
+            assertTrue("selection status missing", waitIdText("selection_status", "Selected:", 8000));
             assertTrue("selection text too short", text("selection_status").length() > 16);
         });
 
         step("copy_selection", "Copy places the selection on the clipboard", () -> {
             click("copy_button");
-            assertTrue("copy status missing", waitTextContains("Copied", 8000));
+            assertTrue("copy status missing", waitIdText("reader_status", "Copied", 8000));
             assertTrue("copy count missing", text("status_text").contains("characters"));
         });
 
@@ -148,7 +148,7 @@ public final class HostWalkthroughTest {
             assertNotNull("comment field missing", waitId("note_comment", 8000));
             device.findObject(By.res(APP + ":id/note_comment")).setText("note one");
             clickLabel("Save");
-            assertTrue("save status missing", waitTextContains("Annotation saved", 15000));
+            assertTrue("save status missing", waitIdText("reader_status", "Annotation saved", 15000));
             assertTrue("note count missing", waitButtonText("Notes (1)", 15000));
         });
 
@@ -168,7 +168,7 @@ public final class HostWalkthroughTest {
             assertNotNull("comment field missing", waitId("note_comment", 8000));
             device.findObject(By.res(APP + ":id/note_comment")).setText("note one edited");
             clickLabel("Save");
-            assertTrue("update status missing", waitTextContains("Annotation updated", 15000));
+            assertTrue("update status missing", waitIdText("reader_status", "Annotation updated", 15000));
             assertNotNull("edited row missing", findNoteRow("note one edited"));
             click("notes_close");
         });
@@ -178,7 +178,7 @@ public final class HostWalkthroughTest {
             UiObject2 row = findNoteRow("note one edited");
             assertNotNull("annotation row missing", row);
             row.click();
-            assertTrue("jump status missing", waitTextContains("Jumped to annotation", 15000));
+            assertTrue("jump status missing", waitIdText("reader_status", "Jumped to annotation", 15000));
             assertNotNull("reader missing after jump", waitId("page_label", 8000));
         });
 
@@ -237,7 +237,7 @@ public final class HostWalkthroughTest {
             row.longClick();
             assertNotNull("comment field missing", waitId("note_comment", 8000));
             clickLabel("Delete");
-            assertTrue("delete status missing", waitTextContains("Annotation deleted", 15000));
+            assertTrue("delete status missing", waitIdText("reader_status", "Annotation deleted", 15000));
             assertTrue("note count not zero", waitButtonText("Notes (0)", 15000));
         });
 
@@ -280,20 +280,20 @@ public final class HostWalkthroughTest {
 
         step("pdf_zoom", "PDF zoom changes the rendered page", () -> {
             click("zoom_up");
-            assertTrue("zoom status missing", waitTextContains("Zoom 1.25", 15000));
+            assertTrue("zoom status missing", waitIdText("zoom_label", "1.25", 15000));
             click("zoom_down");
-            assertTrue("zoom reset missing", waitTextContains("Zoom 1.00", 15000));
+            assertTrue("zoom reset missing", waitIdText("zoom_label", "1.00", 15000));
         });
 
         step("pdf_select_copy", "Select and copy PDF text", () -> {
             click("select_button");
-            assertTrue("select mode missing", waitTextContains("Select mode on", 5000));
+            assertTrue("select mode missing", waitIdText("reader_status", "Select mode on", 5000));
             UiObject2 line = findLineNode("A");
             assertNotNull("pdf text line missing", line);
             line.click();
-            assertTrue("pdf selection missing", waitTextContains("Selected: A", 8000));
+            assertTrue("pdf selection missing", waitIdText("selection_status", "Selected: A", 8000));
             click("copy_button");
-            assertTrue("pdf copy missing", waitTextContains("Copied 1 characters", 8000));
+            assertTrue("pdf copy missing", waitIdText("reader_status", "Copied 1 characters", 8000));
         });
 
         step("pdf_note_add", "Add a fixed-page annotation", () -> {
@@ -301,7 +301,7 @@ public final class HostWalkthroughTest {
             assertNotNull("comment field missing", waitId("note_comment", 8000));
             device.findObject(By.res(APP + ":id/note_comment")).setText("pdf note");
             clickLabel("Save");
-            assertTrue("pdf note save missing", waitTextContains("Annotation saved", 15000));
+            assertTrue("pdf note save missing", waitIdText("reader_status", "Annotation saved", 15000));
             assertTrue("pdf note count missing", waitButtonText("Notes (1)", 15000));
         });
 
@@ -324,7 +324,7 @@ public final class HostWalkthroughTest {
             row.longClick();
             assertNotNull("comment field missing", waitId("note_comment", 8000));
             clickLabel("Delete");
-            assertTrue("pdf delete status missing", waitTextContains("Annotation deleted", 15000));
+            assertTrue("pdf delete status missing", waitIdText("reader_status", "Annotation deleted", 15000));
             assertTrue("pdf note count not zero", waitButtonText("Notes (0)", 15000));
         });
 
@@ -364,7 +364,7 @@ public final class HostWalkthroughTest {
             clickBookRow("Ambiguous.epub");
             assertNotNull("ambiguous reader missing on reopen", waitId("reader_panel", 20000));
             assertTrue("ambiguity was not reported",
-                    waitTextContains("not exact", 20000));
+                    waitIdText("reader_status", "not exact", 20000));
         });
 
         step("corrupt_import", "A malformed EPUB is reported without a crash", () -> {
@@ -735,6 +735,15 @@ public final class HostWalkthroughTest {
         long deadline = SystemClock.uptimeMillis() + timeout;
         while (SystemClock.uptimeMillis() < deadline) {
             if (text("notes_button").contains(needle)) return true;
+            SystemClock.sleep(150);
+        }
+        return false;
+    }
+
+    private boolean waitIdText(String id, String needle, long timeout) throws Exception {
+        long deadline = SystemClock.uptimeMillis() + timeout;
+        while (SystemClock.uptimeMillis() < deadline) {
+            if (text(id).contains(needle)) return true;
             SystemClock.sleep(150);
         }
         return false;
