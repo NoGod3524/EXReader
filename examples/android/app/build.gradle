@@ -8,6 +8,7 @@ android {
     namespace 'org.exreader.host'
     compileSdk 35
     ndkVersion '27.0.12077973'
+    buildFeatures { buildConfig true }
 
     defaultConfig {
         applicationId 'org.exreader.host'

@@ -63,7 +63,7 @@ public final class ReaderView extends View {
 
     private final Runnable longPressRunnable = new Runnable() {
         @Override public void run() {
-            if (!down || moved || selectMode || page == null) return;
+            if (!isEnabled() || !down || moved || selectMode || page == null) return;
             longPress = true;
             setSelectMode(true);
             int hit = hit(downX, downY);
@@ -165,6 +165,8 @@ public final class ReaderView extends View {
     }
 
     public void setPage(PageSnapshot snapshot) {
+        handler.removeCallbacks(longPressRunnable);
+        down = false;
         page = snapshot;
         selection = null;
         anchor = -1;
@@ -322,7 +324,7 @@ public final class ReaderView extends View {
     }
 
     @Override public boolean onTouchEvent(MotionEvent event) {
-        if (page == null) return false;
+        if (!isEnabled() || page == null) return false;
         computeFit();
         float x = event.getX();
         float y = event.getY();

@@ -3,6 +3,7 @@ package org.exreader.host;
 
 import android.graphics.Bitmap;
 import android.graphics.RectF;
+import android.util.Log;
 
 import org.exreader.EXReader;
 
@@ -28,14 +29,19 @@ final class ReflowSession implements AutoCloseable {
     private boolean atEnd;
     private boolean closed;
     private final String title;
+    private final long bookId;
+    private long nativeNextCalls;
+    private long recoveryCalls;
 
-    ReflowSession(String path, byte[] font, float size) {
+    ReflowSession(long bookId, String path, byte[] font, float size) {
+        this.bookId = bookId;
         this.font = font;
         this.fontSize = size;
         document = new EXReader.Document(path);
-        text = document.utf8();
-        title = document.title();
-        resetPager();
+        try {
+            text = document.utf8();
+            title = document.title();
+        } catch (RuntimeException | Error error) { document.close(); throw error; }
     }
 
     String title() {
@@ -68,89 +74,116 @@ final class ReflowSession implements AutoCloseable {
         return config;
     }
 
-    private void resetPager() {
+    PageLoad next(HostTask task) throws Exception {
+        if (pager == null) return prepare(index + 1, -1, fontSize, task);
+        task.check();
+        long started = System.nanoTime();
+        try (EXReader.ReflowPage page = nextPage(pager, false)) {
+            if (page == null) return null;
+            EXReader.LayoutSnapshot layout = page.snapshot();
+            task.check();
+            EXReader.Bitmap rendered = page.render();
+            task.check();
+            if (rendered == null) throw new IllegalStateException("No page bitmap");
+            PageSnapshot snapshot = build(layout, toBitmap(rendered), index + 1);
+            return new PageLoad(snapshot, (System.nanoTime() - started) / 1000000L,
+                    () -> { index = snapshot.index; lastStart = snapshot.start; logSteps(); },
+                    this::recoverAcceptedCursor);
+        } catch (Exception | Error error) { recoverAcceptedCursor(); throw error; }
+    }
+
+    private EXReader.ReflowPage nextPage(EXReader.Pager source, boolean recovery) {
+        nativeNextCalls++;
+        if (recovery) recoveryCalls++;
+        return source.next();
+    }
+
+    private void logSteps() {
+        Log.i("EXRHost", "paging {\"book\":" + bookId + ",\"index\":" + index +
+                ",\"native_next_calls\":" + nativeNextCalls + ",\"recovery_calls\":" + recoveryCalls + "}");
+    }
+
+    private void recoverAcceptedCursor() {
         if (pager != null) pager.close();
-        pager = document.pager(font, 0, config(fontSize));
-        index = -1;
-        atEnd = false;
+        pager = null;
+        if (closed) return;
+        EXReader.Pager restored = null;
+        try {
+            restored = document.pager(font, 0, config(fontSize));
+            if (index >= 20000) throw new IllegalStateException("Recovery exceeds the host page budget");
+            for (int at = 0; at <= index; at++) {
+                try (EXReader.ReflowPage page = nextPage(restored, true)) {
+                    if (page == null) throw new IllegalStateException("Accepted page no longer exists");
+                }
+            }
+            pager = restored;
+            restored = null;
+        } catch (RuntimeException error) {
+            Log.w("EXRHost", "Cursor recovery failed; next request must rebuild: " + error.getMessage());
+        } finally { if (restored != null) restored.close(); }
     }
-
-    PageLoad next() {
-        if (closed || atEnd) return null;
-        return readPage();
+    PageLoad previous(HostTask task) throws Exception {
+        return index <= 0 ? null : prepare(index - 1, -1, fontSize, task);
     }
-
-    PageLoad previous() {
-        if (closed || index <= 0) return null;
-        return seekToIndex(index - 1);
+    PageLoad seek(long offset, HostTask task) throws Exception {
+        if (offset < 0 || offset > text.length) throw new IllegalArgumentException("Text position is outside the document");
+        return prepare(-1, offset, fontSize, task);
     }
-
-    PageLoad seek(long offset) {
-        if (closed) return null;
-        if (offset < 0) offset = 0;
-        resetPager();
-        PageLoad last = null;
-        int guard = 0;
-        while (guard++ < 20000) {
-            PageLoad load = readPage();
-            if (load == null) return last;
-            last = load;
-            if (load.snapshot.end > offset || load.snapshot.start >= offset) return load;
-        }
-        return last;
-    }
-
-    PageLoad seekToIndex(int target) {
-        if (closed) return null;
-        if (target < 0) target = 0;
-        resetPager();
-        PageLoad last = null;
-        int guard = 0;
-        while (guard++ <= target + 1) {
-            PageLoad load = readPage();
-            if (load == null) return last;
-            last = load;
-            if (index >= target) return load;
-        }
-        return last;
-    }
-
-    PageLoad setFontSize(float size) {
-        long keep = 0;
-        if (index >= 0) {
-            // The current page start is not retained after readPage; use the
-            // last offset stored by the caller through seek().
-            keep = lastStart;
-        }
-        fontSize = size;
-        return seek(keep);
-    }
+    PageLoad setFontSize(float size, HostTask task) throws Exception { return prepare(-1, lastStart, size, task); }
 
     private long lastStart = 0;
 
-    private PageLoad readPage() {
+    private PageLoad prepare(int target, long offset, float size, HostTask task) throws Exception {
+        if (closed) throw new IllegalStateException("Reader is closed");
+        task.check();
         long started = System.nanoTime();
-        EXReader.ReflowPage page = null;
+        final EXReader.Pager candidate = document.pager(font, 0, config(size));
+        boolean transferred = false;
         try {
-            page = pager.next();
-            if (page == null) {
-                atEnd = true;
-                return null;
+            // The installed Java binding exposes sequential pagers. Replay an
+            // independent candidate so a render/database failure cannot advance
+            // the accepted cursor. Preceding pages are not rasterized.
+            for (int at = 0; at < 20000; at++) {
+                task.check();
+                try (EXReader.ReflowPage page = nextPage(candidate, false)) {
+                    if (page == null) {
+                        if (target >= 0) return null;
+                        throw new IllegalArgumentException("No page contains the requested text position");
+                    }
+                    EXReader.LayoutSnapshot layout = page.snapshot();
+                    boolean contains = offset >= layout.start && (offset < layout.end ||
+                            (offset == text.length && layout.end == offset));
+                    if (target >= 0 ? at != target : !contains) continue;
+                    task.check();
+                    EXReader.Bitmap rendered = page.render();
+                    task.check();
+                    if (rendered == null) throw new IllegalStateException("No page bitmap");
+                    Bitmap bitmap = toBitmap(rendered);
+                    final int acceptedIndex = at;
+                    PageSnapshot snapshot = build(layout, bitmap, at);
+                    PageLoad result = new PageLoad(snapshot, (System.nanoTime() - started) / 1000000L,
+                            () -> {
+                                if (pager != null) pager.close();
+                                pager = candidate;
+                                index = acceptedIndex;
+                                fontSize = size;
+                                lastStart = snapshot.start;
+                                logSteps();
+                            }, candidate::close);
+                    transferred = true;
+                    return result;
+                }
             }
-            index++;
-            EXReader.LayoutSnapshot layout = page.snapshot();
-            EXReader.Bitmap nativeBitmap = page.render();
-            if (nativeBitmap == null) throw new IllegalStateException("No page bitmap");
-            Bitmap bitmap = toBitmap(nativeBitmap);
-            PageSnapshot snapshot = build(layout, bitmap);
-            lastStart = snapshot.start;
-            return new PageLoad(snapshot, (System.nanoTime() - started) / 1000000L);
-        } finally {
-            if (page != null) page.close();
-        }
+            throw new IllegalStateException("Seek exceeds the 20000-page host budget");
+        } finally { if (!transferred) candidate.close(); }
     }
 
-    private PageSnapshot build(EXReader.LayoutSnapshot layout, Bitmap bitmap) {
+    private PageSnapshot build(EXReader.LayoutSnapshot layout, Bitmap bitmap, int pageIndex) {
+        try { return buildSnapshot(layout, bitmap, pageIndex); }
+        catch (RuntimeException | Error error) { bitmap.recycle(); throw error; }
+    }
+
+    private PageSnapshot buildSnapshot(EXReader.LayoutSnapshot layout, Bitmap bitmap, int pageIndex) {
         int glyphCount = layout.glyphs.length;
         long[] starts = new long[glyphCount];
         long[] ends = new long[glyphCount];
@@ -177,9 +210,9 @@ final class ReflowSession implements AutoCloseable {
         }
         long start = layout.start == -1 ? 0 : layout.start;
         long end = layout.end == -1 ? text.length : layout.end;
-        return new PageSnapshot(bitmap, false, index, -1, start, end, text, 1f,
+        return new PageSnapshot(bitmap, false, pageIndex, -1, start, end, text, 1f,
                 bitmap.getWidth(), bitmap.getHeight(), starts, ends, null,
-                gx, baseline, advance, size, lineText, lineBounds, 0);
+                gx, baseline, advance, size, lineText, lineBounds, 0, bookId);
     }
 
     static Bitmap toBitmap(EXReader.Bitmap source) {
