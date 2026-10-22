@@ -62,12 +62,13 @@ R6 核心发布门槛，详见 [六个工作包](CORE-ROADMAP.md)。已完成能
 | --- | --- | --- |
 | 冻结 SDK 可靠性 | 源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9`，run `39666440519`：98/98 作业、99 同源工件、四目标各至少 24 实际进程 CPU 小时 | 后续核心改动不继承旧源码 CPU 额度；整项目发布状态另行收口 |
 | WP6 有界 EPUB 章阅读 | 50/100 MiB 单章、10→100 MiB 索引/解析续排峰值增量 19.3 MiB、检查点及随机恢复固定出口已验收 | 新宿主接入仍单独推进 |
-| 表格 border-spacing | 源码 `ee76f5b`，run `39816051738`，Windows/Linux 各 163/163；纳入 K 后专用 run `39821213939` 2/2 成功，native 全量回归通过 | 最终 S 仍须同源复验；完整 CSS 仍有缺口 |
-| 基础 AcroForm 与独立文件语料 | 原基础已纳入 K；新增源码 `a326fd38`，run `39833769030` 5/5 成功，Linux/Windows/sanitizer 各 75/75 独立文件、零失败零跳过 | 至少 30 文件出口已满足；75 份含写拒绝/取消/不可读树。安装消费者各覆盖 31、跳过 2；高级表单范围未完成，待 C 同源复验 |
-| Apple 宿主审计 | 源码 `b3f28ca`，run `39813162880`：8/8 作业、8 工件，三平台各 12 用例/61 步/46 附件，严格汇总通过；已合入 K，native SDK/绑定构建通过 | K 上未重跑 Apple UI 专用验收，最终 S 仍须完整同源复验；真机/VoiceOver 仍独立跟踪 |
-| Android 宿主审计 | 源码 `8a6636ed`，run `39831715741` 唯一作业成功；原 45/45＋独立 10/10、49 页/49 native next/0 recovery、48 门禁及严格 accepted 同次通过 | API34 x86_64 模拟器范围通过；等待 C 同源复验，真机/签名/TalkBack 等另列；旧失败继续保留 |
-| OPDS facets | 独立分支源码 `757e2f3`，run `39815167314`：双平台各 65/65、facet 回归与 Linux sanitizer 通过 | 独立分支待最终集成；计数 profile、HTTPS、间接获取、借阅/支付/LCP 等边界保持 |
-| SDK 预集成与基线 K | `4729f7fc7d908d249704d96ee61cc74ee778a27f`：native run `39821205425` 7/7、AcroForm 3/3、spacing 2/2；native 19 份工件同源、非空、未过期且具有 SHA-256 digest | C 阶段一/二完成，A/B 固定交付已到齐；B 改顶层 CMake，需重验并冻结新 K，再完成 OPDS 及最终联合验收 |
+| 表格 border-spacing | 独立验收后纳入 S，run `39844627315` 2/2 成功，并纳入 S 的 native 回归 | 声明范围联合验收通过；完整 CSS 仍有缺口 |
+| 基础 AcroForm 与独立文件语料 | 独立 75 文件出口通过；在 S 的 run `39844617258` 5/5 成功，并纳入严格联合汇总 | 至少 30 文件出口已满足；75 份含写拒绝/取消/不可读树。安装消费者各覆盖 31、跳过 2；高级表单范围未完成 |
+| Apple 宿主审计 | 独立审计通过后在 S 重验，run `39844598529` 8/8 作业、8 工件成功，严格联合汇总接受 | 声明范围联合验收通过；真机/VoiceOver 仍独立跟踪 |
+| Android 宿主审计 | 独立审计通过后在 S 重验，run `39844608350` 成功，完整证据由严格联合汇总接受 | API34 x86_64 模拟器范围联合验收通过；真机/签名/TalkBack 等另列；旧失败继续保留 |
+| OPDS facets | 独立审计通过，冻结 H 后纳入 S，run `39844589166` 双平台 2/2 作业成功并获严格汇总接受 | 声明范围联合验收通过；计数 profile、HTTPS、间接获取、借阅/支付/LCP 等边界保持 |
+| SDK 预集成与原基线 K（历史） | `4729f7fc7d908d249704d96ee61cc74ee778a27f`：native run `39821205425` 7/7、AcroForm 3/3、spacing 2/2；native 19 份工件有效 | 阶段一/二结果保留，已由最终 K2 接续 |
+| 最终 SDK 基线 K2 与共同源码 S | K2=`d46ff370`；S=`686ce2fe6c3463ef1b917569677ee9933e22faa9`；12 组/35 上游作业与严格汇总 `39850404743` 通过，44 上游工件有效 | A/B/C 已收口；产品整体、S 的 WP16 长测、真实语料和新性能预算尚未完成 |
 
 主要证据见 [冻结 SDK 记录](validation/2026-10-22-reliability-cloud.json)、
 [表格间距](WP5_BORDER_SPACING.md)、[AcroForm](WP9_ACROFORM.md)、[Apple 审计](WP13-APPLE-REVIEW.md)，
@@ -75,7 +76,9 @@ Android/OPDS 独立候选的完整身份见 [总 handoff](handoffs/2026-10-22-af
 
 最新 A/B 固定交付、云端核对和 C 接续要求见 [A/B 到齐登记](handoffs/2026-10-22-AB-delivered.md)。
 
-K 的登记及最新阶段记录见集成分支固定提交 `b81f138` 中的
+当前最终状态以 [A/B/C 联合验收登记](handoffs/2026-10-22-ABC-accepted.md) 为准。
+
+原 K 的阶段一/二历史记录见集成分支固定提交 `b81f138` 中的
 [SDK 基线](https://github.com/NoGod3524/EXReader/blob/b81f13869bb49b1138e4862faf64daae01d5fd01/docs/validation/sdk-baseline.json)、
 [预集成证据](https://github.com/NoGod3524/EXReader/blob/b81f13869bb49b1138e4862faf64daae01d5fd01/docs/validation/2026-10-22-preintegration.json) 与
 [联合验收说明](https://github.com/NoGod3524/EXReader/blob/b81f13869bb49b1138e4862faf64daae01d5fd01/docs/PARALLEL-INTEGRATION.md)。
@@ -87,7 +90,7 @@ K 的登记及最新阶段记录见集成分支固定提交 `b81f138` 中的
 
 | 目标 | 已有工作 | 尚未闭合的出口 |
 | --- | --- | --- |
-| 默认分支必须通过的 CI 与可信构建基线 | `native.yml` 在默认分支 `codex/framework` push 和 PR 上运行；已有默认/裁剪 SDK 安装消费、ABI/分层检查；K 已同源验证并固定八条受保护树，12 组联合协议及基线门禁自验通过 | 2026-10-22 只读核对时默认分支 `protected=false`、required checks 为空、rulesets 为空。仍需配置必需检查与合并/发布门槛，并完成最终 S 的联合验收 |
+| 默认分支必须通过的 CI 与可信构建基线 | `native.yml` 在默认分支 `codex/framework` push 和 PR 上运行；已有默认/裁剪 SDK 安装消费、ABI/分层检查；K2 固定八条受保护树，S 的 12 组联合验收与严格汇总通过 | 2026-10-22 只读核对时默认分支 `protected=false`、required checks 为空、rulesets 为空。仍需配置必需检查与合并/发布门槛 |
 | EPUB 超时、PDF 打开/渲染失败闭环 | 整本文档探针、逐进程超时/失败保留、独立分类与回归工具；已有针对性引擎修复 | 历史 EPUB 500 本仅 483 完成，另有 11 超时、5 限制、1 参数状态；PDF 122 份中 49 完成，其余 73 留有分类，不能全部视作同一故障。原批未整体验收；新协议可复现真实语料登记仍为 0/1710 |
 | 成熟引擎差分、像素与性能回归 | WP7 有 HarfBuzz 对照，彩色字体有 Chrome 对照，PDF 部分颜色/绘制有 MuPDF 独立参考；已有像素、页面 hash、分页与转换基准 | 统一固定工具/字体/采样口径、语料、容差及资源阈值，覆盖真实 EPUB/PDF 故障，并接入必需 CI；专项对照不替代全格式差分验收 |
 | 内存峰值、长章节和恶意输入专项 | WP6 有界章出口、1 GiB CBZ 原书导入、1 GiB WAV 随机读取、取消/限界/sanitizer 与四目标可靠性长测 | 每次核心变更绑定新源码复验；其他格式大文件、其他音频 1 GiB 实测和全部宿主有界接入仍未覆盖 |
@@ -101,26 +104,19 @@ K 的登记及最新阶段记录见集成分支固定提交 `b81f138` 中的
 
 | 包 | 独立职责 | 汇合依赖 |
 | --- | --- | --- |
-| [A：Android 修复](handoffs/2026-10-22-A-android.md) | 声明范围通过，交付 HEAD `31b36f30`，受测源码 `8a6636ed` | C 按固定历史合入，再做最终同源复验 |
-| [B：AcroForm 语料](handoffs/2026-10-22-B-acroform-corpus.md) | 独立文件出口通过，交付 HEAD `97e33452`，受测源码 `a326fd38` | C 合入并重冻结 K；可选编辑支持边界保留 |
-| [C：SDK 集成](handoffs/2026-10-22-C-integration.md) | 阶段一/二完成；阶段三/四输入已到齐 | 更新 AcroForm 3→5 作业及门禁正反例，目标为 12 组/35 上游作业；新 K、H、S 与严格汇总待完成 |
+| [A：Android 修复](handoffs/2026-10-22-A-android.md) | 声明范围独立验收通过，交付 `31b36f30`；已纳入 S 并复验 | 已收口，支持边界保留 |
+| [B：AcroForm 语料](handoffs/2026-10-22-B-acroform-corpus.md) | 独立文件出口通过，交付 `97e33452`；已纳入 S 并复验 | 已收口，可选编辑支持边界保留 |
+| [C：SDK 集成](handoffs/2026-10-22-C-integration.md) | 阶段一至四完成；K2、H、S 及 12 组/35 作业严格汇总均已登记 | 联合验收通过；完整发布制度和性能路线另行推进 |
 
-C 的 protocol 自验 run `39823812435` 成功；dispatch run `39823842117` 的 protocol、baseline 成功，
-受检源码为 `82f88966c0ca2bbca93837861270b8cb57ebb184`，summarize 按设计跳过。当前门禁核对 K 的祖先关系、
-八条受保护树、基线证据及版本/ABI，并要求 OPDS `BASELINE` 和合入后的 Android `SDK_BASE` 指向 K。
-Android 守卫尚登记为 pending；文件合入时必须转为有效契约。
-
-后续顺序：合入 A/B 固定交付 → 重验并冻结新 K → 更新 5 作业 AcroForm 联合门禁并验证 → 登记 Android 基线与所有权源码 →
-冻结非 OPDS 祖先 H → 最后合入 OPDS facets 并登记 `HANDOFF=H` → 冻结 S →
-在 S 上重跑 12 组并提交 12 个 run ID，严格汇总 `accepted=true` 后授予联合验收。
-旧协议为 33 个上游作业；B 新工作流纳入后目标为 35，检查器迁移尚待 C 实现。
-联合门禁自身另有 protocol、baseline 和 summarize 作业。
+C 已合入固定交付，重验并冻结 K2=`d46ff370`，冻结非 OPDS 祖先 H=`d10fa590` 后完成 OPDS 合入。
+最终 S 的 12 组/35 上游作业全部成功，汇总 run `39850404743` 的 protocol、baseline、summarize 也全部成功。
+完成日志明确 `accepted=true`；OPDS 与 Android 的 SDK 契约均为 K2，`pending_contracts=[]`。
+早期 protocol 自验、原 K 和 33 作业协议继续作为历史保留，当前验收以最终 S 为准。
 
 三包是当前功能与集成子任务，不替代上述五项质量目标。C 直接覆盖 SDK 基线与联合验证，B 覆盖表单专项输入；
 EPUB/PDF 历史失败闭环、通用差分门禁和完整发布制度尚未成为这三包中可独立验收的完整任务。
 下一版执行 [原生阅读核心路线](CORE-ROADMAP.md)；其余十五项能力见 [历史工作清单](WORK-QUEUE-2026-10-22.md)，
-按需积压，不全部列入下一核心版本。A/B/C 已冻结的交付及 12 组联合验收契约继续单独收口；
-本次定位调整不修改其脚本或将未通过项改记为通过。
+按需积压，不全部列入下一核心版本。A/B/C 等待条件已满足，R1–R6 尚未启动。
 
 所有构建、测试、生成、模拟器、工件解析与证据汇总均在 GitHub Actions 执行。独立用例通过、
 多平台构建通过、共同源码验收和最终发布门槛分开记录；未满足项继续保留。
