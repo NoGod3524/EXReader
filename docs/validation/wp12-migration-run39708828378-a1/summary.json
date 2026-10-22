@@ -1,0 +1,54 @@
+{
+ "schema": 1,
+ "kind": "wp12-legacy-migration-summary",
+ "complete": false,
+ "problems": [
+  "linux: case failed_rollback_is_reported_and_pre_image_kept failed",
+  "linux: case failed_rollback_is_reported_and_pre_image_kept failed",
+  "linux: browser end-to-end chain failed",
+  "windows: case failed_rollback_is_reported_and_pre_image_kept failed",
+  "windows: case failed_rollback_is_reported_and_pre_image_kept failed",
+  "windows: browser end-to-end chain failed"
+ ],
+ "required_platforms": [
+  "linux",
+  "windows"
+ ],
+ "platforms": {
+  "linux": {
+   "scenario_cases": 65,
+   "scenario_passed": 64,
+   "checks": 135,
+   "checks_passed": 133,
+   "max_peak_rss_bytes": 50786304,
+   "e2e_passed": false,
+   "browser": "131.0.6778.33",
+   "tool_sha256": "7f660c6aa4ea12616030435ca922f9d035bf7b09b9b39fbc6edb781e6437383a",
+   "exporter_sha256": "abaf9daf150e2fcbeb481ff3db25f92c52c3f9a5bca156db9b0f5f51124cc759",
+   "sdk_files": 35
+  },
+  "windows": {
+   "scenario_cases": 65,
+   "scenario_passed": 64,
+   "checks": 135,
+   "checks_passed": 133,
+   "max_peak_rss_bytes": 47480832,
+   "e2e_passed": false,
+   "browser": "131.0.6778.33",
+   "tool_sha256": "f9da473ee7b2ba5557eb4ac758fe8a08e633811eefba181f2d87a16a65ce2a95",
+   "exporter_sha256": "abaf9daf150e2fcbeb481ff3db25f92c52c3f9a5bca156db9b0f5f51124cc759",
+   "sdk_files": 35
+  }
+ },
+ "required_cases": 65,
+ "not_executed": [
+  "Originals above 128 MiB (the SDK in-memory import bound) are rejected as limit-exceeded; streaming migration is not implemented and was not exercised.",
+  "Unlocated annotations cannot be stored in the library because no public API accepts an unresolved range; they are preserved only in the ledger sidecar.",
+  "Audio originals cannot be stored (the SDK has no audio original format); only positions and bookmarks are migrated.",
+  "No installed Tauri desktop build was run: the Tauri shell stores nothing outside its webview IndexedDB, so the same export path applies, but an actual Tauri webview profile was not exercised.",
+  "Browsers other than Chromium (Firefox, WebKit) were not exercised.",
+  "macOS was not exercised.",
+  "Real user libraries from the old application were not available; the dataset is synthetic but created through the old application's own store and library modules."
+ ],
+ "claim": "Legacy IndexedDB/backup migration tool only; this is not complete WP12 high-fidelity conversion."
+}
