@@ -70,9 +70,16 @@ import SQLite3
             let first = try session.open(bookID: id, cancel: HostCancelBox())
             let second = try session.turn(1, cancel: HostCancelBox())
             let third = try session.turn(1, cancel: HostCancelBox())
+            let oldSelection = HostSelectionContext(bookID: id, frameCount: 1,
+                baseOffset: first.pageRange.lowerBound, text: first.pageText, part: first.part, path: first.path)
+            let currentSelection = HostSelectionContext(bookID: id, frameCount: 3,
+                baseOffset: third.pageRange.lowerBound, text: third.pageText, part: third.part, path: third.path)
+            let repeatedSelectionIsolated = first.path == third.path && first.pageText == third.pageText &&
+                first.pageRange == third.pageRange && !session.matches(oldSelection) && session.matches(currentSelection)
             let back = try session.turn(-1, cancel: HostCancelBox())
             return first.part == 0 && second.part == 1 && third.part == 2 && back.part == 1 &&
-                first.pageRange.lowerBound == second.pageRange.lowerBound && first.pageText != second.pageText
+                first.pageRange.lowerBound == second.pageRange.lowerBound && first.pageText != second.pageText &&
+                repeatedSelectionIsolated
         }
         check("same_part_notes_crud_and_cross_part_jump") {
             let frame = try session.renderSnapshot()
