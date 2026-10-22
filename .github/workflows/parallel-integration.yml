@@ -10,7 +10,7 @@ on:
         type: string
         default: ''
       runs_json:
-        description: JSON object mapping all ten package keys to cloud run IDs; empty runs protocol checks only
+        description: JSON object mapping the ten package keys and the acroform/spacing capability keys to cloud run IDs; empty runs protocol checks only
         type: string
         default: '{}'
 permissions:
@@ -36,7 +36,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Verify same source, every required job and all required evidence
+      - name: Verify same source, the accepted SDK baseline, every required job and all required evidence
         env:
           EXPECTED_SOURCE: ${{ inputs.source_sha }}
           SOURCE_RUNS: ${{ inputs.runs_json }}

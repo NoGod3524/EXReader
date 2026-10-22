@@ -2,7 +2,34 @@
 
 本分支 `codex/parallel-integration` 从 `feda26381a7b05c6a1ce3db91a440ca0094e06c5` 开始，保留各交付分支的原始历史。集成源码 `9e4b595ed7e10dcb2d78f5547e4e6a11a04ba3a1` 已通过八组同源云端验收及严格汇总；下列已接受结果只绑定该 SHA。
 
-## 下一轮 Apple/Android 集成（待验收）
+## 预集成 SDK 候选（阶段一，已云端通过）
+
+预集成源码 `4729f7fc7d908d249704d96ee61cc74ee778a27f` 由三个已独立通过的交付按
+`wp9-acroform` → `wp5-border-spacing` → `wp13-apple-review` 顺序合入本分支的合并提交组成，
+保留原提交历史；兼容语料首次登记 `00a8838cf6089e67a730ca6fd4956cb45d09c27d` 仍是其祖先。
+Android 失败候选与 OPDS facets 未纳入本候选。
+
+同一源码的三组云端运行全部成功：
+
+| 组 | run | 作业 | 覆盖 |
+| --- | --- | --- | --- |
+| native | `39821205425` | 7/7 | 三平台全量 ctest（含 `native-pdf-form`、`native-table-spacing`）、ASan/UBSan、可移植安装与裁剪安装、安装后组件与公开消费者、JNI/Swift、层依赖、Android arm64 与 iOS/iPadOS 库 |
+| acroform | `39821209875` | 3/3 | AcroForm 专用用例、干净构建与 sanitizer |
+| spacing | `39821213939` | 2/2 | 专用间距用例与全量回归 |
+
+候选 K 登记在 `docs/validation/sdk-baseline.json`：SDK 3.40.0、ABI 1，受保护树逐项固定。
+`tools/check_parallel_integration.py` 的严格汇总现在要求 K 与最终源码的受保护树一致、K 是最终源码祖先、
+K 的三组证据运行同源成功、版本/ABI 与头文件一致，并额外要求 `acroform`、`spacing` 两个同源运行；
+十组共 28 个上游作业的门槛保持原样，没有删除任何保护检查。OPDS 与 Android 的固定 SDK 常量必须指向 K。
+
+未满足项：A 的 Android 新交付（45+10 用例/49 页/48 项门禁）、B 的至少 30 份独立文档与声明范围、
+B 之后可能的 K 重冻结、所有权祖先 H、十组同源联合验收。本候选只验收上述声明范围，
+`complete_product=false`、`wp16_accepted=false`，冻结 SDK 长测不转移到新源码。
+
+## 下一轮 Apple/Android 集成（原候选，已被本轮取代）
+
+> 本节保留历史候选与失败记录；当前交付身份以 `docs/handoffs/2026-10-22-parallel-index.md`、`docs/handoffs/2026-10-22-A-android.md`、`2026-10-22-B-acroform-corpus.md` 与上面阶段一记录为准。
+
 
 Apple 审计候选 `e0f162af1fad68353b91f5f595867c4bccd2da81` 的 run `39801977033` 未通过，尚未合入本分支。macOS/iPhone 各 12 个 UI 用例/61 步、SDK 21 项、会话 18 项及三平台原 21 项自检通过；iPad 有三项 UI 失败，严格汇总拒绝验收。固定完整门槛仍为各平台 12 个 UI 用例/61 步/46 份附件、各 21 项原自检、21 项 SDK 及 18 项会话回归。保留本轮与前轮失败证据，后续候选不得拼接通过项。
 
