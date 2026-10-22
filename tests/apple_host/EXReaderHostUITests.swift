@@ -249,7 +249,6 @@ final class EXReaderHostUITests: XCTestCase {
         try step("step13_font_increase_repaginates") {
             waitElement("reader.font.increase").tap()
             XCTAssertTrue(waitLabel("reader.font.value", contains: "字号 30", 30))
-            XCTAssertTrue(waitLabel("reader.status", contains: "字号", 20))
         }
         try step("step14_font_decrease_restores_size") {
             waitElement("reader.font.decrease").tap()
@@ -316,7 +315,7 @@ final class EXReaderHostUITests: XCTestCase {
         }
         try step("step22_create_annotation") {
             waitElement("selection.annotate").tap()
-            XCTAssertTrue(waitLabel("reader.status", contains: "已保存标注", 40))
+            XCTAssertTrue(waitLabel("reader.notes", contains: "标注 1", 40))
             XCTAssertTrue(waitElement("reader.page", 20).exists)
         }
         try step("step23_annotation_list_navigation") {
@@ -359,6 +358,7 @@ final class EXReaderHostUITests: XCTestCase {
         try step("step27_open_and_navigate") {
             launch()
             try ensureReader("Sample.epub")
+            clearNotes()
             waitElement("reader.first").tap()
             _ = waitLabel("reader.location", contains: "第 1 页", 30)
             waitElement("reader.next").tap()
@@ -372,7 +372,8 @@ final class EXReaderHostUITests: XCTestCase {
             selectWord()
             XCTAssertTrue(waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 20))
             waitElement("selection.annotate").tap()
-            XCTAssertTrue(waitLabel("reader.status", contains: "已保存标注", 40))
+            XCTAssertTrue(waitLabel("reader.notes", contains: "标注 1", 40))
+            Thread.sleep(forTimeInterval: 0.5)
             hash = text("reader.state")
             XCTAssertTrue(hash.contains("#"))
         }

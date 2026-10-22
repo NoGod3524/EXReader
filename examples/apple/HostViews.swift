@@ -71,7 +71,8 @@ struct LibraryScreen: View {
                     .accessibilityIdentifier("library.title")
                 Spacer()
                 if model.busy {
-                    ProgressView()
+                    Text("处理中…").font(.caption)
+                        .accessibilityIdentifier("library.busy")
                     Button("取消") { model.cancelWork() }
                         .accessibilityIdentifier("library.cancel")
                 }
@@ -165,7 +166,8 @@ struct ReaderScreen: View {
                     .accessibilityIdentifier("reader.title")
                 Spacer()
                 if model.busy {
-                    ProgressView()
+                    Text("处理中…").font(.caption)
+                        .accessibilityIdentifier("reader.busy")
                     Button("取消") { model.cancelWork() }
                         .accessibilityIdentifier("reader.cancel")
                 }
@@ -181,7 +183,7 @@ struct ReaderScreen: View {
                             .scaledToFit()
                             .frame(width: geometry.size.width, height: geometry.size.height)
                     } else {
-                        ProgressView()
+                        Text("渲染中…").foregroundColor(.secondary)
                     }
                 }
                 .accessibilityElement(children: .ignore)
