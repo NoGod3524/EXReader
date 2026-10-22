@@ -14,6 +14,7 @@ import json
 import os
 import re
 import shutil
+import sqlite3
 import struct
 import subprocess
 import sys
@@ -116,7 +117,8 @@ def check_parameters(planned, observed):
         return
     kind = args[0]
     key = {'shelf': 'count', 'notes': 'count', 'page': 'page', 'font': 'font',
-           'selection': 'active', 'status': 'needle', 'clipboard': 'needle', 'book': 'title'}[kind]
+           'selection': 'active', 'status': 'needle', 'clipboard': 'needle', 'book': 'title',
+           'part': 'part', 'bounded': 'bounded'}[kind]
     expected = args[2] if kind in ('shelf', 'status', 'clipboard') else args[1]
     actual = observed.get(key)
     if kind == 'selection':
@@ -231,7 +233,8 @@ def source_identity():
 
 
 def render_script(template, package, fixtures):
-    return (template.replace('@@SAMPLE@@', str(package))
+    return (template.replace('@@SAMPLE@@\\Sample.epub', str(package / 'Sample-positive.epub'))
+                    .replace('@@SAMPLE@@', str(package))
                     .replace('@@FIXTURES@@', str(fixtures)))
 
 
@@ -280,7 +283,7 @@ def seal_inputs(package, sdk, manifest_path, selftest_path, consumer, steps_dir,
     require(len(runtime_names) == 1, 'require exactly one packaged runtime')
     runtime = runtime_names[0]
     required = {'EXReader.exe', runtime, 'Reader.otf', 'OFL.txt', 'LICENSE.txt', 'THIRD_PARTY_NOTICES.md',
-                'Sample.epub', 'Sample.pdf', 'Sample-Text.pdf'}
+                'Sample.epub', 'Sample-positive.epub', 'Sample.pdf', 'Sample-Text.pdf'}
     verify_file_manifest(package, manifest.get('files'), required)
     require(digest(package / 'EXReader.exe') == digest(consumer), 'packaged executable differs from installed SDK consumer')
     require(digest(package / runtime) == digest(sdk / 'bin' / runtime), 'packaged runtime differs from installed SDK')
@@ -408,6 +411,12 @@ def main():
             parsed[phase] = parse_log(output / phase / 'drive.log', plans[phase], phase, seal['sdk_version'], runs[phase]['pid'])
         except (OSError, ValueError) as error:
             errors.append('phase ' + phase + ': ' + str(error))
+            raw_log = output / phase / 'drive.log'
+            if raw_log.is_file():
+                # Diagnostic only: rejected records still receive no acceptance credit.
+                for raw in raw_log.read_text(encoding='utf-8', errors='replace').splitlines():
+                    if '\tFAIL\t' in raw or raw.startswith('STATE\t'):
+                        print('REJECTED-DIAGNOSTIC '+phase+' '+raw, flush=True)
             parsed[phase] = ([], {}, {}, {}, {}, [], [])
             runs.setdefault(phase, {'exit_code': 125, 'elapsed_seconds': 0, 'pid': 0})
 
@@ -528,6 +537,30 @@ def main():
         errors.append('fixed-page annotation deletion was not persisted')
     if state('A', 'note_deleted').get('notes') != '1':
         errors.append('reflow annotation deletion was not persisted')
+    added, jumped = state('A', 'note_added'), state('A', 'after_note_jump')
+    if any(added.get(key) != jumped.get(key) for key in ('book_id', 'part', 'page', 'offset', 'page_text_fnv')) or \
+            jumped.get('selection_active') != '1' or jumped.get('selection_start') != added.get('offset') or \
+            int(jumped.get('selection_end', '-1')) != int(added.get('offset', '-2')) + int(added.get('range_len', '-3')):
+        errors.append('positive annotation did not return to its exact chapter/page/range')
+    # The original 158 actions now exercise the normal default bounded EPUB
+    # import/reader, rather than obtaining credit from a legacy memory import.
+    for phase, name in [('A', 'epub_open'), ('A', 'final'), ('B', 'restored'),
+                        ('B', 'before_restart_font'), ('C', 'after_restart')]:
+        observed = state(phase, name)
+        if observed.get('bounded') != '1' or observed.get('explicit_snapshot_bytes') != '0' or not observed.get('part_path'):
+            errors.append('original EPUB actions did not use bounded source storage: '+phase+'/'+name)
+    bounded_storage = {}
+    try:
+        with sqlite3.connect(data / 'library.sqlite') as database:
+            bounded_storage = {'schema': database.execute('PRAGMA user_version').fetchone()[0],
+                'bounded_books': database.execute('SELECT count(*) FROM epub_bounded_books').fetchone()[0],
+                'progress': database.execute('SELECT count(*) FROM epub_progress').fetchone()[0],
+                'notes': database.execute('SELECT count(*) FROM epub_notes').fetchone()[0],
+                'legacy_notes': database.execute('SELECT count(*) FROM notes').fetchone()[0]}
+        if bounded_storage != {'schema': 7, 'bounded_books': 1, 'progress': 1, 'notes': 1, 'legacy_notes': 0}:
+            errors.append('original EPUB actions used wrong storage tables or counts')
+    except sqlite3.Error as error:
+        errors.append('bounded EPUB storage evidence unavailable: '+str(error))
 
     identities_unchanged = False
     try:
@@ -570,7 +603,7 @@ def main():
         'sdk_runtime': {'name': runtime, 'sha256': sealed_digest(package / runtime)},
         'font_sha256': sealed_digest(package / 'Reader.otf'),
         'books': {name: {'sha256': sealed_digest(package / name)}
-                  for name in ('Sample.epub', 'Sample.pdf', 'Sample-Text.pdf')
+                  for name in ('Sample.epub', 'Sample-positive.epub', 'Sample.pdf', 'Sample-Text.pdf')
                   },
         'fixtures': {Path(path).name: {'sha256': sha} for path, sha in seal['identities'].items()
                      if Path(path).parent == fixtures},
@@ -578,6 +611,9 @@ def main():
         'runs': runs,
         'counts': counts,
         'selftest': selftest,
+        'bounded_storage': bounded_storage,
+        'navigation_positive_fixture': 'Sample-positive.epub',
+        'original_repeated_fixture': 'Sample.epub retained for 26 self-test and independent ambiguity refusal; original-byte UI pass is not claimed',
         'steps': steps,
         'states': states,
         'shelf': shelf,

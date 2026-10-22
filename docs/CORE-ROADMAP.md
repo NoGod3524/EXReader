@@ -30,8 +30,8 @@
 | 已完成 | R1 Windows/macOS（H1）：受测源码 `9b968a16` 的 run [39854485070](https://github.com/NoGod3524/EXReader/actions/runs/39854485070) 两 preset 4/4 成功（构建、安装、安装后消费者、九格式合成 smoke、依赖/配置判定），见 [H1 记录](https://github.com/NoGod3524/EXReader/blob/2e8e981b6dd44d855a23931480fe5e0d5c791762/docs/READING-PLATFORMS.md)；证据门禁加固由 [H6](https://github.com/NoGod3524/EXReader/blob/62ab38e8223e42f1562fda7137cd41b4d87620f1/docs/handoffs/reading-H6-platform-gate.md) 跟踪 |
 | 已完成 | R3 初始 PDF/CBZ 测量（合成）：源码 `3cd7bdf1` 的 run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753) 测极小 1 页 PDF/4 页 CBZ；可区分页面候选 `4b6f562c` 的 run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765) 加入 3 页 PDF/4 页 CBZ 合成文档，2026-10-22 只读核对 success，见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md)；不是成熟基线，未设预算，RSS 增量为 0 不表示无分配 |
 | 失败保留 | 源码 `61aa183` 的 run `39852907619`：测量自验 mock 误拦截，实际采样未执行 |
-| 开发中 | R5 已实现随机源、schema 7、有界导入及章内进度/标注，SDK 尚未冻结；同源候选/失败与长章出口见 [冻结跟踪](R5-SDK-FREEZE.md) |
-| 运行中 | R5 专项云端复验；Windows/Apple/Android 有界宿主并行开发，最终接入仍待固定 SDK |
+| 重新验证 | 阅读SDK原`ce5d664`六组18执行作业/30工件记录保留；Apple发现窗口单元递归超时，冻结已撤回，修复后重验，见[冻结记录](R5-SDK-FREEZE.md) |
+| 运行中 | Windows H8有界宿主已通过；Apple/Android/Linux独立验收，四宿主须随新SDK复验 |
 | 未完成 | 真实 EPUB/PDF 语料（0/1710）与故障修复；真实多页 PDF、跨平台性能与硬预算；R4；各平台 R5 验收；必需检查与发布接线 |
 
 `reading-core` 关闭音频、书库、全文索引、PDF 编辑、旧共享总库、工具与 JNI，保留 PDF、密码认证、ICC 与现有图像开关；

@@ -2,6 +2,27 @@
 
 2026-10-22。通过 GitHub 连接读取 run、每页 100 项的 jobs/artifacts、完成日志和固定源码；未下载工件或执行本地测试。
 
+## 共同阅读SDK源码复验：已通过
+
+固定源码`ce5d664c9f76d0613df6d79b27568a7039c4a81e`，
+run [39864534400](https://github.com/NoGod3524/EXReader/actions/runs/39864534400)，
+四作业均在attempt 1真实执行并成功，四份工件同源、非空、未过期且Actions digest合法。
+
+| 平台/profile | job | 安装消费者 | 必需程序实际执行 | 回归 |
+| --- | --- | --- | --- | --- |
+| Windows/core | 120123301847 | 3/3 | 5/5 | 25/25 |
+| Windows/library | 120123301515 | 5/5 | 8/8 | 30/30 |
+| macOS/core | 120123301852 | 3/3 | 5/5 | 25/25 |
+| macOS/library | 120123301761 | 5/5 | 8/8 | 30/30 |
+
+四作业各9格式smoke通过、`accepted=true`、`problems=[]`。
+library精确清单新增`reading-library-source`与`reading-library-chapter-probe`；
+前者由CTest真实运行，后者在固定表格EPUB上执行有界导入/持久化/重开，绑定运行前后程序hash。
+新增两项拒绝回归分别删去probe执行记录及伪造其执行后hash；没有忽略新程序以复用旧清单。
+一次小夹具调用证明加载与持久化路径，不转授性能预算。
+
+原H6多attempt记录保留如下；本次共同源码已完成四项整轮同attempt复验。
+
 ## 已通过的固定候选
 
 受测源码 `862be39869b047c71f178ce9e5b168ff5c03b7f9`，分支 `handoff/reading-h6-platform-gate`，
