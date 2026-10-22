@@ -223,6 +223,7 @@ def widget_body(widget):
     if not widget.get('merged'):
         body.append(b' /Parent ' + ref(widget['parent']))
     body.append(b' /Rect [' + b' '.join(b'%g' % v for v in rect) + b']')
+    body.append(b' /F 4')
     if widget.get('ap_stream'):
         body.append(b' /AP << /N ' + ref(widget['ap_stream']) + b' >>')
     elif widget.get('ap_states'):
@@ -489,11 +490,12 @@ def build_mixed_batch():
         F(t='person', ft='Tx', v=('text', 'inherited'), da='/Helv 9 Tf 0 g', q=0,
           kids=[F(t='given', widget=W(page=0, rect=TEXT_RECT)),
                 F(t='family', dv=('text', 'Default'), widget=W(page=0, rect=(10, 65, 190, 100)))]),
-        F(t='initial', ft='Tx', maxlen=9, v=('text', 'seed'), widget=W(page=1, rect=TEXT_RECT)),
+        F(t='initial', ft='Tx', maxlen=9, v=('text', 'seed'),
+          widget=W(page=1, rect=(10, 70, 190, 110))),
         F(t='agree', ft='Btn', v=('name', 'Off'),
           widget=W(page=1, rect=BOX_RECT, states=['Yes'], as_state='Off')),
         F(t='news', ft='Btn', v=('name', 'Yes'),
-          widget=W(page=1, rect=(10, 50, 30, 70), states=['Yes'], as_state='Yes')),
+          widget=W(page=1, rect=(40, 20, 60, 40), states=['Yes'], as_state='Yes')),
         F(t='color', ft='Btn', flags=BUTTON_FLAGS['radio'], v=('name', 'Green'),
           widgets=[W(page=2, rect=RADIO_A, states=['Red'], as_state='Off'),
                    W(page=2, rect=RADIO_B, states=['Green'], as_state='Green')]),
@@ -679,7 +681,7 @@ FILES = [
         'expect': 'accept', 'op': 'write', 'font': 0,
         'build': lambda: build_form(fields=[
             F(t='kept', ft='Tx', v=('text', 'old'),
-              widget=W(page=0, rect=TEXT_RECT, ap='stream', extra=b'/F 4 /NM (kept-widget)')),
+              widget=W(page=0, rect=TEXT_RECT, ap='stream', extra=b'/NM (kept-widget)')),
         ], doc_id=b'0004'),
         'changes': [('kept', ['replaced'])],
         'notes': 'Existing normal appearance stream and unrelated widget dictionary entries survive the replacement.',
@@ -770,7 +772,7 @@ FILES = [
         'expect': 'accept', 'op': 'write', 'font': 0,
         'build': lambda: build_form(fields=[
             F(t='check0', ft='Btn', v=('name', 'Off'),
-              widget=W(page=0, rect=BOX_RECT, states=['Yes'], as_state='Off', extra=b'/F 4')),
+              widget=W(page=0, rect=BOX_RECT, states=['Yes'], as_state='Off')),
         ], doc_id=b'0015'),
         'changes': [('check0', ['Yes'])],
         'notes': 'Existing named normal appearances are replaced by Off and on-state streams with a matching AS.',

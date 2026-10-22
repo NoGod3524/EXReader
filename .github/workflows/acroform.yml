@@ -97,19 +97,52 @@ jobs:
       - name: Verify compiled layer dependencies
         if: runner.os == 'Linux'
         run: python3 tools/check_layers.py build/form
+      - name: Verify measurements against the frozen spec
+        continue-on-error: true
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tools/check_acroform_corpus.py --corpus build/corpus --edited build/form/acroform-edited --results build/form/acroform-results.tsv --out build/evidence --platform "$RUNNER_OS"
       - name: Independent reference validation of edited outputs
         if: runner.os == 'Linux'
+        continue-on-error: true
         shell: bash
         run: |
           PY=$(command -v python || command -v python3)
           "$PY" tools/acroform_reference.py outputs --corpus build/corpus --edited build/form/acroform-edited --out build/reference-outputs.json
-      - name: Verify measurements against the frozen spec
+      - name: Explain failing documents
+        if: always()
         shell: bash
         run: |
           PY=$(command -v python || command -v python3)
-          REFERENCE=""
-          if [ "${{ runner.os }}" = "Linux" ]; then REFERENCE="--reference build/reference-outputs.json"; fi
-          "$PY" tools/check_acroform_corpus.py --corpus build/corpus --edited build/form/acroform-edited --results build/form/acroform-results.tsv --out build/evidence --platform "$RUNNER_OS" $REFERENCE
+          "$PY" - build/form/acroform-edited build/form/acroform-results.tsv <<'PY'
+          import pathlib, sys
+          edited, results = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+          bases = {}
+          for line in results.read_text(encoding='utf-8').splitlines():
+              cells = line.split('\t')
+              if cells[0] == 'F':
+                  bases[cells[1]] = bytes.fromhex(cells[3]).decode('utf-8')
+              elif cells[0] == 'W':
+                  name = bytes.fromhex(cells[9]).decode('utf-8')
+                  print('W id=%s status=%s size=%s file=%s present=%s' % (
+                      cells[1], cells[3], cells[6], name, (edited / name).exists()))
+              elif cells[0] == 'RO':
+                  print('RO id=%s status=%s fields=%s' % (cells[1], cells[2], cells[4]))
+          print('edited files on disk: %d' % len(list(edited.glob('*.pdf'))))
+          PY
+      - name: Gate on the frozen spec with reference reports
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tools/check_acroform_corpus.py --corpus build/corpus --edited build/form/acroform-edited --results build/form/acroform-results.tsv --out build/evidence --platform "$RUNNER_OS" --reference build/reference-outputs.json --require-reference
+      - name: Gate on the frozen spec
+        if: runner.os != 'Linux'
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tools/check_acroform_corpus.py --corpus build/corpus --edited build/form/acroform-edited --results build/form/acroform-results.tsv --out build/evidence --platform "$RUNNER_OS"
       - name: Install the portable SDK with the form component
         run: cmake --install build/form --config Debug --prefix stage
       - name: Build and run the installed AcroForm consumer
