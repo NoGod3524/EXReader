@@ -1,0 +1,12 @@
+{
+ "base": "60-reject-control-char.pdf",
+ "id": "60",
+ "category": "reject/control-character",
+ "expect": "reject",
+ "size": 663,
+ "sha256": "1cde6c8d703a2893f9742c53a7a07f4682a0b20a33cf379ec817c02efe247d45",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

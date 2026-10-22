@@ -1,0 +1,12 @@
+{
+ "base": "02-text-inherit-two-widgets.pdf",
+ "id": "02",
+ "category": "text/inheritance",
+ "expect": "accept",
+ "size": 1036,
+ "sha256": "435703b0548b4fd161c264300b149731be74c2a0b97fe8a9b11abe666145e987",
+ "edited_sha256": "e505529bb49f94ae247dba97ec1f7a1cd52bb0691fa8af47dcf586b586786f6e",
+ "assertions": 32,
+ "result": "pass",
+ "failures": []
+}

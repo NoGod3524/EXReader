@@ -1,0 +1,12 @@
+{
+ "base": "07-text-merged-and-kids.pdf",
+ "id": "07",
+ "category": "widget/merged",
+ "expect": "accept",
+ "size": 1055,
+ "sha256": "f5a4aff2e9bd0eff5fe00809fbafc9c796558bd97c8ea7d5ef4424b54d5825a5",
+ "edited_sha256": "5ad3f914475b105eab44cb04722afe7dc6a1988b7a8edba5ce2ed1d791a8d18b",
+ "assertions": 34,
+ "result": "pass",
+ "failures": []
+}

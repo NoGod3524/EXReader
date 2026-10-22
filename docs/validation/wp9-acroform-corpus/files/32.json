@@ -1,0 +1,12 @@
+{
+ "base": "32-zero-change.pdf",
+ "id": "32",
+ "category": "structure/zero-change",
+ "expect": "accept",
+ "size": 678,
+ "sha256": "08afb95d84772ff52c062af9d56d7edb2663d1cbd0cc9c9419822b868ea2a9e0",
+ "edited_sha256": "08afb95d84772ff52c062af9d56d7edb2663d1cbd0cc9c9419822b868ea2a9e0",
+ "assertions": 26,
+ "result": "pass",
+ "failures": []
+}

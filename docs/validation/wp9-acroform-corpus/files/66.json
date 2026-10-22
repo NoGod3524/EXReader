@@ -1,0 +1,12 @@
+{
+ "base": "66-cancel-final.pdf",
+ "id": "66",
+ "category": "cancel/export-completion",
+ "expect": "cancel",
+ "size": 663,
+ "sha256": "55356511b22e7cfc7d289fd4d0de75a2255f05b621d248072d512fa239429326",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

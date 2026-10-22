@@ -1,0 +1,12 @@
+{
+ "base": "09-text-spaces.pdf",
+ "id": "09",
+ "category": "text/blank",
+ "expect": "accept",
+ "size": 663,
+ "sha256": "00a9fa4db275fec78da3adf5aecc116d24d94f54b92a74c0f76adf969a558b2c",
+ "edited_sha256": "dfe50a61cf0f5d9538921914f5acb18725913108838f8bc22c99bf4b65b63507",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

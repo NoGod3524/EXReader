@@ -1,0 +1,12 @@
+{
+ "base": "16-radio-basic.pdf",
+ "id": "16",
+ "category": "radio/basic",
+ "expect": "accept",
+ "size": 1584,
+ "sha256": "fcf38ba26c29ba97b0285fded7e96f14d054c477d841d4b362d0bcf5b8fe7458",
+ "edited_sha256": "98926ac1504852b33e1a8edd417dff32562d9a2bb55cdf459ab2cd9bdc0a2516",
+ "assertions": 38,
+ "result": "pass",
+ "failures": []
+}

@@ -1,0 +1,12 @@
+{
+ "base": "11-text-unicode.pdf",
+ "id": "11",
+ "category": "text/unicode",
+ "expect": "accept",
+ "size": 663,
+ "sha256": "afbd6e4012b5c6adf71880c7e38e4d78b5dab7d2db9d3efd2e1a7e52ad783557",
+ "edited_sha256": "b1d08531922fea046dc71307cff9522b4f6c2bd022eca23fcec32b0198c23545",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

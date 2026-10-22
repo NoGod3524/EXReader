@@ -1,0 +1,12 @@
+{
+ "base": "10-text-long-shrink.pdf",
+ "id": "10",
+ "category": "text/fit",
+ "expect": "accept",
+ "size": 662,
+ "sha256": "f84efd3676fb347f82e51a316b70dc04c7a1e2939ac2a0498ab3e3b3f6775d2a",
+ "edited_sha256": "203acc18273706a4ba78b320cad2c427f9d04daadc34c0df1ebf5c1979797a9d",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

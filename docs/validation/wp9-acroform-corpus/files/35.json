@@ -1,0 +1,12 @@
+{
+ "base": "35-action-flag-isolated.pdf",
+ "id": "35",
+ "category": "structure/action-flag",
+ "expect": "accept",
+ "size": 763,
+ "sha256": "308c3593f613ca7ec5f168aab96e1ec19fc8318961140d044d5988393c757724",
+ "edited_sha256": "29b18ba39ce557730226928288cb482e037470b455ab4e8ef331e730449be189",
+ "assertions": 41,
+ "result": "pass",
+ "failures": []
+}

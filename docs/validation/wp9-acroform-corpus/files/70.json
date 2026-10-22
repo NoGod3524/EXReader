@@ -1,0 +1,12 @@
+{
+ "base": "70-read-mixed-kids.pdf",
+ "id": "70",
+ "category": "read/mixed-kids",
+ "expect": "read-fail",
+ "size": 776,
+ "sha256": "831ebc3bfcd4a1a2a9c4b179822d3c6aafee9d8fc61d65b5e469a2e163632610",
+ "edited_sha256": null,
+ "assertions": 6,
+ "result": "pass",
+ "failures": []
+}

@@ -1,0 +1,12 @@
+{
+ "base": "73-read-bad-rect.pdf",
+ "id": "73",
+ "category": "read/bad-rect",
+ "expect": "read-fail",
+ "size": 705,
+ "sha256": "f7c0a38630a642a4e2361cf4737ffb3f87de24cb6590f1f3c924c4b0fc8d13ff",
+ "edited_sha256": null,
+ "assertions": 6,
+ "result": "pass",
+ "failures": []
+}
