@@ -204,7 +204,7 @@ def check_suite(evidence, suite, expected, build):
         require(declared == re.findall(r'step\("([a-z0-9_]+)",\s*"([^"]+)"', original),
                 'original walkthrough titles/order changed')
         titles = dict(declared)
-    for case in cases:
+    for index, case in enumerate(cases, 1):
         case_id = case['id']
         require(case.get('status') == 'pass', suite + ': case did not pass: ' + case_id)
         if titles:
@@ -218,10 +218,11 @@ def check_suite(evidence, suite, expected, build):
         check_png(path)
         require(case.get('screenshot_bytes') == path.stat().st_size and case.get('screenshot_sha256') == sha256(path),
                 'case screenshot identity mismatch')
-        matches = list((root/'cases').glob('*' + case_id + '.json'))
-        require(len(matches) == 1 and matches[0].resolve().is_relative_to(root.resolve()) and load(matches[0]) == case,
+        case_name = (f'{index:02d}-' if suite == 'walkthrough' else '') + case_id + '.json'
+        case_path = root/'cases'/case_name
+        require(case_path.resolve().is_relative_to(root.resolve()) and load(case_path) == case,
                 'per-case JSON differs from the aggregate report')
-        case_files.add(matches[0].name)
+        case_files.add(case_name)
         if suite == 'review':
             assertions = case.get('assertions')
             require(isinstance(assertions, list) and assertions and all(isinstance(name, str) and name for name in assertions),

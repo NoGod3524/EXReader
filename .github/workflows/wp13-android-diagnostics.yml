@@ -19,11 +19,11 @@ jobs:
           import hashlib, io, json, os, re, urllib.error, urllib.parse, urllib.request, zipfile
           from pathlib import Path, PurePosixPath
           API = 'https://api.github.com/repos/NoGod3524/EXReader'
-          RUN = 39806252140
-          SOURCE = 'c19854a2aeaefaa5a0c70b6865c17597c7caf21f'
-          ARTIFACT = 12439356641
-          SIZE = 147864371
-          DIGEST = 'sha256:f5e4058f40057078d23c0506e1f8599fd7198a07c76b4c4879de043b67510f6b'
+          RUN = 39813713535
+          SOURCE = '5a04a27bf518766e03f20f2679e31d77bb42d8ce'
+          ARTIFACT = 12441886741
+          SIZE = 149894678
+          DIGEST = 'sha256:eb16d88ddd738cf8905905b18140c25907d620103de1ef4dad54b8554dfc188d'
           HEADERS = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json',
                      'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'EXReader-cloud-diagnostic'}
           def require(value, message):
@@ -36,8 +36,11 @@ jobs:
               def redirect_request(self, request, stream, code, message, headers, url):
                   return None
           run = api('/actions/runs/' + str(RUN))
-          require(run.get('id') == RUN and run.get('head_sha') == SOURCE and run.get('run_attempt') == 1 and
-                  run.get('conclusion') == 'failure', 'failed run identity differs')
+          require(run.get('id') == RUN and run.get('head_sha') == SOURCE and run.get('run_attempt') == 1,
+                  'failed run identity differs')
+          job = api('/actions/jobs/119946527174')
+          require(job.get('run_id') == RUN and any(step.get('name') == 'Final fail-closed acceptance' and
+                  step.get('conclusion') == 'failure' for step in job.get('steps', [])), 'final rejection missing')
           metadata = api('/actions/artifacts/' + str(ARTIFACT))
           identity = metadata.get('workflow_run', {})
           require(metadata.get('id') == ARTIFACT and metadata.get('name') == 'EXReader-WP13-Android' and
@@ -92,7 +95,7 @@ jobs:
                   lines = payload.decode('utf-8', errors='replace').splitlines()
                   pattern = (r'INSTRUMENTATION_(STATUS|RESULT|CODE)|FAILURES|OK \(|AssertionError|Error in|'
                              r'EXReader|Review |native-next|next_calls|recovery|ANR in|TimeoutException|'
-                             r'UiDevice|ActivityTaskManager|DocumentsUI')
+                             r'UiDevice|ActivityTaskManager|DocumentsUI|EXRReview')
                   observations = [bounded(line) for line in lines if re.search(pattern, line) and
                       not re.search(r'\bat (?:org\.|java\.|android\.|androidx\.)|\bpc [0-9a-f]+|backtrace|stacktrace', line)]
                   report['native_log_observations'][suite + suffix] = {'path': name, 'total_lines': len(lines),
