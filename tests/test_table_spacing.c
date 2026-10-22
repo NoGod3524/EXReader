@@ -114,6 +114,11 @@ static void pages(int header,int tall,int vertical_mode) {
         if(b[j].node==first) { CHECK(near(b[j].y,21)); bottom=b[j].y+b[j].height; }
         else if(b[j].node!=second) body=fminf(body,b[j].y);
       }
+      if(!(bottom>0 && near(body-bottom,11))) {
+        fprintf(stderr,"header page %zu/%zu: bottom=%g body=%g gap=%g\n",p,np,bottom,body,body-bottom);
+        for(j=0;j<n;j++) if(b[j].page==p && b[j].kind==EXR_BOX_CELL)
+          fprintf(stderr,"  cell %zu: y=%g height=%g\n",b[j].node,b[j].y,b[j].height);
+      }
       CHECK(bottom>0 && near(body-bottom,11));
     }
   }
