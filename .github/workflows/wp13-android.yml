@@ -24,9 +24,8 @@ jobs:
     timeout-minutes: 120
     runs-on: ubuntu-latest
     env:
-      # Accepted Android delivery source; the audit boundary stops here so later
-      # integration commits cannot be attributed to the Android package.
-      ANDROID_OWNERSHIP_HEAD: 8a6636ed8ac6db06ab84e174f5a01c49d12511dc
+      # Freeze Android ownership before other package scopes join the tested source.
+      ANDROID_OWNERSHIP_HEAD: 797c47fc8d5c397fd7c960afe91eb6f851ec07f1
     steps:
       - uses: actions/checkout@v4
         with:
@@ -86,7 +85,7 @@ jobs:
           sudo chmod 666 /dev/kvm
           /usr/local/lib/android/sdk/emulator/emulator -accel-check || true
 
-      - name: Boot emulator and run original 45 plus independent review 10
+      - name: Boot emulator and run original 45, review 10 and bounded 11
         id: emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -100,6 +99,20 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: bash examples/android/ci/emulator.sh
+
+      - name: Print per-suite summaries and failing case identities
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for path in Path('build/android-host/evidence').glob('*/validation.json'):
+              report=json.loads(path.read_text())
+              print(json.dumps({'suite':report.get('suite'),'summary':report.get('summary'),'sequence':report.get('sequence')}))
+              for case in report.get('cases',[]):
+                  if case.get('status')!='pass':
+                      print(json.dumps({'id':case.get('id'),'status':case.get('status'),'error':case.get('error'),'detail':case.get('detail')}))
+          PY
 
       - name: Preflight complete same-run evidence
         id: preflight
@@ -129,11 +142,20 @@ jobs:
             --stage stage/android-x86_64 \
             --output build/android-host/gate-review.json
 
+      - name: Prove bounded evidence gate rejects altered inputs
+        id: bounded_gate
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
+        run: |
+          python3 tests/android_host/check_bounded_evidence_gate.py \
+            --evidence build/android-host/evidence --build build/android-host/build.json \
+            --stage stage/android-x86_64 --output build/android-host/bounded-gate-review.json
+
       - name: Final fail-closed acceptance
         if: always()
         env:
           ANDROID_HOST_UPSTREAM: '{"build":"${{ steps.build.outcome }}","static":"${{ steps.static.outcome }}","emulator":"${{ steps.emulator.outcome }}"}'
           ANDROID_GATE_OUTCOME: '${{ steps.gate_review.outcome }}'
+          ANDROID_BOUNDED_GATE_OUTCOME: '${{ steps.bounded_gate.outcome }}'
         run: |
           python3 tools/check_android_host.py \
             --repo . \
@@ -141,6 +163,7 @@ jobs:
             --build build/android-host/build.json \
             --stage stage/android-x86_64 \
             --gate-review build/android-host/gate-review.json \
+            --bounded-gate-review build/android-host/bounded-gate-review.json \
             --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             --output docs/validation/wp13-android.json
 
@@ -154,6 +177,7 @@ jobs:
             build/android-host/build.json
             build/android-host/build.log
             build/android-host/gate-review.json
+            build/android-host/bounded-gate-review.json
             build/android-host/fixtures/
             build/android-host/artifacts/
             build/android-host/evidence/

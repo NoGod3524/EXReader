@@ -179,6 +179,12 @@ public final class ReaderView extends View {
             lineText = snapshot.lineText == null ? new String[0] : snapshot.lineText;
             lineBounds = snapshot.lineBounds == null ? new RectF[0] : snapshot.lineBounds;
         }
+        if(snapshot!=null && snapshot.highlightStart>=0) {
+            for(int i=0;i<snapshot.glyphCount();i++) if(snapshot.ends[i]>snapshot.highlightStart && snapshot.starts[i]<snapshot.highlightEnd) {
+                if(anchor<0) anchor=i; focus=i;
+            }
+            if(anchor>=0) updateSelection(false);
+        }
         setContentDescription(describe());
         invalidate();
         if (isShown()) sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
@@ -457,7 +463,7 @@ public final class ReaderView extends View {
             invalidate();
             return;
         }
-        String text = ReflowSession.slice(page.text, start, end);
+        String text = ReflowSession.slice(page.text, start - page.textBase, end - page.textBase);
         selection = new Selection(page.index, start, end, text, rects);
         setContentDescription(describe());
         invalidate();

@@ -32,6 +32,21 @@ final class ReflowSession implements AutoCloseable {
     private final long bookId;
     private long nativeNextCalls;
     private long recoveryCalls;
+    private BoundedEpub bounded;
+
+    ReflowSession(BookStore store,long bookId,byte[] font,float size) {
+        this.bookId=bookId; this.font=font; fontSize=size; document=null; text=null; title="EPUB";
+        bounded=new BoundedEpub(store.nativeLibrary(),bookId,font,size);
+    }
+    boolean bounded() { return bounded!=null; }
+    PageLoad restore(int displayIndex,HostTask task) throws Exception { return bounded.restore(displayIndex,task); }
+    PageLoad seek(NativeLibrary.Note note,HostTask task) throws Exception {
+        return bounded!=null?bounded.seek(note,task):seek(note.start,task);
+    }
+    void saveProgress(PageSnapshot page) { bounded.saveProgress(page); }
+    void saveBoundedNote(long id,long start,long end,String text) { bounded.saveNote(id,start,end,text); }
+    void refreshSource() { if(bounded!=null) bounded.refresh(); }
+    void reviewChapterBudget(long bytes) { if(bounded!=null) bounded.chapterBudget=bytes; }
 
     ReflowSession(long bookId, String path, byte[] font, float size) {
         this.bookId = bookId;
@@ -75,6 +90,7 @@ final class ReflowSession implements AutoCloseable {
     }
 
     PageLoad next(HostTask task) throws Exception {
+        if(bounded!=null) return bounded.next(task);
         if (pager == null) return prepare(index + 1, -1, fontSize, task);
         task.check();
         long started = System.nanoTime();
@@ -123,13 +139,16 @@ final class ReflowSession implements AutoCloseable {
         } finally { if (restored != null) restored.close(); }
     }
     PageLoad previous(HostTask task) throws Exception {
+        if(bounded!=null) return bounded.previous(task);
         return index <= 0 ? null : prepare(index - 1, -1, fontSize, task);
     }
     PageLoad seek(long offset, HostTask task) throws Exception {
         if (offset < 0 || offset > text.length) throw new IllegalArgumentException("Text position is outside the document");
         return prepare(-1, offset, fontSize, task);
     }
-    PageLoad setFontSize(float size, HostTask task) throws Exception { return prepare(-1, lastStart, size, task); }
+    PageLoad setFontSize(float size, HostTask task) throws Exception {
+        return bounded!=null?bounded.font(size,task):prepare(-1,lastStart,size,task);
+    }
 
     private long lastStart = 0;
 
@@ -239,6 +258,7 @@ final class ReflowSession implements AutoCloseable {
     public void close() {
         if (closed) return;
         closed = true;
+        if(bounded!=null) { bounded.close(); return; }
         if (pager != null) {
             pager.close();
             pager = null;

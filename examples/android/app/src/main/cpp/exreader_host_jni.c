@@ -10,6 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int bounded_mode(JNIEnv *,exr_library *,int64_t);
+static int bounded_note_owner(JNIEnv *,exr_library *,int64_t,int64_t);
+static jobjectArray bounded_notes(JNIEnv *,exr_library *,int64_t);
+
 static void throw_status(JNIEnv *env, exr_status status, const exr_error *error, const char *fallback) {
   char message[512];
   const char *detail = (error && error->message[0]) ? error->message : fallback;
@@ -67,6 +71,8 @@ static char *input_string(JNIEnv *env, jstring value) {
 
 static int note_owner(JNIEnv *env,exr_library *store,jlong book,jlong id,int fixed) {
   exr_error error={0}; exr_status status; size_t count=0,i; int found=0;
+  if(!fixed && bounded_mode(env,store,(int64_t)book)>0) return bounded_note_owner(env,store,(int64_t)book,(int64_t)id);
+  if((*env)->ExceptionCheck(env)) return 0;
   if(fixed) {
     exr_fixed_note *notes=NULL; status=exr_library_fixed_notes(store,(int64_t)book,&notes,&count,&error);
     if(status==EXR_OK) for(i=0;i<count;i++) if(notes[i].id==(int64_t)id) found=1;
@@ -219,6 +225,8 @@ static int set_number(JNIEnv *env, jobjectArray row, jsize column, long long val
   return set_cell(env, row, column, buffer);
 }
 
+#include "bounded_epub_jni.inc"
+
 JNIEXPORT jstring JNICALL Java_org_exreader_host_NativeLibrary_nativeIdentity(JNIEnv *env, jclass type) {
   char buffer[128];
   (void)type;
@@ -295,7 +303,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_nativeBooks(
 }
 
 JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFile(
-    JNIEnv *env, jclass type, jlong handle, jstring path, jint format, jstring title) {
+    JNIEnv *env, jclass type, jlong handle, jstring path, jint format, jstring title,jboolean legacy) {
   exr_library *store = library(env, handle);
   char *file = NULL, *name = NULL;
   int64_t id = 0;
@@ -331,7 +339,7 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFi
       return NULL;
     }
   }
-  if (format == EXR_PDF || format == EXR_CBZ) {
+  if ((format == EXR_EPUB && !legacy) || format == EXR_PDF || format == EXR_CBZ) {
     status = exr_library_import_file_unique(store, (exr_format)format, file, name, &id, &created, &error);
   } else {
     size_t size = 0;
@@ -403,6 +411,8 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_nativeNotes(
   (void)type;
   memset(&error, 0, sizeof(error));
   if (!store) return NULL;
+  if(bounded_mode(env,store,(int64_t)book_id)>0) return bounded_notes(env,store,(int64_t)book_id);
+  if((*env)->ExceptionCheck(env)) return NULL;
   status = exr_library_notes(store, (int64_t)book_id, &notes, &count, &error);
   if (status != EXR_OK) {
     throw_status(env, status, &error, "Cannot read annotations");
@@ -509,7 +519,11 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeUpdateNoteText
     if (!(*env)->ExceptionCheck(env)) throw_argument(env, "Comment is required");
     return;
   }
-  status = exr_library_note_text(store, (int64_t)note_id, text, &error);
+  if(bounded_mode(env,store,(int64_t)book_id)>0) {
+    exr_epub_note note={0}; int64_t saved=0;
+    note.id=(int64_t)note_id; note.book_id=(int64_t)book_id; note.text=text;
+    status=exr_library_epub_note(store,&note,&saved,&error);
+  } else status = exr_library_note_text(store, (int64_t)note_id, text, &error);
   free(text);
   if (status != EXR_OK) throw_status(env, status, &error, "Cannot update the annotation");
 }
@@ -523,7 +537,8 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeRemoveNote(
   memset(&error, 0, sizeof(error));
   if (!store) return;
   if (!note_owner(env,store,book_id,note_id,0)) return;
-  status = exr_library_remove_note(store, (int64_t)note_id, &error);
+  status = bounded_mode(env,store,(int64_t)book_id)>0 ?
+      exr_library_remove_epub_note(store,(int64_t)note_id,&error) : exr_library_remove_note(store, (int64_t)note_id, &error);
   if (status != EXR_OK) throw_status(env, status, &error, "Cannot remove the annotation");
 }
 

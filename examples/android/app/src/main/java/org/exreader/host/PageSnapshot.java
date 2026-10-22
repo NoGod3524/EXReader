@@ -6,6 +6,16 @@ import android.graphics.RectF;
 
 /** Immutable UI-side page: bitmap, engine geometry and text for selection. */
 final class PageSnapshot {
+    boolean bounded;
+    int part = -1;
+    String path;
+    long textBase, boundedHandle;
+    boolean preserveProgress;
+    String restoreNotice;
+    long highlightStart=-1, highlightEnd=-1;
+    BoundedEpub boundedOwner;
+    String[] boundedLocation;
+    float layoutFont;
     final long bookId;
     final Bitmap bitmap;
     final boolean fixed;
