@@ -36,15 +36,16 @@ jobs:
   protocol:
     if: github.ref == 'refs/heads/codex/compat-corpus-manifest'
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.manifest != '' && 360 || 30 }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Build the existing document checker only
         run: |
-          cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
-          cmake --build build/native --target exreader-check-document --parallel 4
+          mkdir -p build/compat
+          cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF 2>&1 | tee build/compat/configure.log
+          cmake --build build/native --target exreader-check-document --parallel 4 2>&1 | tee build/compat/build.log
       - name: Check strict manifests and native process evidence
         run: python3 tests/compat_corpus/check_protocol.py build/native/exreader-check-document build/compat/selftests
       - name: Record current licensed real asset shortfall

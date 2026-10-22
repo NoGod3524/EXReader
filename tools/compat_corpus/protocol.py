@@ -4,6 +4,7 @@
 import argparse
 from collections import Counter
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -285,7 +286,7 @@ def collect(manifest, manifest_path, root, registration):
             time.sleep(0.5)
             attempt['input'] = fetch(source['url'], inside(root, item['path']), item['sha256'], item['bytes'])
             attempt['status'] = 'collected'
-        except (OSError, ValueError) as error:
+        except (OSError, ValueError, http.client.HTTPException) as error:
             failures += 1
             attempt.update(status='collection_failed', error=str(error))
         with (root / 'collection-attempts.jsonl').open('a', encoding='utf-8') as ledger:
@@ -341,6 +342,7 @@ def main():
     parser.add_argument('--workers', type=int, default=4)
     args = parser.parse_args()
     try:
+        cloud_only()
         manifest = json.loads(args.manifest.read_text(encoding='utf-8-sig'))
         inventory = validate(manifest)
         if args.action == 'inventory':
@@ -362,6 +364,15 @@ def main():
         return run(manifest, args.manifest, args.root, args.output, args.binary, args.font,
                    registration, args.timeout, args.workers)
     except (OSError, ValueError, TypeError, KeyError, subprocess.CalledProcessError) as error:
+        if os.environ.get('GITHUB_ACTIONS') == 'true' and not args.output.exists():
+            refusal = {'schema': 1, 'accepted': False, 'pipeline_accepted': False,
+                       'run_id': os.environ.get('GITHUB_RUN_ID'), 'refusal': str(error)}
+            if args.action == 'run':
+                args.output.mkdir(parents=True)
+                write_json(args.output / 'acceptance.json', refusal)
+            else:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                write_json(args.output, refusal)
         print(str(error), file=sys.stderr)
         return 1
 

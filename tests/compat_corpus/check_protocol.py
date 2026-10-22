@@ -6,6 +6,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -250,12 +251,23 @@ def check(binary, output):
         tempgit('config', 'user.email', 'protocol-selftest@example.invalid')
         temporary_manifest = temporary_root / 'manifest.json'
         p.write_json(temporary_manifest, synthetic)
-        tempgit('add', 'manifest.json')
+        (temporary_root / 'tools').mkdir()
+        for tool in ('check_corpus.py', 'check_document.c'):
+            shutil.copyfile(ROOT / 'tools' / tool, temporary_root / 'tools' / tool)
+        tempgit('add', '.')
         tempgit('commit', '-m', 'Register expectations before execution')
         original_commit = tempgit('rev-parse', 'HEAD')
         with patch.object(p, 'ROOT', temporary_root):
-            assert p.registered(temporary_manifest, original_commit)['commit'] == original_commit
+            temporary_registration = p.registered(temporary_manifest, original_commit)
+            assert temporary_registration['commit'] == original_commit
             passed('independent_registration_positive')
+            wrapper_output = output / 'wrapper-run'
+            code = p.run(synthetic, temporary_manifest, assets, wrapper_output, binary,
+                         ROOT / 'tests/fixtures/fonts/primary.ttf', temporary_registration, 60, 1)
+            wrapper_report = json.loads((wrapper_output / 'acceptance.json').read_text())
+            assert code == 1 and 'refusal' not in wrapper_report and wrapper_report['counts'] == {'passed': 1}
+            assert not wrapper_report['pipeline_accepted'] and not wrapper_report['accepted']
+            passed('full_native_wrapper_retains_partial_scope_refusal')
             rewritten = deepcopy(synthetic)
             rewritten['files'][0]['expected']['status'] = 11
             p.write_json(temporary_manifest, rewritten)
