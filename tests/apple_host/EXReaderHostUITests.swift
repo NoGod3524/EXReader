@@ -139,8 +139,20 @@ final class EXReaderHostUITests: XCTestCase {
 
     private func waitLabel(_ identifier: String, contains text: String,
                            _ timeout: TimeInterval = 30) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
         _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
-        let matched = waitUntil(timeout) { self.text(identifier).contains(text) }
+        let matched: Bool
+        if identifier == "reader.status" && text == "就绪" {
+            // A completed open may hand a pending viewport directly to its next
+            // worker while retaining the previous status text. Only one stable,
+            // current AX snapshot with an accepted frame and enabled controls is ready.
+            matched = waitStableState(max(0, deadline.timeIntervalSinceNow)) {
+                guard let state = self.screenSnapshot(), state.text(identifier)?.contains(text) == true else { return nil }
+                return self.readerIdleIdentity(state)
+            }
+        } else {
+            matched = waitUntil(max(0, deadline.timeIntervalSinceNow)) { self.text(identifier).contains(text) }
+        }
         if !matched { reportWaitFailure(identifier, expected: text) }
         return matched
     }
