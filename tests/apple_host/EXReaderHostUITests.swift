@@ -42,6 +42,13 @@ final class EXReaderHostUITests: XCTestCase {
         return target
     }
 
+    private func text(_ identifier: String) -> String {
+        let target = element(identifier)
+        let label = target.label
+        if !label.isEmpty { return label }
+        return (target.value as? String) ?? ""
+    }
+
     private func waitUntil(_ timeout: TimeInterval, _ condition: () -> Bool) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
@@ -54,21 +61,21 @@ final class EXReaderHostUITests: XCTestCase {
     private func waitLabel(_ identifier: String, contains text: String,
                            _ timeout: TimeInterval = 30) -> Bool {
         _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
-        return waitUntil(timeout) { element(identifier).label.contains(text) }
+        return waitUntil(timeout) { self.text(identifier).contains(text) }
     }
 
     private func waitLabelAny(_ identifier: String, _ texts: [String],
                               _ timeout: TimeInterval = 30) -> Bool {
         _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
-        return waitUntil(timeout) { texts.contains(where: { element(identifier).label.contains($0) }) }
+        return waitUntil(timeout) { texts.contains(where: { self.text(identifier).contains($0) }) }
     }
 
     private func waitLabelFilled(_ identifier: String, excluding: [String],
                                  _ timeout: TimeInterval = 15) -> Bool {
         _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
         return waitUntil(timeout) {
-            let label = element(identifier).label
-            return !label.isEmpty && !excluding.contains(label)
+            let value = text(identifier)
+            return !value.isEmpty && !excluding.contains(value)
         }
     }
 
@@ -110,7 +117,7 @@ final class EXReaderHostUITests: XCTestCase {
 
     private func ensureReader(_ title: String) throws {
         if element("reader.page").waitForExistence(timeout: 3) {
-            if element("reader.title").label.contains(title) { return }
+            if text("reader.title").contains(title) { return }
             if element("reader.back").exists {
                 element("reader.back").tap()
                 _ = element("library.title").waitForExistence(timeout: 20)
@@ -301,8 +308,8 @@ final class EXReaderHostUITests: XCTestCase {
             waitElement("selection.copy").tap()
             waitElement("selection.verifyPaste").tap()
             XCTAssertTrue(waitLabelFilled("selection.clipboard", excluding: ["剪贴板为空"], 20))
-            let quote = element("selection.quote").label
-            let clipboard = element("selection.clipboard").label
+            let quote = text("selection.quote")
+            let clipboard = text("selection.clipboard")
             XCTAssertTrue(clipboard.contains(quote) || quote.contains(clipboard),
                           "clipboard \(clipboard) does not contain quote \(quote)")
             attach("11-selection-copied")
@@ -315,7 +322,7 @@ final class EXReaderHostUITests: XCTestCase {
         try step("step23_annotation_list_navigation") {
             waitElement("reader.notes").tap()
             XCTAssertTrue(waitElement("notes.quote.0", 30).exists)
-            let quote = element("notes.quote.0").label
+            let quote = text("notes.quote.0")
             XCTAssertFalse(quote.isEmpty)
             attach("12-annotation-list")
         }
@@ -356,7 +363,7 @@ final class EXReaderHostUITests: XCTestCase {
             _ = waitLabel("reader.location", contains: "第 1 页", 30)
             waitElement("reader.next").tap()
             XCTAssertTrue(waitLabel("reader.location", contains: "第 2 页", 30))
-            location = element("reader.location").label
+            location = text("reader.location")
         }
         var hash = ""
         try step("step28_create_note_and_read_state") {
@@ -366,7 +373,7 @@ final class EXReaderHostUITests: XCTestCase {
             XCTAssertTrue(waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 20))
             waitElement("selection.annotate").tap()
             XCTAssertTrue(waitLabel("reader.status", contains: "已保存标注", 40))
-            hash = element("reader.state").label
+            hash = text("reader.state")
             XCTAssertTrue(hash.contains("#"))
         }
         try step("step29_background_and_foreground") {
@@ -380,15 +387,15 @@ final class EXReaderHostUITests: XCTestCase {
             app.activate()
 #endif
             _ = waitElement("reader.page", 40)
-            XCTAssertEqual(element("reader.location").label, location)
+            XCTAssertEqual(text("reader.location"), location)
             attach("15-after-background")
         }
         try step("step30_relaunch_restores_position_and_state") {
             app.terminate()
             launch()
             _ = waitElement("reader.page", 90)
-            XCTAssertEqual(element("reader.location").label, location)
-            XCTAssertEqual(element("reader.state").label, hash)
+            XCTAssertEqual(text("reader.location"), location)
+            XCTAssertEqual(text("reader.state"), hash)
             attach("16-after-relaunch")
         }
         try step("step31_notes_survive_relaunch") {
@@ -404,7 +411,7 @@ final class EXReaderHostUITests: XCTestCase {
             XCTAssertTrue(row.waitForExistence(timeout: 20))
             row.tap()
             _ = waitElement("reader.page", 90)
-            XCTAssertEqual(element("reader.location").label, location)
+            XCTAssertEqual(text("reader.location"), location)
         }
     }
 
@@ -460,7 +467,7 @@ final class EXReaderHostUITests: XCTestCase {
             _ = waitLabel("reader.location", contains: "第 1 /", 30)
             waitElement("reader.next").tap()
             XCTAssertTrue(waitLabel("reader.location", contains: "第 2 /", 30))
-            location = element("reader.location").label
+            location = text("reader.location")
         }
         try step("step40_fixed_annotation") {
             clearNotes()
@@ -482,7 +489,7 @@ final class EXReaderHostUITests: XCTestCase {
             app.terminate()
             launch()
             _ = waitElement("reader.page", 90)
-            XCTAssertEqual(element("reader.location").label, location)
+            XCTAssertEqual(text("reader.location"), location)
             attach("24-pdf-after-relaunch")
         }
     }
@@ -494,8 +501,8 @@ final class EXReaderHostUITests: XCTestCase {
             for identifier in ["reader.page", "reader.location", "reader.progress",
                                "reader.next", "reader.previous", "reader.select",
                                "reader.notes", "reader.state"] {
-                let target = waitElement(identifier, 30)
-                XCTAssertFalse(target.label.isEmpty, "empty label for \(identifier)")
+                _ = waitElement(identifier, 30)
+                XCTAssertFalse(text(identifier).isEmpty, "empty accessible text for \(identifier)")
             }
             attach("25-accessibility-reader")
         }
