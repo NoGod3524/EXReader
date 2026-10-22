@@ -31,6 +31,7 @@ static void reject(const char *input, const opds_limits *limits, opds_status wan
 int main(int argc, char **argv) {
   opds_feed feed; opds_error error = {0}; const opds_facet *facets;
   const char empty[] = "{\"metadata\":{\"title\":\"Empty\"},\"links\":[]}";
+  const char empty_atom[] = "<feed xmlns='http://www.w3.org/2005/Atom'><title>Empty</title><id></id></feed>";
   opds_limits limits; size_t count = 99;
   CHECK(opds_feed_facets(NULL, &count) == NULL && count == 0);
   CHECK(opds_feed_facets(NULL, NULL) == NULL);
@@ -81,6 +82,10 @@ int main(int argc, char **argv) {
   reject(atom, &limits, OPDS_LIMIT);
   reject(json, &limits, OPDS_LIMIT);
   CHECK(opds_feed_parse(empty, strlen(empty), NULL, NULL, NULL, &feed, &error) == OPDS_OK);
+  CHECK(opds_feed_facets(&feed, &count) == NULL && count == 0);
+  opds_feed_free(&feed);
+  CHECK(opds_feed_parse(empty_atom, strlen(empty_atom), NULL, NULL, NULL, &feed, &error) == OPDS_OK);
+  CHECK(feed.id && !strcmp(feed.id, ""));
   CHECK(opds_feed_facets(&feed, &count) == NULL && count == 0);
   opds_feed_free(&feed);
   printf("{\"passed\":%s,\"checks\":%u,\"failures\":%u}\n", failures ? "false" : "true", checks, failures);
