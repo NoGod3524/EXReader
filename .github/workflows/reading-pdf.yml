@@ -24,10 +24,15 @@ jobs:
         run: |
           cmake -S tests/reading_pdf -B build/reading-pdf-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-core/stage" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           cmake --build build/reading-pdf-consumer --parallel 4
+      - name: Freeze distinct-page synthetic rules and verify deterministic bytes
+        run: |
+          python3 tests/reading_pdf/generate.py build/reading-pdf-inputs
+          python3 tests/reading_pdf/generate.py build/reading-pdf-inputs-repeat
+          diff -r build/reading-pdf-inputs build/reading-pdf-inputs-repeat
       - name: Check evidence refusal and native failure reporting
-        run: python3 tests/check_reading_pdf_measurements.py --binary build/reading-pdf-consumer/reading-pdf-benchmark
+        run: python3 tests/check_reading_pdf_measurements.py --binary build/reading-pdf-consumer/reading-pdf-benchmark --generated-root build/reading-pdf-inputs
       - name: Measure fixed PDF CBZ cases in fresh native processes
-        run: python3 tools/measure_reading_pdf.py build/reading-pdf-consumer/reading-pdf-benchmark tests/fixtures/fonts/primary.ttf build/reading-pdf-measurements --source-sha "$GITHUB_SHA" --compiler cc
+        run: python3 tools/measure_reading_pdf.py build/reading-pdf-consumer/reading-pdf-benchmark tests/fixtures/fonts/primary.ttf build/reading-pdf-measurements --source-sha "$GITHUB_SHA" --compiler cc --generated-root build/reading-pdf-inputs
       - name: Preserve exact-source evidence including failures
         if: always()
         uses: actions/upload-artifact@v4
@@ -36,6 +41,8 @@ jobs:
           path: |
             build/reading-pdf-measurements/
             build/reading-pdf-selfcheck/
+            build/reading-pdf-inputs/
+            build/reading-pdf-inputs-repeat/
             build/reading-pdf-consumer/reading-pdf-benchmark
             build/reading-pdf-consumer/CMakeCache.txt
             build/reading-pdf-consumer/compile_commands.json

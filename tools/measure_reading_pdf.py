@@ -19,6 +19,12 @@ CASES = {
             "sha256": "e0b8b52aa4780a3edb036f88a26f5e84997b90ce97bfdcf741ccb8ba7d09a6ee"},
     "cbz": {"path": "comic.cbz", "bytes": 908, "pages": 4,
             "sha256": "08df7ceb8771ab82610651c2299072b8fc299d3f8fba3996ee6e12054ea6701f"}}
+# Independent, predeclared pixel categories; the generator never calls the engine.
+GENERATED_CASES = {
+    "pdf-distinct": {"path": "distinct-pages.pdf", "pages": 3, "width": 32, "height": 32,
+                     "kind": "synthetic", "expected_rgba": ["ff0000ff", "00ff00ff", "0000ffff"]},
+    "cbz-distinct": {"path": "distinct-pages.cbz", "pages": 4, "width": 32, "height": 32,
+                     "kind": "synthetic", "expected_rgba": ["ff0000ff", "00ff00ff", "0000ffff", "ffff00ff"]}}
 FONT_SHA256 = "ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed"
 METRICS = ("font_open_ms", "fixed_open_ms", "directory_ms", "first_visible_total_ms",
            "baseline_peak_rss_bytes", "peak_rss_bytes", "incremental_peak_rss_bytes",
@@ -35,6 +41,27 @@ def number(value):
         return type(value) in (int, float) and math.isfinite(value) and value >= 0
     except OverflowError:
         return False
+
+
+def color_hash(rgba, width, height):
+    value = 14695981039346656037
+    for byte in bytes.fromhex(rgba) * (width * height):
+        value = ((value ^ byte) * 1099511628211) & 0xffffffffffffffff
+    return f"{value:016x}"
+
+
+def generated_cases(manifest):
+    require(manifest["schema_version"] == 1 and manifest["kind"] == "synthetic" and
+            manifest["real_document_credit"] == 0 and manifest["engine_results_used"] is False and
+            manifest["generator_sha256"] == sha256(ROOT / "tests/reading_pdf/generate.py"), "Invalid generator identity")
+    require(set(manifest["cases"]) == set(GENERATED_CASES), "Missing/unknown generated case")
+    for name, definition in GENERATED_CASES.items():
+        case = manifest["cases"][name]
+        require({key: case[key] for key in definition} == definition, "Generated expectation changed")
+        require(type(case["bytes"]) is int and case["bytes"] > 0 and isinstance(case["sha256"], str) and
+                len(case["sha256"]) == 64 and all(char in "0123456789abcdef" for char in case["sha256"]),
+                "Invalid generated input identity")
+    return manifest["cases"]
 
 
 def validate(record, case):
@@ -72,6 +99,14 @@ def validate(record, case):
         signature = [item[key] for key in ("width", "height", "channels", "pixel_bytes", "pixel_hash")]
         require(page not in signatures or signatures[page] == signature, "Same-page redraw changed pixels")
         signatures[page] = signature
+        if "expected_rgba" in case:
+            rgba = case["expected_rgba"][page]
+            require(item["width"] == case["width"] and item["height"] == case["height"] and
+                    item["uniform_rgba"] is True and item["first_rgba"] == rgba and
+                    pixel_hash == color_hash(rgba, case["width"], case["height"]), "Wrong page pixel category/content")
+    if "expected_rgba" in case:
+        require({item["page"] for item in samples if item["phase"] == "random"} == set(range(case["pages"])),
+                "Random plan did not revisit all distinct pages")
     require(record["first_visible_total_ms"] + .00001 >= sum(record[field] for field in
             ("font_open_ms", "fixed_open_ms", "directory_ms")) + samples[0]["render_ms"], "Invalid first-visible timing")
     ordered = sorted(item["render_ms"] for item in samples if item["phase"] == "random")
@@ -88,31 +123,37 @@ def read_record(path):
     return json.loads(path.read_text(encoding="utf-8"), parse_constant=reject)
 
 
-def snapshot(binary, font, fixtures):
+def snapshot(binary, font, fixtures, cases=CASES, generated_root=None):
+    def input_path(name, case):
+        return (generated_root if name in GENERATED_CASES else fixtures) / case["path"]
     return {"source_sha": git("rev-parse", "HEAD"), "source_tree": git("rev-parse", "HEAD^{tree}"),
             "source_clean": not git("status", "--porcelain", "--untracked-files=all"),
             "binary_sha256": sha256(binary), "binary_bytes": binary.stat().st_size,
             "font_sha256": sha256(font), "font_bytes": font.stat().st_size,
-            "inputs": {name: {"sha256": sha256(fixtures / case["path"]),
-                               "bytes": (fixtures / case["path"]).stat().st_size} for name, case in CASES.items()},
+            "inputs": {name: {"sha256": sha256(input_path(name, case)),
+                               "bytes": input_path(name, case).stat().st_size} for name, case in cases.items()},
+            "generated_manifest_sha256": sha256(generated_root / "manifest.json") if generated_root else None,
             "tools": {name: sha256(ROOT / name) for name in
                       ("tools/reading_pdf_benchmark.c", "tools/measure_reading_pdf.py", "tools/measure_reading_core.py",
-                       "tools/run_benchmarks.py", "tests/reading_pdf/CMakeLists.txt")}}
+                       "tools/run_benchmarks.py", "tests/reading_pdf/CMakeLists.txt", "tests/reading_pdf/generate.py")}}
 
 
 def evaluate(summary, output):
     """Derive acceptance from retained raw runs, never from a claimed success flag."""
     before = summary["before"]
+    cases = dict(CASES)
+    if summary.get("generated_manifest") is not None:
+        cases.update(generated_cases(summary["generated_manifest"]))
     require(before == summary["after"] and before["source_clean"] and
             before["source_sha"] == summary["expected_source_sha"], "Source/input identity changed")
     require(before["font_sha256"] == FONT_SHA256 and summary["compiler"]["exit_code"] == 0,
             "Wrong font/compiler identity")
-    for name, case in CASES.items():
+    for name, case in cases.items():
         require(before["inputs"][name] == {"sha256": case["sha256"], "bytes": case["bytes"]}, "Fixture drift")
     runs = summary["runs_requested"]
-    require(type(runs) is int and 1 <= runs <= 10 and len(summary["attempts"]) == runs * len(CASES), "Missing run")
-    metrics, signatures, versions = {name: [] for name in CASES}, {}, set()
-    expected_order = [(name, run) for name in CASES for run in range(1, runs + 1)]
+    require(type(runs) is int and 1 <= runs <= 10 and len(summary["attempts"]) == runs * len(cases), "Missing run")
+    metrics, signatures, versions = {name: [] for name in cases}, {}, set()
+    expected_order = [(name, run) for name in cases for run in range(1, runs + 1)]
     for item, (name, run) in zip(summary["attempts"], expected_order):
         require(item["case"] == name and item["run"] == run and item["exit_code"] == 0 and not item.get("failure"),
                 "Failed or misidentified attempt")
@@ -121,7 +162,7 @@ def evaluate(summary, output):
             require(Path(filename).name == filename and sha256(output / filename) == item[field + "_sha256"],
                     "Missing/changed process output")
         record = read_record(output / item["stdout"])
-        values, pixels = validate(record, CASES[name])
+        values, pixels = validate(record, cases[name])
         require(name not in signatures or signatures[name] == pixels, "Cross-process pixels changed")
         signatures[name] = pixels
         metrics[name].append(values)
@@ -138,6 +179,7 @@ def main():
     parser.add_argument("font", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--fixtures", type=Path, default=ROOT / "tests/fixtures")
+    parser.add_argument("--generated-root", type=Path)
     parser.add_argument("--source-sha", required=True)
     parser.add_argument("--runs", type=positive, default=3)
     parser.add_argument("--timeout", type=float, default=120)
@@ -164,7 +206,13 @@ def main():
                    "build": {key: os.environ.get(key) for key in ("CC", "CXX", "CFLAGS", "CXXFLAGS",
                        "LDFLAGS", "GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT", "RUNNER_ARCH")}}}
     try:
-        summary["before"] = snapshot(binary, font, fixtures)
+        generated_root = args.generated_root.resolve() if args.generated_root else None
+        cases = dict(CASES)
+        if generated_root:
+            summary["generated_manifest"] = read_record(generated_root / "manifest.json")
+            cases.update(generated_cases(summary["generated_manifest"]))
+        summary["cases_frozen"] = cases
+        summary["before"] = snapshot(binary, font, fixtures, cases, generated_root)
         summary["compiler"] = {"command": [args.compiler, "--version"], "exit_code": None}
         try:
             result = subprocess.run(summary["compiler"]["command"], capture_output=True, timeout=20)
@@ -172,10 +220,11 @@ def main():
                 stdout=result.stdout.decode("utf-8", errors="replace"), stderr=result.stderr.decode("utf-8", errors="replace"))
         except (OSError, subprocess.TimeoutExpired) as error:
             summary["compiler"]["failure"] = type(error).__name__
-        for name, case in CASES.items():
+        for name, case in cases.items():
             for run in range(1, args.runs + 1):
                 stdout, stderr = output / f"{name}-{run}.json", output / f"{name}-{run}.stderr.log"
-                command = [str(binary), str(fixtures / case["path"]), str(font)]
+                input_root = generated_root if name in GENERATED_CASES else fixtures
+                command = [str(binary), str(input_root / case["path"]), str(font)]
                 item = {"case": name, "run": run, "command": command, "exit_code": None,
                         "stdout": stdout.name, "stderr": stderr.name}
                 summary["attempts"].append(item)
@@ -191,7 +240,7 @@ def main():
                     item.update(failure="process_start_failure", detail=str(error))
                 for field, path in (("stdout", stdout), ("stderr", stderr)):
                     item[field + "_sha256"] = sha256(path)
-        summary["after"] = snapshot(binary, font, fixtures)
+        summary["after"] = snapshot(binary, font, fixtures, cases, generated_root)
         summary["results"] = evaluate(summary, output)
         summary["accepted"] = True
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
