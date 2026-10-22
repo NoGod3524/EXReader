@@ -457,7 +457,7 @@ public final class ReaderView extends View {
             invalidate();
             return;
         }
-        String text = ReflowSession.slice(page.text, start, end);
+        String text = ReflowSession.slice(page.text, start - page.textBase, end - page.textBase);
         selection = new Selection(page.index, start, end, text, rects);
         setContentDescription(describe());
         invalidate();

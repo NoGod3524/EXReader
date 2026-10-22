@@ -416,13 +416,19 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             try {
                 task.check();
                 String path = prefs.getString("path_" + target.id, null);
-                if (path == null || !new File(path).isFile()) {
+                boolean bounded = target.format==NativeLibrary.FORMAT_EPUB && store.bounded(target.id);
+                if (!bounded && (path == null || !new File(path).isFile())) {
                     throw new IOException("The app-owned book copy is missing");
                 }
                 if (target.fixed()) {
                     candidateFixed = new FixedSession(target.id, path, fontBytes(), target.format);
                     int requested = requestedPage >= 0 ? requestedPage : (int) Math.max(0, target.position);
                     load = candidateFixed.load(requested, requestedZoom, task);
+                } else if(bounded) {
+                    candidateReflow=new ReflowSession(store,target.id,fontBytes(),requestedFont);
+                    int display=requestedPage>=0?requestedPage:prefs.getInt("display_"+target.id,0);
+                    load=candidateReflow.restore(display,task);
+                    notice=load.snapshot.restoreNotice;
                 } else {
                     candidateReflow = new ReflowSession(target.id, path, fontBytes(), requestedFont);
                     long savedOffset = requestedOffset;
@@ -590,16 +596,18 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 task.check();
                 if (sessionBookId != owner) throw new IllegalStateException("The reading book changed");
                 reviewGate("page-before-render", task);
-                load = action.run(task);
-                if (load == null) {
-                    postUi(() -> { if (gen == generation) { finishTask(gen); setStatus(empty); } });
-                    return;
-                }
                 if (BuildConfig.DEBUG && getIntent().getBooleanExtra("review_fail_progress", false)) {
                     getIntent().removeExtra("review_fail_progress");
                     fault = android.database.sqlite.SQLiteDatabase.openDatabase(
                             new File(getFilesDir(), "library.db").getPath(), null, 0);
-                    fault.execSQL("CREATE TRIGGER host_review_progress BEFORE INSERT ON book_progress BEGIN SELECT RAISE(ABORT,'host-review'); END");
+                    String table=reflow!=null && reflow.bounded()?"epub_progress":"book_progress";
+                    fault.execSQL("CREATE TRIGGER host_review_progress BEFORE INSERT ON "+table+" BEGIN SELECT RAISE(ABORT,'host-review'); END");
+                    if(reflow!=null) reflow.refreshSource();
+                }
+                load = action.run(task);
+                if (load == null) {
+                    postUi(() -> { if (gen == generation) { finishTask(gen); setStatus(empty); } });
+                    return;
                 }
                 final PageLoad result = load;
                 task.commit(() -> { saveProgressLocked(result.snapshot, task); result.accept(); });
@@ -615,6 +623,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     finally { fault.close(); }
                 }
                 if (load != null) load.close();
+                if(fault!=null && reflow!=null) reflow.refreshSource();
             }
         });
     }
@@ -658,7 +667,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             reviewGate("progress-before-write", task);
             if (snapshot.fixed) {
                 store.setPosition(snapshot.bookId, snapshot.index);
-            } else {
+            } else if(snapshot.bounded && !snapshot.preserveProgress) {
+                BoundedEpub.storeProgress(store.nativeLibrary(),snapshot);
+                prefs.edit().putInt("display_"+snapshot.bookId,snapshot.index).apply();
+            } else if(!snapshot.bounded) {
                 store.saveProgress(snapshot.bookId, snapshot.start);
             }
         }
@@ -759,7 +771,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         } else {
             NativeLibrary.Note value = (NativeLibrary.Note) note;
             if (value.start < 0) { setStatus("Annotation range is unresolved"); return; }
-            runPage(task -> reflow.seek(value.start, task),
+            runPage(task -> reflow.seek(value, task),
                     () -> setStatus("Jumped to annotation"), "Annotation page is missing");
         }
     }
@@ -834,6 +846,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 if (sessionBookId != frame.bookId) throw new IllegalStateException("The reading book changed");
                 task.commit(() -> {
                     if (isFixed) store.saveFixedNote(frame.bookId, noteId, page, start, end, text);
+                    else if(frame.bounded) reflow.saveBoundedNote(noteId,start,end,text);
                     else if (noteId > 0) store.updateNoteText(frame.bookId, noteId, text);
                     else store.saveNote(frame.bookId, 0, start, end, text);
                 });
@@ -962,7 +975,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     byte[] bytes = readFile(copied.file);
                     EXReader.FixedDocument document = new EXReader.FixedDocument(EXReader.FixedFormat.CBZ, bytes);
                     document.close();
-                } else {
+                } else if(format!=NativeLibrary.FORMAT_EPUB) {
                     EXReader.Document document = new EXReader.Document(path);
                     document.close();
                 }
