@@ -1,7 +1,7 @@
 name: WP15 OPDS client
 on:
   push:
-    branches: ['codex/wp15-opds-review']
+    branches: ['codex/wp15-opds-review', 'codex/wp15-catalog-features']
     paths:
       - 'extras/opds/**'
       - 'tests/opds/**'
@@ -17,7 +17,7 @@ env:
   BASELINE: d46ff370cb3c5ce9a0ceb4dc1f8b099209149280
   # Reviewed integrated ancestor immediately before the OPDS merge; original
   # standalone handoff ownership evidence is retained in the delivery history.
-  HANDOFF: a6407dea6540e498dee05270d0e0fe42e380e125
+  HANDOFF: d10fa590609c820368266daac2b4b154e8e30a60
 jobs:
   opds:
     timeout-minutes: 45
@@ -42,18 +42,33 @@ jobs:
         run: |
           cmake -S extras/opds -B build/opds -DEXR_SDK="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release
           cmake --build build/opds --config Release --parallel 4
+      - name: Run facet model, budgets, malformed input and public API cases
+        run: ctest --test-dir build/opds -C Release --output-on-failure
       - name: Run the fixed local service, acceptance cases and consumer example
         shell: bash
         run: |
           git merge-base --is-ancestor "$HANDOFF" HEAD
           libs=$(find stage/lib -maxdepth 1 -type f \( -name '*.a' -o -name '*.lib' \) | sort | tr '\n' ' ')
           python tools/check_opds.py --build build/opds --repo . --out build/wp15-evidence --base "$BASELINE" --handoff "$HANDOFF" --identity $libs
+      - name: Run standalone facet parser with ASan and UBSan
+        if: runner.os == 'Linux'
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          cmake -S extras/opds -B build/facets-asan -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+          cmake --build build/facets-asan --parallel 4
+          ctest --test-dir build/facets-asan --output-on-failure
       - name: Preserve evidence and logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: wp15-opds-${{ runner.os }}
           path: |
+            build/opds/facet-result.json
+            build/opds/Testing/Temporary/LastTest.log
+            build/facets-asan/facet-result.json
+            build/facets-asan/Testing/Temporary/LastTest.log
             build/wp15-evidence/*.json
             build/wp15-evidence/*.jsonl
             build/wp15-evidence/*.txt

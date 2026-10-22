@@ -8,7 +8,10 @@
 #include <string.h>
 
 typedef struct opds_ablock { struct opds_ablock *next; size_t used, cap; } opds_ablock;
-struct opds_arena { opds_ablock *head; size_t total; };
+struct opds_arena {
+  opds_ablock *head; size_t total;
+  const opds_facet *facets; size_t facet_count;
+};
 
 struct opds_arena *arena_new(void);
 void arena_free(struct opds_arena *arena);

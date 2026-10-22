@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#define OPDS_MODULE_VERSION "0.1.0"
+#define OPDS_MODULE_VERSION "0.2.0"
 
 typedef enum {
   OPDS_OK = 0,
@@ -107,6 +107,22 @@ opds_status opds_feed_parse(const void *data, size_t size, const char *content_t
                             opds_feed *out, opds_error *error);
 /* First link of the given kind, or NULL. */
 const opds_link *opds_feed_find(const opds_feed *feed, opds_rel_kind kind);
+/* Facet links retain the normal resolved URL and host-controlled transport.
+   All pointers are borrowed from the feed and expire with opds_feed_free(). */
+typedef struct {
+  opds_link link;
+  int64_t number_of_items; /* -1 when not supplied. */
+  int active;
+} opds_facet_choice;
+typedef struct {
+  const char *title; /* Empty for ungrouped OPDS 1 facets. */
+  const opds_facet_choice *choices;
+  size_t choice_count;
+} opds_facet;
+/* OPDS 1 facetGroup/activeFacet/thr:count and OPDS 2 facets/self/numberOfItems.
+   Groups and total choices each use max_entries; a group uses the per-entry
+   link limit. NULL feed/count are allowed. Existing public model sizes stay fixed. */
+const opds_facet *opds_feed_facets(const opds_feed *feed, size_t *count);
 /* First acquisition link of an entry whose type equals media_type (NULL = any usable). */
 const opds_link *opds_entry_acquisition(const opds_entry *entry, const char *media_type);
 /* NEEDS_HOST for borrow/buy/subscribe/priced/protected links, OK otherwise. */

@@ -21,7 +21,16 @@ static void *vec_arena(vec *v, struct opds_arena *a) {
   return p;
 }
 
-typedef struct { struct opds_arena *a; const opds_limits *lim; const char *base; opds_error *err; } fctx;
+typedef struct facet_group {
+  struct facet_group *next;
+  const char *title;
+  vec choices;
+} facet_group;
+typedef struct {
+  struct opds_arena *a; const opds_limits *lim; const char *base; opds_error *err;
+  facet_group *facets, *last_facet;
+  size_t facet_count, choice_count;
+} fctx;
 
 static int streq_ci(const char *a, const char *b) { return opds_ascii_ieq(a, b); }
 
@@ -97,6 +106,92 @@ static opds_status make_link(fctx *c, vec *links, const char *rel, const char *h
 static int has_acquisition(const opds_link *l, size_t n) {
   for (size_t i = 0; i < n; i++) if (l[i].acq != OPDS_ACQ_NONE) return 1;
   return 0;
+}
+
+static int rel_token(const char *rel, const char *token) {
+  size_t size = strlen(token);
+  while (rel && *rel) {
+    const char *start;
+    while (isspace((unsigned char)*rel)) rel++;
+    start = rel;
+    while (*rel && !isspace((unsigned char)*rel)) rel++;
+    if ((size_t)(rel - start) == size && !memcmp(start, token, size)) return 1;
+  }
+  return 0;
+}
+
+static opds_status facet_number(fctx *c, const char *text, int64_t *out) {
+  uint64_t value = 0;
+  *out = -1;
+  if (!text) return OPDS_OK;
+  if (!*text) return opds_fail(c->err, OPDS_FORMAT, "empty facet item count");
+  for (; *text; text++) {
+    unsigned digit = (unsigned char)*text - '0';
+    if (digit > 9 || value > ((uint64_t)INT64_MAX - digit) / 10)
+      return opds_fail(c->err, OPDS_FORMAT, "invalid facet item count");
+    value = value * 10 + digit;
+  }
+  *out = (int64_t)value;
+  return OPDS_OK;
+}
+
+static opds_status facet_new(fctx *c, const char *title, int merge, facet_group **out) {
+  facet_group *group;
+  for (group = c->facets; merge && group; group = group->next)
+    if (!strcmp(group->title, title)) { *out = group; return OPDS_OK; }
+  if (c->facet_count >= c->lim->max_entries)
+    return opds_fail(c->err, OPDS_LIMIT, "facet group budget exceeded");
+  group = (facet_group *)calloc(1, sizeof(*group));
+  if (!group) return OPDS_MEMORY;
+  group->title = arena_strdup(c->a, title);
+  if (!group->title) { free(group); return OPDS_MEMORY; }
+  group->choices.sz = sizeof(opds_facet_choice);
+  if (c->last_facet) c->last_facet->next = group; else c->facets = group;
+  c->last_facet = group;
+  c->facet_count++;
+  *out = group;
+  return OPDS_OK;
+}
+
+static opds_status facet_choice(fctx *c, facet_group *group, const opds_link *link,
+                               int active, int64_t count, int single_active) {
+  opds_facet_choice *choice;
+  if (group->choices.n >= c->lim->max_links_per_entry || c->choice_count >= c->lim->max_entries)
+    return opds_fail(c->err, OPDS_LIMIT, "facet choice budget exceeded");
+  if (active && single_active) {
+    opds_facet_choice *old = (opds_facet_choice *)group->choices.p;
+    for (size_t i = 0; i < group->choices.n; i++)
+      if (old[i].active) return opds_fail(c->err, OPDS_FORMAT, "multiple active OPDS1 facets in a group");
+  }
+  choice = (opds_facet_choice *)vec_push(&group->choices);
+  if (!choice) return OPDS_MEMORY;
+  choice->link = *link; choice->active = active; choice->number_of_items = count;
+  c->choice_count++;
+  return OPDS_OK;
+}
+
+static opds_status facets_finish(fctx *c) {
+  opds_facet *result;
+  size_t i = 0;
+  if (!c->facet_count) return OPDS_OK;
+  if (c->facet_count > SIZE_MAX / sizeof(*result)) return OPDS_LIMIT;
+  result = (opds_facet *)arena_alloc(c->a, c->facet_count * sizeof(*result));
+  if (!result) return OPDS_MEMORY;
+  for (facet_group *group = c->facets; group; group = group->next, i++) {
+    result[i].title = group->title;
+    result[i].choice_count = group->choices.n;
+    result[i].choices = (const opds_facet_choice *)vec_arena(&group->choices, c->a);
+    if (!result[i].choices) return OPDS_MEMORY;
+  }
+  c->a->facets = result; c->a->facet_count = c->facet_count;
+  return OPDS_OK;
+}
+
+static void facets_release(fctx *c) {
+  while (c->facets) {
+    facet_group *next = c->facets->next;
+    free(c->facets->choices.p); free(c->facets); c->facets = next;
+  }
 }
 
 /* ---- Atom ---- */
@@ -188,6 +283,20 @@ static opds_status atom_feed(fctx *c, const opds_xnode *root, opds_feed *f) {
   for (const opds_xnode *ch = root->first; ch; ch = ch->next) {
     if (opds_xis(ch, NS_ATOM, "link")) {
       if ((st = atom_link(c, ch, &links)) != OPDS_OK) goto done;
+      const opds_link *link = (opds_link *)links.p + links.n - 1;
+      if (rel_token(link->rel, "http://opds-spec.org/facet")) {
+        const char *name = opds_xattr_get(ch, NS_OPDS, "facetGroup");
+        const char *active = opds_xattr_get(ch, NS_OPDS, "activeFacet");
+        int enabled = active && !strcmp(active, "true");
+        int64_t count;
+        facet_group *group;
+        if (active && strcmp(active, "true") && strcmp(active, "false")) {
+          st = opds_fail(c->err, OPDS_FORMAT, "invalid activeFacet value"); goto done;
+        }
+        if ((st = facet_number(c, opds_xattr_get(ch, "http://purl.org/syndication/thread/1.0", "count"), &count)) != OPDS_OK ||
+            (st = facet_new(c, name ? name : "", 1, &group)) != OPDS_OK ||
+            (st = facet_choice(c, group, link, enabled, count, 1)) != OPDS_OK) goto done;
+      }
     } else if (opds_xis(ch, NS_ATOM, "entry")) {
       opds_entry *e;
       vec elinks = {0}, authors = {0};
@@ -295,6 +404,46 @@ static opds_status j_links(fctx *c, const opds_jnode *arr, vec *links, const cha
   return OPDS_OK;
 }
 
+static opds_status j_facets(fctx *c, const opds_jnode *facets) {
+  if (!facets) return OPDS_OK;
+  if (facets->type != OJ_ARR) return opds_fail(c->err, OPDS_FORMAT, "OPDS2 facets is not an array");
+  for (const opds_jnode *item = facets->first; item; item = item->next) {
+    const opds_jnode *metadata = opds_jget(item, "metadata"), *links;
+    const opds_jnode *name = opds_jget(metadata, "title");
+    const char *title = j_text(c, name);
+    facet_group *group;
+    opds_status status;
+    if (item->type != OJ_OBJ || !metadata || metadata->type != OJ_OBJ || !name ||
+        (name->type != OJ_STR && name->type != OJ_OBJ) || !title || !*title)
+      return opds_fail(c->err, OPDS_FORMAT, "OPDS2 facet group without title");
+    links = opds_jget(item, "links");
+    if (!links || links->type != OJ_ARR || !links->first)
+      return opds_fail(c->err, OPDS_FORMAT, "OPDS2 facet group without links");
+    if ((status = facet_new(c, title, 0, &group)) != OPDS_OK) return status;
+    for (const opds_jnode *item_link = links->first; item_link; item_link = item_link->next) {
+      vec one = {0}; int64_t count;
+      const opds_jnode *properties, *number;
+      one.sz = sizeof(opds_link);
+      status = j_link(c, item_link, &one, "");
+      if (status != OPDS_OK) { free(one.p); return status; }
+      properties = opds_jget(item_link, "properties");
+      if (properties && properties->type != OJ_OBJ) {
+        free(one.p); return opds_fail(c->err, OPDS_FORMAT, "facet properties is not an object");
+      }
+      number = opds_jget(properties, "numberOfItems");
+      if (number && number->type != OJ_NUM) { free(one.p); return opds_fail(c->err, OPDS_FORMAT, "facet count is not an integer"); }
+      status = facet_number(c, number ? number->str : NULL, &count);
+      if (status == OPDS_OK) {
+        const opds_link *link = (const opds_link *)one.p;
+        status = facet_choice(c, group, link, rel_token(link->rel, "self"), count, 0);
+      }
+      free(one.p);
+      if (status != OPDS_OK) return status;
+    }
+  }
+  return OPDS_OK;
+}
+
 static opds_status j_entries(fctx *c, const opds_jnode *nav, const opds_jnode *pubs, const char *group, vec *entries) {
   if (nav) {
     if (nav->type != OJ_ARR) return opds_fail(c->err, OPDS_FORMAT, "OPDS2 navigation is not an array");
@@ -362,7 +511,7 @@ static opds_status json_feed(fctx *c, const opds_jnode *root, opds_feed *f) {
   opds_status st;
   entries.sz = sizeof(opds_entry); links.sz = sizeof(opds_link);
   if (root->type != OJ_OBJ || !md || md->type != OJ_OBJ) return opds_fail(c->err, OPDS_FORMAT, "OPDS2 feed without metadata");
-  if (!opds_jget(root, "links") && !opds_jget(root, "navigation") && !opds_jget(root, "publications") && !opds_jget(root, "groups"))
+  if (!opds_jget(root, "links") && !opds_jget(root, "navigation") && !opds_jget(root, "publications") && !opds_jget(root, "groups") && !opds_jget(root, "facets"))
     return opds_fail(c->err, OPDS_FORMAT, "JSON document is not an OPDS2 feed");
   f->version = 2;
   if (!(t = j_text(c, opds_jget(md, "title"))) || !*t) return opds_fail(c->err, OPDS_FORMAT, "OPDS2 feed without title");
@@ -385,6 +534,7 @@ static opds_status json_feed(fctx *c, const opds_jnode *root, opds_feed *f) {
       if ((st = j_entries(c, opds_jget(m, "navigation"), opds_jget(m, "publications"), gt ? arena_strdup(c->a, gt) : NULL, &entries)) != OPDS_OK) goto done;
     }
   }
+  if ((st = j_facets(c, opds_jget(root, "facets"))) != OPDS_OK) goto done;
   f->entry_count = entries.n; f->link_count = links.n;
   f->entries = (const opds_entry *)vec_arena(&entries, c->a);
   f->links = (const opds_link *)vec_arena(&links, c->a);
@@ -407,10 +557,11 @@ opds_status opds_feed_parse(const void *data, size_t size, const char *content_t
   const char *d = (const char *)data;
   size_t i = 0;
   struct opds_arena *a;
-  fctx c;
+  fctx c = {0};
   opds_status st;
+  if (!out) return opds_fail(error, OPDS_ARGUMENT, "feed output required");
   memset(out, 0, sizeof *out);
-  if (!data || !out) return opds_fail(error, OPDS_ARGUMENT, "feed data required");
+  if (!data) return opds_fail(error, OPDS_ARGUMENT, "feed data required");
   if (limits) lim = *limits; else opds_limits_defaults(&lim);
   if (size > lim.max_feed_bytes) return opds_fail(error, OPDS_LIMIT, "feed larger than %zu bytes", lim.max_feed_bytes);
   if (size >= 3 && !memcmp(d, "\xEF\xBB\xBF", 3)) i = 3;
@@ -437,8 +588,16 @@ opds_status opds_feed_parse(const void *data, size_t size, const char *content_t
     st = opds_json_parse(a, d, size, &lim, &root, error);
     if (st == OPDS_OK) st = json_feed(&c, root, out);
   }
+  if (st == OPDS_OK) st = facets_finish(&c);
+  facets_release(&c);
   if (st != OPDS_OK) { if (error && error->code == OPDS_OK) error->code = st; opds_feed_free(out); }
   return st;
+}
+
+const opds_facet *opds_feed_facets(const opds_feed *feed, size_t *count) {
+  size_t size = feed && feed->arena ? feed->arena->facet_count : 0;
+  if (count) *count = size;
+  return size ? feed->arena->facets : NULL;
 }
 
 const opds_link *opds_feed_find(const opds_feed *f, opds_rel_kind kind) {
