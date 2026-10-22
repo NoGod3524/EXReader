@@ -1,0 +1,15 @@
+name: Reading overview links
+on:
+  push:
+    branches: [codex/reading-package-integration]
+    paths: ['README.md', 'docs/**', 'tools/check_reading_doc_links.py', '.github/workflows/reading-docs.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  links:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the eight reading overview documents
+        run: python3 tools/check_reading_doc_links.py
