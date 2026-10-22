@@ -130,7 +130,62 @@ jobs:
                   if any(re.search(r'selection\.|library\.(status|import|book|busy)|reader\.(title|location|busy)|尚未选择|已导入|已存在', str(child))
                          for child in fields.values()):
                       observations.append({key: bounded(child, 500) for key, child in fields.items()})
-              return observations[:32]
+              scalars = []
+              def collect(item):
+                  if isinstance(item, dict):
+                      for key, child in item.items():
+                          if isinstance(child, (str, int, float, bool)):
+                              scalars.append({'key': str(key), 'value': bounded(child, 240)})
+                          else:
+                              collect(child)
+                  elif isinstance(item, list):
+                      for child in item:
+                          if isinstance(child, str):
+                              scalars.append({'value': bounded(child, 240)})
+                          else:
+                              collect(child)
+              collect(decoded)
+              return {'relevant': observations[:32], 'envelope_fields': scalars[:45]}
+
+          def media_observations(payload, suffix):
+              # OCR reads preserved pixels only; it never launches the host or simulator.
+              script = OUTPUT/'read-preserved-pixels.swift'
+              script.write_text('''import Foundation
+          import Vision
+          import ImageIO
+          import AVFoundation
+          let url = URL(fileURLWithPath: CommandLine.arguments[1])
+          var image: CGImage
+          var second: Double = 0
+          if url.pathExtension == "mp4" {
+              let asset = AVURLAsset(url: url)
+              second = max(0, CMTimeGetSeconds(asset.duration) - 5)
+              let generator = AVAssetImageGenerator(asset: asset)
+              generator.appliesPreferredTrackTransform = true
+              image = try generator.copyCGImage(at: CMTime(seconds: second, preferredTimescale: 600), actualTime: nil)
+          } else {
+              image = CGImageSourceCreateImageAtIndex(CGImageSourceCreateWithURL(url as CFURL, nil)!, 0, nil)!
+          }
+          let request = VNRecognizeTextRequest()
+          request.recognitionLevel = .accurate
+          request.recognitionLanguages = ["zh-Hans", "en-US"]
+          try VNImageRequestHandler(cgImage: image).perform([request])
+          let words: [[String: Any]] = (request.results ?? []).prefix(48).compactMap { item in
+              guard let text = item.topCandidates(1).first?.string else { return nil }
+              let box = item.boundingBox
+              return ["text": String(text.prefix(200)), "box": [box.minX, box.minY, box.width, box.height]]
+          }
+          let data = try JSONSerialization.data(withJSONObject: ["width": image.width, "height": image.height,
+              "second": second, "ocr": words], options: [.sortedKeys])
+          print(String(data: data, encoding: .utf8)!)
+          ''')
+              media = OUTPUT/('preserved.' + suffix)
+              media.write_bytes(payload)
+              try:
+                  proc = subprocess.run(['swift', str(script), str(media)], capture_output=True, text=True, timeout=90)
+                  return json.loads(proc.stdout) if proc.returncode == 0 else {'error': bounded(proc.stderr, 300)}
+              finally:
+                  media.unlink(missing_ok=True)
 
           def export_result(bundle, section, test_id=None):
               arguments = ['xcrun', 'xcresulttool', 'get', 'test-results', section,
@@ -199,10 +254,16 @@ jobs:
                           if re.search(r'spindump|stack|crash|diagnostic|\.ips\b', label, re.I):
                               metadata['excluded_from_text_output'] = True
                               continue
+                          if 'Screen Recording' in label and filename.endswith('.mp4') and archive.getinfo(name).file_size <= 20 * 1024**2:
+                              metadata['late_frame'] = media_observations(archive.read(name), 'mp4')
+                              continue
                           if archive.getinfo(name).file_size > 8 * 1024**2:
                               continue
                           payload = archive.read(name)
                           metadata['signature'] = payload[:8].hex()
+                          if label.startswith(('01-empty-library', '10-selection-sheet')) and payload.startswith(b'\x89PNG'):
+                              metadata['pixel_text'] = media_observations(payload, 'png')
+                              continue
                           if 'snapshot' in label.lower() and payload.startswith((b'bplist00', b'<?xml')):
                               try:
                                   metadata['snapshot_fields'] = snapshot_observations(payload)
