@@ -315,6 +315,52 @@ public final class HostReviewTest {
             next(2); assertTrue(logs().contains("bounded page {"));
             a.add("external connection commit invalidates old DB source with EXR_IO; fresh source/publication recovers accepted cursor and continues");
         });
+        boundedCase("bounded_damaged_next_preserves_frame",a->{
+            reset(""); pick("DamagedNext.epub"); awaitText("Imported DamagedNext.epub"); open("DamagedNext.epub");
+            String before=text("page_label");
+            tapNext(); awaitText("Page error:");
+            assertTrue("malformed later chapter must report real EXR_FORMAT",text("reader_status").contains("code 5"));
+            assertEquals(before,text("page_label")); assertNotNull(waitText("EXReader boundary accepted",10000));
+            assertNull(waitText("EXReader boundary forbidden jump",1000));
+            tapNext(); awaitText("Page error:"); assertEquals(before,text("page_label"));
+            device.executeShellCommand("am force-stop "+APP); launch(""); awaitPage(1);
+            assertNotNull(waitText("EXReader boundary accepted",10000));
+            a.add("malformed next reading chapter produces real EXR_FORMAT twice, retains accepted frame and persisted position across process restart, and never advances to the later valid chapter");
+        });
+        boundedCase("bounded_budget_limit_preserves_frame",a->{
+            reset(""); pick("BudgetNext.epub"); awaitText("Imported BudgetNext.epub"); open("BudgetNext.epub");
+            String before=text("page_label");
+            configure("--ei review_chapter_budget 1048576"); tapNext(); awaitText("Page error:");
+            assertTrue("actual 1MiB chapter options must report EXR_LIMIT",text("reader_status").contains("code 6"));
+            assertEquals(before,text("page_label")); assertNotNull(waitText("EXReader boundary accepted",10000));
+            assertNull(waitText("EXReader boundary forbidden jump",1000));
+            device.executeShellCommand("am force-stop "+APP); launch(""); awaitPage(1);
+            next(2); assertNotNull(waitText("EXReader budget chapter",10000));
+            a.add("real workspace_budget=1MiB rejects next chapter with EXR_LIMIT, retains frame and persisted position, and default 8MiB retry opens that same chapter rather than treating LIMIT as EOF");
+            reset(""); pick("Large.epub"); awaitText("Imported Large.epub"); open("Large.epub"); next(2);
+            String saved=progressIdentity("before-budget");
+            device.executeShellCommand("am force-stop "+APP); launch(""); awaitPage(2);
+            assertTrue("real 5s query budget must be observable",text("reader_status").contains("query budget exceeded"));
+            assertTrue(logs().contains("bounded progress resolution budget exhausted"));
+            Matcher query=Pattern.compile("bounded progress resolve elapsed_ms=(\\d+) state=-2").matcher(logs());
+            long queryMillis=-1; while(query.find()) queryMillis=Long.parseLong(query.group(1));
+            assertTrue("timeout must consume the actual five-second query budget",queryMillis>=5000);
+            assertEquals(saved,progressIdentity("after-budget"));
+            click("font_up"); awaitPage(2); assertEquals(saved,progressIdentity("after-font"));
+            next(3); assertNotEquals(saved,progressIdentity("after-explicit-next"));
+            a.add("real five-second point-selector query timeout is distinct from FOUND/MISSING; validated stored chapter offset is explicit, original selector survives restore/font, and only explicit next saves a new selector");
+        });
+        boundedCase("bounded_empty_next_explicit_error",a->{
+            reset(""); pick("EmptyNext.epub"); awaitText("Imported EmptyNext.epub"); open("EmptyNext.epub");
+            String before=text("page_label"); long began=SystemClock.elapsedRealtime();
+            tapNext(); awaitText("Page error:");
+            assertTrue(text("reader_status").contains("Empty reading chapter is not supported"));
+            assertTrue("empty chapter must terminate within the ordinary UI bound",SystemClock.elapsedRealtime()-began<20000);
+            assertEquals(before,text("page_label")); assertNotNull(waitText("EXReader boundary accepted",10000));
+            assertNull(waitText("EXReader boundary forbidden jump",1000));
+            device.executeShellCommand("am force-stop "+APP); launch(""); awaitPage(1);
+            a.add("empty reading chapter is explicitly unsupported, terminates without crash or loop, retains accepted frame and persisted position, and does not silently jump to a later chapter");
+        });
         int passed=0; JSONArray cases=new JSONArray();
         for(JSONObject item:results) { cases.put(item); if("pass".equals(item.getString("status"))) passed++; }
         boolean emulator=Build.HARDWARE.contains("ranchu") || Build.PRODUCT.contains("sdk") || Build.FINGERPRINT.contains("generic");
@@ -323,10 +369,15 @@ public final class HostReviewTest {
             .put("apk_sha256",args.getString("apk_sha256","")).put("test_apk_sha256",args.getString("test_apk_sha256",""))
             .put("api",Build.VERSION.SDK_INT).put("abi",Build.SUPPORTED_ABIS[0]).put("device_is_emulator",emulator).put("physical_device_execution",!emulator)
             .put("cases",cases).put("summary",new JSONObject().put("total",results.size()).put("passed",passed).put("failed",results.size()-passed).put("skipped",0));
-        write(new File(output,"validation.json"),report.toString(2)); assertEquals("Bounded Android regressions failed",8,passed);
+        write(new File(output,"validation.json"),report.toString(2)); assertEquals("Bounded Android regressions failed",11,passed);
     }
     private void boundedCase(String id,Body body) throws Exception { run(id,body); }
     private String logs() throws Exception { return device.executeShellCommand("logcat -d -s EXRHost:I '*:S'"); }
+    private String progressIdentity(String label) throws Exception {
+        configure("--es review_progress_identity "+label); String prefix="Review selector "+label+" ";
+        awaitText(prefix); String value=text("reader_status"); assertTrue(value.startsWith(prefix));
+        String digest=value.substring(prefix.length()); assertTrue(digest.matches("[0-9a-f]{64}")); return digest;
+    }
     private void addBoundedNote(String value) throws Exception {
         selectLine(); click("annotate_button"); setText("note_comment",value); clickText("Save","bounded note save"); awaitText("Annotation saved");
         if(find("selection_cancel")!=null) click("selection_cancel");

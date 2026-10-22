@@ -14,7 +14,7 @@ bounded 书从同一书库 owner 的 `exr_library_source` 打开 publication/cha
 run `39864510415` 的 SDK／三 APK 云端构建通过；该首轮没有运行模拟器。
 接续候选增加原 45+10 和独立 bounded 8、原 48 与额外 16 项门禁，固定 `candidate_only=true, accepted=false`。
 `ANDROID_CANDIDATE_SDK_BASE` 只用于旧候选工作流；正式 `wp13-android.yml` 不设置候选开关，
-必须原 45、review 10、新 bounded 8、原 48 与额外 16 门禁同次通过后才允许 `accepted=true`。
+必须原 45、review 10、新 bounded 11（原 8 加 3 项错误边界）、原 48 与额外 16 门禁同次通过后才允许 `accepted=true`。
 原 45+10 IDs、49 页／49 actual next／0 recovery、48 门禁不删减；真实 next 在 C 调用点计数，
 seek／恢复扫描不栅格化前页；新增专项及模拟器闭环仍须完整执行。
 
@@ -32,3 +32,17 @@ seek／恢复扫描不栅格化前页；新增专项及模拟器闭环仍须完�
 接续让取消用例使用真实复制后的既有 debug gate；恢复复用 resolve 的同一 pager，避免重复章节建索引，
 并记录 open/scan 耗时。跨 owner 提交造成的 pending source 失效会重开、解析、重绘后发布，
 真实重建 next 计入 recovery；数据库 code 7 拒绝不重试。以上仍须新源码整轮云端复验。
+
+## 补充的宿主错误边界
+
+保留原 8 项专项，并增后续章节 XML 格式错误、真实章节 options 的 1 MiB workspace LIMIT、空阅读章三项。
+每项检查已接受画面和页码不变、下一有效章不被跳入、进程重启仍在原位置；预算恢复 8 MiB 后须能打开同一目标章。
+空阅读章当前明确不支持，返回可恢复错误；该项要求普通 UI 时限内结束且不崩溃、不循环，不宣称自动跳空章。
+`review_chapter_budget` 只在 DEBUG 测试入口把预算传到真实 `exr_chapter_options`，不伪造 SDK 返回值。
+以上新增项也必须在正式源码整轮验收，不转授 SDK 层测试的通过结果。
+
+进度恢复的整章 point-selector 解析设真实 5 秒查询预算。耗尽后使用独立 unresolved-budget 状态（不是 FOUND/MISSING），
+关闭可能已取消的 pager，再从原 part/path 打开新 pager，验证原章内偏移的 UTF-8 边界后明确 fallback。
+原 selector 保留，恢复和字号变化不覆写；显式翻页才能保存新位置。标注解析没有此 fallback。
+新增预算用例同时触发长章恢复的真实查询超时，比较公开 getter 返回 selector 的 SHA-256，验证恢复/字号前后一致、显式翻页后改变。
+帧发布前无论是否保存进度均重新检查 DB source，跨 owner 提交造成失效时先重建，避免发布旧 source 的画面。

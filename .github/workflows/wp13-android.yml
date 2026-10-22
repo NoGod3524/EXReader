@@ -85,7 +85,7 @@ jobs:
           sudo chmod 666 /dev/kvm
           /usr/local/lib/android/sdk/emulator/emulator -accel-check || true
 
-      - name: Boot emulator and run original 45, review 10 and bounded 8
+      - name: Boot emulator and run original 45, review 10 and bounded 11
         id: emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:

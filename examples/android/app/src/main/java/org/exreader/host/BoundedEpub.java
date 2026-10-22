@@ -28,6 +28,7 @@ final class BoundedEpub implements AutoCloseable {
     boolean closed;
     boolean unresolvedProgress;
     String unresolvedNotice;
+    long chapterBudget=8*1024*1024;
 
     BoundedEpub(NativeLibrary library,long book,byte[] font,float size) {
         this.library=library; this.book=book; this.font=font; this.size=size;
@@ -41,7 +42,7 @@ final class BoundedEpub implements AutoCloseable {
     }
     private long open(int target,float fontSize,HostTask task) throws Exception {
         task.check();
-        long began=System.nanoTime(); long opened=nativeOpen(library.checked(),book,target,font,fontSize,task);
+        long began=System.nanoTime(); long opened=nativeOpen(library.checked(),book,target,font,fontSize,chapterBudget,task);
         Log.i("EXRHost","bounded open part="+target+" elapsed_ms="+((System.nanoTime()-began)/1000000L)); return opened;
     }
     private Frame next(long pager,HostTask task,boolean recovery,boolean render) throws Exception {
@@ -65,16 +66,27 @@ final class BoundedEpub implements AutoCloseable {
     private PageLoad resolvedPage(String[] location,int display,float value,HostTask task,boolean fallback,boolean recovery) throws Exception {
         int target=Integer.parseInt(location[0]); long candidate=open(target,value,task);
         try {
-            long[] match=nativeResolve(candidate,location,task);
+            long resolveBegan=System.nanoTime();
+            long[] match=nativeResolve(candidate,location,fallback?5000:0,task);
+            Log.i("EXRHost","bounded progress resolve elapsed_ms="+((System.nanoTime()-resolveBegan)/1000000L)+" state="+match[0]);
+            task.check();
+            boolean timedOut=match[0]==-2;
+            if(timedOut) {
+                nativeClose(candidate); candidate=0;
+                candidate=open(target,value,task);
+                Log.i("EXRHost","bounded progress resolution budget exhausted; original selector retained");
+            }
             boolean exact=match[0]==1;
             if(!exact && !fallback) throw new IllegalArgumentException("Annotation is not exact (state "+match[0]+")");
             long offset=exact?match[1]:Math.max(0,Long.parseLong(location[2]));
             if(!exact && offset>=nativeExtent(candidate)) offset=0;
+            if(!exact) nativeCapture(candidate,target,offset); // Validate actual UTF-8 point without replacing the saved selector.
             long ready=candidate; candidate=0;
             PageLoad load=prepareOn(ready,target,display,-1,offset,value,task,recovery);
             if(!exact) {
                 load.snapshot.preserveProgress=true;
-                load.snapshot.restoreNotice="Saved position is not exact (state "+match[0]+"); opened at stored chapter offset "+offset+". Original selector retained.";
+                load.snapshot.restoreNotice=(timedOut?"Saved position unresolved (query budget exceeded)":"Saved position is not exact (state "+match[0]+")")+
+                    "; opened at stored chapter offset "+offset+". Original selector retained.";
             } else if(!fallback) { load.snapshot.highlightStart=match[1]; load.snapshot.highlightEnd=match[2]; }
             return load;
         } finally { if(candidate!=0) nativeClose(candidate); }
@@ -117,6 +129,7 @@ final class BoundedEpub implements AutoCloseable {
         long began=System.nanoTime(),extent=nativeExtent(candidate);
         boolean transferred=false;
         try {
+            if(extent==0) throw new IllegalArgumentException("Empty reading chapter is not supported");
             Frame selected=null; int selectedPage=-1;
             for(int p=0;p<20000;p++) {
                 Frame frame=next(candidate,task,recovery,false);
@@ -163,6 +176,11 @@ final class BoundedEpub implements AutoCloseable {
     static void storeProgress(NativeLibrary library,PageSnapshot page) {
         nativeSaveProgress(page.boundedHandle,library.checked(),page.bookId,page.part,page.start);
     }
+    static void checkSource(PageSnapshot page) { nativeCapture(page.boundedHandle,page.part,page.start); }
+    static String progressIdentity(NativeLibrary library,long book) {
+        String[] location=nativeProgress(library.checked(),book);
+        return location==null?"null":new org.json.JSONArray(java.util.Arrays.asList(location)).toString();
+    }
     void saveNote(long id,long begin,long end,String text) {
         nativeSaveNote(handle,library.checked(),book,part,id,begin,end,text);
     }
@@ -191,7 +209,7 @@ final class BoundedEpub implements AutoCloseable {
     }
     @Override public void close() { closed=true; if(handle!=0) nativeClose(handle); handle=0; }
     private static native String[][] nativeParts(long library,long book);
-    private static native long nativeOpen(long library,long book,int part,byte[] font,float size,HostTask task);
+    private static native long nativeOpen(long library,long book,int part,byte[] font,float size,long budget,HostTask task);
     private static native Frame nativeNext(long handle,HostTask task,boolean render);
     private static native Frame nativeRender(long handle,HostTask task);
     private static native long nativeCalls(long handle);
@@ -199,7 +217,7 @@ final class BoundedEpub implements AutoCloseable {
     private static native String[] nativeCapture(long handle,int part,long offset);
     private static native void nativeClose(long handle);
     private static native String[] nativeProgress(long library,long book);
-    private static native long[] nativeResolve(long handle,String[] location,HostTask task);
+    private static native long[] nativeResolve(long handle,String[] location,long budgetMs,HostTask task);
     private static native void nativeSaveProgress(long handle,long library,long book,int part,long offset);
     private static native void nativeSaveNote(long handle,long library,long book,int part,long id,long start,long end,String text);
 }
