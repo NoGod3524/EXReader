@@ -493,6 +493,8 @@ static void run_entry(size_t index,const char *corpus,const char *outdir,
     exr_free(noop_out);
   } else if(!strcmp(entry->op,"cancel-entry") || !strcmp(entry->op,"cancel-final") ||
             !strcmp(entry->op,"cancel-shape")) {
+    exr_status second,noop;
+    size_t noop_size=0; void *noop_out=NULL;
     if(!strcmp(entry->op,"cancel-entry")) { cancel_state=1; options.control.cancelled=cancel_flag; }
     else if(!strcmp(entry->op,"cancel-final")) { cancel_state=0; options.control.cancelled=cancel_flag; options.control.progress=progress_cancel; }
     else { cancel_state=0; options.control.cancelled=cancel_flag; options.control.progress=progress_shape; }
@@ -500,7 +502,15 @@ static void run_entry(size_t index,const char *corpus,const char *outdir,
     status=exr_pdf_form_write(input,size,changes,entry->count,&options,&out,&out_size,&error);
     same=!memcmp(input,pristine,size);
     emit_write(index,entry->op,status,out_size,0,same,entry->count,target);
-    exr_free(out); out=NULL;
+    exr_free(out); out=NULL; out_size=0;
+    second=exr_pdf_form_write(input,size,changes,entry->count,&options,&out,&out_size,&error);
+    exr_free(out); out=NULL; out_size=0;
+    { exr_pdf_form_write_options plain=exr_pdf_form_write_defaults();
+      noop=exr_pdf_form_write(input,size,NULL,0,&plain,&noop_out,&noop_size,&error); }
+    fprintf(results,"J\t%zu\t%s\t%d\t%s\t%d\t%s\t%d\t%zu\t%d\n",index,
+      status_name(status),status,status_name(second),second,status_name(noop),noop,noop_size,
+      noop==EXR_OK && noop_out && noop_size==size && !memcmp(noop_out,input,size));
+    exr_free(noop_out);
     cancel_state=0;
   } else if(!strcmp(entry->op,"read") || !strcmp(entry->op,"read-fail")) {
     /* A pure read: the R record above is the whole measurement. */
