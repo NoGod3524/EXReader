@@ -65,6 +65,39 @@ Android 的 `ANDROID_OWNERSHIP_HEAD` 固定到 A 的受测源码，只作为宿�
 由于这是非 OPDS 路径，按所有权契约重新冻结：先回退 OPDS 合并、把修复放入新的前置祖先 H，
 再重新合入 OPDS。
 
+## 十二组同源联合验收（阶段四，已通过）
+
+最终共同源码 S = `686ce2fe6c3463ef1b917569677ee9933e22faa9`，同一 SHA 上 12 组共 35 个上游作业全部成功：
+
+| 组 | run | attempt | 作业 | 工件 |
+| --- | --- | --- | ---: | ---: |
+| native | `39844509983` | 1 | 7 | 19 |
+| ocr | `39844519195` | 2 | 3 | 3 |
+| corpus | `39844528742` | 1 | 1 | 1 |
+| linux | `39844540267` | 2 | 1 | 1 |
+| windows_evidence | `39844549354` | 1 | 1 | 1 |
+| windows_worker | `39844559336` | 1 | 1 | 1 |
+| migration | `39844568676` | 1 | 3 | 3 |
+| opds | `39844589166` | 1 | 2 | 2 |
+| apple | `39844598529` | 1 | 8 | 8 |
+| android | `39844608350` | 1 | 1 | 1 |
+| acroform | `39844617258` | 1 | 5 | 4 |
+| spacing | `39844627315` | 1 | 2 | 0 |
+
+严格汇总 run `39850404743`（protocol、baseline、summarize 三作业）成功：门禁逐项核对 K2 的祖先关系与受保护树、
+两组固定基线契约、十二个 run 的源码与作业数、能力工件的 run/source/大小/过期/digest，最终 `accepted=true`。
+
+两次重跑都按同一源码重新完整执行，旧尝试保留：
+Linux 宿主 attempt 1 在并发高负载下卡在原生文件对话框超时，attempt 2 通过；
+OCR 的 sanitizer 作业 attempt 1 撞上 25 分钟作业上限，整轮 attempt 2 通过（release 与 sanitizers 都重跑）。
+
+首次尝试 `6a0806b`（标签 `s1-2026-10-22-attempt`）的 Apple 失败已记录：SDK 安装树里的
+`examples/android/.gitignore` 被 `upload-artifact` 的隐藏文件默认策略丢弃，修复后重新冻结 H 与 OPDS 合并。
+
+范围不变：只验收 12 个包各自声明的部分，`complete_product=false`、`wp16_accepted=false`；
+真实语料仍为 0/1710，Android 仅 API34 x86_64 模拟器，真机、VoiceOver/TalkBack 人工走查与其余队列另行跟踪。
+逐项身份见 `docs/validation/2026-10-22-joint-acceptance.json`。
+
 ## 下一轮 Apple/Android 集成（原候选，已被本轮取代）
 
 > 本节保留历史候选与失败记录；当前交付身份以 `docs/handoffs/2026-10-22-parallel-index.md`、`docs/handoffs/2026-10-22-A-android.md`、`2026-10-22-B-acroform-corpus.md` 与上面阶段一记录为准。

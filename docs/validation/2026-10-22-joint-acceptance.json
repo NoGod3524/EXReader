@@ -1,0 +1,690 @@
+{
+  "schema": 1,
+  "package": "Parallel integration, joint same-source acceptance",
+  "status": "accepted within the declared package scopes only",
+  "source": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+  "sdk_candidate": "d46ff370cb3c5ce9a0ceb4dc1f8b099209149280",
+  "opds_ownership_ancestor": "d10fa590609c820368266daac2b4b154e8e30a60",
+  "first_attempt_tag": "s1-2026-10-22-attempt",
+  "groups": 12,
+  "upstream_jobs": 35,
+  "runs": {
+    "native": {
+      "run_id": 39844509983,
+      "attempt": 1,
+      "workflow": ".github/workflows/native.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120054133215,
+          "name": "apple-mobile",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054133457,
+          "name": "android",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054133473,
+          "name": "fuzz",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054133531,
+          "name": "desktop (ubuntu-22.04)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054133576,
+          "name": "sanitizers",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054133701,
+          "name": "desktop (macos-15)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054133754,
+          "name": "desktop (windows-latest)",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12455875025,
+          "name": "EXReader-C-macOS",
+          "bytes": 18145251,
+          "digest": "sha256:ab1937975aec048eb74d457eb41c928bf6dd4152725af3f18cd00789c7230528",
+          "expired": false
+        },
+        {
+          "id": 12455775746,
+          "name": "sanitizer-native-tests",
+          "bytes": 27696,
+          "digest": "sha256:581d2b545809a66db722813302d2550c90212085d80df1eff2c1f975adec0edb",
+          "expired": false
+        },
+        {
+          "id": 12455661068,
+          "name": "EXReader-reference-Windows",
+          "bytes": 17381422,
+          "digest": "sha256:586fe0ba1fc095abcde9c7524ba625c01da7c1b3c968d6237bfc8dd812415769",
+          "expired": false
+        },
+        {
+          "id": 12455616329,
+          "name": "EXReader-conversion-Windows",
+          "bytes": 14307,
+          "digest": "sha256:f1ce50b80e79b70fe89828f837a7536c5dca3a903a147c96f7ec2ece2b9397a1",
+          "expired": false
+        },
+        {
+          "id": 12455520190,
+          "name": "EXReader-C-Linux",
+          "bytes": 20822384,
+          "digest": "sha256:1d46f3dd1beecb8b51684f0a8b5ac0cae7dc1fb944452bd0f48f152209e8f1bd",
+          "expired": false
+        },
+        {
+          "id": 12455490247,
+          "name": "reliability-native-smoke",
+          "bytes": 20789,
+          "digest": "sha256:2ee33d3d2302cc520966d11c22285cbcf4dc7182ae8e9d029608548e2b62c998",
+          "expired": false
+        },
+        {
+          "id": 12455381899,
+          "name": "EXReader-performance-Windows",
+          "bytes": 14399,
+          "digest": "sha256:730abb5ba4514946d697239bcd5b068324b09dc798c9407570195bf5ac0b2dcc",
+          "expired": false
+        },
+        {
+          "id": 12455222668,
+          "name": "EXReader-C-Windows",
+          "bytes": 14312739,
+          "digest": "sha256:2f351e1f196e07b93a960bb1fd5c2d4fe81eb1b701d79acfe9793959c14d7e18",
+          "expired": false
+        },
+        {
+          "id": 12455146258,
+          "name": "EXReader-WP6-Linux",
+          "bytes": 28769,
+          "digest": "sha256:6a6a41dc1d971a5398f0cbdceb4f18de9f427504045ba8fa47bfa6fa7e1621cd",
+          "expired": false
+        },
+        {
+          "id": 12454947166,
+          "name": "EXReader-reference-macOS",
+          "bytes": 24935164,
+          "digest": "sha256:64e471baa5764b67b75c1f8b9f4eb7c65cb8e4e58b011499814f5c76db6e6aa9",
+          "expired": false
+        },
+        {
+          "id": 12454943792,
+          "name": "EXReader-reference-iPhone-iPad",
+          "bytes": 24820559,
+          "digest": "sha256:734ae86e13359eba28848d4cae97f0c073e25bf32bc0a131ba07bc621b2aee6d",
+          "expired": false
+        },
+        {
+          "id": 12454912374,
+          "name": "EXReader-performance-macOS",
+          "bytes": 14348,
+          "digest": "sha256:2287d338b2f0d3d31eb8204843bfabf8dd2e5247cdd7f3288165d5792d221f81",
+          "expired": false
+        },
+        {
+          "id": 12454856635,
+          "name": "EXReader-C-Android-arm64",
+          "bytes": 33477420,
+          "digest": "sha256:7ce28862bb411df25d9ec0c4f84f7031d0ba993881ea509e92b94edfdc0b2ba2",
+          "expired": false
+        },
+        {
+          "id": 12454807473,
+          "name": "EXReader-conversion-Linux",
+          "bytes": 13979,
+          "digest": "sha256:60be8967332bfd1f22a5364f704d1d235786f1b6f40789e41bb0be402bc0b547",
+          "expired": false
+        },
+        {
+          "id": 12454793014,
+          "name": "EXReader-WP6-Windows",
+          "bytes": 28499,
+          "digest": "sha256:041d450eea7d359f4d3b7c509c50751c3e7880c05b1c6b4024c2f828c524b3d9",
+          "expired": false
+        },
+        {
+          "id": 12454329365,
+          "name": "EXReader-C-iOS-iPadOS-arm64",
+          "bytes": 35877625,
+          "digest": "sha256:66e231f9c52d081c463d2c4380daa7708f02dd715ca644a8deae1b5e45bc782d",
+          "expired": false
+        },
+        {
+          "id": 12454019103,
+          "name": "EXReader-conversion-macOS",
+          "bytes": 14177,
+          "digest": "sha256:2e2a63835b3e1943c071dc7c285d265ae1bda42599b8cfb224122da33242ecd3",
+          "expired": false
+        },
+        {
+          "id": 12453669482,
+          "name": "EXReader-WP6-macOS",
+          "bytes": 27769,
+          "digest": "sha256:b87f7cdab49fe888401a7b2a3328d85e4de97281c60838b42efd7657e44f7215",
+          "expired": false
+        },
+        {
+          "id": 12453529635,
+          "name": "EXReader-performance-Linux",
+          "bytes": 14408,
+          "digest": "sha256:29ff9b42a49a4cd3e31e3f5b598de2adf17d6b476e90f9b3d62f599c52edfb37",
+          "expired": false
+        }
+      ]
+    },
+    "ocr": {
+      "run_id": 39844519195,
+      "attempt": 2,
+      "workflow": ".github/workflows/wp11-ocr.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120067692445,
+          "name": "ocr (release)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120067692930,
+          "name": "ocr (sanitizers)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120073883053,
+          "name": "audit",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12456366421,
+          "name": "WP11-OCR-sanitizers",
+          "bytes": 20726723,
+          "digest": "sha256:81bdbdae292061a10d96381b0218a3617f9dc752b00a6817aaf39f2001e925bc",
+          "expired": false
+        },
+        {
+          "id": 12455894531,
+          "name": "WP11-OCR-release",
+          "bytes": 20726680,
+          "digest": "sha256:b394d06283e9e35b95932e6d4fef41b620a09c342a14ee4d55c2e2d2a186f8d2",
+          "expired": false
+        },
+        {
+          "id": 12455479792,
+          "name": "WP11-OCR-cloud-audit",
+          "bytes": 547,
+          "digest": "sha256:afeb1e437f526376a21d89bb4b69bc8a45f5329c4a2bcf4a22c9b5904012ddfc",
+          "expired": false
+        }
+      ]
+    },
+    "corpus": {
+      "run_id": 39844528742,
+      "attempt": 1,
+      "workflow": ".github/workflows/compat-corpus.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120054199969,
+          "name": "protocol",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12454242977,
+          "name": "compatibility-corpus-39844528742-1",
+          "bytes": 23245,
+          "digest": "sha256:8f48222dac88d15938acd87f4e5a41d28a0ae487999fa5c76cf403276ab414c7",
+          "expired": false
+        }
+      ]
+    },
+    "linux": {
+      "run_id": 39844540267,
+      "attempt": 1,
+      "workflow": ".github/workflows/wp13-linux.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120054235727,
+          "name": "host",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12454672335,
+          "name": "WP13-Linux-686ce2fe6c3463ef1b917569677ee9933e22faa9",
+          "bytes": 32860791,
+          "digest": "sha256:d37c2ef61db6cb801b341636bc5ddaa958e0b290aca52a6ba0ade358758bd1e9",
+          "expired": false
+        }
+      ]
+    },
+    "windows_evidence": {
+      "run_id": 39844549354,
+      "attempt": 1,
+      "workflow": ".github/workflows/wp13-windows-evidence.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120054270225,
+          "name": "windows-evidence",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12455370761,
+          "name": "EXReader-WP13-Windows-Evidence-Review",
+          "bytes": 35496122,
+          "digest": "sha256:607376de0c1a688ea891dbc838eb284a08ea84ea4df778a6965ff7a5b0b641f9",
+          "expired": false
+        }
+      ]
+    },
+    "windows_worker": {
+      "run_id": 39844559336,
+      "attempt": 1,
+      "workflow": ".github/workflows/wp13-windows-worker.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120054301612,
+          "name": "worker-review",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12455720042,
+          "name": "EXReader-WP13-Windows-WorkerReview",
+          "bytes": 35605899,
+          "digest": "sha256:ce06e121306556f4d7b66e7199e213266ffe63dcdcd5e736e409a609bc4b3a4c",
+          "expired": false
+        }
+      ]
+    },
+    "migration": {
+      "run_id": 39844568676,
+      "attempt": 1,
+      "workflow": ".github/workflows/wp12-migration.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120056311053,
+          "name": "migration (ubuntu-22.04, linux, python3, build/migration/exreader-legacy-migrate, build/migration...",
+          "conclusion": "success"
+        },
+        {
+          "id": 120056311557,
+          "name": "migration (windows-latest, windows, python, build/migration/Release/exreader-legacy-migrate.exe, ...",
+          "conclusion": "success"
+        },
+        {
+          "id": 120061183225,
+          "name": "record",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12456020366,
+          "name": "wp12-migration-review-summary",
+          "bytes": 1655,
+          "digest": "sha256:298f4e7b3bf3694acad2f0674ecaed2457b9bcd22ae5572ff62b195eeb407f83",
+          "expired": false
+        },
+        {
+          "id": 12455547187,
+          "name": "wp12-evidence-linux",
+          "bytes": 99314,
+          "digest": "sha256:f9976a647bb39f51bfe13b4709ae9f7767398946720e6780cbc8fabeae5eb617",
+          "expired": false
+        },
+        {
+          "id": 12454479820,
+          "name": "wp12-evidence-windows",
+          "bytes": 100020,
+          "digest": "sha256:7515225269e9830e951d96c2bf5b5862036fbf61a53511e015887d8a1145b951",
+          "expired": false
+        }
+      ]
+    },
+    "opds": {
+      "run_id": 39844589166,
+      "attempt": 1,
+      "workflow": ".github/workflows/wp15-opds.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120054407784,
+          "name": "opds (ubuntu-22.04)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054407881,
+          "name": "opds (windows-latest)",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12455585073,
+          "name": "wp15-opds-Windows",
+          "bytes": 17806,
+          "digest": "sha256:5b379be2a9c3938cf8c1821be3011640d8b20a4a4a7d89c0d9c1fb87b35c550f",
+          "expired": false
+        },
+        {
+          "id": 12454068129,
+          "name": "wp15-opds-Linux",
+          "bytes": 17581,
+          "digest": "sha256:fb5bf2a204c7246d96afe56fa7ac952a06090d479afcb9263423769c457dd2ec",
+          "expired": false
+        }
+      ]
+    },
+    "apple": {
+      "run_id": 39844598529,
+      "attempt": 1,
+      "workflow": ".github/workflows/wp13-apple.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120054441464,
+          "name": "sdk (iphoneos)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054441628,
+          "name": "sdk (macos)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054441791,
+          "name": "sdk (iphonesimulator)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120055709731,
+          "name": "uitest (ipad)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120055709767,
+          "name": "uitest (iphone)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120055709808,
+          "name": "package",
+          "conclusion": "success"
+        },
+        {
+          "id": 120055709908,
+          "name": "uitest (macos)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120066381445,
+          "name": "summary",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12456491120,
+          "name": "wp13-apple-validation",
+          "bytes": 61965,
+          "digest": "sha256:39e5ec6c21314febe381d15b6afce60afb41ee30367772597150e04ace558407",
+          "expired": false
+        },
+        {
+          "id": 12455548067,
+          "name": "wp13-apple-iphone",
+          "bytes": 35318605,
+          "digest": "sha256:5be99922babf4c18ffb3f84d145261b587b4879d1da6e4a79d49b1f4522470cf",
+          "expired": false
+        },
+        {
+          "id": 12455059745,
+          "name": "wp13-apple-ipad",
+          "bytes": 45715627,
+          "digest": "sha256:d1f96a91586ca0a22075f28d4905eac6dd7599e3536052f271374f5f40ff3719",
+          "expired": false
+        },
+        {
+          "id": 12454784050,
+          "name": "wp13-apple-package",
+          "bytes": 126465950,
+          "digest": "sha256:827e186e99f7e7c156d38e5560188a37928c0d5481a4e9035d2aaad2bb3d3678",
+          "expired": false
+        },
+        {
+          "id": 12454772124,
+          "name": "wp13-apple-sdk-macos",
+          "bytes": 18097168,
+          "digest": "sha256:547c693bf3cd98e29e295bc2afacd66fe29d2c87e246413d4f0976a683872469",
+          "expired": false
+        },
+        {
+          "id": 12454668814,
+          "name": "wp13-apple-macos",
+          "bytes": 35220564,
+          "digest": "sha256:ebf08316b8c762ecabc11fcc1fd128d145b0321ca8ea4235268178eb480756f5",
+          "expired": false
+        },
+        {
+          "id": 12454163052,
+          "name": "wp13-apple-sdk-iphonesimulator",
+          "bytes": 18094011,
+          "digest": "sha256:c6bb38cc87942f87b4355288c8835baf7a036978257ecef5b29d624076a4f00f",
+          "expired": false
+        },
+        {
+          "id": 12453848845,
+          "name": "wp13-apple-sdk-iphoneos",
+          "bytes": 17808278,
+          "digest": "sha256:131e6e15b57e38d7ef9800909a20ab84a053b593fc338b2df73399bc79aa05db",
+          "expired": false
+        }
+      ]
+    },
+    "android": {
+      "run_id": 39844608350,
+      "attempt": 1,
+      "workflow": ".github/workflows/wp13-android.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120054475517,
+          "name": "android-host",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12455596624,
+          "name": "EXReader-WP13-Android",
+          "bytes": 149222811,
+          "digest": "sha256:33ffe7ad9943e4978929bdf98eab7678272014b38179db7498f69af610d679cf",
+          "expired": false
+        }
+      ]
+    },
+    "acroform": {
+      "run_id": 39844617258,
+      "attempt": 1,
+      "workflow": ".github/workflows/acroform.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120054504989,
+          "name": "sanitizer",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054505414,
+          "name": "native (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054505443,
+          "name": "native (ubuntu-22.04)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054505750,
+          "name": "corpus",
+          "conclusion": "success"
+        },
+        {
+          "id": 120055220251,
+          "name": "evidence",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12454547102,
+          "name": "EXReader-acroform-sanitizer",
+          "bytes": 96998,
+          "digest": "sha256:276c7c8544f9aaf31d57fd9b3b67db783d9d455fcda89da33eb403f7a661ee1e",
+          "expired": false
+        },
+        {
+          "id": 12454407892,
+          "name": "EXReader-acroform-corpus",
+          "bytes": 60053,
+          "digest": "sha256:ac0a43ecda05192d070bed316fd9d83a350ab83faa4db927a55b5ef51b91c4df",
+          "expired": false
+        },
+        {
+          "id": 12454353045,
+          "name": "EXReader-acroform-Windows",
+          "bytes": 97955,
+          "digest": "sha256:a1c50269123711f7efff8d625683027dfa79eebed1c2be3a80c8e99bf094dbee",
+          "expired": false
+        },
+        {
+          "id": 12454187909,
+          "name": "EXReader-acroform-Linux",
+          "bytes": 161487,
+          "digest": "sha256:da2312efa9324b261c3c6797513496fe4d1054a85fe1474a2247cf9e42e04fc2",
+          "expired": false
+        }
+      ]
+    },
+    "spacing": {
+      "run_id": 39844627315,
+      "attempt": 1,
+      "workflow": ".github/workflows/wp5-border-spacing.yml",
+      "head_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120054541962,
+          "name": "spacing (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120054542453,
+          "name": "spacing (ubuntu-22.04)",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": []
+    }
+  },
+  "summary": {
+    "run_id": 39850404743,
+    "attempt": 1,
+    "head_sha": "1c3e07247b09d14eb8fca6b9b53aa9b51e8993af",
+    "status": "completed",
+    "conclusion": "success",
+    "checked_source": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
+    "jobs": [
+      {
+        "id": 120074705987,
+        "name": "protocol",
+        "conclusion": "success"
+      },
+      {
+        "id": 120074770853,
+        "name": "baseline",
+        "conclusion": "success"
+      },
+      {
+        "id": 120074771032,
+        "name": "summarize",
+        "conclusion": "success"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12457625620,
+        "name": "sdk-baseline-check",
+        "bytes": 876,
+        "digest": "sha256:54dcb1db737ed132235be46cf0194536e7920cb5369e65a8d9b661873fc1024c"
+      },
+      {
+        "id": 12457531170,
+        "name": "parallel-integration-summary",
+        "bytes": 3830,
+        "digest": "sha256:d9a5fefff99e5c542a1b0dbaa0c4b3066efce7e71a6afab0b2d5e440a2eb39e0"
+      },
+      {
+        "id": 12457172657,
+        "name": "parallel-integration-gate-protocol",
+        "bytes": 303,
+        "digest": "sha256:d787a471aa8b74fc334eee199674c1b454e56133ab227fcaeef7dfe073373b74"
+      }
+    ]
+  },
+  "limits": [
+    "declared package scopes only: complete_product=false, wp16_accepted=false, wp16_cpu_credit_seconds=0",
+    "real corpus remains 0/1710; Android scope is the API34 x86_64 emulator; device, VoiceOver and TalkBack review stay out",
+    "the OCR group was re-run as attempt 2 after its sanitizer job hit the 25 minute timeout on a loaded runner; attempt 1 stays in the run history",
+    "the Linux host group accepted attempt 2 of its run after a native file dialog timeout under load"
+  ]
+}
