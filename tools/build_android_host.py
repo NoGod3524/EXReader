@@ -367,7 +367,7 @@ def main():
 
     sys.path.insert(0, str(ROOT / 'tools'))
     from host_font import fetch as fetch_font
-    font = fetch(ROOT / 'build/host-font-cache')
+    font = fetch_font(ROOT / 'build/host-font-cache')
     assets = ANDROID / 'app/src/main/assets'
     assets.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(font / 'Reader.otf', assets / 'Reader.otf')
