@@ -24,6 +24,7 @@ def main():
     output.mkdir(parents=True)
     program = output/'model-review'
     subprocess.run(['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library',
+                    '-D', 'EXR_APPLE_HOST_REVIEW',
                     '-I', str(sdk/'include'), '-L', str(sdk/'lib'), '-lexreader',
                     '-Xlinker', '-rpath', '-Xlinker', str(sdk/'lib'),
                     str(ROOT/'examples/apple/HostSDK.swift'),
