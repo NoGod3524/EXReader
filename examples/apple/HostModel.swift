@@ -45,6 +45,7 @@ final class HostSession {
     private var pager: HostPager?
     private var fixed: HostFixed?
     private var page = 0
+    private var readingOffset = 0
     private var fontSize = 28.0
     private var viewport = CGSize(width: 720, height: 1040)
     private(set) var pageText = ""
@@ -126,8 +127,13 @@ final class HostSession {
             let document = try library.document(bookID: target.id)
             self.document = document
             page = 0
+            readingOffset = 0
+            if let saved = try? library.progress(bookID: target.id),
+               saved.state == EXR_ANCHOR_FOUND || saved.state == EXR_ANCHOR_LEGACY {
+                readingOffset = saved.anchor.start
+            }
             try rebuildPager(width: Double(viewport.width), height: Double(viewport.height),
-                             font: fontSize, cancel: cancel, restore: true)
+                             font: fontSize, cancel: cancel)
         }
         do {
             return try renderSnapshot()
@@ -140,17 +146,10 @@ final class HostSession {
     }
 
     private func rebuildPager(width: Double, height: Double, font size: Double,
-                              cancel: HostCancelBox, restore: Bool) throws {
+                              cancel: HostCancelBox) throws {
         guard let document else { return }
         begin(cancel)
-        let anchor: HostAnchor?
-        if restore, let saved = try? library.progress(bookID: documentID()) {
-            anchor = saved.state == EXR_ANCHOR_FOUND || saved.state == EXR_ANCHOR_LEGACY ? saved.anchor : nil
-        } else if !restore, pageRange.lowerBound <= pageRange.upperBound {
-            anchor = try? document.makeAnchor(start: pageRange.lowerBound, end: pageRange.lowerBound)
-        } else {
-            anchor = nil
-        }
+        let anchor = try? document.makeAnchor(start: readingOffset, end: readingOffset)
         viewport = CGSize(width: width, height: height)
         fontSize = size
         let newPager = try HostPager(document: document, font: font, width: width, height: height,
@@ -162,12 +161,10 @@ final class HostSession {
         if (try? newPager.pageRange(page)) == nil { page = 0 }
     }
 
-    private func documentID() -> Int64 { book?.id ?? 0 }
-
     func resize(width: Double, height: Double, cancel: HostCancelBox) throws -> HostSnapshot {
         begin(cancel)
         guard fixed == nil, document != nil else { return try renderSnapshot() }
-        try rebuildPager(width: width, height: height, font: fontSize, cancel: cancel, restore: false)
+        try rebuildPager(width: width, height: height, font: fontSize, cancel: cancel)
         return try renderSnapshot()
     }
 
@@ -177,7 +174,7 @@ final class HostSession {
         let next = min(48, max(18, fontSize + delta))
         guard next != fontSize else { return try renderSnapshot() }
         try rebuildPager(width: Double(viewport.width), height: Double(viewport.height),
-                         font: next, cancel: cancel, restore: false)
+                         font: next, cancel: cancel)
         return try renderSnapshot()
     }
 
@@ -195,16 +192,16 @@ final class HostSession {
             }
         }
         _ = book
-        return try renderSnapshot()
+        return try renderSnapshot(userMove: true)
     }
 
     func firstPage(cancel: HostCancelBox) throws -> HostSnapshot {
         begin(cancel)
         page = 0
-        return try renderSnapshot()
+        return try renderSnapshot(userMove: true)
     }
 
-    func renderSnapshot() throws -> HostSnapshot {
+    func renderSnapshot(userMove: Bool = false) throws -> HostSnapshot {
         guard let book else { throw HostError.invalidInput("没有打开的书") }
         if let fixed {
             let bitmap = try fixed.render(page: page, maximumDimension: 2200)
@@ -222,6 +219,7 @@ final class HostSession {
         }
         guard let document, let pager else { throw HostError.invalidInput("分页尚未就绪") }
         let range = try pager.pageRange(page)
+        if userMove { readingOffset = range.lowerBound }
         let bitmap = try pager.render(page)
         let text = slice(document.text, range)
         pageRange = range
@@ -252,14 +250,14 @@ final class HostSession {
         if fixed != nil {
             try library.updatePosition(book: book, position: page)
         } else if let document {
-            let anchor = try document.makeAnchor(start: pageRange.lowerBound, end: pageRange.lowerBound)
+            let anchor = try document.makeAnchor(start: readingOffset, end: readingOffset)
             try library.setProgress(bookID: book.id, anchor: anchor)
         }
     }
 
     private func persist(book: HostBook, fixed: HostFixed?, document: HostDocument, range: Range<Int>) throws {
-        try library.updatePosition(book: book, position: range.lowerBound)
-        let anchor = try document.makeAnchor(start: range.lowerBound, end: range.lowerBound)
+        try library.updatePosition(book: book, position: readingOffset)
+        let anchor = try document.makeAnchor(start: readingOffset, end: readingOffset)
         try library.setProgress(bookID: book.id, anchor: anchor)
     }
 
@@ -303,15 +301,15 @@ final class HostSession {
         }
         guard let pager else { throw HostError.invalidInput("分页尚未就绪") }
         page = try pager.pageIndex(for: note.start)
-        return try renderSnapshot()
+        return try renderSnapshot(userMove: true)
     }
 
     func persistCurrent() {
         guard let book else { return }
         if let fixed {
             try? library.updatePosition(book: book, position: page)
-        } else if let document, pageRange.lowerBound <= pageRange.upperBound {
-            if let anchor = try? document.makeAnchor(start: pageRange.lowerBound, end: pageRange.lowerBound) {
+        } else if let document {
+            if let anchor = try? document.makeAnchor(start: readingOffset, end: readingOffset) {
                 try? library.setProgress(bookID: book.id, anchor: anchor)
             }
         }
