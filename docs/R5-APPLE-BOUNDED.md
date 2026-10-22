@@ -2,8 +2,8 @@
 
 本包在 `fd210224a4eba206762c08de435a5e9edfdf2a90` 上准备 Apple 局部实现；
 原SDK基线为`ce5d664c9f76d0613df6d79b27568a7039c4a81e`。Repeated边界诊断暴露同root下降循环后，
-现合入修复候选`2f26847684b54006ca812c35477ceae43719e7d4`；SDK六组18作业重冻结与Apple八作业并行复验。
-工作流逐项拒绝与该候选的受保护SDK树差异，并把基线写入三SDK身份、严格汇总及拒绝回归。
+现合入并绑定正式重冻结基线`9c69bc4c7efb0cff68ced27562709fe597189041`，其六组18作业/30工件同源通过。
+工作流逐项拒绝与该基线的受保护SDK树差异，并把基线写入三SDK身份、严格汇总及拒绝回归。
 候选未获验收。构建、Swift 编译、夹具生成、测试与证据计算只在 GitHub Actions 执行。
 
 ## 路径
@@ -62,7 +62,20 @@ bounded消费者已成功编译，但900秒执行预算耗尽，package及summar
 
 修复SDK候选`2f26847684b54006ca812c35477ceae43719e7d4`的Apple复验源码为
 `86c3219f36501aa334c4ef6fc91b2efc5be000f5` / run `39871718040`，保持正式16KiB/900秒。
-三个SDK与Swift预编译已成功，UI及package/summary仍在运行或排队。
+三个SDK与Swift预编译、SDK21、Model18、bounded15、三平台legacy21以及macOS/iPhone的13UI/67步骤成功。
 SDK候选的新增预算回归随后仅修正触发时机，后继重冻结候选为
 `9c69bc4c7efb0cff68ced27562709fe597189041`，其受保护实现树与`2f2684`相同。
-本轮Apple先完成以定位剩余宿主缺陷；最终身份仍须与重冻结候选统一。
+该轮iPad的`test08BusyImportGuardsAndCancellationRecovery`在line697失败：取消及真实书架恢复通过，
+但恢复打开书后点击首页，40秒后仍为`第1章·第2页`，状态`就绪`，无错误。自动失败截图未满足正式附件命名契约，
+collector拒绝，summary也因上游失败拒绝。`continue-on-error`下jobs API曾显示UI步骤`conclusion=success`，
+完成日志实际为12/13；旧状态判断已按完成日志更正，原运行与工件保留，不算通过。
+
+根因路径为open完成后直接交接pending viewport worker，旧`就绪`文字可与busy并存；驱动当时只等状态文字，
+未在点击首页前验证稳定的已接受frame/可用控件。后继统一强化`waitLabel(reader.status, 就绪)`：同一个fresh AX snapshot
+须同时状态匹配及`readerIdleIdentity`成立，并稳定0.6秒；busy或identity变化重置。存在等待计入原40秒总截止。
+原首页/下一页、取消恢复及页码断言保持，不增加重试点击，不延长预算。
+另在原跨章用例补上同path/文字/局部range但不同part的旧选区拒绝断言，15项数量不变；RSS与运行范围进入云端日志。
+
+后继已合入9c基线并准备交给共同源码S；不再单独重复八作业。
+必须由S的三平台13UI/67步骤/50附件、SDK21、Model18、bounded15、三legacy21和全部证据拒绝回归
+同次通过，才授予最终H9声明范围。当前候选待该轮验证。
