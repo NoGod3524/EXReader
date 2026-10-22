@@ -8,11 +8,11 @@
 typedef struct linux_reader linux_reader;
 typedef enum { READER_SHELF, READER_OPEN, READER_IMPORT, READER_NEXT,
   READER_PREVIOUS, READER_FONT, READER_NOTE_ADD, READER_NOTE_REMOVE,
-  READER_NOTE_JUMP } reader_action;
+  READER_NOTE_JUMP, READER_COMMIT } reader_action;
 typedef struct {
   reader_action action;
   int64_t book,note;
-  size_t start,end;
+  size_t part,start,end;
   int font;
   const char *path,*comment;
 } reader_command;
@@ -20,9 +20,9 @@ typedef struct { int64_t id;size_t part,start,end;char *text; } reader_note;
 typedef struct {
   exr_status status;
   char message[160];
-  int has_frame,bounded,font,select_range;
+  int has_frame,has_shelf,bounded,font,select_range;
   int64_t book;
-  size_t part,page,start,end,selected_start,selected_end;
+  size_t part,page,start,end,position,selected_start,selected_end;
   size_t width,height,stride,text_size;
   unsigned char *pixels;
   char *text;

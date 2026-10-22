@@ -64,7 +64,7 @@ class Session:
             if self.process.poll() is not None:
                 raise RuntimeError('Host exited; see application.log')
             state = self.read()
-            if state and predicate(state):
+            if state and not state.get('busy', 0) and predicate(state):
                 return state
             time.sleep(.1)
         raise TimeoutError('UI did not reach expected state: '+repr(self.read()))
@@ -183,7 +183,8 @@ def main():
         host.key('F7', 'ctrl+a', 'F8')
         state = host.wait(lambda s: s['notes'] == 1)
         with sqlite3.connect(output/'profile/library.sqlite') as db:
-            note = db.execute('SELECT start,end,text,anchor_exact FROM notes').fetchone()
+            table, quote = ('epub_notes', 'exact') if state.get('bounded') else ('notes', 'anchor_exact')
+            note = db.execute(f'SELECT start,end,text,{quote} FROM {table}').fetchone()
         checked('11 selected range and Unicode comment stored',
                 state['selection_end'] > state['selection_start'] and note[0] == state['selection_start']
                 and note[1] == state['selection_end'] and note[2] == 'Cloud UI note: 中文 café' and bool(note[3]))

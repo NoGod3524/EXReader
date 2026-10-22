@@ -1,65 +1,79 @@
 /* SPDX-License-Identifier: MIT */
+#define _POSIX_C_SOURCE 200809L
 #include <gtk/gtk.h>
 #include <exreader.h>
 #include <stdio.h>
 #include <stdlib.h>
 static int fail_reads;
-static exr_status query_notes(exr_library *l,int64_t id,exr_note **out,size_t *count,exr_error *error) {
+static exr_status query_notes(exr_library *library,int64_t id,exr_note **out,size_t *count,exr_error *error) {
   if(fail_reads) { *out=NULL;*count=0;error->code=EXR_DATABASE;return EXR_DATABASE; }
-  return exr_library_notes(l,id,out,count,error);
+  return exr_library_notes(library,id,out,count,error);
 }
 #define exr_library_notes query_notes
-#define main exreader_host_main
-#include "../../examples/linux/reader.c"
-#undef main
+#include "../../examples/linux/reading.c"
 #undef exr_library_notes
+#define main exreader_host_main
+#include "../../examples/linux/reader_async.c"
+#undef main
 static unsigned checks;
 static void require(int condition,const char *name) {
   if(!condition) { fprintf(stderr,"FAIL %s\n",name);exit(1); } checks++;
 }
 static unsigned rows(void) {
-  GList *children=gtk_container_get_children(GTK_CONTAINER(notes));unsigned n=g_list_length(children);
-  g_list_free(children);return n;
+  GList *children=gtk_container_get_children(GTK_CONTAINER(notes));unsigned n=g_list_length(children);g_list_free(children);return n;
+}
+static void apply(linux_reader *reader,reader_command command) {
+  host_result *result=g_new0(host_result,1);result->action=command.action;result->generation=g_atomic_int_get(&generation);
+  linux_reader_execute(reader,&command,&result->value);apply_result(result);
+  if(saving) {
+    host_job *job=g_async_queue_pop(queue);host_result *saved=g_new0(host_result,1);
+    saved->action=READER_COMMIT;saved->generation=job->generation;
+    linux_reader_execute(reader,&job->command,&saved->value);job_free(job);apply_result(saved);
+  }
 }
 int main(int argc,char **argv) {
+  linux_reader *reader=NULL;exr_error error={0};reader_command command={0};
   if(argc!=3) return 2;
   gtk_init(NULL,NULL);home=g_strdup(argv[2]);g_mkdir_with_parents(home,0700);
   settings_path=g_build_filename(home,"reader.ini",NULL);settings=g_key_file_new();
-  char *db=g_build_filename(home,"library.sqlite",NULL);exr_error error={0};
-  require(exr_library_open(db,&library,&error)==EXR_OK,"open real library");g_free(db);
-  require(exr_font_open(argv[1],&font,&error)==EXR_OK,"open real font");
-  window=gtk_window_new(GTK_WINDOW_TOPLEVEL);label=gtk_label_new("");image=gtk_image_new();
-  text=gtk_text_view_new();comment=gtk_entry_new();notes=gtk_list_box_new();stack=gtk_stack_new();
+  char *database=g_build_filename(home,"library.sqlite",NULL);
+  require(linux_reader_open(database,argv[1],NULL,&reader,&error)==EXR_OK,"open installed SDK reader");g_free(database);
+  queue=g_async_queue_new();window=gtk_window_new(GTK_WINDOW_TOPLEVEL);label=gtk_label_new("");image=gtk_image_new();
+  text=gtk_text_view_new();comment=gtk_entry_new();notes=gtk_list_box_new();shelf=gtk_list_box_new();stack=gtk_stack_new();
   gtk_stack_add_named(GTK_STACK(stack),gtk_label_new("reader"),"reader");
-  const char *body="Reader note body with stable original bytes.";
-  int64_t first=0,second=0,note_id=0;
-  require(exr_library_import(library,EXR_TXT,body,strlen(body),"Original",&first,&error)==EXR_OK,"import original");
-  require(exr_library_import(library,EXR_TXT,body,strlen(body),"Candidate",&second,&error)==EXR_OK,"import candidate");
+  const char *body="Reader note body with stable original bytes.";int64_t first=0,second=0,note_id=0;
+  require(exr_library_import(reader->library,EXR_TXT,body,strlen(body),"Original",&first,&error)==EXR_OK,"import original");
+  require(exr_library_import(reader->library,EXR_TXT,body,strlen(body),"Candidate",&second,&error)==EXR_OK,"import candidate");
   exr_note note={0};note.book_id=first;note.start=0;note.end=6;note.text="existing";
-  require(exr_library_note(library,&note,&note_id,&error)==EXR_OK,"persist existing note");
-  open_id(first);require(book_id==first&&note_count==1&&rows()==1&&last_error==0,"show original book and note");
-  exr_document *old_document=document;exr_pager *old_pager=pager;size_t old_start=page_start,old_end=page_end;
-  GdkPixbuf *old_pixels=gtk_image_get_pixbuf(GTK_IMAGE(image));
-  fail_reads=1;
-  require(!refresh_notes(first)&&last_error==EXR_DATABASE&&note_count==1&&rows()==1,"failed query retains existing notes and error");
-  open_id(second);
-  require(book_id==first&&document==old_document&&pager==old_pager&&page_start==old_start&&page_end==old_end&&
-    gtk_image_get_pixbuf(GTK_IMAGE(image))==old_pixels&&last_error==EXR_DATABASE&&note_count==1&&rows()==1,
-    "candidate note failure retains original document pager pixels and notes");
-  GtkTextBuffer *buffer=gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));GtkTextIter a,b;
-  gtk_text_buffer_get_iter_at_offset(buffer,&a,0);gtk_text_buffer_get_iter_at_offset(buffer,&b,6);
-  gtk_text_buffer_select_range(buffer,&a,&b);gtk_entry_set_text(GTK_ENTRY(comment),"added during refresh failure");
-  add_note();require(last_error==EXR_DATABASE&&note_count==1&&rows()==1,"add does not mask refresh failure");
+  require(exr_library_note(reader->library,&note,&note_id,&error)==EXR_OK,"persist existing note");
+  command.action=READER_OPEN;command.book=first;command.font=24;apply(reader,command);
+  require(book_id==first && note_count==1 && rows()==1 && last_error==0,"show original page and note");
+  exr_document *old_document=reader->current.document;exr_pager *old_pager=reader->current.pager;
+  size_t old_start=page_start,old_end=page_end;GdkPixbuf *old_pixels=gtk_image_get_pixbuf(GTK_IMAGE(image));
+  /* A rendered but unaccepted candidate must not move the worker cursor. */
+  reader_result candidate={0};command.action=READER_FONT;command.font=26;
+  linux_reader_execute(reader,&command,&candidate);
+  require(candidate.status==EXR_OK && candidate.has_frame && reader->current.pager==old_pager && reader->current.font==24,
+          "unaccepted font candidate retains accepted session");
+  reader_result_free(&candidate);command.action=READER_SHELF;linux_reader_execute(reader,&command,&candidate);
+  require(!reader->has_pending && reader->current.pager==old_pager,"discard stale candidate without changing cursor");reader_result_free(&candidate);
+  fail_reads=1;command.action=READER_OPEN;command.book=first;command.font=24;apply(reader,command);
+  require(last_error==EXR_DATABASE && note_count==1 && rows()==1,"failed query retains notes and visible error");
+  command.book=second;apply(reader,command);
+  require(book_id==first && reader->current.document==old_document && reader->current.pager==old_pager &&
+    page_start==old_start && page_end==old_end && gtk_image_get_pixbuf(GTK_IMAGE(image))==old_pixels &&
+    last_error==EXR_DATABASE && note_count==1 && rows()==1,"candidate note failure retains accepted page and notes");
+  command.book=first;command.action=READER_NOTE_ADD;command.start=0;command.end=6;command.comment="added during refresh failure";
+  apply(reader,command);require(last_error==EXR_DATABASE && rows()==1,"add does not mask query failure");
   exr_note *actual=NULL;size_t count=0;
-  require(exr_library_notes(library,first,&actual,&count,&error)==EXR_OK&&count==2,"both notes remain persisted after add");
-  exr_notes_free(actual,count);
-  gtk_list_box_select_row(GTK_LIST_BOX(notes),gtk_list_box_get_row_at_index(GTK_LIST_BOX(notes),0));
-  delete_note();require(last_error==EXR_DATABASE&&note_count==1&&rows()==1,"delete does not mask refresh failure");
-  require(exr_library_notes(library,first,&actual,&count,&error)==EXR_OK&&count==1&&
-    !strcmp(actual[0].text,"added during refresh failure"),"only selected note was removed");
-  exr_notes_free(actual,count);fail_reads=0;
-  require(refresh_notes(first)&&note_count==1&&rows()==1,"recover notes after query succeeds");
-  exr_pager_free(pager);exr_document_free(document);exr_font_free(font);exr_library_close(library);
-  g_key_file_free(settings);g_free(settings_path);g_free(home);
+  require(exr_library_notes(reader->library,first,&actual,&count,&error)==EXR_OK && count==2,"both notes remain persisted");
+  exr_notes_free(actual,count);command.action=READER_NOTE_REMOVE;command.note=note_id;apply(reader,command);
+  require(last_error==EXR_DATABASE && rows()==1,"delete refuses unverified ownership during query failure");
+  require(exr_library_notes(reader->library,first,&actual,&count,&error)==EXR_OK && count==2,"failed ownership query deletes no row");
+  exr_notes_free(actual,count);fail_reads=0;command.action=READER_OPEN;apply(reader,command);
+  require(note_count==2 && rows()==2 && last_error==0,"recover notes after query succeeds");
+  command.action=READER_NOTE_REMOVE;apply(reader,command);
+  require(note_count==1 && rows()==1 && last_error==0,"verified deletion succeeds");
+  linux_reader_close(reader);g_async_queue_unref(queue);g_key_file_free(settings);g_free(settings_path);g_free(home);g_free(page_text);
   printf("{\"passed\":true,\"checks\":%u,\"kind\":\"GTK note query fault regression\"}\n",checks);return 0;
 }
