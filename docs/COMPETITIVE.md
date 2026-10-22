@@ -30,7 +30,12 @@
 
 先对真实使用场景的代表性固定语料建立基线，再登记各 profile 的绝对预算和回归容差。
 预算尚待实测冻结。R3 首轮只在 GitHub Linux 对两个阅读 preset 做了 1 MiB TXT 首屏/32 次翻页的三次新进程采样
-（受测 `54d8c592`，run `39853356309`），用于验证测量流程；它不是 PDF、随机跳页或真实语料基线，也不授予任何预算结论。每次核心变更运行相关快速回归；长测、完整语料与跨平台矩阵在对应风险变化或发布候选时执行。
+（受测 `54d8c592`，run [39853356309](https://github.com/NoGod3524/EXReader/actions/runs/39853356309)），用于验证测量流程；它不是 PDF、随机跳页或真实语料基线，也不授予任何预算结论。
+R3 另在 Linux 对 `reading-core` 安装 SDK 测量极小合成 PDF/CBZ：1 页 PDF 与 4 页 CBZ（源码 `3cd7bdf1`，
+run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753)），以及新增 3 页 PDF/4 页 CBZ 可区分页面文档的
+固定随机回读（源码 `4b6f562c`，run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765)，
+2026-10-22 只读核对 success），见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md)。
+这些是合成工作负载的初始观测，不是成熟性能基线，也未设硬预算；RSS 基线与峰值相同只表示未超过先前高水位，不表示没有分配。每次核心变更运行相关快速回归；长测、完整语料与跨平台矩阵在对应风险变化或发布候选时执行。
 不同系统、CPU、渲染质量、字体、线程和缓存条件分别报告，不能据此合并排名。
 像素差异用于定位原因，字体栅格差异须分类；任何速度收益都须同时报告正确性和内存变化。
 

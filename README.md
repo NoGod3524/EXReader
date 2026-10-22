@@ -64,7 +64,7 @@ cmake --install build/reading-core
 ```
 
 安装前缀为 `build/<preset>/stage`；`reading-library` 将命令中的名称替换即可。前置条件：CMake 3.24+、Ninja、C11 编译器在 `PATH` 中可用（preset 固定 Ninja 生成器，Windows 需在已加载 MSVC 环境的命令行中运行），AVIF 开启时还需 Perl；首次配置需联网下载固定散列的依赖。
-这两个配置只是组件裁剪，不增加 PDF 或图像能力，也不表示性能已达标；PDF 编辑、音频和全文索引仍可用默认构建或单独开关启用。目前只有 GitHub Linux（ubuntu-22.04）完成验证，Windows/macOS 的 preset 结果尚未登记。
+这两个配置只是组件裁剪，不增加 PDF 或图像能力，也不表示性能已达标；PDF 编辑、音频和全文索引仍可用默认构建或单独开关启用。GitHub Linux（ubuntu-22.04）已完成验证；Windows（windows-2022/MSVC）与 macOS（macos-15/ARM64）在受测源码 `9b968a16` 的 run [39854485070](https://github.com/NoGod3524/EXReader/actions/runs/39854485070) 中两 preset 共 4/4 作业完成构建、安装、安装后消费者与九格式合成 smoke，见 [H1 平台记录](https://github.com/NoGod3524/EXReader/blob/2e8e981b6dd44d855a23931480fe5e0d5c791762/docs/READING-PLATFORMS.md)。该结果不含性能或体积预算，证据门禁加固另由 [H6](https://github.com/NoGod3524/EXReader/blob/62ab38e8223e42f1562fda7137cd41b4d87620f1/docs/handoffs/reading-H6-platform-gate.md) 跟踪。
 
 ## 当前实现
 
@@ -125,17 +125,20 @@ PDF 已有固定页绘制、文字几何、搜索选择、标准密码认证、�
 
 当前质量目标是：默认分支强制 CI 与可信构建基线、EPUB 超时/PDF 打开绘制失败闭环、成熟引擎差分与像素/性能回归、内存/长章节/恶意输入专项，以及许可证和版本发布流程统一。已有专项结果，但默认分支必需检查和整条发布门槛尚未闭合，真实兼容语料验收仍有缺口；逐项现状与证据见 [项目概述](docs/PROJECT_OVERVIEW.md#五项工程质量目标)。
 
-冻结 SDK 源码的四目标各 24 CPU 小时长测与严格云端汇总已通过，该结果只绑定其源码。A/B/C 已联合收口：共同源码 S=`686ce2fe`，12 组 35 个上游作业同源成功，严格汇总 run `39850404743` 确认 accepted；SDK 基线 K2=`d46ff370`，详见 [联合验收登记](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-ABC-accepted.md)。验收只覆盖各包声明范围，真实语料与核心性能预算仍待完成。
+冻结 SDK 源码的四目标各 24 CPU 小时长测与严格云端汇总已通过，该结果只绑定其源码。A/B/C 已联合收口：共同源码 S=`686ce2fe`，12 组 35 个上游作业同源成功，严格汇总 run [39850404743](https://github.com/NoGod3524/EXReader/actions/runs/39850404743) 确认 accepted；SDK 基线 K2=`d46ff370`，详见 [联合验收登记](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-ABC-accepted.md)。验收只覆盖各包声明范围，真实语料与核心性能预算仍待完成。
 
 原生阅读核心路线已在 `codex/r1-reading-core` 启动，状态按受测源码分开登记：
 
 | 状态 | 范围 |
 | --- | --- |
 | 已完成 | 受测源码 `54d8c592`，run [39853356309](https://github.com/NoGod3524/EXReader/actions/runs/39853356309) 2/2 作业成功：Linux 上 `reading-core`、`reading-library` 的构建、安装、安装后消费者、九格式合成 smoke、组成判定与 1 MiB TXT/32 次翻页初始采样。前一源码 `61aa183` 的 run `39852907619` 因测量自验 mock 失败，记录保留 |
+| 已完成 | H1：Windows/macOS 两 preset，受测源码 `9b968a16`，run [39854485070](https://github.com/NoGod3524/EXReader/actions/runs/39854485070) 4/4 作业成功（构建、安装、消费者 3/3 或 4/4、smoke 9/9）；门禁加固由 H6 另行跟踪 |
+| 已完成 | R3 初始 PDF/CBZ 测量（合成）：源码 `3cd7bdf1` 的 run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753) 测 1 页 PDF 与 4 页 CBZ 极小 fixture；可区分页面候选 `4b6f562c` 的 run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765) 加入 3 页 PDF/4 页 CBZ 合成文档，12 进程/240 次绘制，2026-10-22 只读核对为 success，见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md) |
+| 开发中 | R5 书库 EPUB 随机读出口、有界导入与章内进度/标注持久化：尚无冻结源码或云端结果，见 [R5 接入梳理](docs/R5-NATIVE-HOST-ADOPTION.md) |
 | 运行中 | 2026-10-22 只读核对时无排队或运行中的 workflow |
-| 未执行 | Windows/macOS profile 验证、PDF 与随机跳页基线、真实 EPUB/PDF 语料（仍为 0/1710）、硬性能预算、R4 热点优化、R5 宿主有界接入、默认分支必需检查与发布接线 |
+| 未执行 | 真实多页 PDF 与真实语料性能、真实 EPUB/PDF 语料（仍为 0/1710）、硬性能预算、R4 热点优化、R5 宿主有界接入、默认分支必需检查与发布接线 |
 
-初始 TXT 采样只证明测量流程可运行，不代表 PDF、随机跳页、真实语料或任何性能预算已达标；新 profile 也不继承 S 的联合验收或旧源码长测。详见 [首轮启动记录](docs/READING-CORE-START.md) 与 [发布门槛映射](docs/READING-CORE-GATE.md)。所有构建、测试及证据汇总在 GitHub Actions 执行。
+初始 TXT 与 PDF/CBZ 采样只针对极小合成工作负载，证明测量流程可运行，不是成熟性能基线，也不代表真实语料或任何性能预算已达标；RSS 增量为 0 只表示未超过进程先前高水位，不表示没有分配。新 profile 也不继承 S 的联合验收或旧源码长测。详见 [首轮启动记录](docs/READING-CORE-START.md) 与 [发布门槛映射](docs/READING-CORE-GATE.md)。所有构建、测试及证据汇总在 GitHub Actions 执行。
 
 ## 构建
 
