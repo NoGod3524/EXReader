@@ -164,6 +164,8 @@ jobs:
           if [ "$platform" = macos ]; then
             container="$HOME/Library/Application Support/EXReader"
           else
+            xcrun simctl boot "$udid" >/dev/null 2>&1 || true
+            xcrun simctl bootstatus "$udid" -b >/dev/null 2>&1 || true
             container=$(xcrun simctl get_app_container "$udid" org.exreader.host data || true)
           fi
           python3 - "$platform" "$container" <<'PY'

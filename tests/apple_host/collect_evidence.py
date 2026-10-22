@@ -56,15 +56,34 @@ def export_attachments(xcresult, output):
                 '--path', xcresult, '--output-path', target])
     files = sorted(path.name for path in target.glob('*')) if target.exists() else []
     manifest = []
+    items = []
     manifest_path = target/'manifest.json'
     if manifest_path.exists():
         try:
             data = json.loads(manifest_path.read_text())
-            manifest = data if isinstance(data, list) else data.get('attachments', [])
+            if isinstance(data, list):
+                if data and isinstance(data[0], dict) and 'attachments' in data[0]:
+                    for group in data:
+                        manifest.extend(group.get('attachments', []))
+                else:
+                    manifest = data
+            else:
+                manifest = data.get('attachments', [])
         except json.JSONDecodeError:
             manifest = []
+    steps_by_test = {}
+    for item in manifest:
+        suggested = item.get('suggestedHumanReadableName') or ''
+        if suggested.startswith('steps-'):
+            path = target/item.get('exportedFileName', '')
+            try:
+                payload = json.loads(path.read_text())
+                steps_by_test[payload.get('test', suggested)] = payload.get('steps', [])
+            except (OSError, json.JSONDecodeError):
+                continue
     return {'status': proc.returncode, 'stderr': proc.stderr[-2000:],
-            'file_count': len(files), 'files': files[:400], 'manifest': manifest[:400]}
+            'file_count': len(files), 'files': files[:400], 'manifest': manifest[:400],
+            'steps_by_test': steps_by_test}
 
 
 def collect_database(container, output):
@@ -139,6 +158,13 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     metadata, cases = load_results(args.xcresult)
     attachments = export_attachments(args.xcresult, output)
+    steps_by_test = attachments.pop('steps_by_test', {})
+    for case in cases:
+        for test_name, steps in steps_by_test.items():
+            if case['name'].split('(')[0] in test_name:
+                case['steps'] = steps
+                case['step_count'] = len(steps)
+                break
     identity = json.loads(args.identity.read_text()) if args.identity and args.identity.exists() else {}
     passed = sum(1 for case in cases if case['result'] == 'Passed')
     failed = sum(1 for case in cases if case['result'] == 'Failed')

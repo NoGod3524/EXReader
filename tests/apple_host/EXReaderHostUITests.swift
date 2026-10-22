@@ -6,13 +6,24 @@ import AppKit
 
 final class EXReaderHostUITests: XCTestCase {
     private var app: XCUIApplication!
+    private static var recordedSteps: [String] = []
 
     override func setUpWithError() throws {
         continueAfterFailure = false
+        Self.recordedSteps = []
         app = XCUIApplication()
     }
 
     override func tearDownWithError() throws {
+        if !Self.recordedSteps.isEmpty,
+           let data = try? JSONSerialization.data(withJSONObject: ["test": name, "steps": Self.recordedSteps],
+                                                   options: [.prettyPrinted, .sortedKeys]),
+           let text = String(data: data, encoding: .utf8) {
+            let attachment = XCTAttachment(string: text)
+            attachment.name = "steps-\(name).json"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
 #if os(iOS)
         XCUIDevice.shared.orientation = .portrait
 #endif
@@ -80,6 +91,7 @@ final class EXReaderHostUITests: XCTestCase {
     }
 
     private func step(_ name: String, _ body: () throws -> Void) rethrows {
+        Self.recordedSteps.append(name)
         try XCTContext.runActivity(named: name) { _ in try body() }
     }
 
