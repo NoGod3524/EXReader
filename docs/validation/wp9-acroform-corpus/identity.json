@@ -1,6 +1,6 @@
 {
  "schema": "exreader-acroform-corpus-identity/1",
- "source_sha": "d46ff370cb3c5ce9a0ceb4dc1f8b099209149280",
+ "source_sha": "686ce2fe6c3463ef1b917569677ee9933e22faa9",
  "corpus_files": 75,
  "corpus_sha256": {
   "01-text-ascii-basic.pdf": "eeb2fbfaee0830dc2e0bce227dba1bd12a8e7f7a6d14d5e11cdb93cb9628f575",
