@@ -357,8 +357,10 @@ public final class HostWalkthroughTest {
             assertNotNull("pdf reader missing after restart", waitId("reader_panel", 25000));
             assertTrue("pdf page 2 not restored", waitLabelContains("PDF p.2/5", 20000));
             assertTrue("PDF restart lost the selected page", waitReaderState(position, anchor, title, 15000));
-            assertTrue("PDF restart changed the rendered frame", waitFrameEqual(frame));
+            // The restored note highlight is drawn when the store finishes loading the notes,
+            // so prove the annotation state is back before comparing the rendered frame.
             assertTrue("pdf note lost after restart", waitButtonText("Notes (1)", 20000));
+            assertTrue("PDF restart changed the rendered frame", waitFrameEqual(frame));
         });
 
         step("pdf_note_delete", "Delete the fixed-page annotation", () -> {

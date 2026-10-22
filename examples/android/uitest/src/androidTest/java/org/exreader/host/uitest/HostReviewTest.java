@@ -150,8 +150,8 @@ public final class HostReviewTest {
             UiObject2 annotate = find("annotate_button");
             assertTrue("busy frame must not keep annotation enabled", annotate == null || !annotate.isEnabled());
             click("cancel_button"); awaitText("Operation canceled");
-            assertNull(find("selection_status"));
-            assertTrue(text("notes_button").contains("Notes (0)"));
+            assertTrue("cancellation must clear the selection bar", waitGone("selection_status", 5000));
+            assertTrue("cancellation must leave the annotation count at zero", waitButtonText("Notes (0)", 5000));
             configure(""); next(2);
             a.add("ordinary page path exposes loading and cancel before the debug gate; busy frame invalidates selection; cancellation creates no annotation and reader recovers");
         });
@@ -249,10 +249,17 @@ public final class HostReviewTest {
         List<String> assertions = new ArrayList<>(); long begin = SystemClock.elapsedRealtime();
         try { body.run(assertions); result.put("status", "pass"); }
         catch (Throwable error) {
-            StackTraceElement frame = error.getStackTrace().length > 0 ? error.getStackTrace()[0] : null;
+            StackTraceElement frame = null;
+            for (StackTraceElement element : error.getStackTrace()) {
+                if (element.getClassName().startsWith("org.exreader.host.uitest.")) { frame = element; break; }
+            }
             result.put("error", error.getClass().getSimpleName() + (frame == null ? "" : " line " + frame.getLineNumber())
                     + ": " + error.getMessage());
-            try { result.put("detail", text("status_text") + " | " + text("reader_status")); } catch (Throwable ignored) { }
+            try {
+                result.put("detail", text("status_text") + " | " + text("reader_status") + " | notes="
+                        + text("notes_button") + " | page=" + text("page_label")
+                        + " | selection=" + (find("selection_status") != null) + " | reader=" + (find("reader_view") != null));
+            } catch (Throwable ignored) { }
         }
         File shot = new File(output, "shots/" + id + ".png");
         if (!device.takeScreenshot(shot)) result.put("status", "fail");
@@ -344,7 +351,7 @@ public final class HostReviewTest {
     private boolean bookExists(String name) { return device.wait(Until.hasObject(By.textStartsWith(name + "\n")), 1500); }
     private void next(int page) throws Exception { tapNext(); awaitPage(page); }
     private void tapNext() throws Exception {
-        UiObject2 view = waitId("reader_view", 10000); assertNotNull(view);
+        UiObject2 view = waitId("reader_view", 10000); assertNotNull("reader surface missing before paging", view);
         Rect box = view.getVisibleBounds(); device.click(box.right - box.width()/6, box.centerY());
     }
     private void awaitPage(int page) throws Exception {
@@ -376,7 +383,7 @@ public final class HostReviewTest {
     private void clickText(String value, String what) throws Exception {
         long deadline = SystemClock.uptimeMillis() + 15000;
         while (SystemClock.uptimeMillis() < deadline) {
-            UiObject2 object = device.findObject(By.text(value));
+            UiObject2 object = device.findObject(By.text(Pattern.compile("(?i)^" + Pattern.quote(value) + "$")));
             if (object != null && object.isEnabled()) {
                 try {
                     object.click();
@@ -403,6 +410,22 @@ public final class HostReviewTest {
             }
         }
         throw new AssertionError("field did not accept text: " + id);
+    }
+    private boolean waitGone(String id, long timeout) {
+        long deadline = SystemClock.uptimeMillis() + timeout;
+        while (SystemClock.uptimeMillis() < deadline) {
+            if (find(id) == null) return true;
+            SystemClock.sleep(100);
+        }
+        return false;
+    }
+    private boolean waitButtonText(String needle, long timeout) {
+        long deadline = SystemClock.uptimeMillis() + timeout;
+        while (SystemClock.uptimeMillis() < deadline) {
+            if (text("notes_button").contains(needle)) return true;
+            SystemClock.sleep(150);
+        }
+        return false;
     }
     private UiObject2 waitText(String value, long timeout) { return device.wait(Until.findObject(By.textContains(value)), timeout); }
     private UiObject2 waitId(String id, long timeout) { return device.wait(Until.findObject(By.res(APP + ":id/" + id)), timeout); }
