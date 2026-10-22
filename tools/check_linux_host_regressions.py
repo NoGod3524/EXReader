@@ -27,10 +27,12 @@ def main():
  # Run the real UI verifier against a deliberately broken restore implementation.
  payload=root/'font-mutant-payload';shutil.copytree(args.payload,payload)
  shutil.copyfile(args.consumer/'exreader-linux-font_restore_mutant',payload/'bin/exreader-linux')
- run=subprocess.run([sys.executable,str(pathlib.Path(__file__).with_name('check_linux_host.py')),
-                     '--payload',str(payload),'--output',str(root/'font-mutant-evidence')],
-                    stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=180)
- (root/'font-mutant-verifier.log').write_text(run.stdout+run.stderr)
+ # xclip retains inherited output descriptors while owning the clipboard. A file
+ # avoids waiting for a daemon's pipe EOF after the verifier has already exited.
+ with (root/'font-mutant-verifier.log').open('wb') as log:
+  run=subprocess.run([sys.executable,str(pathlib.Path(__file__).with_name('check_linux_host.py')),
+                       '--payload',str(payload),'--output',str(root/'font-mutant-evidence')],
+                      stdout=log,stderr=subprocess.STDOUT,timeout=180)
  report=json.loads((root/'font-mutant-evidence/report.json').read_text())
  settings=configparser.ConfigParser();settings.read(root/'font-mutant-evidence/profile/reader.ini')
  state=configparser.ConfigParser();state.read(root/'font-mutant-evidence/state.ini')
