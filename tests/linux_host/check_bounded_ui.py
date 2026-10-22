@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT/'tools'))
 from check_linux_host import Session, command
 
-SDK = 'ce5d664c9f76d0613df6d79b27568a7039c4a81e'
+SDK = '2f26847684b54006ca812c35477ceae43719e7d4'
 TREES = ('src', 'include', 'cmake', 'CMakeLists.txt', 'tests/fixtures',
          '.github/workflows/native.yml', '.github/workflows/reliability.yml', 'bindings')
 
