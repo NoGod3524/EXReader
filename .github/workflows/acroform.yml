@@ -22,6 +22,7 @@ jobs:
         shell: bash
         run: |
           PY=$(command -v python || command -v python3)
+          mkdir -p build
           "$PY" tests/acroform_corpus/generate.py --out build/corpus-a | tee build/corpus-summary.json
           "$PY" tests/acroform_corpus/generate.py --out build/corpus-b
           "$PY" - build/corpus-a build/corpus-b <<'PY'
