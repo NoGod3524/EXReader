@@ -462,17 +462,17 @@ public final class HostWalkthroughTest {
         if (screenshot == null) screenshot = screenshot(id);
         long duration = SystemClock.uptimeMillis() - started;
         try {
-            JSONObject record = new JSONObject();
-            record.put("id", id);
-            record.put("title", title);
-            record.put("status", status);
-            record.put("detail", detail);
-            record.put("duration_ms", duration);
-            if (screenshot != null) record.put("screenshot", screenshot);
-            results.add(record);
+            JSONObject entry = new JSONObject();
+            entry.put("id", id);
+            entry.put("title", title);
+            entry.put("status", status);
+            entry.put("detail", detail);
+            entry.put("duration_ms", duration);
+            if (screenshot != null) entry.put("screenshot", screenshot);
+            results.add(entry);
             File file = new File(caseDir, String.format(Locale.US, "%02d-%s.json", sequence, id));
             try (FileOutputStream output = new FileOutputStream(file)) {
-                output.write(record.toString(2).getBytes(StandardCharsets.UTF_8));
+                output.write(entry.toString(2).getBytes(StandardCharsets.UTF_8));
             }
         } catch (Throwable error) {
             failures.add(id + " - evidence write failed: " + error);

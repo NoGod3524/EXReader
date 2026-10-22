@@ -263,25 +263,42 @@ def elf_check(path):
     return {'machine': machine, 'load_alignments': sorted(set(alignments))}
 
 
+def elf_dynamic(path):
+    tool = shutil.which('readelf')
+    if not tool:
+        return {}
+    output = subprocess.check_output([tool, '-d', str(path)], text=True)
+    needed = re.findall(r'\(NEEDED\)\s+Shared library: \[([^\]]+)\]', output)
+    soname = re.search(r'\(SONAME\)\s+Library soname: \[([^\]]+)\]', output)
+    return {'needed': needed, 'soname': soname.group(1) if soname else ''}
+
+
 def inspect_apk(apk):
     info = {}
     with zipfile.ZipFile(apk) as archive:
         names = [name for name in archive.namelist() if name.startswith('lib/')]
-        for required in ['lib/x86_64/libexreader.so', 'lib/x86_64/libexreader_jni.so']:
+        for required in ['lib/x86_64/libexreader.so', 'lib/x86_64/libexreader_jni.so',
+                         'lib/x86_64/libexreader_host.so']:
             if required not in names:
                 raise SystemExit('APK is missing ' + required)
         if any(name.endswith('libexreader.so.1') for name in names):
             raise SystemExit('APK still contains the versioned engine name')
         for name in ['lib/x86_64/libexreader.so', 'lib/x86_64/libexreader_jni.so',
                      'lib/x86_64/libexreader_host.so']:
-            if name not in names:
-                raise SystemExit('APK is missing ' + name)
-            payload = archive.read(name)
-            if b'libexreader.so.1' in payload:
-                raise SystemExit(name + ' still references the versioned engine name')
             target = Path('/tmp') / Path(name).name
-            target.write_bytes(payload)
-            info[name] = elf_check(target)
+            target.write_bytes(archive.read(name))
+            entry = elf_check(target)
+            dynamic = elf_dynamic(target)
+            entry.update(dynamic)
+            if name.endswith('/libexreader.so') and dynamic.get('soname') not in ('', 'libexreader.so'):
+                raise SystemExit('engine runtime still has a versioned soname')
+            if name.endswith('libexreader_jni.so') or name.endswith('libexreader_host.so'):
+                needed = dynamic.get('needed') or []
+                if needed and 'libexreader.so' not in needed:
+                    raise SystemExit(name + ' does not depend on libexreader.so')
+                if any(item.endswith('libexreader.so.1') for item in needed):
+                    raise SystemExit(name + ' still depends on the versioned engine name')
+            info[name] = entry
     return info
 
 
