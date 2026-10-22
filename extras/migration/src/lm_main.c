@@ -1035,6 +1035,28 @@ static int verify_library(ctx *c, exr_library *lib, int check_metadata) {
   unsigned bad = 0;
   size_t *head, *next, at;
   memset(&by_id, 0, sizeof(by_id));
+  /* A damaged ledger must not silently turn a located annotation into a skip. */
+  for (i = 0; i < c->ledger.note_n; i++) {
+    lm_note *note = &c->ledger.notes[i];
+    jv *record;
+    lm_sb canonical;
+    char error[160], fingerprint[65];
+    size_t owner;
+    if (!note->touched) continue;
+    record = note->retained ? lm_json_parse(note->retained, strlen(note->retained), error, sizeof(error)) : NULL;
+    if (!record || record->t != J_OBJ) { lm_json_free(record); fail(c, O_FAILED, "verify-failed", "retained annotation is not a record"); return 0; }
+    lm_sb_init(&canonical);
+    lm_json_write(&canonical, record);
+    lm_sha_bytes(canonical.p ? canonical.p : "", canonical.n, fingerprint);
+    lm_sb_free(&canonical); lm_json_free(record);
+    if (strcmp(fingerprint, note->fp)) { fail(c, O_FAILED, "verify-failed", "retained annotation fingerprint differs from the ledger"); return 0; }
+    if (note->located && (note->new_id <= 0 || !note->book_legacy ||
+        !lm_hm_get(&c->ledger.book_index, note->book_legacy, &owner) ||
+        !c->ledger.books[owner].touched || c->ledger.books[owner].kind != note->kind ||
+        (note->kind != K_AUDIO && c->ledger.books[owner].book_id <= 0))) {
+      fail(c, O_FAILED, "verify-failed", "located annotation lacks a valid mapped owner or stored identity"); return 0;
+    }
+  }
   if (exr_library_books(lib, "", &books, &count, &c->err) != EXR_OK) { sdk_fail(c, "listing library"); return 0; }
   for (i = 0; i < count; i++) {
     char *k = lm_xalloc(24);
@@ -1293,7 +1315,8 @@ static int publish(ctx *c) {
   if (cancel_cb(c)) { fail(c, O_CANCELLED, "cancelled", "cancelled before publication"); return 0; }
   if (!(c->target_existed ? lm_replace(c->stage, c->target) : lm_publish_new(c->stage, c->target))) { fail(c, O_FAILED, "publish-failed", "cannot publish the target library; the original is unchanged"); return 0; }
   c->stage_state = "published";
-  if (injected(c, "sidecar-fail", 0) || injected(c, "rollback-fail", 0) || !lm_replace(c->sidecar_tmp, c->sidecar)) {
+  if (injected(c, "sidecar-fail", 0) || injected(c, "rollback-fail", 0) ||
+      !(c->sidecar_existed ? lm_replace(c->sidecar_tmp, c->sidecar) : lm_publish_new(c->sidecar_tmp, c->sidecar))) {
     int restored = 0;
     if (!injected(c, "rollback-fail", 0)) restored = c->target_existed ? lm_replace(c->pre, c->target) : lm_remove(c->target);
     if (restored) { c->rolled_back = 1; fail(c, O_FAILED, "ledger-publish-failed", "the ledger could not be published; the library was rolled back to its previous state"); }

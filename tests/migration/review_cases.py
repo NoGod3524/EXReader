@@ -27,7 +27,7 @@ def main():
         checks.append({'name': name, 'passed': bool(condition)})
         assert condition, name
 
-    def seeded(name, fixed=False):
+    def seeded(name, fixed=False, unlocated=False):
         context = Ctx(args.tool, str(args.output), name)
         book = L.entry(L.book_record('book', 'book.pdf' if fixed else 'book.txt'), L.pdf() if fixed else L.TXT)
         if fixed:
@@ -35,7 +35,7 @@ def main():
             note = next(n.copy() for n in notes if n['bookId'] == 'b-pdf' and n.get('note') == 'second page')
             note.update(id='note', bookId='book')
         else:
-            note = L.note_record('note', 'book', 'lantern keeper', 'original comment')
+            note = L.note_record('note', 'book', 'not present xyz' if unlocated else 'lantern keeper', 'original comment')
         pack = context.pack([book], [note])
         target = context.path('library.sqlite')
         assert context.migrate(pack, target).code == 0
@@ -46,6 +46,24 @@ def main():
     changed_pack = c.pack([book], [changed], name='changed.exrpack')
     result = c.tool_run('verify', '--pack', changed_pack, '--target', target)
     check('verify rejects same note identity with changed pack content', result.code == 3 and bool(result.entries('verify-note-content')))
+
+    for mutation in ('retained-unlocated', 'stored-identity', 'owner', 'kind'):
+        c, _, _, pack, target = seeded('ledger-' + mutation, unlocated=mutation == 'retained-unlocated')
+        ledger = Path(target + '.legacy-map.json')
+        data = json.loads(ledger.read_text(encoding='utf-8'))
+        record = data['notes'][0]
+        if mutation == 'retained-unlocated':
+            assert record['located'] is False
+            record['retained']['note'] = 'changed retained comment'
+        elif mutation == 'stored-identity':
+            record['new_id'] = 0
+        elif mutation == 'owner':
+            record['book_legacy_id'] = 'not-registered'
+        else:
+            record['kind'] = 'fixed'
+        ledger.write_text(json.dumps(data), encoding='utf-8')
+        result = c.tool_run('verify', '--pack', pack, '--target', target)
+        check('damaged ledger refused: ' + mutation, result.code == 3 and result.codename == 'verify-failed')
 
     for mode in ('reflow-text', 'fixed-text', 'fixed-range'):
         c, _, _, pack, target = seeded(mode, mode.startswith('fixed'))
