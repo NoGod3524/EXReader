@@ -11,6 +11,7 @@ static void execute(linux_reader *reader,reader_command *command,reader_result *
   reader_result_free(result);linux_reader_execute(reader,command,result);
   CHECK(result->status==EXR_OK);
   if(result->has_frame) {
+    command->part=result->part;
     reader_command accepted={0};reader_result saved={0};
     accepted.action=READER_COMMIT;accepted.book=result->book;accepted.part=result->part;accepted.start=result->start;
     linux_reader_execute(reader,&accepted,&saved);CHECK(saved.status==EXR_OK);reader_result_free(&saved);

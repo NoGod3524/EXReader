@@ -336,7 +336,7 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
     if(status!=EXR_OK) goto done;
     owned_session=1;memset(&next,0,sizeof(next));
     status=open_book(reader,id,command->font,&next,result,&error);
-  } else if(!next.pager || next.id!=command->book) status=EXR_ARGUMENT;
+  } else if(!next.pager || next.id!=command->book || (next.bounded && next.part!=command->part)) status=EXR_ARGUMENT;
   else if(command->action==READER_NOTE_ADD) {
     exr_epub_note note={0};exr_note old={0};int64_t saved=0;
     if(command->start<next.start || command->end>next.end || command->start>=command->end) status=EXR_ARGUMENT;

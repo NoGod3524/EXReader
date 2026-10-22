@@ -138,7 +138,7 @@ static void submit(reader_action action,int64_t id,const char *path,int size) {
   if(save_failed) { status(EXR_DATABASE,"Position was not saved; F12 retries before leaving");return; }
   if(busy) { status(EXR_OK,"Reading operation in progress; current page retained");return; }
   host_job *job=g_new0(host_job,1);job->generation=g_atomic_int_add(&generation,1)+1;
-  job->command.action=action;job->command.book=id;job->command.font=size;
+  job->command.action=action;job->command.book=id;job->command.part=part;job->command.font=size;
   if(path) { job->path=g_strdup(path);job->command.path=job->path; }
   if(action==READER_NOTE_ADD) {
     GtkTextIter a,b;GtkTextBuffer *buffer=gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
