@@ -7,7 +7,9 @@ existing top-level example inventory until integration.
 
 ## Product scope
 
-Run `exreader-linux FONT STATE_DIRECTORY` to open a persistent bookshelf. The
+Run the packaged `bin/exreader-linux` to open a persistent bookshelf, using its
+bundled font and the XDG user data directory's `exreader` folder. Optional
+`exreader-linux FONT STATE_DIRECTORY` arguments choose an explicit profile. The
 directory holds `library.sqlite` and `reader.ini`; originals, progress anchors
 and notes are stored through the public SQLite library API. Settings retain the
 last book and font size. Closing or losing focus saves the current page's text
