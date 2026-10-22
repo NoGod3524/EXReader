@@ -23,7 +23,7 @@
 
 ## 功能闭环
 
-1. **导入、书架、重复书**：`exr_library_import_file_unique()` 按格式与原字节精确去重；原书字节写入 SQLite 的 `books.source`，宿主不保留外部文件路径，重启后仍从书库打开。
+1. **导入、书架、重复书**：`exr_library_import_unique()` 按格式与原字节精确去重；原书字节写入 SQLite 的 `books.source`，宿主不保留外部文件路径，重启后仍从书库打开。
 2. **阅读与排版**：EPUB/TXT 等重排文档经 `exr_library_document()` 打开，PDF/CBZ 经 `exr_library_fixed()`；页宽/页高跟随窗口与旋转，字号 18–48pt 触发重新分页，位置用锚点保持。
 3. **真实选择与标注**：本页文字来自 SDK 文本快照，选择范围由原生文本视图产生；重排书用 `exr_library_note()` 由书库从存储源捕获 TextQuoteSelector（exact/prefix/suffix/chapter），固定版式用 `exr_library_fixed_note()` 捕获 page_id + 引文。列表显示锚点解析状态（精确/歧义/旧式/未找到）。
 4. **持久化**：每次翻页写入点锚点（`exr_library_progress()`）与数值位置；固定版式写页位置。后台、视图重建、进程重启均从书库恢复。`Documents/host-state.json` 与 `library.sqlite` 快照作为 artifacts。
@@ -33,7 +33,7 @@
 ## 持久化与权限
 
 - 书库：`Application Support/EXReader/library.sqlite`（iOS 位于 app 容器 `Library/Application Support`）。原始 EPUB/PDF 字节在 SQLite 中，无外部 sidecar。
-- 状态快照：`Documents/host-state.json`（iOS 通过 `UIFileSharingEnabled` 暴露 Documents）。
+- 状态快照：iOS 写 `Documents/host-state.json`（通过 `UIFileSharingEnabled` 暴露），macOS 写 `Application Support/EXReader/host-state.json`。
 - 系统文件选择器使用 security-scoped URL，读完即释放；文件内容随后进入书库，不再依赖原路径。
 - 单文件上限 32 MiB；超限或格式不支持在导入/打开时给出可恢复错误。
 
@@ -42,25 +42,69 @@
 - 进度：页起点作为空引文点锚点，附带最多 32 个 Unicode 标量的前后文；解析失败时使用书库保存的数值位置，并在 UI 中保留真实页码/百分比。
 - 标注：书库从存储源重新捕获选择器；列表解析返回 `FOUND/AMBIGUOUS/LEGACY/MISSING`。只有 `FOUND` 才允许“定位”，歧义或未找到会显示状态并拒绝跳转，不按页码猜测。
 - 固定版式：`page_id + 引文 + 前后文`；解析复用页面文本快照，同样拒绝猜测。
-- 重新分页/旋转/字号变化：旧页起点锚点在新分页器中解析，再定位到包含该偏移的页。
+- 重新分页/旋转/字号变化：使用当前阅读位置的精确 UTF-8 字节偏移重建分页，再定位到包含该偏移的页；后台或视图重建不会退回页码猜测。
 
 ## 云端验收
 
 工作流 `.github/workflows/wp13-apple.yml` 在 `macos-15` 上：
 
 - `sdk`：构建并安装 macOS、iphonesimulator、iphoneos 三套 SDK。
-- `uitest`（matrix: macos / iphone / ipad）：生成只用于验收的 Xcode 工程，运行 XCUITest。每个平台至少 20 条具名步骤，覆盖导入、去重、书架、翻页、字号、旋转/窗口、选文、复制、标注增改删与导航、后台/前台、进程重开、取消与错误恢复。UI 测试使用真实点击/触摸、硬件键盘选择与复制，并断言持久化后的 UI 状态。
+- `uitest`（matrix: macos / iphone / ipad）：生成只用于验收的 Xcode 工程，运行 XCUITest。每个平台至少 20 条具名步骤，覆盖导入、去重、书架、翻页、字号、旋转/窗口、选文、复制、标注增改删与导航、后台/前台、进程重开、取消与错误恢复。UI 测试使用真实点击、双击选词、窗口拖拽、模拟器旋转与键盘输入，并断言持久化后的 UI 状态。
 - `package`：用 `tools/build_apple_host.py` 消费安装后的 SDK，独立打包 macOS、模拟器与未签名设备包，并运行原有 21 项自检（macOS/iPhone/iPad 各 21 项）。
 
 产物：xcresult、逐 case 与步骤 JSON、元素树、截图、xcodebuild 原始日志、SQLite 快照与 SHA-256、字体/SDK/Xcode/模拟器身份。设备包保留但不声明真机通过：`physical_device_execution=false`。
 
 ## 结果
 
-| 平台 | 用例 | 步骤 | 21 项自检 | 结论 |
-| --- | --- | --- | --- | --- |
-| macOS | 待云端 | 待云端 | 21/21 | 待云端 |
-| iPhone 模拟器 | 待云端 | 待云端 | 21/21 | 待云端 |
-| iPad 模拟器 | 待云端 | 待云端 | 21/21 | 待云端 |
+实现提交 `960b6653e231cc5095deb6e71932061e8a32a8fb`，云端运行
+[39717882847](https://github.com/NoGod3524/EXReader/actions/runs/39717882847) 全绿：
+
+| 平台 | UI 用例 | 具名步骤 | 原 21 项自检 | 结论 | Job |
+| --- | --- | --- | --- | --- | --- |
+| macOS | 7/7 | 46 | 21/21 | 通过 | [119624365379](https://github.com/NoGod3524/EXReader/actions/runs/39717882847/job/119624365379) |
+| iPhone 模拟器（iPhone SE 3rd, iOS 26.2） | 7/7 | 46 | 21/21 | 通过 | [119624365384](https://github.com/NoGod3524/EXReader/actions/runs/39717882847/job/119624365384) |
+| iPad 模拟器（iPad mini A17 Pro, iOS 26.2） | 7/7 | 46 | 21/21 | 通过 | [119624365386](https://github.com/NoGod3524/EXReader/actions/runs/39717882847/job/119624365386) |
+
+独立打包 job [119624365444](https://github.com/NoGod3524/EXReader/actions/runs/39717882847/job/119624365444)
+用安装后的 SDK 重新构建 macOS、模拟器和未签名设备包，三份 `report.json` 均为 21 项通过。
+
+### 逐 case
+
+| Case | macOS | iPhone | iPad |
+| --- | --- | --- | --- |
+| test01 导入/去重/损坏恢复 | 通过 | 通过 | 通过 |
+| test02 翻页/字号/旋转或窗口 | 通过 | 通过 | 通过 |
+| test03 选文/复制/标注增改删/导航 | 通过 | 通过 | 通过 |
+| test04 后台/前台/进程重开/视图重建 | 通过 | 通过 | 通过 |
+| test05 取消与恢复 | 通过 | 通过 | 通过 |
+| test06 PDF 固定版式与锚点 | 通过 | 通过 | 通过 |
+| test07 可访问性与动态字号 | 通过 | 通过 | 通过 |
+
+每次运行保留 `xcresult`、xcodebuild 原始日志、34 个命名附件（23 张截图、4 份元素树、7 份步骤 JSON）、
+`host-log.txt`、`host-state.json` 和 `library.sqlite` 快照及 SHA-256。三平台数据库散列分别为
+`60739bf6…`（macOS）、`bf0a89c5…`（iPhone）、`3351d9d6…`（iPad），均含 2 本书、1 条进度、
+1 条重排标注与 1 条固定页标注。SDK 3.40.0 / ABI 1，Xcode 16.4 (16F6)，字体 SHA-256
+`2c76254f…`。逐平台明细见 `docs/validation/wp13-apple-{macos,iphone,ipad}.json`，汇总见
+`docs/validation/wp13-apple-summary.json`。
+
+### 锚点实测
+
+- 进度以页起点空引文点锚点写入 `book_progress`，同时保存数值偏移；后台、重启和重新分页都按
+  保存的**精确偏移**恢复，不按页码猜测。
+- 标注由书库从存储源捕获 TextQuoteSelector。样例中单词级选择可能出现重复引文，UI 明确显示
+  “歧义”，此时“定位”被拒绝（记录中 `state=歧义`、`start=SIZE_MAX`），不会伪造精确位置。
+- 固定版式标注保存 `page_id + 引文 + 前后文`，解析状态同样进入列表。
+
+
+## 云端证据入口
+
+- 三平台 UI：`wp13-apple-{macos,iphone,ipad}` artifacts（`build/results/*.xcresult`、
+  `build/evidence/<platform>/evidence.json`、attachments、`library.sqlite`、`host-state.json`、
+  `host-log.txt`）。
+- SDK：`wp13-apple-sdk-{macos,iphonesimulator,iphoneos}`。
+- 独立打包：`wp13-apple-package`（`EXReader-macOS`/`EXReader-simulator` app、`build.json`、
+  `EXReader-iOS-unsigned.ipa`、三份 21 项 `report.json`、截图）。
+- 运行页：https://github.com/NoGod3524/EXReader/actions/runs/39717882847
 
 ## 未满足项与边界
 
