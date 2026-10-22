@@ -32,6 +32,7 @@ def main():
     ap.add_argument("--export-dir", required=True)
     ap.add_argument("--work", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--spec", required=True)
     a = ap.parse_args()
     os.makedirs(a.work, exist_ok=True)
     pack = os.path.join(a.export_dir, "legacy.exrpack")
@@ -56,7 +57,7 @@ def main():
     code, first = run(a.tool, "migrate", "--pack", pack, "--target", T, "--allow-partial")
     check(code == 0 and first["result"] == "success", "migration with --allow-partial succeeds: %s" % (first or {}).get("message"))
     code, d1 = run(a.tool, "dump", "--target", T)
-    want_shas = {L.sha256(L.TXT), L.sha256(L.epub()), L.sha256(L.pdf()), L.sha256(L.cbz())}
+    want_shas = {b["sha256"] for b in json.load(open(a.spec, encoding="utf-8"))["books"] if not b["record"].get("audio")}
     check(code == 0 and {b["source_sha256"] for b in d1["books"]} == want_shas, "reopened library holds byte-identical originals")
     titles = {b["title"]: b for b in d1["books"]}
     check(set(titles) == {"The Tale", "Lighthouse Chronicle", "Scan", "Comic"}, "titles survive: %s" % sorted(titles))

@@ -1245,7 +1245,7 @@ static int publish(ctx *c) {
   }
   if (!lm_replace(c->stage, c->target)) { fail(c, O_FAILED, "publish-failed", "cannot replace the target library (is it open elsewhere?); the original is unchanged"); return 0; }
   c->stage_state = "published";
-  if (injected(c, "sidecar-fail", 0) || !lm_replace(c->sidecar_tmp, c->sidecar)) {
+  if (injected(c, "sidecar-fail", 0) || injected(c, "rollback-fail", 0) || !lm_replace(c->sidecar_tmp, c->sidecar)) {
     int restored = 0;
     if (!injected(c, "rollback-fail", 0)) restored = c->target_existed ? lm_replace(c->pre, c->target) : lm_remove(c->target);
     if (restored) { c->rolled_back = 1; fail(c, O_FAILED, "ledger-publish-failed", "the ledger could not be published; the library was rolled back to its previous state"); }

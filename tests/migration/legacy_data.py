@@ -51,9 +51,9 @@ def epub(variant=""):
     }
     out = BytesIO()
     with zipfile.ZipFile(out, "w") as z:
-        z.writestr(zipfile.ZipInfo("mimetype"), "application/epub+zip", compress_type=zipfile.ZIP_STORED)
+        z.writestr(zipfile.ZipInfo("mimetype", (2020, 1, 1, 0, 0, 0)), "application/epub+zip", compress_type=zipfile.ZIP_STORED)
         for name, data in files.items():
-            z.writestr(name, data, compress_type=zipfile.ZIP_DEFLATED)
+            z.writestr(zipfile.ZipInfo(name, (2020, 1, 1, 0, 0, 0)), data, compress_type=zipfile.ZIP_DEFLATED)
     return out.getvalue()
 
 
@@ -82,7 +82,7 @@ def cbz(pages=3):
     out = BytesIO()
     with zipfile.ZipFile(out, "w") as z:
         for i in range(pages):
-            z.writestr("page%02d.png" % (i + 1), png(shade=i * 40), compress_type=zipfile.ZIP_STORED)
+            z.writestr(zipfile.ZipInfo("page%02d.png" % (i + 1), (2020, 1, 1, 0, 0, 0)), png(shade=i * 40), compress_type=zipfile.ZIP_STORED)
     return out.getvalue()
 
 
