@@ -13,7 +13,7 @@ import sys
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[3]
-SDK_CANDIDATE = '6f0d7592ea431394d175d221b04b054facf4a26c'
+SDK_CANDIDATE = 'ce5d664c9f76d0613df6d79b27568a7039c4a81e'
 sys.path.insert(0, str(ROOT / 'tools'))
 import check_windows_host as base
 
