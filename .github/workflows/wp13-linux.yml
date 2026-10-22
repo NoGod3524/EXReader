@@ -1,11 +1,12 @@
 name: WP13 Linux native host
 on:
   push:
-    branches: [codex/wp13-linux-host]
+    branches: [codex/wp13-linux-host, codex/wp13-linux-review]
     paths:
       - 'examples/linux/**'
       - 'tools/build_linux_host.py'
       - 'tools/check_linux_host.py'
+      - 'tools/check_linux_host_regressions.py'
       - 'tests/linux_host/**'
       - '.github/workflows/wp13-linux.yml'
   workflow_dispatch:
@@ -28,6 +29,10 @@ jobs:
           cmake --install build/linux-sdk --prefix "$PWD/build/linux-stage"
       - name: Compile and package installed SDK consumer
         run: python3 tools/build_linux_host.py --sdk build/linux-stage --output build/linux-host
+      - name: Compile noninstalled fault regression consumers
+        run: |
+          cmake -S examples/linux -B build/linux-review-consumers -DEXR_SDK="$PWD/build/linux-stage" -DEXR_LINUX_REVIEW_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/linux-review-consumers --parallel 4
       - name: Twenty real desktop operations and lifecycle checks
         run: |
           xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
@@ -35,6 +40,7 @@ jobs:
             wm=$!
             trap "kill $wm || true" EXIT
             python3 tools/check_linux_host.py --payload build/linux-host/EXReader-Linux --output build/linux-host-evidence
+            python3 tools/check_linux_host_regressions.py --payload build/linux-host/EXReader-Linux --consumer build/linux-review-consumers --output build/linux-review-evidence
           '
       - name: Preserve application, screenshot and per-operation evidence
         if: always()
@@ -45,5 +51,6 @@ jobs:
             build/linux-host/build.json
             build/linux-host/EXReader-Linux.tar.gz
             build/linux-host-evidence/
+            build/linux-review-evidence/
             build/openbox.log
           if-no-files-found: error

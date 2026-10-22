@@ -69,12 +69,11 @@ static void refresh_shelf(void) {
   }
   gtk_widget_show_all(shelf);
 }
-static void refresh_notes(void) {
-  exr_note *entries=NULL;size_t count=0;exr_error error={0};rows_clear(notes);note_count=0;
-  if(!book_id) return;
-  exr_status s=exr_library_notes(library,book_id,&entries,&count,&error);
-  if(s!=EXR_OK) { status(s,"Could not read notes");return; }
-  note_count=count;
+static gboolean refresh_notes(int64_t id) {
+  exr_note *entries=NULL;size_t count=0;exr_error error={0};
+  exr_status s=id?exr_library_notes(library,id,&entries,&count,&error):EXR_OK;
+  if(s!=EXR_OK) { status(s,"Could not read notes");return FALSE; }
+  rows_clear(notes);note_count=count;
   for(size_t i=0;i<count;i++) {
     GtkWidget *row=gtk_list_box_row_new(),*title=gtk_label_new(entries[i].text);
     exr_note *copy=g_new0(exr_note,1);copy->id=entries[i].id;copy->start=entries[i].start;copy->end=entries[i].end;
@@ -82,7 +81,7 @@ static void refresh_notes(void) {
     gtk_label_set_ellipsize(GTK_LABEL(title),PANGO_ELLIPSIZE_END);
     gtk_container_add(GTK_CONTAINER(row),title);gtk_container_add(GTK_CONTAINER(notes),row);
   }
-  exr_notes_free(entries,count);gtk_widget_show_all(notes);
+  exr_notes_free(entries,count);gtk_widget_show_all(notes);return TRUE;
 }
 static exr_status frame(exr_pager *p,exr_document *doc,size_t index,gboolean seek,size_t position,
                         GdkPixbuf **pixels,const exr_page **out,size_t *found) {
@@ -133,8 +132,9 @@ static void open_id(int64_t id) {
   if(s==EXR_OK) s=frame(p,doc,0,TRUE,point.start,&pixels,&pg,&found);
   exr_anchor_free(&point);
   if(s!=EXR_OK) { exr_pager_free(p);exr_document_free(doc);status(s,"Could not open book");return; }
+  if(!refresh_notes(id)) { g_object_unref(pixels);exr_pager_free(p);exr_document_free(doc);return; }
   exr_pager_free(pager);exr_document_free(document);pager=p;document=doc;book_id=id;
-  refresh_notes();present(pixels,pg,found);
+  present(pixels,pg,found);
 }
 static exr_format format_for(const char *path) {
   const char *ext=strrchr(path,'.');if(!ext) return EXR_CUSTOM;
@@ -194,14 +194,15 @@ static void add_note(void) {
   note.text=(char *)gtk_entry_get_text(GTK_ENTRY(comment));
   exr_status s=exr_library_note(library,&note,&id,&error);
   if(s!=EXR_OK) { status(s,"Could not save note");return; }
-  selection_start=note.start;selection_end=note.end;refresh_notes();status(EXR_OK,"Note saved");
+  selection_start=note.start;selection_end=note.end;
+  if(refresh_notes(book_id)) status(EXR_OK,"Note saved");
 }
 static void delete_note(void) {
   GtkListBoxRow *row=gtk_list_box_get_selected_row(GTK_LIST_BOX(notes));
   if(!row) { status(EXR_ARGUMENT,"Select a note first");return; }
   exr_note *note=g_object_get_data(G_OBJECT(row),"note");exr_error error={0};
   exr_status s=exr_library_remove_note(library,note->id,&error);
-  if(s==EXR_OK) { refresh_notes();status(EXR_OK,"Note deleted"); }
+  if(s==EXR_OK) { if(refresh_notes(book_id)) status(EXR_OK,"Note deleted"); }
   else status(s,"Could not delete note");
 }
 static void shelf_activated(GtkListBox *box,GtkListBoxRow *row,gpointer unused) {
