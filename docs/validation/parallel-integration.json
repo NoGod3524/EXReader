@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "branch": "codex/parallel-integration",
+  "base_commit": "feda26381a7b05c6a1ce3db91a440ca0094e06c5",
+  "status": "integration_pending_audit_fixes_and_cloud_acceptance",
+  "accepted": false,
+  "packages": {
+    "ocr_adapter": "bbe7139862e1705e7e8954b97c0b9dfbb639287e",
+    "corpus_protocol": "c8292c885d6b3ac1c27eec646eba3bd3d14ef712",
+    "windows_host_original": "2d99fcd3a912eb05ad6df8257a13a6c929c860a8",
+    "linux_host_original": "8ae82da506f4c7a1616f25a4544fe3ba77e90f08"
+  },
+  "corpus_original_registration": "00a8838cf6089e67a730ca6fd4956cb45d09c27d",
+  "cloud_runs": [],
+  "local_tests_executed": false,
+  "reliability_source": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+  "reliability_run": 39666440519,
+  "wp16_accepted": false,
+  "wp16_transferred_cpu_seconds": 0,
+  "pending": [
+    "Windows serial-worker and state-publication fixes",
+    "Windows strict evidence checker and negative regressions",
+    "Linux error propagation, exit-status and persistence regressions",
+    "Cloud acceptance at one integrated source commit"
+  ]
+}
