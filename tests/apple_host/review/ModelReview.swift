@@ -59,7 +59,16 @@ struct ModelReview {
         let font = try HostFont(data: Data(contentsOf: resources.appendingPathComponent("Reader.otf")))
         let session = HostSession(library: library, font: font, slowDelay: 0,
                                   viewport: CGSize(width: 480, height: 640), fontSize: 28)
-        let (id, _) = try library.importUnique(file: resources.appendingPathComponent("Sample.epub"), title: "Model review")
+        // Preserve the original snapshot/global-coordinate regression contract.
+        // Bounded sessions have a separate suite; these numeric rollback tests
+        // must continue asserting real book_progress writes, not zero placeholders.
+        let legacy = try Data(contentsOf: resources.appendingPathComponent("Sample.epub"))
+        var id: Int64 = 0, error = exr_error()
+        try legacy.withUnsafeBytes { bytes in
+            try "Model review".withCString { title in
+                try hostCheck(exr_library_import(library.handle, EXR_EPUB, bytes.baseAddress, bytes.count, title, &id, &error), error)
+            }
+        }
         var checks: [[String: Any]] = []
         var observations: [String: Any] = [:]
         func check(_ name: String, _ operation: () throws -> Bool) {

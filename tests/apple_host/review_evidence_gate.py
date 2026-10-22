@@ -37,6 +37,14 @@ def edit(path, change):
     replace(path, (json.dumps(data, sort_keys=True) + '\n').encode())
 
 
+def alter_database(root, sql):
+    # Copies use hardlinks; detach before SQLite writes to preserve originals.
+    path = root/'wp13-apple-macos/evidence/macos/library.sqlite'
+    replace(path, path.read_bytes())
+    with sqlite3.connect(path) as connection:
+        connection.execute(sql)
+
+
 def attachment(root, kind):
     directory = root/'wp13-apple-macos/evidence/macos'
     records = json.loads((directory/'evidence.json').read_text())['attachments']['records']
@@ -94,7 +102,8 @@ def affected_accepted(args, name):
                          args.source_sha, args.run_id, args.attempt, target)
         elif name in ('missing model review', 'failed model review', 'incomplete model review checks',
                       'changed model executable', 'missing SDK review', 'failed SDK review',
-                      'incomplete SDK review checks', 'changed SDK review executable'):
+                      'incomplete SDK review checks', 'changed SDK review executable',
+                      'missing bounded suite', 'missing bounded check'):
             fixtures = load(root/'wp13-apple-macos/apple-resources/manifest.json')
             validate_review_reports(root/'wp13-apple-package', args.source_sha, args.run_id,
                                     args.attempt, sdks['macos'], fixtures)
@@ -187,6 +196,15 @@ def mutations():
         ('failed SDK review', lambda r: edit(r/'wp13-apple-package/sdk-review/sdk-review-identity.json', lambda d: d.update(passed=False))),
         ('incomplete SDK review checks', lambda r: edit(r/'wp13-apple-package/sdk-review/consumer/sdk-review.json', lambda d: d['cases'].pop())),
         ('changed SDK review executable', lambda r: replace(r/'wp13-apple-package/sdk-review/sdk-review', b'changed program')),
+        ('missing bounded suite', lambda r: (r/'wp13-apple-package/bounded-review/bounded-review.json').unlink()),
+        ('missing bounded check', lambda r: edit(r/'wp13-apple-package/bounded-review/bounded-review.json', lambda d: d['checks'].pop())),
+        ('missing bounded marker', lambda r: alter_database(r, 'DELETE FROM epub_bounded_books')),
+        ('missing chapter progress', lambda r: alter_database(r, 'DELETE FROM epub_progress')),
+        ('wrong chapter route', lambda r: alter_database(r, "UPDATE epub_progress SET path='OPS/wrong.xhtml'")),
+        ('global coordinates impersonate chapter progress', lambda r: alter_database(r, 'UPDATE books SET text_size=123,position=123 WHERE id IN (SELECT book_id FROM epub_bounded_books)')),
+        ('missing chapter note', lambda r: alter_database(r, 'DELETE FROM epub_notes')),
+        ('chapter note wrong owner', lambda r: alter_database(r, 'UPDATE epub_notes SET book_id=(SELECT id FROM books WHERE format=8 LIMIT 1)')),
+        ('wrong host note namespace', lambda r: edit(r/ui/'host-state.json', lambda d: [n.update(storage='global') for b in d['books'] for n in b.get('notes', [])])),
     ]
     return changes
 

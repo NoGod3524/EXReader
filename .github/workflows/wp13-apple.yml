@@ -1,7 +1,7 @@
 name: WP13 Apple host
 on:
   push:
-    branches: ['codex/wp13-apple', 'codex/wp13-apple-review']
+    branches: ['codex/wp13-apple', 'codex/wp13-apple-review', 'codex/r5-apple-bounded']
   workflow_dispatch:
 permissions:
   contents: read
@@ -217,6 +217,10 @@ jobs:
         run: |
           python3 tools/check_apple_model_review.py --sdk stage/macos \
             --resources build/apple-resources --output build/package/model-review
+      - name: Run bounded EPUB storage, chapter, notes and long source review
+        run: |
+          python3 tests/apple_host/run_bounded_review.py --sdk stage/macos \
+            --resources build/apple-resources --output build/package/bounded-review
       - name: Build and self-check the macOS reference host
         run: |
           set -euo pipefail
