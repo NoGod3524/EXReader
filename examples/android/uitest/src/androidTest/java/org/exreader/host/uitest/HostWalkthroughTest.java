@@ -437,11 +437,16 @@ public final class HostWalkthroughTest {
         });
 
         step("cancel_large_import", "Cancel an in-flight import", () -> {
+            // Package-only import may finish before a UI polling interval. Hold
+            // the existing debug boundary after the real copy, before SDK insert.
+            device.executeShellCommand("am start --activity-single-top -n " + APP + "/.MainActivity --ez exr_review true --es review_pause import-copied");
             pickFile("Large.epub");
+            assertTrue("real import-copy gate missing", waitTextContains("Review import-copied",30000));
             assertNotNull("cancel control missing", waitId("cancel_button", 8000));
             click("cancel_button");
             assertTrue("cancel status missing", waitTextContains("Import canceled", 30000));
             assertFalse("canceled book entered the shelf", bookExists("Large.epub"));
+            device.executeShellCommand("am start --activity-single-top -n " + APP + "/.MainActivity --ez exr_review true");
         });
 
         step("book_switch", "Switch between two books without stale pages", () -> {
