@@ -37,8 +37,9 @@ IDS = {'path': 101, 'import': 102, 'open': 103, 'delete': 104, 'previous': 105,
 
 def send(window, message, wparam=0, lparam=0, timeout=2000):
     result = C.c_size_t()
+    C.set_last_error(0)
     if not U.SendMessageTimeoutW(window, message, wparam, lparam, 2, timeout, C.byref(result)):
-        raise TimeoutError('Window did not service a bounded UI message')
+        raise TimeoutError('UI message not serviced: message=%d wparam=%d winerror=%d' % (message, wparam, C.get_last_error()))
     return result.value
 
 
@@ -63,8 +64,12 @@ class App:
                 return True
             U.EnumWindows(visit, 0)
             return self.window
-        self.wait(found)
-        self.wait_idle()
+        try:
+            self.wait(found)
+            self.wait_idle()
+        except Exception:
+            self.process.kill(); self.process.wait(); self.log.close()
+            raise
 
     def wait(self, check, timeout=30):
         end = time.monotonic()+timeout
