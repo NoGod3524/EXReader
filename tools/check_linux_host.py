@@ -33,7 +33,23 @@ class Session:
         self.process = subprocess.Popen([str(self.binary), str(self.font), str(self.folder/'profile'),
                                          str(self.observe)], stdout=self.log, stderr=subprocess.STDOUT)
         self.wait(lambda s: s['visible'] == 1)
-        self.window = command('xdotool', 'search', '--sync', '--onlyvisible', '--name', '^EXReader Linux$').splitlines()[-1]
+        end = time.monotonic()+30
+        self.window = None
+        while time.monotonic() < end:
+            if self.process.poll() is not None:
+                raise RuntimeError('Host exited before mapping its window; see application.log')
+            result = subprocess.run(['xdotool', 'search', '--onlyvisible', '--pid', str(self.process.pid)],
+                                    text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=5)
+            if result.returncode == 0:
+                for candidate in result.stdout.splitlines():
+                    if command('xdotool', 'getwindowname', candidate) == 'EXReader Linux':
+                        self.window = candidate
+                        break
+            if self.window:
+                break
+            time.sleep(.1)
+        if not self.window:
+            raise TimeoutError('Host window was not mapped; see window-tree.txt and application.log')
         command('xdotool', 'windowactivate', '--sync', self.window)
 
     def read(self):
@@ -187,9 +203,16 @@ def main():
         checked('16 exact duplicate import retains row notes progress', state['books'] == 1 and state['notes'] == 1 and state['page'] == 2)
         host.dialog(other)
         second = host.wait(lambda s: s['books'] == 2 and s['book'] != first)['book']
+        host.key('F11')
+        host.paste('Unicode byte range')
+        host.key('F7', 'ctrl+Home', 'shift+Right', 'shift+Right', 'shift+Right', 'F8')
+        unicode_state = host.wait(lambda s: s['notes'] == 1 and s['selection_end'] > 0)
+        with sqlite3.connect(output/'profile/library.sqlite') as db:
+            unicode_note = db.execute('SELECT start,end,anchor_exact FROM notes WHERE book_id=?', (second,)).fetchone()
+        unicode_range = unicode_state['selection_start'] == 0 and unicode_state['selection_end'] == 9 and unicode_note == (0, 9, '中文、')
         host.key('F2', 'Home', 'Down', 'Return')
-        checked('17 native shelf switches back to persisted book',
-                second != first and host.wait(lambda s: s['book'] == first)['page'] == 2)
+        checked('17 Unicode byte-range selection and native shelf switching',
+                unicode_range and second != first and host.wait(lambda s: s['book'] == first)['page'] == 2)
         prior = host.read()
         host.dialog(oversized)
         state = host.wait(lambda s: s['error'] == 6)
@@ -208,6 +231,10 @@ def main():
         host.close()
         report['passed'] = len(checks) == 20
     finally:
+        (output/'window-tree.txt').write_text(command('xwininfo', '-root', '-tree'))
+        if len(checks) != 20:
+            print('Window inventory: '+(output/'window-tree.txt').read_text(), flush=True)
+            print('Host diagnostics: '+(output/'application.log').read_text(errors='replace'), flush=True)
         if host.process and host.process.poll() is None:
             host.process.send_signal(signal.SIGTERM)
             host.process.wait(timeout=10)
