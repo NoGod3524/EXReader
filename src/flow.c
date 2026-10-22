@@ -13,6 +13,8 @@ exr_style exr_flow_style(const exr_style *style, exr_writing_mode mode) {
                      mode == EXR_WRITING_VERTICAL_RL ? 3u : 1u, 0u}, j;
     result.width = style->height; result.height = style->width;
     result.max_width = style->max_height; result.max_height = style->max_width;
+    result.border_spacing[0]=style->border_spacing[1];
+    result.border_spacing[1]=style->border_spacing[0];
     for (j = 0; j < 4; j++) {
       result.margin[j] = style->margin[map[j]];
       result.padding[j] = style->padding[map[j]];
