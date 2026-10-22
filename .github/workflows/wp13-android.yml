@@ -67,9 +67,16 @@ jobs:
       - name: Static source and ownership checks
         run: python3 tools/check_android_host.py --repo .
 
+      - name: Enable KVM for the emulator
+        run: |
+          ls -l /dev/kvm
+          sudo chmod 666 /dev/kvm
+          /usr/local/lib/android/sdk/emulator/emulator -accel-check || true
+
       - name: Boot emulator and run the instrumented walkthrough
         uses: reactivecircus/android-emulator-runner@v2
         with:
+          disable-linux-hw-accel: false
           api-level: 34
           target: default
           arch: x86_64
