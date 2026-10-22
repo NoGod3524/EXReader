@@ -327,5 +327,11 @@
       "summarize_job": "skipped by design"
     },
     "scope": "gate and baseline wiring only; no package or capability run was accepted here"
+  },
+  "current_branch_head": {
+    "head": "5c4af0067b8b5ee1b262451c34370f1b711fbbf5",
+    "relation_to_candidate": "tooling and documentation commits only after K",
+    "protected_trees_identical_to_candidate": true,
+    "verified_by": "git rev-parse K:<path> against HEAD:<path> for all eight protected paths"
   }
 }
