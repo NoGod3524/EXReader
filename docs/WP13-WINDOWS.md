@@ -12,8 +12,11 @@ acceptance and does not include migration, OPDS, TTS or other platform hosts.
 - SDK: 3.40.0 (core 3.39.0, ABI 1, library schema 7) consumed from an installed prefix.
 - H8 initial SDK candidate: `96c4f2c035a737ccf3f5be890d127d6efdd946f8`;
   final SDK candidate and host source must receive their own cloud results.
-- Current final SDK candidate: `ce5d664c9f76d0613df6d79b27568a7039c4a81e`
-  (merged without changing public APIs; overall SDK freeze is granted separately by the integrator).
+- Current frozen SDK: `9c69bc4c7efb0cff68ced27562709fe597189041`.
+  The `ce5d664` freeze was withdrawn after Apple exposed a same-unit window recursion;
+  the corrected SDK passed all six freeze groups. H8 revalidated the corrected implementation
+  on `8c51264b9017c255345b7ba2056c4f6bd1f1969a` in run `39871687848`;
+  the current-K ancestry guard and all four hosts still await their common-source run.
 - Source: `examples/reader.c` (Win32, one translation unit) with an independent
   consumer build in `examples/windows/`.
 

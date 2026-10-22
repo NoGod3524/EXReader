@@ -2,7 +2,16 @@
 
 2026-10-22。通过 GitHub 连接读取 run、每页 100 项的 jobs/artifacts、完成日志和固定源码；未下载工件或执行本地测试。
 
-## 共同阅读SDK源码复验：已通过
+## 当前共同阅读SDK源码复验：已通过
+
+固定源码`9c69bc4c7efb0cff68ced27562709fe597189041`，
+run[39871874132](https://github.com/NoGod3524/EXReader/actions/runs/39871874132)，四作业均attempt1整轮成功。
+Windows core/library job分别`120147987929`/`120147987648`，macOS分别`120147987939`/`120147987998`。
+各core消费者3/3、必需程序5/5、回归25/25；各library消费者5/5、程序8/8、回归30/30。
+各9格式smoke、`accepted=true`、`problems=[]`；四份同源工件非空、未过期、Actions digest合法。
+下文保留原`ce5d664`整合与H6独立迭代记录。
+
+## 原ce5共同源码复验（历史保留）
 
 固定源码`ce5d664c9f76d0613df6d79b27568a7039c4a81e`，
 run [39864534400](https://github.com/NoGod3524/EXReader/actions/runs/39864534400)，
