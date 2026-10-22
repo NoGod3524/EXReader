@@ -16,10 +16,25 @@ on:
       - tests/check_reading_licenses.py
       - .github/workflows/reading-licenses.yml
   workflow_dispatch:
+    inputs:
+      pin_materials_only:
+        description: Print proposed repository material hashes; not release acceptance
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
+  material-pins:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.pin_materials_only }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print proposed SQLite material hash in cloud
+        run: |
+          git rev-parse HEAD
+          sha256sum licenses/sqlite-public-domain.txt
   licenses:
+    if: ${{ !inputs.pin_materials_only }}
     name: licenses (${{ matrix.profile }})
     runs-on: ubuntu-22.04
     timeout-minutes: 30
@@ -48,7 +63,7 @@ jobs:
           cmake --build --preset "$PROFILE"
           cmake --install "build/$PROFILE"
       - name: Check installed license materials
-        run: python3 tools/check_reading_licenses.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/licenses.json"
+        run: python3 tools/check_reading_licenses.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/licenses.json" --require-release-ready
       - name: Reject invalid license materials
         if: success() || failure()
         run: python3 tests/check_reading_licenses.py

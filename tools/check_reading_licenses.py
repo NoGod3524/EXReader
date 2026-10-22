@@ -22,6 +22,12 @@ LICENSES = 'share/exreader/licenses/'
 NOTICE_NAME = re.compile(r'(LICEN[CS]E|COPYING|COPYRIGHT|NOTICE|PATENTS)([._-].*)?$', re.I)
 SCOPE = ('Materials check against the registered manifest: sources, pins, enable '
          'conditions, linked archives and installed license texts. Not a legal opinion.')
+SQLITE_DEDICATION = '''** The author disclaims copyright to this source code.  In place of
+** a legal notice, here is a blessing:
+**
+**    May you do good and not evil.
+**    May you find forgiveness for yourself and forgive others.
+**    May you share freely, never taking more than you give.'''
 
 
 def upstream(path, installed, sha256=None, when=None):
@@ -59,7 +65,9 @@ COMPONENTS = [
      'license': 'MIT', 'when': '', 'fetch': True, 'vendor_files': ['expat'],
      'notice_marker': 'Expat', 'linkage': 'private static archive', 'notice_dirs': ['.', 'expat'],
      'files': [upstream('expat/COPYING', LICENSES + 'expat/COPYING',
-                        '31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87')]},
+                        '31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87'),
+               upstream('COPYING', LICENSES + 'expat/upstream-root/COPYING',
+                        '73cc92f80889ab23c7287b1a11dd50fdec190c3f26ebe5938c579043817d651e')]},
     {'id': 'miniz', 'name': 'miniz', 'version': '3.1.2',
      'source': 'https://codeload.github.com/richgel999/miniz/tar.gz/refs/tags/3.1.2',
      'archive_sha256': '98468f8924934b723276680f85238b6c78bf1f8b49b4459cc9b7214a20e2e9fb',
@@ -83,15 +91,15 @@ COMPONENTS = [
      'vendor_files': ['webp', 'webpdemux', 'sharpyuv'], 'notice_marker': 'libwebp',
      'linkage': 'private static archives',
      'files': [upstream('COPYING', LICENSES + 'libwebp/COPYING',
-                        '5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf')]},
+                        '5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf'),
+               upstream('PATENTS', LICENSES + 'libwebp/PATENTS',
+                        'cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c')]},
     {'id': 'zlib', 'name': 'zlib', 'version': 'v1.3.1',
      'source': 'https://codeload.github.com/madler/zlib/tar.gz/refs/tags/v1.3.1',
      'archive_sha256': '17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c',
      'license': 'Zlib', 'when': 'EXR_ENABLE_IMAGE_TIFF', 'fetch': True,
      'vendor_files': ['zlibstatic'], 'notice_marker': 'zlib', 'linkage': 'private static archive',
      'files': [upstream('LICENSE', LICENSES + 'zlib/LICENSE',
-                        '845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243'),
-               upstream('LICENSE', LICENSES + 'libtiff/LICENSE',
                         '845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243')]},
     {'id': 'libtiff', 'name': 'libtiff', 'version': 'v4.7.0',
      'source': 'https://codeload.github.com/libsdl-org/libtiff/tar.gz/refs/tags/v4.7.0',
@@ -138,10 +146,10 @@ COMPONENTS = [
      'archive_sha256': '68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d',
      'license': 'Public domain', 'when': 'EXR_ENABLE_LIBRARY|EXR_BUILD_TEXT_INDEX', 'fetch': True,
      'vendor_files': ['exr_sqlite'], 'notice_marker': 'SQLite', 'linkage': 'private static archive',
-     'evidence': [['sqlite3.c', 'The author disclaims copyright to this source code']],
-     'pending': ['upstream ships no license file; the public-domain dedication is only in the '
-                 'sqlite3.c header and a THIRD_PARTY_NOTICES.md row, nothing under ' + LICENSES],
-     'files': []},
+     'source_statement': ['sqlite3.c', 'licenses/sqlite-public-domain.txt', SQLITE_DEDICATION],
+     'version_header': ['sqlite3.h', 'SQLITE_VERSION'],
+     'files': [repo('licenses/sqlite-public-domain.txt', LICENSES + 'sqlite/sqlite-public-domain.txt',
+                    'PIN_SQLITE_NOTICE_FROM_CLOUD')]},
     {'id': 'minimp3', 'name': 'minimp3', 'version': 'commit ea99364f61c14656440e8d77e9c233ccf3124633',
      'source': 'https://codeload.github.com/lieff/minimp3/tar.gz/ea99364f61c14656440e8d77e9c233ccf3124633',
      'archive_sha256': '5628166eb82a9bb581317918a334c317a2c0a30278bb14a20381307976768f34',
@@ -356,6 +364,26 @@ def check(profile, root, build, stage, components=COMPONENTS):
             marker = component.get('notice_marker')
             if marker and marker not in notices:
                 failures.append(f'{name}: not described in THIRD_PARTY_NOTICES.md ({marker})')
+            if component.get('source_statement'):
+                path, notice_path, text = component['source_statement']
+                original, statement = source_dir / path, root / notice_path
+                header = original.read_text(encoding='utf-8')[:8192] if original.is_file() else ''
+                notice = statement.read_text(encoding='utf-8') if statement.is_file() else ''
+                if not text or text not in header or text not in notice:
+                    failures.append(f'{name}: source statement differs from the fixed source header')
+                if not all(value in notice for value in
+                           (component['source'], component['version'], component['archive_sha256'])):
+                    failures.append(f'{name}: source statement provenance is missing or changed')
+                row['source_statement'] = {'source': path, 'notice': notice_path,
+                                           'source_sha256': digest(original) if original.is_file() else None}
+            if component.get('version_header'):
+                path, macro = component['version_header']
+                original = source_dir / path
+                header = original.read_text(encoding='utf-8') if original.is_file() else ''
+                found = re.search(r'#\s*define\s+' + re.escape(macro) + r'\s+"([^"\r\n]+)"', header)
+                row['observed_version'] = found.group(1) if found else None
+                if not found or found.group(1) != component['version']:
+                    failures.append(f'{name}: version header differs from the fixed source version')
             for path, needle in component.get('evidence', []):
                 original = source_dir / path
                 if not original.is_file() or needle not in original.read_text(encoding='utf-8', errors='replace'):
@@ -428,8 +456,12 @@ def check(profile, root, build, stage, components=COMPONENTS):
         relative = path.relative_to(stage).as_posix()
         if path.is_file() and relative not in registered_files:
             failures.append(f'unregistered installed license material: {relative}')
+    # Unregistered upstream notices and unresolved source facts are release blockers,
+    # while the existing inventory-only outcome remains separately available.
+    mandatory_missing = list(pending)
     return {'schema': 1, 'profile': profile, 'scope': SCOPE, 'legal_judgment': 'not performed',
             'materials_check_passed': not failures, 'failures': failures, 'pending': pending,
+            'mandatory_missing': mandatory_missing, 'release_ready': not failures and not mandatory_missing,
             'audio_switches': audio, 'layers': layers, 'cache_switches': switches,
             'fetched_dependencies': fetched, 'linked_vendor_archives': sorted(archives),
             'components': rows}
@@ -441,6 +473,8 @@ def main():
     parser.add_argument('build', type=Path)
     parser.add_argument('stage', type=Path)
     parser.add_argument('output', type=Path)
+    parser.add_argument('--require-release-ready', action='store_true',
+                        help='Return nonzero for unresolved mandatory release materials as well as failures')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     report = check(args.profile, root, args.build, args.stage)
@@ -450,7 +484,7 @@ def main():
         json.dump(report, stream, indent=2)
         stream.write('\n')
     print(json.dumps(report, indent=2))
-    return 0 if report['materials_check_passed'] else 1
+    return 0 if report['release_ready' if args.require_release_ready else 'materials_check_passed'] else 1
 
 
 if __name__ == '__main__':
