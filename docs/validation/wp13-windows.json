@@ -172,5 +172,16 @@
   "docs": [
     "docs/WP13-WINDOWS.md",
     "examples/windows/README.md"
-  ]
+  ],
+  "final_head": "40c45799131b3e7f2927d5cdb09a1bf72d9452db",
+  "verification_run": {
+    "id": 39711090216,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39711090216",
+    "head_sha": "40c45799131b3e7f2927d5cdb09a1bf72d9452db",
+    "conclusion": "success",
+    "selftest_checks": 26,
+    "ui_steps": 158,
+    "failed_steps": 0,
+    "screenshots": 8
+  }
 }
