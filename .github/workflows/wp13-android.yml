@@ -24,9 +24,8 @@ jobs:
     timeout-minutes: 120
     runs-on: ubuntu-latest
     env:
-      # Accepted Android delivery source; the audit boundary stops here so later
-      # integration commits cannot be attributed to the Android package.
-      ANDROID_OWNERSHIP_HEAD: 8a6636ed8ac6db06ab84e174f5a01c49d12511dc
+      # Validate every Android change from the frozen reading SDK to this source.
+      ANDROID_OWNERSHIP_HEAD: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -86,7 +85,7 @@ jobs:
           sudo chmod 666 /dev/kvm
           /usr/local/lib/android/sdk/emulator/emulator -accel-check || true
 
-      - name: Boot emulator and run original 45 plus independent review 10
+      - name: Boot emulator and run original 45, review 10 and bounded 8
         id: emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -100,6 +99,20 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: bash examples/android/ci/emulator.sh
+
+      - name: Print per-suite summaries and failing case identities
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for path in Path('build/android-host/evidence').glob('*/validation.json'):
+              report=json.loads(path.read_text())
+              print(json.dumps({'suite':report.get('suite'),'summary':report.get('summary'),'sequence':report.get('sequence')}))
+              for case in report.get('cases',[]):
+                  if case.get('status')!='pass':
+                      print(json.dumps({'id':case.get('id'),'status':case.get('status'),'error':case.get('error'),'detail':case.get('detail')}))
+          PY
 
       - name: Preflight complete same-run evidence
         id: preflight
