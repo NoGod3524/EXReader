@@ -53,11 +53,11 @@ R6 核心发布门槛，详见 [六个工作包](CORE-ROADMAP.md)。已完成能
 | 已完成（失败保留） | R1/R3 首轮 | 源码 `61aa183`，run `39852907619`：构建、安装、消费者与 smoke 成功，测量自验因 mock 误拦截失败、实际采样未执行；修复后在新源码重验 |
 | 已完成 | R1 跨平台（H1） | 受测源码 `9b968a16fc47596725e849e56ee98e4c4c210b74`，run [39854485070](https://github.com/NoGod3524/EXReader/actions/runs/39854485070) attempt 1：Windows/macOS × 两 preset 4/4 作业成功，构建、安装、安装消费者 3/3 或 4/4、九格式合成 smoke 9/9 与依赖/配置判定 accepted，见 [H1 记录](https://github.com/NoGod3524/EXReader/blob/2e8e981b6dd44d855a23931480fe5e0d5c791762/docs/READING-PLATFORMS.md)；未做性能或体积预算。程序集合、依赖解析与链接器身份的门禁加固由 [H6](https://github.com/NoGod3524/EXReader/blob/62ab38e8223e42f1562fda7137cd41b4d87620f1/docs/handoffs/reading-H6-platform-gate.md) 另行跟踪 |
 | 已完成 | R3 初始 PDF/CBZ 测量（Linux，合成） | 源码 `3cd7bdf14d4ee961a9cdda98bd7410d34c04161b`，run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753)：655 字节 1 页 PDF 与 908 字节 4 页 CBZ 各三进程；可区分页面候选 `4b6f562c29181d509f470feda0e5f1226fd466bb`，run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765) 增加 3 页 PDF/4 页 CBZ 的 32×32 合成文档，12 进程/240 次绘制、60 项拒绝自验，2026-10-22 只读核对为 success。见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md) |
-| 运行中 | — | 核对时无排队或运行中的 workflow |
-| 开发中 | R5 SDK 契约 | 书库 EPUB 随机读出口、有界导入和章内进度/标注持久化仍在开发，尚无冻结源码或云端结果；已有公开 API 与待实现要求分列于 [R5 接入梳理](R5-NATIVE-HOST-ADOPTION.md#已有公共-api-与共同缺口) |
+| 运行中 | R5 | 同源专项复验和 Windows/Apple/Android 原生有界宿主并行开发，SDK 尚未冻结 |
+| 开发中 | R5 SDK 契约 | 随机源、schema 7、有界 EPUB 导入及章内进度/标注已实现；候选的普通/消毒器回归已有云端结果，长章严格出口待通过，见 [冻结跟踪](R5-SDK-FREEZE.md) |
 | 未执行 | R2 | 九格式原创 fixture 清单已冻结，仅作小型回归；真实 EPUB/PDF 语料仍为 0/1710，实际故障尚未逐份登记修复 |
 | 未执行 | R3 正式基线 | 真实多页 PDF、嵌入/回退字体与复杂图像、真实语料、跨平台性能、峰值内存预算与冻结的硬性能预算 |
-| 未执行 | R4 / R5 宿主 | R4 等可复现热点；R5 各平台宿主等 SDK 契约冻结，尚无宿主接入结果 |
+| 未完成 | R4 / R5 宿主 | R4 等可复现热点；R5 宿主正在候选 SDK 上开发，最终验收等固定 SDK 和 Windows pilot |
 | 未执行 | R6 启用 | 门禁映射已写入，两个 check 尚未设为默认分支必需检查；默认分支 `protected=false`、rulesets 为空 |
 
 两个 preset 只做组件裁剪：`reading-core` 关闭音频（含 MP3/AAC）、书库、全文索引、PDF 编辑、旧共享总库、工具和 JNI，

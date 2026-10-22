@@ -80,7 +80,7 @@ jobs:
         if: always() && steps.consumer.outcome == 'success'
         run: |
           names="reading-document reading-benchmark components/core-consumer components/chapter-consumer components/convert-consumer"
-          if [ "$PROFILE" = reading-library ]; then names="$names components/library-consumer"; fi
+          if [ "$PROFILE" = reading-library ]; then names="$names components/library-consumer reading-library-source reading-library-chapter-probe"; fi
           args=""; for name in $names; do args="$args --program build/reading-consumer/$name$EXE"; done
           echo "PROGRAM_ARGS=$args" >> "$GITHUB_ENV"
           python tools/reading_platform_evidence.py snapshot "build/$PROFILE/program-snapshot.json" $args
@@ -94,11 +94,17 @@ jobs:
       - name: Run the benchmark program once on a fixture (loader evidence, no performance claim)
         if: always() && steps.programs.outcome == 'success'
         run: python tools/reading_platform_evidence.py run "build/$PROFILE/benchmark-run.json" -- "build/reading-consumer/reading-benchmark$EXE" tests/fixtures/table-fragments-12.epub tests/fixtures/fonts/primary.ttf --max-pages 1
+      - name: Execute the installed stored-chapter probe (loader and persistence evidence)
+        if: always() && steps.programs.outcome == 'success' && matrix.profile == 'reading-library'
+        run: |
+          python tools/reading_platform_evidence.py run "build/$PROFILE/library-probe-run.json" -- "build/reading-consumer/reading-library-chapter-probe$EXE" tests/fixtures/table-fragments-12.epub tests/fixtures/fonts/primary.ttf --max-pages 1 --turns 1 --random 0 --window-bytes 16384 --library "$WS/build/$PROFILE/platform-probe.sqlite" --render
       - name: Gate installed files, program identity, dependencies, executions and toolchain
         id: evidence
         if: always() && steps.install.outcome == 'success'
         run: |
-          python tools/reading_platform_evidence.py verify "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" build/reading-consumer "build/$PROFILE/platform-evidence.json" --platform "$RUNNER_OS" $PROGRAM_ARGS --snapshot "build/$PROFILE/program-snapshot.json" --ctest-tests "build/$PROFILE/ctest-tests.json" --ctest-junit "build/$PROFILE/consumer-tests.xml" --smoke-summary "build/$PROFILE/corpus/summary.json" --run "build/$PROFILE/benchmark-run.json" --input tests/fixtures/fonts/primary.ttf --input tests/fixtures/fonts/colrv1.ttf --input tools/reading_core/smoke-manifest.json --input tests/fixtures/table-fragments-12.epub --toolchain "build/$PROFILE/toolchain.txt"
+          probe_run=""
+          if [ "$PROFILE" = reading-library ]; then probe_run="--run build/$PROFILE/library-probe-run.json"; fi
+          python tools/reading_platform_evidence.py verify "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" build/reading-consumer "build/$PROFILE/platform-evidence.json" --platform "$RUNNER_OS" $PROGRAM_ARGS --snapshot "build/$PROFILE/program-snapshot.json" --ctest-tests "build/$PROFILE/ctest-tests.json" --ctest-junit "build/$PROFILE/consumer-tests.xml" --smoke-summary "build/$PROFILE/corpus/summary.json" --run "build/$PROFILE/benchmark-run.json" $probe_run --input tests/fixtures/fonts/primary.ttf --input tests/fixtures/fonts/colrv1.ttf --input tools/reading_core/smoke-manifest.json --input tests/fixtures/table-fragments-12.epub --toolchain "build/$PROFILE/toolchain.txt"
       - name: Rejection regression for the evidence gate
         if: always() && steps.evidence.outcome == 'success'
         run: python tests/check_reading_platform_evidence.py "build/$PROFILE/platform-evidence.json" "build/$PROFILE/rejection-regression.json"

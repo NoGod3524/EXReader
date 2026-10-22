@@ -119,6 +119,17 @@ def main():
         check(f'record-missing {option}', without(base, option), ['not-executed'])
     benchmark = next(p for p in programs if Path(p).name.startswith('reading-benchmark'))
     check('benchmark-not-executed', without(base, '--run'), ['not-executed'])
+    if profile == 'reading-library':
+        probe_record = next(path for path in option_pairs(base, '--run')
+                            if Path(json.loads(Path(path).read_text(encoding='utf-8'))['program']).stem
+                            == 'reading-library-chapter-probe')
+        check('stored-chapter-probe-not-executed', without(base, '--run', probe_record), ['not-executed'])
+        record = json.loads(Path(probe_record).read_text(encoding='utf-8'))
+        record['sha256_after'] = '0' * 64
+        wrong_hash = work/'probe-wrong-hash.json'
+        wrong_hash.write_text(json.dumps(record), encoding='utf-8')
+        check('stored-chapter-probe-hash-mismatch',
+              without(base, '--run', probe_record) + ['--run', str(wrong_hash)], ['not-executed'])
     # Artifact identity: a copied consumer tree where one required path is not a native executable.
     fake = work/'consumer'
     for program in programs:
