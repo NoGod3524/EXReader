@@ -1,0 +1,9 @@
+.gradle/
+build/
+local.properties
+app/build/
+uitest/build/
+app/src/main/jniLibs/
+app/src/main/assets/Reader.otf
+app/src/main/assets/OFL.txt
+app/src/main/assets/build-identity.json

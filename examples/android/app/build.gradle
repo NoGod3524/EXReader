@@ -1,0 +1,55 @@
+plugins {
+    id 'com.android.application'
+}
+
+def exrSdk = project.findProperty('exrSdk') ?: ''
+
+android {
+    namespace 'org.exreader.host'
+    compileSdk 35
+    ndkVersion '27.0.12077973'
+
+    defaultConfig {
+        applicationId 'org.exreader.host'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+        ndk {
+            abiFilters 'x86_64'
+        }
+        externalNativeBuild {
+            cmake {
+                arguments "-DEXR_SDK=${exrSdk}"
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging false
+        }
+    }
+
+    lint {
+        abortOnError false
+    }
+}
