@@ -255,6 +255,7 @@ def main():
     parser.add_argument('--out', required=True, type=pathlib.Path)
     parser.add_argument('--platform', default='unknown')
     parser.add_argument('--reference', type=pathlib.Path)
+    parser.add_argument('--require-reference', action='store_true')
     arguments = parser.parse_args()
 
     spec = json.loads((arguments.corpus / 'corpus-spec.json').read_text(encoding='utf-8'))
@@ -548,6 +549,8 @@ def main():
         failures.append('%d files produced no measurements' % len(skipped))
     if duplicates:
         failures.append('%d files share content with another file' % len(duplicates))
+    if arguments.require_reference and reference is None:
+        failures.append('the independent reference report is missing')
     if reference is not None:
         for problem in reference.get('failures', []):
             failures.append('reference: %s' % problem)
