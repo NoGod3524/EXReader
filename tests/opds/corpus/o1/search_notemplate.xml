@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:os="http://a9.com/-/spec/opensearch/1.1/" xmlns:dc="http://purl.org/dc/terms/"><id>urn:s</id><title>No Template</title>
+  <link rel="search" href="/o1/search2" type="application/atom+xml"/>
+</feed>

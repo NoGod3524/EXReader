@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:os="http://a9.com/-/spec/opensearch/1.1/" xmlns:dc="http://purl.org/dc/terms/" xml:lang="en">
+  <id>urn:opds-test:root</id>
+  <title>Fixture Catalog</title>
+  <updated>2026-01-01T00:00:00Z</updated>
+  <link rel="self" href="/c/o1/root.xml" type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+  <link rel="start" href="root.xml" type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+  <link rel="search" href="/o1/opensearch.xml" type="application/opensearchdescription+xml" title="Search"/>
+  <entry>
+    <title>All Books</title><id>urn:opds-test:nav:all</id><updated>2026-01-01T00:00:00Z</updated>
+    <content type="text">Everything in the catalog</content>
+    <link rel="subsection" href="/o1/all?page=1" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  </entry>
+  <entry>
+    <title>New Releases</title><id>urn:opds-test:nav:new</id><updated>2026-01-01T00:00:00Z</updated>
+    <link rel="http://opds-spec.org/sort/new" href="/o1/all?page=1" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  </entry>
+  <entry>
+    <title>Vendor Shelf</title><id>urn:opds-test:nav:vendor</id><updated>2026-01-01T00:00:00Z</updated>
+    <link rel="x-vendor/shelf" href="shelf.xml" type="application/vnd.vendor+xml"/>
+  </entry>
+</feed>
