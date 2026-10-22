@@ -63,15 +63,17 @@ R6 核心发布门槛，详见 [六个工作包](CORE-ROADMAP.md)。已完成能
 | 冻结 SDK 可靠性 | 源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9`，run `39666440519`：98/98 作业、99 同源工件、四目标各至少 24 实际进程 CPU 小时 | 后续核心改动不继承旧源码 CPU 额度；整项目发布状态另行收口 |
 | WP6 有界 EPUB 章阅读 | 50/100 MiB 单章、10→100 MiB 索引/解析续排峰值增量 19.3 MiB、检查点及随机恢复固定出口已验收 | 新宿主接入仍单独推进 |
 | 表格 border-spacing | 源码 `ee76f5b`，run `39816051738`，Windows/Linux 各 163/163；纳入 K 后专用 run `39821213939` 2/2 成功，native 全量回归通过 | 最终 S 仍须同源复验；完整 CSS 仍有缺口 |
-| 基础 AcroForm | 源码 `7e44ae5`，run `39817023587`：Windows/Linux 各 4/4、ASan/UBSan 1/1，各 9394 次 CHECK；纳入 K 后专用 run `39821209875` 3/3 成功，native 全量回归通过 | 24 种进程内输入、0 份独立 PDF；至少 30 文件出口仍未满足，完整 WP9 未完成 |
+| 基础 AcroForm 与独立文件语料 | 原基础已纳入 K；新增源码 `a326fd38`，run `39833769030` 5/5 成功，Linux/Windows/sanitizer 各 75/75 独立文件、零失败零跳过 | 至少 30 文件出口已满足；75 份含写拒绝/取消/不可读树。安装消费者各覆盖 31、跳过 2；高级表单范围未完成，待 C 同源复验 |
 | Apple 宿主审计 | 源码 `b3f28ca`，run `39813162880`：8/8 作业、8 工件，三平台各 12 用例/61 步/46 附件，严格汇总通过；已合入 K，native SDK/绑定构建通过 | K 上未重跑 Apple UI 专用验收，最终 S 仍须完整同源复验；真机/VoiceOver 仍独立跟踪 |
-| Android 宿主审计 | 已登记候选 `ac7aecc` 的 run `39816104855` 最终失败 | 包 A 负责定位新一轮逐项失败并完整复验；旧源的 45/45 + 独立 4/10 不可拼接为新源通过 |
+| Android 宿主审计 | 源码 `8a6636ed`，run `39831715741` 唯一作业成功；原 45/45＋独立 10/10、49 页/49 native next/0 recovery、48 门禁及严格 accepted 同次通过 | API34 x86_64 模拟器范围通过；等待 C 同源复验，真机/签名/TalkBack 等另列；旧失败继续保留 |
 | OPDS facets | 独立分支源码 `757e2f3`，run `39815167314`：双平台各 65/65、facet 回归与 Linux sanitizer 通过 | 独立分支待最终集成；计数 profile、HTTPS、间接获取、借阅/支付/LCP 等边界保持 |
-| SDK 预集成与基线 K | `4729f7fc7d908d249704d96ee61cc74ee778a27f`：native run `39821205425` 7/7、AcroForm 3/3、spacing 2/2；native 19 份工件同源、非空、未过期且具有 SHA-256 digest | C 阶段一/二完成；A/B 固定交付、必要的 K 重冻结、OPDS 合入及最终联合验收待完成 |
+| SDK 预集成与基线 K | `4729f7fc7d908d249704d96ee61cc74ee778a27f`：native run `39821205425` 7/7、AcroForm 3/3、spacing 2/2；native 19 份工件同源、非空、未过期且具有 SHA-256 digest | C 阶段一/二完成，A/B 固定交付已到齐；B 改顶层 CMake，需重验并冻结新 K，再完成 OPDS 及最终联合验收 |
 
 主要证据见 [冻结 SDK 记录](validation/2026-10-22-reliability-cloud.json)、
 [表格间距](WP5_BORDER_SPACING.md)、[AcroForm](WP9_ACROFORM.md)、[Apple 审计](WP13-APPLE-REVIEW.md)，
 Android/OPDS 独立候选的完整身份见 [总 handoff](handoffs/2026-10-22-after-deadline.md)。
+
+最新 A/B 固定交付、云端核对和 C 接续要求见 [A/B 到齐登记](handoffs/2026-10-22-AB-delivered.md)。
 
 K 的登记及最新阶段记录见集成分支固定提交 `b81f138` 中的
 [SDK 基线](https://github.com/NoGod3524/EXReader/blob/b81f13869bb49b1138e4862faf64daae01d5fd01/docs/validation/sdk-baseline.json)、
@@ -99,19 +101,20 @@ K 的登记及最新阶段记录见集成分支固定提交 `b81f138` 中的
 
 | 包 | 独立职责 | 汇合依赖 |
 | --- | --- | --- |
-| [A：Android 修复](handoffs/2026-10-22-A-android.md) | 修复失败行为/驱动，完成同一新源码的 45+10、分页计量和严格证据门禁 | 交付固定源码与完整云端验收 |
-| [B：AcroForm 语料](handoffs/2026-10-22-B-acroform-corpus.md) | 补至少 30 份独立 PDF、保存重开和外观验证；必要时修复表单缺陷 | 交付固定源码、逐文件证据与回归 |
-| [C：SDK 集成](handoffs/2026-10-22-C-integration.md) | 阶段一/二完成：合入 AcroForm、spacing、Apple 修复，云端验证 K 并登记基线与严格门禁 | 阶段三/四等 A/B 固定交付；最终 S 跑原十组 28 作业，加 AcroForm 3 作业和 spacing 2 作业，共 12 组 33 个上游作业及严格汇总 |
+| [A：Android 修复](handoffs/2026-10-22-A-android.md) | 声明范围通过，交付 HEAD `31b36f30`，受测源码 `8a6636ed` | C 按固定历史合入，再做最终同源复验 |
+| [B：AcroForm 语料](handoffs/2026-10-22-B-acroform-corpus.md) | 独立文件出口通过，交付 HEAD `97e33452`，受测源码 `a326fd38` | C 合入并重冻结 K；可选编辑支持边界保留 |
+| [C：SDK 集成](handoffs/2026-10-22-C-integration.md) | 阶段一/二完成；阶段三/四输入已到齐 | 更新 AcroForm 3→5 作业及门禁正反例，目标为 12 组/35 上游作业；新 K、H、S 与严格汇总待完成 |
 
 C 的 protocol 自验 run `39823812435` 成功；dispatch run `39823842117` 的 protocol、baseline 成功，
 受检源码为 `82f88966c0ca2bbca93837861270b8cb57ebb184`，summarize 按设计跳过。当前门禁核对 K 的祖先关系、
 八条受保护树、基线证据及版本/ABI，并要求 OPDS `BASELINE` 和合入后的 Android `SDK_BASE` 指向 K。
 Android 守卫尚登记为 pending；文件合入时必须转为有效契约。
 
-后续顺序：A/B 交付 → 若受保护树改变则重验并冻结新 K → 登记 Android 基线与所有权源码 →
+后续顺序：合入 A/B 固定交付 → 重验并冻结新 K → 更新 5 作业 AcroForm 联合门禁并验证 → 登记 Android 基线与所有权源码 →
 冻结非 OPDS 祖先 H → 最后合入 OPDS facets 并登记 `HANDOFF=H` → 冻结 S →
 在 S 上重跑 12 组并提交 12 个 run ID，严格汇总 `accepted=true` 后授予联合验收。
-33 个上游作业之外，联合门禁自身另有 protocol、baseline 和 summarize 作业。
+旧协议为 33 个上游作业；B 新工作流纳入后目标为 35，检查器迁移尚待 C 实现。
+联合门禁自身另有 protocol、baseline 和 summarize 作业。
 
 三包是当前功能与集成子任务，不替代上述五项质量目标。C 直接覆盖 SDK 基线与联合验证，B 覆盖表单专项输入；
 EPUB/PDF 历史失败闭环、通用差分门禁和完整发布制度尚未成为这三包中可独立验收的完整任务。

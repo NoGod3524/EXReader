@@ -2,12 +2,12 @@
 
 最新登记：阶段一/二已完成，K=`4729f7fc7d908d249704d96ee61cc74ee778a27f`，
 native/acroform/spacing 同源分别 7/3/2 作业成功，基线门禁自验通过；证据见 [项目概述](../PROJECT_OVERVIEW.md)。
-下面阶段一/二保留实现要求，勿重复预集成；阶段三/四等待 A/B 最新固定交付。
-当前组合仍需 12 组/33 上游作业。未来核心/可选组件发布门禁拆分由 [R6](../CORE-ROADMAP.md) 实现并验证，
-本次文档不改变现有组合通过条件。
+下面阶段一/二保留实现要求，勿重复预集成；A/B 最新固定交付已到齐，见 [接续登记](2026-10-22-AB-delivered.md)。
+旧检查器为 12 组/33 上游作业；B 工作流已增加到 5 作业，必须实现并验证 12 组/35 作业的契约迁移。
+未来核心/可选组件发布门禁拆分由 [R6](../CORE-ROADMAP.md) 另行处理。
 
 供独立 AI 执行的任务说明。用户把本文件交给你要求执行时，负责本包与最终汇合；A 修 Android，B 补 AcroForm 文档语料。
-阶段一/二已有交付，后续只接续阶段三/四；最终源码冻结与完整验收等 A/B 的固定交付。
+阶段一/二已有交付，后续接续阶段三/四，使用下列 A/B 固定交付。
 
 ## 工作树与输入
 
@@ -18,13 +18,13 @@ native/acroform/spacing 同源分别 7/3/2 作业成功，基线门禁自验通�
 
 | 输入分支 | 当前可用交付 HEAD | 实际受测源码 | 独立通过 run |
 | --- | --- | --- | --- |
-| `codex/wp9-acroform` | `4605dbf7524f8764b923e5c447e1a6988fe4f62f` | `7e44ae59d47a578dac3116154b0de5a67efb0163` | `39817023587`：Windows/Linux 各 4/4、ASan 1/1；B 后续会有新交付 |
+| `codex/wp9-acroform` | `97e33452a96f1c042dcc98510b51f3e4af7253ef` | `a326fd38bbbb481da74657d682f649b1f45f7e2c` | `39833769030`：5/5 作业，三执行平台各 75/75 文件；保留消费者各 2 跳过的边界 |
 | `codex/wp5-border-spacing` | `a0bb9d2d6988b74e62aa1592faed681cee1950d4` | `ee76f5b582ec92112bb294226d5b42758b1ad2ae` | `39816051738`：双平台各 163/163 |
 | `codex/wp13-apple-review` | `535f6baff40234427d9d0584fee1432dfecf099b` | `b3f28ca19904f9a6f173113f6ed86e62928be875` | `39813162880`：8/8、严格汇总通过 |
 | `codex/wp15-catalog-features` | `47d8fda0bea9aca6eb1f3f595344b31c0ec51d08` | `757e2f33271b358715ea8f83f44a3c779ad660e8` | `39815167314`：双平台各 65/65、facet 与 Linux sanitizer 通过 |
-| `codex/wp13-android-review` | `05048cccd84532509e0d6039feb3b7769824ec1a` | `ac7aecc4d3c2e6e65a6797ab556cd31546ca3a5c` | `39816104855` 最终 failure；等待 A 的新通过交付 |
+| `codex/wp13-android-review` | `31b36f305085cb8b1468b1d9b9b1ea2d67ee1656` | `8a6636ed8ac6db06ab84e174f5a01c49d12511dc` | `39831715741`：45+10、49/49/0、48 门禁及严格 accepted 同次通过 |
 
-上表为原交接输入；AcroForm 基础、spacing、Apple 已纳入 K，Android/OPDS 等待后续冻结顺序。
+上表已更新 A/B 最终交付；AcroForm 基础、spacing、Apple 已纳入原 K，A/B 新交付与 OPDS 按后续冻结顺序合入。
 文档 HEAD 与实际受测源码分开，不把独立旧运行当作共同源码验收。
 
 ## 阶段一：已完成要求记录
@@ -48,7 +48,7 @@ Android/OPDS 明确核对 `src/include/bindings/cmake/CMakeLists.txt` 等树。�
 先验证新 SDK，保留原 API/ABI/所有权和安装消费证据，再登记固定 SDK 候选 K；
 让宿主/可选包验证其相对 K 没有额外修改 SDK。保留原基线的交付与历史结果。
 不要把随意变化的当前 HEAD 当作基线来使检查自证通过；K 必须能追溯到单独接受的 SDK 证据。
-B 的最终语料/引擎修复合入后，若改变受保护树，重新验证并冻结最终 K。
+B 的最终交付修改了顶层 `CMakeLists.txt`，已触发受保护树变化；合入后必须重新云端验证并冻结最终 K，不能因 src/include 未改而沿用原 K。
 
 Android 的 `ANDROID_OWNERSHIP_HEAD` 只用于固定宿主变更审计终点，必须是受测源码祖先；
 它不能替代运行的 source，也不能绕过 SDK 保护。所有权字段由你在集成分支维护，不抢写 A 的分支。
@@ -65,7 +65,7 @@ Android 的 `ANDROID_OWNERSHIP_HEAD` 只用于固定宿主变更审计终点，�
 
 ## 阶段四：共同源码云端验收
 
-当前 `tools/check_parallel_integration.py` 要求原十组 28 作业及两组补充作业，共 12 组、33 个上游作业：
+旧 `tools/check_parallel_integration.py` 固定 12 组/33 作业。纳入 B 后，需迁移并验证下列 12 组/35 作业目标，包含新增 corpus/evidence 作业与其严格证据检查：
 
 | key | workflow | jobs |
 | --- | --- | ---: |
@@ -79,7 +79,7 @@ Android 的 `ANDROID_OWNERSHIP_HEAD` 只用于固定宿主变更审计终点，�
 | opds | `wp15-opds.yml` | 2 |
 | apple | `wp13-apple.yml` | 8 |
 | android | `wp13-android.yml` | 1 |
-| acroform | `acroform.yml` | 3 |
+| acroform | `acroform.yml` | 5 |
 | spacing | `wp5-border-spacing.yml` | 2 |
 
 这些工作流全部跑同一 S。确保 native 或补充的同源检查实际执行 AcroForm/spacing/B 新语料及所需 sanitizer，

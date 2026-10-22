@@ -8,7 +8,7 @@ EXReader 是面向桌面和移动阅读应用的 **C11 原生阅读引擎与可�
 
 原生参考宿主覆盖 Windows（`examples/reader.c`）、Linux GTK（`examples/linux/`）与
 macOS/iPhone/iPad（`examples/apple/`），提供各自声明范围内的书架、导入、阅读、选文标注和进度恢复。
-Android 宿主以独立分支交付，当前审计复验尚未通过。各宿主的格式、文件大小、生命周期与设备限制分别记录，
+Android 宿主以独立分支交付，API34 x86_64 模拟器审计复验已通过，待共同源码集成。各宿主的格式、文件大小、生命周期与设备限制分别记录，
 不使用统一的“32 MiB”口径。iPhone/iPad 和 Android 的模拟器结果与真机验收分开登记。
 
 项目定位、当前交付状态与质量目标见 [项目概述](docs/PROJECT_OVERVIEW.md)。格式和功能的详细边界见
@@ -61,7 +61,7 @@ ctest --test-dir build/core --output-on-failure
 | PDF 书库 | 保存原书、Info/XMP 标题/作者、页进度与固定页备注，支持 NUL 引用、稳定锚点、备份恢复和旧库事务迁移 |
 | 固定页交互 | 语义文字快照、线性精确搜索、字格选择、源坐标命中、PDF 原生标注数据读取、页 ID 与引用/上下文稳定标注锚点，支持宿主固定格式 |
 | PDF 标注编辑 | 按页和 NM 新增、更新 Text/Highlight/Underline/StrikeOut/Squiggly，删除标注及同页 Popup；追加修订并返回完整 PDF，保留原字节；绘制已有与新写入的 normal Form 外观，SDK 书库备注由宿主显式同步 |
-| 基础 AcroForm | 字段继承、值/默认值、选项与 widget 快照；声明范围内文本、checkbox/radio/choice 的增量值与外观写回；Windows/Linux/sanitizer 独立回归通过，30 份独立 PDF 的完整 WP9 出口待补，见 [表单范围](docs/WP9_ACROFORM.md) |
+| 基础 AcroForm | 字段继承、值/默认值、选项与 widget 快照；声明范围内文本、checkbox/radio/choice 的增量值与外观写回；独立交付新增 75 份语料通过，至少 30 文件出口满足，完整 WP9 仍有未覆盖项，见 [最新交付与边界](docs/handoffs/2026-10-22-AB-delivered.md) |
 | 通用绘制接口 | 开放 Bézier 字形轮廓、路径/描边、分层图片、裁切、正逆视口矩阵和流式绘制回调；可用内置 C 画布或宿主绘制后端 |
 | 文档输入 | TXT（UTF-8、带 BOM 的 UTF-16）、HTML、FB2、EPUB spine、DOCX 结构、RTF 正文、MOBI / PalmDOC / HUFF-CDIC、KF8 章节、CSS、图片与字体 |
 | 宿主文档构造 | `exr_document_create()` 接收通用节点、章节和资源字节，复制输入并生成规范化正文；宿主解析器无需注册，可直接接入现有搜索、布局、渲染和正文导出 |
@@ -106,7 +106,7 @@ PDF 已有固定页绘制、文字几何、搜索选择、标准密码认证、�
 
 当前质量目标是：默认分支强制 CI 与可信构建基线、EPUB 超时/PDF 打开绘制失败闭环、成熟引擎差分与像素/性能回归、内存/长章节/恶意输入专项，以及许可证和版本发布流程统一。已有专项结果，但默认分支必需检查和整条发布门槛尚未闭合，真实兼容语料验收仍有缺口；逐项现状与证据见 [项目概述](docs/PROJECT_OVERVIEW.md#五项工程质量目标)。
 
-冻结 SDK 源码的四目标各 24 CPU 小时长测与严格云端汇总已通过，该结果只绑定其源码。既有 [A/B/C 三包](docs/handoffs/2026-10-22-parallel-index.md) 单独收口：C 已完成预集成与 SDK 基线 K（`4729f7fc`）登记，native、AcroForm、spacing 三组同源云端共 12 个作业成功，基线门禁自验通过。该组合最终冻结仍等 A 的 Android 修复与 B 的至少 30 份独立表单 PDF 交付，再完成 OPDS 合入、12 组共 33 个上游作业及严格联合汇总，详见 [既有交付收口](docs/PROJECT_OVERVIEW.md#既有-abc-交付收口)。下一核心版本按六个工作包推进，并建立独立核心发布门槛。所有构建、测试及证据汇总在 GitHub Actions 执行。
+冻结 SDK 源码的四目标各 24 CPU 小时长测与严格云端汇总已通过，该结果只绑定其源码。既有 [A/B/C 三包](docs/handoffs/2026-10-22-parallel-index.md) 单独收口：A 的 Android 审计与 B 的 75 份独立表单语料交付已到齐；C 已完成预集成与原 K 基线验证。C 接续合入、重冻结新 K、更新 AcroForm 五作业契约，目标为 12 组共 35 个上游作业及严格联合汇总，详见 [A/B 到齐与 C 接续](docs/handoffs/2026-10-22-AB-delivered.md)。R1–R6 暂不启动，等该组合收口。所有构建、测试及证据汇总在 GitHub Actions 执行。
 
 ## 构建
 
