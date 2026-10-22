@@ -26,7 +26,8 @@ reports failure and retains the previously displayed page.
 
 The page image is rendered by EXReader. A native selectable text panel exposes
 the same page range, including Unicode. Select text there, enter a comment, and
-choose Add note. The notes list opens and selects that range; Delete removes the
+choose Add note. The notes list opens the range's first page and selects its
+visible portion; Delete removes the
 selected note. This is a text-panel selection UI, not an image-overlay selector.
 
 Toolbar actions also have F1–F11 keys: import, shelf, previous, next, larger,
@@ -70,6 +71,12 @@ Failed attempts remain in GitHub Actions; an incomplete report cannot pass.
 The cloud run ID and final status are recorded in
 `docs/validation/wp13-linux.json`. No test, build, simulator, evidence download or
 local evidence aggregation was run on the user's computer for this package.
+
+The accepted source is `44e546296862e3258ad885a3706652319c266a56`: GitHub run
+`39707069576`, job `119589495393`, completed successfully. All 20 real UI cases,
+SDK installation, independent consumer compilation, packaging and artifact
+upload passed in that one run. Earlier incomplete runs remain listed in the
+evidence JSON and are not added to the accepted run's count.
 
 ## Integration handoff
 
