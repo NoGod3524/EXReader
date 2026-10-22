@@ -134,7 +134,7 @@ incomplete attempts and remaining scope are recorded in
 dispatch on the integration branch; automatic pushes are restricted to the
 review branch. The original delivery JSON remains unchanged.
 
-## H11 bounded EPUB adoption
+## H11 bounded EPUB adoption: initial ce5 acceptance
 
 The sole production host is now `examples/linux/reader.c`, backed by
 `reading.c`/`reading.h`; the temporary asynchronous duplicate and the old
@@ -178,3 +178,29 @@ Identity, digest and preserved failed attempts are recorded in
 `docs/validation/r5-linux-bounded.json`. H11 covers native GTK/X11 bounded EPUB
 adoption; PDF/CBZ UI, physical/Wayland accessibility, per-format legacy fixture
 coverage and overall RSS/performance gates remain separate work.
+
+## H11 final SDK candidate revalidation
+
+Final source `6cb58962866c4f2223dfba0d21b6d36675cbfff1` adopts SDK candidate
+`9c69bc4c7efb0cff68ced27562709fe597189041`, including the oversized inline-unit
+preparation fix and its corrected lazy-load budget regression. The H11 guard
+requires that exact candidate as an ancestor and compares all eight protected
+trees. No host implementation, fixture, assertion, window preference or
+workspace budget was changed for this revalidation.
+
+Run `39872057413`, attempt 2, job `120150277110` passed every step: original
+20 cases, all four regression groups including 26 GTK/backend fault assertions,
+37 H11 checks and 82 backend assertions. Long-chapter measurements remain
+1,279,999 projection bytes, 789,460 index bytes, 2,296,896 peak parse-workspace
+bytes, zero explicit snapshot bytes, 65 page turns and six window evictions.
+Real input during worker activity was handled in 16.74 ms. Original process
+5877 reopened as 6031, and cancellation returned `EXR_CANCELLED`.
+
+Attempt 1 timed out mapping the first GTK window before any acceptance case.
+The entire sole job was rerun at the same source. Its failure log and artifact
+`12466573199` remain alongside successful attempt-2 artifact `12466748302`;
+the accepted artifact is selected by the completed upload log's exact ID and
+digest. Earlier ce5 and 2f source successes remain historical records, and no
+checks were borrowed from them. Exact identities and hashes are in
+`docs/validation/r5-linux-bounded.json`. SDK-wide freeze and the final common
+source integration run remain the integration owner's gates.

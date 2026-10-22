@@ -1,7 +1,8 @@
 # H11 Linux GTK 有界 EPUB 接入计划
 
 有界后端与异步 GTK 生产宿主已经实现并通过独立云端验收。
-SDK 冻结候选为 `ce5d664c9f76d0613df6d79b27568a7039c4a81e`，Windows H8 pilot 已通过。
+本轮 SDK 候选为 `9c69bc4c7efb0cff68ced27562709fe597189041`，已含超窗口 inline 单元递归修复。
+此前 `ce5d664c9f76d0613df6d79b27568a7039c4a81e` 的 H11 和 Windows H8 pilot 记录继续保留。
 范围是现有 GTK 重排宿主；不新增 PDF/CBZ UI，不引入 WebView。
 
 ## 当前调用链与最少替换
@@ -53,8 +54,10 @@ F2 响应/Escape 取消/后续换书。诊断文件只观察状态，不提供�
 
 ## 固定交付
 
-受测源码 `f42cfa2e23b4f43bb3417ebd0ca9272b8be45201`，run `39869717148` attempt 1，
-唯一 host job `120140792044` 全步骤成功。原 20 项、4 组回归（其中真实 GTK/后端故障 26 断言、
+受测源码 `6cb58962866c4f2223dfba0d21b6d36675cbfff1`，run `39872057413` attempt 2，
+唯一 host job `120150277110` 全步骤成功。原 20 项、4 组回归（其中真实 GTK/后端故障 26 断言、
 字体恢复负例在原第 13 项被拒绝）、H11 37 项和后端 82 断言在同一源码/运行通过。
 异步版本已归并为唯一生产 `examples/linux/reader.c`，旧未编译宿主和临时 `reader_async.c` 已删除。
 工件、测量值及保留失败见 `docs/validation/r5-linux-bounded.json`；集成后需在共同源码重跑本工作流。
+同源 attempt 1 在任何用例开始前遇到 GTK 窗口映射超时；其工件保留，attempt 2 从构建开始整 job 重跑，
+未修改生产宿主、窗口预算或断言。本轮真实长任务输入响应为 16.74 ms，65 次翻页及其余内存观测保持同一出口。
