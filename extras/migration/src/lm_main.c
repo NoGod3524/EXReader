@@ -1012,6 +1012,22 @@ static int write_file(const char *path, const char *data, size_t n) {
 }
 
 /* ---------- verification and dump ---------- */
+static int check_target_header(ctx *c);
+static char *verified_note_text(const lm_note *note) {
+  char error[160];
+  jv *record = lm_json_parse(note->retained ? note->retained : "{}",
+                           note->retained ? strlen(note->retained) : 2, error, sizeof(error));
+  const char *comment = lm_get_str(record, "note"), *quote = lm_get_str(record, "quote");
+  const jv *bookmark = lm_get(record, "bookmark");
+  char *text;
+  if (!record || record->t != J_OBJ) { lm_json_free(record); return NULL; }
+  if (!comment) comment = "";
+  if (note->kind == K_REFLOW && bookmark && bookmark->t == J_BOOL && bookmark->b && !*comment)
+    comment = quote ? quote : "";
+  text = lm_xdup(comment);
+  lm_json_free(record);
+  return text;
+}
 static int verify_library(ctx *c, exr_library *lib, int check_metadata) {
   size_t i, count = 0;
   exr_book *books = NULL;
@@ -1079,16 +1095,22 @@ static int verify_library(ctx *c, exr_library *lib, int check_metadata) {
         exr_note *notes = NULL;
         size_t m, j;
         int found = 0;
-        if (exr_library_notes(lib, b->book_id, &notes, &m, &c->err) != EXR_OK) { sdk_fail(c, "verify notes"); break; }
-        for (j = 0; j < m; j++) if (notes[j].id == nn->new_id && notes[j].start == nn->start && notes[j].end == nn->end) found = 1;
+        char *expected_text = verified_note_text(nn);
+        if (!expected_text) { fail(c, O_FAILED, "verify-failed", "invalid retained annotation record"); break; }
+        if (exr_library_notes(lib, b->book_id, &notes, &m, &c->err) != EXR_OK) { free(expected_text); sdk_fail(c, "verify notes"); break; }
+        for (j = 0; j < m; j++) if (notes[j].id == nn->new_id && notes[j].start == nn->start && notes[j].end == nn->end && !strcmp(notes[j].text, expected_text)) found = 1;
+        free(expected_text);
         exr_notes_free(notes, m);
         if (!found) { bad++; entry(c, S_CONFLICT, "verify-note", "verify", nn->legacy, "migrated note %lld missing or moved after reopen", (long long)nn->new_id); }
       } else {
         exr_fixed_note *notes = NULL;
         size_t m, j;
         int found = 0;
-        if (exr_library_fixed_notes(lib, b->book_id, &notes, &m, &c->err) != EXR_OK) { sdk_fail(c, "verify fixed notes"); break; }
-        for (j = 0; j < m; j++) if (notes[j].id == nn->new_id && notes[j].page == nn->page) found = 1;
+        char *expected_text = verified_note_text(nn);
+        if (!expected_text) { fail(c, O_FAILED, "verify-failed", "invalid retained annotation record"); break; }
+        if (exr_library_fixed_notes(lib, b->book_id, &notes, &m, &c->err) != EXR_OK) { free(expected_text); sdk_fail(c, "verify fixed notes"); break; }
+        for (j = 0; j < m; j++) if (notes[j].id == nn->new_id && notes[j].page == nn->page && notes[j].start == nn->start && notes[j].end == nn->end && !strcmp(notes[j].text, expected_text)) found = 1;
+        free(expected_text);
         exr_fixed_notes_free(notes, m);
         if (!found) { bad++; entry(c, S_CONFLICT, "verify-note", "verify", nn->legacy, "migrated fixed note %lld missing after reopen", (long long)nn->new_id); }
       }
@@ -1105,6 +1127,7 @@ static void dump_library(ctx *c) {
   exr_book *books = NULL;
   size_t count, i, j;
   lm_sb_init(&b);
+  if (!check_target_header(c)) return;
   if (exr_library_open(c->target, &c->lib, &c->err) != EXR_OK) { fail(c, O_FAILED, "open-failed", "cannot open %s: %s", c->target, c->err.message); return; }
   if (exr_library_books(c->lib, "", &books, &count, &c->err) != EXR_OK) { sdk_fail(c, "listing library"); return; }
   lm_sb_str(&b, "{\"books\":[");
@@ -1237,13 +1260,38 @@ static int publish(ctx *c) {
   sidecar_text(c, &text);
   if (text.oom || !write_file(c->sidecar_tmp, text.p, text.n)) { lm_sb_free(&text); fail(c, O_FAILED, "ledger-write-failed", "cannot write the migration ledger next to the target"); return 0; }
   lm_sb_free(&text);
+  if (injected(c, "publish-cancel", 0)) g_cancel = 1;
+  if (injected(c, "publish-pause", 0)) {
+    char *ready = path_join(c->target, ".review-ready"), *resume = path_join(c->target, ".review-resume");
+    unsigned wait;
+    int resumed = 0;
+    if (!write_file(ready, "ready", 5)) { free(ready); free(resume); fail(c, O_FAILED, "review-hook-failed", "cannot create review synchronization marker"); return 0; }
+    for (wait = 0; wait < 400 && !cancel_cb(c); wait++) {
+      if (lm_exists(resume)) { resumed = 1; break; }
+#ifdef _WIN32
+      Sleep(50);
+#else
+      struct timespec delay = {0, 50000000};
+      nanosleep(&delay, NULL);
+#endif
+    }
+    lm_remove(ready); lm_remove(resume); free(ready); free(resume);
+    if (!resumed && !cancel_cb(c)) { fail(c, O_FAILED, "review-hook-timeout", "review synchronization timed out"); return 0; }
+  }
   if (injected(c, "publish-fail", 0)) { fail(c, O_FAILED, "injected-publish-fail", "injected failure before the library was replaced"); return 0; }
+  if (cancel_cb(c)) { fail(c, O_CANCELLED, "cancelled", "cancelled before publication"); return 0; }
+  if (lm_exists(c->target) != c->target_existed) { fail(c, O_FAILED, "target-changed", "target existence changed during migration"); return 0; }
+  if (lm_exists(c->sidecar) != c->sidecar_existed ||
+      (c->sidecar_existed && (!lm_sha_file(c->sidecar, digest, NULL) || strcmp(digest, c->sidecar_sha)))) {
+    fail(c, O_FAILED, "ledger-changed", "the migration ledger changed; nothing was published"); return 0;
+  }
   if (c->target_existed) {
     if (!lm_sha_file(c->target, digest, &size) || strcmp(digest, c->target_sha)) { fail(c, O_FAILED, "target-changed", "the target changed while it was being migrated; nothing was published"); return 0; }
     if (!lm_copy(c->target, c->pre)) { fail(c, O_FAILED, "pre-image-failed", "cannot keep a pre-image of the target for rollback"); return 0; }
     c->pre_state = "kept-until-commit";
   }
-  if (!lm_replace(c->stage, c->target)) { fail(c, O_FAILED, "publish-failed", "cannot replace the target library (is it open elsewhere?); the original is unchanged"); return 0; }
+  if (cancel_cb(c)) { fail(c, O_CANCELLED, "cancelled", "cancelled before publication"); return 0; }
+  if (!(c->target_existed ? lm_replace(c->stage, c->target) : lm_publish_new(c->stage, c->target))) { fail(c, O_FAILED, "publish-failed", "cannot publish the target library; the original is unchanged"); return 0; }
   c->stage_state = "published";
   if (injected(c, "sidecar-fail", 0) || injected(c, "rollback-fail", 0) || !lm_replace(c->sidecar_tmp, c->sidecar)) {
     int restored = 0;
@@ -1461,6 +1509,7 @@ static void run_verify(ctx *c) {
   c->sidecar = path_join(c->target, ".legacy-map.json");
   if (!lm_exists(c->sidecar)) { fail(c, O_REJECTED, "ledger-missing", "no migration ledger next to %s", c->target); return; }
   if (!sidecar_load(c, c->sidecar)) return;
+  if (!check_target_header(c)) return;
   if (exr_library_open(c->target, &c->lib, &c->err) != EXR_OK) { fail(c, O_FAILED, "open-failed", "cannot open %s: %s", c->target, c->err.message); return; }
   for (i = 0; i < c->pack.books->n; i++) {
     const char *id = lm_get_str(c->pack.books->items[i], "legacy_id");
@@ -1475,7 +1524,14 @@ static void run_verify(ctx *c) {
   for (i = 0; i < c->pack.notes->n; i++) {
     const char *id = lm_get_str(c->pack.notes->items[i], "legacy_id");
     lm_note *n = lm_ledger_note(&c->ledger, id, 0);
+    lm_sb record;
+    char fingerprint[65];
     if (!n) { entry(c, S_CONFLICT, "verify-unmapped-note", "verify", id, "pack note has no ledger entry"); c->notes_skipped++; continue; }
+    lm_sb_init(&record);
+    lm_json_write(&record, lm_get(c->pack.notes->items[i], "record"));
+    lm_sha_bytes(record.p ? record.p : "", record.n, fingerprint);
+    lm_sb_free(&record);
+    if (strcmp(n->fp, fingerprint)) { entry(c, S_CONFLICT, "verify-note-content", "verify", id, "pack annotation differs from the migrated ledger record"); c->notes_skipped++; continue; }
     n->touched = 1;
     if (n->located) c->notes_existing++; else c->notes_unlocated++;
   }

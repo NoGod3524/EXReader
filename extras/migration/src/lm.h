@@ -37,6 +37,7 @@ FILE *lm_fopen(const char *path, const char *mode);
 int lm_exists(const char *path);
 int lm_remove(const char *path);
 int lm_replace(const char *from, const char *to);
+int lm_publish_new(const char *from, const char *to);
 int lm_copy(const char *from, const char *to);
 int lm_sha_file(const char *path, char out[65], uint64_t *size);
 int lm_seek(FILE *f, uint64_t offset);

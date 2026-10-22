@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import sys
 
 REQUIRED_CASES = """
@@ -88,6 +89,15 @@ def gate(a):
         s = entry["scenarios"]
         if s:
             names = {c["name"]: c for c in s["cases"]}
+            recomputed_checks = [check for case in s['cases'] for check in case['checks']]
+            if (len(names) != len(s['cases']) or s['summary']['cases'] != len(s['cases']) or
+                    s['summary']['passed'] != sum(case['passed'] is True for case in s['cases']) or
+                    s['summary']['failed'] != sum(case['passed'] is not True for case in s['cases']) or
+                    s['summary']['checks'] != len(recomputed_checks) or
+                    s['summary']['checks_passed'] != sum(check['ok'] is True for check in recomputed_checks) or
+                    not all(check['ok'] is True for check in recomputed_checks) or
+                    any(case['passed'] is not True for case in s['cases'])):
+                problems.append('%s: duplicate cases or inconsistent per-check accounting' % label)
             if s["summary"]["cases"] < 30:
                 problems.append("%s: only %d scenarios" % (label, s["summary"]["cases"]))
             for name in REQUIRED_CASES:
@@ -108,6 +118,35 @@ def gate(a):
                 problems.append("%s: browser end-to-end chain failed" % label)
             if e["indexeddb"]["version"] != 1:
                 problems.append("%s: IndexedDB version is %s, not 1" % (label, e["indexeddb"]["version"]))
+            if len(e['checks']) != 17 or not all(check['ok'] is True for check in e['checks']):
+                problems.append('%s: incomplete browser-chain checks' % label)
+        identity = entry['identity']
+        if identity:
+            if (identity['git']['sha'] != os.environ['GITHUB_SHA'] or
+                    identity['workflow']['run_id'] != os.environ['GITHUB_RUN_ID'] or
+                    identity['workflow']['attempt'] != os.environ['GITHUB_RUN_ATTEMPT'] or identity['label'] != label):
+                problems.append('%s: source, run, attempt or platform identity mismatch' % label)
+            files = identity['sdk']['files_sha256']
+            hashes = list(files.values()) + [identity['tool']['sha256'], identity['exporter']['sha256']]
+            if not files or len(files) != identity['sdk']['prefix_files'] or not all(re.fullmatch('[0-9a-f]{64}', value) for value in hashes):
+                problems.append('%s: incomplete SDK or program identity' % label)
+            if s and s['tool']['sha256'] != identity['tool']['sha256']:
+                problems.append('%s: scenario program differs from identity' % label)
+            if e and (e['tool_sha256'] != identity['tool']['sha256'] or e['exporter_sha256'] != identity['exporter']['sha256'] or
+                      e['pack']['sha256'] != identity['inputs'].get('legacy.exrpack') or
+                      set(e['legacy_sources']) != {'store.js', 'library.js', 'registry.js'} or
+                      any(value != identity['inputs'].get(name) for name, value in e['legacy_sources'].items())):
+                problems.append('%s: browser-chain inputs or program differ from identity' % label)
+            review = os.path.join(a.evidence, 'review-%s.json' % label)
+            if not os.path.isfile(review):
+                problems.append('%s: missing migration review regressions' % label)
+            else:
+                record = json.load(open(review, encoding='utf-8'))
+                if (record.get('passed') is not True or record.get('source_sha') != os.environ['GITHUB_SHA'] or
+                        record.get('run_id') != os.environ['GITHUB_RUN_ID'] or
+                        record.get('tool_sha256') != identity['tool']['sha256'] or len(record.get('checks', [])) != 16 or
+                        not all(check['passed'] is True for check in record['checks'])):
+                    problems.append('%s: incomplete or mismatched migration review regressions' % label)
         platforms[label] = {
             "scenario_cases": s["summary"]["cases"] if s else None, "scenario_passed": s["summary"]["passed"] if s else None,
             "checks": s["summary"]["checks"] if s else None, "checks_passed": s["summary"]["checks_passed"] if s else None,
@@ -118,6 +157,7 @@ def gate(a):
             "sdk_files": entry["identity"]["sdk"]["prefix_files"] if entry["identity"] else None,
         }
     summary = {"schema": 1, "kind": "wp12-legacy-migration-summary", "complete": not problems, "problems": problems, "required_platforms": a.require,
+               "source_sha": os.environ['GITHUB_SHA'], "run_id": os.environ['GITHUB_RUN_ID'], "run_attempt": os.environ['GITHUB_RUN_ATTEMPT'],
                "platforms": platforms, "required_cases": len(REQUIRED_CASES), "not_executed": NOT_EXECUTED,
                "claim": "Legacy IndexedDB/backup migration tool only; this is not complete WP12 high-fidelity conversion."}
     if a.out:
