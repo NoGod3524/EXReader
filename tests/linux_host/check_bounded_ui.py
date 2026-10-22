@@ -145,6 +145,7 @@ def main():
         command('import', '-window', host.window, output/'before-reopen.png')
         book.unlink(); host.close(); host.launch()
         restored = stable('after actual process reopen')
+        restored_pid = host.process.pid
         require(host.process.pid != pid and all(restored[k] == saved[k] for k in ('book', 'part', 'position', 'start', 'font', 'notes')),
                 'new process restores exact source independent chapter and note')
         require('BETA' in select_copy(), 'reopened page native text')
@@ -199,6 +200,11 @@ def main():
         require(retry['book'] != broken['book'], 'worker accepts subsequent book without stale overwrite')
         command('import', '-window', host.window, output/'after-cancel.png')
         host.close()
+        report['measurements'] = {'long_native_turns': 65, 'projection_bytes': beginning['projection_bytes'],
+                                  'index_bytes': advanced['index_bytes'], 'peak_parse_workspace_bytes': advanced['workspace_bytes'],
+                                  'explicit_snapshot_bytes': advanced['snapshot_bytes'], 'windows_evicted': advanced['windows_evicted'],
+                                  'input_response_ms': elapsed, 'cancel_code': cancelled['error'],
+                                  'original_pid': pid, 'reopened_pid': restored_pid, 'screenshots': 2}
         report['accepted'] = True
     finally:
         if host.process and host.process.poll() is None:
@@ -211,7 +217,8 @@ def main():
             print('H11 STATE '+repr(host.read()), flush=True)
             print((output/'application.log').read_text(errors='replace')[-10000:], flush=True)
     print(json.dumps({'H11_accepted': report['accepted'], 'checks': len(checks), 'source_sha': source,
-                      'sdk_candidate': SDK, 'run_id': report['run_id'], 'run_attempt': report['run_attempt']}, sort_keys=True))
+                      'sdk_candidate': SDK, 'run_id': report['run_id'], 'run_attempt': report['run_attempt'],
+                      'measurements': report['measurements']}, sort_keys=True))
 
 
 if __name__ == '__main__':
