@@ -15,7 +15,7 @@
 cmake --preset reading-core
 cmake --build --preset reading-core
 cmake --install build/reading-core
-python3 tools/check_reading_licenses.py reading-core build/reading-core build/reading-core/stage build/reading-core/licenses.json
+python3 tools/check_reading_licenses.py reading-core build/reading-core build/reading-core/stage build/reading-core/licenses.json --require-release-ready
 python3 tests/check_reading_licenses.py
 ```
 
@@ -36,9 +36,13 @@ python3 tests/check_reading_licenses.py
 | `stage/lib/exreader/*exr_vendor_*` 与 `EXReaderDependencies.cmake` | 两者一致；每个链接归档须属于已登记且已启用的组件 |
 | `stage/share/exreader/licenses/**` | 登记文件存在、非空、与原始来源逐字节相同、与清单固定 SHA-256 相同；未登记文件即失败 |
 | `cmake/deps.cmake`、`CMakeLists.txt` | 清单的 URL / 归档散列与固定依赖一致；每个登记文件有对应安装规则 |
-| 上游源码顶层 `LICENSE*`、`COPYING*`、`NOTICE*`、`PATENTS*`、`COPYRIGHT*` | 未随包安装者列为“待处理”，不自动判为失败或通过 |
+| 上游源码顶层 `LICENSE*`、`COPYING*`、`NOTICE*`、`PATENTS*`、`COPYRIGHT*` | 未登记安装者同时列入 `pending` 与 `mandatory_missing`，阻止 `release_ready` |
+| SQLite 原件头部与 `sqlite3.h` | 摘录逐字匹配固定源头 dedication；版本、归档来源和固定散列对应，文件随包安装 |
 
-失败项使检查返回非零；“待处理”项单独列出，需要主代理或发布者决定。
+报告保留库存范围的 `materials_check_passed`，另给出
+`release_ready = materials_check_passed and not mandatory_missing`。
+`--require-release-ready` 使缺材料或未确认来源同样返回非零；云端两 preset 始终启用此严格模式。
+普通审计可保留不带开关的库存结果，但不能将它当发布出口。
 
 ## 组件清单
 
@@ -49,17 +53,17 @@ python3 tests/check_reading_licenses.py
 | 组件 | 固定来源 / 版本 | 归档 SHA-256 | 启用条件 | 链接 | 许可证原文 → 安装路径（`share/exreader/licenses/` 下） | 原文 SHA-256 | core | library |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | FreeType | freetype/freetype `VER-2-15-0` | `87c7f1f8…cdcac4fb8` | 总是 | `freetype` | `docs/FTL.TXT` → `freetype/FTL.TXT`；`LICENSE.TXT` → `freetype/LICENSE.TXT` | `5a5ee54c…02d02967f`；`bd36c8b4…64fd2d3b` | 是 | 是 |
-| Expat | libexpat/libexpat `R_2_9_0` | `6e8ce7b5…0700cec27` | 总是 | `expat` | `expat/COPYING` → `expat/COPYING` | `31b15de8…39b25e87` | 是 | 是 |
+| Expat | libexpat/libexpat `R_2_9_0` | `6e8ce7b5…0700cec27` | 总是 | `expat` | `expat/COPYING` → `expat/COPYING`；根 `COPYING` → `expat/upstream-root/COPYING` | `31b15de8…39b25e87`；`73cc92f8…17d651e` | 是 | 是 |
 | miniz | richgel999/miniz `3.1.2` | `98468f89…20e2e9fb` | 总是 | `miniz` | `LICENSE` → `miniz/LICENSE` | `0115478d…a01646b3` | 是 | 是 |
 | stb_image | nothings/stb `2c980bb5…` | `9a955b1b…ba515` | 总是 | 头文件编入 `exr_graphics`（构建目录私有补丁副本） | `LICENSE` → `stb/LICENSE` | `bebfe904…6cff63` | 是 | 是 |
-| libwebp | webmproject/libwebp `v1.5.0` | `668c9aba…0f37` | `EXR_ENABLE_IMAGE_WEBP` | `webp`、`webpdemux`、`sharpyuv` | `COPYING` → `libwebp/COPYING` | `5aec868f…e13acf` | 是 | 是 |
-| zlib | madler/zlib `v1.3.1` | `17e88863…14d05c` | `EXR_ENABLE_IMAGE_TIFF` | `zlibstatic` | `LICENSE` → `zlib/LICENSE`，另一份 → `libtiff/LICENSE` | `845efc77…95753243` | 是 | 是 |
+| libwebp | webmproject/libwebp `v1.5.0` | `668c9aba…0f37` | `EXR_ENABLE_IMAGE_WEBP` | `webp`、`webpdemux`、`sharpyuv` | `COPYING` → `libwebp/COPYING`；`PATENTS` → `libwebp/PATENTS` | `5aec868f…e13acf`；`cc3273e0…f5023c` | 是 | 是 |
+| zlib | madler/zlib `v1.3.1` | `17e88863…14d05c` | `EXR_ENABLE_IMAGE_TIFF` | `zlibstatic` | `LICENSE` → `zlib/LICENSE`；不再安装到 libtiff 目录 | `845efc77…95753243` | 是 | 是 |
 | libtiff | libsdl-org/libtiff `v4.7.0` | `8f568a0d…111e16` | `EXR_ENABLE_IMAGE_TIFF` | `tiff` | `LICENSE.md` → `libtiff/LICENSE.md` | `0780558a…e380d` | 是 | 是 |
 | libaom | arthenica/libaom `af3dc9aa…`（上游 `CHANGELOG` 实测 3.15.2） | `a606215e…baa62a` | `EXR_ENABLE_IMAGE_AVIF` | `aom`（仅解码器） | `LICENSE` → `libaom/LICENSE`；`PATENTS` → `libaom/PATENTS` | `4764a286…de7f2`；`661fb8e5…96e61` | 是 | 是 |
 | libavif | AOMediaCodec/libavif `v1.2.0` | `2182f490…7d8c` | `EXR_ENABLE_IMAGE_AVIF` | `avif` | `LICENSE` → `libavif/LICENSE` | `165abf92…8216f9` | 是 | 是 |
 | Mbed TLS 加密子集 | Mbed-TLS/mbedtls `mbedtls-3.6.7` | `807f0a1c…055fcc` | `EXR_ENABLE_PDF` 且 `EXR_ENABLE_PDF_CRYPTO` | `exr_crypto`（7 个上游源文件）；ARC4 改编自 2.28.10，位于 `src/pdf_crypto.c` | `LICENSE` → `mbedtls/LICENSE` | `9b405ef4…2ad09b` | 是 | 是 |
 | LittleCMS | mm2/Little-CMS `lcms2.19.1` | `267705e2…a709` | `EXR_ENABLE_ICC` | `exr_lcms` | `LICENSE` → `lcms/LICENSE` | `6dbd6043…484d31` | 是 | 是 |
-| SQLite | sqlite.org 3.54.0 amalgamation | `68e913b0…5aa4d` | `EXR_ENABLE_LIBRARY` 或 `EXR_BUILD_TEXT_INDEX` | `exr_sqlite` | 无文件；检查 `sqlite3.c` 头部公有领域声明与 notices 行 | — | 否 | 是 |
+| SQLite | sqlite.org 3.54.0 amalgamation | `68e913b0…5aa4d` | `EXR_ENABLE_LIBRARY` 或 `EXR_BUILD_TEXT_INDEX` | `exr_sqlite` | 仓库 `licenses/sqlite-public-domain.txt` → `sqlite/sqlite-public-domain.txt`；与实际 `sqlite3.c` 开头 dedication 及 `sqlite3.h` 版本核对 | 完整固定值见检查器 | 否 | 是 |
 | minimp3 | lieff/minimp3 `ea99364f…` | `5628166e…768f34` | `EXR_ENABLE_AUDIO` 且 `EXR_ENABLE_MP3` | — | `LICENSE` → `minimp3/LICENSE`（未构建，未核对） | 未固定 | 否 | 否 |
 | FAAD2 | knik0/faad2 `521d1059…` | `9284bd9c…dfd8` | `EXR_ENABLE_AUDIO` 且 `EXR_ENABLE_AAC` | — | `COPYING`、仓库 `licenses/faad2-notice.txt` → `faad2/`（未构建，未核对） | 未固定 | 否 | 否 |
 | Unicode 数据派生表 | UCD 17.0.0 与 3.2（各生成器固定输入散列） | — | 总是 | 生成的 C 表 | 仓库 `tests/fixtures/unicode/LICENSE.txt` → `unicode/LICENSE.txt` | `e7a93b00…bc53d96` | 是 | 是 |
@@ -89,25 +93,24 @@ python3 tests/check_reading_licenses.py
   反过来，本清单也不对音频构建作任何结论，minimp3/FAAD2 许可证文件未经本次构建核对。
 - PDF 编辑、文本索引、共享兼容库、JNI、工具与测试在两个 preset 中均关闭，未纳入本清单。
 
-## 未解决项（待处理，交主代理）
+## H5 修补范围与证据
 
-以下项由云端检查器逐项列出或由本次核对发现。本包不修改共享安装规则，也不手工复制文件掩盖。
+原 run `39858675511` 的两份库存检查与 pending 保留在
+`docs/validation/reading-h5-licenses/README.md`，不将原绿色结果解释为材料全部齐备。
+修补分支 `codex/reading-license-fixes` 修改四处安装材料并启用严格发布条件：
 
-1. **libwebp `PATENTS` 未随包安装。** 上游 v1.5.0 顶层有 `PATENTS`
-   （SHA-256 `cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c`），
-   当前只安装 `COPYING`；同类的 libaom 已安装 `PATENTS`。建议在
-   `CMakeLists.txt` 第 974 行把 `${libwebp_SOURCE_DIR}/PATENTS` 加入
-   `share/exreader/licenses/libwebp`，随后在清单登记并固定散列。
-2. **Expat 有两份不同的 `COPYING`。** 安装的是 `expat/COPYING`（版权年份 2001-2025）；
-   仓库顶层 `COPYING`（SHA-256 `73cc92f80889ab23c7287b1a11dd50fdec190c3f26ebe5938c579043817d651e`）
-   为同一 MIT 文本，但年份为 2001-2026。是否改装或并装由主代理决定。
-3. **SQLite 无随包许可证文件**（仅 `reading-library`）。上游 amalgamation 不含许可证文件，
-   公有领域声明只在 `sqlite3.c` 头部与 `THIRD_PARTY_NOTICES.md` 一行中；
-   `share/exreader/licenses/` 下没有 SQLite 条目。是否补充说明文件由主代理决定。
-4. **zlib 许可证被重复复制到 `licenses/libtiff/LICENSE`。** 来源是
-   `CMakeLists.txt` 第 977 行把 `${zlib_SOURCE_DIR}/LICENSE` 与 libtiff 的 `LICENSE.md`
-   同装一处；第 978 行已另装到 `licenses/zlib/LICENSE`。文件名易被误读为 libtiff 许可证，
-   建议从第 977 行移除 zlib 文件；移除后同步删除清单中的第二个 zlib 条目。
-5. **覆盖范围限制。** 只覆盖 Linux 静态 SDK；Windows（`.lib`）、macOS、Android 与原生宿主包
-   （如 Noto Sans CJK 字体）未在本次运行。Apache-2.0 来源（Mbed TLS、PDF.js 数据）只核对了
-   已登记与上游顶层文件，PDF.js 不在构建时下载，其上游 `NOTICE` 情况未由本工具核对。
+1. libwebp `COPYING` 和 `PATENTS` 同条件安装并分别固定散列。
+2. Expat 子项目 `COPYING` 保留，根 `COPYING` 装入 `upstream-root/`，避免覆盖不同年份的文本。
+3. SQLite 附带版本／归档／原文件来源与头部原文，不编造上游不存在的 LICENSE；实际源头不匹配时拒绝。
+4. zlib 只保留自身目录中的 LICENSE；旧 `libtiff/LICENSE` 出现在干净 stage 时作为未登记材料拒绝。
+
+原 23 项拒绝回归完整保留，增加 8 项材料／摘录／来源／版本回归；原“未安装上游 PATENTS 只 pending”用例
+改为同时证明库存结果可为真但 `release_ready=false`。补充两个声明／根 notice 正控。
+工作流的 `pin_materials_only=true` 只输出源文件散列，不构建、不运行验收，不授予 `release_ready`。
+
+本轮新结果在两 preset 完成同源云端构建、安装、严格检查与回归后登记；此前不授予新候选通过。
+覆盖仍只到 Linux 静态 SDK；Windows/macOS/Android、原生宿主字体与音频包使用各自材料出口。
+
+PDF.js 固定来源 `81525fd446779f0a29003cf06e3ba33751954826` 的仓库根与 `src/core/` 目录已由
+GitHub contents API 读取：根只有 LICENSE，两个目录均无 NOTICE 文件；沿用已安装的
+`licenses/pdfjs.txt`，不为不存在的该目录文件编写声明。此目录核对不扩展为整个上游递归许可证审计。

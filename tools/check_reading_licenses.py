@@ -149,7 +149,7 @@ COMPONENTS = [
      'source_statement': ['sqlite3.c', 'licenses/sqlite-public-domain.txt', SQLITE_DEDICATION],
      'version_header': ['sqlite3.h', 'SQLITE_VERSION'],
      'files': [repo('licenses/sqlite-public-domain.txt', LICENSES + 'sqlite/sqlite-public-domain.txt',
-                    'PIN_SQLITE_NOTICE_FROM_CLOUD')]},
+                    'abc1b93c15fe0a92ec55020569e10fb8206de2cf535c30e70f7f9d5428e20bcc')]},
     {'id': 'minimp3', 'name': 'minimp3', 'version': 'commit ea99364f61c14656440e8d77e9c233ccf3124633',
      'source': 'https://codeload.github.com/lieff/minimp3/tar.gz/ea99364f61c14656440e8d77e9c233ccf3124633',
      'archive_sha256': '5628166eb82a9bb581317918a334c317a2c0a30278bb14a20381307976768f34',
