@@ -51,17 +51,26 @@ def main():
   prediction=''.join(t for level,t,b in items if level==1)
   expected=normal(''.join(page['lines']));actual=normal(prediction);error,_=alignment(expected,actual)
   ew=' '.join(page['lines']).split();aw=prediction.split();we,_=alignment(ew,aw)
-  symbols=[]
+  symbols=[];groups=[]
   for level,text,box in items:
    if level!=3:continue
-   for c in normal(text):symbols.append((c,box))
-  _,pairs=alignment(''.join(x['char'] for x in page['characters']),''.join(c for c,b in symbols))
-  offsets=[]
-  for a,b in pairs:offsets.append(max(abs(x-y) for x,y in zip(page['characters'][a]['box'],symbols[b][1])))
+   word=normal(text);groups.append((word,box,len(symbols)))
+   for c in word:symbols.append(c)
+  _,pairs=alignment(''.join(x['char'] for x in page['characters']),''.join(symbols));matched={b:a for a,b in pairs}
+  offsets=[];group_offsets=[]
+  for word,box,start_index in groups:
+   refs=[matched.get(i) for i in range(start_index,start_index+len(word))]
+   if not refs or any(x is None for x in refs) or refs!=list(range(refs[0],refs[0]+len(refs))):continue
+   boxes=[page['characters'][i]['box'] for i in refs]
+   reference=[min(b[0] for b in boxes),min(b[1] for b in boxes),max(b[2] for b in boxes),max(b[3] for b in boxes)]
+   delta=max(abs(x-y) for x,y in zip(reference,box));group_offsets.append(delta)
+   if len(word)==1:offsets.append(delta)
   records.append({"id":page['id'],"language":page['language'],"rotation":page['rotation'],"input_sha256":page['sha256'],
      "cer_errors":error,"cer_characters":len(expected),"cer":error/len(expected),"wer_errors":we,"wer_words":len(ew),"wer":we/len(ew),
      "matched_character_boxes":len(offsets),"box_edge_error_px_mean":statistics.mean(offsets) if offsets else None,
-     "box_edge_error_px_max":max(offsets,default=None),"wall_seconds":time.monotonic()-start,"backend":backend,"contracts":contracts,
+     "box_edge_error_px_max":max(offsets,default=None),"matched_symbol_group_boxes":len(group_offsets),
+     "symbol_group_edge_error_px_mean":statistics.mean(group_offsets) if group_offsets else None,"symbol_group_edge_error_px_max":max(group_offsets,default=None),
+     "wall_seconds":time.monotonic()-start,"backend":backend,"contracts":contracts,
      "prediction":prediction,"items":len(items),"raw_sha256":hashlib.sha256(dest.read_bytes()).hexdigest()})
  assert len(records)==30 and sum(r['contracts'] for r in records)==11
  aggregate={}
@@ -71,7 +80,9 @@ def main():
                    "wer":sum(r['wer_errors'] for r in group)/sum(r['wer_words'] for r in group),
                    "matched_character_boxes":sum(r['matched_character_boxes'] for r in group),
                    "box_edge_error_px_max":max(r['box_edge_error_px_max'] or 0 for r in group),
-                   "box_edge_error_px_mean_across_pages":statistics.mean(r['box_edge_error_px_mean'] for r in group if r['box_edge_error_px_mean'] is not None)}
+                   "box_edge_error_px_mean_across_pages":statistics.mean(r['box_edge_error_px_mean'] for r in group if r['box_edge_error_px_mean'] is not None),
+                   "matched_symbol_group_boxes":sum(r['matched_symbol_group_boxes'] for r in group),
+                   "symbol_group_edge_error_px_max":max(r['symbol_group_edge_error_px_max'] or 0 for r in group)}
  accepted=aggregate['en']['cer']<=.03 and aggregate['zh']['cer']<=.05
  report={"schema":1,"source":__import__('os').environ['GITHUB_SHA'],"accepted":accepted,"complete_wp11":False,
    "corpus_kind":manifest['kind'],"dpi":300,"pages":records,"aggregate":aggregate,"coordinate_roundtrip_checks":checks,

@@ -46,6 +46,8 @@ jobs:
           cmake -S extras/ocr -B build/adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/stage-sdk" -DCMAKE_CXX_FLAGS="$flags" -DEXR_OCR_TESTS=ON
           cmake --build build/adapter --parallel 4
           cmake --install build/adapter --prefix "$PWD/stage-ocr"
+          test -s stage-ocr/share/exreader-ocr/LICENSE
+          test -s stage-ocr/share/exreader-ocr/WP11-OCR-ADAPTER.md
           cmake -S tests/ocr -B build/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/stage-sdk;$PWD/stage-ocr" -DCMAKE_CXX_FLAGS="$flags"
           cmake --build build/consumer --parallel 4
       - name: Freeze original 30 page corpus and input identities
@@ -94,6 +96,7 @@ jobs:
           for mode in ('release','sanitizers'):
             p=root/f'WP11-OCR-{mode}';d=json.loads((p/'results/summary.json').read_text())
             assert d['accepted'] is True and d['source']==os.environ['GITHUB_SHA'] and len(d['pages'])==30
+            assert len({p['input_sha256'] for p in d['pages']})==30
             assert d['coordinate_roundtrip_checks']>0
             assert sum(x['contracts'] for x in d['pages'])==11
             assert (p/'programs.sha256').stat().st_size>0
