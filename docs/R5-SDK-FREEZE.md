@@ -17,6 +17,10 @@ Apple 接续发现单段原文加标签超过16KiB窗口时，窗口准备可能
 `native-chapter-oversized-unit`覆盖16KiB单段、32KiB嵌套inline、重复引文歧义、
 全文流式查询与首页面等价，并检查2MiB单元在1MiB工作区下拒绝。
 该回归独立设置60秒超时，防止递归回归耗尽整轮预算。修复候选尚未获云端接受。
+首候选`2f268476`的native运行[39871355982](https://github.com/NoGod3524/EXReader/actions/runs/39871355982)
+保留为失败：两种正常单元查询/歧义/页面检查已通过，新增低预算反例误要求lazy pager构造时立刻拒绝。
+实际单元在首次查询时加载；回归改为在`exr_pager_anchor_create`触发加载并要求`EXR_LIMIT`且输出为空。
+该修正不改SDK实现或预算。
 
 ## 原源码冻结证据（历史保留）
 
