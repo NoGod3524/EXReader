@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include <gtk/gtk.h>
+#include <string.h>
 /* Deliberately faulty test-only host: ignore stored font on restart. */
 static gint ignore_saved_font(GKeyFile *file,const gchar *group,const gchar *name,GError **error) {
   if(!strcmp(group,"reader")&&!strcmp(name,"font")) return 24;
