@@ -27,6 +27,8 @@ jobs:
       EXREADER_HOST_ACCEPTANCE: '1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configure native SDK
         run: cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
@@ -50,7 +52,7 @@ jobs:
 
       - name: Run the UI acceptance phases and validate evidence
         run: |
-          python tools/check_windows_host.py --package build/wp13-windows/EXReader --output build/wp13-evidence --sdk stage --manifest build/wp13-windows/build.json --steps tests/windows_host --fixtures build/wp13-fixtures --selftest-report build/wp13-windows/report.json
+          python tools/check_windows_host.py --package build/wp13-windows/EXReader --output build/wp13-evidence --sdk stage --manifest build/wp13-windows/build.json --steps tests/windows_host --fixtures build/wp13-fixtures --selftest-report build/wp13-windows/report.json --consumer-binary build/win-host/Release/EXReader.exe
 
       - name: Upload Windows host evidence
         if: always()
