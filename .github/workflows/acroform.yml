@@ -125,8 +125,9 @@ jobs:
                   bases[cells[1]] = bytes.fromhex(cells[3]).decode('utf-8')
               elif cells[0] == 'W':
                   name = bytes.fromhex(cells[9]).decode('utf-8')
-                  print('W id=%s status=%s size=%s file=%s present=%s' % (
-                      cells[1], cells[3], cells[6], name, (edited / name).exists()))
+                  message = bytes.fromhex(cells[10]).decode('utf-8')
+                  print('W id=%s status=%s size=%s file=%s present=%s msg=%s' % (
+                      cells[1], cells[3], cells[6], name, (edited / name).exists(), message))
               elif cells[0] == 'RO':
                   print('RO id=%s status=%s fields=%s' % (cells[1], cells[2], cells[4]))
           print('edited files on disk: %d' % len(list(edited.glob('*.pdf'))))

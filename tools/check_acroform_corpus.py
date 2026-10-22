@@ -358,7 +358,8 @@ def main():
         if entry['expect'] in ('accept', 'empty'):
             if entry['op'] in ('write', 'write-empty'):
                 verdict.check(item.write['status'] == 'EXR_OK',
-                              'write status %r != EXR_OK' % item.write['status'])
+                              'write status %r != EXR_OK (%s)' %
+                              (item.write['status'], item.write.get('message')))
                 verdict.check(item.write['prefix'], 'output does not preserve the input prefix')
                 verdict.check(item.write['same'], 'the caller input bytes changed')
                 verdict.check(item.write['size'] > entry['size'] if entry['op'] == 'write'
@@ -474,7 +475,8 @@ def main():
                               'read of a formless document was not successful')
         else:
             verdict.check(item.write['status'] == entry['status'],
-                          'write status %r != %r' % (item.write['status'], entry['status']))
+                          'write status %r != %r (%s)' %
+                          (item.write['status'], entry['status'], item.write.get('message')))
             verdict.check(item.write['size'] == 0 and item.write['changes'] == len(entry['changes']),
                           'rejected write reported outputs or a wrong change count')
             verdict.check(item.write['same'], 'a rejected write modified the caller input')
