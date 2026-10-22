@@ -22,19 +22,25 @@ final class FixedSession implements AutoCloseable {
     private final float baseScale;
     private int index;
     private boolean closed;
+    private final long bookId;
+    private final boolean imageOnly;
 
-    FixedSession(String path, byte[] font, int format) throws IOException {
+    FixedSession(long bookId, String path, byte[] font, int format) throws IOException {
+        this.bookId = bookId;
+        imageOnly = format == NativeLibrary.FORMAT_CBZ;
         byte[] bytes = read(path);
         if (format == NativeLibrary.FORMAT_CBZ) {
             document = new EXReader.FixedDocument(EXReader.FixedFormat.CBZ, bytes);
         } else {
             document = new EXReader.Pdf(bytes, font, 0);
         }
-        pageCount = document.pageCount();
-        if (pageCount <= 0) throw new IllegalStateException("The document has no pages");
-        EXReader.Bitmap probe = document.render(0, 1.0);
-        if (probe == null || probe.width <= 0) throw new IllegalStateException("The first page cannot be rendered");
-        baseScale = Math.max(0.25f, Math.min(20f, 600f / probe.width));
+        try {
+            pageCount = document.pageCount();
+            if (pageCount <= 0) throw new IllegalStateException("The document has no pages");
+            EXReader.Bitmap probe = document.render(0, 1.0);
+            if (probe == null || probe.width <= 0) throw new IllegalStateException("The first page cannot be rendered");
+            baseScale = Math.max(0.25f, Math.min(20f, 600f / probe.width));
+        } catch (RuntimeException | Error error) { document.close(); throw error; }
     }
 
     int pageCount() {
@@ -45,22 +51,23 @@ final class FixedSession implements AutoCloseable {
         return index;
     }
 
-    PageLoad load(int page, float zoom) {
+    PageLoad load(int page, float zoom, HostTask task) throws Exception {
         if (closed) return null;
+        task.check();
         if (page < 0) page = 0;
         if (page >= pageCount) page = pageCount - 1;
-        index = page;
+        final int candidateIndex = page;
         long started = System.nanoTime();
         float scale = baseScale * zoom;
         EXReader.Bitmap nativeBitmap = document.render(page, scale);
+        task.check();
         if (nativeBitmap == null) throw new IllegalStateException("No page bitmap");
         Bitmap bitmap = ReflowSession.toBitmap(nativeBitmap);
-        EXReader.TextPage textPage = null;
+        boolean transferred = false;
         try {
-            textPage = document.text(page);
-        } catch (RuntimeException ignored) {
-            // A page without a text layer is still a valid fixed page.
-        }
+        EXReader.TextPage textPage = null;
+        if (!imageOnly) textPage = document.text(page);
+        task.check();
         byte[] text = textPage == null || textPage.utf8 == null ? new byte[0] : textPage.utf8;
         int regions = textPage == null ? 0 : textPage.flags.length;
         long[] starts = new long[regions];
@@ -80,8 +87,12 @@ final class FixedSession implements AutoCloseable {
         float contentHeight = bitmap.getHeight() / scale;
         PageSnapshot snapshot = new PageSnapshot(bitmap, true, page, pageCount, 0, text.length,
                 text, scale, contentWidth, contentHeight, starts, ends, quads,
-                null, null, null, null, lineText, lineBounds, 0);
-        return new PageLoad(snapshot, (System.nanoTime() - started) / 1000000L);
+                null, null, null, null, lineText, lineBounds, 0, bookId);
+        PageLoad result = new PageLoad(snapshot, (System.nanoTime() - started) / 1000000L,
+                () -> index = candidateIndex, () -> {});
+        transferred = true;
+        return result;
+        } finally { if (!transferred) bitmap.recycle(); }
     }
 
     private static final class LineSet {
@@ -151,7 +162,10 @@ final class FixedSession implements AutoCloseable {
         try {
             byte[] buffer = new byte[65536];
             int count;
-            while ((count = in.read(buffer)) > 0) out.write(buffer, 0, count);
+            while ((count = in.read(buffer)) > 0) {
+                if (out.size() > 32L * 1024 * 1024 - count) throw new IOException("File exceeds 32 MiB");
+                out.write(buffer, 0, count);
+            }
         } finally {
             in.close();
         }

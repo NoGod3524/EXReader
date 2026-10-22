@@ -39,22 +39,53 @@ static char *copy_string(const char *text) {
 }
 
 static char *input_string(JNIEnv *env, jstring value) {
-  const char *chars;
-  char *copy;
+  const jchar *chars;
+  char *copy; jsize length, i; size_t out=0;
   if (!value) return NULL;
-  chars = (*env)->GetStringUTFChars(env, value, NULL);
+  length=(*env)->GetStringLength(env,value);
+  chars = (*env)->GetStringChars(env, value, NULL);
   if (!chars) return NULL;
-  copy = copy_string(chars);
-  (*env)->ReleaseStringUTFChars(env, value, chars);
+  copy=malloc((size_t)length*3+1);
+  if(!copy) { (*env)->ReleaseStringChars(env,value,chars); throw_argument(env,"Cannot allocate UTF-8 input"); return NULL; }
+  for(i=0;i<length;i++) {
+    uint32_t cp=chars[i];
+    if(cp>=0xd800 && cp<=0xdbff && i+1<length && chars[i+1]>=0xdc00 && chars[i+1]<=0xdfff)
+      { cp=0x10000+((cp-0xd800)<<10)+(chars[++i]-0xdc00); }
+    else if(!cp || (cp>=0xd800 && cp<=0xdfff)) {
+      free(copy); (*env)->ReleaseStringChars(env,value,chars);
+      throw_argument(env,"Text contains NUL or an unpaired UTF-16 surrogate"); return NULL;
+    }
+    if(cp<0x80) copy[out++]=(char)cp;
+    else if(cp<0x800) { copy[out++]=(char)(0xc0|(cp>>6)); copy[out++]=(char)(0x80|(cp&63)); }
+    else if(cp<0x10000) { copy[out++]=(char)(0xe0|(cp>>12)); copy[out++]=(char)(0x80|((cp>>6)&63)); copy[out++]=(char)(0x80|(cp&63)); }
+    else { copy[out++]=(char)(0xf0|(cp>>18)); copy[out++]=(char)(0x80|((cp>>12)&63)); copy[out++]=(char)(0x80|((cp>>6)&63)); copy[out++]=(char)(0x80|(cp&63)); }
+  }
+  copy[out]=0;
+  (*env)->ReleaseStringChars(env, value, chars);
   return copy;
 }
 
-static jstring output_string(JNIEnv *env, const char *text) {
-  size_t length, index = 0, produced = 0;
+static int note_owner(JNIEnv *env,exr_library *store,jlong book,jlong id,int fixed) {
+  exr_error error={0}; exr_status status; size_t count=0,i; int found=0;
+  if(fixed) {
+    exr_fixed_note *notes=NULL; status=exr_library_fixed_notes(store,(int64_t)book,&notes,&count,&error);
+    if(status==EXR_OK) for(i=0;i<count;i++) if(notes[i].id==(int64_t)id) found=1;
+    exr_fixed_notes_free(notes,count);
+  } else {
+    exr_note *notes=NULL; status=exr_library_notes(store,(int64_t)book,&notes,&count,&error);
+    if(status==EXR_OK) for(i=0;i<count;i++) if(notes[i].id==(int64_t)id) found=1;
+    exr_notes_free(notes,count);
+  }
+  if(status!=EXR_OK) { throw_status(env,status,&error,"Cannot verify annotation ownership"); return 0; }
+  if(!found) throw_argument(env,"Annotation does not belong to the selected book");
+  return found;
+}
+
+static jstring output_bytes(JNIEnv *env, const char *text,size_t length) {
+  size_t index = 0, produced = 0;
   jchar *units;
   jstring result;
   if (!text) text = "";
-  length = strlen(text);
   units = (jchar *)malloc((length + 1) * sizeof(jchar));
   if (!units) {
     jclass type = (*env)->FindClass(env, "java/lang/OutOfMemoryError");
@@ -113,6 +144,8 @@ static jstring output_string(JNIEnv *env, const char *text) {
   return result;
 }
 
+static jstring output_string(JNIEnv *env,const char *text) { return output_bytes(env,text ? text : "",text ? strlen(text) : 0); }
+
 static unsigned char *read_entire_file(const char *path, size_t *size) {
   FILE *file;
   long length;
@@ -169,6 +202,14 @@ static int set_cell(JNIEnv *env, jobjectArray row, jsize column, const char *val
   if (!text) return 0;
   (*env)->SetObjectArrayElement(env, row, column, text);
   (*env)->DeleteLocalRef(env, text);
+  return (*env)->ExceptionCheck(env) ? 0 : 1;
+}
+
+static int set_cell_bytes(JNIEnv *env,jobjectArray row,jsize column,const char *value,size_t size) {
+  jstring text=output_bytes(env,value,size);
+  if(!text) return 0;
+  (*env)->SetObjectArrayElement(env,row,column,text);
+  (*env)->DeleteLocalRef(env,text);
   return (*env)->ExceptionCheck(env) ? 0 : 1;
 }
 
@@ -270,6 +311,9 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFi
     throw_argument(env, "Unsupported import format");
     return NULL;
   }
+  /* Allocate the Java result before a database insert can commit. */
+  result = (*env)->NewLongArray(env, 2);
+  if (!result) return NULL;
   file = input_string(env, path);
   name = input_string(env, title);
   if (!file || !name) {
@@ -309,7 +353,6 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFi
   }
   values[0] = (jlong)id;
   values[1] = (jlong)created;
-  result = (*env)->NewLongArray(env, 2);
   if (result) (*env)->SetLongArrayRegion(env, result, 0, 2, values);
   return result;
 }
@@ -370,6 +413,28 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_nativeNotes(
     throw_argument(env, "Too many annotations");
     return NULL;
   }
+  {
+    exr_document *document = NULL;
+    for (i = 0; i < count; i++) {
+      exr_anchor_match match;
+      if (!notes[i].anchor.exact) continue; /* Legacy offsets. */
+      if (!document) {
+        status = exr_library_document(store, (int64_t)book_id, &document, &error);
+        if (status != EXR_OK) break;
+      }
+      memset(&match, 0, sizeof(match));
+      status = exr_anchor_resolve(document, &notes[i].anchor, &match, &error);
+      if (status != EXR_OK) break;
+      notes[i].start = match.state == EXR_ANCHOR_FOUND ? match.start : SIZE_MAX;
+      notes[i].end = match.state == EXR_ANCHOR_FOUND ? match.end : SIZE_MAX;
+    }
+    exr_document_free(document);
+    if (status != EXR_OK) {
+      exr_notes_free(notes, count);
+      throw_status(env, status, &error, "Cannot resolve annotations");
+      return NULL;
+    }
+  }
   rows = new_rows(env, (jsize)count);
   for (i = 0; rows && i < count; i++) {
     jobjectArray row = new_row(env, 5);
@@ -426,7 +491,7 @@ JNIEXPORT jlong JNICALL Java_org_exreader_host_NativeLibrary_nativeSaveNote(
 }
 
 JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeUpdateNoteText(
-    JNIEnv *env, jclass type, jlong handle, jlong note_id, jstring comment) {
+    JNIEnv *env, jclass type, jlong handle, jlong book_id, jlong note_id, jstring comment) {
   exr_library *store = library(env, handle);
   char *text;
   exr_error error;
@@ -434,6 +499,7 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeUpdateNoteText
   (void)type;
   memset(&error, 0, sizeof(error));
   if (!store) return;
+  if (!note_owner(env,store,book_id,note_id,0)) return;
   if (note_id <= 0) {
     throw_argument(env, "Invalid annotation id");
     return;
@@ -449,13 +515,14 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeUpdateNoteText
 }
 
 JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeRemoveNote(
-    JNIEnv *env, jclass type, jlong handle, jlong note_id) {
+    JNIEnv *env, jclass type, jlong handle, jlong book_id, jlong note_id) {
   exr_library *store = library(env, handle);
   exr_error error;
   exr_status status;
   (void)type;
   memset(&error, 0, sizeof(error));
   if (!store) return;
+  if (!note_owner(env,store,book_id,note_id,0)) return;
   status = exr_library_remove_note(store, (int64_t)note_id, &error);
   if (status != EXR_OK) throw_status(env, status, &error, "Cannot remove the annotation");
 }
@@ -481,16 +548,52 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_nativeFixedN
     throw_argument(env, "Too many annotations");
     return NULL;
   }
+  if (count) {
+    exr_fixed_document *document = NULL;
+    exr_fixed_open_options options;
+    const exr_fixed_page *pages;
+    size_t page_count = 0;
+    memset(&options, 0, sizeof(options));
+    options.struct_size = sizeof(options);
+    status = exr_library_fixed(store, (int64_t)book_id, &options, &document, &error);
+    pages = status == EXR_OK ? exr_fixed_pages(document, &page_count) : NULL;
+    for (i = 0; status == EXR_OK && i < count; i++) {
+      exr_fixed_text *text = NULL;
+      exr_anchor_match match;
+      size_t page;
+      for (page = 0; page < page_count; page++)
+        if (strcmp(pages[page].id, notes[i].anchor.page_id) == 0) break;
+      notes[i].start = notes[i].end = SIZE_MAX;
+      if (page == page_count) { notes[i].page = SIZE_MAX; continue; }
+      notes[i].page = page;
+      status = exr_fixed_load_text(document, page, NULL, &text, &error);
+      if (status == EXR_OK) {
+        memset(&match, 0, sizeof(match));
+        status = exr_fixed_anchor_resolve(pages[page].id, text, &notes[i].anchor, NULL, &match, &error);
+        if (status == EXR_OK && match.state == EXR_ANCHOR_FOUND) {
+          notes[i].start = match.start;
+          notes[i].end = match.end;
+        }
+      }
+      exr_fixed_text_free(text);
+    }
+    exr_fixed_free(document);
+    if (status != EXR_OK) {
+      exr_fixed_notes_free(notes, count);
+      throw_status(env, status, &error, "Cannot resolve page annotations");
+      return NULL;
+    }
+  }
   rows = new_rows(env, (jsize)count);
   for (i = 0; rows && i < count; i++) {
     jobjectArray row = new_row(env, 6);
     if (!row) break;
     if (!set_number(env, row, 0, (long long)notes[i].id) ||
-        !set_number(env, row, 1, (long long)notes[i].page) ||
+        !set_number(env, row, 1, notes[i].page == SIZE_MAX ? -1 : (long long)notes[i].page) ||
         !set_number(env, row, 2, notes[i].start == SIZE_MAX ? -1 : (long long)notes[i].start) ||
         !set_number(env, row, 3, notes[i].end == SIZE_MAX ? -1 : (long long)notes[i].end) ||
         !set_cell(env, row, 4, notes[i].text) ||
-        !set_cell(env, row, 5, notes[i].anchor.exact)) {
+        !set_cell_bytes(env, row, 5, notes[i].anchor.exact,notes[i].anchor.exact_size)) {
       (*env)->DeleteLocalRef(env, row);
       break;
     }
@@ -539,13 +642,14 @@ JNIEXPORT jlong JNICALL Java_org_exreader_host_NativeLibrary_nativeSaveFixedNote
 }
 
 JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeRemoveFixedNote(
-    JNIEnv *env, jclass type, jlong handle, jlong note_id) {
+    JNIEnv *env, jclass type, jlong handle, jlong book_id, jlong note_id) {
   exr_library *store = library(env, handle);
   exr_error error;
   exr_status status;
   (void)type;
   memset(&error, 0, sizeof(error));
   if (!store) return;
+  if (!note_owner(env,store,book_id,note_id,1)) return;
   status = exr_library_remove_fixed_note(store, (int64_t)note_id, &error);
   if (status != EXR_OK) throw_status(env, status, &error, "Cannot remove the page annotation");
 }
@@ -574,15 +678,18 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeProgress
     exr_document *document = NULL;
     exr_error resolve_error;
     memset(&resolve_error, 0, sizeof(resolve_error));
-    if (exr_library_document(store, (int64_t)book_id, &document, &resolve_error) == EXR_OK) {
+    status=exr_library_document(store, (int64_t)book_id, &document, &resolve_error);
+    if (status == EXR_OK) {
       exr_anchor_match match;
       memset(&match, 0, sizeof(match));
-      if (exr_anchor_resolve(document, &point, &match, &resolve_error) == EXR_OK) {
+      status=exr_anchor_resolve(document, &point, &match, &resolve_error);
+      if (status == EXR_OK) {
         state = match.state;
-        if (state == EXR_ANCHOR_FOUND && match.start != SIZE_MAX) point.start = match.start;
+        point.start = state == EXR_ANCHOR_FOUND ? match.start : SIZE_MAX;
       }
       exr_document_free(document);
     }
+    if(status!=EXR_OK) { exr_anchor_free(&point);throw_status(env,status,&resolve_error,"Cannot resolve saved progress");return NULL; }
   }
   values[0] = (jlong)state;
   values[1] = point.start == SIZE_MAX ? -1 : (jlong)point.start;

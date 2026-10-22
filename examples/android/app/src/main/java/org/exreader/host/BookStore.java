@@ -52,12 +52,12 @@ final class BookStore implements AutoCloseable {
         return library.saveNote(bookId, noteId, start, end, comment);
     }
 
-    void updateNoteText(long noteId, String comment) {
-        library.updateNoteText(noteId, comment);
+    void updateNoteText(long bookId, long noteId, String comment) {
+        library.updateNoteText(bookId, noteId, comment);
     }
 
-    void removeNote(long noteId) {
-        library.removeNote(noteId);
+    void removeNote(long bookId, long noteId) {
+        library.removeNote(bookId, noteId);
     }
 
     List<NativeLibrary.FixedNote> fixedNotes(long bookId) {
@@ -70,8 +70,8 @@ final class BookStore implements AutoCloseable {
         return library.saveFixedNote(bookId, noteId, page, start, end, comment);
     }
 
-    void removeFixedNote(long noteId) {
-        library.removeFixedNote(noteId);
+    void removeFixedNote(long bookId, long noteId) {
+        library.removeFixedNote(bookId, noteId);
     }
 
     void deleteBook(long bookId) {

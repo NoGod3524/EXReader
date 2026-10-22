@@ -5,7 +5,10 @@
 只消费安装后的公开 SDK；`bindings/jni/**` 保持只读，书库、选择器和标注由
 `examples/android/app/src/main/cpp/exreader_host_jni.c` 这一小型本地桥接提供。
 
-## 云端验收结果
+## 原交付的云端验收结果
+
+以下记录保留原交付的历史身份；本轮修复与新门禁以 `docs/WP13-ANDROID-REVIEW.md`
+为准。历史 45/45 不替代新源码的云端验收。
 
 - 实现提交：`6f6bfb77e946d145245d90c7165188566b300e50`（分支 `codex/wp13-android`）。
 - 工作流运行：[WP13 Android host #39723075163](https://github.com/NoGod3524/EXReader/actions/runs/39723075163)，
@@ -113,7 +116,7 @@ Noto Sans CJK SC（OFL），随 APK 分发。
 仓库内汇总：`docs/validation/wp13-android.json`（由 `check_android_host.py` 合并，
 仅在全部 case 通过且 ABI/API/散列一致时写出）。
 
-## 已知限制
+## 原交付验收的已知限制
 
 - 只打包 x86_64，供云端模拟器安装；没有 arm64 真机 APK，也不声明真机结果。
 - APK 使用 debug 签名；不请求用户证书、账号或设备。

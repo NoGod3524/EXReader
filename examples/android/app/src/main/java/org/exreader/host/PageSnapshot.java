@@ -6,6 +6,7 @@ import android.graphics.RectF;
 
 /** Immutable UI-side page: bitmap, engine geometry and text for selection. */
 final class PageSnapshot {
+    final long bookId;
     final Bitmap bitmap;
     final boolean fixed;
     final int index;
@@ -32,7 +33,8 @@ final class PageSnapshot {
                  byte[] text, float renderScale, float contentWidth, float contentHeight,
                  long[] starts, long[] ends, float[][] quads,
                  float[] glyphX, float[] glyphBaseline, float[] glyphAdvance, float[] glyphSize,
-                 String[] lineText, RectF[] lineBounds, long millis) {
+                 String[] lineText, RectF[] lineBounds, long millis, long bookId) {
+        this.bookId = bookId;
         this.bitmap = bitmap;
         this.fixed = fixed;
         this.index = index;

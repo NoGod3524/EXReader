@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 # Emulator-side host walkthrough. Kept in a file because the emulator action
 # runs its inline script line by line.
-set -e
+set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 cd "$ROOT"
@@ -80,22 +80,8 @@ done
 adb shell ls -l /sdcard/Download > "$EVIDENCE/device-downloads.txt" 2>&1 || true
 
 adb shell pm clear org.exreader.host
-adb shell rm -rf /sdcard/Android/data/org.exreader.host.uitest/files/evidence
+adb shell rm -rf /sdcard/Android/data/org.exreader.host.uitest/files/evidence \
+  /sdcard/Android/data/org.exreader.host.uitest/files/review-evidence
 
-set +e
-adb shell am instrument -w -e disableAnalytics true \
-  org.exreader.host.uitest.test/androidx.test.runner.AndroidJUnitRunner \
-  | tee "$EVIDENCE/instrumentation.txt"
-instrument_status=$PIPESTATUS
-set -e
-
-adb logcat -d > "$EVIDENCE/logcat.txt" || true
-adb pull /sdcard/Android/data/org.exreader.host.uitest/files/evidence \
-  "$EVIDENCE/device" || true
-if [ -d "$EVIDENCE/device/evidence" ]; then
-  cp -a "$EVIDENCE/device/evidence/." "$EVIDENCE/device/"
-  rm -rf "$EVIDENCE/device/evidence"
-fi
-adb shell dumpsys package org.exreader.host > "$EVIDENCE/package.txt" 2>&1 || true
-
-exit "$instrument_status"
+python3 tools/run_android_host_evidence.py --build build/android-host/build.json \
+  --evidence "$EVIDENCE"

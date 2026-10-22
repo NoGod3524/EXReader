@@ -2,12 +2,16 @@
 package org.exreader.host.uitest;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.Rect;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.view.KeyEvent;
 import android.os.Build;
 import android.os.SystemClock;
 
@@ -26,13 +30,17 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.regex.Pattern;
+import java.security.MessageDigest;
 
 /**
  * Black-box walkthrough of the installed host. The test APK instruments itself,
@@ -54,6 +62,9 @@ public final class HostWalkthroughTest {
     private long startedAt;
     private final List<JSONObject> results = new ArrayList<>();
     private final List<String> failures = new ArrayList<>();
+    private String originalFontFrame;
+    private String rotatedPage, rotatedAnchor, rotatedTitle;
+    private String notePage, noteAnchor, noteTitle;
 
     @Before public void setUp() throws Exception {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
@@ -116,14 +127,18 @@ public final class HostWalkthroughTest {
         });
 
         step("font_increase", "Font increase reflows and keeps the position", () -> {
+            originalFontFrame = frameDigest();
+            String position = pagePosition();
             click("font_up");
             assertTrue("font status missing", waitIdText("reader_status", "Font size 28", 15000));
-            assertTrue("page label lost", text("page_label").contains("p."));
+            assertEquals("font change moved the first page", position, pagePosition());
+            assertTrue("font change did not change rendered pixels", waitFrameDifferent(originalFontFrame));
         });
 
         step("font_decrease", "Font decrease reflows back", () -> {
             click("font_down");
             assertTrue("font status missing", waitIdText("reader_status", "Font size 24", 15000));
+            assertTrue("font decrease did not restore rendered pixels", waitFrameEqual(originalFontFrame));
         });
 
         step("touch_select", "Touch drag selects real page text", () -> {
@@ -142,9 +157,13 @@ public final class HostWalkthroughTest {
             SystemClock.sleep(2000);
             assertTrue("copy status missing", waitIdText("reader_status", "Copied", 10000));
             assertTrue("copy count missing", text("reader_status").contains("characters"));
+            verifyPastedSelection();
         });
 
         step("note_add", "Add an annotation from the selection", () -> {
+            notePage = pagePosition();
+            noteAnchor = pageAnchor();
+            noteTitle = text("book_title");
             click("annotate_button");
             assertNotNull("comment field missing", waitId("note_comment", 8000));
             device.findObject(By.res(APP + ":id/note_comment")).setText("note one");
@@ -175,19 +194,25 @@ public final class HostWalkthroughTest {
         });
 
         step("note_navigate", "Navigate from an annotation to its page", () -> {
+            tapReader(1);
+            assertTrue("navigation setup did not leave the annotation page", waitLabelContains("p.2", 15000));
             click("notes_button");
             UiObject2 row = findNoteRow("note one edited");
             assertNotNull("annotation row missing", row);
             row.click();
             assertTrue("jump status missing", waitIdText("reader_status", "Jumped to annotation", 15000));
-            assertNotNull("reader missing after jump", waitId("page_label", 8000));
+            assertTrue("annotation jump did not restore the selected source page",
+                    waitReaderState(notePage, noteAnchor, noteTitle, 15000));
         });
 
         step("rotate_landscape", "Rotation recreates the activity and keeps state", () -> {
+            rotatedPage = pagePosition();
+            rotatedAnchor = pageAnchor();
+            rotatedTitle = text("book_title");
             device.setOrientationLeft();
             SystemClock.sleep(1200);
             assertNotNull("reader missing after rotation", waitId("reader_panel", 20000));
-            assertTrue("page label missing after rotation", text("page_label").contains("p."));
+            assertTrue("rotation lost the exact source page", waitReaderState(rotatedPage, rotatedAnchor, rotatedTitle, 15000));
             assertTrue("annotations lost after rotation", waitButtonText("Notes (1)", 15000));
         });
 
@@ -195,33 +220,41 @@ public final class HostWalkthroughTest {
             device.setOrientationNatural();
             SystemClock.sleep(1200);
             assertNotNull("reader missing after rotation", waitId("reader_panel", 20000));
-            assertTrue("page label missing after rotation", text("page_label").contains("p."));
+            assertTrue("portrait restore lost the exact source page", waitReaderState(rotatedPage, rotatedAnchor, rotatedTitle, 15000));
         });
 
         step("activity_rebuild", "Explicit activity recreation restores the reader", () -> {
+            String position = pagePosition(), anchor = pageAnchor(), title = text("book_title");
+            String frame = frameDigest();
             click("rebuild_view");
             SystemClock.sleep(800);
             assertNotNull("reader missing after rebuild", waitId("reader_panel", 20000));
-            assertTrue("page label missing after rebuild", text("page_label").contains("p."));
+            assertTrue("rebuild lost the exact source page", waitReaderState(position, anchor, title, 15000));
+            assertTrue("rebuild changed the accepted frame", waitFrameEqual(frame));
             assertTrue("annotations lost after rebuild", waitButtonText("Notes (1)", 15000));
         });
 
         step("background_resume", "Home and resume keeps the reader state", () -> {
+            String position = pagePosition(), anchor = pageAnchor(), title = text("book_title");
             device.pressHome();
             SystemClock.sleep(900);
             device.executeShellCommand("am start -W -n " + APP + "/.MainActivity");
             assertNotNull("reader missing after resume", waitId("reader_panel", 20000));
-            assertTrue("page label missing after resume", text("page_label").contains("p."));
+            assertTrue("resume lost the exact source page", waitReaderState(position, anchor, title, 15000));
         });
 
         step("process_restart_reflow", "Process restart restores page and annotations", () -> {
             tapReader(1);
             assertTrue("page 2 not reached", waitLabelContains("p.2", 15000));
+            String position = pagePosition(), anchor = pageAnchor(), title = text("book_title");
+            String frame = frameDigest();
             device.executeShellCommand("am force-stop " + APP);
             SystemClock.sleep(900);
             device.executeShellCommand("am start -W -n " + APP + "/.MainActivity");
             assertNotNull("reader missing after restart", waitId("reader_panel", 25000));
             assertTrue("page 2 not restored", waitLabelContains("p.2", 20000));
+            assertTrue("restart lost exact position or original text", waitReaderState(position, anchor, title, 15000));
+            assertTrue("restart changed the accepted frame", waitFrameEqual(frame));
             assertTrue("annotations lost after restart", waitButtonText("Notes (1)", 20000));
         });
 
@@ -280,10 +313,14 @@ public final class HostWalkthroughTest {
         });
 
         step("pdf_zoom", "PDF zoom changes the rendered page", () -> {
+            JSONObject before = lastPageMetric();
+            long bytes = before.getLong("bytes");
             click("zoom_up");
             assertTrue("zoom status missing", waitIdText("zoom_label", "1.25", 15000));
+            assertTrue("zoom did not increase the real bitmap", waitBitmapSize(before, bytes, true));
             click("zoom_down");
             assertTrue("zoom reset missing", waitIdText("zoom_label", "1.00", 15000));
+            assertTrue("zoom did not restore the real bitmap", waitBitmapSize(before, bytes, false));
         });
 
         step("pdf_select_copy", "Select and copy PDF text", () -> {
@@ -295,6 +332,7 @@ public final class HostWalkthroughTest {
             assertTrue("pdf selection missing", waitIdText("selection_status", "Selected: A", 8000));
             click("copy_button");
             assertTrue("pdf copy missing", waitIdText("reader_status", "Copied 1 characters", 8000));
+            verifyPastedSelection();
         });
 
         step("pdf_note_add", "Add a fixed-page annotation", () -> {
@@ -310,11 +348,15 @@ public final class HostWalkthroughTest {
             click("selection_cancel");
             tapReader(1);
             assertTrue("pdf page 2 not reached", waitLabelContains("PDF p.2/5", 15000));
+            String position = pagePosition(), anchor = pageAnchor(), title = text("book_title");
+            String frame = frameDigest();
             device.executeShellCommand("am force-stop " + APP);
             SystemClock.sleep(900);
             device.executeShellCommand("am start -W -n " + APP + "/.MainActivity");
             assertNotNull("pdf reader missing after restart", waitId("reader_panel", 25000));
             assertTrue("pdf page 2 not restored", waitLabelContains("PDF p.2/5", 20000));
+            assertTrue("PDF restart lost the selected page", waitReaderState(position, anchor, title, 15000));
+            assertTrue("PDF restart changed the rendered frame", waitFrameEqual(frame));
             assertTrue("pdf note lost after restart", waitButtonText("Notes (1)", 20000));
         });
 
@@ -406,7 +448,8 @@ public final class HostWalkthroughTest {
             clickBookRow("Second.epub");
             assertNotNull("second book missing", waitId("reader_panel", 20000));
             assertTrue("wrong book title", text("book_title").contains("Second.epub"));
-            assertTrue("wrong page", text("page_label").contains("p."));
+            assertTrue("wrong page", waitLabelContains("p.1", 15000));
+            assertNotNull("stale first-book content survived the switch", findLineNode("Second sample"));
             backToShelf();
         });
 
@@ -446,6 +489,138 @@ public final class HostWalkthroughTest {
         }
     }
 
+    private void verifyPastedSelection() throws Exception {
+        String selected = text("selection_status");
+        assertTrue("selection text unavailable", selected.startsWith("Selected: "));
+        String expected = selected.substring("Selected: ".length());
+        assertTrue("clipboard comparison needs the complete selected line", !expected.isEmpty() && !expected.endsWith("..."));
+        click("annotate_button");
+        UiObject2 input = waitId("note_comment", 8000);
+        assertNotNull("paste verification field missing", input);
+        input.setText("");
+        input.click();
+        device.pressKeyCode(KeyEvent.KEYCODE_PASTE);
+        long deadline = SystemClock.uptimeMillis() + 8000;
+        while (SystemClock.uptimeMillis() < deadline && !expected.equals(text("note_comment"))) SystemClock.sleep(100);
+        assertEquals("clipboard paste differs from the selected original text", expected, text("note_comment"));
+        clickLabel("Cancel");
+    }
+
+    private String pagePosition() {
+        String value = text("page_label");
+        int divider = value.indexOf('·');
+        return (divider < 0 ? value : value.substring(0, divider)).trim();
+    }
+
+    private String pageAnchor() {
+        try {
+            Rect reader = boundsOf("reader_view");
+            if (reader == null) return "";
+            List<UiObject2> lines = new ArrayList<>();
+            for (UiObject2 line : device.findObjects(By.clazz("android.widget.TextView"))) {
+                Rect bounds = line.getVisibleBounds();
+                String value = line.getText();
+                if (value != null && !value.trim().isEmpty() && bounds.width() > 0 && bounds.height() > 0
+                        && bounds.left >= reader.left - 2 && bounds.right <= reader.right + 2
+                        && bounds.top >= reader.top - 2 && bounds.bottom <= reader.bottom + 2) lines.add(line);
+            }
+            lines.sort(Comparator.comparingInt((UiObject2 line) -> line.getVisibleBounds().top)
+                    .thenComparingInt(line -> line.getVisibleBounds().left));
+            return lines.isEmpty() ? "" : lines.get(0).getText();
+        } catch (androidx.test.uiautomator.StaleObjectException transientSnapshot) {
+            return "";
+        }
+    }
+
+    private boolean waitReaderState(String position, String anchor, String title, long timeout) throws Exception {
+        assertTrue("expected page anchor is empty", anchor != null && !anchor.isEmpty());
+        long deadline = SystemClock.uptimeMillis() + timeout;
+        while (SystemClock.uptimeMillis() < deadline) {
+            if (position.equals(pagePosition()) && anchor.equals(pageAnchor()) && title.equals(text("book_title"))) return true;
+            SystemClock.sleep(150);
+        }
+        return false;
+    }
+
+    private static String hex(byte[] bytes) {
+        StringBuilder result = new StringBuilder(bytes.length * 2);
+        for (byte value : bytes) {
+            result.append(Character.forDigit((value >>> 4) & 15, 16));
+            result.append(Character.forDigit(value & 15, 16));
+        }
+        return result.toString();
+    }
+
+    private String fileDigest(File file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (FileInputStream stream = new FileInputStream(file)) {
+            byte[] buffer = new byte[65536];
+            for (int count; (count = stream.read(buffer)) >= 0;) if (count > 0) digest.update(buffer, 0, count);
+        }
+        return hex(digest.digest());
+    }
+
+    private String frameDigest() throws Exception {
+        device.waitForIdle();
+        Rect bounds = boundsOf("reader_view");
+        assertNotNull("reader frame missing", bounds);
+        File temporary = File.createTempFile("exr-frame-", ".png", context.getCacheDir());
+        Bitmap screen = null, frame = null;
+        try {
+            assertTrue("frame capture failed", device.takeScreenshot(temporary));
+            screen = BitmapFactory.decodeFile(temporary.getAbsolutePath());
+            assertNotNull("frame decode failed", screen);
+            assertTrue("reader frame outside screen", bounds.left >= 0 && bounds.top >= 0
+                    && bounds.right <= screen.getWidth() && bounds.bottom <= screen.getHeight());
+            frame = Bitmap.createBitmap(screen, bounds.left, bounds.top, bounds.width(), bounds.height());
+            ByteBuffer pixels = ByteBuffer.allocate(frame.getByteCount());
+            frame.copyPixelsToBuffer(pixels);
+            return hex(MessageDigest.getInstance("SHA-256").digest(pixels.array()));
+        } finally {
+            if (frame != null && frame != screen) frame.recycle();
+            if (screen != null) screen.recycle();
+            temporary.delete();
+        }
+    }
+
+    private boolean waitFrameEqual(String expected) throws Exception {
+        long deadline = SystemClock.uptimeMillis() + 8000;
+        while (SystemClock.uptimeMillis() < deadline) {
+            if (expected.equals(frameDigest())) return true;
+            SystemClock.sleep(150);
+        }
+        return false;
+    }
+
+    private boolean waitFrameDifferent(String previous) throws Exception {
+        long deadline = SystemClock.uptimeMillis() + 8000;
+        while (SystemClock.uptimeMillis() < deadline) {
+            if (!previous.equals(frameDigest())) return true;
+            SystemClock.sleep(150);
+        }
+        return false;
+    }
+
+    private JSONObject lastPageMetric() throws Exception {
+        String log = device.executeShellCommand("logcat -d -s EXRHost:I");
+        int start = log.lastIndexOf("metric {\"event\":\"page\"");
+        assertTrue("no real page render metric", start >= 0);
+        int end = log.indexOf('\n', start);
+        return new JSONObject(log.substring(start + "metric ".length(), end < 0 ? log.length() : end).trim());
+    }
+
+    private boolean waitBitmapSize(JSONObject before, long bytes, boolean larger) throws Exception {
+        long deadline = SystemClock.uptimeMillis() + 15000;
+        while (SystemClock.uptimeMillis() < deadline) {
+            JSONObject now = lastPageMetric();
+            if (now.getBoolean("fixed") && now.getLong("book") == before.getLong("book")
+                    && now.getInt("page") == before.getInt("page")
+                    && (larger ? now.getLong("bytes") > bytes : now.getLong("bytes") == bytes)) return true;
+            SystemClock.sleep(150);
+        }
+        return false;
+    }
+
     private void step(String id, String title, Body body) {
         sequence++;
         long started = SystemClock.uptimeMillis();
@@ -461,6 +636,11 @@ public final class HostWalkthroughTest {
             screenshot = screenshot(id + "-fail");
         }
         if (screenshot == null) screenshot = screenshot(id);
+        if (screenshot == null) {
+            status = "fail";
+            detail = "screenshot capture failed";
+            failures.add(id + " - " + detail);
+        }
         long duration = SystemClock.uptimeMillis() - started;
         try {
             JSONObject entry = new JSONObject();
@@ -469,7 +649,12 @@ public final class HostWalkthroughTest {
             entry.put("status", status);
             entry.put("detail", detail);
             entry.put("duration_ms", duration);
-            if (screenshot != null) entry.put("screenshot", screenshot);
+            if (screenshot != null) {
+                File shot = new File(evidenceDir, screenshot);
+                entry.put("screenshot", screenshot);
+                entry.put("screenshot_bytes", shot.length());
+                entry.put("screenshot_sha256", fileDigest(shot));
+            }
             results.add(entry);
             File file = new File(caseDir, String.format(Locale.US, "%02d-%s.json", sequence, id));
             try (FileOutputStream output = new FileOutputStream(file)) {
@@ -502,6 +687,12 @@ public final class HostWalkthroughTest {
                     || Build.PRODUCT.contains("sdk");
             JSONObject validation = new JSONObject();
             validation.put("schema", 1);
+            android.os.Bundle arguments = InstrumentationRegistry.getArguments();
+            validation.put("source_sha", arguments.getString("exr_source_sha", ""));
+            validation.put("run_id", arguments.getString("exr_run_id", ""));
+            validation.put("attempt", arguments.getString("exr_attempt", ""));
+            validation.put("apk_sha256", arguments.getString("apk_sha256", ""));
+            validation.put("test_apk_sha256", arguments.getString("test_apk_sha256", ""));
             validation.put("package", APP);
             validation.put("device_is_emulator", emulator);
             validation.put("physical_device_execution", !emulator);
@@ -726,7 +917,7 @@ public final class HostWalkthroughTest {
     private boolean waitLabelContains(String needle, long timeout) throws Exception {
         long deadline = SystemClock.uptimeMillis() + timeout;
         while (SystemClock.uptimeMillis() < deadline) {
-            if (text("page_label").contains(needle)) return true;
+            if (pagePosition().equals(needle)) return true;
             SystemClock.sleep(150);
         }
         return false;

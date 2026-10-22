@@ -137,12 +137,12 @@ public final class NativeLibrary implements AutoCloseable {
         return nativeSaveNote(checked(), bookId, noteId, start, end, comment);
     }
 
-    public void updateNoteText(long noteId, String comment) {
-        nativeUpdateNoteText(checked(), noteId, comment);
+    public void updateNoteText(long bookId, long noteId, String comment) {
+        nativeUpdateNoteText(checked(), bookId, noteId, comment);
     }
 
-    public void removeNote(long noteId) {
-        nativeRemoveNote(checked(), noteId);
+    public void removeNote(long bookId, long noteId) {
+        nativeRemoveNote(checked(), bookId, noteId);
     }
 
     public FixedNote[] fixedNotes(long bookId) {
@@ -160,8 +160,8 @@ public final class NativeLibrary implements AutoCloseable {
         return nativeSaveFixedNote(checked(), bookId, noteId, page, start, end, comment);
     }
 
-    public void removeFixedNote(long noteId) {
-        nativeRemoveFixedNote(checked(), noteId);
+    public void removeFixedNote(long bookId, long noteId) {
+        nativeRemoveFixedNote(checked(), bookId, noteId);
     }
 
     /** {state, start offset}; start is -1 when the SDK has no usable range. */
@@ -214,11 +214,11 @@ public final class NativeLibrary implements AutoCloseable {
     private static native void nativeSetPosition(long handle, long bookId, long position);
     private static native String[][] nativeNotes(long handle, long bookId);
     private static native long nativeSaveNote(long handle, long bookId, long noteId, long start, long end, String comment);
-    private static native void nativeUpdateNoteText(long handle, long noteId, String comment);
-    private static native void nativeRemoveNote(long handle, long noteId);
+    private static native void nativeUpdateNoteText(long handle, long bookId, long noteId, String comment);
+    private static native void nativeRemoveNote(long handle, long bookId, long noteId);
     private static native String[][] nativeFixedNotes(long handle, long bookId);
     private static native long nativeSaveFixedNote(long handle, long bookId, long noteId, long page, long start, long end, String comment);
-    private static native void nativeRemoveFixedNote(long handle, long noteId);
+    private static native void nativeRemoveFixedNote(long handle, long bookId, long noteId);
     private static native long[] nativeProgress(long handle, long bookId);
     private static native void nativeSaveProgress(long handle, long bookId, long offset);
     private static native void nativeDeleteBook(long handle, long bookId);

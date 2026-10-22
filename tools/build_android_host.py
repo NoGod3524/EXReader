@@ -14,6 +14,7 @@ import subprocess
 import sys
 import zipfile
 from pathlib import Path
+from android_host_evidence import apk_native, cloud_identity, inventory, ownership, source_files
 
 ROOT = Path(__file__).absolute().parents[1]
 ANDROID = ROOT / 'examples/android'
@@ -50,13 +51,7 @@ def ndk_home():
     candidate = android_home() / 'ndk' / NDK_VERSION
     if candidate.is_dir():
         return candidate
-    explicit = os.environ.get('ANDROID_NDK_HOME') or os.environ.get('ANDROID_NDK_ROOT')
-    if explicit and Path(explicit).is_dir():
-        return Path(explicit)
-    installed = sorted((android_home() / 'ndk').glob('*')) if (android_home() / 'ndk').is_dir() else []
-    if installed:
-        return installed[-1]
-    raise SystemExit('Android NDK is not installed')
+    raise SystemExit('The declared Android NDK ' + NDK_VERSION + ' is not installed')
 
 
 def ndk_revision(ndk):
@@ -233,6 +228,8 @@ def write_fixtures(folder):
         'EXReader plain text sample.\n\n'
         'The text host reads UTF-8 paragraphs and paginates them with the same engine.\n\n'
         'A second paragraph keeps the page navigation meaningful.\n', encoding='utf-8')
+    (folder / 'NewReview.txt').write_text(
+        'Independent Android ownership and cancellation review.\n' * 200, encoding='utf-8')
     broken = b'PK\x03\x04' + bytes(range(256)) * 16
     (folder / 'Broken.epub').write_bytes(broken)
     pdf = ROOT / 'tests/fixtures/pdf-public.pdf'
@@ -364,9 +361,13 @@ def main():
     args = parser.parse_args()
     if platform.system() != 'Linux':
         raise SystemExit('Android host builds run in Linux CI only')
+    cloud = cloud_identity()
+    owned = ownership()
     stage = args.stage.absolute()
     build = args.build_dir.absolute()
     build.mkdir(parents=True, exist_ok=True)
+    if (build/'build.json').exists():
+        raise SystemExit('Preserve earlier build evidence: choose a fresh output directory')
     if not args.skip_sdk:
         build_sdk(stage, args.sdk_build.absolute())
     if not (stage / 'lib/libexreader_jni.so').is_file():
@@ -388,12 +389,17 @@ def main():
     if not args.skip_gradle:
         gradle_version = gradle_build(stage, args.gradle)
     artifacts = collect_artifacts(build)
+    # Retain the existing SONAME/NEEDED checks alongside the relocatable byte proof.
+    inspect_apk(Path(artifacts['app-debug.apk']['path']))
 
     source_sha = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
+    if source_sha != cloud['source_sha']:
+        raise SystemExit('The checked-out source differs from the cloud run source')
     branch = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', '--abbrev-ref', 'HEAD'], text=True).strip()
     ndk = ndk_home()
     identity = {
-        'schema': 1,
+        **cloud,
+        'schema': 2,
         'source_sha': source_sha,
         'branch': branch,
         'sdk_version': header_version(stage / 'include/exr/base.h', 'EXR_VERSION'),
@@ -413,7 +419,12 @@ def main():
         'font': {'name': 'NotoSansCJKsc-Regular.otf', 'sha256': sha256(font / 'Reader.otf')},
         'fixtures': manifest,
         'artifacts': artifacts,
-        'native': inspect_apk(Path(artifacts['app-debug.apk']['path'])),
+        'native': apk_native(Path(artifacts['app-debug.apk']['path'])),
+        'sdk_files_sha256': inventory(stage),
+        'source_files_sha256': source_files(),
+        'ownership': owned,
+        'sdk_built': not args.skip_sdk,
+        'apk_built': not args.skip_gradle,
     }
     (build / 'build.json').write_text(json.dumps(identity, indent=2) + '\n')
     print(json.dumps({'build_dir': str(build), 'apk': artifacts['app-debug.apk']}, indent=2))

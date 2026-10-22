@@ -44,6 +44,7 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Single-activity Android host. All SDK access runs on one worker thread; the UI
@@ -51,6 +52,9 @@ import java.util.concurrent.TimeUnit;
  */
 public final class MainActivity extends Activity implements ReaderView.Listener {
     private static final String TAG = "EXRHost";
+    private static final Object IMPORT_LOCK = new Object();
+    private static final Object PROGRESS_LOCK = new Object();
+    private static final AtomicLong OWNER_EPOCH = new AtomicLong();
     private static final int REQUEST_IMPORT = 1001;
     private static final long MAX_INPUT_BYTES = 32L * 1024 * 1024;
     private static final String PREFS = "host";
@@ -109,12 +113,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private ReflowSession reflow;
     private FixedSession fixed;
     private PageSnapshot current;
-    private long generation;
+    private volatile long generation;
     private boolean pageBusy;
-    private volatile boolean importCancel;
-    private volatile boolean openCancel;
     private volatile boolean destroyed;
     private int operation;
+    private HostTask activeTask;
+    private long sessionBookId; // Worker-owned identity; never inferred from a UI field.
+    private long ownerEpoch;
+    private long shownNotesBookId;
+    private long shownNotesGeneration;
+    private PageSnapshot pendingFrame;
 
     private long bookId;
     private float fontSize = 24f;
@@ -133,6 +141,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ownerEpoch = OWNER_EPOCH.incrementAndGet();
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         fontSize = prefs.getFloat("font", 24f);
         zoom = prefs.getFloat("zoom", 1f);
@@ -238,15 +247,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         annotateButton.setOnClickListener(view -> annotateSelection());
         selectionCancel.setOnClickListener(view -> readerView.setSelectMode(false));
         cancelButton.setOnClickListener(view -> {
-            if (operation == 1) {
-                importCancel = true;
-                loadingText.setText("Canceling import...");
-            } else if (operation == 2) {
-                openCancel = true;
-                loadingText.setText("Canceling open...");
-            }
+            if (activeTask != null) activeTask.cancel();
+            loadingText.setText("Canceling operation...");
         });
         bookList.setOnItemClickListener((parent, view, position, id) -> {
+            if (operation != 0 || pageBusy) return;
             if (position < 0 || position >= books.size()) return;
             NativeLibrary.Book book = books.get(position);
             if (currentBook != null && currentBook.id == book.id && current != null) {
@@ -256,14 +261,19 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             openBook(book.id, -1, -1);
         });
         noteList.setOnItemClickListener((parent, view, position, id) -> {
+            if (operation != 0 || pageBusy || currentBook == null ||
+                    shownNotesBookId != currentBook.id || shownNotesGeneration != generation) return;
             if (position < 0 || position >= shownNotes.size()) return;
             Object note = shownNotes.get(position);
             hideNotes();
             navigateTo(note);
         });
         noteList.setOnItemLongClickListener((parent, view, position, id) -> {
+            if (operation != 0 || pageBusy || currentBook == null ||
+                    shownNotesBookId != currentBook.id || shownNotesGeneration != generation) return true;
             if (position < 0 || position >= shownNotes.size()) return true;
             Object note = shownNotes.get(position);
+            pendingFrame = current;
             if (note instanceof NativeLibrary.FixedNote) {
                 NativeLibrary.FixedNote fixedNote = (NativeLibrary.FixedNote) note;
                 pendingFixed = true;
@@ -323,8 +333,62 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         return book.title + "\n" + formatName(book.format) + " · " + humanBytes(bytes) + " · " + position;
     }
 
+    private HostTask beginTask(int kind) {
+        if (activeTask != null) activeTask.cancel();
+        final long gen = ++generation;
+        HostTask task = new HostTask(() -> destroyed || generation != gen);
+        activeTask = task;
+        operation = kind;
+        pageBusy = true;
+        readerView.setSelectMode(false);
+        readerView.clearSelection();
+        setActionsEnabled(false);
+        return task;
+    }
+
+    private void setActionsEnabled(boolean enabled) {
+        for (View view : new View[]{importButton, refreshButton, bookList, fontDown, fontUp,
+                zoomDown, zoomUp, selectButton, notesButton, copyButton, annotateButton, readerView}) {
+            view.setEnabled(enabled);
+        }
+    }
+
+    private void finishTask(long gen) {
+        if (gen != generation) return;
+        activeTask = null;
+        operation = 0;
+        pageBusy = false;
+        hideLoading();
+        setActionsEnabled(true);
+    }
+
+    private void taskFailed(long gen, String prefix, Throwable error) {
+        postUi(() -> {
+            if (gen != generation) return;
+            finishTask(gen);
+            setStatus(error instanceof HostTask.Cancelled ? "Operation canceled" : prefix + message(error));
+        });
+    }
+
+    // One debug-only phase gate is used by cloud UI tests. It observes actual
+    // file/SDK work; ordinary launches never wait here.
+    private void reviewGate(String phase, HostTask task) throws Exception {
+        if (!BuildConfig.DEBUG || !getIntent().getBooleanExtra("exr_review", false) ||
+                !phase.equals(getIntent().getStringExtra("review_pause"))) return;
+        File release = new File(getFilesDir(), "review-release");
+        postUi(() -> loadingText.setText("Review " + phase));
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(
+                "progress-before-write".equals(phase) ? 60 : 20);
+        while (!release.isFile()) {
+            task.check();
+            if (System.nanoTime() > deadline) throw new IOException("Cloud review phase was not released");
+            Thread.sleep(10);
+        }
+        if (!release.delete()) throw new IOException("Cannot remove review release marker");
+    }
+
     private void openBook(long id, long offset, int page) {
-        if (worker == null) return;
+        if (worker == null || operation != 0 || pageBusy) return;
         if (store == null) {
             setStatus("Library is still opening");
             return;
@@ -337,28 +401,30 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             return;
         }
         final NativeLibrary.Book target = book;
-        final long gen = ++generation;
-        operation = 2;
-        openCancel = false;
-        pageBusy = false;
+        final HostTask task = beginTask(2);
+        final long gen = generation;
+        final float requestedFont = fontSize, requestedZoom = zoom;
         showLoading("Opening " + target.title + "...", true);
         final long requestedOffset = offset;
         final int requestedPage = page;
         worker.execute(() -> {
+            ReflowSession candidateReflow = null;
+            FixedSession candidateFixed = null;
+            PageLoad load = null;
+            boolean accepted = false;
             String notice = null;
             try {
-                closeSessionsLocked();
+                task.check();
                 String path = prefs.getString("path_" + target.id, null);
                 if (path == null || !new File(path).isFile()) {
                     throw new IOException("The app-owned book copy is missing");
                 }
-                PageLoad load;
                 if (target.fixed()) {
-                    fixed = new FixedSession(path, fontBytes(), target.format);
+                    candidateFixed = new FixedSession(target.id, path, fontBytes(), target.format);
                     int requested = requestedPage >= 0 ? requestedPage : (int) Math.max(0, target.position);
-                    load = fixed.load(requested, zoom);
+                    load = candidateFixed.load(requested, requestedZoom, task);
                 } else {
-                    reflow = new ReflowSession(path, fontBytes(), fontSize);
+                    candidateReflow = new ReflowSession(target.id, path, fontBytes(), requestedFont);
                     long savedOffset = requestedOffset;
                     int state = -1;
                     if (savedOffset < 0) {
@@ -376,27 +442,26 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                         notice = "Saved position is not exact (state " + state
                                 + "); opened at stored offset " + seek + ".";
                     }
-                    load = reflow.seek(seek);
+                    load = candidateReflow.seek(seek, task);
                 }
                 if (load == null) throw new IllegalStateException("The book has no readable pages");
                 Log.i(TAG, "handle open book=" + target.id + " mode=" + (target.fixed() ? "fixed" : "reflow"));
-                if (openCancel) {
-                    closeSessionsLocked();
-                    postUi(() -> {
-                        if (gen != generation) return;
-                        operation = 0;
-                        hideLoading();
-                        setStatus("Open canceled");
-                        showShelf(false);
-                    });
-                    return;
-                }
                 final PageLoad result = load;
+                final ReflowSession nextReflow = candidateReflow;
+                final FixedSession nextFixed = candidateFixed;
+                task.commit(() -> {
+                    saveProgressLocked(result.snapshot, task);
+                    result.accept();
+                    closeSessionsLocked();
+                    reflow = nextReflow;
+                    fixed = nextFixed;
+                    sessionBookId = target.id;
+                });
+                accepted = true;
                 final String restored = notice;
                 postUi(() -> {
                     if (gen != generation) return;
-                    operation = 0;
-                    hideLoading();
+                    finishTask(gen);
                     currentBook = target;
                     bookId = target.id;
                     prefs.edit().putLong("lastBook", target.id).putBoolean("lastReader", true).apply();
@@ -406,23 +471,20 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     refreshNotesCount();
                 });
             } catch (Throwable error) {
-                closeSessionsLocked();
-                final String detail = message(error);
-                postUi(() -> {
-                    if (gen != generation) return;
-                    operation = 0;
-                    hideLoading();
-                    current = null;
-                    readerView.setPage(null);
-                    setStatus("Could not open " + target.title + ": " + detail);
-                    showShelf(false);
-                });
+                taskFailed(gen, "Could not open " + target.title + ": ", error);
+            } finally {
+                if (load != null) load.close();
+                if (!accepted) {
+                    if (candidateReflow != null) candidateReflow.close();
+                    if (candidateFixed != null) candidateFixed.close();
+                }
             }
         });
     }
 
     private void applyPage(long gen, PageLoad load, String notice) {
         if (gen != generation) return;
+        finishTask(gen);
         current = load.snapshot;
         pageBusy = false;
         readerView.setPage(current);
@@ -482,10 +544,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private void leaveReader() {
-        final PageSnapshot snapshot = current;
+        if (activeTask != null) activeTask.cancel();
         ++generation;
+        operation = 0;
+        activeTask = null;
         pageBusy = false;
+        hideLoading();
+        setActionsEnabled(true);
         current = null;
+        currentBook = null;
+        bookId = 0;
         readerView.setPage(null);
         readerPanel.setVisibility(View.GONE);
         notesPanel.setVisibility(View.GONE);
@@ -493,44 +561,60 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         selectionBar.setVisibility(View.GONE);
         prefs.edit().putBoolean("lastReader", false).apply();
         if (worker != null) {
-            worker.execute(() -> {
-                if (snapshot != null) saveProgressLocked(snapshot);
-                closeSessionsLocked();
-            });
+            worker.execute(this::closeSessionsLocked);
         }
         loadShelf(false);
     }
 
     private void turnPage(int delta) {
         if (worker == null || current == null || pageBusy || operation != 0) return;
+        final boolean isFixed = current.fixed;
+        final float scale = zoom;
+        runPage(task -> isFixed ? fixed.load(fixed.index() + delta, scale, task) :
+                (delta > 0 ? reflow.next(task) : reflow.previous(task)),
+                () -> {}, delta > 0 ? "End of book" : "Start of book");
+    }
+
+    private interface PageAction { PageLoad run(HostTask task) throws Exception; }
+
+    private void runPage(PageAction action, Runnable accepted, String empty) {
+        if (worker == null || current == null || operation != 0 || pageBusy) return;
+        final long owner = current.bookId;
+        final HostTask task = beginTask(3);
         final long gen = generation;
-        pageBusy = true;
+        showLoading("Loading page...", true);
         worker.execute(() -> {
+            PageLoad load = null;
+            android.database.sqlite.SQLiteDatabase fault = null;
             try {
-                PageLoad load;
-                if (current.fixed) {
-                    if (fixed == null) return;
-                    load = fixed.load(fixed.index() + delta, zoom);
-                } else {
-                    if (reflow == null) return;
-                    load = delta > 0 ? reflow.next() : reflow.previous();
-                }
+                task.check();
+                if (sessionBookId != owner) throw new IllegalStateException("The reading book changed");
+                reviewGate("page-before-render", task);
+                load = action.run(task);
                 if (load == null) {
-                    postUi(() -> {
-                        if (gen != generation) return;
-                        pageBusy = false;
-                        setStatus(delta > 0 ? "End of book" : "Start of book");
-                    });
+                    postUi(() -> { if (gen == generation) { finishTask(gen); setStatus(empty); } });
                     return;
                 }
-                saveProgressLocked(load.snapshot);
-                postUi(() -> applyPage(gen, load, null));
-            } catch (Throwable error) {
+                if (BuildConfig.DEBUG && getIntent().getBooleanExtra("review_fail_progress", false)) {
+                    getIntent().removeExtra("review_fail_progress");
+                    fault = android.database.sqlite.SQLiteDatabase.openDatabase(
+                            new File(getFilesDir(), "library.db").getPath(), null, 0);
+                    fault.execSQL("CREATE TRIGGER host_review_progress BEFORE INSERT ON book_progress BEGIN SELECT RAISE(ABORT,'host-review'); END");
+                }
+                final PageLoad result = load;
+                task.commit(() -> { saveProgressLocked(result.snapshot, task); result.accept(); });
                 postUi(() -> {
                     if (gen != generation) return;
-                    pageBusy = false;
-                    setStatus("Page error: " + message(error));
+                    accepted.run();
+                    applyPage(gen, result, null);
                 });
+            } catch (Throwable error) { taskFailed(gen, "Page error: ", error); }
+            finally {
+                if (fault != null) {
+                    try { fault.execSQL("DROP TRIGGER IF EXISTS host_review_progress"); }
+                    finally { fault.close(); }
+                }
+                if (load != null) load.close();
             }
         });
     }
@@ -542,28 +626,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             setStatus("Font size limit");
             return;
         }
-        fontSize = size;
-        prefs.edit().putFloat("font", size).apply();
-        final long gen = generation;
-        pageBusy = true;
-        worker.execute(() -> {
-            try {
-                PageLoad load = reflow.setFontSize(size);
-                if (load == null) throw new IllegalStateException("The book has no readable pages");
-                saveProgressLocked(load.snapshot);
-                postUi(() -> {
-                    if (gen != generation) return;
-                    applyPage(gen, load, null);
-                    setStatus("Font size " + (int) size);
-                });
-            } catch (Throwable error) {
-                postUi(() -> {
-                    if (gen != generation) return;
-                    pageBusy = false;
-                    setStatus("Layout error: " + message(error));
-                });
-            }
-        });
+        runPage(task -> reflow.setFontSize(size, task), () -> {
+            fontSize = size;
+            prefs.edit().putFloat("font", size).apply();
+            setStatus("Font size " + (int) size);
+        }, "The book has no readable pages");
     }
 
     private void changeZoom(int direction) {
@@ -573,39 +640,27 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             setStatus("Zoom limit");
             return;
         }
-        zoom = next;
-        prefs.edit().putFloat("zoom", next).apply();
-        final long gen = generation;
-        pageBusy = true;
-        worker.execute(() -> {
-            try {
-                PageLoad load = fixed.load(fixed.index(), zoom);
-                postUi(() -> {
-                    if (gen != generation) return;
-                    applyPage(gen, load, null);
-                    setStatus(String.format(Locale.US, "Zoom %.2f", zoom));
-                });
-            } catch (Throwable error) {
-                postUi(() -> {
-                    if (gen != generation) return;
-                    pageBusy = false;
-                    setStatus("Zoom error: " + message(error));
-                });
-            }
-        });
+        runPage(task -> fixed.load(fixed.index(), next, task), () -> {
+            zoom = next;
+            prefs.edit().putFloat("zoom", next).apply();
+            setStatus(String.format(Locale.US, "Zoom %.2f", zoom));
+        }, "The book has no readable pages");
     }
 
-    private void saveProgressLocked(PageSnapshot snapshot) {
-        if (store == null || snapshot == null || bookId <= 0) return;
-        try {
+    private void saveProgressLocked(PageSnapshot snapshot, HostTask task) throws Exception {
+        if (store == null || snapshot == null || snapshot.bookId <= 0) return;
+        Log.i(TAG, "progress attempt {\"owner\":" + ownerEpoch + ",\"book\":" + snapshot.bookId
+                + ",\"index\":" + snapshot.index + "}");
+        // Only workers take this lock. An old in-flight save finishes before a
+        // new Activity can publish progress; a queued stale owner cannot save.
+        synchronized (PROGRESS_LOCK) {
+            if (destroyed || ownerEpoch != OWNER_EPOCH.get()) throw new HostTask.Cancelled();
+            reviewGate("progress-before-write", task);
             if (snapshot.fixed) {
-                store.setPosition(bookId, snapshot.index);
+                store.setPosition(snapshot.bookId, snapshot.index);
             } else {
-                store.saveProgress(bookId, snapshot.start);
-                store.setPosition(bookId, snapshot.start);
+                store.saveProgress(snapshot.bookId, snapshot.start);
             }
-        } catch (Throwable error) {
-            Log.w(TAG, "progress save failed: " + message(error));
         }
     }
 
@@ -621,27 +676,31 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             fixed = null;
             closed = true;
         }
-        if (closed) Log.i(TAG, "handle close book=" + bookId);
+        if (closed) Log.i(TAG, "handle close book=" + sessionBookId);
+        sessionBookId = 0;
     }
 
     private void refreshNotesCount() {
         if (worker == null || currentBook == null) return;
         final NativeLibrary.Book book = currentBook;
+        final long gen = generation;
         worker.execute(() -> {
-            int count = 0;
             try {
-                count = book.fixed() ? store.fixedNotes(book.id).size() : store.notes(book.id).size();
+                final int value = book.fixed() ? store.fixedNotes(book.id).size() : store.notes(book.id).size();
+                postUi(() -> {
+                    if (gen == generation && currentBook != null && currentBook.id == book.id)
+                        notesButton.setText("Notes (" + value + ")");
+                });
             } catch (Throwable error) {
-                Log.w(TAG, "annotation count failed: " + message(error));
+                postUi(() -> { if (gen == generation) setStatus("Annotation count error: " + message(error)); });
             }
-            final int value = count;
-            postUi(() -> notesButton.setText("Notes (" + value + ")"));
         });
     }
 
     private void showNotes() {
-        if (worker == null || currentBook == null) return;
+        if (worker == null || currentBook == null || pageBusy || operation != 0) return;
         final NativeLibrary.Book book = currentBook;
+        final long gen = generation;
         worker.execute(() -> {
             try {
                 List<String> rows = new ArrayList<>();
@@ -660,9 +719,17 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                         rows.add(note.comment + " — " + ReaderView.clip(note.selected, 60));
                     }
                 }
-                postUi(() -> showNotesPanel(rows, notes));
+                postUi(() -> {
+                    if (gen != generation || currentBook == null || currentBook.id != book.id) return;
+                    shownNotesBookId = book.id;
+                    shownNotesGeneration = gen;
+                    showNotesPanel(rows, notes);
+                });
             } catch (Throwable error) {
-                postStatus("Annotation list error: " + message(error));
+                postUi(() -> {
+                    if (gen == generation && currentBook != null && currentBook.id == book.id)
+                        setStatus("Annotation list error: " + message(error));
+                });
             }
         });
     }
@@ -682,45 +749,23 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private void navigateTo(Object note) {
-        if (worker == null || current == null) return;
-        final long gen = generation;
-        pageBusy = true;
-        worker.execute(() -> {
-            try {
-                PageLoad load;
-                if (note instanceof NativeLibrary.FixedNote) {
-                    NativeLibrary.FixedNote fixedNote = (NativeLibrary.FixedNote) note;
-                    if (fixed == null) throw new IllegalStateException("The fixed reader is closed");
-                    load = fixed.load((int) fixedNote.page, zoom);
-                } else {
-                    NativeLibrary.Note reflowNote = (NativeLibrary.Note) note;
-                    if (reflowNote.start < 0) {
-                        postUi(() -> {
-                            if (gen == generation) {
-                                pageBusy = false;
-                                setStatus("Annotation range is unresolved");
-                            }
-                        });
-                        return;
-                    }
-                    load = reflow.seek(reflowNote.start);
-                }
-                postUi(() -> {
-                    if (gen != generation) return;
-                    applyPage(gen, load, null);
-                    setStatus("Jumped to annotation");
-                });
-            } catch (Throwable error) {
-                postUi(() -> {
-                    if (gen != generation) return;
-                    pageBusy = false;
-                    setStatus("Annotation navigation error: " + message(error));
-                });
-            }
-        });
+        if (current == null || current.bookId != shownNotesBookId || generation != shownNotesGeneration) return;
+        final float scale = zoom;
+        if (note instanceof NativeLibrary.FixedNote) {
+            NativeLibrary.FixedNote value = (NativeLibrary.FixedNote) note;
+            if (value.page < 0 || value.start < 0) { setStatus("Annotation range is unresolved"); return; }
+            runPage(task -> fixed.load((int) value.page, scale, task),
+                    () -> setStatus("Jumped to annotation"), "Annotation page is missing");
+        } else {
+            NativeLibrary.Note value = (NativeLibrary.Note) note;
+            if (value.start < 0) { setStatus("Annotation range is unresolved"); return; }
+            runPage(task -> reflow.seek(value.start, task),
+                    () -> setStatus("Jumped to annotation"), "Annotation page is missing");
+        }
     }
 
     private void copySelection() {
+        if (pageBusy || operation != 0) return;
         Selection selection = readerView.getSelection();
         if (selection == null || selection.text.isEmpty()) {
             setStatus("No text is selected");
@@ -736,6 +781,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private void annotateSelection() {
+        if (pageBusy || operation != 0 || current == null) return;
         Selection selection = readerView.getSelection();
         if (selection == null || selection.text.isEmpty()) {
             setStatus("Select text first");
@@ -746,6 +792,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         pendingEnd = selection.end;
         pendingPage = selection.pageIndex;
         pendingSelected = selection.text;
+        pendingFrame = current;
         showNoteDialog(0, "", true);
     }
 
@@ -766,68 +813,72 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private void saveNote(long noteId, String raw) {
+        final PageSnapshot frame = pendingFrame;
+        if (worker == null || frame == null || frame != current || pageBusy || operation != 0) {
+            setStatus("The selected page changed; select text again");
+            return;
+        }
         String comment = raw == null ? "" : raw.trim();
         if (comment.isEmpty()) comment = ReaderView.clip(pendingSelected, 80);
         if (comment.isEmpty()) comment = "(no comment)";
         final String text = comment;
-        if (worker == null) return;
-        if (noteId > 0) {
-            worker.execute(() -> {
-                try {
-                    if (pendingFixed) {
-                        store.saveFixedNote(bookId, noteId, pendingPage, pendingStart, pendingEnd, text);
-                    } else {
-                        store.updateNoteText(noteId, text);
-                    }
-                    postStatus("Annotation updated");
-                    refreshNotesCount();
-                    postUi(() -> {
-                        if (notesPanel.getVisibility() == View.VISIBLE) showNotes();
-                    });
-                } catch (Throwable error) {
-                    postStatus("Could not update annotation: " + message(error));
-                }
-            });
-            return;
-        }
-        final boolean isFixed = current != null && current.fixed;
+        final boolean isFixed = frame.fixed;
         final long start = pendingStart;
         final long end = pendingEnd;
         final int page = pendingPage;
+        final HostTask task = beginTask(4);
+        final long gen = generation;
         worker.execute(() -> {
             try {
-                if (isFixed) {
-                    store.saveFixedNote(bookId, 0, page, start, end, text);
-                } else {
-                    store.saveNote(bookId, 0, start, end, text);
-                }
-                postStatus("Annotation saved");
-                refreshNotesCount();
+                task.check();
+                if (sessionBookId != frame.bookId) throw new IllegalStateException("The reading book changed");
+                task.commit(() -> {
+                    if (isFixed) store.saveFixedNote(frame.bookId, noteId, page, start, end, text);
+                    else if (noteId > 0) store.updateNoteText(frame.bookId, noteId, text);
+                    else store.saveNote(frame.bookId, 0, start, end, text);
+                });
+                postUi(() -> {
+                    if (gen != generation) return;
+                    finishTask(gen);
+                    setStatus(noteId > 0 ? "Annotation updated" : "Annotation saved");
+                    refreshNotesCount();
+                    if (notesPanel.getVisibility() == View.VISIBLE) showNotes();
+                });
             } catch (Throwable error) {
-                postStatus("Could not save annotation: " + message(error));
+                taskFailed(gen, "Could not save annotation: ", error);
             }
         });
     }
 
     private void deleteNote(long noteId) {
-        if (worker == null) return;
-        final boolean isFixed = current != null && current.fixed;
+        final PageSnapshot frame = pendingFrame;
+        if (worker == null || frame == null || frame != current || pageBusy || operation != 0) return;
+        final boolean isFixed = frame.fixed;
+        final HostTask task = beginTask(4);
+        final long gen = generation;
         worker.execute(() -> {
             try {
-                if (isFixed) store.removeFixedNote(noteId);
-                else store.removeNote(noteId);
+                task.check();
+                if (sessionBookId != frame.bookId) throw new IllegalStateException("The reading book changed");
+                task.commit(() -> {
+                    if (isFixed) store.removeFixedNote(frame.bookId, noteId);
+                    else store.removeNote(frame.bookId, noteId);
+                });
                 postUi(() -> {
+                    if (gen != generation) return;
+                    finishTask(gen);
                     setStatus("Annotation deleted");
                     hideNotes();
+                    refreshNotesCount();
                 });
-                refreshNotesCount();
             } catch (Throwable error) {
-                postStatus("Could not delete annotation: " + message(error));
+                taskFailed(gen, "Could not delete annotation: ", error);
             }
         });
     }
 
     private void startImport() {
+        if (pageBusy || operation != 0) return;
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
@@ -868,76 +919,121 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         importUri(uri, name, format);
     }
 
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (!BuildConfig.DEBUG || !intent.getBooleanExtra("exr_review", false)) return;
+        if (intent.getBooleanExtra("review_recreate", false)) {
+            intent.removeExtra("review_recreate");
+            intent.removeExtra("review_pause");
+            recreate();
+            return;
+        }
+        String title = intent.getStringExtra("review_open_title");
+        if (title != null) {
+            for (NativeLibrary.Book book : books) {
+                if (title.equals(book.title)) { openBook(book.id, -1, -1); return; }
+            }
+            setStatus("Review target is missing from the shelf");
+        }
+    }
+
     private void importUri(Uri uri, String name, int format) {
-        if (worker == null) return;
-        operation = 1;
-        importCancel = false;
+        if (worker == null || pageBusy || operation != 0) return;
+        final HostTask task = beginTask(1);
+        final long gen = generation;
         showLoading("Importing " + name + "...", true);
         worker.execute(() -> {
-            File copied = null;
+          synchronized (IMPORT_LOCK) {
+            CopyResult copied = null;
             long importedId = 0;
             boolean created = false;
+            boolean published = false;
             try {
-                copied = copyUri(uri, name);
-                if (importCancel) throw new CancelledImport();
-                String path = copied.getAbsolutePath();
+                copied = copyUri(uri, name, task);
+                reviewGate("import-copied", task);
+                task.check();
+                String path = copied.file.getAbsolutePath();
                 if (format == NativeLibrary.FORMAT_PDF) {
-                    byte[] bytes = readFile(copied);
+                    byte[] bytes = readFile(copied.file);
                     EXReader.FixedDocument document = new EXReader.Pdf(bytes, fontBytes(), 0);
                     document.close();
                 } else if (format == NativeLibrary.FORMAT_CBZ) {
-                    byte[] bytes = readFile(copied);
+                    byte[] bytes = readFile(copied.file);
                     EXReader.FixedDocument document = new EXReader.FixedDocument(EXReader.FixedFormat.CBZ, bytes);
                     document.close();
                 } else {
                     EXReader.Document document = new EXReader.Document(path);
                     document.close();
                 }
-                if (importCancel) throw new CancelledImport();
+                task.check();
                 NativeLibrary.ImportResult result = store.importFile(path, format, name);
                 importedId = result.id;
                 created = result.created;
-                if (importCancel) {
-                    if (created) store.deleteBook(importedId);
-                    throw new CancelledImport();
+                reviewGate("import-inserted", task);
+                final long acceptedId = importedId;
+                final CopyResult resultCopy = copied;
+                final String oldPath = prefs.getString("path_" + acceptedId, null);
+                final boolean reused = !created && oldPath != null && new File(oldPath).isFile();
+                task.commit(() -> {
+                    String acceptedPath = reused ? oldPath : path;
+                    if (!prefs.edit().putString("path_" + acceptedId, acceptedPath)
+                            .putLong("size_" + acceptedId, new File(acceptedPath).length()).commit()) {
+                        throw new IOException("Could not persist the imported book path");
+                    }
+                });
+                published = true;
+                if (reused && resultCopy.owned && !path.equals(oldPath) && !resultCopy.file.delete()) {
+                    Log.w(TAG, "Unused duplicate copy could not be removed");
                 }
-                prefs.edit().putString("path_" + importedId, path)
-                        .putLong("size_" + importedId, copied.length()).apply();
+                reviewGate("import-committed", task);
                 final boolean inserted = created;
                 postUi(() -> {
-                    operation = 0;
-                    hideLoading();
+                    if (gen != generation) return;
+                    finishTask(gen);
                     setStatus(inserted ? "Imported " + name : "Already in shelf: " + name);
                     loadShelf(false);
                 });
-            } catch (CancelledImport canceled) {
-                if (copied != null) copied.delete();
-                if (importedId > 0 && created) {
-                    try { store.deleteBook(importedId); } catch (Throwable ignored) { }
-                }
-                postUi(() -> {
-                    operation = 0;
-                    hideLoading();
-                    setStatus("Import canceled");
-                    loadShelf(false);
-                });
             } catch (Throwable error) {
-                if (copied != null) copied.delete();
-                if (importedId > 0 && created) {
-                    try { store.deleteBook(importedId); } catch (Throwable ignored) { }
+                Throwable reported = error;
+                if (!published) {
+                    try { rollbackImport(copied, importedId, created); }
+                    catch (Throwable cleanup) { reported = cleanup; }
                 }
-                final String detail = message(error);
+                final Throwable failure = reported;
+                final boolean completed = published;
                 postUi(() -> {
-                    operation = 0;
-                    hideLoading();
-                    setStatus("Could not open " + name + ": " + detail);
+                    if (gen != generation) return;
+                    finishTask(gen);
+                    setStatus(completed ? "Imported " + name : failure instanceof HostTask.Cancelled ?
+                            "Import canceled" : "Could not open " + name + ": " + message(failure));
                     loadShelf(false);
                 });
             }
+          }
         });
     }
 
-    private File copyUri(Uri uri, String name) throws IOException {
+    private static final class CopyResult {
+        final File file;
+        final boolean owned;
+        CopyResult(File file, boolean owned) { this.file = file; this.owned = owned; }
+    }
+
+    private void rollbackImport(CopyResult copy, long id, boolean created) throws IOException {
+        if (created) {
+            try { store.deleteBook(id); }
+            catch (Throwable error) {
+                throw new IOException("Import rollback failed; retained book " + id + " and its source: " + message(error));
+            }
+        }
+        if (copy != null && copy.owned && copy.file.exists() && !copy.file.delete()) {
+            throw new IOException("Import cleanup failed; retained source " + copy.file.getName());
+        }
+    }
+
+    private CopyResult copyUri(Uri uri, String name, HostTask task) throws IOException {
+        task.check();
         File folder = new File(getFilesDir(), "books");
         if (!folder.isDirectory() && !folder.mkdirs()) throw new IOException("Cannot create the book folder");
         File temporary = new File(folder, "import-" + System.nanoTime() + ".part");
@@ -955,37 +1051,39 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             byte[] buffer = new byte[65536];
             int count;
             while ((count = input.read(buffer)) > 0) {
-                if (importCancel) throw new CancelledImport();
+                task.check();
                 total += count;
                 if (total > MAX_INPUT_BYTES) throw new IOException("File exceeds 32 MiB limit");
                 output.write(buffer, 0, count);
                 digest.update(buffer, 0, count);
             }
-        } catch (CancelledImport canceled) {
-            temporary.delete();
+        } catch (HostTask.Cancelled canceled) {
+            removeTemporary(temporary);
             throw canceled;
         } catch (Throwable error) {
-            temporary.delete();
+            removeTemporary(temporary);
             if (error instanceof IOException) throw (IOException) error;
             throw new IOException(message(error));
         }
         if (total == 0) {
-            temporary.delete();
+            removeTemporary(temporary);
             throw new IOException("The selected file is empty");
         }
         String extension = extension(name);
         File target = new File(folder, hex(digest.digest()) + (extension.isEmpty() ? "" : "." + extension));
         if (target.isFile()) {
-            temporary.delete();
+            if (!temporary.delete()) throw new IOException("Cannot clean the duplicate temporary file");
+            return new CopyResult(target, false);
         } else if (!temporary.renameTo(target)) {
-            temporary.delete();
+            removeTemporary(temporary);
             throw new IOException("Cannot keep the app-owned copy");
         }
-        return target;
+        return new CopyResult(target, true);
     }
 
-    private static final class CancelledImport extends IOException {
-        CancelledImport() { super("Import canceled"); }
+    private static void removeTemporary(File temporary) throws IOException {
+        if (temporary.exists() && !temporary.delete())
+            throw new IOException("Import cleanup failed; retained temporary source " + temporary.getName());
     }
 
     private String queryName(Uri uri) {
@@ -1161,10 +1259,6 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     @Override protected void onStop() {
         super.onStop();
         saveInstancePrefs();
-        final PageSnapshot snapshot = current;
-        if (worker != null && snapshot != null) {
-            worker.execute(() -> saveProgressLocked(snapshot));
-        }
     }
 
     @Override public void onBackPressed() {
@@ -1181,27 +1275,19 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
     @Override protected void onDestroy() {
         destroyed = true;
+        if (activeTask != null) activeTask.cancel();
         ++generation;
         final ExecutorService service = worker;
         worker = null;
-        final PageSnapshot snapshot = current;
-        final BookStore openStore = store;
         if (service != null) {
             service.execute(() -> {
-                try {
-                    saveProgressLocked(snapshot);
-                    closeSessionsLocked();
-                    if (openStore != null) openStore.close();
-                } catch (Throwable error) {
-                    Log.w(TAG, "shutdown failed: " + message(error));
+                try { closeSessionsLocked(); }
+                finally {
+                    if (store != null) { store.close(); store = null; }
+                    Log.i(TAG, "worker shutdown complete");
                 }
             });
             service.shutdown();
-            try {
-                service.awaitTermination(2, TimeUnit.SECONDS);
-            } catch (InterruptedException interrupted) {
-                Thread.currentThread().interrupt();
-            }
         }
         super.onDestroy();
     }
