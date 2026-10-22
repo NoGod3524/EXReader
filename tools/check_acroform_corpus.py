@@ -147,8 +147,7 @@ def parse_results(path):
     return measurements, order, meta
 
 
-def option_values(entry):
-    field = entry['fields']
+def option_values(field):
     return [option['value'] for option in field['options']]
 
 

@@ -947,7 +947,7 @@ FILES = [
         'id': '33', 'slug': 'maxlen-scalars', 'category': 'text/maxlen',
         'expect': 'accept', 'op': 'write', 'font': 1,
         'build': lambda: build_form(fields=[basic_text(maxlen=8)], doc_id=b'0033'),
-        'changes': [('person.name', ['\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b'])],
+        'changes': [('person.name', ['\u7532\u4e59\u7532\u4e59\u7532\u4e59\u7532\u4e59'])],
         'notes': 'MaxLen counts Unicode scalars, so eight CJK scalars fit an eight-scalar limit.',
     },
     {
