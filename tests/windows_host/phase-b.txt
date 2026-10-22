@@ -1,5 +1,6 @@
 # Phase B: restart persistence, note navigation, fixed-page restore,
 # then a font-size change that must survive another restart by anchor.
+wait_idle
 state|restored
 check|shelf|count|2
 check|book|EXReader benchmark

@@ -223,8 +223,8 @@ def main():
     c_after = state('C', 'after_restart')
     if a_start.get('page') not in (None, '0') or a_start.get('book_id') != '0':
         errors.append('phase A did not start with an empty reading state')
-    if a_import.get('book_id') in (None, '', '0'):
-        errors.append('EPUB import did not produce a shelf row')
+    if a_import.get('selected_id') in (None, '', '0'):
+        errors.append('EPUB import did not produce a selected shelf row')
     if a_open.get('kind') != 'reflow':
         errors.append('EPUB did not open through the reflow path')
     if a_final.get('kind') != 'reflow':

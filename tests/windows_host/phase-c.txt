@@ -1,5 +1,6 @@
 # Phase C: restart after the font change. Page numbers may move, so the
 # checker compares the anchored text offset and the text at that offset.
+wait_idle
 state|after_restart
 check|shelf|count|2
 check|book|EXReader benchmark
