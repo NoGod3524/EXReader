@@ -4,10 +4,11 @@
 # is still built by tools/build_apple_host.py against an installed SDK.
 require 'xcodeproj'
 require 'fileutils'
+require 'pathname'
 
 root = Dir.pwd
-output = ARGV[0] || File.join(root, 'build/apple-host')
-resources = ARGV[1] || File.join(root, 'build/apple-resources')
+output = File.expand_path(ARGV[0] || File.join(root, 'build/apple-host'))
+resources = File.expand_path(ARGV[1] || File.join(root, 'build/apple-resources'))
 project_path = File.join(output, 'EXReaderHost.xcodeproj')
 FileUtils.mkdir_p(output)
 FileUtils.rm_rf(project_path)
@@ -24,11 +25,15 @@ sources = Dir[File.join(root, 'examples/apple/*.swift')].sort +
 test_sources = Dir[File.join(root, 'tests/apple_host/*.swift')].sort
 resource_files = Dir[File.join(resources, '*')].sort
 
-source_refs = sources.map { |file| project.new_file(file, :absolute) }
+base = Pathname.new(output)
+def relative(base, file)
+  Pathname.new(File.expand_path(file)).relative_path_from(base).to_s
+end
+source_refs = sources.map { |file| project.new_file(relative(base, file)) }
 host_group.children.concat(source_refs)
-test_refs = test_sources.map { |file| project.new_file(file, :absolute) }
+test_refs = test_sources.map { |file| project.new_file(relative(base, file)) }
 host_group.children.concat(test_refs)
-resource_refs = resource_files.map { |file| project.new_file(file, :absolute) }
+resource_refs = resource_files.map { |file| project.new_file(relative(base, file)) }
 resource_group.children.concat(resource_refs)
 
 def app_settings(target, platform, deployment)
