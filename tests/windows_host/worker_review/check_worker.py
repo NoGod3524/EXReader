@@ -10,7 +10,11 @@ import os
 from pathlib import Path
 import sqlite3
 import subprocess
+import sys
 import time
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from make_fixtures import epub
 
 U, K = C.WinDLL('user32', use_last_error=True), C.WinDLL('kernel32', use_last_error=True)
 U.GetDlgItem.argtypes = [W.HWND, C.c_int]
@@ -180,6 +184,8 @@ def main():
     sample = (args.package/'Sample.epub').resolve()
     pdf = (args.fixtures/'Pages.pdf').resolve()
     extra = (args.fixtures/'Extra-Book.epub').resolve()
+    seek_book = output/'Seek-Unique.epub'
+    epub(seek_book, 'Worker Seek Unique', ' '.join('word%05d' % i for i in range(6000)))
     cases = []
 
     def run(name, test):
@@ -269,7 +275,8 @@ def main():
     run('rollback-sql-busy', rollback)
 
     def failed_seek(app):
-        setup_text(app)
+        app.import_file(seek_book)
+        app.open('Worker Seek Unique')
         for _ in range(8):
             app.click('next')
             app.wait_idle()
@@ -282,13 +289,14 @@ def main():
         app.click('jump')
         app.wait_idle()
         retained, status = app.q(11) == before, app.status()
+        lookups, injected = app.q(27), app.q(28)
         app.click('select')
         # Force the actual page selection painter after the failed jump.
         send(app.control('page'), 0xF)
         selected = app.q(16)
         app.note('after failed seek')
         after_notes = app.q(12)
-        return retained and '失败' in status and selected > 0 and after_notes == 2, {'retained_page': retained, 'status': status, 'selected_bytes_after_failure': selected, 'saved_notes_after_failure': after_notes}
+        return retained and '失败' in status and selected > 0 and after_notes == 2 and lookups >= 3 and injected == 1, {'retained_page': retained, 'status': status, 'selected_bytes_after_failure': selected, 'saved_notes_after_failure': after_notes, 'real_page_lookups': lookups, 'injected_public_errors': injected}
     run('seek-failure-retains-selection', failed_seek)
 
     def close_candidate(app):
