@@ -199,6 +199,7 @@ def mutations():
         ('missing bounded suite', lambda r: (r/'wp13-apple-package/bounded-review/bounded-review.json').unlink()),
         ('missing bounded check', lambda r: edit(r/'wp13-apple-package/bounded-review/bounded-review.json', lambda d: d['checks'].pop())),
         ('missing bounded marker', lambda r: alter_database(r, 'DELETE FROM epub_bounded_books')),
+        ('missing chapter table', lambda r: alter_database(r, 'DROP TABLE epub_progress')),
         ('missing chapter progress', lambda r: alter_database(r, 'DELETE FROM epub_progress')),
         ('wrong chapter route', lambda r: alter_database(r, "UPDATE epub_progress SET path='OPS/wrong.xhtml'")),
         ('global coordinates impersonate chapter progress', lambda r: alter_database(r, 'UPDATE books SET text_size=123,position=123 WHERE id IN (SELECT book_id FROM epub_bounded_books)')),

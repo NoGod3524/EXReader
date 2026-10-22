@@ -260,6 +260,12 @@ def database_state(root, environment):
         require(con.execute('PRAGMA application_id').fetchone()[0] == 1163416131 and
                 con.execute('PRAGMA user_version').fetchone()[0] == 7, 'database identity mismatch')
         require(not con.execute('PRAGMA foreign_key_check').fetchall(), 'database foreign key mismatch')
+        for table, columns in {
+                'epub_bounded_books': {'book_id'},
+                'epub_progress': {'book_id', 'part', 'path', 'position', 'prefix', 'suffix', 'chapter'},
+                'epub_notes': {'id', 'book_id', 'part', 'path', 'start', 'end', 'exact', 'prefix', 'suffix', 'chapter', 'text'}}.items():
+            require({row[1] for row in con.execute('PRAGMA table_info(' + table + ')')} == columns,
+                    'schema7 chapter columns missing or changed: ' + table)
         rows = {table: con.execute('SELECT COUNT(*) FROM ' + table).fetchone()[0]
                 for table in ('books', 'notes', 'fixed_notes', 'book_progress', 'epub_bounded_books', 'epub_progress', 'epub_notes')}
         require(rows['books'] >= 2 and all(rows[key] >= 1 for key in ('epub_notes', 'fixed_notes', 'epub_progress')),
