@@ -601,7 +601,7 @@ static exr_status measure(flow *f, exr_table_cursor *t) {
      probed row group must fit in what is left. */
   if (repeats_header(f, t))
     full_room = fmaxf(1, full_room - header_height(t) - boundary(t,0) -
-                         boundary(t,t->header_rows));
+                         boundary(t,t->header_rows) - t->block_spacing);
   t->end = t->row + 1;
   t->last = t->first;
   /* Cells are in row order. Extending the end discovers the entire rowspan group. */
@@ -962,7 +962,7 @@ exr_status exr_table_step(flow *f, exr_table_cursor *t, int *done) {
       return failed(f, status);
     float room=fmaxf(exr_flow_room(f),f->unit_assigned ? f->unit_block_reference : 0);
     if(repeats_header(f,t))
-      room=fmaxf(1,room-header_height(t)-boundary(t,0)-boundary(t,t->header_rows));
+      room=fmaxf(1,room-header_height(t)-boundary(t,0)-boundary(t,t->header_rows)-t->block_spacing);
     if(f->paginate && !f->defer_tall_rows && t->positions[t->end]-t->positions[t->row]+boundary(t,t->row)+boundary(t,t->end)+t->block_spacing>room+.01f) {
       t->fragmented=1;t->consumed=0;t->position=previous;
       for(i=t->first;i<t->last;i++) {
