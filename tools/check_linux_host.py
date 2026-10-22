@@ -17,7 +17,7 @@ from run_benchmarks import make_epub
 
 
 def command(*args, **kwargs):
-    return subprocess.check_output([str(x) for x in args], text=True, **kwargs).strip()
+    return subprocess.check_output([str(x) for x in args], text=True, timeout=30, **kwargs).strip()
 
 
 class Session:
@@ -62,6 +62,7 @@ class Session:
         self.key('ctrl+v')
 
     def dialog(self, path=None):
+        before = self.read()['sequence']
         self.key('F1')
         command('xdotool', 'search', '--sync', '--onlyvisible', '--name', '^Import book$')
         if path is None:
@@ -70,6 +71,15 @@ class Session:
             self.key('ctrl+l')
             self.paste(str(path))
             self.key('Return')
+        self.wait(lambda s: s['sequence'] > before)
+        end = time.monotonic()+30
+        while time.monotonic() < end:
+            result = subprocess.run(['xdotool', 'search', '--onlyvisible', '--name', '^Import book$'],
+                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+            if result.returncode == 1:
+                return
+            time.sleep(.1)
+        raise TimeoutError('Native import dialog did not close')
 
     def close(self):
         if self.process and self.process.poll() is None:

@@ -29,6 +29,9 @@ def main():
                     '-DEXR_SDK='+str(args.sdk.resolve()), '-DCMAKE_BUILD_TYPE=Release'], check=True)
     subprocess.run(['cmake', '--build', str(build), '--parallel', '4'], check=True)
     subprocess.run(['cmake', '--install', str(build), '--prefix', str(payload)], check=True)
+    identity = subprocess.check_output([str(payload/'bin/exreader-linux'), '--version'], text=True).strip()
+    if identity != '3.40.0 1':
+        raise RuntimeError('Installed host reports an unexpected SDK or ABI')
     assets = fetch(ROOT/'build/linux-font-cache')
     for name in ('Reader.otf', 'OFL.txt'):
         shutil.copyfile(assets/name, payload/name)
@@ -36,7 +39,8 @@ def main():
         shutil.copyfile(ROOT/name, payload/name)
     shutil.copytree(args.sdk/'share/exreader/licenses', payload/'licenses')
     source = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
-    manifest = {'schema': 1, 'source_sha': source, 'sdk_version': '3.40.0', 'abi': 1,
+    manifest = {'schema': 1, 'source_sha': source, 'sdk_version': identity.split()[0], 'abi': int(identity.split()[1]),
+                'gtk_version': subprocess.check_output(['pkg-config', '--modversion', 'gtk+-3.0'], text=True).strip(),
                 'files': {str(p.relative_to(payload)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted(payload.rglob('*')) if p.is_file()}}
     (output/'build.json').write_text(json.dumps(manifest, indent=2)+'\n')

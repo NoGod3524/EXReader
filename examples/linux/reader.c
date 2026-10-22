@@ -219,17 +219,23 @@ static void note_activated(GtkListBox *box,GtkListBoxRow *row,gpointer unused) {
     gtk_text_buffer_select_range(buffer,&a,&b);selection_start=start;selection_end=end;state();
   }
 }
+static void focus_list(GtkWidget *box) {
+  GtkListBoxRow *row=gtk_list_box_get_selected_row(GTK_LIST_BOX(box));
+  if(!row) row=gtk_list_box_get_row_at_index(GTK_LIST_BOX(box),0);
+  if(row) { gtk_list_box_select_row(GTK_LIST_BOX(box),row);gtk_widget_grab_focus(GTK_WIDGET(row)); }
+  else gtk_widget_grab_focus(box);
+}
 static void action(GtkWidget *widget,gpointer name) {
   (void)widget;const char *a=name;
   if(!strcmp(a,"import")) import_dialog();
-  else if(!strcmp(a,"shelf")) { save_progress();refresh_shelf();gtk_stack_set_visible_child_name(GTK_STACK(stack),"shelf");gtk_widget_grab_focus(shelf);state(); }
+  else if(!strcmp(a,"shelf")) { save_progress();refresh_shelf();gtk_stack_set_visible_child_name(GTK_STACK(stack),"shelf");focus_list(shelf);state(); }
   else if(!strcmp(a,"previous")) { if(page_number) show_page(page_number-1,FALSE,0);else status(EXR_ARGUMENT,"First page"); }
   else if(!strcmp(a,"next")) show_page(page_number+1,FALSE,0);
   else if(!strcmp(a,"bigger")) resize_font(2);
   else if(!strcmp(a,"smaller")) resize_font(-2);
   else if(!strcmp(a,"text")) { gtk_widget_grab_focus(text);state(); }
   else if(!strcmp(a,"note")) add_note();
-  else if(!strcmp(a,"notes")) { gtk_widget_grab_focus(notes);state(); }
+  else if(!strcmp(a,"notes")) { focus_list(notes);state(); }
   else if(!strcmp(a,"delete")) delete_note();
   else if(!strcmp(a,"comment")) { gtk_widget_grab_focus(comment);state(); }
 }
@@ -254,8 +260,18 @@ static GtkWidget *scroll(GtkWidget *child) {
   GtkWidget *s=gtk_scrolled_window_new(NULL,NULL);gtk_container_add(GTK_CONTAINER(s),child);return s;
 }
 int main(int argc,char **argv) {
-  if(argc!=3 && argc!=4) { fprintf(stderr,"Usage: exreader-linux FONT STATE_DIRECTORY [OBSERVATION_FILE]\n");return 2; }
-  home=g_strdup(argv[2]);state_path=argc==4?g_strdup(argv[3]):NULL;
+  if(argc==2 && !strcmp(argv[1],"--version")) { printf("%s %u\n",exr_version(),exr_abi_version());return 0; }
+  if(argc!=1 && argc!=3 && argc!=4) { fprintf(stderr,"Usage: exreader-linux [FONT STATE_DIRECTORY [OBSERVATION_FILE]]\n");return 2; }
+  char *default_font=NULL;
+  if(argc==1) {
+    char *executable=g_file_read_link("/proc/self/exe",NULL);
+    if(!executable) return 2;
+    char *bin=g_path_get_dirname(executable),*package=g_path_get_dirname(bin);
+    default_font=g_build_filename(package,"Reader.otf",NULL);
+    g_free(executable);g_free(bin);g_free(package);
+    home=g_build_filename(g_get_user_data_dir(),"exreader",NULL);
+  } else home=g_strdup(argv[2]);
+  state_path=argc==4?g_strdup(argv[3]):NULL;
   if(g_mkdir_with_parents(home,0700)) return 2;
   settings_path=g_build_filename(home,"reader.ini",NULL);settings=g_key_file_new();
   g_key_file_load_from_file(settings,settings_path,G_KEY_FILE_NONE,NULL);
@@ -263,7 +279,10 @@ int main(int argc,char **argv) {
   int64_t last=g_key_file_get_int64(settings,"reader","book",NULL);
   exr_error error={0};char *db=g_build_filename(home,"library.sqlite",NULL);
   exr_status s=exr_library_open(db,&library,&error);g_free(db);
-  if(s!=EXR_OK || exr_font_open(argv[1],&font,&error)!=EXR_OK) { exr_library_close(library);return 2; }
+  if(s!=EXR_OK || exr_font_open(default_font?default_font:argv[1],&font,&error)!=EXR_OK) {
+    fprintf(stderr,"Could not open the library or reader font\n");exr_library_close(library);g_free(default_font);return 2;
+  }
+  g_free(default_font);
   gtk_init(NULL,NULL);window=gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(window),"EXReader Linux");gtk_window_set_default_size(GTK_WINDOW(window),1040,820);
   GtkWidget *root=gtk_box_new(GTK_ORIENTATION_VERTICAL,6),*toolbar=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,4);
