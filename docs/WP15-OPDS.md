@@ -23,6 +23,7 @@ pagination is `opds_fetch_next` (rel=next); search is `opds_search_url` + `opds_
 Module 0.2 adds `opds_feed_facets(feed, &count)`: groups expose a title and choices with resolved
 `opds_link`, active state, and an exact nonnegative 64-bit item count (`-1` means absent).
 Pointers are borrowed until `opds_feed_free()`. Existing public feed, entry and link sizes stay fixed.
+Count spellings use decimal digits only; decimal-point and exponent spellings return `format`.
 The host displays the choices and passes the selected `link.href` to `opds_fetch_feed()`;
 the normal per-origin credentials, redirect and transport rules apply.
 
@@ -121,6 +122,11 @@ facet URL through the client and checks the returned publication/acquisition lin
 standalone parser under ASan/UBSan with leak detection.
 The mapping follows [OPDS 1.2 facets](https://specs.opds.io/opds-1.2.html)
 and [OPDS 2.0 facets](https://specs.opds.io/opds-2.0.html).
+
+The facet profile at source `757e2f33271b358715ea8f83f44a3c779ad660e8` passed both final jobs
+of run `39815167314`, including Linux ASan/UBSan. Same-source artifact identities and retained failures
+are registered in `docs/validation/wp15-opds-facets.json`. This acceptance covers the declared facet
+profile; the remaining WP15 gaps below stay open.
 
 ## Known gaps
 

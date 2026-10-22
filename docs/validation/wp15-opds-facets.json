@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "package": "WP15-OPDS-facets",
-  "recorded_at_utc": "2026-10-22T16:39:00Z",
+  "recorded_at_utc": "2026-10-22T16:45:41Z",
   "source": "757e2f33271b358715ea8f83f44a3c779ad660e8",
   "branch": "codex/wp15-catalog-features",
   "run_id": 39815167314,
   "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/39815167314",
-  "accepted": false,
-  "state": "pending_github_final_conclusions",
+  "accepted": true,
+  "state": "accepted_declared_facet_scope",
   "observed_cloud_logs": {
     "linux": {
       "job_id": 119951700328,
@@ -30,18 +30,18 @@
     }
   },
   "github_metadata_at_observation": {
-    "run_status": "queued",
-    "conclusion": null,
+    "run_status": "completed",
+    "conclusion": "success",
     "jobs": [
       {
         "id": 119951700328,
-        "status": "queued",
-        "conclusion": null
+        "status": "completed",
+        "conclusion": "success"
       },
       {
         "id": 119951699726,
-        "status": "queued",
-        "conclusion": null
+        "status": "completed",
+        "conclusion": "success"
       }
     ]
   },
@@ -88,7 +88,8 @@
       "Indirect acquisition resolution",
       "Borrow/payment/DRM/LCP",
       "Host UI integration",
-      "Full WP15"
+      "Full WP15",
+      "Facet count numeric spellings containing a decimal point or exponent are outside this parser profile."
     ]
   },
   "completion_rule": "Require both final job conclusions and run conclusion success at this source with valid same-run artifacts. Old source results do not substitute."
