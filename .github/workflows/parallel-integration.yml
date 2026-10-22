@@ -29,6 +29,24 @@ jobs:
           name: parallel-integration-gate-protocol
           path: build/integration-gate-protocol.json
           if-no-files-found: error
+  baseline:
+    if: github.event_name == 'workflow_dispatch' && inputs.source_sha != ''
+    needs: protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the registered SDK candidate, its protected trees and its own evidence
+        env:
+          EXPECTED_SOURCE: ${{ inputs.source_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/check_parallel_integration.py baseline build/sdk-baseline-check.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sdk-baseline-check
+          path: build/sdk-baseline-check.json
+          if-no-files-found: error
   summarize:
     if: github.event_name == 'workflow_dispatch' && inputs.runs_json != '{}'
     needs: protocol
