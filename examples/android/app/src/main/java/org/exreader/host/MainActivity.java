@@ -416,13 +416,20 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             try {
                 task.check();
                 String path = prefs.getString("path_" + target.id, null);
-                if (path == null || !new File(path).isFile()) {
+                boolean bounded = target.format==NativeLibrary.FORMAT_EPUB && store.bounded(target.id);
+                Log.i(TAG,"storage mode book="+target.id+" bounded="+bounded);
+                if (!bounded && (path == null || !new File(path).isFile())) {
                     throw new IOException("The app-owned book copy is missing");
                 }
                 if (target.fixed()) {
                     candidateFixed = new FixedSession(target.id, path, fontBytes(), target.format);
                     int requested = requestedPage >= 0 ? requestedPage : (int) Math.max(0, target.position);
                     load = candidateFixed.load(requested, requestedZoom, task);
+                } else if(bounded) {
+                    candidateReflow=new ReflowSession(store,target.id,fontBytes(),requestedFont);
+                    int display=requestedPage>=0?requestedPage:prefs.getInt("display_"+target.id,0);
+                    load=candidateReflow.restore(display,task);
+                    notice=load.snapshot.restoreNotice;
                 } else {
                     candidateReflow = new ReflowSession(target.id, path, fontBytes(), requestedFont);
                     long savedOffset = requestedOffset;
@@ -446,17 +453,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 }
                 if (load == null) throw new IllegalStateException("The book has no readable pages");
                 Log.i(TAG, "handle open book=" + target.id + " mode=" + (target.fixed() ? "fixed" : "reflow"));
-                final PageLoad result = load;
                 final ReflowSession nextReflow = candidateReflow;
                 final FixedSession nextFixed = candidateFixed;
-                task.commit(() -> {
-                    saveProgressLocked(result.snapshot, task);
-                    result.accept();
-                    closeSessionsLocked();
-                    reflow = nextReflow;
-                    fixed = nextFixed;
-                    sessionBookId = target.id;
-                });
+                final PageLoad[] delivery={load};
+                try {
+                    task.commit(() -> {
+                        delivery[0]=persistPage(delivery[0],task); delivery[0].accept();
+                        closeSessionsLocked(); reflow=nextReflow; fixed=nextFixed; sessionBookId=target.id;
+                    });
+                } finally { load=delivery[0]; }
+                final PageLoad result=load;
                 accepted = true;
                 final String restored = notice;
                 postUi(() -> {
@@ -487,8 +493,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         finishTask(gen);
         current = load.snapshot;
         pageBusy = false;
-        readerView.setPage(current);
         readerView.setSelectMode(false);
+        readerView.setPage(current);
         selectButton.setText("Select");
         selectionBar.setVisibility(View.GONE);
         selectionStatus.setText("");
@@ -503,7 +509,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         zoomDown.setVisibility(isFixed ? View.VISIBLE : View.GONE);
         zoomUp.setVisibility(isFixed ? View.VISIBLE : View.GONE);
         zoomLabel.setVisibility(isFixed ? View.VISIBLE : View.GONE);
-        if (notice != null) setStatus(notice);
+        if (notice != null || current.restoreNotice!=null) setStatus(notice!=null?notice:current.restoreNotice);
         Log.i(TAG, "metric {\"event\":\"page\",\"book\":" + bookId + ",\"page\":" + (current.index + 1)
                 + ",\"fixed\":" + isFixed + ",\"bytes\":" + current.bitmapBytes
                 + ",\"ms\":" + load.millis + "}");
@@ -590,19 +596,36 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 task.check();
                 if (sessionBookId != owner) throw new IllegalStateException("The reading book changed");
                 reviewGate("page-before-render", task);
-                load = action.run(task);
-                if (load == null) {
-                    postUi(() -> { if (gen == generation) { finishTask(gen); setStatus(empty); } });
-                    return;
+                if(BuildConfig.DEBUG && getIntent().hasExtra("review_chapter_budget")) {
+                    int budget=getIntent().getIntExtra("review_chapter_budget",8*1024*1024);
+                    getIntent().removeExtra("review_chapter_budget");
+                    if(reflow!=null) reflow.reviewChapterBudget(budget);
+                }
+                if(BuildConfig.DEBUG && getIntent().getBooleanExtra("review_external_commit",false)) {
+                    getIntent().removeExtra("review_external_commit");
+                    try(android.database.sqlite.SQLiteDatabase changed=android.database.sqlite.SQLiteDatabase.openDatabase(
+                            new File(getFilesDir(),"library.db").getPath(),null,0)) {
+                        changed.execSQL("CREATE TABLE host_review_commit(value INTEGER)");
+                        changed.execSQL("DROP TABLE host_review_commit");
+                    }
                 }
                 if (BuildConfig.DEBUG && getIntent().getBooleanExtra("review_fail_progress", false)) {
                     getIntent().removeExtra("review_fail_progress");
                     fault = android.database.sqlite.SQLiteDatabase.openDatabase(
                             new File(getFilesDir(), "library.db").getPath(), null, 0);
-                    fault.execSQL("CREATE TRIGGER host_review_progress BEFORE INSERT ON book_progress BEGIN SELECT RAISE(ABORT,'host-review'); END");
+                    String table=reflow!=null && reflow.bounded()?"epub_progress":"book_progress";
+                    fault.execSQL("CREATE TRIGGER host_review_progress BEFORE INSERT ON "+table+" BEGIN SELECT RAISE(ABORT,'host-review'); END");
+                    if(reflow!=null) reflow.refreshSource();
                 }
-                final PageLoad result = load;
-                task.commit(() -> { saveProgressLocked(result.snapshot, task); result.accept(); });
+                load = action.run(task);
+                if (load == null) {
+                    postUi(() -> { if (gen == generation) { finishTask(gen); setStatus(empty); } });
+                    return;
+                }
+                final PageLoad[] delivery={load};
+                try { task.commit(() -> { delivery[0]=persistPage(delivery[0],task); delivery[0].accept(); }); }
+                finally { load=delivery[0]; }
+                final PageLoad result=load;
                 postUi(() -> {
                     if (gen != generation) return;
                     accepted.run();
@@ -615,6 +638,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     finally { fault.close(); }
                 }
                 if (load != null) load.close();
+                if(reflow!=null) reflow.reviewChapterBudget(8*1024*1024);
+                if(fault!=null && reflow!=null) reflow.refreshSource();
             }
         });
     }
@@ -647,6 +672,21 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         }, "The book has no readable pages");
     }
 
+    private PageLoad persistPage(PageLoad request,HostTask task) throws Exception {
+        try { saveProgressLocked(request.snapshot,task); return request; }
+        catch(RuntimeException error) {
+                String detail=error.getMessage();
+                if(!request.snapshot.bounded || detail==null || !detail.contains("code 3")) throw error;
+                // Another Activity can commit while this candidate waits for the
+                // publication lock. Rebuild and resolve its captured point before
+                // showing any pixels from the new source. A DB rejection is not retried.
+                PageSnapshot previous=request.snapshot; request.close();
+                PageLoad rebuilt=previous.boundedOwner.retryFrame(previous,task);
+                try { saveProgressLocked(rebuilt.snapshot,task); return rebuilt; }
+                catch(Exception|Error retryError) { rebuilt.close(); throw retryError; }
+        }
+    }
+
     private void saveProgressLocked(PageSnapshot snapshot, HostTask task) throws Exception {
         if (store == null || snapshot == null || snapshot.bookId <= 0) return;
         Log.i(TAG, "progress attempt {\"owner\":" + ownerEpoch + ",\"book\":" + snapshot.bookId
@@ -656,9 +696,13 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         synchronized (PROGRESS_LOCK) {
             if (destroyed || ownerEpoch != OWNER_EPOCH.get()) throw new HostTask.Cancelled();
             reviewGate("progress-before-write", task);
+            if(snapshot.bounded) BoundedEpub.checkSource(snapshot);
             if (snapshot.fixed) {
                 store.setPosition(snapshot.bookId, snapshot.index);
-            } else {
+            } else if(snapshot.bounded && !snapshot.preserveProgress) {
+                BoundedEpub.storeProgress(store.nativeLibrary(),snapshot);
+                prefs.edit().putInt("display_"+snapshot.bookId,snapshot.index).apply();
+            } else if(!snapshot.bounded) {
                 store.saveProgress(snapshot.bookId, snapshot.start);
             }
         }
@@ -759,7 +803,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         } else {
             NativeLibrary.Note value = (NativeLibrary.Note) note;
             if (value.start < 0) { setStatus("Annotation range is unresolved"); return; }
-            runPage(task -> reflow.seek(value.start, task),
+            runPage(task -> reflow.seek(value, task),
                     () -> setStatus("Jumped to annotation"), "Annotation page is missing");
         }
     }
@@ -834,6 +878,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 if (sessionBookId != frame.bookId) throw new IllegalStateException("The reading book changed");
                 task.commit(() -> {
                     if (isFixed) store.saveFixedNote(frame.bookId, noteId, page, start, end, text);
+                    else if(frame.bounded) reflow.saveBoundedNote(noteId,start,end,text);
                     else if (noteId > 0) store.updateNoteText(frame.bookId, noteId, text);
                     else store.saveNote(frame.bookId, 0, start, end, text);
                 });
@@ -923,6 +968,42 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         super.onNewIntent(intent);
         setIntent(intent);
         if (!BuildConfig.DEBUG || !intent.getBooleanExtra("exr_review", false)) return;
+        if(intent.hasExtra("review_progress_identity")) {
+            String label=intent.getStringExtra("review_progress_identity");
+            intent.removeExtra("review_progress_identity");
+            if(worker==null || current==null) return;
+            final long selected=current.bookId;
+            worker.execute(()->{
+                try {
+                    String identity=BoundedEpub.progressIdentity(store.nativeLibrary(),selected);
+                    String digest=hex(MessageDigest.getInstance("SHA-256").digest(identity.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+                    Log.i(TAG,"bounded stored selector "+label+" sha256="+digest);
+                    postUi(()->setStatus("Review selector "+label+" "+digest));
+                } catch(Throwable error) { Log.e(TAG,"Review selector read failed: "+message(error)); }
+            });
+            return;
+        }
+        if(intent.getBooleanExtra("review_schema6",false)) {
+            intent.removeExtra("review_schema6");
+            HostTask task=beginTask(4); long gen=generation;
+            worker.execute(()->{
+                try {
+                    closeSessionsLocked(); store.close(); store=null;
+                    File file=new File(getFilesDir(),"library.db");
+                    try(android.database.sqlite.SQLiteDatabase old=android.database.sqlite.SQLiteDatabase.openDatabase(file.getPath(),null,0)) {
+                        old.execSQL("DROP TABLE epub_notes"); old.execSQL("DROP TABLE epub_progress"); old.execSQL("DROP TABLE epub_bounded_books");
+                        old.execSQL("PRAGMA user_version=6");
+                    }
+                    store=new BookStore(file);
+                    try(android.database.sqlite.SQLiteDatabase current=android.database.sqlite.SQLiteDatabase.openDatabase(file.getPath(),null,android.database.sqlite.SQLiteDatabase.OPEN_READONLY);
+                        android.database.Cursor cursor=current.rawQuery("PRAGMA user_version",null)) {
+                        if(!cursor.moveToFirst() || cursor.getInt(0)!=7) throw new IllegalStateException("Schema migration did not reach 7");
+                    }
+                    postUi(()->{ if(gen==generation) { finishTask(gen); showShelf(false); setStatus("Review schema 6 upgraded to 7"); loadShelf(false); } });
+                } catch(Throwable error) { taskFailed(gen,"Review migration: ",error); }
+            });
+            return;
+        }
         if (intent.getBooleanExtra("review_recreate", false)) {
             intent.removeExtra("review_recreate");
             intent.removeExtra("review_pause");
@@ -962,12 +1043,14 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     byte[] bytes = readFile(copied.file);
                     EXReader.FixedDocument document = new EXReader.FixedDocument(EXReader.FixedFormat.CBZ, bytes);
                     document.close();
-                } else {
+                } else if(format!=NativeLibrary.FORMAT_EPUB) {
                     EXReader.Document document = new EXReader.Document(path);
                     document.close();
                 }
                 task.check();
-                NativeLibrary.ImportResult result = store.importFile(path, format, name);
+                boolean legacy=BuildConfig.DEBUG && getIntent().getBooleanExtra("review_legacy_import",false);
+                getIntent().removeExtra("review_legacy_import");
+                NativeLibrary.ImportResult result = legacy?store.nativeLibrary().importLegacyFile(path,format,name):store.importFile(path, format, name);
                 importedId = result.id;
                 created = result.created;
                 reviewGate("import-inserted", task);
