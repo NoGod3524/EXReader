@@ -133,7 +133,6 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
-        FONT = loadFontAsset();
         fontSize = prefs.getFloat("font", 24f);
         zoom = prefs.getFloat("zoom", 1f);
         if (savedInstanceState != null) {
@@ -1061,6 +1060,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private byte[] fontBytes() throws IOException {
+        if (FONT == null) FONT = loadFontAsset();
         if (FONT == null || FONT.length == 0) throw new IOException("The bundled font is missing");
         return FONT;
     }
