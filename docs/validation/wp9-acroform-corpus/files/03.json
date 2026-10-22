@@ -1,0 +1,12 @@
+{
+ "base": "03-text-align-right.pdf",
+ "id": "03",
+ "category": "text/justification",
+ "expect": "accept",
+ "size": 582,
+ "sha256": "9a49667a2f7d8e55c8fcc5ddfcb1437242e52403d83876437fffb5343077fe0a",
+ "edited_sha256": "e1448a78b33c4d7d16c1e81dedfe327adca93733270c58d0d5b73b8db3b1311b",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

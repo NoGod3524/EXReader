@@ -1,0 +1,12 @@
+{
+ "base": "19-radio-off.pdf",
+ "id": "19",
+ "category": "radio/off",
+ "expect": "accept",
+ "size": 1584,
+ "sha256": "de1b49af835016a326508091cb0b4af01bf29343cc844e15330dafd3c87b4066",
+ "edited_sha256": "43c0d0422c5039cf94ed29a3fd61252becc9189a2f377ac90f0c495eb8827011",
+ "assertions": 38,
+ "result": "pass",
+ "failures": []
+}

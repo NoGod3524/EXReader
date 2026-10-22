@@ -1,0 +1,12 @@
+{
+ "base": "01-text-ascii-basic.pdf",
+ "id": "01",
+ "category": "text/basic",
+ "expect": "accept",
+ "size": 663,
+ "sha256": "eeb2fbfaee0830dc2e0bce227dba1bd12a8e7f7a6d14d5e11cdb93cb9628f575",
+ "edited_sha256": "7178284d5f2156768453d864b69cafccd4c1fe86ac2f2060e61c3ede338e56b9",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

@@ -1,0 +1,12 @@
+{
+ "base": "37-reject-required-empty.pdf",
+ "id": "37",
+ "category": "reject/required",
+ "expect": "reject",
+ "size": 669,
+ "sha256": "442c974fc16863506bee43c8e32a941ce66444d44d26dfd396551c28dcc812fd",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

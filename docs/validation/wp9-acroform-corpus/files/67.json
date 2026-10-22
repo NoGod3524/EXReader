@@ -1,0 +1,12 @@
+{
+ "base": "67-cancel-shape.pdf",
+ "id": "67",
+ "category": "cancel/shaping",
+ "expect": "cancel",
+ "size": 663,
+ "sha256": "6a910f772aa9a29be65e8e87de15d2f6cdccdccba28cd6b6652258f4519b103d",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

@@ -1,0 +1,12 @@
+{
+ "base": "63-reject-outline-only.pdf",
+ "id": "63",
+ "category": "reject/empty-outline",
+ "expect": "reject",
+ "size": 663,
+ "sha256": "1e07d6e6a3c96ab02257943ac22a8a7e3045716df51c54d387b7a44737d153ea",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

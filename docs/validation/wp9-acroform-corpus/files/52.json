@@ -1,0 +1,12 @@
+{
+ "base": "52-reject-signature.pdf",
+ "id": "52",
+ "category": "reject/signature",
+ "expect": "reject",
+ "size": 574,
+ "sha256": "6737768de4f0f1176b0490c9dbb422d701c1a21123592460dafe5cfad4b02599",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

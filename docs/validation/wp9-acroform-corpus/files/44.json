@@ -1,0 +1,12 @@
+{
+ "base": "44-reject-editable-combo.pdf",
+ "id": "44",
+ "category": "reject/editable-combo",
+ "expect": "reject",
+ "size": 605,
+ "sha256": "8fb4360dc428dcfa929cc6a8df10f0e0f5e91688101a26a1c9fe3b268bc9da51",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}
