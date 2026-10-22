@@ -23,4 +23,6 @@ jobs:
       - name: Build
         run: cmake --build build/wp5 --config Release --parallel 4
       - name: Spacing and existing native regression suites
-        run: ctest --test-dir build/wp5 -C Release --output-on-failure
+        run: |
+          ctest --test-dir build/wp5 -C Release --output-on-failure -R "^native-table-spacing$"
+          ctest --test-dir build/wp5 -C Release --output-on-failure
