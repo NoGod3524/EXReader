@@ -192,7 +192,8 @@ def evidence_checks(evidence, build_path, api, target, image, run_id, run_url, w
             problems.append('native handle open logs are missing')
         if 'handle close book=' not in log:
             problems.append('native handle close logs are missing')
-        if 'FATAL EXCEPTION' in log or 'UnsatisfiedLinkError' in log:
+        if ('FATAL EXCEPTION' in log or 'UnsatisfiedLinkError' in log
+                or 'Fatal signal' in log):
             problems.append('logcat contains a fatal native/app failure')
     else:
         problems.append('missing logcat.txt')

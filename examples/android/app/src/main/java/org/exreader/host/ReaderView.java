@@ -249,7 +249,8 @@ public final class ReaderView extends View {
 
     private Rect screenBounds(RectF bounds) {
         Rect rect = new Rect();
-        if (bounds == null) return rect;
+        if (bounds == null || page == null) return rect;
+        computeFit();
         int[] location = new int[2];
         getLocationOnScreen(location);
         rect.set(Math.round(location[0] + toViewX(bounds.left)),
