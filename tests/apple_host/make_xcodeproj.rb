@@ -1,0 +1,149 @@
+#!/usr/bin/env ruby
+# SPDX-License-Identifier: MIT
+# Generate the Xcode project used only for WP13 UI acceptance. The shipped host
+# is still built by tools/build_apple_host.py against an installed SDK.
+require 'xcodeproj'
+require 'fileutils'
+
+root = Dir.pwd
+output = ARGV[0] || File.join(root, 'build/apple-host')
+resources = ARGV[1] || File.join(root, 'build/apple-resources')
+project_path = File.join(output, 'EXReaderHost.xcodeproj')
+FileUtils.mkdir_p(output)
+FileUtils.rm_rf(project_path)
+
+project = Xcodeproj::Project.new(project_path)
+project.root_object.attributes['LastSwiftUpdateCheck'] = '1600'
+project.root_object.attributes['LastUpgradeCheck'] = '1600'
+
+host_group = project.main_group.new_group('Host', root)
+resource_group = project.main_group.new_group('Resources', resources)
+
+sources = Dir[File.join(root, 'examples/apple/*.swift')].sort +
+          [File.join(root, 'bindings/swift/EXReader.swift')]
+test_sources = Dir[File.join(root, 'tests/apple_host/*.swift')].sort
+resource_files = Dir[File.join(resources, '*')].sort
+
+def refs_for(group, files, base)
+  files.map do |file|
+    group.new_file(file.sub(base + '/', ''))
+  end
+end
+
+source_refs = refs_for(host_group, sources, root)
+resource_refs = refs_for(resource_group, resource_files, resources)
+
+def app_settings(target, platform, deployment)
+  target.build_configurations.each do |config|
+    settings = config.build_settings
+    settings['SWIFT_VERSION'] = '5.0'
+    settings['PRODUCT_NAME'] = 'EXReaderHost'
+    settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'org.exreader.host'
+    settings['GENERATE_INFOPLIST_FILE'] = 'YES'
+    settings['INFOPLIST_KEY_CFBundleDisplayName'] = 'EXReader'
+    settings['CURRENT_PROJECT_VERSION'] = '1'
+    settings['MARKETING_VERSION'] = '1.0'
+    settings['CODE_SIGN_STYLE'] = 'Manual'
+    settings['CODE_SIGN_IDENTITY'] = '-'
+    settings['ENABLE_HARDENED_RUNTIME'] = 'NO'
+    settings['ENABLE_APP_SANDBOX'] = 'NO'
+    settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+    settings['CLANG_ENABLE_MODULES'] = 'YES'
+    settings['EXR_SDK_DIR'] = '$(SRCROOT)/sdk'
+    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lexreader']
+    settings['LIBRARY_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/lib']
+    settings['HEADER_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include']
+    settings['SWIFT_INCLUDE_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include']
+    settings['LD_RUNPATH_SEARCH_PATHS'] = ['$(inherited)', '@executable_path/Frameworks',
+                                            '@executable_path/../Frameworks']
+    if platform == :ios
+      settings['SDKROOT'] = 'iphoneos'
+      settings['SUPPORTED_PLATFORMS'] = 'iphonesimulator iphoneos'
+      settings['IPHONEOS_DEPLOYMENT_TARGET'] = deployment
+      settings['TARGETED_DEVICE_FAMILY'] = '1,2'
+      settings['SUPPORTS_MACCATALYST'] = 'NO'
+      settings['CODE_SIGNING_ALLOWED'] = 'NO'
+      settings['CODE_SIGNING_REQUIRED'] = 'NO'
+      settings['INFOPLIST_KEY_UILaunchScreen_Generation'] = 'YES'
+      settings['INFOPLIST_KEY_UIFileSharingEnabled'] = 'YES'
+      settings['INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace'] = 'YES'
+      settings['INFOPLIST_KEY_UISupportedInterfaceOrientations'] =
+        'UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight'
+      settings['INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad'] =
+        'UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown ' \
+        'UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight'
+    else
+      settings['SDKROOT'] = 'macosx'
+      settings['SUPPORTED_PLATFORMS'] = 'macosx'
+      settings['MACOSX_DEPLOYMENT_TARGET'] = deployment
+      settings['INFOPLIST_KEY_LSApplicationCategoryType'] = 'public.app-category.books'
+      settings['CODE_SIGNING_ALLOWED'] = 'YES'
+    end
+  end
+end
+
+def test_settings(target, app_name, platform)
+  target.build_configurations.each do |config|
+    settings = config.build_settings
+    settings['SWIFT_VERSION'] = '5.0'
+    settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'org.exreader.host.uitests'
+    settings['TEST_TARGET_NAME'] = app_name
+    settings['GENERATE_INFOPLIST_FILE'] = 'YES'
+    settings['CODE_SIGN_STYLE'] = 'Manual'
+    settings['CODE_SIGN_IDENTITY'] = '-'
+    settings['CODE_SIGNING_REQUIRED'] = platform == :ios ? 'NO' : 'YES'
+    settings['CODE_SIGNING_ALLOWED'] = platform == :ios ? 'NO' : 'YES'
+    settings['LD_RUNPATH_SEARCH_PATHS'] = ['$(inherited)', '@executable_path/Frameworks',
+                                            '@loader_path/Frameworks']
+    settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'YES'
+  end
+end
+
+def embed_phase(target)
+  phase = target.new_shell_script_build_phase('Embed EXReader runtime')
+  phase.shell_script = <<~SCRIPT
+    set -e
+    DEST="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}"
+    mkdir -p "$DEST"
+    cp -f "$EXR_SDK_DIR"/lib/libexreader*.dylib "$DEST"/
+    if [ "$PLATFORM_NAME" = "macosx" ]; then
+      for lib in "$DEST"/libexreader*.dylib; do
+        codesign --force --sign - "$lib"
+      done
+    fi
+  SCRIPT
+end
+
+def make_ui_target(project, name, platform, deployment)
+  begin
+    project.new_target(:ui_test_bundle, name, platform, deployment)
+  rescue StandardError
+    target = project.new_target(:unit_test_bundle, name, platform, deployment)
+    target.product_type = 'com.apple.product-type.bundle.ui-testing'
+    target
+  end
+end
+
+[[:osx, 'macOS', '12.0'], [:ios, 'iOS', '15.0']].each do |platform, label, deployment|
+  app_name = "EXReaderHost-#{label}"
+  test_name = "EXReaderHostUITests-#{label}"
+  app = project.new_target(:application, app_name, platform, deployment)
+  app.add_file_references(source_refs)
+  app.add_resources(resource_refs)
+  app_settings(app, platform, deployment)
+  embed_phase(app)
+
+  ui = make_ui_target(project, test_name, platform, deployment)
+  ui.add_file_references(refs_for(host_group, test_sources, root))
+  test_settings(ui, app_name, platform)
+  ui.add_dependency(app)
+
+  scheme = Xcodeproj::XCScheme.new
+  scheme.add_build_target(app)
+  scheme.add_test_target(ui)
+  scheme.set_launch_target(app)
+  scheme.save_as(project.path, app_name, true)
+end
+
+project.save
+puts "wrote #{project_path}"
