@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:os="http://a9.com/-/spec/opensearch/1.1/" xmlns:dc="http://purl.org/dc/terms/" xml:base="/c/o1/sub/dir/">
+  <id>urn:opds-test:base</id><title>Base Handling</title><updated>2026-01-01T00:00:00Z</updated>
+  <link rel="self" href="../self.xml"/>
+  <link rel="up" href="http://other.example/up.xml"/>
+  <link rel="start" href="//cdn.example/start.xml"/>
+  <link rel="first" href="?page=1"/>
+  <entry xml:base="items/">
+    <title>E1</title><id>urn:opds-test:base:1</id><updated>2026-01-01T00:00:00Z</updated>
+    <link rel="subsection" href="a b.xml"/>
+    <link rel="subsection" href="caf&#233;.xml"/>
+    <link rel="subsection" href="%7Efoo/%2Fx.xml"/>
+    <link rel="subsection" xml:base="/z/" href="./q/../r.xml"/>
+    <link rel="subsection" href="x.xml?a=b c&amp;d=%41"/>
+  </entry>
+</feed>
