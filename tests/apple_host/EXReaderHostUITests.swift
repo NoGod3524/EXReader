@@ -151,7 +151,7 @@ final class EXReaderHostUITests: XCTestCase {
                 return self.readerIdleIdentity(state)
             }
         } else {
-            matched = waitUntil(max(0, deadline.timeIntervalSinceNow)) { self.text(identifier).contains(text) }
+            matched = waitUntil(timeout) { self.text(identifier).contains(text) }
         }
         if !matched { reportWaitFailure(identifier, expected: text) }
         return matched
