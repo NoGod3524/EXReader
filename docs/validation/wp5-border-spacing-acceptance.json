@@ -1,0 +1,48 @@
+{
+  "package": "WP5 CSS border-spacing",
+  "implementation_commit": "ee76f5b582ec92112bb294226d5b42758b1ad2ae",
+  "branch": "codex/wp5-border-spacing",
+  "baseline_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+  "run_id": 39816051738,
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/39816051738",
+  "package_status": "accepted",
+  "run_status": "completed",
+  "run_conclusion": "success",
+  "run_final_updated_utc": "2026-10-22T16:49:41Z",
+  "evidence_checked_utc": "2026-10-22T16:51Z",
+  "scenario_count": 21,
+  "random_page_requests_per_pagination_variant": 19,
+  "pagination_variants": 4,
+  "geometry_tolerance_px": 0.002,
+  "repeated_header_expected_gap_px": 11,
+  "platforms": {
+    "ubuntu-22.04": {
+      "job_id": 119955243145,
+      "job_status": "completed",
+      "job_conclusion": "success",
+      "evidence": "decoded GitHub job log",
+      "checkout_commit_verified": true,
+      "dedicated_spacing_test": "passed",
+      "dedicated_spacing_seconds": 0.10,
+      "full_ctest_passed": 163,
+      "full_ctest_failed": 0,
+      "full_ctest_seconds": 95.63,
+      "ctest_finished_utc": "2026-10-22T16:46:05Z"
+    },
+    "windows-latest": {
+      "job_id": 119955243659,
+      "job_status": "completed",
+      "job_conclusion": "success",
+      "evidence": "decoded GitHub job log",
+      "checkout_commit_verified": true,
+      "dedicated_spacing_test": "passed",
+      "dedicated_spacing_seconds": 0.18,
+      "full_ctest_passed": 163,
+      "full_ctest_failed": 0,
+      "full_ctest_seconds": 137.12,
+      "ctest_finished_utc": "2026-10-22T16:49:36Z"
+    }
+  },
+  "local_execution": "source, documentation and Git only; no local compilation, testing, fixture generation or benchmark",
+  "old_tests_and_tolerances": "unchanged"
+}

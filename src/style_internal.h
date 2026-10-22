@@ -25,6 +25,7 @@ typedef struct {
   int ruby_position, ruby_align;
   int table_fixed;
   int border_collapse;
+  float border_spacing[2]; /* CSS physical horizontal, vertical lengths. */
   int vertical_align;
   int float_side,clear_side; /* CSS line-left=1, line-right=2, both=3. */
   int hyphens;
