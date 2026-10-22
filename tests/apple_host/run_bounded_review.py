@@ -63,7 +63,10 @@ def main():
                    'rss_scope': 'bounded consumer process high water; includes font, both accepted/candidate frames, all cases and allocator; compiler excluded',
                    'physical_device_execution': False})
     (out/'bounded-review.json').write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
-    print(json.dumps({'accepted': True, 'checks': len(checks), 'measurements': report['measurements']}))
+    print(json.dumps({'accepted': True, 'checks': len(checks), 'measurements': report['measurements'],
+                      'process_peak_rss_bytes': report['process_peak_rss_bytes'],
+                      'runtime_budget_seconds': report['runtime_budget_seconds'],
+                      'diagnostic_only': report['diagnostic_only']}))
 
 
 if __name__ == '__main__':
