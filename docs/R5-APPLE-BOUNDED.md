@@ -42,3 +42,13 @@ macOS与iPad各13UI/67步骤成功；iPhone12/13成功，原PDF选词后标注�
 后继驱动在真实选词后明确用一次外部标签点击关闭UIKit编辑菜单，并继续核选中文本及原标注断言。
 该候选未通过。后继将消费者的throwing短路表达式拆成明确的先取值后比较，并让编译失败诊断直接进入云端日志；
 同时追加source中途取消/晚到回滚和schema6兼容检查。运行结果不拼接。
+
+`86d5a53aa8c622b2936f519304698feb9363250c` / run `39865340346`：三个SDK构建成功，
+三平台各13UI/67步骤成功，iPhone collector也为`accepted=true`；原SDK桥接21项、Model18项成功。
+bounded消费者已成功编译，但900秒执行预算耗尽，package及summary拒绝；本轮未获验收。
+
+`254ea3398097498f12719da3da6b981ada01fe60` / diagnostic run `39869222854`：
+180秒隔离诊断的前11项成功，停在`original_repeated_fixture_refuses_ambiguous_note`，
+50MiB长章尚未执行。该运行只定位失败，不授予Apple验收。后续诊断细分import/publication/pager/anchor阶段，
+并以原Repeated夹具对照16/64KiB窗口；正式默认仍为16KiB，解析工作区16MiB与900秒预算不变。
+非默认窗口证据明确标为`diagnostic_only=true`，不替代原负例或正式八作业复验。
