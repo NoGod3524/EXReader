@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "package": "WP11 recognition and coordinate adapter",
+  "base_commit": "a2552d7feb786cd2345d2b0b3eb894777b3254db",
+  "status": "cloud_validation_pending",
+  "complete_wp11": false,
+  "default_sdk_dependency_changed": false,
+  "workflow": ".github/workflows/wp11-ocr.yml",
+  "expected_pages": 30,
+  "english_cer_limit": 0.03,
+  "chinese_cer_limit": 0.05,
+  "remaining": ["cloud Release and adapter ASan/UBSan results", "PDF text-layer writeback", "search/selection/annotation integration", "real scanned-page accuracy"]
+}
