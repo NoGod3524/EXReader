@@ -111,9 +111,15 @@ def run_phase(exe, steps_dir, output, phase, data, package, fixtures, timeout):
     if os.name == 'nt':
         creationflags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
     started = time.time()
-    completed = subprocess.run(command, cwd=str(package), env=env, timeout=timeout,
-                               capture_output=True, text=True, encoding='utf-8',
-                               errors='replace', creationflags=creationflags)
+    try:
+        completed = subprocess.run(command, cwd=str(package), env=env, timeout=timeout,
+                                   capture_output=True, text=True, encoding='utf-8',
+                                   errors='replace', creationflags=creationflags)
+    except subprocess.TimeoutExpired as expired:
+        (output / ('phase-' + phase + '.stdout.log')).write_text(
+            'timeout after %.1fs\nstdout=%r\nstderr=%r' % (timeout, expired.stdout, expired.stderr),
+            encoding='utf-8')
+        return 124, timeout
     elapsed = time.time() - started
     (output / ('phase-' + phase + '.stdout.log')).write_text(
         (completed.stdout or '') + '\n--- stderr ---\n' + (completed.stderr or ''), encoding='utf-8')
@@ -135,6 +141,10 @@ def main():
     parser.add_argument('--selftest-report', type=Path)
     parser.add_argument('--timeout', type=float, default=420)
     args = parser.parse_args()
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
     package = args.package.resolve()
     output = args.output.resolve()
     sdk = args.sdk.resolve()
@@ -161,6 +171,14 @@ def main():
         code, elapsed = run_phase(exe, args.steps.resolve(), output, phase, data, package,
                                   fixtures, args.timeout)
         runs[phase] = {'exit_code': code, 'elapsed_seconds': round(elapsed, 3)}
+        log_path = output / phase / 'drive.log'
+        print('PHASE %s exit=%s elapsed=%.2fs log=%s' % (phase, code, elapsed, log_path.exists()),
+              flush=True)
+        if not log_path.exists():
+            stdout_path = output / ('phase-' + phase + '.stdout.log')
+            if stdout_path.exists():
+                print('PHASE %s stdout tail: %s' % (phase, stdout_path.read_text(
+                    encoding='utf-8', errors='replace')[-800:]), flush=True)
 
     parsed = {}
     for phase in PHASES:
@@ -372,8 +390,10 @@ def main():
         json.dumps(evidence, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
     summary = {'passed': evidence['passed'], 'counts': counts,
                'screenshots': sum(len(shots[p]) for p in PHASES),
-               'errors': errors[:12], 'evidence': str(output / 'wp13-windows-evidence.json')}
-    print(json.dumps(summary, ensure_ascii=False))
+               'errors': errors, 'evidence': str(output / 'wp13-windows-evidence.json')}
+    (output / 'summary.json').write_text(json.dumps(summary, indent=2, ensure_ascii=False) + '\n',
+                                         encoding='utf-8')
+    print(json.dumps(summary, ensure_ascii=True))
     return 0 if evidence['passed'] else 1
 
 
