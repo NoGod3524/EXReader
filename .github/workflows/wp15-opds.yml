@@ -13,7 +13,9 @@ permissions:
   contents: read
 env:
   BASELINE: a2552d7feb786cd2345d2b0b3eb894777b3254db
-  HANDOFF: feda26381a7b05c6a1ce3db91a440ca0094e06c5
+  # Reviewed integrated ancestor immediately before the OPDS merge; original
+  # standalone handoff ownership evidence is retained in the delivery history.
+  HANDOFF: a6407dea6540e498dee05270d0e0fe42e380e125
 jobs:
   opds:
     timeout-minutes: 45
@@ -41,6 +43,7 @@ jobs:
       - name: Run the fixed local service, acceptance cases and consumer example
         shell: bash
         run: |
+          git merge-base --is-ancestor "$HANDOFF" HEAD
           libs=$(find stage/lib -maxdepth 1 -type f \( -name '*.a' -o -name '*.lib' \) | sort | tr '\n' ' ')
           python tools/check_opds.py --build build/opds --repo . --out build/wp15-evidence --base "$BASELINE" --handoff "$HANDOFF" --identity $libs
       - name: Preserve evidence and logs
