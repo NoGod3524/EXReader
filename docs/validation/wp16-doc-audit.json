@@ -74,6 +74,17 @@
       "note": "Existing recorded engine validation, not a new run of this documentation branch."
     }
   },
+  "follow_up_2026_10_22": {
+    "scope": "Frozen SDK candidate only; original baseline findings and remaining snapshot below are historical",
+    "source_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+    "wp16_accepted_for_frozen_sdk": true,
+    "campaign_run": 39666440519,
+    "jobs_succeeded": 98,
+    "strict_cloud_summary_passed": true,
+    "cloud_record": "docs/validation/2026-10-22-reliability-cloud.json",
+    "new_host_or_optional_package_acceptance_granted": false,
+    "complete_product": false
+  },
   "remaining": {
     "wp16_accepted": false,
     "campaign_status_at_baseline": "in_progress",
