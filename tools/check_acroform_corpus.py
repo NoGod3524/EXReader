@@ -473,12 +473,17 @@ def main():
                 verdict.check(read is not None and read['status'] == 'EXR_OK',
                               'read of a formless document was not successful')
         else:
-            verdict.check(item.write['status'] == entry['status'],
-                          'write status %r != %r (%s)' %
-                          (item.write['status'], entry['status'], item.write.get('message')))
-            verdict.check(item.write['size'] == 0 and item.write['changes'] == len(entry['changes']),
-                          'rejected write reported outputs or a wrong change count')
-            verdict.check(item.write['same'], 'a rejected write modified the caller input')
+            if item.write is not None:
+                verdict.check(item.write['status'] == entry['status'],
+                              'write status %r != %r (%s)' %
+                              (item.write['status'], entry['status'], item.write.get('message')))
+                verdict.check(item.write['size'] == 0 and
+                              item.write['changes'] == len(entry['changes']),
+                              'rejected write reported outputs or a wrong change count')
+                verdict.check(item.write['same'], 'a rejected write modified the caller input')
+            else:
+                verdict.check(entry['expect'] == 'read-fail',
+                              'no write was attempted for a writable document')
             if entry['expect'] in ('reject', 'cancel'):
                 verdict.check(item.repeat is not None,
                               'missing repeat-call record')
