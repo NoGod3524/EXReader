@@ -8,8 +8,10 @@
   "post_acceptance_changes": "Nine-workflow Apple gate preparation; accepted and validated_source below remain scoped to the earlier eight-workflow cloud acceptance",
   "next_integration": {
     "status": "apple_standalone_acceptance_pending",
-    "apple_source": "245164f144871fd9bc25491b5cb3457972cd2c13",
-    "apple_run": 39722504792,
+    "apple_source": "c5e0e8bd0f4d438e75a2d62ef2b19e3e81f29863",
+    "apple_run": 39723662459,
+    "apple_expected": {"jobs": 8, "artifacts": 8, "ui_cases_per_platform": 12, "ui_steps_per_platform": 61, "attachments_per_platform": 46, "legacy_checks_per_platform": 21, "sdk_checks": 21, "model_checks": 18},
+    "gate_protocol": {"source_sha": "56dfb02a273783c38a88a264499e049bcba4b15b", "run": 39722560085, "job": 119639130777, "checks": 18, "passed": true, "integration_accepted": false},
     "expected_workflows": 9,
     "expected_producer_jobs": 27,
     "accepted": false
