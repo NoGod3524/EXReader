@@ -26,6 +26,21 @@ CSS-wide keywords, relative units, rowspan/colspan, both vertical directions,
 repeated header gaps, tall rows, page rendering, hit tests and seeded random
 checkpoint restoration. Existing tests stay registered without changed
 tolerances. `.github/workflows/wp5-border-spacing.yml` builds on Ubuntu 22.04 and
-Windows and runs the full native CTest suite. Cloud execution results are pending.
+Windows and runs the full native CTest suite.
+
+The frozen implementation is commit
+`ee76f5b582ec92112bb294226d5b42758b1ad2ae` on
+`codex/wp5-border-spacing`. Its cloud run is
+<https://github.com/NoGod3524/EXReader/actions/runs/39816051738>.
+Ubuntu job `119955243145` logs confirm that exact checkout, the dedicated
+spacing regression passed in 0.10 seconds, and all 163 native tests passed in
+95.63 seconds, ending at `2026-10-22T16:46:05Z`. The regression keeps the exact
+11px repeated-header gap assertion and 0.002px geometry tolerance.
+Windows job `119955243659` logs confirm the same checkout, the dedicated
+spacing regression passed in 0.18 seconds, and all 163 native tests passed in
+137.12 seconds, ending at `2026-10-22T16:49:36Z`. Both jobs and the overall run
+are `completed/success`; the final run status was checked at
+`2026-10-22T16:51Z`. Detailed evidence is in
+`docs/validation/wp5-border-spacing-acceptance.json`.
 
 No local build, test, fixture generation or benchmark was run for this package.
