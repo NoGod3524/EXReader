@@ -90,8 +90,9 @@ jobs:
               for suffix in ('-instrumentation.txt', '-logcat.txt'):
                   name, payload = one('/' + suite + suffix)
                   lines = payload.decode('utf-8', errors='replace').splitlines()
-                  pattern = (r'INSTRUMENTATION_(STATUS|RESULT|CODE)|FAILURES|OK \(|AssertionError|Error in|' 
-                             r'EXReader|Review |native-next|next_calls|recovery|ANR in|TimeoutException')
+                  pattern = (r'INSTRUMENTATION_(STATUS|RESULT|CODE)|FAILURES|OK \(|AssertionError|Error in|'
+                             r'EXReader|Review |native-next|next_calls|recovery|ANR in|TimeoutException|'
+                             r'UiDevice|ActivityTaskManager|DocumentsUI')
                   observations = [bounded(line) for line in lines if re.search(pattern, line) and
                       not re.search(r'\bat (?:org\.|java\.|android\.|androidx\.)|\bpc [0-9a-f]+|backtrace|stacktrace', line)]
                   report['native_log_observations'][suite + suffix] = {'path': name, 'total_lines': len(lines),
@@ -99,7 +100,14 @@ jobs:
           output = Path('build/android-diagnostic')
           output.mkdir(parents=True)
           (output/'diagnostic.json').write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n')
-          print(json.dumps(report, ensure_ascii=True))
+          print(json.dumps({'diagnostic_only': True, 'execution': {'completed': execution['completed'],
+              'suites': execution['suites'], 'errors': execution['errors']},
+              'suites': {suite: {'case_count': value['case_count'],
+                  'cases': [{key: case['result'].get(key) for key in ('id', 'status', 'error', 'detail', 'elapsed_ms')}
+                            for case in value['cases']],
+                  'summary': value['validation'].get('summary') if value['validation'] else None}
+                  for suite, value in report['suites'].items()},
+              'logs': report['native_log_observations']}, ensure_ascii=True))
           PY
       - name: Preserve diagnostic observations
         if: always()
