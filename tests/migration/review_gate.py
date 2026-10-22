@@ -32,6 +32,14 @@ def main():
 
     assert accepted(args.evidence)
     checks.append({'name': 'real two-platform cloud evidence accepted', 'passed': True})
+    original_upstream = os.environ['MIGRATION_UPSTREAM_RESULT']
+    try:
+        for result in ('failure', 'cancelled', 'skipped', ''):
+            os.environ['MIGRATION_UPSTREAM_RESULT'] = result
+            assert not accepted(args.evidence), result
+            checks.append({'name': 'upstream ' + (result or 'missing') + ' refused', 'passed': True})
+    finally:
+        os.environ['MIGRATION_UPSTREAM_RESULT'] = original_upstream
     changes = [
         ('wrong-source', 'identity', lambda d: d['git'].update(sha='0' * 40)),
         ('wrong-run', 'identity', lambda d: d['workflow'].update(run_id='0')),

@@ -78,6 +78,8 @@ def identity(a):
 
 def gate(a):
     problems, platforms = [], {}
+    if os.environ.get('MIGRATION_UPSTREAM_RESULT') != 'success':
+        problems.append('required migration jobs did not all succeed')
     for label in a.require:
         entry = {"scenarios": None, "e2e": None, "identity": None}
         for kind, pattern in (("scenarios", "scenarios-%s.json"), ("e2e", "e2e-%s.json"), ("identity", "identity-%s.json")):

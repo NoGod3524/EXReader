@@ -102,6 +102,8 @@ jobs:
   record:
     needs: migration
     if: always()
+    env:
+      MIGRATION_UPSTREAM_RESULT: ${{ needs.migration.result }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     permissions:
