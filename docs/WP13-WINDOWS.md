@@ -11,6 +11,8 @@ acceptance and does not include migration, OPDS, TTS or other platform hosts.
 - SDK: 3.40.0 (core 3.39.0, ABI 1, library schema 7) consumed from an installed prefix.
 - H8 initial SDK candidate: `96c4f2c035a737ccf3f5be890d127d6efdd946f8`;
   final SDK candidate and host source must receive their own cloud results.
+- Current development SDK candidate: `6f0d7592ea431394d175d221b04b054facf4a26c`
+  (merged without changing public APIs; full native SDK acceptance remains pending).
 - Source: `examples/reader.c` (Win32, one translation unit) with an independent
   consumer build in `examples/windows/`.
 
@@ -174,7 +176,7 @@ each row below is a UI/lifecycle step.
 | # | Phase | Step (driver action) | Expected |
 | --- | --- | --- | --- |
 | 1 | A | start state | empty shelf, no book |
-| 2 | A | import Sample.epub | shelf 1, success status |
+| 2 | A | import Sample-positive.epub (sealed script parameter) | shelf 1, success status |
 | 3 | A | import the same EPUB again | shelf still 1, dedupe status |
 | 4 | A | open EPUB | reflow book, page 1 |
 | 5 | A | next | page 2 |

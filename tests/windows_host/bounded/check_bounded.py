@@ -220,7 +220,7 @@ def main():
         require(all(base.digest(Path(p)) == sha for p, sha in identities.items()), 'all-sealed-inputs-unchanged')
     except (OSError, ValueError, KeyError, IndexError, sqlite3.Error, subprocess.SubprocessError) as caught:
         error = type(caught).__name__+': '+str(caught)
-    evidence = {'schema': 1, 'source_sha': source, 'sdk_candidate': '96c4f2c035a737ccf3f5be890d127d6efdd946f8',
+    evidence = {'schema': 1, 'source_sha': source, 'sdk_candidate': '6f0d7592ea431394d175d221b04b054facf4a26c',
                 'run_id': os.environ.get('GITHUB_RUN_ID'), 'accepted': error is None and bool(checks) and all(x['passed'] for x in checks),
                 'checks': checks, 'failures': [] if error is None else [error], 'identities': identities, 'runs': records,
                 'scope': 'H8 default bounded EPUB Windows pilot; legacy mode and fixed readers retained',
