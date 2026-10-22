@@ -72,6 +72,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private ListView bookList;
     private ListView noteList;
     private TextView statusText;
+    private TextView readerStatus;
     private TextView sdkLabel;
     private TextView bookTitle;
     private TextView pageLabel;
@@ -179,6 +180,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         bookList = findViewById(R.id.book_list);
         noteList = findViewById(R.id.note_list);
         statusText = findViewById(R.id.status_text);
+        readerStatus = findViewById(R.id.reader_status);
         sdkLabel = findViewById(R.id.sdk_label);
         bookTitle = findViewById(R.id.book_title);
         pageLabel = findViewById(R.id.page_label);
@@ -1109,6 +1111,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
     private void setStatus(String text) {
         statusText.setText(text);
+        if (readerStatus != null) readerStatus.setText(text);
         Log.i(TAG, "status " + text);
     }
 
