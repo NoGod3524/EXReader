@@ -144,7 +144,7 @@ def gate(a):
                 record = json.load(open(review, encoding='utf-8'))
                 if (record.get('passed') is not True or record.get('source_sha') != os.environ['GITHUB_SHA'] or
                         record.get('run_id') != os.environ['GITHUB_RUN_ID'] or
-                        record.get('tool_sha256') != identity['tool']['sha256'] or len(record.get('checks', [])) != 16 or
+                        record.get('tool_sha256') != identity['tool']['sha256'] or len(record.get('checks', [])) != 20 or
                         not all(check['passed'] is True for check in record['checks'])):
                     problems.append('%s: incomplete or mismatched migration review regressions' % label)
         platforms[label] = {
