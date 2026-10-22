@@ -101,7 +101,10 @@ EXR_API exr_pdf_form_write_options exr_pdf_form_write_defaults(void);
    Sig/pushbutton/unknown types, XFA, field/widget actions, rotation and signed
    permission constraints cannot be changed. Failures/cancellation clear outputs.
    Values are UTF-8; button values use the widget export name or Off. Empty lists
-   clear a field. No formatting, calculation, validation actions or JS execute. */
+   clear a field. Duplicate radio export values require RadiosInUnison; otherwise
+   an explicit-widget selection API is needed and writing returns UNSUPPORTED.
+   The form-wide NeedAppearances request is preserved during partial edits.
+   No formatting, calculation, validation actions or JS execute. */
 EXR_API exr_status exr_pdf_form_write(const void *data,size_t size,const exr_pdf_form_change *changes,size_t count,
   const exr_pdf_form_write_options *options,void **out,size_t *out_size,exr_error *error);
 #ifdef __cplusplus
