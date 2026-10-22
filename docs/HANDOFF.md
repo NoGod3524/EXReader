@@ -1,6 +1,6 @@
 # EXReader 开发状态与路线
 
-更新日期：2026-10-21。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.40.0**、ABI epoch **1**、书库 schema **6**。
+更新日期：2026-10-22。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.40.0**、ABI epoch **1**、书库 schema **6**。
 
 3.40.0新增独立有界EPUB章分页、跨窗口CFI/书签/正文输出；旧快照入口和限界保持原契约。
 本批实现与验证入口：`docs/WP6-BOUNDED-READER.md`、`docs/validation/2026-10-20-wp6-window-reader.json`。
@@ -9,11 +9,11 @@ WP6固定出口已通过：50/100MiB单章打开，10→100MiB索引与解析/�
 PNG修复源码的七作业CI和Linux ASan/UBSan 159/159通过；六配置SDK、许可、基准、
 四宿主报告及三平台章解析/转换结果已下载独立核验，清单含1385文件（含19份下载身份记录）。
 WP16首次最终源码长测因PNG依赖的空读取问题拒绝，72份已通过报告与失败现场均已归档。
-共享修复和固定回归已落地；同一修正源码的四目标各24CPU小时长测已启动，旧源码时长不拼接。
+共享修复和固定回归已落地；同一修正源码的四目标各24CPU小时长测与严格云端汇总已通过，旧源码时长不拼接。
 修复版Windows默认/关闭可选图像解码器各169/169、18次计量和全章遍历、默认/裁剪安装消费均通过。
-WP16保持未完成，等待本批96分片及独立严格汇总。
+WP16对冻结SDK源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9` 的五项登记出口全部通过；后续宿主/可选包及项目整体仍独立跟踪。
 长测与最终严格汇总、归档均由GitHub Actions云端执行，本地常驻轮询已按用户要求停止。
-本次修正证据见 `docs/validation/2026-10-21-png-reliability.json`。
+本次修正证据见 `docs/validation/2026-10-21-png-reliability.json`，最终98作业/99工件云端记录见 `docs/validation/2026-10-22-reliability-cloud.json`。
 后续独立开发分为五个外派包（迁移、OPDS、Windows、Apple、Android）及四个内部包（Linux、OCR、发行文档审计、兼容语料），
 分支、文件归属与完整交付要求见 `docs/handoffs/parallel-2026-10-21/README.md`。
 这些新包在独立分支进行；其构建与测试仅在GitHub云端执行，不自动继承本次冻结源码的长测结论。
@@ -41,7 +41,7 @@ WP12a最终提交链也已集成：更多CBZ图像格式与CBZ/PDF流式原书�
 
 本轮参考应用的CI七作业全部成功，macOS/iPhone模拟器/iPad模拟器各21项自动自检通过；
 Windows本地与CI各26项。默认/裁剪桌面安装消费、移动交叉编译及带许可的SDK产物已归档。
-用户现阶段暂缓iPhone/iPad真机安装。96分片可靠性续批仍在运行；语料、单章增量解析、
+用户现阶段暂缓iPhone/iPad真机安装。冻结SDK的96分片可靠性续批及严格汇总已通过；语料、其余格式增量解析、
 应用完整验收及下表未完成能力继续保留。记录见 `docs/RELIABILITY-HANDOFF.md`、
 `docs/validation/2026-10-20-native-hosts.json`、`docs/validation/2026-10-20-corpus-performance.json`。
 

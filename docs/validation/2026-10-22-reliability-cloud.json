@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "scope": "Frozen SDK engine release and reliability candidate; later host and optional-package revisions are independent",
+  "source_sha": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+  "accepted": true,
+  "run_id": 39666440519,
+  "attempt": 1,
+  "workflow": ".github/workflows/reliability.yml",
+  "completed_utc": "2026-10-22T08:05:22Z",
+  "cloud_host": "GitHub Actions ubuntu-22.04",
+  "jobs": {"expected": 98, "succeeded": 98, "failed": 0, "cancelled": 0, "same_source": true},
+  "campaign": {
+    "targets": ["parser", "font", "layout", "render"],
+    "shards_per_target": 24,
+    "total_shards": 96,
+    "requested_process_cpu_seconds_per_shard": 3600,
+    "minimum_process_cpu_hours_per_target": 24,
+    "minimum_total_process_cpu_hours": 96,
+    "first_seed": 2026101901,
+    "seed_stride": 2,
+    "prior_source_cpu_credit_nanoseconds": 0,
+    "exact_job_and_artifact_schedule_verified": true,
+    "actual_totals_location": "Cloud reliability-summary artifact; no local artifact download or reaggregation"
+  },
+  "strict_cloud_summary": {
+    "job_id": 119711529461,
+    "passed": true,
+    "build_result": "success",
+    "campaign_result": "success",
+    "minimum_hours": 24,
+    "expected_shards_per_target": 24,
+    "expected_source_sha": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+    "fixed_source_workflow_and_checker_reviewed": true,
+    "artifact": {"id": 12411366224, "name": "reliability-summary", "bytes": 4790, "digest": "sha256:2077e91aa4b7d033fa1ac0ca1cd8446683034e1b57b4c25554e161505586241d", "expires_at": "2026-11-21T08:05:17Z"}
+  },
+  "evidence": {
+    "expected_artifacts": 99,
+    "observed_artifacts": 99,
+    "shard_artifacts": 96,
+    "all_same_run_and_source": true,
+    "all_nonempty_unexpired_with_sha256": true,
+    "runtime_artifact": {"id": 12376529261, "name": "reliability-runtime", "bytes": 19901321, "digest": "sha256:3c37cf5bf5592390a70273091ff5e03a88991261b19c945996c7dedc77813ec2"},
+    "build_artifact": {"id": 12376529266, "name": "reliability-build-evidence", "bytes": 23401, "digest": "sha256:c8bc68e1d7743e4c702dde959e9f85706fa3c3f73cd7f5349c278ef65de0061c"},
+    "verification_origin": "GitHub run/jobs/artifacts API and completed strict-summary job log; full 100-item pagination requested"
+  },
+  "wp16": {
+    "accepted_for_frozen_sdk_candidate": true,
+    "gates_record": "docs/validation/2026-10-20-wp6-window-reader.json",
+    "criteria": "docs/RELIABILITY-HANDOFF.md section 6",
+    "other_previously_accepted_gates": ["versioned_support_and_migration_docs", "local_default_trimmed_cpp_exports", "seven_native_ci_jobs_and_linux_sanitizers", "six_platform_artifacts_licenses_benchmarks"],
+    "native_ci_run": 39614694252,
+    "new_host_or_optional_package_acceptance_granted": false,
+    "complete_product": false
+  },
+  "local_execution": {"tests": false, "campaign": false, "artifact_download": false, "report_reaggregation": false},
+  "historical_failures_preserved": true,
+  "completion_monitor_deleted": true
+}
