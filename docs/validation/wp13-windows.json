@@ -1,0 +1,187 @@
+{
+  "schema": 1,
+  "package": "WP13 Windows native host",
+  "branch": "codex/wp13-windows",
+  "base_source_sha": "a2552d7feb786cd2345d2b0b3eb894777b3254db",
+  "implementation_sha": "11ac64e4542b53980a0adb1cc995750258b05361",
+  "platform": "Windows (GitHub Actions windows-latest)",
+  "sdk_version": "3.40.0",
+  "workflow": {
+    "name": "WP13 Windows native host",
+    "file": ".github/workflows/wp13-windows.yml"
+  },
+  "run": {
+    "id": 39710580316,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39710580316",
+    "conclusion": "success",
+    "phases": {
+      "A": {
+        "exit_code": 0,
+        "seconds": 5.31,
+        "log": "wp13-evidence/A/drive.log"
+      },
+      "B": {
+        "exit_code": 0,
+        "seconds": 0.9,
+        "log": "wp13-evidence/B/drive.log"
+      },
+      "C": {
+        "exit_code": 0,
+        "seconds": 0.33,
+        "log": "wp13-evidence/C/drive.log"
+      }
+    }
+  },
+  "artifact": {
+    "name": "EXReader-WP13-Windows",
+    "bytes": 39316660,
+    "contents": [
+      "wp13-windows/EXReader-Windows.zip",
+      "wp13-windows/build.json",
+      "wp13-windows/report.json",
+      "wp13-windows/page.png",
+      "wp13-windows/application.log",
+      "wp13-evidence/wp13-windows-evidence.json",
+      "wp13-evidence/A|B|C/drive.log",
+      "wp13-evidence/A|B|C/*.png",
+      "wp13-fixtures/"
+    ]
+  },
+  "selftest": {
+    "checks": 26,
+    "passed": true,
+    "engine_version": "3.40.0"
+  },
+  "ui_acceptance": {
+    "phases": 3,
+    "steps": 158,
+    "passed": 158,
+    "failed": 0,
+    "screenshots": 8,
+    "automated_driver": "in-app Win32 message driver (BM_CLICK/WM_COMMAND/WM_KEYDOWN/WM_LBUTTONDOWN/WM_SIZE)",
+    "manual_steps": 0
+  },
+  "coverage": {
+    "import": [
+      "EPUB",
+      "PDF",
+      "dedupe",
+      "delete",
+      "unsupported extension",
+      "corrupt container"
+    ],
+    "shelf": [
+      "list",
+      "select",
+      "open",
+      "delete",
+      "restart"
+    ],
+    "reading": [
+      "next",
+      "previous",
+      "font change",
+      "window resize",
+      "fixed page navigation",
+      "page limit"
+    ],
+    "selection": [
+      "select all page",
+      "mouse drag",
+      "copy quote",
+      "clipboard"
+    ],
+    "annotations": [
+      "add",
+      "edit comment",
+      "delete",
+      "jump",
+      "reflow",
+      "fixed PDF page"
+    ],
+    "lifecycle": [
+      "cancel import",
+      "supersede import with open",
+      "close and restart",
+      "anchored restore after font change"
+    ]
+  },
+  "restart": {
+    "book_id_match": true,
+    "page_match": true,
+    "title_match": true,
+    "notes_match": true,
+    "anchor_offset_match": true
+  },
+  "zero_tolerance": {
+    "saved_annotations_preserved": true,
+    "stale_import_not_published": true,
+    "cancelled_import_no_shelf_change": true,
+    "no_silent_wrong_restore": true
+  },
+  "hashes": {
+    "location": "EXReader-WP13-Windows/wp13-evidence/wp13-windows-evidence.json",
+    "fields": [
+      "program_sha256",
+      "sdk_runtime.sha256",
+      "font_sha256",
+      "books.*.sha256",
+      "fixtures.*.sha256",
+      "library_sha256",
+      "package_hashes"
+    ],
+    "package_manifest": "EXReader-WP13-Windows/wp13-windows/build.json"
+  },
+  "support": {
+    "reflow": [
+      "EPUB",
+      "TXT",
+      "HTML",
+      "FB2",
+      "DOCX",
+      "RTF",
+      "MOBI/AZW3"
+    ],
+    "fixed": [
+      "PDF",
+      "CBZ"
+    ],
+    "limits": {
+      "import_bytes": 100663296,
+      "font_percent": [
+        80,
+        300
+      ],
+      "font_base_points": 28,
+      "zoom_percent": [
+        25,
+        400
+      ],
+      "fixed_render_max_side": 4096
+    },
+    "bounded_chapter_entry": "not used; the host reads the stored snapshot through exr_library_document and reports EXR_LIMIT explicitly"
+  },
+  "unmet": [
+    "bounded large-chapter entry (exr_publication_pager_create) is not wired into this host",
+    "fixed annotation writes still parse the stored original on the UI thread when idle",
+    "no cover thumbnails, rename UI, search, migration, OPDS or TTS",
+    "no screen-reader or full WP14 accessibility acceptance",
+    "manual human confirmation of the same lifecycle steps is not claimed; all 158 UI steps were executed by the automated Win32 driver"
+  ],
+  "scope": "Windows host subpackage only. The five host packages are reconciled by the integration pass; this evidence does not assert whole-WP13 or product completion.",
+  "docs": [
+    "docs/WP13-WINDOWS.md",
+    "examples/windows/README.md"
+  ],
+  "final_head": "40c45799131b3e7f2927d5cdb09a1bf72d9452db",
+  "verification_run": {
+    "id": 39711090216,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39711090216",
+    "head_sha": "40c45799131b3e7f2927d5cdb09a1bf72d9452db",
+    "conclusion": "success",
+    "selftest_checks": 26,
+    "ui_steps": 158,
+    "failed_steps": 0,
+    "screenshots": 8
+  }
+}

@@ -1,0 +1,65 @@
+name: WP13 Windows native host
+
+on:
+  push:
+    branches: ['codex/wp13-windows']
+    paths:
+      - 'examples/reader.c'
+      - 'examples/windows/**'
+      - 'tools/build_windows_host.py'
+      - 'tools/check_windows_host.py'
+      - 'tests/windows_host/**'
+      - '.github/workflows/wp13-windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wp13-windows-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows-host:
+    runs-on: windows-latest
+    timeout-minutes: 75
+    env:
+      EXREADER_HOST_ACCEPTANCE: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure native SDK
+        run: cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+
+      - name: Build native SDK
+        run: cmake --build build/native --config Release --parallel 4
+
+      - name: Install portable SDK with license notices
+        run: cmake --install build/native --config Release --prefix stage
+
+      - name: Build the Windows host from the installed SDK
+        run: |
+          cmake -S stage/examples/windows -B build/win-host -DEXR_SDK="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/win-host --config Release --parallel 4
+
+      - name: Package the host and run the preserved 26-check self-test
+        run: python tools/build_windows_host.py --sdk stage --binary build/win-host/Release/EXReader.exe --output build/wp13-windows
+
+      - name: Generate extra acceptance books
+        run: python tests/windows_host/make_fixtures.py --output build/wp13-fixtures
+
+      - name: Run the UI acceptance phases and validate evidence
+        run: |
+          python tools/check_windows_host.py --package build/wp13-windows/EXReader --output build/wp13-evidence --sdk stage --manifest build/wp13-windows/build.json --steps tests/windows_host --fixtures build/wp13-fixtures --selftest-report build/wp13-windows/report.json
+
+      - name: Upload Windows host evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-WP13-Windows
+          path: |
+            build/wp13-windows/
+            build/wp13-evidence/
+            build/wp13-fixtures/
+            build/win-host/
+          if-no-files-found: warn
