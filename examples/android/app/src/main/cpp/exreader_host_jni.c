@@ -568,6 +568,22 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeProgress
     throw_status(env, status, &error, "Cannot read the saved position");
     return NULL;
   }
+  /* The stored state only records that a selector exists. Resolve it against
+     the stored document so the host can distinguish FOUND from AMBIGUOUS. */
+  if (state != EXR_ANCHOR_LEGACY && point.exact) {
+    exr_document *document = NULL;
+    exr_error resolve_error;
+    memset(&resolve_error, 0, sizeof(resolve_error));
+    if (exr_library_document(store, (int64_t)book_id, &document, &resolve_error) == EXR_OK) {
+      exr_anchor_match match;
+      memset(&match, 0, sizeof(match));
+      if (exr_anchor_resolve(document, &point, &match, &resolve_error) == EXR_OK) {
+        state = match.state;
+        if (state == EXR_ANCHOR_FOUND && match.start != SIZE_MAX) point.start = match.start;
+      }
+      exr_document_free(document);
+    }
+  }
   values[0] = (jlong)state;
   values[1] = point.start == SIZE_MAX ? -1 : (jlong)point.start;
   exr_anchor_free(&point);
