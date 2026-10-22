@@ -99,7 +99,7 @@ extern "C" exr_status exr_ocr_recognize(exr_ocr *p,const exr_bitmap *b,const exr
       do {
         if(work.stop()) return stopped();
         std::unique_ptr<char[]> s(it->GetUTF8Text(levels[level]));
-        if(!s || !*s) continue;
+        if(!s || !s[0]) continue;
         size_t length=0;
         while(s[length] && length<o->max_output_bytes) length++;
         if(length==o->max_output_bytes || items.size()>=o->max_items ||
