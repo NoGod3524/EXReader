@@ -41,6 +41,10 @@ def main():
     finally:
         os.environ['MIGRATION_UPSTREAM_RESULT'] = original_upstream
     changes = [
+        ('empty-scenario-evidence', 'scenarios', lambda d: d.clear()),
+        ('empty-browser-evidence', 'e2e', lambda d: d.clear()),
+        ('empty-identity-evidence', 'identity', lambda d: d.clear()),
+        ('string-browser-result', 'e2e', lambda d: d.update(passed='true')),
         ('wrong-source', 'identity', lambda d: d['git'].update(sha='0' * 40)),
         ('wrong-run', 'identity', lambda d: d['workflow'].update(run_id='0')),
         ('wrong-attempt', 'identity', lambda d: d['workflow'].update(attempt='0')),
