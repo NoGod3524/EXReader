@@ -20,6 +20,9 @@ Import supports EPUB, TXT, HTML/XHTML, FB2, RTF, DOCX and MOBI snapshots, up to
 existing decoded-document limits still apply. Fixed-page, audio, DRM, OPDS and
 large windowed EPUB reading are outside this reference host's product scope.
 No format outside the seven listed routes is silently treated as plain text.
+The page cache holds at most three pages / 8 MiB; a seek is capped at 20,000
+pages, and font controls stay between 12 and 48 px. Hitting a page/work limit
+reports failure and retains the previously displayed page.
 
 The page image is rendered by EXReader. A native selectable text panel exposes
 the same page range, including Unicode. Select text there, enter a comment, and
@@ -56,7 +59,8 @@ EPUB path import; mapped window/rendered page; next; previous; first-page bound;
 font increase; font decrease; native text selection; selected Unicode note
 storage; note navigation; close/restart without original source; minimize/restore
 and resize; cancellation while reading; exact import deduplication; two-book
-shelf switching; oversized input rejection; invalid EPUB rejection; note deletion
+shelf switching with independently checked UTF-8 selection offsets; oversized
+input rejection; invalid EPUB rejection; note deletion
 and restart. Static source checks are not counted as successful interaction.
 
 Artifacts contain the runnable package, dependency notices, source/file hashes,
