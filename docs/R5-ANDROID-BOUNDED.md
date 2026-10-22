@@ -1,7 +1,7 @@
 # H10 Android bounded 候选
 
-当前 SDK 守卫及 Android 差异起点为集成人指定的修复候选 `2f26847684b54006ca812c35477ceae43719e7d4`；
-该候选的同源 SDK 冻结运行与本包正式运行均须通过，才能授予最终 Android 声明范围验收。
+当前 SDK 守卫及 Android 差异起点为集成人正式冻结的 `9c69bc4c7efb0cff68ced27562709fe597189041`。
+最终声明等待 Apple/Android 合入后的共同源码 S；同 S 的 Android 整轮用作本包最终验收。
 
 候选起点 `fd210224a4eba206762c08de435a5e9edfdf2a90`，SDK schema 7 API 已稳定。
 接续合入 SDK 包 `ce5d664c9f76d0613df6d79b27568a7039c4a81e`；集成人授予该源码为正式 K_reading 后，
@@ -58,3 +58,27 @@ seek／恢复扫描不栅格化前页；新增专项及模拟器闭环仍须完�
 但原 45 项的 PDF 重启帧比较失败，最终拒绝、48+16 不计通过。原件保留，不拼接此前已通过的 45 项。
 接续在 PDF 重启参考捕获前增加“页面实际像素已变化”的原时限断言，保留重启前后裁剪 PNG 与散列/边界观测；
 最终帧精确相等断言及 8 秒比较窗均不变，原 45 项标题、次序和标识保持不变。
+
+## 首次完整通过
+
+受测完整源码 `7b97041aca4053b27fd7d24f12d505ffc60d3e40`，SDK 来源为 `2f26847684b54006ca812c35477ceae43719e7d4`。
+正式 run `39871797469`／attempt 1／job `120147731764` 全步骤 success：
+
+| 检查 | 同次结果 |
+| --- | --- |
+| SDK、host 与两份测试 APK | 构建通过 |
+| 原 walkthrough | 45/45，0 失败、0 跳过 |
+| 独立 review | 10/10，0 失败、0 跳过 |
+| bounded 专项 | 11/11，0 失败、0 跳过 |
+| 真实顺序分页 | 49 页／49 native next／0 recovery，44729 ms |
+| 原证据门禁 | 48/48，accepted=true |
+| 附加 bounded 门禁 | 16/16，accepted=true |
+| 最终 fail-closed 汇总 | accepted=true，problems=[] |
+
+云端工件唯一一份 `EXReader-WP13-Android`，id `12467401242`，150877425 B，
+digest `sha256:88f6e8be2454d102effff4ff0cb888fb519f7c4f0c0d1c313faf212d969d9089`，
+API 确认同 run、同受测 SHA、非空、未过期，expires_at=`2027-01-20T23:26:32Z`。
+包含 SDK、APKs、原始日志、66 项逐例 JSON/截图、48+16 门禁报告及 PDF 前后裁剪帧。
+
+从 `2f268` 接续到正式 SDK `9c69` 仅有测试与冻结记录差异，SDK 受保护树相同。
+本分支已合入 `9c69` 并只更新 SDK/ownership 双守卫及文档；按集成人调度，不重复单独 dispatch，等待共同 S 的整轮。
