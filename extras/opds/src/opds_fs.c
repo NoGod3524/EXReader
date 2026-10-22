@@ -78,9 +78,9 @@ int opds_publish(const char *tmp, const char *dest, int replace) {
   if (replace) return rename(tmp, dest) == 0 ? 0 : -1;
   if (link(tmp, dest) == 0) { unlink(tmp); return 0; }
   if (errno == EEXIST) return 1;
-  /* file systems without hard links: best-effort existence check, then rename */
-  if (opds_path_kind(dest) != 0) return 1;
-  return rename(tmp, dest) == 0 ? 0 : -1;
+  /* No atomic no-replace operation is available here. A check followed by
+     rename could overwrite a file another writer just published. */
+  return -1;
 }
 int opds_sync(FILE *f) { return fsync(fileno(f)); }
 #endif

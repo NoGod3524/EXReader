@@ -952,6 +952,59 @@ static int d_redirected_download(void) {
   return 0;
 }
 
+/* Verification arms cancellation after network I/O has completed. */
+typedef struct { unsigned checks, cancel_at; int armed; opds_status verifier_status; } late_cancel;
+static int late_cancelled(void *context) {
+  late_cancel *c = (late_cancel *)context;
+  return c->armed && ++c->checks >= c->cancel_at;
+}
+static opds_status arm_cancel(void *context, const char *path, const char *type, char *detail, size_t cap) {
+  late_cancel *c = (late_cancel *)context;
+  opds_status st = opds_sdk_verify(NULL, path, type, detail, cap);
+  c->armed = 1;c->checks = 0;
+  return st == OPDS_OK ? c->verifier_status : st;
+}
+static int d_cancel_after_verifier(void) {
+  opds_config cf = cfg();opds_client *c = mk(&cf);char dst[800];
+  opds_download_result r;opds_download_options o = epub_opts(OPDS_EXISTING_FAIL);
+  late_cancel late = {0,1,0,OPDS_OK};opds_control ctl = {late_cancelled,&late};
+  case_dir("d_cancel_after_verifier");dest(dst,sizeof dst,"absent.epub");
+  o.verify = arm_cancel;o.verify_context = &late;
+  CHECK_ST(opds_download_url(c,U("/dl/book.epub"),dst,&o,&ctl,&r,&E),OPDS_CANCELLED);
+  CHECK(!r.published && !r.already_present && !file_exists(dst) && count_files()==0);
+  dest(dst,sizeof dst,"keep.epub");CHECK(write_file(dst,"existing original"));
+  o.existing = OPDS_EXISTING_REPLACE;late.armed = 0;
+  CHECK_ST(opds_download_url(c,U("/dl/book.epub"),dst,&o,&ctl,&r,&E),OPDS_CANCELLED);
+  CHECK(file_is(dst,"existing original") && count_files()==1 && !r.published);
+  /* A verifier can itself report cancellation without a control callback. */
+  late.armed = 0;late.verifier_status = OPDS_CANCELLED;
+  CHECK_ST(opds_download_url(c,U("/dl/book.epub"),dst,&o,NULL,&r,&E),OPDS_CANCELLED);
+  CHECK(file_is(dst,"existing original") && count_files()==1 && !r.published);
+  opds_client_free(c);return 0;
+}
+static int d_cancel_existing_comparison(void) {
+  opds_config cf = cfg();opds_client *c = mk(&cf);char dst[800],before[65];size_t size;char *data;
+  opds_download_result r;opds_download_options o = epub_opts(OPDS_EXISTING_FAIL);
+  late_cancel late = {0,3,0,OPDS_OK};opds_control ctl = {late_cancelled,&late};
+  case_dir("d_cancel_existing_comparison");dest(dst,sizeof dst,"same.epub");
+  CHECK_ST(opds_download_url(c,U("/dl/book.epub"),dst,&o,NULL,&r,&E),OPDS_OK);
+  snprintf(before,sizeof before,"%s",r.sha256);o.verify = arm_cancel;o.verify_context = &late;
+  CHECK_ST(opds_download_url(c,U("/dl/book.epub"),dst,&o,&ctl,&r,&E),OPDS_CANCELLED);
+  CHECK(late.checks==3 && !r.published && !r.already_present && count_files()==1);
+  data = read_file(dst,&size);CHECK(data);opds_sha256_hex(data,size,r.sha256);free(data);
+  CHECK_STR(before,r.sha256);opds_client_free(c);return 0;
+}
+static int d_cancel_before_publication(void) {
+  opds_config cf = cfg();opds_client *c = mk(&cf);char dst[800];
+  opds_download_result r;opds_download_options o = epub_opts(OPDS_EXISTING_FAIL);
+  late_cancel late = {0,2,0,OPDS_OK};opds_control ctl = {late_cancelled,&late};
+  case_dir("d_cancel_before_publication");dest(dst,sizeof dst,"absent.epub");
+  o.verify = arm_cancel;o.verify_context = &late;
+  CHECK_ST(opds_download_url(c,U("/dl/book.epub"),dst,&o,&ctl,&r,&E),OPDS_CANCELLED);
+  CHECK(late.checks==2 && !r.published && !file_exists(dst) && count_files()==0);
+  opds_client_free(c);return 0;
+}
+
 /* ---- consumer example (invoked by tools/check_opds.py, not here) ---- */
 
 typedef struct { const char *id, *protocol, *category, *request_class, *expected; int (*fn)(void); } tcase;
@@ -1018,6 +1071,9 @@ static const tcase CASES[] = {
   {"d_destination_names", "both", "download", "none", "argument", d_destination_names},
   {"d_authenticated_download", "both", "download", "download", "auth_required", d_authenticated_download},
   {"d_redirected_download", "both", "download", "download", "ok", d_redirected_download},
+  {"d_cancel_after_verifier", "both", "download", "download", "cancelled", d_cancel_after_verifier},
+  {"d_cancel_existing_comparison", "both", "download", "download", "cancelled", d_cancel_existing_comparison},
+  {"d_cancel_before_publication", "both", "download", "download", "cancelled", d_cancel_before_publication},
 };
 
 static void jstr(FILE *f, const char *s) {

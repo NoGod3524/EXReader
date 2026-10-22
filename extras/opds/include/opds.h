@@ -220,7 +220,10 @@ typedef struct {
   char detail[160];
 } opds_download_result;
 /* dest_path: final file (host chosen). The directory must exist and the name must
-   be a plain file name without traversal. Temp file lives next to it. */
+   be a plain file name without traversal. Temp file lives next to it.
+   Cancellation is polled after verification, during existing-file comparison,
+   and immediately before atomic publication; a completed publication is not undone.
+   No-replace fails with OPDS_IO when the filesystem lacks an atomic primitive. */
 opds_status opds_download(opds_client *client, const opds_link *link,
                           const char *dest_path, const opds_download_options *options,
                           const opds_control *control, opds_download_result *result,

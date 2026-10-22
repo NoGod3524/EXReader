@@ -361,17 +361,34 @@ static int is_signed_type(const char *m) {
 }
 static int is_generic(const char *m) { return !strcmp(m, "application/octet-stream") || !strcmp(m, "binary/octet-stream") || !m[0]; }
 
-static int sha_file(const char *path, char hex[65]) {
+static int download_cancelled(const opds_control *ctl) {
+  return ctl && ctl->cancelled && ctl->cancelled(ctl->context);
+}
+static opds_status sha_file(const char *path, uint64_t expected, const opds_control *ctl,
+                            char hex[65], opds_error *err) {
   FILE *f = opds_fopen_read(path);
   opds_sha s;
   unsigned char buf[16384];
-  size_t n;
-  if (!f) return 0;
+  uint64_t total = 0;
+  int different_size = 0;
+  opds_status st = OPDS_OK;
+  hex[0] = 0;
+  if (!f) return opds_fail(err, OPDS_IO, "cannot read the existing destination");
   opds_sha_init(&s);
-  while ((n = fread(buf, 1, sizeof buf, f)) > 0) opds_sha_update(&s, buf, n);
-  { int bad = ferror(f); fclose(f); if (bad) return 0; }
-  opds_sha_final_hex(&s, hex);
-  return 1;
+  for (;;) {
+    size_t want = sizeof buf, n;
+    if (download_cancelled(ctl)) { st = opds_fail(err, OPDS_CANCELLED, "download cancelled during destination comparison");break; }
+    /* Equal content must have equal length. Read at most expected+1 bytes. */
+    if (expected - total < sizeof buf) want = (size_t)(expected - total) + 1;
+    n = fread(buf, 1, want, f);
+    if (!n) break;
+    if ((uint64_t)n > expected - total) { different_size = 1;break; }
+    opds_sha_update(&s, buf, n);total += n;
+  }
+  if (ferror(f) && st == OPDS_OK) st = opds_fail(err, OPDS_IO, "cannot read the existing destination");
+  if (fclose(f) != 0 && st == OPDS_OK) st = opds_fail(err, OPDS_IO, "cannot close the existing destination");
+  if (st == OPDS_OK && !different_size && total == expected) opds_sha_final_hex(&s, hex);
+  return st;
 }
 
 opds_status opds_download_url(opds_client *c, const char *url, const char *dest, const opds_download_options *opt,
@@ -431,6 +448,9 @@ opds_status opds_download_url(opds_client *c, const char *url, const char *dest,
   }
   if (o.verify) {
     st = o.verify(o.verify_context, tmp, declared[0] ? declared : sn, res->detail, sizeof res->detail);
+    if (download_cancelled(ctl) || st == OPDS_CANCELLED) {
+      opds_remove(tmp);return opds_fail(err, OPDS_CANCELLED, "download cancelled after verification");
+    }
     if (st == OPDS_UNSUPPORTED) {
       res->readable = OPDS_READ_UNKNOWN; /* verifier cannot judge this type: publish, but never claim readable */
     } else if (st != OPDS_OK) {
@@ -446,13 +466,17 @@ opds_status opds_download_url(opds_client *c, const char *url, const char *dest,
     if (kind == 2 || kind == 3 || kind < 0) { opds_remove(tmp); return opds_fail(err, OPDS_ARGUMENT, "destination changed into a directory or link"); }
     if (kind == 1) {
       char have[65];
-      if (sha_file(dest, have) && !strcmp(have, res->sha256)) {
+      st = sha_file(dest, d.bytes, ctl, have, err);
+      if (st != OPDS_OK) { opds_remove(tmp);return st; }
+      if (download_cancelled(ctl)) { opds_remove(tmp);return opds_fail(err, OPDS_CANCELLED, "download cancelled after destination comparison"); }
+      if (have[0] && !strcmp(have, res->sha256)) {
         opds_remove(tmp);
         res->already_present = 1; res->published = 1;
         return OPDS_OK;
       }
       if (!replace) { opds_remove(tmp); return opds_fail(err, OPDS_EXISTS, "destination exists with different content"); }
     }
+    if (download_cancelled(ctl)) { opds_remove(tmp);return opds_fail(err, OPDS_CANCELLED, "download cancelled before publication"); }
     r = opds_publish(tmp, dest, replace);
     if (r == 1) { opds_remove(tmp); return opds_fail(err, OPDS_EXISTS, "destination appeared during the download"); }
     if (r != 0) { opds_remove(tmp); return opds_fail(err, OPDS_IO, "cannot publish the downloaded file"); }
