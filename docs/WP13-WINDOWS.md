@@ -75,8 +75,8 @@ notices and the sample books, and is zipped by `tools/build_windows_host.py`.
 
 Host limits: import file size 96 MiB (single cancellable read); SDK snapshot limits
 still apply (64 MiB normalized text). Fixed render is capped at 4096 pixels per side;
-font 80-300%, zoom 25-400%. Over-limit or unsupported input is displayed, never
-silently clamped. Encrypted PDFs are reported as `EXR_PASSWORD`; there is no password
+font 80-300% of the 28-point base (1.5 line height), zoom 25-400%. Over-limit or
+unsupported input is displayed, never silently clamped. Encrypted PDFs are reported as `EXR_PASSWORD`; there is no password
 prompt in this package.
 
 The bounded chapter entry (`exr_publication_pager_create`) is **not** used by this host.
@@ -148,11 +148,11 @@ each row below is a UI/lifecycle step.
 | 12 | A | copy quote | clipboard contains page text |
 | 13 | A | add note | notes 1 |
 | 14 | A | edit note comment | notes 1, updated status |
-| 15 | A | previous + jump to note | page 2, highlight message |
+| 15 | A | previous + jump to note | note page loaded, highlight and status message |
 | 16 | A | mouse drag selection | non-empty selection |
 | 17 | A | add second note | notes 2 |
 | 18 | A | delete selected note | notes 1 |
-| 19 | A | import Sample-Text.pdf | shelf 2 |
+| 19 | A | import Pages.pdf (generated, 4 renderable pages) | shelf 2 |
 | 20 | A | open PDF | fixed book, page 1 |
 | 21 | A | select all + add PDF note | fixed note count 1 |
 | 22 | A | next + jump to PDF note | page 1 with highlight |
@@ -164,7 +164,7 @@ each row below is a UI/lifecycle step.
 | 28 | A | asynchronous import + cancel | cancellation status, shelf 2 |
 | 29 | A | asynchronous import + open another book | new book stays visible, no shelf row |
 | 30 | A | quit | process exits cleanly |
-| 31 | B | restart | same book, page 2, notes 1, explicit restore message |
+| 31 | B | restart | same book, page 3, notes 1, explicit restore message |
 | 32 | B | select note + jump | annotation navigation works after restart |
 | 33 | B | open PDF | fixed page 4 restored, fixed notes 0 |
 | 34 | B | open EPUB + font + | font 160%, anchored re-layout |
@@ -176,6 +176,16 @@ The checker additionally enforces: no failed UI step, shelf equality across rest
 annotation identity across restart, anchored offset equality after a font change,
 screenshot presence, exact package hashes, and the zero-tolerance conditions
 (no lost saved note, no stale import frame on a new book, no silent wrong restore).
+
+### Cloud result
+
+- Run: [39710580316](https://github.com/NoGod3524/EXReader/actions/runs/39710580316),
+  commit `11ac64e4542b53980a0adb1cc995750258b05361`, conclusion **success**.
+- Preserved self-test: **26/26** checks.
+- UI phases A/B/C: exit 0, **158/158** steps passed, 8 screenshots.
+- Artifact `EXReader-WP13-Windows` (39,316,660 bytes).
+- Evidence JSON: `wp13-evidence/wp13-windows-evidence.json` inside the artifact; the
+  committed summary is `docs/validation/wp13-windows.json`.
 
 ## Evidence
 
