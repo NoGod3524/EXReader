@@ -1,0 +1,538 @@
+{
+  "ok": true,
+  "problems": [],
+  "summary": {
+    "schema": 1,
+    "package": "org.exreader.host",
+    "branch": "codex/wp13-android",
+    "source_sha": "6f6bfb77e946d145245d90c7165188566b300e50",
+    "physical_device_execution": false,
+    "build": {
+      "sdk_version": "3.40.0",
+      "core_version": "3.39.0",
+      "library_version": "3.34.0",
+      "abi_version": 1,
+      "library_schema": 6,
+      "abi": "x86_64",
+      "android_platform": "android-26",
+      "compile_sdk": 35,
+      "min_sdk": 26,
+      "target_sdk": 35,
+      "ndk": "27.0.12077973",
+      "cmake": "3.31.6",
+      "agp": "8.6.1",
+      "gradle": "8.9",
+      "artifacts": {
+        "app-debug.apk": {
+          "path": "/home/runner/work/EXReader/EXReader/build/android-host/artifacts/app-debug.apk",
+          "size": 21880638,
+          "sha256": "55e79775e7391920d72d7eb8d44b44d768eb8bbba371ee9e0144f453a0b9feb9"
+        },
+        "uitest-debug.apk": {
+          "path": "/home/runner/work/EXReader/EXReader/build/android-host/artifacts/uitest-debug.apk",
+          "size": 5643,
+          "sha256": "fdc339aa66a59d3564fa7ca46988cca1b29b88e00e087723103622eb17d867f0"
+        },
+        "uitest-debug-androidTest.apk": {
+          "path": "/home/runner/work/EXReader/EXReader/build/android-host/artifacts/uitest-debug-androidTest.apk",
+          "size": 1752539,
+          "sha256": "e9965bfccc5a322c2d75973dbaa5cf234c88ac1bab6a9906813ebe9cd22926fe"
+        }
+      },
+      "native": {
+        "lib/x86_64/libexreader.so": {
+          "machine": 62,
+          "load_alignments": [
+            16384
+          ],
+          "needed": [
+            "libOpenSLES.so",
+            "libm.so",
+            "libdl.so",
+            "libc.so"
+          ],
+          "soname": "libexreader.so"
+        },
+        "lib/x86_64/libexreader_jni.so": {
+          "machine": 62,
+          "load_alignments": [
+            16384
+          ],
+          "needed": [
+            "libexreader.so",
+            "libm.so",
+            "libdl.so",
+            "libc.so"
+          ],
+          "soname": "libexreader_jni.so"
+        },
+        "lib/x86_64/libexreader_host.so": {
+          "machine": 62,
+          "load_alignments": [
+            16384
+          ],
+          "needed": [
+            "libexreader.so",
+            "libm.so",
+            "libdl.so",
+            "libc.so"
+          ],
+          "soname": "libexreader_host.so"
+        }
+      },
+      "fixtures": {
+        "Ambiguous.epub": {
+          "size": 1450,
+          "sha256": "410aa0ec272711bd247db7b677c4f8f782b5c167505875d6d5b114247c00ce6e"
+        },
+        "BigChapter.epub": {
+          "size": 13931,
+          "sha256": "8223e40f2ef3a67a3f792b60fb57a5996568f701631f68639efbb8fd54eda8df"
+        },
+        "Broken.epub": {
+          "size": 4100,
+          "sha256": "0bf33c8f12bc371c9e677251e2e83de9cc4a7fbaa75d3a1c3b7df959c320a99e"
+        },
+        "Large.epub": {
+          "size": 30742816,
+          "sha256": "978cb919c33b93dcb5a9d7ddd577d9c5cec12bbdfc8d17df5ca877da01a78fcd"
+        },
+        "Sample.epub": {
+          "size": 2419,
+          "sha256": "9d6464c0f15bfe5b970dd7168aa3162d46e3a64f8f0f049801e7b8651fab3f76"
+        },
+        "Sample.pdf": {
+          "size": 12585,
+          "sha256": "4f6fdc7b4dc13363aae532953ccf863c6be853c3c8b63de4718bc45dafbeb49d"
+        },
+        "Sample.txt": {
+          "size": 165,
+          "sha256": "4983c8776fd49327b8b255b89389914e319a2b1449775afcbfb7c1b8d60240f1"
+        },
+        "Second.epub": {
+          "size": 1733,
+          "sha256": "e07b119259955be230da9e87ee2ada65dfb954223940c9c65b9814c398d18428"
+        },
+        "TooLarge.epub": {
+          "size": 34604843,
+          "sha256": "39b8543362de7e726b2847802ec7adc8d35247c18c9ba8af0acb54e1c10efe60"
+        }
+      }
+    },
+    "font": {
+      "name": "NotoSansCJKsc-Regular.otf",
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+    },
+    "device": {
+      "api": 34,
+      "abi": "x86_64",
+      "model": "Android SDK built for x86_64",
+      "hardware": "ranchu",
+      "is_emulator": true
+    },
+    "emulator": {
+      "api": 34,
+      "target": "default",
+      "image": "system-images;android-34;default;x86_64",
+      "arch": "x86_64"
+    },
+    "run": {
+      "workflow": "wp13-android",
+      "id": "39723075163",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39723075163"
+    },
+    "cases": [
+      {
+        "id": "cold_start_shelf",
+        "title": "Cold start shows an empty shelf",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 1508,
+        "screenshot": "shots/01-cold_start_shelf.png"
+      },
+      {
+        "id": "picker_cancel",
+        "title": "System picker cancel returns to the shelf",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 5818,
+        "screenshot": "shots/02-picker_cancel.png"
+      },
+      {
+        "id": "import_epub",
+        "title": "System picker imports an EPUB into the shelf",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 4103,
+        "screenshot": "shots/03-import_epub.png"
+      },
+      {
+        "id": "open_epub",
+        "title": "Open EPUB shows the first reflow page",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 1066,
+        "screenshot": "shots/04-open_epub.png"
+      },
+      {
+        "id": "page_next",
+        "title": "Tap the right zone to turn forward",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 812,
+        "screenshot": "shots/05-page_next.png"
+      },
+      {
+        "id": "page_prev",
+        "title": "Tap the left zone to turn back",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 859,
+        "screenshot": "shots/06-page_prev.png"
+      },
+      {
+        "id": "font_increase",
+        "title": "Font increase reflows and keeps the position",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 808,
+        "screenshot": "shots/07-font_increase.png"
+      },
+      {
+        "id": "font_decrease",
+        "title": "Font decrease reflows back",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 828,
+        "screenshot": "shots/08-font_decrease.png"
+      },
+      {
+        "id": "touch_select",
+        "title": "Touch drag selects real page text",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 2266,
+        "screenshot": "shots/09-touch_select.png"
+      },
+      {
+        "id": "copy_selection",
+        "title": "Copy places the selection on the clipboard",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 3247,
+        "screenshot": "shots/10-copy_selection.png"
+      },
+      {
+        "id": "note_add",
+        "title": "Add an annotation from the selection",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 2484,
+        "screenshot": "shots/11-note_add.png"
+      },
+      {
+        "id": "notes_read",
+        "title": "Read the annotation list back",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 1375,
+        "screenshot": "shots/12-notes_read.png"
+      },
+      {
+        "id": "note_edit",
+        "title": "Edit the annotation comment",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 4207,
+        "screenshot": "shots/13-note_edit.png"
+      },
+      {
+        "id": "note_navigate",
+        "title": "Navigate from an annotation to its page",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 1558,
+        "screenshot": "shots/14-note_navigate.png"
+      },
+      {
+        "id": "rotate_landscape",
+        "title": "Rotation recreates the activity and keeps state",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 2452,
+        "screenshot": "shots/15-rotate_landscape.png"
+      },
+      {
+        "id": "rotate_portrait",
+        "title": "Rotate back to portrait",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 2320,
+        "screenshot": "shots/16-rotate_portrait.png"
+      },
+      {
+        "id": "activity_rebuild",
+        "title": "Explicit activity recreation restores the reader",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 1184,
+        "screenshot": "shots/17-activity_rebuild.png"
+      },
+      {
+        "id": "background_resume",
+        "title": "Home and resume keeps the reader state",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 2182,
+        "screenshot": "shots/18-background_resume.png"
+      },
+      {
+        "id": "process_restart_reflow",
+        "title": "Process restart restores page and annotations",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 3168,
+        "screenshot": "shots/19-process_restart_reflow.png"
+      },
+      {
+        "id": "notes_after_restart",
+        "title": "Annotations survive the process restart",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 1384,
+        "screenshot": "shots/20-notes_after_restart.png"
+      },
+      {
+        "id": "note_delete",
+        "title": "Delete the annotation",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 2701,
+        "screenshot": "shots/21-note_delete.png"
+      },
+      {
+        "id": "import_txt",
+        "title": "Import a plain text book",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 5674,
+        "screenshot": "shots/22-import_txt.png"
+      },
+      {
+        "id": "open_txt",
+        "title": "Open the text book",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 1543,
+        "screenshot": "shots/23-open_txt.png"
+      },
+      {
+        "id": "import_pdf",
+        "title": "Import the fixed-page PDF",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 4608,
+        "screenshot": "shots/24-import_pdf.png"
+      },
+      {
+        "id": "open_pdf",
+        "title": "Open the PDF in fixed-page mode",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 796,
+        "screenshot": "shots/25-open_pdf.png"
+      },
+      {
+        "id": "pdf_next",
+        "title": "PDF page forward",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 824,
+        "screenshot": "shots/26-pdf_next.png"
+      },
+      {
+        "id": "pdf_prev",
+        "title": "PDF page back",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 804,
+        "screenshot": "shots/27-pdf_prev.png"
+      },
+      {
+        "id": "pdf_zoom",
+        "title": "PDF zoom changes the rendered page",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 1437,
+        "screenshot": "shots/28-pdf_zoom.png"
+      },
+      {
+        "id": "pdf_select_copy",
+        "title": "Select and copy PDF text",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 3126,
+        "screenshot": "shots/29-pdf_select_copy.png"
+      },
+      {
+        "id": "pdf_note_add",
+        "title": "Add a fixed-page annotation",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 2294,
+        "screenshot": "shots/30-pdf_note_add.png"
+      },
+      {
+        "id": "pdf_process_restart",
+        "title": "PDF page progress and notes survive restart",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 3834,
+        "screenshot": "shots/31-pdf_process_restart.png"
+      },
+      {
+        "id": "pdf_note_delete",
+        "title": "Delete the fixed-page annotation",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 2782,
+        "screenshot": "shots/32-pdf_note_delete.png"
+      },
+      {
+        "id": "import_bigchapter",
+        "title": "Import a single large chapter",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 3551,
+        "screenshot": "shots/33-import_bigchapter.png"
+      },
+      {
+        "id": "open_bigchapter",
+        "title": "Open the large chapter",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 885,
+        "screenshot": "shots/34-open_bigchapter.png"
+      },
+      {
+        "id": "bigchapter_next",
+        "title": "Page inside the large chapter",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 1594,
+        "screenshot": "shots/35-bigchapter_next.png"
+      },
+      {
+        "id": "import_ambiguous",
+        "title": "Import a book with repeated text",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 2856,
+        "screenshot": "shots/36-import_ambiguous.png"
+      },
+      {
+        "id": "ambiguous_restore",
+        "title": "A repeated-text anchor is reported as not exact",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 3932,
+        "screenshot": "shots/37-ambiguous_restore.png"
+      },
+      {
+        "id": "corrupt_import",
+        "title": "A malformed EPUB is reported without a crash",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 3411,
+        "screenshot": "shots/38-corrupt_import.png"
+      },
+      {
+        "id": "retry_import",
+        "title": "Retry with a valid book after the failure",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 4378,
+        "screenshot": "shots/39-retry_import.png"
+      },
+      {
+        "id": "duplicate_import",
+        "title": "Duplicate import reuses the existing row",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 4544,
+        "screenshot": "shots/40-duplicate_import.png"
+      },
+      {
+        "id": "too_large",
+        "title": "The 32 MiB host limit is enforced",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 6978,
+        "screenshot": "shots/41-too_large.png"
+      },
+      {
+        "id": "cancel_large_import",
+        "title": "Cancel an in-flight import",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 3477,
+        "screenshot": "shots/42-cancel_large_import.png"
+      },
+      {
+        "id": "book_switch",
+        "title": "Switch between two books without stale pages",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 2985,
+        "screenshot": "shots/43-book_switch.png"
+      },
+      {
+        "id": "accessibility_semantics",
+        "title": "Controls and page lines expose accessible names",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 858,
+        "screenshot": "shots/44-accessibility_semantics.png"
+      },
+      {
+        "id": "native_metrics",
+        "title": "Native page metrics and handle closure are logged",
+        "status": "pass",
+        "detail": "",
+        "duration_ms": 121,
+        "screenshot": "shots/45-native_metrics.png"
+      }
+    ],
+    "summary": {
+      "total": 45,
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0
+    },
+    "limitations": [
+      "x86_64 emulator only; no physical-device installation or signing",
+      "TalkBack human review is not part of this run",
+      "fixed-page fixture is the repository PDF with one text glyph per page",
+      "large-chapter case uses a 2 MiB single chapter, not a multi-megabyte stress book",
+      "cancellation is cooperative between host copy, SDK import and render boundaries"
+    ],
+    "evidence": {
+      "instrumentation": "evidence/instrumentation.txt",
+      "logcat": "evidence/logcat.txt",
+      "device_cases": "evidence/device/cases",
+      "screenshots": "evidence/device/shots",
+      "apk": "evidence/artifacts/app-debug.apk"
+    },
+    "static": {
+      "build_sdk": "3.40.0",
+      "build_abi": "x86_64",
+      "build_ndk": "27.0.12077973",
+      "build_gradle": "8.9",
+      "cases": 45,
+      "api": 34,
+      "abi": "x86_64",
+      "model": "Android SDK built for x86_64",
+      "page_metrics": 28
+    }
+  }
+}
