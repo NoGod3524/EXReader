@@ -18,6 +18,7 @@ import xml.etree.ElementTree as ET
 
 PLATFORMS = ('macos', 'iphone', 'ipad')
 SDK_TARGET = {'macos': 'macos', 'iphone': 'iphonesimulator', 'ipad': 'iphonesimulator'}
+READING_SDK_BASELINE = 'ce5d664c9f76d0613df6d79b27568a7039c4a81e'
 BASE_CASES = {
     'test01ImportDeduplicateAndErrors': '''step01_launch_fresh_state step02_import_epub_fixture step03_duplicate_import_reuses_row step04_import_pdf_fixture step05_broken_import_error_is_recoverable step06_reopen_epub_after_error step07_element_tree_import'''.split(),
     'test02PagingTypographyAndLayout': '''step08_launch_and_open_reader step09_first_page step10_next_page_progress step11_next_page_again step12_previous_page step13_font_increase_repaginates step14_font_decrease_restores_size step15_rotate_or_resize_viewport step16_layout_fits_new_size step17_restore_original_orientation step18_element_tree_reader'''.split(),
@@ -214,6 +215,7 @@ def sdk_record(root, target):
     root = Path(root)
     base = (root/'include/exr/base.h').read_text()
     return {**cloud_identity(target), 'sdk_version': re.search(r'#define EXR_VERSION "([^"]+)"', base)[1],
+            'reading_sdk_baseline': READING_SDK_BASELINE,
             'abi': int(re.search(r'#define EXR_ABI_VERSION (\d+)u', base)[1]),
             'files_sha256': inventory(root),
             'runtime_ids': {path.name: runtime_ids(path) for path in sorted((root/'lib').glob('libexreader*.dylib'))}}
@@ -221,6 +223,7 @@ def sdk_record(root, target):
 
 def validate_sdk(root, value, source, run_id, attempt, target):
     validate_identity(value, source, run_id, attempt, target, 'sdk')
+    require(value.get('reading_sdk_baseline') == READING_SDK_BASELINE, 'SDK frozen reading baseline mismatch')
     require(value.get('files_sha256') == inventory(root), 'SDK file identity mismatch')
     require(value.get('abi') == 1 and value.get('sdk_version'), 'SDK version or ABI missing')
     header = (Path(__file__).resolve().parents[2]/'include/exr/base.h').read_text()
@@ -501,6 +504,7 @@ def validate_review_reports(root, source, run_id, attempt, sdk, fixtures):
     bounded = load(bounded_root/'bounded-review.json')
     validate_identity(bounded, source, run_id, attempt, 'bounded-macos', 'package')
     require(bounded.get('schema') == 1 and bounded.get('accepted') is True and bounded.get('physical_device_execution') is False and
+            bounded.get('runtime_budget_seconds') == 900 and bounded.get('diagnostic_only') is False and
             [c.get('name') for c in bounded.get('checks', [])] == BOUNDED_CHECKS and
             all(c.get('passed') is True for c in bounded['checks']), 'bounded consumer checks incomplete')
     require(bounded.get('program_sha256') == digest(bounded_root/'bounded-review') and

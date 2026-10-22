@@ -15,8 +15,12 @@ import SQLite3
         let source = resources.appendingPathComponent("Bounded.epub")
         var results: [[String: Any]] = [], measurements: [String: Any] = [:]
         func check(_ name: String, _ operation: () throws -> Bool) {
+            let started = Date()
+            print("bounded-case-start \(name)"); fflush(stdout)
             do { results.append(["name": name, "passed": try operation()]) }
             catch { results.append(["name": name, "passed": false, "error": String(describing: error)]) }
+            results[results.count - 1]["elapsed_ms"] = Date().timeIntervalSince(started) * 1000
+            print("bounded-case-end \(name) passed=\(results.last?["passed"] as? Bool == true)"); fflush(stdout)
         }
         let id = try library.importUnique(file: source, title: "Bounded.epub").id
         let book = try library.books().first(where: { $0.id == id })!
@@ -172,21 +176,32 @@ import SQLite3
                 notes[0].comment == "schema6 original note" && notes[0].quote == "Unicode" && Data(bytes: blob, count: size) == original
         }
         check("long_chapter_tail_text_without_snapshot") {
+            func phase(_ name: String) { print("bounded-long-phase \(name)"); fflush(stdout) }
             let start = Date()
+            phase("before-import")
             let longID = try library.importUnique(file: resources.appendingPathComponent("BoundedLong.epub"), title: "BoundedLong.epub").id
+            phase("imported")
             let imported = Date()
             let publication = try HostPublication(library: library, bookID: longID, cancel: HostCancelBox())
+            phase("publication-opened")
             let cancel = HostCancelBox()
             let pager = try HostPager(publication: publication, part: 0, font: font, width: 480, height: 640, fontSize: 28, box: cancel)
+            phase("chapter-pager-created")
             let range = try pager.pageRange(0, cancel: cancel)
+            phase("first-layout")
             let bitmap = try pager.render(0, cancel: cancel)
+            phase("first-paint")
             let firstPaint = Date()
             let extent = pager.extent
             let tail = try pager.text(max(0, extent - 512)..<extent, cancel: cancel)
+            phase("tail-text")
             let anchor = try pager.makeAnchor(start: extent, end: extent, cancel: cancel)
+            phase("tail-point-captured")
             try library.setEPUBProgress(bookID: longID, part: 0, path: publication.parts[0].path, anchor: anchor)
+            phase("tail-point-stored")
             let saved = try library.epubProgress(bookID: longID)
             let match = try pager.resolveLocation(saved!, cancel: cancel)
+            phase("tail-point-resolved")
             let stats = pager.statistics
             measurements = ["import_ms": imported.timeIntervalSince(start) * 1000,
                             "first_paint_ms": firstPaint.timeIntervalSince(imported) * 1000,

@@ -215,7 +215,7 @@ final class HostPublication {
 }
 
 final class HostEPUBLocation {
-    var raw: exr_epub_location
+    private(set) var raw: exr_epub_location
     init(adopting raw: exr_epub_location) { self.raw = raw }
     deinit { exr_epub_location_free(&raw) }
     var part: Int { raw.part }
@@ -241,7 +241,7 @@ private func hostFileRead(_ context: UnsafeMutableRawPointer?, _ offset: UInt64,
         try HostSDKReview.event?("import-read")
 #endif
         return bytes.count
-    } catch { owner.failure = error; return 0 }
+    } catch { if owner.failure == nil { owner.failure = error }; return 0 }
 }
 
 private final class HostPageText {
@@ -466,11 +466,12 @@ final class HostPager {
     func resolve(_ anchor: HostAnchor, cancel: HostCancelBox? = nil) throws -> HostAnchorMatch {
         try bind(cancel)
         if let document { return try document.resolve(anchor, cancel: box) }
-        return try resolveRaw(anchor.raw)
+        return try withExtendedLifetime(anchor) { try resolveRaw(anchor.raw) }
     }
 
     func resolveLocation(_ location: HostEPUBLocation, cancel: HostCancelBox) throws -> HostAnchorMatch {
-        try bind(cancel); return try resolveRaw(location.raw.selector)
+        try bind(cancel)
+        return try withExtendedLifetime(location) { try resolveRaw(location.raw.selector) }
     }
     private func resolveRaw(_ raw: exr_anchor) throws -> HostAnchorMatch {
         var anchor = raw, match = exr_anchor_match(), error = exr_error(), control = hostControl(box)
@@ -853,19 +854,23 @@ final class HostLibrary {
     func setEPUBProgress(bookID: Int64, part: Int, path: String, anchor: HostAnchor) throws {
         var location = exr_epub_location(), error = exr_error()
         location.part = part; location.selector = anchor.raw
-        try path.withCString {
-            location.path = UnsafeMutablePointer(mutating: $0)
-            try hostCheck(exr_library_epub_progress(handle, bookID, &location, &error), error)
+        try withExtendedLifetime(anchor) {
+            try path.withCString {
+                location.path = UnsafeMutablePointer(mutating: $0)
+                try hostCheck(exr_library_epub_progress(handle, bookID, &location, &error), error)
+            }
         }
     }
     func addEPUBNote(bookID: Int64, part: Int, path: String, anchor: HostAnchor, text: String) throws {
         guard !text.utf8.contains(0) else { throw HostError.invalidInput("标注包含空字符") }
         var note = exr_epub_note(), result: Int64 = 0, error = exr_error()
         note.book_id = bookID; note.location.part = part; note.location.selector = anchor.raw
-        try path.withCString { route in try text.withCString { comment in
-            note.location.path = UnsafeMutablePointer(mutating: route); note.text = UnsafeMutablePointer(mutating: comment)
-            try hostCheck(exr_library_epub_note(handle, &note, &result, &error), error)
-        } }
+        try withExtendedLifetime(anchor) {
+            try path.withCString { route in try text.withCString { comment in
+                note.location.path = UnsafeMutablePointer(mutating: route); note.text = UnsafeMutablePointer(mutating: comment)
+                try hostCheck(exr_library_epub_note(handle, &note, &result, &error), error)
+            } }
+        }
     }
     func updateEPUBNote(bookID: Int64, noteID: Int64, text: String) throws {
         guard !text.utf8.contains(0) else { throw HostError.invalidInput("标注包含空字符") }

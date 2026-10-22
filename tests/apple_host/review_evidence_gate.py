@@ -96,7 +96,7 @@ def affected_accepted(args, name):
                 for target in ('macos', 'iphonesimulator', 'iphoneos')}
         if name in ('missing platform', 'missing fixture manifest'):
             return accepted(args)
-        if name in ('wrong SDK source', 'missing SDK', 'changed SDK bytes'):
+        if name in ('wrong SDK source', 'wrong SDK baseline', 'missing SDK', 'changed SDK bytes'):
             target = 'iphoneos' if name == 'missing SDK' else 'macos'
             validate_sdk(root/('wp13-apple-sdk-' + target)/'stage'/target, sdks[target],
                          args.source_sha, args.run_id, args.attempt, target)
@@ -166,6 +166,7 @@ def mutations():
         ('wrong fixture identity', lambda r: edit(r/report, lambda d: d['environment']['fixtures'].update(**{'Sample.epub': '0'*64}))),
         ('changed fixture bytes', lambda r: replace(r/ui/'program/EXReaderHost.app/Contents/Resources/Sample.epub', b'changed fixture')),
         ('wrong SDK source', lambda r: edit(r/'wp13-apple-sdk-macos/build/sdk-identity.json', lambda d: d.update(source_sha='0'*40))),
+        ('wrong SDK baseline', lambda r: edit(r/'wp13-apple-sdk-macos/build/sdk-identity.json', lambda d: d.update(reading_sdk_baseline='0'*40))),
         ('missing SDK', lambda r: shutil.rmtree(r/'wp13-apple-sdk-iphoneos')),
         ('changed SDK bytes', lambda r: replace(r/'wp13-apple-sdk-macos/stage/macos/include/exr/base.h', b'changed SDK header')),
         ('missing persisted database', lambda r: (r/ui/'library.sqlite').unlink()),
