@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       source_sha:
-        description: Full integrated source SHA tested by all eight workflows
+        description: Full integrated source SHA tested by all nine workflows
         type: string
         default: ''
       runs_json:
-        description: JSON object mapping all eight package keys to cloud run IDs; empty runs protocol checks only
+        description: JSON object mapping all nine package keys to cloud run IDs; empty runs protocol checks only
         type: string
         default: '{}'
 permissions:
