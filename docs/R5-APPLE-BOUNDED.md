@@ -52,3 +52,9 @@ bounded消费者已成功编译，但900秒执行预算耗尽，package及summar
 50MiB长章尚未执行。该运行只定位失败，不授予Apple验收。后续诊断细分import/publication/pager/anchor阶段，
 并以原Repeated夹具对照16/64KiB窗口；正式默认仍为16KiB，解析工作区16MiB与900秒预算不变。
 非默认窗口证据明确标为`diagnostic_only=true`，不替代原负例或正式八作业复验。
+
+阶段诊断`a77530d` / run `39869850934`确认Repeated已完成导入、publication与chapter-pager建立，
+第一次`makeAnchor(1024,1088)`在180秒预算内没有返回；尚未进入selector解析。
+同源对照`11d80be` / run `39870093796`中，16KiB窗口在相同阶段超时；64KiB窗口原负例2.28毫秒成功，
+`windows_loaded=1`、`windows_evicted=0`，15项检查全过；50MiB长章首屏约1.43秒、整个长章检查约1.70秒。
+这些是隔离诊断结果；正式窗口不扩大，SDK修复及重新冻结后的八作业复验仍待执行。
