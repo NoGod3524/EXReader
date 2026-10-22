@@ -34,6 +34,10 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def text(value):
+    return isinstance(value, str) and bool(value.strip())
+
+
 def write_json(path, value):
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
@@ -66,23 +70,25 @@ def https(value):
 
 
 def validate(manifest):
-    require(isinstance(manifest, dict) and manifest.get('schema') == 1, 'Unknown manifest schema')
+    require(isinstance(manifest, dict) and type(manifest.get('schema')) is int and manifest['schema'] == 1,
+            'Unknown manifest schema')
     require(re.fullmatch(r'[a-z0-9][a-z0-9-]{0,79}', manifest.get('dataset_id', '')) is not None,
             'Require a stable dataset_id')
-    require(manifest.get('targets') == TARGETS, 'Targets must match the frozen public format policy')
+    require(manifest.get('targets') == TARGETS and all(type(x) is int for x in manifest['targets'].values()),
+            'Targets must match the frozen public format policy')
     require(type(manifest.get('complete')) is bool, 'Require an explicit complete flag')
     selection = manifest.get('selection', {})
     require(isinstance(selection, dict), 'Invalid source selection declaration')
     require(isinstance(selection.get('method'), str) and selection['method'].strip(), 'Missing source selection method')
     require(selection.get('engine_results_used') is False, 'Selection must precede engine observations')
     candidates, excluded = selection.get('candidate_ids'), selection.get('excluded')
-    require(isinstance(candidates, list) and all(isinstance(x, str) and x for x in candidates)
+    require(isinstance(candidates, list) and all(text(x) for x in candidates)
             and len(candidates) == len(set(candidates)), 'Missing or duplicate candidate roster')
     require(isinstance(excluded, list), 'Require an explicit exclusion ledger')
     excluded_ids = []
     for item in excluded:
         require(isinstance(item, dict) and item.get('reason') in
-                ('permission_unconfirmed', 'not_declared_format') and item.get('evidence'),
+                ('permission_unconfirmed', 'not_declared_format') and text(item.get('evidence')),
                 'Failures cannot be excluded from the candidate roster')
         excluded_ids.append(item.get('id'))
     files = manifest.get('files')
@@ -92,7 +98,7 @@ def validate(manifest):
     for item in files:
         require(isinstance(item, dict), 'Invalid inventory entry')
         identity = item.get('id')
-        require(isinstance(identity, str) and identity and identity not in ids, 'Missing or duplicate input identity')
+        require(text(identity) and identity not in ids, 'Missing or duplicate input identity')
         ids.add(identity)
         path = relative(item.get('path'))
         require(path.casefold() not in paths, 'Duplicate input path or case alias')
@@ -114,11 +120,11 @@ def validate(manifest):
         source = item.get('source', {})
         require(isinstance(source, dict), 'Invalid source declaration')
         https(source.get('url'))
-        require(source.get('creator') and source.get('license'), 'Missing source creator or license')
+        require(text(source.get('creator')) and text(source.get('license')), 'Missing source creator or license')
         permission = source.get('permission', {})
         require(isinstance(permission, dict), 'Invalid redistribution declaration')
-        require(permission.get('redistribution') is True and permission.get('scope') and
-                permission.get('reviewed_by'), 'Per-file redistribution review is required')
+        require(permission.get('redistribution') is True and text(permission.get('scope')) and
+                text(permission.get('reviewed_by')), 'Per-file redistribution review is required')
         https(permission.get('evidence_url'))
         proof = relative(permission.get('evidence_path'))
         require(isinstance(permission.get('evidence_sha256'), str) and HASH.fullmatch(permission['evidence_sha256']),
@@ -137,14 +143,14 @@ def validate(manifest):
                 type(expected['complete']) is bool, 'Missing predeclared pipeline expectation')
         require(isinstance(capabilities, dict) and set(capabilities) == {'open', 'render', 'extract', 'save'},
                 'Declare every capability before observation')
-        require(capabilities['save'] == 'not_evaluated' and item.get('save_reason'),
+        require(capabilities['save'] == 'not_evaluated' and text(item.get('save_reason')),
                 'This checker cannot grant saving acceptance')
         if item['scope'] == 'supported':
             require(expected == {'status': 0, 'complete': True} and
                     all(capabilities[k] == 'complete' for k in ('open', 'render', 'extract')),
                     'Supported inputs require whole-document completion')
         else:
-            require(expected['status'] > 0 and expected['complete'] is False and item.get('expectation_reason') and
+            require(expected['status'] > 0 and expected['complete'] is False and text(item.get('expectation_reason')) and
                     all(capabilities[k] == 'not_evaluated' for k in ('open', 'render', 'extract')),
                     'Boundary rejections need a prior reason and cannot claim completion')
         if item['kind'] == 'synthetic':

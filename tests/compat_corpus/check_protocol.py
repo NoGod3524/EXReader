@@ -60,6 +60,7 @@ def check(binary, output):
     passed('positive_predeclared_rights_reviewed_manifest')
     rejects('missing_source', lambda m: m['files'][0].pop('source'))
     rejects('missing_permission', lambda m: m['files'][0]['source'].pop('permission'))
+    rejects('nontext_license_is_not_permission_evidence', lambda m: m['files'][0]['source'].update(license=True))
     rejects('unconfirmed_redistribution', lambda m: m['files'][0]['source']['permission'].update(redistribution=False))
     rejects('missing_license_proof_hash', lambda m: m['files'][0]['source']['permission'].pop('evidence_sha256'))
     rejects('missing_expectations', lambda m: m['files'][0].pop('expected'))
