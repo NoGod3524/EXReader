@@ -120,7 +120,8 @@ def gate(a):
                 problems.append("%s: browser end-to-end chain failed" % label)
             if e["indexeddb"]["version"] != 1:
                 problems.append("%s: IndexedDB version is %s, not 1" % (label, e["indexeddb"]["version"]))
-            if len(e['checks']) != 17 or not all(check['ok'] is True for check in e['checks']):
+            if (len(e['checks']) != 17 or len({check['check'] for check in e['checks']}) != 17 or
+                    not all(check['ok'] is True for check in e['checks'])):
                 problems.append('%s: incomplete browser-chain checks' % label)
         identity = entry['identity']
         if identity:
@@ -146,7 +147,8 @@ def gate(a):
                 record = json.load(open(review, encoding='utf-8'))
                 if (record.get('passed') is not True or record.get('source_sha') != os.environ['GITHUB_SHA'] or
                         record.get('run_id') != os.environ['GITHUB_RUN_ID'] or
-                        record.get('tool_sha256') != identity['tool']['sha256'] or len(record.get('checks', [])) != 20 or
+                        record.get('tool_sha256') != identity['tool']['sha256'] or len(record.get('checks', [])) != 22 or
+                        len({check['name'] for check in record.get('checks', [])}) != 22 or
                         not all(check['passed'] is True for check in record['checks'])):
                     problems.append('%s: incomplete or mismatched migration review regressions' % label)
         platforms[label] = {

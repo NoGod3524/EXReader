@@ -47,6 +47,22 @@ def main():
     result = c.tool_run('verify', '--pack', changed_pack, '--target', target)
     check('verify rejects same note identity with changed pack content', result.code == 3 and bool(result.entries('verify-note-content')))
 
+    c, book, note, pack, target = seeded('cross-pack-preserved-owner')
+    before = c.dump(target)
+    second_book = L.entry(dict(book['record'], id='second'), L.TXT)
+    other_note = dict(note, bookId='second')
+    second_pack = c.pack([second_book], [other_note], name='second.exrpack')
+    result = c.migrate(second_pack, target, '--allow-partial')
+    check('partial conflict preserves note owned by earlier pack', result.code == 0 and
+          bool(result.entries('note-changed')) and before == c.dump(target))
+
+    c, _, note, _, target = seeded('cross-pack-existing-note')
+    before = c.dump(target)
+    pack = c.pack([], [note], name='note-only.exrpack')
+    result = c.migrate(pack, target)
+    check('existing note with owner outside current pack is verified and reused',
+          result.code == 0 and result.rep['counts']['notes_existing'] == 1 and before == c.dump(target))
+
     for mutation in ('retained-unlocated', 'stored-identity', 'owner', 'kind'):
         c, _, _, pack, target = seeded('ledger-' + mutation, unlocated=mutation == 'retained-unlocated')
         ledger = Path(target + '.legacy-map.json')
