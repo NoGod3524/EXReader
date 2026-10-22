@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "../src/document_internal.h"
+#include <exr/formats.h>
 #include <stdio.h>
 
 static exr_error error;
