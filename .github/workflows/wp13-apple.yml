@@ -159,7 +159,8 @@ jobs:
             sdk_target=macos
             app=build/DerivedData/Build/Products/Debug/EXReaderHost.app
           else
-            container=$(xcrun simctl get_app_container "$udid" org.exreader.host data)
+            container=$(python3 tests/apple_host/resolve_container.py --udid "$udid" \
+              --output "build/results/${platform}-container.json")
             sdk_target=iphonesimulator
             app=build/DerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
           fi

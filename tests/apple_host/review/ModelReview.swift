@@ -138,7 +138,14 @@ struct ModelReview {
         check("selection_context_rejects_wrong_book_page_and_text") {
             let current = try session.renderSnapshot()
             let good = HostSelectionContext(bookID: id, frameCount: 1, baseOffset: current.pageRange.lowerBound, text: current.pageText)
-            return session.matches(good) &&
+            let model = HostReaderModel()
+            model.current = HostBookRow(id: id, title: "Reader", detail: "", isFixed: false, position: 0)
+            model.pageText = current.pageText
+            guard model.selectionContext != nil else { return false }
+            model.updateViewport(CGSize(width: 480, height: 640))
+            let pendingUnavailable = model.busy && model.selectionContext == nil
+            model.cancelWork()
+            return pendingUnavailable && !model.busy && model.selectionContext != nil && session.matches(good) &&
                 !session.matches(HostSelectionContext(bookID: id + 100, frameCount: 1, baseOffset: good.baseOffset, text: good.text)) &&
                 !session.matches(HostSelectionContext(bookID: id, frameCount: 1, baseOffset: good.baseOffset + 1, text: good.text)) &&
                 !session.matches(HostSelectionContext(bookID: id, frameCount: 1, baseOffset: good.baseOffset, text: "old text"))
