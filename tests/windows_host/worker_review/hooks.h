@@ -2,6 +2,7 @@
  * Cloud-only fault gates at public SDK call boundaries. The distributed host
  * does not compile this file or accept the observation message. */
 static volatile LONG review_armed, review_entered, review_offset_remaining, review_notes_fail, review_shelf_fail;
+static volatile LONG review_offset_calls, review_offset_injected;
 static HANDLE review_event;
 static DWORD review_note_thread;
 static int review_query_failure(int kind) {
@@ -17,7 +18,9 @@ static void review_pause(int stage, host_job *job) {
 static exr_status review_offset_get(exr_pager *pager, size_t index, const exr_layout **out, exr_error *error) {
   exr_status status = exr_pager_get(pager, index, out, error);
   LONG left = InterlockedCompareExchange(&review_offset_remaining, 0, 0);
+  InterlockedIncrement(&review_offset_calls);
   if (left > 0 && InterlockedDecrement(&review_offset_remaining) == 0 && status == EXR_OK) {
+    InterlockedIncrement(&review_offset_injected);
     *out = NULL;
     if (error) { error->code = EXR_LIMIT; strcpy(error->message, "Cloud regression: public page lookup returned EXR_LIMIT"); }
     return EXR_LIMIT;
@@ -37,6 +40,8 @@ static LRESULT review_message(HWND window, WPARAM code, LPARAM value) {
   if (code == 19) return (LRESULT)g.session.book_id;
   if (code == 25) return (LRESULT)review_note_thread;
   if (code == 26) return (LRESULT)GetWindowThreadProcessId(window, NULL);
+  if (code == 27) return InterlockedCompareExchange(&review_offset_calls, 0, 0);
+  if (code == 28) return InterlockedCompareExchange(&review_offset_injected, 0, 0);
   if (code >= 101 && code <= 104) {
     wchar_t name[100];
     swprintf(name, 100, L"Local\\EXReaderWorkerReview-%lu", GetCurrentProcessId());
@@ -47,7 +52,10 @@ static LRESULT review_message(HWND window, WPARAM code, LPARAM value) {
     return review_event != NULL;
   }
   if (code == 200) { if (review_event) SetEvent(review_event); return 1; }
-  if (code == 300) { InterlockedExchange(&review_offset_remaining, (LONG)value); return 1; }
+  if (code == 300) {
+    InterlockedExchange(&review_offset_calls, 0); InterlockedExchange(&review_offset_injected, 0);
+    InterlockedExchange(&review_offset_remaining, (LONG)value); return 1;
+  }
   if (code == 301) { InterlockedExchange(&review_notes_fail, 1); return 1; }
   if (code == 302) { InterlockedExchange(&review_shelf_fail, 1); return 1; }
   return 0;
