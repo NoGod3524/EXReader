@@ -43,6 +43,10 @@ android {
         }
     }
 
+    androidResources {
+        noCompress += ['otf']
+    }
+
     packaging {
         jniLibs {
             useLegacyPackaging false
