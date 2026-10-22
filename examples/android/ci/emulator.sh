@@ -66,6 +66,8 @@ ensure_storage
 adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0
+adb shell settings put global hide_error_dialogs 1
+adb shell settings put global anr_show_background 0
 adb install -r build/android-host/artifacts/app-debug.apk
 adb install -r build/android-host/artifacts/uitest-debug.apk
 adb install -r build/android-host/artifacts/uitest-debug-androidTest.apk
