@@ -95,6 +95,15 @@ def main():
         evidence.update({'environment': identity, 'source_sha': identity['source_sha'],
             'date': identity['date'], 'run': {'id': identity['run_id'], 'attempt': identity['attempt'],
                 'job': identity['job'], 'url': identity['run_url']}})
+        # Preserve the application and persisted diagnostics even when a failed
+        # test adds an attachment that strict acceptance must reject.
+        program = output/'program/EXReaderHost.app'
+        shutil.copytree(bundle, program)
+        evidence['program_files_sha256'] = inventory(program)
+        copy_persisted(args.container, output)
+        evidence['xcresult_sha256'] = tree_digest(args.xcresult)
+        evidence['xcodebuild_log_sha256'] = digest(args.xcresult.parent/(args.platform + '-xcodebuild.log'))
+        evidence['state'] = database_state(output, identity)
         cases = load_results(args.xcresult)
         attachments = output/'attachments'
         subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', str(args.xcresult),
@@ -105,13 +114,6 @@ def main():
             case['step_count'] = len(case['steps'])
         evidence.update({'tests': cases, 'totals': validate_cases(cases),
                          'attachments': {'status': 0, 'count': len(records), 'records': records}})
-        program = output/'program/EXReaderHost.app'
-        shutil.copytree(bundle, program)
-        evidence['program_files_sha256'] = inventory(program)
-        copy_persisted(args.container, output)
-        evidence['state'] = database_state(output, identity)
-        evidence['xcresult_sha256'] = tree_digest(args.xcresult)
-        evidence['xcodebuild_log_sha256'] = digest(args.xcresult.parent/(args.platform + '-xcodebuild.log'))
         evidence.update({'accepted': True, 'collector_status': 0})
         (output/'evidence.json').write_text(json.dumps(evidence, indent=2, sort_keys=True) + '\n')
         validate_platform(output, args.platform, identity['source_sha'], identity['run_id'], identity['attempt'],
