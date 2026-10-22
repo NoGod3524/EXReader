@@ -239,8 +239,10 @@ def write_fixtures(folder):
     if not pdf.is_file():
         raise SystemExit('missing tests/fixtures/pdf-public.pdf')
     shutil.copyfile(pdf, folder / 'Sample.pdf')
-    large = ('<h1>Large</h1><p>' + stream_text(30 * 1024 * 1024, 'large') + '</p>')
-    epub(folder / 'Large.epub', 'Large Import', [large], stored=True)
+    large_parts = ['<h1>Large</h1>']
+    for index in range(3000):
+        large_parts.append('<p>' + stream_text(10 * 1024, 'large-%d' % index) + '</p>')
+    epub(folder / 'Large.epub', 'Large Import', [''.join(large_parts)], stored=True)
     too_large = ('<h1>Too large</h1><p>' + stream_text(33 * 1024 * 1024, 'too-large') + '</p>')
     epub(folder / 'TooLarge.epub', 'Too Large Import', [too_large], stored=True)
     manifest = {}
