@@ -59,3 +59,10 @@ OPDS sanitizer 曾发现空 XML 文本的空指针零长度操作，已修复并
 
 停工后 16:57 UTC 为回答估时只读核对：Android `39816104855` 最终为 failure，未验收。
 完整交接及最新候选身份见 `docs/handoffs/2026-10-22-after-deadline.md`；上表保留 12:51 收口时快照。
+
+后续事实（不改上表快照）：第 14 项 Android 已不再是待修复的当前任务。A/B/C 在共同源码
+S=`686ce2fe6c3463ef1b917569677ee9933e22faa9` 联合验收，Android 在 S 的 run
+[39844608350](https://github.com/NoGod3524/EXReader/actions/runs/39844608350) 成功，严格汇总
+[39850404743](https://github.com/NoGod3524/EXReader/actions/runs/39850404743) accepted；范围仅 API34 x86_64 模拟器，
+上述旧候选失败继续保留，真机/签名/TalkBack 另列。真实语料仍为 0/1710。当前状态见
+[项目概述](PROJECT_OVERVIEW.md#已登记的验收与候选状态)。

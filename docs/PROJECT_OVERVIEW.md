@@ -51,16 +51,19 @@ R6 核心发布门槛，详见 [六个工作包](CORE-ROADMAP.md)。已完成能
 | 已完成 | R1（Linux） | 受测源码 `54d8c592ed4f48e2f5ddb7811de213c95e41243c`，run [39853356309](https://github.com/NoGod3524/EXReader/actions/runs/39853356309) attempt 1：`reading (reading-core)`、`reading (reading-library)` 均成功；安装消费者 3/3、4/4，九格式合成 smoke 均 9/9，组件/依赖判定与拒绝自验通过 |
 | 已完成 | R3 初始采样（Linux） | 同一 run 两 profile 各三次独立进程的 1 MiB TXT 首屏/32 次翻页采样，汇总 accepted |
 | 已完成（失败保留） | R1/R3 首轮 | 源码 `61aa183`，run `39852907619`：构建、安装、消费者与 smoke 成功，测量自验因 mock 误拦截失败、实际采样未执行；修复后在新源码重验 |
+| 已完成 | R1 跨平台（H1） | 受测源码 `9b968a16fc47596725e849e56ee98e4c4c210b74`，run [39854485070](https://github.com/NoGod3524/EXReader/actions/runs/39854485070) attempt 1：Windows/macOS × 两 preset 4/4 作业成功，构建、安装、安装消费者 3/3 或 4/4、九格式合成 smoke 9/9 与依赖/配置判定 accepted，见 [H1 记录](https://github.com/NoGod3524/EXReader/blob/2e8e981b6dd44d855a23931480fe5e0d5c791762/docs/READING-PLATFORMS.md)；未做性能或体积预算。程序集合、依赖解析与链接器身份的门禁加固由 [H6](https://github.com/NoGod3524/EXReader/blob/62ab38e8223e42f1562fda7137cd41b4d87620f1/docs/handoffs/reading-H6-platform-gate.md) 另行跟踪 |
+| 已完成 | R3 初始 PDF/CBZ 测量（Linux，合成） | 源码 `3cd7bdf14d4ee961a9cdda98bd7410d34c04161b`，run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753)：655 字节 1 页 PDF 与 908 字节 4 页 CBZ 各三进程；可区分页面候选 `4b6f562c29181d509f470feda0e5f1226fd466bb`，run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765) 增加 3 页 PDF/4 页 CBZ 的 32×32 合成文档，12 进程/240 次绘制、60 项拒绝自验，2026-10-22 只读核对为 success。见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md) |
 | 运行中 | — | 核对时无排队或运行中的 workflow |
-| 未执行 | R1 跨平台 | Windows/macOS 的 preset 构建、安装与消费者验证（独立 H1 包） |
+| 开发中 | R5 SDK 契约 | 书库 EPUB 随机读出口、有界导入和章内进度/标注持久化仍在开发，尚无冻结源码或云端结果；已有公开 API 与待实现要求分列于 [R5 接入梳理](R5-NATIVE-HOST-ADOPTION.md#已有公共-api-与共同缺口) |
 | 未执行 | R2 | 九格式原创 fixture 清单已冻结，仅作小型回归；真实 EPUB/PDF 语料仍为 0/1710，实际故障尚未逐份登记修复 |
-| 未执行 | R3 正式基线 | PDF、固定随机跳页、真实语料、峰值内存预算与冻结的硬性能预算 |
-| 未执行 | R4 / R5 | R4 等可复现热点；R5 正在梳理书库来源与位置契约，尚无宿主接入结果 |
+| 未执行 | R3 正式基线 | 真实多页 PDF、嵌入/回退字体与复杂图像、真实语料、跨平台性能、峰值内存预算与冻结的硬性能预算 |
+| 未执行 | R4 / R5 宿主 | R4 等可复现热点；R5 各平台宿主等 SDK 契约冻结，尚无宿主接入结果 |
 | 未执行 | R6 启用 | 门禁映射已写入，两个 check 尚未设为默认分支必需检查；默认分支 `protected=false`、rulesets 为空 |
 
 两个 preset 只做组件裁剪：`reading-core` 关闭音频（含 MP3/AAC）、书库、全文索引、PDF 编辑、旧共享总库、工具和 JNI，
 保留 PDF、PDF 密码认证、ICC 与全部现有图像开关；`reading-library` 仅再打开 SQLite 书库。
-裁剪不增强 PDF 或图像能力，初始 1 MiB TXT 采样也不替代 PDF、随机跳页、真实语料或硬预算。
+裁剪不增强 PDF 或图像能力；初始 1 MiB TXT 与极小 PDF/CBZ 采样均为合成工作负载，不是成熟性能基线，
+也不替代真实语料或硬预算。R3 表中 RSS 基线与峰值相同只表示未超过进程先前高水位，不能推断没有分配。
 新配置结果只绑定其受测源码，不继承 S 的联合验收或旧源码长测额度。命令与前置条件见
 [README 阅读 SDK preset](../README.md#阅读-sdk-preset)，记录见 [首轮启动](READING-CORE-START.md)、[门禁映射](READING-CORE-GATE.md)、
 [语料准备](READING-CORPUS.md) 与 [测量口径](READING-PERFORMANCE.md)。
@@ -92,7 +95,7 @@ R6 核心发布门槛，详见 [六个工作包](CORE-ROADMAP.md)。已完成能
 | Android 宿主审计 | 独立审计通过后在 S 重验，run `39844608350` 成功，完整证据由严格联合汇总接受 | API34 x86_64 模拟器范围联合验收通过；真机/签名/TalkBack 等另列；旧失败继续保留 |
 | OPDS facets | 独立审计通过，冻结 H 后纳入 S，run `39844589166` 双平台 2/2 作业成功并获严格汇总接受 | 声明范围联合验收通过；计数 profile、HTTPS、间接获取、借阅/支付/LCP 等边界保持 |
 | SDK 预集成与原基线 K（历史） | `4729f7fc7d908d249704d96ee61cc74ee778a27f`：native run `39821205425` 7/7、AcroForm 3/3、spacing 2/2；native 19 份工件有效 | 阶段一/二结果保留，已由最终 K2 接续 |
-| 最终 SDK 基线 K2 与共同源码 S | K2=`d46ff370`；S=`686ce2fe6c3463ef1b917569677ee9933e22faa9`；12 组/35 上游作业与严格汇总 `39850404743` 通过，44 上游工件有效 | A/B/C 已收口；产品整体、S 的 WP16 长测、真实语料和新性能预算尚未完成 |
+| 最终 SDK 基线 K2 与共同源码 S | K2=`d46ff370`；S=`686ce2fe6c3463ef1b917569677ee9933e22faa9`；12 组/35 上游作业与严格汇总 [39850404743](https://github.com/NoGod3524/EXReader/actions/runs/39850404743) 通过，44 上游工件有效 | A/B/C 已收口；产品整体、S 的 WP16 长测、真实语料和新性能预算尚未完成 |
 
 主要证据见 [冻结 SDK 记录](validation/2026-10-22-reliability-cloud.json)、
 [表格间距](WP5_BORDER_SPACING.md)、[AcroForm](WP9_ACROFORM.md)、[Apple 审计](WP13-APPLE-REVIEW.md)，
