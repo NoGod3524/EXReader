@@ -33,6 +33,34 @@ def make_unicode_epub(path):
             archive.writestr(item, content)
 
 
+def make_bounded_epub(path):
+    make_epub(path, 2, 128, single_paragraph=True)
+    with zipfile.ZipFile(path) as archive:
+        entries = [(item, archive.read(item.filename)) for item in archive.infolist()]
+    with zipfile.ZipFile(path, 'w') as archive:
+        for item, content in entries:
+            if item.filename.endswith('.opf'):
+                content = content.replace(b'</spine>', b'<itemref idref="c0"/></spine>')
+            elif item.filename == 'OPS/c0.xhtml':
+                content = b'<html xmlns="http://www.w3.org/1999/xhtml"><body><p>Bounded first chapter unique opening.</p></body></html>'
+            elif item.filename == 'OPS/c1.xhtml':
+                content = b'<html xmlns="http://www.w3.org/1999/xhtml"><body><p>Bounded second chapter unique opening.</p></body></html>'
+            archive.writestr(item, content)
+
+
+def make_unique_sample(path):
+    with zipfile.ZipFile(path) as archive:
+        entries = [(item, archive.read(item.filename)) for item in archive.infolist()]
+    with zipfile.ZipFile(path, 'w') as archive:
+        for item, content in entries:
+            if item.filename.startswith('OPS/c') and item.filename.endswith('.xhtml'):
+                chapter = int(Path(item.filename).stem[1:])
+                paragraphs = ['<p>' + ' '.join('C%02dP%03dW%02d reading' % (chapter, p, w)
+                                               for w in range(12)) + '</p>' for p in range(80)]
+                content = ('<html xmlns="http://www.w3.org/1999/xhtml"><body>' + ''.join(paragraphs) + '</body></html>').encode()
+            archive.writestr(item, content)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--resources', type=Path, required=True)
@@ -43,10 +71,18 @@ def main():
         shutil.rmtree(out)
     out.mkdir(parents=True)
     make_epub(out/'Sample.epub', 3, 16384, single_paragraph=True)
+    # Retain the original repeating sample as an ambiguity negative. The normal
+    # UI's positive fixture has unique selector context, declared before opening.
+    shutil.copyfile(out/'Sample.epub', out/'Repeated.epub')
+    make_unique_sample(out/'Sample.epub')
     shutil.copyfile(ROOT/'tests/fixtures/pdf-public.pdf', out/'Sample.pdf')
     (out/'Broken.epub').write_bytes(b'not a valid epub payload\n' * 8)
     make_epub(out/'Large.epub', 48, 65536)
     make_unicode_epub(out/'Unicode.epub')
+    make_bounded_epub(out/'Bounded.epub')
+    # Many small paragraphs, one 50 MiB decompressed chapter. A giant atomic
+    # paragraph would test a different budget rejection rather than windowing.
+    make_epub(out/'BoundedLong.epub', 1, 50 * 1024 * 1024)
     font = host_font(args.font_cache)
     shutil.copyfile(font/'Reader.otf', out/'Reader.otf')
     shutil.copyfile(font/'OFL.txt', out/'OFL.txt')

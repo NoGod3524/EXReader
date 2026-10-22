@@ -10,6 +10,8 @@ struct HostSelectionContext: Equatable {
     let frameCount: Int
     let baseOffset: Int
     let text: String
+    var part: Int = -1
+    var path: String = ""
 }
 
 #if EXR_APPLE_HOST_REVIEW
@@ -39,6 +41,8 @@ struct HostSnapshot {
     let pageCount: Int?
     let fontSize: Int
     let pageAccessibilityLabel: String
+    var part: Int = -1
+    var path: String = ""
 }
 
 private func makeCGImage(_ bitmap: HostBitmap) -> CGImage? {
@@ -60,6 +64,9 @@ final class HostSession {
     private var document: HostDocument?
     private var pager: HostPager?
     private var fixed: HostFixed?
+    private var publication: HostPublication?
+    private var part = -1
+    private var preserveUnresolvedProgress = false
     private var page = 0
     private var readingOffset = 0
     private var fontSize = 28.0
@@ -79,8 +86,10 @@ final class HostSession {
     var currentViewport: CGSize { viewport }
 
     func matches(_ context: HostSelectionContext) -> Bool {
-        book?.id == context.bookID && pageText == context.text && pageRange.lowerBound == context.baseOffset
+        book?.id == context.bookID && pageText == context.text && pageRange.lowerBound == context.baseOffset &&
+            part == context.part && currentPath == context.path
     }
+    private var currentPath: String { publication?.parts.first(where: { $0.index == part })?.path ?? "" }
 
     func listBooks() throws -> [HostBookRow] {
         try library.books().map { book in
@@ -106,14 +115,16 @@ final class HostSession {
 
     // Keep the last usable frame/session if parsing, seeking, rendering or saving fails.
     private func changing(_ cancel: HostCancelBox, _ operation: () throws -> HostSnapshot) throws -> HostSnapshot {
-        let old = (book, document, pager, fixed, page, readingOffset, fontSize, viewport, pageText, pageRange, currentCancel)
+        let old = (book, document, pager, fixed, page, readingOffset, fontSize, viewport, pageText, pageRange, currentCancel,
+                   publication, part, preserveUnresolvedProgress)
         try begin(cancel)
         do {
             if slowDelay > 0 { try waitCancellable(cancel, seconds: slowDelay) }
             return try operation()
         }
         catch {
-            (book, document, pager, fixed, page, readingOffset, fontSize, viewport, pageText, pageRange, currentCancel) = old
+            (book, document, pager, fixed, page, readingOffset, fontSize, viewport, pageText, pageRange, currentCancel,
+             publication, part, preserveUnresolvedProgress) = old
             throw error
         }
     }
@@ -131,6 +142,9 @@ final class HostSession {
         pager = nil
         document = nil
         fixed = nil
+        publication = nil
+        part = -1
+        preserveUnresolvedProgress = false
         pageRange = 0..<0
         pageText = ""
     }
@@ -164,6 +178,20 @@ final class HostSession {
             let fixed = try library.fixed(bookID: target.id, font: font, cancel: cancel)
             self.fixed = fixed
             page = min(max(0, target.position), max(0, fixed.pageCount - 1))
+        } else if try library.isBoundedEPUB(book: target) {
+            let source = try HostPublication(library: library, bookID: target.id, cancel: cancel)
+            self.publication = source
+            guard let first = source.parts.first(where: { $0.reading }) else { throw HostError.invalidResult("EPUB 没有阅读章节") }
+            let saved = try library.epubProgress(bookID: target.id)
+            part = saved?.part ?? first.index
+            _ = try source.route(part, path: saved?.path)
+            readingOffset = 0; page = 0
+            try rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+            if let saved, let pager {
+                let match = try pager.resolveLocation(saved, cancel: cancel)
+                if let range = match.range { readingOffset = range.lowerBound; page = try pager.pageIndex(for: readingOffset, cancel: cancel) }
+                else { preserveUnresolvedProgress = true }
+            }
         } else {
             let document = try library.document(bookID: target.id, cancel: cancel)
             self.document = document
@@ -181,24 +209,30 @@ final class HostSession {
 
     private func rebuildPager(width: Double, height: Double, font size: Double,
                               cancel: HostCancelBox) throws {
-        guard let document else { return }
+        guard document != nil || publication != nil else { return }
         try begin(cancel)
         guard width.isFinite, height.isFinite, size.isFinite else {
             throw HostError.invalidInput("页面尺寸或字号无效")
         }
-        let anchor = try document.makeAnchor(start: readingOffset, end: readingOffset)
+        let offset = readingOffset
         viewport = CGSize(width: width, height: height)
         fontSize = size
-        let newPager = try HostPager(document: document, font: font, width: width, height: height,
-                                     fontSize: size, box: cancel)
+        let newPager: HostPager
+        if let publication {
+            newPager = try HostPager(publication: publication, part: part, font: font, width: width, height: height,
+                                    fontSize: size, box: cancel)
+        } else if let document {
+            newPager = try HostPager(document: document, font: font, width: width, height: height,
+                                    fontSize: size, box: cancel)
+        } else { throw HostError.invalidResult("阅读器不可用") }
         pager = newPager
-        page = try newPager.pageIndex(for: anchor.start, cancel: cancel)
+        page = try newPager.pageIndex(for: offset, cancel: cancel)
         _ = try newPager.pageRange(page, cancel: cancel)
     }
 
     func resize(width: Double, height: Double, cancel: HostCancelBox) throws -> HostSnapshot {
         try changing(cancel) {
-            if fixed == nil, document != nil {
+            if fixed == nil, document != nil || publication != nil {
                 try rebuildPager(width: width, height: height, font: fontSize, cancel: cancel)
             }
             return try renderSnapshot()
@@ -208,7 +242,7 @@ final class HostSession {
     func changeFont(delta: Double, cancel: HostCancelBox) throws -> HostSnapshot {
         try changing(cancel) {
             guard delta.isFinite else { throw HostError.invalidInput("字号无效") }
-            if fixed == nil, document != nil {
+            if fixed == nil, document != nil || publication != nil {
                 let next = min(48, max(18, fontSize + delta))
                 if next != fontSize {
                     try rebuildPager(width: Double(viewport.width), height: Double(viewport.height),
@@ -229,6 +263,15 @@ final class HostSession {
                 guard let pager else { throw HostError.invalidInput("分页尚未就绪") }
                 let next = page + direction
                 if next >= 0, try pager.existingRange(next, cancel: cancel) != nil { page = next }
+                else if let publication {
+                    let route = direction > 0 ? publication.parts.first(where: { $0.reading && $0.index > part }) :
+                        publication.parts.last(where: { $0.reading && $0.index < part })
+                    if let route {
+                        part = route.index; readingOffset = 0
+                        try rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+                        if direction < 0, let previous = self.pager { page = try previous.pageIndex(for: previous.extent, cancel: cancel) }
+                    }
+                }
             }
             return try renderSnapshot(userMove: true)
         }
@@ -236,6 +279,10 @@ final class HostSession {
 
     func firstPage(cancel: HostCancelBox) throws -> HostSnapshot {
         try changing(cancel) {
+            if let publication, let first = publication.parts.first(where: { $0.reading }), first.index != part {
+                part = first.index; readingOffset = 0
+                try rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+            }
             page = 0
             return try renderSnapshot(userMove: true)
         }
@@ -262,27 +309,33 @@ final class HostSession {
                                 pageRange: 0..<0, pageCount: total, fontSize: Int(fontSize),
                                 pageAccessibilityLabel: pageLabel(text: text, page: page + 1))
         }
-        guard let document, let pager else { throw HostError.invalidInput("分页尚未就绪") }
+        guard let pager else { throw HostError.invalidInput("分页尚未就绪") }
         let range = try pager.pageRange(page, cancel: cancel)
         let nextOffset = userMove ? range.lowerBound : readingOffset
         let bitmap = try pager.render(page, cancel: cancel)
         guard let image = makeCGImage(bitmap) else { throw HostError.invalidResult("页面图像无法创建") }
-        let text = slice(document.text, range)
-        let totalBytes = max(1, document.text.count)
+        // Rendering consumes the borrowed layout first; this query may evict its
+        // chapter projection window and returns only an owned current-page copy.
+        let text = try pager.text(range, cancel: cancel)
+        let totalBytes = max(1, pager.extent)
         let percent = min(100, Int((Double(range.upperBound) / Double(totalBytes) * 100).rounded()))
-        let anchor = try document.makeAnchor(start: nextOffset, end: nextOffset)
+        let anchor = try pager.makeAnchor(start: nextOffset, end: nextOffset, cancel: cancel)
         try cancel.commit {
             // This SDK call updates numeric position and selector in one transaction.
-            try library.setProgress(bookID: book.id, anchor: anchor)
+            if publication != nil {
+                if userMove { preserveUnresolvedProgress = false }
+                if !preserveUnresolvedProgress { try library.setEPUBProgress(bookID: book.id, part: part, path: currentPath, anchor: anchor) }
+            } else { try library.setProgress(bookID: book.id, anchor: anchor) }
             readingOffset = nextOffset
             pageRange = range
             pageText = text
         }
         return HostSnapshot(book: book, image: image,
-                            location: "第 \(page + 1) 页", progress: "\(percent)%",
+                            location: publication == nil ? "第 \(page + 1) 页" : "第 \(part + 1) 章 · 第 \(page + 1) 页",
+                            progress: publication == nil ? "\(percent)%" : (preserveUnresolvedProgress ? "保存位置未精确匹配；从章首浏览" : "本章 \(percent)% · 有界 EPUB"),
                             pageText: text, pageIndex: page, pageRange: range, pageCount: nil,
                             fontSize: Int(fontSize),
-                            pageAccessibilityLabel: pageLabel(text: text, page: page + 1))
+                            pageAccessibilityLabel: pageLabel(text: text, page: page + 1), part: part, path: currentPath)
     }
 
     private func pageLabel(text: String, page: Int) -> String {
@@ -300,6 +353,7 @@ final class HostSession {
     func notes() throws -> [HostNoteRow] {
         guard let book else { return [] }
         if let fixed { return try library.fixedNotes(bookID: book.id, fixed: fixed) }
+        if publication != nil, let pager { return try library.epubNotes(bookID: book.id, part: part, pager: pager, cancel: currentCancel ?? HostCancelBox()) }
         if let document { return try library.reflowNotes(bookID: book.id, document: document) }
         return []
     }
@@ -311,6 +365,9 @@ final class HostSession {
         try cancel.commit {
             if fixed != nil {
                 _ = try library.addFixedNote(bookID: book.id, page: page, start: start, end: end, text: comment)
+            } else if publication != nil, let pager {
+                let anchor = try pager.makeAnchor(start: start, end: end, cancel: cancel)
+                try library.addEPUBNote(bookID: book.id, part: part, path: currentPath, anchor: anchor, text: comment)
             } else {
                 _ = try library.addNote(bookID: book.id, start: start, end: end, text: comment)
             }
@@ -323,6 +380,7 @@ final class HostSession {
         guard try notes().contains(where: { $0.id == noteID }) else { throw HostError.invalidInput("标注已不属于当前书籍") }
         try cancel.commit {
             if fixed != nil { try library.updateFixedNoteText(bookID: book.id, noteID: noteID, text: text) }
+            else if publication != nil { try library.updateEPUBNote(bookID: book.id, noteID: noteID, text: text) }
             else { try library.updateNoteText(noteID: noteID, text: text) }
         }
     }
@@ -334,7 +392,8 @@ final class HostSession {
             throw HostError.invalidInput("标注已不属于当前书籍")
         }
         try cancel.commit {
-            if note.page >= 0 { try library.removeFixedNote(noteID: note.id) }
+            if note.location != nil { try library.removeEPUBNote(noteID: note.id) }
+            else if note.page >= 0 { try library.removeFixedNote(noteID: note.id) }
             else { try library.removeNote(noteID: note.id) }
         }
     }
@@ -345,7 +404,18 @@ final class HostSession {
             guard let stored = try notes().first(where: { $0.id == note.id && $0.page == note.page }), stored.isResolved else {
                 throw HostError.invalidInput("该标注无法精确恢复")
             }
-            if let fixed {
+            if let location = stored.location, let publication {
+                _ = try publication.route(location.part, path: location.path)
+                if location.part != part {
+                    part = location.part; readingOffset = 0
+                    try rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+                }
+                guard let pager, let range = try pager.resolveLocation(location, cancel: cancel).range else {
+                    throw HostError.invalidInput("该标注无法精确恢复")
+                }
+                readingOffset = range.lowerBound; page = try pager.pageIndex(for: readingOffset, cancel: cancel)
+                preserveUnresolvedProgress = false
+            } else if let fixed {
                 guard stored.page >= 0, stored.page < fixed.pageCount else { throw HostError.invalidInput("标注页码无效") }
                 page = stored.page
             } else {
@@ -361,6 +431,11 @@ final class HostSession {
         guard let book else { return }
         if let fixed {
             try library.updatePosition(book: book, position: page)
+        } else if publication != nil, let pager {
+            if !preserveUnresolvedProgress {
+                let anchor = try pager.makeAnchor(start: readingOffset, end: readingOffset)
+                try library.setEPUBProgress(bookID: book.id, part: part, path: currentPath, anchor: anchor)
+            }
         } else if let document {
             let anchor = try document.makeAnchor(start: readingOffset, end: readingOffset)
             try library.setProgress(bookID: book.id, anchor: anchor)
@@ -371,9 +446,12 @@ final class HostSession {
         var parts: [String] = []
         for book in try library.books() {
             parts.append("b\(book.id):\(book.position)")
+            if try library.isBoundedEPUB(book: book), let saved = try library.epubProgress(bookID: book.id) {
+                parts.append("p\(book.id):\(saved.part):\(saved.path):\(saved.raw.selector.start)")
+            }
         }
         for note in try notes() {
-            parts.append("n\(note.id):\(note.page):\(note.start):\(note.state):\(note.comment)")
+            parts.append("n\(note.storage):\(note.id):\(note.location?.part ?? -1):\(note.location?.path ?? ""):\(note.page):\(note.start):\(note.state):\(note.comment)")
         }
         let digest = SHA256.hash(data: Data(parts.joined(separator: "|").utf8))
         return String(digest.map { String(format: "%02x", $0) }.joined().prefix(8))
@@ -381,7 +459,7 @@ final class HostSession {
 
     func writeState(to url: URL, fontSHA: String) throws {
         var payload: [String: Any] = [
-            "schema": 1,
+            "schema": 2,
             "sdk_version": HOST_SDK_VERSION,
             "abi_version": Int(HOST_ABI_VERSION),
             "font_sha256": fontSHA,
@@ -392,12 +470,35 @@ final class HostSession {
         for book in try library.books() {
             var entry: [String: Any] = ["id": book.id, "title": book.title,
                                         "format": book.formatLabel, "position": book.position]
+            let bounded = try library.isBoundedEPUB(book: book)
+            entry["storage"] = bounded ? "epub" : (book.isFixed ? "fixed" : "global")
+            if bounded, let saved = try library.epubProgress(bookID: book.id) {
+                entry["epub_progress"] = ["part": saved.part, "path": saved.path,
+                                          "start": saved.raw.selector.start, "end": saved.raw.selector.end,
+                                          "exact": hostString(saved.raw.selector.exact),
+                                          "prefix": hostString(saved.raw.selector.prefix), "suffix": hostString(saved.raw.selector.suffix)]
+            }
             if let current = self.book, current.id == book.id {
                 entry["notes"] = try notes().map { note -> [String: Any] in
                     ["id": note.id, "quote": note.quote, "comment": note.comment,
-                     "page": note.page, "start": note.start, "state": note.state]
+                     "page": note.page, "start": note.start, "end": note.end, "state": note.state,
+                     "storage": note.storage, "part": note.location?.part ?? -1, "path": note.location?.path ?? "",
+                     "selector_start": note.location?.raw.selector.start ?? note.start,
+                     "selector_end": note.location?.raw.selector.end ?? note.end]
                 }
                 entry["page"] = page
+                entry["part"] = part
+                entry["path"] = currentPath
+                entry["reading_offset"] = readingOffset
+                entry["unresolved_progress"] = preserveUnresolvedProgress
+                if publication != nil, let pager {
+                    let stats = pager.statistics
+                    entry["bounded_memory"] = ["index_bytes": stats.index_bytes, "parse_workspace_bytes": stats.parse_workspace_bytes,
+                                                "peak_parse_workspace_bytes": stats.peak_parse_workspace_bytes,
+                                                "page_cache_bytes": stats.page_cache_bytes, "checkpoint_bytes": stats.checkpoint_bytes,
+                                                "projection_bytes": stats.projection_bytes, "explicit_snapshot_bytes": stats.explicit_snapshot_bytes,
+                                                "swift_page_text_bytes": pageText.utf8.count]
+                }
                 entry["page_text_sha256"] = SHA256.hash(data: Data(pageText.utf8)).map {
                     String(format: "%02x", $0)
                 }.joined()
@@ -428,6 +529,8 @@ final class HostReaderModel: ObservableObject {
     @Published var notes: [HostNoteRow] = []
     @Published var showLibrary = true
     @Published var frameCount = 0
+    private var pagePart = -1
+    private var pagePath = ""
     private(set) var fontSHA = ""
 
     private let queue = DispatchQueue(label: "org.exreader.host.reader")
@@ -455,7 +558,7 @@ final class HostReaderModel: ObservableObject {
     var selectionContext: HostSelectionContext? {
         guard let current, !busy else { return nil }
         return HostSelectionContext(bookID: current.id, frameCount: frameCount,
-                                    baseOffset: pageBaseOffset, text: pageText)
+                                    baseOffset: pageBaseOffset, text: pageText, part: pagePart, path: pagePath)
     }
 
     func reportImportFailure(_ error: Error) {
@@ -644,6 +747,8 @@ final class HostReaderModel: ObservableObject {
         progress = snapshot.progress
         pageText = snapshot.pageText
         pageBaseOffset = snapshot.pageRange.lowerBound
+        pagePart = snapshot.part
+        pagePath = snapshot.path
         pageAccessibilityLabel = snapshot.pageAccessibilityLabel
         fontSize = snapshot.fontSize
         defaults.set(snapshot.fontSize, forKey: "EXRFontSize")
