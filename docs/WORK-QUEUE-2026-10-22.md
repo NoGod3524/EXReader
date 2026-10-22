@@ -50,3 +50,6 @@
 AcroForm 独立审查发现并修复：局部更新清除了原 NeedAppearances 请求、没有 RadiosInUnison 时的重复 radio 导出值会同时选中。
 OPDS sanitizer 曾发现空 XML 文本的空指针零长度操作，已修复并在上述最终源码重新通过。
 各包实现与纯文档 HEAD 分开登记。本轮候选尚未联合合入，未合并 PR，未推送 `codex/framework`。
+
+停工后 16:57 UTC 为回答估时只读核对：Android `39816104855` 最终为 failure，未验收。
+完整交接及最新候选身份见 `docs/handoffs/2026-10-22-after-deadline.md`；上表保留 12:51 收口时快照。
