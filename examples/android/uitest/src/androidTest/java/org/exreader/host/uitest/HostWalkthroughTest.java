@@ -139,9 +139,8 @@ public final class HostWalkthroughTest {
 
         step("copy_selection", "Copy places the selection on the clipboard", () -> {
             click("copy_button");
-            device.pressBack();
-            SystemClock.sleep(300);
-            assertTrue("copy status missing", waitIdText("reader_status", "Copied", 15000));
+            SystemClock.sleep(2000);
+            assertTrue("copy status missing", waitIdText("reader_status", "Copied", 10000));
             assertTrue("copy count missing", text("reader_status").contains("characters"));
         });
 
