@@ -9,11 +9,6 @@ on:
       - 'docs/WP15-OPDS.md'
       - '.github/workflows/wp15-opds.yml'
   workflow_dispatch:
-    inputs:
-      ownership_base:
-        description: 'Reviewed integration SHA before merging OPDS repairs; empty uses the original handoff'
-        required: false
-        type: string
 permissions:
   contents: read
 env:
@@ -45,11 +40,9 @@ jobs:
           cmake --build build/opds --config Release --parallel 4
       - name: Run the fixed local service, acceptance cases and consumer example
         shell: bash
-        env:
-          OWNERSHIP_BASE: ${{ inputs.ownership_base }}
         run: |
           libs=$(find stage/lib -maxdepth 1 -type f \( -name '*.a' -o -name '*.lib' \) | sort | tr '\n' ' ')
-          python tools/check_opds.py --build build/opds --repo . --out build/wp15-evidence --base "$BASELINE" --handoff "${OWNERSHIP_BASE:-$HANDOFF}" --identity $libs
+          python tools/check_opds.py --build build/opds --repo . --out build/wp15-evidence --base "$BASELINE" --handoff "$HANDOFF" --identity $libs
       - name: Preserve evidence and logs
         if: always()
         uses: actions/upload-artifact@v4
