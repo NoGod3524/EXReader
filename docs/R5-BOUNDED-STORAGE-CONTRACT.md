@@ -4,7 +4,7 @@
 的独立专项已通过；当前候选进一步实现 EPUB 有界导入、章内进度与同章标注。
 冻结前必须完成“导入 EPUB → 书架 → 有界阅读 → 进度/同章标注 → 重开”的同源验证。
 
-## 已有实现与边界
+## 接入前基线与边界
 
 - `src/library.c:exr_library_import` 对重排格式调用 `exr_document_open_memory`，保存全文 normalized
   UTF-8 字节数到 `books.text_size`；`position`、`book_progress`、`notes.start/end` 均为全书坐标。
@@ -124,6 +124,8 @@ note 包含自己的 ID、book ID、上述 location 与评论。显式 selector 
 schema 7 同次创建 `epub_notes`：独立 `id`、book 外键、part/path、章内范围、quote/context 与评论。
 后续已发布 schema 的变更仍须明确升级，不静默新增表。
 新旧 note ID 分属不同接口域，宿主列表须带类型，不能用新 ID 调旧删除接口。
+notes 查询的 64 MiB 上限针对返回记录与字符串的逻辑载荷；动态数组预留容量和分配器开销不在此计数，
+不能将该数字当作进程 resident 内存上限。实际峰值由进程测量另列。
 首版不加入跨章单条标注、CFI/quote 双重真值、全文导出或修订重定位系统。
 
 ## 旧数据兼容
