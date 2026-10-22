@@ -56,7 +56,7 @@ def decode_widgets(value):
     if value == '-':
         return []
     out = []
-    for item in value.split(','):
+    for item in value.split(';'):
         cells = item.split(',')
         page = int(cells[0])
         rect = [int(number) / 1000.0 for number in cells[1:5]]
