@@ -91,6 +91,34 @@ def setitem(item, key, value):
     item[key] = value
 
 
+def add_notice(root, build, stage, manifest, source, installed):
+    data = b'additional upstream material\n'
+    (build / '_deps/alpha-src' / source).write_bytes(data)
+    destination = stage / LICENSES / installed
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(data)
+    manifest[0]['files'].append(licenses.upstream(source, LICENSES + installed, sha256(data)))
+    with (root / 'CMakeLists.txt').open('a') as stream:
+        stream.write(f'install(FILES ${{alpha_SOURCE_DIR}}/{source} DESTINATION '
+                     f'{LICENSES}{Path(installed).parent.as_posix()})\n')
+
+
+def update_statement(root, stage, manifest, data):
+    (root / 'licenses/notice.txt').write_bytes(data)
+    (stage / LICENSES / 'notice.txt').write_bytes(data)
+    manifest[2]['files'][0]['sha256'] = sha256(data)
+
+
+def source_statement(root, build, stage, manifest):
+    component = manifest[0]
+    component['source_statement'] = ['LICENSE', 'licenses/notice.txt', ALPHA.decode()]
+    component['version_header'] = ['alpha.h', 'ALPHA_VERSION']
+    (build / '_deps/alpha-src/alpha.h').write_text('#define ALPHA_VERSION "1.0"\n')
+    data = ('Version: ' + component['version'] + '\nSource: ' + component['source'] + '\nSHA-256: ' +
+            component['archive_sha256'] + '\n').encode() + ALPHA
+    update_statement(root, stage, manifest, data)
+
+
 CASES = [
     ('missing license file', 'missing installed license',
      lambda r, b, s, m: (s / LICENSES / 'alpha/LICENSE').unlink()),
@@ -138,23 +166,52 @@ CASES = [
      lambda r, b, s, m: (r / 'THIRD_PARTY_NOTICES.md').write_text('Beta\n')),
     ('install rule missing', 'no install rule',
      lambda r, b, s, m: replace(r / 'CMakeLists.txt', 'licenses/notice.txt', 'licenses/other.txt')),
+    ('registered PATENTS missing', 'missing installed license',
+     lambda r, b, s, m: (add_notice(r, b, s, m, 'PATENTS', 'alpha/PATENTS'),
+                         (s / LICENSES / 'alpha/PATENTS').unlink())),
+    ('separate upstream root COPYING missing', 'missing installed license',
+     lambda r, b, s, m: (add_notice(r, b, s, m, 'COPYING', 'alpha/upstream-root/COPYING'),
+                         (s / LICENSES / 'alpha/upstream-root/COPYING').unlink())),
+    ('obsolete zlib copy in libtiff directory', 'unregistered installed license material',
+     lambda r, b, s, m: ((s / LICENSES / 'libtiff').mkdir(),
+                         (s / LICENSES / 'libtiff/LICENSE').write_bytes(ALPHA))),
+    ('installed source statement missing', 'missing installed license',
+     lambda r, b, s, m: (source_statement(r, b, s, m), (s / LICENSES / 'notice.txt').unlink())),
+    ('source dedication changed', 'source statement differs from the fixed source header',
+     lambda r, b, s, m: (source_statement(r, b, s, m),
+                         (b / '_deps/alpha-src/LICENSE').write_bytes(b'changed dedication\n'))),
+    ('repacked source statement changed', 'source statement differs from the fixed source header',
+     lambda r, b, s, m: (source_statement(r, b, s, m),
+                         update_statement(r, s, m, (r / 'licenses/notice.txt').read_bytes().replace(ALPHA, b'changed\n')))),
+    ('source statement provenance missing', 'source statement provenance is missing or changed',
+     lambda r, b, s, m: (source_statement(r, b, s, m),
+                         update_statement(r, s, m, ALPHA))),
+    ('source version header changed', 'version header differs from the fixed source version',
+     lambda r, b, s, m: (source_statement(r, b, s, m),
+                         (b / '_deps/alpha-src/alpha.h').write_text('#define ALPHA_VERSION "2.0"\n'))),
 ]
 
 
 def main():
     for profile in licenses.READING_PROFILES:
         report = run(profile=profile)
-        if not report['materials_check_passed'] or report['pending']:
+        if not report['materials_check_passed'] or report['pending'] or not report['release_ready'] or report['mandatory_missing']:
             raise RuntimeError(f'Valid {profile} materials rejected: {report["failures"]} {report["pending"]}')
         if report['legal_judgment'] != 'not performed':
             raise RuntimeError('Report must not make a legal judgment')
     for label, expected, mutate in CASES:
         report = run(mutate)
-        if report['materials_check_passed'] or not any(expected in item for item in report['failures']):
+        if report['materials_check_passed'] or report['release_ready'] or not any(expected in item for item in report['failures']):
             raise RuntimeError(f'{label} accepted or reported unexpectedly: {report["failures"]}')
     report = run(lambda r, b, s, m: (b / '_deps/alpha-src/PATENTS').write_bytes(b'grant\n'))
-    if not report['materials_check_passed'] or not any('PATENTS' in item for item in report['pending']):
-        raise RuntimeError(f'Uninstalled upstream notice not reported as pending: {report["pending"]}')
+    if not report['materials_check_passed'] or report['release_ready'] or \
+            not any('PATENTS' in item for item in report['mandatory_missing']) or report['pending'] != report['mandatory_missing']:
+        raise RuntimeError(f'Uninstalled upstream notice did not block release: {report}')
+    for mutate in (source_statement,
+                   lambda r, b, s, m: add_notice(r, b, s, m, 'COPYING', 'alpha/upstream-root/COPYING')):
+        report = run(mutate)
+        if not report['materials_check_passed'] or not report['release_ready'] or report['mandatory_missing']:
+            raise RuntimeError(f'Complete source statement/root notice rejected: {report}')
 
     # The real manifest must match the pinned sources and keep audio codecs out
     # of both reading presets.
@@ -169,7 +226,8 @@ def main():
         if licenses.enabled(by_id['sqlite']['when'], switches) != (profile == 'reading-library'):
             raise RuntimeError(f'{profile} SQLite selection differs from the bookshelf profile')
     print(json.dumps({'license_checker_self_check': True, 'negative_cases': len(CASES),
-                      'pending_cases': 1, 'manifest_components': len(licenses.COMPONENTS)}))
+                      'mandatory_missing_cases': 1, 'source_statement_positive_cases': 2,
+                      'manifest_components': len(licenses.COMPONENTS)}))
 
 
 if __name__ == '__main__':
