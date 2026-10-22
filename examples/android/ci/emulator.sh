@@ -81,7 +81,8 @@ adb shell ls -l /sdcard/Download > "$EVIDENCE/device-downloads.txt" 2>&1 || true
 
 adb shell pm clear org.exreader.host
 adb shell rm -rf /sdcard/Android/data/org.exreader.host.uitest/files/evidence \
-  /sdcard/Android/data/org.exreader.host.uitest/files/review-evidence
+  /sdcard/Android/data/org.exreader.host.uitest/files/review-evidence \
+  /sdcard/Android/data/org.exreader.host.uitest/files/bounded-evidence
 
 python3 tools/run_android_host_evidence.py --build build/android-host/build.json \
   --evidence "$EVIDENCE"

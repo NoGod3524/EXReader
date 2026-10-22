@@ -67,7 +67,7 @@ def main():
             # Raw mode is mandatory: the checker reads INSTRUMENTATION_STATUS class/test/code
             # records, which am only prints with -r. Pretty mode hides them entirely.
             argv = ['adb', 'shell', 'am', 'instrument', '-w', '-r', '-e', 'disableAnalytics', 'true',
-                '-e', 'class', class_path,
+                '-e', 'class', class_path + '#' + method, '-e', 'exr_suite', suite,
                 '-e', 'exr_source_sha', identity['source_sha'], '-e', 'exr_run_id', identity['run_id'],
                 '-e', 'exr_attempt', identity['attempt'],
                 '-e', 'apk_sha256', build['artifacts']['app-debug.apk']['sha256'],
@@ -75,7 +75,7 @@ def main():
                 'org.exreader.host.uitest.test/androidx.test.runner.AndroidJUnitRunner']
             code, unused = command(argv, output/(suite + '-instrumentation.txt'), timeout=900)
             log_code, unused = command(['adb', 'logcat', '-d'], output/(suite + '-logcat.txt'))
-            remote = 'evidence' if suite == 'walkthrough' else 'review-evidence'
+            remote = {'walkthrough':'evidence', 'review':'review-evidence', 'bounded':'bounded-evidence'}[suite]
             require(not (output/folder).exists(), 'earlier suite evidence must not be reused')
             pull_code, unused = command(['adb', 'pull',
                 '/sdcard/Android/data/org.exreader.host.uitest/files/' + remote, str(output/folder)])

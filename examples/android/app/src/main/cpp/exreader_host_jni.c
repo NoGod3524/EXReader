@@ -303,7 +303,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_nativeBooks(
 }
 
 JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFile(
-    JNIEnv *env, jclass type, jlong handle, jstring path, jint format, jstring title) {
+    JNIEnv *env, jclass type, jlong handle, jstring path, jint format, jstring title,jboolean legacy) {
   exr_library *store = library(env, handle);
   char *file = NULL, *name = NULL;
   int64_t id = 0;
@@ -339,7 +339,7 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFi
       return NULL;
     }
   }
-  if (format == EXR_EPUB || format == EXR_PDF || format == EXR_CBZ) {
+  if ((format == EXR_EPUB && !legacy) || format == EXR_PDF || format == EXR_CBZ) {
     status = exr_library_import_file_unique(store, (exr_format)format, file, name, &id, &created, &error);
   } else {
     size_t size = 0;

@@ -12,6 +12,7 @@ final class PageSnapshot {
     long textBase, boundedHandle;
     boolean preserveProgress;
     String restoreNotice;
+    long highlightStart=-1, highlightEnd=-1;
     final long bookId;
     final Bitmap bitmap;
     final boolean fixed;

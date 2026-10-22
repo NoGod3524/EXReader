@@ -13,7 +13,7 @@ permissions:
 jobs:
   candidate-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 120
     env:
       ANDROID_CANDIDATE_SDK_BASE: fd210224a4eba206762c08de435a5e9edfdf2a90
       ANDROID_OWNERSHIP_HEAD: ${{ github.sha }}
@@ -34,12 +34,56 @@ jobs:
           sudo apt-get install -y patchelf
           SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
           yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1"
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
       - name: Build candidate SDK and APKs in cloud
+        id: build
         run: |
           mkdir -p build/android-host
           set -o pipefail
           python3 tools/build_android_host.py --stage stage/android-x86_64 --build-dir build/android-host --gradle gradle 2>&1 | tee build/android-host/build.log
+      - name: Static candidate source checks
+        id: static
+        run: python3 tools/check_android_host.py --repo .
+      - name: Enable KVM
+        run: sudo chmod 666 /dev/kvm
+      - name: Run original 45, review 10 and bounded 8 on API34 x86_64
+        id: emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          script: bash examples/android/ci/emulator.sh
+      - name: Verify complete candidate evidence
+        id: preflight
+        if: always()
+        continue-on-error: true
+        env:
+          ANDROID_HOST_UPSTREAM: '{"build":"${{ steps.build.outcome }}","static":"${{ steps.static.outcome }}","emulator":"${{ steps.emulator.outcome }}"}'
+        run: |
+          mkdir -p build/android-host/evidence/artifacts
+          cp build/android-host/artifacts/*.apk build/android-host/evidence/artifacts/
+          python3 tools/check_android_host.py --repo . --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --output build/android-host/evidence/preflight.json
+      - name: Original 48 evidence gate checks
+        id: gate_review
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
+        run: python3 tests/android_host/check_evidence_gate.py --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --output build/android-host/gate-review.json
+      - name: Additional bounded evidence gate checks
+        id: bounded_gate
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
+        run: python3 tests/android_host/check_bounded_evidence_gate.py --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --output build/android-host/bounded-gate-review.json
+      - name: Candidate runtime result, no formal acceptance
+        if: always()
+        env:
+          ANDROID_HOST_UPSTREAM: '{"build":"${{ steps.build.outcome }}","static":"${{ steps.static.outcome }}","emulator":"${{ steps.emulator.outcome }}"}'
+          ANDROID_GATE_OUTCOME: '${{ steps.gate_review.outcome }}'
+          ANDROID_BOUNDED_GATE_OUTCOME: '${{ steps.bounded_gate.outcome }}'
+        run: |
+          python3 tools/check_android_host.py --repo . --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --gate-review build/android-host/gate-review.json --bounded-gate-review build/android-host/bounded-gate-review.json --output build/android-host/candidate.json
       - name: Candidate scope only
         if: always()
         run: |
@@ -52,4 +96,8 @@ jobs:
             build/android-host/build.log
             build/android-host/build.json
             build/android-host/artifacts/
+            build/android-host/fixtures/
+            build/android-host/evidence/
+            build/android-host/*gate-review.json
+            build/android-host/candidate.json
           if-no-files-found: error

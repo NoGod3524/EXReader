@@ -44,7 +44,7 @@ def edit(path, mutation):
 def mutate(name, evidence, build):
     if ':' in name:
         suite, name = name.split(':')
-        root = evidence/('device' if suite == 'walkthrough' else 'review')
+        root = evidence/{'walkthrough':'device','review':'review','bounded':'bounded'}[suite]
         report_path = root/'validation.json'
         report = load(report_path)
         cases = report['cases']

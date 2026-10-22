@@ -16,14 +16,17 @@ SDK_BASE = 'd46ff370cb3c5ce9a0ceb4dc1f8b099209149280'
 REVIEW_BASE = '9b57cc64094a9c5fc0474ec87ca660d2dc935b74'
 WALKTHROUGH_IDS = '''cold_start_shelf picker_cancel import_epub open_epub page_next page_prev font_increase font_decrease touch_select copy_selection note_add notes_read note_edit note_navigate rotate_landscape rotate_portrait activity_rebuild background_resume process_restart_reflow notes_after_restart note_delete import_txt open_txt import_pdf open_pdf pdf_next pdf_prev pdf_zoom pdf_select_copy pdf_note_add pdf_process_restart pdf_note_delete import_bigchapter open_bigchapter bigchapter_next import_ambiguous ambiguous_restore corrupt_import retry_import duplicate_import too_large cancel_large_import book_switch accessibility_semantics native_metrics'''.split()
 REVIEW_IDS = '''duplicate_cancel_keeps_original new_copy_cancel_cleans_file late_insert_cancel_rolls_back_new_book duplicate_late_cancel_keeps_original late_cancel_after_commit_reports_success failed_open_preserves_reader failed_progress_preserves_frame selection_invalidated_while_busy unicode_comment_round_trip destroyed_activity_releases_worker'''.split()
+BOUNDED_IDS = '''bounded_source_delete_restore bounded_cross_chapter_font bounded_note_domain_restart bounded_duplicate_spine bounded_legacy_dedup bounded_schema6_upgrade bounded_progress_write_reject bounded_external_commit_reopen'''.split()
 SUITES = {'walkthrough': ('HostWalkthroughTest', 'walkthrough', 'device', WALKTHROUGH_IDS),
-          'review': ('HostReviewTest', 'review', 'review', REVIEW_IDS)}
+          'review': ('HostReviewTest', 'review', 'review', REVIEW_IDS),
+          'bounded': ('HostReviewTest', 'bounded', 'bounded', BOUNDED_IDS)}
 PACKAGES = {'app-debug.apk': 'org.exreader.host', 'uitest-debug.apk': 'org.exreader.host.uitest',
             'uitest-debug-androidTest.apk': 'org.exreader.host.uitest.test'}
 SOURCE_PATHS = ['CMakeLists.txt', 'src', 'include', 'cmake', 'bindings/jni', 'examples/android',
                 'tools/build_android_host.py', 'tools/check_android_host.py', 'tools/android_host_evidence.py',
                 'tools/run_android_host_evidence.py', 'tools/host_font.py', 'tests/android_host',
                 '.github/workflows/wp13-android.yml']
+SOURCE_PATHS += ['.github/workflows/r5-android-bounded-candidate.yml']
 
 
 def ownership():
@@ -228,7 +231,7 @@ def check_suite(evidence, suite, expected, build):
         require(case_path.resolve().is_relative_to(root.resolve()) and load(case_path) == case,
                 'per-case JSON differs from the aggregate report')
         case_files.add(case_name)
-        if suite == 'review':
+        if suite != 'walkthrough':
             assertions = case.get('assertions')
             require(isinstance(assertions, list) and assertions and all(isinstance(name, str) and name for name in assertions),
                     'review assertions missing')
@@ -243,7 +246,7 @@ def check_suite(evidence, suite, expected, build):
     if suite == 'walkthrough':
         require(log.count('metric {"event":"page"') >= 12 and 'handle open book=' in log and
                 'handle close book=' in log, 'native page/ownership evidence incomplete')
-    else:
+    elif suite == 'review':
         source = (ROOT/'examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/HostReviewTest.java').read_text()
         require(re.findall(r'run\("([a-z0-9_]+)"', source) == REVIEW_IDS, 'review case source contract changed')
         sequence = report.get('sequence', {})
@@ -257,6 +260,12 @@ def check_suite(evidence, suite, expected, build):
                     value.get('recovery_calls') == 0 for value in paging),
                 'raw paging counters do not establish 49 sequential pages')
         require('worker shutdown complete' in log, 'destroyed Activity worker completion is missing')
+    else:
+        source = (ROOT/'examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/HostReviewTest.java').read_text()
+        require(re.findall(r'boundedCase\("([a-z0-9_]+)"', source) == BOUNDED_IDS, 'bounded case source contract changed')
+        require('bounded page {' in log and 'storage mode book=' in log and
+                'host-review' in log and 'code 7' in log and 'code 3' in log,
+                'bounded storage/native page/real write rejection/external-source evidence incomplete')
     return report
 
 
@@ -318,5 +327,5 @@ def check_evidence(evidence, build_path, stage, upstream, expected=None):
     return {'schema': 2, 'package': 'org.exreader.host', 'source_sha': expected['source_sha'],
             'run': {'id': expected['run_id'], 'attempt': expected['attempt']},
             'physical_device_execution': False, 'build': build, 'cases': reports['walkthrough']['cases'],
-            'summary': reports['walkthrough']['summary'], 'review': reports['review'],
+            'summary': reports['walkthrough']['summary'], 'review': reports['review'], 'bounded': reports['bounded'],
             'execution_sha256': sha256(evidence/'execution.json')}

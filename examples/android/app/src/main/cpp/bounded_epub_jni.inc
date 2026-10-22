@@ -2,12 +2,14 @@
 /* App-local public-API bridge. Included after the common JNI string helpers. */
 typedef struct {
   exr_library *library;
+  exr_source source;
   int64_t book;
   exr_publication *publication;
   exr_font *font;
   exr_pager *pager;
   exr_layout *page;
   size_t part;
+  uint64_t next_calls;
 } host_epub;
 typedef struct { JNIEnv *env; jobject task; jmethodID check; } host_control;
 static int host_cancelled(void *context) {
@@ -93,7 +95,11 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_BoundedEpub_nativeParts(JN
   exr_publication_free(publication); return (*env)->ExceptionCheck(env)?NULL:rows;
 }
 static void host_epub_free(host_epub *reader) {
-  if(reader) { exr_layout_free(reader->page); exr_pager_free(reader->pager); exr_publication_free(reader->publication); exr_font_free(reader->font); free(reader); }
+  if(reader) {
+    exr_layout_free(reader->page); exr_pager_free(reader->pager); exr_publication_free(reader->publication);
+    if(reader->source.release) reader->source.release(reader->source.context);
+    exr_font_free(reader->font); free(reader);
+  }
 }
 JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeOpen(JNIEnv *env,jclass type,jlong owner,jlong book,jint part,jbyteArray font,jfloat size,jobject task) {
   host_epub *reader=NULL; exr_library *store=library(env,owner); exr_error error={0};
@@ -105,7 +111,11 @@ JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeOpen(JNIEnv *en
   if(part<0 || size<18 || size>40 || length<=0 || length>64*1024*1024) { throw_argument(env,"Invalid chapter font/configuration"); return 0; }
   reader=calloc(1,sizeof(*reader)); if(!reader) { status=EXR_MEMORY; goto done; }
   reader->library=store; reader->book=(int64_t)book; reader->part=(size_t)part;
-  status=host_publication(store,(int64_t)book,&reader->publication,&error); if(status!=EXR_OK) goto done;
+  status=exr_library_source(store,(int64_t)book,&reader->source,&error); if(status!=EXR_OK) goto done;
+  {
+    exr_source borrowed=reader->source; borrowed.release=NULL;
+    status=exr_publication_open_source(&borrowed,&reader->publication,&error); if(status!=EXR_OK) goto done;
+  }
   bytes=(*env)->GetByteArrayElements(env,font,NULL); if(!bytes) goto done;
   input.data=bytes; input.size=(size_t)length;
   status=exr_font_create(&input,1,&reader->font,&error); if(status!=EXR_OK) goto done;
@@ -143,8 +153,15 @@ static jobject host_epub_frame(JNIEnv *env,jlong handle,jobject task,int advance
   jlongArray jm=NULL,js=NULL; jfloatArray jg=NULL; jbyteArray jt=NULL,jp=NULL;
   jclass frame; jmethodID ctor; jobject result=NULL;
   if(!reader || (*env)->ExceptionCheck(env)) { if(!reader) throw_argument(env,"Bounded reader is closed"); return NULL; }
+  {
+    unsigned char byte;
+    if(reader->source.read_at(reader->source.context,0,&byte,1)!=1) {
+      status=EXR_IO; strcpy(error.message,"Library source invalidated by external storage change"); goto done;
+    }
+  }
   status=exr_pager_set_control(reader->pager,&control,&error); if(status!=EXR_OK) goto done;
   if(advance) {
+    reader->next_calls++;
     status=exr_pager_next(reader->pager,&layout,&error); if(status!=EXR_OK || !layout) goto done;
     exr_layout_free(reader->page); reader->page=layout;
   } else layout=reader->page;
@@ -192,6 +209,10 @@ JNIEXPORT jobject JNICALL Java_org_exreader_host_BoundedEpub_nativeNext(JNIEnv *
 }
 JNIEXPORT jobject JNICALL Java_org_exreader_host_BoundedEpub_nativeRender(JNIEnv *env,jclass type,jlong handle,jobject task) {
   (void)type; return host_epub_frame(env,handle,task,0,1);
+}
+JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeCalls(JNIEnv *env,jclass type,jlong handle) {
+  host_epub *reader=(host_epub *)(intptr_t)handle; (void)env; (void)type;
+  return reader?(jlong)reader->next_calls:0;
 }
 JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_BoundedEpub_nativeProgress(JNIEnv *env,jclass type,jlong owner,jlong book) {
   exr_library *store=library(env,owner); exr_epub_location location={0}; int present=0; exr_error error={0};

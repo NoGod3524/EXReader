@@ -417,6 +417,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 task.check();
                 String path = prefs.getString("path_" + target.id, null);
                 boolean bounded = target.format==NativeLibrary.FORMAT_EPUB && store.bounded(target.id);
+                Log.i(TAG,"storage mode book="+target.id+" bounded="+bounded);
                 if (!bounded && (path == null || !new File(path).isFile())) {
                     throw new IOException("The app-owned book copy is missing");
                 }
@@ -596,6 +597,14 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 task.check();
                 if (sessionBookId != owner) throw new IllegalStateException("The reading book changed");
                 reviewGate("page-before-render", task);
+                if(BuildConfig.DEBUG && getIntent().getBooleanExtra("review_external_commit",false)) {
+                    getIntent().removeExtra("review_external_commit");
+                    try(android.database.sqlite.SQLiteDatabase changed=android.database.sqlite.SQLiteDatabase.openDatabase(
+                            new File(getFilesDir(),"library.db").getPath(),null,0)) {
+                        changed.execSQL("CREATE TABLE host_review_commit(value INTEGER)");
+                        changed.execSQL("DROP TABLE host_review_commit");
+                    }
+                }
                 if (BuildConfig.DEBUG && getIntent().getBooleanExtra("review_fail_progress", false)) {
                     getIntent().removeExtra("review_fail_progress");
                     fault = android.database.sqlite.SQLiteDatabase.openDatabase(
@@ -936,6 +945,27 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         super.onNewIntent(intent);
         setIntent(intent);
         if (!BuildConfig.DEBUG || !intent.getBooleanExtra("exr_review", false)) return;
+        if(intent.getBooleanExtra("review_schema6",false)) {
+            intent.removeExtra("review_schema6");
+            HostTask task=beginTask(4); long gen=generation;
+            worker.execute(()->{
+                try {
+                    closeSessionsLocked(); store.close(); store=null;
+                    File file=new File(getFilesDir(),"library.db");
+                    try(android.database.sqlite.SQLiteDatabase old=android.database.sqlite.SQLiteDatabase.openDatabase(file.getPath(),null,0)) {
+                        old.execSQL("DROP TABLE epub_notes"); old.execSQL("DROP TABLE epub_progress"); old.execSQL("DROP TABLE epub_bounded_books");
+                        old.execSQL("PRAGMA user_version=6");
+                    }
+                    store=new BookStore(file);
+                    try(android.database.sqlite.SQLiteDatabase current=android.database.sqlite.SQLiteDatabase.openDatabase(file.getPath(),null,android.database.sqlite.SQLiteDatabase.OPEN_READONLY);
+                        android.database.Cursor cursor=current.rawQuery("PRAGMA user_version",null)) {
+                        if(!cursor.moveToFirst() || cursor.getInt(0)!=7) throw new IllegalStateException("Schema migration did not reach 7");
+                    }
+                    postUi(()->{ if(gen==generation) { finishTask(gen); showShelf(false); setStatus("Review schema 6 upgraded to 7"); loadShelf(false); } });
+                } catch(Throwable error) { taskFailed(gen,"Review migration: ",error); }
+            });
+            return;
+        }
         if (intent.getBooleanExtra("review_recreate", false)) {
             intent.removeExtra("review_recreate");
             intent.removeExtra("review_pause");
@@ -980,7 +1010,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     document.close();
                 }
                 task.check();
-                NativeLibrary.ImportResult result = store.importFile(path, format, name);
+                boolean legacy=BuildConfig.DEBUG && getIntent().getBooleanExtra("review_legacy_import",false);
+                getIntent().removeExtra("review_legacy_import");
+                NativeLibrary.ImportResult result = legacy?store.nativeLibrary().importLegacyFile(path,format,name):store.importFile(path, format, name);
                 importedId = result.id;
                 created = result.created;
                 reviewGate("import-inserted", task);
