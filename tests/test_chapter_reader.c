@@ -206,8 +206,10 @@ static void oversized_inline_unit(exr_font *font) {
     OK(exr_publication_open_memory(EXR_EPUB,data,size,&publication,&error));mz_free(data);
     if(variant==2) {
       options.window_bytes=16384;options.workspace_budget=1024*1024;
-      CHECK(exr_publication_pager_create(publication,0,font,&config,&options,&pager,&error)==EXR_LIMIT);
-      CHECK(pager==NULL);exr_publication_free(publication);continue;
+      OK(exr_publication_pager_create(publication,0,font,&config,&options,&pager,&error));
+      CHECK(exr_pager_anchor_create(pager,1024,1088,NULL,&anchor,&error)==EXR_LIMIT);
+      CHECK(!anchor.exact && !anchor.prefix && !anchor.suffix);
+      exr_pager_free(pager);exr_publication_free(publication);continue;
     }
     OK(exr_publication_load(publication,0,&document,&error));
     text=exr_document_text(document,&text_size);CHECK(text && text_size>=letters-1);
