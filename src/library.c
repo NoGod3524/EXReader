@@ -1040,7 +1040,8 @@ static exr_status epub_text_column(sqlite3_stmt *s,int column,size_t limit,int n
 exr_status exr_library_epub_progress_get(exr_library *l,int64_t id,exr_epub_location *out,int *present,exr_error *e) {
   exr_epub_location location={0};exr_error validation={0};sqlite3_stmt *s=NULL;sqlite3_mutex *mutex;
   int format=0,bounded=0,step;exr_status status;
-  if(out) memset(out,0,sizeof(*out));if(present) *present=0;
+  if(out) memset(out,0,sizeof(*out));
+  if(present) *present=0;
   if(!l || id<=0 || !out || !present) return exr_fail(e,EXR_ARGUMENT,"Invalid EPUB progress query");
   mutex=sqlite3_db_mutex(l->db);sqlite3_mutex_enter(mutex);
   status=book_storage(l,id,&format,&bounded,0,e);if(status!=EXR_OK) goto finish;
@@ -1121,7 +1122,8 @@ exr_status exr_library_epub_notes(exr_library *l,int64_t book,exr_epub_note **ou
   exr_epub_note *notes=NULL;exr_document *index=NULL;exr_source source={0};sqlite3_stmt *s=NULL;
   sqlite3_mutex *mutex;exr_status status;exr_error validation={0};size_t n=0,capacity=0,bytes=0;
   int format=0,bounded=0,step;
-  if(out) *out=NULL;if(count) *count=0;
+  if(out) *out=NULL;
+  if(count) *count=0;
   if(!l || book<=0 || !out || !count) return exr_fail(e,EXR_ARGUMENT,"Invalid EPUB notes query");
   mutex=sqlite3_db_mutex(l->db);sqlite3_mutex_enter(mutex);
   status=book_storage(l,book,&format,&bounded,0,e);if(status!=EXR_OK) goto finish;
