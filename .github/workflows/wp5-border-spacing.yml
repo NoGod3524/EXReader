@@ -1,0 +1,23 @@
+name: WP5 border spacing
+on:
+  push:
+    branches: ['codex/wp5-border-spacing']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  spacing:
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build/wp5 -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF
+      - name: Build
+        run: cmake --build build/wp5 --config Release --parallel 4
+      - name: Spacing and existing native regression suites
+        run: ctest --test-dir build/wp5 -C Release --output-on-failure
