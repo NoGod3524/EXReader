@@ -1,7 +1,7 @@
 name: WP15 OPDS client
 on:
   push:
-    branches: ['codex/wp15-opds']
+    branches: ['codex/wp15-opds-review']
     paths:
       - 'extras/opds/**'
       - 'tests/opds/**'

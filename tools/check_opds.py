@@ -92,6 +92,7 @@ def main():
 
     test_exe = find_binary(a.build, "opds-test", a.config)
     cons_exe = find_binary(a.build, "opds-consume", a.config)
+    publish_exe = find_binary(a.build, "opds-publish-fault-test", a.config)
     ports_file = os.path.join(out, "ports.json")
     log_file = os.path.join(out, "server-requests.jsonl")
     server = subprocess.Popen([sys.executable, os.path.join(repo, "tests", "opds", "server.py"),
@@ -188,6 +189,17 @@ def main():
                                      "--auth-env", "OPDS_TEST_BASIC", "--out", authdir], 0, dict(common, selected="Alpha Story"))
         report["examples"] = examples
 
+        # Production filesystem shim with only OS publication failure injected.
+        atomic_dir = os.path.join(work, "atomic-failure")
+        os.makedirs(atomic_dir, exist_ok=True)
+        atomic = subprocess.run([publish_exe, atomic_dir], capture_output=True, text=True, timeout=30)
+        outputs.append(atomic.stdout + atomic.stderr)
+        atomic_report = json.loads(atomic.stdout.strip().splitlines()[-1]) if atomic.stdout.strip() else {}
+        check("atomic_no_replace_failure_preserves_destination", atomic.returncode == 0
+              and atomic_report.get("passed") is True and atomic_report.get("checks", 0) >= 10
+              and atomic_report.get("primitive_failure") is True and atomic_report.get("other_writer_preserved") is True)
+        report["atomic_publication_regression"] = atomic_report
+
         # ---- request log audit (credential values are never logged by the server) ----
         time.sleep(0.3)
         rows = [json.loads(l) for l in open(log_file, encoding="utf-8") if l.strip()]
@@ -254,7 +266,7 @@ def main():
     ident.update(head=head, base=a.base, sdk_version=ver, sdk_abi=abi, trees=trees)
 
     # ---- runtime identity ----
-    files = [test_exe, cons_exe] + [p for p in a.identity if os.path.isfile(p)]
+    files = [test_exe, cons_exe, publish_exe] + [p for p in a.identity if os.path.isfile(p)]
     ident["files"] = {os.path.basename(p): {"sha256": sha256_file(p), "bytes": os.path.getsize(p)} for p in files}
     ident["runner"] = {"os": platform.platform(), "machine": platform.machine(), "python": platform.python_version(),
                        "github_run_id": os.environ.get("GITHUB_RUN_ID", ""), "github_job": os.environ.get("GITHUB_JOB", ""),
