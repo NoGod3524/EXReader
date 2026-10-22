@@ -2568,6 +2568,13 @@ static void drive_state(const char *name) {
     detail_add(detail, sizeof(detail), "range_len", number);
     snprintf(number, sizeof(number), "%d", (int)current_note_count());
     detail_add(detail, sizeof(detail), "notes", number);
+    {
+      LRESULT selected = g.books ? SendMessageW(g.books, LB_GETCURSEL, 0, 0) : LB_ERR;
+      long long selected_id = 0;
+      if (selected != LB_ERR && (size_t)selected < g.shelf_count) selected_id = (long long)g.shelf[selected].id;
+      snprintf(number, sizeof(number), "%lld", selected_id);
+      detail_add(detail, sizeof(detail), "selected_id", number);
+    }
     snprintf(number, sizeof(number), "%d", g.selection.active ? 1 : 0);
     detail_add(detail, sizeof(detail), "selection_active", number);
     snprintf(number, sizeof(number), "%llu", page_hash);
@@ -3612,9 +3619,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   ShowWindow(g.window, show ? show : SW_SHOWNORMAL);
   UpdateWindow(g.window);
   reload_shelf();
-  if (script[0]) {
-    drive_start();
-  } else if (book_path[0]) {
+  if (script[0]) drive_start();
+  if (book_path[0] && !script[0]) {
     g.auto_open_imported = 1;
     import_path(book_path, 0);
   } else if (g.active_book_id > 0 && shelf_index(g.active_book_id) >= 0) {
