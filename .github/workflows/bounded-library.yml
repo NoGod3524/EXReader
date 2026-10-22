@@ -42,7 +42,7 @@ jobs:
         run: |
           python3 tests/check_library_chapter_measurements.py
           python3 tools/generate_bounded_chapter_corpus.py build/library-corpus
-          python3 tools/run_wp6_bounded_probe.py build/installed-source/reading-library-chapter-probe tests/fixtures/fonts/primary.ttf build/library-corpus build/library-chapter-evidence --window-bytes 16384 --sample-pages 16 --random-count 4 --repeats 1 --library
+          python3 tools/run_wp6_bounded_probe.py build/installed-source/reading-library-chapter-probe tests/fixtures/fonts/primary.ttf build/library-corpus build/library-chapter-evidence --window-bytes 16384 --sample-pages 64 --random-count 16 --repeats 3 --library
       - name: Report measured acceptance conditions
         if: always() && matrix.sanitize == 'OFF'
         run: |
