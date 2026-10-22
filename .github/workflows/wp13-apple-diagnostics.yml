@@ -1,0 +1,42 @@
+name: Apple evidence attachment diagnostics
+on:
+  push:
+    branches: [codex/wp13-apple-diagnostics]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  manifest:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: wp13-apple-macos
+          run-id: 39720374560
+          github-token: ${{ github.token }}
+          path: evidence
+      - name: Report exported attachment identities without sample or log contents
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          root = pathlib.Path('evidence')
+          paths = list(root.rglob('attachments/manifest.json'))
+          assert len(paths) == 1, 'require one preserved macOS attachment manifest'
+          data = json.loads(paths[0].read_text())
+          report = {'diagnostic_only': True, 'accepted': False, 'source_run': 39720374560,
+                    'manifest': str(paths[0]), 'groups': []}
+          for group in data:
+              report['groups'].append({key: value for key, value in group.items()
+                  if key in ('testIdentifier', 'testName')})
+              report['groups'][-1]['attachments'] = [{key: value for key, value in item.items()
+                  if key in ('suggestedHumanReadableName', 'exportedFileName', 'uniformTypeIdentifier')}
+                  for item in group.get('attachments', [])]
+          pathlib.Path('attachment-diagnostic.json').write_text(json.dumps(report, indent=2)+'\n')
+          print(json.dumps(report, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wp13-apple-attachment-diagnostic
+          path: attachment-diagnostic.json
+          if-no-files-found: error
