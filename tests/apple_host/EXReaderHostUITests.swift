@@ -464,6 +464,7 @@ final class EXReaderHostUITests: XCTestCase {
             location = element("reader.location").label
         }
         try step("step40_fixed_annotation") {
+            clearNotes()
             waitElement("reader.select").tap()
             _ = waitElement("selection.title", 20)
             selectWord()

@@ -296,8 +296,8 @@ final class HostFixed {
         geometries = (0..<count).map { index in
             let bounds = pages[index].geometry.bounds
             let unit = pages[index].geometry.unit_scale
-            return HostFixedGeometry(width: (bounds[2] - bounds[0]) * unit,
-                                     height: (bounds[3] - bounds[1]) * unit)
+            return HostFixedGeometry(width: (bounds.2 - bounds.0) * unit,
+                                     height: (bounds.3 - bounds.1) * unit)
         }
     }
 
@@ -388,7 +388,7 @@ struct HostBook {
     }
 }
 
-struct HostNoteRow {
+struct HostNoteRow: Identifiable {
     let id: Int64
     let quote: String
     let comment: String

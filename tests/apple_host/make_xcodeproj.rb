@@ -16,22 +16,20 @@ project = Xcodeproj::Project.new(project_path)
 project.root_object.attributes['LastSwiftUpdateCheck'] = '1600'
 project.root_object.attributes['LastUpgradeCheck'] = '1600'
 
-host_group = project.main_group.new_group('Host', root)
-resource_group = project.main_group.new_group('Resources', resources)
+host_group = project.main_group.new_group('Host')
+resource_group = project.main_group.new_group('Resources')
 
 sources = Dir[File.join(root, 'examples/apple/*.swift')].sort +
           [File.join(root, 'bindings/swift/EXReader.swift')]
 test_sources = Dir[File.join(root, 'tests/apple_host/*.swift')].sort
 resource_files = Dir[File.join(resources, '*')].sort
 
-def refs_for(group, files, base)
-  files.map do |file|
-    group.new_file(file.sub(base + '/', ''))
-  end
-end
-
-source_refs = refs_for(host_group, sources, root)
-resource_refs = refs_for(resource_group, resource_files, resources)
+source_refs = sources.map { |file| project.new_file(file, :absolute) }
+host_group.children.concat(source_refs)
+test_refs = test_sources.map { |file| project.new_file(file, :absolute) }
+host_group.children.concat(test_refs)
+resource_refs = resource_files.map { |file| project.new_file(file, :absolute) }
+resource_group.children.concat(resource_refs)
 
 def app_settings(target, platform, deployment)
   target.build_configurations.each do |config|
@@ -134,7 +132,7 @@ end
   embed_phase(app)
 
   ui = make_ui_target(project, test_name, platform, deployment)
-  ui.add_file_references(refs_for(host_group, test_sources, root))
+  ui.add_file_references(test_refs)
   test_settings(ui, app_name, platform)
   ui.add_dependency(app)
 
