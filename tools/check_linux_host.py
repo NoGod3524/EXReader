@@ -70,8 +70,13 @@ class Session:
         raise TimeoutError('UI did not reach expected state: '+repr(self.read()))
 
     def key(self, *keys):
-        command('xdotool', 'key', '--clearmodifiers', *keys)
-        time.sleep(.15)
+        for key in keys:
+            command('xdotool', 'key', '--clearmodifiers', key)
+            time.sleep(.15)
+            # Each scripted reading action represents a completed user operation.
+            # The asynchronous host intentionally rejects SDK work during SAVE.
+            if key in ('F3', 'F4', 'F5', 'F6', 'F8', 'F10', 'Return'):
+                self.wait(lambda state: True)
 
     def paste(self, value):
         subprocess.run(['xclip', '-selection', 'clipboard'], input=value.encode(), check=True)
