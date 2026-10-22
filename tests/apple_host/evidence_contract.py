@@ -18,7 +18,7 @@ import xml.etree.ElementTree as ET
 
 PLATFORMS = ('macos', 'iphone', 'ipad')
 SDK_TARGET = {'macos': 'macos', 'iphone': 'iphonesimulator', 'ipad': 'iphonesimulator'}
-READING_SDK_BASELINE = 'ce5d664c9f76d0613df6d79b27568a7039c4a81e'
+READING_SDK_BASELINE = '2f26847684b54006ca812c35477ceae43719e7d4'
 BASE_CASES = {
     'test01ImportDeduplicateAndErrors': '''step01_launch_fresh_state step02_import_epub_fixture step03_duplicate_import_reuses_row step04_import_pdf_fixture step05_broken_import_error_is_recoverable step06_reopen_epub_after_error step07_element_tree_import'''.split(),
     'test02PagingTypographyAndLayout': '''step08_launch_and_open_reader step09_first_page step10_next_page_progress step11_next_page_again step12_previous_page step13_font_increase_repaginates step14_font_decrease_restores_size step15_rotate_or_resize_viewport step16_layout_fits_new_size step17_restore_original_orientation step18_element_tree_reader'''.split(),

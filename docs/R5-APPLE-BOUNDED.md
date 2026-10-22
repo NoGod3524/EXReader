@@ -1,8 +1,9 @@
 # H9 Apple 有界 EPUB 候选
 
 本包在 `fd210224a4eba206762c08de435a5e9edfdf2a90` 上准备 Apple 局部实现；
-现固定 SDK `K_reading=ce5d664c9f76d0613df6d79b27568a7039c4a81e`，Windows pilot同K已通过。
-Apple后继候选已合入K，工作流逐项拒绝受保护SDK树差异，并把基线写入三SDK身份、严格汇总及拒绝回归。
+原SDK基线为`ce5d664c9f76d0613df6d79b27568a7039c4a81e`。Repeated边界诊断暴露同root下降循环后，
+现合入修复候选`2f26847684b54006ca812c35477ceae43719e7d4`；SDK六组18作业重冻结与Apple八作业并行复验。
+工作流逐项拒绝与该候选的受保护SDK树差异，并把基线写入三SDK身份、严格汇总及拒绝回归。
 候选未获验收。构建、Swift 编译、夹具生成、测试与证据计算只在 GitHub Actions 执行。
 
 ## 路径
