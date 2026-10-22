@@ -4,6 +4,9 @@ if(EXR_BUILD_TESTS)
   add_executable(exreader-core-component-test tests/test_core_component.c)
   target_link_libraries(exreader-core-component-test PRIVATE exr_core)
   add_test(NAME native-core-component COMMAND exreader-core-component-test ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf)
+  add_executable(exreader-anchor-boundary-test tests/test_anchor_boundary.c)
+  target_link_libraries(exreader-anchor-boundary-test PRIVATE exr_formats)
+  add_test(NAME native-anchor-boundary COMMAND exreader-anchor-boundary-test)
 endif()
 
 # Direct-source regression executables define a few public helpers themselves.

@@ -209,6 +209,14 @@ static exr_status search_scope(anchor_search *s, exr_error *e) {
   exr_status status;
   if (s->quote)
     return search(s, s->exact, s->quote, 0, e);
+  /* An empty adjacent context earns a point only at its scope boundary.
+     Once that boundary has both points, no other point in this scope can tie.
+     The caller still visits every chapter scope, preserving duplicate ties. */
+  if ((!s->prefix && s->suffix) || (!s->suffix && s->prefix)) {
+    candidate(s, s->prefix ? s->hi : s->lo);
+    if (s->best_score == 2)
+      return exr_control_cancel(s->control, e);
+  }
   /* A point can be recovered from either adjacent context; equal candidates
      from the two searches are counted once. */
   if (s->prefix && (status = search(s, s->prefix_text, s->prefix, 1, e)) != EXR_OK)
