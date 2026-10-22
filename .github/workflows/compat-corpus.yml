@@ -1,0 +1,85 @@
+name: Compatibility corpus protocol
+on:
+  push:
+    branches: ['codex/compat-corpus-manifest']
+    paths:
+      - 'tools/compat_corpus/**'
+      - 'tests/compat_corpus/**'
+      - '.github/workflows/compat-corpus.yml'
+      - 'docs/COMPAT-CORPUS-PARALLEL.md'
+      - 'docs/validation/compat-corpus-parallel*.json'
+  workflow_dispatch:
+    inputs:
+      manifest:
+        description: Committed, rights-reviewed manifest path; empty means protocol self-tests only
+        type: string
+        default: ''
+      registration:
+        description: Full commit which first added that manifest, before any probe
+        type: string
+        default: ''
+      resume_run:
+        description: Optional earlier cloud run containing this exact collection registration
+        type: string
+        default: ''
+      resume_attempt:
+        description: Artifact attempt of the earlier run
+        type: string
+        default: '1'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: compat-corpus-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  protocol:
+    if: github.ref == 'refs/heads/codex/compat-corpus-manifest'
+    runs-on: ubuntu-22.04
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.manifest != '' && 360 || 30 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build the existing document checker only
+        run: |
+          mkdir -p build/compat
+          cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF 2>&1 | tee build/compat/configure.log
+          cmake --build build/native --target exreader-check-document --parallel 4 2>&1 | tee build/compat/build.log
+      - name: Check strict manifests and native process evidence
+        run: python3 tests/compat_corpus/check_protocol.py build/native/exreader-check-document build/compat/selftests
+      - name: Record current licensed real asset shortfall
+        run: python3 tools/compat_corpus/protocol.py inventory tools/compat_corpus/manifest.json --output build/compat/inventory.json
+      - name: Restore a prior cloud collection without local transfer
+        if: github.event_name == 'workflow_dispatch' && inputs.manifest != '' && inputs.resume_run != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: compatibility-corpus-${{ inputs.resume_run }}-${{ inputs.resume_attempt }}
+          run-id: ${{ inputs.resume_run }}
+          github-token: ${{ github.token }}
+          path: build/compat-resume
+      - name: Stage the retained collection
+        if: github.event_name == 'workflow_dispatch' && inputs.manifest != '' && inputs.resume_run != ''
+        run: mv build/compat-resume/assets build/compat/assets
+      - name: Collect registered assets in cloud
+        if: github.event_name == 'workflow_dispatch' && inputs.manifest != ''
+        env:
+          CORPUS_MANIFEST: ${{ inputs.manifest }}
+          CORPUS_REGISTRATION: ${{ inputs.registration }}
+        run: |
+          python3 tools/compat_corpus/protocol.py collect "$CORPUS_MANIFEST" --registered-at "$CORPUS_REGISTRATION" --root build/compat/assets --output build/compat/collection.json
+      - name: Probe every registered document without filtering
+        if: github.event_name == 'workflow_dispatch' && inputs.manifest != ''
+        env:
+          CORPUS_MANIFEST: ${{ inputs.manifest }}
+          CORPUS_REGISTRATION: ${{ inputs.registration }}
+        run: |
+          python3 tools/compat_corpus/protocol.py run "$CORPUS_MANIFEST" --registered-at "$CORPUS_REGISTRATION" --root build/compat/assets --output "build/compat/run-${{ github.run_id }}-${{ github.run_attempt }}" --binary build/native/exreader-check-document --font tests/fixtures/fonts/primary.ttf
+      - name: Preserve failed and successful evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compatibility-corpus-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/compat/
+          if-no-files-found: warn
+          retention-days: 30

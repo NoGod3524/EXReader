@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "package": "I4 compatibility corpus manifest and cloud protocol",
+  "base_source_sha": "a2552d7feb786cd2345d2b0b3eb894777b3254db",
+  "accepted": false,
+  "pipeline_accepted": false,
+  "local_builds_tests_collection_or_validation_run": false,
+  "canonical_document_formats": {
+    "pdf": 1000,
+    "epub": 500,
+    "txt": 30,
+    "html": 30,
+    "fb2": 30,
+    "docx": 30,
+    "rtf": 30,
+    "mobi": 30,
+    "cbz": 30
+  },
+  "format_identity": {
+    "source": "include/exr/base.h; src/formats.c; docs/SUPPORT_MATRIX.md",
+    "html_variants": ["html", "xhtml"],
+    "mobi_variants": ["mobi", "kf8"],
+    "extension_aliases_are_not_new_formats": true,
+    "duplicate_content_counted_once": true,
+    "audio_and_image_subcodecs_evaluated": false
+  },
+  "registered_cloud_real_documents": 0,
+  "historical": {
+    "epub": {
+      "inputs": 500,
+      "completed": 483,
+      "incomplete": 17,
+      "accepted": false,
+      "reference": "docs/validation/2026-10-20-corpus-performance.json"
+    },
+    "pdf": {
+      "inputs": 122,
+      "completed": 49,
+      "reference_completed_primary_rejected": 54,
+      "reference_repaired_input": 8,
+      "requires_review": 4,
+      "unsupported_feature": 7,
+      "accepted": false,
+      "reference": "docs/validation/2026-10-20-wp6-compatibility.json"
+    },
+    "original_expectations_and_results_preserved": true,
+    "transferred_to_current_source": false,
+    "external_unconfirmed_pdf_assets_read_copied_or_uploaded": false
+  },
+  "cloud_selftests": {
+    "status": "passed",
+    "tool_source_sha": "5af959aa1b19991f9b8b56528058cfc921adf961",
+    "run_id": 39707133908,
+    "workflow": ".github/workflows/compat-corpus.yml",
+    "entry": "tests/compat_corpus/check_protocol.py",
+    "real_documents_counted": 0,
+    "checks_passed": 46,
+    "artifact_id": 12395274110,
+    "artifact_name": "compatibility-corpus-39707133908-1",
+    "artifact_sha256": "8d63171bdd820a8cd8acac8eed3bacac3f89782f6c8d0fd4c62430ff53758388",
+    "artifact_bytes": 23224,
+    "artifact_expires_at": "2026-11-21T01:43:41Z",
+    "artifact_downloaded_locally": false,
+    "scope": "manifest rights and expectations, original Git registration, bounded collector simulation, retained native subprocess outcomes, full checker wrapper; synthetic self-tests only",
+    "earlier_success": {
+      "tool_source_sha": "00a8838cf6089e67a730ca6fd4956cb45d09c27d",
+      "run_id": 39706770108,
+      "checks_passed": 43,
+      "artifact_id": 12394863584,
+      "artifact_name": "compatibility-corpus-39706770108-1"
+    }
+  },
+  "pending": [
+    "Review per-file redistribution permission and freeze candidate inventory and capabilities before observation",
+    "Register 1000 PDF, 500 EPUB and 30 each of the other seven canonical document formats",
+    "Execute full licensed real corpus against the exact new source in GitHub cloud",
+    "Independent fidelity, saving/readback and specification matrix evidence"
+  ]
+}
