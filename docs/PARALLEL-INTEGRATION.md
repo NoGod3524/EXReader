@@ -51,6 +51,20 @@ Android 的 `ANDROID_OWNERSHIP_HEAD` 固定到 A 的受测源码，只作为宿�
 `EXReader-acroform-Linux`、`-Windows`、`-sanitizer`）的 run/source/大小/过期/digest；`spacing` 仍为 2 个作业。
 十二组共 35 个上游作业（28 + 5 + 2），十组门槛未变。
 
+### 首次联合尝试的 Apple 失败与修复
+
+首次十二组同源尝试（源码 `6a0806beec03b6de6e9302c3eea957bb5c670d49`，已用标签
+`s1-2026-10-22-attempt` 保留）中，三平台 UI 各 12 用例全部通过，但证据收集步骤失败：
+`Rejected: SDK file identity mismatch`。
+
+原因在交付形状而非阅读逻辑：SDK 安装规则会安装整个 `examples/`，Android 交付新增的
+`examples/android/.gitignore` 随之进入安装树；`actions/upload-artifact@v4` 默认不包含隐藏文件
+（`include-hidden-files: false`），sdk 工件往返后少了这个文件，本地登记的整树 SHA-256 清单因此对不上。
+
+最小修复只改 Apple 工作流的 sdk 上传步骤，显式保留隐藏文件，不修改安装规则、不弱化身份校验。
+由于这是非 OPDS 路径，按所有权契约重新冻结：先回退 OPDS 合并、把修复放入新的前置祖先 H，
+再重新合入 OPDS。
+
 ## 下一轮 Apple/Android 集成（原候选，已被本轮取代）
 
 > 本节保留历史候选与失败记录；当前交付身份以 `docs/handoffs/2026-10-22-parallel-index.md`、`docs/handoffs/2026-10-22-A-android.md`、`2026-10-22-B-acroform-corpus.md` 与上面阶段一记录为准。
