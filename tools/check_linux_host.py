@@ -194,6 +194,7 @@ def main():
         host.wait(lambda s: s['font'] == 26 and s['error'] == 0)
         host.key('F4', 'F4')
         saved = host.wait(lambda s: s['page'] == 2)
+        report['restart_expected'] = saved
         book.unlink()
         host.close()
         host.launch()

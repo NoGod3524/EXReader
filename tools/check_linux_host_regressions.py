@@ -35,9 +35,10 @@ def main():
  settings=configparser.ConfigParser();settings.read(root/'font-mutant-evidence/profile/reader.ini')
  state=configparser.ConfigParser();state.read(root/'font-mutant-evidence/state.ini')
  assert run.returncode!=0 and report['passed'] is False and len(report['checks'])==12
- assert settings.getint('reader','font')==26 and state.getint('host','font')==24
+ assert report['restart_expected']['font']==26 and state.getint('host','font')==24
  checks.append({'name':'nondefault font restore mutant rejected by real UI check 13','pass':True,
-                'prior_checks_passed':len(report['checks']),'stored_font':26,'incorrect_restored_font':24})
+                'prior_checks_passed':len(report['checks']),'expected_font_before_restart':26,'incorrect_restored_font':24,
+                'persisted_font_after_mutant_restart':settings.getint('reader','font')})
  result={'schema':1,'passed':True,'source_sha':os.environ.get('GITHUB_SHA'),'checks':checks,'real_ui_cases_expected':20,
          'files':{str(f.relative_to(root)):hashlib.sha256(f.read_bytes()).hexdigest() for f in root.rglob('*') if f.is_file()}}
  (root/'regressions.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({k:result[k] for k in ('passed','source_sha','checks')}))
