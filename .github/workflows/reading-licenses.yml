@@ -1,0 +1,83 @@
+name: Reading license materials
+on:
+  push:
+    branches: ['handoff/reading-h5-licenses']
+  pull_request:
+    paths:
+      - CMakeLists.txt
+      - CMakePresets.json
+      - cmake/**
+      - licenses/**
+      - LICENSE
+      - THIRD_PARTY_NOTICES.md
+      - tests/fixtures/unicode/LICENSE.txt
+      - tools/check_reading_licenses.py
+      - tools/check_reading_profile.py
+      - tests/check_reading_licenses.py
+      - .github/workflows/reading-licenses.yml
+  workflow_dispatch:
+    inputs:
+      pin_materials_only:
+        description: Print proposed repository material hashes; not release acceptance
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  material-pins:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.pin_materials_only }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print proposed SQLite material hash in cloud
+        run: |
+          git rev-parse HEAD
+          sha256sum licenses/sqlite-public-domain.txt
+  licenses:
+    if: ${{ !inputs.pin_materials_only }}
+    name: licenses (${{ matrix.profile }})
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [reading-core, reading-library]
+    env:
+      PROFILE: ${{ matrix.profile }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify reading base ancestor
+        run: |
+          git fetch --no-tags origin b529513b7e8e8992786f8c679c0ec6c92110b035
+          git merge-base --is-ancestor b529513b7e8e8992786f8c679c0ec6c92110b035 HEAD
+          git rev-parse HEAD
+          cmake --version
+      - name: Configure clean reading preset
+        run: |
+          test ! -e "build/$PROFILE"
+          cmake --preset "$PROFILE"
+      - name: Build and install selected components
+        run: |
+          cmake --build --preset "$PROFILE"
+          cmake --install "build/$PROFILE"
+      - name: Check installed license materials
+        run: python3 tools/check_reading_licenses.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/licenses.json" --require-release-ready
+      - name: Reject invalid license materials
+        if: success() || failure()
+        run: python3 tests/check_reading_licenses.py
+      - name: Preserve source-bound license evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reading-licenses-${{ matrix.profile }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/${{ matrix.profile }}/licenses.json
+            build/${{ matrix.profile }}/CMakeCache.txt
+            build/${{ matrix.profile }}/exr-modules.json
+            build/${{ matrix.profile }}/stage/LICENSE
+            build/${{ matrix.profile }}/stage/THIRD_PARTY_NOTICES.md
+            build/${{ matrix.profile }}/stage/share/exreader/
+            build/${{ matrix.profile }}/stage/lib/cmake/EXReader/EXReaderDependencies.cmake
+          if-no-files-found: error
