@@ -1,0 +1,117 @@
+name: Optional OCR adapter
+on:
+  push:
+    branches: ['codex/wp11-ocr-adapter']
+    paths: ['extras/ocr/**', 'tests/ocr/**', 'tools/check_ocr_adapter.py', '.github/workflows/wp11-ocr.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ocr:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [release, sanitizers]
+    env:
+      OMP_THREAD_LIMIT: '1'
+      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Optional backend and original corpus dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libtesseract-dev libleptonica-dev python3-pil fonts-noto-cjk ninja-build
+          mkdir -p evidence models
+          dpkg-query -W > evidence/packages.txt
+          for item in eng chi_sim; do curl --fail --location --retry 3 "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/$item.traineddata" --output "models/$item.traineddata"; done
+          curl --fail --location "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/LICENSE" --output models/LICENSE
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path('models')
+          (p/'identity.json').write_text(json.dumps({'repository':'tesseract-ocr/tessdata_fast','commit':'87416418657359cb625c412a48b6e1d6d41c29bd','license':'Apache-2.0','files':{f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in p.iterdir()}},indent=2))
+          PY
+      - name: Build and install unchanged lightweight SDK
+        run: |
+          cmake -S . -B build/sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_ENABLE_LIBRARY=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF
+          cmake --build build/sdk --parallel 4
+          cmake --install build/sdk --prefix "$PWD/stage-sdk"
+      - name: Build separate optional adapter and install
+        shell: bash
+        run: |
+          flags=''
+          if [ '${{ matrix.mode }}' = sanitizers ]; then flags='-fsanitize=address,undefined -fno-omit-frame-pointer'; fi
+          cmake -S extras/ocr -B build/adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/stage-sdk" -DCMAKE_CXX_FLAGS="$flags" -DEXR_OCR_TESTS=ON
+          cmake --build build/adapter --parallel 4
+          cmake --install build/adapter --prefix "$PWD/stage-ocr"
+          test -s stage-ocr/share/exreader-ocr/LICENSE
+          test -s stage-ocr/share/exreader-ocr/WP11-OCR-ADAPTER.md
+          cmake -S tests/ocr -B build/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/stage-sdk;$PWD/stage-ocr" -DCMAKE_CXX_FLAGS="$flags"
+          cmake --build build/consumer --parallel 4
+      - name: Freeze original 30 page corpus and input identities
+        run: |
+          /usr/bin/python3 tests/ocr/generate.py evidence/corpus
+          mkdir -p evidence/fonts
+          cp /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf evidence/fonts/
+          cp /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc evidence/fonts/
+          cp /usr/share/doc/fonts-dejavu-core/copyright evidence/fonts/DejaVu-LICENSE
+          cp /usr/share/doc/fonts-noto-cjk/copyright evidence/fonts/Noto-LICENSE
+          cp -r models evidence/models
+          sha256sum build/consumer/exreader-ocr-probe build/adapter/libexreader_ocr.a /usr/lib/x86_64-linux-gnu/libtesseract.so.* /usr/lib/x86_64-linux-gnu/liblept.so.* > evidence/programs.sha256
+          ldd build/consumer/exreader-ocr-probe > evidence/runtime.txt
+      - name: Installed consumer, contracts, CER WER and source coordinate checks
+        run: python3 tools/check_ocr_adapter.py build/consumer/exreader-ocr-probe models evidence/corpus evidence/results
+      - name: Publish concise measurements
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json,pathlib
+          p=pathlib.Path('evidence/results/summary.json')
+          if p.exists():
+            d=json.loads(p.read_text());print(json.dumps({k:d[k] for k in ('source','accepted','aggregate','coordinate_roundtrip_checks','complete_wp11')}))
+          PY
+      - name: Preserve all inputs, models, licenses, raw and final evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: WP11-OCR-${{ matrix.mode }}
+          path: evidence/
+          if-no-files-found: error
+  audit:
+    needs: ocr
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: WP11-OCR-*
+          path: all-evidence
+      - name: Check both installed configurations and frozen identities
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          root=pathlib.Path('all-evidence');records=[]
+          for mode in ('release','sanitizers'):
+            p=root/f'WP11-OCR-{mode}';d=json.loads((p/'results/summary.json').read_text())
+            assert d['accepted'] is True and d['source']==os.environ['GITHUB_SHA'] and len(d['pages'])==30
+            assert len({p['input_sha256'] for p in d['pages']})==30
+            assert d['coordinate_roundtrip_checks']>0
+            assert sum(x['contracts'] for x in d['pages'])==11
+            assert (p/'programs.sha256').stat().st_size>0
+            assert (p/'fonts/DejaVu-LICENSE').stat().st_size>0 and (p/'fonts/Noto-LICENSE').stat().st_size>0
+            assert (p/'models/LICENSE').stat().st_size>0
+            for name,digest in d['model_identity']['files'].items():assert hashlib.sha256((p/'models'/name).read_bytes()).hexdigest()==digest
+            records.append(d)
+          assert records[0]['fonts']==records[1]['fonts']
+          assert records[0]['model_identity']==records[1]['model_identity']
+          assert [(p['id'],p['input_sha256']) for p in records[0]['pages']]==[(p['id'],p['input_sha256']) for p in records[1]['pages']]
+          summary={'accepted':True,'source':os.environ['GITHUB_SHA'],'modes':[{k:d[k] for k in ('aggregate','coordinate_roundtrip_checks','complete_wp11')} for d in records]}
+          pathlib.Path('wp11-cloud-audit.json').write_text(json.dumps(summary,indent=2));print(json.dumps(summary))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WP11-OCR-cloud-audit
+          path: wp11-cloud-audit.json
+          if-no-files-found: error
