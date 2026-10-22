@@ -19,8 +19,10 @@ def main():
     parser.add_argument('--sdk', type=Path, required=True)
     parser.add_argument('--resources', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--timeout', type=int, default=900, help='lower budgets are diagnostic only; maximum 900 seconds')
     args = parser.parse_args()
     require(sys.platform == 'darwin' and os.environ.get('GITHUB_ACTIONS') == 'true', 'cloud macOS only')
+    require(1 <= args.timeout <= 900, 'consumer budget must be between 1 and 900 seconds')
     sdk, fixtures, out = args.sdk.resolve(), args.resources.resolve(), args.output.resolve()
     require(not out.exists(), 'preserve previous evidence; use a fresh output')
     out.mkdir(parents=True)
@@ -35,8 +37,15 @@ def main():
     if compiled.returncode:
         print((out/'compile.log').read_text(), flush=True)
         raise SystemExit(compiled.returncode)
-    result = subprocess.run([sys.executable, __file__, '--measure-child', str(out/'bounded-review'), str(fixtures), str(out/'consumer'), str(out/'run.log')],
-                            capture_output=True, text=True, timeout=920)
+    try:
+        result = subprocess.run([sys.executable, __file__, '--measure-child', str(args.timeout), str(out/'bounded-review'), str(fixtures), str(out/'consumer'), str(out/'run.log')],
+                                capture_output=True, text=True, timeout=args.timeout + 20)
+    except subprocess.TimeoutExpired:
+        print((out/'run.log').read_text(), flush=True)
+        raise
+    if result.returncode:
+        print((out/'run.log').read_text(), flush=True)
+        print(result.stderr, flush=True)
     report = load(out/'consumer/bounded-review.json')
     checks = report.get('checks', [])
     print(json.dumps({'bounded_checks': checks, 'exit_code': result.returncode}), flush=True)
@@ -48,6 +57,7 @@ def main():
                    'fixtures': {name: digest(fixtures/name) for name in ('Bounded.epub', 'BoundedLong.epub', 'Unicode.epub', 'Reader.otf', 'Repeated.epub')},
                    'source_files_sha256': {p: digest(ROOT/p) for p in [*sources, 'tests/apple_host/run_bounded_review.py']},
                    'process_peak_rss_bytes': json.loads(result.stdout)['process_peak_rss_bytes'],
+                   'runtime_budget_seconds': args.timeout, 'diagnostic_only': args.timeout != 900,
                    'rss_scope': 'bounded consumer process high water; includes font, both accepted/candidate frames, all cases and allocator; compiler excluded',
                    'physical_device_execution': False})
     (out/'bounded-review.json').write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
@@ -56,8 +66,8 @@ def main():
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '--measure-child':
-        with open(sys.argv[5], 'w') as log:
-            child = subprocess.run(sys.argv[2:5], stdout=log, stderr=subprocess.STDOUT, timeout=900)
+        with open(sys.argv[6], 'w') as log:
+            child = subprocess.run(sys.argv[3:6], stdout=log, stderr=subprocess.STDOUT, timeout=int(sys.argv[2]))
         print(json.dumps({'process_peak_rss_bytes': resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss}))
         raise SystemExit(child.returncode)
     else:

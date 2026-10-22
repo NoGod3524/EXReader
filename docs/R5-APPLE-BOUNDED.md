@@ -1,6 +1,8 @@
 # H9 Apple 有界 EPUB 候选
 
-本包在 `fd210224a4eba206762c08de435a5e9edfdf2a90` 上准备 Apple 局部实现；最终 SDK K 和 Windows pilot 尚未授予。
+本包在 `fd210224a4eba206762c08de435a5e9edfdf2a90` 上准备 Apple 局部实现；
+现固定 SDK `K_reading=ce5d664c9f76d0613df6d79b27568a7039c4a81e`，Windows pilot同K已通过。
+Apple后继候选已合入K，工作流逐项拒绝受保护SDK树差异，并把基线写入三SDK身份、严格汇总及拒绝回归。
 候选未获验收。构建、Swift 编译、夹具生成、测试与证据计算只在 GitHub Actions 执行。
 
 ## 路径
@@ -36,5 +38,7 @@ host-state升级schema2并与SQL逐项比较。新增缺marker、缺point、错�
 
 `62b9d116ea046b6c3cc79babc6d87584272d163e` / run `39864500523`：三个SDK构建成功，
 原SDK桥接21项与Model18项成功；新增bounded消费者编译失败，原始`compile.log`保留在package工件。
+macOS与iPad各13UI/67步骤成功；iPhone12/13成功，原PDF选词后标注步骤失败，严格summary拒绝。
+后继驱动在真实选词后明确用一次外部标签点击关闭UIKit编辑菜单，并继续核选中文本及原标注断言。
 该候选未通过。后继将消费者的throwing短路表达式拆成明确的先取值后比较，并让编译失败诊断直接进入云端日志；
 同时追加source中途取消/晚到回滚和schema6兼容检查。运行结果不拼接。

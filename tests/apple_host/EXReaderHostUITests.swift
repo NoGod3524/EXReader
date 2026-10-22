@@ -276,6 +276,18 @@ final class EXReaderHostUITests: XCTestCase {
             view.press(forDuration: 1.2)
 #endif
         }
+#if os(iOS)
+        // Native word selection can leave UIKit's edit menu above the host.
+        // Dismiss it with a separate outside tap before activating a host button;
+        // the selected quote must survive through the normal selection owner.
+        if waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 10) {
+            let selected = text("selection.quote")
+            waitElement("selection.quote").tap()
+            XCTAssertTrue(waitUntil(10) {
+                self.text("selection.quote") == selected && self.element("selection.annotate").isEnabled
+            })
+        }
+#endif
     }
 
     private func clearNotes() {
