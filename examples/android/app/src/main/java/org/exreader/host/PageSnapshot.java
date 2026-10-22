@@ -13,6 +13,9 @@ final class PageSnapshot {
     boolean preserveProgress;
     String restoreNotice;
     long highlightStart=-1, highlightEnd=-1;
+    BoundedEpub boundedOwner;
+    String[] boundedLocation;
+    float layoutFont;
     final long bookId;
     final Bitmap bitmap;
     final boolean fixed;

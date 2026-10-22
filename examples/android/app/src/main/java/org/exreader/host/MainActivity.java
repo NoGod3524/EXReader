@@ -453,17 +453,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 }
                 if (load == null) throw new IllegalStateException("The book has no readable pages");
                 Log.i(TAG, "handle open book=" + target.id + " mode=" + (target.fixed() ? "fixed" : "reflow"));
-                final PageLoad result = load;
                 final ReflowSession nextReflow = candidateReflow;
                 final FixedSession nextFixed = candidateFixed;
-                task.commit(() -> {
-                    saveProgressLocked(result.snapshot, task);
-                    result.accept();
-                    closeSessionsLocked();
-                    reflow = nextReflow;
-                    fixed = nextFixed;
-                    sessionBookId = target.id;
-                });
+                final PageLoad[] delivery={load};
+                try {
+                    task.commit(() -> {
+                        delivery[0]=persistPage(delivery[0],task); delivery[0].accept();
+                        closeSessionsLocked(); reflow=nextReflow; fixed=nextFixed; sessionBookId=target.id;
+                    });
+                } finally { load=delivery[0]; }
+                final PageLoad result=load;
                 accepted = true;
                 final String restored = notice;
                 postUi(() -> {
@@ -618,8 +617,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     postUi(() -> { if (gen == generation) { finishTask(gen); setStatus(empty); } });
                     return;
                 }
-                final PageLoad result = load;
-                task.commit(() -> { saveProgressLocked(result.snapshot, task); result.accept(); });
+                final PageLoad[] delivery={load};
+                try { task.commit(() -> { delivery[0]=persistPage(delivery[0],task); delivery[0].accept(); }); }
+                finally { load=delivery[0]; }
+                final PageLoad result=load;
                 postUi(() -> {
                     if (gen != generation) return;
                     accepted.run();
@@ -663,6 +664,21 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             prefs.edit().putFloat("zoom", next).apply();
             setStatus(String.format(Locale.US, "Zoom %.2f", zoom));
         }, "The book has no readable pages");
+    }
+
+    private PageLoad persistPage(PageLoad request,HostTask task) throws Exception {
+        try { saveProgressLocked(request.snapshot,task); return request; }
+        catch(RuntimeException error) {
+                String detail=error.getMessage();
+                if(!request.snapshot.bounded || detail==null || !detail.contains("code 3")) throw error;
+                // Another Activity can commit while this candidate waits for the
+                // publication lock. Rebuild and resolve its captured point before
+                // showing any pixels from the new source. A DB rejection is not retried.
+                PageSnapshot previous=request.snapshot; request.close();
+                PageLoad rebuilt=previous.boundedOwner.retryFrame(previous,task);
+                try { saveProgressLocked(rebuilt.snapshot,task); return rebuilt; }
+                catch(Exception|Error retryError) { rebuilt.close(); throw retryError; }
+        }
     }
 
     private void saveProgressLocked(PageSnapshot snapshot, HostTask task) throws Exception {
