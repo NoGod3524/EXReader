@@ -144,8 +144,9 @@ int main(int argc,char **argv) {
     CHECK(exr_pdf_form_write(pdf,length,&c,1,&options,&output,&output_size,&error)==EXR_UNSUPPORTED && error.code==EXR_UNSUPPORTED && !output && !output_size && !memcmp(pdf,original,length)); }
   { const char *rtl[]={"A \xd7\x90"}; exr_pdf_form_change c={"person.text00",rtl,1};
     CHECK(exr_pdf_form_write(pdf,length,&c,1,&options,&output,&output_size,&error)==EXR_UNSUPPORTED && strstr(error.message,"directional") && !output && !output_size); }
-  { exr_font *bitmap_font=NULL; OK(exr_font_open(argv[2],&bitmap_font,&error)); options.font=bitmap_font;
-    CHECK(exr_pdf_form_write(pdf,length,changes,1,&options,&output,&output_size,&error)==EXR_UNSUPPORTED && strstr(error.message,"outlines") && !output && !output_size); exr_font_free(bitmap_font); }
+  { const char *visible[]={"A"}; exr_pdf_form_change c={"person.text00",visible,1}; exr_font *bitmap_font=NULL;
+    OK(exr_font_open(argv[2],&bitmap_font,&error)); options.font=bitmap_font;
+    CHECK(exr_pdf_form_write(pdf,length,&c,1,&options,&output,&output_size,&error)==EXR_UNSUPPORTED && strstr(error.message,"outlines") && !output && !output_size); exr_font_free(bitmap_font); }
   { const char *hidden[]={"A\xe2\x80\x8bV"}; exr_pdf_form_change c={"person.text00",hidden,1}; options.font=font;
     OK(exr_pdf_form_write(pdf,length,&c,1,&options,&output,&output_size,&error)); exr_free(output); }
   { exr_pdf_form_options limits=exr_pdf_form_defaults(); limits.max_fields=30; CHECK(exr_pdf_form_read(pdf,length,&limits,&fields,&n,&error)==EXR_LIMIT && !fields && !n); limits=exr_pdf_form_defaults(); limits.max_widgets=1; CHECK(exr_pdf_form_read(pdf,length,&limits,&fields,&n,&error)==EXR_LIMIT && !fields && !n); limits=exr_pdf_form_defaults(); limits.max_text_bytes=16; CHECK(exr_pdf_form_read(pdf,length,&limits,&fields,&n,&error)==EXR_LIMIT && !fields && !n); }
