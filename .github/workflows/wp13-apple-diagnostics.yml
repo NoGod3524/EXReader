@@ -1,0 +1,363 @@
+name: WP13 Apple preserved artifact diagnostics
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnostic:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - name: Inspect the preserved failed-run artifacts on this cloud runner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, plistlib, re, subprocess, sys, tempfile, urllib.error, urllib.parse, urllib.request, zipfile
+          from pathlib import Path, PurePosixPath
+
+          REPO = 'NoGod3524/EXReader'
+          RUN = 39801977033
+          SOURCE = 'e0f162af1fad68353b91f5f595867c4bccd2da81'
+          ARTIFACT = 12437177747
+          ZIP_DIGEST = 'sha256:e0a35c907df0c2515b0c4d375f1dad1f6bc03f43edd6a709189ab3989238a3c3'
+          OUTPUT = Path('build/apple-diagnostic')
+          TARGETS = {'test01ImportDeduplicateAndErrors': 290,
+                     'test03SelectionCopyAnnotation': 404,
+                     'test04LifecycleAndPersistence': 473}
+          API = 'https://api.github.com/repos/' + REPO
+          LIMIT = 256 * 1024 * 1024
+          HEADERS = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                     'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28',
+                     'User-Agent': 'EXReader-cloud-artifact-diagnostic'}
+
+          def require(condition, message):
+              if not condition:
+                  raise ValueError(message)
+
+          def api(path):
+              request = urllib.request.Request(API + path, headers=HEADERS)
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  return json.load(response)
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, request, stream, code, message, headers, url):
+                  return None
+
+          def artifact(artifact_id, name):
+              metadata = api('/actions/artifacts/' + str(artifact_id))
+              identity = metadata.get('workflow_run', {})
+              require(metadata.get('id') == artifact_id and metadata.get('name') == name and
+                      metadata.get('expired') is False and identity.get('id') == RUN and
+                      identity.get('head_sha') == SOURCE, 'artifact API identity mismatch')
+              require(metadata.get('size_in_bytes') == 174141939 and metadata.get('digest') == ZIP_DIGEST,
+                      'preserved artifact size/digest differs from the registered original')
+              require(0 < metadata.get('size_in_bytes', 0) <= LIMIT, 'artifact size outside diagnostic budget')
+              request = urllib.request.Request(API + '/actions/artifacts/' + str(artifact_id) + '/zip', headers=HEADERS)
+              try:
+                  response = urllib.request.build_opener(NoRedirect).open(request, timeout=60)
+              except urllib.error.HTTPError as error:
+                  require(error.code == 302, 'artifact download did not return its signed redirect')
+                  location = error.headers.get('Location', '')
+                  target = urllib.parse.urlparse(location)
+                  require(target.scheme == 'https' and target.hostname and not target.username and not target.password,
+                          'artifact redirect is not HTTPS')
+                  # The signed artifact-store request deliberately carries no GitHub credential.
+                  response = urllib.request.urlopen(urllib.request.Request(location, headers={
+                      'User-Agent': HEADERS['User-Agent']}), timeout=60)
+              with response:
+                  raw = response.read(LIMIT + 1)
+              require(len(raw) <= LIMIT, 'artifact download exceeded diagnostic budget')
+              digest = 'sha256:' + hashlib.sha256(raw).hexdigest()
+              require(len(raw) == metadata['size_in_bytes'] and metadata.get('digest') == digest,
+                      'artifact ZIP differs from the API size/digest')
+              return zipfile.ZipFile(io.BytesIO(raw)), {'id': artifact_id, 'name': name, 'digest': digest}
+
+          def one(archive, suffix):
+              names = [name for name in archive.namelist() if name.endswith(suffix)]
+              require(len(names) == 1, 'required artifact entry is missing or ambiguous: ' + suffix)
+              return names[0], archive.read(names[0])
+
+          def identity(value, job):
+              require(value.get('source_sha') == SOURCE and value.get('run_id') == str(RUN) and
+                      value.get('attempt') == '1' and value.get('job') == job,
+                      'report identity differs from the preserved run')
+
+          def bounded(value, maximum=500):
+              return str(value).replace('\n', ' ')[:maximum]
+
+          def relevant_lines(text, maximum=28):
+              lines = text.splitlines()
+              selected = set()
+              pattern = r'selection\.|library\.(status|import|book|busy)|reader\.(title|location|busy)|TextView|Text View|Select All|Select Word|Copy|选择|选取|复制|尚未选择|已导入|已存在|Failed|failed|XCTAssert|error:'
+              for index, line in enumerate(lines):
+                  if re.search(pattern, line):
+                      selected.update(range(max(0, index - 1), min(len(lines), index + 2)))
+              return [{'line': index + 1, 'text': bounded(lines[index], 650)}
+                      for index in sorted(selected)[:maximum]]
+
+          def nested(value):
+              if isinstance(value, dict):
+                  yield value
+                  for child in value.values():
+                      yield from nested(child)
+              elif isinstance(value, list):
+                  for child in value:
+                      yield from nested(child)
+
+          def snapshot_observations(payload):
+              value = plistlib.loads(payload)
+              objects = value.get('$objects', []) if isinstance(value, dict) else []
+              def resolve(item, depth=0, seen=frozenset()):
+                  if depth > 12:
+                      return '<depth-bound>'
+                  if isinstance(item, plistlib.UID):
+                      if item.data in seen or item.data >= len(objects):
+                          return '<object-reference>'
+                      return resolve(objects[item.data], depth + 1, seen | {item.data})
+                  if isinstance(item, dict):
+                      return {str(key): resolve(child, depth + 1, seen) for key, child in item.items()}
+                  if isinstance(item, list):
+                      return [resolve(child, depth + 1, seen) for child in item[:1000]]
+                  if isinstance(item, bytes):
+                      return '<binary:%d>' % len(item)
+                  return item
+              decoded = resolve(value)
+              observations = []
+              for node in nested(decoded):
+                  fields = {key: child for key, child in node.items() if isinstance(child, (str, int, float, bool))}
+                  if any(re.search(r'selection\.|library\.(status|import|book|busy)|reader\.(title|location|busy)|尚未选择|已导入|已存在', str(child))
+                         for child in fields.values()):
+                      observations.append({key: bounded(child, 500) for key, child in fields.items()})
+              scalars = []
+              def collect(item):
+                  if isinstance(item, dict):
+                      for key, child in item.items():
+                          if isinstance(child, (str, int, float, bool)):
+                              scalars.append({'key': str(key), 'value': bounded(child, 240)})
+                          else:
+                              collect(child)
+                  elif isinstance(item, list):
+                      for child in item:
+                          if isinstance(child, str):
+                              scalars.append({'value': bounded(child, 240)})
+                          else:
+                              collect(child)
+              collect(decoded)
+              return {'relevant': observations[:32], 'envelope_fields': scalars[:45]}
+
+          def media_observations(payload, suffix):
+              # OCR reads preserved pixels only; it never launches the host or simulator.
+              script = OUTPUT/'read-preserved-pixels.swift'
+              script.write_text('''import Foundation
+          import Vision
+          import ImageIO
+          import AVFoundation
+          let url = URL(fileURLWithPath: CommandLine.arguments[1])
+          var image: CGImage
+          var second: Double = 0
+          if url.pathExtension == "mp4" {
+              let asset = AVURLAsset(url: url)
+              second = max(0, CMTimeGetSeconds(asset.duration) - 5)
+              let generator = AVAssetImageGenerator(asset: asset)
+              generator.appliesPreferredTrackTransform = true
+              image = try generator.copyCGImage(at: CMTime(seconds: second, preferredTimescale: 600), actualTime: nil)
+          } else {
+              image = CGImageSourceCreateImageAtIndex(CGImageSourceCreateWithURL(url as CFURL, nil)!, 0, nil)!
+          }
+          let request = VNRecognizeTextRequest()
+          request.recognitionLevel = .accurate
+          request.recognitionLanguages = ["zh-Hans", "en-US"]
+          try VNImageRequestHandler(cgImage: image).perform([request])
+          let words: [[String: Any]] = (request.results ?? []).prefix(48).compactMap { item in
+              guard let text = item.topCandidates(1).first?.string else { return nil }
+              let box = item.boundingBox
+              return ["text": String(text.prefix(200)), "box": [box.minX, box.minY, box.width, box.height]]
+          }
+          let data = try JSONSerialization.data(withJSONObject: ["width": image.width, "height": image.height,
+              "second": second, "ocr": words], options: [.sortedKeys])
+          print(String(data: data, encoding: .utf8)!)
+          ''')
+              media = OUTPUT/('preserved.' + suffix)
+              media.write_bytes(payload)
+              try:
+                  proc = subprocess.run(['swift', str(script), str(media)], capture_output=True, text=True, timeout=90)
+                  return json.loads(proc.stdout) if proc.returncode == 0 else {'error': bounded(proc.stderr, 300)}
+              finally:
+                  media.unlink(missing_ok=True)
+
+          def export_result(bundle, section, test_id=None):
+              arguments = ['xcrun', 'xcresulttool', 'get', 'test-results', section,
+                           '--path', str(bundle), '--format', 'json']
+              if test_id:
+                  arguments += ['--test-id', test_id]
+              result = subprocess.run(arguments, capture_output=True, text=True, timeout=90)
+              name = section + ('-' + re.sub(r'[^A-Za-z0-9_-]', '_', test_id) if test_id else '') + '.json'
+              record = {'section': section, 'test_id': test_id, 'exit_code': result.returncode, 'path': name}
+              if result.returncode == 0:
+                  value = json.loads(result.stdout)
+                  (OUTPUT/name).write_text(json.dumps(value, indent=2, sort_keys=True))
+                  record['sha256'] = hashlib.sha256((OUTPUT/name).read_bytes()).hexdigest()
+                  return record, value
+              record['error'] = bounded(result.stderr)
+              return record, {}
+
+          def main():
+              require(os.environ.get('GITHUB_REPOSITORY') == REPO, 'unexpected diagnostic repository')
+              OUTPUT.mkdir(parents=True, exist_ok=True)
+              run = api('/actions/runs/' + str(RUN))
+              require(run.get('id') == RUN and run.get('head_sha') == SOURCE and run.get('run_attempt') == 1 and
+                      run.get('status') == 'completed' and run.get('conclusion') == 'failure', 'failed run API identity mismatch')
+              job = api('/actions/jobs/119906295355')
+              require(job.get('run_id') == RUN and job.get('id') == 119906295355 and
+                      'ipad' in job.get('name', '') and job.get('conclusion') == 'failure',
+                      'failed iPad job API identity mismatch')
+              archive, artifact_identity = artifact(ARTIFACT, 'wp13-apple-ipad')
+              _, raw = one(archive, 'evidence/ipad/evidence.json')
+              evidence = json.loads(raw)
+              identity(evidence.get('environment', {}), 'uitest')
+              require(evidence.get('source_sha') == SOURCE and evidence.get('platform') == 'ipad' and
+                      evidence.get('accepted') is False, 'preserved iPad rejection identity mismatch')
+              report = {'diagnostic_only': True, 'accepted': False,
+                  'target': {'repository': REPO, 'run_id': RUN, 'attempt': 1, 'source_sha': SOURCE},
+                  'artifact': artifact_identity, 'collector_errors': evidence.get('errors', []),
+                  'observations': {}, 'exports': [], 'persisted': {}}
+              names = archive.namelist()
+              require(len(names) == len(set(names)) and sum(item.file_size for item in archive.infolist()) <= 1024**3,
+                      'ZIP entries exceed diagnostic bounds or contain duplicate paths')
+              for filename in names:
+                  path = PurePosixPath(filename)
+                  require(not path.is_absolute() and '..' not in path.parts and '\\' not in filename,
+                          'ZIP entry escapes cloud diagnostic directory')
+              _, raw = one(archive, 'evidence/ipad/attachments/manifest.json')
+              manifest = json.loads(raw)
+              require(isinstance(manifest, list), 'attachment manifest is invalid')
+              attachment_prefix = next(name for name in names if name.endswith('evidence/ipad/attachments/manifest.json'))[:-len('manifest.json')]
+              for test, line in TARGETS.items():
+                  observation = {'source_line': line, 'steps': [], 'text_attachments': [], 'attachment_inventory': []}
+                  for group in manifest:
+                      owner = str(group.get('testIdentifier') or group.get('testName', ''))
+                      if test not in owner:
+                          continue
+                      for item in group.get('attachments', []):
+                          filename = item.get('exportedFileName', '')
+                          require(PurePosixPath(filename).name == filename, 'attachment filename escapes export')
+                          name = attachment_prefix + filename
+                          if name not in names:
+                              continue
+                          label = item.get('suggestedHumanReadableName', '')
+                          metadata = {'name': bounded(label, 160), 'path': name,
+                                      'bytes': archive.getinfo(name).file_size,
+                                      'type': item.get('uniformTypeIdentifier')}
+                          observation['attachment_inventory'].append(metadata)
+                          if re.search(r'spindump|stack|crash|diagnostic|\.ips\b', label, re.I):
+                              metadata['excluded_from_text_output'] = True
+                              continue
+                          if 'Screen Recording' in label and filename.endswith('.mp4') and archive.getinfo(name).file_size <= 20 * 1024**2:
+                              metadata['late_frame'] = media_observations(archive.read(name), 'mp4')
+                              continue
+                          if archive.getinfo(name).file_size > 8 * 1024**2:
+                              continue
+                          payload = archive.read(name)
+                          metadata['signature'] = payload[:8].hex()
+                          if label.startswith(('01-empty-library', '10-selection-sheet')) and payload.startswith(b'\x89PNG'):
+                              metadata['pixel_text'] = media_observations(payload, 'png')
+                              continue
+                          if 'snapshot' in label.lower() and payload.startswith((b'bplist00', b'<?xml')):
+                              try:
+                                  metadata['snapshot_fields'] = snapshot_observations(payload)
+                              except Exception as error:
+                                  metadata['snapshot_decode_error'] = type(error).__name__
+                              continue
+                          if not (filename.lower().endswith(('.txt', '.json')) or
+                                  'snapshot' in label.lower() or 'tree' in label.lower() or 'steps-' in label):
+                              continue
+                          if payload.startswith(b'\x89PNG') or b'\x00' in payload[:200]:
+                              continue
+                          text = payload.decode('utf-8', errors='replace')
+                          if 'steps-' in label:
+                              steps = json.loads(text)
+                              observation['steps'] = steps.get('steps', [])
+                          observation['text_attachments'].append({'name': bounded(label, 160), 'path': name,
+                              'bytes': len(payload), 'sha256': hashlib.sha256(payload).hexdigest(),
+                              'relevant_lines': relevant_lines(text)})
+                  report['observations'][test] = observation
+              for suffix in ('host-log.txt', 'host-state.json', 'ipad-container.json'):
+                  matches = [name for name in names if name.endswith('/' + suffix)]
+                  record = {'present': bool(matches), 'paths': matches}
+                  if len(matches) == 1 and archive.getinfo(matches[0]).file_size <= 8 * 1024**2:
+                      payload = archive.read(matches[0])
+                      text = payload.decode('utf-8', errors='replace')
+                      record.update({'sha256': hashlib.sha256(payload).hexdigest(), 'bytes': len(payload)})
+                      if suffix == 'host-log.txt':
+                          record['tail'] = [bounded(value) for value in text.splitlines()[-12:]]
+                      else:
+                          value = json.loads(text)
+                          record['summary'] = {key: value[key] for key in ('status', 'source_sha', 'run_id', 'attempt',
+                              'initial_state', 'final_state', 'book_id', 'position', 'font_size') if key in value}
+                  report['persisted'][suffix] = record
+              with tempfile.TemporaryDirectory(prefix='exr-preserved-ipad-') as temporary:
+                  root = Path(temporary)
+                  entries = [name for name in names if '.xcresult/' in name and not name.endswith('/')]
+                  require(entries, 'preserved xcresult bundle is absent')
+                  for name in entries:
+                      path = root/name
+                      path.parent.mkdir(parents=True, exist_ok=True)
+                      path.write_bytes(archive.read(name))
+                  bundles = list(root.rglob('ipad.xcresult'))
+                  require(len(bundles) == 1, 'preserved iPad xcresult identity is ambiguous')
+                  bundle = bundles[0]
+                  for section in ('summary', 'tests'):
+                      record, value = export_result(bundle, section)
+                      report['exports'].append(record)
+                      require(record['exit_code'] == 0, 'xcresult ' + section + ' export failed')
+                      if section == 'tests':
+                          test_nodes = list(nested(value))
+                      else:
+                          report['failure_summary'] = [
+                              {key: bounded(node[key], 600) for key in ('testName', 'message', 'issueType', 'fileName', 'lineNumber') if key in node}
+                              for node in nested(value) if 'message' in node][:12]
+                  for test, observation in report['observations'].items():
+                      candidates = [node for node in test_nodes if node.get('nodeType') == 'Test Case' and test in str(node.get('name', ''))]
+                      require(len(candidates) == 1, 'xcresult test identity missing or duplicated: ' + test)
+                      node = candidates[0]
+                      observation['result'] = node.get('result')
+                      test_id = node.get('nodeIdentifier') or 'EXReaderHostUITests/' + test + '()'
+                      observation['test_id'] = test_id
+                      for section in ('test-details', 'activities'):
+                          record, value = export_result(bundle, section, test_id)
+                          report['exports'].append(record)
+                          fragments = []
+                          for item in nested(value):
+                              title = str(item.get('title') or item.get('name') or item.get('message') or '')
+                              if re.search(r'closure #|partial apply|@objc|test\d+.*\(\)$', title):
+                                  continue
+                              if re.search(r'selection\.|library\.status|Double Tap|Press|Tap|Failed|failed|XCTAssert|Select', title):
+                                  fragments.append(bounded(title, 550))
+                          observation[section + '_relevant'] = fragments[-22:]
+              log_path, raw = one(archive, 'results/ipad-xcodebuild.log')
+              lines = raw.decode('utf-8', errors='replace').splitlines()
+              for test, observation in report['observations'].items():
+                  indices = [index for index, line in enumerate(lines) if
+                             re.search(r'EXReaderHostUITests.swift:' + str(TARGETS[test]) + r'\b', line)]
+                  observation['xcode_log_windows'] = [
+                      {'at': index + 1, 'lines': [bounded(line, 650) for line in lines[max(0, index - 7):index + 4]]}
+                      for index in indices[:2]]
+              (OUTPUT/'diagnostic.json').write_text(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False))
+              print(json.dumps(report, ensure_ascii=True))
+
+          try:
+              main()
+          except Exception as error:
+              print(json.dumps({'diagnostic_only': True, 'accepted': False,
+                                'diagnostic_error': type(error).__name__ + ': ' + str(error).replace('\n', ' ')[:400]}))
+              sys.exit(1)
+          PY
+      - name: Preserve diagnostic observations and xcresult JSON exports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wp13-apple-ipad-failure-diagnostic
+          path: build/apple-diagnostic/
+          if-no-files-found: error
