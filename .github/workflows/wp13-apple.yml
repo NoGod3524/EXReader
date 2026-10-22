@@ -11,33 +11,40 @@ concurrency:
 
 jobs:
   sdk:
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator, iphoneos]
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
-      - name: Build installed SDKs for macOS and both iOS targets
+      - name: Build and install the ${{ matrix.target }} SDK
         run: |
           set -euo pipefail
-          cmake -S . -B build/sdk-macos -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_AAC=OFF
-          cmake --build build/sdk-macos --parallel 4
-          cmake --install build/sdk-macos --prefix stage/macos
-          for sdk in iphonesimulator iphoneos; do
-            cmake -S . -B "build/sdk-$sdk" -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT="$sdk" \
+          target="${{ matrix.target }}"
+          if [ "$target" = macos ]; then
+            cmake -S . -B "build/sdk-$target" -DCMAKE_BUILD_TYPE=Release \
+              -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=ON -DEXR_ENABLE_AAC=OFF
+          else
+            cmake -S . -B "build/sdk-$target" -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT="$target" \
               -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
               -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF \
               -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO -DEXR_ENABLE_AAC=OFF
-            cmake --build "build/sdk-$sdk" --parallel 4
-            cmake --install "build/sdk-$sdk" --prefix "stage/$sdk"
-          done
-          test -f stage/macos/lib/libexreader.dylib
-          test -f stage/iphonesimulator/lib/libexreader.dylib
+          fi
+          cmake --build "build/sdk-$target" --parallel 4
+          cmake --install "build/sdk-$target" --prefix "stage/$target"
+          test -f "stage/$target/lib/libexreader.dylib"
       - name: Record SDK identity
         run: |
           python3 - <<'PY'
           import json, pathlib, re
-          base = pathlib.Path('stage/macos/include/exr/base.h').read_text()
-          version = re.search(r'#define EXR_VERSION "([^"]+)"', base).group(1)
-          abi = re.search(r'#define EXR_ABI_VERSION (\d+)u', base).group(1)
+          base = pathlib.Path('stage/macos/include/exr/base.h')
+          if not base.exists():
+              base = next(pathlib.Path('stage').glob('*/include/exr/base.h'))
+          text = base.read_text()
+          version = re.search(r'#define EXR_VERSION "([^"]+)"', text).group(1)
+          abi = re.search(r'#define EXR_ABI_VERSION (\d+)u', text).group(1)
           pathlib.Path('build').mkdir(exist_ok=True)
           pathlib.Path('build/sdk-identity.json').write_text(
               json.dumps({'sdk_version': version, 'abi': int(abi)}, indent=2) + '\n')
@@ -45,9 +52,9 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: wp13-apple-sdk
+          name: wp13-apple-sdk-${{ matrix.target }}
           path: |
-            stage/
+            stage/${{ matrix.target }}/
             build/sdk-identity.json
           retention-days: 30
 
@@ -63,13 +70,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: wp13-apple-sdk
+          pattern: wp13-apple-sdk-*
           path: sdk-artifact
-      - name: Stage the installed SDK
+      - name: Stage the installed SDKs
         run: |
           set -euo pipefail
           mkdir -p stage
-          cp -R sdk-artifact/stage/* stage/
+          cp -R sdk-artifact/*/stage/* stage/
+          ls stage
       - name: Build fixtures and the UI test project
         run: |
           set -euo pipefail
@@ -156,7 +164,8 @@ jobs:
           import json, pathlib, platform as host_platform, subprocess, sys, datetime
           platform, container = sys.argv[1], sys.argv[2]
           lines = pathlib.Path('build/destination.txt').read_text().splitlines()
-          sdk = json.loads(pathlib.Path('sdk-artifact/build/sdk-identity.json').read_text())
+          identity_path = next(pathlib.Path('sdk-artifact').glob('*/build/sdk-identity.json'))
+          sdk = json.loads(identity_path.read_text())
           manifest = json.loads(pathlib.Path('build/apple-resources/manifest.json').read_text())
           xcode = subprocess.check_output(['xcodebuild', '-version'], text=True).strip()
           sw_vers = subprocess.check_output(['sw_vers'], text=True).strip()
@@ -211,13 +220,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: wp13-apple-sdk
+          pattern: wp13-apple-sdk-*
           path: sdk-artifact
-      - name: Stage the installed SDK
+      - name: Stage the installed SDKs
         run: |
           set -euo pipefail
           mkdir -p stage
-          cp -R sdk-artifact/stage/* stage/
+          cp -R sdk-artifact/*/stage/* stage/
+          ls stage
       - name: Build and self-check the macOS reference host
         run: |
           set -euo pipefail

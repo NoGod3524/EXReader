@@ -252,6 +252,7 @@ struct SelectionSheet: View {
     @ObservedObject var model: HostReaderModel
     @Environment(\.presentationMode) private var presentation
     @State private var selection = NSRange(location: 0, length: 0)
+    @State private var lastRange = NSRange(location: 0, length: 0)
     @State private var quote = ""
     @State private var hint = "长按或用方向键选择文字"
     @State private var clipboard = ""
@@ -297,18 +298,26 @@ struct SelectionSheet: View {
         return NSRange(location: location, length: length)
     }
 
+    private func effectiveRange() -> NSRange {
+        let current = clamped(selection)
+        if current.length > 0 { return current }
+        return clamped(lastRange)
+    }
+
     private func selectedText() -> String {
-        let range = clamped(selection)
+        let range = effectiveRange()
         guard range.length > 0 else { return "" }
         return page.substring(with: range)
     }
 
     private func refreshQuote() {
+        let current = clamped(selection)
+        if current.length > 0 { lastRange = current }
         quote = selectedText()
     }
 
     private func byteRange() -> (Int, Int)? {
-        let range = clamped(selection)
+        let range = effectiveRange()
         guard range.length > 0 else { return nil }
         let prefix = page.substring(to: range.location)
         let selected = page.substring(with: range)
