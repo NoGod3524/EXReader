@@ -1,201 +1,128 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Collect per-platform UI acceptance evidence: cases, steps, attachments, state."""
+"""Collect and validate the actual Apple UI result, executable and persisted state."""
 import argparse
-import hashlib
+import datetime
 import json
-import os
+from pathlib import Path
+import platform as host_platform
 import shutil
 import sqlite3
 import subprocess
-import sys
-from pathlib import Path
+
+from evidence_contract import (attachment_records, case_key, cloud_identity, database_state,
+    digest, inventory, load, require, tree_digest, validate_cases, validate_platform, validate_sdk)
 
 
-def run(command):
-    return subprocess.run([str(value) for value in command], capture_output=True, text=True)
-
-
-def digest(path):
-    sha = hashlib.sha256()
-    with open(path, 'rb') as stream:
-        for chunk in iter(lambda: stream.read(1 << 20), b''):
-            sha.update(chunk)
-    return sha.hexdigest()
+def command(*args):
+    return subprocess.check_output([str(arg) for arg in args], text=True).strip()
 
 
 def load_results(xcresult):
-    proc = run(['xcrun', 'xcresulttool', 'get', 'test-results', 'tests',
-                '--path', xcresult, '--format', 'json'])
-    if proc.returncode != 0:
-        return {'error': (proc.stderr or proc.stdout)[-4000:]}, []
-    try:
-        payload = json.loads(proc.stdout)
-    except json.JSONDecodeError as error:
-        return {'error': str(error)}, []
+    payload = json.loads(command('xcrun', 'xcresulttool', 'get', 'test-results', 'tests',
+                                 '--path', xcresult, '--format', 'json'))
     cases = []
 
     def walk(node):
+        require(isinstance(node, dict), 'invalid xcresult test node')
         if node.get('nodeType') == 'Test Case':
-            activities = [child.get('name') for child in node.get('children', [])
-                          if 'Activity' in str(child.get('nodeType'))]
             cases.append({'name': node.get('name'), 'result': node.get('result'),
-                          'duration': node.get('duration'), 'steps': activities,
-                          'step_count': len(activities)})
+                          'duration': node.get('duration'), 'steps': [], 'step_count': 0})
         for child in node.get('children', []):
             walk(child)
 
-    for node in payload.get('testNodes', []):
+    require(isinstance(payload.get('testNodes'), list), 'xcresult has no test nodes')
+    for node in payload['testNodes']:
         walk(node)
-    return {'raw_nodes': len(payload.get('testNodes', []))}, cases
+    return cases
 
 
-def export_attachments(xcresult, output):
-    target = output/'attachments'
-    proc = run(['xcrun', 'xcresulttool', 'export', 'attachments',
-                '--path', xcresult, '--output-path', target])
-    files = sorted(path.name for path in target.glob('*')) if target.exists() else []
-    manifest = []
-    items = []
-    manifest_path = target/'manifest.json'
-    if manifest_path.exists():
-        try:
-            data = json.loads(manifest_path.read_text())
-            if isinstance(data, list):
-                if data and isinstance(data[0], dict) and 'attachments' in data[0]:
-                    for group in data:
-                        manifest.extend(group.get('attachments', []))
-                else:
-                    manifest = data
-            else:
-                manifest = data.get('attachments', [])
-        except json.JSONDecodeError:
-            manifest = []
-    steps_by_test = {}
-    for item in manifest:
-        suggested = item.get('suggestedHumanReadableName') or ''
-        if suggested.startswith('steps-'):
-            path = target/item.get('exportedFileName', '')
-            try:
-                payload = json.loads(path.read_text())
-                steps_by_test[payload.get('test', suggested)] = payload.get('steps', [])
-            except (OSError, json.JSONDecodeError):
-                continue
-    return {'status': proc.returncode, 'stderr': proc.stderr[-2000:],
-            'file_count': len(files), 'files': files[:400], 'manifest': manifest[:400],
-            'steps_by_test': steps_by_test}
-
-
-def collect_database(container, output):
-    if not container:
-        return {'status': 'container-not-provided'}
+def copy_persisted(container, output):
+    require(bool(container), 'application container missing')
     root = Path(container)
-    candidates = [root/'Library/Application Support/EXReader/library.sqlite',
-                  root/'library.sqlite']
-    db = next((path for path in candidates if path.exists()), candidates[0])
-    if not db.exists():
-        return {'status': 'missing', 'expected': str(db)}
-    target = output/'library.sqlite'
-    try:
-        source = sqlite3.connect('file:'+str(db)+'?mode=ro', uri=True)
-        backup = sqlite3.connect(target)
-        source.backup(backup)
-        backup.close()
-        source.close()
-    except sqlite3.Error as error:
-        return {'status': 'copy-failed', 'error': str(error)}
-    counts = {}
-    try:
-        con = sqlite3.connect(target)
-        for table in ['books', 'notes', 'fixed_notes', 'book_progress']:
-            try:
-                counts[table] = con.execute('SELECT COUNT(*) FROM '+table).fetchone()[0]
-            except sqlite3.Error:
-                counts[table] = None
-        con.close()
-    except sqlite3.Error:
-        pass
-    return {'status': 'copied', 'sha256': digest(target), 'bytes': target.stat().st_size,
-            'rows': counts, 'source_name': 'library.sqlite'}
-
-
-def copy_state(container, output):
-    if not container:
-        return {'status': 'container-not-provided'}
-    result = {'status': 'missing'}
-    for candidate in [Path(container)/'Documents/host-log.txt',
-                      Path(container)/'host-log.txt',
-                      Path(container)/'EXReader/host-log.txt']:
-        if candidate.exists():
-            target = output/'host-log.txt'
-            shutil.copyfile(candidate, target)
-            result['log_sha256'] = digest(target)
-            break
-    for candidate in [Path(container)/'Documents/host-state.json',
-                      Path(container)/'host-state.json',
-                      Path(container)/'EXReader/host-state.json']:
-        if candidate.exists():
-            target = output/'host-state.json'
-            shutil.copyfile(candidate, target)
-            try:
-                payload = json.loads(target.read_text())
-            except json.JSONDecodeError:
-                payload = {}
-            result.update({'status': 'copied', 'sha256': digest(target), 'payload': payload})
-            break
-    return result
+    db = next((path for path in (root/'Library/Application Support/EXReader/library.sqlite',
+                                root/'library.sqlite') if path.is_file()), None)
+    require(db is not None, 'persisted database missing')
+    with sqlite3.connect(db.resolve().as_uri() + '?mode=ro', uri=True) as source:
+        with sqlite3.connect(output/'library.sqlite') as target:
+            source.backup(target)
+    for name in ('host-state.json', 'host-log.txt'):
+        candidate = next((folder/name for folder in (root/'Documents', root, root/'EXReader')
+                          if (folder/name).is_file()), None)
+        require(candidate is not None, 'persisted host file missing: ' + name)
+        shutil.copyfile(candidate, output/name)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--platform', required=True)
+    parser.add_argument('--platform', choices=['macos', 'iphone', 'ipad'], required=True)
     parser.add_argument('--xcresult', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--container', default='')
-    parser.add_argument('--identity', type=Path)
+    parser.add_argument('--container', required=True)
+    parser.add_argument('--sdk-root', type=Path, required=True)
+    parser.add_argument('--sdk-identity', type=Path, required=True)
+    parser.add_argument('--app', type=Path, required=True)
+    parser.add_argument('--fixtures', type=Path, required=True)
+    parser.add_argument('--destination-file', type=Path, required=True)
     args = parser.parse_args()
     output = args.output.absolute()
     output.mkdir(parents=True, exist_ok=True)
-    metadata, cases = load_results(args.xcresult)
-    attachments = export_attachments(args.xcresult, output)
-    steps_by_test = attachments.pop('steps_by_test', {})
-    for case in cases:
-        for test_name, steps in steps_by_test.items():
-            if case['name'].split('(')[0] in test_name:
-                case['steps'] = steps
-                case['step_count'] = len(steps)
-                break
-    identity = json.loads(args.identity.read_text()) if args.identity and args.identity.exists() else {}
-    passed = sum(1 for case in cases if case['result'] == 'Passed')
-    failed = sum(1 for case in cases if case['result'] == 'Failed')
-    evidence = {
-        'schema': 1,
-        'platform': args.platform,
-        'date': identity.get('date', ''),
-        'source_sha': identity.get('source_sha', os.environ.get('GITHUB_SHA', '')),
-        'run': {'id': os.environ.get('GITHUB_RUN_ID', ''),
-                'job': os.environ.get('GITHUB_JOB', ''),
-                'attempt': os.environ.get('GITHUB_RUN_ATTEMPT', ''),
-                'url': identity.get('run_url', '')},
-        'environment': identity,
-        'tests': cases,
-        'totals': {'cases': len(cases), 'passed': passed, 'failed': failed,
-                   'steps': sum(case['step_count'] for case in cases)},
-        'xcresult': {'path': str(args.xcresult), 'sha256_directory': None,
-                     'parsed': metadata},
-        'attachments': attachments,
-        'state': {'database': collect_database(args.container, output),
-                  'host_state': copy_state(args.container, output)},
-        'physical_device_execution': False,
-        'scope': 'UI acceptance drives real controls, touches and keyboard events on macOS and both simulators'
-    }
-    (output/'evidence.json').write_text(json.dumps(evidence, indent=2, sort_keys=True)+'\n')
-    print(json.dumps({'platform': args.platform, 'cases': len(cases), 'passed': passed,
-                      'failed': failed, 'steps': evidence['totals']['steps'],
-                      'attachments': attachments.get('file_count', 0)}, indent=2))
-    if failed or not cases:
-        sys.exit('UI acceptance failed for '+args.platform)
+    evidence = {'schema': 2, 'platform': args.platform, 'accepted': False,
+                'physical_device_execution': False, 'collector_status': 1, 'errors': []}
+    try:
+        identity = cloud_identity(args.platform)
+        require(command('git', 'rev-parse', 'HEAD') == identity['source_sha'], 'checkout source differs from cloud source')
+        sdk = load(args.sdk_identity)
+        validate_sdk(args.sdk_root, sdk, identity['source_sha'], identity['run_id'], identity['attempt'],
+                     'macos' if args.platform == 'macos' else 'iphonesimulator')
+        lines = args.destination_file.read_text().splitlines()
+        require(len(lines) == 4 and all(lines), 'destination identity incomplete')
+        require((args.platform == 'macos' and lines[0] == 'platform=macOS') or
+                (args.platform != 'macos' and lines[0].startswith('platform=iOS Simulator,id=') and
+                 lines[2].lower().startswith(args.platform)), 'destination platform mismatch')
+        bundle = args.app
+        mac = args.platform == 'macos'
+        executable = bundle/('Contents/MacOS/EXReaderHost' if mac else 'EXReaderHost')
+        plist = bundle/('Contents/Info.plist' if mac else 'Info.plist')
+        manifest = load(args.fixtures)
+        identity.update({'date': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'destination': lines[0], 'device': lines[2], 'runtime': lines[3],
+            'host': host_platform.platform(), 'xcode': command('xcodebuild', '-version'),
+            'sdk': sdk, 'fixtures': manifest, 'font_sha256': manifest['Reader.otf'],
+            'input_driver': 'XCUITest tap/doubleTap/typeText/drag and simulator orientation',
+            'app': {'bundle': str(bundle), 'executable_sha256': digest(executable),
+                    'info_plist_sha256': digest(plist)}})
+        evidence.update({'environment': identity, 'source_sha': identity['source_sha'],
+            'date': identity['date'], 'run': {'id': identity['run_id'], 'attempt': identity['attempt'],
+                'job': identity['job'], 'url': identity['run_url']}})
+        cases = load_results(args.xcresult)
+        attachments = output/'attachments'
+        subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', str(args.xcresult),
+                        '--output-path', str(attachments)], check=True, capture_output=True, text=True)
+        records, steps = attachment_records(attachments)
+        for case in cases:
+            case['steps'] = steps[case_key(case['name'])]
+            case['step_count'] = len(case['steps'])
+        evidence.update({'tests': cases, 'totals': validate_cases(cases),
+                         'attachments': {'status': 0, 'count': len(records), 'records': records}})
+        program = output/'program/EXReaderHost.app'
+        shutil.copytree(bundle, program)
+        evidence['program_files_sha256'] = inventory(program)
+        copy_persisted(args.container, output)
+        evidence['state'] = database_state(output, identity)
+        evidence['xcresult_sha256'] = tree_digest(args.xcresult)
+        evidence['xcodebuild_log_sha256'] = digest(args.xcresult.parent/(args.platform + '-xcodebuild.log'))
+        evidence.update({'accepted': True, 'collector_status': 0})
+        (output/'evidence.json').write_text(json.dumps(evidence, indent=2, sort_keys=True) + '\n')
+        validate_platform(output, args.platform, identity['source_sha'], identity['run_id'], identity['attempt'],
+                          sdk, args.xcresult.parent)
+    except Exception as error:
+        evidence.update({'accepted': False, 'collector_status': 1, 'errors': [type(error).__name__ + ': ' + str(error)[:500]]})
+    (output/'evidence.json').write_text(json.dumps(evidence, indent=2, sort_keys=True) + '\n')
+    print(json.dumps({'platform': args.platform, 'accepted': evidence['accepted'],
+                      'totals': evidence.get('totals'), 'errors': evidence['errors']}))
+    return evidence['collector_status']
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

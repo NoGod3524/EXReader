@@ -105,6 +105,7 @@ struct LibraryScreen: View {
                                 .cornerRadius(10)
                             }
                             .buttonStyle(.plain)
+                            .disabled(model.busy)
                             .accessibilityIdentifier("library.book.\(index)")
                             .accessibilityLabel(Text("\(book.title)，\(book.detail)"))
                         }
@@ -134,9 +135,12 @@ struct LibraryScreen: View {
                         Button("导入大文件") { model.importFixture("Large", extension: "epub") }
                             .accessibilityIdentifier("library.import.large")
                     }
+                    Button("导入 Unicode 示例") { model.importFixture("Unicode", extension: "epub") }
+                        .accessibilityIdentifier("library.import.unicode")
                 }
             }
             .buttonStyle(.bordered)
+            .disabled(model.busy)
             .padding(.vertical, 8)
 
             Text(model.statusText).font(.caption)
@@ -147,7 +151,12 @@ struct LibraryScreen: View {
             }
         }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.data], allowsMultipleSelection: false) { result in
-            if case .success(let urls) = result, let url = urls.first { model.importFile(url) }
+            switch result {
+            case .success(let urls):
+                if let url = urls.first { model.importFile(url) }
+                else { model.reportImportFailure(HostError.invalidInput("文件选择器未返回文件")) }
+            case .failure(let error): model.reportImportFailure(error)
+            }
         }
     }
 }
@@ -214,6 +223,7 @@ struct ReaderScreen: View {
                     .accessibilityIdentifier("reader.next")
             }
             .buttonStyle(.bordered)
+            .disabled(model.busy)
 
             HStack(spacing: 10) {
                 Button("A-") { model.changeFont(-2) }
@@ -224,6 +234,7 @@ struct ReaderScreen: View {
                     .accessibilityIdentifier("reader.font.increase")
             }
             .buttonStyle(.bordered)
+            .disabled(model.busy)
 
             HStack(spacing: 10) {
                 Button("选文") { showSelection = true }
@@ -232,6 +243,7 @@ struct ReaderScreen: View {
                     .accessibilityIdentifier("reader.notes")
             }
             .buttonStyle(.bordered)
+            .disabled(model.busy)
 
             Text(model.statusText).font(.caption)
                 .accessibilityIdentifier("reader.status")
@@ -258,14 +270,26 @@ struct SelectionSheet: View {
     @State private var quote = ""
     @State private var hint = "长按或用方向键选择文字"
     @State private var clipboard = ""
+    @State private var context: HostSelectionContext?
+
+    init(model: HostReaderModel) {
+        self.model = model
+        _context = State(initialValue: model.selectionContext)
+    }
+
+    private var isCurrent: Bool {
+        guard let context else { return false }
+        return model.selectionContext == context
+    }
 
     var body: some View {
         VStack(spacing: 10) {
             Text("选择本页文字").font(.headline)
                 .accessibilityIdentifier("selection.title")
-            SelectableText(text: model.pageText, selection: $selection)
+            SelectableText(text: context?.text ?? "", revision: context?.frameCount ?? -1, selection: $selection)
                 .frame(minHeight: 240)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.secondary.opacity(0.35)))
+                .disabled(!isCurrent)
             Text(quote.isEmpty ? "尚未选择文字" : quote)
                 .font(.caption).lineLimit(2)
                 .accessibilityIdentifier("selection.quote")
@@ -274,10 +298,18 @@ struct SelectionSheet: View {
             Text(clipboard.isEmpty ? "剪贴板为空" : clipboard).font(.caption2)
                 .accessibilityIdentifier("selection.clipboard")
             HStack(spacing: 12) {
+                Button("全选") { selection = NSRange(location: 0, length: page.length) }
+                    .accessibilityIdentifier("selection.all")
+                    .disabled(!isCurrent)
                 Button("复制") { copySelection() }
                     .accessibilityIdentifier("selection.copy")
+                    .disabled(!isCurrent)
                 Button("标注所选") { annotateSelection() }
                     .accessibilityIdentifier("selection.annotate")
+                    .disabled(!isCurrent)
+            }
+            .buttonStyle(.bordered)
+            HStack(spacing: 12) {
                 Button("粘贴校验") { clipboard = hostReadPasteboard() }
                     .accessibilityIdentifier("selection.verifyPaste")
                 Button("关闭") { presentation.wrappedValue.dismiss() }
@@ -287,23 +319,29 @@ struct SelectionSheet: View {
         }
         .padding()
         .onChange(of: selection) { _ in refreshQuote() }
-        .onChange(of: model.pageText) { _ in refreshQuote() }
+        .onChange(of: model.selectionContext) { _ in
+            guard model.selectionContext != context else { return }
+            selection = NSRange(location: 0, length: 0)
+            lastRange = selection
+            quote = ""
+            hint = "页面已变化，请关闭后重新选择文字"
+        }
         .onAppear { refreshQuote() }
     }
 
-    private var page: NSString { model.pageText as NSString }
+    private var page: NSString { (context?.text ?? "") as NSString }
 
-    private func clamped(_ range: NSRange) -> NSRange {
-        guard range.location != NSNotFound else { return NSRange(location: 0, length: 0) }
-        let location = min(max(0, range.location), page.length)
-        let length = min(max(0, range.length), page.length - location)
-        return NSRange(location: location, length: length)
+    private func validated(_ range: NSRange) -> NSRange {
+        guard isCurrent, let context, hostSelectionUTF8Range(range, in: context.text) != nil else {
+            return NSRange(location: 0, length: 0)
+        }
+        return range
     }
 
     private func effectiveRange() -> NSRange {
-        let current = clamped(selection)
+        let current = validated(selection)
         if current.length > 0 { return current }
-        return clamped(lastRange)
+        return validated(lastRange)
     }
 
     private func selectedText() -> String {
@@ -313,18 +351,15 @@ struct SelectionSheet: View {
     }
 
     private func refreshQuote() {
-        let current = clamped(selection)
+        let current = validated(selection)
         if current.length > 0 { lastRange = current }
         quote = selectedText()
     }
 
     private func byteRange() -> (Int, Int)? {
-        let range = effectiveRange()
-        guard range.length > 0 else { return nil }
-        let prefix = page.substring(to: range.location)
-        let selected = page.substring(with: range)
-        let start = prefix.utf8.count
-        return (start, start + selected.utf8.count)
+        guard isCurrent, let context,
+              let bytes = hostSelectionUTF8Range(effectiveRange(), in: context.text) else { return nil }
+        return (bytes.lowerBound, bytes.upperBound)
     }
 
     private func copySelection() {
@@ -338,12 +373,12 @@ struct SelectionSheet: View {
     }
 
     private func annotateSelection() {
-        guard let (start, end) = byteRange(), !selectedText().isEmpty else {
+        guard let context, isCurrent, let (start, end) = byteRange(), !selectedText().isEmpty else {
             hint = "请先选择文字"
             return
         }
-        model.addNote(start: model.pageBaseOffset + start, end: model.pageBaseOffset + end,
-                      comment: "摘录：\(selectedText())")
+        model.addNote(start: context.baseOffset + start, end: context.baseOffset + end,
+                      comment: "摘录：\(selectedText())", expectedContext: context)
         presentation.wrappedValue.dismiss()
     }
 }
@@ -352,6 +387,14 @@ struct NotesSheet: View {
     @ObservedObject var model: HostReaderModel
     @Environment(\.presentationMode) private var presentation
     @State private var editing: HostNoteRow?
+    @State private var bookID: Int64?
+
+    init(model: HostReaderModel) {
+        self.model = model
+        _bookID = State(initialValue: model.current?.id)
+    }
+
+    private var isCurrent: Bool { !model.busy && bookID != nil && model.current?.id == bookID }
 
     var body: some View {
         VStack(spacing: 10) {
@@ -374,18 +417,21 @@ struct NotesSheet: View {
                                 .accessibilityIdentifier("notes.state.\(index)")
                             HStack(spacing: 12) {
                                 Button("定位") {
+                                    guard isCurrent else { return }
                                     model.jump(to: note)
                                     presentation.wrappedValue.dismiss()
                                 }
                                     .accessibilityIdentifier("notes.jump.\(index)")
                                 Button("编辑") {
+                                    guard isCurrent else { return }
                                     editing = note
                                 }
                                 .accessibilityIdentifier("notes.edit.\(index)")
-                                Button("删除") { model.deleteNote(note) }
+                                Button("删除") { if isCurrent { model.deleteNote(note) } }
                                     .accessibilityIdentifier("notes.delete.\(index)")
                             }
                             .buttonStyle(.bordered)
+                            .disabled(!isCurrent)
                         }
                         .padding(8)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -406,6 +452,7 @@ struct NotesSheet: View {
                 .buttonStyle(.bordered)
         }
         .padding()
+        .onChange(of: model.current?.id) { _ in editing = nil }
         .sheet(item: $editing) { note in
             EditNoteSheet(model: model, note: note)
         }
@@ -417,11 +464,13 @@ struct EditNoteSheet: View {
     let note: HostNoteRow
     @Environment(\.presentationMode) private var presentation
     @State private var draft: String
+    @State private var bookID: Int64?
 
     init(model: HostReaderModel, note: HostNoteRow) {
         self.model = model
         self.note = note
         _draft = State(initialValue: note.comment)
+        _bookID = State(initialValue: model.current?.id)
     }
 
     var body: some View {
@@ -433,10 +482,12 @@ struct EditNoteSheet: View {
                 .accessibilityIdentifier("notes.editor")
             HStack {
                 Button("保存") {
+                    guard !model.busy, bookID != nil, model.current?.id == bookID else { return }
                     model.updateNote(note, text: draft)
                     presentation.wrappedValue.dismiss()
                 }
                 .accessibilityIdentifier("notes.save")
+                .disabled(model.busy || bookID == nil || model.current?.id != bookID)
                 Button("取消") { presentation.wrappedValue.dismiss() }
                     .accessibilityIdentifier("notes.cancel")
             }
