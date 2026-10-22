@@ -27,7 +27,7 @@ static exr_document *document(const char *css,const char *parent,int rows,int sp
   nodes[2]=(exr_node_input){EXR_NODE_TABLE,1,"table",NULL,attrs[2],1};
   for(r=0;r<rows;r++) {
     size_t row;
-    if(header && r<2) { group=used++; nodes[group]=(exr_node_input){EXR_NODE_ELEMENT,2,r ? "tbody" : "thead",NULL,NULL,0}; }
+    if(header && r<2) { group=used++; nodes[group]=(exr_node_input){EXR_NODE_ELEMENT,2,r ? "http://www.w3.org/1999/xhtml|tbody" : "http://www.w3.org/1999/xhtml|thead",NULL,NULL,0}; }
     row=used++; nodes[row]=(exr_node_input){EXR_NODE_ROW,group,"tr",NULL,NULL,0};
     for(c=0;c<(spans ? 3 : 2);c++) {
       size_t cell,text; unsigned count=1; const char *ids[]={"a","b","c","d"};
