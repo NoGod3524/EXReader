@@ -1,0 +1,12 @@
+{
+ "base": "47-reject-actions.pdf",
+ "id": "47",
+ "category": "reject/actions",
+ "expect": "reject",
+ "size": 633,
+ "sha256": "425da7d36d6ab37db6c9abd00a6a97bafd0621861fe0b7aa81599e612e01d008",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

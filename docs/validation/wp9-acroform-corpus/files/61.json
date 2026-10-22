@@ -1,0 +1,12 @@
+{
+ "base": "61-reject-missing-glyph.pdf",
+ "id": "61",
+ "category": "reject/missing-glyph",
+ "expect": "reject",
+ "size": 663,
+ "sha256": "c35a566450d5fc2d79f6d3c7ec6733a658d6b7350760669df7ad3365faee757c",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

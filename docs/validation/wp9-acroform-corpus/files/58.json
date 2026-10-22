@@ -1,0 +1,12 @@
+{
+ "base": "58-reject-missing-field.pdf",
+ "id": "58",
+ "category": "reject/missing-field",
+ "expect": "reject",
+ "size": 663,
+ "sha256": "a9f5bd2055d5c530b9969eaa43f756fc93a146407a19aa3abba08580294d311b",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

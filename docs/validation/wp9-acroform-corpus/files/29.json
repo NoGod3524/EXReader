@@ -1,0 +1,12 @@
+{
+ "base": "29-extra-annots.pdf",
+ "id": "29",
+ "category": "widget/non-widget-annots",
+ "expect": "accept",
+ "size": 799,
+ "sha256": "50abd315c8767bbaf9d181fe5dd344243fd5cb43201482c4423610c84e1392c0",
+ "edited_sha256": "ede37c2c35681a1695749594b8797144085d94f379513945ac439813a4cbfedd",
+ "assertions": 32,
+ "result": "pass",
+ "failures": []
+}

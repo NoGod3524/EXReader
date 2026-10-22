@@ -1,0 +1,12 @@
+{
+ "base": "62-reject-bidi.pdf",
+ "id": "62",
+ "category": "reject/bidi",
+ "expect": "reject",
+ "size": 663,
+ "sha256": "66afd759d0e84ada35c2b4c1078bf32705a925de5b9ff65751da5271d73bb2b4",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}
