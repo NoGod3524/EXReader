@@ -102,6 +102,10 @@ jobs:
             adb logcat -d > build/android-host/evidence/logcat.txt
             adb pull /sdcard/Android/data/org.exreader.host.uitest/files/evidence \
               build/android-host/evidence/device || true
+            if [ -d build/android-host/evidence/device/evidence ]; then
+              cp -a build/android-host/evidence/device/evidence/. build/android-host/evidence/device/
+              rm -rf build/android-host/evidence/device/evidence
+            fi
             adb shell dumpsys package org.exreader.host > build/android-host/evidence/package.txt || true
 
       - name: Aggregate and verify evidence

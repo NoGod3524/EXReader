@@ -673,7 +673,6 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         notesEmpty.setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
         noteList.setVisibility(rows.isEmpty() ? View.GONE : View.VISIBLE);
         notesPanel.setVisibility(View.VISIBLE);
-        setStatus("Annotations: " + rows.size());
     }
 
     private void hideNotes() {
