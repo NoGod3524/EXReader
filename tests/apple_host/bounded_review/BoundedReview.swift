@@ -120,18 +120,24 @@ import SQLite3
         }
         check("original_repeated_fixture_refuses_ambiguous_note") {
             func phase(_ name: String) { print("bounded-repeated-phase \(name)"); fflush(stdout) }
+            let window = Int(ProcessInfo.processInfo.environment["H9_DIAGNOSTIC_REPEATED_WINDOW"] ?? "16384") ?? 16384
+            measurements["repeated_window_bytes"] = window
+            print("bounded-repeated-window \(window)"); fflush(stdout)
             let repeatedID = try library.importUnique(file: resources.appendingPathComponent("Repeated.epub"), title: "Repeated.epub").id
             phase("imported")
             let publication = try HostPublication(library: library, bookID: repeatedID, cancel: HostCancelBox())
             phase("publication-opened")
             let cancel = HostCancelBox()
-            let pager = try HostPager(publication: publication, part: 0, font: font, width: 480, height: 640, fontSize: 28, box: cancel)
+            let pager = try HostPager(publication: publication, part: 0, font: font, width: 480, height: 640, fontSize: 28, box: cancel, windowBytes: window)
             phase("chapter-pager-created")
             // An interior quote with repeated context must remain ambiguous.
             let anchor = try pager.makeAnchor(start: 1024, end: 1088, cancel: cancel)
             phase("anchor-captured")
             let match = try pager.resolve(anchor, cancel: cancel)
             phase("anchor-resolved")
+            let stats = pager.statistics
+            measurements["repeated_windows_loaded"] = stats.windows_loaded
+            measurements["repeated_windows_evicted"] = stats.windows_evicted
             return match.state == EXR_ANCHOR_AMBIGUOUS && match.range == nil
         }
         check("legacy_memory_import_keeps_global_progress") {
@@ -209,7 +215,7 @@ import SQLite3
             let match = try pager.resolveLocation(saved!, cancel: cancel)
             phase("tail-point-resolved")
             let stats = pager.statistics
-            measurements = ["import_ms": imported.timeIntervalSince(start) * 1000,
+            measurements.merge(["import_ms": imported.timeIntervalSince(start) * 1000,
                             "first_paint_ms": firstPaint.timeIntervalSince(imported) * 1000,
                             "projection_bytes": extent, "tail_text_bytes": tail.utf8.count,
                             "index_bytes": stats.index_bytes, "parse_workspace_bytes": stats.parse_workspace_bytes,
@@ -217,7 +223,7 @@ import SQLite3
                             "page_cache_bytes": stats.page_cache_bytes, "checkpoint_bytes": stats.checkpoint_bytes,
                             "explicit_snapshot_bytes": stats.explicit_snapshot_bytes,
                             "bitmap_bytes": bitmap.pixels.count, "swift_tail_bytes": tail.utf8.count,
-                            "page_range": [range.lowerBound, range.upperBound]]
+                            "page_range": [range.lowerBound, range.upperBound]]) { _, new in new }
             return extent >= 49 * 1024 * 1024 && tail.utf8.count == 512 && !bitmap.pixels.isEmpty &&
                 stats.explicit_snapshot_bytes == 0 && stats.peak_parse_workspace_bytes <= 16 * 1024 * 1024 &&
                 match.isFound && match.range?.lowerBound == extent

@@ -57,7 +57,8 @@ def main():
                    'fixtures': {name: digest(fixtures/name) for name in ('Bounded.epub', 'BoundedLong.epub', 'Unicode.epub', 'Reader.otf', 'Repeated.epub')},
                    'source_files_sha256': {p: digest(ROOT/p) for p in [*sources, 'tests/apple_host/run_bounded_review.py']},
                    'process_peak_rss_bytes': json.loads(result.stdout)['process_peak_rss_bytes'],
-                   'runtime_budget_seconds': args.timeout, 'diagnostic_only': args.timeout != 900,
+                   'runtime_budget_seconds': args.timeout,
+                   'diagnostic_only': args.timeout != 900 or report['measurements'].get('repeated_window_bytes') != 16384,
                    'rss_scope': 'bounded consumer process high water; includes font, both accepted/candidate frames, all cases and allocator; compiler excluded',
                    'physical_device_execution': False})
     (out/'bounded-review.json').write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
