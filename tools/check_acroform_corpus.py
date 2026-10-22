@@ -138,7 +138,8 @@ def parse_results(path):
             item.reopen = {'status': cells[2], 'code': int(cells[3]), 'fields': int(cells[4])}
         elif tag == 'INK':
             item.ink.append({'field': decode_text(cells[3]), 'widget': int(cells[4]),
-                             'page': int(cells[5]), 'dark': int(cells[6])})
+                             'page': int(cells[5]), 'dark': int(cells[6]),
+                             'message': decode_text(cells[7]) if len(cells) > 7 else None})
     meta = {}
     for line in pathlib.Path(path).read_text(encoding='utf-8').splitlines():
         if line.startswith('META\t'):
@@ -465,9 +466,10 @@ def main():
                         else:
                             expect_ink = bool(values and values[0].strip())
                         verdict.check((entries[0]['dark'] > 0) == expect_ink,
-                                      '%s widget %d: ink %d does not match expected %s' %
+                                      '%s widget %d: ink %d does not match expected %s (%s)' %
                                       (change['field'], widget_index, entries[0]['dark'],
-                                       'ink' if expect_ink else 'none'))
+                                       'ink' if expect_ink else 'none',
+                                       entries[0].get('message')))
                 record['ink'] = item.ink
             else:
                 verdict.check(read is not None and read['status'] == 'EXR_OK',
