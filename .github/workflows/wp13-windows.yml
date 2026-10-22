@@ -2,7 +2,7 @@ name: WP13 Windows native host
 
 on:
   push:
-    branches: ['codex/wp13-windows']
+    branches: ['codex/wp13-windows', 'codex/r5-windows-bounded']
     paths:
       - 'examples/reader.c'
       - 'examples/windows/**'
@@ -54,6 +54,34 @@ jobs:
         run: |
           python tools/check_windows_host.py --package build/wp13-windows/EXReader --output build/wp13-evidence --sdk stage --manifest build/wp13-windows/build.json --steps tests/windows_host --fixtures build/wp13-fixtures --selftest-report build/wp13-windows/report.json --consumer-binary build/win-host/Release/EXReader.exe
 
+      - name: Reject forged and incomplete original Windows evidence
+        if: always()
+        run: python tests/windows_host/check_evidence.py --package build/wp13-windows/EXReader --sdk stage --manifest build/wp13-windows/build.json --fixtures build/wp13-fixtures --selftest-report build/wp13-windows/report.json --consumer-binary build/win-host/Release/EXReader.exe --output build/wp13-negative-evidence
+
+      - name: Build public legacy-memory-import fixture consumer
+        if: always()
+        run: |
+          cmake -S tests/windows_host/bounded -B build/h8-seed -DEXR_SDK="${{ github.workspace }}/stage"
+          cmake --build build/h8-seed --config Release --parallel 4
+
+      - name: Require H8 default bounded long-chapter and cross-part UI acceptance
+        if: always()
+        run: python tests/windows_host/bounded/check_bounded.py --package build/wp13-windows/EXReader --seed build/h8-seed/Release/seed_legacy.exe --output build/h8-evidence
+
+      - name: Build cloud-only worker observation consumers for candidate and original host
+        if: always()
+        run: |
+          cmake -S tests/windows_host/worker_review -B build/worker-review -DEXR_SDK="${{ github.workspace }}/stage"
+          cmake --build build/worker-review --config Release --parallel 4
+          git fetch --depth=1 origin 2d99fcd3a912eb05ad6df8257a13a6c929c860a8
+          python tests/windows_host/worker_review/prepare_baseline.py --output build/worker-baseline-source
+          cmake -S tests/windows_host/worker_review -B build/worker-baseline -DEXR_SDK="${{ github.workspace }}/stage" -DEXR_REVIEW_SOURCE="${{ github.workspace }}/build/worker-baseline-source/reader-baseline.c"
+          cmake --build build/worker-baseline --config Release --parallel 4
+
+      - name: Preserve worker ownership, SQL-failure and reverse-verification gates
+        if: always()
+        run: python tests/windows_host/worker_review/check_worker.py --candidate build/worker-review/Release/EXReader.exe --baseline build/worker-baseline/Release/EXReader.exe --package build/wp13-windows/EXReader --fixtures build/wp13-fixtures --output build/wp13-worker-review-evidence
+
       - name: Upload Windows host evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -64,4 +92,7 @@ jobs:
             build/wp13-evidence/
             build/wp13-fixtures/
             build/win-host/
+            build/h8-evidence/
+            build/wp13-negative-evidence/
+            build/wp13-worker-review-evidence/
           if-no-files-found: warn
