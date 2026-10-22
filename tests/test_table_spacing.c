@@ -78,6 +78,7 @@ static void spans(void) {
 static void vertical(int lr) {
   exr_document *d=document("border-spacing:7px 11px;height:200px;width:auto",lr ? "writing-mode:vertical-lr" : "writing-mode:vertical-rl",2,0,0,0);
   exr_layout_config cfg=config(); exr_layout *l=NULL; const exr_box *a,*b,*c;
+  cfg.page.height=340;
   cfg.user_css="table {table-layout:fixed} td {padding:0;margin:0;width:30px;vertical-align:top;text-orientation:upright;background:#c0d0e0}";
   OK(exr_layout_create_ex(d,font,&cfg,&l,&error)); a=box(d,l,"a"); b=box(d,l,"b"); c=box(d,l,"c");
   CHECK(near(a->y,21) && near(a->height,(200-33)/2.0f));
