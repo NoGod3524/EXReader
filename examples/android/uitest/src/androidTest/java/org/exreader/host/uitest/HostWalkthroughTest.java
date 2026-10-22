@@ -347,10 +347,12 @@ public final class HostWalkthroughTest {
         step("pdf_process_restart", "PDF page progress and notes survive restart", () -> {
             assertTrue("saving the annotation must clear its selection", find("selection_status") == null);
             assertTrue("saving the annotation must leave selection mode", find("selection_cancel") == null);
+            String priorFrame=frameDigest();
             tapReader(1);
             assertTrue("pdf page 2 not reached", waitLabelContains("PDF p.2/5", 15000));
+            assertTrue("pdf page 2 pixels must be drawn before recording the restart reference",waitFrameDifferent(priorFrame));
             String position = pagePosition(), anchor = pageAnchor(), title = text("book_title");
-            String frame = frameDigest();
+            String frame = frameDigest("pdf-restart-before");
             device.executeShellCommand("am force-stop " + APP);
             SystemClock.sleep(900);
             device.executeShellCommand("am start -W -n " + APP + "/.MainActivity");
@@ -360,7 +362,10 @@ public final class HostWalkthroughTest {
             // The restored note highlight is drawn when the store finishes loading the notes,
             // so prove the annotation state is back before comparing the rendered frame.
             assertTrue("pdf note lost after restart", waitButtonText("Notes (1)", 20000));
-            assertTrue("PDF restart changed the rendered frame", waitFrameEqual(frame));
+            boolean equal=waitFrameEqual(frame);
+            String restoredFrame=frameDigest("pdf-restart-after");
+            android.util.Log.i("EXRWalkthrough","PDF restart frame expected="+frame+" actual="+restoredFrame+" equal="+equal);
+            assertTrue("PDF restart changed the rendered frame", equal);
         });
 
         step("pdf_note_delete", "Delete the fixed-page annotation", () -> {
@@ -569,6 +574,10 @@ public final class HostWalkthroughTest {
     }
 
     private String frameDigest() throws Exception {
+        return frameDigest(null);
+    }
+
+    private String frameDigest(String evidenceName) throws Exception {
         device.waitForIdle();
         Rect bounds = boundsOf("reader_view");
         assertNotNull("reader frame missing", bounds);
@@ -581,6 +590,13 @@ public final class HostWalkthroughTest {
             assertTrue("reader frame outside screen", bounds.left >= 0 && bounds.top >= 0
                     && bounds.right <= screen.getWidth() && bounds.bottom <= screen.getHeight());
             frame = Bitmap.createBitmap(screen, bounds.left, bounds.top, bounds.width(), bounds.height());
+            if(evidenceName!=null) {
+                File folder=new File(evidenceDir,"frames"); assertTrue(folder.isDirectory() || folder.mkdirs());
+                try(FileOutputStream proof=new FileOutputStream(new File(folder,evidenceName+".png"))) {
+                    assertTrue(frame.compress(Bitmap.CompressFormat.PNG,100,proof));
+                }
+                android.util.Log.i("EXRWalkthrough","PDF frame "+evidenceName+" bounds="+bounds.toShortString());
+            }
             ByteBuffer pixels = ByteBuffer.allocate(frame.getByteCount());
             frame.copyPixelsToBuffer(pixels);
             return hex(MessageDigest.getInstance("SHA-256").digest(pixels.array()));
