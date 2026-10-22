@@ -7,9 +7,9 @@
   "abi": 1,
   "library_schema": 6,
   "engine_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
-  "status": "wp6_accepted_replacement_reliability_in_progress",
+  "status": "wp6_and_frozen_sdk_wp16_accepted",
   "wp6_accepted": true,
-  "wp16_accepted": false,
+  "wp16_accepted": true,
   "historical_evidence": [
     "docs/validation/wp6-bounded-chapters.json",
     "docs/validation/2026-10-20-audit-fixes.json",
@@ -226,7 +226,7 @@
     "PNG correction source was remeasured with the r4 immutable runtime and revalidated by its own seven-job CI; all earlier rounds remain historical."
   ],
   "acceptance_source": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
-  "updated_utc": "2026-10-21T20:09:42.357563+00:00",
+  "updated_utc": "2026-10-22T08:05:22Z",
   "engine_unchanged_between_measurement_and_acceptance_source": true,
   "reliability_evidence_schema": 3,
   "native_ci": {
@@ -273,7 +273,9 @@
     }
   ],
   "wp16": {
-    "complete": false,
+    "complete": true,
+    "scope": "Frozen SDK candidate 635225fe6ceb7759a948a1d8cede0ab18ea1cee9; excludes later host/optional-package revisions and overall product completion",
+    "cloud_acceptance_record": "docs/validation/2026-10-22-reliability-cloud.json",
     "gates": [
       {
         "id": "versioned_support_and_migration_docs",
@@ -298,7 +300,7 @@
       },
       {
         "id": "same_source_four_target_24cpu_hours",
-        "passed": false
+        "passed": true
       }
     ],
     "physical_device_execution": false
@@ -306,8 +308,9 @@
   "final_reliability": {
     "run": 39666440519,
     "source_commit": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
-    "status": "in_progress",
-    "accepted": false,
+    "status": "completed",
+    "accepted": true,
+    "cloud_acceptance_record": "docs/validation/2026-10-22-reliability-cloud.json",
     "targets": [
       "parser",
       "font",
