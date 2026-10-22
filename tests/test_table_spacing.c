@@ -10,7 +10,7 @@ static exr_error error; static unsigned checks; static exr_font *font;
 static int near(float a,float b) { return fabsf(a-b)<.002f; }
 static exr_layout_config config(void) {
   exr_layout_config c=exr_layout_config_defaults(); c.page=(exr_layout_options){420,180,10,14,1.2f,0};
-  c.user_css="table {width:200px;table-layout:fixed} td {padding:0;margin:0;height:30px;vertical-align:top;background:#c0d0e0} tr,table {padding:0;margin:0}";
+  c.user_css="table {width:200px;table-layout:fixed;background:white} td {padding:0;margin:0;vertical-align:top;background:#c0d0e0} tr,table {padding:0;margin:0}";
   return c;
 }
 /* Host construction exercises the same CSS cascade and pager as EPUB without
@@ -36,7 +36,7 @@ static exr_document *document(const char *css,const char *parent,int rows,int sp
       attrs[cell][0]=(exr_attribute){"id",r==0 ? ids[c] : r==1 ? (spans ? "d" : c ? "d" : "c") : "later"};
       if(spans && r==0 && !c) attrs[cell][count++]=(exr_attribute){"rowspan","2"};
       if(spans && r==1) attrs[cell][count++]=(exr_attribute){"colspan","2"};
-      if(tall && !r) attrs[cell][count++]=(exr_attribute){"style","height:400px;border:2px solid red"};
+      attrs[cell][count++]=(exr_attribute){"style",tall && !r ? "height:400px;border:2px solid red" : "height:30px"};
       nodes[cell]=(exr_node_input){EXR_NODE_CELL,row,"td",NULL,attrs[cell],count};
       nodes[text]=(exr_node_input){EXR_NODE_TEXT,cell,NULL,tall && !r ? "A A A A A A A A A A A A A A A A A A A A" : "A",NULL,0};
     }
