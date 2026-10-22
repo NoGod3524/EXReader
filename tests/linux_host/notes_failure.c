@@ -5,13 +5,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 static int fail_reads;
+static int fail_write;
+static exr_status write_progress(exr_library *library,int64_t id,const exr_anchor *anchor,exr_error *error) {
+  if(fail_write) { error->code=EXR_DATABASE;return EXR_DATABASE; }
+  return exr_library_progress(library,id,anchor,error);
+}
 static exr_status query_notes(exr_library *library,int64_t id,exr_note **out,size_t *count,exr_error *error) {
   if(fail_reads) { *out=NULL;*count=0;error->code=EXR_DATABASE;return EXR_DATABASE; }
   return exr_library_notes(library,id,out,count,error);
 }
 #define exr_library_notes query_notes
+#define exr_library_progress write_progress
 #include "../../examples/linux/reading.c"
 #undef exr_library_notes
+#undef exr_library_progress
 #define main exreader_host_main
 #include "../../examples/linux/reader_async.c"
 #undef main
@@ -74,6 +81,20 @@ int main(int argc,char **argv) {
   require(note_count==2 && rows()==2 && last_error==0,"recover notes after query succeeds");
   command.action=READER_NOTE_REMOVE;apply(reader,command);
   require(note_count==1 && rows()==1 && last_error==0,"verified deletion succeeds");
+  fail_write=1;command.action=READER_FONT;command.font=28;apply(reader,command);
+  require(save_failed && reader->has_pending && reader->current.font==24 && font_size==28,
+          "failed accepted-frame save retains pending and previous committed cursor");
+  int before=g_atomic_int_get(&generation);open_id(second);action(NULL,"cancel");
+  require(save_failed && book_id==first && g_atomic_int_get(&generation)==before && reader->has_pending,
+          "failed save blocks switching and cancellation cannot discard pending");
+  fail_write=0;action(NULL,"save");
+  require(saving && busy,"F12 queues serialized save retry");
+  action(NULL,"cancel");require(saving && busy && g_atomic_int_get(&generation)==before,"escape cannot cancel save barrier");
+  host_job *retry=g_async_queue_pop(queue);host_result *saved=g_new0(host_result,1);
+  saved->action=READER_COMMIT;saved->generation=retry->generation;
+  linux_reader_execute(reader,&retry->command,&saved->value);job_free(retry);apply_result(saved);
+  require(!save_failed && !saving && !busy && !reader->has_pending && reader->current.font==28,
+          "successful retry promotes exact accepted pending cursor");
   linux_reader_close(reader);g_async_queue_unref(queue);g_key_file_free(settings);g_free(settings_path);g_free(home);g_free(page_text);
   printf("{\"passed\":true,\"checks\":%u,\"kind\":\"GTK note query fault regression\"}\n",checks);return 0;
 }
