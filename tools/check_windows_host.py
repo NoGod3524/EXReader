@@ -149,6 +149,9 @@ def parse_log(path, plan, phase, version, pid):
         require(1 <= index <= len(plan) and result == 'PASS', 'invalid index or failed evidence record')
         detail = fields(parts[4])
         planned = plan[index - 1]
+        if kind not in ('STEP', 'DONE') or (kind == 'STEP' and planned['action'] == 'check'):
+            require(parts[4] and all('=' in value for value in parts[4].split(';')),
+                    'malformed structured evidence fields')
         if kind == 'STEP':
             require(index == len(steps) + 1 and action == planned['action'], 'missing, duplicate or reordered STEP')
             check_parameters(planned, detail)
@@ -436,6 +439,8 @@ def main():
                 shot.update(png_identity(image))
             except (OSError, ValueError) as error:
                 errors.append('phase ' + phase + ' screenshot ' + name + ': ' + str(error))
+        if {p.name for p in (output / phase).glob('*.png')} != {name + '.png' for name in EXPECTED_SHOTS[phase]}:
+            errors.append('phase ' + phase + ' screenshot directory differs from the complete plan')
 
     if errors:
         for phase in PHASES:
@@ -527,6 +532,11 @@ def main():
     identities_unchanged = False
     try:
         unchanged(seal['identities'])
+        require({p.relative_to(package).as_posix() for p in package.rglob('*') if p.is_file()} == set(seal['package_files']),
+                'package file inventory changed during execution')
+        require({str(p.resolve()) for p in fixtures.iterdir() if p.is_file()} ==
+                {name for name in seal['identities'] if Path(name).parent == fixtures},
+                'fixture file inventory changed during execution')
         require(source_identity() == seal['source_sha'], 'source changed during UI execution')
         require(digest(output / 'pre-run-identities.json') == seal['seal_sha256'], 'pre-run identity seal changed')
         identities_unchanged = True

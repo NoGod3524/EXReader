@@ -104,6 +104,8 @@ def main():
         forged('premature_done', lambda lines: lines.insert(1, lines[-1]))
         forged('contradictory_done', lambda lines: lines.__setitem__(-1, lines[-1].replace('\tPASS\t', '\tFAIL\t')))
         forged('unknown_record', lambda lines: lines.insert(1, 'UNKNOWN\t1\tx\tPASS\t'))
+        forged('malformed_structured_fields', lambda lines: lines.__setitem__(at(lines, 'STATE'),
+            lines[at(lines, 'STATE')] + ';unstructured'))
         forged('extra_after_done', lambda lines: lines.append('STEP\t120\tquit\tPASS\t'))
         def change_check(lines):
             index = next(i for i, line in enumerate(lines) if '\tcheck\tPASS\tcount=0' in line)
