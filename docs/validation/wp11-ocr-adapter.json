@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "package": "WP11 recognition and coordinate adapter",
+  "base_commit": "a2552d7feb786cd2345d2b0b3eb894777b3254db",
+  "status": "adapter_recognition_and_coordinate_mapping_accepted",
+  "acceptance_source": "09c4a54913e5c4211ca44de813ea54a30e241abb",
+  "implementation_commit": "13b541b451cefc2d397750ba9f006372c68d99bf",
+  "cloud_run": 39706497037,
+  "cloud_jobs": {"release": 119587647353, "adapter_asan_ubsan": 119587647219, "cross_configuration_audit": 119588132283},
+  "cloud_jobs_passed": 3,
+  "cloud_jobs_expected": 3,
+  "complete_wp11": false,
+  "default_sdk_dependency_changed": false,
+  "workflow": ".github/workflows/wp11-ocr.yml",
+  "expected_pages": 30,
+  "actual_unique_pages_per_configuration": 30,
+  "corpus": "Original digitally rendered 300 dpi clean print, not scanned-page evidence",
+  "recognition_backend": "Tesseract 5.3.4, system shared library; only adapter and consumer instrumented by ASan/UBSan",
+  "models": {"repository": "tesseract-ocr/tessdata_fast", "commit": "87416418657359cb625c412a48b6e1d6d41c29bd", "languages": ["eng", "chi_sim"], "license": "Apache-2.0"},
+  "english_cer_limit": 0.03,
+  "chinese_cer_limit": 0.05,
+  "per_configuration": {
+    "coordinate_roundtrip_checks": 15796,
+    "consumer_contracts": 11,
+    "english": {"pages": 10, "cer": 0.0, "wer": 0.0, "matched_character_boxes": 1501, "box_edge_error_px_mean_across_pages": 7.2181794977924945, "box_edge_error_px_max": 34.578125},
+    "chinese": {"pages": 10, "cer": 0.0016666666666666668, "wer": 0.016666666666666666, "matched_character_boxes": 599, "box_edge_error_px_mean_across_pages": 22.52369350282486, "box_edge_error_px_max": 248.0},
+    "mixed": {"pages": 10, "cer": 0.0, "wer": 0.0, "matched_character_boxes": 710, "box_edge_error_px_mean_across_pages": 8.559639084507042, "box_edge_error_px_max": 93.25}
+  },
+  "character_localization_acceptance": null,
+  "character_localization_note": "These are raw backend symbol boxes compared against Pillow reference font layout bounds. No character-precision acceptance threshold was declared; maxima are retained. Exact affine mapping passed, but high-precision glyph localization is not claimed.",
+  "cross_configuration_checks": ["Same source SHA", "30 unique input SHA-256 values", "Identical font identities", "Identical pinned model identities and byte hashes", "CER thresholds", "11 failure/cancellation/budget contracts", "Nonzero affine coordinate checks", "Frozen program/library hashes and redistribution licenses"],
+  "artifacts": [
+    {"id": 12395047186, "name": "WP11-OCR-sanitizers", "bytes": 20726698, "sha256": "f31c26b3c602089273a1b30aca0b6ceda9233a04b78379310c5c2f5e8ef92a7e"},
+    {"id": 12394873527, "name": "WP11-OCR-cloud-audit", "bytes": 545, "sha256": "95c01b268e8aaf3e68f191d8acd3d0987b955bf1b1188329f8373be28356b6af"},
+    {"id": 12394708294, "name": "WP11-OCR-release", "bytes": 20726712, "sha256": "e76e592591f2d5912634857f7fc59910151a4b1a74d32415c455ed3626717b45"}
+  ],
+  "prior_runs_preserved": [
+    {"run": 39705644207, "source": "d3fc2d81c03d0351cc71fe386faf4c93e1356719", "result": "failure: runner supplied Tesseract 4 instead of required 5"},
+    {"run": 39705714165, "source": "16408e2d489d1b1f33c6ce6c5fcdea65ba478d4b", "result": "failure: same runner backend version mismatch"},
+    {"run": 39705852854, "source": "c7981170732f3ca821c02d49681c09ffe43b5d16", "result": "failure: same runner backend version mismatch"},
+    {"run": 39705901881, "source": "48e70d5136c68e4c0dbb20fd0b400ea208e85b0c", "result": "failure: adapter compilation corrected in next commit"},
+    {"run": 39706099133, "source": "13b541b451cefc2d397750ba9f006372c68d99bf", "result": "success: initial Release/sanitizer/identity audit before diagnostic clarification and installed license checks"}
+  ],
+  "local_tests_or_evidence_downloads": false,
+  "wp16_cpu_credit_seconds": 0,
+  "remaining": ["PDF text-layer writeback", "native text duplicate-layer policy and search/selection/annotation integration", "real scanned-page accuracy", "automatic orientation detection", "high-precision character localization acceptance", "Windows/macOS installed OCR backend validation"]
+}
