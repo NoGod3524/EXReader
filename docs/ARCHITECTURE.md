@@ -2,6 +2,13 @@
 
 2026-10-19，C11 SDK3.38.0，MIT，ABI1，schema6。
 
+## 原生阅读路径约束
+
+2026-10-22 确定：多格式解析、排版与自有 PDF 渲染核心保持原生实现，不依赖 WebView 或浏览器运行时。
+HTML/EPUB 输入由 C 核解析并生成布局/绘制结果，参考宿主用原生控件、像素或系统绘图接口呈现。
+WebView2、WKWebView、Android WebView、Chromium 和 Electron 不作为 SDK 或参考宿主的运行依赖。
+浏览器对照仅用于开发期质量验证。当前定位与性能优先级见 [项目概述](PROJECT_OVERVIEW.md#项目定位与优先级)。
+
 ## 核心与可选组件
 
 `exr_core`是CMake组合目标，选择以下七个静态库；它自身不引入运行时包装层。宿主可直接链接其中更小的库。
