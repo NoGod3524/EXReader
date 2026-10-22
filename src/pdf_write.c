@@ -873,6 +873,11 @@ static exr_status form_change_valid(form_reader *r,size_t index,const exr_pdf_fo
     int found=!change->value_count || !strcmp(change->values[0],"Off");
     for(i=0;i<f->widget_count && !found;i++) if(!strcmp(f->widgets[i].on_state,change->values[0])) found=1;
     if(!found) return exr_fail(r->error,EXR_ARGUMENT,"PDF button value is absent from widget on states");
+    if(f->kind==EXR_PDF_FIELD_RADIO && !(f->flags&(1u<<25)) && change->value_count && strcmp(change->values[0],"Off")) {
+      size_t matches=0;
+      for(i=0;i<f->widget_count;i++) if(!strcmp(f->widgets[i].on_state,change->values[0])) matches++;
+      if(matches>1) return exr_fail(r->error,EXR_UNSUPPORTED,"PDF radio value needs an explicit widget selection");
+    }
     if(f->kind==EXR_PDF_FIELD_RADIO && (f->flags&(1u<<14)) && (!change->value_count || !strcmp(change->values[0],"Off")))
       return exr_fail(r->error,EXR_ARGUMENT,"PDF radio group forbids turning all widgets off");
   }
@@ -1017,7 +1022,7 @@ exr_status exr_pdf_form_write(const void *data,size_t size,const exr_pdf_form_ch
   const exr_pdf_form_write_options *options,void **out,size_t *out_size,exr_error *e) {
   pdf_writer w={0}; form_reader r={0}; exr_pdf_form_write_options config=exr_pdf_form_write_defaults(); exr_pdf_revision_info revision;
   size_t i,j,k,*indices=NULL,next=0,work=0; uint32_t object,generation,root,root_generation,form_raw; exr_status status;
-  static const char *const value_skip[]={"V","I"},*const form_skip[]={"NeedAppearances"},*const catalog_skip[]={"AcroForm"};
+  static const char *const value_skip[]={"V","I"},*const catalog_skip[]={"AcroForm"};
   if(out) *out=NULL;
   if(out_size) *out_size=0;
   if(!out || !out_size) return exr_fail(e,EXR_ARGUMENT,"Missing written PDF outputs");
@@ -1067,10 +1072,11 @@ exr_status exr_pdf_form_write(const void *data,size_t size,const exr_pdf_form_ch
   form_raw=exr_pdf_get(w.file,exr_pdf_root(w.file),"AcroForm");
   if(form_kind(&r,form_raw,EXR_PDF_REF)) {
     status=exr_pdf_object_identity(w.file,form_raw,&object,&generation,e); if(status!=EXR_OK) goto done;
-    begin_object(&w,object,generation); dictionary(&w,r.acroform,form_skip,1); literal(&w," /NeedAppearances false >>\nendobj\n");
+    /* Partial edits cannot clear another field's appearance-generation request. */
+    begin_object(&w,object,generation); dictionary(&w,r.acroform,NULL,0); literal(&w," >>\nendobj\n");
   } else {
     begin_object(&w,root,root_generation); dictionary(&w,exr_pdf_root(w.file),catalog_skip,1); literal(&w," /AcroForm ");
-    dictionary(&w,r.acroform,form_skip,1); literal(&w," /NeedAppearances false >> >>\nendobj\n");
+    dictionary(&w,r.acroform,NULL,0); literal(&w," >> >>\nendobj\n");
   }
   finish(&w,&revision,next,EXR_PDF_NONE,EXR_PDF_NONE); status=output(&w,data,out,out_size);
 done:

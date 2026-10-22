@@ -39,13 +39,13 @@ static void source(unsigned mode) {
       i==21 && mode==8 ? "/MK << /R 90 >>" : ""); object(i,text);
   }
   for(i=44;i<48;i++) { snprintf(text,sizeof(text),"<< /FT /Btn /T (check%u) /Type /Annot /Subtype /Widget /Rect [10 35 30 55] /V /Off /AP << /N << /Off 7 0 R /Yes 7 0 R >> >> >>",i-44); object(i,text); }
-  for(i=48;i<50;i++) { snprintf(text,sizeof(text),"<< /FT /Btn /Ff 32768 /T (radio%u) /Kids [%u 0 R %u 0 R] /V /Off >>",i-48,102+(i-48)*2,103+(i-48)*2); object(i,text); }
+  for(i=48;i<50;i++) { snprintf(text,sizeof(text),"<< /FT /Btn /Ff %u /T (radio%u) /Kids [%u 0 R %u 0 R] /V /Off >>",mode==23 ? 32768u+(1u<<25) : 32768u,i-48,102+(i-48)*2,103+(i-48)*2); object(i,text); }
   for(i=50;i<54;i++) { snprintf(text,sizeof(text),"<< /FT /Ch /Ff %u /T (choice%u) /Type /Annot /Subtype /Widget /Rect [10 10 110 30] /Opt [(A) [(B) (V)]] /V (A) /AP << /N 7 0 R >> >>",i==50 && mode==15 ? 393216u : i==52 ? 2097152u : i==53 ? 131072u : 0u,i-50); object(i,text); }
   object(54,"<< /FT /Sig /T (signature) /Type /Annot /Subtype /Widget /Rect [10 10 110 30] >>");
   object(55,"<< /FT /Btn /Ff 65536 /T (push) /Type /Annot /Subtype /Widget /Rect [10 10 110 30] >>");
   for(i=100;i<106;i++) {
     snprintf(text,sizeof(text),"<< /Type /Annot /Subtype /Widget /Parent %u 0 R /Rect %s /AP << /N %s >> >>",i<102 ? 20 : i<104 ? 48 : 49,i<102 ? "[10 10 110 30]" : "[10 40 110 60]",
-      i<102 ? "7 0 R" : i%2 ? "<< /Off 7 0 R /Blue 7 0 R >>" : "<< /Off 7 0 R /Red 7 0 R >>"); object(i,text);
+      i<102 ? "7 0 R" : i%2 && mode!=22 && mode!=23 ? "<< /Off 7 0 R /Blue 7 0 R >>" : "<< /Off 7 0 R /Red 7 0 R >>"); object(i,text);
   }
   xref=length; add("xref\n0 106\n0000000000 65535 f \n");
   for(i=1;i<106;i++) if(offset[i]) fmt("%010zu 00000 n \n",offset[i]); else add("0000000000 00000 f \n");
@@ -67,6 +67,12 @@ static void failure(unsigned mode,const char *name,const char *value,exr_status 
 }
 static uint32_t get(exr_pdf_file *file,uint32_t dict,const char *key) { uint32_t id; OK(exr_pdf_resolve(file,exr_pdf_get(file,dict,key),&id,&error)); return id; }
 static int name_is(exr_pdf_file *file,uint32_t id,const char *name) { size_t n; const unsigned char *s=exr_pdf_bytes(file,id,&n); return s && n==strlen(name) && !memcmp(s,name,n); }
+static void appearance_request(const void *data,size_t size) {
+  exr_pdf_file *file=NULL; uint32_t form,request; const exr_pdf_value *value;
+  OK(exr_pdf_open(data,size,&file,&error)); form=get(file,exr_pdf_root(file),"AcroForm");
+  request=get(file,form,"NeedAppearances"); value=exr_pdf_value_at(file,request);
+  CHECK(value && value->kind==EXR_PDF_BOOL && value->u.integer); exr_pdf_close(file);
+}
 static void appearances(const void *data,size_t size) {
   exr_pdf_file *file=NULL; exr_pdf_page_info *pages=NULL; size_t count=0,i,seen=0; OK(exr_pdf_open(data,size,&file,&error)); OK(exr_pdf_pages(file,&pages,&count,&error)); CHECK(count==2);
   for(i=0;i<count;i++) {
@@ -115,7 +121,7 @@ int main(int argc,char **argv) {
     values[i][1]="B"; changes[i]=(exr_pdf_form_change){names[i],values[i],i==32 ? 2 : 1};
   }
   options.font=font; OK(exr_pdf_form_write(pdf,length,changes,34,&options,&output,&output_size,&error)); CHECK(output_size>length && !memcmp(output,pdf,length)); CHECK(!memcmp(pdf,original,length));
-  fields=read_fields(output,output_size,&n); CHECK(n==36);
+  appearance_request(output,output_size); fields=read_fields(output,output_size,&n); CHECK(n==36);
   for(i=0;i<34;i++) { field=named(fields,n,names[i]); CHECK(field->value_count==changes[i].value_count && !strcmp(field->values[0],values[i][0])); }
   exr_pdf_form_free(fields,n); appearances(output,output_size); render(output,output_size,font,1);
   values[0][0]="\xe7\x94\xb2\xe4\xb9\x99\xf0\x9f\x98\x80"; OK(exr_pdf_form_write(output,output_size,changes,1,&options,&second,&second_size,&error));
@@ -123,7 +129,7 @@ int main(int argc,char **argv) {
   /* Only this field has painted content, so the ink check cannot be satisfied
      by another field. Unicode outlines reopen without the borrowed font. */
   source(9); OK(exr_pdf_form_write(pdf,length,changes,1,&options,&output,&output_size,&error));
-  fields=read_fields(output,output_size,&n); CHECK(!strcmp(fields[0].values[0],values[0][0])); exr_pdf_form_free(fields,n); render(output,output_size,NULL,1);
+  appearance_request(output,output_size); fields=read_fields(output,output_size,&n); CHECK(!strcmp(fields[0].values[0],values[0][0])); exr_pdf_form_free(fields,n); render(output,output_size,NULL,1);
   changes[0].value_count=0; OK(exr_pdf_form_write(output,output_size,changes,1,NULL,&second,&second_size,&error)); render(second,second_size,NULL,0);
   fields=read_fields(second,second_size,&n); CHECK(named(fields,n,"person.text00")->value_count==1 && !*named(fields,n,"person.text00")->values[0]); exr_pdf_form_free(fields,n); exr_free(second); exr_free(output);
   changes[0].value_count=1; values[0][0]="AVA"; source(9); OK(exr_pdf_form_write(pdf,length,changes,1,NULL,&output,&output_size,&error)); render(output,output_size,font,1); exr_free(output);
@@ -135,6 +141,19 @@ int main(int argc,char **argv) {
   failure(0,"person.text00","\xe7\x94\xb2",EXR_UNSUPPORTED);
   for(i=10;i<=14;i++) failure((unsigned)i,"person.text01","A",EXR_UNSUPPORTED);
   failure(15,"choice0","A",EXR_UNSUPPORTED); failure(16,"person.text00","A",EXR_FORMAT); failure(21,"person.direct","A",EXR_UNSUPPORTED);
+  failure(22,"radio0","Red",EXR_UNSUPPORTED);
+  { const char *selected[]={"Red"}; exr_pdf_form_change c={"radio0",selected,1}; exr_pdf_file *file=NULL; uint32_t fields_array,at,radio,kids; size_t j,seen=0;
+    source(23); OK(exr_pdf_form_write(pdf,length,&c,1,NULL,&output,&output_size,&error));
+    fields=read_fields(output,output_size,&n); CHECK(!strcmp(named(fields,n,"radio0")->values[0],"Red")); exr_pdf_form_free(fields,n);
+    OK(exr_pdf_open(output,output_size,&file,&error)); fields_array=get(file,get(file,exr_pdf_root(file),"AcroForm"),"Fields");
+    at=exr_pdf_value_at(file,fields_array)->first;
+    for(j=0;j<5;j++) { CHECK(at!=EXR_PDF_NONE); at=exr_pdf_value_at(file,at)->next; }
+    OK(exr_pdf_resolve(file,at,&radio,&error)); kids=get(file,radio,"Kids"); at=exr_pdf_value_at(file,kids)->first;
+    while(at!=EXR_PDF_NONE) { uint32_t next=exr_pdf_value_at(file,at)->next,widget;
+      OK(exr_pdf_resolve(file,at,&widget,&error)); CHECK(name_is(file,get(file,widget,"AS"),"Red")); seen++; at=next;
+    }
+    CHECK(seen==2); appearance_request(output,output_size); exr_pdf_close(file); exr_free(output); output=NULL;
+  }
   for(i=1;i<=2;i++) { source((unsigned)i); fields=(exr_pdf_form_field *)1; n=99; CHECK(exr_pdf_form_read(pdf,length,NULL,&fields,&n,&error)==EXR_FORMAT && !fields && !n); }
   for(i=19;i<=20;i++) { source((unsigned)i); fields=(exr_pdf_form_field *)1; n=99; CHECK(exr_pdf_form_read(pdf,length,NULL,&fields,&n,&error)==EXR_FORMAT && !fields && !n); }
   source(17); fields=(exr_pdf_form_field *)1; n=99; OK(exr_pdf_form_read(pdf,length,NULL,&fields,&n,&error)); CHECK(!fields && !n);
