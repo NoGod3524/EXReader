@@ -1,0 +1,31 @@
+# Phase B: restart persistence, note navigation, fixed-page restore,
+# then a font-size change that must survive another restart by anchor.
+wait_idle
+state|restored
+check|shelf|count|2
+check|book|EXReader benchmark
+check|page|3
+check|notes|1
+check|status|contains|恢复
+snapshot|10-restored
+note_select|0
+jump_note|0
+check|selection|nonempty
+check|status|contains|标注
+next
+next
+check|page|3
+state|note_jump_restored
+open|Pages
+check|book|Pages
+check|page|4
+check|notes|0
+state|pdf_restored
+open|EXReader benchmark
+check|page|3
+check|notes|1
+font_inc
+check|font|160
+state|before_restart_font
+snapshot|11-font-changed
+quit

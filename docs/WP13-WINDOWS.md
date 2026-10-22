@@ -1,0 +1,218 @@
+# WP13 Windows native host
+
+Status: implementation and cloud acceptance package for branch `codex/wp13-windows`.
+This package closes the Windows host loop only; it is not a whole-WP13 or product
+acceptance and does not include migration, OPDS, TTS or other platform hosts.
+
+## Baseline
+
+- Implementation baseline: `a2552d7feb786cd2345d2b0b3eb894777b3254db`.
+- SDK: 3.40.0 (core 3.39.0, ABI 1, library schema 6) consumed from an installed prefix.
+- Source: `examples/reader.c` (Win32, one translation unit) with an independent
+  consumer build in `examples/windows/`.
+
+## What changed
+
+The previous host could open one file and keep a page number in `reader.ini`. The
+package replaces that with a real library-backed session while keeping the original
+26-check native self-test unchanged:
+
+- **Bookshelf**: `exr_library_open/books/import_file/import/import_unique/update/delete`
+  with metadata, exact-byte dedupe, per-book progress and SQLite-backed annotations.
+- **Non-blocking work**: import, open, page, font and zoom work runs on one serialized
+  worker; the UI thread only applies completed results. A new request cancels the
+  current job and replaces any pending one, so a stale result cannot be published to a
+  newer book. Closing the window cancels and joins the worker before freeing SDK objects.
+- **Reading**: reflow pages (720x1040, 80-300% font scale) and fixed PDF/CBZ pages
+  (25-400% zoom, bounded render size). Previous/next, page limits, window resize and
+  unsupported input are reported explicitly.
+- **Selection and annotations**: page-level select-all plus mouse drag selection.
+  Reflow notes use `exr_anchor` selectors; PDF/CBZ notes use `exr_fixed_note` with page
+  ranges. Add, edit (comment only), delete and jump-to-note are implemented; copy
+  quote uses the clipboard.
+- **Restore**: reflow progress is stored as a point anchor plus the numeric text offset;
+  fixed progress is the zero-based page index. Restart resolves the anchor; ambiguity
+  and missing matches are shown explicitly and fall back to the saved offset, never to
+  a guessed nearby location. Font/window changes re-layout and re-anchor the current
+  page.
+
+## Build and consume
+
+Build the SDK and install it, then build the consumer project against the installed
+prefix (see `examples/windows/README.md`):
+
+```powershell
+cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+cmake --build build/native --config Release --parallel 4
+cmake --install build/native --config Release --prefix stage
+cmake -S stage/examples/windows -B build/win-host -DEXR_SDK="$PWD/stage" -DCMAKE_BUILD_TYPE=Release
+cmake --build build/win-host --config Release --parallel 4
+python tools/build_windows_host.py --sdk stage --binary build/win-host/Release/EXReader.exe --output build/wp13-windows
+```
+
+`examples/CMakeLists.txt` stays untouched; the installed tree contains the same
+consumer project because the top-level install copies `examples`. The portable payload
+contains `EXReader.exe`, the installed `exreader.dll`, `Reader.otf`/OFL, license
+notices and the sample books, and is zipped by `tools/build_windows_host.py`.
+
+## Runtime layout
+
+- `%LOCALAPPDATA%\EXReaderHost\library.sqlite`: books, covers (SDK), progress and
+  annotations (owned by the SDK, not the host settings file).
+- `%LOCALAPPDATA%\EXReaderHost\host.ini`: font size, zoom, window size and the last
+  active book only.
+- `--data DIR`, `--library PATH`, `--font PATH` override the defaults for a portable
+  profile. `--drive SCRIPT --evidence DIR` enables the acceptance driver.
+
+## Supported input
+
+| Format | Path | Notes |
+| --- | --- | --- |
+| EPUB | reflow | `exr_library_document` + `exr_pager`; full stored snapshot, not the bounded chapter entry |
+| TXT/HTML/FB2/DOCX/RTF/MOBI/AZW3 | reflow | as reported by the installed SDK decoders |
+| PDF | fixed | `exr_library_fixed`; text selection when the page exposes text |
+| CBZ | fixed | `exr_library_fixed`; image pages have no selectable text |
+
+Host limits: import file size 96 MiB (single cancellable read); SDK snapshot limits
+still apply (64 MiB normalized text). Fixed render is capped at 4096 pixels per side;
+font 80-300% of the 28-point base (1.5 line height), zoom 25-400%. Over-limit or
+unsupported input is displayed, never silently clamped. Encrypted PDFs are reported as `EXR_PASSWORD`; there is no password
+prompt in this package.
+
+The bounded chapter entry (`exr_publication_pager_create`) is **not** used by this host.
+It stays available for a future large-chapter host; a chapter that exceeds the stored
+snapshot limit fails with `EXR_LIMIT` and the host shows the SDK error.
+
+## Controls, focus and names
+
+| ID | Control | Accessible name |
+| --- | --- | --- |
+| 101 | import path edit | "导入路径" label |
+| 102-104 | import/open/delete | "导入", "打开", "删除" |
+| 105-117 | reading, annotation, font/zoom, cancel | button text |
+| 118-120 | shelf/list, notes list, comment edit | "书架", "标注列表", "批注" |
+| 121 | page view (custom) | window text "阅读区域" |
+| 122-123 | page label and status | static text |
+
+The main window is `WS_EX_CONTROLPARENT`; the message loop runs
+`IsDialogMessageW`, so Tab and Shift+Tab traverse controls in creation order and the
+page view receives arrows (`WM_GETDLGCODE` asks for arrows/chars). Mouse selection,
+wheel paging and Ctrl+A/Ctrl+C/Ctrl+O/Ctrl+I are handled by the page view. Labels,
+button text and control IDs are stable for the WP14 accessibility work, but this
+package does not claim a screen-reader acceptance.
+
+## Concurrency and ownership
+
+- One `host_job` owns the SDK documents/pager/fixed handle for its lifetime; jobs are
+  serialized. A second request marks the first cancelled, keeps a pending request and
+  starts it only after the first posts completion.
+- The worker owns `exr_document`/`exr_pager`/`exr_fixed_document` creation; the live
+  session is swapped only after a complete page render. The UI keeps its own rendered
+  bitmap, so worker parsing never blocks painting.
+- `exr_control.cancelled` is wired into pager creation, page layout/render, fixed
+  render, fixed notes and library openings. Import reads the file in 256 KiB chunks and
+  checks cancellation between chunks; a cancellation that lands after the SDK insert
+  removes the just-created row before reporting cancellation.
+- Closing the window cancels and waits for the worker (20 s guard) before freeing the
+  session, library and font. The guard exists only for a broken SDK callback; a timeout
+  exits the process instead of freeing objects still in use.
+
+## Acceptance
+
+Run the dedicated cloud workflow (no local UI tests):
+
+```
+.github/workflows/wp13-windows.yml
+```
+
+It builds the SDK, installs it, builds the host from the installed prefix, runs the
+preserved native self-test (26 documented checks; the report records the actual count),
+then runs three UI phases through the real executable. The driver sends real
+`BM_CLICK`, `WM_COMMAND`, `WM_KEYDOWN`, `WM_LBUTTONDOWN/UP` and resize messages to the
+created controls and records what the application observed. It is not an SDK unit test:
+each row below is a UI/lifecycle step.
+
+| # | Phase | Step (driver action) | Expected |
+| --- | --- | --- | --- |
+| 1 | A | start state | empty shelf, no book |
+| 2 | A | import Sample.epub | shelf 1, success status |
+| 3 | A | import the same EPUB again | shelf still 1, dedupe status |
+| 4 | A | open EPUB | reflow book, page 1 |
+| 5 | A | next | page 2 |
+| 6 | A | next | page 3 |
+| 7 | A | previous | page 2 |
+| 8 | A | font + | font 160%, page renders |
+| 9 | A | font - | font 150% |
+| 10 | A | resize 1120x820 | repaint, reading position retained |
+| 11 | A | select all page | non-empty selection |
+| 12 | A | copy quote | clipboard contains page text |
+| 13 | A | add note | notes 1 |
+| 14 | A | edit note comment | notes 1, updated status |
+| 15 | A | previous + jump to note | note page loaded, highlight and status message |
+| 16 | A | mouse drag selection | non-empty selection |
+| 17 | A | add second note | notes 2 |
+| 18 | A | delete selected note | notes 1 |
+| 19 | A | import Pages.pdf (generated, 4 renderable pages) | shelf 2 |
+| 20 | A | open PDF | fixed book, page 1 |
+| 21 | A | select all + add PDF note | fixed note count 1 |
+| 22 | A | next + jump to PDF note | page 1 with highlight |
+| 23 | A | next to page 4 + next again | explicit last-page status |
+| 24 | A | delete PDF note | fixed note count 0 |
+| 25 | A | import and delete Extra-Book | shelf back to 2 |
+| 26 | A | import .bin | explicit unsupported status, shelf 2 |
+| 27 | A | import Broken.epub | explicit format failure, shelf 2 |
+| 28 | A | asynchronous import + cancel | cancellation status, shelf 2 |
+| 29 | A | asynchronous import + open another book | new book stays visible, no shelf row |
+| 30 | A | quit | process exits cleanly |
+| 31 | B | restart | same book, page 3, notes 1, explicit restore message |
+| 32 | B | select note + jump | annotation navigation works after restart |
+| 33 | B | open PDF | fixed page 4 restored, fixed notes 0 |
+| 34 | B | open EPUB + font + | font 160%, anchored re-layout |
+| 35 | B | quit | process exits cleanly |
+| 36 | C | restart after font change | font 160%, notes 1, anchored offset restored |
+| 37 | C | quit | process exits cleanly |
+
+The checker additionally enforces: no failed UI step, shelf equality across restart,
+annotation identity across restart, anchored offset equality after a font change,
+screenshot presence, exact package hashes, and the zero-tolerance conditions
+(no lost saved note, no stale import frame on a new book, no silent wrong restore).
+
+### Cloud result
+
+- Implementation run: [39710580316](https://github.com/NoGod3524/EXReader/actions/runs/39710580316),
+  commit `11ac64e4542b53980a0adb1cc995750258b05361`, conclusion **success**.
+- Final HEAD verification run: [39711090216](https://github.com/NoGod3524/EXReader/actions/runs/39711090216),
+  commit `40c45799131b3e7f2927d5cdb09a1bf72d9452db`, conclusion **success**.
+- Preserved self-test: **26/26** checks.
+- UI phases A/B/C: exit 0, **158/158** steps passed, 8 screenshots.
+- Artifact `EXReader-WP13-Windows` (39,316,660 bytes).
+- Evidence JSON: `wp13-evidence/wp13-windows-evidence.json` inside the artifact; the
+  committed summary is `docs/validation/wp13-windows.json`.
+
+## Evidence
+
+The CI artifact `EXReader-WP13-Windows` contains:
+
+- `wp13-windows/EXReader-Windows.zip` and `build.json` (file hashes, source SHA, SDK version)
+- `wp13-windows/report.json` and `page.png` from the preserved self-test
+- `wp13-evidence/wp13-windows-evidence.json` (steps, states, shelf, notes, hashes)
+- `wp13-evidence/A|B|C/drive.log` and the PNG screenshots
+- `wp13-fixtures/` (generated acceptance books) and raw phase stdio logs
+
+The committed summary is `docs/validation/wp13-windows.json`; it references the cloud
+run and artifact instead of duplicating raw logs.
+
+## Known limitations / not in this package
+
+- Fixed annotation writes and fixed page opens parse the stored original; this is done
+  off the UI thread for opens, but `exr_library_fixed_note` is called synchronously from
+  the annotation button when no task is running, so a very large PDF can stall that
+  action briefly.
+- The reflow annotation list shows the saved text offset, not a resolved page number;
+  jump resolves the selector and reports ambiguity explicitly.
+- No cover thumbnails, book rename UI, search, migration, OPDS, TTS, audio or other
+  platform hosts.
+- The bounded chapter entry is not used (see above); bounded large-chapter behavior is
+  listed as a separate interface need for the integration pass.
+- Screen-reader verification (WP14) is not claimed. Control IDs, names and Tab order
+  are stable inputs for that work.
