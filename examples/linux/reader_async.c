@@ -85,20 +85,19 @@ static void pixels_free(guchar *pixels,gpointer unused) { (void)unused;free(pixe
 static gboolean apply_result(gpointer data) {
   host_result *done=data;reader_result *result=&done->value;
   if(done->generation!=g_atomic_int_get(&generation)) goto free_result;
-  busy=FALSE;
   if(result->has_shelf) shelf_present(result);
   if(done->action==READER_COMMIT) {
     gboolean retrying=save_failed;
-    saving=FALSE;save_failed=result->status!=EXR_OK;
+    busy=saving=FALSE;save_failed=result->status!=EXR_OK;
     if(save_failed) { close_after_save=FALSE;status(result->status,"Position save failed; F12 retries, book switch and close are blocked"); }
     else { if(retrying) status(EXR_OK,"Position saved");else state();if(close_after_save) stop_worker(); }
     goto free_result;
   }
-  if(result->status!=EXR_OK) { status(result->status,result->message);goto free_result; }
+  if(result->status!=EXR_OK) { busy=FALSE;status(result->status,result->message);goto free_result; }
   if(result->has_frame) {
     GdkPixbuf *pixels=gdk_pixbuf_new_from_data(result->pixels,GDK_COLORSPACE_RGB,TRUE,8,
       (int)result->width,(int)result->height,(int)result->stride,pixels_free,NULL);
-    if(!pixels) { status(EXR_MEMORY,"Page presentation failed; accepted page retained");goto free_result; }
+    if(!pixels) { busy=FALSE;status(EXR_MEMORY,"Page presentation failed; accepted page retained");goto free_result; }
     notes_present(result);
     result->pixels=NULL;gtk_image_set_from_pixbuf(GTK_IMAGE(image),pixels);g_object_unref(pixels);
     book_id=result->book;part=result->part;bounded=result->bounded;font_size=result->font;
@@ -123,7 +122,7 @@ static gboolean apply_result(gpointer data) {
     status(EXR_OK,result->message);save_settings();queue_commit();
   } else {
     notes_present(result);
-    selection_start=result->selected_start;selection_end=result->selected_end;status(EXR_OK,result->message);
+    selection_start=result->selected_start;selection_end=result->selected_end;busy=FALSE;status(EXR_OK,result->message);
   }
 free_result:
   reader_result_free(result);g_free(done);return G_SOURCE_REMOVE;
