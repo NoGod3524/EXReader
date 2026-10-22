@@ -18,6 +18,16 @@ enable_testing()
 # Reuse installed C consumers and C++ header compilation, including the bounded
 # chapter consumer. No source-tree engine target is linked into these programs.
 add_subdirectory(../sdk_components components)
+if(EXR_EXPECT_LIBRARY)
+  add_executable(reading-library-source ../test_library_source.c)
+  target_link_libraries(reading-library-source PRIVATE EXReader::exr_library EXReader::exr_core)
+  set_target_properties(reading-library-source PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+  if(MSVC)
+    set_property(TARGET reading-library-source PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  endif()
+  add_test(NAME installed-library-source COMMAND reading-library-source
+    "${EXR_TEST_FIXTURES}" "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
 add_executable(reading-document ../../tools/check_document.c)
 add_executable(reading-benchmark ../../tools/benchmark.c)
 foreach(target reading-document reading-benchmark)

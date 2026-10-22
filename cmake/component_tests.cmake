@@ -24,6 +24,14 @@ if(EXR_FULL_TESTS)
   endforeach()
 endif()
 
+if(EXR_BUILD_TESTS AND EXR_ENABLE_LIBRARY)
+  add_executable(exreader-library-source-test tests/test_library_source.c)
+  target_compile_definitions(exreader-library-source-test PRIVATE EXR_SOURCE_SQLITE_FIXTURES=1)
+  target_link_libraries(exreader-library-source-test PRIVATE exr_library exr_core exr_sqlite)
+  add_test(NAME native-library-source COMMAND exreader-library-source-test
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures" "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
+
 if(EXR_BUILD_TESTS)
   foreach(header IN LISTS exr_public_headers)
     get_filename_component(name "${header}" NAME_WE)

@@ -40,6 +40,20 @@ EXR_API exr_status exr_library_remove_audio_bookmark(exr_library *library,int64_
 EXR_API exr_status exr_library_clear_audio(exr_library *library,const char *audio_id,exr_error *error);
 EXR_API exr_status exr_library_open(const char *path, exr_library **out, exr_error *error);
 EXR_API void exr_library_close(exr_library *library);
+/* Seekable original bytes, without parsing or a whole-book heap copy. On success
+   the caller owns source.context: call source.release(source.context), or pass
+   the source to a reader that takes ownership on successful open. The source
+   keeps the database alive after library_close, including :memory: libraries.
+   Metadata/progress writes through this owner remain readable. Deleting the
+   book through this owner permanently invalidates its existing sources, even
+   if a later insert reuses the ID. Any commit through another database
+   connection conservatively invalidates these sources; reopen the source and
+   reader to continue. Reads outside the advertised size return zero. A storage
+   failure permanently invalidates the source; reader APIs report EXR_IO. Outputs are cleared
+   on failure. Serialize use/release of each source; callbacks must not reenter
+   the owner. Existing blob/snapshot APIs keep their original semantics. */
+EXR_API exr_status exr_library_source(exr_library *library,int64_t id,exr_source *source,
+                                      exr_error *error);
 /* Imports original bytes (including PDF/CBZ) and the first declared reflow cover-image up to 8 MiB.
    Larger covers remain in the original source; failed cover reads abort the insert. */
 EXR_API exr_status exr_library_import(exr_library *library, exr_format format, const void *data,

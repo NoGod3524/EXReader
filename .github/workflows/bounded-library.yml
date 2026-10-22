@@ -1,0 +1,51 @@
+name: Bounded library source
+on:
+  push:
+    branches: ['codex/r5-library-source']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitize: ['OFF', 'ON']
+    env:
+      SANITIZE: ${{ matrix.sanitize }}
+      ASAN_OPTIONS: detect_leaks=1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure source consumers with unchanged reading features
+        run: cmake --preset reading-library -DEXR_BUILD_TESTS=ON -DEXR_SANITIZE="$SANITIZE"
+      - name: Build and run native source and existing component regressions
+        run: |
+          cmake --build --preset reading-library
+          ctest --test-dir build/reading-library --output-on-failure --no-tests=error --output-junit "$PWD/build/native-source-tests.xml"
+          python3 tools/check_layers.py build/reading-library
+          cmake --install build/reading-library
+      - name: Build and run public installed source consumer
+        run: |
+          if [ "$SANITIZE" = ON ]; then
+            export CFLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer'
+            export CXXFLAGS="$CFLAGS"
+            export LDFLAGS='-fsanitize=address,undefined'
+          fi
+          cmake -S tests/reading_core -B build/installed-source -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DEXR_EXPECT_LIBRARY=ON -DEXR_TEST_FONT="$PWD/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$PWD/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$PWD/tests/fixtures"
+          cmake --build build/installed-source --parallel 4
+          ctest --test-dir build/installed-source --output-on-failure --no-tests=error --output-junit "$PWD/build/installed-source-tests.xml"
+      - name: Preserve source-bound results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bounded-library-${{ matrix.sanitize }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/native-source-tests.xml
+            build/installed-source-tests.xml
+            build/reading-library/Testing/Temporary/
+            build/installed-source/Testing/Temporary/
+            build/reading-library/stage/
+          if-no-files-found: error
