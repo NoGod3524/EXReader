@@ -81,6 +81,13 @@ NeedAppearances 为 true 的两份文件由查看器重建外观，因此只做�
 `tests/consumer/form_consumer.c` 通过已安装的 `EXReader::exr_pdf_edit` 组件重跑
 读取 → 编辑 → 重开路径，证明检查不是只存在于源码树内的专用命令。
 
+这个出口只证明已声明的单行文本、复选框、单选组和选项字段在独立文档上的读写与外观，
+不改变下面的范围：多行、密码、comb、rich text、文件选择、可编辑或多选组合框、
+旋转 Widget、签名/按钮/未知类型、直接字段、动作/XFA、Catalog 权限约束、
+加密写回与原始样式保真仍未实现或未验收，剩余出口以 `validation/wp9-acroform.json`
+的 `remaining_limits` 为准。语料在云端按源码生成，仓库只保存生成器、预期、
+判定规则和汇总记录，PDF 字节留在 run 工件中。
+
 ## 可复现验收入口
 
 全部执行放在 `.github/workflows/acroform.yml`。该工作流记录准确 HEAD，
