@@ -140,4 +140,31 @@ SDK 保护树仍与 `a2552d7feb786cd2345d2b0b3eb894777b3254db` 一致。所有�
 - 断言强度不变：45/10 的 ID、顺序、标题、真实复制、真实 SDK 插入、SQLite 失败、Activity 重建、
   49 页计数与截图/身份校验全部保留。
 
-当前状态：修复待新一轮云端验收，尚未报告通过。
+该轮修复后经两次针对性返工（材质按钮大写标签、恢复后标注状态就绪），最终在同一源码完整通过，见下节。
+
+## 2026-10-22 验收通过
+
+受测源码 `8a6636ed8ac6db06ab84e174f5a01c49d12511dc`，run [`39831715741`](https://github.com/NoGod3524/EXReader/actions/runs/39831715741)
+attempt 1，作业 `android-host`（job `120009269825`）。唯一作业全部步骤成功，包括
+`Prove evidence gate accepts the complete run and rejects altered inputs` 与 `Final fail-closed acceptance`。
+
+同一次执行的实际计量（云端日志与工件双向核对）：
+
+| 项目 | 结果 |
+| --- | --- |
+| 原 45 项 | 45/45，0 失败 0 跳过 |
+| 独立 10 项 | 10/10，0 失败 0 跳过 |
+| 49 页序列 | `rendered_pages=49`、`native_next_calls=49`、`recovery_calls=0`、`sequential_elapsed_ms=63603` |
+| 证据门禁正反例 | `checks=48`、`expected=48`、`accepted=true` |
+| 最终汇总 | `accepted=true`、`problems=[]` |
+| 原始仪器化 | 两套均含 `INSTRUMENTATION_STATUS` 的类、方法、开始/通过状态码与 `INSTRUMENTATION_CODE: -1` |
+
+工件身份：`EXReader-WP13-Android`，id `12449232819`，149127088 字节，
+`sha256:1c5ee0f59fb8f30227ca8985eefb0d320cdc02dee6a9e1733ef6fa18bc825e1a`，
+同 run / 同 `head_sha`、未过期（2027-01-20T18:28:35Z）；run 内工件总数 1，作业总数 1。
+云端只读诊断 run `39833457474` 重新校验该 ZIP 的 id、字节数与 digest 后逐项复核上表，
+诊断自身仍为 `diagnostic_only=true`、`accepted=false`，不充抵验收。
+
+当前限制不变：只验收 API 34 `default` x86_64 模拟器（`physical_device_execution=false`）；
+真机安装/签名、TalkBack 真人验收与其他格式仍在各自包。SDK 保护树仍等于
+`a2552d7feb786cd2345d2b0b3eb894777b3254db`，本轮改动只落在 Android 宿主、测试驱动、Android 专用工具与工作流。
