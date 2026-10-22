@@ -30,6 +30,10 @@ if(EXR_BUILD_TESTS AND EXR_ENABLE_LIBRARY)
   target_link_libraries(exreader-library-source-test PRIVATE exr_library exr_core exr_sqlite)
   add_test(NAME native-library-source COMMAND exreader-library-source-test
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures" "${CMAKE_CURRENT_BINARY_DIR}")
+  add_executable(exreader-library-epub-storage-test tests/test_library_epub_storage.c)
+  target_link_libraries(exreader-library-epub-storage-test PRIVATE exr_library exr_core exr_sqlite miniz)
+  add_test(NAME native-library-epub-storage COMMAND exreader-library-epub-storage-test
+    "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
 if(EXR_BUILD_TESTS)

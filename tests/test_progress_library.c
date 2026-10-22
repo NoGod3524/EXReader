@@ -20,7 +20,7 @@ int main(int argc,char **argv) {
   const char *text="First paragraph with Unicode 中文. Second paragraph for stable progress.";
   char path[4096],backup[4096],migration[4096]; exr_library *l=NULL,*copy=NULL; exr_document *doc=NULL; exr_anchor a={0},b={0},out={0},bad; exr_anchor_state state; exr_book *books=NULL; size_t n; int64_t book,pdf;
   CHECK(argc==3); snprintf(path,sizeof(path),"%s/progress-library.sqlite",argv[2]); snprintf(backup,sizeof(backup),"%s/progress-backup.sqlite",argv[2]); snprintf(migration,sizeof(migration),"%s/progress-migrate.sqlite",argv[2]); remove(path); remove(backup); remove(migration);
-  OK(exr_library_open(path,&l,&error)); CHECK(scalar(path,"PRAGMA user_version")==6); OK(exr_library_import(l,EXR_TXT,text,strlen(text),"Book",&book,&error)); OK(exr_library_document(l,book,&doc,&error)); progress(l,book,doc,EXR_ANCHOR_LEGACY,0);
+  OK(exr_library_open(path,&l,&error)); CHECK(scalar(path,"PRAGMA user_version")==7); OK(exr_library_import(l,EXR_TXT,text,strlen(text),"Book",&book,&error)); OK(exr_library_document(l,book,&doc,&error)); progress(l,book,doc,EXR_ANCHOR_LEGACY,0);
   OK(exr_anchor_create(doc,5,5,&a,&error)); OK(exr_anchor_create(doc,8,8,&b,&error)); OK(exr_library_progress(l,book,&a,&error)); progress(l,book,doc,EXR_ANCHOR_FOUND,5);
   { int64_t reused; int created; OK(exr_library_import_unique(l,EXR_TXT,text,strlen(text),"Ignored",&reused,&created,&error)); CHECK(reused==book && !created); progress(l,book,doc,EXR_ANCHOR_FOUND,5); }
   OK(exr_library_books(l,"Book",&books,&n,&error)); CHECK(n==1 && books[0].position==5); books[0].favorite=1; books[0].title[0]='L'; OK(exr_library_update(l,&books[0],&error)); progress(l,book,doc,EXR_ANCHOR_FOUND,5);
@@ -38,9 +38,9 @@ int main(int argc,char **argv) {
   exr_library_close(l); OK(exr_library_open(path,&l,&error)); progress(l,book,doc,EXR_ANCHOR_FOUND,5);
   OK(exr_library_backup(l,backup,&error)); OK(exr_library_open(backup,&copy,&error)); progress(copy,book,doc,EXR_ANCHOR_FOUND,5); exr_library_close(copy);
   OK(exr_library_backup(l,migration,&error));
-  sql(migration,"DROP TRIGGER books_progress_changed;DROP TABLE book_progress;ALTER TABLE notes DROP COLUMN location_state;CREATE TRIGGER books_progress_changed AFTER UPDATE OF position ON books BEGIN SELECT 1;END;PRAGMA user_version=4;");
+  sql(migration,"DROP TABLE epub_notes;DROP TABLE epub_progress;DROP TABLE epub_bounded_books;DROP TRIGGER books_progress_changed;DROP TABLE book_progress;ALTER TABLE notes DROP COLUMN location_state;CREATE TRIGGER books_progress_changed AFTER UPDATE OF position ON books BEGIN SELECT 1;END;PRAGMA user_version=4;");
   CHECK(exr_library_open(migration,&copy,&error)==EXR_DATABASE && !copy); CHECK(scalar(migration,"PRAGMA user_version")==4 && !scalar(migration,"SELECT count(*) FROM sqlite_master WHERE name='book_progress'"));
-  sql(migration,"DROP TRIGGER books_progress_changed;"); OK(exr_library_open(migration,&copy,&error)); CHECK(scalar(migration,"PRAGMA user_version")==6); progress(copy,book,doc,EXR_ANCHOR_LEGACY,5); exr_library_close(copy);
+  sql(migration,"DROP TRIGGER books_progress_changed;"); OK(exr_library_open(migration,&copy,&error)); CHECK(scalar(migration,"PRAGMA user_version")==7); progress(copy,book,doc,EXR_ANCHOR_LEGACY,5); exr_library_close(copy);
   { char file[4096]; FILE *f; void *bytes; long length; snprintf(file,sizeof(file),"%s/pdf-public-text.pdf",argv[1]); f=fopen(file,"rb"); CHECK(f && !fseek(f,0,SEEK_END)); length=ftell(f); CHECK(length>0); rewind(f); bytes=malloc((size_t)length); CHECK(bytes && fread(bytes,1,(size_t)length,f)==(size_t)length); fclose(f);
     OK(exr_library_import(l,EXR_PDF,bytes,(size_t)length,NULL,&pdf,&error)); free(bytes); CHECK(exr_library_progress(l,pdf,&a,&error)==EXR_FORMAT); CHECK(exr_library_progress_get(l,pdf,&out,&state,&error)==EXR_FORMAT && !out.exact);
   }

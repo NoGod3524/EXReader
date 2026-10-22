@@ -256,6 +256,50 @@ static void failed_publication_consumer(void) {
   CHECK(source.read_at(source.context,0,buffer,sizeof(buffer))==sizeof(buffer) && !memcmp(buffer,bytes,sizeof(buffer)));
   source.release(source.context);CHECK(tracked.releases==1);
 }
+/* Public installed-SDK path: file import, stored original, bounded point,
+   database close/reopen and resolution in a rebuilt chapter pager. */
+static void stored_progress_consumer(const char *database,const char *epub_path,const char *font_path) {
+  exr_library *library=NULL;exr_publication *publication=NULL;exr_pager *pager=NULL;
+  exr_font *font=NULL;exr_source source={0};const exr_part *parts;
+  exr_library_epub_info info={sizeof(info),0,0};exr_epub_location point={0},restored={0};
+  exr_layout_config config=exr_layout_config_defaults();exr_chapter_options options=exr_chapter_options_defaults();
+  exr_anchor_match match;size_t count=0;int64_t id=0,reused=0;int created=0,present=0;
+  OK(exr_library_open(database,&library,&error));
+  OK(exr_library_import_file_unique(library,EXR_EPUB,epub_path,"Public bounded import",&id,&created,&error));
+  CHECK(id>0 && created);
+  OK(exr_library_epub_info_get(library,id,&info,&error));CHECK(info.bounded_storage && !info.global_extent_known);
+  OK(exr_library_epub_progress_get(library,id,&restored,&present,&error));CHECK(!present && !restored.path);
+  OK(exr_library_source(library,id,&source,&error));
+  OK(exr_publication_open_source(&source,&publication,&error));
+  parts=exr_publication_parts(publication,&count);CHECK(parts && count==2);
+  point.part=1;point.path=malloc(strlen(parts[1].path)+1);CHECK(point.path);strcpy(point.path,parts[1].path);
+  OK(exr_font_open(font_path,&font,&error));config.page=(exr_layout_options){360,480,20,24,1.5f,8};
+  OK(exr_publication_pager_create(publication,point.part,font,&config,&options,&pager,&error));
+  OK(exr_pager_anchor_create(pager,5,5,NULL,&point.selector,&error));
+  OK(exr_library_epub_progress(library,id,&point,&error));
+  /* Metadata-only writes through the owner leave this already open pager usable. */
+  OK(exr_pager_anchor_resolve(pager,&point.selector,NULL,&match,&error));
+  CHECK(match.state==EXR_ANCHOR_FOUND && match.start==5 && match.end==5);
+  CHECK(exr_pager_chapter_statistics(pager).explicit_snapshot_bytes==0);
+  OK(exr_library_import_file_unique(library,EXR_EPUB,epub_path,"Ignored duplicate",&reused,&created,&error));
+  CHECK(reused==id && !created);
+  exr_pager_free(pager);pager=NULL;exr_publication_free(publication);publication=NULL;
+  exr_library_close(library);library=NULL;
+  OK(exr_library_open(database,&library,&error));
+  OK(exr_library_epub_progress_get(library,id,&restored,&present,&error));
+  CHECK(present && restored.part==1 && restored.path && !strcmp(point.path,restored.path));
+  CHECK(restored.selector.exact && !restored.selector.exact[0] && restored.selector.start==5);
+  OK(exr_library_source(library,id,&source,&error));
+  OK(exr_publication_open_source(&source,&publication,&error));
+  config.page.font_size=26;
+  OK(exr_publication_pager_create(publication,restored.part,font,&config,&options,&pager,&error));
+  exr_library_close(library);library=NULL;exr_publication_free(publication);publication=NULL;
+  OK(exr_pager_anchor_resolve(pager,&restored.selector,NULL,&match,&error));
+  CHECK(match.state==EXR_ANCHOR_FOUND && match.start==5 && match.end==5);
+  CHECK(exr_pager_chapter_statistics(pager).explicit_snapshot_bytes==0);
+  exr_pager_free(pager);exr_font_free(font);
+  exr_epub_location_free(&point);exr_epub_location_free(&restored);
+}
 int main(int argc,char **argv) {
   char path[4096],fixture[4096],font[4096];unsigned char *epub;size_t size;int i;
   CHECK(argc==3);snprintf(fixture,sizeof(fixture),"%s/sample.epub",argv[1]);
@@ -285,5 +329,7 @@ int main(int argc,char **argv) {
   corrupt_rows(path);remove(path);
 #endif
   publication_consumer(epub,size,font);failed_publication_consumer();free(epub);
+  snprintf(path,sizeof(path),"%s/library-source-progress.sqlite",argv[2]);remove(path);
+  stored_progress_consumer(path,fixture,font);remove(path);
   printf("%u public library source checks passed\n",checks);return 0;
 }

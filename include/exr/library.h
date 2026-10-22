@@ -21,6 +21,24 @@ typedef struct {
   char *text;
   exr_anchor anchor; /* Owned in query results; zero-initialize input notes. */
 } exr_note;
+
+/* Whole-book offsets and chapter-local offsets are different storage modes.
+   Set struct_size before info_get. Valid-size payload fields are cleared on
+   failure; records declaring a shorter prefix are rejected without tail writes. */
+typedef struct {
+  size_t struct_size;
+  int bounded_storage, global_extent_known;
+} exr_library_epub_info;
+typedef struct {
+  size_t part;
+  char *path;
+  exr_anchor selector; /* Normalized UTF-8 offsets within this part, not the book. */
+} exr_epub_location;
+typedef struct {
+  int64_t id,book_id;
+  exr_epub_location location;
+  char *text;
+} exr_epub_note;
 typedef struct {
   int64_t id,book_id;
   size_t page,start,end; /* Zero-based page; UTF-8 range within that page. */
@@ -54,6 +72,35 @@ EXR_API void exr_library_close(exr_library *library);
    the owner. Existing blob/snapshot APIs keep their original semantics. */
 EXR_API exr_status exr_library_source(exr_library *library,int64_t id,exr_source *source,
                                       exr_error *error);
+/* EPUB-only mode query. Source/file imports have unknown global text extent;
+   existing memory imports retain their original whole-book extent. */
+EXR_API exr_status exr_library_epub_info_get(exr_library *library,int64_t id,
+  exr_library_epub_info *info,exr_error *error);
+EXR_API void exr_epub_location_free(exr_epub_location *location);
+/* Stores a caller-captured chapter-local point. part/path must describe the
+   current package directory; selector.chapter, if present, must equal path.
+   No chapter body is parsed and no text match is claimed. Capture/resolve with
+   the bounded pager; only its FOUND result authorizes precise navigation.
+   An empty exact string and start==end are required. */
+EXR_API exr_status exr_library_epub_progress(exr_library *library,int64_t id,
+  const exr_epub_location *location,exr_error *error);
+/* Owned output strings; release with location_free. present denotes a stored
+   record, not a resolved match. Missing records return OK with present=0.
+   Failure clears the location/present; old global progress is never converted. */
+EXR_API exr_status exr_library_epub_progress_get(exr_library *library,int64_t id,
+  exr_epub_location *location,int *present,exr_error *error);
+/* EPUB-only, single-part notes. New/reranged notes require an explicit nonempty
+   quote selector captured by the bounded pager. Updating id>0 with exact=NULL
+   changes only the comment: part/path/range inputs are ignored and the existing
+   selector is retained. Updates check both note id and book id. No body is read.
+   Stored selectors are not resolved matches; resolve before navigating. */
+EXR_API exr_status exr_library_epub_note(exr_library *library,const exr_epub_note *note,
+  int64_t *id,exr_error *error);
+EXR_API exr_status exr_library_epub_notes(exr_library *library,int64_t book_id,
+  exr_epub_note **notes,size_t *count,exr_error *error);
+EXR_API void exr_epub_notes_free(exr_epub_note *notes,size_t count);
+/* Note IDs belong to this API's own namespace, not exr_library_remove_note. */
+EXR_API exr_status exr_library_remove_epub_note(exr_library *library,int64_t id,exr_error *error);
 /* Imports original bytes (including PDF/CBZ) and the first declared reflow cover-image up to 8 MiB.
    Larger covers remain in the original source; failed cover reads abort the insert. */
 EXR_API exr_status exr_library_import(exr_library *library, exr_format format, const void *data,
@@ -67,9 +114,14 @@ EXR_API exr_status exr_library_import_unique(exr_library *library,exr_format for
                                              size_t size,const char *title,int64_t *id,int *created,exr_error *error);
 /* Streaming counterparts for large originals. The seekable source is borrowed
    only for the call; bytes are copied into SQLite in 64 KiB chunks, so the
-   host never needs a contiguous copy. Source import supports CBZ; file import
+   host never needs a contiguous copy. Source import supports EPUB/CBZ; file import
    additionally supports PDF, whose metadata is read through a read-only file
-   mapping. Other formats return EXR_UNSUPPORTED. The source control callback is
+   mapping. EPUB imports read package metadata without loading XHTML; the ZIP
+   source limit remains 128 MiB. Author/cover stay empty in this bounded mode,
+   global extent is unknown, and legacy global progress/notes APIs return
+   EXR_UNSUPPORTED. Use epub_info_get/epub_progress instead. Memory imports keep
+   their snapshot behavior. Exact duplicates reuse the existing storage mode.
+   Other formats return EXR_UNSUPPORTED. The source control callback is
    honored between chunks and beside archive/PDF header reads. A failed or
    cancelled write rolls back the book row and its blob; unique imports compare
    same-size stored sources byte-for-byte before reusing the oldest ID. */
