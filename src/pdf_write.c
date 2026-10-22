@@ -905,10 +905,16 @@ static void form_text_appearance(pdf_writer *p,const char *text,double width,dou
   double size=fmin(12,height*.65),advance=0,x=2,y=fmax(1,(height-size)*.5+size*.2); size_t i,n=strlen(text);
   if(p->status!=EXR_OK) return;
   if(options->font) {
-    exr_shaped_glyph *glyphs=NULL; size_t count=0; exr_shape_options shape=exr_shape_defaults();
+    exr_shaped_glyph *glyphs=NULL; size_t count=0,scalar_count=0; exr_shape_options shape=exr_shape_defaults(); exr_bidi *bidi=NULL;
+    const exr_bidi_scalar *scalars;
+    p->status=exr_bidi_analyze(text,n,EXR_DIRECTION_LTR,&bidi,p->error); scalars=exr_bidi_scalars(bidi,&scalar_count);
+    for(i=0;i<scalar_count && p->status==EXR_OK;i++) if(scalars[i].level)
+      p->status=exr_fail(p->error,EXR_UNSUPPORTED,"PDF form directional runs require a bidirectional appearance layout");
+    exr_bidi_free(bidi); if(p->status!=EXR_OK) return;
     shape.font_size=100; shape.control=options->control;
     p->status=exr_shape(options->font,options->font_index,text,n,&shape,&glyphs,&count,p->error);
     for(i=0;i<count && p->status==EXR_OK;i++) {
+      if(glyphs[i].flags&EXR_GLYPH_HIDDEN) continue;
       if(!glyphs[i].glyph) p->status=exr_fail(p->error,EXR_UNSUPPORTED,"PDF form appearance font lacks a glyph");
       advance+=glyphs[i].advance_x*10;
     }
@@ -917,7 +923,13 @@ static void form_text_appearance(pdf_writer *p,const char *text,double width,dou
     if(justification==2) x=width-2-advance*size/1000;
     for(i=0;i<count && p->status==EXR_OK;i++) {
       exr_path_segment *segments=NULL; size_t segment_count=0;
+      if(glyphs[i].flags&EXR_GLYPH_HIDDEN) continue;
       p->status=exr_font_glyph_outline(options->font,options->font_index,glyphs[i].glyph,&segments,&segment_count,p->control,p->error);
+      if(p->status==EXR_OK && !segment_count) {
+        size_t at; int blank=1;
+        for(at=glyphs[i].start;at<glyphs[i].end;at++) if(text[at]!=' ') blank=0;
+        if(!blank) p->status=exr_fail(p->error,EXR_UNSUPPORTED,"PDF form appearance requires visible glyph outlines");
+      }
       if(segment_count>1048576-*work) p->status=exr_fail(p->error,EXR_LIMIT,"PDF form appearance outline budget exceeded");
       else *work+=segment_count;
       literal(p,"q "); number(p,size/1000); literal(p," 0 0 "); number(p,size/1000); literal(p," "); number(p,x+glyphs[i].offset_x*size/100);

@@ -94,7 +94,8 @@ EXR_API exr_pdf_form_write_options exr_pdf_form_write_defaults(void);
 /* Atomic incremental edit, preserving original bytes. Tx, checkbox/radio and
    Ch values and every associated widget appearance update together. ReadOnly,
    Required, MaxLen, option membership and single/multiple selection are checked.
-   Unicode text requires font; missing glyphs fail rather than emitting tofu.
+   LTR Unicode text requires an outline font; missing/empty visible glyphs and
+   bidirectional runs return UNSUPPORTED. Hidden shaping glyphs are not painted.
    Without font, printable ASCII uses Helvetica. Password/multiline/file-select/
    rich-text/comb text and editable combo boxes currently return UNSUPPORTED.
    Sig/pushbutton/unknown types, XFA, field/widget actions, rotation and signed
