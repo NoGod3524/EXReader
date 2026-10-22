@@ -45,9 +45,10 @@ def send(window, message, wparam=0, lparam=0, timeout=2000):
 def set_text(window, text):
     # SetWindowText cannot edit another process's child control. WM_SETTEXT is
     # a system message, so Windows marshals this Unicode buffer to the reader.
-    value = C.create_unicode_buffer(text)
+    units = len(text.encode('utf-16-le'))//2+1
+    value = C.create_unicode_buffer(text, units)
     assert send(window, 0xC, 0, C.addressof(value)), 'Edit rejected WM_SETTEXT'
-    actual = C.create_unicode_buffer(len(text.encode('utf-16-le'))//2+1)
+    actual = C.create_unicode_buffer(units)
     send(window, 0xD, len(actual), C.addressof(actual))
     assert actual.value == text, 'Edit text differs from requested Unicode input'
 
