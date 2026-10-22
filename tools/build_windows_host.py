@@ -44,6 +44,7 @@ def main():
     shutil.copytree(sdk/'share/exreader/licenses', payload/'licenses')
     make_epub(payload/'Sample.epub', 3, 16384, single_paragraph=True)
     shutil.copyfile(ROOT/'tests/fixtures/pdf-public.pdf', payload/'Sample.pdf')
+    shutil.copyfile(ROOT/'tests/fixtures/pdf-public-text.pdf', payload/'Sample-Text.pdf')
     report, image = output/'report.json', output/'page.png'
     with (output/'application.log').open('wb') as log:
         result = subprocess.run([str(payload/'EXReader.exe'), '--self-test',
@@ -54,10 +55,11 @@ def main():
         raise RuntimeError('Windows reference host self-check failed; see '+str(output/'application.log'))
     checked = json.loads(report.read_text())
     expected = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk/'include/exr/base.h').read_text())[1]
-    if checked.get('passed') is not True or checked.get('checks', 0) < 20 or checked.get('engine_version') != expected:
+    if checked.get('passed') is not True or checked.get('checks', 0) < 26 or checked.get('engine_version') != expected:
         raise RuntimeError('Invalid Windows host report')
     source_sha = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
     manifest = {'schema': 1, 'passed': True, 'source_sha': source_sha, 'sdk_version': expected,
+                'selftest_checks': checked['checks'],
                 'files': {str(p.relative_to(payload)).replace('\\', '/'): digest(p)
                           for p in sorted(payload.rglob('*')) if p.is_file()},
                 'report_sha256': digest(report), 'image_sha256': digest(image)}

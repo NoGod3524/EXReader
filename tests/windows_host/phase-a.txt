@@ -1,0 +1,121 @@
+# WP13 Windows host acceptance, phase A: import, shelf, reflow reading,
+# selection, reflow and fixed annotations, error/cancel/stale recovery.
+# Every action is issued through the real Win32 controls by the in-app driver.
+state|start
+check|shelf|count|0
+snapshot|00-empty-shelf
+import|@@SAMPLE@@\Sample.epub
+check|shelf|count|1
+check|status|contains|导入
+state|epub_imported
+import|@@SAMPLE@@\Sample.epub
+check|shelf|count|1
+check|status|contains|去重
+open|EXReader benchmark
+check|book|EXReader benchmark
+check|page|1
+state|epub_open
+snapshot|01-epub-page1
+next
+check|page|2
+next
+check|page|3
+prev
+check|page|2
+state|before_font
+font_inc
+check|font|160
+state|after_font
+font_dec
+check|font|150
+resize|1120|820
+state|after_resize
+snapshot|02-resized
+select_all
+check|selection|nonempty
+copy
+check|clipboard|contains|Reading
+note|First automated note
+add_note
+check|notes|1
+state|note_added
+note|Updated automated note
+update_note
+check|status|contains|更新
+prev
+check|page|1
+jump_note|0
+check|page|2
+check|status|contains|标注
+state|after_note_jump
+drag|220|240|480|420
+check|selection|nonempty
+note|Second note
+add_note
+check|notes|2
+state|note_second
+delete_note
+check|notes|1
+state|note_deleted
+import|@@SAMPLE@@\Sample-Text.pdf
+check|shelf|count|2
+check|status|contains|导入
+open|Sample-Text
+check|book|Sample-Text
+check|page|1
+state|pdf_open
+snapshot|03-pdf-page1
+select_all
+check|selection|nonempty
+note|PDF fixed note
+add_note
+check|notes|1
+next
+check|page|2
+jump_note|0
+check|page|1
+check|status|contains|标注
+state|pdf_note_jump
+next
+check|page|2
+next
+check|page|3
+next
+check|page|4
+next
+check|status|contains|最后一页
+state|pdf_last_page
+delete_note
+check|notes|0
+state|pdf_note_deleted
+import|@@FIXTURES@@\Extra-Book.epub
+check|shelf|count|3
+delete_book|Extra Book
+check|shelf|count|2
+state|extra_deleted
+import|@@FIXTURES@@\Unsupported.bin
+check|shelf|count|2
+check|status|contains|不支持
+state|unsupported_error
+import|@@FIXTURES@@\Broken.epub
+check|shelf|count|2
+check|status|contains|失败
+state|broken_error
+delay|700
+import_async|@@FIXTURES@@\Cancel-Big.epub
+cancel
+wait_idle
+check|shelf|count|2
+check|status|contains|取消
+state|cancel_done
+delay|700
+import_async|@@FIXTURES@@\Stale-Book.epub
+open|EXReader benchmark
+check|shelf|count|2
+check|book|EXReader benchmark
+check|page|2
+state|stale_done
+delay|0
+snapshot|04-stale-final
+state|final
+quit
