@@ -20,7 +20,7 @@ jobs:
       - name: Install native desktop and UI input tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libgtk-3-dev xvfb openbox xdotool xclip imagemagick python3-pil
+          sudo apt-get install -y libgtk-3-dev xvfb openbox xdotool xclip x11-utils imagemagick python3-pil
       - name: Build and install frozen public SDK
         run: |
           cmake -S . -B build/linux-sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_LIBRARY=ON -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
