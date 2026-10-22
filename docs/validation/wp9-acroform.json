@@ -1,0 +1,116 @@
+{
+  "package": "WP9 AcroForm",
+  "status": "partial_implementation_not_package_acceptance",
+  "current_candidate_source": "7e44ae59d47a578dac3116154b0de5a67efb0163",
+  "current_candidate_run": 39817023587,
+  "current_candidate_status": "declared_implementation_regressions_passed_package_still_partial",
+  "current_candidate_final_metadata_confirmed_at_utc": "2026-10-22T16:50:13Z",
+  "current_candidate_final_run_conclusion": "success",
+  "current_candidate_jobs": [
+    {"id": 119958062337, "name": "sanitizer", "conclusion": "success", "ctest_passed": 1, "ctest_total": 1, "check_executions": 9394},
+    {"id": 119958062911, "name": "native (ubuntu-22.04)", "conclusion": "success", "ctest_passed": 4, "ctest_total": 4, "check_executions": 9394},
+    {"id": 119958062947, "name": "native (windows-latest)", "conclusion": "success", "ctest_passed": 4, "ctest_total": 4, "check_executions": 9394}
+  ],
+  "current_candidate_fixes": ["Preserve the original NeedAppearances request during partial changes", "Reject ambiguous duplicate radio on-states unless RadiosInUnison is set"],
+  "current_candidate_input_definitions": 24,
+  "historical_results_notice": "The tested_implementation_source, run, jobs and corpus below retain prior source results separately; current_candidate fields identify the reviewed final source.",
+  "tested_implementation_source": "72ca373c5d378e9b267ad04cb7181503b2ac8939",
+  "implementation_base": "635225fe6ceb7759a948a1d8cede0ab18ea1cee9",
+  "documentation_head": "This record is committed after the tested implementation; resolve the documentation-only commit containing this file.",
+  "workflow": ".github/workflows/acroform.yml",
+  "execution_location": "GitHub Actions",
+  "final_metadata_confirmed_at_utc": "2026-10-22T16:41:15Z",
+  "run": {
+    "id": 39814495944,
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39814495944",
+    "final_status": "completed",
+    "final_conclusion": "success"
+  },
+  "jobs": [
+    {
+      "id": 119949322572,
+      "name": "native (windows-latest)",
+      "final_conclusion": "success",
+      "completed_at_utc": "2026-10-22T16:31:02Z",
+      "tests_passed_in_completed_log": 4,
+      "tests_total": 4,
+      "acroform_check_executions": 8848
+    },
+    {
+      "id": 119949322782,
+      "name": "native (ubuntu-22.04)",
+      "final_conclusion": "success",
+      "completed_at_utc": "2026-10-22T16:29:49Z",
+      "tests_passed_in_completed_log": 4,
+      "tests_total": 4,
+      "acroform_check_executions": 8848,
+      "compiled_layers": {
+        "objects": 106,
+        "symbol_references": 1162,
+        "inverse_references": 0,
+        "new_inverse_references": 0,
+        "source_header_dependencies": 954,
+        "inverse_includes": 0
+      }
+    },
+    {
+      "id": 119949380099,
+      "name": "sanitizer",
+      "final_conclusion": "success",
+      "completed_at_utc": "2026-10-22T16:30:03Z",
+      "tests_passed_in_completed_log": 1,
+      "tests_total": 1,
+      "acroform_check_executions": 8848,
+      "asan_options": "detect_leaks=1:halt_on_error=1",
+      "ubsan_options": "halt_on_error=1"
+    }
+  ],
+  "corpus": {
+    "source": "tests/test_pdf_form.c",
+    "primary_form_definitions": 1,
+    "primary_fields": 36,
+    "primary_widgets": 39,
+    "primary_pages": 2,
+    "batch_changed_fields": 34,
+    "changed_widget_appearances_checked": 37,
+    "source_function_input_definitions_including_primary": 21,
+    "additional_deep_tree_input_definitions": 1,
+    "total_in_memory_input_definitions": 22,
+    "standalone_pdf_files": 0,
+    "independent_document_requirement": 30,
+    "independent_document_gate_satisfied": false,
+    "check_count_meaning": "8848 runtime CHECK macro executions, including PDF-builder format/capacity checks; not distinct scenarios or documents."
+  },
+  "verified_paths": [
+    "Qualified names and inherited type, flags, values, defaults, options and constraints",
+    "Widget page and Rect mapping across two pages",
+    "Batch text, checkbox, radio, list and combo edits followed by fresh parser reopening",
+    "Every changed widget has a nonempty selected normal appearance stream",
+    "Independent Unicode appearance reopening without the borrowed host font",
+    "Clearing text produces no ink in the isolated interior text probe",
+    "Original byte prefix is preserved and caller input remains unchanged",
+    "ReadOnly, Required, MaxLen, options, duplicate changes, missing fields and invalid UTF-8 reject atomically",
+    "Field-tree malformed types, cycles, duplicate qualified names, inconsistent Parent and resource limits reject atomically",
+    "Unsupported modes, actions, XFA, direct fields, rotation, permissions, missing glyphs and empty visible outlines reject atomically",
+    "Hidden shaping glyphs are skipped; bidirectional appearance layout is explicitly unsupported",
+    "Cancellation at entry, during shaping and after final export progress clears output and preserves input"
+  ],
+  "prior_runs_retained": [
+    {"source": "6c34da6", "run_id": 39813085595, "observed_failure": "Shaping size exceeded the public API limit."},
+    {"source": "cce1604", "run_id": 39813411980, "observed_failure": "Overlapping radio appearance hid the text rendering probe."},
+    {"source": "5702761", "run_id": 39813672942, "observed_conclusion": "success"},
+    {"source": "2527419", "run_id": 39813951033, "observed_conclusion": "success"},
+    {"source": "2fd27fa", "run_id": 39814189621, "observed_failure": "Bitmap-only test used a string containing a glyph absent from its font."},
+    {"source": "1623474", "run_id": 39814335226, "observed_failure": "X9-removed hidden scalar level was treated as requiring bidi layout."}
+  ],
+  "remaining_limits": [
+    "The 30 independent-document acceptance gate remains unmet.",
+    "Single-line values and one LTR shaping run; no complete multi-script/bidi appearance layout or font fallback.",
+    "White background, black border/text and fitted size replace original DA/MK/BS appearance styling.",
+    "List appearance shows selected labels without full scrolling or interactive controls.",
+    "Multiline, password, comb, rich text, file-select, editable/multiselect combo and rotated widgets are rejected.",
+    "Signature, pushbutton, unknown/direct field/widget, actions, XFA, Catalog permission constraints and encrypted writeback are not implemented.",
+    "Incremental output retains historical values and does not perform redaction."
+  ]
+}
