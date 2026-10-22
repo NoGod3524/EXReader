@@ -1,0 +1,288 @@
+MSBuild version 18.11.0-1.26475.11+3cde5c8ec for .NET Framework
+
+  Checking File Globs
+  1>Checking Build System
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  Building Custom Rule D:/a/EXReader/EXReader/build/sdk/_deps/expat-src/expat/CMakeLists.txt
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  Building Custom Rule D:/a/EXReader/EXReader/build/sdk/_deps/miniz-src/CMakeLists.txt
+  cmsalpha.c
+  xcs.c
+  xmlparse.c
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  chapter_reader.c
+  Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36260 for x64
+  Copyright (C) Microsoft Corporation.  All rights reserved.
+  cl /c /I"D:\a\EXReader\EXReader\build\sdk\_deps\miniz-src" /I"D:\a\EXReader\EXReader\build\sdk\_deps\miniz-build" /Zi /W3 /WX- /diagnostics:column /O2 /Ob2 /D _MBCS /D WIN32 /D _WINDOWS /D NDEBUG /D MINIZ_NO_ZLIB_COMPATIBLE_NAMES /D _CRT_SECURE_NO_WARNINGS /D "CMAKE_INTDIR=\"Release\"" /MT /permissive- /Fo"miniz.dir\Release\\" /Fd"D:\a\EXReader\EXReader\build\sdk\_deps\miniz-build\Release\miniz.pdb" /external:W3 /TC /errorReport:queue  /utf-8 "D:\a\EXReader\EXReader\build\sdk\_deps\miniz-src\miniz.c" "D:\a\EXReader\EXReader\build\sdk\_deps\miniz-src\miniz_zip.c" "D:\a\EXReader\EXReader\build\sdk\_deps\miniz-src\miniz_tinfl.c" "D:\a\EXReader\EXReader\build\sdk\_deps\miniz-src\miniz_tdef.c"
+  miniz.c
+  miniz_zip.c
+  sqlite3.c
+  display_bidi.c
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  floats.c
+  flow.c
+  inline.c
+  layout.c
+D:\a\EXReader\EXReader\src\inline.c(1244,18): warning C4456: declaration of 'k' hides previous local declaration [D:\a\EXReader\EXReader\build\sdk\exr_layout_objects.vcxproj]
+      D:\a\EXReader\EXReader\src\inline.c(1223,53):
+      see declaration of 'k'
+  
+D:\a\EXReader\EXReader\src\layout.c(170,46): warning C4389: '!=': signed/unsigned mismatch [D:\a\EXReader\EXReader\build\sdk\exr_layout_objects.vcxproj]
+  pager.c
+D:\a\EXReader\EXReader\src\pager.c(435,25): warning C4389: '==': signed/unsigned mismatch [D:\a\EXReader\EXReader\build\sdk\exr_layout_objects.vcxproj]
+  pager_table.c
+  positioned.c
+  publication.c
+  ruby.c
+  style.c
+  aes.c
+  md5.c
+  Generating Code...
+  sha256.c
+  sha512.c
+  platform.c
+  platform_util.c
+  cmscam02.c
+  miniz_tinfl.c
+  xmlrole.c
+  miniz_tdef.c
+  Generating Code...
+  xmltok.c
+  cmscgats.c
+D:\a\EXReader\EXReader\src\publication.c(296,1): warning C4701: potentially uninitialized local variable 'result' used [D:\a\EXReader\EXReader\build\sdk\exr_layout_objects.vcxproj]
+  random_rand_s.c
+  Generating Code...
+  cmscnvrt.c
+  constant_time.c
+  Generating Code...
+  cmserr.c
+  cmsgamma.c
+  cmsgmt.c
+  cmshalf.c
+  cmsintrp.c
+  miniz.vcxproj -> D:\a\EXReader\EXReader\build\sdk\_deps\miniz-build\Release\miniz.lib
+  cmsio0.c
+  cmsio1.c
+  exr_crypto.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_crypto.lib
+  cmslut.c
+  expat.vcxproj -> D:\a\EXReader\EXReader\build\sdk\_deps\expat-build\Release\libexpatMT.lib
+  cmsmd5.c
+  cmsmtrx.c
+  cmsnamed.c
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  cmsopt.c
+  Building Custom Rule D:/a/EXReader/EXReader/build/sdk/_deps/freetype-src/CMakeLists.txt
+  cmspack.c
+  exr_layout_objects.vcxproj -> D:\a\EXReader\EXReader\build\sdk\exr_layout_objects.dir\Release\exr_layout_objects.lib
+  cmspcs.c
+  raster.c
+  autofit.c
+  cmsplugin.c
+  ftbase.c
+  ftbbox.c
+  cmsps2.c
+  ftbdf.c
+  ftbitmap.c
+  Generating Code...
+  ftcid.c
+  ftfstype.c
+  ftgasp.c
+  ftglyph.c
+  ftgxval.c
+  ftinit.c
+  ftmm.c
+  ftotval.c
+  ftpatent.c
+  ftpfr.c
+  ftstroke.c
+  ftsynth.c
+  fttype1.c
+  ftwinfnt.c
+  Compiling...
+  cmssamp.c
+  bdf.c
+  Generating Code...
+  cmssm.c
+  cmstypes.c
+  cmsvirt.c
+  cmswtpnt.c
+  cmsxform.c
+  Generating Code...
+  Compiling...
+  ftbzip2.c
+  exr_render_objects.vcxproj -> D:\a\EXReader\EXReader\build\sdk\exr_render_objects.dir\Release\exr_render_objects.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  ftcache.c
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  cff.c
+  anchor.c
+  annotation.c
+  cfi.c
+  exr_lcms.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_lcms.lib
+  cfi_text.c
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  type1cid.c
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  chapter_index.c
+  case.c
+D:\a\EXReader\EXReader\src\cfi_text.c(120,87): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data [D:\a\EXReader\EXReader\build\sdk\exr_doc_objects.vcxproj]
+D:\a\EXReader\EXReader\src\cfi_text.c(144,125): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data [D:\a\EXReader\EXReader\build\sdk\exr_doc_objects.vcxproj]
+  chapter_window.c
+  common.c
+  ftgzip.c
+  construct.c
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  core.c
+  document.c
+  hvf.c
+  fixed.c
+  fixed_text.c
+  ftlzw.c
+  Generating Code...
+  pcf.c
+  docx.c
+  epub_write.c
+  pfr.c
+  export_epub.c
+  map.c
+  psaux.c
+  pshinter.c
+  psnames.c
+  memory.c
+  normalize.c
+  numbering.c
+  raster.c
+  source.c
+D:\a\EXReader\EXReader\src\cfi.c(293,1): warning C4701: potentially uninitialized local variable 'result' used [D:\a\EXReader\EXReader\build\sdk\exr_doc_objects.vcxproj]
+  transfer.c
+  sdf.c
+  viewport.c
+  Generating Code...
+  sfnt.c
+  export_text.c
+  fb2.c
+  cbz.c
+  formats.c
+  smooth.c
+  pdf_annotation_paint.c
+  huff.c
+  pdf_annotations.c
+  pdf_calculator.c
+  svg.c
+  kf8.c
+  exr_doc_objects.vcxproj -> D:\a\EXReader\EXReader\build\sdk\exr_doc_objects.dir\Release\exr_doc_objects.lib
+  pdf_ccitt.c
+  navigation.c
+  pdf_cmap.c
+  rtf.c
+  pdf_color.c
+  xmp.c
+D:\a\EXReader\EXReader\src\rtf.c(894,60): warning C4456: declaration of 'k' hides previous local declaration [D:\a\EXReader\EXReader\build\sdk\exr_formats_objects.vcxproj]
+      D:\a\EXReader\EXReader\src\rtf.c(764,14):
+      see declaration of 'k'
+  
+D:\a\EXReader\EXReader\src\pdf_color.c(144,34): warning C4456: declaration of 'status' hides previous local declaration [D:\a\EXReader\EXReader\build\sdk\exr_pdf_objects.vcxproj]
+      D:\a\EXReader\EXReader\src\pdf_color.c(133,48):
+      see declaration of 'status'
+  
+  pdf_content.c
+  Generating Code...
+  pdf_crypto.c
+  pdf_document.c
+  pdf_encoding.c
+  pdf_face.c
+  pdf_font.c
+  truetype.c
+  pdf_function.c
+  pdf_image.c
+  exr_base_objects.vcxproj -> D:\a\EXReader\EXReader\build\sdk\exr_base_objects.dir\Release\exr_base_objects.lib
+  pdf_objects.c
+  type1.c
+D:\a\EXReader\EXReader\src\pdf_objects.c(1056,45): warning C4456: declaration of 'count' hides previous local declaration [D:\a\EXReader\EXReader\build\sdk\exr_pdf_objects.vcxproj]
+      D:\a\EXReader\EXReader\src\pdf_objects.c(956,69):
+      see declaration of 'count'
+  
+  pdf_pages.c
+  type42.c
+  pdf_paint.c
+  pdf_raster.c
+  Generating Code...
+  pdf_shading.c
+  Generating Code...
+  affine_image.c
+  blend.c
+  canvas.c
+  curves.c
+  dash.c
+  icc.c
+  image_formats.c
+  images.c
+D:\a\EXReader\EXReader\src\images.c(7,52): warning C4324: '<unnamed-tag>': structure was padded due to alignment specifier [D:\a\EXReader\EXReader\build\sdk\exr_graphics_objects.vcxproj]
+  stroke.c
+  vector.c
+  Generating Code...
+D:\a\EXReader\EXReader\src\pdf_annotation_paint.c(236,1): warning C4701: potentially uninitialized local variable 'present' used [D:\a\EXReader\EXReader\build\sdk\exr_pdf_objects.vcxproj]
+  Compiling...
+  pdf_shading_mesh.c
+  pdf_softmask.c
+  pdf_softmask_parse.c
+  pdf_view.c
+  Generating Code...
+  exr_graphics_objects.vcxproj -> D:\a\EXReader\EXReader\build\sdk\exr_graphics_objects.dir\Release\exr_graphics_objects.lib
+  exr_formats_objects.vcxproj -> D:\a\EXReader\EXReader\build\sdk\exr_formats_objects.dir\Release\exr_formats_objects.lib
+  exr_pdf_objects.vcxproj -> D:\a\EXReader\EXReader\build\sdk\exr_pdf_objects.dir\Release\exr_pdf_objects.lib
+  Compiling...
+  winfnt.c
+  ftsystem.c
+  ftdebug.c
+  Generating Code...
+  freetype.vcxproj -> D:\a\EXReader\EXReader\build\sdk\_deps\freetype-build\Release\freetype.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  bidi.c
+  font_bitmap.c
+  font_color.c
+  font_colr_v1.c
+  font_outline.c
+  font_path.c
+  font_svg.c
+D:\a\EXReader\EXReader\src\font_svg.c(913,19): warning C4456: declaration of 'value' hides previous local declaration [D:\a\EXReader\EXReader\build\sdk\exr_text_objects.vcxproj]
+      D:\a\EXReader\EXReader\src\font_svg.c(883,15):
+      see declaration of 'value'
+  
+D:\a\EXReader\EXReader\src\font_svg.c(935,19): warning C4456: declaration of 'value' hides previous local declaration [D:\a\EXReader\EXReader\build\sdk\exr_text_objects.vcxproj]
+      D:\a\EXReader\EXReader\src\font_svg.c(883,15):
+      see declaration of 'value'
+  
+  fonts.c
+  hyphen.c
+  opentype.c
+D:\a\EXReader\EXReader\src\opentype.c(1624,30): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data [D:\a\EXReader\EXReader\build\sdk\exr_text_objects.vcxproj]
+D:\a\EXReader\EXReader\src\opentype.c(1755,30): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data [D:\a\EXReader\EXReader\build\sdk\exr_text_objects.vcxproj]
+  text.c
+  variable.c
+  Generating Code...
+  exr_sqlite.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_sqlite.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  library.c
+  exr_library_objects.vcxproj -> D:\a\EXReader\EXReader\build\sdk\exr_library_objects.dir\Release\exr_library_objects.lib
+D:\a\EXReader\EXReader\src\hyphen.c(1001,1): warning C4701: potentially uninitialized local variable 'emit' used [D:\a\EXReader\EXReader\build\sdk\exr_text_objects.vcxproj]
+  exr_text_objects.vcxproj -> D:\a\EXReader\EXReader\build\sdk\exr_text_objects.dir\Release\exr_text_objects.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  exr_base.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_base.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  exr_graphics.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_graphics.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  exr_text.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_text.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  exr_doc.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_doc.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  exr_formats.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_formats.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  exr_pdf.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_pdf.lib
+  exr_layout.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_layout.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  exr_library.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_library.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
+  exr_render.vcxproj -> D:\a\EXReader\EXReader\build\sdk\Release\exr_render.lib
+  Building Custom Rule D:/a/EXReader/EXReader/CMakeLists.txt
