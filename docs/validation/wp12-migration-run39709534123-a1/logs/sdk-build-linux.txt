@@ -1,0 +1,219 @@
+[  1%] Building C object CMakeFiles/exr_sqlite.dir/_deps/sqlite-src/sqlite3.c.o
+[  1%] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/aes.c.o
+[  1%] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz.c.o
+[  2%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsalpha.c.o
+[  3%] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz_zip.c.o
+[  3%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmscam02.c.o
+[  4%] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/md5.c.o
+[  4%] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/sha256.c.o
+[  5%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmscgats.c.o
+[  6%] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/sha512.c.o
+[  6%] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/platform.c.o
+[  7%] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/platform_util.c.o
+[  7%] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/constant_time.c.o
+[  8%] Linking C static library libexr_crypto.a
+[  8%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmscnvrt.c.o
+[  8%] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz_tinfl.c.o
+[  9%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmserr.c.o
+[ 10%] Building C object _deps/miniz-build/CMakeFiles/miniz.dir/miniz_tdef.c.o
+[ 10%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsgamma.c.o
+[ 10%] Built target exr_crypto
+[ 11%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/autofit/autofit.c.o
+[ 12%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsgmt.c.o
+[ 13%] Linking C static library libminiz.a
+[ 13%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmshalf.c.o
+[ 14%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsintrp.c.o
+/usr/bin/ar qc libminiz.a CMakeFiles/miniz.dir/miniz.c.o CMakeFiles/miniz.dir/miniz_zip.c.o CMakeFiles/miniz.dir/miniz_tinfl.c.o CMakeFiles/miniz.dir/miniz_tdef.c.o
+/usr/bin/ranlib libminiz.a
+[ 14%] Built target miniz
+[ 14%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbase.c.o
+[ 15%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsio0.c.o
+[ 15%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsio1.c.o
+[ 16%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmslut.c.o
+[ 16%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xcs.c.o
+[ 17%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmlparse.c.o
+[ 18%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbbox.c.o
+[ 18%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbdf.c.o
+[ 19%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftbitmap.c.o
+[ 19%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsmd5.c.o
+[ 20%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsmtrx.c.o
+[ 20%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsnamed.c.o
+[ 20%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftcid.c.o
+[ 21%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftfstype.c.o
+[ 21%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftgasp.c.o
+[ 22%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftglyph.c.o
+[ 23%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsopt.c.o
+[ 23%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftgxval.c.o
+[ 24%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftinit.c.o
+[ 24%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftmm.c.o
+[ 25%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftotval.c.o
+[ 25%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftpatent.c.o
+[ 26%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftpfr.c.o
+[ 26%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftstroke.c.o
+[ 26%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmspack.c.o
+[ 27%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftsynth.c.o
+[ 27%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/fttype1.c.o
+[ 28%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftwinfnt.c.o
+[ 28%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/bdf/bdf.c.o
+[ 28%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmlrole.c.o
+[ 29%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/xmltok.c.o
+[ 30%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/bzip2/ftbzip2.c.o
+[ 31%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cache/ftcache.c.o
+[ 31%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cff/cff.c.o
+[ 31%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_getentropy.c.o
+[ 32%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_getrandom.c.o
+[ 33%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/cid/type1cid.c.o
+[ 33%] Linking C static library libexpat.a
+[ 33%] Built target expat
+[ 34%] Building C object CMakeFiles/exr_layout_objects.dir/src/chapter_reader.c.o
+[ 35%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmspcs.c.o
+[ 35%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/gzip/ftgzip.c.o
+[ 35%] Building C object CMakeFiles/exr_layout_objects.dir/src/display_bidi.c.o
+[ 35%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsplugin.c.o
+[ 36%] Building C object CMakeFiles/exr_layout_objects.dir/src/floats.c.o
+[ 36%] Building C object CMakeFiles/exr_layout_objects.dir/src/flow.c.o
+[ 37%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsps2.c.o
+[ 37%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmssamp.c.o
+[ 38%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/hvf/hvf.c.o
+[ 39%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmssm.c.o
+[ 39%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/lzw/ftlzw.c.o
+[ 40%] Building C object CMakeFiles/exr_layout_objects.dir/src/inline.c.o
+[ 41%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pcf/pcf.c.o
+[ 41%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmstypes.c.o
+[ 41%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pfr/pfr.c.o
+[ 42%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/psaux/psaux.c.o
+[ 43%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsvirt.c.o
+[ 43%] Building C object CMakeFiles/exr_layout_objects.dir/src/layout.c.o
+[ 43%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmswtpnt.c.o
+[ 44%] Building C object CMakeFiles/exr_layout_objects.dir/src/pager.c.o
+[ 45%] Building C object CMakeFiles/exr_lcms.dir/_deps/lcms-src/src/cmsxform.c.o
+[ 45%] Linking C static library libexr_lcms.a
+[ 45%] Built target exr_lcms
+[ 45%] Building C object CMakeFiles/exr_layout_objects.dir/src/pager_table.c.o
+[ 45%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/pshinter/pshinter.c.o
+[ 45%] Building C object CMakeFiles/exr_render_objects.dir/src/raster.c.o
+[ 46%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/psnames/psnames.c.o
+[ 46%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/raster/raster.c.o
+[ 47%] Building C object CMakeFiles/exr_layout_objects.dir/src/positioned.c.o
+[ 47%] Built target exr_render_objects
+[ 47%] Building C object CMakeFiles/exr_layout_objects.dir/src/publication.c.o
+[ 48%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/sdf/sdf.c.o
+[ 49%] Building C object CMakeFiles/exr_layout_objects.dir/src/ruby.c.o
+[ 49%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/sfnt/sfnt.c.o
+[ 49%] Building C object CMakeFiles/exr_layout_objects.dir/src/style.c.o
+[ 49%] Building C object CMakeFiles/exr_pdf_objects.dir/src/cbz.c.o
+[ 50%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_annotation_paint.c.o
+[ 50%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_annotations.c.o
+[ 50%] Built target exr_layout_objects
+[ 50%] Building C object CMakeFiles/exr_base_objects.dir/src/case.c.o
+[ 51%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_calculator.c.o
+[ 52%] Building C object CMakeFiles/exr_base_objects.dir/src/common.c.o
+[ 52%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_ccitt.c.o
+[ 52%] Building C object CMakeFiles/exr_base_objects.dir/src/core.c.o
+[ 53%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_cmap.c.o
+[ 54%] Building C object CMakeFiles/exr_base_objects.dir/src/map.c.o
+[ 54%] Building C object CMakeFiles/exr_base_objects.dir/src/memory.c.o
+[ 55%] Building C object CMakeFiles/exr_base_objects.dir/src/normalize.c.o
+[ 55%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_color.c.o
+[ 55%] Building C object CMakeFiles/exr_base_objects.dir/src/numbering.c.o
+[ 56%] Building C object CMakeFiles/exr_base_objects.dir/src/source.c.o
+[ 56%] Building C object CMakeFiles/exr_base_objects.dir/src/transfer.c.o
+[ 57%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_content.c.o
+[ 58%] Building C object CMakeFiles/exr_base_objects.dir/src/viewport.c.o
+[ 58%] Built target exr_base_objects
+[ 59%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_crypto.c.o
+[ 60%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/smooth/smooth.c.o
+[ 60%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/svg/svg.c.o
+[ 61%] Building C object CMakeFiles/exr_graphics_objects.dir/src/affine_image.c.o
+[ 62%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/truetype/truetype.c.o
+[ 62%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_document.c.o
+[ 62%] Building C object CMakeFiles/exr_graphics_objects.dir/src/blend.c.o
+[ 63%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_encoding.c.o
+[ 63%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_face.c.o
+[ 64%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_font.c.o
+[ 65%] Building C object CMakeFiles/exr_graphics_objects.dir/src/canvas.c.o
+[ 65%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_function.c.o
+[ 66%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_image.c.o
+[ 66%] Building C object CMakeFiles/exr_graphics_objects.dir/src/curves.c.o
+[ 66%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_objects.c.o
+[ 67%] Building C object CMakeFiles/exr_graphics_objects.dir/src/dash.c.o
+[ 68%] Building C object CMakeFiles/exr_graphics_objects.dir/src/icc.c.o
+[ 68%] Building C object CMakeFiles/exr_graphics_objects.dir/src/image_formats.c.o
+[ 69%] Building C object CMakeFiles/exr_graphics_objects.dir/src/images.c.o
+[ 69%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/type1/type1.c.o
+[ 70%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_pages.c.o
+[ 70%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_paint.c.o
+[ 71%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_raster.c.o
+[ 71%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_shading.c.o
+[ 72%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_shading_mesh.c.o
+[ 73%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/type42/type42.c.o
+[ 73%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/winfonts/winfnt.c.o
+[ 73%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_softmask.c.o
+[ 74%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/builds/unix/ftsystem.c.o
+[ 75%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_softmask_parse.c.o
+[ 75%] Building C object _deps/freetype-build/CMakeFiles/freetype.dir/src/base/ftdebug.c.o
+[ 76%] Linking C static library libfreetype.a
+[ 76%] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_view.c.o
+[ 76%] Built target exr_pdf_objects
+[ 76%] Building C object CMakeFiles/exr_graphics_objects.dir/src/stroke.c.o
+[ 76%] Built target freetype
+[ 77%] Building C object CMakeFiles/exr_doc_objects.dir/src/anchor.c.o
+[ 78%] Building C object CMakeFiles/exr_formats_objects.dir/src/docx.c.o
+[ 79%] Building C object CMakeFiles/exr_doc_objects.dir/src/annotation.c.o
+[ 79%] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi.c.o
+[ 80%] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_text.c.o
+[ 80%] Building C object CMakeFiles/exr_formats_objects.dir/src/epub_write.c.o
+[ 80%] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_index.c.o
+[ 81%] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_window.c.o
+[ 82%] Building C object CMakeFiles/exr_formats_objects.dir/src/export_epub.c.o
+[ 83%] Building C object CMakeFiles/exr_graphics_objects.dir/src/vector.c.o
+[ 83%] Building C object CMakeFiles/exr_doc_objects.dir/src/construct.c.o
+[ 83%] Built target exr_graphics_objects
+[ 84%] Building C object CMakeFiles/exr_doc_objects.dir/src/document.c.o
+[ 84%] Building C object CMakeFiles/exr_formats_objects.dir/src/export_text.c.o
+[ 85%] Linking C static library libexr_base.a
+[ 86%] Building C object CMakeFiles/exr_formats_objects.dir/src/fb2.c.o
+[ 86%] Built target exr_base
+[ 86%] Building C object CMakeFiles/exr_text_objects.dir/src/bidi.c.o
+[ 86%] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed.c.o
+[ 86%] Building C object CMakeFiles/exr_formats_objects.dir/src/formats.c.o
+[ 87%] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed_text.c.o
+[ 88%] Building C object CMakeFiles/exr_text_objects.dir/src/font_bitmap.c.o
+[ 88%] Built target exr_doc_objects
+[ 88%] Linking C static library libexr_graphics.a
+[ 88%] Built target exr_graphics
+[ 89%] Building C object CMakeFiles/exr_formats_objects.dir/src/huff.c.o
+[ 89%] Building C object CMakeFiles/exr_text_objects.dir/src/font_color.c.o
+[ 90%] Building C object CMakeFiles/exr_text_objects.dir/src/font_colr_v1.c.o
+[ 90%] Building C object CMakeFiles/exr_formats_objects.dir/src/kf8.c.o
+[ 90%] Building C object CMakeFiles/exr_text_objects.dir/src/font_outline.c.o
+[ 91%] Building C object CMakeFiles/exr_formats_objects.dir/src/navigation.c.o
+[ 92%] Building C object CMakeFiles/exr_text_objects.dir/src/font_path.c.o
+[ 93%] Building C object CMakeFiles/exr_text_objects.dir/src/font_svg.c.o
+[ 93%] Building C object CMakeFiles/exr_formats_objects.dir/src/rtf.c.o
+[ 94%] Building C object CMakeFiles/exr_formats_objects.dir/src/xmp.c.o
+[ 94%] Building C object CMakeFiles/exr_text_objects.dir/src/fonts.c.o
+[ 95%] Building C object CMakeFiles/exr_text_objects.dir/src/hyphen.c.o
+[ 95%] Built target exr_formats_objects
+[ 95%] Building C object CMakeFiles/exr_text_objects.dir/src/opentype.c.o
+[ 96%] Building C object CMakeFiles/exr_text_objects.dir/src/text.c.o
+[ 96%] Building C object CMakeFiles/exr_text_objects.dir/src/variable.c.o
+[ 96%] Built target exr_text_objects
+[ 97%] Linking C static library libexr_text.a
+[ 97%] Built target exr_text
+[ 97%] Linking C static library libexr_doc.a
+[ 97%] Built target exr_doc
+[ 97%] Linking C static library libexr_formats.a
+[ 97%] Built target exr_formats
+[ 98%] Linking C static library libexr_pdf.a
+[ 98%] Linking C static library libexr_layout.a
+[ 98%] Built target exr_layout
+[ 98%] Built target exr_pdf
+[ 99%] Linking C static library libexr_render.a
+[ 99%] Built target exr_render
+[ 99%] Linking C static library libexr_sqlite.a
+[ 99%] Built target exr_sqlite
+[ 99%] Building C object CMakeFiles/exr_library_objects.dir/src/library.c.o
+[ 99%] Built target exr_library_objects
+[100%] Linking C static library libexr_library.a
+[100%] Built target exr_library

@@ -1,0 +1,5 @@
+[ 25%] Building C object CMakeFiles/exreader-legacy-migrate.dir/src/lm_main.c.o
+[ 50%] Building C object CMakeFiles/exreader-legacy-migrate.dir/src/lm_pack.c.o
+[ 75%] Building C object CMakeFiles/exreader-legacy-migrate.dir/src/lm_util.c.o
+[100%] Linking C executable exreader-legacy-migrate
+[100%] Built target exreader-legacy-migrate
