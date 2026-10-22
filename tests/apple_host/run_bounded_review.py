@@ -26,7 +26,7 @@ def main():
     out.mkdir(parents=True)
     sources = ['examples/apple/HostSDK.swift', 'examples/apple/HostModel.swift', 'examples/apple/SelectableText.swift',
                'tests/apple_host/bounded_review/BoundedReview.swift']
-    command = ['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library', '-O',
+    command = ['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library', '-O', '-D', 'EXR_APPLE_HOST_REVIEW',
                '-I', str(sdk/'include'), '-L', str(sdk/'lib'), '-lexreader',
                '-Xlinker', '-rpath', '-Xlinker', str(sdk/'lib'),
                *[str(ROOT/p) for p in sources], '-o', str(out/'bounded-review')]

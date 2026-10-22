@@ -821,6 +821,7 @@ final class EXReaderHostUITests: XCTestCase {
             XCTAssertTrue(text("reader.progress").contains("有界 EPUB"))
             waitElement("reader.first").tap()
             XCTAssertTrue(waitLabel("reader.location", contains: "第 1 章", 40))
+            XCTAssertTrue(waitReaderIdle())
             attach("35-bounded-first-chapter")
         }
         try step("bounded02_cross_chapter_same_local_offset") {

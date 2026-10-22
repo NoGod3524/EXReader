@@ -2,6 +2,7 @@
 import Foundation
 import CoreGraphics
 import CEXReader
+import SQLite3
 
 @main struct BoundedReview {
     static func main() throws {
@@ -23,12 +24,27 @@ import CEXReader
         check("source_import_marks_unknown_extent") { try library.isBoundedEPUB(book: book) && book.position == 0 }
         check("duplicate_preserves_storage_mode") {
             let duplicate = try library.importUnique(file: source, title: "Duplicate")
-            return duplicate.id == id && !duplicate.created && (try library.isBoundedEPUB(book: book))
+            let bounded = try library.isBoundedEPUB(book: book)
+            return duplicate.id == id && !duplicate.created && bounded
         }
         check("source_import_pre_cancel_is_atomic") {
             let box = HostCancelBox(); box.cancel()
             let before = try library.books().count
             do { _ = try library.importUnique(file: source, title: "Cancelled", cancel: box); return false }
+            catch HostError.cancelled { return try library.books().count == before }
+        }
+        check("source_import_mid_cancel_and_late_rollback") {
+            let before = try library.books().count
+            let cancel = HostCancelBox()
+            var observed = false
+            HostSDKReview.event = { if $0 == "import-read" { observed = true; cancel.cancel() } }
+            defer { HostSDKReview.event = nil }
+            do { _ = try library.importUnique(file: resources.appendingPathComponent("Sample.epub"), title: "Cancelled", cancel: cancel); return false }
+            catch HostError.cancelled { }
+            guard observed, try library.books().count == before else { return false }
+            let late = HostCancelBox()
+            HostSDKReview.event = { if $0 == "import-inserted" { late.cancel() } }
+            do { _ = try library.importUnique(file: resources.appendingPathComponent("Sample.epub"), title: "Late cancelled", cancel: late); return false }
             catch HostError.cancelled { return try library.books().count == before }
         }
         check("publication_rebinds_stable_source_control") {
@@ -38,7 +54,9 @@ import CEXReader
             creator.cancel()
             let active = HostCancelBox()
             let range = try pager.pageRange(0, cancel: active)
-            return !(try pager.text(range, cancel: active)).isEmpty && !(try pager.render(0, cancel: active)).pixels.isEmpty
+            let text = try pager.text(range, cancel: active)
+            let bitmap = try pager.render(0, cancel: active)
+            return !text.isEmpty && !bitmap.pixels.isEmpty
         }
         check("repeated_spine_path_keeps_part_identity") {
             let p = try HostPublication(library: library, bookID: id, cancel: HostCancelBox())
@@ -116,7 +134,42 @@ import CEXReader
             let document = try library.document(bookID: legacyID)
             let anchor = try document.makeAnchor(start: 0, end: 0)
             try library.setProgress(bookID: legacyID, anchor: anchor)
-            return !(try library.isBoundedEPUB(book: legacy)) && (try library.progress(bookID: legacyID)).anchor.start == 0
+            let bounded = try library.isBoundedEPUB(book: legacy)
+            let progress = try library.progress(bookID: legacyID)
+            return !bounded && progress.anchor.start == 0
+        }
+        check("schema6_upgrade_preserves_legacy_original_progress_notes") {
+            let path = output.appendingPathComponent("schema6.sqlite")
+            let original = try Data(contentsOf: resources.appendingPathComponent("Unicode.epub"))
+            var old: HostLibrary? = try HostLibrary(path: path)
+            var legacyID: Int64 = 0, error = exr_error()
+            try original.withUnsafeBytes { bytes in try "Legacy schema6".withCString {
+                try hostCheck(exr_library_import(old!.handle, EXR_EPUB, bytes.baseAddress, bytes.count, $0, &legacyID, &error), error)
+            } }
+            do {
+                let document = try old!.document(bookID: legacyID)
+                let anchor = try document.makeAnchor(start: 0, end: 0)
+                try old!.setProgress(bookID: legacyID, anchor: anchor)
+                _ = try old!.addNote(bookID: legacyID, start: 0, end: 7, text: "schema6 original note")
+            }
+            old = nil
+            var connection: OpaquePointer?
+            guard sqlite3_open(path.path, &connection) == SQLITE_OK, let connection else { return false }
+            let status = sqlite3_exec(connection, "DROP TABLE epub_notes; DROP TABLE epub_progress; DROP TABLE epub_bounded_books; PRAGMA user_version=6;", nil, nil, nil)
+            sqlite3_close(connection)
+            guard status == SQLITE_OK else { return false }
+            let upgraded = try HostLibrary(path: path)
+            let book = try upgraded.books().first!
+            let document = try upgraded.document(bookID: legacyID)
+            let notes = try upgraded.reflowNotes(bookID: legacyID, document: document)
+            var blob: UnsafeMutableRawPointer?, size = 0
+            try hostCheck(exr_library_blob(upgraded.handle, legacyID, 0, &blob, &size, &error), error)
+            defer { exr_free(blob) }
+            guard let blob else { return false }
+            let bounded = try upgraded.isBoundedEPUB(book: book)
+            let progress = try upgraded.progress(bookID: legacyID)
+            return book.title == "Legacy schema6" && !bounded && progress.anchor.start == 0 && notes.count == 1 &&
+                notes[0].comment == "schema6 original note" && notes[0].quote == "Unicode" && Data(bytes: blob, count: size) == original
         }
         check("long_chapter_tail_text_without_snapshot") {
             let start = Date()

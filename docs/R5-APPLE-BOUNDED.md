@@ -21,8 +21,8 @@ part/path、章内 UTF-8 point 和同章 notes 使用 schema7 公共 API；旧me
 原12 UI/61具名步骤/46附件、21legacy、21SDK桥接、18Model保持。
 原Model数字回滚回归明确使用公开memory import准备legacy书，继续验证真正global写入。
 新增三平台第13个UI用例、6步骤、3截图，覆盖source导入、跨章、notes跳转、重开、前翻。
-新增macOS安装SDK消费者13项：source/模式/取消、稳定取消owner、重复path、跨章、notesCRUD、
-字号/窗口/重开、歧义拒绝、非法路由、原重复样本歧义、旧memory兼容、50MiB单章后段读取。
+新增macOS安装SDK消费者15项：source/模式/中途取消及晚到回滚、稳定取消owner、重复path、跨章、notesCRUD、
+字号/窗口/重开、歧义拒绝、非法路由、原重复样本歧义、旧memory兼容、schema6升级原件/进度/notes保留、50MiB单章后段读取。
 长章范围为首屏渲染与后段文字/章末point，不宣称全章分页或全局性能门槛。
 
 原重复Sample保留为Repeated.epub负例；正例Sample使用独立编号语料，避免把真实歧义冒充精确匹配。
