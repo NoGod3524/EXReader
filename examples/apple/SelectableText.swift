@@ -57,17 +57,25 @@ struct SelectableText: UIViewRepresentable {
 
     func updateUIView(_ view: UITextView, context: Context) {
         let changed = context.coordinator.parent.text != text || context.coordinator.parent.revision != revision ||
-            context.coordinator.parent.isEnabled != isEnabled
+            context.coordinator.enabled != isEnabled
         if changed { context.coordinator.generation += 1 }
+        let requested = context.coordinator.requestedSelection != selection
+        let nativeEcho = context.coordinator.publishedSelection == selection
+        if nativeEcho || changed { context.coordinator.publishedSelection = nil }
+        context.coordinator.requestedSelection = selection
         context.coordinator.parent = self
+        context.coordinator.enabled = isEnabled
         context.coordinator.updating = true
         defer { context.coordinator.updating = false }
-        view.isSelectable = isEnabled
-        view.isUserInteractionEnabled = isEnabled
+        if view.isSelectable != isEnabled { view.isSelectable = isEnabled }
+        if view.isUserInteractionEnabled != isEnabled { view.isUserInteractionEnabled = isEnabled }
         if changed || view.text != text {
             view.text = text
             view.selectedRange = NSRange(location: 0, length: 0)
-        } else if view.selectedRange != selection {
+        } else if requested && !nativeEcho && view.selectedRange != selection {
+            // A native gesture can change selectedRange before its deferred
+            // Binding callback. Unrelated redraws must not restore the old range.
+            context.coordinator.selectionEvent += 1
             view.selectedRange = selection
         }
     }
@@ -78,21 +86,32 @@ struct SelectableText: UIViewRepresentable {
         var parent: SelectableText
         var generation = 0
         var updating = false
+        var enabled: Bool
+        var requestedSelection: NSRange
+        var publishedSelection: NSRange?
+        var selectionEvent = 0
 
-        init(_ parent: SelectableText) { self.parent = parent }
+        init(_ parent: SelectableText) {
+            self.parent = parent
+            enabled = parent.isEnabled
+            requestedSelection = parent.selection
+        }
 
         func textViewDidChangeSelection(_ textView: UITextView) {
             guard !updating else { return }
             let range = textView.selectedRange
             let expected = parent, generation = self.generation
+            selectionEvent += 1
+            let event = selectionEvent
             guard parent.selection != range else { return }
             DispatchQueue.main.async { [weak self, weak textView] in
-                guard let self, let textView, expected.isEnabled, self.parent.isEnabled,
+                guard let self, let textView, self.enabled, event == self.selectionEvent,
                       generation == self.generation,
                       self.parent.revision == expected.revision, self.parent.text == expected.text,
-                      textView.text == expected.text else { return }
-                expected.selection = range.length == 0 || hostSelectionUTF8Range(range, in: expected.text) != nil
-                    ? range : NSRange(location: 0, length: 0)
+                      textView.text == expected.text, textView.selectedRange == range else { return }
+                let valid = range.length == 0 || hostSelectionUTF8Range(range, in: expected.text) != nil
+                self.publishedSelection = valid ? range : nil
+                expected.selection = valid ? range : NSRange(location: 0, length: 0)
             }
         }
 
@@ -135,17 +154,25 @@ struct SelectableText: NSViewRepresentable {
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
         let changed = context.coordinator.parent.text != text || context.coordinator.parent.revision != revision ||
-            context.coordinator.parent.isEnabled != isEnabled
+            context.coordinator.enabled != isEnabled
         if changed { context.coordinator.generation += 1 }
+        let requested = context.coordinator.requestedSelection != selection
+        let nativeEcho = context.coordinator.publishedSelection == selection
+        if nativeEcho || changed { context.coordinator.publishedSelection = nil }
+        context.coordinator.requestedSelection = selection
         context.coordinator.parent = self
+        context.coordinator.enabled = isEnabled
         guard let view = scroll.documentView as? NSTextView else { return }
         context.coordinator.updating = true
         defer { context.coordinator.updating = false }
-        view.isSelectable = isEnabled
+        if view.isSelectable != isEnabled { view.isSelectable = isEnabled }
         if changed || view.string != text {
             view.string = text
             view.setSelectedRange(NSRange(location: 0, length: 0))
-        } else if view.selectedRange() != selection { view.setSelectedRange(selection) }
+        } else if requested && !nativeEcho && view.selectedRange() != selection {
+            context.coordinator.selectionEvent += 1
+            view.setSelectedRange(selection)
+        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
@@ -154,21 +181,32 @@ struct SelectableText: NSViewRepresentable {
         var parent: SelectableText
         var generation = 0
         var updating = false
+        var enabled: Bool
+        var requestedSelection: NSRange
+        var publishedSelection: NSRange?
+        var selectionEvent = 0
 
-        init(_ parent: SelectableText) { self.parent = parent }
+        init(_ parent: SelectableText) {
+            self.parent = parent
+            enabled = parent.isEnabled
+            requestedSelection = parent.selection
+        }
 
         func textViewDidChangeSelection(_ notification: Notification) {
             guard !updating, let view = notification.object as? NSTextView else { return }
             let range = view.selectedRange()
             let expected = parent, generation = self.generation
+            selectionEvent += 1
+            let event = selectionEvent
             guard parent.selection != range else { return }
             DispatchQueue.main.async { [weak self, weak view] in
-                guard let self, let view, expected.isEnabled, self.parent.isEnabled,
+                guard let self, let view, self.enabled, event == self.selectionEvent,
                       generation == self.generation,
                       self.parent.revision == expected.revision, self.parent.text == expected.text,
-                      view.string == expected.text else { return }
-                expected.selection = range.length == 0 || hostSelectionUTF8Range(range, in: expected.text) != nil
-                    ? range : NSRange(location: 0, length: 0)
+                      view.string == expected.text, view.selectedRange() == range else { return }
+                let valid = range.length == 0 || hostSelectionUTF8Range(range, in: expected.text) != nil
+                self.publishedSelection = valid ? range : nil
+                expected.selection = valid ? range : NSRange(location: 0, length: 0)
             }
         }
     }

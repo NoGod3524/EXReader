@@ -38,10 +38,8 @@ final class EXReaderHostUITests: XCTestCase {
         args += extra
         app.launchArguments = args
         app.launch()
-        XCTAssertTrue(waitUntil(90) {
-            (self.element("reader.page").exists && !self.element("reader.busy").exists) ||
-            (self.element("library.title").exists && !self.element("library.busy").exists &&
-             self.element("library.import.epub").isEnabled)
+        XCTAssertTrue(waitStableState(90) {
+            self.readerIdleIdentity() ?? self.libraryIdleIdentity()
         }, "host did not finish startup and saved-book restoration")
     }
 
@@ -74,6 +72,44 @@ final class EXReaderHostUITests: XCTestCase {
         return condition()
     }
 
+    // The accepted frame and controls must remain idle through the viewport
+    // debounce, rather than treating one transient enabled AX snapshot as ready.
+    private func waitStableState(_ timeout: TimeInterval, _ state: () -> String?) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        var previous: String?, stableSince: Date?
+        while Date() < deadline {
+            let current = state()
+            let observed = Date()
+            if let current {
+                if previous == current {
+                    if let stableSince, observed.timeIntervalSince(stableSince) >= 0.6 { return true }
+                } else {
+                    previous = current
+                    stableSince = observed
+                }
+            } else {
+                previous = nil
+                stableSince = nil
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return false
+    }
+
+    private func readerIdleIdentity() -> String? {
+        guard element("reader.page").exists, !element("reader.busy").exists,
+              element("reader.next").isEnabled else { return nil }
+        let identity = [text("reader.title"), text("reader.location"), text("reader.font.value"),
+                        text("reader.state"), String(describing: element("reader.page").frame)].joined(separator: "|")
+        return element("reader.busy").exists ? nil : identity
+    }
+
+    private func libraryIdleIdentity() -> String? {
+        guard element("library.title").exists, !element("library.busy").exists,
+              element("library.import.epub").isEnabled else { return nil }
+        return "library|\(bookRows().count)|\(text("library.status"))"
+    }
+
     private func waitLabel(_ identifier: String, contains text: String,
                            _ timeout: TimeInterval = 30) -> Bool {
         _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
@@ -96,9 +132,7 @@ final class EXReaderHostUITests: XCTestCase {
     }
 
     private func waitReaderIdle(_ timeout: TimeInterval = 45) -> Bool {
-        waitUntil(timeout) {
-            !self.element("reader.busy").exists && self.element("reader.next").isEnabled
-        }
+        waitStableState(timeout) { self.readerIdleIdentity() }
     }
 
     private func step(_ name: String, _ body: () throws -> Void) rethrows {
@@ -131,17 +165,19 @@ final class EXReaderHostUITests: XCTestCase {
     }
 
     private func openLibrary() {
-        if element("library.title").exists && !element("library.busy").exists { return }
-        if element("reader.back").waitForExistence(timeout: 5) {
+        if !element("library.title").exists && element("reader.back").waitForExistence(timeout: 5) {
             element("reader.back").tap()
         }
         _ = waitElement("library.title", 20)
-        XCTAssertTrue(waitUntil(45) { !self.element("library.busy").exists })
+        XCTAssertTrue(waitStableState(45) { self.libraryIdleIdentity() })
     }
 
     private func ensureReader(_ title: String) throws {
         if element("reader.page").waitForExistence(timeout: 3) {
-            if text("reader.title").contains(title) { return }
+            if text("reader.title").contains(title) {
+                XCTAssertTrue(waitReaderIdle(90))
+                return
+            }
             if element("reader.back").exists {
                 element("reader.back").tap()
                 _ = element("library.title").waitForExistence(timeout: 20)
@@ -157,6 +193,7 @@ final class EXReaderHostUITests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 30), "book \(title) missing")
         row.tap()
         _ = waitElement("reader.page", 90)
+        XCTAssertTrue(waitReaderIdle(90))
     }
 
     private func selectionTextView() -> XCUIElement {
@@ -166,6 +203,8 @@ final class EXReaderHostUITests: XCTestCase {
     }
 
     private func selectWord() {
+        XCTAssertTrue(waitUntil(10) { self.element("selection.copy").isEnabled },
+                      "selection sheet must still own a stable frame before native word selection")
         let view = selectionTextView()
         view.tap()
 #if os(iOS)
@@ -189,6 +228,7 @@ final class EXReaderHostUITests: XCTestCase {
             _ = element("notes.empty").waitForExistence(timeout: 5)
         }
         element("notes.close").tap()
+        XCTAssertTrue(waitReaderIdle())
     }
 
 #if os(macOS)
@@ -591,7 +631,7 @@ final class EXReaderHostUITests: XCTestCase {
 
     func test09BusyReadingBackAndBookOwnership() throws {
         try step("regression04_reading_busy_guards") {
-            launch(extra: ["-EXRHostDelayMs", "5000"])
+            launch(extra: ["-EXRHostDelayMs", "10000"])
             try ensureReader("Sample.epub")
             XCTAssertTrue(waitLabel("reader.status", contains: "就绪", 40))
             waitElement("reader.next").tap()

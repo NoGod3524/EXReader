@@ -430,6 +430,7 @@ final class HostReaderModel: ObservableObject {
     private var lastViewport = CGSize.zero
     private var viewportWork: DispatchWorkItem?
     private var pendingViewport: CGSize?
+    private var viewportWaiting = false
     private let defaults = UserDefaults.standard
     private let testFixtures = ProcessInfo.processInfo.arguments.contains("-EXRUITestFixtures")
     private let freshState = ProcessInfo.processInfo.arguments.contains("-EXRFreshState")
@@ -769,11 +770,26 @@ final class HostReaderModel: ObservableObject {
     }
 
     func updateViewport(_ size: CGSize) {
+        guard let current, !current.isFixed else { return }
         guard size.width > 80, size.height > 80 else { return }
         guard abs(size.width - lastViewport.width) > 6 || abs(size.height - lastViewport.height) > 6 else { return }
         lastViewport = size
         viewportWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in self?.applyViewport(size) }
+        // The debounced interval is part of the resize operation: exposing a
+        // selectable frame here would invalidate it as soon as the timer fires.
+        if !busy {
+            viewportWaiting = true
+            busy = true
+            statusText = "正在调整页面…"
+        }
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            if self.viewportWaiting {
+                self.viewportWaiting = false
+                self.busy = false
+            }
+            self.applyViewport(size)
+        }
         viewportWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
     }
@@ -881,6 +897,7 @@ final class HostReaderModel: ObservableObject {
         let myToken = token
         activeCancel?.cancel()
         viewportWork?.cancel()
+        viewportWaiting = false
         pendingViewport = nil
         busy = true
         statusText = "正在保存…"
@@ -913,6 +930,14 @@ final class HostReaderModel: ObservableObject {
     }
 
     func cancelWork() {
+        if viewportWaiting {
+            viewportWork?.cancel()
+            viewportWaiting = false
+            pendingViewport = nil
+            statusText = "已取消"
+            finish()
+            return
+        }
         activeCancel?.cancel()
         statusText = "正在取消…"
     }
