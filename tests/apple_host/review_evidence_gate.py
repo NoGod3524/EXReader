@@ -103,7 +103,8 @@ def affected_accepted(args, name):
         elif name in ('missing model review', 'failed model review', 'incomplete model review checks',
                       'changed model executable', 'missing SDK review', 'failed SDK review',
                       'incomplete SDK review checks', 'changed SDK review executable',
-                      'missing bounded suite', 'missing bounded check'):
+                      'missing bounded suite', 'missing bounded check', 'diagnostic bounded result',
+                      'nonformal bounded budget', 'nonformal bounded window'):
             fixtures = load(root/'wp13-apple-macos/apple-resources/manifest.json')
             validate_review_reports(root/'wp13-apple-package', args.source_sha, args.run_id,
                                     args.attempt, sdks['macos'], fixtures)
@@ -199,6 +200,9 @@ def mutations():
         ('changed SDK review executable', lambda r: replace(r/'wp13-apple-package/sdk-review/sdk-review', b'changed program')),
         ('missing bounded suite', lambda r: (r/'wp13-apple-package/bounded-review/bounded-review.json').unlink()),
         ('missing bounded check', lambda r: edit(r/'wp13-apple-package/bounded-review/bounded-review.json', lambda d: d['checks'].pop())),
+        ('diagnostic bounded result', lambda r: edit(r/'wp13-apple-package/bounded-review/bounded-review.json', lambda d: d.update(diagnostic_only=True))),
+        ('nonformal bounded budget', lambda r: edit(r/'wp13-apple-package/bounded-review/bounded-review.json', lambda d: d.update(runtime_budget_seconds=180))),
+        ('nonformal bounded window', lambda r: edit(r/'wp13-apple-package/bounded-review/bounded-review.json', lambda d: d['measurements'].update(repeated_window_bytes=65536))),
         ('missing bounded marker', lambda r: alter_database(r, 'DELETE FROM epub_bounded_books')),
         ('missing chapter table', lambda r: alter_database(r, 'DROP TABLE epub_progress')),
         ('missing chapter progress', lambda r: alter_database(r, 'DELETE FROM epub_progress')),

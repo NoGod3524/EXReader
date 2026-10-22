@@ -517,7 +517,8 @@ def validate_review_reports(root, source, run_id, attempt, sdk, fixtures):
     require(load(bounded_root/'consumer/bounded-review.json').get('checks') == bounded['checks'] and
             load(bounded_root/'consumer/bounded-review.json').get('measurements') == bounded.get('measurements'), 'bounded consumer raw result mismatch')
     metrics = bounded.get('measurements', {})
-    require(metrics.get('projection_bytes', 0) >= 49 * 1024 * 1024 and metrics.get('tail_text_bytes') == 512 and
+    require(metrics.get('repeated_window_bytes') == 16384 and
+            metrics.get('projection_bytes', 0) >= 49 * 1024 * 1024 and metrics.get('tail_text_bytes') == 512 and
             metrics.get('explicit_snapshot_bytes') == 0 and metrics.get('peak_parse_workspace_bytes', 1 << 60) <= 16 * 1024 * 1024 and
             bounded.get('process_peak_rss_bytes', 0) > 0, 'bounded long chapter evidence incomplete')
     return {'model': {'checks': len(MODEL_CHECKS), 'accepted': True, 'sha256': digest(model_root/'model-review.json')},
