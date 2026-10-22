@@ -173,6 +173,7 @@ enum {
   BORDER_RIGHT_STYLE,
   BORDER_BOTTOM_STYLE,
   BORDER_LEFT_STYLE,
+  BORDER_SPACING,
   PROPERTIES
 };
 typedef struct {
@@ -363,7 +364,7 @@ static int property(const char *s, size_t n) {
       "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align", "border-collapse", "float", "clear", "hyphens",
       "border-top-width", "border-right-width", "border-bottom-width", "border-left-width",
       "border-top-color", "border-right-color", "border-bottom-color", "border-left-color",
-      "border-top-style", "border-right-style", "border-bottom-style", "border-left-style"};
+      "border-top-style", "border-right-style", "border-bottom-style", "border-left-style", "border-spacing"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -757,6 +758,25 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
   float number;
   char *end;
   uint32_t rgba;
+  if (prop == BORDER_SPACING) {
+    float values[2]; size_t at=0; int count=0;
+    if(!strcmp(v,"inherit") || !strcmp(v,"unset")) {
+      memcpy(s->border_spacing,parent->border_spacing,sizeof(s->border_spacing)); return 1;
+    }
+    if(!strcmp(v,"initial")) { s->border_spacing[0]=s->border_spacing[1]=0; return 1; }
+    while(v[at]) {
+      char token[128]; size_t start,n;
+      while(ws(v[at])) at++;
+      if(!v[at]) break;
+      start=at; while(v[at] && !ws(v[at])) at++;
+      n=at-start; if(count==2 || n>=sizeof(token)) return 0;
+      memcpy(token,v+start,n); token[n]=0;
+      if(!length(token,s->font_size,root,0,&l) || l.percent || l.value<0) return 0;
+      values[count++]=l.value;
+    }
+    if(!count) return 0;
+    s->border_spacing[0]=values[0]; s->border_spacing[1]=values[count-1]; return 1;
+  }
   if (!strcmp(v, "inherit")) {
     if (prop == FAMILY)
       s->family = parent->family;
@@ -1143,6 +1163,7 @@ static exr_status compute_styles(const exr_document *d, const exr_layout_config 
     s->ruby_align = parent->ruby_align;
     s->indent = parent->indent;
     s->border_collapse = parent->border_collapse;
+    memcpy(s->border_spacing,parent->border_spacing,sizeof(s->border_spacing));
     s->hyphens = parent->hyphens;
     s->display = EXR_CSS_INLINE;
     /* HTML table defaults; other host-defined elements retain the CSS initial
