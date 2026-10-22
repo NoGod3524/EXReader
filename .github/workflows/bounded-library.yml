@@ -9,7 +9,7 @@ permissions:
 jobs:
   source:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -37,6 +37,12 @@ jobs:
           cmake -S tests/reading_core -B build/installed-source -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DEXR_EXPECT_LIBRARY=ON -DEXR_TEST_FONT="$PWD/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$PWD/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$PWD/tests/fixtures"
           cmake --build build/installed-source --parallel 4
           ctest --test-dir build/installed-source --output-on-failure --no-tests=error --output-junit "$PWD/build/installed-source-tests.xml"
+      - name: Measure stored long chapters and persistence through installed SDK
+        if: matrix.sanitize == 'OFF'
+        run: |
+          python3 tests/check_library_chapter_measurements.py
+          python3 tools/generate_bounded_chapter_corpus.py build/library-corpus
+          python3 tools/run_wp6_bounded_probe.py build/installed-source/reading-library-chapter-probe tests/fixtures/fonts/primary.ttf build/library-corpus build/library-chapter-evidence --window-bytes 16384 --sample-pages 16 --random-count 4 --repeats 1 --library
       - name: Preserve source-bound results
         if: always()
         uses: actions/upload-artifact@v4
@@ -48,4 +54,6 @@ jobs:
             build/reading-library/Testing/Temporary/
             build/installed-source/Testing/Temporary/
             build/reading-library/stage/
+            build/library-corpus/manifest.json
+            build/library-chapter-evidence/
           if-no-files-found: error
