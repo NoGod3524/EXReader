@@ -7,7 +7,7 @@ default C SDK gains no network runtime, no dependency, no ABI/schema change (che
 No LCP, no payment/borrowing service, no account is required or implemented.
 
 Build (SDK optional): `cmake -S extras/opds -B build/opds [-DEXR_SDK=<installed SDK prefix>]`.
-Without `EXR_SDK` only `libopds` is built. With it: `opds-consume` and `opds-test`.
+Without `EXR_SDK`, `libopds` and the standalone facet regression are built. With it: `opds-consume` and `opds-test`.
 All building and testing for this package happens in GitHub Actions (`wp15-opds.yml`, Linux + Windows).
 
 ## Model (`include/opds.h`)
@@ -20,13 +20,20 @@ Unknown relations and media types are preserved; `kind == OPDS_REL_OTHER` tells 
 Navigation (`OPDS_REL_SUBSECTION`, `START`, `UP` …) and acquisition (`OPDS_REL_ACQUISITION` + `acq`) are separate;
 pagination is `opds_fetch_next` (rel=next); search is `opds_search_url` + `opds_fetch_feed`.
 
+Module 0.2 adds `opds_feed_facets(feed, &count)`: groups expose a title and choices with resolved
+`opds_link`, active state, and an exact nonnegative 64-bit item count (`-1` means absent).
+Pointers are borrowed until `opds_feed_free()`. Existing public feed, entry and link sizes stay fixed.
+The host displays the choices and passes the selected `link.href` to `opds_fetch_feed()`;
+the normal per-origin credentials, redirect and transport rules apply.
+
 ## Support table
 
 | Area | OPDS 1.x Atom | OPDS 2 JSON | Explicit refusal (tested) |
 | --- | --- | --- | --- |
-| Document | `atom:feed` in the Atom namespace, any prefix, UTF-8 (BOM ok) | object with `metadata.title` and one of `links`/`navigation`/`publications`/`groups` | other roots/namespaces, HTML, JSON arrays, other encodings (`unsupported`), DTD/DOCTYPE, undefined entities, duplicate attributes, undeclared prefixes → `format` |
+| Document | `atom:feed` in the Atom namespace, any prefix, UTF-8 (BOM ok) | object with `metadata.title` and one of `links`/`navigation`/`publications`/`groups`/`facets` | other roots/namespaces, HTML, JSON arrays, other encodings (`unsupported`), DTD/DOCTYPE, undefined entities, duplicate attributes, undeclared prefixes → `format` |
 | Navigation | `entry/link rel=subsection` or any other rel (kept verbatim, `kind=OTHER`) | `navigation[]`, `groups[].navigation[]`, link `rel` string or array (joined by a space; default `subsection`) | link without `href`, entry/feed without title → `format` |
-| Publications | `entry` with `author/name`, `dc:identifier|language|publisher` (dc or dcterms), summary/content | `publications[]`, `groups[].publications[]`: title (string or localized object → first value), author string/object/array, identifier, language (string/array), publisher, description, modified, `images[]` | publication without metadata/title → `format`; `facets` are ignored |
+| Publications | `entry` with `author/name`, `dc:identifier|language|publisher` (dc or dcterms), summary/content | `publications[]`, `groups[].publications[]`: title (string or localized object → first value), author string/object/array, identifier, language (string/array), publisher, description, modified, `images[]` | publication without metadata/title → `format` |
+| Facets | feed links with `rel=http://opds-spec.org/facet`, grouped by `opds:facetGroup` (empty if absent), `opds:activeFacet`, `thr:count` | `facets[].metadata.title` and `links[]`, active `rel=self`, `properties.numberOfItems` | malformed groups/counts, multiple active OPDS1 choices per group → `format`; groups and total choices each capped by `max_entries`, choices per group by `max_links_per_entry` → `limit` |
 | Links / base | `xml:base` on feed, entry and link; relative, scheme-relative, dot segments, query-only; bytes outside RFC 3986 are percent-encoded once (existing `%XX` kept) | links resolved against the document URL after redirects | URL > 4096 bytes → `format` |
 | Pagination | rel `next`/`previous`/`first`/`last` + OpenSearch `totalResults/itemsPerPage/startIndex` | same rels, `numberOfItems/itemsPerPage/currentPage` | page budget and revisit (loop) → `limit` |
 | Search | `rel=search` to an OpenSearch description (first `atom+xml`/`opds+json` Url) or a templated href | `rel=search` with `templated:true` | no search link, non-templated href, template operators `+ # / . ;`, unknown *required* variable → `unsupported`; `https` → `needs_host` |
@@ -35,7 +42,7 @@ pagination is `opds_fetch_next` (rel=next); search is `opds_search_url` + `opds_
 | Media types | any, compared case-insensitively without parameters; content is sniffed for EPUB/PDF/ZIP/HTML | same | declared type vs content mismatch → `mismatch` (see below) |
 | Errors | HTTP 401 → `auth_required` (+scheme), other non-2xx → `http` (+status) | same | timeouts → `timeout`, cancel → `cancelled`, truncated bodies → `io` |
 
-Not supported (reported, never silently ignored): facets, OPDS 1 `opds:facetGroup`, `indirectAcquisition` resolution,
+Not supported (reported, never silently ignored): `indirectAcquisition` resolution,
 borrow/payment flows, DRM, templated acquisition links, HTTPS inside the reference transport (host transport needed),
 non-UTF-8 XML, HTTP compression, HEAD/POST.
 
@@ -106,8 +113,15 @@ proves the default SDK is untouched (git tree hashes of `src`, `include`, `cmake
 request class, input SHA-256, expected/actual, request lines, library/binary SHA-256 identity) uploaded as the
 `wp15-opds-<os>` artifact. A case that is missing, skipped or failing fails the job.
 
+Facet coverage additionally runs `opds-facets` in both platform jobs before the existing acceptance driver.
+`facet-result.json`, CTest log and the facet binary hash are preserved in the same artifact and summary.
+It covers grouping, active selection, base resolution, localized group titles, absent/zero/INT64_MAX counts,
+malformed inputs, budgets and pointer lifetime. The existing `o2_groups_facets` service case now checks the API.
+The mapping follows [OPDS 1.2 facets](https://specs.opds.io/opds-1.2.html)
+and [OPDS 2.0 facets](https://specs.opds.io/opds-2.0.html).
+
 ## Known gaps
 
-HTTPS and TLS (host transport), facets, indirect-acquisition resolution, borrow/buy/subscribe/LCP (explicit
+HTTPS and TLS (host transport), indirect-acquisition resolution, borrow/buy/subscribe/LCP (explicit
 `needs_host`), name-resolution cancellation, symlink-destination test on Windows (POSIX only), PDF/CBZ SDK verification
 (requires the `exr_pdf` component, outside this core-only consumer), integration into the Windows/Apple/Android hosts.
