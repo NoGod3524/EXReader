@@ -299,7 +299,7 @@
   "unmet": [
     "package A final Android delivery and its 45+10 cases, 49 pages, 48-gate acceptance",
     "package B final corpus with at least 30 independent documents",
-    "final SDK candidate refreeze if a protected tree changes",
+    "final SDK candidate refreeze if a protected tree changes, and promotion of the Android SDK guard from pending to active",
     "OPDS ownership ancestor H and the final OPDS merge",
     "the ten-group same-source acceptance and its strict summary at the final source",
     "real corpus 0/1710, device, VoiceOver and TalkBack review, complete WP15 and the rest of the queue"
@@ -310,5 +310,22 @@
     "corpus_registration_is_ancestor_of_pre_integration_source": true,
     "previous_sdk_baseline_ancestor": "a2552d7feb786cd2345d2b0b3eb894777b3254db",
     "eight_group_acceptance_source_ancestor": "9e4b595ed7e10dcb2d78f5547e4e6a11a04ba3a1"
+  },
+  "gate_verification": {
+    "protocol_run": {
+      "id": 39823812435,
+      "event": "push",
+      "head_sha": "824d71601f7940ed1cb57fb06f562983bb0940e8",
+      "result": "protocol job success; the summarize job was skipped because no run map was supplied"
+    },
+    "baseline_run": {
+      "id": 39823842117,
+      "event": "workflow_dispatch",
+      "head_sha": "824d71601f7940ed1cb57fb06f562983bb0940e8",
+      "checked_source": "82f88966c0ca2bbca93837861270b8cb57ebb184",
+      "result": "protocol and baseline jobs success; the baseline job verified ancestry, protected trees, the OPDS contract, the pending Android guard, the three candidate evidence runs and the published version/ABI",
+      "summarize_job": "skipped by design"
+    },
+    "scope": "gate and baseline wiring only; no package or capability run was accepted here"
   }
 }

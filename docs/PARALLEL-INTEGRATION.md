@@ -20,7 +20,12 @@ Android 失败候选与 OPDS facets 未纳入本候选。
 候选 K 登记在 `docs/validation/sdk-baseline.json`：SDK 3.40.0、ABI 1，受保护树逐项固定。
 `tools/check_parallel_integration.py` 的严格汇总现在要求 K 与最终源码的受保护树一致、K 是最终源码祖先、
 K 的三组证据运行同源成功、版本/ABI 与头文件一致，并额外要求 `acroform`、`spacing` 两个同源运行；
-十组共 28 个上游作业的门槛保持原样，没有删除任何保护检查。OPDS 与 Android 的固定 SDK 常量必须指向 K。
+十组共 28 个上游作业的门槛保持原样，没有删除任何保护检查。OPDS 与 Android 的固定 SDK 常量必须指向 K；
+Android 的常量在合入前登记为 pending，文件一旦出现而仍未登记就会被拒绝。
+
+门禁本身已在云端验证：push 触发的协议 run `39823812435` 成功；以 `82f88966c0ca2bbca93837861270b8cb57ebb184`
+为受检源码的 dispatch run `39823842117` 通过 protocol 与 baseline 两个作业，逐项核对祖先关系、受保护树、
+OPDS 常量、pending Android 守卫、K 的三组证据运行及版本/ABI。两次运行都不授予任何包或能力通过。
 
 未满足项：A 的 Android 新交付（45+10 用例/49 页/48 项门禁）、B 的至少 30 份独立文档与声明范围、
 B 之后可能的 K 重冻结、所有权祖先 H、十组同源联合验收。本候选只验收上述声明范围，
