@@ -324,11 +324,13 @@ static void dump_fields(size_t index,const char *phase,const exr_pdf_form_field 
 }
 
 
-static long ink_count(const void *data,size_t size,size_t page,const double bounds[4],int button) {
+static long ink_count(const void *data,size_t size,size_t page,const double bounds[4],int button,
+  exr_font *fallback) {
   exr_fixed_open_options options; exr_fixed_document *doc=NULL; exr_bitmap bitmap; long dark=0,x,y;
   double inset=button ? fmin(bounds[2]-bounds[0],bounds[3]-bounds[1])*0.25 : 2.5;
   long x0,x1,y0,y1;
   memset(&options,0,sizeof(options)); options.struct_size=sizeof(options);
+  options.fallback_font=fallback;
   memset(&bitmap,0,sizeof(bitmap));
   if(exr_fixed_open_memory(EXR_PDF,data,size,&options,&doc,&error)!=EXR_OK) return -1;
   if(exr_fixed_render(doc,page,1,NULL,&bitmap,&error)!=EXR_OK) {
@@ -462,7 +464,7 @@ static void run_entry(size_t index,const char *corpus,const char *outdir,
               long dark;
               if(widget->page==SIZE_MAX) continue;
               dark=ink_count(out,out_size,widget->page,widget->bounds,
-                field->kind==EXR_PDF_FIELD_CHECKBOX || field->kind==EXR_PDF_FIELD_RADIO);
+                field->kind==EXR_PDF_FIELD_CHECKBOX || field->kind==EXR_PDF_FIELD_RADIO,text_font);
               fprintf(results,"INK\t%zu\tout\t",index);
               emit_hex(entry->items[i].field,entry->items[i].field_size);
               fprintf(results,"\t%zu\t%zu\t%ld\t",w,widget->page,dark);
