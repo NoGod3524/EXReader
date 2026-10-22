@@ -501,7 +501,7 @@ static int o2_publication_metadata(void) {
   return 0;
 }
 static int o2_groups_facets(void) {
-  opds_client *c; opds_feed f; opds_config cf = cfg(); const opds_entry *e;
+  opds_client *c; opds_feed f, selected; opds_config cf = cfg(); const opds_entry *e;
   const opds_facet *facets; size_t facet_count;
   c = mk(&cf); in_file("o2/groups.json");
   CHECK_ST(fetch_path(c, "/c/o2/groups.json", &f), OPDS_OK);
@@ -515,6 +515,10 @@ static int o2_groups_facets(void) {
   CHECK_STR(facets[0].choices[0].link.title, "English");
   CHECK(strstr(facets[0].choices[0].link.href, "/o2/all?lang=en") != NULL);
   CHECK(!facets[0].choices[0].active && facets[0].choices[0].number_of_items == -1);
+  CHECK_ST(opds_fetch_feed(c, facets[0].choices[0].link.href, NULL, &selected, &E), OPDS_OK);
+  CHECK(selected.entry_count == 2 && selected.entries[0].is_publication);
+  CHECK(opds_entry_acquisition(&selected.entries[0], "application/epub+zip") != NULL);
+  opds_feed_free(&selected);
   opds_feed_free(&f); opds_client_free(c);
   return 0;
 }

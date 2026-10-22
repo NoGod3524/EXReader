@@ -116,7 +116,9 @@ request class, input SHA-256, expected/actual, request lines, library/binary SHA
 Facet coverage additionally runs `opds-facets` in both platform jobs before the existing acceptance driver.
 `facet-result.json`, CTest log and the facet binary hash are preserved in the same artifact and summary.
 It covers grouping, active selection, base resolution, localized group titles, absent/zero/INT64_MAX counts,
-malformed inputs, budgets and pointer lifetime. The existing `o2_groups_facets` service case now checks the API.
+malformed inputs, budgets and pointer lifetime. The existing `o2_groups_facets` service case now selects a
+facet URL through the client and checks the returned publication/acquisition links. Linux also runs the
+standalone parser under ASan/UBSan with leak detection.
 The mapping follows [OPDS 1.2 facets](https://specs.opds.io/opds-1.2.html)
 and [OPDS 2.0 facets](https://specs.opds.io/opds-2.0.html).
 

@@ -48,6 +48,15 @@ jobs:
           git merge-base --is-ancestor "$HANDOFF" HEAD
           libs=$(find stage/lib -maxdepth 1 -type f \( -name '*.a' -o -name '*.lib' \) | sort | tr '\n' ' ')
           python tools/check_opds.py --build build/opds --repo . --out build/wp15-evidence --base "$BASELINE" --handoff "$HANDOFF" --identity $libs
+      - name: Run standalone facet parser with ASan and UBSan
+        if: runner.os == 'Linux'
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          cmake -S extras/opds -B build/facets-asan -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+          cmake --build build/facets-asan --parallel 4
+          ctest --test-dir build/facets-asan --output-on-failure
       - name: Preserve evidence and logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,6 +65,8 @@ jobs:
           path: |
             build/opds/facet-result.json
             build/opds/Testing/Temporary/LastTest.log
+            build/facets-asan/facet-result.json
+            build/facets-asan/Testing/Temporary/LastTest.log
             build/wp15-evidence/*.json
             build/wp15-evidence/*.jsonl
             build/wp15-evidence/*.txt
