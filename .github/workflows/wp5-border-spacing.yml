@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: wp5-border-spacing-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   spacing:
     timeout-minutes: 20
