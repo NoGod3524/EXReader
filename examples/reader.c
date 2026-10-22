@@ -70,6 +70,7 @@ typedef struct {
   int valid;
   int fixed;
   int bounded;
+  int hold_progress;
   int64_t book_id;
   wchar_t title[256];
   double render_scale;
@@ -92,6 +93,7 @@ typedef struct {
   exr_document *document;
   exr_publication *publication;
   int bounded;
+  int hold_progress;
   size_t part;
   exr_pager *pager;
   exr_fixed_document *fixed_document;
@@ -936,6 +938,7 @@ static exr_status render_reflow(host_session *session, size_t page, host_frame *
   out->text = session->bounded ? NULL : host_wide(out->utf8, out->text_bytes);
   if (!session->bounded && !out->text) { frame_clear(out); return EXR_MEMORY; }
   out->bounded = session->bounded; out->part = session->part;
+  out->hold_progress = session->hold_progress;
   out->generation = ++g.frame_sequence;
   out->text_bytes = info->end - info->start;
   out->page = page;
@@ -1224,12 +1227,20 @@ static exr_status bounded_restore(host_session *session, const exr_control *cont
   *page = 0;
   if (status == EXR_OK && present) {
     status = exr_pager_anchor_resolve(session->pager, &location.selector, control, &match, error);
-    if (status == EXR_OK && match.state != EXR_ANCHOR_FOUND) {
-      copy_wstring(note, capacity, match.state == EXR_ANCHOR_AMBIGUOUS ? L"进度锚点存在歧义，未覆盖原位置。" : L"进度锚点未匹配，未覆盖原位置。");
-      status = EXR_ARGUMENT;
+    if (status == EXR_OK) {
+      size_t offset = match.state == EXR_ANCHOR_FOUND ? match.start : location.selector.start;
+      if (match.state != EXR_ANCHOR_FOUND) {
+        host_text_sink sink = {NULL, 0, 0};
+        /* Validate the stored chapter-local UTF-8 boundary before using a
+           numerical fallback. This does not change the anchor match state. */
+        status = exr_pager_read_text(session->pager, offset, offset, page_text_sink, &sink, control, error);
+        session->hold_progress = 1;
+        copy_wstring(note, capacity, match.state == EXR_ANCHOR_AMBIGUOUS ?
+          L"进度锚点存在歧义，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。" :
+          L"进度锚点未匹配，按已保存章内偏移回退恢复（未精确锚定）；保留原记录，翻页后保存新位置。");
+      } else copy_wstring(note, capacity, L"已按章节与文本锚点恢复到上次位置。");
+      if (status == EXR_OK) status = page_for_offset(session, offset, control, page, NULL, NULL, error);
     }
-    if (status == EXR_OK) status = page_for_offset(session, match.start, control, page, NULL, NULL, error);
-    if (status == EXR_OK) copy_wstring(note, capacity, L"已按章节与文本锚点恢复到上次位置。");
   } else if (status == EXR_OK) copy_wstring(note, capacity, L"从首个阅读章节开始。");
   exr_epub_location_free(&location); return status;
 }
@@ -1360,6 +1371,7 @@ static exr_status job_bounded_go(host_job *job) {
   exr_control control = {job_cancel_check, NULL, job};
   const exr_part *parts; size_t count = 0, part = candidate.part, page = job->target_page;
   int switching = 0;
+  if (!job->use_offset && job->direction) candidate.hold_progress = 0;
   parts = exr_publication_parts(candidate.publication, &count);
   if (job->use_offset) {
     part = job->target_part;
@@ -1474,10 +1486,16 @@ static exr_status job_layout(host_job *job) {
     if (status == EXR_OK) status = bounded_pager(&candidate, candidate.part, &pager, &error);
     candidate.pager = pager;
     if (status == EXR_OK) status = exr_pager_anchor_resolve(pager, &point, &control, &match, &error);
-    if (status == EXR_OK && match.state != EXR_ANCHOR_FOUND) {
-      copy_wstring(job->message, 512, L"字号变化时锚点未唯一匹配，保留原画面与字号。"); status = EXR_ARGUMENT;
+    if (status == EXR_OK) {
+      size_t target = match.state == EXR_ANCHOR_FOUND ? match.start : point.start;
+      if (match.state != EXR_ANCHOR_FOUND) {
+        host_text_sink sink = {NULL, 0, 0};
+        status = exr_pager_read_text(pager, target, target, page_text_sink, &sink, &control, &error);
+        candidate.hold_progress = 1;
+        copy_wstring(job->message, 512, L"字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。");
+      }
+      if (status == EXR_OK) status = page_for_offset(&candidate, target, &control, &page, NULL, NULL, &error);
     }
-    if (status == EXR_OK) status = page_for_offset(&candidate, match.start, &control, &page, NULL, NULL, &error);
     if (status == EXR_OK) status = render_reflow(&candidate, page, &job->frame, &control, &error);
     exr_anchor_free(&point);
     if (status == EXR_OK) {
@@ -2213,6 +2231,7 @@ static int save_progress(void) {
   }
   if (g.session.bounded) {
     host_job *job; const exr_part *parts; size_t count = 0;
+    if (g.session.hold_progress) return 1;
     if (!g.progress_failed && g.saved_generation == g.frame.generation) return 1;
     parts = exr_publication_parts(g.session.publication, &count);
     if (g.frame.part != g.session.part || g.frame.part >= count || !g.frame.point.exact) {
@@ -2884,6 +2903,7 @@ static void handle_job_complete(host_job *job) {
         }
         frame_move(&g.frame, &job->frame);
         g.session.part = g.frame.part;
+        g.session.hold_progress = g.frame.hold_progress;
         memset(&g.selection, 0, sizeof(g.selection));
         g.session.page = g.frame.page;
         if (job->kind == JOB_LAYOUT && job->font_percent > 0) g.font_percent = job->font_percent;
@@ -3155,6 +3175,7 @@ static void drive_state(const char *name) {
     snprintf(number, sizeof(number), "%d", g.session.bounded); detail_add(detail, sizeof(detail), "bounded", number);
     snprintf(number, sizeof(number), "%llu", (unsigned long long)g.frame.part); detail_add(detail, sizeof(detail), "part", number);
     snprintf(number, sizeof(number), "%lu", g.frame.generation); detail_add(detail, sizeof(detail), "generation", number);
+    snprintf(number, sizeof(number), "%d", g.session.hold_progress); detail_add(detail, sizeof(detail), "progress_record_preserved", number);
     if (g.session.bounded) {
       const exr_part *parts; size_t part_count = 0; exr_chapter_stats stats = g.frame.chapter_stats;
       parts = exr_publication_parts(g.session.publication, &part_count);

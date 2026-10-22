@@ -59,7 +59,7 @@ def main():
     base.require(book.read_bytes() == repeated.read_bytes(), 'fixture generation is not byte-stable')
     repeated.unlink()
     source = base.source_identity()
-    files = [exe, package / 'Reader.otf', args.seed.resolve(), book, missing]
+    files = [exe, package / 'Reader.otf', package / 'Sample.epub', package / 'Sample-positive.epub', args.seed.resolve(), book, missing]
     files += [p for p in package.iterdir() if p.suffix == '.dll']
     identities = {str(p): base.digest(p) for p in files}
     checks, records = [], {}
@@ -176,10 +176,34 @@ def main():
                 require(all(before_state[k] == after_state[k] for k in ('book_id', 'part', 'page_text_fnv', 'offset')),
                         kind+'/rejected-with-accepted-frame-retained')
             else:
-                require(after_state['book_id'] == '0' and after_state['kind'] == 'none', kind+'/no-approximate-restore')
+                require(after_state['book_id'] != '0' and after_state['part'] == '2' and
+                        after_state.get('progress_record_preserved') == '1' and
+                        '回退恢复（未精确锚定）' in after_state['status'], kind+'/explicit-numeric-fallback-without-exact-claim')
             with sqlite3.connect(rejected/'library.sqlite') as database:
                 after_rows = database.execute('SELECT * FROM '+('epub_notes' if kind.endswith('note') else 'epub_progress')+' ORDER BY 1').fetchall()
             require(before_rows == after_rows, kind+'/original-records-retained')
+        repeat_profile = output / 'repeated-profile'; repeat_profile.mkdir()
+        repeated_a = run('original-repeated', 'A', [
+            'import|'+str(package/'Sample.epub'), 'open|EXReader benchmark', 'check|bounded|1',
+            'next', 'select_all', 'note|Repeated quote negative', 'add_note', 'check|notes|1',
+            'prev', 'state|before_ambiguous_note', 'jump_note|0', 'check|status|contains|歧义',
+            'state|after_ambiguous_note', 'next', 'next', 'state|before_restart', 'quit'], repeat_profile)
+        refused_before = repeated_a['states']['before_ambiguous_note']
+        refused_after = repeated_a['states']['after_ambiguous_note']
+        require(all(refused_before[k] == refused_after[k] for k in ('book_id', 'part', 'page', 'offset', 'page_text_fnv')) and
+                refused_after['selection_active'] == '0', 'original-repeated-quote-rejected-without-navigation')
+        with sqlite3.connect(repeat_profile/'library.sqlite') as database:
+            repeat_progress = database.execute('SELECT * FROM epub_progress').fetchall()
+        repeated_b = run('original-repeated', 'B', [
+            'wait_idle', 'check|bounded|1', 'check|notes|1', 'check|status|contains|回退', 'state|fallback_restored', 'quit'], repeat_profile)
+        repeated_restored = repeated_b['states']['fallback_restored']
+        require(all(repeated_a['states']['before_restart'][k] == repeated_restored[k]
+                    for k in ('book_id', 'part', 'page', 'offset', 'page_text_fnv')) and
+                repeated_restored['progress_record_preserved'] == '1', 'original-repeated-progress-explicit-fallback')
+        with sqlite3.connect(repeat_profile/'library.sqlite') as database:
+            require(database.execute('SELECT * FROM epub_progress').fetchall() == repeat_progress and
+                    database.execute('SELECT count(*) FROM epub_notes').fetchone()[0] == 1,
+                    'original-repeated-selector-records-retained')
         legacy = output / 'legacy-profile'; legacy.mkdir()
         subprocess.run([str(args.seed.resolve()), str(legacy/'library.sqlite'), str(package/'Sample.epub')], check=True, timeout=30)
         la = run('legacy', 'A', ['import|'+str(package/'Sample.epub'), 'check|shelf|count|1',

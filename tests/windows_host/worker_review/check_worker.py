@@ -191,7 +191,7 @@ def main():
         parser.error('Choose a fresh evidence directory')
     output.mkdir(parents=True)
     font = (args.package/'Reader.otf').resolve()
-    sample = (args.package/'Sample.epub').resolve()
+    sample = (args.package/'Sample-positive.epub').resolve()
     pdf = (args.fixtures/'Pages.pdf').resolve()
     extra = (args.fixtures/'Extra-Book.epub').resolve()
     seek_book = output/'Seek-Unique.epub'

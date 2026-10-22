@@ -93,8 +93,11 @@ Chapter-local offsets never enter legacy global tables. Previous/next navigation
 skips auxiliary parts while preserving repeated spine routes by part plus path.
 Only normal pager EOF may cross a chapter; I/O, limits and malformed chapters remain
 errors. Font changes and note jumps publish candidates only after unique anchor
-resolution. Missing/ambiguous bounded progress is rejected without overwriting the
-stored selector. New EPUB notes use `exr_library_epub_note/notes/remove_epub_note`;
+resolution for notes. Missing/ambiguous bounded progress validates the stored
+part/path and UTF-8 offset, then explicitly reports a numerical fallback rather
+than exact reanchoring. It preserves the stored selector until an explicit user
+page turn accepts a new position. Font changes use the same stated numerical
+fallback on the same stored source. New EPUB notes use `exr_library_epub_note/notes/remove_epub_note`;
 cross-chapter single-note selection is unsupported.
 
 Page text, clipboard input, highlights and evidence previews share the accepted
@@ -106,11 +109,18 @@ navigation/close; failure retains the visible position and blocks silent close.
 
 H8 acceptance preserves all original 26 self-test checks, 158 UI actions, eight
 screenshots, evidence-refusal tests and worker candidate/baseline reverse tests.
+The original `Sample.epub` bytes and generator remain unchanged for the 26-check
+self-test and an independent repeated-quote ambiguity-refusal regression. The
+158 positive UI actions use the additional `Sample-positive.epub` with unique
+paragraph identifiers; all actions, assertions and screenshots remain, and an
+extra check binds the note jump to the original part/page/range. Both fixture
+hashes are sealed. Passing this positive plan does not claim the original-byte
+UI plan passed; runs `39862590539` and `39863379537` retain those original failures.
 `tests/windows_host/bounded/check_bounded.py` adds long-chapter eviction, cross-part
 notes/restore, duplicate paths, missing chapter errors, selector rejection, and a
 public memory-import compatibility fixture using the normal distributed binary.
-First run `39862590539` compiled the SDK/host and passed 26 checks but failed the UI
-gate; that failure and its artifact remain retained. No H8 acceptance is claimed yet.
+The original failures identify ambiguous font/progress points and a correctly
+rejected repeated quote. No H8 acceptance is claimed yet.
 
 ## Controls, focus and names
 
