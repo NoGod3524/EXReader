@@ -117,6 +117,16 @@ def main():
     if output.exists():
         parser.error('Choose a new evidence directory')
     output.mkdir(parents=True)
+    # Wait for the desktop session before mapping a real client. Openbox starts
+    # asynchronously in the workflow; showing GTK before it owns the root races.
+    end = time.monotonic()+30
+    while time.monotonic() < end:
+        ready = command('xprop', '-root', '_NET_SUPPORTING_WM_CHECK')
+        if 'window id #' in ready and '0x0' not in ready:
+            break
+        time.sleep(.1)
+    else:
+        raise TimeoutError('Window manager did not become ready')
     corpus = output/'corpus'
     corpus.mkdir()
     book = corpus/'示例 reader.epub'

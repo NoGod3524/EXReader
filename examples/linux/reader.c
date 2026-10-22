@@ -320,7 +320,7 @@ int main(int argc,char **argv) {
   g_signal_connect(shelf,"row-activated",G_CALLBACK(shelf_activated),NULL);
   g_signal_connect(notes,"row-activated",G_CALLBACK(note_activated),NULL);
   g_signal_connect(gtk_text_view_get_buffer(GTK_TEXT_VIEW(text)),"mark-set",G_CALLBACK(selection_changed),NULL);
-  refresh_shelf();gtk_widget_show_all(window);
+  refresh_shelf();gtk_widget_show_all(window);gtk_window_present(GTK_WINDOW(window));
   if(last) open_id(last);
   state();gtk_main();
   exr_pager_free(pager);exr_document_free(document);exr_books_free(books,book_count);
