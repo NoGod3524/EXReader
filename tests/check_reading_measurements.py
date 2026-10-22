@@ -86,18 +86,24 @@ def main():
         binary, font = output / "binary", output / "font"
         binary.write_bytes(b"fake")
         font.write_bytes(b"fake")
+        real_run = subprocess.run
+        compiler_command = ["self-check-compiler", "--version"]
+        benchmark_command = [str(binary), "--text-bytes", "1048576", str(font),
+                             "--paging", "--max-pages", "32"]
         for outcome in ("failure", "timeout", "invalid", "success"):
             destination = output / outcome
             def fake_run(command, **kwargs):
-                if kwargs.get("capture_output"):
+                if command == compiler_command:
                     return subprocess.CompletedProcess(command, 0, b"self-check compiler", b"")
+                if command != benchmark_command:
+                    return real_run(command, **kwargs)
                 kwargs["stdout"].write(json.dumps(sample if outcome != "invalid" else {}).encode())
                 kwargs["stderr"].write(b"retained self-check diagnostic")
                 if outcome == "timeout":
                     raise subprocess.TimeoutExpired(command, 1)
                 return subprocess.CompletedProcess(command, 1 if outcome == "failure" else 0)
             argv = ["measure_reading_core.py", str(binary), str(font), str(destination),
-                    "--runs", "2", "--source-sha", "a" * 40]
+                    "--runs", "2", "--source-sha", "a" * 40, "--compiler", "self-check-compiler"]
             with patch.object(sys, "argv", argv), patch.object(runner, "identity", return_value=identity), \
                     patch.object(runner.subprocess, "run", side_effect=fake_run), \
                     contextlib.redirect_stdout(io.StringIO()):
