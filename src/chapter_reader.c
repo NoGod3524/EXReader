@@ -260,7 +260,10 @@ static exr_status prepare(void *context,size_t node,const exr_control *control,e
       if(s->display!=EXR_CSS_NONE && candidate->start!=EXR_CHAPTER_NONE && candidate->end>candidate->start) break;
       child=candidate->next_sibling;
     }
-    if(child!=EXR_CHAPTER_NONE) return prepare(r,child,control,e);
+    /* Inline/text children can map back to this same oversized block. Load
+       that complete unit under the workspace budget instead of recursing. */
+    if(child!=EXR_CHAPTER_NONE && unit_root(r,child)!=first)
+      return prepare(r,child,control,e);
   }
   last=subtree_end(r,first);
   target=n->source_start+r->options.window_bytes;
