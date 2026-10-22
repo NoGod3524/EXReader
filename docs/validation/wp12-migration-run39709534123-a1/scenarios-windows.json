@@ -1,0 +1,1228 @@
+{
+ "schema": 1,
+ "kind": "wp12-legacy-migration-scenarios",
+ "label": "windows",
+ "platform": "Windows-2025Server-10.0.26100-SP0",
+ "python": "3.12.10",
+ "tool": {
+  "path": "exreader-legacy-migrate.exe",
+  "sha256": "ae430869c8ea1420b2896e0373728f87f99a6864baadb71f319b6c2c2f426b07",
+  "version": "exreader-legacy-migrate 0.1.0 (EXReader SDK 3.40.0)"
+ },
+ "summary": {
+  "cases": 65,
+  "passed": 65,
+  "failed": 0,
+  "checks": 135,
+  "checks_passed": 135,
+  "tool_invocations": 130,
+  "max_peak_rss_bytes": 47480832,
+  "areas": [
+   "annotations",
+   "atomicity",
+   "audio",
+   "commands",
+   "conflicts",
+   "corrupt",
+   "fields",
+   "fixed",
+   "idempotence",
+   "metadata",
+   "originals",
+   "progress",
+   "target"
+  ]
+ },
+ "cases": [
+  {
+   "name": "metadata_roundtrip",
+   "area": "metadata",
+   "passed": true,
+   "checks": [
+    {
+     "check": "partial migration of the full dataset succeeds (exit 0)",
+     "ok": true
+    },
+    {
+     "check": "title/author/tags/favorite/status reach the library",
+     "ok": true
+    },
+    {
+     "check": "data-URI cover decoded into the library cover column",
+     "ok": true
+    },
+    {
+     "check": "four storable books (audio original excluded) are in the library",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 87,
+   "error": null
+  },
+  {
+   "name": "status_favorite_mapping",
+   "area": "metadata",
+   "passed": true,
+   "checks": [
+    {
+     "check": "unread/reading/finished -> 0/1/2 and favorite flags: {'S0': (0, 0), 'S1': (1, 1), 'S2': (2, 0)}",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 28,
+   "error": null
+  },
+  {
+   "name": "original_bytes_exact",
+   "area": "originals",
+   "passed": true,
+   "checks": [
+    {
+     "check": "stored originals are byte-identical to the legacy files (sha256 set equal)",
+     "ok": true
+    },
+    {
+     "check": "report carries per-book digests",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 61,
+   "error": null
+  },
+  {
+   "name": "sdk_rejects_garbage_original",
+   "area": "originals",
+   "passed": true,
+   "checks": [
+    {
+     "check": "SDK-refused original is an item-level unsupported finding that rejects strictly",
+     "ok": true
+    },
+    {
+     "check": "nothing published",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 10,
+   "error": null
+  },
+  {
+   "name": "dedup_is_content_not_name_or_size",
+   "area": "originals",
+   "passed": true,
+   "checks": [
+    {
+     "check": "same name+size+mtime with different bytes stays two books",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 22,
+   "error": null
+  },
+  {
+   "name": "reflow_progress_cfi_anchor",
+   "area": "progress",
+   "passed": true,
+   "checks": [
+    {
+     "check": "CFI progress stored as a FOUND point selector",
+     "ok": true
+    },
+    {
+     "check": "CFI offset 24 equals the start of the second-chapter 'echo token'",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 61,
+   "error": null
+  },
+  {
+   "name": "reflow_progress_percent_is_approximate",
+   "area": "progress",
+   "passed": true,
+   "checks": [
+    {
+     "check": "fraction-only progress is stored as a LEGACY offset with no selector",
+     "ok": true
+    },
+    {
+     "check": "report flags the percentage estimate",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 65,
+   "error": null
+  },
+  {
+   "name": "note_unique_quote_located",
+   "area": "annotations",
+   "passed": true,
+   "checks": [
+    {
+     "check": "unique quote becomes a selector-backed note",
+     "ok": true
+    },
+    {
+     "check": "method recorded",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 62,
+   "error": null
+  },
+  {
+   "name": "note_whitespace_equivalent_quote",
+   "area": "annotations",
+   "passed": true,
+   "checks": [
+    {
+     "check": "line breaks/runs of spaces in the legacy quote still locate the text",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 63,
+   "error": null
+  },
+  {
+   "name": "note_cjk_quote",
+   "area": "annotations",
+   "passed": true,
+   "checks": [
+    {
+     "check": "CJK quote located on UTF-8 boundaries",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 65,
+   "error": null
+  },
+  {
+   "name": "note_ambiguous_quote_unlocated",
+   "area": "annotations",
+   "passed": true,
+   "checks": [
+    {
+     "check": "two occurrences -> unlocated, no guess",
+     "ok": true
+    },
+    {
+     "check": "ambiguous note is not placed in the library",
+     "ok": true
+    },
+    {
+     "check": "content retained in the readable ledger",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 73,
+   "error": null
+  },
+  {
+   "name": "note_missing_quote_unlocated",
+   "area": "annotations",
+   "passed": true,
+   "checks": [
+    {
+     "check": "edited-away quote is unlocated",
+     "ok": true
+    },
+    {
+     "check": "unlocated annotations are counted, not dropped",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 53,
+   "error": null
+  },
+  {
+   "name": "note_cfi_range_exact",
+   "area": "annotations",
+   "passed": true,
+   "checks": [
+    {
+     "check": "CFI range confirmed by quote",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 63,
+   "error": null
+  },
+  {
+   "name": "note_cfi_disambiguates_repeated_quote",
+   "area": "annotations",
+   "passed": true,
+   "checks": [
+    {
+     "check": "CFI node picks the chapter-two occurrence",
+     "ok": true
+    },
+    {
+     "check": "same quote without a CFI stays unlocated",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 61,
+   "error": null
+  },
+  {
+   "name": "bookmark_with_cfi_is_a_point",
+   "area": "annotations",
+   "passed": true,
+   "checks": [
+    {
+     "check": "CFI bookmark becomes an empty-range point note",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 62,
+   "error": null
+  },
+  {
+   "name": "bookmark_without_cfi_unlocated",
+   "area": "annotations",
+   "passed": true,
+   "checks": [
+    {
+     "check": "a bookmark without a CFI is never given a guessed place",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 55,
+   "error": null
+  },
+  {
+   "name": "fixed_progress_is_one_based_to_zero_based",
+   "area": "fixed",
+   "passed": true,
+   "checks": [
+    {
+     "check": "legacy page 2 (one-based) -> zero-based position 1",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 71,
+   "error": null
+  },
+  {
+   "name": "fixed_page_note_located",
+   "area": "fixed",
+   "passed": true,
+   "checks": [
+    {
+     "check": "PDF quote located on its own page (zero-based page 1)",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 63,
+   "error": null
+  },
+  {
+   "name": "fixed_page_bookmark",
+   "area": "fixed",
+   "passed": true,
+   "checks": [
+    {
+     "check": "page bookmark stored as an empty page note",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 56,
+   "error": null
+  },
+  {
+   "name": "fixed_missing_quote_unlocated_and_rects_recorded",
+   "area": "fixed",
+   "passed": true,
+   "checks": [
+    {
+     "check": "quote absent from the page is unlocated",
+     "ok": true
+    },
+    {
+     "check": "legacy rectangles are reported as not converted",
+     "ok": true
+    },
+    {
+     "check": "rectangles retained verbatim in the ledger",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 53,
+   "error": null
+  },
+  {
+   "name": "cbz_percent_progress_is_page_estimate",
+   "area": "fixed",
+   "passed": true,
+   "checks": [
+    {
+     "check": "0.5 over 3 pages -> page index 1, flagged approximate",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 63,
+   "error": null
+  },
+  {
+   "name": "audio_positions_and_bookmarks",
+   "area": "audio",
+   "passed": true,
+   "checks": [
+    {
+     "check": "seconds -> millisecond resume point",
+     "ok": true
+    },
+    {
+     "check": "audio bookmarks use millisecond offsets and the best label",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 61,
+   "error": null
+  },
+  {
+   "name": "audio_original_is_unsupported_so_strict_rejects",
+   "area": "audio",
+   "passed": true,
+   "checks": [
+    {
+     "check": "strict mode rejects because an audio original cannot be stored",
+     "ok": true
+    },
+    {
+     "check": "no target, ledger or stray file after the rejection",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 52,
+   "error": null
+  },
+  {
+   "name": "missing_fields_get_defaults",
+   "area": "fields",
+   "passed": true,
+   "checks": [
+    {
+     "check": "absent fields get documented defaults",
+     "ok": true
+    },
+    {
+     "check": "each default is reported as info",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 20,
+   "error": null
+  },
+  {
+   "name": "unknown_fields_reported_and_kept",
+   "area": "fields",
+   "passed": true,
+   "checks": [
+    {
+     "check": "unknown book and note fields are reported",
+     "ok": true
+    },
+    {
+     "check": "unknown field retained in the ledger",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 16,
+   "error": null
+  },
+  {
+   "name": "wrong_type_record_is_item_rejection",
+   "area": "fields",
+   "passed": true,
+   "checks": [
+    {
+     "check": "wrong JSON type is rejected as an item and, strictly, as the run",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 10,
+   "error": null
+  },
+  {
+   "name": "missing_original_distinguished",
+   "area": "fields",
+   "passed": true,
+   "checks": [
+    {
+     "check": "missing original bytes are their own finding",
+     "ok": true
+    },
+    {
+     "check": "--allow-partial publishes the rest and lists the skipped book",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 3,
+   "duration_ms": 101,
+   "error": null
+  },
+  {
+   "name": "unsupported_format_reported",
+   "area": "fields",
+   "passed": true,
+   "checks": [
+    {
+     "check": "fb2.zip/fbz has no SDK format and is reported",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 10,
+   "error": null
+  },
+  {
+   "name": "orphan_note_preserved",
+   "area": "fields",
+   "passed": true,
+   "checks": [
+    {
+     "check": "note whose book is absent is kept in the ledger only",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 56,
+   "error": null
+  },
+  {
+   "name": "memory_metering",
+   "area": "fields",
+   "passed": true,
+   "checks": [
+    {
+     "check": "peak RSS and largest original are reported: {'peak_rss_bytes': 47480832, 'max_original_bytes': 4194271, 'imported_bytes': 4194271, 'manifest_bytes': 744}",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 342,
+   "error": null
+  },
+  {
+   "name": "rerun_same_pack_is_stable",
+   "area": "idempotence",
+   "passed": true,
+   "checks": [
+    {
+     "check": "second run creates nothing: {'books_expected': 5, 'books_created': 0, 'books_existing': 4, 'books_merged': 0, 'books_skipped': 0, 'books_audio_positions_only': 1, 'books_accounted': 5, 'notes_expected': 16, 'notes_created': 0, 'notes_existing': 10, 'notes_unlocated': 6, 'notes_skipped': 0, 'notes_accounted': 16, 'entries': {'info': 10, 'warning': 0, 'approximate': 0, 'unlocated': 1, 'dropped': 0, 'unsupported': 1, 'conflict': 0}}",
+     "ok": true
+    },
+    {
+     "check": "library content identical after the second run (same IDs)",
+     "ok": true
+    },
+    {
+     "check": "ledger byte-identical (stable ID mapping)",
+     "ok": true
+    },
+    {
+     "check": "verify command agrees in a fresh process",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 5,
+   "duration_ms": 103,
+   "error": null
+  },
+  {
+   "name": "interrupted_run_then_retry_equals_clean_run",
+   "area": "idempotence",
+   "passed": true,
+   "checks": [
+    {
+     "check": "cancelled run publishes nothing",
+     "ok": true
+    },
+    {
+     "check": "stage, lock and temp files removed after cancellation",
+     "ok": true
+    },
+    {
+     "check": "retry result equals an uninterrupted run",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 5,
+   "duration_ms": 152,
+   "error": null
+  },
+  {
+   "name": "ledger_loss_does_not_duplicate",
+   "area": "idempotence",
+   "passed": true,
+   "checks": [
+    {
+     "check": "content match adopts existing books/notes: {'books_expected': 5, 'books_created': 0, 'books_existing': 4, 'books_merged': 0, 'books_skipped': 0, 'books_audio_positions_only': 1, 'books_accounted': 5, 'notes_expected': 16, 'notes_created': 0, 'notes_existing': 10, 'notes_unlocated': 6, 'notes_skipped': 0, 'notes_accounted': 16, 'entries': {'info': 10, 'warning': 1, 'approximate': 0, 'unlocated': 6, 'dropped': 1, 'unsupported': 1, 'conflict': 0}}",
+     "ok": true
+    },
+    {
+     "check": "no duplicate books or annotations without the ledger",
+     "ok": true
+    },
+    {
+     "check": "adoption is reported",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 4,
+   "duration_ms": 95,
+   "error": null
+  },
+  {
+   "name": "same_original_different_legacy_id_merges",
+   "area": "conflicts",
+   "passed": true,
+   "checks": [
+    {
+     "check": "identical bytes with two legacy ids -> one book, first metadata kept",
+     "ok": true
+    },
+    {
+     "check": "merge rule reported",
+     "ok": true
+    },
+    {
+     "check": "annotations of both legacy ids are merged",
+     "ok": true
+    },
+    {
+     "check": "ledger maps both legacy ids to the same book",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 26,
+   "error": null
+  },
+  {
+   "name": "same_id_changed_original_is_conflict",
+   "area": "conflicts",
+   "passed": true,
+   "checks": [
+    {
+     "check": "strict: rejected, library and ledger untouched",
+     "ok": true
+    },
+    {
+     "check": "--allow-partial keeps the earlier book and skips the changed one",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 5,
+   "duration_ms": 54,
+   "error": null
+  },
+  {
+   "name": "same_note_id_changed_content_is_conflict",
+   "area": "conflicts",
+   "passed": true,
+   "checks": [
+    {
+     "check": "same note id with different content is a conflict",
+     "ok": true
+    },
+    {
+     "check": "earlier note kept",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 4,
+   "duration_ms": 42,
+   "error": null
+  },
+  {
+   "name": "existing_target_content_is_preserved",
+   "area": "conflicts",
+   "passed": true,
+   "checks": [
+    {
+     "check": "pre-existing book, notes and ids unchanged after a second migration into the same library",
+     "ok": true
+    },
+    {
+     "check": "stage was built from the existing library with the backup API and published",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 4,
+   "duration_ms": 46,
+   "error": null
+  },
+  {
+   "name": "corrupt_bad_magic",
+   "area": "corrupt",
+   "passed": true,
+   "checks": [
+    {
+     "check": " -> rejected/pack-bad-magic (got rejected/pack-bad-magic) ",
+     "ok": true
+    },
+    {
+     "check": "no target, ledger or stray file",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 6,
+   "error": null
+  },
+  {
+   "name": "corrupt_unknown_container_version",
+   "area": "corrupt",
+   "passed": true,
+   "checks": [
+    {
+     "check": " -> rejected/pack-unknown-version (got rejected/pack-unknown-version) ",
+     "ok": true
+    },
+    {
+     "check": "no target, ledger or stray file",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 6,
+   "error": null
+  },
+  {
+   "name": "corrupt_truncated",
+   "area": "corrupt",
+   "passed": true,
+   "checks": [
+    {
+     "check": " -> rejected/pack-truncated (got rejected/pack-truncated) ",
+     "ok": true
+    },
+    {
+     "check": "no target, ledger or stray file",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 6,
+   "error": null
+  },
+  {
+   "name": "corrupt_manifest_digest",
+   "area": "corrupt",
+   "passed": true,
+   "checks": [
+    {
+     "check": " -> rejected/pack-manifest-hash (got rejected/pack-manifest-hash) ",
+     "ok": true
+    },
+    {
+     "check": "no target, ledger or stray file",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 6,
+   "error": null
+  },
+  {
+   "name": "corrupt_original_digest",
+   "area": "corrupt",
+   "passed": true,
+   "checks": [
+    {
+     "check": " -> rejected/pack-hash-mismatch (got rejected/pack-hash-mismatch) ",
+     "ok": true
+    },
+    {
+     "check": "no target, ledger or stray file",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 8,
+   "error": null
+  },
+  {
+   "name": "corrupt_unknown_manifest_version",
+   "area": "corrupt",
+   "passed": true,
+   "checks": [
+    {
+     "check": " -> rejected/pack-unknown-version (got rejected/pack-unknown-version) ",
+     "ok": true
+    },
+    {
+     "check": "no target, ledger or stray file",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 8,
+   "error": null
+  },
+  {
+   "name": "corrupt_unknown_manifest_format",
+   "area": "corrupt",
+   "passed": true,
+   "checks": [
+    {
+     "check": " -> rejected/pack-unknown-format (got rejected/pack-unknown-format) ",
+     "ok": true
+    },
+    {
+     "check": "no target, ledger or stray file",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 8,
+   "error": null
+  },
+  {
+   "name": "corrupt_duplicate_legacy_ids",
+   "area": "corrupt",
+   "passed": true,
+   "checks": [
+    {
+     "check": " -> rejected/pack-duplicate-id (got rejected/pack-duplicate-id) ",
+     "ok": true
+    },
+    {
+     "check": "no target, ledger or stray file",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 8,
+   "error": null
+  },
+  {
+   "name": "corrupt_manifest_is_not_json",
+   "area": "corrupt",
+   "passed": true,
+   "checks": [
+    {
+     "check": " -> rejected/pack-manifest-json (got rejected/pack-manifest-json) ",
+     "ok": true
+    },
+    {
+     "check": "no target, ledger or stray file",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 8,
+   "error": null
+  },
+  {
+   "name": "corrupt_schema_missing_arrays",
+   "area": "corrupt",
+   "passed": true,
+   "checks": [
+    {
+     "check": " -> rejected/pack-schema (got rejected/pack-schema) ",
+     "ok": true
+    },
+    {
+     "check": "no target, ledger or stray file",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 6,
+   "error": null
+  },
+  {
+   "name": "target_not_a_library",
+   "area": "target",
+   "passed": true,
+   "checks": [
+    {
+     "check": "non-SQLite target refused",
+     "ok": true
+    },
+    {
+     "check": "garbage target: library file and ledger bytes unchanged",
+     "ok": true
+    },
+    {
+     "check": "garbage target: no stage, lock, pre-image or temp file left (['lib.sqlite', 'pack.exrpack'])",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 10,
+   "error": null
+  },
+  {
+   "name": "target_old_schema_not_upgraded",
+   "area": "target",
+   "passed": true,
+   "checks": [
+    {
+     "check": "schema-5 target refused instead of upgraded in place",
+     "ok": true
+    },
+    {
+     "check": "old schema: library file and ledger bytes unchanged",
+     "ok": true
+    },
+    {
+     "check": "old schema: no stage, lock, pre-image or temp file left (['lib.sqlite', 'lib.sqlite.legacy-map.json', 'second.exrpack', 'seed.exrpack'])",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 54,
+   "error": null
+  },
+  {
+   "name": "target_occupied_by_lock_file",
+   "area": "target",
+   "passed": true,
+   "checks": [
+    {
+     "check": "existing lock -> busy (exit 5)",
+     "ok": true
+    },
+    {
+     "check": "foreign lock file is not removed",
+     "ok": true
+    },
+    {
+     "check": "--break-lock takes over and releases the lock",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 3,
+   "duration_ms": 74,
+   "error": null
+  },
+  {
+   "name": "target_held_open_exclusively",
+   "area": "target",
+   "passed": true,
+   "checks": [
+    {
+     "check": "target locked by another connection -> busy/failed (got busy/target-busy)",
+     "ok": true
+    },
+    {
+     "check": "exclusively locked target: library file and ledger bytes unchanged",
+     "ok": true
+    },
+    {
+     "check": "exclusively locked target: no stage, lock, pre-image or temp file left (['lib.sqlite', 'lib.sqlite.legacy-map.json', 'second.exrpack', 'seed.exrpack'])",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 8838,
+   "error": null
+  },
+  {
+   "name": "ledger_without_library_refused",
+   "area": "target",
+   "passed": true,
+   "checks": [
+    {
+     "check": "a ledger without its library is refused",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 10,
+   "error": null
+  },
+  {
+   "name": "ledger_with_unknown_version_refused",
+   "area": "target",
+   "passed": true,
+   "checks": [
+    {
+     "check": "newer ledger version is never overwritten",
+     "ok": true
+    },
+    {
+     "check": "unknown ledger version: library file and ledger bytes unchanged",
+     "ok": true
+    },
+    {
+     "check": "unknown ledger version: no stage, lock, pre-image or temp file left (['lib.sqlite', 'lib.sqlite.legacy-map.json', 'second.exrpack', 'seed.exrpack'])",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 65,
+   "error": null
+  },
+  {
+   "name": "cancel_midway_keeps_target",
+   "area": "atomicity",
+   "passed": true,
+   "checks": [
+    {
+     "check": "cancelled (exit 4)",
+     "ok": true
+    },
+    {
+     "check": "cancel: library file and ledger bytes unchanged",
+     "ok": true
+    },
+    {
+     "check": "cancel: no stage, lock, pre-image or temp file left (['lib.sqlite', 'lib.sqlite.legacy-map.json', 'second.exrpack', 'seed.exrpack'])",
+     "ok": true
+    },
+    {
+     "check": "logical library content identical",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 4,
+   "duration_ms": 76,
+   "error": null
+  },
+  {
+   "name": "read_failure_keeps_target",
+   "area": "atomicity",
+   "passed": true,
+   "checks": [
+    {
+     "check": "source read failure -> failed",
+     "ok": true
+    },
+    {
+     "check": "read failure: library file and ledger bytes unchanged",
+     "ok": true
+    },
+    {
+     "check": "read failure: no stage, lock, pre-image or temp file left (['lib.sqlite', 'lib.sqlite.legacy-map.json', 'second.exrpack', 'seed.exrpack'])",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 59,
+   "error": null
+  },
+  {
+   "name": "write_failure_after_partial_writes_keeps_target",
+   "area": "atomicity",
+   "passed": true,
+   "checks": [
+    {
+     "check": "library write failure after the first book was staged -> failed",
+     "ok": true
+    },
+    {
+     "check": "write failure: library file and ledger bytes unchanged",
+     "ok": true
+    },
+    {
+     "check": "write failure: no stage, lock, pre-image or temp file left (['lib.sqlite', 'lib.sqlite.legacy-map.json', 'second.exrpack', 'seed.exrpack'])",
+     "ok": true
+    },
+    {
+     "check": "logical content identical",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 4,
+   "duration_ms": 80,
+   "error": null
+  },
+  {
+   "name": "verification_failure_keeps_target",
+   "area": "atomicity",
+   "passed": true,
+   "checks": [
+    {
+     "check": "stage verification failure -> failed",
+     "ok": true
+    },
+    {
+     "check": "verify failure: library file and ledger bytes unchanged",
+     "ok": true
+    },
+    {
+     "check": "verify failure: no stage, lock, pre-image or temp file left (['lib.sqlite', 'lib.sqlite.legacy-map.json', 'second.exrpack', 'seed.exrpack'])",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 65,
+   "error": null
+  },
+  {
+   "name": "publish_failure_keeps_target",
+   "area": "atomicity",
+   "passed": true,
+   "checks": [
+    {
+     "check": "publish failure before replacement -> failed",
+     "ok": true
+    },
+    {
+     "check": "publish failure: library file and ledger bytes unchanged",
+     "ok": true
+    },
+    {
+     "check": "publish failure: no stage, lock, pre-image or temp file left (['lib.sqlite', 'lib.sqlite.legacy-map.json', 'second.exrpack', 'seed.exrpack'])",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 69,
+   "error": null
+  },
+  {
+   "name": "ledger_publish_failure_rolls_back_library",
+   "area": "atomicity",
+   "passed": true,
+   "checks": [
+    {
+     "check": "ledger failure after replacement rolls the library back",
+     "ok": true
+    },
+    {
+     "check": "ledger publish failure: library file and ledger bytes unchanged",
+     "ok": true
+    },
+    {
+     "check": "ledger publish failure: no stage, lock, pre-image or temp file left (['lib.sqlite', 'lib.sqlite.legacy-map.json', 'second.exrpack', 'seed.exrpack'])",
+     "ok": true
+    },
+    {
+     "check": "logical content identical after rollback",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 4,
+   "duration_ms": 88,
+   "error": null
+  },
+  {
+   "name": "failed_rollback_is_reported_and_pre_image_kept",
+   "area": "atomicity",
+   "passed": true,
+   "checks": [
+    {
+     "check": "rollback failure is its own outcome (exit 6)",
+     "ok": true
+    },
+    {
+     "check": "pre-image with the original bytes is retained and reported",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 2,
+   "duration_ms": 64,
+   "error": null
+  },
+  {
+   "name": "dry_run_publishes_nothing",
+   "area": "atomicity",
+   "passed": true,
+   "checks": [
+    {
+     "check": "dry run verifies the stage, leaves no file",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 59,
+   "error": null
+  },
+  {
+   "name": "new_target_failure_leaves_nothing",
+   "area": "atomicity",
+   "passed": true,
+   "checks": [
+    {
+     "check": "failure with no pre-existing library creates no library, ledger or stage",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 54,
+   "error": null
+  },
+  {
+   "name": "legacy_backup_zip_converts_to_equivalent_pack",
+   "area": "commands",
+   "passed": true,
+   "checks": [
+    {
+     "check": "backup_to_pack.py converts the legacy backup archive (exit 0)",
+     "ok": true
+    },
+    {
+     "check": "backup-derived and directly built packs migrate to identical libraries",
+     "ok": true
+    },
+    {
+     "check": "an unrelated archive is refused with a named error",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 4,
+   "duration_ms": 269,
+   "error": null
+  },
+  {
+   "name": "inspect_command",
+   "area": "commands",
+   "passed": true,
+   "checks": [
+    {
+     "check": "inspect classifies without touching any target: {'b-txt': 'convertible', 'b-epub': 'convertible', 'b-pdf': 'convertible', 'b-cbz': 'convertible', 'b-audio': 'audio-positions-only', 'z': 'unsupported-format'}",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 1,
+   "duration_ms": 10,
+   "error": null
+  },
+  {
+   "name": "verify_detects_a_pack_that_was_not_migrated",
+   "area": "commands",
+   "passed": true,
+   "checks": [
+    {
+     "check": "verify passes for the migrated pack and fails for one with an unmigrated book",
+     "ok": true
+    }
+   ],
+   "tool_invocations": 3,
+   "duration_ms": 44,
+   "error": null
+  }
+ ]
+}

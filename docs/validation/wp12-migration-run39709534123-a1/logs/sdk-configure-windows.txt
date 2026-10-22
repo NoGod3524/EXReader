@@ -1,0 +1,108 @@
+-- Building for: Visual Studio 18 2026
+-- The C compiler identification is MSVC 19.51.36260.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Could NOT find PkgConfig (missing: PKG_CONFIG_EXECUTABLE) 
+-- Looking for dlfcn.h
+-- Looking for dlfcn.h - not found
+-- Looking for fcntl.h
+-- Looking for fcntl.h - found
+-- Looking for inttypes.h
+-- Looking for inttypes.h - found
+-- Looking for memory.h
+-- Looking for memory.h - found
+-- Looking for stdint.h
+-- Looking for stdint.h - found
+-- Looking for stdlib.h
+-- Looking for stdlib.h - found
+-- Looking for strings.h
+-- Looking for strings.h - not found
+-- Looking for string.h
+-- Looking for string.h - found
+-- Looking for sys/stat.h
+-- Looking for sys/stat.h - found
+-- Looking for sys/types.h
+-- Looking for sys/types.h - found
+-- Looking for unistd.h
+-- Looking for unistd.h - not found
+-- Looking for getpagesize
+-- Looking for getpagesize - not found
+-- Looking for mmap
+-- Looking for mmap - not found
+-- Looking for getrandom
+-- Looking for getrandom - not found
+-- Performing Test HAVE_ARC4RANDOM_BUF
+-- Performing Test HAVE_ARC4RANDOM_BUF - Failed
+-- Performing Test HAVE_ARC4RANDOM
+-- Performing Test HAVE_ARC4RANDOM - Failed
+-- Looking for 4 include files stdlib.h, ..., float.h
+-- Looking for 4 include files stdlib.h, ..., float.h - found
+-- Performing Test HAVE_OFF_T
+-- Performing Test HAVE_OFF_T - Success
+-- Performing Test HAVE_GETENTROPY
+-- Performing Test HAVE_GETENTROPY - Failed
+-- Performing Test HAVE_SYSCALL_GETRANDOM
+-- Performing Test HAVE_SYSCALL_GETRANDOM - Failed
+-- Performing Test _FLAG_DETECTION_UNUSABLE
+-- Performing Test _FLAG_DETECTION_UNUSABLE - Failed
+-- Performing Test FLAG_WSTRICT_ALIASING
+-- Performing Test FLAG_WSTRICT_ALIASING - Failed
+-- Performing Test FLAG_WIMPLICIT_FALLTHROUGH
+-- Performing Test FLAG_WIMPLICIT_FALLTHROUGH - Failed
+-- Performing Test FLAG_VISIBILITY
+-- Performing Test FLAG_VISIBILITY - Failed
+-- Looking for cos in m
+-- Looking for cos in m - not found
+-- -- Using static CRT ON
+-- ===========================================================================
+-- 
+-- CMake version in use ......... 4.4.4
+-- 
+-- Configuration
+--   Generator .................. Visual Studio 18 2026
+--   Build types ................ Debug;Release;MinSizeRel;RelWithDebInfo
+--   Prefix ..................... C:/Program Files (x86)/EXReader
+--   Shared libraries ........... OFF
+--   Static CRT ................. ON
+--   Character type ............. char (UTF-8)
+-- 
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... OFF
+--   Install files .............. OFF
+-- 
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+-- 
+--   Entropy sources
+--     rand_s ................... ON
+-- 
+-- ===========================================================================
+CMake Warning (deprecated) at build/sdk/_deps/miniz-src/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+-- Performing Test COMPILER_HAS_DEPRECATED_ATTR
+-- Performing Test COMPILER_HAS_DEPRECATED_ATTR - Failed
+-- Performing Test COMPILER_HAS_DEPRECATED
+-- Performing Test COMPILER_HAS_DEPRECATED - Success
+-- Configuring done (49.8s)
+-- Generating done (0.3s)
+-- Build files have been written to: D:/a/EXReader/EXReader/build/sdk
