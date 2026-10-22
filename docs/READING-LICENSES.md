@@ -108,7 +108,10 @@ python3 tests/check_reading_licenses.py
 改为同时证明库存结果可为真但 `release_ready=false`。补充三个声明／根 notice／下载组件附带仓库材料正控。
 工作流的 `pin_materials_only=true` 只输出源文件散列，不构建、不运行验收，不授予 `release_ready`。
 
-本轮新结果在两 preset 完成同源云端构建、安装、严格检查与回归后登记；此前不授予新候选通过。
+修补受测源码 `72c1e89659679b7d7b76504007a84d6d8c453db3`，云端 run `39862694733` attempt 1，
+两 preset 均完成干净构建／安装，`materials_check_passed=true`、`release_ready=true`，
+`failures=[]`、`pending=[]`、`mandatory_missing=[]`。两份自检均为 31 项拒绝回归、
+1 项必需缺口阻断例、3 项材料正控、21 个组件；完整身份及先前失败见证据目录。
 覆盖仍只到 Linux 静态 SDK；Windows/macOS/Android、原生宿主字体与音频包使用各自材料出口。
 
 PDF.js 固定来源 `81525fd446779f0a29003cf06e3ba33751954826` 的仓库根与 `src/core/` 目录已由
