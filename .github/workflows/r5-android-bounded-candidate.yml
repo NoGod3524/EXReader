@@ -8,10 +8,40 @@ on:
       - tests/android_host/**
       - .github/workflows/r5-android-bounded-candidate.yml
   workflow_dispatch:
+    inputs:
+      inspect_run_id:
+        description: Read an earlier candidate's per-case failures in Actions only; no acceptance
+        type: string
+        default: ''
 permissions:
   contents: read
+  actions: read
 jobs:
+  inspect-failure:
+    if: ${{ inputs.inspect_run_id != '' && github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      INSPECT_RUN: ${{ inputs.inspect_run_id }}
+    steps:
+      - name: Read previous cloud case reports, diagnostic only
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$INSPECT_RUN" --jq '{id,head_sha,run_attempt,status,conclusion}'
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$INSPECT_RUN/artifacts?per_page=100" --jq '.artifacts[]|{id,name,size_in_bytes,digest,expired}'
+          gh run download "$INSPECT_RUN" --repo "$GITHUB_REPOSITORY" --pattern "R5-Android-bounded-candidate-$INSPECT_RUN-*" --dir cloud-diagnostic
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          print('diagnostic_only=true; accepted=false')
+          for path in Path('cloud-diagnostic').rglob('validation.json'):
+              report=json.loads(path.read_text())
+              print(json.dumps({'path':str(path),'source':report.get('source_sha'),'suite':report.get('suite'),'summary':report.get('summary')}))
+              for case in report.get('cases',[]):
+                  if case.get('status')!='pass':
+                      print(json.dumps({'id':case.get('id'),'status':case.get('status'),'error':case.get('error'),'detail':case.get('detail')}))
+          PY
   candidate-build:
+    if: ${{ !inputs.inspect_run_id }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
@@ -58,6 +88,19 @@ jobs:
           cores: 4
           disable-animations: true
           script: bash examples/android/ci/emulator.sh
+      - name: Print per-suite summaries and failing case identities
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for path in Path('build/android-host/evidence').glob('*/validation.json'):
+              report=json.loads(path.read_text())
+              print(json.dumps({'suite':report.get('suite'),'summary':report.get('summary')}))
+              for case in report.get('cases',[]):
+                  if case.get('status')!='pass':
+                      print(json.dumps({'id':case.get('id'),'status':case.get('status'),'error':case.get('error'),'detail':case.get('detail')}))
+          PY
       - name: Verify complete candidate evidence
         id: preflight
         if: always()
