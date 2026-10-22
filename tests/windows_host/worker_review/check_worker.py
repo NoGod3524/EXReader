@@ -330,6 +330,8 @@ def main():
     def drag_busy(app):
         setup_text(app)
         send(app.control('page'), 0x201, 1, 220 | (240 << 16))
+        if app.bounded:
+            app.wait_idle()  # The bounded down hit is a serialized SDK job.
         began = app.q(17) == 1
         app.gate(2)
         app.click('next')
