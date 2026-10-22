@@ -574,6 +574,12 @@ public final class HostWalkthroughTest {
                 device.wait(Until.hasObject(By.pkg(APP)), 10000);
                 return;
             }
+            if (device.hasObject(By.textContains("Files in Download"))) {
+                device.swipe(device.getDisplayWidth() / 2, (int) (device.getDisplayHeight() * 0.78),
+                        device.getDisplayWidth() / 2, (int) (device.getDisplayHeight() * 0.25), 24);
+                SystemClock.sleep(600);
+                continue;
+            }
             UiObject2 folder = findLabel("Download");
             if (folder == null) folder = findLabel("Downloads");
             if (folder != null && folder.getVisibleBounds().width() > 0) {
