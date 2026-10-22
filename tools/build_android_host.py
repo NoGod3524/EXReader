@@ -99,28 +99,31 @@ def build_sdk(stage, build):
 
 
 def patch_android_libraries(stage):
+    """Android installs unversioned runtimes. Keep a plain libexreader.so and
+    only rename a versioned SONAME/NEEDED entry if another platform layout
+    produced one."""
     patchelf = shutil.which('patchelf')
     if not patchelf:
-        raise SystemExit('patchelf is required to give the Android runtime a plain .so name')
+        raise SystemExit('patchelf is required to normalize Android native names')
     libraries = sorted((stage / 'lib').glob('libexreader.so.*.*'))
-    if not libraries:
-        raise SystemExit('installed SDK is missing the versioned engine runtime')
-    engine = libraries[-1]
-    run([patchelf, '--set-soname', 'libexreader.so', engine])
+    engine = libraries[-1] if libraries else stage / 'lib/libexreader.so'
+    if not engine.is_file():
+        raise SystemExit('installed SDK is missing the engine runtime')
     jni = stage / 'lib/libexreader_jni.so'
     if not jni.is_file():
         raise SystemExit('installed SDK is missing libexreader_jni.so')
-    run([patchelf, '--replace-needed', 'libexreader.so.1', 'libexreader.so', jni])
+    soname = elf_dynamic(engine).get('soname', '')
+    if soname and soname != 'libexreader.so':
+        run([patchelf, '--set-soname', 'libexreader.so', engine])
+    needed = elf_dynamic(jni).get('needed') or []
+    if 'libexreader.so.1' in needed:
+        run([patchelf, '--replace-needed', 'libexreader.so.1', 'libexreader.so', jni])
     target = ANDROID / 'app/src/main/jniLibs/x86_64'
     target.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(engine, target / 'libexreader.so')
     shutil.copyfile(jni, target / 'libexreader_jni.so')
-    # The imported CMake target points at the versioned file; keep its symlink
-    # usable for the host JNI link step as well.
     link = stage / 'lib/libexreader.so'
-    if link.is_symlink() or not link.exists():
-        if link.is_symlink() or link.exists():
-            link.unlink()
+    if link != engine and not link.exists():
         shutil.copyfile(engine, link)
     return target
 
