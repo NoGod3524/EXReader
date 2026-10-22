@@ -216,6 +216,20 @@ def main():
                 shot['sha256'] = digest(image)
                 shot['path'] = str(image)
 
+    if errors:
+        for phase in PHASES:
+            for name in ('epub_open', 'pdf_open', 'stale_done', 'final', 'restored', 'after_restart'):
+                if name in states.get(phase, {}):
+                    print('STATEDIAG %s/%s %s' % (phase, name, json.dumps(
+                        states[phase][name], ensure_ascii=True)), flush=True)
+            for step in steps:
+                if step['phase'] != phase:
+                    continue
+                if step['result'] != 'PASS' or step['index'] <= 20:
+                    print('STEPDIAG %s %d %s %s %s' % (
+                        phase, step['index'], step['action'], step['result'],
+                        json.dumps(step['observed'], ensure_ascii=True)), flush=True)
+
     if len(steps) < 20:
         errors.append('only ' + str(len(steps)) + ' UI steps were recorded; at least 20 are required')
     actions = {step['action'] for step in steps}
