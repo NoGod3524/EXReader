@@ -16,17 +16,25 @@ typedef struct {
   exr_pager *pager;
   int64_t id;
   int bounded,font,hold_progress;
-  size_t part,page,start,end;
+  size_t part,page,start,end,position;
 } reader_session;
 struct linux_reader {
   exr_library *library;
   exr_font *font;
   exr_control control;
   reader_session current;
+  reader_session pending;
+  int has_pending,pending_owns_session,pending_new_pager;
 };
 static void session_free(reader_session *session) {
   exr_pager_free(session->pager);exr_publication_free(session->publication);
   exr_document_free(session->document);memset(session,0,sizeof(*session));
+}
+static void pending_discard(linux_reader *reader) {
+  if(reader->pending_owns_session) session_free(&reader->pending);
+  else if(reader->pending_new_pager) exr_pager_free(reader->pending.pager);
+  memset(&reader->pending,0,sizeof(reader->pending));
+  reader->has_pending=reader->pending_owns_session=reader->pending_new_pager=0;
 }
 void reader_result_free(reader_result *result) {
   size_t i;free(result->pixels);free(result->text);
@@ -46,6 +54,7 @@ exr_status linux_reader_open(const char *database,const char *font,const exr_con
 }
 void linux_reader_close(linux_reader *reader) {
   if(reader) {
+    pending_discard(reader);
     session_free(&reader->current);exr_font_free(reader->font);
     exr_library_close(reader->library);free(reader);
   }
@@ -94,7 +103,7 @@ static exr_status render(linux_reader *reader,reader_session *session,size_t ind
   }
   if(i==PAGE_LIMIT) return EXR_LIMIT;
   if(page.end-page.start>PAGE_TEXT_LIMIT) return EXR_LIMIT;
-  status=exr_render_page_color(layout,exr_layout_font(layout),0,&bitmap,error);
+  status=exr_render_page_ex(layout,exr_layout_font(layout),0,4,&reader->control,&bitmap,error);
   if(status!=EXR_OK) return status;
   if(bitmap.channels!=4 || !bitmap.width || !bitmap.height || bitmap.width>4096 || bitmap.height>4096) {
     exr_bitmap_free(&bitmap);return EXR_LIMIT;
@@ -203,11 +212,17 @@ static exr_status open_book(linux_reader *reader,int64_t id,int size,reader_sess
     if(status!=EXR_OK) goto done;
     if(match.state==EXR_ANCHOR_FOUND) offset=match.start;
     else {
+      exr_anchor verified={0};
+      status=exr_pager_anchor_create(session->pager,point.selector.start,point.selector.start,
+                                     &reader->control,&verified,error);
+      exr_anchor_free(&verified);if(status!=EXR_OK) goto done;
+      offset=point.selector.start;
       session->hold_progress=1;
-      strcpy(result->message,"Saved position is not unique; chapter start shown, original position retained");
+      strcpy(result->message,"Position not unique; saved chapter offset shown, original point retained");
     }
   }
   status=render(reader,session,0,1,offset,result,error);
+  if(status==EXR_OK) session->position=offset;
 done:
   exr_epub_location_free(&point);exr_anchor_free(&legacy);return status;
 }
@@ -287,6 +302,7 @@ static exr_status jump_note(linux_reader *reader,reader_session *session,int64_t
   }
   if(status==EXR_OK) {
     status=render(reader,session,0,1,match.start,result,error);
+    if(status==EXR_OK) session->position=match.start;
     result->select_range=1;result->selected_start=match.start;result->selected_end=match.end;
   }
 done:
@@ -296,7 +312,23 @@ done:
 void linux_reader_execute(linux_reader *reader,const reader_command *command,reader_result *result) {
   reader_session next=reader->current;exr_error error={0};exr_status status=cancel(reader);
   int owned_session=0,new_pager=0;int64_t id=command->book;size_t target=0;
+  int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
+  if(command->action==READER_COMMIT) {
+    /* The GTK acceptance callback queues this before subsequent operations.
+       A stale result never queues it; close waits for its outcome. */
+    reader_session *pending=&reader->pending;
+    status=reader->has_pending && pending->id==command->book && pending->part==command->part && pending->start==command->start ?
+      persist(reader,pending,pending->position,&error):EXR_ARGUMENT;
+    if(status==EXR_OK) {
+      if(reader->pending_owns_session) session_free(&reader->current);
+      else if(reader->pending_new_pager) exr_pager_free(reader->current.pager);
+      reader->current=*pending;memset(pending,0,sizeof(*pending));
+      reader->has_pending=reader->pending_owns_session=reader->pending_new_pager=0;
+    }
+    goto done;
+  }
+  pending_discard(reader);
   if(status!=EXR_OK) goto done;
   if(command->action==READER_SHELF) goto done;
   if(command->action==READER_IMPORT || command->action==READER_OPEN) {
@@ -335,7 +367,7 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   } else if(command->action==READER_NOTE_JUMP) {
     status=jump_note(reader,&next,command->note,result,&error);new_pager=next.pager!=reader->current.pager;
   } else if(command->action==READER_FONT) {
-    exr_anchor point={0};exr_anchor_match match;size_t position=next.start;
+    exr_anchor point={0};exr_anchor_match match;size_t position=next.position;
     if(command->font<12 || command->font>48) status=EXR_ARGUMENT;
     else status=capture(reader,&next,position,position,&point,&error);
     if(status==EXR_OK) {
@@ -350,7 +382,9 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
       }
     }
     if(status==EXR_OK && position>extent(&next)) status=EXR_ARGUMENT;
-    if(status==EXR_OK) { next.font=command->font;status=render(reader,&next,0,1,position,result,&error); }
+    if(status==EXR_OK) {
+      next.font=command->font;status=render(reader,&next,0,1,position,result,&error);next.position=position;
+    }
     exr_anchor_free(&point);
   } else {
     int previous=command->action==READER_PREVIOUS;
@@ -364,16 +398,19 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
     } else {
       target=previous ? next.page-1:next.page+1;status=render(reader,&next,target,0,0,result,&error);
     }
+    if(status==EXR_OK) next.position=result->start;
   }
   if(status==EXR_OK) status=note_list(reader,&next,result,&error);
-  if(status==EXR_OK) status=exr_library_books(reader->library,"",&result->books,&result->book_count,&error);
-  if(status==EXR_OK && result->has_frame) status=persist(reader,&next,result->start,&error);
+  if(status==EXR_OK && wants_shelf) {
+    status=exr_library_books(reader->library,"",&result->books,&result->book_count,&error);
+    result->has_shelf=status==EXR_OK;
+  }
   if(status==EXR_OK) status=cancel(reader);
   if(status==EXR_OK && result->has_frame) {
     next.page=result->page;next.start=result->start;next.end=result->end;
-    if(owned_session) session_free(&reader->current);
-    else if(new_pager) exr_pager_free(reader->current.pager);
-    reader->current=next;owned_session=new_pager=0;
+    result->position=next.position;reader->pending=next;reader->has_pending=1;
+    reader->pending_owns_session=owned_session;reader->pending_new_pager=new_pager;
+    owned_session=new_pager=0;
   }
 done:
   if(owned_session) session_free(&next);
@@ -382,7 +419,10 @@ done:
   result->status=status;
   if(!result->message[0]) strcpy(result->message,status==EXR_OK ? "Ready":"Reading operation failed; accepted page retained");
   /* A committed import remains visible even when its first chapter is bad. */
-  exr_status listing=result->books ? EXR_OK:
-    exr_library_books(reader->library,"",&result->books,&result->book_count,&error);
+  exr_status listing=EXR_OK;
+  if(wants_shelf && !result->has_shelf) {
+    listing=exr_library_books(reader->library,"",&result->books,&result->book_count,&error);
+    result->has_shelf=listing==EXR_OK;
+  }
   if(listing!=EXR_OK && result->status==EXR_OK) { result->status=listing;result->has_frame=0; }
 }
