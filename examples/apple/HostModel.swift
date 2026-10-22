@@ -12,6 +12,14 @@ struct HostSelectionContext: Equatable {
     let text: String
 }
 
+#if EXR_APPLE_HOST_REVIEW
+// The cloud consumer uses this boundary to change real SQLite schema before a
+// real public-SDK query; the shipped application contains no review callbacks.
+enum HostModelReviewGate {
+    static var beforeFrameNotes: ((HostSession) throws -> Void)?
+}
+#endif
+
 struct HostBookRow: Identifiable, Equatable {
     let id: Int64
     let title: String
@@ -429,8 +437,14 @@ final class HostReaderModel: ObservableObject {
     private var started = false
     private var lastViewport = CGSize.zero
     private var viewportWork: DispatchWorkItem?
-    private var pendingViewport: CGSize?
+    private struct ViewportRequest {
+        let size: CGSize
+        let bookID: Int64
+        let token: Int
+    }
+    private var pendingViewport: ViewportRequest?
     private var viewportWaiting = false
+    private var viewportGeneration = 0
     private let defaults = UserDefaults.standard
     private let testFixtures = ProcessInfo.processInfo.arguments.contains("-EXRUITestFixtures")
     private let freshState = ProcessInfo.processInfo.arguments.contains("-EXRFreshState")
@@ -542,12 +556,15 @@ final class HostReaderModel: ObservableObject {
     }
 
     private func finish() {
-        busy = false
         activeCancel = nil
-        if let size = pendingViewport {
+        if let request = pendingViewport {
             pendingViewport = nil
-            DispatchQueue.main.async { [weak self] in self?.applyViewport(size) }
+            if request.bookID == current?.id, request.token == token, current?.isFixed == false {
+                applyViewport(request, finishingPrevious: true)
+                return
+            }
         }
+        busy = false
     }
 
     private func requireBook(_ id: Int64, session: HostSession, cancel: HostCancelBox) throws {
@@ -558,7 +575,12 @@ final class HostReaderModel: ObservableObject {
     @discardableResult
     private func completeFrame(_ snapshot: HostSnapshot, session: HostSession, token: Int,
                                status: String, opening: Bool = false) -> Bool {
-        let notes = Result { try session.notes() }
+        let notes = Result {
+#if EXR_APPLE_HOST_REVIEW
+            try HostModelReviewGate.beforeFrameNotes?(session)
+#endif
+            return try session.notes()
+        }
         let hash = Result { try session.stateHash() }
         let viewport = session.currentViewport
         var warnings: [String] = []
@@ -569,6 +591,13 @@ final class HostReaderModel: ObservableObject {
         let warning = warnings.joined(separator: "；")
         return DispatchQueue.main.sync {
             guard token == self.token else { return false }
+            if self.current?.id != snapshot.book.id {
+                self.notes = []
+                self.stateHash = "—"
+                // A discarded request from the old book must not suppress the
+                // new reader's first geometry observation at the same size.
+                self.lastViewport = .zero
+            }
             self.apply(snapshot)
             if opening { self.showLibrary = false }
             if case .success(let rows) = notes { self.notes = rows }
@@ -775,6 +804,15 @@ final class HostReaderModel: ObservableObject {
         guard abs(size.width - lastViewport.width) > 6 || abs(size.height - lastViewport.height) > 6 else { return }
         lastViewport = size
         viewportWork?.cancel()
+        viewportGeneration += 1
+        let generation = viewportGeneration
+        let request = ViewportRequest(size: size, bookID: current.id, token: token)
+        // The finishing worker will hand this request directly to the next
+        // worker. Do not publish an idle, selectable frame between the two.
+        if busy && !viewportWaiting {
+            pendingViewport = request
+            return
+        }
         // The debounced interval is part of the resize operation: exposing a
         // selectable frame here would invalidate it as soon as the timer fires.
         if !busy {
@@ -783,21 +821,24 @@ final class HostReaderModel: ObservableObject {
             statusText = "正在调整页面…"
         }
         let work = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            if self.viewportWaiting {
-                self.viewportWaiting = false
-                self.busy = false
+            guard let self, self.viewportGeneration == generation, self.viewportWaiting else { return }
+            self.viewportWaiting = false
+            guard request.bookID == self.current?.id, request.token == self.token else {
+                self.finish()
+                return
             }
-            self.applyViewport(size)
+            self.applyViewport(request, finishingPrevious: true)
         }
         viewportWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
     }
 
-    private func applyViewport(_ size: CGSize) {
+    private func applyViewport(_ request: ViewportRequest, finishingPrevious: Bool = false) {
         guard let current, !current.isFixed else { return }
-        guard !busy else { pendingViewport = size; return }
+        guard current.id == request.bookID, token == request.token else { return }
+        guard !busy || finishingPrevious else { pendingViewport = request; return }
         let bookID = current.id
+        let size = request.size
         let (myToken, box) = begin()
         queue.async {
             do {
@@ -897,6 +938,7 @@ final class HostReaderModel: ObservableObject {
         let myToken = token
         activeCancel?.cancel()
         viewportWork?.cancel()
+        viewportGeneration += 1
         viewportWaiting = false
         pendingViewport = nil
         busy = true
@@ -930,10 +972,11 @@ final class HostReaderModel: ObservableObject {
     }
 
     func cancelWork() {
+        viewportWork?.cancel()
+        viewportGeneration += 1
+        pendingViewport = nil
         if viewportWaiting {
-            viewportWork?.cancel()
             viewportWaiting = false
-            pendingViewport = nil
             statusText = "已取消"
             finish()
             return
@@ -993,4 +1036,18 @@ final class HostReaderModel: ObservableObject {
         guard let session else { return }
         try session.writeState(to: try stateFileURL(), fontSHA: fontSHA)
     }
+
+#if EXR_APPLE_HOST_REVIEW
+    // Install an actual session in the command-line cloud consumer without
+    // relying on application-bundle startup resources or replacing SDK calls.
+    func installReviewSession(_ session: HostSession, snapshot: HostSnapshot) throws {
+        self.session = session
+        books = try session.listBooks()
+        apply(snapshot)
+        notes = try session.notes()
+        stateHash = try session.stateHash()
+        showLibrary = false
+        busy = false
+    }
+#endif
 }

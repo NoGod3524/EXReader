@@ -3,6 +3,7 @@ import Foundation
 import CoreGraphics
 import CryptoKit
 import CEXReader
+import Combine
 
 @main
 struct ModelReview {
@@ -29,6 +30,22 @@ struct ModelReview {
         do { try operation(); return false }
         catch HostError.engine(let code, _) { return code == Int(EXR_DATABASE.rawValue) }
         catch { return false }
+    }
+
+    static func pump(_ timeout: TimeInterval = 10, until condition: () -> Bool) throws {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if condition() { return }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
+        throw HostError.invalidResult("Model worker did not reach the expected observable state")
+    }
+
+    static func settle(_ seconds: TimeInterval) {
+        let deadline = Date().addingTimeInterval(seconds)
+        while Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
     }
 
     static func main() throws {
@@ -156,6 +173,127 @@ struct ModelReview {
                 hostSelectionUTF8Range(NSRange(location: 2, length: 1), in: text) == nil &&
                 hostSelectionUTF8Range(NSRange(location: 1, length: 2), in: text) == (1..<5) &&
                 hostSelectionUTF8Range(NSRange(location: Int.max, length: 4), in: text) == nil
+        }
+        check("cross_book_notes_query_failure_clears_previous_book") {
+            let original = try session.renderSnapshot()
+            if try session.notes().isEmpty {
+                _ = try library.addNote(bookID: id, start: original.pageRange.lowerBound,
+                                        end: original.pageRange.lowerBound + 24, text: "Original book annotation")
+            }
+            let otherFile = out.appendingPathComponent("other-review.txt")
+            try Data("A different book with its own unique source text and no annotations.".utf8).write(to: otherFile)
+            let (otherID, _) = try library.importUnique(file: otherFile, title: "Other review book")
+            let model = HostReaderModel()
+            try model.installReviewSession(session, snapshot: original)
+            guard !model.notes.isEmpty, model.notes.allSatisfy({ $0.bookID == id }) else { return false }
+            let oldRequest = CGSize(width: 570, height: 750)
+            model.updateViewport(oldRequest)
+            model.cancelWork()
+            guard !model.busy else { return false }
+            var hidden = false, realSDKRejected = false
+            defer {
+                HostModelReviewGate.beforeFrameNotes = nil
+                if hidden { try? sql(library.path, "ALTER TABLE notes_review_hidden RENAME TO notes;") }
+            }
+            HostModelReviewGate.beforeFrameNotes = { candidate in
+                guard candidate.book?.id == otherID, !hidden else { return }
+                try sql(library.path, "ALTER TABLE notes RENAME TO notes_review_hidden;")
+                hidden = true
+                realSDKRejected = databaseRejected { _ = try candidate.notes() }
+            }
+            model.openBook(id: otherID)
+            try pump { !model.busy }
+            let cleared = model.current?.id == otherID && model.notes.isEmpty && model.stateHash == "—" &&
+                model.errorText.contains("标注刷新失败") && model.image != nil
+            HostModelReviewGate.beforeFrameNotes = nil
+            try sql(library.path, "ALTER TABLE notes_review_hidden RENAME TO notes;")
+            hidden = false
+            model.refreshState()
+            try pump { !model.busy }
+            let recovered = model.current?.id == otherID && model.notes.isEmpty &&
+                model.stateHash != "—" && model.errorText.isEmpty
+            let acceptedFrame = model.frameCount
+            model.updateViewport(oldRequest)
+            let freshRequestAccepted = model.busy && model.selectionContext == nil
+            try pump { !model.busy }
+            return realSDKRejected && cleared && recovered && freshRequestAccepted &&
+                model.frameCount == acceptedFrame + 1 && model.current?.id == otherID && model.notes.isEmpty
+        }
+        check("same_book_notes_query_failure_preserves_list_and_recovers") {
+            let original = try session.renderSnapshot()
+            let model = HostReaderModel()
+            try model.installReviewSession(session, snapshot: original)
+            let noteIDs = model.notes.map(\.id)
+            guard !noteIDs.isEmpty else { return false }
+            var hidden = false, realSDKRejected = false
+            defer {
+                HostModelReviewGate.beforeFrameNotes = nil
+                if hidden { try? sql(library.path, "ALTER TABLE notes_review_hidden RENAME TO notes;") }
+            }
+            HostModelReviewGate.beforeFrameNotes = { candidate in
+                guard !hidden else { return }
+                try sql(library.path, "ALTER TABLE notes RENAME TO notes_review_hidden;")
+                hidden = true
+                realSDKRejected = databaseRejected { _ = try candidate.notes() }
+            }
+            model.turn(1)
+            try pump { !model.busy }
+            let retained = model.current?.id == id && model.notes.map(\.id) == noteIDs &&
+                model.errorText.contains("标注刷新失败") && model.frameCount == 2
+            HostModelReviewGate.beforeFrameNotes = nil
+            try sql(library.path, "ALTER TABLE notes_review_hidden RENAME TO notes;")
+            hidden = false
+            model.refreshState()
+            try pump { !model.busy }
+            return realSDKRejected && retained && model.notes.map(\.id) == noteIDs && model.errorText.isEmpty
+        }
+        check("pending_viewport_handoff_has_no_idle_frame") {
+            let original = try session.renderSnapshot()
+            let model = HostReaderModel()
+            try model.installReviewSession(session, snapshot: original)
+            let initialFrame = model.frameCount
+            let size = CGSize(width: 530, height: 710)
+            var intermediateIdle = false, actualRefreshes = 0
+            let observation = model.$busy.sink { value in
+                if !value && model.frameCount == initialFrame + 1 { intermediateIdle = true }
+            }
+            defer { observation.cancel(); HostModelReviewGate.beforeFrameNotes = nil }
+            HostModelReviewGate.beforeFrameNotes = { _ in
+                actualRefreshes += 1
+                if actualRefreshes == 1 {
+                    DispatchQueue.main.sync { model.updateViewport(size) }
+                }
+            }
+            model.turn(1)
+            try pump { !model.busy && model.frameCount >= initialFrame + 2 }
+            return !intermediateIdle && actualRefreshes == 2 && model.frameCount == initialFrame + 2 &&
+                session.currentViewport == size && model.selectionContext != nil && model.errorText.isEmpty
+        }
+        check("cancel_pending_viewport_keeps_frame_and_recovers") {
+            let original = try session.renderSnapshot()
+            let model = HostReaderModel()
+            try model.installReviewSession(session, snapshot: original)
+            let initialFrame = model.frameCount, viewport = session.currentViewport
+            var actualPoll = false
+            defer { HostSDKReview.poll = nil }
+            HostSDKReview.poll = { _ in
+                guard !actualPoll else { return }
+                actualPoll = true
+                DispatchQueue.main.sync {
+                    model.updateViewport(CGSize(width: 660, height: 820))
+                    model.cancelWork()
+                }
+            }
+            model.turn(1)
+            try pump { !model.busy }
+            HostSDKReview.poll = nil
+            settle(0.6) // A discarded debounce must not start another resize.
+            try pump { !model.busy }
+            let unchanged = actualPoll && model.frameCount == initialFrame && model.pageText == original.pageText &&
+                session.currentViewport == viewport && model.statusText == "已取消"
+            model.turn(1)
+            try pump { !model.busy }
+            return unchanged && model.frameCount == initialFrame + 1 && model.errorText.isEmpty
         }
         let accepted = checks.allSatisfy { $0["passed"] as? Bool == true }
         let env = ProcessInfo.processInfo.environment
