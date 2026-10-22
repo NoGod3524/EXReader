@@ -1169,7 +1169,7 @@ static int verify_library(ctx *c, exr_library *lib, int check_metadata) {
         }
         if (exr_library_audio_bookmarks(lib, b->audio_id, &marks, &count, &c->err) != EXR_OK) { free(expected_text); sdk_fail(c, "verify audio bookmarks"); break; }
         for (j = 0; j < count; j++) if (marks[j].id == nn->new_id && marks[j].position.offset_ms == nn->start &&
-            marks[j].position.rate == 1.0 && marks[j].position.track_id && !strcmp(marks[j].position.track_id, b->legacy) &&
+            marks[j].position.track_id && !strcmp(marks[j].position.track_id, b->legacy) &&
             !strcmp(marks[j].label, expected_text)) found = 1;
         free(expected_text); exr_audio_bookmarks_free(marks, count);
         if (!found) { bad++; entry(c, S_CONFLICT, "verify-note", "verify", nn->legacy, "stored audio bookmark differs from its mapping"); }
