@@ -71,7 +71,9 @@ def collect_database(container, output):
     if not container:
         return {'status': 'container-not-provided'}
     root = Path(container)
-    db = root/'Library/Application Support/EXReader/library.sqlite'
+    candidates = [root/'Library/Application Support/EXReader/library.sqlite',
+                  root/'library.sqlite']
+    db = next((path for path in candidates if path.exists()), candidates[0])
     if not db.exists():
         return {'status': 'missing', 'expected': str(db)}
     target = output/'library.sqlite'
@@ -102,7 +104,8 @@ def copy_state(container, output):
     if not container:
         return {'status': 'container-not-provided'}
     for candidate in [Path(container)/'Documents/host-state.json',
-                      Path(container)/'host-state.json']:
+                      Path(container)/'host-state.json',
+                      Path(container)/'EXReader/host-state.json']:
         if candidate.exists():
             target = output/'host-state.json'
             shutil.copyfile(candidate, target)

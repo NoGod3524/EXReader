@@ -19,13 +19,19 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        id: sdk-cache
+        with:
+          path: stage/${{ matrix.target }}
+          key: exreader-sdk-${{ matrix.target }}-${{ hashFiles('CMakeLists.txt', 'src/**', 'include/**', 'cmake/**') }}
       - name: Build and install the ${{ matrix.target }} SDK
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           target="${{ matrix.target }}"
           if [ "$target" = macos ]; then
             cmake -S . -B "build/sdk-$target" -DCMAKE_BUILD_TYPE=Release \
-              -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=ON -DEXR_ENABLE_AAC=OFF
+              -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF
           else
             cmake -S . -B "build/sdk-$target" -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT="$target" \
               -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
@@ -82,7 +88,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
-          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
           ruby tests/apple_host/make_xcodeproj.rb build/apple-host build/apple-resources
           xcodebuild -project build/apple-host/EXReaderHost.xcodeproj -list
       - name: Select destination and reset simulator state
@@ -169,6 +175,22 @@ jobs:
           manifest = json.loads(pathlib.Path('build/apple-resources/manifest.json').read_text())
           xcode = subprocess.check_output(['xcodebuild', '-version'], text=True).strip()
           sw_vers = subprocess.check_output(['sw_vers'], text=True).strip()
+          import hashlib
+          def sha(path):
+              return hashlib.sha256(path.read_bytes()).hexdigest()
+          apps = list(pathlib.Path('build/DerivedData/Build/Products').glob('**/EXReaderHost.app'))
+          app_info = {}
+          if apps:
+              bundle = apps[0]
+              exe = bundle / 'Contents/MacOS/EXReaderHost'
+              if not exe.exists():
+                  exe = bundle / 'EXReaderHost'
+              app_info = {'bundle': str(bundle),
+                          'executable_sha256': sha(exe) if exe.exists() else '',
+                          'info_plist_sha256': sha(bundle / 'Contents/Info.plist')
+                          if (bundle / 'Contents/Info.plist').exists()
+                          else sha(bundle / 'Info.plist')
+                          if (bundle / 'Info.plist').exists() else ''}
           identity = {
               'platform': platform,
               'destination': lines[0] if lines else '',
@@ -183,6 +205,8 @@ jobs:
               'host': host_platform.platform(),
               'sw_vers': sw_vers,
               'sdk': sdk,
+              'app': app_info,
+              'input_driver': 'XCUITest tap/doubleTap/typeText/drag and simulator orientation',
               'font_sha256': manifest.get('Reader.otf', ''),
               'fixtures': manifest,
           }

@@ -51,11 +51,12 @@ final class HostSession {
     private var pageRange: Range<Int> = 0..<0
     private var currentCancel: HostCancelBox?
 
-    init(library: HostLibrary, font: HostFont, slowDelay: Double, viewport: CGSize) {
+    init(library: HostLibrary, font: HostFont, slowDelay: Double, viewport: CGSize, fontSize: Double) {
         self.library = library
         self.font = font
         self.slowDelay = slowDelay
         self.viewport = viewport
+        self.fontSize = min(48, max(18, fontSize))
     }
 
     var currentViewport: CGSize { viewport }
@@ -420,8 +421,10 @@ final class HostReaderModel: ObservableObject {
                 let viewport = savedWidth > 200 && savedHeight > 200
                     ? CGSize(width: savedWidth, height: savedHeight)
                     : CGSize(width: 720, height: 1040)
+                let savedFont = self.defaults.double(forKey: "EXRFontSize")
                 let session = HostSession(library: library, font: font, slowDelay: self.slowDelay,
-                                          viewport: viewport)
+                                          viewport: viewport,
+                                          fontSize: savedFont > 0 ? savedFont : 28)
                 self.session = session
                 let rows = try session.listBooks()
                 let lastID = (self.defaults.object(forKey: "EXRLastBook") as? NSNumber)?.int64Value
@@ -449,9 +452,14 @@ final class HostReaderModel: ObservableObject {
         return base.appendingPathComponent("EXReader", isDirectory: true)
     }
 
-    private func documentsFolder() throws -> URL {
-        try FileManager.default.url(for: .documentDirectory, in: .userDomainMask,
-                                    appropriateFor: nil, create: true)
+    private func stateFileURL() throws -> URL {
+#if os(iOS)
+        let folder = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask,
+                                                 appropriateFor: nil, create: true)
+        return folder.appendingPathComponent("host-state.json")
+#else
+        return try storageFolder().appendingPathComponent("host-state.json")
+#endif
     }
 
     private func describe(_ error: Error) -> String {
@@ -484,6 +492,7 @@ final class HostReaderModel: ObservableObject {
         pageBaseOffset = snapshot.pageRange.lowerBound
         pageAccessibilityLabel = snapshot.pageAccessibilityLabel
         fontSize = snapshot.fontSize
+        defaults.set(snapshot.fontSize, forKey: "EXRFontSize")
         frameCount += 1
         defaults.set(snapshot.book.id, forKey: "EXRLastBook")
     }
@@ -841,7 +850,6 @@ final class HostReaderModel: ObservableObject {
 
     private func writeState(session: HostSession?) throws {
         guard let session else { return }
-        let folder = try documentsFolder()
-        try session.writeState(to: folder.appendingPathComponent("host-state.json"), fontSHA: fontSHA)
+        try session.writeState(to: try stateFileURL(), fontSHA: fontSHA)
     }
 }
