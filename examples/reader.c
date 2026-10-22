@@ -2107,6 +2107,7 @@ static void jump_selected_note(void) {
     exr_anchor_match match;
     exr_error error = {0};
     size_t offset;
+    size_t target_start = note->start, target_end = note->end;
     if (!g.session.document) return;
     if (!note->anchor.exact) {
       if (note->start == SIZE_MAX) { set_status(L"该标注没有可用的文本锚点。"); return; }
@@ -2130,6 +2131,8 @@ static void jump_selected_note(void) {
         return;
       }
       offset = match.start;
+      target_start = match.start;
+      target_end = match.end;
     }
     job = job_new(JOB_GO);
     if (!job) return;
@@ -2138,8 +2141,8 @@ static void jump_selected_note(void) {
     job->target_offset = offset;
     job->direction = 0;
     g.pending_selection = 1;
-    g.pending_start = note->start;
-    g.pending_end = note->end;
+    g.pending_start = target_start;
+    g.pending_end = target_end;
     g.pending_book = g.current.id;
     job_submit(job);
   }
