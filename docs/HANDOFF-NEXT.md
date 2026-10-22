@@ -2,7 +2,7 @@
 
 ## 当前入口：3.40.0 开发版
 
-2026-10-21，SDK **3.40.0**、核心 **3.39.0**、PDF读取 **3.38.3**，MIT，ABI1/schema6。
+2026-10-22，SDK **3.40.0**、核心 **3.39.0**、PDF读取 **3.38.3**，MIT，ABI1/schema6。
 当前实现证据对应源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9`；
 最新范围以 [支持矩阵](SUPPORT_MATRIX.md) 和 [开发路线](HANDOFF.md) 为准。
 
@@ -10,7 +10,7 @@
 - Windows GCC默认/关闭可选图像解码器（均含fuzz）各169/169；当前源码原生CI七作业通过，Linux ASan/UBSan为159/159。证据见 `docs/validation/2026-10-20-wp6-window-reader.json`、`docs/validation/2026-10-21-png-reliability.json`。
 - 默认完整包324个公开命名函数导出，原316个全部保留；WP7八脚本、WP8冻结子集、WP12-lite及WP12a的声明边界见支持矩阵和各包文档。完整WP12、平台嵌入、无障碍与移动真机验收仍未完成。
 - Windows/macOS/iPhone模拟器/iPad模拟器已有参考App与自动自检；移动真机安装仍按用户要求暂缓。
-- WP16未完成：源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9` 的长测39666440519仍待96分片及严格汇总；旧失败与旧源码时长保留为历史，不转移CPU额度。
+- 冻结 SDK 源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9` 的 WP16 五项登记出口已闭合：长测 `39666440519` 的 98 作业与严格汇总通过，99 份同源工件齐全，见 `docs/validation/2026-10-22-reliability-cloud.json`。后续宿主与可选包仍独立验收；旧失败与旧源码时长保留为历史，不转移 CPU 额度。
 
 构建、测试、长测、最终汇总和归档仅在GitHub云端执行；本机不执行本页历史命令，
 不启动后台轮询、下载或本地重汇总。云端验收与拒绝条件见 [可靠性交接](RELIABILITY-HANDOFF.md)。

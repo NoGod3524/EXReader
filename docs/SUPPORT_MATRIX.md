@@ -27,9 +27,9 @@ macOS/iPhone模拟器/iPad模拟器保留最小阅读应用与自动自检。各
 
 3.40.0独立章阅读的预算、查询、正文输出与验收入口见 `docs/WP6-BOUNDED-READER.md`。
 当前实现与原生CI证据对应源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9`。
-WP6已验收，WP16仍等待同一源码的四目标各24 CPU小时及严格汇总；
-进行中的长测不记为通过，旧源码时长不转移。当前记录见 `docs/validation/2026-10-20-wp6-window-reader.json`、
-`docs/validation/2026-10-21-png-reliability.json`。
+WP6已验收，冻结 SDK 候选的 WP16 五项登记出口已闭合，同源四目标各24 CPU小时及严格云端汇总通过。
+后续宿主和可选包独立验收，旧源码时长不转移。当前记录见 `docs/validation/2026-10-20-wp6-window-reader.json`、
+`docs/validation/2026-10-21-png-reliability.json`、`docs/validation/2026-10-22-reliability-cloud.json`。
 
 ## 输入格式
 
@@ -122,7 +122,7 @@ WP6已验收，WP16仍等待同一源码的四目标各24 CPU小时及严格汇�
 | 桌面 CTest | 同源包集成的原生CI及七组包验收已通过严格云端汇总，见 `validation/parallel-integration.json`；引擎原验收见 `validation/2026-10-20-wp6-window-reader.json`、`validation/2026-10-21-png-reliability.json`；3.39.0联合记录保留于 `validation/2026-10-20-parallel-integration.json` |
 | Sanitizer | 3.40.0源码的Linux ASan/UBSan 159/159见 `validation/2026-10-21-png-reliability.json`；当前源码普通CI不替代WP16长测 |
 | 编译器门槛 | `-Wall -Wextra -Wpedantic -Werror` |
-| Fuzz | 原生CI短测与四目标各24 CPU小时长测分开验收；固定引擎源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9` 的长测及严格汇总尚未完成，见 [FUZZING.md](FUZZING.md) 与 `validation/2026-10-21-png-reliability.json` |
+| Fuzz | 原生CI短测与四目标各24 CPU小时长测分开验收；固定引擎源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9` 的长测及严格汇总通过，98/98作业、99份同源工件；见 [FUZZING.md](FUZZING.md) 与 `validation/2026-10-22-reliability-cloud.json` |
 | 依赖 | 14 个第三方组件，全部 SHA-256 固定；WebP/TIFF/AVIF 为默认开启的可选构建项 |
 
 ## 更新规则
