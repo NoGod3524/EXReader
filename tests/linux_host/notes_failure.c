@@ -20,7 +20,7 @@ static exr_status query_notes(exr_library *library,int64_t id,exr_note **out,siz
 #undef exr_library_notes
 #undef exr_library_progress
 #define main exreader_host_main
-#include "../../examples/linux/reader_async.c"
+#include "../../examples/linux/reader.c"
 #undef main
 static unsigned checks;
 static unsigned publication_events;

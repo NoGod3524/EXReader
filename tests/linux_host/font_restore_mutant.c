@@ -7,4 +7,4 @@ static gint ignore_saved_font(GKeyFile *file,const gchar *group,const gchar *nam
   return g_key_file_get_integer(file,group,name,error);
 }
 #define g_key_file_get_integer ignore_saved_font
-#include "../../examples/linux/reader_async.c"
+#include "../../examples/linux/reader.c"
