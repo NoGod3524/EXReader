@@ -484,6 +484,27 @@ def verify(args):
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
+    # Job-log copy of the per-program and toolchain evidence, so it is readable without the artifact.
+    for name, item in programs.items():
+        print(f'## program {name}\n' + json.dumps({
+            'sha256': item['sha256'], 'bytes': item['bytes'], 'native': item['native'], 'sources': item.get('sources'),
+            'executed': item.get('executed'),
+            'executions': [{k: e.get(k) for k in ('via', 'test', 'status', 'exit_code', 'success')} for e in item.get('executions', [])],
+            'dependency_command': item['dependencies']['command'], 'dependency_exit_code': item['dependencies']['exit_code'],
+            'dependency_resolution': item['dependencies'].get('resolution')}, ensure_ascii=False))
+        print(item['dependencies']['raw_output'].rstrip())
+    for label, item in toolchains.items():
+        detected = item.get('detected', {})
+        print(f'## toolchain {label}\n' + json.dumps({
+            'compilers': {lang: [detected.get(f'{lang}_COMPILER'), detected.get(f'{lang}_COMPILER_ID'),
+                                 detected.get(f'{lang}_COMPILER_VERSION'), detected.get(f'{lang}_COMPILER_ARCHITECTURE_ID')]
+                          for lang in ('C', 'CXX')},
+            'CMAKE_LINKER': item.get('cache', {}).get('CMAKE_LINKER'), 'CMAKE_AR': item.get('cache', {}).get('CMAKE_AR'),
+            'compiler_linker': [detected.get('C_COMPILER_LINKER'), detected.get('C_COMPILER_LINKER_ID'),
+                                detected.get('C_COMPILER_LINKER_VERSION')],
+            'linker_probes': {path: probe.get('version') for path, probe in item.get('linker_probes', {}).items()},
+            'msvc_environment': item.get('msvc_environment'), 'path_link_candidates': item.get('path_link_candidates'),
+            'developer_dir': item.get('developer_dir'), 'driver_linker': item.get('driver_linker')}, ensure_ascii=False))
     print(json.dumps({'profile': args.profile, 'accepted': report['accepted'], 'problems': problems,
                       'executed': {key: item['executed'] for key, item in programs.items()},
                       'loader_conclusion': loader, 'installed_bytes_total': report['installed_bytes_total']}))
