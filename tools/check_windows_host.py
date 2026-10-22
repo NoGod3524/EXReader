@@ -233,7 +233,8 @@ def source_identity():
 
 
 def render_script(template, package, fixtures):
-    return (template.replace('@@SAMPLE@@', str(package))
+    return (template.replace('@@SAMPLE@@\\Sample.epub', str(package / 'Sample-positive.epub'))
+                    .replace('@@SAMPLE@@', str(package))
                     .replace('@@FIXTURES@@', str(fixtures)))
 
 
@@ -282,7 +283,7 @@ def seal_inputs(package, sdk, manifest_path, selftest_path, consumer, steps_dir,
     require(len(runtime_names) == 1, 'require exactly one packaged runtime')
     runtime = runtime_names[0]
     required = {'EXReader.exe', runtime, 'Reader.otf', 'OFL.txt', 'LICENSE.txt', 'THIRD_PARTY_NOTICES.md',
-                'Sample.epub', 'Sample.pdf', 'Sample-Text.pdf'}
+                'Sample.epub', 'Sample-positive.epub', 'Sample.pdf', 'Sample-Text.pdf'}
     verify_file_manifest(package, manifest.get('files'), required)
     require(digest(package / 'EXReader.exe') == digest(consumer), 'packaged executable differs from installed SDK consumer')
     require(digest(package / runtime) == digest(sdk / 'bin' / runtime), 'packaged runtime differs from installed SDK')
@@ -536,6 +537,11 @@ def main():
         errors.append('fixed-page annotation deletion was not persisted')
     if state('A', 'note_deleted').get('notes') != '1':
         errors.append('reflow annotation deletion was not persisted')
+    added, jumped = state('A', 'note_added'), state('A', 'after_note_jump')
+    if any(added.get(key) != jumped.get(key) for key in ('book_id', 'part', 'page', 'offset', 'page_text_fnv')) or \
+            jumped.get('selection_active') != '1' or jumped.get('selection_start') != added.get('offset') or \
+            int(jumped.get('selection_end', '-1')) != int(added.get('offset', '-2')) + int(added.get('range_len', '-3')):
+        errors.append('positive annotation did not return to its exact chapter/page/range')
     # The original 158 actions now exercise the normal default bounded EPUB
     # import/reader, rather than obtaining credit from a legacy memory import.
     for phase, name in [('A', 'epub_open'), ('A', 'final'), ('B', 'restored'),
@@ -597,7 +603,7 @@ def main():
         'sdk_runtime': {'name': runtime, 'sha256': sealed_digest(package / runtime)},
         'font_sha256': sealed_digest(package / 'Reader.otf'),
         'books': {name: {'sha256': sealed_digest(package / name)}
-                  for name in ('Sample.epub', 'Sample.pdf', 'Sample-Text.pdf')
+                  for name in ('Sample.epub', 'Sample-positive.epub', 'Sample.pdf', 'Sample-Text.pdf')
                   },
         'fixtures': {Path(path).name: {'sha256': sha} for path, sha in seal['identities'].items()
                      if Path(path).parent == fixtures},
@@ -606,6 +612,8 @@ def main():
         'counts': counts,
         'selftest': selftest,
         'bounded_storage': bounded_storage,
+        'navigation_positive_fixture': 'Sample-positive.epub',
+        'original_repeated_fixture': 'Sample.epub retained for 26 self-test and independent ambiguity refusal; original-byte UI pass is not claimed',
         'steps': steps,
         'states': states,
         'shelf': shelf,
