@@ -179,8 +179,10 @@ screenshot presence, exact package hashes, and the zero-tolerance conditions
 
 ### Cloud result
 
-- Run: [39710580316](https://github.com/NoGod3524/EXReader/actions/runs/39710580316),
+- Implementation run: [39710580316](https://github.com/NoGod3524/EXReader/actions/runs/39710580316),
   commit `11ac64e4542b53980a0adb1cc995750258b05361`, conclusion **success**.
+- Final HEAD verification run: [39711090216](https://github.com/NoGod3524/EXReader/actions/runs/39711090216),
+  commit `40c45799131b3e7f2927d5cdb09a1bf72d9452db`, conclusion **success**.
 - Preserved self-test: **26/26** checks.
 - UI phases A/B/C: exit 0, **158/158** steps passed, 8 screenshots.
 - Artifact `EXReader-WP13-Windows` (39,316,660 bytes).
