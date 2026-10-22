@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """Cloud-only gate for same-source package CI. Does not grant WP16 CPU credit."""
+import base64
 import copy
 import json
 import os
@@ -18,6 +19,26 @@ WORKFLOWS = {
     'apple': ('wp13-apple.yml', 8),
     'android': ('wp13-android.yml', 1),
 }
+
+# New capabilities introduced by the integrated core, verified at the same source and kept
+# outside the ten-package threshold instead of replacing any package check.
+SUPPLEMENTAL = {'acroform': ('acroform.yml', 3), 'spacing': ('wp5-border-spacing.yml', 2)}
+REQUIRED_RUNS = dict(WORKFLOWS, **SUPPLEMENTAL)
+
+# Public SDK surface shared by every package that consumes the default SDK install.
+PROTECTED_TREES = ('src', 'include', 'cmake', 'CMakeLists.txt', 'tests/fixtures',
+                   '.github/workflows/native.yml', '.github/workflows/reliability.yml', 'bindings')
+BASELINE_FILE = 'docs/validation/sdk-baseline.json'
+BASELINE_EVIDENCE = {
+    'native': '.github/workflows/native.yml',
+    'acroform': '.github/workflows/acroform.yml',
+    'spacing': '.github/workflows/wp5-border-spacing.yml',
+}
+# Every package-level SDK guard must name the registered baseline, not a mutable HEAD.
+BASELINE_CONTRACTS = (
+    ('.github/workflows/wp15-opds.yml', r'BASELINE:\s*([0-9a-f]{40})'),
+    ('tools/android_host_evidence.py', r"SDK_BASE\s*=\s*'([0-9a-f]{40})'"),
+)
 
 
 def require(value, message):
@@ -63,6 +84,15 @@ def verify(kind, source, run, jobs, artifacts):
             'jobs': len(jobs), 'artifacts': [{key: artifact[key] for key in ('id', 'name', 'digest', 'size_in_bytes')} for artifact in artifacts]}
 
 
+def verify_supplemental(kind, source, run, jobs):
+    workflow, expected_jobs = SUPPLEMENTAL[kind]
+    require(run['head_sha'] == source and run['status'] == 'completed' and run['conclusion'] == 'success', kind + ': supplemental run did not succeed at the required source')
+    require(run['path'].split('@')[0] == '.github/workflows/' + workflow, kind + ': wrong supplemental workflow')
+    require(len(jobs) == expected_jobs and len({job['id'] for job in jobs}) == expected_jobs, kind + ': missing or duplicate supplemental jobs')
+    require(all(job['head_sha'] == source and job['status'] == 'completed' and job['conclusion'] == 'success' for job in jobs), kind + ': failed, incomplete or cross-source supplemental job')
+    return {'run_id': run['id'], 'attempt': run['run_attempt'], 'workflow': workflow, 'jobs': expected_jobs}
+
+
 def fetch(path):
     request = urllib.request.Request('https://api.github.com/repos/' + os.environ['GITHUB_REPOSITORY'] + '/' + path,
         headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json',
@@ -84,6 +114,36 @@ def pages(path, key):
         require(len(records) <= total, 'pagination exceeds the declared count')
         page += 1
     return records
+
+
+def tree_at(ref, path, cache):
+    """Resolve one repository path to its git object SHA at a commit, descending only that path."""
+    if (ref, path) in cache:
+        return cache[(ref, path)]
+    current = fetch('commits/' + ref)['commit']['tree']['sha']
+    parts = path.split('/')
+    for index, part in enumerate(parts):
+        entries = {entry['path']: entry for entry in fetch('git/trees/' + current)['tree']}
+        require(part in entries, path + ': missing at ' + ref)
+        if index < len(parts) - 1:
+            require(entries[part]['type'] == 'tree', path + ': path component is not a tree')
+        current = entries[part]['sha']
+    cache[(ref, path)] = current
+    return current
+
+
+def baseline_problems(registry, source, protected, contracts):
+    """Pure comparison against the registered SDK baseline candidate."""
+    baseline = registry.get('sdk_baseline') or ''
+    require(re.fullmatch('[0-9a-f]{40}', baseline) is not None, 'baseline: require an immutable full SHA')
+    require(baseline != source, 'baseline: must be separately accepted, not the summarised source')
+    require(set(registry.get('protected_trees') or {}) == set(PROTECTED_TREES), 'baseline: protected tree set drifted')
+    require(set(registry.get('evidence') or {}) == set(BASELINE_EVIDENCE), 'baseline: evidence set drifted')
+    for path in PROTECTED_TREES:
+        require(protected.get(path) == registry['protected_trees'][path], 'baseline: ' + path + ' differs from the accepted SDK candidate')
+    for path, expected in contracts:
+        require(expected == baseline, 'baseline contract: ' + path + ' does not name the registered candidate')
+    return baseline
 
 
 def selftest():
@@ -109,6 +169,7 @@ def selftest():
         ('wrong artifact source', lambda r, j, a: a[0]['workflow_run'].update(head_sha='0' * 40)),
         ('artifact from another run', lambda r, j, a: a[0]['workflow_run'].update(id=124)),
     ]
+    checked = 1 + len(changes)
     for name, change in changes:
         r, j, a = copy.deepcopy((run, jobs, artifacts))
         change(r, j, a)
@@ -122,6 +183,7 @@ def selftest():
     apple_artifacts = [dict(artifacts[0], id=i, name=name) for i, name in
                        enumerate(sorted(required_artifacts('apple', source, apple_run)))]
     verify('apple', source, apple_run, apple_jobs, apple_artifacts)
+    checked += 1
     for kind in ('summary missing', 'summary failed'):
         copied_jobs, copied_artifacts = copy.deepcopy((apple_jobs, apple_artifacts))
         if kind == 'summary missing':
@@ -133,10 +195,12 @@ def selftest():
         except ValueError:
             continue
         raise AssertionError('Apple ' + kind + ' was accepted')
+    checked += 2
     android_run = dict(run, path='.github/workflows/wp13-android.yml')
     android_jobs = [dict(jobs[0], id=900)]
     android_artifacts = [dict(artifacts[0], id=900, name='EXReader-WP13-Android')]
     verify('android', source, android_run, android_jobs, android_artifacts)
+    checked += 1
     for failure in ('missing acceptance artifact', 'failed host'):
         copied_jobs, copied_artifacts = copy.deepcopy((android_jobs, android_artifacts))
         if failure == 'missing acceptance artifact':
@@ -148,8 +212,94 @@ def selftest():
         except ValueError:
             continue
         raise AssertionError('Android ' + failure + ' was accepted')
-    return {'passed': True, 'checks': 7 + len(changes), 'integration_accepted': False,
-            'source_sha': os.environ['GITHUB_SHA'], 'scope': 'gate protocol only'}
+    checked += 2
+    acroform_run = dict(run, path='.github/workflows/acroform.yml')
+    acroform_jobs = [dict(jobs[0], id=800 + i) for i in range(3)]
+    verify_supplemental('acroform', source, acroform_run, acroform_jobs)
+    checked += 1
+    spacing_run = dict(run, path='.github/workflows/wp5-border-spacing.yml')
+    spacing_jobs = [dict(jobs[0], id=700 + i) for i in range(2)]
+    verify_supplemental('spacing', source, spacing_run, spacing_jobs)
+    checked += 1
+    for failure in ('missing supplemental job', 'failed supplemental job', 'wrong supplemental workflow', 'supplemental at another source'):
+        copied = copy.deepcopy((acroform_run, acroform_jobs))
+        if failure == 'missing supplemental job':
+            copied[1].pop()
+        elif failure == 'failed supplemental job':
+            copied[1][0]['conclusion'] = 'failure'
+        elif failure == 'wrong supplemental workflow':
+            copied[0]['path'] = '.github/workflows/native.yml'
+        else:
+            copied[0]['head_sha'] = '0' * 40
+        try:
+            verify_supplemental('acroform', source, copied[0], copied[1])
+        except ValueError:
+            continue
+        raise AssertionError('Supplemental ' + failure + ' was accepted')
+    baseline = 'c' * 40
+    trees = {path: 'd' * 40 for path in PROTECTED_TREES}
+    registry = {'sdk_baseline': baseline, 'protected_trees': dict(trees),
+                'evidence': {kind: 1 for kind in BASELINE_EVIDENCE}}
+    contracts = [(path, baseline) for path, _ in BASELINE_CONTRACTS]
+    baseline_problems(registry, source, trees, contracts)
+    checked += 1
+    baseline_changes = [
+        ('baseline is the summarised source', lambda g, t, c: g.update(sdk_baseline=source)),
+        ('baseline is not immutable', lambda g, t, c: g.update(sdk_baseline='c' * 12)),
+        ('protected tree changed', lambda g, t, c: t.update(src='e' * 40)),
+        ('protected path unregistered', lambda g, t, c: (g['protected_trees'].pop('include'), t.pop('include'))),
+        ('protected path added', lambda g, t, c: (g['protected_trees'].update(extra='d' * 40), t.update(extra='d' * 40))),
+        ('evidence set drifted', lambda g, t, c: g['evidence'].pop('spacing')),
+        ('a package guard still names the old baseline', lambda g, t, c: c.__setitem__(0, (c[0][0], 'a' * 40))),
+    ]
+    for name, change in baseline_changes:
+        g, t, c = copy.deepcopy((registry, trees, contracts))
+        change(g, t, c)
+        try:
+            baseline_problems(g, source, t, c)
+        except ValueError:
+            continue
+        raise AssertionError('SDK baseline: ' + name + ' was accepted')
+    checked += 1 + len(baseline_changes)
+    return {'passed': True, 'checks': checked,
+            'integration_accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+            'scope': 'gate protocol only'}
+
+
+def verify_baseline(source):
+    registry = json.loads(Path(BASELINE_FILE).read_text(encoding='utf-8'))
+    baseline = registry.get('sdk_baseline') or ''
+    require(re.fullmatch('[0-9a-f]{40}', baseline) is not None, 'baseline: require an immutable full SHA')
+    comparison = fetch('compare/' + baseline + '...' + source)
+    require(comparison.get('status') in ('ahead', 'identical') and comparison.get('merge_base_commit', {}).get('sha') == baseline,
+            'baseline: source does not descend from the accepted SDK candidate')
+    cache = {}
+    protected = {path: tree_at(source, path, cache) for path in PROTECTED_TREES}
+    contracts = []
+    for path, pattern in BASELINE_CONTRACTS:
+        text = Path(path).read_text(encoding='utf-8')
+        found = re.search(pattern, text, re.MULTILINE)
+        require(found is not None, 'baseline contract: no fixed SDK baseline in ' + path)
+        contracts.append((path, found.group(1)))
+    baseline = baseline_problems(registry, source, protected, contracts)
+    evidence, seen = {}, set()
+    for kind, workflow in BASELINE_EVIDENCE.items():
+        run_id = registry['evidence'][kind]
+        require(type(run_id) is int and run_id > 0 and run_id not in seen, 'baseline evidence: duplicate or invalid run id')
+        seen.add(run_id)
+        run = fetch('actions/runs/' + str(run_id))
+        require(run['head_sha'] == baseline and run['path'].split('@')[0] == workflow and
+                run['status'] == 'completed' and run['conclusion'] == 'success',
+                'baseline evidence: ' + kind + ' did not succeed at the registered candidate')
+        evidence[kind] = {'run_id': run_id, 'attempt': run['run_attempt'], 'workflow': workflow, 'head_sha': run['head_sha']}
+    header = base64.b64decode(fetch('contents/include/exr/base.h?ref=' + baseline)['content']).decode('utf-8')
+    version = re.search(r'#define EXR_VERSION "([^"]+)"', header)
+    abi = re.search(r'#define EXR_ABI_VERSION (\d+)u', header)
+    require(version is not None and abi is not None, 'baseline: no public version or ABI declaration')
+    require(registry.get('sdk_version') == version.group(1) and registry.get('sdk_abi') == int(abi.group(1)),
+            'baseline: registered SDK version or ABI does not match the candidate headers')
+    return {'candidate': baseline, 'protected_trees': protected, 'contracts': dict(contracts), 'evidence': evidence,
+            'sdk_version': version.group(1), 'sdk_abi': int(abi.group(1))}
 
 
 def main():
@@ -166,19 +316,25 @@ def main():
         try:
             require(re.fullmatch('[0-9a-f]{40}', source) is not None, 'Require an immutable full source SHA')
             requested = json.loads(os.environ['SOURCE_RUNS'])
-            require(set(requested) == set(WORKFLOWS) and len(set(requested.values())) == len(WORKFLOWS) and
-                    all(type(value) is int and value > 0 for value in requested.values()), 'Require all ten distinct workflow run IDs')
+            require(set(requested) == set(REQUIRED_RUNS) and len(set(requested.values())) == len(REQUIRED_RUNS) and
+                    all(type(value) is int and value > 0 for value in requested.values()),
+                    'Require all ten package run IDs plus the supplemental capability runs')
+            report['sdk_baseline'] = verify_baseline(source)
+            report['supplemental'] = {}
             for kind, run_id in requested.items():
                 path = f'actions/runs/{run_id}'
                 run = fetch(path)
                 jobs = pages(path + f"/attempts/{run['run_attempt']}/jobs", 'jobs')
+                if kind in SUPPLEMENTAL:
+                    report['supplemental'][kind] = verify_supplemental(kind, source, run, jobs)
+                    continue
                 artifacts = pages(path + '/artifacts', 'artifacts')
                 report['runs'][kind] = verify(kind, source, run, jobs, artifacts)
             report['accepted'] = True
         except (ValueError, KeyError, TypeError, OSError) as error:
             report['refusal'] = str(error)
     output.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
-    print(json.dumps({key: value for key, value in report.items() if key not in ('runs',)}))
+    print(json.dumps({key: value for key, value in report.items() if key not in ('runs', 'sdk_baseline')}))
     return 0 if report.get('accepted', report.get('passed', False)) else 1
 
 

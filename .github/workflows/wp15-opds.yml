@@ -12,7 +12,9 @@ on:
 permissions:
   contents: read
 env:
-  BASELINE: a2552d7feb786cd2345d2b0b3eb894777b3254db
+  # Registered candidate in docs/validation/sdk-baseline.json; the OPDS merge itself
+  # only moves HANDOFF to the frozen non-OPDS ancestor H.
+  BASELINE: 4729f7fc7d908d249704d96ee61cc74ee778a27f
   # Reviewed integrated ancestor immediately before the OPDS merge; original
   # standalone handoff ownership evidence is retained in the delivery history.
   HANDOFF: a6407dea6540e498dee05270d0e0fe42e380e125
