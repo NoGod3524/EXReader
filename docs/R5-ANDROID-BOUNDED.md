@@ -1,6 +1,7 @@
 # H10 Android bounded 候选
 
 候选起点 `fd210224a4eba206762c08de435a5e9edfdf2a90`，SDK schema 7 API 已稳定；正式 K 与 Windows pilot 尚待集成人授予。
+接续合入 SDK 包候选 `ce5d664c9f76d0613df6d79b27568a7039c4a81e`，候选来源检查固定到该提交；它尚未替代正式 `SDK_BASE`。
 本分支实现 app-local JNI／Java，不修改 SDK 与共享 JNI。所有构建、测试、夹具、散列和证据处理在 Actions。
 
 新导入 EPUB 走 package-only file import；去重后查询 storage mode。
