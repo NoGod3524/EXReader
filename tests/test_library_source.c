@@ -122,6 +122,37 @@ static void deletion(const char *database) {
   exr_library_close(library);release_source(&b);compare_source(&fresh,after,sizeof(after)-1);
   CHECK(a.read_at(a.context,0,&byte,1)==0);release_source(&a);release_source(&fresh);
 }
+#ifdef EXR_SOURCE_FIXED_READER
+static void cbz_pixels(exr_fixed_document *document,const exr_bitmap *expected) {
+  exr_bitmap image={0};uint32_t y;
+  OK(exr_fixed_render(document,0,1,NULL,&image,&error));
+  CHECK(image.pixels && image.channels==4 && image.width==expected->width && image.height==expected->height);
+  for(y=0;y<image.height;y++)
+    CHECK(!memcmp(image.pixels+(size_t)y*image.stride,expected->pixels+(size_t)y*expected->stride,(size_t)image.width*4));
+  exr_bitmap_free(&image);
+}
+static void cbz_owner_writes(const char *database,const void *cbz,size_t size) {
+  exr_library *library=NULL;exr_fixed_document *document=NULL;exr_bitmap expected={0};
+  exr_book *books=NULL;size_t count=0;int64_t id=0;
+  OK(exr_library_open(database,&library,&error));
+  OK(exr_library_import(library,EXR_CBZ,cbz,size,"CBZ source lifetime",&id,&error));
+  OK(exr_library_fixed_source(library,id,NULL,&document,&error));
+  CHECK(exr_fixed_pages(document,&count) && count==4);
+  OK(exr_fixed_render(document,0,1,NULL,&expected,&error));
+  CHECK(expected.pixels && expected.width==2 && expected.height==2 && expected.channels==4);
+  CHECK(expected.pixels[0]==255 && expected.pixels[1]==0 && expected.pixels[2]==0 && expected.pixels[3]==255);
+  OK(exr_library_books(library,"CBZ source lifetime",&books,&count,&error));
+  CHECK(count==1 && books[0].id==id);books[0].favorite=1;
+  OK(exr_library_update(library,books,&error));exr_books_free(books,count);books=NULL;
+  cbz_pixels(document,&expected);
+  OK(exr_library_books(library,"CBZ source lifetime",&books,&count,&error));
+  CHECK(count==1 && books[0].id==id && books[0].favorite==1);books[0].position=1;
+  OK(exr_library_update(library,books,&error));exr_books_free(books,count);
+  cbz_pixels(document,&expected);
+  exr_library_close(library);library=NULL;cbz_pixels(document,&expected);
+  exr_bitmap_free(&expected);exr_fixed_free(document);
+}
+#endif
 static void external_replacement(const char *database) {
   const char before[]="Old bytes.",after[]="New bytes.";
   exr_library *owner=NULL,*other=NULL;exr_source old={0},fresh={0};
@@ -331,5 +362,12 @@ int main(int argc,char **argv) {
   publication_consumer(epub,size,font);failed_publication_consumer();free(epub);
   snprintf(path,sizeof(path),"%s/library-source-progress.sqlite",argv[2]);remove(path);
   stored_progress_consumer(path,fixture,font);remove(path);
+#ifdef EXR_SOURCE_FIXED_READER
+  { unsigned char *cbz;size_t cbz_size;
+    snprintf(fixture,sizeof(fixture),"%s/comic.cbz",argv[1]);cbz=read_file(fixture,&cbz_size);
+    snprintf(path,sizeof(path),"%s/library-source-cbz.sqlite",argv[2]);remove(path);
+    cbz_owner_writes(path,cbz,cbz_size);remove(path);cbz_owner_writes(":memory:",cbz,cbz_size);free(cbz);
+  }
+#endif
   printf("%u public library source checks passed\n",checks);return 0;
 }

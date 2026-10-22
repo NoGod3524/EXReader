@@ -392,12 +392,6 @@ finish:
 #define EXR_STREAM_CHUNK ((size_t)64 * 1024)
 #define EXR_STREAM_MAX (UINT64_C(2) * 1024 * 1024 * 1024 - 1)
 typedef struct { sqlite3 *db; sqlite3_blob *blob; } stream_blob;
-static size_t stream_blob_read(void *context,uint64_t offset,void *buffer,size_t size) {
-  stream_blob *b=context;int n;
-  if(!b || !b->blob || offset>INT_MAX || size>INT_MAX || offset+size>(uint64_t)sqlite3_blob_bytes(b->blob)) return 0;
-  n=(int)size;
-  return sqlite3_blob_read(b->blob,buffer,n,(int)offset)==SQLITE_OK ? size : 0;
-}
 static void stream_blob_release(void *context) {
   stream_blob *b=context;if(!b) return;
   if(b->blob) sqlite3_blob_close(b->blob);
@@ -678,11 +672,8 @@ exr_status exr_library_fixed_source(exr_library *l,int64_t id,const exr_fixed_op
     stream_blob_release(context);
     return exr_fixed_open_mapped(EXR_PDF,&mapping,&options,out,e);
   }
-  context=calloc(1,sizeof(*context));if(!context) { sqlite3_finalize(s);return exr_fail(e,EXR_MEMORY,"Streaming source allocation failed"); }
-  context->db=l->db;
-  if(sqlite3_blob_open(l->db,"main","books","source",id,0,&context->blob)!=SQLITE_OK) { sqlite3_finalize(s);free(context);return exr_fail(e,EXR_DATABASE,"Cannot open stored source blob"); }
-  memset(&source,0,sizeof(source));source.size=(uint64_t)sqlite3_blob_bytes(context->blob);source.read_at=stream_blob_read;source.release=stream_blob_release;source.context=context;
   sqlite3_finalize(s);
+  { exr_status status=exr_library_source(l,id,&source,e);if(status!=EXR_OK) return status; }
   return exr_cbz_open_source(&source,"",&options,1,out,e);
 }
 
