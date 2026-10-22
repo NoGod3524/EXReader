@@ -42,35 +42,34 @@ final class EXReaderHostUITests: XCTestCase {
         return target
     }
 
+    private func waitUntil(_ timeout: TimeInterval, _ condition: () -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if condition() { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return condition()
+    }
+
     private func waitLabel(_ identifier: String, contains text: String,
                            _ timeout: TimeInterval = 30) -> Bool {
-        let target = element(identifier)
-        guard target.waitForExistence(timeout: timeout) else { return false }
-        let predicate = NSPredicate(format: "label CONTAINS %@", text)
-        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: target)
-        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+        _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
+        return waitUntil(timeout) { element(identifier).label.contains(text) }
     }
 
     private func waitLabelAny(_ identifier: String, _ texts: [String],
                               _ timeout: TimeInterval = 30) -> Bool {
-        let target = element(identifier)
-        guard target.waitForExistence(timeout: timeout) else { return false }
-        let format = Array(repeating: "label CONTAINS %@", count: texts.count).joined(separator: " OR ")
-        let predicate = NSPredicate(format: format, argumentArray: texts)
-        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: target)
-        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+        _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
+        return waitUntil(timeout) { texts.contains(where: { element(identifier).label.contains($0) }) }
     }
 
     private func waitLabelFilled(_ identifier: String, excluding: [String],
                                  _ timeout: TimeInterval = 15) -> Bool {
-        let target = element(identifier)
-        guard target.waitForExistence(timeout: timeout) else { return false }
-        var predicates = ["label != ''"]
-        for value in excluding { predicates.append("label != %@") }
-        let format = predicates.joined(separator: " AND ")
-        let predicate = NSPredicate(format: format, argumentArray: excluding)
-        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: target)
-        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+        _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
+        return waitUntil(timeout) {
+            let label = element(identifier).label
+            return !label.isEmpty && !excluding.contains(label)
+        }
     }
 
     private func step(_ name: String, _ body: () throws -> Void) rethrows {

@@ -160,6 +160,7 @@ final class HostDocument {
 
 final class HostPager {
     private let pager: OpaquePointer
+    private(set) var failure: String?
     private let document: HostDocument
     private let font: HostFont
     private let box: HostCancelBox
@@ -169,9 +170,11 @@ final class HostPager {
         self.document = document
         self.font = font
         self.box = box
+        let safeWidth = max(320.0, width)
+        let safeHeight = max(480.0, height)
         var config = exr_layout_config_defaults()
-        config.page.width = Float(width)
-        config.page.height = Float(height)
+        config.page.width = Float(safeWidth)
+        config.page.height = Float(safeHeight)
         config.page.margin = 36
         config.page.font_size = Float(fontSize)
         config.document_css = 1
@@ -196,7 +199,9 @@ final class HostPager {
         guard index >= 0 else { throw HostError.invalidInput("页码无效") }
         var layout: OpaquePointer?
         var error = exr_error()
-        try hostCheck(exr_pager_get(pager, index, &layout, &error), error)
+        let status = exr_pager_get(pager, index, &layout, &error)
+        record(status, error)
+        try hostCheck(status, error)
         guard let layout else { throw HostError.invalidResult("页面不存在") }
         var count = 0
         guard let pages = exr_layout_pages(layout, &count), count > 0 else {
@@ -256,6 +261,14 @@ final class HostPager {
             }
         }
         return low
+    }
+
+    private func record(_ status: exr_status, _ error: exr_error) {
+        guard status != EXR_OK, failure == nil else { return }
+        var copy = error
+        failure = withUnsafePointer(to: &copy.message) { pointer in
+            pointer.withMemoryRebound(to: CChar.self, capacity: 256) { String(cString: $0) }
+        }
     }
 
     private func existingRange(_ index: Int) throws -> Range<Int>? {

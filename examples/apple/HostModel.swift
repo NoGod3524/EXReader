@@ -129,7 +129,14 @@ final class HostSession {
             try rebuildPager(width: Double(viewport.width), height: Double(viewport.height),
                              font: fontSize, cancel: cancel, restore: true)
         }
-        return try renderSnapshot()
+        do {
+            return try renderSnapshot()
+        } catch {
+            if let failure = pager?.failure {
+                throw HostError.invalidInput("分页失败（\(Int(viewport.width))x\(Int(viewport.height))）：\(failure)")
+            }
+            throw error
+        }
     }
 
     private func rebuildPager(width: Double, height: Double, font size: Double,
@@ -419,7 +426,7 @@ final class HostReaderModel: ObservableObject {
                 let savedWidth = self.defaults.double(forKey: "EXRViewportWidth")
                 let savedHeight = self.defaults.double(forKey: "EXRViewportHeight")
                 let viewport = savedWidth > 200 && savedHeight > 200
-                    ? CGSize(width: savedWidth, height: savedHeight)
+                    ? CGSize(width: max(320, savedWidth), height: max(480, savedHeight))
                     : CGSize(width: 720, height: 1040)
                 let savedFont = self.defaults.double(forKey: "EXRFontSize")
                 let session = HostSession(library: library, font: font, slowDelay: self.slowDelay,
@@ -437,6 +444,7 @@ final class HostReaderModel: ObservableObject {
                     }
                 }
             } catch {
+                self.appendLog("startup failed: \(self.describe(error))")
                 DispatchQueue.main.async {
                     self.errorText = self.describe(error)
                     self.statusText = "初始化失败"
@@ -837,7 +845,21 @@ final class HostReaderModel: ObservableObject {
         }
     }
 
+    private func appendLog(_ text: String) {
+        guard let base = try? stateFileURL().deletingLastPathComponent() else { return }
+        let url = base.appendingPathComponent("host-log.txt")
+        let line = "\(Date().timeIntervalSince1970) \(text)\n"
+        if let handle = try? FileHandle(forWritingTo: url) {
+            handle.seekToEndOfFile()
+            handle.write(Data(line.utf8))
+            try? handle.close()
+        } else {
+            try? Data(line.utf8).write(to: url)
+        }
+    }
+
     private func fail(_ error: Error) {
+        appendLog("operation failed: \(describe(error))")
         if let host = error as? HostError, host.isCancelled {
             statusText = "已取消"
             finish()
