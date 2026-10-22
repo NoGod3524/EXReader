@@ -11,6 +11,7 @@ import android.os.SystemClock;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.StaleObjectException;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
@@ -26,6 +27,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -113,7 +116,10 @@ public final class HostReviewTest {
             sample(); pick("NewReview.txt"); awaitText("Imported NewReview.txt");
             open("Sample.epub");
             String page = text("page_label");
-            device.executeShellCommand("run-as " + APP + " sh -c 'rm files/books/*.txt'");
+            for (String name : ownedSources().keySet()) {
+                if (name.endsWith(".txt")) device.executeShellCommand("run-as " + APP + " rm files/books/" + name);
+            }
+            assertTrue("owned text source must be gone", anyTextSource(ownedSources()).isEmpty());
             configure("--es review_open_title NewReview.txt");
             awaitText("Could not open NewReview.txt");
             assertEquals(page, text("page_label"));
@@ -134,13 +140,15 @@ public final class HostReviewTest {
         });
         run("selection_invalidated_while_busy", a -> {
             sample(); open("Sample.epub"); selectLine();
-            assertNotNull(find("annotate_button"));
+            assertNotNull("selection controls must appear for a real selection", waitId("annotate_button", 10000));
             configure("--es review_pause page-before-render");
             click("font_up"); awaitText("Review page-before-render");
-            assertNotNull("ordinary page request must expose its loading overlay", find("loading_overlay"));
-            assertTrue("ordinary page request must expose an enabled cancel control", find("cancel_button").isEnabled());
+            assertNotNull("ordinary page request must expose its loading overlay", waitId("loading_overlay", 5000));
+            UiObject2 cancel = waitId("cancel_button", 5000);
+            assertNotNull("ordinary page request must expose a cancel control", cancel);
+            assertTrue("ordinary page request must expose an enabled cancel control", cancel.isEnabled());
             UiObject2 annotate = find("annotate_button");
-            assertTrue(annotate == null || !annotate.isEnabled());
+            assertTrue("busy frame must not keep annotation enabled", annotate == null || !annotate.isEnabled());
             click("cancel_button"); awaitText("Operation canceled");
             assertNull(find("selection_status"));
             assertTrue(text("notes_button").contains("Notes (0)"));
@@ -150,16 +158,17 @@ public final class HostReviewTest {
         run("unicode_comment_round_trip", a -> {
             sample(); open("Sample.epub"); selectLine();
             click("annotate_button");
-            UiObject2 input = waitId("note_comment", 5000); assertNotNull(input);
+            UiObject2 input = waitId("note_comment", 10000); assertNotNull("comment field missing", input);
             String comment = "Review 😀 保存 e\u0301";
-            input.setText(comment);
-            UiObject2 save = device.findObject(By.text("Save")); assertNotNull(save); save.click();
-            awaitText("Annotation saved"); click("notes_button");
-            assertNotNull(device.wait(Until.findObject(By.textContains(comment)), 10000));
+            setText("note_comment", comment);
+            clickText("Save", "annotation save");
+            awaitText("Annotation saved");
+            click("notes_button");
+            assertNotNull("annotation row missing", waitText(comment, 20000));
             click("notes_close");
             device.executeShellCommand("am force-stop " + APP); launch("");
             awaitPage(1); click("notes_button");
-            assertNotNull(device.wait(Until.findObject(By.textContains(comment)), 10000));
+            assertNotNull("annotation row missing after process restart", waitText(comment, 20000));
             a.add("standard UTF-8 emoji/Chinese/combining-mark comment survives native SDK insertion, query and process restart");
         });
         run("destroyed_activity_releases_worker", a -> {
@@ -239,7 +248,12 @@ public final class HostReviewTest {
         JSONObject result = new JSONObject().put("id", id).put("status", "fail");
         List<String> assertions = new ArrayList<>(); long begin = SystemClock.elapsedRealtime();
         try { body.run(assertions); result.put("status", "pass"); }
-        catch (Throwable error) { result.put("error", error.getClass().getSimpleName() + ": " + error.getMessage()); }
+        catch (Throwable error) {
+            StackTraceElement frame = error.getStackTrace().length > 0 ? error.getStackTrace()[0] : null;
+            result.put("error", error.getClass().getSimpleName() + (frame == null ? "" : " line " + frame.getLineNumber())
+                    + ": " + error.getMessage());
+            try { result.put("detail", text("status_text") + " | " + text("reader_status")); } catch (Throwable ignored) { }
+        }
         File shot = new File(output, "shots/" + id + ".png");
         if (!device.takeScreenshot(shot)) result.put("status", "fail");
         result.put("screenshot", "shots/" + id + ".png"); result.put("screenshot_bytes", shot.length());
@@ -270,7 +284,12 @@ public final class HostReviewTest {
         while (SystemClock.uptimeMillis() < deadline) {
             UiObject2 file = device.findObject(By.textContains(name));
             if (file != null && file.isEnabled()) {
-                file.click();
+                try {
+                    file.click();
+                } catch (StaleObjectException transientNode) {
+                    SystemClock.sleep(300);
+                    continue;
+                }
                 assertTrue("picker must return to the reader", device.wait(Until.hasObject(By.pkg(APP)), 10000));
                 return;
             }
@@ -284,20 +303,42 @@ public final class HostReviewTest {
             }
             UiObject2 folder = device.findObject(By.text("Download"));
             if (folder == null) folder = device.findObject(By.text("Downloads"));
-            if (folder != null) folder.click();
-            else {
+            if (folder != null) {
+                try { folder.click(); } catch (StaleObjectException transientNode) { }
+            } else {
                 UiObject2 roots = device.findObject(By.descContains("Show roots"));
-                if (roots != null) roots.click();
-                else device.swipe(device.getDisplayWidth()/2, device.getDisplayHeight()*3/4,
-                        device.getDisplayWidth()/2, device.getDisplayHeight()/4, 20);
+                if (roots != null) {
+                    try { roots.click(); } catch (StaleObjectException transientNode) { }
+                } else {
+                    device.swipe(device.getDisplayWidth()/2, device.getDisplayHeight()*3/4,
+                            device.getDisplayWidth()/2, device.getDisplayHeight()/4, 20);
+                }
             }
             SystemClock.sleep(200);
         }
         throw new AssertionError("System picker did not list " + name);
     }
     private void open(String name) throws Exception {
-        UiObject2 row = device.wait(Until.findObject(By.textStartsWith(name + "\n")), 15000);
-        assertNotNull("book row missing: " + name, row); row.click(); awaitPage(1);
+        long deadline = SystemClock.uptimeMillis() + 20000;
+        while (true) {
+            // Re-fetch the row every attempt: the shelf adapter rebuilds it after an import.
+            UiObject2 row = device.findObject(By.textStartsWith(name + "\n"));
+            if (row != null) {
+                try {
+                    row.click();
+                    break;
+                } catch (StaleObjectException transientNode) {
+                    if (SystemClock.uptimeMillis() > deadline) throw new AssertionError("book row did not accept a click: " + name);
+                    SystemClock.sleep(200);
+                }
+            } else if (SystemClock.uptimeMillis() > deadline) {
+                throw new AssertionError("book row not found: " + name);
+            } else {
+                SystemClock.sleep(150);
+            }
+        }
+        SystemClock.sleep(200);
+        awaitPage(1);
         assertNotNull(waitId("reader_view", 10000));
     }
     private boolean bookExists(String name) { return device.wait(Until.hasObject(By.textStartsWith(name + "\n")), 1500); }
@@ -317,13 +358,87 @@ public final class HostReviewTest {
         throw new AssertionError("actual reader did not reach page " + page);
     }
     private void awaitText(String value) throws Exception { assertTrue("missing status: " + value, device.wait(Until.hasObject(By.textContains(value)), 20000)); }
-    private void click(String id) throws Exception { UiObject2 view = waitId(id, 10000); assertNotNull(id, view); view.click(); }
+    private void click(String id) throws Exception {
+        long deadline = SystemClock.uptimeMillis() + 20000;
+        while (SystemClock.uptimeMillis() < deadline) {
+            UiObject2 view = waitId(id, 8000);
+            assertNotNull("control not found: " + id, view);
+            try {
+                view.click();
+                SystemClock.sleep(150);
+                return;
+            } catch (StaleObjectException transientNode) {
+                SystemClock.sleep(150);
+            }
+        }
+        throw new AssertionError("control did not accept a click: " + id);
+    }
+    private void clickText(String value, String what) throws Exception {
+        long deadline = SystemClock.uptimeMillis() + 15000;
+        while (SystemClock.uptimeMillis() < deadline) {
+            UiObject2 object = device.findObject(By.text(value));
+            if (object != null && object.isEnabled()) {
+                try {
+                    object.click();
+                    SystemClock.sleep(150);
+                    return;
+                } catch (StaleObjectException transientNode) {
+                    SystemClock.sleep(150);
+                }
+            }
+            SystemClock.sleep(150);
+        }
+        throw new AssertionError(what + " did not accept a click");
+    }
+    private void setText(String id, String value) throws Exception {
+        long deadline = SystemClock.uptimeMillis() + 15000;
+        while (SystemClock.uptimeMillis() < deadline) {
+            UiObject2 field = waitId(id, 5000);
+            assertNotNull("field not found: " + id, field);
+            try {
+                field.setText(value);
+                return;
+            } catch (StaleObjectException transientNode) {
+                SystemClock.sleep(150);
+            }
+        }
+        throw new AssertionError("field did not accept text: " + id);
+    }
+    private UiObject2 waitText(String value, long timeout) { return device.wait(Until.findObject(By.textContains(value)), timeout); }
     private UiObject2 waitId(String id, long timeout) { return device.wait(Until.findObject(By.res(APP + ":id/" + id)), timeout); }
     private UiObject2 find(String id) { return device.findObject(By.res(APP + ":id/" + id)); }
     private String text(String id) { UiObject2 view = find(id); return view == null ? "" : String.valueOf(view.getText()); }
-    private String sources() throws Exception { return device.executeShellCommand("run-as " + APP + " sh -c 'sha256sum files/books/*'").trim(); }
+    private String sources() throws Exception {
+        SortedMap<String, String> digests = ownedSources();
+        assertFalse("app-owned source observation must not be empty", digests.isEmpty());
+        return digests.toString();
+    }
+    /**
+     * Reads the app-owned copies as the device shell sees them. The shell API tokenises the
+     * command line, so every run-as argument is a plain token: no quoting, no globbing.
+     */
+    private SortedMap<String, String> ownedSources() throws Exception {
+        SortedMap<String, String> digests = new TreeMap<>();
+        String listing = device.executeShellCommand("run-as " + APP + " ls files/books").trim();
+        if (listing.isEmpty()) return digests;
+        for (String name : listing.split("\\s+")) {
+            if (name.isEmpty() || name.endsWith(".part")) continue;
+            String line = device.executeShellCommand("run-as " + APP + " sha256sum files/books/" + name).trim();
+            assertTrue("owned source digest unavailable for " + name + ": " + line,
+                    line.matches("[0-9a-f]{64}\\s+files/books/" + Pattern.quote(name)));
+            digests.put(name, line.substring(0, 64));
+        }
+        return digests;
+    }
+    private static String anyTextSource(SortedMap<String, String> digests) {
+        for (String name : digests.keySet()) if (name.endsWith(".txt")) return name;
+        return "";
+    }
     private void selectLine() throws Exception {
-        click("select_button"); Rect reader = waitId("reader_view", 5000).getVisibleBounds();
+        click("select_button");
+        UiObject2 view = waitId("reader_view", 10000);
+        assertNotNull("reader surface missing", view);
+        Rect reader = view.getVisibleBounds();
         for (UiObject2 line : device.findObjects(By.textContains("EXReader"))) {
             Rect box = line.getVisibleBounds();
             if (box.height() > 0 && box.top >= reader.top && box.bottom <= reader.bottom && box.width() > 40) {

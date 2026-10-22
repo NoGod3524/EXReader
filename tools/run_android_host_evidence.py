@@ -64,7 +64,9 @@ def main():
         for suite, (class_name, method, folder, required_ids) in SUITES.items():
             checked(['adb', 'logcat', '-c'])
             class_path = 'org.exreader.host.uitest.' + class_name
-            argv = ['adb', 'shell', 'am', 'instrument', '-w', '-e', 'disableAnalytics', 'true',
+            # Raw mode is mandatory: the checker reads INSTRUMENTATION_STATUS class/test/code
+            # records, which am only prints with -r. Pretty mode hides them entirely.
+            argv = ['adb', 'shell', 'am', 'instrument', '-w', '-r', '-e', 'disableAnalytics', 'true',
                 '-e', 'class', class_path,
                 '-e', 'exr_source_sha', identity['source_sha'], '-e', 'exr_run_id', identity['run_id'],
                 '-e', 'exr_attempt', identity['attempt'],

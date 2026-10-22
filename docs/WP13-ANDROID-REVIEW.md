@@ -102,3 +102,42 @@ TalkBack 真人验收保持独立跟踪。
 诊断始终 `diagnostic_only=true`、`accepted=false`。诊断路径只精确加入 Android 所有权白名单；
 SDK 保护树仍与 `a2552d7feb786cd2345d2b0b3eb894777b3254db` 一致。所有旧失败和原件保留，
 未下载工件、未跨源拼接，也未启动长期监控。
+
+## 2026-10-22 第三轮：ac7aecc 云端逐项复核与驱动修复
+
+`ac7aecc4d3c2e6e65a6797ab556cd31546ca3a5c` / run `39816104855` 的最终结论为 **failure**，
+失败步骤是 `Final fail-closed acceptance`，`gate-review` 因预检查失败被跳过；同次工件
+`12442877834`（149850865 字节，`sha256:05940079adbcf78f9335a385f4b346a066d77f0d60f8b3cd52591b1dc8e73e37`）
+保留完整证据。云端只读诊断 run `39821383356` 固定校验该 ZIP 后逐项读出：
+
+- 原 45 项 45/45 通过；49 页 / 49 次原生 next / 0 次恢复重放已记录（`sequential_elapsed_ms` 正常）。
+- 独立 10 项为 **3/10**：`late_cancel_after_commit_reports_success`、
+  `failed_progress_preserves_frame`、`destroyed_activity_releases_worker` 通过。
+- 汇总拒绝的直接原因是 `instrumentation class identity mismatch`：原始仪器化文本里没有
+  `INSTRUMENTATION_STATUS` 记录。`am instrument` 只有加 `-r` 才输出逐条状态，
+  而驱动调用没有该参数，门禁要求的类/方法/终止码因此永远读不到。
+
+七项失败的三类真因（均属测试驱动或调用契约，不改断言）：
+
+1. `am instrument` 缺 `-r`，门禁读不到原始类、方法、状态码与终止码。
+2. `executeShellCommand` 以 `Runtime.exec` 的空白分词执行，**不处理 shell 引号**：
+   `run-as <pkg> sh -c 'sha256sum files/books/*'` 拆分后内层命令变成了 `'sha256sum`，
+   stderr 又不回传，于是 `sources()` 恒为空串、删除源与 `import-*` 观测全部失真：
+   `late_insert_cancel_rolls_back_new_book` 报 “Values should be different”，
+   `failed_open_preserves_reader` 因源文件没被删掉而等不到打开失败提示。
+3. UI 对象陈旧与就绪竞态：三项取消用例 `StaleObjectException`（书行在导入回滚后重建）、
+   `selection_invalidated_while_busy` 立即 `find` 取标注控件、`unicode_comment_round_trip`
+   的对话框与注释行取用过于即时。
+
+本轮修复（只动 Android 宿主/驱动/工具）：
+
+- `tools/run_android_host_evidence.py`：`am instrument -w -r`，保留 900 秒预算与类过滤。
+- `HostReviewTest.java`：`sources()` 改为按 token 调用
+  `run-as <pkg> ls files/books` 再逐个 `sha256sum files/books/<name>`，
+  仍由设备 shell 读取真实字节，并新增“源观测不得为空”的断言；删除源改为逐文件 `rm` 并复核结果；
+  三项取消用例、`open()`、`pick()`、`Save` 与注释输入统一改为“重新取控件 + 陈旧即重试”；
+  选择控件、加载浮层与取消按钮改为有界等待；失败用例额外记录首个栈帧与状态文案，便于下一轮定位。
+- 断言强度不变：45/10 的 ID、顺序、标题、真实复制、真实 SDK 插入、SQLite 失败、Activity 重建、
+  49 页计数与截图/身份校验全部保留。
+
+当前状态：修复待新一轮云端验收，尚未报告通过。
