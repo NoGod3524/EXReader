@@ -58,7 +58,9 @@ def set_text(window, text):
 
 
 class App:
-    def __init__(self, exe, font, profile):
+    def __init__(self, exe, font, profile, bounded=False):
+        self.bounded = bounded
+        self.note_table = 'epub_notes' if bounded else 'notes'
         self.profile = profile
         profile.mkdir(parents=True)
         self.db = profile/'library.sqlite'
@@ -159,6 +161,14 @@ class App:
         with sqlite3.connect(self.db) as db:
             return db.execute(sql, values).fetchone()[0]
 
+    def position(self, book=None, connection=None):
+        sql = 'SELECT start FROM epub_progress' if self.bounded else 'SELECT position FROM books'
+        values = () if book is None else (book,)
+        sql += ' LIMIT 1' if book is None else (' WHERE book_id=?' if self.bounded else ' WHERE id=?')
+        if connection is not None:
+            return connection.execute(sql, values).fetchone()[0]
+        return self.scalar(sql, values)
+
     def close(self):
         self.release()
         if self.process.poll() is None:
@@ -193,7 +203,7 @@ def main():
             app = None
             result = {'name': name, 'variant': variant, 'pass': False}
             try:
-                app = App(exe.resolve(), font, output/(variant+'-'+name))
+                app = App(exe.resolve(), font, output/(variant+'-'+name), bounded=variant == 'candidate')
                 passed, observed = test(app)
                 result.update({'pass': bool(passed), 'observed': observed})
             except Exception as error:
@@ -306,14 +316,14 @@ def main():
         app.click('next'); app.wait_idle()
         app.click('next'); app.wait_idle()
         source = app.q(10)
-        old_position = app.scalar('SELECT position FROM books WHERE id=?', (source,))
+        old_position = app.position(source)
         app.gate(4)
         app.open('Pages', wait=False)
         app.stage(4)
         session_still_original = app.q(19) == source
         U.PostMessageW(app.window, 0x10, 0, 0)
         app.process.wait(timeout=20)
-        position = app.scalar('SELECT position FROM books WHERE id=?', (source,))
+        position = app.position(source)
         return session_still_original and old_position > 0 and position == old_position, {'candidate_not_published': session_still_original, 'before_position': old_position, 'after_position': position, 'exit_code': app.process.returncode}
     run('close-discards-open-candidate', close_candidate)
 
@@ -338,7 +348,7 @@ def main():
         app.note('retained annotation')
         app.q(301)
         app.note('new committed annotation')
-        visible, durable, status = app.q(12), app.scalar('SELECT count(*) FROM notes'), app.status()
+        visible, durable, status = app.q(12), app.scalar('SELECT count(*) FROM '+app.note_table), app.status()
         first = visible == 1 and durable == 2 and '读取标注失败' in status
         app.open('EXReader benchmark')
         return first and app.q(12) == 2, {'visible_during_failure': visible, 'durable_notes': durable, 'status': status, 'visible_after_retry': app.q(12)}
@@ -357,12 +367,12 @@ def main():
     def comment_boundary(app):
         setup_text(app)
         app.note('中'*21846)  # 65538 UTF-8 bytes, valid if truncated at 65535
-        count, status = app.scalar('SELECT count(*) FROM notes'), app.status()
+        count, status = app.scalar('SELECT count(*) FROM '+app.note_table), app.status()
         rejected = count == 0 and '上限' in status
         exact = '😀'*16383
         app.note(exact)
         with sqlite3.connect(app.db) as db:
-            saved = db.execute('SELECT text FROM notes ORDER BY id DESC LIMIT 1').fetchone()[0]
+            saved = db.execute('SELECT text FROM '+app.note_table+' ORDER BY id DESC LIMIT 1').fetchone()[0]
         return rejected and saved == exact, {'over_limit_inserted': count, 'over_limit_status': status, 'boundary_utf8_bytes': len(saved.encode()), 'boundary_text_exact': saved == exact}
     run('unicode-comment-byte-limit', comment_boundary)
 
@@ -373,7 +383,7 @@ def main():
             lock.execute('BEGIN IMMEDIATE')
             app.click('next'); app.wait_idle()
             status = app.status()
-            old = lock.execute('SELECT position FROM books LIMIT 1').fetchone()[0]
+            old = app.position(connection=lock)
             U.PostMessageW(app.window, 0x10, 0, 0)
             time.sleep(4)
             refused = app.process.poll() is None
@@ -383,7 +393,7 @@ def main():
         if app.process.poll() is None:
             U.PostMessageW(app.window, 0x10, 0, 0)
             app.process.wait(timeout=15)
-        saved = app.scalar('SELECT position FROM books LIMIT 1')
+        saved = app.position()
         return result and saved > 0, {'status': status, 'old_durable_position': old, 'close_refused_until_retry': refused, 'position_after_retry': saved}
     run('progress-failure-blocks-silent-close', progress_failure)
 
