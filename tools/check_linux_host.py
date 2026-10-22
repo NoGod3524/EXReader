@@ -80,7 +80,8 @@ class Session:
     def dialog(self, path=None):
         before = self.read()['sequence']
         self.key('F1')
-        command('xdotool', 'search', '--sync', '--onlyvisible', '--name', '^Import book$')
+        dialog = command('xdotool', 'search', '--sync', '--onlyvisible', '--name', '^Import book$').splitlines()[-1]
+        command('xdotool', 'windowactivate', '--sync', dialog)
         if path is None:
             self.key('Escape')
         else:

@@ -17,6 +17,7 @@ static GThread *thread;
 static gint generation=1;
 static int worker_generation;
 static gboolean busy,saving,save_failed,closing,close_after_save;
+static gboolean choosing_file;
 typedef struct { reader_command command;char *path,*comment;int generation,stop; } host_job;
 typedef struct { reader_result value;reader_action action;int generation; } host_result;
 static void stop_worker(void);
@@ -90,7 +91,7 @@ static gboolean apply_result(gpointer data) {
     GdkPixbuf *pixels=gdk_pixbuf_new_from_data(result->pixels,GDK_COLORSPACE_RGB,TRUE,8,
       (int)result->width,(int)result->height,(int)result->stride,pixels_free,NULL);
     if(!pixels) { status(EXR_MEMORY,"Page presentation failed; accepted page retained");goto free_result; }
-    if(result->notes) notes_present(result);
+    notes_present(result);
     result->pixels=NULL;gtk_image_set_from_pixbuf(GTK_IMAGE(image),pixels);g_object_unref(pixels);
     book_id=result->book;part=result->part;bounded=result->bounded;font_size=result->font;
     page_number=result->page;page_start=result->start;page_end=result->end;selection_start=selection_end=0;
@@ -110,7 +111,7 @@ static gboolean apply_result(gpointer data) {
       result->chapter.index_bytes,result->chapter.peak_parse_workspace_bytes,result->chapter.windows_evicted,done->generation);
     status(EXR_OK,result->message);save_settings();queue_commit();
   } else {
-    if(result->notes) notes_present(result);
+    notes_present(result);
     selection_start=result->selected_start;selection_end=result->selected_end;status(EXR_OK,result->message);
   }
 free_result:
@@ -159,7 +160,9 @@ static void import_dialog(void) {
   if(busy || closing || save_failed) { state();return; }
   GtkWidget *dialog=gtk_file_chooser_dialog_new("Import book",GTK_WINDOW(window),GTK_FILE_CHOOSER_ACTION_OPEN,
     "Cancel",GTK_RESPONSE_CANCEL,"Import",GTK_RESPONSE_ACCEPT,NULL);
-  if(gtk_dialog_run(GTK_DIALOG(dialog))==GTK_RESPONSE_ACCEPT) {
+  choosing_file=TRUE;
+  int response=gtk_dialog_run(GTK_DIALOG(dialog));choosing_file=FALSE;
+  if(response==GTK_RESPONSE_ACCEPT) {
     char *path=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));gtk_widget_destroy(dialog);
     submit(READER_IMPORT,0,path,font_size);g_free(path);
   } else { gtk_widget_destroy(dialog);state(); }
@@ -188,6 +191,7 @@ static void action(GtkWidget *widget,gpointer name) {
 }
 static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
   (void)w;(void)unused;
+  if(choosing_file) return FALSE;
   static const char *names[]={"import","shelf","previous","next","bigger","smaller","text","note","notes","delete","comment","save"};
   if(event->state & (GDK_CONTROL_MASK|GDK_MOD1_MASK|GDK_SUPER_MASK)) return FALSE;
   if(event->keyval==GDK_KEY_Escape) { action(NULL,"cancel");return TRUE; }
