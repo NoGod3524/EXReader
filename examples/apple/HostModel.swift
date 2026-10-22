@@ -1041,6 +1041,10 @@ final class HostReaderModel: ObservableObject {
     // Install an actual session in the command-line cloud consumer without
     // relying on application-bundle startup resources or replacing SDK calls.
     func installReviewSession(_ session: HostSession, snapshot: HostSnapshot) throws {
+        // start() creates this directory for the real app. The headless
+        // consumer must satisfy the same persistence prerequisite explicitly.
+        let stateFolder = try stateFileURL().deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: stateFolder, withIntermediateDirectories: true)
         self.session = session
         books = try session.listBooks()
         apply(snapshot)

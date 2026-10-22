@@ -61,9 +61,18 @@ struct ModelReview {
                                   viewport: CGSize(width: 480, height: 640), fontSize: 28)
         let (id, _) = try library.importUnique(file: resources.appendingPathComponent("Sample.epub"), title: "Model review")
         var checks: [[String: Any]] = []
+        var observations: [String: Any] = [:]
         func check(_ name: String, _ operation: () throws -> Bool) {
-            do { checks.append(["name": name, "passed": try operation()]) }
-            catch { checks.append(["name": name, "passed": false, "error": error.localizedDescription]) }
+            observations = [:]
+            var result: [String: Any] = ["name": name]
+            do { result["passed"] = try operation() }
+            catch { result["passed"] = false; result["error"] = error.localizedDescription }
+            if !observations.isEmpty { result["observations"] = observations }
+            checks.append(result)
+            if let data = try? JSONSerialization.data(withJSONObject: ["model_check": result], options: [.sortedKeys]) {
+                FileHandle.standardOutput.write(data)
+                FileHandle.standardOutput.write(Data([10]))
+            }
         }
         var frame: HostSnapshot?
         check("open_real_source") {
@@ -216,6 +225,11 @@ struct ModelReview {
             model.updateViewport(oldRequest)
             let freshRequestAccepted = model.busy && model.selectionContext == nil
             try pump { !model.busy }
+            observations = ["real_sdk_query_rejected": realSDKRejected, "new_book_cleared": cleared,
+                            "refresh_recovered": recovered, "fresh_viewport_request_accepted": freshRequestAccepted,
+                            "accepted_frame_before_resize": acceptedFrame, "accepted_frame_after_resize": model.frameCount,
+                            "current_book_id": model.current?.id ?? -1, "expected_book_id": otherID,
+                            "visible_notes": model.notes.count, "error_after_resize": model.errorText]
             return realSDKRejected && cleared && recovered && freshRequestAccepted &&
                 model.frameCount == acceptedFrame + 1 && model.current?.id == otherID && model.notes.isEmpty
         }
@@ -240,11 +254,15 @@ struct ModelReview {
             try pump { !model.busy }
             let retained = model.current?.id == id && model.notes.map(\.id) == noteIDs &&
                 model.errorText.contains("标注刷新失败") && model.frameCount == 2
+            let errorDuringFailure = model.errorText
             HostModelReviewGate.beforeFrameNotes = nil
             try sql(library.path, "ALTER TABLE notes_review_hidden RENAME TO notes;")
             hidden = false
             model.refreshState()
             try pump { !model.busy }
+            observations = ["real_sdk_query_rejected": realSDKRejected, "old_list_retained": retained,
+                            "expected_note_ids": noteIDs, "recovered_note_ids": model.notes.map(\.id),
+                            "error_during_failure": errorDuringFailure, "error_after_recovery": model.errorText]
             return realSDKRejected && retained && model.notes.map(\.id) == noteIDs && model.errorText.isEmpty
         }
         check("pending_viewport_handoff_has_no_idle_frame") {
@@ -266,6 +284,11 @@ struct ModelReview {
             }
             model.turn(1)
             try pump { !model.busy && model.frameCount >= initialFrame + 2 }
+            observations = ["intermediate_idle_published": intermediateIdle, "actual_refreshes": actualRefreshes,
+                            "initial_frame": initialFrame, "final_frame": model.frameCount,
+                            "actual_viewport_width": session.currentViewport.width,
+                            "actual_viewport_height": session.currentViewport.height,
+                            "selection_context_available": model.selectionContext != nil, "error_after_resize": model.errorText]
             return !intermediateIdle && actualRefreshes == 2 && model.frameCount == initialFrame + 2 &&
                 session.currentViewport == size && model.selectionContext != nil && model.errorText.isEmpty
         }
@@ -291,8 +314,13 @@ struct ModelReview {
             try pump { !model.busy }
             let unchanged = actualPoll && model.frameCount == initialFrame && model.pageText == original.pageText &&
                 session.currentViewport == viewport && model.statusText == "已取消"
+            let cancelledFrame = model.frameCount, cancelledStatus = model.statusText
             model.turn(1)
             try pump { !model.busy }
+            observations = ["actual_sdk_cancel_poll": actualPoll, "cancelled_frame_unchanged": unchanged,
+                            "initial_frame": initialFrame, "frame_after_cancel": cancelledFrame,
+                            "status_after_cancel": cancelledStatus, "frame_after_recovery": model.frameCount,
+                            "error_after_recovery": model.errorText]
             return unchanged && model.frameCount == initialFrame + 1 && model.errorText.isEmpty
         }
         let accepted = checks.allSatisfy { $0["passed"] as? Bool == true }

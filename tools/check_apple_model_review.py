@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 """Build/run real Swift session regressions in GitHub Actions against installed SDK."""
 import argparse
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -23,7 +24,7 @@ def main():
         parser.error('Preserve earlier evidence: choose a new output')
     output.mkdir(parents=True)
     program = output/'model-review'
-    subprocess.run(['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library',
+    command = ['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library',
                     '-D', 'EXR_APPLE_HOST_REVIEW',
                     '-I', str(sdk/'include'), '-L', str(sdk/'lib'), '-lexreader',
                     '-Xlinker', '-rpath', '-Xlinker', str(sdk/'lib'),
@@ -31,8 +32,23 @@ def main():
                     str(ROOT/'examples/apple/HostModel.swift'),
                     str(ROOT/'examples/apple/SelectableText.swift'),
                     str(ROOT/'tests/apple_host/review/ModelReview.swift'),
-                    '-o', str(program)], check=True)
-    subprocess.run([str(program), str(resources), str(output), str(sdk)], check=True)
+                    '-o', str(program)]
+    for phase, arguments in [('compile', command), ('model-review', [str(program), str(resources), str(output), str(sdk)])]:
+        try:
+            completed = subprocess.run(arguments, timeout=180)
+        except subprocess.TimeoutExpired:
+            print(json.dumps({'phase': phase, 'accepted': False, 'timed_out': True, 'budget_seconds': 180}), flush=True)
+            raise SystemExit(1)
+        if phase == 'model-review':
+            report = output/'model-review.json'
+            if report.is_file():
+                data = json.loads(report.read_text())
+                print(json.dumps({'phase': phase, 'return_code': completed.returncode,
+                                  'source_sha': data.get('source_sha'), 'run_id': data.get('run_id'),
+                                  'accepted': data.get('accepted'), 'check_count': len(data.get('checks', []))}), flush=True)
+        if completed.returncode:
+            print(json.dumps({'phase': phase, 'accepted': False, 'return_code': completed.returncode}), flush=True)
+            raise SystemExit(1)
 
 
 if __name__ == '__main__':

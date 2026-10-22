@@ -143,7 +143,6 @@ jobs:
             -default-test-execution-time-allowance 180 \
             -maximum-test-execution-time-allowance 300 \
             EXR_SDK_DIR="$sdk_dir" \
-            INFOPLIST_KEY_EXRSourceSHA="$GITHUB_SHA" \
             CODE_SIGNING_ALLOWED="$signing" \
             2>&1 | tee "build/results/${platform}-xcodebuild.log"
       - name: Collect per-case evidence and persisted state

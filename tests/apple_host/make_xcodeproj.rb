@@ -36,15 +36,15 @@ host_group.children.concat(test_refs)
 resource_refs = resource_files.map { |file| project.new_file(relative(base, file)) }
 resource_group.children.concat(resource_refs)
 
-def app_settings(target, platform, deployment)
+def app_settings(target, platform, deployment, info_plist)
   target.build_configurations.each do |config|
     settings = config.build_settings
     settings['SWIFT_VERSION'] = '5.0'
     settings['PRODUCT_NAME'] = 'EXReaderHost'
     settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'org.exreader.host'
     settings['GENERATE_INFOPLIST_FILE'] = 'YES'
+    settings['INFOPLIST_FILE'] = info_plist
     settings['INFOPLIST_KEY_CFBundleDisplayName'] = 'EXReader'
-    settings['INFOPLIST_KEY_EXRSourceSHA'] = ENV.fetch('GITHUB_SHA')
     settings['CURRENT_PROJECT_VERSION'] = '1'
     settings['MARKETING_VERSION'] = '1.0'
     settings['CODE_SIGN_STYLE'] = 'Manual'
@@ -134,7 +134,13 @@ end
   app = project.new_target(:application, app_name, platform, deployment)
   app.add_file_references(source_refs)
   app.add_resources(resource_refs)
-  app_settings(app, platform, deployment)
+  source_sha = ENV.fetch('GITHUB_SHA')
+  raise 'immutable source SHA required' unless source_sha.match?(/\A[0-9a-f]{40}\z/)
+  info_plist = File.join(output, "Info-#{label}.plist")
+  # Xcode's generated standard keys augment this explicit source plist. Custom
+  # INFOPLIST_KEY settings alone did not survive the cloud product generation.
+  Xcodeproj::Plist.write_to_path({'EXRSourceSHA' => source_sha}, info_plist)
+  app_settings(app, platform, deployment, info_plist)
   embed_phase(app)
 
   ui = make_ui_target(project, test_name, platform, deployment)

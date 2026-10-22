@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import plistlib
 import shutil
 import sqlite3
 import subprocess
@@ -12,7 +13,7 @@ import tempfile
 import zipfile
 
 from assemble_validation import assemble
-from evidence_contract import (cloud_identity, digest, load, require, validate_identity,
+from evidence_contract import (cloud_identity, digest, inventory, load, require, validate_identity,
     validate_package, validate_platform, validate_review_reports, validate_sdk)
 
 
@@ -53,6 +54,23 @@ def alter_export_name(root, prefix):
                     if item['suggestedHumanReadableName'].endswith('.png'))
         item['suggestedHumanReadableName'] = prefix + '_0_00000000-0000-0000-0000-000000000000.png'
     edit(path, change)
+
+
+def alter_program_source(root, value):
+    directory = root/'wp13-apple-macos/evidence/macos'
+    bundle = directory/'program/EXReaderHost.app'
+    path = bundle/'Contents/Info.plist'
+    info = plistlib.loads(path.read_bytes())
+    if value is None:
+        info.pop('EXRSourceSHA', None)
+    else:
+        info['EXRSourceSHA'] = value
+    replace(path, plistlib.dumps(info, fmt=plistlib.FMT_BINARY))
+
+    def refresh_hashes(report):
+        report['environment']['app']['info_plist_sha256'] = digest(path)
+        report['program_files_sha256'] = inventory(bundle)
+    edit(directory/'evidence.json', refresh_hashes)
 
 
 def accepted(args):
@@ -133,6 +151,8 @@ def mutations():
         ('missing program', lambda r: shutil.rmtree(r/ui/'program')),
         ('changed executable bytes', lambda r: replace(r/ui/'program/EXReaderHost.app/Contents/MacOS/EXReaderHost', b'changed executable')),
         ('wrong program hash', lambda r: edit(r/report, lambda d: d['environment']['app'].update(executable_sha256='0'*64))),
+        ('missing program source key', lambda r: alter_program_source(r, None)),
+        ('wrong program source key', lambda r: alter_program_source(r, '0'*40)),
         ('missing fixture manifest', lambda r: (r/'wp13-apple-macos/apple-resources/manifest.json').unlink()),
         ('wrong fixture identity', lambda r: edit(r/report, lambda d: d['environment']['fixtures'].update(**{'Sample.epub': '0'*64}))),
         ('changed fixture bytes', lambda r: replace(r/ui/'program/EXReaderHost.app/Contents/Resources/Sample.epub', b'changed fixture')),
