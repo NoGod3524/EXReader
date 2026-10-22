@@ -1,0 +1,58 @@
+name: WP13 Windows worker ownership review
+on:
+  push:
+    branches: [codex/wp13-windows-worker-review]
+    paths: ['examples/reader.c', 'tests/windows_host/worker_review/**', '.github/workflows/wp13-windows-worker.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  worker-review:
+    runs-on: windows-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and install original public SDK configuration
+        run: |
+          cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/native --config Release --parallel 4
+          cmake --install build/native --config Release --prefix stage
+      - name: Build normal distributed host and preserve its original self-test
+        run: |
+          cmake -S stage/examples/windows -B build/win-host -DEXR_SDK="${{ github.workspace }}/stage"
+          cmake --build build/win-host --config Release --parallel 4
+          python tools/build_windows_host.py --sdk stage --binary build/win-host/Release/EXReader.exe --output build/wp13-worker-package
+      - name: Preserve original UI acceptance without changing its checker
+        run: |
+          python tests/windows_host/make_fixtures.py --output build/wp13-worker-fixtures
+          $workerCheckerExtra = @()
+          if ((python tools/check_windows_host.py --help) -match '--consumer-binary') { $workerCheckerExtra = @('--consumer-binary', 'build/win-host/Release/EXReader.exe') }
+          python tools/check_windows_host.py --package build/wp13-worker-package/EXReader --output build/wp13-worker-original-evidence --sdk stage --manifest build/wp13-worker-package/build.json --steps tests/windows_host --fixtures build/wp13-worker-fixtures --selftest-report build/wp13-worker-package/report.json @workerCheckerExtra
+      - name: Build cloud-only fault-observation consumer
+        if: always()
+        run: |
+          cmake -S tests/windows_host/worker_review -B build/worker-review -DEXR_SDK="${{ github.workspace }}/stage"
+          cmake --build build/worker-review --config Release --parallel 4
+      - name: Build original host with the same observation gates for reverse verification
+        if: always()
+        run: |
+          git fetch --depth=1 origin 2d99fcd3a912eb05ad6df8257a13a6c929c860a8
+          python tests/windows_host/worker_review/prepare_baseline.py --output build/worker-baseline-source
+          cmake -S tests/windows_host/worker_review -B build/worker-baseline -DEXR_SDK="${{ github.workspace }}/stage" -DEXR_REVIEW_SOURCE="${{ github.workspace }}/build/worker-baseline-source/reader-baseline.c"
+          cmake --build build/worker-baseline --config Release --parallel 4
+      - name: Real controls, cancellations, SQL failure and retained selection regressions
+        if: always()
+        run: |
+          python tests/windows_host/worker_review/check_worker.py --candidate build/worker-review/Release/EXReader.exe --baseline build/worker-baseline/Release/EXReader.exe --package build/wp13-worker-package/EXReader --fixtures build/wp13-worker-fixtures --output build/wp13-worker-review-evidence
+      - name: Preserve all original and new evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-WP13-Windows-WorkerReview
+          path: |
+            build/wp13-worker-package/
+            build/wp13-worker-original-evidence/
+            build/wp13-worker-review-evidence/
+            build/wp13-worker-fixtures/
+            build/worker-baseline-source/
+          if-no-files-found: error
