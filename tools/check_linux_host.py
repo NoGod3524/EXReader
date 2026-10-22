@@ -157,7 +157,7 @@ def main():
 
     def checked(name, result, detail=None):
         if not result:
-            raise AssertionError(name)
+            raise AssertionError(name+': '+repr(host.read()))
         checks.append({'name': name, 'pass': True, 'observed': detail or host.read()})
         print('PASS '+name, flush=True)
 
