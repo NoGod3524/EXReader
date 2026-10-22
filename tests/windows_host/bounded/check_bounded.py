@@ -13,6 +13,7 @@ import sys
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[3]
+SDK_CANDIDATE = '6f0d7592ea431394d175d221b04b054facf4a26c'
 sys.path.insert(0, str(ROOT / 'tools'))
 import check_windows_host as base
 
@@ -62,7 +63,7 @@ def main():
     files = [exe, package / 'Reader.otf', package / 'Sample.epub', package / 'Sample-positive.epub', args.seed.resolve(), book, missing]
     files += [p for p in package.iterdir() if p.suffix == '.dll']
     identities = {str(p): base.digest(p) for p in files}
-    checks, records = [], {}
+    checks, records, sdk_trees = [], {}, {}
 
     def require(condition, name):
         checks.append({'name': name, 'passed': bool(condition)})
@@ -96,6 +97,14 @@ def main():
 
     error = None
     try:
+        ancestry = subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', SDK_CANDIDATE, source], check=False)
+        require(ancestry.returncode == 0, 'SDK-candidate-is-source-ancestor')
+        for path in ('src', 'include', 'cmake', 'CMakeLists.txt', 'tests/fixtures',
+                     '.github/workflows/native.yml', '.github/workflows/reliability.yml', 'bindings'):
+            baseline = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', SDK_CANDIDATE+':'+path], text=True).strip()
+            current = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', source+':'+path], text=True).strip()
+            sdk_trees[path] = {'candidate': baseline, 'host': current}
+            require(baseline == current, 'unchanged-SDK-tree/'+path)
         data = output / 'profile'; data.mkdir()
         a = run('pilot', 'A', [
             'import|'+str(book), 'open|H8 Bounded', 'check|bounded|1', 'check|part|0', 'state|alpha',
@@ -226,7 +235,7 @@ def main():
                     if field in ('book_id', 'part', 'page', 'offset', 'notes', 'status', 'progress_record_preserved')}
                     for key, state in result['states'].items()},
                 'notes': result['notes']}, ensure_ascii=True), flush=True)
-    evidence = {'schema': 1, 'source_sha': source, 'sdk_candidate': '6f0d7592ea431394d175d221b04b054facf4a26c',
+    evidence = {'schema': 1, 'source_sha': source, 'sdk_candidate': SDK_CANDIDATE, 'sdk_trees': sdk_trees,
                 'run_id': os.environ.get('GITHUB_RUN_ID'), 'accepted': error is None and bool(checks) and all(x['passed'] for x in checks),
                 'checks': checks, 'failures': [] if error is None else [error], 'identities': identities, 'runs': records,
                 'scope': 'H8 default bounded EPUB Windows pilot; legacy mode and fixed readers retained',
