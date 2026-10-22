@@ -1,6 +1,8 @@
 # H11 Linux GTK 有界 EPUB 接入计划
 
-本文件来自源码阅读，宿主尚未修改。正式实施等待同源 SDK 冻结与 Windows pilot。
+有界后端与异步 GTK 生产宿主已经实现并通过独立云端验收。
+本轮 SDK 候选为 `9c69bc4c7efb0cff68ced27562709fe597189041`，已含超窗口 inline 单元递归修复。
+此前 `ce5d664c9f76d0613df6d79b27568a7039c4a81e` 的 H11 和 Windows H8 pilot 记录继续保留。
 范围是现有 GTK 重排宿主；不新增 PDF/CBZ UI，不引入 WebView。
 
 ## 当前调用链与最少替换
@@ -19,10 +21,14 @@
 
 ## 所有权与响应
 
-现有 SDK 调用大多直接发生于 GTK 回调。只增加一个串行 worker，独占 library、font、publication、
+SDK 调用移入一个串行 worker，独占 library、font、publication、
 pager、锚点与 SDK 临时对象；GTK 主线程持有控件和自有页面数据，不能访问 worker 的借用 layout。
-任务只传入书 ID、generation、所需页/章及有限选择范围。关闭、换书、字号改变使旧 generation 失效，
+任务只传入书 ID、generation、所需页/章及有限选择范围。取消、关闭及新任务使旧 generation 失效，
 完成回调通过 GTK 主循环提交前再次核对；失败/取消保留已接受画面与位置。
+候选 session 只有在 GTK 接受自有位图/文字并成功执行串行 `READER_COMMIT` 后才提升为当前位置。
+保存失败保留 pending；F12 重试，期间阻止换书/关闭。Escape 不取消 SAVE，关闭等待 SAVE 完成。
+字号调整与重启保留精确章内字节位置；选择器不唯一时明确显示偏移回退并保留原持久化记录。
+标注只接受 `FOUND` 的精确解析，不把数字偏移冒充唯一匹配。
 
 只保留当前章 pager 和轻量目录；当前页文字与位图都有明确容量限制。
 源 ZIP 长度、UTF-16/GTK 字符数、页号均不能替代章内 normalized UTF-8 selector。
@@ -39,3 +45,19 @@ UI 响应需用长任务执行期间实际发送输入并观察状态提交证�
 日志增加存储模式、part、章内 range、任务 generation 和内存观测，不泄露正文样本。
 工件绑定 source/run/attempt、程序与字体散列。真实库关闭重开后再核对精确定位，
 不让旧进程保留的 pager 或文字缓冲伪装成恢复。
+
+`tests/linux_host/check_bounded_ui.py` 用打包的正常 GTK 程序执行独立多章、长章 65 次真实翻页、
+窗口逐出、跨章标注、重复 spine 路由、删除原件后的新进程重开、缺章保帧，及真实长任务期间的
+F2 响应/Escape 取消/后续换书。诊断文件只观察状态，不提供动作入口或测试延时。
+同脚本要求冻结 SDK 是受测源码祖先，并逐项核对八条保护树的 Git 对象身份。
+`bounded_backend.c` 保留独立安装后端检查；`notes_failure.c` 额外覆盖保存失败、pending 重试与保存屏障。
+
+## 固定交付
+
+受测源码 `6cb58962866c4f2223dfba0d21b6d36675cbfff1`，run `39872057413` attempt 2，
+唯一 host job `120150277110` 全步骤成功。原 20 项、4 组回归（其中真实 GTK/后端故障 26 断言、
+字体恢复负例在原第 13 项被拒绝）、H11 37 项和后端 82 断言在同一源码/运行通过。
+异步版本已归并为唯一生产 `examples/linux/reader.c`，旧未编译宿主和临时 `reader_async.c` 已删除。
+工件、测量值及保留失败见 `docs/validation/r5-linux-bounded.json`；集成后需在共同源码重跑本工作流。
+同源 attempt 1 在任何用例开始前遇到 GTK 窗口映射超时；其工件保留，attempt 2 从构建开始整 job 重跑，
+未修改生产宿主、窗口预算或断言。本轮真实长任务输入响应为 16.74 ms，65 次翻页及其余内存观测保持同一出口。

@@ -64,14 +64,19 @@ class Session:
             if self.process.poll() is not None:
                 raise RuntimeError('Host exited; see application.log')
             state = self.read()
-            if state and predicate(state):
+            if state and not state.get('busy', 0) and predicate(state):
                 return state
             time.sleep(.1)
         raise TimeoutError('UI did not reach expected state: '+repr(self.read()))
 
     def key(self, *keys):
-        command('xdotool', 'key', '--clearmodifiers', *keys)
-        time.sleep(.15)
+        for key in keys:
+            command('xdotool', 'key', '--clearmodifiers', key)
+            time.sleep(.15)
+            # Each scripted reading action represents a completed user operation.
+            # The asynchronous host intentionally rejects SDK work during SAVE.
+            if key in ('F3', 'F4', 'F5', 'F6', 'F8', 'F10', 'Return'):
+                self.wait(lambda state: True)
 
     def paste(self, value):
         subprocess.run(['xclip', '-selection', 'clipboard'], input=value.encode(), check=True)
@@ -80,13 +85,21 @@ class Session:
     def dialog(self, path=None):
         before = self.read()['sequence']
         self.key('F1')
-        command('xdotool', 'search', '--sync', '--onlyvisible', '--name', '^Import book$')
+        dialog = command('xdotool', 'search', '--sync', '--onlyvisible', '--name', '^Import book$').splitlines()[-1]
+        command('xdotool', 'windowactivate', '--sync', dialog)
         if path is None:
             self.key('Escape')
         else:
             self.key('ctrl+l')
             self.paste(str(path))
             self.key('Return')
+            # GTK's location entry first resolves/selects the file asynchronously.
+            # If the chooser remains mapped, activate that selection with Enter.
+            time.sleep(.3)
+            visible = subprocess.run(['xdotool', 'search', '--onlyvisible', '--name', '^Import book$'],
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+            if visible.returncode == 0:
+                self.key('Return')
         self.wait(lambda s: s['sequence'] > before)
         end = time.monotonic()+30
         while time.monotonic() < end:
@@ -144,7 +157,7 @@ def main():
 
     def checked(name, result, detail=None):
         if not result:
-            raise AssertionError(name)
+            raise AssertionError(name+': '+repr(host.read()))
         checks.append({'name': name, 'pass': True, 'observed': detail or host.read()})
         print('PASS '+name, flush=True)
 
@@ -183,7 +196,8 @@ def main():
         host.key('F7', 'ctrl+a', 'F8')
         state = host.wait(lambda s: s['notes'] == 1)
         with sqlite3.connect(output/'profile/library.sqlite') as db:
-            note = db.execute('SELECT start,end,text,anchor_exact FROM notes').fetchone()
+            table, quote = ('epub_notes', 'exact') if state.get('bounded') else ('notes', 'anchor_exact')
+            note = db.execute(f'SELECT start,end,text,{quote} FROM {table}').fetchone()
         checked('11 selected range and Unicode comment stored',
                 state['selection_end'] > state['selection_start'] and note[0] == state['selection_start']
                 and note[1] == state['selection_end'] and note[2] == 'Cloud UI note: 中文 café' and bool(note[3]))
