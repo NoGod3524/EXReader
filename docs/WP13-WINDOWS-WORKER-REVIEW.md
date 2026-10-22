@@ -53,5 +53,16 @@ reverse-check the regressions. It must reject the same eleven contracts without
 unexpected harness errors; the candidate must pass all eleven. No original case,
 failure record, screenshot requirement, budget or tolerance is removed.
 
-Current acceptance is pending the new cloud run. No local build/test, evidence
-download or local evidence aggregation is used.
+Accepted source `32f4f77cd69be5dcd2a66ed31701c5812997a78a` passed cloud run
+`39715816056`, job `119617536797`. The original 26 self-checks, 158 UI steps and
+eight screenshots passed. The candidate passed all eleven new contracts; the
+original instrumented host rejected all eleven without harness errors. The unique
+seek fixture reached three real SDK page lookups and exactly one injected error;
+the candidate preserved the old page, selection and subsequent annotation write.
+
+Artifact `12399715251` contains the separate original and new evidence, portable
+package, baseline instrumentation and failed-case profiles. The repository record
+is `docs/validation/wp13-windows-worker-review.json`. It keeps all four earlier
+failed runs, including the driver/input and ambiguous-fixture corrections; none
+are counted as acceptance. No local build/test, artifact download or local
+evidence aggregation was used. Integration-branch validation remains separate.
