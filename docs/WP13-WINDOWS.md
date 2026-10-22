@@ -1,7 +1,8 @@
 # WP13 Windows native host
 
-Status: the original package remains recorded below; default bounded EPUB adoption
-is implemented on `codex/r5-windows-bounded` and awaits its complete same-source cloud acceptance.
+Status: H8 default bounded EPUB adoption passed its complete same-source Windows
+cloud acceptance on `codex/r5-windows-bounded`; tested source is
+`2a9dcff8131543f27cad358fe254b6d4253423c0`. The original WP13 package remains recorded below.
 This package closes the Windows host loop only; it is not a whole-WP13 or product
 acceptance and does not include migration, OPDS, TTS or other platform hosts.
 
@@ -12,7 +13,7 @@ acceptance and does not include migration, OPDS, TTS or other platform hosts.
 - H8 initial SDK candidate: `96c4f2c035a737ccf3f5be890d127d6efdd946f8`;
   final SDK candidate and host source must receive their own cloud results.
 - Current final SDK candidate: `ce5d664c9f76d0613df6d79b27568a7039c4a81e`
-  (merged without changing public APIs; full native SDK acceptance remains pending).
+  (merged without changing public APIs; overall SDK freeze is granted separately by the integrator).
 - Source: `examples/reader.c` (Win32, one translation unit) with an independent
   consumer build in `examples/windows/`.
 
@@ -122,7 +123,41 @@ UI plan passed; runs `39862590539` and `39863379537` retain those original failu
 notes/restore, duplicate paths, missing chapter errors, selector rejection, and a
 public memory-import compatibility fixture using the normal distributed binary.
 The original failures identify ambiguous font/progress points and a correctly
-rejected repeated quote. No H8 acceptance is claimed yet.
+rejected repeated quote. They remain retained alongside the passing revised scope.
+
+### H8 cloud result
+
+Tested source `2a9dcff8131543f27cad358fe254b6d4253423c0` passed
+[run 39865943512](https://github.com/NoGod3524/EXReader/actions/runs/39865943512),
+attempt 1, job `120129784734`; every job step succeeded.
+
+| Gate | Result |
+| --- | --- |
+| Installed SDK / normal distributed host build | Passed |
+| Original native self-test, original `Sample.epub` bytes | 26/26 |
+| Original UI action/assertion plan with sealed unique positive EPUB | 158/158, 0 failures, eight screenshots; A/B/C exit 0 |
+| Evidence forgery/incompleteness refusals | 51/51 |
+| H8 source, long chapter, routes, notes, fallback and legacy checks | 80/80, strict `accepted=true`, no failures |
+| Worker ownership/fault candidate | 11/11 |
+| Original host reverse verification | 11/11 rejected, `reverse_verification=true` |
+
+The H8 gate verifies the SDK candidate is an ancestor and all eight protected
+SDK trees match it exactly. The long UI fixture has 6,000 independently numbered
+paragraphs and crosses multiple 64 KiB windows; this is synthetic UI coverage,
+not a transfer of the SDK's separate 10/50/100 MiB benchmark results.
+
+Artifact `EXReader-WP13-Windows`, ID `12464188909`, is 39,607,521 bytes,
+digest `sha256:a920f5d5db09baefeff2b34c08347a8065f64111af2096bbc814e53a621561bf`.
+GitHub metadata binds it to the same run/source; it was unexpired at verification
+and expires on `2027-01-20T22:34:28Z`. The committed pointer record is
+`docs/validation/r5-windows-bounded.json`; raw generated evidence stays in the cloud artifact.
+
+Earlier passing development source `4a6f7e7` / run `39865681259` used SDK `6f0d759`;
+it is not substituted for the final SDK candidate run above. Original failed runs
+`39862590539`, `39863379537`, `39864142767`, `39864506016` and cancelled pending
+runs remain retained. The comment-update observation race in the latter two was
+fixed by waiting for the actual worker completion before taking the pilot state;
+the update content assertion was kept.
 
 ## Controls, focus and names
 
@@ -218,7 +253,7 @@ annotation identity across restart, anchored offset equality after a font change
 screenshot presence, exact package hashes, and the zero-tolerance conditions
 (no lost saved note, no stale import frame on a new book, no silent wrong restore).
 
-### Cloud result
+### Original WP13 cloud result
 
 - Implementation run: [39710580316](https://github.com/NoGod3524/EXReader/actions/runs/39710580316),
   commit `11ac64e4542b53980a0adb1cc995750258b05361`, conclusion **success**.
@@ -239,21 +274,22 @@ The CI artifact `EXReader-WP13-Windows` contains:
 - `wp13-evidence/wp13-windows-evidence.json` (steps, states, shelf, notes, hashes)
 - `wp13-evidence/A|B|C/drive.log` and the PNG screenshots
 - `wp13-fixtures/` (generated acceptance books) and raw phase stdio logs
+- `h8-evidence/h8-evidence.json`, generated route/long-chapter fixtures, phase logs,
+  screenshots and isolated legacy/refusal profiles
+- `wp13-negative-evidence/checks.json` and `wp13-worker-review-evidence/worker-review.json`
 
-The committed summary is `docs/validation/wp13-windows.json`; it references the cloud
-run and artifact instead of duplicating raw logs.
+The original summary is `docs/validation/wp13-windows.json`; the H8 result is
+`docs/validation/r5-windows-bounded.json`. Both reference their own cloud identities.
 
 ## Known limitations / not in this package
 
-- Fixed annotation writes and fixed page opens parse the stored original; this is done
-  off the UI thread for opens, but `exr_library_fixed_note` is called synchronously from
-  the annotation button when no task is running, so a very large PDF can stall that
-  action briefly.
-- The reflow annotation list shows the saved text offset, not a resolved page number;
-  jump resolves the selector and reports ambiguity explicitly.
+- Fixed annotation writes still parse the stored original through the SDK, on the
+  serialized worker; a complete fixed-document memory/performance budget is not granted.
+- The bounded note list shows the saved chapter with pending resolution; legacy
+  notes show global offsets. Jumps require unique quote resolution.
 - No cover thumbnails, book rename UI, search, migration, OPDS, TTS, audio or other
   platform hosts.
-- The bounded chapter entry is not used (see above); bounded large-chapter behavior is
-  listed as a separate interface need for the integration pass.
+- Other reflow formats keep their snapshot limits. Cross-chapter single annotations,
+  automatic legacy-coordinate migration and a whole-book page/percentage index are not implemented.
 - Screen-reader verification (WP14) is not claimed. Control IDs, names and Tab order
   are stable inputs for that work.
