@@ -180,6 +180,58 @@ static exr_status text_sink(void *context,const char *text,size_t size,exr_error
   s->offset+=size;s->calls++;
   return s->reject ? EXR_IO : EXR_OK;
 }
+static void oversized_inline_unit(exr_font *font) {
+  const char *container="<container><rootfiles><rootfile full-path='book.opf'/></rootfiles></container>";
+  const char *package="<package><metadata/><manifest><item id='c' href='c.xhtml' media-type='application/xhtml+xml'/></manifest><spine><itemref idref='c'/></spine></package>";
+  size_t variant;
+  for(variant=0;variant<3;variant++) {
+    const size_t letters=variant==2 ? 2*1024*1024 : (variant+1)*16384;
+    mz_zip_archive zip={0};void *data=NULL;size_t size=0,at=0,i,text_size;
+    char *xml=malloc(letters+128);const char *text;
+    exr_publication *publication=NULL;exr_document *document=NULL;
+    exr_pager *pager=NULL;exr_layout *page=NULL;
+    exr_anchor anchor={0};exr_anchor_match match;
+    exr_layout_config config=exr_layout_config_defaults();
+    exr_chapter_options options=exr_chapter_options_defaults();
+    page_sample expected;
+    CHECK(xml!=NULL);
+    at+=(size_t)sprintf(xml+at,"<html><body><p>%s",variant ? "<span>" : "");
+    for(i=0;i<letters;i++) xml[at++]=(char)"abcdefg "[i%8];
+    at+=(size_t)sprintf(xml+at,"%s</p></body></html>",variant ? "</span>" : "");
+    CHECK(at<letters+128);
+    CHECK(mz_zip_writer_init_heap(&zip,0,0));
+    add(&zip,"mimetype","application/epub+zip");add(&zip,"META-INF/container.xml",container);
+    add(&zip,"book.opf",package);add(&zip,"c.xhtml",xml);
+    CHECK(mz_zip_writer_finalize_heap_archive(&zip,&data,&size));CHECK(mz_zip_writer_end(&zip));free(xml);
+    OK(exr_publication_open_memory(EXR_EPUB,data,size,&publication,&error));mz_free(data);
+    if(variant==2) {
+      options.window_bytes=16384;options.workspace_budget=1024*1024;
+      CHECK(exr_publication_pager_create(publication,0,font,&config,&options,&pager,&error)==EXR_LIMIT);
+      CHECK(pager==NULL);exr_publication_free(publication);continue;
+    }
+    OK(exr_publication_load(publication,0,&document,&error));
+    text=exr_document_text(document,&text_size);CHECK(text && text_size>=letters-1);
+    config.page=(exr_layout_options){360,480,20,24,1.5f,8};
+    OK(exr_pager_create(document,font,&config,&pager,&error));
+    OK(exr_pager_next(pager,&page,&error));CHECK(page!=NULL);expected=hash_layout(page);
+    exr_layout_free(page);page=NULL;exr_pager_free(pager);pager=NULL;
+    options.window_bytes=16384;options.workspace_budget=16*1024*1024;
+    OK(exr_publication_pager_create(publication,0,font,&config,&options,&pager,&error));
+    /* Queries prepare the same root as text/inline children; neither may loop. */
+    OK(exr_pager_anchor_create(pager,1024,1088,NULL,&anchor,&error));
+    OK(exr_pager_anchor_resolve(pager,&anchor,NULL,&match,&error));
+    CHECK(match.state==EXR_ANCHOR_AMBIGUOUS && match.start==SIZE_MAX && match.end==SIZE_MAX);
+    { text_check check={text,0,text_size,0,pager,0};
+      OK(exr_pager_read_text(pager,0,text_size,text_sink,&check,NULL,&error));
+      CHECK(check.offset==text_size && check.calls>0);
+    }
+    OK(exr_pager_next(pager,&page,&error));CHECK(page!=NULL);CHECK(hash_layout(page).hash==expected.hash);
+    CHECK(exr_pager_chapter_statistics(pager).peak_parse_workspace_bytes<=options.workspace_budget);
+    CHECK(exr_pager_chapter_statistics(pager).explicit_snapshot_bytes==0);
+    exr_layout_free(page);exr_anchor_free(&anchor);exr_pager_free(pager);
+    exr_document_free(document);exr_publication_free(publication);
+  }
+}
 static void queries(exr_publication *publication,exr_document *document,exr_font *font,
                     const exr_layout_config *config,const page_sample *first) {
   exr_chapter_options options=exr_chapter_options_defaults();
@@ -250,8 +302,14 @@ int main(int argc,char **argv) {
   page_sample expected[96];size_t i,j;char path[2048];
   static const size_t windows[]={512,2048,16384};
   static const size_t random[]={95,3,48,1,94,4,36,2,93,92,72};
-  CHECK(argc==2);snprintf(path,sizeof(path),"%s/primary.ttf",argv[1]);
-  OK(exr_font_open(path,&font,&error));OK(exr_publication_load(publication,0,&document,&error));
+  CHECK(argc==2 || (argc==3 && !strcmp(argv[2],"--oversized-unit")));
+  snprintf(path,sizeof(path),"%s/primary.ttf",argv[1]);
+  OK(exr_font_open(path,&font,&error));
+  if(argc==3) {
+    oversized_inline_unit(font);exr_font_free(font);exr_publication_free(publication);
+    printf("%u oversized inline unit checks passed\n",checks);return 0;
+  }
+  OK(exr_publication_load(publication,0,&document,&error));
   config.page.width=240;config.page.height=200;config.page.margin=12;config.page.font_size=14;
   OK(exr_pager_create(document,font,&config,&pager,&error));
   for(i=0;i<96;i++) { OK(exr_pager_next(pager,&page,&error));CHECK(page!=NULL);expected[i]=hash_layout(page);exr_layout_free(page);page=NULL; }

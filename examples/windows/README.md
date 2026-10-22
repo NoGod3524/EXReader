@@ -37,3 +37,9 @@ The packaged payload needs `EXReader.exe`, the installed `exreader.dll`, `Reader
 `%LOCALAPPDATA%\EXReaderHost` (override with `--data`):
 `library.sqlite` holds the bookshelf, progress and annotations; `host.ini` holds only
 font size, zoom, window size and the last active book.
+
+New EPUB imports use the stored-source bounded chapter reader and schema 7
+chapter-local progress/notes. Existing memory-import EPUBs retain their original
+global positions and notes, including after exact deduplication. PDF/CBZ open via
+`exr_library_fixed_source`. See `docs/WP13-WINDOWS.md` for the current H8 candidate,
+budgets and cloud acceptance status.
