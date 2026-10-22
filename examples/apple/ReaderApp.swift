@@ -13,6 +13,7 @@ struct EXReaderHostApp: App {
 struct SelfTestScreen: View {
     @State private var status = "运行中…"
     @State private var detail = ""
+    @State private var started = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -26,6 +27,8 @@ struct SelfTestScreen: View {
         .padding()
         .frame(minWidth: 360, minHeight: 200)
         .onAppear {
+            guard !started else { return }
+            started = true
             let outcome = LegacySelfTest.run()
             status = outcome.passed ? "通过 \(outcome.checkCount) 项" : "失败"
             detail = outcome.error ?? ""

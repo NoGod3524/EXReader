@@ -51,11 +51,14 @@ final class HostSession {
     private var pageRange: Range<Int> = 0..<0
     private var currentCancel: HostCancelBox?
 
-    init(library: HostLibrary, font: HostFont, slowDelay: Double) {
+    init(library: HostLibrary, font: HostFont, slowDelay: Double, viewport: CGSize) {
         self.library = library
         self.font = font
         self.slowDelay = slowDelay
+        self.viewport = viewport
     }
+
+    var currentViewport: CGSize { viewport }
 
     func listBooks() throws -> [HostBookRow] {
         try library.books().map { book in
@@ -412,7 +415,13 @@ final class HostReaderModel: ObservableObject {
                 let fontData = try Data(contentsOf: fontURL)
                 let font = try HostFont(data: fontData)
                 self.fontSHA = SHA256.hash(data: fontData).map { String(format: "%02x", $0) }.joined()
-                let session = HostSession(library: library, font: font, slowDelay: self.slowDelay)
+                let savedWidth = self.defaults.double(forKey: "EXRViewportWidth")
+                let savedHeight = self.defaults.double(forKey: "EXRViewportHeight")
+                let viewport = savedWidth > 200 && savedHeight > 200
+                    ? CGSize(width: savedWidth, height: savedHeight)
+                    : CGSize(width: 720, height: 1040)
+                let session = HostSession(library: library, font: font, slowDelay: self.slowDelay,
+                                          viewport: viewport)
                 self.session = session
                 let rows = try session.listBooks()
                 let lastID = (self.defaults.object(forKey: "EXRLastBook") as? NSNumber)?.int64Value
@@ -665,6 +674,8 @@ final class HostReaderModel: ObservableObject {
 
     private func applyViewport(_ size: CGSize) {
         guard let current, !current.isFixed else { return }
+        defaults.set(Double(size.width), forKey: "EXRViewportWidth")
+        defaults.set(Double(size.height), forKey: "EXRViewportHeight")
         let (myToken, box) = begin()
         queue.async {
             do {

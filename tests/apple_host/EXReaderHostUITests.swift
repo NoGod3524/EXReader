@@ -135,12 +135,16 @@ final class EXReaderHostUITests: XCTestCase {
         return app.textViews.firstMatch
     }
 
-    private func selectTwelveCharacters() {
+    private func selectWord() {
         let view = selectionTextView()
         view.tap()
-        view.typeKey(.upArrow, modifierFlags: .command)
-        for _ in 0..<12 {
-            view.typeKey(.rightArrow, modifierFlags: .shift)
+#if os(iOS)
+        view.doubleTap()
+#else
+        view.doubleClick()
+#endif
+        if !waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 5) {
+            view.press(forDuration: 1.2)
         }
     }
 
@@ -291,11 +295,11 @@ final class EXReaderHostUITests: XCTestCase {
             attach("10-selection-sheet")
         }
         try step("step20_keyboard_select_text") {
-            selectTwelveCharacters()
+            selectWord()
             XCTAssertTrue(waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 20))
         }
         try step("step21_copy_selection") {
-            selectionTextView().typeKey("c", modifierFlags: .command)
+            waitElement("selection.copy").tap()
             waitElement("selection.verifyPaste").tap()
             XCTAssertTrue(waitLabelFilled("selection.clipboard", excluding: ["剪贴板为空"], 20))
             let quote = element("selection.quote").label
@@ -320,7 +324,6 @@ final class EXReaderHostUITests: XCTestCase {
             waitElement("notes.edit.0").tap()
             let field = waitElement("notes.editor", 20)
             field.tap()
-            field.typeKey("a", modifierFlags: .command)
             field.typeText("edited-note")
             waitElement("notes.save").tap()
             XCTAssertTrue(waitLabel("notes.comment.0", contains: "edited-note", 40))
@@ -360,7 +363,7 @@ final class EXReaderHostUITests: XCTestCase {
         try step("step28_create_note_and_read_state") {
             waitElement("reader.select").tap()
             _ = waitElement("selection.title", 20)
-            selectTwelveCharacters()
+            selectWord()
             XCTAssertTrue(waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 20))
             waitElement("selection.annotate").tap()
             XCTAssertTrue(waitLabel("reader.status", contains: "已保存标注", 40))
@@ -463,7 +466,7 @@ final class EXReaderHostUITests: XCTestCase {
         try step("step40_fixed_annotation") {
             waitElement("reader.select").tap()
             _ = waitElement("selection.title", 20)
-            selectTwelveCharacters()
+            selectWord()
             XCTAssertTrue(waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 20))
             waitElement("selection.annotate").tap()
             XCTAssertTrue(waitLabel("reader.status", contains: "已保存标注", 40))

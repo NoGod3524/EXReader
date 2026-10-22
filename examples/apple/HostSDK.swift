@@ -490,23 +490,20 @@ final class HostLibrary {
     func updatePosition(book: HostBook, position: Int) throws {
         var raw = exr_book()
         raw.id = book.id
-        raw.format = exr_format(UInt32(book.format))
         raw.position = position
-        let title = strdup(book.title)
-        let author = strdup(book.author)
-        let tags = strdup("")
-        defer {
-            free(title)
-            free(author)
-            free(tags)
-        }
-        raw.title = title
-        raw.author = author
-        raw.tags = tags
         raw.favorite = 0
         raw.status = 0
         var error = exr_error()
-        try hostCheck(exr_library_update(handle, &raw, &error), error)
+        try book.title.withCString { title in
+            try book.author.withCString { author in
+                try "".withCString { tags in
+                    raw.title = UnsafeMutablePointer(mutating: title)
+                    raw.author = UnsafeMutablePointer(mutating: author)
+                    raw.tags = UnsafeMutablePointer(mutating: tags)
+                    try hostCheck(exr_library_update(handle, &raw, &error), error)
+                }
+            }
+        }
     }
 
     func addNote(bookID: Int64, start: Int, end: Int, text: String) throws -> Int64 {
@@ -515,12 +512,12 @@ final class HostLibrary {
         note.book_id = bookID
         note.start = start
         note.end = end
-        let comment = strdup(text)
-        defer { free(comment) }
-        note.text = comment
         var noteID: Int64 = 0
         var error = exr_error()
-        try hostCheck(exr_library_note(handle, &note, &noteID, &error), error)
+        try text.withCString { pointer in
+            note.text = UnsafeMutablePointer(mutating: pointer)
+            try hostCheck(exr_library_note(handle, &note, &noteID, &error), error)
+        }
         return noteID
     }
 
@@ -577,12 +574,12 @@ final class HostLibrary {
         note.page = page
         note.start = start
         note.end = end
-        let comment = strdup(text)
-        defer { free(comment) }
-        note.text = comment
         var noteID: Int64 = 0
         var error = exr_error()
-        try hostCheck(exr_library_fixed_note(handle, &note, nil, &noteID, &error), error)
+        try text.withCString { pointer in
+            note.text = UnsafeMutablePointer(mutating: pointer)
+            try hostCheck(exr_library_fixed_note(handle, &note, nil, &noteID, &error), error)
+        }
         return noteID
     }
 
