@@ -1,4 +1,4 @@
-name: WP13 Apple review artifact diagnostics
+name: WP13 Apple preserved artifact diagnostics
 on:
   workflow_dispatch:
 permissions:
