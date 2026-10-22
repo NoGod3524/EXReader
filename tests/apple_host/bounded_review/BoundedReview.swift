@@ -119,13 +119,19 @@ import SQLite3
             catch HostError.invalidInput { return true }
         }
         check("original_repeated_fixture_refuses_ambiguous_note") {
+            func phase(_ name: String) { print("bounded-repeated-phase \(name)"); fflush(stdout) }
             let repeatedID = try library.importUnique(file: resources.appendingPathComponent("Repeated.epub"), title: "Repeated.epub").id
+            phase("imported")
             let publication = try HostPublication(library: library, bookID: repeatedID, cancel: HostCancelBox())
+            phase("publication-opened")
             let cancel = HostCancelBox()
             let pager = try HostPager(publication: publication, part: 0, font: font, width: 480, height: 640, fontSize: 28, box: cancel)
+            phase("chapter-pager-created")
             // An interior quote with repeated context must remain ambiguous.
             let anchor = try pager.makeAnchor(start: 1024, end: 1088, cancel: cancel)
+            phase("anchor-captured")
             let match = try pager.resolve(anchor, cancel: cancel)
+            phase("anchor-resolved")
             return match.state == EXR_ANCHOR_AMBIGUOUS && match.range == nil
         }
         check("legacy_memory_import_keeps_global_progress") {
