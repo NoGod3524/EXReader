@@ -82,18 +82,51 @@ jobs:
             adb shell settings put global window_animation_scale 0
             adb shell settings put global transition_animation_scale 0
             adb shell settings put global animator_duration_scale 0
+            mkdir -p build/android-host/evidence
             adb install -r build/android-host/artifacts/app-debug.apk
             adb install -r build/android-host/artifacts/uitest-debug.apk
             adb install -r build/android-host/artifacts/uitest-debug-androidTest.apk
-            adb shell mkdir -p /sdcard/Download
+            ensure_storage() {
+              for i in $(seq 1 24); do
+                if adb shell mkdir -p /sdcard/Download >/dev/null 2>&1; then return 0; fi
+                sleep 5
+              done
+              echo "shared storage is not ready; volumes:"
+              adb shell sm list-volumes all || true
+              adb shell "ls -ld /sdcard /storage/emulated/0 /data/media/0" || true
+              adb root || true
+              adb wait-for-device
+              sleep 3
+              adb shell "sm mount 'emulated;0'" || true
+              sleep 5
+              for i in $(seq 1 12); do
+                if adb shell mkdir -p /sdcard/Download >/dev/null 2>&1; then return 0; fi
+                sleep 5
+              done
+              echo "rebooting the emulator to recover shared storage"
+              adb reboot || true
+              adb wait-for-device
+              for i in $(seq 1 120); do
+                [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ] && break
+                sleep 3
+              done
+              sleep 20
+              adb shell input keyevent 82 || true
+              for i in $(seq 1 24); do
+                if adb shell mkdir -p /sdcard/Download >/dev/null 2>&1; then return 0; fi
+                sleep 5
+              done
+              return 1
+            }
+            ensure_storage
             for file in build/android-host/fixtures/*; do
               case "$file" in
                 *.epub|*.pdf|*.txt) adb push "$file" /sdcard/Download/ ;;
               esac
             done
+            adb shell ls -l /sdcard/Download > build/android-host/evidence/device-downloads.txt || true
             adb shell pm clear org.exreader.host
             adb shell rm -rf /sdcard/Android/data/org.exreader.host.uitest/files/evidence
-            mkdir -p build/android-host/evidence
             set +e
             adb shell am instrument -w -e disableAnalytics true \
               org.exreader.host.uitest.test/androidx.test.runner.AndroidJUnitRunner \
