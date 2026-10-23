@@ -23,8 +23,14 @@ for path in sorted(root.rglob("*.pdf")):
             space_kind, space_value = document.xref_get_key(group_xref, key)
             print(json.dumps({"file": path.name, "group_form_xref": xref,
                 "group": [group_kind, group_value], "space": [space_kind, space_value],
+                "group_object": document.xref_object(group_xref),
                 "space_object": document.xref_object(int(space_value.split()[0]))
                 if space_kind == "xref" else None}))
+        mask_kind, mask_value = document.xref_get_key(xref, "SMask")
+        if mask_kind in {"dict", "xref"}:
+            print(json.dumps({"file": path.name, "smask_owner": xref,
+                "smask": document.xref_object(int(mask_value.split()[0]))
+                if mask_kind == "xref" else mask_value}))
         kind, value = document.xref_get_key(xref, "ToUnicode")
         if kind != "xref":
             continue
