@@ -22,7 +22,8 @@ PDF随机操作覆盖整个声明页目录。只测原生引擎到首帧，不�
 RSS为进程high-water，包括字体、解析器、位图、分配器和映射。工作区、章索引、页缓存、检查点与位图单列，
 它们存在共享或包含关系，不与RSS相加。体积记录实际链接消费者、安装SDK逐文件大小/散列和动态依赖。
 章内工作区/缓存分项仅适用于EPUB。PDF记录打开后的`fixed_directory_bytes`与每次渲染后的
-`fixed_document_bytes`公共总量；PDF内部缓存/工作区缺公共细分观测，不把章内原始零字段作为PDF零分配指标。
+`directory_metadata_bytes`公共目录/元数据量（明确排除provider payload）；PDF内部缓存/工作区缺公共细分观测，
+全进程RSS保留整体峰值，不把章内原始零字段作为PDF零分配指标。
 
 PDF预选页使用同72dpi Poppler进行RGB像素对照，保留双方原件PPM、原始命令与stderr。
 同引擎同页重绘必须逐像素hash一致；跨引擎差异先作疑点复核，不要求全面领先或逐像素相等。
