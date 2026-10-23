@@ -49,7 +49,7 @@ static exr_status draw_ex(void *context,size_t page,const double matrix[6],const
   free(content.data);
   /* Failed lazy resolution/decoding can leave a sticky parser error. Rebuild
      the reader on the next request, so another page remains independently usable. */
-  if(status!=EXR_OK) discard_reader(d); else exr_pdf_control(d->file,NULL);
+  if(status!=EXR_OK) discard_reader(d); else exr_pdf_operation_end(d->file);
   return status;
 }
 static exr_status draw(void *context,size_t page,const double matrix[6],const exr_draw_sink *sink,const exr_control *control,exr_error *e) {
@@ -102,7 +102,7 @@ static exr_status text(void *context,size_t page,const exr_control *control,exr_
   if(status==EXR_OK) status=exr_pdf_text_ops(d->file,d->pages[page].resources,content.data,content.size,collect_text,&b,control,e);
   if(status==EXR_OK) status=exr_fixed_text_create(b.bytes.data,b.bytes.size,b.regions,b.count,control,out,e);
   free(content.data); free(b.bytes.data); free(b.regions);
-  if(status!=EXR_OK) discard_reader(d); else exr_pdf_control(d->file,NULL);
+  if(status!=EXR_OK) discard_reader(d); else exr_pdf_operation_end(d->file);
   return status;
 }
 /* ISO 32000 text strings: PDFDocEncoding, BOM UTF-16BE and PDF 2 UTF-8.
@@ -197,7 +197,7 @@ read_xmp:
   status=merge_xmp(d,control,e); if(status!=EXR_OK) goto done;
   *out=d->metadata; *count=d->metadata_count;
 done:
-  if(status!=EXR_OK) discard_reader(d); else exr_pdf_control(d->file,NULL);
+  if(status!=EXR_OK) discard_reader(d); else exr_pdf_operation_end(d->file);
   return status;
 }
 static exr_status annotations(void *context,size_t page,const exr_control *control,const exr_page_annotation **out,size_t *count,exr_error *e) {
@@ -207,7 +207,7 @@ static exr_status annotations(void *context,size_t page,const exr_control *contr
   if(page>=d->count) return exr_fail(e,EXR_ARGUMENT,"PDF annotation page is out of range");
   exr_pdf_control(d->file,control);
   status=exr_pdf_page_annotations(d->file,d->pages[page].annotations,control,&d->annotations,&d->annotation_count,e);
-  if(status!=EXR_OK) discard_reader(d); else { exr_pdf_control(d->file,NULL); *out=d->annotations; *count=d->annotation_count; }
+  if(status!=EXR_OK) discard_reader(d); else { exr_pdf_operation_end(d->file); *out=d->annotations; *count=d->annotation_count; }
   return status;
 }
 exr_status exr_fixed_open_options_copy(const exr_fixed_open_options *input,exr_fixed_open_options *out,exr_error *e) {
@@ -248,7 +248,7 @@ static exr_status open_data(unsigned char *data,size_t size,const char *title,co
   exr_pdf_crypt_snapshot(d->file,&d->crypt);
   exr_pdf_control(d->file,&options->control);
   status=exr_pdf_pages(d->file,&d->pages,&d->count,e); if(status!=EXR_OK) goto done;
-  exr_pdf_control(d->file,NULL);
+  exr_pdf_operation_end(d->file);
   if(!d->count) { status=exr_fail(e,EXR_FORMAT,"PDF has no pages"); goto done; }
   pages=calloc(d->count,sizeof(*pages)); if(!pages) { status=exr_fail(e,EXR_MEMORY,"PDF fixed directory allocation failed"); goto done; }
   for(i=0;i<d->count;i++) {

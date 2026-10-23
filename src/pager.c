@@ -1484,6 +1484,11 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
     return exr_fail(e, EXR_ARGUMENT, "Invalid, failed or reentrant pager");
   if (p->finished)
     return exr_fail(e, EXR_OK, "");
+  /* Only a top-level page boundary can declare an image unused: unfinished
+     pages have boxes but do not acquire their image references until seal(). */
+  if (!p->local && !p->borrowed)
+    for (i = 0; i < p->assets->image_count; i++)
+      p->assets->images[i].evictable = *p->assets->images[i].refs == 1;
   /* An independent chapter reader budgets one public page operation. Local
      speculative/float/table cursors share this budget and never reset it. */
   if(p->owned_chapter) p->assets->work_glyphs=p->assets->shape_work=0;
