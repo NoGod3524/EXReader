@@ -64,10 +64,13 @@ static int jpx_boxes(const unsigned char *p,size_t size,int indexed,int nested) 
       length=(uint64_t)jpx_u32(p+at+8)<<32|jpx_u32(p+at+12);header=16;
     } else if(!length) length=size-at;
     if(length<header || length>size-at) return 0;
-    if(type==0x63646566u) return 0; /* cdef, including associated alpha */
-    if(!indexed && (type==0x70636c72u || type==0x636d6170u)) return 0;
+    if(type==0x63646566u) return -1; /* cdef, including associated alpha */
+    if(!indexed && (type==0x70636c72u || type==0x636d6170u)) return -1;
     if(type==0x6a703268u) {
-      if(nested || !jpx_boxes(p+at+header,(size_t)length-header,indexed,1)) return 0;
+      int result;
+      if(nested) return 0;
+      result=jpx_boxes(p+at+header,(size_t)length-header,indexed,1);
+      if(result!=1) return result;
     }
     at+=(size_t)length;
   }
@@ -105,8 +108,10 @@ exr_status exr_pdf_jpx_decode(const void *data,size_t size,unsigned width,
   jp2=size>=12 && !memcmp(bytes,signature,12);
   if(!jp2 && !(size>=4 && bytes[0]==255 && bytes[1]==0x4f && bytes[2]==255 && bytes[3]==0x51))
     return exr_fail(e,EXR_FORMAT,"Invalid JPX stream signature");
-  if(jp2 && !jpx_boxes(bytes,size,indexed,0))
-    return exr_fail(e,EXR_UNSUPPORTED,"Unsupported JPX channel metadata");
+  if(jp2) {
+    int layout=jpx_boxes(bytes,size,indexed,0);
+    if(layout!=1) return exr_fail(e,layout<0 ? EXR_UNSUPPORTED : EXR_FORMAT,"Invalid or unsupported JPX channel metadata");
+  }
   memset(&input,0,sizeof(input));input.data=bytes;input.size=size;input.control=control;
   codec=opj_create_decompress(jp2 ? OPJ_CODEC_JP2 : OPJ_CODEC_J2K);
   stream=opj_stream_create(4096,OPJ_TRUE);
