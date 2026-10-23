@@ -121,8 +121,10 @@ exr_status exr_pdf_jpx_decode(const void *data,size_t size,unsigned width,
   opj_set_info_handler(codec,jpx_message,NULL);
   opj_set_default_decoder_parameters(&params);
   params.flags|=OPJ_DPARAMETERS_IGNORE_PCLR_CMAP_CDEF_FLAG;
+  /* Zero workers uses the calling thread. Stub builds already use this mode
+     and intentionally return false from opj_codec_set_threads. */
   if(!opj_setup_decoder(codec,&params) || !opj_decoder_set_strict_mode(codec,OPJ_TRUE) ||
-     !opj_codec_set_threads(codec,1)) { status=EXR_UNSUPPORTED;goto done; }
+     (opj_has_thread_support() && !opj_codec_set_threads(codec,0))) { status=EXR_UNSUPPORTED;goto done; }
   opj_stream_set_user_data(stream,&input,NULL);
   opj_stream_set_user_data_length(stream,size);
   opj_stream_set_read_function(stream,jpx_read);
