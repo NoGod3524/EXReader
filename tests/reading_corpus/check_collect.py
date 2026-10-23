@@ -135,7 +135,7 @@ class FrozenInputProtocol(unittest.TestCase):
         for i, entry in enumerate(self.entries):
             self.members['inputs/assets/' + entry['path']] = ('fixed-' + str(i)).encode()
             self.members['inputs/licenses/' + entry['id'] + '.txt'] = self.rights
-        self.registry = {'run_id': 1, 'run_attempt': 1, 'source_sha': 'a' * 40,
+        self.registry = {'repository': 'NoGod3524/EXReader', 'run_id': 1, 'run_attempt': 1, 'source_sha': 'a' * 40,
                          'workflow': '.github/workflows/reading-required.yml',
                          'artifact_id': 2, 'artifact_name': 'fixed',
                          'manifest_sha256': collect.sha(self.manifest)}
@@ -230,6 +230,26 @@ class FrozenInputProtocol(unittest.TestCase):
                 report = json.loads((output / 'manifest.json').read_bytes())
                 self.assertEqual(report['complete'], expected == 0)
                 self.assertEqual(report['raw_input_archive'], self.registry)
+                if expected == 0:
+                    self.assertIn('/actions/artifacts/2/zip#inputs/assets/', report['files'][0]['retrieved_url'])
+                    self.assertEqual(report['files'][0]['input_origin']['publisher_retrieved_url'], self.entries[0]['source_url'])
+
+    def test_archive_recovery_failure_writes_source_bound_incomplete_report(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); manifest = root / 'manifest.json'; manifest.write_bytes(self.manifest)
+            registry = root / 'registry.json'; registry.write_text(json.dumps(self.registry))
+            output = root / 'output'
+            with patch.object(sys, 'argv', ['collect', 'cached', str(manifest), str(output)]), \
+                    patch.object(frozen, 'REGISTRY', registry), \
+                    patch.object(frozen, 'recover', side_effect=ValueError('Frozen input ZIP size/digest refused')), \
+                    patch.object(collect, 'fetch') as fetched, redirect_stdout(io.StringIO()):
+                self.assertEqual(collect.main(), 1)
+            fetched.assert_not_called()
+            report = json.loads((output / 'manifest.json').read_bytes())
+            self.assertFalse(report['complete'])
+            self.assertFalse(report['engine_executed'])
+            self.assertEqual(report['raw_input_archive'], self.registry)
+            self.assertEqual(report['collection_failures'][0]['id'], 'raw-input-archive')
 
     def test_direct_mismatch_retains_observed_identity_without_fallback(self):
         with tempfile.TemporaryDirectory() as folder:
