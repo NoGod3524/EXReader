@@ -55,6 +55,8 @@ jobs:
       - name: Verify declaration before any engine process
         run: |
           python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"tools/reading_corpus"); from run import registered; import os; registered(Path(os.environ["R2_MANIFEST"]),os.environ["R2_REGISTRATION"])'
+      - name: Verify bounded collector retry and download refusals
+        run: python3 tests/reading_corpus/check_collect.py
       - name: Collect all eight exact published sources
         run: python3 tools/reading_corpus/collect.py collect "$R2_MANIFEST" build/r2/inputs
       - name: Build and install current native reading SDK
