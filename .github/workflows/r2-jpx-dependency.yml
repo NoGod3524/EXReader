@@ -28,6 +28,8 @@ jobs:
           (root/'LICENSE').write_bytes(license)
           report={'url':url,'archive_sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw),
                   'license_sha256':hashlib.sha256(license).hexdigest(),'root_notices':notices}
+          assert report['archive_sha256']=='a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a'
+          assert report['license_sha256']=='a6af136f3e15038a666b61f376612a07d9a4e48cb7c01adbf3e33b3f14ab49b6'
           (root/'source.json').write_text(json.dumps(report,indent=2)+'\n')
           print(json.dumps(report))
           PY
@@ -35,4 +37,78 @@ jobs:
         with:
           name: openjpeg-source-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/jpx-source/
+          if-no-files-found: error
+  dependency:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [reading-core, reading-library, jpx-off, pdf-off]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure a declared reading profile or an explicit cut
+        run: |
+          profile=reading-core
+          if [ '${{ matrix.mode }}' = reading-library ]; then profile=reading-library; fi
+          echo "PROFILE=$profile" >> "$GITHUB_ENV"
+          options=()
+          if [ '${{ matrix.mode }}' = jpx-off ]; then options=(-DEXR_ENABLE_PDF_JPX=OFF); fi
+          if [ '${{ matrix.mode }}' = pdf-off ]; then options=(-DEXR_ENABLE_PDF=OFF); fi
+          cmake --preset "$profile" "${options[@]}"
+      - name: Build and install the actual static SDK
+        run: |
+          cmake --build --preset "$PROFILE"
+          cmake --install "build/$PROFILE"
+      - name: Verify intentional cuts do not fetch or install OpenJPEG
+        if: matrix.mode == 'jpx-off' || matrix.mode == 'pdf-off'
+        run: |
+          test ! -e "build/$PROFILE/_deps/openjpeg-src"
+          test ! -e "build/$PROFILE/stage/lib/exreader/libexr_vendor_exr_jpx.a"
+          test ! -e "build/$PROFILE/stage/share/exreader/licenses/openjpeg"
+          if grep -q 'exr_jpx' "build/$PROFILE/stage/lib/cmake/EXReader/EXReaderDependencies.cmake"; then exit 1; fi
+          echo 'Explicit cut: no OpenJPEG source, archive, imported dependency or license installed.'
+      - name: Run installed public consumers and strict license materials
+        if: matrix.mode == 'reading-core' || matrix.mode == 'reading-library'
+        run: |
+          library=OFF
+          if [ "$PROFILE" = reading-library ]; then library=ON; fi
+          cmake -S tests/reading_core -B build/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/$PROFILE/stage" -DEXR_EXPECT_LIBRARY="$library" -DEXR_TEST_FONT="$PWD/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$PWD/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$PWD/tests/fixtures"
+          cmake --build build/consumer --parallel 4
+          ctest --test-dir build/consumer --output-on-failure --no-tests=error
+          python3 tools/check_reading_licenses.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/licenses.json" --require-release-ready
+          python3 tests/check_reading_licenses.py
+          python3 tests/check_reading_profile.py
+      - name: Force a static OpenJPEG symbol through the installed PDF component
+        if: matrix.mode == 'reading-core' || matrix.mode == 'reading-library'
+        run: |
+          mkdir -p build/jpx-consumer
+          cat > build/jpx-consumer/CMakeLists.txt <<'CMAKE'
+          cmake_minimum_required(VERSION 3.24)
+          project(InstalledJPXLink C)
+          find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
+          add_executable(jpx-link main.c)
+          target_link_libraries(jpx-link PRIVATE EXReader::exr_pdf)
+          CMAKE
+          cat > build/jpx-consumer/main.c <<'C'
+          #include <exr/base.h>
+          #include <string.h>
+          extern const char *opj_version(void);
+          int main(void) { return strcmp(exr_version(), "3.40.0") || strcmp(opj_version(), "2.5.4"); }
+          C
+          cmake -S build/jpx-consumer -B build/jpx-consumer-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/$PROFILE/stage"
+          cmake --build build/jpx-consumer-build --parallel 4
+          build/jpx-consumer-build/jpx-link
+      - name: Preserve configuration, licenses and static SDK evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jpx-dependency-${{ matrix.mode }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/${{ env.PROFILE }}/CMakeCache.txt
+            build/${{ env.PROFILE }}/licenses.json
+            build/${{ env.PROFILE }}/exr-modules.json
+            build/${{ env.PROFILE }}/stage/
+            build/consumer/Testing/
+            build/jpx-consumer/
           if-no-files-found: error
