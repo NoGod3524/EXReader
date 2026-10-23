@@ -166,9 +166,9 @@ struct step {
       // Verify a book's claimed immutable length before adopting it as the
       // authority for future references. Bad first metadata cannot poison the
       // retained book identity and block a later correct revision.
-      if(info.source_bytes){uint64_t known=0;reader_revision_status status=reader_revision_book_identity(s.revisions,info.book_key,&known,nullptr);
-        if(status!=READER_REV_NOT_FOUND)revision_check(status);
-        if(status==READER_REV_OK&&known!=info.source_bytes)revision_check(READER_REV_FORMAT);
+      if(info.source_bytes){uint64_t known=0;reader_revision_status book_status=reader_revision_book_identity(s.revisions,info.book_key,&known,nullptr);
+        if(book_status!=READER_REV_NOT_FOUND)revision_check(book_status);
+        if(book_status==READER_REV_OK&&known!=info.source_bytes)revision_check(READER_REV_FORMAT);
         remote_original(info);
       }
       // Non-book history is retained even without metadata; it remains
