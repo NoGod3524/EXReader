@@ -5,6 +5,9 @@ static volatile LONG review_armed, review_entered, review_offset_remaining, revi
 static volatile LONG review_offset_calls, review_offset_injected;
 static HANDLE review_event;
 static DWORD review_note_thread;
+#ifdef EXR_HOST_SHELF_REVIEW
+static void host_update_controls(void);
+#endif
 static int review_query_failure(int kind) {
   return InterlockedExchange(kind == 1 ? &review_notes_fail : &review_shelf_fail, 0) != 0;
 }
@@ -64,7 +67,11 @@ static LRESULT review_message(HWND window, WPARAM code, LPARAM value) {
     SendMessageW(g.books, LB_RESETCONTENT, 0, 0);
     return 1;
   }
-  if (code == 304) return reload_shelf() == EXR_OK;
+  if (code == 304) {
+    int ok=reload_shelf()==EXR_OK;
+    host_update_controls();
+    return ok;
+  }
 #endif
   return 0;
 }
