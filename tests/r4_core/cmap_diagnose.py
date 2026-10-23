@@ -15,6 +15,11 @@ for path in sorted(root.rglob("*.pdf")):
     if path.name not in {"nist-csf2.pdf", "nasa-solar-system.pdf"}:
         continue
     document = pymupdf.open(path)
+    if path.name == "nasa-solar-system.pdf":
+        for font in document[29].get_fonts(full=True):
+            xref = font[0]
+            print(json.dumps({"file": path.name, "page": 29, "font": font,
+                "font_object": document.xref_object(xref)}))
     for xref in range(1, document.xref_length()):
         group_kind, group_value = document.xref_get_key(xref, "Group")
         if group_kind not in {"null", "none"}:

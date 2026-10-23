@@ -37,12 +37,18 @@ jobs:
           ref: 232a1806c38e0775892da2b4dd82fe6cd90414b2
           path: corpus
           fetch-depth: 0
-      - name: Verify pre-execution registration and collect unchanged originals
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12474886324
+          run-id: 39891075765
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: build/frozen
+      - name: Verify pre-execution registration and reuse unchanged retained originals
         run: |
-          sudo apt-get update && sudo apt-get install -y poppler-utils
+          cp -a build/frozen/real-inputs build/real-inputs
           cd corpus
           python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"tools/reading_corpus"); from run import registered; registered(Path("tools/reading_corpus/real-v1.json"),"ea5c13e081cfba86d9f6dd759439894463e51126")'
-          python3 tools/reading_corpus/collect.py collect tools/reading_corpus/real-v1.json ../build/real-inputs
       - name: Build current installed native SDK and original public consumers
         run: |
           cmake --preset reading-core
