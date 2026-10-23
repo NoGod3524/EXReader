@@ -9,6 +9,7 @@ that names the expected problem. The program set is also checked against the exe
 Ninja itself lists for the consumer build, independently of the gate's own Ninja parser.
 """
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -62,6 +63,9 @@ def main():
     base = report['invocation']
     if base[0] != 'verify' or not report['accepted']:
         raise SystemExit('The replayed report must be an accepted verify report')
+    if report['source_sha'] != os.environ['GITHUB_SHA'] or any(
+            report['ci'].get(key) != os.environ[key] for key in ('GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT')):
+        raise SystemExit('The replayed platform report belongs to another source/run/attempt')
     profile, consumer, platform_name = base[1], Path(base[4]), report['platform_requested']
     programs = option_pairs(base, '--program')
     other_profile = {'reading-core': 'reading-library', 'reading-library': 'reading-core'}[profile]
@@ -147,6 +151,9 @@ def main():
     check('not-build-output', fake_argv, ['not-build-output'])
     shutil.rmtree(work, ignore_errors=True)
     summary = {'schema': 1, 'profile': profile, 'platform': platform_name, 'report': args.report.as_posix(),
+               'source_sha': report['source_sha'],
+               'ci': {key: os.environ[key] for key in ('GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT')},
+               'report_sha256': hashlib.sha256(args.report.read_bytes()).hexdigest(),
                'cases': len(results), 'passed': sum(r['passed'] for r in results),
                'accepted': all(r['passed'] for r in results), 'results': results}
     args.output.write_text(json.dumps(summary, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')

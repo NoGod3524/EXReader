@@ -9,6 +9,7 @@ reports that the project as a whole is compliant.
 """
 import argparse
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
@@ -480,6 +481,7 @@ def main():
     root = Path(__file__).resolve().parents[1]
     report = check(args.profile, root, args.build, args.stage)
     report['source_sha'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+    report['ci'] = {key: os.environ[key] for key in ('GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT')}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open('x', encoding='utf-8') as stream:
         json.dump(report, stream, indent=2)
