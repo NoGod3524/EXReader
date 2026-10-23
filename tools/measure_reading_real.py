@@ -7,6 +7,7 @@ import json
 import math
 import os
 import platform
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -94,6 +95,7 @@ def baseline_origin(budgets, source):
     require(len(matching) == 1, "Baseline artifact missing/duplicate")
     artifact = matching[0]
     require(artifact["id"] == budgets["baseline_artifact_id"] and
+            re.fullmatch(r"sha256:[0-9a-f]{64}", artifact.get("digest") or "") is not None and
             artifact["digest"] == budgets["baseline_artifact_digest"] and not artifact["expired"] and
             artifact["size_in_bytes"] > 0 and artifact["workflow_run"]["id"] == run["id"] and
             artifact["workflow_run"]["head_sha"] == run["head_sha"], "Baseline artifact identity refused")
@@ -415,6 +417,12 @@ def main():
                         path = output / item[key]
                         if path.is_file():
                             item[key + "_identity"] = file_identity(path)
+                    if "native_identity" in item and "reference_identity" in item:
+                        try:
+                            item["diagnostic_pixel_difference"] = pixel_difference(output / item["native"], output / item["reference"])
+                        except (OSError, ValueError) as error:
+                            item["diagnostic_pixel_problem"] = str(error)
+                    print(json.dumps({"reference_observation": item}), flush=True)
                     summary["references"].append(item)
         summary["after"] = identity(binary, font, args.manifest, CONTRACT, entries, args.corpus)
         summary["results"] = audit(summary, output, budgets)
