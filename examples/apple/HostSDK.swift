@@ -3,6 +3,7 @@
 // The shared Swift binding stays read-only; this file adds library, anchor and
 // fixed-page access that the reference host needs.
 import Foundation
+import CryptoKit
 import CEXReader
 
 enum HostError: Error, LocalizedError {
@@ -678,6 +679,79 @@ struct HostBook {
     }
 }
 
+struct HostSourceFingerprint: Equatable {
+    let format: String
+    let sha256: String
+    let bytes: Int64
+}
+
+// A single bounded read of the external URL creates the stable, host-owned
+// input used by every later SDK open (including PDF's path-based import).
+final class HostImportCopy {
+    let url: URL
+    let fingerprint: HostSourceFingerprint
+    private let folder: URL
+
+    static func discardInterrupted(in root: URL) throws {
+        guard FileManager.default.fileExists(atPath: root.path) else { return }
+        for item in try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil) {
+            try FileManager.default.removeItem(at: item)
+        }
+    }
+
+    init(file: URL, root: URL, cancel: HostCancelBox) throws {
+        try cancel.check()
+        guard let format = HostLibrary.format(forExtension: file.pathExtension) else {
+            throw HostError.invalidInput("不支持的格式：\(file.pathExtension)")
+        }
+        let maximum = format == EXR_EPUB ? 128 * 1024 * 1024 : 32 * 1024 * 1024
+        let privateFolder = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let privateURL = privateFolder.appendingPathComponent("source." + file.pathExtension.lowercased())
+        folder = privateFolder
+        url = privateURL
+        do {
+            try FileManager.default.createDirectory(at: privateFolder, withIntermediateDirectories: true,
+                                                    attributes: [.posixPermissions: 0o700])
+            let input = try FileHandle(forReadingFrom: file)
+            defer { try? input.close() }
+            let advertised = try input.seekToEnd()
+            guard advertised > 0, advertised <= UInt64(maximum) else {
+                throw HostError.invalidInput(format == EXR_EPUB ? "EPUB 文件为空或超过 128 MiB" : "文件为空或超过 32 MiB")
+            }
+            try input.seek(toOffset: 0)
+            guard FileManager.default.createFile(atPath: privateURL.path, contents: nil,
+                                                  attributes: [.posixPermissions: 0o600]) else {
+                throw HostError.invalidInput("无法创建私有导入副本")
+            }
+            let output = try FileHandle(forWritingTo: privateURL)
+            defer { try? output.close() }
+            var hash = SHA256(), total = 0
+            while true {
+                try cancel.check()
+                let chunk = try input.read(upToCount: min(64 * 1024, maximum - total + 1)) ?? Data()
+                if chunk.isEmpty { break }
+                guard chunk.count <= maximum - total else { throw HostError.invalidInput("导入时文件超过格式上限") }
+                try output.write(contentsOf: chunk)
+                hash.update(data: chunk)
+                total += chunk.count
+#if EXR_APPLE_HOST_REVIEW
+                try HostSDKReview.event?("private-copy-read")
+#endif
+            }
+            guard total > 0, UInt64(total) == advertised else { throw HostError.invalidInput("导入时外部文件长度改变") }
+            try output.close()
+            try cancel.check()
+            fingerprint = HostSourceFingerprint(format: format == EXR_HTML ? "html" : file.pathExtension.lowercased(),
+                sha256: hash.finalize().map { String(format: "%02x", $0) }.joined(), bytes: Int64(total))
+#if EXR_APPLE_HOST_REVIEW
+            try HostSDKReview.event?("private-copy-complete")
+#endif
+        } catch { try? FileManager.default.removeItem(at: privateFolder); throw error }
+    }
+
+    deinit { try? FileManager.default.removeItem(at: folder) }
+}
+
 struct HostNoteRow: Identifiable {
     let id: Int64
     let bookID: Int64
@@ -827,6 +901,46 @@ final class HostLibrary {
                             title: hostString(book.title), author: hostString(book.author),
                             position: Int(book.position))
         }
+    }
+
+    func sourceFingerprint(book: HostBook, cancel: HostCancelBox? = nil) throws -> HostSourceFingerprint {
+        try cancel?.check()
+        let format = book.formatLabel.lowercased()
+        guard ["epub", "pdf", "cbz", "txt", "html", "fb2", "docx", "rtf", "mobi"].contains(format) else {
+            throw HostError.invalidInput("产品书库不支持该原件格式")
+        }
+        var source = exr_source(), error = exr_error()
+        try hostCheck(exr_library_source(handle, book.id, &source, &error), error)
+        defer {
+            source.release?(source.context)
+#if EXR_APPLE_HOST_REVIEW
+            try? HostSDKReview.event?("mapping-source-released")
+#endif
+        }
+        guard source.size > 0, source.size <= UInt64(Int64.max), let read = source.read_at else {
+            throw HostError.invalidResult("存储原件来源无效")
+        }
+        var buffer = [UInt8](repeating: 0, count: 64 * 1024), offset: UInt64 = 0
+        var hash = SHA256()
+        while offset < source.size {
+            try cancel?.check()
+            let request = Int(min(UInt64(buffer.count), source.size - offset))
+            let received = buffer.withUnsafeMutableBytes { read(source.context, offset, $0.baseAddress, request) }
+            guard received > 0, received <= request else { throw HostError.invalidResult("存储原件读取不完整") }
+            hash.update(data: Data(buffer.prefix(received)))
+            offset += UInt64(received)
+#if EXR_APPLE_HOST_REVIEW
+            try HostSDKReview.event?("mapping-source-read")
+#endif
+        }
+        try cancel?.check()
+        return HostSourceFingerprint(format: format,
+            sha256: hash.finalize().map { String(format: "%02x", $0) }.joined(), bytes: Int64(offset))
+    }
+
+    func locationKind(book: HostBook) throws -> String {
+        if book.isFixed { return "fixed_page" }
+        return try isBoundedEPUB(book: book) ? "epub_chapter" : "reflow_global"
     }
 
     func delete(bookID: Int64) throws {

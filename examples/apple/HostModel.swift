@@ -56,6 +56,31 @@ private func makeCGImage(_ bitmap: HostBitmap) -> CGImage? {
                    provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
 }
 
+extension HostCatalog {
+    @discardableResult
+    func attach(book: HostBook, fingerprint: HostSourceFingerprint, library: HostLibrary) throws -> Int64 {
+        try attach(format: fingerprint.format, sha256: fingerprint.sha256, bytes: fingerprint.bytes,
+                   title: book.title, author: book.author, sdkID: book.id,
+                   locationKind: library.locationKind(book: book))
+    }
+
+    func repairMissing(library: HostLibrary, books: [HostBook], cancel: HostCancelBox? = nil) throws -> [String] {
+        let mapped = try localIDs()
+        var failures: [String] = []
+        // One SDK enumeration is supplied by startup. Ascending IDs ensure
+        // historical duplicate sources retain the smallest ID and its real mode.
+        for book in books.sorted(by: { $0.id < $1.id }) where !mapped.contains(book.id) {
+            try cancel?.check()
+            do {
+                let fingerprint = try library.sourceFingerprint(book: book, cancel: cancel)
+                try attach(book: book, fingerprint: fingerprint, library: library)
+            } catch let error as HostError where error.isCancelled { throw error }
+            catch { failures.append("\(book.id)：\(error.localizedDescription)") }
+        }
+        return failures
+    }
+}
+
 final class HostSession {
     let library: HostLibrary
     let font: HostFont
@@ -91,8 +116,8 @@ final class HostSession {
     }
     private var currentPath: String { publication?.parts.first(where: { $0.index == part })?.path ?? "" }
 
-    func listBooks() throws -> [HostBookRow] {
-        try library.books().map { book in
+    func listBooks(_ storedBooks: [HostBook]? = nil) throws -> [HostBookRow] {
+        try (storedBooks ?? library.books()).map { book in
             let detail: String
             if try library.isBoundedEPUB(book: book) {
                 if let saved = try library.epubProgress(bookID: book.id) { detail = "EPUB · 第 \(saved.part + 1) 章" }
@@ -158,12 +183,43 @@ final class HostSession {
         book = nil
     }
 
-    func importBook(url: URL, cancel: HostCancelBox) throws -> (Int64, Bool) {
+    func importBook(url: URL, cancel: HostCancelBox, catalog: HostCatalog? = nil) throws -> (Int64, Bool) {
         try begin(cancel)
         if slowDelay > 0 { try waitCancellable(cancel, seconds: slowDelay) }
         let title = url.lastPathComponent
-        let (id, created) = try library.importUnique(file: url, title: title, cancel: cancel)
-        return (id, created)
+        guard let catalog else { return try library.importUnique(file: url, title: title, cancel: cancel) }
+        guard !title.utf8.contains(0), title.unicodeScalars.count <= 4096 else {
+            throw HostError.invalidInput("书名包含空字符或超过长度上限")
+        }
+        let copy = try HostImportCopy(file: url,
+            root: library.path.deletingLastPathComponent().appendingPathComponent("import-staging", isDirectory: true), cancel: cancel)
+        return try withExtendedLifetime(copy) {
+            let (id, created) = try library.importUnique(file: copy.url, title: title, cancel: cancel)
+            var published = false
+            do {
+#if EXR_APPLE_HOST_REVIEW
+                try HostSDKReview.event?("mapping-after-sdk")
+#endif
+                guard let stored = try library.books().first(where: { $0.id == id }) else {
+                    throw HostError.invalidResult("SDK 导入后未找到原件记录")
+                }
+                let actual = try library.sourceFingerprint(book: stored, cancel: cancel)
+                guard actual == copy.fingerprint else { throw HostError.invalidResult("SDK 存储原件与私有导入副本不一致") }
+                try cancel.commit {}
+                published = true
+#if EXR_APPLE_HOST_REVIEW
+                try HostSDKReview.event?("mapping-before-product")
+#endif
+                let canonicalID = try catalog.attach(book: stored, fingerprint: actual, library: library)
+                return (canonicalID, created)
+            } catch {
+                if !published {
+                    if created { try library.delete(bookID: id) }
+                    throw error
+                }
+                throw HostError.invalidResult("书籍已保存，产品索引待修复；重启后重试：\(error.localizedDescription)")
+            }
+        }
     }
 
     func open(bookID: Int64, cancel: HostCancelBox) throws -> HostSnapshot {
@@ -530,6 +586,9 @@ final class HostReaderModel: ObservableObject {
     @Published var showLibrary = true
     @Published var frameCount = 0
     @Published private(set) var uiTestTrace = ""
+#if EXR_APPLE_IMPORT_REVIEW
+    @Published private(set) var importMappingProbe = ""
+#endif
     private var uiTestEvents: [String] = []
     private var uiTestEventCount = 0
     private var pagePart = -1
@@ -619,7 +678,11 @@ final class HostReaderModel: ObservableObject {
                 }
                 let catalog = try HostCatalog(path: folder.appendingPathComponent("reader-catalog.db"),
                                               migrationURL: migration, ownerQueue: self.queue)
+#if EXR_APPLE_IMPORT_REVIEW
+                self.configureImportMappingReview()
+#endif
                 let library = try HostLibrary(path: folder.appendingPathComponent("library.sqlite"))
+                try HostImportCopy.discardInterrupted(in: folder.appendingPathComponent("import-staging", isDirectory: true))
                 let fontURL = Bundle.main.url(forResource: "Reader", withExtension: "otf")
                 guard let fontURL else { throw HostError.invalidInput("缺少 Reader.otf") }
                 let fontData = try Data(contentsOf: fontURL)
@@ -635,14 +698,22 @@ final class HostReaderModel: ObservableObject {
                                           viewport: viewport,
                                           fontSize: savedFont > 0 ? savedFont : 28)
                 self.session = session
-                let rows = try session.listBooks()
+                let storedBooks = try library.books()
+                let repairProblems = try catalog.repairMissing(library: library, books: storedBooks)
+                let rows = try session.listBooks(storedBooks)
                 self.catalog = catalog
+#if EXR_APPLE_IMPORT_REVIEW
+                self.refreshImportMappingProbe(catalog, folder: folder)
+#endif
                 let lastID = (self.defaults.object(forKey: "EXRLastBook") as? NSNumber)?.int64Value
                 DispatchQueue.main.async {
                     self.traceUITest("startup-publish rows=\(rows.count)")
                     self.books = rows
                     self.busy = false
-                    if let lastID, rows.contains(where: { $0.id == lastID }) {
+                    if !repairProblems.isEmpty {
+                        self.errorText = "产品索引待修复：" + repairProblems.joined(separator: "；")
+                        self.statusText = "书籍已保留，产品索引待修复"
+                    } else if let lastID, rows.contains(where: { $0.id == lastID }) {
                         self.openBook(id: lastID)
                     } else {
                         self.busy = false
@@ -659,6 +730,40 @@ final class HostReaderModel: ObservableObject {
             }
         }
     }
+
+#if EXR_APPLE_IMPORT_REVIEW
+    private func configureImportMappingReview() {
+        let arguments = ProcessInfo.processInfo.arguments
+        let pause: (String) -> Void = { [weak self] phase in
+            DispatchQueue.main.async { self?.statusText = phase }
+            // The independent UI suite kills this real process while paused.
+            // Ordinary hosts contain neither the observer nor this pause.
+            Thread.sleep(forTimeInterval: 180)
+        }
+        HostSDKReview.event = arguments.contains("-EXRMappingPausePublished") ? { event in
+            if event == "mapping-before-product" { pause("导入已保存，正在登记") }
+        } : nil
+        HostCatalog.afterProductBookWrite = arguments.contains("-EXRMappingPauseTransaction") ? {
+            pause("登记事务已开始")
+        } : nil
+    }
+
+    private func refreshImportMappingProbe(_ catalog: HostCatalog, folder: URL) {
+        do {
+            let books = try catalog.scalar("SELECT count(*) FROM reader_books")
+            let local = try catalog.scalar("SELECT count(*) FROM reader_local_books")
+            let epub = try catalog.scalar("SELECT count(*) FROM reader_local_books WHERE location_kind='epub_chapter'")
+            let reflow = try catalog.scalar("SELECT count(*) FROM reader_local_books WHERE location_kind='reflow_global'")
+            let fixed = try catalog.scalar("SELECT count(*) FROM reader_local_books WHERE location_kind='fixed_page'")
+            let keys = try catalog.text("SELECT coalesce(group_concat(book_key,'|'),'') FROM (SELECT book_key FROM reader_books ORDER BY book_key LIMIT 16)")
+            let staging = (try? FileManager.default.contentsOfDirectory(atPath: folder.appendingPathComponent("import-staging").path).count) ?? 0
+            let value = "books=\(books);local=\(local);epub_chapter=\(epub);reflow_global=\(reflow);fixed_page=\(fixed);staging=\(staging);keys=\(keys)"
+            DispatchQueue.main.async { self.importMappingProbe = value }
+        } catch {
+            DispatchQueue.main.async { self.importMappingProbe = "error=\(error.localizedDescription)" }
+        }
+    }
+#endif
 
     private func storageFolder() throws -> URL {
         let base = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
@@ -859,18 +964,21 @@ final class HostReaderModel: ObservableObject {
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
             do {
-                guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
-                let (bookID, created) = try session.importBook(url: url, cancel: box)
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库未就绪") }
+                let (bookID, created) = try session.importBook(url: url, cancel: box, catalog: catalog)
+#if EXR_APPLE_IMPORT_REVIEW
+                self.refreshImportMappingProbe(catalog, folder: session.library.path.deletingLastPathComponent())
+#endif
                 DispatchQueue.main.async { self.traceUITest("import-sdk-return source-token=\(myToken),book=\(bookID),created=\(created)") }
-                do { try box.commit {} }
-                catch {
-                    if created { try session.library.delete(bookID: bookID) }
-                    throw error
-                }
                 self.completeMutation(session: session, token: myToken,
                                       status: created ? "已导入 \(url.lastPathComponent)" : "已存在，复用书架记录",
                                       imported: true)
             } catch {
+#if EXR_APPLE_IMPORT_REVIEW
+                if let catalog = self.catalog, let session = self.session {
+                    self.refreshImportMappingProbe(catalog, folder: session.library.path.deletingLastPathComponent())
+                }
+#endif
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
                     self.fail(error)

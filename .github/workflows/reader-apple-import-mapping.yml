@@ -1,0 +1,183 @@
+name: Apple public SDK product import mapping
+on:
+  push:
+    branches: [codex/reader-apple-import-mapping]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  sdk:
+    name: SDK ${{ matrix.target }}
+    runs-on: macos-15
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Keep all eight frozen SDK trees and shared bindings unchanged
+        run: git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+      - name: Build the unchanged public SDK
+        run: |
+          target='${{ matrix.target }}'
+          options=()
+          if test "$target" = iphonesimulator; then
+            options=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          fi
+          cmake -S . -B "build/sdk-$target" -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${options[@]}"
+          cmake --build "build/sdk-$target" --parallel 4
+          cmake --install "build/sdk-$target" --prefix "stage/$target"
+          python3 tests/apple_host/evidence_contract.py sdk --root "stage/$target" --platform "$target" --output build/sdk-identity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-import-mapping-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            stage/${{ matrix.target }}/
+            build/sdk-identity.json
+          include-hidden-files: true
+          if-no-files-found: error
+  native:
+    runs-on: macos-15
+    needs: sdk
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-import-mapping-sdk-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: sdk-artifact
+      - name: Execute the original exact eight catalog adapter checks
+        run: |
+          mkdir -p build/apple-import-native
+          xcrun swiftc -swift-version 5 -parse-as-library examples/apple/HostCatalog.swift tests/reader_catalog/apple_catalog_check.swift -lsqlite3 -o build/apple-import-native/catalog-check
+          build/apple-import-native/catalog-check apps/reader/store/001_catalog.sql build/apple-import-native/catalog.json
+      - name: Compile and execute the actual public SDK mapping consumer
+        run: |
+          set -o pipefail
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          sdk="$PWD/sdk-artifact/stage/macos"
+          xcrun swiftc -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
+            -I "$sdk/include" -L "$sdk/lib" -lexreader -lsqlite3 \
+            -Xlinker -rpath -Xlinker "$sdk/lib" \
+            examples/apple/HostSDK.swift examples/apple/HostModel.swift examples/apple/HostCatalog.swift examples/apple/SelectableText.swift \
+            tests/apple_host/import_mapping/MappingReview.swift -o build/apple-import-native/mapping-review \
+            2>&1 | tee build/apple-import-native/build.log
+          build/apple-import-native/mapping-review build/apple-resources build/apple-import-native/consumer 2>&1 | tee build/apple-import-native/consumer.log
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          for filename, count, field in [('catalog.json', 8, 'checks'), ('consumer/mapping-review.json', 15, 'checks')]:
+              value = json.loads((Path('build/apple-import-native') / filename).read_text())
+              assert value['accepted'] is True and value['failed'] == 0 and value['skipped'] == 0
+              assert value['source_sha'] == os.environ['GITHUB_SHA']
+              assert str(value['run_id']) == os.environ['GITHUB_RUN_ID'] and str(value['attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
+              assert len(value[field]) == count and len({row['id'] for row in value[field]}) == count
+              assert all(row['passed'] is True for row in value[field])
+          print('Exact catalog 8 and real SDK mapping 15 passed without skips')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-import-mapping-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-import-native/
+          if-no-files-found: error
+  ui:
+    name: Mapping UI ${{ matrix.platform }}
+    needs: [sdk, native]
+    runs-on: macos-15
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: apple-import-mapping-sdk-*
+          path: sdk-artifacts
+      - name: Build the separate UI test project with real production import code
+        run: |
+          mkdir -p stage build/apple-import-ui
+          cp -R sdk-artifacts/*/stage/* stage/
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path('build/apple-resources')
+          (root / 'Mapping.txt').write_text('Native product mapping text. Café 阅读😀.\n' * 64, encoding='utf-8')
+          manifest = json.loads((root / 'manifest.json').read_text())
+          manifest['Mapping.txt'] = hashlib.sha256((root / 'Mapping.txt').read_bytes()).hexdigest()
+          (root / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          PY
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-import-project build/apple-resources tests/apple_host/import_mapping/ui
+      - name: Select an actual platform destination
+        run: |
+          python3 - '${{ matrix.platform }}' > build/apple-import-ui/destination.txt <<'PY'
+          import json, subprocess, sys
+          platform = sys.argv[1]
+          if platform == 'macos':
+              print('platform=macOS\nmacos\nmacOS host\nmacOS')
+          else:
+              prefix = 'iPhone' if platform == 'iphone' else 'iPad'
+              data = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))
+              choices = [(runtime, device['name'], device['udid']) for runtime, devices in data['devices'].items()
+                         for device in devices if device.get('isAvailable') and device['name'].startswith(prefix)]
+              runtime, name, udid = max(choices)
+              subprocess.run(['xcrun', 'simctl', 'shutdown', udid], check=False, capture_output=True)
+              subprocess.run(['xcrun', 'simctl', 'erase', udid], check=True)
+              print('platform=iOS Simulator,id=' + udid + '\n' + udid + '\n' + name + '\n' + runtime)
+          PY
+      - name: Run four actual UI cases including two real process terminations
+        id: ui
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          platform='${{ matrix.platform }}'
+          scheme=EXReaderHost-iOS
+          sdk="$PWD/stage/iphonesimulator"
+          signing=NO
+          if test "$platform" = macos; then scheme=EXReaderHost-macOS; sdk="$PWD/stage/macos"; signing=YES; fi
+          destination=$(sed -n '1p' build/apple-import-ui/destination.txt)
+          xcodebuild test -project build/apple-import-project/EXReaderHost.xcodeproj -scheme "$scheme" \
+            -destination "$destination" -derivedDataPath build/MappingDerivedData \
+            -resultBundlePath "build/apple-import-ui/$platform.xcresult" -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 \
+            EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "build/apple-import-ui/$platform-xcodebuild.log"
+      - name: Preserve and strictly inspect original UI and catalog evidence
+        if: always()
+        id: evidence
+        continue-on-error: true
+        run: |
+          platform='${{ matrix.platform }}'
+          if test "$platform" = macos; then
+            container="$HOME/Library/Application Support/EXReader"
+            target=macos
+            app=build/MappingDerivedData/Build/Products/Debug/EXReaderHost.app
+          else
+            udid=$(sed -n '2p' build/apple-import-ui/destination.txt)
+            container=$(python3 tests/apple_host/resolve_container.py --udid "$udid" --output build/apple-import-ui/container.json)
+            target=iphonesimulator
+            app=build/MappingDerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+          fi
+          python3 tests/apple_host/import_mapping/collect_mapping_evidence.py --platform "$platform" \
+            --xcresult "build/apple-import-ui/$platform.xcresult" --output build/apple-import-ui/evidence \
+            --container "$container" --app "$app" --fixtures build/apple-resources/manifest.json \
+            --sdk-root "stage/$target" --sdk-identity "sdk-artifacts/apple-import-mapping-sdk-$target-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/build/sdk-identity.json" \
+            --destination build/apple-import-ui/destination.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-import-mapping-ui-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-import-ui/
+          if-no-files-found: error
+      - if: always() && (steps.ui.outcome != 'success' || steps.evidence.outcome != 'success')
+        run: exit 1

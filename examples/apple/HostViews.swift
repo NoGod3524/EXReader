@@ -149,6 +149,15 @@ struct LibraryScreen: View {
 
             Text(model.statusText).font(.caption)
                 .accessibilityIdentifier("library.status")
+#if EXR_APPLE_IMPORT_REVIEW
+            if model.showsTestFixtures {
+                Button("导入文本示例") { model.importFixture("Mapping", extension: "txt") }
+                    .accessibilityIdentifier("library.import.mapping-text")
+                Text(model.importMappingProbe).font(.caption2).lineLimit(2)
+                    .accessibilityLabel(model.importMappingProbe)
+                    .accessibilityIdentifier("library.import.mapping-state")
+            }
+#endif
             if !model.errorText.isEmpty {
                 Text(model.errorText).font(.caption).foregroundColor(.red)
                     .accessibilityIdentifier("library.error")

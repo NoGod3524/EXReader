@@ -22,7 +22,8 @@ resource_group = project.main_group.new_group('Resources')
 
 sources = Dir[File.join(root, 'examples/apple/*.swift')].sort +
           [File.join(root, 'bindings/swift/EXReader.swift')]
-test_sources = Dir[File.join(root, 'tests/apple_host/*.swift')].sort
+test_directory = ARGV[2] ? File.expand_path(ARGV[2]) : File.join(root, 'tests/apple_host')
+test_sources = Dir[File.join(test_directory, '*.swift')].sort
 resource_files = Dir[File.join(resources, '*')].sort
 
 base = Pathname.new(output)
@@ -141,6 +142,11 @@ end
   # INFOPLIST_KEY settings alone did not survive the cloud product generation.
   Xcodeproj::Plist.write_to_path({'EXRSourceSHA' => source_sha}, info_plist)
   app_settings(app, platform, deployment, info_plist)
+  if ARGV[2]
+    app.build_configurations.each do |config|
+      config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = '$(inherited) EXR_APPLE_HOST_REVIEW EXR_APPLE_IMPORT_REVIEW'
+    end
+  end
   embed_phase(app)
 
   ui = make_ui_target(project, test_name, platform, deployment)
