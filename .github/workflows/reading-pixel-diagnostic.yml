@@ -23,11 +23,20 @@ on:
         description: Inspect the twelve registered pages; false inspects all three W9 pages
         type: boolean
         default: false
+      export_only:
+        description: Export the review template or reviewed budgets without repeating contact sheets
+        type: boolean
+        default: false
+      review_record:
+        description: Committed review JSON path; empty exports the unreviewed twelve-page template
+        type: string
+        default: ''
 permissions:
   contents: read
   actions: read
 jobs:
   pixel-diagnostic:
+    if: ${{ !inputs.export_only }}
     name: pixel-diagnostic-${{ matrix.case }}-slot-${{ matrix.slot }}
     strategy:
       fail-fast: false
@@ -55,5 +64,33 @@ jobs:
         with:
           name: reading-pixel-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.case }}-${{ matrix.slot }}
           path: build/reading-pixel-diagnostic/
+          if-no-files-found: error
+          retention-days: 30
+  budget-export:
+    if: ${{ inputs.all_pdf_pages || inputs.export_only }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify complete page review refusal checks
+        run: python3 tests/check_reading_real_review.py
+      - name: Export pinned baseline review template or reviewed budgets in cloud only
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASELINE_RUN: ${{ inputs.run_id }}
+          BASELINE_SOURCE: ${{ inputs.source_sha }}
+          REVIEW_RECORD: ${{ inputs.review_record }}
+        run: |
+          args=()
+          if test -n "$REVIEW_RECORD"; then args=(--review-record "$REVIEW_RECORD"); fi
+          python3 tools/export_reading_real_budgets.py --baseline-source-sha "$BASELINE_SOURCE" \
+            --baseline-run-id "$BASELINE_RUN" --output build/reading-budget-export "${args[@]}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reading-budget-export-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reading-budget-export/
           if-no-files-found: error
           retention-days: 30
