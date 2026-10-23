@@ -1,0 +1,30 @@
+name: Reading pixel diagnostic only
+on:
+  push:
+    branches: ['codex/r3-real-performance']
+    paths:
+      - '.github/workflows/reading-pixel-diagnostic.yml'
+      - 'tools/reading_pixel_diagnostic.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  pixel-diagnostic:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install image inspector
+        run: sudo apt-get update -qq && sudo apt-get install -y python3-pil
+      - name: Verify retained artifact and print bounded contact sheet
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reading_pixel_diagnostic.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reading-pixel-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reading-pixel-diagnostic/
+          if-no-files-found: error
+          retention-days: 30
