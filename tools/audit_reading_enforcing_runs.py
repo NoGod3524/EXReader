@@ -120,7 +120,8 @@ def inspect(run_id, output):
         'workflow_conclusion': run['conclusion'], 'job_id': job['id'], 'job_conclusion': job['conclusion'],
         'artifact': {key: artifact[key] for key in ('id', 'name', 'size_in_bytes', 'digest')},
         'raw_audit_passed': False, 'source_performance_accepted': False, 'audit_problems': []}
-    log = subprocess.check_output(['gh', 'api', f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/jobs/{job["id"]}/logs'],
+    log = subprocess.check_output(['gh', 'api', f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/jobs/{job["id"]}/logs',
+                                   '--allow-escape-sequences'],
                                   text=True, timeout=120)
     (output / 'original-job.log').write_text(log, encoding='utf-8')
     verify_upload(log, artifact)
