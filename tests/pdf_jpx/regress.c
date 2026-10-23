@@ -68,8 +68,8 @@ int main(int argc,char **argv) {
     }
     free(out);
     rejected(p,n,8,3,c,bits,c==1,NULL,EXR_FORMAT);
-    rejected(p,n/2,7,3,c,bits,c==1,NULL,EXR_OK);
-    rejected(p,n-2,7,3,c,bits,c==1,NULL,EXR_OK);
+    rejected(p,n/2,7,3,c,bits,c==1,NULL,EXR_FORMAT);
+    rejected(p,n-2,7,3,c,bits,c==1,NULL,EXR_FORMAT);
     rejected(p,n,8192,8192,32,16,0,NULL,EXR_LIMIT);
     { int remaining=1;exr_control control={cancel,NULL,&remaining};rejected(p,n,7,3,c,bits,c==1,&control,EXR_CANCELLED); }
     free(p);
@@ -77,6 +77,14 @@ int main(int argc,char **argv) {
   { size_t n;unsigned char *p=encode("signed.jp2",8,1,0,1,0,&n);rejected(p,n,7,3,1,8,0,NULL,EXR_UNSUPPORTED);free(p); }
   { size_t n;unsigned char *p=encode("subsample.jp2",8,1,0,0,1,&n);rejected(p,n,7,3,1,8,0,NULL,EXR_UNSUPPORTED);free(p); }
   { unsigned char p[]={1,2,3,4};rejected(p,sizeof(p),7,3,1,8,0,NULL,EXR_FORMAT); }
+  {
+    static const unsigned char cdef[]={0,0,0,8,'c','d','e','f'};
+    size_t n;unsigned char *p=encode("metadata.jp2",8,1,0,0,0,&n),*extended=(unsigned char *)malloc(n+sizeof(cdef));
+    assert(extended);memcpy(extended,p,n);memcpy(extended+n,cdef,sizeof(cdef));
+    rejected(extended,n+sizeof(cdef),7,3,1,8,0,NULL,EXR_UNSUPPORTED);
+    extended[n+4]='p';extended[n+5]='c';extended[n+6]='l';extended[n+7]='r';
+    rejected(extended,n+sizeof(cdef),7,3,1,8,0,NULL,EXR_UNSUPPORTED);free(extended);free(p);
+  }
   {
     size_t n;int remaining=3;exr_control control={cancel,NULL,&remaining};
     unsigned char *p=encode_size("cancel.j2k",257,257,8,1,1,0,0,&n);
