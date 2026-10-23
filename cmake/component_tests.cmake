@@ -1,4 +1,11 @@
 # SPDX-License-Identifier: MIT
+if(EXR_BUILD_TESTS AND EXR_ENABLE_PDF AND EXR_ENABLE_PDF_JPX)
+  add_executable(exreader-pdf-jpx-test tests/pdf_jpx/regress.c)
+  target_include_directories(exreader-pdf-jpx-test PRIVATE src include)
+  target_link_libraries(exreader-pdf-jpx-test PRIVATE exr_pdf exr_jpx)
+  add_test(NAME native-pdf-jpx COMMAND exreader-pdf-jpx-test)
+endif()
+
 if(EXR_BUILD_TESTS)
   enable_testing()
   add_executable(exreader-core-component-test tests/test_core_component.c)
