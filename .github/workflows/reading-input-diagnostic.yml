@@ -1,28 +1,66 @@
-name: Retained Android frame diagnostic only
+name: Android viewport ABBA diagnostic only
 on:
   workflow_dispatch:
+    inputs:
+      new_artifact_id:
+        description: Reviewed artifact from c987 run 39995947460 attempt 1
+        type: string
+        required: true
+      new_artifact_bytes:
+        type: string
+        required: true
+      new_artifact_digest:
+        description: Reviewed 64-character ZIP SHA256 without prefix
+        type: string
+        required: true
 permissions:
   contents: read
   actions: read
 jobs:
-  retained-android-frame:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
+  viewport-abba:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      GH_TOKEN: ${{ github.token }}
+      AB_NEW_ID: ${{ inputs.new_artifact_id }}
+      AB_NEW_BYTES: ${{ inputs.new_artifact_bytes }}
+      AB_NEW_DIGEST: ${{ inputs.new_artifact_digest }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install retained image inspector
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install only original emulator and APK inspection tools
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y python3-pil
-      - name: Verify the failed artifact and inspect retained Android frames without execution
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 tools/android_frame_diagnostic.py
-      - name: Preserve original archive and retained frame diagnostic without an acceptance grant
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
+          echo "$SDK/emulator" >> "$GITHUB_PATH"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "emulator" "build-tools;35.0.0" "system-images;android-34;default;x86_64"
+      - name: Verify original ZIPs, old APK pair, font and native identities
+        run: python3 tools/android_raster_ab_diagnostic.py prepare
+      - name: Enable original emulator accelerator
+        run: sudo chmod 666 /dev/kvm
+      - name: One emulator and old 45-step method with external ABBA sampling
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: python3 tools/android_raster_ab_diagnostic.py run
+      - name: Preserve originals and diagnostic outcomes without acceptance
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-frame-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/android-frame-diagnostic/
+          name: android-raster-ab-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-raster-ab-diagnostic/
           if-no-files-found: error
           retention-days: 30
