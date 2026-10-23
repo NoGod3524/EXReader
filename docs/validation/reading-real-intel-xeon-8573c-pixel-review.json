@@ -1,0 +1,230 @@
+{
+  "baseline_source_sha": "9442e84d60469de5551de7ce7e62191a0059d9d1",
+  "baseline_run_id": 40010395155,
+  "baseline_run_attempt": 1,
+  "baseline_artifact_id": 12525832835,
+  "baseline_artifact_digest": "sha256:ee1e37658f5c2789d8e5dd305cd71a5265725ddfa27f44c21baaa3cfd8c19151",
+  "schema": 1,
+  "render_parity_granted": false,
+  "pages": [
+    {
+      "case": "irs-w9",
+      "page": 0,
+      "native_sha256": "897259f91ef9018de1267b6c3c55844cbc9e02148d95494288cc8618acd29b54",
+      "reference_sha256": "d033caa417a46bfba4b6ed93ac53306078bd1849d2a63f6429e654b62c9cfe53",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: form title, field rules, checkboxes, taxpayer boxes and lower instructions retain the reference layout. Native small-text strokes and thin rules are lighter and glyph edges differ. Freeze the measured difference as a regression boundary; no form-fidelity or render-parity grant.",
+      "diagnostic_job_id": 120241288144,
+      "contact_sha256": "3a62af4614836f58916aa041ba78e2647222805b24766c4817d8eb0bc26af45d",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.06001878486259494
+    },
+    {
+      "case": "irs-w9",
+      "page": 1,
+      "native_sha256": "842512e5e1dc0d69a3ecda4c5ddfd1c443fdf1badbd1f8412e9ac7fe60f6a299",
+      "reference_sha256": "e443566274f97f667652dec1cd291e84fb1be14bad64cac1c23114cf3f244c66",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: two-column instructions, headings and paragraph blocks retain their positions. Dense body text has different stroke density and edge rasterization. Accept only this identified baseline's difference boundary.",
+      "diagnostic_job_id": 120241288012,
+      "contact_sha256": "1b47ef21bd022aafe94e8a212319d15dfd525a64d0f57c274987a40f33c429a6",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.06869391563980183
+    },
+    {
+      "case": "irs-w9",
+      "page": 2,
+      "native_sha256": "c0c47a266523b470305f512f1598ddde300eb2b5790e8c0d8386c213aad4eb63",
+      "reference_sha256": "a5fc753d772e0b086bb706ccaa04102f4a44526735d2dd14c95e48b3bbf01ace",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: two-column instructions and the upper-right name table remain visible with aligned major blocks. Small glyphs and table-rule rasterization differ; this is a known baseline difference, not an equality result.",
+      "diagnostic_job_id": 120241288178,
+      "contact_sha256": "dc214e4412326670d88a86146931fe1f6711f397593264e87d8488633b3935bd",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.07016497313258174
+    },
+    {
+      "case": "nist-ai-rmf",
+      "page": 0,
+      "native_sha256": "fd391f2972f29bd1e469a64ad9c13495c9a5482eba8d29c58ac34518d70bf8c2",
+      "reference_sha256": "6e7730b85762be42b6f5ff88b818bda7082e3fdbdbe7115fd6d4087cfe83a13e",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: blue cover, title, central illustrated band and NIST mark retain their placement. Fine illustration edges and text rasterization differ. Retain the baseline-bound external difference only.",
+      "diagnostic_job_id": 120241288033,
+      "contact_sha256": "99e9d2ed936532eade459741d31468a3c2c1ae72d23877cad0c325fe2a20efbe",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.008248335700117066
+    },
+    {
+      "case": "nist-ai-rmf",
+      "page": 5,
+      "native_sha256": "109663bb067d4ca8b11c6564b354e03a8cb81d95b7c902799443d65fb14bf12f",
+      "reference_sha256": "b43ad3a4883829f05ed1b137131e74bf5d8984993289ec80a66bf15fdab308fb",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: Executive Summary body, cyan definition box and page footer retain the reference layout. Differences concentrate on glyph strokes and box/text edges. Record as a regression baseline, without parity.",
+      "diagnostic_job_id": 120241288001,
+      "contact_sha256": "6df7d296bfa0a1911f03329d6d2bf72ce9fef294a9245932889a646493de707e",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.03207265691646699
+    },
+    {
+      "case": "nist-ai-rmf",
+      "page": 12,
+      "native_sha256": "56fac452abb70427fd4f7fa2de88028a9cb59bfb95f3f67bbc061db923056021",
+      "reference_sha256": "a3df5a3286fd793d66caa7616666d7abb8c34bfde9d79dcca63d57cb52a82ef5",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: risk discussion, section heading, paragraphs and footer remain in matching major blocks. Glyph antialiasing and stroke density differ. Freeze the observed difference rather than asserting identical typography.",
+      "diagnostic_job_id": 120241287996,
+      "contact_sha256": "15f0072516b494cc8961383617793c2555e7634de049be71cd6f23c32d73b42e",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.03035784443175831
+    },
+    {
+      "case": "nist-csf2",
+      "page": 0,
+      "native_sha256": "f5938052b51f736880638b46705be51e7771f1d1252deebe8ccac32095e40398",
+      "reference_sha256": "56dfa47c22504362d2af721187680fdbd69c9cf0bcf6249d76c928b28056ca6a",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: colored framework wheel, central labels, cover image and title band are retained. Fine image texture, color edges and text rasterization differ. No colorimetric or pixel-parity claim.",
+      "diagnostic_job_id": 120241288039,
+      "contact_sha256": "1745324062aa69691ad5edaf360ce631981bc90893d8b0fe118ecb32ba6f841e",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.020442045406001575
+    },
+    {
+      "case": "nist-csf2",
+      "page": 5,
+      "native_sha256": "6eae9decd643d4936be7cc11547cf7a2e85667eaef7096d21df9e82809a5b3c3",
+      "reference_sha256": "de81e8ebe3a31a451b9cd3c5993f3ca1d26b896ee6d2f60f3b9b0e27590a5a3e",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: overview heading, nested bullets, blue links and footer retain their positions. Text strokes and link/underline edges differ. Accept only the pinned baseline's measured boundary.",
+      "diagnostic_job_id": 120241287903,
+      "contact_sha256": "2b1105963434ecc7ccbdddc8aaa8cb8d5e94459a595891d3d7e0f4b3a64018a1",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.03137825022837198
+    },
+    {
+      "case": "nist-csf2",
+      "page": 12,
+      "native_sha256": "6d575e59b222c46b0e7c8f9bc11a9ce1bbdae7c5453b66d6b323d337acce3bdb",
+      "reference_sha256": "374ad4ca303eebd5ba0325d281606bbbb86f10bc0a499c575ef2e728825f804c",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: four ascending tier blocks, tier labels, figure caption, paragraphs and blue links are retained. Thin graphic boundaries and glyph strokes differ. Freeze a difference-regression boundary only.",
+      "diagnostic_job_id": 120241287976,
+      "contact_sha256": "4d2cd72bb62d5ff1a3f32766fe61e442e37cae45f35211c9b5a2d00c8c07f5e9",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.01268412962553037
+    },
+    {
+      "case": "nasa-solar-system",
+      "page": 0,
+      "native_sha256": "5c67448cfc483e27bda8d58ff7258dcc2d1c1f39bb119821fd2ae75dc2fb0598",
+      "reference_sha256": "93c106a4d38ae3c9a68ef070196c42b38ee9240ed69fdcb741b84b9b828db4a0",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: title, planets, image framing, NASA mark and bottom legend retain the reference composition. Native illustration tones are visibly cooler in places and image/text edges differ. Preserve this known color/raster difference; no color-fidelity or parity grant.",
+      "diagnostic_job_id": 120241287985,
+      "contact_sha256": "f1384e0aab0ea4071c85f21a99cdfdb4eda1f915a7131572ac7bf60789f79deb",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.02893732381269226
+    },
+    {
+      "case": "nasa-solar-system",
+      "page": 1,
+      "native_sha256": "57d016ba12253c4bbfa515423bfe763c79dbf0390fa4c161317caefebd05dad8",
+      "reference_sha256": "654334d43670cebd7aea9d42c2a2d1188f0b695e57f3d9153b5127aec32e7287",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: three resource columns, headings, italic links and footer retain the reference layout. Small-text stroke density and raster edges differ. Record only a bounded regression baseline.",
+      "diagnostic_job_id": 120241288063,
+      "contact_sha256": "dfe9717bdd863bb1bf308ccd758948b03da432a8661643f3403c65edb09a63e7",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.016535517290034784
+    },
+    {
+      "case": "nasa-solar-system",
+      "page": 2,
+      "native_sha256": "95d30a654644c3895f686d3a6458c61053c299c02bde0b5084b6c97d09646221",
+      "reference_sha256": "d4c61bd97f6f6ff17b6862cf21b6c8b2829a12b575cc15a7417d2daf6f201407",
+      "reviewed": true,
+      "finding": "Visual contact-sheet review: planetary composition, labels, framing and caption remain visible. Native dark background and planets have a visibly different blue/gray balance from Poppler, plus image-edge differences. This known baseline color difference remains open for fidelity work; it is not a parity pass.",
+      "diagnostic_job_id": 120241288005,
+      "contact_sha256": "66acde80298497b93fd406e81e70cd5911f48c4ee9cba8ff7b172ef5c97f1748",
+      "contact_crop": [
+        0,
+        140,
+        612,
+        400
+      ],
+      "baseline_normalized_mae": 0.02207458680529935
+    }
+  ],
+  "review_method": "Root visually inspected all twelve cloud-generated contact sheets: full-page thumbnails plus the recorded original-size crop, with 128-color diagnostic quantization. Full original 72dpi PPM hashes are bound below; diagnostic thumbnails do not replace those originals.",
+  "review_scope": "Pinned external-difference regression boundaries and exact same-engine route RGBA/UTF-8/position signatures; not a full-document visual correctness, color-fidelity, mature-engine parity, or cross-platform performance acceptance.",
+  "diagnostic_run_id": 39900673298,
+  "diagnostic_source_sha": "1bce2e9eb833079ded4dddcc1b0a4bbbc81f190d",
+  "equivalence_source": {
+    "policy": "exact-twelve-native-and-reference-image-sha256-and-all-route-signatures",
+    "review_path": "docs/validation/reading-real-pixel-review.json",
+    "review_sha256": "881889c4bbe93d1e06e28ffee73feed72834a2ee1a4d13b5a9fee10161882a4e",
+    "baseline_source_sha": "887e1bb59ef6f28c15824cb7593654f3610f3cef",
+    "baseline_run_id": 39899829270,
+    "baseline_run_attempt": 1,
+    "baseline_artifact_id": 12478631207,
+    "baseline_artifact_digest": "sha256:c3532b00e70e041855ad2e9050dbfe362c51916140af074218fdb45c0a1052be",
+    "new_visual_review_claimed": false
+  }
+}
