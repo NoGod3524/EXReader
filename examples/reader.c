@@ -1284,20 +1284,20 @@ static exr_status job_open(host_job *job) {
   exr_status status;
   exr_book book;
   exr_book *books = NULL;
-  size_t count = 0, index;
+  size_t metadata_count = 0, metadata_index;
   memset(&session, 0, sizeof(session));
   memset(&book, 0, sizeof(book));
   /* The UI may evict or replace its metadata window while this worker runs.
      The public SDK currently enumerates into a temporary worker-only array;
      no pointer into that array or the UI cache survives this lookup. */
   EnterCriticalSection(&g.library_lock);
-  status = exr_library_books(g.library, "", &books, &count, &error);
+  status = exr_library_books(g.library, "", &books, &metadata_count, &error);
   if (status == EXR_OK) {
-    for (index = 0; index < count && books[index].id != job->book_id; index++) {}
-    if (index == count) status = EXR_ARGUMENT;
-    else if (!book_copy(&book, &books[index])) status = EXR_MEMORY;
+    for (metadata_index = 0; metadata_index < metadata_count && books[metadata_index].id != job->book_id; metadata_index++) {}
+    if (metadata_index == metadata_count) status = EXR_ARGUMENT;
+    else if (!book_copy(&book, &books[metadata_index])) status = EXR_MEMORY;
   }
-  exr_books_free(books, count);
+  exr_books_free(books, metadata_count);
   LeaveCriticalSection(&g.library_lock);
   if (status != EXR_OK) {
     job->error = error;
