@@ -21,6 +21,7 @@
   旧结果、取消结果和已销毁 Activity 的结果均不能更新书架。
 - prefs 只保存查询、顶行 `(sort_title,book_key)` 与像素偏移。刷新、Activity 重建和
   重启从该 keyset 恢复；选书使用稳定 SDK ID，不要求恢复中的书位于当前 150 条窗口。
+  同查询刷新前先保存当前视口，启动/查询尚未完成时保留已有锚点；换查询立即清除旧查询锚点。
 - 书行保留原先的“标题 + 换行 + 简介”无障碍文本契约，原 45/10/11 测试源码和断言不改。
 
 这只把**书架展示与目录读取**改为有界。冻结 SDK 目前只有全量 books metadata API；
@@ -33,10 +34,12 @@
 4 cores、4096 MiB 和固定 Android 工具链。在同一源码、同一运行中依次要求：
 
 1. 公共 SDK 实际导入 2,201 份不同短 TXT 和 1 份有作者元数据的 PDF，再调用
-   生产 `BookStore.repairMissingMappings()` 建目录。目录 10 项检查包括正/反向全量 keyset、
+   生产 `BookStore.repairMissingMappings()` 建目录。目录 11 项检查包括正/反向全量 keyset、
    130 份同标题、作者/字面搜索、取消、owner 限制、隐藏未映射/已删除记录、实际新导入刷新。
    第 9 项控制异步调度顺序但使用真实产品 SQL，证明被取消旧查询不能覆盖新结果；
    第 10 项证明尾部失效锚点只在同一搜索条件内做反向回退。
+   第 11 项控制真实请求的调度，证明 SDK 尚未打开/查询尚未返回时销毁不丢原查询锚点，
+   切换查询后销毁则不复用旧查询锚点。
 2. 在真实 app 主书库重新导入并映射 2,202 本，由独立 UI Automator helper 操作生产
    MainActivity：全库正/反滚动、所有可见源身份、View 回收、搜索、快速查询、刷新锚点、
    旋转/后台/不同 PID 重启、离线打开 TXT/返回、系统文件选择器新增导入，共 10 项。
@@ -58,6 +61,8 @@
 - `Window.OnFrameMetricsAvailableListener` 逐回调复制系统 FrameMetrics，在独立
   HandlerThread 写 JSONL；每个真实 Window 实例、PID、递增 callback sequence 独立记录。
   保留系统 dropCount，丢失、错误或截断则拒绝本轮观测。单 Window 最多 20,000 帧/32 MiB。
+  同一显式 debug 开关下，pre-draw 核对真实书行 tag 与目录快照，再标记已布局 revision；
+  helper 要求该 revision 与应用 revision 相同，且两次新读的视口一致，才比较恢复/滚动。
 - UI helper 用同一设备 elapsedRealtimeNanos 标记正/反向滚动区间。汇总按完成回调时间
   归入区间，报告普通帧 TOTAL p50/p95/p99/max；不是屏幕呈现时间或隔离 ListView 的耗时。
 - 云端外部约每秒按 PID 读取全进程 TOTAL PSS，保留原文。报告采样次数、中位和采样峰值；

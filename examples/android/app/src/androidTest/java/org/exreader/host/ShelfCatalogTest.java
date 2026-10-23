@@ -31,7 +31,8 @@ public final class ShelfCatalogTest extends Instrumentation {
     private static final String[] NAMES={"realSdkImportsAndProductionRepair", "forwardKeysetHasNoMissingOrRepeatedBooks",
             "reverseKeysetMatchesForwardOrder", "sameTitleUsesSourceKeyTieBreak", "titleAuthorAndLiteralSearch",
             "cancelsQueriesAndRejectsWrongOwner", "hidesUnmappedAndDeletedProducts", "repairsNewImportBeforeRefresh",
-            "canceledOldSearchCannotReplaceNewResults", "missingEndAnchorFallsBackWithinSameFilter"};
+            "canceledOldSearchCannotReplaceNewResults", "missingEndAnchorFallsBackWithinSameFilter",
+            "pendingRestoreRetainsOnlySameQueryAnchor"};
     private interface Check { void run() throws Exception; }
     private Context context;
     private File directory;
@@ -47,7 +48,8 @@ public final class ShelfCatalogTest extends Instrumentation {
         Check[] checks={this::realSdkImportsAndProductionRepair,this::forwardKeysetHasNoMissingOrRepeatedBooks,
                 this::reverseKeysetMatchesForwardOrder,this::sameTitleUsesSourceKeyTieBreak,this::titleAuthorAndLiteralSearch,
                 this::cancelsQueriesAndRejectsWrongOwner,this::hidesUnmappedAndDeletedProducts,this::repairsNewImportBeforeRefresh,
-                this::canceledOldSearchCannotReplaceNewResults,this::missingEndAnchorFallsBackWithinSameFilter};
+                this::canceledOldSearchCannotReplaceNewResults,this::missingEndAnchorFallsBackWithinSameFilter,
+                this::pendingRestoreRetainsOnlySameQueryAnchor};
         try {
             directory=new File(context.getCacheDir(),"shelf-catalog"); remove(directory); require(directory.mkdirs(),"test folder");
             seed(directory,false);
@@ -240,6 +242,41 @@ public final class ShelfCatalogTest extends Instrumentation {
                     && value.getJSONArray("keys").getString(0).equals(all("Book 0200").get(0).key.bookKey),
                     "missing end anchor returns the actual filtered predecessor, without unrelated books");
         } finally {runOnMainSync(()->controller.get().close());}
+    }
+
+    private void pendingRestoreRetainsOnlySameQueryAnchor() throws Exception {
+        CatalogStore.ShelfKey anchor=all("Book 0200").get(0).key;
+        java.util.concurrent.ConcurrentLinkedQueue<Runnable> scheduled=new java.util.concurrent.ConcurrentLinkedQueue<>();
+        android.content.SharedPreferences preferences=context.getSharedPreferences("shelf-lifecycle-test",Context.MODE_PRIVATE);
+        AtomicReference<Throwable> failure=new AtomicReference<>();
+        runOnMainSync(()->{
+            preferences.edit().clear().putString("catalog_query","Book 0200").putString("catalog_top_sort",anchor.sortTitle)
+                    .putString("catalog_top_key",anchor.bookKey).putInt("catalog_top_y",-4).commit();
+            CatalogShelf unopened=new CatalogShelf(context,new android.widget.ListView(context),new android.widget.EditText(context),
+                    new android.widget.TextView(context),preferences,scheduled::add,
+                    (query,key,before,inclusive,signal)->store.shelfPage(query,key,before,inclusive,signal),failure::set);
+            unopened.save();unopened.close();
+            require(anchor.bookKey.equals(preferences.getString("catalog_top_key",null)),
+                    "destroy while SDK is still opening cannot erase a previously saved cursor");
+            CatalogShelf shelf=new CatalogShelf(context,new android.widget.ListView(context),new android.widget.EditText(context),
+                    new android.widget.TextView(context),preferences,scheduled::add,
+                    (query,key,before,inclusive,signal)->store.shelfPage(query,key,before,inclusive,signal),failure::set);
+            shelf.start();shelf.save();shelf.close();
+        });
+        require(anchor.bookKey.equals(preferences.getString("catalog_top_key",null)) && preferences.getInt("catalog_top_y",0)==-4,
+                "close while the actual restore request is pending retains the same-filter cursor");
+        scheduled.remove().run();waitForIdleSync();
+        runOnMainSync(()->{
+            android.widget.EditText search=new android.widget.EditText(context);
+            CatalogShelf shelf=new CatalogShelf(context,new android.widget.ListView(context),search,
+                    new android.widget.TextView(context),preferences,scheduled::add,
+                    (query,key,before,inclusive,signal)->store.shelfPage(query,key,before,inclusive,signal),failure::set);
+            shelf.start();search.setText("absent title");shelf.save();shelf.close();
+        });
+        require(preferences.getString("catalog_query","").equals("absent title")
+                && preferences.getString("catalog_top_key",null)==null,
+                "a changed filter immediately removes the previous filter's cursor even before debounce");
+        scheduled.remove().run();waitForIdleSync();require(failure.get()==null,"canceled lifecycle requests never publish a failure");
     }
 
     private void seedUi() {

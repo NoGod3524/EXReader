@@ -235,7 +235,7 @@ public final class ShelfWalkthroughTest {
         SystemClock.sleep(260);
     }
     private JSONObject ready(String query)throws Exception {
-        long end=SystemClock.uptimeMillis()+30000;JSONObject last=null;
+        long end=SystemClock.uptimeMillis()+30000;JSONObject last=null;String previous=null;
         while(SystemClock.uptimeMillis()<end){
             AccessibilityNodeInfo root=InstrumentationRegistry.getInstrumentation().getUiAutomation().getRootInActiveWindow();
             if(root!=null){
@@ -243,8 +243,14 @@ public final class ShelfWalkthroughTest {
                 for(AccessibilityNodeInfo node:nodes){String raw=node.getExtras().getString("exreader.shelf");
                     if(raw!=null){last=new JSONObject(raw);if(last.getString("query").equals(query) && !last.getBoolean("loading")
                             && last.getLong("generation")==last.getLong("applied_generation")
+                            && last.getLong("applied_revision")==last.getLong("drawn_revision")
                             && (last.getInt("cached_rows")==0 || last.getInt("visible_children")>0)
-                            && last.getLong("first_interactive_elapsed_ns")>0){SystemClock.sleep(60);return last;}}
+                            && last.getLong("first_interactive_elapsed_ns")>0){
+                        String fresh=last.getLong("generation")+":"+last.getLong("applied_revision")+":"+last.optString("top_key")
+                                +":"+last.getInt("top_y")+":"+last.getJSONArray("visible_keys");
+                        if(fresh.equals(previous))return last;
+                        previous=fresh;
+                    }else previous=null;}
                 }
             }
             SystemClock.sleep(90);
