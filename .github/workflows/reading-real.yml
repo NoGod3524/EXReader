@@ -29,6 +29,10 @@ on:
         description: Collect one independent 40-process baseline without granting acceptance
         type: boolean
         default: false
+      expected_cpu:
+        description: Optional exact CPU for an independent baseline; refuse a different allocation before building
+        type: string
+        default: ''
   workflow_call:
     inputs:
       require_budgets:
@@ -54,6 +58,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Refuse a different CPU allocation for the requested independent baseline
+        if: inputs.expected_cpu != ''
+        env:
+          EXPECTED_CPU: ${{ inputs.expected_cpu }}
+          BASELINE_ONLY: ${{ inputs.baseline_only }}
+          REQUIRE_BUDGETS: ${{ inputs.require_budgets }}
+        run: |
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+          test "$BASELINE_ONLY" = true
+          test "$REQUIRE_BUDGETS" != true
+          actual=$(sed -n 's/^model name[[:space:]]*: //p' /proc/cpuinfo | head -n 1)
+          printf 'Observed CPU: %s\nExpected CPU: %s\n' "$actual" "$EXPECTED_CPU"
+          test "$actual" = "$EXPECTED_CPU"
       - name: Bind caller source and artifact identity
         id: identity
         run: |
