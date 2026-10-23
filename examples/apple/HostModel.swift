@@ -88,6 +88,10 @@ final class HostShelf: ObservableObject {
             case .failure(let error): self.error = error.localizedDescription
             case .success(let page):
                 guard page.count <= 50 else { self.error = "书架分页超过上限"; return }
+                if !replacing && page.isEmpty {
+                    if previous { self.before = false } else { self.after = false }
+                    return
+                }
                 if replacing && page.isEmpty && anchor != nil && !previous {
                     self.request(anchor: anchor, previous: true, inclusive: false, replacing: true)
                     return
