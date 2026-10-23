@@ -6,7 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define READER_REVISIONS_VERSION "0.1.0"
+#define READER_REVISIONS_VERSION "0.2.0"
 #define READER_REVISION_MAX_BYTES ((size_t)1048576)
 #define READER_REVISION_MAX_PARENTS ((size_t)32)
 #define READER_REVISION_MAX_ENTITY_HISTORY ((size_t)4096)
@@ -21,6 +21,8 @@ typedef struct reader_revisions reader_revisions;
 typedef struct {
   char revision_id[33], entity_kind[16], entity_key[257], operation[8], location_kind[16], sha256[65];
   size_t bytes, parent_count;
+  char book_key[73]; /* Empty for shelf/tag/series; global original identity otherwise. */
+  uint64_t source_bytes; /* Known only on a non-delete book revision, never inferred as zero. */
 } reader_revision_info;
 typedef struct {
   size_t revisions, heads, missing_parents, foreign_parents;
@@ -72,6 +74,10 @@ void reader_revision_bytes_free(void *);
    its selector still requires the existing public resolve result FOUND. */
 reader_revision_status reader_revision_heads(reader_revisions *,const char *entity_kind,
   const char *entity_key,reader_revision_head_fn,void *,reader_revision_state *,reader_revision_error *);
+/* Revalidates retained book history and returns its immutable original byte
+   length. Missing non-delete metadata is NOT_FOUND; conflicts are refused. */
+reader_revision_status reader_revision_book_identity(reader_revisions *,const char *book_key,
+  uint64_t *source_bytes,reader_revision_error *);
 /* Read first 1..100 pending entries, not a persistent monotonic queue cursor.
    Copy rows before calling ack/retry; callback reentry is rejected. */
 reader_revision_status reader_revision_outbox(reader_revisions *,size_t limit,

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.24)
-project(EXReaderRevisions VERSION 0.1.0 LANGUAGES C CXX)
+project(EXReaderRevisions VERSION 0.2.0 LANGUAGES C CXX)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -36,6 +36,6 @@ install(EXPORT EXReaderRevisionsTargets NAMESPACE EXReaderRevisions:: DESTINATIO
 configure_package_config_file(EXReaderRevisionsConfig.cmake.in
   "${CMAKE_CURRENT_BINARY_DIR}/EXReaderRevisionsConfig.cmake" INSTALL_DESTINATION lib/cmake/EXReaderRevisions)
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXReaderRevisionsConfigVersion.cmake"
-  VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
+  VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderRevisionsConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/EXReaderRevisionsConfigVersion.cmake" DESTINATION lib/cmake/EXReaderRevisions)

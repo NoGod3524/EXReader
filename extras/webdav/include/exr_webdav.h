@@ -6,7 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define EXR_WEBDAV_VERSION "0.1.0"
+#define EXR_WEBDAV_VERSION "0.2.0"
 typedef enum {
   EXR_DAV_OK=0, EXR_DAV_ARGUMENT, EXR_DAV_MEMORY, EXR_DAV_IO,
   EXR_DAV_TLS, EXR_DAV_HTTP, EXR_DAV_AUTH, EXR_DAV_CANCELLED,
@@ -60,6 +60,16 @@ exr_webdav_status exr_webdav_list(exr_webdav_client *, const char *collection,
 exr_webdav_status exr_webdav_download_file(exr_webdav_client *, const char *resource,
   const char *private_directory, const char *filename, const exr_webdav_control *,
   exr_webdav_download *, exr_webdav_error *);
+/* Optional immutable-sync primitives. No write follows a redirect, even within
+   the configured root. MKCOL accepts 201 or pre-existing 405; callers must
+   subsequently prove the collection when using it. PUT streams a regular
+   private file with its exact expected length and If-None-Match: *. A 412
+   returns EXISTS and never authorizes ack: caller must GET/verify bytes/hash.
+   Successful creation still requires caller identity verification before ack. */
+exr_webdav_status exr_webdav_make_collection(exr_webdav_client *,const char *collection,
+  const exr_webdav_control *,exr_webdav_error *);
+exr_webdav_status exr_webdav_publish_file(exr_webdav_client *,const char *resource,
+  const char *private_file,uint64_t expected_bytes,const exr_webdav_control *,exr_webdav_error *);
 #ifdef __cplusplus
 }
 #endif
