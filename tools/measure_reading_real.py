@@ -23,6 +23,8 @@ PROTECTED = ("src", "include", "cmake", "CMakeLists.txt", "tests/fixtures",
 CONTRACT = ROOT / "tests/reading_real/contract.json"
 MANIFEST = ROOT / "tools/reading_corpus/real-v1.json"
 BUDGETS = ROOT / "tests/reading_real/budgets.json"
+EPUB_MEMORY = ("workspace_bytes", "peak_workspace_bytes", "index_bytes", "cache_bytes",
+               "checkpoint_bytes", "explicit_snapshot_bytes")
 
 
 def read(path):
@@ -138,8 +140,8 @@ def native_metrics(record, entry, contract):
     for sample in samples:
         require(type(sample["page"]) is int and sample["page"] >= 0 and type(sample["part"]) is int and sample["part"] >= 0,
                 "Invalid page route")
-        for field in ("layout_ms", "render_ms", "total_ms", "bitmap_bytes", "workspace_bytes", "peak_workspace_bytes",
-                      "index_bytes", "cache_bytes", "checkpoint_bytes", "explicit_snapshot_bytes"):
+        memory_fields = EPUB_MEMORY if entry["format"].lower() == "epub" else ("fixed_document_bytes",)
+        for field in ("layout_ms", "render_ms", "total_ms", "bitmap_bytes") + memory_fields:
             require(number(sample[field]), "Invalid operation metric " + field)
         require(type(sample["width"]) is int and type(sample["height"]) is int and
                 0 < sample["width"] <= 4096 and 0 < sample["height"] <= 4096 and
@@ -170,9 +172,9 @@ def native_metrics(record, entry, contract):
     require([sample["page"] for sample in reference] == (entry["selected_pages"] if entry["format"].lower() == "pdf" else []),
             "Reference-page selection changed")
     metrics = {field: record[field] for field in ("font_open_ms", "open_ms", "first_visible_ms", "peak_rss_bytes")}
-    metrics["fixed_directory_bytes"] = record["fixed_directory_bytes"]
-    for field in ("bitmap_bytes", "workspace_bytes", "peak_workspace_bytes", "index_bytes", "cache_bytes",
-                  "checkpoint_bytes", "explicit_snapshot_bytes"):
+    if entry["format"].lower() == "pdf":
+        metrics["fixed_directory_bytes"] = record["fixed_directory_bytes"]
+    for field in ("bitmap_bytes",) + memory_fields:
         metrics[field] = max(sample[field] for sample in samples)
     return metrics, signatures
 
@@ -349,6 +351,11 @@ def main():
                "contract": contract, "files": entries, "attempts": [], "references": [], "problems": [],
                "real_document_credit": 0, "synthetic_credit": 0, "wp16_cpu_credit_seconds": 0,
                "results": None, "complete_product": False}
+    summary["memory_telemetry"] = {
+        "peak_rss_bytes": "whole-process Linux high-water; components may overlap and are not added",
+        "epub": "public chapter workspace/index/cache/checkpoint counters",
+        "pdf": "public fixed_document_bytes after each render, including internal cache retention; internal cache/workspace split unavailable",
+        "raw_pdf_chapter_zero_fields": "not applicable; omitted from PDF case metrics and budgets"}
     summary["diagnostic_observations"] = []
     try:
         require(len(args.source_sha) == 40, "Use a full source SHA")

@@ -17,7 +17,7 @@ typedef struct {
   size_t part,page;
   double layout_ms,render_ms,total_ms;
   uint32_t width,height;
-  uint64_t bitmap_bytes,hash;
+  uint64_t bitmap_bytes,hash,fixed_document_bytes;
   exr_chapter_stats memory;
 } sample;
 typedef struct { size_t part,page; } route;
@@ -56,6 +56,7 @@ static int fixed_page(exr_fixed_document *fixed,size_t page,const char *phase,
   item->phase=phase;item->page=page;
   ok=exr_fixed_render(fixed,page,1.0,&options,&bitmap,error)==EXR_OK;
   item->render_ms=item->total_ms=now_ms()-at;
+  item->fixed_document_bytes=exr_fixed_memory_size(fixed);
   if(ok) ok=bitmap_sample(&bitmap,item,dump);
   exr_bitmap_free(&bitmap);return ok;
 }
@@ -212,10 +213,11 @@ finish:
     sample *s=&samples[i];exr_chapter_stats *m=&s->memory;
     printf("%s{\"phase\":\"%s\",\"part\":%zu,\"page\":%zu,\"layout_ms\":%.6f,\"render_ms\":%.6f,"
            "\"total_ms\":%.6f,\"width\":%u,\"height\":%u,\"bitmap_bytes\":%" PRIu64 ","
+           "\"fixed_document_bytes\":%" PRIu64 ","
            "\"pixel_hash\":\"%016" PRIx64 "\",\"workspace_bytes\":%zu,\"peak_workspace_bytes\":%zu,"
            "\"index_bytes\":%zu,\"cache_bytes\":%zu,\"checkpoint_bytes\":%zu,\"explicit_snapshot_bytes\":%zu}",
            i?",":"",s->phase,s->part,s->page,s->layout_ms,s->render_ms,s->total_ms,s->width,s->height,
-           s->bitmap_bytes,s->hash,m->parse_workspace_bytes,m->peak_parse_workspace_bytes,m->index_bytes,
+           s->bitmap_bytes,s->fixed_document_bytes,s->hash,m->parse_workspace_bytes,m->peak_parse_workspace_bytes,m->index_bytes,
            m->page_cache_bytes,m->checkpoint_bytes,m->explicit_snapshot_bytes);
   }
   printf("]}\n");if(!ok) fprintf(stderr,"Native measurement failed at %s status=%d: %s\n",stage,(int)error.code,error.message);
