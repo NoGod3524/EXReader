@@ -123,7 +123,7 @@ PDF 已有固定页绘制、文字几何、搜索选择、标准密码认证、�
 
 ## 工程质量与当前进展
 
-当前质量目标是：默认分支强制 CI 与可信构建基线、EPUB 超时/PDF 打开绘制失败闭环、成熟引擎差分与像素/性能回归、内存/长章节/恶意输入专项，以及许可证和版本发布流程统一。已有专项结果，但默认分支必需检查和整条发布门槛尚未闭合，真实兼容语料验收仍有缺口；逐项现状与证据见 [项目概述](docs/PROJECT_OVERVIEW.md#五项工程质量目标)。
+当前质量目标是：默认分支强制 CI 与可信构建基线、EPUB 超时/PDF 打开绘制失败闭环、成熟引擎差分与像素/性能回归、内存/长章节/恶意输入专项，以及许可证和版本发布流程统一。默认分支必需检查已实际启用，六份原包发布准备已在云端验证；真实兼容语料仍有未覆盖范围，逐项现状与证据见 [项目概述](docs/PROJECT_OVERVIEW.md#五项工程质量目标)。
 
 冻结 SDK 源码的四目标各 24 CPU 小时长测与严格云端汇总已通过，该结果只绑定其源码。A/B/C 已联合收口：共同源码 S=`686ce2fe`，12 组 35 个上游作业同源成功，严格汇总 run [39850404743](https://github.com/NoGod3524/EXReader/actions/runs/39850404743) 确认 accepted；SDK 基线 K2=`d46ff370`，详见 [联合验收登记](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-ABC-accepted.md)。该轮只覆盖各包声明范围；后继真实八份语料与核心性能预算见下表。
 
@@ -138,7 +138,7 @@ PDF 已有固定页绘制、文字几何、搜索选择、标准密码认证、�
 | 已验证 | R2固定八份真实文档与JPX专项：源码`da1c183`、run [39899523839](https://github.com/NoGod3524/EXReader/actions/runs/39899523839)三作业成功，整本8/8、重开定位8/8、ON/ASan/OFF各24项通过。见[语料记录](docs/R2-REAL-CORPUS.md)及[R4修复](docs/R4-CORE-HOTSPOTS.md) |
 | 已验收 | H8–H11四宿主共同源码`5bc805a`：Windows、Linux、Apple、Android四组11作业与11份必需工件同源通过，见[共同验收记录](docs/R5-SDK-FREEZE.md)；旧失败保留 |
 | 已验收 | R3/R6 SDK候选：`fa54027`的run [39902467216](https://github.com/NoGod3524/EXReader/actions/runs/39902467216)17/17作业成功，严格accepted=true；三平台六包、八份语料、40进程与12参考页及冻结预算同次通过，见[R6记录](docs/R6-READING-RELEASE.md) |
-| 待启用 | 默认分支接纳与必需检查、原包发布准备、实际tag/发布 |
+| 已启用 | PR #2已合入；默认分支强制reading-required且无绕过权限，发布准备已原样核验并导出六包，见[R6记录](docs/R6-READING-RELEASE.md)；尚未创建tag/Release |
 | 后续范围 | 历史1710份库存仍未恢复，本批八份独立计数；跨平台性能、真机与读屏仍待各自验收 |
 
 初始 TXT 与 PDF/CBZ 采样只针对极小合成工作负载，证明测量流程可运行，不是成熟性能基线，也不代表真实语料或任何性能预算已达标；RSS 增量为 0 只表示未超过进程先前高水位，不表示没有分配。新 profile 也不继承 S 的联合验收或旧源码长测。详见 [首轮启动记录](docs/READING-CORE-START.md) 与 [发布门槛映射](docs/READING-CORE-GATE.md)。所有构建、测试及证据汇总在 GitHub Actions 执行。

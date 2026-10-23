@@ -15,7 +15,7 @@ import tarfile
 import urllib.error
 import zipfile
 
-from check_parallel_integration import fetch, pages, require
+from check_parallel_integration import download_artifact_zip, fetch, pages, require
 from reading_required import expected_artifacts, verify_jobs, verify_metadata, verify_publisher
 
 HOSTS = {'Linux': 'X64', 'Windows': 'X64', 'macOS': 'ARM64'}
@@ -155,8 +155,7 @@ def verify_candidate(raw_zip, source, run, attempt, host, profile, identity, reg
 
 
 def download(item):
-    repository = os.environ['GITHUB_REPOSITORY']
-    raw = subprocess.check_output(['gh', 'api', f'repos/{repository}/actions/artifacts/{item["id"]}/zip'])
+    raw = download_artifact_zip(item['id'])
     require(sha(raw) == item['digest'].removeprefix('sha256:'), 'downloaded artifact ZIP digest changed')
     return raw
 
