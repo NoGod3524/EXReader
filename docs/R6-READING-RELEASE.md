@@ -25,12 +25,29 @@ Android则在run39903068530加入DEBUG位图身份观测以定位299个±1边缘
 最终reading-required汇总因缺少Pillow运行依赖而失败，整轮仍为未通过。
 
 `fa54027…`仅在汇总作业补齐python3-pil，预算、引擎、门禁断言未改；
-完整17作业重验run [39902467216](https://github.com/NoGod3524/EXReader/actions/runs/39902467216)已启动。
-最终结论以这次同source/run/attempt的完整执行及严格汇总为准。
+完整17作业重验run [39902467216](https://github.com/NoGod3524/EXReader/actions/runs/39902467216)、attempt1已成功：
+源码`fa540271ea8ad2d9af4cd31467699db2e50c640a`，17/17作业成功，28份工件同源、非空、未过期且digest有效。
+最终reading-required job120250787806实际输出accepted=true、problems=[]；
+18份必需上游工件、六份SDK包、R2逐项原始结果及R3原始输出/参考页/固定预算均被严格重核。
+签发者为GitHub Actions integration15368。完整身份见[本轮JSON](validation/reading-required-fa54027.json)。
+
+### 已接受的六份SDK候选
+
+以下均为上述源码、run及attempt的原始tar.gz；数值为SDK归档字节，不是应用可执行文件大小。
+
+| 平台/架构 | reading-core | reading-library |
+| --- | ---: | ---: |
+| Linux/X64 | 6,346,646 | 7,144,226 |
+| Windows/X64 | 8,493,092 | 9,695,591 |
+| macOS/ARM64 | 5,580,476 | 6,370,598 |
+
+本次接受范围为原生阅读SDK及固定real-v1八份代表文档。默认分支规则仍未启用，未创建tag或Release；
+发布准备要求受测源码已成为默认分支祖先，并从这次已接受运行原样导出六包。
+宿主UI后继修正、历史1710份库存、跨平台性能、真机/读屏及WP16仍分别验收。
 
 下列旧候选封装与协议记录只授予各自固定源码的声明范围；实际发布和默认分支规则仍未执行。
 
-## 候选封装
+## 候选封装实现与历史验证
 
 复用`reading-core.yml`两个Linux preset的构建与安装，在同一个stage执行现有严格许可检查，
 并通过独立安装消费者核对SDK运行库版本/ABI与头文件；library额外使用公共API创建书库，

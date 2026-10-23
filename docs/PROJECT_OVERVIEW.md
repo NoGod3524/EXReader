@@ -57,9 +57,9 @@ R1分支 `codex/r1-reading-core` 从 S=`686ce2fe` 追加阅读 preset、安装�
 | 复验中 | R5 宿主H8–H11 | 新SDK共同源码`da1c183`四组已启动；原`e25959e`四组11作业结果作为历史保留，见[共同验收记录](R5-SDK-FREEZE.md) |
 | 已验证 | R5 SDK 契约 | 当前固定`9854061`，六组18执行作业/30工件同源通过，含本轮核心修复；旧冻结和失败保留，见[SDK冻结记录](R5-SDK-FREEZE.md) |
 | 已验证 | R2代表语料 | `da1c183`的run39899523839整本8/8、重开定位8/8严格接受，原件/原预期未改；历史1710份库存不与本批混计，见[R2](R2-REAL-CORPUS.md) |
-| 执行中 | R3正式基线 | 新SDK五进程×八份、12个参考页已启动；待实际审阅后冻结数字预算并独立strict，跨平台性能另列，见[R3](READING-REAL-PERFORMANCE.md) |
+| 已验证 | R3正式基线与严格运行 | 五进程×八份、12个参考页已完成并实际审阅，固定数字预算后在run39902467216严格接受；范围为Linux reading-core与该固定语料，见[R3](READING-REAL-PERFORMANCE.md) |
 | 已验证局部 | R4 | 图片/解码流缓存、CMap、anchor、CMYK/软蒙版、CFF/BBox与受限JPX修复已纳入当前SDK；JPX ON/ASan/OFF各24项同次通过，见[R4](R4-CORE-HOTSPOTS.md) |
-| 收口中 | R6 | 六平台候选封装、总门禁与发布准备协议已云端验证；待含冻结预算的17作业共同运行。规则候选绑定GitHub Actions的reading-required，仍disabled，未发布 |
+| 候选已验收 | R6 | `fa54027`的run39902467216已17/17、28工件、严格accepted=true；三平台六包及全部固定证据同次通过。规则候选绑定GitHub Actions的reading-required，仍disabled，实际发布待默认分支接纳，见[R6](R6-READING-RELEASE.md) |
 | 后续范围 | 设备与读屏 | 真机、VoiceOver/TalkBack及宿主声明外能力独立验收 |
 
 两个 preset 只做组件裁剪：`reading-core` 关闭音频（含 MP3/AAC）、书库、全文索引、PDF 编辑、旧共享总库、工具和 JNI，
