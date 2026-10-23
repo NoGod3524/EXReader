@@ -45,9 +45,10 @@ def main():
 
     def cert(name, host):
         key, certificate = certificates / (name + '.key'), certificates / (name + '.crt')
+        san = 'DNS:' + host + (',IP:127.0.0.1' if host == 'localhost' else '')
         subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
                         '-keyout', str(key), '-out', str(certificate), '-subj', '/CN=' + host,
-                        '-addext', 'subjectAltName=DNS:' + host], check=True, capture_output=True)
+                        '-addext', 'subjectAltName=' + san], check=True, capture_output=True)
         return key, certificate
 
     trusted_key, trusted = cert('trusted', 'localhost')
@@ -204,7 +205,10 @@ def main():
 
     def root(name='dav', selected_port=port):
         directories.add('/' + name + '/')
-        return 'https://localhost:' + str(selected_port) + '/' + name + '/'
+        # Bind the bulk fixture's URL to the address actually listening. The
+        # original 76/77-source suite still exercises DNS localhost. This avoids
+        # a fresh IPv6-to-IPv4 fallback on every native Windows bulk request.
+        return 'https://127.0.0.1:' + str(selected_port) + '/' + name + '/'
 
     def state(name):
         base = folder / name
