@@ -29,11 +29,13 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
-      - run: python3 -m pip install Pillow==11.3.0
+      - run: |
+          python3 -m venv build/diagnostic-venv
+          build/diagnostic-venv/bin/python -m pip install Pillow==11.3.0
       - name: Read retained original iPhone import failure attachments
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tests/r4_core/apple_failure.py
+        run: build/diagnostic-venv/bin/python tests/r4_core/apple_failure.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
