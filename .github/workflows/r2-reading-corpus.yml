@@ -6,6 +6,9 @@ on:
       - 'tools/reading_corpus/**'
       - 'tests/reading_corpus/**'
       - '.github/workflows/r2-reading-corpus.yml'
+      - 'src/flow.c'
+      - 'src/pager.c'
+      - 'src/layout_internal.h'
   workflow_dispatch:
     inputs:
       manifest:
