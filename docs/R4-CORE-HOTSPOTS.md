@@ -221,3 +221,37 @@ page 35 的 page xref 为 351，Contents 352 使用 FlateDecode；唯一图像 `
 stream 诊断工件 `12476915870`，922 B，digest `sha256:b036557786b831e1272e995d5739b0b0160ef817c6ef038aae7e884ad53537e6`。
 
 本分支的真实两 PDF 仍保留一次未通过，不能记为 NASA 全 42 页通过、R2 八份整包通过、历史 1710 目标通过，或新 SDK/宿主授予；后续集成源码须由主代理重新核对。
+
+## JPX 原组件解码与集成边界
+
+`400d825` 至 `1a1d6e5` 新增 `src/pdf_jpx.c` / `pdf_jpx_internal.h`，仅返回逐行补齐、MSB-first 的原组件样本；Indexed 不在 OpenJPEG 内转 RGB。
+主代理维护终端过滤器与 `pdf_image.c`，R2 维护主 CMake、依赖与许可证，R3 维护 public SDK 集成对照。
+解码器使用 R2 固定 OpenJPEG 2.5.4，archive SHA-256 `a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a`。
+明确 PDF 色彩空间、1/2/4/8/16-bit 无符号组件、相同完整尺寸且无子采样可进入解码；其他布局、CDEF/内嵌 alpha，以及非 Indexed 的 PCLR/CMAP 拒绝。
+`opj_read_header` 后验证完整几何、组件精度和符号，再执行 `opj_decode`；packed 单独不超过 64 MiB，32-bit 组件平面与 packed 合计不超过 64 MiB。
+父级继续在 128 MiB image_chain 中计入本图 RGBA、组件平面与 packed，解码返回后释放平面计数；这里的可见样本内存计数不包含 OpenJPEG 内部工作区。
+内存流 read/skip/seek 检查边界，strict mode 拒绝截断；失败输出始终 NULL/0，并覆盖预取消及读取压缩数据期间取消。
+`1a1d6e5` 明确零 worker 只用调用线程；实际 thread support 时设置 0，`MUTEX_stub` 本身已无线程且其 `set_threads` 返回 false，因此不调用它。
+关闭 `EXR_ENABLE_PDF_JPX` 后只保留无 OpenJPEG include/link 的 EXR_UNSUPPORTED stub。
+
+规范在 Actions 内下载官方 [PDF Reference 1.7](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.7old.pdf) 并提取原文，SHA-256 `4aa598e7e2cc88867565fae793db38c140a10ca2b5551dccdb45e2124282ce29`。
+run `39896660928` / job `120228578772` 保存 86–90、340–346 页全文；§3.3.8 页 89：
+
+> Decode is ignored, except in the case where the image is treated as a mask; that is, when ImageMask is true. In this case, the JPEG2000 data must provide a single color channel with 1-bit samples.
+
+Table 4.39 页 341 独立写明：
+
+> If the image uses the JPXDecode filter and ImageMask is false, Decode is ignored.
+
+页 89 允许 Indexed 且限制 256 色，没有 Decode 例外；主代理据此让非蒙版 Indexed 也忽略显式 Decode。
+本轮仅支持明确且与码流一致的 BitsPerComponent；规范允许的省略/覆盖元数据范围不在本次实现内。
+
+最终专属源码 `f4e9da8479c6cfe4b0806ab80de376c68bd89415`，run `39897100291` / decoder job `120229957889` / primary-spec job `120229958124` 全部 success。
+独立子项目使用与正式依赖相同的 22 个 C 源、生成配置和 `MUTEX_stub`；ASan+UBSan 的两个 CTest 均通过：原组件 packed 回归，以及完全不链接 OpenJPEG 的 disabled 回归。
+packed 回归包含 JP2/裸 J2K × Gray/RGB × 1/2/4/8/16-bit 共 20 组精确样本，逐行 padding、尺寸、截断、资源限制、预取消与解码期间取消、signed/subsampling/CDEF/PCLR 拒绝。
+Pillow 11.3.0 独立入口对 Gray/RGB8 的 JP2/J2K 四份原组件逐字节通过；原 NASA xref 357 的 JP2 经 adapter 保持 165600 个索引，与 Pillow 读取所提取裸 codestream 的索引逐字节相同，样本 SHA-256 `1b4225ec777eef03635117a7864c3d8eccde447e0f41b7b8f5ab1dc52e6c9392`。
+原 NASA 输入重新核对登记 SHA；解包、提取、生成、编译、执行及对照全部只在 GitHub Actions 完成。
+最终工件 `12476978448`，217816 B，digest `sha256:c95536471a3aea5b76d1e3303288035860d6b5b56279835643affd7a29db81be`，保留 CTest 日志、编码夹具、原 NASA 图像及逐字节输出。
+
+保留失败链：`400d825` / run `39896566880` 原组件 sanitizer 通过，但独立 reference 步误用上游 CMake 改写前的 binary 路径而未执行，`7693095` 修正后 run `39896660928` 全通过；`0be75cd` / run `39897019441` 正式 stub 配置的 packed 测试通过，新增 disabled CTest 因 workflow 未构建其 target 而 NotRun，`f4e9da8` 补构建后最终双测试及 reference 全通过。
+本节授予组件解码证据；完整 PDF、public SDK、ON/OFF/ASan 与原八件集成终态由主代理记录。
