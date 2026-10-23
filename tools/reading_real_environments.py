@@ -53,12 +53,13 @@ def select_budget(environment, root=ROOT):
     if not registry_path.exists():
         path = root / LEGACY
         budget = read(path)
-        require((budget.get('cpu_model'), budget.get('compiler')) == (observed[3], observed[4]),
+        require(isinstance(budget, dict) and
+                (budget.get('cpu_model'), budget.get('compiler')) == (observed[3], observed[4]),
                 'Baseline environment refused: no matching registered CPU/compiler')
         return path, {'registry_sha256': None, 'environment_id': 'legacy',
                       'budget_path': LEGACY, 'budget_sha256': digest(path)}
     registry = read(registry_path)
-    require(set(registry) == {'schema', 'legacy_budget_sha256', 'environments'} and
+    require(isinstance(registry, dict) and set(registry) == {'schema', 'legacy_budget_sha256', 'environments'} and
             type(registry['schema']) is int and registry['schema'] == 1,
             'Invalid frozen-environment registry')
     legacy_hash = registry['legacy_budget_sha256']
@@ -89,7 +90,7 @@ def select_budget(environment, root=ROOT):
                 isinstance(expected_hash, str) and re.fullmatch('[0-9a-f]{64}', expected_hash) and
                 digest(path) == expected_hash, 'Frozen budget file/hash refused')
         budget = read(path)
-        require(budget.get('cpu_model') == key[3] and budget.get('compiler') == key[4],
+        require(isinstance(budget, dict) and budget.get('cpu_model') == key[3] and budget.get('compiler') == key[4],
                 'Registered CPU/compiler differs from budget')
         if relative == LEGACY:
             legacy_count += 1
