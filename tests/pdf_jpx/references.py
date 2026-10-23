@@ -15,7 +15,7 @@ def spec():
     hits = 0
     for number, page in enumerate(document):
         text = page.get_text()
-        if "JPXDecode" in text and ("Decode array" in text or "Decode entry" in text or "Decode shall" in text):
+        if number + 1 in {*range(86, 91), *range(340, 347)}:
             print(f"=== PDF physical page {number+1} ===\n{text}")
             hits += 1
     if not hits:
