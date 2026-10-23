@@ -21,7 +21,7 @@ static int number(exr_pdf_file *file, uint32_t id, double *out) {
 
 /* Validate a mask dictionary and report Alpha (0) or Luminosity (1). */
 exr_status exr_pdf_soft_mask_kind(exr_pdf_file *file, uint32_t mask, int *kind, exr_error *e) {
-  uint32_t id, g; const exr_pdf_value *v;
+  uint32_t id, g; const exr_pdf_value *v; int cmyk = 0;
   *kind = 0;
   if (exr_pdf_resolve(file, mask, &mask, e) != EXR_OK) return e->code;
   v = exr_pdf_value_at(file, mask);
@@ -44,6 +44,7 @@ exr_status exr_pdf_soft_mask_kind(exr_pdf_file *file, uint32_t mask, int *kind, 
         !name_is(file, cs, "DeviceRGB") && !name_is(file, cs, "DeviceGray") &&
         !name_is(file, cs, "DeviceCMYK"))
       return fail(e, EXR_UNSUPPORTED, "PDF soft mask group colour space is not a supported device space");
+    cmyk = name_is(file, cs, "DeviceCMYK");
   }
   if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "TR"), &id, e) != EXR_OK) return e->code;
   if (id != EXR_PDF_NONE && exr_pdf_value_at(file, id)->kind != EXR_PDF_NULL && !name_is(file, id, "Identity")) {
@@ -61,7 +62,7 @@ exr_status exr_pdf_soft_mask_kind(exr_pdf_file *file, uint32_t mask, int *kind, 
     v = exr_pdf_value_at(file, id);
     if (v->kind != EXR_PDF_ARRAY) return fail(e, EXR_FORMAT, "PDF soft mask backdrop must be an array");
     { uint32_t at = v->first; while (at != EXR_PDF_NONE) { uint32_t value; if (count == 4 || exr_pdf_resolve(file, at, &value, e) != EXR_OK || !number(file, value, &bc[count])) return fail(e, EXR_FORMAT, "Invalid PDF soft mask backdrop"); count++; at = exr_pdf_value_at(file, at)->next; } }
-    if (count != 1 && count != 3 && count != 4) return fail(e, EXR_FORMAT, "Invalid PDF soft mask backdrop length");
+    if ((cmyk && count != 4) || (count != 1 && count != 3 && count != 4)) return fail(e, EXR_FORMAT, "Invalid PDF soft mask backdrop length");
   }
   return EXR_OK;
 }

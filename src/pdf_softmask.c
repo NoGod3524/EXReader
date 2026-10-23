@@ -77,16 +77,18 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
     (group&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0)|(group&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|
     (group&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0);
   if (kind) {
+    double tmp[4]={0};
+    /* The default BC is all-zero components in the group space. */
+    if(group&EXR_PDF_GROUP_CMYK) count=4;
     if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "BC"), &id, e) != EXR_OK) return e->code;
     if (id != EXR_PDF_NONE && exr_pdf_value_at(file, id)->kind != EXR_PDF_NULL) {
-      double tmp[4];
+      count=0;
       v = exr_pdf_value_at(file, id);
       { uint32_t at = v->first; while (at != EXR_PDF_NONE && count < 4) { uint32_t value; if (exr_pdf_resolve(file, at, &value, e) != EXR_OK || !number(file, value, &tmp[count])) return fail(e, EXR_FORMAT, "Invalid PDF soft mask backdrop"); count++; at = exr_pdf_value_at(file, at)->next; } }
-      if (count == 1) { bc[0] = bc[1] = bc[2] = tmp[0]; }
-      else if (count == 3) { bc[0] = tmp[0]; bc[1] = tmp[1]; bc[2] = tmp[2]; }
-      else if (count == 4) { exr_icc *profile=NULL;status=exr_icc_default_cmyk(control,&profile,e);if(status!=EXR_OK) return status;exr_device_cmyk_rgb(profile,tmp,bc,1);status=exr_icc_deferred_status(profile,e);exr_icc_free(profile);if(status!=EXR_OK) return status; }
-      else return fail(e, EXR_FORMAT, "Invalid PDF soft mask backdrop length");
     }
+    if (count == 1) { bc[0] = bc[1] = bc[2] = tmp[0]; }
+    else if (count == 3) { bc[0] = tmp[0]; bc[1] = tmp[1]; bc[2] = tmp[2]; }
+    else if (count == 4) { exr_icc *profile=NULL;status=exr_icc_default_cmyk(control,&profile,e);if(status!=EXR_OK) return status;exr_device_cmyk_rgb(profile,tmp,bc,1);status=exr_icc_deferred_status(profile,e);exr_icc_free(profile);if(status!=EXR_OK) return status; }
   }
   config.width = width; config.height = height; config.channels = 4; config.background = 0;
   if(kind) {
