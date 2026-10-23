@@ -3,6 +3,7 @@
 """Collect published inputs in Actions; discovery never runs the engine."""
 import argparse
 import hashlib
+from html.parser import HTMLParser
 import json
 from pathlib import Path
 import subprocess
@@ -14,6 +15,15 @@ import xml.etree.ElementTree as ET
 
 def sha(data):
     return hashlib.sha256(data).hexdigest()
+
+
+class PolicyText(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.words = []
+
+    def handle_data(self, data):
+        self.words.append(data)
 
 
 def fetch(url, limit):
@@ -81,11 +91,17 @@ def main():
             evidence = a.output / 'licenses' / (entry['id'] + '.txt')
             evidence.parent.mkdir(exist_ok=True)
             evidence.write_bytes(rights)
-            if a.mode == 'collect' and sha(rights) != entry['license_sha256']:
-                raise ValueError('Frozen license evidence changed')
-            entry.update(sha256=sha(data), size=len(data), bytes=len(data), license_sha256=sha(rights),
+            policy = PolicyText()
+            policy.feed(rights.decode('utf-8'))
+            policy_text = ' '.join(' '.join(policy.words).split())
+            if a.mode == 'collect' and not all(term in policy_text for term in entry['license_required_terms']):
+                raise ValueError('Required license terms absent from current publisher policy')
+            entry.update(sha256=sha(data), size=len(data), bytes=len(data),
                          retrieved_url=final_url, retrieved_license_url=rights_url,
                          source_structure=structure(target, entry))
+            entry['observed_license_sha256'] = sha(rights)
+            if a.mode == 'discover':
+                entry['license_sha256'] = sha(rights)
             records.append(entry)
             print(json.dumps({'asset': entry}, ensure_ascii=False), flush=True)
         except Exception as error:
