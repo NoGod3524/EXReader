@@ -28,11 +28,12 @@ import java.util.concurrent.atomic.AtomicReference;
 /** Thousands of real public-SDK imports, followed by the unchanged production mapping repair. */
 public final class ShelfCatalogTest extends Instrumentation {
     private static final int TXT_BOOKS=2200, TOTAL=TXT_BOOKS+2;
+    private static final String NFD_TITLE="Cafe\u0301 source", NFD_AUTHOR="Shelf Author Re\u0301ne\u0301";
     private static final String[] NAMES={"realSdkImportsAndProductionRepair", "forwardKeysetHasNoMissingOrRepeatedBooks",
             "reverseKeysetMatchesForwardOrder", "sameTitleUsesSourceKeyTieBreak", "titleAuthorAndLiteralSearch",
             "cancelsQueriesAndRejectsWrongOwner", "hidesUnmappedAndDeletedProducts", "repairsNewImportBeforeRefresh",
             "canceledOldSearchCannotReplaceNewResults", "missingEndAnchorFallsBackWithinSameFilter",
-            "pendingRestoreRetainsOnlySameQueryAnchor"};
+            "pendingRestoreRetainsOnlySameQueryAnchor", "canonicalSearchPreservesDisplayBytes"};
     private interface Check { void run() throws Exception; }
     private Context context;
     private File directory;
@@ -49,7 +50,7 @@ public final class ShelfCatalogTest extends Instrumentation {
                 this::reverseKeysetMatchesForwardOrder,this::sameTitleUsesSourceKeyTieBreak,this::titleAuthorAndLiteralSearch,
                 this::cancelsQueriesAndRejectsWrongOwner,this::hidesUnmappedAndDeletedProducts,this::repairsNewImportBeforeRefresh,
                 this::canceledOldSearchCannotReplaceNewResults,this::missingEndAnchorFallsBackWithinSameFilter,
-                this::pendingRestoreRetainsOnlySameQueryAnchor};
+                this::pendingRestoreRetainsOnlySameQueryAnchor,this::canonicalSearchPreservesDisplayBytes};
         try {
             directory=new File(context.getCacheDir(),"shelf-catalog"); remove(directory); require(directory.mkdirs(),"test folder");
             seed(directory,false);
@@ -85,7 +86,7 @@ public final class ShelfCatalogTest extends Instrumentation {
         android.content.SharedPreferences.Editor editor=context.getSharedPreferences("host",Context.MODE_PRIVATE).edit();
         try(NativeLibrary sdk=new NativeLibrary(new File(root,"library.db").getPath())) {
             for(int index=0;index<TXT_BOOKS+1;index++) {
-                String title=index==TXT_BOOKS ? "100%_literal" : index<130 ? "Tie title" : String.format(Locale.ROOT,"Book %04d",index);
+                String title=index==TXT_BOOKS ? "100%_literal" : index<130 ? "Tie title" : index==1999 ? NFD_TITLE : String.format(Locale.ROOT,"Book %04d",index);
                 byte[] bytes=("Real short TXT source "+index+". Read, paginate, search and reopen this book.\n").getBytes(StandardCharsets.UTF_8);
                 File file=new File(sources,"source-"+index+".txt"); write(file,bytes);
                 NativeLibrary.ImportResult imported=sdk.importFile(file.getPath(),NativeLibrary.FORMAT_TXT,title);
@@ -150,6 +151,19 @@ public final class ShelfCatalogTest extends Instrumentation {
         require(all("Shelf Author").size()==1,"author from real PDF SDK import");
         require(all("100%_").size()==1,"percent and underscore are literal user input");
         require(all("absent title").isEmpty(),"empty search results");
+    }
+    private void canonicalSearchPreservesDisplayBytes() {
+        List<CatalogStore.ShelfBook> composedTitle=all("Caf\u00e9 source"), decomposedTitle=all(NFD_TITLE);
+        List<CatalogStore.ShelfBook> composedAuthor=all("R\u00e9n\u00e9"), decomposedAuthor=all("Re\u0301ne\u0301");
+        require(composedTitle.size()==1 && decomposedTitle.size()==1
+                && composedTitle.get(0).key.bookKey.equals(decomposedTitle.get(0).key.bookKey),
+                "NFC and NFD title queries identify the same real SDK source");
+        require(composedAuthor.size()==1 && decomposedAuthor.size()==1
+                && composedAuthor.get(0).key.bookKey.equals(decomposedAuthor.get(0).key.bookKey),
+                "NFC and NFD author queries identify the same real PDF source");
+        require(java.util.Arrays.equals(composedTitle.get(0).title.getBytes(StandardCharsets.UTF_8),NFD_TITLE.getBytes(StandardCharsets.UTF_8))
+                && java.util.Arrays.equals(composedAuthor.get(0).author.getBytes(StandardCharsets.UTF_8),NFD_AUTHOR.getBytes(StandardCharsets.UTF_8)),
+                "catalog preserves the public SDK's original decomposed display title and author bytes");
     }
     private void cancelsQueriesAndRejectsWrongOwner() throws Exception {
         CancellationSignal canceled=new CancellationSignal(); canceled.cancel();
@@ -314,10 +328,12 @@ public final class ShelfCatalogTest extends Instrumentation {
     }
     private static void pdf(File file) throws Exception {
         String content="BT /F1 14 Tf 20 100 Td (A real PDF with an author) Tj ET\n";
+        StringBuilder author=new StringBuilder("FEFF");
+        for(byte value:NFD_AUTHOR.getBytes(StandardCharsets.UTF_16BE))author.append(String.format(Locale.ROOT,"%02X",value&255));
         String[] objects={"<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
                 "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
                 "<< /Length "+content.length()+" >>\nstream\n"+content+"endstream",
-                "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>","<< /Title (Authored sample) /Author (Shelf Author) >>"};
+                "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>","<< /Title (Authored sample) /Author <"+author+"> >>"};
         java.io.ByteArrayOutputStream bytes=new java.io.ByteArrayOutputStream();
         bytes.write("%PDF-1.4\n".getBytes(StandardCharsets.US_ASCII)); int[] offsets=new int[objects.length];
         for(int at=0;at<objects.length;at++){offsets[at]=bytes.size();bytes.write(((at+1)+" 0 obj\n"+objects[at]+"\nendobj\n").getBytes(StandardCharsets.US_ASCII));}

@@ -34,12 +34,15 @@
 4 cores、4096 MiB 和固定 Android 工具链。在同一源码、同一运行中依次要求：
 
 1. 公共 SDK 实际导入 2,201 份不同短 TXT 和 1 份有作者元数据的 PDF，再调用
-   生产 `BookStore.repairMissingMappings()` 建目录。目录 11 项检查包括正/反向全量 keyset、
+   生产 `BookStore.repairMissingMappings()` 建目录。目录 12 项检查包括正/反向全量 keyset、
    130 份同标题、作者/字面搜索、取消、owner 限制、隐藏未映射/已删除记录、实际新导入刷新。
    第 9 项控制异步调度顺序但使用真实产品 SQL，证明被取消旧查询不能覆盖新结果；
    第 10 项证明尾部失效锚点只在同一搜索条件内做反向回退。
    第 11 项控制真实请求的调度，证明 SDK 尚未打开/查询尚未返回时销毁不丢原查询锚点，
    切换查询后销毁则不复用旧查询锚点。
+   第 12 项用真实 SDK 的 NFD 书名和 PDF UTF-16BE 作者，验证 NFC/NFD 查询命中同一源，
+   且目录保留原始 display title/author UTF-8。标题查询复用 NFC `sort_title`，作者绑定
+   NFC/NFD 两个有界字面 pattern；不改变 schema，也不宣称任意混合正规化或 Unicode casefold。
 2. 在真实 app 主书库重新导入并映射 2,202 本，由独立 UI Automator helper 操作生产
    MainActivity：全库正/反滚动、所有可见源身份、View 回收、搜索、快速查询、刷新锚点、
    旋转/后台/不同 PID 重启、离线打开 TXT/返回、系统文件选择器新增导入，共 10 项。
@@ -110,7 +113,10 @@
 - 上一工件云端回读 `40036326340` 成功，固定核验 `12536608131`、106,901,651 B、
   `sha256:b5024d1d8006c6076ac660073cacab012571afe38781cd03ccee42caeb79e34b`；
   只定位原失败，`diagnostic_only=true, accepted=false`。
-- 后继候选正在提交；所有出口仍待同源云端完成。
+- `d448e5e91fe323057ca2fc8f82b69bd933b6d4c8` / run `40036544464`：修复恢复书籍的
+  loading 标题，云端完整回归仍运行；尚未授联合验收。
+- 后继修复 NFC 查询原始 NFD display title 漏项，增加第 12 个目录专项，并在真实 UI 的
+  既有搜索用例中验证 NFC 书名和作者；所有出口仍须新源码同轮云端完成。
 
 本地仅源码/文档编辑和 Git；编译、语法检查、夹具生成、SQL、仪器化、工件读取/解析均在
 GitHub Actions。最终验收以同源完成日志、工件身份和严格汇总为准。

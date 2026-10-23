@@ -130,10 +130,10 @@ final class CatalogStore implements AutoCloseable {
         StringBuilder sql = new StringBuilder(SHELF_COLUMNS);
         List<String> args = new ArrayList<>();
         if (!query.isEmpty()) {
-            String escaped = Normalizer.normalize(query, Normalizer.Form.NFC)
-                    .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-            sql.append(" AND (b.title LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\')");
-            args.add("%" + escaped + "%"); args.add("%" + escaped + "%");
+            String composed = shelfLiteral(Normalizer.normalize(query, Normalizer.Form.NFC));
+            String decomposed = shelfLiteral(Normalizer.normalize(query, Normalizer.Form.NFD));
+            sql.append(" AND (b.sort_title LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\')");
+            args.add(composed); args.add(composed); args.add(decomposed);
         }
         if (anchor != null) {
             sql.append(" AND (b.sort_title,b.book_key) ").append(before ? "<" : inclusive ? ">=" : ">")
@@ -151,6 +151,10 @@ final class CatalogStore implements AutoCloseable {
         }
         if (before) Collections.reverse(books);
         return books;
+    }
+
+    private static String shelfLiteral(String value) {
+        return "%" + value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
     }
 
     ShelfBook localShelfBook(long sdkBookId) {
