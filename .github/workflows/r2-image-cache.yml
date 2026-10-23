@@ -17,6 +17,8 @@ jobs:
         mode: [Release, sanitizer]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Configure full native tests
         run: |
           if [ '${{ matrix.mode }}' = sanitizer ]; then
