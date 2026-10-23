@@ -144,13 +144,13 @@ static void canvas_boundaries(void) {
     CHECK(exr_canvas_end_layer(c,0,&error)!=EXR_OK);CHECK(!exr_canvas_bitmap(c));exr_canvas_free(c);
   }
 }
+static int cancel_mask(void *context) { (void)context;return 1; }
 static void cmyk_soft_masks(void) {
   /* Two translucent ink sources must blend in CMYK before conversion. The
      independent CMS reference makes RGB blending fail this check. */
   const double a=128./255,total=a+a-a*a;
-  unsigned rgb[3],backdrop[3],scenario,k;
-  cmyk_reference((const double[4]){a*(1-a)/total,a/total,0,0},rgb);
-  for(scenario=0;scenario<8;scenario++) {
+  unsigned rgb[3],scenario,k;
+  for(scenario=0;scenario<9;scenario++) {
     char pdf[8192],row[2048];size_t used=0,offset[9],xref;unsigned id;
     exr_fixed_document *document=NULL;exr_bitmap bitmap={0};exr_fixed_render_options options={0};
     const char *paint="/M gs 1 0 0 rg 0 0 16 16 re f";
@@ -158,7 +158,7 @@ static void cmyk_soft_masks(void) {
     const char *group_paint=scenario>=6 ? "/Child Do" : mask;
     const char *bc=scenario==2 ? "/BC [0 0 0 0]" : scenario==3 ? "/BC [1 0 0 0]" : scenario==5 ? "/BC [0 0 0]" : "";
     const char *space=scenario==4 ? "[/CalRGB << /WhitePoint [.95047 1 1.08883] >>]" : "/DeviceCMYK";
-    double expected=total;
+    double coverage=scenario==8 ? 1 : total,expected=coverage;
 #define APPEND(text) do { size_t length=strlen(text);CHECK(length<sizeof(pdf)-used);memcpy(pdf+used,text,length);used+=length; } while(0)
     APPEND("%PDF-1.7\n");
     for(id=1;id<=8;id++) {
@@ -171,7 +171,7 @@ static void cmyk_soft_masks(void) {
         case 5:
           snprintf(row,sizeof(row),"<< /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true /CS %s >> /Resources << /ExtGState << /Half 7 0 R >> /XObject << /Child 8 0 R >> >> /Length %zu >>\nstream\n%s\nendstream",space,strlen(group_paint),group_paint);APPEND(row);break;
         case 6: snprintf(row,sizeof(row),"<< /S /%s /G 5 0 R %s >>",scenario ? "Luminosity" : "Alpha",bc);APPEND(row);break;
-        case 7: APPEND("<< /ca .5 >>");break;
+        case 7: APPEND(scenario==8 ? "<< /ca 1 >>" : "<< /ca .5 >>");break;
         case 8:
           snprintf(row,sizeof(row),"<< /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I false /CS /%s >> /Length %zu >>\nstream\n%s\nendstream",scenario==7 ? "DeviceRGB" : "DeviceCMYK",strlen(mask),mask);APPEND(row);break;
       }
@@ -187,17 +187,26 @@ static void cmyk_soft_masks(void) {
       const unsigned char *p;
       OK(exr_fixed_render(document,0,1,&options,&bitmap,&error));p=bitmap.pixels+8*bitmap.stride+8*4;
       if(scenario) {
-        double luminance=(.3*rgb[0]+.59*rgb[1]+.11*rgb[2])/255;
-        double back;
-        cmyk_reference((const double[4]){scenario==3 ? 1 : 0,0,0,(scenario==1 || scenario==6) ? 1 : 0},backdrop);
-        back=(.3*backdrop[0]+.59*backdrop[1]+.11*backdrop[2])/255;
-        expected=luminance*total+back*(1-total);
+        const double source[4]={scenario==8 ? 0 : a*(1-a)/total,scenario==8 ? 1 : a/total,0,0};
+        const double back[4]={scenario==3 ? 1 : 0,0,0,(scenario==1 || scenario>=6) ? 1 : 0};
+        double inks[4];
+        /* Composite in the declared ink space before the nonlinear CMS. */
+        for(k=0;k<4;k++) inks[k]=source[k]*coverage+back[k]*(1-coverage);
+        cmyk_reference(inks,rgb);
+        expected=(.3*rgb[0]+.59*rgb[1]+.11*rgb[2])/255;
       }
       CHECK(p[0]==255 && p[1]==0 && p[2]==0);
       CHECK(abs((int)p[3]-(int)floor(expected*255+.5))<=2);
       for(k=0;k<4;k++) CHECK(bitmap.pixels[k]==p[k]);
     }
-    exr_bitmap_free(&bitmap);exr_fixed_free(document);
+    exr_bitmap_free(&bitmap);
+    if(scenario==1) {
+      options.mask_budget=1;
+      CHECK(exr_fixed_render(document,0,1,&options,&bitmap,&error)==EXR_LIMIT && !bitmap.pixels);
+      options.mask_budget=0;options.control.cancel=cancel_mask;
+      CHECK(exr_fixed_render(document,0,1,&options,&bitmap,&error)==EXR_CANCELLED && !bitmap.pixels);
+    }
+    exr_fixed_free(document);
   }
 }
 int main(int argc,char **argv) {
