@@ -34,7 +34,7 @@ target_link_libraries(reader-desktop-catalog-check PRIVATE reader_catalog_sqlite
 if(MSVC)
   target_link_options(reader-desktop-catalog-check PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/sdk-link.map")
 else()
-  target_link_options(reader-desktop-catalog-check PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/sdk-link.map")
+  target_link_options(reader-desktop-catalog-check PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/sdk-link.map" "-Wl,--trace-symbol=sqlite3_open")
 endif()
 add_test(NAME desktop-public-sdk-catalog COMMAND reader-desktop-catalog-check
   "${CMAKE_CURRENT_BINARY_DIR}/sdk-check" "${EXR_READER_FIXTURES}")
@@ -42,3 +42,12 @@ add_executable(reader-native-catalog-check ../../../tests/reader_catalog/native_
 target_link_libraries(reader-native-catalog-check PRIVATE reader_catalog reader_catalog_sqlite Threads::Threads)
 add_test(NAME desktop-native-catalog COMMAND reader-native-catalog-check
   "${CMAKE_CURRENT_BINARY_DIR}/native-check" "${CMAKE_CURRENT_SOURCE_DIR}/../store/001_catalog.sql")
+option(EXR_READER_BUILD_GTK "Build the real GTK product host over the installed SDK" OFF)
+if(EXR_READER_BUILD_GTK)
+  if(NOT UNIX OR APPLE)
+    message(FATAL_ERROR "The GTK product host requires Linux")
+  endif()
+  add_subdirectory(../../../examples/linux gtk-host)
+  target_compile_definitions(exreader-linux-reading PRIVATE EXR_READER_PRODUCT_CATALOG=1)
+  target_link_libraries(exreader-linux-reading PRIVATE reader_catalog_sdk)
+endif()
