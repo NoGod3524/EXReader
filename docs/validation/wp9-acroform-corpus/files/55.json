@@ -1,0 +1,12 @@
+{
+ "base": "55-reject-choice-duplicate-exports.pdf",
+ "id": "55",
+ "category": "reject/choice-duplicate",
+ "expect": "reject",
+ "size": 607,
+ "sha256": "09b57551bd23b7fa0e6458952261fab4e0fb05f7ad3fce9fad6bc19881104fcf",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

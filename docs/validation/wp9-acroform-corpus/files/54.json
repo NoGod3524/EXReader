@@ -1,0 +1,12 @@
+{
+ "base": "54-reject-unknown-ft.pdf",
+ "id": "54",
+ "category": "reject/unknown-type",
+ "expect": "reject",
+ "size": 574,
+ "sha256": "81fc033de261c2a69da7c9c7ba6cd38e4ad89d039d574b29b64a968b936df9f3",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

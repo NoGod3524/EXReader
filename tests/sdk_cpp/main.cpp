@@ -62,6 +62,17 @@ int main(int argc,char **argv) {
     if(exr_render_page_color(page,face,0,&bitmap,&error)!=EXR_OK) return 17;
     bool valid=bitmap.width==180 && bitmap.height==100 && exr_pager_statistics(pager).restored_checkpoints>0;
     exr_bitmap_free(&bitmap);if(!valid) return 18;
+    exr_publication *publication=nullptr;
+    if(exr_publication_open(argv[2],&publication,&error)!=EXR_OK) return 20;
+    std::unique_ptr<exr_publication,decltype(&exr_publication_free)> owned_publication(publication,exr_publication_free);
+    auto chapter_options=exr_chapter_options_defaults();chapter_options.window_bytes=512;
+    if(exr_publication_pager_create(publication,0,face,&config,&chapter_options,&pager,&error)!=EXR_OK) return 21;
+    owned_pager.reset(pager);owned_publication.reset();
+    const auto stats=exr_pager_chapter_statistics(pager);std::size_t streamed=0;
+    auto sink=[](void *context,const char *,std::size_t bytes,exr_error *)->exr_status {
+      *static_cast<std::size_t *>(context)+=bytes;return EXR_OK;
+    };
+    if(exr_pager_read_text(pager,0,stats.projection_bytes,sink,&streamed,nullptr,&error)!=EXR_OK || streamed!=stats.projection_bytes) return 22;
   } else if(argc!=1) return 19;
   std::printf("C++ consumer: %s ABI %u\n",exr_version(),unsigned(exr_abi_version())); return 0;
 }

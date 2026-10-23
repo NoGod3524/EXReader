@@ -28,22 +28,22 @@ void exr_inline_clear(exr_inline_bidi *b) {
 /* Walk only the remaining visible inline portion of this block. */
 static size_t following(flow *f, size_t node) {
   for (;;) {
-    const exr_node *n = &f->doc->nodes[node];
+    const exr_node *n = (const exr_node[]){exr_doc_node(f->doc,node)};
     if (n->next_sibling != SIZE_MAX)
       return n->next_sibling;
     node = n->parent;
-    if (node == SIZE_MAX || f->styles[node].display != EXR_CSS_INLINE)
+    if (node == SIZE_MAX || (*exr_doc_style(f->doc,f->styles,node)).display != EXR_CSS_INLINE)
       return SIZE_MAX;
   }
 }
 static size_t next_text(flow *f, size_t node) {
   while (node != SIZE_MAX) {
-    const exr_node *n = &f->doc->nodes[node];
-    if (f->styles[node].display == EXR_CSS_NONE || n->start == SIZE_MAX || f->styles[node].float_side)
+    const exr_node *n = (const exr_node[]){exr_doc_node(f->doc,node)};
+    if ((*exr_doc_style(f->doc,f->styles,node)).display == EXR_CSS_NONE || n->start == SIZE_MAX || (*exr_doc_style(f->doc,f->styles,node)).float_side)
       node = following(f, node);
     else if (n->kind == EXR_NODE_TEXT || exr_ruby_node(f->doc,node))
       return node;
-    else if (f->styles[node].display != EXR_CSS_INLINE ||
+    else if ((*exr_doc_style(f->doc,f->styles,node)).display != EXR_CSS_INLINE ||
              n->kind == EXR_NODE_BREAK || n->kind == EXR_NODE_IMAGE)
       return SIZE_MAX;
     else if (n->first_child != SIZE_MAX)
@@ -57,14 +57,14 @@ typedef struct { flow *f; size_t node, at, start; } inline_text_cursor;
 static int following_inline_scalar(void *context, uint32_t *cp) {
   inline_text_cursor *c = context;
   while (c->node != SIZE_MAX) {
-    const exr_node *n = &c->f->doc->nodes[c->node];
+    const exr_node *n = (const exr_node[]){exr_doc_node(c->f->doc,c->node)};
     if (c->at<n->end && exr_ruby_node(c->f->doc,c->node)) { c->start=c->at; c->at=n->end; *cp=0xfffc; return 1; }
     if (c->at < n->end) {
       c->start=c->at;
-      return exr_next(c->f->doc->text, n->end, &c->at, cp);
+      return exr_doc_next(c->f->doc, n->end, &c->at, cp);
     }
     c->node = next_text(c->f, following(c->f, c->node));
-    if (c->node != SIZE_MAX) c->at = c->f->doc->nodes[c->node].start;
+    if (c->node != SIZE_MAX) c->at = (exr_doc_node(c->f->doc,c->node)).start;
   }
   return 0;
 }
@@ -86,12 +86,12 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
   exr_inline_clear(b);
   b->first_node = first;b->prepared=1;b->window_safe=-1;
   for (node = first; node != SIZE_MAX; node = next_text(f, following(f, node))) {
-    const exr_node *n = &f->doc->nodes[node];
-    if(f->styles[node].hyphens==EXR_HYPHENS_AUTO) risks|=exr_hyphenator_bidi_risk(f->hyphenator,node_language(f,node));
+    const exr_node *n = (const exr_node[]){exr_doc_node(f->doc,node)};
+    if((*exr_doc_style(f->doc,f->styles,node)).hyphens==EXR_HYPHENS_AUTO) risks|=exr_hyphenator_bidi_risk(f->hyphenator,node_language(f,node));
     if (exr_ruby_node(f->doc,node)) { bytes += 3; count++; continue; }
     bytes += n->end - n->start;
     for (at = n->start; at < n->end;) {
-      if (!exr_next(f->doc->text, n->end, &at, &cp))
+      if (!exr_doc_next(f->doc, n->end, &at, &cp))
         return exr_fail(f->error, EXR_ENCODING, "Invalid inline UTF-8");
       complex |= exr_bidi_complex(cp);
       if (++count > EXR_MAX_ITEMS)
@@ -110,7 +110,7 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
     return exr_fail(f->error, EXR_MEMORY, "Inline bidi allocation failed");
   }
   for (node = first; node != SIZE_MAX; node = next_text(f, following(f, node))) {
-    const exr_node *n = &f->doc->nodes[node];
+    const exr_node *n = (const exr_node[]){exr_doc_node(f->doc,node)};
     if (exr_ruby_node(f->doc,node)) {
       b->offsets[index++] = n->start;
       memcpy(text.data + text.size,"\xef\xbf\xbc",3); text.size += 3;
@@ -118,9 +118,15 @@ exr_status exr_inline_prepare(flow *f, size_t first, exr_inline_bidi *b) {
     }
     for (at = n->start; at < n->end;) {
       b->offsets[index++] = at;
-      exr_next(f->doc->text, n->end, &at, &cp);
+      if (!exr_doc_next(f->doc, n->end, &at, &cp)) {
+        exr_inline_clear(b); free(text.data);
+        return exr_fail(f->error, EXR_ENCODING, "Invalid inline UTF-8");
+      }
     }
-    memcpy(text.data + text.size, f->doc->text + n->start, n->end - n->start);
+    if (n->end > n->start && !exr_doc_copy(f->doc, n->start, n->end - n->start, text.data + text.size)) {
+      exr_inline_clear(b); free(text.data);
+      return exr_fail(f->error, EXR_ENCODING, "Unavailable inline source range");
+    }
     text.size += n->end - n->start;
   }
   status = exr_bidi_analyze_mapped(text.data,text.size,f->paragraph->direction,b->offsets,f->auto_bases,
@@ -422,6 +428,10 @@ size_t exr_inline_extra_size(const exr_line_buffer *b,int compact) {
   if(b->plan_prefix) bytes+=b->plan_prefix->total;
   if(b->plan_suffix) bytes+=b->plan_suffix->bytes;
   if(b->auto_bases) bytes+=b->auto_bases->depth*sizeof(*b->auto_bases);
+  if(!compact) {
+    bytes+=exr_display_view_size(b->plan_view);
+    if(b->display) bytes+=exr_display_view_size(b->display->active)+exr_display_view_size(b->display->trial);
+  }
   return bytes+exr_display_state_size(b->display);
 }
 static size_t line_payload(const exr_line_buffer *b) {
@@ -481,9 +491,9 @@ static display_cursor display_after(flow *f,const exr_layout *l,size_t at) {
     const exr_glyph *last=&l->glyphs[l->glyph_count-1];size_t node=last->node,floor=last->end;
     /* A generated source range can cross several inline nodes. Do not replay
        erased source from the anchor's following siblings. */
-    while(node!=SIZE_MAX && f->doc->nodes[node].end<=floor) node=next_text(f,following(f,node));
+    while(node!=SIZE_MAX && (exr_doc_node(f->doc,node)).end<=floor) node=next_text(f,following(f,node));
     c.source.node=node;
-    if(node!=SIZE_MAX) c.source.at=floor>f->doc->nodes[node].start ? floor : f->doc->nodes[node].start;
+    if(node!=SIZE_MAX) c.source.at=floor>(exr_doc_node(f->doc,node)).start ? floor : (exr_doc_node(f->doc,node)).start;
   }
   return c;
 }
@@ -495,7 +505,7 @@ static exr_status display_group(flow *f,exr_layout *l,size_t first,size_t end) {
     if(g->cluster_end>source_last) source_last=g->cluster_end;
     if(g->flags&EXR_GLYPH_RUBY_ITEM) continue;
     keep=g->flags&(EXR_GLYPH_GENERATED|EXR_GLYPH_DELETED|EXR_GLYPH_DISPLAY_BIDI|EXR_GLYPH_VERTICAL|EXR_GLYPH_SIDEWAYS|EXR_GLYPH_TRY_VERTICAL);
-    g->flags=f->styles[g->node].flags|keep|
+    g->flags=(*exr_doc_style(f->doc,f->styles,g->node)).flags|keep|
       ((exr_text_hidden(g->codepoint) || g->bidi_level==UINT_MAX) ? EXR_GLYPH_HIDDEN : 0);
     g->advance=g->offset_x=g->offset_y=0;
   }
@@ -533,7 +543,7 @@ static exr_status display_scan(flow *f,exr_layout *l,int project,
       if(!(flags&EXR_BOUNDARY_GRAPHEME) || (flags&EXR_BOUNDARY_GLUE)) automatic=0;
       g->boundaries=flags|automatic|(*serial<<EXR_DISPLAY_ID_SHIFT);
       if(f->writing_mode!=EXR_WRITING_HORIZONTAL_TB) {
-        if(!i || (flags&EXR_BOUNDARY_GRAPHEME)) vertical=exr_vertical_flags(g->codepoint,f->styles[g->node].orientation);
+        if(!i || (flags&EXR_BOUNDARY_GRAPHEME)) vertical=exr_vertical_flags(g->codepoint,(*exr_doc_style(f->doc,f->styles,g->node)).orientation);
         g->flags=(g->flags&~(EXR_GLYPH_VERTICAL|EXR_GLYPH_SIDEWAYS|EXR_GLYPH_TRY_VERTICAL))|vertical;
       }
     }
@@ -548,7 +558,7 @@ static exr_status display_line(flow *f,exr_line_buffer *b,exr_layout *l,int proj
 static int source_ltr(flow *f,size_t first,size_t last) {
   size_t at=first;uint32_t cp;
   if(first==last) return 0;
-  while(at<last) if(!exr_next(f->doc->text,last,&at,&cp) || !exr_bidi_ltr_letter(cp)) return 0;
+  while(at<last) if(!exr_doc_next(f->doc,last,&at,&cp) || !exr_bidi_ltr_letter(cp)) return 0;
   return 1;
 }
 static int literal_ltr(const char *text,size_t bytes) {
@@ -561,7 +571,7 @@ static int literal_ltr(const char *text,size_t bytes) {
 static int source_anchor_ltr(flow *f,size_t first,size_t last) {
   uint32_t cp;
   return first<last ? source_ltr(f,first,last) :
-    exr_next(f->doc->text,f->doc->size,&first,&cp) && exr_bidi_ltr_letter(cp);
+    exr_doc_next(f->doc,f->doc->size,&first,&cp) && exr_bidi_ltr_letter(cp);
 }
 static int bidi_safe(flow *f,exr_line_buffer *b,const exr_layout *l,const exr_hyphen_edit *edit,size_t raw_end) {
   size_t i;
@@ -578,7 +588,7 @@ static int bidi_safe(flow *f,exr_line_buffer *b,const exr_layout *l,const exr_hy
     if(g->flags&EXR_GLYPH_DELETED) return 0;
     if(!(g->flags&EXR_GLYPH_GENERATED)) {
       if(g->flags&EXR_GLYPH_RUBY_ITEM) continue;
-      if(!exr_next(f->doc->text,g->end,&at,&cp) || at!=g->end || cp!=g->codepoint) return 0;
+      if(!exr_doc_next(f->doc,g->end,&at,&cp) || at!=g->end || cp!=g->codepoint) return 0;
       continue;
     }
     if(i+1==l->glyph_count && (g->codepoint==0x2010 || g->codepoint=='-')) {
@@ -624,7 +634,7 @@ static exr_status bidi_init(flow *f,exr_line_buffer *b,exr_display_state *state,
      context. Ordinary opens never pay for this optional candidate-view cache. */
   int cacheable=f->bidi && f->bidi->prepared && f->bidi->first_node==state->first_node;
   int known=cacheable && f->bidi->window_safe>=0;
-  cursor.at=f->doc->nodes[state->first_node].start;state->window_safe=known ? f->bidi->window_safe : 1;
+  cursor.at=(exr_doc_node(f->doc,state->first_node)).start;state->window_safe=known ? f->bidi->window_safe : 1;
   if(known && (!state->window_safe || !b->first_strong)) return EXR_OK;
   if(known && b->plan && b->plan->content.safe && b->plan_prefix) {
     state->context=b->plan_prefix;state->context->refs++;return EXR_OK;
@@ -668,8 +678,8 @@ static int bidi_window_literal(const char *text,size_t size) {
 }
 static inline_text_cursor bidi_cursor_at(flow *f,size_t node,size_t offset) {
   inline_text_cursor cursor={f,node,offset,0};
-  while(cursor.node!=SIZE_MAX && f->doc->nodes[cursor.node].end<=offset) cursor.node=next_text(f,following(f,cursor.node));
-  if(cursor.node!=SIZE_MAX && cursor.at<f->doc->nodes[cursor.node].start) cursor.at=f->doc->nodes[cursor.node].start;
+  while(cursor.node!=SIZE_MAX && (exr_doc_node(f->doc,cursor.node)).end<=offset) cursor.node=next_text(f,following(f,cursor.node));
+  if(cursor.node!=SIZE_MAX && cursor.at<(exr_doc_node(f->doc,cursor.node)).start) cursor.at=(exr_doc_node(f->doc,cursor.node)).start;
   return cursor;
 }
 static exr_status bidi_context_append(flow *f,exr_display_builder *builder,const exr_display_patch *context) {
@@ -695,7 +705,7 @@ static exr_status bidi_build(flow *f,exr_line_buffer *b,const exr_display_patch 
   exr_direction direction=f->paragraph->direction;
   builder.control=&f->config->control;*out=NULL;
   if(state->first_node==SIZE_MAX) return exr_fail(f->error,EXR_FORMAT,"Missing display paragraph source");
-  cursor=(inline_text_cursor){f,state->first_node,f->doc->nodes[state->first_node].start,0};
+  cursor=(inline_text_cursor){f,state->first_node,(exr_doc_node(f->doc,state->first_node)).start,0};
   if(window) {
     status=bidi_context_append(f,&builder,state->context);if(status!=EXR_OK) goto done;
     source_end=state->context ? state->context->end : cursor.at;
@@ -848,11 +858,11 @@ static exr_status shape_line_copy(flow *f, exr_line_buffer *b, exr_layout *to, c
   if (status != EXR_OK) return status;
   child.layout = to;
   if (hyphen && count && to->glyphs[count - 1].codepoint == 0xad &&
-      f->styles[to->glyphs[count-1].node].hyphens!=EXR_HYPHENS_NONE) {
+      (*exr_doc_style(f->doc,f->styles,to->glyphs[count-1].node)).hyphens!=EXR_HYPHENS_NONE) {
     exr_glyph *g = &to->glyphs[count - 1];
-    size_t order[32], n = exr_font_order(f->font, f->styles[g->node].family,
-                                          f->styles[g->node].flags,
-                                          f->doc->nodes[g->node].chapter, order);
+    size_t order[32], n = exr_font_order(f->font, (*exr_doc_style(f->doc,f->styles,g->node)).family,
+                                          (*exr_doc_style(f->doc,f->styles,g->node)).flags,
+                                          (exr_doc_node(f->doc,g->node)).chapter, order);
     soft = g->start;
     /* Prefer the Unicode hyphen throughout the allowed fallback sequence. */
     for (i = 0; i < n && !exr_font_has_glyph(f->font, order[i], 0x2010); i++) {}
@@ -878,11 +888,11 @@ static exr_status shape_line_copy(flow *f, exr_line_buffer *b, exr_layout *to, c
 }
 static exr_status generated_hyphen(flow *f,exr_line_buffer *b,exr_layout *to,size_t point,size_t first,const exr_glyph *anchor) {
   flow child=*f;exr_glyph g=*anchor; size_t i,n,order[32]; exr_status status;
-  n=exr_font_order(f->font,f->styles[g.node].family,f->styles[g.node].flags,f->doc->nodes[g.node].chapter,order);
+  n=exr_font_order(f->font,(*exr_doc_style(f->doc,f->styles,g.node)).family,(*exr_doc_style(f->doc,f->styles,g.node)).flags,(exr_doc_node(f->doc,g.node)).chapter,order);
   for(i=0;i<n && !exr_font_has_glyph(f->font,order[i],0x2010);i++) {}
   g.codepoint=i<n ? 0x2010 : '-';
-  g.flags=f->styles[g.node].flags|EXR_GLYPH_GENERATED;
-  if(f->writing_mode!=EXR_WRITING_HORIZONTAL_TB) g.flags|=exr_vertical_flags(g.codepoint,f->styles[g.node].orientation);
+  g.flags=(*exr_doc_style(f->doc,f->styles,g.node)).flags|EXR_GLYPH_GENERATED;
+  if(f->writing_mode!=EXR_WRITING_HORIZONTAL_TB) g.flags|=exr_vertical_flags(g.codepoint,(*exr_doc_style(f->doc,f->styles,g.node)).orientation);
   g.start=g.cluster_start=first;g.end=g.cluster_end=point;
   if(anchor->flags&EXR_GLYPH_GENERATED) {
     if(anchor->cluster_start<g.cluster_start) g.cluster_start=anchor->cluster_start;
@@ -907,9 +917,9 @@ static exr_status generated_text(flow *f,exr_line_buffer *b,exr_layout *to,const
       if(anchor->cluster_start<g.cluster_start) g.cluster_start=anchor->cluster_start;
       if(anchor->cluster_end>g.cluster_end) g.cluster_end=anchor->cluster_end;
     }
-    g.flags=f->styles[g.node].flags|EXR_GLYPH_GENERATED|(exr_text_hidden(cp) ? EXR_GLYPH_HIDDEN : 0);
+    g.flags=(*exr_doc_style(f->doc,f->styles,g.node)).flags|EXR_GLYPH_GENERATED|(exr_text_hidden(cp) ? EXR_GLYPH_HIDDEN : 0);
     if(!size) g.flags|=EXR_GLYPH_HIDDEN|EXR_GLYPH_DELETED;
-    if(f->writing_mode!=EXR_WRITING_HORIZONTAL_TB) g.flags|=exr_vertical_flags(cp,f->styles[g.node].orientation);
+    if(f->writing_mode!=EXR_WRITING_HORIZONTAL_TB) g.flags|=exr_vertical_flags(cp,(*exr_doc_style(f->doc,f->styles,g.node)).orientation);
     g.boundaries=to->glyph_count==start ? EXR_BOUNDARY_GRAPHEME : 0;g.offset_x=g.offset_y=g.advance=0;
     status=line_reserve(f,b,to,to->glyph_count+1);if(status!=EXR_OK) return status;
     to->glyphs[to->glyph_count++]=g;
@@ -1213,7 +1223,7 @@ static exr_status rematch_token(flow *f,exr_line_buffer *b,const char *text,size
   char previous[256]={0};int have_previous=0;size_t k;exr_status status;
   for(k=0;k<count;k++) {
     const exr_glyph *g=&b->raw.glyphs[indices[k]];char key[256];exr_hyphenation *result=NULL;const exr_hyphen_break *items;size_t n,j;
-    if((exr_inline_id(g) ? exr_inline_id(g)<=b->display_origin_id : g->start<=origin) || f->styles[g->node].hyphens!=EXR_HYPHENS_AUTO || !(g->boundaries&EXR_BOUNDARY_GRAPHEME) ||
+    if((exr_inline_id(g) ? exr_inline_id(g)<=b->display_origin_id : g->start<=origin) || (*exr_doc_style(f->doc,f->styles,g->node)).hyphens!=EXR_HYPHENS_AUTO || !(g->boundaries&EXR_BOUNDARY_GRAPHEME) ||
        (g->boundaries&EXR_BOUNDARY_GLUE) || !exr_hyphen_language(node_language(f,g->node),key)) continue;
     if(have_previous && !strcmp(previous,key)) continue;
     memcpy(previous,key,strlen(key)+1);have_previous=1;
@@ -1225,7 +1235,7 @@ static exr_status rematch_token(flow *f,exr_line_buffer *b,const char *text,size
       if(point==SIZE_MAX || point>=count) { status=exr_fail(f->error,EXR_FORMAT,"Unmapped display hyphenation point");break; }
       candidate=&b->raw.glyphs[indices[point]];
       if((exr_inline_id(candidate) ? exr_inline_id(candidate)<=b->display_origin_id : candidate->start<=origin) || !(candidate->boundaries&EXR_BOUNDARY_GRAPHEME) || (candidate->boundaries&EXR_BOUNDARY_GLUE) ||
-         f->styles[candidate->node].hyphens!=EXR_HYPHENS_AUTO ||
+         (*exr_doc_style(f->doc,f->styles,candidate->node)).hyphens!=EXR_HYPHENS_AUTO ||
          !exr_hyphen_language(node_language(f,candidate->node),language) || strcmp(language,key)) continue;
       if(item->start!=item->point || item->end!=item->point || item->before_size || item->after_size) {
         size_t first=word_index(offsets,count,item->start),last=word_index(offsets,count,item->end);exr_hyphen_edit edit={0};
@@ -1553,8 +1563,8 @@ exr_status exr_inline_break(flow *f,exr_line_buffer *b) {
   return exr_inline_drain(f,b);
 }
 static const char *node_language(const flow *f,size_t node) {
-  for(;node!=SIZE_MAX;node=f->doc->nodes[node].parent) {
-    const exr_node *n=&f->doc->nodes[node]; const char *value=exr_node_attribute(n,"http://www.w3.org/XML/1998/namespace|lang");
+  for(;node!=SIZE_MAX;node=(exr_doc_node(f->doc,node)).parent) {
+    const exr_node *n=(const exr_node[]){exr_doc_node(f->doc,node)}; const char *value=exr_node_attribute(n,"http://www.w3.org/XML/1998/namespace|lang");
     if(!value) value=exr_node_attribute(n,"xml:lang");
     if(!value) value=exr_node_attribute(n,"lang");
     if(value) return value;
@@ -1580,7 +1590,8 @@ static exr_status word_points(flow *f,exr_line_buffer *b,const char key[256]) {
     if(!kind && !(word_joiner(cp) && previous && word_after(cursor))) break;
     if(count==256 || size>sizeof(text)-bytes) { w->until=SIZE_MAX;return EXR_OK; }
     offsets[count]=bytes;sources[count++]=cursor.start;
-    memcpy(text+bytes,f->doc->text+cursor.start,size);bytes+=size;w->until=cursor.at;
+    if(!exr_doc_copy(f->doc,cursor.start,size,text+bytes)) return exr_fail(f->error,EXR_ENCODING,"Unavailable hyphenation source range");
+    bytes+=size;w->until=cursor.at;
     numeric|=kind==3 || (count==1 && kind!=1);previous=!!kind;
   }
   if(numeric || !bytes) return EXR_OK;
@@ -1619,7 +1630,7 @@ static exr_status hyphenate_scalar(flow *f,exr_line_buffer *b,exr_glyph *g) {
     b->in_word=0; if(b->word) b->word->until=0; return EXR_OK;
   }
   if(!b->in_word) { b->word_node=g->node; b->word_start=g->start; b->in_word=1; }
-  if(g->start<b->blocked_until || f->styles[g->node].hyphens!=EXR_HYPHENS_AUTO || !(g->boundaries&EXR_BOUNDARY_GRAPHEME) ||
+  if(g->start<b->blocked_until || (*exr_doc_style(f->doc,f->styles,g->node)).hyphens!=EXR_HYPHENS_AUTO || !(g->boundaries&EXR_BOUNDARY_GRAPHEME) ||
       (g->boundaries&EXR_BOUNDARY_GLUE) || !exr_hyphen_language(node_language(f,g->node),key)) return EXR_OK;
   if(!b->word) {
     if(sizeof(*b->word)>16*1024*1024-line_payload(b)) return exr_fail(f->error,EXR_LIMIT,"Hyphenation word exceeds line budget");
@@ -1646,11 +1657,11 @@ static exr_status hyphenate_scalar(flow *f,exr_line_buffer *b,exr_glyph *g) {
 exr_status exr_inline_auto_stable(flow *f,exr_line_buffer *b,size_t node,size_t start,int *stable) {
   exr_glyph g={0};size_t at=start,i;exr_status status;
   *stable=0;
-  if(exr_ruby_node(f->doc,node) || !exr_next(f->doc->text,f->doc->nodes[node].end,&at,&g.codepoint) || !exr_bidi_strong_type(g.codepoint) ||
-     f->styles[node].hyphens!=EXR_HYPHENS_AUTO || (b->in_word && b->word_start<start)) return EXR_OK;
+  if(exr_ruby_node(f->doc,node) || !exr_doc_next(f->doc,(exr_doc_node(f->doc,node)).end,&at,&g.codepoint) || !exr_bidi_strong_type(g.codepoint) ||
+     (*exr_doc_style(f->doc,f->styles,node)).hyphens!=EXR_HYPHENS_AUTO || (b->in_word && b->word_start<start)) return EXR_OK;
   g.start=start;g.end=at;g.node=node;g.boundaries=EXR_BOUNDARY_GRAPHEME;
   status=hyphenate_scalar(f,b,&g);if(status!=EXR_OK) return status;
-  if(!b->word || b->word->start!=start || b->word->until>f->doc->nodes[node].end) return EXR_OK;
+  if(!b->word || b->word->start!=start || b->word->until>(exr_doc_node(f->doc,node)).end) return EXR_OK;
   for(i=0;i<b->word->edit_count;i++) if(b->word->edits[i].start<=start) return EXR_OK;
   *stable=1;return EXR_OK;
 }
@@ -1682,7 +1693,7 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
     }
     g.boundaries|=b->display_feed_id<<EXR_DISPLAY_ID_SHIFT;
   }
-  if(b->display_previous==0xad && f->styles[b->display_node].hyphens==EXR_HYPHENS_NONE) g.boundaries&=~EXR_BOUNDARY_LINE;
+  if(b->display_previous==0xad && (*exr_doc_style(f->doc,f->styles,b->display_node)).hyphens==EXR_HYPHENS_NONE) g.boundaries&=~EXR_BOUNDARY_LINE;
   if(f->hyphenator && f->intrinsic!=2 && !(g.flags&EXR_GLYPH_RUBY_ITEM)) {
     status=hyphenate_scalar(f,b,&g); if(status!=EXR_OK) return status;
   } else if(f->hyphenator) { b->in_word=0; if(b->word) b->word->until=0; }
@@ -1691,7 +1702,7 @@ exr_status exr_inline_feed(flow *f, exr_line_buffer *b, exr_glyph g) {
     g.boundaries |= EXR_BOUNDARY_GRAPHEME;
   if (f->writing_mode != EXR_WRITING_HORIZONTAL_TB) {
     if (g.boundaries & EXR_BOUNDARY_GRAPHEME)
-      b->vertical_flags = exr_vertical_flags(g.codepoint, f->styles[g.node].orientation);
+      b->vertical_flags = exr_vertical_flags(g.codepoint, (*exr_doc_style(f->doc,f->styles,g.node)).orientation);
     g.flags |= b->vertical_flags;
   }
   if ((g.boundaries & EXR_BOUNDARY_GRAPHEME) && b->cluster_start < b->run.glyph_count) {

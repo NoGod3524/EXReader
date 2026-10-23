@@ -29,6 +29,10 @@ PostScript is a registered trademark of Adobe Systems Incorporated.
 | Mbed TLS crypto subset | mbedtls-3.6.7, Mbed-TLS/mbedtls | Apache-2.0 OR GPL-2.0-or-later; Apache-2.0 selected | Optional PDF MD5/SHA-256/384/512 and AES-CBC/ECB; EXR_ENABLE_PDF_CRYPTO |
 
 CMake verifies every source archive using the SHA-256 values in cmake/deps.cmake.
+The build creates a private copy of the pinned stb_image header with a local
+zero-length read correction: no copy or destination pointer is needed for an
+empty read, including a valid empty PNG data chunk. The original source and
+license remain unchanged; this correction adds no input allocation or budget.
 The WP12a image-codec archives are pinned as follows: libwebp
 `668c9aba45565e24c27e17f7aaf7060a399f7f31dba6c97a044e1feacb930f37`,
 zlib `17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c`,
@@ -309,3 +313,14 @@ Neither the external library nor preprocessor is linked or shipped. Explicit
 zero-cut insertion, protected source mapping and bounded full restored stems
 are verified against the independent model; external comparison is restricted
 to the documented common semantics. No external pattern text is copied.
+## OpenJPEG 2.5.4
+
+PDF JPXDecode uses the pure C OpenJPEG library under BSD-2-Clause, pinned to
+`https://codeload.github.com/uclouvain/openjpeg/tar.gz/refs/tags/v2.5.4`, SHA-256
+`a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a`.
+The unchanged copyright notice and license are installed at
+`share/exreader/licenses/openjpeg/LICENSE`. The private static library builds
+only its 22 library C sources, with upstream portable allocation and thread
+stubs; no codec CLI, JPIP, GUI or JNI is built. `EXR_ENABLE_PDF_JPX=OFF` or
+`EXR_ENABLE_PDF=OFF` omits the dependency and its installed archive/materials.
+

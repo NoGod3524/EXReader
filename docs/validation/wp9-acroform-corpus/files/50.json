@@ -1,0 +1,12 @@
+{
+ "base": "50-reject-radio-duplicate.pdf",
+ "id": "50",
+ "category": "reject/radio-duplicate",
+ "expect": "reject",
+ "size": 1583,
+ "sha256": "606a3ed3bc28c0016e9205c6250994380394ac65be887e06ee18ff8455051b76",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

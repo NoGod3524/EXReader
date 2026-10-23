@@ -1,0 +1,12 @@
+{
+ "base": "46-reject-rotation.pdf",
+ "id": "46",
+ "category": "reject/rotation",
+ "expect": "reject",
+ "size": 679,
+ "sha256": "292a7f1866867775344485d61efbb404f38b20ca13c9ca7d649b6ad9014176b0",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

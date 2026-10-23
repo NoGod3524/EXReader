@@ -1,0 +1,85 @@
+name: Native reading profiles
+on:
+  push:
+    branches: ['codex/r1-reading-core']
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  profile:
+    name: reading (${{ matrix.profile }})
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [reading-core, reading-library]
+    env:
+      PROFILE: ${{ matrix.profile }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify accepted integration ancestor
+        run: |
+          git fetch --no-tags origin 686ce2fe6c3463ef1b917569677ee9933e22faa9
+          git merge-base --is-ancestor 686ce2fe6c3463ef1b917569677ee9933e22faa9 HEAD
+      - name: Configure explicit reading preset
+        run: cmake --preset "$PROFILE"
+      - name: Build and install selected components
+        run: |
+          cmake --build --preset "$PROFILE"
+          cmake --install "build/$PROFILE"
+      - name: Compile installed C consumers and C++ headers
+        run: |
+          library=OFF
+          if [ "$PROFILE" = reading-library ]; then library=ON; fi
+          cmake -S tests/reading_core -B build/reading-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/$PROFILE/stage" -DEXR_EXPECT_LIBRARY="$library" -DEXR_TEST_FONT="$PWD/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$PWD/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$PWD/tests/fixtures"
+          cmake --build build/reading-consumer --parallel 4
+          ctest --test-dir build/reading-consumer --output-on-failure --no-tests=error --output-junit "$PWD/build/$PROFILE/consumer-tests.xml"
+      - name: Verify exported composition and measure installed size
+        run: |
+          python3 tests/check_reading_profile.py
+          python3 tools/check_reading_profile.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" build/reading-consumer/reading-document "build/$PROFILE/profile.json"
+      - name: Run predeclared nine-format fixture smoke
+        run: python3 tools/check_corpus.py build/reading-consumer/reading-document tests/fixtures/fonts/primary.ttf tools/reading_core/smoke-manifest.json "build/$PROFILE/corpus" --root tests/fixtures --timeout 60
+      - name: Check measurement failure handling
+        run: python3 tests/check_reading_measurements.py
+      - name: Record initial fresh-process reflow measurements
+        run: python3 tools/measure_reading_core.py build/reading-consumer/reading-benchmark tests/fixtures/fonts/primary.ttf "build/$PROFILE/measurements" --source-sha "$GITHUB_SHA" --compiler cc
+      - name: Require complete release license materials on this installed stage
+        run: |
+          python3 tools/check_reading_licenses.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/licenses.json" --require-release-ready
+          python3 tests/check_reading_licenses.py
+      - name: Execute the installed SDK identity and schema consumer
+        run: |
+          library=OFF
+          if [ "$PROFILE" = reading-library ]; then library=ON; fi
+          cmake -S tests/reading_release -B build/release-identity -G Ninja -DEXR_SDK="$PWD/build/$PROFILE/stage" -DEXR_RELEASE_LIBRARY="$library"
+          cmake --build build/release-identity --parallel 4
+          build/release-identity/release-identity "$PWD/build/$PROFILE/release-schema.sqlite" > "build/$PROFILE/release-runtime.json"
+          cat "build/$PROFILE/release-runtime.json"
+      - name: Seal a candidate archive without granting quality or publication
+        run: |
+          database=""
+          if [ "$PROFILE" = reading-library ]; then database="--database build/$PROFILE/release-schema.sqlite"; fi
+          python3 tools/reading_release.py --profile "$PROFILE" --stage "build/$PROFILE/stage" --evidence "build/$PROFILE" --runtime "build/$PROFILE/release-runtime.json" $database --output "build/$PROFILE/release-candidate"
+      - name: Preserve source-bound evidence and installed SDK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reading-${{ matrix.profile }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/${{ matrix.profile }}/stage/
+            build/${{ matrix.profile }}/profile.json
+            build/${{ matrix.profile }}/licenses.json
+            build/${{ matrix.profile }}/release-runtime.json
+            build/${{ matrix.profile }}/release-candidate/
+            build/${{ matrix.profile }}/consumer-tests.xml
+            build/${{ matrix.profile }}/corpus/
+            build/${{ matrix.profile }}/measurements/
+            build/reading-consumer/Testing/Temporary/LastTest.log
+          if-no-files-found: error
+          include-hidden-files: true

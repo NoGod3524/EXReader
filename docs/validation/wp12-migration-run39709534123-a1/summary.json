@@ -1,0 +1,47 @@
+{
+ "schema": 1,
+ "kind": "wp12-legacy-migration-summary",
+ "complete": true,
+ "problems": [],
+ "required_platforms": [
+  "linux",
+  "windows"
+ ],
+ "platforms": {
+  "linux": {
+   "scenario_cases": 65,
+   "scenario_passed": 65,
+   "checks": 135,
+   "checks_passed": 135,
+   "max_peak_rss_bytes": 50610176,
+   "e2e_passed": true,
+   "browser": "131.0.6778.33",
+   "tool_sha256": "2883126887a5ff1d7aeca9d48ee4d6a636bca7527824ecf10c5267b60db31062",
+   "exporter_sha256": "abaf9daf150e2fcbeb481ff3db25f92c52c3f9a5bca156db9b0f5f51124cc759",
+   "sdk_files": 35
+  },
+  "windows": {
+   "scenario_cases": 65,
+   "scenario_passed": 65,
+   "checks": 135,
+   "checks_passed": 135,
+   "max_peak_rss_bytes": 47480832,
+   "e2e_passed": true,
+   "browser": "131.0.6778.33",
+   "tool_sha256": "ae430869c8ea1420b2896e0373728f87f99a6864baadb71f319b6c2c2f426b07",
+   "exporter_sha256": "abaf9daf150e2fcbeb481ff3db25f92c52c3f9a5bca156db9b0f5f51124cc759",
+   "sdk_files": 35
+  }
+ },
+ "required_cases": 65,
+ "not_executed": [
+  "Originals above 128 MiB (the SDK in-memory import bound) are rejected as limit-exceeded; streaming migration is not implemented and was not exercised.",
+  "Unlocated annotations cannot be stored in the library because no public API accepts an unresolved range; they are preserved only in the ledger sidecar.",
+  "Audio originals cannot be stored (the SDK has no audio original format); only positions and bookmarks are migrated.",
+  "No installed Tauri desktop build was run: the Tauri shell stores nothing outside its webview IndexedDB, so the same export path applies, but an actual Tauri webview profile was not exercised.",
+  "Browsers other than Chromium (Firefox, WebKit) were not exercised.",
+  "macOS was not exercised.",
+  "Real user libraries from the old application were not available; the dataset is synthetic but created through the old application's own store and library modules."
+ ],
+ "claim": "Legacy IndexedDB/backup migration tool only; this is not complete WP12 high-fidelity conversion."
+}

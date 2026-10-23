@@ -201,9 +201,9 @@ static int requested(const exr_document *d, const exr_style *styles, const exr_f
   for (i = 0; i < d->node_count; i++) {
     size_t at = 0;
     char family[128];
-    if (!styles[i].family || styles[i].display == EXR_CSS_NONE ||
-        (r->chapter != SIZE_MAX && d->nodes[i].chapter != r->chapter)) continue;
-    while (exr_family_next(styles[i].family, &at, family) == 1)
+    if (!(*exr_doc_style(d,styles,i)).family || (*exr_doc_style(d,styles,i)).display == EXR_CSS_NONE ||
+        (r->chapter != SIZE_MAX && exr_doc_node(d,i).chapter != r->chapter)) continue;
+    while (exr_family_next((*exr_doc_style(d,styles,i)).family, &at, family) == 1)
       if (exr_family_equal(family, r->family)) return 1;
   }
   return 0;

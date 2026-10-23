@@ -1,0 +1,30 @@
+name: Reading release candidates
+on:
+  push:
+    branches: [codex/r6-reading-release]
+    paths:
+      - 'tools/reading_release.py'
+      - 'tests/check_reading_release.py'
+      - 'tests/check_reading_required.py'
+      - 'tools/reading_required.py'
+      - 'tools/prepare_reading_release.py'
+      - 'tests/check_reading_release_plan.py'
+      - 'tests/reading_release/**'
+      - '.github/workflows/reading-core.yml'
+      - '.github/workflows/reading-release-candidate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject invalid release materials and installed identities
+        run: python3 tests/check_reading_release.py
+      - name: Reject missing upstreams and foreign pull request merges
+        run: python3 tests/check_reading_required.py
+      - name: Reject unaccepted sources and changed release archives
+        run: python3 tests/check_reading_release_plan.py
+  profiles:
+    uses: ./.github/workflows/reading-core.yml

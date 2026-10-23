@@ -1,0 +1,12 @@
+{
+ "base": "13-checkbox-basic.pdf",
+ "id": "13",
+ "category": "checkbox/basic",
+ "expect": "accept",
+ "size": 2061,
+ "sha256": "833c8cfaa973e4caedaeb2b20f27170d0441da58061342459bf0d926f84803ef",
+ "edited_sha256": "89e84bc4b3b539264dd84747c12ca54fdd9126252b3d577f26a301e2709bce38",
+ "assertions": 60,
+ "result": "pass",
+ "failures": []
+}

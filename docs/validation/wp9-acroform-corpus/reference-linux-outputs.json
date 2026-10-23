@@ -1,0 +1,2616 @@
+{
+ "schema": "exreader-acroform-reference/1",
+ "mode": "outputs",
+ "tools": {
+  "qpdf": {
+   "available": true,
+   "path": "/usr/bin/qpdf",
+   "version": "qpdf version 10.6.3"
+  },
+  "poppler": {
+   "available": true,
+   "path": "/usr/bin/pdftoppm",
+   "version": "pdftoppm version 22.02.0"
+  },
+  "pypdf": {
+   "available": true,
+   "version": "6.21.2"
+  }
+ },
+ "resolution_dpi": 150,
+ "ink_level": 100,
+ "inset_points": 3.0,
+ "summary": {
+  "files": 75,
+  "checks": 147,
+  "problems": 0
+ },
+ "failure_count": 0,
+ "failures": [],
+ "files": [
+  {
+   "id": "01",
+   "base": "01-text-ascii-basic.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "person.name",
+     "widget": 0,
+     "page": 0,
+     "dark": 266,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1403
+  },
+  {
+   "id": "02",
+   "base": "02-text-inherit-two-widgets.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 2,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "person.name",
+     "widget": 0,
+     "page": 0,
+     "dark": 690,
+     "pixels": 25773,
+     "expect": "ink"
+    },
+    {
+     "field": "person.name",
+     "widget": 1,
+     "page": 1,
+     "dark": 690,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 2472
+  },
+  {
+   "id": "03",
+   "base": "03-text-align-right.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "aligned",
+     "widget": 0,
+     "page": 0,
+     "dark": 257,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1322
+  },
+  {
+   "id": "04",
+   "base": "04-text-existing-appearance.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "kept",
+     "widget": 0,
+     "page": 0,
+     "dark": 479,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1569
+  },
+  {
+   "id": "05",
+   "base": "05-text-three-pages.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 3,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "stamp",
+     "widget": 0,
+     "page": 0,
+     "dark": 236,
+     "pixels": 25773,
+     "expect": "ink"
+    },
+    {
+     "field": "stamp",
+     "widget": 1,
+     "page": 1,
+     "dark": 236,
+     "pixels": 25773,
+     "expect": "ink"
+    },
+    {
+     "field": "stamp",
+     "widget": 2,
+     "page": 2,
+     "dark": 236,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 3131
+  },
+  {
+   "id": "06",
+   "base": "06-text-detached-widget.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [],
+   "input_bytes": null,
+   "output_bytes": 1457
+  },
+  {
+   "id": "07",
+   "base": "07-text-merged-and-kids.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 3,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "alias",
+     "widget": 0,
+     "page": 0,
+     "dark": 270,
+     "pixels": 25773,
+     "expect": "ink"
+    },
+    {
+     "field": "alias",
+     "widget": 1,
+     "page": 1,
+     "dark": 270,
+     "pixels": 25773,
+     "expect": "ink"
+    },
+    {
+     "field": "alias",
+     "widget": 2,
+     "page": 2,
+     "dark": 270,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 2859
+  },
+  {
+   "id": "08",
+   "base": "08-text-clear.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "person.name",
+     "widget": 0,
+     "page": 0,
+     "dark": 0,
+     "pixels": 25773,
+     "expect": "none"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1385
+  },
+  {
+   "id": "09",
+   "base": "09-text-spaces.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "person.name",
+     "widget": 0,
+     "page": 0,
+     "dark": 0,
+     "pixels": 25773,
+     "expect": "none"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1507
+  },
+  {
+   "id": "10",
+   "base": "10-text-long-shrink.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "person.name",
+     "widget": 0,
+     "page": 0,
+     "dark": 118,
+     "pixels": 4520,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1566
+  },
+  {
+   "id": "11",
+   "base": "11-text-unicode.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "person.name",
+     "widget": 0,
+     "page": 0,
+     "dark": 1856,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1724
+  },
+  {
+   "id": "12",
+   "base": "12-text-utf16-name.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "person.naïve",
+     "widget": 0,
+     "page": 0,
+     "dark": 457,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1451
+  },
+  {
+   "id": "13",
+   "base": "13-checkbox-basic.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf button states",
+    "pypdf button states",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "check0",
+     "widget": 0,
+     "page": 0,
+     "dark": 185,
+     "pixels": 841,
+     "expect": "ink"
+    },
+    {
+     "field": "check1",
+     "widget": 0,
+     "page": 0,
+     "dark": 187,
+     "pixels": 870,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 4021
+  },
+  {
+   "id": "14",
+   "base": "14-checkbox-off.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf button states",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "check0",
+     "widget": 0,
+     "page": 0,
+     "dark": 0,
+     "pixels": 841,
+     "expect": "none"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 2030
+  },
+  {
+   "id": "15",
+   "base": "15-checkbox-existing-dict.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf button states",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "check0",
+     "widget": 0,
+     "page": 0,
+     "dark": 185,
+     "pixels": 841,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 2030
+  },
+  {
+   "id": "16",
+   "base": "16-radio-basic.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf button states",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "choice",
+     "widget": 0,
+     "page": 0,
+     "dark": 0,
+     "pixels": 841,
+     "expect": "none"
+    },
+    {
+     "field": "choice",
+     "widget": 1,
+     "page": 0,
+     "dark": 185,
+     "pixels": 841,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 3603
+  },
+  {
+   "id": "17",
+   "base": "17-radio-unison.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf button states",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "choice",
+     "widget": 0,
+     "page": 0,
+     "dark": 185,
+     "pixels": 841,
+     "expect": "ink"
+    },
+    {
+     "field": "choice",
+     "widget": 1,
+     "page": 0,
+     "dark": 185,
+     "pixels": 841,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 3605
+  },
+  {
+   "id": "18",
+   "base": "18-radio-two-pages.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf button states",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 2,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "choice",
+     "widget": 0,
+     "page": 0,
+     "dark": 0,
+     "pixels": 841,
+     "expect": "none"
+    },
+    {
+     "field": "choice",
+     "widget": 1,
+     "page": 1,
+     "dark": 185,
+     "pixels": 841,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 3722
+  },
+  {
+   "id": "19",
+   "base": "19-radio-off.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf button states",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "choice",
+     "widget": 0,
+     "page": 0,
+     "dark": 0,
+     "pixels": 841,
+     "expect": "none"
+    },
+    {
+     "field": "choice",
+     "widget": 1,
+     "page": 0,
+     "dark": 0,
+     "pixels": 841,
+     "expect": "none"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 3601
+  },
+  {
+   "id": "20",
+   "base": "20-choice-list.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf option index",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "pet",
+     "widget": 0,
+     "page": 0,
+     "dark": 148,
+     "pixels": 71148,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1435
+  },
+  {
+   "id": "21",
+   "base": "21-choice-multi.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf option index",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "tags",
+     "widget": 0,
+     "page": 0,
+     "dark": 468,
+     "pixels": 71148,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1585
+  },
+  {
+   "id": "22",
+   "base": "22-choice-combo.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf option index",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "city",
+     "widget": 0,
+     "page": 0,
+     "dark": 322,
+     "pixels": 18150,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1388
+  },
+  {
+   "id": "23",
+   "base": "23-choice-labels.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf option index",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "country",
+     "widget": 0,
+     "page": 0,
+     "dark": 389,
+     "pixels": 18150,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1478
+  },
+  {
+   "id": "24",
+   "base": "24-mixed-batch.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "pypdf option index",
+    "pypdf button states",
+    "pypdf button states",
+    "appearance stream text",
+    "appearance stream text",
+    "appearance stream text",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 3,
+    "stderr": "Syntax Error: Missing 'Tf' operator in field's DA string\nSyntax Error: Missing 'Tf' operator in field's DA string\nSyntax Error: Missing 'Tf' operator in field's DA string\nSyntax Error: Missing 'Tf' operator in field's DA string"
+   },
+   "ink": [
+    {
+     "field": "person.given",
+     "widget": 0,
+     "page": 0,
+     "dark": 160,
+     "pixels": 25773,
+     "expect": "ink",
+     "asserted": false
+    },
+    {
+     "field": "person.family",
+     "widget": 0,
+     "page": 0,
+     "dark": 226,
+     "pixels": 21780,
+     "expect": "ink",
+     "asserted": false
+    },
+    {
+     "field": "agree",
+     "widget": 0,
+     "page": 1,
+     "dark": 0,
+     "pixels": 841,
+     "expect": "ink",
+     "asserted": false
+    },
+    {
+     "field": "color",
+     "widget": 0,
+     "page": 2,
+     "dark": 0,
+     "pixels": 841,
+     "expect": "ink",
+     "asserted": false
+    },
+    {
+     "field": "color",
+     "widget": 1,
+     "page": 2,
+     "dark": 0,
+     "pixels": 841,
+     "expect": "none",
+     "asserted": false
+    },
+    {
+     "field": "size",
+     "widget": 0,
+     "page": 2,
+     "dark": 0,
+     "pixels": 25773,
+     "expect": "ink",
+     "asserted": false
+    },
+    {
+     "field": "initial",
+     "widget": 0,
+     "page": 1,
+     "dark": 0,
+     "pixels": 25773,
+     "expect": "ink",
+     "asserted": false
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 9120
+  },
+  {
+   "id": "25",
+   "base": "25-needappearances-true.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": "Syntax Error: Missing 'Tf' operator in field's DA string\nSyntax Error: Missing 'Tf' operator in field's DA string"
+   },
+   "ink": [
+    {
+     "field": "edited",
+     "widget": 0,
+     "page": 0,
+     "dark": 0,
+     "pixels": 25773,
+     "expect": "ink",
+     "asserted": false
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1714
+  },
+  {
+   "id": "26",
+   "base": "26-needappearances-false.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "edited",
+     "widget": 0,
+     "page": 0,
+     "dark": 474,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1373
+  },
+  {
+   "id": "27",
+   "base": "27-needappearances-absent.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "edited",
+     "widget": 0,
+     "page": 0,
+     "dark": 474,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1327
+  },
+  {
+   "id": "28",
+   "base": "28-acroform-direct.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "inline",
+     "widget": 0,
+     "page": 0,
+     "dark": 254,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1322
+  },
+  {
+   "id": "29",
+   "base": "29-extra-annots.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "field",
+     "widget": 0,
+     "page": 0,
+     "dark": 281,
+     "pixels": 21780,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1514
+  },
+  {
+   "id": "30",
+   "base": "30-deep-nesting.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "l1.l2.l3.l4.l5.l6.l7.l8.l9.l10.l11.l12",
+     "widget": 0,
+     "page": 0,
+     "dark": 219,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 2274
+  },
+  {
+   "id": "31",
+   "base": "31-duplicate-partials.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "left.x",
+     "widget": 0,
+     "page": 0,
+     "dark": 182,
+     "pixels": 25773,
+     "expect": "ink"
+    },
+    {
+     "field": "right.x",
+     "widget": 0,
+     "page": 0,
+     "dark": 180,
+     "pixels": 21780,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 2148
+  },
+  {
+   "id": "32",
+   "base": "32-zero-change.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": "Syntax Error: Missing 'Tf' operator in field's DA string"
+   },
+   "ink": [],
+   "input_bytes": null,
+   "output_bytes": 678
+  },
+  {
+   "id": "33",
+   "base": "33-maxlen-scalars.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "person.name",
+     "widget": 0,
+     "page": 0,
+     "dark": 5056,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 2417
+  },
+  {
+   "id": "34",
+   "base": "34-no-acroform.pdf",
+   "checks": [
+    "pypdf field tree",
+    "read-only document"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "35",
+   "base": "35-action-flag-isolated.pdf",
+   "checks": [
+    "pypdf field tree",
+    "pypdf edited values",
+    "appearance stream text",
+    "poppler raster ink"
+   ],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "render": {
+    "available": true,
+    "exit": 0,
+    "pages": 1,
+    "stderr": ""
+   },
+   "ink": [
+    {
+     "field": "plain",
+     "widget": 0,
+     "page": 0,
+     "dark": 461,
+     "pixels": 25773,
+     "expect": "ink"
+    }
+   ],
+   "input_bytes": null,
+   "output_bytes": 1515
+  },
+  {
+   "id": "36",
+   "base": "36-reject-readonly.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "37",
+   "base": "37-reject-required-empty.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "38",
+   "base": "38-reject-maxlen.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "39",
+   "base": "39-reject-multiline.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "40",
+   "base": "40-reject-password.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "41",
+   "base": "41-reject-comb.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "42",
+   "base": "42-reject-richtext.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "43",
+   "base": "43-reject-fileselect.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "44",
+   "base": "44-reject-editable-combo.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "45",
+   "base": "45-reject-multiselect-combo.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "46",
+   "base": "46-reject-rotation.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "47",
+   "base": "47-reject-actions.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "48",
+   "base": "48-reject-xfa.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "49",
+   "base": "49-reject-permissions.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "50",
+   "base": "50-reject-radio-duplicate.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "51",
+   "base": "51-reject-radio-notoggle.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "52",
+   "base": "52-reject-signature.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "53",
+   "base": "53-reject-pushbutton.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "54",
+   "base": "54-reject-unknown-ft.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "55",
+   "base": "55-reject-choice-duplicate-exports.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "56",
+   "base": "56-reject-choice-absent.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "57",
+   "base": "57-reject-duplicate-change.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "58",
+   "base": "58-reject-missing-field.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "59",
+   "base": "59-reject-invalid-utf8.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "60",
+   "base": "60-reject-control-char.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "61",
+   "base": "61-reject-missing-glyph.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "62",
+   "base": "62-reject-bidi.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "63",
+   "base": "63-reject-outline-only.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "64",
+   "base": "64-reject-bad-justification.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "65",
+   "base": "65-cancel-entry.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "66",
+   "base": "66-cancel-final.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "67",
+   "base": "67-cancel-shape.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "68",
+   "base": "68-read-cycle.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "69",
+   "base": "69-read-shared-child.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "70",
+   "base": "70-read-mixed-kids.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "71",
+   "base": "71-read-parent-mismatch.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "72",
+   "base": "72-read-duplicate-name.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "73",
+   "base": "73-read-bad-rect.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "74",
+   "base": "74-read-multi-page-annot.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  },
+  {
+   "id": "75",
+   "base": "75-read-depth-limit.pdf",
+   "checks": [],
+   "problems": [],
+   "qpdf": {
+    "exit": 0,
+    "errors": 0,
+    "warnings": 0,
+    "passed": true,
+    "available": true
+   },
+   "qpdf_output": {
+    "exit": null,
+    "errors": null,
+    "warnings": null,
+    "passed": null,
+    "available": null
+   },
+   "render": null,
+   "ink": null,
+   "input_bytes": null,
+   "output_bytes": null
+  }
+ ]
+}

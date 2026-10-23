@@ -1,0 +1,127 @@
+{
+  "schema": 1,
+  "scope": "Windows and Linux host declared acceptance at one source; completed cloud logs and GitHub artifact metadata audit",
+  "source_sha": "5bc805abb3a56297b73af06fdff8a248dd8326e0",
+  "sdk_candidate": "9854061be331fe603a1822d9b2b36ee357154927",
+  "declared_desktop_scopes_accepted": true,
+  "sdk_freeze_granted_by_this_record": false,
+  "complete_product": false,
+  "local_execution": false,
+  "local_artifact_download": false,
+  "audit_method": "GitHub connector: completed run metadata, all job steps, completed job logs, and artifact metadata; no artifact payload downloaded",
+  "previous_source_record_retained": "docs/validation/r5-desktop-hosts-da1c183.json",
+  "windows": {
+    "workflow": ".github/workflows/wp13-windows.yml",
+    "run_id": 39905068109,
+    "run_attempt": 1,
+    "job_id": 120255038886,
+    "conclusion": "success",
+    "all_job_steps_successful": true,
+    "job_step_count": 17,
+    "native_selftest_checks": 26,
+    "original_ui": {
+      "passed": true,
+      "steps": 158,
+      "passed_steps": 158,
+      "failed_steps": 0,
+      "screenshots": 8,
+      "errors": [],
+      "phase_exit_codes": {
+        "A": 0,
+        "B": 0,
+        "C": 0
+      }
+    },
+    "evidence_selftests": {
+      "passed": true,
+      "checks": 51
+    },
+    "bounded_ui": {
+      "accepted": true,
+      "checks": 80,
+      "failures": [],
+      "same_source_confirmed_in_success_output": true,
+      "sdk_ancestor_and_eight_protected_trees_enforced": true
+    },
+    "worker_review": {
+      "passed": true,
+      "candidate_passed": 11,
+      "baseline_rejected": 11,
+      "reverse_verification": true,
+      "same_source_and_run_confirmed_in_success_output": true
+    },
+    "artifact": {
+      "id": 12480294006,
+      "name": "EXReader-WP13-Windows",
+      "size_in_bytes": 39921204,
+      "digest": "sha256:cfc22bb3a78e1ba31025f2913f287d63eae6f295ebdd438aab2b8fc11e58c757",
+      "expired_at_audit": false,
+      "expires_at": "2027-01-21T05:18:56Z",
+      "created_at": "2026-10-23T05:24:18Z",
+      "source_sha": "5bc805abb3a56297b73af06fdff8a248dd8326e0",
+      "run_id": 39905068109,
+      "api_source_and_run_match": true
+    }
+  },
+  "linux": {
+    "workflow": ".github/workflows/wp13-linux.yml",
+    "run_id": 39905072269,
+    "run_attempt": 1,
+    "job_id": 120255051890,
+    "conclusion": "success",
+    "all_job_steps_successful": true,
+    "job_step_count": 11,
+    "original_ui": {
+      "passed": true,
+      "checks": 20,
+      "report_sha256": "3711133c5add3e9f69c46a83a29a8fa52aeb9dddd7a806a35d3e250c5a141629",
+      "screenshot_sha256": "c4e78401438fd831aef556e6bb39d270a83478e0167defee24508397a87aa807"
+    },
+    "negative_groups": {
+      "passed": true,
+      "count": 4,
+      "already_exited_child_statuses": [
+        23,
+        0
+      ],
+      "real_notes_failure_checks": 26,
+      "font_restore_mutant_rejected_at_ui_check": 13,
+      "mutant_prior_checks_passed": 12,
+      "expected_font": 26,
+      "mutant_restored_font": 24
+    },
+    "bounded_ui": {
+      "accepted": true,
+      "checks": 37,
+      "sdk_ancestor_and_eight_protected_trees_verified_in_ci": true,
+      "long_native_turns": 65,
+      "windows_evicted": 6,
+      "projection_bytes": 1279999,
+      "index_bytes": 789460,
+      "peak_parse_workspace_bytes": 2296896,
+      "explicit_snapshot_bytes": 0,
+      "original_pid": 5744,
+      "reopened_pid": 5895,
+      "real_worker_input_response_ms": 17.009916000006342,
+      "cancel_code": 9,
+      "screenshots": 2
+    },
+    "independent_backend": {
+      "backend_passed": true,
+      "checks": 82,
+      "actual_success_output_observed": true
+    },
+    "artifact": {
+      "id": 12481005433,
+      "name": "WP13-Linux-5bc805abb3a56297b73af06fdff8a248dd8326e0",
+      "size_in_bytes": 33046393,
+      "digest": "sha256:764533c5a2fb8538566bb05ff55b358473043c5b7637603071944a8775798b0e",
+      "expired_at_audit": false,
+      "expires_at": "2027-01-21T05:18:59Z",
+      "created_at": "2026-10-23T05:21:52Z",
+      "source_sha": "5bc805abb3a56297b73af06fdff8a248dd8326e0",
+      "run_id": 39905072269,
+      "api_source_and_run_match": true
+    }
+  }
+}

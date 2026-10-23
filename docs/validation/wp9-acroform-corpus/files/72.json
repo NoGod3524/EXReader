@@ -1,0 +1,12 @@
+{
+ "base": "72-read-duplicate-name.pdf",
+ "id": "72",
+ "category": "read/duplicate-name",
+ "expect": "read-fail",
+ "size": 647,
+ "sha256": "fa0a03fdce116544fe1cd280335f39a5596cbe2d2579480e0a815e8e9256951d",
+ "edited_sha256": null,
+ "assertions": 6,
+ "result": "pass",
+ "failures": []
+}

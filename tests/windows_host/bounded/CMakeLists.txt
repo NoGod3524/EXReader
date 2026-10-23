@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.24)
+project(EXReaderWindowsLegacySeed LANGUAGES C)
+set(CMAKE_C_STANDARD 11)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8)
+endif()
+find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
+add_executable(seed_legacy seed_legacy.c)
+target_link_libraries(seed_legacy PRIVATE EXReader::exreader)
+find_file(EXR_RUNTIME NAMES exreader.dll libexreader.dll PATHS "${EXR_SDK}/bin" NO_DEFAULT_PATH REQUIRED)
+add_custom_command(TARGET seed_legacy POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:seed_legacy>" VERBATIM)

@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "package": "WP13 Windows worker ownership review",
+  "branch": "codex/wp13-windows-worker-review",
+  "original_delivery_sha": "2d99fcd3a912eb05ad6df8257a13a6c929c860a8",
+  "accepted_source_sha": "32f4f77cd69be5dcd2a66ed31701c5812997a78a",
+  "production_changes_last_sha": "910567a367605a44411824eda8127cce4efa8c07",
+  "platform": "GitHub-hosted windows-latest",
+  "sdk_version": "3.40.0",
+  "abi": 1,
+  "library_schema": 6,
+  "workflow": ".github/workflows/wp13-windows-worker.yml",
+  "run": {
+    "id": 39715816056,
+    "job_id": 119617536797,
+    "conclusion": "success",
+    "source_sha": "32f4f77cd69be5dcd2a66ed31701c5812997a78a"
+  },
+  "artifact": {
+    "id": 12399715251,
+    "name": "EXReader-WP13-Windows-WorkerReview",
+    "size_bytes": 35568002,
+    "digest": "sha256:57bbac649f465b8060ea0b4543534ef86b282f5c2410f05a8ea972fd476c814f",
+    "expired_at_verification": false,
+    "paths": [
+      "wp13-worker-review-evidence/worker-review.json",
+      "wp13-worker-original-evidence/wp13-windows-evidence.json",
+      "wp13-worker-original-evidence/A|B|C/drive.log",
+      "wp13-worker-original-evidence/A|B|C/*.png",
+      "wp13-worker-package/build.json",
+      "wp13-worker-package/report.json",
+      "wp13-worker-package/EXReader-Windows.zip",
+      "worker-baseline-source/instrumentation.json",
+      "wp13-worker-review-evidence/Seek-Unique.epub",
+      "wp13-worker-review-evidence/baseline-*|candidate-*/"
+    ]
+  },
+  "original_acceptance": {
+    "self_checks": 26,
+    "self_checks_passed": 26,
+    "ui_steps": 158,
+    "ui_steps_passed": 158,
+    "ui_steps_failed": 0,
+    "screenshots": 8,
+    "checker": "tools/check_windows_host.py",
+    "unchanged_on_review_branch": true
+  },
+  "cloud_regression_summary": {
+    "passed": true,
+    "candidate_cases": 11,
+    "candidate_passed": 11,
+    "baseline_cases": 11,
+    "baseline_rejected": 11,
+    "reverse_verification": true,
+    "baseline_harness_errors": 0,
+    "source": "wp13-worker-review-evidence/worker-review.json"
+  },
+  "case_contracts": [
+    "fixed-note-cancel",
+    "fixed-note-update-cancel",
+    "fixed-go-late-cancel",
+    "rollback-sql-busy",
+    "seek-failure-retains-selection",
+    "close-discards-open-candidate",
+    "busy-drag-ownership",
+    "notes-query-retains-old-list",
+    "shelf-query-error-disclosed",
+    "unicode-comment-byte-limit",
+    "progress-failure-blocks-silent-close"
+  ],
+  "seek_observation": {
+    "candidate_real_page_lookups": 3,
+    "candidate_injected_public_errors": 1,
+    "candidate_retained_page": true,
+    "candidate_selected_bytes": 300,
+    "candidate_saved_notes_after_failure": 2,
+    "baseline_real_page_lookups": 4,
+    "baseline_injected_public_errors": 1,
+    "baseline_retained_page": false
+  },
+  "methods": {
+    "driver": "Independent Python process sends actual Win32 control, keyboard, mouse and paint messages; reads actual SQLite state",
+    "sql_fault": "Independent SQLite connection holds BEGIN IMMEDIATE for rollback and progress cases",
+    "api_fault": "Cloud-only public API return gates; real pager calls run before fault injection",
+    "cancellation": "Cloud-only event gates make pre-call and late-completion interleavings deterministic",
+    "baseline": "Original delivery plus observation-only instrumentation, linked against the same installed SDK",
+    "production_hooks": false,
+    "binary_hashes": "worker-review.json:binaries; original checker JSON and package manifest",
+    "baseline_source_hashes": "worker-baseline-source/instrumentation.json",
+    "execution_location": "GitHub-hosted only",
+    "local_builds_or_tests": false,
+    "local_artifact_downloads": false
+  },
+  "failed_runs_preserved": [
+    {
+      "id": 39714216763,
+      "source_sha": "992d85241af6bec7d2d5954d87a3248713ad1f10",
+      "conclusion": "failure",
+      "reason": "Fault consumer source path was one directory too high; baseline edit-input driver reached import dialog instead of entering path. Original acceptance passed."
+    },
+    {
+      "id": 39714761211,
+      "source_sha": "910567a367605a44411824eda8127cce4efa8c07",
+      "conclusion": "failure",
+      "reason": "Cross-process SetWindowText did not edit child controls. Both consumers built; original acceptance passed. No regression acceptance credited."
+    },
+    {
+      "id": 39715287179,
+      "source_sha": "eb50ead71e3c7fac481e3e9bd93db66c5e708496",
+      "conclusion": "failure",
+      "candidate_passed": 10,
+      "reason": "Repeated original sample made seek anchor ambiguous before the intended API fault. Original acceptance passed; no complete new acceptance credited."
+    },
+    {
+      "id": 39715321547,
+      "source_sha": "8f7f32352e9a4ed69e119d7fa7a75c1811cf073c",
+      "conclusion": "failure",
+      "candidate_passed": 10,
+      "reason": "Same ambiguous seek fixture, corrected by unique text and explicit actual-fault counters in accepted source. Original acceptance passed; no complete new acceptance credited."
+    }
+  ],
+  "boundaries": [
+    "Windows automated host acceptance; no new claim about older Windows releases or manual device testing",
+    "Original delivery documents and evidence retained separately",
+    "No public SDK, engine, ABI/schema, version, engine budget or original checker changes",
+    "Joint integration and integration-branch strict checker acceptance remain integration-owner work"
+  ]
+}

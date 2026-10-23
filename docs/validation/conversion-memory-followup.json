@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "kind": "conversion-memory-followup",
+  "package": "A",
+  "branch": "codex/reliability-convert-memory",
+  "source_sha": "599667e",
+  "validated_run": {
+    "id": 39525428345,
+    "workflow": "Native C engine",
+    "conclusion": "success",
+    "jobs": "7/7 success (windows, linux, macos, apple-mobile, android, sanitizers, fuzz)"
+  },
+  "root_cause": "macOS 15 default malloc keeps freed medium blocks as MADV_FREE_REUSABLE pages that stay in RSS; leaks=0, footprint ~20 MB, RSS >100 MB after 100 items; malloc_zone_pressure_relief ineffective (resident unchanged after call).",
+  "fix": "cv_apply_allocator_policy: on macOS set MallocSpaceEfficient=1 (unless caller set it) and execv self at startup; removed cv_release_unused_memory.",
+  "rejected_diagnostics": {
+    "dir": "build/wp7-integration-20261020/macos-memory-diagnostic-r1",
+    "runs": [
+      39521983620
+    ],
+    "allocator_env_probe_run": 39524891551,
+    "probe_max_rss_bytes": {
+      "none": 116391936,
+      "MallocSpaceEfficient=1": 28131328,
+      "MallocXzoneMadvise=0": 184664064,
+      "MallocLargeCache=0": 170164224,
+      "MallocDisableXzone=1": 127090688,
+      "MallocXzoneEnabled=0": 151846912
+    }
+  },
+  "budget_bytes": 33554432,
+  "platforms": {
+    "Linux": {
+      "raw_json": "build/wp7-integration-20261020/native-39525428345/EXReader-conversion-Linux/native-convert-benchmark.json",
+      "json_sha256": "6c21deb5361696bced8b8e86ab7b1a6d5c227a32f0ba715296f82059ac0c257d",
+      "tool_sha256": "61a737d29773b73143310617425ee3dedc60809708c7a94697b40f6b5c8263d1",
+      "runtime": {
+        "libexreader.so": {
+          "path": "/home/runner/work/EXReader/EXReader/build/native/libexreader.so",
+          "sha256": "20063fbc5b7de51d2b78db778fb5938ee3240d682a0263ba912ba6e32a63477f"
+        }
+      },
+      "single_peak": 24707072,
+      "batch_peak": 26357760,
+      "delta": 1650688,
+      "unfinished": 0,
+      "failed": 0,
+      "temporary_files_remaining": 0,
+      "memory_budget_passed": true
+    },
+    "macOS": {
+      "raw_json": "build/wp7-integration-20261020/native-39525428345/EXReader-conversion-macOS/native-convert-benchmark.json",
+      "json_sha256": "3afb847d454597cc4736aec5559d9566170d32e82c6b1a90e428d5744ef40511",
+      "tool_sha256": "855e31fbd8fe47b702913b70b89d9abd8007eb3984bcf337e888bfb5abacafea",
+      "runtime": {
+        "libexreader.dylib": {
+          "path": "/Users/runner/work/EXReader/EXReader/build/native/libexreader.dylib",
+          "sha256": "ba87e6ac9c4f9c296029d1ce5e5de900c103471812f57552d2fea56b79f235cc"
+        }
+      },
+      "single_peak": 24051712,
+      "batch_peak": 28065792,
+      "delta": 4014080,
+      "unfinished": 0,
+      "failed": 0,
+      "temporary_files_remaining": 0,
+      "memory_budget_passed": true
+    },
+    "Windows": {
+      "raw_json": "build/wp7-integration-20261020/native-39525428345/EXReader-conversion-Windows/native-convert-benchmark.json",
+      "json_sha256": "cf3e395e598233e595ae4452da1c643787ed8385829d458dbccabc32581bee19",
+      "tool_sha256": "5f71aee38dda44a7b814adc33df0ad577c83a54763f905cc74301b2640d4a8a0",
+      "runtime": {
+        "exreader.dll": {
+          "path": "D:\\a\\EXReader\\EXReader\\build\\native\\Release\\exreader.dll",
+          "sha256": "7042454c293d6606c65138559270eee440168486d60bd8f7a8b6b9221408c078"
+        }
+      },
+      "single_peak": 27725824,
+      "batch_peak": 29921280,
+      "delta": 2195456,
+      "unfinished": 0,
+      "failed": 0,
+      "temporary_files_remaining": 0,
+      "memory_budget_passed": true
+    }
+  },
+  "asan": {
+    "raw_json": "build/wp7-integration-20261020/native-39525428345/sanitizer-native-tests/native-convert-benchmark.json",
+    "instrumented": true,
+    "memory_budget_evaluated": false,
+    "memory_budget_passed": null
+  },
+  "remaining": [
+    "final 7-job joint acceptance after A+B merge (integrator)",
+    "WP6 (package B)",
+    "note: tool source still contains opt-in EXR_CONVERT_MEM_DIAG diagnostics (macOS stderr only)"
+  ]
+}

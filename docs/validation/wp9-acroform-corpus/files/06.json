@@ -1,0 +1,12 @@
+{
+ "base": "06-text-detached-widget.pdf",
+ "id": "06",
+ "category": "widget/detached",
+ "expect": "accept",
+ "size": 703,
+ "sha256": "c130b6141f47ce8047a8a8a8d9e4cd940a36823488b88cbf4af46d4609addbb2",
+ "edited_sha256": "6ff972dd89582fb90ebb4e5ed7ab6a22d2771e2ac94aad8200f3aef1b1f09c8e",
+ "assertions": 39,
+ "result": "pass",
+ "failures": []
+}

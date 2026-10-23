@@ -20,6 +20,17 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
   if(control) settings.control=*control;
   status=exr_canvas_create(&settings,&canvas,e); if(status!=EXR_OK) return status;
   if(config->work) canvas->work=*config->work;
+  if(config->background_cmyk) {
+    exr_path_segment rect[5]={ {.verb=EXR_PATH_MOVE,.points={{0,0}}},
+      {.verb=EXR_PATH_LINE,.points={{config->width,0}}},
+      {.verb=EXR_PATH_LINE,.points={{config->width,config->height}}},
+      {.verb=EXR_PATH_LINE,.points={{0,config->height}}}, {.verb=EXR_PATH_CLOSE} };
+    exr_draw_style style=exr_draw_style_defaults();
+    status=exr_canvas_begin_group(canvas,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED|EXR_GROUP_CMYK,e);
+    if(status==EXR_OK) status=exr_canvas_path_cmyk(canvas,rect,5,NULL,&style,
+      config->background_cmyk,config->background_cmyk,e);
+    if(status!=EXR_OK) goto done;
+  }
   if(config->initial_clip) {
     const double *b=config->initial_clip; exr_path_segment rect[5]={0};
     rect[0].verb=EXR_PATH_MOVE; rect[0].points[0]=(exr_path_point){b[0],b[1]};
@@ -37,6 +48,7 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
     ended=exr_canvas_end_layer(canvas,status==EXR_OK,&cleanup);
     if(status==EXR_OK && ended!=EXR_OK) { status=ended;if(e) *e=cleanup; }
   }
+  if(status==EXR_OK && config->background_cmyk) status=exr_canvas_end_layer(canvas,1,e);
   if(status==EXR_OK) status=exr_canvas_take(canvas,out,e);
   if(status==EXR_OK && gray) status=exr_bitmap_to_gray(out,control,e);
   if(status!=EXR_OK) { free(out->pixels);memset(out,0,sizeof(*out)); }

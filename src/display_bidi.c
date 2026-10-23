@@ -88,7 +88,7 @@ exr_status exr_display_apply_line(const exr_display_view *v,exr_glyph *g,size_t 
 static unsigned piece_kind(const exr_document *d,const exr_glyph *g) {
   size_t at=g->start;uint32_t cp;
   if(g->flags&EXR_GLYPH_GENERATED) return 1;
-  if(!(g->flags&EXR_GLYPH_RUBY_ITEM) && exr_next(d->text,g->end,&at,&cp) && at==g->end && cp==g->codepoint) return 0;
+  if(!(g->flags&EXR_GLYPH_RUBY_ITEM) && exr_doc_next(d,g->end,&at,&cp) && at==g->end && cp==g->codepoint) return 0;
   return 2;
 }
 void exr_display_patch_free(exr_display_patch *p) {
@@ -130,8 +130,15 @@ exr_status exr_display_patch_append(exr_display_builder *b,const exr_document *d
   size_t i;exr_status status;
   for(i=0;i<p->count;i++) {
     const exr_display_piece *v=p->pieces+i;
-    status=exr_display_append(b,v->kind ? p->text+v->offset : d->text+v->start,
-                               v->kind ? v->size : v->end-v->start,v->start,!!v->kind,v->kind==1,e);
+    const char *text;
+    size_t size=v->kind ? v->size : v->end-v->start;
+    if(v->kind) text=p->text+v->offset;
+    else {
+      size_t available;
+      text=exr_doc_span(d,v->start,&available);
+      if(!text || size>available) return exr_fail(e,EXR_FORMAT,"Unavailable display source range");
+    }
+    status=exr_display_append(b,text,size,v->start,!!v->kind,v->kind==1,e);
     if(status!=EXR_OK) return status;
   }
   return EXR_OK;
@@ -141,6 +148,9 @@ void exr_display_state_free(exr_display_state *s) {
   exr_display_patch_free(s->history);exr_display_patch_free(s->pending);
   exr_display_patch_free(s->context);exr_display_patch_free(s->pending_context);
   exr_display_view_free(s->active);exr_display_view_free(s->trial);free(s);
+}
+size_t exr_display_view_size(const exr_display_view *v) {
+  return v ? sizeof(*v)+v->capacity*(sizeof(*v->sources)+1)+exr_bidi_memory_size(v->bidi) : 0;
 }
 exr_display_state *exr_display_state_clone(const exr_display_state *s) {
   exr_display_state *copy;

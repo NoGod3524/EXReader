@@ -7,6 +7,9 @@ struct exr_bidi {
   unsigned char *types, *bases;
   size_t count;
 };
+size_t exr_bidi_memory_size(const exr_bidi *bidi) {
+  return bidi ? sizeof(*bidi)+bidi->count*(sizeof(*bidi->scalars)+2) : 0;
+}
 typedef struct {
   unsigned char level, override, isolate;
 } status_entry;

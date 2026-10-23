@@ -23,10 +23,40 @@ static void expect_page(exr_fixed_document *d,size_t page,const char *id,unsigne
   for(y=0;y<bitmap.height;y++) for(x=0;x<bitmap.width;x++) for(k=0;k<4;k++) CHECK(bitmap.pixels[(size_t)y*bitmap.stride+x*4+k]<=255);
   exr_bitmap_free(&bitmap);
 }
+static void rejected_probe(const char *fixtures) {
+  mz_zip_archive zip;void *data=NULL;size_t size=0,i;
+  memset(&zip,0,sizeof(zip));CHECK(mz_zip_writer_init_heap(&zip,0,0));
+  put_file(&zip,"page.png",fixtures,"images/png/huge.png");
+  CHECK(mz_zip_writer_finalize_heap_archive(&zip,&data,&size));CHECK(mz_zip_writer_end(&zip));
+  for(i=0;i<3;i++) {
+    exr_fixed_document *doc=(void *)1;
+    CHECK(exr_fixed_open_memory(EXR_CBZ,data,size,NULL,&doc,&error)==EXR_LIMIT);
+    CHECK(!doc);
+  }
+  mz_free(data);
+}
+static void natural_frame_order(const char *fixtures) {
+  mz_zip_archive zip;void *data=NULL;size_t size=0,count,i;exr_fixed_document *doc=NULL;const exr_fixed_page *pages;
+  const char *names[]={"page01.gif","page01.gif#1","page01.gif#2","page01.gif#3",
+                       "page1.gif","page1.gif#1","page1.gif#2","page1.gif#3"};
+  memset(&zip,0,sizeof(zip));CHECK(mz_zip_writer_init_heap(&zip,0,0));
+  put_file(&zip,"page1.gif",fixtures,"images/gif/animation.gif");
+  put_file(&zip,"page01.gif",fixtures,"images/gif/animation.gif");
+  CHECK(mz_zip_writer_finalize_heap_archive(&zip,&data,&size));CHECK(mz_zip_writer_end(&zip));
+  OK(exr_fixed_open_memory(EXR_CBZ,data,size,NULL,&doc,&error));
+  pages=exr_fixed_pages(doc,&count);CHECK(count==8);
+  for(i=0;i<count;i++) CHECK(!strcmp(pages[i].id,names[i]));
+  exr_fixed_free(doc);mz_free(data);
+}
 int main(int argc,char **argv) {
   mz_zip_archive zip;void *archive=NULL;size_t size=0,count,i;exr_fixed_document *d=NULL;const exr_fixed_page *pages;
   const char *info="<ComicInfo><Title>Formats</Title><Writer>WP12a</Writer></ComicInfo>";
-  CHECK(argc==2);
+  CHECK(argc==2 || argc==3);
+  if(argc==3 && !strcmp(argv[2],"order")) {
+    natural_frame_order(argv[1]);printf("%u CBZ order checks passed\n",checks);return 0;
+  }
+  rejected_probe(argv[1]);
+  natural_frame_order(argv[1]);
   memset(&zip,0,sizeof(zip));CHECK(mz_zip_writer_init_heap(&zip,0,0));
   put_file(&zip,"Chapter/1.png",argv[1],"images/png/solid.png");
   put_file(&zip,"Chapter/2.gif",argv[1],"images/gif/animation.gif");

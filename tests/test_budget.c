@@ -119,6 +119,56 @@ static void accounting(void) {
   exr_document_free(base);
 }
 
+/* A finished document must retain exact-size arrays: geometric growth slack is
+   not part of the payload a caller can use, and on a large chapter it is tens of
+   megabytes of parse workspace.  The bound below is the payload computed from the
+   public arrays plus a small allowance for the document header. */
+static void retained_workspace(void) {
+  enum { PARAGRAPHS = 2000 };
+  static exr_node_input nodes[2 + PARAGRAPHS * 2];
+  static char texts[PARAGRAPHS][65];
+  exr_chapter_input chapter = {"retained", "retained.unit", 1, 1};
+  exr_document_input input;
+  exr_document *document = NULL;
+  const exr_node *node_list;
+  const exr_chapter *chapter_list;
+  const exr_resource *resource_list;
+  size_t node_count = 0, block_count = 0, chapter_count = 0, resource_count = 0, text_size = 0;
+  size_t payload, i;
+  nodes[0] = (exr_node_input){EXR_NODE_DOCUMENT, SIZE_MAX, NULL, NULL, NULL, 0};
+  nodes[1] = (exr_node_input){EXR_NODE_CHAPTER, 0, NULL, NULL, NULL, 0};
+  for (i = 0; i < PARAGRAPHS; i++) {
+    memset(texts[i], 'A' + (int)(i % 26), 64);
+    texts[i][64] = 0;
+    nodes[2 + i * 2] = (exr_node_input){EXR_NODE_PARAGRAPH, 1, "p", NULL, NULL, 0};
+    nodes[3 + i * 2] = (exr_node_input){EXR_NODE_TEXT, 2 + i * 2, NULL, texts[i], NULL, 0};
+  }
+  input = (exr_document_input){"Retained workspace", nodes, 2 + PARAGRAPHS * 2, &chapter, 1, NULL,
+                               0};
+  OK(exr_document_create(&input, &document, &error));
+  node_list = exr_document_nodes(document, &node_count);
+  (void)exr_document_blocks(document, &block_count);
+  chapter_list = exr_document_chapters(document, &chapter_count);
+  resource_list = exr_document_resources(document, &resource_count);
+  (void)resource_list;
+  (void)exr_document_text(document, &text_size);
+  payload = text_size + 1 + node_count * sizeof(exr_node) + block_count * sizeof(exr_block) +
+            chapter_count * sizeof(exr_chapter) + resource_count * sizeof(exr_resource);
+  payload += strlen(exr_document_title(document)) + 1;
+  for (i = 0; i < node_count; i++) {
+    payload += node_list[i].attribute_count * sizeof(exr_attribute);
+    if (node_list[i].name) payload += strlen(node_list[i].name) + 1;
+    if (node_list[i].text) payload += strlen(node_list[i].text) + 1;
+  }
+  for (i = 0; i < chapter_count; i++) {
+    if (chapter_list[i].id) payload += strlen(chapter_list[i].id) + 1;
+    if (chapter_list[i].path) payload += strlen(chapter_list[i].path) + 1;
+  }
+  CHECK(exr_document_memory_size(document) >= payload);
+  CHECK(exr_document_memory_size(document) <= payload + 4096);
+  exr_document_free(document);
+}
+
 static void cache_budget(exr_font *font) {
   exr_part parts[] = {{"a", "a.unit", "A", 1}, {"b", "b.unit", "B", 1},
                       {"large", "large.unit", "Large", 1}, {"broken", "broken.unit", "Broken", 1},
@@ -233,6 +283,7 @@ int main(int argc, char **argv) {
   CHECK(!exr_session_cached_bytes(NULL));
   CHECK(exr_session_set_budget(NULL, 0, &error) == EXR_ARGUMENT);
   accounting();
+  retained_workspace();
   OK(exr_font_open(path, &font, &error));
   cache_budget(font);
   exr_font_free(font);

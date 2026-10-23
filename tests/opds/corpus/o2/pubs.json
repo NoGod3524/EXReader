@@ -1,0 +1,24 @@
+{
+  "metadata": {"title": "Publications", "numberOfItems": 3, "itemsPerPage": 10, "currentPage": 1},
+  "links": [{"rel": "self", "href": "pubs.json", "type": "application/opds+json"}],
+  "publications": [
+    {
+      "metadata": {"title": {"en": "Localized Title", "fr": "Titre localé"}, "identifier": "urn:isbn:9780000000002",
+        "author": "Plain Author", "language": "fr", "publisher": {"name": "Pub Co"}, "modified": "2026-01-02T00:00:00Z",
+        "description": "Described."},
+      "links": [
+        {"rel": "http://opds-spec.org/acquisition/open-access", "href": "../dl/book.epub", "type": "application/epub+zip"},
+        {"rel": "http://opds-spec.org/acquisition/open-access", "href": "/dl/book.pdf", "type": "application/pdf"}
+      ],
+      "images": [{"href": "/img/1.png", "type": "image/png"}, {"rel": "http://opds-spec.org/image/thumbnail", "href": "/img/t1.png", "type": "image/png"}]
+    },
+    {
+      "metadata": {"title": "Two Authors", "author": [{"name": "A One"}, "B Two", {"identifier": "no-name"}], "language": ["en", "fr"]},
+      "links": [{"rel": "http://opds-spec.org/acquisition", "href": "/dl/book.epub", "type": "application/epub+zip"}]
+    },
+    {
+      "metadata": {"title": "Object Author", "author": {"name": "Obj Author"}},
+      "links": [{"rel": ["http://opds-spec.org/acquisition/x-future", "alternate"], "href": "/dl/book.epub", "type": "application/x-new"}]
+    }
+  ]
+}

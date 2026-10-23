@@ -27,6 +27,10 @@ exr_status exr_pdf_ccitt_decode(const unsigned char *data,size_t size,long k,uns
 void exr_pdf_close(exr_pdf_file *file);
 /* Borrowed only for the duration of one synchronous adapter operation. */
 void exr_pdf_control(exr_pdf_file *file,const exr_control *control);
+/* End a synchronous fixed-document operation, after all borrowed stream/font
+   bytes and nested painters have been released. Parsed object IDs stay valid.
+   Cache and work limits apply to each operation, not all pages ever visited. */
+void exr_pdf_operation_end(exr_pdf_file *file);
 exr_status exr_pdf_metadata_string(exr_pdf_file *file,uint32_t id,char **out,exr_error *error);
 /* Patch document-subject XMP without flattening unknown RDF structures. */
 exr_status exr_pdf_xmp_write(const void *data,size_t size,const exr_metadata_entry *changes,size_t count,
@@ -54,7 +58,7 @@ uint32_t exr_pdf_get(exr_pdf_file *file,uint32_t dict,const char *key);
 exr_status exr_pdf_resolve(exr_pdf_file *file,uint32_t value,uint32_t *out,exr_error *error);
 exr_status exr_pdf_stream_data(exr_pdf_file *file,uint32_t stream,const unsigned char **data,
                                  size_t *size,exr_error *error);
-typedef enum { EXR_PDF_STREAM_RAW,EXR_PDF_STREAM_JPEG } exr_pdf_stream_codec;
+typedef enum { EXR_PDF_STREAM_RAW,EXR_PDF_STREAM_JPEG,EXR_PDF_STREAM_JPX } exr_pdf_stream_codec;
 /* Decodes lossless prefixes and preserves a final image codec for the image
    decoder. Ordinary stream_data always rejects an encoded image tail. */
 exr_status exr_pdf_image_payload(exr_pdf_file *file,uint32_t stream,const unsigned char **data,size_t *size,
@@ -81,6 +85,7 @@ exr_status exr_pdf_syntax_ops(const void *data,size_t size,exr_pdf_operator_fn o
 typedef struct exr_pdf_cmap exr_pdf_cmap;
 typedef struct { uint32_t code; unsigned code_bytes; char utf8[256]; size_t size; } exr_pdf_mapping;
 exr_status exr_pdf_cmap_parse(const void *data,size_t size,const exr_control *control,exr_pdf_cmap **out,exr_error *error);
+exr_status exr_pdf_cmap_parse_width(const void *data,size_t size,unsigned code_bytes,const exr_control *control,exr_pdf_cmap **out,exr_error *error);
 void exr_pdf_cmap_free(exr_pdf_cmap *map);
 exr_status exr_pdf_cmap_next(const exr_pdf_cmap *map,const unsigned char *data,size_t size,size_t *at,
                             exr_pdf_mapping *out,exr_error *error);
@@ -97,7 +102,8 @@ typedef struct {
   double width,vertical_advance,vertical_x,vertical_y;
   const char *glyph_name;
 } exr_pdf_character;
-/* Font metadata/mapping are owned; decoded program bytes borrow the PDF file. */
+/* Font metadata/mapping are owned; decoded program bytes borrow the PDF file
+   until close or exr_pdf_operation_end, whichever comes first. */
 exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dictionary,const exr_control *control,exr_pdf_font **out,exr_error *error);
 void exr_pdf_font_close(exr_pdf_font *font);
 const exr_pdf_font_info *exr_pdf_font_description(const exr_pdf_font *font);

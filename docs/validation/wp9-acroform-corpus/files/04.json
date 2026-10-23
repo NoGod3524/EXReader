@@ -1,0 +1,12 @@
+{
+ "base": "04-text-existing-appearance.pdf",
+ "id": "04",
+ "category": "text/appearance",
+ "expect": "accept",
+ "size": 795,
+ "sha256": "01d686ff7d09ce34c68887b6201a403b26e679e234abe380eea61fd24c289d4f",
+ "edited_sha256": "ae1ffd666790b158cec4ae235fc1204985445e42a261fe01dceaa3315759597a",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

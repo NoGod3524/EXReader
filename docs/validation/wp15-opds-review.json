@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "package": "WP15 OPDS publication and cancellation review repairs",
+  "status": "passed_linux_and_windows_declared_scope",
+  "base_sha": "45cff9e4853229a2affe6b8c5ddcfe55f8ac2b4a",
+  "implementation_sha": "6ccf312b8b7e8766b8f5f5e7bee11af1d5db28a4",
+  "acceptance_source_sha": "ce5bfc75b20a0cb4faa22c3ca01ae5fbc910f88c",
+  "branch": "codex/wp15-opds-review",
+  "cloud_run": 39714210896,
+  "cloud_jobs": {"windows": 119612345169, "linux": 119612345251},
+  "cloud_jobs_expected": 2,
+  "cloud_jobs_passed": 2,
+  "per_platform": {
+    "original_cases_preserved": 62,
+    "added_cases": 3,
+    "cases_passed": 65,
+    "cases_failed": 0,
+    "consumer_examples_preserved_and_passed": 8,
+    "atomic_publication_regression_passed": true,
+    "atomic_regression_minimum_asserted_checks": 10,
+    "foreign_origin_received_no_credentials": true,
+    "no_temporary_files_left": true,
+    "no_credential_values_in_reports": true,
+    "all_declared_cases_executed_without_duplicates": true
+  },
+  "fixes": [
+    "POSIX no-replace refuses publication when hard-link atomic creation fails; ordinary rename is never used as a fallback",
+    "Cancellation after verifier completion, including verifier-returned OPDS_CANCELLED, removes the temporary file and prevents publication",
+    "Existing destination comparison polls cancellation per bounded read and reads at most downloaded byte length plus one",
+    "Cancellation is checked after destination comparison, including identical-file success, and immediately before atomic publication"
+  ],
+  "new_network_cases": ["d_cancel_after_verifier", "d_cancel_existing_comparison", "d_cancel_before_publication"],
+  "negative_test_method": {
+    "network_cases": "Original real loopback HTTP service and real SDK verifier; verifier arms deterministic control callbacks after download",
+    "filesystem": "Compile production opds_fs.c with only link/MoveFileExW substituted to report unsupported atomic publication",
+    "filesystem_assertions": ["Missing destination remains missing on primitive failure", "Temporary input bytes remain intact for caller cleanup", "Another writer's destination bytes remain intact", "Normal existing-target conflict preserves both files", "Explicit replace still publishes complete bytes"]
+  },
+  "artifacts": [
+    {"platform": "Linux", "id": 12398461942, "name": "wp15-opds-Linux", "bytes": 16097, "sha256": "bc5dbe78f511ab2c90ee50e3a3d0f61fb7ea521581b974516516df437b4e33e3", "report": "wp15-opds-linux.json"},
+    {"platform": "Windows", "id": 12397514878, "name": "wp15-opds-Windows", "bytes": 16968, "sha256": "72fd3ea5f8d8cd1321dbea8205b04452d10e3e18655efcc55cddbad45236c374", "report": "wp15-opds-windows.json"}
+  ],
+  "ownership_gate": {"handoff": "feda26381a7b05c6a1ce3db91a440ca0094e06c5", "head": "ce5bfc75b20a0cb4faa22c3ca01ae5fbc910f88c", "owned_paths_only": true},
+  "default_sdk_protection": {
+    "baseline": "a2552d7feb786cd2345d2b0b3eb894777b3254db",
+    "all_tree_hashes_identical": true,
+    "trees": ["src", "include", "cmake", "CMakeLists.txt", "tests/fixtures", ".github/workflows/native.yml", ".github/workflows/reliability.yml", "bindings"],
+    "runtime_sdk_version_and_abi_match_headers": true
+  },
+  "history": [
+    {"run": 39708980968, "source": "45cff9e4853229a2affe6b8c5ddcfe55f8ac2b4a", "role": "Original OPDS delivery; retained, no results overwritten"},
+    {"run": 39714015736, "source": "6ccf312b8b7e8766b8f5f5e7bee11af1d5db28a4", "role": "Earlier repair run; both platforms passed; final acceptance uses only 39714210896"}
+  ],
+  "local_build_test_download_or_reaggregation": false,
+  "wp16_cpu_credit_seconds": 0,
+  "scope_boundaries": [
+    "No HTTPS transport implementation added; reference socket transport still returns OPDS_NEEDS_HOST",
+    "Verifier and local filesystem operations remain synchronous; cancellation is cooperative between operations",
+    "A cancellation that arrives after the atomic publication commit does not roll back published content",
+    "Filesystems without atomic no-replace support now return OPDS_IO rather than a weaker publication guarantee",
+    "Original WP15 documented exclusions, including LCP, borrowing, payment and host UI integration, remain"
+  ],
+  "integration": "Merge this review branch after the original OPDS delivery. Preserve standalone ownership evidence; integration owner chooses the reviewed --handoff base for final combined-source validation."
+}

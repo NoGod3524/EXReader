@@ -1,0 +1,234 @@
+name: AcroForm acceptance
+on:
+  push:
+    branches: ['codex/wp9-acroform']
+    paths-ignore:
+      - 'docs/validation/wp9-acroform-corpus/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  corpus:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record exact source identity
+        shell: bash
+        run: |
+          git rev-parse HEAD
+          sha256sum tests/acroform_corpus/generate.py tools/acroform_reference.py tools/check_acroform_corpus.py tools/acroform_evidence.py
+      - name: Generate the frozen corpus twice and compare both trees
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          mkdir -p build
+          "$PY" tests/acroform_corpus/generate.py --out build/corpus-a | tee build/corpus-summary.json
+          "$PY" tests/acroform_corpus/generate.py --out build/corpus-b
+          "$PY" - build/corpus-a build/corpus-b <<'PY'
+          import hashlib, pathlib, sys
+          left, right = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+          names = sorted(path.name for path in left.iterdir())
+          other = sorted(path.name for path in right.iterdir())
+          if names != other:
+              raise SystemExit('corpus trees list different files')
+          for name in names:
+              first = hashlib.sha256((left / name).read_bytes()).hexdigest()
+              second = hashlib.sha256((right / name).read_bytes()).hexdigest()
+              if first != second:
+                  raise SystemExit('corpus file differs between runs: ' + name)
+          print('deterministic generation: %d identical files' % len(names))
+          PY
+          rm -rf build/corpus-b
+          mv build/corpus-a build/corpus
+      - name: Install independent reference tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qpdf poppler-utils
+          python3 -m pip install --quiet --upgrade pypdf
+      - name: Independent reference validation of every frozen input
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tools/acroform_reference.py inputs --corpus build/corpus --out build/reference-inputs.json
+      - name: Preserve the corpus, its spec and the reference report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-acroform-corpus
+          path: |
+            build/corpus/
+            build/corpus-summary.json
+            build/reference-inputs.json
+          if-no-files-found: error
+
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record exact source identity
+        shell: bash
+        run: git rev-parse HEAD
+      - name: Generate the frozen corpus
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tests/acroform_corpus/generate.py --out build/corpus
+      - name: Install independent reference tools
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qpdf poppler-utils
+          python3 -m pip install --quiet --upgrade pypdf
+      - name: Configure
+        shell: bash
+        run: cmake -S . -B build/form -DCMAKE_BUILD_TYPE=Debug -DEXR_ACROFORM_CORPUS="$GITHUB_WORKSPACE/build/corpus" -DEXR_BUILD_JNI=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_MP3=OFF
+      - name: Build actual C implementation and regression tests
+        run: cmake --build build/form --config Debug --parallel 4 --target exreader-pdf-form-test exreader-pdf-write-test exreader-pdf-metadata-write-test exreader-pdf-appearance-test exreader-pdf-form-corpus-test
+      - name: Enumerate, edit, reopen and render generated original corpus
+        run: ctest --test-dir build/form -C Debug --verbose --output-on-failure -R "native-pdf-(form|write|metadata-write|appearance)$"
+      - name: Run the independent corpus documents
+        run: ctest --test-dir build/form -C Debug --verbose --output-on-failure -R "^native-pdf-form-corpus$"
+      - name: Verify compiled layer dependencies
+        if: runner.os == 'Linux'
+        run: python3 tools/check_layers.py build/form
+      - name: Verify measurements against the frozen spec
+        continue-on-error: true
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tools/check_acroform_corpus.py --corpus build/corpus --edited build/form/acroform-edited --results build/form/acroform-results.tsv --out build/evidence --platform "$RUNNER_OS"
+      - name: Independent reference validation of edited outputs
+        if: runner.os == 'Linux'
+        continue-on-error: true
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tools/acroform_reference.py outputs --corpus build/corpus --edited build/form/acroform-edited --out build/reference-outputs.json
+      - name: Explain failing documents
+        if: always()
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" - build/form/acroform-edited build/form/acroform-results.tsv <<'PY'
+          import pathlib, sys
+          edited, results = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+          bases = {}
+          for line in results.read_text(encoding='utf-8').splitlines():
+              cells = line.split('\t')
+              if cells[0] == 'F':
+                  bases[cells[1]] = bytes.fromhex(cells[3]).decode('utf-8')
+              elif cells[0] == 'W':
+                  name = bytes.fromhex(cells[9]).decode('utf-8')
+                  message = bytes.fromhex(cells[10]).decode('utf-8')
+                  print('W id=%s status=%s size=%s file=%s present=%s msg=%s' % (
+                      cells[1], cells[3], cells[6], name, (edited / name).exists(), message))
+              elif cells[0] == 'RO':
+                  print('RO id=%s status=%s fields=%s' % (cells[1], cells[2], cells[4]))
+          print('edited files on disk: %d' % len(list(edited.glob('*.pdf'))))
+          PY
+      - name: Gate on the frozen spec with reference reports
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tools/check_acroform_corpus.py --corpus build/corpus --edited build/form/acroform-edited --results build/form/acroform-results.tsv --out build/evidence --platform "$RUNNER_OS" --reference build/reference-outputs.json --require-reference
+      - name: Gate on the frozen spec
+        if: runner.os != 'Linux'
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tools/check_acroform_corpus.py --corpus build/corpus --edited build/form/acroform-edited --results build/form/acroform-results.tsv --out build/evidence --platform "$RUNNER_OS"
+      - name: Install the portable SDK with the form component
+        run: cmake --install build/form --config Debug --prefix stage
+      - name: Build and run the installed AcroForm consumer
+        shell: bash
+        run: |
+          cmake -S tests/sdk_components -B build/sdk-components -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DEXR_TEST_CORPUS="$GITHUB_WORKSPACE/build/corpus" -DEXR_TEST_FONT="$GITHUB_WORKSPACE/tests/fixtures/fonts/primary.ttf" -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build/sdk-components --config Debug --parallel 4 --target form-consumer
+          ctest --test-dir build/sdk-components -C Debug --verbose --output-on-failure -R "^installed-form$"
+      - name: Preserve per-platform evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-acroform-${{ runner.os }}
+          path: |
+            build/form/acroform-edited/
+            build/form/acroform-results.tsv
+            build/reference-outputs.json
+            build/reference-pages/
+            build/evidence/
+            build/corpus/manifest.json
+            build/sdk-components/installed-form.json
+          if-no-files-found: warn
+
+  sanitizer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: git rev-parse HEAD
+      - name: Generate the frozen corpus
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tests/acroform_corpus/generate.py --out build/corpus
+      - run: cmake -S . -B build/form -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_ACROFORM_CORPUS="$GITHUB_WORKSPACE/build/corpus" -DEXR_BUILD_JNI=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_MP3=OFF
+      - run: cmake --build build/form --parallel 4 --target exreader-pdf-form-test exreader-pdf-form-corpus-test
+      - run: ctest --test-dir build/form --verbose --output-on-failure -R '^native-pdf-form(-corpus)?$'
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1
+      - name: Verify measurements under sanitizers
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tools/check_acroform_corpus.py --corpus build/corpus --edited build/form/acroform-edited --results build/form/acroform-results.tsv --out build/evidence --platform sanitizer
+      - name: Preserve sanitizer evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-acroform-sanitizer
+          path: |
+            build/form/acroform-edited/
+            build/form/acroform-results.tsv
+            build/evidence/
+            build/corpus/manifest.json
+          if-no-files-found: warn
+
+  evidence:
+    needs: [corpus, native, sanitizer]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: EXReader-acroform-*
+          path: build/artifacts
+      - name: Reconcile every platform, hash and count
+        shell: bash
+        run: |
+          PY=$(command -v python || command -v python3)
+          "$PY" tools/acroform_evidence.py --artifacts build/artifacts --out docs/validation/wp9-acroform-corpus --source "$GITHUB_SHA"
+      - name: Commit the reconciled evidence
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/validation/wp9-acroform-corpus
+          if git diff --cached --quiet; then
+            echo "evidence unchanged"
+          else
+            git commit -m "docs(pdf): record independent AcroForm corpus evidence [skip ci]"
+            git push
+          fi

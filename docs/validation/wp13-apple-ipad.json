@@ -1,0 +1,240 @@
+{
+  "artifacts": {
+    "attachment_files": 35,
+    "element_tree_present": false,
+    "screenshots": [
+      "01CDB3FC-CEFD-4057-A1A2-8B512F672E6B.png",
+      "2BD152D2-E31B-431A-BD0B-957EFF4A3D7E.png",
+      "41638612-BA60-4565-8BEF-C1753D0C512E.png",
+      "4896F274-CB53-4414-84F3-7F4FDC50C081.png",
+      "5236F92D-1B15-4F10-9D97-CD8B5BE591C0.png",
+      "53FFD63C-C801-436C-B04B-F10D07924CE5.png",
+      "55C16365-5EAC-471C-B26A-ABB06CC3D831.png",
+      "58E7018E-96DE-4A6D-9A6C-81D9DD7A208A.png",
+      "5B379842-B503-49B5-89ED-4BD7CEA160BB.png",
+      "5C83E3A3-8D9B-402D-AE1F-3C919DD3F2B0.png",
+      "6EF0A94F-E452-4CB8-99CE-7657E027AF8B.png",
+      "7DEBFE64-5E77-48A4-9EB5-A301DC18F13F.png",
+      "835C27F8-507B-4280-833A-2128E0B61087.png",
+      "91AB42ED-85D5-4EC8-A4E6-9C9E11CD8E4C.png",
+      "A20513CC-92A7-4F5B-97B5-E32A10CACDDF.png",
+      "AA36813E-BEB6-4A7B-B53C-F7E721EE3A9F.png",
+      "ADACA6DD-A075-46DA-83A4-71BB091820C6.png",
+      "C7B6341D-DAEB-4E03-971A-22F220B107CB.png",
+      "E5461642-2BB7-4A29-93D6-6F261D008488.png",
+      "E6DAA5F3-35D6-4A1E-A599-6250AD4DC10E.png",
+      "EFF6D569-CFC5-48FA-A2AE-7A27D7252A65.png",
+      "F6591535-67AE-427B-BC1C-0D607EF998D6.png",
+      "F67B7886-A7DB-4201-89D4-72879CB83C4E.png"
+    ],
+    "xcodebuild_log": "build/results/ipad-xcodebuild.log",
+    "xcresult": "build/results/ipad.xcresult"
+  },
+  "date": "2026-10-22",
+  "environment": {
+    "app": {
+      "bundle": "build/DerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app",
+      "executable_sha256": "6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f",
+      "info_plist_sha256": "22efbdc1bd9e931413a43151ef3647a5f7d050c26ac02abdf270b0a0da066a15"
+    },
+    "destination": "platform=iOS Simulator,id=9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF",
+    "device": "iPad mini (A17 Pro)",
+    "fixtures": {
+      "Broken.epub": "cc3a09739ee6201acade6316ba570c7f208ae4f0f755efa236cf01837fe59a7d",
+      "Large.epub": "d6c457e2ee019d663b1aea8ff5ef08d29a0629daf226258b472e35459781cb46",
+      "OFL.txt": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "Sample.epub": "acad327c574da58993c69278b6c455287cdce387fe4da9c94f93386760027cfd",
+      "Sample.pdf": "4f6fdc7b4dc13363aae532953ccf863c6be853c3c8b63de4718bc45dafbeb49d"
+    },
+    "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "host": "macOS-15.7.9-arm64-arm-64bit-Mach-O",
+    "input_driver": "XCUITest tap/doubleTap/typeText/drag and simulator orientation",
+    "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+    "sdk": {
+      "abi": 1,
+      "sdk_version": "3.40.0"
+    },
+    "xcode": "Xcode 16.4\nBuild version 16F6"
+  },
+  "legacy_self_checks": {
+    "checks": 21,
+    "passed": true,
+    "path": "evidence-ipad\\report.json",
+    "sha256": "e6cc300af1c285c0d129da1d5cff2cb16a50cd0b6c3b7613b4a92f6eec92f260"
+  },
+  "package": "WP13-APPLE",
+  "physical_device_execution": false,
+  "platform": "ipad",
+  "platform_label": "iPad simulator",
+  "run": {
+    "id": "39717882847",
+    "job": "ipad",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39717882847"
+  },
+  "schema": 1,
+  "scope": "real controls, touches and keyboard events on macOS and both simulators",
+  "source_sha": "960b6653e231cc5095deb6e71932061e8a32a8fb",
+  "state": {
+    "database": {
+      "bytes": 57344,
+      "rows": {
+        "book_progress": 1,
+        "books": 2,
+        "fixed_notes": 1,
+        "notes": 1
+      },
+      "sha256": "3351d9d6985fdaca5b04418361e83970b8a2e5ee9990e3d16579d2b9bd91e976",
+      "source_name": "library.sqlite",
+      "status": "copied"
+    },
+    "host_state": {
+      "log_sha256": "07cdd54080ab8b5af41786e0fb2a087866bcbda5a240e1e5c928973c515bcbd8",
+      "payload": {
+        "abi_version": 1,
+        "books": [
+          {
+            "format": "PDF",
+            "id": 2,
+            "position": 1,
+            "title": "Sample.pdf"
+          },
+          {
+            "format": "EPUB",
+            "id": 1,
+            "notes": [
+              {
+                "comment": "\u6458\u5f55\uff1ameasurable",
+                "id": 1,
+                "page": -1,
+                "quote": "measurable",
+                "start": 9223372036854775807,
+                "state": "\u6b67\u4e49"
+              }
+            ],
+            "page": 2,
+            "page_text_sha256": "dacf2e7d48531c184906943c85b72f6b50833d30f7e564720685a735522b094c",
+            "position": 1669,
+            "title": "Sample.epub"
+          }
+        ],
+        "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+        "schema": 1,
+        "sdk_version": "3.40.0",
+        "state_hash": "2436191b"
+      },
+      "sha256": "ab72cd66cb20523d4c2e8abe1ef5a9f88c2bd8efdc99707747c1fbf7f63bae3a",
+      "status": "copied"
+    }
+  },
+  "tests": [
+    {
+      "duration": "1m 19s",
+      "name": "test01ImportDeduplicateAndErrors()",
+      "result": "Passed",
+      "step_count": 7,
+      "steps": [
+        "step01_launch_fresh_state",
+        "step02_import_epub_fixture",
+        "step03_duplicate_import_reuses_row",
+        "step04_import_pdf_fixture",
+        "step05_broken_import_error_is_recoverable",
+        "step06_reopen_epub_after_error",
+        "step07_element_tree_import"
+      ]
+    },
+    {
+      "duration": "50s",
+      "name": "test02PagingTypographyAndLayout()",
+      "result": "Passed",
+      "step_count": 11,
+      "steps": [
+        "step08_launch_and_open_reader",
+        "step09_first_page",
+        "step10_next_page_progress",
+        "step11_next_page_again",
+        "step12_previous_page",
+        "step13_font_increase_repaginates",
+        "step14_font_decrease_restores_size",
+        "step15_rotate_or_resize_viewport",
+        "step16_layout_fits_new_size",
+        "step17_restore_original_orientation",
+        "step18_element_tree_reader"
+      ]
+    },
+    {
+      "duration": "1m 15s",
+      "name": "test03SelectionCopyAnnotation()",
+      "result": "Passed",
+      "step_count": 8,
+      "steps": [
+        "step19_open_selection_sheet",
+        "step20_keyboard_select_text",
+        "step21_copy_selection",
+        "step22_create_annotation",
+        "step23_annotation_list_navigation",
+        "step24_edit_annotation",
+        "step25_jump_to_annotation",
+        "step26_delete_annotation"
+      ]
+    },
+    {
+      "duration": "1m 2s",
+      "name": "test04LifecycleAndPersistence()",
+      "result": "Passed",
+      "step_count": 6,
+      "steps": [
+        "step27_open_and_navigate",
+        "step28_create_note_and_read_state",
+        "step29_background_and_foreground",
+        "step30_relaunch_restores_position_and_state",
+        "step31_notes_survive_relaunch",
+        "step32_view_rebuild_via_library"
+      ]
+    },
+    {
+      "duration": "24s",
+      "name": "test05CancellationAndRecovery()",
+      "result": "Passed",
+      "step_count": 5,
+      "steps": [
+        "step33_launch_with_deterministic_slow_import",
+        "step34_cancel_in_flight_import",
+        "step35_recover_with_valid_import",
+        "step36_reader_remains_usable",
+        "step37_state_tree_after_cancel"
+      ]
+    },
+    {
+      "duration": "54s",
+      "name": "test06FixedPagePdfAndAnchor()",
+      "result": "Passed",
+      "step_count": 5,
+      "steps": [
+        "step38_open_pdf_fixed_layout",
+        "step39_fixed_page_navigation",
+        "step40_fixed_annotation",
+        "step41_fixed_annotation_jump",
+        "step42_fixed_progress_survives_relaunch"
+      ]
+    },
+    {
+      "duration": "32s",
+      "name": "test07AccessibilityAndDynamicType()",
+      "result": "Passed",
+      "step_count": 4,
+      "steps": [
+        "step43_identifiers_and_labels",
+        "step44_reading_order",
+        "step45_element_tree",
+        "step46_dynamic_type_launch"
+      ]
+    }
+  ],
+  "totals": {
+    "cases": 7,
+    "failed": 0,
+    "passed": 7,
+    "steps": 46
+  }
+}

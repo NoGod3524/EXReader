@@ -222,7 +222,7 @@ static void test_migration_and_notes(void) {
   exr_document_free(doc);
   exr_library_close(library);
   sql = open_sql(database);
-  CHECK(scalar(sql, "PRAGMA user_version") == 6);
+  CHECK(scalar(sql, "PRAGMA user_version") == 7);
   CHECK(scalar(sql, "SELECT count(*) FROM notes") == 0);
   CHECK(sqlite3_close(sql) == SQLITE_OK);
 }
@@ -294,7 +294,7 @@ static void test_migration_rollback(void) {
   OK(exr_library_open(broken, &library, &error));
   exr_library_close(library);
   sql = open_sql(broken);
-  CHECK(scalar(sql, "PRAGMA user_version") == 6);
+  CHECK(scalar(sql, "PRAGMA user_version") == 7);
   CHECK(scalar(sql, "SELECT count(*) FROM pragma_table_info('notes') "
                     "WHERE name LIKE 'anchor_%'") == 4);
   CHECK(sqlite3_close(sql) == SQLITE_OK);

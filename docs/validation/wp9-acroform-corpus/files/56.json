@@ -1,0 +1,12 @@
+{
+ "base": "56-reject-choice-absent.pdf",
+ "id": "56",
+ "category": "reject/choice-absent",
+ "expect": "reject",
+ "size": 590,
+ "sha256": "f2b412379cfd7a3157cc5c5772143aef3a927f1212b57c9ee2c174a0b8370595",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

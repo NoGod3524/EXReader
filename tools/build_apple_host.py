@@ -31,7 +31,8 @@ def main():
     sdk, output = args.sdk.absolute(), args.output.absolute()
     if output.exists():
         parser.error('Choose a new output directory to preserve earlier artifacts')
-    for path in [sdk/'include/exreader.h', sdk/'lib', ROOT/'examples/apple/ReaderApp.swift']:
+    for path in [sdk/'include/exreader.h', sdk/'lib', ROOT/'examples/apple/ReaderApp.swift',
+                 ROOT/'examples/apple/HostSDK.swift']:
         if not path.exists():
             parser.error('Missing SDK or host source: '+str(path))
     output.mkdir(parents=True)
@@ -47,11 +48,11 @@ def main():
     architecture = 'arm64' if mobile else subprocess.check_output(['uname', '-m'], text=True).strip()
     target = architecture+('-apple-macosx12.0' if not mobile else '-apple-ios15.0'+('-simulator' if args.platform == 'simulator' else ''))
     rpath = '@executable_path/Frameworks' if mobile else '@executable_path/../Frameworks'
-    command = ['xcrun', '--sdk', native_sdk, 'swiftc', '-swift-version', '5', '-O',
+    sources = sorted((ROOT/'examples/apple').glob('*.swift'))
+    command = ['xcrun', '--sdk', native_sdk, 'swiftc', '-swift-version', '5', '-O', '-parse-as-library',
                '-sdk', sdk_path, '-target', target, '-I', sdk/'include', '-L', sdk/'lib',
                '-lexreader', '-Xlinker', '-rpath', '-Xlinker', rpath,
-               ROOT/'bindings/swift/EXReader.swift', ROOT/'examples/apple/ReaderApp.swift',
-               '-o', executable]
+               ROOT/'bindings/swift/EXReader.swift', *sources, '-o', executable]
     run(*command)
     source_sha = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
     version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk/'include/exr/base.h').read_text())[1]

@@ -125,6 +125,129 @@ static uint32_t read32(const unsigned char *p) {
   return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3];
 }
 
+static void write32(unsigned char *p, size_t value) {
+  p[0] = (unsigned char)(value >> 24); p[1] = (unsigned char)(value >> 16);
+  p[2] = (unsigned char)(value >> 8); p[3] = (unsigned char)value;
+}
+
+/* Keep the reference font and its document IDs unchanged. */
+static exr_font *document_font(const char *directory, const char *document) {
+  char path[4096];
+  FILE *file;
+  long length;
+  size_t table, size = strlen(document), entry = 0;
+  unsigned char *bytes, *svg;
+  unsigned i;
+  exr_font *font = NULL;
+  exr_font_input input;
+  snprintf(path, sizeof(path), "%s/svgfont.ttf", directory);
+  file = fopen(path, "rb"); CHECK(file != NULL);
+  CHECK(!fseek(file, 0, SEEK_END)); length = ftell(file); CHECK(length > 12);
+  table = ((size_t)length + 3) & ~(size_t)3;
+  bytes = calloc(table + 24 + size, 1); CHECK(bytes != NULL);
+  rewind(file); CHECK(fread(bytes, 1, (size_t)length, file) == (size_t)length); fclose(file);
+  for (i = 0; i < read16(bytes + 4); i++) {
+    size_t at = 12 + (size_t)i*16;
+    CHECK(at + 16 <= (size_t)length);
+    if (!memcmp(bytes + at, "SVG ", 4)) entry = at;
+  }
+  CHECK(entry != 0);
+  write32(bytes + entry + 8, table); write32(bytes + entry + 12, 24 + size);
+  svg = bytes + table;
+  write32(svg + 2, 10); /* document list follows the SVG header */
+  svg[11] = 1; /* one record, for glyph 2 */
+  svg[13] = svg[15] = GID_RECT;
+  write32(svg + 16, 14); write32(svg + 20, size);
+  memcpy(svg + 24, document, size);
+  input = (exr_font_input){bytes, table + 24 + size, 0};
+  OK(exr_font_create_glyphs(&input, 1, &font, &error));
+  free(bytes);
+  return font;
+}
+
+static exr_bitmap document_scene(const char *directory, const char *document) {
+  exr_font *font = document_font(directory, document);
+  exr_bitmap image = scene(font, GID_RECT);
+  exr_font_free(font);
+  return image;
+}
+
+static void same_document_pixels(const char *directory, const char *first, const char *second) {
+  exr_bitmap a = document_scene(directory, first), b = document_scene(directory, second);
+  unsigned y;
+  CHECK(a.width == b.width && a.height == b.height && a.channels == b.channels);
+  for (y = 0; y < a.height; y++)
+    if (memcmp(a.pixels + (size_t)y*a.stride, b.pixels + (size_t)y*b.stride, (size_t)a.width*4)) break;
+  CHECK(y == a.height);
+  exr_bitmap_free(&a); exr_bitmap_free(&b);
+}
+
+#define SVG_START "<svg viewBox='0 0 1000 1000' "
+#define SVG_RECT "<rect x='100' y='100' width='600' height='600'/>"
+
+static void presentation_regressions(const char *directory) {
+  exr_bitmap image;
+  unsigned i;
+  static const char *bad_opacity[] = {"-1%", "101%", "50px", "50%%", "%", "nan", "1.1"};
+  same_document_pixels(directory, SVG_START "fill='red' stroke-width='100'>" SVG_RECT "</svg>",
+                       SVG_START "fill='red' stroke-width='100' stroke='none'>" SVG_RECT "</svg>");
+  same_document_pixels(directory, SVG_START "><g stroke='blue' stroke-width='100'>" SVG_RECT "</g></svg>",
+                       SVG_START "stroke='blue' stroke-width='100'>" SVG_RECT "</svg>");
+  image = document_scene(directory, SVG_START "fill='red' stroke='blue' stroke-width='100'>" SVG_RECT "</svg>");
+  near(&image, 230, 150, 0, 0, 255, 0); /* explicit stroke still paints */
+  exr_bitmap_free(&image);
+  same_document_pixels(directory, SVG_START "fill='red' fill-opacity='50%' stroke='blue' stroke-width='100' stroke-opacity='25%'>" SVG_RECT "</svg>",
+                       SVG_START "fill='red' fill-opacity='0.5' stroke='blue' stroke-width='100' stroke-opacity='0.25'>" SVG_RECT "</svg>");
+  same_document_pixels(directory, SVG_START "opacity=' 50% ' fill='red'>" SVG_RECT "</svg>",
+                       SVG_START "fill='red'><g opacity='0.5'>" SVG_RECT "</g></svg>");
+  /* Overlapping children require a single isolated root layer. */
+  same_document_pixels(directory, SVG_START "opacity='0.5' fill='red'>" SVG_RECT "<rect x='400' y='100' width='500' height='600'/></svg>",
+                       SVG_START "fill='red'><g opacity='0.5'>" SVG_RECT "<rect x='400' y='100' width='500' height='600'/></g></svg>");
+  /* Select only glyph2, inheriting root and ancestor presentation/transforms. */
+  same_document_pixels(directory,
+      SVG_START "opacity='0.5' fill='red' transform='translate(100,50)'><g opacity='0.5' transform='scale(0.5)' stroke='blue' stroke-width='100'><g id='glyph2'>" SVG_RECT "</g><rect x='0' y='0' width='1000' height='1000' fill='green'/></g></svg>",
+      SVG_START "opacity='0.5' fill='red' transform='translate(100,50)'><g opacity='0.5' transform='scale(0.5)' stroke='blue' stroke-width='100'>" SVG_RECT "</g></svg>");
+  same_document_pixels(directory, SVG_START "id='glyph2' opacity='0.5' transform='translate(100,50)' fill='red'>" SVG_RECT "</svg>",
+                       SVG_START "><g opacity='0.5' transform='translate(100,50)' fill='red'>" SVG_RECT "</g></svg>");
+  same_document_pixels(directory, SVG_START "opacity='0.5' fill='red'><g transform='translate(100,50)'><rect id='glyph2' x='100' y='100' width='600' height='600'/><rect width='1000' height='1000' fill='blue'/></g></svg>",
+                       SVG_START "opacity='0.5' fill='red'><g transform='translate(100,50)'>" SVG_RECT "</g></svg>");
+  same_document_pixels(directory,
+      SVG_START "opacity='0.5' fill='red'><defs><g transform='translate(100,50)' opacity='0.5'><g id='glyph2'>" SVG_RECT "</g><rect width='1000' height='1000' fill='blue'/></g></defs><rect width='1000' height='1000' fill='green'/></svg>",
+      SVG_START "opacity='0.5' fill='red'><g transform='translate(100,50)' opacity='0.5'>" SVG_RECT "</g></svg>");
+  same_document_pixels(directory,
+      SVG_START "fill='red'><defs><g><rect width='1000' height='1000' fill='blue'/></g></defs>" SVG_RECT "</svg>",
+      SVG_START "fill='red'>" SVG_RECT "</svg>");
+  image = document_scene(directory, SVG_START "transform='translate(100,50)' fill='red'>" SVG_RECT "</svg>");
+  white(&image, 232, 150); near(&image, 245, 150, 255, 0, 0, 0);
+  exr_bitmap_free(&image);
+  for (i = 0; i < sizeof(bad_opacity)/sizeof(bad_opacity[0]); i++) {
+    char document[512];
+    exr_font *font;
+    exr_status status;
+    snprintf(document, sizeof(document), SVG_START "opacity='%s'>" SVG_RECT "</svg>", bad_opacity[i]);
+    font = document_font(directory, document);
+    image = render_glyph(font, GID_RECT, 100, 0x000000ff, 0, NULL, &status);
+    CHECK(status == EXR_FORMAT && !image.pixels);
+    exr_font_free(font);
+  }
+  {
+    exr_font *font = document_font(directory, SVG_START "opacity='0.5'><g opacity='0.5'><g id='glyph2'>" SVG_RECT "</g></g></svg>");
+    int completed = 0;
+    for (i = 0; i < 16; i++) {
+      cancel_state cancel = {0, i ? 1u << (i - 1) : 0};
+      exr_control control = {0};
+      exr_status status;
+      control.context = &cancel; control.cancelled = cancelled;
+      image = render_glyph(font, GID_RECT, 100, 0x000000ff, 0, &control, &status);
+      CHECK(status == EXR_OK || (status == EXR_CANCELLED && !image.pixels));
+      exr_bitmap_free(&image);
+      if (status == EXR_OK) { completed = 1; break; }
+    }
+    CHECK(completed);
+    exr_font_free(font);
+  }
+}
+
 static void directory_failures(const char *directory) {
   char path[4096];
   FILE *file;
@@ -370,6 +493,7 @@ int main(int argc, char **argv) {
   font = open_font(argv[1], "svgfont.ttf");
   information(argv[1]);
   directory_failures(argv[1]);
+  presentation_regressions(argv[1]);
   shapes(font);
   style(font);
   transforms(font);

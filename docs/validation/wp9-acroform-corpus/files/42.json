@@ -1,0 +1,12 @@
+{
+ "base": "42-reject-richtext.pdf",
+ "id": "42",
+ "category": "reject/richtext",
+ "expect": "reject",
+ "size": 676,
+ "sha256": "84d9716a8cfcd682d806f43d833d7da6e5badf6aa5fe83876d173b1448a06e36",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

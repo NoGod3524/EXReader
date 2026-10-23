@@ -1,0 +1,45 @@
+{
+  "version": 4,
+  "cmakeMinimumRequired": {"major": 3, "minor": 24, "patch": 0},
+  "configurePresets": [
+    {
+      "name": "reading-core",
+      "displayName": "Native multi-format and PDF reading SDK",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/stage",
+        "EXR_ENABLE_PDF": "ON",
+        "EXR_ENABLE_PDF_CRYPTO": "ON",
+        "EXR_ENABLE_PDF_JPX": "ON",
+        "EXR_ENABLE_ICC": "ON",
+        "EXR_ENABLE_IMAGE_WEBP": "ON",
+        "EXR_ENABLE_IMAGE_TIFF": "ON",
+        "EXR_ENABLE_IMAGE_AVIF": "ON",
+        "EXR_ENABLE_AUDIO": "OFF",
+        "EXR_ENABLE_MP3": "OFF",
+        "EXR_ENABLE_AAC": "OFF",
+        "EXR_ENABLE_LIBRARY": "OFF",
+        "EXR_ENABLE_TEXT_INDEX": "OFF",
+        "EXR_BUILD_TEXT_INDEX": "OFF",
+        "EXR_ENABLE_PDF_EDIT": "OFF",
+        "EXR_BUILD_SHARED_COMPAT": "OFF",
+        "EXR_BUILD_TOOLS": "OFF",
+        "EXR_BUILD_TESTS": "OFF",
+        "EXR_BUILD_FUZZ": "OFF",
+        "EXR_BUILD_JNI": "OFF"
+      }
+    },
+    {
+      "name": "reading-library",
+      "displayName": "Native reading SDK with SQLite bookshelf",
+      "inherits": "reading-core",
+      "cacheVariables": {"EXR_ENABLE_LIBRARY": "ON"}
+    }
+  ],
+  "buildPresets": [
+    {"name": "reading-core", "configurePreset": "reading-core", "jobs": 4},
+    {"name": "reading-library", "configurePreset": "reading-library", "jobs": 4}
+  ]
+}
