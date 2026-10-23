@@ -70,11 +70,11 @@ def main():
         assert image.width >= 1000 and image.height >= 700
         # GTK centers a narrow rotated image inside the live scroller. Read that
         # widget's actual viewport, excluding borders/scrollbars and all side UI.
-        state = host.read()
+        state = host.wait(lambda s: s.get('page_width', 0) > 100 and s.get('page_height', 0) > 100)
         bounds = (state['page_x'] + 8, state['page_y'] + 8,
                   min(image.width, state['page_x'] + state['page_width'] - 22),
                   min(image.height, state['page_y'] + state['page_height'] - 22))
-        assert bounds[2] > bounds[0] and bounds[3] > bounds[1]
+        assert bounds[2] > bounds[0] and bounds[3] > bounds[1], repr((bounds, state))
         crop = image.crop(bounds)
         ink = sum(1 for pixel in crop.getdata() if min(pixel) < 180)
         report['screenshots'].append({'file': name, 'viewport_crop': bounds, 'ink_pixels': ink})

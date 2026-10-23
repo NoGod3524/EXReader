@@ -237,6 +237,9 @@ static void note_activated(GtkListBox *box,GtkListBoxRow *row,gpointer unused) {
 static gboolean focus_changed(GtkWidget *w,GdkEventFocus *event,gpointer unused) {
   (void)w;(void)event;(void)unused;state();return FALSE;
 }
+static void page_allocated(GtkWidget *widget,GtkAllocation *allocation,gpointer unused) {
+  (void)widget;(void)allocation;(void)unused;state();
+}
 static void stop_worker(void) {
   if(closing) return;
   closing=TRUE;g_atomic_int_inc(&generation);host_job *stop=g_new0(host_job,1);stop->stop=1;g_async_queue_push(queue,stop);state();
@@ -309,6 +312,7 @@ int main(int argc,char **argv) {
   g_signal_connect(shelf,"row-activated",G_CALLBACK(shelf_activated),NULL);
   g_signal_connect(notes,"row-activated",G_CALLBACK(note_activated),NULL);
   g_signal_connect(gtk_text_view_get_buffer(GTK_TEXT_VIEW(text)),"mark-set",G_CALLBACK(selection_changed),NULL);
+  g_signal_connect(gtk_widget_get_ancestor(image,GTK_TYPE_SCROLLED_WINDOW),"size-allocate",G_CALLBACK(page_allocated),NULL);
   gtk_widget_show_all(window);gtk_window_present(GTK_WINDOW(window));queue=g_async_queue_new();
   thread=g_thread_new("reading",work,font_path);submit(last ? READER_OPEN:READER_SHELF,last,NULL,font_size);
   state();gtk_main();g_thread_join(thread);g_async_queue_unref(queue);
