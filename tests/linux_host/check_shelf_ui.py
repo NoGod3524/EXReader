@@ -110,6 +110,14 @@ def main():
         command('xdotool', 'windowsize', host.window, '1100', '900')
         ready(lambda state: state['books'] <= 150)
         checks.append('resize_keeps_bounded_real_native_list')
+        command('xdotool', 'key', '--clearmodifiers', 'ctrl+f', 'ctrl+a')
+        subprocess.run(['xclip', '-selection', 'clipboard'], input=b'Shelf 0100', check=True)
+        command('xdotool', 'key', '--clearmodifiers', 'ctrl+v', 'alt+F4')
+        host.process.wait(timeout=30)
+        assert host.process.returncode == 0
+        host.log.close();host.launch()
+        ready(lambda state: state['books'] == 1 and state['shelf_first_id'] == 101)
+        checks.append('immediate_normal_close_persists_new_query_before_debounce')
         observations.append({'state': host.read(), 'process_status': Path(f'/proc/{host.process.pid}/status').read_text(),
                              'measurement_scope': 'observed process status only; no frozen UI/RSS budget'})
         host.close()
@@ -118,7 +126,7 @@ def main():
             host.process.kill();host.process.wait(timeout=20)
         if host.log and not host.log.closed:
             host.log.close()
-    assert len(checks) == 12
+    assert len(checks) == 13
     report = {'accepted': True, 'complete_product': False, 'source_sha': os.environ['GITHUB_SHA'],
               'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
               'originals': 2202, 'page_size': 50, 'cache_limit': 150, 'checks': checks,
