@@ -738,6 +738,7 @@ struct host_job {
   volatile LONG progress;
   int session_swapped;
   host_session candidate;
+  exr_book opened_book;
   exr_pager *candidate_pager;
   exr_layout_config candidate_config;
   char *comment;
@@ -799,6 +800,7 @@ static void job_free(host_job *job) {
     } else exr_anchor_free(&job->anchor);
   }
   session_clear(&job->candidate);
+  book_clear(&job->opened_book);
   exr_pager_free(job->candidate_pager);
   free(job->comment);
   free(job->part_path);
@@ -1280,15 +1282,37 @@ static exr_status job_open(host_job *job) {
   host_session session;
   exr_error error = {0};
   exr_status status;
-  int index = shelf_index(job->book_id);
   exr_book book;
+  exr_book *books = NULL;
+  size_t count = 0, index;
   memset(&session, 0, sizeof(session));
   memset(&book, 0, sizeof(book));
-  if (index < 0) {
-    copy_wstring(job->message, 512, L"该书已不在书架中。");
+  /* The UI may evict or replace its metadata window while this worker runs.
+     The public SDK currently enumerates into a temporary worker-only array;
+     no pointer into that array or the UI cache survives this lookup. */
+  EnterCriticalSection(&g.library_lock);
+  status = exr_library_books(g.library, "", &books, &count, &error);
+  if (status == EXR_OK) {
+    for (index = 0; index < count && books[index].id != job->book_id; index++) {}
+    if (index == count) status = EXR_ARGUMENT;
+    else if (!book_copy(&book, &books[index])) status = EXR_MEMORY;
+  }
+  exr_books_free(books, count);
+  LeaveCriticalSection(&g.library_lock);
+  if (status != EXR_OK) {
+    job->error = error;
+    copy_wstring(job->message, 512, L"无法读取该书的本地信息。");
+    book_clear(&book);
+    return status;
+  }
+  if (job_cancel_flag(job)) {
+    book_clear(&book);
+    return EXR_CANCELLED;
+  }
+  if (book.id != job->book_id) {
+    book_clear(&book);
     return EXR_ARGUMENT;
   }
-  if (!book_copy(&book, &g.shelf[index])) return EXR_MEMORY;
   session.book_id = book.id;
   session.fixed = is_fixed_format(book.format);
   if (session.fixed) {
@@ -1372,6 +1396,7 @@ static exr_status job_open(host_job *job) {
   } else {
     session_clear(&session);
   }
+  if (status == EXR_OK) { job->opened_book = book; memset(&book, 0, sizeof(book)); }
   book_clear(&book);
   if (status != EXR_OK) job->error = error;
   return status;
@@ -2923,10 +2948,10 @@ static void handle_job_complete(host_job *job) {
   if (job->status != EXR_OK) g.pending_selection = 0;
   if (job->status == EXR_OK) {
     if (job->kind == JOB_OPEN) {
-      int index = shelf_index(job->book_id);
-      if (job->session_swapped && job->have_frame && index >= 0 && job->candidate.book_id == job->book_id && job->frame.book_id == job->book_id) {
+      if (job->session_swapped && job->have_frame && job->candidate.book_id == job->book_id && job->frame.book_id == job->book_id) {
         exr_book next = {0};
-        if (book_copy(&next, &g.shelf[index])) {
+        if (job->opened_book.id == job->book_id) {
+          next = job->opened_book; memset(&job->opened_book, 0, sizeof(job->opened_book));
           session_clear(&g.session); g.session = job->candidate; memset(&job->candidate, 0, sizeof(job->candidate));
           book_clear(&g.current); g.current = next;
           g.has_current = 1;
@@ -2948,7 +2973,7 @@ static void handle_job_complete(host_job *job) {
             free(title);
           }
         } else {
-          set_status(L"内存不足，无法保存当前书籍信息。");
+          set_status(L"打开任务没有提供一致的书籍信息。");
         }
       } else {
         set_status(L"打开书籍失败：任务结果不完整。");

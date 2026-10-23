@@ -58,6 +58,14 @@ static LRESULT review_message(HWND window, WPARAM code, LPARAM value) {
   }
   if (code == 301) { InterlockedExchange(&review_notes_fail, 1); return 1; }
   if (code == 302) { InterlockedExchange(&review_shelf_fail, 1); return 1; }
+#ifdef EXR_HOST_SHELF_REVIEW
+  if (code == 303) {
+    shelf_clear();
+    SendMessageW(g.books, LB_RESETCONTENT, 0, 0);
+    return 1;
+  }
+  if (code == 304) return reload_shelf() == EXR_OK;
+#endif
   return 0;
 }
 static void review_shutdown(void) { if (review_event) { CloseHandle(review_event); review_event = NULL; } }
