@@ -32,6 +32,7 @@ cmake --install build/webdav
 ## 限额和路径
 
 - 目录只发 `Depth: 1`，最多 4 MiB XML、20,000 元素、32 层和 2,000 个子项；调用者可降低限制。
+  元素名最多128字节、namespace URI最多1024字节，避免通过重复namespace扩张树内存。
 - 文件以最多 64 KiB 的应用缓冲写入，最多 128 MiB；不分配整本原书。TLS／系统缓冲另由原生库管理。
 - 根 URL 必须为 HTTPS 集合并以 `/` 结尾。首版支持 DNS／IPv4，不支持 IPv6 字面量。
 - 资源使用根目录内的 URI 路径，拒绝 userinfo、query、fragment、点段、重复分隔、编码分隔符、双重编码和控制字符。
