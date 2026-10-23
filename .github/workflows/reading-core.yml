@@ -3,6 +3,7 @@ on:
   push:
     branches: ['codex/r1-reading-core']
   pull_request:
+  workflow_call:
   workflow_dispatch:
 permissions:
   contents: read
@@ -48,6 +49,23 @@ jobs:
         run: python3 tests/check_reading_measurements.py
       - name: Record initial fresh-process reflow measurements
         run: python3 tools/measure_reading_core.py build/reading-consumer/reading-benchmark tests/fixtures/fonts/primary.ttf "build/$PROFILE/measurements" --source-sha "$GITHUB_SHA" --compiler cc
+      - name: Require complete release license materials on this installed stage
+        run: |
+          python3 tools/check_reading_licenses.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/licenses.json" --require-release-ready
+          python3 tests/check_reading_licenses.py
+      - name: Execute the installed SDK identity and schema consumer
+        run: |
+          library=OFF
+          if [ "$PROFILE" = reading-library ]; then library=ON; fi
+          cmake -S tests/reading_release -B build/release-identity -G Ninja -DEXR_SDK="$PWD/build/$PROFILE/stage" -DEXR_RELEASE_LIBRARY="$library"
+          cmake --build build/release-identity --parallel 4
+          build/release-identity/release-identity "$PWD/build/$PROFILE/release-schema.sqlite" > "build/$PROFILE/release-runtime.json"
+          cat "build/$PROFILE/release-runtime.json"
+      - name: Seal a candidate archive without granting quality or publication
+        run: |
+          database=""
+          if [ "$PROFILE" = reading-library ]; then database="--database build/$PROFILE/release-schema.sqlite"; fi
+          python3 tools/reading_release.py --profile "$PROFILE" --stage "build/$PROFILE/stage" --evidence "build/$PROFILE" --runtime "build/$PROFILE/release-runtime.json" $database --output "build/$PROFILE/release-candidate"
       - name: Preserve source-bound evidence and installed SDK
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,8 +74,12 @@ jobs:
           path: |
             build/${{ matrix.profile }}/stage/
             build/${{ matrix.profile }}/profile.json
+            build/${{ matrix.profile }}/licenses.json
+            build/${{ matrix.profile }}/release-runtime.json
+            build/${{ matrix.profile }}/release-candidate/
             build/${{ matrix.profile }}/consumer-tests.xml
             build/${{ matrix.profile }}/corpus/
             build/${{ matrix.profile }}/measurements/
             build/reading-consumer/Testing/Temporary/LastTest.log
           if-no-files-found: error
+          include-hidden-files: true

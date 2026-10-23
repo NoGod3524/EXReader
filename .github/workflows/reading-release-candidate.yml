@@ -1,0 +1,16 @@
+name: Reading release candidates
+on:
+  push:
+    branches: [codex/r6-reading-release]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject invalid release materials and installed identities
+        run: python3 tests/check_reading_release.py
+  profiles:
+    uses: ./.github/workflows/reading-core.yml
