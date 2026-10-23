@@ -20,6 +20,7 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -93,6 +94,62 @@ final class CatalogStore implements AutoCloseable {
     SQLiteDatabase database() {
         requireOwner();
         return database;
+    }
+
+    boolean hasLocalBook(long id) {
+        requireOwner();
+        try (Cursor cursor = database.rawQuery("SELECT 1 FROM reader_local_books WHERE sdk_book_id=?",
+                new String[]{Long.toString(id)})) { return cursor.moveToFirst(); }
+    }
+
+    void removeLocalBook(long id) {
+        requireOwner();
+        database.delete("reader_local_books", "sdk_book_id=?", new String[]{Long.toString(id)});
+    }
+
+    /** Only source identity is compared on reuse; product metadata/history stay intact. */
+    void attach(BookStore.VerifiedSource source) {
+        requireOwner();
+        database.beginTransaction();
+        try {
+            boolean exists;
+            try (Cursor row = database.rawQuery(
+                    "SELECT format,source_sha256,source_bytes FROM reader_books WHERE book_key=?",
+                    new String[]{source.key})) {
+                exists = row.moveToFirst();
+                if (exists && (!source.format.equals(row.getString(0))
+                        || !source.sha256.equals(row.getString(1)) || source.bytes != row.getLong(2)))
+                    throw new SQLiteException("Product source identity conflicts with the SDK original");
+            }
+            if (!exists) database.execSQL("INSERT INTO reader_books"
+                    + "(book_key,format,source_sha256,source_bytes,title,author,sort_title,favorite) VALUES(?,?,?,?,?,?,?,?)",
+                    new Object[]{source.key, source.format, source.sha256, source.bytes,
+                            source.book.title, source.book.author,
+                            Normalizer.normalize(source.book.title, Normalizer.Form.NFC), source.book.favorite});
+            boolean mapped;
+            try (Cursor row = database.rawQuery(
+                    "SELECT book_key,location_kind FROM reader_local_books WHERE sdk_book_id=?",
+                    new String[]{Long.toString(source.book.id)})) {
+                mapped = row.moveToFirst();
+                if (mapped && (!source.key.equals(row.getString(0)) || !source.location.equals(row.getString(1))))
+                    throw new SQLiteException("Local SDK identity already maps to another source or mode");
+            }
+            if (!mapped) {
+                long existingId = 0;
+                try (Cursor row = database.rawQuery(
+                        "SELECT sdk_book_id FROM reader_local_books WHERE book_key=?", new String[]{source.key})) {
+                    if (row.moveToFirst()) existingId = row.getLong(0);
+                }
+                if (existingId == 0) database.execSQL(
+                        "INSERT INTO reader_local_books(book_key,sdk_book_id,location_kind) VALUES(?,?,?)",
+                        new Object[]{source.key, source.book.id, source.location});
+                else if (source.book.id < existingId) database.execSQL(
+                        "UPDATE reader_local_books SET sdk_book_id=?,location_kind=? WHERE book_key=?",
+                        new Object[]{source.book.id, source.location, source.key});
+                // Historical SDK duplicates keep their rows; one oldest local ID owns this key.
+            }
+            database.setTransactionSuccessful();
+        } finally { database.endTransaction(); }
     }
 
     private void requireOwner() {
