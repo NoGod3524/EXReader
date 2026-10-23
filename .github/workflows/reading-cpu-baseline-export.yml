@@ -54,3 +54,27 @@ jobs:
           path: build/cpu-baseline-export/
           if-no-files-found: error
           retention-days: 30
+  join:
+    needs: export
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Join exact source bytes from both successful same-run exports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          mkdir -p build/cpu-baseline-join
+          python3 tools/join_reading_cpu_exports.py --output build/cpu-baseline-join/result 2>&1 | tee build/cpu-baseline-join/join.log
+          git diff --exit-code 9442e84d60469de5551de7ce7e62191a0059d9d1 HEAD -- tests/reading_real/budgets.json
+          git diff --exit-code -- tests/reading_real/budgets.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpu-baseline-registry-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/cpu-baseline-join/
+          if-no-files-found: error
+          retention-days: 30
