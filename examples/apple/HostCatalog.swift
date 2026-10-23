@@ -2,6 +2,20 @@
 import Foundation
 import SQLite3
 
+struct HostShelfKey: Codable, Equatable {
+    let sort: String
+    let key: String
+}
+struct HostShelfBook: Identifiable {
+    let key: HostShelfKey
+    let sdkID: Int64
+    let title: String
+    let author: String
+    let format: String
+    let bytes: Int64
+    var id: String { key.key }
+}
+
 enum HostCatalogValue {
     case text(String)
     case integer(Int64)
@@ -138,6 +152,45 @@ final class HostCatalog {
         }
         try check(status, database, expected: SQLITE_DONE)
         return result
+    }
+
+    func shelf(query: String, anchor: HostShelfKey?, before: Bool = false,
+               inclusive: Bool = false) throws -> [HostShelfBook] {
+        guard query.unicodeScalars.count <= 256, !query.utf8.contains(0) else {
+            throw HostCatalogError.invalid("搜索文字超过上限或包含空字符")
+        }
+        let literal = query.precomposedStringWithCanonicalMapping
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "%", with: "\\%")
+            .replacingOccurrences(of: "_", with: "\\_")
+        var sql = "SELECT b.sort_title,b.book_key,l.sdk_book_id,b.title,b.author,b.format,b.source_bytes FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE b.deleted=0"
+        var values: [HostCatalogValue] = []
+        if !query.isEmpty {
+            sql += " AND (b.title LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\')"
+            values += [.text("%" + literal + "%"), .text("%" + literal + "%")]
+        }
+        if let anchor {
+            sql += " AND (b.sort_title,b.book_key) " + (before ? (inclusive ? "<=" : "<") : (inclusive ? ">=" : ">")) + " (?,?)"
+            values += [.text(anchor.sort), .text(anchor.key)]
+        }
+        sql += before ? " ORDER BY b.sort_title DESC,b.book_key DESC LIMIT 50" : " ORDER BY b.sort_title,b.book_key LIMIT 50"
+        let (database, statement) = try prepare(sql, values)
+        defer { sqlite3_finalize(statement) }
+        var result: [HostShelfBook] = []
+        var status = sqlite3_step(statement)
+        while status == SQLITE_ROW {
+            guard let sort = columnText(statement, 0), let key = columnText(statement, 1),
+                  let title = columnText(statement, 3), let author = columnText(statement, 4),
+                  let format = columnText(statement, 5), sqlite3_column_type(statement, 2) == SQLITE_INTEGER,
+                  sqlite3_column_type(statement, 6) == SQLITE_INTEGER else {
+                throw HostCatalogError.invalid("书架行身份无效")
+            }
+            result.append(HostShelfBook(key: HostShelfKey(sort: sort, key: key), sdkID: sqlite3_column_int64(statement, 2),
+                title: title, author: author, format: format, bytes: sqlite3_column_int64(statement, 6)))
+            status = sqlite3_step(statement)
+        }
+        try check(status, database, expected: SQLITE_DONE)
+        return before ? Array(result.reversed()) : result
     }
 
     @discardableResult

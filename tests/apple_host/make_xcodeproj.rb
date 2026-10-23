@@ -144,7 +144,8 @@ end
   app_settings(app, platform, deployment, info_plist)
   if ARGV[2]
     app.build_configurations.each do |config|
-      config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = '$(inherited) EXR_APPLE_HOST_REVIEW EXR_APPLE_IMPORT_REVIEW'
+      review = test_directory.include?('/shelf/') ? 'EXR_APPLE_SHELF_REVIEW' : 'EXR_APPLE_IMPORT_REVIEW'
+      config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = '$(inherited) EXR_APPLE_HOST_REVIEW ' + review
     end
   end
   embed_phase(app)
