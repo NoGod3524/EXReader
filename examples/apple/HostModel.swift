@@ -529,6 +529,9 @@ final class HostReaderModel: ObservableObject {
     @Published var notes: [HostNoteRow] = []
     @Published var showLibrary = true
     @Published var frameCount = 0
+    @Published private(set) var uiTestTrace = ""
+    private var uiTestEvents: [String] = []
+    private var uiTestEventCount = 0
     private var pagePart = -1
     private var pagePath = ""
     private(set) var fontSHA = ""
@@ -555,6 +558,16 @@ final class HostReaderModel: ObservableObject {
 
     var showsTestFixtures: Bool { testFixtures }
 
+    private func traceUITest(_ event: String) {
+        guard testFixtures else { return }
+        uiTestEventCount += 1
+        uiTestEvents.append("\(uiTestEventCount):token=\(token),busy=\(busy),started=\(started):\(event)")
+        if uiTestEvents.count > 16 { uiTestEvents.removeFirst(uiTestEvents.count - 16) }
+        uiTestTrace = uiTestEvents.joined(separator: " | ")
+    }
+
+    func observeUITestScene(_ phase: String) { traceUITest("scene=\(phase)") }
+
     var selectionContext: HostSelectionContext? {
         guard let current, !busy else { return nil }
         return HostSelectionContext(bookID: current.id, frameCount: frameCount,
@@ -570,9 +583,11 @@ final class HostReaderModel: ObservableObject {
     }
 
     func start() {
+        traceUITest("startup-request")
         guard !started else { return }
         started = true
         busy = true
+        traceUITest("startup-worker-scheduled")
         if let index = ProcessInfo.processInfo.arguments.firstIndex(of: "-EXRHostDelayMs"),
            index + 1 < ProcessInfo.processInfo.arguments.count,
            let value = Double(ProcessInfo.processInfo.arguments[index + 1]) {
@@ -608,6 +623,7 @@ final class HostReaderModel: ObservableObject {
                 let rows = try session.listBooks()
                 let lastID = (self.defaults.object(forKey: "EXRLastBook") as? NSNumber)?.int64Value
                 DispatchQueue.main.async {
+                    self.traceUITest("startup-publish rows=\(rows.count)")
                     self.books = rows
                     self.busy = false
                     if let lastID, rows.contains(where: { $0.id == lastID }) {
@@ -615,6 +631,7 @@ final class HostReaderModel: ObservableObject {
                     } else {
                         self.busy = false
                     }
+                    self.traceUITest("startup-finished")
                 }
             } catch {
                 self.appendLog("startup failed: \(self.describe(error))")
@@ -726,11 +743,13 @@ final class HostReaderModel: ObservableObject {
         catch { warnings.append("状态记录失败：\(describe(error))") }
         let warning = warnings.joined(separator: "；")
         DispatchQueue.main.async {
+            if imported { self.traceUITest("import-publish source-token=\(token),status=\(status)") }
             guard token == self.token else { return }
             if case .success(let rows) = books { self.books = rows }
             if case .success(let rows) = notes { self.notes = rows }
             if case .success(let value) = hash { self.stateHash = value }
             if imported { self.showLibrary = true }
+            if imported { self.traceUITest("import-committed rows=\(self.books.count)") }
             self.statusText = warning.isEmpty ? status : "\(status)，刷新失败"
             self.errorText = warning
             self.finish()
@@ -814,15 +833,19 @@ final class HostReaderModel: ObservableObject {
     }
 
     func importFile(_ url: URL) {
-        guard !busy else { return }
+        traceUITest("import-request file=\(url.lastPathComponent)")
+        guard !busy else { traceUITest("import-rejected-busy"); return }
         let (myToken, box) = begin()
         statusText = "正在导入…"
+        traceUITest("import-accepted")
         queue.async {
+            DispatchQueue.main.async { self.traceUITest("import-worker-begin source-token=\(myToken)") }
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
             do {
                 guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
                 let (bookID, created) = try session.importBook(url: url, cancel: box)
+                DispatchQueue.main.async { self.traceUITest("import-sdk-return source-token=\(myToken),book=\(bookID),created=\(created)") }
                 do { try box.commit {} }
                 catch {
                     if created { try session.library.delete(bookID: bookID) }
@@ -841,6 +864,7 @@ final class HostReaderModel: ObservableObject {
     }
 
     func importFixture(_ name: String, extension ext: String) {
+        traceUITest("fixture-request name=\(name).\(ext)")
         guard let url = Bundle.main.url(forResource: name, withExtension: ext) else {
             errorText = "缺少示例文件 \(name).\(ext)"
             return
@@ -1077,6 +1101,7 @@ final class HostReaderModel: ObservableObject {
     }
 
     func cancelWork() {
+        traceUITest("cancel-request")
         viewportWork?.cancel()
         viewportGeneration += 1
         pendingViewport = nil
@@ -1126,6 +1151,7 @@ final class HostReaderModel: ObservableObject {
     }
 
     private func fail(_ error: Error) {
+        traceUITest("failure=\(describe(error))")
         appendLog("operation failed: \(describe(error))")
         if let host = error as? HostError, host.isCancelled {
             statusText = "已取消"

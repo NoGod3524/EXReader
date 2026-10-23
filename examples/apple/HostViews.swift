@@ -49,9 +49,10 @@ struct HostRootView: View {
         }
         .frame(minWidth: 380, minHeight: 460)
         .onAppear {
-            if !selfTesting { model.start() }
+            if !selfTesting { model.observeUITestScene(String(describing: phase)); model.start() }
         }
         .onChange(of: phase) { value in
+            if !selfTesting { model.observeUITestScene(String(describing: value)) }
             if value != .active && !selfTesting { model.persistNow() }
         }
         .onReceive(resignPublisher) { _ in
@@ -69,6 +70,7 @@ struct LibraryScreen: View {
             HStack {
                 Text("EXReader 书架").font(.title2).bold()
                     .accessibilityIdentifier("library.title")
+                    .accessibilityValue(Text(model.uiTestTrace))
                 Spacer()
                 if model.busy {
                     Text("处理中…").font(.caption)
