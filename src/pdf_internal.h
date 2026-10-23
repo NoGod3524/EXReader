@@ -58,7 +58,7 @@ uint32_t exr_pdf_get(exr_pdf_file *file,uint32_t dict,const char *key);
 exr_status exr_pdf_resolve(exr_pdf_file *file,uint32_t value,uint32_t *out,exr_error *error);
 exr_status exr_pdf_stream_data(exr_pdf_file *file,uint32_t stream,const unsigned char **data,
                                  size_t *size,exr_error *error);
-typedef enum { EXR_PDF_STREAM_RAW,EXR_PDF_STREAM_JPEG } exr_pdf_stream_codec;
+typedef enum { EXR_PDF_STREAM_RAW,EXR_PDF_STREAM_JPEG,EXR_PDF_STREAM_JPX } exr_pdf_stream_codec;
 /* Decodes lossless prefixes and preserves a final image codec for the image
    decoder. Ordinary stream_data always rejects an encoded image tail. */
 exr_status exr_pdf_image_payload(exr_pdf_file *file,uint32_t stream,const unsigned char **data,size_t *size,

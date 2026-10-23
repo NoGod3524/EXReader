@@ -1039,6 +1039,11 @@ static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char
       if(end) { if(!jpeg_end(f,input,input_size,end)) goto done; input_size=*end; }
       terminal=EXR_PDF_STREAM_JPEG; terminal_parameters=parms[i]; break;
     }
+    if(allow_image && name_is(f,filters[i],"JPXDecode")) {
+      if(i+1!=count || source.inline_image ||
+         (parms[i]!=EXR_PDF_NONE && f->values[parms[i]].kind!=EXR_PDF_NULL)) goto unsupported;
+      terminal=EXR_PDF_STREAM_JPX; break;
+    }
     if(!end && !decode_work(f,input_size)) goto done;
     if(is_flate) ok=decode_flate(f,input,input_size,&output,current.capacity,end);
     else if(is_lzw) {

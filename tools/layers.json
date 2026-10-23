@@ -117,6 +117,7 @@
     "pdf_font.c": "pdf",
     "pdf_function.c": "pdf",
     "pdf_image.c": "pdf",
+    "pdf_jpx.c": "pdf",
     "pdf_objects.c": "pdf",
     "pdf_pages.c": "pdf",
     "pdf_paint.c": "pdf",
