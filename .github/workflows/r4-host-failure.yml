@@ -1,0 +1,26 @@
+name: R4 preserved Android frame failure diagnosis
+on:
+  push:
+    branches: ['codex/r4-core-hotspots']
+    paths: ['.github/workflows/r4-host-failure.yml', 'tests/r4_core/host_failure.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-frame-diff:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install Pillow==11.3.0
+      - name: Verify and compare retained original frame evidence without executing the host
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/r4_core/host_failure.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r4-original-android-frame-diff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/host-failure/
+          if-no-files-found: error
