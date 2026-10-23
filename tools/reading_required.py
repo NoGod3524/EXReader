@@ -9,7 +9,7 @@ import re
 import subprocess
 import sys
 
-from check_parallel_integration import fetch, pages, require
+from check_parallel_integration import fetch, pages, require, required_artifacts
 from measure_reading_core import sha256
 
 GROUPS = {'protocol', 'native', 'profiles', 'platforms', 'corpus', 'performance'}
@@ -25,7 +25,33 @@ def expected_artifacts(run, attempt):
     return ({f'reading-{profile}-{run}-{attempt}' for profile in ('reading-core', 'reading-library')} |
             {f'reading-platform-{host}-{profile}-{run}-{attempt}'
              for host in ('Windows', 'macOS') for profile in ('reading-core', 'reading-library')} |
-            {f'r2-real-corpus-{run}-{attempt}', f'reading-real-{run}-{attempt}'})
+            {f'r2-real-corpus-{run}-{attempt}', f'reading-real-{run}-{attempt}'} |
+            required_artifacts('native', '', {'id': run, 'run_attempt': attempt}))
+
+
+def expected_jobs():
+    return ({'protocol', 'corpus / R2 real document acceptance', 'performance / reading-performance'} |
+            {f'native / desktop ({host})' for host in ('windows-latest', 'ubuntu-22.04', 'macos-15')} |
+            {'native / ' + name for name in ('sanitizers', 'fuzz', 'android', 'apple-mobile')} |
+            {f'profiles / reading ({profile})' for profile in ('reading-core', 'reading-library')} |
+            {f'platforms / reading {host} ({profile})' for host in ('windows-2022', 'macos-15')
+             for profile in ('reading-core', 'reading-library')})
+
+
+def verify_jobs(workflow_head, run, attempt, jobs):
+    required = expected_jobs()
+    require(len({item['id'] for item in jobs}) == len(jobs) and
+            len({item['name'] for item in jobs}) == len(jobs) and
+            {item['name'] for item in jobs} == required | {'reading-required'},
+            'missing, unexpected or duplicated same-attempt job')
+    for item in jobs:
+        require(str(item['run_id']) == str(run) and str(item['run_attempt']) == str(attempt) and
+                item['head_sha'] == workflow_head, 'job belongs to another source/run/attempt')
+        if item['name'] != 'reading-required':
+            require(item['status'] == 'completed' and item['conclusion'] == 'success',
+                    'upstream job failed, was skipped or did not finish')
+    return [{key: item[key] for key in ('id', 'name', 'run_attempt', 'head_sha', 'status', 'conclusion')}
+            for item in jobs]
 
 
 def workflow_identity(record, source, run, attempt, parents):
@@ -162,6 +188,8 @@ def main():
         workflow_head = workflow_identity(record, source, run, attempt, parents)
         result['workflow_head_sha'] = workflow_head
         result['tested_source_parents'] = parents
+        result['jobs'] = verify_jobs(workflow_head, run, attempt,
+                                    pages(f'actions/runs/{run}/attempts/{attempt}/jobs', 'jobs'))
         result['artifacts'] = verify_metadata(source, run, attempt, read(args.needs),
                                              pages(f'actions/runs/{run}/artifacts', 'artifacts'), workflow_head)
         result['identity'] = reports(args.evidence, source, run, attempt)
