@@ -54,6 +54,10 @@ static void pending_discard(linux_reader *reader) {
 }
 void reader_result_free(reader_result *result) {
   size_t i;free(result->pixels);free(result->text);
+  if(result->cursors) for(i=0;i<result->book_count;i++) {
+    free(result->cursors[i].key);free(result->cursors[i].sort_title);
+  }
+  free(result->cursors);
   exr_books_free(result->books,result->book_count);
   for(i=0;i<result->note_count;i++) free(result->notes[i].text);
   free(result->notes);memset(result,0,sizeof(*result));
@@ -99,11 +103,11 @@ static exr_status cancel(linux_reader *reader) {
   return reader->control.cancelled && reader->control.cancelled(reader->control.context) ? EXR_CANCELLED:EXR_OK;
 }
 #ifdef EXR_READER_PRODUCT_CATALOG
-static void product_refresh(linux_reader *reader,reader_result *result) {
+static exr_status product_refresh(linux_reader *reader,reader_result *result) {
   reader_catalog_error product_error={0};exr_error error={0};size_t failed=0;
   if(!reader->catalog && reader_catalog_open(reader->catalog_path,&reader->catalog,&product_error)!=0) {
     snprintf(result->message,sizeof(result->message),"Books saved locally; catalog unavailable, retry by reopening a book");
-    fprintf(stderr,"Product catalog open: %s\n",product_error.message);return;
+    fprintf(stderr,"Product catalog open: %s\n",product_error.message);return EXR_DATABASE;
   }
   exr_status status=reader_catalog_sdk_repair(reader->catalog,reader->library,result->books,
     result->book_count,&reader->control,&failed,&error);
@@ -111,6 +115,64 @@ static void product_refresh(linux_reader *reader,reader_result *result) {
     snprintf(result->message,sizeof(result->message),"Books saved locally; catalog repair pending");
     fprintf(stderr,"Product catalog repair: code=%d failures=%zu %s\n",(int)status,failed,error.message);
   }
+  return status;
+}
+static void product_shelf_fallback(reader_result *result) {
+  size_t count=result->book_count<50 ? result->book_count:50;
+  exr_book *books=calloc(count ? count:1,sizeof(*books));
+  if(books) for(size_t i=0;i<count;i++) { books[i]=result->books[i];memset(&result->books[i],0,sizeof(*books)); }
+  exr_books_free(result->books,result->book_count);result->books=books;result->book_count=books ? count:0;
+  result->has_shelf=books!=NULL;result->shelf_pending=1;
+  snprintf(result->message,sizeof(result->message),"Books saved locally; catalog pending. F2 retries; showing at most 50 local books");
+}
+typedef struct { reader_result *result;int failed; } shelf_copy;
+static int shelf_receive(void *context,const reader_catalog_row *row) {
+  shelf_copy *copy=context;reader_result *result=copy->result;
+  if(result->book_count>=50) { copy->failed=1;return 1; }
+  size_t index=result->book_count++;
+  exr_book *book=&result->books[index];reader_shelf_cursor *cursor=&result->cursors[index];
+  book->id=row->sdk_book_id;book->title=strdup(row->title);book->author=strdup(row->author);
+  cursor->key=strdup(row->book_key);cursor->sort_title=strdup(row->sort_title);
+  if(!book->title || !book->author || !cursor->key || !cursor->sort_title) { copy->failed=1;return 1; }
+  return 0;
+}
+static int shelf_exists(void *context,const reader_catalog_row *row) {
+  (void)row;*(int *)context=1;return 1;
+}
+static exr_status product_shelf(linux_reader *reader,const reader_command *command,reader_result *result) {
+  /* Startup reconciliation may temporarily enumerate SDK books. Only this
+     bounded product page crosses the worker/UI boundary. */
+  exr_books_free(result->books,result->book_count);result->books=NULL;result->book_count=0;result->has_shelf=0;
+  if(!reader->catalog) return EXR_DATABASE;
+  result->books=calloc(50,sizeof(*result->books));result->cursors=calloc(50,sizeof(*result->cursors));
+  if(!result->books || !result->cursors) return EXR_MEMORY;
+  shelf_copy copy={result,0};reader_catalog_error error={0};int found=0,code=0;
+  int direction=command->direction<0 ? -1:1;
+  const char *title=command->cursor_title,*key=command->cursor_key;
+  if(command->anchor_key && command->anchor_key[0]) {
+    code=reader_catalog_find(reader->catalog,command->anchor_key,command->query,shelf_receive,&copy,&found,&error);
+    if(found && !copy.failed) { title=result->cursors[0].sort_title;key=result->cursors[0].key; }
+    else title=key=NULL;
+    direction=1;
+  }
+  if(code==0 && !copy.failed) code=reader_catalog_query_page(reader->catalog,title,key,command->query,
+    direction,50-result->book_count,shelf_receive,&copy,&error);
+  if(copy.failed) return EXR_MEMORY;
+  if(code) return EXR_DATABASE;
+  if(direction<0) for(size_t i=0;i<result->book_count/2;i++) {
+    size_t j=result->book_count-1-i;exr_book book=result->books[i];reader_shelf_cursor cursor=result->cursors[i];
+    result->books[i]=result->books[j];result->books[j]=book;
+    result->cursors[i]=result->cursors[j];result->cursors[j]=cursor;
+  }
+  if(result->book_count) {
+    reader_shelf_cursor *first=&result->cursors[0],*last=&result->cursors[result->book_count-1];
+    code=reader_catalog_query_page(reader->catalog,first->sort_title,first->key,command->query,-1,1,
+      shelf_exists,&result->shelf_before,&error);
+    if(!code) code=reader_catalog_query_page(reader->catalog,last->sort_title,last->key,command->query,1,1,
+      shelf_exists,&result->shelf_after,&error);
+    if(code) return EXR_DATABASE;
+  }
+  result->shelf_direction=command->direction;result->has_shelf=1;return EXR_OK;
 }
 #endif
 static size_t extent(reader_session *session) {
@@ -485,6 +547,15 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   int owned_session=0,new_pager=0;int64_t id=command->book;size_t target=0;
   int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
+  if(command->action==READER_SHELF_QUERY) {
+#ifdef EXR_READER_PRODUCT_CATALOG
+    result->status=status==EXR_OK ? product_shelf(reader,command,result):status;
+#else
+    result->status=EXR_ARGUMENT;
+#endif
+    strcpy(result->message,result->status==EXR_OK ? "Bookshelf ready":"Bookshelf query failed; current view retained");
+    return;
+  }
   if(command->action==READER_COMMIT) {
     /* The GTK acceptance callback queues this before subsequent operations.
        A stale result never queues it; close waits for its outcome. */
@@ -618,6 +689,12 @@ done:
 #ifdef EXR_READER_PRODUCT_CATALOG
   /* Publication/compensation has completed. Reuse this shelf snapshot on the
      existing owner worker; metadata failure never deletes a committed book. */
-  if(result->has_shelf) product_refresh(reader,result);
+  if(result->has_shelf) {
+    if(product_refresh(reader,result)!=EXR_OK) product_shelf_fallback(result);
+    else {
+      exr_status shelf_status=product_shelf(reader,command,result);
+      if(shelf_status!=EXR_OK) snprintf(result->message,sizeof(result->message),"Books saved locally; catalog query pending");
+    }
+  }
 #endif
 }
