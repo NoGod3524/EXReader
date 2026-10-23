@@ -150,12 +150,12 @@ static void cmyk_soft_masks(void) {
   const double a=128./255,total=a+a-a*a;
   unsigned rgb[3],backdrop[3],scenario,k;
   cmyk_reference((const double[4]){a*(1-a)/total,a/total,0,0},rgb);
-  for(scenario=0;scenario<5;scenario++) {
+  for(scenario=0;scenario<6;scenario++) {
     char pdf[8192],row[2048];size_t used=0,offset[8],xref;unsigned id;
     exr_fixed_document *document=NULL;exr_bitmap bitmap={0};exr_fixed_render_options options={0};
     const char *paint="/M gs 1 0 0 rg 0 0 16 16 re f";
     const char *mask="/Half gs 1 0 0 0 k 0 0 16 16 re f 0 1 0 0 k 0 0 16 16 re f";
-    const char *bc=scenario==2 ? "/BC [0 0 0 0]" : scenario==3 ? "/BC [1 0 0 0]" : "";
+    const char *bc=scenario==2 ? "/BC [0 0 0 0]" : scenario==3 ? "/BC [1 0 0 0]" : scenario==5 ? "/BC [0 0 0]" : "";
     const char *space=scenario==4 ? "[/CalRGB << /WhitePoint [.95047 1 1.08883] >>]" : "/DeviceCMYK";
     double expected=total;
 #define APPEND(text) do { size_t length=strlen(text);CHECK(length<sizeof(pdf)-used);memcpy(pdf+used,text,length);used+=length; } while(0)
@@ -179,17 +179,15 @@ static void cmyk_soft_masks(void) {
     snprintf(row,sizeof(row),"trailer\n<< /Size 8 /Root 1 0 R >>\nstartxref\n%zu\n%%%%EOF\n",xref);APPEND(row);
 #undef APPEND
     OK(exr_fixed_open_memory(EXR_PDF,pdf,used,NULL,&document,&error));options.channels=4;
-    if(scenario==4) CHECK(exr_fixed_render(document,0,1,&options,&bitmap,&error)==EXR_UNSUPPORTED && !bitmap.pixels);
+    if(scenario>=4) CHECK(exr_fixed_render(document,0,1,&options,&bitmap,&error)==(scenario==4 ? EXR_UNSUPPORTED : EXR_FORMAT) && !bitmap.pixels);
     else {
       const unsigned char *p;
       OK(exr_fixed_render(document,0,1,&options,&bitmap,&error));p=bitmap.pixels+8*bitmap.stride+8*4;
       if(scenario) {
         double luminance=(.3*rgb[0]+.59*rgb[1]+.11*rgb[2])/255;
-        double back=0;
-        if(scenario==2 || scenario==3) {
-          cmyk_reference((const double[4]){scenario==3 ? 1 : 0,0,0,0},backdrop);
-          back=(.3*backdrop[0]+.59*backdrop[1]+.11*backdrop[2])/255;
-        }
+        double back;
+        cmyk_reference((const double[4]){scenario==3 ? 1 : 0,0,0,0},backdrop);
+        back=(.3*backdrop[0]+.59*backdrop[1]+.11*backdrop[2])/255;
         expected=luminance*total+back*(1-total);
       }
       CHECK(p[0]==255 && p[1]==0 && p[2]==0);
