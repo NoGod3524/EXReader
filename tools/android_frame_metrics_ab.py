@@ -13,7 +13,7 @@ import time
 import zipfile
 
 import android_raster_ab_diagnostic as original
-from check_parallel_integration import require
+from check_parallel_integration import download_artifact_zip, fetch, pages, require
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'build/android-frame-metrics-ab'
@@ -376,9 +376,119 @@ def run():
     return 0 if report['diagnostic_completed'] else 1
 
 
+def audit_retained():
+    identity = original.cloud()
+    target = ROOT / 'build/android-frame-metrics-audit'
+    target.mkdir(parents=True, exist_ok=False)
+    pin = {'run_id': 40014169649, 'attempt': 1, 'source_sha': 'f2273c952e0fb3931eed11e0a6f25006d02ac826',
+           'artifact_id': 12529481022, 'bytes': 452653024,
+           'digest': '78ce0b37ba5afc30617e3ed566b12f5e5193652a63e9132efe98477459a9ab23'}
+    report = {**identity, 'diagnostic_only': True, 'accepted': False, 'comparison_interpretable': False,
+              'audit_completed': False, 'pin': pin, 'errors': []}
+    try:
+        run = fetch('actions/runs/' + str(pin['run_id']) + '/attempts/1')
+        require(run['id'] == pin['run_id'] and run['run_attempt'] == 1 and run['head_sha'] == pin['source_sha']
+                and run['status'] == 'completed' and run['conclusion'] == 'failure'
+                and run['path'].split('@')[0] == '.github/workflows/reading-input-diagnostic.yml',
+                'Retained failure run differs')
+        jobs = pages('actions/runs/' + str(pin['run_id']) + '/attempts/1/jobs', 'jobs')
+        require(len(jobs) == 1 and jobs[0]['head_sha'] == pin['source_sha']
+                and jobs[0]['status'] == 'completed' and jobs[0]['conclusion'] == 'failure', 'Retained job differs')
+        artifacts = pages('actions/runs/' + str(pin['run_id']) + '/artifacts', 'artifacts')
+        require(len(artifacts) == 1, 'Retained artifact set differs')
+        item = artifacts[0]
+        require(item['id'] == pin['artifact_id'] and item['name'] == 'android-frame-metrics-ab-40014169649-1'
+                and item['expired'] is False and item['size_in_bytes'] == pin['bytes']
+                and item['digest'] == 'sha256:' + pin['digest']
+                and item['workflow_run']['id'] == pin['run_id'] and item['workflow_run']['head_sha'] == pin['source_sha'],
+                'Retained artifact identity differs')
+        save(target / 'source-api.json', {'run': run, 'jobs': jobs, 'artifacts': artifacts})
+        path = target.parent / 'android-frame-metrics-audit-original.zip'
+        with path.open('w+b') as output:
+            download_artifact_zip(pin['artifact_id'], output)
+        receipt = {'bytes': path.stat().st_size, 'sha256': original.sha(path)}
+        save(target / 'archive-receipt.json', receipt)
+        require(receipt == {'bytes': pin['bytes'], 'sha256': pin['digest']}, 'Retained ZIP differs')
+        with zipfile.ZipFile(path) as archive:
+            names = original.zip_members(archive)
+            def raw(name, limit=16 * 1024 * 1024):
+                require(name in names and archive.getinfo(name).file_size <= limit, 'Retained member missing/oversized: ' + name)
+                data = archive.read(name)
+                destination = target / 'raw' / name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(data)
+                return data
+            def read(name):
+                return json.loads(raw(name))
+            retained = read('diagnostic.json')
+            require(retained['source_sha'] == pin['source_sha'] and retained['run_id'] == str(pin['run_id'])
+                    and retained['attempt'] == '1' and retained['diagnostic_completed'] is False
+                    and retained['comparison_interpretable'] is False and retained['accepted'] is False,
+                    'Original rejection/provenance differs')
+            report['original_rejection'] = {key: retained[key] for key in
+                                            ('diagnostic_completed', 'comparison_interpretable', 'accepted', 'inconclusive_reasons')}
+            read('plan.json')
+            built, prepared = read('diagnostic-build.json'), read('prepared.json')
+            require(built['registry'] == prepared['B']['registry'] == prepared['A']['registry'],
+                    'Native/font registry differs')
+            report['diagnostic_apk'] = built['apk']
+            report['font_native_identity'] = built['registry']
+            first = retained['phases'][0]
+            require(first['label'] == 'A1' and first['instrumentation']['timed_out'] is True, 'A1 timeout history differs')
+            record = first['instrumentation']
+            stdout = raw('A1/commands/' + record['stdout'], 65536)
+            stderr = raw('A1/commands/' + record['stderr'], 65536)
+            require(len(stdout) == record['stdout_bytes'] and len(stderr) == record['stderr_bytes'], 'A1 raw output sizes differ')
+            sampling, commands = read('A1/sampling.json'), read('A1/commands/commands.json')
+            report['A1'] = {'instrumentation': record, 'stdout': stdout.decode('utf-8', errors='replace'),
+                            'stderr': stderr.decode('utf-8', errors='replace'),
+                            'sample_count': len(sampling['samples']),
+                            'observed_app_pids': sorted({sample['pid'] for sample in sampling['samples'] if sample.get('pid') is not None}),
+                            'no_app_pid_samples': sum(sample.get('pid') is None for sample in sampling['samples']),
+                            'case_members': sorted(name for name in names if name.startswith('A1/device/')),
+                            'trace_members': sorted(name for name in names if name.startswith('A1/traces/')),
+                            'retained_logcat_dump_commands': [command for command in commands
+                                                             if command['argv'][:3] == ['adb', 'logcat', '-d']],
+                            'explicit_probe': first['explicit_configuration_probe'],
+                            'root_cause': 'Not proven; no complete A1 case/device logcat evidence was collected after the timeout'}
+            report['completed_observations'] = []
+            for phase in retained['phases'][1:]:
+                label = phase['label']
+                require(read(label + '/phase.json') == phase and phase['completed'] and not phase['errors'],
+                        'Retained completed phase differs')
+                for name in sorted(names):
+                    if name.startswith(label + '/traces/') and name.endswith('.jsonl'):
+                        raw(name)
+                observed = traces(target / 'raw' / label / 'traces', label, phase['variant'])
+                require(summarize_trace(observed, phase['period_before_ns']) == phase['frame_metrics'],
+                        'Raw callbacks do not reproduce retained phase statistics')
+                pss = read(label + '/total-pss-samples.json')
+                values = [sample['total_pss_kib'] for sample in pss]
+                require(len(pss) == phase['total_pss']['sample_count']
+                        and statistics.median(values) == phase['total_pss']['median_kib']
+                        and max(values) == phase['total_pss']['max_kib'], 'Raw PSS samples differ')
+                validation = read(label + '/device/validation.json')
+                original.validate_cases(validation)
+                require(validation['summary'] == phase['original_summary']
+                        and validation['source_sha'] == pin['source_sha'] and validation['run_id'] == str(pin['run_id'])
+                        and validation['attempt'] == '1', 'Retained original case identity differs')
+                report['completed_observations'].append({key: phase[key] for key in
+                                                          ('label', 'variant', 'original_summary', 'original_failed_ids',
+                                                           'frame_metrics', 'total_pss', 'sampling')})
+            report['audit_completed'] = True
+    except Exception as error:
+        report['errors'].append(type(error).__name__ + ': ' + str(error))
+    finally:
+        save(target / 'audit.json', report)
+        print(json.dumps(report), flush=True)
+    return 0 if report['audit_completed'] and not report['errors'] else 1
+
+
 if __name__ == '__main__':
-    require(len(sys.argv) == 2 and sys.argv[1] in ('prepare', 'verify', 'run'), 'Use prepare, verify or run')
-    if sys.argv[1] == 'run':
+    require(len(sys.argv) == 2 and sys.argv[1] in ('prepare', 'verify', 'run', 'audit'), 'Use prepare, verify, run or audit')
+    if sys.argv[1] == 'audit':
+        sys.exit(audit_retained())
+    elif sys.argv[1] == 'run':
         sys.exit(run())
     elif sys.argv[1] == 'prepare':
         prepare()
