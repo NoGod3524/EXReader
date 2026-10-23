@@ -200,7 +200,13 @@ def inspect_artifact(artifact_id, digest):
     require(sha(raw) == digest, 'retained diagnostic ZIP digest differs')
     observations = []
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
-        for case in ('gray-jp2', 'rgb-jp2', 'indexed-jp2-decode-0-255', 'rgb-softmask', 'embedded-alpha'):
+        for case in ('gray-jp2', 'rgb-jp2', 'indexed-jp2-decode-0-255', 'rgb-softmask', 'gray-decode-ignored',
+                     'gray16-jp2', 'indexed-jp2-reversed-decode-ignored', 'embedded-alpha',
+                     'rgba-components-mismatch', 'embedded-alpha-cdef'):
+            pdf_names = [name for name in archive.namelist() if name.endswith('/' + case + '.pdf')]
+            if not pdf_names:
+                continue
+            require(len(pdf_names) == 1, 'retained diagnostic PDF duplicated')
             observation = {'case': case}
             for filename in ('page-0.ppm', 'poppler.ppm', 'reference.stderr', 'native.stderr'):
                 names = [name for name in archive.namelist() if name.endswith('/' + case + '/' + filename)]
@@ -218,12 +224,10 @@ def inspect_artifact(artifact_id, digest):
                 else:
                     observation[filename] = content.decode('utf-8', errors='replace')[:4096]
             payload_names = [name for name in archive.namelist() if name.endswith('/' + case + '.jpx')]
-            if case == 'embedded-alpha':
+            if case in ('embedded-alpha', 'rgba-components-mismatch', 'embedded-alpha-cdef'):
                 require(len(payload_names) == 1, 'retained alpha payload missing or duplicated')
                 observation['jp2_metadata'] = jp2_metadata(archive.read(payload_names[0]))
-            pdf_names = [name for name in archive.namelist() if name.endswith('/' + case + '.pdf')]
-            if case != 'embedded-alpha':
-                require(len(pdf_names) == 1, 'retained diagnostic PDF missing or duplicated')
+            else:
                 with tempfile.TemporaryDirectory() as temporary:
                     root = Path(temporary)
                     source = root / 'source.pdf'
@@ -306,6 +310,7 @@ def main():
                                  path.resolve(), (folder / 'poppler').resolve()], folder / 'reference')
                 reference_path = folder / 'poppler.ppm'
                 require(reference.returncode == 0 and reference_path.is_file(), 'independent Poppler rendering failed')
+                result['reference_sha256'] = sha(reference_path.read_bytes())
                 with Image.open(reference_path) as reference_image:
                     require(reference_image.size == (20, 20), 'independent reference dimensions changed')
                     reference_image = reference_image.convert('RGB')
