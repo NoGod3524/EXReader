@@ -120,6 +120,7 @@ def main():
         host.process.wait(timeout=30)
         assert host.process.returncode == 0
         host.log.close();host.launch()
+        host.key('F2')
         ready(lambda state: state['books'] == 1 and state['shelf_first_id'] == 101)
         checks.append('immediate_normal_close_persists_new_query_before_debounce')
         observations.append({'state': host.read(), 'process_status': Path(f'/proc/{host.process.pid}/status').read_text(),
