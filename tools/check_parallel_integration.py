@@ -7,7 +7,9 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import sys
+import time
 import urllib.request
 
 WORKFLOWS = {
@@ -117,6 +119,29 @@ def fetch(path):
                  'X-GitHub-Api-Version': '2022-11-28'})
     with urllib.request.urlopen(request, timeout=60) as response:
         return json.load(response)
+
+
+def download_artifact_zip(artifact_id, output=None):
+    """Keep gh authentication/redirect handling; retry only explicit transient HTTP errors."""
+    require(type(artifact_id) is int and artifact_id > 0, 'Positive artifact ID required')
+    command = ['gh', 'api', f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/artifacts/{artifact_id}/zip']
+    for attempt in range(3):
+        if output is not None:
+            output.seek(0)
+            output.truncate()
+        try:
+            return subprocess.run(command, stdout=output if output is not None else subprocess.PIPE,
+                                  stderr=subprocess.PIPE, check=True, timeout=120).stdout
+        except subprocess.CalledProcessError as error:
+            detail = (error.stderr or b'').decode('utf-8', errors='replace')
+            print(detail, file=sys.stderr, end='')
+            status = re.search(r'(?m)^gh: (?:HTTP (429|502|503|504)(?:\s|$)|[^\r\n]*\(HTTP (429|502|503|504)\)\s*$)', detail)
+            if status is None or attempt == 2:
+                raise
+            delay = 2 ** (attempt + 1)
+            print(json.dumps({'artifact_retry': {'artifact_id': artifact_id, 'attempt': attempt + 1,
+                  'status': int(status.group(1) or status.group(2)), 'delay_seconds': delay}}), flush=True)
+            time.sleep(delay)
 
 
 def pages(path, key):
