@@ -204,3 +204,16 @@ SHA-256 `567df1f70bf3561a854eaeb3b26e2b70ff03b773321debf33d3227803363d35e`。
 同一job的公开JPX像素对照仍失败：11个成功图像均通过本引擎与已知源像素精确比较，
 但Poppler对照像素不同；另有embedded-alpha拒绝状态与冻结计划不同。
 job整体保持失败，八份语料通过不授予该JPX门禁通过。历史1710目标与其他未覆盖项仍按前述范围保留。
+
+## 最终JPX与原八份同次通过
+
+后继源码`da1c1833d89932612d8e4549fee5aec378555ad4`、[run39899523839](https://github.com/NoGod3524/EXReader/actions/runs/39899523839)、
+attempt1的三个作业全部success。普通ON job120237609130重新执行相同原八份，
+full8/8、location8/8，逐项原始证据严格重核后accepted=true；登记与manifest SHA未改。
+该job的24项JPX公开SDK专项同次通过；ASan/UBSan与JPX关闭作业的各24项也全部通过。
+没有拼接run39897525130或其他旧结果，旧失败继续保留。
+
+原八份及本次新证据位于工件`r6-jpx-ON-OFF-39899523839-1`，
+ID12478720699、34,100,503字节、SHA-256`756edd9f4e86f365f2d0010f5aeea25efcfd5e481e13715c0b7b05df2054e976`。
+三份工件完整元数据与声明见[最终JPX记录](validation/reading-jpx-final-da1c183.json)。
+本次授予固定八份代表语料及JPX声明范围通过，历史1710库存、正式性能与发布仍分别验收。
