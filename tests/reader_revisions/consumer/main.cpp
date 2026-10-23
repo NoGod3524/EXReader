@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include <reader_revisions.h>
+#include <reader_projection.h>
 #include <sqlite3.h>
 #include <chrono>
 #include <cstdio>
@@ -37,7 +38,8 @@ int main(int argc,char **argv){try{
 #endif
   if(args.size()<3)return 2;
   if(args[1]=="crash-before-outbox"){if(args.size()!=5)return 2;marker=args[4];if(sqlite3_auto_extension((void(*)(void))install_pause)!=SQLITE_OK)return 2;}
-  reader_revisions *store=nullptr;reader_revision_error error{};reader_revision_info info{};reader_revision_state state{};int created=0,nested=-1;std::string extra;
+  if(args[1]=="crash-project-before-metadata"){if(args.size()!=7)return 2;marker=args[6];if(sqlite3_auto_extension((void(*)(void))install_pause)!=SQLITE_OK)return 2;}
+  reader_revisions *store=nullptr;reader_revision_error error{};reader_revision_info info{};reader_revision_state state{};int created=0,applied=0,nested=-1;std::string extra;
   reader_revision_status status=reader_revisions_open(args[2].c_str(),&store,&error);observations observed{store,{},{},false,-1};
   if(status==READER_REV_OK){
     const std::string &action=args[1];
@@ -52,6 +54,20 @@ int main(int argc,char **argv){try{
       else if(action=="validate")status=reader_revision_validate(store,wire.data(),wire.size(),args.size()>4&&args[4]!="-"?args[4].c_str():nullptr,&info,&error);
       else status=reader_revision_local(store,wire.data(),wire.size(),&info,&created,&error);
       if(action=="crash-after-commit"&&status==READER_REV_OK){marker=args.at(4);pause_marker();}
+    }else if(action=="project-local"||action=="crash-project-before-metadata"||action=="crash-project-after-commit"){
+      std::string wire=read(args.at(3));std::vector<std::string> expected;std::vector<const char *> heads;
+      if(args.at(4)!="-"){size_t start=0;for(;;){size_t end=args[4].find(',',start);expected.push_back(args[4].substr(start,end==std::string::npos?end:end-start));if(end==std::string::npos)break;start=end+1;}}
+      for(const auto &id:expected)heads.push_back(id.c_str());
+      status=reader_revision_local_project(store,wire.data(),wire.size(),heads.data(),heads.size(),args.at(5)=="-"?nullptr:args[5].c_str(),&info,&created,&applied,&error);
+      if(action=="crash-project-after-commit"&&status==READER_REV_OK){marker=args.at(6);pause_marker();}
+    }else if(action=="project-remote"){
+      status=reader_revision_project(store,args.at(3).c_str(),args.at(4).c_str(),args.at(5).c_str(),args.at(6)=="-"?nullptr:args[6].c_str(),&info,&error);
+    }else if(action=="selected"){
+      char *wire=nullptr;size_t bytes=0;reader_revision_selection selection{};
+      status=reader_revision_selected(store,args.at(3).c_str(),args.at(4).c_str(),&wire,&bytes,&info,&selection,&error);state=selection.graph;
+      extra=",\"selection_kind\":"+std::to_string(selection.kind);
+      if(status==READER_REV_OK){std::ofstream output(std::filesystem::u8path(args.at(5)),std::ios::binary);output.write(wire,(std::streamsize)bytes);if(!output)return 3;}else if(wire||bytes)return 3;
+      reader_revision_bytes_free(wire);
     }else if(action=="get"){
       char *wire=nullptr;size_t bytes=0;status=reader_revision_get(store,args.at(3).c_str(),&wire,&bytes,&info,&error);
       if(status==READER_REV_OK){std::ofstream output(std::filesystem::u8path(args.at(4)),std::ios::binary);output.write(wire,(std::streamsize)bytes);if(!output)return 3;}reader_revision_bytes_free(wire);
@@ -65,7 +81,7 @@ int main(int argc,char **argv){try{
     else return 2;
   }
   reader_revision_error close{};if(store&&reader_revisions_close(&store,&close)!=READER_REV_OK)return 4;
-  std::cout<<"{\"status\":"<<(int)status<<",\"sqlite_code\":"<<error.sqlite_code<<",\"message\":"<<quote(error.message)<<",\"created\":"<<created<<','<<metadata(info)
+  std::cout<<"{\"status\":"<<(int)status<<",\"sqlite_code\":"<<error.sqlite_code<<",\"message\":"<<quote(error.message)<<",\"created\":"<<created<<",\"applied\":"<<applied<<','<<metadata(info)
     <<",\"state\":{\"revisions\":"<<state.revisions<<",\"heads\":"<<state.heads<<",\"missing_parents\":"<<state.missing_parents<<",\"foreign_parents\":"<<state.foreign_parents
     <<",\"projection_safe\":"<<state.projection_safe<<",\"deleted\":"<<state.deleted<<",\"requires_restore\":"<<state.requires_restore<<"},\"heads\":"<<array(observed.heads)<<",\"outbox\":"<<array(observed.queue)<<",\"nested_status\":"<<nested<<extra<<"}\n";
   return 0;
