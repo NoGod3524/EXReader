@@ -126,13 +126,24 @@ void exr_pdf_cmap_free(exr_pdf_cmap *map) { if(map) { free(map->spaces); free(ma
 size_t exr_pdf_cmap_memory(const exr_pdf_cmap *map) {
   return map ? sizeof(*map)+(map->space_capacity+map->capacity)*sizeof(cmap_range)+map->strings.capacity : 0;
 }
-exr_status exr_pdf_cmap_parse(const void *data,size_t size,const exr_control *control,exr_pdf_cmap **out,exr_error *error) {
+exr_status exr_pdf_cmap_parse_width(const void *data,size_t size,unsigned code_bytes,const exr_control *control,exr_pdf_cmap **out,exr_error *error) {
   cmap_reader r={0}; exr_pdf_cmap *map; size_t i,j; exr_status status;
   if(!out) return exr_fail(error,EXR_ARGUMENT,"Missing PDF ToUnicode CMap output");
   *out=NULL; map=calloc(1,sizeof(*map)); if(!map) return exr_fail(error,EXR_MEMORY,"PDF CMap allocation failed");
   r.map=map; status=exr_pdf_syntax_ops(data,size,cmap_operation,&r,1024,control,error);
   if(status!=EXR_OK) goto done;
   if(!r.begun || !r.ended || r.block || r.type!=2 || !map->space_count) goto invalid;
+  /* Adobe simple-font ToUnicode streams sometimes declare the full two-byte
+     codespace while spelling their byte codes with one or two hex bytes.
+     Only the font's known single-byte encoding makes this unambiguous. */
+  if(code_bytes==1 && map->space_count==1 && map->spaces[0].bytes==2 &&
+     map->spaces[0].first==0 && map->spaces[0].last==65535) {
+    for(i=0;i<map->count;i++) {
+      if(map->mappings[i].bytes>2 || map->mappings[i].last>255) goto invalid;
+      map->mappings[i].bytes=1;
+    }
+    map->spaces[0].bytes=1; map->spaces[0].last=255;
+  }
   qsort(map->spaces,map->space_count,sizeof(*map->spaces),compare_range);
   if(map->count) qsort(map->mappings,map->count,sizeof(*map->mappings),compare_range);
   for(i=0;i<map->space_count;i++) for(j=0;j<i;j++) {
@@ -159,6 +170,9 @@ invalid:
   status=exr_fail(error,EXR_FORMAT,"Missing, overlapping or ambiguous PDF ToUnicode codespaces/mappings");
 done:
   exr_pdf_cmap_free(map); return status;
+}
+exr_status exr_pdf_cmap_parse(const void *data,size_t size,const exr_control *control,exr_pdf_cmap **out,exr_error *error) {
+  return exr_pdf_cmap_parse_width(data,size,0,control,out,error);
 }
 exr_status exr_pdf_cmap_next(const exr_pdf_cmap *map,const unsigned char *data,size_t size,size_t *at,exr_pdf_mapping *out,exr_error *error) {
   uint32_t code=0; unsigned bytes; const cmap_range *range; unsigned char target[128];
