@@ -73,6 +73,9 @@ jobs:
         env:
           EXREADER_HOST_ACCEPTANCE: '1'
         run: python3 tools/check_windows_host.py --package build/desktop-windows-package/EXReader --output build/desktop-windows-ui --sdk build/reading-library/stage --manifest build/desktop-windows-package/build.json --steps tests/windows_host --fixtures build/desktop-windows-fixtures --selftest-report build/desktop-windows-package/report.json --consumer-binary build/desktop-sdk/EXReaderProduct.exe --static-link-map build/desktop-sdk/windows-host.map
+      - name: Actual Windows product source identity, recovery, visible refusal and dual ownership locks
+        if: runner.os == 'Windows'
+        run: python3 tests/reader_catalog/check_windows_product.py --package build/desktop-windows-package/EXReader --original-evidence build/desktop-windows-ui --fixtures build/desktop-windows-fixtures --output build/desktop-windows-product
       - name: Assemble the actual GTK host with the original pinned font
         if: runner.os == 'Linux'
         run: |
@@ -117,5 +120,6 @@ jobs:
             build/desktop-windows-package/
             build/desktop-windows-negative/
             build/desktop-windows-ui/
+            build/desktop-windows-product/
             build/desktop-sdk/windows-host.map
           if-no-files-found: error
