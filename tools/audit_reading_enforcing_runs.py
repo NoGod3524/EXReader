@@ -15,7 +15,7 @@ from check_parallel_integration import download_artifact_zip, fetch, pages, requ
 from export_reading_cpu_baseline import encoded, extract_raw
 from join_reading_cpu_exports import member_bytes
 from measure_reading_real import (CONTRACT, MANIFEST, PROTECTED, ROOT, SDK,
-    audit, baseline_origin, git, read, sha256)
+    audit, baseline_origin, git, native_metrics, percentile, read, sha256)
 from reading_real_environments import REGISTRY, report_budget
 from reading_required import workflow_identity
 
@@ -181,6 +181,16 @@ def inspect(run_id, output):
         except (ValueError, KeyError, TypeError) as error:
             report['raw_audit_error'] = str(error)
             report['raw_audit_status'] = 'rejected'
+            if str(error).startswith('Budget exceeded: '):
+                case, metric = str(error).removeprefix('Budget exceeded: ').split('/', 1)
+                entry = next(item for item in summary['files'] if item['id'] == case)
+                samples = [native_metrics(read(raw / item['stdout']), entry, summary['contract'])[0][metric]
+                           for item in summary['attempts'] if item['case'] == case]
+                actual, maximum = percentile(samples, .95), budget['cases'][case][metric]
+                report['rejected_metric'] = {'case': case, 'metric': metric, 'samples': samples,
+                    'p95': actual, 'budget': maximum, 'excess': actual - maximum,
+                    'excess_percent': (actual / maximum - 1) * 100 if maximum else None,
+                    'budget_sha256': summary['budget_sha256']}
         report['source_performance_accepted'] = (job['conclusion'] == 'success' and
             summary['accepted'] is True and summary['measurement_valid'] is True and summary['problems'] == [] and
             report['raw_audit_passed'])
