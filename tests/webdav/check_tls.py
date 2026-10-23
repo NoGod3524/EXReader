@@ -134,6 +134,7 @@ def main():
                     '/dav/invalid-dtd/': b'<!DOCTYPE a [<!ENTITY x SYSTEM "file:///unused">]><d:multistatus xmlns:d="DAV:">&x;</d:multistatus>',
                     '/dav/invalid-namespace/': listing([]).replace(b'DAV:', b'urn:other'),
                     '/dav/invalid-missing-href/': listing([response('/dav/a.epub')]).replace(b'<d:href>/dav/a.epub</d:href>', b''),
+                    '/dav/invalid-namespace-limit/': ('<d:multistatus xmlns:d="DAV:"><a:item xmlns:a="' + 'x' * 2048 + '"/></d:multistatus>').encode(),
                 }
                 self.send(207, cases[self.path])
             elif self.path == '/dav/large-list/':
@@ -252,7 +253,7 @@ def main():
         run('listing_entry_budget', LIMIT, action='list', resource='large-list/', entries=2)
         run('listing_cancel', CANCELLED, action='list', resource='large-list/', cancel=128)
         for bad, status in (('escape', REDIRECT), ('origin', REDIRECT), ('traversal', ARG), ('depth', FORMAT),
-                            ('duplicate', FORMAT), ('xml', FORMAT), ('dtd', FORMAT), ('namespace', FORMAT), ('missing-href', FORMAT)):
+                            ('duplicate', FORMAT), ('xml', FORMAT), ('dtd', FORMAT), ('namespace', FORMAT), ('missing-href', FORMAT), ('namespace-limit', LIMIT)):
             run('listing_reject_' + bad, status, action='list', resource='invalid-' + bad + '/')
         for i, resource in enumerate(('../book.epub', '%2e%2e/book.epub', 'a%2Fbook.epub', 'a%5cbook.epub',
                                       'a%252ebook.epub', 'a%00.epub', '//other/a.epub', '/book.epub',

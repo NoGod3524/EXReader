@@ -256,7 +256,8 @@ response perform(exr_webdav_client &client,const url &u,const char *method,int e
   internet session,connection,request;response r;std::wstring host=wide(u.host),target=wide(u.path),verb=wide(method);
   session.h=WinHttpOpen(L"EXReader-WebDAV/0.1.0",WINHTTP_ACCESS_TYPE_NO_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);
   if(!session.h) reject(EXR_DAV_IO,"Cannot create native HTTPS session");
-  int timeout=(int)remaining(deadline);WinHttpSetTimeouts(session.h,timeout,timeout,timeout,timeout);
+  int timeout=(int)remaining(deadline);
+  if(!WinHttpSetTimeouts(session.h,timeout,timeout,timeout,timeout)) reject(EXR_DAV_IO,"Cannot bound native HTTPS timeouts");
   connection.h=WinHttpConnect(session.h,host.c_str(),(INTERNET_PORT)u.port,0);
   if(!connection.h) reject(EXR_DAV_IO,"Cannot connect HTTPS origin");
   request.h=WinHttpOpenRequest(connection.h,verb.c_str(),target.c_str(),NULL,WINHTTP_NO_REFERER,WINHTTP_DEFAULT_ACCEPT_TYPES,WINHTTP_FLAG_SECURE|WINHTTP_FLAG_ESCAPE_DISABLE);
@@ -320,13 +321,16 @@ response perform(exr_webdav_client &client,const url &u,const char *method,int e
   std::unique_ptr<CURL,decltype(&curl_easy_cleanup)> handle(curl_easy_init(),curl_easy_cleanup);
   if(!handle) reject(EXR_DAV_MEMORY,"Cannot create native HTTPS session");
   curl_context context;context.output=&s;context.expected=expected;CURL *h=handle.get();std::string target=full(u);
-  curl_slist *raw=nullptr;
-  auto add=[&](const std::string &v) { curl_slist *next=curl_slist_append(raw,v.c_str());if(!next) { curl_slist_free_all(raw);raw=nullptr;reject(EXR_DAV_MEMORY,"Cannot create HTTPS headers"); }raw=next; };
+  std::unique_ptr<curl_slist,decltype(&curl_slist_free_all)> headers(nullptr,curl_slist_free_all);
+  auto add=[&](const std::string &v) {
+    curl_slist *next=curl_slist_append(headers.get(),v.c_str());
+    if(!next) reject(EXR_DAV_MEMORY,"Cannot create HTTPS headers");
+    headers.release();headers.reset(next);
+  };
   add("Accept-Encoding: identity");
   if(!client.authorization.empty()) add("Authorization: "+client.authorization);
   const char *body="<?xml version=\"1.0\"?><d:propfind xmlns:d=\"DAV:\"><d:prop><d:displayname/><d:resourcetype/><d:getcontentlength/><d:getetag/></d:prop></d:propfind>";
   if(!std::strcmp(method,"PROPFIND")) { add("Depth: 1");add("Content-Type: application/xml; charset=utf-8"); }
-  std::unique_ptr<curl_slist,decltype(&curl_slist_free_all)> headers(raw,curl_slist_free_all);
   curl_easy_setopt(h,CURLOPT_URL,target.c_str());curl_easy_setopt(h,CURLOPT_CUSTOMREQUEST,method);
   curl_easy_setopt(h,CURLOPT_HTTPHEADER,headers.get());curl_easy_setopt(h,CURLOPT_PROXY,"");
 #if LIBCURL_VERSION_NUM >= 0x075500
@@ -378,6 +382,7 @@ node xml(const std::vector<unsigned char> &bytes) {
   node document;std::vector<node *> stack{&document};size_t elements=0;
   auto event=[&](int kind,const std::string &name,const std::string &ns,const std::string &text,bool empty) {
     if(kind==1) {
+      if(name.size()>128 || ns.size()>1024) reject(EXR_DAV_LIMIT,"WebDAV XML name limit exceeded");
       if(++elements>20000 || stack.size()>32) reject(EXR_DAV_LIMIT,"WebDAV XML structure limit exceeded");
       stack.back()->children.push_back(node{name,ns,{}, {}});
       if(!empty) stack.push_back(&stack.back()->children.back());
