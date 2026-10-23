@@ -1,0 +1,27 @@
+name: Android import failure original evidence diagnostic
+on:
+  push:
+    branches: [codex/reader-import-diagnostics]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect-original:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify retained failed archive and inspect original logs in the cloud
+        run: python tools/reader_import_diagnostic.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-import-original-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/import-diagnostic/report.json
+          if-no-files-found: error
