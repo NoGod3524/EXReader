@@ -7,6 +7,7 @@ from pathlib import Path
 import sqlite3
 import sys
 import tempfile
+import tarfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from reading_release import check_profile, digest, seal
@@ -56,11 +57,37 @@ def main():
             stage, reports, runtime, db = fixture(root, profile)
             check = lambda: check_profile(profile, 'a'*40, stage, reports, runtime, db)
             identity = check()
-            ci = {'GITHUB_RUN_ID': '1', 'GITHUB_RUN_ATTEMPT': '1'}
-            first = seal(stage, root/'one', profile, 'a'*40, identity, ci, 1000)
-            second = seal(stage, root/'two', profile, 'a'*40, identity, ci, 1000)
+            ci = {'GITHUB_RUN_ID': '1', 'GITHUB_RUN_ATTEMPT': '1', 'RUNNER_OS': 'Linux', 'RUNNER_ARCH': 'X64'}
+            first = seal(stage, root/'one', profile, 'a'*40, identity, ci, 1000, 'Linux', 'X64')
+            second = seal(stage, root/'two', profile, 'a'*40, identity, ci, 1000, 'Linux', 'X64')
             assert first['sha256'] == second['sha256'] and first['quality_accepted'] is False
             cases.append(profile + ':positive-and-reproducible')
+            composition = json.loads((reports/'profile.json').read_text())
+            for host, arch in (('Windows', 'X64'), ('macOS', 'ARM64')):
+                platform = dict(composition, host=host, platform_requested=host,
+                                installed_files=composition['files'])
+                platform.pop('files')
+                write(reports/'platform-evidence.json', platform)
+                platform_identity = check_profile(profile, 'a'*40, stage, reports, runtime, db, host)
+                platform_ci = dict(ci, RUNNER_OS=host, RUNNER_ARCH=arch)
+                candidate = seal(stage, root/host, profile, 'a'*40, platform_identity, platform_ci, 1000, host, arch)
+                assert candidate['host'] == host and candidate['arch'] == arch and candidate['published'] is False
+                assert candidate['archive'].endswith(f'-{host}-{arch}.tar.gz') and not candidate['quality_accepted']
+                with tarfile.open(root/host/candidate['archive']) as archive:
+                    manifests = [m for m in archive.getmembers() if m.name.endswith('/release-manifest.json')]
+                    assert len(manifests) == 1
+                    manifest = json.load(archive.extractfile(manifests[0]))
+                    assert manifest['host'] == host and manifest['arch'] == arch and manifest['ci'] == platform_ci
+                cases.append(profile + ':' + host + ':candidate-identity')
+                for changes in ({'source_sha': 'b'*40}, {'accepted': False}, {'host': 'other'}, {'installed_files': []}):
+                    write(reports/'platform-evidence.json', dict(platform, **changes))
+                    try: check_profile(profile, 'a'*40, stage, reports, runtime, db, host)
+                    except ValueError: cases.append(profile + ':' + host + ':refused-' + ','.join(changes))
+                    else: raise AssertionError('accepted invalid platform composition')
+                write(reports/'platform-evidence.json', platform)
+            try: seal(stage, root/'wrong-host', profile, 'a'*40, identity, ci, 1000, 'Windows', 'X64')
+            except ValueError: cases.append(profile + ':runner-mismatch')
+            else: raise AssertionError('accepted mismatched runner identity')
             mutations = [
                 ('profile.json', {'source_sha': 'b'*40}),
                 ('profile.json', {'accepted': False}),
