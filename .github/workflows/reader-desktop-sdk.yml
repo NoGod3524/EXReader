@@ -82,7 +82,7 @@ jobs:
             wm=$!
             trap "kill $wm || true" EXIT
             python3 tools/check_linux_host.py --payload build/desktop-payload --output build/desktop-gtk-ui
-            python3 tests/reader_catalog/check_gtk_product.py --payload build/desktop-payload --original-evidence build/desktop-gtk-ui
+            python3 tests/reader_catalog/check_gtk_product.py --payload build/desktop-payload --original-evidence build/desktop-gtk-ui --output build/desktop-gtk-product
           '
       - name: Preserve original logs, link provider and source-bound evidence
         if: always()
@@ -100,4 +100,5 @@ jobs:
             build/desktop-sdk/CMakeCache.txt
             build/reading-library/CMakeCache.txt
             build/desktop-gtk-ui/
+            build/desktop-gtk-product/
           if-no-files-found: error
