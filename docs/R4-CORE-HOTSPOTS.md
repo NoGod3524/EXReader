@@ -255,3 +255,13 @@ Pillow 11.3.0 独立入口对 Gray/RGB8 的 JP2/J2K 四份原组件逐字节通�
 
 保留失败链：`400d825` / run `39896566880` 原组件 sanitizer 通过，但独立 reference 步误用上游 CMake 改写前的 binary 路径而未执行，`7693095` 修正后 run `39896660928` 全通过；`0be75cd` / run `39897019441` 正式 stub 配置的 packed 测试通过，新增 disabled CTest 因 workflow 未构建其 target 而 NotRun，`f4e9da8` 补构建后最终双测试及 reference 全通过。
 本节授予组件解码证据；完整 PDF、public SDK、ON/OFF/ASan 与原八件集成终态由主代理记录。
+
+## 集成终态
+
+源码`da1c1833d89932612d8e4549fee5aec378555ad4`的[run39899523839](https://github.com/NoGod3524/EXReader/actions/runs/39899523839)、
+attempt1已success：JPX ON/ASan/OFF三作业各24/24，零失败零跳过。
+ON与ASan各11项源像素精确比较、11项独立参考契约、13项无PPM拒绝；
+OFF同24项均按关闭契约拒绝且无PPM。三个已登记外部差异单独冻结，不授予render parity。
+普通ON同次执行原八份full8/8与location8/8，原始证据严格accepted=true。
+完整身份见[最终JPX记录](validation/reading-jpx-final-da1c183.json)；
+本轮SDK已另由同源六组18作业冻结于K9854061，四宿主与正式性能仍独立收口。

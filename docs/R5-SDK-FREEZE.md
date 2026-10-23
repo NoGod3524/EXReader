@@ -38,7 +38,8 @@ GitHub连接逐项核对完成日志、完整jobs/artifacts列表；30工件均�
 OpenJPEG 2.5.4采用受限静态库；JPX关闭时不取源、不安装该库。
 原登记八份真实文档在K的run39897525130中full8/8、location8/8通过，
 其JPX专项步骤当时仍失败，整个运行保留failure；八份单独结论见[R2记录](R2-REAL-CORPUS.md)。
-该批次不替代历史1710份库存，性能数字预算和像素审阅由R3另行固定。
+后继同保护树源码da1c183的run39899523839已三作业全绿，JPX ON/ASan/OFF各24项及原八份full8/location8同次通过，
+见[最终记录](validation/reading-jpx-final-da1c183.json)。该批次不替代历史1710份库存，性能数字预算和像素审阅由R3另行固定。
 
 ### 新K四宿主共同复验（运行中）
 

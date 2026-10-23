@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "source_sha": "da1c1833d89932612d8e4549fee5aec378555ad4",
+  "sdk_candidate": "9854061be331fe603a1822d9b2b36ee357154927",
+  "run_id": 39899523839,
+  "run_attempt": 1,
+  "status": "completed",
+  "conclusion": "success",
+  "scope": "bounded JPX public-SDK integration and the fixed representative eight-document corpus",
+  "accepted": true,
+  "jpx": {
+    "cases_per_job": 24,
+    "failed": 0,
+    "skipped": 0,
+    "normal_and_sanitizer": {
+      "source_pixel_cases": 11,
+      "reference_contract_cases": 11,
+      "rejection_cases": 13
+    },
+    "disabled": {
+      "explicit_rejections": 24,
+      "no_ppm_required": true
+    },
+    "render_parity_granted": false
+  },
+  "real_corpus": {
+    "job_id": 120237609130,
+    "full_passed": 8,
+    "location_passed": 8,
+    "accepted": true,
+    "registration_sha": "ea5c13e081cfba86d9f6dd759439894463e51126",
+    "manifest_sha256": "f71f8a24faff664a03b7e15a7f424ec354f83c53fbd14f602d4b050f3fd19de1",
+    "raw_evidence_revalidated": true
+  },
+  "jobs": [
+    {
+      "id": 120237608778,
+      "name": "JPX ON sanitizer ON",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120237609063,
+      "name": "JPX OFF sanitizer OFF",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120237609130,
+      "name": "JPX ON sanitizer OFF",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12478720699,
+      "name": "r6-jpx-ON-OFF-39899523839-1",
+      "size_in_bytes": 34100503,
+      "digest": "sha256:756edd9f4e86f365f2d0010f5aeea25efcfd5e481e13715c0b7b05df2054e976",
+      "expired": false,
+      "expires_at": "2026-11-22T04:21:11Z",
+      "workflow_run": {
+        "id": 39899523839,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/r6-reading-release",
+        "head_sha": "da1c1833d89932612d8e4549fee5aec378555ad4"
+      }
+    },
+    {
+      "id": 12478481298,
+      "name": "r6-jpx-OFF-OFF-39899523839-1",
+      "size_in_bytes": 60272,
+      "digest": "sha256:26ce5642cc2431a9d0d3d892b689762f957d5c9597e0144033897deb13995e1e",
+      "expired": false,
+      "expires_at": "2026-11-22T04:18:34Z",
+      "workflow_run": {
+        "id": 39899523839,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/r6-reading-release",
+        "head_sha": "da1c1833d89932612d8e4549fee5aec378555ad4"
+      }
+    },
+    {
+      "id": 12477763482,
+      "name": "r6-jpx-ON-ON-39899523839-1",
+      "size_in_bytes": 79011,
+      "digest": "sha256:a9a63edbafc59eeb85831cd75e7b2e1c68cbe884197f8a04bb4569067283d60c",
+      "expired": false,
+      "expires_at": "2026-11-22T04:22:22Z",
+      "workflow_run": {
+        "id": 39899523839,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/r6-reading-release",
+        "head_sha": "da1c1833d89932612d8e4549fee5aec378555ad4"
+      }
+    }
+  ],
+  "complete_product": false,
+  "wp16_accepted": false,
+  "wp16_cpu_credit_seconds": 0,
+  "published": false
+}

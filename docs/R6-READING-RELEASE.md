@@ -8,7 +8,8 @@
 新SDK已在`9854061be331fe603a1822d9b2b36ee357154927`重新冻结：
 六组18执行作业、30工件全部同源、attempt1通过，版本/ABI/schema保持3.40.0/1/7。
 八份固定真实语料在该SDK上full8/8与location8/8通过；对应JPX专项当时失败，整run仍记失败，
-后续JPX最终契约run39899523839另行核验，不能拼成一次成功运行。
+后继同保护树源码da1c183的JPX最终契约run39899523839三作业全部通过，
+原八份full8/location8也在该次普通ON作业重新严格通过，见[最终记录](validation/reading-jpx-final-da1c183.json)。
 
 四宿主在共同S=`da1c1833d89932612d8e4549fee5aec378555ad4`重新复验，
 Windows/Linux/Apple/Android分别为39899820869、39899823392、39899825998、39899828858。
