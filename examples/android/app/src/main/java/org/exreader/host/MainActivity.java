@@ -170,7 +170,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
         worker.execute(() -> {
             try {
-                store = new BookStore(getApplicationContext(), new File(getFilesDir(), "library.db"));
+                // A previous Activity may still be compensating its unpublished insert.
+                synchronized (IMPORT_LOCK) {
+                    store = new BookStore(getApplicationContext(), new File(getFilesDir(), "library.db"));
+                }
                 if (store.metadataRepairPending()) postStatus("Metadata repair pending; originals retained");
             } catch (Throwable error) {
                 postStatus("Library error: " + message(error));
