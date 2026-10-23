@@ -1,96 +1,100 @@
-name: Reading pixel diagnostic only
+name: Retained reading environment observation
 on:
   push:
-    branches: ['codex/r3-real-performance', 'codex/r6-reading-release']
-    paths:
-      - '.github/workflows/reading-pixel-diagnostic.yml'
-      - 'tools/reading_pixel_diagnostic.py'
+    branches: [codex/reading-environment-observe]
+    paths: ['.github/workflows/reading-pixel-diagnostic.yml']
   workflow_dispatch:
-    inputs:
-      run_id:
-        type: string
-        default: '39889934254'
-      source_sha:
-        type: string
-        default: c6f0ba92321a284490a81a2bb355557803c17ec9
-      artifact_id:
-        type: string
-        default: '12474462154'
-      artifact_digest:
-        type: string
-        default: sha256:b677a592fa31171a758820d3beba732986419d8fc2af303e113e4e933da7f837
-      all_pdf_pages:
-        description: Inspect the twelve registered pages; false inspects all three W9 pages
-        type: boolean
-        default: false
-      export_only:
-        description: Export the review template or reviewed budgets without repeating contact sheets
-        type: boolean
-        default: false
-      review_record:
-        description: Committed review JSON path; empty exports the unreviewed twelve-page template
-        type: string
-        default: ''
 permissions:
   contents: read
   actions: read
 jobs:
-  pixel-diagnostic:
-    if: ${{ !inputs.export_only }}
-    name: pixel-diagnostic-${{ matrix.case }}-slot-${{ matrix.slot }}
-    strategy:
-      fail-fast: false
-      matrix:
-        case: ${{ fromJSON(inputs.all_pdf_pages && '["irs-w9","nist-ai-rmf","nist-csf2","nasa-solar-system"]' || '["irs-w9"]') }}
-        slot: [0, 1, 2]
+  observe:
     runs-on: ubuntu-22.04
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - name: Install image inspector
-        run: sudo apt-get update -qq && sudo apt-get install -y python3-pil
-      - name: Verify retained artifact and print bounded contact sheet
+      - name: Read fixed failed performance evidence without executing a benchmark
         env:
           GH_TOKEN: ${{ github.token }}
-          DIAGNOSTIC_CASE: ${{ matrix.case }}
-          DIAGNOSTIC_SLOT: ${{ matrix.slot }}
-          DIAGNOSTIC_RUN: ${{ inputs.run_id || '39889934254' }}
-          DIAGNOSTIC_SOURCE: ${{ inputs.source_sha || 'c6f0ba92321a284490a81a2bb355557803c17ec9' }}
-          DIAGNOSTIC_ARTIFACT: ${{ inputs.artifact_id || '12474462154' }}
-          DIAGNOSTIC_DIGEST: ${{ inputs.artifact_digest || 'sha256:b677a592fa31171a758820d3beba732986419d8fc2af303e113e4e933da7f837' }}
-        run: python3 tools/reading_pixel_diagnostic.py
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: reading-pixel-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.case }}-${{ matrix.slot }}
-          path: build/reading-pixel-diagnostic/
-          if-no-files-found: error
-          retention-days: 30
-  budget-export:
-    if: ${{ inputs.all_pdf_pages || inputs.export_only }}
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Verify complete page review refusal checks
-        run: python3 tests/check_reading_real_review.py
-      - name: Export pinned baseline review template or reviewed budgets in cloud only
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BASELINE_RUN: ${{ inputs.run_id }}
-          BASELINE_SOURCE: ${{ inputs.source_sha }}
-          REVIEW_RECORD: ${{ inputs.review_record }}
         run: |
-          args=()
-          if test -n "$REVIEW_RECORD"; then args=(--review-record "$REVIEW_RECORD"); fi
-          python3 tools/export_reading_real_budgets.py --baseline-source-sha "$BASELINE_SOURCE" \
-            --baseline-run-id "$BASELINE_RUN" --output build/reading-budget-export "${args[@]}"
+          python3 - <<'PY'
+          import hashlib, io, json, os, pathlib, subprocess, urllib.request, zipfile
+
+          SOURCE = '31e4117bb3341f57fad65e2d067afaec20655b0e'
+          RUN, ATTEMPT, JOB = 39908383274, 1, 120265465013
+          ARTIFACT, SIZE = 12481188720, 17483984
+          DIGEST = '4800635bfd1bd76791f3e726c7346e65c4bc28cc4ec871256c455ef5de0ba243'
+          repository = os.environ['GITHUB_REPOSITORY']
+          def require(condition, message):
+              if not condition:
+                  raise ValueError(message)
+          def fetch(path):
+              request = urllib.request.Request('https://api.github.com/repos/' + repository + '/' + path,
+                  headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                           'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'})
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  return json.load(response)
+          run = fetch('actions/runs/' + str(RUN))
+          job = fetch('actions/jobs/' + str(JOB))
+          require(run['head_sha'] == SOURCE and run['run_attempt'] == ATTEMPT and
+                  run['path'] == '.github/workflows/reading-required.yml', 'Original run identity differs')
+          require(job['run_id'] == RUN and job['run_attempt'] == ATTEMPT and job['head_sha'] == SOURCE and
+                  job['status'] == 'completed' and job['conclusion'] == 'failure', 'Original failed job differs')
+          artifact = fetch('actions/artifacts/' + str(ARTIFACT))
+          require(artifact['size_in_bytes'] == SIZE and artifact['digest'] == 'sha256:' + DIGEST and
+                  artifact['expired'] is False and artifact['workflow_run']['id'] == RUN and
+                  artifact['workflow_run']['head_sha'] == SOURCE, 'Pinned artifact metadata differs')
+          raw = subprocess.check_output(['gh', 'api', f'repos/{repository}/actions/artifacts/{ARTIFACT}/zip'],
+                                        timeout=120)
+          require(len(raw) == SIZE and hashlib.sha256(raw).hexdigest() == DIGEST, 'Original ZIP bytes differ')
+          with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              names = archive.namelist()
+              require(len(names) == len(set(names)), 'Duplicate ZIP member')
+              def read(name):
+                  require(names.count(name) == 1 and archive.getinfo(name).file_size <= 16 * 1024 * 1024,
+                          'Missing or oversized report')
+                  payload = archive.read(name)
+                  return json.loads(payload), hashlib.sha256(payload).hexdigest()
+              current, current_sha = read('reading-real/summary.json')
+              baseline, baseline_sha = read('reading-real/baseline-summary.json')
+              budgets, budgets_sha = read('identity/tests/reading_real/budgets.json')
+          require(current['source_sha'] == SOURCE and current['run_id'] == str(RUN) and
+                  current['run_attempt'] == str(ATTEMPT) and current['accepted'] is False and
+                  current['measurement_valid'] is False and current['results'] is None and
+                  current['problems'] == ['Baseline environment refused'], 'Failed report identity differs')
+          require(baseline_sha == budgets['baseline_summary_sha256'] and budgets_sha == current['budget_sha256'] and
+                  baseline['source_sha'] == budgets['baseline_source_sha'] and
+                  baseline['run_id'] == str(budgets['baseline_run_id']) and
+                  baseline['run_attempt'] == str(budgets['baseline_run_attempt']), 'Pinned baseline or budget differs')
+          comparisons = {}
+          for key in ('cpu_model', 'compiler', 'reference'):
+              before, now = baseline['environment'][key], current['environment'][key]
+              comparisons[key] = {'baseline': before, 'current': now, 'baseline_equals_current': before == now}
+              if key in budgets:
+                  comparisons[key].update(budget=budgets[key], budget_equals_baseline=budgets[key] == before,
+                                          budget_equals_current=budgets[key] == now)
+          report = {
+              'diagnostic_only': True, 'accepted': False, 'benchmark_executed_by_diagnostic': False,
+              'input_source': SOURCE, 'input_run': RUN, 'input_attempt': ATTEMPT, 'input_job': JOB,
+              'input_artifact': ARTIFACT, 'input_bytes': SIZE, 'input_digest': 'sha256:' + DIGEST,
+              'original_problem': current['problems'], 'comparisons': comparisons,
+              'native_attempts_started': len(current['attempts']), 'reference_attempts_started': len(current['references']),
+              'forty_process_plan_started': bool(current['attempts']),
+              'protected_sdk_trees_equal': baseline['before']['sdk_trees'] == current['before']['sdk_trees'],
+              'sdk_candidate': current['sdk_candidate'],
+              'contract_sha256': current['contract_sha256'], 'budget_sha256': budgets_sha,
+              'current_report_sha256': current_sha, 'baseline_report_sha256': baseline_sha,
+              'current_runner_environment': current['environment'],
+              'baseline_runner_environment': baseline['environment']
+          }
+          output = pathlib.Path('build/reading-environment-observation')
+          output.mkdir(parents=True)
+          (output / 'observation.json').write_text(json.dumps(report, indent=2) + '\n')
+          print(json.dumps(report), flush=True)
+          PY
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: reading-budget-export-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/reading-budget-export/
+          name: reading-environment-observation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reading-environment-observation/observation.json
           if-no-files-found: error
           retention-days: 30
+
