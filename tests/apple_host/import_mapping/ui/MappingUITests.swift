@@ -33,7 +33,11 @@ final class ImportMappingUITests: XCTestCase {
         }
         return condition()
     }
-    private var probe: String { element("library.import.mapping-state").label }
+    private func text(_ identifier: String) -> String {
+        guard let node = try? element(identifier).snapshot() else { return "" }
+        return node.label.isEmpty ? (node.value as? String) ?? "" : node.label
+    }
+    private var probe: String { text("library.import.mapping-state") }
     private func launch(fresh: Bool, extra: [String] = []) {
         app.launchArguments = ["-EXRUITestFixtures", "1"] + (fresh ? ["-EXRFreshState", "1"] : []) + extra
         app.launch()
@@ -43,7 +47,7 @@ final class ImportMappingUITests: XCTestCase {
     }
     private func mark(_ id: String, screenshot: Bool = false) {
         steps.append(["id": id, "probe": element("library.import.mapping-state").exists ? probe : "",
-                      "status": element("library.status").exists ? element("library.status").label : "",
+                      "status": text("library.status"),
                       "app_state": app.state.rawValue])
         if screenshot {
             let image = XCTAttachment(screenshot: app.screenshot())
@@ -59,7 +63,7 @@ final class ImportMappingUITests: XCTestCase {
         target.tap()
         XCTAssertTrue(wait { !self.element("library.busy").exists &&
             self.probe.contains("books=\(count);local=\(count);") &&
-            self.element("library.status").label.contains(duplicate ? "已存在" : "已导入") }, "Import mapping did not complete: \(app.debugDescription)")
+            self.text("library.status").contains(duplicate ? "已存在" : "已导入") }, "Import mapping did not complete: \(app.debugDescription)")
         XCTAssertTrue(probe.contains("staging=0;"))
         XCTAssertFalse(element("library.error").exists)
         mark(button)
@@ -90,7 +94,7 @@ final class ImportMappingUITests: XCTestCase {
         let cancel = app.buttons["library.cancel"]
         XCTAssertTrue(cancel.waitForExistence(timeout: 10))
         cancel.tap()
-        XCTAssertTrue(wait { !self.element("library.busy").exists && self.element("library.status").label == "已取消" })
+        XCTAssertTrue(wait { !self.element("library.busy").exists && self.text("library.status") == "已取消" })
         XCTAssertTrue(probe.contains("books=0;local=0;"))
         XCTAssertTrue(probe.contains("staging=0;"))
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'library.book.'")).allElementsBoundByIndex.isEmpty)
@@ -100,7 +104,7 @@ final class ImportMappingUITests: XCTestCase {
     private func killedImport(extra: String, button: String, phase: String, kind: String) {
         launch(fresh: true, extra: [extra])
         app.buttons[button].tap()
-        XCTAssertTrue(wait { self.element("library.status").label == phase }, "Real import did not reach the interruption boundary")
+        XCTAssertTrue(wait { self.text("library.status") == phase }, "Real import did not reach the interruption boundary")
         mark("before-process-termination", screenshot: true)
         app.terminate()
         XCTAssertTrue(app.wait(for: .notRunning, timeout: 15))
@@ -127,8 +131,8 @@ final class ImportMappingUITests: XCTestCase {
         launch(fresh: true, extra: ["-EXRMappingRejectTransaction"])
         app.buttons["library.import.mapping-text"].tap()
         XCTAssertTrue(wait { !self.element("library.busy").exists &&
-            self.element("library.status").label == "书籍已保存，产品索引待修复" })
-        XCTAssertTrue(element("library.error").label.contains("书籍已保存"))
+            self.text("library.status") == "书籍已保存，产品索引待修复" })
+        XCTAssertTrue(text("library.error").contains("书籍已保存"))
         XCTAssertTrue(probe.contains("books=0;local=0;"))
         XCTAssertTrue(probe.contains("staging=0;"))
         XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'library.book.'")).count, 1)
