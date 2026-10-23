@@ -6,14 +6,15 @@ import json
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from reading_required import GROUPS, ci_identity, expected_artifacts, verify_metadata, workflow_identity
+from reading_required import (GROUPS, ci_identity, expected_artifacts, verify_metadata,
+                              expected_jobs, verify_jobs, workflow_identity)
 
 source, run, attempt = 'a' * 40, '12', '3'
 needs = {key: {'result': 'success'} for key in GROUPS}
 artifacts = [{'id': index, 'name': name, 'expired': False, 'size_in_bytes': 10,
               'workflow_run': {'head_sha': source, 'id': int(run)}, 'digest': 'sha256:' + 'b' * 64}
              for index, name in enumerate(sorted(expected_artifacts(run, attempt)))]
-assert len(verify_metadata(source, run, attempt, needs, artifacts)) == 8
+assert len(verify_metadata(source, run, attempt, needs, artifacts)) == 18
 checks = 1
 mutations = [lambda n, a: n.pop('native'), lambda n, a: n.update(unexpected={'result': 'success'}),
              lambda n, a: a.pop(), lambda n, a: a.append(copy.deepcopy(a[0])),
@@ -52,7 +53,7 @@ record.update(event='pull_request', head_sha='c' * 40)
 assert workflow_identity(record, source, run, attempt, ['b' * 40, 'c' * 40]) == 'c' * 40; checks += 1
 pr_artifacts = copy.deepcopy(artifacts)
 for item in pr_artifacts: item['workflow_run']['head_sha'] = 'c' * 40
-assert len(verify_metadata(source, run, attempt, needs, pr_artifacts, 'c' * 40)) == 8; checks += 1
+assert len(verify_metadata(source, run, attempt, needs, pr_artifacts, 'c' * 40)) == 18; checks += 1
 for changes, parents in [({}, ['b' * 40]), ({}, ['b' * 40, 'd' * 40]),
                          ({'run_attempt': 2}, ['b' * 40, 'c' * 40]),
                          ({'path': '.github/workflows/native.yml'}, ['b' * 40, 'c' * 40]),
@@ -61,4 +62,19 @@ for changes, parents in [({}, ['b' * 40]), ({}, ['b' * 40, 'd' * 40]),
     try: workflow_identity(mutant, source, run, attempt, parents)
     except ValueError: checks += 1
     else: raise AssertionError('accepted unrelated tested merge/run')
+jobs = [{'id': index, 'name': name, 'run_id': int(run), 'run_attempt': int(attempt),
+         'head_sha': source, 'status': 'completed', 'conclusion': 'success'}
+        for index, name in enumerate(sorted(expected_jobs() | {'reading-required'}))]
+assert len(verify_jobs(source, run, attempt, jobs)) == 17; checks += 1
+for change in [lambda j: j.pop(), lambda j: j.append(copy.deepcopy(j[0])),
+               lambda j: j[0].update(run_attempt=2), lambda j: j[0].update(run_id=13),
+               lambda j: j[0].update(head_sha='d' * 40),
+               lambda j: j[0].update(name='unexpected'),
+               lambda j: j[0].update(status='in_progress'),
+               lambda j: j[0].update(conclusion='failure'),
+               lambda j: j[0].update(conclusion='skipped')]:
+    mutant = copy.deepcopy(jobs); change(mutant)
+    try: verify_jobs(source, run, attempt, mutant)
+    except ValueError: checks += 1
+    else: raise AssertionError('accepted missing or reused upstream job')
 print(json.dumps({'accepted': True, 'checks': checks, 'sdk_credit': 0, 'real_document_credit': 0}))
