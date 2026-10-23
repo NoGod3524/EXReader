@@ -12,6 +12,7 @@ static int64_t book_id;
 static int font_size=24,last_error,bounded,fixed,zoom_percent=100;
 static size_t fixed_pages;
 static guint sequence;
+static guint frame_generation,painted_generation;
 static char *home,*settings_path,*state_path,*page_text;
 static GKeyFile *settings;
 static GAsyncQueue *queue;
@@ -40,8 +41,8 @@ static void state(void) {
   char *complete=g_strconcat(data,metrics,NULL);g_free(data);g_free(metrics);data=complete;
   GtkWidget *viewport=gtk_widget_get_ancestor(image,GTK_TYPE_SCROLLED_WINDOW);int x=0,y=0;
   if(viewport && gtk_widget_translate_coordinates(viewport,window,0,0,&x,&y)) {
-    char *bounds=g_strdup_printf("page_x=%d\npage_y=%d\npage_width=%d\npage_height=%d\n",
-      x,y,gtk_widget_get_allocated_width(viewport),gtk_widget_get_allocated_height(viewport));
+    char *bounds=g_strdup_printf("page_x=%d\npage_y=%d\npage_width=%d\npage_height=%d\nframe_generation=%u\npainted_generation=%u\n",
+      x,y,gtk_widget_get_allocated_width(viewport),gtk_widget_get_allocated_height(viewport),frame_generation,painted_generation);
     complete=g_strconcat(data,bounds,NULL);g_free(data);g_free(bounds);data=complete;
   }
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
@@ -114,6 +115,7 @@ static gboolean apply_result(gpointer data) {
     if(!pixels) { busy=FALSE;status(EXR_MEMORY,"Page presentation failed; accepted page retained");goto free_result; }
     notes_present(result);
     result->pixels=NULL;gtk_image_set_from_pixbuf(GTK_IMAGE(image),pixels);g_object_unref(pixels);
+    frame_generation++;
     book_id=result->book;part=result->part;bounded=result->bounded;font_size=result->font;
     fixed=result->fixed;fixed_pages=result->page_count;if(fixed) zoom_percent=result->zoom;
     if(bigger) gtk_button_set_label(GTK_BUTTON(bigger),fixed ? "Zoom + F5":"A+ F5");
@@ -240,6 +242,9 @@ static gboolean focus_changed(GtkWidget *w,GdkEventFocus *event,gpointer unused)
 static void page_allocated(GtkWidget *widget,GtkAllocation *allocation,gpointer unused) {
   (void)widget;(void)allocation;(void)unused;state();
 }
+static gboolean page_painted(GtkWidget *widget,cairo_t *context,gpointer unused) {
+  (void)widget;(void)context;(void)unused;painted_generation=frame_generation;state();return FALSE;
+}
 static void stop_worker(void) {
   if(closing) return;
   closing=TRUE;g_atomic_int_inc(&generation);host_job *stop=g_new0(host_job,1);stop->stop=1;g_async_queue_push(queue,stop);state();
@@ -313,6 +318,7 @@ int main(int argc,char **argv) {
   g_signal_connect(notes,"row-activated",G_CALLBACK(note_activated),NULL);
   g_signal_connect(gtk_text_view_get_buffer(GTK_TEXT_VIEW(text)),"mark-set",G_CALLBACK(selection_changed),NULL);
   g_signal_connect(gtk_widget_get_ancestor(image,GTK_TYPE_SCROLLED_WINDOW),"size-allocate",G_CALLBACK(page_allocated),NULL);
+  g_signal_connect_after(image,"draw",G_CALLBACK(page_painted),NULL);
   gtk_widget_show_all(window);gtk_window_present(GTK_WINDOW(window));queue=g_async_queue_new();
   thread=g_thread_new("reading",work,font_path);submit(last ? READER_OPEN:READER_SHELF,last,NULL,font_size);
   state();gtk_main();g_thread_join(thread);g_async_queue_unref(queue);
