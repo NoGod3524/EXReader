@@ -217,3 +217,5 @@ def checked_candidate(raw, host, profile):
 
 if __name__ == '__main__':
     main()
+    from check_reading_artifact_retry import main as artifact_retry_protocol
+    artifact_retry_protocol()
