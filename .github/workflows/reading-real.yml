@@ -8,6 +8,7 @@ on:
       - 'tools/measure_reading_real.py'
       - 'tools/host_font.py'
       - 'tools/reading_corpus/**'
+      - 'tests/reading_corpus/check_collect.py'
       - 'tests/reading_real/**'
       - 'tests/check_reading_real_baseline.py'
       - 'tests/check_reading_real_baseline_report.py'
@@ -66,6 +67,8 @@ jobs:
           python3 tests/check_reading_real_baseline.py
           python3 tests/check_reading_real_baseline_report.py
           python3 tests/check_reading_real_review.py
+      - name: Verify bounded collector retry and download refusals
+        run: python3 tests/reading_corpus/check_collect.py
       - name: Collect the shared frozen real-document manifest
         run: python3 tools/reading_corpus/collect.py collect tools/reading_corpus/real-v1.json build/reading-real-inputs
       - name: Fetch the existing pinned native host font and license
