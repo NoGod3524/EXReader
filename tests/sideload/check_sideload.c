@@ -15,7 +15,7 @@ static unsigned checks, cases;
 
 typedef struct {
   const unsigned char *bytes;
-  size_t size, calls, short_read;
+  size_t size, calls, short_read, copy_bytes;
   int releases, cancelled, copy_started, cancel_copy, fail_copy, fail_read;
 } memory_source;
 
@@ -25,10 +25,13 @@ static size_t memory_read(void *context, uint64_t offset, void *buffer, size_t s
   memory->calls++;
   if (memory->fail_read) return 0;
   if (offset > memory->size || size > memory->size - (size_t)offset) return 0;
-  if (offset == 0 && size == 65536 && memory->size > 65536) memory->copy_started = 1;
   if (memory->fail_copy && memory->copy_started && offset >= 65536) return 0;
   if (memory->short_read && got > memory->short_read) got = memory->short_read;
   memcpy(buffer, memory->bytes + (size_t)offset, got);
+  if (offset == 0 && size == 65536 && got == 65536 && memory->size > 65536) {
+    memory->copy_started = 1;
+    memory->copy_bytes = got;
+  } else if (memory->copy_started && offset == memory->copy_bytes) memory->copy_bytes += got;
   if (memory->cancel_copy && memory->copy_started && offset == 0 && got == 65536) memory->cancelled = 1;
   return got;
 }
@@ -43,6 +46,54 @@ static exr_source source_for(memory_source *memory, const void *bytes, size_t si
   return source;
 }
 static void passed(const char *name) { cases++; printf("PASS %s\n", name); }
+static unsigned zip_u16(const unsigned char *p) {
+  return (unsigned)p[0] | (unsigned)p[1] << 8;
+}
+static uint32_t zip_u32(const unsigned char *p) {
+  return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24;
+}
+static void zip_put16(unsigned char *p, unsigned value) {
+  p[0] = (unsigned char)value; p[1] = (unsigned char)(value >> 8);
+}
+static void zip_put32(unsigned char *p, uint32_t value) {
+  for (unsigned i = 0; i < 4; i++) p[i] = (unsigned char)(value >> (8 * i));
+}
+/* Add an ignored stored member, preserving the original image records and offsets. */
+static unsigned char *padded_cbz(const unsigned char *original, size_t original_size, size_t *size) {
+  const char name[] = "notes/padding.bin";
+  const size_t name_size = sizeof(name) - 1, payload_size = 128 * 1024;
+  const unsigned char *end;
+  size_t old_central, old_central_size, local_size, central, extra_central;
+  unsigned count; uint32_t crc = UINT32_MAX; unsigned char *bytes, *p;
+  CHECK(original_size >= 22);
+  end = original + original_size - 22;
+  CHECK(!memcmp(end, "PK\005\006", 4) && !zip_u16(end + 20));
+  count = zip_u16(end + 10); old_central_size = zip_u32(end + 12); old_central = zip_u32(end + 16);
+  CHECK(!zip_u16(end + 4) && !zip_u16(end + 6) && zip_u16(end + 8) == count && count < 65534);
+  CHECK(old_central <= original_size - 22 && old_central_size == original_size - 22 - old_central);
+  local_size = 30 + name_size + payload_size;
+  central = old_central + local_size; extra_central = central + old_central_size;
+  *size = extra_central + 46 + name_size + 22;
+  bytes = calloc(1, *size); CHECK(bytes != NULL);
+  memcpy(bytes, original, old_central);
+  for (size_t i = 0; i < payload_size; i++) {
+    for (unsigned bit = 0; bit < 8; bit++) crc = (crc >> 1) ^ (UINT32_C(0xedb88320) & (uint32_t)-(int32_t)(crc & 1));
+  }
+  crc = ~crc;
+  p = bytes + old_central;
+  memcpy(p, "PK\003\004", 4); zip_put16(p + 4, 20);
+  zip_put32(p + 14, crc); zip_put32(p + 18, (uint32_t)payload_size); zip_put32(p + 22, (uint32_t)payload_size);
+  zip_put16(p + 26, (unsigned)name_size); memcpy(p + 30, name, name_size);
+  memcpy(bytes + central, original + old_central, old_central_size);
+  p = bytes + extra_central;
+  memcpy(p, "PK\001\002", 4); zip_put16(p + 4, 20); zip_put16(p + 6, 20);
+  zip_put32(p + 16, crc); zip_put32(p + 20, (uint32_t)payload_size); zip_put32(p + 24, (uint32_t)payload_size);
+  zip_put16(p + 28, (unsigned)name_size); zip_put32(p + 42, (uint32_t)old_central); memcpy(p + 46, name, name_size);
+  p += 46 + name_size;
+  memcpy(p, "PK\005\006", 4); zip_put16(p + 8, count + 1); zip_put16(p + 10, count + 1);
+  zip_put32(p + 12, (uint32_t)(old_central_size + 46 + name_size)); zip_put32(p + 16, (uint32_t)central);
+  return bytes;
+}
 static size_t book_count(exr_library *library) {
   exr_book *books = NULL; size_t count = 0;
   OK(exr_library_books(library, NULL, &books, &count, &error));
@@ -164,26 +215,31 @@ static void rollback_cases(exr_library *library, const char *root) {
   size_t original_size, size; unsigned char *original = fixture(root, "comic.cbz", &original_size), *bytes;
   size_t before = book_count(library); exr_sideload_result result = {sizeof(result), 0, 0};
   memory_source memory; exr_source source;
-  /* A legal maximum ZIP comment makes the stored original cross a 64 KiB chunk.
-     It changes no image, central directory or SDK expectation. */
-  CHECK(original_size >= 22 && !memcmp(original + original_size - 22, "PK\005\006", 4));
-  CHECK(original[original_size - 2] == 0 && original[original_size - 1] == 0);
-  size = original_size + 65535; bytes = malloc(size); CHECK(bytes != NULL);
-  memcpy(bytes, original, original_size); memset(bytes + original_size, 'c', 65535);
-  bytes[original_size - 2] = 255; bytes[original_size - 1] = 255; free(original);
+  bytes = padded_cbz(original, original_size, &size); free(original);
+  /* Prove the larger fixture is readable before exercising transactional faults. */
+  {
+    exr_library *probe = NULL; exr_fixed_document *document = NULL; size_t pages = 0;
+    source = source_for(&memory, bytes, size);
+    OK(exr_library_open(":memory:", &probe, &error));
+    OK(exr_sideload_import_source(probe, EXR_CBZ, &source, "Valid padded comic", NULL, &result, &error));
+    CHECK(result.created && memory.copy_bytes == size && !memory.releases);
+    OK(exr_library_fixed_source(probe, result.book_id, NULL, &document, &error));
+    CHECK(exr_fixed_pages(document, &pages) && pages > 0);
+    exr_fixed_free(document); exr_library_close(probe);
+  }
   source = source_for(&memory, bytes, size); memory.fail_copy = 1;
   CHECK(exr_sideload_import_source(library, EXR_CBZ, &source, "Must roll back", NULL, &result, &error) == EXR_IO);
-  CHECK(memory.copy_started && !result.book_id && !result.created && !memory.releases && book_count(library) == before);
+  CHECK(memory.copy_started && memory.copy_bytes == 65536 && !result.book_id && !result.created && !memory.releases && book_count(library) == before);
   source = source_for(&memory, bytes, size); memory.cancel_copy = 1;
   CHECK(exr_sideload_import_source(library, EXR_CBZ, &source, "Must roll back", NULL, &result, &error) == EXR_CANCELLED);
-  CHECK(memory.copy_started && !result.book_id && !result.created && !memory.releases && book_count(library) == before);
+  CHECK(memory.copy_started && memory.copy_bytes == 65536 && !result.book_id && !result.created && !memory.releases && book_count(library) == before);
   source = source_for(&memory, bytes, size);
   OK(exr_sideload_import_source(library, EXR_CBZ, &source, "Recovered import", NULL, &result, &error));
   CHECK(result.created && book_count(library) == before + 1 && !memory.releases);
   int64_t id = result.book_id; source_matches(library, id, bytes, size);
   source = source_for(&memory, bytes, size); memory.cancel_copy = 1;
   CHECK(exr_sideload_import_source(library, EXR_CBZ, &source, NULL, NULL, &result, &error) == EXR_CANCELLED);
-  CHECK(memory.copy_started && !result.book_id && !result.created && book_count(library) == before + 1);
+  CHECK(memory.copy_started && memory.copy_bytes == 65536 && !result.book_id && !result.created && !memory.releases && book_count(library) == before + 1);
   source_matches(library, id, bytes, size);
   source.release(source.context); CHECK(memory.releases == 1); free(bytes);
   passed("actual_stream_insert_io_cancel_rollback_and_cancelled_duplicate_retains_old_book");
