@@ -29,7 +29,7 @@ static void stop_worker(void);
 #ifdef EXR_READER_PRODUCT_CATALOG
 static GtkWidget *shelf_scroll,*search;
 static gint shelf_generation;
-static gboolean shelf_loading,shelf_before,shelf_after,shelf_restoring,shelf_pending;
+static gboolean shelf_loading,shelf_before,shelf_after,shelf_restoring,shelf_pending,shelf_filter_pending;
 static guint search_timer,viewport_timer,restore_timer;
 static unsigned shelf_queries,shelf_evicted,shelf_max_cached;
 static unsigned shelf_layout,restore_layout;
@@ -66,10 +66,9 @@ static void state(void) {
   g_list_free(rows);
   char *cache_metrics=g_strdup_printf("shelf_first_id=%"G_GINT64_FORMAT"\nshelf_last_id=%"G_GINT64_FORMAT"\nshelf_top_id=%"G_GINT64_FORMAT"\n",first_id,last_id,top_id);
   complete=g_strconcat(data,cache_metrics,NULL);g_free(data);g_free(cache_metrics);data=complete;
-  char *shelf_metrics=g_strdup_printf("shelf_loading=%d\nshelf_generation=%d\nshelf_queries=%u\nshelf_evicted=%u\nshelf_max_cached=%u\nshelf_before=%d\nshelf_after=%d\nshelf_restoring=%d\nshelf_pending=%d\n[shelf]\ntop_key=%s\nselected_key=%s\ntop_offset=%.3f\n",
+  char *shelf_metrics=g_strdup_printf("shelf_loading=%d\nshelf_generation=%d\nshelf_queries=%u\nshelf_evicted=%u\nshelf_max_cached=%u\nshelf_before=%d\nshelf_after=%d\nshelf_restoring=%d\nshelf_pending=%d\n",
     shelf_loading,g_atomic_int_get(&shelf_generation),shelf_queries,shelf_evicted,shelf_max_cached,
-    shelf_before,shelf_after,shelf_restoring,shelf_pending,shelf_top_key ? shelf_top_key:"",
-    shelf_selected_key ? shelf_selected_key:"",shelf_top_offset);
+    shelf_before,shelf_after,shelf_restoring,shelf_pending);
   complete=g_strconcat(data,shelf_metrics,NULL);g_free(data);g_free(shelf_metrics);data=complete;
 #endif
   GtkWidget *viewport=gtk_widget_get_ancestor(image,GTK_TYPE_SCROLLED_WINDOW);int x=0,y=0;
@@ -78,6 +77,11 @@ static void state(void) {
       x,y,gtk_widget_get_allocated_width(viewport),gtk_widget_get_allocated_height(viewport),frame_generation,painted_generation);
     complete=g_strconcat(data,bounds,NULL);g_free(data);g_free(bounds);data=complete;
   }
+#ifdef EXR_READER_PRODUCT_CATALOG
+  char *keys=g_strdup_printf("[shelf]\ntop_key=%s\nselected_key=%s\ntop_offset=%.3f\n",
+    shelf_top_key ? shelf_top_key:"",shelf_selected_key ? shelf_selected_key:"",shelf_top_offset);
+  complete=g_strconcat(data,keys,NULL);g_free(data);g_free(keys);data=complete;
+#endif
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
 }
 static void status(exr_status code,const char *message) {
@@ -184,7 +188,7 @@ static void shelf_allocated(GtkWidget *widget,GtkAllocation *allocation,gpointer
   (void)widget;(void)allocation;(void)unused;shelf_layout++;
 }
 static void shelf_remember(void) {
-  if(shelf_restoring || !shelf_scroll || strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"shelf")) return;
+  if(shelf_filter_pending || shelf_restoring || !shelf_scroll || strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"shelf")) return;
   GtkWidget *row=shelf_top_row();if(!row) return;
   GtkAllocation allocation;gtk_widget_get_allocation(row,&allocation);
   GtkAdjustment *adjustment=gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(shelf_scroll));
@@ -221,7 +225,7 @@ static gboolean shelf_save_viewport(gpointer unused) {
 }
 static void shelf_scrolled(GtkAdjustment *adjustment,gpointer unused) {
   (void)unused;
-  if(shelf_restoring || !shelf_query || strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"shelf")) return;
+  if(shelf_filter_pending || shelf_restoring || !shelf_query || strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"shelf")) return;
   shelf_remember();if(viewport_timer) g_source_remove(viewport_timer);
   viewport_timer=g_timeout_add(300,shelf_save_viewport,NULL);
   double value=gtk_adjustment_get_value(adjustment),page=gtk_adjustment_get_page_size(adjustment);
@@ -238,12 +242,13 @@ static void shelf_selected(GtkListBox *box,GtkListBoxRow *row,gpointer unused) {
 static gboolean shelf_search_due(gpointer unused) {
   (void)unused;search_timer=0;
   if(busy || saving || save_failed) { search_timer=g_timeout_add(200,shelf_search_due,NULL);return G_SOURCE_REMOVE; }
-  g_free(shelf_query);shelf_query=g_strdup(gtk_entry_get_text(GTK_ENTRY(search)));
-  g_clear_pointer(&shelf_top_key,g_free);shelf_top_offset=0;
   shelf_request(0,FALSE);return G_SOURCE_REMOVE;
 }
 static void shelf_search_changed(GtkEditable *entry,gpointer unused) {
   (void)entry;(void)unused;
+  g_free(shelf_query);shelf_query=g_strdup(gtk_entry_get_text(GTK_ENTRY(search)));
+  g_clear_pointer(&shelf_top_key,g_free);shelf_top_offset=0;
+  shelf_filter_pending=TRUE;shelf_restoring=FALSE;
   /* Reject already queued responses immediately; debounce only the new query. */
   g_atomic_int_inc(&shelf_generation);shelf_loading=FALSE;
   if(search_timer) g_source_remove(search_timer);
@@ -279,7 +284,7 @@ static gboolean apply_result(gpointer data) {
     if(closing || done->generation!=g_atomic_int_get(&generation) ||
        done->shelf_generation!=g_atomic_int_get(&shelf_generation)) goto free_result;
     shelf_loading=FALSE;
-    if(result->status==EXR_OK && result->has_shelf) shelf_present(result);
+    if(result->status==EXR_OK && result->has_shelf) { shelf_filter_pending=FALSE;shelf_present(result); }
     else status(result->status,result->message);
     state();goto free_result;
   }
@@ -288,9 +293,12 @@ static gboolean apply_result(gpointer data) {
   profile_writable=done->profile_writable;
   if(result->has_shelf) {
 #ifdef EXR_READER_PRODUCT_CATALOG
-    if(done->shelf_generation==g_atomic_int_get(&shelf_generation))
-#endif
+    if(done->shelf_generation==g_atomic_int_get(&shelf_generation)) {
+      shelf_filter_pending=FALSE;shelf_present(result);
+    }
+#else
     shelf_present(result);
+#endif
   }
   if(done->action==READER_COMMIT) {
     gboolean retrying=save_failed;
@@ -428,6 +436,7 @@ static void action(GtkWidget *widget,gpointer name) {
 #ifdef EXR_READER_PRODUCT_CATALOG
     shelf_schedule_restore();
     if(shelf_pending) submit(READER_SHELF,0,NULL,font_size);
+    else if(shelf_filter_pending) shelf_request(0,FALSE);
 #endif
     state();
   }
