@@ -154,6 +154,8 @@ struct MappingReview {
                 let bytes = Data("<html><body><p>The same original bytes.</p></body></html>".utf8)
                 _ = try mapped(c, file(c, name: "same.txt", data: bytes))
                 _ = try mapped(c, file(c, name: "same.html", data: bytes))
+                let (_, aliasCreated) = try mapped(c, file(c, name: "same.xhtml", data: bytes))
+                try expect(!aliasCreated && c.library.books().count == 2, "XHTML did not retain the public HTML format identity")
                 try expect(try c.catalog.scalar("SELECT count(*) FROM reader_books") == 2, "Format was omitted from global key")
                 try expect(try c.catalog.scalar("SELECT count(DISTINCT source_sha256) FROM reader_books") == 1, "Exact original bytes changed")
             }
@@ -208,7 +210,7 @@ struct MappingReview {
                 let path = try file(c)
                 try c.catalog.execute("CREATE TRIGGER reject_local BEFORE INSERT ON reader_local_books BEGIN SELECT RAISE(ABORT,'mapping test refusal'); END;")
                 do { _ = try mapped(c, path); throw HostError.invalidResult("Product failure was accepted") }
-                catch HostError.invalidResult(let message) { try expect(message.contains("产品索引待修复"), "Product failure did not report retained SDK source") }
+                catch HostError.importRepairPending { }
                 try expect(try c.library.books().count == 1 && c.catalog.scalar("SELECT count(*) FROM reader_books") == 0 && c.catalog.localIDs().isEmpty, "Product transaction was partial or deleted SDK source")
                 try emptyStaging(c)
                 try c.catalog.execute("DROP TRIGGER reject_local")
@@ -225,6 +227,25 @@ struct MappingReview {
                 let book = try c.library.books().first { $0.id == id }!
                 try expect(try c.library.sourceFingerprint(book: book).sha256 == digest(original), "PDF imported a later external open")
                 try expect(try Data(contentsOf: path) != original, "External mutation fixture did not run")
+                try emptyStaging(c)
+            }
+
+            check("another-model-cleanup-keeps-active-copy-and-removes-interrupted-copy") {
+                let c = try context("window-lease"); defer { try? c.catalog.close() }
+                let bytes = try Data(contentsOf: resources.appendingPathComponent("Sample.pdf"))
+                let path = try file(c, name: "window.pdf", data: bytes)
+                let copy = try HostImportCopy(file: path, root: c.staging, cancel: HostCancelBox())
+                let stale = c.staging.appendingPathComponent("interrupted-process", isDirectory: true)
+                try FileManager.default.createDirectory(at: stale, withIntermediateDirectories: true)
+                try Data("interrupted".utf8).write(to: stale.appendingPathComponent("source.pdf"))
+                let otherWindow = HostReaderModel()
+                try otherWindow.reviewCleanImportStaging(c.staging)
+                try expect(try Data(contentsOf: copy.url) == bytes, "Second model's startup cleanup removed the live import")
+                try expect(!FileManager.default.fileExists(atPath: stale.path), "Truly interrupted copy was not removed")
+                let (id, _) = try c.library.importUnique(file: copy.url, title: "Active first window")
+                let book = try c.library.books().first { $0.id == id }!
+                try expect(try c.library.sourceFingerprint(book: book) == copy.fingerprint, "Live PDF could not reopen its private source after another model cleaned")
+                try copy.close()
                 try emptyStaging(c)
             }
 
@@ -255,10 +276,15 @@ struct MappingReview {
                     try expect(rejected { _ = try mapped(c, path) }, "Format limit was widened")
                 }
                 try expect(reads == 0 && c.library.books().isEmpty, "Oversize source was read or imported")
+                let (id, created) = try mapped(c, resources.appendingPathComponent("MappingLarge.epub"))
+                let stored = try c.library.books().first { $0.id == id }!
+                let large = try c.library.sourceFingerprint(book: stored)
+                try expect(created && large.bytes > 32 * 1024 * 1024 && reads > 512, "Valid EPUB above 32 MiB was not streamed within its 128 MiB cap")
+                observations = ["valid_epub_source_bytes": large.bytes, "private_copy_chunks": reads]
                 try emptyStaging(c)
             }
         }
-        let passed = checks.count == 15 && checks.allSatisfy { $0["passed"] as? Bool == true }
+        let passed = checks.count == 16 && checks.allSatisfy { $0["passed"] as? Bool == true }
         let report: [String: Any] = ["schema": 1, "accepted": passed, "checks": checks,
             "passed": checks.filter { $0["passed"] as? Bool == true }.count,
             "failed": checks.filter { $0["passed"] as? Bool != true }.count, "skipped": 0,

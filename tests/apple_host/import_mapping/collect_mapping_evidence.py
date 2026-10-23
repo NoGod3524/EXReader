@@ -24,12 +24,15 @@ CASES = {
         'restart-and-repair', 'recovered-original-with-one-mapping'],
     'testRecoversAfterProcessTerminationInsideProductTransaction': ['fresh-start', 'before-process-termination',
         'restart-and-repair', 'recovered-original-with-one-mapping'],
+    'testSavedBookRemainsVisibleWhenProductIndexFails': ['fresh-start', 'saved-with-pending-index',
+        'restart-and-repair', 'recovered-saved-book'],
 }
 SCREENSHOTS = {
     'testFormatsDuplicateUnicodeAndStoredReading': ['four-source-mappings', 'stored-original-opens'],
     'testPrepublicationCancellationLeavesNoBookOrCopy': ['cancelled-without-publication'],
     'testRecoversAfterProcessTerminationBetweenDatabases': ['before-process-termination', 'recovered-original-with-one-mapping'],
     'testRecoversAfterProcessTerminationInsideProductTransaction': ['before-process-termination', 'recovered-original-with-one-mapping'],
+    'testSavedBookRemainsVisibleWhenProductIndexFails': ['saved-with-pending-index', 'recovered-saved-book'],
 }
 
 
@@ -65,6 +68,13 @@ def validate_steps(owner, payload, fixtures):
     elif owner == 'testPrepublicationCancellationLeavesNoBookOrCopy':
         state = probe(rows['cancelled-without-publication']['probe'])
         require(state['books'] == state['local'] == state['staging'] == 0 and not state['keys'], 'cancelled import left data')
+    elif owner == 'testSavedBookRemainsVisibleWhenProductIndexFails':
+        retained = probe(rows['saved-with-pending-index']['probe'])
+        require(rows['saved-with-pending-index']['status'] == '书籍已保存，产品索引待修复' and
+                retained['books'] == retained['local'] == retained['staging'] == 0, 'postpublication failure was not reported as retained')
+        state = probe(rows['recovered-saved-book']['probe'])
+        require(state['books'] == state['local'] == state['reflow_global'] == 1 and state['staging'] == 0 and
+                state['keys'] == ['txt:' + fixtures['Mapping.txt']], 'retained SDK original was not repaired')
     else:
         inside = owner.endswith('InsideProductTransaction')
         require(rows['before-process-termination']['status'] == ('登记事务已开始' if inside else '导入已保存，正在登记'), 'actual interruption boundary missing')
@@ -88,10 +98,15 @@ def main():
     sdk = json.loads(Path(args.sdk_identity).read_text())
     validate_sdk(Path(args.sdk_root), sdk, source, run, attempt, 'macos' if args.platform == 'macos' else 'iphonesimulator')
     fixtures = json.loads(Path(args.fixtures).read_text())
+    destination = Path(args.destination).read_text().splitlines()
+    require(args.platform in ('macos', 'iphone', 'ipad') and len(destination) == 4 and all(destination), 'mapping destination identity missing')
+    require((args.platform == 'macos' and destination[0] == 'platform=macOS') or
+            (args.platform != 'macos' and destination[0].startswith('platform=iOS Simulator,id=') and
+             destination[2].lower().startswith(args.platform)), 'mapping execution destination differs from platform')
     plist = app / ('Contents/Info.plist' if args.platform == 'macos' else 'Info.plist')
     require(plistlib.loads(plist.read_bytes())['EXRSourceSHA'] == source, 'mapping app is from another source')
     cases = load_results(result)
-    require(len(cases) == 4 and {key(case['name']) for case in cases} == set(CASES) and
+    require(len(cases) == 5 and {key(case['name']) for case in cases} == set(CASES) and
             all(case['result'] == 'Passed' for case in cases), 'mapping UI case failed, skipped or missing')
     attachments = output / 'attachments'
     command('xcrun', 'xcresulttool', 'export', 'attachments', '--path', result, '--output-path', attachments)
@@ -134,8 +149,8 @@ def main():
         mappings = database.execute('SELECT b.book_key,b.source_bytes,l.sdk_book_id,l.location_kind FROM reader_books b JOIN reader_local_books l USING(book_key) ORDER BY b.book_key').fetchall()
     shutil.copytree(app, output / 'program/EXReaderHost.app')
     report = {'schema': 1, 'accepted': True, 'source_sha': source, 'run_id': run, 'attempt': attempt,
-        'platform': args.platform, 'physical_device_execution': False, 'cases': cases, 'ui_cases': 4,
-        'named_steps': 18, 'attachments': 11, 'attachment_files': inventory(attachments), 'databases': database_records,
+        'platform': args.platform, 'physical_device_execution': False, 'cases': cases, 'ui_cases': 5,
+        'named_steps': 22, 'attachments': 14, 'attachment_files': inventory(attachments), 'databases': database_records,
         'mapping_rows': mappings, 'program_files': inventory(output / 'program'), 'xcresult_sha256': tree_digest(result),
         'fixtures': fixtures, 'sdk': sdk, 'destination': Path(args.destination).read_text(),
         'xcode': command('xcodebuild', '-version'), 'problems': []}
