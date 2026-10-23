@@ -1,10 +1,11 @@
 # EXReader SDK compatibility
 
 Current development SDK: **3.40.0**, core **3.39.0**, ABI epoch **1**, library
-schema **6**. The default complete package has 324 named public function exports;
-the 316 previous names remain and bounded chapter reading adds eight. Versioned
-sections below describe their own historical checkpoints. Current package and
-consumer evidence is in `validation/2026-10-20-wp6-window-reader.json`.
+schema **7**. The WP6 checkpoint had 324 named public function exports (316
+previous names plus eight chapter-reading functions); later bounded storage
+adds further public entry points. That count is historical, not the current
+package's complete export inventory. Versioned sections below retain their own
+checkpoints; current SDK and native-host evidence is in [R5-SDK-FREEZE.md](R5-SDK-FREEZE.md).
 
 ABI epoch **1** was introduced in development step **S091** (original build
 **0.91.0**, commit `7dc8d8a`), now classified as **3.4.0** in the [changelog](../CHANGELOG.md). `EXR_ABI_VERSION` identifies the header's epoch;
