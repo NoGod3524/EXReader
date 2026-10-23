@@ -18,6 +18,10 @@ typedef struct {
   double layout_ms,render_ms,total_ms;
   uint32_t width,height;
   uint64_t bitmap_bytes,hash,fixed_document_bytes;
+  uint64_t text_hash,text_bytes;
+  size_t layout_bytes,text_start,text_end;
+  int oversize_fallback,cache_rejection_status;
+  double failed_cache_ms;
   exr_chapter_stats memory;
 } sample;
 typedef struct { size_t part,page; } route;
@@ -71,12 +75,27 @@ static int create_pager(exr_publication *publication,size_t part,exr_font *font,
     (!cached || (exr_pager_set_cache(*pager,2,8u*1024u*1024u,error)==EXR_OK &&
     exr_pager_set_checkpoints(*pager,4,2u*1024u*1024u,16,error)==EXR_OK));
 }
+static exr_status text_sink(void *context,const char *text,size_t bytes,exr_error *error) {
+  sample *item=context;size_t i;(void)error;
+  for(i=0;i<bytes;i++) { item->text_hash^=(unsigned char)text[i];item->text_hash*=UINT64_C(1099511628211); }
+  item->text_bytes+=bytes;return EXR_OK;
+}
+static int text_sample(exr_pager *pager,const exr_layout *layout,sample *item,exr_error *error) {
+  size_t count=0;const exr_page *pages=exr_layout_pages(layout,&count);
+  if(!pages || count!=1) return 0;
+  item->layout_bytes=exr_layout_memory_size(layout);
+  item->text_start=pages[0].start;item->text_end=pages[0].end;
+  item->text_hash=UINT64_C(14695981039346656037);item->text_bytes=0;
+  return exr_pager_read_text(pager,item->text_start,item->text_end,text_sink,item,NULL,error)==EXR_OK;
+}
 static int reflow_page(exr_pager *pager,size_t part,size_t page,
                        const char *phase,int cached,sample *item,exr_error *error) {
   const exr_layout *layout=NULL;exr_layout *owned=NULL;exr_bitmap bitmap={0};double at=now_ms();int ok;
   item->phase=phase;item->part=part;item->page=page;
   if(cached) {
-    if(exr_pager_get(pager,page,&layout,error)!=EXR_OK) return 0;
+    if(exr_pager_get(pager,page,&layout,error)!=EXR_OK) {
+      item->failed_cache_ms=now_ms()-at;item->cache_rejection_status=(int)error->code;return 0;
+    }
   } else {
     if(exr_pager_next(pager,&owned,error)!=EXR_OK) return 0;
     layout=owned;
@@ -87,7 +106,26 @@ static int reflow_page(exr_pager *pager,size_t part,size_t page,
   item->render_ms=now_ms()-at;item->total_ms=item->layout_ms+item->render_ms;
   item->memory=exr_pager_chapter_statistics(pager);
   if(ok) ok=bitmap_sample(&bitmap,item,NULL);
+  if(ok) ok=text_sample(pager,layout,item,error);
   exr_bitmap_free(&bitmap);exr_layout_free(owned);return ok;
+}
+static int oversize_owned_page(exr_publication *publication,exr_font *font,route target,sample *item) {
+  exr_pager *probe=NULL;exr_layout *layout=NULL;exr_error error={0};exr_bitmap bitmap={0};
+  size_t page;double at=now_ms();int ok=0;
+  if(item->cache_rejection_status!=EXR_LIMIT || !create_pager(publication,target.part,font,0,&probe,&error)) goto done;
+  for(page=0;page<=target.page;page++) {
+    exr_layout_free(layout);layout=NULL;
+    if(exr_pager_next(probe,&layout,&error)!=EXR_OK || !layout) goto done;
+  }
+  item->layout_ms=item->failed_cache_ms+now_ms()-at;
+  if(exr_layout_memory_size(layout)<=8u*1024u*1024u) goto done;
+  at=now_ms();if(exr_render_page_ex(layout,exr_layout_font(layout),0,4,NULL,&bitmap,&error)!=EXR_OK) goto done;
+  item->render_ms=now_ms()-at;item->total_ms=item->layout_ms+item->render_ms;
+  item->memory=exr_pager_chapter_statistics(probe);
+  if(!bitmap_sample(&bitmap,item,NULL) || !text_sample(probe,layout,item,&error)) goto done;
+  item->oversize_fallback=1;ok=1;
+done:
+  exr_bitmap_free(&bitmap);exr_layout_free(layout);exr_pager_free(probe);return ok;
 }
 static void diagnose_cache_failure(exr_publication *publication,exr_font *font,route target) {
   exr_pager *probe=NULL;exr_layout *layout=NULL;exr_error error={0};
@@ -118,7 +156,7 @@ int main(int argc,char **argv) {
   exr_font *font=NULL;exr_fixed_document *fixed=NULL;exr_publication *publication=NULL;
   exr_pager *pager=NULL;exr_error error={0};exr_fixed_open_options options={0};
   const exr_part *parts=NULL;sample samples[MAX_SAMPLES]={{0}};route routes[SEQUENTIAL+1]={{0}};
-  size_t count=0,part_count=0,page_count=0,part=0,page=0,i,route_count=0,current_part=SIZE_MAX;
+  size_t count=0,part_count=0,page_count=0,part=0,page=0,i,route_count=0,current_part=SIZE_MAX,fallbacks=0;
   uint32_t random=20261023u;uint64_t baseline=rss(),peak,directory_bytes=0;
   double start=now_ms(),at,font_ms=0,open_ms=0,first_ms=0;int ok=0,is_pdf,result;
   const char *stage="arguments";char *selected=NULL,*token,*save=NULL;
@@ -183,7 +221,10 @@ int main(int argc,char **argv) {
         transition=now_ms()-at;current_part=target.part;
       }
       if(reflow_page(pager,target.part,target.page,"random",1,&samples[count],&error)!=1) {
-        diagnose_cache_failure(publication,font,target);goto finish;
+        if(!oversize_owned_page(publication,font,target,&samples[count])) {
+          diagnose_cache_failure(publication,font,target);goto finish;
+        }
+        error.code=EXR_OK;error.message[0]='\0';
       }
       samples[count].layout_ms+=transition;samples[count].total_ms+=transition;
     }
@@ -203,21 +244,26 @@ int main(int argc,char **argv) {
   ok=1;stage="complete";
 finish:
   peak=rss();if(!peak || start<0) ok=0;
+  for(i=0;i<count;i++) if(samples[i].oversize_fallback) fallbacks++;
   printf("{\"schema\":1,\"success\":%s,\"stage\":\"%s\",\"status\":%d,\"engine_version\":\"%s\","
          "\"engine_abi\":%u,\"mode\":\"%s\",\"font_open_ms\":%.6f,\"open_ms\":%.6f,\"first_visible_ms\":%.6f,"
          "\"baseline_peak_rss_bytes\":%" PRIu64 ",\"peak_rss_bytes\":%" PRIu64 ","
-         "\"fixed_directory_bytes\":%" PRIu64 ",\"page_count\":%zu,\"part_count\":%zu,\"samples\":[",
+         "\"fixed_directory_bytes\":%" PRIu64 ",\"page_count\":%zu,\"part_count\":%zu,\"oversize_fallbacks\":%zu,\"samples\":[",
          ok?"true":"false",stage,(int)error.code,exr_version(),exr_abi_version(),argv[1],font_ms,open_ms,first_ms,
-         baseline,peak,directory_bytes,page_count,part_count);
+         baseline,peak,directory_bytes,page_count,part_count,fallbacks);
   for(i=0;i<count;i++) {
     sample *s=&samples[i];exr_chapter_stats *m=&s->memory;
     printf("%s{\"phase\":\"%s\",\"part\":%zu,\"page\":%zu,\"layout_ms\":%.6f,\"render_ms\":%.6f,"
            "\"total_ms\":%.6f,\"width\":%u,\"height\":%u,\"bitmap_bytes\":%" PRIu64 ","
            "\"fixed_document_bytes\":%" PRIu64 ","
+           "\"text_hash\":\"%016" PRIx64 "\",\"text_bytes\":%" PRIu64 ",\"text_start\":%zu,\"text_end\":%zu,"
+           "\"layout_bytes\":%zu,\"oversize_fallback\":%d,\"cache_rejection_status\":%d,\"failed_cache_ms\":%.6f,"
            "\"pixel_hash\":\"%016" PRIx64 "\",\"workspace_bytes\":%zu,\"peak_workspace_bytes\":%zu,"
            "\"index_bytes\":%zu,\"cache_bytes\":%zu,\"checkpoint_bytes\":%zu,\"explicit_snapshot_bytes\":%zu}",
            i?",":"",s->phase,s->part,s->page,s->layout_ms,s->render_ms,s->total_ms,s->width,s->height,
-           s->bitmap_bytes,s->fixed_document_bytes,s->hash,m->parse_workspace_bytes,m->peak_parse_workspace_bytes,m->index_bytes,
+           s->bitmap_bytes,s->fixed_document_bytes,s->text_hash,s->text_bytes,s->text_start,s->text_end,
+           s->layout_bytes,s->oversize_fallback,s->cache_rejection_status,s->failed_cache_ms,
+           s->hash,m->parse_workspace_bytes,m->peak_parse_workspace_bytes,m->index_bytes,
            m->page_cache_bytes,m->checkpoint_bytes,m->explicit_snapshot_bytes);
   }
   printf("]}\n");if(!ok) fprintf(stderr,"Native measurement failed at %s status=%d: %s\n",stage,(int)error.code,error.message);

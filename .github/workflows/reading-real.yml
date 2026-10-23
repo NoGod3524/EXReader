@@ -39,6 +39,10 @@ jobs:
           echo "source_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
           echo "artifact_name=reading-real-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          if test '${{ inputs.require_budgets }}' = true && ! test -f tests/reading_real/budgets.json; then
+            echo 'Strict performance gate requires frozen budgets before collection or build.'
+            exit 1
+          fi
       - name: Install independent PDF reference and pixel inspector
         run: |
           sudo apt-get update -qq
