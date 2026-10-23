@@ -1774,6 +1774,22 @@ exr_status exr_pager_cfi_resolve(exr_pager *p,const char *cfi,const exr_control 
   if(status!=EXR_OK) *point=(exr_cfi_point){SIZE_MAX,SIZE_MAX,0};
   return status;
 }
+exr_status exr_pager_cfi_create_at(exr_pager *p,size_t offset,const exr_control *control,
+  char **cfi,exr_error *e) {
+  exr_status status;
+  if(!cfi) return exr_fail(e,EXR_ARGUMENT,"Missing CFI output");
+  *cfi=NULL;
+  if(!p || !p->owned_chapter || p->busy || p->failed)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid, failed or reentrant chapter pager query");
+  /* query_begin() prepares node zero and can replay a different window. This
+     query deliberately permits only the existing resident window. */
+  p->busy=1;
+  status=exr_chapter_cfi_create_at(p->owned_chapter,offset,
+                                 control ? control : &p->config.control,cfi,e);
+  status=query_end(p,status,e);
+  if(status!=EXR_OK) { free(*cfi);*cfi=NULL; }
+  return status;
+}
 exr_status exr_pager_anchor_create(exr_pager *p,size_t start,size_t end,
   const exr_control *control,exr_anchor *anchor,exr_error *e) {
   exr_status status;
