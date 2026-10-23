@@ -12,12 +12,14 @@ import android.graphics.Rect;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.KeyEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.os.Build;
 import android.os.SystemClock;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.Configurator;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
@@ -65,6 +67,9 @@ public final class HostWalkthroughTest {
     private String originalFontFrame;
     private String rotatedPage, rotatedAnchor, rotatedTitle;
     private String notePage, noteAnchor, noteTitle;
+    private String activeCase;
+    private int captureSequence;
+    private JSONArray frameObservations;
 
     @Before public void setUp() throws Exception {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
@@ -247,14 +252,14 @@ public final class HostWalkthroughTest {
             tapReader(1);
             assertTrue("page 2 not reached", waitLabelContains("p.2", 15000));
             String position = pagePosition(), anchor = pageAnchor(), title = text("book_title");
-            String frame = frameDigest();
+            String frame = frameDigest("reference");
             device.executeShellCommand("am force-stop " + APP);
             SystemClock.sleep(900);
             device.executeShellCommand("am start -W -n " + APP + "/.MainActivity");
             assertNotNull("reader missing after restart", waitId("reader_panel", 25000));
             assertTrue("page 2 not restored", waitLabelContains("p.2", 20000));
             assertTrue("restart lost exact position or original text", waitReaderState(position, anchor, title, 15000));
-            assertTrue("restart changed the accepted frame", waitFrameEqual(frame));
+            assertEquals("restart changed the accepted frame", frame, frameDigest("restored"));
             assertTrue("annotations lost after restart", waitButtonText("Notes (1)", 20000));
         });
 
@@ -347,12 +352,12 @@ public final class HostWalkthroughTest {
         step("pdf_process_restart", "PDF page progress and notes survive restart", () -> {
             assertTrue("saving the annotation must clear its selection", find("selection_status") == null);
             assertTrue("saving the annotation must leave selection mode", find("selection_cancel") == null);
-            String priorFrame=frameDigest();
+            String priorFrame = frameDigest("pretransition");
             tapReader(1);
             assertTrue("pdf page 2 not reached", waitLabelContains("PDF p.2/5", 15000));
-            assertTrue("pdf page 2 pixels must be drawn before recording the restart reference",waitFrameDifferent(priorFrame));
             String position = pagePosition(), anchor = pageAnchor(), title = text("book_title");
-            String frame = frameDigest("pdf-restart-before");
+            String frame = frameDigest("reference");
+            assertFalse("page 2 pixels must differ from page 1", priorFrame.equals(frame));
             device.executeShellCommand("am force-stop " + APP);
             SystemClock.sleep(900);
             device.executeShellCommand("am start -W -n " + APP + "/.MainActivity");
@@ -362,10 +367,7 @@ public final class HostWalkthroughTest {
             // The restored note highlight is drawn when the store finishes loading the notes,
             // so prove the annotation state is back before comparing the rendered frame.
             assertTrue("pdf note lost after restart", waitButtonText("Notes (1)", 20000));
-            boolean equal=waitFrameEqual(frame);
-            String restoredFrame=frameDigest("pdf-restart-after");
-            android.util.Log.i("EXRWalkthrough","PDF restart frame expected="+frame+" actual="+restoredFrame+" equal="+equal);
-            assertTrue("PDF restart changed the rendered frame", equal);
+            assertEquals("PDF restart changed the rendered frame", frame, frameDigest("restored"));
         });
 
         step("pdf_note_delete", "Delete the fixed-page annotation", () -> {
@@ -574,13 +576,42 @@ public final class HostWalkthroughTest {
     }
 
     private String frameDigest() throws Exception {
-        return frameDigest(null);
+        return frameDigest("capture");
     }
 
-    private String frameDigest(String evidenceName) throws Exception {
-        device.waitForIdle();
-        Rect bounds = boundsOf("reader_view");
-        assertNotNull("reader frame missing", bounds);
+    private String frameDigest(String role) throws Exception {
+        return frameDigest(SystemClock.uptimeMillis()+8000,role);
+    }
+
+    private JSONObject frameObservation() throws Exception {
+        AccessibilityNodeInfo root=InstrumentationRegistry.getInstrumentation().getUiAutomation().getRootInActiveWindow();
+        if(root==null) return null;
+        List<AccessibilityNodeInfo> nodes=new ArrayList<>();
+        try {
+            if(!root.refresh()) return null;
+            nodes=root.findAccessibilityNodeInfosByViewId(APP+":id/reader_view");
+            for(AccessibilityNodeInfo node:nodes) if(node.refresh()) {
+                String value=node.getExtras().getString("exreader.frame");
+                if(value!=null) return new JSONObject(value);
+            }
+            return null;
+        } finally { for(AccessibilityNodeInfo node:nodes) node.recycle(); root.recycle(); }
+    }
+
+    private boolean drawn(JSONObject state) throws Exception {
+        return state!=null && state.getLong("accepted_token")==state.getLong("drawn_token") &&
+            state.getLong("accepted_token")==state.getLong("settled_token") &&
+            state.getLong("revision")==state.getLong("drawn_revision") && state.getLong("revision")==state.getLong("settled_revision") &&
+            state.getInt("viewport_width")==state.getInt("drawn_width") && state.getInt("viewport_height")==state.getInt("drawn_height") &&
+            state.getLong("settled_ns")>=state.getLong("drawn_ns") && state.getLong("drawn_ns")>0;
+    }
+
+    private String frameKey(JSONObject state,Rect bounds) throws Exception {
+        return state.getInt("pid")+":"+state.getInt("view")+":"+state.getLong("accepted_token")+":"+
+            state.getLong("revision")+":"+state.getInt("viewport_width")+":"+state.getInt("viewport_height")+":"+bounds.toShortString();
+    }
+
+    private JSONObject captureSample(JSONObject before,Rect bounds,String name) throws Exception {
         File temporary = File.createTempFile("exr-frame-", ".png", context.getCacheDir());
         Bitmap screen = null, frame = null;
         try {
@@ -590,16 +621,23 @@ public final class HostWalkthroughTest {
             assertTrue("reader frame outside screen", bounds.left >= 0 && bounds.top >= 0
                     && bounds.right <= screen.getWidth() && bounds.bottom <= screen.getHeight());
             frame = Bitmap.createBitmap(screen, bounds.left, bounds.top, bounds.width(), bounds.height());
-            if(evidenceName!=null) {
-                File folder=new File(evidenceDir,"frames"); assertTrue(folder.isDirectory() || folder.mkdirs());
-                try(FileOutputStream proof=new FileOutputStream(new File(folder,evidenceName+".png"))) {
-                    assertTrue(frame.compress(Bitmap.CompressFormat.PNG,100,proof));
-                }
-                android.util.Log.i("EXRWalkthrough","PDF frame "+evidenceName+" bounds="+bounds.toShortString());
+            File folder=new File(evidenceDir,"frames"); assertTrue(folder.isDirectory() || folder.mkdirs());
+            File image=new File(folder,name+".png");
+            try(FileOutputStream proof=new FileOutputStream(image)) {
+                assertTrue(frame.compress(Bitmap.CompressFormat.PNG,100,proof));
             }
             ByteBuffer pixels = ByteBuffer.allocate(frame.getByteCount());
             frame.copyPixelsToBuffer(pixels);
-            return hex(MessageDigest.getInstance("SHA-256").digest(pixels.array()));
+            JSONObject after=frameObservation(); Rect afterBounds=boundsOf("reader_view");
+            boolean same=drawn(after) && afterBounds!=null && frameKey(before,bounds).equals(frameKey(after,afterBounds));
+            return new JSONObject().put("observation",before).put("after_observation",after==null?JSONObject.NULL:after)
+                .put("bounds",new JSONArray(new int[]{bounds.left,bounds.top,bounds.right,bounds.bottom}))
+                .put("after_bounds",afterBounds==null?JSONObject.NULL:new JSONArray(new int[]{afterBounds.left,afterBounds.top,afterBounds.right,afterBounds.bottom}))
+                .put("png","frames/"+image.getName()).put("png_bytes",image.length()).put("png_sha256",fileDigest(image))
+                .put("pixel_sha256",hex(MessageDigest.getInstance("SHA-256").digest(pixels.array())))
+                .put("same_frame",same).put("key",frameKey(before,bounds))
+                .put("font_label",text("font_label")).put("zoom_label",text("zoom_label"))
+                .put("page_label",text("page_label")).put("page_anchor",pageAnchor()).put("book_title",text("book_title"));
         } finally {
             if (frame != null && frame != screen) frame.recycle();
             if (screen != null) screen.recycle();
@@ -607,22 +645,58 @@ public final class HostWalkthroughTest {
         }
     }
 
+    private String frameDigest(long deadline,String role) throws Exception {
+        Configurator configurator=Configurator.getInstance();
+        long idleTimeout=configurator.getWaitForIdleTimeout();
+        configurator.setWaitForIdleTimeout(0);
+        try { return captureStableFrame(deadline,role); }
+        finally { configurator.setWaitForIdleTimeout(idleTimeout); }
+    }
+
+    private String captureStableFrame(long deadline,String role) throws Exception {
+        final long began=SystemClock.uptimeMillis();
+        final String name=activeCase+"-"+(++captureSequence);
+        JSONObject initial=frameObservation();
+        JSONArray samples=new JSONArray();
+        JSONObject proof=new JSONObject().put("status","pending").put("role",role).put("budget_ms",8000)
+            .put("initial_observation",initial==null?JSONObject.NULL:initial).put("samples",samples);
+        frameObservations.put(proof);
+        JSONObject previous=null;
+        int attempt=0;
+        while(SystemClock.uptimeMillis()<deadline) {
+            JSONObject state=frameObservation(); Rect bounds=boundsOf("reader_view");
+            if(!drawn(state) || bounds==null || find("loading_overlay")!=null) {
+                previous=null; SystemClock.sleep(Math.min(50,Math.max(0,deadline-SystemClock.uptimeMillis()))); continue;
+            }
+            if(SystemClock.uptimeMillis()>=deadline) break;
+            JSONObject sample=captureSample(state,bounds,name+"-"+(++attempt)); samples.put(sample);
+            long capturedAt=SystemClock.uptimeMillis(); boolean within=capturedAt<=deadline;
+            sample.put("within_budget",within).put("captured_elapsed_ms",capturedAt-began);
+            if(within && sample.getBoolean("same_frame") && previous!=null &&
+                    previous.getString("key").equals(sample.getString("key")) &&
+                    previous.getString("pixel_sha256").equals(sample.getString("pixel_sha256"))) {
+                long finishedAt=SystemClock.uptimeMillis();
+                if(finishedAt>deadline) break;
+                proof.put("status","stable_after_draw").put("elapsed_ms",finishedAt-began)
+                    .put("pixel_sha256",sample.getString("pixel_sha256"));
+                android.util.Log.i("EXRWalkthrough","frame observation case="+activeCase+" capture="+name+" samples="+samples.length()+" stable_after_draw=true");
+                return sample.getString("pixel_sha256");
+            }
+            previous=within && sample.getBoolean("same_frame")?sample:null;
+            SystemClock.sleep(Math.min(100,Math.max(0,deadline-SystemClock.uptimeMillis())));
+        }
+        proof.put("status","timeout").put("elapsed_ms",SystemClock.uptimeMillis()-began);
+        throw new AssertionError("current accepted frame did not draw and settle within 8 seconds");
+    }
+
     private boolean waitFrameEqual(String expected) throws Exception {
         long deadline = SystemClock.uptimeMillis() + 8000;
-        while (SystemClock.uptimeMillis() < deadline) {
-            if (expected.equals(frameDigest())) return true;
-            SystemClock.sleep(150);
-        }
-        return false;
+        return expected.equals(frameDigest(deadline,"comparison"));
     }
 
     private boolean waitFrameDifferent(String previous) throws Exception {
         long deadline = SystemClock.uptimeMillis() + 8000;
-        while (SystemClock.uptimeMillis() < deadline) {
-            if (!previous.equals(frameDigest())) return true;
-            SystemClock.sleep(150);
-        }
-        return false;
+        return !previous.equals(frameDigest(deadline,"comparison"));
     }
 
     private JSONObject lastPageMetric() throws Exception {
@@ -646,6 +720,7 @@ public final class HostWalkthroughTest {
     }
 
     private void step(String id, String title, Body body) {
+        activeCase=id; captureSequence=0; frameObservations=new JSONArray();
         sequence++;
         long started = SystemClock.uptimeMillis();
         String status = "pass";
@@ -673,6 +748,7 @@ public final class HostWalkthroughTest {
             entry.put("status", status);
             entry.put("detail", detail);
             entry.put("duration_ms", duration);
+            entry.put("frame_observations",frameObservations);
             if (screenshot != null) {
                 File shot = new File(evidenceDir, screenshot);
                 entry.put("screenshot", screenshot);
