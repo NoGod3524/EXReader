@@ -156,18 +156,22 @@ final class HostCatalog {
 
     func shelf(query: String, anchor: HostShelfKey?, before: Bool = false,
                inclusive: Bool = false) throws -> [HostShelfBook] {
-        guard query.unicodeScalars.count <= 256, !query.utf8.contains(0) else {
+        let normalized = query.precomposedStringWithCanonicalMapping
+        guard normalized.unicodeScalars.count <= 256, !normalized.utf8.contains(0) else {
             throw HostCatalogError.invalid("搜索文字超过上限或包含空字符")
         }
-        let literal = query.precomposedStringWithCanonicalMapping
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "%", with: "\\%")
-            .replacingOccurrences(of: "_", with: "\\_")
+        func escaped(_ value: String) -> String {
+            value.replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "%", with: "\\%")
+                .replacingOccurrences(of: "_", with: "\\_")
+        }
+        let literal = escaped(normalized)
         var sql = "SELECT b.sort_title,b.book_key,l.sdk_book_id,b.title,b.author,b.format,b.source_bytes FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE b.deleted=0"
         var values: [HostCatalogValue] = []
         if !query.isEmpty {
-            sql += " AND (b.title LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\')"
-            values += [.text("%" + literal + "%"), .text("%" + literal + "%")]
+            sql += " AND (b.sort_title LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\')"
+            values += [.text("%" + literal + "%"), .text("%" + literal + "%"),
+                       .text("%" + escaped(normalized.decomposedStringWithCanonicalMapping) + "%")]
         }
         if let anchor {
             sql += " AND (b.sort_title,b.book_key) " + (before ? (inclusive ? "<=" : "<") : (inclusive ? ">=" : ">")) + " (?,?)"
