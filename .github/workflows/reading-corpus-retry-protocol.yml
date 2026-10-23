@@ -1,0 +1,19 @@
+name: Collector retry protocol only
+on:
+  push:
+    branches: ['codex/reading-corpus-retry']
+    paths:
+      - '.github/workflows/reading-corpus-retry-protocol.yml'
+      - 'tools/reading_corpus/collect.py'
+      - 'tests/reading_corpus/check_collect.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check bounded retries with fake responses and no downloads
+        run: python3 tests/reading_corpus/check_collect.py
