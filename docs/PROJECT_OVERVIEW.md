@@ -60,7 +60,7 @@ R1分支 `codex/r1-reading-core` 从 S=`686ce2fe` 追加阅读 preset、安装�
 | 已验证 | R2代表语料 | `da1c183`的run39899523839整本8/8、重开定位8/8严格接受，原件/原预期未改；历史1710份库存不与本批混计，见[R2](R2-REAL-CORPUS.md) |
 | 已验证 | R3正式基线与严格运行 | 五进程×八份、12个参考页已完成并实际审阅，固定数字预算后在run39902467216严格接受；范围为Linux reading-core与该固定语料，见[R3](READING-REAL-PERFORMANCE.md) |
 | 已验证局部 | R4 | 图片/解码流缓存、CMap、anchor、CMYK/软蒙版、CFF/BBox与受限JPX修复已纳入当前SDK；JPX ON/ASan/OFF各24项同次通过，见[R4](R4-CORE-HOTSPOTS.md) |
-| 候选已验收 | R6 | `fa54027`的run39902467216已17/17、28工件、严格accepted=true；三平台六包及全部固定证据同次通过。规则候选绑定GitHub Actions的reading-required，仍disabled，实际发布待默认分支接纳，见[R6](R6-READING-RELEASE.md) |
+| 门禁已启用 | R6 | `fa54027`的run39902467216已17/17严格接受；PR #2已合入，规则25700819 active且无bypass，必需reading-required绑定GitHub Actions15368；发布准备run39908781291已核验并原样导出六包，尚未发布，见[R6](R6-READING-RELEASE.md) |
 | 后续范围 | 设备与读屏 | 真机、VoiceOver/TalkBack及宿主声明外能力独立验收 |
 
 两个 preset 只做组件裁剪：`reading-core` 关闭音频（含 MP3/AAC）、书库、全文索引、PDF 编辑、旧共享总库、工具和 JNI，
@@ -121,11 +121,11 @@ Android/OPDS 独立候选的完整身份见 [总 handoff](handoffs/2026-10-22-af
 
 | 目标 | 已有工作 | 尚未闭合的出口 |
 | --- | --- | --- |
-| 默认分支必须通过的 CI 与可信构建基线 | 当前K=`9854061`已冻结；`fa54027`的run39902467216中17/17作业和严格reading-required通过，八份真实语料、固定预算、许可与三平台六包同次核验 | 默认分支仍为旧开发线，规则候选绑定reading-required及GitHub Actions发布者15368；实际接纳与启用尚未执行 |
+| 默认分支必须通过的 CI 与可信构建基线 | 当前K=`9854061`已冻结；`fa54027`的run39902467216中17/17严格通过；PR #2已合入，默认分支已强制reading-required及发布者15368，无bypass | 每次后继源码仍须通过完整门禁；测量环境不一致会在采样前拒绝，不能授予性能通过 |
 | EPUB 超时、PDF 打开/渲染失败闭环 | 固定八份真实原件已有整本8/8与重开定位8/8严格接受，含NASA42页；修复与旧失败见[R2](R2-REAL-CORPUS.md) | 历史 EPUB 500 本仅483完成，另有11超时、5限制、1参数状态；PDF122份中49完成，其余73留有分类。历史原件未恢复，本批不能替代其验收 |
 | 成熟引擎差分、像素与性能回归 | R3已固定工具、字体、40进程样本、12对实际审阅参考页、页面签名和数字预算，run39902467216严格接受；既有HarfBuzz、Chrome及MuPDF专项对照保留 | 当前正式预算只覆盖Linux reading-core和固定八份；跨平台性能、其他语料及全格式差分仍独立推进，未授予像素保真 |
 | 内存峰值、长章节和恶意输入专项 | 当前K已通过10/50/100MiB长章、取消/限界及sanitizer；四宿主在S=`5bc805a`通过有界EPUB与持久化；旧1GiB CBZ/WAV及四目标长测保留原源码身份 | 其他格式大文件、其他音频1GiB、真机资源预算仍待验证；新源码不继承旧长测CPU时长 |
-| 许可证、版本与发布流程统一 | MIT主许可证、第三方材料、版本/ABI/schema及About已统一；run39902467216接受三平台六份固定源码原包和清单，发布准备协议已通过 | 默认分支接纳、必需规则实际启用及真实发布准备尚未执行；tag/Release另行批准，见[R6记录](R6-READING-RELEASE.md) |
+| 许可证、版本与发布流程统一 | MIT主许可证、第三方材料、版本/ABI/schema及About已统一；默认分支门禁已启用，run39908781291原样核验并导出run39902467216的三平台六包、清单及SHA256SUMS | 尚未创建tag/Release；实际发布另行批准，见[R6记录](R6-READING-RELEASE.md) |
 
 相关入口：[兼容语料清单与缺口](COMPAT-CORPUS-PARALLEL.md)、[整本文档检查](CORPUS_VALIDATION.md)、
 [色彩差分](COLOR_MATRIX.md)、[性能记录](PERFORMANCE.md)、[可靠性交付](RELIABILITY-HANDOFF.md)、

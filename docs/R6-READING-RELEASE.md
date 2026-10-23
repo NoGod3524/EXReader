@@ -45,11 +45,30 @@ Apple严格summary两次accepted=true、97项门禁通过；Android原45+10+11�
 | Windows/X64 | 8,493,092 | 9,695,591 |
 | macOS/ARM64 | 5,580,476 | 6,370,598 |
 
-本次接受范围为原生阅读SDK及固定real-v1八份代表文档。默认分支规则仍未启用，未创建tag或Release；
-发布准备要求受测源码已成为默认分支祖先，并从这次已接受运行原样导出六包。
+本次接受范围为原生阅读SDK及固定real-v1八份代表文档。PR #2已合入默认分支，必需规则已启用；
+发布准备已核验受测源码的默认分支祖先关系，并从这次已接受运行原样导出六包，尚未创建tag或Release。
 四宿主同S验收单独登记；历史1710份库存、跨平台性能、真机/读屏及WP16仍分别验收。
 
-下列旧候选封装与协议记录只授予各自固定源码的声明范围；实际发布和默认分支规则仍未执行。
+### 默认分支接纳与实际发布准备
+
+[PR #2](https://github.com/NoGod3524/EXReader/pull/2)已按merge方式合入，默认分支提交
+`31e4117bb3341f57fad65e2d067afaec20655b0e`保留SDK候选与宿主共同源码祖先。
+[规则25700819](https://github.com/NoGod3524/EXReader/rules/25700819)实际active：默认分支必须经PR，
+只允许merge，禁止删除和非快进；严格必需reading-required绑定GitHub Actions15368，bypass为空。
+
+首次真实prepare run39908471213保留为失败：57项协议通过后，共享fetch对空路径多加尾斜杠，
+仓库根API返回404，prepared=false。修复仅使空路径请求规范仓库根URL，非空路径与HTTPError语义保持；
+新增真实请求构造回归，原57项全部保留。
+修复源码`f448d3fe00858ca7c57734c116b29acbf03960a4`的
+[run39908781291](https://github.com/NoGod3524/EXReader/actions/runs/39908781291)已58/58及实际prepared=true、published=false、problems=[]。
+该工作流源码是修复候选；包源码始终为fa54027、accepted_run_id=39902467216、attempt1，未重建或重封装。
+八个输出为plan.json、SHA256SUMS和六原始tar.gz；逐包大小/散列、内外清单及逐文件身份全部重核。
+完整记录见[启用及准备JSON](validation/reading-release-activation-31e4117.json)。
+
+默认分支push门禁run39908383274在性能采样前因Baseline environment refused拒绝，measurement_valid=false；
+该轮不授予通过，环境原件另行核对，不能放宽预算或拼入旧运行。
+
+下列旧候选封装与协议记录只授予各自固定源码的声明范围。
 
 ## 候选封装实现与历史验证
 
@@ -90,10 +109,10 @@ Windows/macOS仍执行core25项、library30项平台拒绝回归；各包的许�
 R2/R3报告必须绑定同source/run/attempt及冻结清单/测量契约/预算身份；诊断或缺证据不能变成发布通过。
 原生七个检查不由Linux profile替代。R4改变核心后由集成人重新验证并冻结SDK。
 
-GitHub默认分支当前`codex/framework`、rulesets仍未启用；About已更新为原生多格式/自有PDF/无WebView和MIT核心、可选依赖分别许可的说明，并云端读回。
-实际check已固定为reading-required，规则候选绑定GitHub Actions发布者15368；实际启用后需读取云端配置确认。
+GitHub默认分支当前`codex/framework`，规则25700819已active并云端读回；About已更新为原生多格式/自有PDF/无WebView和MIT核心、可选依赖分别许可的说明。
+实际check为reading-required，绑定GitHub Actions发布者15368，当前用户也无绕过权限。
 发布动作与候选封装分开；最终产物只能使用已接受源码、固定版本及同次工件，回退指向原有不可变版本，
-不覆盖旧tag、工件或失败。当前尚未授予R6整体完成。
+不覆盖旧tag、工件或失败。门禁接线及发布准备已实际执行，正式tag/Release仍待发布授权。
 
 ## 接线迭代记录（历史）
 

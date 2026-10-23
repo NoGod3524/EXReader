@@ -37,7 +37,8 @@
 | 已验证 | R2 real-v1固定八份在`da1c183`的run39899523839整本8/8、重开定位8/8严格通过；保留所有旧失败，原件/预期未改，见[R2记录](R2-REAL-CORPUS.md)。此独立批次不替代历史1710目标 |
 | 已验证局部 | R4图片/解码流缓存、CMap/anchor、CMYK/软蒙版、CFF/BBox与JPX修复已纳入新SDK；最终JPX三配置各24项同次通过，见[R4记录](R4-CORE-HOTSPOTS.md) |
 | 已验收 | R3冻结预算及R6三平台六份SDK候选：源码`fa54027`、run39902467216已17/17、28工件、严格accepted=true；真实八份、40进程、12参考页与原始证据同次通过，见[性能](READING-REAL-PERFORMANCE.md)及[R6](R6-READING-RELEASE.md) |
-| 未完成 | 默认分支接纳、必需规则启用与实际发布；历史原件恢复、跨平台性能、真机与读屏分别跟踪 |
+| 已启用 | 默认分支已接纳PR #2，必需reading-required规则已active且无bypass；发布准备run39908781291已严格导出六原包，见[R6](R6-READING-RELEASE.md) |
+| 未完成 | 实际tag/Release；历史原件恢复、跨平台性能、真机与读屏分别跟踪 |
 
 `reading-core` 关闭音频、书库、全文索引、PDF 编辑、旧共享总库、工具与 JNI，保留 PDF、密码认证、ICC 与现有图像开关；
 `reading-library` 再打开 SQLite 书库。裁剪不增强 PDF/图像能力，也不表示性能达标。
