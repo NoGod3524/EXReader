@@ -1,0 +1,95 @@
+name: Desktop bounded catalog queries
+on:
+  push:
+    branches: [codex/reader-desktop-shelf]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  query:
+    name: bounded query (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Keep the frozen SDK and product schema unchanged
+        run: |
+          git merge-base --is-ancestor 9854061be331fe603a1822d9b2b36ee357154927 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Compile the actual native catalog and unchanged pinned SQLite
+        run: |
+          mkdir -p build/shelf-evidence
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "SHELF_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          cmake -S tests/reader_catalog/shelf -B build/shelf-query -G Ninja -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/shelf-evidence/configure.log
+          cmake --build build/shelf-query --parallel 4 --verbose 2>&1 | tee build/shelf-evidence/build.log
+      - name: Original twelve catalog groups and ten bidirectional query groups
+        run: ctest --test-dir build/shelf-query --output-on-failure --no-tests=error --timeout 180 --output-junit "$SHELF_WORKSPACE/build/shelf-evidence/tests.xml"
+      - name: Require complete same-source query evidence
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path('build/shelf-query')
+          original = json.loads((root / 'original/result.json').read_text())
+          shelf = json.loads((root / 'shelf/shelf-result.json').read_text())
+          expected = {
+              'forward_all_visible_stable_keys_no_duplicates',
+              'reverse_all_visible_stable_keys_no_duplicates',
+              'same_title_130_rows_cross_page_boundaries',
+              'literal_title_author_punctuation_and_utf8_search',
+              'empty_and_missing_filters',
+              'viewport_key_lookup_respects_filter_delete_and_absence',
+              'anchor_follows_current_title_without_guessing_old_cursor',
+              'query_limits_invalid_utf8_and_partial_cursors_refused',
+              'callback_stop_and_query_reentry_refused',
+              'actual_forward_reverse_sql_uses_index_ranges',
+          }
+          for report, count in ((original, 12), (shelf, 10)):
+              assert report['accepted'] is True and report['problems'] == []
+              assert report['source_sha'] == os.environ['GITHUB_SHA']
+              assert report['run_id'] == os.environ['GITHUB_RUN_ID']
+              assert report['attempt'] == os.environ['GITHUB_RUN_ATTEMPT']
+              assert len(report['checks']) == count and all(x['passed'] is True for x in report['checks'])
+          assert {x['id'] for x in shelf['checks']} == expected
+          assert shelf['rows'] == 2500 and shelf['visible'] == 2499 and shelf['ui_credit'] == 0
+          evidence = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'original_groups': 12, 'query_groups': 10, 'ui_credit': 0,
+              'reports': {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
+                          for p in (root / 'original/result.json', root / 'shelf/shelf-result.json')}}
+          Path('build/shelf-evidence/verified.json').write_text(json.dumps(evidence, indent=2) + '\n')
+          print(json.dumps(evidence))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-shelf-query-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/shelf-evidence/
+            build/shelf-query/original/
+            build/shelf-query/shelf/
+            build/shelf-query/Testing/Temporary/LastTest.log
+            build/shelf-query/CMakeCache.txt
+          if-no-files-found: error
