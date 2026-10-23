@@ -1,0 +1,26 @@
+name: R4 debug Bitmap identity evidence audit
+on:
+  push:
+    branches: ['codex/android-evidence-audit']
+    paths: ['.github/workflows/r4-bitmap-result.yml', 'tests/r4_core/debug_bitmap_result.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  read-only-evidence:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install Pillow==11.3.0
+      - name: Verify the completed debug run and compare retained frame identities
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/r4_core/debug_bitmap_result.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r4-debug-bitmap-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/debug-bitmap-evidence/
+          if-no-files-found: error
