@@ -27,13 +27,24 @@ that rejection.
 | [40013457389](https://github.com/NoGod3524/EXReader/actions/runs/40013457389) | AMD EPYC 7763 / `amd-epyc-7763` | accepted, valid, no problems | passed |
 | [40013462159](https://github.com/NoGod3524/EXReader/actions/runs/40013462159) | AMD EPYC 7763 / `amd-epyc-7763` | rejected, invalid measurement | same original budget refusal |
 | [40013585658](https://github.com/NoGod3524/EXReader/actions/runs/40013585658), performance job `120619855566` | Intel Xeon Platinum 8573C / `intel-xeon-8573c` | accepted, valid, no problems | passed |
+| [40015227294](https://github.com/NoGod3524/EXReader/actions/runs/40015227294) | Intel Xeon Platinum 8573C / `intel-xeon-8573c` | accepted, valid, no problems | passed |
+| [40015233091](https://github.com/NoGod3524/EXReader/actions/runs/40015233091) | Intel Xeon Platinum 8573C / `intel-xeon-8573c` | accepted, valid, no problems | passed |
 
 The complete enclosing required workflow was still running at this record's
 first audit. Its subsequent strict completion is recorded below.
-It also contains no 9V45 enforcing result: the three independent runs above
-all used 7763. Additional fixed-source runs `40015227294` and `40015233091`
-are awaiting completed-original audit; dispatch count does not establish CPU
-coverage.
+It contains no 9V45 enforcing result: the first three independent runs all
+used 7763, and both additional fixed-source runs used 8573C. Dispatch count
+does not establish CPU coverage. All six original runs have now been audited;
+the latest diagnostic run is `40016119074`, with 6/6 successful audit jobs.
+
+| Original run | Original artifact ID | ZIP bytes | ZIP SHA-256 |
+| --- | --- | ---: | --- |
+| 40013452463 | 12528535200 | 36419658 | `bd477015fcd135b37fc62956c3ac731ab646a812147a88ac81b2cd2130b39c7f` |
+| 40013457389 | 12527677305 | 36419662 | `f9a56103eafb7508636500da63e67c53e22c29b319840603fd79b49378bd0380` |
+| 40013462159 | 12526584845 | 36404534 | `a17ec7dcebe28fbacc65105c8ba758df315abbf09617327c6bbf6f9946ef1630` |
+| 40013585658 | 12528400498 | 36419781 | `260a98e3d73705c4f0122e6b63548a3c892b6edae92777b13f1ddec00dfbfe8f` |
+| 40015227294 | 12527614128 | 36419730 | `b7b5c97d10549a6efa5aa7f8f460c567dae862f70f6ba2519905a3a4b49ffd57` |
+| 40015233091 | 12528412700 | 36419769 | `4a4e4ee88446f44cf8f544ae8185e4bfdc643ed184941981b97f3769b417f10e` |
 
 Shared registry SHA-256:
 `d389ec5c71f702a52dfed8acf7b23be4c760acfb8a6a16d7192b701f56c0a6d3`.
@@ -87,6 +98,7 @@ is ID `12526584845`, 36,404,534 bytes, SHA-256
 - [40014534317](https://github.com/NoGod3524/EXReader/actions/runs/40014534317), source `ee6a47d1d7ab9cedfc289f2e527e4b4e85047484`: retained diagnostic failure. The cloud GitHub CLI refused terminal escape sequences in the original job log; no raw replay completed.
 - [40014706615](https://github.com/NoGod3524/EXReader/actions/runs/40014706615), source `d998e56d8109170aace3ab203e4d32913ce62349`: 4/4 diagnostic jobs succeeded after allowing the CLI to retain those inert log bytes. The four original upload/API/ZIP identities were verified.
 - [40015276821](https://github.com/NoGod3524/EXReader/actions/runs/40015276821), source `ed99c7fb76821497b1038c1c302ffde16a19f686`: 4/4 diagnostic jobs succeeded and added the rejected metric's original values. Refusal detail is in audit job `120625643759`, artifact `12527827370` (117,970 bytes, SHA-256 `97142e6dc08b789cc6ebcf4452351c658da414234618a91f474a44f44f1de376`).
+- [40016119074](https://github.com/NoGod3524/EXReader/actions/runs/40016119074), source `6182f69267f2132e55f6b95363c0922895f703e2`: 6/6 diagnostic jobs succeeded. The additional original runs were audited by jobs `120628489048` and `120628489406`; both are 8573C with successful original strict acceptance and raw replay. Their diagnostic artifacts are `12527768659` (146,773 bytes, SHA-256 `f20eff622cf54aa714bfb628a4ba480b4a862f1757743738e3a1b3426f8a2ebc`) and `12527409707` (146,806 bytes, SHA-256 `6c04fe0cd24d82d8010b04744c3ec389951ef2b1617d4f8ef7b780ba99e7db14`).
 
 No PR 7 source, protected SDK tree, old budget, numeric threshold, or
 original run was changed by this audit branch.
