@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install cloud-only screenshot text observer
+        run: command -v tesseract || (sudo apt-get update -qq && sudo apt-get install -y tesseract-ocr)
       - name: Verify retained failed archive and inspect original logs in the cloud
         run: python tools/reader_import_diagnostic.py
       - uses: actions/upload-artifact@v4

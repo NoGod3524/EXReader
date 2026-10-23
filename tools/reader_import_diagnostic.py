@@ -53,6 +53,16 @@ def main():
                             for item in value.get('cases', []) if item.get('status') != 'pass']
                 item = {'path': name, 'summary': value.get('summary'), 'failures': selected}
                 report['entries'].append(item); print(json.dumps(item))
+                for failed in value.get('cases', []):
+                    if failed.get('status') == 'pass':
+                        continue
+                    shot_name = name.rsplit('/', 1)[0] + '/' + failed['screenshot']
+                    shot = output / (failed['id'] + '.png')
+                    shot.write_bytes(zipped.read(shot_name))
+                    observed = subprocess.run(['tesseract', str(shot), 'stdout'],
+                                              capture_output=True, text=True, check=True).stdout
+                    item = {'screenshot': shot_name, 'observed_text': observed}
+                    report['entries'].append(item); print(json.dumps(item))
             if name.endswith(('review-logcat.txt', 'bounded-logcat.txt')):
                 text = zipped.read(name).decode('utf-8', 'replace')
                 lines = text.splitlines()
@@ -65,6 +75,13 @@ def main():
                           or re.search(r'ActivityManager.*(?:ANR in|Killing.*org.exreader|Process.*org.exreader.*died)', line)]
                 item = {'path': name, 'bytes': len(zipped.read(name)),
                         'case_starts': starts, 'events': events[-160:]}
+                report['entries'].append(item); print(json.dumps(item))
+                lower, upper = ('10-23 19:49:40', '10-23 19:50:04') if 'review-' in name else (
+                    '10-23 19:53:30', '10-23 19:53:56')
+                relevant = [line[:700] for line in lines if lower <= line[:14] <= upper
+                            and re.search(r'Activity|Window|Input|EXR|ViewRoot|Choreographer|RenderThread|OpenGLRenderer|BufferQueue|Surface', line)
+                            and not re.search(r'\bat [\w.$]+\(', line)]
+                item = {'window_path': name, 'lower': lower, 'upper': upper, 'lines': relevant[-180:]}
                 report['entries'].append(item); print(json.dumps(item))
         print(json.dumps({'other_diagnostic_paths': [name for name in names if any(
             token in name for token in ('uiautomator', 'window', 'hierarchy', 'logcat', 'instrumentation'))]}))
