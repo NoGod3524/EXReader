@@ -15,11 +15,12 @@ jobs:
         with:
           ref: f2ed25073d92f7ebaee4136c3f3fdbb965d70112
       - name: Install image inspector
-        run: sudo apt-get update -qq && sudo apt-get install -y python3-pil
+        run: sudo apt-get update -qq && sudo apt-get install -y python3-pil poppler-utils
       - name: Read exact retained native and reference pixels without rerunning the SDK
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -o pipefail
           mkdir -p build
           python3 tests/pdf_jpx_integration/check.py --inspect-artifact 12477291584 \
             --artifact-digest 30076c2d9529d2bfea5fde68149ef5fc30f4a138f20b1f451542e51210c022f0 | tee build/jpx-reference-observation.json
