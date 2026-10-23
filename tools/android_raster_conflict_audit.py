@@ -4,10 +4,11 @@
 from collections import Counter
 import json
 from pathlib import Path
+import re
 import sys
 import zipfile
 
-from android_raster_ab_diagnostic import cloud, sha, zip_members
+from android_raster_ab_diagnostic import cloud, parse_frames, sha, zip_members
 from check_parallel_integration import download_artifact_zip, fetch, pages, require
 
 PIN = {'run_id': 39999124836, 'attempt': 1,
@@ -18,6 +19,74 @@ NAME = 'android-raster-ab-diagnostic-39999124836-1'
 OUT = Path('build/android-raster-conflict-audit')
 LABELS = ('A1', 'B1', 'B2', 'A2')
 CRITICAL = ('Flags', 'IntendedVsync', 'FrameCompleted')
+
+
+def identity_readback(frames):
+    old, timeline, availability, headers = {}, {}, Counter(), set()
+    id_values, raw_examples = Counter(), []
+    for frame in frames:
+        row = frame['raw']
+        headers.add(tuple(sorted(row)))
+        key = (frame['pid'], frame['window'], frame['intended_vsync_ns'])
+        item = old.setdefault(key, {'ids': set(), 'vsyncs': set(), 'completed': set()})
+        item['completed'].add(row['FrameCompleted'])
+        if 'Vsync' in row:
+            availability['Vsync_present'] += 1
+            item['vsyncs'].add(row['Vsync'])
+        else:
+            availability['Vsync_missing'] += 1
+        if 'FrameTimelineVsyncId' not in row:
+            availability['FrameTimelineVsyncId_missing'] += 1
+            continue
+        value = row['FrameTimelineVsyncId']
+        availability['FrameTimelineVsyncId_present'] += 1
+        id_values[value] += 1
+        item['ids'].add(value)
+        if value <= 0:
+            availability['FrameTimelineVsyncId_nonpositive'] += 1
+            continue
+        if value == 2**63 - 1:
+            availability['FrameTimelineVsyncId_sentinel'] += 1
+            continue
+        availability['FrameTimelineVsyncId_positive_nonsentinel'] += 1
+        newkey = (frame['pid'], frame['window'], value)
+        target = timeline.setdefault(newkey, {'old_keys': set(), 'critical': {field: set() for field in CRITICAL},
+                                              'Vsync': set()})
+        target['old_keys'].add(key)
+        for field in CRITICAL:
+            target['critical'][field].add(row[field])
+        if 'Vsync' in row:
+            target['Vsync'].add(row['Vsync'])
+        if len(raw_examples) < 3:
+            raw_examples.append({'pid': frame['pid'], 'window': frame['window'], 'raw': row})
+    old_completed = {key: item for key, item in old.items() if len(item['completed']) > 1}
+    collisions = {key: item for key, item in old.items() if len(item['ids']) > 1}
+    new_conflicts = {key: item for key, item in timeline.items()
+                     if any(len(values) > 1 for values in item['critical'].values())}
+    return {'scope': 'All ordinary PID-matching observations under the unchanged original frame filter',
+            'availability_observations': dict(sorted(availability.items())),
+            'ordinary_observations': sum(id_values.values()) + availability['FrameTimelineVsyncId_missing'],
+            'unique_old_keys': len(old), 'old_keys_with_multiple_FrameTimelineVsyncId': len(collisions),
+            'old_keys_with_multiple_Vsync': sum(len(item['vsyncs']) > 1 for item in old.values()),
+            'old_keys_with_multiple_FrameCompleted': len(old_completed),
+            'old_FrameCompleted_conflicts_with_multiple_FrameTimelineVsyncId':
+                sum(len(item['ids']) > 1 for item in old_completed.values()),
+            'old_FrameCompleted_conflicts_with_multiple_Vsync':
+                sum(len(item['vsyncs']) > 1 for item in old_completed.values()),
+            'FrameTimelineVsyncId_distinct_values': len(id_values),
+            'FrameTimelineVsyncId_min': min(id_values, default=None),
+            'FrameTimelineVsyncId_max': max(id_values, default=None),
+            'FrameTimelineVsyncId_top_counts': id_values.most_common(5),
+            'positive_nonsentinel_timeline_keys': len(timeline),
+            'timeline_keys_with_multiple_old_keys': sum(len(item['old_keys']) > 1 for item in timeline.values()),
+            'timeline_keys_with_critical_conflicts': len(new_conflicts),
+            'timeline_key_critical_conflict_counts':
+                {field: sum(len(item['critical'][field]) > 1 for item in timeline.values()) for field in CRITICAL},
+            'timeline_conflict_examples':
+                [{'key': list(key), 'old_keys': [list(value) for value in sorted(item['old_keys'])],
+                  'critical_values': {field: sorted(values) for field, values in item['critical'].items()},
+                  'Vsync_values': sorted(item['Vsync'])} for key, item in list(new_conflicts.items())[:8]],
+            'raw_field_headers': [list(header) for header in sorted(headers)], 'first_raw_examples': raw_examples}
 
 
 def save(path, value):
@@ -73,6 +142,14 @@ def selfcheck():
             and result['changed_fields_observations'] == {'FrameCompleted': 1, 'GpuCompleted': 2}
             and result['critical_changed_observations'] == {'Flags': 0, 'IntendedVsync': 0, 'FrameCompleted': 1},
             'Conflict classification check failed')
+    identity_frames = [dict(frame, raw=dict(frame['raw'], FrameTimelineVsyncId=value, Vsync=100,
+                                           FrameCompleted=completed))
+                       for value, completed in ((1, 200), (2, 210), (2, 220))]
+    identity_result = identity_readback(identity_frames)
+    require(identity_result['old_keys_with_multiple_FrameTimelineVsyncId'] == 1
+            and identity_result['positive_nonsentinel_timeline_keys'] == 2
+            and identity_result['timeline_key_critical_conflict_counts'] ==
+                {'Flags': 0, 'IntendedVsync': 0, 'FrameCompleted': 1}, 'Frame identity classification failed')
     try:
         classify([dict(rows[0], key=[18, 'reader', 100])])
     except ValueError:
@@ -112,15 +189,18 @@ def audit(report):
         raw = OUT / 'raw'
         raw.mkdir()
 
-        def read(name):
+        def read_bytes(name, limit=8 * 1024 * 1024):
             require(name in names, 'Required ABBA JSON missing: ' + name)
             entry = archive.getinfo(name)
-            require(not entry.is_dir() and entry.file_size <= 8 * 1024 * 1024, 'ABBA JSON exceeds bound')
+            require(not entry.is_dir() and entry.file_size <= limit, 'ABBA source member exceeds bound')
             data = archive.read(entry)
             target = raw / name
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
-            return json.loads(data)
+            return data
+
+        def read(name):
+            return json.loads(read_bytes(name))
 
         prepared, plan, original = read('prepared.json'), read('plan.json'), read('diagnostic.json')
         for value in (prepared, original):
@@ -146,8 +226,30 @@ def audit(report):
             result = classify(conflicts)
             require(result['distinct_conflicting_keys'] == phase['measurements']['conflicting_completed_keys'],
                     'Retained conflicting-key count differs')
+            sampling = read(label + '/sampling.json')
+            frames, raw_dump_count, pid_mismatch_observations = [], 0, 0
+            for sample in sampling['samples']:
+                record = sample['commands'].get('gfxinfo')
+                if not record or record['exit_code'] != 0:
+                    continue
+                filename = record['stdout']
+                require(re.fullmatch('[0-9]{5}\\.stdout\\.txt', filename), 'Unexpected gfxinfo raw filename')
+                data = read_bytes(label + '/commands/' + filename, 32 * 1024 * 1024)
+                require(len(data) == record['stdout_bytes'], 'Raw gfxinfo size differs')
+                parsed, unused = parse_frames(data.decode('utf-8', errors='replace'))
+                raw_dump_count += 1
+                for frame in parsed:
+                    if frame['pid'] == sample.get('pid'):
+                        frames.append(frame)
+                    else:
+                        pid_mismatch_observations += 1
+            identity = identity_readback(frames)
+            require(identity['unique_old_keys'] == phase['measurements']['frames']['count'] + result['distinct_conflicting_keys'],
+                    'Full raw readback does not reproduce the original old-key set')
+            identity.update(raw_dump_count=raw_dump_count, pid_mismatch_observations=pid_mismatch_observations)
             report['phases'].append({'label': label, 'variant': phase['variant'],
-                                     'original_measurements_unchanged': phase['measurements'], 'conflicts': result})
+                                     'original_measurements_unchanged': phase['measurements'], 'conflicts': result,
+                                     'frame_identity_readback': identity})
         report['audit_completed'] = True
 
 
