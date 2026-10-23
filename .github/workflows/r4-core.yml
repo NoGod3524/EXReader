@@ -1,0 +1,58 @@
+name: R4 core hotspot diagnostic
+on:
+  push:
+    branches: ['codex/r4-core-hotspots']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  anchor:
+    name: anchor (${{ matrix.profile }})
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [release, gprof]
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 9bd2b2c3caf1f63dc4437e0af978247494e87145
+          path: engine
+      - name: Build the unmodified frozen engine and installed diagnostic consumer
+        shell: bash
+        run: |
+          flags='-fno-omit-frame-pointer'
+          if [ '${{ matrix.profile }}' = gprof ]; then flags="$flags -pg"; fi
+          cmake --preset reading-core -S engine -DCMAKE_C_FLAGS="$flags" -DCMAKE_EXE_LINKER_FLAGS="$flags" -DCMAKE_INSTALL_PREFIX="$PWD/stage"
+          cmake --build engine/build/reading-core --parallel 4
+          cmake --install engine/build/reading-core
+          cmake -S tests/r4_core -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/stage" -DCMAKE_C_FLAGS="$flags" -DCMAKE_EXE_LINKER_FLAGS="$flags"
+          cmake --build build/probe --parallel 4
+          cc --version > build/compiler.txt
+      - name: Locate bounded point and quote restoration cost
+        run: python3 tests/r4_core/run.py --binary build/probe/r4-anchor-probe --font engine/tests/fixtures/fonts/primary.ttf --engine engine --output build/evidence --profile '${{ matrix.profile }}'
+      - name: Preserve the actual sampled call profile
+        if: always() && matrix.profile == 'gprof'
+        run: gprof build/probe/r4-anchor-probe build/evidence/gmon.out > build/evidence/gprof.txt
+      - name: Print measured hotspot evidence
+        if: always()
+        run: |
+          if [ -f build/evidence/summary.json ]; then cat build/evidence/summary.json; fi
+          if [ -f build/evidence/gprof.txt ]; then head -90 build/evidence/gprof.txt; fi
+      - name: Preserve same-source diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r4-anchor-${{ matrix.profile }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/evidence/
+            build/probe/r4-anchor-probe
+            build/compiler.txt
+            build/probe/CMakeCache.txt
+            engine/build/reading-core/CMakeCache.txt
+          if-no-files-found: error
