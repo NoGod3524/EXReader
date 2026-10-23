@@ -101,6 +101,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private Button notesClose;
     private Button cancelButton;
     private ReaderView readerView;
+    private FrameMetricsTrace frameMetricsTrace;
 
     private final List<NativeLibrary.Book> books = new ArrayList<>();
     private final List<String> shelfRows = new ArrayList<>();
@@ -161,6 +162,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         bindViews();
         wireActions();
         readerView.setListener(this);
+        frameMetricsTrace = FrameMetricsTrace.start(this, readerView);
 
         worker = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "exr-host-worker");
@@ -1357,6 +1359,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     @Override protected void onDestroy() {
+        if (frameMetricsTrace != null) frameMetricsTrace.close();
         destroyed = true;
         if (activeTask != null) activeTask.cancel();
         ++generation;

@@ -3,6 +3,7 @@ plugins {
 }
 
 def exrSdk = project.findProperty('exrSdk') ?: ''
+def originalDiagnosticNative = project.findProperty('exrFrameMetricsOriginalNative') == 'true'
 
 android {
     namespace 'org.exreader.host'
@@ -20,7 +21,7 @@ android {
         ndk {
             abiFilters 'x86_64'
         }
-        externalNativeBuild {
+        if (!originalDiagnosticNative) externalNativeBuild {
             cmake {
                 arguments "-DEXR_SDK=${exrSdk}"
             }
@@ -38,7 +39,7 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    externalNativeBuild {
+    if (!originalDiagnosticNative) externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
             version '3.22.1'
@@ -52,6 +53,7 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging false
+            if (originalDiagnosticNative) keepDebugSymbols += ['**/*.so']
         }
     }
 

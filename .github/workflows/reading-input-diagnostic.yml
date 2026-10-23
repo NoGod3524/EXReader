@@ -1,0 +1,60 @@
+name: Android completed FrameMetrics ABBA diagnostic only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  completed-frame-abba:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install only Java APK and emulator tooling
+        run: |
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
+          echo "$SDK/emulator" >> "$GITHUB_PATH"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "emulator" "system-images;android-34;default;x86_64"
+      - name: Verify original archives and reuse exact native, font, asset and helper bytes
+        run: python3 tools/android_frame_metrics_ab.py prepare
+      - name: Build only diagnostic Java APK with original native libraries
+        run: gradle -p examples/android --no-daemon --stacktrace -PexrFrameMetricsOriginalNative=true :app:assembleDebug
+      - name: Verify diagnostic APK font, all assets and complete native registry
+        run: python3 tools/android_frame_metrics_ab.py verify
+      - name: Enable original emulator accelerator
+        run: sudo chmod 666 /dev/kvm
+      - name: Original 45 cases in ABBA with copied completed metrics and external PSS
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: python3 tools/android_frame_metrics_ab.py run
+      - name: Preserve original inputs, diagnostic APK, plan and every phase without acceptance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-frame-metrics-ab-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-frame-metrics-ab/
+          if-no-files-found: error
+          retention-days: 30
