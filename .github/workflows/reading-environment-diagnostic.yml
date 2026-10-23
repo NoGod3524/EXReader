@@ -1,0 +1,23 @@
+name: Retained performance environment diagnostic only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  retained-environment:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the failed artifact and compare retained environments without execution
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reading_environment_diagnostic.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reading-environment-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reading-environment-diagnostic/
+          if-no-files-found: error
+          retention-days: 30
