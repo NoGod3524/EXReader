@@ -1,0 +1,25 @@
+{
+  "source_sha": "dc7e0f6d5a8a9c58595a59ae677ea7d7289d34ce",
+  "run_id": 40040335713,
+  "attempt": 1,
+  "accepted": true,
+  "scope": "GTK bounded native bookshelf declared functional scope",
+  "complete_product": false,
+  "performance_accepted": false,
+  "windows_bounded_shelf_ui_accepted": false,
+  "sdk_candidate": "9854061be331fe603a1822d9b2b36ee357154927",
+  "product_schema": 1,
+  "originals": 2202,
+  "page_size": 50,
+  "cache_limit": 150,
+  "jobs": {
+    "linux": {"id": 120709663824, "conclusion": "success", "sdk_groups": 9, "catalog_groups": 12, "query_groups": 10, "kill_boundaries": 2, "shelf_backend_groups": 10, "original_ui": 20, "product_ui": 5, "fixed_ui": 24, "shelf_ui": 14},
+    "windows": {"id": 120709664069, "conclusion": "success", "sdk_groups": 9, "catalog_groups": 12, "query_groups": 10, "kill_boundaries": 2, "native_selfchecks": 26, "evidence_checks": 54, "original_ui": 158, "screenshots": 8, "product_ui": 10}
+  },
+  "artifacts": [
+    {"id": 12539266408, "name": "reader-desktop-sdk-Linux-40040335713-1", "bytes": 37118149, "sha256": "7a12878e424f7aef0d99d923d6eac2db4543919bb5d0e264c1861c55c16b8b3c", "expired_at_verification": false},
+    {"id": 12538443858, "name": "reader-desktop-sdk-Windows-40040335713-1", "bytes": 36182355, "sha256": "980bf2076078c76e618f61cabbf200b4437b38f7e72ed7acf19de90048986616", "expired_at_verification": false}
+  ],
+  "retained_failed_runs": [40035274193, 40037765533, 40038238904, 40038382028, 40038854469, 40039542360],
+  "problems": []
+}
