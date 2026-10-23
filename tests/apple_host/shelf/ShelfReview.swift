@@ -20,7 +20,8 @@ import CryptoKit
                 migrationURL: resources.appendingPathComponent("reader-catalog-v1.sql"), ownerQueue: queue)
             let input = output.appendingPathComponent("seed.txt")
             for index in 0..<2202 {
-                let title = index < 130 ? "Tie title" : index == 200 ? "100%_ literal" : String(format: "Book %04d", index)
+                let title = index < 130 ? "Tie title" : index == 200 ? "100%_ literal" :
+                    index == 203 ? "Cafe\u{301} Unicode" : String(format: "Book %04d", index)
                 let bytes = Data("Stored native shelf book \(index). Offline reading uses these exact original bytes.\n".utf8)
                 try bytes.write(to: input)
                 _ = try library.importUnique(file: input, title: title)
@@ -29,8 +30,9 @@ import CryptoKit
             try check("2202_real_public_sdk_originals", books.count == 2202)
             for (index, book) in books.enumerated() {
                 let fingerprint = try library.sourceFingerprint(book: book)
+                let author = book.title.hasPrefix("Cafe") ? "Re\u{301}ne\u{301} Unique" : index == 400 ? "Unique Shelf Author" : ""
                 try catalog.attach(format: fingerprint.format, sha256: fingerprint.sha256, bytes: fingerprint.bytes,
-                    title: book.title, author: index == 400 ? "Unique Shelf Author" : "", sdkID: book.id,
+                    title: book.title, author: author, sdkID: book.id,
                     locationKind: library.locationKind(book: book))
             }
             var anchor: HostShelfKey?
@@ -64,6 +66,11 @@ import CryptoKit
             try check("title_ascii_case_search", try catalog.shelf(query: "bOoK 0201", anchor: nil).count == 1)
             try check("independent_author_search", try catalog.shelf(query: "Unique Shelf Author", anchor: nil).count == 1)
             try check("empty_search_result", try catalog.shelf(query: "not a shelf title", anchor: nil).isEmpty)
+            let canonicalTitle = try catalog.shelf(query: "Café Unicode", anchor: nil)
+            let canonicalAuthor = try catalog.shelf(query: "Réné Unique", anchor: nil)
+            try check("canonical_title_and_author_search_preserves_display_bytes", canonicalTitle.count == 1 &&
+                canonicalAuthor.count == 1 && Array(canonicalTitle[0].title.utf8) == Array("Cafe\u{301} Unicode".utf8) &&
+                Array(canonicalAuthor[0].author.utf8) == Array("Re\u{301}ne\u{301} Unique".utf8))
             let middle = try catalog.shelf(query: "", anchor: nil)[30]
             try check("inclusive_restore_keeps_exact_top_key", try catalog.shelf(query: "", anchor: middle.key, inclusive: true).first?.id == middle.id)
             try catalog.close()

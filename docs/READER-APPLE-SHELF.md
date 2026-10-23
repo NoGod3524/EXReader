@@ -19,6 +19,8 @@ At the global tail, a taller native List may be unable to keep the old top row
 at the top. The host accepts its actual earlier first row only after observing
 both the requested row and terminal row in the viewport; it never invents an
 offscreen anchor. Search uses the same NFC/256-scalar bound at UI and SQL layers.
+Title matching uses the normalized sort title; author matching binds both NFC
+and NFD literals. Stored display title and author bytes are preserved.
 
 The reader's compatibility/fallback metadata is separately capped at 50 rows.
 It remains available when an SDK import is saved but its product index is pending
@@ -43,7 +45,8 @@ no hard size, memory or frame-time budget is granted by this package.
 using the actual public macOS SDK and attaches all their actual fingerprints to
 the product catalog. The closed SQLite files are portable inputs for macOS,
 iPhone simulator and iPad simulator. The seed includes 130 identical titles,
-one unique author and a title containing literal `%_`.
+one unique author, a title containing literal `%_`, and decomposed Unicode
+title/author bytes queried with canonically composed text.
 
 Native checks cover both complete keyset traversals, stable equal-title keys,
 title/author/literal/empty searches, inclusive restoration and a deterministically
@@ -80,7 +83,15 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   13 native checks: [shelf 40035801727](https://github.com/NoGod3524/EXReader/actions/runs/40035801727),
   [mapping 40035801688](https://github.com/NoGod3524/EXReader/actions/runs/40035801688),
   [original Apple 40035801800](https://github.com/NoGod3524/EXReader/actions/runs/40035801800).
-  They remain pending; queue time is not a failure and no acceptance is granted.
+  Cancellation was requested after these candidates were superseded; their
+  final cancellation state remains to be confirmed. No acceptance is granted.
+- `f7ea68025b50a18e16ed1697f76f53adc84cc6dc`, terminal viewport clamping,
+  idle cursor persistence and scalar-bound correction:
+  [shelf 40036560455](https://github.com/NoGod3524/EXReader/actions/runs/40036560455),
+  [mapping 40036560497](https://github.com/NoGod3524/EXReader/actions/runs/40036560497),
+  [original Apple 40036560509](https://github.com/NoGod3524/EXReader/actions/runs/40036560509).
+  Their SDK jobs are queued; no P4 compilation or functional acceptance has
+  completed on this source.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
