@@ -82,7 +82,7 @@ API 确认同 run、同受测 SHA、非空、未过期，expires_at=`2027-01-20T
 
 从 `2f268` 接续到正式 SDK `9c69` 仅有测试与冻结记录差异，SDK 受保护树相同。
 本分支已合入 `9c69` 并只更新 SDK/ownership 双守卫及文档；按集成人调度，不重复单独 dispatch，等待共同 S 的整轮。
-Android 所有权边界固定为 `797c47fc8d5c397fd7c960afe91eb6f851ec07f1`，是共同 S 的必需祖先；
+首次 Android 所有权边界为 `797c47fc8d5c397fd7c960afe91eb6f851ec07f1`；共享绘制候选现提升为 `eba7bd58ef8431a4477eaa1db96a9bf5f01baa51`，是后继共同 S 的必需祖先；
 差异范围从正式 SDK `9c69` 量到该边界，避免把后续 Apple 等包的合并错误归属给 Android。
 边界后的本次提交仅固定工作流引用和交接文档，实际受测 source 仍由共同 S 的 Actions 身份和完整证据绑定。
 
@@ -111,3 +111,5 @@ review 10/10、bounded 11/11、49/49/0（40061 ms）同次通过；最终 `accep
   原 48 与既有 16 反例不删，追加缺观测、错误 drawn token、帧 PNG 篡改和 PDF 同错 bitmap 四项，总数 48+20。
 
 该接续尚未构建或运行，不授予通过；由集成人固定后继共同源码后统一云端复验，保留原 66 个用例与所有失败原件。
+实现及所有权固定提交为 `eba7bd58ef8431a4477eaa1db96a9bf5f01baa51`；SDK/REVIEW_BASE 保持 `9c69bc4c7efb0cff68ced27562709fe597189041`。
+本轮只读独立复核完成，随后提交仅固定两个 Android 工作流的 ownership 引用及本段交接；未自行 dispatch。
