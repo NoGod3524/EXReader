@@ -176,7 +176,7 @@ static exr_status search(anchor_search *s, const char *pattern, size_t n, int af
   /* Prefix and suffix contribute at most one point each. Two distinct
      complete matches cannot become unique after visiting later scopes. */
   if (s->best_score == 2 && s->tied)
-    return exr_control_cancel(s->control, e);
+    return EXR_OK;
   if (n > s->hi - s->lo)
     return EXR_OK;
   failure = calloc(n, sizeof(*failure));
@@ -204,7 +204,7 @@ static exr_status search(anchor_search *s, const char *pattern, size_t n, int af
       candidate(s, after ? i + 1 : i + 1 - n);
       if (s->best_score == 2 && s->tied) {
         free(failure);
-        return exr_control_cancel(s->control, e);
+        return EXR_OK;
       }
       j = failure[j - 1];
     }
