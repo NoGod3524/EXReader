@@ -139,10 +139,6 @@ def native_metrics(record, entry, contract):
             "Reference-page selection changed")
     metrics = {field: record[field] for field in ("font_open_ms", "open_ms", "first_visible_ms", "peak_rss_bytes")}
     metrics["fixed_directory_bytes"] = record["fixed_directory_bytes"]
-    for phase, items in (("sequential", sequential), ("random", random)):
-        for field in ("layout_ms", "render_ms", "total_ms"):
-            metrics[f"{phase}_{field}_p50"] = percentile([sample[field] for sample in items], .5)
-            metrics[f"{phase}_{field}_p95"] = percentile([sample[field] for sample in items], .95)
     for field in ("bitmap_bytes", "workspace_bytes", "peak_workspace_bytes", "index_bytes", "cache_bytes",
                   "checkpoint_bytes", "explicit_snapshot_bytes"):
         metrics[field] = max(sample[field] for sample in samples)
@@ -179,6 +175,8 @@ def audit(summary, output, budgets=None):
             len({entry["id"] for entry in entries}) == len(entries), "Incomplete/duplicate representative corpus")
     require(len(summary["attempts"]) == len(entries) * contract["processes"], "Missing native process")
     rows = {entry["id"]: [] for entry in entries}
+    pooled = {entry["id"]: {f"{phase}_{field}": [] for phase in ("sequential", "random")
+                           for field in ("layout_ms", "render_ms", "total_ms")} for entry in entries}
     signatures = {}
     for attempt, (entry, process) in zip(summary["attempts"],
             ((entry, process) for entry in entries for process in range(1, contract["processes"] + 1))):
@@ -193,6 +191,10 @@ def audit(summary, output, budgets=None):
         require(entry["id"] not in signatures or signatures[entry["id"]] == pixels, "Cross-process pixels changed")
         signatures[entry["id"]] = pixels
         rows[entry["id"]].append(values)
+        for phase in ("sequential", "random"):
+            for field in ("layout_ms", "render_ms", "total_ms"):
+                pooled[entry["id"]][f"{phase}_{field}"].extend(sample[field] for sample in record["samples"]
+                                                            if sample["phase"] == phase)
     comparisons = []
     for item in summary["references"]:
         require(item["exit_code"] == 0 and not item.get("failure"), "Reference engine failed")
@@ -207,6 +209,9 @@ def audit(summary, output, budgets=None):
     results = {name: {key: {"p50": percentile([row[key] for row in values], .5),
                             "p95": percentile([row[key] for row in values], .95)} for key in values[0]}
                for name, values in rows.items()}
+    for name, metrics in pooled.items():
+        results[name].update({key: {"p50": percentile(values, .5), "p95": percentile(values, .95)}
+                              for key, values in metrics.items()})
     if budgets is not None:
         require(summary["budget_sha256"] == sha256(BUDGETS) and budgets == read(BUDGETS), "Budget identity changed")
         require(budgets["schema"] == 1 and budgets["frozen"] is True and
