@@ -103,6 +103,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private ReaderView readerView;
 
     private CatalogShelf catalogShelf;
+    private ShelfWindowMetrics shelfMetrics;
+    private long activityStartedNs;
     private EditText shelfSearch;
     private ArrayAdapter<String> noteAdapter;
     private List<?> shownNotes = new ArrayList<>();
@@ -139,6 +141,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private String pendingSelected = "";
 
     @Override protected void onCreate(Bundle savedInstanceState) {
+        activityStartedNs=android.os.SystemClock.elapsedRealtimeNanos();
         super.onCreate(savedInstanceState);
         ownerEpoch = OWNER_EPOCH.incrementAndGet();
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
@@ -158,6 +161,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
         setContentView(R.layout.activity_main);
         bindViews();
+        shelfMetrics=ShelfWindowMetrics.start(this,activityStartedNs);
+        if(shelfMetrics!=null)catalogShelf.observeFirstInteractive(activityStartedNs);
         wireActions();
         readerView.setListener(this);
 
@@ -1392,6 +1397,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     @Override protected void onDestroy() {
+        if (shelfMetrics!=null) shelfMetrics.close();
         if (catalogShelf!=null) catalogShelf.close();
         destroyed = true;
         if (activeTask != null) activeTask.cancel();

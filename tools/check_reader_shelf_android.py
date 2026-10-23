@@ -10,7 +10,8 @@ import xml.etree.ElementTree as ET
 
 TESTS={'realSdkImportsAndProductionRepair','forwardKeysetHasNoMissingOrRepeatedBooks',
        'reverseKeysetMatchesForwardOrder','sameTitleUsesSourceKeyTieBreak','titleAuthorAndLiteralSearch',
-       'cancelsQueriesAndRejectsWrongOwner','hidesUnmappedAndDeletedProducts','repairsNewImportBeforeRefresh'}
+       'cancelsQueriesAndRejectsWrongOwner','hidesUnmappedAndDeletedProducts','repairsNewImportBeforeRefresh',
+       'canceledOldSearchCannotReplaceNewResults'}
 
 
 def main():
