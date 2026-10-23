@@ -25,12 +25,21 @@ DISABLED_CANCEL = (1 << 64) - 1
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--consumer', type=Path, required=True)
+    parser.add_argument('--module-prefix', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     assert os.environ.get('GITHUB_ACTIONS') == 'true', 'Cloud execution only'
     folder = args.output.resolve()
     folder.mkdir(parents=True)
     consumer = args.consumer.resolve()
+    module_prefix = args.module_prefix.resolve()
+    assert (module_prefix / 'include/exr_webdav.h').is_file()
+    installed = {str(path.relative_to(module_prefix)): {'bytes': path.stat().st_size,
+                 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+                 for path in sorted(module_prefix.rglob('*')) if path.is_file()}
+    dependencies = subprocess.check_output(['dumpbin', '/DEPENDENTS', str(consumer)] if os.name == 'nt' else ['ldd', str(consumer)], text=True)
+    assert not any(name in dependencies.lower() for name in ('webview', 'chromium', 'webkit', 'electron'))
+    (folder / 'consumer-dependencies.txt').write_text(dependencies, encoding='utf-8')
     certificates = folder / 'certificates'
     certificates.mkdir()
 
@@ -243,6 +252,11 @@ def main():
         run('untrusted_certificate', TLS, root_url='https://localhost:' + str(untrusted_port) + '/dav/')
         run('hostname_verification', TLS, root_url='https://localhost:' + str(wrong_port) + '/dav/')
         run('missing_credentials', AUTH_REQUIRED, auth='')
+        run('auth_header_injection', ARG, auth='Basic fixture\r\nX-Other: nope')
+        run('download_ceiling_cannot_be_raised', ARG, maximum=128 * 1024 * 1024 + 1)
+        run('listing_ceiling_cannot_be_raised', ARG, listing_bytes=4 * 1024 * 1024 + 1)
+        run('entry_ceiling_cannot_be_raised', ARG, entries=2001)
+        run('timeout_ceiling_cannot_be_raised', ARG, timeout=120001)
         for code in (401, 403, 404, 500, 507):
             run('server_' + str(code), AUTH_REQUIRED if code == 401 else HTTP, resource='error' + str(code))
         result = run('same_client_error_recovery', action='recover')
@@ -281,12 +295,14 @@ def main():
         assert all(not row['authorization_present'] or row['port'] == port for row in requests), 'Credentials left their origin'
         checks.append({'id': 'all_observed_credentials_remain_at_configured_origin', 'pass': True})
         checks.append({'id': 'foreign_redirect_makes_no_foreign_request', 'pass': True})
+        assert len(checks) == (76 if os.name == 'nt' else 77)
         assert all(AUTH not in path.read_text(encoding='utf-8', errors='replace') and 'fixture-password' not in path.read_text(encoding='utf-8', errors='replace')
                    for path in folder.rglob('*') if path.is_file() and path.suffix in ('.json', '.log'))
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform, 'checks': checks,
                   'count': len(checks), 'tls_verification': 'native certificate and hostname verification',
                   'consumer_sha256': hashlib.sha256(consumer.read_bytes()).hexdigest(),
+                  'installed_module_files': installed, 'consumer_native_dependencies': dependencies,
                   'original_sha256': hashlib.sha256(payload).hexdigest(), 'original_bytes': len(payload),
                   'scope': 'read-only HTTPS WebDAV book source; no sync protocol, credentials persistence, host UI or mobile claim',
                   'complete_product': False}

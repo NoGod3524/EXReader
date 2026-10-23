@@ -57,7 +57,7 @@ jobs:
       - name: Actual native HTTPS listing, streaming and refusal acceptance
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
-          python3 tests/webdav/check_tls.py --consumer "build/webdav-consumer/webdav-consumer$exe" --output build/webdav-evidence
+          python3 tests/webdav/check_tls.py --consumer "build/webdav-consumer/webdav-consumer$exe" --module-prefix build/webdav-stage --output build/webdav-evidence
       - name: Preserve source-bound logs and evidence without TLS private keys
         if: always()
         uses: actions/upload-artifact@v4
@@ -69,4 +69,6 @@ jobs:
             !build/webdav-evidence/certificates/*.key
             build/webdav/CMakeCache.txt
             build/webdav-consumer/CMakeCache.txt
+            build/webdav-stage/
+            build/webdav-consumer/webdav-consumer*
           if-no-files-found: error
