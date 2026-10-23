@@ -129,6 +129,10 @@ def main():
     user32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
     callback_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
     user32.EnumWindows.argtypes = [callback_type, wintypes.LPARAM]
+    user32.SendMessageTimeoutW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM,
+                                         wintypes.LPARAM, wintypes.UINT, wintypes.UINT,
+                                         ctypes.POINTER(ctypes.c_size_t)]
+    user32.SendMessageTimeoutW.restype = wintypes.LPARAM
     owner = None
     with (output / 'owner.log').open('wb') as log:
         try:
@@ -149,7 +153,15 @@ def main():
 
                 user32.EnumWindows(visit, 0)
                 if windows and not user32.IsWindowEnabled(user32.GetDlgItem(windows[0], 117)):
-                    window = windows[0]
+                    label = ctypes.create_unicode_buffer(512)
+                    result = ctypes.c_size_t()
+                    replied = user32.SendMessageTimeoutW(user32.GetDlgItem(windows[0], 124), 0x000D,
+                        len(label), ctypes.addressof(label), 0x0002, 2000, ctypes.byref(result))
+                    if replied and (label.value.startswith('章 ') or label.value.startswith('第 ')):
+                        window = windows[0]
+                    else:
+                        assert owner.poll() is None and time.monotonic() < end, 'Owner did not restore its page'
+                        time.sleep(.1)
                 else:
                     assert owner.poll() is None and time.monotonic() < end, 'Owner did not become idle'
                     time.sleep(.1)
