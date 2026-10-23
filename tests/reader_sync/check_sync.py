@@ -369,6 +369,11 @@ def main():
         v = sync(pending, shard=48)
         assert v['pending_metadata'] == 1 and counts(pending) == (1, 0) and not list(pending['cache'].iterdir())
         record('remote_nonbook_revision_without_verified_book_length_is_retained_and_pending')
+        local_pending = state('local-missing-book-metadata')
+        local(local_pending, 'local-pending-progress', pp)
+        v = sync(local_pending, root('local-pending'), shard=48)
+        assert v['pending_metadata'] == 1 and v['pushed'] == 0 and counts(local_pending) == (1, 1)
+        record('local_nonbook_reference_without_book_length_keeps_outbox_pending_instead_of_assuming_zero')
         bp = revision(1, shard=49, kind='book', key=key2, payload={'format': 'txt', 'source_sha256': sha2,
                       'source_bytes': len(source2), 'title': 'Late', 'author': '', 'favorite': False})
         remote(bp)
