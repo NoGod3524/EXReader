@@ -94,7 +94,7 @@ def validate_evidence(report, evidence_root):
     identity = {key: report[key] for key in ('source_sha', 'run_id', 'run_attempt')}
     require(validate_report(report), 'Cannot validate incomplete corpus acceptance')
     summary = load('full/summary.json', report['full_summary_sha256'])
-    require(all(summary.get(key) == value for key, value in identity.items()) and
+    require(isinstance(summary, dict) and all(summary.get(key) == value for key, value in identity.items()) and
             summary.get('accepted') is True and summary.get('identities_unchanged') is True and
             summary.get('source_dirty') is False and summary.get('page_limit') == 0 and
             summary.get('checked_entries') == summary.get('manifest_entries') == 8 and
@@ -104,10 +104,11 @@ def validate_evidence(report, evidence_root):
             relative = f'{phase}/{index:05d}/result.json'
             require(document[phase + '_result'] == relative, 'Unexpected result path')
             result = load(relative, document[phase + '_result_sha256'])
-            require(all(result.get(key) == value for key, value in identity.items()),
+            require(isinstance(result, dict) and all(result.get(key) == value for key, value in identity.items()),
                     'Result belongs to another source/run/attempt')
             observed = result.get('report' if phase == 'full' else 'observed')
-            require(result.get('classification') == document[phase + '_classification'] == 'passed' and
+            require(isinstance(observed, dict) and
+                    result.get('classification') == document[phase + '_classification'] == 'passed' and
                     result.get('exit_code') == 0 and observed == document[phase + '_observed'],
                     'Result classification or observed report differs')
             expected_names = {'stdout.json', 'stderr.log'} if phase == 'full' else {'stdout.jsonl', 'stderr.log'}
@@ -138,7 +139,7 @@ def validate_evidence(report, evidence_root):
                         observed['checked'] > 0 and observed['checked'] + observed['empty'] == observed['units'] and
                         len(rows) == observed['units'] + 1 and rows[-1] == observed,
                         'Location input or native report differs')
-                require(all(row.get('unit') == unit and type(row.get('status')) is int and row['status'] == 0 and
+                require(all(isinstance(row, dict) and row.get('unit') == unit and type(row.get('status')) is int and row['status'] == 0 and
                         type(row.get('text_bytes')) is int and row['text_bytes'] >= 0 and
                         row.get('selector_state') == (1 if row['text_bytes'] else 0)
                         for unit, row in enumerate(rows[:-1])) and
