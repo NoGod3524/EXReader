@@ -118,8 +118,16 @@ struct step {
     if(!i.book_key[0])return true;
     uint64_t bytes=0;reader_revision_status status=reader_revision_book_identity(s.revisions,i.book_key,&bytes,nullptr);
     if(status==READER_REV_NOT_FOUND){++report.pending_metadata;return false;}revision_check(status);
-    if(!s.original){++report.pending_local_original;return false;}char path[8192]{};
-    if(s.original(s.context,i.book_key,path,sizeof(path))||!path[0]||path[sizeof(path)-1]){++report.pending_local_original;return false;}
+    char path[8192]{};
+    bool available=s.original&&!s.original(s.context,i.book_key,path,sizeof(path))&&path[0]&&!path[sizeof(path)-1];
+    if(!available){
+      // Removing a local download must not strand its deletion/metadata queue.
+      // A known-length, hash-verified immutable remote original is sufficient.
+      private_file verify(s.directory);
+      try{download(object_path(i.book_key),verify);}catch(const failure &f){if(f.dav==EXR_DAV_HTTP&&f.http==404){++report.pending_local_original;return false;}throw;}
+      std::string key=i.book_key;if(hash_file(verify.name,bytes,control)!=key.substr(key.find(':')+1))reject(READER_SYNC_HASH,"Existing remote original identity differs");
+      ++report.originals_verified;return true;
+    }
     private_file snapshot(s.directory);fs::path target=snapshot.name;std::string expected=std::string(i.book_key).substr(std::string(i.book_key).find(':')+1);
     if(hash_file(fs::u8path(path),bytes,control,&target)!=expected)reject(READER_SYNC_HASH,"Local original SHA-256 differs from its global book identity");
     publish(object_path(i.book_key),snapshot.name,bytes,expected);++report.originals_verified;return true;
