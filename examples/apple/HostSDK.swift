@@ -12,6 +12,7 @@ enum HostError: Error, LocalizedError {
     case endOfDocument
     case invalidInput(String)
     case invalidResult(String)
+    case importRepairPending(String)
 
     var errorDescription: String? {
         switch self {
@@ -20,6 +21,7 @@ enum HostError: Error, LocalizedError {
         case .endOfDocument: return "已到文档末尾"
         case .invalidInput(let detail): return detail
         case .invalidResult(let detail): return detail
+        case .importRepairPending(let detail): return "书籍已保存，产品索引待修复；重启后重试：\(detail)"
         }
     }
 
@@ -691,11 +693,20 @@ final class HostImportCopy {
     let url: URL
     let fingerprint: HostSourceFingerprint
     private let folder: URL
+    private var closed = false
+    private static let leaseLock = NSLock()
+    private static var activeFolders = Set<String>()
+
+    private static func leaseKey(_ url: URL) -> String {
+        url.standardizedFileURL.resolvingSymlinksInPath().path
+    }
 
     static func discardInterrupted(in root: URL) throws {
+        leaseLock.lock()
+        defer { leaseLock.unlock() }
         guard FileManager.default.fileExists(atPath: root.path) else { return }
         for item in try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil) {
-            try FileManager.default.removeItem(at: item)
+            if !activeFolders.contains(leaseKey(item)) { try FileManager.default.removeItem(at: item) }
         }
     }
 
@@ -709,6 +720,9 @@ final class HostImportCopy {
         let privateURL = privateFolder.appendingPathComponent("source." + file.pathExtension.lowercased())
         folder = privateFolder
         url = privateURL
+        Self.leaseLock.lock()
+        Self.activeFolders.insert(Self.leaseKey(privateFolder))
+        Self.leaseLock.unlock()
         do {
             try FileManager.default.createDirectory(at: privateFolder, withIntermediateDirectories: true,
                                                     attributes: [.posixPermissions: 0o700])
@@ -746,10 +760,38 @@ final class HostImportCopy {
 #if EXR_APPLE_HOST_REVIEW
             try HostSDKReview.event?("private-copy-complete")
 #endif
-        } catch { try? FileManager.default.removeItem(at: privateFolder); throw error }
+        } catch {
+            Self.leaseLock.lock()
+            defer {
+                Self.activeFolders.remove(Self.leaseKey(privateFolder))
+                Self.leaseLock.unlock()
+            }
+            do {
+                if FileManager.default.fileExists(atPath: privateFolder.path) { try FileManager.default.removeItem(at: privateFolder) }
+            } catch let cleanup {
+                throw HostError.invalidResult("导入未提交，私有副本清理失败：\(cleanup.localizedDescription)；原错误：\(error.localizedDescription)")
+            }
+            throw error
+        }
     }
 
-    deinit { try? FileManager.default.removeItem(at: folder) }
+    func close() throws {
+        Self.leaseLock.lock()
+        defer { Self.leaseLock.unlock() }
+        if closed { return }
+        if FileManager.default.fileExists(atPath: folder.path) { try FileManager.default.removeItem(at: folder) }
+        Self.activeFolders.remove(Self.leaseKey(folder))
+        closed = true
+    }
+
+    deinit {
+        try? close()
+        // Once the owner dies a failed remove becomes interrupted work, so
+        // another model's next startup can retry it without retaining a lease.
+        Self.leaseLock.lock()
+        Self.activeFolders.remove(Self.leaseKey(folder))
+        Self.leaseLock.unlock()
+    }
 }
 
 struct HostNoteRow: Identifiable {

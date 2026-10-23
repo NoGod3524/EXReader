@@ -62,6 +62,18 @@ jobs:
         run: |
           set -o pipefail
           python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil, zipfile
+          root = Path('build/apple-resources')
+          shutil.copyfile(root / 'Sample.epub', root / 'MappingLarge.epub')
+          padding = Path('build/apple-import-native/padding.bin')
+          with padding.open('wb') as stream:
+              stream.truncate(33 * 1024 * 1024)
+          with zipfile.ZipFile(root / 'MappingLarge.epub', 'a', compression=zipfile.ZIP_STORED) as archive:
+              archive.write(padding, 'unreferenced-bounded-source.bin')
+          padding.unlink()
+          PY
           sdk="$PWD/sdk-artifact/stage/macos"
           xcrun swiftc -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
             -I "$sdk/include" -L "$sdk/lib" -lexreader -lsqlite3 \
@@ -73,14 +85,14 @@ jobs:
           python3 - <<'PY'
           import json, os
           from pathlib import Path
-          for filename, count, field in [('catalog.json', 8, 'checks'), ('consumer/mapping-review.json', 15, 'checks')]:
+          for filename, count, field in [('catalog.json', 8, 'checks'), ('consumer/mapping-review.json', 16, 'checks')]:
               value = json.loads((Path('build/apple-import-native') / filename).read_text())
               assert value['accepted'] is True and value['failed'] == 0 and value['skipped'] == 0
               assert value['source_sha'] == os.environ['GITHUB_SHA']
               assert str(value['run_id']) == os.environ['GITHUB_RUN_ID'] and str(value['attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
               assert len(value[field]) == count and len({row['id'] for row in value[field]}) == count
               assert all(row['passed'] is True for row in value[field])
-          print('Exact catalog 8 and real SDK mapping 15 passed without skips')
+          print('Exact catalog 8 and real SDK mapping 16 passed without skips')
           PY
       - uses: actions/upload-artifact@v4
         if: always()
@@ -136,7 +148,7 @@ jobs:
               subprocess.run(['xcrun', 'simctl', 'erase', udid], check=True)
               print('platform=iOS Simulator,id=' + udid + '\n' + udid + '\n' + name + '\n' + runtime)
           PY
-      - name: Run four actual UI cases including two real process terminations
+      - name: Run five actual UI cases including two real process terminations
         id: ui
         continue-on-error: true
         run: |

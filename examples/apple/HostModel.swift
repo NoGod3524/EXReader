@@ -56,6 +56,17 @@ private func makeCGImage(_ bitmap: HostBitmap) -> CGImage? {
                    provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
 }
 
+private enum HostImportPublication {
+    // ponytail: serialize only SDK/catalog publication and startup repair
+    // across windows; independent reading/rendering keeps its owner queue.
+    private static let lock = NSRecursiveLock()
+    static func perform<T>(_ operation: () throws -> T) rethrows -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        return try operation()
+    }
+}
+
 extension HostCatalog {
     @discardableResult
     func attach(book: HostBook, fingerprint: HostSourceFingerprint, library: HostLibrary) throws -> Int64 {
@@ -65,19 +76,21 @@ extension HostCatalog {
     }
 
     func repairMissing(library: HostLibrary, books: [HostBook], cancel: HostCancelBox? = nil) throws -> [String] {
-        let mapped = try localIDs()
-        var failures: [String] = []
-        // One SDK enumeration is supplied by startup. Ascending IDs ensure
-        // historical duplicate sources retain the smallest ID and its real mode.
-        for book in books.sorted(by: { $0.id < $1.id }) where !mapped.contains(book.id) {
-            try cancel?.check()
-            do {
-                let fingerprint = try library.sourceFingerprint(book: book, cancel: cancel)
-                try attach(book: book, fingerprint: fingerprint, library: library)
-            } catch let error as HostError where error.isCancelled { throw error }
-            catch { failures.append("\(book.id)：\(error.localizedDescription)") }
+        try HostImportPublication.perform {
+            let mapped = try localIDs()
+            var failures: [String] = []
+            // One SDK enumeration is supplied by startup. Ascending IDs ensure
+            // historical duplicate sources retain the smallest ID and its real mode.
+            for book in books.sorted(by: { $0.id < $1.id }) where !mapped.contains(book.id) {
+                try cancel?.check()
+                do {
+                    let fingerprint = try library.sourceFingerprint(book: book, cancel: cancel)
+                    try attach(book: book, fingerprint: fingerprint, library: library)
+                } catch let error as HostError where error.isCancelled { throw error }
+                catch { failures.append("\(book.id)：\(error.localizedDescription)") }
+            }
+            return failures
         }
-        return failures
     }
 }
 
@@ -193,10 +206,13 @@ final class HostSession {
         }
         let copy = try HostImportCopy(file: url,
             root: library.path.deletingLastPathComponent().appendingPathComponent("import-staging", isDirectory: true), cancel: cancel)
-        return try withExtendedLifetime(copy) {
-            let (id, created) = try library.importUnique(file: copy.url, title: title, cancel: cancel)
-            var published = false
+        return try HostImportPublication.perform {
+            var published = false, created = false
+            var importedID: Int64?
             do {
+                let result = try library.importUnique(file: copy.url, title: title, cancel: cancel)
+                let id = result.id
+                importedID = id; created = result.created
 #if EXR_APPLE_HOST_REVIEW
                 try HostSDKReview.event?("mapping-after-sdk")
 #endif
@@ -211,13 +227,24 @@ final class HostSession {
                 try HostSDKReview.event?("mapping-before-product")
 #endif
                 let canonicalID = try catalog.attach(book: stored, fingerprint: actual, library: library)
+                try copy.close()
                 return (canonicalID, created)
             } catch {
+                var failure = error
                 if !published {
-                    if created { try library.delete(bookID: id) }
-                    throw error
+                    if created, let importedID {
+                        do { try library.delete(bookID: importedID) }
+                        catch { failure = HostError.invalidResult("导入回滚失败；书库保留记录 \(importedID)：\(error.localizedDescription)") }
+                    }
                 }
-                throw HostError.invalidResult("书籍已保存，产品索引待修复；重启后重试：\(error.localizedDescription)")
+                do { try copy.close() }
+                catch let cleanup {
+                    let detail = "私有副本清理失败：\(cleanup.localizedDescription)；原错误：\(failure.localizedDescription)"
+                    if published { throw HostError.importRepairPending(detail) }
+                    throw HostError.invalidResult(detail)
+                }
+                if published { throw HostError.importRepairPending(failure.localizedDescription) }
+                throw failure
             }
         }
     }
@@ -698,8 +725,10 @@ final class HostReaderModel: ObservableObject {
                                           viewport: viewport,
                                           fontSize: savedFont > 0 ? savedFont : 28)
                 self.session = session
-                let storedBooks = try library.books()
-                let repairProblems = try catalog.repairMissing(library: library, books: storedBooks)
+                let (storedBooks, repairProblems) = try HostImportPublication.perform {
+                    let books = try library.books()
+                    return (books, try catalog.repairMissing(library: library, books: books))
+                }
                 let rows = try session.listBooks(storedBooks)
                 self.catalog = catalog
 #if EXR_APPLE_IMPORT_REVIEW
@@ -743,9 +772,13 @@ final class HostReaderModel: ObservableObject {
         HostSDKReview.event = arguments.contains("-EXRMappingPausePublished") ? { event in
             if event == "mapping-before-product" { pause("导入已保存，正在登记") }
         } : nil
-        HostCatalog.afterProductBookWrite = arguments.contains("-EXRMappingPauseTransaction") ? {
-            pause("登记事务已开始")
-        } : nil
+        if arguments.contains("-EXRMappingRejectTransaction") {
+            HostCatalog.afterProductBookWrite = { throw HostError.invalidResult("独立验收中的产品事务拒绝") }
+        } else {
+            HostCatalog.afterProductBookWrite = arguments.contains("-EXRMappingPauseTransaction") ? {
+                pause("登记事务已开始")
+            } : nil
+        }
     }
 
     private func refreshImportMappingProbe(_ catalog: HostCatalog, folder: URL) {
@@ -979,6 +1012,18 @@ final class HostReaderModel: ObservableObject {
                     self.refreshImportMappingProbe(catalog, folder: session.library.path.deletingLastPathComponent())
                 }
 #endif
+                if case HostError.importRepairPending = error, let session = self.session {
+                    let rows = Result { try session.listBooks() }
+                    self.appendLog("import retained; product repair pending: \(self.describe(error))")
+                    DispatchQueue.main.async {
+                        guard myToken == self.token else { return }
+                        if case .success(let books) = rows { self.books = books }
+                        self.errorText = self.describe(error)
+                        self.statusText = "书籍已保存，产品索引待修复"
+                        self.finish()
+                    }
+                    return
+                }
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
                     self.fail(error)
@@ -1293,6 +1338,10 @@ final class HostReaderModel: ObservableObject {
     }
 
 #if EXR_APPLE_HOST_REVIEW
+    func reviewCleanImportStaging(_ root: URL) throws {
+        try queue.sync { try HostImportCopy.discardInterrupted(in: root) }
+    }
+
     // Install an actual session in the command-line cloud consumer without
     // relying on application-bundle startup resources or replacing SDK calls.
     func installReviewSession(_ session: HostSession, snapshot: HostSnapshot, catalogMigration: URL) throws {

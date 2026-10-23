@@ -1,7 +1,7 @@
 name: WP13 Apple host
 on:
   push:
-    branches: ['codex/wp13-apple', 'codex/wp13-apple-review', 'codex/r5-apple-bounded']
+    branches: ['codex/wp13-apple', 'codex/wp13-apple-review', 'codex/r5-apple-bounded', 'codex/reader-apple-import-mapping']
   workflow_dispatch:
 permissions:
   contents: read

@@ -122,4 +122,23 @@ final class ImportMappingUITests: XCTestCase {
         killedImport(extra: "-EXRMappingPauseTransaction", button: "library.import.pdf",
                      phase: "登记事务已开始", kind: "fixed_page")
     }
+
+    func testSavedBookRemainsVisibleWhenProductIndexFails() {
+        launch(fresh: true, extra: ["-EXRMappingRejectTransaction"])
+        app.buttons["library.import.mapping-text"].tap()
+        XCTAssertTrue(wait { !self.element("library.busy").exists &&
+            self.element("library.status").label == "书籍已保存，产品索引待修复" })
+        XCTAssertTrue(element("library.error").label.contains("书籍已保存"))
+        XCTAssertTrue(probe.contains("books=0;local=0;"))
+        XCTAssertTrue(probe.contains("staging=0;"))
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'library.book.'")).count, 1)
+        mark("saved-with-pending-index", screenshot: true)
+        app.terminate()
+        launch(fresh: false)
+        XCTAssertTrue(probe.contains("books=1;local=1;"))
+        XCTAssertTrue(probe.contains("reflow_global=1;"))
+        XCTAssertTrue(probe.contains("staging=0;"))
+        XCTAssertFalse(element("library.error").exists)
+        mark("recovered-saved-book", screenshot: true)
+    }
 }
