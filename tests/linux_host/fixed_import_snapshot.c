@@ -53,8 +53,12 @@ int main(int argc,char **argv) {
   linux_reader_execute(reader,&command,&result);CHECK(result.status==EXR_CANCELLED && !result.has_frame && opens==2);
   stop=late_cancel=0;reader_result_free(&result);CHECK(books(reader)==1);
   /* A distinct, valid original cancelled after commit is compensated once. */
-  copy_file(argv[3],mutable_path);FILE *suffix=fopen(mutable_path,"ab");CHECK(suffix);
-  CHECK(fwrite("\n% distinct original\n",1,21,suffix)==21);CHECK(!fclose(suffix));late_cancel=1;
+  copy_file(argv[3],mutable_path);FILE *variant=fopen(mutable_path,"r+b");CHECK(variant);
+  char probe[65537]={0};size_t bytes=fread(probe,1,sizeof(probe)-1,variant);CHECK(bytes && bytes<sizeof(probe)-1);
+  char *word=strstr(probe,"Native Linux");CHECK(word);
+  /* Same-length stream text edit keeps the independent PDF xref/Length valid. */
+  CHECK(!fseeko(variant,(off_t)(word-probe),SEEK_SET));
+  CHECK(fwrite("Stable",1,6,variant)==6);CHECK(!fclose(variant));late_cancel=1;
   linux_reader_execute(reader,&command,&result);CHECK(result.status==EXR_CANCELLED && !result.has_frame && opens==3);
   stop=late_cancel=0;reader_result_free(&result);CHECK(books(reader)==1);
   command.action=READER_NEXT;command.book=id;
