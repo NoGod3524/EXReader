@@ -161,6 +161,9 @@ def pixel_difference(native, reference):
 
 def audit(summary, output, budgets=None):
     require(summary["schema"] == 1 and summary["scope"] == "linux_representative_reading", "Wrong report scope")
+    require(summary["run_id"] == os.environ["GITHUB_RUN_ID"] and
+            summary["run_attempt"] == os.environ["GITHUB_RUN_ATTEMPT"] and
+            summary["source_sha"] == os.environ["GITHUB_SHA"], "Cloud run/source/attempt identity changed")
     before = summary["before"]
     require(before == summary["after"] and before["source_clean"] and
             before["source_sha"] == summary["source_sha"] and before["sdk_candidate"] == SDK,
@@ -242,6 +245,8 @@ def selfcheck(summary, output, budgets):
     audit(summary, output, budgets)
     changes = {
         "source": lambda s: s.update(source_sha="0" * 40),
+        "run": lambda s: s.update(run_id="0"),
+        "attempt": lambda s: s.update(run_attempt="0"),
         "source_clean": lambda s: s["before"].update(source_clean=False),
         "contract": lambda s: s.update(contract_sha256="0" * 64),
         "manifest": lambda s: s.update(corpus_manifest_sha256="0" * 64),
