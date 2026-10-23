@@ -32,6 +32,7 @@ final class HostShelf: ObservableObject {
     private var appliedQuery = ""
     private var lastLayout: TimeInterval?
     private var layoutIntervals: [Double] = []
+    private var viewportSize = CGSize.zero
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -113,8 +114,13 @@ final class HostShelf: ObservableObject {
         }
     }
 
-    func observe(_ positions: [String: CGRect], height: CGFloat) {
-        let ordered = positions.filter { $0.value.maxY > 0 && $0.value.minY < height }
+    func observe(_ positions: [String: CGRect], size: CGSize) {
+        guard size.height > 0 else { return }
+        if viewportSize != .zero && viewportSize != size {
+            viewportSize = size; restoreViewport(); return
+        }
+        viewportSize = size
+        let ordered = positions.filter { $0.value.maxY > 0 && $0.value.minY < size.height }
             .sorted { $0.value.minY < $1.value.minY }
         let newVisible = Set(ordered.map(\.key))
         guard let first = ordered.first, let index = rows.firstIndex(where: { $0.id == first.key }) else { return }
