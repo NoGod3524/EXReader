@@ -143,6 +143,10 @@ def main():
         require('16 fixed note deletion persists across restart', settled()['notes'] == 0 and host.read()['page'] == 1)
         host.dialog(inputs / 'Rotated.pdf')
         assert settled()['fixed'] == 1 and host.read()['pages'] == 3 and 'Fixed page 1.' in copy()
+        # At the retained 125% zoom the rotated page is wider than the native
+        # viewport. Zoom out through the real controls to expose its right edge.
+        host.key('F6', 'F6')
+        assert settled()['zoom'] == 75
         screenshot('rotated.png')
         require('17 rotated PDF remains renderable and selectable', host.read()['error'] == 0)
         host.dialog(inputs / 'Repeated.pdf')
