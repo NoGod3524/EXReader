@@ -26,6 +26,7 @@ typedef struct {
   size_t scratch_bytes,scratch_budget,visitor_reserve,peak_workspace,windows_loaded,windows_evicted;
   size_t io_bytes,io_peak,io_budget;
   int io_limited;
+  int resident_query,resident_miss;
   exr_status failed;
   exr_style empty_style;
 } chapter_reader;
@@ -248,6 +249,10 @@ static exr_status prepare(void *context,size_t node,const exr_control *control,e
   if(local_node(r,node)!=SIZE_MAX && (!atomic(r,node) ||
      (node>=r->window.first && subtree_end(r,node)<=r->window.last)))
     return exr_control_cancel(control,e);
+  if(r->resident_query) {
+    r->resident_miss=1;
+    return exr_fail(e,EXR_UNSUPPORTED,"CFI point needs a nonresident chapter node");
+  }
   first=unit_root(r,node);
   n=exr_chapter_index_entry(r->index,first);
   /* A container is supplied by the ancestor chain of its first visible unit. */
@@ -366,6 +371,73 @@ exr_status exr_chapter_cfi_resolve(void *context,const char *cfi,const exr_contr
   if(status==EXR_OK && part!=r->part) status=exr_fail(e,EXR_ARGUMENT,"CFI belongs to another publication part");
   if(status==EXR_OK) status=exr_document_cfi_path_resolve(&r->document,0,local,control,point,e);
   free(local);return status;
+}
+static int raw_white(uint32_t cp) { return cp==32 || cp==9 || cp==10 || cp==13; }
+static exr_status resident_point(chapter_reader *r,size_t offset,const exr_control *control,
+  exr_cfi_point *point,exr_error *e) {
+  size_t lo=0,hi=r->text_count,node,local,at=0,units=0,core=0,span,extra,wanted,emitted=0;
+  const exr_chapter_entry *entry;
+  const char *raw;
+  size_t length,next_check=4096;
+  int pending=0;
+  exr_status status=exr_control_cancel(control,e);
+  if(status!=EXR_OK) return status;
+  if(offset>r->document.size) return exr_fail(e,EXR_ARGUMENT,"Point exceeds chapter text");
+  /* At a shared boundary prefer the preceding projected text node. Artificial
+     block separators and a leading space with no raw owner remain unsupported. */
+  while(lo<hi) {
+    size_t mid=lo+(hi-lo)/2;
+    if(exr_chapter_index_entry(r->index,r->text_nodes[mid])->end<offset) lo=mid+1;
+    else hi=mid;
+  }
+  if(lo==r->text_count) return exr_fail(e,EXR_UNSUPPORTED,"Point has no projected text node");
+  node=r->text_nodes[lo];entry=exr_chapter_index_entry(r->index,node);
+  local=local_node(r,node);
+  if(offset<entry->start || local==SIZE_MAX || !r->window.document->nodes[local].text)
+    return exr_fail(e,EXR_UNSUPPORTED,"Point is outside complete resident raw text");
+  /* Window replay retains selected text nodes in full, never a raw suffix. Its
+     normalized start/end were checked against this immutable index at load. */
+  raw=r->window.document->nodes[local].text;length=strlen(raw);
+  while(at<length) {
+    size_t before=at;uint32_t cp;
+    if(at>=next_check) { status=exr_control_cancel(control,e);if(status!=EXR_OK) return status;next_check=at+4096; }
+    if(!exr_next(raw,length,&at,&cp)) return exr_fail(e,EXR_ENCODING,"Invalid resident XML text");
+    if(raw_white(cp)) { if(core) pending=1;continue; }
+    if(pending) core++;
+    core+=at-before;pending=0;
+  }
+  span=(size_t)entry->end-entry->start;
+  if(core>span || span-core>1) return exr_fail(e,EXR_FORMAT,"Raw node projection differs from index");
+  extra=span-core;
+  if(offset-entry->start<extra)
+    return exr_fail(e,EXR_UNSUPPORTED,"Point precedes a projected space without a raw owner");
+  wanted=offset-entry->start-extra;at=0;pending=0;next_check=4096;
+  while(at<length) {
+    size_t before=at;uint32_t cp;
+    if(at>=next_check) { status=exr_control_cancel(control,e);if(status!=EXR_OK) return status;next_check=at+4096; }
+    if(!exr_next(raw,length,&at,&cp)) return exr_fail(e,EXR_ENCODING,"Invalid resident XML text");
+    if(raw_white(cp)) { if(emitted) pending=1;units++;continue; }
+    if(pending) emitted++;
+    if(wanted==emitted) { *point=(exr_cfi_point){node,units,0};return EXR_OK; }
+    if(wanted<emitted+at-before) return exr_fail(e,EXR_ARGUMENT,"Point is inside a UTF-8 scalar");
+    emitted+=at-before;units+=cp>0xffff ? 2 : 1;pending=0;
+    if(wanted==emitted) { *point=(exr_cfi_point){node,units,0};return EXR_OK; }
+  }
+  return exr_fail(e,EXR_UNSUPPORTED,"Point has no exact resident XML boundary");
+}
+exr_status exr_chapter_cfi_create_at(void *context,size_t offset,const exr_control *control,
+  char **cfi,exr_error *e) {
+  chapter_reader *r=context;exr_cfi_point point={SIZE_MAX,SIZE_MAX,0};
+  exr_status status=resident_point(r,offset,control,&point,e);
+  if(status!=EXR_OK) return status;
+  r->resident_query=1;r->resident_miss=0;
+  status=exr_cfi_create_for_part(r->metadata,r->part,&r->document,0,&point,0,control,cfi,e);
+  r->resident_query=0;
+  if(r->resident_miss) {
+    free(*cfi);*cfi=NULL;
+    return exr_fail(e,EXR_UNSUPPORTED,"Exact CFI needs a nonresident chapter node");
+  }
+  return status;
 }
 exr_chapter_options exr_chapter_options_defaults(void) {
   return (exr_chapter_options){sizeof(exr_chapter_options),64u*1024*1024,4u*1024*1024};

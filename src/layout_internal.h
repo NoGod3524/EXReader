@@ -50,6 +50,8 @@ void exr_pager_adopt_chapter(exr_pager *pager,void *chapter,void (*release)(void
 size_t exr_pager_continuation_bytes(const exr_pager *pager);
 exr_status exr_chapter_cfi_create(void *reader,const exr_cfi_point *point,size_t context,
   const exr_control *control,char **cfi,exr_error *error);
+exr_status exr_chapter_cfi_create_at(void *reader,size_t offset,
+  const exr_control *control,char **cfi,exr_error *error);
 exr_status exr_chapter_cfi_resolve(void *reader,const char *cfi,const exr_control *control,
   exr_cfi_point *point,exr_error *error);
 exr_status exr_book_fonts(const exr_document *doc, exr_font *fallback,

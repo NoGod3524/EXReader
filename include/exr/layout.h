@@ -184,6 +184,14 @@ EXR_API exr_chapter_stats exr_pager_chapter_statistics(const exr_pager *pager);
    Query calls and sink callbacks must not reenter or destroy this pager. */
 EXR_API exr_status exr_pager_cfi_create(exr_pager *pager,const exr_cfi_point *point,
   size_t context_scalars,const exr_control *control,char **cfi,exr_error *error);
+/* Experimental successor candidate: create an exact raw-UTF-16 CFI from a
+   normalized UTF-8 point already represented by a complete resident text node.
+   Does not load windows, scan chapter uniqueness, or change TextQuote semantics.
+   Nonresident points / projection-only boundaries return EXR_UNSUPPORTED.
+   Scalar-interior offsets return EXR_ARGUMENT. No assertion context is added.
+   Output uses exr_free; failure clears it. Not adopted by the frozen SDK. */
+EXR_API exr_status exr_pager_cfi_create_at(exr_pager *pager,size_t offset,
+  const exr_control *control,char **cfi,exr_error *error);
 EXR_API exr_status exr_pager_cfi_resolve(exr_pager *pager,const char *cfi,
   const exr_control *control,exr_cfi_point *point,exr_error *error);
 EXR_API exr_status exr_pager_anchor_create(exr_pager *pager,size_t start,size_t end,
