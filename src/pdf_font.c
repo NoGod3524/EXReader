@@ -280,7 +280,8 @@ exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control 
   }
   if(to_unicode!=EXR_PDF_NONE) {
     const unsigned char *data; size_t size;
-    if(exr_pdf_stream_data(file,to_unicode,&data,&size,&r.error)!=EXR_OK || exr_pdf_cmap_parse(data,size,control,&font->unicode,&r.error)!=EXR_OK) goto done;
+    if(exr_pdf_stream_data(file,to_unicode,&data,&size,&r.error)!=EXR_OK ||
+       exr_pdf_cmap_parse_width(data,size,font->info.composite ? 2 : 1,control,&font->unicode,&r.error)!=EXR_OK) goto done;
   }
   if(r.error.code==EXR_OK && exr_control_cancel(control,&r.error)==EXR_OK) { *out=font; font=NULL; } goto done;
 invalid:
