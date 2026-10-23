@@ -59,7 +59,7 @@ static int fixed_page(exr_fixed_document *fixed,size_t page,const char *phase,
   if(ok) ok=bitmap_sample(&bitmap,item,dump);
   exr_bitmap_free(&bitmap);return ok;
 }
-static int create_pager(exr_publication *publication,size_t part,exr_font *font,
+static int create_pager(exr_publication *publication,size_t part,exr_font *font,int cached,
                         exr_pager **pager,exr_error *error) {
   exr_layout_config config=exr_layout_config_defaults();
   exr_chapter_options options=exr_chapter_options_defaults();
@@ -67,21 +67,26 @@ static int create_pager(exr_publication *publication,size_t part,exr_font *font,
   config.page.width=800;config.page.height=1000;config.page.margin=32;config.page.font_size=24;
   options.workspace_budget=16u*1024u*1024u;options.window_bytes=16u*1024u;
   return exr_publication_pager_create(publication,part,font,&config,&options,pager,error)==EXR_OK &&
-    exr_pager_set_cache(*pager,2,8u*1024u*1024u,error)==EXR_OK &&
-    exr_pager_set_checkpoints(*pager,4,2u*1024u*1024u,16,error)==EXR_OK;
+    (!cached || (exr_pager_set_cache(*pager,2,8u*1024u*1024u,error)==EXR_OK &&
+    exr_pager_set_checkpoints(*pager,4,2u*1024u*1024u,16,error)==EXR_OK));
 }
 static int reflow_page(exr_pager *pager,size_t part,size_t page,
-                       const char *phase,sample *item,exr_error *error) {
-  const exr_layout *layout=NULL;exr_bitmap bitmap={0};double at=now_ms();int ok;
+                       const char *phase,int cached,sample *item,exr_error *error) {
+  const exr_layout *layout=NULL;exr_layout *owned=NULL;exr_bitmap bitmap={0};double at=now_ms();int ok;
   item->phase=phase;item->part=part;item->page=page;
-  if(exr_pager_get(pager,page,&layout,error)!=EXR_OK) return 0;
+  if(cached) {
+    if(exr_pager_get(pager,page,&layout,error)!=EXR_OK) return 0;
+  } else {
+    if(exr_pager_next(pager,&owned,error)!=EXR_OK) return 0;
+    layout=owned;
+  }
   item->layout_ms=now_ms()-at;
   if(!layout) return 2;
   at=now_ms();ok=exr_render_page_ex(layout,exr_layout_font(layout),0,4,NULL,&bitmap,error)==EXR_OK;
   item->render_ms=now_ms()-at;item->total_ms=item->layout_ms+item->render_ms;
   item->memory=exr_pager_chapter_statistics(pager);
   if(ok) ok=bitmap_sample(&bitmap,item,NULL);
-  exr_bitmap_free(&bitmap);return ok;
+  exr_bitmap_free(&bitmap);exr_layout_free(owned);return ok;
 }
 int main(int argc,char **argv) {
   exr_font *font=NULL;exr_fixed_document *fixed=NULL;exr_publication *publication=NULL;
@@ -106,12 +111,12 @@ int main(int argc,char **argv) {
     if(exr_publication_open(argv[2],&publication,&error)!=EXR_OK) goto finish;
     parts=exr_publication_parts(publication,&part_count);
     while(part<part_count && !parts[part].in_reading_order) part++;
-    if(part==part_count || !create_pager(publication,part,font,&pager,&error)) goto finish;
+    if(part==part_count || !create_pager(publication,part,font,0,&pager,&error)) goto finish;
     current_part=part;
   }
   open_ms=now_ms()-at;stage="first";
   result=is_pdf ? fixed_page(fixed,0,"first",&samples[count],NULL,&error) :
-                 reflow_page(pager,part,0,"first",&samples[count],&error);
+                 reflow_page(pager,part,0,"first",0,&samples[count],&error);
   if(result!=1) goto finish;
   count++;first_ms=now_ms()-start;routes[route_count++]=(route){part,0};
   stage="sequential";
@@ -123,11 +128,11 @@ int main(int argc,char **argv) {
       double transition=0;
       page++;
       for(;;) {
-        result=reflow_page(pager,part,page,"sequential",&samples[count],&error);
+        result=reflow_page(pager,part,page,"sequential",0,&samples[count],&error);
         if(result!=2) break;
         do { part++; } while(part<part_count && !parts[part].in_reading_order);
         if(part==part_count) break;
-        at=now_ms();if(!create_pager(publication,part,font,&pager,&error)) goto finish;
+        at=now_ms();if(!create_pager(publication,part,font,0,&pager,&error)) goto finish;
         transition+=now_ms()-at;current_part=part;page=0;
       }
       if(part==part_count) break;
@@ -138,6 +143,8 @@ int main(int argc,char **argv) {
     count++;
   }
   stage="random";
+  /* next() has an explicit EOF contract; get() is a separate borrowed-page mode. */
+  current_part=SIZE_MAX;
   for(i=0;i<RANDOM;i++) {
     random=random*1664525u+1013904223u;
     if(is_pdf) {
@@ -145,10 +152,10 @@ int main(int argc,char **argv) {
     } else {
       route target=routes[random%route_count];double transition=0;
       if(target.part!=current_part) {
-        at=now_ms();if(!create_pager(publication,target.part,font,&pager,&error)) goto finish;
+        at=now_ms();if(!create_pager(publication,target.part,font,1,&pager,&error)) goto finish;
         transition=now_ms()-at;current_part=target.part;
       }
-      if(reflow_page(pager,target.part,target.page,"random",&samples[count],&error)!=1) goto finish;
+      if(reflow_page(pager,target.part,target.page,"random",1,&samples[count],&error)!=1) goto finish;
       samples[count].layout_ms+=transition;samples[count].total_ms+=transition;
     }
     count++;
@@ -183,7 +190,7 @@ finish:
            s->bitmap_bytes,s->hash,m->parse_workspace_bytes,m->peak_parse_workspace_bytes,m->index_bytes,
            m->page_cache_bytes,m->checkpoint_bytes,m->explicit_snapshot_bytes);
   }
-  printf("]}\n");if(!ok) fprintf(stderr,"Native measurement failed at %s status=%d\n",stage,(int)error.code);
+  printf("]}\n");if(!ok) fprintf(stderr,"Native measurement failed at %s status=%d: %s\n",stage,(int)error.code,error.message);
   free(selected);exr_pager_free(pager);exr_publication_free(publication);exr_fixed_free(fixed);exr_font_free(font);
   return ok?0:1;
 }

@@ -10,6 +10,7 @@
   "processes": 5,
   "sequential_turns": 32,
   "random_turns": 16,
+  "epub_access": "owned next() for first/sequential with explicit EOF; recreate borrowed get() pager for random and include recreation time",
   "seed": 20261023,
   "process_timeout_seconds": 180,
   "thread_count": 1,
