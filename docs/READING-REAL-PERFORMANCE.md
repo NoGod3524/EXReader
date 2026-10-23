@@ -47,3 +47,17 @@ PDF预选页使用同72dpi Poppler进行RGB像素对照，保留双方原件PPM�
 实际页大小必须大于未变的8MiB预算，所有拒绝/重建/重放耗时和RSS计入随机样本，临时页释放。
 每条route同时核对顺读与回放的完整RGBA和选定规范UTF-8文本散列；独立反例拒绝未超限、未证明缓存拒绝、
 漏计拒绝耗时及route/text变化。保留原纯`get()`失败，不宣称底层缓存接受了超大页。
+
+`aff4dd6a` / 云端`39893185090`已实际编译并执行：25/40个进程完整（四本EPUB与W9各5次），
+其余三份PDF仍由旧SDK的stream cache/ToUnicode问题阻断，整轮`measurement_valid=false, accepted=false`。
+同轮baseline metadata 1正12反、完整report/ZIP来源2正22反、稳定RGBA/UTF-8/位置错误1正3反、
+超大页策略1正5反均通过；这些工具自验不替代缺失的15份真实执行。
+
+正式预算启用时，Actions下载锁定ID的baseline ZIP，核完整digest并保留原始
+`reading-real/baseline-summary.json`及`baseline_summary_sha256`。报告必须同source/run/attempt，
+`measurement_valid=true`，合同/原件/字体/SDK保护树/CPU/编译器/参考版本与本轮相符；
+Git对象逐项核实保护树声明。冻结数值和签名必须来自这份原始报告，预算不能靠自声明拼接。
+预先数值推导上界见`tests/reading_real/contract.json`，没有据本轮失败填写或放宽预算。
+
+W9差分审阅及固定原图/诊断身份见[READING-PIXEL-REVIEW.md](READING-PIXEL-REVIEW.md)。
+新SDK全部12页仍待实跑审阅；本包尚无冻结预算或整体性能通过声明。
