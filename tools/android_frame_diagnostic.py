@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import os
+from collections import Counter
 from pathlib import Path, PurePosixPath
 import re
 import xml.etree.ElementTree as ET
@@ -41,15 +42,26 @@ def pixel_difference(left, right):
     result = {'same_png_size': left.size == right.size}
     if left.size != right.size:
         return result
+    left, right = left.convert('RGBA'), right.convert('RGBA')
     channels = ImageChops.difference(left, right).split()
     mask = ImageChops.lighter(ImageChops.lighter(channels[0], channels[1]), channels[2])
+    mask = ImageChops.lighter(mask, channels[3])
     mask = mask.point(lambda value: 255 if value else 0)
     pixels = left.width * left.height
-    absolute = sum(sum(index * count for index, count in enumerate(channel.histogram())) for channel in channels)
+    absolute = sum(sum(index * count for index, count in enumerate(channel.histogram())) for channel in channels[:3])
     result.update(diff_bbox=mask.getbbox(), changed_pixels=pixels - mask.histogram()[0],
                   total_pixels=pixels, absolute_rgb_difference=absolute,
                   mean_absolute_channel_difference=absolute / (pixels * 3),
                   max_channel_difference=max(max(channel.getextrema()) for channel in channels))
+    signed = {}
+    for name, before, after in zip(('R', 'G', 'B', 'A'), left.split(), right.split()):
+        histogram = Counter(b - a for a, b in zip(before.tobytes(), after.tobytes()))
+        nonzero = [(delta, count) for delta, count in histogram.items() if delta]
+        signed[name] = {'changed_pixels': sum(count for delta, count in nonzero),
+                        'max_absolute_delta': max((abs(delta) for delta, count in nonzero), default=0),
+                        'nonzero_top20': [{'delta': delta, 'count': count}
+                                          for delta, count in sorted(nonzero, key=lambda row: (-row[1], row[0]))[:20]]}
+    result['signed_rgba_after_minus_before'] = signed
     return result
 
 
@@ -80,7 +92,7 @@ def inspect_case(archive, case, output):
             png = archive.read(name)
             require(len(png) == sample['png_bytes'] and sha(png) == sample['png_sha256'], 'Retained PNG digest changed')
             with Image.open(io.BytesIO(png)) as image:
-                rgb = image.convert('RGB')
+                rgb = image.convert('RGBA')
             summary['pngs'].append({'role': role, 'sample': index, 'path': name, 'bytes': len(png),
                                     'sha256': sha(png), 'mode': rgb.mode, 'size': list(rgb.size)})
             selected[role] = (sample, rgb)
@@ -107,7 +119,7 @@ def inspect_case(archive, case, output):
         png = archive.read(name)
         require(len(png) == entry['screenshot_bytes'] and sha(png) == entry['screenshot_sha256'], 'Failure screenshot digest changed')
         with Image.open(io.BytesIO(png)) as image:
-            full = image.convert('RGB')
+            full = image.convert('RGBA')
         failure = {'path': name, 'size': list(full.size), 'sha256': sha(png), 'crops': {}}
         for role, (sample, image) in selected.items():
             bounds = sample['bounds']
@@ -173,8 +185,9 @@ def main():
             names = archive.namelist()
             require(len(names) == len(set(names)), 'Duplicate original ZIP members')
             report['related_paths'] = [name for name in names if any(case in name for case in CASES) or name.endswith(('build.json', 'execution.json', 'walkthrough-logcat.txt', 'validation.json'))][:180]
+            report['xml_paths'] = [name for name in names if name.lower().endswith('.xml')][:180]
             print(json.dumps({'diagnostic_only': True, 'accepted': False, 'artifact_verified': True,
-                              'related_paths': report['related_paths']}), flush=True)
+                              'related_paths': report['related_paths'], 'xml_paths': report['xml_paths']}), flush=True)
             report['cases'] = {case: inspect_case(archive, case, output) for case in CASES}
         report['diagnostic_completed'] = True
     except Exception as error:
