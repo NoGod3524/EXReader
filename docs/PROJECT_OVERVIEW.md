@@ -44,8 +44,8 @@ R6 核心发布门槛，详见 [六个工作包](CORE-ROADMAP.md)。已完成能
 ## 原生阅读核心当前进展
 
 R1分支 `codex/r1-reading-core` 从 S=`686ce2fe` 追加阅读 preset、安装后消费者与测量工具，
-该阶段不修改引擎、公开头或原默认构建。后续集成分支 `codex/reading-package-integration`
-已纳入R5的SDK有界存储契约、许可修补、平台门禁及四宿主接入。以下分列历史结果与当前状态：
+该阶段不修改引擎、公开头或原默认构建。当前集成分支 `codex/r6-reading-release`
+已纳入R5有界存储、R2/R4核心修复、许可材料、平台门禁及四宿主接入。以下分列历史结果与当前状态：
 
 | 状态 | 工作包 | 内容 |
 | --- | --- | --- |
@@ -54,12 +54,13 @@ R1分支 `codex/r1-reading-core` 从 S=`686ce2fe` 追加阅读 preset、安装�
 | 已完成（失败保留） | R1/R3 首轮 | 源码 `61aa183`，run `39852907619`：构建、安装、消费者与 smoke 成功，测量自验因 mock 误拦截失败、实际采样未执行；修复后在新源码重验 |
 | 已完成 | R1 跨平台（H1） | 受测源码 `9b968a16fc47596725e849e56ee98e4c4c210b74`，run [39854485070](https://github.com/NoGod3524/EXReader/actions/runs/39854485070) attempt 1：Windows/macOS × 两 preset 4/4 作业成功，构建、安装、安装消费者 3/3 或 4/4、九格式合成 smoke 9/9 与依赖/配置判定 accepted，见 [H1 记录](https://github.com/NoGod3524/EXReader/blob/2e8e981b6dd44d855a23931480fe5e0d5c791762/docs/READING-PLATFORMS.md)；未做性能或体积预算。程序集合、依赖解析与链接器身份的门禁加固由 [H6](https://github.com/NoGod3524/EXReader/blob/62ab38e8223e42f1562fda7137cd41b4d87620f1/docs/handoffs/reading-H6-platform-gate.md) 另行跟踪 |
 | 已完成 | R3 初始 PDF/CBZ 测量（Linux，合成） | 源码 `3cd7bdf14d4ee961a9cdda98bd7410d34c04161b`，run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753)：655 字节 1 页 PDF 与 908 字节 4 页 CBZ 各三进程；可区分页面候选 `4b6f562c29181d509f470feda0e5f1226fd466bb`，run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765) 增加 3 页 PDF/4 页 CBZ 的 32×32 合成文档，12 进程/240 次绘制、60 项拒绝自验，2026-10-22 只读核对为 success。见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md) |
-| 已完成 | R5 宿主H8–H11 | 共同源码`e25959e`，四组11作业/11必需工件同源、attempt1通过；各平台严格汇总接受，见[共同验收记录](R5-SDK-FREEZE.md) |
-| 已验证 | R5 SDK 契约 | 固定`9c69bc4`，窗口单元递归已修复，六组18执行作业/30工件同源通过；旧冻结撤回与失败记录保留，见[SDK冻结记录](R5-SDK-FREEZE.md) |
-| 未执行 | R2 | 九格式原创 fixture 清单已冻结，仅作小型回归；真实 EPUB/PDF 语料仍为 0/1710，实际故障尚未逐份登记修复 |
-| 未执行 | R3 正式基线 | 真实多页 PDF、嵌入/回退字体与复杂图像、真实语料、跨平台性能、峰值内存预算与冻结的硬性能预算 |
-| 未完成 | R4 / 设备与读屏 | R4等待可复现热点；真机、VoiceOver/TalkBack及宿主声明外能力另行验收 |
-| 未执行 | R6 启用 | 门禁映射已写入，两个 check 尚未设为默认分支必需检查；默认分支 `protected=false`、rulesets 为空 |
+| 复验中 | R5 宿主H8–H11 | 新SDK共同源码`da1c183`四组已启动；原`e25959e`四组11作业结果作为历史保留，见[共同验收记录](R5-SDK-FREEZE.md) |
+| 已验证 | R5 SDK 契约 | 当前固定`9854061`，六组18执行作业/30工件同源通过，含本轮核心修复；旧冻结和失败保留，见[SDK冻结记录](R5-SDK-FREEZE.md) |
+| 已验证 | R2代表语料 | `da1c183`的run39899523839整本8/8、重开定位8/8严格接受，原件/原预期未改；历史1710份库存不与本批混计，见[R2](R2-REAL-CORPUS.md) |
+| 执行中 | R3正式基线 | 新SDK五进程×八份、12个参考页已启动；待实际审阅后冻结数字预算并独立strict，跨平台性能另列，见[R3](READING-REAL-PERFORMANCE.md) |
+| 已验证局部 | R4 | 图片/解码流缓存、CMap、anchor、CMYK/软蒙版、CFF/BBox与受限JPX修复已纳入当前SDK；JPX ON/ASan/OFF各24项同次通过，见[R4](R4-CORE-HOTSPOTS.md) |
+| 收口中 | R6 | 六平台候选封装、总门禁与发布准备协议已云端验证；待含冻结预算的17作业共同运行。规则候选绑定GitHub Actions的reading-required，仍disabled，未发布 |
+| 后续范围 | 设备与读屏 | 真机、VoiceOver/TalkBack及宿主声明外能力独立验收 |
 
 两个 preset 只做组件裁剪：`reading-core` 关闭音频（含 MP3/AAC）、书库、全文索引、PDF 编辑、旧共享总库、工具和 JNI，
 保留 PDF、PDF 密码认证、ICC 与全部现有图像开关；`reading-library` 仅再打开 SQLite 书库。
@@ -120,7 +121,7 @@ Android/OPDS 独立候选的完整身份见 [总 handoff](handoffs/2026-10-22-af
 | 目标 | 已有工作 | 尚未闭合的出口 |
 | --- | --- | --- |
 | 默认分支必须通过的 CI 与可信构建基线 | `native.yml` 在默认分支 `codex/framework` push 和 PR 上运行；已有默认/裁剪 SDK 安装消费、ABI/分层检查；K2 固定八条受保护树，S 的 12 组联合验收与严格汇总通过 | 2026-10-22 只读核对时默认分支 `protected=false`、required checks 为空、rulesets 为空。仍需配置必需检查与合并/发布门槛 |
-| EPUB 超时、PDF 打开/渲染失败闭环 | 整本文档探针、逐进程超时/失败保留、独立分类与回归工具；已有针对性引擎修复 | 历史 EPUB 500 本仅 483 完成，另有 11 超时、5 限制、1 参数状态；PDF 122 份中 49 完成，其余 73 留有分类，不能全部视作同一故障。原批未整体验收；新协议可复现真实语料登记仍为 0/1710 |
+| EPUB 超时、PDF 打开/渲染失败闭环 | 固定八份真实原件已有整本8/8与重开定位8/8严格接受，含NASA42页；修复与旧失败见[R2](R2-REAL-CORPUS.md) | 历史 EPUB 500 本仅483完成，另有11超时、5限制、1参数状态；PDF122份中49完成，其余73留有分类。历史原件未恢复，本批不能替代其验收 |
 | 成熟引擎差分、像素与性能回归 | WP7 有 HarfBuzz 对照，彩色字体有 Chrome 对照，PDF 部分颜色/绘制有 MuPDF 独立参考；已有像素、页面 hash、分页与转换基准 | 统一固定工具/字体/采样口径、语料、容差及资源阈值，覆盖真实 EPUB/PDF 故障，并接入必需 CI；专项对照不替代全格式差分验收 |
 | 内存峰值、长章节和恶意输入专项 | WP6 有界章出口、1 GiB CBZ 原书导入、1 GiB WAV 随机读取、取消/限界/sanitizer 与四目标可靠性长测 | 每次核心变更绑定新源码复验；其他格式大文件、其他音频 1 GiB 实测和全部宿主有界接入仍未覆盖 |
 | 许可证、版本与发布流程统一 | MIT 主许可证、第三方通知、版本规则、ABI/schema 区分；R6已更新并云端读回About，候选封装与严格门禁在云端复验 | 默认分支必需检查尚未启用；tag/版本/产物身份及发布阻断规则仍待最终共同源码闭环，见[R6记录](R6-READING-RELEASE.md) |
