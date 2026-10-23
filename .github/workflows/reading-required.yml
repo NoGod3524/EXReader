@@ -2,8 +2,7 @@ name: Required native reading SDK
 on:
   pull_request:
   push:
-    branches: [codex/framework, codex/r6-reading-release]
-    paths: ['.github/workflows/reading-required.yml']
+    branches: [codex/framework]
   workflow_dispatch:
 permissions:
   contents: read

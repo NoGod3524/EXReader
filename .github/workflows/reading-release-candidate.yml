@@ -5,6 +5,8 @@ on:
     paths:
       - 'tools/reading_release.py'
       - 'tests/check_reading_release.py'
+      - 'tests/check_reading_required.py'
+      - 'tools/reading_required.py'
       - 'tests/reading_release/**'
       - '.github/workflows/reading-core.yml'
       - '.github/workflows/reading-release-candidate.yml'
@@ -18,5 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Reject invalid release materials and installed identities
         run: python3 tests/check_reading_release.py
+      - name: Reject missing upstreams and foreign pull request merges
+        run: python3 tests/check_reading_required.py
   profiles:
     uses: ./.github/workflows/reading-core.yml

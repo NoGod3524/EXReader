@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from reading_required import GROUPS, ci_identity, expected_artifacts, verify_metadata
+from reading_required import GROUPS, ci_identity, expected_artifacts, verify_metadata, workflow_identity
 
 source, run, attempt = 'a' * 40, '12', '3'
 needs = {key: {'result': 'success'} for key in GROUPS}
@@ -45,4 +45,20 @@ for nested in (False, True):
         try: ci_identity(changed, source, run, attempt, nested)
         except ValueError: checks += 1
         else: raise AssertionError('accepted foreign report identity')
+record = {'id': int(run), 'run_attempt': int(attempt), 'path': '.github/workflows/reading-required.yml',
+          'event': 'push', 'head_sha': source}
+assert workflow_identity(record, source, run, attempt, ['b' * 40]) == source; checks += 1
+record.update(event='pull_request', head_sha='c' * 40)
+assert workflow_identity(record, source, run, attempt, ['b' * 40, 'c' * 40]) == 'c' * 40; checks += 1
+pr_artifacts = copy.deepcopy(artifacts)
+for item in pr_artifacts: item['workflow_run']['head_sha'] = 'c' * 40
+assert len(verify_metadata(source, run, attempt, needs, pr_artifacts, 'c' * 40)) == 8; checks += 1
+for changes, parents in [({}, ['b' * 40]), ({}, ['b' * 40, 'd' * 40]),
+                         ({'run_attempt': 2}, ['b' * 40, 'c' * 40]),
+                         ({'path': '.github/workflows/native.yml'}, ['b' * 40, 'c' * 40]),
+                         ({'event': 'workflow_dispatch'}, ['b' * 40, 'c' * 40])]:
+    mutant = dict(record, **changes)
+    try: workflow_identity(mutant, source, run, attempt, parents)
+    except ValueError: checks += 1
+    else: raise AssertionError('accepted unrelated tested merge/run')
 print(json.dumps({'accepted': True, 'checks': checks, 'sdk_credit': 0, 'real_document_credit': 0}))

@@ -9,7 +9,7 @@ import re
 import subprocess
 import sys
 
-from check_parallel_integration import pages, require
+from check_parallel_integration import fetch, pages, require
 from measure_reading_core import sha256
 
 GROUPS = {'protocol', 'native', 'profiles', 'platforms', 'corpus', 'performance'}
@@ -28,7 +28,22 @@ def expected_artifacts(run, attempt):
             {f'r2-real-corpus-{run}-{attempt}', f'reading-real-{run}-{attempt}'})
 
 
-def verify_metadata(source, run, attempt, needs, artifacts):
+def workflow_identity(record, source, run, attempt, parents):
+    require(str(record['id']) == str(run) and str(record['run_attempt']) == str(attempt) and
+            record['path'].split('@')[0] == '.github/workflows/reading-required.yml',
+            'wrong enclosing workflow/run/attempt')
+    if record['event'] == 'pull_request':
+        # The immutable run metadata names the PR head. Checkout/GITHUB_SHA
+        # names GitHub's tested merge. Bind both through that merge's parents.
+        require(len(parents) == 2 and parents[1] == record['head_sha'],
+                'tested PR merge is not a merge of the recorded workflow head')
+    else:
+        require(record['event'] in ('push', 'workflow_dispatch') and record['head_sha'] == source,
+                'workflow head differs from the tested source')
+    return record['head_sha']
+
+
+def verify_metadata(source, run, attempt, needs, artifacts, workflow_head=None):
     require(set(needs) == GROUPS and all(item.get('result') == 'success' for item in needs.values()),
             'missing, failed, skipped or cancelled upstream group')
     require(len({item['id'] for item in artifacts}) == len(artifacts) and
@@ -38,7 +53,7 @@ def verify_metadata(source, run, attempt, needs, artifacts):
     require({item['name'] for item in records} == required, 'same-attempt evidence missing')
     for item in records:
         require(item['expired'] is False and item['size_in_bytes'] > 0 and
-                item['workflow_run']['head_sha'] == source and str(item['workflow_run']['id']) == str(run) and
+                item['workflow_run']['head_sha'] == (workflow_head or source) and str(item['workflow_run']['id']) == str(run) and
                 re.fullmatch(r'sha256:[0-9a-f]{64}', item.get('digest', '')), 'invalid artifact identity/digest')
     return [{key: item[key] for key in ('id', 'name', 'size_in_bytes', 'digest')} for item in records]
 
@@ -142,8 +157,13 @@ def main():
         require(subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == source,
                 'workflow and checkout source differ')
         require(subprocess.run(['git', 'diff', '--quiet', 'HEAD']).returncode == 0, 'tracked source changed')
+        record = fetch(f'actions/runs/{run}')
+        parents = subprocess.check_output(['git', 'rev-list', '--parents', '-n', '1', source], text=True).split()[1:]
+        workflow_head = workflow_identity(record, source, run, attempt, parents)
+        result['workflow_head_sha'] = workflow_head
+        result['tested_source_parents'] = parents
         result['artifacts'] = verify_metadata(source, run, attempt, read(args.needs),
-                                             pages(f'actions/runs/{run}/artifacts', 'artifacts'))
+                                             pages(f'actions/runs/{run}/artifacts', 'artifacts'), workflow_head)
         result['identity'] = reports(args.evidence, source, run, attempt)
         result['accepted'] = True
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
