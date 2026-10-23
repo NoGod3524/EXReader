@@ -1,8 +1,8 @@
 # H10 Android bounded 接入
 
 当前 SDK 守卫及 Android 差异起点为集成人正式冻结的 `9c69bc4c7efb0cff68ced27562709fe597189041`。
-共同源码`b64c72aeca99b9b8e4bf9b5555cac78446dd050b`的Android整轮已通过，
-run[39879075101](https://github.com/NoGod3524/EXReader/actions/runs/39879075101)，详见末节；四宿主整体状态见[冻结记录](R5-SDK-FREEZE.md)。
+共同源码`e25959e1285b5ebf9a4bf5b27c596d12702dc695`的Android整轮已通过，
+run[39881689136](https://github.com/NoGod3524/EXReader/actions/runs/39881689136)，详见末节；四宿主整体状态见[冻结记录](R5-SDK-FREEZE.md)。
 
 候选起点 `fd210224a4eba206762c08de435a5e9edfdf2a90`，SDK schema 7 API 已稳定。
 接续合入 SDK 包 `ce5d664c9f76d0613df6d79b27568a7039c4a81e`；集成人授予该源码为正式 K_reading 后，
@@ -111,7 +111,7 @@ review 10/10、bounded 11/11、49/49/0（40061 ms）同次通过；最终 `accep
   重排为 reference/restored 两角色，PDF 为 pretransition/reference/restored 三角色；PDF 前两份像素必须不同、后两份精确相同，两类恢复均需新 PID。
   原 48 与既有 16 反例不删，追加缺观测、错误 drawn token、帧 PNG 篡改和 PDF 同错 bitmap 四项，总数 48+20。
 
-该接续尚未构建或运行，不授予通过；由集成人固定后继共同源码后统一云端复验，保留原 66 个用例与所有失败原件。
+该接续当时尚未构建或运行；随后S2/S3共同源码整轮通过，见后续验收节，原66个用例与失败原件保留。
 实现及所有权固定提交为 `eba7bd58ef8431a4477eaa1db96a9bf5f01baa51`；SDK/REVIEW_BASE 保持 `9c69bc4c7efb0cff68ced27562709fe597189041`。
 本轮只读独立复核完成，随后提交仅固定两个 Android 工作流的 ownership 引用及本段交接；未自行 dispatch。
 
@@ -127,3 +127,12 @@ run[39879075101](https://github.com/NoGod3524/EXReader/actions/runs/39879075101)
 `sha256:56a79fbfe115d80e061579c6a4b76a2011a06624915be78f6c2f3c5578795b59`。
 API与上传日志的id/字节/digest一致，同run/source，核对时未过期，expires_at=`2027-01-21T00:36:02Z`。
 保留上节首次共同源码失败；四宿主共同收口以[统一记录](R5-SDK-FREEZE.md)为准。
+
+## 共同源码第三轮验收通过
+
+Apple输入候选合入后，Android在新共同源码`e25959e1285b5ebf9a4bf5b27c596d12702dc695`
+重新完整执行：run`39881689136`、attempt1、job`120180279876`。
+45+10+11零失败零跳过，49页/49次native next/0 recovery、41593ms；48+20门禁通过，preflight/final均严格接受。
+本轮工件`12471048990`，154348455B，
+`sha256:ad1a6825da666a887067280a9d2f3af1cecd4848296bd8c8deed044acecd80ab`，
+同run/source、非空未过期，上传日志与API身份一致；未借用第二轮结果。范围仍为API34 x86_64模拟器。

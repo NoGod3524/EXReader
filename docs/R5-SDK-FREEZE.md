@@ -3,10 +3,9 @@
 状态：**SDK 已重新冻结**。固定源码 **`9c69bc4c7efb0cff68ced27562709fe597189041`**，
 SDK 3.40.0 / library 3.34.0 / ABI 1 / schema 7。
 Apple 接续发现的16KiB窗口同单元递归已修复；原`ce5d664`冻结撤回与所有失败记录保留。
-四宿主首轮共同源码`9fb084a1fb9307b459f21f60ed91f12fffd14a00`未通过：
-Windows和Linux成功，Android重启帧比较及iPad首次导入失败；SDK冻结保持。
-第二轮共同源码`b64c72aeca99b9b8e4bf9b5555cac78446dd050b`的Windows/Linux/Android通过，
-Apple的iPhone首次导入失败，本轮共同验收未通过。
+**H8–H11四宿主共同验收已通过**：固定源码
+`e25959e1285b5ebf9a4bf5b27c596d12702dc695`，四组11作业与11份必需工件均同源、attempt1。
+首轮Android重启帧/iPad首次导入失败、第二轮iPhone首次导入失败均保留，详见下文。
 
 ## 当前冻结证据
 
@@ -139,7 +138,7 @@ run [39865943512](https://github.com/NoGod3524/EXReader/actions/runs/39865943512
 
 Windows新SDK实现复验源码`8c51264b9017c255345b7ba2056c4f6bd1f1969a`，
 run[39871687848](https://github.com/NoGod3524/EXReader/actions/runs/39871687848)全部成功，原26/158、51拒绝、80H8及11正反worker门禁保留。
-该源码在当前K之前，仅测试/文档后继变化；其保护树与当前K相同，共同源码复验将正式绑定当前K祖先守卫。
+该源码在当前K之前，仅测试/文档后继变化；其保护树与当前K相同，后续共同源码复验已绑定当前K祖先守卫。
 
 Linux受测`6cb58962866c4f2223dfba0d21b6d36675cbfff1`，
 run[39872057413](https://github.com/NoGod3524/EXReader/actions/runs/39872057413) attempt2完整重跑成功：
@@ -176,15 +175,60 @@ Apple候选`e14cb4a7e0a7c36213f7a82879b56dcebb3ea641`要求唯一、前台、稳
 | Windows | [39879077780](https://github.com/NoGod3524/EXReader/actions/runs/39879077780) | 成功；原26、158步/8截图、51拒绝、80项H8及worker11正例/11反向拒绝 |
 | Linux | [39879080162](https://github.com/NoGod3524/EXReader/actions/runs/39879080162) | 成功；原20、四组回归、H11专项37及backend82，严格接受 |
 | Android | [39879075101](https://github.com/NoGod3524/EXReader/actions/runs/39879075101) | 成功；45+10+11用例零失败零跳过，49页/49次next/0 recovery，48+20门禁及严格accepted通过 |
-| Apple | [39879072615](https://github.com/NoGod3524/EXReader/actions/runs/39879072615) | iPhone首次导入失败，collector拒绝；macOS及package通过，iPad/summary待结束 |
+| Apple | [39879072615](https://github.com/NoGod3524/EXReader/actions/runs/39879072615) | iPhone首次导入失败，collector拒绝；macOS/iPad各13UI/67步骤及package通过，summary因上游失败严格拒绝 |
 
 iPhone的test01在90秒内未导入，13项中1项失败。点击前、点击后及结果等待失败的trace均只有startup1–6，
 token=0，无fixture/import请求；长度不足512字符，没有尾部截断。
 同次观测确认Button唯一、enabled/hittable、应用前台、frame稳定，XCTest记录了Synthesize event；
 本次handler未进入，不能归因于SDK导入、busy拒绝或晚startup覆盖。
 失败工件`12469504968`保留，不授予本轮共同验收。
+Apple最终为六作业成功、iPhone失败、summary拒绝；summary的证据拒绝回归按条件跳过，不计通过。
 
-H5修补、H6程序门禁、H7文档和R3测量已纳入K，且按上表重新同源验证，
+### 四宿主共同源码第三轮（通过）
+
+固定源码`e25959e1285b5ebf9a4bf5b27c596d12702dc695`，K祖先与八保护树一致。
+候选`0ce4e681d459e7433029eb7a8ae0fcb862c7fbeb`只将共享导入输入改为一次100ms press，
+没有fallback、第二次输入或预算/断言变化。本轮三平台均完成真实导入闭环；原tap未送达的底层原因尚未确定。
+
+| 平台 | run | 状态 |
+| --- | --- | --- |
+| Windows | [39881691924](https://github.com/NoGod3524/EXReader/actions/runs/39881691924) | 成功；原26、158步/8截图、51项证据自验、H8的80项及worker11正例/11反向拒绝 |
+| Linux | [39881694674](https://github.com/NoGod3524/EXReader/actions/runs/39881694674) | 成功；原20、四组回归、H11专项37及backend82全部通过 |
+| Android | [39881689136](https://github.com/NoGod3524/EXReader/actions/runs/39881689136) | 成功；45+10+11零失败零跳过，49页/49次next/0 recovery、48+20门禁及最终accepted通过 |
+| Apple | [39881686534](https://github.com/NoGod3524/EXReader/actions/runs/39881686534) | 八作业成功；三平台各13UI/67步骤/50附件，SDK21/Model18/bounded15及各legacy21通过，严格summary与97项门禁通过 |
+
+四组共11作业全部同源成功，11份必需工件均同run/source、非空、核对时未过期，Actions SHA-256 digest有效。
+Apple八个必需工件名称逐项匹配；summary初次及回归后再次`accepted=true`、`problems=[]`。
+本轮Windows/Linux/Android均重新完整执行，不转授前轮通过项。
+SDK K保持9c69；S3包含K祖先，八条保护树逐项相同，未重新打开SDK冻结。
+
+授予H8–H11各自声明范围：Windows、GTK/X11 Linux、Apple macOS及iPhone/iPad模拟器、Android API34 x86_64模拟器。
+EPUB采用有界入口与章内持久化；其他重排格式仍保留明确快照上限，各平台原有格式范围与限制继续适用。
+本轮不是旧12组35作业的重新验收；旧sdk-baseline.json仍属K2历史。
+
+### S3必需工件身份
+
+以下均绑定上述S3及表中平台run；只登记Actions API元数据，未下载或重新计算工件。
+
+| 平台 / 工件名 | ID | 字节 | Actions digest |
+| --- | --- | ---: | --- |
+| Windows / `EXReader-WP13-Windows` | `12470139324` | 39606946 | `sha256:ebd0b9d2c180221a9d11f76a1e8f68cf857b7c674d3d401247cde8bb54bc59cf` |
+| Linux / `WP13-Linux-e25959e1285b5ebf9a4bf5b27c596d12702dc695` | `12469954735` | 33045142 | `sha256:4a68ab261c7a5671df9c168ae2d02e9511eb0611f01d67594a7e2ff888c249b4` |
+| Android / `EXReader-WP13-Android` | `12471048990` | 154348455 | `sha256:ad1a6825da666a887067280a9d2f3af1cecd4848296bd8c8deed044acecd80ab` |
+| Apple / `wp13-apple-iphone` | `12472330001` | 36826405 | `sha256:1e4c5f6379058c83448d4ebaa842ad9c9aedbf9f969cfd7ab1f897283500cf4b` |
+| Apple / `wp13-apple-package` | `12471416222` | 126995103 | `sha256:a8a3fb08438ac01bf0da0fb41a4fa0e464340abc3c6071e2c08885cc0351d308` |
+| Apple / `wp13-apple-ipad` | `12471398195` | 46007962 | `sha256:47e5611e59d0bb43002025c2f3319ea4001eb3f122c22c5461825390657d1fa2` |
+| Apple / `wp13-apple-validation` | `12471383725` | 66581 | `sha256:0a3eddccf152e77d4889fbde50515415b761135f6bada523ca7d94f6509bcbd4` |
+| Apple / `wp13-apple-macos` | `12471018852` | 36179253 | `sha256:546fd172a9de515328a9814c615aa436766f7c7e1649918dc74a0dfc1cbbf93e` |
+| Apple / `wp13-apple-sdk-iphoneos` | `12470712983` | 17874526 | `sha256:8ad0ded7d7c387dada7e83309bac65df7d665364c6b14afc893b69d7f5d4e130` |
+| Apple / `wp13-apple-sdk-iphonesimulator` | `12470213597` | 18156106 | `sha256:4bddfb20d57c60a3fc2e69ea75838791347ff3141c6d17558a8781493471f051` |
+| Apple / `wp13-apple-sdk-macos` | `12470069004` | 18157799 | `sha256:e515c63290759407f49fcf7b9ee47efe77e79c9ca48d13a368f091d5ec7e8dd6` |
+
+Windows job`120180288386`、Linux job`120180297063`、Android job`120180279876`。
+Apple的SDK三job为`120180270741`/`120180271003`/`120180271080`，
+UI三job为`120181006859`/`120181006824`/`120181006905`，package`120181006862`，summary`120187456639`。
+
+H5修补、H6程序门禁、H7文档和R3测量已纳入K，并在K的六组冻结运行中验证；S3只重新执行四宿主，
 见 [许可证复核](READING-LICENSE-REVIEW.md)；
 H6 跨平台证据门禁的受测身份与新日志候选分列，见 [门禁复核](READING-PLATFORM-GATE-REVIEW.md)。
 旧联合包的`docs/validation/sdk-baseline.json`仍记录K2历史身份；新联合收口须显式提升契约并重验。

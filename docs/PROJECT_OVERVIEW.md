@@ -37,7 +37,7 @@ PDF 保留自有原生渲染核心；参考宿主使用原生控件及系统绘�
 具体执行分为 R1 标准阅读构建、R2 实际故障、R3 性能基线、R4 热点优化、R5 宿主有界接入、
 R6 核心发布门槛，详见 [六个工作包](CORE-ROADMAP.md)。已完成能力的调整与现有 A/B/C 收口在同文登记。
 
-总 SDK 当前为 3.40.0 开发版，ABI epoch 1、书库 schema 6。核心自有代码采用 MIT；第三方组件、字体和
+总 SDK 当前为 3.40.0 开发版，ABI epoch 1、书库 schema 7。核心自有代码采用 MIT；第三方组件、字体和
 可选解码器分别遵守各自许可。默认关闭 FAAD2，启用它的组合二进制需遵守 GPL。
 版本字段以公开头文件为准，规则见 [VERSIONING.md](VERSIONING.md)。
 
@@ -54,11 +54,11 @@ R1分支 `codex/r1-reading-core` 从 S=`686ce2fe` 追加阅读 preset、安装�
 | 已完成（失败保留） | R1/R3 首轮 | 源码 `61aa183`，run `39852907619`：构建、安装、消费者与 smoke 成功，测量自验因 mock 误拦截失败、实际采样未执行；修复后在新源码重验 |
 | 已完成 | R1 跨平台（H1） | 受测源码 `9b968a16fc47596725e849e56ee98e4c4c210b74`，run [39854485070](https://github.com/NoGod3524/EXReader/actions/runs/39854485070) attempt 1：Windows/macOS × 两 preset 4/4 作业成功，构建、安装、安装消费者 3/3 或 4/4、九格式合成 smoke 9/9 与依赖/配置判定 accepted，见 [H1 记录](https://github.com/NoGod3524/EXReader/blob/2e8e981b6dd44d855a23931480fe5e0d5c791762/docs/READING-PLATFORMS.md)；未做性能或体积预算。程序集合、依赖解析与链接器身份的门禁加固由 [H6](https://github.com/NoGod3524/EXReader/blob/62ab38e8223e42f1562fda7137cd41b4d87620f1/docs/handoffs/reading-H6-platform-gate.md) 另行跟踪 |
 | 已完成 | R3 初始 PDF/CBZ 测量（Linux，合成） | 源码 `3cd7bdf14d4ee961a9cdda98bd7410d34c04161b`，run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753)：655 字节 1 页 PDF 与 908 字节 4 页 CBZ 各三进程；可区分页面候选 `4b6f562c29181d509f470feda0e5f1226fd466bb`，run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765) 增加 3 页 PDF/4 页 CBZ 的 32×32 合成文档，12 进程/240 次绘制、60 项拒绝自验，2026-10-22 只读核对为 success。见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md) |
-| 运行中 | R5 宿主 | Windows H8、Linux H11已在新SDK实现上通过；Apple/Android最终复验与四宿主共同源码待验 |
+| 已完成 | R5 宿主H8–H11 | 共同源码`e25959e`，四组11作业/11必需工件同源、attempt1通过；各平台严格汇总接受，见[共同验收记录](R5-SDK-FREEZE.md) |
 | 已验证 | R5 SDK 契约 | 固定`9c69bc4`，窗口单元递归已修复，六组18执行作业/30工件同源通过；旧冻结撤回与失败记录保留，见[SDK冻结记录](R5-SDK-FREEZE.md) |
 | 未执行 | R2 | 九格式原创 fixture 清单已冻结，仅作小型回归；真实 EPUB/PDF 语料仍为 0/1710，实际故障尚未逐份登记修复 |
 | 未执行 | R3 正式基线 | 真实多页 PDF、嵌入/回退字体与复杂图像、真实语料、跨平台性能、峰值内存预算与冻结的硬性能预算 |
-| 未完成 | R4 / R5 宿主 | R4等可复现热点；SDK修复已重验，四宿主共同源码复验仍待收口 |
+| 未完成 | R4 / 设备与读屏 | R4等待可复现热点；真机、VoiceOver/TalkBack及宿主声明外能力另行验收 |
 | 未执行 | R6 启用 | 门禁映射已写入，两个 check 尚未设为默认分支必需检查；默认分支 `protected=false`、rulesets 为空 |
 
 两个 preset 只做组件裁剪：`reading-core` 关闭音频（含 MP3/AAC）、书库、全文索引、PDF 编辑、旧共享总库、工具和 JNI，
@@ -74,9 +74,9 @@ R1分支 `codex/r1-reading-core` 从 S=`686ce2fe` 追加阅读 preset、安装�
 | 交付层 | 当前范围 | 主要边界 |
 | --- | --- | --- |
 | 原生引擎与 SDK | TXT/HTML/FB2/EPUB/DOCX/RTF/MOBI/KF8 重排输入，PDF/CBZ 固定页，Unicode 文字分析、OpenType、分页和绘制 | 各格式结构、CSS、脚本、图像与 PDF 子特性按支持矩阵声明 |
-| 有界阅读与存储 | EPUB 章索引/窗口/恢复点；SQLite 原书、进度、标注、精确去重、备份；CBZ/PDF 分块或映射原书路径 | 旧完整快照 API 语义保留；宿主尚未全部接入有界入口，其他格式不能据此宣称大文件全流式 |
+| 有界阅读与存储 | EPUB 章索引/窗口/恢复点；SQLite 原书、进度、标注、精确去重、备份；CBZ/PDF 分块或映射原书路径 | 四宿主已在声明范围接入有界EPUB及章内持久化；旧完整快照API保留，其他格式仍有明确上限 |
 | 字体与图文 | 八个新增声明脚本、竖排/ruby/float/表格；COLR v1 与 SVG 字体子集；扩展 CBZ 图像 | 字体、脚本、颜色和组合模式存在明确支持边界，不能外推到全规范 |
-| 原生参考宿主 | Windows、Linux GTK、macOS/iPhone/iPad；Android 另有独立交付分支 | 各宿主单独验收；大小限制、格式、后台/取消、真机及无障碍范围不同 |
+| 原生参考宿主 | Windows、Linux GTK、macOS/iPhone/iPad、Android已纳入共同R5源码 | 各宿主按声明范围验收；大小限制、格式、后台/取消、真机及无障碍范围不同 |
 | 工具与独立模块 | 轻量转换、EPUB/HTML 资源包 preserve、旧 UI 迁移、OPDS1/2、可选 Tesseract 适配器 | 高保真全格式往返、OCR PDF 文字层与搜索/标注闭环、HTTPS/LCP 和新宿主服务接入仍有缺口 |
 
 接口和所有权见 [NATIVE_API.md](NATIVE_API.md)，组件依赖见 [ARCHITECTURE.md](ARCHITECTURE.md)，
@@ -104,7 +104,8 @@ Android/OPDS 独立候选的完整身份见 [总 handoff](handoffs/2026-10-22-af
 
 最新 A/B 固定交付、云端核对和 C 接续要求见 [A/B 到齐登记](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-AB-delivered.md)。
 
-当前最终状态以 [A/B/C 联合验收登记](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-ABC-accepted.md) 为准。
+原A/B/C阶段以 [联合验收登记](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-ABC-accepted.md) 为准；
+后续R5的当前SDK与宿主源码另见[冻结及共同源码记录](R5-SDK-FREEZE.md)。
 
 原 K 的阶段一/二历史记录见集成分支固定提交 `b81f138` 中的
 [SDK 基线](https://github.com/NoGod3524/EXReader/blob/b81f13869bb49b1138e4862faf64daae01d5fd01/docs/validation/sdk-baseline.json)、
@@ -151,7 +152,7 @@ FAAD2 默认关闭，阅读 preset 也不链接它；只有显式 `EXR_ENABLE_AA
 C 已合入固定交付，重验并冻结 K2=`d46ff370`，冻结非 OPDS 祖先 H=`d10fa590` 后完成 OPDS 合入。
 最终 S 的 12 组/35 上游作业全部成功，汇总 run `39850404743` 的 protocol、baseline、summarize 也全部成功。
 完成日志明确 `accepted=true`；OPDS 与 Android 的 SDK 契约均为 K2，`pending_contracts=[]`。
-早期 protocol 自验、原 K 和 33 作业协议继续作为历史保留，当前验收以最终 S 为准。
+早期 protocol 自验、原 K 和 33 作业协议继续作为历史保留，原A/B/C验收以该最终 S 为准。
 
 三包是当前功能与集成子任务，不替代上述五项质量目标。C 直接覆盖 SDK 基线与联合验证，B 覆盖表单专项输入；
 EPUB/PDF 历史失败闭环、通用差分门禁和完整发布制度尚未成为这三包中可独立验收的完整任务。
