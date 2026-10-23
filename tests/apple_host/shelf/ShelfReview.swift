@@ -144,6 +144,20 @@ import CryptoKit
         tail.observe(clamped, size: CGSize(width: 100, height: 400))
         try check("terminal_viewport_clamp_keeps_real_visible_top", !tail.after && tail.top == tail.rows[tail.rows.count - 10].key &&
             !tail.observation.contains("\"restoring_layout\":true"))
+        let tall = HostShelf(defaults: UserDefaults(suiteName: "EXR.ShelfTall.\(UUID().uuidString)")!)
+        tall.connect { query, anchor, before, inclusive, done in
+            done(Result { try queue.sync { try catalog.shelf(query: query, anchor: anchor, before: before, inclusive: inclusive) } })
+        }
+        func tallLayout() {
+            var positions: [String: CGRect] = [:]
+            for (index, row) in tall.rows.prefix(60).enumerated() {
+                positions[row.id] = CGRect(x: 0, y: CGFloat(index * 40), width: 100, height: 40)
+            }
+            tall.observe(positions, size: CGSize(width: 100, height: 2400))
+        }
+        tallLayout(); tallLayout()
+        try check("tall_native_viewport_prefetches_without_initial_scroll_range", tall.rows.count == 100 &&
+            tall.top == tall.rows.first?.key && !tall.observation.contains("\"restoring_layout\":true"))
         try queue.sync { try catalog.close() }
         let manifest: [String: Any] = ["source_sha": ProcessInfo.processInfo.environment["GITHUB_SHA"]!,
             "run_id": ProcessInfo.processInfo.environment["GITHUB_RUN_ID"]!,

@@ -106,12 +106,13 @@ struct LibraryScreen: View {
                     .onSubmit { searchFocused = false }
                     .accessibilityIdentifier("library.search")
                     .onChange(of: shelf.query) { _ in shelf.search() }
+                    .disabled(model.productIndexPending)
                 Button("刷新") { shelf.refresh() }
-                    .disabled(model.busy)
+                    .disabled(model.busy || model.productIndexPending)
                     .accessibilityIdentifier("library.refresh")
             }.padding(.horizontal).padding(.vertical, 6)
 
-            if shelf.rows.isEmpty && !model.errorText.isEmpty && !model.books.isEmpty {
+            if (model.productIndexPending || (shelf.rows.isEmpty && !model.errorText.isEmpty)) && !model.books.isEmpty {
                 // Retained SDK imports remain reachable while product repair is pending.
                 List(model.books) { book in
                     Button(book.title) { model.openBook(book) }
@@ -120,7 +121,7 @@ struct LibraryScreen: View {
                 }.accessibilityIdentifier("library.list")
             } else if shelf.rows.isEmpty && !shelf.loading {
                 Spacer()
-                Text(shelf.query.isEmpty ? "书架为空，导入一本示例书开始。" : "未找到匹配书籍")
+                Text(shelf.query.isEmpty ? "书架为空，打开文件即可导入。" : "未找到匹配书籍")
                     .foregroundColor(.secondary)
                     .accessibilityIdentifier("library.empty")
                 Spacer()
@@ -174,6 +175,11 @@ struct LibraryScreen: View {
             Text(shelf.observation).font(.caption2).lineLimit(1)
                 .accessibilityLabel(shelf.observation).accessibilityIdentifier("library.shelf.state")
 #endif
+            if model.productIndexPending {
+                Text("产品索引待修复；暂时最多显示最近 50 本本地书籍，重启后重试。")
+                    .font(.caption).foregroundColor(.secondary)
+                    .accessibilityIdentifier("library.shelf.pending")
+            }
             if !shelf.error.isEmpty {
                 Text(shelf.error).font(.caption).foregroundColor(.red).accessibilityIdentifier("library.shelf.error")
             }

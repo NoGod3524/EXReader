@@ -134,6 +134,7 @@ final class HostShelf: ObservableObject {
             .sorted { $0.value.minY < $1.value.minY }
         let newVisible = Set(ordered.map(\.key))
         guard let first = ordered.first, let index = rows.firstIndex(where: { $0.id == first.key }) else { return }
+        let lastIndex = ordered.last.flatMap { last in rows.firstIndex(where: { $0.id == last.key }) } ?? index
         let acknowledged = awaitingLayoutKey != nil
         if let awaitingLayoutKey {
             if first.key != awaitingLayoutKey {
@@ -172,7 +173,7 @@ final class HostShelf: ObservableObject {
         }
         top = rows[index].key
         guard !loading, appliedGeneration == generation else { return }
-        if after && index >= rows.count - 12, let last = rows.last {
+        if after && lastIndex >= rows.count - 12, let last = rows.last {
             request(anchor: last.key, previous: false, inclusive: false, replacing: false)
         } else if before && index < 12, let first = rows.first {
             request(anchor: first.key, previous: true, inclusive: false, replacing: false)
@@ -813,6 +814,7 @@ final class HostReaderModel: ObservableObject {
     @Published var fontSize = 28
     @Published var statusText = "就绪"
     @Published var errorText = ""
+    @Published private(set) var productIndexPending = false
     @Published var stateHash = "—"
     @Published var busy = false
     @Published var notes: [HostNoteRow] = []
@@ -958,6 +960,7 @@ final class HostReaderModel: ObservableObject {
                 DispatchQueue.main.async {
                     self.traceUITest("startup-publish rows=\(rows.count)")
                     self.books = rows
+                    self.productIndexPending = !repairProblems.isEmpty
                     self.busy = false
                     if !repairProblems.isEmpty {
                         self.errorText = "产品索引待修复：" + repairProblems.joined(separator: "；")
@@ -1248,6 +1251,7 @@ final class HostReaderModel: ObservableObject {
                     DispatchQueue.main.async {
                         guard myToken == self.token else { return }
                         if case .success(let books) = rows { self.books = books }
+                        self.productIndexPending = true
                         self.errorText = self.describe(error)
                         self.statusText = "书籍已保存，产品索引待修复"
                         self.finish()

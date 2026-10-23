@@ -21,10 +21,14 @@ both the requested row and terminal row in the viewport; it never invents an
 offscreen anchor. Search uses the same NFC/256-scalar bound at UI and SQL layers.
 Title matching uses the normalized sort title; author matching binds both NFC
 and NFD literals. Stored display title and author bytes are preserved.
+Prefetch uses the last actually visible row, so a tall viewport that initially
+fits a complete 50-row page can fetch its next page without needing a scroll range.
 
 The reader's compatibility/fallback metadata is separately capped at 50 rows.
 It remains available when an SDK import is saved but its product index is pending
-repair. Opening a shelf row uses its SDK ID, including IDs outside either cache.
+repair, including when older product rows already exist. This fallback shows the
+50 newest local SDK books and explicitly pauses product search until startup
+repair succeeds. Opening a shelf row uses its SDK ID, including IDs outside either cache.
 
 ## Memory and timing boundary
 
