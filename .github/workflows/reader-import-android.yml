@@ -1,0 +1,92 @@
+name: Android recoverable product import
+on:
+  push:
+    branches: [codex/reader-import-mapping]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      ANDROID_OWNERSHIP_HEAD: d0b205a56e4fcfbd5cca55a808327f00b25971ed
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require unchanged frozen SDK
+        run: git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install pinned Android compiler and emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk/emulator" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+          python -m pip install ninja==1.11.1.1
+      - name: Build frozen SDK and native host
+        run: |
+          set -o pipefail
+          mkdir -p build/import-android
+          git rev-parse HEAD > build/import-android/source.txt
+          python tests/reader_catalog/check_schema.py --output build/import-android/schema.json
+          python tests/reader_catalog/check_assets.py
+          python tools/build_android_host.py --stage stage/android-x86_64 --build-dir build/android-host --gradle gradle 2>&1 | tee build/import-android/build.log
+          mkdir -p examples/android/app/src/androidTest/assets/mapping
+          cp build/android-host/fixtures/Sample.epub examples/android/app/src/androidTest/assets/mapping/
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Execute real SDK, SQLite and killed-process recovery on API34
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb shell getprop ro.build.version.sdk > build/import-android/device-api.txt
+            adb shell getprop ro.product.cpu.abi > build/import-android/device-abi.txt
+            gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.CatalogStoreTest
+            cp -r examples/android/app/build/outputs/androidTest-results/connected build/import-android/catalog-reports
+            gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.ImportMappingTest -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.ImportMappingTest
+            cp -r examples/android/app/build/outputs/androidTest-results/connected build/import-android/mapping-reports
+            adb install -r examples/android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w -r -e phase seed-before org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/seed-before.txt
+            adb shell am instrument -w -r -e phase recover-before org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/recover-before.txt
+            adb shell am instrument -w -r -e phase seed-during org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/seed-during.txt
+            adb shell am instrument -w -r -e phase recover-during org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/recover-during.txt
+            adb logcat -d -v threadtime > build/import-android/logcat.txt
+      - name: Refuse failed, skipped, incomplete or unrecovered imports
+        run: python tools/check_reader_import_android.py --evidence build/import-android
+      - name: Preserve original reports and identity
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-import-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/import-android/
+            examples/android/app/build/outputs/androidTest-results/
+            examples/android/app/src/main/assets/reader-catalog-v1.json
+            build/android-host/build.json
+          if-no-files-found: error

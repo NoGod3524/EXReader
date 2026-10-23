@@ -95,6 +95,50 @@ final class CatalogStore implements AutoCloseable {
         return database;
     }
 
+    boolean hasLocalBook(long id) {
+        requireOwner();
+        try (Cursor cursor = database.rawQuery("SELECT 1 FROM reader_local_books WHERE sdk_book_id=?",
+                new String[]{Long.toString(id)})) { return cursor.moveToFirst(); }
+    }
+
+    void removeLocalBook(long id) {
+        requireOwner();
+        database.delete("reader_local_books", "sdk_book_id=?", new String[]{Long.toString(id)});
+    }
+
+    /** Only source identity is compared on reuse; product metadata/history stay intact. */
+    void attach(BookStore.VerifiedSource source) {
+        requireOwner();
+        database.beginTransaction();
+        try {
+            boolean exists;
+            try (Cursor row = database.rawQuery(
+                    "SELECT format,source_sha256,source_bytes FROM reader_books WHERE book_key=?",
+                    new String[]{source.key})) {
+                exists = row.moveToFirst();
+                if (exists && (!source.format.equals(row.getString(0))
+                        || !source.sha256.equals(row.getString(1)) || source.bytes != row.getLong(2)))
+                    throw new SQLiteException("Product source identity conflicts with the SDK original");
+            }
+            if (!exists) database.execSQL("INSERT INTO reader_books"
+                    + "(book_key,format,source_sha256,source_bytes,title,author,sort_title,favorite) VALUES(?,?,?,?,?,?,?,?)",
+                    new Object[]{source.key, source.format, source.sha256, source.bytes,
+                            source.book.title, source.book.author, source.book.title, source.book.favorite});
+            boolean mapped;
+            try (Cursor row = database.rawQuery(
+                    "SELECT book_key,location_kind FROM reader_local_books WHERE sdk_book_id=?",
+                    new String[]{Long.toString(source.book.id)})) {
+                mapped = row.moveToFirst();
+                if (mapped && (!source.key.equals(row.getString(0)) || !source.location.equals(row.getString(1))))
+                    throw new SQLiteException("Local SDK identity already maps to another source or mode");
+            }
+            if (!mapped) database.execSQL(
+                    "INSERT INTO reader_local_books(book_key,sdk_book_id,location_kind) VALUES(?,?,?)",
+                    new Object[]{source.key, source.book.id, source.location});
+            database.setTransactionSuccessful();
+        } finally { database.endTransaction(); }
+    }
+
     private void requireOwner() {
         if (Thread.currentThread() != owner) throw new IllegalStateException("Catalog belongs to the host worker");
     }

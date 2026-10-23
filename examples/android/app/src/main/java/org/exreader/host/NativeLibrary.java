@@ -119,6 +119,22 @@ public final class NativeLibrary implements AutoCloseable {
         long[] values = nativeImportFile(checked(), path, format, title, false);
         return new ImportResult(values[0], values[1] != 0);
     }
+
+    /** Seekable original bytes owned by the SDK, independent of host path preferences. */
+    static final class Source implements AutoCloseable {
+        private long handle;
+        final long size;
+        Source(long[] value) { handle = value[0]; size = value[1]; }
+        int read(long offset, byte[] bytes, int count) {
+            if (handle == 0) throw new IllegalStateException("Source is closed");
+            return nativeReadSource(handle, offset, bytes, count);
+        }
+        @Override public void close() {
+            if (handle != 0) { nativeCloseSource(handle); handle = 0; }
+        }
+    }
+
+    Source source(long bookId) { return new Source(nativeOpenSource(checked(), bookId)); }
     ImportResult importLegacyFile(String path,int format,String title) {
         long[] values=nativeImportFile(checked(),path,format,title,true);
         return new ImportResult(values[0],values[1]!=0);
@@ -215,6 +231,9 @@ public final class NativeLibrary implements AutoCloseable {
     }
 
     private static native String nativeIdentity();
+    private static native long[] nativeOpenSource(long handle, long bookId);
+    private static native int nativeReadSource(long source, long offset, byte[] bytes, int count);
+    private static native void nativeCloseSource(long source);
     private static native boolean nativeBounded(long handle,long bookId);
     private static native long nativeOpen(String path);
     private static native void nativeClose(long handle);
