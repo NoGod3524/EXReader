@@ -1,0 +1,88 @@
+name: Representative reading performance
+on:
+  push:
+    branches: ['codex/r3-real-performance']
+  workflow_dispatch:
+    inputs:
+      require_budgets:
+        description: Require committed numeric and reviewed pixel budgets
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      require_budgets:
+        type: boolean
+        default: true
+    outputs:
+      artifact_name:
+        value: ${{ jobs.reading-performance.outputs.artifact_name }}
+      source_sha:
+        value: ${{ jobs.reading-performance.outputs.source_sha }}
+permissions:
+  contents: read
+  actions: read
+jobs:
+  reading-performance:
+    name: reading-performance
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    outputs:
+      artifact_name: ${{ steps.identity.outputs.artifact_name }}
+      source_sha: ${{ steps.identity.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Bind caller source and artifact identity
+        id: identity
+        run: |
+          echo "source_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=reading-real-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Install independent PDF reference and pixel inspector
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y poppler-utils python3-pil
+      - name: Refuse fabricated baseline metadata before sampling
+        run: python3 tests/check_reading_real_baseline.py
+      - name: Collect the shared frozen real-document manifest
+        run: python3 tools/reading_corpus/collect.py collect tools/reading_corpus/real-v1.json build/reading-real-inputs
+      - name: Fetch the existing pinned native host font and license
+        run: python3 -c "import sys; sys.path.insert(0, 'tools'); from host_font import fetch; fetch('build/reading-real-font')"
+      - name: Build and install unchanged reading SDK
+        run: |
+          cmake --preset reading-core -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build --preset reading-core
+          cmake --install build/reading-core
+      - name: Build the actual installed public SDK consumer
+        run: |
+          cmake -S tests/reading_real -B build/reading-real-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-core/stage" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build/reading-real-consumer --parallel 4
+      - name: Measure fresh processes, selected reference pixels and evidence refusals
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          budget_args=()
+          if test -f tests/reading_real/budgets.json; then
+            budget_args=(--budgets tests/reading_real/budgets.json)
+          elif test '${{ inputs.require_budgets }}' = true; then
+            echo 'Strict performance gate requires a committed baseline and numeric budgets.'
+            exit 1
+          fi
+          python3 tools/measure_reading_real.py build/reading-real-consumer/reading-real-benchmark tools/reading_corpus/real-v1.json build/reading-real-inputs/assets build/reading-real --sdk build/reading-core/stage --source-sha "$GITHUB_SHA" "${budget_args[@]}"
+      - name: Arrange the fixed artifact report path
+        if: always()
+        run: |
+          mkdir -p build/reading-real-artifact/reading-real build/reading-real-artifact/identity
+          if test -d build/reading-real; then cp -a build/reading-real/. build/reading-real-artifact/reading-real/; fi
+          for path in build/reading-real-inputs/manifest.json build/reading-real-inputs/licenses build/reading-real-font build/reading-real-consumer build/reading-core/CMakeCache.txt build/reading-core/compile_commands.json tests/reading_real/contract.json tests/reading_real/budgets.json tools/reading_corpus/real-v1.json; do
+            if test -e "$path"; then cp -a --parents "$path" build/reading-real-artifact/identity/; fi
+          done
+      - name: Preserve every raw sample, failure and reference comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.identity.outputs.artifact_name }}
+          path: build/reading-real-artifact/
+          if-no-files-found: error
+          retention-days: 30
