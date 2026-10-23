@@ -93,6 +93,11 @@
   成功，固定核验上述工件 `12532665458`、55,648,465 B、
   `sha256:470aa20d11c3353980db6f251f0bc39520c251cec6462473b4d36fbf461da00d`。
   回读只定位原失败，`diagnostic_only=true, accepted=false`，不授产品验收。
+- `82a4c4c474eb754975e13294e4a45c5e9f73d4ec` / run `40032860158`：目录 10/10、
+  实际 UI 10/10、原 catalog 8/8 与 mapping 14/14 均通过。随后 kill 探针启动被拒：
+  connected tests 会卸载目标 app，组合工作流只重装了 instrumentation APK。后继按原导入
+  工作流同时重装 app 与 instrumentation，再执行原样 kill/recovery 探针。此轮未执行原 66
+  和门禁，严格汇总拒绝，保留 failure；首屏/窗口/PSS 结果只属于本轮观测，不转授后继。
 - 后继候选正在提交；所有出口仍待同源云端完成。
 
 本地仅源码/文档编辑和 Git；编译、语法检查、夹具生成、SQL、仪器化、工件读取/解析均在
