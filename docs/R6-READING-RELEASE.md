@@ -17,9 +17,14 @@ Windows/Linux/Apple/Android分别为39899820869、39899823392、39899825998、39
 Windows/Linux已严格通过；Android原45中的pdf_process_restart帧比较失败，最终拒绝，
 其独立10与bounded11通过不替代原出口；原失败保留并诊断，Apple仍待结束。
 
-正式R3基线源码`887e1bb59ef6f28c15824cb7593654f3610f3cef`、run39899829270已启动，
-计划八份文档各五次新进程及12个参考页。有效基线后先登记像素/位置签名审阅和数值预算，
-再独立执行严格运行。最终17作业总门禁必须在纳入预算后的共同源码重跑，尚未授予通过。
+正式R3基线`887e1bb59ef6f28c15824cb7593654f3610f3cef`、run39899829270已完成40进程及12参考页。
+逐页实际审阅后由云端导出数值预算，固定于`11cb054…`。该源码的run39901084062中，
+包括严格performance的16个上游作业全部成功；performance确认accepted=true、measurement_valid=true、problems=[]。
+最终reading-required汇总因缺少Pillow运行依赖而失败，整轮仍为未通过。
+
+`fa54027…`仅在汇总作业补齐python3-pil，预算、引擎、门禁断言未改；
+完整17作业重验run [39902467216](https://github.com/NoGod3524/EXReader/actions/runs/39902467216)已启动。
+最终结论以这次同source/run/attempt的完整执行及严格汇总为准。
 
 下列旧候选封装与协议记录只授予各自固定源码的声明范围；实际发布和默认分支规则仍未执行。
 
