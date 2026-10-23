@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "base_internal.h"
 #include "pdf_jpx_internal.h"
+#if defined(EXR_ENABLE_PDF_JPX) && EXR_ENABLE_PDF_JPX
 #include <openjpeg.h>
 
 #define JPX_PAYLOAD ((size_t)64*1024*1024)
@@ -158,3 +159,18 @@ done:
   if(status!=EXR_OK) return exr_fail(e,status,"JPX image decode failed");
   return EXR_OK;
 }
+#else
+exr_status exr_pdf_jpx_decode(const void *data,size_t size,unsigned width,
+  unsigned height,unsigned components,unsigned bits,int indexed,
+  const exr_control *control,unsigned char **samples,size_t *sample_size,exr_error *e) {
+  exr_status status;
+  (void)indexed;
+  if(samples) *samples=NULL;
+  if(sample_size) *sample_size=0;
+  if(!samples || !sample_size || !data || !size || !width || !height || !components ||
+     (bits!=1 && bits!=2 && bits!=4 && bits!=8 && bits!=16))
+    return exr_fail(e,EXR_ARGUMENT,"Invalid JPX decode arguments");
+  if((status=exr_control_cancel(control,e))!=EXR_OK) return status;
+  return exr_fail(e,EXR_UNSUPPORTED,"JPX image decoder is disabled");
+}
+#endif
