@@ -6,12 +6,14 @@ on:
       - '.github/workflows/reading-real.yml'
       - 'tools/reading_real_benchmark.c'
       - 'tools/measure_reading_real.py'
+      - 'tools/reading_real_environments.py'
       - 'tools/host_font.py'
       - 'tools/reading_corpus/**'
       - 'tests/reading_corpus/check_collect.py'
       - 'tests/reading_real/**'
       - 'tests/check_reading_real_baseline.py'
       - 'tests/check_reading_real_baseline_report.py'
+      - 'tests/check_reading_real_environments.py'
       - 'src/**'
       - 'include/**'
       - 'cmake/**'
@@ -21,6 +23,10 @@ on:
     inputs:
       require_budgets:
         description: Require committed numeric and reviewed pixel budgets
+        type: boolean
+        default: false
+      baseline_only:
+        description: Collect one independent 40-process baseline without granting acceptance
         type: boolean
         default: false
   workflow_call:
@@ -54,6 +60,13 @@ jobs:
           echo "source_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
           echo "artifact_name=reading-real-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- \
+            tests/reading_real/budgets.json tests/reading_real/contract.json \
+            docs/validation/reading-real-pixel-review.json
+          if test '${{ inputs.baseline_only }}' = true; then
+            test '${{ github.event_name }}' = workflow_dispatch
+            test '${{ inputs.require_budgets }}' != true
+          fi
           if test '${{ inputs.require_budgets }}' = true && ! test -f tests/reading_real/budgets.json; then
             echo 'Strict performance gate requires frozen budgets before collection or build.'
             exit 1
@@ -67,6 +80,7 @@ jobs:
           python3 tests/check_reading_real_baseline.py
           python3 tests/check_reading_real_baseline_report.py
           python3 tests/check_reading_real_review.py
+          python3 tests/check_reading_real_environments.py
       - name: Verify bounded collector retry and download refusals
         run: python3 tests/reading_corpus/check_collect.py
       - name: Recover eight frozen originals and verify current publisher licenses
@@ -89,19 +103,39 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           budget_args=()
-          if test -f tests/reading_real/budgets.json; then
-            budget_args=(--budgets tests/reading_real/budgets.json)
+          if test '${{ inputs.baseline_only }}' = true; then
+            echo 'Independent baseline collection; no performance acceptance is granted.'
+          elif test -f tests/reading_real/budgets.json; then
+            budget_args=(--frozen-budgets)
           elif test '${{ inputs.require_budgets }}' = true; then
             echo 'Strict performance gate requires a committed baseline and numeric budgets.'
             exit 1
           fi
           python3 tools/measure_reading_real.py build/reading-real-consumer/reading-real-benchmark tools/reading_corpus/real-v1.json build/reading-real-inputs/assets build/reading-real --sdk build/reading-core/stage --source-sha "$GITHUB_SHA" "${budget_args[@]}"
+      - name: Require complete baseline collection without acceptance
+        if: inputs.baseline_only == true
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          report = json.loads(Path('build/reading-real/summary.json').read_text())
+          assert report['source_sha'] == os.environ['GITHUB_SHA']
+          assert report['run_id'] == os.environ['GITHUB_RUN_ID']
+          assert report['run_attempt'] == os.environ['GITHUB_RUN_ATTEMPT']
+          assert report['measurement_valid'] is True and report['accepted'] is False
+          assert report['budget_sha256'] is None
+          assert len(report['attempts']) == 40 and len(report['references']) == 12
+          print(json.dumps({'baseline_only': True, 'accepted': False,
+              'measurement_valid': True, 'source_sha': report['source_sha'],
+              'run_id': report['run_id'], 'run_attempt': report['run_attempt'],
+              'environment': report['environment']}))
+          PY
       - name: Arrange the fixed artifact report path
         if: always()
         run: |
           mkdir -p build/reading-real-artifact/reading-real build/reading-real-artifact/identity
           if test -d build/reading-real; then cp -a build/reading-real/. build/reading-real-artifact/reading-real/; fi
-          for path in build/reading-real-inputs/manifest.json build/reading-real-inputs/licenses build/reading-real-font build/reading-real-consumer build/reading-core/CMakeCache.txt build/reading-core/compile_commands.json tests/reading_real/contract.json tests/reading_real/budgets.json tools/reading_corpus/real-v1.json; do
+          for path in build/reading-real-inputs/manifest.json build/reading-real-inputs/licenses build/reading-real-font build/reading-real-consumer build/reading-core/CMakeCache.txt build/reading-core/compile_commands.json tests/reading_real/contract.json tests/reading_real/budgets.json tests/reading_real/environments.json tests/reading_real/environments tools/reading_corpus/real-v1.json; do
             if test -e "$path"; then cp -a --parents "$path" build/reading-real-artifact/identity/; fi
           done
       - name: Preserve every raw sample, failure and reference comparison

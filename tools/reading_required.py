@@ -195,24 +195,26 @@ def reports(root, source, run, attempt):
     performance_path = root / f'reading-real-{run}-{attempt}' / 'reading-real/summary.json'
     performance = read(performance_path)
     ci_identity(performance, source, run, attempt)
-    from measure_reading_real import audit, read as real_read, CONTRACT, BUDGETS
+    from measure_reading_real import audit, read as real_read, CONTRACT
+    from reading_real_environments import report_budget
+    budget_path = report_budget(performance)
     require(performance.get('accepted') is True and performance.get('measurement_valid') is True and
             performance.get('problems') == [] and
             performance.get('corpus_registration_sha') == REGISTRATION and
             performance.get('corpus_manifest_sha256') == corpus['manifest_sha256'] and
             performance.get('contract_path') == 'tests/reading_real/contract.json' and
-            performance.get('budget_path') == 'tests/reading_real/budgets.json' and
             performance.get('contract_sha256') == sha256(CONTRACT) and
-            performance.get('budget_sha256') == sha256(BUDGETS), 'strict frozen performance evidence missing')
+            performance.get('budget_sha256') == sha256(budget_path), 'strict frozen performance evidence missing')
     require(performance.get('refusal_regression', {}).get('passed') is True,
             'performance evidence refusal regression missing')
-    audit(performance, performance_path.parent, real_read(BUDGETS))
+    audit(performance, performance_path.parent, real_read(budget_path))
     return {'sdk_version': candidates[0]['identity']['sdk_version'], 'abi': candidates[0]['identity']['abi'],
             'library_schema': 7, 'sdk_candidate': performance['sdk_candidate'],
             'candidates': [{key: item[key] for key in ('profile', 'host', 'arch', 'archive', 'bytes', 'sha256', 'manifest_sha256')}
                            for item in candidates],
             'manifest_sha256': corpus['manifest_sha256'], 'contract_sha256': performance['contract_sha256'],
-            'budget_sha256': performance['budget_sha256']}
+            'budget_sha256': performance['budget_sha256'], 'budget_path': performance['budget_path'],
+            'budget_selection': performance['budget_selection']}
 
 
 def main():
