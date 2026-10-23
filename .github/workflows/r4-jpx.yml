@@ -1,0 +1,50 @@
+name: R4 bounded JPX component decoder
+on:
+  push:
+    branches: ['codex/r4-core-hotspots']
+    paths: ['src/pdf_jpx*', 'tests/pdf_jpx/**', '.github/workflows/r4-jpx.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  primary-spec:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install PyMuPDF==1.26.7
+      - run: python3 tests/pdf_jpx/references.py --spec
+  decoder:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12474886324
+          run-id: 39891075765
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: build/frozen
+      - name: Build pinned OpenJPEG and bounded adapter with ASan UBSan
+        run: |
+          cmake -S tests/pdf_jpx -B build/jpx -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer' -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address,undefined'
+          cmake --build build/jpx --parallel 4 --target jpx-regress
+          cd build/jpx
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 ctest --output-on-failure
+      - run: python3 -m pip install Pillow==11.3.0 PyMuPDF==1.26.7
+      - name: Independent Pillow and original NASA index references
+        run: |
+          cd build/jpx
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 python3 ../../tests/pdf_jpx/references.py ./jpx-regress ../frozen/real-inputs/assets/pdf/nasa-solar-system.pdf
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r4-jpx-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/jpx/Testing/
+            build/jpx/*.jp2
+            build/jpx/*.j2k
+            build/jpx/*.samples
+          if-no-files-found: error

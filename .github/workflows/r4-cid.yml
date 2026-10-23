@@ -8,6 +8,27 @@ permissions:
   contents: read
   actions: read
 jobs:
+  streams:
+    name: page 35 original filter and parameter dictionaries
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12474886324
+          run-id: 39891075765
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: build/frozen
+      - run: python3 -m pip install PyMuPDF==1.26.7
+      - run: python3 tests/r4_core/cid_diagnose.py --streams build/frozen/real-inputs/assets/pdf/nasa-solar-system.pdf build/stream-diagnostic
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r4-stream-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/stream-diagnostic/
+          if-no-files-found: error
   diagnose:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
