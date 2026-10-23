@@ -65,6 +65,43 @@ public final class ReaderView extends View {
     private int drawnWidth, drawnHeight;
     private float drawnFit, drawnX, drawnY;
     private String pointHash;
+    private org.json.JSONObject debugBitmapIdentity;
+
+    private static String bitmapHash(java.security.MessageDigest digest) {
+        StringBuilder hash=new StringBuilder();
+        for(byte value:digest.digest()) hash.append(String.format(java.util.Locale.ROOT,"%02x",value&255));
+        return hash.toString();
+    }
+
+    /** Diagnostic identity of the accepted Bitmap before Canvas/GPU sampling. */
+    private static org.json.JSONObject bitmapIdentity(Bitmap bitmap) {
+        try {
+            java.security.MessageDigest logical=java.security.MessageDigest.getInstance("SHA-256");
+            int width=bitmap.getWidth(),height=bitmap.getHeight();
+            int[] pixels=new int[width];
+            byte[] row=new byte[width*4];
+            for(int y=0;y<height;y++) {
+                bitmap.getPixels(pixels,0,width,0,y,width,1);
+                for(int x=0;x<width;x++) {
+                    int value=pixels[x],at=x*4;
+                    row[at]=(byte)(value>>>24);row[at+1]=(byte)(value>>>16);
+                    row[at+2]=(byte)(value>>>8);row[at+3]=(byte)value;
+                }
+                logical.update(row);
+            }
+            java.nio.ByteBuffer raw=java.nio.ByteBuffer.allocate(bitmap.getByteCount());
+            bitmap.copyPixelsToBuffer(raw);
+            java.security.MessageDigest storage=java.security.MessageDigest.getInstance("SHA-256");
+            storage.update(raw.array(),0,raw.position());
+            return new org.json.JSONObject().put("logical_argb_sha256",bitmapHash(logical))
+                .put("raw_sha256",bitmapHash(storage)).put("width",width).put("height",height)
+                .put("row_bytes",bitmap.getRowBytes()).put("byte_count",bitmap.getByteCount())
+                .put("config",String.valueOf(bitmap.getConfig())).put("premultiplied",bitmap.isPremultiplied())
+                .put("has_alpha",bitmap.hasAlpha()).put("color_space",String.valueOf(bitmap.getColorSpace()));
+        } catch(java.security.NoSuchAlgorithmException | org.json.JSONException error) {
+            throw new IllegalStateException(error);
+        }
+    }
 
     private void renderChanged() {
         if (!BuildConfig.DEBUG) return;
@@ -100,6 +137,7 @@ public final class ReaderView extends View {
                 .put("fit",drawnFit).put("offset_x",drawnX).put("offset_y",drawnY)
                 .put("selection_mode",selectMode).put("selection_start",selection==null?-1:selection.start)
                 .put("selection_end",selection==null?-1:selection.end);
+            if(BuildConfig.DEBUG && debugBitmapIdentity!=null) state.put("bitmap_identity",debugBitmapIdentity);
             if(page!=null) state.put("book",page.bookId).put("index",page.index).put("part",page.part)
                 .put("path",page.path==null?org.json.JSONObject.NULL:page.path).put("start",page.start).put("end",page.end)
                 .put("anchor_sha256",pointHash==null?org.json.JSONObject.NULL:pointHash)
@@ -219,6 +257,7 @@ public final class ReaderView extends View {
         down = false;
         page = snapshot;
         if(BuildConfig.DEBUG) {
+            debugBitmapIdentity=snapshot==null ? null : bitmapIdentity(snapshot.bitmap);
             acceptedToken++; renderChanged(); pointHash=null;
             if(snapshot!=null && snapshot.boundedLocation!=null) {
                 try {
