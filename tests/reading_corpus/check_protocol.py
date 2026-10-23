@@ -73,6 +73,7 @@ def evidence_checks():
                     lambda r, p, h=phase: p['documents'][0].update({h + '_result': '../result.json'}),
                     lambda r, p, h=phase: p['documents'][0].update({h + '_result_sha256': '0' * 64}),
                     lambda r, p, h=phase: change_result(r, p, h, {'classification': 'unexpected_outcome'}),
+                    lambda r, p, h=phase: change_result(r, p, h, {'report' if h == 'full' else 'observed': None}),
                     lambda r, p, h=phase: change_result(r, p, h, {'exit_code': 1})]
         for key, value in (('source_sha', 'b' * 40), ('run_id', '13'), ('run_attempt', '2')):
             changes.append(lambda r, p, h=phase, k=key, v=value: change_result(r, p, h, {k: v}))
