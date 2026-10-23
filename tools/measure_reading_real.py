@@ -10,6 +10,7 @@ import platform
 import re
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 from measure_reading_core import ROOT, git, sha256
@@ -104,6 +105,76 @@ def baseline_origin(budgets, source):
             artifact["size_in_bytes"] > 0 and artifact["workflow_run"]["id"] == run["id"] and
             artifact["workflow_run"]["head_sha"] == run["head_sha"], "Baseline artifact identity refused")
     return {"run": run, "jobs": jobs, "artifact": artifact}
+
+
+def retain_baseline_report(origin, output):
+    archive_path = output / ".baseline-input.zip"
+    try:
+        with archive_path.open("wb") as stream:
+            subprocess.run(["gh", "api", f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/{origin['artifact']['id']}/zip"],
+                           stdout=stream, check=True, timeout=120)
+        require("sha256:" + sha256(archive_path) == origin["artifact"]["digest"], "Baseline ZIP digest refused")
+        with zipfile.ZipFile(archive_path) as archive:
+            name = "reading-real/summary.json"
+            require(archive.namelist().count(name) == 1 and archive.getinfo(name).file_size <= 16 * 1024 * 1024,
+                    "Baseline summary missing, duplicate or oversized")
+            (output / "baseline-summary.json").write_bytes(archive.read(name))
+        origin["summary_file"] = "baseline-summary.json"
+        origin["summary_sha256"] = sha256(output / "baseline-summary.json")
+    finally:
+        archive_path.unlink(missing_ok=True)
+
+
+def verify_baseline_report(budgets, current, output):
+    origin = current["baseline_origin"]
+    require(origin["summary_file"] == "baseline-summary.json" and
+            sha256(output / "baseline-summary.json") == origin["summary_sha256"] == budgets["baseline_summary_sha256"],
+            "Baseline summary digest refused")
+    baseline = read(output / "baseline-summary.json")
+    require(baseline["schema"] == 1 and baseline["scope"] == current["scope"] and
+            baseline["source_sha"] == budgets["baseline_source_sha"] == origin["run"]["head_sha"] and
+            baseline["run_id"] == str(budgets["baseline_run_id"]) and
+            baseline["run_attempt"] == str(budgets["baseline_run_attempt"]) and baseline["measurement_valid"] is True,
+            "Baseline report identity or complete measurement refused")
+    require(baseline["before"] == baseline["after"] and baseline["before"]["source_clean"] and
+            baseline["sdk_candidate"] == current["sdk_candidate"] and
+            baseline["before"]["sdk_candidate"] == current["before"]["sdk_candidate"] and
+            baseline["before"]["sdk_trees"] == current["before"]["sdk_trees"], "Baseline SDK identity refused")
+    require(baseline["contract_sha256"] == current["contract_sha256"] == budgets["contract_sha256"] and
+            baseline["corpus_manifest_sha256"] == current["corpus_manifest_sha256"] == budgets["corpus_manifest_sha256"] and
+            baseline["contract"] == current["contract"] and baseline["files"] == current["files"] and
+            baseline["before"]["font"] == current["before"]["font"] and
+            baseline["before"]["inputs"] == current["before"]["inputs"], "Baseline contract/corpus/font refused")
+    require(all(baseline["environment"][key] == current["environment"][key] for key in ("cpu_model", "compiler", "reference")) and
+            budgets["cpu_model"] == baseline["environment"]["cpu_model"] and
+            budgets["compiler"] == baseline["environment"]["compiler"], "Baseline environment refused")
+    require(baseline["refusal_regression"]["passed"] is True and
+            baseline["signature_refusal_regression"]["passed"] is True, "Baseline evidence refusals were not run")
+    results = baseline["results"]
+    require(set(results["cases"]) == set(budgets["cases"]) == {entry["id"] for entry in current["files"]},
+            "Baseline case coverage differs")
+    require(budgets["page_signatures"] == results["page_signatures"], "Frozen signatures do not come from pinned baseline")
+    policy = current["contract"]["budget_derivation"]
+    for case, limits in budgets["cases"].items():
+        require(set(limits) == set(results["cases"][case]), "Baseline metric coverage differs")
+        for key, maximum in limits.items():
+            measured = results["cases"][case][key]["p95"]
+            require(number(measured) and number(maximum), "Invalid baseline-derived budget")
+            cap = measured * policy["latency_multiplier_max"] if key.endswith("_ms") else (
+                measured if key == "oversize_fallbacks" else 0 if key == "explicit_snapshot_bytes" else
+                measured * policy["byte_multiplier_max"] + policy["memory_slack_bytes_max"])
+            require(maximum <= cap, "Budget is not bounded by pinned baseline: " + case + "/" + key)
+    require(number(budgets["consumer_bytes"]) and number(budgets["installed_sdk_bytes"]) and
+            budgets["consumer_bytes"] <= baseline["before"]["binary"]["bytes"] * policy["byte_multiplier_max"] +
+            policy["consumer_slack_bytes_max"] and
+            budgets["installed_sdk_bytes"] <= baseline["installed_sdk"]["bytes"] * policy["byte_multiplier_max"],
+            "Size budget is not bounded by pinned baseline")
+    differences = {f"{item['case']}/{item['page']}": item["normalized_mean_absolute_error"]
+                   for item in results["pixel_comparisons"]}
+    require(set(differences) == set(budgets["pixel_tolerances"]) and all(number(value) and
+            value <= differences[key] + policy["external_difference_slack_max"] for key, value in budgets["pixel_tolerances"].items()),
+            "External difference boundary is not bounded by pinned baseline")
+    return baseline
 
 
 def identity(binary, font, manifest, contract, entries, corpus):
@@ -265,6 +336,7 @@ def signature_refusals(record, entry, contract):
 
 def audit(summary, output, budgets=None):
     require(summary["schema"] == 1 and summary["scope"] == "linux_representative_reading", "Wrong report scope")
+    require(summary["render_parity_granted"] is False, "External pixel comparison cannot grant render parity")
     require(summary["run_id"] == os.environ["GITHUB_RUN_ID"] and
             summary["run_attempt"] == os.environ["GITHUB_RUN_ATTEMPT"] and
             summary["source_sha"] == os.environ["GITHUB_SHA"], "Cloud run/source/attempt identity changed")
@@ -334,6 +406,7 @@ def audit(summary, output, budgets=None):
         require(origin["run"]["id"] == budgets["baseline_run_id"] and
                 origin["run"]["head_sha"] == budgets["baseline_source_sha"] and
                 origin["artifact"]["digest"] == budgets["baseline_artifact_digest"], "Baseline origin changed")
+        verify_baseline_report(budgets, summary, output)
         require(budgets["cpu_model"] == summary["environment"]["cpu_model"] and
                 budgets["compiler"] == summary["environment"]["compiler"], "Incomparable baseline CPU/compiler")
         require(budgets["signature_policy"] == "exact-baseline-route-rgba-utf8-position" and
@@ -464,6 +537,8 @@ def main():
         budgets = read(args.budgets) if args.budgets else None
         if budgets:
             summary["baseline_origin"] = baseline_origin(budgets, args.source_sha)
+            retain_baseline_report(summary["baseline_origin"], output)
+            verify_baseline_report(budgets, summary, output)
         for entry in entries:
             source = args.corpus / entry["path"]
             for process in range(1, contract["processes"] + 1):
