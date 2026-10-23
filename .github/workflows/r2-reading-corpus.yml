@@ -1,0 +1,33 @@
+name: R2 real reading corpus
+on:
+  push:
+    branches: ['codex/r2-real-corpus']
+    paths:
+      - 'tools/reading_corpus/**'
+      - 'tests/reading_corpus/**'
+      - '.github/workflows/r2-reading-corpus.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: r2-reading-corpus-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  collect:
+    name: R2 published source collection
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install independent source inspector
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: Discover identities without executing the engine
+        run: python3 tools/reading_corpus/collect.py discover tools/reading_corpus/candidates-v1.json build/r2-collection
+      - name: Preserve every collected source and failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-collection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/r2-collection
+          if-no-files-found: error
+          retention-days: 30
