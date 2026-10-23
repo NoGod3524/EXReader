@@ -105,8 +105,19 @@ def main():
     records, failures, hashes = [], [], set()
     inputs, origins, registry = {}, {}, None
     if a.mode == 'cached':
-        from frozen import recover
-        inputs, origins, registry = recover(manifest_bytes)
+        from frozen import REGISTRY, recover
+        try:
+            registry = json.loads(REGISTRY.read_bytes())
+            inputs, origins, registry = recover(manifest_bytes)
+        except Exception as error:
+            failure = {'id': 'raw-input-archive', 'error_type': type(error).__name__, 'error': str(error)}
+            result = dict(manifest, files=[], complete=False, target=len(manifest['files']),
+                          collection_failures=[failure], raw_input_archive=registry,
+                          original_manifest_sha256=sha(manifest_bytes), engine_executed=False)
+            (a.output / 'manifest.json').write_text(json.dumps(result, indent=2, ensure_ascii=False) + '\n')
+            print(json.dumps({'collection_failure': failure, 'collection_complete': False,
+                              'collected': 0, 'required': len(manifest['files']), 'engine_executed': False}), flush=True)
+            return 1
     for original in manifest['files']:
         entry = dict(original)
         relative = Path(entry['path'])
@@ -118,7 +129,9 @@ def main():
         observed = None
         try:
             if a.mode == 'cached':
-                data, final_url = inputs[entry['path']], origins[entry['path']]['retrieved_url']
+                data = inputs[entry['path']]
+                final_url = (f"https://api.github.com/repos/{registry['repository']}/actions/artifacts/"
+                             f"{registry['artifact_id']}/zip#inputs/assets/{entry['path']}")
                 entry['input_origin'] = dict(origins[entry['path']], artifact_id=registry['artifact_id'])
             else:
                 time.sleep(0.5)
