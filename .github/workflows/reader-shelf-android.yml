@@ -1,0 +1,86 @@
+name: Android product catalog shelf candidate
+on:
+  push:
+    branches: [codex/reader-android-shelf]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android-shelf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      ANDROID_OWNERSHIP_HEAD: d0b205a56e4fcfbd5cca55a808327f00b25971ed
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require unchanged frozen SDK and import publication implementation
+        run: |
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code 19128dc5f5e4a3164416ffa17e63937a3894989b HEAD -- examples/android/app/src/main/java/org/exreader/host/BoundedEpub.java examples/android/app/src/main/java/org/exreader/host/NativeLibrary.java examples/android/app/src/main/cpp
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install pinned Android compiler and emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk/emulator" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+          python -m pip install ninja==1.11.1.1
+      - name: Build frozen SDK and actual catalog-driven application
+        run: |
+          set -o pipefail
+          mkdir -p build/shelf-android
+          git rev-parse HEAD > build/shelf-android/source.txt
+          python tests/reader_catalog/check_schema.py --output build/shelf-android/schema.json
+          python tests/reader_catalog/check_assets.py
+          python tools/build_android_host.py --stage stage/android-x86_64 --build-dir build/android-host --gradle gradle 2>&1 | tee build/shelf-android/build.log
+          python tools/check_android_host.py --repo .
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Verify 2202 real SDK imports and production keyset pages on API34
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb shell getprop ro.build.version.sdk > build/shelf-android/device-api.txt
+            adb shell getprop ro.product.cpu.abi > build/shelf-android/device-abi.txt
+            gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.ShelfCatalogTest -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.ShelfCatalogTest
+            cp -r examples/android/app/build/outputs/androidTest-results/connected build/shelf-android/catalog-reports
+            adb logcat -d -v threadtime > build/shelf-android/logcat.txt
+      - name: Refuse failed, skipped, duplicated or missing catalog shelf cases
+        run: python tools/check_reader_shelf_android.py --evidence build/shelf-android
+      - name: Preserve source, native build and original catalog reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-shelf-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/shelf-android/
+            build/android-host/build.json
+            examples/android/app/build/outputs/androidTest-results/
+            examples/android/app/build/outputs/apk/
+            examples/android/app/src/main/assets/reader-catalog-v1.json
+          if-no-files-found: error

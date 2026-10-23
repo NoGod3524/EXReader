@@ -10,6 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:focusableInTouchMode="true"
         android:padding="16dp">
 
         <TextView
@@ -43,6 +44,24 @@
                 android:text="Refresh"
                 android:contentDescription="Refresh shelf" />
         </LinearLayout>
+
+        <EditText
+            android:id="@+id/shelf_search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Search title or author"
+            android:contentDescription="Search title or author"
+            android:singleLine="true"
+            android:inputType="text"
+            android:imeOptions="actionSearch" />
+
+        <org.exreader.host.ShelfStatusView
+            android:id="@+id/shelf_summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="On this device"
+            android:textSize="12sp"
+            android:importantForAccessibility="yes" />
 
         <TextView
             android:id="@+id/status_text"

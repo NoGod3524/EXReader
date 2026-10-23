@@ -2,6 +2,7 @@
 package org.exreader.host;
 
 import android.content.Context;
+import android.os.CancellationSignal;
 import android.util.Log;
 
 import java.io.File;
@@ -40,6 +41,14 @@ final class BookStore implements AutoCloseable {
     }
 
     boolean metadataRepairPending() { return metadataRepairPending; }
+
+    List<CatalogStore.ShelfBook> shelfPage(String query, CatalogStore.ShelfKey anchor,
+                                          boolean before, boolean inclusive, CancellationSignal cancellation) {
+        return catalog.shelfPage(query, anchor, before, inclusive, cancellation);
+    }
+
+    CatalogStore.ShelfBook localShelfBook(long id) { return catalog.localShelfBook(id); }
+    CatalogStore.ShelfBook localShelfTitle(String title) { return catalog.localShelfTitle(title); }
 
     static final class VerifiedSource {
         final NativeLibrary.Book book;
