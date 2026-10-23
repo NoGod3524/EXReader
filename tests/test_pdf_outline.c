@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "exreader.h"
 #include "../src/pdf_face_internal.h"
+#include FT_CID_H
 static exr_error error; static unsigned checks;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -88,8 +89,27 @@ static void generic_and_fallback(const char *dir,FT_Library library) {
   }
   free(data);
 }
+static int cid_probe(FT_Library library,const char *path) {
+  FT_Face face=NULL;FILE *file=fopen(path,"rb");long size;unsigned char *data;
+  CHECK(file && !fseek(file,0,SEEK_END));size=ftell(file);CHECK(size>0);rewind(file);
+  data=malloc((size_t)size);CHECK(data && fread(data,1,(size_t)size,file)==(size_t)size);fclose(file);
+  CHECK(!FT_New_Memory_Face(library,data,size,0,&face));
+  printf("{\"font\":\"%s\",\"cid_keyed\":%d,\"sfnt\":%d,\"num_glyphs\":%ld}\n",path,!!FT_IS_CID_KEYED(face),!!FT_IS_SFNT(face),face->num_glyphs);
+  for(FT_UInt i=0;i<(FT_UInt)face->num_glyphs;i++) {
+    FT_UInt cid=0;int status=FT_Get_CID_From_Glyph_Index(face,i,&cid);
+    if(status) { printf("{\"first_cid_query_error\":%d,\"index\":%u}\n",status,i);break; }
+    if(i<8 || cid!=i) {
+      int load_cid=FT_Load_Glyph(face,cid,FT_LOAD_NO_SCALE|FT_LOAD_NO_HINTING|FT_LOAD_NO_BITMAP);
+      int points_cid=load_cid ? -1 : face->glyph->outline.n_points;
+      int load_gid=FT_Load_Glyph(face,i,FT_LOAD_NO_SCALE|FT_LOAD_NO_HINTING|FT_LOAD_NO_BITMAP);
+      printf("{\"gid\":%u,\"cid\":%u,\"load_cid\":%d,\"cid_points\":%d,\"load_gid\":%d,\"gid_points\":%d}\n",i,cid,load_cid,points_cid,load_gid,load_gid ? -1 : face->glyph->outline.n_points);
+    }
+  }
+  FT_Done_Face(face);free(data);return 0;
+}
 int main(int argc,char **argv) {
   FT_Library library=NULL; exr_pdf_file *file=NULL; unsigned char *data; size_t size;
+  if(argc==3 && !strcmp(argv[1],"--cid-probe")) { int result;CHECK(!FT_Init_FreeType(&library));result=cid_probe(library,argv[2]);FT_Done_FreeType(library);return result; }
   CHECK(argc==2); CHECK(!FT_Init_FreeType(&library)); data=read_fixture(argv[1],"pdf-outlines.pdf",&size); OK(exr_pdf_open(data,size,&file,&error));
   glyph_selection(file,library); rasterized(file,library); generic_and_fallback(argv[1],library);
   exr_pdf_close(file); free(data); FT_Done_FreeType(library); printf("%u native PDF outline checks passed\n",checks); return 0;
