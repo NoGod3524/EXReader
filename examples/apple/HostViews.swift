@@ -63,14 +63,14 @@ struct HostRootView: View {
 
 private struct ShelfGeometry: Equatable {
     var frames: [String: CGRect] = [:]
-    var height: CGFloat = 0
+    var size: CGSize = .zero
 }
 private struct ShelfGeometryKey: PreferenceKey {
     static var defaultValue = ShelfGeometry()
     static func reduce(value: inout ShelfGeometry, nextValue: () -> ShelfGeometry) {
         let next = nextValue()
         value.frames.merge(next.frames) { _, newer in newer }
-        if next.height > 0 { value.height = next.height }
+        if next.size.height > 0 { value.size = next.size }
     }
 }
 
@@ -158,9 +158,9 @@ struct LibraryScreen: View {
                     .listStyle(.plain)
                     .coordinateSpace(name: "catalog-shelf")
                     .background(GeometryReader { geometry in
-                        Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(height: geometry.size.height))
+                        Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size))
                     })
-                    .onPreferenceChange(ShelfGeometryKey.self) { geometry in shelf.observe(geometry.frames, height: geometry.height) }
+                    .onPreferenceChange(ShelfGeometryKey.self) { geometry in shelf.observe(geometry.frames, size: geometry.size) }
                     .onChange(of: shelf.restoreRevision) { _ in
                         if let key = shelf.restoreKey { DispatchQueue.main.async { proxy.scrollTo(key, anchor: .top) } }
                     }
@@ -176,15 +176,19 @@ struct LibraryScreen: View {
             }
 
             VStack(spacing: 8) {
-                HStack {
-                    Button("导入 EPUB 示例") { model.importFixture("Sample", extension: "epub") }
-                        .accessibilityIdentifier("library.import.epub")
-                    Button("再次导入同一 EPUB") { model.importFixture("Sample", extension: "epub") }
-                        .accessibilityIdentifier("library.import.epub.duplicate")
+                if model.showsTestFixtures {
+                    HStack {
+                        Button("导入 EPUB 示例") { model.importFixture("Sample", extension: "epub") }
+                            .accessibilityIdentifier("library.import.epub")
+                        Button("再次导入同一 EPUB") { model.importFixture("Sample", extension: "epub") }
+                            .accessibilityIdentifier("library.import.epub.duplicate")
+                    }
                 }
                 HStack {
-                    Button("导入 PDF 示例") { model.importFixture("Sample", extension: "pdf") }
-                        .accessibilityIdentifier("library.import.pdf")
+                    if model.showsTestFixtures {
+                        Button("导入 PDF 示例") { model.importFixture("Sample", extension: "pdf") }
+                            .accessibilityIdentifier("library.import.pdf")
+                    }
                     Button("打开文件…") { importing = true }
                         .accessibilityIdentifier("library.import.picker")
                 }

@@ -1,0 +1,180 @@
+// SPDX-License-Identifier: MIT
+import XCTest
+#if os(macOS)
+import AppKit
+#endif
+
+final class ShelfUITests: XCTestCase {
+    private var app: XCUIApplication!
+    private var observations: [[String: Any]] = []
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication()
+        observations = []
+        app.launchArguments = ["-EXRShelfSeed"]
+        app.launch()
+    }
+    override func tearDownWithError() throws {
+        let payload: [String: Any] = ["test": name, "observations": observations]
+        if let data = try? JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys]),
+           let string = String(data: data, encoding: .utf8) {
+            let attachment = XCTAttachment(string: string)
+            attachment.name = "shelf-observations-\(name).json"; attachment.lifetime = .keepAlways; add(attachment)
+        }
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "shelf-screen-\(name)"; screenshot.lifetime = .keepAlways; add(screenshot)
+        app.terminate()
+    }
+    private func element(_ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
+    private func text(_ id: String) -> String {
+        guard let node = try? element(id).snapshot() else { return "" }
+        return node.label.isEmpty ? (node.value as? String) ?? "" : node.label
+    }
+    private func state() -> [String: Any]? {
+        guard let data = text("library.shelf.state").data(using: .utf8) else { return nil }
+        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+    }
+    private func wait(_ timeout: TimeInterval = 60, _ condition: () -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if condition() { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+        }
+        return condition()
+    }
+    private func ready(_ query: String) -> [String: Any] {
+        var accepted: [String: Any] = [:], previous = ""
+        var stableAt = Date()
+        XCTAssertTrue(wait(120) {
+            guard let value = self.state(), value["query"] as? String == query,
+                  value["loading"] as? Bool == false,
+                  value["generation"] as? Int == value["applied_generation"] as? Int,
+                  let keys = value["keys"] as? [String], let visible = value["visible_keys"] as? [String],
+                  keys.isEmpty || (!visible.isEmpty && !(value["top_key"] as? String ?? "").isEmpty) else { previous = ""; return false }
+            let signature = [value["top_key"] as? String ?? "", visible.joined(separator: "|"), keys.joined(separator: "|")].joined(separator: ";")
+            if signature != previous { previous = signature; stableAt = Date() }
+            accepted = value
+            return Date().timeIntervalSince(stableAt) >= 0.35
+        }, "Shelf did not reach a stable native layout for \(query): \(text("library.shelf.state"))")
+        XCTAssertLessThanOrEqual(accepted["cached_rows"] as? Int ?? 999, 150)
+        XCTAssertLessThanOrEqual(accepted["max_cached_rows"] as? Int ?? 999, 150)
+        return accepted
+    }
+    private func record(_ id: String, _ value: [String: Any]) {
+        observations.append(["id": id, "state": value, "uptime": ProcessInfo.processInfo.systemUptime])
+    }
+    private func search(_ query: String) {
+        let field = element("library.search")
+        XCTAssertTrue(field.waitForExistence(timeout: 120)); field.tap()
+#if os(macOS)
+        field.typeKey("a", modifierFlags: .command)
+        field.typeText(XCUIKeyboardKey.delete.rawValue)
+#else
+        let previous = (field.value as? String) ?? ""
+        if !previous.isEmpty { field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count)) }
+#endif
+        if !query.isEmpty { field.typeText(query) }
+        field.typeText(XCUIKeyboardKey.return.rawValue)
+    }
+    private func scroll(previous: Bool) {
+        let list = element("library.list")
+        XCTAssertTrue(list.exists)
+#if os(macOS)
+        list.scroll(byDeltaX: 0, deltaY: previous ? 260 : -260)
+#else
+        if previous { list.swipeDown(velocity: .slow) } else { list.swipeUp(velocity: .slow) }
+#endif
+    }
+    func test01RealShelfAndBoundedInteractiveRows() {
+        search("")
+        let value = ready("")
+        XCTAssertEqual(value["page_limit"] as? Int, 50)
+        XCTAssertEqual(value["cache_limit"] as? Int, 150)
+        XCTAssertGreaterThan(value["process_peak_rss_bytes"] as? Int ?? 0, 0)
+        record("initial-real-shelf", value)
+    }
+    func test02ForwardTraversalOfAllOriginals() {
+        search(""); var value = ready(""); var seen = Set<String>(); var gestures = 0
+        repeat {
+            seen.formUnion(value["keys"] as? [String] ?? [])
+            if value["has_after"] as? Bool == false { break }
+            gestures += 1; XCTAssertLessThan(gestures, 1200)
+            scroll(previous: false); value = ready("")
+        } while true
+        XCTAssertEqual(seen.count, 2202)
+        record("forward-every-original", ["sources": seen.count, "gestures": gestures, "last": value])
+        seen = []; gestures = 0
+        repeat {
+            seen.formUnion(value["keys"] as? [String] ?? [])
+            if value["has_before"] as? Bool == false { break }
+            gestures += 1; XCTAssertLessThan(gestures, 1200)
+            scroll(previous: true); value = ready("")
+        } while true
+        XCTAssertEqual(seen.count, 2202)
+        record("reverse-every-original", ["sources": seen.count, "gestures": gestures, "first": value])
+    }
+    func test03StableEqualTitles() {
+        search("Tie title"); var value = ready("Tie title"); var ties = Set<String>(); var gestures = 0
+        repeat {
+            ties.formUnion(value["keys"] as? [String] ?? [])
+            if value["has_after"] as? Bool == false { break }
+            gestures += 1; XCTAssertLessThan(gestures, 100); scroll(previous: false); value = ready("Tie title")
+        } while true
+        XCTAssertEqual(ties.count, 130)
+        record("equal-titles", ["ties": ties.count, "last": value])
+    }
+    func test04TitleAuthorAndLiteralSearch() {
+        for query in ["bOoK 0201", "Unique Shelf Author", "100%_", "no matching shelf book"] {
+            search(query); let value = ready(query)
+            XCTAssertEqual(value["cached_rows"] as? Int, query.hasPrefix("no matching") ? 0 : 1)
+            record(query, value)
+        }
+    }
+    func test05RapidSearchRefreshAndNativeViewport() {
+        search("Tie title"); search("Book 0300"); search("Book 0201")
+        let latest = ready("Book 0201"); XCTAssertEqual(latest["cached_rows"] as? Int, 1)
+        search(""); _ = ready("")
+        for _ in 0..<16 { scroll(previous: false); _ = ready("") }
+        let before = ready(""); element("library.refresh").tap(); let after = ready("")
+        XCTAssertEqual(before["top_key"] as? String, after["top_key"] as? String)
+        record("refresh-keeps-source-anchor", ["before": before, "after": after, "latest": latest])
+    }
+    func test06RotationBackgroundAndProcessRestore() {
+        search(""); _ = ready("")
+        for _ in 0..<12 { scroll(previous: false); _ = ready("") }
+        let before = ready("")
+#if os(iOS)
+        XCUIDevice.shared.orientation = .landscapeLeft
+        _ = ready(""); XCUIDevice.shared.orientation = .portrait
+#else
+        let window = app.windows.firstMatch
+        let corner = window.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 1))
+        corner.press(forDuration: 0.1, thenDragTo: corner.withOffset(CGVector(dx: -100, dy: 80)))
+#endif
+        let resized = ready("")
+        XCTAssertEqual(before["top_key"] as? String, resized["top_key"] as? String)
+#if os(iOS)
+        XCUIDevice.shared.press(.home)
+#else
+        NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.finder").first?.activate(options: [])
+#endif
+        RunLoop.current.run(until: Date().addingTimeInterval(1))
+        app.terminate(); app.launch(); let restored = ready("")
+        XCTAssertEqual(before["top_key"] as? String, restored["top_key"] as? String)
+        record("native-resize-and-fresh-process", ["before": before, "resized": resized, "restored": restored])
+    }
+    func test07StoredOriginalReadingAndFilteredReturn() {
+        search("Book 0201"); let before = ready("Book 0201")
+        let buttons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'library.book.'"))
+        XCTAssertEqual(buttons.count, 1); buttons.firstMatch.tap()
+        XCTAssertTrue(element("reader.page").waitForExistence(timeout: 90))
+        element("reader.select").tap(); XCTAssertTrue(element("selection.all").waitForExistence(timeout: 20))
+        element("selection.all").tap()
+        XCTAssertTrue(wait { self.text("selection.quote").contains("Stored native shelf book 201.") })
+        element("selection.close").tap(); element("reader.back").tap()
+        let after = ready("Book 0201")
+        XCTAssertEqual(before["keys"] as? [String], after["keys"] as? [String])
+        XCTAssertEqual(after["selected_key"] as? String, (after["keys"] as? [String])?.first)
+        record("stored-original-and-filtered-return", after)
+    }
+}
