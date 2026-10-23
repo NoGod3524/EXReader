@@ -20,11 +20,11 @@ jobs:
           import hashlib,io,json,os,urllib.request,urllib.error,urllib.parse,zipfile
           from pathlib import Path,PurePosixPath
           API='https://api.github.com/repos/NoGod3524/EXReader'
-          RUN=40023575299
-          SOURCE='f24eeebf220b4ac9add5b6d3668e909ca9cc50f3'
-          ARTIFACT=12532665458
-          SIZE=55648465
-          DIGEST='sha256:470aa20d11c3353980db6f251f0bc39520c251cec6462473b4d36fbf461da00d'
+          RUN=40034076410
+          SOURCE='23e5133fcf06a327605d00b893072ff36d39e0e1'
+          ARTIFACT=12536608131
+          SIZE=106901651
+          DIGEST='sha256:b5024d1d8006c6076ac660073cacab012571afe38781cd03ccee42caeb79e34b'
           headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','User-Agent':'EXReader-shelf-cloud-inspection'}
           def require(value,message):
               if not value:raise ValueError(message)
@@ -61,6 +61,11 @@ jobs:
               if case['status']=='fail':item['detail']=case.get('detail',{})
               report['cases'].append(item)
           report['capture_result']=json.loads(read('/ui-execution/result.json'))
+          report['original_suites']={}
+          for suite,folder in [('walkthrough','device'),('review','review'),('bounded','bounded')]:
+              value=json.loads(read('/evidence/'+folder+'/validation.json'))
+              report['original_suites'][suite]={'summary':value.get('summary'),'sequence':value.get('sequence'),
+                  'failed_cases':[{key:case.get(key) for key in ('id','status','error','detail','assertions')} for case in value['cases'] if case.get('status')!='pass']}
           capture_errors=[]
           for name in names:
               if '/ui-execution/windows/' in name and name.endswith('.jsonl'):
