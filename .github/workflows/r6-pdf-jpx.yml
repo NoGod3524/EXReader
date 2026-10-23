@@ -45,6 +45,7 @@ jobs:
       - name: Install independent fixture encoder and PDF reference
         run: sudo apt-get update -qq && sudo apt-get install -y python3-pil poppler-utils
       - name: Build current SDK with enabled or trimmed JPX
+        id: sdk
         run: |
           cmake --preset reading-core -DEXR_BUILD_TESTS=ON -DEXR_ENABLE_PDF_JPX="$JPX" -DEXR_SANITIZE="$SANITIZE"
           cmake --build --preset reading-core --parallel 4
@@ -52,6 +53,7 @@ jobs:
           python3 tools/check_layers.py build/reading-core
           cmake --install build/reading-core
       - name: Build existing public installed reading consumers
+        id: consumers
         run: |
           if [ "$SANITIZE" = ON ]; then
             export CFLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer'
@@ -68,7 +70,8 @@ jobs:
           if [ "$JPX" = OFF ]; then options=(--expect-off); fi
           python3 tests/pdf_jpx_integration/check.py --binary build/jpx-public/reading-real-benchmark --font tests/fixtures/fonts/primary.ttf --output build/jpx-integration "${options[@]}"
       - name: Restore exact retained originals without contacting publishers again
-        if: matrix.jpx == 'ON' && matrix.sanitize == 'OFF'
+        id: originals
+        if: always() && matrix.jpx == 'ON' && matrix.sanitize == 'OFF' && steps.sdk.outcome == 'success' && steps.consumers.outcome == 'success'
         uses: actions/download-artifact@v4
         with:
           artifact-ids: 12474886324
@@ -77,7 +80,7 @@ jobs:
           merge-multiple: true
           path: build/jpx-retained
       - name: Repeat complete acceptance of all eight unchanged registered documents
-        if: matrix.jpx == 'ON' && matrix.sanitize == 'OFF'
+        if: always() && matrix.jpx == 'ON' && matrix.sanitize == 'OFF' && steps.originals.outcome == 'success'
         run: |
           python3 tests/reading_corpus/check_protocol.py build/jpx-real/r2-location tests/fixtures/fonts/primary.ttf
           python3 tools/reading_corpus/run.py --manifest tools/reading_corpus/real-v1.json --registered-at ea5c13e081cfba86d9f6dd759439894463e51126 \
