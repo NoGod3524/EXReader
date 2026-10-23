@@ -52,6 +52,12 @@ final class BookStore implements AutoCloseable {
             throws IOException {
         NativeLibrary.Book book = find(id);
         if (book == null) throw new IOException("Imported SDK book is missing");
+        return verifySource(book, expectedSha256, expectedBytes, task);
+    }
+
+    private VerifiedSource verifySource(NativeLibrary.Book book, String expectedSha256,
+                                        long expectedBytes, HostTask task) throws IOException {
+        long id = book.id;
         MessageDigest digest;
         try { digest = MessageDigest.getInstance("SHA-256"); }
         catch (NoSuchAlgorithmException impossible) { throw new AssertionError(impossible); }
@@ -100,7 +106,7 @@ final class BookStore implements AutoCloseable {
         for (NativeLibrary.Book book : books) {
             try {
                 if (!catalog.hasLocalBook(book.id))
-                    catalog.attach(verifySource(book.id, null, 0, new HostTask(() -> false)));
+                    catalog.attach(verifySource(book, null, 0, new HostTask(() -> false)));
             } catch (IOException | RuntimeException error) {
                 metadataRepairPending = true;
                 Log.w("EXRHost", "Metadata repair pending for SDK book " + book.id, error);
