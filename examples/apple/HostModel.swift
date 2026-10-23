@@ -33,6 +33,9 @@ final class HostShelf: ObservableObject {
     private var lastLayout: TimeInterval?
     private var layoutIntervals: [Double] = []
     private var viewportSize = CGSize.zero
+    private let createdUptime = ProcessInfo.processInfo.systemUptime
+    private var firstLayoutUptime: TimeInterval?
+    private var awaitingLayoutKey: String?
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -52,7 +55,7 @@ final class HostShelf: ObservableObject {
         debounce?.cancel()
         query = String(query.prefix(256))
         generation += 1
-        rows = []; visible = []; top = nil; before = false; after = false; loading = true
+        rows = []; visible = []; top = nil; awaitingLayoutKey = nil; before = false; after = false; loading = true
         defaults.removeObject(forKey: "EXRShelfTop")
         defaults.set(query, forKey: "EXRShelfQuery")
         let work = DispatchWorkItem { [weak self] in self?.reset(anchor: nil) }
@@ -68,7 +71,7 @@ final class HostShelf: ObservableObject {
 
     private func reset(anchor: HostShelfKey?) {
         generation += 1; loading = false; error = ""
-        rows = []; visible = []; before = false; after = false
+        rows = []; visible = []; awaitingLayoutKey = nil; before = false; after = false
         request(anchor: anchor, previous: false, inclusive: true, replacing: true)
     }
 
@@ -109,6 +112,7 @@ final class HostShelf: ObservableObject {
                 self.maximumRows = max(self.maximumRows, self.rows.count)
                 self.appliedGeneration = token; self.appliedQuery = requested
                 self.restoreKey = retainedTop.flatMap { key in self.rows.contains(where: { $0.key == key }) ? key.key : nil } ?? self.rows.first?.id
+                self.awaitingLayoutKey = self.restoreKey
                 self.restoreRevision += 1
             }
         }
@@ -124,7 +128,15 @@ final class HostShelf: ObservableObject {
             .sorted { $0.value.minY < $1.value.minY }
         let newVisible = Set(ordered.map(\.key))
         guard let first = ordered.first, let index = rows.firstIndex(where: { $0.id == first.key }) else { return }
-        if visible != newVisible || top != rows[index].key {
+        let acknowledged = awaitingLayoutKey != nil
+        if let awaitingLayoutKey {
+            guard first.key == awaitingLayoutKey else { return }
+            self.awaitingLayoutKey = nil
+        }
+        if firstLayoutUptime == nil, !loading, generation == appliedGeneration {
+            firstLayoutUptime = ProcessInfo.processInfo.systemUptime
+        }
+        if acknowledged || visible != newVisible || top != rows[index].key {
             let now = ProcessInfo.processInfo.systemUptime
             if let lastLayout { layoutIntervals.append((now - lastLayout) * 1000) }
             if layoutIntervals.count > 512 { layoutIntervals.removeFirst(layoutIntervals.count - 512) }
@@ -141,12 +153,16 @@ final class HostShelf: ObservableObject {
         }
     }
 
-    func restoreViewport() { restoreKey = top?.key; restoreRevision += 1 }
+    func restoreViewport() {
+        restoreKey = top?.key ?? restoreKey
+        awaitingLayoutKey = restoreKey
+        restoreRevision += 1
+    }
     func choose(_ book: HostShelfBook) { selected = book.id; defaults.set(book.id, forKey: "EXRShelfSelected"); save() }
     func save() {
         // Never pair a new query with an old viewport, or clear a valid anchor
         // while a same-query refresh is temporarily between pages.
-        guard appliedGeneration == generation, appliedQuery == query else { return }
+        guard appliedGeneration == generation, appliedQuery == query, awaitingLayoutKey == nil else { return }
         defaults.set(query, forKey: "EXRShelfQuery")
         if let top, let bytes = try? JSONEncoder().encode(top) { defaults.set(bytes, forKey: "EXRShelfTop") }
     }
@@ -155,11 +171,13 @@ final class HostShelf: ObservableObject {
         var usage = rusage()
         getrusage(RUSAGE_SELF, &usage)
         let value: [String: Any] = ["query": query, "generation": generation, "applied_generation": appliedGeneration,
-            "loading": loading, "cached_rows": rows.count, "max_cached_rows": maximumRows,
+            "loading": loading, "restoring_layout": awaitingLayoutKey != nil,
+            "cached_rows": rows.count, "max_cached_rows": maximumRows,
             "page_limit": 50, "cache_limit": 150, "has_before": before, "has_after": after,
             "top_key": top?.key ?? "", "selected_key": selected ?? "", "discarded": discarded,
             "keys": rows.map(\.id), "visible_keys": rows.filter { visible.contains($0.id) }.map(\.id),
             "layout_revision": viewportRevision, "process_peak_rss_bytes": usage.ru_maxrss,
+            "shelf_created_to_first_visible_layout_ms": firstLayoutUptime.map { ($0 - createdUptime) * 1000 } ?? -1,
             "layout_observation_intervals_ms": layoutIntervals]
         return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
     }

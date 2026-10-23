@@ -51,6 +51,11 @@ def main():
     args = parser.parse_args()
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'shelf collection runs only in Actions')
     source, run, attempt = (os.environ[name] for name in ('GITHUB_SHA', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT'))
+    destination = Path(args.destination).read_text().splitlines()
+    require(args.platform in ('macos', 'iphone', 'ipad') and len(destination) == 4 and all(destination), 'shelf destination missing')
+    require((args.platform == 'macos' and destination[0] == 'platform=macOS') or
+            (args.platform != 'macos' and destination[0].startswith('platform=iOS Simulator,id=') and
+             destination[2].lower().startswith(args.platform)), 'shelf destination platform differs')
     seed = json.loads(Path(args.seed).read_text())
     require(seed['accepted'] is True and seed['books'] == len(set(seed['source_keys'])) == 2202 and
             seed['source_sha'] == source and str(seed['run_id']) == run and str(seed['attempt']) == attempt,
@@ -99,7 +104,8 @@ def main():
                 0 <= value['cached_rows'] <= value['max_cached_rows'] <= 150 and
                 value['cached_rows'] == len(value['keys']) == len(set(value['keys'])) and
                 set(value['keys']) <= expected and set(value['visible_keys']) <= set(value['keys']) and
-                value['process_peak_rss_bytes'] > 0 and value['generation'] == value['applied_generation'] and not value['loading'],
+                value['process_peak_rss_bytes'] > 0 and value['generation'] == value['applied_generation'] and not value['loading']
+                and not value['restoring_layout'],
                 'unbounded, stale or foreign shelf observation')
     walk = payloads['test02ForwardTraversalOfAllOriginals']['observations']
     require(all(row['state']['sources'] == 2202 and row['state']['gestures'] > 0 for row in walk), 'real traversal incomplete')

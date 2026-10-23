@@ -48,6 +48,7 @@ final class ShelfUITests: XCTestCase {
         XCTAssertTrue(wait(120) {
             guard let value = self.state(), value["query"] as? String == query,
                   value["loading"] as? Bool == false,
+                  value["restoring_layout"] as? Bool == false,
                   value["generation"] as? Int == value["applied_generation"] as? Int,
                   let keys = value["keys"] as? [String], let visible = value["visible_keys"] as? [String],
                   keys.isEmpty || (!visible.isEmpty && !(value["top_key"] as? String ?? "").isEmpty) else { previous = ""; return false }
@@ -91,6 +92,7 @@ final class ShelfUITests: XCTestCase {
         XCTAssertEqual(value["page_limit"] as? Int, 50)
         XCTAssertEqual(value["cache_limit"] as? Int, 150)
         XCTAssertGreaterThan(value["process_peak_rss_bytes"] as? Int ?? 0, 0)
+        XCTAssertGreaterThan(value["shelf_created_to_first_visible_layout_ms"] as? Double ?? -1, 0)
         record("initial-real-shelf", value)
     }
     func test02ForwardTraversalOfAllOriginals() {
