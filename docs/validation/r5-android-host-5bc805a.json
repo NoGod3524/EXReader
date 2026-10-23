@@ -1,0 +1,236 @@
+{
+  "schema": 1,
+  "scope": "R5 Android host at the final shared source",
+  "android_host_accepted": true,
+  "source_sha": "5bc805abb3a56297b73af06fdff8a248dd8326e0",
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "evidence_origin": "GitHub Actions. Completed logs and metadata read through the GitHub connector; artifact download, ZIP validation, image decoding and pixel checks ran only in Actions.",
+  "source_review": {
+    "compared_with": "da1c1833d89932612d8e4549fee5aec378555ad4",
+    "android_changed_files": [
+      "examples/android/app/src/main/java/org/exreader/host/ReaderView.java"
+    ],
+    "change": "39 added lines cache Bitmap identity only under DEBUG and expose it in the existing frame observation.",
+    "drawing_changed": false,
+    "original_45_10_11_tests_changed": false,
+    "exact_screen_hash_assertion_changed": false,
+    "stable_after_draw_budget_ms": 8000,
+    "formal_workflow_and_gate_scripts_changed": false,
+    "all_eight_sdk_protected_paths_equal_to_baseline": true,
+    "rejected_frame_commit_b7786fc_in_ancestry": false
+  },
+  "run": {
+    "id": 39905079097,
+    "job_id": 120255075925,
+    "attempt": 1,
+    "workflow": ".github/workflows/wp13-android.yml",
+    "branch": "codex/r6-reading-release",
+    "source_sha": "5bc805abb3a56297b73af06fdff8a248dd8326e0",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39905079097",
+    "artifact": {
+      "id": 12481047758,
+      "name": "EXReader-WP13-Android",
+      "bytes": 157125270,
+      "digest": "sha256:c36b5592315ec661d3d1987cddd2a66be1cbbe71c1a7fc970e1a97d4be990143",
+      "expired_at_review": false,
+      "expires_at": "2027-01-21T05:19:04Z"
+    }
+  },
+  "suites": {
+    "walkthrough": {
+      "summary": {
+        "total": 45,
+        "passed": 45,
+        "failed": 0,
+        "skipped": 0
+      },
+      "sequence": null,
+      "failed": []
+    },
+    "review": {
+      "summary": {
+        "total": 10,
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0
+      },
+      "sequence": {
+        "fixture": "Large.epub",
+        "rendered_pages": 49,
+        "native_next_calls": 49,
+        "recovery_calls": 0,
+        "sequential_elapsed_ms": 44861
+      },
+      "failed": []
+    },
+    "bounded": {
+      "summary": {
+        "total": 11,
+        "passed": 11,
+        "failed": 0,
+        "skipped": 0
+      },
+      "sequence": null,
+      "failed": []
+    }
+  },
+  "gate_checks": {
+    "original": {
+      "passed": 48,
+      "expected": 48,
+      "accepted": true
+    },
+    "bounded": {
+      "passed": 20,
+      "expected": 20,
+      "accepted": true
+    }
+  },
+  "strict": {
+    "accepted": true,
+    "candidate_only": false,
+    "candidate_validated": false,
+    "problems": []
+  },
+  "pdf_process_restart": {
+    "status": "pass",
+    "detail": "",
+    "duration_ms": 6346,
+    "frame_budget_ms": 8000,
+    "frame_fields_diff": {},
+    "bounds_equal": true,
+    "bounds": [
+      0,
+      508,
+      1080,
+      2274
+    ],
+    "logical_argb_equal": true,
+    "raw_storage_equal": true,
+    "bitmap_metadata_equal": true,
+    "reference_and_restored_bitmap": {
+      "logical_argb_sha256": "caf9b81c586fb5b56dd65facbf1ea3d9c7d203ed89aa74c308c17e11814f16c3",
+      "raw_sha256": "3a1bd1b2e1ea48f1a7ecde4de63d1be42d6f9ef6072f8267e1756c268aae22e3",
+      "width": 240,
+      "height": 320,
+      "row_bytes": 960,
+      "byte_count": 307200,
+      "config": "ARGB_8888",
+      "premultiplied": true,
+      "has_alpha": true,
+      "color_space": "sRGB IEC61966-2.1 (id=0, model=RGB)"
+    },
+    "screen_pixels_equal": true,
+    "screen_png_bytes_equal": true,
+    "screen_changed_pixels": 0,
+    "roles": {
+      "pretransition": {
+        "status": "stable_after_draw",
+        "elapsed_ms": 833,
+        "final_pair_stable": true,
+        "proofs": [
+          {
+            "png": "frames/pdf_process_restart-1-1.png",
+            "png_bytes": 26295,
+            "png_sha256": "1838a1a435604d40dfeb3b191f735dd73b2fc9e36a49f1dece835baabcbded99",
+            "pixel_sha256": "49ae9feab7790ffa9710242495afa26563e7b3d47b19ba438bdc3d3689c88ac6",
+            "captured_elapsed_ms": 373,
+            "same_frame": true,
+            "within_budget": true,
+            "decoded_rgba_verified": true
+          },
+          {
+            "png": "frames/pdf_process_restart-1-2.png",
+            "png_bytes": 26295,
+            "png_sha256": "1838a1a435604d40dfeb3b191f735dd73b2fc9e36a49f1dece835baabcbded99",
+            "pixel_sha256": "49ae9feab7790ffa9710242495afa26563e7b3d47b19ba438bdc3d3689c88ac6",
+            "captured_elapsed_ms": 833,
+            "same_frame": true,
+            "within_budget": true,
+            "decoded_rgba_verified": true
+          }
+        ]
+      },
+      "reference": {
+        "status": "stable_after_draw",
+        "elapsed_ms": 830,
+        "final_pair_stable": true,
+        "proofs": [
+          {
+            "png": "frames/pdf_process_restart-2-1.png",
+            "png_bytes": 50799,
+            "png_sha256": "901e3590dd87b4780e01d4fad97255741c8285e85cbf0696eb643d61396a29d9",
+            "pixel_sha256": "a7ae2f0082b3b18a277a0d87785e3255defa1d44f435650aeb5f8a22aae9d07d",
+            "captured_elapsed_ms": 374,
+            "same_frame": true,
+            "within_budget": true,
+            "decoded_rgba_verified": true
+          },
+          {
+            "png": "frames/pdf_process_restart-2-2.png",
+            "png_bytes": 50799,
+            "png_sha256": "901e3590dd87b4780e01d4fad97255741c8285e85cbf0696eb643d61396a29d9",
+            "pixel_sha256": "a7ae2f0082b3b18a277a0d87785e3255defa1d44f435650aeb5f8a22aae9d07d",
+            "captured_elapsed_ms": 830,
+            "same_frame": true,
+            "within_budget": true,
+            "decoded_rgba_verified": true
+          }
+        ]
+      },
+      "restored": {
+        "status": "stable_after_draw",
+        "elapsed_ms": 856,
+        "final_pair_stable": true,
+        "proofs": [
+          {
+            "png": "frames/pdf_process_restart-3-1.png",
+            "png_bytes": 50799,
+            "png_sha256": "901e3590dd87b4780e01d4fad97255741c8285e85cbf0696eb643d61396a29d9",
+            "pixel_sha256": "a7ae2f0082b3b18a277a0d87785e3255defa1d44f435650aeb5f8a22aae9d07d",
+            "captured_elapsed_ms": 384,
+            "same_frame": true,
+            "within_budget": true,
+            "decoded_rgba_verified": true
+          },
+          {
+            "png": "frames/pdf_process_restart-3-2.png",
+            "png_bytes": 50799,
+            "png_sha256": "901e3590dd87b4780e01d4fad97255741c8285e85cbf0696eb643d61396a29d9",
+            "pixel_sha256": "a7ae2f0082b3b18a277a0d87785e3255defa1d44f435650aeb5f8a22aae9d07d",
+            "captured_elapsed_ms": 856,
+            "same_frame": true,
+            "within_budget": true,
+            "decoded_rgba_verified": true
+          }
+        ]
+      }
+    }
+  },
+  "independent_cloud_artifact_audit": {
+    "run_id": 39906707161,
+    "job_id": 120260224226,
+    "attempt": 1,
+    "source_sha": "e7aa0e139686f89acbf103136d5e83ebb62289b2",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39906707161",
+    "diagnostic_only": true,
+    "artifact": {
+      "id": 12481570157,
+      "name": "r4-debug-bitmap-evidence-39906707161-1",
+      "bytes": 209107,
+      "digest": "sha256:7af57af47468dba6a0206ecfb1b916d09b5f5d40e7ee05e3c0833614caa80917",
+      "expired_at_review": false,
+      "expires_at": "2027-01-21T05:36:37Z"
+    },
+    "verified": "Pinned host artifact ID, source, run, attempt, ZIP size and SHA-256; all three suite identities and totals; 49 sequential pages with 49 native next calls and zero recovery; strict report; all 48+20 gate checks; all six original frame PNG hashes and decoded RGBA hashes; stable final screen pairs."
+  },
+  "history": {
+    "retained_separately": "docs/validation/android-bitmap-diagnostic-d78abd7.json",
+    "old_failure_root_cause_proven": false,
+    "result_scope": "Every host pass in this record comes from run 39905079097 at source 5bc805abb3a56297b73af06fdff8a248dd8326e0."
+  }
+}
