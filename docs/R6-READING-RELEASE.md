@@ -14,6 +14,25 @@
 tar.gz和清单。归档包含隐含文件；拒绝symlink、越界、已有输出和安装后变更。
 相同输入、身份和源码时间生成相同归档。候选不创建tag或发布：`published=false`、`quality_accepted=false`。
 
+六平台候选接线已在源码`df01224b6bd44cc2291d5b2ab9bc1efc022dfd43`、
+[run 39893977984](https://github.com/NoGod3524/EXReader/actions/runs/39893977984) attempt 1通过：
+protocol与六个构建作业7/7成功，封装正反例54/54。
+Windows/macOS仍执行core25项、library30项平台拒绝回归；各包的许可材料与九格式smoke通过。
+所有包实际SDK 3.40.0 / ABI 1；library为3.34.0 / schema 7，core不含书库。
+
+| 平台/架构 | profile | tar.gz字节 | Actions工件ID | 工件ZIP SHA-256 |
+| --- | --- | ---: | --- | --- |
+| Linux/X64 | reading-core | 6,116,917 | 12475767427 | `4db990c7e6e431b9165055433c834f890a47191ea194e19ad2cf28806d01065c` |
+| Linux/X64 | reading-library | 6,917,736 | 12476370335 | `78f9048a47a5ff7a059cd7189b1cb5d6d7c25715051e4b2bc8c4395de7b30c0c` |
+| Windows/X64 | reading-core | 8,159,629 | 12476022357 | `d4b5df92312a15231e97d50506c5876e4598a8091a405d63052bb2224731b300` |
+| Windows/X64 | reading-library | 9,364,378 | 12475624441 | `f299983b9f8d77d973f101c3861cdb993cd64471aace5dc4d8ae46411026151e` |
+| macOS/ARM64 | reading-core | 5,392,472 | 12475907054 | `7d754cf0001189d8e4d1ef329a3c698463b7a759d8e4f98f0e2e7626ec474cfa` |
+| macOS/ARM64 | reading-library | 6,182,973 | 12476116887 | `5498a53e3bcb74c52e70fefc95db83a4b4f525f7e9bbcdf28c0ddd8d87a397fe` |
+
+上表字节为包内SDK归档，不是Actions ZIP大小或阅读程序体积；ZIP digest直接取自Actions API。
+六工件均绑定同run/source，核对时非空、未过期。包内清单另有SDK归档与逐文件SHA-256。
+总门禁将逐一重核六包；该封装运行不含后续NASA修复，也不授予质量验收或新SDK冻结。
+
 `.github/workflows/reading-release-candidate.yml`先执行封装正反例，再复用实际构建。
 合成自验fixture只验证判定代码，不能替代真实安装消费。
 
