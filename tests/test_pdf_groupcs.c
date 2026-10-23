@@ -203,7 +203,7 @@ static void cmyk_soft_masks(void) {
     if(scenario==1) {
       options.mask_budget=1;
       CHECK(exr_fixed_render(document,0,1,&options,&bitmap,&error)==EXR_LIMIT && !bitmap.pixels);
-      options.mask_budget=0;options.control.cancel=cancel_mask;
+      options.mask_budget=0;options.control.cancelled=cancel_mask;
       CHECK(exr_fixed_render(document,0,1,&options,&bitmap,&error)==EXR_CANCELLED && !bitmap.pixels);
     }
     exr_fixed_free(document);
