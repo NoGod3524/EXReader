@@ -122,7 +122,7 @@ struct json {
   }
   uint64_t integer(size_t index)const{
     const value &v=at(index);if(v.type!="integer" || v.atom.empty() || v.atom[0]=='-')reject(READER_REV_FORMAT,"Nonnegative integer expected");
-    uint64_t result=0;for(char c:v.atom){if(c<'0'||c>'9'||result>(INT64_MAX-(unsigned)(c-'0'))/10)reject(READER_REV_FORMAT,"Integer exceeds signed storage range");result=result*10+(unsigned)(c-'0');}return result;
+    uint64_t result=0;for(char c:v.atom){if(c<'0'||c>'9'||result>((uint64_t)INT64_MAX-(unsigned)(c-'0'))/10)reject(READER_REV_FORMAT,"Integer exceeds signed storage range");result=result*10+(unsigned)(c-'0');}return result;
   }
 };
 struct revision {std::string id,kind,key,operation,location,sha;std::vector<std::string> parents;size_t bytes=0;uint64_t source_bytes=0;};
