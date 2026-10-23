@@ -45,12 +45,60 @@ Linux 同次还执行了原产品 schema 回归。
 身份/模式拒绝、历史重复模式、旧 metadata/history 保留、本机移除、坏输入、
 owner/reentry、真实 writer 锁等待后重试、书架循环拒绝、2,500 条 metadata 的完整有序续页。
 
-## 下一步
+## 公开 SDK 桥接与 GTK 后继候选
 
-Windows/GTK 实际宿主尚未调用这个适配器。本轮没有原件散列、SDK 导入恢复、
-桌面 UI、WebDAV 或界面性能验收。
+`apps/reader/desktop` 从安装后的公开 SDK 读取原件，在现有宿主 worker 上以
+64 KiB 分块计算平台 SHA-256，用平台 NFC 规范化排序标题。原件仍只由 SDK 保存。
+EPUB 模式来自公开 `epub_info_get`，不根据扩展名猜测旧式/章节模式。
+目录写入失败不回滚已发布的 SDK 书籍；启动修复重用一次公开 `books()` 数组。
+取消在每本书发布前后检查；在途 SQL 事务可完成并保留提交行，已有 writer 等待上限为 5 秒。
 
-下一步从安装后的公共 SDK 读取原件，以平台原生 SHA-256/NFC 核实全球身份；
-把启动补映射和导入发布接到宿主现有 owner worker，再接产品书架分页。
-最终消费者必须核 SQLite 的实际链接提供者和编译选项，并复验原宿主流程。
-用户原件仍由 SDK 保存，产品 metadata 不复制运行中的 SDK 数据库。
+首轮源码 `b059d9d451e26ffcb28df708386be49a3dccac51`，
+[run 40022079594](https://github.com/NoGod3524/EXReader/actions/runs/40022079594)
+Windows/Linux 两作业通过：各 8 组公开 SDK 检查、原 12 组 catalog 检查，
+并在 SDK 提交后未映射、产品事务已插书但未插映射两处杀死真实进程，在新进程恢复。
+两份原件已按上传日志与 API 核对：
+
+| 平台 | 工件 ID | 字节 | ZIP SHA-256 |
+| --- | --- | ---: | --- |
+| Linux | 12530782947 | 231257 | `1ea44d6cab59dd76da18a5a9f664494b86e27da90fd8509ee1c2df14600e8a94` |
+| Windows | 12531860201 | 688092 | `1766e382599d0d6d086463cfc78dcf95526331617513f0b1f8c4b440c07c0161` |
+
+首轮的跨块夹具全为同一字符，Linux map 检查也仅检查符号存在；这两处证据不足已在后继收紧。
+后继使用随偏移变化的数据独立重算 SHA、固定全部具名检查，
+以 GNU linker 的 definition trace 或 MSVC map 精确符号行确认实际 archive/object。
+第 9 组公开 SDK 检查还在 COMMIT 时触发取消，要求保留提交且返回 CANCELLED。
+
+源码 `5da02c64fb60cc9afe19cfdd6390d412718fe1ea` 的
+[run 40022745042](https://github.com/NoGod3524/EXReader/actions/runs/40022745042)
+两作业通过上述 9+12+2 检查；两平台实际使用产品公开 SQLite archive，
+版本/source ID 和编译限额一致。Linux 实际 GTK 宿主还执行了原 20 项 UI 操作及 3 项目录检查。
+该轮产品测试复用了原 UI 目录且未覆盖拒绝实例的正常关闭，保留原结果，
+不能据此授予封存证据和跨实例设置保护。
+
+最新候选 `6a22858cf98ea55d2bed079f651cbf96d462412c`，
+[run 40023076532](https://github.com/NoGod3524/EXReader/actions/runs/40023076532)
+attempt 1 两作业均 success，9+12+2 检查在 Windows/Linux 各自同次通过。
+Linux 原 20 项 UI 与新增 5 项产品检查同次通过，两个报告的原 UI 报告 SHA 完全一致。
+Windows job `120652304263`、Linux job `120652303918` 的原日志确认上述计数，
+GNU/MSVC 均确认 SQLite 来自 `reader_catalog_sqlite` 的 `sqlite3.c` 对象。
+两份工件名称、ID、大小、digest 均与各自原 upload 日志/API/source 对齐，未过期：
+
+| 平台 | 工件 ID | 字节 | ZIP SHA-256 |
+| --- | --- | ---: | --- |
+| Linux | 12531806837 | 371481 | `c1bb24f8758273de05758c73150b43f737c0065f77b73f61cd480162fb1e4ce2` |
+| Windows | 12532135764 | 688874 | `1fe1dc72a22ed3ae30191548bff999091700afca6117ba8cce2993eb002444b1` |
+
+GTK 在原 worker、最终导入补偿之后补映射；本地 profile 使用生命周期文件锁。
+拒绝实例在成功打开前不保存 profile 设置。新增测试正常关闭第二实例，
+在第一实例关闭前逐字节核对设置，再重启第一实例核对阅读恢复。
+产品测试使用已正常关闭的 profile 副本及独立证据目录，原 20 项 UI 原件保持封存。
+新增 5 项具名结果：启动补映射、保留用户 metadata、第二实例拒绝且不干扰原实例、
+拒绝实例正常关闭不覆盖设置、第一实例再正常重启保留当前书。
+
+## 后续范围
+
+Windows 实际宿主尚未接产品目录；GTK 的显示书架仍使用 SDK 全量 `books()` 数组，
+尚未接有界产品分页。没有 WebDAV、真实设备或界面性能预算验收。
+后续将 Windows 映射接到 UI 最终接受后的串行任务，保留所有原取消/补偿边界，
+再推进桌面产品书架。用户原件仍由 SDK 保存，不复制运行中的 SDK 数据库。
