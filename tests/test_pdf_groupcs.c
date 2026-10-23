@@ -150,7 +150,7 @@ static void cmyk_soft_masks(void) {
      independent CMS reference makes RGB blending fail this check. */
   const double a=128./255,total=a+a-a*a;
   unsigned rgb[3],scenario,k;
-  for(scenario=0;scenario<9;scenario++) {
+  for(scenario=0;scenario<10;scenario++) {
     char pdf[8192],row[2048];size_t used=0,offset[9],xref;unsigned id;
     exr_fixed_document *document=NULL;exr_bitmap bitmap={0};exr_fixed_render_options options={0};
     const char *paint="/M gs 1 0 0 rg 0 0 16 16 re f";
@@ -158,6 +158,7 @@ static void cmyk_soft_masks(void) {
     const char *group_paint=scenario>=6 ? "/Child Do" : mask;
     const char *bc=scenario==2 ? "/BC [0 0 0 0]" : scenario==3 ? "/BC [1 0 0 0]" : scenario==5 ? "/BC [0 0 0]" : "";
     const char *space=scenario==4 ? "[/CalRGB << /WhitePoint [.95047 1 1.08883] >>]" : "/DeviceCMYK";
+    const char *box=scenario==9 ? "[0 16 16 0]" : "[0 0 16 16]";
     double coverage=scenario==8 ? 1 : total,expected=coverage;
 #define APPEND(text) do { size_t length=strlen(text);CHECK(length<sizeof(pdf)-used);memcpy(pdf+used,text,length);used+=length; } while(0)
     APPEND("%PDF-1.7\n");
@@ -169,7 +170,7 @@ static void cmyk_soft_masks(void) {
         case 3: APPEND("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 16 16] /Contents 4 0 R /Resources << /ExtGState << /M << /SMask 6 0 R >> >> >> >>");break;
         case 4: snprintf(row,sizeof(row),"<< /Length %zu >>\nstream\n%s\nendstream",strlen(paint),paint);APPEND(row);break;
         case 5:
-          snprintf(row,sizeof(row),"<< /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true /CS %s >> /Resources << /ExtGState << /Half 7 0 R >> /XObject << /Child 8 0 R >> >> /Length %zu >>\nstream\n%s\nendstream",space,strlen(group_paint),group_paint);APPEND(row);break;
+          snprintf(row,sizeof(row),"<< /Type /XObject /Subtype /Form /BBox %s /Group << /S /Transparency /I true /CS %s >> /Resources << /ExtGState << /Half 7 0 R >> /XObject << /Child 8 0 R >> >> /Length %zu >>\nstream\n%s\nendstream",box,space,strlen(group_paint),group_paint);APPEND(row);break;
         case 6: snprintf(row,sizeof(row),"<< /S /%s /G 5 0 R %s >>",scenario ? "Luminosity" : "Alpha",bc);APPEND(row);break;
         case 7: APPEND(scenario==8 ? "<< /ca 1 >>" : "<< /ca .5 >>");break;
         case 8:

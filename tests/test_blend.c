@@ -345,6 +345,8 @@ static void softmask(void) {
     {"softmask-alpha",4,0,255,0},{"softmask-alpha",12,255,0,0},
     {"softmask-luminosity",4,0,255,0},{"softmask-luminosity",12,255,0,0},
     {"softmask-none",4,0,255,0},{"softmask-none",12,0,255,0},
+    /* Retain the original reversed-corner fixture as a geometry regression. */
+    {"softmask-bad-7",4,0,255,0},{"softmask-bad-7",12,0,255,0},
   };
   unsigned i;
   for(i=0;i<sizeof(cases)/sizeof(*cases);i++) {
@@ -355,8 +357,8 @@ static void softmask(void) {
     exr_bitmap_free(&result);exr_fixed_free(d);
   }
   /* Malformed mask dictionaries are refused, never partially honoured. */
-  { static const exr_status want[]={EXR_FORMAT,EXR_FORMAT,EXR_FORMAT,EXR_FORMAT,EXR_FORMAT,EXR_UNSUPPORTED,EXR_FORMAT,EXR_FORMAT};
-    for(i=0;i<8;i++) { char name[32];exr_fixed_document *d;exr_fixed_render_options options={0};exr_bitmap result={0};exr_status got;
+  { static const exr_status want[]={EXR_FORMAT,EXR_FORMAT,EXR_FORMAT,EXR_FORMAT,EXR_FORMAT,EXR_UNSUPPORTED,EXR_FORMAT};
+    for(i=0;i<7;i++) { char name[32];exr_fixed_document *d;exr_fixed_render_options options={0};exr_bitmap result={0};exr_status got;
       snprintf(name,sizeof(name),"softmask-bad-%u",i);d=open_book(name);options.channels=4;options.background=0;
       got=exr_fixed_render(d,0,1,&options,&result,&error);CHECK(got==want[i] && !result.pixels);exr_fixed_free(d);
     } }
