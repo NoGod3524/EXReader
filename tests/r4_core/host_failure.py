@@ -1,5 +1,6 @@
 """CI-only byte/state/pixel comparison of the retained failing original run."""
 import base64
+from collections import Counter
 import hashlib
 import io
 import json
@@ -124,6 +125,10 @@ for earlier in validation['cases']:
             result.pop('columns', None)
             report['previous_pdf_comparisons'][earlier['id'] + ':' + str(index) + ':' + proof['role'] + ':' + role] = result
 diff = ImageChops.difference(roles['reference'][2], roles['restored'][2])
+changes = [(a, b) for a, b in zip(roles['reference'][2].getdata(), roles['restored'][2].getdata()) if a != b]
+report['rgb_differences'] = {'max_channel_delta': max(abs(a[c]-b[c]) for a, b in changes for c in range(3)),
+    'max_delta_counts': dict(Counter(max(abs(a[c]-b[c]) for c in range(3)) for a, b in changes)),
+    'reference_restored_value_pairs': [[list(a), list(b), count] for (a, b), count in Counter(changes).most_common(40)]}
 diff.save(output/'reference-restored-diff.png')
 panels = [(key, roles[key][2]) for key in ('pretransition', 'reference', 'restored')] + [('difference x8', diff.point(lambda p: min(255, p*8)))]
 sheet = Image.new('RGB', (360*len(panels), 580), 'white')
