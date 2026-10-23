@@ -17,7 +17,7 @@ from measure_reading_core import ROOT, git, sha256
 from measure_reading_pdf import number, require
 from check_parallel_integration import fetch, pages
 
-SDK = "9c69bc4c7efb0cff68ced27562709fe597189041"
+SDK = "9854061be331fe603a1822d9b2b36ee357154927"
 CORPUS_REGISTRATION = "ea5c13e081cfba86d9f6dd759439894463e51126"
 PROTECTED = ("src", "include", "cmake", "CMakeLists.txt", "tests/fixtures",
              ".github/workflows/native.yml", ".github/workflows/reliability.yml", "bindings")
