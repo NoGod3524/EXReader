@@ -30,7 +30,12 @@ PR11 WebDAV 只读来源、PR13 GTK 固定页、PR14 修订历史/outbox，以�
 
 桌面目录查询 `a1e984315e1399ba96e4ef358030323d44362c81` 的 run `40035762258`
 已三平台通过。GTK 实际 2202 书有界界面已接入候选并复验，Windows 界面分页仍待接入；
-Android 与 Apple 大书架在独立复验，WebDAV 双向同步在验证真实两端协议。
+Android 与 Apple 大书架在独立复验。WebDAV 双向同步二期
+[PR16](https://github.com/NoGod3524/EXReader/pull/16) 已独立交付：受测源码
+`0cb23a13fd23374b61ae7b9744173215aaf04660`，run `40038722770` 两平台同次成功；
+Linux 77+59+33、Windows 76+59+33，两个同源工件未过期且 digest 与上传日志一致。
+覆盖不可变原件、修订/outbox、真实 TLS/重试/并发/墓碑及 2202 原件全 256 分片；
+不授予宿主 metadata 投影、同步 UI、移动适配或真实用户云盘互操作。
 这些阶段尚无六目标共同源码、宿主数据投影联合事务或平台安全凭据 UI 的验收。
 详见[桌面有界书架](READER-DESKTOP-SHELF.md)。
 
