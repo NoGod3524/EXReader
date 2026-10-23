@@ -264,6 +264,7 @@ def main():
     plan = {'schema': 1, 'source_sha': source, 'binary_sha256': sha(args.binary.read_bytes()),
             'font_sha256': sha(args.font.read_bytes()), 'expected_off': args.expect_off,
             'plan_written_before_first_engine_execution': True,
+            'sanitizer_policy': 'reject native sanitizer findings even when a negative case expects nonzero exit',
             'independent_reference': {'program': 'pdftoppm', 'dpi': 720, 'dimensions': [20, 20],
                                       'centers': [[5, 5], [15, 5], [5, 15], [15, 15]], 'interior_radius': 1,
                                       'comparison': 'exact known source values throughout each 3x3 interior'},
@@ -281,6 +282,10 @@ def main():
             path = args.output / case['pdf']
             require(sha(path.read_bytes()) == case['pdf_sha256'], 'planned PDF changed')
             native = run([args.binary.resolve(), 'pdf', path.resolve(), args.font.resolve(), folder.resolve(), '0'], folder / 'native')
+            stderr = native.stderr.decode('utf-8', errors='replace')
+            require(not any(marker in stderr for marker in ('ERROR: AddressSanitizer', 'ERROR: LeakSanitizer',
+                        'runtime error:', 'SUMMARY: UndefinedBehaviorSanitizer', 'AddressSanitizer:DEADLYSIGNAL')),
+                    'native sanitizer reported an error')
             lines = native.stdout.decode('utf-8').splitlines()
             require(len(lines) == 1, 'installed consumer must return exactly one JSON report')
             observed = json.loads(lines[0])
