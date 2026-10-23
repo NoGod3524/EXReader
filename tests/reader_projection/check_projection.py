@@ -306,7 +306,7 @@ def main():
     local(sdk, tag, expected=DATABASE)
     assert sdk.read_bytes() == before_bytes
     record('sdk_database_identity_is_rejected_without_modification')
-    assert len(checks) == 31, len(checks)
+    assert len(checks) == 32, len(checks)
     report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform, 'count': len(checks), 'checks': checks,
               'metadata_history_outbox_same_product_transaction': True, 'wire_rewritten': False,
