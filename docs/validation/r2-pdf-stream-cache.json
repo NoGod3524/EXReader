@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "scope": "PDF decoded stream lifecycle only",
+  "source_sha": "bf39a6178a4d2772ed3829cd479041444b5b1bbd",
+  "run_id": 39891041539,
+  "run_attempt": 1,
+  "accepted": true,
+  "complete_product": false,
+  "sdk_freeze_transferred": false,
+  "regression": {"job":120210610906,"checks":352,"pages":24,"random_operations":96,"baseline_completed_pages_before_limit":15,"single_page_limit_preserved":true},
+  "native": [{"job":120210611238,"sanitizer":false,"passed":168,"failed":0},{"job":120210611061,"sanitizer":true,"passed":165,"failed":0}],
+  "real_document": {"id":"nist-ai-rmf","sha256":"7576edb531d9848825814ee88e28b1795d3a84b435b4b797d3670eafdc4a89f1","pages":48,"text_bytes":91074,"complete":true},
+  "artifacts": [
+    {"id":12475501208,"name":"pdf-cache-native-ON-39891041539-1","bytes":20571,"digest":"sha256:dd0973cf49c66a9483598297bab050e8f1a2e5394d13d23b56a68e3924e9a302"},
+    {"id":12474618922,"name":"pdf-cache-39891041539-1","bytes":3514,"digest":"sha256:6fdd875ebf00538521c48b01841e8b85bc087816ca76c350dfc540b983b51a0c"},
+    {"id":12474589105,"name":"pdf-cache-native-OFF-39891041539-1","bytes":21302,"digest":"sha256:d4e93116778e873fd81037917a42957a37ee397c806fa82063ee24b7a8a027d1"}
+  ],
+  "retained_failure_runs": [39890293628,39890836206],
+  "local_execution": false,
+  "wp16_cpu_credit_seconds": 0
+}
