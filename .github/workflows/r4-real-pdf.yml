@@ -11,7 +11,21 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
+  retained:
+    name: retained first real PDF failure stderr
+    runs-on: ubuntu-22.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12474886324
+          run-id: 39891075765
+          github-token: ${{ github.token }}
+          path: build/retained
+      - name: Print unchanged failed-process stderr
+        run: find build/retained -name '*.stderr' -print -exec cat {} \;
   pdf:
     name: two frozen Adobe PDF complete consumers
     runs-on: ubuntu-22.04
@@ -38,6 +52,9 @@ jobs:
           cmake --build build/real-consumer --parallel 4
       - name: Complete all pages and independent reopen selectors
         run: python3 tests/r4_core/real_pdf.py build/real-consumer/r2-document build/real-consumer/r2-location build/real-inputs/assets corpus/tools/reading_corpus/real-v1.json build/real-results
+      - name: Print all process diagnostics
+        if: always()
+        run: find build/real-results -name '*.stderr' -print -exec cat {} \;
       - name: Preserve input identities and every failed process
         if: always()
         uses: actions/upload-artifact@v4
