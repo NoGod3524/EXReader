@@ -22,18 +22,27 @@ static unsigned char *load(const char *path,size_t *size) {
   assert(f && !fseek(f,0,SEEK_END));n=ftell(f);assert(n>0 && !fseek(f,0,SEEK_SET));
   p=(unsigned char *)malloc((size_t)n);assert(p && fread(p,1,(size_t)n,f)==(size_t)n);fclose(f);*size=(size_t)n;return p;
 }
-static unsigned char *encode(const char *path,unsigned bits,unsigned count,int raw,int signed_sample,int subsample,size_t *size) {
+static unsigned char *encode_size(const char *path,unsigned width,unsigned height,unsigned bits,unsigned count,int raw,int signed_sample,int subsample,size_t *size) {
   opj_image_cmptparm_t comp[4];opj_cparameters_t params;
   opj_codec_t *codec;opj_stream_t *stream;opj_image_t *image;unsigned c,i;
   memset(comp,0,sizeof(comp));
-  for(c=0;c<count;c++) { comp[c].dx=subsample ? 2 : 1;comp[c].dy=1;comp[c].w=subsample ? 4 : 7;comp[c].h=3;comp[c].prec=bits;comp[c].sgnd=signed_sample; }
-  image=opj_image_create(count,comp,count==1 ? OPJ_CLRSPC_GRAY : OPJ_CLRSPC_SRGB);assert(image);image->x1=7;image->y1=3;
-  for(c=0;c<count;c++) for(i=0;i<comp[c].w*3;i++) image->comps[c].data[i]=(OPJ_INT32)(sample(i,c,bits)>>(signed_sample ? 1 : 0));
+  for(c=0;c<count;c++) { comp[c].dx=subsample ? 2 : 1;comp[c].dy=1;comp[c].w=subsample ? (width+1)/2 : width;comp[c].h=height;comp[c].prec=bits;comp[c].sgnd=signed_sample; }
+  image=opj_image_create(count,comp,count==1 ? OPJ_CLRSPC_GRAY : OPJ_CLRSPC_SRGB);assert(image);image->x1=width;image->y1=height;
+  for(c=0;c<count;c++) {
+    uint32_t noise=1234567+c;
+    for(i=0;i<comp[c].w*height;i++) {
+      noise^=noise<<13;noise^=noise>>17;noise^=noise<<5;
+      image->comps[c].data[i]=(OPJ_INT32)((width>7 ? noise&((1u<<bits)-1) : sample(i,c,bits))>>(signed_sample ? 1 : 0));
+    }
+  }
   opj_set_default_encoder_parameters(&params);params.tcp_numlayers=1;params.cp_disto_alloc=1;params.tcp_rates[0]=0;params.numresolution=1;params.tcp_mct=0;
   codec=opj_create_compress(raw ? OPJ_CODEC_J2K : OPJ_CODEC_JP2);assert(codec && opj_setup_encoder(codec,&params,image));
   stream=opj_stream_create_default_file_stream(path,OPJ_FALSE);assert(stream);
   assert(opj_start_compress(codec,image,stream) && opj_encode(codec,stream) && opj_end_compress(codec,stream));
   opj_stream_destroy(stream);opj_destroy_codec(codec);opj_image_destroy(image);return load(path,size);
+}
+static unsigned char *encode(const char *path,unsigned bits,unsigned count,int raw,int signed_sample,int subsample,size_t *size) {
+  return encode_size(path,7,3,bits,count,raw,signed_sample,subsample,size);
 }
 static void rejected(const unsigned char *p,size_t n,unsigned w,unsigned h,unsigned c,unsigned b,int indexed,const exr_control *control,exr_status expected) {
   unsigned char *out=(unsigned char *)1;size_t size=123;exr_error e={0};
@@ -68,5 +77,10 @@ int main(int argc,char **argv) {
   { size_t n;unsigned char *p=encode("signed.jp2",8,1,0,1,0,&n);rejected(p,n,7,3,1,8,0,NULL,EXR_UNSUPPORTED);free(p); }
   { size_t n;unsigned char *p=encode("subsample.jp2",8,1,0,0,1,&n);rejected(p,n,7,3,1,8,0,NULL,EXR_UNSUPPORTED);free(p); }
   { unsigned char p[]={1,2,3,4};rejected(p,sizeof(p),7,3,1,8,0,NULL,EXR_FORMAT); }
+  {
+    size_t n;int remaining=3;exr_control control={cancel,NULL,&remaining};
+    unsigned char *p=encode_size("cancel.j2k",257,257,8,1,1,0,0,&n);
+    assert(n>4096);rejected(p,n,257,257,1,8,0,&control,EXR_CANCELLED);assert(remaining<=0);free(p);
+  }
   puts("JPX packed samples: JP2/J2K 1/2/4/8/16-bit Gray/RGB; malformed, truncated, dimensions, budget, cancellation, signed and subsampling passed");return 0;
 }

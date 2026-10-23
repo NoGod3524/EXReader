@@ -9,7 +9,7 @@ FetchContent_Declare(openjpeg URL https://codeload.github.com/uclouvain/openjpeg
 FetchContent_MakeAvailable(openjpeg)
 add_executable(jpx-regress regress.c ../../src/pdf_jpx.c)
 target_include_directories(jpx-regress PRIVATE ../../include ../../src "${openjpeg_SOURCE_DIR}/src/lib/openjp2" "${openjpeg_BINARY_DIR}/src/lib/openjp2")
-target_compile_definitions(jpx-regress PRIVATE EXR_STATIC OPJ_STATIC EXR_JPX_STANDALONE)
+target_compile_definitions(jpx-regress PRIVATE EXR_STATIC OPJ_STATIC EXR_JPX_STANDALONE EXR_ENABLE_PDF_JPX=1)
 target_link_libraries(jpx-regress PRIVATE openjp2)
 target_compile_options(jpx-regress PRIVATE -Wall -Wextra -Werror)
 set_target_properties(jpx-regress PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
