@@ -326,7 +326,8 @@ extern "C" reader_revision_status reader_revision_heads(reader_revisions *store,
   if(visit)for(const auto &pair:g.nodes)if(pair.second.head){reader_revision_head head{};std::memcpy(head.revision_id,pair.first.c_str(),32);std::memcpy(head.operation,pair.second.operation.c_str(),pair.second.operation.size());std::memcpy(head.sha256,pair.second.sha.c_str(),64);head.complete=pair.second.complete;head.requires_restore=pair.second.blocked;if(visit(context,&head))break;}
 });}
 extern "C" reader_revision_status reader_revision_book_identity(reader_revisions *store,const char *key,uint64_t *bytes,reader_revision_error *error){
-  if(bytes)*bytes=0;return call(error,[&]{guard owner(store);if(!key||!bytes)reject(READER_REV_ARGUMENT,"Missing global book identity/output");book(key);graph g(store->db,"book",key);if(!g.original_bytes)reject(READER_REV_NOT_FOUND,"Verified original book metadata has not arrived");*bytes=g.original_bytes;});
+  if(bytes)*bytes=0;
+  return call(error,[&]{guard owner(store);if(!key||!bytes)reject(READER_REV_ARGUMENT,"Missing global book identity/output");book(key);graph g(store->db,"book",key);if(!g.original_bytes)reject(READER_REV_NOT_FOUND,"Verified original book metadata has not arrived");*bytes=g.original_bytes;});
 }
 extern "C" reader_revision_status reader_revision_outbox(reader_revisions *store,size_t limit,reader_revision_outbox_fn visit,void *context,reader_revision_error *error){return call(error,[&]{
   guard owner(store);if(!visit||!limit||limit>100)reject(READER_REV_ARGUMENT,"Outbox limit must be 1..100");statement q(store->db,"SELECT revision_id,queue_id,attempts,last_error FROM reader_outbox ORDER BY queue_id LIMIT ?1");check(sqlite3_bind_int(q.s,1,(int)limit));

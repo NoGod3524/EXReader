@@ -80,6 +80,7 @@ jobs:
       - name: Actual TLS two-client immutable publication and bounded discovery
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          "build/sync-consumer/sync-c-consumer$exe"
           python3 tests/reader_sync/check_sync.py --consumer "build/sync-consumer/sync-consumer$exe" --revision-consumer "build/sync-revision-consumer/revision-consumer$exe" --output build/sync-evidence
       - name: Preserve source-bound evidence and installed modules without keys
         if: always()
