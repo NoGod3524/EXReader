@@ -1,7 +1,9 @@
 # WP13 Linux native reference host
 
 This independent SDK consumer uses GTK 3 controls and the installed EXReader
-3.40.0 static core/library components. It changes no engine API, ABI1 or schema6.
+3.40.0 static core/library components. The original delivery below used schema6;
+H11 adopts the frozen schema7 bounded EPUB API without changing the SDK.
+Current common-source results are recorded in [R5 SDK freeze](R5-SDK-FREEZE.md).
 Its source lives in `examples/linux`; it is deliberately outside the SDK's
 existing top-level example inventory until integration.
 

@@ -16,11 +16,13 @@
 | 全面领先成熟引擎的路线和功能数量目标 | 已撤销 | 以代表性阅读质量、绝对资源预算和回归结果决定是否发布 |
 
 原默认构建中，音频、书库、索引、PDF 编辑及扩展图像仍默认启用，R1 不改变该默认契约，
-而是新增显式 preset；Windows/Linux/Apple 重排阅读入口仍见 `exr_library_document()`，属于 R5 的调整输入。
+而是新增显式 preset。R5随后新增schema7有界存储契约；四宿主EPUB候选采用publication pager，
+其他重排格式保留快照与明确上限。各宿主结果见[SDK冻结与共同源码记录](R5-SDK-FREEZE.md)。
 
 ## 当前执行状态
 
-2026-10-22 按 GitHub 只读信息核对，主线为 `codex/r1-reading-core`：
+2026-10-22 按 GitHub 只读信息核对；R1起点为 `codex/r1-reading-core`，
+当前R5集成分支为 `codex/reading-package-integration`：
 
 | 状态 | 内容 |
 | --- | --- |
