@@ -55,7 +55,10 @@ EPUB有界导入后使用章内进度／标注接口；旧memory模式命中的�
 `.github/workflows/reader-modules.yml`在Linux、Windows和macOS安装冻结SDK，
 独立构建模块，再只用已安装模块和SDK构建公开消费者。
 检查覆盖九格式、原件回读、去重保留、UTF-8路径、取消／IO回滚、限额、所有权和关库重开。
-首轮运行结果完成后单独登记；未据此授予移动宿主或新产品UI验收。
+源码c2c75f99的[run39980923147](https://github.com/NoGod3524/EXReader/actions/runs/39980923147)
+四作业同次通过：三个OS各完成模块消费者及安装后独立消费者，产品存储九组检查通过。
+四份工件身份及旧失败见[模块验收记录](validation/reader-modules-c2c75f9.json)。
+此范围不授予移动宿主、新产品UI或另一次PR总门禁验收。
 
 首轮源码1ed8360的run39977249550保留为失败：三个OS均构建成功，
 回滚用例的长ZIP注释输入在元数据阶段被拒绝，未进入待验证的分块写入；产品schema九组通过。
