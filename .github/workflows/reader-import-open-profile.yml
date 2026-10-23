@@ -1,0 +1,91 @@
+name: Android bounded reopen stage profile
+on:
+  push:
+    branches: [codex/reader-import-diagnostics]
+    paths:
+      - .github/workflows/reader-import-open-profile.yml
+      - examples/android/**
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  open-profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      ANDROID_OWNERSHIP_HEAD: d0b205a56e4fcfbd5cca55a808327f00b25971ed
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require frozen SDK
+        run: git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install Android compiler and emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk/emulator" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+          python -m pip install ninja==1.11.1.1
+      - name: Build diagnostic app using installed public SDK
+        run: |
+          set -o pipefail
+          mkdir -p build/open-profile
+          git rev-parse HEAD > build/open-profile/source.txt
+          python tools/build_android_host.py --stage stage/android-x86_64 --build-dir build/android-host --gradle gradle 2>&1 | tee build/open-profile/build.log
+          mkdir -p examples/android/app/src/androidTest/assets/mapping
+          cp build/android-host/fixtures/Large.epub examples/android/app/src/androidTest/assets/mapping/
+          gradle -p examples/android --no-daemon --stacktrace :app:assembleDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.OpenProfileTest
+      - name: Enable acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Profile real cold and timeout-restored Large EPUB
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t examples/android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -t examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w -r org.exreader.host.test/org.exreader.host.OpenProfileTest > build/open-profile/instrumentation.txt
+            adb logcat -d -v threadtime > build/open-profile/logcat.txt
+      - name: Check diagnostic completion and show stage costs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root=Path('build/open-profile')
+          text=(root/'instrumentation.txt').read_text()
+          print(text)
+          if 'EXR_OPEN_PROFILE_DONE' not in text or 'INSTRUMENTATION_CODE: -1' not in text:
+              raise SystemExit('diagnostic did not complete')
+          for line in (root/'logcat.txt').read_text().splitlines():
+              if 'EXROpenProfile' in line or ('EXRHost' in line and ('bounded open' in line or 'progress resolve' in line)):
+                  print(line)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-import-open-profile-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/open-profile/
+          if-no-files-found: error

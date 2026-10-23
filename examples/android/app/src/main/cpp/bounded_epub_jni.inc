@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* App-local public-API bridge. Included after the common JNI string helpers. */
 #include <time.h>
+#include <android/log.h>
 typedef struct {
   exr_library *library;
   exr_source source;
@@ -115,22 +116,27 @@ JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeOpen(JNIEnv *en
   exr_chapter_options options=exr_chapter_options_defaults(); exr_font_input input={0};
   host_control context; exr_control control=host_task_control(env,task,&context);
   jbyte *bytes=NULL; jsize length=font?(*env)->GetArrayLength(env,font):0; (void)type;
+  uint64_t profile=host_now_ns(),mark=profile;
   if(!store || (*env)->ExceptionCheck(env)) return 0;
   if(part<0 || size<18 || size>40 || length<=0 || length>64*1024*1024 || budget<1024*1024 || budget>8*1024*1024) { throw_argument(env,"Invalid chapter font/configuration"); return 0; }
   reader=calloc(1,sizeof(*reader)); if(!reader) { status=EXR_MEMORY; goto done; }
   reader->library=store; reader->book=(int64_t)book; reader->part=(size_t)part;
   status=exr_library_source(store,(int64_t)book,&reader->source,&error); if(status!=EXR_OK) goto done;
+  __android_log_print(ANDROID_LOG_INFO,"EXROpenProfile","source_ms=%llu",(unsigned long long)((host_now_ns()-mark)/1000000u)); mark=host_now_ns();
   {
     exr_source borrowed=reader->source; borrowed.release=NULL;
     status=exr_publication_open_source(&borrowed,&reader->publication,&error); if(status!=EXR_OK) goto done;
   }
+  __android_log_print(ANDROID_LOG_INFO,"EXROpenProfile","publication_ms=%llu",(unsigned long long)((host_now_ns()-mark)/1000000u)); mark=host_now_ns();
   bytes=(*env)->GetByteArrayElements(env,font,NULL); if(!bytes) goto done;
   input.data=bytes; input.size=(size_t)length;
   status=exr_font_create(&input,1,&reader->font,&error); if(status!=EXR_OK) goto done;
+  __android_log_print(ANDROID_LOG_INFO,"EXROpenProfile","font_ms=%llu",(unsigned long long)((host_now_ns()-mark)/1000000u)); mark=host_now_ns();
   config.page.width=600; config.page.height=860; config.page.margin=32; config.page.font_size=size;
   config.page.line_height=1.6f; config.page.paragraph_spacing=12; config.document_css=1; config.embedded_fonts=1;
   config.control=control; options.workspace_budget=(size_t)budget; options.window_bytes=64*1024;
   status=exr_publication_pager_create(reader->publication,(size_t)part,reader->font,&config,&options,&reader->pager,&error);
+  __android_log_print(ANDROID_LOG_INFO,"EXROpenProfile","pager_ms=%llu total_ms=%llu",(unsigned long long)((host_now_ns()-mark)/1000000u),(unsigned long long)((host_now_ns()-profile)/1000000u));
   if(status==EXR_OK) status=exr_pager_set_control(reader->pager,NULL,&error);
 done:
   if(bytes) (*env)->ReleaseByteArrayElements(env,font,bytes,JNI_ABORT);
