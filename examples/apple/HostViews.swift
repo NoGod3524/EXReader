@@ -137,6 +137,8 @@ struct LibraryScreen: View {
                     }
                     Button("导入 Unicode 示例") { model.importFixture("Unicode", extension: "epub") }
                         .accessibilityIdentifier("library.import.unicode")
+                    Button("导入跨章示例") { model.importFixture("Bounded", extension: "epub") }
+                        .accessibilityIdentifier("library.import.bounded")
                 }
             }
             .buttonStyle(.bordered)

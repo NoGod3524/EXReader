@@ -3,6 +3,7 @@
 """The shared, fail-closed WP13 Apple evidence contract (no SDK execution)."""
 import argparse
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -11,9 +12,13 @@ import re
 import sqlite3
 import subprocess
 import zipfile
+import posixpath
+import urllib.parse
+import xml.etree.ElementTree as ET
 
 PLATFORMS = ('macos', 'iphone', 'ipad')
 SDK_TARGET = {'macos': 'macos', 'iphone': 'iphonesimulator', 'ipad': 'iphonesimulator'}
+READING_SDK_BASELINE = '9c69bc4c7efb0cff68ced27562709fe597189041'
 BASE_CASES = {
     'test01ImportDeduplicateAndErrors': '''step01_launch_fresh_state step02_import_epub_fixture step03_duplicate_import_reuses_row step04_import_pdf_fixture step05_broken_import_error_is_recoverable step06_reopen_epub_after_error step07_element_tree_import'''.split(),
     'test02PagingTypographyAndLayout': '''step08_launch_and_open_reader step09_first_page step10_next_page_progress step11_next_page_again step12_previous_page step13_font_increase_repaginates step14_font_decrease_restores_size step15_rotate_or_resize_viewport step16_layout_fits_new_size step17_restore_original_orientation step18_element_tree_reader'''.split(),
@@ -46,10 +51,14 @@ for case, names in zip(list(CASES)[7:], (
         '31-unicode-native-selection 32-cross-book-selection-cleared',
         '33-old-frame-selection-rejected', '34-nondefault-font-restored')):
     ATTACHMENTS.update({name: case for name in names.split()})
+CASES['test13BoundedChapterNotesAndRelaunch'] = '''bounded01_import_source_and_open bounded02_cross_chapter_same_local_offset bounded03_note_current_chapter bounded04_repeat_path_rejects_old_frame bounded05_process_reopen_restores_route bounded06_backwards_cross_chapter'''.split()
+ATTACHMENTS.update({name: 'test13BoundedChapterNotesAndRelaunch' for name in
+                    ('35-bounded-first-chapter', '36-bounded-note-cross-chapter-jump', '37-bounded-reopen-route')})
 LEGACY_CHECKS = '''epub_width epub_height epub_pixels epub_text library_insert library_deduplicate next_page previous_page_pixels previous_page_text font_increase font_decrease resume_position excerpt_saved pdf_dimensions pdf_channels pdf_pixels pdf_text image_bridge switch_book library_reopen resume_after_session_reopen'''.split()
 MODEL_CHECKS = '''open_real_source cancelled_turn_keeps_frame_and_recovers precise_progress_is_atomic resize_keeps_exact_offset invalid_resize_keeps_viewport_and_frame cancelled_font_change_recovers failed_save_rolls_back_page_and_numeric_progress failed_save_rolls_back_font_and_viewport persistence_failure_is_reported failed_open_keeps_previous_session cancelled_candidate_keeps_previous_book reopen_uses_exact_saved_offset selection_context_rejects_wrong_book_page_and_text unicode_scalar_ranges_are_exact cross_book_notes_query_failure_clears_previous_book same_book_notes_query_failure_preserves_list_and_recovers pending_viewport_handoff_has_no_idle_frame cancel_pending_viewport_keeps_frame_and_recovers'''.split()
+BOUNDED_CHECKS = '''source_import_marks_unknown_extent duplicate_preserves_storage_mode source_import_pre_cancel_is_atomic source_import_mid_cancel_and_late_rollback publication_rebinds_stable_source_control repeated_spine_path_keeps_part_identity cross_chapter_next_and_previous same_part_notes_crud_and_cross_part_jump font_resize_reopen_restores_part_and_point ambiguous_restore_preserves_selector invalid_part_path_rejected original_repeated_fixture_refuses_ambiguous_note legacy_memory_import_keeps_global_progress schema6_upgrade_preserves_legacy_original_progress_notes long_chapter_tail_text_without_snapshot'''.split()
 SDK_CHECKS = set('''position-preserves-latest-metadata import-pre-cancel-preserves-library import-oversize-rejected-before-read import-cancel-during-bounded-read import-late-cancel-removes-new-row import-late-cancel-preserves-reused-row import-rollback-failure-reports-retained-row pager-rebinds-after-creator-cancel pager-current-token-controls-cache-hit pager-render-polls-current-token pager-seek-propagates-real-limit pager-seek-verifies-target-range-and-eof snapshot-pager-anchor-uses-document-api fixed-render-polls-current-token fixed-text-polls-current-token fixed-reuses-after-cancel fixed-comment-update-keeps-reflow-note-separate fixed-notes-propagates-cancellation fixed-notes-text-failure-is-propagated publication-cancel-ordering embedded-nul-note-is-rejected'''.split())
-FIXTURES = {'Sample.epub', 'Sample.pdf', 'Large.epub', 'Broken.epub', 'Reader.otf', 'OFL.txt', 'Unicode.epub'}
+FIXTURES = {'Sample.epub', 'Sample.pdf', 'Large.epub', 'Broken.epub', 'Reader.otf', 'OFL.txt', 'Unicode.epub', 'Bounded.epub', 'BoundedLong.epub', 'Repeated.epub'}
 
 
 class Rejected(ValueError):
@@ -206,6 +215,7 @@ def sdk_record(root, target):
     root = Path(root)
     base = (root/'include/exr/base.h').read_text()
     return {**cloud_identity(target), 'sdk_version': re.search(r'#define EXR_VERSION "([^"]+)"', base)[1],
+            'reading_sdk_baseline': READING_SDK_BASELINE,
             'abi': int(re.search(r'#define EXR_ABI_VERSION (\d+)u', base)[1]),
             'files_sha256': inventory(root),
             'runtime_ids': {path.name: runtime_ids(path) for path in sorted((root/'lib').glob('libexreader*.dylib'))}}
@@ -213,6 +223,7 @@ def sdk_record(root, target):
 
 def validate_sdk(root, value, source, run_id, attempt, target):
     validate_identity(value, source, run_id, attempt, target, 'sdk')
+    require(value.get('reading_sdk_baseline') == READING_SDK_BASELINE, 'SDK frozen reading baseline mismatch')
     require(value.get('files_sha256') == inventory(root), 'SDK file identity mismatch')
     require(value.get('abi') == 1 and value.get('sdk_version'), 'SDK version or ABI missing')
     header = (Path(__file__).resolve().parents[2]/'include/exr/base.h').read_text()
@@ -250,14 +261,20 @@ def database_state(root, environment):
     with sqlite3.connect(db.resolve().as_uri() + '?mode=ro&immutable=1', uri=True) as con:
         require(con.execute('PRAGMA quick_check').fetchall() == [('ok',)], 'database integrity check failed')
         require(con.execute('PRAGMA application_id').fetchone()[0] == 1163416131 and
-                con.execute('PRAGMA user_version').fetchone()[0] == 6, 'database identity mismatch')
+                con.execute('PRAGMA user_version').fetchone()[0] == 7, 'database identity mismatch')
         require(not con.execute('PRAGMA foreign_key_check').fetchall(), 'database foreign key mismatch')
+        for table, columns in {
+                'epub_bounded_books': {'book_id'},
+                'epub_progress': {'book_id', 'part', 'path', 'position', 'prefix', 'suffix', 'chapter'},
+                'epub_notes': {'id', 'book_id', 'part', 'path', 'start', 'end', 'exact', 'prefix', 'suffix', 'chapter', 'text'}}.items():
+            require({row[1] for row in con.execute('PRAGMA table_info(' + table + ')')} == columns,
+                    'schema7 chapter columns missing or changed: ' + table)
         rows = {table: con.execute('SELECT COUNT(*) FROM ' + table).fetchone()[0]
-                for table in ('books', 'notes', 'fixed_notes', 'book_progress')}
-        require(rows['books'] >= 2 and all(rows[key] >= 1 for key in ('notes', 'fixed_notes', 'book_progress')),
+                for table in ('books', 'notes', 'fixed_notes', 'book_progress', 'epub_bounded_books', 'epub_progress', 'epub_notes')}
+        require(rows['books'] >= 2 and all(rows[key] >= 1 for key in ('epub_notes', 'fixed_notes', 'epub_progress')),
                 'persisted acceptance state incomplete')
         state = load(root/'host-state.json')
-        require(state.get('schema') == 1 and state.get('abi_version') == environment['sdk']['abi'] and
+        require(state.get('schema') == 2 and state.get('abi_version') == environment['sdk']['abi'] and
                 state.get('sdk_version') == environment['sdk']['sdk_version'] and
                 state.get('font_sha256') == environment['font_sha256'], 'host state SDK/font identity mismatch')
         books = state.get('books')
@@ -265,22 +282,73 @@ def database_state(root, environment):
         actual = {row[0]: row[1:] for row in con.execute('SELECT id,title,position FROM books')}
         seen = set()
         parts, notes = [], []
+        current_frame = None
+        bounded_ids = {r[0] for r in con.execute('SELECT book_id FROM epub_bounded_books')}
+        routes = {}
+        for key, format_id, original, title, extent, position in con.execute('SELECT id,format,source,title,text_size,position FROM books'):
+            if title in environment['fixtures']:
+                require(hashlib.sha256(original).hexdigest() == environment['fixtures'][title], 'stored original fixture mismatch')
+            if format_id == 4:
+                require(key in bounded_ids and extent == 0 and position == 0, 'new EPUB lacks bounded marker or uses global coordinates')
+                require(not con.execute('SELECT 1 FROM book_progress WHERE book_id=? UNION ALL SELECT 1 FROM notes WHERE book_id=?', (key, key)).fetchall(), 'bounded EPUB contains legacy position or notes')
+                with zipfile.ZipFile(io.BytesIO(original)) as archive:
+                    container = ET.fromstring(archive.read('META-INF/container.xml'))
+                    package = next(n.attrib['full-path'] for n in container.iter() if n.tag.endswith('rootfile'))
+                    opf = ET.fromstring(archive.read(package))
+                    items = {n.attrib['id']: n.attrib['href'] for n in opf.iter() if n.tag.endswith('}item')}
+                    routes[key] = [posixpath.normpath(posixpath.join(posixpath.dirname(package), urllib.parse.unquote(items[n.attrib['idref']])))
+                                   for n in opf.iter() if n.tag.endswith('}itemref')]
+            else:
+                require(key not in bounded_ids, 'bounded marker belongs to non EPUB')
         for book in books:
             key = book.get('id')
             require(key not in seen and actual.get(key) == (book.get('title'), book.get('position')),
                     'host state differs from persisted book')
             seen.add(key)
             parts.append('b%s:%s' % (key, book['position']))
+            bounded = key in bounded_ids
+            require(book.get('storage') == ('epub' if bounded else 'fixed' if book.get('format') in ('PDF', 'CBZ') else 'global'), 'host storage mode mismatch')
+            if bounded:
+                saved = con.execute('SELECT part,path,position,prefix,suffix FROM epub_progress WHERE book_id=?', (key,)).fetchone()
+                if saved is not None:
+                    p = book.get('epub_progress', {})
+                    require(0 <= saved[0] < len(routes[key]) and routes[key][saved[0]] == saved[1] and saved[2] >= 0, 'stored EPUB route invalid')
+                    require((p.get('part'), p.get('path'), p.get('start'), p.get('prefix'), p.get('suffix')) == saved and
+                            p.get('end') == p.get('start') and p.get('exact') == '', 'host EPUB progress differs from database')
+                    parts.append('p%s:%s:%s:%s' % (key, saved[0], saved[1], saved[2]))
+                else:
+                    require('epub_progress' not in book, 'host invented EPUB progress')
             if 'notes' in book:
                 require(isinstance(book['notes'], list), 'invalid host note state')
                 notes = book['notes']
-                table = 'fixed_notes' if book.get('format') == 'PDF' else 'notes'
+                table = 'epub_notes' if bounded else 'fixed_notes' if book.get('format') in ('PDF', 'CBZ') else 'notes'
                 stored = dict(con.execute('SELECT id,text FROM ' + table + ' WHERE book_id=?', (key,)))
                 require(len(notes) == len(stored) and len({note.get('id') for note in notes}) == len(notes),
                         'host note set mismatch')
                 for note in notes:
                     require(stored.get(note.get('id')) == note.get('comment'), 'host note text differs from database')
-        parts.extend('n%s:%s:%s:%s:%s' % (n['id'], n['page'], n['start'], n['state'], n['comment']) for n in notes)
+                    require(note.get('storage') == book['storage'], 'host note namespace mismatch')
+                    if bounded:
+                        record = con.execute('SELECT part,path,start,end,exact FROM epub_notes WHERE id=? AND book_id=?', (note['id'], key)).fetchone()
+                        require(record == (note.get('part'), note.get('path'), note.get('selector_start'), note.get('selector_end'), note.get('quote')),
+                                'host EPUB note selector differs from database')
+                        require(0 <= record[0] < len(routes[key]) and routes[key][record[0]] == record[1], 'stored EPUB note route invalid')
+                        if note.get('state') == '精确':
+                            require((note.get('start'), note.get('end')) == record[2:4], 'resolved EPUB range mismatch')
+                if bounded:
+                    require(book.get('part') in range(len(routes[key])) and routes[key][book['part']] == book.get('path'), 'current frame route mismatch')
+                    require(isinstance(book.get('reading_offset'), int) and book['reading_offset'] >= 0, 'current frame offset missing')
+                    require(isinstance(book.get('unresolved_progress'), bool), 'current frame recovery state missing')
+                    if not book['unresolved_progress']:
+                        require(saved is not None and saved[:3] == (book['part'], book['path'], book['reading_offset']),
+                                'accepted frame and persisted chapter point differ')
+                    current_frame = 'f%s:%s:%s:%s' % (key, book['part'], book['path'], book['reading_offset'])
+                    memory = book.get('bounded_memory', {})
+                    require(memory.get('explicit_snapshot_bytes') == 0 and memory.get('peak_parse_workspace_bytes', 1 << 60) <= 16 * 1024 * 1024 and
+                            memory.get('swift_page_text_bytes', 1 << 60) <= 2 * 1024 * 1024, 'bounded frame memory contract missing')
+        if current_frame is not None:
+            parts.append(current_frame)
+        parts.extend('n%s:%s:%s:%s:%s:%s:%s:%s' % (n['storage'], n['id'], n['part'], n['path'], n['page'], n['start'], n['state'], n['comment']) for n in notes)
         require(state.get('state_hash') == hashlib.sha256('|'.join(parts).encode()).hexdigest()[:8],
                 'host state hash mismatch')
     require((root/'host-log.txt').stat().st_size > 0, 'missing host operation log')
@@ -432,8 +500,30 @@ def validate_review_reports(root, source, run_id, attempt, sdk, fixtures):
             'SDK consumer evidence bytes mismatch')
     require(digest(sdk_root/'consumer/TextFailure.pdf') == digest(source_root/'tests/fixtures/pdf-public-text.pdf'),
             'SDK consumer fixed input mismatch')
+    bounded_root = root/'bounded-review'
+    bounded = load(bounded_root/'bounded-review.json')
+    validate_identity(bounded, source, run_id, attempt, 'bounded-macos', 'package')
+    require(bounded.get('schema') == 1 and bounded.get('accepted') is True and bounded.get('physical_device_execution') is False and
+            bounded.get('runtime_budget_seconds') == 900 and bounded.get('diagnostic_only') is False and
+            [c.get('name') for c in bounded.get('checks', [])] == BOUNDED_CHECKS and
+            all(c.get('passed') is True for c in bounded['checks']), 'bounded consumer checks incomplete')
+    require(bounded.get('program_sha256') == digest(bounded_root/'bounded-review') and
+            bounded.get('sdk_files_sha256') == sdk['files_sha256'], 'bounded consumer SDK/program identity mismatch')
+    require(bounded.get('fixtures') == {n: fixtures[n] for n in ('Bounded.epub', 'BoundedLong.epub', 'Unicode.epub', 'Reader.otf', 'Repeated.epub')},
+            'bounded consumer fixture identity mismatch')
+    sources = ('examples/apple/HostSDK.swift', 'examples/apple/HostModel.swift', 'examples/apple/SelectableText.swift',
+               'tests/apple_host/bounded_review/BoundedReview.swift', 'tests/apple_host/run_bounded_review.py')
+    require(bounded.get('source_files_sha256') == {p: digest(source_root/p) for p in sources}, 'bounded consumer source mismatch')
+    require(load(bounded_root/'consumer/bounded-review.json').get('checks') == bounded['checks'] and
+            load(bounded_root/'consumer/bounded-review.json').get('measurements') == bounded.get('measurements'), 'bounded consumer raw result mismatch')
+    metrics = bounded.get('measurements', {})
+    require(metrics.get('repeated_window_bytes') == 16384 and
+            metrics.get('projection_bytes', 0) >= 49 * 1024 * 1024 and metrics.get('tail_text_bytes') == 512 and
+            metrics.get('explicit_snapshot_bytes') == 0 and metrics.get('peak_parse_workspace_bytes', 1 << 60) <= 16 * 1024 * 1024 and
+            bounded.get('process_peak_rss_bytes', 0) > 0, 'bounded long chapter evidence incomplete')
     return {'model': {'checks': len(MODEL_CHECKS), 'accepted': True, 'sha256': digest(model_root/'model-review.json')},
-            'sdk': {'checks': len(SDK_CHECKS), 'accepted': True, 'sha256': digest(sdk_root/'sdk-review-identity.json')}}
+            'sdk': {'checks': len(SDK_CHECKS), 'accepted': True, 'sha256': digest(sdk_root/'sdk-review-identity.json')},
+            'bounded': {'checks': len(BOUNDED_CHECKS), 'accepted': True, 'sha256': digest(bounded_root/'bounded-review.json')}}
 
 
 def main():

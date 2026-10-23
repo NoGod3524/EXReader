@@ -139,8 +139,20 @@ final class EXReaderHostUITests: XCTestCase {
 
     private func waitLabel(_ identifier: String, contains text: String,
                            _ timeout: TimeInterval = 30) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
         _ = element(identifier).waitForExistence(timeout: min(timeout, 10))
-        let matched = waitUntil(timeout) { self.text(identifier).contains(text) }
+        let matched: Bool
+        if identifier == "reader.status" && text == "就绪" {
+            // A completed open may hand a pending viewport directly to its next
+            // worker while retaining the previous status text. Only one stable,
+            // current AX snapshot with an accepted frame and enabled controls is ready.
+            matched = waitStableState(max(0, deadline.timeIntervalSinceNow)) {
+                guard let state = self.screenSnapshot(), state.text(identifier)?.contains(text) == true else { return nil }
+                return self.readerIdleIdentity(state)
+            }
+        } else {
+            matched = waitUntil(timeout) { self.text(identifier).contains(text) }
+        }
         if !matched { reportWaitFailure(identifier, expected: text) }
         return matched
     }
@@ -276,6 +288,18 @@ final class EXReaderHostUITests: XCTestCase {
             view.press(forDuration: 1.2)
 #endif
         }
+#if os(iOS)
+        // Native word selection can leave UIKit's edit menu above the host.
+        // Dismiss it with a separate outside tap before activating a host button;
+        // the selected quote must survive through the normal selection owner.
+        if waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 10) {
+            let selected = text("selection.quote")
+            waitElement("selection.quote").tap()
+            XCTAssertTrue(waitUntil(10) {
+                self.text("selection.quote") == selected && self.element("selection.annotate").isEnabled
+            })
+        }
+#endif
     }
 
     private func clearNotes() {
@@ -807,6 +831,58 @@ final class EXReaderHostUITests: XCTestCase {
             waitElement("selection.all").tap()
             XCTAssertTrue(waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 20))
             waitElement("selection.close").tap()
+        }
+    }
+
+    func test13BoundedChapterNotesAndRelaunch() throws {
+        var location = ""
+        try step("bounded01_import_source_and_open") {
+            launch(); openLibrary()
+            waitElement("library.import.bounded").tap()
+            XCTAssertTrue(waitLabelAny("library.status", ["已导入", "已存在"], 90))
+            bookRow("Bounded.epub").tap()
+            XCTAssertTrue(waitReaderIdle(90))
+            XCTAssertTrue(text("reader.progress").contains("有界 EPUB"))
+            waitElement("reader.first").tap()
+            XCTAssertTrue(waitLabel("reader.location", contains: "第 1 章", 40))
+            XCTAssertTrue(waitReaderIdle())
+            attach("35-bounded-first-chapter")
+        }
+        try step("bounded02_cross_chapter_same_local_offset") {
+            waitElement("reader.next").tap()
+            XCTAssertTrue(waitLabel("reader.location", contains: "第 2 章", 40))
+            XCTAssertTrue(waitReaderIdle())
+            location = text("reader.location")
+        }
+        try step("bounded03_note_current_chapter") {
+            clearNotes()
+            waitElement("reader.select").tap(); _ = waitElement("selection.title", 20)
+            waitElement("selection.all").tap()
+            XCTAssertTrue(waitLabelFilled("selection.quote", excluding: ["尚未选择文字"], 20))
+            waitElement("selection.annotate").tap()
+            XCTAssertTrue(waitLabel("reader.notes", contains: "标注 1", 40))
+        }
+        try step("bounded04_repeat_path_rejects_old_frame") {
+            waitElement("reader.next").tap()
+            XCTAssertTrue(waitLabel("reader.location", contains: "第 3 章", 40))
+            XCTAssertTrue(waitReaderIdle())
+            waitElement("reader.notes").tap(); _ = waitElement("notes.title", 20)
+            waitElement("notes.jump.0").tap()
+            XCTAssertTrue(waitLabel("reader.location", contains: "第 2 章", 40))
+            XCTAssertTrue(waitReaderIdle())
+            attach("36-bounded-note-cross-chapter-jump")
+        }
+        try step("bounded05_process_reopen_restores_route") {
+            app.terminate(); launch()
+            XCTAssertTrue(waitReaderIdle(90))
+            XCTAssertEqual(text("reader.location"), location)
+            XCTAssertTrue(text("reader.notes").contains("标注 1"))
+            attach("37-bounded-reopen-route")
+        }
+        try step("bounded06_backwards_cross_chapter") {
+            waitElement("reader.previous").tap()
+            XCTAssertTrue(waitLabel("reader.location", contains: "第 1 章", 40))
+            XCTAssertTrue(waitReaderIdle())
         }
     }
 
