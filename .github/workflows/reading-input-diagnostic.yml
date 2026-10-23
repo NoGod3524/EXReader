@@ -1,0 +1,27 @@
+name: Frozen reading raw inputs diagnostic only
+on:
+  push:
+    branches: ['codex/reading-corpus-inputs']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  raw-inputs:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install independent PDF source inspector
+        run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils
+      - name: Verify raw archive recovery, current licenses and independent publisher response
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reading_corpus/diagnose_frozen.py
+      - name: Preserve diagnostic and raw inputs without an acceptance grant
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reading-input-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/raw-input-diagnostic/
+          if-no-files-found: error
+          retention-days: 30
