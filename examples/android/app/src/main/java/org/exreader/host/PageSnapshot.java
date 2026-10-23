@@ -16,6 +16,7 @@ final class PageSnapshot {
     BoundedEpub boundedOwner;
     String[] boundedLocation;
     float layoutFont;
+    float layoutZoom=1f;
     final long bookId;
     final Bitmap bitmap;
     final boolean fixed;
