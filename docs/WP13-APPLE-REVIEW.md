@@ -76,3 +76,16 @@ gate 的 83 项检查全部通过，并由最终汇总验证脚本/结果散列�
 ## 保持的范围
 
 单原件上限 32 MiB；重排书仍使用完整文档快照，未接有界章入口。公开接口不支持控制回调的快照解析和标注写入不能在其内部中断，取消在调用前后或提交边界处理。真机安装暂缓；系统文件选择器的系统进程操作和 VoiceOver 人工走查未验收。本包不授予 WP16 长测 CPU 时长，也不改变 ABI1/schema6。
+
+## 2026-10-23 导入按钮单次点击候选
+
+run `39899825998` 的 iPhone `test01` 首次导入失败，原 trace 在短按后没有
+`fixture-request`；同按钮在后续 `test02` 正常进入导入调用。
+基于 `6941bdbebd4ee821ad4fbbd5bd7187b4bfbee778` 的候选将 `tapLibraryImport`
+的一次 `press(forDuration: 0.1)` 改为一次标准 `XCUIElement.tap()`，并把动作观测标为
+`single-tap`，移除不再适用的指定按压时长字段。
+唯一、enabled、hittable、前台及稳定快照就绪检查和原 deadline 全部保留，不新增重试。
+这与普通 SwiftUI `Button` 的单击动作一致；候选尚未执行云端验收。
+
+依据：[Apple tap()](https://developer.apple.com/documentation/xcuiautomation/xcuielement/tap())、
+[press(forDuration:)](https://developer.apple.com/documentation/xcuiautomation/xcuielement/press(forduration:))。
