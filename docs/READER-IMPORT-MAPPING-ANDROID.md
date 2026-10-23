@@ -45,8 +45,58 @@
 - 另用新源码 dispatch 原 `.github/workflows/wp13-android.yml`，复验原 45+10+11
   用例与原证据拒绝门禁；旧通过项不转授。
 
+## 冻结交付与同源结果
+
+功能源码冻结为 `19128dc5f5e4a3164416ffa17e63937a3894989b`；后续文档提交
+不转授其他源码验收。以下两组均为该源码、attempt 1，作业及严格汇总全部成功。
+
+| 组 | 云端 run / job | 实际结果 |
+| --- | --- | --- |
+| 产品映射专项 | [40014701174](https://github.com/NoGod3524/EXReader/actions/runs/40014701174) / `120623650348` | 原 catalog 8/8、映射 14/14、真实杀进程恢复 2/2；零失败零跳过；`accepted=true, problems=[]` |
+| 原完整 Android 宿主 | [40014701234](https://github.com/NoGod3524/EXReader/actions/runs/40014701234) / `120623655742` | 原 45/45、review 10/10、bounded 11/11；零失败零跳过；49 rendered pages、49 native next、0 recovery，顺序翻页 44,619 ms；原 48 项与 bounded 20 项证据门禁全过，最终 `accepted=true, problems=[]` |
+
+工件身份已通过 GitHub API metadata 与同次上传日志核对，均非空、未过期，
+`workflow_run.head_sha` 等于功能源码；未在本地下载或解析 ZIP。
+
+| 工件 | ID | 字节 | SHA-256 |
+| --- | --- | ---: | --- |
+| `reader-import-android-40014701174-1` | `12527429754` | 17,246,360 | `66c93a6dbb5c3f7a28e2147af5b3a25fec6bd0c4225a480ee5ef1028938549a3` |
+| `EXReader-WP13-Android` | `12528507540` | 157,930,976 | `c35fa1b72caf57d99e7e1d15111a203a2f1e64108ea2432b8c42289e0a88d43d` |
+
+专项 APK 为 22,276,785 字节，SHA-256
+`a5bfae037cd4b4c5f6800cb745e249d1808884b48d903569ebc76f487fd8da58`；
+仪器化 APK 为 35,630 字节，SHA-256
+`513e2b12f7e087dc6db18a048921239c3038981aa0eb0e322c736a7d12ae5d5f`。
+
+### 旧候选与失败保留
+
+| 源码 | 专项 run | 原完整宿主 run | 结论 |
+| --- | --- | --- | --- |
+| `c1ccbdda…` | `40011731293` | `40011746155` | 尚在 queued、零 steps 时请求取消；无测试或工件可转授 |
+| `90c3ae569c84412257e4bef79fcb1e663e7208df` | `40012042781` | `40012043074` | 同次旧候选成功；不转授到新源码 |
+| `f248fef00f477983c145bd0aa2e43e06ede16742` | `40012182562` | `40012182032` | 同次旧候选成功；不转授到新源码 |
+| `72bbc5bd6c3072c904637724387cc515b03e7237` | `40012904851` success | `40012904324` failure | 原 45/45、review 9/10、bounded 10/11，严格汇总拒绝；失败身份为 `destroyed_activity_releases_worker` 与 `bounded_budget_limit_preserves_frame` |
+
+失败原件 `12528106635`（156,876,456 字节，SHA-256
+`bed03132d339d0b6d7330cbe8c9e57b9cdd900e74c1c8ad4d13ad7f2e9c5f5b6`）
+继续保留。上述各轮使用新 run ID，未用重跑覆盖旧尝试，未删除失败工件。
+
+### 恢复响应仍有独立缺口
+
+云端只读诊断 `40015559943`、`40015789990` 与阶段 profile
+`40016588193` 确认：旧失败停在大 EPUB 打开，首次 pager 建造在慢 runner
+约 8.4–8.6 秒，真实 selector query 达到原 5 秒预算后，宿主关闭并重新完整
+建造 pager，未赶上原 20 秒 UI 用例界限。`19128dc5…` 的同次通过证明本轮
+功能与回归成功，不证明该慢路径成本已修复。
+
+公开健康探测 run `40017556489` 进一步确认，query 取消后的 chapter reader
+会返回 `EXR_CANCELLED`，不能安全删除 close/reopen 或继续复用失败 pager。
+这些诊断均 `diagnostic_only=true, accepted=false`，不授产品验收。正常恢复的
+CFI／point 缓存优化另开分支；缓存缺失、失效或篡改必须回到真实 TextQuote
+解析，原 5 秒 query 与 20 秒 UI 断言保持不变。
+
 本地仅编辑源码／文档与 Git；所有构建、语法检查、SQL、测试和工件解析均在
-GitHub Actions。当前文档记录实现及验收出口，最终 run/source/artifact 尚待云端完成。
+GitHub Actions。八条 SDK 保护树仍与冻结 K 逐项相同。
 
 本包不实现产品书架分页、网络同步、远端冲突选择或六平台 UI。真实设备、签名和
 TalkBack 保持单独验收。
