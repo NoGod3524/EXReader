@@ -11,7 +11,9 @@ typedef enum {READER_SYNC_OK=0,READER_SYNC_ARGUMENT,READER_SYNC_IO,READER_SYNC_D
 typedef struct {reader_sync_status code;int dav_code,revision_code,http_status;char message[160];} reader_sync_error;
 /* Called on the host worker for pending book references. Supply a private
    original path matching the already-verified book history, or return nonzero
-   to keep the entry pending. No credentials or SDK handles enter the module. */
+   when local bytes are unavailable. The module then verifies the existing
+   remote original, or keeps the entry pending if absent. No credentials or
+   SDK handles enter the module. */
 typedef int (*reader_sync_original_fn)(void *,const char *book_key,char *utf8_path,size_t capacity);
 typedef struct {
   exr_webdav_client *dav;reader_revisions *revisions;const char *private_directory;
