@@ -1,0 +1,30 @@
+name: Inspect retained rejected reading environment
+on:
+  push:
+    branches: [codex/reading-cpu-rejection-audit]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve original environment registry and budgets
+        run: |
+          git diff --exit-code 4aa25cf7b1aef19b31a1a86830d59e8880c3b57a HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings tools/measure_reading_real.py tools/reading_real_environments.py tests/reading_real
+      - name: Inspect original bytes only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/audit_reading_rejected_environment.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rejected-environment-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/rejected-environment/
+          if-no-files-found: error
+          retention-days: 30
