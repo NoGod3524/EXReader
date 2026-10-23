@@ -61,13 +61,40 @@ Linux 用目录句柄和 `linkat`、Windows 用不覆盖的 `MoveFileExW` 原子
 Windows 的多个系统阶段可能依次消耗该等待额度；不声称立即中断或硬实时截止。
 401 返回需要凭据，其他 HTTP 错误、TLS／网络错误及限额失败均可由宿主重试；client 不会因此失效。
 
-## 云端验收状态
+## 云端验收
+
+最终功能源码 **`46e2f30c54beb7996380fc48ef0103c10a33c4b6`**，
+[run40031774271](https://github.com/NoGod3524/EXReader/actions/runs/40031774271) attempt1，两个作业全部成功：
+
+| 平台 | 作业 | 固定检查 | 最终结论 | 工件 |
+| --- | --- | ---: | --- | --- |
+| Windows 2022 x64 | 120681499373 | 76/76 | `accepted=true` | 12535592124，393741字节 |
+| Ubuntu 22.04 x64 | 120681499593 | 77/77 | `accepted=true` | 12535487356，163880字节 |
+
+Linux 多一项真实 symlink 目标保持检查。两份工件均同 run／同受测源码、非空、未过期，
+GitHub API digest 与各自上传日志完全一致；完整身份见
+[reader-webdav-source.json](validation/reader-webdav-source.json)。
+包含安装后的模块、独立消费者、安装文件逐项 SHA-256、原生依赖记录、真实 TLS 请求观测、
+逐项结果、构建日志和 CMake 配置；临时 TLS 私钥不上传。
+
+验证覆盖可信 TLS、未信任证书／hostname 拒绝、Depth:1、prefix/default namespace、
+目录307跳转后的相对href、chunked流式字节、发布前／传输中取消、限额、超时和截断、
+同 client 错误后重试、HTTP错误、凭据隔离、路径拒绝、已有目标保持与临时文件清理。
+目录和原书全部来自云端真实 TLS 夹具服务；没有以 socket HTTP reference 代替 HTTPS。
+
+本次没有连接真实用户云盘提供商；Nextcloud等具体服务仍需互操作验收。
+没有测产品 UI／内存峰值／性能预算，也没有运行 SDK 或六目标联合验收。
+
+### 保留的失败
 
 首个候选 `809246e500cff9714f15a4f489f7594dda480604` 的 run `40030890464`
 在编译阶段拒绝：Linux 的严格诊断发现同行条件语句缩进，Windows 缺少 COM 头的显式前置包含。
 修复保留严格编译标志，提交 `341c3f17`。第二轮 run `40031024147` 的 Linux 67 项通过；
 Windows 已编译并安装，但 runner 的混合 PowerShell module path 导致证书 provider 不可用，尚未进入 HTTPS 用例。
-后继只改测试服务的证书安装方式为系统 `certutil`，不放宽 TLS 校验；两平台最终同源验收尚待完成。
+后继只改测试服务的证书安装方式为系统 `certutil`，不放宽 TLS 校验。
+原失败 run、工件和对应源码保留，未用最终通过结果替换旧失败。
+cb6c8e85/run40031294681、65977858/run40031521200、61b93d64/run40031568983均两平台通过，
+最终验收只引用46e2f30c/run40031774271，不拼接其旧轮用例。
 
 `.github/workflows/reader-webdav.yml`在 Windows 和 Linux 独立安装模块，再仅从安装目录编译消费者。
 云端测试服务生成临时 CA 并加入 runner 信任库，真实完成原生 TLS 握手，另外验证不可信证书和 hostname 拒绝。
