@@ -21,6 +21,11 @@ SDK固定为`9854061be331fe603a1822d9b2b36ee357154927`，SDK3.40.0／ABI1／sche
 当前阶段交付导入模块和产品存储基础：c2c75f99的云端run39980923147四作业已通过，
 详见[模块记录](validation/reader-modules-c2c75f9.json)。尚未交付新的产品UI或跨设备同步客户端。
 
+Apple产品库接入在独立分支推进：系统SQLite执行原始完整迁移，实际UI owner队列负责
+独立`reader-catalog.db`的打开和关闭；原生包、UI及Model/Bounded消费者均使用同一原SQL资源。
+新增`reader-catalog-apple.yml`运行八项真实macOS SQLite检查并交叉编译移动端适配器，
+完整旧Apple宿主验收另跑。当前尚未授予这项接入的UI或移动端运行验收。
+
 ## 并行工作包
 
 | 包 | 交付 | 出口 |

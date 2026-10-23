@@ -202,7 +202,8 @@ struct ModelReview {
             try Data("A different book with its own unique source text and no annotations.".utf8).write(to: otherFile)
             let (otherID, _) = try library.importUnique(file: otherFile, title: "Other review book")
             let model = HostReaderModel()
-            try model.installReviewSession(session, snapshot: original)
+            try model.installReviewSession(session, snapshot: original,
+                                          catalogMigration: resources.appendingPathComponent("reader-catalog-v1.sql"))
             guard !model.notes.isEmpty, model.notes.allSatisfy({ $0.bookID == id }) else { return false }
             let oldRequest = CGSize(width: 570, height: 750)
             model.updateViewport(oldRequest)
@@ -245,7 +246,8 @@ struct ModelReview {
         check("same_book_notes_query_failure_preserves_list_and_recovers") {
             let original = try session.renderSnapshot()
             let model = HostReaderModel()
-            try model.installReviewSession(session, snapshot: original)
+            try model.installReviewSession(session, snapshot: original,
+                                          catalogMigration: resources.appendingPathComponent("reader-catalog-v1.sql"))
             let noteIDs = model.notes.map(\.id)
             guard !noteIDs.isEmpty else { return false }
             var hidden = false, realSDKRejected = false
@@ -277,7 +279,8 @@ struct ModelReview {
         check("pending_viewport_handoff_has_no_idle_frame") {
             let original = try session.renderSnapshot()
             let model = HostReaderModel()
-            try model.installReviewSession(session, snapshot: original)
+            try model.installReviewSession(session, snapshot: original,
+                                          catalogMigration: resources.appendingPathComponent("reader-catalog-v1.sql"))
             let initialFrame = model.frameCount
             let size = CGSize(width: 530, height: 710)
             var intermediateIdle = false, actualRefreshes = 0
@@ -304,7 +307,8 @@ struct ModelReview {
         check("cancel_pending_viewport_keeps_frame_and_recovers") {
             let original = try session.renderSnapshot()
             let model = HostReaderModel()
-            try model.installReviewSession(session, snapshot: original)
+            try model.installReviewSession(session, snapshot: original,
+                                          catalogMigration: resources.appendingPathComponent("reader-catalog-v1.sql"))
             let initialFrame = model.frameCount, viewport = session.currentViewport
             var actualPoll = false
             defer { HostSDKReview.poll = nil }
@@ -337,7 +341,7 @@ struct ModelReview {
         let program = URL(fileURLWithPath: CommandLine.arguments[0]).standardizedFileURL
         let sdk = URL(fileURLWithPath: CommandLine.arguments[3])
         var fixtures: [String: String] = [:]
-        for name in ["Sample.epub", "Sample.pdf", "Unicode.epub", "Reader.otf"] {
+        for name in ["Sample.epub", "Sample.pdf", "Unicode.epub", "Reader.otf", "reader-catalog-v1.sql"] {
             fixtures[name] = try sha(resources.appendingPathComponent(name))
         }
         var sdkHashes: [String: String] = [:]

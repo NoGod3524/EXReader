@@ -57,9 +57,9 @@ jobs:
         run: |
           mkdir -p build/apple-preflight
           xcrun swiftc -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
-            -I stage/macos/include -L stage/macos/lib -lexreader \
+            -I stage/macos/include -L stage/macos/lib -lexreader -lsqlite3 \
             -Xlinker -rpath -Xlinker "$PWD/stage/macos/lib" \
-            examples/apple/HostSDK.swift examples/apple/HostModel.swift examples/apple/SelectableText.swift \
+            examples/apple/HostSDK.swift examples/apple/HostModel.swift examples/apple/HostCatalog.swift examples/apple/SelectableText.swift \
             tests/apple_host/bounded_review/BoundedReview.swift -o build/apple-preflight/bounded-review
       - uses: actions/upload-artifact@v4
         with:

@@ -54,7 +54,7 @@ def app_settings(target, platform, deployment, info_plist)
     settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
     settings['CLANG_ENABLE_MODULES'] = 'YES'
     settings['EXR_SDK_DIR'] = '$(SRCROOT)/sdk'
-    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lexreader']
+    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lexreader', '-lsqlite3']
     settings['LIBRARY_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/lib']
     settings['HEADER_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include']
     settings['SWIFT_INCLUDE_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include']
