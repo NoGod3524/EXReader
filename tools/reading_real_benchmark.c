@@ -88,6 +88,31 @@ static int reflow_page(exr_pager *pager,size_t part,size_t page,
   if(ok) ok=bitmap_sample(&bitmap,item,NULL);
   exr_bitmap_free(&bitmap);exr_layout_free(owned);return ok;
 }
+static void diagnose_cache_failure(exr_publication *publication,exr_font *font,route target) {
+  exr_pager *probe=NULL;exr_layout *layout=NULL;exr_error error={0};
+  size_t page,glyphs=0,lines=0,boxes=0,i,images=0;const exr_box *items;
+  if(!create_pager(publication,target.part,font,0,&probe,&error)) goto done;
+  for(page=0;page<=target.page;page++) {
+    exr_layout_free(layout);layout=NULL;
+    if(exr_pager_next(probe,&layout,&error)!=EXR_OK || !layout) goto done;
+  }
+  (void)exr_layout_glyphs(layout,&glyphs);(void)exr_layout_lines(layout,&lines);
+  items=exr_layout_boxes(layout,&boxes);
+  fprintf(stderr,"{\"cache_failure_probe\":{\"part\":%zu,\"page\":%zu,\"layout_bytes\":%zu,"
+          "\"glyphs\":%zu,\"lines\":%zu,\"boxes\":%zu,\"image_boxes\":[",target.part,target.page,
+          exr_layout_memory_size(layout),glyphs,lines,boxes);
+  for(i=0;i<boxes;i++) if(items[i].kind==EXR_BOX_IMAGE) {
+    const exr_bitmap *image=exr_layout_image(layout,items[i].resource);
+    fprintf(stderr,"%s{\"resource\":%zu,\"box_width\":%.6f,\"box_height\":%.6f,"
+            "\"decoded_width\":%u,\"decoded_height\":%u,\"decoded_bytes\":%" PRIu64 "}",
+            images++?",":"",items[i].resource,items[i].width,items[i].height,
+            image?image->width:0,image?image->height:0,image?(uint64_t)image->stride*image->height:0);
+  }
+  fprintf(stderr,"]}}\n");
+done:
+  if(error.code!=EXR_OK) fprintf(stderr,"Cache failure secondary probe status=%d: %s\n",(int)error.code,error.message);
+  exr_layout_free(layout);exr_pager_free(probe);
+}
 int main(int argc,char **argv) {
   exr_font *font=NULL;exr_fixed_document *fixed=NULL;exr_publication *publication=NULL;
   exr_pager *pager=NULL;exr_error error={0};exr_fixed_open_options options={0};
@@ -156,7 +181,9 @@ int main(int argc,char **argv) {
         at=now_ms();if(!create_pager(publication,target.part,font,1,&pager,&error)) goto finish;
         transition=now_ms()-at;current_part=target.part;
       }
-      if(reflow_page(pager,target.part,target.page,"random",1,&samples[count],&error)!=1) goto finish;
+      if(reflow_page(pager,target.part,target.page,"random",1,&samples[count],&error)!=1) {
+        diagnose_cache_failure(publication,font,target);goto finish;
+      }
       samples[count].layout_ms+=transition;samples[count].total_ms+=transition;
     }
     count++;
