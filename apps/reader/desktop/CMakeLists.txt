@@ -42,6 +42,10 @@ add_executable(reader-native-catalog-check ../../../tests/reader_catalog/native_
 target_link_libraries(reader-native-catalog-check PRIVATE reader_catalog reader_catalog_sqlite Threads::Threads)
 add_test(NAME desktop-native-catalog COMMAND reader-native-catalog-check
   "${CMAKE_CURRENT_BINARY_DIR}/native-check" "${CMAKE_CURRENT_SOURCE_DIR}/../store/001_catalog.sql")
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/shelf-check")
+add_executable(reader-native-shelf-check ../../../tests/reader_catalog/native_shelf_check.c)
+target_link_libraries(reader-native-shelf-check PRIVATE reader_catalog reader_catalog_sqlite)
+add_test(NAME desktop-bidirectional-shelf COMMAND reader-native-shelf-check "${CMAKE_CURRENT_BINARY_DIR}/shelf-check")
 option(EXR_READER_BUILD_GTK "Build the real GTK product host over the installed SDK" OFF)
 if(WIN32)
   add_executable(EXReaderProduct WIN32 ../../../examples/reader.c)

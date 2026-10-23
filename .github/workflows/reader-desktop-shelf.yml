@@ -2,6 +2,10 @@ name: Desktop bounded catalog queries
 on:
   push:
     branches: [codex/reader-desktop-shelf]
+    paths:
+      - apps/reader/store/native/**
+      - tests/reader_catalog/**
+      - .github/workflows/reader-desktop-shelf.yml
   workflow_dispatch:
 permissions:
   contents: read
