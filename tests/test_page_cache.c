@@ -250,6 +250,97 @@ static void images(void) {
   exr_document_free(doc);
 }
 
+/* Eight 16 MiB images must fit a sequential reader which releases old pages,
+   while retained pages and the 64 MiB per-operation limit remain protected. */
+static exr_status large_decode(void *context, const exr_resource *resource,
+                               const void *encoded, size_t size, exr_bitmap *out, exr_error *e) {
+  (void)context; (void)resource; (void)e;
+  CHECK(encoded && size == 1);
+  out->width = out->height = 2048; out->stride = 8192; out->channels = 4;
+  out->pixels = malloc((size_t)out->stride * out->height);
+  CHECK(out->pixels);
+  memset(out->pixels, *(const unsigned char *)encoded, (size_t)out->stride * out->height);
+  return EXR_OK;
+}
+static void large_release(void *context, exr_bitmap *bitmap) {
+  (void)context; exr_bitmap_free(bitmap);
+}
+static exr_document *image_book(int split, size_t count) {
+  exr_node_input nodes[20] = {{EXR_NODE_DOCUMENT, SIZE_MAX, NULL, NULL, NULL, 0},
+                             {EXR_NODE_CHAPTER, 0, NULL, NULL, NULL, 0}};
+  exr_resource_input resources[8];
+  exr_attribute attributes[9][2];
+  exr_attribute page = {"style", "page-break-before:always"};
+  exr_chapter_input chapter = {"images", "images.unit", 1, 1};
+  exr_document_input input = {"Bounded image cache", nodes, 2 + count * 2,
+                              &chapter, 1, resources, 8};
+  exr_document *doc = NULL;
+  char paths[8][32]; unsigned char encoded[8]; size_t i;
+  CHECK(count <= 9);
+  for (i = 0; i < 8; i++) {
+    snprintf(paths[i], sizeof(paths[i]), "image%zu.custom", i);
+    encoded[i] = (unsigned char)(31 + i);
+    resources[i] = (exr_resource_input){{paths[i], paths[i], "image/custom", ""}, &encoded[i], 1};
+  }
+  for (i = 0; i < count; i++) {
+    size_t parent = 2 + i * 2;
+    attributes[i][0] = (exr_attribute){"src", paths[i % 8]};
+    attributes[i][1] = (exr_attribute){"style", split ? "width:80px;height:80px" : "width:8px;height:8px"};
+    nodes[parent] = (exr_node_input){EXR_NODE_PARAGRAPH, 1, NULL, NULL, split ? &page : NULL, split ? 1 : 0};
+    nodes[parent + 1] = (exr_node_input){EXR_NODE_IMAGE, parent, NULL, NULL, attributes[i], 2};
+  }
+  OK(exr_document_create(&input, &doc, &error));
+  return doc;
+}
+static void check_large_image(const exr_layout *page, size_t resource) {
+  const exr_bitmap *image = exr_layout_image(page, resource);
+  exr_bitmap rendered = {0};
+  CHECK(image && image->width == 2048 && image->height == 2048);
+  CHECK(image->pixels[0] == 31 + resource &&
+        image->pixels[(size_t)image->stride * image->height - 1] == 31 + resource);
+  OK(exr_render_page_color(page, font, 0, &rendered, &error));
+  exr_bitmap_free(&rendered);
+}
+static int cancel_images(void *context) { (void)context; return 1; }
+static void bounded_images(void) {
+  exr_document *doc = image_book(1, 9);
+  exr_layout_config config = exr_layout_config_defaults();
+  exr_layout *first = NULL, *page = NULL, *whole = NULL;
+  exr_pager *pager = NULL; const exr_layout *cached = NULL; size_t i;
+  config.page = (exr_layout_options){128, 128, 8, 16, 1.25f, 0};
+  config.decode_image = large_decode; config.release_image = large_release;
+  OK(exr_pager_create(doc, font, &config, &pager, &error));
+  for (i = 0; i < 9; i++) {
+    OK(exr_pager_next(pager, &page, &error)); CHECK(page);
+    check_large_image(page, i % 8);
+    if (!i) first = page; else exr_layout_free(page);
+    page = NULL;
+    check_large_image(first, 0);
+  }
+  OK(exr_pager_next(pager, &page, &error)); CHECK(!page);
+  exr_pager_free(pager); pager = NULL;
+  OK(exr_pager_create(doc, font, &config, &pager, &error));
+  OK(exr_pager_set_cache(pager, 2, 48 * 1024 * 1024, &error));
+  for (i = 9; i-- > 0;) {
+    OK(exr_pager_get(pager, i, &cached, &error)); CHECK(cached);
+    check_large_image(cached, i % 8);
+  }
+  exr_pager_free(pager); pager = NULL;
+  /* Whole-layout output still retains all images and must respect 64 MiB. */
+  CHECK(exr_layout_create_ex(doc, font, &config, &whole, &error) == EXR_LIMIT && !whole);
+  OK(exr_pager_create(doc, font, &config, &pager, &error));
+  OK(exr_pager_next(pager, &page, &error)); CHECK(page);
+  { exr_control control = {0}; control.cancelled = cancel_images;
+    OK(exr_pager_set_control(pager, &control, &error)); }
+  CHECK(exr_pager_next(pager, &whole, &error) == EXR_CANCELLED && !whole);
+  exr_pager_free(pager); exr_document_free(doc);
+  check_large_image(first, 0); check_large_image(page, 0);
+  exr_layout_free(first); exr_layout_free(page);
+  doc = image_book(0, 5);
+  CHECK(exr_layout_create_ex(doc, font, &config, &whole, &error) == EXR_LIMIT && !whole);
+  exr_document_free(doc);
+}
+
 int main(int argc, char **argv) {
   exr_document *doc;
   exr_pager *pager = NULL;
@@ -276,6 +367,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < 5; i++) exr_layout_free(expected[i]);
   exr_document_free(doc);
   images();
+  bounded_images();
   exr_font_free(font);
   printf("%u page cache checks passed\n", checks);
   return 0;
