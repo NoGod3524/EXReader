@@ -6,6 +6,11 @@ EXReader 是面向桌面和移动阅读应用的 **C11 原生阅读引擎与可�
 
 **不依赖 WebView 或浏览器运行时。** HTML/EPUB 由 C 核解析、排版和绘制，PDF 使用自有原生渲染核心；参考宿主通过原生控件与绘图接口接入 SDK。
 
+后续产品目标为六平台互通的原生阅读器：本地／云盘／电脑导入，流畅书架、子书架／分类／系列，
+以用户自有WebDAV同步原书、阅读进度和标注，默认界面保持简洁。
+导入模块与产品存储基础已开始开发；现有SDK和参考宿主结果与新产品验收分别登记，见
+[首版产品计划](docs/READER-PRODUCT-PLAN.md)。
+
 原生参考宿主覆盖 Windows（`examples/reader.c`）、Linux GTK（`examples/linux/`）与
 macOS/iPhone/iPad（`examples/apple/`），提供各自声明范围内的书架、导入、阅读、选文标注和进度恢复。
 Android 宿主已在共同源码 S 完成 API34 x86_64 模拟器联合验收。各宿主的格式、文件大小、生命周期与设备限制分别记录，
