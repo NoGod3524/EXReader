@@ -62,7 +62,9 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
   if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "G"), &form, e) != EXR_OK) return e->code;
   if (exr_pdf_stream_data(file, form, &data, &size, e) != EXR_OK) return e->code;
   if (exr_pdf_resolve(file, exr_pdf_get(file, form, "BBox"), &id, e) != EXR_OK) return e->code;
-  if (!numbers(file, id, box, 4) || box[0] > box[2] || box[1] > box[3]) return fail(e, EXR_FORMAT, "Invalid PDF soft mask bounding box");
+  if (!numbers(file, id, box, 4)) return fail(e, EXR_FORMAT, "Invalid PDF soft mask bounding box");
+  /* Match ordinary Form XObjects: either corner order describes the same clip. */
+  for(i=0;i<2;i++) if(box[i]>box[i+2]) { double swap=box[i];box[i]=box[i+2];box[i+2]=swap; }
   local[0] = 1; local[1] = 0; local[2] = 0; local[3] = 1; local[4] = 0; local[5] = 0;
   if (exr_pdf_resolve(file, exr_pdf_get(file, form, "Matrix"), &id, e) != EXR_OK) return e->code;
   if (id != EXR_PDF_NONE) { v = exr_pdf_value_at(file, id); if (v->kind != EXR_PDF_NULL && !numbers(file, id, local, 6)) return fail(e, EXR_FORMAT, "Invalid PDF soft mask matrix"); }
