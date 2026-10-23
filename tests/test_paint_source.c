@@ -109,8 +109,9 @@ static void clipped_budget(int verify) {
     }
     c->work=0;start=clock();status=exr_canvas_paint(c,&source,NULL,1,&error);
     cpu_ms=(double)(clock()-start)*1000/CLOCKS_PER_SEC;work=c->work;
-    if(status==EXR_OK) {
-      const exr_bitmap *b=exr_canvas_bitmap(c);
+    if(c->bitmap.pixels) {
+      /* On LIMIT this is diagnostic working memory, never published output. */
+      const exr_bitmap *b=&c->bitmap;
       for(size_t i=0;i<(size_t)b->stride*b->height;i++) { hash^=b->pixels[i];hash*=1099511628211ULL; }
     }
     printf("{\"scenario\":\"%s\",\"status\":%d,\"calls\":%u,\"charged_work\":%zu,\"cpu_ms\":%.6f,\"pixel_hash\":\"%016llx\"}\n",

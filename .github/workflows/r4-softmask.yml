@@ -14,6 +14,35 @@ on:
 permissions:
   contents: read
 jobs:
+  compare:
+    name: same-run clipped procedural work comparison
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 94a318ddfa09782ccf3a6bd344fc8bf6d47352a4
+          path: engine
+      - name: Build both installed public SDK consumers
+        run: |
+          for role in baseline candidate; do
+            source=engine
+            if [ "$role" = candidate ]; then source=.; fi
+            cmake --preset reading-core -S "$source" -DCMAKE_INSTALL_PREFIX="$PWD/stage/$role"
+            cmake --build "$source/build/reading-core" --parallel 4
+            cmake --install "$source/build/reading-core"
+            cmake -S tests/r4_paint -B "build/$role-probe" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/stage/$role" -DEXR_ENGINE="$PWD/$source"
+            cmake --build "build/$role-probe" --parallel 4
+          done
+      - name: Compare alternating fresh processes under unchanged work budget
+        run: python3 tests/r4_paint/compare.py build/baseline-probe/r4-paint-probe build/candidate-probe/r4-paint-probe build/paint-comparison
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r4-paint-work-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/paint-comparison/
+          if-no-files-found: error
   reference:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
