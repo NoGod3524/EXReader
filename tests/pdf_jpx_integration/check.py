@@ -19,6 +19,33 @@ from PIL import Image, features
 RGB = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
 GRAY = [0, 85, 170, 255]
 OK, FORMAT, UNSUPPORTED = 0, 5, 11
+REFERENCE_OBSERVATION = {
+    'source_sha': '1c0f2754a9860e3ed6c64f2b6687d33c31015b17',
+    'run_id': 39898423568, 'run_attempt': 1, 'job_id': 120234129296,
+    'artifact_id': 12477678119,
+    'artifact_digest': 'sha256:b9500d74f7b608ae3bfff899da3a7d487fac23d2ae5a997bb86862b3b7e3e1ec',
+    'inspection_run_id': 39899071321, 'inspection_job_id': 120236175172,
+    'specification_observation': {'run_id': 39896660928, 'job_id': 120228578772,
+                                 'sections': ['3.3.8 printed page 89', 'Table 4.39 printed page 341']},
+    'reference': 'Poppler 22.02.0; observed behavior only, no render parity credit',
+}
+REFERENCE_DIFFERENCES = {
+    'gray-decode-ignored': {
+        'reference_expected_rgb': [(255, 255, 255), (170, 170, 170), (85, 85, 85), (0, 0, 0)],
+        'reference_ppm_sha256': '6c7cff83c74757f85392ddc65a3c509eb270dbf641e1fc3c49cdfbaf1a5a3f59',
+        'reason': 'Reference applies reversed non-mask Decode; SDK must still ignore Decode per the cited specification.',
+    },
+    'indexed-jp2-reversed-decode-ignored': {
+        'reference_expected_rgb': [(255, 255, 255)] * 4,
+        'reference_ppm_sha256': '9aac5d0d530ac881b11a98e51b8298f5778d73f5781b9fd461dfc1873cc1d8d6',
+        'reason': 'Reference applies reversed Decode to Indexed samples; SDK must preserve the original indices per the cited specification.',
+    },
+    'gray16-jp2': {
+        'reference_expected_rgb': [(0, 0, 0), (85, 85, 85), (171, 171, 171), (255, 255, 255)],
+        'reference_ppm_sha256': '114c83d8891cf8bd65b15cf120668cb300d23c85839443a443e6a037503210ac',
+        'reason': 'Reference maps unsigned sample 43690 to 171; exact full-range normalization is 170 and remains the SDK requirement.',
+    },
+}
 
 
 def require(value, message):
@@ -142,8 +169,12 @@ def generate(root):
         raw = pdf(data, **kwargs)
         path.write_bytes(raw)
         (root / (name + '.jpx')).write_bytes(data)
+        reference = REFERENCE_DIFFERENCES.get(name)
         cases.append({'name': name, 'pdf': path.name, 'pdf_sha256': sha(raw), 'payload_sha256': sha(data),
-                      'expected_rgb': expected, 'on_statuses': [OK] if expected is not None else statuses,
+                      'known_source_expected_rgb': expected,
+                      'reference_expected_rgb': reference['reference_expected_rgb'] if reference else expected,
+                      'reference_behavior': dict(REFERENCE_OBSERVATION, **reference) if reference else None,
+                      'on_statuses': [OK] if expected is not None else statuses,
                       'off_statuses': [UNSUPPORTED] if off_statuses is None else off_statuses})
 
     gray_rgb = [(value, value, value) for value in GRAY]
@@ -271,13 +302,14 @@ def main():
             'sanitizer_policy': 'reject native sanitizer findings even when a negative case expects nonzero exit',
             'independent_reference': {'program': 'pdftoppm', 'dpi': 720, 'dimensions': [20, 20],
                                       'centers': [[5, 5], [15, 5], [5, 15], [15, 15]], 'interior_radius': 1,
-                                      'comparison': 'exact known source values throughout each 3x3 interior'},
+                                      'comparison': 'exact frozen source or separately registered observed reference values throughout each 3x3 interior'},
             'case_count': len(cases), 'cases': cases}
     write_json(args.output / 'plan.json', plan)
     frozen = sha((args.output / 'plan.json').read_bytes())
     report = {'schema': 1, 'source_sha': source, 'run_id': os.environ.get('GITHUB_RUN_ID'),
               'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'), 'expected_off': args.expect_off,
-              'plan_sha256': frozen, 'accepted': False, 'results': [], 'problems': []}
+              'plan_sha256': frozen, 'render_parity_granted': False,
+              'accepted': False, 'results': [], 'problems': []}
     for case in cases:
         result = {'name': case['name'], 'passed': False}
         folder = args.output / case['name']
@@ -302,7 +334,8 @@ def main():
                 require(native.returncode == 0 and observed['success'] is True and observed['stage'] == 'complete' and
                         observed['page_count'] == 1 and len(observed['samples']) == 50 and ppm.is_file(),
                         'public SDK did not complete every actual page render')
-                expected_rgb = [tuple(value) for value in case['expected_rgb']]
+                expected_rgb = [tuple(value) for value in case['known_source_expected_rgb']]
+                reference_expected_rgb = [tuple(value) for value in case['reference_expected_rgb']]
                 pixels = image_pixels(ppm)
                 result['native_pixels'] = pixels
                 require(pixels == expected_rgb, 'native pixels differ from independently known source values')
@@ -311,19 +344,23 @@ def main():
                 reference_path = folder / 'poppler.ppm'
                 require(reference.returncode == 0 and reference_path.is_file(), 'independent Poppler rendering failed')
                 result['reference_sha256'] = sha(reference_path.read_bytes())
+                if case['reference_behavior'] is not None:
+                    require(result['reference_sha256'] == case['reference_behavior']['reference_ppm_sha256'],
+                            'registered external reference behavior changed')
                 with Image.open(reference_path) as reference_image:
                     require(reference_image.size == (20, 20), 'independent reference dimensions changed')
                     reference_image = reference_image.convert('RGB')
                     centers = plan['independent_reference']['centers']
                     reference_pixels = [reference_image.getpixel(tuple(point)) for point in centers]
                     result['reference_pixels'] = reference_pixels
-                    for (x, y), expected_pixel in zip(centers, expected_rgb):
+                    for (x, y), expected_pixel in zip(centers, reference_expected_rgb):
                         require(all(reference_image.getpixel((x + dx, y + dy)) == expected_pixel
                                     for dy in (-1, 0, 1) for dx in (-1, 0, 1)),
-                                'Poppler interior pixels differ from known source values')
-                require(reference_pixels == expected_rgb, 'Poppler pixels differ from known source values')
+                                'Poppler interior pixels differ from the frozen reference contract')
+                require(reference_pixels == reference_expected_rgb, 'Poppler pixels differ from the frozen reference contract')
                 result.update(ppm_sha256=sha(ppm.read_bytes()), reference_sha256=sha(reference_path.read_bytes()),
-                              exact_source_pixels=True, exact_poppler_interiors=True)
+                              exact_source_pixels=True, exact_reference_contract=True,
+                              reference_matches_known_source=reference_expected_rgb == expected_rgb)
             else:
                 require(native.returncode != 0 and observed['success'] is False and not list(folder.glob('*.ppm')),
                         'rejected PDF produced success or a partial rendered page')
