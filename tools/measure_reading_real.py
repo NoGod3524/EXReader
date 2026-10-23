@@ -82,7 +82,7 @@ def identity(binary, font, manifest, contract, entries, corpus):
             "manifest_sha256": sha256(manifest), "contract_sha256": sha256(contract),
             "inputs": {entry["id"]: file_identity(corpus / entry["path"]) for entry in entries},
             "tools": {path: sha256(ROOT / path) for path in
-                ("tools/reading_real_benchmark.c", "tools/measure_reading_real.py", "tests/reading_real/CMakeLists.txt")}}
+                ("tools/reading_real_benchmark.c", "tools/measure_reading_real.py", "tools/host_font.py", "tests/reading_real/CMakeLists.txt")}}
 
 
 def native_metrics(record, entry, contract):
