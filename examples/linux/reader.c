@@ -30,7 +30,7 @@ static void stop_worker(void);
 static GtkWidget *shelf_scroll,*search;
 static gint shelf_generation;
 static gboolean shelf_loading,shelf_before,shelf_after,shelf_restoring,shelf_pending;
-static guint search_timer,viewport_timer;
+static guint search_timer,viewport_timer,restore_timer;
 static unsigned shelf_queries,shelf_evicted,shelf_max_cached;
 static unsigned shelf_layout,restore_layout;
 static char *shelf_query,*shelf_top_key,*shelf_selected_key,*restore_key;
@@ -39,6 +39,7 @@ static void shelf_request(int direction,gboolean anchor);
 static void shelf_remember(void);
 static GtkWidget *shelf_top_row(void);
 static gboolean shelf_save_viewport(gpointer unused);
+static void shelf_schedule_restore(void);
 #endif
 
 static void state(void) {
@@ -152,7 +153,7 @@ static void shelf_present(reader_result *result) {
       if(result->shelf_direction<0) shelf_after=TRUE;else shelf_before=TRUE;
     }
     book_count=count;shelf_max_cached=MAX(shelf_max_cached,(unsigned)count);g_list_free(children);
-    gtk_widget_show_all(shelf);shelf_loading=FALSE;
+    gtk_widget_show_all(shelf);gtk_widget_queue_resize(shelf);shelf_loading=FALSE;shelf_schedule_restore();
     return;
   }
 #endif
@@ -183,7 +184,10 @@ static void shelf_remember(void) {
 }
 static gboolean shelf_restore(gpointer unused) {
   (void)unused;
-  if(!shelf_restoring || shelf_layout<restore_layout || strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"shelf")) return G_SOURCE_CONTINUE;
+  if(!shelf_restoring || strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"shelf")) {
+    restore_timer=0;return G_SOURCE_REMOVE;
+  }
+  if(book_count && shelf_layout<restore_layout) return G_SOURCE_CONTINUE;
   GList *children=gtk_container_get_children(GTK_CONTAINER(shelf));GtkWidget *anchor=NULL;
   for(GList *p=children;p;p=p->next) {
     const char *key=g_object_get_data(G_OBJECT(p->data),"book-key");
@@ -198,7 +202,10 @@ static gboolean shelf_restore(gpointer unused) {
   g_list_free(children);shelf_restoring=FALSE;shelf_remember();
   if(viewport_timer) g_source_remove(viewport_timer);
   viewport_timer=g_timeout_add(300,shelf_save_viewport,NULL);
-  state();return G_SOURCE_CONTINUE;
+  state();restore_timer=0;return G_SOURCE_REMOVE;
+}
+static void shelf_schedule_restore(void) {
+  if(shelf_restoring && !restore_timer) restore_timer=g_timeout_add(30,shelf_restore,NULL);
 }
 static gboolean shelf_save_viewport(gpointer unused) {
   (void)unused;viewport_timer=0;shelf_remember();save_settings();state();return G_SOURCE_REMOVE;
@@ -410,6 +417,7 @@ static void action(GtkWidget *widget,gpointer name) {
   else if(!strcmp(a,"shelf")) {
     gtk_stack_set_visible_child_name(GTK_STACK(stack),"shelf");focus_list(shelf);
 #ifdef EXR_READER_PRODUCT_CATALOG
+    shelf_schedule_restore();
     if(shelf_pending) submit(READER_SHELF,0,NULL,font_size);else shelf_request(0,TRUE);
 #endif
     state();
@@ -433,7 +441,7 @@ static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
   if(choosing_file) return FALSE;
 #ifdef EXR_READER_PRODUCT_CATALOG
   if((event->state&GDK_CONTROL_MASK) && event->keyval==GDK_KEY_f) {
-    gtk_stack_set_visible_child_name(GTK_STACK(stack),"shelf");gtk_widget_grab_focus(search);return TRUE;
+    gtk_stack_set_visible_child_name(GTK_STACK(stack),"shelf");shelf_schedule_restore();gtk_widget_grab_focus(search);return TRUE;
   }
 #endif
   static const char *names[]={"import","shelf","previous","next","bigger","smaller","text","note","notes","delete","comment","save"};
@@ -534,7 +542,6 @@ int main(int argc,char **argv) {
   g_signal_connect(shelf,"row-selected",G_CALLBACK(shelf_selected),NULL);
   g_signal_connect(shelf,"size-allocate",G_CALLBACK(shelf_allocated),NULL);
   g_signal_connect(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(shelf_scroll)),"value-changed",G_CALLBACK(shelf_scrolled),NULL);
-  g_timeout_add(30,shelf_restore,NULL);
 #else
   gtk_stack_add_named(GTK_STACK(stack),scroll(shelf),"shelf");
 #endif
