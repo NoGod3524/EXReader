@@ -4,7 +4,9 @@
 SDK 3.40.0 / library 3.34.0 / ABI 1 / schema 7。
 Apple 接续发现的16KiB窗口同单元递归已修复；原`ce5d664`冻结撤回与所有失败记录保留。
 四宿主首轮共同源码`9fb084a1fb9307b459f21f60ed91f12fffd14a00`未通过：
-Windows和Linux成功，Android重启帧比较及iPad首次导入失败；SDK冻结保持，宿主继续修复。
+Windows和Linux成功，Android重启帧比较及iPad首次导入失败；SDK冻结保持。
+第二轮共同源码`b64c72aeca99b9b8e4bf9b5555cac78446dd050b`的Windows/Linux/Android通过，
+Apple的iPhone首次导入失败，本轮共同验收未通过。
 
 ## 当前冻结证据
 
@@ -159,6 +161,28 @@ Android的49页/49次native next/0 recovery不能替代失败的重启比较。
 iPad其余12项与已修的test08通过，但首例没有完整步骤/附件，不能授予Apple包通过。
 现有失败原件不能区分首次点击未触发与启动后继任务覆盖；接续增加单次点击前状态及有界操作观测。
 修复后固定新共同源码，四组全部重跑；本轮桌面通过项不拼入下一源码。
+
+### 四宿主共同源码第二轮（未通过）
+
+固定源码`b64c72aeca99b9b8e4bf9b5555cac78446dd050b`，K祖先与八保护树一致。
+Android候选`29b892c1158aa17f2150a88636133fa55cb8ea4f`的实际实现/ownership为
+`eba7bd58ef8431a4477eaa1db96a9bf5f01baa51`：共享绘制观测、原8秒验收截止、
+PDF翻页前异后同、两类重启新PID及强制帧PNG/metadata，原48与额外20拒绝检查。
+Apple候选`e14cb4a7e0a7c36213f7a82879b56dcebb3ea641`要求唯一、前台、稳定的原生Button单次点击，
+保留原截止与结果断言，并补仅UITest模式的16条有界操作trace；首次导入失败根因仍未确定。
+
+| 平台 | run | 状态 |
+| --- | --- | --- |
+| Windows | [39879077780](https://github.com/NoGod3524/EXReader/actions/runs/39879077780) | 成功；原26、158步/8截图、51拒绝、80项H8及worker11正例/11反向拒绝 |
+| Linux | [39879080162](https://github.com/NoGod3524/EXReader/actions/runs/39879080162) | 成功；原20、四组回归、H11专项37及backend82，严格接受 |
+| Android | [39879075101](https://github.com/NoGod3524/EXReader/actions/runs/39879075101) | 成功；45+10+11用例零失败零跳过，49页/49次next/0 recovery，48+20门禁及严格accepted通过 |
+| Apple | [39879072615](https://github.com/NoGod3524/EXReader/actions/runs/39879072615) | iPhone首次导入失败，collector拒绝；macOS及package通过，iPad/summary待结束 |
+
+iPhone的test01在90秒内未导入，13项中1项失败。点击前、点击后及结果等待失败的trace均只有startup1–6，
+token=0，无fixture/import请求；长度不足512字符，没有尾部截断。
+同次观测确认Button唯一、enabled/hittable、应用前台、frame稳定，XCTest记录了Synthesize event；
+本次handler未进入，不能归因于SDK导入、busy拒绝或晚startup覆盖。
+失败工件`12469504968`保留，不授予本轮共同验收。
 
 H5修补、H6程序门禁、H7文档和R3测量已纳入K，且按上表重新同源验证，
 见 [许可证复核](READING-LICENSE-REVIEW.md)；

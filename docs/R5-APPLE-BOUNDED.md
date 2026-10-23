@@ -91,3 +91,7 @@ SDK21/Model18/bounded15、三平台legacy21、macOS与iPhone的13UI/67步骤成�
 仅UITest夹具模式通过书架标题AX value公开最近16条startup/scene/import/取消/提交事件与token/busy，
 不改变SDK调用、提交及取消决策；驱动记录点击前后原生角色、ID计数、frame、前台、trace及失败状态。
 trace用于定位，不替代13UI/67步骤/50附件及严格汇总验收。后继待root统一共同源码复验，不另dispatch。
+
+共同源码第二轮的macOS完成日志确认，XCTest读取的AX value会截到512字符；
+模型保留最多16条事件，但该接口不保证能导出完整16条或尾部提交事件。
+日志已可见单次点击及真实fixture/import handler前缀，完整结果仍由书库、逐步证据与严格汇总判定。

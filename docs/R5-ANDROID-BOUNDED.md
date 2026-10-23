@@ -1,7 +1,8 @@
-# H10 Android bounded 候选
+# H10 Android bounded 接入
 
 当前 SDK 守卫及 Android 差异起点为集成人正式冻结的 `9c69bc4c7efb0cff68ced27562709fe597189041`。
-最终声明等待 Apple/Android 合入后的共同源码 S；同 S 的 Android 整轮用作本包最终验收。
+共同源码`b64c72aeca99b9b8e4bf9b5555cac78446dd050b`的Android整轮已通过，
+run[39879075101](https://github.com/NoGod3524/EXReader/actions/runs/39879075101)，详见末节；四宿主整体状态见[冻结记录](R5-SDK-FREEZE.md)。
 
 候选起点 `fd210224a4eba206762c08de435a5e9edfdf2a90`，SDK schema 7 API 已稳定。
 接续合入 SDK 包 `ce5d664c9f76d0613df6d79b27568a7039c4a81e`；集成人授予该源码为正式 K_reading 后，
@@ -113,3 +114,16 @@ review 10/10、bounded 11/11、49/49/0（40061 ms）同次通过；最终 `accep
 该接续尚未构建或运行，不授予通过；由集成人固定后继共同源码后统一云端复验，保留原 66 个用例与所有失败原件。
 实现及所有权固定提交为 `eba7bd58ef8431a4477eaa1db96a9bf5f01baa51`；SDK/REVIEW_BASE 保持 `9c69bc4c7efb0cff68ced27562709fe597189041`。
 本轮只读独立复核完成，随后提交仅固定两个 Android 工作流的 ownership 引用及本段交接；未自行 dispatch。
+
+## 共同源码第二轮验收通过
+
+受测源码`b64c72aeca99b9b8e4bf9b5555cac78446dd050b`，
+run[39879075101](https://github.com/NoGod3524/EXReader/actions/runs/39879075101)，attempt1，job`120171788387`。
+原45、review10、bounded11全部通过，零失败零跳过；49页/49次native next/0 recovery，顺序阶段44842ms。
+原48及额外20门禁全过，preflight与最终严格汇总均`accepted=true`、`problems=[]`、`candidate_only=false`。
+强制帧证明及四项新增拒绝同次通过；本轮授予现有API34 x86_64模拟器声明范围。
+
+唯一工件`EXReader-WP13-Android`：id`12470521732`，154388588B，
+`sha256:56a79fbfe115d80e061579c6a4b76a2011a06624915be78f6c2f3c5578795b59`。
+API与上传日志的id/字节/digest一致，同run/source，核对时未过期，expires_at=`2027-01-21T00:36:02Z`。
+保留上节首次共同源码失败；四宿主共同收口以[统一记录](R5-SDK-FREEZE.md)为准。

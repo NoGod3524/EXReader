@@ -1,8 +1,9 @@
 # WP13 Windows native host
 
-Status: H8 default bounded EPUB adoption passed its complete same-source Windows
-cloud acceptance on `codex/r5-windows-bounded`; tested source is
-`2a9dcff8131543f27cad358fe254b6d4253423c0`. The original WP13 package remains recorded below.
+Status: H8 default bounded EPUB adoption passed again on common host source
+`b64c72aeca99b9b8e4bf9b5555cac78446dd050b`, run
+[39879077780](https://github.com/NoGod3524/EXReader/actions/runs/39879077780), attempt 1.
+The independent `2a9dcff8131543f27cad358fe254b6d4253423c0` result and original WP13 package remain recorded below.
 This package closes the Windows host loop only; it is not a whole-WP13 or product
 acceptance and does not include migration, OPDS, TTS or other platform hosts.
 
@@ -16,7 +17,8 @@ acceptance and does not include migration, OPDS, TTS or other platform hosts.
   The `ce5d664` freeze was withdrawn after Apple exposed a same-unit window recursion;
   the corrected SDK passed all six freeze groups. H8 revalidated the corrected implementation
   on `8c51264b9017c255345b7ba2056c4f6bd1f1969a` in run `39871687848`;
-  the current-K ancestry guard and all four hosts still await their common-source run.
+  the current-K ancestry and eight-tree guard also passed on the common source above.
+  All-host status is recorded in [R5 SDK freeze](R5-SDK-FREEZE.md).
 - Source: `examples/reader.c` (Win32, one translation unit) with an independent
   consumer build in `examples/windows/`.
 
