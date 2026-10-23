@@ -163,9 +163,18 @@ struct step {
       std::ifstream input(file.name,std::ios::binary);std::string wire((std::istreambuf_iterator<char>(input)),{});reader_revision_info info{};
       revision_check(reader_revision_validate(s.revisions,wire.data(),wire.size(),leaves[n].substr(33,64).c_str(),&info,nullptr));
       if(std::string(info.revision_id)!=leaves[n].substr(0,32))reject(READER_SYNC_HASH,"Remote revision ID differs from immutable path");
-      // Retain causal history even if its book metadata is absent. It remains
-      // explicitly pending and is fetched/verified on the next complete sweep.
-      int created=0;revision_check(reader_revision_receive(s.revisions,wire.data(),wire.size(),info.sha256,nullptr,&created,nullptr));remote_original(info);
+      // Verify a book's claimed immutable length before adopting it as the
+      // authority for future references. Bad first metadata cannot poison the
+      // retained book identity and block a later correct revision.
+      if(info.source_bytes){uint64_t known=0;reader_revision_status status=reader_revision_book_identity(s.revisions,info.book_key,&known,nullptr);
+        if(status!=READER_REV_NOT_FOUND)revision_check(status);
+        if(status==READER_REV_OK&&known!=info.source_bytes)revision_check(READER_REV_FORMAT);
+        remote_original(info);
+      }
+      // Non-book history is retained even without metadata; it remains
+      // explicitly pending and is verified on the next complete sweep.
+      int created=0;revision_check(reader_revision_receive(s.revisions,wire.data(),wire.size(),info.sha256,nullptr,&created,nullptr));
+      if(!info.source_bytes)remote_original(info);
       ++report.pulled;std::snprintf(report.after,sizeof(report.after),"%s",leaves[n].c_str());
     }
     report.remaining_in_shard=leaves.size()-count;report.shard_complete=report.remaining_in_shard==0;

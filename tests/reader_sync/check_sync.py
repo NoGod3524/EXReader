@@ -401,6 +401,20 @@ def main():
         assert v['revision_code'] == 4 and counts(pending) == (2, 0)
         del entries[conflict_path]
         record('conflicting_retained_book_length_is_refused_without_clock_selection_or_history_replacement')
+        poisoned = state('bad-first-book-metadata')
+        poison_url = root('first-invalid')
+        first_bad = json.loads(raw(bp));first_bad['id'] = '%02x%030x' % (70, 1)
+        first_bad['payload']['source_bytes'] += 1
+        first_bad_path = remote(first_bad, 'first-invalid')
+        entries['/first-invalid/exreader-sync-v1/objects/' + sha2[:2] + '/' + sha2 + '.txt'] = source2
+        sync(poisoned, poison_url, shard=70, expected=5)
+        assert counts(poisoned) == (0, 0)
+        del entries[first_bad_path]
+        first_good = json.loads(raw(bp));first_good['id'] = '%02x%030x' % (70, 2)
+        remote(first_good, 'first-invalid')
+        sync(poisoned, poison_url, shard=70)
+        assert counts(poisoned) == (1, 0) and (poisoned['cache'] / (sha2 + '.txt')).read_bytes() == source2
+        record('incorrect_first_book_length_is_rejected_before_history_adoption_and_cannot_poison_later_valid_metadata')
         child = revision(2, shard=50, key='4' * 32, parents=['%02x%030x' % (51, 1)])
         parent = revision(1, shard=51, key='4' * 32)
         remote(child);remote(parent)
@@ -493,7 +507,7 @@ def main():
             assert secret not in device['db'].read_bytes()
         assert all(secret not in value and AUTH.encode() not in value for value in entries.values())
         record('credentials_are_absent_from_payloads_and_product_databases')
-        assert len(checks) == 32, len(checks)
+        assert len(checks) == 33, len(checks)
         (folder / 'requests.json').write_text(json.dumps(requests, indent=2), encoding='utf-8')
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform, 'count': len(checks),
