@@ -12,6 +12,6 @@ target_include_directories(jpx-regress PRIVATE ../../include ../../src "${openjp
 target_compile_definitions(jpx-regress PRIVATE EXR_STATIC OPJ_STATIC EXR_JPX_STANDALONE)
 target_link_libraries(jpx-regress PRIVATE openjp2)
 target_compile_options(jpx-regress PRIVATE -Wall -Wextra -Werror)
-set_target_properties(jpx-regress PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+set_target_properties(jpx-regress PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 enable_testing()
 add_test(NAME packed-jpx-regression COMMAND jpx-regress)
