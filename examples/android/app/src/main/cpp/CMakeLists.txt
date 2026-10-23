@@ -14,6 +14,6 @@ set(EXReader_DIR "${EXR_SDK}/lib/cmake/EXReader" CACHE PATH "Installed EXReader 
 find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED)
 
 add_library(exreader_host SHARED exreader_host_jni.c)
-target_link_libraries(exreader_host PRIVATE EXReader::exreader)
+target_link_libraries(exreader_host PRIVATE EXReader::exreader log)
 target_compile_options(exreader_host PRIVATE -Wall -Wextra)
 target_link_options(exreader_host PRIVATE -Wl,-z,max-page-size=16384)
