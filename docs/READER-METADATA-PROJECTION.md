@@ -2,7 +2,7 @@
 
 本阶段在现有产品EXRP/schema1上增加固定实体API，不修改SDK或迁移，不提供通用SQL callback。
 它接续[WebDAV原件与修订传输](READER-WEBDAV-SYNC.md)，把传输与宿主书架之间的原子边界具体化。
-云端验收尚在执行；UI接线、真实设备和跨平台产品联合验收仍独立进行。
+Windows/Linux云端验收已通过；UI接线、真实设备和跨平台产品联合验收仍独立进行。
 
 ## API
 
@@ -54,3 +54,27 @@ membership新增／修改要求书与分类均活跃；子书架父必须活跃�
 SDK库与产品目录是不同数据库。SDK原书导入后，再提交本产品事务；失败时保留SDK去重结果，
 用既有repair路径重试映射，不能删旧SDK书来模拟跨库回滚。
 本阶段不把SDK标注镜像、UI、同步安全凭据或两数据库写入包装为原子。
+
+## 云端验收与固定身份
+
+受测源码`73d80201e538c00fcf9df95af96ce91a7bd41fc5`，
+[run 40040479157](https://github.com/NoGod3524/EXReader/actions/runs/40040479157)，attempt 1，
+Windows 2022与Ubuntu 22.04均成功。Linux同次通过来源77／原协议59／同步33／本期32项；
+Windows对应76／59／33／32项；原产品catalog CTest各1/1，安装后的C/C++消费者也均成功。
+
+32项包括NFC派生排序与原wire保存、完整expected_heads、重复不重放、remote显式安全选择、
+metadata/outbox故障回滚、五种selected状态、progress/annotation原payload权威、子书架八层与环、
+三种membership、软删与墓碑、原件身份不变、两个真实native进程竞争，
+以及history/outbox已插入而metadata尚未写入与提交成功后的两次真实kill恢复。
+
+独立只读复核覆盖固定`efc93a93083e9a8e4f870d8846cf41ede3b7c299`的事务、no-op、
+跨实体约束与selected快照，未发现阻断；后续受测源码只改测试总数和文档，没有改实现。
+首轮`40040139115`两平台已逐项执行32项，但总数误写31使门禁拒绝；失败保留，
+修正后整轮重跑，没有删除断言或复用旧绿灯。
+
+两份工件同run/source、非空且未过期，digest已核对上传日志；完整身份见
+[reader-metadata-projection.json](validation/reader-metadata-projection.json)。
+SDK八条保护树与原产品schema1均保持不变；本地未编译、测试或运行语法检查，未下载工件。
+
+下一层shared typed command可调用这些公开C入口生成新wire并提交，宿主不应另外实现wire或SQL writer。
+Android/iOS仍须分别接通同一native产品provider／owner队列与UI，再授予移动端功能验收。
