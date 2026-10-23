@@ -334,9 +334,20 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
   space=c->cmyk_groups ? EXR_GROUP_CMYK : EXR_GROUP_RGB;components=c->cmyk_groups ? 4 : 3;
   cost=32+(state ? 20+state->depth*4 : 0)+(c->blend==EXR_BLEND_NORMAL ? 16 : c->blend<EXR_BLEND_HUE ? 40 : 80);
   for(unsigned y=0;y<c->bitmap.height;y++) {
+    unsigned first=0,last=c->bitmap.width;size_t active=c->bitmap.width;
     status=exr_control_cancel(&c->control,e);if(status!=EXR_OK) return finish(c,status,e);
-    if(!exr_vector_work(&c->work,(size_t)c->bitmap.width*cost)) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source work budget exceeded"),e);
-    for(unsigned x=0;x<c->bitmap.width;x++) {
+    if(c->clip) {
+      const unsigned char *row=c->clip->bitmap.pixels+(size_t)y*c->clip->bitmap.stride;
+      if(!exr_vector_work(&c->work,c->bitmap.width)) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source clip scan exceeds work budget"),e);
+      first=c->bitmap.width;last=0;active=0;
+      for(unsigned x=0;x<c->bitmap.width;x++) if(row[x]) {
+        if(!active) first=x;
+        last=x+1;active++;
+      }
+      if(!active) continue;
+    }
+    if(!exr_vector_work(&c->work,active*cost+(c->clip ? last-first : 0))) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source work budget exceeded"),e);
+    for(unsigned x=first;x<last;x++) {
       unsigned coverage=c->clip ? c->clip->bitmap.pixels[(size_t)y*c->clip->bitmap.stride+x] : 255;
       double colors[4]={0},sum_alpha=0,sum_shape=0,object_alpha,object_shape;
       if(!coverage) continue;

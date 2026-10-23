@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 static exr_error error;static unsigned checks;
 #define CHECK(x) do { checks++;if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message);exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -97,4 +98,36 @@ static void prefixes(void) {
   }
   sink.struct_size=sizeof(sink);OK(exr_canvas_get_sink_ex(c,&sink,&error));CHECK(sink.paint);exr_canvas_free(c);
 }
-int main(void) { coordinates();compositing();errors();prefixes();printf("%u procedural paint checks passed\n",checks);return 0; }
+static void clipped_budget(int verify) {
+  for(unsigned clipped=0;clipped<2;clipped++) {
+    const unsigned size=3072;sampler s={0,0,0,{0},1,1};
+    exr_paint_source source={sizeof(source),sample,&s};exr_canvas *c=canvas(size,4,(exr_control){0});
+    exr_path_segment path[10];exr_status status;clock_t start;double cpu_ms;size_t work;unsigned long long hash=1469598103934665603ULL;
+    if(clipped) {
+      rectangle(path,100,100,104,104);rectangle(path+5,101,101,103,103);
+      OK(exr_canvas_clip(c,path,10,NULL,EXR_FILL_EVENODD,&error));
+    }
+    c->work=0;start=clock();status=exr_canvas_paint(c,&source,NULL,1,&error);
+    cpu_ms=(double)(clock()-start)*1000/CLOCKS_PER_SEC;work=c->work;
+    if(status==EXR_OK) {
+      const exr_bitmap *b=exr_canvas_bitmap(c);
+      for(size_t i=0;i<(size_t)b->stride*b->height;i++) { hash^=b->pixels[i];hash*=1099511628211ULL; }
+    }
+    printf("{\"scenario\":\"%s\",\"status\":%d,\"calls\":%u,\"charged_work\":%zu,\"cpu_ms\":%.6f,\"pixel_hash\":\"%016llx\"}\n",
+      clipped ? "tiny-clip-with-hole" : "full-canvas",status,s.calls,work,cpu_ms,hash);
+    if(verify) {
+      if(clipped) {
+        const exr_bitmap *b=exr_canvas_bitmap(c);const unsigned char *pixel;
+        CHECK(status==EXR_OK && s.calls==12*4);CHECK(work==(size_t)size*size+16+12*48);
+        pixel=b->pixels+100*b->stride+100*4;CHECK(pixel[2]==255 && pixel[3]==255);
+        pixel=b->pixels+101*b->stride+101*4;CHECK(!pixel[0] && !pixel[1] && !pixel[2] && !pixel[3]);
+        CHECK(!b->pixels[3]);
+      } else {
+        exr_bitmap b={0};CHECK(status==EXR_LIMIT && s.calls>0);
+        CHECK(work<=256u*1024u*1024u);CHECK(exr_canvas_take(c,&b,&error)==EXR_LIMIT && !b.pixels);
+      }
+    }
+    exr_canvas_free(c);
+  }
+}
+int main(void) { coordinates();compositing();errors();prefixes();clipped_budget(1);printf("%u procedural paint checks passed\n",checks);return 0; }
