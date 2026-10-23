@@ -105,6 +105,24 @@ def jp2_metadata(payload):
     return {'components': struct.unpack_from('>H', payload, marker + 38)[0], 'cdef_boxes': definitions}
 
 
+def alpha_cdef(payload):
+    require(jp2_metadata(payload) == {'components': 4, 'cdef_boxes': []}, 'RGBA mismatch fixture must have four components and no CDEF')
+    definitions = struct.pack('>H', 4) + b''.join(struct.pack('>HHH', channel, 0, channel + 1) for channel in range(3))
+    definitions += struct.pack('>HHH', 3, 1, 0)  # Channel 3 is unassociated whole-image alpha.
+    cdef = struct.pack('>I4s', len(definitions) + 8, b'cdef') + definitions
+    output = bytearray()
+    for kind, body in jp2_boxes(payload):
+        if kind == b'jp2h':
+            body += cdef
+        output.extend(struct.pack('>I4s', len(body) + 8, kind) + body)
+    result = bytes(output)
+    require(jp2_metadata(result) == {'components': 4, 'cdef_boxes': [definitions.hex()]}, 'explicit RGBA CDEF was not installed')
+    with Image.open(io.BytesIO(result)) as image:
+        require(image.mode == 'RGBA' and list(image.getdata()) == [(*color, 128) for color in RGB],
+                'Pillow did not independently accept the explicit RGBA CDEF fixture')
+    return result
+
+
 def generate(root):
     require(features.check('jpg_2000'), 'Pillow requires its independent JPEG2000 codec')
     rgb = encoded('RGB', RGB)
@@ -113,6 +131,7 @@ def generate(root):
     indices = encoded('L', [0, 1, 2, 3])
     indices_raw = encoded('L', [0, 1, 2, 3], True)
     rgba = encoded('RGBA', [(*color, 128) for color in RGB])
+    rgba_with_cdef = alpha_cdef(rgba)
     gray16 = encoded('I;16', [0, 21845, 43690, 65535])
     palette = b'/ColorSpace [/Indexed /DeviceRGB 3 <ff000000ff000000ffffffff>] /BitsPerComponent 8 /Decode [0 255]'
     gray_dict = b'/ColorSpace /DeviceGray /BitsPerComponent 8'
@@ -150,7 +169,8 @@ def generate(root):
     add('precision-signed8', change_siz(gray_raw, 40, 0x87), statuses=[UNSUPPORTED], dictionary=gray_dict)
     add('precision32', change_siz(gray_raw, 40, 31), statuses=[FORMAT, UNSUPPORTED], dictionary=gray_dict)
     add('subsampled-component', change_siz(encoded('RGB', RGB, True), 44, 2), statuses=[UNSUPPORTED])
-    add('embedded-alpha', rgba, statuses=[UNSUPPORTED])
+    add('rgba-components-mismatch', rgba, statuses=[FORMAT])
+    add('embedded-alpha-cdef', rgba_with_cdef, statuses=[UNSUPPORTED])
     add('jpx-not-last-filter', rgb, statuses=[FORMAT], off_statuses=[FORMAT], filters=b'[/JPXDecode /ASCII85Decode]')
     add('non-null-decode-parms', rgb, statuses=[FORMAT], off_statuses=[FORMAT],
         dictionary=b'/ColorSpace /DeviceRGB /BitsPerComponent 8 /DecodeParms << /Unused 1 >>')
@@ -190,8 +210,11 @@ def inspect_artifact(artifact_id, digest):
                 content = archive.read(names[0])
                 if filename.endswith('.ppm'):
                     with Image.open(io.BytesIO(content)) as image:
-                        require(image.size == (2, 2), 'diagnostic page dimensions changed')
-                        observation[filename] = {'sha256': sha(content), 'pixels': list(image.convert('RGB').getdata())}
+                        require(image.size in ((2, 2), (20, 20)), 'diagnostic page dimensions changed')
+                        converted = image.convert('RGB')
+                        pixels = (list(converted.getdata()) if image.size == (2, 2) else
+                                  [converted.getpixel(point) for point in ((5, 5), (15, 5), (5, 15), (15, 15))])
+                        observation[filename] = {'sha256': sha(content), 'dimensions': image.size, 'pixels': pixels}
                 else:
                     observation[filename] = content.decode('utf-8', errors='replace')[:4096]
             payload_names = [name for name in archive.namelist() if name.endswith('/' + case + '.jpx')]
@@ -241,6 +264,9 @@ def main():
     plan = {'schema': 1, 'source_sha': source, 'binary_sha256': sha(args.binary.read_bytes()),
             'font_sha256': sha(args.font.read_bytes()), 'expected_off': args.expect_off,
             'plan_written_before_first_engine_execution': True,
+            'independent_reference': {'program': 'pdftoppm', 'dpi': 720, 'dimensions': [20, 20],
+                                      'centers': [[5, 5], [15, 5], [5, 15], [15, 15]], 'interior_radius': 1,
+                                      'comparison': 'exact known source values throughout each 3x3 interior'},
             'case_count': len(cases), 'cases': cases}
     write_json(args.output / 'plan.json', plan)
     frozen = sha((args.output / 'plan.json').read_bytes())
@@ -271,15 +297,23 @@ def main():
                 pixels = image_pixels(ppm)
                 result['native_pixels'] = pixels
                 require(pixels == expected_rgb, 'native pixels differ from independently known source values')
-                reference = run(['pdftoppm', '-r', '72', '-f', '1', '-singlefile', '-aa', 'no', '-aaVector', 'no',
+                reference = run(['pdftoppm', '-r', '720', '-f', '1', '-singlefile', '-aa', 'no', '-aaVector', 'no',
                                  path.resolve(), (folder / 'poppler').resolve()], folder / 'reference')
                 reference_path = folder / 'poppler.ppm'
                 require(reference.returncode == 0 and reference_path.is_file(), 'independent Poppler rendering failed')
-                reference_pixels = image_pixels(reference_path)
-                result['reference_pixels'] = reference_pixels
+                with Image.open(reference_path) as reference_image:
+                    require(reference_image.size == (20, 20), 'independent reference dimensions changed')
+                    reference_image = reference_image.convert('RGB')
+                    centers = plan['independent_reference']['centers']
+                    reference_pixels = [reference_image.getpixel(tuple(point)) for point in centers]
+                    result['reference_pixels'] = reference_pixels
+                    for (x, y), expected_pixel in zip(centers, expected_rgb):
+                        require(all(reference_image.getpixel((x + dx, y + dy)) == expected_pixel
+                                    for dy in (-1, 0, 1) for dx in (-1, 0, 1)),
+                                'Poppler interior pixels differ from known source values')
                 require(reference_pixels == expected_rgb, 'Poppler pixels differ from known source values')
                 result.update(ppm_sha256=sha(ppm.read_bytes()), reference_sha256=sha(reference_path.read_bytes()),
-                              exact_source_pixels=True, exact_poppler_pixels=True)
+                              exact_source_pixels=True, exact_poppler_interiors=True)
             else:
                 require(native.returncode != 0 and observed['success'] is False and not list(folder.glob('*.ppm')),
                         'rejected PDF produced success or a partial rendered page')
