@@ -1,7 +1,7 @@
 name: Representative reading performance
 on:
   push:
-    branches: ['codex/r3-real-performance']
+    branches: ['codex/r3-real-performance', 'codex/r3-frozen-baseline']
     paths:
       - '.github/workflows/reading-real.yml'
       - 'tools/reading_real_benchmark.c'
