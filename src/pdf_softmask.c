@@ -52,7 +52,7 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
                                    unsigned width, unsigned height, unsigned char **out,
                                    size_t *work,size_t *active_mask_bytes, const exr_control *control, exr_error *e) {
   uint32_t form, id, resources = EXR_PDF_NONE; const unsigned char *data = NULL; size_t size = 0, i,local_work=0;
-  double matrix[6], local[6], box[4], bc[4] = {0, 0, 0, 0}; unsigned char *pixels = NULL, *result = NULL;
+  double matrix[6], local[6], box[4], bc[4] = {0, 0, 0, 0},bc_cmyk[4]; unsigned char *pixels = NULL, *result = NULL;
   const exr_pdf_value *v; int kind = 0, count = 0; exr_bitmap bitmap = {0}; exr_pdf_raster_config config = {0}; exr_status status;
   exr_pdf_function *function=NULL;size_t sample_cost;int group;
   *out = NULL;
@@ -88,6 +88,7 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
     }
     if (count == 1) { bc[0] = bc[1] = bc[2] = tmp[0]; }
     else if (count == 3) { bc[0] = tmp[0]; bc[1] = tmp[1]; bc[2] = tmp[2]; }
+    else if (count == 4 && (group&EXR_PDF_GROUP_CMYK)) { memcpy(bc_cmyk,tmp,sizeof(bc_cmyk));config.background_cmyk=bc_cmyk; }
     else if (count == 4) { exr_icc *profile=NULL;status=exr_icc_default_cmyk(control,&profile,e);if(status!=EXR_OK) return status;exr_device_cmyk_rgb(profile,tmp,bc,1);status=exr_icc_deferred_status(profile,e);exr_icc_free(profile);if(status!=EXR_OK) return status; }
   }
   config.width = width; config.height = height; config.channels = 4; config.background = 0;
