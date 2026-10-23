@@ -15,6 +15,7 @@ from measure_reading_core import sha256
 GROUPS = {'protocol', 'native', 'profiles', 'platforms', 'corpus', 'performance'}
 REGISTRATION = 'ea5c13e081cfba86d9f6dd759439894463e51126'
 MANIFEST = Path('tools/reading_corpus/real-v1.json')
+PACKAGE_ARCH = {'Linux': 'X64', 'Windows': 'X64', 'macOS': 'ARM64'}
 
 
 def read(path):
@@ -108,33 +109,61 @@ def ci_identity(report, source, run, attempt, nested=False):
             'report belongs to another run/attempt')
 
 
+def validate_candidates(root, source, run, attempt):
+    """Verify all six sealed native packages and their same-run license reports."""
+    candidates = []
+    for host, arch in PACKAGE_ARCH.items():
+        for profile in ('reading-core', 'reading-library'):
+            name = f'reading-{profile}' if host == 'Linux' else f'reading-platform-{host}-{profile}'
+            folder = root / f'{name}-{run}-{attempt}'
+            path = one(folder, 'candidate.json'); candidate = read(path)
+            require(not path.is_symlink() and path.resolve().is_relative_to(folder.resolve()), 'candidate path escapes artifact')
+            ci_identity(candidate, source, run, attempt, True)
+            require(candidate.get('schema') == 1 and candidate.get('accepted') is True and
+                    candidate.get('profile') == profile and candidate.get('host') == host and candidate.get('arch') == arch and
+                    candidate['ci'].get('RUNNER_OS') == host and candidate['ci'].get('RUNNER_ARCH') == arch and
+                    candidate.get('published') is False and candidate.get('quality_accepted') is False,
+                    'native candidate profile/platform/quality identity differs')
+            identity = candidate['identity']
+            require(re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', identity.get('sdk_version', '')) and
+                    type(identity.get('abi')) is int and identity['abi'] > 0, 'invalid native SDK version/ABI')
+            expected = f"EXReader-{profile}-{identity['sdk_version']}-{host}-{arch}.tar.gz"
+            archive = path.parent / candidate['archive']
+            require(candidate['archive'] == expected and not archive.is_symlink() and
+                    archive.resolve().parent == path.parent.resolve() and
+                    type(candidate['bytes']) is int and candidate['bytes'] > 0 and
+                    archive.stat().st_size == candidate['bytes'] and sha256(archive) == candidate['sha256'],
+                    'sealed SDK archive path, size or hash changed')
+            manifest_path = path.parent / 'release-manifest.json'
+            require(not manifest_path.is_symlink() and manifest_path.resolve().parent == path.parent.resolve() and
+                    sha256(manifest_path) == candidate['manifest_sha256'], 'SDK manifest path/hash changed')
+            manifest = read(manifest_path)
+            require(manifest.get('schema') == 1 and manifest.get('published') is False and
+                    all(manifest.get(key) == candidate[key] for key in ('source_sha', 'profile', 'host', 'arch', 'ci', 'identity')) and
+                    len(manifest['files']) == candidate['file_count'] > 0, 'SDK manifest identity changed')
+            license_path = one(folder, 'licenses.json')
+            require(not license_path.is_symlink() and license_path.resolve().is_relative_to(folder.resolve()),
+                    'license report path escapes artifact')
+            license_report = read(license_path)
+            ci_identity(license_report, source, run, attempt, True)
+            require(license_report.get('profile') == profile and license_report.get('release_ready') is True and
+                    license_report.get('materials_check_passed') is True and license_report.get('failures') == [] and
+                    license_report.get('pending') == [] and license_report.get('mandatory_missing') == [],
+                    'release license materials rejected')
+            require(identity.get('library_schema') == (7 if profile == 'reading-library' else None) and
+                    (isinstance(identity.get('library_header_version'), str) and bool(identity['library_header_version'])
+                     if profile == 'reading-library' else identity.get('library_header_version') is None),
+                    'native package library schema/header identity differs')
+            candidates.append(candidate)
+    require(len({item['identity']['sdk_version'] for item in candidates}) == 1 and
+            len({item['identity']['abi'] for item in candidates}) == 1 and
+            len({item['identity']['library_header_version'] for item in candidates if item['profile'] == 'reading-library'}) == 1,
+            'native package versions/ABI/header versions differ')
+    return candidates
+
+
 def reports(root, source, run, attempt):
-    identities = []
-    for profile in ('reading-core', 'reading-library'):
-        folder = root / f'reading-{profile}-{run}-{attempt}'
-        path = one(folder, 'candidate.json'); candidate = read(path)
-        ci_identity(candidate, source, run, attempt, True)
-        require(candidate.get('accepted') is True and candidate.get('profile') == profile and
-                candidate.get('published') is False and candidate.get('quality_accepted') is False,
-                'installed candidate was not sealed independently of quality/publication')
-        archive = path.parent / candidate['archive']
-        require(archive.parent == path.parent and archive.stat().st_size == candidate['bytes'] and
-                sha256(archive) == candidate['sha256'], 'sealed SDK archive changed')
-        manifest = read(path.parent / 'release-manifest.json')
-        require(sha256(path.parent / 'release-manifest.json') == candidate['manifest_sha256'] and
-                manifest['source_sha'] == source and manifest['profile'] == profile and
-                manifest['identity'] == candidate['identity'] and
-                len(manifest['files']) == candidate['file_count'] > 0, 'SDK manifest identity changed')
-        license_report = read(one(folder, 'licenses.json'))
-        ci_identity(license_report, source, run, attempt, True)
-        require(license_report.get('source_sha') == source and license_report.get('profile') == profile and
-                license_report.get('release_ready') is True and license_report.get('materials_check_passed') is True and
-                license_report.get('failures') == [] and license_report.get('pending') == [] and
-                license_report.get('mandatory_missing') == [], 'release license materials rejected')
-        identities.append(candidate['identity'])
-    require(identities[0]['sdk_version'] == identities[1]['sdk_version'] and
-            identities[0]['abi'] == identities[1]['abi'] and identities[0]['library_schema'] is None and
-            identities[1]['library_schema'] == 7, 'profile versions/ABI or actual library schema differ')
+    candidates = validate_candidates(root, source, run, attempt)
     for host in ('Windows', 'macOS'):
         for profile in ('reading-core', 'reading-library'):
             folder = root / f'reading-platform-{host}-{profile}-{run}-{attempt}'
@@ -178,8 +207,10 @@ def reports(root, source, run, attempt):
     require(performance.get('refusal_regression', {}).get('passed') is True,
             'performance evidence refusal regression missing')
     audit(performance, performance_path.parent, real_read(BUDGETS))
-    return {'sdk_version': identities[0]['sdk_version'], 'abi': identities[0]['abi'],
+    return {'sdk_version': candidates[0]['identity']['sdk_version'], 'abi': candidates[0]['identity']['abi'],
             'library_schema': 7, 'sdk_candidate': performance['sdk_candidate'],
+            'candidates': [{key: item[key] for key in ('profile', 'host', 'arch', 'archive', 'bytes', 'sha256', 'manifest_sha256')}
+                           for item in candidates],
             'manifest_sha256': corpus['manifest_sha256'], 'contract_sha256': performance['contract_sha256'],
             'budget_sha256': performance['budget_sha256']}
 
