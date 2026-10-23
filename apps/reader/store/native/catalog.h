@@ -19,6 +19,7 @@ typedef struct {
   uint64_t source_bytes;
   int64_t sdk_book_id; /* Zero if no local SDK mapping exists. */
   int favorite;
+  const char *author;
 } reader_catalog_row;
 /* Row strings are borrowed for this call only. Copy them before returning.
  * Return nonzero to stop delivery. No reentry on this catalog. */
@@ -36,5 +37,18 @@ int reader_catalog_remove_local(reader_catalog *, int64_t id, reader_catalog_err
  * delivered (sort_title, book_key). Limit is 1..200. Deleted books stay hidden. */
 int reader_catalog_page(reader_catalog *, const char *after_title, const char *after_key,
                         size_t limit, reader_catalog_visit, void *, reader_catalog_error *);
+/* direction +1: ascending rows after cursor; -1: descending rows before it.
+ * Both cursor strings NULL starts at that end. Search is a literal substring
+ * of title/author (SQLite ASCII case-insensitive; Unicode bytes otherwise exact).
+ * NULL or empty query selects all. Limit remains 1..200, including filtered rows.
+ * Reverse pages are delivered in descending order; the host reverses them for
+ * an ascending UI. No OFFSET or unbounded row materialization is used. */
+int reader_catalog_query_page(reader_catalog *, const char *cursor_title, const char *cursor_key,
+                              const char *query, int direction, size_t limit,
+                              reader_catalog_visit, void *, reader_catalog_error *);
+/* Find a stable visible key under the current filter before restoring a viewport.
+ * Calls visit at most once; sets found=0 if deleted, missing or filtered out. */
+int reader_catalog_find(reader_catalog *, const char *book_key, const char *query,
+                        reader_catalog_visit, void *, int *found, reader_catalog_error *);
 const char *reader_catalog_migration(size_t *bytes);
 #endif
