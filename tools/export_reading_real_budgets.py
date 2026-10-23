@@ -30,6 +30,35 @@ def verify_review(review, baseline, artifact):
                 for item in rows), 'each baseline page requires an actual recorded review')
 
 
+def derive_budget(baseline, provenance, origin, review_path, review_sha256):
+    """Apply the original contract formula to one complete, independent run."""
+    policy = baseline['contract']['budget_derivation']
+    cases = {}
+    for name, metrics in baseline['results']['cases'].items():
+        limits = {}
+        for key, result in metrics.items():
+            measured = result['p95']
+            limits[key] = (measured * policy['latency_multiplier_max'] if key.endswith('_ms') else
+                           measured if key == 'oversize_fallbacks' else 0 if key == 'explicit_snapshot_bytes' else
+                           math.floor(measured * policy['byte_multiplier_max'] + policy['memory_slack_bytes_max']))
+        cases[name] = limits
+    return dict(provenance, schema=1, frozen=True, render_parity_granted=False,
+                baseline_summary_sha256=origin['summary_sha256'],
+                contract_sha256=baseline['contract_sha256'], corpus_manifest_sha256=baseline['corpus_manifest_sha256'],
+                cpu_model=baseline['environment']['cpu_model'], compiler=baseline['environment']['compiler'],
+                cases=cases,
+                consumer_bytes=math.floor(baseline['before']['binary']['bytes'] * policy['byte_multiplier_max'] +
+                                          policy['consumer_slack_bytes_max']),
+                installed_sdk_bytes=math.floor(baseline['installed_sdk']['bytes'] * policy['byte_multiplier_max']),
+                pixel_tolerances={f'{item["case"]}/{item["page"]}':
+                                  min(1, item['normalized_mean_absolute_error'] + policy['external_difference_slack_max'])
+                                  for item in baseline['results']['pixel_comparisons']},
+                page_signatures=baseline['results']['page_signatures'],
+                signature_policy='exact-baseline-route-rgba-utf8-position',
+                pixel_review_path=review_path, pixel_review_sha256=review_sha256,
+                signature_review_record=review_path, pixel_review_record=review_path)
+
+
 def main():
     from measure_reading_real import (CONTRACT, MANIFEST, PROTECTED, SDK, baseline_origin, git, read,
                                      retain_baseline_report, sha256, verify_baseline_report)
@@ -77,34 +106,10 @@ def main():
             return
         review = read(args.review_record)
         verify_review(review, baseline, artifact)
-        policy = baseline['contract']['budget_derivation']
-        cases = {}
-        for name, metrics in baseline['results']['cases'].items():
-            limits = {}
-            for key, result in metrics.items():
-                measured = result['p95']
-                limits[key] = (measured * policy['latency_multiplier_max'] if key.endswith('_ms') else
-                               measured if key == 'oversize_fallbacks' else 0 if key == 'explicit_snapshot_bytes' else
-                               math.floor(measured * policy['byte_multiplier_max'] + policy['memory_slack_bytes_max']))
-            cases[name] = limits
         review_path = args.review_record.resolve().relative_to(Path.cwd().resolve()).as_posix()
         require(git('show', 'HEAD:' + review_path).strip() == args.review_record.read_text(encoding='utf-8').strip(),
                 'review record must be committed at the exporter source')
-        budget = dict(provenance, schema=1, frozen=True, render_parity_granted=False,
-                      baseline_summary_sha256=origin['summary_sha256'],
-                      contract_sha256=baseline['contract_sha256'], corpus_manifest_sha256=baseline['corpus_manifest_sha256'],
-                      cpu_model=baseline['environment']['cpu_model'], compiler=baseline['environment']['compiler'],
-                      cases=cases,
-                      consumer_bytes=math.floor(baseline['before']['binary']['bytes'] * policy['byte_multiplier_max'] +
-                                                policy['consumer_slack_bytes_max']),
-                      installed_sdk_bytes=math.floor(baseline['installed_sdk']['bytes'] * policy['byte_multiplier_max']),
-                      pixel_tolerances={f'{item["case"]}/{item["page"]}':
-                                        min(1, item['normalized_mean_absolute_error'] + policy['external_difference_slack_max'])
-                                        for item in baseline['results']['pixel_comparisons']},
-                      page_signatures=baseline['results']['page_signatures'],
-                      signature_policy='exact-baseline-route-rgba-utf8-position',
-                      pixel_review_path=review_path, pixel_review_sha256=sha256(args.review_record),
-                      signature_review_record=review_path, pixel_review_record=review_path)
+        budget = derive_budget(baseline, provenance, origin, review_path, sha256(args.review_record))
         context = copy.deepcopy(baseline)
         context['baseline_origin'] = origin
         verify_baseline_report(budget, context, directory)
