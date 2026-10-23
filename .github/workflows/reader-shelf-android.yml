@@ -85,6 +85,7 @@ jobs:
             mkdir -p build/import-android/apks
             cp examples/android/app/build/outputs/apk/debug/app-debug.apk build/import-android/apks/
             cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/import-android/apks/
+            adb install -r -t examples/android/app/build/outputs/apk/debug/app-debug.apk
             adb install -r -t examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             adb shell am instrument -w -r -e phase seed-before org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/seed-before.txt
             adb shell am instrument -w -r -e phase recover-before org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/recover-before.txt
