@@ -54,6 +54,16 @@ def verify_jobs(workflow_head, run, attempt, jobs):
             for item in jobs]
 
 
+def verify_publisher(check, workflow_head, ruleset):
+    rules = [item for item in ruleset['rules'] if item['type'] == 'required_status_checks']
+    require(len(rules) == 1 and rules[0]['parameters']['required_status_checks'] ==
+            [{'context': 'reading-required', 'integration_id': 15368}], 'required publisher is not pinned')
+    require(check['name'] == 'reading-required' and check['head_sha'] == workflow_head and
+            check['app']['id'] == 15368 and check['app']['slug'] == 'github-actions',
+            'required check was issued by another publisher/source')
+    return {'integration_id': check['app']['id'], 'publisher': check['app']['slug'], 'check_id': check['id']}
+
+
 def workflow_identity(record, source, run, attempt, parents):
     require(str(record['id']) == str(run) and str(record['run_attempt']) == str(attempt) and
             record['path'].split('@')[0] == '.github/workflows/reading-required.yml',
@@ -190,6 +200,9 @@ def main():
         result['tested_source_parents'] = parents
         result['jobs'] = verify_jobs(workflow_head, run, attempt,
                                     pages(f'actions/runs/{run}/attempts/{attempt}/jobs', 'jobs'))
+        own_job = next(item for item in result['jobs'] if item['name'] == 'reading-required')
+        result['publisher'] = verify_publisher(fetch('check-runs/' + str(own_job['id'])), workflow_head,
+                                              read('docs/reading-required-ruleset.json'))
         result['artifacts'] = verify_metadata(source, run, attempt, read(args.needs),
                                              pages(f'actions/runs/{run}/artifacts', 'artifacts'), workflow_head)
         result['identity'] = reports(args.evidence, source, run, attempt)
