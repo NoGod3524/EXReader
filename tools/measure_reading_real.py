@@ -17,7 +17,7 @@ from measure_reading_core import ROOT, git, sha256
 from measure_reading_pdf import number, require
 from check_parallel_integration import fetch, pages
 
-SDK = "9c69bc4c7efb0cff68ced27562709fe597189041"
+SDK = "9854061be331fe603a1822d9b2b36ee357154927"
 CORPUS_REGISTRATION = "ea5c13e081cfba86d9f6dd759439894463e51126"
 PROTECTED = ("src", "include", "cmake", "CMakeLists.txt", "tests/fixtures",
              ".github/workflows/native.yml", ".github/workflows/reliability.yml", "bindings")
@@ -412,7 +412,15 @@ def audit(summary, output, budgets=None):
         require(origin["run"]["id"] == budgets["baseline_run_id"] and
                 origin["run"]["head_sha"] == budgets["baseline_source_sha"] and
                 origin["artifact"]["digest"] == budgets["baseline_artifact_digest"], "Baseline origin changed")
-        verify_baseline_report(budgets, summary, output)
+        baseline_report = verify_baseline_report(budgets, summary, output)
+        from export_reading_real_budgets import verify_review
+        review_path = ROOT / budgets['pixel_review_path']
+        require(review_path.resolve().is_relative_to(ROOT.resolve()) and review_path.is_file() and
+                sha256(review_path) == budgets['pixel_review_sha256'] and
+                budgets['signature_review_record'] == budgets['pixel_review_record'] == budgets['pixel_review_path'],
+                'Frozen pixel review path or content changed')
+        git('rev-parse', 'HEAD:' + budgets['pixel_review_path'])
+        verify_review(read(review_path), baseline_report, origin['artifact'])
         require(budgets["cpu_model"] == summary["environment"]["cpu_model"] and
                 budgets["compiler"] == summary["environment"]["compiler"], "Incomparable baseline CPU/compiler")
         require(budgets["signature_policy"] == "exact-baseline-route-rgba-utf8-position" and
