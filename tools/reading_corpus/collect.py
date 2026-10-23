@@ -93,7 +93,7 @@ def structure(path, entry):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('mode', choices=['discover', 'collect'])
+    p.add_argument('mode', choices=['discover', 'collect', 'cached'])
     p.add_argument('manifest', type=Path)
     p.add_argument('output', type=Path)
     a = p.parse_args()
@@ -103,6 +103,10 @@ def main():
     manifest_bytes = a.manifest.read_bytes()
     manifest = json.loads(manifest_bytes)
     records, failures, hashes = [], [], set()
+    inputs, origins, registry = {}, {}, None
+    if a.mode == 'cached':
+        from frozen import recover
+        inputs, origins, registry = recover(manifest_bytes)
     for original in manifest['files']:
         entry = dict(original)
         relative = Path(entry['path'])
@@ -111,10 +115,16 @@ def main():
         folder = a.output / 'assets'
         target = folder / relative
         target.parent.mkdir(parents=True, exist_ok=True)
+        observed = None
         try:
-            time.sleep(0.5)
-            data, final_url = fetch(entry['source_url'], entry['limits']['download_bytes'])
-            if a.mode == 'collect' and (sha(data) != entry['sha256'] or len(data) != entry['size']):
+            if a.mode == 'cached':
+                data, final_url = inputs[entry['path']], origins[entry['path']]['retrieved_url']
+                entry['input_origin'] = dict(origins[entry['path']], artifact_id=registry['artifact_id'])
+            else:
+                time.sleep(0.5)
+                data, final_url = fetch(entry['source_url'], entry['limits']['download_bytes'])
+            observed = {'sha256': sha(data), 'size': len(data), 'final_url': final_url}
+            if a.mode != 'discover' and (sha(data) != entry['sha256'] or len(data) != entry['size']):
                 raise ValueError('Frozen source identity changed')
             if sha(data) in hashes:
                 raise ValueError('Duplicate document content')
@@ -128,7 +138,7 @@ def main():
             policy = PolicyText()
             policy.feed(rights.decode('utf-8'))
             policy_text = ' '.join(' '.join(policy.words).split())
-            if a.mode == 'collect' and not all(term in policy_text for term in entry['license_required_terms']):
+            if a.mode != 'discover' and not all(term in policy_text for term in entry['license_required_terms']):
                 raise ValueError('Required license terms absent from current publisher policy')
             entry.update(sha256=sha(data), size=len(data), bytes=len(data),
                          retrieved_url=final_url, retrieved_license_url=rights_url,
@@ -140,11 +150,15 @@ def main():
             print(json.dumps({'asset': entry}, ensure_ascii=False), flush=True)
         except Exception as error:
             failure = {'id': entry['id'], 'error_type': type(error).__name__, 'error': str(error)}
+            if observed is not None:
+                failure['observed_source'] = observed
             failures.append(failure)
             print(json.dumps({'collection_failure': failure}), flush=True)
     result = dict(manifest, files=records, complete=not failures,
                   target=len(manifest['files']), collection_failures=failures,
                   original_manifest_sha256=sha(manifest_bytes), engine_executed=False)
+    if registry is not None:
+        result['raw_input_archive'] = registry
     (a.output / 'manifest.json').write_text(json.dumps(result, indent=2, ensure_ascii=False) + '\n')
     print(json.dumps({'collection_complete': not failures, 'collected': len(records),
                       'required': len(manifest['files']), 'engine_executed': False}), flush=True)
