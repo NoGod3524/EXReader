@@ -95,6 +95,7 @@ jobs:
         run: |
           python3 tests/linux_host/generate_fixed.py build/desktop-fixed-inputs
           build/desktop-sdk/gtk-host/exreader-linux-fixed-backend build/desktop-fixed.sqlite build/desktop-payload/Reader.otf build/desktop-fixed-inputs | tee build/desktop-evidence/fixed-backend.log
+          build/desktop-sdk/gtk-host/exreader-linux-fixed-import build/desktop-snapshot.sqlite build/desktop-payload/Reader.otf build/desktop-fixed-inputs/Pages.pdf build/desktop-fixed-inputs/mutable.pdf | tee build/desktop-evidence/fixed-import.log
           python3 tests/linux_host/generate_bounded.py build/desktop-bounded-inputs
           build/desktop-sdk/gtk-host/exreader-linux-bounded-backend build/desktop-bounded.sqlite build/desktop-payload/Reader.otf build/desktop-bounded-inputs/routes.epub | tee build/desktop-evidence/bounded-backend.log
       - name: Original twenty GTK operations and real product startup repair

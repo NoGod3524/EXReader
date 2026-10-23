@@ -359,6 +359,29 @@ static exr_format file_format(const char *path) {
   for(size_t i=0;i<sizeof(formats)/sizeof(formats[0]);i++) if(!strcasecmp(ext,names[i])) return formats[i];
   return EXR_CUSTOM;
 }
+static exr_status import_pdf(linux_reader *reader,FILE *input,size_t size,const char *title,
+                             int64_t *id,int *created,exr_error *error) {
+  /* The public PDF file API reopens its path. Snapshot the chooser's mutable
+     file into an unlinked private file and keep its descriptor alive throughout. */
+  if(size>32u*1024u*1024u) return EXR_LIMIT;
+  exr_status status=cancel(reader);if(status!=EXR_OK) return status;
+  FILE *copy=tmpfile();if(!copy) return EXR_IO;
+  if(fseeko(input,0,SEEK_SET)) { fclose(copy);return EXR_IO; }
+  unsigned char bytes[65536];size_t offset=0;
+  while(offset<size) {
+    size_t count=size-offset;if(count>sizeof(bytes)) count=sizeof(bytes);
+    status=cancel(reader);if(status!=EXR_OK) break;
+    if(fread(bytes,1,count,input)!=count || fwrite(bytes,1,count,copy)!=count) { status=EXR_IO;break; }
+    offset+=count;
+  }
+  if(status==EXR_OK && fflush(copy)) status=EXR_IO;
+  if(status==EXR_OK) status=cancel(reader);
+  if(status==EXR_OK) {
+    char stable[64];snprintf(stable,sizeof(stable),"/proc/self/fd/%d",fileno(copy));
+    status=exr_library_import_file_unique(reader->library,EXR_PDF,stable,title,id,created,error);
+  }
+  fclose(copy);return status;
+}
 static exr_status import_book(linux_reader *reader,const char *path,int64_t *id,exr_error *error) {
   exr_format format=file_format(path);exr_status status;FILE *file;off_t length;int created=0;
   if(format==EXR_CUSTOM) return EXR_UNSUPPORTED;
@@ -370,8 +393,7 @@ static exr_status import_book(linux_reader *reader,const char *path,int64_t *id,
     source.control=reader->control;
     status=exr_library_import_source_unique(reader->library,format,&source,title,id,&created,error);
   } else if(format==EXR_PDF) {
-    status=length>32*1024*1024 ? EXR_LIMIT:cancel(reader);
-    if(status==EXR_OK) status=exr_library_import_file_unique(reader->library,format,path,title,id,&created,error);
+    status=import_pdf(reader,file,(size_t)length,title,id,&created,error);
   } else if(length>LEGACY_INPUT_LIMIT) status=EXR_LIMIT;
   else {
     size_t size=(size_t)length;unsigned char *bytes=malloc(size);
