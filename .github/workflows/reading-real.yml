@@ -10,6 +10,7 @@ on:
       - 'tools/reading_corpus/**'
       - 'tests/reading_real/**'
       - 'tests/check_reading_real_baseline.py'
+      - 'tests/check_reading_real_baseline_report.py'
       - 'src/**'
       - 'include/**'
       - 'cmake/**'
@@ -61,7 +62,9 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y poppler-utils python3-pil
       - name: Refuse fabricated baseline metadata before sampling
-        run: python3 tests/check_reading_real_baseline.py
+        run: |
+          python3 tests/check_reading_real_baseline.py
+          python3 tests/check_reading_real_baseline_report.py
       - name: Collect the shared frozen real-document manifest
         run: python3 tools/reading_corpus/collect.py collect tools/reading_corpus/real-v1.json build/reading-real-inputs
       - name: Fetch the existing pinned native host font and license
