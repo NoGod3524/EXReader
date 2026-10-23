@@ -103,7 +103,7 @@ for group in manifest:
         elif filename.endswith(('.txt', '.json')) and len(payload) < 8*1024**2:
             text = payload.decode('utf-8', errors='replace')
             entry['relevant_lines'] = [line[:1200] for line in text.splitlines() if re.search(r'library\.|import|token|scene|status|failed|hittable|frame|Button', line, re.I)][:70]
-        elif payload.startswith(b'bplist00') and 'snapshot' in label.lower():
+        elif payload.startswith(b'bplist00'):
             value = plistlib.loads(payload)
             objects = value.get('$objects', [])
             def resolve(node, depth=0, seen=frozenset()):
@@ -120,6 +120,8 @@ for group in manifest:
                 return '<bytes>' if isinstance(node, bytes) else node
             decoded = resolve(value)
             (output/(filename + '.json')).write_text(json.dumps(decoded, indent=2, default=str))
+            if 'Synthesized Event' in label:
+                entry['synthesized_event'] = decoded
             entry['matching_snapshot_scalars'] = [[k, v[:1200]] for k, v in scalars(decoded) if re.search(r'library\.|import|就绪|导入|frame|hittable|enabled', k+' '+v, re.I)][:90]
         elif filename.endswith('.mp4') and 'Screen Recording' in label:
             video = output/'original.mp4'
@@ -135,7 +137,7 @@ generator.requestedTimeToleranceBefore = .zero
 generator.requestedTimeToleranceAfter = .zero
 let duration = CMTimeGetSeconds(asset.duration)
 print("video duration=\\(duration)")
-for second in [0.0, 4, 8, 12, 16, 24, max(0, duration-5)] {
+for second in [45.0, 48, 50, 52, 53, 54, 55, 56, 60, 70, max(0, duration-5)] {
   let image = try generator.copyCGImage(at: CMTime(seconds: second, preferredTimescale: 600), actualTime: nil)
   let url = URL(fileURLWithPath: CommandLine.arguments[2]+"/video-\\(Int(second)).png")
   let dst = CGImageDestinationCreateWithURL(url as CFURL, "public.png" as CFString, 1, nil)!
