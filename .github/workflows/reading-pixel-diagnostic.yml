@@ -1,96 +1,30 @@
-name: Reading pixel diagnostic only
+name: Artifact retry protocol only
 on:
   push:
-    branches: ['codex/r3-real-performance', 'codex/r6-reading-release']
-    paths:
-      - '.github/workflows/reading-pixel-diagnostic.yml'
-      - 'tools/reading_pixel_diagnostic.py'
+    branches: [codex/reading-artifact-retry-protocol]
+    paths: ['.github/workflows/reading-pixel-diagnostic.yml']
   workflow_dispatch:
-    inputs:
-      run_id:
-        type: string
-        default: '39889934254'
-      source_sha:
-        type: string
-        default: c6f0ba92321a284490a81a2bb355557803c17ec9
-      artifact_id:
-        type: string
-        default: '12474462154'
-      artifact_digest:
-        type: string
-        default: sha256:b677a592fa31171a758820d3beba732986419d8fc2af303e113e4e933da7f837
-      all_pdf_pages:
-        description: Inspect the twelve registered pages; false inspects all three W9 pages
-        type: boolean
-        default: false
-      export_only:
-        description: Export the review template or reviewed budgets without repeating contact sheets
-        type: boolean
-        default: false
-      review_record:
-        description: Committed review JSON path; empty exports the unreviewed twelve-page template
-        type: string
-        default: ''
 permissions:
   contents: read
-  actions: read
 jobs:
-  pixel-diagnostic:
-    if: ${{ !inputs.export_only }}
-    name: pixel-diagnostic-${{ matrix.case }}-slot-${{ matrix.slot }}
-    strategy:
-      fail-fast: false
-      matrix:
-        case: ${{ fromJSON(inputs.all_pdf_pages && '["irs-w9","nist-ai-rmf","nist-csf2","nasa-solar-system"]' || '["irs-w9"]') }}
-        slot: [0, 1, 2]
+  protocol:
     runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install image inspector
-        run: sudo apt-get update -qq && sudo apt-get install -y python3-pil
-      - name: Verify retained artifact and print bounded contact sheet
-        env:
-          GH_TOKEN: ${{ github.token }}
-          DIAGNOSTIC_CASE: ${{ matrix.case }}
-          DIAGNOSTIC_SLOT: ${{ matrix.slot }}
-          DIAGNOSTIC_RUN: ${{ inputs.run_id || '39889934254' }}
-          DIAGNOSTIC_SOURCE: ${{ inputs.source_sha || 'c6f0ba92321a284490a81a2bb355557803c17ec9' }}
-          DIAGNOSTIC_ARTIFACT: ${{ inputs.artifact_id || '12474462154' }}
-          DIAGNOSTIC_DIGEST: ${{ inputs.artifact_digest || 'sha256:b677a592fa31171a758820d3beba732986419d8fc2af303e113e4e933da7f837' }}
-        run: python3 tools/reading_pixel_diagnostic.py
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: reading-pixel-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.case }}-${{ matrix.slot }}
-          path: build/reading-pixel-diagnostic/
-          if-no-files-found: error
-          retention-days: 30
-  budget-export:
-    if: ${{ inputs.all_pdf_pages || inputs.export_only }}
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Verify complete page review refusal checks
-        run: python3 tests/check_reading_real_review.py
-      - name: Export pinned baseline review template or reviewed budgets in cloud only
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BASELINE_RUN: ${{ inputs.run_id }}
-          BASELINE_SOURCE: ${{ inputs.source_sha }}
-          REVIEW_RECORD: ${{ inputs.review_record }}
+      - name: Original and new fake transport protocols without artifact downloads
         run: |
-          args=()
-          if test -n "$REVIEW_RECORD"; then args=(--review-record "$REVIEW_RECORD"); fi
-          python3 tools/export_reading_real_budgets.py --baseline-source-sha "$BASELINE_SOURCE" \
-            --baseline-run-id "$BASELINE_RUN" --output build/reading-budget-export "${args[@]}"
+          set -o pipefail
+          mkdir -p build/artifact-retry-protocol
+          python3 tests/check_reading_release_plan.py | tee build/artifact-retry-protocol/release-plan.log
+          python3 tests/reading_corpus/check_collect.py 2>&1 | tee build/artifact-retry-protocol/collector.log
+          python3 tests/check_reading_real_baseline.py | tee build/artifact-retry-protocol/baseline.log
+          python3 tests/check_reading_real_baseline_report.py | tee build/artifact-retry-protocol/baseline-report.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: reading-budget-export-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/reading-budget-export/
+          name: artifact-retry-protocol-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/artifact-retry-protocol/
           if-no-files-found: error
-          retention-days: 30
