@@ -1,0 +1,72 @@
+name: Native HTTPS WebDAV book source
+on:
+  push:
+    branches: [codex/reader-webdav-source]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  webdav:
+    name: native WebDAV (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require delivered ancestor, frozen SDK and original product schema
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor 57ad488423dc393b2ecd15526beec0806e0501f8 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Install Linux native HTTPS and XML development libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev pkg-config
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the independent optional static module
+        run: |
+          mkdir -p build/webdav-logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "DAV_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          cmake -S extras/webdav -B build/webdav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/webdav-stage" 2>&1 | tee build/webdav-logs/configure.log
+          cmake --build build/webdav --verbose 2>&1 | tee build/webdav-logs/build.log
+          cmake --install build/webdav 2>&1 | tee build/webdav-logs/install.log
+      - name: Compile an independent consumer using only the installed module
+        run: |
+          cmake -S tests/webdav/consumer -B build/webdav-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$DAV_WORKSPACE/build/webdav-stage" 2>&1 | tee build/webdav-logs/consumer-configure.log
+          cmake --build build/webdav-consumer --verbose 2>&1 | tee build/webdav-logs/consumer-build.log
+      - name: Actual native HTTPS listing, streaming and refusal acceptance
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/webdav/check_tls.py --consumer "build/webdav-consumer/webdav-consumer$exe" --output build/webdav-evidence
+      - name: Preserve source-bound logs and evidence without TLS private keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-webdav-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/webdav-logs/
+            build/webdav-evidence/
+            !build/webdav-evidence/certificates/*.key
+            build/webdav/CMakeCache.txt
+            build/webdav-consumer/CMakeCache.txt
+          if-no-files-found: error
