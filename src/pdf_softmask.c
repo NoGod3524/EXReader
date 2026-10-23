@@ -78,8 +78,8 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
     (group&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0);
   if (kind) {
     double tmp[4]={0};
-    /* The default BC is all-zero components in the group space. */
-    if(group&EXR_PDF_GROUP_CMYK) count=4;
+    /* ISO 32000-1 table 144: BC defaults to the space's initial black. */
+    if(group&EXR_PDF_GROUP_CMYK) { count=4;tmp[3]=1; }
     if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "BC"), &id, e) != EXR_OK) return e->code;
     if (id != EXR_PDF_NONE && exr_pdf_value_at(file, id)->kind != EXR_PDF_NULL) {
       count=0;
