@@ -1,21 +1,39 @@
 name: Reading pixel diagnostic only
 on:
   push:
-    branches: ['codex/r3-real-performance']
+    branches: ['codex/r3-real-performance', 'codex/r6-reading-release']
     paths:
       - '.github/workflows/reading-pixel-diagnostic.yml'
       - 'tools/reading_pixel_diagnostic.py'
   workflow_dispatch:
+    inputs:
+      run_id:
+        type: string
+        default: '39889934254'
+      source_sha:
+        type: string
+        default: c6f0ba92321a284490a81a2bb355557803c17ec9
+      artifact_id:
+        type: string
+        default: '12474462154'
+      artifact_digest:
+        type: string
+        default: sha256:b677a592fa31171a758820d3beba732986419d8fc2af303e113e4e933da7f837
+      all_pdf_pages:
+        description: Inspect the twelve registered pages; false inspects all three W9 pages
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
 jobs:
   pixel-diagnostic:
-    name: pixel-diagnostic-page-${{ matrix.page }}
+    name: pixel-diagnostic-${{ matrix.case }}-slot-${{ matrix.slot }}
     strategy:
       fail-fast: false
       matrix:
-        page: [1, 2]
+        case: ${{ fromJSON(inputs.all_pdf_pages && '["irs-w9","nist-ai-rmf","nist-csf2","nasa-solar-system"]' || '["irs-w9"]') }}
+        slot: [0, 1, 2]
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
@@ -25,12 +43,17 @@ jobs:
       - name: Verify retained artifact and print bounded contact sheet
         env:
           GH_TOKEN: ${{ github.token }}
-          DIAGNOSTIC_PAGE: ${{ matrix.page }}
+          DIAGNOSTIC_CASE: ${{ matrix.case }}
+          DIAGNOSTIC_SLOT: ${{ matrix.slot }}
+          DIAGNOSTIC_RUN: ${{ inputs.run_id || '39889934254' }}
+          DIAGNOSTIC_SOURCE: ${{ inputs.source_sha || 'c6f0ba92321a284490a81a2bb355557803c17ec9' }}
+          DIAGNOSTIC_ARTIFACT: ${{ inputs.artifact_id || '12474462154' }}
+          DIAGNOSTIC_DIGEST: ${{ inputs.artifact_digest || 'sha256:b677a592fa31171a758820d3beba732986419d8fc2af303e113e4e933da7f837' }}
         run: python3 tools/reading_pixel_diagnostic.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: reading-pixel-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}-page-${{ matrix.page }}
+          name: reading-pixel-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.case }}-${{ matrix.slot }}
           path: build/reading-pixel-diagnostic/
           if-no-files-found: error
           retention-days: 30
