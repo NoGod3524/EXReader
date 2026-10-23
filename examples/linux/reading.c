@@ -6,6 +6,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/types.h>
+#include <math.h>
 #ifdef EXR_READER_PRODUCT_CATALOG
 #include "catalog_sdk.h"
 #include <fcntl.h>
@@ -20,8 +21,11 @@ typedef struct {
   exr_document *document;
   exr_publication *publication;
   exr_pager *pager;
+  exr_fixed_document *fixed_document;
+  exr_book *fixed_book;
   int64_t id;
   int bounded,font,hold_progress;
+  int zoom;
   size_t part,page,start,end,position;
 } reader_session;
 struct linux_reader {
@@ -39,7 +43,8 @@ struct linux_reader {
 };
 static void session_free(reader_session *session) {
   exr_pager_free(session->pager);exr_publication_free(session->publication);
-  exr_document_free(session->document);memset(session,0,sizeof(*session));
+  exr_document_free(session->document);exr_fixed_free(session->fixed_document);
+  exr_books_free(session->fixed_book,session->fixed_book ? 1:0);memset(session,0,sizeof(*session));
 }
 static void pending_discard(linux_reader *reader) {
   if(reader->pending_owns_session) session_free(&reader->pending);
@@ -135,6 +140,52 @@ static exr_status append_text(void *context,const char *text,size_t size,exr_err
   if(size>copy->capacity-copy->size) return EXR_LIMIT;
   memcpy(copy->bytes+copy->size,text,size);copy->size+=size;return EXR_OK;
 }
+static exr_status render_fixed(linux_reader *reader,reader_session *session,size_t index,
+                               reader_result *result,exr_error *error) {
+  size_t count=0;const exr_fixed_page *pages=exr_fixed_pages(session->fixed_document,&count);
+  exr_viewport viewport={0};exr_bitmap bitmap={0};exr_fixed_text *text=NULL;
+  exr_fixed_render_options options={0};exr_status status;
+  if(!pages || index>=count) return EXR_ARGUMENT;
+  status=exr_viewport_create(&pages[index].geometry,1,&viewport,error);
+  if(status!=EXR_OK) return status;
+  double dimension=fmax(viewport.width,viewport.height);
+  if(!(dimension>0) || !isfinite(dimension)) return EXR_FORMAT;
+  double scale=fmin(1.0,1080.0/dimension)*(double)session->zoom/100.0;
+  if(!(scale>0) || !isfinite(scale) || viewport.width*scale>2048 || viewport.height*scale>2048) {
+    snprintf(result->message,sizeof(result->message),"Zoom exceeds this host's 2048-pixel page limit; previous page retained");
+    return EXR_LIMIT;
+  }
+  options.channels=4;options.background=0xffffffffu;options.mask_budget=16u*1024u*1024u;
+  options.control=reader->control;
+  status=exr_fixed_render(session->fixed_document,index,scale,&options,&bitmap,error);
+  if(status!=EXR_OK) return status;
+  if(bitmap.channels!=4 || !bitmap.width || !bitmap.height || bitmap.width>2048 || bitmap.height>2048) {
+    exr_bitmap_free(&bitmap);return EXR_LIMIT;
+  }
+  status=exr_fixed_load_text(session->fixed_document,index,&reader->control,&text,error);
+  const char *bytes="";size_t size=0;
+  if(status==EXR_OK) bytes=exr_fixed_text_string(text,&size);
+  else if(status==EXR_UNSUPPORTED) { status=EXR_OK;if(error) memset(error,0,sizeof(*error)); }
+  if(status!=EXR_OK || size>PAGE_TEXT_LIMIT || (!bytes && size)) {
+    exr_fixed_text_free(text);exr_bitmap_free(&bitmap);return status!=EXR_OK ? status:EXR_LIMIT;
+  }
+  result->text=malloc(size+1);result->stride=(size_t)bitmap.width*4;
+  result->pixels=malloc(result->stride*(size_t)bitmap.height);
+  if(!result->text || !result->pixels) {
+    exr_fixed_text_free(text);exr_bitmap_free(&bitmap);return EXR_MEMORY;
+  }
+  if(size) memcpy(result->text,bytes,size);
+  result->text[size]=0;result->text_size=size;
+  for(size_t y=0;y<bitmap.height;y++) memcpy(result->pixels+y*result->stride,
+    bitmap.pixels+y*bitmap.stride,result->stride);
+  result->width=bitmap.width;result->height=bitmap.height;
+  exr_fixed_text_free(text);exr_bitmap_free(&bitmap);
+  result->book=session->id;result->font=session->font;result->fixed=1;result->zoom=session->zoom;
+  result->page=index;result->page_count=count;result->start=0;result->end=size;result->has_frame=1;
+  session->page=index;session->position=index;
+  if(!size) snprintf(result->message,sizeof(result->message),"Page rendered; no selectable text is supplied for this page");
+  return EXR_OK;
+}
 static exr_status render(linux_reader *reader,reader_session *session,size_t index,int seek,size_t offset,
                           reader_result *result,exr_error *error) {
   exr_status status;const exr_layout *layout=NULL;exr_bitmap bitmap={0};
@@ -182,6 +233,10 @@ static exr_status capture(linux_reader *reader,reader_session *session,size_t st
 }
 static exr_status persist(linux_reader *reader,reader_session *session,size_t position,exr_error *error) {
   exr_epub_location point={0};exr_status status;
+  if(session->fixed_document) {
+    exr_book update=*session->fixed_book;update.position=session->page;
+    return exr_library_update(reader->library,&update,error);
+  }
   if(session->hold_progress) return EXR_OK;
   status=capture(reader,session,position,position,&point.selector,error);
   if(status==EXR_OK) {
@@ -193,8 +248,9 @@ static exr_status persist(linux_reader *reader,reader_session *session,size_t po
   exr_anchor_free(&point.selector);return status;
 }
 static exr_status note_list(linux_reader *reader,reader_session *session,reader_result *result,exr_error *error) {
-  exr_epub_note *bounded=NULL;exr_note *legacy=NULL;size_t count=0,i;exr_status status;
-  if(session->bounded) status=exr_library_epub_notes(reader->library,session->id,&bounded,&count,error);
+  exr_epub_note *bounded=NULL;exr_note *legacy=NULL;exr_fixed_note *fixed=NULL;size_t count=0,i;exr_status status;
+  if(session->fixed_document) status=exr_library_fixed_notes(reader->library,session->id,&fixed,&count,error);
+  else if(session->bounded) status=exr_library_epub_notes(reader->library,session->id,&bounded,&count,error);
   else status=exr_library_notes(reader->library,session->id,&legacy,&count,error);
   if(status!=EXR_OK) return status;
   if(count>4096) { status=EXR_LIMIT;goto done; }
@@ -202,7 +258,10 @@ static exr_status note_list(linux_reader *reader,reader_session *session,reader_
   if(!result->notes) { status=EXR_MEMORY;goto done; }
   for(i=0;i<count;i++) {
     reader_note *note=&result->notes[i];const char *text;
-    if(session->bounded) {
+    if(session->fixed_document) {
+      note->id=fixed[i].id;note->part=fixed[i].page;
+      note->start=fixed[i].start;note->end=fixed[i].end;text=fixed[i].text;
+    } else if(session->bounded) {
       note->id=bounded[i].id;note->part=bounded[i].location.part;
       note->start=bounded[i].location.selector.start;note->end=bounded[i].location.selector.end;text=bounded[i].text;
     } else { note->id=legacy[i].id;note->start=legacy[i].start;note->end=legacy[i].end;text=legacy[i].text; }
@@ -210,10 +269,11 @@ static exr_status note_list(linux_reader *reader,reader_session *session,reader_
     if(!note->text) { status=EXR_MEMORY;break; }
   }
 done:
-  exr_epub_notes_free(bounded,session->bounded ? count:0);exr_notes_free(legacy,session->bounded ? 0:count);
+  exr_fixed_notes_free(fixed,fixed ? count:0);
+  exr_epub_notes_free(bounded,bounded ? count:0);exr_notes_free(legacy,legacy ? count:0);
   return status;
 }
-static exr_status open_book(linux_reader *reader,int64_t id,int size,reader_session *session,
+static exr_status open_book(linux_reader *reader,int64_t id,int size,int zoom,reader_session *session,
                              reader_result *result,exr_error *error) {
   exr_book *books=NULL;size_t count=0,i;exr_status status;exr_epub_location point={0};int present=0;
   exr_anchor legacy={0};exr_anchor_state legacy_state=EXR_ANCHOR_MISSING;size_t offset=0;
@@ -221,11 +281,28 @@ static exr_status open_book(linux_reader *reader,int64_t id,int size,reader_sess
   status=exr_library_books(reader->library,"",&books,&count,error);if(status!=EXR_OK) return status;
   for(i=0;i<count && books[i].id!=id;i++) {}
   if(i==count) status=EXR_ARGUMENT;
-  else if(books[i].format==EXR_EPUB) {
+  else if(books[i].format==EXR_PDF || books[i].format==EXR_CBZ) {
+    session->zoom=zoom ? zoom:100;
+    if(session->zoom<25 || session->zoom>400) status=EXR_ARGUMENT;
+    else {
+      session->fixed_book=malloc(sizeof(*session->fixed_book));
+      if(!session->fixed_book) status=EXR_MEMORY;
+      else { *session->fixed_book=books[i];memset(&books[i],0,sizeof(books[i])); }
+    }
+  } else if(books[i].format==EXR_EPUB) {
     exr_library_epub_info info={0};info.struct_size=sizeof(info);
     status=exr_library_epub_info_get(reader->library,id,&info,error);session->bounded=info.bounded_storage;
   }
   exr_books_free(books,count);if(status!=EXR_OK) return status;
+  if(session->fixed_book) {
+    exr_fixed_open_options options={0};options.struct_size=sizeof(options);
+    options.fallback_font=reader->font;options.control=reader->control;
+    status=exr_library_fixed_source(reader->library,id,&options,&session->fixed_document,error);
+    if(status!=EXR_OK) return status;
+    size_t pages=0;exr_fixed_pages(session->fixed_document,&pages);
+    if(!pages || session->fixed_book->position>=pages) return EXR_FORMAT;
+    return render_fixed(reader,session,session->fixed_book->position,result,error);
+  }
   if(session->bounded) {
     exr_source source={0};status=exr_library_source(reader->library,id,&source,error);
     if(status==EXR_OK) {
@@ -277,10 +354,33 @@ static size_t file_read(void *context,size_t offset,void *bytes,size_t size) {
 }
 static exr_format file_format(const char *path) {
   const char *ext=strrchr(path,'.');if(!ext) return EXR_CUSTOM;
-  const char *names[]={".epub",".txt",".html",".xhtml",".fb2",".rtf",".docx",".mobi"};
-  const exr_format formats[]={EXR_EPUB,EXR_TXT,EXR_HTML,EXR_HTML,EXR_FB2,EXR_RTF,EXR_DOCX,EXR_MOBI};
+  const char *names[]={".epub",".txt",".html",".xhtml",".fb2",".rtf",".docx",".mobi",".pdf",".cbz"};
+  const exr_format formats[]={EXR_EPUB,EXR_TXT,EXR_HTML,EXR_HTML,EXR_FB2,EXR_RTF,EXR_DOCX,EXR_MOBI,EXR_PDF,EXR_CBZ};
   for(size_t i=0;i<sizeof(formats)/sizeof(formats[0]);i++) if(!strcasecmp(ext,names[i])) return formats[i];
   return EXR_CUSTOM;
+}
+static exr_status import_pdf(linux_reader *reader,FILE *input,size_t size,const char *title,
+                             int64_t *id,int *created,exr_error *error) {
+  /* The public PDF file API reopens its path. Snapshot the chooser's mutable
+     file into an unlinked private file and keep its descriptor alive throughout. */
+  if(size>32u*1024u*1024u) return EXR_LIMIT;
+  exr_status status=cancel(reader);if(status!=EXR_OK) return status;
+  FILE *copy=tmpfile();if(!copy) return EXR_IO;
+  if(fseeko(input,0,SEEK_SET)) { fclose(copy);return EXR_IO; }
+  unsigned char bytes[65536];size_t offset=0;
+  while(offset<size) {
+    size_t count=size-offset;if(count>sizeof(bytes)) count=sizeof(bytes);
+    status=cancel(reader);if(status!=EXR_OK) break;
+    if(fread(bytes,1,count,input)!=count || fwrite(bytes,1,count,copy)!=count) { status=EXR_IO;break; }
+    offset+=count;
+  }
+  if(status==EXR_OK && fflush(copy)) status=EXR_IO;
+  if(status==EXR_OK) status=cancel(reader);
+  if(status==EXR_OK) {
+    char stable[64];snprintf(stable,sizeof(stable),"/proc/self/fd/%d",fileno(copy));
+    status=exr_library_import_file_unique(reader->library,EXR_PDF,stable,title,id,created,error);
+  }
+  fclose(copy);return status;
 }
 static exr_status import_book(linux_reader *reader,const char *path,int64_t *id,exr_error *error) {
   exr_format format=file_format(path);exr_status status;FILE *file;off_t length;int created=0;
@@ -288,10 +388,12 @@ static exr_status import_book(linux_reader *reader,const char *path,int64_t *id,
   file=fopen(path,"rb");if(!file) return EXR_IO;
   if(fseeko(file,0,SEEK_END) || (length=ftello(file))<=0) { fclose(file);return EXR_IO; }
   const char *title=strrchr(path,'/');title=title ? title+1:path;
-  if(format==EXR_EPUB) {
+  if(format==EXR_EPUB || format==EXR_CBZ) {
     exr_source source={0};source.size=(size_t)length;source.context=file;source.read_at=file_read;
     source.control=reader->control;
     status=exr_library_import_source_unique(reader->library,format,&source,title,id,&created,error);
+  } else if(format==EXR_PDF) {
+    status=import_pdf(reader,file,(size_t)length,title,id,&created,error);
   } else if(length>LEGACY_INPUT_LIMIT) status=EXR_LIMIT;
   else {
     size_t size=(size_t)length;unsigned char *bytes=malloc(size);
@@ -322,9 +424,31 @@ static exr_status move_part(linux_reader *reader,reader_session *session,int dir
   return status;
 }
 static exr_status jump_note(linux_reader *reader,reader_session *session,int64_t id,reader_result *result,exr_error *error) {
-  exr_epub_note *bounded=NULL;exr_note *legacy=NULL;size_t count=0,i;exr_status status;
+  exr_epub_note *bounded=NULL;exr_note *legacy=NULL;exr_fixed_note *fixed=NULL;
+  exr_fixed_text *text=NULL;size_t count=0,i;exr_status status;
   const exr_anchor *anchor=NULL;exr_anchor_match match;
-  if(session->bounded) {
+  if(session->fixed_document) {
+    status=exr_library_fixed_notes(reader->library,session->id,&fixed,&count,error);
+    if(status!=EXR_OK) return status;
+    for(i=0;i<count && fixed[i].id!=id;i++) {}
+    if(i==count) { status=EXR_ARGUMENT;goto done; }
+    size_t pages_count=0;
+    const exr_fixed_page *pages=exr_fixed_pages(session->fixed_document,&pages_count);
+    if(!pages || fixed[i].page>=pages_count) { status=EXR_ARGUMENT;goto done; }
+    status=exr_fixed_load_text(session->fixed_document,fixed[i].page,&reader->control,&text,error);
+    if(status==EXR_OK) status=exr_fixed_anchor_resolve(pages[fixed[i].page].id,text,
+      &fixed[i].anchor,&reader->control,&match,error);
+    if(status==EXR_OK && match.state!=EXR_ANCHOR_FOUND) {
+      strcpy(result->message,"Note quote is missing or ambiguous; location unchanged");status=EXR_ARGUMENT;
+    }
+    if(status==EXR_OK) {
+      status=render_fixed(reader,session,fixed[i].page,result,error);
+      if(status==EXR_OK) {
+        result->select_range=1;result->selected_start=match.start;result->selected_end=match.end;
+      }
+    }
+    goto done;
+  } else if(session->bounded) {
     status=exr_library_epub_notes(reader->library,session->id,&bounded,&count,error);
     if(status!=EXR_OK) return status;
     for(i=0;i<count && bounded[i].id!=id;i++) {}
@@ -352,7 +476,8 @@ static exr_status jump_note(linux_reader *reader,reader_session *session,int64_t
     result->select_range=1;result->selected_start=match.start;result->selected_end=match.end;
   }
 done:
-  exr_epub_notes_free(bounded,session->bounded ? count:0);exr_notes_free(legacy,session->bounded ? 0:count);
+  exr_fixed_text_free(text);exr_fixed_notes_free(fixed,fixed ? count:0);
+  exr_epub_notes_free(bounded,bounded ? count:0);exr_notes_free(legacy,legacy ? count:0);
   return status;
 }
 void linux_reader_execute(linux_reader *reader,const reader_command *command,reader_result *result) {
@@ -364,7 +489,8 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
     /* The GTK acceptance callback queues this before subsequent operations.
        A stale result never queues it; close waits for its outcome. */
     reader_session *pending=&reader->pending;
-    status=reader->has_pending && pending->id==command->book && pending->part==command->part && pending->start==command->start ?
+    status=reader->has_pending && pending->id==command->book && pending->part==command->part &&
+      pending->start==command->start && (!pending->fixed_document || pending->page==command->page) ?
       persist(reader,pending,pending->position,&error):EXR_ARGUMENT;
     if(status==EXR_OK) {
       if(reader->pending_owns_session) session_free(&reader->current);
@@ -381,16 +507,24 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
     if(command->action==READER_IMPORT) status=import_book(reader,command->path,&id,&error);
     if(status!=EXR_OK) goto done;
     owned_session=1;memset(&next,0,sizeof(next));
-    status=open_book(reader,id,command->font,&next,result,&error);
-  } else if(!next.pager || next.id!=command->book || (next.bounded && next.part!=command->part)) status=EXR_ARGUMENT;
+    status=open_book(reader,id,command->font,command->zoom,&next,result,&error);
+  } else if((!next.pager && !next.fixed_document) || next.id!=command->book ||
+            (next.bounded && next.part!=command->part) ||
+            (next.fixed_document && next.page!=command->page)) status=EXR_ARGUMENT;
   else if(command->action==READER_NOTE_ADD) {
     exr_epub_note note={0};exr_note old={0};int64_t saved=0;
     if(command->start<next.start || command->end>next.end || command->start>=command->end) status=EXR_ARGUMENT;
     else {
       note.book_id=next.id;note.text=(char *)command->comment;note.location.part=next.part;
-      note.location.path=(char *)route(&next,next.part);
-      status=capture(reader,&next,command->start,command->end,&note.location.selector,&error);
-      if(status==EXR_OK) {
+      if(next.fixed_document) {
+        exr_fixed_note fixed={0};fixed.book_id=next.id;fixed.page=next.page;
+        fixed.start=command->start;fixed.end=command->end;fixed.text=(char *)command->comment;
+        status=exr_library_fixed_note(reader->library,&fixed,&reader->control,&saved,&error);
+      } else {
+        note.location.path=(char *)route(&next,next.part);
+        status=capture(reader,&next,command->start,command->end,&note.location.selector,&error);
+      }
+      if(status==EXR_OK && !next.fixed_document) {
         if(next.bounded) status=exr_library_epub_note(reader->library,&note,&saved,&error);
         else {
           old.book_id=next.id;old.start=command->start;old.end=command->end;
@@ -406,13 +540,18 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
     if(status==EXR_OK) {
       size_t i;for(i=0;i<entries.note_count && entries.notes[i].id!=command->note;i++) {}
       if(i==entries.note_count) status=EXR_ARGUMENT;
-      else status=next.bounded ? exr_library_remove_epub_note(reader->library,command->note,&error):
+      else status=next.fixed_document ? exr_library_remove_fixed_note(reader->library,command->note,&error):
+        next.bounded ? exr_library_remove_epub_note(reader->library,command->note,&error):
         exr_library_remove_note(reader->library,command->note,&error);
     }
     reader_result_free(&entries);
   } else if(command->action==READER_NOTE_JUMP) {
     status=jump_note(reader,&next,command->note,result,&error);new_pager=next.pager!=reader->current.pager;
-  } else if(command->action==READER_FONT) {
+  } else if(command->action==READER_ZOOM) {
+    if(!next.fixed_document || command->zoom<25 || command->zoom>400) status=EXR_ARGUMENT;
+    else { next.zoom=command->zoom;status=render_fixed(reader,&next,next.page,result,&error); }
+  } else if(command->action==READER_FONT && next.fixed_document) status=EXR_ARGUMENT;
+  else if(command->action==READER_FONT) {
     exr_anchor point={0};exr_anchor_match match;size_t position=next.position;
     if(command->font<12 || command->font>48) status=EXR_ARGUMENT;
     else status=capture(reader,&next,position,position,&point,&error);
@@ -432,7 +571,12 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
       next.font=command->font;status=render(reader,&next,0,1,position,result,&error);next.position=position;
     }
     exr_anchor_free(&point);
-  } else {
+  } else if((command->action==READER_NEXT || command->action==READER_PREVIOUS) && next.fixed_document) {
+    size_t count=0;exr_fixed_pages(next.fixed_document,&count);
+    int previous=command->action==READER_PREVIOUS;
+    if((previous && !next.page) || (!previous && next.page+1>=count)) status=EXR_ARGUMENT;
+    else status=render_fixed(reader,&next,previous ? next.page-1:next.page+1,result,&error);
+  } else if(command->action==READER_NEXT || command->action==READER_PREVIOUS) {
     int previous=command->action==READER_PREVIOUS;
     next.hold_progress=0;
     if((previous && !next.page) || (!previous && next.end==extent(&next))) {
@@ -445,7 +589,7 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
       target=previous ? next.page-1:next.page+1;status=render(reader,&next,target,0,0,result,&error);
     }
     if(status==EXR_OK) next.position=result->start;
-  }
+  } else status=EXR_ARGUMENT;
   if(status==EXR_OK) status=note_list(reader,&next,result,&error);
   if(status==EXR_OK && wants_shelf) {
     status=exr_library_books(reader->library,"",&result->books,&result->book_count,&error);
