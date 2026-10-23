@@ -11,7 +11,8 @@ import xml.etree.ElementTree as ET
 TESTS={'realSdkImportsAndProductionRepair','forwardKeysetHasNoMissingOrRepeatedBooks',
        'reverseKeysetMatchesForwardOrder','sameTitleUsesSourceKeyTieBreak','titleAuthorAndLiteralSearch',
        'cancelsQueriesAndRejectsWrongOwner','hidesUnmappedAndDeletedProducts','repairsNewImportBeforeRefresh',
-       'canceledOldSearchCannotReplaceNewResults','missingEndAnchorFallsBackWithinSameFilter'}
+       'canceledOldSearchCannotReplaceNewResults','missingEndAnchorFallsBackWithinSameFilter',
+       'pendingRestoreRetainsOnlySameQueryAnchor'}
 
 
 def main():

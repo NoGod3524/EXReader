@@ -54,6 +54,7 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
     private int maxRowsObserved;
     private int createdViews, recycledViews;
     private long activityStartedNs, firstInteractiveNs;
+    private long appliedRevision, drawnRevision=-1;
     private android.view.ViewTreeObserver.OnPreDrawListener firstDraw;
     private boolean loading, before, after, applying, started;
     private volatile boolean closed;
@@ -70,7 +71,12 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
         search.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                query=Normalizer.normalize(s.toString().trim(), Normalizer.Form.NFC);
+                String next=Normalizer.normalize(s.toString().trim(), Normalizer.Form.NFC);
+                if(next.equals(query))return;
+                query=next;
+                // A cursor belongs to its exact filter; never persist the previous filter's anchor.
+                prefs.edit().putString("catalog_query",query).remove("catalog_top_sort").remove("catalog_top_key")
+                        .remove("catalog_top_y").apply();
                 invalidateRequest(); // Invalidate now, before the debounce; an old result cannot flash back.
                 rows.clear(); CatalogShelf.this.before=CatalogShelf.this.after=false; notifyDataSetChanged();
                 status.setText("Loading books…");
@@ -95,10 +101,14 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
     void observeFirstInteractive(long startedNs) {
         activityStartedNs=startedNs;
         firstDraw=()->{
-            if (firstInteractiveNs==0 && started && !loading && appliedGeneration==generation
-                    && (rows.isEmpty() || list.getChildCount()>0) && list.isShown() && list.isEnabled()) {
-                firstInteractiveNs=android.os.SystemClock.elapsedRealtimeNanos();
-                list.getViewTreeObserver().removeOnPreDrawListener(firstDraw); firstDraw=null;
+            if (started && !loading && appliedGeneration==generation && list.isShown() && list.isEnabled()) {
+                int first=list.getFirstVisiblePosition(), children=list.getChildCount();
+                boolean laidOut=rows.isEmpty() ? children==0 : children>0 && first>=0 && first+children<=rows.size();
+                for(int at=0;laidOut && at<children;at++)laidOut=rows.get(first+at).key.bookKey.equals(list.getChildAt(at).getTag());
+                if(laidOut){
+                    drawnRevision=appliedRevision;
+                    if(firstInteractiveNs==0)firstInteractiveNs=android.os.SystemClock.elapsedRealtimeNanos();
+                }
             }
             return true;
         };
@@ -113,6 +123,7 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
     void refresh() {
         if (!started || closed) return;
         Viewport viewport=viewport();
+        save();
         reset(viewport==null ? null : viewport.key, viewport==null ? 0 : viewport.top);
     }
 
@@ -187,6 +198,7 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
             while (rows.size()>MAX_ROWS) { rows.remove(0); before=true; }
         }
         maxRowsObserved=Math.max(maxRowsObserved,rows.size());
+        appliedRevision++;
         notifyDataSetChanged();
         if (visible!=null) restore(visible.key,visible.top);
         else if (reset) restore(anchor,restoreTop);
@@ -217,7 +229,8 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
         Viewport visible=viewport();
         if (visible!=null) edit.putString("catalog_top_sort",visible.key.sortTitle).putString("catalog_top_key",visible.key.bookKey)
                 .putInt("catalog_top_y",visible.top);
-        else if (rows.isEmpty()) edit.remove("catalog_top_sort").remove("catalog_top_key").remove("catalog_top_y");
+        else if (started && rows.isEmpty() && !loading && appliedGeneration==generation)
+            edit.remove("catalog_top_sort").remove("catalog_top_key").remove("catalog_top_y");
         edit.apply();
     }
 
@@ -240,6 +253,7 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
         if (recycled==null) createdViews++; else recycledViews++;
         View row=recycled==null ? LayoutInflater.from(context).inflate(android.R.layout.simple_list_item_1,parent,false) : recycled;
         CatalogStore.ShelfBook book=getItem(position);
+        row.setTag(book.key.bookKey);
         TextView title=row.findViewById(android.R.id.text1);
         title.setMaxLines(3); title.setEllipsize(TextUtils.TruncateAt.END);
         String bytes=book.sourceBytes<1024 ? book.sourceBytes+" B" : book.sourceBytes<1024*1024
@@ -262,6 +276,7 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
                     .put("discarded_results",discardedResults).put("visible_children",list.getChildCount())
                     .put("created_views",createdViews).put("recycled_views",recycledViews)
                     .put("activity_started_elapsed_ns",activityStartedNs).put("first_interactive_elapsed_ns",firstInteractiveNs)
+                    .put("applied_revision",appliedRevision).put("drawn_revision",drawnRevision)
                     .put("first_interactive_ms",firstInteractiveNs==0 ? JSONObject.NULL : (firstInteractiveNs-activityStartedNs)/1e6)
                     .put("top_key",visible==null ? JSONObject.NULL : visible.key.bookKey)
                     .put("top_y",visible==null ? 0 : visible.top).put("keys",keys).put("visible_keys",visibleKeys).toString();
