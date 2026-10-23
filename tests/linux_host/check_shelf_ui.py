@@ -85,6 +85,8 @@ def main():
         checks.append('literal_author_search_uses_real_metadata')
         empty = search('No such book')
         assert empty['books'] == 0 and not empty['shelf_before'] and not empty['shelf_after']
+        another_empty = search('Another absent title')
+        assert another_empty['books'] == 0
         checks.append('empty_search_has_no_stale_rows')
         # New input invalidates the old generation before the debounce expires.
         host.key('ctrl+f', 'ctrl+a');host.paste('Shelf 0001');host.key('ctrl+a');host.paste('Shelf 2050')
