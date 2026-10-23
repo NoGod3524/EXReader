@@ -15,3 +15,9 @@ The registered artifact currently expires on 2026-11-22. Missing, expired or
 changed evidence stops collection. A separately registered durable store of the
 same original bytes is still needed for permanent preservation. This change
 does not grant permanent availability or transfer old-source acceptance.
+
+Cloud diagnostic 39986016184 recovered all eight exact originals and passed
+current license/structure checks. Its independent publisher probe observed
+different bytes at the same pg84 URL. The diagnostic grants no engine or budget
+acceptance; current-source R2/R3 must still execute. Full identities are in
+[the diagnostic record](../../docs/validation/reading-frozen-inputs-39986016184.json).
