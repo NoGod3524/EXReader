@@ -1,0 +1,52 @@
+name: R4 retained real PDF failures
+on:
+  push:
+    branches: ['codex/r4-core-hotspots']
+    paths:
+      - 'src/pdf_cmap.c'
+      - 'src/pdf_font.c'
+      - 'src/pdf_internal.h'
+      - 'tests/r4_core/real_pdf.py'
+      - '.github/workflows/r4-real-pdf.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pdf:
+    name: two frozen Adobe PDF complete consumers
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 232a1806c38e0775892da2b4dd82fe6cd90414b2
+          path: corpus
+          fetch-depth: 0
+      - name: Verify pre-execution registration and collect unchanged originals
+        run: |
+          sudo apt-get update && sudo apt-get install -y poppler-utils
+          cd corpus
+          python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"tools/reading_corpus"); from run import registered; registered(Path("tools/reading_corpus/real-v1.json"),"ea5c13e081cfba86d9f6dd759439894463e51126")'
+          python3 tools/reading_corpus/collect.py collect tools/reading_corpus/real-v1.json ../build/real-inputs
+      - name: Build current installed native SDK and original public consumers
+        run: |
+          cmake --preset reading-core
+          cmake --build --preset reading-core
+          cmake --install build/reading-core
+          cmake -S corpus/tests/reading_corpus -B build/real-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-core/stage"
+          cmake --build build/real-consumer --parallel 4
+      - name: Complete all pages and independent reopen selectors
+        run: python3 tests/r4_core/real_pdf.py build/real-consumer/r2-document build/real-consumer/r2-location build/real-inputs/assets corpus/tools/reading_corpus/real-v1.json build/real-results
+      - name: Preserve input identities and every failed process
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r4-real-pdf-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/real-inputs/
+            build/real-results/
+            build/real-consumer/
+            build/reading-core/CMakeCache.txt
+          if-no-files-found: error
+          retention-days: 30
