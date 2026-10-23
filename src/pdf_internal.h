@@ -27,6 +27,10 @@ exr_status exr_pdf_ccitt_decode(const unsigned char *data,size_t size,long k,uns
 void exr_pdf_close(exr_pdf_file *file);
 /* Borrowed only for the duration of one synchronous adapter operation. */
 void exr_pdf_control(exr_pdf_file *file,const exr_control *control);
+/* End a synchronous fixed-document operation, after all borrowed stream/font
+   bytes and nested painters have been released. Parsed object IDs stay valid.
+   Cache and work limits apply to each operation, not all pages ever visited. */
+void exr_pdf_operation_end(exr_pdf_file *file);
 exr_status exr_pdf_metadata_string(exr_pdf_file *file,uint32_t id,char **out,exr_error *error);
 /* Patch document-subject XMP without flattening unknown RDF structures. */
 exr_status exr_pdf_xmp_write(const void *data,size_t size,const exr_metadata_entry *changes,size_t count,
