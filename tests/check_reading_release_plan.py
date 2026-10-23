@@ -9,12 +9,14 @@ import os
 from pathlib import Path
 import sys
 import tarfile
+from unittest.mock import patch
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from prepare_reading_release import (HOSTS, PROFILES, one, sha, verify_ancestry, verify_artifact_inventory,
                                     verify_candidate, verify_candidate_registry, verify_run, verify_summary, zip_members)
 from reading_required import GROUPS, expected_artifacts, expected_jobs
+from check_parallel_integration import fetch
 
 SOURCE = 'a' * 40
 IDENTITY = {'sdk_version': '3.40.0', 'abi': 1, 'library_schema': 7, 'library_header_version': '3.34.0'}
@@ -120,6 +122,18 @@ def main():
             cases.append({'name': name, 'passed': True})
             return
         raise AssertionError('accepted invalid protocol fixture: ' + name)
+
+    def repository_api_requests():
+        with patch.dict(os.environ, GITHUB_REPOSITORY='synthetic/protocol', GH_TOKEN='protocol-only'):
+            with patch('check_parallel_integration.urllib.request.urlopen',
+                       side_effect=lambda request, timeout: io.BytesIO(b'{"default_branch":"main"}')) as transport:
+                assert fetch('')['default_branch'] == 'main'
+                fetch('git/ref/heads/main')
+        assert [call.args[0].full_url for call in transport.call_args_list] == [
+            'https://api.github.com/repos/synthetic/protocol',
+            'https://api.github.com/repos/synthetic/protocol/git/ref/heads/main']
+
+    positive('canonical_repository_root_and_subresource_requests', repository_api_requests)
 
     record = {'id': 123, 'run_attempt': 1, 'head_sha': SOURCE, 'event': 'push', 'status': 'completed',
               'conclusion': 'success', 'path': '.github/workflows/reading-required.yml'}
