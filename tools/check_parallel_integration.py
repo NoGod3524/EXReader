@@ -111,7 +111,8 @@ def verify_supplemental(kind, source, run, jobs, artifacts):
 
 
 def fetch(path):
-    request = urllib.request.Request('https://api.github.com/repos/' + os.environ['GITHUB_REPOSITORY'] + '/' + path,
+    url = 'https://api.github.com/repos/' + os.environ['GITHUB_REPOSITORY']
+    request = urllib.request.Request(url + ('/' + path if path else ''),
         headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json',
                  'X-GitHub-Api-Version': '2022-11-28'})
     with urllib.request.urlopen(request, timeout=60) as response:
