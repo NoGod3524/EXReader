@@ -1,0 +1,63 @@
+name: Required native reading SDK
+on:
+  pull_request:
+  push:
+    branches: [codex/framework, codex/r6-reading-release]
+    paths: ['.github/workflows/reading-required.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tests/check_reading_release.py
+      - run: python3 tests/check_reading_required.py
+  native:
+    uses: ./.github/workflows/native.yml
+  profiles:
+    uses: ./.github/workflows/reading-core.yml
+  platforms:
+    uses: ./.github/workflows/reading-platforms.yml
+  corpus:
+    uses: ./.github/workflows/r2-reading-corpus.yml
+  performance:
+    uses: ./.github/workflows/reading-real.yml
+    with:
+      require_budgets: true
+  required:
+    name: reading-required
+    if: always()
+    needs: [protocol, native, profiles, platforms, corpus, performance]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve every upstream result without skipping the final check
+        env:
+          UPSTREAM_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          mkdir -p build/reading-required
+          printf '%s\n' "$UPSTREAM_RESULTS" > build/reading-required/needs.json
+      - name: Read same-run immutable artifact metadata and download in cloud only
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          path: build/reading-required/artifacts
+      - name: Strict same-source, same-attempt quality and release-material summary
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reading_required.py build/reading-required/artifacts build/reading-required/needs.json build/reading-required/summary.json
+      - name: Preserve rejection or acceptance without publishing
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reading-required-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/reading-required/needs.json
+            build/reading-required/summary.json
+          if-no-files-found: error

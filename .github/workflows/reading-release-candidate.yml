@@ -2,6 +2,12 @@ name: Reading release candidates
 on:
   push:
     branches: [codex/r6-reading-release]
+    paths:
+      - 'tools/reading_release.py'
+      - 'tests/check_reading_release.py'
+      - 'tests/reading_release/**'
+      - '.github/workflows/reading-core.yml'
+      - '.github/workflows/reading-release-candidate.yml'
   workflow_dispatch:
 permissions:
   contents: read

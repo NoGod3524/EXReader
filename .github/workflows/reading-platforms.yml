@@ -3,6 +3,7 @@ on:
   push:
     branches: ['handoff/reading-h6-platform-gate']
   workflow_dispatch:
+  workflow_call:
 permissions:
   contents: read
 defaults:
