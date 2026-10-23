@@ -1,0 +1,38 @@
+name: Pinned PDF JPX dependency
+on:
+  push:
+    branches: ['codex/r2-pdf-jpx-dependency']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch and identify unchanged OpenJPEG source in cloud
+        run: |
+          python3 - <<'PY'
+          import hashlib,io,json,pathlib,tarfile,urllib.request
+          url='https://codeload.github.com/uclouvain/openjpeg/tar.gz/refs/tags/v2.5.4'
+          with urllib.request.urlopen(url,timeout=120) as response:
+              assert response.url.startswith('https://')
+              raw=response.read(16*1024*1024+1)
+          assert len(raw)<=16*1024*1024
+          root=pathlib.Path('build/jpx-source');root.mkdir(parents=True)
+          (root/'openjpeg-v2.5.4.tar.gz').write_bytes(raw)
+          with tarfile.open(fileobj=io.BytesIO(raw),mode='r:gz') as archive:
+              license=archive.extractfile('openjpeg-2.5.4/LICENSE').read()
+              notices=[m.name for m in archive.getmembers() if m.isfile() and m.name.count('/')==1 and
+                       any(m.name.rsplit('/',1)[-1].upper().startswith(x) for x in ('LICENSE','COPYING','NOTICE','PATENTS','COPYRIGHT'))]
+          (root/'LICENSE').write_bytes(license)
+          report={'url':url,'archive_sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw),
+                  'license_sha256':hashlib.sha256(license).hexdigest(),'root_notices':notices}
+          (root/'source.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openjpeg-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/jpx-source/
+          if-no-files-found: error
