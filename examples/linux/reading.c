@@ -97,7 +97,7 @@ static exr_status cancel(linux_reader *reader) {
 static void product_refresh(linux_reader *reader,reader_result *result) {
   reader_catalog_error product_error={0};exr_error error={0};size_t failed=0;
   if(!reader->catalog && reader_catalog_open(reader->catalog_path,&reader->catalog,&product_error)!=0) {
-    snprintf(result->message,sizeof(result->message),"Books saved locally; catalog unavailable, retry on shelf refresh");
+    snprintf(result->message,sizeof(result->message),"Books saved locally; catalog unavailable, retry by reopening a book");
     fprintf(stderr,"Product catalog open: %s\n",product_error.message);return;
   }
   exr_status status=reader_catalog_sdk_repair(reader->catalog,reader->library,result->books,

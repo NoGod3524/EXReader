@@ -60,6 +60,19 @@ jobs:
         run: ctest --test-dir build/desktop-sdk --output-on-failure --no-tests=error --timeout 180 --output-junit "$DESKTOP_WORKSPACE/build/desktop-evidence/tests.xml"
       - name: Kill two actual processes and repair in fresh processes
         run: python3 tests/reader_catalog/check_desktop_sdk.py build/desktop-sdk
+      - name: Package the lightweight static Windows product and original 26 self-checks
+        if: runner.os == 'Windows'
+        run: |
+          python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/desktop-sdk/EXReaderProduct.exe --output build/desktop-windows-package --static-reading
+          python3 tests/windows_host/make_fixtures.py --output build/desktop-windows-fixtures
+      - name: Original Windows evidence rejection cases plus static SDK provider refusals
+        if: runner.os == 'Windows'
+        run: python3 tests/windows_host/check_evidence.py --package build/desktop-windows-package/EXReader --sdk build/reading-library/stage --manifest build/desktop-windows-package/build.json --fixtures build/desktop-windows-fixtures --selftest-report build/desktop-windows-package/report.json --consumer-binary build/desktop-sdk/EXReaderProduct.exe --static-link-map build/desktop-sdk/windows-host.map --output build/desktop-windows-negative
+      - name: Original 158 Windows UI actions and eight bound screenshots on the actual product
+        if: runner.os == 'Windows'
+        env:
+          EXREADER_HOST_ACCEPTANCE: '1'
+        run: python3 tools/check_windows_host.py --package build/desktop-windows-package/EXReader --output build/desktop-windows-ui --sdk build/reading-library/stage --manifest build/desktop-windows-package/build.json --steps tests/windows_host --fixtures build/desktop-windows-fixtures --selftest-report build/desktop-windows-package/report.json --consumer-binary build/desktop-sdk/EXReaderProduct.exe --static-link-map build/desktop-sdk/windows-host.map
       - name: Assemble the actual GTK host with the original pinned font
         if: runner.os == 'Linux'
         run: |
@@ -101,4 +114,8 @@ jobs:
             build/reading-library/CMakeCache.txt
             build/desktop-gtk-ui/
             build/desktop-gtk-product/
+            build/desktop-windows-package/
+            build/desktop-windows-negative/
+            build/desktop-windows-ui/
+            build/desktop-sdk/windows-host.map
           if-no-files-found: error

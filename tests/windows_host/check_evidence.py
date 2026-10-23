@@ -49,6 +49,7 @@ def main():
     parser = argparse.ArgumentParser()
     for name in ('package', 'sdk', 'manifest', 'fixtures', 'selftest-report', 'consumer-binary', 'output'):
         parser.add_argument('--' + name, type=Path, required=True)
+    parser.add_argument('--static-link-map', type=Path)
     args = parser.parse_args()
     c.require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Run evidence checks in GitHub cloud')
     args.output.mkdir(parents=True, exist_ok=False)
@@ -140,13 +141,14 @@ def main():
 
         # The same preflight used by real UI execution, with the real cloud-built package.
         original_manifest = json.loads(args.manifest.read_text())
-        def seal(manifest, steps=ROOT / 'tests/windows_host', fixtures=args.fixtures):
+        def seal(manifest, steps=ROOT / 'tests/windows_host', fixtures=args.fixtures, link_map=args.static_link_map):
             target = temp / ('preflight-' + str(len(checks)))
             target.mkdir()
             registration = target / 'build.json'
             registration.write_text(json.dumps(manifest), encoding='utf-8')
             return c.seal_inputs(args.package.resolve(), args.sdk.resolve(), registration,
-                args.selftest_report.resolve(), args.consumer_binary.resolve(), steps.resolve(), fixtures.resolve(), target)
+                args.selftest_report.resolve(), args.consumer_binary.resolve(), steps.resolve(), fixtures.resolve(), target,
+                link_map.resolve() if link_map else None)
         seal(original_manifest)
         passed('positive_real_cloud_package_preflight')
         def bad_manifest(name, modify):
@@ -160,8 +162,17 @@ def main():
         bad_manifest('selftest_image_identity_mismatch', lambda value: value.update(image_sha256='0' * 64))
         for name in ('EXReader.exe', 'Reader.otf', 'Sample.epub', 'Sample-positive.epub', 'Sample.pdf', 'Sample-Text.pdf'):
             bad_manifest('mandatory_file_missing_' + name, lambda value, name=name: value['files'].pop(name))
-        runtime = next(name for name in ('exreader.dll', 'libexreader.dll') if name in original_manifest['files'])
-        bad_manifest('mandatory_runtime_missing', lambda value: value['files'].pop(runtime))
+        if args.static_link_map is None:
+            runtime = next(name for name in ('exreader.dll', 'libexreader.dll') if name in original_manifest['files'])
+            bad_manifest('mandatory_runtime_missing', lambda value: value['files'].pop(runtime))
+        else:
+            refuses('static_reading_requires_explicit_link_proof', lambda: seal(original_manifest, link_map=None))
+            bad_manifest('static_reading_wrong_linkage_declaration', lambda value: value.update(linkage='shared'))
+            original_map = args.static_link_map.read_text(errors='replace')
+            for symbol, source in (('exr_core', 'core'), ('exr_library', 'library')):
+                changed_map = temp / (symbol + '-wrong-provider.map')
+                changed_map.write_text(original_map.replace(symbol + ':' + source + '.c.obj', 'untrusted:' + source + '.c.obj'))
+                refuses('static_wrong_provider_' + symbol, lambda changed_map=changed_map: seal(original_manifest, link_map=changed_map))
         altered_steps = temp / 'steps'
         shutil.copytree(ROOT / 'tests/windows_host', altered_steps)
         phase_a = altered_steps / 'phase-a.txt'
