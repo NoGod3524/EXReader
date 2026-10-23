@@ -109,10 +109,13 @@ static int reflow_page(exr_pager *pager,size_t part,size_t page,
   if(ok) ok=text_sample(pager,layout,item,error);
   exr_bitmap_free(&bitmap);exr_layout_free(owned);return ok;
 }
-static int oversize_owned_page(exr_publication *publication,exr_font *font,route target,sample *item) {
+static int oversize_owned_page(exr_publication *publication,exr_font *font,route target,exr_pager **cached,sample *item) {
   exr_pager *probe=NULL;exr_layout *layout=NULL;exr_error error={0};exr_bitmap bitmap={0};
   size_t page;double at=now_ms();int ok=0;
-  if(item->cache_rejection_status!=EXR_LIMIT || !create_pager(publication,target.part,font,0,&probe,&error)) goto done;
+  if(item->cache_rejection_status!=EXR_LIMIT) goto done;
+  /* Drop the failed cache before decoding an independent large temporary page. */
+  exr_pager_free(*cached);*cached=NULL;
+  if(!create_pager(publication,target.part,font,0,&probe,&error)) goto done;
   for(page=0;page<=target.page;page++) {
     exr_layout_free(layout);layout=NULL;
     if(exr_pager_next(probe,&layout,&error)!=EXR_OK || !layout) goto done;
@@ -221,9 +224,10 @@ int main(int argc,char **argv) {
         transition=now_ms()-at;current_part=target.part;
       }
       if(reflow_page(pager,target.part,target.page,"random",1,&samples[count],&error)!=1) {
-        if(!oversize_owned_page(publication,font,target,&samples[count])) {
+        if(!oversize_owned_page(publication,font,target,&pager,&samples[count])) {
           diagnose_cache_failure(publication,font,target);goto finish;
         }
+        current_part=SIZE_MAX;
         error.code=EXR_OK;error.message[0]='\0';
       }
       samples[count].layout_ms+=transition;samples[count].total_ms+=transition;

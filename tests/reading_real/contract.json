@@ -12,7 +12,7 @@
   "sequential_turns": 32,
   "random_turns": 16,
   "epub_access": "owned next() for first/sequential with explicit EOF; recreate borrowed get() pager for random and include recreation time",
-  "oversize_page_policy": "Only after get() returns EXR_LIMIT, replay a fresh owned next() pager to target; accept fallback only if observed exr_layout_memory_size exceeds the unchanged 8MiB cache budget. Include rejected get, construction and replay time; free temporary page. Require same route RGBA and selected UTF-8 text as sequential. No claim that get() accepts oversized pages.",
+  "oversize_page_policy": "Only after get() returns EXR_LIMIT, drop its failed cache and replay a fresh owned next() pager to target; accept fallback only if observed exr_layout_memory_size exceeds the unchanged 8MiB cache budget. Include rejected get, failed cache release, construction and replay time; free temporary page. The next random operation recreates its cache. Require same route RGBA and selected UTF-8 text as sequential. No claim that get() accepts oversized pages.",
   "seed": 20261023,
   "process_timeout_seconds": 180,
   "thread_count": 1,
