@@ -1,0 +1,125 @@
+name: Desktop product public SDK bridge
+on:
+  push:
+    branches: [codex/reader-desktop-catalog]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  desktop:
+    name: desktop SDK (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require frozen SDK and unchanged product schema
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Install Linux host dependency
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev at-spi2-core xvfb openbox xdotool xclip x11-utils imagemagick python3-pil
+      - name: Enter native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install unmodified reading-library SDK
+        run: |
+          mkdir -p build/desktop-evidence
+          cmake --preset reading-library 2>&1 | tee build/desktop-evidence/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/desktop-evidence/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/desktop-evidence/sdk-install.log
+      - name: Compile product bridge against installed public API
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "DESKTOP_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          gtk=OFF
+          if [ "$RUNNER_OS" = Linux ]; then gtk=ON; fi
+          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DEXR_READER_FIXTURES="$ws/tests/fixtures" -DEXR_READER_BUILD_GTK="$gtk" 2>&1 | tee build/desktop-evidence/configure.log
+          cmake --build build/desktop-sdk --parallel 4 --verbose 2>&1 | tee build/desktop-evidence/build.log
+      - name: Real source digest, mode, cancellation and product transaction checks
+        run: ctest --test-dir build/desktop-sdk --output-on-failure --no-tests=error --timeout 180 --output-junit "$DESKTOP_WORKSPACE/build/desktop-evidence/tests.xml"
+      - name: Kill two actual processes and repair in fresh processes
+        run: python3 tests/reader_catalog/check_desktop_sdk.py build/desktop-sdk
+      - name: Package the lightweight static Windows product and original 26 self-checks
+        if: runner.os == 'Windows'
+        run: |
+          python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/desktop-sdk/EXReaderProduct.exe --output build/desktop-windows-package --static-reading
+          python3 tests/windows_host/make_fixtures.py --output build/desktop-windows-fixtures
+      - name: Original Windows evidence rejection cases plus static SDK provider refusals
+        if: runner.os == 'Windows'
+        run: python3 tests/windows_host/check_evidence.py --package build/desktop-windows-package/EXReader --sdk build/reading-library/stage --manifest build/desktop-windows-package/build.json --fixtures build/desktop-windows-fixtures --selftest-report build/desktop-windows-package/report.json --consumer-binary build/desktop-sdk/EXReaderProduct.exe --static-link-map build/desktop-sdk/windows-host.map --output build/desktop-windows-negative
+      - name: Original 158 Windows UI actions and eight bound screenshots on the actual product
+        if: runner.os == 'Windows'
+        env:
+          EXREADER_HOST_ACCEPTANCE: '1'
+        run: python3 tools/check_windows_host.py --package build/desktop-windows-package/EXReader --output build/desktop-windows-ui --sdk build/reading-library/stage --manifest build/desktop-windows-package/build.json --steps tests/windows_host --fixtures build/desktop-windows-fixtures --selftest-report build/desktop-windows-package/report.json --consumer-binary build/desktop-sdk/EXReaderProduct.exe --static-link-map build/desktop-sdk/windows-host.map
+      - name: Actual Windows product source identity, recovery, visible refusal and dual ownership locks
+        if: runner.os == 'Windows'
+        run: python3 tests/reader_catalog/check_windows_product.py --package build/desktop-windows-package/EXReader --original-evidence build/desktop-windows-ui --fixtures build/desktop-windows-fixtures --output build/desktop-windows-product
+      - name: Assemble the actual GTK host with the original pinned font
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p build/desktop-payload/bin
+          cp build/desktop-sdk/gtk-host/exreader-linux build/desktop-payload/bin/
+          python3 - <<'PY'
+          import sys, shutil
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from host_font import fetch
+          font = fetch(Path('build/desktop-font-cache'))
+          for name in ('Reader.otf', 'OFL.txt'):
+              shutil.copyfile(font / name, Path('build/desktop-payload') / name)
+          PY
+      - name: Original twenty GTK operations and real product startup repair
+        if: runner.os == 'Linux'
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox >build/desktop-evidence/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tools/check_linux_host.py --payload build/desktop-payload --output build/desktop-gtk-ui
+            python3 tests/reader_catalog/check_gtk_product.py --payload build/desktop-payload --original-evidence build/desktop-gtk-ui --output build/desktop-gtk-product
+          '
+      - name: Preserve original logs, link provider and source-bound evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-desktop-sdk-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/desktop-evidence/
+            build/desktop-sdk/verified.json
+            build/desktop-sdk/sdk-check/
+            build/desktop-sdk/native-check/
+            build/desktop-sdk/kill-*/
+            build/desktop-sdk/sdk-link.map
+            build/desktop-sdk/Testing/Temporary/LastTest.log
+            build/desktop-sdk/CMakeCache.txt
+            build/reading-library/CMakeCache.txt
+            build/desktop-gtk-ui/
+            build/desktop-gtk-product/
+            build/desktop-windows-package/
+            build/desktop-windows-negative/
+            build/desktop-windows-ui/
+            build/desktop-windows-product/
+            build/desktop-sdk/windows-host.map
+          if-no-files-found: error
