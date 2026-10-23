@@ -12,8 +12,8 @@ import tarfile
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from prepare_reading_release import (HOSTS, PROFILES, sha, verify_ancestry, verify_candidate,
-                                    verify_run, verify_summary, zip_members)
+from prepare_reading_release import (HOSTS, PROFILES, one, sha, verify_ancestry, verify_artifact_inventory,
+                                    verify_candidate, verify_candidate_registry, verify_run, verify_summary, zip_members)
 from reading_required import GROUPS, expected_artifacts, expected_jobs
 
 SOURCE = 'a' * 40
@@ -145,6 +145,11 @@ def main():
                       expired=False, workflow_run={'head_sha': SOURCE, 'id': 123})
                  for index, name in enumerate(sorted(expected_artifacts(123, 1)))]
     publisher = {'integration_id': 15368, 'publisher': 'github-actions', 'check_id': 999}
+    extra_native = dict(id=999, name='EXReader-extra-native-kit')
+    complete = artifacts + [dict(id=998, name='reading-required-123-1'), extra_native]
+    positive('extra_native_artifact_retained', lambda: verify_artifact_inventory(complete, 123, 1))
+    rejected('required_artifact_missing', lambda: verify_artifact_inventory(complete[1:], 123, 1))
+    rejected('artifact_name_duplicate', lambda: verify_artifact_inventory(complete + [dict(id=1000, name=extra_native['name'])], 123, 1))
     summary = {'schema': 1, 'accepted': True, 'problems': [], 'source_sha': SOURCE, 'run_id': '123',
                'run_attempt': '1', 'workflow_head_sha': SOURCE, 'published': False, 'complete_product': False,
                'wp16_cpu_credit_seconds': 0, 'publisher': publisher,
@@ -162,19 +167,38 @@ def main():
     for host in HOSTS:
         for profile in PROFILES:
             positive(host + '_' + profile, lambda host=host, profile=profile:
-                     verify_candidate(fixture(host, profile), SOURCE, 123, 1, host, profile, IDENTITY))
+                     checked_candidate(fixture(host, profile), host, profile))
+    registry = [registered_candidate(fixture(host, profile)) for host in HOSTS for profile in PROFILES]
+    positive('accepted_six_package_registry', lambda: verify_candidate_registry(registry))
+    rejected('accepted_registry_missing_package', lambda: verify_candidate_registry(registry[:-1]))
+    changed = copy.deepcopy(registry)
+    changed[0] = copy.deepcopy(changed[1])
+    rejected('accepted_registry_duplicate_package', lambda: verify_candidate_registry(changed))
+    changed = registered_candidate(fixture())
+    changed['sha256'] = '0' * 64
+    rejected('candidate_registry_different_digest', lambda: verify_candidate(fixture(), SOURCE, 123, 1, 'Linux', 'reading-core', IDENTITY, changed))
     for mutation in ('wrong_source', 'wrong_arch', 'wrong_runner', 'wrong_attempt', 'wrong_repository',
                      'wrong_abi', 'wrong_schema', 'published', 'file_digest', 'file_size', 'mode', 'extra',
                      'path_escape', 'symlink', 'duplicate_tar', 'inner_manifest', 'quality_granted',
                      'unaccepted', 'tar_digest', 'manifest_digest'):
         rejected('candidate_' + mutation, lambda mutation=mutation:
-                 verify_candidate(fixture(mutation=mutation), SOURCE, 123, 1, 'Linux', 'reading-core', IDENTITY))
+                 checked_candidate(fixture(mutation=mutation), 'Linux', 'reading-core'))
     output = io.BytesIO()
     with zipfile.ZipFile(output, mode='w') as archive:
         archive.writestr('../escape', b'x')
     rejected('zip_path_escape', lambda: zip_members(output.getvalue()))
     print(json.dumps({'protocol_only': True, 'published': False, 'cases': len(cases),
                       'passed': len(cases), 'results': cases}, allow_nan=False))
+
+
+def registered_candidate(raw):
+    with zip_members(raw) as archive:
+        candidate = json.loads(one(archive, 'candidate.json'))
+    return {key: candidate[key] for key in ('profile', 'host', 'arch', 'archive', 'bytes', 'sha256', 'manifest_sha256')}
+
+
+def checked_candidate(raw, host, profile):
+    return verify_candidate(raw, SOURCE, 123, 1, host, profile, IDENTITY, registered_candidate(raw))
 
 
 if __name__ == '__main__':

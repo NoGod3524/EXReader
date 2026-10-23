@@ -84,7 +84,21 @@ def verify_summary(summary, needs, artifacts, source, run, attempt, jobs, publis
     return current
 
 
-def verify_candidate(raw_zip, source, run, attempt, host, profile, identity):
+def verify_artifact_inventory(artifacts, run, attempt):
+    require(len({item['id'] for item in artifacts}) == len(artifacts) and
+            len({item['name'] for item in artifacts}) == len(artifacts), 'duplicate cloud artifacts')
+    required = expected_artifacts(run, attempt) | {f'reading-required-{run}-{attempt}'}
+    require(required <= {item['name'] for item in artifacts}, 'required release evidence missing')
+
+
+def verify_candidate_registry(records):
+    require(len(records) == 6 and {(item['host'], item['profile']) for item in records} ==
+            {(host, profile) for host in HOSTS for profile in PROFILES} and
+            all(item['arch'] == HOSTS[item['host']] for item in records), 'accepted six-package registry incomplete')
+    return {(item['host'], item['profile']): item for item in records}
+
+
+def verify_candidate(raw_zip, source, run, attempt, host, profile, identity, registered):
     with zip_members(raw_zip) as archive:
         candidate = json_bytes(one(archive, 'candidate.json'))
         manifest_raw = one(archive, 'release-manifest.json')
@@ -107,6 +121,8 @@ def verify_candidate(raw_zip, source, run, attempt, host, profile, identity):
         require(candidate.get('accepted') is True and candidate.get('quality_accepted') is False and
                 candidate.get('archive') == name and candidate.get('manifest_sha256') == sha(manifest_raw),
                 'candidate seal was not accepted or manifest changed')
+        require({key: candidate[key] for key in ('profile', 'host', 'arch', 'archive', 'bytes', 'sha256', 'manifest_sha256')} == registered,
+                'candidate seal differs from the accepted six-package registry')
         require(candidate['ci'] == manifest['ci'], 'candidate and manifest CI differ')
         payload = one(archive, name)
         require(len(payload) == candidate['bytes'] and sha(payload) == candidate['sha256'], 'sealed tar changed')
@@ -163,8 +179,7 @@ def prepare(source, run, output):
     publisher = verify_publisher(fetch(f'check-runs/{check_id}'), source, ruleset)
     artifacts = pages(f'actions/runs/{run}/artifacts', 'artifacts')
     summary_name = f'reading-required-{run}-{attempt}'
-    require(len(artifacts) == 19 and {item['name'] for item in artifacts} == expected_artifacts(run, attempt) | {summary_name},
-            'release requires exactly 18 upstream artifacts and the accepted summary')
+    verify_artifact_inventory(artifacts, run, attempt)
     summary_artifact = next(item for item in artifacts if item['name'] == summary_name)
     require(summary_artifact['expired'] is False and summary_artifact['size_in_bytes'] > 0 and
             summary_artifact['workflow_run']['head_sha'] == source and summary_artifact['workflow_run']['id'] == run and
@@ -173,6 +188,7 @@ def prepare(source, run, output):
         summary = json_bytes(one(archive, 'summary.json'))
         needs = json_bytes(one(archive, 'needs.json'))
     verify_summary(summary, needs, artifacts, source, run, attempt, jobs, publisher)
+    registered = verify_candidate_registry(summary['identity']['candidates'])
     header = source_text(source, 'include/exr/base.h')
     sdk = re.search(r'^#define EXR_VERSION "([0-9]+\.[0-9]+\.[0-9]+)"$', header, re.M)
     abi = re.search(r'^#define EXR_ABI_VERSION ([0-9]+)u?$', header, re.M)
@@ -206,7 +222,8 @@ def prepare(source, run, output):
             artifact_name = (f'reading-{profile}-{run}-{attempt}' if host == 'Linux' else
                              f'reading-platform-{host}-{profile}-{run}-{attempt}')
             item = next(item for item in artifacts if item['name'] == artifact_name)
-            name, payload, sealed = verify_candidate(download(item), source, run, attempt, host, profile, identity)
+            name, payload, sealed = verify_candidate(download(item), source, run, attempt, host, profile, identity,
+                                                     registered[(host, profile)])
             (output / name).write_bytes(payload)
             archives.append(dict(sealed, name=name, artifact={key: item[key] for key in ('id', 'name', 'digest', 'size_in_bytes')}))
     (output / 'SHA256SUMS').write_text(''.join(f'{item["sha256"]}  {item["name"]}\n' for item in archives), encoding='utf-8')
