@@ -52,6 +52,9 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
     private String query;
     private long generation, appliedGeneration, discardedResults;
     private int maxRowsObserved;
+    private int createdViews, recycledViews;
+    private long activityStartedNs, firstInteractiveNs;
+    private android.view.ViewTreeObserver.OnPreDrawListener firstDraw;
     private boolean loading, before, after, applying, started;
     private volatile boolean closed;
 
@@ -69,7 +72,7 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 query=Normalizer.normalize(s.toString().trim(), Normalizer.Form.NFC);
                 invalidateRequest(); // Invalidate now, before the debounce; an old result cannot flash back.
-                rows.clear(); before=after=false; notifyDataSetChanged();
+                rows.clear(); CatalogShelf.this.before=CatalogShelf.this.after=false; notifyDataSetChanged();
                 status.setText("Loading books…");
                 if (pendingSearch != null) ui.removeCallbacks(pendingSearch);
                 pendingSearch=()-> { if (started && !closed) reset(null, 0); };
@@ -88,6 +91,19 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
     }
 
     void load() { if (!started) start(); else refresh(); }
+
+    void observeFirstInteractive(long startedNs) {
+        activityStartedNs=startedNs;
+        firstDraw=()->{
+            if (firstInteractiveNs==0 && started && !loading && appliedGeneration==generation
+                    && (rows.isEmpty() || list.getChildCount()>0) && list.isShown() && list.isEnabled()) {
+                firstInteractiveNs=android.os.SystemClock.elapsedRealtimeNanos();
+                list.getViewTreeObserver().removeOnPreDrawListener(firstDraw); firstDraw=null;
+            }
+            return true;
+        };
+        list.getViewTreeObserver().addOnPreDrawListener(firstDraw);
+    }
 
     CatalogStore.ShelfBook cachedBook(long id) {
         for (CatalogStore.ShelfBook row:rows) if (row.sdkBookId==id) return row;
@@ -221,34 +237,40 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
     @Override public boolean hasStableIds() { return true; }
 
     @Override public View getView(int position,View recycled,ViewGroup parent) {
-        View row=recycled==null ? LayoutInflater.from(context).inflate(android.R.layout.simple_list_item_2,parent,false) : recycled;
+        if (recycled==null) createdViews++; else recycledViews++;
+        View row=recycled==null ? LayoutInflater.from(context).inflate(android.R.layout.simple_list_item_1,parent,false) : recycled;
         CatalogStore.ShelfBook book=getItem(position);
-        TextView title=row.findViewById(android.R.id.text1), detail=row.findViewById(android.R.id.text2);
-        title.setMaxLines(1); title.setEllipsize(TextUtils.TruncateAt.END); title.setText(book.title);
-        detail.setMaxLines(2); detail.setEllipsize(TextUtils.TruncateAt.END);
+        TextView title=row.findViewById(android.R.id.text1);
+        title.setMaxLines(3); title.setEllipsize(TextUtils.TruncateAt.END);
         String bytes=book.sourceBytes<1024 ? book.sourceBytes+" B" : book.sourceBytes<1024*1024
                 ? String.format(Locale.ROOT,"%.1f KiB",book.sourceBytes/1024.0)
                 : String.format(Locale.ROOT,"%.1f MiB",book.sourceBytes/(1024.0*1024.0));
-        detail.setText((book.author.isEmpty() ? "" : book.author+" · ")+book.format.toUpperCase(Locale.ROOT)+" · "+bytes);
+        title.setText(book.title+"\n"+(book.author.isEmpty() ? "" : book.author+" · ")+book.format.toUpperCase(Locale.ROOT)+" · "+bytes);
         return row;
     }
 
     String observation() {
         try {
-            JSONArray keys=new JSONArray();
+            JSONArray keys=new JSONArray(), visibleKeys=new JSONArray();
             for (CatalogStore.ShelfBook book:rows) keys.put(book.key.bookKey);
+            int first=list.getFirstVisiblePosition();
+            for(int at=Math.max(0,first);at<Math.min(rows.size(),first+list.getChildCount());at++)visibleKeys.put(rows.get(at).key.bookKey);
             Viewport visible=viewport();
             return new JSONObject().put("query",query).put("generation",generation).put("applied_generation",appliedGeneration)
                     .put("loading",loading).put("cached_rows",rows.size()).put("max_cached_rows",maxRowsObserved)
                     .put("page_limit",PAGE_SIZE).put("cache_limit",MAX_ROWS).put("has_before",before).put("has_after",after)
                     .put("discarded_results",discardedResults).put("visible_children",list.getChildCount())
+                    .put("created_views",createdViews).put("recycled_views",recycledViews)
+                    .put("activity_started_elapsed_ns",activityStartedNs).put("first_interactive_elapsed_ns",firstInteractiveNs)
+                    .put("first_interactive_ms",firstInteractiveNs==0 ? JSONObject.NULL : (firstInteractiveNs-activityStartedNs)/1e6)
                     .put("top_key",visible==null ? JSONObject.NULL : visible.key.bookKey)
-                    .put("top_y",visible==null ? 0 : visible.top).put("keys",keys).toString();
+                    .put("top_y",visible==null ? 0 : visible.top).put("keys",keys).put("visible_keys",visibleKeys).toString();
         } catch (Exception error) { throw new IllegalStateException(error); }
     }
 
     @Override public void close() {
         save(); closed=true; invalidateRequest();
         if (pendingSearch!=null) ui.removeCallbacks(pendingSearch);
+        if (firstDraw!=null && list.getViewTreeObserver().isAlive())list.getViewTreeObserver().removeOnPreDrawListener(firstDraw);
     }
 }

@@ -33,7 +33,8 @@ public final class ShelfCatalogTest extends Instrumentation {
     private static final int TXT_BOOKS=2200, TOTAL=TXT_BOOKS+2;
     private static final String[] NAMES={"realSdkImportsAndProductionRepair", "forwardKeysetHasNoMissingOrRepeatedBooks",
             "reverseKeysetMatchesForwardOrder", "sameTitleUsesSourceKeyTieBreak", "titleAuthorAndLiteralSearch",
-            "cancelsQueriesAndRejectsWrongOwner", "hidesUnmappedAndDeletedProducts", "repairsNewImportBeforeRefresh"};
+            "cancelsQueriesAndRejectsWrongOwner", "hidesUnmappedAndDeletedProducts", "repairsNewImportBeforeRefresh",
+            "canceledOldSearchCannotReplaceNewResults"};
     private interface Check { void run() throws Exception; }
     private Context context;
     private File directory;
@@ -48,7 +49,8 @@ public final class ShelfCatalogTest extends Instrumentation {
         int failures=0;
         Check[] checks={this::realSdkImportsAndProductionRepair,this::forwardKeysetHasNoMissingOrRepeatedBooks,
                 this::reverseKeysetMatchesForwardOrder,this::sameTitleUsesSourceKeyTieBreak,this::titleAuthorAndLiteralSearch,
-                this::cancelsQueriesAndRejectsWrongOwner,this::hidesUnmappedAndDeletedProducts,this::repairsNewImportBeforeRefresh};
+                this::cancelsQueriesAndRejectsWrongOwner,this::hidesUnmappedAndDeletedProducts,this::repairsNewImportBeforeRefresh,
+                this::canceledOldSearchCannotReplaceNewResults};
         try {
             directory=new File(context.getCacheDir(),"shelf-catalog"); remove(directory); require(directory.mkdirs(),"test folder");
             seed(directory,false);
@@ -176,6 +178,42 @@ public final class ShelfCatalogTest extends Instrumentation {
         require(book.created && store.localShelfBook(book.id)==null,"SDK commit precedes product mapping");
         store.repairMissingMappings();
         require(all("New arrival").size()==1 && store.localShelfBook(book.id)!=null,"refreshed page sees production repair");
+    }
+
+    private void canceledOldSearchCannotReplaceNewResults() throws Exception {
+        java.util.concurrent.ConcurrentLinkedQueue<Runnable> scheduled=new java.util.concurrent.ConcurrentLinkedQueue<>();
+        AtomicReference<CatalogShelf> controller=new AtomicReference<>();
+        AtomicReference<android.widget.EditText> input=new AtomicReference<>();
+        AtomicReference<Throwable> failure=new AtomicReference<>();
+        runOnMainSync(()->{
+            android.widget.EditText search=new android.widget.EditText(context); input.set(search);
+            android.content.SharedPreferences preferences=context.getSharedPreferences("shelf-race-test",Context.MODE_PRIVATE);
+            preferences.edit().clear().commit();
+            CatalogShelf shelf=new CatalogShelf(context,new android.widget.ListView(context),search,
+                    new android.widget.TextView(context),preferences,scheduled::add,
+                    (query,anchor,before,inclusive,signal)->store.shelfPage(query,anchor,before,inclusive,signal),failure::set);
+            controller.set(shelf); shelf.start(); search.setText("Book 0200");
+        });
+        try {
+            long deadline=SystemClock.uptimeMillis()+5000;
+            while(scheduled.size()<2 && SystemClock.uptimeMillis()<deadline)SystemClock.sleep(25);
+            require(scheduled.size()==2,"old and debounced replacement requests queued independently");
+            scheduled.remove().run(); waitForIdleSync();
+            runOnMainSync(()->{
+                try { require(new JSONObject(controller.get().observation()).getInt("cached_rows")==0,
+                        "canceled old search never flashes back while replacement is pending"); }
+                catch(Exception error){throw new IllegalStateException(error);}
+            });
+            scheduled.remove().run(); waitForIdleSync();
+            AtomicReference<String> observed=new AtomicReference<>();
+            runOnMainSync(()->observed.set(controller.get().observation()));
+            JSONObject value=new JSONObject(observed.get());
+            require(failure.get()==null && value.getString("query").equals("Book 0200")
+                    && value.getInt("cached_rows")==1 && value.getLong("discarded_results")>=1,
+                    "actual new catalog result wins and canceled result is discarded");
+            require(value.getJSONArray("keys").getString(0).equals(all("Book 0200").get(0).key.bookKey),
+                    "replacement source identity is from the real product catalog");
+        } finally { runOnMainSync(()->controller.get().close()); }
     }
 
     private void seedUi() {
