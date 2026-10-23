@@ -11,11 +11,11 @@ import zipfile
 from PIL import Image, ImageChops
 
 API = 'https://api.github.com/repos/NoGod3524/EXReader'
-RUN = 39903068530
-SOURCE = 'd78abd7911c3ceb7b723cb4605765e88f0dd6785'
-ARTIFACT = 12479359216
-SIZE = 157155099
-DIGEST = 'sha256:8d9d35d71948af1ba5cd76a93ea380e7d5d5cdef524ad289fb481995b2403975'
+RUN = 39905079097
+SOURCE = '5bc805abb3a56297b73af06fdff8a248dd8326e0'
+ARTIFACT = 12481047758
+SIZE = 157125270
+DIGEST = 'sha256:c36b5592315ec661d3d1987cddd2a66be1cbbe71c1a7fc970e1a97d4be990143'
 HEADERS = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json',
            'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'EXReader-debug-bitmap-evidence-audit'}
 
