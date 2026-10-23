@@ -116,6 +116,8 @@ def generate(root):
         filters=b'[/ASCII85Decode /JPXDecode]')
     add('indexed-jp2-decode-0-255', indices, RGB, dictionary=palette)
     add('indexed-j2k-decode-0-255', indices_raw, RGB, dictionary=palette)
+    add('indexed-jp2-reversed-decode-ignored', indices, RGB,
+        dictionary=palette.replace(b'/Decode [0 255]', b'/Decode [255 0]'))
     add('rgb-softmask', rgb, [(255, 255, 255), RGB[1], RGB[2], (255, 255, 255)],
         dictionary=b'/ColorSpace /DeviceRGB /BitsPerComponent 8 /SMask 6 0 R', mask=bytes([0, 255, 255, 0]))
     add('rgb-color-key-mask', rgb, [(255, 255, 255), RGB[1], RGB[2], RGB[3]],
