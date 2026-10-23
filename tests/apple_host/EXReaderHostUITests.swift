@@ -47,11 +47,14 @@ final class EXReaderHostUITests: XCTestCase {
     private struct ScreenSnapshot {
         let elements: [String: XCUIElementSnapshot]
         let bookCount: Int
+        let frame: CGRect
 
         init(_ root: XCUIElementSnapshot) {
             var indexed: [String: XCUIElementSnapshot] = [:]
             var books = 0
+            var windowFrame: CGRect?
             func visit(_ node: XCUIElementSnapshot) {
+                if windowFrame == nil && node.elementType == .window && !node.frame.isEmpty { windowFrame = node.frame }
                 if !node.identifier.isEmpty && indexed[node.identifier] == nil { indexed[node.identifier] = node }
                 if node.elementType == .button && node.identifier.hasPrefix("library.book.") { books += 1 }
                 for child in node.children { visit(child) }
@@ -59,6 +62,7 @@ final class EXReaderHostUITests: XCTestCase {
             visit(root)
             elements = indexed
             bookCount = books
+            frame = windowFrame ?? root.frame
         }
 
         func text(_ identifier: String) -> String? {
@@ -132,9 +136,56 @@ final class EXReaderHostUITests: XCTestCase {
 
     private func libraryIdleIdentity(_ state: ScreenSnapshot) -> String? {
         guard state.elements["library.title"] != nil, state.elements["library.busy"] == nil,
-              state.elements["library.import.epub"]?.isEnabled == true,
+              let importButton = state.elements["library.import.epub"], importButton.isEnabled,
               let status = state.text("library.status") else { return nil }
-        return "library|\(state.bookCount)|\(status)"
+        return "library|\(state.bookCount)|\(status)|\(state.frame)|\(importButton.frame)"
+    }
+
+    @discardableResult
+    private func tapLibraryImport(_ identifier: String, expecting statuses: [String]? = nil,
+                                  timeout: TimeInterval = 90, file: StaticString = #filePath, line: UInt = #line) -> Date {
+        let deadline = Date().addingTimeInterval(timeout)
+        let ready = waitStableState(max(0, deadline.timeIntervalSinceNow)) {
+            let buttons = self.app.buttons.matching(identifier: identifier)
+            guard self.app.state == .runningForeground, buttons.count == 1,
+                  let state = self.screenSnapshot(), let idle = self.libraryIdleIdentity(state),
+                  let node = try? buttons.element(boundBy: 0).snapshot(), node.elementType == .button, node.isEnabled,
+                  !node.frame.isEmpty, state.frame.contains(node.frame), buttons.element(boundBy: 0).isHittable else { return nil }
+            return "\(idle)|\(node.frame)"
+        }
+        reportImportAction(identifier, phase: "before-single-tap")
+        let inBudget = Date() < deadline
+        XCTAssertTrue(ready && inBudget, "import button must be unique, enabled, hittable and stable", file: file, line: line)
+        guard ready && inBudget else { return deadline }
+        app.buttons.matching(identifier: identifier).element(boundBy: 0).tap()
+        if let statuses {
+            reportImportAction(identifier, phase: "after-single-tap")
+            let matched = waitUntil(max(0, deadline.timeIntervalSinceNow)) {
+                let status = self.text("library.status")
+                return Date() < deadline && statuses.contains(where: { status.contains($0) })
+            }
+            if !matched { reportWaitFailure("library.status", expected: statuses.joined(separator: "|")) }
+            XCTAssertTrue(matched, "import result must arrive within its original budget", file: file, line: line)
+        }
+        return deadline
+    }
+
+    private func reportImportAction(_ identifier: String, phase: String) {
+        let state = screenSnapshot()
+        let query = app.buttons.matching(identifier: identifier)
+        let controls: [[String: Any]] = (0..<min(query.count, 4)).map {
+            let button = query.element(boundBy: $0)
+            return ["type": String(describing: button.elementType), "enabled": button.isEnabled,
+                    "hittable": button.isHittable, "frame": String(describing: button.frame)]
+        }
+        let record: [String: Any] = ["phase": phase, "identifier": identifier, "app_state": String(describing: app.state),
+            "any_matches": app.descendants(matching: .any).matching(identifier: identifier).count,
+            "button_matches": query.count, "controls": controls,
+            "frame": String(describing: state?.frame), "status": state?.text("library.status") ?? "<absent>",
+            "busy": state?.elements["library.busy"] != nil,
+            "trace": (state?.elements["library.title"]?.value as? String) ?? "<absent>"]
+        if let data = try? JSONSerialization.data(withJSONObject: record, options: [.sortedKeys]),
+           let value = String(data: data, encoding: .utf8) { print("EXR_UI_IMPORT_ACTION " + value) }
     }
 
     private func waitLabel(_ identifier: String, contains text: String,
@@ -177,6 +228,7 @@ final class EXReaderHostUITests: XCTestCase {
     }
 
     private func reportWaitFailure(_ identifier: String, expected: String) {
+        if identifier == "library.status" { reportImportAction("library.import.epub", phase: "result-wait-failed") }
         guard let state = screenSnapshot() else { return }
         var observed: [String: Any] = ["identifier": identifier, "expected": expected,
             "book_count": state.bookCount]
@@ -250,8 +302,7 @@ final class EXReaderHostUITests: XCTestCase {
         _ = waitElement("library.title", 60)
         var row = bookRow(title)
         if !row.exists {
-            waitElement("library.import.epub").tap()
-            XCTAssertTrue(waitLabelAny("library.status", ["已导入", "已存在"], 90))
+            tapLibraryImport("library.import.epub", expecting: ["已导入", "已存在"])
             row = bookRow(title)
         }
         XCTAssertTrue(row.waitForExistence(timeout: 30), "book \(title) missing")
@@ -335,32 +386,27 @@ final class EXReaderHostUITests: XCTestCase {
             attach("01-empty-library")
         }
         try step("step02_import_epub_fixture") {
-            waitElement("library.import.epub").tap()
-            XCTAssertTrue(waitLabelAny("library.status", ["已导入"], 90))
-            XCTAssertTrue(bookRow("Sample.epub").waitForExistence(timeout: 20))
+            let deadline = tapLibraryImport("library.import.epub", expecting: ["已导入"])
+            XCTAssertTrue(bookRow("Sample.epub").waitForExistence(timeout: min(20, max(0, deadline.timeIntervalSinceNow))))
             attach("02-imported-epub")
         }
         try step("step03_duplicate_import_reuses_row") {
-            waitElement("library.import.epub.duplicate").tap()
-            XCTAssertTrue(waitLabelAny("library.status", ["已存在"], 60))
+            tapLibraryImport("library.import.epub.duplicate", expecting: ["已存在"], timeout: 60)
             XCTAssertEqual(bookRows().count, 1, "duplicate import must reuse the stored record")
         }
         try step("step04_import_pdf_fixture") {
-            waitElement("library.import.pdf").tap()
-            XCTAssertTrue(waitLabelAny("library.status", ["已导入"], 90))
+            tapLibraryImport("library.import.pdf", expecting: ["已导入"])
             XCTAssertEqual(bookRows().count, 2)
             XCTAssertTrue(bookRow("Sample.pdf").exists)
             attach("03-library-two-books")
         }
         try step("step05_broken_import_error_is_recoverable") {
-            waitElement("library.import.broken").tap()
-            XCTAssertTrue(waitLabelAny("library.status", ["操作失败"], 60))
+            tapLibraryImport("library.import.broken", expecting: ["操作失败"], timeout: 60)
             XCTAssertTrue(waitElement("library.error", 10).exists)
             attach("04-broken-import-error")
         }
         try step("step06_reopen_epub_after_error") {
-            waitElement("library.import.epub").tap()
-            XCTAssertTrue(waitLabelAny("library.status", ["已存在", "已导入"], 60))
+            tapLibraryImport("library.import.epub", expecting: ["已存在", "已导入"], timeout: 60)
             let row = bookRow("Sample.epub")
             XCTAssertTrue(row.waitForExistence(timeout: 20))
             row.tap()
@@ -572,15 +618,14 @@ final class EXReaderHostUITests: XCTestCase {
             attach("18-library-slow-mode")
         }
         try step("step34_cancel_in_flight_import") {
-            waitElement("library.import.large").tap()
+            tapLibraryImport("library.import.large", timeout: 30)
             XCTAssertTrue(waitElement("library.cancel", 4).exists)
             element("library.cancel").tap()
             XCTAssertTrue(waitLabel("library.status", contains: "已取消", 40))
             attach("19-import-cancelled")
         }
         try step("step35_recover_with_valid_import") {
-            waitElement("library.import.epub").tap()
-            XCTAssertTrue(waitLabelAny("library.status", ["已导入", "已存在"], 90))
+            tapLibraryImport("library.import.epub", expecting: ["已导入", "已存在"])
             let row = bookRow("Sample.epub")
             XCTAssertTrue(row.waitForExistence(timeout: 20))
             row.tap()
@@ -602,8 +647,7 @@ final class EXReaderHostUITests: XCTestCase {
             launch()
             openLibrary()
             if !bookRow("Sample.pdf").exists {
-                waitElement("library.import.pdf").tap()
-                XCTAssertTrue(waitLabelAny("library.status", ["已导入", "已存在"], 90))
+                tapLibraryImport("library.import.pdf", expecting: ["已导入", "已存在"])
             }
             let row = bookRow("Sample.pdf")
             XCTAssertTrue(row.waitForExistence(timeout: 30))
@@ -684,7 +728,7 @@ final class EXReaderHostUITests: XCTestCase {
             openLibrary()
             count = bookRows().count
             XCTAssertGreaterThanOrEqual(count, 2)
-            waitElement("library.import.large").tap()
+            tapLibraryImport("library.import.large", timeout: 30)
             _ = waitElement("library.cancel", 5)
             XCTAssertTrue(waitUntil(3) {
                 !self.element("library.import.epub").isEnabled &&
@@ -755,8 +799,7 @@ final class EXReaderHostUITests: XCTestCase {
             try ensureReader("Sample.epub")
             originalNotes = text("reader.notes")
             openLibrary()
-            waitElement("library.import.unicode").tap()
-            XCTAssertTrue(waitLabelAny("library.status", ["已导入", "已存在"], 90))
+            tapLibraryImport("library.import.unicode", expecting: ["已导入", "已存在"])
             bookRow("Unicode.epub").tap()
             XCTAssertTrue(waitLabel("reader.title", contains: "Unicode.epub", 90))
         }
@@ -838,8 +881,7 @@ final class EXReaderHostUITests: XCTestCase {
         var location = ""
         try step("bounded01_import_source_and_open") {
             launch(); openLibrary()
-            waitElement("library.import.bounded").tap()
-            XCTAssertTrue(waitLabelAny("library.status", ["已导入", "已存在"], 90))
+            tapLibraryImport("library.import.bounded", expecting: ["已导入", "已存在"])
             bookRow("Bounded.epub").tap()
             XCTAssertTrue(waitReaderIdle(90))
             XCTAssertTrue(text("reader.progress").contains("有界 EPUB"))
