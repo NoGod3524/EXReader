@@ -832,6 +832,9 @@ static void job_start(host_job *job) {
   InterlockedIncrement(&job->refs);
   handle = _beginthreadex(NULL, 0, job_thread, job, 0, &thread_id);
   if (!handle) {
+#ifdef EXR_READER_PRODUCT_CATALOG
+    if(product_job_kind(job->kind)) g.product_pending=1;
+#endif
     InterlockedDecrement(&job->refs);
     g.job = NULL;
     job->status = EXR_MEMORY;
@@ -2851,7 +2854,7 @@ static void handle_job_complete(host_job *job) {
     }
     if(job->status!=EXR_OK) {
       set_status(job->kind==JOB_PRODUCT_DELETE ? L"原书仍保留；删除未完成，书目映射将在重启后修复。":
-        L"原书已保存在本机；书目索引待修复，可重新导入同一本书或重启重试。");
+        L"原书已保存在本机；书架信息将在重启后重试恢复。");
     } else if(job->kind==JOB_PRODUCT_ATTACH) set_status(job->message[0] ? job->message:L"原书与书目索引已保存。");
     if(job->product_auto_open && !job_cancel_flag(job) && !g.closing) {
       host_job *open=job_new(JOB_OPEN);
@@ -3000,7 +3003,7 @@ static void handle_job_complete(host_job *job) {
         attach->product_auto_open=g.auto_open_imported && job->imported;
         g.auto_open_imported=0;job_submit(attach);
       } else {
-        g.auto_open_imported=0;set_status(L"原书已保存；无法启动书目索引任务，重启后重试。");
+        g.product_pending=1;g.auto_open_imported=0;set_status(L"原书已保存；无法启动书目索引任务，重启后重试。");
       }
 #else
       if (g.auto_open_imported && job->imported) {
@@ -4390,7 +4393,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   {
     host_job *repair=job_new(JOB_PRODUCT_REPAIR);
     if(repair) job_start(repair);
-    else set_status(L"无法启动书目修复；原书仍保留，可重启后重试。");
+    else { g.product_pending=1;set_status(L"无法启动书目修复；原书仍保留，可重启后重试。"); }
   }
 #endif
   if (script[0]) drive_start();
