@@ -418,7 +418,7 @@ static void action(GtkWidget *widget,gpointer name) {
     gtk_stack_set_visible_child_name(GTK_STACK(stack),"shelf");focus_list(shelf);
 #ifdef EXR_READER_PRODUCT_CATALOG
     shelf_schedule_restore();
-    if(shelf_pending) submit(READER_SHELF,0,NULL,font_size);else shelf_request(0,TRUE);
+    if(shelf_pending) submit(READER_SHELF,0,NULL,font_size);
 #endif
     state();
   }
