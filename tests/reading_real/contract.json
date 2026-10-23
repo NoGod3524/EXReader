@@ -22,5 +22,6 @@
   "pdf": {"dpi": 72, "scale": 1, "channels": 4, "background": "ffffffff", "reference": "poppler pdftoppm RGB 72dpi antialias yes"},
   "epub": {"width": 800, "height": 1000, "margin": 32, "font_size": 24, "workspace_budget": 16777216, "window_bytes": 16384, "page_cache_count": 2, "page_cache_budget": 8388608, "checkpoint_count": 4, "checkpoint_budget": 2097152, "checkpoint_interval": 16},
   "percentile_method": "nearest rank over retained operation samples; startup percentiles across five fresh processes",
+  "quality_verification": "After timed rendering, hash full RGBA, page selected normalized UTF-8 and canonical source ranges/positions; PDF uses owned page text and ordered quads. Hashing/text verification is outside latency timings but included in process peak RSS. Freeze per-route signatures from an earlier identified baseline; changes reject until explicit review and a new frozen baseline. Poppler difference tolerances are reviewed per-page regression boundaries and never grant render parity.",
   "budget_policy": "diagnostic run first; commit baseline-derived numeric budgets before a separate enforcing run; never widen to make a failing candidate pass"
 }

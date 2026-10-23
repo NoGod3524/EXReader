@@ -18,8 +18,8 @@ typedef struct {
   double layout_ms,render_ms,total_ms;
   uint32_t width,height;
   uint64_t bitmap_bytes,hash,directory_metadata_bytes;
-  uint64_t text_hash,text_bytes;
-  size_t layout_bytes,text_start,text_end;
+  uint64_t text_hash,text_bytes,position_hash;
+  size_t layout_bytes,text_start,text_end,position_items;
   int oversize_fallback,cache_rejection_status;
   double failed_cache_ms;
   exr_chapter_stats memory;
@@ -33,6 +33,28 @@ static double now_ms(void) {
 static uint64_t rss(void) {
   struct rusage value;
   return getrusage(RUSAGE_SELF,&value) || value.ru_maxrss<0 ? 0 : (uint64_t)value.ru_maxrss*1024;
+}
+static void hash_bytes(uint64_t *hash,const void *data,size_t bytes) {
+  const unsigned char *text=data;size_t i;
+  for(i=0;i<bytes;i++) { *hash^=text[i];*hash*=UINT64_C(1099511628211); }
+}
+static int fixed_text_signature(exr_fixed_document *fixed,size_t page,sample *item,exr_error *error) {
+  exr_fixed_text *text=NULL;const char *value;const exr_text_region *regions;size_t bytes=0,count=0,i;
+  char line[512];int n;
+  if(exr_fixed_load_text(fixed,page,NULL,&text,error)!=EXR_OK) return 0;
+  value=exr_fixed_text_string(text,&bytes);regions=exr_fixed_text_regions(text,&count);
+  if((bytes && !value) || (count && !regions)) { exr_fixed_text_free(text);return 0; }
+  item->text_hash=item->position_hash=UINT64_C(14695981039346656037);
+  item->text_bytes=item->text_end=bytes;item->position_items=count;
+  hash_bytes(&item->text_hash,value,bytes);
+  for(i=0;i<count;i++) {
+    const exr_text_region *r=&regions[i];
+    n=snprintf(line,sizeof(line),"%zu,%zu,%u,%a,%a,%a,%a,%a,%a,%a,%a;",r->start,r->end,r->flags,
+       r->quad[0],r->quad[1],r->quad[2],r->quad[3],r->quad[4],r->quad[5],r->quad[6],r->quad[7]);
+    if(n<0 || (size_t)n>=sizeof(line)) { exr_fixed_text_free(text);return 0; }
+    hash_bytes(&item->position_hash,line,(size_t)n);
+  }
+  exr_fixed_text_free(text);return 1;
 }
 static int bitmap_sample(exr_bitmap *bitmap,sample *item,const char *dump) {
   size_t x,y,row=(size_t)bitmap->width*4;
@@ -62,6 +84,7 @@ static int fixed_page(exr_fixed_document *fixed,size_t page,const char *phase,
   item->render_ms=item->total_ms=now_ms()-at;
   item->directory_metadata_bytes=exr_fixed_memory_size(fixed);
   if(ok) ok=bitmap_sample(&bitmap,item,dump);
+  if(ok) ok=fixed_text_signature(fixed,page,item,error);
   exr_bitmap_free(&bitmap);return ok;
 }
 static int create_pager(exr_publication *publication,size_t part,exr_font *font,int cached,
@@ -76,16 +99,32 @@ static int create_pager(exr_publication *publication,size_t part,exr_font *font,
     exr_pager_set_checkpoints(*pager,4,2u*1024u*1024u,16,error)==EXR_OK));
 }
 static exr_status text_sink(void *context,const char *text,size_t bytes,exr_error *error) {
-  sample *item=context;size_t i;(void)error;
-  for(i=0;i<bytes;i++) { item->text_hash^=(unsigned char)text[i];item->text_hash*=UINT64_C(1099511628211); }
+  sample *item=context;(void)error;
+  hash_bytes(&item->text_hash,text,bytes);
   item->text_bytes+=bytes;return EXR_OK;
 }
 static int text_sample(exr_pager *pager,const exr_layout *layout,sample *item,exr_error *error) {
-  size_t count=0;const exr_page *pages=exr_layout_pages(layout,&count);
+  size_t count=0,glyphs=0,boxes=0,i;const exr_page *pages=exr_layout_pages(layout,&count);
+  const exr_glyph *g=exr_layout_glyphs(layout,&glyphs);const exr_box *b=exr_layout_boxes(layout,&boxes);
+  char line[512];int n;
   if(!pages || count!=1) return 0;
   item->layout_bytes=exr_layout_memory_size(layout);
   item->text_start=pages[0].start;item->text_end=pages[0].end;
   item->text_hash=UINT64_C(14695981039346656037);item->text_bytes=0;
+  item->position_hash=UINT64_C(14695981039346656037);item->position_items=glyphs+boxes;
+  for(i=0;i<glyphs;i++) {
+    n=snprintf(line,sizeof(line),"G%zu,%zu,%zu,%u,%u,%zu,%a,%a,%a,%a,%u;",g[i].start,g[i].end,g[i].node,
+       g[i].codepoint,g[i].glyph,g[i].font_index,(double)g[i].x,(double)g[i].baseline,
+       (double)g[i].advance,(double)g[i].size,g[i].flags);
+    if(n<0 || (size_t)n>=sizeof(line)) return 0;
+    hash_bytes(&item->position_hash,line,(size_t)n);
+  }
+  for(i=0;i<boxes;i++) {
+    n=snprintf(line,sizeof(line),"B%d,%zu,%zu,%zu,%zu,%a,%a,%a,%a,%u;",(int)b[i].kind,b[i].node,
+       b[i].resource,b[i].start,b[i].end,(double)b[i].x,(double)b[i].y,(double)b[i].width,(double)b[i].height,b[i].flags);
+    if(n<0 || (size_t)n>=sizeof(line)) return 0;
+    hash_bytes(&item->position_hash,line,(size_t)n);
+  }
   return exr_pager_read_text(pager,item->text_start,item->text_end,text_sink,item,NULL,error)==EXR_OK;
 }
 static int reflow_page(exr_pager *pager,size_t part,size_t page,
@@ -261,11 +300,13 @@ finish:
            "\"total_ms\":%.6f,\"width\":%u,\"height\":%u,\"bitmap_bytes\":%" PRIu64 ","
            "\"directory_metadata_bytes\":%" PRIu64 ","
            "\"text_hash\":\"%016" PRIx64 "\",\"text_bytes\":%" PRIu64 ",\"text_start\":%zu,\"text_end\":%zu,"
+           "\"position_hash\":\"%016" PRIx64 "\",\"position_items\":%zu,"
            "\"layout_bytes\":%zu,\"oversize_fallback\":%d,\"cache_rejection_status\":%d,\"failed_cache_ms\":%.6f,"
            "\"pixel_hash\":\"%016" PRIx64 "\",\"workspace_bytes\":%zu,\"peak_workspace_bytes\":%zu,"
            "\"index_bytes\":%zu,\"cache_bytes\":%zu,\"checkpoint_bytes\":%zu,\"explicit_snapshot_bytes\":%zu}",
            i?",":"",s->phase,s->part,s->page,s->layout_ms,s->render_ms,s->total_ms,s->width,s->height,
            s->bitmap_bytes,s->directory_metadata_bytes,s->text_hash,s->text_bytes,s->text_start,s->text_end,
+           s->position_hash,s->position_items,
            s->layout_bytes,s->oversize_fallback,s->cache_rejection_status,s->failed_cache_ms,
            s->hash,m->parse_workspace_bytes,m->peak_parse_workspace_bytes,m->index_bytes,
            m->page_cache_bytes,m->checkpoint_bytes,m->explicit_snapshot_bytes);

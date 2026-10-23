@@ -25,6 +25,8 @@ MANIFEST = ROOT / "tools/reading_corpus/real-v1.json"
 BUDGETS = ROOT / "tests/reading_real/budgets.json"
 EPUB_MEMORY = ("workspace_bytes", "peak_workspace_bytes", "index_bytes", "cache_bytes",
                "checkpoint_bytes", "explicit_snapshot_bytes")
+SIGNATURE_FIELDS = ("width", "height", "pixel_hash", "text_start", "text_end", "text_bytes", "text_hash",
+                    "position_hash", "position_items")
 
 
 def read(path):
@@ -152,13 +154,15 @@ def native_metrics(record, entry, contract):
         require(abs(sample["total_ms"] - sample["layout_ms"] - sample["render_ms"]) <= .000003, "Timing accounting changed")
         route = (sample["part"], sample["page"])
         signature = (sample["width"], sample["height"], sample["pixel_hash"])
+        require(type(sample["text_start"]) is int and type(sample["text_end"]) is int and
+                0 <= sample["text_start"] <= sample["text_end"] and
+                sample["text_bytes"] == sample["text_end"] - sample["text_start"] and
+                type(sample["position_items"]) is int and sample["position_items"] >= 0 and
+                all(isinstance(sample[key], str) and re.fullmatch(r"[0-9a-f]{16}", sample[key]) is not None
+                    for key in ("text_hash", "position_hash")), "Invalid UTF-8/position signature evidence")
+        signature += tuple(sample[key] for key in SIGNATURE_FIELDS[3:])
         if entry["format"].lower() == "epub":
-            require(number(sample["layout_bytes"]) and sample["layout_bytes"] > 0 and
-                    type(sample["text_start"]) is int and type(sample["text_end"]) is int and
-                    0 <= sample["text_start"] <= sample["text_end"] and
-                    sample["text_bytes"] == sample["text_end"] - sample["text_start"] and
-                    isinstance(sample["text_hash"], str) and re.fullmatch(r"[0-9a-f]{16}", sample["text_hash"]) is not None,
-                    "Invalid selected UTF-8 text evidence")
+            require(number(sample["layout_bytes"]) and sample["layout_bytes"] > 0, "Invalid layout size")
             require(type(sample["oversize_fallback"]) is int and sample["oversize_fallback"] in (0, 1), "Invalid fallback marker")
             if sample["oversize_fallback"]:
                 require(sample["phase"] == "random" and sample["cache_rejection_status"] == 6 and
@@ -168,7 +172,6 @@ def native_metrics(record, entry, contract):
                 fallback_count += 1
             else:
                 require(sample["cache_rejection_status"] == 0 and sample["failed_cache_ms"] == 0, "Hidden cache rejection")
-            signature += (sample["text_start"], sample["text_end"], sample["text_bytes"], sample["text_hash"])
         require(route not in signatures or signatures[route] == signature, "Same route changed pixels")
         signatures[route] = signature
         if entry["format"].lower() == "epub":
@@ -233,6 +236,33 @@ def fallback_refusals(record, entry, contract):
     return result
 
 
+def frozen_signatures(expected, observed):
+    require(expected == observed,
+            "Cross-source page RGBA/UTF-8/position signature changed; explicit review and a new frozen baseline required")
+
+
+def signature_refusals(record, entry, contract):
+    _, baseline = native_metrics(record, entry, contract)
+    frozen_signatures(baseline, baseline)
+    route = (record["samples"][0]["part"], record["samples"][0]["page"])
+    for field in ("pixel_hash", "text_hash", "position_hash"):
+        mutant = copy.deepcopy(record)
+        for sample in mutant["samples"]:
+            if (sample["part"], sample["page"]) == route:
+                sample[field] = "0" * 16
+        # Deliberately stable corruption passes ordinary within-process repeat checks.
+        _, changed = native_metrics(mutant, entry, contract)
+        try:
+            frozen_signatures(baseline, changed)
+        except ValueError:
+            continue
+        raise ValueError("Stable cross-source corruption accepted: " + field)
+    result = {"scope": "observed_native_route_signature_guard_only", "case": entry["id"],
+              "positive": 1, "stable_corruptions_refused": 3, "passed": True}
+    print(json.dumps({"signature_refusal_regression": result}), flush=True)
+    return result
+
+
 def audit(summary, output, budgets=None):
     require(summary["schema"] == 1 and summary["scope"] == "linux_representative_reading", "Wrong report scope")
     require(summary["run_id"] == os.environ["GITHUB_RUN_ID"] and
@@ -291,6 +321,8 @@ def audit(summary, output, budgets=None):
     for name, metrics in pooled.items():
         results[name].update({key: {"p50": percentile(values, .5), "p95": percentile(values, .95)}
                               for key, values in metrics.items()})
+    page_signatures = {case: {f"{part}/{page}": dict(zip(SIGNATURE_FIELDS, values))
+                             for (part, page), values in routes.items()} for case, routes in signatures.items()}
     if budgets is not None:
         require(summary["budget_sha256"] == sha256(BUDGETS) and budgets == read(BUDGETS), "Budget identity changed")
         require(budgets["schema"] == 1 and budgets["frozen"] is True and
@@ -304,6 +336,10 @@ def audit(summary, output, budgets=None):
                 origin["artifact"]["digest"] == budgets["baseline_artifact_digest"], "Baseline origin changed")
         require(budgets["cpu_model"] == summary["environment"]["cpu_model"] and
                 budgets["compiler"] == summary["environment"]["compiler"], "Incomparable baseline CPU/compiler")
+        require(budgets["signature_policy"] == "exact-baseline-route-rgba-utf8-position" and
+                isinstance(budgets["signature_review_record"], str) and budgets["signature_review_record"].strip(),
+                "Missing fixed baseline signature review record")
+        frozen_signatures(budgets["page_signatures"], page_signatures)
         require(set(budgets["cases"]) == set(results), "Budget case coverage differs")
         for name, limits in budgets["cases"].items():
             require(set(limits) == set(results[name]), "Budget metric coverage differs")
@@ -313,10 +349,12 @@ def audit(summary, output, budgets=None):
         require(summary["installed_sdk"]["bytes"] <= budgets["installed_sdk_bytes"], "Installed SDK size budget exceeded")
         require(set(budgets["pixel_tolerances"]) == {f"{item['case']}/{item['page']}" for item in comparisons},
                 "Pixel tolerance coverage differs")
+        require(isinstance(budgets["pixel_review_record"], str) and budgets["pixel_review_record"].strip(),
+                "Missing per-page external difference-boundary review record")
         for item in comparisons:
             require(item["normalized_mean_absolute_error"] <= budgets["pixel_tolerances"][f"{item['case']}/{item['page']}"],
                     f"Pixel difference exceeds reviewed tolerance: {item['case']}/{item['page']}")
-    return {"cases": results, "pixel_comparisons": comparisons}
+    return {"cases": results, "pixel_comparisons": comparisons, "page_signatures": page_signatures}
 
 
 def selfcheck(summary, output, budgets):
@@ -356,6 +394,7 @@ def selfcheck(summary, output, budgets):
         "fake_fallback": lambda r: r["samples"][0].update(oversize_fallback=1),
         "hidden_cache_rejection": lambda r: r["samples"][0].update(cache_rejection_status=6),
         "changed_selected_text": lambda r: next(s for s in r["samples"] if s["phase"] == "random").update(text_hash="0" * 16),
+        "changed_position": lambda r: next(s for s in r["samples"] if s["phase"] == "random").update(position_hash="0" * 16),
     }
     for name, change in raw_changes.items():
         mutant = copy.deepcopy(native);change(mutant)
@@ -395,6 +434,9 @@ def main():
                "contract": contract, "files": entries, "attempts": [], "references": [], "problems": [],
                "real_document_credit": 0, "synthetic_credit": 0, "wp16_cpu_credit_seconds": 0,
                "results": None, "complete_product": False}
+    summary["render_parity_granted"] = False
+    summary["external_pixel_scope"] = "reviewed difference-regression boundaries only; never a correctness/parity score"
+    summary["cross_source_signatures_checked"] = False
     summary["memory_telemetry"] = {
         "peak_rss_bytes": "whole-process Linux high-water; components may overlap and are not added",
         "epub": "public chapter workspace/index/cache/checkpoint counters",
@@ -448,6 +490,8 @@ def main():
                     try:
                         observation["metrics"], _ = native_metrics(raw, entry, contract)
                         observation["complete_process_valid"] = True
+                        if "signature_refusal_regression" not in summary:
+                            summary["signature_refusal_regression"] = signature_refusals(raw, entry, contract)
                         if raw["oversize_fallbacks"] and "oversize_refusal_regression" not in summary:
                             summary["oversize_refusal_regression"] = fallback_refusals(raw, entry, contract)
                     except (ValueError, KeyError, TypeError) as error:
@@ -483,6 +527,7 @@ def main():
         summary["measurement_valid"] = True
         summary["real_document_credit"] = len(entries)
         summary["accepted"] = budgets is not None
+        summary["cross_source_signatures_checked"] = budgets is not None
         if not budgets:
             summary["problems"].append("baseline_only: numeric performance and reviewed pixel budgets are not frozen")
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
