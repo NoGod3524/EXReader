@@ -137,12 +137,18 @@ def verify_baseline_report(budgets, current, output):
             baseline["run_attempt"] == str(budgets["baseline_run_attempt"]) and baseline["measurement_valid"] is True,
             "Baseline report identity or complete measurement refused")
     require(baseline["before"] == baseline["after"] and baseline["before"]["source_clean"] and
+            baseline["before"]["source_sha"] == baseline["source_sha"] and
+            baseline["before"]["source_tree"] == git("rev-parse", baseline["source_sha"] + "^{tree}") and
             baseline["sdk_candidate"] == current["sdk_candidate"] and
             baseline["before"]["sdk_candidate"] == current["before"]["sdk_candidate"] and
             baseline["before"]["sdk_trees"] == current["before"]["sdk_trees"], "Baseline SDK identity refused")
+    require(all(baseline["before"]["sdk_trees"][path] == git("rev-parse", baseline["source_sha"] + ":" + path)
+                for path in PROTECTED), "Baseline protected tree claims differ from committed source")
     require(baseline["contract_sha256"] == current["contract_sha256"] == budgets["contract_sha256"] and
             baseline["corpus_manifest_sha256"] == current["corpus_manifest_sha256"] == budgets["corpus_manifest_sha256"] and
             baseline["contract"] == current["contract"] and baseline["files"] == current["files"] and
+            baseline["before"]["contract_sha256"] == baseline["contract_sha256"] and
+            baseline["before"]["manifest_sha256"] == baseline["corpus_manifest_sha256"] and
             baseline["before"]["font"] == current["before"]["font"] and
             baseline["before"]["inputs"] == current["before"]["inputs"], "Baseline contract/corpus/font refused")
     require(all(baseline["environment"][key] == current["environment"][key] for key in ("cpu_model", "compiler", "reference")) and

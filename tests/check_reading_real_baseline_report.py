@@ -18,7 +18,9 @@ import measure_reading_real as gate
 if os.environ.get("GITHUB_ACTIONS") != "true":
     raise SystemExit("Run report provenance tests in Actions")
 
-identity = {"source_clean": True, "sdk_candidate": gate.SDK, "sdk_trees": {"src": "a" * 40},
+identity = {"source_clean": True, "source_sha": gate.SDK, "source_tree": gate.git("rev-parse", gate.SDK + "^{tree}"),
+            "sdk_candidate": gate.SDK, "sdk_trees": {path: gate.git("rev-parse", gate.SDK + ":" + path) for path in gate.PROTECTED},
+            "contract_sha256": "d" * 64, "manifest_sha256": "e" * 64,
             "font": {"sha256": "b" * 64}, "inputs": {"fixture": {"sha256": "c" * 64}}, "binary": {"bytes": 100}}
 current = {"scope": "linux_representative_reading", "sdk_candidate": gate.SDK, "before": identity,
            "contract_sha256": "d" * 64, "corpus_manifest_sha256": "e" * 64,
@@ -60,7 +62,7 @@ changes = {
     "wrong_attempt": lambda r: r.update(run_attempt="2"),
     "wrong_contract": lambda r: r.update(contract_sha256="0" * 64),
     "wrong_manifest": lambda r: r.update(corpus_manifest_sha256="0" * 64),
-    "changed_sdk_trees": lambda r: r["before"]["sdk_trees"].update(src="0" * 40),
+    "changed_sdk_trees": lambda r: (r["before"]["sdk_trees"].update(src="0" * 40), r["after"]["sdk_trees"].update(src="0" * 40)),
     "wrong_cpu": lambda r: r["environment"].update(cpu_model="other"),
     "wrong_compiler": lambda r: r["environment"].update(compiler="other"),
     "wrong_reference": lambda r: r["environment"].update(reference="other"),
