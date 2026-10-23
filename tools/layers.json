@@ -181,6 +181,7 @@
     "src/pdf_font_data.h": "pdf",
     "src/pdf_function_internal.h": "pdf",
     "src/pdf_internal.h": "pdf",
+    "src/pdf_jpx_internal.h": "pdf",
     "src/pdf_raster_internal.h": "pdf",
     "src/pdf_saslprep_data.h": "pdf",
     "src/pixels_internal.h": "graphics",
