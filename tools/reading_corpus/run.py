@@ -11,7 +11,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
-from check_corpus import digest
+from check_corpus import digest, valid_report
 
 
 def git(*args):
@@ -32,10 +32,10 @@ def registered(manifest, anchor):
         raise ValueError('Tracked source is modified')
 
 
-def location_probe(binary, font, entry, assets, folder):
+def location_probe(binary, font, entry, assets, folder, identity):
     folder.mkdir(parents=True)
     before = digest(assets / entry['path'])
-    result = {'id': entry['id'], 'classification': 'invalid_input', 'input_sha256': before}
+    result = {'id': entry['id'], 'classification': 'invalid_input', 'input_sha256': before, **identity}
     start = time.monotonic()
     if before != entry['sha256']:
         raise ValueError('Input hash mismatch before location probe')
@@ -77,6 +77,76 @@ def validate_report(report):
                 for r in report['documents']) and report.get('full_probe_accepted') is True)
 
 
+def validate_evidence(report, evidence_root):
+    """Recheck an accepted report against its retained same-operation evidence."""
+    def require(value, message):
+        if not value:
+            raise ValueError(message)
+
+    root = Path(evidence_root).resolve()
+
+    def load(relative, expected_sha):
+        path = root / relative
+        require(not path.is_symlink() and path.resolve().is_relative_to(root), 'Evidence path escapes root')
+        require(digest(path) == expected_sha, 'Evidence hash changed: ' + relative)
+        return json.loads(path.read_text(encoding='utf-8'))
+
+    identity = {key: report[key] for key in ('source_sha', 'run_id', 'run_attempt')}
+    require(validate_report(report), 'Cannot validate incomplete corpus acceptance')
+    summary = load('full/summary.json', report['full_summary_sha256'])
+    require(all(summary.get(key) == value for key, value in identity.items()) and
+            summary.get('accepted') is True and summary.get('identities_unchanged') is True and
+            summary.get('source_dirty') is False and summary.get('page_limit') == 0 and
+            summary.get('checked_entries') == summary.get('manifest_entries') == 8 and
+            len(summary.get('results', [])) == 8, 'Full evidence summary identity or coverage differs')
+    for index, document in enumerate(report['documents']):
+        for phase in ('full', 'location'):
+            relative = f'{phase}/{index:05d}/result.json'
+            require(document[phase + '_result'] == relative, 'Unexpected result path')
+            result = load(relative, document[phase + '_result_sha256'])
+            require(all(result.get(key) == value for key, value in identity.items()),
+                    'Result belongs to another source/run/attempt')
+            observed = result.get('report' if phase == 'full' else 'observed')
+            require(result.get('classification') == document[phase + '_classification'] == 'passed' and
+                    result.get('exit_code') == 0 and observed == document[phase + '_observed'],
+                    'Result classification or observed report differs')
+            expected_names = {'stdout.json', 'stderr.log'} if phase == 'full' else {'stdout.jsonl', 'stderr.log'}
+            require(set(result.get('evidence', {})) == expected_names, 'Missing or unexpected raw evidence')
+            for name, sha in result['evidence'].items():
+                attachment = root / phase / f'{index:05d}' / name
+                require(not attachment.is_symlink() and attachment.resolve().is_relative_to(root) and
+                        digest(attachment) == sha, 'Raw evidence changed: ' + name)
+            if phase == 'full':
+                item = summary['results'][index]
+                require(item['index'] == result['index'] == index and
+                        Path(item['result']).parts[-3:] == ('full', f'{index:05d}', 'result.json') and
+                        item['sha256'] == document['full_result_sha256'] and item['classification'] == 'passed' and
+                        item['observed'] == observed and result['input']['id'] == document['id'] and
+                        result['input']['sha256'] == result['observed_sha256'] == document['sha256'] and
+                        result['input']['expected'] == {'status': 0, 'complete': True} and
+                        valid_report(observed) and observed['complete'] is True and observed['status'] == 0,
+                        'Full result input or native report differs')
+                require(json.loads((root / phase / f'{index:05d}' / 'stdout.json').read_text()) == observed,
+                        'Full native stdout differs')
+            else:
+                rows = [json.loads(line) for line in
+                        (root / phase / f'{index:05d}' / 'stdout.jsonl').read_text().splitlines()]
+                require(result['id'] == document['id'] and result['input_sha256'] == document['sha256'] and
+                        observed.get('schema') == 1 and observed.get('status') == 0 and
+                        observed.get('complete') is True and all(type(observed.get(key)) is int and
+                        observed[key] >= 0 for key in ('units', 'checked', 'empty')) and
+                        observed['checked'] > 0 and observed['checked'] + observed['empty'] == observed['units'] and
+                        len(rows) == observed['units'] + 1 and rows[-1] == observed,
+                        'Location input or native report differs')
+                require(all(row.get('unit') == unit and type(row.get('status')) is int and row['status'] == 0 and
+                        type(row.get('text_bytes')) is int and row['text_bytes'] >= 0 and
+                        row.get('selector_state') == (1 if row['text_bytes'] else 0)
+                        for unit, row in enumerate(rows[:-1])) and
+                        sum(row['text_bytes'] > 0 for row in rows[:-1]) == observed['checked'],
+                        'Location unit evidence differs from summary')
+    return True
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--manifest', type=Path, required=True)
@@ -109,18 +179,26 @@ def main():
                         str(a.manifest), str(a.output / 'full'), '--root', str(a.assets),
                         '--timeout', '120', '--workers', '1'], stdout=log, stderr=subprocess.STDOUT, check=False)
     full = json.loads((a.output / 'full/summary.json').read_text())
+    identity = {'source_sha': git('rev-parse', 'HEAD').decode().strip(),
+                'run_id': os.environ['GITHUB_RUN_ID'], 'run_attempt': os.environ['GITHUB_RUN_ATTEMPT']}
     documents = []
     for index, entry in enumerate(data['files']):
-        loc = location_probe(a.location, a.font, entry, a.assets, a.output / 'location' / f'{index:05d}')
+        loc = location_probe(a.location, a.font, entry, a.assets, a.output / 'location' / f'{index:05d}', identity)
         item = full['results'][index]
+        result_path = a.output / 'full' / f'{index:05d}' / 'result.json'
+        result = json.loads(result_path.read_text()); result.update(identity)
+        result_path.write_text(json.dumps(result, indent=2, ensure_ascii=False) + '\n')
+        item['sha256'] = digest(result_path)
         record = {'id': entry['id'], 'format': entry['format'], 'sha256': entry['sha256'],
                   'full_classification': item['classification'], 'full_observed': item.get('observed'),
-                  'full_result': item['result'], 'full_result_sha256': item['sha256'],
+                  'full_result': f'full/{index:05d}/result.json', 'full_result_sha256': item['sha256'],
                   'location_classification': loc['classification'], 'location_observed': loc.get('observed'),
                   'location_result': f'location/{index:05d}/result.json',
                   'location_result_sha256': digest(a.output / 'location' / f'{index:05d}' / 'result.json')}
         documents.append(record)
         print(json.dumps({'document': record}), flush=True)
+    full.update(identity)
+    (a.output / 'full/summary.json').write_text(json.dumps(full, indent=2, ensure_ascii=False) + '\n')
     stable = (all(digest(Path(path)) == value for path, value in identity_paths.items()) and
               not git('status', '--porcelain', '--untracked-files=no').strip() and
               all(digest(a.assets / x['path']) == x['sha256'] for x in data['files']))
@@ -133,10 +211,17 @@ def main():
               'registration_sha': a.registered_at, 'manifest_entries': 8,
               'font_sha256': digest(a.font), 'identities': identities, 'identities_unchanged': stable,
               'full_probe_accepted': full['accepted'], 'full_counts': full['counts'],
+              'full_summary_sha256': digest(a.output / 'full/summary.json'),
               'location_counts': {k: sum(x['location_classification'] == k for x in documents)
                                   for k in sorted({x['location_classification'] for x in documents})},
               'documents': documents}
     report['accepted'] = validate_report(report)
+    if report['accepted']:
+        try:
+            validate_evidence(report, a.output)
+        except (OSError, ValueError, KeyError, TypeError, IndexError) as error:
+            report['accepted'] = False
+            report['evidence_problem'] = str(error)
     (a.output / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
     if os.environ.get('GITHUB_OUTPUT'):
         with Path(os.environ['GITHUB_OUTPUT']).open('a') as output:
