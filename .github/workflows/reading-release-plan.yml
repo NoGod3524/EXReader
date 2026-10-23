@@ -1,0 +1,37 @@
+name: Prepare accepted reading SDK release plan
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Full accepted source SHA already in remote default branch history
+        required: true
+        type: string
+      accepted_run_id:
+        description: Successful exact-source reading-required run ID
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+  checks: read
+jobs:
+  prepare:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Positive and refusal protocol checks
+        run: python3 tests/check_reading_release_plan.py
+      - name: Prepare original archives without rebuilding or publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLAN_SOURCE: ${{ inputs.source_sha }}
+          ACCEPTED_RUN: ${{ inputs.accepted_run_id }}
+        run: python3 tools/prepare_reading_release.py --source-sha "$PLAN_SOURCE" --accepted-run-id "$ACCEPTED_RUN" --output build/reading-release-plan
+      - name: Preserve prepared plan or refusal
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reading-release-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reading-release-plan
+          if-no-files-found: warn
