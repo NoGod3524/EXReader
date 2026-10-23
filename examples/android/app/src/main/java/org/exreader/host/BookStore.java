@@ -31,7 +31,12 @@ final class BookStore implements AutoCloseable {
         }
         catalog = openedCatalog;
         library = openedLibrary;
-        repairMissingMappings();
+        try { repairMissingMappings(); }
+        catch (RuntimeException | Error error) {
+            try { library.close(); } catch (RuntimeException cleanup) { error.addSuppressed(cleanup); }
+            try { catalog.close(); } catch (RuntimeException cleanup) { error.addSuppressed(cleanup); }
+            throw error;
+        }
     }
 
     boolean metadataRepairPending() { return metadataRepairPending; }

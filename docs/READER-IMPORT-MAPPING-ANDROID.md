@@ -16,6 +16,8 @@
 3. `HostTask.commit` 成功后书籍已发布，随后在独立 SQLite 单事务附加
    `reader_books` 与 `reader_local_books`。主键为 `format:sha256`；相同身份只核对
    不可变源信息，保留既有标题、收藏、删除状态、修订、墓碑和 outbox。
+   新行的 `sort_title` 使用 NFC 正规化，显示标题原样保留。历史非 unique SDK
+   重复行统一保留最小 SDK ID 的本机映射及该 ID 的真实位置模式，不删除重复 SDK 行。
 4. 发布前失败／取消只补偿本次 created 的 SDK 行和 owned 副本；重复旧行不删除。
    发布后产品 SQL 失败保留 SDK 行及原件，界面报告 metadata repair pending。
 5. 重启仅扫描没有本机映射的 SDK ID，通过公开 books/source 重建，成功映射不重复
@@ -29,9 +31,11 @@
 工作流 `.github/workflows/reader-import-android.yml` 在 API34 x86_64 模拟器运行：
 
 - 原 catalog 8 项检查保持完整。
-- 新 12 项真实 SDK／SQLite 检查，包括跨 64 KiB 哈希、删外部副本仍读 SDK 原件、
+- 新 14 项真实 SDK／SQLite 检查，包括跨 64 KiB 哈希、删外部副本仍读 SDK 原件、
   幂等映射、元数据／历史保留、legacy/bounded EPUB、源读错、摘要／长度错、SQL
-  拒绝的事务回滚、取消、已发布状态和本机 ID 冲突。
+  拒绝的事务回滚、取消、已发布状态、本机 ID 冲突、NFC 排序及历史重复的最小 ID。
+  历史行由 debug-only 桥接调用公开 `exr_library_import`／`exr_library_import_file`
+  实际建立，分别验证最旧行是 legacy 或 bounded EPUB；不写 SDK 私有表。
 - 两次独立杀进程：一次在 SDK 提交后、产品映射前；一次在 SDK 已提交且产品库
   已写入但尚未提交的 SQLite 事务内。新进程先证实产品行未发布，再经实际
   `BookStore` 启动修复，核原书摘要和幂等性。事务中断探针直接在同一 schema

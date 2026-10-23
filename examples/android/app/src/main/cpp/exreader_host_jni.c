@@ -357,7 +357,8 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeCloseSource(
 }
 
 JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFile(
-    JNIEnv *env, jclass type, jlong handle, jstring path, jint format, jstring title,jboolean legacy) {
+    JNIEnv *env, jclass type, jlong handle, jstring path, jint format, jstring title,
+    jboolean legacy, jboolean historical) {
   exr_library *store = library(env, handle);
   char *file = NULL, *name = NULL;
   int64_t id = 0;
@@ -394,7 +395,8 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFi
     }
   }
   if ((format == EXR_EPUB && !legacy) || format == EXR_PDF || format == EXR_CBZ) {
-    status = exr_library_import_file_unique(store, (exr_format)format, file, name, &id, &created, &error);
+    if (historical) status = exr_library_import_file(store, (exr_format)format, file, name, &id, &error);
+    else status = exr_library_import_file_unique(store, (exr_format)format, file, name, &id, &created, &error);
   } else {
     size_t size = 0;
     unsigned char *data = read_entire_file(file, &size);
@@ -404,7 +406,8 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFi
       throw_status(env, EXR_IO, NULL, "Cannot read the selected book");
       return NULL;
     }
-    status = exr_library_import_unique(store, (exr_format)format, data, size, name, &id, &created, &error);
+    if (historical) status = exr_library_import(store, (exr_format)format, data, size, name, &id, &error);
+    else status = exr_library_import_unique(store, (exr_format)format, data, size, name, &id, &created, &error);
     free(data);
   }
   free(file);
@@ -413,6 +416,7 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFi
     throw_status(env, status, &error, "Cannot import the book");
     return NULL;
   }
+  if (historical) created = 1;
   values[0] = (jlong)id;
   values[1] = (jlong)created;
   if (result) (*env)->SetLongArrayRegion(env, result, 0, 2, values);
