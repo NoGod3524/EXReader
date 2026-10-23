@@ -15,7 +15,7 @@ from pathlib import Path
 
 from measure_reading_core import ROOT, git, sha256
 from measure_reading_pdf import number, require
-from check_parallel_integration import fetch, pages
+from check_parallel_integration import download_artifact_zip, fetch, pages
 
 SDK = "9854061be331fe603a1822d9b2b36ee357154927"
 CORPUS_REGISTRATION = "ea5c13e081cfba86d9f6dd759439894463e51126"
@@ -111,8 +111,7 @@ def retain_baseline_report(origin, output):
     archive_path = output / ".baseline-input.zip"
     try:
         with archive_path.open("wb") as stream:
-            subprocess.run(["gh", "api", f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/{origin['artifact']['id']}/zip"],
-                           stdout=stream, check=True, timeout=120)
+            download_artifact_zip(origin['artifact']['id'], stream)
         require("sha256:" + sha256(archive_path) == origin["artifact"]["digest"], "Baseline ZIP digest refused")
         with zipfile.ZipFile(archive_path) as archive:
             name = "reading-real/summary.json"
