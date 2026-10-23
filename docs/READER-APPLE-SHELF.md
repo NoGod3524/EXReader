@@ -15,6 +15,10 @@ saved separately from the reader's existing exact progress and annotation state.
 An interrupted same-query refresh retains its previously saved cursor. An idle
 visible source key is also saved after a short debounce, so process termination
 does not require a preceding background event to preserve the last settled view.
+At the global tail, a taller native List may be unable to keep the old top row
+at the top. The host accepts its actual earlier first row only after observing
+both the requested row and terminal row in the viewport; it never invents an
+offscreen anchor. Search uses the same NFC/256-scalar bound at UI and SQL layers.
 
 The reader's compatibility/fallback metadata is separately capped at 50 rows.
 It remains available when an SDK import is saved but its product index is pending

@@ -121,6 +121,22 @@ import CryptoKit
         acknowledge()
         try check("layout_acknowledges_exact_restored_source", stillRestoring && paged.top == chosen.key &&
             !paged.observation.contains("\"restoring_layout\":true"))
+        let terminal = try queue.sync { try catalog.shelf(query: "", anchor: nil, before: true) }
+        let tailDefaults = UserDefaults(suiteName: "EXR.ShelfTail.\(UUID().uuidString)")!
+        let terminalTarget = terminal[terminal.count - 2]
+        tailDefaults.set(try JSONEncoder().encode(terminalTarget.key), forKey: "EXRShelfTop")
+        let tail = HostShelf(defaults: tailDefaults)
+        tail.connect { query, anchor, before, inclusive, done in
+            done(Result { try queue.sync { try catalog.shelf(query: query, anchor: anchor, before: before, inclusive: inclusive) } })
+        }
+        tail.observe([terminalTarget.id: CGRect(x: 0, y: 0, width: 100, height: 40)], size: CGSize(width: 100, height: 400))
+        var clamped: [String: CGRect] = [:]
+        for (index, row) in tail.rows.suffix(10).enumerated() {
+            clamped[row.id] = CGRect(x: 0, y: CGFloat(index * 40), width: 100, height: 40)
+        }
+        tail.observe(clamped, size: CGSize(width: 100, height: 400))
+        try check("terminal_viewport_clamp_keeps_real_visible_top", !tail.after && tail.top == tail.rows[tail.rows.count - 10].key &&
+            !tail.observation.contains("\"restoring_layout\":true"))
         try queue.sync { try catalog.close() }
         let manifest: [String: Any] = ["source_sha": ProcessInfo.processInfo.environment["GITHUB_SHA"]!,
             "run_id": ProcessInfo.processInfo.environment["GITHUB_RUN_ID"]!,

@@ -54,7 +54,7 @@ final class HostShelf: ObservableObject {
 
     func search() {
         debounce?.cancel()
-        query = String(query.prefix(256))
+        query = String(String.UnicodeScalarView(query.precomposedStringWithCanonicalMapping.unicodeScalars.prefix(256)))
         generation += 1
         rows = []; visible = []; top = nil; awaitingLayoutKey = nil; before = false; after = false; loading = true
         defaults.removeObject(forKey: "EXRShelfTop")
@@ -90,6 +90,7 @@ final class HostShelf: ObservableObject {
                 guard page.count <= 50 else { self.error = "书架分页超过上限"; return }
                 if !replacing && page.isEmpty {
                     if previous { self.before = false } else { self.after = false }
+                    if self.awaitingLayoutKey != nil { self.restoreRevision += 1 }
                     return
                 }
                 if replacing && page.isEmpty && anchor != nil && !previous {
@@ -135,7 +136,19 @@ final class HostShelf: ObservableObject {
         guard let first = ordered.first, let index = rows.firstIndex(where: { $0.id == first.key }) else { return }
         let acknowledged = awaitingLayoutKey != nil
         if let awaitingLayoutKey {
-            guard first.key == awaitingLayoutKey else { return }
+            if first.key != awaitingLayoutKey {
+                // Native List clamps an old top near the global end when a
+                // taller viewport cannot align that row at the top. Confirm
+                // only real visible target + terminal-row geometry.
+                guard let target = positions[awaitingLayoutKey], target.maxY > 0, target.minY < size.height,
+                      let last = rows.last, let tail = positions[last.id], tail.maxY > 0,
+                      tail.maxY <= size.height + 1 else { return }
+                if after {
+                    if !loading { request(anchor: last.key, previous: false, inclusive: false, replacing: false) }
+                    return
+                }
+                restoreKey = first.key
+            }
             self.awaitingLayoutKey = nil
         }
         if firstLayoutUptime == nil, !loading, generation == appliedGeneration {

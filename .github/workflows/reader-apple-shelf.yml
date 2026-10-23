@@ -163,7 +163,7 @@ jobs:
           seeds = list(Path('evidence').glob('apple-shelf-native-*/seed/shelf-seed.json'))
           assert len(seeds) == 1
           seed = json.loads(seeds[0].read_text())
-          assert seed['accepted'] is True and len(seed['checks']) == 13 and len(set(seed['source_keys'])) == 2202
+          assert seed['accepted'] is True and len(seed['checks']) == 14 and len(set(seed['source_keys'])) == 2202
           request = urllib.request.Request(f'https://api.github.com/repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}/artifacts?per_page=100',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
           data = json.load(urllib.request.urlopen(request))
           assert data['total_count'] == len(data['artifacts']) == 6
@@ -209,13 +209,13 @@ jobs:
           root = Path('build/apple-shelf-native')
           catalog = json.loads((root / 'catalog.json').read_text())
           seed = json.loads((root / 'seed/shelf-seed.json').read_text())
-          for value, count in [(catalog, 8), (seed, 13)]:
+          for value, count in [(catalog, 8), (seed, 14)]:
               assert value['accepted'] is True and value['failed'] == value['skipped'] == 0
               assert value['source_sha'] == os.environ['GITHUB_SHA']
               assert str(value['run_id']) == os.environ['GITHUB_RUN_ID'] and str(value['attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
               assert len(value['checks']) == count
           assert seed['books'] == len(set(seed['source_keys'])) == 2202
-          print('Exact catalog 8 and shelf 13 passed; 2202 real originals')
+          print('Exact catalog 8 and shelf 14 passed; 2202 real originals')
           PY
           python3 tools/build_apple_host.py --sdk "$sdk" --platform macos --output build/apple-shelf-native/standalone
       - uses: actions/upload-artifact@v4
