@@ -40,9 +40,14 @@ def main():
     pdf_bytes = pdf.read_bytes()
     cbz_bytes = cbz.read_bytes()
     host = Session((args.payload / 'bin/exreader-linux').resolve(), (args.payload / 'Reader.otf').resolve(), folder)
+    package = json.loads((args.payload.parent / 'build.json').read_text())
+    assert package['source_sha'] == source and package['sdk_version'] == '3.40.0' and package['abi'] == 1
+    assert package['files']['bin/exreader-linux'] == hashlib.sha256(host.binary.read_bytes()).hexdigest()
+    assert package['files']['Reader.otf'] == hashlib.sha256(host.font.read_bytes()).hexdigest()
     checks = []
     report = {'accepted': False, 'source_sha': source, 'run_id': run, 'attempt': attempt,
               'original_ui_cases': 20, 'original_product_cases': 5, 'checks': checks,
+              'package_manifest_sha256': hashlib.sha256((args.payload.parent / 'build.json').read_bytes()).hexdigest(),
               'scope': 'Linux native PDF/CBZ page reading, text panel and fixed annotations',
               'complete_product': False, 'performance_budget_accepted': False}
 

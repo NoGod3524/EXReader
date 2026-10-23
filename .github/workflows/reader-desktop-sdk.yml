@@ -78,26 +78,15 @@ jobs:
         run: python3 tests/reader_catalog/check_windows_product.py --package build/desktop-windows-package/EXReader --original-evidence build/desktop-windows-ui --fixtures build/desktop-windows-fixtures --output build/desktop-windows-product
       - name: Assemble the actual GTK host with the original pinned font
         if: runner.os == 'Linux'
-        run: |
-          mkdir -p build/desktop-payload/bin
-          cp build/desktop-sdk/gtk-host/exreader-linux build/desktop-payload/bin/
-          python3 - <<'PY'
-          import sys, shutil
-          from pathlib import Path
-          sys.path.insert(0, 'tools')
-          from host_font import fetch
-          font = fetch(Path('build/desktop-font-cache'))
-          for name in ('Reader.otf', 'OFL.txt'):
-              shutil.copyfile(font / name, Path('build/desktop-payload') / name)
-          PY
+        run: python3 tools/build_linux_host.py --sdk build/reading-library/stage --binary build/desktop-sdk/gtk-host/exreader-linux --output build/desktop-linux-package
       - name: Fixed-page and retained bounded backend against the installed SDK
         if: runner.os == 'Linux'
         run: |
           python3 tests/linux_host/generate_fixed.py build/desktop-fixed-inputs
-          build/desktop-sdk/gtk-host/exreader-linux-fixed-backend build/desktop-fixed.sqlite build/desktop-payload/Reader.otf build/desktop-fixed-inputs | tee build/desktop-evidence/fixed-backend.log
-          build/desktop-sdk/gtk-host/exreader-linux-fixed-import build/desktop-snapshot.sqlite build/desktop-payload/Reader.otf build/desktop-fixed-inputs/Pages.pdf build/desktop-fixed-inputs/mutable.pdf | tee build/desktop-evidence/fixed-import.log
+          build/desktop-sdk/gtk-host/exreader-linux-fixed-backend build/desktop-fixed.sqlite build/desktop-linux-package/EXReader-Linux/Reader.otf build/desktop-fixed-inputs | tee build/desktop-evidence/fixed-backend.log
+          build/desktop-sdk/gtk-host/exreader-linux-fixed-import build/desktop-snapshot.sqlite build/desktop-linux-package/EXReader-Linux/Reader.otf build/desktop-fixed-inputs/Pages.pdf build/desktop-fixed-inputs/mutable.pdf | tee build/desktop-evidence/fixed-import.log
           python3 tests/linux_host/generate_bounded.py build/desktop-bounded-inputs
-          build/desktop-sdk/gtk-host/exreader-linux-bounded-backend build/desktop-bounded.sqlite build/desktop-payload/Reader.otf build/desktop-bounded-inputs/routes.epub | tee build/desktop-evidence/bounded-backend.log
+          build/desktop-sdk/gtk-host/exreader-linux-bounded-backend build/desktop-bounded.sqlite build/desktop-linux-package/EXReader-Linux/Reader.otf build/desktop-bounded-inputs/routes.epub | tee build/desktop-evidence/bounded-backend.log
       - name: Original twenty GTK operations and real product startup repair
         if: runner.os == 'Linux'
         run: |
@@ -105,10 +94,10 @@ jobs:
             openbox >build/desktop-evidence/openbox.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
-            python3 tools/check_linux_host.py --payload build/desktop-payload --output build/desktop-gtk-ui
-            python3 tests/reader_catalog/check_gtk_product.py --payload build/desktop-payload --original-evidence build/desktop-gtk-ui --output build/desktop-gtk-product
-            python3 tools/check_linux_host_regressions.py --payload build/desktop-payload --consumer build/desktop-sdk/gtk-host --output build/desktop-gtk-regressions
-            python3 tests/linux_host/check_fixed_ui.py --payload build/desktop-payload --original-evidence build/desktop-gtk-ui --product-evidence build/desktop-gtk-product --output build/desktop-gtk-fixed
+            python3 tools/check_linux_host.py --payload build/desktop-linux-package/EXReader-Linux --output build/desktop-gtk-ui
+            python3 tests/reader_catalog/check_gtk_product.py --payload build/desktop-linux-package/EXReader-Linux --original-evidence build/desktop-gtk-ui --output build/desktop-gtk-product
+            python3 tools/check_linux_host_regressions.py --payload build/desktop-linux-package/EXReader-Linux --consumer build/desktop-sdk/gtk-host --output build/desktop-gtk-regressions
+            python3 tests/linux_host/check_fixed_ui.py --payload build/desktop-linux-package/EXReader-Linux --original-evidence build/desktop-gtk-ui --product-evidence build/desktop-gtk-product --output build/desktop-gtk-fixed
           '
       - name: Preserve original logs, link provider and source-bound evidence
         if: always()
@@ -130,6 +119,9 @@ jobs:
             build/desktop-gtk-fixed/
             build/desktop-gtk-regressions/
             build/desktop-fixed-inputs/
+            build/desktop-linux-package/build.json
+            build/desktop-linux-package/runtime-dependencies.txt
+            build/desktop-linux-package/EXReader-Linux.tar.gz
             build/desktop-windows-package/
             build/desktop-windows-negative/
             build/desktop-windows-ui/

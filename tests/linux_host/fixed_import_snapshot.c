@@ -64,6 +64,7 @@ int main(int argc,char **argv) {
   command.action=READER_NEXT;command.book=id;
   linux_reader_execute(reader,&command,&result);CHECK(result.status==EXR_OK && result.page==1 && result.book==id);
   reader_result_free(&result);linux_reader_close(reader);
-  printf("{\"accepted\":true,\"checks\":%u,\"scope\":\"private PDF snapshot and created-only cancellation\"}\n",checks);
+  printf("{\"accepted\":true,\"checks\":%u,\"source_sha\":\"%s\",\"run_id\":\"%s\",\"attempt\":\"%s\",\"scope\":\"private PDF snapshot and created-only cancellation\"}\n",
+    checks,getenv("GITHUB_SHA"),getenv("GITHUB_RUN_ID"),getenv("GITHUB_RUN_ATTEMPT"));
   return 0;
 }

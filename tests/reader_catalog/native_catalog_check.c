@@ -90,7 +90,10 @@ typedef struct {
 } worker;
 static void worker_run(worker *w) {
   if(!w->lock) { int present=0;w->result=reader_catalog_has_local(w->catalog,10,&present,NULL);return; }
-  sqlite3 *db=external(w->path);sql(db,"BEGIN IMMEDIATE");
+  sqlite3 *db=external(w->path);
+  /* The fixture writer's COMMIT can briefly overlap the waiting owner's read
+     lock on Windows. Use the same bounded wait as the actual catalog owner. */
+  CHECK(sqlite3_busy_timeout(db,5000)==SQLITE_OK);sql(db,"BEGIN IMMEDIATE");
 #ifdef _WIN32
   CHECK(SetEvent(w->event));Sleep(200);
 #else
