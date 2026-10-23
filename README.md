@@ -137,7 +137,8 @@ PDF 已有固定页绘制、文字几何、搜索选择、标准密码认证、�
 | 已验证 | 阅读SDK固定`9854061`：六组18执行作业/30工件同源通过，含缓存、CMap/anchor、PDF绘制和受限JPX修复。见[SDK冻结记录](docs/R5-SDK-FREEZE.md) |
 | 已验证 | R2固定八份真实文档与JPX专项：源码`da1c183`、run [39899523839](https://github.com/NoGod3524/EXReader/actions/runs/39899523839)三作业成功，整本8/8、重开定位8/8、ON/ASan/OFF各24项通过。见[语料记录](docs/R2-REAL-CORPUS.md)及[R4修复](docs/R4-CORE-HOTSPOTS.md) |
 | 复验中 | H8–H11在新SDK共同源码`da1c183`重新执行；原`e25959e`四组11作业结果保留为历史，见[共同验收记录](docs/R5-SDK-FREEZE.md) |
-| 收口中 | R3正式40进程基线与12页审阅、冻结硬预算；R6六平台候选封装和17作业总门禁。默认分支必需检查及发布尚未启用 |
+| 已验收 | R3/R6 SDK候选：`fa54027`的run [39902467216](https://github.com/NoGod3524/EXReader/actions/runs/39902467216)17/17作业成功，严格accepted=true；三平台六包、八份语料、40进程与12参考页及冻结预算同次通过，见[R6记录](docs/R6-READING-RELEASE.md) |
+| 待启用 | 默认分支必需检查、实际tag/发布；四宿主UI后继复验仍独立收口 |
 | 后续范围 | 历史1710份库存仍未恢复，本批八份独立计数；跨平台性能、真机与读屏仍待各自验收 |
 
 初始 TXT 与 PDF/CBZ 采样只针对极小合成工作负载，证明测量流程可运行，不是成熟性能基线，也不代表真实语料或任何性能预算已达标；RSS 增量为 0 只表示未超过进程先前高水位，不表示没有分配。新 profile 也不继承 S 的联合验收或旧源码长测。详见 [首轮启动记录](docs/READING-CORE-START.md) 与 [发布门槛映射](docs/READING-CORE-GATE.md)。所有构建、测试及证据汇总在 GitHub Actions 执行。
