@@ -86,7 +86,7 @@ def identity(binary, font, manifest, contract, entries, corpus):
 
 
 def native_metrics(record, entry, contract):
-    require(record["schema"] == 1 and record["success"] is True and record["status"] == 0 and
+    require(record["schema"] == 1 and record["success"] is True and record["status"] == 0 and record["engine_version"] == "3.40.0" and
             record["stage"] == "complete" and record["mode"] == entry["format"].lower(), "Native measurement failed")
     for field in ("font_open_ms", "open_ms", "first_visible_ms", "peak_rss_bytes", "baseline_peak_rss_bytes"):
         require(number(record[field]), "Invalid metric " + field)
@@ -303,6 +303,7 @@ def main():
                "measurement_valid": False, "source_sha": args.source_sha, "sdk_candidate": SDK,
                "run_id": os.environ["GITHUB_RUN_ID"], "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
                "corpus_registration_sha": CORPUS_REGISTRATION,
+               "contract_path": "tests/reading_real/contract.json", "budget_path": "tests/reading_real/budgets.json",
                "corpus_manifest_sha256": sha256(args.manifest), "contract_sha256": sha256(CONTRACT),
                "budget_sha256": sha256(args.budgets) if args.budgets else None,
                "contract": contract, "files": entries, "attempts": [], "references": [], "problems": [],
@@ -347,6 +348,8 @@ def main():
                         ("success", "stage", "status", "open_ms", "first_visible_ms", "peak_rss_bytes")}
                     observation.update(case=entry["id"], process=process, exit_code=item["exit_code"],
                                        retained_operations=len(raw.get("samples", [])))
+                    if item["exit_code"]:
+                        observation["error"] = (output / item["stderr"]).read_text(encoding="utf-8")[:1000]
                     print(json.dumps({"observation": observation}), flush=True)
                 except (OSError, ValueError):
                     print(json.dumps({"observation": {"case": entry["id"], "process": process,
