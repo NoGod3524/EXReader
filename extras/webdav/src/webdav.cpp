@@ -17,6 +17,7 @@
 #define NOMINMAX
 #include <windows.h>
 #include <winhttp.h>
+#include <objbase.h>
 #include <xmllite.h>
 #include <shlwapi.h>
 #else
@@ -93,7 +94,8 @@ url parse(const std::string &input) {
     std::string port=authority.substr(colon+1);unsigned value=0;
     if(port.empty() || port.size()>5) reject(EXR_DAV_ARGUMENT,"Invalid HTTPS port");
     for(char c:port) { if(c<'0'||c>'9') reject(EXR_DAV_ARGUMENT,"Invalid HTTPS port");value=value*10+(unsigned)(c-'0'); }
-    if(!value || value>65535) reject(EXR_DAV_ARGUMENT,"Invalid HTTPS port");u.port=value;
+    if(!value || value>65535) reject(EXR_DAV_ARGUMENT,"Invalid HTTPS port");
+    u.port=value;
   }
   u.origin="https://"+u.host+":"+std::to_string(u.port);u.path=path(input.substr(slash),true);return u;
 }
@@ -103,7 +105,8 @@ std::string trim(std::string s) {
   return s.substr(begin,s.find_last_not_of(" \t\r\n")-begin+1);
 }
 uint64_t number(const std::string &s) {
-  if(s.empty()) reject(EXR_DAV_FORMAT,"Missing byte length");uint64_t v=0;
+  if(s.empty()) reject(EXR_DAV_FORMAT,"Missing byte length");
+  uint64_t v=0;
   for(char c:s) { if(c<'0'||c>'9'||v>(UINT64_MAX-(unsigned)(c-'0'))/10) reject(EXR_DAV_FORMAT,"Invalid byte length");v=v*10+(unsigned)(c-'0'); }
   return v;
 }
@@ -201,7 +204,8 @@ public:
       DWORD code=GetLastError();reject(code==ERROR_ALREADY_EXISTS||code==ERROR_FILE_EXISTS ? EXR_DAV_EXISTS:EXR_DAV_IO,"Destination publication refused");
     }
 #else
-    if(fsync(file)!=0) reject(EXR_DAV_IO,"Cannot flush private download");cancelled(control);
+    if(fsync(file)!=0) reject(EXR_DAV_IO,"Cannot flush private download");
+    cancelled(control);
     if(linkat(directory,name.c_str(),directory,dest.c_str(),0)!=0) reject(errno==EEXIST ? EXR_DAV_EXISTS:EXR_DAV_IO,"Destination publication refused");
     unlinkat(directory,name.c_str(),0);
 #endif
@@ -229,7 +233,8 @@ void head(const response &r,int expected,sink &s) {
 using clock_type=std::chrono::steady_clock;
 long remaining(clock_type::time_point deadline) {
   auto ms=std::chrono::duration_cast<std::chrono::milliseconds>(deadline-clock_type::now()).count();
-  if(ms<=0) reject(EXR_DAV_IO,"HTTPS transfer timed out");return (long)std::min<int64_t>(ms,120000);
+  if(ms<=0) reject(EXR_DAV_IO,"HTTPS transfer timed out");
+  return (long)std::min<int64_t>(ms,120000);
 }
 }
 
@@ -285,7 +290,8 @@ struct curl_context { response r;sink *output;int expected;size_t header_bytes=0
 size_t curl_head(char *data,size_t size,size_t count,void *opaque) {
   auto &c=*(curl_context *)opaque;size_t n=size*count;
   try {
-    if(n>32768-c.header_bytes) reject(EXR_DAV_LIMIT,"HTTPS header limit exceeded");c.header_bytes+=n;
+    if(n>32768-c.header_bytes) reject(EXR_DAV_LIMIT,"HTTPS header limit exceeded");
+    c.header_bytes+=n;
     std::string line(data,n);
     if(line.compare(0,5,"HTTP/")==0) {
       c.r=response{};size_t space=line.find(' ');if(space==std::string::npos) reject(EXR_DAV_FORMAT,"Invalid HTTPS status");
@@ -412,12 +418,14 @@ node xml(const std::vector<unsigned char> &bytes) {
   }
   if(status<0) reject(EXR_DAV_FORMAT,"Malformed WebDAV XML");
 #endif
-  if(stack.size()!=1 || document.children.size()!=1) reject(EXR_DAV_FORMAT,"Missing WebDAV XML root");return std::move(document.children[0]);
+  if(stack.size()!=1 || document.children.size()!=1) reject(EXR_DAV_FORMAT,"Missing WebDAV XML root");
+  return std::move(document.children[0]);
 }
 bool dav(const node &n,const char *name) { return n.ns=="DAV:" && n.name==name; }
 const node *child(const node &n,const char *name,bool required=false) {
   const node *found=nullptr;for(const auto &value:n.children) if(dav(value,name)) { if(found) reject(EXR_DAV_FORMAT,"Duplicate WebDAV property");found=&value; }
-  if(!found && required) reject(EXR_DAV_FORMAT,"Missing WebDAV property");return found;
+  if(!found && required) reject(EXR_DAV_FORMAT,"Missing WebDAV property");
+  return found;
 }
 bool success(const node &n) { int code=0;return std::sscanf(n.text.c_str(),"%*15s %d",&code)==1 && code>=200 && code<300; }
 char *copy(const std::string &s) { char *out=(char *)std::malloc(s.size()+1);if(!out) throw std::bad_alloc();std::memcpy(out,s.c_str(),s.size()+1);return out; }
@@ -446,7 +454,8 @@ extern "C" exr_webdav_status exr_webdav_create(const exr_webdav_config *config,e
 }
 extern "C" void exr_webdav_free(exr_webdav_client *client) { delete client; }
 extern "C" void exr_webdav_listing_free(exr_webdav_listing *listing) {
-  if(!listing) return;for(size_t i=0;i<listing->count;i++) { std::free(listing->entries[i].resource);std::free(listing->entries[i].display_name);std::free(listing->entries[i].etag); }
+  if(!listing) return;
+  for(size_t i=0;i<listing->count;i++) { std::free(listing->entries[i].resource);std::free(listing->entries[i].display_name);std::free(listing->entries[i].etag); }
   std::free(listing->entries);std::memset(listing,0,sizeof(*listing));
 }
 extern "C" exr_webdav_status exr_webdav_list(exr_webdav_client *client,const char *collection,const exr_webdav_control *control,exr_webdav_listing *out,exr_webdav_error *error) {
