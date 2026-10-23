@@ -65,6 +65,7 @@ jobs:
         run: |
           python3 tests/check_reading_real_baseline.py
           python3 tests/check_reading_real_baseline_report.py
+          python3 tests/check_reading_real_review.py
       - name: Collect the shared frozen real-document manifest
         run: python3 tools/reading_corpus/collect.py collect tools/reading_corpus/real-v1.json build/reading-real-inputs
       - name: Fetch the existing pinned native host font and license
