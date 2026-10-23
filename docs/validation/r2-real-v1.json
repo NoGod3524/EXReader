@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "scope": "representative-real-v1-only",
+  "accepted": false,
+  "historical_1710_accepted": false,
+  "historical_failures_reproduced": false,
+  "complete_product": false,
+  "manifest_path": "tools/reading_corpus/real-v1.json",
+  "manifest_sha256": "f71f8a24faff664a03b7e15a7f424ec354f83c53fbd14f602d4b050f3fd19de1",
+  "registration_sha": "ea5c13e081cfba86d9f6dd759439894463e51126",
+  "collection_only_run": 39887277694,
+  "initial_execution": {
+    "source_sha": "232a1806c38e0775892da2b4dd82fe6cd90414b2",
+    "run_id": 39888135957,
+    "attempt": 1,
+    "job_id": 120201078536,
+    "job_conclusion": "failure",
+    "accepted": false,
+    "full_counts": {"passed": 4, "unexpected_outcome": 4},
+    "location_counts": {"passed": 6, "location_failure": 2},
+    "protocol_checks": 20,
+    "artifact": {
+      "name": "r2-real-corpus-39888135957-1",
+      "id": 12473113944,
+      "size_bytes": 40674221,
+      "digest": "sha256:5560d15611a4ca27e189efb9ad94a0257caebbe4f086dd362aff7609842719a2"
+    },
+    "failures": [
+      {"id":"pg1342-pride","full_index":2,"status":6,"stage":"paginate","completed_pages":97,"category":"decoded_image_cache_64MiB","core_path":"src/flow.c"},
+      {"id":"nist-ai-rmf","full_index":5,"status":6,"stage":"render","completed_pages":16,"category":"pdf_decoded_stream_cache","core_path":"src/pdf_objects.c"},
+      {"id":"nist-csf2","full_index":6,"status":5,"stage":"render","completed_pages":0,"category":"pdf_tounicode_codespace_mapping","core_path":"src/pdf_cmap.c"},
+      {"id":"nasa-solar-system","full_index":7,"status":5,"stage":"render","completed_pages":0,"category":"pdf_tounicode_codespace_mapping","core_path":"src/pdf_cmap.c"}
+    ]
+  },
+  "diagnostic": {
+    "source_sha": "02a319288609817e6559036ebea7dd3e6e5bfc58",
+    "original_binary_source_sha": "232a1806c38e0775892da2b4dd82fe6cd90414b2",
+    "run_id": 39888572521,
+    "job_id": 120202517705,
+    "attempt": 1,
+    "job_conclusion": "success",
+    "accepted": false,
+    "reference": "PyMuPDF",
+    "reference_version": "1.26.7",
+    "replayed": 4,
+    "reference_complete": 4,
+    "reference_repaired": 0,
+    "counts": {"baseline_completed":4,"reference_completed_primary_rejected":2,"resource_limit":2},
+    "evidence_path": "r2-diagnostic-39888572521-1/classification.json"
+  },
+  "next": "R4 core repair, then all eight original documents and expectations on one fixed source SHA; no splicing of prior passes."
+}
