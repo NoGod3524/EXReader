@@ -124,9 +124,9 @@ def generate(root):
     add('truncated', gray_raw[:len(gray_raw)//2], statuses=[FORMAT], dictionary=gray_dict)
     add('dimensions-mismatch', gray, statuses=[FORMAT], dictionary=gray_dict, width=3)
     add('components-mismatch', gray, statuses=[FORMAT])
-    add('precision-signed8', change_siz(gray_raw, 40, 0x87), statuses=[FORMAT, UNSUPPORTED], dictionary=gray_dict)
+    add('precision-signed8', change_siz(gray_raw, 40, 0x87), statuses=[UNSUPPORTED], dictionary=gray_dict)
     add('precision32', change_siz(gray_raw, 40, 31), statuses=[FORMAT, UNSUPPORTED], dictionary=gray_dict)
-    add('subsampled-component', change_siz(encoded('RGB', RGB, True), 44, 2), statuses=[FORMAT, UNSUPPORTED])
+    add('subsampled-component', change_siz(encoded('RGB', RGB, True), 44, 2), statuses=[UNSUPPORTED])
     add('embedded-alpha', rgba, statuses=[UNSUPPORTED])
     add('jpx-not-last-filter', rgb, statuses=[FORMAT], off_statuses=[FORMAT], filters=b'[/JPXDecode /ASCII85Decode]')
     add('non-null-decode-parms', rgb, statuses=[FORMAT], off_statuses=[FORMAT],
