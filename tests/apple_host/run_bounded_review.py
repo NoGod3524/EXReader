@@ -27,9 +27,10 @@ def main():
     require(not out.exists(), 'preserve previous evidence; use a fresh output')
     out.mkdir(parents=True)
     sources = ['examples/apple/HostSDK.swift', 'examples/apple/HostModel.swift', 'examples/apple/SelectableText.swift',
+               'examples/apple/HostCatalog.swift',
                'tests/apple_host/bounded_review/BoundedReview.swift']
     command = ['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library', '-O', '-D', 'EXR_APPLE_HOST_REVIEW',
-               '-I', str(sdk/'include'), '-L', str(sdk/'lib'), '-lexreader',
+               '-I', str(sdk/'include'), '-L', str(sdk/'lib'), '-lexreader', '-lsqlite3',
                '-Xlinker', '-rpath', '-Xlinker', str(sdk/'lib'),
                *[str(ROOT/p) for p in sources], '-o', str(out/'bounded-review')]
     with (out/'compile.log').open('w') as log:
@@ -55,8 +56,8 @@ def main():
             'bounded consumer failed or omitted checks')
     report.update({**cloud_identity('bounded-macos'), 'program_sha256': digest(out/'bounded-review'),
                    'sdk_files_sha256': inventory(sdk),
-                   'fixtures': {name: digest(fixtures/name) for name in ('Bounded.epub', 'BoundedLong.epub', 'Unicode.epub', 'Reader.otf', 'Repeated.epub')},
-                   'source_files_sha256': {p: digest(ROOT/p) for p in [*sources, 'tests/apple_host/run_bounded_review.py']},
+                   'fixtures': {name: digest(fixtures/name) for name in ('Bounded.epub', 'BoundedLong.epub', 'Unicode.epub', 'Reader.otf', 'Repeated.epub', 'reader-catalog-v1.sql')},
+                   'source_files_sha256': {p: digest(ROOT/p) for p in [*sources, 'tests/apple_host/run_bounded_review.py', 'apps/reader/store/001_catalog.sql']},
                    'process_peak_rss_bytes': json.loads(result.stdout)['process_peak_rss_bytes'],
                    'runtime_budget_seconds': args.timeout,
                    'diagnostic_only': args.timeout != 900 or report['measurements'].get('repeated_window_bytes') != 16384,
