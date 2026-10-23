@@ -98,6 +98,18 @@
   connected tests 会卸载目标 app，组合工作流只重装了 instrumentation APK。后继按原导入
   工作流同时重装 app 与 instrumentation，再执行原样 kill/recovery 探针。此轮未执行原 66
   和门禁，严格汇总拒绝，保留 failure；首屏/窗口/PSS 结果只属于本轮观测，不转授后继。
+- `334e3f16d63cc53c9356f8a3147b8e43fcc823d5` / run `40033393345`：生命周期与真实布局修复后，
+  目录 11/11、UI 10/10、原 catalog 8/8 与 mapping 14/14 均通过；仍因上一项已修的 target
+  app 重装问题停止于 kill 阶段，保留 failure。
+- `23e5133fcf06a327605d00b893072ff36d39e0e1` / run `40034076410`：目录 11/11、UI 10/10、
+  原 catalog 8/8、mapping 14/14、kill/recovery 2/2 同次成功；原宿主 45/45、review 9/10、
+  bounded 11/11，49 页/49 native next/0 recovery。唯一原回归失败为
+  `destroyed_activity_releases_worker`：新 Activity 尚未加载书架窗口，临时 loading 文案使用
+  “book”，没有显示实际书名；后继从 worker 的单条本机目录查询取真实书名，按 generation
+  更新 loading/错误文案，保持原进度锁与旧断言。原严格汇总拒绝，未授联合验收。
+- 上一工件云端回读 `40036326340` 成功，固定核验 `12536608131`、106,901,651 B、
+  `sha256:b5024d1d8006c6076ac660073cacab012571afe38781cd03ccee42caeb79e34b`；
+  只定位原失败，`diagnostic_only=true, accepted=false`。
 - 后继候选正在提交；所有出口仍待同源云端完成。
 
 本地仅源码/文档编辑和 Git；编译、语法检查、夹具生成、SQL、仪器化、工件读取/解析均在
