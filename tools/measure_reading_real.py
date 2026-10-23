@@ -137,6 +137,7 @@ def native_metrics(record, entry, contract):
     expected_random = contract["seed"]
     routes = [(sample["part"], sample["page"]) for sample in samples[:1 + len(sequential)]]
     signatures = {}
+    fallback_count = 0
     for sample in samples:
         require(type(sample["page"]) is int and sample["page"] >= 0 and type(sample["part"]) is int and sample["part"] >= 0,
                 "Invalid page route")
@@ -151,6 +152,23 @@ def native_metrics(record, entry, contract):
         require(abs(sample["total_ms"] - sample["layout_ms"] - sample["render_ms"]) <= .000003, "Timing accounting changed")
         route = (sample["part"], sample["page"])
         signature = (sample["width"], sample["height"], sample["pixel_hash"])
+        if entry["format"].lower() == "epub":
+            require(number(sample["layout_bytes"]) and sample["layout_bytes"] > 0 and
+                    type(sample["text_start"]) is int and type(sample["text_end"]) is int and
+                    0 <= sample["text_start"] <= sample["text_end"] and
+                    sample["text_bytes"] == sample["text_end"] - sample["text_start"] and
+                    isinstance(sample["text_hash"], str) and re.fullmatch(r"[0-9a-f]{16}", sample["text_hash"]) is not None,
+                    "Invalid selected UTF-8 text evidence")
+            require(type(sample["oversize_fallback"]) is int and sample["oversize_fallback"] in (0, 1), "Invalid fallback marker")
+            if sample["oversize_fallback"]:
+                require(sample["phase"] == "random" and sample["cache_rejection_status"] == 6 and
+                        sample["layout_bytes"] > contract["epub"]["page_cache_budget"] and
+                        number(sample["failed_cache_ms"]) and 0 < sample["failed_cache_ms"] <= sample["layout_ms"],
+                        "Fallback did not prove oversize cache rejection and complete accounting")
+                fallback_count += 1
+            else:
+                require(sample["cache_rejection_status"] == 0 and sample["failed_cache_ms"] == 0, "Hidden cache rejection")
+            signature += (sample["text_start"], sample["text_end"], sample["text_bytes"], sample["text_hash"])
         require(route not in signatures or signatures[route] == signature, "Same route changed pixels")
         signatures[route] = signature
         if entry["format"].lower() == "epub":
@@ -158,6 +176,7 @@ def native_metrics(record, entry, contract):
                     sample["peak_workspace_bytes"] <= contract["epub"]["workspace_budget"] and
                     sample["cache_bytes"] <= contract["epub"]["page_cache_budget"] and
                     sample["checkpoint_bytes"] <= contract["epub"]["checkpoint_budget"], "Bounded resource contract failed")
+    require(record["oversize_fallbacks"] == fallback_count, "Fallback count differs from retained routes")
     for index, sample in enumerate(sequential):
         if entry["format"].lower() == "pdf":
             require(sample["page"] == (index + 1) % record["page_count"], "Sequential PDF plan changed")
@@ -174,6 +193,9 @@ def native_metrics(record, entry, contract):
     metrics = {field: record[field] for field in ("font_open_ms", "open_ms", "first_visible_ms", "peak_rss_bytes")}
     if entry["format"].lower() == "pdf":
         metrics["fixed_directory_bytes"] = record["fixed_directory_bytes"]
+    else:
+        metrics["oversize_fallbacks"] = fallback_count
+        metrics["layout_bytes"] = max(sample["layout_bytes"] for sample in samples)
     for field in ("bitmap_bytes",) + memory_fields:
         metrics[field] = max(sample[field] for sample in samples)
     return metrics, signatures
@@ -190,6 +212,25 @@ def pixel_difference(native, reference):
         # Exact pixels are diagnostic; antialias/font engines differ even for correct pages.
         return {"width": a.width, "height": a.height, "normalized_mean_absolute_error": mean,
                 "changed_channel_fraction": nonzero / (a.width * a.height * 3)}
+
+
+def fallback_refusals(record, entry, contract):
+    native_metrics(record, entry, contract)
+    changes = {"not_oversize": ("layout_bytes", contract["epub"]["page_cache_budget"]),
+               "no_cache_rejection": ("cache_rejection_status", 0), "no_rejected_get_time": ("failed_cache_ms", 0),
+               "changed_route": ("page", 999999), "changed_text": ("text_hash", "0" * 16)}
+    for name, (key, value) in changes.items():
+        mutant = copy.deepcopy(record)
+        next(sample for sample in mutant["samples"] if sample["oversize_fallback"])[key] = value
+        try:
+            native_metrics(mutant, entry, contract)
+        except ValueError:
+            continue
+        raise ValueError("Oversize refusal accepted " + name)
+    result = {"scope": "observed_owned_oversize_consumer_policy_only", "case": entry["id"],
+              "positive": 1, "refused": len(changes), "passed": True}
+    print(json.dumps({"oversize_refusal_regression": result}), flush=True)
+    return result
 
 
 def audit(summary, output, budgets=None):
@@ -312,6 +353,9 @@ def selfcheck(summary, output, budgets):
         "random_route": lambda r: next(s for s in r["samples"] if s["phase"] == "random").update(page=999999),
         "bitmap_size": lambda r: r["samples"][0].update(bitmap_bytes=1),
         "timing_accounting": lambda r: r["samples"][0].update(total_ms=999999),
+        "fake_fallback": lambda r: r["samples"][0].update(oversize_fallback=1),
+        "hidden_cache_rejection": lambda r: r["samples"][0].update(cache_rejection_status=6),
+        "changed_selected_text": lambda r: next(s for s in r["samples"] if s["phase"] == "random").update(text_hash="0" * 16),
     }
     for name, change in raw_changes.items():
         mutant = copy.deepcopy(native);change(mutant)
@@ -404,6 +448,8 @@ def main():
                     try:
                         observation["metrics"], _ = native_metrics(raw, entry, contract)
                         observation["complete_process_valid"] = True
+                        if raw["oversize_fallbacks"] and "oversize_refusal_regression" not in summary:
+                            summary["oversize_refusal_regression"] = fallback_refusals(raw, entry, contract)
                     except (ValueError, KeyError, TypeError) as error:
                         observation["complete_process_valid"] = False
                         observation["validation_problem"] = str(error)
