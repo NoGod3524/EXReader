@@ -12,7 +12,8 @@ import CryptoKit
         var groups: [String] = []
         func check(_ name: String, _ condition: @autoclosure () throws -> Bool) throws {
             guard try condition() else { throw NSError(domain: "ShelfReview", code: 1, userInfo: [NSLocalizedDescriptionKey: name]) }
-            groups.append(name); print("SHELF PASS \(name)")
+            groups.append(name)
+            FileHandle.standardOutput.write(Data("SHELF PASS \(name)\n".utf8))
         }
         try queue.sync {
             let library = try HostLibrary(path: output.appendingPathComponent("ShelfSeed-library.sqlite"))
@@ -30,7 +31,7 @@ import CryptoKit
             try check("2202_real_public_sdk_originals", books.count == 2202)
             for (index, book) in books.enumerated() {
                 let fingerprint = try library.sourceFingerprint(book: book)
-                let author = book.title.hasPrefix("Cafe") ? "Re\u{301}ne\u{301} Unique" : index == 400 ? "Unique Shelf Author" : ""
+                let author = book.title == "Cafe\u{301} Unicode" ? "Re\u{301}ne\u{301} Unique" : index == 400 ? "Unique Shelf Author" : ""
                 try catalog.attach(format: fingerprint.format, sha256: fingerprint.sha256, bytes: fingerprint.bytes,
                     title: book.title, author: author, sdkID: book.id,
                     locationKind: library.locationKind(book: book))
@@ -68,6 +69,7 @@ import CryptoKit
             try check("empty_search_result", try catalog.shelf(query: "not a shelf title", anchor: nil).isEmpty)
             let canonicalTitle = try catalog.shelf(query: "Café Unicode", anchor: nil)
             let canonicalAuthor = try catalog.shelf(query: "Réné Unique", anchor: nil)
+            FileHandle.standardOutput.write(Data("SHELF canonical title=\(canonicalTitle.count) author=\(canonicalAuthor.count)\n".utf8))
             try check("canonical_title_and_author_search_preserves_display_bytes", canonicalTitle.count == 1 &&
                 canonicalAuthor.count == 1 && Array(canonicalTitle[0].title.utf8) == Array("Cafe\u{301} Unicode".utf8) &&
                 Array(canonicalAuthor[0].author.utf8) == Array("Re\u{301}ne\u{301} Unique".utf8))
