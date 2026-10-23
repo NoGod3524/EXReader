@@ -123,23 +123,23 @@ Android/OPDS 独立候选的完整身份见 [总 handoff](handoffs/2026-10-22-af
 | EPUB 超时、PDF 打开/渲染失败闭环 | 整本文档探针、逐进程超时/失败保留、独立分类与回归工具；已有针对性引擎修复 | 历史 EPUB 500 本仅 483 完成，另有 11 超时、5 限制、1 参数状态；PDF 122 份中 49 完成，其余 73 留有分类，不能全部视作同一故障。原批未整体验收；新协议可复现真实语料登记仍为 0/1710 |
 | 成熟引擎差分、像素与性能回归 | WP7 有 HarfBuzz 对照，彩色字体有 Chrome 对照，PDF 部分颜色/绘制有 MuPDF 独立参考；已有像素、页面 hash、分页与转换基准 | 统一固定工具/字体/采样口径、语料、容差及资源阈值，覆盖真实 EPUB/PDF 故障，并接入必需 CI；专项对照不替代全格式差分验收 |
 | 内存峰值、长章节和恶意输入专项 | WP6 有界章出口、1 GiB CBZ 原书导入、1 GiB WAV 随机读取、取消/限界/sanitizer 与四目标可靠性长测 | 每次核心变更绑定新源码复验；其他格式大文件、其他音频 1 GiB 实测和全部宿主有界接入仍未覆盖 |
-| 许可证、版本与发布流程统一 | MIT 主许可证、第三方通知、版本规则、ABI/schema 区分，以及冻结 SDK 的多平台许可/产物/基准归档 | GitHub About 仍含旧“GPLv3”描述，与当前 MIT LICENSE 不一致；需统一说明、tag/版本/产物身份、许可清单与发布阻断规则，新集成候选尚未完成整条发布闭环 |
+| 许可证、版本与发布流程统一 | MIT 主许可证、第三方通知、版本规则、ABI/schema 区分；R6已更新并云端读回About，候选封装与严格门禁在云端复验 | 默认分支必需检查尚未启用；tag/版本/产物身份及发布阻断规则仍待最终共同源码闭环，见[R6记录](R6-READING-RELEASE.md) |
 
 相关入口：[兼容语料清单与缺口](COMPAT-CORPUS-PARALLEL.md)、[整本文档检查](CORPUS_VALIDATION.md)、
 [色彩差分](COLOR_MATRIX.md)、[性能记录](PERFORMANCE.md)、[可靠性交付](RELIABILITY-HANDOFF.md)、
 [第三方许可](../THIRD_PARTY_NOTICES.md)。历史失败、取消和原预期保留，不能删除困难样本或用事后预期提高通过率。
 
-### GitHub About 建议文案（待仓库所有者修改）
+### GitHub About（已更新）
 
-2026-10-22 只读核对：About 仍为 `GPLv3 native C ebook engine with custom pagination, raster rendering and a SQLite bookshelf`，
-而 GitHub license metadata 与根目录 `LICENSE` 均为 MIT。建议替换为：
+原About为 `GPLv3 native C ebook engine with custom pagination, raster rendering and a SQLite bookshelf`，
+与MIT元数据不一致。本轮R6已更新仓库说明并通过GitHub连接读回：
 
-> Lightweight native C11 reading engine and SDK: multi-format parsing, in-house PDF rendering, no WebView. MIT core; optional dependencies keep their own licenses (binaries built with FAAD2/AAC enabled are subject to the GPL).
+> Lightweight native C11 reading engine and SDK: multi-format parsing, in-house PDF rendering, no WebView. MIT core; optional dependencies retain their own licenses (FAAD2/AAC-enabled binaries require GPL compliance).
 
 中文说明可用：“轻量原生 C11 阅读引擎与 SDK：多格式解析、自有 PDF 渲染、不依赖 WebView。核心为 MIT；
 可选依赖保留各自许可，启用 FAAD2/AAC 构建的组合二进制须遵守 GPL。”
 FAAD2 默认关闭，阅读 preset 也不链接它；只有显式 `EXR_ENABLE_AAC=ON` 并链接音频组件的产物须按 GPL 分发
-（提供对应源码与许可文本）。本文档只提供建议，不修改仓库设置、About、许可证原文、版本或 tag。
+（提供对应源码与许可文本）。许可证原文、版本和tag保持；本次About更新不构成新版本发布。
 
 ## 既有 A/B/C 交付收口
 

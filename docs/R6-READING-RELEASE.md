@@ -1,7 +1,7 @@
 # R6：阅读SDK门禁与发布接线
 
 起点`9bd2b2c3caf1f63dc4437e0af978247494e87145`；既有SDK冻结与四宿主结果保留在
-[冻结记录](R5-SDK-FREEZE.md)。本包不改变SDK实现或公开API。
+[冻结记录](R5-SDK-FREEZE.md)。R6接线不改变公开API；集成分支同时纳入R2/R4已验证的核心修复，须重新冻结SDK。
 
 ## 候选封装
 
@@ -23,7 +23,7 @@ tar.gz和清单。归档包含隐含文件；拒绝symlink、越界、已有输�
 R2/R3报告必须绑定同source/run/attempt及冻结清单/测量契约/预算身份；诊断或缺证据不能变成发布通过。
 原生七个检查不由Linux profile替代。R4改变核心后由集成人重新验证并冻结SDK。
 
-GitHub默认分支当前`codex/framework`、rulesets为空；About仍为旧GPLv3说明，仓库LICENSE为MIT。
+GitHub默认分支当前`codex/framework`、rulesets仍未启用；About已更新为原生多格式/自有PDF/无WebView和MIT核心、可选依赖分别许可的说明，并云端读回。
 本包会先固定实际产生的check名及可审阅规则，再启用门禁并读取云端配置确认。
 发布动作与候选封装分开；最终产物只能使用已接受源码、固定版本及同次工件，回退指向原有不可变版本，
 不覆盖旧tag、工件或失败。当前尚未授予R6整体完成。
@@ -44,6 +44,14 @@ GitHub默认分支当前`codex/framework`、rulesets为空；About仍为旧GPLv3
 核对八份报告工件的同source/run/attempt、有效digest、非空和未过期，再检查封装、许可、
 平台拒绝回归、R2完整声明，以及R3冻结预算和原始证据。下载和重新审计均只发生在云端。
 报告保留`published=false`、`complete_product=false`及零WP16信用。
+
+后继门禁进一步核对当前attempt精确17个作业及十份必需native工件；不接受部分重跑沿用的旧native成功。
+`fdf93b8`的run `39892685541`三作业成功，封装32项、门禁55项协议通过。
+PR合并提交与GitHub运行元数据的分支头分别绑定，避免混淆实际受测源码。
+run `39892833007`只读观察真实`reading-required`检查，确认发布者为GitHub Actions、integration ID 15368；
+预备规则已绑定该发布者，仍为disabled，尚未修改仓库规则。
+许可/平台拒绝报告新增同run/attempt与原报告散列绑定，R2聚合重核逐项原始附件，R3预算重核固定基线ZIP内的原报告。
+这些后继接口仍需在最终共同源码完整验收，不因协议自验单独授予发布通过。
 
 为复用原生七作业，`native.yml`仅增加`workflow_call`入口，原步骤不变。
 该文件属于保护树，因此新SDK冻结必须纳入这一变化及后续核心修复；不能继续转授旧K的结果。
