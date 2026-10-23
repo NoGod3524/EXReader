@@ -69,8 +69,10 @@ jobs:
           python3 tests/check_reading_real_review.py
       - name: Verify bounded collector retry and download refusals
         run: python3 tests/reading_corpus/check_collect.py
-      - name: Collect the shared frozen real-document manifest
-        run: python3 tools/reading_corpus/collect.py collect tools/reading_corpus/real-v1.json build/reading-real-inputs
+      - name: Recover eight frozen originals and verify current publisher licenses
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reading_corpus/collect.py cached tools/reading_corpus/real-v1.json build/reading-real-inputs
       - name: Fetch the existing pinned native host font and license
         run: python3 -c "import sys; sys.path.insert(0, 'tools'); from host_font import fetch; fetch('build/reading-real-font')"
       - name: Build and install unchanged reading SDK
