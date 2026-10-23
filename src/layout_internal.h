@@ -9,6 +9,7 @@ typedef struct {
   size_t resource;
   exr_bitmap bitmap;
   size_t *refs; /* Shared immutable decoded pixels across independent pages. */
+  unsigned evictable; /* Unreferenced at the preceding top-level page boundary. */
 } exr_cached_image;
 struct exr_layout {
   size_t refs;

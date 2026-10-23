@@ -445,6 +445,7 @@ exr_status exr_layout_image_asset(const exr_document *doc,exr_layout *l,
   if(resource>=doc->resource_count) return exr_fail(e,EXR_ARGUMENT,"Invalid image resource");
   for (i = 0; i < l->image_count; i++)
     if (l->images[i].resource == resource) {
+      l->images[i].evictable = 0;
       *bitmap = &l->images[i].bitmap;
       return EXR_OK;
     }
@@ -482,12 +483,21 @@ exr_status exr_layout_image_asset(const exr_document *doc,exr_layout *l,
     return exr_fail(e,status,"Image decoding failed");
   }
   size = (size_t)decoded.stride * decoded.height;
+  for (i = 0; size > 64 * 1024 * 1024 - l->image_bytes && i < l->image_count;) {
+    exr_cached_image *old = &l->images[i];
+    if (!old->evictable || *old->refs != 1) { i++; continue; }
+    l->image_bytes -= (size_t)old->bitmap.stride * old->bitmap.height;
+    exr_bitmap_free(&old->bitmap);
+    free(old->refs);
+    memmove(old, old + 1, (--l->image_count - i) * sizeof(*old));
+  }
   if (size > 64 * 1024 * 1024 - l->image_bytes ||
       !exr_grow((void **)&l->images, &l->image_cap, l->image_count + 1, sizeof(*l->images))) {
     exr_bitmap_free(&decoded);
     return exr_fail(e,EXR_LIMIT,"Decoded image cache exceeds 64 MiB");
   }
   l->images[l->image_count].resource = resource;
+  l->images[l->image_count].evictable = 0;
   l->images[l->image_count].refs = malloc(sizeof(size_t));
   if (!l->images[l->image_count].refs) {
     exr_bitmap_free(&decoded);
