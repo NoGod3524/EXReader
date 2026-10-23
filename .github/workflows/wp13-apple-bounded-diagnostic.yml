@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
 env:
-  H9_SDK_BASELINE: 9c69bc4c7efb0cff68ced27562709fe597189041
+  H9_SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
 jobs:
   diagnose:
     strategy:

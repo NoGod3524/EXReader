@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Freeze Android ownership before other package scopes join the tested source.
-      ANDROID_OWNERSHIP_HEAD: eba7bd58ef8431a4477eaa1db96a9bf5f01baa51
+      ANDROID_OWNERSHIP_HEAD: d0b205a56e4fcfbd5cca55a808327f00b25971ed
     steps:
       - uses: actions/checkout@v4
         with:
