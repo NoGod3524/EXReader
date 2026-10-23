@@ -44,6 +44,8 @@ jobs:
           sudo apt-get install -y poppler-utils python3-pil
       - name: Collect the shared frozen real-document manifest
         run: python3 tools/reading_corpus/collect.py collect tools/reading_corpus/real-v1.json build/reading-real-inputs
+      - name: Fetch the existing pinned native host font and license
+        run: python3 -c "import sys; sys.path.insert(0, 'tools'); from host_font import fetch; fetch('build/reading-real-font')"
       - name: Build and install unchanged reading SDK
         run: |
           cmake --preset reading-core -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
@@ -68,7 +70,7 @@ jobs:
         run: |
           mkdir -p build/reading-real-artifact/reading-real build/reading-real-artifact/identity
           if test -d build/reading-real; then cp -a build/reading-real/. build/reading-real-artifact/reading-real/; fi
-          for path in build/reading-real-inputs/manifest.json build/reading-real-inputs/licenses build/reading-real-consumer build/reading-core/CMakeCache.txt build/reading-core/compile_commands.json tests/reading_real/contract.json tests/reading_real/budgets.json tools/reading_corpus/real-v1.json; do
+          for path in build/reading-real-inputs/manifest.json build/reading-real-inputs/licenses build/reading-real-font build/reading-real-consumer build/reading-core/CMakeCache.txt build/reading-core/compile_commands.json tests/reading_real/contract.json tests/reading_real/budgets.json tools/reading_corpus/real-v1.json; do
             if test -e "$path"; then cp -a --parents "$path" build/reading-real-artifact/identity/; fi
           done
       - name: Preserve every raw sample, failure and reference comparison
