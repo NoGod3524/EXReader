@@ -19,6 +19,8 @@ ARTIFACT = 12474462154
 DIGEST = "sha256:b677a592fa31171a758820d3beba732986419d8fc2af303e113e4e933da7f837"
 
 require(os.environ.get("GITHUB_ACTIONS") == "true", "Diagnostic must run in Actions")
+selected_page = int(os.environ.get("DIAGNOSTIC_PAGE", "0"))
+require(selected_page in (0, 1, 2), "Choose a retained W9 page")
 output = Path("build/reading-pixel-diagnostic")
 output.mkdir(parents=True, exist_ok=False)
 metadata = fetch("actions/artifacts/" + str(ARTIFACT))
@@ -40,6 +42,8 @@ with zipfile.ZipFile(archive_path) as archive:
     references = [item for item in summary["references"] if item["case"] == "irs-w9"]
     require([item["page"] for item in references] == [0, 1, 2], "W9 reference plan differs")
     for item in references:
+        if item["page"] != selected_page:
+            continue
         pictures = []
         for key in ("native", "reference"):
             name = "reading-real/" + item[key]
@@ -53,13 +57,15 @@ with zipfile.ZipFile(archive_path) as archive:
         difference = ImageChops.difference(native, reference)
         histogram = difference.histogram()
         error = sum(index * count for index, count in enumerate(histogram)) / (612 * 792 * 255)
-        crop = (0, 0, 612, 520)
-        sheet = Image.new("L", (1836, 548), 255)
+        crop = (0, 140, 612, 400)
+        sheet = Image.new("L", (1836, 708), 255)
         draw = ImageDraw.Draw(sheet)
         views = [native, reference, ImageChops.invert(difference.point(lambda x: min(255, x * 4)))]
         for column, (title, view) in enumerate(zip(("EXReader native", "Poppler reference", "Difference x4 (white = equal)"), views)):
             draw.text((column * 612 + 8, 8), title, fill=0)
-            sheet.paste(view.crop(crop), (column * 612, 28))
+            sheet.paste(view.resize((306, 396), getattr(Image, "Resampling", Image).LANCZOS), (column * 612 + 153, 28))
+            draw.text((column * 612 + 8, 432), "Detail: original page y=140..400", fill=0)
+            sheet.paste(view.crop(crop), (column * 612, 448))
         png = io.BytesIO()
         sheet.quantize(colors=32, dither=getattr(Image, "Dither", Image).NONE).save(png, format="PNG", optimize=True)
         data = png.getvalue()
@@ -73,10 +79,9 @@ with zipfile.ZipFile(archive_path) as archive:
         report["pages"].append({"page": item["page"], "crop": crop, "gray_normalized_mae": error,
                                 "contact_png_bytes": len(data), "contact_sha256": hashlib.sha256(data).hexdigest(),
                                 "contact_only_gray_levels": 32, "contact_size": sheet.size})
-        if item["page"] == 0:
-            print("PIXEL_CONTACT_PNG_BEGIN", flush=True)
-            print(base64.b64encode(data).decode("ascii"), flush=True)
-            print("PIXEL_CONTACT_PNG_END", flush=True)
+        print("PIXEL_CONTACT_PNG_BEGIN", flush=True)
+        print(base64.b64encode(data).decode("ascii"), flush=True)
+        print("PIXEL_CONTACT_PNG_END", flush=True)
 archive_path.unlink()
 (output / "diagnostic.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 print(json.dumps(report), flush=True)
