@@ -64,8 +64,9 @@ final class BookStore implements AutoCloseable {
             for (long offset = 0; offset < bytes;) {
                 task.check();
                 int count = (int)Math.min(chunk.length, bytes - offset);
-                if (source.read(offset, chunk, count) != count) throw new IOException("Short SDK source read");
-                digest.update(chunk, 0, count); offset += count;
+                int read = source.read(offset, chunk, count);
+                if (read <= 0 || read > count) throw new IOException("Invalid SDK source read");
+                digest.update(chunk, 0, read); offset += read;
             }
         }
         task.check();
@@ -89,7 +90,14 @@ final class BookStore implements AutoCloseable {
     /** SDK is authoritative for bytes; retry only IDs absent from the local mapping. */
     void repairMissingMappings() {
         metadataRepairPending = false;
-        for (NativeLibrary.Book book : library.books()) {
+        NativeLibrary.Book[] books;
+        try { books = library.books(); }
+        catch (RuntimeException error) {
+            metadataRepairPending = true;
+            Log.w("EXRHost", "Metadata repair pending; SDK book scan failed", error);
+            return;
+        }
+        for (NativeLibrary.Book book : books) {
             try {
                 if (!catalog.hasLocalBook(book.id))
                     catalog.attach(verifySource(book.id, null, 0, new HostTask(() -> false)));
