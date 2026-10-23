@@ -64,6 +64,7 @@ struct HostRootView: View {
 private struct ShelfGeometry: Equatable {
     var frames: [String: CGRect] = [:]
     var size: CGSize = .zero
+    var revision = 0
 }
 private struct ShelfGeometryKey: PreferenceKey {
     static var defaultValue = ShelfGeometry()
@@ -71,6 +72,7 @@ private struct ShelfGeometryKey: PreferenceKey {
         let next = nextValue()
         value.frames.merge(next.frames) { _, newer in newer }
         if next.size.height > 0 { value.size = next.size }
+        value.revision = max(value.revision, next.revision)
     }
 }
 
@@ -151,7 +153,7 @@ struct LibraryScreen: View {
                             .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
                             .background(GeometryReader { geometry in
                                 Color.clear.preference(key: ShelfGeometryKey.self,
-                                    value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))]))
+                                    value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))], revision: shelf.restoreRevision))
                             })
                         }
                     }
@@ -159,7 +161,7 @@ struct LibraryScreen: View {
                     .listStyle(.plain)
                     .coordinateSpace(name: "catalog-shelf")
                     .background(GeometryReader { geometry in
-                        Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size))
+                        Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size, revision: shelf.restoreRevision))
                     })
                     .onPreferenceChange(ShelfGeometryKey.self) { geometry in shelf.observe(geometry.frames, size: geometry.size) }
                     .onChange(of: shelf.restoreRevision) { _ in
