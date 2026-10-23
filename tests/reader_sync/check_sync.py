@@ -308,9 +308,18 @@ def main():
         record('local_original_corruption_is_refused_before_any_publication')
         missing_local = state('missing-local-original')
         local(missing_local, 'book-missing-local', book)
-        v = sync(missing_local)
+        v = sync(missing_local, root('missing-local'))
         assert v['pending_local_original'] == 1 and v['pushed'] == 0 and counts(missing_local)[1] == 1
         record('missing_private_original_stays_explicitly_pending_without_ack')
+        removed_local = state('book-tombstone-without-local-original')
+        book_wire = wire('known-book-before-local-removal', book)
+        rv(removed_local, 'receive', book_wire, hashlib.sha256(book_wire.read_bytes()).hexdigest())
+        book_delete = revision(2, kind='book', key=book_key, operation='delete', parents=[book['id']])
+        local(removed_local, 'book-delete-without-bytes', book_delete)
+        v = sync(removed_local)
+        assert v['pushed'] == 1 and v['pending_local_original'] == 0 and counts(removed_local) == (2, 0)
+        assert entries[object_resource] == source and rv(removed_local, 'heads', 'book', book_key)['state']['deleted']
+        record('book_deletion_without_local_bytes_uses_verified_existing_remote_original_and_keeps_its_history')
         tag = revision(20, shard=18)
         local(da, 'tag-lost-response', tag)
         tag_path = '/dav/exreader-sync-v1/revisions/12/' + tag['id'] + '-' + hashlib.sha256(raw(tag)).hexdigest() + '.json'
@@ -484,7 +493,7 @@ def main():
             assert secret not in device['db'].read_bytes()
         assert all(secret not in value and AUTH.encode() not in value for value in entries.values())
         record('credentials_are_absent_from_payloads_and_product_databases')
-        assert len(checks) == 31, len(checks)
+        assert len(checks) == 32, len(checks)
         (folder / 'requests.json').write_text(json.dumps(requests, indent=2), encoding='utf-8')
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform, 'count': len(checks),
