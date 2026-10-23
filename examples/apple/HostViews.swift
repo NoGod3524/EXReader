@@ -148,6 +148,7 @@ struct LibraryScreen: View {
                             .accessibilityIdentifier("library.book.\(book.sdkID - 1)")
                             .accessibilityLabel(Text("\(book.title)，\(book.author)，\(book.format.uppercased())"))
                             .id(book.id)
+                            .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
                             .background(GeometryReader { geometry in
                                 Color.clear.preference(key: ShelfGeometryKey.self,
                                     value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))]))

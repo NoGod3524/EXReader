@@ -60,12 +60,12 @@ import CryptoKit
                 if page.count < 50 { break }
             } while true
             try check("same_title_uses_130_stable_source_keys", ties.count == 130 && Set(ties).count == 130 && ties == ties.sorted())
-            try check("literal_percent_underscore_and_bound_parameters", catalog.shelf(query: "100%_", anchor: nil).count == 1)
-            try check("title_ascii_case_search", catalog.shelf(query: "bOoK 0201", anchor: nil).count == 1)
-            try check("independent_author_search", catalog.shelf(query: "Unique Shelf Author", anchor: nil).count == 1)
-            try check("empty_search_result", catalog.shelf(query: "not a shelf title", anchor: nil).isEmpty)
+            try check("literal_percent_underscore_and_bound_parameters", try catalog.shelf(query: "100%_", anchor: nil).count == 1)
+            try check("title_ascii_case_search", try catalog.shelf(query: "bOoK 0201", anchor: nil).count == 1)
+            try check("independent_author_search", try catalog.shelf(query: "Unique Shelf Author", anchor: nil).count == 1)
+            try check("empty_search_result", try catalog.shelf(query: "not a shelf title", anchor: nil).isEmpty)
             let middle = try catalog.shelf(query: "", anchor: nil)[30]
-            try check("inclusive_restore_keeps_exact_top_key", catalog.shelf(query: "", anchor: middle.key, inclusive: true).first?.id == middle.id)
+            try check("inclusive_restore_keeps_exact_top_key", try catalog.shelf(query: "", anchor: middle.key, inclusive: true).first?.id == middle.id)
             try catalog.close()
             try FileManager.default.removeItem(at: input)
         }
@@ -77,6 +77,51 @@ import CryptoKit
         shelf.query = "new query"; shelf.search()
         responses[0](.success([]))
         try check("old_generation_cannot_replace_new_query", shelf.discarded == 1 && shelf.query == "new query" && shelf.rows.isEmpty)
+        let catalog = try queue.sync { try HostCatalog(path: output.appendingPathComponent("ShelfSeed-reader-catalog.db"),
+            migrationURL: resources.appendingPathComponent("reader-catalog-v1.sql"), ownerQueue: queue) }
+        let pageDefaults = UserDefaults(suiteName: "EXR.ShelfPages.\(UUID().uuidString)")!
+        let paged = HostShelf(defaults: pageDefaults)
+        var deferred = false
+        var pending: (() -> Void)?
+        paged.connect { query, anchor, before, inclusive, done in
+            let result = Result { try queue.sync { try catalog.shelf(query: query, anchor: anchor, before: before, inclusive: inclusive) } }
+            if deferred { pending = { done(result) } } else { done(result) }
+        }
+        func layout(_ id: String) {
+            paged.observe([id: CGRect(x: 0, y: 0, width: 100, height: 40)], size: CGSize(width: 100, height: 100))
+        }
+        func acknowledge() {
+            for _ in 0..<4 {
+                if let key = paged.restoreKey { layout(key) }
+                if !paged.observation.contains("\"restoring_layout\":true") { break }
+            }
+        }
+        acknowledge()
+        var visited = Set(paged.rows.map(\.id)), turns = 0
+        while paged.after {
+            guard let last = paged.rows.last, turns < 100 else { throw HostError.invalidResult("forward state did not advance") }
+            layout(last.id); acknowledge(); visited.formUnion(paged.rows.map(\.id)); turns += 1
+        }
+        var reverse = Set(paged.rows.map(\.id)); turns = 0
+        while paged.before {
+            guard let first = paged.rows.first, turns < 100 else { throw HostError.invalidResult("reverse state did not advance") }
+            layout(first.id); acknowledge(); reverse.formUnion(paged.rows.map(\.id)); turns += 1
+        }
+        try check("production_state_bounds_both_real_traversals", visited.count == 2202 && reverse.count == 2202 &&
+            paged.rows.count <= 150 && paged.maximumRows == 150)
+        let chosen = paged.rows[25]
+        layout(chosen.id); paged.save()
+        let saved = pageDefaults.data(forKey: "EXRShelfTop")
+        deferred = true; paged.refresh(); paged.save()
+        try check("refresh_interruption_retains_saved_top_key", paged.loading && paged.rows.isEmpty &&
+            saved != nil && pageDefaults.data(forKey: "EXRShelfTop") == saved)
+        deferred = false; pending?(); pending = nil
+        if let wrong = paged.rows.dropFirst().first { layout(wrong.id) }
+        let stillRestoring = paged.observation.contains("\"restoring_layout\":true")
+        acknowledge()
+        try check("layout_acknowledges_exact_restored_source", stillRestoring && paged.top == chosen.key &&
+            !paged.observation.contains("\"restoring_layout\":true"))
+        try queue.sync { try catalog.close() }
         let manifest: [String: Any] = ["source_sha": ProcessInfo.processInfo.environment["GITHUB_SHA"]!,
             "run_id": ProcessInfo.processInfo.environment["GITHUB_RUN_ID"]!,
             "attempt": ProcessInfo.processInfo.environment["GITHUB_RUN_ATTEMPT"]!,
