@@ -1,26 +1,18 @@
 // SPDX-License-Identifier: MIT
 package org.exreader.host;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
+import android.os.Bundle;
+import android.os.SystemClock;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,22 +25,107 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** Executes the packaged migration with Android's own SQLite, including triggers. */
-@RunWith(AndroidJUnit4.class)
-public final class CatalogStoreTest {
+public final class CatalogStoreTest extends Instrumentation {
     private Context context;
     private byte[] asset;
     private final List<File> files = new ArrayList<>();
 
-    @Before public void prepare() throws Exception {
-        context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    @Override public void onCreate(Bundle arguments) {
+        super.onCreate(arguments);
+        String selected = arguments == null ? null : arguments.getString("class");
+        if (selected != null && !getClass().getName().equals(selected)) {
+            Bundle result = new Bundle();
+            result.putString("shortMsg", "Unexpected catalog instrumentation class");
+            finish(Activity.RESULT_CANCELED, result);
+            return;
+        }
+        start();
+    }
+
+    @Override public void onStart() {
+        super.onStart();
+        String[] names = {
+                "createsAndReopensCatalog",
+                "rejectsForeignDatabasesWithoutChangingData",
+                "keepsCompleteShelfTriggers",
+                "retainsImmutableRevisionsAndTombstones",
+                "rollsBackInterruptedMigrationAndAllowsRetry",
+                "rejectsTamperedAssetFieldsAndSource",
+                "rejectsOversizedAndMalformedAssets",
+                "enforcesWorkerOwnership"
+        };
+        Attempt[] tests = {
+                this::createsAndReopensCatalog,
+                this::rejectsForeignDatabasesWithoutChangingData,
+                this::keepsCompleteShelfTriggers,
+                this::retainsImmutableRevisionsAndTombstones,
+                this::rollsBackInterruptedMigrationAndAllowsRetry,
+                this::rejectsTamperedAssetFieldsAndSource,
+                this::rejectsOversizedAndMalformedAssets,
+                this::enforcesWorkerOwnership
+        };
+        long started = SystemClock.elapsedRealtime();
+        int failures = 0;
+        for (int index = 0; index < tests.length; index++) {
+            Bundle status = testStatus(names[index], index + 1, tests.length);
+            status.putString("stream", "\n" + getClass().getName() + ":" + names[index]);
+            sendStatus(1, status);
+            Throwable failure = null;
+            try {
+                prepare();
+                tests[index].run();
+            } catch (Throwable error) {
+                failure = error;
+            } finally {
+                try { cleanUp(); }
+                catch (Throwable cleanupError) {
+                    if (failure == null) failure = cleanupError;
+                    else failure.addSuppressed(cleanupError);
+                }
+            }
+            Bundle completed = testStatus(names[index], index + 1, tests.length);
+            if (failure == null) {
+                completed.putString("stream", ".");
+                sendStatus(0, completed);
+            } else {
+                failures++;
+                completed.putString("stack", Log.getStackTraceString(failure));
+                completed.putString("stream", "\nFailure in " + names[index] + ": " + failure + "\n");
+                sendStatus(-2, completed);
+            }
+        }
+        Bundle result = new Bundle();
+        String elapsed = "\nTime: " + ((SystemClock.elapsedRealtime() - started) / 1000.0) + "\n\n";
+        result.putString("stream", elapsed + (failures == 0 ? "OK (8 tests)\n"
+                : "FAILURES!!!\nTests run: 8, Failures: " + failures + "\n"));
+        if (failures != 0) result.putString("shortMsg", failures + " catalog tests failed");
+        finish(failures == 0 ? Activity.RESULT_OK : Activity.RESULT_CANCELED, result);
+    }
+
+    private Bundle testStatus(String name, int current, int total) {
+        Bundle status = new Bundle();
+        status.putString("id", "InstrumentationTestRunner");
+        status.putString("class", getClass().getName());
+        status.putString("test", name);
+        status.putInt("numtests", total);
+        status.putInt("current", current);
+        return status;
+    }
+
+    public void prepare() throws Exception {
+        context = getTargetContext();
         asset = CatalogStore.readAsset(context);
     }
 
-    @After public void cleanUp() {
-        for (File file : files) SQLiteDatabase.deleteDatabase(file);
+    public void cleanUp() {
+        try {
+            for (File file : files) SQLiteDatabase.deleteDatabase(file);
+        } finally {
+            files.clear();
+        }
     }
 
-    @Test public void createsAndReopensCatalog() throws Exception {
+    public void createsAndReopensCatalog() throws Exception {
         File file = newFile();
         try (CatalogStore catalog = new CatalogStore(context, file)) {
             SQLiteDatabase db = catalog.database();
@@ -68,7 +145,7 @@ public final class CatalogStoreTest {
         }
     }
 
-    @Test public void rejectsForeignDatabasesWithoutChangingData() throws Exception {
+    public void rejectsForeignDatabasesWithoutChangingData() throws Exception {
         long[][] identities = {
                 {1163416131, 7}, {999, 1}, {0, 0}, {0, 0},
                 {CatalogStore.APPLICATION_ID, 2}, {0, 2}
@@ -94,7 +171,7 @@ public final class CatalogStoreTest {
         }
     }
 
-    @Test public void keepsCompleteShelfTriggers() throws Exception {
+    public void keepsCompleteShelfTriggers() throws Exception {
         try (CatalogStore catalog = new CatalogStore(context, newFile())) {
             SQLiteDatabase db = catalog.database();
             for (int i = 1; i <= 8; i++) insertShelf(db, i, i == 1 ? null : id(i - 1));
@@ -118,7 +195,7 @@ public final class CatalogStoreTest {
         }
     }
 
-    @Test public void retainsImmutableRevisionsAndTombstones() throws Exception {
+    public void retainsImmutableRevisionsAndTombstones() throws Exception {
         File file = newFile();
         String revision = id(1);
         String body = "{\"operation\":\"delete\"}";
@@ -142,7 +219,7 @@ public final class CatalogStoreTest {
         }
     }
 
-    @Test public void rollsBackInterruptedMigrationAndAllowsRetry() throws Exception {
+    public void rollsBackInterruptedMigrationAndAllowsRetry() throws Exception {
         File file = newFile();
         JSONObject broken = object();
         JSONArray original = broken.getJSONArray("statements");
@@ -169,7 +246,7 @@ public final class CatalogStoreTest {
         }
     }
 
-    @Test public void rejectsTamperedAssetFieldsAndSource() throws Exception {
+    public void rejectsTamperedAssetFieldsAndSource() throws Exception {
         List<byte[]> bad = new ArrayList<>();
         bad.add(encoded(object().put("source_sha256", zeros(64))));
         bad.add(encoded(object().put("source_bytes", object().getLong("source_bytes") + 1)));
@@ -198,7 +275,7 @@ public final class CatalogStoreTest {
         }
     }
 
-    @Test public void rejectsOversizedAndMalformedAssets() throws Exception {
+    public void rejectsOversizedAndMalformedAssets() throws Exception {
         List<byte[]> bad = new ArrayList<>();
         bad.add(new byte[0]);
         bad.add(new byte[128 * 1024 + 1]);
@@ -216,7 +293,7 @@ public final class CatalogStoreTest {
         }
     }
 
-    @Test public void enforcesWorkerOwnership() throws Exception {
+    public void enforcesWorkerOwnership() throws Exception {
         try (CatalogStore catalog = new CatalogStore(context, newFile())) {
             AtomicReference<Throwable> queryError = new AtomicReference<>();
             AtomicReference<Throwable> closeError = new AtomicReference<>();
@@ -306,6 +383,31 @@ public final class CatalogStoreTest {
     }
 
     private interface Attempt { void run() throws Exception; }
+
+    private static void assertEquals(long expected, long actual) {
+        if (expected != actual) fail("Expected " + expected + ", got " + actual);
+    }
+
+    private static void assertEquals(String expected, String actual) {
+        if (expected == null ? actual != null : !expected.equals(actual))
+            fail("Expected " + expected + ", got " + actual);
+    }
+
+    private static void assertTrue(boolean value) {
+        if (!value) fail("Expected true");
+    }
+
+    private static void assertFalse(boolean value) { assertFalse("Expected false", value); }
+
+    private static void assertFalse(String message, boolean value) {
+        if (value) fail(message);
+    }
+
+    private static void assertNotNull(Object value) {
+        if (value == null) fail("Expected a non-null value");
+    }
+
+    private static void fail(String message) { throw new AssertionError(message); }
 
     private static void rejects(Class<? extends Throwable> expected, Attempt attempt) throws Exception {
         try { attempt.run(); }
