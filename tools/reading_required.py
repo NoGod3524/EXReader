@@ -126,6 +126,7 @@ def reports(root, source, run, attempt):
                 manifest['identity'] == candidate['identity'] and
                 len(manifest['files']) == candidate['file_count'] > 0, 'SDK manifest identity changed')
         license_report = read(one(folder, 'licenses.json'))
+        ci_identity(license_report, source, run, attempt, True)
         require(license_report.get('source_sha') == source and license_report.get('profile') == profile and
                 license_report.get('release_ready') is True and license_report.get('materials_check_passed') is True and
                 license_report.get('failures') == [] and license_report.get('pending') == [] and
@@ -137,24 +138,29 @@ def reports(root, source, run, attempt):
     for host in ('Windows', 'macOS'):
         for profile in ('reading-core', 'reading-library'):
             folder = root / f'reading-platform-{host}-{profile}-{run}-{attempt}'
-            report = read(one(folder, 'platform-evidence.json'))
+            platform_path = one(folder, 'platform-evidence.json')
+            report = read(platform_path)
             ci_identity(report, source, run, attempt, True)
             require(report.get('accepted') is True and report.get('problems') == [] and
                     report.get('profile') == profile and report.get('host') == host,
                     'platform dependency/execution/toolchain check rejected')
             rejection = read(one(folder, 'rejection-regression.json'))
+            ci_identity(rejection, source, run, attempt, True)
             require(rejection.get('accepted') is True and rejection.get('profile') == profile and
                     rejection.get('platform') == host and
+                    rejection.get('report_sha256') == sha256(platform_path) and
                     rejection.get('cases', 0) == rejection.get('passed', -1) > 0 and
                     all(item.get('passed') is True for item in rejection['results']), 'platform refusal regression failed')
-    corpus = read(one(root / f'r2-real-corpus-{run}-{attempt}', 'report.json'))
+    corpus_path = one(root / f'r2-real-corpus-{run}-{attempt}', 'report.json')
+    corpus = read(corpus_path)
     ci_identity(corpus, source, run, attempt)
     sys.path.insert(0, str(Path('tools/reading_corpus').resolve()))
-    from run import validate_report
+    from run import validate_report, validate_evidence
     manifest = read(MANIFEST)
     require(corpus.get('accepted') is True and validate_report(corpus) and
             corpus['registration_sha'] == REGISTRATION and corpus['manifest_sha256'] == sha256(MANIFEST),
             'real-document declaration or complete acceptance rejected')
+    require(validate_evidence(corpus, corpus_path.parent), 'raw real-document evidence rejected')
     require([(row['id'], row['sha256']) for row in corpus['documents']] ==
             [(row['id'], row['sha256']) for row in manifest['files']], 'real-document coverage changed')
     performance_path = root / f'reading-real-{run}-{attempt}' / 'reading-real/summary.json'
@@ -201,7 +207,9 @@ def main():
         result['jobs'] = verify_jobs(workflow_head, run, attempt,
                                     pages(f'actions/runs/{run}/attempts/{attempt}/jobs', 'jobs'))
         own_job = next(item for item in result['jobs'] if item['name'] == 'reading-required')
-        result['publisher'] = verify_publisher(fetch('check-runs/' + str(own_job['id'])), workflow_head,
+        check_id = fetch('actions/jobs/' + str(own_job['id']))['check_run_url'].rsplit('/', 1)[1]
+        require(check_id.isdecimal(), 'invalid check-run URL')
+        result['publisher'] = verify_publisher(fetch('check-runs/' + check_id), workflow_head,
                                               read('docs/reading-required-ruleset.json'))
         result['artifacts'] = verify_metadata(source, run, attempt, read(args.needs),
                                              pages(f'actions/runs/{run}/artifacts', 'artifacts'), workflow_head)
