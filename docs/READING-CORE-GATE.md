@@ -9,9 +9,10 @@
 三平台六份SDK候选、固定八份真实语料、40进程/12参考页及冻结预算同次通过；
 28份工件与完整身份见[验收JSON](validation/reading-required-fa54027.json)和[R6记录](R6-READING-RELEASE.md)。
 
-当前待执行的是默认分支接纳、必需检查启用和实际发布。规则候选
+PR #2已合入，默认分支规则25700819已active并云端读回。
 [reading-required-ruleset.json](reading-required-ruleset.json)绑定GitHub Actions integration15368的
-`reading-required`，仍为`disabled`；仓库About已更新为原生C11/自有PDF/无WebView、MIT核心与可选依赖各自许可。
+`reading-required`，严格检查且无bypass；仓库About已更新为原生C11/自有PDF/无WebView、MIT核心与可选依赖各自许可。
+真实发布准备已在修复候选run39908781291核验并原样导出六包；正式tag/Release尚未执行，见[R6记录](R6-READING-RELEASE.md)。
 
 ## 初始设置快照（2026-10-22，历史保留）
 
@@ -37,8 +38,8 @@
 最初两个reading检查不再单独作为默认分支统一门槛。
 
 1. 已完成：共同源码运行17作业门禁，六包、native/sanitizer、R2原始证据及R3固定预算全部严格接受；旧缺Pillow汇总失败保留。
-2. 待执行：通过PR将门禁源码接纳到默认分支，再启用已准备的规则。`reading-required.yml`覆盖PR和默认分支push，没有路径过滤。
-3. 待执行：以已接受源码和run调用`reading-release-plan.yml`；工具核默认分支祖先、17作业、工件、版本/ABI/schema及已有tag后，原样导出六包和SHA256SUMS。
+2. 已完成：PR #2接纳到默认分支，规则25700819已active。`reading-required.yml`覆盖PR和默认分支push，没有路径过滤。
+3. 已验证：真实prepare核默认分支祖先、17作业、工件、版本/ABI/schema及已有tag后，原样导出六包和SHA256SUMS；首次404失败及修复候选58项回归保留。
 4. 待执行：审阅发布准备结果后创建不可变版本。旧tag、失败与原工件保留；产品和宿主声明外范围另行验收。
 
 ## 检查映射
@@ -73,4 +74,5 @@ A/B/C 联合验收绑定 `S=686ce2fe6c3463ef1b917569677ee9933e22faa9`，严格�
 
 冻结 SDK 的历史长测 CPU 信用只属于其原始源码。R1 首轮不授予 WP16、新源码长测、真实语料整体通过或产品完成。
 
-R6候选的check名、封装/许可/版本判定、R3预算与最终17作业门禁已经验收。尚待默认分支接纳、GitHub规则实际启用及正式发布准备/发布；规则当前未启用。
+R6的check名、封装/许可/版本判定、R3预算与候选17作业门禁已经验收；默认分支接纳、规则启用及实际六包准备已执行。
+后继源码仍必须通过各自门禁，正式tag/Release另行批准。
