@@ -1,50 +1,28 @@
-name: Retained performance environment diagnostic only
+name: Retained Android frame diagnostic only
 on:
   workflow_dispatch:
-    inputs:
-      run_id:
-        type: string
-        required: true
-        default: '39992864599'
-      job_id:
-        type: string
-        required: true
-        default: '120548780916'
-      artifact_id:
-        type: string
-        required: true
-        default: '12517893663'
-      artifact_bytes:
-        type: string
-        required: true
-        default: '17484684'
-      artifact_digest:
-        type: string
-        required: true
-        default: '4304062b657c03d972029e8dab773ceece786e61ddb18c38756d04b178061f5e'
 permissions:
   contents: read
   actions: read
 jobs:
-  retained-environment:
+  retained-android-frame:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Verify the failed artifact and compare retained environments without execution
+      - name: Install retained image inspector
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y python3-pil
+      - name: Verify the failed artifact and inspect retained Android frames without execution
         env:
           GH_TOKEN: ${{ github.token }}
-          DIAG_RUN_ID: ${{ inputs.run_id }}
-          DIAG_JOB_ID: ${{ inputs.job_id }}
-          DIAG_ARTIFACT_ID: ${{ inputs.artifact_id }}
-          DIAG_ARTIFACT_BYTES: ${{ inputs.artifact_bytes }}
-          DIAG_ARTIFACT_DIGEST: ${{ inputs.artifact_digest }}
-        run: python3 tools/reading_environment_diagnostic.py
-      - name: Preserve retained environment diagnostic without an acceptance grant
+        run: python3 tools/android_frame_diagnostic.py
+      - name: Preserve original archive and retained frame diagnostic without an acceptance grant
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reading-environment-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/reading-environment-diagnostic/
+          name: android-frame-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-frame-diagnostic/
           if-no-files-found: error
           retention-days: 30
