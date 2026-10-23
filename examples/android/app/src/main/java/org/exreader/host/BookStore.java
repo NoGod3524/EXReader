@@ -1,18 +1,32 @@
 // SPDX-License-Identifier: MIT
 package org.exreader.host;
 
+import android.content.Context;
+
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /** Worker-thread facade over the SDK library; no call is made from the UI thread. */
 final class BookStore implements AutoCloseable {
     private final NativeLibrary library;
+    private final CatalogStore catalog;
     NativeLibrary nativeLibrary() { return library; }
     boolean bounded(long bookId) { return library.bounded(bookId); }
 
-    BookStore(File database) {
-        library = new NativeLibrary(database.getAbsolutePath());
+    BookStore(Context context, File database) throws IOException {
+        CatalogStore openedCatalog = new CatalogStore(context,
+                new File(database.getParentFile(), "reader-catalog.db"));
+        NativeLibrary openedLibrary;
+        try {
+            openedLibrary = new NativeLibrary(database.getAbsolutePath());
+        } catch (RuntimeException | Error error) {
+            openedCatalog.close();
+            throw error;
+        }
+        catalog = openedCatalog;
+        library = openedLibrary;
     }
 
     List<NativeLibrary.Book> books() {
@@ -82,6 +96,7 @@ final class BookStore implements AutoCloseable {
 
     @Override
     public void close() {
-        library.close();
+        try { library.close(); }
+        finally { catalog.close(); }
     }
 }

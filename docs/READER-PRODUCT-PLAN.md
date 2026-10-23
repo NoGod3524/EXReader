@@ -21,6 +21,13 @@ SDK固定为`9854061be331fe603a1822d9b2b36ee357154927`，SDK3.40.0／ABI1／sche
 当前阶段交付导入模块和产品存储基础：c2c75f99的云端run39980923147四作业已通过，
 详见[模块记录](validation/reader-modules-c2c75f9.json)。尚未交付新的产品UI或跨设备同步客户端。
 
+下一步接入Android宿主的独立产品库：构建时从原SQL生成完整语句资产，运行时由现有worker
+打开`reader-catalog.db`，保留触发器和迁移事务；失败回滚，拒绝改写SDK或未知数据库。
+专项工作流`reader-catalog-android.yml`在API34 x86_64运行八项真实SQLite检查，当前待云端结果。
+此步尚未切换书架查询、建立导入映射或交付同步客户端。
+WebDAV的[首版实施契约](WEBDAV-PROTOCOL.md)固定不可变对象、条件创建、并发修订与恢复规则，
+网络实现和双设备互操作验收继续由P3承担。
+
 ## 并行工作包
 
 | 包 | 交付 | 出口 |

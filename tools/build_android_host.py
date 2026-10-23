@@ -400,6 +400,8 @@ def main():
     font = fetch_font(ROOT / 'build/host-font-cache')
     assets = ANDROID / 'app/src/main/assets'
     assets.mkdir(parents=True, exist_ok=True)
+    run([sys.executable, ROOT / 'tools/reader_catalog_assets.py',
+         '--output', assets / 'reader-catalog-v1.json'])
     shutil.copyfile(font / 'Reader.otf', assets / 'Reader.otf')
     shutil.copyfile(font / 'OFL.txt', assets / 'OFL.txt')
 
