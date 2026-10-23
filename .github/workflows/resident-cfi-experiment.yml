@@ -1,0 +1,72 @@
+name: Experimental resident normalized point to CFI
+on:
+  push:
+    branches: [codex/android-restore-cfi]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  resident-cfi:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [false, true]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Record isolated successor scope and actual host fixture
+        run: |
+          mkdir -p build/resident-cfi
+          git rev-parse HEAD > build/resident-cfi/source.txt
+          git diff --name-only 19128dc5f5e4a3164416ffa17e63937a3894989b > build/resident-cfi/changed.txt
+          python tests/resident_cfi/prepare_and_check.py prepare build/resident-cfi/fixtures | tee build/resident-cfi/prepare.json
+      - name: Build and install the experimental SDK with unchanged versions
+        env:
+          SANITIZER: ${{ matrix.sanitizer }}
+        run: |
+          flags=""
+          if [ "$SANITIZER" = true ]; then flags="-fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          cmake --preset reading-core -DCMAKE_C_FLAGS="$flags" -DCMAKE_CXX_FLAGS="$flags" -DCMAKE_EXE_LINKER_FLAGS="$flags"
+          cmake --build --preset reading-core
+          cmake --install build/reading-core
+          cmake -S tests/resident_cfi -B build/resident-cfi/consumer -G Ninja -DEXR_SDK="$PWD/build/reading-core/stage" -DCMAKE_C_FLAGS="$flags" -DCMAKE_EXE_LINKER_FLAGS="$flags"
+          cmake --build build/resident-cfi/consumer --parallel 4
+      - name: Require exact raw UTF16 boundaries and resident-only behavior
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          set -o pipefail
+          build/resident-cfi/consumer/existing-cfi-text | tee build/resident-cfi/existing-cfi-text.txt
+          build/resident-cfi/consumer/resident-cfi suite build/resident-cfi/fixtures/font/Reader.otf build/resident-cfi/fixtures/Boundary.epub unused | tee build/resident-cfi/boundaries.json
+      - name: Capture actual Large page 2 and resolve it in a fresh process
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          set -o pipefail
+          f=build/resident-cfi/fixtures
+          build/resident-cfi/consumer/resident-cfi capture "$f/font/Reader.otf" "$f/Large.epub" "$f/large-page2" | tee build/resident-cfi/capture.txt
+          build/resident-cfi/consumer/resident-cfi resolve "$f/font/Reader.otf" "$f/Large.epub" "$f/large-page2" | tee "$f/resolved.json"
+          python tests/resident_cfi/prepare_and_check.py check "$f" | tee build/resident-cfi/verified.json
+      - name: Preserve experimental evidence without granting product acceptance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resident-cfi-${{ matrix.sanitizer }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/resident-cfi/source.txt
+            build/resident-cfi/changed.txt
+            build/resident-cfi/*.json
+            build/resident-cfi/*.txt
+            build/resident-cfi/fixtures/large-page2.*
+            build/resident-cfi/fixtures/resolved.json
+            build/resident-cfi/fixtures/fixtures.json
+            build/resident-cfi/consumer/CMakeCache.txt
+          if-no-files-found: error
