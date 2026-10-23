@@ -1058,13 +1058,20 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 reviewGate("import-inserted", task);
                 BookStore.VerifiedSource verified = store.verifySource(importedId, copied.sha256, copied.bytes, task);
                 final long acceptedId = importedId;
+                final CopyResult resultCopy = copied;
+                final String oldPath = prefs.getString("path_" + acceptedId, null);
+                final boolean reused = !created && matchesOwnedCopy(oldPath, copied, task);
                 task.commit(() -> {
-                    if (!prefs.edit().putString("path_" + acceptedId, path)
+                    String acceptedPath = reused ? oldPath : path;
+                    if (!prefs.edit().putString("path_" + acceptedId, acceptedPath)
                             .putLong("size_" + acceptedId, verified.bytes).commit()) {
                         throw new IOException("Could not persist the imported book path");
                     }
                 });
                 published = true;
+                if (reused && resultCopy.owned && !path.equals(oldPath) && !resultCopy.file.delete()) {
+                    Log.w(TAG, "Unused duplicate copy could not be removed");
+                }
                 reviewGate("import-published", task);
                 store.finalizeImport(verified);
                 metadataFinalized = true;
@@ -1105,6 +1112,32 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         CopyResult(File file, boolean owned, String sha256, long bytes) {
             this.file = file; this.owned = owned; this.sha256 = sha256; this.bytes = bytes;
         }
+    }
+
+    /** Preferences only suggest a reusable path; actual private bytes must match. */
+    private boolean matchesOwnedCopy(String path, CopyResult copy, HostTask task) throws IOException {
+        if (path == null) return false;
+        try {
+            File file = new File(path).getCanonicalFile();
+            File folder = new File(getFilesDir(), "books").getCanonicalFile();
+            if (!folder.equals(file.getParentFile()) || !file.isFile() || file.length() != copy.bytes) return false;
+            MessageDigest digest;
+            try { digest = MessageDigest.getInstance("SHA-256"); }
+            catch (Exception impossible) { throw new AssertionError(impossible); }
+            long bytes = 0;
+            try (InputStream input = new FileInputStream(file)) {
+                byte[] chunk = new byte[65536]; int read;
+                while ((read = input.read(chunk)) != -1) {
+                    task.check();
+                    bytes += read;
+                    if (bytes > copy.bytes) return false;
+                    digest.update(chunk, 0, read);
+                }
+            }
+            task.check();
+            return bytes == copy.bytes && copy.sha256.equals(hex(digest.digest()));
+        } catch (HostTask.Cancelled error) { throw error; }
+        catch (IOException inaccessible) { return false; }
     }
 
     private void rollbackImport(CopyResult copy, long id, boolean created) throws IOException {
