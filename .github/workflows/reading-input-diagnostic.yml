@@ -1,66 +1,24 @@
-name: Android viewport ABBA diagnostic only
+name: Android ABBA conflict readback only
 on:
   workflow_dispatch:
-    inputs:
-      new_artifact_id:
-        description: Reviewed artifact from c987 run 39995947460 attempt 1
-        type: string
-        required: true
-      new_artifact_bytes:
-        type: string
-        required: true
-      new_artifact_digest:
-        description: Reviewed 64-character ZIP SHA256 without prefix
-        type: string
-        required: true
 permissions:
   contents: read
   actions: read
 jobs:
-  viewport-abba:
+  conflict-audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 15
     env:
       GH_TOKEN: ${{ github.token }}
-      AB_NEW_ID: ${{ inputs.new_artifact_id }}
-      AB_NEW_BYTES: ${{ inputs.new_artifact_bytes }}
-      AB_NEW_DIGEST: ${{ inputs.new_artifact_digest }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - name: Install only original emulator and APK inspection tools
-        run: |
-          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
-          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
-          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
-          echo "$SDK/emulator" >> "$GITHUB_PATH"
-          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "emulator" "build-tools;35.0.0" "system-images;android-34;default;x86_64"
-      - name: Verify original ZIPs, old APK pair, font and native identities
-        run: python3 tools/android_raster_ab_diagnostic.py prepare
-      - name: Enable original emulator accelerator
-        run: sudo chmod 666 /dev/kvm
-      - name: One emulator and old 45-step method with external ABBA sampling
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          disable-linux-hw-accel: false
-          api-level: 34
-          target: default
-          arch: x86_64
-          profile: pixel_6
-          ram-size: 4096M
-          cores: 4
-          disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          script: python3 tools/android_raster_ab_diagnostic.py run
-      - name: Preserve originals and diagnostic outcomes without acceptance
+      - name: Verify pinned ABBA archive and inspect retained conflict fields
+        run: python3 tools/android_raster_conflict_audit.py
+      - name: Preserve raw JSON, metadata and audit without acceptance
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-raster-ab-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/android-raster-ab-diagnostic/
+          name: android-raster-conflict-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-raster-conflict-audit/
           if-no-files-found: error
           retention-days: 30
