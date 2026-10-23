@@ -28,16 +28,17 @@ static void check(const char *text,const exr_anchor *anchor,exr_anchor_state sta
 static void scopes(const char *first,const char *second,const char *third,const exr_anchor *anchor,
                    exr_anchor_state state,size_t expected) {
   exr_node_input nodes[10]={0};exr_chapter_input chapters[3]={0};exr_document_input input={0};
-  const char *texts[]={first,second,third};exr_document *doc=NULL;exr_anchor a=*anchor;exr_anchor_match match;size_t i;
+  const char *texts[]={first,second,third},*paths[]={"first.xhtml","second.xhtml","third.xhtml"};
+  exr_document *doc=NULL;exr_anchor a=*anchor;exr_anchor_match match;size_t i;
   nodes[0].kind=EXR_NODE_DOCUMENT;nodes[0].parent=SIZE_MAX;
   for(i=0;i<3;i++) {
     size_t root=1+i*3;nodes[root].kind=EXR_NODE_CHAPTER;nodes[root].parent=0;
     nodes[root+1].kind=EXR_NODE_PARAGRAPH;nodes[root+1].parent=root;
     nodes[root+2].kind=EXR_NODE_TEXT;nodes[root+2].parent=root+1;nodes[root+2].text=texts[i];
-    chapters[i].root=root;chapters[i].path="same.xhtml";chapters[i].in_reading_order=1;
+    chapters[i].root=root;chapters[i].path=paths[i];chapters[i].in_reading_order=1;
   }
   input.nodes=nodes;input.node_count=10;input.chapters=chapters;input.chapter_count=3;
-  OK(exr_document_create(&input,&doc,&error));a.chapter="same.xhtml";
+  OK(exr_document_create(&input,&doc,&error));a.chapter=NULL;
   OK(exr_anchor_resolve(doc,&a,&match,&error));CHECK(match.state==state);
   CHECK(match.start==(state==EXR_ANCHOR_FOUND?expected:SIZE_MAX));exr_document_free(doc);
 }

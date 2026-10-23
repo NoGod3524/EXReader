@@ -12,3 +12,13 @@ target_link_libraries(r4-anchor-regress PRIVATE EXReader::exr_core m)
 target_compile_options(r4-anchor-regress PRIVATE -Wall -Wextra -Werror)
 set_target_properties(r4-anchor-regress PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
 add_test(NAME r4-anchor-semantics COMMAND r4-anchor-regress)
+# Reuse the existing public-interface regressions without enabling optional SDK
+# components merely to make the monolithic native test group register.
+add_executable(r4-original-anchor ../test_anchor.c)
+add_executable(r4-original-fixed-text ../test_fixed_text.c)
+foreach(name anchor fixed-text)
+  target_link_libraries(r4-original-${name} PRIVATE EXReader::exr_core m)
+  set_target_properties(r4-original-${name} PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+endforeach()
+add_test(NAME r4-original-anchor COMMAND r4-original-anchor "${CMAKE_CURRENT_SOURCE_DIR}/../fixtures")
+add_test(NAME r4-original-fixed-text COMMAND r4-original-fixed-text)
