@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: b8ceb01bda81cb05b227ae0ff01a770c8e123b4d
+          ref: f2ed25073d92f7ebaee4136c3f3fdbb965d70112
       - name: Install image inspector
         run: sudo apt-get update -qq && sudo apt-get install -y python3-pil
       - name: Read exact retained native and reference pixels without rerunning the SDK
