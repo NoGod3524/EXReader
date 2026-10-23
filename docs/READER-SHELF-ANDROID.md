@@ -116,9 +116,52 @@
   `sha256:b5024d1d8006c6076ac660073cacab012571afe38781cd03ccee42caeb79e34b`；
   只定位原失败，`diagnostic_only=true, accepted=false`。
 - `d448e5e91fe323057ca2fc8f82b69bd933b6d4c8` / run `40036544464`：修复恢复书籍的
-  loading 标题，云端完整回归仍运行；尚未授联合验收。
-- 后继修复 NFC 查询原始 NFD display title 漏项，增加第 12 个目录专项，并在真实 UI 的
-  既有搜索用例中验证 NFC 书名和作者；所有出口仍须新源码同轮云端完成。
+  loading 标题，目录 11/UI 10、原 catalog 8/mapping 14/kill 2、原宿主 45+10+bounded
+  严格出口、48+20 原门禁及本包 17 项证据门禁同次通过，最终 `accepted=true`。
+  工件 `12537874050`，107,491,798 B，
+  `sha256:84b0a66c11d9780f1da73e6dedaa820efd0f18940bd5f6deb0b4629912952e89`，
+  API 与上传日志 digest 一致、同源码/运行且未过期；通过只属于该源码的声明范围。
+- `d5bf3f2360924ef766ec222c13f5047179e043a5` / run `40037631638`：修复 NFC 查询原始
+  NFD display title 漏项，增加第 12 个目录专项，并在真实 UI 的既有搜索用例中验证
+  NFC 书名和作者。目录 12/UI 10、原 catalog 8/mapping 14/kill 2、原宿主 45+10+11、
+  原 48+20 与本包 17 门禁同次通过，最终 `accepted=true`。工件 `12539005627`，
+  107,426,378 B，`sha256:b0b2d8162733ed4e086fdd0de9f1097c09407b79ada2a42e9bb26ddf8d4fa7ac`，
+  API 与上传日志身份一致、未过期；通过不转移到后继。
+- 最终候选 `ed0008d680a6838e2834dd2a8973dcf17a5d44d2` / run `40037805014`：严格
+  汇总逐条核 PSS 原文，增加缺原文/汇总不符两个拒绝探针，门禁合计 19 项。
+  同次所有出口成功，结果如下；未拼接先前运行。
+
+## 最终同源交付
+
+受测源码 `ed0008d680a6838e2834dd2a8973dcf17a5d44d2`，
+[run 40037805014](https://github.com/NoGod3524/EXReader/actions/runs/40037805014)，attempt 1，
+唯一 `android-shelf` job `120701455062` 成功。完成日志确认：
+
+| 出口 | 结果 |
+| --- | --- |
+| 真 SDK 2,202 源目录 | 12/12，0 失败/跳过 |
+| 真实原生书架 UI | 10/10，含全源可见遍历、反向/回收、搜索/取消、刷新、旋转/后台/不同 PID 恢复、离线阅读、系统 picker |
+| 原 catalog / mapping / kill recovery | 8/8、14/14、2/2 |
+| 原宿主 | 45+10+11 全过，严格检查确认 49 rendered pages / 49 native next / 0 recovery |
+| 原证据门禁 | 48/48 + 20/20 |
+| 本包证据门禁 | 19/19，17 个拒绝探针及前后两个正例 |
+| 最终严格汇总 | `accepted=true`、`problems=[]`、`ui_accepted=true` |
+
+唯一工件 `reader-shelf-android-40037805014-1`，ID `12538856596`，107,473,231 B，
+`sha256:891a57848a53baf67bebd7fa1b0cc9a14d5b74c3aab0766e2c5b2a71c23a22c5`。
+API 的 source/run/大小/digest 与上传完成日志一致，工件未过期，过期时间为
+`2027-01-21T23:07:10Z`。记录见 [reader-shelf-android.json](validation/reader-shelf-android.json)。
+
+该运行首个可交互为 1,446.959 ms；4 个 Window、2 个 PID，共 5,084 个普通完成回调，
+TOTAL p50/p95/p99 为 67.933/118.454/133.539 ms，callback drops 为 0。
+211 个稳定 PID 的 PSS 样本均重核原文，median 36,277 KiB、sampled peak 81,889 KiB。
+这些是上述显式观测口径的数据，`performance_accepted=false`；没有授予帧率、硬预算、
+全启动常量内存或真机性能结论。
+
+分支 `codex/reader-android-shelf` 可审查合入，尚未创建 PR。建议 stacked base 是
+PR #8 的 `codex/reader-import-mapping`。本分支起点为其受测实现 `19128dc5…`；
+PR #8 当前 HEAD `486d5e96…` 在该实现之后只有导入映射文档差异，未改源码。
+本包后继文档提交不代替上面的受测 SHA。
 
 本地仅源码/文档编辑和 Git；编译、语法检查、夹具生成、SQL、仪器化、工件读取/解析均在
 GitHub Actions。最终验收以同源完成日志、工件身份和严格汇总为准。
