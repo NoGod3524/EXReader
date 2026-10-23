@@ -141,7 +141,7 @@ def native_metrics(record, entry, contract):
     for sample in samples:
         require(type(sample["page"]) is int and sample["page"] >= 0 and type(sample["part"]) is int and sample["part"] >= 0,
                 "Invalid page route")
-        memory_fields = EPUB_MEMORY if entry["format"].lower() == "epub" else ("fixed_document_bytes",)
+        memory_fields = EPUB_MEMORY if entry["format"].lower() == "epub" else ("directory_metadata_bytes",)
         for field in ("layout_ms", "render_ms", "total_ms", "bitmap_bytes") + memory_fields:
             require(number(sample[field]), "Invalid operation metric " + field)
         require(type(sample["width"]) is int and type(sample["height"]) is int and
@@ -398,7 +398,7 @@ def main():
     summary["memory_telemetry"] = {
         "peak_rss_bytes": "whole-process Linux high-water; components may overlap and are not added",
         "epub": "public chapter workspace/index/cache/checkpoint counters",
-        "pdf": "public fixed_document_bytes after each render, including internal cache retention; internal cache/workspace split unavailable",
+        "pdf": "public directory_metadata_bytes excludes provider payload; internal provider cache/workspace unavailable through public API; whole-process RSS covers the overall peak",
         "raw_pdf_chapter_zero_fields": "not applicable; omitted from PDF case metrics and budgets"}
     summary["diagnostic_observations"] = []
     try:
