@@ -5,7 +5,8 @@
 `wp13-android-review/EXReader`，HEAD 为 `31b36f305085cb8b1468b1d9b9b1ea2d67ee1656`。
 
 后续SDK已重新冻结到`9c69bc4c7efb0cff68ced27562709fe597189041`，原件出口、有界导入、章内进度/notes均已实现，
-并修复Apple接续发现的窗口单元递归。Windows H8和Linux H11在新实现上通过，Apple/Android最终复验中。
+并修复Apple接续发现的窗口单元递归。H8–H11在共同源码`e25959e1285b5ebf9a4bf5b27c596d12702dc695`
+完成四组11作业/11必需工件同源验收，各平台严格汇总接受。
 当前身份与同源出口见[SDK冻结记录](R5-SDK-FREEZE.md)。
 下列共同缺口表描述S时的旧接口，不能用来判断当前SDK是否已实现。
 

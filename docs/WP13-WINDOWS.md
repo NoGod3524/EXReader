@@ -1,8 +1,8 @@
 # WP13 Windows native host
 
 Status: H8 default bounded EPUB adoption passed again on common host source
-`b64c72aeca99b9b8e4bf9b5555cac78446dd050b`, run
-[39879077780](https://github.com/NoGod3524/EXReader/actions/runs/39879077780), attempt 1.
+`e25959e1285b5ebf9a4bf5b27c596d12702dc695`, run
+[39881691924](https://github.com/NoGod3524/EXReader/actions/runs/39881691924), attempt 1.
 The independent `2a9dcff8131543f27cad358fe254b6d4253423c0` result and original WP13 package remain recorded below.
 This package closes the Windows host loop only; it is not a whole-WP13 or product
 acceptance and does not include migration, OPDS, TTS or other platform hosts.

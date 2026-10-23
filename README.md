@@ -1,6 +1,6 @@
 # EXReader — native C reading engine & SDK
 
-EXReader 是面向桌面和移动阅读应用的 **C11 原生阅读引擎与可嵌入 SDK**，当前为 **3.40.0 开发版**，ABI epoch 1、书库 schema 6。核心自有代码使用 MIT 协议，可构建静态组件或 DLL / SO / dylib，以 C 接口供 C/C++、Swift 和 JNI 宿主调用。
+EXReader 是面向桌面和移动阅读应用的 **C11 原生阅读引擎与可嵌入 SDK**，当前为 **3.40.0 开发版**，ABI epoch 1、书库 schema 7。核心自有代码使用 MIT 协议，可构建静态组件或 DLL / SO / dylib，以 C 接口供 C/C++、Swift 和 JNI 宿主调用。
 
 项目以**多格式阅读、自有 PDF 渲染核心、轻量与高性能**为主线：优先做好常用文档的可靠打开、正确显示、快速首屏/翻页和有界内存。成熟引擎用于差分与性能参照，撤销“全面领先 MuPDF 等引擎”的总目标。可选编辑、OCR、网络和平台服务按实际需求独立推进；性能按固定设备、语料与构建的实测预算验收，具体取舍见 [项目定位与优先级](docs/PROJECT_OVERVIEW.md#项目定位与优先级)。
 
@@ -135,8 +135,8 @@ PDF 已有固定页绘制、文字几何、搜索选择、标准密码认证、�
 | 已完成 | H1：Windows/macOS 两 preset，受测源码 `9b968a16`，run [39854485070](https://github.com/NoGod3524/EXReader/actions/runs/39854485070) 4/4 作业成功（构建、安装、消费者 3/3 或 4/4、smoke 9/9）；门禁加固由 H6 另行跟踪 |
 | 已完成 | R3 初始 PDF/CBZ 测量（合成）：源码 `3cd7bdf1` 的 run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753) 测 1 页 PDF 与 4 页 CBZ 极小 fixture；可区分页面候选 `4b6f562c` 的 run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765) 加入 3 页 PDF/4 页 CBZ 合成文档，12 进程/240 次绘制，2026-10-22 只读核对为 success，见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md) |
 | 已验证 | 阅读SDK重新固定`9c69bc4`：窗口单元递归已修复，六组18执行作业/30工件同源通过，保留旧冻结撤回与失败记录。见[SDK冻结记录](docs/R5-SDK-FREEZE.md) |
-| 运行中 | Windows H8与Linux H11已独立通过新SDK实现；Apple、Android最终复验中，四宿主共同源码待验。H5/H6/H7/R3已整合 |
-| 未完成 | 真实多页 PDF 与真实语料性能、真实 EPUB/PDF 语料（仍为 0/1710）、硬性能预算、R4 热点优化、各平台 R5 有界宿主验收、默认分支必需检查与发布接线 |
+| 已完成 | H8–H11有界宿主：共同源码`e25959e`，Windows/Linux/Apple/Android四组11作业、11必需工件同源通过，各平台严格验收接受；H5/H6/H7/R3已整合。见[共同验收记录](docs/R5-SDK-FREEZE.md) |
+| 未完成 | 真实多页 PDF 与真实语料性能、真实 EPUB/PDF 语料（仍为 0/1710）、硬性能预算、R4 热点优化、真机与读屏验收、默认分支必需检查与发布接线 |
 
 初始 TXT 与 PDF/CBZ 采样只针对极小合成工作负载，证明测量流程可运行，不是成熟性能基线，也不代表真实语料或任何性能预算已达标；RSS 增量为 0 只表示未超过进程先前高水位，不表示没有分配。新 profile 也不继承 S 的联合验收或旧源码长测。详见 [首轮启动记录](docs/READING-CORE-START.md) 与 [发布门槛映射](docs/READING-CORE-GATE.md)。所有构建、测试及证据汇总在 GitHub Actions 执行。
 

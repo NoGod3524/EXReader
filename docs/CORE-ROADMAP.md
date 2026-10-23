@@ -33,8 +33,8 @@
 | 已完成 | R3 初始 PDF/CBZ 测量（合成）：源码 `3cd7bdf1` 的 run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753) 测极小 1 页 PDF/4 页 CBZ；可区分页面候选 `4b6f562c` 的 run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765) 加入 3 页 PDF/4 页 CBZ 合成文档，2026-10-22 只读核对 success，见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md)；不是成熟基线，未设预算，RSS 增量为 0 不表示无分配 |
 | 失败保留 | 源码 `61aa183` 的 run `39852907619`：测量自验 mock 误拦截，实际采样未执行 |
 | 已验证 | 阅读SDK重新固定`9c69bc4`：窗口单元递归已修复，六组18执行作业/30工件同源通过；旧冻结撤回与失败记录保留，见[冻结记录](R5-SDK-FREEZE.md) |
-| 运行中 | Windows H8、Linux H11已在新SDK实现上独立通过；Apple/Android最终复验及四宿主共同源码待验 |
-| 未完成 | 真实 EPUB/PDF 语料（0/1710）与故障修复；真实多页 PDF、跨平台性能与硬预算；R4；各平台 R5 验收；必需检查与发布接线 |
+| 已完成 | H8–H11共同源码`e25959e`：Windows/Linux/Apple/Android四组11作业与11必需工件同源通过，各平台严格汇总接受，见[共同验收记录](R5-SDK-FREEZE.md) |
+| 未完成 | 真实 EPUB/PDF 语料（0/1710）与故障修复；真实多页 PDF、跨平台性能与硬预算；R4；真机与读屏；必需检查与发布接线 |
 
 `reading-core` 关闭音频、书库、全文索引、PDF 编辑、旧共享总库、工具与 JNI，保留 PDF、密码认证、ICC 与现有图像开关；
 `reading-library` 再打开 SQLite 书库。裁剪不增强 PDF/图像能力，也不表示性能达标。
@@ -71,12 +71,12 @@ R5 按平台独立分支推进，宿主采用哪个 SDK 必须登记固定源码
 ## 现有 A/B/C 如何收口
 
 A/B/C 已联合收口：共同源码 S=`686ce2fe`，K2=`d46ff370`，12 组/35 上游作业及严格汇总 run [39850404743](https://github.com/NoGod3524/EXReader/actions/runs/39850404743) 通过。
-最新身份与范围见 [联合验收登记](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-ABC-accepted.md)；此前迁移要求保留于
+原A/B/C身份与范围见 [联合验收登记](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-ABC-accepted.md)；此前迁移要求保留于
 [A/B 接续记录](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-AB-delivered.md)。R1–R6 的等待条件已满足，并已在 `codex/r1-reading-core` 启动，见上方当前执行状态。
 
 - A 已在 S 联合验收（API34 x86_64 模拟器范围）；原旧候选失败记录保留，真机/签名/TalkBack 另列，有界入口接入放到 R5。
 - B 保持至少 30 份独立 PDF 及保存/重开/外观的原验收，归入可选 `pdf_edit` 交付；完整表单能力不再作为未来只读核心发布前提。
-- C 的阶段一至四均已完成：原 K 保留为历史，K2 替代当前 SDK 基线；H 后合入 OPDS，最终 S 的联合验收通过。
+- C 的阶段一至四均已完成：原 K 保留为历史，K2 替代当时 SDK 基线；H 后合入 OPDS，最终 S 的联合验收通过。
   该组合验收与未来 reading-core 发布分开登记。
 
 R6 必须实现并验证新的核心/可选组件门禁，之后才可切换未来发布流程。

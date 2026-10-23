@@ -1,10 +1,12 @@
-# H9 Apple 有界 EPUB 候选
+# H9 Apple 有界 EPUB 接入
 
 本包在 `fd210224a4eba206762c08de435a5e9edfdf2a90` 上准备 Apple 局部实现；
 原SDK基线为`ce5d664c9f76d0613df6d79b27568a7039c4a81e`。Repeated边界诊断暴露同root下降循环后，
 现合入并绑定正式重冻结基线`9c69bc4c7efb0cff68ced27562709fe597189041`，其六组18作业/30工件同源通过。
 工作流逐项拒绝与该基线的受保护SDK树差异，并把基线写入三SDK身份、严格汇总及拒绝回归。
-候选未获验收。构建、Swift 编译、夹具生成、测试与证据计算只在 GitHub Actions 执行。
+共同源码`e25959e1285b5ebf9a4bf5b27c596d12702dc695`已通过H9声明范围验收，
+run[39881686534](https://github.com/NoGod3524/EXReader/actions/runs/39881686534)，详见末节。
+构建、Swift 编译、夹具生成、测试与证据计算只在 GitHub Actions 执行。
 
 ## 路径
 
@@ -58,7 +60,7 @@ bounded消费者已成功编译，但900秒执行预算耗尽，package及summar
 第一次`makeAnchor(1024,1088)`在180秒预算内没有返回；尚未进入selector解析。
 同源对照`11d80be` / run `39870093796`中，16KiB窗口在相同阶段超时；64KiB窗口原负例2.28毫秒成功，
 `windows_loaded=1`、`windows_evicted=0`，15项检查全过；50MiB长章首屏约1.43秒、整个长章检查约1.70秒。
-这些是隔离诊断结果；正式窗口不扩大，SDK修复及重新冻结后的八作业复验仍待执行。
+这些是隔离诊断结果；正式窗口不扩大，当时SDK修复及重新冻结后的八作业复验尚待执行；最终结果见末节S3。
 
 修复SDK候选`2f26847684b54006ca812c35477ceae43719e7d4`的Apple复验源码为
 `86c3219f36501aa334c4ef6fc91b2efc5be000f5` / run `39871718040`，保持正式16KiB/900秒。
@@ -78,20 +80,36 @@ collector拒绝，summary也因上游失败拒绝。`continue-on-error`下jobs A
 
 后继已合入9c基线并准备交给共同源码S；不再单独重复八作业。
 必须由S的三平台13UI/67步骤/50附件、SDK21、Model18、bounded15、三legacy21和全部证据拒绝回归
-同次通过，才授予最终H9声明范围。当前候选待该轮验证。
+同次通过，才授予最终H9声明范围。该候选当时待共同源码验证，最终结果见末节S3。
 
 共同源码`9fb084a1fb9307b459f21f60ed91f12fffd14a00` / run `39875517031`：
 SDK21/Model18/bounded15、三平台legacy21、macOS与iPhone的13UI/67步骤成功；iPad原test08也通过，
 但test01首次点击EPUB导入后90秒仍为空书架、状态`就绪`，13项中1项失败。collector与summary均拒绝，
 原件保留。已有日志没有点击时hittable/前台/重复ID及实际handler事件，根因尚未确定。
 
-后继候选只增加单次fixture-import点击的前置条件与观测：唯一native Button、前台、enabled/hittable、
+后继候选只增加单次fixture-import点击的前置条件与观测：唯一AX button角色、前台、enabled/hittable、
 窗口及控件frame稳定0.6秒；预置条件、单次tap和结果等待共用原90/60秒截止，首例书行断言仍保留。
 不重tap。2.5秒取消用例不在点击后插入AX诊断查询，保留其真实取消窗口。
 仅UITest夹具模式通过书架标题AX value公开最近16条startup/scene/import/取消/提交事件与token/busy，
 不改变SDK调用、提交及取消决策；驱动记录点击前后原生角色、ID计数、frame、前台、trace及失败状态。
-trace用于定位，不替代13UI/67步骤/50附件及严格汇总验收。后继待root统一共同源码复验，不另dispatch。
+trace用于定位，不替代13UI/67步骤/50附件及严格汇总验收。该后继当时交给root统一复验，最终结果见末节S3。
 
 共同源码第二轮的macOS完成日志确认，XCTest读取的AX value会截到512字符；
 模型保留最多16条事件，但该接口不保证能导出完整16条或尾部提交事件。
 日志已可见单次点击及真实fixture/import handler前缀，完整结果仍由书库、逐步证据与严格汇总判定。
+
+## 第三轮共同源码验收通过
+
+第二轮`b64c72a` / run`39879072615`最终为macOS/iPad通过、iPhone test01首次输入未进入handler，
+summary严格拒绝；相关失败工件和原件保留。后继`0ce4e681`只把共享fixture导入输入改为一次100ms press，
+没有fallback或第二次输入，预算和全部原断言不变；该候选验证输入时长差异，未证明原tap未送达的底层原因。
+
+第三轮受测源码`e25959e1285b5ebf9a4bf5b27c596d12702dc695`，run`39881686534`，attempt1，八作业成功。
+macOS/iPhone/iPad各13UI、67具名步骤、50附件，零失败；三个collector全部接受。
+各原自检21、SDK桥接21、Model18、bounded15通过；严格summary初次及97项门禁回归后均`accepted=true`、`problems=[]`。
+iPhone/iPad首次单次press均进入fixture/import handler并完成真实导入；test01分别88.816/81.203秒，test08也均通过。
+
+八份必需工件同run/source、非空、核对时未过期、Actions digest有效；完整身份见[共同验收记录](R5-SDK-FREEZE.md)。
+正式bounded消费者保持16KiB窗口/900秒，首帧1331.375ms、进程RSS高水61,472,768B、显式全文快照0，
+解析工作区峰值2,315,171B；长章覆盖首帧与尾部定位，不是全文枚举或UI进程内存预算。
+本轮授予macOS及iPhone/iPad模拟器的声明范围，真机与VoiceOver继续独立跟踪。

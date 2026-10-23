@@ -1,6 +1,7 @@
 # 模块与稳定核心
 
-2026-10-19，C11 SDK3.38.0，MIT，ABI1，schema6。
+2026-10-19结构快照：C11 SDK3.38.0，MIT，ABI1，schema6。
+当前SDK3.40.0及schema7有界存储/宿主接入见[SDK冻结记录](R5-SDK-FREEZE.md)。
 
 ## 原生阅读路径约束
 
