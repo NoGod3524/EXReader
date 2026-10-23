@@ -79,3 +79,15 @@ collector拒绝，summary也因上游失败拒绝。`continue-on-error`下jobs A
 后继已合入9c基线并准备交给共同源码S；不再单独重复八作业。
 必须由S的三平台13UI/67步骤/50附件、SDK21、Model18、bounded15、三legacy21和全部证据拒绝回归
 同次通过，才授予最终H9声明范围。当前候选待该轮验证。
+
+共同源码`9fb084a1fb9307b459f21f60ed91f12fffd14a00` / run `39875517031`：
+SDK21/Model18/bounded15、三平台legacy21、macOS与iPhone的13UI/67步骤成功；iPad原test08也通过，
+但test01首次点击EPUB导入后90秒仍为空书架、状态`就绪`，13项中1项失败。collector与summary均拒绝，
+原件保留。已有日志没有点击时hittable/前台/重复ID及实际handler事件，根因尚未确定。
+
+后继候选只增加单次fixture-import点击的前置条件与观测：唯一native Button、前台、enabled/hittable、
+窗口及控件frame稳定0.6秒；预置条件、单次tap和结果等待共用原90/60秒截止，首例书行断言仍保留。
+不重tap。2.5秒取消用例不在点击后插入AX诊断查询，保留其真实取消窗口。
+仅UITest夹具模式通过书架标题AX value公开最近16条startup/scene/import/取消/提交事件与token/busy，
+不改变SDK调用、提交及取消决策；驱动记录点击前后原生角色、ID计数、frame、前台、trace及失败状态。
+trace用于定位，不替代13UI/67步骤/50附件及严格汇总验收。后继待root统一共同源码复验，不另dispatch。
