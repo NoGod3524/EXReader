@@ -24,9 +24,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.zip.CRC32;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /** Thousands of real public-SDK imports, followed by the unchanged production mapping repair. */
 public final class ShelfCatalogTest extends Instrumentation {
@@ -34,7 +31,7 @@ public final class ShelfCatalogTest extends Instrumentation {
     private static final String[] NAMES={"realSdkImportsAndProductionRepair", "forwardKeysetHasNoMissingOrRepeatedBooks",
             "reverseKeysetMatchesForwardOrder", "sameTitleUsesSourceKeyTieBreak", "titleAuthorAndLiteralSearch",
             "cancelsQueriesAndRejectsWrongOwner", "hidesUnmappedAndDeletedProducts", "repairsNewImportBeforeRefresh",
-            "canceledOldSearchCannotReplaceNewResults"};
+            "canceledOldSearchCannotReplaceNewResults", "missingEndAnchorFallsBackWithinSameFilter"};
     private interface Check { void run() throws Exception; }
     private Context context;
     private File directory;
@@ -50,7 +47,7 @@ public final class ShelfCatalogTest extends Instrumentation {
         Check[] checks={this::realSdkImportsAndProductionRepair,this::forwardKeysetHasNoMissingOrRepeatedBooks,
                 this::reverseKeysetMatchesForwardOrder,this::sameTitleUsesSourceKeyTieBreak,this::titleAuthorAndLiteralSearch,
                 this::cancelsQueriesAndRejectsWrongOwner,this::hidesUnmappedAndDeletedProducts,this::repairsNewImportBeforeRefresh,
-                this::canceledOldSearchCannotReplaceNewResults};
+                this::canceledOldSearchCannotReplaceNewResults,this::missingEndAnchorFallsBackWithinSameFilter};
         try {
             directory=new File(context.getCacheDir(),"shelf-catalog"); remove(directory); require(directory.mkdirs(),"test folder");
             seed(directory,false);
@@ -94,10 +91,10 @@ public final class ShelfCatalogTest extends Instrumentation {
                 expected.add("txt:"+sha(bytes));
                 if(prefs)editor.putString("path_"+imported.id,file.getPath()).putLong("size_"+imported.id,bytes.length);
             }
-            File authored=new File(sources,"authored.epub"); epub(authored);
-            NativeLibrary.ImportResult imported=sdk.importLegacyFile(authored.getPath(),NativeLibrary.FORMAT_EPUB,"Authored sample");
-            require(imported.created,"real authored EPUB import");
-            expected.add("epub:"+sha(read(authored)));
+            File authored=new File(sources,"authored.pdf"); pdf(authored);
+            NativeLibrary.ImportResult imported=sdk.importFile(authored.getPath(),NativeLibrary.FORMAT_PDF,"Authored sample");
+            require(imported.created,"real authored PDF import");
+            expected.add("pdf:"+sha(read(authored)));
             if(prefs)editor.putString("path_"+imported.id,authored.getPath()).putLong("size_"+imported.id,authored.length());
         }
         if(prefs)require(editor.commit(),"seeded host path preferences");
@@ -148,7 +145,7 @@ public final class ShelfCatalogTest extends Instrumentation {
     }
     private void titleAuthorAndLiteralSearch() {
         require(all("BOOK 0200").size()==1,"title case-insensitive search");
-        require(all("Shelf Author").size()==1,"author from real legacy SDK import");
+        require(all("Shelf Author").size()==1,"author from real PDF SDK import");
         require(all("100%_").size()==1,"percent and underscore are literal user input");
         require(all("absent title").isEmpty(),"empty search results");
     }
@@ -216,6 +213,35 @@ public final class ShelfCatalogTest extends Instrumentation {
         } finally { runOnMainSync(()->controller.get().close()); }
     }
 
+    private void missingEndAnchorFallsBackWithinSameFilter() throws Exception {
+        java.util.concurrent.ConcurrentLinkedQueue<Runnable> scheduled=new java.util.concurrent.ConcurrentLinkedQueue<>();
+        AtomicReference<CatalogShelf> controller=new AtomicReference<>();AtomicReference<Throwable> failure=new AtomicReference<>();
+        List<String> queries=new ArrayList<>();
+        runOnMainSync(()->{
+            android.content.SharedPreferences preferences=context.getSharedPreferences("shelf-fallback-test",Context.MODE_PRIVATE);
+            preferences.edit().clear().putString("catalog_query","Book 0200").putString("catalog_top_sort","\uffff")
+                    .putString("catalog_top_key","txt:"+"f".repeat(64)).commit();
+            CatalogShelf shelf=new CatalogShelf(context,new android.widget.ListView(context),new android.widget.EditText(context),
+                    new android.widget.TextView(context),preferences,scheduled::add,(query,anchor,before,inclusive,signal)->{
+                        queries.add(query);return store.shelfPage(query,anchor,before,inclusive,signal);
+                    },failure::set);
+            controller.set(shelf);shelf.start();
+        });
+        try {
+            require(scheduled.size()==1,"restore request is bounded to one scheduled query");
+            scheduled.remove().run();waitForIdleSync();
+            require(scheduled.size()==1,"missing end anchor schedules one reverse fallback");
+            scheduled.remove().run();waitForIdleSync();
+            AtomicReference<String> observed=new AtomicReference<>();runOnMainSync(()->observed.set(controller.get().observation()));
+            JSONObject value=new JSONObject(observed.get());
+            require(failure.get()==null && queries.size()==2 && queries.get(0).equals("Book 0200") && queries.get(1).equals("Book 0200"),
+                    "reverse fallback never broadens or changes the restored filter");
+            require(value.getInt("cached_rows")==1 && !value.getBoolean("has_after")
+                    && value.getJSONArray("keys").getString(0).equals(all("Book 0200").get(0).key.bookKey),
+                    "missing end anchor returns the actual filtered predecessor, without unrelated books");
+        } finally {runOnMainSync(()->controller.get().close());}
+    }
+
     private void seedUi() {
         try {
             directory=context.getFilesDir(); seed(directory,true);
@@ -226,7 +252,7 @@ public final class ShelfCatalogTest extends Instrumentation {
             File output=new File(context.getExternalFilesDir(null),"shelf-tests"); require(output.isDirectory() || output.mkdirs(),"UI seed evidence folder");
             JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id"))
                     .put("attempt",arguments.getString("attempt")).put("books",TOTAL).put("txt_books",TXT_BOOKS+1)
-                    .put("legacy_epub_books",1).put("source_keys",new JSONArray(expected)).put("production_mapping_complete",true);
+                    .put("pdf_books",1).put("source_keys",new JSONArray(expected)).put("production_mapping_complete",true);
             write(new File(output,"seed.json"),report.toString(2).getBytes(StandardCharsets.UTF_8));
             Bundle result=new Bundle(); result.putString("stream","EXR_SHELF_SEEDED "+TOTAL+"\n"); finish(Activity.RESULT_OK,result);
         } catch(Throwable error) {
@@ -249,18 +275,18 @@ public final class ShelfCatalogTest extends Instrumentation {
         if(file.isDirectory())for(File child:file.listFiles())remove(child);
         require(file.delete(),"fixture cleanup");
     }
-    private static void epub(File file) throws Exception {
-        String[] names={"mimetype","META-INF/container.xml","OEBPS/book.opf","OEBPS/chapter.xhtml"};
-        String[] texts={"application/epub+zip",
-                "<?xml version=\"1.0\"?><container xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\" version=\"1.0\"><rootfiles><rootfile full-path=\"OEBPS/book.opf\" media-type=\"application/oebps-package+xml\"/></rootfiles></container>",
-                "<package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\" unique-identifier=\"uid\"><metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\"><dc:identifier id=\"uid\">shelf-author</dc:identifier><dc:title>Authored sample</dc:title><dc:creator>Shelf Author</dc:creator><dc:language>en</dc:language></metadata><manifest><item id=\"c\" href=\"chapter.xhtml\" media-type=\"application/xhtml+xml\"/></manifest><spine><itemref idref=\"c\"/></spine></package>",
-                "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>Authored sample</title></head><body><p>A real source with author metadata for the product shelf.</p></body></html>"};
-        try(ZipOutputStream zip=new ZipOutputStream(new FileOutputStream(file))) {
-            for(int at=0;at<names.length;at++) {
-                byte[] bytes=texts[at].getBytes(StandardCharsets.UTF_8); ZipEntry entry=new ZipEntry(names[at]); entry.setTime(0);
-                if(at==0){CRC32 crc=new CRC32();crc.update(bytes);entry.setMethod(ZipEntry.STORED);entry.setSize(bytes.length);entry.setCompressedSize(bytes.length);entry.setCrc(crc.getValue());}
-                zip.putNextEntry(entry);zip.write(bytes);zip.closeEntry();
-            }
-        }
+    private static void pdf(File file) throws Exception {
+        String content="BT /F1 14 Tf 20 100 Td (A real PDF with an author) Tj ET\n";
+        String[] objects={"<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+                "<< /Length "+content.length()+" >>\nstream\n"+content+"endstream",
+                "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>","<< /Title (Authored sample) /Author (Shelf Author) >>"};
+        java.io.ByteArrayOutputStream bytes=new java.io.ByteArrayOutputStream();
+        bytes.write("%PDF-1.4\n".getBytes(StandardCharsets.US_ASCII)); int[] offsets=new int[objects.length];
+        for(int at=0;at<objects.length;at++){offsets[at]=bytes.size();bytes.write(((at+1)+" 0 obj\n"+objects[at]+"\nendobj\n").getBytes(StandardCharsets.US_ASCII));}
+        int xref=bytes.size();bytes.write(("xref\n0 "+(objects.length+1)+"\n0000000000 65535 f \n").getBytes(StandardCharsets.US_ASCII));
+        for(int offset:offsets)bytes.write(String.format(Locale.ROOT,"%010d 00000 n \n",offset).getBytes(StandardCharsets.US_ASCII));
+        bytes.write(("trailer\n<< /Size "+(objects.length+1)+" /Root 1 0 R /Info 6 0 R >>\nstartxref\n"+xref+"\n%%EOF\n").getBytes(StandardCharsets.US_ASCII));
+        write(file,bytes.toByteArray());
     }
 }

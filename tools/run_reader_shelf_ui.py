@@ -134,6 +134,8 @@ def main():
                  APP+'.test/org.exreader.host.ShelfCatalogTest',filename='seed-instrumentation.txt',timeout=900)
         require('EXR_SHELF_SEEDED 2202' in seed and 'INSTRUMENTATION_CODE: -1' in seed,'real UI SDK seed failed')
         adb('pull',f'/sdcard/Android/data/{APP}/files/shelf-tests',root/'seed',filename='pull-seed.txt')
+        # The seeding instrumentation is not a measured UI process and has no Window.
+        adb('shell','am','force-stop',APP,filename='stop-seeding-process.txt')
         adb('shell','mkdir','-p','/sdcard/Download')
         adb('push','build/android-host/fixtures/NewReview.txt','/sdcard/Download/',filename='push-new-fixture.txt')
         (root/'pss').mkdir();thread=threading.Thread(target=sample);thread.start()

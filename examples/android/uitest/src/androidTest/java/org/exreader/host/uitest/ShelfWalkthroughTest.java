@@ -71,7 +71,7 @@ public final class ShelfWalkthroughTest {
                 if(!value.getBoolean("has_after") && page.length()>0 && shown.length()>0
                         && page.getString(page.length()-1).equals(shown.getString(shown.length()-1)))break;
                 assertTrue("forward scrolling must make bounded progress",++gestures<=600);
-                swipe(false); value=ready("");
+                scroll(false); value=ready("");
             }
             assertEquals(expected,loaded); assertEquals("actual visible rows cover every real source",expected,visible);
             detail.put("loaded_sources",loaded.size()).put("visible_sources",visible.size()).put("gestures",gestures).put("last",value);
@@ -79,13 +79,19 @@ public final class ShelfWalkthroughTest {
         });
         run("reverse_scroll_preserves_keyset_and_recycles_views",detail->{
             long start=SystemClock.elapsedRealtimeNanos(); Set<String> observed=new HashSet<>(); int gestures=0;
+            UiObject2 scroller=device.wait(Until.findObject(By.res(APP+":id/book_list")),10000);assertNotNull(scroller);
+            Rect box=scroller.getVisibleBounds();
+            for(int turn=0;turn<3;turn++){
+                device.swipe(box.centerX(),box.top+box.height()/4,box.centerX(),box.bottom-box.height()/4,12);
+                device.swipe(box.centerX(),box.bottom-box.height()/4,box.centerX(),box.top+box.height()/4,12);
+            }
             JSONObject value=ready("");
             while(true) {
                 bounds(value); observed.addAll(keys(value.getJSONArray("keys")));
                 if(!value.getBoolean("has_before") && value.getJSONArray("visible_keys").getString(0)
                         .equals(value.getJSONArray("keys").getString(0)))break;
                 assertTrue("reverse scrolling must make bounded progress",++gestures<=600);
-                swipe(true); value=ready("");
+                scroll(true); value=ready("");
             }
             assertEquals(expected,observed); assertTrue("ListView actually reused row Views",value.getInt("recycled_views")>0);
             detail.put("sources",observed.size()).put("gestures",gestures).put("first",value);
@@ -95,7 +101,7 @@ public final class ShelfWalkthroughTest {
             search("Tie title"); Set<String> found=new HashSet<>(); JSONObject value=ready("Tie title");
             int gestures=0;
             while(true){found.addAll(keys(value.getJSONArray("keys")));bounds(value);if(!value.getBoolean("has_after"))break;
-                assertTrue(++gestures<80);swipe(false);value=ready("Tie title");}
+                assertTrue(++gestures<80);scroll(false);value=ready("Tie title");}
             assertEquals(130,found.size());detail.put("unique_sources",found.size()).put("last",value);
         });
         run("title_author_literal_and_empty_search",detail->{
@@ -112,7 +118,7 @@ public final class ShelfWalkthroughTest {
             detail.put("latest",settled);
         });
         run("refresh_preserves_scrolled_source_anchor",detail->{
-            search("");for(int at=0;at<12;at++)swipe(false);
+            search("");for(int at=0;at<12;at++)scroll(false);
             JSONObject before=ready("");click("refresh_button");JSONObject after=ready("");
             assertEquals(before.getString("top_key"),after.getString("top_key"));
             assertTrue(Math.abs(before.getInt("top_y")-after.getInt("top_y"))<=2);
@@ -190,10 +196,14 @@ public final class ShelfWalkthroughTest {
             if(device.executeShellCommand("dumpsys input_method").contains("mInputShown=true"))device.pressBack();return;
         }catch(StaleObjectException stale){if(retry==3)throw stale;}
     }
-    private void swipe(boolean previous)throws Exception {
-        UiObject2 list=device.wait(Until.findObject(By.res(APP+":id/book_list")),10000);assertNotNull(list);
-        Rect box=list.getVisibleBounds();int low=box.bottom-box.height()/8,high=box.top+box.height()/5;
-        device.swipe(box.centerX(),previous?high:low,box.centerX(),previous?low:high,18);SystemClock.sleep(90);
+    private void scroll(boolean previous)throws Exception {
+        // ListView's real accessibility scroll advances one viewport with a bounded smooth scroll.
+        // A high-velocity injected fling can skip unseen rows between observations.
+        AccessibilityNodeInfo root=InstrumentationRegistry.getInstrumentation().getUiAutomation().getRootInActiveWindow();
+        assertNotNull(root);List<AccessibilityNodeInfo> nodes=root.findAccessibilityNodeInfosByViewId(APP+":id/book_list");
+        assertFalse(nodes.isEmpty());assertTrue(nodes.get(0).performAction(previous
+                ? AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD : AccessibilityNodeInfo.ACTION_SCROLL_FORWARD));
+        SystemClock.sleep(260);
     }
     private JSONObject ready(String query)throws Exception {
         long end=SystemClock.uptimeMillis()+30000;JSONObject last=null;
