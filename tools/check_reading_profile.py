@@ -23,7 +23,7 @@ def inspect(profile, build, sdk, executable):
         if line and not line.startswith(('#', '//')) and '=' in line and ':' in line:
             key, value = line.split('=', 1)
             values[key.split(':', 1)[0]] = value
-    on = ['EXR_ENABLE_PDF', 'EXR_ENABLE_PDF_CRYPTO', 'EXR_ENABLE_ICC',
+    on = ['EXR_ENABLE_PDF', 'EXR_ENABLE_PDF_CRYPTO', 'EXR_ENABLE_PDF_JPX', 'EXR_ENABLE_ICC',
           'EXR_ENABLE_IMAGE_WEBP', 'EXR_ENABLE_IMAGE_TIFF', 'EXR_ENABLE_IMAGE_AVIF']
     off = ['EXR_ENABLE_AUDIO', 'EXR_ENABLE_MP3', 'EXR_ENABLE_AAC',
            'EXR_ENABLE_TEXT_INDEX', 'EXR_BUILD_TEXT_INDEX', 'EXR_ENABLE_PDF_EDIT',

@@ -12,6 +12,7 @@
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/stage",
         "EXR_ENABLE_PDF": "ON",
         "EXR_ENABLE_PDF_CRYPTO": "ON",
+        "EXR_ENABLE_PDF_JPX": "ON",
         "EXR_ENABLE_ICC": "ON",
         "EXR_ENABLE_IMAGE_WEBP": "ON",
         "EXR_ENABLE_IMAGE_TIFF": "ON",

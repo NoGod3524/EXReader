@@ -135,6 +135,14 @@ COMPONENTS = [
      'mbedtls-2.28.10 into src/pdf_crypto.c',
      'files': [upstream('LICENSE', LICENSES + 'mbedtls/LICENSE',
                         '9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b')]},
+    {'id': 'openjpeg', 'name': 'OpenJPEG', 'version': '2.5.4',
+     'source': 'https://codeload.github.com/uclouvain/openjpeg/tar.gz/refs/tags/v2.5.4',
+     'archive_sha256': 'a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a',
+     'license': 'BSD-2-Clause', 'when': 'EXR_ENABLE_PDF&EXR_ENABLE_PDF_JPX', 'fetch': True,
+     'vendor_files': ['exr_jpx'], 'notice_marker': 'OpenJPEG',
+     'linkage': '22 fixed upstream C library sources in the private static exr_jpx archive; thread stubs',
+     'files': [upstream('LICENSE', LICENSES + 'openjpeg/LICENSE',
+                        'a6af136f3e15038a666b61f376612a07d9a4e48cb7c01adbf3e33b3f14ab49b6')]},
     {'id': 'lcms', 'name': 'LittleCMS', 'version': 'lcms2.19.1',
      'source': 'https://codeload.github.com/mm2/Little-CMS/tar.gz/refs/tags/lcms2.19.1',
      'archive_sha256': '267705e278e2f7c2fb886c259dadcbaeb2be52748bcbc71c79f08aacacb7a709',
@@ -261,6 +269,9 @@ def manifest_problems(root, components=COMPONENTS):
     problems = []
     deps = (root / 'cmake/deps.cmake').read_text(encoding='utf-8')
     installs = (root / 'CMakeLists.txt').read_text(encoding='utf-8')
+    dependency_installs = root / 'cmake/install_dependencies.cmake'
+    if dependency_installs.is_file():
+        installs += dependency_installs.read_text(encoding='utf-8')
     ids = [component['id'] for component in components]
     problems += [f'duplicate manifest id: {name}' for name in sorted({i for i in ids if ids.count(i) > 1})]
     declared = {name.lower() for name in re.findall(r'FetchContent_Declare\((\w+)', deps)}
