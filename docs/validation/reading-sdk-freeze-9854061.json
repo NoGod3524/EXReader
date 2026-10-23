@@ -669,14 +669,15 @@
   ],
   "host_revalidation": {
     "accepted": false,
-    "status": "in_progress",
+    "status": "rejected_android_failure; Apple pending",
     "source_sha": "da1c1833d89932612d8e4549fee5aec378555ad4",
     "runs": {
       "windows": 39899820869,
       "linux": 39899823392,
       "apple": 39899825998,
       "android": 39899828858
-    }
+    },
+    "android_failure": "pdf_process_restart frame mismatch; original walkthrough 44/45, review 10/10, bounded 11/11; final strict acceptance refused"
   },
   "formal_performance_accepted": false,
   "required_release_gate_accepted": false,

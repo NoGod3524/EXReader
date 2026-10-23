@@ -41,7 +41,7 @@ OpenJPEG 2.5.4采用受限静态库；JPX关闭时不取源、不安装该库。
 后继同保护树源码da1c183的run39899523839已三作业全绿，JPX ON/ASan/OFF各24项及原八份full8/location8同次通过，
 见[最终记录](validation/reading-jpx-final-da1c183.json)。该批次不替代历史1710份库存，性能数字预算和像素审阅由R3另行固定。
 
-### 新K四宿主共同复验（运行中）
+### 新K四宿主共同复验（Android拒绝，继续诊断）
 
 共同源码S=`da1c1833d89932612d8e4549fee5aec378555ad4`包含K祖先及新守卫，八保护树与K相同。
 Android所有权祖先X=`d0b205a56e4fcfbd5cca55a808327f00b25971ed`以merge保留。
@@ -49,10 +49,13 @@ Android所有权祖先X=`d0b205a56e4fcfbd5cca55a808327f00b25971ed`以merge保留
 
 | 平台 | run | 状态 |
 | --- | --- | --- |
-| Windows | [39899820869](https://github.com/NoGod3524/EXReader/actions/runs/39899820869) | 已启动，待完整验收 |
-| Linux | [39899823392](https://github.com/NoGod3524/EXReader/actions/runs/39899823392) | 已启动，待完整验收 |
+| Windows | [39899820869](https://github.com/NoGod3524/EXReader/actions/runs/39899820869) | 成功；26自测、158动作/8图、51证据检查、H8的80项及worker11正/11反通过 |
+| Linux | [39899823392](https://github.com/NoGod3524/EXReader/actions/runs/39899823392) | 成功；原20UI、4故障组、H11的37项及独立backend82项通过 |
 | Apple | [39899825998](https://github.com/NoGod3524/EXReader/actions/runs/39899825998) | 已启动，待完整验收 |
-| Android | [39899828858](https://github.com/NoGod3524/EXReader/actions/runs/39899828858) | 已启动，待完整验收 |
+| Android | [39899828858](https://github.com/NoGod3524/EXReader/actions/runs/39899828858) | 失败；原45中pdf_process_restart帧比较失败，44/45；独立10/10及bounded11/11通过，最终严格拒绝 |
+
+桌面两份完成日志/工件身份见[独立审计](validation/r5-desktop-hosts-da1c183.json)。
+Android原失败工件保留，不能以独立用例通过替代原45出口；当前正在核对重启前后实际帧与状态，未修改断言或预算。
 
 当前只授予SDK冻结；新K宿主联合验收、R3正式性能及17作业总门禁尚待结束。
 默认分支规则未启用，未创建发布；旧98作业长测不转移，新增WP16 CPU信用为0。
