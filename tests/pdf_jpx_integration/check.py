@@ -11,6 +11,7 @@ from pathlib import Path
 import struct
 import subprocess
 import sys
+import tempfile
 import zipfile
 
 from PIL import Image, features
@@ -83,6 +84,25 @@ def change_siz(payload, offset, value):
     altered = bytearray(payload)
     altered[marker + offset] = value
     return bytes(altered)
+
+
+def jp2_boxes(payload):
+    offset = 0
+    while offset < len(payload):
+        require(len(payload) - offset >= 8, 'truncated JP2 box header')
+        size, kind = struct.unpack_from('>I4s', payload, offset)
+        size = size or len(payload) - offset
+        require(8 <= size <= len(payload) - offset, 'invalid generated JP2 box length')
+        yield kind, payload[offset + 8:offset + size]
+        offset += size
+
+
+def jp2_metadata(payload):
+    marker = payload.find(b'\xff\x51')
+    require(marker >= 0 and marker + 40 <= len(payload), 'missing JP2 SIZ component declaration')
+    definitions = [body.hex() for kind, header in jp2_boxes(payload) if kind == b'jp2h'
+                   for subkind, body in jp2_boxes(header) if subkind == b'cdef']
+    return {'components': struct.unpack_from('>H', payload, marker + 38)[0], 'cdef_boxes': definitions}
 
 
 def generate(root):
@@ -174,6 +194,26 @@ def inspect_artifact(artifact_id, digest):
                         observation[filename] = {'sha256': sha(content), 'pixels': list(image.convert('RGB').getdata())}
                 else:
                     observation[filename] = content.decode('utf-8', errors='replace')[:4096]
+            payload_names = [name for name in archive.namelist() if name.endswith('/' + case + '.jpx')]
+            if case == 'embedded-alpha':
+                require(len(payload_names) == 1, 'retained alpha payload missing or duplicated')
+                observation['jp2_metadata'] = jp2_metadata(archive.read(payload_names[0]))
+            pdf_names = [name for name in archive.namelist() if name.endswith('/' + case + '.pdf')]
+            if case != 'embedded-alpha':
+                require(len(pdf_names) == 1, 'retained diagnostic PDF missing or duplicated')
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    source = root / 'source.pdf'
+                    source.write_bytes(archive.read(pdf_names[0]))
+                    rendered = run(['pdftoppm', '-r', '720', '-f', '1', '-singlefile', '-aa', 'no', '-aaVector', 'no',
+                                    source, root / 'high'], root / 'reference-high')
+                    require(rendered.returncode == 0, 'higher resolution reference diagnostic failed')
+                    with Image.open(root / 'high.ppm') as image:
+                        require(image.size == (20, 20), 'higher resolution reference dimensions changed')
+                        pixels = image.convert('RGB')
+                        coordinates = (0, 5, 15, 19)
+                        observation['reference_720dpi_grid'] = [{'x': x, 'y': y, 'rgb': pixels.getpixel((x, y))}
+                                                               for y in coordinates for x in coordinates]
             observations.append(observation)
     print(json.dumps({'diagnostic_only': True, 'artifact_id': artifact_id, 'zip_sha256': digest,
                       'observations': observations}, allow_nan=False))
