@@ -15,7 +15,9 @@
 Windows/Linux/Apple/Android分别为39899820869、39899823392、39899825998、39899828858。
 本轮守卫已指向新K，Android所有权祖先以merge保留。
 Windows/Linux已严格通过；Android原45中的pdf_process_restart帧比较失败，最终拒绝，
-其独立10与bounded11通过不替代原出口；原失败保留并诊断，Apple仍待结束。
+其独立10与bounded11通过不替代原出口；Apple因iPhone首次导入未触发而失败、summary拒绝。
+两份原失败均保留。Apple一次标准tap修正已在run39903016234完整复验，
+Android则在run39903068530加入DEBUG位图身份观测以定位299个±1边缘像素差异；原判定保持。
 
 正式R3基线`887e1bb59ef6f28c15824cb7593654f3610f3cef`、run39899829270已完成40进程及12参考页。
 逐页实际审阅后由云端导出数值预算，固定于`11cb054…`。该源码的run39901084062中，
