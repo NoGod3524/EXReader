@@ -1,0 +1,74 @@
+name: Desktop product public SDK bridge
+on:
+  push:
+    branches: [codex/reader-desktop-catalog]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  desktop:
+    name: desktop SDK (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require frozen SDK and unchanged product schema
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Install Linux host dependency
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev
+      - name: Enter native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install unmodified reading-library SDK
+        run: |
+          mkdir -p build/desktop-evidence
+          cmake --preset reading-library 2>&1 | tee build/desktop-evidence/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/desktop-evidence/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/desktop-evidence/sdk-install.log
+      - name: Compile product bridge against installed public API
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "DESKTOP_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DEXR_READER_FIXTURES="$ws/tests/fixtures" 2>&1 | tee build/desktop-evidence/configure.log
+          cmake --build build/desktop-sdk --parallel 4 --verbose 2>&1 | tee build/desktop-evidence/build.log
+      - name: Real source digest, mode, cancellation and product transaction checks
+        run: ctest --test-dir build/desktop-sdk --output-on-failure --no-tests=error --timeout 180 --output-junit "$DESKTOP_WORKSPACE/build/desktop-evidence/tests.xml"
+      - name: Kill two actual processes and repair in fresh processes
+        run: python3 tests/reader_catalog/check_desktop_sdk.py build/desktop-sdk
+      - name: Preserve original logs, link provider and source-bound evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-desktop-sdk-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/desktop-evidence/
+            build/desktop-sdk/verified.json
+            build/desktop-sdk/sdk-check/
+            build/desktop-sdk/native-check/
+            build/desktop-sdk/kill-*/
+            build/desktop-sdk/sdk-link.map
+            build/desktop-sdk/Testing/Temporary/LastTest.log
+            build/desktop-sdk/CMakeCache.txt
+            build/reading-library/CMakeCache.txt
+          if-no-files-found: error
