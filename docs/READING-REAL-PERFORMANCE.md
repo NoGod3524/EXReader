@@ -21,6 +21,9 @@ PDF随机操作覆盖整个声明页目录。只测原生引擎到首帧，不�
 
 RSS为进程high-water，包括字体、解析器、位图、分配器和映射。工作区、章索引、页缓存、检查点与位图单列，
 它们存在共享或包含关系，不与RSS相加。体积记录实际链接消费者、安装SDK逐文件大小/散列和动态依赖。
+章内工作区/缓存分项仅适用于EPUB。PDF记录打开后的`fixed_directory_bytes`与每次渲染后的
+`directory_metadata_bytes`公共目录/元数据量（明确排除provider payload）；PDF内部缓存/工作区缺公共细分观测，
+全进程RSS保留整体峰值，不把章内原始零字段作为PDF零分配指标。
 
 PDF预选页使用同72dpi Poppler进行RGB像素对照，保留双方原件PPM、原始命令与stderr。
 同引擎同页重绘必须逐像素hash一致；跨引擎差异先作疑点复核，不要求全面领先或逐像素相等。
@@ -37,3 +40,24 @@ PDF预选页使用同72dpi Poppler进行RGB像素对照，保留双方原件PPM�
 
 首轮`39887915689`（`f57fb562…`）实际SDK和消费者编译成功，但只有W9的五个进程完整执行；EPUB消费者误将缓存模式章尾当作`OK+NULL`，其余真实文件另有`LIMIT/FORMAT`。整轮失败保留，没有从失败轮冻结预算。
 后继修复消费者EOF口径、固定工件布局并增加具体错误诊断；随后以原生宿主固定字体重采样。尚无本包性能通过声明。
+
+`fcfd2b5`的云端`39890300401`进一步证明Frankenstein/Pride拒绝的是`part=0,page=0`封面，
+单图解码为19,888,896/12,684,000字节，确实超过原8MiB缓存；这是公开缓存契约的正常拒绝。
+尚未冻结性能预算阶段，消费者合同改为显式超大页策略：仅在`get()`返回`EXR_LIMIT`后独立owned顺序重放，
+实际页大小必须大于未变的8MiB预算，所有拒绝/重建/重放耗时和RSS计入随机样本，临时页释放。
+每条route同时核对顺读与回放的完整RGBA和选定规范UTF-8文本散列；独立反例拒绝未超限、未证明缓存拒绝、
+漏计拒绝耗时及route/text变化。保留原纯`get()`失败，不宣称底层缓存接受了超大页。
+
+`aff4dd6a` / 云端`39893185090`已实际编译并执行：25/40个进程完整（四本EPUB与W9各5次），
+其余三份PDF仍由旧SDK的stream cache/ToUnicode问题阻断，整轮`measurement_valid=false, accepted=false`。
+同轮baseline metadata 1正12反、完整report/ZIP来源2正22反、稳定RGBA/UTF-8/位置错误1正3反、
+超大页策略1正5反均通过；这些工具自验不替代缺失的15份真实执行。
+
+正式预算启用时，Actions下载锁定ID的baseline ZIP，核完整digest并保留原始
+`reading-real/baseline-summary.json`及`baseline_summary_sha256`。报告必须同source/run/attempt，
+`measurement_valid=true`，合同/原件/字体/SDK保护树/CPU/编译器/参考版本与本轮相符；
+Git对象逐项核实保护树声明。冻结数值和签名必须来自这份原始报告，预算不能靠自声明拼接。
+预先数值推导上界见`tests/reading_real/contract.json`，没有据本轮失败填写或放宽预算。
+
+W9差分审阅及固定原图/诊断身份见[READING-PIXEL-REVIEW.md](READING-PIXEL-REVIEW.md)。
+新SDK全部12页仍待实跑审阅；本包尚无冻结预算或整体性能通过声明。
