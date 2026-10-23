@@ -86,7 +86,8 @@ def identity(binary, font, manifest, contract, entries, corpus):
 
 
 def native_metrics(record, entry, contract):
-    require(record["schema"] == 1 and record["success"] is True and record["status"] == 0 and record["engine_version"] == "3.40.0" and
+    require(record["schema"] == 1 and record["success"] is True and record["status"] == 0 and
+            record["engine_version"] == "3.40.0" and record["engine_abi"] == 1 and
             record["stage"] == "complete" and record["mode"] == entry["format"].lower(), "Native measurement failed")
     for field in ("font_open_ms", "open_ms", "first_visible_ms", "peak_rss_bytes", "baseline_peak_rss_bytes"):
         require(number(record[field]), "Invalid metric " + field)
@@ -98,6 +99,8 @@ def native_metrics(record, entry, contract):
     require(bool(samples) and samples[0]["phase"] == "first" and samples[0]["page"] == 0 and
             len(sequential) == contract["sequential_turns"] and len(random) == contract["random_turns"] and
             len(samples) == 1 + len(sequential) + len(random) + len(reference), "Incomplete native operation plan")
+    require(abs(record["first_visible_ms"] - record["font_open_ms"] - record["open_ms"] -
+                samples[0]["total_ms"]) <= .000003, "First-frame timing includes unmeasured work")
     require([sample["phase"] for sample in samples] ==
             ["first"] + ["sequential"] * len(sequential) + ["random"] * len(random) + ["reference"] * len(reference),
             "Operation order changed")
@@ -314,6 +317,7 @@ def main():
                "contract": contract, "files": entries, "attempts": [], "references": [], "problems": [],
                "real_document_credit": 0, "synthetic_credit": 0, "wp16_cpu_credit_seconds": 0,
                "results": None, "complete_product": False}
+    summary["diagnostic_observations"] = []
     try:
         require(len(args.source_sha) == 40, "Use a full source SHA")
         require(subprocess.run(["git", "merge-base", "--is-ancestor", SDK, args.source_sha], cwd=ROOT).returncode == 0,
@@ -355,6 +359,13 @@ def main():
                                        retained_operations=len(raw.get("samples", [])))
                     if item["exit_code"]:
                         observation["error"] = (output / item["stderr"]).read_text(encoding="utf-8")[:1000]
+                    try:
+                        observation["metrics"], _ = native_metrics(raw, entry, contract)
+                        observation["complete_process_valid"] = True
+                    except (ValueError, KeyError, TypeError) as error:
+                        observation["complete_process_valid"] = False
+                        observation["validation_problem"] = str(error)
+                    summary["diagnostic_observations"].append(observation)
                     print(json.dumps({"observation": observation}), flush=True)
                 except (OSError, ValueError):
                     print(json.dumps({"observation": {"case": entry["id"], "process": process,

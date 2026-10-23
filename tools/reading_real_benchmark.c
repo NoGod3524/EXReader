@@ -118,7 +118,7 @@ int main(int argc,char **argv) {
   result=is_pdf ? fixed_page(fixed,0,"first",&samples[count],NULL,&error) :
                  reflow_page(pager,part,0,"first",0,&samples[count],&error);
   if(result!=1) goto finish;
-  count++;first_ms=now_ms()-start;routes[route_count++]=(route){part,0};
+  count++;first_ms=font_ms+open_ms+samples[0].total_ms;routes[route_count++]=(route){part,0};
   stage="sequential";
   for(i=0;i<SEQUENTIAL;i++) {
     if(is_pdf) {
@@ -130,6 +130,7 @@ int main(int argc,char **argv) {
       for(;;) {
         result=reflow_page(pager,part,page,"sequential",0,&samples[count],&error);
         if(result!=2) break;
+        transition+=samples[count].layout_ms;
         do { part++; } while(part<part_count && !parts[part].in_reading_order);
         if(part==part_count) break;
         at=now_ms();if(!create_pager(publication,part,font,0,&pager,&error)) goto finish;
@@ -175,10 +176,10 @@ int main(int argc,char **argv) {
 finish:
   peak=rss();if(!peak || start<0) ok=0;
   printf("{\"schema\":1,\"success\":%s,\"stage\":\"%s\",\"status\":%d,\"engine_version\":\"%s\","
-         "\"mode\":\"%s\",\"font_open_ms\":%.6f,\"open_ms\":%.6f,\"first_visible_ms\":%.6f,"
+         "\"engine_abi\":%u,\"mode\":\"%s\",\"font_open_ms\":%.6f,\"open_ms\":%.6f,\"first_visible_ms\":%.6f,"
          "\"baseline_peak_rss_bytes\":%" PRIu64 ",\"peak_rss_bytes\":%" PRIu64 ","
          "\"fixed_directory_bytes\":%" PRIu64 ",\"page_count\":%zu,\"part_count\":%zu,\"samples\":[",
-         ok?"true":"false",stage,(int)error.code,exr_version(),argv[1],font_ms,open_ms,first_ms,
+         ok?"true":"false",stage,(int)error.code,exr_version(),exr_abi_version(),argv[1],font_ms,open_ms,first_ms,
          baseline,peak,directory_bytes,page_count,part_count);
   for(i=0;i<count;i++) {
     sample *s=&samples[i];exr_chapter_stats *m=&s->memory;
