@@ -294,7 +294,7 @@ def seal_inputs(package, sdk, manifest_path, selftest_path, consumer, steps_dir,
         runtime = None
         map_text = static_link_map.read_text(encoding='utf-8', errors='replace')
         symbols = {}
-        for symbol, archive, source in (('exr_version', 'exr_core', 'core'),
+        for symbol, archive, source in (('exr_version', 'exr_base', 'core'),
                                          ('exr_library_open', 'exr_library', 'library')):
             matches = [line.strip() for line in map_text.splitlines()
                        if re.search(r'^\s*[0-9a-fA-F]+:[0-9a-fA-F]+\s+' + symbol + r'\s+', line)]

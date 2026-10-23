@@ -169,7 +169,7 @@ def main():
             refuses('static_reading_requires_explicit_link_proof', lambda: seal(original_manifest, link_map=None))
             bad_manifest('static_reading_wrong_linkage_declaration', lambda value: value.update(linkage='shared'))
             original_map = args.static_link_map.read_text(errors='replace')
-            for symbol, source in (('exr_core', 'core'), ('exr_library', 'library')):
+            for symbol, source in (('exr_base', 'core'), ('exr_library', 'library')):
                 changed_map = temp / (symbol + '-wrong-provider.map')
                 changed_map.write_text(original_map.replace(symbol + ':' + source + '.c.obj', 'untrusted:' + source + '.c.obj'))
                 refuses('static_wrong_provider_' + symbol, lambda changed_map=changed_map: seal(original_manifest, link_map=changed_map))

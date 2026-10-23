@@ -123,6 +123,7 @@ typedef struct {
   wchar_t product_path[HOST_PATH];
   HANDLE product_lock;
   HANDLE product_profile_lock;
+  int product_pending;
 #endif
   wchar_t settings_path[HOST_PATH];
   wchar_t evidence_dir[HOST_PATH];
@@ -195,6 +196,12 @@ static void set_status(const wchar_t *text) {
   if (!text) text = L"";
   wcsncpy(g.status_text, text, 767);
   g.status_text[767] = 0;
+#ifdef EXR_READER_PRODUCT_CATALOG
+  if(g.product_pending && !wcsstr(g.status_text,L"书架信息待恢复")) {
+    size_t length=wcslen(g.status_text);
+    wcsncat(g.status_text,L" · 书架信息待恢复",767-length);
+  }
+#endif
   if (g.status) SetWindowTextW(g.status, g.status_text);
 }
 
@@ -2837,6 +2844,8 @@ static void host_update_controls(void) {
 static void handle_job_complete(host_job *job) {
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(product_job_kind(job->kind)) {
+    if(job->status!=EXR_OK) g.product_pending=1;
+    else if(job->kind==JOB_PRODUCT_REPAIR) g.product_pending=0;
     if(job->kind==JOB_PRODUCT_DELETE && job->product_deleted) {
       show_deleted_book(job->book_id);return;
     }
@@ -3255,6 +3264,9 @@ static void drive_state(const char *name) {
     }
   }
   detail_add(detail, sizeof(detail), "state", name);
+#ifdef EXR_READER_PRODUCT_CATALOG
+  detail_add(detail,sizeof(detail),"product_pending",g.product_pending ? "1":"0");
+#endif
   detail_add(detail, sizeof(detail), "title", title ? title : "");
   detail_add(detail, sizeof(detail), "kind", g.has_current ? (g.frame.fixed ? "fixed" : "reflow") : "none");
   detail_add(detail, sizeof(detail), "page_text", page_prefix);
