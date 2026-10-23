@@ -1,6 +1,27 @@
 name: Retained performance environment diagnostic only
 on:
   workflow_dispatch:
+    inputs:
+      run_id:
+        type: string
+        required: true
+        default: '39992864599'
+      job_id:
+        type: string
+        required: true
+        default: '120548780916'
+      artifact_id:
+        type: string
+        required: true
+        default: '12517893663'
+      artifact_bytes:
+        type: string
+        required: true
+        default: '17484684'
+      artifact_digest:
+        type: string
+        required: true
+        default: '4304062b657c03d972029e8dab773ceece786e61ddb18c38756d04b178061f5e'
 permissions:
   contents: read
   actions: read
@@ -13,6 +34,11 @@ jobs:
       - name: Verify the failed artifact and compare retained environments without execution
         env:
           GH_TOKEN: ${{ github.token }}
+          DIAG_RUN_ID: ${{ inputs.run_id }}
+          DIAG_JOB_ID: ${{ inputs.job_id }}
+          DIAG_ARTIFACT_ID: ${{ inputs.artifact_id }}
+          DIAG_ARTIFACT_BYTES: ${{ inputs.artifact_bytes }}
+          DIAG_ARTIFACT_DIGEST: ${{ inputs.artifact_digest }}
         run: python3 tools/reading_environment_diagnostic.py
       - name: Preserve retained environment diagnostic without an acceptance grant
         if: always()
