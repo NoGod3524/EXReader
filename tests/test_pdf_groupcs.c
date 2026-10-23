@@ -144,10 +144,65 @@ static void canvas_boundaries(void) {
     CHECK(exr_canvas_end_layer(c,0,&error)!=EXR_OK);CHECK(!exr_canvas_bitmap(c));exr_canvas_free(c);
   }
 }
+static void cmyk_soft_masks(void) {
+  /* Two translucent ink sources must blend in CMYK before conversion. The
+     independent CMS reference makes RGB blending fail this check. */
+  const double a=128./255,total=a+a-a*a;
+  unsigned rgb[3],backdrop[3],scenario,k;
+  cmyk_reference((const double[4]){a*(1-a)/total,a/total,0,0},rgb);
+  for(scenario=0;scenario<5;scenario++) {
+    char pdf[8192],row[2048];size_t used=0,offset[8],xref;unsigned id;
+    exr_fixed_document *document=NULL;exr_bitmap bitmap={0};exr_fixed_render_options options={0};
+    const char *paint="/M gs 1 0 0 rg 0 0 16 16 re f";
+    const char *mask="/Half gs 1 0 0 0 k 0 0 16 16 re f 0 1 0 0 k 0 0 16 16 re f";
+    const char *bc=scenario==2 ? "/BC [0 0 0 0]" : scenario==3 ? "/BC [1 0 0 0]" : "";
+    const char *space=scenario==4 ? "[/CalRGB << /WhitePoint [.95047 1 1.08883] >>]" : "/DeviceCMYK";
+    double expected=total;
+#define APPEND(text) do { size_t length=strlen(text);CHECK(length<sizeof(pdf)-used);memcpy(pdf+used,text,length);used+=length; } while(0)
+    APPEND("%PDF-1.7\n");
+    for(id=1;id<=7;id++) {
+      offset[id]=used;snprintf(row,sizeof(row),"%u 0 obj\n",id);APPEND(row);
+      switch(id) {
+        case 1: APPEND("<< /Type /Catalog /Pages 2 0 R >>");break;
+        case 2: APPEND("<< /Type /Pages /Count 1 /Kids [3 0 R] >>");break;
+        case 3: APPEND("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 16 16] /Contents 4 0 R /Resources << /ExtGState << /M << /SMask 6 0 R >> >> >> >>");break;
+        case 4: snprintf(row,sizeof(row),"<< /Length %zu >>\nstream\n%s\nendstream",strlen(paint),paint);APPEND(row);break;
+        case 5:
+          snprintf(row,sizeof(row),"<< /Type /XObject /Subtype /Form /BBox [0 0 16 16] /Group << /S /Transparency /I true /CS %s >> /Resources << /ExtGState << /Half 7 0 R >> >> /Length %zu >>\nstream\n%s\nendstream",space,strlen(mask),mask);APPEND(row);break;
+        case 6: snprintf(row,sizeof(row),"<< /S /%s /G 5 0 R %s >>",scenario ? "Luminosity" : "Alpha",bc);APPEND(row);break;
+        case 7: APPEND("<< /ca .5 >>");break;
+      }
+      APPEND("\nendobj\n");
+    }
+    xref=used;APPEND("xref\n0 8\n0000000000 65535 f \n");
+    for(id=1;id<=7;id++) { snprintf(row,sizeof(row),"%010zu 00000 n \n",offset[id]);APPEND(row); }
+    snprintf(row,sizeof(row),"trailer\n<< /Size 8 /Root 1 0 R >>\nstartxref\n%zu\n%%%%EOF\n",xref);APPEND(row);
+#undef APPEND
+    OK(exr_fixed_open_memory(EXR_PDF,pdf,used,NULL,&document,&error));options.channels=4;
+    if(scenario==4) CHECK(exr_fixed_render(document,0,1,&options,&bitmap,&error)==EXR_UNSUPPORTED && !bitmap.pixels);
+    else {
+      const unsigned char *p;
+      OK(exr_fixed_render(document,0,1,&options,&bitmap,&error));p=bitmap.pixels+8*bitmap.stride+8*4;
+      if(scenario) {
+        double luminance=(.3*rgb[0]+.59*rgb[1]+.11*rgb[2])/255;
+        double back=0;
+        if(scenario==2 || scenario==3) {
+          cmyk_reference((const double[4]){scenario==3 ? 1 : 0,0,0,0},backdrop);
+          back=(.3*backdrop[0]+.59*backdrop[1]+.11*backdrop[2])/255;
+        }
+        expected=luminance*total+back*(1-total);
+      }
+      CHECK(p[0]==255 && p[1]==0 && p[2]==0);
+      CHECK(abs((int)p[3]-(int)floor(expected*255+.5))<=2);
+      for(k=0;k<4;k++) CHECK(bitmap.pixels[k]==p[k]);
+    }
+    exr_bitmap_free(&bitmap);exr_fixed_free(document);
+  }
+}
 int main(int argc,char **argv) {
   exr_bitmap page; const unsigned char *p;
   CHECK(argc==2); directory=argv[1];
-  group_flags();mixed_groups();rejected_groups();canvas_boundaries();
+  group_flags();mixed_groups();rejected_groups();canvas_boundaries();cmyk_soft_masks();
   page=render("groupgray.pdf");
   p=page.pixels+8*page.stride+8*4;
   CHECK(p[0]==p[1] && p[1]==p[2]);          /* grey, not red */

@@ -74,7 +74,8 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
   config.group_present=1;
   config.group_flags=(group&EXR_PDF_GROUP_ISOLATED ? EXR_GROUP_ISOLATED : 0)|
     (group&EXR_PDF_GROUP_KNOCKOUT ? EXR_GROUP_KNOCKOUT : 0)|
-    (group&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0)|(group&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0);
+    (group&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0)|(group&EXR_PDF_GROUP_GRAY ? EXR_GROUP_GRAY : 0)|
+    (group&EXR_PDF_GROUP_CMYK ? EXR_GROUP_CMYK : 0);
   if (kind) {
     if (exr_pdf_resolve(file, exr_pdf_get(file, mask, "BC"), &id, e) != EXR_OK) return e->code;
     if (id != EXR_PDF_NONE && exr_pdf_value_at(file, id)->kind != EXR_PDF_NULL) {
