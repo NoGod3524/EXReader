@@ -125,7 +125,7 @@ PDF 已有固定页绘制、文字几何、搜索选择、标准密码认证、�
 
 当前质量目标是：默认分支强制 CI 与可信构建基线、EPUB 超时/PDF 打开绘制失败闭环、成熟引擎差分与像素/性能回归、内存/长章节/恶意输入专项，以及许可证和版本发布流程统一。已有专项结果，但默认分支必需检查和整条发布门槛尚未闭合，真实兼容语料验收仍有缺口；逐项现状与证据见 [项目概述](docs/PROJECT_OVERVIEW.md#五项工程质量目标)。
 
-冻结 SDK 源码的四目标各 24 CPU 小时长测与严格云端汇总已通过，该结果只绑定其源码。A/B/C 已联合收口：共同源码 S=`686ce2fe`，12 组 35 个上游作业同源成功，严格汇总 run [39850404743](https://github.com/NoGod3524/EXReader/actions/runs/39850404743) 确认 accepted；SDK 基线 K2=`d46ff370`，详见 [联合验收登记](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-ABC-accepted.md)。验收只覆盖各包声明范围，真实语料与核心性能预算仍待完成。
+冻结 SDK 源码的四目标各 24 CPU 小时长测与严格云端汇总已通过，该结果只绑定其源码。A/B/C 已联合收口：共同源码 S=`686ce2fe`，12 组 35 个上游作业同源成功，严格汇总 run [39850404743](https://github.com/NoGod3524/EXReader/actions/runs/39850404743) 确认 accepted；SDK 基线 K2=`d46ff370`，详见 [联合验收登记](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-ABC-accepted.md)。该轮只覆盖各包声明范围；后继真实八份语料与核心性能预算见下表。
 
 原生阅读核心路线已在 `codex/r1-reading-core` 启动，状态按受测源码分开登记：
 
@@ -136,9 +136,9 @@ PDF 已有固定页绘制、文字几何、搜索选择、标准密码认证、�
 | 已完成 | R3 初始 PDF/CBZ 测量（合成）：源码 `3cd7bdf1` 的 run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753) 测 1 页 PDF 与 4 页 CBZ 极小 fixture；可区分页面候选 `4b6f562c` 的 run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765) 加入 3 页 PDF/4 页 CBZ 合成文档，12 进程/240 次绘制，2026-10-22 只读核对为 success，见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md) |
 | 已验证 | 阅读SDK固定`9854061`：六组18执行作业/30工件同源通过，含缓存、CMap/anchor、PDF绘制和受限JPX修复。见[SDK冻结记录](docs/R5-SDK-FREEZE.md) |
 | 已验证 | R2固定八份真实文档与JPX专项：源码`da1c183`、run [39899523839](https://github.com/NoGod3524/EXReader/actions/runs/39899523839)三作业成功，整本8/8、重开定位8/8、ON/ASan/OFF各24项通过。见[语料记录](docs/R2-REAL-CORPUS.md)及[R4修复](docs/R4-CORE-HOTSPOTS.md) |
-| 复验中 | H8–H11在新SDK共同源码`da1c183`重新执行；原`e25959e`四组11作业结果保留为历史，见[共同验收记录](docs/R5-SDK-FREEZE.md) |
+| 已验收 | H8–H11四宿主共同源码`5bc805a`：Windows、Linux、Apple、Android四组11作业与11份必需工件同源通过，见[共同验收记录](docs/R5-SDK-FREEZE.md)；旧失败保留 |
 | 已验收 | R3/R6 SDK候选：`fa54027`的run [39902467216](https://github.com/NoGod3524/EXReader/actions/runs/39902467216)17/17作业成功，严格accepted=true；三平台六包、八份语料、40进程与12参考页及冻结预算同次通过，见[R6记录](docs/R6-READING-RELEASE.md) |
-| 待启用 | 默认分支必需检查、实际tag/发布；四宿主UI后继复验仍独立收口 |
+| 待启用 | 默认分支接纳与必需检查、原包发布准备、实际tag/发布 |
 | 后续范围 | 历史1710份库存仍未恢复，本批八份独立计数；跨平台性能、真机与读屏仍待各自验收 |
 
 初始 TXT 与 PDF/CBZ 采样只针对极小合成工作负载，证明测量流程可运行，不是成熟性能基线，也不代表真实语料或任何性能预算已达标；RSS 增量为 0 只表示未超过进程先前高水位，不表示没有分配。新 profile 也不继承 S 的联合验收或旧源码长测。详见 [首轮启动记录](docs/READING-CORE-START.md) 与 [发布门槛映射](docs/READING-CORE-GATE.md)。所有构建、测试及证据汇总在 GitHub Actions 执行。
