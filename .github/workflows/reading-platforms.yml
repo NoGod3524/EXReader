@@ -109,6 +109,23 @@ jobs:
       - name: Rejection regression for the evidence gate
         if: always() && steps.evidence.outcome == 'success'
         run: python tests/check_reading_platform_evidence.py "build/$PROFILE/platform-evidence.json" "build/$PROFILE/rejection-regression.json"
+      - name: Require complete release license materials on this installed stage
+        run: |
+          python tools/check_reading_licenses.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/licenses.json" --require-release-ready
+          python tests/check_reading_licenses.py
+      - name: Execute the installed SDK identity and schema consumer
+        run: |
+          library=OFF
+          if [ "$PROFILE" = reading-library ]; then library=ON; fi
+          cmake -S tests/reading_release -B build/release-identity -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/$PROFILE/stage" -DEXR_RELEASE_LIBRARY="$library"
+          cmake --build build/release-identity --parallel 4
+          "build/release-identity/release-identity$EXE" "$WS/build/$PROFILE/release-schema.sqlite" > "build/$PROFILE/release-runtime.json"
+          cat "build/$PROFILE/release-runtime.json"
+      - name: Seal a native platform candidate without granting quality or publication
+        run: |
+          database=""
+          if [ "$PROFILE" = reading-library ]; then database="--database build/$PROFILE/release-schema.sqlite"; fi
+          python tools/reading_release.py --profile "$PROFILE" --stage "build/$PROFILE/stage" --evidence "build/$PROFILE" --runtime "build/$PROFILE/release-runtime.json" $database --output "build/$PROFILE/release-candidate"
       - name: Preserve source-bound evidence and installed SDK
         if: always()
         uses: actions/upload-artifact@v4
@@ -122,5 +139,7 @@ jobs:
             build/${{ matrix.profile }}/consumer-tests.xml
             build/${{ matrix.profile }}/corpus/
             build/${{ matrix.profile }}/CMakeCache.txt
+            build/${{ matrix.profile }}/release-candidate/
             build/reading-consumer/Testing/Temporary/LastTest.log
           if-no-files-found: error
+          include-hidden-files: true

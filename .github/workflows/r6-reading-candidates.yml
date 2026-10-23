@@ -1,0 +1,17 @@
+name: Six native reading SDK candidates
+on:
+  push:
+    branches: ['codex/r6-platform-candidates']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tests/check_reading_release.py
+  profiles:
+    uses: ./.github/workflows/reading-core.yml
+  platforms:
+    uses: ./.github/workflows/reading-platforms.yml

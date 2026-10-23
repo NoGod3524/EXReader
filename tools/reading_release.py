@@ -45,17 +45,21 @@ def version(header):
     return sdk[1], int(abi[1])
 
 
-def check_profile(profile, source, stage, evidence, runtime, database=None):
+def check_profile(profile, source, stage, evidence, runtime, database=None, platform=None):
     require(profile in PROFILES, 'unknown reading profile')
     stage, evidence = Path(stage), Path(evidence)
-    composition = load(evidence / 'profile.json')
+    require(platform in (None, 'Windows', 'macOS'), 'unknown platform composition')
+    composition = load(evidence / ('platform-evidence.json' if platform else 'profile.json'))
     licenses = load(evidence / 'licenses.json')
     smoke = load(evidence / 'corpus/summary.json')
     for name, report in [('composition', composition), ('licenses', licenses), ('smoke', smoke)]:
         require(report.get('source_sha') == source, name + ': source mismatch')
     require(composition.get('profile') == profile and composition.get('accepted') is True and
             composition.get('problems') == [], 'composition did not strictly accept the profile')
-    inventory = composition.get('files', [])
+    if platform:
+        require(composition.get('host') == composition.get('platform_requested') == platform,
+                'platform composition host differs')
+    inventory = composition.get('installed_files' if platform else 'files', [])
     actual = {p.relative_to(stage).as_posix() for p in stage.rglob('*') if p.is_file()}
     require(inventory and len({f['path'] for f in inventory}) == len(inventory) and
             {f['path'] for f in inventory} == actual, 'composition inventory differs from installed stage')
@@ -100,9 +104,11 @@ def check_profile(profile, source, stage, evidence, runtime, database=None):
             'library_header_version': observed.get('library_header_version')}
 
 
-def seal(stage, output, profile, source, identity, ci, epoch):
+def seal(stage, output, profile, source, identity, ci, epoch, host, arch):
     """Deterministic file-only archive. Symlinks are rejected instead of followed."""
     stage, output = Path(stage).resolve(strict=True), Path(output)
+    require(host in ('Linux', 'Windows', 'macOS') and arch in ('X64', 'ARM64'), 'unknown package host/architecture')
+    require(ci.get('RUNNER_OS') == host and ci.get('RUNNER_ARCH') == arch, 'package runner identity differs')
     require(not output.exists(), 'candidate output already exists')
     files = []
     for path in sorted(stage.rglob('*')):
@@ -113,12 +119,12 @@ def seal(stage, output, profile, source, identity, ci, epoch):
     require(files, 'empty installed stage')
     require(not (stage / 'release-manifest.json').exists(), 'stage contains reserved release manifest')
     manifest = {'schema': 1, 'scope': 'installed reading SDK candidate; quality gates required before release',
-                'source_sha': source, 'profile': profile, 'ci': ci, 'identity': identity,
+                'source_sha': source, 'profile': profile, 'host': host, 'arch': arch, 'ci': ci, 'identity': identity,
                 'files': files, 'published': False}
     raw = (json.dumps(manifest, indent=2, sort_keys=True, allow_nan=False) + '\n').encode()
     output.mkdir(parents=True)
     (output / 'release-manifest.json').write_bytes(raw)
-    prefix = 'EXReader-' + profile + '-' + identity['sdk_version']
+    prefix = f"EXReader-{profile}-{identity['sdk_version']}-{host}-{arch}"
     archive = output / (prefix + '.tar.gz')
     with archive.open('xb') as destination, gzip.GzipFile(fileobj=destination, filename='', mtime=epoch) as compressed:
         with tarfile.open(fileobj=compressed, mode='w') as tar:
@@ -129,7 +135,8 @@ def seal(stage, output, profile, source, identity, ci, epoch):
                 info = tarfile.TarInfo(prefix + '/' + entry['path'])
                 info.size, info.mtime, info.mode = len(payload), epoch, 0o755 if entry['executable'] else 0o644
                 tar.addfile(info, io.BytesIO(payload))
-    record = {'schema': 1, 'accepted': True, 'source_sha': source, 'profile': profile, 'ci': ci,
+    record = {'schema': 1, 'accepted': True, 'source_sha': source, 'profile': profile,
+              'host': host, 'arch': arch, 'ci': ci,
               'identity': identity, 'archive': archive.name, 'bytes': archive.stat().st_size,
               'sha256': digest(archive), 'manifest_sha256': hashlib.sha256(raw).hexdigest(),
               'file_count': len(files), 'published': False, 'quality_accepted': False}
@@ -150,11 +157,14 @@ def main():
     source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     require(source == os.environ.get('GITHUB_SHA'), 'checkout and workflow source differ')
     require(subprocess.run(['git', 'diff', '--quiet', 'HEAD']).returncode == 0, 'tracked source changed during build')
-    identity = check_profile(args.profile, source, args.stage, args.evidence, args.runtime, args.database)
+    host, arch = os.environ['RUNNER_OS'], os.environ['RUNNER_ARCH']
+    identity = check_profile(args.profile, source, args.stage, args.evidence, args.runtime, args.database,
+                             host if host != 'Linux' else None)
     require(identity['sdk_version'] == version(Path('include/exr/base.h'))[0], 'source and installed versions differ')
-    ci = {name: os.environ[name] for name in ('GITHUB_REPOSITORY', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'GITHUB_JOB')}
+    ci = {name: os.environ[name] for name in ('GITHUB_REPOSITORY', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT',
+                                            'GITHUB_JOB', 'RUNNER_OS', 'RUNNER_ARCH')}
     epoch = int(subprocess.check_output(['git', 'show', '-s', '--format=%ct', 'HEAD'], text=True))
-    print(json.dumps(seal(args.stage, args.output, args.profile, source, identity, ci, epoch)))
+    print(json.dumps(seal(args.stage, args.output, args.profile, source, identity, ci, epoch, host, arch)))
 
 
 if __name__ == '__main__':
