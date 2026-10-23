@@ -61,6 +61,22 @@ Android原失败工件保留，不能以独立用例通过替代原45出口；�
 Apple后继`1abf9d3…`只将导入输入由单次0.1秒press改为一次标准tap；
 就绪检查、结果断言和deadline保留，完整八作业run39903016234重验中。
 
+### 后继四宿主共同源码复验
+
+最终宿主候选S=`5bc805abb3a56297b73af06fdff8a248dd8326e0`合入单次标准tap及Android DEBUG位图身份观测，
+八条SDK保护树与K相同。Android观测版本d78abd7已在独立运行通过全部45+10+11；
+其原生位图与屏幕均精确相同，见[诊断记录](validation/android-bitmap-diagnostic-d78abd7.json)。
+旧失败没有位图身份，旧299个±1边缘像素的根因仍未证明；本次不把新增观测称为修复GPU缺陷。
+
+下列四组全部在同一S重新执行，原用例、精确截图判定、8秒帧观测及各平台时限保持：
+
+| 平台 | run | 状态 |
+| --- | --- | --- |
+| Windows | [39905068109](https://github.com/NoGod3524/EXReader/actions/runs/39905068109) | 运行中 |
+| Linux | [39905072269](https://github.com/NoGod3524/EXReader/actions/runs/39905072269) | 运行中 |
+| Apple | [39905075296](https://github.com/NoGod3524/EXReader/actions/runs/39905075296) | 运行中 |
+| Android | [39905079097](https://github.com/NoGod3524/EXReader/actions/runs/39905079097) | 运行中 |
+
 R3严格性能与17作业SDK总门禁已在`fa54027…`、run39902467216同次通过，见[R6记录](R6-READING-RELEASE.md)。
 当前仍待新K宿主联合验收结束。
 默认分支规则未启用，未创建发布；旧98作业长测不转移，新增WP16 CPU信用为0。
