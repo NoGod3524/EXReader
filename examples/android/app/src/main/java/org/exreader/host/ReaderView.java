@@ -60,6 +60,56 @@ public final class ReaderView extends View {
     private String[] lineText = new String[0];
     private RectF[] lineBounds = new RectF[0];
     private int accessibilityFocused = -1;
+    private long acceptedToken, renderRevision, drawnToken=-1, drawnRevision=-1, settledToken=-1, settledRevision=-1;
+    private long drawnNanos, settledNanos;
+    private int drawnWidth, drawnHeight;
+    private float drawnFit, drawnX, drawnY;
+    private String pointHash;
+
+    private void renderChanged() {
+        if (!BuildConfig.DEBUG) return;
+        renderRevision++; drawnToken=settledToken=-1; drawnRevision=settledRevision=-1;
+    }
+
+    private void observedDraw() {
+        if (!BuildConfig.DEBUG || page==null || (drawnToken==acceptedToken && drawnRevision==renderRevision)) return;
+        final PageSnapshot captured=page;
+        final long token=acceptedToken, revision=renderRevision;
+        final int width=getWidth(), height=getHeight();
+        drawnToken=token; drawnRevision=revision; drawnWidth=width; drawnHeight=height;
+        drawnFit=fit; drawnX=offsetX; drawnY=offsetY; drawnNanos=System.nanoTime();
+        // This is an after-draw/settled observation, not a compositor presentation fence.
+        postOnAnimation(()->postOnAnimation(()->{
+            if(page!=captured || acceptedToken!=token || renderRevision!=revision ||
+                    drawnToken!=token || drawnRevision!=revision || getWidth()!=width || getHeight()!=height) return;
+            settledToken=token; settledRevision=revision; settledNanos=System.nanoTime();
+            sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
+        }));
+    }
+
+    private String frameObservation() {
+        try {
+            org.json.JSONObject state=new org.json.JSONObject()
+                .put("pid",android.os.Process.myPid()).put("view",System.identityHashCode(this))
+                .put("accepted_token",acceptedToken).put("revision",renderRevision)
+                .put("drawn_token",drawnToken).put("drawn_revision",drawnRevision)
+                .put("settled_token",settledToken).put("settled_revision",settledRevision)
+                .put("drawn_ns",drawnNanos).put("settled_ns",settledNanos)
+                .put("viewport_width",getWidth()).put("viewport_height",getHeight())
+                .put("drawn_width",drawnWidth).put("drawn_height",drawnHeight)
+                .put("fit",drawnFit).put("offset_x",drawnX).put("offset_y",drawnY)
+                .put("selection_mode",selectMode).put("selection_start",selection==null?-1:selection.start)
+                .put("selection_end",selection==null?-1:selection.end);
+            if(page!=null) state.put("book",page.bookId).put("index",page.index).put("part",page.part)
+                .put("path",page.path==null?org.json.JSONObject.NULL:page.path).put("start",page.start).put("end",page.end)
+                .put("anchor_sha256",pointHash==null?org.json.JSONObject.NULL:pointHash)
+                .put("anchor_kind",page.bounded?"bounded_point":page.fixed?"fixed_page":"source_offset")
+                .put("font",page.fixed?org.json.JSONObject.NULL:page.layoutFont).put("zoom",page.layoutZoom)
+                .put("render_scale",page.renderScale).put("bitmap_width",page.bitmap.getWidth()).put("bitmap_height",page.bitmap.getHeight())
+                .put("glyph_font_first",page.glyphSize==null || page.glyphSize.length==0?org.json.JSONObject.NULL:page.glyphSize[0]);
+            return state.toString();
+        } catch(org.json.JSONException error) { throw new IllegalStateException(error); }
+    }
 
     private final Runnable longPressRunnable = new Runnable() {
         @Override public void run() {
@@ -168,6 +218,17 @@ public final class ReaderView extends View {
         handler.removeCallbacks(longPressRunnable);
         down = false;
         page = snapshot;
+        if(BuildConfig.DEBUG) {
+            acceptedToken++; renderChanged(); pointHash=null;
+            if(snapshot!=null && snapshot.boundedLocation!=null) {
+                try {
+                    byte[] bytes=new org.json.JSONArray(java.util.Arrays.asList(snapshot.boundedLocation)).toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    byte[] digest=java.security.MessageDigest.getInstance("SHA-256").digest(bytes);
+                    StringBuilder hash=new StringBuilder(); for(byte value:digest) hash.append(String.format(java.util.Locale.ROOT,"%02x",value&255));
+                    pointHash=hash.toString();
+                } catch(java.security.NoSuchAlgorithmException error) { throw new IllegalStateException(error); }
+            }
+        }
         selection = null;
         anchor = -1;
         focus = -1;
@@ -201,6 +262,7 @@ public final class ReaderView extends View {
     public void setSelectMode(boolean enabled) {
         if (selectMode == enabled) return;
         selectMode = enabled;
+        renderChanged();
         if (!enabled) {
             selection = null;
             anchor = -1;
@@ -209,6 +271,7 @@ public final class ReaderView extends View {
             if (listener != null) listener.onSelectionCleared();
         }
         setContentDescription(describe());
+        if(BuildConfig.DEBUG) invalidate();
         if (listener != null) listener.onSelectModeChanged(enabled);
     }
 
@@ -217,6 +280,7 @@ public final class ReaderView extends View {
     }
 
     public void clearSelection() {
+        renderChanged();
         selection = null;
         anchor = -1;
         focus = -1;
@@ -245,6 +309,7 @@ public final class ReaderView extends View {
         info.setClassName(ReaderView.class.getName());
         info.setContentDescription(describe());
         info.setScrollable(false);
+        if(BuildConfig.DEBUG) info.getExtras().putString("exreader.frame",frameObservation());
     }
 
     private AccessibilityNodeInfo hostNode() {
@@ -322,11 +387,13 @@ public final class ReaderView extends View {
                 canvas.drawCircle(toViewX(last.right), toViewY(last.bottom), 9f, handlePaint);
             }
         }
+        observedDraw();
     }
 
     @Override protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
         super.onSizeChanged(width, height, oldWidth, oldHeight);
         computeFit();
+        renderChanged();
     }
 
     @Override public boolean onTouchEvent(MotionEvent event) {
@@ -460,11 +527,13 @@ public final class ReaderView extends View {
         }
         if (start == Long.MAX_VALUE) {
             selection = null;
+            renderChanged();
             invalidate();
             return;
         }
         String text = ReflowSession.slice(page.text, start - page.textBase, end - page.textBase);
         selection = new Selection(page.index, start, end, text, rects);
+        renderChanged();
         setContentDescription(describe());
         invalidate();
         if (notify && listener != null) listener.onSelectionChanged(selection);

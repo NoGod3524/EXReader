@@ -101,7 +101,7 @@ final class ReflowSession implements AutoCloseable {
             EXReader.Bitmap rendered = page.render();
             task.check();
             if (rendered == null) throw new IllegalStateException("No page bitmap");
-            PageSnapshot snapshot = build(layout, toBitmap(rendered), index + 1);
+            PageSnapshot snapshot = build(layout, toBitmap(rendered), index + 1, fontSize);
             return new PageLoad(snapshot, (System.nanoTime() - started) / 1000000L,
                     () -> { index = snapshot.index; lastStart = snapshot.start; logSteps(); },
                     this::recoverAcceptedCursor);
@@ -179,7 +179,7 @@ final class ReflowSession implements AutoCloseable {
                     if (rendered == null) throw new IllegalStateException("No page bitmap");
                     Bitmap bitmap = toBitmap(rendered);
                     final int acceptedIndex = at;
-                    PageSnapshot snapshot = build(layout, bitmap, at);
+                    PageSnapshot snapshot = build(layout, bitmap, at, size);
                     PageLoad result = new PageLoad(snapshot, (System.nanoTime() - started) / 1000000L,
                             () -> {
                                 if (pager != null) pager.close();
@@ -197,12 +197,12 @@ final class ReflowSession implements AutoCloseable {
         } finally { if (!transferred) candidate.close(); }
     }
 
-    private PageSnapshot build(EXReader.LayoutSnapshot layout, Bitmap bitmap, int pageIndex) {
-        try { return buildSnapshot(layout, bitmap, pageIndex); }
+    private PageSnapshot build(EXReader.LayoutSnapshot layout, Bitmap bitmap, int pageIndex, float layoutFont) {
+        try { return buildSnapshot(layout, bitmap, pageIndex, layoutFont); }
         catch (RuntimeException | Error error) { bitmap.recycle(); throw error; }
     }
 
-    private PageSnapshot buildSnapshot(EXReader.LayoutSnapshot layout, Bitmap bitmap, int pageIndex) {
+    private PageSnapshot buildSnapshot(EXReader.LayoutSnapshot layout, Bitmap bitmap, int pageIndex, float layoutFont) {
         int glyphCount = layout.glyphs.length;
         long[] starts = new long[glyphCount];
         long[] ends = new long[glyphCount];
@@ -229,9 +229,11 @@ final class ReflowSession implements AutoCloseable {
         }
         long start = layout.start == -1 ? 0 : layout.start;
         long end = layout.end == -1 ? text.length : layout.end;
-        return new PageSnapshot(bitmap, false, pageIndex, -1, start, end, text, 1f,
+        PageSnapshot snapshot = new PageSnapshot(bitmap, false, pageIndex, -1, start, end, text, 1f,
                 bitmap.getWidth(), bitmap.getHeight(), starts, ends, null,
                 gx, baseline, advance, size, lineText, lineBounds, 0, bookId);
+        snapshot.layoutFont=layoutFont;
+        return snapshot;
     }
 
     static Bitmap toBitmap(EXReader.Bitmap source) {
