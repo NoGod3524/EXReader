@@ -1,4 +1,4 @@
-name: R4 core hotspot diagnostic
+name: R4 core anchor optimization
 on:
   push:
     branches: ['codex/r4-core-hotspots']
@@ -6,14 +6,10 @@ on:
 permissions:
   contents: read
 jobs:
-  anchor:
-    name: anchor (${{ matrix.profile }})
+  compare:
+    name: paired unchanged-baseline and candidate
     runs-on: ubuntu-22.04
     timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        profile: [release, gprof]
     env:
       OMP_NUM_THREADS: '1'
       OPENBLAS_NUM_THREADS: '1'
@@ -23,36 +19,68 @@ jobs:
         with:
           ref: 9bd2b2c3caf1f63dc4437e0af978247494e87145
           path: engine
-      - name: Build the unmodified frozen engine and installed diagnostic consumer
+      - name: Build baseline and candidate with identical reading options
         shell: bash
         run: |
-          flags='-fno-omit-frame-pointer'
-          if [ '${{ matrix.profile }}' = gprof ]; then flags="$flags -pg"; fi
-          cmake --preset reading-core -S engine -DCMAKE_C_FLAGS="$flags" -DCMAKE_EXE_LINKER_FLAGS="$flags" -DCMAKE_INSTALL_PREFIX="$PWD/stage"
-          cmake --build engine/build/reading-core --parallel 4
-          cmake --install engine/build/reading-core
-          cmake -S tests/r4_core -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/stage" -DCMAKE_C_FLAGS="$flags" -DCMAKE_EXE_LINKER_FLAGS="$flags"
-          cmake --build build/probe --parallel 4
+          mkdir -p build
+          for role in baseline candidate; do
+            source=engine
+            if [ "$role" = candidate ]; then source=.; fi
+            cmake --preset reading-core -S "$source" -DEXR_BUILD_TESTS=ON -DCMAKE_C_FLAGS='-fno-omit-frame-pointer' -DCMAKE_INSTALL_PREFIX="$PWD/stage/$role"
+            cmake --build "$source/build/reading-core" --parallel 4
+            cmake --install "$source/build/reading-core"
+            ctest --test-dir "$source/build/reading-core" --output-on-failure --no-tests=error -R 'native-(anchor|fixed-text|chapter|cfi)' --output-junit "$PWD/build/$role-native.xml"
+            cmake -S tests/r4_core -B "build/probe-$role" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/stage/$role" -DCMAKE_C_FLAGS='-fno-omit-frame-pointer'
+            cmake --build "build/probe-$role" --parallel 4
+            ctest --test-dir "build/probe-$role" --output-on-failure --no-tests=error --output-junit "$PWD/build/$role-regression.xml"
+          done
           cc --version > build/compiler.txt
-      - name: Locate bounded point and quote restoration cost
-        run: python3 tests/r4_core/run.py --binary build/probe/r4-anchor-probe --font engine/tests/fixtures/fonts/primary.ttf --engine engine --output build/evidence --profile '${{ matrix.profile }}'
-      - name: Preserve the actual sampled call profile
-        if: always() && matrix.profile == 'gprof'
-        run: gprof build/probe/r4-anchor-probe build/evidence/gmon.out > build/evidence/gprof.txt
-      - name: Print measured hotspot evidence
+      - name: Compare alternating fresh-process anchor and page results
+        run: python3 tests/r4_core/run.py --binary build/probe-candidate/r4-anchor-probe --baseline-binary build/probe-baseline/r4-anchor-probe --font engine/tests/fixtures/fonts/primary.ttf --engine . --baseline-engine engine --output build/evidence --profile release
+      - name: Print same-run measurements
         if: always()
         run: |
           if [ -f build/evidence/summary.json ]; then cat build/evidence/summary.json; fi
-          if [ -f build/evidence/gprof.txt ]; then head -90 build/evidence/gprof.txt; fi
       - name: Preserve same-source diagnostic evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: r4-anchor-${{ matrix.profile }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: r4-anchor-comparison-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/evidence/
-            build/probe/r4-anchor-probe
+            build/probe-baseline/
+            build/probe-candidate/
             build/compiler.txt
-            build/probe/CMakeCache.txt
+            build/*-native.xml
+            build/*-regression.xml
+            build/reading-core/CMakeCache.txt
             engine/build/reading-core/CMakeCache.txt
+          if-no-files-found: error
+  sanitize:
+    name: candidate ASan and UBSan
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    env:
+      ASAN_OPTIONS: detect_leaks=1
+      UBSAN_OPTIONS: halt_on_error=1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run native candidate regressions with sanitizers
+        run: |
+          cmake --preset reading-core -DEXR_BUILD_TESTS=ON -DEXR_SANITIZE=ON
+          cmake --build --preset reading-core
+          ctest --test-dir build/reading-core --output-on-failure --no-tests=error --output-junit "$PWD/build/sanitizer-native.xml"
+          cmake --install build/reading-core
+          cmake -S tests/r4_core -B build/probe-sanitize -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-core/stage" -DCMAKE_C_FLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer' -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address,undefined'
+          cmake --build build/probe-sanitize --parallel 4
+          ctest --test-dir build/probe-sanitize --output-on-failure --no-tests=error --output-junit "$PWD/build/sanitizer-r4.xml"
+      - name: Preserve sanitizer regressions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r4-anchor-sanitizer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/sanitizer-*.xml
+            build/reading-core/Testing/Temporary/
+            build/probe-sanitize/Testing/Temporary/
           if-no-files-found: error
