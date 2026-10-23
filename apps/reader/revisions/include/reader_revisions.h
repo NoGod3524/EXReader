@@ -6,7 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define READER_REVISIONS_VERSION "0.2.0"
+#define READER_REVISIONS_VERSION "0.3.0"
 #define READER_REVISION_MAX_BYTES ((size_t)1048576)
 #define READER_REVISION_MAX_PARENTS ((size_t)32)
 #define READER_REVISION_MAX_ENTITY_HISTORY ((size_t)4096)
