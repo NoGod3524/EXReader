@@ -96,6 +96,21 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   [original Apple 40036560509](https://github.com/NoGod3524/EXReader/actions/runs/40036560509).
   Their SDK jobs are queued; no P4 compilation or functional acceptance has
   completed on this source.
+- `2bc6e8abdd782230bef00a9a14d4effb0000e929`, canonical title/author matching:
+  [shelf 40037999708](https://github.com/NoGod3524/EXReader/actions/runs/40037999708),
+  [mapping 40037999715](https://github.com/NoGod3524/EXReader/actions/runs/40037999715),
+  [original Apple 40037999790](https://github.com/NoGod3524/EXReader/actions/runs/40037999790).
+  Superseded by the pending-index and tall-viewport corrections; cancellation
+  was requested and no acceptance is transferred.
+- `d94893372658871353e9585924d18af4098049e0`, pending SDK fallback and tall
+  viewport prefetch: [shelf 40039402715](https://github.com/NoGod3524/EXReader/actions/runs/40039402715),
+  [mapping 40039402856](https://github.com/NoGod3524/EXReader/actions/runs/40039402856),
+  [original Apple 40039402733](https://github.com/NoGod3524/EXReader/actions/runs/40039402733).
+  The first shelf native job compiled the Swift model and passed catalog8, then
+  failed its canonical title/author assertion. Its seed assigned the decomposed
+  title's author with an ambiguous grapheme prefix; the correction compares the
+  complete fixture title. The assertion is unchanged. Native failure artifact
+  `12539137105` is retained. UI and summary were skipped and grant no acceptance.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
