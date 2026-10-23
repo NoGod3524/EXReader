@@ -3,6 +3,7 @@
 """Strict Android host evidence validation. Build and execution happen only in CI."""
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -184,6 +185,104 @@ def check_instrumentation(path, class_name, method):
     require(statuses == ['1', '0'], 'instrumentation skipped, failed or executed an unexpected test')
 
 
+FRAME_FIELDS = '''book index part path start end anchor_kind anchor_sha256 font zoom render_scale bitmap_width bitmap_height glyph_font_first viewport_width viewport_height fit offset_x offset_y selection_mode selection_start selection_end'''.split()
+
+
+def check_drawn_frame(state):
+    require(isinstance(state, dict), 'frame observation missing')
+    require(type(state.get('pid')) is int and state['pid'] > 0 and type(state.get('view')) is int,
+            'frame process/view identity missing')
+    require(type(state.get('accepted_token')) is int and state['accepted_token'] > 0 and
+            state['accepted_token'] == state.get('drawn_token') == state.get('settled_token') and
+            type(state.get('revision')) is int and state['revision'] > 0 and
+            state['revision'] == state.get('drawn_revision') == state.get('settled_revision'),
+            'accepted frame has not actually drawn and settled')
+    require(type(state.get('drawn_ns')) is int and type(state.get('settled_ns')) is int and
+            0 < state['drawn_ns'] <= state['settled_ns'], 'frame after-draw timing missing')
+    for name in ('viewport_width', 'viewport_height', 'bitmap_width', 'bitmap_height'):
+        require(type(state.get(name)) is int and 0 < state[name] <= 8192, 'invalid frame dimensions: ' + name)
+    require(state['viewport_width'] == state.get('drawn_width') and state['viewport_height'] == state.get('drawn_height'),
+            'drawn viewport differs from accepted viewport')
+    for name in ('fit', 'zoom', 'render_scale'):
+        require(type(state.get(name)) in (int, float) and math.isfinite(state[name]) and state[name] > 0,
+                'invalid actual frame scale: ' + name)
+    for name in ('offset_x', 'offset_y'):
+        require(type(state.get(name)) in (int, float) and math.isfinite(state[name]), 'invalid actual frame fit offset')
+    require(all(name in state for name in FRAME_FIELDS), 'frame semantic state is incomplete')
+    require(type(state['book']) is int and state['book'] > 0 and type(state['index']) is int and state['index'] >= 0 and
+            type(state['start']) is int and type(state['end']) is int and 0 <= state['start'] <= state['end'],
+            'frame source position invalid')
+    if state['anchor_kind'] == 'fixed_page':
+        require(state['font'] is None, 'fixed-page font must be explicitly not applicable')
+    else:
+        require(type(state['font']) in (int, float) and math.isfinite(state['font']) and state['font'] > 0,
+                'actual layout font missing or defaulted')
+    if state['anchor_kind'] == 'bounded_point':
+        require(type(state['part']) is int and state['part'] >= 0 and isinstance(state['path'], str) and state['path'] and
+                re.fullmatch(r'[0-9a-f]{64}', state['anchor_sha256'] or ''), 'bounded part/point anchor identity missing')
+
+
+def frame_key(state, bounds):
+    return tuple(state[name] for name in ('pid', 'view', 'accepted_token', 'revision', 'viewport_width', 'viewport_height')) + tuple(bounds)
+
+
+def check_frame_observations(root, case):
+    required = case['id'] in ('process_restart_reflow', 'pdf_process_restart')
+    proofs = case.get('frame_observations', [])
+    roles = ['pretransition', 'reference', 'restored'] if case['id'] == 'pdf_process_restart' else ['reference', 'restored']
+    require(isinstance(proofs, list) and (not required or [proof.get('role') for proof in proofs] == roles),
+            'restart frame observations missing or reordered')
+    accepted = []
+    frame_paths = set()
+    for proof in proofs:
+        require(proof.get('status') == 'stable_after_draw' and proof.get('budget_ms') == 8000 and
+                type(proof.get('elapsed_ms')) is int and 0 < proof['elapsed_ms'] <= 8000 and
+                'initial_observation' in proof, 'stable frame observation exceeded the original 8s budget')
+        samples = proof.get('samples', [])
+        require(isinstance(samples, list) and len(samples) >= 2, 'consecutive frame samples missing')
+        for sample in samples:
+            name = sample.get('png', '')
+            require(isinstance(name, str) and re.fullmatch(r'frames/[A-Za-z0-9_-]+\.png', name), 'frame PNG path invalid')
+            require(name not in frame_paths, 'frame PNG was reused for another sample')
+            frame_paths.add(name)
+            path = root/name
+            check_png(path)
+            require(path.stat().st_size == sample.get('png_bytes') and sha256(path) == sample.get('png_sha256'),
+                    'frame PNG identity mismatch')
+            require(re.fullmatch(r'[0-9a-f]{64}', sample.get('pixel_sha256', '')), 'frame pixel identity missing')
+        pair = samples[-2:]
+        for sample in pair:
+            require(sample.get('same_frame') is True and sample.get('within_budget') is True and
+                    type(sample.get('captured_elapsed_ms')) is int and 0 <= sample['captured_elapsed_ms'] <= 8000,
+                    'stable sample crossed a frame or deadline')
+            before, after = sample.get('observation'), sample.get('after_observation')
+            check_drawn_frame(before)
+            check_drawn_frame(after)
+            bounds = sample.get('bounds')
+            require(isinstance(bounds, list) and len(bounds) == 4 and all(type(value) is int for value in bounds) and
+                    0 <= bounds[0] < bounds[2] and 0 <= bounds[1] < bounds[3], 'frame viewport bounds missing')
+            require(bounds == sample.get('after_bounds') and frame_key(before, bounds) == frame_key(after, sample['after_bounds']) and
+                    all(before[name] == after[name] for name in FRAME_FIELDS), 'capture crossed accepted frame state')
+            width, height = struct.unpack_from('>II', (root/sample['png']).read_bytes(), 16)
+            require((width, height) == (bounds[2]-bounds[0], bounds[3]-bounds[1]), 'frame PNG differs from viewport crop')
+        require(frame_key(pair[0]['observation'], pair[0]['bounds']) == frame_key(pair[1]['observation'], pair[1]['bounds']) and
+                all(pair[0]['observation'][name] == pair[1]['observation'][name] for name in FRAME_FIELDS) and
+                pair[0]['pixel_sha256'] == pair[1]['pixel_sha256'] == proof.get('pixel_sha256') and
+                pair[0]['png_sha256'] == pair[1]['png_sha256'], 'consecutive screenshots are not stable')
+        accepted.append(pair[-1])
+    if required:
+        if case['id'] == 'pdf_process_restart':
+            prior, reference = accepted[:2]
+            require(prior['pixel_sha256'] != reference['pixel_sha256'] and prior['png_sha256'] != reference['png_sha256'],
+                    'PDF page turn reused the previous page pixels')
+        before, after = accepted[-2:]
+        require(before['observation']['pid'] != after['observation']['pid'], 'restart did not create a new reader process')
+        require(before['pixel_sha256'] == after['pixel_sha256'] and before['png_sha256'] == after['png_sha256'],
+                'restart changed the exact accepted pixels')
+        require(all(before['observation'][name] == after['observation'][name] for name in FRAME_FIELDS) and
+                before['bounds'] == after['bounds'], 'restart changed part/offset/anchor/font/viewport/fit/selection')
+
+
 def check_suite(evidence, suite, expected, build):
     class_name, method, folder, required_ids = SUITES[suite]
     root = Path(evidence)/folder
@@ -215,6 +314,8 @@ def check_suite(evidence, suite, expected, build):
     for index, case in enumerate(cases, 1):
         case_id = case['id']
         require(case.get('status') == 'pass', suite + ': case did not pass: ' + case_id)
+        if suite == 'walkthrough':
+            check_frame_observations(root, case)
         if titles:
             require(case['title'] == titles[case_id], 'walkthrough case title identity mismatch')
         shot = case.get('screenshot', '')

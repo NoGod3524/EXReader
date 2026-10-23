@@ -88,6 +88,7 @@ final class FixedSession implements AutoCloseable {
         PageSnapshot snapshot = new PageSnapshot(bitmap, true, page, pageCount, 0, text.length,
                 text, scale, contentWidth, contentHeight, starts, ends, quads,
                 null, null, null, null, lineText, lineBounds, 0, bookId);
+        snapshot.layoutZoom=zoom;
         PageLoad result = new PageLoad(snapshot, (System.nanoTime() - started) / 1000000L,
                 () -> index = candidateIndex, () -> {});
         transferred = true;

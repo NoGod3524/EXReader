@@ -17,7 +17,7 @@ bounded 书从同一书库 owner 的 `exr_library_source` 打开 publication/cha
 run `39864510415` 的 SDK／三 APK 云端构建通过；该首轮没有运行模拟器。
 接续候选增加原 45+10 和独立 bounded 8、原 48 与额外 16 项门禁，固定 `candidate_only=true, accepted=false`。
 `ANDROID_CANDIDATE_SDK_BASE` 只用于旧候选工作流；正式 `wp13-android.yml` 不设置候选开关，
-必须原 45、review 10、新 bounded 11（原 8 加 3 项错误边界）、原 48 与额外 16 门禁同次通过后才允许 `accepted=true`。
+必须原 45、review 10、新 bounded 11（原 8 加 3 项错误边界）、原 48 与额外 20 门禁（既有 16 加缺帧观测/错 drawn token/帧 PNG 篡改/PDF 同错 bitmap 四项）同次通过后才允许 `accepted=true`。
 原 45+10 IDs、49 页／49 actual next／0 recovery、48 门禁不删减；真实 next 在 C 调用点计数，
 seek／恢复扫描不栅格化前页；新增专项及模拟器闭环仍须完整执行。
 
@@ -82,6 +82,34 @@ API 确认同 run、同受测 SHA、非空、未过期，expires_at=`2027-01-20T
 
 从 `2f268` 接续到正式 SDK `9c69` 仅有测试与冻结记录差异，SDK 受保护树相同。
 本分支已合入 `9c69` 并只更新 SDK/ownership 双守卫及文档；按集成人调度，不重复单独 dispatch，等待共同 S 的整轮。
-Android 所有权边界固定为 `797c47fc8d5c397fd7c960afe91eb6f851ec07f1`，是共同 S 的必需祖先；
+首次 Android 所有权边界为 `797c47fc8d5c397fd7c960afe91eb6f851ec07f1`；共享绘制候选现提升为 `eba7bd58ef8431a4477eaa1db96a9bf5f01baa51`，是后继共同 S 的必需祖先；
 差异范围从正式 SDK `9c69` 量到该边界，避免把后续 Apple 等包的合并错误归属给 Android。
 边界后的本次提交仅固定工作流引用和交接文档，实际受测 source 仍由共同 S 的 Actions 身份和完整证据绑定。
+
+## 共同源码首次失败与共享绘制观测候选
+
+共同源码 `9fb084a1fb9307b459f21f60ed91f12fffd14a00` 的 run `39875520153`／attempt 1／job `120160050211` 未通过。
+原 walkthrough 44/45，唯一失败 `process_restart_reflow` 的重启截图精确相等；该项此前页码、首行 anchor 与书名检查已通过。
+review 10/10、bounded 11/11、49/49/0（40061 ms）同次通过；最终 `accepted=false`，48+16 门禁未计通过。
+失败工件 `12467609653`，150823219 B，digest
+`sha256:fd03be34e5c0b30c231cedf71c011271dd022f318cde3d9bba94b61844694290`，同 source、未过期。
+
+源码链可确认标签/虚拟文本先更新并 invalidate，真实 drawBitmap 稍后执行；旧参考 PNG 已在临时缓存删除，
+无法追溯证明该次像素差异完整原因。接续候选将两类重启与其他像素断言统一接到同一采样入口：
+
+- `ReaderView` 仅在 DEBUG accessibility extras 暴露 accepted/drawn/settled token、revision、真实 part/path/offset/anchor hash、
+  帧工厂的实际布局 font/zoom、viewport/fit、selection。产品可访问名称和文案不加入诊断内容。
+- 真实 onDraw 尾部记录 token/revision；两次 postOnAnimation 回调重新核对帧对象、token、revision 和 viewport，
+  才记录 after-draw/settled。该状态不宣称 SurfaceFlinger/GPU 物理呈现已完成。
+- 共享 `frameDigest` 保持一次 8 秒绝对验收截止，临时关闭 UiAutomator 的隐式 idle 等待并在结束时恢复；要求当前 accepted 帧实际 drawn/settled，再取连续两张同帧、同 viewport、
+  同像素截图。帧/选择/viewport 变化重置稳定样本，截止不重置；稳定后仅做一次原精确相等或变化比较，不追目标散列。
+  同步 Binder/截图调用不能强制中断，超截止返回的样本一律拒绝；不把验收预算写成物理返回时限。
+- 所有样本裁剪 PNG 与初始/截图前后状态写入工件；两类重启前后的 part/offset/anchor/font/viewport/fit/selection 均需相同。
+  legacy 字号取自实际 pager config 候选参数，不用尚未 accept 的会话字段；fixed font 明确 N/A，另记实际 zoom。
+- 现有严格证据校验强制两类重启观测和 PNG 身份齐备、accepted/drawn/settled 匹配及真实 font/viewport 有效。
+  重排为 reference/restored 两角色，PDF 为 pretransition/reference/restored 三角色；PDF 前两份像素必须不同、后两份精确相同，两类恢复均需新 PID。
+  原 48 与既有 16 反例不删，追加缺观测、错误 drawn token、帧 PNG 篡改和 PDF 同错 bitmap 四项，总数 48+20。
+
+该接续尚未构建或运行，不授予通过；由集成人固定后继共同源码后统一云端复验，保留原 66 个用例与所有失败原件。
+实现及所有权固定提交为 `eba7bd58ef8431a4477eaa1db96a9bf5f01baa51`；SDK/REVIEW_BASE 保持 `9c69bc4c7efb0cff68ced27562709fe597189041`。
+本轮只读独立复核完成，随后提交仅固定两个 Android 工作流的 ownership 引用及本段交接；未自行 dispatch。
