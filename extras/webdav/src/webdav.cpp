@@ -367,12 +367,12 @@ url resolve(exr_webdav_client &client,const url &current,const std::string &refe
     reject(EXR_DAV_REDIRECT,"Remote resource leaves the configured HTTPS origin or collection");
   return result;
 }
-void fetch(exr_webdav_client &client,url u,const char *method,int expected,sink &s) {
+url fetch(exr_webdav_client &client,url u,const char *method,int expected,sink &s) {
   auto deadline=clock_type::now()+std::chrono::milliseconds(client.timeout);std::set<std::string> visited;
   for(unsigned redirects=0;;redirects++) {
     cancelled(s.control);if(!visited.insert(full(u)).second) reject(EXR_DAV_REDIRECT,"Redirect loop refused");
     response r=perform(client,u,method,expected,s,deadline);
-    if(!redirect(r.status)) { cancelled(s.control);return; }
+    if(!redirect(r.status)) { cancelled(s.control);return u; }
     if(redirects>=4 || r.location.empty()) reject(EXR_DAV_REDIRECT,"Redirect budget exceeded or location absent");
     u=resolve(client,u,r.location);
   }
@@ -469,7 +469,7 @@ extern "C" exr_webdav_status exr_webdav_list(exr_webdav_client *client,const cha
     if(!client || !collection || !out) reject(EXR_DAV_ARGUMENT,"Missing collection request");
     std::string resource=path(collection,false);if(!resource.empty() && resource.back()!='/') reject(EXR_DAV_ARGUMENT,"Collection resource must end in slash");
     url current=client->root;current.path+=resource;std::vector<unsigned char> bytes;sink s{client->max_listing,0,control,&bytes,nullptr};
-    fetch(*client,current,"PROPFIND",207,s);node root=xml(bytes);
+    current=fetch(*client,current,"PROPFIND",207,s);node root=xml(bytes);
     if(!dav(root,"multistatus")) reject(EXR_DAV_FORMAT,"Response is not DAV multistatus");
     std::set<std::string> seen;
     for(const node &response_node:root.children) {
