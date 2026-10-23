@@ -47,7 +47,7 @@ int main(int argc,char **argv) {
     OK(exr_fixed_render(d,page,1,NULL,&b,&error)); pixels(&b,page); exr_bitmap_free(&b);
     OK(exr_fixed_load_text(d,page,NULL,&text,&error)); exr_fixed_text_free(text); text=NULL;
   }
-  options.struct_size=sizeof(options); options.control.cancelled=cancel;
+  options.control.cancelled=cancel;
   CHECK(exr_fixed_render(d,0,1,&options,&b,&error)==EXR_CANCELLED && !b.pixels);
   OK(exr_fixed_render(d,0,1,NULL,&b,&error)); pixels(&b,0); exr_bitmap_free(&b);
   exr_fixed_text_free(retained_text); exr_bitmap_free(&retained); exr_fixed_free(d); d=NULL;

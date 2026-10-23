@@ -101,7 +101,8 @@ typedef struct {
   double width,vertical_advance,vertical_x,vertical_y;
   const char *glyph_name;
 } exr_pdf_character;
-/* Font metadata/mapping are owned; decoded program bytes borrow the PDF file. */
+/* Font metadata/mapping are owned; decoded program bytes borrow the PDF file
+   until close or exr_pdf_operation_end, whichever comes first. */
 exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dictionary,const exr_control *control,exr_pdf_font **out,exr_error *error);
 void exr_pdf_font_close(exr_pdf_font *font);
 const exr_pdf_font_info *exr_pdf_font_description(const exr_pdf_font *font);
