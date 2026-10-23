@@ -2,6 +2,11 @@
 import Foundation
 import SQLite3
 
+enum HostCatalogValue {
+    case text(String)
+    case integer(Int64)
+}
+
 enum HostCatalogError: Error, LocalizedError {
     case invalid(String)
     case sqlite(Int32, String)
@@ -21,6 +26,9 @@ final class HostCatalog {
     static let resourceName = "reader-catalog-v1"
     private let ownerQueue: DispatchQueue
     private var handle: OpaquePointer?
+#if EXR_APPLE_IMPORT_REVIEW
+    static var afterProductBookWrite: (() throws -> Void)?
+#endif
 
     convenience init(path: URL, migrationURL: URL, ownerQueue: DispatchQueue) throws {
         let attributes = try FileManager.default.attributesOfItem(atPath: migrationURL.path)
@@ -116,13 +124,105 @@ final class HostCatalog {
         return String(cString: value)
     }
 
+    func localIDs() throws -> Set<Int64> {
+        let (database, statement) = try prepare("SELECT sdk_book_id FROM reader_local_books")
+        defer { sqlite3_finalize(statement) }
+        var result = Set<Int64>()
+        var status = sqlite3_step(statement)
+        while status == SQLITE_ROW {
+            guard sqlite3_column_type(statement, 0) == SQLITE_INTEGER else {
+                throw HostCatalogError.invalid("产品书库本机 ID 无效")
+            }
+            result.insert(sqlite3_column_int64(statement, 0))
+            status = sqlite3_step(statement)
+        }
+        try check(status, database, expected: SQLITE_DONE)
+        return result
+    }
+
+    @discardableResult
+    func attach(format: String, sha256: String, bytes: Int64, title: String, author: String,
+                sdkID: Int64, locationKind: String) throws -> Int64 {
+        let formats = ["epub", "pdf", "cbz", "txt", "html", "fb2", "docx", "rtf", "mobi"]
+        guard formats.contains(format), bytes > 0, sdkID > 0, sha256.count == 64,
+              sha256.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }),
+              [title, author, title.precomposedStringWithCanonicalMapping].allSatisfy({
+                  !$0.utf8.contains(0) && $0.unicodeScalars.count <= 4096
+              }) else { throw HostCatalogError.invalid("产品书籍身份或元数据无效") }
+        let key = format + ":" + sha256
+        try execute("BEGIN IMMEDIATE")
+        do {
+            let (database, existing) = try prepare(
+                "SELECT format,source_sha256,source_bytes FROM reader_books WHERE book_key=?", [.text(key)])
+            defer { sqlite3_finalize(existing) }
+            let status = sqlite3_step(existing)
+            if status == SQLITE_ROW {
+                guard columnText(existing, 0) == format, columnText(existing, 1) == sha256,
+                      sqlite3_column_type(existing, 2) == SQLITE_INTEGER,
+                      sqlite3_column_int64(existing, 2) == bytes else {
+                    throw HostCatalogError.invalid("已存在产品书籍的原件身份不一致")
+                }
+            } else {
+                try check(status, database, expected: SQLITE_DONE)
+                try write("INSERT INTO reader_books(book_key,format,source_sha256,source_bytes,title,author,sort_title) VALUES(?,?,?,?,?,?,?)",
+                          [.text(key), .text(format), .text(sha256), .integer(bytes), .text(title), .text(author),
+                           .text(title.precomposedStringWithCanonicalMapping)])
+            }
+            // Existing metadata, deleted flags, immutable revisions and outbox
+            // are deliberately untouched by a local source attachment.
+            let (_, incoming) = try prepare("SELECT book_key,location_kind FROM reader_local_books WHERE sdk_book_id=?", [.integer(sdkID)])
+            defer { sqlite3_finalize(incoming) }
+            let incomingStatus = sqlite3_step(incoming)
+            if incomingStatus == SQLITE_ROW {
+                guard columnText(incoming, 0) == key, columnText(incoming, 1) == locationKind else {
+                    throw HostCatalogError.invalid("本机书籍 ID 已绑定其他原件或位置模式")
+                }
+            } else { try check(incomingStatus, database, expected: SQLITE_DONE) }
+#if EXR_APPLE_IMPORT_REVIEW
+            try Self.afterProductBookWrite?()
+#endif
+            let (_, local) = try prepare("SELECT sdk_book_id FROM reader_local_books WHERE book_key=?", [.text(key)])
+            defer { sqlite3_finalize(local) }
+            let localStatus = sqlite3_step(local)
+            var chosen = sdkID
+            if localStatus == SQLITE_ROW {
+                chosen = min(sdkID, sqlite3_column_int64(local, 0))
+                if chosen == sdkID {
+                    try write("UPDATE reader_local_books SET sdk_book_id=?,location_kind=? WHERE book_key=?",
+                              [.integer(sdkID), .text(locationKind), .text(key)])
+                }
+            } else {
+                try check(localStatus, database, expected: SQLITE_DONE)
+                try write("INSERT INTO reader_local_books(book_key,sdk_book_id,location_kind) VALUES(?,?,?)",
+                          [.text(key), .integer(sdkID), .text(locationKind)])
+            }
+            try execute("COMMIT")
+            return chosen
+        } catch {
+            try? execute("ROLLBACK")
+            throw error
+        }
+    }
+
+    private func columnText(_ statement: OpaquePointer, _ column: Int32) -> String? {
+        guard sqlite3_column_type(statement, column) == SQLITE_TEXT,
+              let value = sqlite3_column_text(statement, column) else { return nil }
+        return String(cString: value)
+    }
+
+    private func write(_ sql: String, _ values: [HostCatalogValue]) throws {
+        let (database, statement) = try prepare(sql, values)
+        defer { sqlite3_finalize(statement) }
+        try check(sqlite3_step(statement), database, expected: SQLITE_DONE)
+    }
+
     private func connection() throws -> OpaquePointer {
         dispatchPrecondition(condition: .onQueue(ownerQueue))
         guard let handle else { throw HostCatalogError.invalid("产品书库已关闭") }
         return handle
     }
 
-    private func prepare(_ sql: String) throws -> (OpaquePointer, OpaquePointer) {
+    private func prepare(_ sql: String, _ values: [HostCatalogValue] = []) throws -> (OpaquePointer, OpaquePointer) {
         let database = try connection()
         guard !sql.utf8.contains(0) else { throw HostCatalogError.invalid("SQL 包含空字符") }
         var statement: OpaquePointer?
@@ -131,6 +231,21 @@ final class HostCatalog {
             if let statement { sqlite3_finalize(statement) }
             throw HostCatalogError.sqlite(status, String(cString: sqlite3_errmsg(database)))
         }
+        do {
+            for (index, value) in values.enumerated() {
+                let status: Int32
+                switch value {
+                case .integer(let number): status = sqlite3_bind_int64(prepared, Int32(index + 1), number)
+                case .text(let text):
+                    guard !text.utf8.contains(0) else { throw HostCatalogError.invalid("产品书库参数包含空字符") }
+                    status = text.withCString {
+                        sqlite3_bind_text(prepared, Int32(index + 1), $0, -1,
+                                          unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+                    }
+                }
+                try check(status, database)
+            }
+        } catch { sqlite3_finalize(prepared); throw error }
         return (database, prepared)
     }
 
