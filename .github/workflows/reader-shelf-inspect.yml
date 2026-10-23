@@ -1,0 +1,85 @@
+name: Android shelf retained cloud evidence inspection
+on:
+  push:
+    branches: [codex/reader-shelf-inspect]
+    paths: ['.github/workflows/reader-shelf-inspect.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Read fixed failed UI evidence on this cloud runner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib,io,json,os,urllib.request,urllib.error,urllib.parse,zipfile
+          from pathlib import Path,PurePosixPath
+          API='https://api.github.com/repos/NoGod3524/EXReader'
+          RUN=40034076410
+          SOURCE='23e5133fcf06a327605d00b893072ff36d39e0e1'
+          ARTIFACT=12536608131
+          SIZE=106901651
+          DIGEST='sha256:b5024d1d8006c6076ac660073cacab012571afe38781cd03ccee42caeb79e34b'
+          headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','User-Agent':'EXReader-shelf-cloud-inspection'}
+          def require(value,message):
+              if not value:raise ValueError(message)
+          def api(path):
+              with urllib.request.urlopen(urllib.request.Request(API+path,headers=headers),timeout=60) as stream:return json.load(stream)
+          run=api('/actions/runs/'+str(RUN));metadata=api('/actions/artifacts/'+str(ARTIFACT))
+          require(run['head_sha']==SOURCE and run['status']=='completed' and run['conclusion']=='failure','failed-run identity differs')
+          require(metadata['workflow_run']['id']==RUN and metadata['workflow_run']['head_sha']==SOURCE and metadata['size_in_bytes']==SIZE
+                  and metadata['digest']==DIGEST and not metadata['expired'],'retained artifact identity differs')
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,request,stream,code,message,headers,url):return None
+          request=urllib.request.Request(API+'/actions/artifacts/'+str(ARTIFACT)+'/zip',headers=headers)
+          try:stream=urllib.request.build_opener(NoRedirect).open(request,timeout=60)
+          except urllib.error.HTTPError as error:
+              require(error.code==302,'signed artifact redirect missing')
+              location=error.headers['Location'];target=urllib.parse.urlparse(location)
+              require(target.scheme=='https' and target.hostname and not target.username and not target.password,'invalid artifact redirect')
+              stream=urllib.request.urlopen(location,timeout=60)
+          with stream:raw=stream.read(SIZE+1)
+          require(len(raw)==SIZE and 'sha256:'+hashlib.sha256(raw).hexdigest()==DIGEST,'ZIP digest differs')
+          archive=zipfile.ZipFile(io.BytesIO(raw));names=archive.namelist()
+          require(len(names)==len(set(names)) and sum(item.file_size for item in archive.infolist())<1024**3,'invalid ZIP entries')
+          for name in names:
+              path=PurePosixPath(name);require(not path.is_absolute() and '..' not in path.parts and '\\' not in name,'unsafe ZIP path')
+          def read(suffix):
+              found=[name for name in names if name.endswith(suffix)];require(len(found)==1,'missing/ambiguous '+suffix)
+              return archive.read(found[0])
+          value=json.loads(read('/ui-execution/ui/validation.json'))
+          require(value['source_sha']==SOURCE and value['run_id']==str(RUN) and value['attempt']=='1','UI source/run differs')
+          report={'diagnostic_only':True,'accepted':False,'source_sha':SOURCE,'run_id':RUN,'artifact_id':ARTIFACT,'digest':DIGEST,
+                  'passed':value['passed'],'failed':value['failed'],'skipped':value['skipped'],'cases':[]}
+          for case in value['cases']:
+              item={'id':case['id'],'status':case['status'],'error':case.get('error'),'path':'ui-execution/ui/'+case['id']+'.json'}
+              if case['status']=='fail':item['detail']=case.get('detail',{})
+              report['cases'].append(item)
+          report['capture_result']=json.loads(read('/ui-execution/result.json'))
+          report['original_suites']={}
+          for suite,folder in [('walkthrough','device'),('review','review'),('bounded','bounded')]:
+              value=json.loads(read('/evidence/'+folder+'/validation.json'))
+              report['original_suites'][suite]={'summary':value.get('summary'),'sequence':value.get('sequence'),
+                  'failed_cases':[{key:case.get(key) for key in ('id','status','error','detail','assertions')} for case in value['cases'] if case.get('status')!='pass']}
+          capture_errors=[]
+          for name in names:
+              if '/ui-execution/windows/' in name and name.endswith('.jsonl'):
+                  for line in archive.read(name).splitlines():
+                      row=json.loads(line)
+                      if row['kind']=='error':capture_errors.append({'path':name,'detail':row.get('detail')})
+          report['capture_errors']=capture_errors
+          output=Path('build/shelf-inspection');output.mkdir(parents=True)
+          (output/'inspection.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-shelf-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/shelf-inspection/
+          if-no-files-found: error
