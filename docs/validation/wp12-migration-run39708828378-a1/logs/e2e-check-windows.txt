@@ -1,0 +1,18 @@
+ok   the page really created IndexedDB 'exreader' version 1 with books/files/notes
+ok   source database snapshot identical before and after the export (read-only)
+ok   exporting a missing database fails without creating it
+ok   exporter summary: 5 books, 15 notes: {'database': 'exreader', 'version': 1, 'books': 5, 'notes': 15, 'originals': 5, 'orphan_files': 0, 'max_original_bytes': 1642, 'total_original_bytes': 3570, 'manifest_sha256': '2ca0d087c8156a76ae0fbb23bc0c607afe53c2906ce0757227ba64269f64300a', 'bytes': 9501}
+ok   inspect classifies the exported originals: {'b-audio': 'audio-positions-only', 'b-cbz': 'convertible', 'b-epub': 'convertible', 'b-pdf': 'convertible', 'b-txt': 'convertible'}
+ok   strict migration is rejected because an audio original cannot be stored; nothing published
+ok   migration with --allow-partial succeeds: published and verified
+FAIL reopened library holds byte-identical originals
+ok   titles survive: ['Comic', 'Lighthouse Chronicle', 'Scan', 'The Tale']
+ok   fixed-page positions (page 2 -> index 1; 0.5 of 3 pages -> index 1)
+ok   CFI range note and CFI progress resolved through the exporter's data
+ok   PDF quote note and page bookmark present
+ok   audio resume and bookmarks
+ok   unlocated annotations: ['n-epub-ambiguous', 'n-pdf-missing', 'n-txt-ambiguous', 'n-txt-bookmark', 'n-txt-missing']
+ok   ledger lists every exported book and annotation
+ok   second migration is a no-op (same library content and IDs): {'books_expected': 5, 'books_created': 0, 'books_existing': 4, 'books_merged': 0, 'books_skipped': 0, 'books_audio_positions_only': 1, 'books_accounted': 5, 'notes_expected': 15, 'notes_created': 0, 'notes_existing': 10, 'notes_unlocated': 5, 'notes_skipped': 0, 'notes_accounted': 15, 'entries': {'info': 10, 'warning': 0, 'approximate': 0, 'unlocated': 0, 'dropped': 0, 'unsupported': 1, 'conflict': 0}}
+ok   verify in a new process agrees
+e2e FAILED 16/17 checks

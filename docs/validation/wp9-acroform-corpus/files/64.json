@@ -1,0 +1,12 @@
+{
+ "base": "64-reject-bad-justification.pdf",
+ "id": "64",
+ "category": "reject/justification",
+ "expect": "reject",
+ "size": 668,
+ "sha256": "35ed5612185e601f43e4f7ce53cffeb77499aa234f77be8349e1bec0a5a351ba",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

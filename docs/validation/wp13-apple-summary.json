@@ -1,0 +1,66 @@
+{
+  "branch": "codex/wp13-apple",
+  "date": "2026-10-22",
+  "device_package": {
+    "build": "device\\build.json",
+    "installation_status": "owner_signing_required",
+    "ipa_sha256": "0d6ebc31fef233a5a5d1b9ed73f817951caef1e950b85e3c7df8bb6cbd09a1aa",
+    "sha256": "b84b25b44843380fbb628414f1ba3905214d581515779b9108fad7be53f64768"
+  },
+  "legacy_self_checks": {
+    "ipad": {
+      "checks": 21,
+      "passed": true,
+      "path": "evidence-ipad\\report.json",
+      "sha256": "e6cc300af1c285c0d129da1d5cff2cb16a50cd0b6c3b7613b4a92f6eec92f260"
+    },
+    "iphone": {
+      "checks": 21,
+      "passed": true,
+      "path": "evidence-iphone\\report.json",
+      "sha256": "e6cc300af1c285c0d129da1d5cff2cb16a50cd0b6c3b7613b4a92f6eec92f260"
+    },
+    "macos": {
+      "checks": 21,
+      "passed": true,
+      "path": "evidence-macos\\report.json",
+      "sha256": "51a55ada0225272bdc0e670a7a90fa46bb7a5b7e70c93ec9dfe865f4d6a95d0b"
+    }
+  },
+  "limitations": [
+    "Physical device installation is deferred by user request; the unsigned package stays uninstalled.",
+    "The system document picker is not driven by XCUITest; fixture import exercises the same host import path.",
+    "Whole-document library opens are bounded by the 32 MiB host input limit."
+  ],
+  "package": "WP13 Apple host",
+  "physical_device_execution": false,
+  "platforms": {
+    "ipad": {
+      "cases": 7,
+      "failed": 0,
+      "legacy_checks": 21,
+      "passed": 7,
+      "steps": 46
+    },
+    "iphone": {
+      "cases": 7,
+      "failed": 0,
+      "legacy_checks": 21,
+      "passed": 7,
+      "steps": 46
+    },
+    "macos": {
+      "cases": 7,
+      "failed": 0,
+      "legacy_checks": 21,
+      "passed": 7,
+      "steps": 46
+    }
+  },
+  "run": {
+    "id": "39717882847",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39717882847"
+  },
+  "schema": 1,
+  "source_sha": "960b6653e231cc5095deb6e71932061e8a32a8fb"
+}

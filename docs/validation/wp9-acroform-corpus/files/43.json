@@ -1,0 +1,12 @@
+{
+ "base": "43-reject-fileselect.pdf",
+ "id": "43",
+ "category": "reject/fileselect",
+ "expect": "reject",
+ "size": 675,
+ "sha256": "bd6702d81eba324e6fe4e8d2ac9e36c89ce1c33b0acd2a62bb300676139e16c4",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

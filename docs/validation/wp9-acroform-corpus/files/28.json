@@ -1,0 +1,12 @@
+{
+ "base": "28-acroform-direct.pdf",
+ "id": "28",
+ "category": "structure/direct-acroform",
+ "expect": "accept",
+ "size": 547,
+ "sha256": "ddb88e540f664d11af19f23ed6df390d591c8bf462ee49790ae39bce558699eb",
+ "edited_sha256": "64ab303a89959003bbbd9b072e6358ce3d268c82308ccf6db7030008962fe35a",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

@@ -1,0 +1,18 @@
+name: Six package required gate protocol
+on:
+  push:
+    branches: ['codex/r6-platform-candidates']
+    paths:
+      - 'tools/reading_required.py'
+      - 'tests/check_reading_required.py'
+      - '.github/workflows/r6-reading-required-protocol.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tests/check_reading_release.py
+      - run: python3 tests/check_reading_required.py

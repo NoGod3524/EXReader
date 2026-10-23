@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "scope": "Android DEBUG Bitmap identity diagnosis and retained exact-screen evidence",
+  "diagnostic_only": true,
+  "root_cause_proven": false,
+  "debug_observation_commit": "d78abd7911c3ceb7b723cb4605765e88f0dd6785",
+  "source_change": {
+    "files": ["examples/android/app/src/main/java/org/exreader/host/ReaderView.java"],
+    "added_lines": 39,
+    "behavior": "Cache logical ARGB and raw storage hashes plus Bitmap metadata at DEBUG setPage; expose the cached identity in frameObservation.",
+    "drawing_changed": false,
+    "original_tests_changed": false,
+    "exact_screen_hash_changed": false,
+    "frame_budget_ms": 8000
+  },
+  "host_execution": {
+    "run_id": 39903068530,
+    "job_id": 120248759733,
+    "attempt": 1,
+    "source_sha": "d78abd7911c3ceb7b723cb4605765e88f0dd6785",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39903068530",
+    "artifact": {
+      "id": 12479359216,
+      "name": "EXReader-WP13-Android",
+      "bytes": 157155099,
+      "digest": "sha256:8d9d35d71948af1ba5cd76a93ea380e7d5d5cdef524ad289fb481995b2403975",
+      "expired_at_review": false,
+      "expires_at": "2027-01-21T04:57:09Z"
+    },
+    "walkthrough": {"total": 45, "passed": 45, "failed": 0, "skipped": 0},
+    "review": {"total": 10, "passed": 10, "failed": 0, "skipped": 0},
+    "bounded": {"total": 11, "passed": 11, "failed": 0, "skipped": 0},
+    "sequence": {"fixture": "Large.epub", "rendered_pages": 49, "native_next_calls": 49, "recovery_calls": 0},
+    "gate_checks": {"original": 48, "bounded": 20, "all_passed": true},
+    "strict": {"accepted": true, "candidate_only": false, "candidate_validated": false, "problems": []}
+  },
+  "cloud_artifact_audit": {
+    "run_id": 39905036434,
+    "job_id": 120254934397,
+    "source_sha": "82d4178987a392829d6dcf6ae4e7ef7f5cc0b963",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/39905036434",
+    "artifact": {
+      "id": 12479534545,
+      "name": "r4-debug-bitmap-evidence-39905036434-1",
+      "bytes": 208663,
+      "digest": "sha256:2d86ec0283bcb590e3b1afe40d6bcf2bf37d9c03f0e9cf420557e78c6b13ebe4",
+      "expired_at_review": false,
+      "expires_at": "2027-01-21T05:18:34Z"
+    },
+    "verification": "Only GitHub Actions downloaded and opened the original ZIP; verified the pinned artifact ID, size and ZIP digest, all three suite identities, strict report, 48+20 gate checks, six original PNG byte hashes and their decoded RGBA hashes, and each final stable pair. Completed logs and metadata were read through the GitHub connector."
+  },
+  "pdf_process_restart": {
+    "status": "pass",
+    "duration_ms": 6558,
+    "reference_stable_ms": 852,
+    "restored_stable_ms": 888,
+    "frame_fields_diff": {},
+    "bounds": [0, 508, 1080, 2274],
+    "fit": 4.433333396911621,
+    "offset_x": 8,
+    "offset_y": 173.6666259765625,
+    "reference_and_restored_bitmap": {
+      "logical_argb_sha256": "caf9b81c586fb5b56dd65facbf1ea3d9c7d203ed89aa74c308c17e11814f16c3",
+      "raw_sha256": "3a1bd1b2e1ea48f1a7ecde4de63d1be42d6f9ef6072f8267e1756c268aae22e3",
+      "width": 240,
+      "height": 320,
+      "row_bytes": 960,
+      "byte_count": 307200,
+      "config": "ARGB_8888",
+      "premultiplied": true,
+      "has_alpha": true,
+      "color_space": "sRGB IEC61966-2.1 (id=0, model=RGB)"
+    },
+    "reference_and_restored_screen": {
+      "png_bytes": 50799,
+      "png_sha256": "901e3590dd87b4780e01d4fad97255741c8285e85cbf0696eb643d61396a29d9",
+      "pixel_sha256": "a7ae2f0082b3b18a277a0d87785e3255defa1d44f435650aeb5f8a22aae9d07d",
+      "changed_pixels": 0,
+      "both_final_pairs_stable": true,
+      "all_four_pngs_and_decoded_rgba_verified": true
+    }
+  },
+  "retained_original_failure": {
+    "run_id": 39899828858,
+    "source_sha": "da1c1833d89932612d8e4549fee5aec378555ad4",
+    "artifact_id": 12478623224,
+    "artifact_bytes": 156992804,
+    "artifact_digest": "sha256:7973d2aa1c32e9043f1f1f5b64e7c045762c4aa053ee008f4e0dbb2f0e7c80da",
+    "status": "fail",
+    "case": "pdf_process_restart",
+    "diagnostic_run": 39903160806,
+    "diagnostic_job": 120249043242,
+    "frame_fields_diff": {},
+    "changed_pixels": 299,
+    "maximum_rgb_channel_delta": 1,
+    "reference_pixel_sha256": "a7ae2f0082b3b18a277a0d87785e3255defa1d44f435650aeb5f8a22aae9d07d",
+    "restored_pixel_sha256": "c265b7e83925b424a69fdb0f54e398ae7cdd5420b731827506f3c0aaf9c7a7d7",
+    "bitmap_identity_available": false,
+    "conclusion": "The new accepted run has identical native Bitmaps and exact reference/restored screen pixels. The old failed run retains its exact-screen rejection; its absent native Bitmap identity leaves the cause of the old 299-pixel difference unresolved."
+  }
+}

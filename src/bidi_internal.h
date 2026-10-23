@@ -3,6 +3,7 @@
 #define EXR_BIDI_INTERNAL_H
 #include "base_internal.h"
 #include "exr/text.h"
+size_t exr_bidi_memory_size(const exr_bidi *bidi);
 typedef struct exr_bidi_override {
   size_t refs,start,end,depth;
   exr_direction direction;

@@ -1,0 +1,12 @@
+{
+ "base": "57-reject-duplicate-change.pdf",
+ "id": "57",
+ "category": "reject/duplicate-change",
+ "expect": "reject",
+ "size": 663,
+ "sha256": "1358e6d639e8e97e942c194a050c4623bfaae450ed767ec410ccd686ddbaf103",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

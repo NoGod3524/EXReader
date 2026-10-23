@@ -13,20 +13,20 @@ typedef struct {
   int complex;
 } ruby_model;
 typedef struct { exr_layout *layout; float width,ascent,descent,height; } ruby_text;
-static const char *tag(const flow *f,size_t node) { return exr_html_tag(f->doc,&f->doc->nodes[node]); }
+static const char *tag(const flow *f,size_t node) { return exr_html_tag(f->doc,(const exr_node[]){exr_doc_node(f->doc,node)}); }
 int exr_ruby_node(const exr_document *doc,size_t node) {
-  return !strcmp(exr_html_tag(doc,&doc->nodes[node]),"ruby");
+  return !strcmp(exr_html_tag(doc,(const exr_node[]){exr_doc_node(doc,node)}),"ruby");
 }
 static exr_status failure(flow *f,exr_status status,const char *message) { return exr_fail(f->error,status,"%s",message); }
 static int present(const flow *f,size_t node) {
-  return f->styles[node].display!=EXR_CSS_NONE && f->doc->nodes[node].start!=SIZE_MAX;
+  return (*exr_doc_style(f->doc,f->styles,node)).display!=EXR_CSS_NONE && (exr_doc_node(f->doc,node)).start!=SIZE_MAX;
 }
 static exr_status base_add(flow *f,ruby_model *m,size_t first,size_t stop) {
   ruby_base *b;
   if(first==SIZE_MAX) return EXR_OK;
   if(m->base_count==RUBY_PARTS) return failure(f,EXR_LIMIT,"Ruby exceeds 256 base segments");
   b=&m->bases[m->base_count++]; b->first=first; b->stop=stop;
-  b->start=f->doc->nodes[first].start; b->end=b->start; return EXR_OK;
+  b->start=(exr_doc_node(f->doc,first)).start; b->end=b->start; return EXR_OK;
 }
 static size_t annotation_span(const exr_node *n) {
   const char *value=exr_node_attribute(n,"rbspan"); char *end; unsigned long span;
@@ -36,7 +36,7 @@ static size_t annotation_span(const exr_node *n) {
 static exr_status annotation_add(flow *f,ruby_model *m,size_t node,size_t column,size_t span,size_t row) {
   ruby_annotation *a;
   if(column>=m->base_count) return EXR_OK;
-  row=2*row+(unsigned)f->styles[node].ruby_position;
+  row=2*row+(unsigned)(*exr_doc_style(f->doc,f->styles,node)).ruby_position;
   if(row>=RUBY_ROWS || m->annotation_count==RUBY_PARTS)
     return failure(f,EXR_LIMIT,"Ruby exceeds 8 annotation levels or 256 annotation segments");
   a=&m->annotations[m->annotation_count++];
@@ -48,30 +48,30 @@ static exr_status parse(flow *f,size_t root,ruby_model *m) {
   size_t child,first=SIZE_MAX,column=0,rtc_row=0,visited=0,i;
   int has_rb=0,has_rt=0;
   exr_status status;
-  for(child=f->doc->nodes[root].first_child;child!=SIZE_MAX;child=f->doc->nodes[child].next_sibling) {
+  for(child=(exr_doc_node(f->doc,root)).first_child;child!=SIZE_MAX;child=(exr_doc_node(f->doc,child)).next_sibling) {
     if(++visited>RUBY_SCALARS) return failure(f,EXR_LIMIT,"Ruby direct-child work limit exceeded");
     has_rb|=!strcmp(tag(f,child),"rb");
     if(!strcmp(tag(f,child),"rtc")) m->complex=1;
   }
   m->complex|=has_rb;
-  for(child=f->doc->nodes[root].first_child;child!=SIZE_MAX;child=f->doc->nodes[child].next_sibling) {
+  for(child=(exr_doc_node(f->doc,root)).first_child;child!=SIZE_MAX;child=(exr_doc_node(f->doc,child)).next_sibling) {
     const char *name=tag(f,child);
     if(!present(f,child) || !strcmp(name,"rp")) continue;
     if(!strcmp(name,"rb")) {
       status=base_add(f,m,first,child); if(status!=EXR_OK) return status; first=SIZE_MAX;
-      status=base_add(f,m,child,f->doc->nodes[child].next_sibling); if(status!=EXR_OK) return status;
+      status=base_add(f,m,child,(exr_doc_node(f->doc,child)).next_sibling); if(status!=EXR_OK) return status;
     } else if(!strcmp(name,"rt") || !strcmp(name,"rtc")) {
       status=base_add(f,m,first,child); if(status!=EXR_OK) return status; first=SIZE_MAX;
       if(!strcmp(name,"rt")) {
         size_t target=has_rb ? column++ : m->base_count ? m->base_count-1 : SIZE_MAX;
-        status=annotation_add(f,m,child,target,annotation_span(&f->doc->nodes[child]),0);
+        status=annotation_add(f,m,child,target,annotation_span((const exr_node[]){exr_doc_node(f->doc,child)}),0);
         if(status!=EXR_OK) return status;
         has_rt=1;
       } else {
         size_t rt,at=0,row=rtc_row+++(size_t)has_rt; int found=0;
-        for(rt=f->doc->nodes[child].first_child;rt!=SIZE_MAX;rt=f->doc->nodes[rt].next_sibling)
+        for(rt=(exr_doc_node(f->doc,child)).first_child;rt!=SIZE_MAX;rt=(exr_doc_node(f->doc,rt)).next_sibling)
           if(present(f,rt) && !strcmp(tag(f,rt),"rt")) {
-            size_t span=annotation_span(&f->doc->nodes[rt]);
+            size_t span=annotation_span((const exr_node[]){exr_doc_node(f->doc,rt)});
             status=annotation_add(f,m,rt,at,span,row); if(status!=EXR_OK) return status;
             at+=span; found=1;
           }
@@ -81,11 +81,11 @@ static exr_status parse(flow *f,size_t root,ruby_model *m) {
   }
   status=base_add(f,m,first,SIZE_MAX); if(status!=EXR_OK) return status;
   for(i=0;i<m->base_count;i++)
-    m->bases[i].end=i+1<m->base_count ? m->bases[i+1].start : f->doc->nodes[root].end;
+    m->bases[i].end=i+1<m->base_count ? m->bases[i+1].start : (exr_doc_node(f->doc,root)).end;
   return EXR_OK;
 }
 static exr_status collect(flow *f,size_t node,int base,exr_layout *l,unsigned depth) {
-  const exr_node *n=&f->doc->nodes[node]; const exr_style *s=&f->styles[node];
+  const exr_node *n=(const exr_node[]){exr_doc_node(f->doc,node)}; const exr_style *s=exr_doc_style(f->doc,f->styles,node);
   const char *name=tag(f,node); size_t child,at;
   if(!present(f,node) || !strcmp(name,"rp") || (base && (!strcmp(name,"rt") || !strcmp(name,"rtc")))) return EXR_OK;
   if(depth>=256 || exr_ruby_node(f->doc,node)) return failure(f,EXR_LIMIT,"Nested ruby or ruby tree depth exceeds the supported group model");
@@ -93,14 +93,14 @@ static exr_status collect(flow *f,size_t node,int base,exr_layout *l,unsigned de
     for(at=n->start;at<n->end;) {
       size_t start=at; uint32_t cp; exr_glyph *g;
       if(l->glyph_count==RUBY_SCALARS) return failure(f,EXR_LIMIT,"Ruby text exceeds 8192 scalars");
-      if(!exr_next(f->doc->text,n->end,&at,&cp)) return failure(f,EXR_ENCODING,"Invalid ruby UTF-8");
+      if(!exr_doc_next(f->doc,n->end,&at,&cp)) return failure(f,EXR_ENCODING,"Invalid ruby UTF-8");
       if(!exr_grow((void **)&l->glyphs,&l->glyph_cap,l->glyph_count+1,sizeof(*l->glyphs))) return failure(f,EXR_MEMORY,"Ruby text allocation failed");
       g=&l->glyphs[l->glyph_count++]; *g=(exr_glyph){0};
       g->start=start; g->end=at; g->node=node; g->codepoint=cp; g->size=s->font_size; g->color=s->color;
       g->flags=s->flags|(exr_text_hidden(cp) ? EXR_GLYPH_HIDDEN : 0);
       g->line_height=s->leading_relative ? s->leading*s->font_size : s->leading;
     }
-  } else for(child=n->first_child;child!=SIZE_MAX;child=f->doc->nodes[child].next_sibling) {
+  } else for(child=n->first_child;child!=SIZE_MAX;child=(exr_doc_node(f->doc,child)).next_sibling) {
     exr_status status=collect(f,child,base,l,depth+1); if(status!=EXR_OK) return status;
   }
   return EXR_OK;
@@ -117,7 +117,7 @@ static exr_status shape(flow *f,size_t first,size_t stop,int base,ruby_text *out
   exr_status status=EXR_OK; unsigned orientation=0; exr_line *line;
   if(!l) return failure(f,EXR_MEMORY,"Ruby shaping allocation failed");
   out->layout=l;
-  for(node=first;node!=stop && node!=SIZE_MAX;node=f->doc->nodes[node].next_sibling) {
+  for(node=first;node!=stop && node!=SIZE_MAX;node=(exr_doc_node(f->doc,node)).next_sibling) {
     status=collect(f,node,base,l,0); if(status!=EXR_OK) goto done;
   }
   if(!l->glyph_count) goto done;
@@ -130,14 +130,14 @@ static exr_status shape(flow *f,size_t first,size_t stop,int base,ruby_text *out
     if(!exr_codepoint(&text,l->glyphs[i].codepoint)) { status=failure(f,EXR_MEMORY,"Ruby text buffer allocation failed"); goto done; }
   }
   status=exr_text_analyze(text.data,text.size,&boundaries,f->error); if(status!=EXR_OK) goto done;
-  status=exr_bidi_analyze(text.data,text.size,f->styles[first].direction,&bidi.analysis,f->error); if(status!=EXR_OK) goto done;
+  status=exr_bidi_analyze(text.data,text.size,(*exr_doc_style(f->doc,f->styles,first)).direction,&bidi.analysis,f->error); if(status!=EXR_OK) goto done;
   bidi.count=l->glyph_count; child.layout=l; child.bidi=&bidi;
   for(i=0;i<l->glyph_count;i++) {
     exr_glyph *g=&l->glyphs[i];
     g->boundaries=boundaries[bytes[i]]; g->bidi_level=exr_inline_level(&bidi,g->start);
     if(g->bidi_level==UINT_MAX) g->flags|=EXR_GLYPH_HIDDEN;
     if(f->writing_mode!=EXR_WRITING_HORIZONTAL_TB) {
-      if(g->boundaries&EXR_BOUNDARY_GRAPHEME) orientation=exr_vertical_flags(g->codepoint,f->styles[g->node].orientation);
+      if(g->boundaries&EXR_BOUNDARY_GRAPHEME) orientation=exr_vertical_flags(g->codepoint,(*exr_doc_style(f->doc,f->styles,g->node)).orientation);
       g->flags|=orientation;
     }
   }
@@ -198,7 +198,7 @@ static exr_status prepare(flow *f,size_t root,uint32_t selected,ruby_model *m,ex
   ruby_text *texts=calloc(m->base_count+m->annotation_count,sizeof(*texts));
   exr_layout *result=calloc(1,sizeof(*result));
   float columns[RUBY_PARTS]={0},row_height[RUBY_ROWS]={0},row_ascent[RUBY_ROWS]={0},row_descent[RUBY_ROWS]={0};
-  float row_y[RUBY_ROWS]={0},base_ascent=0,base_descent=0,base_height=0,before=0,after=0,gap=fmaxf(1,f->styles[root].font_size*.1f);
+  float row_y[RUBY_ROWS]={0},base_ascent=0,base_descent=0,base_height=0,before=0,after=0,gap=fmaxf(1,(*exr_doc_style(f->doc,f->styles,root)).font_size*.1f);
   size_t i,j,scalars=0,first=selected==UINT32_MAX ? 0 : selected,last=selected==UINT32_MAX ? m->base_count : selected+1;
   exr_status status=EXR_OK;
   *out=NULL;
@@ -214,7 +214,7 @@ static exr_status prepare(flow *f,size_t root,uint32_t selected,ruby_model *m,ex
   for(i=0;i<m->annotation_count;i++) {
     ruby_annotation *a=&m->annotations[i]; ruby_text *t=&texts[m->base_count+i]; float width=0;
     if(a->column<first || a->column>=last) continue;
-    status=shape(f,a->node,f->doc->nodes[a->node].next_sibling,0,t); if(status!=EXR_OK) goto done;
+    status=shape(f,a->node,(exr_doc_node(f->doc,a->node)).next_sibling,0,t); if(status!=EXR_OK) goto done;
     if(t->layout->glyph_count>RUBY_SCALARS-scalars) { status=failure(f,EXR_LIMIT,"Ruby group exceeds 8192 shaped glyphs"); goto done; }
     scalars+=t->layout->glyph_count;
     for(j=a->column;j<a->column+a->span;j++) width+=columns[j];
@@ -238,7 +238,7 @@ static exr_status prepare(flow *f,size_t root,uint32_t selected,ruby_model *m,ex
   { float x=0;
     for(i=first;i<last;i++) {
       ruby_text *t=&texts[i]; float y=*baseline-t->ascent-(t->height-t->ascent-t->descent)/2;
-      status=place(f,result,t,x,y,columns[i],f->styles[root].ruby_align); if(status!=EXR_OK) goto done;
+      status=place(f,result,t,x,y,columns[i],(*exr_doc_style(f->doc,f->styles,root)).ruby_align); if(status!=EXR_OK) goto done;
       x+=columns[i];
     }
     result->flow_inline=x;
@@ -250,7 +250,7 @@ static exr_status prepare(flow *f,size_t root,uint32_t selected,ruby_model *m,ex
     for(j=a->column;j<a->column+a->span;j++) width+=columns[j];
     y=row_y[a->row]+row_ascent[a->row]+(row_height[a->row]-row_ascent[a->row]-row_descent[a->row])/2-
        t->ascent-(t->height-t->ascent-t->descent)/2;
-    status=place(f,result,t,x,y,width,f->styles[a->node].ruby_align); if(status!=EXR_OK) goto done;
+    status=place(f,result,t,x,y,width,(*exr_doc_style(f->doc,f->styles,a->node)).ruby_align); if(status!=EXR_OK) goto done;
   }
   result->flow_block=before+base_height+after;
   *out=result; result=NULL;
@@ -266,10 +266,10 @@ exr_status exr_ruby_item(flow *f,size_t node,size_t part,exr_glyph *item,int *do
   if(!m->base_count || (m->complex ? part!=0 : part>=m->base_count)) { *done=1; goto done; }
   *item=(exr_glyph){0}; item->node=node; item->glyph=m->complex ? UINT32_MAX : (uint32_t)part;
   status=prepare(f,node,item->glyph,m,&layout,&baseline); if(status!=EXR_OK) goto done;
-  item->start=m->complex ? f->doc->nodes[node].start : m->bases[part].start;
-  item->end=m->complex ? f->doc->nodes[node].end : m->bases[part].end;
+  item->start=m->complex ? (exr_doc_node(f->doc,node)).start : m->bases[part].start;
+  item->end=m->complex ? (exr_doc_node(f->doc,node)).end : m->bases[part].end;
   item->cluster_start=item->start; item->cluster_end=item->end; item->codepoint=0xfffc;
-  item->size=f->styles[node].font_size; item->advance=layout->flow_inline; item->line_height=layout->flow_block;
+  item->size=(*exr_doc_style(f->doc,f->styles,node)).font_size; item->advance=layout->flow_inline; item->line_height=layout->flow_block;
   item->offset_x=baseline; item->offset_y=layout->flow_block-baseline;
   item->flags=EXR_GLYPH_RUBY_ITEM|EXR_GLYPH_SHAPED;
 done:

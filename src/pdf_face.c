@@ -47,6 +47,9 @@ static exr_status open_face(FT_Library library,const exr_pdf_font *font,const ex
   if(info->kind==EXR_PDF_CID_TYPE0) {
     FT_Bool keyed=0;
     if(FT_Get_CID_Is_Internally_CID_Keyed(face->face,&keyed) || !keyed) { status=exr_fail(error,EXR_FORMAT,"PDF CID CFF program is not CID-keyed"); goto done; }
+    /* Raw CID faces load by CID; only SFNT-wrapped CFF uses contiguous GIDs.
+       Its public num_glyphs is a CID range, not a CFF CharStrings count. */
+    if(FT_IS_CID_KEYED(face->face)) goto ready;
     face->count=(size_t)face->face->num_glyphs; face->cids=calloc(face->count,sizeof(*face->cids));
     if(!face->cids) { status=exr_fail(error,EXR_MEMORY,"PDF CID glyph index allocation failed"); goto done; }
     for(i=0;i<face->count;i++) {
@@ -57,6 +60,7 @@ static exr_status open_face(FT_Library library,const exr_pdf_font *font,const ex
     }
     qsort(face->cids,face->count,sizeof(*face->cids),compare_cid);
   }
+ready:
   status=exr_control_cancel(control,error);
 done:
   if(status==EXR_OK) { *out=face; if(error) memset(error,0,sizeof(*error)); } else exr_pdf_face_close(face);
@@ -87,9 +91,18 @@ exr_status exr_pdf_face_glyph(exr_pdf_face *face,const exr_pdf_character *ch,uin
   if(!face->composite && ch->cid>255) return exr_fail(error,EXR_ARGUMENT,"Invalid PDF simple font character code");
   if(face->kind==EXR_PDF_CID_TYPE2) glyph=ch->glyph_known ? ch->glyph : 0;
   else if(face->kind==EXR_PDF_CID_TYPE0) {
-    size_t low=0,high=face->count;
-    while(low<high) { size_t mid=low+(high-low)/2; if(face->cids[mid].cid<ch->cid) low=mid+1; else high=mid; }
-    if(low<face->count && face->cids[low].cid==ch->cid) glyph=face->cids[low].glyph;
+    if(FT_IS_CID_KEYED(ft)) {
+      glyph=ch->cid;
+      if(glyph<(uint64_t)ft->num_glyphs) {
+        int status=FT_Load_Glyph(ft,glyph,FT_LOAD_NO_SCALE|FT_LOAD_NO_HINTING|FT_LOAD_NO_BITMAP|FT_LOAD_IGNORE_TRANSFORM);
+        if(status==FT_Err_Invalid_Argument) glyph=0; /* Missing subset CID -> .notdef. */
+        else if(status) return exr_fail(error,EXR_FORMAT,"Cannot load PDF CID outline");
+      }
+    } else {
+      size_t low=0,high=face->count;
+      while(low<high) { size_t mid=low+(high-low)/2; if(face->cids[mid].cid<ch->cid) low=mid+1; else high=mid; }
+      if(low<face->count && face->cids[low].cid==ch->cid) glyph=face->cids[low].glyph;
+    }
   } else if(face->kind==EXR_PDF_TRUETYPE && (face->flags&4)) {
     if(!FT_Select_Charmap(ft,FT_ENCODING_MS_SYMBOL)) {
       glyph=FT_Get_Char_Index(ft,0xf000+ch->cid); if(!glyph) glyph=FT_Get_Char_Index(ft,ch->cid);

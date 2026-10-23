@@ -1,0 +1,12 @@
+{
+ "base": "25-needappearances-true.pdf",
+ "id": "25",
+ "category": "need-appearances/true",
+ "expect": "accept",
+ "size": 944,
+ "sha256": "6e3c8d1d29d299eea3d6d6b8ee0efca667148930bb8997bc64e626758f6ed363",
+ "edited_sha256": "8c21314c87e57b17cf73e3c6af122185d92e2a77eaf68d3dbc675fd4e1cafccd",
+ "assertions": 42,
+ "result": "pass",
+ "failures": []
+}

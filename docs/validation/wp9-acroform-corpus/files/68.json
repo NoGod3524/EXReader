@@ -1,0 +1,12 @@
+{
+ "base": "68-read-cycle.pdf",
+ "id": "68",
+ "category": "read/cycle",
+ "expect": "read-fail",
+ "size": 673,
+ "sha256": "c27162bc87f8bccf85d6bb8c1a40dfece5ee1587548bac7cc1a1a3357fbf3ee6",
+ "edited_sha256": null,
+ "assertions": 6,
+ "result": "pass",
+ "failures": []
+}

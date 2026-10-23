@@ -9,6 +9,7 @@ typedef struct {
   size_t resource;
   exr_bitmap bitmap;
   size_t *refs; /* Shared immutable decoded pixels across independent pages. */
+  unsigned evictable; /* Unreferenced at the preceding top-level page boundary. */
 } exr_cached_image;
 struct exr_layout {
   size_t refs;
@@ -42,6 +43,15 @@ exr_status exr_layout_image_asset(const exr_document *doc, exr_layout *assets,
                                     const exr_layout_config *config, size_t resource,
                                     const exr_bitmap **bitmap, exr_error *error);
 void exr_layout_ref(exr_layout *layout);
+exr_status exr_publication_retain_epub(exr_publication *publication,const exr_document **index,exr_error *error);
+size_t exr_publication_index_memory(const exr_publication *publication);
+void exr_pager_adopt_chapter(exr_pager *pager,void *chapter,void (*release)(void *),
+                            exr_chapter_stats (*statistics)(const void *));
+size_t exr_pager_continuation_bytes(const exr_pager *pager);
+exr_status exr_chapter_cfi_create(void *reader,const exr_cfi_point *point,size_t context,
+  const exr_control *control,char **cfi,exr_error *error);
+exr_status exr_chapter_cfi_resolve(void *reader,const char *cfi,const exr_control *control,
+  exr_cfi_point *point,exr_error *error);
 exr_status exr_book_fonts(const exr_document *doc, exr_font *fallback,
                            const exr_style *styles, const exr_font_rule *rules, size_t count,
                            const exr_control *control, exr_font **out, exr_error *error);

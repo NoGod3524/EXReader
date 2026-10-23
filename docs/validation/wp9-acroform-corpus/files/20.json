@@ -1,0 +1,12 @@
+{
+ "base": "20-choice-list.pdf",
+ "id": "20",
+ "category": "choice/list",
+ "expect": "accept",
+ "size": 625,
+ "sha256": "046ba26c10e8daeb7429831943579864c015a0f94bff2d00c06f61203408f545",
+ "edited_sha256": "2d3d636b847be1db93e5585285991d5ea98f722c02e380c6e29097095f48d2a0",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

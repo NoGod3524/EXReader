@@ -1,0 +1,12 @@
+{
+ "base": "26-needappearances-false.pdf",
+ "id": "26",
+ "category": "need-appearances/false",
+ "expect": "accept",
+ "size": 608,
+ "sha256": "e15dfaf064301fb8adb7e85203fc3c07762181f814339995b490b089dc759717",
+ "edited_sha256": "cd45604885044daba45592f2aa78d5e655bbf04aa262916aa0700d77767eb86a",
+ "assertions": 31,
+ "result": "pass",
+ "failures": []
+}

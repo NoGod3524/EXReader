@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+"""Cloud-only migration review regressions; original 65 cases run separately."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import time
+
+import legacy_data as L
+from run_cases import Ctx, Result
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--tool', required=True)
+    parser.add_argument('--editor', required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    args = parser.parse_args()
+    assert os.environ.get('GITHUB_ACTIONS') == 'true'
+    args.output.mkdir(parents=True, exist_ok=False)
+    checks = []
+
+    def check(name, condition):
+        checks.append({'name': name, 'passed': bool(condition)})
+        assert condition, name
+
+    def seeded(name, fixed=False, unlocated=False):
+        context = Ctx(args.tool, str(args.output), name)
+        book = L.entry(L.book_record('book', 'book.pdf' if fixed else 'book.txt'), L.pdf() if fixed else L.TXT)
+        if fixed:
+            _, notes = L.dataset()
+            note = next(n.copy() for n in notes if n['bookId'] == 'b-pdf' and n.get('note') == 'second page')
+            note.update(id='note', bookId='book')
+        else:
+            note = L.note_record('note', 'book', 'not present xyz' if unlocated else 'lantern keeper', 'original comment')
+        pack = context.pack([book], [note])
+        target = context.path('library.sqlite')
+        assert context.migrate(pack, target).code == 0
+        return context, book, note, pack, target
+
+    c, book, note, pack, target = seeded('pack-note-change')
+    changed = dict(note, note='changed pack comment')
+    changed_pack = c.pack([book], [changed], name='changed.exrpack')
+    result = c.tool_run('verify', '--pack', changed_pack, '--target', target)
+    check('verify rejects same note identity with changed pack content', result.code == 3 and bool(result.entries('verify-note-content')))
+
+    c, book, note, pack, target = seeded('cross-pack-preserved-owner')
+    before = c.dump(target)
+    second_book = L.entry(dict(book['record'], id='second'), L.TXT)
+    other_note = dict(note, bookId='second')
+    second_pack = c.pack([second_book], [other_note], name='second.exrpack')
+    result = c.migrate(second_pack, target, '--allow-partial')
+    check('partial conflict preserves note owned by earlier pack', result.code == 0 and
+          bool(result.entries('note-changed')) and before == c.dump(target))
+
+    c, _, note, _, target = seeded('cross-pack-existing-note')
+    before = c.dump(target)
+    pack = c.pack([], [note], name='note-only.exrpack')
+    result = c.migrate(pack, target)
+    check('existing note with owner outside current pack is verified and reused',
+          result.code == 0 and result.rep['counts']['notes_existing'] == 1 and before == c.dump(target))
+
+    def audio_seed(name):
+        c = Ctx(args.tool, str(args.output), name)
+        book = L.entry(L.book_record('audio', 'audio.mp3', audio=True, seconds=0), L.AUDIO)
+        note = L.note_record('audio-note', 'audio', 'zero', 'bookmark comment', seconds=0, bookmark=True)
+        pack = c.pack([book], [note])
+        target = c.path('library.sqlite')
+        assert c.migrate(pack, target, '--allow-partial').code == 0
+        return c, pack, target
+
+    c, pack, target = audio_seed('zero-audio-positive')
+    check('zero audio checkpoint and bookmark verify in a new process', c.tool_run('verify', '--pack', pack, '--target', target).code == 0)
+    for mode in ('audio-resume-offset', 'audio-resume-track', 'audio-resume-rate',
+                 'audio-bookmark-remove', 'audio-bookmark-text', 'audio-bookmark-offset'):
+        c, pack, target = audio_seed(mode)
+        subprocess.run([args.editor, target, mode], check=True)
+        result = c.tool_run('verify', '--pack', pack, '--target', target)
+        check('verify rejects public API edit: ' + mode, result.code == 3 and result.codename == 'verify-failed')
+    c, pack, target = audio_seed('preserve-existing-audio')
+    subprocess.run([args.editor, target, 'audio-resume-offset'], check=True)
+    result = c.migrate(pack, target, '--allow-partial')
+    check('migration preserves an existing audio checkpoint different from legacy', result.code == 0 and c.dump(target)['audio'][0]['resume_ms'] == 250)
+    check('verification uses the registered retained audio checkpoint', c.tool_run('verify', '--pack', pack, '--target', target).code == 0)
+
+    for mutation in ('retained-unlocated', 'stored-identity', 'owner', 'kind'):
+        c, _, _, pack, target = seeded('ledger-' + mutation, unlocated=mutation == 'retained-unlocated')
+        ledger = Path(target + '.legacy-map.json')
+        data = json.loads(ledger.read_text(encoding='utf-8'))
+        record = data['notes'][0]
+        if mutation == 'retained-unlocated':
+            assert record['located'] is False
+            record['retained']['note'] = 'changed retained comment'
+        elif mutation == 'stored-identity':
+            record['new_id'] = 0
+        elif mutation == 'owner':
+            record['book_legacy_id'] = 'not-registered'
+        else:
+            record['kind'] = 'fixed'
+        ledger.write_text(json.dumps(data), encoding='utf-8')
+        result = c.tool_run('verify', '--pack', pack, '--target', target)
+        check('damaged ledger refused: ' + mutation, result.code == 3 and result.codename == 'verify-failed')
+
+    for mode in ('reflow-text', 'fixed-text', 'fixed-range'):
+        c, _, _, pack, target = seeded(mode, mode.startswith('fixed'))
+        subprocess.run([args.editor, target, mode], check=True)
+        before = (c.sha(target), c.sha(target + '.legacy-map.json'))
+        result = c.tool_run('verify', '--pack', pack, '--target', target)
+        check('verify rejects public API edit: ' + mode, result.code == 3 and result.codename == 'verify-failed')
+        check('verification preserves edited library and ledger: ' + mode,
+              before == (c.sha(target), c.sha(target + '.legacy-map.json')))
+
+    c, _, _, pack, target = seeded('read-missing-target')
+    Path(target).unlink()
+    result = c.tool_run('verify', '--pack', pack, '--target', target)
+    check('verify does not create missing target', result.code != 0 and not Path(target).exists())
+    result = c.tool_run('dump', '--target', c.path('missing.sqlite'))
+    check('dump does not create missing target', result.code != 0 and not Path(c.path('missing.sqlite')).exists())
+
+    c, _, _, pack, target = seeded('late-cancel')
+    before = (c.sha(target), c.sha(target + '.legacy-map.json'))
+    result = c.migrate(pack, target, inject='publish-cancel')
+    check('late cancellation refuses publication', result.code == 4 and before == (c.sha(target), c.sha(target + '.legacy-map.json')))
+
+    for mutation in ('ledger-content', 'ledger-created', 'target-created'):
+        c, _, _, pack, target = seeded('concurrent-' + mutation)
+        ledger = Path(target + '.legacy-map.json')
+        if mutation == 'ledger-created':
+            ledger.unlink()
+        elif mutation == 'target-created':
+            Path(target).unlink()
+            ledger.unlink()
+        before_target = c.sha(target)
+        env = dict(os.environ, EXR_MIGRATE_TEST_FAULTS='1')
+        log_path = Path(c.path('process.log'))
+        with log_path.open('wb') as log:
+            process = subprocess.Popen([args.tool, 'migrate', '--pack', pack, '--target', target,
+                                        '--inject', 'publish-pause'], stdout=log, stderr=subprocess.STDOUT, env=env)
+            try:
+                ready = Path(target + '.review-ready')
+                end = time.monotonic() + 30
+                while not ready.exists() and process.poll() is None and time.monotonic() < end:
+                    time.sleep(.02)
+                assert ready.exists(), 'missing publication synchronization'
+                if mutation == 'ledger-content':
+                    ledger.write_bytes(ledger.read_bytes() + b'\n ')
+                elif mutation == 'ledger-created':
+                    ledger.write_text('{"external":true}', encoding='utf-8')
+                else:
+                    Path(target).write_bytes(b'external writer content')
+                expected = (c.sha(target), c.sha(str(ledger)))
+                Path(target + '.review-resume').write_text('resume', encoding='utf-8')
+                process.wait(timeout=30)
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                    process.wait()
+        result = Result(process.returncode, log_path.read_text(encoding='utf-8'), '')
+        check('publication preserves concurrent change: ' + mutation,
+              result.code == 3 and result.codename in ('target-changed', 'ledger-changed') and
+              expected == (c.sha(target), c.sha(str(ledger))))
+        check('no stage or lock left: ' + mutation,
+              not any('.migrating-' in p.name or p.name.endswith('.migrate-lock') for p in Path(c.dir).iterdir()))
+
+    report = {'schema': 1, 'passed': True, 'source_sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'], 'checks': checks,
+              'tool_sha256': hashlib.sha256(Path(args.tool).read_bytes()).hexdigest(),
+              'editor_sha256': hashlib.sha256(Path(args.editor).read_bytes()).hexdigest()}
+    (args.output / 'review.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+    print(json.dumps({'passed': True, 'checks': len(checks), 'source_sha': report['source_sha']}))
+
+
+if __name__ == '__main__':
+    main()

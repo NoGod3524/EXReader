@@ -1,0 +1,2 @@
+{"metadata": {"title": "Unsupported template"}, "links": [
+  {"rel": "search", "href": "/o2/search{/path}", "type": "application/opds+json", "templated": true}]}

@@ -1,0 +1,59 @@
+{
+ "browser": "131.0.6778.33",
+ "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/131.0.6778.33 Safari/537.36",
+ "origin": "http://127.0.0.1:55452",
+ "built": true,
+ "before": {
+  "version": 1,
+  "stores": [
+   "books",
+   "files",
+   "notes"
+  ],
+  "books": 5,
+  "notes": 15,
+  "files": 5,
+  "digest": "d9eabaf88c73914f964c43d60a7d0eaeabe6e607c17298175d28fb8114c97a51"
+ },
+ "after": {
+  "version": 1,
+  "stores": [
+   "books",
+   "files",
+   "notes"
+  ],
+  "books": 5,
+  "notes": 15,
+  "files": 5,
+  "digest": "d9eabaf88c73914f964c43d60a7d0eaeabe6e607c17298175d28fb8114c97a51"
+ },
+ "source_unchanged": true,
+ "missing_database": {
+  "threw": true,
+  "code": "database-missing",
+  "exists": false
+ },
+ "export_summary": {
+  "database": "exreader",
+  "version": 1,
+  "books": 5,
+  "notes": 15,
+  "originals": 5,
+  "orphan_files": 0,
+  "max_original_bytes": 1642,
+  "total_original_bytes": 3570,
+  "manifest_sha256": "4d5c416488bb36b0bd25c7b005221e9e76facf164a93079ae7f2d0278d0bb290",
+  "bytes": 9501
+ },
+ "pack": {
+  "path": "legacy.exrpack",
+  "bytes": 9501,
+  "sha256": "ead4b736e69157363831ae5f8e753bdc05566a67f9fb7dab1bb865bb2bb62138"
+ },
+ "exporter_sha256": "abaf9daf150e2fcbeb481ff3db25f92c52c3f9a5bca156db9b0f5f51124cc759",
+ "legacy_sources": {
+  "store.js": "545a169c24cf65ef0ffd2e6c1a8a23080531c849dd772acf958409714fa33550",
+  "library.js": "27846cb640bb0c0a5719f195ad9416aadee57c99e633f6133df461fecaac9dab",
+  "registry.js": "33abd6e8c8bad0da75494d04253c5a7baef7498cb34838bd4f07340d8b248082"
+ }
+}

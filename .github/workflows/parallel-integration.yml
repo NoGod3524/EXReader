@@ -1,0 +1,68 @@
+name: Parallel package integration evidence
+on:
+  push:
+    branches: [codex/parallel-integration]
+    paths: ['tools/check_parallel_integration.py', '.github/workflows/parallel-integration.yml']
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Full integrated source SHA tested by all ten workflows
+        type: string
+        default: ''
+      runs_json:
+        description: JSON object mapping the ten package keys and the acroform/spacing capability keys to cloud run IDs; empty runs protocol checks only
+        type: string
+        default: '{}'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/check_parallel_integration.py selftest build/integration-gate-protocol.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parallel-integration-gate-protocol
+          path: build/integration-gate-protocol.json
+          if-no-files-found: error
+  baseline:
+    if: github.event_name == 'workflow_dispatch' && inputs.source_sha != ''
+    needs: protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the registered SDK candidate, its protected trees and its own evidence
+        env:
+          EXPECTED_SOURCE: ${{ inputs.source_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/check_parallel_integration.py baseline build/sdk-baseline-check.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sdk-baseline-check
+          path: build/sdk-baseline-check.json
+          if-no-files-found: error
+  summarize:
+    if: github.event_name == 'workflow_dispatch' && inputs.runs_json != '{}'
+    needs: protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify same source, the accepted SDK baseline, every required job and all required evidence
+        env:
+          EXPECTED_SOURCE: ${{ inputs.source_sha }}
+          SOURCE_RUNS: ${{ inputs.runs_json }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/check_parallel_integration.py summarize build/parallel-integration.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parallel-integration-summary
+          path: build/parallel-integration.json
+          if-no-files-found: error

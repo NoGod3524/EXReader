@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:os="http://a9.com/-/spec/opensearch/1.1/" xmlns:dc="http://purl.org/dc/terms/">
+  <id>urn:opds-test:acq</id><title>Acquisition Variants</title><updated>2026-01-01T00:00:00Z</updated>
+  <entry><title>Open Book</title><id>urn:opds-test:a1</id><updated>2026-01-01T00:00:00Z</updated>
+    <author><name>Ann Author</name></author><author><name>Co Author</name></author>
+    <dc:identifier>urn:isbn:9780000000001</dc:identifier><dc:language>en</dc:language><dc:publisher>Pub Co</dc:publisher>
+    <summary>An open access book.</summary>
+    <link rel="http://opds-spec.org/acquisition/open-access" href="/dl/book.pdf" type="application/pdf"/>
+    <link rel="http://opds-spec.org/acquisition/open-access" href="/dl/book.epub" type="application/epub+zip"/>
+    <link rel="http://opds-spec.org/image" href="/img/1.png" type="image/png"/>
+    <link rel="http://opds-spec.org/image/thumbnail" href="/img/t1.png" type="image/png"/>
+  </entry>
+  <entry><title>Sample Only</title><id>urn:opds-test:a2</id><updated>2026-01-01T00:00:00Z</updated>
+    <link rel="http://opds-spec.org/acquisition/sample" href="/dl/book.epub" type="application/epub+zip"/>
+  </entry>
+  <entry><title>Borrow Book</title><id>urn:opds-test:a3</id><updated>2026-01-01T00:00:00Z</updated>
+    <link rel="http://opds-spec.org/acquisition/borrow" href="/borrow/3" type="application/atom+xml;type=entry;profile=opds-catalog"/>
+  </entry>
+  <entry><title>Buy Book</title><id>urn:opds-test:a4</id><updated>2026-01-01T00:00:00Z</updated>
+    <link rel="http://opds-spec.org/acquisition/buy" href="/buy/4" type="application/epub+zip"><opds:price currencycode="USD">9.99</opds:price></link>
+  </entry>
+  <entry><title>Subscribe Book</title><id>urn:opds-test:a5</id><updated>2026-01-01T00:00:00Z</updated>
+    <link rel="http://opds-spec.org/acquisition/subscribe" href="/sub/5" type="application/epub+zip"/>
+  </entry>
+  <entry><title>Adept Book</title><id>urn:opds-test:a6</id><updated>2026-01-01T00:00:00Z</updated>
+    <link rel="http://opds-spec.org/acquisition" href="/dl/adept.acsm" type="application/vnd.adobe.adept+xml">
+      <opds:indirectAcquisition type="application/epub+zip"/>
+    </link>
+  </entry>
+  <entry><title>Priced Generic</title><id>urn:opds-test:a7</id><updated>2026-01-01T00:00:00Z</updated>
+    <link rel="http://opds-spec.org/acquisition" href="/dl/book.epub" type="application/epub+zip"><opds:price currencycode="EUR">1.00</opds:price></link>
+  </entry>
+  <entry><title>Future Rel</title><id>urn:opds-test:a8</id><updated>2026-01-01T00:00:00Z</updated>
+    <link rel="http://opds-spec.org/acquisition/x-future" href="/dl/book.epub" type="application/x-new"/>
+  </entry>
+  <entry><title>Navigation Only</title><id>urn:opds-test:a9</id><updated>2026-01-01T00:00:00Z</updated>
+    <link rel="subsection" href="root.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  </entry>
+</feed>

@@ -13,6 +13,9 @@
 #include <time.h>
 #include <wctype.h>
 #ifdef __APPLE__
+#include <limits.h>
+#include <mach-o/dyld.h>
+#include <mach/mach.h>
 #include <malloc/malloc.h>
 #endif
 #ifdef _WIN32
@@ -26,9 +29,41 @@
 #include <unistd.h>
 #endif
 
-void cv_release_unused_memory(void) {
+/* macOS 15's default allocator parks freed medium blocks as MADV_FREE_REUSABLE pages that stay
+   in RSS (zero leaks, ~20 MB footprint, yet >100 MB RSS after 100 items; malloc_zone_pressure_relief
+   does not release them). MallocSpaceEfficient is read once at process start, so set it and
+   re-execute before any allocation-heavy work. A caller-provided value is respected. */
+void cv_apply_allocator_policy(char **argv) {
 #ifdef __APPLE__
-  (void)malloc_zone_pressure_relief(NULL, 0);
+  char path[PATH_MAX];
+  uint32_t size = (uint32_t)sizeof(path);
+  if (getenv("MallocSpaceEfficient")) return;
+  if (_NSGetExecutablePath(path, &size) != 0 || setenv("MallocSpaceEfficient", "1", 1) != 0) return;
+  execv(path, argv);
+  unsetenv("MallocSpaceEfficient");
+#else
+  (void)argv;
+#endif
+}
+
+/* Opt-in allocator diagnostics (EXR_CONVERT_MEM_DIAG=1): stderr only, never part of the report. */
+void cv_memory_diag(const char *label, size_t index) {
+#ifdef __APPLE__
+  mach_task_basic_info_data_t info;
+  mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
+  malloc_statistics_t stats;
+  const char *on = getenv("EXR_CONVERT_MEM_DIAG");
+  if (!on || !*on || *on == '0') return;
+  memset(&stats, 0, sizeof(stats));
+  malloc_zone_statistics(NULL, &stats);
+  if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &count) != KERN_SUCCESS)
+    memset(&info, 0, sizeof(info));
+  fprintf(stderr, "mem-diag item=%zu %s resident=%llu peak=%llu malloc_in_use=%zu malloc_allocated=%zu blocks=%u\n",
+          index, label, (unsigned long long)info.resident_size,
+          (unsigned long long)cv_peak_rss(), stats.size_in_use, stats.size_allocated,
+          stats.blocks_in_use);
+#else
+  (void)label; (void)index;
 #endif
 }
 

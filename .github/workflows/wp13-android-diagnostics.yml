@@ -1,0 +1,126 @@
+name: WP13 Android preserved artifact diagnostics
+on:
+  push:
+    branches: [codex/wp13-android-review]
+    paths: ['.github/workflows/wp13-android-diagnostics.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Inspect the fixed failed-run ZIP on this cloud runner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, re, urllib.error, urllib.parse, urllib.request, zipfile
+          from pathlib import Path, PurePosixPath
+          API = 'https://api.github.com/repos/NoGod3524/EXReader'
+          RUN = 39831715741
+          SOURCE = '8a6636ed8ac6db06ab84e174f5a01c49d12511dc'
+          JOB = 120009269825
+          ARTIFACT = 12449232819
+          SIZE = 149127088
+          DIGEST = 'sha256:1c5ee0f59fb8f30227ca8985eefb0d320cdc02dee6a9e1733ef6fa18bc825e1a'
+          HEADERS = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json',
+                     'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'EXReader-cloud-diagnostic'}
+          def require(value, message):
+              if not value:
+                  raise ValueError(message)
+          def api(path):
+              with urllib.request.urlopen(urllib.request.Request(API + path, headers=HEADERS), timeout=60) as response:
+                  return json.load(response)
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, request, stream, code, message, headers, url):
+                  return None
+          run = api('/actions/runs/' + str(RUN))
+          require(run.get('id') == RUN and run.get('head_sha') == SOURCE and run.get('run_attempt') == 1 and
+                  run.get('conclusion') == 'success', 'accepted run identity differs')
+          job = api('/actions/jobs/' + str(JOB))
+          require(job.get('run_id') == RUN and any(step.get('name') == 'Final fail-closed acceptance' and
+                  step.get('conclusion') == 'success' for step in job.get('steps', [])), 'final acceptance missing')
+          metadata = api('/actions/artifacts/' + str(ARTIFACT))
+          identity = metadata.get('workflow_run', {})
+          require(metadata.get('id') == ARTIFACT and metadata.get('name') == 'EXReader-WP13-Android' and
+                  metadata.get('expired') is False and metadata.get('size_in_bytes') == SIZE and
+                  metadata.get('digest') == DIGEST and identity.get('id') == RUN and
+                  identity.get('head_sha') == SOURCE, 'artifact API identity differs')
+          request = urllib.request.Request(API + '/actions/artifacts/' + str(ARTIFACT) + '/zip', headers=HEADERS)
+          try:
+              response = urllib.request.build_opener(NoRedirect).open(request, timeout=60)
+          except urllib.error.HTTPError as error:
+              require(error.code == 302, 'artifact signed redirect missing')
+              location = error.headers.get('Location', '')
+              target = urllib.parse.urlparse(location)
+              require(target.scheme == 'https' and target.hostname and not target.username and not target.password,
+                      'artifact redirect is not HTTPS')
+              response = urllib.request.urlopen(location, timeout=60)
+          with response:
+              raw = response.read(SIZE + 1)
+          require(len(raw) == SIZE and 'sha256:' + hashlib.sha256(raw).hexdigest() == DIGEST,
+                  'downloaded ZIP identity differs')
+          archive = zipfile.ZipFile(io.BytesIO(raw))
+          names = archive.namelist()
+          require(len(names) == len(set(names)) and sum(item.file_size for item in archive.infolist()) < 1024**3,
+                  'invalid or oversized ZIP entries')
+          for name in names:
+              path = PurePosixPath(name)
+              require(not path.is_absolute() and '..' not in path.parts and '\\' not in name, 'unsafe ZIP entry')
+          def one(suffix):
+              found = [name for name in names if name.endswith(suffix)]
+              require(len(found) == 1, 'entry missing or ambiguous: ' + suffix)
+              return found[0], archive.read(found[0])
+          def bounded(value, limit=600):
+              return str(value).replace('\n', ' ')[:limit]
+          name, payload = one('/execution.json')
+          execution = json.loads(payload)
+          require(execution.get('source_sha') == SOURCE and execution.get('run_id') == str(RUN) and
+                  execution.get('attempt') == '1', 'execution identity differs')
+          report = {'diagnostic_only': True, 'accepted': False, 'source_sha': SOURCE, 'run_id': RUN,
+                    'artifact_id': ARTIFACT, 'digest': DIGEST, 'execution': execution,
+                    'suites': {}, 'native_log_observations': {}, 'instrumentation_head': {}}
+          for suite, folder in [('walkthrough', 'device'), ('review', 'review')]:
+              cases = []
+              for name in names:
+                  if '/evidence/' + folder + '/cases/' in name and name.endswith('.json'):
+                      value = json.loads(archive.read(name))
+                      cases.append({'path': name, 'result': value})
+              validation = [name for name in names if name.endswith('/evidence/' + folder + '/validation.json')]
+              report['suites'][suite] = {'cases': cases, 'case_count': len(cases),
+                  'validation': json.loads(archive.read(validation[0])) if len(validation) == 1 else None}
+              for suffix in ('-instrumentation.txt', '-logcat.txt'):
+                  name, payload = one('/' + suite + suffix)
+                  lines = payload.decode('utf-8', errors='replace').splitlines()
+                  pattern = (r'INSTRUMENTATION_(STATUS|RESULT|CODE)|FAILURES|OK \(|AssertionError|Error in|'
+                             r'EXReader|Review |native-next|next_calls|recovery|ANR in|TimeoutException|'
+                             r'UiDevice|ActivityTaskManager|DocumentsUI|EXRReview')
+                  observations = [bounded(line) for line in lines if re.search(pattern, line) and
+                      not re.search(r'\bat (?:org\.|java\.|android\.|androidx\.)|\bpc [0-9a-f]+|backtrace|stacktrace', line)]
+                  report['native_log_observations'][suite + suffix] = {'path': name, 'total_lines': len(lines),
+                      'sha256': hashlib.sha256(payload).hexdigest(), 'relevant_tail': observations[-70:]}
+                  if suffix == '-instrumentation.txt':
+                      report['instrumentation_head'][suite] = [bounded(line) for line in lines[:60]]
+          output = Path('build/android-diagnostic')
+          output.mkdir(parents=True)
+          (output/'diagnostic.json').write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n')
+          print(json.dumps({'diagnostic_only': True, 'execution': {'completed': execution['completed'],
+              'suites': execution['suites'], 'errors': execution['errors']},
+              'suites': {suite: {'case_count': value['case_count'],
+                  'cases': [{key: case['result'].get(key) for key in ('id', 'status', 'error', 'detail', 'elapsed_ms')}
+                            for case in value['cases']],
+                  'summary': value['validation'].get('summary') if value['validation'] else None,
+                  'sequence': value['validation'].get('sequence') if value['validation'] else None}
+                  for suite, value in report['suites'].items()},
+              'instrumentation_head': report['instrumentation_head'],
+              'logs': report['native_log_observations']}, ensure_ascii=True))
+          PY
+      - name: Preserve diagnostic observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wp13-android-failure-diagnostic
+          path: build/android-diagnostic/
+          if-no-files-found: error

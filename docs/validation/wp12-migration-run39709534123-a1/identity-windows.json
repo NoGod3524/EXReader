@@ -1,0 +1,72 @@
+{
+ "schema": 1,
+ "kind": "wp12-legacy-migration-identity",
+ "label": "windows",
+ "platform": "Windows-2025Server-10.0.26100-SP0",
+ "git": {
+  "sha": "bf6a362e8567bbe95c03debb12f052c9b61d85cf",
+  "ref": "refs/heads/codex/wp12-legacy-migration"
+ },
+ "workflow": {
+  "run_id": "39709534123",
+  "attempt": "1",
+  "job": "migration",
+  "runner": "GitHub Actions 1000003256",
+  "image": "20261018.275.1"
+ },
+ "tool": {
+  "file": "exreader-legacy-migrate.exe",
+  "sha256": "ae430869c8ea1420b2896e0373728f87f99a6864baadb71f319b6c2c2f426b07"
+ },
+ "exporter": {
+  "file": "exr-legacy-export.js",
+  "sha256": "abaf9daf150e2fcbeb481ff3db25f92c52c3f9a5bca156db9b0f5f51124cc759"
+ },
+ "sdk": {
+  "prefix_files": 35,
+  "files_sha256": {
+   "examples/entry.h": "a499a3a350ac5bf1b8972ebc5e2802c8cfd86ceb43ef04f43ad372eb05cab9ae",
+   "include/exreader.h": "69ba8847b65a583b257360caf9f76b9fc3fc1ff113231da2fef7dc3c82f53c9f",
+   "include/exr/audio.h": "cac99ff20ece707958be51ac5c8f0d6d96eef15adb4e368ba4104cc9bcb4a201",
+   "include/exr/base.h": "add6b16b78d206fb09536d8e40b03b40ee6b7bce487dbc6deec0ea1a57501522",
+   "include/exr/core.h": "927283b6ec31dbf2c495a88725fc98ed7af75879cdaa3502d5f54e5144679990",
+   "include/exr/document.h": "448be21ba9ef508dd52e318a42bc6e0b635bba4a1c2ce824ab362f08c47df3e8",
+   "include/exr/formats.h": "d432fdf3339eca7ba2bb203bf4f58c421cc854e4504538f5e4996bb94fa52a67",
+   "include/exr/graphics.h": "3b383a57d542fdbc9553334ba33e4abf8274b3b5c4090b8a0f8d78b45c4f74b1",
+   "include/exr/layout.h": "f43bbb2723eeff88cb3c104cb9ea76df1b138959c5afc857f072fcf29cd7a3e6",
+   "include/exr/library.h": "277e707af559b3c79ae50fc51e8fdbb0fac8e0f11498f6b6197c5512272f6c5e",
+   "include/exr/pdf.h": "b62c6b5e7bb483fd7d87af48d1d3ccd792a9b4e43ce1f0cbea11e46385eef448",
+   "include/exr/pdf_edit.h": "238a38f587d6d7567a0a99842fcf3c39b60b225897b4a1d19d85420353319eb5",
+   "include/exr/render.h": "659fb346edcec051b8e409b54bc43d54276cefd0dfed7f928257887f132488db",
+   "include/exr/text.h": "c6fb1adda319b620179177ec6775b1098628444d5cc40f61163d34ab3ae159cf",
+   "include/exr/textindex.h": "d0f51a23480542adc4865601ca5bf5ece26ab334a20efc7cc0fe71aa748c5e79",
+   "lib/exr_base.lib": "9deeaf2775367a31ff15c1281aeee68d593f68da7860ebebd27f83cb9290e5e3",
+   "lib/exr_doc.lib": "33fd4706e5825ceee070d356a1fefe36ad864a88a21c97cb085fc2fe38f10dba",
+   "lib/exr_formats.lib": "a14603882ed7dbe1b8373d390e1e070646688fbf8966d55c7bbb7eacad0d4c0f",
+   "lib/exr_graphics.lib": "ee360c4649649c89276001ebd74dfac1f735bc5e91c9577dd400e8f355698938",
+   "lib/exr_layout.lib": "eb065da284e4f8bdf552144980d51770cb6c1f4645b4591de559326532f7b920",
+   "lib/exr_library.lib": "b26b11743cbaad4f8805903a993cf5a262711290b82392c49be4960021ab398c",
+   "lib/exr_pdf.lib": "5a8559fafd3b787d555f16a6ba318dccb5d7ee3734345c846b4d805994abda9b",
+   "lib/exr_render.lib": "f3938e0aff4198df117240a9b53b4020d2c8e03044845d5c70bb08904a98dc92",
+   "lib/exr_text.lib": "15cb8c38b931fff3eea53f8d992b0757611dd6c3195fec5baadf2d3c5ca9c8a8",
+   "lib/cmake/EXReader/EXReaderConfig.cmake": "5cd77451bf2b3419aaf35213e2e4abb42071036fb12b4cf0e88a5517585aeeff",
+   "lib/cmake/EXReader/EXReaderConfigVersion.cmake": "8603f8b9dbb2fc7e283e090201652192f1d0a93dd99e7af9f5fbc1eb8b435cb8",
+   "lib/cmake/EXReader/EXReaderDependencies.cmake": "5f0c0c70c54fd8de4b93b7ea43fa15c37cff7ec73164fd4bdcefd7e3f230d292",
+   "lib/cmake/EXReader/EXReaderTargets-release.cmake": "0e944fed5a676cbe7f01ff3b4d665bd327af3d36cd00f38d86909dedb430691d",
+   "lib/cmake/EXReader/EXReaderTargets.cmake": "84f3bf1fd277e42281e070eb9bc6a626e7ca461c6d69866259902e704fae576a",
+   "lib/exreader/exr_vendor_expat.lib": "0bfc9f436101de48cf932656cdfa789e9f23a4a35d04ea9649182fdcc7a56a98",
+   "lib/exreader/exr_vendor_exr_crypto.lib": "f36c3a73eb33a3baf5a0d3bffe4848b725236465bc93c6426256075182d7f096",
+   "lib/exreader/exr_vendor_exr_lcms.lib": "2e48ea55a788b57b336f45eaa4738e88eb549021ae74f960c381b514b2e9adf5",
+   "lib/exreader/exr_vendor_exr_sqlite.lib": "c5747c1b7e4d550853e5e0290da8ce9454b3392e17bdbf126041c98b20557c8f",
+   "lib/exreader/exr_vendor_freetype.lib": "94fed88f7c32caec520130772f577fe0d514549543ada3134970dcb4409d6cf4",
+   "lib/exreader/exr_vendor_miniz.lib": "98221f7ba13910aecd0a481a4e2cb88594798b9d4774c26d3c604f32176afc54"
+  }
+ },
+ "inputs": {
+  "legacy.exrpack": "ead4b736e69157363831ae5f8e753bdc05566a67f9fb7dab1bb865bb2bb62138",
+  "store.js": "545a169c24cf65ef0ffd2e6c1a8a23080531c849dd772acf958409714fa33550",
+  "library.js": "27846cb640bb0c0a5719f195ad9416aadee57c99e633f6133df461fecaac9dab",
+  "registry.js": "33abd6e8c8bad0da75494d04253c5a7baef7498cb34838bd4f07340d8b248082",
+  "legacy_data.py": "9c6baddebbcce6ac7597eed9c93c39a39ca547af77dca93fc98c9d88bec8e5d4"
+ }
+}

@@ -724,6 +724,17 @@ exr_status exr_pdf_open_password(const void *data,size_t size,const void *passwo
 }
 void exr_pdf_crypt_snapshot(const exr_pdf_file *f,exr_pdf_crypt *out) { *out=f->crypt; }
 void exr_pdf_control(exr_pdf_file *f,const exr_control *control) { if(f) f->control=control; }
+void exr_pdf_operation_end(exr_pdf_file *f) {
+  size_t i; if(!f) return;
+  /* Callers own any returned snapshots. Font programs/CID maps and recursive
+     content walkers must be gone before invalidating these borrowed bytes.
+     Object-stream indexes and parsed strings have separate owned storage. */
+  for(i=0;i<f->stream_count;i++) {
+    free(f->streams[i].decoded); f->streams[i].decoded=NULL;
+    f->streams[i].decoded_size=0; f->streams[i].ready=0;
+  }
+  f->decoded_bytes=0; f->decode_work=0; f->work=0; f->control=NULL;
+}
 typedef struct { unsigned char *data; size_t size,capacity; } pdf_output;
 static int decode_work(exr_pdf_file *f,size_t amount) {
   size_t *work=f->decode_budget ? f->decode_budget : &f->decode_work;
@@ -1027,6 +1038,11 @@ static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char
       if(i+1!=count) goto unsupported;
       if(end) { if(!jpeg_end(f,input,input_size,end)) goto done; input_size=*end; }
       terminal=EXR_PDF_STREAM_JPEG; terminal_parameters=parms[i]; break;
+    }
+    if(allow_image && name_is(f,filters[i],"JPXDecode")) {
+      if(i+1!=count || source.inline_image ||
+         (parms[i]!=EXR_PDF_NONE && f->values[parms[i]].kind!=EXR_PDF_NULL)) goto unsupported;
+      terminal=EXR_PDF_STREAM_JPX; break;
     }
     if(!end && !decode_work(f,input_size)) goto done;
     if(is_flate) ok=decode_flate(f,input,input_size,&output,current.capacity,end);

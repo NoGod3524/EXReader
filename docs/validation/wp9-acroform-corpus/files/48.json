@@ -1,0 +1,12 @@
+{
+ "base": "48-reject-xfa.pdf",
+ "id": "48",
+ "category": "reject/xfa",
+ "expect": "reject",
+ "size": 681,
+ "sha256": "c7a74da74dc9170f45aaba197e0a851fd821de9df5ba2add32948140d44468b4",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

@@ -1,0 +1,52 @@
+name: WP13 Windows evidence review
+on:
+  push:
+    branches: ['codex/wp13-windows-evidence-review']
+    paths:
+      - 'tools/check_windows_host.py'
+      - 'tests/windows_host/check_evidence.py'
+      - '.github/workflows/wp13-windows-evidence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: wp13-windows-evidence-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  windows-evidence:
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/codex/wp13-windows-evidence-review'
+    runs-on: windows-latest
+    timeout-minutes: 75
+    env:
+      EXREADER_HOST_ACCEPTANCE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build and install the original SDK and Windows consumer
+        run: |
+          cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/native --config Release --parallel 4
+          cmake --install build/native --config Release --prefix stage
+          cmake -S stage/examples/windows -B build/win-host -DEXR_SDK="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/win-host --config Release --parallel 4
+      - name: Preserve the original 26-check package and original acceptance books
+        run: |
+          python tools/build_windows_host.py --sdk stage --binary build/win-host/Release/EXReader.exe --output build/wp13-windows
+          python tests/windows_host/make_fixtures.py --output build/wp13-fixtures
+      - name: Reject forged and incomplete evidence
+        run: python tests/windows_host/check_evidence.py --package build/wp13-windows/EXReader --sdk stage --manifest build/wp13-windows/build.json --fixtures build/wp13-fixtures --selftest-report build/wp13-windows/report.json --consumer-binary build/win-host/Release/EXReader.exe --output build/wp13-negative-evidence
+      - name: Run unchanged 158 UI actions and require eight bound screenshots
+        run: python tools/check_windows_host.py --package build/wp13-windows/EXReader --output build/wp13-evidence --sdk stage --manifest build/wp13-windows/build.json --steps tests/windows_host --fixtures build/wp13-fixtures --selftest-report build/wp13-windows/report.json --consumer-binary build/win-host/Release/EXReader.exe
+      - name: Preserve successes and refusals
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-WP13-Windows-Evidence-Review
+          path: |
+            build/wp13-windows/
+            build/wp13-evidence/
+            build/wp13-negative-evidence/
+            build/wp13-fixtures/
+          if-no-files-found: warn
+          retention-days: 30
