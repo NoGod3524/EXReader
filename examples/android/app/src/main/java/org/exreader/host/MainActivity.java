@@ -171,6 +171,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         worker.execute(() -> {
             try {
                 store = new BookStore(getApplicationContext(), new File(getFilesDir(), "library.db"));
+                if (store.metadataRepairPending()) postStatus("Metadata repair pending; originals retained");
             } catch (Throwable error) {
                 postStatus("Library error: " + message(error));
                 return;
@@ -1030,6 +1031,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             long importedId = 0;
             boolean created = false;
             boolean published = false;
+            boolean metadataFinalized = false;
             try {
                 copied = copyUri(uri, name, task);
                 reviewGate("import-copied", task);
@@ -1054,21 +1056,18 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 importedId = result.id;
                 created = result.created;
                 reviewGate("import-inserted", task);
+                BookStore.VerifiedSource verified = store.verifySource(importedId, copied.sha256, copied.bytes, task);
                 final long acceptedId = importedId;
-                final CopyResult resultCopy = copied;
-                final String oldPath = prefs.getString("path_" + acceptedId, null);
-                final boolean reused = !created && oldPath != null && new File(oldPath).isFile();
                 task.commit(() -> {
-                    String acceptedPath = reused ? oldPath : path;
-                    if (!prefs.edit().putString("path_" + acceptedId, acceptedPath)
-                            .putLong("size_" + acceptedId, new File(acceptedPath).length()).commit()) {
+                    if (!prefs.edit().putString("path_" + acceptedId, path)
+                            .putLong("size_" + acceptedId, verified.bytes).commit()) {
                         throw new IOException("Could not persist the imported book path");
                     }
                 });
                 published = true;
-                if (reused && resultCopy.owned && !path.equals(oldPath) && !resultCopy.file.delete()) {
-                    Log.w(TAG, "Unused duplicate copy could not be removed");
-                }
+                reviewGate("import-published", task);
+                store.finalizeImport(verified);
+                metadataFinalized = true;
                 reviewGate("import-committed", task);
                 final boolean inserted = created;
                 postUi(() -> {
@@ -1085,10 +1084,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 }
                 final Throwable failure = reported;
                 final boolean completed = published;
+                final boolean mapped = metadataFinalized;
                 postUi(() -> {
                     if (gen != generation) return;
                     finishTask(gen);
-                    setStatus(completed ? "Imported " + name : failure instanceof HostTask.Cancelled ?
+                    setStatus(completed ? "Imported " + name + (mapped ? "" : "; metadata repair pending: " + message(failure)) : failure instanceof HostTask.Cancelled ?
                             "Import canceled" : "Could not open " + name + ": " + message(failure));
                     loadShelf(false);
                 });
@@ -1100,7 +1100,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private static final class CopyResult {
         final File file;
         final boolean owned;
-        CopyResult(File file, boolean owned) { this.file = file; this.owned = owned; }
+        final String sha256;
+        final long bytes;
+        CopyResult(File file, boolean owned, String sha256, long bytes) {
+            this.file = file; this.owned = owned; this.sha256 = sha256; this.bytes = bytes;
+        }
     }
 
     private void rollbackImport(CopyResult copy, long id, boolean created) throws IOException {
@@ -1153,15 +1157,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             throw new IOException("The selected file is empty");
         }
         String extension = extension(name);
-        File target = new File(folder, hex(digest.digest()) + (extension.isEmpty() ? "" : "." + extension));
+        String sourceHash = hex(digest.digest());
+        File target = new File(folder, sourceHash + (extension.isEmpty() ? "" : "." + extension));
         if (target.isFile()) {
             if (!temporary.delete()) throw new IOException("Cannot clean the duplicate temporary file");
-            return new CopyResult(target, false);
+            return new CopyResult(target, false, sourceHash, total);
         } else if (!temporary.renameTo(target)) {
             removeTemporary(temporary);
             throw new IOException("Cannot keep the app-owned copy");
         }
-        return new CopyResult(target, true);
+        return new CopyResult(target, true, sourceHash, total);
     }
 
     private static void removeTemporary(File temporary) throws IOException {

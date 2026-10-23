@@ -302,6 +302,60 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_nativeBooks(
   return (*env)->ExceptionCheck(env) ? NULL : rows;
 }
 
+JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeOpenSource(
+    JNIEnv *env, jclass type, jlong handle, jlong book) {
+  exr_library *store = library(env, handle);
+  exr_source *source;
+  exr_error error = {0}; exr_status status;
+  jlong values[2]; jlongArray result;
+  (void)type;
+  if (!store) return NULL;
+  result = (*env)->NewLongArray(env, 2);
+  if (!result) return NULL;
+  source = calloc(1, sizeof(*source));
+  if (!source) { throw_status(env, EXR_MEMORY, NULL, "Cannot allocate source"); return NULL; }
+  status = exr_library_source(store, (int64_t)book, source, &error);
+  if (status != EXR_OK || source->size == 0 || source->size > INT64_MAX) {
+    if (status == EXR_OK) source->release(source->context);
+    free(source);
+    throw_status(env, status == EXR_OK ? EXR_IO : status, &error, "Cannot open stored source");
+    return NULL;
+  }
+  values[0] = (jlong)(intptr_t)source; values[1] = (jlong)source->size;
+  (*env)->SetLongArrayRegion(env, result, 0, 2, values);
+  if ((*env)->ExceptionCheck(env)) { source->release(source->context); free(source); return NULL; }
+  return result;
+}
+
+JNIEXPORT jint JNICALL Java_org_exreader_host_NativeLibrary_nativeReadSource(
+    JNIEnv *env, jclass type, jlong handle, jlong offset, jbyteArray bytes, jint count) {
+  exr_source *source = (exr_source *)(intptr_t)handle;
+  unsigned char buffer[65536]; size_t total = 0;
+  (void)type;
+  if (!source || !bytes || offset < 0 || count <= 0 || count > (jint)sizeof(buffer)
+      || count > (*env)->GetArrayLength(env, bytes) || (uint64_t)offset > source->size
+      || (uint64_t)count > source->size - (uint64_t)offset) {
+    throw_argument(env, "Invalid source read range"); return 0;
+  }
+  while (total < (size_t)count) {
+    size_t read = source->read_at(source->context, (uint64_t)offset + total,
+                                  buffer + total, (size_t)count - total);
+    if (read == 0 || read > (size_t)count - total) {
+      throw_status(env, EXR_IO, NULL, "Stored original could not be read"); return 0;
+    }
+    total += read;
+  }
+  (*env)->SetByteArrayRegion(env, bytes, 0, count, (const jbyte *)buffer);
+  return (*env)->ExceptionCheck(env) ? 0 : count;
+}
+
+JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeCloseSource(
+    JNIEnv *env, jclass type, jlong handle) {
+  exr_source *source = (exr_source *)(intptr_t)handle;
+  (void)env; (void)type;
+  if (source) { source->release(source->context); free(source); }
+}
+
 JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFile(
     JNIEnv *env, jclass type, jlong handle, jstring path, jint format, jstring title,jboolean legacy) {
   exr_library *store = library(env, handle);
