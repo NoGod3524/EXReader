@@ -1,0 +1,94 @@
+name: Candidate CPU measurements - no acceptance
+on:
+  push:
+    branches: [codex/reading-cpu-candidates]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  candidate:
+    name: independent environment sample (${{ matrix.sample }})
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        sample: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Keep frozen SDK and all production budgets unchanged
+        run: |
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code de9871aca6a54f70c6c1d147ba12f308cedf1004 HEAD -- tests/reading_real tools/measure_reading_real.py tools/reading_corpus/real-v1.json .github/workflows/reading-real.yml .github/workflows/reading-required.yml
+      - name: Record actual hardware before building
+        run: |
+          mkdir -p build/cpu-candidate
+          git rev-parse HEAD > build/cpu-candidate/source.txt
+          lscpu > build/cpu-candidate/lscpu.txt
+          cc --version > build/cpu-candidate/compiler.txt
+      - name: Install the same reference and pixel reader
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y poppler-utils python3-pil
+      - name: Keep existing provenance and refusal checks
+        run: |
+          python3 tests/check_reading_real_baseline.py
+          python3 tests/check_reading_real_baseline_report.py
+          python3 tests/check_reading_real_review.py
+          python3 tests/reading_corpus/check_collect.py
+      - name: Verify exact original documents and current publisher terms
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reading_corpus/collect.py cached tools/reading_corpus/real-v1.json build/reading-real-inputs
+      - name: Fetch the pinned font and its license
+        run: python3 -c "import sys; sys.path.insert(0, 'tools'); from host_font import fetch; fetch('build/reading-real-font')"
+      - name: Build the unchanged installed SDK and public consumer
+        run: |
+          cmake --preset reading-core -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build --preset reading-core
+          cmake --install build/reading-core
+          cmake -S tests/reading_real -B build/reading-real-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-core/stage" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build/reading-real-consumer --parallel 4
+      - name: Capture an independent baseline candidate without granting acceptance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/measure_reading_real.py build/reading-real-consumer/reading-real-benchmark tools/reading_corpus/real-v1.json build/reading-real-inputs/assets build/reading-real --sdk build/reading-core/stage --source-sha "$GITHUB_SHA"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('build/reading-real/summary.json').read_text())
+          assert report['measurement_valid'] is True
+          assert report['accepted'] is False and report['budget_sha256'] is None
+          assert len(report['attempts']) == 40 and len(report['references']) == 12
+          candidate = {
+              'candidate_only': True, 'accepted': False, 'review_required': True,
+              'production_budgets_changed': False, 'default_gate_changed': False,
+              'source_sha': report['source_sha'], 'run_id': report['run_id'],
+              'run_attempt': report['run_attempt'], 'environment': report['environment'],
+              'native_processes': 40, 'reference_processes': 12,
+              'measurement_valid': True,
+              'scope': 'independent raw environment measurements; no budget or SDK acceptance',
+          }
+          Path('build/cpu-candidate/candidate.json').write_text(json.dumps(candidate, indent=2) + '\n')
+          print(json.dumps(candidate))
+          PY
+      - name: Preserve this sample separately without combining environments
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpu-candidate-${{ matrix.sample }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/cpu-candidate/
+            build/reading-real/
+            build/reading-real-inputs/manifest.json
+            build/reading-real-inputs/licenses/
+            build/reading-real-font/
+            build/reading-real-consumer/
+            build/reading-core/CMakeCache.txt
+            build/reading-core/compile_commands.json
+          if-no-files-found: error
+          retention-days: 90
