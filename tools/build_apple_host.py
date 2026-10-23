@@ -51,7 +51,7 @@ def main():
     sources = sorted((ROOT/'examples/apple').glob('*.swift'))
     command = ['xcrun', '--sdk', native_sdk, 'swiftc', '-swift-version', '5', '-O', '-parse-as-library',
                '-sdk', sdk_path, '-target', target, '-I', sdk/'include', '-L', sdk/'lib',
-               '-lexreader', '-Xlinker', '-rpath', '-Xlinker', rpath,
+               '-lexreader', '-lsqlite3', '-Xlinker', '-rpath', '-Xlinker', rpath,
                ROOT/'bindings/swift/EXReader.swift', *sources, '-o', executable]
     run(*command)
     source_sha = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
@@ -77,6 +77,7 @@ def main():
         plistlib.dump(info, stream)
     for name, source in [('Sample.pdf', 'pdf-public.pdf')]:
         shutil.copyfile(ROOT/'tests/fixtures'/source, resources/name)
+    shutil.copyfile(ROOT/'apps/reader/store/001_catalog.sql', resources/'reader-catalog-v1.sql')
     make_epub(resources/'Sample.epub', 3, 16384, single_paragraph=True)
     font = host_font(ROOT/'build/host-font-cache')
     shutil.copyfile(font/'Reader.otf', resources/'Reader.otf')

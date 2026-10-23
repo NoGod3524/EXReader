@@ -10,6 +10,13 @@ import SQLite3
         let resources = URL(fileURLWithPath: CommandLine.arguments[1])
         let output = URL(fileURLWithPath: CommandLine.arguments[2])
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let catalogQueue = DispatchQueue(label: "org.exreader.host.bounded-catalog")
+        let catalog = try catalogQueue.sync {
+            try HostCatalog(path: output.appendingPathComponent("reader-catalog.db"),
+                            migrationURL: resources.appendingPathComponent("reader-catalog-v1.sql"),
+                            ownerQueue: catalogQueue)
+        }
+        defer { catalogQueue.sync { try? catalog.close() } }
         let library = try HostLibrary(path: output.appendingPathComponent("bounded.sqlite"))
         let font = try HostFont(data: Data(contentsOf: resources.appendingPathComponent("Reader.otf")))
         let source = resources.appendingPathComponent("Bounded.epub")
