@@ -28,7 +28,9 @@ jobs:
           git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
       - name: Install Linux host dependency
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev at-spi2-core xvfb openbox xdotool xclip x11-utils imagemagick python3-pil
       - name: Enter native Windows compiler environment
         if: runner.os == 'Windows'
         shell: pwsh
@@ -50,12 +52,38 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
           echo "DESKTOP_WORKSPACE=$ws" >> "$GITHUB_ENV"
-          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DEXR_READER_FIXTURES="$ws/tests/fixtures" 2>&1 | tee build/desktop-evidence/configure.log
+          gtk=OFF
+          if [ "$RUNNER_OS" = Linux ]; then gtk=ON; fi
+          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DEXR_READER_FIXTURES="$ws/tests/fixtures" -DEXR_READER_BUILD_GTK="$gtk" 2>&1 | tee build/desktop-evidence/configure.log
           cmake --build build/desktop-sdk --parallel 4 --verbose 2>&1 | tee build/desktop-evidence/build.log
       - name: Real source digest, mode, cancellation and product transaction checks
         run: ctest --test-dir build/desktop-sdk --output-on-failure --no-tests=error --timeout 180 --output-junit "$DESKTOP_WORKSPACE/build/desktop-evidence/tests.xml"
       - name: Kill two actual processes and repair in fresh processes
         run: python3 tests/reader_catalog/check_desktop_sdk.py build/desktop-sdk
+      - name: Assemble the actual GTK host with the original pinned font
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p build/desktop-payload/bin
+          cp build/desktop-sdk/gtk-host/exreader-linux build/desktop-payload/bin/
+          python3 - <<'PY'
+          import sys, shutil
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from host_font import fetch
+          font = fetch(Path('build/desktop-font-cache'))
+          for name in ('Reader.otf', 'OFL.txt'):
+              shutil.copyfile(font / name, Path('build/desktop-payload') / name)
+          PY
+      - name: Original twenty GTK operations and real product startup repair
+        if: runner.os == 'Linux'
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox >build/desktop-evidence/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tools/check_linux_host.py --payload build/desktop-payload --output build/desktop-gtk-ui
+            python3 tests/reader_catalog/check_gtk_product.py --payload build/desktop-payload --original-evidence build/desktop-gtk-ui
+          '
       - name: Preserve original logs, link provider and source-bound evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -71,4 +99,5 @@ jobs:
             build/desktop-sdk/Testing/Temporary/LastTest.log
             build/desktop-sdk/CMakeCache.txt
             build/reading-library/CMakeCache.txt
+            build/desktop-gtk-ui/
           if-no-files-found: error

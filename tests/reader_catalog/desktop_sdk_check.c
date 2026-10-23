@@ -65,11 +65,13 @@ static void pause_for_kill(void) {
 #endif
   }
 }
+static int kill_on_mapping,observe_commit,commit_cancel;
 static int trace(unsigned type,void *context,void *statement,void *extra) {
   (void)context;(void)extra;
   if(type==SQLITE_TRACE_STMT) {
     const char *query=sqlite3_sql(statement);
-    if(query && strstr(query,"INSERT INTO reader_local_books")) pause_for_kill();
+    if(query && kill_on_mapping && strstr(query,"INSERT INTO reader_local_books")) pause_for_kill();
+    if(query && observe_commit && !strcmp(query,"COMMIT")) commit_cancel=1;
   }
   return 0;
 }
@@ -77,6 +79,7 @@ static int instrument(sqlite3 *db,char **message,const sqlite3_api_routines *api
   (void)message;(void)api;return sqlite3_trace_v2(db,SQLITE_TRACE_STMT,trace,NULL);
 }
 static int cancel(void *context) { int *remaining=context;return --*remaining<=0; }
+static int after_commit(void *context) { (void)context;return commit_cancel; }
 static unsigned char *load(const char *path,size_t *size) {
   FILE *f=fopen(path,"rb");CHECK(f);CHECK(fseek(f,0,SEEK_END)==0);
   long bytes=ftell(f);CHECK(bytes>0 && fseek(f,0,SEEK_SET)==0);
@@ -96,11 +99,12 @@ static void original(int64_t id,const char *expected,size_t bytes) {
 int main(int argc,char **argv) {
   CHECK(argc==3 || argc==4);paths(argv[1]);
   if(argc==4) {
-    if(!strcmp(argv[3],"transaction")) CHECK(sqlite3_auto_extension((void (*)(void))instrument)==SQLITE_OK);
+    if(!strcmp(argv[3],"transaction")) { kill_on_mapping=1;CHECK(sqlite3_auto_extension((void (*)(void))instrument)==SQLITE_OK); }
     open_both();int64_t id=0;OK(exr_library_import(library,EXR_TXT,"abc",3,"Crash book",&id,&error));
     if(!strcmp(argv[3],"sdk")) pause_for_kill();
     repair();CHECK(0);
   }
+  CHECK(sqlite3_auto_extension((void (*)(void))instrument)==SQLITE_OK);
   open_both();
   if(!strcmp(argv[2],"recover")) {
     sqlite3 *db=external();CHECK(scalar(db,"SELECT count(*) FROM reader_books")==0);
@@ -143,12 +147,13 @@ int main(int argc,char **argv) {
   OK(exr_library_import_file(library,EXR_PDF,fixture,"PDF",&pdf,&error));repair();
   db=external();CHECK(scalar(db,"SELECT count(*) FROM reader_local_books WHERE location_kind='fixed_page'")==1);CHECK(sqlite3_close(db)==SQLITE_OK);
   PASS("pdf_fixed_page_mapping");
-  data=malloc(196609);CHECK(data);memset(data,'x',196609);
+  data=malloc(196609);CHECK(data);
+  for(size_t i=0;i<196609;i++) data[i]=(unsigned char)('a'+((i*17+i/65536)%26));
   OK(exr_library_import(library,EXR_TXT,data,196609,"Large source",&large,&error));free(data);
   all=books(&n);int remaining=4;exr_control control={cancel,NULL,&remaining};
   CHECK(reader_catalog_sdk_attach(catalog,library,find(all,n,large),&control,key,&error)==EXR_CANCELLED && !key[0]);
   int present=1;CHECK(reader_catalog_has_local(catalog,large,&present,NULL)==0 && !present);
-  original(large,"xxx",196609);
+  original(large,"ari",196609);
   OK(reader_catalog_sdk_attach(catalog,library,find(all,n,large),NULL,key,&error));exr_books_free(all,n);
   CHECK(strlen(key)==68);PASS("multichunk_cancel_retains_committed_sdk_source");
   int64_t failed_book=0;OK(exr_library_import(library,EXR_TXT,"repair me",9,"Pending metadata",&failed_book,&error));
@@ -158,8 +163,14 @@ int main(int argc,char **argv) {
   sql(db,"DROP TRIGGER injected_failure");CHECK(sqlite3_close(db)==SQLITE_OK);
   close_both();open_both();repair();CHECK(reader_catalog_has_local(catalog,failed_book,&present,NULL)==0 && present);
   PASS("postcommit_product_failure_repaired_after_restart");
+  int64_t commit_book=0;OK(exr_library_import(library,EXR_TXT,"publication",11,"Commit boundary",&commit_book,&error));
+  all=books(&n);exr_control publication_control={after_commit,NULL,NULL};size_t failed=0;observe_commit=1;
+  CHECK(reader_catalog_sdk_repair(catalog,library,find(all,n,commit_book),1,&publication_control,&failed,&error)==EXR_CANCELLED);
+  observe_commit=0;exr_books_free(all,n);
+  CHECK(commit_cancel && reader_catalog_has_local(catalog,commit_book,&present,NULL)==0 && present);
+  original(commit_book,"pub",11);PASS("cancel_at_publication_reports_cancel_retains_commit");
   char report[4096];snprintf(report,sizeof(report),"%s/sdk-result.json",argv[1]);FILE *out=fopen(report,"wb");CHECK(out);
-  CHECK(count==8);fprintf(out,"{\"accepted\":true,\"source_sha\":\"%s\",\"run_id\":\"%s\",\"attempt\":\"%s\",\"sqlite_version\":\"%s\",\"sqlite_source_id\":\"%s\",\"checks\":[",getenv("GITHUB_SHA"),getenv("GITHUB_RUN_ID"),getenv("GITHUB_RUN_ATTEMPT"),sqlite3_libversion(),sqlite3_sourceid());
+  CHECK(count==9);fprintf(out,"{\"accepted\":true,\"source_sha\":\"%s\",\"run_id\":\"%s\",\"attempt\":\"%s\",\"sqlite_version\":\"%s\",\"sqlite_source_id\":\"%s\",\"checks\":[",getenv("GITHUB_SHA"),getenv("GITHUB_RUN_ID"),getenv("GITHUB_RUN_ATTEMPT"),sqlite3_libversion(),sqlite3_sourceid());
   for(size_t i=0;i<count;i++) fprintf(out,"%s{\"id\":\"%s\",\"passed\":true}",i?",":"",checks[i]);
   fprintf(out,"],\"problems\":[],\"complete_product\":false}\n");CHECK(fclose(out)==0);close_both();return 0;
 }

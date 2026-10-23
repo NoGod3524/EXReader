@@ -6,6 +6,12 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/types.h>
+#ifdef EXR_READER_PRODUCT_CATALOG
+#include "catalog_sdk.h"
+#include <fcntl.h>
+#include <sys/file.h>
+#include <unistd.h>
+#endif
 
 #define PAGE_TEXT_LIMIT (1024u*1024u)
 #define LEGACY_INPUT_LIMIT (8u*1024u*1024u)
@@ -25,6 +31,11 @@ struct linux_reader {
   reader_session current;
   reader_session pending;
   int has_pending,pending_owns_session,pending_new_pager;
+#ifdef EXR_READER_PRODUCT_CATALOG
+  reader_catalog *catalog;
+  char *catalog_path;
+  int catalog_lock;
+#endif
 };
 static void session_free(reader_session *session) {
   exr_pager_free(session->pager);exr_publication_free(session->publication);
@@ -46,6 +57,20 @@ exr_status linux_reader_open(const char *database,const char *font,const exr_con
                             linux_reader **out,exr_error *error) {
   linux_reader *reader=calloc(1,sizeof(*reader));exr_status status;
   *out=NULL;if(!reader) return EXR_MEMORY;
+#ifdef EXR_READER_PRODUCT_CATALOG
+  reader->catalog_lock=-1;
+  size_t path_size=strlen(database)+32;
+  reader->catalog_path=malloc(path_size);
+  char *lock_path=malloc(path_size);
+  if(!reader->catalog_path || !lock_path) { free(lock_path);linux_reader_close(reader);return EXR_MEMORY; }
+  snprintf(reader->catalog_path,path_size,"%s.product.sqlite",database);
+  snprintf(lock_path,path_size,"%s.product.lock",database);
+  reader->catalog_lock=open(lock_path,O_CREAT|O_RDWR|O_CLOEXEC,0600);free(lock_path);
+  if(reader->catalog_lock<0 || flock(reader->catalog_lock,LOCK_EX|LOCK_NB)) {
+    if(error) { error->code=EXR_IO;snprintf(error->message,sizeof(error->message),"This local library is already in use or cannot be locked"); }
+    linux_reader_close(reader);return EXR_IO;
+  }
+#endif
   if(control) reader->control=*control;
   status=exr_library_open(database,&reader->library,error);
   if(status==EXR_OK) status=exr_font_open(font,&reader->font,error);
@@ -56,12 +81,33 @@ void linux_reader_close(linux_reader *reader) {
   if(reader) {
     pending_discard(reader);
     session_free(&reader->current);exr_font_free(reader->font);
-    exr_library_close(reader->library);free(reader);
+    exr_library_close(reader->library);
+#ifdef EXR_READER_PRODUCT_CATALOG
+    reader_catalog_close(&reader->catalog,NULL);
+    free(reader->catalog_path);
+    if(reader->catalog_lock>=0) close(reader->catalog_lock);
+#endif
+    free(reader);
   }
 }
 static exr_status cancel(linux_reader *reader) {
   return reader->control.cancelled && reader->control.cancelled(reader->control.context) ? EXR_CANCELLED:EXR_OK;
 }
+#ifdef EXR_READER_PRODUCT_CATALOG
+static void product_refresh(linux_reader *reader,reader_result *result) {
+  reader_catalog_error product_error={0};exr_error error={0};size_t failed=0;
+  if(!reader->catalog && reader_catalog_open(reader->catalog_path,&reader->catalog,&product_error)!=0) {
+    snprintf(result->message,sizeof(result->message),"Books saved locally; catalog unavailable, retry on shelf refresh");
+    fprintf(stderr,"Product catalog open: %s\n",product_error.message);return;
+  }
+  exr_status status=reader_catalog_sdk_repair(reader->catalog,reader->library,result->books,
+    result->book_count,&reader->control,&failed,&error);
+  if(status!=EXR_OK) {
+    snprintf(result->message,sizeof(result->message),"Books saved locally; catalog repair pending");
+    fprintf(stderr,"Product catalog repair: code=%d failures=%zu %s\n",(int)status,failed,error.message);
+  }
+}
+#endif
 static size_t extent(reader_session *session) {
   size_t size=0;
   if(session->bounded) return exr_pager_chapter_statistics(session->pager).projection_bytes;
@@ -425,4 +471,9 @@ done:
     result->has_shelf=listing==EXR_OK;
   }
   if(listing!=EXR_OK && result->status==EXR_OK) { result->status=listing;result->has_frame=0; }
+#ifdef EXR_READER_PRODUCT_CATALOG
+  /* Publication/compensation has completed. Reuse this shelf snapshot on the
+     existing owner worker; metadata failure never deletes a committed book. */
+  if(result->has_shelf) product_refresh(reader,result);
+#endif
 }
