@@ -11,6 +11,7 @@ from pathlib import Path
 import struct
 import subprocess
 import sys
+import zipfile
 
 from PIL import Image, features
 
@@ -151,15 +152,48 @@ def image_pixels(path):
         return list(image.convert('RGB').getdata())
 
 
+def inspect_artifact(artifact_id, digest):
+    """Read retained tiny evidence in Actions without altering its expectations."""
+    require(artifact_id > 0 and len(digest) == 64 and all(c in '0123456789abcdef' for c in digest),
+            'artifact ID and complete lowercase ZIP SHA-256 required')
+    raw = subprocess.check_output(['gh', 'api', f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/artifacts/{artifact_id}/zip'])
+    require(sha(raw) == digest, 'retained diagnostic ZIP digest differs')
+    observations = []
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        for case in ('gray-jp2', 'rgb-jp2', 'indexed-jp2-decode-0-255', 'rgb-softmask', 'embedded-alpha'):
+            observation = {'case': case}
+            for filename in ('page-0.ppm', 'poppler.ppm', 'reference.stderr', 'native.stderr'):
+                names = [name for name in archive.namelist() if name.endswith('/' + case + '/' + filename)]
+                require(len(names) <= 1, 'duplicate diagnostic member')
+                if not names:
+                    continue
+                content = archive.read(names[0])
+                if filename.endswith('.ppm'):
+                    with Image.open(io.BytesIO(content)) as image:
+                        require(image.size == (2, 2), 'diagnostic page dimensions changed')
+                        observation[filename] = {'sha256': sha(content), 'pixels': list(image.convert('RGB').getdata())}
+                else:
+                    observation[filename] = content.decode('utf-8', errors='replace')[:4096]
+            observations.append(observation)
+    print(json.dumps({'diagnostic_only': True, 'artifact_id': artifact_id, 'zip_sha256': digest,
+                      'observations': observations}, allow_nan=False))
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--binary', type=Path, required=True)
-    parser.add_argument('--font', type=Path, required=True)
-    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--binary', type=Path)
+    parser.add_argument('--font', type=Path)
+    parser.add_argument('--output', type=Path)
     parser.add_argument('--expect-off', action='store_true')
+    parser.add_argument('--inspect-artifact', type=int)
+    parser.add_argument('--artifact-digest')
     args = parser.parse_args()
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'JPX integration runs only in cloud CI')
-    require(args.binary.is_file() and args.font.is_file(), 'installed consumer binary and font are required')
+    if args.inspect_artifact is not None:
+        return inspect_artifact(args.inspect_artifact, args.artifact_digest or '')
+    require(args.binary is not None and args.font is not None and args.output is not None and
+            args.binary.is_file() and args.font.is_file(), 'installed consumer binary, font and output are required')
     require(not args.output.exists(), 'output directory already exists')
     args.output.mkdir(parents=True)
     cases = generate(args.output)
@@ -195,12 +229,15 @@ def main():
                         'public SDK did not complete every actual page render')
                 expected_rgb = [tuple(value) for value in case['expected_rgb']]
                 pixels = image_pixels(ppm)
+                result['native_pixels'] = pixels
                 require(pixels == expected_rgb, 'native pixels differ from independently known source values')
                 reference = run(['pdftoppm', '-r', '72', '-f', '1', '-singlefile', '-aa', 'no', '-aaVector', 'no',
                                  path.resolve(), (folder / 'poppler').resolve()], folder / 'reference')
                 reference_path = folder / 'poppler.ppm'
                 require(reference.returncode == 0 and reference_path.is_file(), 'independent Poppler rendering failed')
-                require(image_pixels(reference_path) == expected_rgb, 'Poppler pixels differ from known source values')
+                reference_pixels = image_pixels(reference_path)
+                result['reference_pixels'] = reference_pixels
+                require(reference_pixels == expected_rgb, 'Poppler pixels differ from known source values')
                 result.update(ppm_sha256=sha(ppm.read_bytes()), reference_sha256=sha(reference_path.read_bytes()),
                               exact_source_pixels=True, exact_poppler_pixels=True)
             else:
