@@ -3,7 +3,8 @@
 状态：**SDK 已重新冻结**。固定源码 **`9c69bc4c7efb0cff68ced27562709fe597189041`**，
 SDK 3.40.0 / library 3.34.0 / ABI 1 / schema 7。
 Apple 接续发现的16KiB窗口同单元递归已修复；原`ce5d664`冻结撤回与所有失败记录保留。
-Windows和Linux已在新SDK实现上独立通过；Apple、Android继续最终复验，之后收四宿主共同源码。
+四宿主首轮共同源码`9fb084a1fb9307b459f21f60ed91f12fffd14a00`未通过：
+Windows和Linux成功，Android重启帧比较及iPad首次导入失败；SDK冻结保持，宿主继续修复。
 
 ## 当前冻结证据
 
@@ -142,7 +143,22 @@ Linux受测`6cb58962866c4f2223dfba0d21b6d36675cbfff1`，
 run[39872057413](https://github.com/NoGod3524/EXReader/actions/runs/39872057413) attempt2完整重跑成功：
 原20、四组回归（故障26）、H11专项37、backend82全部通过，当前K祖先及八树守卫通过。
 attempt1在用例开始前窗口映射超时，失败原件保留。交付HEAD`49edfd4c…`已合入当前集成分支。
-Apple、Android独立最终验收中；四宿主最终共同源码尚未授予通过。
+### 四宿主共同源码首轮（未通过）
+
+受测源码`9fb084a1fb9307b459f21f60ed91f12fffd14a00`包含当前K祖先，八项保护树与K逐项相同。
+四组均为该源码、attempt 1；完成日志与Actions作业/工件元数据已核对。
+
+| 平台 | run | 完成结论 |
+| --- | --- | --- |
+| Windows | [39875523437](https://github.com/NoGod3524/EXReader/actions/runs/39875523437) | 成功；原26自检、158步/8截图、51证据拒绝、H8的80检查及worker11正例/11反向拒绝通过 |
+| Linux | [39875526650](https://github.com/NoGod3524/EXReader/actions/runs/39875526650) | 成功；原20、四组回归、H11专项37及backend82通过，H11严格接受 |
+| Android | [39875520153](https://github.com/NoGod3524/EXReader/actions/runs/39875520153) | 失败；原45项中重排进程重启帧比较失败，独立10和bounded11通过；严格汇总拒绝，证据正反例门禁未执行 |
+| Apple | [39875517031](https://github.com/NoGod3524/EXReader/actions/runs/39875517031) | 失败；三SDK、package、macOS及iPhone成功，iPad首次导入用例失败；collector及严格summary拒绝 |
+
+Android的49页/49次native next/0 recovery不能替代失败的重启比较。
+iPad其余12项与已修的test08通过，但首例没有完整步骤/附件，不能授予Apple包通过。
+现有失败原件不能区分首次点击未触发与启动后继任务覆盖；接续增加单次点击前状态及有界操作观测。
+修复后固定新共同源码，四组全部重跑；本轮桌面通过项不拼入下一源码。
 
 H5修补、H6程序门禁、H7文档和R3测量已纳入K，且按上表重新同源验证，
 见 [许可证复核](READING-LICENSE-REVIEW.md)；
