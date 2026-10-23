@@ -73,7 +73,7 @@ def restore_archive(raw, manifest_bytes, registry):
             rights = member('inputs/licenses/' + entry['id'] + '.txt', 4 * 1024 * 1024)
             require(sha(rights) == prior['observed_license_sha256'], 'Archived license evidence refused')
             inputs[path] = data
-            origins[path] = {'retrieved_url': prior['retrieved_url'],
+            origins[path] = {'publisher_retrieved_url': prior['retrieved_url'],
                              'archived_license_sha256': sha(rights)}
     return inputs, origins
 
