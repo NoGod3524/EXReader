@@ -61,7 +61,9 @@ ZIP digest `sha256:c3532b00e70e041855ad2e9050dbfe362c51916140af074218fdb45c0a105
 | NASA Solar System | 1861.622897 | 1122.673626 | 1101.135326 | 95875072 |
 
 Frankenstein/Pride 的超大封面在固定随机路线中各发生一次已计时的owned回退，其他两本EPUB为零。
-12页独立差分仍须逐页审阅；此轮不授予render parity、严格预算通过或全产品完成。
+12页已逐页审阅并登记[本轮JSON](validation/reading-real-pixel-review.json)，
+云端run39900884120核原ZIP与完整报告后导出冻结预算，已提交于`11cb054…`。
+此基线不授予render parity、严格预算通过或全产品完成。
 
 `tools/export_reading_real_budgets.py`仅在CI核原ZIP、原report、K保护树后输出12页审阅模板；
 审阅JSON固定原图SHA、baseline身份及逐页finding，提交后才允许导出数值预算。
@@ -89,4 +91,6 @@ Git对象逐项核实保护树声明。冻结数值和签名必须来自这份�
 预先数值推导上界见`tests/reading_real/contract.json`，没有据本轮失败填写或放宽预算。
 
 W9差分审阅及固定原图/诊断身份见[READING-PIXEL-REVIEW.md](READING-PIXEL-REVIEW.md)。
-新SDK全部12页已由完整基线实跑，实际审阅与冻结预算仍待完成；本包尚无严格性能通过声明。
+新SDK全部12页已由完整基线实跑、实际审阅并冻结预算；
+独立严格执行纳入共同源码`11cb05489839c8587936340d83b4e45e214463d2`的17作业run39901084062，
+尚无严格性能通过声明，最终按该次结果登记。
