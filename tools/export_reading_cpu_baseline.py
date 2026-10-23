@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 import re
 import stat
 import subprocess
+import sys
 import tempfile
 from unittest.mock import patch
 import zipfile
@@ -30,6 +31,12 @@ MAX_SELECTED = 512 * 1024 * 1024
 
 def encoded(value):
     return (json.dumps(value, indent=2, allow_nan=False) + '\n').encode('utf-8')
+
+
+def print_file(marker, data):
+    print(marker + '_BEGIN')
+    sys.stdout.write(data.decode('utf-8'))
+    print(marker + '_END')
 
 
 def committed(path):
@@ -242,6 +249,8 @@ def main():
         print('CPU_BUDGET_JSON_BEGIN\n' + json.dumps(budget, allow_nan=False) + '\nCPU_BUDGET_JSON_END')
         print('CPU_REVIEW_JSON_BEGIN\n' + json.dumps(review, allow_nan=False) + '\nCPU_REVIEW_JSON_END')
         print('CPU_REGISTRY_DRAFT_JSON_BEGIN\n' + json.dumps(registry, allow_nan=False) + '\nCPU_REGISTRY_DRAFT_JSON_END')
+        print_file('CPU_BUDGET_FILE', budget_bytes)
+        print_file('CPU_REVIEW_FILE', review_bytes)
 
 
 if __name__ == '__main__':

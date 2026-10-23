@@ -12,6 +12,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from export_reading_cpu_baseline import CPU_IDS, ENVIRONMENT_KEYS, extract_raw, inherited_review
 from export_reading_real_budgets import derive_budget
+from join_reading_cpu_exports import combine_entries
 
 
 def refused(operation):
@@ -75,6 +76,32 @@ def main():
     assert budget['consumer_bytes'] == 4201 and budget['installed_sdk_bytes'] == 210
     assert set(ENVIRONMENT_KEYS) == {'runner_os', 'runner_arch', 'runner_image', 'cpu_model', 'compiler', 'reference'}
     assert len(CPU_IDS) == 2 and not any('9V74' in name or '8370' in name for name in CPU_IDS.values())
+    old_environment = {key: 'fixed-' + key for key in ENVIRONMENT_KEYS}
+    old_environment['cpu_model'] = 'AMD EPYC 7763 64-Core Processor'
+    legacy = {'id': 'amd-epyc-7763', 'environment': old_environment,
+              'budget_path': 'tests/reading_real/budgets.json', 'budget_sha256': 'c' * 64}
+    drafts = {}
+    for environment_id, cpu in CPU_IDS.items():
+        environment = dict(old_environment, cpu_model=cpu)
+        drafts[environment_id] = {'schema': 1, 'legacy_budget_sha256': 'c' * 64,
+            'environments': [copy.deepcopy(legacy), {'id': environment_id, 'environment': environment,
+                'budget_path': f'tests/reading_real/environments/{environment_id}/budgets.json',
+                'budget_sha256': 'd' * 64}]}
+    assert len(combine_entries(drafts, 'c' * 64)['environments']) == 3
+    first = sorted(CPU_IDS)[0]
+    registry_changes = {
+        'missing_cpu': lambda value: value.pop(first),
+        'wrong_legacy_hash': lambda value: value[first].update(legacy_budget_sha256='e' * 64),
+        'legacy_environment_changed': lambda value: value[first]['environments'][0]['environment'].update(reference='other'),
+        'extra_environment_field': lambda value: value[first]['environments'][1]['environment'].update(extra='unexpected'),
+        'missing_environment_field': lambda value: value[first]['environments'][1]['environment'].pop('reference'),
+        'wrong_cpu': lambda value: value[first]['environments'][1]['environment'].update(cpu_model='unmeasured 9V74'),
+        'unsafe_budget_path': lambda value: value[first]['environments'][1].update(budget_path='../budgets.json'),
+        'changed_legacy_path': lambda value: value[first]['environments'][0].update(budget_path='new-legacy.json'),
+    }
+    for change in registry_changes.values():
+        altered = copy.deepcopy(drafts); change(altered)
+        refused(lambda: combine_entries(altered, 'c' * 64))
     for unsafe in ('../outside', '/outside', 'reading-real/../../outside', 'C:/outside', 'a\\outside'):
         stream = io.BytesIO()
         with zipfile.ZipFile(stream, 'w') as archive:
@@ -82,7 +109,7 @@ def main():
         stream.seek(0)
         with tempfile.TemporaryDirectory() as directory, zipfile.ZipFile(stream) as archive:
             refused(lambda: extract_raw(archive, Path(directory)))
-    print(json.dumps({'protocol_only': True, 'positive': 2, 'refused': len(changes) + 2 + 5,
+    print(json.dumps({'protocol_only': True, 'positive': 3, 'refused': len(changes) + 2 + 5 + len(registry_changes),
                       'budget_formula_unchanged': True, 'passed': True}))
 
 
