@@ -38,6 +38,12 @@ static void state(void) {
     position,projection_bytes,index_bytes,workspace_bytes,windows_evicted,snapshot_bytes,
     !strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"reader"),fixed,zoom_percent,fixed_pages);
   char *complete=g_strconcat(data,metrics,NULL);g_free(data);g_free(metrics);data=complete;
+  GtkWidget *viewport=gtk_widget_get_ancestor(image,GTK_TYPE_SCROLLED_WINDOW);int x=0,y=0;
+  if(viewport && gtk_widget_translate_coordinates(viewport,window,0,0,&x,&y)) {
+    char *bounds=g_strdup_printf("page_x=%d\npage_y=%d\npage_width=%d\npage_height=%d\n",
+      x,y,gtk_widget_get_allocated_width(viewport),gtk_widget_get_allocated_height(viewport));
+    complete=g_strconcat(data,bounds,NULL);g_free(data);g_free(bounds);data=complete;
+  }
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
 }
 static void status(exr_status code,const char *message) {
