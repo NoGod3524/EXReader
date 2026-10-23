@@ -2,12 +2,15 @@
 # SPDX-License-Identifier: MIT
 """Collect published inputs in Actions; discovery never runs the engine."""
 import argparse
+from datetime import timezone
+from email.utils import parsedate_to_datetime
 import hashlib
 from html.parser import HTMLParser
 import json
 from pathlib import Path
 import subprocess
 import time
+import urllib.error
 import urllib.request
 import zipfile
 import xml.etree.ElementTree as ET
@@ -26,17 +29,48 @@ class PolicyText(HTMLParser):
         self.words.append(data)
 
 
+def retry_delay(value, attempt):
+    if value is not None:
+        value = value.strip()
+        try:
+            if value.isascii() and value.isdigit():
+                return float(value)
+            date = parsedate_to_datetime(value)
+            return max(0, date.replace(tzinfo=date.tzinfo or timezone.utc).timestamp() - time.time())
+        except (ValueError, TypeError, OverflowError):
+            pass
+    return 2 ** (attempt + 1)
+
+
 def fetch(url, limit):
     if not url.startswith('https://'):
         raise ValueError('HTTPS required')
     request = urllib.request.Request(url, headers={'User-Agent': 'EXReader-reading-corpus/1 (compatibility research)'})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        if not response.url.startswith('https://'):
-            raise ValueError('HTTPS redirect required')
-        data = response.read(limit + 1)
-        if len(data) > limit:
-            raise ValueError('Declared download bound exceeded')
-        return data, response.url
+    deadline = time.monotonic() + 180
+    for attempt in range(4):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError('Download retry window exhausted')
+        try:
+            with urllib.request.urlopen(request, timeout=min(60, remaining)) as response:
+                if not response.url.startswith('https://'):
+                    raise ValueError('HTTPS redirect required')
+                data = response.read(limit + 1)
+                if len(data) > limit:
+                    raise ValueError('Declared download bound exceeded')
+                return data, response.url
+        except urllib.error.HTTPError as error:
+            if not error.url.startswith('https://'):
+                raise ValueError('HTTPS redirect required') from error
+            if error.code != 429 or attempt == 3:
+                raise
+            delay = retry_delay(error.headers.get('Retry-After'), attempt)
+            if delay >= deadline - time.monotonic():
+                raise
+            error.close()
+            print(json.dumps({'collection_retry': {'url': url, 'status': 429, 'attempt': attempt + 1,
+                                                   'delay_seconds': delay}}), flush=True)
+            time.sleep(delay)
 
 
 def structure(path, entry):
