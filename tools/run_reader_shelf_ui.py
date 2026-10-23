@@ -36,6 +36,14 @@ def summarize(values):
                                   for q in (.5,.95,.99)},'max':max(ordered,default=None)}
 
 
+def pss_total(raw,pid):
+    match=re.search(r'\*\* MEMINFO in pid (\d+) \[org\.exreader\.host\] \*\*',raw)
+    total=re.search(r'TOTAL PSS:\s*(\d+)',raw)
+    if not total:total=re.search(r'^\s*TOTAL\s+(\d+)\s',raw,re.M)
+    require(match and int(match.group(1))==pid and total,'PSS raw PID/total differs')
+    return int(total.group(1))
+
+
 def analyze(root,identity):
     value=json.loads((root/'ui/validation.json').read_text())
     require(all(value.get(key)==item for key,item in identity.items()),'UI evidence source/run/attempt differs')
@@ -72,6 +80,14 @@ def analyze(root,identity):
     memory=json.loads((root/'pss-sampling.json').read_text());valid=[item for item in memory['samples'] if item.get('total_pss_kib') is not None]
     require(not memory['errors'] and len(valid)>=10,'external PSS sampling failed/incomplete')
     require({item['pid'] for item in valid}<=pids,'sampled PID is absent from Window traces')
+    require([item.get('slot') for item in memory['samples']]==list(range(len(memory['samples']))),'PSS slots missing or duplicated')
+    pss_reports=[]
+    for item in valid:
+        require(type(item['total_pss_kib']) is int and item['total_pss_kib']>0
+                and not item.get('process_changed_during_sample'),'invalid stable PSS sample')
+        path=root/'pss'/f'{item["slot"]}.txt';raw=path.read_bytes()
+        require(pss_total(raw.decode(errors='replace'),item['pid'])==item['total_pss_kib'],'PSS summary differs from raw total')
+        pss_reports.append({'slot':item['slot'],'pid':item['pid'],'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()})
     segments=[]
     for interval in value['intervals']:
         sample=[row['total_ns']/1e6 for row in ordinary if interval['started_elapsed_ns']<=row['callback_elapsed_ns']<=interval['finished_elapsed_ns']]
@@ -82,7 +98,7 @@ def analyze(root,identity):
             'first_interactive_ms':first['first_interactive_ms'],'completed_window_frame_ms':summarize([row['total_ns']/1e6 for row in ordinary]),
             'callback_drops':drops,'windows':windows,'scroll_segments':segments,
             'total_pss_kib':{'samples':len(valid),'median':statistics.median(item['total_pss_kib'] for item in valid),
-                             'sampled_peak':max(item['total_pss_kib'] for item in valid)},
+                             'sampled_peak':max(item['total_pss_kib'] for item in valid),'raw_reports':pss_reports},
             'performance_budget_accepted':False,'physical_device_execution':False,
             'measurement_limits':['One fixed API34 x86_64 emulator; instrumented candidate only.',
                 'FrameMetrics are completed Window callback durations, not display presentation or an isolated ListView cost.',
@@ -112,14 +128,9 @@ def main():
                 item={'slot':slot,'pid':int(text) if re.fullmatch(r'[0-9]+',text) else None}
                 if item['pid'] is not None:
                     raw=adb('shell','dumpsys','meminfo',str(item['pid']),filename=f'pss/{slot}.txt',timeout=15)
-                    match=re.search(r'\*\* MEMINFO in pid (\d+) \[org\.exreader\.host\] \*\*',raw)
-                    total=re.search(r'TOTAL PSS:\s*(\d+)',raw)
-                    if not total:total=re.search(r'^\s*TOTAL\s+(\d+)\s',raw,re.M)
                     after=adb('shell','pidof',APP,checked=False,timeout=10).strip()
                     if after!=str(item['pid']):item['process_changed_during_sample']=True
-                    else:
-                        require(match and int(match.group(1))==item['pid'] and total,'PSS PID/total differs')
-                        item['total_pss_kib']=int(total.group(1))
+                    else:item['total_pss_kib']=pss_total(raw,item['pid'])
                 item['collection_elapsed_ms']=(time.monotonic_ns()-start)/1e6;samples['samples'].append(item)
                 stop.wait(max(0,1-(time.monotonic_ns()-start)/1e9))
         except Exception as error:samples['errors'].append(type(error).__name__+': '+str(error))
