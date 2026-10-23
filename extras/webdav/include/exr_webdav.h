@@ -24,7 +24,7 @@ typedef struct {
   uint64_t max_download_bytes; /* 0 = 128 MiB; may only lower that ceiling. */
   size_t max_listing_bytes;    /* 0 = 4 MiB; may only lower that ceiling. */
   size_t max_entries;          /* 0 = 2000; may only lower that ceiling. */
-  unsigned timeout_ms;         /* 0 = 30000; maximum 120000, entire transfer. */
+  unsigned timeout_ms;         /* 0 = 30000; max 120000; deadline checked at I/O boundaries. */
 } exr_webdav_config;
 typedef struct {
   int (*cancelled)(void *context);
@@ -53,7 +53,7 @@ exr_webdav_status exr_webdav_list(exr_webdav_client *, const char *collection,
    and plain UTF-8 filename; a remote title is never a local path. No whole-book
    allocation. Failed/cancelled transfers remove their temporary file.
    Once publication commits, OK/published wins over later cancellation.
-   Pass the durable file to the existing exr_sideload_import_file on its owner
+   Pass the published file to the existing exr_sideload_import_file on its owner
    queue; this source module does not open SDK handles or write catalog rows.
    Cancellation is observed at I/O boundaries; a blocking native HTTPS call is
    bounded by the remaining transfer timeout, not an immediate interrupt. */

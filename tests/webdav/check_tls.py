@@ -47,9 +47,7 @@ def main():
     wrong_key, wrong_host = certificate('wrong-host', 'wrong.example')
     if os.name == 'nt':
         for cert in (trusted, wrong_host):
-            subprocess.run(['powershell', '-NoProfile', '-Command',
-                            "Import-Certificate -FilePath '" + str(cert).replace("'", "''") +
-                            "' -CertStoreLocation Cert:\\LocalMachine\\Root | Out-Null"], check=True)
+            subprocess.run(['certutil', '-addstore', '-f', 'Root', str(cert)], check=True, capture_output=True)
     else:
         for cert in (trusted, wrong_host):
             subprocess.run(['sudo', 'cp', str(cert), '/usr/local/share/ca-certificates/exr-dav-' + cert.name], check=True)
@@ -90,7 +88,10 @@ def main():
             self.send_header('Content-Length', str(len(data)))
             self.end_headers()
             if data:
-                self.wfile.write(data)
+                try:
+                    self.wfile.write(data)
+                except (BrokenPipeError, ConnectionResetError, ssl.SSLError):
+                    self.close_connection = True
 
         def record(self):
             if self.command == 'PROPFIND':
@@ -260,7 +261,7 @@ def main():
         for i, url in enumerate(('http://localhost/dav/', 'https://user:secret@localhost/dav/',
                                  root[:-1], root + '?token=secret', root + '%2e%2e/')):
             run('root_reject_' + str(i), ARG, root_url=url)
-        for i, filename in enumerate(('../book.epub', 'a/b.epub', 'a\\b.epub', 'a:stream', '.', 'a.')):
+        for i, filename in enumerate(('../book.epub', 'a/b.epub', 'a\\b.epub', 'a:stream', '.', 'a.', 'CON.txt', 'LPT1.epub', 'a?.epub')):
             run('local_name_reject_' + str(i), ARG, filename=filename)
         def existing(downloads):
             (downloads / 'book.epub').write_bytes(b'keep original')
