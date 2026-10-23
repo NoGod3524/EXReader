@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from reading_required import (GROUPS, ci_identity, expected_artifacts, verify_metadata,
-                              expected_jobs, verify_jobs, workflow_identity)
+                              expected_jobs, verify_jobs, workflow_identity, verify_publisher)
 
 source, run, attempt = 'a' * 40, '12', '3'
 needs = {key: {'result': 'success'} for key in GROUPS}
@@ -77,4 +77,14 @@ for change in [lambda j: j.pop(), lambda j: j.append(copy.deepcopy(j[0])),
     try: verify_jobs(source, run, attempt, mutant)
     except ValueError: checks += 1
     else: raise AssertionError('accepted missing or reused upstream job')
+ruleset = json.loads((Path(__file__).resolve().parents[1] / 'docs/reading-required-ruleset.json').read_text())
+publisher = {'id': 1, 'name': 'reading-required', 'head_sha': source,
+             'app': {'id': 15368, 'slug': 'github-actions'}}
+verify_publisher(publisher, source, ruleset); checks += 1
+for change in [lambda p: p['app'].update(id=1), lambda p: p['app'].update(slug='foreign-app'),
+               lambda p: p.update(head_sha='d' * 40), lambda p: p.update(name='other-check')]:
+    mutant = copy.deepcopy(publisher); change(mutant)
+    try: verify_publisher(mutant, source, ruleset)
+    except ValueError: checks += 1
+    else: raise AssertionError('accepted foreign check publisher')
 print(json.dumps({'accepted': True, 'checks': checks, 'sdk_credit': 0, 'real_document_credit': 0}))
