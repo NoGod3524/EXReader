@@ -1,0 +1,228 @@
+// SPDX-License-Identifier: MIT
+package org.exreader.host;
+
+import android.app.Activity;
+import android.app.Instrumentation;
+import android.content.Context;
+import android.database.Cursor;
+import android.os.Bundle;
+import android.os.CancellationSignal;
+import android.os.OperationCanceledException;
+import android.os.SystemClock;
+import android.util.Log;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+/** Thousands of real public-SDK imports, followed by the unchanged production mapping repair. */
+public final class ShelfCatalogTest extends Instrumentation {
+    private static final int TXT_BOOKS=2200, TOTAL=TXT_BOOKS+2;
+    private static final String[] NAMES={"realSdkImportsAndProductionRepair", "forwardKeysetHasNoMissingOrRepeatedBooks",
+            "reverseKeysetMatchesForwardOrder", "sameTitleUsesSourceKeyTieBreak", "titleAuthorAndLiteralSearch",
+            "cancelsQueriesAndRejectsWrongOwner", "hidesUnmappedAndDeletedProducts", "repairsNewImportBeforeRefresh"};
+    private interface Check { void run() throws Exception; }
+    private Context context;
+    private File directory;
+    private Bundle arguments;
+    private BookStore store;
+    private Set<String> expected=new HashSet<>();
+
+    @Override public void onCreate(Bundle arguments) { super.onCreate(arguments); this.arguments=arguments; start(); }
+    @Override public void onStart() {
+        context=getTargetContext();
+        if (arguments!=null && "seed-ui".equals(arguments.getString("phase"))) { seedUi(); return; }
+        int failures=0;
+        Check[] checks={this::realSdkImportsAndProductionRepair,this::forwardKeysetHasNoMissingOrRepeatedBooks,
+                this::reverseKeysetMatchesForwardOrder,this::sameTitleUsesSourceKeyTieBreak,this::titleAuthorAndLiteralSearch,
+                this::cancelsQueriesAndRejectsWrongOwner,this::hidesUnmappedAndDeletedProducts,this::repairsNewImportBeforeRefresh};
+        try {
+            directory=new File(context.getCacheDir(),"shelf-catalog"); remove(directory); require(directory.mkdirs(),"test folder");
+            seed(directory,false);
+            store=new BookStore(context,new File(directory,"library.db"));
+            for (int index=0;index<checks.length;index++) {
+                sendStatus(1,status(NAMES[index],index+1));
+                Bundle result=status(NAMES[index],index+1);
+                try { checks[index].run(); result.putString("stream","."); sendStatus(0,result); }
+                catch (Throwable error) {
+                    failures++; result.putString("stack",Log.getStackTraceString(error));
+                    result.putString("stream","Failure in "+NAMES[index]+": "+error); sendStatus(-2,result);
+                }
+            }
+        } catch (Throwable error) { failures++; Log.e("EXRShelfTest","Setup failed",error); }
+        finally {
+            if (store!=null) store.close();
+            try { if(directory!=null)remove(directory); } catch(Exception error) { failures++; }
+        }
+        Bundle result=new Bundle();
+        result.putString("stream",failures==0 ? "\nOK ("+NAMES.length+" tests)\n"
+                : "\nFAILURES!!! Tests run: "+NAMES.length+", Failures: "+failures+"\n");
+        finish(failures==0 ? Activity.RESULT_OK : Activity.RESULT_CANCELED,result);
+    }
+
+    private Bundle status(String name,int index) {
+        Bundle value=new Bundle(); value.putString("id","InstrumentationTestRunner");
+        value.putString("class",getClass().getName()); value.putString("test",name);
+        value.putInt("numtests",NAMES.length); value.putInt("current",index); return value;
+    }
+
+    private void seed(File root,boolean prefs) throws Exception {
+        File sources=new File(root,"books"); require(sources.isDirectory() || sources.mkdirs(),"source folder");
+        android.content.SharedPreferences.Editor editor=context.getSharedPreferences("host",Context.MODE_PRIVATE).edit();
+        try(NativeLibrary sdk=new NativeLibrary(new File(root,"library.db").getPath())) {
+            for(int index=0;index<TXT_BOOKS+1;index++) {
+                String title=index==TXT_BOOKS ? "100%_literal" : index<130 ? "Tie title" : String.format(Locale.ROOT,"Book %04d",index);
+                byte[] bytes=("Real short TXT source "+index+". Read, paginate, search and reopen this book.\n").getBytes(StandardCharsets.UTF_8);
+                File file=new File(sources,"source-"+index+".txt"); write(file,bytes);
+                NativeLibrary.ImportResult imported=sdk.importFile(file.getPath(),NativeLibrary.FORMAT_TXT,title);
+                require(imported.created,"unique SDK TXT import");
+                expected.add("txt:"+sha(bytes));
+                if(prefs)editor.putString("path_"+imported.id,file.getPath()).putLong("size_"+imported.id,bytes.length);
+            }
+            File authored=new File(sources,"authored.epub"); epub(authored);
+            NativeLibrary.ImportResult imported=sdk.importLegacyFile(authored.getPath(),NativeLibrary.FORMAT_EPUB,"Authored sample");
+            require(imported.created,"real authored EPUB import");
+            expected.add("epub:"+sha(read(authored)));
+            if(prefs)editor.putString("path_"+imported.id,authored.getPath()).putLong("size_"+imported.id,authored.length());
+        }
+        if(prefs)require(editor.commit(),"seeded host path preferences");
+    }
+
+    private List<CatalogStore.ShelfBook> all(String query) {
+        List<CatalogStore.ShelfBook> result=new ArrayList<>(); CatalogStore.ShelfKey after=null;
+        while(true) {
+            List<CatalogStore.ShelfBook> page=store.shelfPage(query,after,false,false,new CancellationSignal());
+            require(page.size()<=50,"strict page bound"); result.addAll(page);
+            if(page.size()<50)break;
+            after=page.get(page.size()-1).key;
+            require(result.size()<=TOTAL+1,"keyset did not advance");
+        }
+        return result;
+    }
+
+    private void realSdkImportsAndProductionRepair() {
+        require(!store.metadataRepairPending(),"all real SDK sources mapped");
+        require(expected.size()==TOTAL,"independent source identity count");
+        require(all("").size()==TOTAL,"real imported product count");
+    }
+    private void forwardKeysetHasNoMissingOrRepeatedBooks() {
+        List<CatalogStore.ShelfBook> rows=all(""); Set<String> observed=new HashSet<>();
+        CatalogStore.ShelfBook previous=null;
+        for(CatalogStore.ShelfBook book:rows) {
+            require(observed.add(book.key.bookKey),"duplicate source across keysets");
+            if(previous!=null)require(compare(previous.key,book.key)<0,"strict stable ordering");
+            previous=book;
+        }
+        require(observed.equals(expected),"all actual SDK sources appear exactly once");
+    }
+    private void reverseKeysetMatchesForwardOrder() {
+        List<CatalogStore.ShelfBook> expectedRows=all("");
+        CatalogStore.ShelfKey before=new CatalogStore.ShelfKey("\uffff","txt:"+"f".repeat(64));
+        int end=expectedRows.size();
+        while(end>0) {
+            List<CatalogStore.ShelfBook> page=store.shelfPage("",before,true,false,new CancellationSignal());
+            require(page.size()==Math.min(50,end),"reverse page size");
+            for(int at=0;at<page.size();at++)require(page.get(at).key.bookKey.equals(expectedRows.get(end-page.size()+at).key.bookKey),"reverse page content");
+            before=page.get(0).key; end-=page.size();
+        }
+        require(store.shelfPage("",before,true,false,new CancellationSignal()).isEmpty(),"first-page boundary");
+    }
+    private void sameTitleUsesSourceKeyTieBreak() {
+        List<CatalogStore.ShelfBook> rows=all("Tie title"); require(rows.size()==130,"same-title corpus size");
+        for(int at=1;at<rows.size();at++)require(rows.get(at-1).key.bookKey.compareTo(rows.get(at).key.bookKey)<0,"source identity tie-break");
+    }
+    private void titleAuthorAndLiteralSearch() {
+        require(all("BOOK 0200").size()==1,"title case-insensitive search");
+        require(all("Shelf Author").size()==1,"author from real legacy SDK import");
+        require(all("100%_").size()==1,"percent and underscore are literal user input");
+        require(all("absent title").isEmpty(),"empty search results");
+    }
+    private void cancelsQueriesAndRejectsWrongOwner() throws Exception {
+        CancellationSignal canceled=new CancellationSignal(); canceled.cancel();
+        try { store.shelfPage("",null,false,false,canceled); throw new AssertionError("canceled query returned"); }
+        catch(OperationCanceledException expected) { }
+        AtomicReference<Throwable> result=new AtomicReference<>();
+        Thread other=new Thread(()->{try {store.shelfPage("",null,false,false,new CancellationSignal());}catch(Throwable error){result.set(error);}});
+        other.start(); other.join(5000);
+        require(!other.isAlive() && result.get() instanceof IllegalStateException,"owner thread confinement");
+    }
+    private void hidesUnmappedAndDeletedProducts() throws Exception {
+        CatalogStore.ShelfBook book=all("").get(0);
+        try(CatalogStore product=new CatalogStore(context,new File(directory,"reader-catalog.db"))) {
+            product.database().execSQL("UPDATE reader_books SET deleted=1 WHERE book_key=?",new Object[]{book.key.bookKey});
+            require(store.localShelfBook(book.sdkBookId)==null && all("").size()==TOTAL-1,"deleted products hidden");
+            product.database().execSQL("UPDATE reader_books SET deleted=0 WHERE book_key=?",new Object[]{book.key.bookKey});
+            product.removeLocalBook(book.sdkBookId);
+            require(store.localShelfBook(book.sdkBookId)==null && all("").size()==TOTAL-1,"unmapped products hidden");
+        }
+        store.repairMissingMappings(); require(all("").size()==TOTAL,"production repair recovers the real local source");
+    }
+    private void repairsNewImportBeforeRefresh() throws Exception {
+        File source=new File(directory,"new.txt"); write(source,"A genuinely new source after the initial shelf snapshot.\n".getBytes(StandardCharsets.UTF_8));
+        NativeLibrary.ImportResult book=store.importFile(source.getPath(),NativeLibrary.FORMAT_TXT,"New arrival");
+        require(book.created && store.localShelfBook(book.id)==null,"SDK commit precedes product mapping");
+        store.repairMissingMappings();
+        require(all("New arrival").size()==1 && store.localShelfBook(book.id)!=null,"refreshed page sees production repair");
+    }
+
+    private void seedUi() {
+        try {
+            directory=context.getFilesDir(); seed(directory,true);
+            try(BookStore product=new BookStore(context,new File(directory,"library.db"))) {
+                store=product; require(all("").size()==TOTAL && !product.metadataRepairPending(),"UI corpus production mapping");
+            }
+            store=null;
+            File output=new File(context.getExternalFilesDir(null),"shelf-tests"); require(output.isDirectory() || output.mkdirs(),"UI seed evidence folder");
+            JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id"))
+                    .put("attempt",arguments.getString("attempt")).put("books",TOTAL).put("txt_books",TXT_BOOKS+1)
+                    .put("legacy_epub_books",1).put("source_keys",new JSONArray(expected)).put("production_mapping_complete",true);
+            write(new File(output,"seed.json"),report.toString(2).getBytes(StandardCharsets.UTF_8));
+            Bundle result=new Bundle(); result.putString("stream","EXR_SHELF_SEEDED "+TOTAL+"\n"); finish(Activity.RESULT_OK,result);
+        } catch(Throwable error) {
+            Bundle result=new Bundle(); result.putString("stream","EXR_SHELF_SEED_FAILED "+error+"\n"); finish(Activity.RESULT_CANCELED,result);
+        }
+    }
+
+    private static int compare(CatalogStore.ShelfKey a,CatalogStore.ShelfKey b) {
+        int title=a.sortTitle.compareTo(b.sortTitle); return title==0 ? a.bookKey.compareTo(b.bookKey) : title;
+    }
+    private static String sha(byte[] raw) throws Exception {
+        byte[] digest=MessageDigest.getInstance("SHA-256").digest(raw); StringBuilder value=new StringBuilder();
+        for(byte part:digest)value.append(String.format(Locale.ROOT,"%02x",part&255)); return value.toString();
+    }
+    private static void write(File file,byte[] bytes) throws Exception { try(FileOutputStream out=new FileOutputStream(file)){out.write(bytes);} }
+    private static byte[] read(File file) throws Exception { try(java.io.FileInputStream in=new java.io.FileInputStream(file)){return in.readAllBytes();} }
+    private static void require(boolean value,String message) { if(!value)throw new AssertionError(message); }
+    private static void remove(File file) throws Exception {
+        if(!file.exists())return;
+        if(file.isDirectory())for(File child:file.listFiles())remove(child);
+        require(file.delete(),"fixture cleanup");
+    }
+    private static void epub(File file) throws Exception {
+        String[] names={"mimetype","META-INF/container.xml","OEBPS/book.opf","OEBPS/chapter.xhtml"};
+        String[] texts={"application/epub+zip",
+                "<?xml version=\"1.0\"?><container xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\" version=\"1.0\"><rootfiles><rootfile full-path=\"OEBPS/book.opf\" media-type=\"application/oebps-package+xml\"/></rootfiles></container>",
+                "<package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\" unique-identifier=\"uid\"><metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\"><dc:identifier id=\"uid\">shelf-author</dc:identifier><dc:title>Authored sample</dc:title><dc:creator>Shelf Author</dc:creator><dc:language>en</dc:language></metadata><manifest><item id=\"c\" href=\"chapter.xhtml\" media-type=\"application/xhtml+xml\"/></manifest><spine><itemref idref=\"c\"/></spine></package>",
+                "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>Authored sample</title></head><body><p>A real source with author metadata for the product shelf.</p></body></html>"};
+        try(ZipOutputStream zip=new ZipOutputStream(new FileOutputStream(file))) {
+            for(int at=0;at<names.length;at++) {
+                byte[] bytes=texts[at].getBytes(StandardCharsets.UTF_8); ZipEntry entry=new ZipEntry(names[at]); entry.setTime(0);
+                if(at==0){CRC32 crc=new CRC32();crc.update(bytes);entry.setMethod(ZipEntry.STORED);entry.setSize(bytes.length);entry.setCompressedSize(bytes.length);entry.setCrc(crc.getValue());}
+                zip.putNextEntry(entry);zip.write(bytes);zip.closeEntry();
+            }
+        }
+    }
+}

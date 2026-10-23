@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
+import android.os.CancellationSignal;
 import android.util.JsonReader;
 import android.util.JsonToken;
 
@@ -22,6 +23,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -94,6 +96,73 @@ final class CatalogStore implements AutoCloseable {
     SQLiteDatabase database() {
         requireOwner();
         return database;
+    }
+
+    static final class ShelfKey {
+        final String sortTitle, bookKey;
+        ShelfKey(String sortTitle, String bookKey) {
+            if (sortTitle == null || bookKey == null) throw new IllegalArgumentException("Shelf key is incomplete");
+            this.sortTitle = sortTitle; this.bookKey = bookKey;
+        }
+    }
+
+    static final class ShelfBook {
+        final ShelfKey key;
+        final long sdkBookId, sourceBytes;
+        final String title, author, format;
+        ShelfBook(Cursor row) {
+            key = new ShelfKey(row.getString(0), row.getString(1));
+            sdkBookId = row.getLong(2); title = row.getString(3); author = row.getString(4);
+            format = row.getString(5); sourceBytes = row.getLong(6);
+        }
+    }
+
+    private static final String SHELF_COLUMNS = "SELECT b.sort_title,b.book_key,l.sdk_book_id,b.title,b.author,b.format,b.source_bytes "
+            + "FROM reader_books b JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0";
+
+    /** A strict 50-row keyset; remote-only and tombstoned books have no runnable shelf row. */
+    List<ShelfBook> shelfPage(String query, ShelfKey anchor, boolean before, boolean inclusive,
+                              CancellationSignal cancellation) {
+        requireOwner();
+        if (query == null || query.length() > 256 || query.indexOf('\0') >= 0)
+            throw new IllegalArgumentException("Invalid shelf search");
+        cancellation.throwIfCanceled();
+        StringBuilder sql = new StringBuilder(SHELF_COLUMNS);
+        List<String> args = new ArrayList<>();
+        if (!query.isEmpty()) {
+            String escaped = Normalizer.normalize(query, Normalizer.Form.NFC)
+                    .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+            sql.append(" AND (b.title LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\')");
+            args.add("%" + escaped + "%"); args.add("%" + escaped + "%");
+        }
+        if (anchor != null) {
+            sql.append(" AND (b.sort_title,b.book_key) ").append(before ? "<" : inclusive ? ">=" : ">")
+                    .append(" (?,?)");
+            args.add(anchor.sortTitle); args.add(anchor.bookKey);
+        }
+        sql.append(before ? " ORDER BY b.sort_title DESC,b.book_key DESC LIMIT 50"
+                : " ORDER BY b.sort_title,b.book_key LIMIT 50");
+        List<ShelfBook> books = new ArrayList<>();
+        try (Cursor rows = database.rawQuery(sql.toString(), args.toArray(new String[0]), cancellation)) {
+            while (rows.moveToNext()) {
+                cancellation.throwIfCanceled();
+                books.add(new ShelfBook(rows));
+            }
+        }
+        if (before) Collections.reverse(books);
+        return books;
+    }
+
+    ShelfBook localShelfBook(long sdkBookId) {
+        requireOwner();
+        try (Cursor row = database.rawQuery(SHELF_COLUMNS + " AND l.sdk_book_id=? LIMIT 1",
+                new String[]{Long.toString(sdkBookId)})) { return row.moveToFirst() ? new ShelfBook(row) : null; }
+    }
+
+    ShelfBook localShelfTitle(String title) {
+        requireOwner();
+        try (Cursor row = database.rawQuery(SHELF_COLUMNS + " AND b.title=? ORDER BY b.sort_title,b.book_key LIMIT 1",
+                new String[]{title})) { return row.moveToFirst() ? new ShelfBook(row) : null; }
     }
 
     boolean hasLocalBook(long id) {

@@ -102,9 +102,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private Button cancelButton;
     private ReaderView readerView;
 
-    private final List<NativeLibrary.Book> books = new ArrayList<>();
-    private final List<String> shelfRows = new ArrayList<>();
-    private ArrayAdapter<String> shelfAdapter;
+    private CatalogShelf catalogShelf;
+    private EditText shelfSearch;
     private ArrayAdapter<String> noteAdapter;
     private List<?> shownNotes = new ArrayList<>();
     private final List<String> noteRows = new ArrayList<>();
@@ -219,8 +218,15 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         cancelButton = findViewById(R.id.cancel_button);
         readerView = findViewById(R.id.reader_view);
 
-        shelfAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, shelfRows);
-        bookList.setAdapter(shelfAdapter);
+        shelfSearch=findViewById(R.id.shelf_search);
+        ShelfStatusView shelfSummary=findViewById(R.id.shelf_summary);
+        catalogShelf=new CatalogShelf(this,bookList,shelfSearch,shelfSummary,prefs,
+                action->{ if (worker!=null) worker.execute(action); },
+                (query,anchor,before,inclusive,cancellation)->{
+                    if (store==null) throw new IllegalStateException("Library is still opening");
+                    return store.shelfPage(query,anchor,before,inclusive,cancellation);
+                },error->setStatus("Shelf error: "+message(error)));
+        shelfSummary.bind(catalogShelf);
         noteAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, noteRows);
         noteList.setAdapter(noteAdapter);
         statusText.setContentDescription("Status");
@@ -256,13 +262,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         });
         bookList.setOnItemClickListener((parent, view, position, id) -> {
             if (operation != 0 || pageBusy) return;
-            if (position < 0 || position >= books.size()) return;
-            NativeLibrary.Book book = books.get(position);
-            if (currentBook != null && currentBook.id == book.id && current != null) {
-                showReader(book);
+            if (position < 0 || position >= catalogShelf.getCount() || id<=0) return;
+            catalogShelf.save();
+            shelfSearch.clearFocus();
+            ((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE))
+                    .hideSoftInputFromWindow(shelfSearch.getWindowToken(),0);
+            if (currentBook != null && currentBook.id == id && current != null) {
+                showReader(currentBook);
                 return;
             }
-            openBook(book.id, -1, -1);
+            openBook(id, -1, -1);
         });
         noteList.setOnItemClickListener((parent, view, position, id) -> {
             if (operation != 0 || pageBusy || currentBook == null ||
@@ -300,21 +309,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
     private void loadShelf(boolean maybeOpen) {
         if (worker == null) return;
-        worker.execute(() -> {
-            List<NativeLibrary.Book> loaded;
-            try {
-                loaded = store == null ? new ArrayList<>() : store.books();
-            } catch (Throwable error) {
-                postStatus("Shelf error: " + message(error));
-                return;
-            }
-            postUi(() -> {
-                books.clear();
-                books.addAll(loaded);
-                shelfRows.clear();
-                for (NativeLibrary.Book book : books) shelfRows.add(shelfRow(book));
-                shelfAdapter.notifyDataSetChanged();
-            });
+        postUi(() -> {
             if (maybeOpen) {
                 long target = restoreBook;
                 if (target <= 0) target = prefs.getLong("lastBook", 0);
@@ -323,18 +318,12 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     final long openId = target;
                     final long openOffset = restoreOffset;
                     final int openPage = restorePage;
-                    postUi(() -> openBook(openId, openOffset, openPage));
+                    openBook(openId, openOffset, openPage);
                 } else {
-                    postUi(() -> showShelf(false));
+                    showShelf(false);
                 }
-            }
+            } else catalogShelf.load();
         });
-    }
-
-    private String shelfRow(NativeLibrary.Book book) {
-        long bytes = prefs.getLong("size_" + book.id, 0);
-        String position = book.fixed() ? "page " + (book.position + 1) : "offset " + book.position;
-        return book.title + "\n" + formatName(book.format) + " · " + humanBytes(bytes) + " · " + position;
     }
 
     private HostTask beginTask(int kind) {
@@ -351,7 +340,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private void setActionsEnabled(boolean enabled) {
-        for (View view : new View[]{importButton, refreshButton, bookList, fontDown, fontUp,
+        for (View view : new View[]{importButton, refreshButton, bookList, shelfSearch, fontDown, fontUp,
                 zoomDown, zoomUp, selectButton, notesButton, copyButton, annotateButton, readerView}) {
             view.setEnabled(enabled);
         }
@@ -397,18 +386,12 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             setStatus("Library is still opening");
             return;
         }
-        NativeLibrary.Book book = null;
-        for (NativeLibrary.Book candidate : books) if (candidate.id == id) book = candidate;
-        if (book == null) {
-            setStatus("Book is missing from the shelf");
-            showShelf(false);
-            return;
-        }
-        final NativeLibrary.Book target = book;
+        CatalogStore.ShelfBook shown=catalogShelf.cachedBook(id);
+        final String displayTitle=shown==null ? "book" : shown.title;
         final HostTask task = beginTask(2);
         final long gen = generation;
         final float requestedFont = fontSize, requestedZoom = zoom;
-        showLoading("Opening " + target.title + "...", true);
+        showLoading("Opening " + displayTitle + "...", true);
         final long requestedOffset = offset;
         final int requestedPage = page;
         worker.execute(() -> {
@@ -419,6 +402,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             String notice = null;
             try {
                 task.check();
+                if (store.localShelfBook(id)==null) throw new IOException("Book is not available on this device");
+                // The frozen SDK exposes metadata as an enumeration; keep that read on its owner,
+                // only for the chosen book, instead of rebuilding the entire shelf on every refresh.
+                final NativeLibrary.Book target=store.find(id);
+                if (target==null) throw new IOException("Book is missing from the SDK library");
                 String path = prefs.getString("path_" + target.id, null);
                 boolean bounded = target.format==NativeLibrary.FORMAT_EPUB && store.bounded(target.id);
                 Log.i(TAG,"storage mode book="+target.id+" bounded="+bounded);
@@ -481,7 +469,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     refreshNotesCount();
                 });
             } catch (Throwable error) {
-                taskFailed(gen, "Could not open " + target.title + ": ", error);
+                taskFailed(gen, "Could not open " + displayTitle + ": ", error);
             } finally {
                 if (load != null) load.close();
                 if (!accepted) {
@@ -1016,10 +1004,15 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         }
         String title = intent.getStringExtra("review_open_title");
         if (title != null) {
-            for (NativeLibrary.Book book : books) {
-                if (title.equals(book.title)) { openBook(book.id, -1, -1); return; }
-            }
-            setStatus("Review target is missing from the shelf");
+            worker.execute(()->{
+                try {
+                    CatalogStore.ShelfBook book=store.localShelfTitle(title);
+                    postUi(()->{
+                        if (book==null) setStatus("Review target is missing from the shelf");
+                        else openBook(book.sdkBookId,-1,-1);
+                    });
+                } catch (Throwable error) { postStatus("Review shelf: "+message(error)); }
+            });
         }
     }
 
@@ -1364,6 +1357,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private void saveInstancePrefs() {
+        if (catalogShelf!=null) catalogShelf.save();
         prefs.edit().putLong("lastBook", bookId)
                 .putBoolean("lastReader", readerPanel.getVisibility() == View.VISIBLE)
                 .putFloat("font", fontSize).putFloat("zoom", zoom).apply();
@@ -1398,6 +1392,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     @Override protected void onDestroy() {
+        if (catalogShelf!=null) catalogShelf.close();
         destroyed = true;
         if (activeTask != null) activeTask.cancel();
         ++generation;
