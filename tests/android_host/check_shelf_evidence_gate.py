@@ -40,6 +40,11 @@ def main():
         shot=next((root/'ui-execution/ui/shots').glob('*.png'));alter(shot,lambda raw:b'','missing_ui_screenshot')
         trace=next((root/'ui-execution/windows').glob('*.jsonl'));alter(trace,lambda raw:raw+b'{','truncated_window_trace')
         edit(root/'ui-execution/pss-sampling.json','pss_sampler_error',lambda value:value['errors'].append('controlled refusal probe'))
+        memory=root/'ui-execution/pss-sampling.json'
+        slot=next(item['slot'] for item in json.loads(memory.read_text())['samples'] if item.get('total_pss_kib') is not None)
+        alter(root/'ui-execution/pss'/f'{slot}.txt',lambda raw:b'','missing_pss_original')
+        edit(memory,'pss_summary_differs_from_original',lambda value:next(item for item in value['samples']
+             if item.get('total_pss_kib') is not None).update(total_pss_kib=1))
         edit(mapping,'mapping_rejected',lambda value:value.update(accepted=False))
         edit(mapping,'mapping_old_source',lambda value:value.update(source_sha='0'*40))
         edit(mapping,'missing_process_recovery',lambda value:value.update(process_recovery_passed=1))
