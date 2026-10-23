@@ -130,6 +130,14 @@ static void shelf_present(reader_result *result) {
     g_free(restore_key);restore_key=g_strdup(shelf_top_key);restore_offset=shelf_top_offset;
     shelf_restoring=TRUE;restore_layout=shelf_layout+1;
     if(!result->shelf_direction) rows_clear(shelf);
+    gboolean trimmed=FALSE;
+    GList *old_rows=gtk_container_get_children(GTK_CONTAINER(shelf));size_t old_count=g_list_length(old_rows);
+    while(old_count+result->book_count>150) {
+      GList *item=result->shelf_direction<0 ? g_list_last(old_rows):old_rows;
+      gtk_widget_destroy(GTK_WIDGET(item->data));old_rows=g_list_delete_link(old_rows,item);
+      old_count--;shelf_evicted++;trimmed=TRUE;
+    }
+    g_list_free(old_rows);
     for(size_t i=0;i<result->book_count;i++) {
       exr_book *book=&result->books[i];reader_shelf_cursor *cursor=&result->cursors[i];
       GtkWidget *row=gtk_list_box_row_new();char *caption=g_strdup_printf("%s\n%s",book->title,book->author);
@@ -147,15 +155,16 @@ static void shelf_present(reader_result *result) {
     GList *children=gtk_container_get_children(GTK_CONTAINER(shelf));size_t count=g_list_length(children);
     shelf_before=result->shelf_direction>0 ? shelf_before:result->shelf_before;
     shelf_after=result->shelf_direction<0 ? shelf_after:result->shelf_after;
-    while(count>150) {
-      GList *item=result->shelf_direction<0 ? g_list_last(children):children;
-      gtk_widget_destroy(GTK_WIDGET(item->data));children=g_list_delete_link(children,item);count--;shelf_evicted++;
+    if(trimmed) {
       if(result->shelf_direction<0) shelf_after=TRUE;else shelf_before=TRUE;
     }
     book_count=count;shelf_max_cached=MAX(shelf_max_cached,(unsigned)count);g_list_free(children);
     gtk_widget_show_all(shelf);gtk_widget_queue_resize(shelf);shelf_loading=FALSE;shelf_schedule_restore();
     return;
   }
+#endif
+#ifdef EXR_READER_PRODUCT_CATALOG
+  shelf_loading=shelf_restoring=shelf_before=shelf_after=FALSE;
 #endif
   rows_clear(shelf);book_count=result->book_count;
   for(size_t i=0;i<result->book_count;i++) {
@@ -349,7 +358,7 @@ static gpointer work(gpointer font_path) {
 }
 #ifdef EXR_READER_PRODUCT_CATALOG
 static void shelf_request(int direction,gboolean anchor) {
-  if(closing || busy || saving || save_failed) return;
+  if(closing || busy || saving || save_failed || shelf_pending) return;
   host_job *job=g_new0(host_job,1);job->generation=g_atomic_int_get(&generation);
   job->shelf_generation=g_atomic_int_add(&shelf_generation,1)+1;
   job->command.action=READER_SHELF_QUERY;job->command.direction=direction;
