@@ -12,7 +12,7 @@ TESTS={'realSdkImportsAndProductionRepair','forwardKeysetHasNoMissingOrRepeatedB
        'reverseKeysetMatchesForwardOrder','sameTitleUsesSourceKeyTieBreak','titleAuthorAndLiteralSearch',
        'cancelsQueriesAndRejectsWrongOwner','hidesUnmappedAndDeletedProducts','repairsNewImportBeforeRefresh',
        'canceledOldSearchCannotReplaceNewResults','missingEndAnchorFallsBackWithinSameFilter',
-       'pendingRestoreRetainsOnlySameQueryAnchor'}
+       'pendingRestoreRetainsOnlySameQueryAnchor','canonicalSearchPreservesDisplayBytes'}
 
 
 def main():

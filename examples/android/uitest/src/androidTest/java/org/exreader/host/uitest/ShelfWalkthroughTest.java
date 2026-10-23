@@ -105,7 +105,7 @@ public final class ShelfWalkthroughTest {
             assertEquals(130,found.size());detail.put("unique_sources",found.size()).put("last",value);
         });
         run("title_author_literal_and_empty_search",detail->{
-            for(String query:new String[]{"BOOK 0200","Shelf Author","100%_","missing shelf title"}){
+            for(String query:new String[]{"BOOK 0200","Shelf Author","100%_","Caf\u00e9 source","R\u00e9n\u00e9","missing shelf title"}){
                 search(query);JSONObject value=ready(query);assertEquals(query.startsWith("missing")?0:1,value.getInt("cached_rows"));
                 bounds(value);detail.put(query,value);
             }
