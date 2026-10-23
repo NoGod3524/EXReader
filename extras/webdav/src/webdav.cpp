@@ -12,6 +12,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <filesystem>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -223,11 +224,34 @@ struct sink {
   }
 };
 struct response { int status=0;std::string location;uint64_t length=0;bool has_length=false; };
+struct upload {
+  std::FILE *file=nullptr;uint64_t length=0,sent=0;const exr_webdav_control *control;
+  upload(const char *name,uint64_t expected,const exr_webdav_control *c):length(expected),control(c){
+    if(!name || !expected || expected>UINT64_C(128)*1024*1024)reject(EXR_DAV_ARGUMENT,"Invalid bounded upload file");
+    std::filesystem::path p=std::filesystem::u8path(name);
+    if(std::filesystem::is_symlink(std::filesystem::symlink_status(p)) || !std::filesystem::is_regular_file(p) || std::filesystem::file_size(p)!=expected)
+      reject(EXR_DAV_IO,"Upload source is not a regular exact-length private file");
+#ifdef _WIN32
+    file=_wfopen(p.c_str(),L"rb");
+#else
+    int fd=open(name,O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd>=0)file=fdopen(fd,"rb");if(fd>=0&&!file)close(fd);
+#endif
+    if(!file)reject(EXR_DAV_IO,"Upload source is unavailable");
+  }
+  ~upload(){if(file)std::fclose(file);}
+  size_t read(void *data,size_t capacity){
+    cancelled(control);size_t want=(size_t)std::min<uint64_t>(capacity,length-sent);
+    size_t got=std::fread(data,1,want,file);if(got!=want)reject(EXR_DAV_IO,"Upload source changed or became unreadable");
+    sent+=got;if(control&&control->progress)control->progress(control->context,sent);return got;
+  }
+};
 bool redirect(int status) { return status==301||status==302||status==307||status==308; }
 void head(const response &r,int expected,sink &s) {
   if(redirect(r.status)) return;
   if(r.status==401) reject(EXR_DAV_AUTH,"Credentials required for the configured origin",401);
-  if(r.status!=expected) reject(EXR_DAV_HTTP,"Server rejected the WebDAV request",r.status);
+  bool accepted=r.status==expected || (expected==-201&&(r.status==201||r.status==405)) ||
+    (expected==-202&&(r.status==201||r.status==204||r.status==412));
+  if(!accepted) reject(EXR_DAV_HTTP,"Server rejected the WebDAV request",r.status);
   if(r.has_length && r.length>s.maximum) reject(EXR_DAV_LIMIT,"Declared response exceeds byte limit",r.status);
 }
 using clock_type=std::chrono::steady_clock;
@@ -252,7 +276,7 @@ std::string header(HINTERNET request,DWORD kind) {
   if(!WinHttpQueryHeaders(request,kind,NULL,value.data(),&bytes,NULL)) reject(EXR_DAV_IO,"Cannot read HTTPS response headers");
   return narrow(value.data());
 }
-response perform(exr_webdav_client &client,const url &u,const char *method,int expected,sink &s,clock_type::time_point deadline) {
+response perform(exr_webdav_client &client,const url &u,const char *method,int expected,sink &s,clock_type::time_point deadline,upload *input=nullptr) {
   internet session,connection,request;response r;std::wstring host=wide(u.host),target=wide(u.path),verb=wide(method);
   session.h=WinHttpOpen(L"EXReader-WebDAV/0.1.0",WINHTTP_ACCESS_TYPE_NO_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);
   if(!session.h) reject(EXR_DAV_IO,"Cannot create native HTTPS session");
@@ -267,11 +291,14 @@ response perform(exr_webdav_client &client,const url &u,const char *method,int e
   std::wstring headers=L"Accept-Encoding: identity\r\n";
   const char *body="";
   if(!std::strcmp(method,"PROPFIND")) { headers+=L"Depth: 1\r\nContent-Type: application/xml; charset=utf-8\r\n";body="<?xml version=\"1.0\"?><d:propfind xmlns:d=\"DAV:\"><d:prop><d:displayname/><d:resourcetype/><d:getcontentlength/><d:getetag/></d:prop></d:propfind>"; }
+  if(input)headers+=L"If-None-Match: *\r\nContent-Type: application/octet-stream\r\n";
   if(!client.authorization.empty()) headers+=L"Authorization: "+wide(client.authorization)+L"\r\n";
   cancelled(s.control);
-  if(!WinHttpSendRequest(request.h,headers.c_str(),(DWORD)-1L,(LPVOID)body,(DWORD)std::strlen(body),(DWORD)std::strlen(body),0)||!WinHttpReceiveResponse(request.h,NULL)) {
+  if(!WinHttpSendRequest(request.h,headers.c_str(),(DWORD)-1L,input?WINHTTP_NO_REQUEST_DATA:(LPVOID)body,input?0:(DWORD)std::strlen(body),input?(DWORD)input->length:(DWORD)std::strlen(body),0)) {
     DWORD error=GetLastError();reject(error==ERROR_WINHTTP_SECURE_FAILURE ? EXR_DAV_TLS:EXR_DAV_IO,"Native HTTPS request failed");
   }
+  if(input){unsigned char buffer[65536];while(input->sent<input->length){size_t got=input->read(buffer,sizeof(buffer));DWORD wrote=0;if(!WinHttpWriteData(request.h,buffer,(DWORD)got,&wrote)||wrote!=got)reject(EXR_DAV_IO,"Native HTTPS upload failed");remaining(deadline);}}
+  if(!WinHttpReceiveResponse(request.h,NULL)){DWORD error=GetLastError();reject(error==ERROR_WINHTTP_SECURE_FAILURE?EXR_DAV_TLS:EXR_DAV_IO,"Native HTTPS response failed");}
   DWORD code=0,bytes=sizeof(code);
   if(!WinHttpQueryHeaders(request.h,WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER,NULL,&code,&bytes,NULL)) reject(EXR_DAV_IO,"Missing HTTPS status");
   r.status=(int)code;r.location=header(request.h,WINHTTP_QUERY_LOCATION);
@@ -287,7 +314,7 @@ response perform(exr_webdav_client &client,const url &u,const char *method,int e
   if(r.has_length && r.length!=s.received) reject(EXR_DAV_IO,"Incomplete HTTPS response body");return r;
 }
 #else
-struct curl_context { response r;sink *output;int expected;size_t header_bytes=0;failure error{EXR_DAV_OK,"",0}; };
+struct curl_context { response r;sink *output;upload *input=nullptr;int expected;size_t header_bytes=0;failure error{EXR_DAV_OK,"",0}; };
 size_t curl_head(char *data,size_t size,size_t count,void *opaque) {
   auto &c=*(curl_context *)opaque;size_t n=size*count;
   try {
@@ -315,12 +342,13 @@ size_t curl_body(char *data,size_t size,size_t count,void *opaque) {
   catch(const failure &e) { c.error=e;return 0; } catch(...) { c.error={EXR_DAV_MEMORY,"Cannot allocate HTTPS body",0};return 0; }
 }
 int curl_progress(void *opaque,curl_off_t,curl_off_t,curl_off_t,curl_off_t) { return stop(((curl_context *)opaque)->output->control) ? 1:0; }
-response perform(exr_webdav_client &client,const url &u,const char *method,int expected,sink &s,clock_type::time_point deadline) {
+size_t curl_read(char *data,size_t size,size_t count,void *opaque){auto &c=*(curl_context *)opaque;try{return c.input->read(data,size*count);}catch(const failure &e){c.error=e;return CURL_READFUNC_ABORT;}catch(...){c.error={EXR_DAV_MEMORY,"Cannot read upload source",0};return CURL_READFUNC_ABORT;}}
+response perform(exr_webdav_client &client,const url &u,const char *method,int expected,sink &s,clock_type::time_point deadline,upload *input=nullptr) {
   static const CURLcode initialized=curl_global_init(CURL_GLOBAL_DEFAULT);
   if(initialized!=CURLE_OK) reject(EXR_DAV_IO,"Cannot initialize native HTTPS transport");
   std::unique_ptr<CURL,decltype(&curl_easy_cleanup)> handle(curl_easy_init(),curl_easy_cleanup);
   if(!handle) reject(EXR_DAV_MEMORY,"Cannot create native HTTPS session");
-  curl_context context;context.output=&s;context.expected=expected;CURL *h=handle.get();std::string target=full(u);
+  curl_context context;context.output=&s;context.expected=expected;context.input=input;CURL *h=handle.get();std::string target=full(u);
   std::unique_ptr<curl_slist,decltype(&curl_slist_free_all)> headers(nullptr,curl_slist_free_all);
   auto add=[&](const std::string &v) {
     curl_slist *next=curl_slist_append(headers.get(),v.c_str());
@@ -331,6 +359,7 @@ response perform(exr_webdav_client &client,const url &u,const char *method,int e
   if(!client.authorization.empty()) add("Authorization: "+client.authorization);
   const char *body="<?xml version=\"1.0\"?><d:propfind xmlns:d=\"DAV:\"><d:prop><d:displayname/><d:resourcetype/><d:getcontentlength/><d:getetag/></d:prop></d:propfind>";
   if(!std::strcmp(method,"PROPFIND")) { add("Depth: 1");add("Content-Type: application/xml; charset=utf-8"); }
+  if(input){add("If-None-Match: *");add("Content-Type: application/octet-stream");add("Expect:");}
   curl_easy_setopt(h,CURLOPT_URL,target.c_str());curl_easy_setopt(h,CURLOPT_CUSTOMREQUEST,method);
   curl_easy_setopt(h,CURLOPT_HTTPHEADER,headers.get());curl_easy_setopt(h,CURLOPT_PROXY,"");
 #if LIBCURL_VERSION_NUM >= 0x075500
@@ -345,6 +374,7 @@ response perform(exr_webdav_client &client,const url &u,const char *method,int e
   curl_easy_setopt(h,CURLOPT_WRITEFUNCTION,curl_body);curl_easy_setopt(h,CURLOPT_WRITEDATA,&context);
   curl_easy_setopt(h,CURLOPT_XFERINFOFUNCTION,curl_progress);curl_easy_setopt(h,CURLOPT_XFERINFODATA,&context);curl_easy_setopt(h,CURLOPT_NOPROGRESS,0L);
   if(!std::strcmp(method,"PROPFIND")) { curl_easy_setopt(h,CURLOPT_POSTFIELDS,body);curl_easy_setopt(h,CURLOPT_POSTFIELDSIZE,(long)std::strlen(body)); }
+  if(input){curl_easy_setopt(h,CURLOPT_UPLOAD,1L);curl_easy_setopt(h,CURLOPT_READFUNCTION,curl_read);curl_easy_setopt(h,CURLOPT_READDATA,&context);curl_easy_setopt(h,CURLOPT_INFILESIZE_LARGE,(curl_off_t)input->length);}
   cancelled(s.control);CURLcode result=curl_easy_perform(h);
   if(context.error.code!=EXR_DAV_OK) throw context.error;
   cancelled(s.control);
@@ -509,4 +539,25 @@ extern "C" exr_webdav_status exr_webdav_download_file(exr_webdav_client *client,
     cancelled(control);temporary file(directory,filename);sink s{client->max_download,0,control,nullptr,&file};url target=client->root;target.path+=relative;
     fetch(*client,target,"GET",200,s);file.publish(control);out->bytes=s.received;out->published=1;return EXR_DAV_OK;
   } catch(const failure &f) { return report(error,f); } catch(...) { return report(error,{EXR_DAV_MEMORY,"Cannot allocate WebDAV transfer",0}); }
+}
+extern "C" exr_webdav_status exr_webdav_make_collection(exr_webdav_client *client,const char *collection,const exr_webdav_control *control,exr_webdav_error *error){
+  clean(error);try{
+    if(!client||!collection)reject(EXR_DAV_ARGUMENT,"Missing immutable collection request");
+    std::string relative=path(collection,false);if(relative.empty()||relative.back()!='/')reject(EXR_DAV_ARGUMENT,"A non-root collection resource is required");
+    url target=client->root;target.path+=relative;std::vector<unsigned char> body;sink output{65536,0,control,&body,nullptr};
+    response r=perform(*client,target,"MKCOL",-201,output,clock_type::now()+std::chrono::milliseconds(client->timeout));
+    if(redirect(r.status))reject(EXR_DAV_REDIRECT,"Immutable writes do not follow redirects");
+    cancelled(control);return EXR_DAV_OK;
+  }catch(const failure &f){return report(error,f);}catch(...){return report(error,{EXR_DAV_IO,"Cannot create immutable remote collection",0});}
+}
+extern "C" exr_webdav_status exr_webdav_publish_file(exr_webdav_client *client,const char *resource,const char *name,uint64_t bytes,const exr_webdav_control *control,exr_webdav_error *error){
+  clean(error);try{
+    if(!client||!resource)reject(EXR_DAV_ARGUMENT,"Missing immutable upload request");
+    std::string relative=path(resource,false);if(relative.empty()||relative.back()=='/'||bytes>client->max_download)reject(EXR_DAV_ARGUMENT,"Invalid bounded immutable upload");
+    upload input(name,bytes,control);url target=client->root;target.path+=relative;std::vector<unsigned char> body;sink output{65536,0,control,&body,nullptr};
+    response r=perform(*client,target,"PUT",-202,output,clock_type::now()+std::chrono::milliseconds(client->timeout),&input);
+    if(redirect(r.status))reject(EXR_DAV_REDIRECT,"Immutable writes do not follow redirects");
+    if(r.status==412)reject(EXR_DAV_EXISTS,"Remote immutable identity requires verification",412);
+    cancelled(control);return EXR_DAV_OK;
+  }catch(const failure &f){return report(error,f);}catch(...){return report(error,{EXR_DAV_IO,"Cannot publish immutable private file",0});}
 }

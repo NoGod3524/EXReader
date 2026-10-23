@@ -125,7 +125,7 @@ struct json {
     uint64_t result=0;for(char c:v.atom){if(c<'0'||c>'9'||result>((uint64_t)INT64_MAX-(unsigned)(c-'0'))/10)reject(READER_REV_FORMAT,"Integer exceeds signed storage range");result=result*10+(unsigned)(c-'0');}return result;
   }
 };
-struct revision {std::string id,kind,key,operation,location,sha;std::vector<std::string> parents;size_t bytes=0;uint64_t source_bytes=0;};
+struct revision {std::string id,kind,key,operation,location,sha,book_key;std::vector<std::string> parents;size_t bytes=0;uint64_t source_bytes=0;};
 void selector(const json &j,size_t index) {
   j.fields(index,{"exact","prefix","suffix","start","end"});
   j.string(j.field(index,"exact"),65536,65536,true);j.string(j.field(index,"prefix"),4096);j.string(j.field(index,"suffix"),4096);
@@ -164,6 +164,9 @@ revision parse(sqlite3 *db,const std::string &wire,const char *expected) {
   else if(r.kind=="annotation") {size_t colon=r.key.rfind(':');if(colon==std::string::npos)reject(READER_REV_FORMAT,"Invalid annotation identity");book(r.key.substr(0,colon));identifier(r.key.substr(colon+1));}
   else {size_t first=r.key.find(':'),second=r.key.find(':',first==std::string::npos?0:first+1);if(first==std::string::npos||second==std::string::npos)reject(READER_REV_FORMAT,"Invalid membership identity");std::string group=r.key.substr(0,first);if(group!="shelf"&&group!="tag"&&group!="series")reject(READER_REV_FORMAT,"Invalid membership kind");identifier(r.key.substr(first+1,second-first-1));book(r.key.substr(second+1));}
   if(reading){std::string key=r.kind=="progress"?r.key:r.key.substr(0,r.key.rfind(':'));std::string format=book(key);if((r.location=="fixed_page")!=(format=="pdf"||format=="cbz")||(r.location=="epub_chapter"&&format!="epub"))reject(READER_REV_FORMAT,"Envelope location and book format disagree");}
+  if(r.kind=="book"||r.kind=="progress")r.book_key=r.key;
+  else if(r.kind=="annotation")r.book_key=r.key.substr(0,r.key.rfind(':'));
+  else if(r.kind=="membership")r.book_key=r.key.substr(r.key.find(':',r.key.find(':')+1)+1);
   size_t payload=j.field(0,"payload");
   if(r.operation=="delete") {if(j.at(payload).type!="null")reject(READER_REV_FORMAT,"Delete payload must be null");}
   else if(r.kind=="book") {
@@ -196,6 +199,7 @@ void info(const revision &r,reader_revision_info *out) {
   std::memset(out,0,sizeof(*out));
   std::memcpy(out->revision_id,r.id.c_str(),r.id.size());std::memcpy(out->entity_kind,r.kind.c_str(),r.kind.size());std::memcpy(out->entity_key,r.key.c_str(),r.key.size());
   std::memcpy(out->operation,r.operation.c_str(),r.operation.size());std::memcpy(out->location_kind,r.location.c_str(),r.location.size());std::memcpy(out->sha256,r.sha.c_str(),r.sha.size());out->bytes=r.bytes;out->parent_count=r.parents.size();
+  std::memcpy(out->book_key,r.book_key.c_str(),r.book_key.size());out->source_bytes=r.source_bytes;
 }
 }
 
@@ -209,15 +213,14 @@ struct guard {
 };
 struct graph_node {std::string id,operation,sha;std::vector<std::string> parents;size_t pending=0;bool complete=true,blocked=false,head=true;};
 struct graph {
-  sqlite3 *db;std::map<std::string,graph_node> nodes;reader_revision_state state{};
+  sqlite3 *db;std::map<std::string,graph_node> nodes;reader_revision_state state{};uint64_t original_bytes=0;
   graph(sqlite3 *database,const std::string &kind,const std::string &key):db(database){
     statement q(db,"SELECT revision_id,operation,body_sha256,body_json FROM reader_revisions WHERE entity_kind=?1 AND entity_key=?2 ORDER BY revision_id");q.bind(1,kind);q.bind(2,key);
-    uint64_t source_bytes=0;
     while(q.next()==SQLITE_ROW){
       if(nodes.size()>=READER_REVISION_MAX_ENTITY_HISTORY)reject(READER_REV_LIMIT,"Entity revision history limit exceeded");
       std::string wire=text(q.s,3);revision r=parse(db,wire,text(q.s,2).c_str());
       if(r.id!=text(q.s,0)||r.operation!=text(q.s,1)||r.kind!=kind||r.key!=key)reject(READER_REV_HASH,"Retained revision columns differ from wire bytes");
-      if(r.source_bytes){if(source_bytes&&source_bytes!=r.source_bytes)reject(READER_REV_FORMAT,"Revision changes immutable original byte length");source_bytes=r.source_bytes;}
+      if(r.source_bytes){if(original_bytes&&original_bytes!=r.source_bytes)reject(READER_REV_FORMAT,"Revision changes immutable original byte length");original_bytes=r.source_bytes;}
       graph_node n;n.id=r.id;n.operation=r.operation;n.sha=r.sha;n.parents=std::move(r.parents);nodes.emplace(r.id,std::move(n));
     }
     std::set<std::string> missing,foreign;
@@ -322,6 +325,9 @@ extern "C" reader_revision_status reader_revision_heads(reader_revisions *store,
   guard owner(store);if(!entity_kind||!entity_key||!kind(entity_kind)||!out)reject(READER_REV_ARGUMENT,"Missing revision entity query");graph g(store->db,entity_kind,entity_key);*out=g.state;
   if(visit)for(const auto &pair:g.nodes)if(pair.second.head){reader_revision_head head{};std::memcpy(head.revision_id,pair.first.c_str(),32);std::memcpy(head.operation,pair.second.operation.c_str(),pair.second.operation.size());std::memcpy(head.sha256,pair.second.sha.c_str(),64);head.complete=pair.second.complete;head.requires_restore=pair.second.blocked;if(visit(context,&head))break;}
 });}
+extern "C" reader_revision_status reader_revision_book_identity(reader_revisions *store,const char *key,uint64_t *bytes,reader_revision_error *error){
+  if(bytes)*bytes=0;return call(error,[&]{guard owner(store);if(!key||!bytes)reject(READER_REV_ARGUMENT,"Missing global book identity/output");book(key);graph g(store->db,"book",key);if(!g.original_bytes)reject(READER_REV_NOT_FOUND,"Verified original book metadata has not arrived");*bytes=g.original_bytes;});
+}
 extern "C" reader_revision_status reader_revision_outbox(reader_revisions *store,size_t limit,reader_revision_outbox_fn visit,void *context,reader_revision_error *error){return call(error,[&]{
   guard owner(store);if(!visit||!limit||limit>100)reject(READER_REV_ARGUMENT,"Outbox limit must be 1..100");statement q(store->db,"SELECT revision_id,queue_id,attempts,last_error FROM reader_outbox ORDER BY queue_id LIMIT ?1");check(sqlite3_bind_int(q.s,1,(int)limit));
   while(q.next()==SQLITE_ROW){std::string body,id=text(q.s,0),last=text(q.s,3);revision r=retained(store,id,&body);reader_revision_outbox_row row{};info(r,&row.info);row.wire=body.data();row.queue_id=sqlite3_column_int64(q.s,1);row.attempts=sqlite3_column_int64(q.s,2);row.last_error=last.c_str();if(visit(context,&row))break;}
