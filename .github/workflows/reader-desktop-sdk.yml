@@ -1,7 +1,7 @@
 name: Desktop product public SDK bridge
 on:
   push:
-    branches: [codex/reader-desktop-catalog]
+    branches: [codex/reader-desktop-catalog, codex/reader-gtk-fixed-pages]
   workflow_dispatch:
 permissions:
   contents: read
@@ -54,7 +54,7 @@ jobs:
           echo "DESKTOP_WORKSPACE=$ws" >> "$GITHUB_ENV"
           gtk=OFF
           if [ "$RUNNER_OS" = Linux ]; then gtk=ON; fi
-          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DEXR_READER_FIXTURES="$ws/tests/fixtures" -DEXR_READER_BUILD_GTK="$gtk" 2>&1 | tee build/desktop-evidence/configure.log
+          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DEXR_READER_FIXTURES="$ws/tests/fixtures" -DEXR_READER_BUILD_GTK="$gtk" -DEXR_LINUX_REVIEW_TESTS="$gtk" -DEXR_LINUX_FIXED_TESTS="$gtk" 2>&1 | tee build/desktop-evidence/configure.log
           cmake --build build/desktop-sdk --parallel 4 --verbose 2>&1 | tee build/desktop-evidence/build.log
       - name: Real source digest, mode, cancellation and product transaction checks
         run: ctest --test-dir build/desktop-sdk --output-on-failure --no-tests=error --timeout 180 --output-junit "$DESKTOP_WORKSPACE/build/desktop-evidence/tests.xml"
@@ -90,6 +90,13 @@ jobs:
           for name in ('Reader.otf', 'OFL.txt'):
               shutil.copyfile(font / name, Path('build/desktop-payload') / name)
           PY
+      - name: Fixed-page and retained bounded backend against the installed SDK
+        if: runner.os == 'Linux'
+        run: |
+          python3 tests/linux_host/generate_fixed.py build/desktop-fixed-inputs
+          build/desktop-sdk/gtk-host/exreader-linux-fixed-backend build/desktop-fixed.sqlite build/desktop-payload/Reader.otf build/desktop-fixed-inputs | tee build/desktop-evidence/fixed-backend.log
+          python3 tests/linux_host/generate_bounded.py build/desktop-bounded-inputs
+          build/desktop-sdk/gtk-host/exreader-linux-bounded-backend build/desktop-bounded.sqlite build/desktop-payload/Reader.otf build/desktop-bounded-inputs/routes.epub | tee build/desktop-evidence/bounded-backend.log
       - name: Original twenty GTK operations and real product startup repair
         if: runner.os == 'Linux'
         run: |
@@ -99,6 +106,8 @@ jobs:
             trap "kill $wm || true" EXIT
             python3 tools/check_linux_host.py --payload build/desktop-payload --output build/desktop-gtk-ui
             python3 tests/reader_catalog/check_gtk_product.py --payload build/desktop-payload --original-evidence build/desktop-gtk-ui --output build/desktop-gtk-product
+            python3 tools/check_linux_host_regressions.py --payload build/desktop-payload --consumer build/desktop-sdk/gtk-host --output build/desktop-gtk-regressions
+            python3 tests/linux_host/check_fixed_ui.py --payload build/desktop-payload --original-evidence build/desktop-gtk-ui --product-evidence build/desktop-gtk-product --output build/desktop-gtk-fixed
           '
       - name: Preserve original logs, link provider and source-bound evidence
         if: always()
@@ -117,6 +126,9 @@ jobs:
             build/reading-library/CMakeCache.txt
             build/desktop-gtk-ui/
             build/desktop-gtk-product/
+            build/desktop-gtk-fixed/
+            build/desktop-gtk-regressions/
+            build/desktop-fixed-inputs/
             build/desktop-windows-package/
             build/desktop-windows-negative/
             build/desktop-windows-ui/
