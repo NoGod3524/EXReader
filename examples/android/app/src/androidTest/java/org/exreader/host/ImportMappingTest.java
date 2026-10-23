@@ -33,7 +33,8 @@ public final class ImportMappingTest extends Instrumentation {
             "rejectsWrongCopyHashAndLength", "rejectsInvalidatedSourceReads",
             "repairsSdkCommitBeforeCatalog", "rollsBackSqlFailureAndRepairsOnReopen",
             "cancelsBeforePublicationWithoutDeletingDuplicate", "retainsPublishedBookOnCatalogFailure",
-            "clearsLocalMappingBeforeSdkDelete", "rejectsConflictingLocalIdentity"
+            "clearsLocalMappingBeforeSdkDelete", "rejectsConflictingLocalIdentity",
+            "keepsOldestHistoricalDuplicateAndActualMode", "normalizesSortTitleWithoutChangingDisplayTitle"
     };
 
     @Override public void onCreate(Bundle arguments) {
@@ -51,7 +52,8 @@ public final class ImportMappingTest extends Instrumentation {
                 this::rejectsWrongCopyHashAndLength, this::rejectsInvalidatedSourceReads,
                 this::repairsSdkCommitBeforeCatalog, this::rollsBackSqlFailureAndRepairsOnReopen,
                 this::cancelsBeforePublicationWithoutDeletingDuplicate, this::retainsPublishedBookOnCatalogFailure,
-                this::clearsLocalMappingBeforeSdkDelete, this::rejectsConflictingLocalIdentity
+                this::clearsLocalMappingBeforeSdkDelete, this::rejectsConflictingLocalIdentity,
+                this::keepsOldestHistoricalDuplicateAndActualMode, this::normalizesSortTitleWithoutChangingDisplayTitle
         };
         int failures = 0;
         long start = SystemClock.elapsedRealtime();
@@ -75,7 +77,7 @@ public final class ImportMappingTest extends Instrumentation {
         }
         Bundle result = new Bundle();
         result.putString("stream", "\nTime: " + (SystemClock.elapsedRealtime() - start)/1000.0 + "\n\n"
-                + (failures == 0 ? "OK (12 tests)\n" : "FAILURES!!! Tests run: 12, Failures: " + failures));
+                + (failures == 0 ? "OK (" + NAMES.length + " tests)\n" : "FAILURES!!! Tests run: " + NAMES.length + ", Failures: " + failures));
         finish(failures == 0 ? Activity.RESULT_OK : Activity.RESULT_CANCELED, result);
     }
 
@@ -305,6 +307,62 @@ public final class ImportMappingTest extends Instrumentation {
             equal(first.key, value(catalog.database(), "SELECT book_key FROM reader_local_books"));
             equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_books"));
             equal(2, store.books().size());
+        }
+    }
+
+    private void keepsOldestHistoricalDuplicateAndActualMode() throws Exception {
+        File file = epub();
+        for (boolean legacyOldest : new boolean[]{false, true}) {
+            File folder = new File(directory, legacyOldest ? "legacy-oldest" : "bounded-oldest");
+            require(folder.mkdirs(), "historical database directory");
+            long firstId;
+            String key;
+            try (BookStore store = new BookStore(context, new File(folder, "library.db"))) {
+                NativeLibrary library = store.nativeLibrary();
+                NativeLibrary.ImportResult first = library.importHistoricalFile(file.getPath(), 4, "Oldest", legacyOldest);
+                NativeLibrary.ImportResult second = library.importHistoricalFile(file.getPath(), 4, "Middle", !legacyOldest);
+                NativeLibrary.ImportResult third = library.importHistoricalFile(file.getPath(), 4, "Newest", !legacyOldest);
+                require(first.created && second.created && third.created, "public non-unique SDK imports created actual historical rows");
+                require(first.id < second.id && second.id < third.id, "historical SDK IDs");
+                firstId = first.id;
+                BookStore.VerifiedSource newest = store.verifySource(third.id, hash(file), file.length(), task());
+                key = newest.key;
+                store.finalizeImport(newest);
+                try (CatalogStore catalog = new CatalogStore(context, new File(folder, "reader-catalog.db"))) {
+                    catalog.database().execSQL("UPDATE reader_books SET title='Keep product title',favorite=1");
+                }
+                // Reverse source order proves canonical choice does not depend on enumeration.
+                store.finalizeImport(store.verifySource(second.id, hash(file), file.length(), task()));
+                store.finalizeImport(store.verifySource(first.id, hash(file), file.length(), task()));
+                store.finalizeImport(newest);
+                store.repairMissingMappings(); require(!store.metadataRepairPending(), "historical duplicates are repairable");
+                equal(3, store.books().size());
+            }
+            try (BookStore reopened = new BookStore(context, new File(folder, "library.db"));
+                 CatalogStore catalog = new CatalogStore(context, new File(folder, "reader-catalog.db"))) {
+                require(!reopened.metadataRepairPending(), "restarted canonical mapping");
+                equal(3, reopened.books().size());
+                equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_books"));
+                equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_local_books"));
+                equal(firstId, number(catalog.database(), "SELECT sdk_book_id FROM reader_local_books"));
+                equal(legacyOldest ? "reflow_global" : "epub_chapter",
+                        value(catalog.database(), "SELECT location_kind FROM reader_local_books"));
+                equal(key, value(catalog.database(), "SELECT book_key FROM reader_local_books"));
+                equal("Keep product title", value(catalog.database(), "SELECT title FROM reader_books"));
+                equal(1L, number(catalog.database(), "SELECT favorite FROM reader_books"));
+            }
+        }
+    }
+
+    private void normalizesSortTitleWithoutChangingDisplayTitle() throws Exception {
+        File file = text("unicode.txt", 2);
+        String displayTitle = "Cafe\u0301 \u212b";
+        try (BookStore store = open(); CatalogStore catalog = catalog()) {
+            NativeLibrary.ImportResult result = store.importFile(file.getPath(), 1, displayTitle);
+            store.finalizeImport(store.verifySource(result.id, hash(file), file.length(), task()));
+            equal(displayTitle, value(catalog.database(), "SELECT title FROM reader_books"));
+            equal("Caf\u00e9 \u00c5", value(catalog.database(), "SELECT sort_title FROM reader_books"));
+            equal(displayTitle, store.books().get(0).title);
         }
     }
 

@@ -18,6 +18,7 @@ TESTS = {
     'repairsSdkCommitBeforeCatalog', 'rollsBackSqlFailureAndRepairsOnReopen',
     'cancelsBeforePublicationWithoutDeletingDuplicate', 'retainsPublishedBookOnCatalogFailure',
     'clearsLocalMappingBeforeSdkDelete', 'rejectsConflictingLocalIdentity',
+    'keepsOldestHistoricalDuplicateAndActualMode', 'normalizesSortTitleWithoutChangingDisplayTitle',
 }
 
 
@@ -79,7 +80,7 @@ def main():
                 raise ValueError('empty application/instrumentation APK')
             apks[name] = {'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
         output['apks'] = apks
-        output.update(accepted=True, passed=12, failed=0, skipped=0, catalog_passed=8,
+        output.update(accepted=True, passed=len(TESTS), failed=0, skipped=0, catalog_passed=8,
                       process_recovery_passed=2)
     except (ValueError, OSError, ET.ParseError) as error:
         output['problems'].append(str(error))
