@@ -70,8 +70,8 @@ jobs:
             cp -r examples/android/app/build/outputs/androidTest-results/connected build/import-android/catalog-reports
             gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.ImportMappingTest -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.ImportMappingTest
             cp -r examples/android/app/build/outputs/androidTest-results/connected build/import-android/mapping-reports
-            adb install -r examples/android/app/build/outputs/apk/debug/app-debug.apk
-            adb install -r examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb install -r -t examples/android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -t examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             adb shell am instrument -w -r -e phase seed-before org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/seed-before.txt
             adb shell am instrument -w -r -e phase recover-before org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/recover-before.txt
             adb shell am instrument -w -r -e phase seed-during org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/seed-during.txt
