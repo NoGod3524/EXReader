@@ -10,4 +10,4 @@ python3 tests/pdf_jpx_integration/check.py --binary build/reading-real-consumer/
 
 夹具由 Pillow lossless JP2/裸 J2K 和最小 PDF 对象图生成，期待值来自固定源像素；`plan.json` 在第一次 SDK 执行之前落盘。十项正例用 2×2 像素逐点对比源值及独立 Poppler：Gray8/16、RGB8、ASCII85→JPX、Indexed8 原索引和 `/Decode [0 255]`、独立 soft mask 与 color-key mask。Gray 的反转 Decode 按 JPX 忽略规则验证；Indexed 非默认 Decode 待规范结论，不加入本计划。
 
-十二项负例覆盖损坏/截断、维度/组件不匹配、signed/32bit 精度、子采样、嵌入 alpha、JPX 非末端、非 null 参数、inline、stencil；拒绝均要求无 PPM。精度等不支持的元数据允许 FORMAT 或 UNSUPPORTED，两者必须显式失败。该小型合成套件验证真实公开 SDK 集成，不代替 NASA 或其他真实 PDF 验收。
+十二项负例覆盖损坏/截断、维度/组件不匹配、signed/32bit 精度、子采样、嵌入 alpha、JPX 非末端、非 null 参数、inline、stencil；拒绝均要求无 PPM。32bit 变异可能由 codestream 头解析器以 FORMAT 拒绝，也可能到达 adapter 并以 UNSUPPORTED 拒绝；其余用例固定单一状态。该小型合成套件验证真实公开 SDK 集成，不代替 NASA 或其他真实 PDF 验收。
