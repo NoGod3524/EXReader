@@ -20,6 +20,7 @@ on:
         value: ${{ jobs.reading-performance.outputs.source_sha }}
 permissions:
   contents: read
+  actions: read
 jobs:
   reading-performance:
     name: reading-performance
@@ -56,6 +57,8 @@ jobs:
           cmake -S tests/reading_real -B build/reading-real-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-core/stage" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           cmake --build build/reading-real-consumer --parallel 4
       - name: Measure fresh processes, selected reference pixels and evidence refusals
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           budget_args=()
           if test -f tests/reading_real/budgets.json; then

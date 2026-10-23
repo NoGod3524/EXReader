@@ -13,6 +13,7 @@ from pathlib import Path
 
 from measure_reading_core import ROOT, git, sha256
 from measure_reading_pdf import number, require
+from check_parallel_integration import fetch, pages
 
 SDK = "9c69bc4c7efb0cff68ced27562709fe597189041"
 CORPUS_REGISTRATION = "ea5c13e081cfba86d9f6dd759439894463e51126"
@@ -72,6 +73,31 @@ def environment():
 
 def file_identity(path):
     return {"sha256": sha256(path), "bytes": path.stat().st_size}
+
+
+def baseline_origin(budgets, source):
+    """An invented or failed earlier run cannot authorize a numeric budget."""
+    run = fetch("actions/runs/" + str(budgets["baseline_run_id"]))
+    require(run["head_sha"] == budgets["baseline_source_sha"] and
+            run["run_attempt"] == budgets["baseline_run_attempt"] and
+            run["status"] == "completed" and run["conclusion"] == "success" and
+            run["path"] == ".github/workflows/reading-real.yml", "Baseline run identity/status refused")
+    require(run["head_sha"] != source and subprocess.run(
+        ["git", "merge-base", "--is-ancestor", run["head_sha"], source], cwd=ROOT).returncode == 0,
+        "Baseline source must be an earlier ancestor")
+    jobs = pages("actions/runs/" + str(run["id"]) + "/jobs", "jobs")
+    require(len(jobs) == 1 and jobs[0]["name"] == "reading-performance" and
+            jobs[0]["head_sha"] == run["head_sha"] and jobs[0]["status"] == "completed" and
+            jobs[0]["conclusion"] == "success", "Baseline performance job refused")
+    artifacts = pages("actions/runs/" + str(run["id"]) + "/artifacts", "artifacts")
+    matching = [item for item in artifacts if item["name"] == f"reading-real-{run['id']}-{run['run_attempt']}"]
+    require(len(matching) == 1, "Baseline artifact missing/duplicate")
+    artifact = matching[0]
+    require(artifact["id"] == budgets["baseline_artifact_id"] and
+            artifact["digest"] == budgets["baseline_artifact_digest"] and not artifact["expired"] and
+            artifact["size_in_bytes"] > 0 and artifact["workflow_run"]["id"] == run["id"] and
+            artifact["workflow_run"]["head_sha"] == run["head_sha"], "Baseline artifact identity refused")
+    return {"run": run, "jobs": jobs, "artifact": artifact}
 
 
 def identity(binary, font, manifest, contract, entries, corpus):
@@ -227,6 +253,10 @@ def audit(summary, output, budgets=None):
                 budgets["corpus_manifest_sha256"] == summary["corpus_manifest_sha256"], "Unfrozen/incompatible budgets")
         require(budgets["baseline_source_sha"] != summary["source_sha"] and budgets["baseline_run_id"] and
                 len(budgets["baseline_source_sha"]) == 40, "Budget needs an earlier identified baseline")
+        origin = summary["baseline_origin"]
+        require(origin["run"]["id"] == budgets["baseline_run_id"] and
+                origin["run"]["head_sha"] == budgets["baseline_source_sha"] and
+                origin["artifact"]["digest"] == budgets["baseline_artifact_digest"], "Baseline origin changed")
         require(budgets["cpu_model"] == summary["environment"]["cpu_model"] and
                 budgets["compiler"] == summary["environment"]["compiler"], "Incomparable baseline CPU/compiler")
         require(set(budgets["cases"]) == set(results), "Budget case coverage differs")
@@ -336,6 +366,9 @@ def main():
         summary["installed_sdk"] = {"bytes": sum(path.stat().st_size for path in sdk_files),
             "files": {str(path.relative_to(args.sdk)): file_identity(path) for path in sdk_files}}
         summary["dynamic_dependencies"] = checked_output(["ldd", str(binary)])
+        budgets = read(args.budgets) if args.budgets else None
+        if budgets:
+            summary["baseline_origin"] = baseline_origin(budgets, args.source_sha)
         for entry in entries:
             source = args.corpus / entry["path"]
             for process in range(1, contract["processes"] + 1):
@@ -384,7 +417,6 @@ def main():
                             item[key + "_identity"] = file_identity(path)
                     summary["references"].append(item)
         summary["after"] = identity(binary, font, args.manifest, CONTRACT, entries, args.corpus)
-        budgets = read(args.budgets) if args.budgets else None
         summary["results"] = audit(summary, output, budgets)
         summary["refusal_regression"] = selfcheck(summary, output, budgets)
         summary["measurement_valid"] = True
