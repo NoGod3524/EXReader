@@ -313,3 +313,14 @@ Neither the external library nor preprocessor is linked or shipped. Explicit
 zero-cut insertion, protected source mapping and bounded full restored stems
 are verified against the independent model; external comparison is restricted
 to the documented common semantics. No external pattern text is copied.
+## OpenJPEG 2.5.4
+
+PDF JPXDecode uses the pure C OpenJPEG library under BSD-2-Clause, pinned to
+`https://codeload.github.com/uclouvain/openjpeg/tar.gz/refs/tags/v2.5.4`, SHA-256
+`a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a`.
+The unchanged copyright notice and license are installed at
+`share/exreader/licenses/openjpeg/LICENSE`. The private static library builds
+only its 22 library C sources, with upstream portable allocation and thread
+stubs; no codec CLI, JPIP, GUI or JNI is built. `EXR_ENABLE_PDF_JPX=OFF` or
+`EXR_ENABLE_PDF=OFF` omits the dependency and its installed archive/materials.
+
