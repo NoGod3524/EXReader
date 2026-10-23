@@ -1,0 +1,65 @@
+name: R2 retained corpus failure diagnosis
+on:
+  push:
+    branches: ['codex/r2-real-corpus']
+    paths:
+      - '.github/workflows/r2-corpus-diagnostic.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore original cloud evidence without local transfer
+        uses: actions/download-artifact@v4
+        with:
+          name: r2-real-corpus-39888135957-1
+          run-id: 39888135957
+          github-token: ${{ github.token }}
+          path: build/r2
+      - name: Install independent reference only in cloud
+        run: python3 -m pip install PyMuPDF==1.26.7
+      - name: Record short original stage reasons
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          root=pathlib.Path('build/r2/evidence/full')
+          summary=json.loads((root/'summary.json').read_text())
+          assert summary['source_sha']=='232a1806c38e0775892da2b4dd82fe6cd90414b2'
+          for item in summary['results']:
+              record=json.loads(pathlib.Path(item['result']).read_text())
+              assert hashlib.sha256(pathlib.Path(item['result']).read_bytes()).hexdigest()==item['sha256']
+              if item['classification']!='passed':
+                  err=pathlib.Path(item['result']).parent/'stderr.log'
+                  assert hashlib.sha256(err.read_bytes()).hexdigest()==record['evidence']['stderr.log']
+                  print(json.dumps({'id':record['input']['id'],'source':summary['source_sha'],'report':record.get('report'),'original_stderr_path':str(err),'reason':err.read_text()[:300]}))
+          PY
+      - name: Reproduce using original binary and independent reference
+        run: |
+          chmod +x build/r2/consumer/r2-document
+          python3 tools/triage_corpus.py build/r2/evidence/full/summary.json \
+            build/r2/consumer/r2-document tests/fixtures/fonts/primary.ttf build/r2-diagnostic \
+            --root build/r2/inputs/assets --pdf-reference --workers 1
+      - name: Print independent classifications without granting acceptance
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json,pathlib
+          p=pathlib.Path('build/r2-diagnostic/classification.json')
+          if p.is_file():
+              r=json.loads(p.read_text())
+              print(json.dumps({'accepted':r['accepted'],'baseline_accepted':r['baseline_accepted'],'counts':r['counts'],'reference_identity':r['reference_identity']}))
+              for item in r['results']:
+                  if item['category']!='baseline_completed':
+                      print(json.dumps({'id':item['input']['id'],'category':item['category'],'limit_kind':item.get('limit_kind'),'reference_observed':item.get('reference_observed')}))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r2-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/r2-diagnostic
+          if-no-files-found: warn
+          retention-days: 30
