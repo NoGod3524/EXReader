@@ -49,7 +49,7 @@ def main():
               'original_ui_cases': 20, 'original_product_cases': 5, 'checks': checks,
               'package_manifest_sha256': hashlib.sha256((args.payload.parent / 'build.json').read_bytes()).hexdigest(),
               'scope': 'Linux native PDF/CBZ page reading, text panel and fixed annotations',
-              'complete_product': False, 'performance_budget_accepted': False}
+              'complete_product': False, 'performance_budget_accepted': False, 'screenshots': []}
 
     def require(name, condition, observation=None):
         checks.append({'name': name, 'passed': bool(condition), 'observed': observation or host.read()})
@@ -68,9 +68,18 @@ def main():
         command('import', '-window', host.window, path)
         image = Image.open(path).convert('RGB')
         assert image.width >= 1000 and image.height >= 700
-        # Capture the actual rendered page region, not just toolbar text.
-        crop = image.crop((40, 120, 570, 650))
-        assert sum(1 for pixel in crop.getdata() if min(pixel) < 180) > 300
+        # GTK centers a narrow rotated image inside the live scroller. Read that
+        # widget's actual viewport, excluding borders/scrollbars and all side UI.
+        state = host.read()
+        bounds = (state['page_x'] + 8, state['page_y'] + 8,
+                  min(image.width, state['page_x'] + state['page_width'] - 22),
+                  min(image.height, state['page_y'] + state['page_height'] - 22))
+        assert bounds[2] > bounds[0] and bounds[3] > bounds[1]
+        crop = image.crop(bounds)
+        ink = sum(1 for pixel in crop.getdata() if min(pixel) < 180)
+        report['screenshots'].append({'file': name, 'viewport_crop': bounds, 'ink_pixels': ink})
+        print(json.dumps({'screenshot': name, 'viewport_crop': bounds, 'ink_pixels': ink}), flush=True)
+        assert ink > 300
 
     try:
         host.launch()
