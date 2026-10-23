@@ -118,7 +118,7 @@ public final class ShelfWalkthroughTest {
             detail.put("latest",settled);
         });
         run("refresh_preserves_scrolled_source_anchor",detail->{
-            search("");for(int at=0;at<12;at++)scroll(false);
+            search("");ready("");for(int at=0;at<12;at++)scroll(false);
             JSONObject before=ready("");click("refresh_button");JSONObject after=ready("");
             assertEquals(before.getString("top_key"),after.getString("top_key"));
             assertTrue(Math.abs(before.getInt("top_y")-after.getInt("top_y"))<=2);
@@ -149,10 +149,7 @@ public final class ShelfWalkthroughTest {
             detail.put("before",before).put("after",after).put("network_disabled",true);
         });
         run("system_picker_import_appears_in_product_search",detail->{
-            click("import_button");
-            UiObject2 downloads=device.wait(Until.findObject(By.desc("Show roots")),5000);
-            if(downloads!=null){downloads.click();UiObject2 root=device.wait(Until.findObject(By.text("Downloads")),5000);assertNotNull(root);root.click();}
-            UiObject2 file=device.wait(Until.findObject(By.text("NewReview.txt")),15000);assertNotNull("real system picker fixture",file);file.click();
+            pick("NewReview.txt");
             assertTrue(device.wait(Until.hasObject(By.textContains("Imported NewReview.txt")),30000));
             search("NewReview.txt");JSONObject value=ready("NewReview.txt");assertEquals(1,value.getInt("cached_rows"));
             detail.put("imported",value);
@@ -169,7 +166,12 @@ public final class ShelfWalkthroughTest {
     private void run(String id,Body body)throws Exception {
         JSONObject item=identity().put("id",id).put("started_elapsed_ns",SystemClock.elapsedRealtimeNanos());
         try{JSONObject detail=new JSONObject();body.run(detail);item.put("status","pass").put("detail",detail);}
-        catch(Throwable error){item.put("status","fail").put("error",error.toString());}
+        catch(Throwable error){
+            item.put("status","fail").put("error",error.toString());
+            for(StackTraceElement frame:error.getStackTrace())if(frame.getClassName().equals(getClass().getName())){
+                item.put("test_source_line",frame.getLineNumber());break;
+            }
+        }
         item.put("finished_elapsed_ns",SystemClock.elapsedRealtimeNanos());cases.put(item);
         device.takeScreenshot(new File(output,"shots/"+id+".png"));
         write(new File(output,id+".json"),item.toString(2));
@@ -188,7 +190,34 @@ public final class ShelfWalkthroughTest {
         assertTrue("created row Views bounded by two pages",value.getInt("created_views")<=100);
     }
     private void launch()throws Exception {device.executeShellCommand("am start -n "+APP+"/.MainActivity --ez shelf_metrics true");}
-    private void click(String id)throws Exception {UiObject2 value=device.wait(Until.findObject(By.res(APP+":id/"+id)),10000);assertNotNull(id,value);value.click();}
+    private void click(String id)throws Exception {
+        long end=SystemClock.uptimeMillis()+10000;
+        while(SystemClock.uptimeMillis()<end)try{
+            UiObject2 value=device.findObject(By.res(APP+":id/"+id));
+            if(value!=null && value.isEnabled()){value.click();return;}
+            SystemClock.sleep(100);
+        }catch(StaleObjectException stale){SystemClock.sleep(100);}
+        throw new AssertionError("control missing or not ready: "+id);
+    }
+    private void pick(String name)throws Exception {
+        click("import_button");long end=SystemClock.uptimeMillis()+30000;
+        while(SystemClock.uptimeMillis()<end)try{
+            UiObject2 file=device.findObject(By.text(name));
+            if(file!=null && file.isEnabled()){
+                file.click();assertTrue("system picker returns to actual app",device.wait(Until.hasObject(By.pkg(APP)),10000));return;
+            }
+            UiObject2 folder=device.findObject(By.text("Download"));if(folder==null)folder=device.findObject(By.text("Downloads"));
+            if(folder!=null)folder.click();
+            else{
+                UiObject2 roots=device.findObject(By.descContains("Show roots"));
+                if(roots!=null)roots.click();
+                else device.swipe(device.getDisplayWidth()/2,device.getDisplayHeight()*3/4,
+                        device.getDisplayWidth()/2,device.getDisplayHeight()/4,25);
+            }
+            SystemClock.sleep(150);
+        }catch(StaleObjectException stale){SystemClock.sleep(100);}
+        throw new AssertionError("system file picker did not list "+name);
+    }
     private void search(String query)throws Exception {
         for(int retry=0;retry<4;retry++)try{
             UiObject2 field=device.wait(Until.findObject(By.res(APP+":id/shelf_search")),10000);assertNotNull(field);field.setText(query);
