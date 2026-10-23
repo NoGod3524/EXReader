@@ -153,13 +153,13 @@ final class EXReaderHostUITests: XCTestCase {
                   !node.frame.isEmpty, state.frame.contains(node.frame), buttons.element(boundBy: 0).isHittable else { return nil }
             return "\(idle)|\(node.frame)"
         }
-        reportImportAction(identifier, phase: "before-single-tap")
+        reportImportAction(identifier, phase: "before-single-press")
         let inBudget = Date() < deadline
         XCTAssertTrue(ready && inBudget, "import button must be unique, enabled, hittable and stable", file: file, line: line)
         guard ready && inBudget else { return deadline }
-        app.buttons.matching(identifier: identifier).element(boundBy: 0).tap()
+        app.buttons.matching(identifier: identifier).element(boundBy: 0).press(forDuration: 0.1)
         if let statuses {
-            reportImportAction(identifier, phase: "after-single-tap")
+            reportImportAction(identifier, phase: "after-single-press")
             let matched = waitUntil(max(0, deadline.timeIntervalSinceNow)) {
                 let status = self.text("library.status")
                 return Date() < deadline && statuses.contains(where: { status.contains($0) })
@@ -178,7 +178,8 @@ final class EXReaderHostUITests: XCTestCase {
             return ["type": String(describing: button.elementType), "enabled": button.isEnabled,
                     "hittable": button.isHittable, "frame": String(describing: button.frame)]
         }
-        let record: [String: Any] = ["phase": phase, "identifier": identifier, "app_state": String(describing: app.state),
+        let record: [String: Any] = ["phase": phase, "identifier": identifier, "input": "single-press", "duration_seconds": 0.1,
+            "app_state": String(describing: app.state),
             "any_matches": app.descendants(matching: .any).matching(identifier: identifier).count,
             "button_matches": query.count, "controls": controls,
             "frame": String(describing: state?.frame), "status": state?.text("library.status") ?? "<absent>",
