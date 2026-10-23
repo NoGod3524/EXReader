@@ -12,7 +12,9 @@ currently visible rows. List geometry supplies the visible top source key;
 pagination, refresh and viewport changes restore that key. Query generation
 rejects late results. Search text, top source key and selected source key are
 saved separately from the reader's existing exact progress and annotation state.
-An interrupted same-query refresh retains its previously saved cursor.
+An interrupted same-query refresh retains its previously saved cursor. An idle
+visible source key is also saved after a short debounce, so process termination
+does not require a preceding background event to preserve the last settled view.
 
 The reader's compatibility/fallback metadata is separately capped at 50 rows.
 It remains available when an SDK import is saved but its product index is pending
@@ -62,12 +64,19 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
 
 - `655edfc98e1d0c39eeb66fe201c09fbd5c67bd49`, native bootstrap run
   [40034248093](https://github.com/NoGod3524/EXReader/actions/runs/40034248093):
-  simulator SDK completed; remaining jobs were queued at the initial review.
+  both SDK jobs completed; the superseded run was cancelled before native
+  acceptance and grants no validation credit.
 - `3bd55c1a16eeb88e0a6d426e66da7d86f4c25f77`, first complete UI candidate:
   [shelf 40034880367](https://github.com/NoGod3524/EXReader/actions/runs/40034880367),
   [mapping 40034880402](https://github.com/NoGod3524/EXReader/actions/runs/40034880402),
   [original Apple 40034880345](https://github.com/NoGod3524/EXReader/actions/runs/40034880345).
-  Complete cloud evidence is still pending; this entry grants no acceptance.
+  These superseded runs were requested to cancel, retaining their records;
+  none contributes validation credit.
+- `e34b54ed1f84a9a0b8702bbd9bf0d9860fd9fdc1`, layout acknowledgement and
+  13 native checks: [shelf 40035801727](https://github.com/NoGod3524/EXReader/actions/runs/40035801727),
+  [mapping 40035801688](https://github.com/NoGod3524/EXReader/actions/runs/40035801688),
+  [original Apple 40035801800](https://github.com/NoGod3524/EXReader/actions/runs/40035801800).
+  They remain pending; queue time is not a failure and no acceptance is granted.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.

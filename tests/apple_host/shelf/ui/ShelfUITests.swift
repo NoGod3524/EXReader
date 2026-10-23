@@ -155,6 +155,9 @@ final class ShelfUITests: XCTestCase {
 #endif
         let resized = ready("")
         XCTAssertEqual(before["top_key"] as? String, resized["top_key"] as? String)
+        app.terminate(); app.launch()
+        let directlyReopened = ready("")
+        XCTAssertEqual(before["top_key"] as? String, directlyReopened["top_key"] as? String)
 #if os(iOS)
         XCUIDevice.shared.press(.home)
 #else
@@ -163,7 +166,8 @@ final class ShelfUITests: XCTestCase {
         RunLoop.current.run(until: Date().addingTimeInterval(1))
         app.terminate(); app.launch(); let restored = ready("")
         XCTAssertEqual(before["top_key"] as? String, restored["top_key"] as? String)
-        record("native-resize-and-fresh-process", ["before": before, "resized": resized, "restored": restored])
+        record("native-resize-and-fresh-process", ["before": before, "resized": resized,
+            "direct_reopened": directlyReopened, "restored": restored])
     }
     func test07StoredOriginalReadingAndFilteredReturn() {
         search("Book 0201"); let before = ready("Book 0201")

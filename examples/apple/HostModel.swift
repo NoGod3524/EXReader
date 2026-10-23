@@ -36,6 +36,7 @@ final class HostShelf: ObservableObject {
     private let createdUptime = ProcessInfo.processInfo.systemUptime
     private var firstLayoutUptime: TimeInterval?
     private var awaitingLayoutKey: String?
+    private var pendingSave: DispatchWorkItem?
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -43,7 +44,7 @@ final class HostShelf: ObservableObject {
         selected = defaults.string(forKey: "EXRShelfSelected")
         if let data = defaults.data(forKey: "EXRShelfTop") { top = try? JSONDecoder().decode(HostShelfKey.self, from: data) }
     }
-    deinit { debounce?.cancel() }
+    deinit { debounce?.cancel(); pendingSave?.cancel() }
 
     func connect(_ load: @escaping Loader) {
         guard loader == nil else { return }
@@ -143,6 +144,14 @@ final class HostShelf: ObservableObject {
             self.lastLayout = now
             visible = newVisible
             viewportRevision += 1
+            pendingSave?.cancel()
+            let token = generation, key = rows[index].key
+            let work = DispatchWorkItem { [weak self] in
+                guard let self, self.generation == token, self.top == key else { return }
+                self.save()
+            }
+            pendingSave = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
         }
         top = rows[index].key
         guard !loading, appliedGeneration == generation else { return }
