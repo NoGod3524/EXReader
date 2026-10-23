@@ -43,6 +43,16 @@ target_link_libraries(reader-native-catalog-check PRIVATE reader_catalog reader_
 add_test(NAME desktop-native-catalog COMMAND reader-native-catalog-check
   "${CMAKE_CURRENT_BINARY_DIR}/native-check" "${CMAKE_CURRENT_SOURCE_DIR}/../store/001_catalog.sql")
 option(EXR_READER_BUILD_GTK "Build the real GTK product host over the installed SDK" OFF)
+if(WIN32)
+  add_executable(EXReaderProduct WIN32 ../../../examples/reader.c)
+  target_compile_definitions(EXReaderProduct PRIVATE EXR_READER_PRODUCT_CATALOG=1
+    "EXR_READER_WINDOWS_PRODUCT_HEADER=\"${CMAKE_CURRENT_SOURCE_DIR}/windows_catalog.inc\"")
+  target_link_libraries(EXReaderProduct PRIVATE reader_catalog_sdk EXReader::exr_core
+    comdlg32 gdi32 shell32 user32)
+  if(MSVC)
+    target_link_options(EXReaderProduct PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/windows-host.map")
+  endif()
+endif()
 if(EXR_READER_BUILD_GTK)
   if(NOT UNIX OR APPLE)
     message(FATAL_ERROR "The GTK product host requires Linux")

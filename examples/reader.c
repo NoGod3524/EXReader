@@ -27,6 +27,9 @@
 #include <string.h>
 #include <stdarg.h>
 #include <wchar.h>
+#ifdef EXR_READER_PRODUCT_CATALOG
+#include "catalog_sdk.h"
+#endif
 
 #define HOST_PATH 4096
 #define HOST_IMPORT_LIMIT ((size_t)96 * 1024 * 1024)
@@ -116,6 +119,11 @@ typedef struct {
   wchar_t font_path[HOST_PATH];
   wchar_t data_dir[HOST_PATH];
   wchar_t library_path[HOST_PATH];
+#ifdef EXR_READER_PRODUCT_CATALOG
+  wchar_t product_path[HOST_PATH];
+  HANDLE product_lock;
+  HANDLE product_profile_lock;
+#endif
   wchar_t settings_path[HOST_PATH];
   wchar_t evidence_dir[HOST_PATH];
   wchar_t script_path[HOST_PATH];
@@ -679,7 +687,13 @@ static void note_comment_write(const char *utf8) {
 /* Jobs: one SDK-owning worker at a time                               */
 /* ------------------------------------------------------------------ */
 
-enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB_NOTE_UPDATE, JOB_ROLLBACK, JOB_HIT, JOB_SAVE };
+enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB_NOTE_UPDATE, JOB_ROLLBACK, JOB_HIT, JOB_SAVE,
+  JOB_PRODUCT_ATTACH, JOB_PRODUCT_REPAIR, JOB_PRODUCT_DELETE };
+#ifdef EXR_READER_PRODUCT_CATALOG
+static int product_job_kind(int kind) {
+  return kind==JOB_PRODUCT_ATTACH || kind==JOB_PRODUCT_REPAIR || kind==JOB_PRODUCT_DELETE;
+}
+#endif
 
 struct host_job {
   LONG refs;
@@ -725,6 +739,9 @@ struct host_job {
   int rollback_failed;
   int note_fixed;
   int resolved_selection;
+#ifdef EXR_READER_PRODUCT_CATALOG
+  int product_auto_open,product_deleted;
+#endif
 };
 
 static int job_cancel_flag(host_job *job) {
@@ -794,7 +811,11 @@ static void job_start(host_job *job) {
   uintptr_t handle;
   unsigned thread_id = 0;
   g.job = job;
-  if (job->kind != JOB_HIT && job->kind != JOB_SAVE) {
+  if (job->kind != JOB_HIT && job->kind != JOB_SAVE
+#ifdef EXR_READER_PRODUCT_CATALOG
+      && !product_job_kind(job->kind)
+#endif
+  ) {
   dragging = 0;
   g.hit_pending = 0; g.gesture++;
   if (GetCapture() == g.page) ReleaseCapture();
@@ -1727,6 +1748,9 @@ static exr_status job_import(host_job *job) {
   return status;
 }
 
+#ifdef EXR_READER_PRODUCT_CATALOG
+#include EXR_READER_WINDOWS_PRODUCT_HEADER
+#endif
 static unsigned __stdcall job_thread(void *context) {
   host_job *job = context;
   job_pause(job);
@@ -1737,7 +1761,11 @@ static unsigned __stdcall job_thread(void *context) {
 #ifdef EXR_HOST_WORKER_REVIEW
   if (job->status == EXR_OK) review_pause(job->kind == JOB_OPEN ? 4 : job->kind == JOB_GO ? 2 : 0, job);
 #endif
-  if (job->status == EXR_OK && job_cancel_flag(job) && job->kind != JOB_NOTE_ADD && job->kind != JOB_NOTE_UPDATE)
+  if (job->status == EXR_OK && job_cancel_flag(job) && job->kind != JOB_NOTE_ADD && job->kind != JOB_NOTE_UPDATE
+#ifdef EXR_READER_PRODUCT_CATALOG
+      && !(job->kind==JOB_PRODUCT_DELETE && job->product_deleted)
+#endif
+  )
     job->status = job->kind == JOB_IMPORT ? rollback_import(job) : EXR_CANCELLED;
   if (job->status == EXR_CANCELLED) frame_clear(&job->frame);
   if (!PostMessageW(g.window, WM_HOST_COMPLETE, 0, (LPARAM)job)) {
@@ -1778,6 +1806,9 @@ static exr_status job_run(host_job *job) {
     case JOB_ROLLBACK: return rollback_import(job);
     case JOB_HIT: return job_hit(job);
     case JOB_SAVE: return job_save(job);
+#ifdef EXR_READER_PRODUCT_CATALOG
+    case JOB_PRODUCT_ATTACH: case JOB_PRODUCT_REPAIR: case JOB_PRODUCT_DELETE: return product_job_run(job);
+#endif
     default: return EXR_ARGUMENT;
   }
 }
@@ -2679,28 +2710,7 @@ static void open_selected_book(void) {
   job_submit(job);
 }
 
-static void delete_selected_book(void) {
-  LRESULT index;
-  int64_t id;
-  exr_error error = {0};
-  exr_status status;
-  if (g.job || g.pending) return;
-  if (!g.books) return;
-  index = SendMessageW(g.books, LB_GETCURSEL, 0, 0);
-  if (index == LB_ERR || (size_t)index >= g.shelf_count) {
-    set_status(L"请先在书架中选择一本书。");
-    return;
-  }
-  id = g.shelf[index].id;
-  EnterCriticalSection(&g.library_lock);
-  status = exr_library_delete(g.library, id, &error);
-  LeaveCriticalSection(&g.library_lock);
-  if (status != EXR_OK) {
-    wchar_t message[512];
-    describe_error(message, 512, L"删除书籍失败", status, &error);
-    set_status(message);
-    return;
-  }
+static void show_deleted_book(int64_t id) {
   if (g.has_current && g.current.id == id) {
     session_clear(&g.session);
     book_clear(&g.current);
@@ -2717,6 +2727,27 @@ static void delete_selected_book(void) {
   if (reload_shelf() != EXR_OK) return;
   host_update_controls();
   set_status(L"已删除书籍及其标注。");
+}
+static void delete_selected_book(void) {
+  if(g.job || g.pending || !g.books) return;
+  LRESULT index=SendMessageW(g.books,LB_GETCURSEL,0,0);
+  if(index==LB_ERR || (size_t)index>=g.shelf_count) {
+    set_status(L"请先在书架中选择一本书。");return;
+  }
+  int64_t id=g.shelf[index].id;
+#ifdef EXR_READER_PRODUCT_CATALOG
+  host_job *job=job_new(JOB_PRODUCT_DELETE);
+  if(!job) { set_status(L"内存不足，无法删除书籍。");return; }
+  job->book_id=id;job_submit(job);
+#else
+  exr_error error={0};EnterCriticalSection(&g.library_lock);
+  exr_status status=exr_library_delete(g.library,id,&error);
+  LeaveCriticalSection(&g.library_lock);
+  if(status!=EXR_OK) {
+    wchar_t message[512];describe_error(message,512,L"删除书籍失败",status,&error);set_status(message);return;
+  }
+  show_deleted_book(id);
+#endif
 }
 
 static void import_path(const wchar_t *path, int dialog_fallback) {
@@ -2804,6 +2835,22 @@ static void host_update_controls(void) {
 }
 
 static void handle_job_complete(host_job *job) {
+#ifdef EXR_READER_PRODUCT_CATALOG
+  if(product_job_kind(job->kind)) {
+    if(job->kind==JOB_PRODUCT_DELETE && job->product_deleted) {
+      show_deleted_book(job->book_id);return;
+    }
+    if(job->status!=EXR_OK) {
+      set_status(job->kind==JOB_PRODUCT_DELETE ? L"原书仍保留；删除未完成，书目映射将在重启后修复。":
+        L"原书已保存在本机；书目索引待修复，可重新导入同一本书或重启重试。");
+    } else if(job->kind==JOB_PRODUCT_ATTACH) set_status(job->message[0] ? job->message:L"原书与书目索引已保存。");
+    if(job->product_auto_open && !job_cancel_flag(job) && !g.closing) {
+      host_job *open=job_new(JOB_OPEN);
+      if(open) { open->book_id=job->book_id;open->font_percent=g.font_percent;job_submit(open); }
+    }
+    return;
+  }
+#endif
   if (job->kind == JOB_SAVE) {
     g.progress_failed = job->status != EXR_OK;
     if (!g.progress_failed) g.saved_generation = job->generation;
@@ -2934,6 +2981,19 @@ static void handle_job_complete(host_job *job) {
       } else {
         set_status(L"已存在完全相同的内容，未重复导入（去重命中）。");
       }
+#ifdef EXR_READER_PRODUCT_CATALOG
+      /* All three import cancellation/compensation boundaries and fallback
+         title publication have passed. Only now create product metadata. */
+      host_job *attach=job_new(JOB_PRODUCT_ATTACH);
+      if(attach) {
+        attach->book_id=job->imported_id;
+        copy_wstring(attach->message,512,g.status_text);
+        attach->product_auto_open=g.auto_open_imported && job->imported;
+        g.auto_open_imported=0;job_submit(attach);
+      } else {
+        g.auto_open_imported=0;set_status(L"原书已保存；无法启动书目索引任务，重启后重试。");
+      }
+#else
       if (g.auto_open_imported && job->imported) {
         host_job *open = job_new(JOB_OPEN);
         g.auto_open_imported = 0;
@@ -2943,6 +3003,7 @@ static void handle_job_complete(host_job *job) {
           job_submit(open);
         }
       }
+#endif
     } else if (job->kind == JOB_NOTE_ADD || job->kind == JOB_NOTE_UPDATE) {
       if (g.has_current && job->book_id == g.current.id && reload_notes() == EXR_OK) {
         size_t i;
@@ -3507,6 +3568,9 @@ static int drive_execute(void) {
     int gone;
     if (!shelf_click(drive_args[1])) { drive_step_finish(0, "book not found"); return 0; }
     SendMessageW(g.delete_button, BM_CLICK, 0, 0);
+#ifdef EXR_READER_PRODUCT_CATALOG
+    if(g.job || g.pending) { drive_expect_idle=1;return 1; }
+#endif
     needle = host_wide(drive_args[1], strlen(drive_args[1]));
     gone = needle && shelf_index_for_title(needle) < 0;
     free(needle);
@@ -3751,7 +3815,12 @@ static void drive_tick(void) {
         detail_add(detail, sizeof(detail), "page", number);
         detail_add(detail, sizeof(detail), "status", status ? status : "");
         free(status);
-        drive_step_finish(1, detail);
+        if(!strcmp(drive_action,"delete_book")) {
+          wchar_t *needle=host_wide(drive_args[1],strlen(drive_args[1]));
+          int gone=needle && shelf_index_for_title(needle)<0;free(needle);
+          detail_add(detail,sizeof(detail),"book_removed",gone ? "1":"0");
+          drive_step_finish(gone,detail);
+        } else drive_step_finish(1, detail);
       }
       continue;
     }
@@ -4164,6 +4233,12 @@ static void host_cleanup(void) {
   if (drive_file) fclose(drive_file);
   drive_file = NULL;
   DeleteCriticalSection(&g.library_lock);
+#ifdef EXR_READER_PRODUCT_CATALOG
+  if(g.product_lock && g.product_lock!=INVALID_HANDLE_VALUE) CloseHandle(g.product_lock);
+  if(g.product_profile_lock && g.product_profile_lock!=INVALID_HANDLE_VALUE) CloseHandle(g.product_profile_lock);
+  g.product_lock=NULL;
+  g.product_profile_lock=NULL;
+#endif
 }
 
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int show) {
@@ -4227,6 +4302,26 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     path_join(font_path, HOST_PATH, module_dir, L"Reader.otf");
   }
   copy_wstring(g.font_path, HOST_PATH, font_path);
+#ifdef EXR_READER_PRODUCT_CATALOG
+  {
+    wchar_t lock_path[HOST_PATH];
+    if(wcslen(g.library_path)>HOST_PATH-32 || wcslen(g.data_dir)>HOST_PATH-32) { LocalFree(argv);return 2; }
+    swprintf(lock_path,HOST_PATH,L"%ls\\product.profile.lock",g.data_dir);
+    g.product_profile_lock=CreateFileW(lock_path,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+    if(g.product_profile_lock==INVALID_HANDLE_VALUE) {
+      if(!script[0]) MessageBoxW(NULL,L"此本机阅读配置正在使用，或无法取得访问权限。",L"EXReader",MB_OK|MB_ICONERROR);
+      LocalFree(argv);return 2;
+    }
+    swprintf(g.product_path,HOST_PATH,L"%ls.product.sqlite",g.library_path);
+    swprintf(lock_path,HOST_PATH,L"%ls.product.lock",g.library_path);
+    g.product_lock=CreateFileW(lock_path,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+    if(g.product_lock==INVALID_HANDLE_VALUE) {
+      if(!script[0]) MessageBoxW(NULL,L"此本机书库正在使用，或无法取得访问权限。",L"EXReader",MB_OK|MB_ICONERROR);
+      CloseHandle(g.product_profile_lock);g.product_profile_lock=NULL;
+      LocalFree(argv);return 2;
+    }
+  }
+#endif
   settings_load();
   InitializeCriticalSection(&g.library_lock);
   {
@@ -4239,7 +4334,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
       describe_error(message, 512, L"无法打开书架数据库", status, &error);
       if (!script[0]) MessageBoxW(NULL, message, L"EXReader", MB_OK | MB_ICONERROR);
       set_status(message);
-      DeleteCriticalSection(&g.library_lock);
+      host_cleanup();
       LocalFree(argv);
       return 2;
     }
@@ -4279,17 +4374,36 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   ShowWindow(g.window, show ? show : SW_SHOWNORMAL);
   UpdateWindow(g.window);
   reload_shelf();
+#ifdef EXR_READER_PRODUCT_CATALOG
+  {
+    host_job *repair=job_new(JOB_PRODUCT_REPAIR);
+    if(repair) job_start(repair);
+    else set_status(L"无法启动书目修复；原书仍保留，可重启后重试。");
+  }
+#endif
   if (script[0]) drive_start();
   if (book_path[0] && !script[0]) {
     g.auto_open_imported = 1;
+#ifdef EXR_READER_PRODUCT_CATALOG
+    host_job *import=job_new(JOB_IMPORT);
+    if(import) {
+      copy_wstring(import->path,HOST_PATH,book_path);
+      if(g.job) g.pending=import;else job_submit(import);
+    }
+#else
     import_path(book_path, 0);
+#endif
   } else if (g.active_book_id > 0 && shelf_index(g.active_book_id) >= 0) {
     host_job *job = job_new(JOB_OPEN);
     SendMessageW(g.books, LB_SETCURSEL, (WPARAM)shelf_index(g.active_book_id), 0);
     if (job) {
       job->book_id = g.active_book_id;
       job->font_percent = g.font_percent;
+#ifdef EXR_READER_PRODUCT_CATALOG
+      if(g.job) g.pending=job;else job_submit(job);
+#else
       job_submit(job);
+#endif
     }
   } else if (g.shelf_count > 0) {
     SendMessageW(g.books, LB_SETCURSEL, 0, 0);
