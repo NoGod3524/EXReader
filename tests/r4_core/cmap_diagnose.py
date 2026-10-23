@@ -24,6 +24,7 @@ for path in sorted(root.rglob("*.pdf")):
             print(json.dumps({"file": path.name, "group_form_xref": xref,
                 "group": [group_kind, group_value], "space": [space_kind, space_value],
                 "group_object": document.xref_object(group_xref),
+                "bbox": document.xref_get_key(xref, "BBox"),
                 "space_object": document.xref_object(int(space_value.split()[0]))
                 if space_kind == "xref" else None}))
         mask_kind, mask_value = document.xref_get_key(xref, "SMask")
