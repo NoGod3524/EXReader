@@ -405,9 +405,14 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             PageLoad load = null;
             boolean accepted = false;
             String notice = null;
+            String resolvedTitle = displayTitle;
             try {
                 task.check();
-                if (store.localShelfBook(id)==null) throw new IOException("Book is not available on this device");
+                CatalogStore.ShelfBook local=store.localShelfBook(id);
+                if (local==null) throw new IOException("Book is not available on this device");
+                resolvedTitle=local.title;
+                final String loadingTitle=local.title;
+                postUi(()->{if(gen==generation && activeTask==task)loadingText.setText("Opening "+loadingTitle+"...");});
                 // The frozen SDK exposes metadata as an enumeration; keep that read on its owner,
                 // only for the chosen book, instead of rebuilding the entire shelf on every refresh.
                 final NativeLibrary.Book target=store.find(id);
@@ -474,7 +479,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     refreshNotesCount();
                 });
             } catch (Throwable error) {
-                taskFailed(gen, "Could not open " + displayTitle + ": ", error);
+                taskFailed(gen, "Could not open " + resolvedTitle + ": ", error);
             } finally {
                 if (load != null) load.close();
                 if (!accepted) {
