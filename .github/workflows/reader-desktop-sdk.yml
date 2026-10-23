@@ -1,7 +1,7 @@
 name: Desktop product public SDK bridge
 on:
   push:
-    branches: [codex/reader-desktop-catalog, codex/reader-gtk-fixed-pages]
+    branches: [codex/reader-desktop-catalog, codex/reader-gtk-fixed-pages, codex/reader-desktop-shelf]
   workflow_dispatch:
 permissions:
   contents: read
@@ -87,6 +87,11 @@ jobs:
           build/desktop-sdk/gtk-host/exreader-linux-fixed-import build/desktop-snapshot.sqlite build/desktop-linux-package/EXReader-Linux/Reader.otf build/desktop-fixed-inputs/Pages.pdf build/desktop-fixed-inputs/mutable.pdf | tee build/desktop-evidence/fixed-import.log
           python3 tests/linux_host/generate_bounded.py build/desktop-bounded-inputs
           build/desktop-sdk/gtk-host/exreader-linux-bounded-backend build/desktop-bounded.sqlite build/desktop-linux-package/EXReader-Linux/Reader.otf build/desktop-bounded-inputs/routes.epub | tee build/desktop-evidence/bounded-backend.log
+      - name: Actual public SDK 2202-book shelf and failure recovery
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p build/desktop-gtk-shelf/profile
+          build/desktop-sdk/reader-gtk-shelf-check build/desktop-gtk-shelf/profile/library.sqlite build/desktop-linux-package/EXReader-Linux/Reader.otf | tee build/desktop-evidence/shelf-backend.log
       - name: Original twenty GTK operations and real product startup repair
         if: runner.os == 'Linux'
         run: |
@@ -98,6 +103,7 @@ jobs:
             python3 tests/reader_catalog/check_gtk_product.py --payload build/desktop-linux-package/EXReader-Linux --original-evidence build/desktop-gtk-ui --output build/desktop-gtk-product
             python3 tools/check_linux_host_regressions.py --payload build/desktop-linux-package/EXReader-Linux --consumer build/desktop-sdk/gtk-host --output build/desktop-gtk-regressions
             python3 tests/linux_host/check_fixed_ui.py --payload build/desktop-linux-package/EXReader-Linux --original-evidence build/desktop-gtk-ui --product-evidence build/desktop-gtk-product --output build/desktop-gtk-fixed
+            python3 tests/linux_host/check_shelf_ui.py --payload build/desktop-linux-package/EXReader-Linux --output build/desktop-gtk-shelf
           '
       - name: Preserve original logs, link provider and source-bound evidence
         if: always()
@@ -117,6 +123,7 @@ jobs:
             build/desktop-gtk-ui/
             build/desktop-gtk-product/
             build/desktop-gtk-fixed/
+            build/desktop-gtk-shelf/
             build/desktop-gtk-regressions/
             build/desktop-fixed-inputs/
             build/desktop-linux-package/build.json
