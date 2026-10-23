@@ -1,0 +1,33 @@
+name: R4 soft-mask color references
+on:
+  push:
+    branches: ['codex/r4-core-hotspots']
+    paths:
+      - 'src/pdf_content.c'
+      - 'src/pdf_softmask*.c'
+      - 'src/pdf_raster*'
+      - 'tests/test_pdf_groupcs.c'
+      - '.github/workflows/r4-softmask.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reference:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build existing color and mask reference consumers
+        run: |
+          cmake -S . -B build/native -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF
+          cmake --build build/native --parallel 4 --target exreader-pdf-groupcs-test exreader-mask-scope-test exreader-mask-functions-test exreader-blend-test
+      - name: Check independent CMS, blend, mask, cancellation and budget references
+        run: ctest --test-dir build/native --output-on-failure --no-tests=error -R 'native-(pdf-groupcs|mask-scope|mask-functions|blend)$' --output-junit "$PWD/build/references.xml"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r4-softmask-reference-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/references.xml
+            build/native/Testing/Temporary/
+          if-no-files-found: error
