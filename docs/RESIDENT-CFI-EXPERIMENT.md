@@ -52,6 +52,40 @@ UTF-8。仅以 glyph.node 构造 node-start CFI，再附加旧 offset，不能�
 4. 固定空白／实体／emoji／组合字符的手写 raw offset 预期、scalar 内部拒绝、
    取消、不驻留拒绝、窗口驱逐前后查询与后续分页，以及原 CFI 文本测试。
 
-当前代码尚待独立云端执行；`experimental_only=true`、`product_adopted=false`、
+## 首轮同源实验结果
+
+源码 `e0d91d58c9295cb9ffe9dd8565bf4ae1ee086c33`，run
+[40020938919](https://github.com/NoGod3524/EXReader/actions/runs/40020938919)，
+attempt 1，两个作业全部 success。文档后续提交不转授其他源码验收。
+
+| 模式 | Job | 原 CFI 文本检查 | 新检查 | 转换 CPU ms | 新进程解析 CPU ms |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 普通 Release | `120645018880` | 67 | 795 | 0.117 | 85.853 |
+| ASan+UBSan | `120645018718` | 67 | 795 | 0.588 | 206.315 |
+
+两轮均以实际 Large 第 2 页的 normalized offset `642`，生成并解析到 raw node
+`10`、UTF-16 offset `636`；完整文档及独立 ElementTree 全 XML 参考一致。
+Large SHA-256 为
+`978cb919c33b93dcb5a9d7ddd577d9c5cec12bbdfc8d17df5ca877da01a78fcd`；
+字体固定为原宿主 Noto，SHA-256
+`2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b`。
+
+生成时未先执行 TextQuote FOUND，windows_loaded/evicted 前后不变；第二个进程
+公开 CFI resolve 只加载一个窗口。边界消费者运行到 173 页、三个窗口，并核对
+驱逐后的旧点明确拒绝、后续真实分页仍可继续。ASan/UBSan 无报告。上述时间
+仅为该 Linux runner 的单次 CPU 观测，没有硬预算或 Android UI 响应结论。
+
+| 工件 | ID | 字节 | SHA-256 |
+| --- | --- | ---: | --- |
+| `resident-cfi-false-40020938919-1` | `12529943832` | 14,511 | `1867771196882b831c942f8e6ba80e55f35d54d51a7cce415f76fb2f676a3add` |
+| `resident-cfi-true-40020938919-1` | `12530746916` | 14,555 | `8d0325edb1b3102e1901c4a911e6f224dae1f80523cb19764e70bb7a8769912e` |
+
+两个工件已核 GitHub API source/run/大小/digest/未过期，并对照同次上传日志。
+工件保留完整 raw-node 参考、CFI、独立参考记录、原用例输出及构建身份；未在
+本地下载或解析。本实验没有改 Android `BoundedEpub`、旧 5 秒／20 秒断言，
+没有实现持久缓存、源身份绑定或产品采用；未证明 uncached timeout 的第二次
+pager 建造成本已消除。后续采用需新的 SDK 冻结、宿主实现与同源完整验收。
+
+结果始终标记 `experimental_only=true`、`product_adopted=false`、
 `frozen_sdk_accepted=false`、`budget_credit_seconds=0`。本地只读写源码／文档和
 Git，未构建、运行测试、执行语法检查、生成夹具或下载工件。
