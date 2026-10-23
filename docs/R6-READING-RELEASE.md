@@ -5,6 +5,18 @@
 
 ## 当前收口状态
 
+2026-10-23后续收尾完成：PR #3修复仓库根URL、原件429与工件ZIP暂态下载问题，
+完整门禁[39972628703](https://github.com/NoGod3524/EXReader/actions/runs/39972628703)
+17/17成功、28工件同源，严格汇总accepted=true；实际受测merge为c55c8d46，PR head为f797d535。
+正常merge提交`cdfe48231853d6e70fba2c41b42bdd187155901a`已进入默认分支，规则仍active且无bypass。
+默认分支prepare[39975024792](https://github.com/NoGod3524/EXReader/actions/runs/39975024792)
+通过58+27协议，八输出含六份fa54027／39902467216原包，prepared=true、published=false、problems=[]。
+默认分支push[39974986212](https://github.com/NoGod3524/EXReader/actions/runs/39974986212)
+随后也在cdfe482本身完成17/17、28工件及严格accepted=true；两轮source/run分别保留。
+SDK保护树、冻结环境与数字预算均未改。完整身份及旧失败见
+[默认分支收尾JSON](validation/reading-release-default-cdfe482.json)。
+后续产品按[原生互通阅读器计划](READER-PRODUCT-PLAN.md)单独推进。
+
 新SDK已在`9854061be331fe603a1822d9b2b36ee357154927`重新冻结：
 六组18执行作业、30工件全部同源、attempt1通过，版本/ABI/schema保持3.40.0/1/7。
 八份固定真实语料在该SDK上full8/8与location8/8通过；对应JPX专项当时失败，整run仍记失败，
