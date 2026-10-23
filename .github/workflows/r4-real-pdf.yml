@@ -1,0 +1,75 @@
+name: R4 retained real PDF failures
+on:
+  push:
+    branches: ['codex/r4-core-hotspots']
+    paths:
+      - 'src/pdf_cmap.c'
+      - 'src/pdf_font.c'
+      - 'src/pdf_internal.h'
+      - 'tests/r4_core/real_pdf.py'
+      - '.github/workflows/r4-real-pdf.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  retained:
+    name: retained first real PDF failure stderr
+    runs-on: ubuntu-22.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12474886324
+          run-id: 39891075765
+          github-token: ${{ github.token }}
+          path: build/retained
+      - name: Print unchanged failed-process stderr
+        run: find build/retained -name '*.stderr' -print -exec cat {} \;
+  pdf:
+    name: two frozen Adobe PDF complete consumers
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 232a1806c38e0775892da2b4dd82fe6cd90414b2
+          path: corpus
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12474886324
+          run-id: 39891075765
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: build/frozen
+      - name: Verify pre-execution registration and reuse unchanged retained originals
+        run: |
+          cp -a build/frozen/real-inputs build/real-inputs
+          cd corpus
+          python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"tools/reading_corpus"); from run import registered; registered(Path("tools/reading_corpus/real-v1.json"),"ea5c13e081cfba86d9f6dd759439894463e51126")'
+      - name: Build current installed native SDK and original public consumers
+        run: |
+          cmake --preset reading-core
+          cmake --build --preset reading-core
+          cmake --install build/reading-core
+          cmake -S corpus/tests/reading_corpus -B build/real-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-core/stage"
+          cmake --build build/real-consumer --parallel 4
+      - name: Complete all pages and independent reopen selectors
+        run: python3 tests/r4_core/real_pdf.py build/real-consumer/r2-document build/real-consumer/r2-location build/real-inputs/assets corpus/tools/reading_corpus/real-v1.json build/real-results
+      - name: Print all process diagnostics
+        if: always()
+        run: find build/real-results -name '*.stderr' -print -exec cat {} \;
+      - name: Preserve input identities and every failed process
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r4-real-pdf-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/real-inputs/
+            build/real-results/
+            build/real-consumer/
+            build/reading-core/CMakeCache.txt
+          if-no-files-found: error
+          retention-days: 30

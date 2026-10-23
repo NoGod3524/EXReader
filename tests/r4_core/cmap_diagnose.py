@@ -15,7 +15,28 @@ for path in sorted(root.rglob("*.pdf")):
     if path.name not in {"nist-csf2.pdf", "nasa-solar-system.pdf"}:
         continue
     document = pymupdf.open(path)
+    if path.name == "nasa-solar-system.pdf":
+        for font in document[29].get_fonts(full=True):
+            xref = font[0]
+            print(json.dumps({"file": path.name, "page": 29, "font": font,
+                "font_object": document.xref_object(xref)}))
     for xref in range(1, document.xref_length()):
+        group_kind, group_value = document.xref_get_key(xref, "Group")
+        if group_kind not in {"null", "none"}:
+            group_xref = int(group_value.split()[0]) if group_kind == "xref" else xref
+            key = "CS" if group_kind == "xref" else "Group/CS"
+            space_kind, space_value = document.xref_get_key(group_xref, key)
+            print(json.dumps({"file": path.name, "group_form_xref": xref,
+                "group": [group_kind, group_value], "space": [space_kind, space_value],
+                "group_object": document.xref_object(group_xref),
+                "bbox": document.xref_get_key(xref, "BBox"),
+                "space_object": document.xref_object(int(space_value.split()[0]))
+                if space_kind == "xref" else None}))
+        mask_kind, mask_value = document.xref_get_key(xref, "SMask")
+        if mask_kind in {"dict", "xref"}:
+            print(json.dumps({"file": path.name, "smask_owner": xref,
+                "smask": document.xref_object(int(mask_value.split()[0]))
+                if mask_kind == "xref" else mask_value}))
         kind, value = document.xref_get_key(xref, "ToUnicode")
         if kind != "xref":
             continue
