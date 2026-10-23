@@ -41,7 +41,7 @@ OpenJPEG 2.5.4采用受限静态库；JPX关闭时不取源、不安装该库。
 后继同保护树源码da1c183的run39899523839已三作业全绿，JPX ON/ASan/OFF各24项及原八份full8/location8同次通过，
 见[最终记录](validation/reading-jpx-final-da1c183.json)。该批次不替代历史1710份库存，性能数字预算和像素审阅由R3另行固定。
 
-### 新K四宿主共同复验（Android拒绝，继续诊断）
+### 新K四宿主共同复验首轮（未通过，历史保留）
 
 共同源码S=`da1c1833d89932612d8e4549fee5aec378555ad4`包含K祖先及新守卫，八保护树与K相同。
 Android所有权祖先X=`d0b205a56e4fcfbd5cca55a808327f00b25971ed`以merge保留。
@@ -55,13 +55,15 @@ Android所有权祖先X=`d0b205a56e4fcfbd5cca55a808327f00b25971ed`以merge保留
 | Android | [39899828858](https://github.com/NoGod3524/EXReader/actions/runs/39899828858) | 失败；原45中pdf_process_restart帧比较失败，44/45；独立10/10及bounded11/11通过，最终严格拒绝 |
 
 桌面两份完成日志/工件身份见[独立审计](validation/r5-desktop-hosts-da1c183.json)。
-Android原失败工件保留，不能以独立用例通过替代原45出口；当前正在核对重启前后实际帧与状态，未修改断言或预算。
-原件云端差分确认重启状态相同，299个边缘像素仅相差1级；独立DEBUG位图身份诊断run39903068530
-用于区分原生位图与GPU采样，仍执行原截图hash/8秒和全部用例。该诊断未授予通过。
+Android原失败工件保留，不能以独立用例通过替代原45出口。
+原件云端差分确认重启状态相同，299个边缘像素仅相差1级；该失败APK没有位图身份，根因仍未证明。
+后继DEBUG观测版本d78abd7的正式run39903068530已通过原45+10+11、48+20门禁及严格汇总，
+独立云端原件审计确认该新运行位图和截图相同，见[独立记录](validation/android-bitmap-diagnostic-d78abd7.json)。
 Apple后继`1abf9d3…`只将导入输入由单次0.1秒press改为一次标准tap；
-就绪检查、结果断言和deadline保留，完整八作业run39903016234重验中。
+就绪检查、结果断言和deadline保留，完整八作业run39903016234已成功，见[独立记录](validation/r5-apple-host-1abf9d3.json)。
+上述独立结果不转授后继共同源码。
 
-### 后继四宿主共同源码复验
+### 四宿主共同源码复验（通过）
 
 最终宿主候选S=`5bc805abb3a56297b73af06fdff8a248dd8326e0`合入单次标准tap及Android DEBUG位图身份观测，
 八条SDK保护树与K相同。Android观测版本d78abd7已在独立运行通过全部45+10+11；
@@ -72,13 +74,22 @@ Apple后继`1abf9d3…`只将导入输入由单次0.1秒press改为一次标准t
 
 | 平台 | run | 状态 |
 | --- | --- | --- |
-| Windows | [39905068109](https://github.com/NoGod3524/EXReader/actions/runs/39905068109) | 运行中 |
-| Linux | [39905072269](https://github.com/NoGod3524/EXReader/actions/runs/39905072269) | 运行中 |
-| Apple | [39905075296](https://github.com/NoGod3524/EXReader/actions/runs/39905075296) | 运行中 |
-| Android | [39905079097](https://github.com/NoGod3524/EXReader/actions/runs/39905079097) | 运行中 |
+| Windows | [39905068109](https://github.com/NoGod3524/EXReader/actions/runs/39905068109) | 成功；26自检、158步/8图、51证据检查、80项H8及worker11正/11反通过 |
+| Linux | [39905072269](https://github.com/NoGod3524/EXReader/actions/runs/39905072269) | 成功；20UI、4故障组、37项H11及82项backend通过，严格接受 |
+| Apple | [39905075296](https://github.com/NoGod3524/EXReader/actions/runs/39905075296) | 八作业成功；三UI各13用例/67步骤/50附件，SDK21/Model18/bounded15、各legacy21；严格summary及97项门禁通过 |
+| Android | [39905079097](https://github.com/NoGod3524/EXReader/actions/runs/39905079097) | 成功；45+10+11零失败零跳过，49页/49次native next/0 recovery，48+20门禁及严格accepted通过 |
+
+四组11作业全部同S、attempt1成功，11份必需工件同run/source、非空、核对时未过期，API digest与上传日志一致。
+Apple严格summary在门禁回归前后均accepted=true、problems=[]；97项为1个正向与96个拒绝检查。
+[桌面记录](validation/r5-desktop-hosts-5bc805a.json)、[Apple记录](validation/r5-apple-host-5bc805a.json)与
+[Android记录](validation/r5-android-host-5bc805a.json)保存本轮完成结论与完整工件身份。
+Android原始位图和截图由额外云端审计核对，恢复前后像素差为0。
+
+本轮授予Windows、GTK/X11 Linux、macOS及iPhone/iPad模拟器、Android API34 x86_64模拟器各自声明的宿主范围。
+EPUB使用有界入口及章内持久化，其他重排格式保持原快照上限；真机与VoiceOver/TalkBack独立验收。
 
 R3严格性能与17作业SDK总门禁已在`fa54027…`、run39902467216同次通过，见[R6记录](R6-READING-RELEASE.md)。
-当前仍待新K宿主联合验收结束。
+SDK总门禁绑定fa54027，四宿主绑定S；两份验收分别登记，不拼成同一次全产品验收。
 默认分支规则未启用，未创建发布；旧98作业长测不转移，新增WP16 CPU信用为0。
 
 ## 前一轮K9c69与S3冻结记录（历史保留）
