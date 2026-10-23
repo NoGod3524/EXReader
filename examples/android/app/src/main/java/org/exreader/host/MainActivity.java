@@ -170,7 +170,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
         worker.execute(() -> {
             try {
-                store = new BookStore(new File(getFilesDir(), "library.db"));
+                store = new BookStore(getApplicationContext(), new File(getFilesDir(), "library.db"));
             } catch (Throwable error) {
                 postStatus("Library error: " + message(error));
                 return;
@@ -994,7 +994,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                         old.execSQL("DROP TABLE epub_notes"); old.execSQL("DROP TABLE epub_progress"); old.execSQL("DROP TABLE epub_bounded_books");
                         old.execSQL("PRAGMA user_version=6");
                     }
-                    store=new BookStore(file);
+                    store=new BookStore(getApplicationContext(),file);
                     try(android.database.sqlite.SQLiteDatabase current=android.database.sqlite.SQLiteDatabase.openDatabase(file.getPath(),null,android.database.sqlite.SQLiteDatabase.OPEN_READONLY);
                         android.database.Cursor cursor=current.rawQuery("PRAGMA user_version",null)) {
                         if(!cursor.moveToFirst() || cursor.getInt(0)!=7) throw new IllegalStateException("Schema migration did not reach 7");
