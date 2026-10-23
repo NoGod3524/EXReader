@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "reader_revisions.h"
+#include "reader_projection.h"
 #include <catalog.h>
 #include <sqlite3.h>
 #include <opds.h>
@@ -43,7 +43,7 @@ int64_t scalar(sqlite3 *db,const char *sql) {
 }
 struct transaction {
   sqlite3 *db;bool committed=false;
-  explicit transaction(sqlite3 *database):db(database){execute(db,"BEGIN IMMEDIATE");}
+  explicit transaction(sqlite3 *database,const char *begin="BEGIN IMMEDIATE"):db(database){execute(db,begin);}
   ~transaction(){if(!committed) sqlite3_exec(db,"ROLLBACK",nullptr,nullptr,nullptr);}
   void commit(){execute(db,"COMMIT");committed=true;}
 };
@@ -254,15 +254,18 @@ revision retained(reader_revisions *store,const std::string &id,std::string *bod
   if(body)*body=std::move(wire);
   return r;
 }
-void commit(reader_revisions *store,const std::string &wire,bool local,const char *expected,reader_revision_info *output,int *created){
-  revision r=parse(store->db,wire,expected);transaction tx(store->db);
+bool already_retained(reader_revisions *store,const revision &r,const std::string &wire){
   {
     statement existing(store->db,"SELECT body_json,body_sha256,entity_kind,entity_key,operation FROM reader_revisions WHERE revision_id=?1");existing.bind(1,r.id);
     if(existing.next()==SQLITE_ROW){
       if(text(existing.s,0)!=wire||text(existing.s,1)!=r.sha||text(existing.s,2)!=r.kind||text(existing.s,3)!=r.key||text(existing.s,4)!=r.operation)reject(READER_REV_COLLISION,"Revision ID is already bound to different bytes");
-      tx.commit();info(r,output);return;
+      return true;
     }
   }
+  return false;
+}
+bool store_revision(reader_revisions *store,const revision &r,const std::string &wire,bool local){
+  if(already_retained(store,r,wire))return false;
   for(const std::string &id:r.parents){statement parent(store->db,"SELECT entity_kind,entity_key FROM reader_revisions WHERE revision_id=?1");parent.bind(1,id);
     if(parent.next()==SQLITE_ROW){if(text(parent.s,0)!=r.kind||text(parent.s,1)!=r.key)reject(READER_REV_FORMAT,"Parent belongs to a different entity");}
     else if(local)reject(READER_REV_MISSING_PARENT,"Local parent has not been received");
@@ -273,7 +276,63 @@ void commit(reader_revisions *store,const std::string &wire,bool local,const cha
   }
   graph checked(store->db,r.kind,r.key);(void)checked;
   if(local){statement enqueue(store->db,"INSERT INTO reader_outbox(revision_id) VALUES(?1)");enqueue.bind(1,r.id);enqueue.next();}
-  tx.commit();if(created)*created=1;info(r,output);
+  return true;
+}
+void commit(reader_revisions *store,const std::string &wire,bool local,const char *expected,reader_revision_info *output,int *created){
+  revision r=parse(store->db,wire,expected);transaction tx(store->db);
+  bool inserted=store_revision(store,r,wire,local);tx.commit();if(inserted&&created)*created=1;info(r,output);
+}
+std::set<std::string> head_ids(const graph &g){std::set<std::string> ids;for(const auto &pair:g.nodes)if(pair.second.head)ids.insert(pair.first);return ids;}
+std::string safe_head(const graph &g){if(!g.state.projection_safe)reject(READER_REV_UNSAFE,"Entity has no complete safe unique head");return *head_ids(g).begin();}
+bool product_exists(sqlite3 *db,const std::string &table,const std::string &column,const std::string &key,bool active=false){
+  std::string sql="SELECT 1 FROM "+table+" WHERE "+column+"=?1"+(active?" AND deleted=0":"");statement q(db,sql.c_str());q.bind(1,key);return q.next()==SQLITE_ROW;
+}
+void require_active(sqlite3 *db,const std::string &table,const std::string &column,const std::string &key){
+  if(!product_exists(db,table,column,key,true))reject(READER_REV_UNSAFE,"Referenced product metadata has not become active");
+}
+void apply_product(reader_revisions *store,const revision &r,const std::string &wire,const char *sort_title){
+  if(r.kind=="progress"||r.kind=="annotation")reject(READER_REV_ARGUMENT,"Reading entities use selected payloads, not metadata or SDK writes");
+  json j(store->db,wire);size_t payload=j.field(0,"payload");bool deleted=r.operation=="delete";
+  if(r.kind=="book"){
+    graph history(store->db,"book",r.key);uint64_t bytes=history.original_bytes;
+    if(!bytes)reject(READER_REV_UNSAFE,"Original book metadata has not arrived");
+    bool exists=product_exists(store->db,"reader_books","book_key",r.key);
+    if(exists){statement known(store->db,"SELECT source_bytes FROM reader_books WHERE book_key=?1");known.bind(1,r.key);known.next();if((uint64_t)sqlite3_column_int64(known.s,0)!=bytes)reject(READER_REV_FORMAT,"Product original identity differs from revision history");}
+    std::string title,author,sort;int favorite=0;
+    if(!deleted){if(!sort_title)reject(READER_REV_ARGUMENT,"Host NFC book sort title is required");sort=sort_title;
+      if(sort.size()>16384||unicode(sort)>4096)reject(READER_REV_LIMIT,"Host book sort title exceeds its limit");
+      title=j.string(j.field(payload,"title"));author=j.string(j.field(payload,"author"));favorite=j.at(j.field(payload,"favorite")).type=="true";
+    }
+    if(deleted&&exists){statement q(store->db,"UPDATE reader_books SET deleted=1 WHERE book_key=?1");q.bind(1,r.key);q.next();return;}
+    statement q(store->db,exists?"UPDATE reader_books SET title=?2,author=?3,sort_title=?4,favorite=?5,deleted=0 WHERE book_key=?1":
+      "INSERT INTO reader_books(book_key,title,author,sort_title,favorite,deleted,format,source_sha256,source_bytes) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)");
+    q.bind(1,r.key);q.bind(2,title);q.bind(3,author);q.bind(4,sort);check(sqlite3_bind_int(q.s,5,favorite));
+    if(!exists){size_t colon=r.key.find(':');check(sqlite3_bind_int(q.s,6,deleted));q.bind(7,r.key.substr(0,colon));q.bind(8,r.key.substr(colon+1));check(sqlite3_bind_int64(q.s,9,(sqlite3_int64)bytes));}q.next();return;
+  }
+  if(r.kind=="shelf"||r.kind=="tag"||r.kind=="series"){
+    std::string table=r.kind=="shelf"?"reader_shelves":r.kind=="tag"?"reader_tags":"reader_series";
+    std::string column=r.kind=="shelf"?"shelf_id":r.kind=="tag"?"tag_id":"series_id";
+    bool exists=product_exists(store->db,table,column,r.key);std::string name=deleted?r.key:j.string(j.field(payload,"name"));
+    if(deleted&&exists){std::string sql="UPDATE "+table+" SET deleted=1 WHERE "+column+"=?1";statement q(store->db,sql.c_str());q.bind(1,r.key);q.next();return;}
+    std::string sql=exists?"UPDATE "+table+" SET name=?2,deleted=?3":"INSERT INTO "+table+"("+column+",name,deleted";
+    if(r.kind=="shelf"){
+      std::string parent;uint64_t ordinal=0;bool has_parent=false;
+      if(!deleted){size_t index=j.field(payload,"parent_id");has_parent=j.at(index).type!="null";if(has_parent){parent=j.string(index);require_active(store->db,"reader_shelves","shelf_id",parent);}ordinal=j.integer(j.field(payload,"ordinal"));}
+      sql+=exists?",parent_id=?4,ordinal=?5 WHERE shelf_id=?1":",parent_id,ordinal) VALUES(?1,?2,?3,?4,?5)";
+      statement q(store->db,sql.c_str());q.bind(1,r.key);q.bind(2,name);check(sqlite3_bind_int(q.s,3,deleted));if(has_parent)q.bind(4,parent);else check(sqlite3_bind_null(q.s,4));check(sqlite3_bind_int64(q.s,5,(sqlite3_int64)ordinal));q.next();
+    }else{
+      sql+=exists?" WHERE "+column+"=?1":") VALUES(?1,?2,?3)";statement q(store->db,sql.c_str());q.bind(1,r.key);q.bind(2,name);check(sqlite3_bind_int(q.s,3,deleted));q.next();
+    }return;
+  }
+  size_t first=r.key.find(':'),second=r.key.find(':',first+1);std::string group=r.key.substr(0,first),id=r.key.substr(first+1,second-first-1),book_key=r.key.substr(second+1);
+  std::string table=group=="shelf"?"reader_book_shelves":group=="tag"?"reader_book_tags":"reader_book_series";
+  std::string column=group=="shelf"?"shelf_id":group=="tag"?"tag_id":"series_id";
+  if(deleted){std::string sql="DELETE FROM "+table+" WHERE "+column+"=?1 AND book_key=?2";statement q(store->db,sql.c_str());q.bind(1,id);q.bind(2,book_key);q.next();return;}
+  require_active(store->db,"reader_books","book_key",book_key);require_active(store->db,group=="shelf"?"reader_shelves":group=="tag"?"reader_tags":"reader_series",column,id);
+  std::string where=" WHERE "+column+"=?1 AND book_key=?2",lookup="SELECT 1 FROM "+table+where;statement found(store->db,lookup.c_str());found.bind(1,id);found.bind(2,book_key);bool exists=found.next()==SQLITE_ROW;
+  if(group=="tag"&&exists)return;
+  std::string sql=exists?"UPDATE "+table+" SET ordinal=?3"+where:"INSERT INTO "+table+"("+column+",book_key"+(group=="tag"?") VALUES(?1,?2)":",ordinal) VALUES(?1,?2,?3)");
+  statement q(store->db,sql.c_str());q.bind(1,id);q.bind(2,book_key);if(group!="tag")check(sqlite3_bind_int64(q.s,3,(sqlite3_int64)j.integer(j.field(payload,"ordinal"))));q.next();
 }
 reader_revision_status report(reader_revision_error *e,const failure &f){if(e){e->code=f.code;e->sqlite_code=f.database;std::snprintf(e->message,sizeof(e->message),"%s",f.message);}return f.code;}
 template<class Function>reader_revision_status call(reader_revision_error *e,Function function){if(e)std::memset(e,0,sizeof(*e));try{function();return READER_REV_OK;}catch(const failure &f){return report(e,f);}catch(...){return report(e,{READER_REV_MEMORY,"Cannot allocate bounded revision state"});}}
@@ -328,6 +387,44 @@ extern "C" reader_revision_status reader_revision_heads(reader_revisions *store,
 extern "C" reader_revision_status reader_revision_book_identity(reader_revisions *store,const char *key,uint64_t *bytes,reader_revision_error *error){
   if(bytes)*bytes=0;
   return call(error,[&]{guard owner(store);if(!key||!bytes)reject(READER_REV_ARGUMENT,"Missing global book identity/output");book(key);graph g(store->db,"book",key);if(!g.original_bytes)reject(READER_REV_NOT_FOUND,"Verified original book metadata has not arrived");*bytes=g.original_bytes;});
+}
+extern "C" reader_revision_status reader_revision_local_project(reader_revisions *store,const void *bytes,size_t count,const char *const *expected,size_t expected_count,const char *sort_title,reader_revision_info *out,int *created,int *applied,reader_revision_error *error){
+  if(created)*created=0;
+  if(applied)*applied=0;
+  if(out)std::memset(out,0,sizeof(*out));
+  return call(error,[&]{guard owner(store);if(expected_count>32||(expected_count&&!expected))reject(READER_REV_ARGUMENT,"Expected head set must contain at most 32 IDs");
+    std::string wire=wire_input(bytes,count);revision r=parse(store->db,wire,nullptr);transaction tx(store->db);
+    if(already_retained(store,r,wire)){tx.commit();info(r,out);return;}
+    std::set<std::string> observed;for(size_t n=0;n<expected_count;n++){if(!expected[n])reject(READER_REV_ARGUMENT,"Missing expected head ID");identifier(expected[n]);if(!observed.insert(expected[n]).second)reject(READER_REV_ARGUMENT,"Duplicate expected head ID");}
+    graph before(store->db,r.kind,r.key);std::set<std::string> parents(r.parents.begin(),r.parents.end());
+    if(head_ids(before)!=observed||parents!=observed)reject(READER_REV_UNSAFE,"Expected heads or new parent set differs from current history");
+    store_revision(store,r,wire,true);graph after(store->db,r.kind,r.key);
+    if(safe_head(after)!=r.id)reject(READER_REV_UNSAFE,"Local revision did not form a complete safe unique head");
+    apply_product(store,r,wire,sort_title);tx.commit();info(r,out);if(created)*created=1;if(applied)*applied=1;
+  });
+}
+extern "C" reader_revision_status reader_revision_project(reader_revisions *store,const char *entity_kind,const char *entity_key,const char *expected,const char *sort_title,reader_revision_info *out,reader_revision_error *error){
+  if(out)std::memset(out,0,sizeof(*out));
+  return call(error,[&]{guard owner(store);if(!entity_kind||!entity_key||!expected||!kind(entity_kind))reject(READER_REV_ARGUMENT,"Missing restricted product projection identity");identifier(expected);transaction tx(store->db);
+    graph current(store->db,entity_kind,entity_key);if(safe_head(current)!=expected)reject(READER_REV_UNSAFE,"Expected safe head changed before metadata projection");
+    std::string wire;revision r=retained(store,expected,&wire);apply_product(store,r,wire,sort_title);tx.commit();info(r,out);
+  });
+}
+extern "C" reader_revision_status reader_revision_selected(reader_revisions *store,const char *entity_kind,const char *entity_key,char **wire,size_t *bytes,reader_revision_info *out,reader_revision_selection *selection,reader_revision_error *error){
+  if(wire)*wire=nullptr;
+  if(bytes)*bytes=0;
+  if(out)std::memset(out,0,sizeof(*out));
+  if(selection)std::memset(selection,0,sizeof(*selection));
+  return call(error,[&]{guard owner(store);if(!entity_kind||!entity_key||!kind(entity_kind)||!wire||!bytes||!selection)reject(READER_REV_ARGUMENT,"Missing selected revision output");transaction tx(store->db,"BEGIN");
+    graph current(store->db,entity_kind,entity_key);selection->graph=current.state;
+    if(!current.state.heads){selection->kind=READER_SELECTION_MISSING;reject(READER_REV_NOT_FOUND,"No revision history exists for the entity");}
+    if(current.state.missing_parents||current.state.foreign_parents){selection->kind=READER_SELECTION_PENDING_PARENTS;reject(READER_REV_UNSAFE,"Selected history still has pending or foreign parents");}
+    if(current.state.heads>1){selection->kind=READER_SELECTION_CONCURRENT;reject(READER_REV_UNSAFE,"Concurrent heads require explicit user resolution");}
+    if(!current.state.projection_safe){selection->kind=READER_SELECTION_BLOCKED_RESTORE;reject(READER_REV_UNSAFE,"An implicit resurrection remains blocked");}
+    std::string body;revision r=retained(store,safe_head(current),&body);
+    std::unique_ptr<char,decltype(&std::free)> copy((char *)std::malloc(body.size()+1),std::free);if(!copy)throw std::bad_alloc();std::memcpy(copy.get(),body.data(),body.size());copy.get()[body.size()]=0;
+    tx.commit();selection->kind=READER_SELECTION_SAFE;*wire=copy.release();*bytes=body.size();info(r,out);
+  });
 }
 extern "C" reader_revision_status reader_revision_outbox(reader_revisions *store,size_t limit,reader_revision_outbox_fn visit,void *context,reader_revision_error *error){return call(error,[&]{
   guard owner(store);if(!visit||!limit||limit>100)reject(READER_REV_ARGUMENT,"Outbox limit must be 1..100");statement q(store->db,"SELECT revision_id,queue_id,attempts,last_error FROM reader_outbox ORDER BY queue_id LIMIT ?1");check(sqlite3_bind_int(q.s,1,(int)limit));
