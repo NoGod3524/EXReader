@@ -1,0 +1,649 @@
+{
+  "schema": 1,
+  "record_type": "independent completed-run metadata and evidence-log audit",
+  "repository": "NoGod3524/EXReader",
+  "source_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+  "run_id": 39902467216,
+  "run_attempt": 1,
+  "workflow": ".github/workflows/reading-required.yml",
+  "run_status": "completed",
+  "run_conclusion": "success",
+  "run_updated_at": "2026-10-23T05:05:02Z",
+  "accepted": true,
+  "problems": [],
+  "scope": "native reading SDK and the fixed representative real-v1 corpus",
+  "published": false,
+  "complete_product": false,
+  "wp16_cpu_credit_seconds": 0,
+  "final_job_id": 120250787806,
+  "publisher": {
+    "integration_id": 15368,
+    "publisher": "github-actions",
+    "check_id": 120250787806
+  },
+  "job_count": 17,
+  "artifact_count": 28,
+  "required_upstream_artifact_count": 18,
+  "metadata_checks": {
+    "run_completed_success": true,
+    "jobs_17_same_attempt_success": true,
+    "all_28_artifacts_identity_and_digest": true,
+    "summary_18_required_registry_matches_api": true,
+    "six_candidates_match_producer_logs": true
+  },
+  "identity": {
+    "sdk_version": "3.40.0",
+    "abi": 1,
+    "library_schema": 7,
+    "sdk_candidate": "9854061be331fe603a1822d9b2b36ee357154927",
+    "candidates": [
+      {
+        "profile": "reading-core",
+        "host": "Linux",
+        "arch": "X64",
+        "archive": "EXReader-reading-core-3.40.0-Linux-X64.tar.gz",
+        "bytes": 6346646,
+        "sha256": "60cc0ef87a0b55ffa49a68f760d185e84427521fb43398bcb1f82060aa15d106",
+        "manifest_sha256": "220fa768e74a7e1702da602c78106cb9d859ec366487656bc17792cd848b8b92"
+      },
+      {
+        "profile": "reading-library",
+        "host": "Linux",
+        "arch": "X64",
+        "archive": "EXReader-reading-library-3.40.0-Linux-X64.tar.gz",
+        "bytes": 7144226,
+        "sha256": "d6042fd49b0e26c909a98d6dadbc5179402767d90c0f5a303e40b85fe2711e72",
+        "manifest_sha256": "1d7725fc78d308a52e6ad551deb536fd99a805fb765ee51c4557a906a9d78f3f"
+      },
+      {
+        "profile": "reading-core",
+        "host": "Windows",
+        "arch": "X64",
+        "archive": "EXReader-reading-core-3.40.0-Windows-X64.tar.gz",
+        "bytes": 8493092,
+        "sha256": "963eaa507282cc14af3ce501d1d25a2ac27c8b83af5df6f65a4eabff1fd03aa1",
+        "manifest_sha256": "22616128c2918c6f7d6714b74958321c5ad1622c53b69c7f77d50a89ac47461d"
+      },
+      {
+        "profile": "reading-library",
+        "host": "Windows",
+        "arch": "X64",
+        "archive": "EXReader-reading-library-3.40.0-Windows-X64.tar.gz",
+        "bytes": 9695591,
+        "sha256": "5e1a90aea608c696da1a9e62b6b25a96c0eda9273d3c625e9cebeef471bb2e4e",
+        "manifest_sha256": "de1f468db776ec0181cd4cc352849928bb242f4deb68f49b199ab59807d61edf"
+      },
+      {
+        "profile": "reading-core",
+        "host": "macOS",
+        "arch": "ARM64",
+        "archive": "EXReader-reading-core-3.40.0-macOS-ARM64.tar.gz",
+        "bytes": 5580476,
+        "sha256": "ce54cd341cea780fe3d3a049b40b660b9eaa2a00a1c00aa8d3995b0ed3e7c013",
+        "manifest_sha256": "6fc66b831ad1e7448d5f06ed562ea8ead007a58b63ca682db462b791415be673"
+      },
+      {
+        "profile": "reading-library",
+        "host": "macOS",
+        "arch": "ARM64",
+        "archive": "EXReader-reading-library-3.40.0-macOS-ARM64.tar.gz",
+        "bytes": 6370598,
+        "sha256": "05525637cf7584b43e23d71cacee9a3610944904e1ec0100041ae5dc4ce4b5eb",
+        "manifest_sha256": "06fff0354f210f579a0b74a0354d484b8abc5e3d1658f03cf1074beda7aec508"
+      }
+    ],
+    "manifest_sha256": "f71f8a24faff664a03b7e15a7f424ec354f83c53fbd14f602d4b050f3fd19de1",
+    "contract_sha256": "dcd56132e4707183df15883dca1c7a3dd5c43778c1c58625160bd8e38204e7bd",
+    "budget_sha256": "75142b54f03b62d8f12752ff96fbc2f8e7f0d910511ec218165c39844ef5b0f3"
+  },
+  "raw_material_evidence": {
+    "required_job": 120250787806,
+    "conclusion": "The completed required job revalidated the six sealed native candidates, original R2 raw evidence and original R3 performance evidence before emitting accepted=true.",
+    "r2": {
+      "job_id": 120246895729,
+      "accepted": true,
+      "full_documents_passed": 8,
+      "location_documents_passed": 8,
+      "protocol_checks_passed": 43,
+      "artifact_id": 12479327987
+    },
+    "r3": {
+      "job_id": 120246895872,
+      "accepted": true,
+      "measurement_valid": true,
+      "problems": [],
+      "documents": 8,
+      "fresh_processes": 40,
+      "pdf_reference_pages": 12,
+      "evidence_refusals_passed": 23,
+      "actual_review_protocol": {
+        "positive": 1,
+        "refused": 13
+      },
+      "artifact_id": 12479422279
+    },
+    "frozen_review": {
+      "path": "docs/validation/reading-real-pixel-review.json",
+      "sha256": "881889c4bbe93d1e06e28ffee73feed72834a2ee1a4d13b5a9fee10161882a4e",
+      "pages": 12,
+      "render_parity_granted": false
+    },
+    "baseline": {
+      "source_sha": "887e1bb59ef6f28c15824cb7593654f3610f3cef",
+      "run_id": 39899829270,
+      "run_attempt": 1,
+      "artifact_id": 12478631207,
+      "artifact_digest": "sha256:c3532b00e70e041855ad2e9050dbfe362c51916140af074218fdb45c0a1052be",
+      "summary_sha256": "f83c42b738127ce52ee2a4ddb8653fbda36b03e8cd56adf5971fd1f219e3135d"
+    }
+  },
+  "candidate_producer_logs": {
+    "Linux_reading_core": 120246896141,
+    "Linux_reading_library": 120246896032,
+    "Windows_reading_core": 120246895910,
+    "Windows_reading_library": 120246896100,
+    "macOS_reading_core": 120246895988,
+    "macOS_reading_library": 120246895972,
+    "verified": "All six final-summary tar/manifest identities exactly match their completed producer logs at this source/run/attempt. Producer quality_accepted=false and published=false remain unchanged; joint acceptance is granted by the final required summary."
+  },
+  "jobs": [
+    {
+      "id": 120246895581,
+      "name": "protocol",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246895729,
+      "name": "corpus / R2 real document acceptance",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246895815,
+      "name": "native / sanitizers",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246895872,
+      "name": "performance / reading-performance",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246895910,
+      "name": "platforms / reading windows-2022 (reading-core)",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246895950,
+      "name": "native / fuzz",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246895966,
+      "name": "native / desktop (windows-latest)",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246895972,
+      "name": "platforms / reading macos-15 (reading-library)",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246895988,
+      "name": "platforms / reading macos-15 (reading-core)",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246895990,
+      "name": "native / apple-mobile",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246895997,
+      "name": "native / android",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246896032,
+      "name": "profiles / reading (reading-library)",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246896100,
+      "name": "platforms / reading windows-2022 (reading-library)",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246896124,
+      "name": "native / desktop (macos-15)",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246896125,
+      "name": "native / desktop (ubuntu-22.04)",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120246896141,
+      "name": "profiles / reading (reading-core)",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 120250787806,
+      "name": "reading-required",
+      "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a",
+      "run_id": 39902467216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12480345209,
+      "name": "sanitizer-native-tests",
+      "size_in_bytes": 28192,
+      "digest": "sha256:4f0b8fafa971f0c4c331656f72c933f8ab10b18b6d5cf048d8e76f8a769d2af9",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12480285381,
+      "name": "EXReader-conversion-Windows",
+      "size_in_bytes": 14274,
+      "digest": "sha256:a56db81eee9dce2df6092841721c7328c2334bb47a95f1e004b792d92fddb56d",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12480086314,
+      "name": "EXReader-C-Windows",
+      "size_in_bytes": 14823572,
+      "digest": "sha256:0f362c9dd4fcfeeed0e2ec290907466b0574fe74f416649863ef3498ca1cea7a",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12480040608,
+      "name": "EXReader-reference-macOS",
+      "size_in_bytes": 25440109,
+      "digest": "sha256:2adde220df46b272c872658dcf4f6609929812581a962e3a47bb6c25da557897",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12480021023,
+      "name": "EXReader-C-iOS-iPadOS-arm64",
+      "size_in_bytes": 37329113,
+      "digest": "sha256:f1e79620926741c5bca0f3431a45f2c7b3763b9007a5e7a2990bb7c2fe7cce04",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479980530,
+      "name": "EXReader-WP6-macOS",
+      "size_in_bytes": 27744,
+      "digest": "sha256:4f2f2fe14546f80d769e4e3d9157520bf24769fdc1416efd810621095e3b5689",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479927022,
+      "name": "EXReader-reference-Windows",
+      "size_in_bytes": 17504829,
+      "digest": "sha256:3498d9f17576a7191da25e94a30aac96dedb3bc88c38a16da2867d286719b147",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479925851,
+      "name": "EXReader-C-Linux",
+      "size_in_bytes": 21732947,
+      "digest": "sha256:8cace89e2e49ee827bab1a15b40f49dc61f7a168e4e92ad20a011a76867bb79b",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479901162,
+      "name": "EXReader-conversion-macOS",
+      "size_in_bytes": 14212,
+      "digest": "sha256:fd3286f20aa10b11655b747211f2481251afbd4bb5fd61ef25a0c472df33c540",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479880321,
+      "name": "reading-reading-core-39902467216-1",
+      "size_in_bytes": 12972664,
+      "digest": "sha256:3f7e979de03a8b08aaab284102a9a4e3bc1dd5f1a5ea54ec6358a956a18c3e62",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479821068,
+      "name": "reliability-native-smoke",
+      "size_in_bytes": 23016,
+      "digest": "sha256:d1194521069043bee6c70343e9f263bc38a64d6a3a9e5170ee8590e1d0beaae9",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479791903,
+      "name": "EXReader-WP6-Windows",
+      "size_in_bytes": 28530,
+      "digest": "sha256:b94962eeca6eea22a8ed324dfec8b11515c8410c70b3d92e90d4d058e33e96e0",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479771202,
+      "name": "EXReader-WP6-Linux",
+      "size_in_bytes": 28736,
+      "digest": "sha256:62c0e91cd8a5a2fdd605c4c750e3889695fd9212210ac38e0ee753e8bbb2a297",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479697123,
+      "name": "EXReader-performance-macOS",
+      "size_in_bytes": 14362,
+      "digest": "sha256:dcae331e59a36f66619eac1678fdef66bf7c727acf973e83e215b5060b3a0d2f",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479687217,
+      "name": "EXReader-C-macOS",
+      "size_in_bytes": 18875853,
+      "digest": "sha256:eb391e9448a0fcf12221e1494709e513c455d987fd10d65db42a5bb6a8b46464",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479512249,
+      "name": "reading-reading-library-39902467216-1",
+      "size_in_bytes": 14579750,
+      "digest": "sha256:f28318e3ca7602f366b23f84aef2d73042e0c51daedd560507914697ebb70ab3",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479483063,
+      "name": "EXReader-conversion-Linux",
+      "size_in_bytes": 14024,
+      "digest": "sha256:0b7c4705dbc730d0b82491b54563a70c9d165381f4cb55d7c0e7414ae92dc34d",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479462930,
+      "name": "EXReader-reference-iPhone-iPad",
+      "size_in_bytes": 25316641,
+      "digest": "sha256:828ffdadb838e28986e568ca0083b86596c14e0a1717f1978d02c67c13875fbb",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479459040,
+      "name": "EXReader-performance-Windows",
+      "size_in_bytes": 14403,
+      "digest": "sha256:2586a228051129143dc8430df67e76e7470cb9b9e477fe5a9b4400d338368c07",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479434671,
+      "name": "reading-required-39902467216-1",
+      "size_in_bytes": 3224,
+      "digest": "sha256:d36a1d330de08399c7f4bdc110be6ecb3d0401feddd8731911a0e85e4a954ef0",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479422279,
+      "name": "reading-real-39902467216-1",
+      "size_in_bytes": 36388421,
+      "digest": "sha256:bd8ddba926efe267570c581829c3ad79c78686ac346b46e48057398cb7a6d82a",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479356905,
+      "name": "reading-platform-Windows-reading-library-39902467216-1",
+      "size_in_bytes": 19692358,
+      "digest": "sha256:77d2a17f257171a294331a109207ac49fa16cfd886e87b5074778a7a8e4ae729",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479328118,
+      "name": "reading-platform-macOS-reading-library-39902467216-1",
+      "size_in_bytes": 13139394,
+      "digest": "sha256:332d393ff12087153722a239f11e75861d46d61d890a1b6a48813a5750174630",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479327987,
+      "name": "r2-real-corpus-39902467216-1",
+      "size_in_bytes": 41084748,
+      "digest": "sha256:60ba3753cd54a5e932a3446a462ad66a486f23a521f888ee7a5a568b3cacd005",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479153984,
+      "name": "reading-platform-Windows-reading-core-39902467216-1",
+      "size_in_bytes": 17271469,
+      "digest": "sha256:0881d3f661ff651e301415db5664a775e445c2948a0fc13af2dec8c84e2c73c3",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12479044992,
+      "name": "EXReader-performance-Linux",
+      "size_in_bytes": 14450,
+      "digest": "sha256:f5d26a0495e75e06821d8725070982b4814a14d187c3d3c98ac847fac5d2eab9",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12478929945,
+      "name": "EXReader-C-Android-arm64",
+      "size_in_bytes": 34740384,
+      "digest": "sha256:fe3715d32d0dd3459e72914a501a56079597f8edd216fc42973f704f1c3f13b2",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    },
+    {
+      "id": 12478833711,
+      "name": "reading-platform-macOS-reading-core-39902467216-1",
+      "size_in_bytes": 11537970,
+      "digest": "sha256:de113563d26b907d17b8e51609b155d10b46f58e1dd1dec51058cc30e6be3d12",
+      "expired": false,
+      "workflow_run": {
+        "id": 39902467216,
+        "head_sha": "fa540271ea8ad2d9af4cd31467699db2e50c640a"
+      }
+    }
+  ],
+  "required_upstream_artifact_ids": [
+    12480345209,
+    12480086314,
+    12480040608,
+    12480021023,
+    12479927022,
+    12479925851,
+    12479880321,
+    12479821068,
+    12479687217,
+    12479512249,
+    12479462930,
+    12479422279,
+    12479356905,
+    12479328118,
+    12479327987,
+    12479153984,
+    12478929945,
+    12478833711
+  ],
+  "retained_failure": {
+    "source_sha": "11cb05489839c8587936340d83b4e45e214463d2",
+    "run_id": 39901084062,
+    "run_attempt": 1,
+    "upstream_jobs_succeeded": 16,
+    "final_job_id": 120246178893,
+    "final_job_conclusion": "failure",
+    "joint_accepted": false,
+    "reason": "Final original-performance evidence audit could not import PIL. The previous failure is retained; its successful upstream results are not substituted into this run."
+  },
+  "scope_limits": [
+    "Fixed representative real-v1 corpus and native SDK scope only; host application acceptance is separate.",
+    "No render-parity or complete-product grant; no old-source reliability CPU credit.",
+    "No tag or release publication is performed by this acceptance."
+  ]
+}
