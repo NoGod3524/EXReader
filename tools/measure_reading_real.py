@@ -15,6 +15,7 @@ from measure_reading_core import ROOT, git, sha256
 from measure_reading_pdf import number, require
 
 SDK = "9c69bc4c7efb0cff68ced27562709fe597189041"
+CORPUS_REGISTRATION = "ea5c13e081cfba86d9f6dd759439894463e51126"
 PROTECTED = ("src", "include", "cmake", "CMakeLists.txt", "tests/fixtures",
              ".github/workflows/native.yml", ".github/workflows/reliability.yml", "bindings")
 CONTRACT = ROOT / "tests/reading_real/contract.json"
@@ -166,6 +167,7 @@ def audit(summary, output, budgets=None):
             "Source/input identity changed")
     require(before["contract_sha256"] == summary["contract_sha256"] and
             before["manifest_sha256"] == summary["corpus_manifest_sha256"], "Contract/manifest identity changed")
+    require(summary["corpus_registration_sha"] == CORPUS_REGISTRATION, "Corpus registration identity changed")
     contract = summary["contract"]
     require(before["font"]["sha256"] == contract["font_sha256"] and contract == read(CONTRACT), "Font/contract drift")
     entries = summary["files"]
@@ -300,6 +302,7 @@ def main():
     summary = {"schema": 1, "scope": "linux_representative_reading", "accepted": False,
                "measurement_valid": False, "source_sha": args.source_sha, "sdk_candidate": SDK,
                "run_id": os.environ["GITHUB_RUN_ID"], "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+               "corpus_registration_sha": CORPUS_REGISTRATION,
                "corpus_manifest_sha256": sha256(args.manifest), "contract_sha256": sha256(CONTRACT),
                "budget_sha256": sha256(args.budgets) if args.budgets else None,
                "contract": contract, "files": entries, "attempts": [], "references": [], "problems": [],
@@ -309,6 +312,10 @@ def main():
         require(len(args.source_sha) == 40, "Use a full source SHA")
         require(subprocess.run(["git", "merge-base", "--is-ancestor", SDK, args.source_sha], cwd=ROOT).returncode == 0,
                 "SDK is not an ancestor")
+        require(subprocess.run(["git", "merge-base", "--is-ancestor", CORPUS_REGISTRATION, args.source_sha], cwd=ROOT).returncode == 0,
+                "First corpus registration is not an ancestor")
+        require(git("rev-parse", "HEAD:tools/reading_corpus/real-v1.json") ==
+                git("rev-parse", CORPUS_REGISTRATION + ":tools/reading_corpus/real-v1.json"), "Registered manifest blob changed")
         for path in PROTECTED:
             require(git("rev-parse", "HEAD:" + path) == git("rev-parse", SDK + ":" + path), "SDK protected tree changed")
         summary["environment"] = environment()
