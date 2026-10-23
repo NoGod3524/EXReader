@@ -61,7 +61,7 @@ def main():
         subprocess.run(['sudo', 'update-ca-certificates'], check=True, capture_output=True)
     entries, directories, requests, checks = {}, set(), [], []
     lock = threading.Lock()
-    flags = {'disconnect': '', 'pause_get': '', 'redirect_write': False}
+    flags = {'disconnect': '', 'pause_get': '', 'redirect_write': False, 'redirect_put': False}
     committed, release = threading.Event(), threading.Event()
     foreign_port = 0
 
@@ -153,6 +153,9 @@ def main():
             if not self.record():
                 return
             assert self.headers.get('If-None-Match') == '*'
+            if flags['redirect_put']:
+                self.send(307, headers={'Location': 'https://localhost:' + str(foreign_port) + '/dav/changed'})
+                return
             with lock:
                 if self.path in entries:
                     code = 412
@@ -428,6 +431,11 @@ def main():
         flags['redirect_write'] = False
         assert v['dav_code'] == 10 and not [r for r in requests if r['port'] == foreign_port]
         record('immutable_write_redirect_is_refused_before_foreign_origin_receives_credentials')
+        flags['redirect_put'] = True
+        v = sync(redirect, root('redirect'), shard=63, expected=3)
+        flags['redirect_put'] = False
+        assert v['dav_code'] == 10 and counts(redirect) == (1, 1) and not [r for r in requests if r['port'] == foreign_port]
+        record('put_redirect_cannot_replay_body_or_credentials_to_another_origin')
         for name, selected_port in (('untrusted', bad.server_port), ('hostname', wrong_server.server_port)):
             device = state('tls-' + name)
             v = sync(device, root('tls', selected_port), expected=3)
@@ -476,7 +484,7 @@ def main():
             assert secret not in device['db'].read_bytes()
         assert all(secret not in value and AUTH.encode() not in value for value in entries.values())
         record('credentials_are_absent_from_payloads_and_product_databases')
-        assert len(checks) == 30, len(checks)
+        assert len(checks) == 31, len(checks)
         (folder / 'requests.json').write_text(json.dumps(requests, indent=2), encoding='utf-8')
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform, 'count': len(checks),
