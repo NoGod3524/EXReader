@@ -64,20 +64,23 @@ def main():
         return subprocess.check_output(['xclip', '-selection', 'clipboard', '-o'], text=True, timeout=30)
 
     def screenshot(name):
+        state = host.wait(lambda s: s.get('page_width', 0) > 100 and s.get('page_height', 0) > 100
+                          and s.get('frame_generation', 0) > 0
+                          and s.get('painted_generation', -1) == s['frame_generation'])
         path = folder / name
         command('import', '-window', host.window, path)
         image = Image.open(path).convert('RGB')
         assert image.width >= 1000 and image.height >= 700
         # GTK centers a narrow rotated image inside the live scroller. Read that
         # widget's actual viewport, excluding borders/scrollbars and all side UI.
-        state = host.wait(lambda s: s.get('page_width', 0) > 100 and s.get('page_height', 0) > 100)
         bounds = (state['page_x'] + 8, state['page_y'] + 8,
                   min(image.width, state['page_x'] + state['page_width'] - 22),
                   min(image.height, state['page_y'] + state['page_height'] - 22))
         assert bounds[2] > bounds[0] and bounds[3] > bounds[1], repr((bounds, state))
         crop = image.crop(bounds)
         ink = sum(1 for pixel in crop.getdata() if min(pixel) < 180)
-        report['screenshots'].append({'file': name, 'viewport_crop': bounds, 'ink_pixels': ink})
+        report['screenshots'].append({'file': name, 'viewport_crop': bounds, 'ink_pixels': ink,
+                                      'painted_generation': state['painted_generation']})
         print(json.dumps({'screenshot': name, 'viewport_crop': bounds, 'ink_pixels': ink}), flush=True)
         assert ink > 300
 
