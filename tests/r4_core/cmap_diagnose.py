@@ -16,6 +16,15 @@ for path in sorted(root.rglob("*.pdf")):
         continue
     document = pymupdf.open(path)
     for xref in range(1, document.xref_length()):
+        group_kind, group_value = document.xref_get_key(xref, "Group")
+        if group_kind not in {"null", "none"}:
+            group_xref = int(group_value.split()[0]) if group_kind == "xref" else xref
+            key = "CS" if group_kind == "xref" else "Group/CS"
+            space_kind, space_value = document.xref_get_key(group_xref, key)
+            print(json.dumps({"file": path.name, "group_form_xref": xref,
+                "group": [group_kind, group_value], "space": [space_kind, space_value],
+                "space_object": document.xref_object(int(space_value.split()[0]))
+                if space_kind == "xref" else None}))
         kind, value = document.xref_get_key(xref, "ToUnicode")
         if kind != "xref":
             continue
