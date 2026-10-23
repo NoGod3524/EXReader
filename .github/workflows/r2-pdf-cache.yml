@@ -1,0 +1,82 @@
+name: PDF operation stream cache regression
+on:
+  push:
+    branches: [codex/r2-pdf-stream-cache]
+    paths: ['src/**', 'tests/pdf_stream_cache/**', '.github/workflows/r2-pdf-cache.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 9bd2b2c3caf1f63dc4437e0af978247494e87145
+          path: baseline
+      - name: Generate bounded cache regression PDFs in cloud
+        run: python3 tests/pdf_stream_cache/generate.py build/pdf-cache-fixtures
+      - name: Build unchanged baseline and candidate installed SDKs
+        run: |
+          cmake --preset reading-core -S baseline
+          cmake --build baseline/build/reading-core --parallel 4
+          cmake --install baseline/build/reading-core
+          cmake --preset reading-core
+          cmake --build --preset reading-core
+          cmake --install build/reading-core
+          for variant in baseline candidate; do
+            sdk="$PWD/build/reading-core/stage"
+            if [ "$variant" = baseline ]; then sdk="$PWD/baseline/build/reading-core/stage"; fi
+            cmake -S tests/pdf_stream_cache -B "build/cache-$variant" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$sdk"
+            cmake --build "build/cache-$variant" --parallel 4
+          done
+      - name: Prove the unchanged baseline fails and candidate preserves page limits
+        run: |
+          build/cache-baseline/pdf-stream-cache build/pdf-cache-fixtures baseline | tee build/pdf-cache-baseline.json
+          build/cache-candidate/pdf-stream-cache build/pdf-cache-fixtures candidate | tee build/pdf-cache-candidate.json
+      - name: Verify the complete originally failing NIST AI document
+        run: |
+          curl --fail --location --retry 3 --output build/nist-ai-rmf.pdf https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf
+          echo '7576edb531d9848825814ee88e28b1795d3a84b435b4b797d3670eafdc4a89f1  build/nist-ai-rmf.pdf' | sha256sum -c -
+          cmake -S tests/reading_core -B build/reading-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-core/stage" -DEXR_TEST_FONT="$PWD/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$PWD/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$PWD/tests/fixtures"
+          cmake --build build/reading-consumer --parallel 4
+          /usr/bin/time -v build/reading-consumer/reading-document build/nist-ai-rmf.pdf tests/fixtures/fonts/primary.ttf > build/nist-ai-result.json 2> build/nist-ai-process.log
+          cat build/nist-ai-result.json
+      - name: Preserve candidate results and regression sources
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-cache-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/pdf-cache-*.json
+            build/nist-ai-*.json
+            build/nist-ai-*.log
+            build/pdf-cache-fixtures/
+          if-no-files-found: error
+  native:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitize: ['OFF', 'ON']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure full native test suite
+        run: cmake -S . -B build/native -G Ninja -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=${{ matrix.sanitize }} -DEXR_ENABLE_AAC=OFF
+      - run: cmake --build build/native --parallel 4
+      - name: All registered native tests including embedded fonts, encryption and recovery
+        run: ctest --test-dir build/native --output-on-failure --no-tests=error --output-junit "$PWD/build/native/tests.xml"
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pdf-cache-native-${{ matrix.sanitize }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/native/tests.xml
+            build/native/Testing/
+          if-no-files-found: error
