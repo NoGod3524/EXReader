@@ -96,5 +96,55 @@ SHA-256 `5560d15611a4ca27e189efb9ad94a0257caebbe4f086dd362aff7609842719a2`。
 `native-page-cache`新增八份16 MiB图像的跨页压力回归、旧页保活与倒翻、
 取消后页面可绘制、同页超限拒绝、整文档布局超限拒绝。固定旧SDK运行同一新增回归必须失败，
 并保留原64 MiB拒绝原因；既有小图只解码一次断言保留。
-完整native Release与ASan/UBSan由run `39890510578`执行；
-原八份真实文档由run `39890510535`执行。两者首次登记时均未结束，尚不授予修复验收。
+run `39890510578`的完整native Release 168/168、ASan/UBSan 165/165通过。
+首次旧SDK拒绝控制因浅克隆无法找到登记基线而失败；保留该失败。
+`d67a68e09ea18396c5bc84b9d0b93ff45ef43823`只将checkout改为完整历史，
+重跑run `39890990240`的Release再次168/168通过，旧SDK控制明确检出64 MiB累计图像拒绝；
+ASan/UBSan也完成165/165，`native-page-cache`在两种构建均通过。
+Release工件ID `12474148828`、14,180字节、
+SHA-256 `a55ce7bc59047372002fe957ef05fefb59acb0210d0091873274a113af581071`。
+sanitizer工件ID `12475500911`、13,613字节、
+SHA-256 `484583fdc95b9bd79a8204927aa5fb37e3688ce54fd7921a5a56c32bc62331e3`。
+
+原八份真实文档run `39890510535`在候选`9114b24`完成：Pride由97页限制修至963页、10/10部分完整通过；
+其余四份先前通过项仍通过，三个PDF仍保留原失败。完整遍历5通过/3失败、定位6通过/2失败，
+严格`accepted=false`。工件ID `12474901013`，
+SHA-256 `ff826618e1764bb07ed733c82e9c60133dba2eda95e388831cdbf1a0fb7f7e3c`。
+
+## 组合候选完整重跑
+
+`c358df7bdc128a478c3a2d21a68d2bff89d06632`合入图像缓存、PDF解码流操作边界、
+公共固定页面选项回归修正和R4单字节ToUnicode映射修复。
+原八份、原预期、同一manifest与登记提交的完整重跑为run `39891591170`。
+manifest SHA-256仍为`f71f8a24faff664a03b7e15a7f424ec354f83c53fbd14f602d4b050f3fd19de1`。
+
+| 原件 | 完整遍历 | 独立重开定位 | 结论 |
+| --- | --- | --- | --- |
+| Alice | 226页、16/16部分 | 15文字部分+1空文字部分 | 通过 |
+| Frankenstein | 539页、33/33部分 | 32文字部分+1空文字部分 | 通过 |
+| Pride | 963页、10/10部分 | 9文字部分+1空文字部分 | 通过 |
+| Moby Dick | 1449页、14/14部分 | 13文字部分+1空文字部分 | 通过 |
+| W-9 | 6/6页、37,688文字字节 | 6/6页 | 通过 |
+| NIST AI RMF | 48/48页、91,074文字字节 | 48/48页 | 通过 |
+| NIST CSF2 | 32/32页、68,794文字字节 | 32/32页 | 通过 |
+| NASA图册 | 首面绘制`status=11`，完成0页 | 42/42页 | 未通过，保留成功预期 |
+
+完整遍历7通过/1失败，定位8通过，严格`accepted=false`。
+工件`r2-real-corpus-39891591170-1` ID `12475246637`、40,675,156字节、
+SHA-256 `dc1dfa45cbb6aa3b4ac61f08a3bf2c4e6e5c7c4db81a8f3f6e9b2aedeb31c844`。
+NASA后续由R4继续诊断绘制；不将此状态改为预期拒绝，不拼接其他源码旧通过项。
+
+## PDF解码流生命周期独立源码复核
+
+对组合候选中的`pdf_objects.c`与`pdf_document.c`五个清理入口作只读复核，未发现越过操作边界的借用：
+
+| 路径 | 清理前完成的持有者 | 依据 |
+| --- | --- | --- |
+| 页面绘制、AP、嵌套Form和Type3 | 同步递归解释器先关闭font/colorspace，painter再关闭FreeType face、ICC与软蒙版 | `pdf_document.c:41`、`pdf_content.c:416`、`pdf_content.c:651`、`pdf_paint.c:201`、`pdf_annotation_paint.c:225` |
+| 字体程序、CIDToGID、颜色空间与函数 | font程序和CID表借解码流；其font/face都先关闭。Indexed颜色表和采样函数复制源数据；calculator/ICC在所属颜色空间销毁时结束 | `pdf_font.c:238`、`pdf_font.c:269`、`pdf_color.c:156`、`pdf_function.c:120` |
+| 文字、元数据、注释和位图返回值 | 文字及regions复制；Info/XMP与annotation字段单独分配；公开fixed层再次复制metadata/annotation；canvas输出独立像素 | `fixed_text.c:31`、`pdf_document.c:110`、`pdf_annotations.c:42`、`fixed.c:91`、`pdf_raster.c:40` |
+| 页面目录及对象流索引 | 页面只保留对象ID与数值；对象流objects/offsets独立分配，解析字符串进入file拥有的strings | `pdf_pages.c:105`、`pdf_objects.c:413`、`pdf_objects.c:727` |
+| 工作预算与重入 | 仅成功顶层出口清零work/decode_work，失败销毁reader；嵌套Form/Type3/AP无清零入口。fixed层busy拒绝同文档重入 | `pdf_objects.c:727`、`pdf_document.c:52`、`fixed.c:95`、`fixed.c:163` |
+
+64 MiB单流、128 MiB单操作累计和256 MiB解码工作预算继续在操作内部执行；
+跨已结束操作不再累计。上述为源码生命周期复核，云端回归及真实原件结果分别保留于对应run。
