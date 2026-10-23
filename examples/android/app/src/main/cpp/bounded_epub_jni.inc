@@ -256,6 +256,36 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_BoundedEpub_nativeResolve(JN
   if(budget_ms>0) context.deadline_ns=host_now_ns()+(uint64_t)budget_ms*1000000u;
   status=exr_pager_anchor_resolve(reader->pager,&anchor,&control,&match,&error);
   if(status==EXR_CANCELLED && context.expired && !(*env)->ExceptionCheck(env)) {
+    host_control probe_context; exr_control probe_control=host_task_control(env,task,&probe_context);
+    exr_anchor probe={0}; exr_error probe_error={0}; host_page_text text={0};
+    exr_status point_status,far_status=EXR_ARGUMENT,page_status=EXR_ARGUMENT;
+    exr_chapter_stats statistics=exr_pager_chapter_statistics(reader->pager);
+    unsigned char first; size_t pages=0,last=0;
+    char reason[256]; snprintf(reason,sizeof(reason),"%s",error.message);
+    point_status=reader->source.read_at(reader->source.context,0,&first,1)==1
+      ? exr_pager_anchor_create(reader->pager,anchor.start,anchor.start,&probe_control,&probe,&probe_error) : EXR_IO;
+    exr_anchor_free(&probe);
+    if(point_status==EXR_OK && statistics.projection_bytes>1024) {
+      far_status=exr_pager_read_text(reader->pager,statistics.projection_bytes-1024,statistics.projection_bytes,
+                                    host_text_sink,&text,&probe_control,&probe_error);
+      free(text.bytes);
+      if(far_status==EXR_OK) {
+        page_status=exr_pager_set_control(reader->pager,&probe_control,&probe_error);
+        while(page_status==EXR_OK && pages<1000 && last<131072) {
+          exr_layout *layout=NULL; const exr_page *page; size_t count=0;
+          reader->next_calls++;
+          page_status=exr_pager_next(reader->pager,&layout,&probe_error);
+          if(page_status==EXR_OK && layout) {
+            page=exr_layout_pages(layout,&count);
+            if(page && count==1) { last=page[0].end; pages++; }
+            else page_status=EXR_FORMAT;
+          } else if(page_status==EXR_OK) page_status=EXR_FORMAT;
+          exr_layout_free(layout);
+        }
+      }
+    }
+    __android_log_print(ANDROID_LOG_INFO,"EXROpenProfile","timeout_reason=%s point_status=%d far_window_status=%d next_status=%d pages=%zu last_offset=%zu",
+                        reason,(int)point_status,(int)far_status,(int)page_status,pages,last);
     status=EXR_OK; result[0]=-2; result[1]=result[2]=-1;
   } else {
     if(status!=EXR_OK) goto done;

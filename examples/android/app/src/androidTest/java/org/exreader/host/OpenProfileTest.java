@@ -35,7 +35,7 @@ public final class OpenProfileTest extends Instrumentation {
             try (BookStore store = new BookStore(getTargetContext(), new File(folder, "library.db"))) {
                 long id = store.importFile(file.getPath(), 4, "Large profile").id;
                 HostTask task = new HostTask(() -> false);
-                for (int attempt = 0; attempt < 2; attempt++) {
+                for (int attempt = 0; attempt < 3; attempt++) {
                     long began = SystemClock.elapsedRealtime();
                     try (BoundedEpub epub = new BoundedEpub(store.nativeLibrary(), id, font, 24)) {
                         PageLoad load = epub.restore(attempt == 0 ? 0 : 1, task);
