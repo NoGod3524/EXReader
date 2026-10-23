@@ -1,27 +1,24 @@
-name: Frozen reading raw inputs diagnostic only
+name: Retained performance environment diagnostic only
 on:
-  push:
-    branches: ['codex/reading-corpus-inputs']
+  workflow_dispatch:
 permissions:
   contents: read
   actions: read
 jobs:
-  raw-inputs:
+  retained-environment:
     runs-on: ubuntu-22.04
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Install independent PDF source inspector
-        run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils
-      - name: Verify raw archive recovery, current licenses and independent publisher response
+      - name: Verify the failed artifact and compare retained environments without execution
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tools/reading_corpus/diagnose_frozen.py
-      - name: Preserve diagnostic and raw inputs without an acceptance grant
+        run: python3 tools/reading_environment_diagnostic.py
+      - name: Preserve retained environment diagnostic without an acceptance grant
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reading-input-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/raw-input-diagnostic/
+          name: reading-environment-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reading-environment-diagnostic/
           if-no-files-found: error
           retention-days: 30
