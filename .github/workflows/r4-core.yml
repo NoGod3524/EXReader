@@ -2,6 +2,17 @@ name: R4 core anchor optimization
 on:
   push:
     branches: ['codex/r4-core-hotspots']
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'cmake/**'
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
+      - 'tests/**'
+      - '!tests/r4_core/cmap_diagnose.py'
+      - '!tests/r4_core/real_pdf.py'
+      - 'tools/r4_anchor_probe.c'
+      - '.github/workflows/r4-core.yml'
   workflow_dispatch:
 permissions:
   contents: read

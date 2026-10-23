@@ -1,0 +1,66 @@
+name: R4 soft-mask color references
+on:
+  push:
+    branches: ['codex/r4-core-hotspots']
+    paths:
+      - 'src/pdf_content.c'
+      - 'src/pdf_softmask*.c'
+      - 'src/pdf_raster*'
+      - 'tests/test_pdf_groupcs.c'
+      - 'tests/test_paint_source.c'
+      - 'src/canvas.c'
+      - 'src/pdf_face.c'
+      - 'tests/test_pdf_outline.c'
+      - '.github/workflows/r4-softmask.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    name: same-run clipped procedural work comparison
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 94a318ddfa09782ccf3a6bd344fc8bf6d47352a4
+          path: engine
+      - name: Build both installed public SDK consumers
+        run: |
+          for role in baseline candidate; do
+            source=engine
+            if [ "$role" = candidate ]; then source=.; fi
+            cmake --preset reading-core -S "$source" -DCMAKE_INSTALL_PREFIX="$PWD/stage/$role"
+            cmake --build "$source/build/reading-core" --parallel 4
+            cmake --install "$source/build/reading-core"
+            cmake -S tests/r4_paint -B "build/$role-probe" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/stage/$role" -DEXR_ENGINE="$PWD/$source"
+            cmake --build "build/$role-probe" --parallel 4
+          done
+      - name: Compare alternating fresh processes under unchanged work budget
+        run: python3 tests/r4_paint/compare.py build/baseline-probe/r4-paint-probe build/candidate-probe/r4-paint-probe build/paint-comparison
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r4-paint-work-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/paint-comparison/
+          if-no-files-found: error
+  reference:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build existing color and mask reference consumers
+        run: |
+          cmake -S . -B build/native -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF
+          cmake --build build/native --parallel 4 --target exreader-pdf-groupcs-test exreader-mask-scope-test exreader-mask-functions-test exreader-blend-test exreader-paint-source-test exreader-pdf-outline-test
+      - name: Check independent CMS, blend, mask, cancellation and budget references
+        run: ctest --test-dir build/native --output-on-failure --no-tests=error -R 'native-(pdf-groupcs|mask-scope|mask-functions|blend|paint-source|pdf-outline)$' --output-junit "$PWD/build/references.xml"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r4-softmask-reference-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/references.xml
+            build/native/Testing/Temporary/
+          if-no-files-found: error
