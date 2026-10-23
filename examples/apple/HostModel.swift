@@ -538,6 +538,7 @@ final class HostReaderModel: ObservableObject {
 
     private let queue = DispatchQueue(label: "org.exreader.host.reader")
     private var session: HostSession?
+    private var catalog: HostCatalog?
     private var token = 0
     private var activeCancel: HostCancelBox?
     private var started = false
@@ -555,6 +556,13 @@ final class HostReaderModel: ObservableObject {
     private let testFixtures = ProcessInfo.processInfo.arguments.contains("-EXRUITestFixtures")
     private let freshState = ProcessInfo.processInfo.arguments.contains("-EXRFreshState")
     private var slowDelay: Double = 0
+
+    deinit {
+        let ownedCatalog = catalog
+        queue.async {
+            try? ownedCatalog?.close()
+        }
+    }
 
     var showsTestFixtures: Bool { testFixtures }
 
@@ -599,11 +607,18 @@ final class HostReaderModel: ObservableObject {
                 let folder = try self.storageFolder()
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                 if fresh {
-                    for name in ["library.sqlite", "library.sqlite-wal", "library.sqlite-shm"] {
+                    for name in ["library.sqlite", "library.sqlite-wal", "library.sqlite-shm",
+                                 "reader-catalog.db", "reader-catalog.db-wal", "reader-catalog.db-shm",
+                                 "reader-catalog.db-journal"] {
                         try? FileManager.default.removeItem(at: folder.appendingPathComponent(name))
                     }
                     self.defaults.removeObject(forKey: "EXRLastBook")
                 }
+                guard let migration = Bundle.main.url(forResource: HostCatalog.resourceName, withExtension: "sql") else {
+                    throw HostError.invalidInput("缺少原始产品书库迁移资源")
+                }
+                let catalog = try HostCatalog(path: folder.appendingPathComponent("reader-catalog.db"),
+                                              migrationURL: migration, ownerQueue: self.queue)
                 let library = try HostLibrary(path: folder.appendingPathComponent("library.sqlite"))
                 let fontURL = Bundle.main.url(forResource: "Reader", withExtension: "otf")
                 guard let fontURL else { throw HostError.invalidInput("缺少 Reader.otf") }
@@ -621,6 +636,7 @@ final class HostReaderModel: ObservableObject {
                                           fontSize: savedFont > 0 ? savedFont : 28)
                 self.session = session
                 let rows = try session.listBooks()
+                self.catalog = catalog
                 let lastID = (self.defaults.object(forKey: "EXRLastBook") as? NSNumber)?.int64Value
                 DispatchQueue.main.async {
                     self.traceUITest("startup-publish rows=\(rows.count)")
@@ -1171,11 +1187,15 @@ final class HostReaderModel: ObservableObject {
 #if EXR_APPLE_HOST_REVIEW
     // Install an actual session in the command-line cloud consumer without
     // relying on application-bundle startup resources or replacing SDK calls.
-    func installReviewSession(_ session: HostSession, snapshot: HostSnapshot) throws {
+    func installReviewSession(_ session: HostSession, snapshot: HostSnapshot, catalogMigration: URL) throws {
         // start() creates this directory for the real app. The headless
         // consumer must satisfy the same persistence prerequisite explicitly.
         let stateFolder = try stateFileURL().deletingLastPathComponent()
         try FileManager.default.createDirectory(at: stateFolder, withIntermediateDirectories: true)
+        try queue.sync {
+            self.catalog = try HostCatalog(path: session.library.path.deletingLastPathComponent()
+                .appendingPathComponent("reader-catalog.db"), migrationURL: catalogMigration, ownerQueue: queue)
+        }
         self.session = session
         books = try session.listBooks()
         apply(snapshot)
