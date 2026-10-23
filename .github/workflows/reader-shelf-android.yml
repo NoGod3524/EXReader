@@ -120,6 +120,11 @@ jobs:
           ANDROID_GATE_OUTCOME: '${{ steps.gate_review.outcome }}'
           ANDROID_BOUNDED_GATE_OUTCOME: '${{ steps.bounded_gate.outcome }}'
         run: python tools/check_android_host.py --repo . --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --gate-review build/android-host/gate-review.json --bounded-gate-review build/android-host/bounded-gate-review.json --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --output build/shelf-android/original-result.json
+      - name: Require all production shelf exits from this exact source and run
+        if: always()
+        run: python tools/check_reader_shelf_android.py --evidence build/shelf-android --all-exits
+      - name: Refuse altered or incomplete shelf, mapping and original evidence
+        run: python tests/android_host/check_shelf_evidence_gate.py --evidence build/shelf-android
       - name: Preserve source, native build and original catalog reports
         if: always()
         uses: actions/upload-artifact@v4
