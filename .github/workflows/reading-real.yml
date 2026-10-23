@@ -2,6 +2,19 @@ name: Representative reading performance
 on:
   push:
     branches: ['codex/r3-real-performance']
+    paths:
+      - '.github/workflows/reading-real.yml'
+      - 'tools/reading_real_benchmark.c'
+      - 'tools/measure_reading_real.py'
+      - 'tools/host_font.py'
+      - 'tools/reading_corpus/**'
+      - 'tests/reading_real/**'
+      - 'tests/check_reading_real_baseline.py'
+      - 'src/**'
+      - 'include/**'
+      - 'cmake/**'
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
   workflow_dispatch:
     inputs:
       require_budgets:

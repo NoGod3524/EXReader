@@ -25,7 +25,7 @@ metadata = fetch("actions/artifacts/" + str(ARTIFACT))
 require(metadata["digest"] == DIGEST and not metadata["expired"] and metadata["size_in_bytes"] > 0 and
         metadata["workflow_run"]["id"] == RUN and metadata["workflow_run"]["head_sha"] == SOURCE,
         "Pinned input artifact identity refused")
-archive_path = output / "input.zip"
+archive_path = Path("build/reading-pixel-input.zip")
 with archive_path.open("wb") as stream:
     subprocess.run(["gh", "api", f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/{ARTIFACT}/zip"],
                    stdout=stream, check=True, timeout=120)
@@ -61,12 +61,18 @@ with zipfile.ZipFile(archive_path) as archive:
             draw.text((column * 612 + 8, 8), title, fill=0)
             sheet.paste(view.crop(crop), (column * 612, 28))
         png = io.BytesIO()
-        sheet.save(png, format="PNG", optimize=True)
+        sheet.quantize(colors=32, dither=Image.Dither.NONE).save(png, format="PNG", optimize=True)
         data = png.getvalue()
+        while len(data) > 200 * 1024 and sheet.width > 1000:
+            sheet = sheet.resize((int(sheet.width * .85), int(sheet.height * .85)), Image.Resampling.LANCZOS)
+            png = io.BytesIO()
+            sheet.quantize(colors=32, dither=Image.Dither.NONE).save(png, format="PNG", optimize=True)
+            data = png.getvalue()
         require(len(data) <= 200 * 1024, "Contact sheet exceeds log image bound")
         (output / f"w9-{item['page']}-top-contact.png").write_bytes(data)
         report["pages"].append({"page": item["page"], "crop": crop, "gray_normalized_mae": error,
-                                "contact_png_bytes": len(data), "contact_sha256": hashlib.sha256(data).hexdigest()})
+                                "contact_png_bytes": len(data), "contact_sha256": hashlib.sha256(data).hexdigest(),
+                                "contact_only_gray_levels": 32, "contact_size": sheet.size})
         if item["page"] == 0:
             print("PIXEL_CONTACT_PNG_BEGIN", flush=True)
             print(base64.b64encode(data).decode("ascii"), flush=True)
