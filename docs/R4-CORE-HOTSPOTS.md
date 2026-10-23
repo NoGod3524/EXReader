@@ -52,3 +52,8 @@ gprof 工件 `12473620800`，3145238 B，digest `sha256:b82d225f3079235e3a929382
 
 Android 旧合成长章用例固定要求真实 5 秒超时。更快的合法歧义可能触发该旧用例；宿主复验须换为仍需全扫描的唯一或缺失 context，保留超时断言。
 旧 SDK 冻结及宿主通过不授予新核心；重新冻结和宿主复验由集成人协调。
+
+首个候选 `254ea8b` / run `39888168960` 未通过，完整原件保留。
+专属测试错误地用公开 constructor 创建重复 chapter path，原始基线即按契约拒绝，未执行 A/B 采样。
+改为合法不同 path 的跨章全局搜索；重复 spine path 继续由不改动的原始 `test_anchor.c` 覆盖。
+同时确认 reading preset 的裁剪配置只注册少量原生组件测试；后继直接把原始 public anchor/fixed-text 测试链接双方已安装 core，候选 sanitizer 使用完整原生配置注册全套（含 chapter/CFI）。
