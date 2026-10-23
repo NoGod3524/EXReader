@@ -113,7 +113,7 @@ private func hostProgressCallback(_ context: UnsafeMutableRawPointer?, _ stage: 
                                   _ completed: UInt64, _ total: UInt64) {
 }
 
-private func hostControl(_ box: HostCancelBox) -> exr_control {
+func hostControl(_ box: HostCancelBox) -> exr_control {
     var control = exr_control()
     control.context = Unmanaged.passUnretained(box).toOpaque()
     control.cancelled = hostCancelledCallback
@@ -161,6 +161,100 @@ final class HostAnchor {
     var quote: String { hostString(raw.exact) }
     var hasQuote: Bool { raw.exact != nil }
     var isPoint: Bool { raw.start == raw.end }
+}
+
+// This owner is stable for the entire publication lifetime; each serial worker
+// operation replaces only its active token, never a borrowed callback context.
+private final class HostSourceControl {
+    var active: HostCancelBox
+    init(_ active: HostCancelBox) { self.active = active }
+}
+private func hostSourceCancelled(_ context: UnsafeMutableRawPointer?) -> Int32 {
+    guard let context else { return 0 }
+    return Unmanaged<HostSourceControl>.fromOpaque(context).takeUnretainedValue().active.isCancelled ? 1 : 0
+}
+
+struct HostPart { let index: Int; let path: String; let reading: Bool }
+final class HostPublication {
+    let handle: OpaquePointer
+    let parts: [HostPart]
+    private let library: HostLibrary
+    private let controlOwner: HostSourceControl
+    init(library: HostLibrary, bookID: Int64, cancel: HostCancelBox) throws {
+        self.library = library
+        let owner = HostSourceControl(cancel)
+        controlOwner = owner
+        var source = exr_source(), error = exr_error()
+        try hostCheck(exr_library_source(library.handle, bookID, &source, &error), error)
+        source.control.context = Unmanaged.passUnretained(owner).toOpaque()
+        source.control.cancelled = hostSourceCancelled
+        var result: OpaquePointer?
+        let status = exr_publication_open_source(&source, &result, &error)
+        if status != EXR_OK {
+            source.release?(source.context)
+            try hostCheck(status, error)
+        }
+        guard let result else {
+            source.release?(source.context)
+            throw HostError.invalidResult("EPUB 目录为空")
+        }
+        if cancel.isCancelled { exr_publication_free(result); throw HostError.cancelled }
+        handle = result
+        var count = 0
+        if let rows = exr_publication_parts(result, &count) {
+            parts = (0..<count).map { HostPart(index: $0, path: hostString(rows[$0].path), reading: rows[$0].in_reading_order != 0) }
+        } else { parts = [] }
+    }
+    deinit { exr_publication_free(handle) }
+    func bind(_ cancel: HostCancelBox) throws { try cancel.check(); controlOwner.active = cancel }
+    func route(_ part: Int, path: String? = nil) throws -> HostPart {
+        guard parts.indices.contains(part), parts[part].reading,
+              path == nil || path == parts[part].path else { throw HostError.invalidInput("EPUB 章节路由无效") }
+        return parts[part]
+    }
+}
+
+final class HostEPUBLocation {
+    private(set) var raw: exr_epub_location
+    init(adopting raw: exr_epub_location) { self.raw = raw }
+    deinit { exr_epub_location_free(&raw) }
+    var part: Int { raw.part }
+    var path: String { hostString(raw.path) }
+}
+
+private final class HostFileSource {
+    let file: FileHandle
+    let cancel: HostCancelBox
+    var failure: Error?
+    init(file: FileHandle, cancel: HostCancelBox) { self.file = file; self.cancel = cancel }
+}
+private func hostFileRead(_ context: UnsafeMutableRawPointer?, _ offset: UInt64,
+                          _ buffer: UnsafeMutableRawPointer?, _ size: Int) -> Int {
+    guard let context, let buffer else { return 0 }
+    let owner = Unmanaged<HostFileSource>.fromOpaque(context).takeUnretainedValue()
+    do {
+        try owner.cancel.check()
+        try owner.file.seek(toOffset: offset)
+        let bytes = try owner.file.read(upToCount: min(size, 64 * 1024)) ?? Data()
+        bytes.copyBytes(to: buffer.assumingMemoryBound(to: UInt8.self), count: bytes.count)
+#if EXR_APPLE_HOST_REVIEW
+        try HostSDKReview.event?("import-read")
+#endif
+        return bytes.count
+    } catch { if owner.failure == nil { owner.failure = error }; return 0 }
+}
+
+private final class HostPageText {
+    var data = Data()
+    static let limit = 2 * 1024 * 1024
+}
+private func hostPageTextSink(_ context: UnsafeMutableRawPointer?, _ bytes: UnsafePointer<CChar>?,
+                              _ size: Int, _ error: UnsafeMutablePointer<exr_error>?) -> exr_status {
+    guard let context, let bytes else { return EXR_ARGUMENT }
+    let owner = Unmanaged<HostPageText>.fromOpaque(context).takeUnretainedValue()
+    guard size <= HostPageText.limit - owner.data.count else { return EXR_LIMIT }
+    owner.data.append(UnsafeRawPointer(bytes).assumingMemoryBound(to: UInt8.self), count: size)
+    return EXR_OK
 }
 
 struct HostAnchorMatch {
@@ -230,13 +324,15 @@ final class HostDocument {
 final class HostPager {
     private let pager: OpaquePointer
     private(set) var failure: String?
-    private let document: HostDocument
+    private let document: HostDocument?
+    private let publication: HostPublication?
     private let font: HostFont
     private var box: HostCancelBox
 
     init(document: HostDocument, font: HostFont, width: Double, height: Double,
          fontSize: Double, box: HostCancelBox) throws {
         self.document = document
+        publication = nil
         self.font = font
         self.box = box
         let safeWidth = max(320.0, width)
@@ -261,6 +357,42 @@ final class HostPager {
         pager = result
     }
 
+    init(publication: HostPublication, part: Int, font: HostFont, width: Double, height: Double,
+         fontSize: Double, box: HostCancelBox, windowBytes: Int = 16384) throws {
+        document = nil; self.publication = publication; self.font = font; self.box = box
+        _ = try publication.route(part)
+        try publication.bind(box)
+        var config = exr_layout_config_defaults()
+        config.page.width = Float(max(320, width)); config.page.height = Float(max(480, height))
+        config.page.margin = 36; config.page.font_size = Float(fontSize)
+        config.document_css = 1; config.embedded_fonts = 1; config.control = hostControl(box)
+        var options = exr_chapter_options_defaults()
+        options.workspace_budget = 16 * 1024 * 1024; options.window_bytes = windowBytes
+        var result: OpaquePointer?, error = exr_error()
+        try hostCheck(exr_publication_pager_create(publication.handle, part, font.handle, &config, &options, &result, &error), error)
+        guard let result else { throw HostError.invalidResult("有界章节无法创建") }
+        if box.isCancelled { exr_pager_free(result); throw HostError.cancelled }
+        do {
+            try hostCheck(exr_pager_set_cache(result, 2, 8 * 1024 * 1024, &error), error)
+            try hostCheck(exr_pager_set_checkpoints(result, 4, 2 * 1024 * 1024, 16, &error), error)
+        } catch { exr_pager_free(result); throw error }
+        pager = result
+    }
+
+    var extent: Int { document?.text.count ?? Int(exr_pager_chapter_statistics(pager).projection_bytes) }
+    var statistics: exr_chapter_stats { exr_pager_chapter_statistics(pager) }
+
+    func text(_ range: Range<Int>, cancel: HostCancelBox) throws -> String {
+        if let document { return String(decoding: document.text[range], as: UTF8.self) }
+        try bind(cancel)
+        let owner = HostPageText()
+        var error = exr_error(), control = hostControl(cancel)
+        try hostCheck(exr_pager_read_text(pager, range.lowerBound, range.upperBound, hostPageTextSink,
+                                        Unmanaged.passUnretained(owner).toOpaque(), &control, &error), error)
+        try cancel.check()
+        return String(decoding: owner.data, as: UTF8.self)
+    }
+
     deinit { exr_pager_free(pager) }
 
     func cancel() { box.cancel() }
@@ -268,6 +400,7 @@ final class HostPager {
     private func bind(_ cancel: HostCancelBox?) throws {
         let active = cancel ?? HostCancelBox()
         try active.check()
+        try publication?.bind(active)
         var control = hostControl(active)
         var error = exr_error()
         try hostCheck(exr_pager_set_control(pager, &control, &error), error)
@@ -321,43 +454,60 @@ final class HostPager {
 
     func makeAnchor(start: Int, end: Int, cancel: HostCancelBox? = nil) throws -> HostAnchor {
         try bind(cancel)
-        // This host creates snapshot pagers. The pager_anchor_* APIs are only
-        // valid for the separate bounded chapter entry, not exr_pager_create.
-        return try document.makeAnchor(start: start, end: end, cancel: box)
+        // Snapshot pagers retain document selectors; bounded pagers use only
+        // their chapter query entry points.
+        if let document { return try document.makeAnchor(start: start, end: end, cancel: box) }
+        var anchor = exr_anchor(), error = exr_error(), control = hostControl(box)
+        try hostCheck(exr_pager_anchor_create(pager, start, end, &control, &anchor, &error), error)
+        if box.isCancelled { exr_anchor_free(&anchor); throw HostError.cancelled }
+        return HostAnchor(adopting: anchor)
     }
 
     func resolve(_ anchor: HostAnchor, cancel: HostCancelBox? = nil) throws -> HostAnchorMatch {
         try bind(cancel)
-        return try document.resolve(anchor, cancel: box)
+        if let document { return try document.resolve(anchor, cancel: box) }
+        return try withExtendedLifetime(anchor) { try resolveRaw(anchor.raw) }
+    }
+
+    func resolveLocation(_ location: HostEPUBLocation, cancel: HostCancelBox) throws -> HostAnchorMatch {
+        try bind(cancel)
+        return try withExtendedLifetime(location) { try resolveRaw(location.raw.selector) }
+    }
+    private func resolveRaw(_ raw: exr_anchor) throws -> HostAnchorMatch {
+        var anchor = raw, match = exr_anchor_match(), error = exr_error(), control = hostControl(box)
+        try hostCheck(exr_pager_anchor_resolve(pager, &anchor, &control, &match, &error), error)
+        try box.check()
+        return HostAnchorMatch(state: match.state, range: match.state == EXR_ANCHOR_FOUND ? match.start..<match.end : nil)
     }
 
     func pageIndex(for offset: Int, cancel: HostCancelBox? = nil) throws -> Int {
-        guard offset >= 0, offset <= document.text.count else {
+        let textCount = extent
+        guard offset >= 0, offset <= textCount else {
             throw HostError.invalidInput("文字位置越界")
         }
         let active = cancel ?? HostCancelBox()
         try active.check()
         let first = try pageRange(0, cancel: active)
-        if first.contains(offset) || (offset == document.text.count && first.upperBound == offset) { return 0 }
+        if first.contains(offset) || (offset == textCount && first.upperBound == offset) { return 0 }
         var low = 0
         var high = 1
         while high < 262144 {
             guard let range = try existingRange(high, cancel: active) else { break }
-            if range.upperBound > offset || (offset == document.text.count && range.upperBound == offset) { break }
+            if range.upperBound > offset || (offset == textCount && range.upperBound == offset) { break }
             low = high
             high *= 2
         }
         while low < high {
             let middle = (low + high) / 2
             if let range = try existingRange(middle, cancel: active),
-               range.upperBound < offset || (range.upperBound == offset && offset != document.text.count) {
+               range.upperBound < offset || (range.upperBound == offset && offset != textCount) {
                 low = middle + 1
             } else {
                 high = middle
             }
         }
         let range = try pageRange(low, cancel: active)
-        guard range.contains(offset) || (offset == document.text.count && range.upperBound == offset) else {
+        guard range.contains(offset) || (offset == textCount && range.upperBound == offset) else {
             throw HostError.invalidResult("未找到包含文字位置的页面")
         }
         return low
@@ -537,7 +687,9 @@ struct HostNoteRow: Identifiable {
     let start: Int
     let end: Int
     let state: String
+    var location: HostEPUBLocation? = nil
     var isResolved: Bool { state == "精确" }
+    var storage: String { location != nil ? "epub" : (page >= 0 ? "fixed" : "global") }
 }
 
 final class HostLibrary {
@@ -582,6 +734,35 @@ final class HostLibrary {
         let input = try FileHandle(forReadingFrom: file)
         defer { try? input.close() }
         let size = try input.seekToEnd()
+        if format == EXR_EPUB {
+            guard size > 0, size <= 128 * 1024 * 1024 else { throw HostError.invalidInput("EPUB 文件为空或超过 128 MiB") }
+            let active = cancel ?? HostCancelBox()
+            let owner = HostFileSource(file: input, cancel: active)
+            var source = exr_source(), id: Int64 = 0, created: Int32 = 0, error = exr_error()
+            source.size = size; source.context = Unmanaged.passUnretained(owner).toOpaque()
+            source.read_at = hostFileRead; source.control = hostControl(active)
+            let status = withExtendedLifetime(owner) {
+                title.withCString { exr_library_import_source_unique(handle, format, &source, $0, &id, &created, &error) }
+            }
+            if status != EXR_OK {
+                if active.isCancelled { throw HostError.cancelled }
+                if let failure = owner.failure { throw failure }
+                try hostCheck(status, error)
+            }
+            do {
+#if EXR_APPLE_HOST_REVIEW
+                try HostSDKReview.event?("import-inserted")
+#endif
+                try active.check()
+            } catch {
+                if created != 0 {
+                    do { try delete(bookID: id) }
+                    catch { throw HostError.invalidResult("导入回滚失败；书库保留记录 \(id)：\(error.localizedDescription)") }
+                }
+                throw error
+            }
+            return (id, created != 0)
+        }
         guard size > 0, size <= UInt64(maximum) else {
             throw HostError.invalidInput("文件为空或超过 32 MiB")
         }
@@ -655,6 +836,76 @@ final class HostLibrary {
 
     func document(bookID: Int64, cancel: HostCancelBox? = nil) throws -> HostDocument {
         try HostDocument(library: self, bookID: bookID, cancel: cancel)
+    }
+
+    func isBoundedEPUB(book: HostBook) throws -> Bool {
+        guard book.format == Int32(EXR_EPUB.rawValue) else { return false }
+        var info = exr_library_epub_info(), error = exr_error()
+        info.struct_size = MemoryLayout<exr_library_epub_info>.size
+        try hostCheck(exr_library_epub_info_get(handle, book.id, &info, &error), error)
+        return info.bounded_storage != 0
+    }
+    func epubProgress(bookID: Int64) throws -> HostEPUBLocation? {
+        var location = exr_epub_location(), present: Int32 = 0, error = exr_error()
+        try hostCheck(exr_library_epub_progress_get(handle, bookID, &location, &present, &error), error)
+        guard present != 0 else { exr_epub_location_free(&location); return nil }
+        return HostEPUBLocation(adopting: location)
+    }
+    func setEPUBProgress(bookID: Int64, part: Int, path: String, anchor: HostAnchor) throws {
+        var location = exr_epub_location(), error = exr_error()
+        location.part = part; location.selector = anchor.raw
+        try withExtendedLifetime(anchor) {
+            try path.withCString {
+                location.path = UnsafeMutablePointer(mutating: $0)
+                try hostCheck(exr_library_epub_progress(handle, bookID, &location, &error), error)
+            }
+        }
+    }
+    func addEPUBNote(bookID: Int64, part: Int, path: String, anchor: HostAnchor, text: String) throws {
+        guard !text.utf8.contains(0) else { throw HostError.invalidInput("标注包含空字符") }
+        var note = exr_epub_note(), result: Int64 = 0, error = exr_error()
+        note.book_id = bookID; note.location.part = part; note.location.selector = anchor.raw
+        try withExtendedLifetime(anchor) {
+            try path.withCString { route in try text.withCString { comment in
+                note.location.path = UnsafeMutablePointer(mutating: route); note.text = UnsafeMutablePointer(mutating: comment)
+                try hostCheck(exr_library_epub_note(handle, &note, &result, &error), error)
+            } }
+        }
+    }
+    func updateEPUBNote(bookID: Int64, noteID: Int64, text: String) throws {
+        guard !text.utf8.contains(0) else { throw HostError.invalidInput("标注包含空字符") }
+        var note = exr_epub_note(), result: Int64 = 0, error = exr_error()
+        note.id = noteID; note.book_id = bookID // exact=NULL is comment-only.
+        try text.withCString {
+            note.text = UnsafeMutablePointer(mutating: $0)
+            try hostCheck(exr_library_epub_note(handle, &note, &result, &error), error)
+        }
+    }
+    func removeEPUBNote(noteID: Int64) throws {
+        var error = exr_error(); try hostCheck(exr_library_remove_epub_note(handle, noteID, &error), error)
+    }
+    func epubNotes(bookID: Int64, part: Int, pager: HostPager, cancel: HostCancelBox) throws -> [HostNoteRow] {
+        var list: UnsafeMutablePointer<exr_epub_note>?, count = 0, error = exr_error()
+        try hostCheck(exr_library_epub_notes(handle, bookID, &list, &count, &error), error)
+        defer { exr_epub_notes_free(list, count) }
+        guard let list else { return [] }
+        var rows: [HostNoteRow] = []
+        for i in 0..<count {
+            try cancel.check()
+            // Transfer this nested location into one owner, then clear the array
+            // slot so notes_free cannot free the strings a second time.
+            let location = HostEPUBLocation(adopting: list[i].location)
+            list[i].location = exr_epub_location()
+            let match: HostAnchorMatch?
+            if location.part == part { match = try pager.resolveLocation(location, cancel: cancel) }
+            else { match = nil }
+            rows.append(HostNoteRow(id: list[i].id, bookID: list[i].book_id,
+                                    quote: hostString(location.raw.selector.exact), comment: hostString(list[i].text),
+                                    page: -1, start: match?.range?.lowerBound ?? Int.max,
+                                    end: match?.range?.upperBound ?? Int.max,
+                                    state: match?.label ?? "待定位", location: location))
+        }
+        return rows
     }
 
     func fixed(bookID: Int64, font: HostFont, cancel: HostCancelBox? = nil) throws -> HostFixed {

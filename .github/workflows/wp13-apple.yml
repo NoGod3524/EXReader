@@ -1,10 +1,12 @@
 name: WP13 Apple host
 on:
   push:
-    branches: ['codex/wp13-apple', 'codex/wp13-apple-review']
+    branches: ['codex/wp13-apple', 'codex/wp13-apple-review', 'codex/r5-apple-bounded']
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  H9_SDK_BASELINE: 9c69bc4c7efb0cff68ced27562709fe597189041
 
 jobs:
   sdk:
@@ -16,6 +18,13 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
+      - name: Verify the frozen reading SDK trees
+        run: |
+          git fetch --no-tags --depth=1 origin "$H9_SDK_BASELINE"
+          git diff --exit-code "$H9_SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt \
+            tests/fixtures bindings licenses tools/layers.json \
+            .github/workflows/native.yml .github/workflows/reliability.yml
+          echo "H9 frozen SDK baseline: $H9_SDK_BASELINE"
       - uses: actions/cache@v4
         id: sdk-cache
         with:
@@ -43,6 +52,15 @@ jobs:
           python3 tests/apple_host/evidence_contract.py sdk \
             --root "stage/${{ matrix.target }}" --platform "${{ matrix.target }}" \
             --output build/sdk-identity.json
+      - name: Compile the bounded Swift consumer before scheduling UI jobs
+        if: matrix.target == 'macos'
+        run: |
+          mkdir -p build/apple-preflight
+          xcrun swiftc -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
+            -I stage/macos/include -L stage/macos/lib -lexreader \
+            -Xlinker -rpath -Xlinker "$PWD/stage/macos/lib" \
+            examples/apple/HostSDK.swift examples/apple/HostModel.swift examples/apple/SelectableText.swift \
+            tests/apple_host/bounded_review/BoundedReview.swift -o build/apple-preflight/bounded-review
       - uses: actions/upload-artifact@v4
         with:
           name: wp13-apple-sdk-${{ matrix.target }}
@@ -217,6 +235,10 @@ jobs:
         run: |
           python3 tools/check_apple_model_review.py --sdk stage/macos \
             --resources build/apple-resources --output build/package/model-review
+      - name: Run bounded EPUB storage, chapter, notes and long source review
+        run: |
+          python3 tests/apple_host/run_bounded_review.py --sdk stage/macos \
+            --resources build/apple-resources --output build/package/bounded-review
       - name: Build and self-check the macOS reference host
         run: |
           set -euo pipefail
