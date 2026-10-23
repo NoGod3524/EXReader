@@ -267,7 +267,7 @@ def run_phase(exe, script, output, phase, data, package, timeout):
     return process.returncode, elapsed, process.pid
 
 
-def seal_inputs(package, sdk, manifest_path, selftest_path, consumer, steps_dir, fixtures, output):
+def seal_inputs(package, sdk, manifest_path, selftest_path, consumer, steps_dir, fixtures, output, static_link_map=None):
     from host_font import ASSETS
     source_sha = source_identity()
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
@@ -280,13 +280,44 @@ def seal_inputs(package, sdk, manifest_path, selftest_path, consumer, steps_dir,
             type(manifest.get('selftest_checks')) is int and manifest['selftest_checks'] == 26,
             'package source, version or native self-test identity mismatch')
     runtime_names = [name for name in ('exreader.dll', 'libexreader.dll') if (package / name).is_file()]
-    require(len(runtime_names) == 1, 'require exactly one packaged runtime')
-    runtime = runtime_names[0]
-    required = {'EXReader.exe', runtime, 'Reader.otf', 'OFL.txt', 'LICENSE.txt', 'THIRD_PARTY_NOTICES.md',
+    static_sdk = None
+    static_paths = []
+    if static_link_map is None:
+        require(manifest.get('linkage', 'shared') == 'shared', 'static package requires explicit static identity verification')
+        require(len(runtime_names) == 1, 'require exactly one packaged runtime')
+        runtime = runtime_names[0]
+        static_paths.append(sdk / 'bin' / runtime)
+        require(digest(package / runtime) == digest(sdk / 'bin' / runtime), 'packaged runtime differs from installed SDK')
+    else:
+        require(manifest.get('linkage') == 'static-reading' and not runtime_names,
+                'static reading package must declare static linkage and omit compatibility runtimes')
+        runtime = None
+        map_text = static_link_map.read_text(encoding='utf-8', errors='replace')
+        symbols = {}
+        for symbol, archive, source in (('exr_version', 'exr_base', 'core'),
+                                         ('exr_library_open', 'exr_library', 'library')):
+            matches = [line.strip() for line in map_text.splitlines()
+                       if re.search(r'^\s*[0-9a-fA-F]+:[0-9a-fA-F]+\s+' + symbol + r'\s+', line)]
+            require(len(matches) == 1 and re.search(r'\b' + archive + ':' + source + r'\.c\.obj\s*$', matches[0]),
+                    'actual static SDK symbol provider mismatch: ' + symbol)
+            symbols[symbol] = matches[0]
+            archive_path = sdk / 'lib' / (archive + '.lib')
+            require(archive_path.is_file(), 'installed static SDK archive missing: ' + archive)
+            static_paths.append(archive_path)
+        dependencies = subprocess.check_output(['dumpbin', '/DEPENDENTS', str(consumer)], text=True)
+        require('kernel32.dll' in dependencies.lower() and
+                not any(name in dependencies.lower() for name in ('exreader.dll', 'webview', 'chrome', 'webkit')),
+                'static reading consumer imports an unexpected SDK or browser runtime')
+        static_paths.append(static_link_map)
+        static_sdk = {'linkage': 'static-reading', 'symbols': symbols, 'dependencies': dependencies,
+                      'archives': {str(path.resolve()): digest(path) for path in static_paths[:-1]},
+                      'link_map_sha256': digest(static_link_map)}
+    required = {'EXReader.exe', 'Reader.otf', 'OFL.txt', 'LICENSE.txt', 'THIRD_PARTY_NOTICES.md',
                 'Sample.epub', 'Sample-positive.epub', 'Sample.pdf', 'Sample-Text.pdf'}
+    if runtime is not None:
+        required.add(runtime)
     verify_file_manifest(package, manifest.get('files'), required)
     require(digest(package / 'EXReader.exe') == digest(consumer), 'packaged executable differs from installed SDK consumer')
-    require(digest(package / runtime) == digest(sdk / 'bin' / runtime), 'packaged runtime differs from installed SDK')
     require(all(digest(package / name) == expected for name, (_, expected) in ASSETS.items()),
             'font or font license differs from the pinned reference asset')
     selftest = json.loads(selftest_path.read_text(encoding='utf-8'))
@@ -308,7 +339,7 @@ def seal_inputs(package, sdk, manifest_path, selftest_path, consumer, steps_dir,
         require(path.stat().st_size == record.get('bytes') and digest(path) == record.get('sha256'),
                 'original fixture identity mismatch: ' + name)
     plans, scripts = {}, {}
-    paths = [manifest_path, selftest_path, image, consumer, base_header, sdk / 'bin' / runtime,
+    paths = [manifest_path, selftest_path, image, consumer, base_header, *static_paths,
              ROOT / 'tools/check_windows_host.py', ROOT / 'tools/build_windows_host.py',
              ROOT / 'tests/windows_host/make_fixtures.py', ROOT / 'examples/reader.c',
              *[p for p in package.rglob('*') if p.is_file()], *[p for p in fixtures.iterdir() if p.is_file()]]
@@ -329,6 +360,7 @@ def seal_inputs(package, sdk, manifest_path, selftest_path, consumer, steps_dir,
             'acceptance_definition_sha': acceptance_source, 'sdk_version': version,
             'identities': snapshot(paths), 'plans': plans,
             'package_files': manifest['files'], 'runtime': runtime,
+            'static_sdk': static_sdk,
             'selftest': {'passed': True, 'checks': 26, 'engine_version': version, 'sha256': digest(selftest_path)},
             'parameter_observation_scope': 'Native log echoes check results and named states/screenshots. Other action parameters are bound to the sealed executed script, not independently echoed by this unchanged host.'}
     (output / 'pre-run-identities.json').write_text(json.dumps(seal, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
@@ -350,6 +382,7 @@ def main():
     parser.add_argument('--fixtures', type=Path)
     parser.add_argument('--selftest-report', type=Path, required=True)
     parser.add_argument('--consumer-binary', type=Path, required=True)
+    parser.add_argument('--static-link-map', type=Path, help='Explicit lightweight static SDK provider map; default shared runtime checks remain unchanged')
     parser.add_argument('--timeout', type=float, default=420)
     args = parser.parse_args()
     try:
@@ -379,7 +412,8 @@ def main():
 
     try:
         seal, plans, scripts = seal_inputs(package, sdk, args.manifest.resolve(), args.selftest_report.resolve(),
-                                          args.consumer_binary.resolve(), args.steps.resolve(), fixtures, output)
+                                          args.consumer_binary.resolve(), args.steps.resolve(), fixtures, output,
+                                          args.static_link_map.resolve() if args.static_link_map else None)
     except (OSError, ValueError, KeyError, TypeError, subprocess.CalledProcessError) as error:
         refusal = {'schema': 1, 'passed': False, 'errors': ['preflight: ' + str(error)]}
         (output / 'summary.json').write_text(json.dumps(refusal, indent=2) + '\n', encoding='utf-8')
@@ -600,7 +634,7 @@ def main():
         'sdk_version': sdk_version,
         'package': str(package),
         'program_sha256': sealed_digest(exe),
-        'sdk_runtime': {'name': runtime, 'sha256': sealed_digest(package / runtime)},
+        'sdk_runtime': {'name': runtime, 'sha256': sealed_digest(package / runtime)} if runtime else seal['static_sdk'],
         'font_sha256': sealed_digest(package / 'Reader.otf'),
         'books': {name: {'sha256': sealed_digest(package / name)}
                   for name in ('Sample.epub', 'Sample-positive.epub', 'Sample.pdf', 'Sample-Text.pdf')
