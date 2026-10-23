@@ -117,6 +117,8 @@ def main():
             assert self.headers.get('Depth') == '1'
             if self.path == '/dav/':
                 self.send(207, listing([response('/dav/', True), response('/dav/book.epub'), response('/dav/folder/', True), response('/dav/%E4%B9%A6.epub')]))
+            elif self.path == '/dav/redirected/':
+                self.send(307, headers={'Location': '/dav/folder/'})
             elif self.path == '/dav/folder/':
                 self.send(207, listing([response('/dav/folder/', True), response('child.epub')]))
             elif self.path == '/dav/alias/':
@@ -228,6 +230,8 @@ def main():
         assert result['entries'][0]['display_name'] == '书 & Book'
         assert result['entries'][1]['collection'] == 1
         run('nested_collection_relative_href', action='list', resource='folder/')
+        result = run('redirected_collection_relative_href', action='list', resource='redirected/')
+        assert [row['resource'] for row in result['entries']] == ['folder/child.epub']
         run('namespace_alias', action='list', resource='alias/')
         run('default_namespace', action='list', resource='default/')
         run('native_https_download')
