@@ -18,7 +18,7 @@ static void pixels(const exr_bitmap *b,size_t page) {
 }
 int main(int argc,char **argv) {
   exr_fixed_document *d=NULL; exr_bitmap b={0},retained={0};
-  exr_fixed_text *retained_text=NULL,*text=NULL; exr_control control={0};
+  exr_fixed_text *retained_text=NULL,*text=NULL; exr_fixed_render_options options={0};
   char path[4096]; size_t count,n; unsigned i; exr_status status;
   CHECK(argc==3 && (!strcmp(argv[2],"baseline") || !strcmp(argv[2],"candidate")));
   snprintf(path,sizeof(path),"%s/many-pages.pdf",argv[1]);
@@ -47,8 +47,8 @@ int main(int argc,char **argv) {
     OK(exr_fixed_render(d,page,1,NULL,&b,&error)); pixels(&b,page); exr_bitmap_free(&b);
     OK(exr_fixed_load_text(d,page,NULL,&text,&error)); exr_fixed_text_free(text); text=NULL;
   }
-  control.cancelled=cancel;
-  CHECK(exr_fixed_render(d,0,1,&control,&b,&error)==EXR_CANCELLED && !b.pixels);
+  options.struct_size=sizeof(options); options.control.cancelled=cancel;
+  CHECK(exr_fixed_render(d,0,1,&options,&b,&error)==EXR_CANCELLED && !b.pixels);
   OK(exr_fixed_render(d,0,1,NULL,&b,&error)); pixels(&b,0); exr_bitmap_free(&b);
   exr_fixed_text_free(retained_text); exr_bitmap_free(&retained); exr_fixed_free(d); d=NULL;
   snprintf(path,sizeof(path),"%s/oversized-page.pdf",argv[1]);
