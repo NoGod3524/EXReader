@@ -59,6 +59,9 @@ def main():
         'session-reopen':['session_only_credential_not_restored_after_kill'],
         'semantics':['polite_status_semantics','organizer_hides_covered_shelf_semantics','reader_semantic_scroll_changes_real_page','font_value_and_large_font_controls']}
     try:
+        # The original owner suite ran against this APK first; isolate UI fixture data.
+        assert adb('shell','pm','clear',package).strip()==b'Success'
+        adb('shell','am','start','-W','-n',package+'/.MainActivity')
         adb('reverse',f'tcp:{server.server.server_port}',f'tcp:{server.server.server_port}')
         for phase in expected:
             adb('shell','am','force-stop',package)
