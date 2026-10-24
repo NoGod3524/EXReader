@@ -337,35 +337,50 @@ CASES = [
 
 
 def cases_report():
-    accepted = []
-    verify_ok(build())
-    accepted.append('base fixture granted')
-    blocker = build()
-    declared_blocker(blocker)
-    result = verify(blocker)
-    if result['release_ready'] or not result['release_blockers']:
-        raise RuntimeError('declared private path was not retained as a release blocker')
-    accepted.append('declared private path blocks release without failing the evidence')
+    """Accept every consistent fixture and name every inconsistent claim."""
+    accepted, rejected, errors = [], [], []
+    try:
+        verify_ok(build())
+        accepted.append('base fixture granted')
+    except RuntimeError as error:
+        errors.append(str(error))
+    try:
+        blocker = build()
+        declared_blocker(blocker)
+        result = verify(blocker)
+        if result['release_ready'] or not result['release_blockers']:
+            errors.append('declared private path was not retained as a release blocker')
+        else:
+            accepted.append('declared private path blocks release without failing the evidence')
+    except contract.InventoryError as error:
+        errors.append('declared blocker rejected: %s %s' % (error.code, error.detail))
     for platform, profile in (('windows', 'reading-library'), ('macos', 'reading-core')):
-        verify_ok(build(platform=platform, profile=profile))
-    accepted.append('windows and macos fixtures granted')
-    rejected = []
-    for label, expected, mutate in CASES:
-        fixture = build()
-        mutate(fixture)
         try:
+            verify_ok(build(platform=platform, profile=profile))
+            accepted.append('%s/%s fixture granted' % (platform, profile))
+        except RuntimeError as error:
+            errors.append(str(error))
+    for label, expected, mutate in CASES:
+        try:
+            fixture = build()
+            mutate(fixture)
             verify(fixture)
         except contract.InventoryError as error:
             detail = error.detail if isinstance(error.detail, (list, str)) else []
             text = ' '.join(detail) if isinstance(detail, list) else str(detail)
             if expected not in (text + ' ' + str(error.code) + ' ' + str(error.args[0])):
-                raise RuntimeError('%s rejected with %s/%s instead of %s'
-                                   % (label, error.code, text[:140], expected)) from None
-            rejected.append(label)
+                errors.append('%s: rejected with %s/%s instead of %s'
+                              % (label, error.code, text[:120], expected))
+            else:
+                rejected.append(label)
             continue
-        raise RuntimeError(label + ' was accepted')
+        except Exception as error:
+            errors.append('%s: unexpected %r' % (label, error))
+            continue
+        errors.append(label + ' was accepted')
+    if errors:
+        raise RuntimeError('%d fixture problems: %s' % (len(errors), ' | '.join(errors)[:3000]))
     return accepted, rejected
-
 
 def tool_parsers():
     assert [entry['name'] for entry in contract.parse_entries('ar', AR_SDK)] == ['main.o', 'render.o']
