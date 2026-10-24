@@ -5,7 +5,14 @@
 The verifier reads the run, its jobs and its artifacts through the API, then
 downloads each platform ZIP and re-computes its size and SHA-256, opens the
 report inside it, and refuses anything that is expired, cross-source,
-cross-attempt, empty, renamed or inconsistent between platforms."""
+cross-attempt, empty or inconsistent.
+
+Cross-platform rules, fixed before the first run:
+- all three platforms report exactly the same 41 case names;
+- no case may FAIL anywhere;
+- every installed consumer case must PASS on every platform;
+- every native probe case must PASS on at least two of the three platforms, and
+  a SKIP is only allowed for a documented runner limitation."""
 import hashlib
 import io
 import json
@@ -57,6 +64,7 @@ def main():
         'sdk_changed': False,
         'schema_changed': False,
     }
+    statuses_by_platform = {}
     try:
         run = fetch('actions/runs/%d' % run_id)
         require(run['head_sha'] == source and run['run_attempt'] == attempt,
@@ -65,7 +73,6 @@ def main():
         require(run['conclusion'] == 'success', 'the run did not succeed')
         jobs = pages('actions/runs/%d/attempts/%d/jobs' % (run_id, attempt), 'jobs')
         artifacts = pages('actions/runs/%d/artifacts' % run_id, 'artifacts')
-        outcomes = []
         for platform, runner in PLATFORMS:
             artifact_name = 'reader-keyboard-actions-%s-%d-%d' % (platform, run_id, attempt)
             job_name = 'keyboard actions (%s)' % runner
@@ -97,22 +104,27 @@ def main():
             require(report.get('granted_platform') == platform.lower(), 'platform grant differs')
             require(int(report.get('checks', 0)) == EXPECTED_CASES and
                     len(report.get('cases', [])) == EXPECTED_CASES, 'case count differs')
-            cases = sorted((case['suite'], case['name'], case['status'])
-                           for case in report['cases'])
+            statuses = {}
+            for case in report['cases']:
+                key = (case['suite'], case['name'])
+                require(key not in statuses, 'duplicate case %s' % (key,))
+                statuses[key] = case['status']
+                require(case['status'] != 'FAIL', 'a named case failed on %s: %s' % (platform, key))
+                if case['status'] == 'SKIP':
+                    require(case['name'] in DOCUMENTED_SKIPS,
+                            'undocumented skip ' + case['name'])
             for suite, expected in (('consumer-c', CASE_C), ('consumer-cpp', CASE_CPP),
                                     ('probe', CASE_PROBE)):
-                names = {name for suite_name, name, _ in cases if suite_name == suite}
-                require(names == set(expected), '%s case identity differs on %s' % (suite, platform))
-            statuses = {(suite, name): status for suite, name, status in cases}
-            for key, status in statuses.items():
-                require(status != 'FAIL', 'a named case failed on %s: %s' % (platform, key))
-                if status == 'SKIP':
-                    require(key[1] in DOCUMENTED_SKIPS, 'undocumented skip ' + key[1])
-            skipped = sorted(name for (suite, name), status in statuses.items() if status == 'SKIP')
-            outcomes.append(sorted(statuses.items()))
+                names = {name for suite_name, name in statuses if suite_name == suite}
+                require(names == set(expected),
+                        '%s case identity differs on %s' % (suite, platform))
+            statuses_by_platform[platform.lower()] = statuses
+            skipped = sorted(name for (suite, name), status in statuses.items()
+                             if status == 'SKIP')
             summary['platforms'][platform.lower()] = {
                 'case_names': len(statuses),
                 'skipped': skipped,
+                'install_proof': report.get('install_proof', {}),
                 'binaries': report.get('binaries', {}),
             }
             summary['skipped'][platform.lower()] = skipped
@@ -120,8 +132,20 @@ def main():
                                          ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
             summary['jobs'].append({key: job[key] for key in ('id', 'name', 'conclusion')})
             summary['granted_platforms'].append(platform.lower())
-        require(len(outcomes) == 3 and outcomes[0] == outcomes[1] == outcomes[2],
-                'the three platforms reported different case sets or statuses')
+
+        require(len(statuses_by_platform) == 3, 'a platform report is missing')
+        expected_keys = [('consumer-c', name) for name in CASE_C] + \
+                        [('consumer-cpp', name) for name in CASE_CPP] + \
+                        [('probe', name) for name in CASE_PROBE]
+        for key in expected_keys:
+            values = [statuses_by_platform[platform][key] for platform in
+                      ('linux', 'windows', 'macos')]
+            if key[0] == 'probe':
+                require(sum(1 for value in values if value == 'PASS') >= 2,
+                        'probe case %s passed on fewer than two platforms: %s' % (key, values))
+            else:
+                require(all(value == 'PASS' for value in values),
+                        'installed consumer case %s did not pass everywhere: %s' % (key, values))
         summary['checks_per_platform'] = EXPECTED_CASES
         summary['uncovered'] = [{'case': name, 'reason': reason}
                                 for name, reason in sorted(DOCUMENTED_SKIPS.items())
