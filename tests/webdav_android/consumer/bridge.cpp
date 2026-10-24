@@ -36,7 +36,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_org_exreader_webdav_probe_NativeDav
   exr_webdav_android_test_stats(counters);
 #endif
   std::string json="{\"status\":"+std::to_string(result.status)+",\"http\":"+std::to_string(result.http)+",\"count\":"+std::to_string(result.count)
-    +",\"bytes\":"+std::to_string(result.bytes)+",\"published\":"+std::to_string(result.published)+",\"resource\":"+quote(result.resource)+",\"title\":"+quote(result.title)
+    +",\"bytes\":"+std::to_string(result.bytes)+",\"published\":"+std::to_string(result.published)+",\"resource\":"+quote(result.resource)+",\"title\":"+quote(result.title)+",\"message\":"+quote(result.message)
     +",\"reentry\":"+std::to_string(result.reentry)+",\"wrong_owner\":"+std::to_string(result.wrong_owner)+",\"first_status\":"+std::to_string(result.first_status)+",\"clients\":"+std::to_string(counters[0])
     +",\"uploads\":"+std::to_string(counters[1])+",\"attached\":"+std::to_string(counters[2])+",\"detached\":"+std::to_string(counters[3])+"}";
   jbyteArray bytes=env->NewByteArray((jsize)json.size());if(bytes)env->SetByteArrayRegion(bytes,0,(jsize)json.size(),(const jbyte *)json.data());return bytes;

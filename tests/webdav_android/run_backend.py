@@ -84,7 +84,13 @@ def main():
         args=['shell','am','instrument','-w','-r']
         for key,value in identity.items():args.extend(['-e',key,value])
         raw=adb(*args,app+'.test/'+app+'.BackendProbe');(a.output/(name+'-instrumentation.txt')).write_bytes(raw)
-        if b'EXR_ANDROID_DAV_ACCEPTED' not in raw or b'INSTRUMENTATION_CODE: -1' not in raw:raise RuntimeError(raw.decode(errors='replace'))
+        if b'EXR_ANDROID_DAV_ACCEPTED' not in raw or b'INSTRUMENTATION_CODE: -1' not in raw:
+            for filename in ('last-result.json','progress.json'):
+                try:
+                    diagnostic=adb('exec-out','run-as',app,'cat','files/'+filename);assert auth.encode() not in diagnostic
+                    (a.output/(name+'-'+filename)).write_bytes(diagnostic);print(diagnostic.decode(errors='replace'),flush=True)
+                except subprocess.CalledProcessError:pass
+            raise RuntimeError(raw.decode(errors='replace'))
         report=json.loads(adb('exec-out','run-as',app,'cat','files/backend-report.json'))
         assert all(report.get(key)==value for key,value in identity.items()) and report['api']==34 and report['abi']=='x86_64' and report['accepted'] is True
         (a.output/(name+'-device.json')).write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n');return report
