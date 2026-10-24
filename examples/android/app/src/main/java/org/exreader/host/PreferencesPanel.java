@@ -21,7 +21,8 @@ final class PreferencesPanel {
     private final Activity activity;private final Host host;private AlertDialog dialog;private boolean busy;
     PreferencesPanel(Activity activity,Host host){this.activity=activity;this.host=host;}
     boolean visible(){return dialog!=null&&dialog.isShowing();}
-    void close(){if(busy)host.preferencesCancel();if(dialog!=null)dialog.dismiss();dialog=null;busy=false;}
+    void close(){if(busy)host.preferencesCancel();if(dialog!=null){hideKeyboard();dialog.dismiss();}dialog=null;busy=false;}
+    private void hideKeyboard(){if(dialog==null||dialog.getWindow()==null)return;android.view.inputmethod.InputMethodManager input=(android.view.inputmethod.InputMethodManager)activity.getSystemService(Activity.INPUT_METHOD_SERVICE);if(input!=null)input.hideSoftInputFromWindow(dialog.getWindow().getDecorView().getWindowToken(),0);}
     private EditText number(LinearLayout box,String label,float value){
         TextView title=new TextView(activity);title.setText(label);box.addView(title);
         EditText input=new EditText(activity);input.setSingleLine(true);input.setContentDescription(label);
@@ -46,6 +47,8 @@ final class PreferencesPanel {
         ScrollView scroll=new ScrollView(activity);scroll.addView(box);
         dialog=new AlertDialog.Builder(activity).setTitle("阅读设置").setView(scroll).setPositiveButton("应用",null).setNegativeButton("取消",null).create();
         dialog.setOnCancelListener(ignored->{if(busy)host.preferencesCancel();busy=false;});
+        dialog.setOnDismissListener(ignored->{hideKeyboard();android.view.View reader=activity.findViewById(R.id.reader_view);if(reader!=null)reader.post(reader::requestFocus);});
+        if(dialog.getWindow()!=null)dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
         dialog.show();AlertDialog owner=dialog;
         owner.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view->close());
         owner.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view->{

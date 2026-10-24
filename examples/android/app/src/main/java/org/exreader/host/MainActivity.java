@@ -1695,6 +1695,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
     @Override public boolean dispatchKeyEvent(android.view.KeyEvent event){
         int code=event.getKeyCode();
+        if(BuildConfig.DEBUG&&BuildConfig.READER_PREFERENCES&&(code==19||code==20||code==21||code==22||code==92||code==93))Log.i(TAG,"preferences key code="+code+" action="+event.getAction()+" repeat="+event.getRepeatCount()+" input="+(readingPreferences==null?0:readingPreferences.input)+" operation="+operation+" selected="+(readerView!=null&&readerView.isSelectMode())+" focus="+hasWindowFocus());
         if(BuildConfig.READER_PREFERENCES&&readingPreferences!=null&&readingPreferences.input==4&&current!=null&&!readerView.isSelectMode()&&operation==0&&readerPanel.getVisibility()==View.VISIBLE){
             int delta=0;if(code==android.view.KeyEvent.KEYCODE_PAGE_DOWN||code==android.view.KeyEvent.KEYCODE_DPAD_DOWN)delta=1;
             else if(code==android.view.KeyEvent.KEYCODE_PAGE_UP||code==android.view.KeyEvent.KEYCODE_DPAD_UP)delta=-1;
