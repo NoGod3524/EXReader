@@ -96,7 +96,8 @@ Windows 用 `FlushFileBuffers`）后，POSIX `rename`、Windows `MoveFileExW(REP
 工作流 `.github/workflows/reader-annotation-export.yml` 在 Ubuntu 22.04、Windows 2022、macOS 15 上从已安装的产品 SQLite、
 修订库、阅读状态、SDK 和导出包构建 C11／C++ 消费者，并用 `tests/reader_annotation_export/` 的语料与独立读取器判定：
 JSONL 由 Python `json` 和一个只依据上文编码规则手写的反转义器分别还原，每个头的 wire 必须与语料原字节逐字相同；
-Markdown 由结构解析器读回并核对每个围栏内容、状态、位置字段，且证明围栏外没有可渲染标记；导出前后数据库转储和进度不变。
+Markdown 由结构解析器读回并核对每个围栏内容、状态、位置字段，且证明围栏外没有可渲染标记；导出前后数据库转储和进度不变
+（四个快照窗口的那 4 条推进修订由夹具的第二进程写入，窗口段之后重新基线；其余每次导出仍逐字比对转储）。
 覆盖：中文、emoji、组合字符、换行、引号、Markdown／HTML 样本、控制字符、非规范 wire（`\uXXXX` 代理对、空格、键序、`display_time`）、
 空导出、1234 条分页、anchor v1/v2、三种位置模式、冲突／墓碑／缺父／外来父／阻止复活、取消、预算边界、发布失败与写入失败。
 另外三类（本轮新增）：**单实体快照窗口**——四个窗口书各只有一条标注，导出在取消回调里阻塞于“页已读完、实体还没取头”的确定性握手上，
