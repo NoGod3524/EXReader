@@ -1,0 +1,268 @@
+{
+  "schema": 1,
+  "scope": "Android accessibility and large-font audit of the installed host through the public accessibility tree",
+  "audit_completed": true,
+  "accessibility_accepted": false,
+  "complete_product": false,
+  "physical_device_execution": false,
+  "talkback_speech_verified": false,
+  "source_sha": "2bdfee69f82b5607bd5d43db7f80ea817640c1d5",
+  "branch": "codex/reader-a11y-android",
+  "base_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "frozen_sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+  "execution": "GitHub Actions only",
+  "run": {
+    "id": 40082957400,
+    "attempt": 1,
+    "event": "push",
+    "job_id": 120840087102,
+    "job_name": "audit",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40082957400",
+    "api": 34,
+    "abi": "x86_64",
+    "profile": "pixel_6",
+    "system_image": "system-images;android-34;default;x86_64",
+    "instrumentation": "org.exreader.host.a11y.test/androidx.test.runner.AndroidJUnitRunner",
+    "instrumentation_result": "OK (1 test)",
+    "instrumentation_seconds": 132.983,
+    "audit_exit_code": 0
+  },
+  "artifact": {
+    "id": 12556261406,
+    "name": "reader-a11y-android-40082957400-1",
+    "bytes": 44086158,
+    "digest": "sha256:5c723e84bc8790bc45c0d178f5f93ddddb9a5fb9e6308b072cc0349573f5baee",
+    "expired": false,
+    "created_at": "2026-10-24T09:48:38Z",
+    "reread_run": 40083655133,
+    "reread_digest_matched": true,
+    "contents": [
+      "device/trees/*.xml",
+      "device/trees/*.json",
+      "device/shots/*.png",
+      "device/validation.json",
+      "device/cases/*.json",
+      "installed-host-apk.txt",
+      "harness-apks.json",
+      "host-build.json",
+      "instrumentation.txt",
+      "logcat.txt"
+    ]
+  },
+  "decisions": {
+    "audit_completed": "all 15 declared cases ran and every named tree, screenshot and identity record exists and matches",
+    "accessibility_accepted": "false because four declared requirements failed; a completed audit is not an accessibility pass"
+  },
+  "cases": {
+    "total": 15,
+    "passed": 11,
+    "failed": 4,
+    "skipped": 0,
+    "passed_ids": [
+      "shelf_semantics",
+      "hidden_panels",
+      "import_picker",
+      "shelf_row_and_search",
+      "back_navigation",
+      "reader_line_nodes",
+      "annotate_flow",
+      "notes_panel",
+      "rotation",
+      "large_font",
+      "display_scaling"
+    ],
+    "failed_ids": [
+      "status_announcement",
+      "organize_panel",
+      "reader_page_turn",
+      "reader_toolbar_state"
+    ]
+  },
+  "findings": [
+    {
+      "case_id": "status_announcement",
+      "finding": "status_not_announced",
+      "capture": "03-shelf-status",
+      "observed": "status_text shows 'Shelf refreshed' with live_region 0",
+      "requirement": "a changed status must be announced",
+      "minimal_patch": "android:accessibilityLiveRegion=\"polite\" on status_text and reader_status in res/layout/activity_main.xml"
+    },
+    {
+      "case_id": "reader_page_turn",
+      "finding": "page_turn_not_reachable_by_semantics",
+      "capture": "13-reader-actions",
+      "observed": "reader_view advertises no ACTION_SCROLL_FORWARD/BACKWARD and the tree contains no next/previous control",
+      "requirement": "a screen reader user must be able to change pages",
+      "minimal_patch": "add both scroll actions in ReaderView.onInitializeAccessibilityNodeInfo and route performAccessibilityAction to listener.onTapZone(1)/onTapZone(-1)"
+    },
+    {
+      "case_id": "reader_toolbar_state",
+      "finding": "control_state_not_exposed",
+      "capture": "15-reader-toolbar",
+      "observed": "font_up is named 'Increase font size' with an empty state description while font_label shows 'Size 24'",
+      "requirement": "a control must expose the value it changes (WCAG 4.1.2)",
+      "minimal_patch": "set a state description (or include the size in the content description) on font_up/font_down in MainActivity.applyPage"
+    },
+    {
+      "case_id": "organize_panel",
+      "finding": "layout_integrity_08-organize",
+      "capture": "08-organize",
+      "observed": "the organizer overlays the shelf while the shelf controls stay in the accessibility tree; recorded overlap pairs include Close~import_button, Kind~refresh_button, Saved intent~more_button, Cancel~book_list",
+      "requirement": "no interactive control may be covered by another control of the same window",
+      "minimal_patch": "hide shelf_panel from accessibility (IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS) while the organizer is visible, or host it in a dialog window"
+    }
+  ],
+  "advisories": [
+    {
+      "capture": "01-shelf-default",
+      "control": "shelf_search",
+      "measured": "379x45dp",
+      "note": "text field below the 48dp recommended touch target"
+    },
+    {
+      "capture": "08-organize",
+      "control": "shelf_search",
+      "measured": "379x45dp",
+      "note": "text field below the 48dp recommended touch target"
+    },
+    {
+      "capture": "26-shelf-density480",
+      "control": "shelf_search",
+      "measured": "328x45dp",
+      "note": "text field below the 48dp recommended touch target at the 480 dpi override"
+    },
+    {
+      "capture": "23-reader-landscape",
+      "control": "page_label",
+      "measured": "p.1 before, p.1 after",
+      "note": "reflow repagination keeps the reading offset"
+    }
+  ],
+  "coverage": {
+    "shelf": {
+      "implemented": true,
+      "cases": [
+        "shelf_semantics",
+        "shelf_row_and_search"
+      ],
+      "outcome": "pass"
+    },
+    "import": {
+      "implemented": true,
+      "cases": [
+        "import_picker"
+      ],
+      "outcome": "pass"
+    },
+    "organize": {
+      "implemented": true,
+      "cases": [
+        "organize_panel"
+      ],
+      "outcome": "finding 4"
+    },
+    "read": {
+      "implemented": true,
+      "cases": [
+        "reader_line_nodes",
+        "reader_page_turn",
+        "reader_toolbar_state",
+        "rotation",
+        "large_font",
+        "display_scaling"
+      ],
+      "outcome": "findings 2 and 3"
+    },
+    "annotate": {
+      "implemented": true,
+      "cases": [
+        "annotate_flow",
+        "notes_panel"
+      ],
+      "outcome": "pass"
+    },
+    "navigation": {
+      "implemented": true,
+      "cases": [
+        "back_navigation"
+      ],
+      "outcome": "pass"
+    },
+    "account": {
+      "implemented": false,
+      "cases": [],
+      "outcome": "the application has no account, purchase or sync screen; not covered and not granted"
+    }
+  },
+  "captures": 25,
+  "unverified": [
+    "talkback_speech",
+    "physical_device",
+    "other_api_levels",
+    "rtl_and_locale",
+    "contrast",
+    "account_surfaces"
+  ],
+  "identity_checks": {
+    "installed_apk_matches_owner_build": true,
+    "harness_apks_recorded_with_size_and_sha256": true,
+    "source_run_attempt_bound_to_evidence": true,
+    "expected_case_list_enforced": true,
+    "altered_evidence_refusals": 8,
+    "altered_evidence_required": 8,
+    "altered_evidence_passed": true,
+    "corruptions": [
+      "missing_screenshot",
+      "empty_xml",
+      "source_mismatch",
+      "acceptance_mismatch",
+      "case_set",
+      "skipped_cases",
+      "screenshot_bytes",
+      "installed_identity"
+    ]
+  },
+  "original_failures": [
+    {
+      "run": 40076530338,
+      "failure": "shared builder ownership window refused this package",
+      "correction": "anchor the builder at the package start; keep the workflow's frozen-tree and whitelist checks binding"
+    },
+    {
+      "run": 40077262983,
+      "failure": "harness compile error: dumpWindowHierarchy returns void",
+      "correction": "assert the dumped file instead"
+    },
+    {
+      "run": 40077918078,
+      "failure": "the system picker never listed Sample.epub and stayed in front",
+      "correction": "scroll the picker list instead of leaving the download folder"
+    },
+    {
+      "run": 40079479165,
+      "failure": "import title is the picked file name; a fitting list is not scrollable",
+      "correction": "match the real row text; require exposed rows instead of isScrollable"
+    },
+    {
+      "run": 40080432881,
+      "failure": "unescaped quote in an advisory note",
+      "correction": "corrected"
+    },
+    {
+      "run": 40081249134,
+      "failure": "platform dialog buttons render upper case; reflow repagination on rotation",
+      "correction": "case-insensitive label match; hold the book identity and record the drift"
+    },
+    {
+      "run": 40082174522,
+      "failure": "By.textMatches does not exist in uiautomator 2.3.0",
+      "correction": "use By.text(Pattern)"
+    }
+  ],
+  "limits": [
+    "an emulator semantic tree is not TalkBack speech",
+    "no physical device, API 26-33, OEM skin, RTL or contrast verdict is granted",
+    "only the deterministic Sample.epub fixture and the real system picker were used; no account or private file"
+  ]
+}
