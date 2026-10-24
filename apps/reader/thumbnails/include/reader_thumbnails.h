@@ -9,7 +9,9 @@
    thread, and refuses re-entry from a control callback, with RTH_ARGUMENT; such a
    refusal changes nothing and rth_cache_close leaves the cache alive. No C++
    exception crosses the ABI: allocation and filesystem failures return RTH_MEMORY
-   or RTH_IO.
+   or RTH_IO, the output box is left empty (width/height/origin 0, pixels NULL) and
+   nothing leaks - a failed open holds no lock and a failed cover keeps the cache
+   usable for a retry.
 
    Two origins are never mixed: RTH_ORIGIN_AUTHOR_COVER is an image the book
    declares as its cover; RTH_ORIGIN_FIRST_PAGE_PREVIEW is a page rendered from a
@@ -18,7 +20,11 @@
    source/file EPUB imports store no cover; this module does not open the ZIP or
    load the whole book to invent one.
 
-   The cache limits bound the cache directory only. Decoding an author cover
+   rth_limits.max_entries / max_total_bytes are a hard bound on the directory that
+   holds this cache: a cache handle exists only while the directory holds no more own
+   entry files or bytes than those limits allow, and only one cache handle owns a
+   directory at a time (RTH_BUSY otherwise). They bound nothing else. Decoding an
+   author cover
    allocates the full decoded source image (width*height*4 bytes) transiently;
    rth_limits.max_source_pixels bounds that, and rth_thumbnail.decoded_bytes /
    rth_stats.peak_decoded_bytes report it separately from cache bytes. */
@@ -38,7 +44,9 @@ extern "C" {
 
 typedef enum {
   RTH_OK = 0, RTH_ARGUMENT, RTH_MEMORY, RTH_IO, RTH_FORMAT, RTH_LIMIT,
-  RTH_CANCELLED, RTH_UNSUPPORTED, RTH_SDK
+  RTH_CANCELLED, RTH_UNSUPPORTED, RTH_SDK,
+  RTH_BUSY /* the directory is already owned by another cache (another handle,
+              process or a not-yet-collected dead one: the OS releases the lock) */
 } rth_status;
 typedef struct {
   rth_status code;
@@ -107,27 +115,37 @@ typedef struct {
   /* Publishing and scanning accounting. index_failures counts index publications
      whose atomic replace failed (rth_cache_open and rth_cache_clear return RTH_IO
      instead of hiding such a failure). scanned_files is the number of directory
-     entries one bounded open inspected; peak_retained_entries is the largest entry
-     set it held at once (bounded by max_entries); scan_truncated is 1 when the
-     directory held more candidates than the scan budget, so adoption is partial
-     and the uninspected files are left untouched. */
-  uint64_t index_failures, scanned_files, peak_retained_entries, scan_truncated;
+     entries one successful open inspected, own_candidates the subset that are
+     cache files of this module, scan_deleted the own entry files removed during
+     that scan (damaged, over the count/byte cap, or larger than max_total_bytes),
+     and peak_retained_entries the largest entry map it ever held (<= max_entries:
+     room is made before an entry is inserted). */
+  uint64_t index_failures, scanned_files, own_candidates, scan_deleted, peak_retained_entries;
 } rth_stats;
 
 typedef struct rth_cache rth_cache;
-/* Opens/creates the directory and adopts valid entries in ONE bounded pass (the
-   candidate budget is 256 + max_entries*8, at most 65536 files), deleting only
-   files it recognises as its own (entry files, temporaries of its own naming, the
-   index). Over-limit entries are evicted entry by entry while scanning, so the
-   retained set never exceeds max_entries. Returns RTH_IO when the index cannot be
-   published atomically.
+/* Opens/creates the directory, takes its owner lock and adopts valid entries in ONE
+   pass over the directory with a bounded working set (at most max_entries entries
+   plus one name are ever held). Only files it recognises as its own are deleted.
+   Every call that returns RTH_OK leaves the directory in a state where the sum of
+   its own entry files is <= max_entries and their bytes <= max_total_bytes: surplus
+   and damaged entries are deleted during the pass, so the limits are a hard bound on
+   the directory, not on an observed prefix. A directory holding more own entry files
+   than the scan ceiling (max(4096, max_entries*64), at most 65536) is refused with
+   RTH_LIMIT instead of being adopted partially.
 
-   Multi-process contract for one directory: every file is created exclusively under
-   an unpredictable per-open temporary name and published with a same-directory
-   atomic replace, so two processes may share a directory; open removes temporaries
-   of the pre-0.1.0 naming ("rth-tmp-<n>.tmp") at once and temporaries of the current
-   naming only when they are older than 600 s, because a younger one may belong to a
-   live process. */
+   One cache per directory: the owner lock is an OS lock on "rth-owner.lock" (flock on
+   POSIX, an exclusive open without sharing on Windows). A second open - another
+   handle in the same process, another process, or one whose holder died and whose
+   handle the OS already released - returns RTH_BUSY when the lock is held. The lock
+   is released when the cache is closed or the holding process dies. Files are created
+   exclusively under an unpredictable per-open temporary name and published with a
+   same-directory atomic replace; open removes temporaries of the pre-0.1.0 naming at
+   once and temporaries of the current naming only when older than 600 s.
+
+   Returns RTH_IO when the index cannot be published atomically, RTH_LIMIT when the
+   directory exceeds the scan ceiling, RTH_MEMORY on allocation failure; in every one
+   of those cases *out is NULL, no lock is held and the directory can be retried. */
 rth_status rth_cache_open(const char *directory_utf8, const rth_limits *limits, rth_cache **out, rth_error *error);
 void rth_cache_close(rth_cache *cache); /* persists LRU order */
 rth_status rth_cache_clear(rth_cache *cache, rth_error *error);

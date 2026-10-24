@@ -22,6 +22,7 @@
 #include <fstream>
 #include <iterator>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -148,6 +149,39 @@ void lru_verify(const fs::path& dir, const Bytes& png) {
   check("regress: reopening with a smaller entry bound evicts the stale entry, not the touched ones",
         s6 == RTH_OK && t6.t.from_cache == 0, "6x6 from cache " + num((uint64_t)t6.t.from_cache));
   rth_cache_close(c);
+}
+
+// ---- modes: lock-hold / lock-busy / lock-release ---------------------------
+// One cache per directory across processes: the holder keeps the OS lock until it is
+// killed, and the OS then releases it for the next process.
+void lock_hold(const fs::path& dir) {
+  fs::remove_all(dir);
+  fs::create_directories(dir);
+  rth_cache* c = open_cache(dir, rth_limits_defaults());
+  std::printf("SETUP lock-hold owns %s (%p)\n", dir.string().c_str(), static_cast<void*>(c));
+  std::fflush(stdout);
+  std::this_thread::sleep_for(std::chrono::seconds(300));
+  rth_cache_close(c);  // only reached when the parent did not kill us
+}
+
+void lock_busy(const fs::path& dir) {
+  rth_cache* c = reinterpret_cast<rth_cache*>(static_cast<std::uintptr_t>(1));
+  rth_error e;
+  std::memset(&e, 0, sizeof(e));
+  const rth_status st = rth_cache_open(dir.u8string().c_str(), nullptr, &c, &e);
+  check("regress: a second cache on one directory is refused while another process owns it",
+        st == RTH_BUSY && c == nullptr, "status " + num((uint64_t)st));
+  if (st == RTH_OK && c) rth_cache_close(c);
+}
+
+void lock_release(const fs::path& dir) {
+  rth_cache* c = nullptr;
+  rth_error e;
+  std::memset(&e, 0, sizeof(e));
+  const rth_status st = rth_cache_open(dir.u8string().c_str(), nullptr, &c, &e);
+  check("regress: a killed owner's lock is released by the OS and the directory reopens",
+        st == RTH_OK && c != nullptr, "status " + num((uint64_t)st));
+  if (st == RTH_OK && c) rth_cache_close(c);
 }
 
 // ---- mode: cache -----------------------------------------------------------
@@ -348,6 +382,12 @@ int main(int argc, char** argv) {
     lru_verify(work / "lru", png);
   } else if (mode == "cache") {
     cache_checks(work, png);
+  } else if (mode == "lock-hold") {
+    lock_hold(work / "lock");
+  } else if (mode == "lock-busy") {
+    lock_busy(work / "lock");
+  } else if (mode == "lock-release") {
+    lock_release(work / "lock");
   } else {
     fatal("unknown mode " + mode);
   }

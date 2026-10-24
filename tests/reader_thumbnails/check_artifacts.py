@@ -29,6 +29,7 @@ def main():
         artifacts = pages(f'actions/runs/{run_id}/artifacts', 'artifacts')
         names = []
         regress_names = []
+        fault_names = []
         for platform, runner in PLATFORMS:
             name = f'reader-thumbnails-{platform}-{run_id}-{attempt}'
             job_name = f'thumbnail consumers ({runner})'
@@ -50,8 +51,12 @@ def main():
             require(report['regress_checks'] >= 9 and len(report['regress_check_names']) == report['regress_checks'],
                     'regression report is empty')
             require(all(r['pass'] is True for r in report['regress_results']), 'regression results are not all passing')
+            require(report['fault_checks'] >= 3 and len(report['fault_check_names']) == report['fault_checks'],
+                    'fault report is empty')
+            require(all(r['pass'] is True for r in report['fault_results']), 'fault results are not all passing')
             names.append((platform, sorted(report['check_names'])))
             regress_names.append((platform, sorted(report['regress_check_names'])))
+            fault_names.append((platform, sorted(report['fault_check_names'])))
             summary['measurements'][platform] = report['measurements']
             summary['artifacts'].append({k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
             summary['jobs'].append({k: job[k] for k in ('id', 'name', 'conclusion')})
@@ -67,7 +72,11 @@ def main():
         base_regress = regress_names[0][1]
         for platform, values in regress_names[1:]:
             require(values == base_regress, 'regression check names differ on ' + platform)
+        base_fault = fault_names[0][1]
+        for platform, values in fault_names[1:]:
+            require(values == base_fault, 'fault check names differ on ' + platform)
         summary['regress_check_names'] = base_regress
+        summary['fault_check_names'] = base_fault
         summary['accepted'] = True
     except Exception as error:
         summary['problems'].append(str(error))

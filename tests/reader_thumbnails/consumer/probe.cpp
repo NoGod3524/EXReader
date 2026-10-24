@@ -940,9 +940,10 @@ void test_bounded_open() {
     rth_cache_close(c);
     c = open_cache(dir);
     rth_stats s = stats_of(c);
-    check("bounded open: a tidy directory is scanned completely, holds one entry and reports no truncation",
-          s.scan_truncated == 0 && s.entries == 1 && s.peak_retained_entries <= 1 && s.scanned_files >= 2 && s.scanned_files <= 8,
-          "scanned " + num(s.scanned_files) + " peak " + num(s.peak_retained_entries));
+    check("bounded open: a tidy directory is scanned completely, holds one entry and reports its work",
+          s.entries == 1 && s.own_candidates == 1 && s.scan_deleted == 0 && s.peak_retained_entries <= 1 &&
+              s.scanned_files >= 2 && s.scanned_files <= 8,
+          "scanned " + num(s.scanned_files) + " own " + num(s.own_candidates) + " peak " + num(s.peak_retained_entries));
     rth_cache_close(c);
   }
   {  // 40 valid entries, reopened with max_entries=3
@@ -958,8 +959,8 @@ void test_bounded_open() {
     rth_stats s = stats_of(c);
     check("bounded open: 40 entries were stored before the bounded reopen", stored == 40, "stored " + num(stored));
     check("bounded open: a reopen with max_entries=3 retains at most 3 while scanning, never 40",
-          s.entries == 3 && s.peak_retained_entries <= 3 && s.scanned_files >= 41 && s.scan_truncated == 0,
-          "entries " + num(s.entries) + " peak " + num(s.peak_retained_entries) + " scanned " + num(s.scanned_files));
+          s.entries == 3 && s.peak_retained_entries <= 3 && s.scanned_files >= 41 && s.own_candidates == 40 && s.scan_deleted == 37,
+          "entries " + num(s.entries) + " peak " + num(s.peak_retained_entries) + " scanned " + num(s.scanned_files) + " deleted " + num(s.scan_deleted));
     measure_scan("bounded-reopen-max-entries-3", c, dir, thumb_current_rss());
     rth_cache_close(c);
   }
@@ -983,7 +984,6 @@ void test_bounded_open() {
     uint64_t before = thumb_current_rss();
     rth_cache* c = open_cache(dir, &lim);
     rth_stats s = stats_of(c);
-    const uint64_t budget = 256 + 2 * 8;
     size_t left = 0;
     for (const auto& it : fs::directory_iterator(dir)) {
       const std::string n = it.path().filename().string();
@@ -991,15 +991,125 @@ void test_bounded_open() {
     }
     bool foreign_ok = true;
     for (size_t i = 0; i < foreign.size() && i < 25; ++i) foreign_ok = foreign_ok && fs::exists(dir / foreign[i]);
-    check("bounded open: 1300 candidates are scanned within the 272-file budget and the rest is left untouched",
-          s.scanned_files <= budget && s.scan_truncated == 1 && s.entries == 0 && left > 0 && foreign_ok,
-          "scanned " + num(s.scanned_files) + " left " + num((uint64_t)left) + " of " + num(candidates) + " unrelated kept " + num((uint64_t)foreign_ok));
+    check("bounded open: 1300 candidates are cleaned in one pass and the unrelated files are left untouched",
+          s.entries == 0 && s.own_candidates == candidates && s.scan_deleted == candidates && left == 0 && foreign_ok,
+          "own " + num(s.own_candidates) + " deleted " + num(s.scan_deleted) + " left " + num((uint64_t)left) + " unrelated kept " + num((uint64_t)foreign_ok));
     measure_scan("bounded-overflow-max-entries-2", c, dir, before);
     Thumb t, u;
     const bool stored = cover(c, b, png, 8, 8, t) == RTH_OK && t.t.stored;
-    check("bounded open: the cache still stores and serves after a truncated scan", stored && cover(c, b, png, 8, 8, u) == RTH_OK && u.t.from_cache == 1);
+    check("bounded open: the cache still stores and serves after a full cleanup", stored && cover(c, b, png, 8, 8, u) == RTH_OK && u.t.from_cache == 1);
     rth_cache_close(c);
   }
+}
+
+// The directory hard bound: whatever the directory held, an OK open leaves no more
+// own entry files or bytes than max_entries / max_total_bytes, judged by an
+// independent walk of the directory, and unrelated files survive untouched.
+void test_disk_budget() {
+  const Bytes& png = fx["grad16x8.png"];
+  const Bytes& alt = fx["swap16x8.png"];
+  rth_book b = mk_book((int)EXR_EPUB, sha(png));
+  rth_book b2 = mk_book((int)EXR_EPUB, sha(alt));
+  fs::path dir = fresh("disk-budget");
+  rth_limits big = rth_limits_defaults();
+  big.max_entries = 512;
+  rth_cache* c = open_cache(dir, &big);
+  for (uint32_t k = 4; k < 404; ++k) { Thumb t; cover(c, b, png, k, k, t); }
+  const uint32_t grown = stats_of(c).entries;
+  const uint64_t before = dir_bytes(dir);
+  rth_cache_close(c);
+  std::vector<std::string> foreign;
+  for (int i = 0; i < 40; ++i) {
+    const std::string n = "user-" + num((uint64_t)i) + ".txt";
+    foreign.push_back(n);
+    write_file(dir / n, Bytes(5, (unsigned char)('A' + (i % 26))));
+  }
+  rth_limits small = rth_limits_defaults();
+  small.max_entries = 5;
+  small.max_total_bytes = 4096;
+  uint64_t rss = thumb_current_rss();
+  c = open_cache(dir, &small);
+  rth_stats s = stats_of(c);
+  auto walk = [&dir](size_t& files, uint64_t& bytes) {
+    files = 0;
+    bytes = 0;
+    for (const auto& it : fs::directory_iterator(dir)) {
+      const std::string n = it.path().filename().string();
+      if (n.size() == 40 && n.compare(0, 4, "rth-") == 0 && n.compare(36, 4, ".rth") == 0) {
+        ++files;
+        bytes += fs::file_size(it.path());
+      }
+    }
+  };
+  size_t files = 0;
+  uint64_t bytes = 0;
+  walk(files, bytes);
+  bool foreign_ok = true;
+  for (const std::string& n : foreign) foreign_ok = foreign_ok && fs::exists(dir / n);
+  check("disk budget: 400 stored entries were on disk before the lower-cap reopen",
+        grown == 400 && before > 4096, "entries " + num(grown) + " bytes " + num(before));
+  check("disk budget: an OK open leaves every own entry file inside max_entries=5 and max_total_bytes=4096",
+        files <= 5 && bytes <= 4096 && s.entries == files && s.bytes == bytes && s.peak_retained_entries <= 5 &&
+            s.scan_deleted >= 395 && foreign_ok,
+        "files " + num((uint64_t)files) + " bytes " + num(bytes) + " deleted " + num(s.scan_deleted) +
+            " unrelated kept " + num((uint64_t)foreign_ok));
+  measure_scan("disk-budget-reopen-5-4096", c, dir, rss);
+  {
+    Thumb t;
+    cover(c, b2, alt, 8, 8, t);
+  }
+  size_t files2 = 0;
+  uint64_t bytes2 = 0;
+  walk(files2, bytes2);
+  rth_stats s2 = stats_of(c);
+  check("disk budget: a further store keeps the open directory inside the same caps",
+        files2 <= 5 && bytes2 <= 4096 && s2.entries == files2 && s2.bytes == bytes2,
+        "files " + num((uint64_t)files2) + " bytes " + num(bytes2));
+  rth_cache_close(c);
+}
+
+// One cache per directory, in this process as well.
+void test_owner_lock() {
+  fs::path dir = fresh("owner-lock");
+  rth_cache* a = open_cache(dir);
+  rth_cache* b = reinterpret_cast<rth_cache*>(static_cast<std::uintptr_t>(1));
+  rth_error e;
+  std::memset(&e, 0, sizeof(e));
+  const rth_status st = rth_cache_open(dir.u8string().c_str(), nullptr, &b, &e);
+  check("owner lock: a second cache handle on the same directory is refused", st == RTH_BUSY && b == nullptr,
+        "status " + num((uint64_t)st));
+  rth_cache_close(a);
+  b = nullptr;
+  std::memset(&e, 0, sizeof(e));
+  const rth_status st2 = rth_cache_open(dir.u8string().c_str(), nullptr, &b, &e);
+  check("owner lock: closing the first handle lets a new cache own the directory", st2 == RTH_OK && b != nullptr,
+        "status " + num((uint64_t)st2));
+  if (b) rth_cache_close(b);
+}
+
+// A directory that holds more own entry files than the scan ceiling is refused
+// instead of being adopted partially; unrelated files stay.
+void test_scan_ceiling() {
+  fs::path dir = fresh("scan-ceiling");
+  const uint32_t junk = 4100;
+  Bytes body(200, 0x7e);
+  for (uint32_t i = 0; i < junk; ++i) {
+    char name[64];
+    std::snprintf(name, sizeof(name), "rth-%032x.rth", static_cast<unsigned>(i));
+    write_file(dir / name, body);
+  }
+  for (int i = 0; i < 20; ++i) write_file(dir / ("keep-" + num((uint64_t)i) + ".txt"), Bytes(4, 'k'));
+  rth_limits lim = rth_limits_defaults();
+  lim.max_entries = 1;  // ceiling = max(4096, 1*64) = 4096
+  rth_cache* c = reinterpret_cast<rth_cache*>(static_cast<std::uintptr_t>(1));
+  rth_error e;
+  std::memset(&e, 0, sizeof(e));
+  const rth_status st = rth_cache_open(dir.u8string().c_str(), &lim, &c, &e);
+  bool foreign_ok = true;
+  for (int i = 0; i < 20; ++i) foreign_ok = foreign_ok && fs::exists(dir / ("keep-" + num((uint64_t)i) + ".txt"));
+  check("disk budget: a directory above the scan ceiling is refused with RTH_LIMIT and no cache",
+        st == RTH_LIMIT && c == nullptr && foreign_ok, "status " + num((uint64_t)st) + " msg " + e.message);
+  if (st == RTH_OK && c) rth_cache_close(c);
 }
 
 // Atomic publish: no temporary survives, the index replace is reported when it fails,
@@ -1156,6 +1266,9 @@ int main(int argc, char** argv) {
   test_cancel();
   test_reopen();
   test_bounded_open();
+  test_disk_budget();
+  test_owner_lock();
+  test_scan_ceiling();
   test_publish();
   test_reentry();
   test_owner();
