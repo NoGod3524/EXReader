@@ -130,8 +130,8 @@ endfunction()
 
 set(EXR_MODULE_HEADERS
   "EXReader::exr_core|exreader.h"
-  "EXReaderProductCatalog::reader_catalog|exreader-product/catalog.h"
-  "EXReaderProductCatalog::reader_catalog_sqlite|exreader-product/sqlite3.h"
+  "EXReaderProductCatalog::reader_catalog|catalog.h"
+  "EXReaderProductCatalog::reader_catalog_sqlite|sqlite3.h"
   "EXReaderRevisions::reader_revisions|reader_revisions.h"
   "EXReaderRevisions::reader_revisions|reader_projection.h"
   "EXReaderCommands::reader_commands|reader_commands.h"
