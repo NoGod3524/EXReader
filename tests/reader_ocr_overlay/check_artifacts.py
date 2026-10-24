@@ -47,9 +47,12 @@ def main(output):
     run = os.environ['GITHUB_RUN_ID']
     attempt = os.environ['GITHUB_RUN_ATTEMPT']
     source = os.environ['GITHUB_SHA']
+    platforms = [item.strip() for item in os.environ.get('J15_PLATFORMS', 'Linux,macOS').split(',') if item.strip()]
+    if not platforms:
+        raise SystemExit('J15_PLATFORMS declares no platform')
     listed = api(f'repos/{repo}/actions/runs/{run}/artifacts?per_page=100')['artifacts']
     problems, records = [], []
-    for system in ('Linux', 'macOS'):
+    for system in platforms:
         name = f'reader-ocr-overlay-{system}-{run}-{attempt}'
         found = [artifact for artifact in listed if artifact['name'] == name]
         if len(found) != 1:
@@ -161,6 +164,11 @@ def main(output):
         record['lines'] = [line.get('text') for line in (manifest.get('lines') or [])]
         record['binaries'] = summary.get('binaries')
         records.append(record)
+    for artifact in listed:
+        if artifact['name'].startswith('reader-ocr-overlay-') and artifact['name'].endswith(f'-{run}-{attempt}') and \
+                not any(record['name'] == artifact['name'] for record in records) and \
+                not artifact['name'].startswith('reader-ocr-overlay-evidence-'):
+            problems.append(f'undeclared same-run artifact: {artifact["name"]}')
     if len(records) == 2:
         if records[0]['verdicts'] != records[1]['verdicts']:
             problems.append('the two platforms reported different verdict names or statuses')
@@ -170,8 +178,11 @@ def main(output):
             problems.append('the two platforms used different traineddata commits')
         if records[0]['binaries'] and records[1]['binaries'] and records[0]['binaries']['probe']['sha256'] == records[1]['binaries']['probe']['sha256']:
             problems.append('both platforms uploaded the same probe binary digest')
+    if not records:
+        problems.append('no platform artifact was verified')
     result = {'id': 'J15', 'component': 'reader_ocr_overlay', 'source': source, 'run_id': run,
-              'run_attempt': attempt, 'artifacts': records, 'accepted': not problems, 'problems': problems}
+              'run_attempt': attempt, 'platforms': platforms, 'artifacts': records,
+              'accepted': not problems, 'problems': problems}
     pathlib.Path(output).mkdir(parents=True, exist_ok=True)
     (pathlib.Path(output) / 'artifacts.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(result, ensure_ascii=False, indent=2))

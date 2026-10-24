@@ -23,7 +23,15 @@ constexpr size_t kMaxPixels = 64000000, kMaxItems = 20000, kMaxSnapshot = 4u << 
 constexpr unsigned kMaxTimeout = 300000;
 
 Status fail(reader_ocr_overlay_error *e, Status code, int sdk, const char *message) {
-  if(e) { e->code = code; e->sdk_code = sdk; std::snprintf(e->message, sizeof(e->message), "%s", message); }
+  if(e) {
+    e->code = code;
+    e->sdk_code = sdk;
+    /* Bounded copy: an SDK/backend message may be longer than this error field. */
+    size_t length = message ? std::strlen(message) : 0;
+    if(length > sizeof(e->message) - 1) length = sizeof(e->message) - 1;
+    if(length) std::memcpy(e->message, message, length);
+    e->message[length] = '\0';
+  }
   return code;
 }
 Status ok(reader_ocr_overlay_error *e) { return fail(e, READER_OCR_OVERLAY_OK, 0, ""); }
@@ -201,9 +209,8 @@ Status reader_ocr_engine_open(const char *dir, const char *languages, reader_ocr
     bool regular = std::filesystem::is_regular_file(model, ec) && !ec;
     uintmax_t bytes = regular ? std::filesystem::file_size(model, ec) : 0;
     if(!regular || ec || bytes == 0) {
-      char message[160];
-      std::snprintf(message, sizeof(message), "OCR model missing or empty: %s", name.c_str());
-      return fail(e, READER_OCR_OVERLAY_MODEL_MISSING, 0, message);
+      const std::string notice = "OCR model missing or empty: " + name;
+      return fail(e, READER_OCR_OVERLAY_MODEL_MISSING, 0, notice.c_str());
     }
   }
   std::unique_ptr<reader_ocr_engine> engine;
