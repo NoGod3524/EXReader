@@ -88,7 +88,7 @@ static exr_status product_job_run(host_job *job) {
       if(at==count) {
         status=EXR_ARGUMENT;job->error.code=status;
         snprintf(job->error.message,sizeof(job->error.message),"Accepted SDK book no longer exists");
-      } else status=reader_catalog_sdk_attach(catalog,g.library,&books[at],&control,NULL,&job->error);
+      } else status=reader_catalog_sdk_attach(catalog,g.library,&books[at],&control,job->product_key,&job->error);
     } else if(status==EXR_OK)
       status=reader_catalog_sdk_repair(catalog,g.library,books,count,&control,&failed,&job->error);
     exr_books_free(books,count);

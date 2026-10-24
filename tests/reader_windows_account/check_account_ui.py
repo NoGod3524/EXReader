@@ -295,7 +295,7 @@ def main():
     (source / 'Remote Small.txt').write_bytes(small_text)
     large = bytearray()
     line = 0
-    while len(large) < 16 * 1024 * 1024:
+    while len(large) < 5 * 1024 * 1024:
         large += ('Large account text line %08d with stable words for hashing and import.\n' % line).encode();line += 1
     (source / 'AAA Large Text.txt').write_bytes(bytes(large))
     epub(source / 'Account Epub.epub', 'Account Epub', 'Account epub marker bravo. ' * 600)
