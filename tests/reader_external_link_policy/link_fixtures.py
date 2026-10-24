@@ -26,7 +26,7 @@ REQUIRED_GROUPS = {
     "protocol-relative": 2, "encoded-separators": 4, "double-escape": 2, "path-escape": 4,
     "forbidden-scheme": 8, "unknown-scheme": 3, "bad-scheme": 5, "controls": 6,
     "invalid-utf8": 3, "overlong": 6, "authority": 8, "internal-allowed": 12,
-    "fragment-and-cfi": 6, "escapes": 6, "spaces": 3, "escape-boundary": 11,
+    "fragment-and-cfi": 6, "escapes": 6, "spaces": 3, "escape-boundary": 17,
 }
 
 
@@ -191,6 +191,14 @@ def default_cases():
     c.append(internal("escape-boundary", "unicode-raw", "#章节", "FRAGMENT"))
     c.append(internal("escape-boundary", "unicode-encoded", "#%E7%AB%A0%E8%8A%82", "FRAGMENT"))
     c.append(host("escape-boundary", "mailto-crlf-query", "mailto:reader@example.com?body=x%0D%0Ay", "mailto"))
+    # The query region ends at the first '#': a fragment after a query is still a
+    # fragment, and a '?' inside a fragment never starts query data.
+    c.append(reject("escape-boundary", "query-bad-fragment", "https://example.com/?q=x#%0A", "ENCODED_CONTROL"))
+    c.append(host("escape-boundary", "query-crlf-with-fragment", "https://example.com/?q=x%0D%0Ay#frag", "https"))
+    c.append(reject("escape-boundary", "fragment-question-control", "https://example.com/#a?b%0A", "ENCODED_CONTROL"))
+    c.append(host("escape-boundary", "fragment-question-literal", "https://example.com/#a?b", "https"))
+    c.append(reject("escape-boundary", "external-fragment-invalid-utf8", "https://example.com/#%FF", "BAD_ESCAPE"))
+    c.append(host("escape-boundary", "mailto-crlf-with-fragment", "mailto:reader@example.com?body=x%0D%0Ay#section", "mailto"))
     return c
 
 

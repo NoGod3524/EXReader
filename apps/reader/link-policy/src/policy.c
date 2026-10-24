@@ -261,6 +261,8 @@ static int check_escapes(const char *s, size_t n, int control_ok, reader_link_re
   return 1;
 }
 
+static int check_fragment_bytes(const char *s, size_t n, reader_link_reason *why);
+
 static void external(const char *t, size_t n, size_t colon, verdict *v) {
   const char *rest = t + colon + 1;
   size_t rest_len = n - colon - 1, i, hash = SIZE_MAX;
@@ -270,23 +272,30 @@ static void external(const char *t, size_t n, size_t colon, verdict *v) {
     if (t[i] == ' ') { reject(v, READER_LINK_REASON_SPACE); return; }
   if (!rest_len) { reject(v, READER_LINK_REASON_MALFORMED); return; }
   {
-    size_t hash_at = SIZE_MAX, query = SIZE_MAX, k;
+    size_t hash_at = SIZE_MAX, query = SIZE_MAX, head_len, k;
     for (k = 0; k < rest_len; k++)
       if (rest[k] == '#') { hash_at = k; break; }
+    head_len = (hash_at == SIZE_MAX) ? rest_len : hash_at;
     /* A '?' only starts query data before the fragment; a '?' inside a
        fragment is literal text. */
-    for (k = 0; k < (hash_at == SIZE_MAX ? rest_len : hash_at); k++)
+    for (k = 0; k < head_len; k++)
       if (rest[k] == '?') { query = k; break; }
-    /* Encoded controls are query data only (for example a mailto body); the
-       authority, path and fragment must never carry them. */
+    /* Encoded controls are query data only (for example a mailto body), and
+       that region ends at the first '#'. The authority, the path and the
+       fragment itself must never carry them. */
     if (query == SIZE_MAX) {
-      if (!check_escapes(rest, rest_len, 0, &why)) { reject(v, why); return; }
+      if (!check_escapes(rest, head_len, 0, &why)) { reject(v, why); return; }
     } else {
       if (!check_escapes(rest, query, 0, &why)) { reject(v, why); return; }
-      if (!check_escapes(rest + query + 1, rest_len - query - 1, 1, &why)) {
+      if (!check_escapes(rest + query + 1, head_len - query - 1, 1, &why)) {
         reject(v, why);
         return;
       }
+    }
+    if (hash_at != SIZE_MAX &&
+        !check_fragment_bytes(rest + hash_at + 1, rest_len - hash_at - 1, &why)) {
+      reject(v, why);
+      return;
     }
   }
   for (i = 0; i < rest_len; i++)
