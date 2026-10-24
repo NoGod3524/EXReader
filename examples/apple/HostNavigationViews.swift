@@ -67,15 +67,8 @@ struct HostNavigationSheet: View {
                         }.accessibilityLabel(Text("\(row.label)的子目录"))
                             .accessibilityIdentifier("navigation.children.\(row.index)")
                     }
-                }.disabled(navigation.running || model.busy)
+                }.buttonStyle(.borderless).disabled(navigation.running || model.busy)
             }.accessibilityIdentifier("navigation.rows")
-            DisclosureGroup("EPUB CFI") {
-                TextField("epubcfi(…)", text: $navigation.cfi).textFieldStyle(.roundedBorder)
-                    .accessibilityIdentifier("navigation.cfi")
-                Button("定位 CFI") { model.selectNavigation(row: UInt64.max, cfi: navigation.cfi) }
-                    .disabled(model.busy || navigation.running || navigation.cfi.isEmpty)
-                    .accessibilityIdentifier("navigation.cfi.go")
-            }
         }.padding().frame(minWidth: 280, minHeight: 360)
             .onDisappear { navigation.cancel() }
             .onChange(of: navigation.committed) { _ in presentation.wrappedValue.dismiss() }

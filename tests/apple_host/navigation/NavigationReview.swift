@@ -149,6 +149,12 @@ import Darwin
                 let input = try cfi(3), selection = try resolve(UInt64.max, cfi: input)
                 let (_, frame) = try session.navigationCandidate(selection, acceptPart: false, cancel: HostCancelBox())
                 try expect(frame.part == 1 && frame.pageText.contains("A😀Z"), "CFI did not map whole non-BMP scalar")
+                for row in [UInt64(6), UInt64(7)] {
+                    let authored = try resolve(row)
+                    try expect(authored.cfi == (expected["authored_cfi"] as? String), "Author CFI href was not read from the live snapshot")
+                    let (_, frame) = try session.navigationCandidate(authored, acceptPart: false, cancel: HostCancelBox())
+                    try expect(frame.part == 1 && frame.pageText.contains("A😀Z"), "Author CFI row did not independently FOUND")
+                }
             }
             check("cfi-surrogate-and-folding-refused") {
                 try expect(rejects { _ = try HostNavigationWorker.cfiProjection(document: document, node: UInt64(unicodeNode), units: 2) }, "Surrogate interior mapped")

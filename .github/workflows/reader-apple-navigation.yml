@@ -75,6 +75,10 @@ jobs:
           python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
           python3 tests/apple_host/navigation/prepare_navigation_fixture.py --resources build/apple-resources
           sdk="$PWD/sdk-artifact/stage/macos"
+          cc -I "$sdk/include" tests/apple_host/navigation/make_cfi.c -L "$sdk/lib" -lexreader \
+            -Wl,-rpath,"$sdk/lib" -o build/apple-navigation-native/make-cfi
+          build/apple-navigation-native/make-cfi build/apple-resources/Sample.epub > build/apple-navigation-native/authored-cfi.txt
+          python3 tests/apple_host/navigation/prepare_navigation_fixture.py --resources build/apple-resources --cfi build/apple-navigation-native/authored-cfi.txt
           python3 tools/apple_swift.py --sdk "$sdk" -- -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
             -I "$sdk/include" -L "$sdk/lib" -lexreader -Xlinker -rpath -Xlinker "$sdk/lib" \
             examples/apple/HostSDK.swift examples/apple/HostModel.swift examples/apple/HostCatalog.swift examples/apple/SelectableText.swift \
@@ -121,6 +125,11 @@ jobs:
           cp -R sdk-artifacts/*/stage/* stage/
           python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
           python3 tests/apple_host/navigation/prepare_navigation_fixture.py --resources build/apple-resources
+          sdk="$PWD/stage/macos"
+          cc -I "$sdk/include" tests/apple_host/navigation/make_cfi.c -L "$sdk/lib" -lexreader \
+            -Wl,-rpath,"$sdk/lib" -o build/apple-navigation-ui/make-cfi
+          build/apple-navigation-ui/make-cfi build/apple-resources/Sample.epub > build/apple-navigation-ui/authored-cfi.txt
+          python3 tests/apple_host/navigation/prepare_navigation_fixture.py --resources build/apple-resources --cfi build/apple-navigation-ui/authored-cfi.txt
           ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
           ruby tests/apple_host/make_xcodeproj.rb build/apple-navigation-project build/apple-resources tests/apple_host/navigation/ui
           python3 - '${{ matrix.platform }}' > build/apple-navigation-ui/destination.txt <<'PY'

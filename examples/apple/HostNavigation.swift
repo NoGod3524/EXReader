@@ -135,10 +135,39 @@ enum HostNavigationWorker {
                 var options = reader_navigation_resolve_options(), target = reader_navigation_target(), error = reader_navigation_error()
                 options.struct_size = MemoryLayout<reader_navigation_resolve_options>.size
                 options.control = hostControl(cancel); options.source_key = keyPointer; options.explicit_part = explicitPart
+                var inputCFI = cfi, checkLocalPart = false
+                if inputCFI.isEmpty {
+                    var page = reader_navigation_page()
+                    try hostNavigationCheck(reader_navigation_rows(snapshot, row, 1, &page, &error), error)
+                    defer { reader_navigation_page_free(&page) }
+                    guard page.count == 1, let rows = page.rows, rows[0].index == row else { throw HostError.invalidInput("目录项已变化") }
+                    let href = hostString(rows[0].href)
+                    if href.hasPrefix("epubcfi(") { inputCFI = href }
+                    else if let hash = href.firstIndex(of: "#") {
+                        let fragment = String(href[href.index(after: hash)...])
+                        if fragment.hasPrefix("epubcfi(") {
+                            inputCFI = fragment; checkLocalPart = hash != href.startIndex
+                        }
+                    }
+                }
+                var localPart: HostNavigationTarget?
+                if checkLocalPart {
+                    guard let publication else { throw HostError.invalidInput("本书的目录位置无法精确解析") }
+                    var local = reader_navigation_target()
+                    let status = reader_navigation_resolve_publication(snapshot, row, publication.handle, &options, &local, &error)
+                    defer { reader_navigation_target_free(&local) }
+                    if status == READER_NAVIGATION_AMBIGUOUS {
+                        let candidates = local.candidates.map { Array(UnsafeBufferPointer(start: $0, count: local.candidate_count)) } ?? []
+                        return HostNavigationSelection(bookID: bookID, sourceKey: key, row: row, cfi: "",
+                            resolution: HostNavigationResolution(status: status, target: HostNavigationTarget(local), candidates: candidates))
+                    }
+                    if status != READER_NAVIGATION_PART_ONLY { try hostNavigationCheck(status, error) }
+                    localPart = HostNavigationTarget(local)
+                }
                 let status: reader_navigation_status
-                if !cfi.isEmpty {
+                if !inputCFI.isEmpty {
                     guard let publication else { throw HostError.invalidInput("本书不提供 EPUB CFI") }
-                    status = cfi.withCString { reader_navigation_resolve_cfi(snapshot, publication.handle, $0, &options, &target, &error) }
+                    status = inputCFI.withCString { reader_navigation_resolve_cfi(snapshot, publication.handle, $0, &options, &target, &error) }
                 } else if let publication { status = reader_navigation_resolve_publication(snapshot, row, publication.handle, &options, &target, &error) }
                 else if let fixed { status = reader_navigation_resolve_page(snapshot, row, fixed.handle, &options, &target, &error) }
                 else { status = reader_navigation_resolve_document(snapshot, row, document!.handle, &options, &target, &error) }
@@ -146,9 +175,13 @@ enum HostNavigationWorker {
                 if status != READER_NAVIGATION_PART_ONLY && status != READER_NAVIGATION_AMBIGUOUS {
                     try hostNavigationCheck(status, error)
                 }
+                if let localPart {
+                    guard target.part == localPart.part, hostString(target.part_path) == localPart.path,
+                          hostString(target.part_id) == localPart.partID else { throw HostError.invalidInput("目录链接与原生位置不一致") }
+                }
                 try cancel.check()
                 let candidates = target.candidates.map { Array(UnsafeBufferPointer(start: $0, count: target.candidate_count)) } ?? []
-                return HostNavigationSelection(bookID: bookID, sourceKey: key, row: row, cfi: cfi,
+                return HostNavigationSelection(bookID: bookID, sourceKey: key, row: row, cfi: inputCFI,
                     resolution: HostNavigationResolution(status: status, target: HostNavigationTarget(target), candidates: candidates))
             }
         }
@@ -263,7 +296,6 @@ final class HostNavigationState: ObservableObject {
     @Published private(set) var status = "正在读取目录…"
     @Published private(set) var pending: HostNavigationSelection?
     @Published private(set) var committed = 0
-    @Published var cfi = ""
     private(set) var bookID: Int64?
     private(set) var key: String?
     private(set) var generation = 0
@@ -301,7 +333,7 @@ final class HostNavigationState: ObservableObject {
     }
     func pushParent() { if let page { parents.append((page.parent, page.first)) } }
     func popParent() -> (UInt64, UInt64)? { parents.popLast() }
-    func invalidate() { cancel(); bookID = nil; key = nil; page = nil; parents = []; cfi = "" }
+    func invalidate() { cancel(); bookID = nil; key = nil; page = nil; parents = [] }
 #if EXR_APPLE_HOST_REVIEW
     func reviewCancellationReady(generation expected: Int) {
         if generation == expected && running { status = "正在读取目录（可取消）" }

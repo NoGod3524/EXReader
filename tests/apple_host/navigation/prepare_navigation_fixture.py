@@ -2,6 +2,7 @@
 """Cloud-only authored TOC with hierarchy, 70 roots and explicit bad targets."""
 import argparse
 import hashlib
+import html
 import json
 import os
 from pathlib import Path
@@ -13,9 +14,34 @@ import zlib
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--resources', type=Path, required=True)
+    parser.add_argument('--cfi', type=Path)
     args = parser.parse_args()
     assert os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only'
     source = args.resources / 'Sample.epub'
+    if args.cfi is not None:
+        cfi = args.cfi.read_text().strip()
+        assert cfi.startswith('epubcfi(') and cfi.endswith(')') and len(cfi.encode()) <= 4096
+        assert '\x00' not in cfi and '\n' not in cfi
+        with zipfile.ZipFile(source) as archive:
+            entries = [(item, archive.read(item.filename)) for item in archive.infolist()]
+        changed = 0
+        with zipfile.ZipFile(source, 'w') as archive:
+            for item, data in entries:
+                if item.filename == 'OPS/nav.xhtml':
+                    assert data.count(b'__EXR_AUTHOR_CFI__') == 2
+                    data = data.replace(b'__EXR_AUTHOR_CFI__', html.escape(cfi, quote=True).encode())
+                    changed += 1
+                archive.writestr(item, data)
+        assert changed == 1
+        expected_path = args.resources / 'navigation-expected.json'
+        expected = json.loads(expected_path.read_text()); expected['authored_cfi'] = cfi
+        expected_path.write_text(json.dumps(expected, sort_keys=True) + '\n')
+        manifest_path = args.resources / 'manifest.json'
+        manifest = json.loads(manifest_path.read_text())
+        for path in (source, expected_path):
+            manifest[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+        manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')
+        return
     with zipfile.ZipFile(source) as archive:
         entries = [(item, archive.read(item.filename)) for item in archive.infolist()]
     nav = ('<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">'
@@ -24,8 +50,10 @@ def main():
            '<li><a href="c1.xhtml#missing">Missing fragment</a></li>'
            '<li><a href="c0.xhtml#p010">Repeated chapter</a></li>'
            '<li><a href="https://example.invalid/reader">External target</a></li>'
-           '<li><a href="../../outside.xhtml">Unsafe target</a></li>' +
-           ''.join('<li><a href="c2.xhtml#p%03d">Entry %03d</a></li>' % (index, index) for index in range(65)) +
+           '<li><a href="../../outside.xhtml">Unsafe target</a></li>'
+           '<li><a href="__EXR_AUTHOR_CFI__">Unicode destination</a></li>'
+           '<li><a href="c1.xhtml#__EXR_AUTHOR_CFI__">Unicode local destination</a></li>' +
+           ''.join('<li><a href="c2.xhtml#p%03d">Entry %03d</a></li>' % (index, index) for index in range(63)) +
            '</ol></nav></body></html>').encode()
     with zipfile.ZipFile(source, 'w') as archive:
         for item, data in entries:
@@ -44,7 +72,8 @@ def main():
     expected = args.resources / 'navigation-expected.json'
     expected.write_text(json.dumps({'roots': 70, 'nodes': 71, 'group': 0, 'destination': 1,
         'missing': 2, 'duplicate': 3, 'external': 4, 'unsafe': 5,
-        'duplicate_parts': [0, 3], 'destination_text': 'C01P040W00', 'duplicate_text': 'C00P010W00'}, sort_keys=True) + '\n')
+        'duplicate_parts': [0, 3], 'destination_text': 'C01P040W00', 'duplicate_text': 'C00P010W00',
+        'cfi_row': 6, 'local_cfi_row': 7}, sort_keys=True) + '\n')
     def chunk(kind, data):
         return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data) & 0xffffffff)
     png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 8, 8, 8, 2, 0, 0, 0))
