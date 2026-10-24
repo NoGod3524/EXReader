@@ -131,6 +131,7 @@ jobs:
           "build/r-relay-consumer/relay-c-consumer$E" || c_exit=$?
           echo "$c_exit" > build/relay-build/c-consumer-exit.txt
           "build/r-relay-consumer/relay-consumer$E" "$PWD/build/relay-build/consumer-work" "$PWD/build/relay-build/component-consumer.json" 2>&1 | tee build/relay-build/logs/component-consumer.log || true
+          rm -rf build/relay-build/consumer-work
           cp "build/r-relay-consumer/relay-tool$E" build/relay-build/bin/
       - name: Build the cross-OS relay probe from the installed packages
         run: |
