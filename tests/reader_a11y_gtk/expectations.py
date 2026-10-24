@@ -134,6 +134,7 @@ CHECKS = [
     ('metadata_dialog_controls_named', 'metadata-dialog'),
     ('metadata_dialog_escape_restores_focus', 'metadata-dialog'),
     ('account_dialog_identity_and_focus', 'account-dialog'),
+    ('account_dialog_declares_modality', 'account-dialog'),
     ('account_entries_and_buttons_named', 'account-dialog'),
     ('account_password_secret_not_reachable_through_atspi', 'account-dialog'),
     ('account_dialog_escape_restores_focus', 'account-dialog'),

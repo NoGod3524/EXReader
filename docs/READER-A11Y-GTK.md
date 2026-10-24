@@ -95,6 +95,7 @@ GTK provides (focusable rows, modal dialogs, focus restoration, event delivery).
 | `metadata_dialog_controls_named` | `Book title`, `Book author`, `Favorite book` | blocking |
 | `metadata_dialog_escape_restores_focus` | `Escape` closes and focus returns to the shelf | blocking |
 | `account_dialog_identity_and_focus` | dialog `Account and Sync`, focus on `HTTPS WebDAV root` | blocking |
+| `account_dialog_declares_modality` | the dialog exposes the MODAL state like the other two dialogs | advisory |
 | `account_entries_and_buttons_named` | three entries, two storage radios, seven buttons | blocking |
 | `account_password_secret_not_reachable_through_atspi` | the typed secret is not readable through `AtkText`; the secret marker is recorded separately as a gap | blocking |
 | `account_dialog_escape_restores_focus` | `Escape` closes and focus returns | blocking |
