@@ -54,6 +54,13 @@ def build_cases():
     plain = 'Application>Window>Button[%s]'
 
     def case(identifier, description, expected, elements, first, second, ratio=None):
+        # Guard against fixture typos: every named scroll ancestor must resolve to a
+        # recorded viewport, except the deliberate 'ghost' missing-viewport case.
+        for name in (first, second):
+            for ancestor in scroll_chain(elements[name].get('path')):
+                if ancestor['bare'] or ancestor['id'] == 'ghost':
+                    continue
+                assert ancestor['id'] in elements, identifier + ': 缺少视口记录 ' + ancestor['id']
         return {'id': identifier, 'description': description, 'expected': expected,
                 'threshold_ratio': ratio,
                 'outcome': classify_overlap(elements[first], elements[second], elements, 0.5)}
@@ -132,7 +139,7 @@ def build_cases():
                       'excluded', elements, 'a', 'b'))
 
     # 12-13. Scroll content against an external control.
-    elements = {'list': element('list2', -2.5, 165, 380, 15, 'Application>Window>ScrollView[list2]', role='ScrollView'),
+    elements = {'list2': element('list2', -2.5, 165, 380, 15, 'Application>Window>ScrollView[list2]', role='ScrollView'),
                 'book': element('book', 13.5, 165, 348, 142,
                                 'Application>Window>ScrollView[list2]>Other>Button[book]'),
                 'import': element('import', -1.5, 188, 176, 77.5, plain % 'import')}
