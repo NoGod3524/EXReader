@@ -142,6 +142,7 @@ def main():
     files['badmagic.png'] = b'not an image at all, just text\n' * 3
 
     files['cover-exact.epub'] = epub(files['alpha8x8.png'])
+    files['cover-none.epub'] = epub(None)
     files['pages2.pdf'] = pdf([(200, 100, b'1 0 0 rg 0 0 100 100 re f 0 0 1 rg 100 0 100 100 re f'),
                                (100, 200, b'0 1 0 rg 0 0 100 200 re f')])
     files['pages2.cbz'] = cbz([('001.png', png(60, 90, bytes((200, 30, 30, 255)) * 5400)),

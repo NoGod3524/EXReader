@@ -260,11 +260,11 @@ void test_missing() {
   exr_library* lib = open_library(lp);
   uint64_t entries0 = stats_of(c).entries;
   struct Case { const char* label; const char* file; bool bounded; };
-  Case cases[] = {{"EPUB whose package declares no cover", "cover-import-missing.epub", false},
+  Case cases[] = {{"EPUB whose package declares no cover", "cover-none.epub", false},
                   {"EPUB whose 8 MiB+ cover stays in the source", "cover-import-large.epub", false},
                   {"bounded file import of a cover-bearing EPUB", "cover-import.epub", true}};
   for (const Case& cs : cases) {
-    const Bytes& epub = repo[cs.file];
+    const Bytes& epub = fx.count(cs.file) ? fx[cs.file] : repo[cs.file];
     int64_t id = 0;
     exr_error e;
     std::memset(&e, 0, sizeof(e));
@@ -914,7 +914,7 @@ int main(int argc, char** argv) {
     fx[name] = read_file(it.path());
     hashes[name] = sha(fx[name]);
   }
-  for (const char* name : {"cover-import.epub", "cover-import-missing.epub", "cover-import-large.epub", "pdf-public.pdf", "comic.cbz"}) {
+  for (const char* name : {"cover-import.epub", "cover-import-large.epub", "pdf-public.pdf", "comic.cbz"}) {
     repo[name] = read_file(repo_fixtures / name);
     hashes[std::string("repo/") + name] = sha(repo[name]);
   }
@@ -962,7 +962,7 @@ int main(int argc, char** argv) {
     if (name == "manifest.json" || name == "expect.txt") continue;
     if (sha(read_file(it.path())) != hashes[name]) unchanged = false;
   }
-  for (const char* name : {"cover-import.epub", "cover-import-missing.epub", "cover-import-large.epub", "pdf-public.pdf", "comic.cbz"})
+  for (const char* name : {"cover-import.epub", "cover-import-large.epub", "pdf-public.pdf", "comic.cbz"})
     if (sha(read_file(repo_fixtures / name)) != hashes[std::string("repo/") + name]) unchanged = false;
   check("unchanged: every original fixture file is byte-identical after all operations", unchanged);
 
