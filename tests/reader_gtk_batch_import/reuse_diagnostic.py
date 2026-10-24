@@ -72,15 +72,15 @@ def main():
             path = PurePosixPath(entry.name)
             assert not path.is_absolute() and '..' not in path.parts and (entry.isfile() or entry.isdir())
         bundle.extractall(payload)
-    binary = payload / 'EXReader-Linux/bin/exreader-linux'
+    binary = payload / 'bin/exreader-linux'
     digest = hashlib.sha256(binary.read_bytes()).hexdigest()
     assert digest == original['program_sha256']
     record = dict(accepted=False, diagnostic_only=True, test_source=os.environ['GITHUB_SHA'], program_source=source,
                   previous_run=run_id, artifact={key: artifact[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')},
-                  program_sha256=digest, payload=str(payload / 'EXReader-Linux'))
+                  program_sha256=digest, payload=str(payload))
     (output / 'input.json').write_text(json.dumps(record, indent=2) + '\n')
     with open(os.environ['GITHUB_ENV'], 'a') as environment:
-        environment.write('DIAGNOSTIC_PAYLOAD=' + str(payload / 'EXReader-Linux') + '\n')
+        environment.write('DIAGNOSTIC_PAYLOAD=' + str(payload) + '\n')
         environment.write('DIAGNOSTIC_PROGRAM_SOURCE=' + source + '\n')
     print(json.dumps(record), flush=True)
 
