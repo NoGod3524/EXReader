@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 static int set_environment(const char *name, const char *value) {
 #if defined(_WIN32)
   return _putenv_s(name, value) == 0;
@@ -109,7 +113,7 @@ static int parse_save_flags(int argc, char **argv, int first) {
   return 1;
 }
 
-int main(int argc, char **argv) {
+static int run_main(int argc, char **argv) {
   reader_preferences p;
   reader_preferences before;
   reader_preferences_error error;
@@ -228,3 +232,37 @@ int main(int argc, char **argv) {
 
   return 2;
 }
+
+#if defined(_WIN32)
+static char *rp_wide_to_utf8(const wchar_t *text) {
+  int needed = WideCharToMultiByte(CP_UTF8, 0, text, -1, NULL, 0, NULL, NULL);
+  char *utf8;
+  if (needed <= 0) return NULL;
+  utf8 = (char *)malloc((size_t)needed);
+  if (!utf8) return NULL;
+  if (WideCharToMultiByte(CP_UTF8, 0, text, -1, utf8, needed, NULL, NULL) != needed) {
+    free(utf8);
+    return NULL;
+  }
+  return utf8;
+}
+
+int wmain(int argc, wchar_t **argv) {
+  char **utf8 = (char **)calloc((size_t)argc + 1u, sizeof(char *));
+  int i;
+  int result;
+  if (!utf8) return 2;
+  for (i = 0; i < argc; ++i) {
+    utf8[i] = rp_wide_to_utf8(argv[i]);
+    if (!utf8[i]) return 2;
+  }
+  result = run_main(argc, utf8);
+  for (i = 0; i < argc; ++i) free(utf8[i]);
+  free(utf8);
+  return result;
+}
+#else
+int main(int argc, char **argv) {
+  return run_main(argc, argv);
+}
+#endif
