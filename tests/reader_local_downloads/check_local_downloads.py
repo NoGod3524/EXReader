@@ -1025,6 +1025,8 @@ def s_reimport_publish_blocked(ctx):
     same((r["status"], r["outcome"]), ("ok", "attached"), "retry after clearing the block")
     same(env.dump_sha(int(r["id"])), book.sha, "the retry stored the verified bytes")
     same(env.catalog(book.key)[:3], (1, int(r["id"]), 1), "mapping restored on the retry")
+    book.ids[0] = int(r["id"])
+    removed_ok(env.run("remove", "--key", book.key), book)
     env.assert_state_clean()
 
 
