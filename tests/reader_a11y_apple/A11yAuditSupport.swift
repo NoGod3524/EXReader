@@ -101,13 +101,12 @@ enum A11yAudit {
         }
     }
 
-    /// The same raw-value printing affects XCUIApplication.State.
+    /// The same raw-value printing affects XCUIApplication.State, and this Xcode
+    /// only exposes a subset of its members, so classify without naming them all.
     static func appStateName(_ app: XCUIApplication) -> String {
         if app.state == .runningForeground { return "runningForeground" }
-        if app.state == .runningBackground { return "runningBackground" }
-        if app.state == .runningBackgroundSuspended { return "runningBackgroundSuspended" }
         if app.state == .notRunning { return "notRunning" }
-        return "unknown"
+        return "other"
     }
 
     static func platformName() -> String {
