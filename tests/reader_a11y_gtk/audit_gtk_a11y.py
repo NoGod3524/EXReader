@@ -215,9 +215,13 @@ def main():
         return path
 
     def idle(timeout=120):
-        return host.wait_state(lambda state: not state.get('busy') and not state.get('saving')
-                               and not state.get('shelf_loading')
-                               and not state.get('shelf_restoring'), timeout=timeout)
+        # reader.c leaves shelf_restoring set while the reader is the visible child, so the
+        # shelf bookkeeping only has to settle when the shelf is the one on screen.
+        return host.wait_state(
+            lambda state: not state.get('busy') and not state.get('saving')
+            and (state.get('reader_visible') == 1
+                 or (not state.get('shelf_loading') and not state.get('shelf_restoring'))),
+            timeout=timeout)
 
     def dialog_window(title, present=True, timeout=30):
         return host.window_named(title, present, timeout=timeout)
@@ -992,7 +996,8 @@ def main():
                     actual={'reached_by_tab': reached, 'entry': snapshot(password),
                             'exported_text_length': (exported or {}).get('length'),
                             'exported_text_is_secret': leaked,
-                            'exported_text_sample': ((exported or {}).get('text') or '')[:8],
+                            'exported_text_sample': '<secret was exported>' if leaked
+                            else ((exported or {}).get('text') or '')[:8],
                             'attributes': attributes, 'attributes_mark_secret': marked},
                     element=snapshot(password)['path'] or snapshot(dialog)['path'],
                     severity='blocking',
@@ -1121,11 +1126,13 @@ def main():
         accepted = audit_completed and not blocking
         findings = audit.findings()
         leaks = 0
+        leak_files = []
         for path in sorted(folder.rglob('*')):
             if path.is_file() and path.name != 'result.json':
                 try:
                     if secret.encode() in path.read_bytes():
                         leaks += 1
+                        leak_files.append(str(path.relative_to(folder)))
                 except OSError:
                     pass
         report = {
@@ -1160,6 +1167,7 @@ def main():
             'observations': audit.observations,
             'secret_typed_into_password_field': True,
             'secret_leak_hits': leaks,
+            'secret_leak_files': leak_files,
             'evidence': {},
         }
         for path in sorted(folder.rglob('*')):
