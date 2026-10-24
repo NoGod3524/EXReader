@@ -13,6 +13,12 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#ifdef __ANDROID__
+#include "exr_webdav_android.h"
+#include <thread>
+#include <mutex>
+#include <map>
+#endif
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -22,8 +28,10 @@
 #include <xmllite.h>
 #include <shlwapi.h>
 #else
+#ifndef __ANDROID__
 #include <curl/curl.h>
 #include <libxml/xmlreader.h>
+#endif
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -268,6 +276,11 @@ long remaining(clock_type::time_point deadline) {
 
 struct exr_webdav_client {
   url root;std::string authorization;uint64_t max_download;size_t max_listing,max_entries;unsigned timeout;
+#ifdef __ANDROID__
+  std::thread::id android_owner=std::this_thread::get_id();
+  bool android_active=false;
+  jobject android_backend=nullptr;
+#endif
 };
 
 namespace {
@@ -317,6 +330,8 @@ response perform(exr_webdav_client &client,const url &u,const char *method,int e
   }
   if(r.has_length && r.length!=s.received) reject(EXR_DAV_IO,"Incomplete HTTPS response body");return r;
 }
+#elif defined(__ANDROID__)
+#include "android_transport.inc"
 #else
 struct curl_context { response r;sink *output;upload *input=nullptr;int expected;size_t header_bytes=0;failure error{EXR_DAV_OK,"",0}; };
 size_t curl_head(char *data,size_t size,size_t count,void *opaque) {
@@ -456,6 +471,8 @@ node xml(const std::vector<unsigned char> &bytes,size_t maximum_entries) {
     } else if(type==XmlNodeType_DocumentType) reject(EXR_DAV_FORMAT,"DTD is not allowed");
   }
   if(FAILED(status)) reject(EXR_DAV_FORMAT,"Malformed WebDAV XML");
+#elif defined(__ANDROID__)
+  android_xml(bytes,event);
 #else
   xmlTextReaderPtr raw=xmlReaderForMemory((const char *)bytes.data(),(int)bytes.size(),NULL,NULL,XML_PARSE_NONET|XML_PARSE_NOERROR|XML_PARSE_NOWARNING);
   if(!raw) reject(EXR_DAV_FORMAT,"Cannot create safe XML reader");
@@ -495,6 +512,9 @@ exr_webdav_status report(exr_webdav_error *e,const failure &f) {
 void clean(exr_webdav_error *e) { if(e) std::memset(e,0,sizeof(*e)); }
 }
 
+#ifdef __ANDROID__
+extern "C" exr_webdav_status exr_webdav_android_initialize(JNIEnv *env) { return android_initialize(env); }
+#endif
 extern "C" exr_webdav_status exr_webdav_create(const exr_webdav_config *config,exr_webdav_client **out,exr_webdav_error *error) {
   clean(error);if(out) *out=nullptr;
   try {
@@ -509,10 +529,18 @@ extern "C" exr_webdav_status exr_webdav_create(const exr_webdav_config *config,e
     c->max_entries=config->max_entries ? config->max_entries:2000;c->timeout=config->timeout_ms ? config->timeout_ms:30000;
     if(c->max_download>UINT64_C(128)*1024*1024 || c->max_listing>4*1024*1024 || c->max_entries>2000 || c->timeout>120000)
       reject(EXR_DAV_ARGUMENT,"WebDAV limits exceed module ceilings");
+#ifdef __ANDROID__
+    android_create(c.get());
+#endif
     *out=c.release();return EXR_DAV_OK;
   } catch(const failure &f) { return report(error,f); } catch(...) { return report(error,{EXR_DAV_MEMORY,"Cannot create WebDAV client",0}); }
 }
-extern "C" void exr_webdav_free(exr_webdav_client *client) { delete client; }
+extern "C" void exr_webdav_free(exr_webdav_client *client) {
+#ifdef __ANDROID__
+  if(!android_release(client))return;
+#endif
+  delete client;
+}
 extern "C" void exr_webdav_listing_free(exr_webdav_listing *listing) {
   if(!listing) return;
   for(size_t i=0;i<listing->count;i++) { std::free(listing->entries[i].resource);std::free(listing->entries[i].display_name);std::free(listing->entries[i].etag); }
@@ -522,6 +550,9 @@ extern "C" exr_webdav_status exr_webdav_list(exr_webdav_client *client,const cha
   clean(error);if(out) std::memset(out,0,sizeof(*out));
   try {
     if(!client || !collection || !out) reject(EXR_DAV_ARGUMENT,"Missing collection request");
+#ifdef __ANDROID__
+    android_operation operation(client);
+#endif
     std::string resource=path(collection,false);if(!resource.empty() && resource.back()!='/') reject(EXR_DAV_ARGUMENT,"Collection resource must end in slash");
     url current=client->root;current.path+=resource;std::vector<unsigned char> bytes;sink s{client->max_listing,0,control,&bytes,nullptr};
     current=fetch(*client,current,"PROPFIND",207,s);node root=xml(bytes,client->max_entries);
@@ -560,6 +591,9 @@ extern "C" exr_webdav_status exr_webdav_download_file(exr_webdav_client *client,
   clean(error);if(out) std::memset(out,0,sizeof(*out));
   try {
     if(!client || !resource || !directory || !filename || !out) reject(EXR_DAV_ARGUMENT,"Missing download request");
+#ifdef __ANDROID__
+    android_operation operation(client);
+#endif
     std::string relative=path(resource,false);if(relative.empty() || relative.back()=='/') reject(EXR_DAV_ARGUMENT,"Download requires a file resource");
     cancelled(control);temporary file(directory,filename);sink s{client->max_download,0,control,nullptr,&file};url target=client->root;target.path+=relative;
     fetch(*client,target,"GET",200,s);file.publish(control);out->bytes=s.received;out->published=1;return EXR_DAV_OK;
@@ -568,6 +602,9 @@ extern "C" exr_webdav_status exr_webdav_download_file(exr_webdav_client *client,
 extern "C" exr_webdav_status exr_webdav_make_collection(exr_webdav_client *client,const char *collection,const exr_webdav_control *control,exr_webdav_error *error){
   clean(error);try{
     if(!client||!collection)reject(EXR_DAV_ARGUMENT,"Missing immutable collection request");
+#ifdef __ANDROID__
+    android_operation operation(client);
+#endif
     std::string relative=path(collection,false);if(relative.empty()||relative.back()!='/')reject(EXR_DAV_ARGUMENT,"A non-root collection resource is required");
     url target=client->root;target.path+=relative;std::vector<unsigned char> body;sink output{65536,0,control,&body,nullptr};
     response r=perform(*client,target,"MKCOL",-201,output,clock_type::now()+std::chrono::milliseconds(client->timeout));
@@ -578,6 +615,9 @@ extern "C" exr_webdav_status exr_webdav_make_collection(exr_webdav_client *clien
 extern "C" exr_webdav_status exr_webdav_publish_file(exr_webdav_client *client,const char *resource,const char *name,uint64_t bytes,const exr_webdav_control *control,exr_webdav_error *error){
   clean(error);try{
     if(!client||!resource)reject(EXR_DAV_ARGUMENT,"Missing immutable upload request");
+#ifdef __ANDROID__
+    android_operation operation(client);
+#endif
     std::string relative=path(resource,false);if(relative.empty()||relative.back()=='/'||bytes>client->max_download)reject(EXR_DAV_ARGUMENT,"Invalid bounded immutable upload");
     upload input(name,bytes,control);url target=client->root;target.path+=relative;std::vector<unsigned char> body;sink output{65536,0,control,&body,nullptr};
     response r=perform(*client,target,"PUT",-202,output,clock_type::now()+std::chrono::milliseconds(client->timeout),&input);

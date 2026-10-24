@@ -5,10 +5,13 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 jobs:
-  platform-probe:
+  android-backend:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,7 +26,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Require frozen SDK and unchanged desktop DAV during platform investigation
+      - name: Record source identity and require frozen SDK ABI and product packages
         run: |
           mkdir -p build/webdav-android/platform
           git rev-parse HEAD > build/webdav-android/platform/source.txt
@@ -33,7 +36,8 @@ jobs:
           Path('build/webdav-android/platform/identity.json').write_text(json.dumps({key:os.environ[value] for key,value in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]}))
           PY
           git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
-          git diff --exit-code 4d4e2be80f6dd103e4b39e739ef3813974acdf00 HEAD -- extras/webdav/src/webdav.cpp extras/webdav/include/exr_webdav.h extras/webdav/CMakeLists.txt
+          git diff --exit-code 4d4e2be80f6dd103e4b39e739ef3813974acdf00 HEAD -- extras/webdav/include/exr_webdav.h apps/reader tests/webdav
+          python -m py_compile tests/webdav_android/fixture.py tests/webdav_android/run_platform.py tests/webdav_android/run_backend.py tests/webdav_android/audit.py
       - name: Install Android tools and prepare a test-only CA on Actions
         run: |
           sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
@@ -41,14 +45,31 @@ jobs:
           echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
           echo "$sdk/platform-tools" >> "$GITHUB_PATH"
           yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "emulator" "system-images;android-34;default;x86_64"
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.31.1" "ndk;27.2.12479018" "emulator" "system-images;android-34;default;x86_64"
           python tests/webdav_android/fixture.py prepare --output build/webdav-android/fixture
           mkdir -p tests/webdav_android/android/platform/src/debug/res/raw
           cp build/webdav-android/fixture/public/ca.crt tests/webdav_android/android/platform/src/debug/res/raw/fixture_ca.crt
-          gradle -p tests/webdav_android/android --no-daemon --stacktrace :platform:assembleDebug :platform:assembleDebugAndroidTest :platform:assembleRelease
+          mkdir -p tests/webdav_android/android/backend/src/debug/res/raw
+          cp build/webdav-android/fixture/public/ca.crt tests/webdav_android/android/backend/src/debug/res/raw/fixture_ca.crt
+      - name: Build and install independent Android Debug and Release static archives
+        run: |
+          mkdir -p build/webdav-android/logs
+          toolchain="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"
+          for config in Debug Release; do
+            lower=$(echo "$config" | tr '[:upper:]' '[:lower:]')
+            if [ "$config" = Debug ]; then hooks=ON; else hooks=OFF; fi
+            cmake -S extras/webdav -B "build/webdav-android/native-$lower" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE="$config" -DEXR_WEBDAV_ANDROID_TESTING="$hooks" -DCMAKE_INSTALL_PREFIX="$PWD/build/webdav-android/stage-$lower" 2>&1 | tee "build/webdav-android/logs/$lower-configure.log"
+            cmake --build "build/webdav-android/native-$lower" --verbose 2>&1 | tee "build/webdav-android/logs/$lower-build.log"
+            cmake --install "build/webdav-android/native-$lower" 2>&1 | tee "build/webdav-android/logs/$lower-install.log"
+          done
+          if cmake -S extras/webdav -B build/webdav-android/forbidden-release-hooks -G Ninja -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DCMAKE_BUILD_TYPE=Release -DEXR_WEBDAV_ANDROID_TESTING=ON >build/webdav-android/logs/release-hooks-refusal.log 2>&1; then exit 1; fi
+      - name: Build optional AAR and actual C consumer without changing the reader default build
+        run: |
+          gradle -p tests/webdav_android/android --no-daemon --stacktrace :platform:assembleDebug :platform:assembleDebugAndroidTest :platform:assembleRelease :support:assembleDebug :support:assembleRelease :support:runtimeEvidence :backend:assembleDebug :backend:assembleDebugAndroidTest :backend:assembleRelease :baseline:assembleRelease 2>&1 | tee build/webdav-android/logs/gradle.log
+          python tests/webdav_android/audit.py --output build/webdav-android/packages
       - name: Enable emulator acceleration
         run: sudo chmod 666 /dev/kvm
-      - name: Probe actual public URLConnection methods and timeout behavior
+      - name: Actual public API probe TLS DAV C consumer owner cleanup and process retry
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -58,15 +79,97 @@ jobs:
           ram-size: 4096M
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          script: python tests/webdav_android/run_platform.py --fixture build/webdav-android/fixture --output build/webdav-android/platform
-      - name: Preserve raw platform capability evidence and public certificates only
+          script: |
+            python tests/webdav_android/run_platform.py --fixture build/webdav-android/fixture --output build/webdav-android/platform
+            cp build/webdav-android/fixture/requests.json build/webdav-android/platform/requests.json
+            python tests/webdav_android/run_backend.py --fixture build/webdav-android/fixture --output build/webdav-android/backend
+      - name: Preserve source bound evidence public certificates and distributable packages
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reader-webdav-android-platform-${{ github.run_id }}-${{ github.run_attempt }}
+          name: reader-webdav-android-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/webdav-android/platform/
+            build/webdav-android/backend/
+            build/webdav-android/logs/
+            build/webdav-android/packages/
+            build/webdav-android/stage-debug/
+            build/webdav-android/stage-release/
             build/webdav-android/fixture/public/
             build/webdav-android/fixture/requests.json
             tests/webdav_android/android/platform/build/outputs/apk/
+            tests/webdav_android/android/backend/build/outputs/apk/
+            tests/webdav_android/android/baseline/build/outputs/apk/
+            extras/webdav/android/webdav/build/outputs/aar/
+            extras/webdav/android/webdav/build/reports/runtime.json
+          if-no-files-found: error
+
+  desktop-regression:
+    name: unchanged desktop DAV (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require delivered ancestor, frozen SDK and original product schema
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor 57ad488423dc393b2ecd15526beec0806e0501f8 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Install Linux native HTTPS and XML development libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev pkg-config
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the independent optional static module
+        run: |
+          mkdir -p build/webdav-logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "DAV_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          cmake -S extras/webdav -B build/webdav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/webdav-stage" 2>&1 | tee build/webdav-logs/configure.log
+          cmake --build build/webdav --verbose 2>&1 | tee build/webdav-logs/build.log
+          cmake --install build/webdav 2>&1 | tee build/webdav-logs/install.log
+      - name: Compile an independent consumer using only the installed module
+        run: |
+          cmake -S tests/webdav/consumer -B build/webdav-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$DAV_WORKSPACE/build/webdav-stage" 2>&1 | tee build/webdav-logs/consumer-configure.log
+          cmake --build build/webdav-consumer --verbose 2>&1 | tee build/webdav-logs/consumer-build.log
+      - name: Actual native HTTPS listing, streaming and refusal acceptance
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/webdav/check_tls.py --consumer "build/webdav-consumer/webdav-consumer$exe" --module-prefix build/webdav-stage --output build/webdav-evidence
+      - name: Native parser compatibility with percent names and full sized listings
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/webdav/check_compat.py --consumer "build/webdav-consumer/webdav-consumer$exe" --output build/webdav-compat-evidence
+      - name: Preserve source-bound logs and evidence without TLS private keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-webdav-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/webdav-logs/
+            build/webdav-evidence/
+            !build/webdav-evidence/certificates/*.key
+            build/webdav-compat-evidence/
+            !build/webdav-compat-evidence/certificates/*.key
+            build/webdav/CMakeCache.txt
+            build/webdav-consumer/CMakeCache.txt
+            build/webdav-stage/
+            build/webdav-consumer/webdav-consumer*
           if-no-files-found: error
