@@ -15,7 +15,7 @@ import zipfile
 
 API = "https://api.github.com"
 EXPECTED = ("Windows", "Linux", "macOS")
-CHECKS = 19
+CHECKS = 20
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
