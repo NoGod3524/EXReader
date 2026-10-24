@@ -1199,6 +1199,8 @@ def build_summary(context, records, aggregates, environment_doc, prep):
         'frame_time_not_measured': environment_doc['measurement']['frame_time_measured'] is False,
         'numeric_budget_not_enforced': True,
     }
+    # The busy-window proposal must name the cohort that actually holds samples.
+    import_cohort = 'import' if (aggregates.get('import') or {}).get('launches') else 'import_epub'
     proposals = [
         {'metric': 'first_screen_interactive_ms', 'cohort': 'cold_shelf', 'statistic': 'p95',
          'proposal_ms': proposal(aggregates, 'cold_shelf', 'first_screen_interactive_ms', 1.5),
@@ -1218,8 +1220,8 @@ def build_summary(context, records, aggregates, environment_doc, prep):
         {'metric': 'resume_ms', 'cohort': 'reading', 'statistic': 'p95',
          'proposal_ms': proposal(aggregates, 'reading', 'resume_ms', 1.5),
          'basis': 'launch-to-restored-page p95 plus 50% headroom; proposal only'},
-        {'metric': 'input_during_import_p50_ms', 'cohort': 'import', 'statistic': 'p95',
-         'proposal_ms': max(5, proposal(aggregates, 'import', 'input_during_import_p50_ms', 4.0) or 0),
+        {'metric': 'input_during_import_p50_ms', 'cohort': import_cohort, 'statistic': 'p95',
+         'proposal_ms': max(5, proposal(aggregates, import_cohort, 'input_during_import_p50_ms', 4.0) or 0),
          'basis': 'busy-window input round-trip p95 times four, floored at 5 ms so a sub-millisecond '
                   'sample cannot propose a sub-millisecond line; proposal only'},
         {'metric': 'peak_working_set_bytes', 'cohort': 'cold_shelf', 'statistic': 'p95',
