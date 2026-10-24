@@ -1,0 +1,81 @@
+{
+  "source_sha": "20c6a1deec794b4902f0ae3a7140a17b19cef7fd",
+  "run_id": 40082869006,
+  "attempt": 1,
+  "job_id": 120839830599,
+  "summary_job_id": 120841063040,
+  "accepted": true,
+  "scope": "Windows account binding, manual sync, cancel, retry, receive and close in the real Win32 product host",
+  "performance_accepted": false,
+  "complete_product": false,
+  "sdk_candidate": "9854061be331fe603a1822d9b2b36ee357154927",
+  "product_schema": 1,
+  "account_checks": 25,
+  "checks": {
+    "original_ui_actions": 158,
+    "original_screenshots": 8,
+    "product_ui": 10,
+    "worker_cache_cases": 5,
+    "bookshelf_ui": 13,
+    "metadata_ui": 18,
+    "evidence_rejection_min": 26,
+    "account": 25
+  },
+  "artifact": {
+    "id": 12556205896,
+    "name": "reader-windows-account-40082869006-1",
+    "bytes": 39993859,
+    "sha256": "e546121dec975ecc318df514a2ea4ce6d03f1dcd53fcd31a8dfc3cc19d7d2df0",
+    "expires_at": "2027-01-22T09:40:15Z",
+    "expired_at_verification": false,
+    "contains": [
+      "account-ui/account-ui.json",
+      "account-ui/*.bmp",
+      "account-ui/windows-host.map",
+      "account-package/EXReader/EXReader.exe",
+      "account-host/windows-host.map"
+    ]
+  },
+  "summary_artifact": {
+    "id": 12556092304,
+    "name": "reader-windows-account-summary-40082869006-1",
+    "bytes": 724,
+    "sha256": "13a3c3bef2d9034bcd20b3f941fe368a44a3479dc79a58b4ff26d9260c1a2560"
+  },
+  "digest_binding": {
+    "api_digest": "sha256:e546121dec975ecc318df514a2ea4ce6d03f1dcd53fcd31a8dfc3cc19d7d2df0",
+    "upload_step_digest": "e546121dec975ecc318df514a2ea4ce6d03f1dcd53fcd31a8dfc3cc19d7d2df0",
+    "recomputed_in_actions": "e546121dec975ecc318df514a2ea4ce6d03f1dcd53fcd31a8dfc3cc19d7d2df0",
+    "summary_verdict": "strict same-source summary accepted with no problems"
+  },
+  "executable_digest_location": "account-ui/account-ui.json inside the artefact records program_sha256 of the packaged EXReader.exe; it is not restated outside Actions",
+  "uncovered": [
+    "Windows Credential Manager UNAVAILABLE state (only the session-only branch is exercised)",
+    "screen-reader narration of the account window",
+    "CONCURRENT, PENDING-parent and tombstone receive states are displayed but never provoked end to end",
+    "cancel during receive/import (cancel is exercised during the network scan)",
+    "a real remote HTTPS collection (loopback TLS with a runner-local test CA only)",
+    "product performance and any unified six-target product claim"
+  ],
+  "previous_failures": [
+    {
+      "run_id": 40081525331,
+      "sha": "da9b3a4807be5604d5162d2bec1c546bee99b347",
+      "failure": "fault_round_2 opened a shelf row by its pre-rename title; the remote title was 'Epub Retitled Remotely'",
+      "retained": true
+    },
+    {
+      "run_id": 40082268762,
+      "sha": "56d960cd16f9f93cd7813b35e9f4f00f26932d85",
+      "failure": "strict summary compared a 'sha256:' prefixed API digest with the bare upload output",
+      "retained": true
+    },
+    {
+      "run_id": 40080415165,
+      "sha": "3dbb4b2288862470492853c29382f00d22e1f003",
+      "failure": "the on-disk credential scan treated the session's share-mode-0 '<product>.sync-account' as a leak",
+      "retained": true
+    }
+  ],
+  "problems": []
+}

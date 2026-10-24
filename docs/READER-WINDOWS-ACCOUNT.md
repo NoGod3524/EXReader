@@ -136,6 +136,32 @@ re-downloads the uploaded ZIP, recomputes its SHA-256 against both the upload
 step output and the API digest, and requires every retained and account report to
 be bound to this source, run and attempt.
 
+
+### Accepted run
+
+Source `20c6a1deec794b4902f0ae3a7140a17b19cef7fd`, run `40082869006`, attempt 1,
+job `120839830599`: every step above succeeded, all 25 named account checks
+passed, and the strict summary job `120841063040` accepted the artefact with no
+problems.
+
+* artefact `reader-windows-account-40082869006-1`, id `12556205896`,
+  39,993,859 bytes, SHA-256
+  `e546121dec975ecc318df514a2ea4ce6d03f1dcd53fcd31a8dfc3cc19d7d2df0`
+  (identical in the API, the upload step output and the ZIP re-hashed inside
+  Actions), expires 2027-01-22T09:40:15Z.
+* summary artefact `reader-windows-account-summary-40082869006-1`, id
+  `12556092304`, 724 bytes, SHA-256
+  `13a3c3bef2d9034bcd20b3f941fe368a44a3479dc79a58b4ff26d9260c1a2560`.
+* counts: original UI 158/158, product 10, worker 5, bookshelf 13, metadata 18,
+  evidence rejections >= 26, account 25.
+* the packaged EXE digest is `program_sha256` in `account-ui/account-ui.json`
+  inside that artefact; the screenshots and link map sit beside it.
+
+Earlier failures on this branch are kept, not rewritten: run `40080415165`
+(the credential scan read the session's share-mode-0 manifest as a leak), run
+`40081525331` (the mapping-repair round opened a row by its pre-rename title)
+and run `40082268762` (the summary compared a `sha256:` prefixed API digest
+with the bare upload value).
 ## Not covered by this package
 
 Mirrored in `docs/validation/reader-windows-account.json` and never a claim for
