@@ -3,21 +3,25 @@
 分支`codex/reader-gtk-navigation-ui`从Search最终证据HEAD
 `9762a7dd4ede02b11339105ccd64b8d187f5d6bf`接续。原样引入已验F2源码
 `cbd7832b914bddcf99e06a85962d301a00b47efa`的模块与原130项消费者；共享实现未改。
-当前候选`28cc589a1f6b2600c655cd3dfceb4ddc644f1b01`的完整同源运行
-[40127001332](https://github.com/NoGod3524/EXReader/actions/runs/40127001332)在最初X11映射检查拒绝，尚未进入导航用例；
-该失败后的后续套件已取消并原样保留工件。现在明确等待Openbox测试环境就绪，并在启动失败时保存原生window tree/PID/WM属性；
-不改原30秒映射预算或PID/窗口身份匹配，不重启或重试应用。以下旧候选事实不转授给新源码。
-加入原生环境就绪条件及失败快照后的`53486d52`/run`40127877461`已29/29通过，
-包含真实选中/Open就绪、候选无默认项与完整生命周期；随后仅补与既有Search一致的metadata/collections模态互斥。
-源码`8bf2b68dba205a63d7cdae78b2dd0f139c04ffb4`的专项
-[40124093566](https://github.com/NoGod3524/EXReader/actions/runs/40124093566)已通过导航UI29/29、
-新后端58，以及F2原130项、Search264/34和F3 20。
-同源完整保留回归[40124481444](https://github.com/NoGod3524/EXReader/actions/runs/40124481444)拒绝导航UI：
-NCX子项尚未选中，Open仍禁用，随后mnemonic没有提交；Search30/296、原46+105+4+AT-SPI10通过，设置仍33/35。
-云端只读诊断`40126131632`在原failure-tree确认了modal active、行未selected和Open不敏感。
-现在在行替换结束后恢复原生列表焦点，探针先等真实行分配和选中/Open可用，再发一次打开快捷键；不重放点击。
-焦点修复的专项`bd32a6ee`/run`40126438508`已29/29通过；同一恢复规则也用于重复spine候选页，
-但候选保持未选择、Open禁用，必须由用户明确选中，不因恢复焦点默认取第一项。
+导航功能范围已在源码`f31858c6df4a4bf753a0caac67bf229b17b22ef1`的完整同源运行
+[40128621078](https://github.com/NoGod3524/EXReader/actions/runs/40128621078)、attempt1、job`120975335174`通过。
+原设置的两项整页配色检查仍严格失败，因此整轮`failure, accepted=false`。
+
+| 范围 | 同源实测 |
+| --- | --- |
+| 新导航实际UI | 29/29 |
+| 新导航owner后端 | 58项断言通过 |
+| 安装后的F2公共消费者 | 130项通过 |
+| 保留Search | 264项/34场景、后端296项、实际UI30/30 |
+| 安装后的F3设置包 | 20组通过 |
+| 原账号/接收 | 46项通过 |
+| 原阅读/产品/固定页/书架/metadata/collections UI | 20+5+24+14+15+27=105项通过 |
+| 原故障/回归 | 4项通过 |
+| 定向真实AT-SPI | 10项通过 |
+| 原设置UI | 全35项执行，33通过、2严格失败 |
+
+两个失败原名为`light_foreground_and_background_change_page_pixels`与
+`dark_theme_and_palette_change_page_pixels`，仍由下一次SDK画布能力候选处理。
 
 可选`EXR_READER_GTK_NAVIGATION=ON`和安装前缀`READER_NAVIGATION_PREFIX`接入，默认关闭。
 原“更多”末尾及Ctrl+Shift+T打开原生模态目录，每层只显示当前32行，可打开条目、进入子级、返回或继续分页。
@@ -38,19 +42,38 @@ CFI raw UTF-16只有完整scalar且raw/规范化节点文本相同时才能映�
 不恢复未提交的目录对话框或CFI。冻结SDK、产品schema、F2、F3和Search公共模块保持原样。
 
 F2复制快照完成后立即释放创建它的SDK输入；常驻快照没有SDK指针，解析时才创建两个独立输入。
+行替换后恢复原生列表焦点；重复spine候选恢复焦点时仍保持未选择、Open禁用，必须明确选中。
+探针等真实行分配和选中/Open就绪后只发一次打开快捷键。启动前确认Openbox就绪；
+失败时保存原生window tree/PID/WM属性，原30秒映射及PID/窗口身份匹配保持严格。
 大目录取消探针直接观察真实control阶段，不在打开后枚举或激活窗口消耗短任务窗口；
 只发送一次零延时快捷键，保持原15秒观察预算，没有延迟生产代码或重放操作。
 
 专项探针覆盖原F2夹具、45根条目32+13、Unicode层级、外部/越界/缺失目标、PART_ONLY、重复spine、完整CFI、
 PDF/CBZ真实页入口，以及实际控制轮询中的取消/Escape/最小化/父关闭/进程重开。
-稳定后同一源码复跑Search264/34、Search后端296/UI30、F3 20、原46+105+4+AT-SPI10与设置35。
+同一源码已复跑Search264/34、Search后端296/UI30、F3 20、原46+105+4+AT-SPI10与设置35。
 设置中的Light背景和Dark页色两个已知失败保持严格；缺口与下一次SDK候选方案见
 [Search证据](READER-GTK-SEARCH.md)。整体`accepted=false`。
 
 构建、语法检查、夹具、测试和工件解析仅在Actions；具体身份见[验证记录](validation/reader-gtk-navigation.json)。
 
-保留的失败：`2799df58`/run`40122987085`因四处misleading-indentation警告在原`-Werror`下编译拒绝；
-仅将语句分行，编译检查保持不变。`4ad9f45d`/run`40123371736`已通过导航/CFI/页入口场景，
-但取消探针额外的窗口枚举耗尽9000行快照工作窗口，观察时已是phase3/polls40；保留该轮失败，
-移除额外窗口操作后以新source重新执行。另以第二对象的原生SDK解析替代重复F2调用，并补精确位置断言。
-完整轮次中的NCX选择失败同样保留，不以专项29通过替代它；只读诊断不授予验收。
+## 工件与限制
+
+同源工件`12574786910`，42,369,097字节，SHA-256
+`9f25b18f3e11cdd73458db12163f2e1a4e6c774a662c044a6cf6197e75755a21`，
+有效期`2027-01-22T20:10:46Z`；上传日志与API digest一致。
+程序SHA-256为`1012d8fd3ed87ac9296e761d754a0304fbcdca0875e84dd58920c5d066c5a776`。
+工件包含安装模块、唯一SDK/product provider记录、原始日志、逐项结果、真实帧截图、合成输入与保留回归。
+授予范围是本次Linux/GTK的导航功能；性能、完整G13/Orca、整页主题及六平台互通继续单独验收。
+
+## 保留的失败与诊断
+
+| source / run | 原样事实 |
+| --- | --- |
+| `2799df58` / 40122987085 | 原`-Werror`拒绝四处misleading-indentation；语句分行后重跑，编译检查不变。 |
+| `4ad9f45d` / 40123371736 | 导航/CFI/页入口已过；额外窗口枚举耗尽9000行工作窗口，观察时phase3/polls40，取消检查拒绝。 |
+| `8bf2b68d` / 40124481444 | 完整轮次NCX行未selected/Open禁用，mnemonic未提交；保留套件通过、设置33/35。 |
+| `28cc589a` / 40127001332 | 最初PID绑定的X11映射检查超时，未执行导航用例；失败后取消后续套件，run及always工件保留。 |
+
+只读诊断`40126131632`从原failure-tree确认active modal、无焦点、行未选中与Open不敏感，
+`diagnostic_only=true, accepted=false`。专项`40124093566`、`40126438508`与`40127877461`
+分别在原source通过29项；最终授予使用上方`f31858c6`的完整同源结果。
