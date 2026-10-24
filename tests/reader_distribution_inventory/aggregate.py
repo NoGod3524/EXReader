@@ -193,16 +193,18 @@ def verify_combined(key, payload, inventory, licenses_doc, run, components=None,
         contract.need(not section.get('external_missing'), 'combined_package_unmet')
         claimed_bundled = section.get('bundled') or []
         contract.need(len(claimed_bundled) == len(package['bundled']), 'combined_package_bundled')
-        for claimed, registered in zip(claimed_bundled, package['bundled']):
-            contract.need(claimed.get('library') == registered['library']
-                          and claimed.get('archive') == registered['archive']
-                          and claimed.get('material') == registered['material'],
+        for claimed, expected_bundled in zip(claimed_bundled, package['bundled']):
+            contract.need(claimed.get('library') == expected_bundled['library']
+                          and claimed.get('archive') == expected_bundled['archive']
+                          and claimed.get('material') == expected_bundled['material'],
                           'combined_package_bundled')
-            contract.need(claimed.get('providers') == providers.get(registered['library'], []),
+            contract.need(claimed.get('providers')
+                          == providers.get(expected_bundled['library'], []),
                           'combined_package_providers')
-            contract.need(registered['archive'] in ' '.join(claimed['providers']),
+            contract.need(expected_bundled['archive'] in ' '.join(claimed['providers']),
                           'combined_package_bundled_provider')
-            contract.need(registered['material'] in index, 'combined_package_bundled_material')
+            contract.need(expected_bundled['material'] in index,
+                          'combined_package_bundled_material')
         link = section.get('link') or {}
         contract.need(bool(link.get('record')), 'combined_link_missing')
         contract.need(any(record == link['record'] for record in records), 'combined_link_record')
