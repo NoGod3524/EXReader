@@ -408,6 +408,10 @@ static void accounts_open(GtkWidget *button,gpointer unused) {
   /* The parent WM close event still retires preparation/session state. */
   accounts.main_content=gtk_bin_get_child(GTK_BIN(window));gtk_widget_set_sensitive(accounts.main_content,FALSE);
   accounts.dialog=gtk_dialog_new_with_buttons("Account and Sync",GTK_WINDOW(window),GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,"_Back",GTK_RESPONSE_CLOSE,NULL);
+  /* Keep the modal grab inside this dialog; the insensitive parent still accepts
+     its WM close request so preparation/network retirement can finish safely. */
+  GtkWindowGroup *group=gtk_window_group_new();
+  gtk_window_group_add_window(group,GTK_WINDOW(accounts.dialog));g_object_unref(group);
   gtk_window_set_default_size(GTK_WINDOW(accounts.dialog),760,480);
   GtkWidget *area=gtk_dialog_get_content_area(GTK_DIALOG(accounts.dialog));gtk_container_set_border_width(GTK_CONTAINER(area),16);
   accounts.identity=gtk_label_new("Loading this library's account");gtk_label_set_xalign(GTK_LABEL(accounts.identity),0);

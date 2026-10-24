@@ -121,6 +121,7 @@ jobs:
             python3 tests/linux_host/check_collections_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-collections-ui
           '
       - name: Targeted real AT-SPI regressions for G13 production fixes
+        if: ${{ !cancelled() }}
         run: |
           mkdir -p build/gtk-atspi-client
           git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
@@ -130,6 +131,8 @@ jobs:
             wm=$!
             trap "kill $wm || true" EXIT
             export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             /usr/bin/python3 tests/reader_gtk_receive/check_atspi_fixes.py --payload build/account-package/EXReader-Linux --output build/account-atspi-fixes
           '
       - name: Preserve source-bound evidence and original logs without credentials or TLS private keys
