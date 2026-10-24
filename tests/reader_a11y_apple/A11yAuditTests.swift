@@ -163,8 +163,22 @@ final class EXReaderA11yAuditTests: XCTestCase {
 
     private func ensureBooks() {
         if !element("library.title").exists { openLibrary() }
-        if bookCount() == 0 { importFixture("library.import.epub", expects: ["已导入", "已存在"]) }
-        if !bookRow("Sample.pdf").exists { importFixture("library.import.pdf", expects: ["已导入", "已存在"]) }
+        // Only an empty shelf triggers imports. Probing for a specific row is
+        // unreliable at accessibility text sizes, where the lazy shelf builds
+        // only the rows that fit on screen.
+        if bookCount() == 0 {
+            importFixture("library.import.epub", expects: ["已导入", "已存在"])
+            importFixture("library.import.pdf", expects: ["已导入", "已存在"])
+        }
+    }
+
+    private func openAnyBook() {
+        XCTAssertTrue(waitIdle(240), "library did not settle before opening a book")
+        let rows = shelfRows()
+        XCTAssertGreaterThan(rows.count, 0, "library exposes no book row")
+        rows.element(boundBy: 0).tap()
+        _ = waitElement("reader.page", 360)
+        XCTAssertTrue(waitIdle(360), "reader did not settle")
     }
 
     private func openBook(_ title: String, timeout: TimeInterval = 360) {
@@ -352,12 +366,16 @@ final class EXReaderA11yAuditTests: XCTestCase {
             ensureBooks()
             openBook("Sample.epub")
             app.terminate()
-            launch(extra: ["-UIPreferredContentSizeCategoryName",
-                           "UICTContentSizeCategoryAccessibilityExtraExtraExtraLarge"])
-            if !element("reader.page").waitForExistence(timeout: 180) { openBook("Sample.epub") }
+            // The device content size is the fixture here; a launch-argument
+            // override resets the app to the default category, so it is not used.
+            launch()
+            if !element("reader.page").waitForExistence(timeout: 180) {
+                openLibrary()
+                openAnyBook()
+            }
             XCTAssertTrue(waitIdle(360), "reader did not settle at the accessibility text size")
             capture("reader.large_type", screenshot: "a11y-12-reader-large-type",
-                    detail: ["content_size_override": "UICTContentSizeCategoryAccessibilityExtraExtraExtraLarge"])
+                    detail: ["content_size": "device-level accessibility-extra-extra-extra-large"])
         }
         try step("a11y-13-large-type-library") {
             waitElement("reader.back").tap()

@@ -274,8 +274,7 @@
             "StaticText"
           ],
           "name_contains": "第 1 页",
-          "value_contains": "第 1 页",
-          "fix": "阅读面必须有页号与页文本替身；空名称等于阅读内容对辅助技术不可用"
+          "fix": "阅读面必须有页号与页文本替身；macOS 不桥接该容器的 AX value，所以用 label 判定（label 已含“第 N 页：正文”）"
         },
         {
           "id": "reader.location",
@@ -389,7 +388,8 @@
             "Image",
             "StaticText"
           ],
-          "value_contains": "第 2 页"
+          "name_contains": "第 2 页",
+          "fix": "阅读面必须有页号与页文本替身；macOS 不桥接该容器的 AX value，所以用 label 判定（label 已含“第 N 页：正文”）"
         },
         {
           "id": "reader.next",
