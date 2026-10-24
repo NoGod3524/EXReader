@@ -255,6 +255,7 @@ void book_input(reader_metadata_snapshot &value,const reader_book_command &input
   operation(input.operation);if(text(input.book_key,72)!=value.key)reject(READER_METADATA_ARGUMENT,"Book command differs from its prepared key");
   value.operation=input.operation;
   if(input.operation!=READER_COMMAND_DELETE){
+    if(!input.title||!input.author||!input.sort_title)reject(READER_METADATA_ARGUMENT,"Book edit requires all prepared metadata fields");
     if(text(input.format,8)!=value.format||text(input.source_sha256,64)!=value.sha||input.source_bytes!=value.source_bytes)
       reject(READER_METADATA_ARGUMENT,"Book command differs from its prepared original identity");
     if(input.favorite!=0&&input.favorite!=1)reject(READER_METADATA_ARGUMENT,"Invalid favorite value");

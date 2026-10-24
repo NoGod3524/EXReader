@@ -21,6 +21,11 @@ int main(int argc,char **argv){
   if(strcmp(reader_metadata_snapshot_view(snapshot)->book.title,"C edited book"))return 5;
   if(reader_metadata_stage_bootstrap(owner,snapshot,&source,&result,&error)||reader_metadata_finish_pending(owner,&result,&error)||!result.committed)return 6;
   reader_metadata_snapshot_free(snapshot);snapshot=0;
+  if(reader_metadata_prepare_book(owner,key,&snapshot,&error))return 12;
+  {reader_book_command invalid=reader_metadata_snapshot_view(snapshot)->book;invalid.title=0;
+    if(reader_metadata_stage_book(owner,snapshot,&invalid,&result,&error)!=READER_METADATA_ARGUMENT||
+       reader_metadata_pending(owner,&result,&error)!=READER_METADATA_NO_PENDING)return 13;}
+  reader_metadata_snapshot_free(snapshot);snapshot=0;
   if(reader_metadata_prepare_group(owner,READER_GROUP_TAG,0,&snapshot,&error)||reader_metadata_stage_group(owner,snapshot,&group,&result,&error))return 7;
   memcpy(group_id,result.command.entity_key,33);
   if(reader_metadata_apply_pending(owner,&result,&error)||!result.committed||!result.pending||reader_metadata_finish_pending(owner,&result,&error)||result.command.created||result.pending)return 8;
