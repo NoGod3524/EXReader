@@ -6,6 +6,7 @@ import CReaderProduct
 struct HostAccountProfile: Codable, Equatable, Identifiable {
     let id: String
     let root: String
+    var anonymous: Bool? = nil
 
     func directory(in base: URL) -> URL {
         base.appendingPathComponent("accounts", isDirectory: true).appendingPathComponent(id, isDirectory: true)
@@ -66,7 +67,7 @@ final class HostAccounts: ObservableObject {
         guard profiles.count < 16 else { throw HostError.invalidInput("账号数量已达 16 个") }
         try validateRoot(root)
         guard !profiles.contains(where: { $0.root == root }) else { throw HostError.invalidInput("该云盘账号已经存在") }
-        let profile = HostAccountProfile(id: UUID().uuidString.lowercased(), root: root)
+        let profile = HostAccountProfile(id: UUID().uuidString.lowercased(), root: root, anonymous: username.isEmpty && password.isEmpty)
         try updateCredentials(profile, username: username, password: password, remember: remember)
         let updated = profiles + [profile]
         do {
@@ -104,13 +105,22 @@ final class HostAccounts: ObservableObject {
             let result = profile.id.withCString { exr_credentials_delete(credentials, $0) }
             removed = result == EXR_CRED_OK || result == EXR_CRED_NOT_FOUND
         }
-        if stored { message = "授权信息已保存到钥匙串" }
+        if let index = profiles.firstIndex(where: { $0.id == profile.id }), profiles[index].anonymous != authorization.isEmpty {
+            var updated = profiles
+            updated[index].anonymous = authorization.isEmpty
+            let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+            try encoder.encode(updated).write(to: folder.appendingPathComponent("accounts.json"), options: .atomic)
+            profiles = updated
+        }
+        if authorization.isEmpty { message = removed ? "匿名连接，未保存授权信息" : "匿名连接；钥匙串中的旧授权未能移除" }
+        else if stored { message = "授权信息已保存到钥匙串" }
         else if remember { message = "本次使用新的授权，钥匙串更新未完成" }
         else { message = removed ? "授权信息仅保留在本次运行中" : "本次使用临时授权；钥匙串中的旧授权未能移除" }
     }
 
     func authorization(for profile: HostAccountProfile) throws -> Data {
         if let value = transient[profile.id] { return value }
+        if profiles.first(where: { $0.id == profile.id })?.anonymous == true { return Data() }
         guard let credentials else { throw HostError.invalidInput("请重新输入此账号的授权信息") }
         var buffer = [UInt8](repeating: 0, count: Int(EXR_CREDENTIALS_SECRET_MAX)), count = 0
         defer { buffer.withUnsafeMutableBytes { exr_credentials_wipe($0.baseAddress, $0.count) } }
@@ -122,6 +132,7 @@ final class HostAccounts: ObservableObject {
     }
 
     func choose(_ profile: HostAccountProfile?) {
+        guard selected != profile?.id else { return }
         for session in sessions.values { session.close() }
         selected = profile?.id
         UserDefaults.standard.set(selected, forKey: "EXRSelectedAccount")
@@ -138,7 +149,7 @@ final class HostAccounts: ObservableObject {
 final class HostAccountSession: ObservableObject {
     @Published private(set) var state = "未同步"
     @Published private(set) var running = false
-    @Published var preparing = false
+    @Published private(set) var preparing = false
     @Published private(set) var steps: UInt64 = 0
     @Published private(set) var completedSweeps: UInt64 = 0
     @Published private(set) var completedShards: UInt32 = 0
@@ -147,6 +158,14 @@ final class HostAccountSession: ObservableObject {
     private var timer: Timer?
     private var closeRequested = false
     private var completion: (() -> Void)?
+    private var cancelPreparation: (() -> Void)?
+
+    func beginPreparation(cancel: @escaping () -> Void) throws {
+        guard !running, !preparing, !closeRequested else { throw HostError.invalidInput("此账号已在准备、同步或关闭") }
+        preparing = true; cancelPreparation = cancel
+    }
+
+    func finishPreparation() { preparing = false; cancelPreparation = nil }
 
     deinit {
         timer?.invalidate()
@@ -165,7 +184,7 @@ final class HostAccountSession: ObservableObject {
     }
 
     func start(profile: HostAccountProfile, directory: URL, authorization: Data, completed: @escaping () -> Void) throws {
-        guard !running, !closeRequested else { throw HostError.invalidInput("同步会话正在运行或关闭") }
+        guard !running, !preparing, !closeRequested else { throw HostError.invalidInput("同步会话正在准备、运行或关闭") }
         if handle == nil {
             let privateDirectory = directory.appendingPathComponent("sync", isDirectory: true)
             let originals = directory.appendingPathComponent("sync-originals", isDirectory: true)
@@ -196,6 +215,7 @@ final class HostAccountSession: ObservableObject {
     func cancel() { if let handle { _ = reader_session_cancel(handle) } }
 
     func close() {
+        cancelPreparation?()
         guard let handle else { return }
         closeRequested = true
         _ = reader_session_request_close(handle)

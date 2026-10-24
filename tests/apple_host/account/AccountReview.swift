@@ -82,6 +82,11 @@ import CReaderProduct
         }
         let session = accounts.controller(for: profile)
         try check("all_windows_share_one_account_controller", session === accounts.controller(for: profile))
+        var preparationCancelled = false, overlappingPreparationRefused = false
+        try session.beginPreparation { preparationCancelled = true }
+        do { try session.beginPreparation {} } catch { overlappingPreparationRefused = true }
+        session.close(); session.finishPreparation()
+        try check("account_change_cancels_unstarted_preparation", preparationCancelled && overlappingPreparationRefused && !session.preparing)
         var ticks = 0, callbacks = 0
         let timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in ticks += 1 }
         defer { timer.invalidate(); session.close() }

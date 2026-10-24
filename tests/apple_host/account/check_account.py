@@ -26,7 +26,7 @@ CHECKS = [
     'bounded_product_sync_page', 'exact_public_sdk_original_export',
     'existing_immutable_original_is_verified_and_reused', 'cancelled_preparation_preserves_the_valid_original',
     'verified_bootstrap_is_idempotent_history_and_outbox', 'bootstrap_preserves_product_title_author',
-    'all_windows_share_one_account_controller', 'native_account_sweep_completes',
+    'all_windows_share_one_account_controller', 'account_change_cancels_unstarted_preparation', 'native_account_sweep_completes',
     'actual_256_shard_account_scan', 'main_runloop_active_during_native_https',
     'closed_before_native_controller_release', 'verified_remote_ack_retains_history',
 ]
