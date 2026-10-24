@@ -214,6 +214,8 @@ def validate(root, source, run_id, attempt):
         entry = coverage.get(surface) or {}
         if entry.get("implemented") is not True or not entry.get("cases"):
             problems.append("coverage:" + surface)
+    if not isinstance(validation.get("advisories"), list):
+        problems.append("coverage:advisories")
     unverified = validation.get("unverified") or []
     if len(unverified) < 5:
         problems.append("coverage:unverified")
@@ -286,6 +288,7 @@ def summarise(root, problems):
         "passed_cases": [case.get("id") for case in cases if case.get("verdict") == "pass"],
         "findings": {case.get("id"): case.get("finding") for case in cases if case.get("finding")},
         "captures": validation.get("captures") or [],
+        "advisories": validation.get("advisories") or [],
         "unverified": [entry.get("item") for entry in (validation.get("unverified") or [])],
     }
 
