@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import tempfile
 import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
 from check_parallel_integration import download_artifact_zip, fetch, pages, require
@@ -34,7 +35,10 @@ def main():
                 require(len(matches) == 1, 'missing/duplicate job ' + job_name); job = matches[0]
                 require(job['head_sha'] == source and job['run_attempt'] == attempt and job['conclusion'] == 'success', 'upstream failed or different source')
                 require(not artifact['expired'] and artifact['size_in_bytes'] > 0 and artifact['workflow_run']['head_sha'] == source, 'artifact identity differs')
-                stream = io.BytesIO(); download_artifact_zip(artifact['id'], stream); data = stream.getvalue()
+                # The authenticated downloader writes through an OS descriptor.
+                with tempfile.TemporaryFile() as stream:
+                    download_artifact_zip(artifact['id'], stream)
+                    stream.seek(0); data = stream.read()
                 require(len(data) == artifact['size_in_bytes'] and 'sha256:' + hashlib.sha256(data).hexdigest() == artifact['digest'], 'ZIP bytes/digest differ')
                 with zipfile.ZipFile(io.BytesIO(data)) as archive:
                     report = json.loads(archive.read(path))
