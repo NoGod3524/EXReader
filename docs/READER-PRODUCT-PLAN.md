@@ -99,6 +99,11 @@ Android收藏整理`3f50a165`的run`40059870895`完整通过，新增8原生/8UI
 汇总重新校验实际消费者和安装包哈希、原始命名检查及跨平台结果，
 `search_package_accepted=true, webdav_roundtrip_accepted=true`。
 完整工件身份见[同源联验](validation/reader-search-joint.json)，宿主搜索UI尚未授予。
+原生同步macOS接入`a32602be`、run`40065344267`同源四作业严格通过：
+macOS ARM64/Linux各283检查、Windows282检查，覆盖HTTPS、修订、同步、metadata、
+命令、恢复与账号会话。Apple使用系统随机源/CommonCrypto和系统libcurl/libxml2，
+SDK/schema不变。已正常合入工作候选；本包未授予iOS、Android同步或宿主账号UI，
+身份见[macOS原生同步](validation/reader-sync-apple.json)。
 
 Apple有界书架仍等完整云端出口。随后需把已验收包合到同一源码
 复验，并把已通过的原生原件/metadata/阅读状态WebDAV往返接入宿主的分批下载、
