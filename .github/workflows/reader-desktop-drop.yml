@@ -1,0 +1,248 @@
+name: Desktop file drop adapter
+on:
+  push:
+    branches: [codex/reader-desktop-drop]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  guard:
+    name: guard
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK and whitelist-only changes
+        run: bash tests/reader_desktop_drop/check_scope.sh
+
+  linux:
+    name: drop (linux-gtk3)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK and whitelist-only changes
+        run: bash tests/reader_desktop_drop/check_scope.sh
+      - name: Install GTK3, a virtual display and Ninja
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev pkg-config ninja-build xvfb xauth
+      - name: Build and install the independent adapter package
+        run: |
+          set -o pipefail
+          echo "DD_WS=$PWD" >> "$GITHUB_ENV"
+          mkdir -p build/desktop-drop/logs
+          cmake -S extras/desktop-drop -B build/desktop-drop/module -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/desktop-drop/stage" 2>&1 | tee build/desktop-drop/logs/module-configure.log
+          cmake --build build/desktop-drop/module 2>&1 | tee build/desktop-drop/logs/module-build.log
+          cmake --install build/desktop-drop/module 2>&1 | tee build/desktop-drop/logs/module-install.log
+      - name: Build the installed-package host example
+        run: |
+          set -o pipefail
+          cmake -S extras/desktop-drop/examples -B build/desktop-drop/examples -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$PWD/build/desktop-drop/stage" 2>&1 | tee build/desktop-drop/logs/examples-configure.log
+          cmake --build build/desktop-drop/examples 2>&1 | tee build/desktop-drop/logs/examples-build.log
+          mkdir -p build/desktop-drop/consumer
+          cp build/desktop-drop/examples/host-example-c build/desktop-drop/examples/host-example-cxx \
+            build/desktop-drop/consumer/
+      - name: Build the acceptance project from the installed prefix
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_desktop_drop -B build/desktop-drop/accept -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$PWD/build/desktop-drop/stage" 2>&1 | tee build/desktop-drop/logs/consumer-configure.log
+          cmake --build build/desktop-drop/accept 2>&1 | tee build/desktop-drop/logs/consumer-build.log
+          cp build/desktop-drop/accept/drop-check build/desktop-drop/accept/drop-probe build/desktop-drop/consumer/
+      - name: Portable parser acceptance
+        run: |
+          set +e
+          build/desktop-drop/consumer/drop-check > build/desktop-drop/logs/portable.log 2>&1
+          echo "exit=$?" >> build/desktop-drop/logs/portable-exit.log
+      - name: Real GTK3 drop destination and clipboard acceptance
+        run: |
+          set +e
+          xvfb-run -a --server-args="-screen 0 1280x1024x24" \
+            build/desktop-drop/consumer/drop-probe > build/desktop-drop/logs/probe.log 2>&1
+          echo "exit=$?" >> build/desktop-drop/logs/probe-exit.log
+      - name: Bind cases to this source, run and binaries
+        run: |
+          python3 tests/reader_desktop_drop/check_results.py --platform linux \
+            --probe-log build/desktop-drop/logs/probe.log \
+            --portable-log build/desktop-drop/logs/portable.log \
+            --exe build/desktop-drop/consumer/drop-probe \
+            --portable-exe build/desktop-drop/consumer/drop-check \
+            --root build/desktop-drop --output build/desktop-drop/evidence
+      - name: Preserve logs, binaries and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-desktop-drop-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/desktop-drop/
+          if-no-files-found: error
+
+  windows:
+    name: drop (windows-hdrop)
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK and whitelist-only changes
+        run: bash tests/reader_desktop_drop/check_scope.sh
+      - name: Enter Windows native compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the independent adapter package
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          echo "DD_WS=$ws" >> "$GITHUB_ENV"
+          mkdir -p build/desktop-drop/logs
+          cmake -S extras/desktop-drop -B build/desktop-drop/module -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$ws/build/desktop-drop/stage" 2>&1 | tee build/desktop-drop/logs/module-configure.log
+          cmake --build build/desktop-drop/module 2>&1 | tee build/desktop-drop/logs/module-build.log
+          cmake --install build/desktop-drop/module 2>&1 | tee build/desktop-drop/logs/module-install.log
+      - name: Build the installed-package host example
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          cmake -S extras/desktop-drop/examples -B build/desktop-drop/examples -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$ws/build/desktop-drop/stage" 2>&1 | tee build/desktop-drop/logs/examples-configure.log
+          cmake --build build/desktop-drop/examples 2>&1 | tee build/desktop-drop/logs/examples-build.log
+          mkdir -p build/desktop-drop/consumer
+          cp build/desktop-drop/examples/host-example-c.exe build/desktop-drop/examples/host-example-cxx.exe \
+            build/desktop-drop/consumer/
+      - name: Build the acceptance project from the installed prefix
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          cmake -S tests/reader_desktop_drop -B build/desktop-drop/accept -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$ws/build/desktop-drop/stage" 2>&1 | tee build/desktop-drop/logs/consumer-configure.log
+          cmake --build build/desktop-drop/accept 2>&1 | tee build/desktop-drop/logs/consumer-build.log
+          cp build/desktop-drop/accept/drop-check.exe build/desktop-drop/accept/drop-probe.exe build/desktop-drop/consumer/
+      - name: Portable parser acceptance
+        run: |
+          set +e
+          ./build/desktop-drop/consumer/drop-check.exe > build/desktop-drop/logs/portable.log 2>&1
+          echo "exit=$?" >> build/desktop-drop/logs/portable-exit.log
+      - name: Real HDROP, OLE drop target and clipboard acceptance
+        run: |
+          set +e
+          ./build/desktop-drop/consumer/drop-probe.exe > build/desktop-drop/logs/probe.log 2>&1
+          echo "exit=$?" >> build/desktop-drop/logs/probe-exit.log
+      - name: Bind cases to this source, run and binaries
+        run: |
+          python tests/reader_desktop_drop/check_results.py --platform windows \
+            --probe-log build/desktop-drop/logs/probe.log \
+            --portable-log build/desktop-drop/logs/portable.log \
+            --exe build/desktop-drop/consumer/drop-probe.exe \
+            --portable-exe build/desktop-drop/consumer/drop-check.exe \
+            --root build/desktop-drop --output build/desktop-drop/evidence
+      - name: Preserve logs, binaries and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-desktop-drop-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/desktop-drop/
+          if-no-files-found: error
+
+  macos:
+    name: drop (macos-pasteboard)
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK and whitelist-only changes
+        run: bash tests/reader_desktop_drop/check_scope.sh
+      - name: Build and install the independent adapter package
+        run: |
+          set -o pipefail
+          echo "DD_WS=$PWD" >> "$GITHUB_ENV"
+          mkdir -p build/desktop-drop/logs
+          cmake -S extras/desktop-drop -B build/desktop-drop/module -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/desktop-drop/stage" 2>&1 | tee build/desktop-drop/logs/module-configure.log
+          cmake --build build/desktop-drop/module 2>&1 | tee build/desktop-drop/logs/module-build.log
+          cmake --install build/desktop-drop/module 2>&1 | tee build/desktop-drop/logs/module-install.log
+      - name: Build the installed-package host example
+        run: |
+          set -o pipefail
+          cmake -S extras/desktop-drop/examples -B build/desktop-drop/examples -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$PWD/build/desktop-drop/stage" 2>&1 | tee build/desktop-drop/logs/examples-configure.log
+          cmake --build build/desktop-drop/examples 2>&1 | tee build/desktop-drop/logs/examples-build.log
+          mkdir -p build/desktop-drop/consumer
+          cp build/desktop-drop/examples/host-example-c build/desktop-drop/examples/host-example-cxx \
+            build/desktop-drop/consumer/
+      - name: Build the acceptance project from the installed prefix
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_desktop_drop -B build/desktop-drop/accept -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$PWD/build/desktop-drop/stage" 2>&1 | tee build/desktop-drop/logs/consumer-configure.log
+          cmake --build build/desktop-drop/accept 2>&1 | tee build/desktop-drop/logs/consumer-build.log
+          cp build/desktop-drop/accept/drop-check build/desktop-drop/accept/drop-probe build/desktop-drop/consumer/
+      - name: Portable parser acceptance
+        run: |
+          set +e
+          build/desktop-drop/consumer/drop-check > build/desktop-drop/logs/portable.log 2>&1
+          echo "exit=$?" >> build/desktop-drop/logs/portable-exit.log
+      - name: Real NSPasteboard and drag destination acceptance
+        run: |
+          set +e
+          build/desktop-drop/consumer/drop-probe > build/desktop-drop/logs/probe.log 2>&1
+          echo "exit=$?" >> build/desktop-drop/logs/probe-exit.log
+      - name: Bind cases to this source, run and binaries
+        run: |
+          python3 tests/reader_desktop_drop/check_results.py --platform macos \
+            --probe-log build/desktop-drop/logs/probe.log \
+            --portable-log build/desktop-drop/logs/portable.log \
+            --exe build/desktop-drop/consumer/drop-probe \
+            --portable-exe build/desktop-drop/consumer/drop-check \
+            --root build/desktop-drop --output build/desktop-drop/evidence
+      - name: Preserve logs, binaries and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-desktop-drop-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/desktop-drop/
+          if-no-files-found: error
+
+  report:
+    name: same-run report
+    needs: [guard, linux, windows, macos]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require ZIP and report rejection regressions
+        run: python3 tests/reader_desktop_drop/check_aggregate.py
+      - name: Strictly bind the three platform artifacts to this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tests/reader_desktop_drop/aggregate.py --output build/desktop-drop-report
+      - name: Preserve the aggregate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-desktop-drop-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/desktop-drop-report/
+          if-no-files-found: error
