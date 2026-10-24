@@ -62,8 +62,8 @@ def main():
     def key(*values):
         host.key(*values);keys.extend(values)
 
-    def click(name):
-        rectangle = bus.extents(element(name));assert rectangle and rectangle['width'] > 0
+    def click(name, roles=None):
+        rectangle = bus.extents(element(name, roles));assert rectangle and rectangle['width'] > 0
         command('xdotool', 'mousemove', '--sync', str(rectangle['x'] + rectangle['width'] // 2),
                 str(rectangle['y'] + rectangle['height'] // 2));command('xdotool', 'click', '1')
 
@@ -77,10 +77,10 @@ def main():
         key('Escape');wait(lambda value: value['visible'] == '0')
 
     def field(name, value):
-        click(name);key('ctrl+a');host.paste(str(value));key('Tab')
+        click(name, {'spin button', 'text'});key('ctrl+a');host.paste(str(value));key('Tab')
 
     def combo(name, index):
-        click(name);key('Home', *(['Down'] * index), 'Return')
+        click(name, {'combo box'});key('Home', *(['Down'] * index), 'Return')
 
     def save():
         key('alt+s');return wait()

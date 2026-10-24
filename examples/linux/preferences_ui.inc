@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Optional installed F3 settings. SDK work and atomic saves stay on the owner. */
 static struct {
-  GtkWidget *dialog,*content,*return_focus,*message,*font,*line,*paragraph,*margin,*theme,*direction,*input,*zoom,*colors[4];
+  GtkWidget *dialog,*content,*return_focus,*resume_focus,*message,*font,*line,*paragraph,*margin,*theme,*direction,*input,*zoom,*colors[4];
   GtkCssProvider *css;
   GDBusProxy *portal;
   GtkSettings *platform;
@@ -60,6 +60,10 @@ static void preferences_prepare(reader_command *command) {
   if(command->action==READER_SETTINGS || command->action==READER_FONT || command->action==READER_ZOOM) {
     if(profile_writable && (command->action!=READER_SETTINGS || preferences.persist)) command->preferences_path=g_strdup(preferences.path);
     preferences.running=TRUE;preferences.awaiting_commit=FALSE;
+    if(preferences.dialog) {
+      g_clear_object(&preferences.resume_focus);GtkWidget *focus=gtk_window_get_focus(GTK_WINDOW(preferences.dialog));
+      if(focus) preferences.resume_focus=g_object_ref(focus);
+    }
   }
 }
 static void preferences_destroyed(GtkWidget *widget,gpointer unused) {
@@ -73,7 +77,7 @@ static void preferences_destroyed(GtkWidget *widget,gpointer unused) {
       gtk_widget_grab_focus(preferences.return_focus);
     else gtk_widget_grab_focus(search);
   }
-  g_clear_object(&preferences.return_focus);preferences.want_close=FALSE;state();
+  g_clear_object(&preferences.return_focus);g_clear_object(&preferences.resume_focus);preferences.want_close=FALSE;state();
 }
 static void preferences_close(void) {
   if(preferences.running) { preferences.want_close=TRUE;preferences_notice("Finishing settings safely…");return; }
@@ -107,7 +111,12 @@ static void preferences_result(const reader_result *result,reader_action action)
     if(result->status!=EXR_OK) preferences_notice("Position save failed. Close settings and press F12 to retry");
   }
   if(!preferences.running) {
-    if(preferences.dialog) gtk_widget_set_sensitive(gtk_dialog_get_content_area(GTK_DIALOG(preferences.dialog)),TRUE);
+    if(preferences.dialog) {
+      gtk_widget_set_sensitive(gtk_dialog_get_content_area(GTK_DIALOG(preferences.dialog)),TRUE);
+      if(preferences.resume_focus && gtk_widget_get_toplevel(preferences.resume_focus)==preferences.dialog)
+        gtk_widget_grab_focus(preferences.resume_focus);
+      g_clear_object(&preferences.resume_focus);
+    }
     if(preferences.want_close) preferences_close();
     if(preferences.exit_wanted && !busy && !saving && !closing) {
       preferences.exit_wanted=FALSE;close_window(window,NULL,NULL);
@@ -137,9 +146,12 @@ static void preferences_style(void) {
   if(!window) return;
   int dark=reader_preferences_effective_theme(&appearance,(reader_preferences_theme)appearance_system_theme)==READER_PREFERENCES_THEME_DARK;
   const uint8_t *fg=dark ? appearance.dark_foreground:appearance.light_foreground,*bg=dark ? appearance.dark_background:appearance.light_background;
-  char css[512];g_snprintf(css,sizeof(css),
-    ".exreader-appearance,.exreader-appearance textview text,.exreader-appearance entry{color:rgba(%u,%u,%u,%.3f);background-color:rgba(%u,%u,%u,%.3f);}",
-    fg[0],fg[1],fg[2],fg[3]/255.0,bg[0],bg[1],bg[2],bg[3]/255.0);
+  char css[512],foreground_alpha[32],background_alpha[32];
+  g_ascii_formatd(foreground_alpha,sizeof(foreground_alpha),"%.3f",fg[3]/255.0);
+  g_ascii_formatd(background_alpha,sizeof(background_alpha),"%.3f",bg[3]/255.0);
+  g_snprintf(css,sizeof(css),
+    ".exreader-appearance,.exreader-appearance textview text,.exreader-appearance entry{color:rgba(%u,%u,%u,%s);background-color:rgba(%u,%u,%u,%s);}",
+    fg[0],fg[1],fg[2],foreground_alpha,bg[0],bg[1],bg[2],background_alpha);
   if(!preferences.css) {
     preferences.css=gtk_css_provider_new();gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),GTK_STYLE_PROVIDER(preferences.css),GTK_STYLE_PROVIDER_PRIORITY_APPLICATION+1);
   }
@@ -212,6 +224,7 @@ static void preferences_combo_focus(GtkWidget *widget,gpointer unused) {
 }
 static GtkWidget *preferences_field(GtkWidget *grid,int row,const char *name,GtkWidget *widget) {
   GtkWidget *caption=gtk_label_new(name);gtk_label_set_xalign(GTK_LABEL(caption),0);
+  gtk_label_set_mnemonic_widget(GTK_LABEL(caption),widget);
   gtk_grid_attach(GTK_GRID(grid),caption,0,row,1,1);gtk_grid_attach(GTK_GRID(grid),widget,1,row,1,1);
   atk_object_set_name(gtk_widget_get_accessible(widget),name);gtk_widget_set_hexpand(widget,TRUE);return widget;
 }
@@ -339,5 +352,5 @@ static char *preferences_observation(void) {
 static void preferences_cleanup(void) {
   preferences.cleaned=TRUE;
   if(preferences.platform) { g_signal_handler_disconnect(preferences.platform,preferences.theme_watch);g_signal_handler_disconnect(preferences.platform,preferences.dark_watch); }
-  g_clear_object(&preferences.portal);g_clear_object(&preferences.css);g_clear_object(&preferences.return_focus);g_free(preferences.path);
+  g_clear_object(&preferences.portal);g_clear_object(&preferences.css);g_clear_object(&preferences.return_focus);g_clear_object(&preferences.resume_focus);g_free(preferences.path);
 }
