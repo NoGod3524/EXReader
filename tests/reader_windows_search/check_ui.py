@@ -112,7 +112,12 @@ def main():
         problems.append(phase + ': ' + type(error).__name__ + ': ' + str(error))
         traceback.print_exc()
         if app:
-            print('Native status:', app.status(), flush=True)
+            report['native_status'] = app.status()
+            report['import_path'] = text(app.control('path'))
+            report['shelf_rows'] = send(app.control('books'), 0x18B)
+            print(json.dumps({'native_status': report['native_status'],
+                              'import_path': report['import_path'],
+                              'shelf_rows': report['shelf_rows']}, ensure_ascii=True), flush=True)
     finally:
         if app:
             app.close()

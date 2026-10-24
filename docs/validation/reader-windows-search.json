@@ -1,12 +1,38 @@
 {
   "schema": 1,
   "accepted": false,
-  "state": "candidate_not_yet_compiled",
+  "state": "compiled_ui_import_failure_under_investigation",
   "branch": "codex/reader-windows-search-ui",
   "start": "3bcc6511",
   "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "tested_source": null,
   "runs": [],
+  "earlier_failed_runs": [
+    {
+      "source": "e4bddc310ba5a731596bd4d5b3b29a831cd4bf1b",
+      "run": 40128929347,
+      "attempt": 1,
+      "compiled": true,
+      "original_f1_checks": 264,
+      "host_checks_completed": 0,
+      "artifact": 12574561832,
+      "artifact_bytes": 35586388,
+      "artifact_sha256": "bca45709f53eabff6d90a731a90fcb2cc51964f031ed8fd7a44e63c6d5bd4b61"
+    },
+    {
+      "source": "2d2bb59eb629c6dbf35528ee2916adf23bfa27a8",
+      "run": 40129875990,
+      "attempt": 1,
+      "compiled": true,
+      "original_f1_checks": 264,
+      "host_checks_completed": 0,
+      "phase": "wait-imported-row",
+      "secondary_diagnostic_error": "cp1252 console could not print native Chinese status",
+      "artifact": 12574718560,
+      "artifact_bytes": 35586402,
+      "artifact_sha256": "6e35f2d4fc50115d02abcde1e1078228555fd52a2d21c14d6b6aefd831e97ca1"
+    }
+  ],
   "complete_product": false,
   "performance_accepted": false,
   "screen_reader_accepted": false,
