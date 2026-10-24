@@ -20,6 +20,6 @@
 
 原 Reading16 中仅用例 `pdf_real_page_id_points_and_cbz_capture_refusal` 升级为 `pdf_and_cbz_real_page_id_points`：保留两份 PDF 正例，把已知错误宿主拒绝改成真实 CBZ 空快照/page-ID 捕获与 FOUND 正例。其他 missing/NUL/legacy/unsafe/stale/cancel/历史/真实 kill/retry 等断言不变。旧受测源码、拒绝结果与证据不改写。
 
-新工作流 `reader-android-cbz-reading.yml` 保留原 SDK/transport/正式宿主16、Search15、Navigation18、升级后的Reading16、Preferences17，随后新增 CBZ8首进程+真实kill/retry1+再次重开1。独立预期由三页灰阶 `40/110/180`、`001.png/002.png/003.png` 在任何 SDK 读取前登记。验证实际 SDK 中心像素、真实空 snapshot、来源/页 ID、当前 renderer、错 hint、missing/NULL/NUL/foreign key、编辑/delete/明确 restore、取消、原件副本变化、真实旋转和提交后杀进程后的精确重试。
+新工作流 `reader-android-cbz-reading.yml` 保留原 SDK/transport/正式宿主16、Search15、Navigation18、升级后的Reading16、Preferences17，随后新增 CBZ8首进程+真实kill/retry1+再次重开1。独立预期由原生成器三页 RGB `(40,80,215)/(110,80,145)/(180,80,75)`、`001.png/002.png/003.png` 在任何 SDK 读取前登记。验证实际 SDK 中心像素、真实空 snapshot、来源/页 ID、当前 renderer、错 hint、missing/NULL/NUL/foreign key、编辑/delete/明确 restore、取消、原件副本变化、真实旋转和提交后杀进程后的精确重试。
 
 所有构建、语法检查、夹具、测试及工件解析仅 Actions。API34 `default` x86_64 模拟器以外、真机/TalkBack语音、OCR、产品性能、阅读页配色、平移及六平台完整产品仍独立跟踪。
