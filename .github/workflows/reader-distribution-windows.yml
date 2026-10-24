@@ -47,7 +47,13 @@ jobs:
       - name: Reject leaking stages, tampered seals and unbounded reports (synthetic fixtures)
         run: python3 tests/reader_distribution_windows/check_distributions.py
       - name: Keep the acceptance document honestly unaccepted until a real run exists
-        run: python3 -c "import json; d=json.load(open('docs/validation/reader-distribution-windows.json')); print(json.dumps({'accepted': d.get('accepted'), 'problems': d.get('problems')}))"
+        run: |
+          python3 -c "
+          import json
+          document = json.load(open('docs/validation/reader-distribution-windows.json'))
+          print(json.dumps({'accepted': document.get('accepted'), 'problems': document.get('problems')}))
+          "
+
 
   windows:
     name: installed reading distribution relocation
