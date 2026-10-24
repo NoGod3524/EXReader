@@ -134,7 +134,8 @@ static void state(void) {
 static void status(exr_status code,const char *message) {
   g_print("STATUS code=%d book=%"G_GINT64_FORMAT" part=%zu page=%zu busy=%d saving=%d generation=%d message=%s\n",
     (int)code,book_id,part,page_number,busy,saving,g_atomic_int_get(&generation),message);
-  last_error=(int)code;gtk_label_set_text(GTK_LABEL(label),message);state();
+  last_error=(int)code;atk_object_set_name(gtk_widget_get_accessible(label),message);
+  gtk_label_set_text(GTK_LABEL(label),message);state();
 }
 static gboolean save_settings(void) {
   /* No profile writes before the worker has successfully opened its library.
@@ -208,6 +209,7 @@ static void shelf_present(reader_result *result) {
 #endif
       g_object_set_data_full(G_OBJECT(row),"book-key",g_strdup(cursor->key),g_free);
       g_object_set_data_full(G_OBJECT(row),"sort-title",g_strdup(cursor->sort_title),g_free);
+      atk_object_set_name(gtk_widget_get_accessible(row),gtk_label_get_text(GTK_LABEL(title)));
       gtk_container_add(GTK_CONTAINER(row),title);
       if(!book->id) {
 #ifdef EXR_READER_ACCOUNT
@@ -236,6 +238,7 @@ static void shelf_present(reader_result *result) {
   rows_clear(shelf);book_count=result->book_count;
   for(size_t i=0;i<result->book_count;i++) {
     GtkWidget *row=gtk_list_box_row_new(),*title=gtk_label_new(result->books[i].title);
+    atk_object_set_name(gtk_widget_get_accessible(row),result->books[i].title && result->books[i].title[0] ? result->books[i].title:"Untitled book");
     int64_t *id=g_new(int64_t,1);*id=result->books[i].id;g_object_set_data_full(G_OBJECT(row),"book-id",id,g_free);
     gtk_container_add(GTK_CONTAINER(row),title);gtk_container_add(GTK_CONTAINER(shelf),row);
   }
@@ -325,6 +328,7 @@ static void notes_present(reader_result *result) {
   rows_clear(notes);note_count=result->note_count;
   for(size_t i=0;i<result->note_count;i++) {
     GtkWidget *row=gtk_list_box_row_new(),*title=gtk_label_new(result->notes[i].text);
+    atk_object_set_name(gtk_widget_get_accessible(row),result->notes[i].text && result->notes[i].text[0] ? result->notes[i].text:"Saved note");
     int64_t *id=g_new(int64_t,1);*id=result->notes[i].id;g_object_set_data_full(G_OBJECT(row),"note-id",id,g_free);
     gtk_label_set_ellipsize(GTK_LABEL(title),PANGO_ELLIPSIZE_END);
     gtk_container_add(GTK_CONTAINER(row),title);gtk_container_add(GTK_CONTAINER(notes),row);
@@ -650,7 +654,9 @@ static void selection_changed(GtkTextBuffer *buffer,GtkTextIter *iter,GtkTextMar
   (void)buffer;(void)iter;(void)mark;(void)unused;state();
 }
 static GtkWidget *scroll(GtkWidget *child) {
-  GtkWidget *s=gtk_scrolled_window_new(NULL,NULL);gtk_container_add(GTK_CONTAINER(s),child);return s;
+  GtkWidget *s=gtk_scrolled_window_new(NULL,NULL);gtk_container_add(GTK_CONTAINER(s),child);
+  const char *name=atk_object_get_name(gtk_widget_get_accessible(child));
+  atk_object_set_name(gtk_widget_get_accessible(s),name && name[0] ? name:"Reading content");return s;
 }
 
 int main(int argc,char **argv) {
@@ -750,8 +756,9 @@ int main(int argc,char **argv) {
   gtk_stack_add_named(GTK_STACK(stack),scroll(shelf),"shelf");
 #endif
   GtkWidget *reader=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,8),*right=gtk_box_new(GTK_ORIENTATION_VERTICAL,6);
-  image=gtk_image_new();gtk_box_pack_start(GTK_BOX(reader),scroll(image),TRUE,TRUE,0);
+  image=gtk_image_new();
   atk_object_set_name(gtk_widget_get_accessible(image),"Rendered page; selectable text is in the adjacent panel");
+  gtk_box_pack_start(GTK_BOX(reader),scroll(image),TRUE,TRUE,0);
   text=gtk_text_view_new();gtk_text_view_set_editable(GTK_TEXT_VIEW(text),FALSE);
   atk_object_set_name(gtk_widget_get_accessible(text),"Selectable page text");
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text),GTK_WRAP_WORD_CHAR);gtk_widget_set_size_request(text,320,250);

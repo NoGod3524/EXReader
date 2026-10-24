@@ -3,7 +3,7 @@
 static struct {
   GtkWidget *dialog,*form,*root,*user,*password,*remember,*session_only,*identity,*notice,*progress,*resume_focus;
   GtkWidget *load,*apply,*forget,*scan,*receive,*cancel,*retry,*disconnect;
-  GtkWidget *spinner,*main_content;
+  GtkWidget *spinner,*main_content,*return_focus;
   reader_session *session;reader_session_snapshot view;reader_account_control control;
   char *id,*bound_root,*receive_key,*conflict_cursor,*conflict_keys,*conflict_heads,*resolutions;
   guint timer,stage_idle;reader_action next_stage;
@@ -63,6 +63,14 @@ static void accounts_destroyed(GtkWidget *widget,gpointer unused) {
   accounts.spinner=NULL;
   if(accounts.main_content) gtk_widget_set_sensitive(accounts.main_content,TRUE);
   accounts.main_content=NULL;
+  if(!closing && !accounts.exit_wanted) {
+    gtk_window_present(GTK_WINDOW(window));
+    if(accounts.return_focus && gtk_widget_get_toplevel(accounts.return_focus)==window &&
+       gtk_widget_get_visible(accounts.return_focus) && gtk_widget_is_sensitive(accounts.return_focus))
+      gtk_widget_grab_focus(accounts.return_focus);
+    else gtk_widget_grab_focus(search);
+  }
+  g_clear_object(&accounts.return_focus);
   g_clear_object(&accounts.resume_focus);accounts.close_wanted=FALSE;
   if(!closing && shelf_filter_pending) shelf_request(0,FALSE);
   state();
@@ -395,10 +403,11 @@ static void accounts_open(GtkWidget *button,gpointer unused) {
   if(closing || busy || saving || save_failed || metadata_running || metadata_dialog || collections_opened() || accounts.dialog ||
      accounts.preparing || accounts.owner_busy || !profile_writable) return;
   accounts.close_wanted=accounts.want_start=accounts.preparing=FALSE;g_atomic_int_set(&accounts.control.cancelled,0);
-  /* Keep the parent WM close event active. Insensitive content prevents other
-     library actions while this transient dialog owns preparation/session state. */
+  GtkWidget *focus=gtk_window_get_focus(GTK_WINDOW(window));
+  g_clear_object(&accounts.return_focus);if(focus) accounts.return_focus=g_object_ref(focus);
+  /* The parent WM close event still retires preparation/session state. */
   accounts.main_content=gtk_bin_get_child(GTK_BIN(window));gtk_widget_set_sensitive(accounts.main_content,FALSE);
-  accounts.dialog=gtk_dialog_new_with_buttons("Account and Sync",GTK_WINDOW(window),GTK_DIALOG_DESTROY_WITH_PARENT,"_Back",GTK_RESPONSE_CLOSE,NULL);
+  accounts.dialog=gtk_dialog_new_with_buttons("Account and Sync",GTK_WINDOW(window),GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,"_Back",GTK_RESPONSE_CLOSE,NULL);
   gtk_window_set_default_size(GTK_WINDOW(accounts.dialog),760,480);
   GtkWidget *area=gtk_dialog_get_content_area(GTK_DIALOG(accounts.dialog));gtk_container_set_border_width(GTK_CONTAINER(area),16);
   accounts.identity=gtk_label_new("Loading this library's account");gtk_label_set_xalign(GTK_LABEL(accounts.identity),0);
@@ -495,7 +504,7 @@ static char *accounts_observation(void) {
 static void accounts_cleanup(void) {
   if(accounts.timer) g_source_remove(accounts.timer);
   if(accounts.stage_idle) g_source_remove(accounts.stage_idle);
-  g_clear_object(&accounts.resume_focus);g_free(accounts.id);g_free(accounts.bound_root);
+  g_clear_object(&accounts.resume_focus);g_clear_object(&accounts.return_focus);g_free(accounts.id);g_free(accounts.bound_root);
   g_free(accounts.receive_key);g_free(accounts.conflict_cursor);g_free(accounts.conflict_keys);g_free(accounts.conflict_heads);
   g_free(accounts.resolutions);
 }
