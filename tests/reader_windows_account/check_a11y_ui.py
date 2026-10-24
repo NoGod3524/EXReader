@@ -181,6 +181,7 @@ def main():
     source.write_bytes((marker + "\n" + "".join(
         f"{row:04d} {unit_text}Second sentence for the page range.\n" for row in range(55))).encode("utf-8"))
     checks = []
+    failures = []
 
     def record(name):
         assert name not in checks, name
@@ -321,8 +322,17 @@ def main():
                           "focus": focus_of(process.pid), "expected": control(128),
                           "enabled": bool(USER32.IsWindowEnabled(control(128))),
                           "status": window_text(control(125))}}, ensure_ascii=False), flush=True)
-        wait(lambda: focus_of(process.pid) == control(128), 20, "focus back on details")
-        record("details_dialog_returns_focus_to_its_invoking_command")
+        try:
+            wait(lambda: focus_of(process.pid) == control(128), 20, "focus back on details")
+        except TimeoutError as error:
+            # Keep this assertion strict while still exercising the independent
+            # text provider below. The final report and process must both fail.
+            failures.append({"check": "details_dialog_returns_focus_to_its_invoking_command",
+                             "error": str(error), "focus": focus_of(process.pid),
+                             "expected": control(128)})
+            print(json.dumps({"failure": failures[-1]}, ensure_ascii=False), flush=True)
+        else:
+            record("details_dialog_returns_focus_to_its_invoking_command")
 
         # 7) mnemonics on the main commands
         keys = {}
@@ -503,11 +513,13 @@ def main():
         assert focus_of(process.pid) == order[0], "the cycle did not close"
         record("tab_order_visits_every_enabled_stop_once_and_closes")
 
-        report = {"accepted": True, "source_sha": os.environ["GITHUB_SHA"], "run_id": os.environ["GITHUB_RUN_ID"],
+        report = {"accepted": not failures, "source_sha": os.environ["GITHUB_SHA"], "run_id": os.environ["GITHUB_RUN_ID"],
                   "attempt": os.environ["GITHUB_RUN_ATTEMPT"], "checks": checks, "count": len(checks),
-                  "transport": "sendinput+uia", "screen_reader_verified": False, "complete_product": False}
+                  "failures": failures, "transport": "sendinput+uia", "screen_reader_verified": False, "complete_product": False}
         (output / "a11y-ui.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print(json.dumps({"accepted": True, "count": len(checks)}), flush=True)
+        print(json.dumps({"accepted": not failures, "count": len(checks), "failures": failures}), flush=True)
+        if failures:
+            raise SystemExit("native accessibility checks failed")
     finally:
         if process.poll() is None:
             USER32.PostMessageW(host["window"], 0x0010, 0, 0)
