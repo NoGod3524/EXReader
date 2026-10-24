@@ -127,10 +127,15 @@ class Host:
             return default
 
     def wait_state(self, predicate, timeout=60, description='host state'):
-        def probe():
-            state = self.host_state()
-            return state if state and predicate(state) else None
-        return wait_until(probe, timeout, description=description)
+        deadline = time.monotonic() + timeout
+        current = {}
+        while time.monotonic() < deadline:
+            current = self.host_state()
+            if current and predicate(current):
+                return current
+            time.sleep(0.1)
+        raise TimeoutError('timed out waiting for %s (last observed state=%r)'
+                           % (description, current))
 
     def wait_visible(self, window_id, present=True, timeout=30):
         end = time.monotonic() + timeout
@@ -196,19 +201,15 @@ class Host:
         if settle is not None:
             self.wait_state(settle, timeout=settle_timeout, description='host idle after %r' % (keys,))
 
-    def paste(self, value):
-        # xclip forks a holder process that inherits the stdio pipes; capturing
-        # them would keep this call waiting until the timeout expires.
-        result = subprocess.run(['xclip', '-selection', 'clipboard'], input=value.encode(),
-                                check=False, stdout=subprocess.DEVNULL,
-                                stderr=subprocess.DEVNULL, timeout=20)
-        if result.returncode != 0:
-            raise RuntimeError('xclip failed with status %d' % result.returncode)
-        self.key('ctrl+v')
-
     def type_text(self, value):
-        command('xdotool', 'type', '--clearmodifiers', '--delay', '40', value)
-        self.record('type:' + value[:40])
+        """Type ASCII text with real key events.
+
+        Clipboard pastes depend on an external selection owner taking over in
+        time, which races when several pastes happen in one session; typing is
+        deterministic and produces the same key events a user produces.
+        """
+        command('xdotool', 'type', '--clearmodifiers', '--delay', '35', value, timeout=120)
+        self.record('type:' + value[-40:])
 
     # -- evidence ----------------------------------------------------------
     def screenshot(self, path, window=None):
