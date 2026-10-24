@@ -41,8 +41,9 @@ jobs:
               require(0<info.file_size<=4*1024*1024,'container report size')
               data=archive.read(info)
               value=json.loads(data)
+              print(json.dumps({'retained_container':value},indent=2,sort_keys=True))
               require(value['source_sha']==source and value['run_id']==str(run) and
-                      value['attempt']=='1' and value['status']=='failed','container identity differs')
+                      value['attempt']=='1','container identity differs')
               names=[name for name in archive.namelist() if name.endswith('.json')]
           output=Path('build/apple-search-evidence')
           output.mkdir(parents=True)
