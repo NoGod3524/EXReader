@@ -77,16 +77,50 @@ all-or-nothing: the commit boundary is the return of `EXR_DROP_OK`.
 ### Windows — `exr_desktop_drop_windows.h`
 
 `exr_drop_windows_attach(HWND, options, &target)` registers this module's
-`IDropTarget` with `RegisterDragDrop`. Accepted formats, in order: `CF_HDROP`,
-`CF_UNICODETEXT`, `FileGroupDescriptorW` (a promised file, reported as
-`EXR_DROP_ITEM_VIRTUAL` and never materialised); anything else answers
-`DROPEFFECT_NONE`. `exr_drop_windows_clipboard_request` reads the clipboard
-with bounded retries (80 ms) and copies everything it needs, so the request
-survives `CloseClipboard` and the owning process. `exr_drop_windows_deliver_drop`
-delivers a completed drop through the same entry OLE calls for
-`IDropTarget::Drop` with identical effect negotiation and callback ownership;
-hosts use it to forward a drop another window received, acceptance uses it where
-no pointer device can start a drag.
+`IDropTarget` with `RegisterDragDrop`, then installs one transparent window
+procedure so the registration can be released while the window is still valid:
+`WM_DESTROY` calls `RevokeDragDrop` (which drops OLE's reference) and
+`WM_NCDESTROY` restores the original procedure. Every other message goes to the
+original procedure unchanged, detach restores it, and the probe asserts both
+directions. A window destroyed before detach therefore leaves no COM object
+behind: OLE's reference is gone, detach frees the last one, and the hook build
+counts live targets to prove it.
+
+Accepted formats, in order: `CF_HDROP`, `CF_UNICODETEXT`,
+`FileGroupDescriptorW` (a promised file, reported as `EXR_DROP_ITEM_VIRTUAL`
+and never materialised); anything else answers `DROPEFFECT_NONE`.
+
+Every HGLOBAL is bounded by its real allocation before a single element is
+read — the 1 MiB payload budget is a product limit, never a buffer size:
+
+- `CF_UNICODETEXT`: `GlobalSize() / sizeof(wchar_t)` units are scanned; a
+  buffer without a NUL inside that extent (including an odd trailing byte that
+  cannot form a unit) is refused, never `wcsnlen`-ed past the end.
+- `FileGroupDescriptorW`: the allocation must hold the whole header, and
+  `cItems` must be covered by
+  `(GlobalSize() - offsetof(fgd)) / sizeof(FILEDESCRIPTORW)`; a lying or
+  extreme count is refused before `fgd[]` is indexed. Zero descriptors is
+  `EXR_DROP_UNSUPPORTED`.
+- `CF_HDROP`: the header must fit, `pFiles` must lie inside the allocation
+  and be at least `sizeof(DROPFILES)`, and the wide or ANSI list must be
+  terminated by an empty entry inside the allocation. Wide units are read
+  bytewise so a truncated code unit can never be read at all. Only then does
+  `DragQueryFileW` see the buffer.
+
+A malformed buffer is refused with `EXR_DROP_PLATFORM` (one callback, no
+request, `DROPEFFECT_NONE`). `exr_drop_windows_clipboard_request` reads the
+clipboard with bounded retries (80 ms) and copies everything it needs, so the
+request survives `CloseClipboard` and the owning process.
+`exr_drop_windows_deliver_drop` delivers a completed drop through the same entry
+OLE calls for `IDropTarget::Drop` with identical effect negotiation and callback
+ownership; hosts use it to forward a drop another window received, acceptance
+uses it where no pointer device can start a drag.
+
+Acceptance compiles the module a second time with
+`EXR_DESKTOP_DROP_TEST_HOOKS` (a live-target counter that must return to its
+previous value around attach/ destroy/ detach) and a third time under
+`/fsanitize=address`; both variants run the same probe. The hook counter is
+compiled out of the installed binary.
 
 ### GTK3 — `exr_desktop_drop_gtk.h`
 
@@ -195,8 +229,10 @@ kept in the record; nothing was loosened to turn it green.
   pasteboards, but no pointer motion is synthesised.
 - No host wiring: attaching the adapter to a production host window is left to
   the host owners; this package ships the module, the example and the probes.
-- Windows COM reclamation when the window is destroyed before detach: OLE keeps
-  its own reference, the target frees only its own and the registration dies
-  with the window, so that corner leaks one small object.
+- Windows memory safety is asserted on an AddressSanitizer build of the same
+  probe with deliberately tiny, unterminated, odd-length, lying-count and
+  out-of-range HGLOBALs; the release build asserts the same named rejections,
+  and the hook build proves the COM target is reclaimed when the window dies
+  before detach.
 - No filesystem, network or archive access is performed, so drag-and-drop of
   remote or virtual entries stops at the reported status.

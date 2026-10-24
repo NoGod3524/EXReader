@@ -142,6 +142,45 @@ jobs:
             -DCMAKE_PREFIX_PATH="$ws/build/desktop-drop/stage" 2>&1 | tee build/desktop-drop/logs/consumer-configure.log
           cmake --build build/desktop-drop/accept 2>&1 | tee build/desktop-drop/logs/consumer-build.log
           cp build/desktop-drop/accept/drop-check.exe build/desktop-drop/accept/drop-probe.exe build/desktop-drop/consumer/
+      - name: Build the lifecycle-hook and sanitizer acceptance variants
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          cmake -S extras/desktop-drop -B build/desktop-drop/module-hooks -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+            -DEXR_DESKTOP_DROP_TEST_HOOKS=ON -DCMAKE_INSTALL_PREFIX="$ws/build/desktop-drop/stage-hooks" \
+            2>&1 | tee build/desktop-drop/logs/hooks-configure.log
+          cmake --build build/desktop-drop/module-hooks 2>&1 | tee build/desktop-drop/logs/hooks-build.log
+          cmake --install build/desktop-drop/module-hooks 2>&1 | tee build/desktop-drop/logs/hooks-install.log
+          cmake -S tests/reader_desktop_drop -B build/desktop-drop/accept-hooks -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+            -DEXRDD_TEST_HOOKS=ON -DCMAKE_PREFIX_PATH="$ws/build/desktop-drop/stage-hooks" \
+            2>&1 | tee build/desktop-drop/logs/hooks-consumer-configure.log
+          cmake --build build/desktop-drop/accept-hooks 2>&1 | tee build/desktop-drop/logs/hooks-consumer-build.log
+          cmake -S extras/desktop-drop -B build/desktop-drop/module-asan -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DCMAKE_C_FLAGS=/fsanitize=address \
+            -DCMAKE_INSTALL_PREFIX="$ws/build/desktop-drop/stage-asan" \
+            2>&1 | tee build/desktop-drop/logs/asan-configure.log
+          cmake --build build/desktop-drop/module-asan 2>&1 | tee build/desktop-drop/logs/asan-build.log
+          cmake --install build/desktop-drop/module-asan 2>&1 | tee build/desktop-drop/logs/asan-install.log
+          cmake -S tests/reader_desktop_drop -B build/desktop-drop/accept-asan -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL \
+            -DCMAKE_C_FLAGS=/fsanitize=address -DCMAKE_EXE_LINKER_FLAGS=/fsanitize=address \
+            -DCMAKE_PREFIX_PATH="$ws/build/desktop-drop/stage-asan" \
+            2>&1 | tee build/desktop-drop/logs/asan-consumer-configure.log
+          cmake --build build/desktop-drop/accept-asan 2>&1 | tee build/desktop-drop/logs/asan-consumer-build.log
+      - name: Lifecycle-hook and AddressSanitizer acceptance runs
+        env:
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1:print_stacktrace=1
+        run: |
+          set +e
+          ./build/desktop-drop/accept-hooks/drop-probe.exe > build/desktop-drop/logs/probe-hooks.log \
+            2> build/desktop-drop/logs/probe-hooks-stderr.log
+          echo "exit=$?" >> build/desktop-drop/logs/probe-hooks-exit.log
+          ./build/desktop-drop/accept-asan/drop-probe.exe > build/desktop-drop/logs/probe-asan.log \
+            2> build/desktop-drop/logs/probe-asan-stderr.log
+          echo "exit=$?" >> build/desktop-drop/logs/probe-asan-exit.log
+          ./build/desktop-drop/accept-asan/drop-check.exe > build/desktop-drop/logs/portable-asan.log \
+            2> build/desktop-drop/logs/portable-asan-stderr.log
+          echo "exit=$?" >> build/desktop-drop/logs/portable-asan-exit.log
       - name: Portable parser acceptance
         run: |
           set +e
@@ -159,6 +198,14 @@ jobs:
           python tests/reader_desktop_drop/check_results.py --platform windows \
             --probe-log build/desktop-drop/logs/probe.log \
             --portable-log build/desktop-drop/logs/portable.log \
+            --extra-probe-log build/desktop-drop/logs/probe-hooks.log \
+            --extra-probe-log build/desktop-drop/logs/probe-asan.log \
+            --extra-portable-log build/desktop-drop/logs/portable-asan.log \
+            --scan build/desktop-drop/logs/probe-stderr.log \
+            --scan build/desktop-drop/logs/portable-stderr.log \
+            --scan build/desktop-drop/logs/probe-hooks-stderr.log \
+            --scan build/desktop-drop/logs/probe-asan-stderr.log \
+            --scan build/desktop-drop/logs/portable-asan-stderr.log \
             --exe build/desktop-drop/consumer/drop-probe.exe \
             --portable-exe build/desktop-drop/consumer/drop-check.exe \
             --root build/desktop-drop --output build/desktop-drop/evidence
