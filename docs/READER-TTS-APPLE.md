@@ -92,22 +92,44 @@ reader-tts-apple-ios-<run>-<attempt>、reader-tts-apple-evidence-<run>-<attempt>
 该平台语音引擎对同一段中文/表情文本真的产生了采样，但它不是对库自身输出的录音
 （库按契约直接 `speakUtterance:` 到系统输出设备）。
 
+## 平台发现（实测，含本包修掉的缺陷）
+
+1. **未知语音 ID 会被系统“接受”**：`+[AVSpeechSynthesisVoice voiceWithIdentifier:]`
+   在 runner 上对 `com.example.absent` 也返回了非空对象，导致未知声音不是
+   `ARGUMENT`，而是先通过校验、再在真正朗读时失败。后端改为只认**identifier 与
+   请求逐字相等**的已安装声音（`ResolveVoice`），查找与朗读共用同一判定；
+   `probe.rejects-unknown-voice` 覆盖这条。
+2. **取消后的下一句可能被系统丢掉**：`stopSpeakingAtBoundary:Immediate` 之后
+   立刻 `speakUtterance:` 的新请求可能拿到 `STARTED` 与一个 `RANGE` 后不再推进。
+   host 要在取消终态之后过一个 run-loop turn（本 probe 用 1 s）再提交下一块；
+   该行为单独登记为 `probe.post-cancel-utterance`，与“迟到回调不污染新请求”
+   （`probe.late-callback-isolation`，按 request id 判定）分开记。
+3. **无音频路由的 runner 不产出回调**：headless 机器上 `speakUtterance:` 只让
+   `isSpeaking` 变真，delegate 一个都不投递，`writeUtterance:toBufferCallback:`
+   也拿不到任何 buffer。Actions 里为此临时装一个 BlackHole 回环设备当默认输出
+   （best-effort，不作为门；失败只会让相关用例记 pending）；iOS Simulator 即使
+   host 有该设备仍然不产声，故 Simulator 的朗读/PCM 用例记为 pending。
+
 ## 当前状态
 
-首次云端验收进行中，`docs/validation/reader-tts-apple.json` 的
-`accepted=false`。真实跑通后按范围填写受测 SHA、run/attempt/job、具名结果、
-工件 id/字节/digest/有效期、失败原件与未覆盖范围。
+受测源码 `ecc51101c130502da59b0ffe5eca78dc80138e54`，
+[run 40129088735](https://github.com/NoGod3524/EXReader/actions/runs/40129088735) attempt 1
+的四个作业全部成功，`accepted=true`。
 
-## 未覆盖范围（明确登记）
+| 执行平台 | 同次具名结果 | 工件 |
+| --- | --- | --- |
+| macOS 15.7.9 arm64（BlackHole 回环输出设备） | 逻辑 65 + 安装消费者 39 = **104 通过 / 0 失败 / 0 pending**；真实 PCM 75,456 B、37,706 帧、22,050 Hz、1.71 s、RMS 0.1356 | `reader-tts-apple-macos-40129088735-1` id 12573932041，73,611 B，`sha256:352b8f3b…e51c` |
+| iPhone 16 Pro / iPad (A16)，iOS 26.2 arm64 Simulator | 26 通过 / 0 失败 / 13 pending（朗读回调与 PCM：该运行时完全不产声）；iPad 25 通过 / 13 pending | `reader-tts-apple-ios-40129088735-1` id 12574162912，15,682 B，`sha256:1e7eb9ac…947a` |
 
-- 物理 iPhone/iPad/Mac 真机执行：未覆盖（只有 macOS runner 与 iOS Simulator）。
-- 听感质量、发音正确性、音量/音色主观判断：自动化无法授予，未覆盖。
-- 宿主接线（`Host*.swift` 的 UI、`AVAudioSession` 类别、后台策略、锁屏控制、
-  分块调度）：由 root 统一做，本包不改宿主。
-- 平台中立逻辑套件只在 macOS runner 运行；iOS 上跑的是真实后端 probe（同一个
-  `core.cpp` 但由真实 AVFoundation 驱动），未在 Simulator 里重跑伪引擎套件。
-- 语音下载/增强语音（premium/enhanced voices）：本包只用系统已安装的声音，
-  不触发下载。
-- 无音频输出设备的 runner 上，系统可能不投递 delegate 回调；此时相关具名用例
-  记为 `pending` 并记录原因（`speech_available=false`），不会以“API 调用成功”
-  冒充朗读成功。
+两个工件有效期至 2027-01-22T20:17:08Z；严格汇总作业（120978693849）重新下载两个
+ZIP、重算 SHA-256、核对 API 的 id/大小/digest/有效期/head_sha，并解包核对报告内的
+source/run/attempt/平台、失败用例数与 WAV 摘要，`problems=[]`。完整身份见
+[验收记录](validation/reader-tts-apple.json)。
+
+失败原件全部保留：首次 push 的 workflow 因作业名带裸冒号无效（run 40123553063）；
+此后依次暴露并修掉假引擎未用字段、跨 sysroot 的 `find_package`、两条错误的逻辑
+预期、占位语音、同步索要 CLOSED、暂停后 stop 竞速、取消后下一句、`-Werror` 未用
+变量、Simulator 的应用内 source 身份，以及“无 buffer 该记 pending 而非失败”
+（run 40124481498 / 40125616017 / 40126409617 / 40126868252 / 40127571458 /
+40128098065）。另有两次为被后续提交取代而取消（40123743856 / 40128919501），以及
+一次只差 iOS 的同源运行（40128493769，macOS 104/0/0），均不拼接进最终结论。

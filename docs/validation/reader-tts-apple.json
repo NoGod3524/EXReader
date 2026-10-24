@@ -1,26 +1,213 @@
 {
-  "accepted": false,
+  "accepted": true,
   "schema": 1,
   "package": "J17 reader-tts-apple",
   "branch": "codex/reader-tts-apple",
   "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "artifacts": [],
-  "jobs": [],
-  "platforms": {},
-  "problems": [
-    "cloud acceptance has not completed yet; accepted stays false until the strict same-source aggregate passes"
+  "source_sha": "ecc51101c130502da59b0ffe5eca78dc80138e54",
+  "run_id": 40129088735,
+  "attempt": 1,
+  "jobs": [
+    {
+      "id": 120976747249,
+      "name": "source, protected-tree and path guard",
+      "conclusion": "success"
+    },
+    {
+      "id": 120976780039,
+      "name": "macOS logic suite, installed probe and PCM",
+      "conclusion": "success"
+    },
+    {
+      "id": 120976780116,
+      "name": "iOS Simulator native speech inside a UIKit app",
+      "conclusion": "success"
+    },
+    {
+      "id": 120978693849,
+      "name": "strict same-source evidence",
+      "conclusion": "success"
+    }
   ],
+  "artifacts": [
+    {
+      "id": 12573932041,
+      "name": "reader-tts-apple-macos-40129088735-1",
+      "size_in_bytes": 73611,
+      "digest": "sha256:352b8f3b4d5305e4f0b3e0f8f35c22b50505ee71ddfa5fc7f9f3036999b9e51c",
+      "expires_at": "2027-01-22T20:17:08Z",
+      "expired": false,
+      "head_sha": "ecc51101c130502da59b0ffe5eca78dc80138e54",
+      "platform": "macos",
+      "counts": {"pass": 104, "fail": 0, "pending": 0},
+      "logic_counts": {"pass": 65, "fail": 0},
+      "probe_counts": {"pass": 39, "fail": 0, "pending": 0},
+      "consumer_sha256": "9924a2d9fe45a6d56e8aa02f02183314b2606402ad9bccbfded78fba6612be3f",
+      "os": "15.7.9",
+      "arch": "arm64",
+      "speech_available": true,
+      "pcm": {
+        "file": "speech-result.json.wav",
+        "bytes": 75456,
+        "frames": 37706,
+        "sample_rate": 22050.0,
+        "duration_seconds": 1.710023,
+        "rms": 0.135588,
+        "sha256": "1816c23d5304b2a91dad6788c0a3783f8c68baaa64fc4afbaef4066c9fee66ba",
+        "recomputed_sha256": "1816c23d5304b2a91dad6788c0a3783f8c68baaa64fc4afbaef4066c9fee66ba"
+      }
+    },
+    {
+      "id": 12574162912,
+      "name": "reader-tts-apple-ios-40129088735-1",
+      "size_in_bytes": 15682,
+      "digest": "sha256:1e7eb9ac6cb06e46edaa5d4cf7d74cb2765775fca160ed62b8dc33cfdc47947a",
+      "expires_at": "2027-01-22T20:17:08Z",
+      "expired": false,
+      "head_sha": "ecc51101c130502da59b0ffe5eca78dc80138e54",
+      "platform": "ios-simulator",
+      "counts": {"pass": 26, "fail": 0, "pending": 13},
+      "consumer_sha256": "273d770d7b621bf891a7d54ec5f90f124120c0f9e45cc5c889adabdd57c72810",
+      "os": "iOS 26.2 (23C54)",
+      "arch": "arm64",
+      "devices": {
+        "iPhone 16 Pro": {"pass": 25, "fail": 0, "pending": 13},
+        "iPad (A16)": {"pass": 25, "fail": 0, "pending": 13}
+      },
+      "speech_available": false,
+      "speech_note": "no speech-start callback within 25 s (state 1, events 1); no usable audio route on this runner",
+      "pcm": null
+    }
+  ],
+  "platforms": {
+    "macos": {"pass": 104, "fail": 0, "pending": 0},
+    "ios-simulator": {"pass": 26, "fail": 0, "pending": 13}
+  },
+  "named_results": {
+    "logic-suite": {
+      "cases": 65,
+      "note": "platform-neutral state machine against a deterministic fake engine; every case is printed by name and any non-pass exits non-zero"
+    },
+    "macos-installed-probe": {
+      "cases": 39,
+      "live_speech": [
+        "probe.speak-english-lifecycle",
+        "probe.speak-english-callbacks",
+        "probe.speak-chinese-emoji-lifecycle",
+        "probe.range-byte-boundaries",
+        "probe.range-advances",
+        "probe.speak-named-voice",
+        "probe.pause-resume",
+        "probe.stop-after-pause",
+        "probe.queue-replacement-busy",
+        "probe.cancel-terminal-once",
+        "probe.late-callback-isolation",
+        "probe.post-cancel-utterance",
+        "probe.pcm-wav-captured"
+      ],
+      "note": "AVSpeechSynthesizer driven from the real main run loop on a runner whose output device is a BlackHole loopback installed for the fixture"
+    },
+    "ios-simulator-probe": {
+      "cases": 26,
+      "pending_cases": [
+        "probe.speak-english-lifecycle",
+        "probe.speak-english-callbacks",
+        "probe.state-ready-after-finish",
+        "probe.speak-chinese-emoji-lifecycle",
+        "probe.range-byte-boundaries",
+        "probe.range-advances",
+        "probe.speak-named-voice",
+        "probe.pause-resume",
+        "probe.stop-after-pause",
+        "probe.queue-replacement-busy",
+        "probe.cancel-terminal-once",
+        "probe.late-callback-isolation",
+        "probe.pcm-wav-captured"
+      ],
+      "note": "the simulator runtime accepted speakUtterance: and returned one terminal, but produced no speech callback and no audio buffer at all; nothing is granted for live speech or PCM there"
+    }
+  },
   "capsule": {
-    "module_accepted": false,
+    "module_accepted": true,
+    "installed_consumer_accepted": true,
+    "macos_live_speech_accepted": true,
+    "ios_simulator_contract_accepted": true,
+    "ios_simulator_live_speech_accepted": false,
     "host_function_accepted": false,
     "physical_device_execution": false,
     "listening_impression_evaluated": false,
     "performance_budget_accepted": false,
     "complete_product": false
   },
+  "retained_runs": [
+    {
+      "source": "2779625ff74798a355c454874899e6d0945e1e62",
+      "run_id": 40123553063,
+      "result": "failure",
+      "reason": "invalid workflow file: a job name contained an unquoted colon, so no job ran"
+    },
+    {
+      "source": "94c2250f55eed8a334635fba1c272b98c14bdec3",
+      "run_id": 40123743856,
+      "result": "cancelled",
+      "reason": "superseded before a green path; macOS had an unused fake-engine field and iOS could not resolve the installed package across the sysroot"
+    },
+    {
+      "source": "19de49af",
+      "run_id": 40124481498,
+      "result": "failure",
+      "reason": "logic 63/65 (two wrong expectations: a refused id treated as consumed, a RANGE demanded), probe accepted an unknown voice and expected CLOSED synchronously; iOS find_package could not cross the sysroot"
+    },
+    {
+      "source": "9fa69834",
+      "run_id": 40125616017,
+      "result": "failure",
+      "reason": "same two logic expectations with per-case output enabled; iOS probe reported the same unknown-voice/close/destroy trio and had no source identity"
+    },
+    {
+      "source": "82056e3a",
+      "run_id": 40126409617,
+      "result": "failure",
+      "reason": "installed probe: the platform answered an unknown voice identifier with a placeholder voice; close/destroy demanded CLOSED synchronously"
+    },
+    {
+      "source": "dd35ac9d",
+      "run_id": 40126868252,
+      "result": "failure",
+      "reason": "macOS: stop raced a short paused utterance and the utterance queued in the cancel turn was dropped; iOS: probe build error (unused variable) and an empty source identity inside the app"
+    },
+    {
+      "source": "544ccede",
+      "run_id": 40127571458,
+      "result": "failure",
+      "reason": "probe build error on both platforms: a terminal-kind variable was set but never used (-Werror)"
+    },
+    {
+      "source": "72ecbbd6",
+      "run_id": 40128098065,
+      "result": "failure",
+      "reason": "macOS 102/1: the post-cancel case needed a longer settle; iOS: PCM capture classified as failure and the app reported an empty source SHA"
+    },
+    {
+      "source": "04f02638",
+      "run_id": 40128919501,
+      "result": "failure",
+      "reason": "superseded: the pending policy still demanded speech_available=false for a macOS report that had no pendings left to explain"
+    },
+    {
+      "source": "e3037d52",
+      "run_id": 40128493769,
+      "result": "failure",
+      "reason": "macOS producer already green (104/0/0) but the iOS producer failed, so the strict aggregate rejected the run; not usable for acceptance because the source differs from the final tested SHA"
+    }
+  ],
+  "uncovered": [
+    "physical iPhone/iPad/Mac execution",
+    "listening impression and pronunciation quality",
+    "host wiring (AVAudioSession category, background policy, lock-screen controls, chunk scheduling) owned by root",
+    "the platform-neutral logic suite is executed on macOS only; the simulator runs the real backend probe instead",
+    "premium/enhanced voice download (this package uses installed voices only)"
+  ],
   "execution": "All builds, tests, syntax checks, fixtures and artifact download/parsing in GitHub Actions; local source/docs/Git only"
 }
