@@ -101,7 +101,7 @@ jobs:
       - name: Original twenty GTK operations and real product startup repair
         if: runner.os == 'Linux'
         run: |
-          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
             openbox >build/desktop-evidence/openbox.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
