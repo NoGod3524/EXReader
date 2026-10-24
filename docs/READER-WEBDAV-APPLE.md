@@ -36,10 +36,27 @@ iOS 默认使用此实现；macOS 默认继续使用原系统 libcurl，显式
 
 ## 当前状态
 
-尚未获得本包最终联合验收。早期 `e2049f5c` / run `40069002968` 因 CFStream 回调
+受测源码 `5bebae0fe029daba8406c6805d9aaff1167e0332`，
+[run 40070706494](https://github.com/NoGod3524/EXReader/actions/runs/40070706494) attempt 1
+的四个 producer 与严格汇总五作业全部成功，`accepted=true, ios_transport_accepted=true`。
+
+| 执行平台 | 同次检查 |
+| --- | --- |
+| iOS 26.2 arm64 iPhone Simulator | 原77 + 兼容12 + 新增11 = 100 |
+| macOS ARM64 Foundation | 原七套283 + 兼容12 + 新增11 = 306 |
+| Linux | 原七套283 + 兼容12 = 295 |
+| Windows | 原七套282 + 兼容12 = 294 |
+
+严格汇总重新核验四份上游ZIP的API身份、大小与SHA-256，报告绑定同一source/run/attempt，
+实际消费者/Mach-O散列匹配。iOS实际依赖为系统Foundation/UIKit/libxml2，无curl、
+OpenSSL或WebView。完整身份见[验收记录](validation/reader-webdav-apple.json)。
+
+早期 `e2049f5c` / run `40069002968` 因 CFStream 回调
 类型不匹配编译失败；修正后的 `f0453f70` / run `40069232620` 三平台七套原生检查均成功，
 该次没有 iOS 或最终严格汇总。`e39f5f3e` / run `40069514068` 的 iOS 安装后消费者
 因交叉编译包搜索路径失败，后继已改用明确的安装包目录。所有失败保留。
+前继 `f939d6a9` / run `40069631469` 已通过四平台的10项新增用例版本；
+最终运行另外保留32KiB响应字段限制和第11项检查，不拼接前继结果。
 
 本包只验证网络传输；完整 iOS `reader_session`、SDK 原件导出/导入调度、账号 UI、
 真机和六目标互通继续独立验收。
