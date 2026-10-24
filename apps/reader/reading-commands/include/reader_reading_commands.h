@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef READER_READING_COMMANDS_H
 #define READER_READING_COMMANDS_H
+#include <reader_projection.h>
 #include <reader_reading_state.h>
 #define READER_READING_COMMANDS_VERSION "0.1.0"
 #ifdef __cplusplus
