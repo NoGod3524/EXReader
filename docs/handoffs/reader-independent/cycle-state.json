@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T10:49:42Z",
+  "recorded_at_utc": "2026-10-24T11:04:01Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -12,7 +12,7 @@
   "integration_runs": [],
   "mainline_owners": [
     { "agent": "/root/handoff_modules", "branch": "codex/reader-apple-host-account", "completed_ios_evidence_head": "254466e7", "ios_run": 40080841137, "candidate": "9b84f4254a7442a10e91a082796e8c8f1a8d840c", "candidate_runs": [40086427673, 40086438356, 40086444544] },
-    { "agent": "/root/handoff_validation", "branch": "codex/reader-gtk-receive", "candidate": "ddaded9b81c2e51de4313919242f883246dd4426", "candidate_runs": [40087214516] },
+    { "agent": "/root/handoff_validation", "branch": "codex/reader-gtk-settings", "completed_receive_source": "ddaded9b81c2e51de4313919242f883246dd4426", "completed_receive_evidence_head": "8a7cab996f7b3a876254f16a90dab69bbeb9f15a", "completed_receive_run": 40087214516 },
     { "agent": "/root/main_android", "branch": "codex/reader-android-sync-session", "candidate": "170d1f77d6e320c75fca25b047dbf117bd1d0c5f", "candidate_runs": [40086660647, 40086660638, 40086660644] }
   ],
   "claude_quota": {
@@ -81,7 +81,10 @@
       "reused_completed_session": "Unicode 路径与跨平台回归测试",
       "new_owner_started": true,
       "full_permissions_observed": true,
-      "state": "root_second_review_staging_limit_and_publish_before_mapping_fixes"
+      "state": "root_review_passed_awaiting_joint_integration",
+      "tested_source": "49313756e20efb4ea0d8f503deb0727beefd360b",
+      "verified_run": 40087396501,
+      "evidence_head": "1f04538dec1595b4af1373915de344766dda284f"
     },
     {
       "package_id": "G05",
@@ -91,9 +94,10 @@
       "reused_completed_session": "账号同步故障一致性专项",
       "new_owner_started": true,
       "full_permissions_observed": true,
-      "state": "root_second_review_windows_parent_junction_alias_fix_queued",
-      "latest_verified_run": 40085969696,
-      "latest_tested_source": "0b79307a41fc5152cf10f7c34e30573d2481aa08"
+      "state": "root_review_passed_awaiting_joint_integration",
+      "tested_source": "ad0d2fb3a38f74f5b600bd518e566ed3095a2516",
+      "verified_run": 40087054573,
+      "evidence_head": "0f0728b8abfe8245382d40747bc73f657c717b52"
     }
   ],
   "integrated_package_ids": [],
