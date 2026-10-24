@@ -1033,21 +1033,23 @@ int main(void) {
         (exr_drop_item_status)0, 0);
   }
   if (g_clipboard_ok) {
-    static const unsigned char raw[4] = {'A', 0, 'B', 0};
-    HGLOBAL memory = make_raw(raw, sizeof(raw));
-    if (!memory) {
-      report_fail("reject_clipboard_text_without_terminator", "fixture allocation failed");
-    } else if (!clipboard_put(CF_UNICODETEXT, memory)) {
-      report_fail("reject_clipboard_text_without_terminator", "SetClipboardData failed");
+    /* The clipboard normalises CF_UNICODETEXT (it hands back a terminated
+       copy), so the structural negative here is an HDROP whose pFiles leaves
+       the allocation: the platform stores that verbatim. */
+    HGLOBAL fixture = make_hdrop_raw((DWORD)(sizeof(DROPFILES) + 64), FALSE, NULL, 0);
+    if (!fixture) {
+      report_fail("reject_clipboard_hdrop_invalid_pfiles", "fixture allocation failed");
+    } else if (!clipboard_put(CF_HDROP, fixture)) {
+      report_fail("reject_clipboard_hdrop_invalid_pfiles", "SetClipboardData failed");
     } else {
       exr_drop_request *rejected = NULL;
       exr_drop_status status = exr_drop_windows_clipboard_request(EXR_DROP_ORIGIN_CLIPBOARD, NULL, &rejected);
-      report_expect("reject_clipboard_text_without_terminator",
+      report_expect("reject_clipboard_hdrop_invalid_pfiles",
           status == EXR_DROP_PLATFORM && rejected == NULL, exr_drop_status_name(status));
       exr_drop_request_release(rejected);
     }
   } else {
-    report_skip_clipboard("reject_clipboard_text_without_terminator");
+    report_skip_clipboard("reject_clipboard_hdrop_invalid_pfiles");
   }
 
   /* ---- lifecycle ----------------------------------------------------- */

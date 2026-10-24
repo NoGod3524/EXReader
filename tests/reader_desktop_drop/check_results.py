@@ -47,7 +47,7 @@ PLATFORM_CASES = {
         "reject_file_group_empty", "reject_hdrop_short_header", "reject_hdrop_pfiles_out_of_range",
         "reject_hdrop_pfiles_before_header", "reject_hdrop_wide_unterminated",
         "reject_hdrop_ansi_unterminated", "accept_hdrop_ansi_list", "reject_hdrop_wide_truncated_unit",
-        "reject_clipboard_text_without_terminator",
+        "reject_clipboard_hdrop_invalid_pfiles",
         "detach_from_other_thread", "detach_inside_callback", "window_destroyed_before_detach",
         "window_proc_restored_after_detach", "com_object_reclaimed_after_window_destroy",
         "deliver_null_object", "detach_owner_thread",
