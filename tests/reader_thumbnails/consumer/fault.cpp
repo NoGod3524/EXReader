@@ -97,6 +97,15 @@ size_t count_entries(const fs::path& dir) {
   }
   return n;
 }
+rth_stats stats_now(rth_cache* c) {
+  rth_stats s;
+  std::memset(&s, 0, sizeof(s));
+  s.struct_size = sizeof(s);
+  rth_error e;
+  std::memset(&e, 0, sizeof(e));
+  rth_cache_stats(c, &s, &e);
+  return s;
+}
 size_t count_temps(const fs::path& dir) {
   size_t n = 0;
   for (const auto& it : fs::directory_iterator(dir)) {
@@ -179,6 +188,7 @@ void sweep_store(const fs::path& root, const Bytes& png) {
     Thumb t;
     rth_error e;
     std::memset(&e, 0, sizeof(e));
+    const rth_stats before_stats = stats_now(c);
     const long long live_before = g_live;
     g_countdown = n;
     g_tripped = false;
@@ -198,6 +208,26 @@ void sweep_store(const fs::path& root, const Bytes& png) {
       break;
     }
     ++points;
+    if (!escaped && st == RTH_OK) {
+      // The only allocation point that is reported instead of thrown is the
+      // best-effort index publication: the entry must still be published, complete and
+      // counted, and the cache must serve it from the file.
+      const rth_stats after = stats_now(c);
+      Thumb hit;
+      const rth_status st3 = rth_cover_from_encoded(c, &b, png.data(), png.size(), &request, nullptr, &hit.t, &e);
+      const bool index_only = t.t.pixels != nullptr && t.t.stored == 1 && t.t.origin == RTH_ORIGIN_AUTHOR_COVER &&
+                              after.index_failures == before_stats.index_failures + 1 && count_entries(dir) == 1 &&
+                              count_temps(dir) == 0 && st3 == RTH_OK && hit.t.from_cache == 1;
+      if (!index_only) {
+        all_ok = false;
+        bad = "index point at n=" + num(n) + ": entry or index accounting differs (failures " + num((long long)after.index_failures) +
+              " entries " + num((long long)count_entries(dir)) + ")";
+        rth_cache_close(c);
+        break;
+      }
+      rth_cache_close(c);
+      continue;
+    }
     const bool reported = !escaped && (st == RTH_MEMORY || st == RTH_IO);
     const bool empty_output = t.t.pixels == nullptr && t.t.width == 0 && t.t.height == 0 && t.t.origin == RTH_ORIGIN_NONE && t.t.stride == 0;
     const bool no_leak = g_live == live_before;
@@ -238,6 +268,8 @@ void sweep_library(const fs::path& root, const Bytes& epub) {
   if (exr_library_open(store.u8string().c_str(), &lib, &e) != EXR_OK || !lib) fatal(std::string("library open: ") + e.message);
   int64_t id = 0;
   if (exr_library_import(lib, EXR_EPUB, epub.data(), epub.size(), "cover", &id, &e) != EXR_OK) fatal(std::string("import: ") + e.message);
+  rth_error re;
+  std::memset(&re, 0, sizeof(re));
   const rth_book b = mk_book((int)EXR_EPUB, sha_of(epub));
   rth_request request = rth_request_defaults();
   request.width = 64;
@@ -246,8 +278,10 @@ void sweep_library(const fs::path& root, const Bytes& epub) {
   long long points = 0;
   std::string bad;
   for (long long n = 1; n <= 8192 && all_ok; ++n) {
+    rth_cache_clear(c, &re);  // every point starts from an empty cache, so it reaches the store
     Thumb t;
-    std::memset(&e, 0, sizeof(e));
+    std::memset(&re, 0, sizeof(re));
+    const rth_stats before_stats = stats_now(c);
     const long long live_before = g_live;
     g_countdown = n;
     g_tripped = false;
@@ -255,7 +289,7 @@ void sweep_library(const fs::path& root, const Bytes& epub) {
     rth_status st = RTH_OK;
     bool escaped = false;
     try {
-      st = rth_cover_from_library(c, lib, id, &b, &request, nullptr, &t.t, &e);
+      st = rth_cover_from_library(c, lib, id, &b, &request, nullptr, &t.t, &re);
     } catch (...) {
       escaped = true;
     }
@@ -266,19 +300,32 @@ void sweep_library(const fs::path& root, const Bytes& epub) {
       break;
     }
     ++points;
+    if (!escaped && st == RTH_OK) {
+      // Best-effort index publication: the blob and the pixels are fully used, the
+      // entry is published and the index failure is counted.
+      const rth_stats after = stats_now(c);
+      const bool index_only = t.t.pixels != nullptr && t.t.origin == RTH_ORIGIN_AUTHOR_COVER && t.t.stored == 1 &&
+                              after.index_failures == before_stats.index_failures + 1;
+      if (!index_only) {
+        all_ok = false;
+        bad = "index point at n=" + num(n) + ": entry or index accounting differs";
+        break;
+      }
+      continue;
+    }
     const bool reported = !escaped && (st == RTH_MEMORY || st == RTH_IO || st == RTH_SDK);
     const bool empty_output = t.t.pixels == nullptr && t.t.width == 0 && t.t.origin == RTH_ORIGIN_NONE;
     const bool no_leak = g_live == live_before;
     if (!reported || !empty_output || !no_leak) {
       all_ok = false;
       bad = "n=" + num(n) + " status=" + num((long long)st) + " escaped=" + num((long long)escaped) + " live " + num(live_before) + "->" + num(g_live) +
-            " msg=" + e.message;
+            " msg=" + re.message;
       break;
     }
   }
   Thumb usable;
-  std::memset(&e, 0, sizeof(e));
-  const rth_status st = rth_cover_from_library(c, lib, id, &b, &request, nullptr, &usable.t, &e);
+  std::memset(&re, 0, sizeof(re));
+  const rth_status st = rth_cover_from_library(c, lib, id, &b, &request, nullptr, &usable.t, &re);
   const bool still_usable = st == RTH_OK && usable.t.pixels != nullptr && usable.t.origin == RTH_ORIGIN_AUTHOR_COVER;
   check("fault: an allocation failure on the library cover path frees the borrowed blob and leaves the cache usable",
         all_ok && covered && points > 0 && still_usable, all_ok ? (still_usable ? "points " + num(points) : "library unusable afterwards") : bad);
