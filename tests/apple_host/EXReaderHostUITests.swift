@@ -882,8 +882,10 @@ final class EXReaderHostUITests: XCTestCase {
         var location = ""
         try step("bounded01_import_source_and_open") {
             launch(); openLibrary()
-            tapLibraryImport("library.import.bounded", expecting: ["已导入", "已存在"])
-            bookRow("Bounded.epub").tap()
+            let deadline = tapLibraryImport("library.import.bounded", expecting: ["已导入", "已存在"])
+            let row = bookRow("Bounded.epub")
+            XCTAssertTrue(row.waitForExistence(timeout: min(20, max(0, deadline.timeIntervalSinceNow))))
+            row.tap()
             XCTAssertTrue(waitReaderIdle(90))
             XCTAssertTrue(text("reader.progress").contains("有界 EPUB"))
             waitElement("reader.first").tap()

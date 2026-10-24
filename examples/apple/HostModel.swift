@@ -42,6 +42,7 @@ final class HostShelf: ObservableObject {
     private var pendingSave: DispatchWorkItem?
 #if EXR_APPLE_SHELF_REVIEW
     private var reviewVisibleFrames: [[String: Any]] = []
+    private var reviewGeometryRevision = -1
 #endif
 
     init(defaults: UserDefaults = .standard) {
@@ -141,6 +142,7 @@ final class HostShelf: ObservableObject {
         let ordered = positions.filter { $0.value.maxY > 0 && $0.value.minY < size.height }
             .sorted { $0.value.minY < $1.value.minY }
 #if EXR_APPLE_SHELF_REVIEW
+        reviewGeometryRevision = revision
         reviewVisibleFrames = ordered.prefix(3).map {
             ["key": $0.key, "min_y": Double($0.value.minY), "max_y": Double($0.value.maxY)]
         }
@@ -228,6 +230,7 @@ final class HostShelf: ObservableObject {
             "layout_observation_intervals_ms": layoutIntervals]
 #if EXR_APPLE_SHELF_REVIEW
         value["visible_frames"] = reviewVisibleFrames
+        value["observed_geometry_revision"] = reviewGeometryRevision
         value["viewport_height"] = Double(viewportSize.height)
         value["requested_restore_key"] = restoreKey ?? ""
         value["geometry_revision"] = geometryRevision

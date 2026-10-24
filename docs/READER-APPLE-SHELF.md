@@ -253,6 +253,20 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   Focused output remains diagnostic-only/accepted=false. Product code is now
   fixed for one fresh same-source complete shelf, mapping and original Apple
   run. The 150-row functional result grants no performance budget acceptance.
+- `a817ad14e75656094a2a926e6002c79f647c68ef` completed all runs without
+  cancellation. Mapping `40062233335` passed six jobs; native `40062236825`
+  passed seven. Original Apple `40062233307` passed macOS/iPhone13 UI and
+  package checks, but iPad case13 tapped the new Bounded.epub row before the
+  asynchronous shelf query exposed it; its strict summary rejected the source.
+  The test now waits for that exact row within the existing import deadline,
+  matching original case01, before retaining every original reading assertion.
+  Shelf `40062233353` passed macOS complete bidirectional traversal (875.652s)
+  but failed macOS single-result searches and mobile pending layout cases.
+  Raw failed artifacts `12548468573`, `12548957232`, `12548858169` are retained.
+  The row measurement subtree and viewport probe now use their immutable
+  geometry epoch as identity; the native ScrollView and book IDs stay stable.
+  Review frames also record their actual observed epoch. Focused recovery now
+  selects original macOS04/05/07 and iPhone/iPad06 with unchanged time limits.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
