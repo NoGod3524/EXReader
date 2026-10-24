@@ -2,6 +2,9 @@
 #ifndef EXR_LINUX_READING_H
 #define EXR_LINUX_READING_H
 #include <exreader.h>
+#ifdef EXR_READER_PREFERENCES
+#include <reader_preferences.h>
+#endif
 
 /* Private GTK host messages. SDK handles stay on one worker; results own their
    page bytes and list strings and contain no borrowed layout pointers. */
@@ -16,7 +19,7 @@ typedef enum { READER_SHELF, READER_OPEN, READER_IMPORT, READER_NEXT,
   READER_ACCOUNT_LOAD, READER_ACCOUNT_SET, READER_ACCOUNT_DELETE,
   READER_ACCOUNT_STAGE_BEGIN, READER_ACCOUNT_STAGE_NEXT,
   READER_RECEIVE_BEGIN, READER_RECEIVE_NEXT, READER_RECEIVE_OPEN,
-  READER_RECEIVE_CONFLICTS_BEGIN, READER_RECEIVE_CONFLICTS_NEXT } reader_action;
+  READER_RECEIVE_CONFLICTS_BEGIN, READER_RECEIVE_CONFLICTS_NEXT, READER_SETTINGS } reader_action;
 typedef struct { int cancelled,current_bytes,total_bytes; } reader_account_control;
 typedef struct {
   reader_action action;
@@ -40,6 +43,12 @@ typedef struct {
   int account_remember,account_saved_only;
   reader_account_control *account_control;
   const char *receive_key;
+#ifdef EXR_READER_PREFERENCES
+  reader_preferences preferences;
+  const char *preferences_path;
+  int preferences_set;
+  uint32_t system_theme;
+#endif
 } reader_command;
 typedef struct { int64_t id;size_t part,start,end;char *text; } reader_note;
 typedef struct { char *key,*sort_title;int receive_kind;size_t receive_heads; } reader_shelf_cursor;
@@ -89,6 +98,10 @@ typedef struct {
   size_t receive_reading_rows,receive_reading_found,receive_reading_unresolved;
   int receive_reading_more;
   char *receive_resolutions;
+#ifdef EXR_READER_PREFERENCES
+  reader_preferences preferences;
+  int has_preferences;
+#endif
 } reader_result;
 exr_status linux_reader_open(const char *database,const char *font,const exr_control *control,
                             linux_reader **out,exr_error *error);

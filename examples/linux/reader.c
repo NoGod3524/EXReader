@@ -28,9 +28,21 @@ static int worker_generation;
 static gboolean busy,saving,save_failed,closing,close_after_save;
 static gboolean choosing_file;
 static gboolean profile_writable;
+#ifdef EXR_READER_PREFERENCES_UI
+static reader_preferences appearance;
+static uint32_t appearance_system_theme=READER_PREFERENCES_THEME_LIGHT;
+static void preferences_open(GtkWidget *,gpointer);
+static void preferences_prepare(reader_command *);
+static void preferences_result(const reader_result *,reader_action);
+static gboolean preferences_busy(void);
+static gboolean preferences_opened(void);
+static void preferences_exit(void);
+static char *preferences_observation(void);
+#endif
 typedef struct { reader_command command;char *path,*comment;int generation,stop,shelf_generation; } host_job;
 typedef struct { reader_result value;reader_action action;int generation,profile_writable,shelf_generation; } host_result;
 static void stop_worker(void);
+static gboolean close_window(GtkWidget *,GdkEvent *,gpointer);
 #ifdef EXR_READER_ACCOUNT
 static void accounts_open(GtkWidget *,gpointer);
 static void accounts_apply(host_result *);
@@ -129,6 +141,10 @@ static void state(void) {
   char *account=accounts_observation();
   complete=g_strconcat(data,account,NULL);g_free(data);g_free(account);data=complete;
 #endif
+#ifdef EXR_READER_PREFERENCES_UI
+  char *preferences=preferences_observation();
+  complete=g_strconcat(data,preferences,NULL);g_free(data);g_free(preferences);data=complete;
+#endif
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
 }
 static void status(exr_status code,const char *message) {
@@ -142,8 +158,11 @@ static gboolean save_settings(void) {
      In product builds that also proves ownership of the profile lifetime lock. */
   if(!profile_writable) return TRUE;
   GError *error=NULL;
-  g_key_file_set_int64(settings,"reader","book",book_id);g_key_file_set_integer(settings,"reader","font",font_size);
+  g_key_file_set_int64(settings,"reader","book",book_id);
+#ifndef EXR_READER_PREFERENCES_UI
+  g_key_file_set_integer(settings,"reader","font",font_size);
   g_key_file_set_integer(settings,"reader","zoom",zoom_percent);
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   g_key_file_set_string(settings,"shelf","query",shelf_query ? shelf_query:"");
   g_key_file_set_string(settings,"shelf","top_key",shelf_top_key ? shelf_top_key:"");
@@ -347,6 +366,9 @@ static void job_free(host_job *job) {
   g_free((gpointer)job->command.collection_member_cursor);
   g_free((gpointer)job->command.account_root);g_free((gpointer)job->command.account_id);
   g_free((gpointer)job->command.receive_key);
+#ifdef EXR_READER_PREFERENCES
+  g_free((gpointer)job->command.preferences_path);
+#endif
   reader_secret_free((char *)job->command.account_user);reader_secret_free((char *)job->command.account_password);g_free(job);
 }
 static void queue_commit(void) {
@@ -435,6 +457,9 @@ static gboolean apply_result(gpointer data) {
     selection_start=result->selected_start;selection_end=result->selected_end;busy=FALSE;status(EXR_OK,result->message);
   }
 free_result:
+#ifdef EXR_READER_PREFERENCES_UI
+  if(done->generation==g_atomic_int_get(&generation)) preferences_result(result,done->action);
+#endif
   reader_result_free(result);g_free(done);return G_SOURCE_REMOVE;
 }
 static gboolean worker_stopped(gpointer unused) { (void)unused;gtk_widget_destroy(window);return G_SOURCE_REMOVE; }
@@ -446,6 +471,9 @@ static gpointer work(gpointer font_path) {
   for(;;) {
     host_job *job=g_async_queue_pop(queue);if(job->stop) { job_free(job);break; }
     int barrier=job->command.action==READER_COMMIT;
+#ifdef EXR_READER_PREFERENCES_UI
+    barrier=barrier || job->command.preferences_path || job->command.action==READER_SETTINGS;
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
     barrier=barrier || (job->command.action>=READER_METADATA_PREPARE && job->command.action<=READER_COLLECTIONS_DISCARD);
 #endif
@@ -502,6 +530,9 @@ static void submit(reader_action action,int64_t id,const char *path,int size) {
   job->command.action=action;job->command.book=id;job->command.part=part;job->command.page=page_number;
   job->command.font=action==READER_ZOOM ? font_size:size;
   job->command.zoom=action==READER_ZOOM ? size:zoom_percent;
+#ifdef EXR_READER_PREFERENCES_UI
+  preferences_prepare(&job->command);
+#endif
   if(path) { job->path=g_strdup(path);job->command.path=job->path; }
   if(action==READER_NOTE_ADD) {
     GtkTextIter a,b;GtkTextBuffer *buffer=gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
@@ -524,6 +555,9 @@ static void submit(reader_action action,int64_t id,const char *path,int size) {
 #ifdef EXR_READER_ACCOUNT
 #include "accounts_ui.inc"
 #endif
+#ifdef EXR_READER_PREFERENCES_UI
+#include "preferences_ui.inc"
+#endif
 static void open_id(int64_t id) { submit(READER_OPEN,id,NULL,font_size); }
 static void import_dialog(void) {
   if(busy || closing || save_failed) { state();return; }
@@ -542,6 +576,10 @@ static void focus_list(GtkWidget *box) {
 }
 static void action(GtkWidget *widget,gpointer name) {
   (void)widget;const char *a=name;
+#ifdef EXR_READER_PREFERENCES_UI
+  if(preferences_opened()) return;
+  if(preferences_busy() && !strcmp(a,"cancel")) { status(EXR_OK,"Finishing settings safely");return; }
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   if(metadata_running) { status(EXR_OK,"Finishing a book edit; its accepted result will be retained");return; }
 #endif
@@ -557,8 +595,12 @@ static void action(GtkWidget *widget,gpointer name) {
   }
   else if(!strcmp(a,"previous")) submit(READER_PREVIOUS,book_id,NULL,font_size);
   else if(!strcmp(a,"next")) submit(READER_NEXT,book_id,NULL,font_size);
+#ifdef EXR_READER_PREFERENCES_UI
+  else if(!strcmp(a,"bigger") || !strcmp(a,"smaller")) preferences_adjust(!strcmp(a,"bigger"));
+#else
   else if(!strcmp(a,"bigger")) submit(fixed ? READER_ZOOM:READER_FONT,book_id,NULL,fixed ? zoom_percent+25:font_size+2);
   else if(!strcmp(a,"smaller")) submit(fixed ? READER_ZOOM:READER_FONT,book_id,NULL,fixed ? zoom_percent-25:font_size-2);
+#endif
   else if(!strcmp(a,"text")) { gtk_widget_grab_focus(text);state(); }
   else if(!strcmp(a,"note")) submit(READER_NOTE_ADD,book_id,NULL,font_size);
   else if(!strcmp(a,"notes")) { focus_list(notes);state(); }
@@ -572,6 +614,11 @@ static void action(GtkWidget *widget,gpointer name) {
 static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
   (void)w;(void)unused;
   if(choosing_file) return FALSE;
+#ifdef EXR_READER_PREFERENCES_UI
+  if(preferences_opened()) return TRUE;
+  if((event->state&GDK_CONTROL_MASK) && event->keyval==GDK_KEY_comma) { preferences_open(NULL,NULL);return TRUE; }
+  if(preferences_turn_key(event)) return TRUE;
+#endif
 #ifdef EXR_READER_ACCOUNT
   if(accounts_opened()) return TRUE;
   if((event->state&GDK_CONTROL_MASK) && (event->state&GDK_SHIFT_MASK) && (event->keyval==GDK_KEY_A || event->keyval==GDK_KEY_a)) {
@@ -636,6 +683,9 @@ static void stop_worker(void) {
 }
 static gboolean close_window(GtkWidget *w,GdkEvent *event,gpointer unused) {
   (void)w;(void)event;(void)unused;
+#ifdef EXR_READER_PREFERENCES_UI
+  if(preferences_busy()) { preferences_exit();return TRUE; }
+#endif
 #ifdef EXR_READER_ACCOUNT
   if(accounts_defer_exit()) return TRUE;
 #endif
@@ -672,8 +722,10 @@ int main(int argc,char **argv) {
   state_path=argc==4 ? g_strdup(argv[3]):NULL;if(g_mkdir_with_parents(home,0700)) return 2;
   settings_path=g_build_filename(home,"reader.ini",NULL);settings=g_key_file_new();
   g_key_file_load_from_file(settings,settings_path,G_KEY_FILE_NONE,NULL);
+#ifndef EXR_READER_PREFERENCES_UI
   int size=g_key_file_get_integer(settings,"reader","font",NULL);if(size>=12 && size<=48) font_size=size;
   int zoom=g_key_file_get_integer(settings,"reader","zoom",NULL);if(zoom>=25 && zoom<=400) zoom_percent=zoom;
+#endif
   int64_t last=g_key_file_get_int64(settings,"reader","book",NULL);
 #ifdef EXR_READER_PRODUCT_CATALOG
   shelf_query=g_key_file_get_string(settings,"shelf","query",NULL);
@@ -687,7 +739,11 @@ int main(int argc,char **argv) {
   shelf_top_offset=g_key_file_get_double(settings,"shelf","top_offset",NULL);
   if(!isfinite(shelf_top_offset) || shelf_top_offset<0 || shelf_top_offset>256) shelf_top_offset=0;
 #endif
-  gtk_init(NULL,NULL);window=gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_init(NULL,NULL);
+#ifdef EXR_READER_PREFERENCES_UI
+  preferences_initialize();
+#endif
+  window=gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(window),"EXReader Linux");gtk_window_set_default_size(GTK_WINDOW(window),1040,820);
   GtkWidget *root=gtk_box_new(GTK_ORIENTATION_VERTICAL,6),*toolbar=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,4);
   gtk_container_add(GTK_CONTAINER(window),root);gtk_box_pack_start(GTK_BOX(root),toolbar,FALSE,FALSE,0);
@@ -720,6 +776,10 @@ int main(int argc,char **argv) {
   gtk_button_set_use_underline(GTK_BUTTON(more),TRUE);atk_object_set_name(gtk_widget_get_accessible(more),"More library actions");
   GtkWidget *menu=gtk_menu_new(),*organize=gtk_menu_item_new_with_label("Collections…");
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),organize);g_signal_connect(organize,"activate",G_CALLBACK(collections_open),NULL);
+#ifdef EXR_READER_PREFERENCES_UI
+  GtkWidget *reading_settings=gtk_menu_item_new_with_label("Reading settings…");
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu),reading_settings);g_signal_connect(reading_settings,"activate",G_CALLBACK(preferences_open),NULL);
+#endif
 #ifdef EXR_READER_ACCOUNT
   GtkWidget *account=gtk_menu_item_new_with_label("Account / Sync…");
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),account);g_signal_connect(account,"activate",G_CALLBACK(accounts_open),NULL);
@@ -758,7 +818,16 @@ int main(int argc,char **argv) {
   GtkWidget *reader=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,8),*right=gtk_box_new(GTK_ORIENTATION_VERTICAL,6);
   image=gtk_image_new();
   atk_object_set_name(gtk_widget_get_accessible(image),"Rendered page; selectable text is in the adjacent panel");
+#ifdef EXR_READER_PREFERENCES_UI
+  GtkWidget *page_input=gtk_event_box_new();gtk_container_add(GTK_CONTAINER(page_input),image);
+  gtk_widget_add_events(page_input,GDK_BUTTON_PRESS_MASK|GDK_BUTTON_RELEASE_MASK|GDK_POINTER_MOTION_MASK);
+  g_signal_connect(page_input,"button-press-event",G_CALLBACK(preferences_page_press),NULL);
+  g_signal_connect(page_input,"button-release-event",G_CALLBACK(preferences_page_release),NULL);
+  atk_object_set_name(gtk_widget_get_accessible(page_input),"Reading page gestures");
+  gtk_box_pack_start(GTK_BOX(reader),scroll(page_input),TRUE,TRUE,0);
+#else
   gtk_box_pack_start(GTK_BOX(reader),scroll(image),TRUE,TRUE,0);
+#endif
   text=gtk_text_view_new();gtk_text_view_set_editable(GTK_TEXT_VIEW(text),FALSE);
   atk_object_set_name(gtk_widget_get_accessible(text),"Selectable page text");
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text),GTK_WRAP_WORD_CHAR);gtk_widget_set_size_request(text,320,250);
@@ -781,8 +850,14 @@ int main(int argc,char **argv) {
   g_signal_connect(gtk_widget_get_ancestor(image,GTK_TYPE_SCROLLED_WINDOW),"size-allocate",G_CALLBACK(page_allocated),NULL);
   g_signal_connect_after(image,"draw",G_CALLBACK(page_painted),NULL);
   gtk_widget_show_all(window);gtk_window_present(GTK_WINDOW(window));queue=g_async_queue_new();
+#ifdef EXR_READER_PREFERENCES_UI
+  preferences_platform_start();preferences_style();
+#endif
   thread=g_thread_new("reading",work,font_path);submit(last ? READER_OPEN:READER_SHELF,last,NULL,font_size);
   state();gtk_main();g_thread_join(thread);g_async_queue_unref(queue);
+#ifdef EXR_READER_PREFERENCES_UI
+  preferences_cleanup();
+#endif
 #ifdef EXR_READER_ACCOUNT
   accounts_cleanup();
 #endif
