@@ -145,8 +145,10 @@ def main():
     staging_files = []
     try:
         bases = wait_for(ready)
-        for base in bases.values():
-            wait_port(base)
+        # Only the plain origins are probed: a bare TCP connect to the TLS origin would
+        # abort its handshake before the consumers arrive.
+        wait_port(bases["plain"])
+        wait_port(bases["other"])
         network_cases = work / "network-cases.jsonl"
         import_cases = work / "import-cases.jsonl"
         network = subprocess.run([arguments.consumer, str(staging), bases["plain"], bases["tls"], bases["other"],
@@ -206,6 +208,9 @@ def main():
             process.kill()
         server_log.close()
 
+    runner = os.environ.get("RUNNER_OS") or platform.system()
+    platform_name = {"linux": "linux", "windows": "windows", "macos": "macos", "darwin": "macos"}.get(
+        runner.lower(), runner.lower())
     failed = [case["id"] for case in cases if not case.get("ok")]
     if failed:
         problems.append("failing cases: " + ", ".join(failed))
@@ -216,8 +221,8 @@ def main():
         "source_sha": arguments.source_sha,
         "run_id": int(arguments.run_id),
         "attempt": int(arguments.attempt),
-        "platform": platform.system().lower(),
-        "runner": os.environ.get("RUNNER_OS", platform.system()),
+        "platform": platform_name,
+        "runner": runner,
         "checks": len(cases),
         "cases": cases,
         "origin_isolation": isolation,

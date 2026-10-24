@@ -336,8 +336,24 @@ class Handler(BaseHTTPRequestHandler):
             return
         self.send_body(404, "text/plain", b"no such fixture\n")
 
+class TolerantServer(ThreadingHTTPServer):
+    """A stray TCP connect (a port probe) must not kill the TLS accept loop."""
+
+    daemon_threads = True
+
+    def get_request(self):
+        while True:
+            try:
+                return super().get_request()
+            except (ssl.SSLError, OSError):
+                continue
+
+    def handle_error(self, request, client_address):
+        return
+
+
 def build_server(origin, port, tls, certfile, keyfile):
-    httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    httpd = TolerantServer(("127.0.0.1", port), Handler)
     httpd.origin = origin
     httpd.daemon_threads = True
     if tls:
