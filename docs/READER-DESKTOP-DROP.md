@@ -183,7 +183,34 @@ report job re-downloads each artifact of the same run, checks name, id, byte
 size, API digest and expiry, recomputes the ZIP SHA-256, re-reads the platform
 report and re-hashes every file that report binds.
 
-## Acceptance result
+## Acceptance result (root-review repair)
+
+Run [40136297928](https://github.com/NoGod3524/EXReader/actions/runs/40136297928), attempt 1,
+on tested source `5a0cd498ce4ec570f6cd52c6eca4d611431c1cc0`: guard, the three
+platform jobs and the same-run report all succeeded.
+
+| Job | Result |
+| --- | --- |
+| guard | fixed start is an ancestor, frozen SDK trees and every shared path byte-identical, whitelist-only diff, module SDK-free and out of the default build |
+| drop (linux-gtk3) | installed package, host examples and acceptance project built from the installed prefix; 28 GTK cases and 52 portable cases, 0 problems |
+| drop (windows-hdrop) | three builds of the same package (release, `EXR_DESKTOP_DROP_TEST_HOOKS` Debug, `/fsanitize=address`) and three probe runs merged by case: 49 native cases and 52 portable cases, 0 problems; 5 sanitizer scan streams clean; the live-target hook shows one target allocated and reclaimed across attach → destroy → detach |
+| drop (macos-pasteboard) | 28 native cases and 52 portable cases, 0 problems |
+| same-run report | 13/13 rejection regressions rejected, three artifacts re-downloaded and re-hashed against the API digest, reports re-read and every bound file re-hashed, `accepted=True` |
+
+The Windows report binds the release probe, the hook probe, the AddressSanitizer
+probe and portable run, and the five stderr scan files, so the memory-safety and
+lifecycle claims are part of the attested artifact rather than prose.
+
+Artifacts (all expire 2027-01-22T21:54:59Z):
+
+| Artifact | id | bytes | SHA-256 |
+| --- | --- | --- | --- |
+| reader-desktop-drop-windows-40136297928-1 | 12577100299 | 12397988 | `7083e89f487d036a41567bad1f5aca808d165c8e878a53853a3658761782ed91` |
+| reader-desktop-drop-linux-40136297928-1 | 12576449766 | 306129 | `ecaa015a7747082c778c0adb541564099c407e6fdd00fe4f27e3477ff560ed74` |
+| reader-desktop-drop-macos-40136297928-1 | 12576884782 | 396149 | `721670a77465aff845dfa754f008bf9948c8c1e6a627c7ca2fd72c833b5023fd` |
+| reader-desktop-drop-report-40136297928-1 | 12577700308 | 834 | `d46a50b416e358643e602833682b7241fdf05b8ae4a82323ebcf6e51631e3018` |
+
+## Previous acceptance (kept)
 
 Run [40123821461](https://github.com/NoGod3524/EXReader/actions/runs/40123821461), attempt 1,
 on tested source `f2c95f9a4cc013f294edc55fefe12b8da3d5a5a5` (branch
@@ -207,7 +234,13 @@ Artifacts (all expire 2027-01-22T19:07:07Z):
 | reader-desktop-drop-macos-40123821461-1 | 12571909968 | 395928 | `5e55051f4e93d1e8458329ab8331b05fda00e3eb50120f9534e202dc3f154b0c` |
 | reader-desktop-drop-report-40123821461-1 | 12572214740 | 828 | `874ae7b021161f9bc39f325eafe85abd7fd8a5ca3f9a1ce1bbd26c816825599b` |
 
-The evidence commit after this run carries `[skip ci]` and changes only this
+That run is kept as the first acceptance of this package. It is superseded for
+the repaired source by run 40136297928: it could not see the Win32 allocation
+bounds, the narrow `CFSTR_FILEDESCRIPTORW` atom or the COM reference that
+survived a window destroyed before detach, all of which the repair and the new
+run address.
+
+The evidence commit after each run carries `[skip ci]` and changes only this
 file and `docs/validation/reader-desktop-drop.json`; the tested source revision
 above is what the acceptance actually ran, and the final HEAD differs from it by
 those two documentation files only.
@@ -223,6 +256,8 @@ kept in the record; nothing was loosened to turn it green.
 | 40122803440 | 2a813e59 | Linux link failure: `gtk_clipboard_wait_is_available` does not exist in GTK3 (implicit declaration, then an undefined reference). Windows portable matrix rejected six fixtures: percent-encoded URI built without the drive prefix, a localhost fixture that reused the previous expectation, gnome cases parsed through the text/uri-list entry, an over-long "path" that was not absolute on Windows, and a reentrancy poll that never cancelled. | The clipboard reader tries each flavour and treats an unserved target as absent. The fixtures now build platform-correct absolute paths, drive the gnome parser for gnome payloads and assert cancellation *and* a successful nested parse. |
 | 40123129432 | 745f152a | Linux: the drop target refused to attach because `g_main_context_is_owner()` is false whenever no loop is running; the clipboard cancellation fixture had a single entry; an AT-SPI warning shared the case stream. | Attachment now also succeeds when no other thread owns the default context and is refused while another thread holds it (asserted by a holder thread). Cancellation uses a two-entry payload; toolkit chatter moved to a separate log and is tolerated by the checker. |
 | 40123504735 | cce4c045 | Linux: two detach cases failed because the negative "attach with a NULL widget" case overwrote the live target handle. | Negative attach cases use a scratch handle on GTK and AppKit. |
+| 40135689234 | 03babdbe | Windows: MSYS rewrote `/fsanitize=address` into `C:/Program Files/Git/fsanitize=address`, so the AddressSanitizer configure and link failed. The same build surfaced two defects: `CFSTR_FILEDESCRIPTORW` is a narrow literal in this SDK, so `RegisterClipboardFormatW()` received a `char *` (module and probe agreed on the wrong atom, which is why the earlier run passed), and the C form of `IDropTarget::lpVtbl` is a plain pointer, so the table cannot be `const`. | The variant step exports `MSYS2_ARG_CONV_EXCL`, the atom is registered from an explicit wide literal, and the vtable is non-const. |
+| 40136007055 | 14b91fbc | Windows: 48/49 native cases passed; the "clipboard text without terminator" negative returned OK because the clipboard normalises `CF_UNICODETEXT` and hands back a terminated copy. | The clipboard negative is now a structural HDROP whose `pFiles` leaves the allocation; the unterminated and odd-length text negatives stay on the `IDataObject` route, where a hostile producer really can hand one over. |
 
 ## Not covered
 
