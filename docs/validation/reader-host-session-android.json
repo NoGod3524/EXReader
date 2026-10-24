@@ -1,8 +1,416 @@
 {
-  "accepted": false,
-  "scope": "formal Android single-account manual native sync, cancellation, background closure, secure credentials and explicit Receive UI",
-  "source_sha": null,
-  "runs": [],
+  "accepted": true,
+  "scope": "formal Android single-account manual native sync, cancellation, background closure, secure credentials, explicit Receive UI and targeted semantic interactions",
+  "source_sha": "ed9ff5ffc3608971bb19020f1ec07496a79d9710",
+  "platform": {
+    "compile_api": 26,
+    "execution_api": 34,
+    "abi": "x86_64",
+    "emulator": true
+  },
+  "runs": [
+    {
+      "kind": "formal_host_ui",
+      "run_id": 40090470041,
+      "attempt": 1,
+      "conclusion": "success",
+      "required_jobs": [
+        {
+          "id": 120861917685,
+          "name": "android",
+          "conclusion": "success"
+        }
+      ],
+      "conditional_diagnostic_job": {
+        "id": 120861918396,
+        "conclusion": "skipped",
+        "selected": false
+      },
+      "artifact": {
+        "id": 12559220856,
+        "bytes": 107771689,
+        "sha256": "5d1c1e3487b1dbcf5903bef102c7a721b5edd05ad977f0ff92b693c7bb794bf6",
+        "expires_at": "2027-01-22T11:34:49Z",
+        "expired": false
+      }
+    },
+    {
+      "kind": "original_android_regression",
+      "run_id": 40090470061,
+      "attempt": 1,
+      "conclusion": "success",
+      "required_jobs": [
+        {
+          "id": 120861917747,
+          "name": "android",
+          "conclusion": "success"
+        }
+      ],
+      "artifact": {
+        "id": 12558798170,
+        "bytes": 47098684,
+        "sha256": "d34a6694ee4b0f52ed85ceb1f7eec642279e8b98c166988d244925507ee88f6f",
+        "expires_at": "2027-01-22T11:34:49Z",
+        "expired": false
+      }
+    },
+    {
+      "kind": "reading_codec_regression",
+      "run_id": 40090470091,
+      "attempt": 1,
+      "conclusion": "success",
+      "required_jobs": [
+        {
+          "id": 120861917692,
+          "name": "Linux",
+          "conclusion": "success"
+        },
+        {
+          "id": 120861917847,
+          "name": "Windows",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12559245664,
+          "bytes": 12327945,
+          "sha256": "7a0d59e3f7716e9dadd11fb708c9d2536f0734db78180b0beb176b692a213b35",
+          "expires_at": "2027-01-22T11:34:49Z",
+          "expired": false
+        },
+        {
+          "id": 12558563611,
+          "bytes": 11795046,
+          "sha256": "b450702db5c2745e660b41b34ea9d8f08c5babeebb49f6569deab9665bf473b9",
+          "expires_at": "2027-01-22T11:34:49Z",
+          "expired": false
+        }
+      ]
+    }
+  ],
+  "formal_ui_checks": {
+    "count": 16,
+    "phases": [
+      {
+        "phase": "first",
+        "pid": 5712,
+        "checks": [
+          {
+            "name": "public_sdk_seed_then_real_activity",
+            "pass": true
+          },
+          {
+            "name": "real_settings_secure_storage",
+            "pass": true
+          },
+          {
+            "name": "ui_cancel_blocked_native_request_then_retry",
+            "pass": true
+          },
+          {
+            "name": "explicit_receive_preserves_sdk_and_product",
+            "pass": true
+          },
+          {
+            "name": "receive_exact_retry_does_not_duplicate",
+            "pass": true
+          },
+          {
+            "name": "explicit_close_waits_for_closed_then_destroy",
+            "pass": true
+          }
+        ],
+        "count": 6
+      },
+      {
+        "phase": "secure-reopen",
+        "pid": 5859,
+        "checks": [
+          {
+            "name": "secure_credentials_and_originals_survive_process_restart",
+            "pass": true
+          },
+          {
+            "name": "background_close_does_not_wait_on_ui",
+            "pass": true
+          },
+          {
+            "name": "manual_sync_after_background_reopens_owned_session",
+            "pass": true
+          },
+          {
+            "name": "forget_credentials_keeps_library_and_binding",
+            "pass": true
+          },
+          {
+            "name": "explicit_session_only_credentials",
+            "pass": true
+          }
+        ],
+        "count": 5
+      },
+      {
+        "phase": "session-reopen",
+        "pid": 6033,
+        "checks": [
+          {
+            "name": "session_only_credential_not_restored_after_kill",
+            "pass": true
+          }
+        ],
+        "count": 1
+      },
+      {
+        "phase": "semantics",
+        "pid": 6168,
+        "checks": [
+          {
+            "name": "polite_status_semantics",
+            "pass": true
+          },
+          {
+            "name": "organizer_hides_covered_shelf_semantics",
+            "pass": true
+          },
+          {
+            "name": "reader_semantic_scroll_changes_real_page",
+            "pass": true
+          },
+          {
+            "name": "font_value_and_large_font_controls",
+            "pass": true
+          }
+        ],
+        "count": 4
+      }
+    ],
+    "distinct_processes": 4,
+    "barriers": [
+      {
+        "phase": "first",
+        "real_request_blocked": true,
+        "ui_action_observed": true
+      },
+      {
+        "phase": "secure-reopen",
+        "real_request_blocked": true,
+        "ui_action_observed": true
+      }
+    ],
+    "storage_file_secret_scans": 74
+  },
+  "retained_original_suites": {
+    "public_sdk_original_export_checks": 8,
+    "native_session_groups": 12,
+    "public_sdk_reading_captures": 18,
+    "receiver_found": 17,
+    "receiver_ambiguous": 1,
+    "original_formal_host_checks": 17,
+    "original_formal_host_process_phases": 2,
+    "dav_backend_cases": 91,
+    "dav_restart_cases": 4
+  },
+  "semantic_observations": {
+    "page_index_before": 0,
+    "page_index_after_forward": 1,
+    "source_start_before": 0,
+    "source_start_after_forward": 415,
+    "font_before": 24,
+    "font_after": 28,
+    "system_font_scale": 2,
+    "sdk_progress_preserved_through_account_phases": 8,
+    "sdk_note_copies": 0,
+    "captures": [
+      {
+        "name": "shelf-status",
+        "bytes": 81109,
+        "sha256": "754307112ed8b3c43755929c1ce5ad6bf69c1b9fd5dc4804592a60fef8d44085",
+        "nodes": 19,
+        "font_scale": 1
+      },
+      {
+        "name": "organizer",
+        "bytes": 59660,
+        "sha256": "81b379ee4014ab2a5f1697272cc8980138efac76552676fef82029f419493ff1",
+        "nodes": 25,
+        "font_scale": 1
+      },
+      {
+        "name": "reader-before",
+        "bytes": 347429,
+        "sha256": "3495de771371b4ad26a2ffc2142c3516590df5f32b160f2819aae92a46000978",
+        "nodes": 38,
+        "font_scale": 1
+      },
+      {
+        "name": "reader-after-forward",
+        "bytes": 340336,
+        "sha256": "315b572b039724520107cc9b505202501bd48379868a173c5dfb53279889ba21",
+        "nodes": 38,
+        "font_scale": 1
+      },
+      {
+        "name": "reader-toolbar",
+        "bytes": 358036,
+        "sha256": "eeaeab2c6faf36f0a42fa0e4a0f3dc8be93159153cef24d8c013ae9ffe09aff9",
+        "nodes": 36,
+        "font_scale": 1
+      },
+      {
+        "name": "large-font-organizer",
+        "bytes": 91236,
+        "sha256": "7a71ad4a4e613b56ea8ada4976abf8502f10a33547ced479f146617db10be817",
+        "nodes": 25,
+        "font_scale": 2
+      }
+    ]
+  },
+  "provider_audit": {
+    "debug_release_passed": true,
+    "no_static_sdk_or_sqlite_in_host": true,
+    "product_provider_isolated": true,
+    "shared_sdk_build_id": "5556b6890d875d5b4f2776579f58b792f39c3e96",
+    "installed_jni_build_id": "e0619869bb7655eb9a145fb16ab69bf67cb67725",
+    "jni_needed": [
+      "libexreader.so",
+      "libm.so",
+      "libdl.so",
+      "libc.so"
+    ],
+    "engine_needed": [
+      "libOpenSLES.so",
+      "libm.so",
+      "libdl.so",
+      "libc.so"
+    ],
+    "release_fixture_ca_and_probe_absent": true
+  },
+  "runtime_material_inspection": {
+    "run_id": 40091262964,
+    "job_id": 120864245793,
+    "diagnostic_only": true,
+    "accepted": false,
+    "producer_run": 40090470041,
+    "artifact_digest": "sha256:5d1c1e3487b1dbcf5903bef102c7a721b5edd05ad977f0ff92b693c7bb794bf6",
+    "runtimes": [
+      {
+        "name": "installed-engine",
+        "bytes": 22258128,
+        "sha256": "42bb8b94f1226f7a0d446c0c996762379d18a1e42abb03e4a0e08423947f80c2",
+        "needed": [
+          "libOpenSLES.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      },
+      {
+        "name": "installed-jni",
+        "bytes": 176496,
+        "sha256": "917a4b480cdc8d4cf02b474a1d13d43ffecc2d33881f64dea6a2fda47a54c337",
+        "needed": [
+          "libexreader.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      },
+      {
+        "name": "debug-engine",
+        "bytes": 5545208,
+        "sha256": "041ba9141a4b0c655545349ee61be8bc36abccfca872cb852a8677f6753dee8b",
+        "needed": [
+          "libOpenSLES.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      },
+      {
+        "name": "debug-jni",
+        "bytes": 40392,
+        "sha256": "182ee0175ca883aa5a3cc5d985b215cba2808df508ab7381cb341423909981f2",
+        "needed": [
+          "libexreader.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      },
+      {
+        "name": "release-engine",
+        "bytes": 5545208,
+        "sha256": "041ba9141a4b0c655545349ee61be8bc36abccfca872cb852a8677f6753dee8b",
+        "needed": [
+          "libOpenSLES.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      },
+      {
+        "name": "release-jni",
+        "bytes": 40392,
+        "sha256": "182ee0175ca883aa5a3cc5d985b215cba2808df508ab7381cb341423909981f2",
+        "needed": [
+          "libexreader.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      }
+    ],
+    "actual_cmake_cache": null,
+    "actual_cmake_options_measured": false,
+    "declared_options": {
+      "EXR_ENABLE_AUDIO": "ON (explicit workflow option)",
+      "EXR_ENABLE_AAC": "OFF (explicit workflow option)",
+      "EXR_ENABLE_MP3": "ON (source default)"
+    },
+    "desktop_reading_profile": false,
+    "frozen_jni_requirement": "CMakeLists.txt requires AUDIO and PDF when EXR_BUILD_JNI=ON; core-only configuration requires JNI=OFF. No options or frozen SDK were changed."
+  },
+  "scope_exclusions": [
+    "full G15 accessibility acceptance",
+    "TalkBack speech",
+    "physical devices",
+    "product annotation UI",
+    "explicit remote reading-state adoption UI",
+    "performance budgets",
+    "complete six-platform reader"
+  ],
+  "cancelled_metadata_revision": {
+    "source_sha": "b385f77e4c98cb9227fe765a5bb99defd5d33dd3",
+    "runs": [
+      40090641782,
+      40090641830,
+      40090641779
+    ],
+    "conclusion": "cancelled",
+    "reason": "Metadata-only follow-up duplicated live ed9 consumers; preserve ed9 as producer and stop repeated consumer execution.",
+    "granted": false
+  },
+  "delivery_net_non_document_changes": [
+    {
+      "path": ".github/workflows/reader-host-session-android.yml",
+      "revision": "b385f77e",
+      "status": "ungranted",
+      "change": "Adds actual SDK CMakeCache artifact path; cancelled producer runs did not validate it."
+    },
+    {
+      "path": "tests/reader_host_session_android/audit.py",
+      "revision": "b385f77e",
+      "status": "ungranted",
+      "change": "Adds actual cache option and installed/packaged runtime material recording; cancelled producer runs did not validate it."
+    },
+    {
+      "path": "tests/reader_host_session_android/inspect.py",
+      "revision": "06822003",
+      "status": "diagnostic_only",
+      "change": "Reads the fixed ed9 producer ZIP; executed only by diagnostic run 40091262964, not a new formal UI producer."
+    }
+  ],
   "retained_failures": [
     {
       "source_sha": "652e1f5c195d9d3fb54b31dddfcfdf8750e08e8d",
