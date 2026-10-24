@@ -152,6 +152,10 @@ import CryptoKit
         let partialSnapshotRejected = paged.top == priorTop && paged.observation.contains("\"restoring_layout\":true")
         if let wrong = paged.rows.dropFirst().first { layout(wrong.id) }
         let stillRestoring = paged.observation.contains("\"restoring_layout\":true")
+        let retryDeadline = Date().addingTimeInterval(1)
+        while !paged.needsScroll && Date() < retryDeadline { RunLoop.current.run(until: Date().addingTimeInterval(0.01)) }
+        let requestsRealRetry = paged.needsScroll && paged.restoreKey == chosen.id
+        paged.didScroll(revision: paged.restoreRevision)
         let beforePrependEpoch = paged.geometryRevision
         paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: beforePrependEpoch)
         settlePage()
@@ -159,7 +163,7 @@ import CryptoKit
         paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: beforePrependEpoch)
         let oldPrependFrameRejected = paged.observation.contains("\"restoring_layout\":true")
         acknowledge()
-        try check("layout_acknowledges_exact_restored_source", preScrollRejected && sameKeyOldEpochRejected && partialSnapshotRejected &&
+        try check("layout_acknowledges_exact_restored_source", preScrollRejected && sameKeyOldEpochRejected && partialSnapshotRejected && requestsRealRetry &&
             stillRestoring && prepended && oldPrependFrameRejected && paged.top == chosen.key &&
             !paged.observation.contains("\"restoring_layout\":true"))
         let terminal = try queue.sync { try catalog.shelf(query: "", anchor: nil, before: true) }
