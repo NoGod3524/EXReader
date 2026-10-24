@@ -86,6 +86,11 @@ final class SessionController {
         String[] roles={"txt","epub","pdf","cbz"};int[] formats={1,4,8,9};
         JSONObject manifest;try(InputStream in=context.getAssets().open("reading/manifest.json")){manifest=new JSONObject(new String(in.readAllBytes(),StandardCharsets.UTF_8));}
         JSONArray books=new JSONArray();String database=new File(folder,"sdk.sqlite").getAbsolutePath();
+        if(!sender)for(String role:roles){
+            String key=role+":"+manifest.getJSONObject(role).getString("sha256");
+            JSONObject selected=product(()->decode(NativeProduct.inspectBook(productPath(folder),key)));if(selected.getInt("selection")!=4||selected.getInt("heads")!=1)throw new IllegalStateException("Unsafe reading metadata before SDK import");
+            JSONObject projected=product(()->decode(NativeProduct.projectBook(productPath(folder),key,selected.getString("head"),selected.getString("selected_title"))));if(projected.getInt("status")!=0)throw new IllegalStateException("Reading metadata projection refused");
+        }
         sdk(()->{
             long owner=NativeSdk.open(database);if(owner==0)throw new IllegalStateException("Reading SDK open failed");
             try{
@@ -106,10 +111,6 @@ final class SessionController {
         for(int n=0;n<4;n++){
             JSONObject book=books.getJSONObject(n);String title="Remote "+book.getString("role");
             if(sender)product(()->decode(NativeProduct.prepareBook(productPath(folder),new File(folder,"reading-metadata-"+book.getString("role")+".pending").getAbsolutePath(),book.getString("format"),book.getString("sha"),book.getLong("bytes"),title,"云端作者",title)));
-            else{
-                JSONObject selected=product(()->decode(NativeProduct.inspectBook(productPath(folder),book.getString("key"))));if(selected.getInt("selection")!=4||selected.getInt("heads")!=1)throw new IllegalStateException("Unsafe reading metadata");
-                JSONObject projected=product(()->decode(NativeProduct.projectBook(productPath(folder),book.getString("key"),selected.getString("head"),selected.getString("selected_title"))));if(projected.getInt("status")!=0)throw new IllegalStateException("Reading metadata projection refused");
-            }
             JSONObject attached=product(()->decode(NativeProduct.attach(productPath(folder),book.getString("format"),book.getString("sha"),book.getLong("bytes"),book.getLong("sdk_id"),book.getString("location"),title,"云端作者",title)));if(attached.getInt("status")!=0)throw new IllegalStateException("Reading mapping refused");
         }
         readingFont(folder);Files.write(new File(folder,"reading-books.json").toPath(),saved.toString(2).getBytes(StandardCharsets.UTF_8));
