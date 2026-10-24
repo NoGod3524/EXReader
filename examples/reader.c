@@ -233,6 +233,7 @@ static void product_shelf_dispatch(void);
 static void product_shelf_schedule(int direction,int reset);
 static void product_shelf_edges(void);
 static void product_shelf_accept(host_job *job);
+static void product_shelf_snapshot_changed(void);
 static void product_shelf_search_changed(void);
 static LRESULT CALLBACK product_shelf_procedure(HWND,UINT,WPARAM,LPARAM);
 #endif
@@ -643,12 +644,18 @@ static exr_status reload_shelf(void) {
   g.shelf = books;
   g.shelf_count = count;
   if (g.books) {
+#ifdef EXR_READER_PRODUCT_CATALOG
+    product_shelf_snapshot_changed();
+#endif
     SendMessageW(g.books, LB_RESETCONTENT, 0, 0);
     for (i = 0; i < count; i++) {
       wchar_t line[512];
       shelf_display(&books[i], line, 512);
       SendMessageW(g.books, LB_ADDSTRING, 0, (LPARAM)line);
     }
+#ifdef EXR_READER_PRODUCT_CATALOG
+    product_shelf_snapshot_changed();
+#endif
   }
   return EXR_OK;
 }

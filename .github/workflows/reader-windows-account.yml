@@ -122,7 +122,7 @@ jobs:
         run: python3 tests/windows_host/check_shelf_worker.py --candidate build/account-host/EXReaderShelfReview.exe --package build/account-package/EXReader --output build/account-worker5
       - name: Original thirteen 2202-book bookshelf UI checks
         if: ${{ github.event.inputs.account_only != 'true' }}
-        run: python3 tests/windows_host/check_shelf_ui.py --candidate build/account-package/EXReader/EXReader.exe --seed build/account-host/reader-windows-shelf-seed.exe --package build/account-package/EXReader --output build/account-shelf-ui
+        run: python3 tests/reader_windows_account/run_retained_shelf.py --candidate build/account-package/EXReader/EXReader.exe --seed build/account-host/reader-windows-shelf-seed.exe --package build/account-package/EXReader --output build/account-shelf-ui
       - name: Retained typed metadata edit and recovery checks
         if: ${{ github.event.inputs.account_only != 'true' }}
         run: python3 tests/windows_host/check_metadata_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --command-consumer build/account-command-consumer/command-consumer.exe --output build/account-metadata-ui
