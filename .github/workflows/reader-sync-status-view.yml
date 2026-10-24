@@ -102,37 +102,44 @@ jobs:
       - name: Build and install revisions, sync, session and the status view package
         run: |
           set -o pipefail
+          extra=""
+          if [ "$RUNNER_OS" = macOS ]; then extra=";$EXR_SDK_PREFIX"; fi
+          base="$WS/build/product-stage;$WS/build/webdav-stage$extra"
           cmake -S apps/reader/revisions -B build/revisions -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DREADER_PRODUCT_PREFIX="$WS/build/product-stage" \
+            -DCMAKE_PREFIX_PATH="$base" \
             -DCMAKE_INSTALL_PREFIX="$WS/build/revisions-stage" 2>&1 | tee build/logs/revisions.log
           cmake --build build/revisions 2>&1 | tee -a build/logs/revisions.log
           cmake --install build/revisions 2>&1 | tee -a build/logs/revisions.log
-          extra=""
-          if [ "$RUNNER_OS" = macOS ]; then extra=";$EXR_SDK_PREFIX"; fi
-          echo "CMAKE_PREFIX_PATH=$WS/build/product-stage;$WS/build/webdav-stage;$WS/build/revisions-stage$extra" >> "$GITHUB_ENV"
+          base="$base;$WS/build/revisions-stage"
           cmake -S apps/reader/sync -B build/sync -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$base" \
             -DCMAKE_INSTALL_PREFIX="$WS/build/sync-stage" 2>&1 | tee build/logs/sync.log
           cmake --build build/sync 2>&1 | tee -a build/logs/sync.log
           cmake --install build/sync 2>&1 | tee -a build/logs/sync.log
-          echo "CMAKE_PREFIX_PATH=$WS/build/product-stage;$WS/build/webdav-stage;$WS/build/revisions-stage;$WS/build/sync-stage$extra" >> "$GITHUB_ENV"
+          base="$base;$WS/build/sync-stage"
           cmake -S apps/reader/session -B build/session -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$base" \
             -DCMAKE_INSTALL_PREFIX="$WS/build/session-stage" 2>&1 | tee build/logs/session.log
           cmake --build build/session 2>&1 | tee -a build/logs/session.log
           cmake --install build/session 2>&1 | tee -a build/logs/session.log
-          echo "CMAKE_PREFIX_PATH=$WS/build/product-stage;$WS/build/webdav-stage;$WS/build/revisions-stage;$WS/build/sync-stage;$WS/build/session-stage$extra" >> "$GITHUB_ENV"
+          base="$base;$WS/build/session-stage"
           cmake -S apps/reader/sync-status-view -B build/status-view -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$base" \
             -DCMAKE_INSTALL_PREFIX="$WS/build/status-view-stage" 2>&1 | tee build/logs/status-view.log
           cmake --build build/status-view 2>&1 | tee -a build/logs/status-view.log
           cmake --install build/status-view 2>&1 | tee -a build/logs/status-view.log
-          echo "CMAKE_PREFIX_PATH=$WS/build/product-stage;$WS/build/webdav-stage;$WS/build/revisions-stage;$WS/build/sync-stage;$WS/build/session-stage;$WS/build/status-view-stage$extra" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=$base;$WS/build/status-view-stage" >> "$GITHUB_ENV"
       - name: Build the installed independent consumers
         run: |
           set -o pipefail
           cmake -S tests/reader_revisions/consumer -B build/revision-consumer -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/logs/revision-consumer.log
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
+            2>&1 | tee build/logs/revision-consumer.log
           cmake --build build/revision-consumer 2>&1 | tee -a build/logs/revision-consumer.log
           cmake -S tests/reader_sync_status_view/consumer -B build/status-view-consumer -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/logs/status-view-consumer.log
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
+            2>&1 | tee build/logs/status-view-consumer.log
           cmake --build build/status-view-consumer --verbose 2>&1 | tee -a build/logs/status-view-consumer.log
       - name: Actual native TLS status transitions, paging, lifetimes and storage invariance
         run: |
