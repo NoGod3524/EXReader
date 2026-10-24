@@ -103,3 +103,43 @@ cmake -S tests/reader_tts_windows/consumer -B build/consumer -G Ninja \
   Actions 里 `evidence/sapi-voices.txt` 记录了 runner 的真实声音清单。
 - 宿主接线、朗读 UI、分块策略（何时切块、块大小）由 root 在共同源码里做。
 - 共享实现缺陷（若有）只交最小复现与建议补丁，不越界修改 SDK、宿主或其它包。
+## 云端验收（同源工件，2026-10-24）
+
+| 项 | 值 |
+| --- | --- |
+| 受测源码 | `62fd2967dd742e9139ed43d327f9dea6273bd84a`（分支 `codex/reader-tts-windows`） |
+| 运行 | run `40130594713` attempt 1，结论 success；作业 `tts (windows-2022)` #120981281947、`same-source report` #120981525053 |
+| 运行器 | windows-2022 · Windows Server 2022 x64 · ImageOS win22 · ImageVersion 20261012.333.1 · MSVC 19.44.35229.0 · CMake 3.31.6 |
+| 逐项检查 | 208 / 208 通过（basic 45、speak 22、unicode 18、limits 27、control 27、chunks 25、overflow 9、service 7、memory 17、close 11），每项具名 pass/fail 见工件里的 `evidence/logs/*.stdout.log` |
+| 生产者工件 | id 12574299504 · 8 051 116 B · `sha256:8585dd19…8452c10d` · 有效至 2027-01-22T20:37:14Z |
+| 汇总工件 | id 12573848311 · 1 916 B · `sha256:f98a5d36…18d4c25` · 有效至 2027-01-22T20:37:14Z |
+| 严格复核 | dispatch run `40130774683`（作业 `retrospective verification` #120981827889）：重新下载两个 ZIP、重算摘要、绑定生产者日志、核对报告身份与安装树，accepted=true；复核工件 id 12574078072 · 8 077 625 B · `sha256:5075c2e7…7fccd2f` |
+| 消费者 | C `tts-consumer.exe` `sha256:37afe221…60358569`；C++ `tts-probe.exe` `sha256:e9b5af15…8316e49`（独立可执行，仅链接安装后的包） |
+| 安装树 | 8 个文件：两个头、`lib/reader_tts.lib`(84 078 B)、四个 CMake 包文件、许可证 |
+
+真实合成（同一路径写出 16 bit/22 050 Hz/单声道 PCM）：
+
+| 文件 | 字节 | 时长 |
+| --- | ---: | ---: |
+| speak.wav（400 B 文本，rate 1.0） | 1 092 808 | 24.78 s |
+| unicode.wav（CJK+emoji+组合符+RTL） | 248 934 | 5.64 s |
+| chunk0/1/2.wav（各 1 000 B，rate 1.5） | 2 757 440 / 2 767 580 / 2 754 570 | 62.5 / 62.8 / 62.5 s |
+| probe.wav（C++ probe，rate 1.25） | 764 800 | 17.34 s |
+
+运行器上真实存在两个 SAPI 声音（Microsoft David/Zira Desktop），清单见工件 `evidence/sapi-voices.txt`。
+
+### 本环境未覆盖
+
+- 听感判断、物理音频设备播放（runner 无音频端点，全部合成走包内 WAV sink）。
+- 引擎 RANGE 事件：该 runner 上 SAPI 把语音写到文件时既不产生 word-boundary 事件
+  （`GetEvents` 返回 S_FALSE），也不更新 `GetStatus` 的词位置，因此能力位按设计保持清除；
+  UTF-16→UTF-8 的字节换算由 `reader_tts_windows_debug_map_utf16` 的 6 个具名用例覆盖
+  （ASCII、双字节、CJK、代理对、混合、非法 UTF-8）。接真实音频端点后需重跑 RANGE 覆盖。
+- 暂停期间的音频推进：文件 sink 比实时快得多，暂停时无法观察推进，只验证状态机与事件静默。
+- 宿主接线、朗读 UI 与分块策略由 root 在共同源码里做。
+
+### 保留的原始失败
+
+22 个失败运行全部保留在 Actions 历史中（编译、事件 sink 的 0xC0000005、无声明的词位置、
+harness/夹具自身缺陷等），逐条 id 与原因见 `docs/validation/reader-tts-windows.json` 的
+`original_failures`；没有删除断言、换语料或把真实失败改成预期。
