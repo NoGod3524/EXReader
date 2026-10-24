@@ -44,11 +44,29 @@ final class EXReaderA11yAuditTests: XCTestCase {
         return target
     }
 
+    /// One atomic tree read per call. Reading `label`/`isEnabled` from a query
+    /// while the host swaps Library and Reader raises "no matches found", which
+    /// aborts the case, so these helpers never touch a live element.
+    private func snapshotIndex() -> [String: XCUIElementSnapshot]? {
+        guard let snapshot = try? app.snapshot() else { return nil }
+        var index: [String: XCUIElementSnapshot] = [:]
+        func walk(_ node: XCUIElementSnapshot) {
+            if !node.identifier.isEmpty && index[node.identifier] == nil { index[node.identifier] = node }
+            for child in node.children { walk(child) }
+        }
+        walk(snapshot)
+        return index
+    }
+
     private func axText(_ identifier: String) -> String {
-        let target = element(identifier)
-        guard target.exists else { return "" }
-        if !target.label.isEmpty { return target.label }
-        return (target.value as? String) ?? ""
+        guard let node = snapshotIndex()?[identifier] else { return "" }
+        if !node.label.isEmpty { return node.label }
+        return (node.value as? String) ?? ""
+    }
+
+    private func axEnabled(_ identifier: String) -> Bool? {
+        guard let node = snapshotIndex()?[identifier] else { return nil }
+        return node.isEnabled
     }
 
     private func shelfRows() -> XCUIElementQuery {
@@ -72,15 +90,20 @@ final class EXReaderA11yAuditTests: XCTestCase {
     // MARK: - Settling
 
     private func idleIdentity() -> String {
-        if element("reader.page").exists {
-            guard !element("reader.busy").exists, element("reader.next").isEnabled else { return "" }
-            let location = axText("reader.location")
-            guard !location.isEmpty else { return "" }
-            return "reader|" + location + "|" + axText("reader.font.value") + "|" + axText("reader.state")
+        guard let index = snapshotIndex() else { return "" }
+        func text(_ identifier: String) -> String {
+            guard let node = index[identifier] else { return "" }
+            return node.label.isEmpty ? ((node.value as? String) ?? "") : node.label
         }
-        if element("library.title").exists {
-            guard !element("library.busy").exists, element("library.import.epub").isEnabled else { return "" }
-            let status = axText("library.status")
+        if index["reader.page"] != nil {
+            guard index["reader.busy"] == nil, index["reader.next"]?.isEnabled == true else { return "" }
+            let location = text("reader.location")
+            guard !location.isEmpty else { return "" }
+            return "reader|" + location + "|" + text("reader.font.value") + "|" + text("reader.state")
+        }
+        if index["library.title"] != nil {
+            guard index["library.busy"] == nil, index["library.import.epub"]?.isEnabled == true else { return "" }
+            let status = text("library.status")
             guard !status.isEmpty else { return "" }
             return "library|\(bookCount())|" + status
         }
@@ -166,7 +189,7 @@ final class EXReaderA11yAuditTests: XCTestCase {
     private func importFixture(_ identifier: String, expects: [String], timeout: TimeInterval = 300) {
         for attempt in 1...2 {
             let button = waitElement(identifier, 120)
-            XCTAssertTrue(button.isEnabled, identifier + " must be enabled for the audited import")
+            XCTAssertEqual(axEnabled(identifier), true, identifier + " must be enabled for the audited import")
             button.tap()
             if waitUntil(20, { self.importLeftIdle() }) { break }
             print("EXR_A11Y_TAP_RETRY import " + identifier + " attempt=" + String(attempt))
@@ -324,7 +347,7 @@ final class EXReaderA11yAuditTests: XCTestCase {
                           "a slow import must expose its cancel control")
             capture("library.busy", screenshot: "a11y-05-library-busy",
                     detail: ["busy_text": axText("library.busy"),
-                             "cancel_enabled": element("library.cancel").isEnabled])
+                             "cancel_enabled": axEnabled("library.cancel") ?? false])
             waitElement("library.cancel").tap()
             XCTAssertTrue(waitText("library.status", contains: "已取消", timeout: 300),
                           "cancel must report 已取消")
