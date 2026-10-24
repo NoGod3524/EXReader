@@ -24,6 +24,22 @@ PATTERN_IDS = {
     "LegacyIAccessiblePattern": 10018,
 }
 
+PATTERN_AVAILABILITY = {
+    "InvokePattern": 30031,
+    "SelectionPattern": 30037,
+    "ValuePattern": 30043,
+    "RangeValuePattern": 30033,
+    "ScrollPattern": 30034,
+    "ExpandCollapsePattern": 30028,
+    "WindowPattern": 30044,
+    "SelectionItemPattern": 30036,
+    "TablePattern": 30038,
+    "TextPattern": 30040,
+    "TogglePattern": 30041,
+    "TransformPattern": 30042,
+    "LegacyIAccessiblePattern": 30090,
+}
+
 PROBE_ORDER = [
     "ValuePattern",
     "TextPattern",
@@ -181,17 +197,37 @@ class Uia(object):
         except Exception:
             return []
 
+    def _available(self, element, property_id):
+        """Read one IsXxxPatternAvailable property; True only for a real bool."""
+        try:
+            value = element.GetCurrentPropertyValue(property_id)
+        except Exception:
+            return None
+        if isinstance(value, bool):
+            return value
+        inner = getattr(value, "value", None)
+        if isinstance(inner, bool):
+            return inner
+        if isinstance(inner, int):
+            return bool(inner)
+        if isinstance(value, int):
+            return bool(value)
+        return None
+
     def patterns(self, control):
-        """Probe which control patterns the element actually answers."""
+        """Which control patterns this element actually advertises.
+
+        Availability comes from the documented IsXxxPatternAvailable properties;
+        GetCurrentPattern alone is not a discriminator because a client can get a
+        pattern pointer for an element that does not implement it.
+        """
         found = []
         element = self._raw(control)
         if element is not None:
             for name in PROBE_ORDER:
-                try:
-                    element.GetCurrentPattern(pattern_id(name))
+                available = self._available(element, PATTERN_AVAILABILITY[name])
+                if available is True:
                     found.append(name)
-                except Exception:
-                    continue
             return found
         for name in PROBE_ORDER:
             try:

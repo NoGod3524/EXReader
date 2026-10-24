@@ -31,6 +31,7 @@ class Session(object):
         self.by_hwnd = {}
         self.last_capture = None
         self.transport_probe = {}
+        self.focus_recoveries = 0
 
     # -- identity -------------------------------------------------------------
     def refresh_names(self):
@@ -106,12 +107,40 @@ class Session(object):
         return names
 
     # -- keyboard -------------------------------------------------------------
+    def recover_focus(self, reason):
+        """Restore a defined keyboard focus after the product loses it entirely.
+
+        The loss is recorded by its own check; this call exists so the rest of
+        the audit can still be measured on the same source.
+        """
+        before = self.focus_hwnd()
+        after = w32.attach_and_focus(self.host.hwnd)
+        self.focus_recoveries += 1
+        self.trace.event("focus_recovery", {"reason": reason, "focus_before": before,
+                                           "focus_after": after,
+                                           "count": self.focus_recoveries})
+        return after
+
+    def ensure_focus(self, reason):
+        """Keep the audit able to send keys: recover only when focus is lost."""
+        if self.focus_hwnd():
+            return True
+        if self.recover_focus(reason):
+            return True
+        self.trace.event("focus_unrecoverable", {"reason": reason})
+        return False
+
     def tab_step(self, backward=False, note=None):
         """One Tab press, retried once with a fresh foreground if focus is stuck."""
         modifiers = ("shift",) if backward else ()
         before = self.focus_name()
+        if before == "none":
+            self.ensure_focus("focus was lost before a Tab")
         self.kb.press("tab", modifiers, note=note)
         after = self.focus_name()
+        if after == "none":
+            self.ensure_focus("Tab did not restore focus")
+            after = self.focus_name()
         if after == before and before != "none":
             self.kb.ready()
             self.kb.press("tab", modifiers, note="retry after re-activating the host")

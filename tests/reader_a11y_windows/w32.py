@@ -422,6 +422,26 @@ def bring_to_front(hwnd):
     return foreground() == hwnd
 
 
+def attach_and_focus(hwnd, child=0):
+    """Give *child* (or *hwnd*) the keyboard focus for its own UI thread.
+
+    SetFocus only works inside the owning thread, so the audit attaches to the
+    host input queue for the call and detaches again. This is a harness
+    recovery, never a user input path: the trace records every use.
+    """
+    target_thread, _pid = thread_id(hwnd)
+    our_thread = int(kernel32.GetCurrentThreadId())
+    if not target_thread:
+        return 0
+    attached = bool(user32.AttachThreadInput(our_thread, target_thread, True))
+    try:
+        user32.SetFocus(child or hwnd)
+    finally:
+        if attached:
+            user32.AttachThreadInput(our_thread, target_thread, False)
+    return focus_of(hwnd)
+
+
 def send_key(vk, up=False, unicode_char=None):
     """Inject one key event with SendInput (real hardware-level input)."""
     item = INPUT()
