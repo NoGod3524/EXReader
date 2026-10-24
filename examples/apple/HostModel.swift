@@ -45,6 +45,7 @@ final class HostShelf: ObservableObject {
     private var lastProbeMovement: TimeInterval?
     private var pendingPage: (() -> Void)?
     private var pendingPageWork: DispatchWorkItem?
+    private var restoreRetryWork: DispatchWorkItem?
     // Even epochs precede the native scroll; odd epochs follow its issue.
     var geometryRevision: Int { restoreRevision * 2 + (issuedRestoreRevision == restoreRevision ? 1 : 0) }
     var needsScroll: Bool { awaitingLayoutKey != nil && issuedRestoreRevision != restoreRevision }
@@ -72,7 +73,7 @@ final class HostShelf: ObservableObject {
         selected = defaults.string(forKey: "EXRShelfSelected")
         if let data = defaults.data(forKey: "EXRShelfTop") { top = try? JSONDecoder().decode(HostShelfKey.self, from: data) }
     }
-    deinit { debounce?.cancel(); pendingSave?.cancel(); pendingPageWork?.cancel() }
+    deinit { debounce?.cancel(); pendingSave?.cancel(); pendingPageWork?.cancel(); restoreRetryWork?.cancel() }
 
     func connect(_ load: @escaping Loader) {
         guard loader == nil else { return }
@@ -83,6 +84,7 @@ final class HostShelf: ObservableObject {
     func search() {
         debounce?.cancel()
         pendingPageWork?.cancel(); pendingPage = nil
+        restoreRetryWork?.cancel()
         query = String(String.UnicodeScalarView(query.precomposedStringWithCanonicalMapping.unicodeScalars.prefix(256)))
         generation += 1
         rows = []; visible = []; top = nil; awaitingLayoutKey = nil; before = false; after = false; loading = true
@@ -101,6 +103,7 @@ final class HostShelf: ObservableObject {
 
     private func reset(anchor: HostShelfKey?) {
         pendingPageWork?.cancel(); pendingPage = nil
+        restoreRetryWork?.cancel()
         generation += 1; loading = false; error = ""
         rows = []; visible = []; awaitingLayoutKey = nil; before = false; after = false
         request(anchor: anchor, previous: false, inclusive: true, replacing: true)
@@ -187,6 +190,24 @@ final class HostShelf: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
     }
 
+    private func scheduleRestoreRetry() {
+        guard let target = awaitingLayoutKey, issuedRestoreRevision == restoreRevision else { return }
+        restoreRetryWork?.cancel()
+        let token = generation, revision = restoreRevision
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.generation == token, self.restoreRevision == revision,
+                  self.awaitingLayoutKey == target, !self.loading else { return }
+            if let movement = self.lastProbeMovement, ProcessInfo.processInfo.systemUptime - movement < 0.15 {
+                self.scheduleRestoreRetry(); return
+            }
+            // An early native scroll can be superseded by the content-size
+            // update. Reissue it after motion stops; only real layout can ack.
+            self.restoreRevision += 1
+        }
+        restoreRetryWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
+    }
+
     func measureProbe(key: String?, frame: CGRect, size: CGSize, revision: Int) {
         guard revision == geometryRevision else { return }
         if probeRevision != revision {
@@ -265,13 +286,14 @@ final class HostShelf: ObservableObject {
                 // only real visible target + terminal-row geometry.
                 guard let target = positions[awaitingLayoutKey], target.maxY > 0, target.minY < size.height,
                       let last = rows.last, let tail = positions[last.id], tail.maxY > 0,
-                      tail.maxY <= size.height + 1 else { return }
+                      tail.maxY <= size.height + 1 else { scheduleRestoreRetry(); return }
                 if after {
                     if !loading { request(anchor: last.key, previous: false, inclusive: false, replacing: false) }
                     return
                 }
                 restoreKey = first.key
             }
+            restoreRetryWork?.cancel()
             self.awaitingLayoutKey = nil
         }
         if firstLayoutUptime == nil, !loading, generation == appliedGeneration {
