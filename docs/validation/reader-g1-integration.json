@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "state": "candidate_not_yet_executed",
+  "branch": "codex/reader-g1-integration",
+  "start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "inputs": "../../tests/reader_g1_integration/inputs.json",
+  "amendments": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
+  "workflow": ".github/workflows/reader-g1-integration.yml",
+  "tested_source": null,
+  "runs": [],
+  "scope": "planned three-desktop 18-module composition and retained Windows native host scopes",
+  "cycle_complete": false,
+  "complete_product": false,
+  "gtk_accepted": false,
+  "android_accepted": false,
+  "ios_accepted": false,
+  "performance_accepted": false,
+  "screen_reader_accepted": false,
+  "physical_device_execution": false,
+  "published": false
+}

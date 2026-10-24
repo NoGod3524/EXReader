@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "inputs": [
+    {
+      "id": "G01",
+      "delivery": "8995ffbf421cf070e29c58f50f49d0a682fdca92",
+      "prior_run": 40113587443,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G02",
+      "delivery": "46cab80997a3c2a708564181fb436b754d8d4ddf",
+      "prior_run": 40092824048,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G03",
+      "delivery": "e1d306e2e03ffafc5c1a121c63cec6401d5201f5",
+      "prior_run": 40084536016,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G04",
+      "delivery": "0527476aed2f099e19bbc7dbeb8271dc662a3636",
+      "prior_run": 40082509106,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G05",
+      "delivery": "0f0728b8abfe8245382d40747bc73f657c717b52",
+      "prior_run": 40087054573,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G06",
+      "delivery": "1f04538dec1595b4af1373915de344766dda284f",
+      "prior_run": 40087396501,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G07",
+      "delivery": "50f158d2d049f957c7f6c9a44013596e474e1b67",
+      "prior_run": 40079870542,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G08",
+      "delivery": "8edfb28ab9853374073be1c6564ee2e277419653",
+      "prior_run": 40081552526,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G09",
+      "delivery": "b7bdd62d02a6c85ab57ab7bc36b8b8212dfe090b",
+      "prior_run": 40095313750,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G10",
+      "delivery": "4d824967bc696320cd52246231ad556475b9aa28",
+      "prior_run": 40086319655,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G11",
+      "delivery": "ae504e504710554719376d88c8c317d12d41db95",
+      "prior_run": 40086971620,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G12",
+      "delivery": "881ab6216a158d76b7c5bbbaf765ea3363291d4c",
+      "prior_run": 40084309431,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G13",
+      "delivery": "10117b08879624d5142e974d668ba2b068fbb81a",
+      "prior_run": 40082300842,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G14",
+      "delivery": "faa6b59edbcce4670fae904acad986fff29591ce",
+      "prior_run": 40079696724,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G15",
+      "delivery": "da243829feaccf664ae75b595ba1e6ea7647ee76",
+      "prior_run": 40082957400,
+      "prior_run_is_not_common_source_evidence": true
+    },
+    {
+      "id": "G16",
+      "delivery": "c2e172d1da9352bee9e0b49003ca25f7e35aa829",
+      "prior_run": 40096206815,
+      "prior_run_is_not_common_source_evidence": true
+    }
+  ],
+  "amendments": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
+  "new_paths": [
+    "tests/reader_g1_integration/",
+    ".github/workflows/reader-g1-integration.yml",
+    "docs/READER-G1-INTEGRATION.md",
+    "docs/validation/reader-g1-integration.json"
+  ],
+  "complete_product": false
+}
