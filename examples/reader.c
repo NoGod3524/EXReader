@@ -33,6 +33,13 @@
 #ifdef EXR_READER_DESKTOP_METADATA
 #include <reader_metadata.h>
 #endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+#include <bcrypt.h>
+#include <reader_session.h>
+#include <reader_projection.h>
+#include <exr_credentials.h>
+#include <exr_sideload.h>
+#endif
 
 #define HOST_PATH 4096
 #define HOST_IMPORT_LIMIT ((size_t)96 * 1024 * 1024)
@@ -56,7 +63,10 @@ enum {
   IDC_PAGE, IDC_PAGE_LABEL, IDC_STATUS, IDC_SHELF_SEARCH, IDC_SHELF_REFRESH,
   IDC_METADATA_BUTTON, IDC_METADATA_TITLE, IDC_METADATA_AUTHOR, IDC_METADATA_FAVORITE,
   IDC_METADATA_SAVE, IDC_METADATA_CANCEL, IDC_METADATA_RETRY, IDC_METADATA_DISCARD,
-  IDC_METADATA_MESSAGE
+  IDC_METADATA_MESSAGE,
+  IDC_ACCOUNT_BUTTON, IDC_ACCOUNT_ROOT, IDC_ACCOUNT_USER, IDC_ACCOUNT_PASSWORD, IDC_ACCOUNT_REMEMBER,
+  IDC_ACCOUNT_APPLY, IDC_ACCOUNT_SYNC, IDC_ACCOUNT_CANCEL, IDC_ACCOUNT_RETRY, IDC_ACCOUNT_FORGET,
+  IDC_ACCOUNT_CLOSE, IDC_ACCOUNT_MESSAGE, IDC_ACCOUNT_DETAIL
 };
 
 #define WM_HOST_COMPLETE (WM_APP + 1)
@@ -151,6 +161,9 @@ typedef struct {
   char metadata_key[72];
   int64_t metadata_book;
   int metadata_running,metadata_recovery,metadata_editable,metadata_favorite_value;
+#endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+  HWND account_button;
 #endif
   wchar_t settings_path[HOST_PATH];
   wchar_t evidence_dir[HOST_PATH];
@@ -782,7 +795,11 @@ static void note_comment_write(const char *utf8) {
 
 enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB_NOTE_UPDATE, JOB_ROLLBACK, JOB_HIT, JOB_SAVE,
   JOB_PRODUCT_ATTACH, JOB_PRODUCT_REPAIR, JOB_PRODUCT_DELETE, JOB_PRODUCT_SHELF,
-  JOB_METADATA_PREPARE, JOB_METADATA_SAVE, JOB_METADATA_RETRY, JOB_METADATA_DISCARD };
+  JOB_METADATA_PREPARE, JOB_METADATA_SAVE, JOB_METADATA_RETRY, JOB_METADATA_DISCARD,
+  JOB_ACCOUNT_LOAD, JOB_ACCOUNT_SET, JOB_ACCOUNT_FORGET, JOB_ACCOUNT_STAGE, JOB_ACCOUNT_RECEIVE };
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+static int account_job_kind(int kind) { return kind>=JOB_ACCOUNT_LOAD && kind<=JOB_ACCOUNT_RECEIVE; }
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
 static int metadata_job_kind(int kind) { return kind>=JOB_METADATA_PREPARE && kind<=JOB_METADATA_DISCARD; }
 #endif
@@ -859,6 +876,10 @@ struct host_job {
   char metadata_key[72];
   int metadata_favorite,metadata_conflict,metadata_has_view,metadata_has_pending,metadata_committed;
 #endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+  int account_action,account_remember;
+  char *account_root,*account_user,*account_password;
+#endif
 };
 
 static int job_cancel_flag(host_job *job) {
@@ -906,6 +927,11 @@ static void job_free(host_job *job) {
   free(job->metadata_title_value);free(job->metadata_author_value);
   free(job->metadata_input_title);free(job->metadata_input_author);
 #endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+  free(job->account_root);
+  if(job->account_user) { SecureZeroMemory(job->account_user,strlen(job->account_user));free(job->account_user); }
+  if(job->account_password) { SecureZeroMemory(job->account_password,strlen(job->account_password));free(job->account_password); }
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(job->product_cursors) for(size_t i=0;i<job->product_book_count;i++) {
     free(job->product_cursors[i].key);free(job->product_cursors[i].sort_title);
@@ -950,6 +976,9 @@ static void job_start(host_job *job) {
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
       && !metadata_job_kind(job->kind)
+#endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+      && !account_job_kind(job->kind)
 #endif
   ) {
   dragging = 0;
@@ -1914,6 +1943,9 @@ static exr_status job_import(host_job *job) {
 #ifdef EXR_READER_DESKTOP_METADATA
 #include "../apps/reader/desktop/windows_metadata.inc"
 #endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+#include "../apps/reader/desktop/windows_accounts.inc"
+#endif
 static unsigned __stdcall job_thread(void *context) {
   host_job *job = context;
   job_pause(job);
@@ -1982,6 +2014,10 @@ static exr_status job_run(host_job *job) {
     case JOB_METADATA_PREPARE: case JOB_METADATA_SAVE: case JOB_METADATA_RETRY: case JOB_METADATA_DISCARD:
       return metadata_job_run(job);
 #endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+    case JOB_ACCOUNT_LOAD: case JOB_ACCOUNT_SET: case JOB_ACCOUNT_FORGET: case JOB_ACCOUNT_STAGE: case JOB_ACCOUNT_RECEIVE:
+      return account_job_run(job);
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
     case JOB_PRODUCT_ATTACH: case JOB_PRODUCT_REPAIR: case JOB_PRODUCT_DELETE: case JOB_PRODUCT_SHELF: return product_job_run(job);
 #endif
@@ -2027,6 +2063,9 @@ static HWND make_static(HWND parent, int id, const wchar_t *text) {
 #ifdef EXR_READER_DESKTOP_METADATA
 #include "../apps/reader/desktop/windows_metadata_ui.inc"
 #endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+#include "../apps/reader/desktop/windows_accounts_ui.inc"
+#endif
 
 static void create_controls(HWND parent) {
   g.import_label = make_static(parent, IDC_IMPORT_LABEL, L"导入路径");
@@ -2062,6 +2101,9 @@ static void create_controls(HWND parent) {
   g.shelf_refresh=make_button(parent,IDC_SHELF_REFRESH,L"刷新");
 #ifdef EXR_READER_DESKTOP_METADATA
   g.metadata_button=make_button(parent,IDC_METADATA_BUTTON,L"详情");
+#endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+  g.account_button=make_button(parent,IDC_ACCOUNT_BUTTON,L"账号");
 #endif
   g.shelf_applying=1;
   wchar_t *shelf_query=host_wide(g.shelf_query ? g.shelf_query:"",g.shelf_query ? strlen(g.shelf_query):0);
@@ -2116,6 +2158,9 @@ static void layout_controls(void) {
       MoveWindow(row[i].window, row[i].x, button_y, row[i].w, button_h, TRUE);
   }
   MoveWindow(g.shelf_label, 8, content_top, left_width - 16, 18, TRUE);
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+  MoveWindow(g.account_button, 1010, button_y, 44, button_h, TRUE);
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   MoveWindow(g.shelf_label,8,content_top,left_width-104,18,TRUE);
   MoveWindow(g.metadata_button,left_width-88,content_top-2,80,22,TRUE);
@@ -3039,9 +3084,15 @@ static void host_update_controls(void) {
 #ifdef EXR_READER_DESKTOP_METADATA
   EnableWindow(g.metadata_button,!busy && !g.closing && g.product_ready && !g.product_pending && g.shelf_count>0);
 #endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+  EnableWindow(g.account_button,!g.closing && !g.metadata_running && !g.metadata_dialog);
+#endif
 }
 
 static void handle_job_complete(host_job *job) {
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+  if(account_job_kind(job->kind)) { acct_job_accept(job);return; }
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   if(metadata_job_kind(job->kind)) { metadata_job_accept(job);return; }
 #endif
@@ -3269,6 +3320,9 @@ static void host_command(int id) {
   switch (id) {
 #ifdef EXR_READER_DESKTOP_METADATA
     case IDC_METADATA_BUTTON: metadata_edit_selected();break;
+#endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+    case IDC_ACCOUNT_BUTTON: acct_open_dialog();break;
 #endif
     case IDC_IMPORT_BUTTON: {
       wchar_t path[HOST_PATH];
@@ -4293,6 +4347,10 @@ done:
 
 static void finish_close(HWND window) {
   if (g.job || g.pending) return;
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+  /* The network worker reaches CLOSED first; the UI never waits for the network. */
+  if (acct_exit_blocked()) return;
+#endif
   KillTimer(window, 2);
   if (!save_progress()) {
     g.closing = 0;
@@ -4405,6 +4463,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if(wparam==3) { KillTimer(window,3);product_shelf_dispatch();return 0; }
       if(wparam==4) { KillTimer(window,4);if(!g.closing) settings_save();return 0; }
 #endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+      if(wparam==5) { acct_tick();return 0; }
+#endif
       if (wparam == 2 && g.closing && g.job) { ExitProcess(1); return 0; }
       if (wparam == 1 && g.drive_mode) drive_tick();
       return 0;
@@ -4415,6 +4476,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #endif
       g.closing = 1;
       KillTimer(window, 1);
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+      acct_exit();
+#endif
       if (g.pending) {
         job_release(g.pending);
         g.pending = NULL;
@@ -4463,6 +4527,11 @@ static int message_loop(void) {
 #ifdef EXR_READER_DESKTOP_METADATA
     if(g.metadata_dialog && IsDialogMessageW(g.metadata_dialog,&message)) continue;
 #endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+    if(acct.dialog && IsDialogMessageW(acct.dialog,&message)) continue;
+    if(message.message==WM_KEYDOWN && message.wParam=='A' && (GetKeyState(VK_CONTROL)&0x8000) && (GetKeyState(VK_SHIFT)&0x8000) &&
+       !acct.dialog && g.window && IsWindowEnabled(g.window)) { acct_open_dialog();continue; }
+#endif
     if (g.window && IsDialogMessageW(g.window, &message)) continue;
     TranslateMessage(&message);
     DispatchMessageW(&message);
@@ -4495,6 +4564,9 @@ static void host_cleanup(void) {
   book_clear(&g.current);
 #ifdef EXR_READER_DESKTOP_METADATA
   metadata_dialog_close();
+#endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+  acct_shutdown();
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   free(g.shelf_query);g.shelf_query=NULL;
