@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+import subprocess
 import sys
 import time
 from PIL import Image
@@ -27,6 +28,25 @@ def main():
       'diagnostic_only':os.environ.get('GTK_NAVIGATION_DIAGNOSTIC_ONLY')=='true','settings_whole_page_palette_accepted':False,
       'complete_product':False,'performance_accepted':False,'program_sha256':hashlib.sha256(host.binary.read_bytes()).hexdigest()}
     originals={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for root in (args.fixtures,args.fixed_inputs) for p in root.iterdir() if p.is_file()}
+    def launch():
+        # Establish the native test fixture before the unchanged host deadline.
+        end=time.monotonic()+10
+        while time.monotonic()<end:
+            manager=subprocess.run(['wmctrl','-m'],text=True,capture_output=True,timeout=2)
+            if manager.returncode==0 and 'Name: Openbox' in manager.stdout:break
+            time.sleep(.05)
+        else:raise TimeoutError('Openbox fixture not ready: '+manager.stdout+manager.stderr)
+        try:host.launch()
+        except BaseException:
+            for name,argv in [('window-tree',['xwininfo','-root','-tree']),('window-list',['wmctrl','-lpG']),('window-manager',['wmctrl','-m'])]:
+                data=subprocess.run(argv,text=True,capture_output=True,timeout=5);body=data.stdout+data.stderr
+                (output/(name+'.txt')).write_text(body);print(name+': '+body,flush=True)
+            matches=subprocess.run(['xdotool','search','--onlyvisible','--name','^EXReader Linux$'],text=True,capture_output=True,timeout=5)
+            print('expected_pid='+str(host.process.pid)+' title_windows='+matches.stdout,flush=True)
+            for native in matches.stdout.splitlines():
+                data=subprocess.run(['xprop','-id',native,'_NET_WM_PID','WM_NAME','WM_CLASS','WM_STATE','_NET_WM_STATE'],text=True,capture_output=True,timeout=5)
+                (output/('window-'+native+'.txt')).write_text(data.stdout+data.stderr);print(data.stdout+data.stderr,flush=True)
+            raise
     def observed(section='directory'):
         value=configparser.ConfigParser(interpolation=None);value.read(host.observe)
         return dict(value[section]) if value.has_section(section) else {}
@@ -112,7 +132,7 @@ def main():
         command('xdotool','key','--clearmodifiers','--delay','0','ctrl+shift+t')
         return wait(lambda v:v['phase']=='2' and int(v['polls'])>0,idle=False,seconds=15)
     try:
-        assert bus.init()[0];host.launch();app=bus.wait_application('exreader-linux');wait()
+        assert bus.init()[0];launch();app=bus.wait_application('exreader-linux');wait()
         book=import_book(args.fixtures/'nav3.epub');host.key('F7','ctrl+Home','ctrl+shift+Right','F11');host.paste('Existing native directory note');host.key('F8');host.wait(lambda v:v['notes']==1)
         for font in (26,28):host.key('F5');host.wait(lambda v:v['font']==font and not v['saving'])
         prior=frame();saved=storage();pixels=image('before-directory');open_directory();dialog=element('Directory and page entries',{'dialog'})
@@ -156,7 +176,7 @@ def main():
         record('background_closes_directory_without_resuming_stale_snapshot',frame()==prior and storage()==saved)
         active_directory();command('wmctrl','-ic',hex(int(host.window)));code=host.process.wait(timeout=20);host.log.close()
         record('parent_close_during_actual_scan_retires_owner_before_exit',code==0 and observed()['visible']=='0' and storage()==saved)
-        host.launch();app=bus.wait_application('exreader-linux');wait();record('real_process_reopen_has_no_directory_or_cfi_resume',observed()['visible']=='0' and storage()==saved)
+        launch();app=bus.wait_application('exreader-linux');wait();record('real_process_reopen_has_no_directory_or_cfi_resume',observed()['visible']=='0' and storage()==saved)
         import_book(args.fixtures/'nav3.epub');open_directory();record('switching_books_rebuilds_source_bound_directory',len(rows())==10 and observed()['candidate_mode']=='0');close_directory()
         record('all_navigation_original_bytes_are_unchanged',all(hashlib.sha256(Path(name).read_bytes()).hexdigest()==sha for name,sha in originals.items()))
         report.update(navigation_scope_passed=True,count=len(checks),passed=len(checks),failed=0)

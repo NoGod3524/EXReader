@@ -3,6 +3,10 @@
 分支`codex/reader-gtk-navigation-ui`从Search最终证据HEAD
 `9762a7dd4ede02b11339105ccd64b8d187f5d6bf`接续。原样引入已验F2源码
 `cbd7832b914bddcf99e06a85962d301a00b47efa`的模块与原130项消费者；共享实现未改。
+当前候选`28cc589a1f6b2600c655cd3dfceb4ddc644f1b01`的完整同源运行
+[40127001332](https://github.com/NoGod3524/EXReader/actions/runs/40127001332)在最初X11映射检查拒绝，尚未进入导航用例；
+该失败后的后续套件已取消并原样保留工件。现在明确等待Openbox测试环境就绪，并在启动失败时保存原生window tree/PID/WM属性；
+不改原30秒映射预算或PID/窗口身份匹配，不重启或重试应用。以下旧候选事实不转授给新源码。
 源码`8bf2b68dba205a63d7cdae78b2dd0f139c04ffb4`的专项
 [40124093566](https://github.com/NoGod3524/EXReader/actions/runs/40124093566)已通过导航UI29/29、
 新后端58，以及F2原130项、Search264/34和F3 20。
