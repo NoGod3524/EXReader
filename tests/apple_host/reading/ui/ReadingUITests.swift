@@ -109,6 +109,8 @@ final class ReadingUITests: XCTestCase {
     }
     func testRealTerminationBeforeCommitRequiresExplicitReplay() {
         openFixture(kill: "-EXRKillReadingAfterSave"); records(); tap("reading.add-bookmark")
+        XCTAssertTrue(wait { self.text("reading.native-boundary") == "private-save" })
+        app.terminate()
         XCTAssertTrue(app.wait(for: .notRunning, timeout: 45)); mark("real-private-save-process-exit")
         launch(fresh: false); records()
         XCTAssertTrue(element("reading.pending").exists); XCTAssertFalse(element("reading.kind.0").exists)
@@ -119,6 +121,8 @@ final class ReadingUITests: XCTestCase {
     }
     func testRealTerminationAfterCommitReplaysExactlyOnce() {
         openFixture(kill: "-EXRKillReadingAfterCommit"); records(); tap("reading.add-bookmark")
+        XCTAssertTrue(wait { self.text("reading.native-boundary") == "post-commit" })
+        app.terminate()
         XCTAssertTrue(app.wait(for: .notRunning, timeout: 45)); mark("real-post-commit-process-exit")
         launch(fresh: false); records()
         XCTAssertTrue(element("reading.pending").exists); XCTAssertEqual(text("reading.kind.0"), "书签"); XCTAssertFalse(element("reading.kind.1").exists)

@@ -1198,14 +1198,6 @@ final class HostReaderModel: ObservableObject {
         self.accounts = accounts
         self.accountSession = profile.flatMap { accounts?.controller(for: $0) }
         self.defaults = profile.flatMap { UserDefaults(suiteName: "org.exreader.account." + $0.id) } ?? .standard
-#if EXR_APPLE_HOST_REVIEW
-        if ProcessInfo.processInfo.arguments.contains("-EXRKillReadingAfterSave") {
-            HostReadingWorker.afterDurableSave = { _exit(73) }
-        }
-        if ProcessInfo.processInfo.arguments.contains("-EXRKillReadingAfterCommit") {
-            HostReadingWorker.afterCommit = { _exit(74) }
-        }
-#endif
     }
 
     deinit {
@@ -1617,6 +1609,21 @@ final class HostReaderModel: ObservableObject {
                 guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库尚未就绪") }
                 try self.requireBook(bookID, session: session, cancel: box)
                 let root = try self.storageFolder()
+#if EXR_APPLE_HOST_REVIEW
+                let beforeSave = HostReadingWorker.afterDurableSave, beforeCommit = HostReadingWorker.afterCommit
+                func holdAtNativeBoundary(_ boundary: String) throws {
+                    DispatchQueue.main.async { self.readingRecords.nativeBoundary = boundary }
+                    while !box.isCancelled { Thread.sleep(forTimeInterval: 0.05) }
+                    throw HostError.cancelled
+                }
+                if ProcessInfo.processInfo.arguments.contains("-EXRKillReadingAfterSave") {
+                    HostReadingWorker.afterDurableSave = { try holdAtNativeBoundary("private-save") }
+                }
+                if ProcessInfo.processInfo.arguments.contains("-EXRKillReadingAfterCommit") {
+                    HostReadingWorker.afterCommit = { try holdAtNativeBoundary("post-commit") }
+                }
+                defer { HostReadingWorker.afterDurableSave = beforeSave; HostReadingWorker.afterCommit = beforeCommit }
+#endif
                 let history = try action(session, catalog, root, box)
                 let book = try catalog.readingBook(sdkID: bookID)
                 let page = try HostReadingWorker.page(catalog: catalog, bookID: bookID, bookKey: book.key, from: cursor, cancel: box)

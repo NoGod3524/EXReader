@@ -37,12 +37,14 @@ jobs:
             -I "$sdk/include" -L "$sdk/lib" -lexreader -Xlinker -rpath -Xlinker "$sdk/lib" \
             examples/apple/*.swift bindings/swift/EXReader.swift -o build/apple-reading-diagnostic/EXReaderHost \
             2>&1 | tee build/apple-reading-diagnostic/compile.log
+          python3 tests/apple_host/reading/run_native.py --sdk "$sdk" --resources build/apple-reading-resources \
+            --output build/apple-reading-diagnostic/native
           python3 - <<'PY'
           import json, os
           from pathlib import Path
           value = {'diagnostic_only': True, 'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
                    'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
-                   'scope': 'macOS compilation only; no native/UI test grant'}
+                   'scope': 'macOS host compilation and native preflight only; no formal native/UI grant'}
           Path('build/apple-reading-diagnostic/report.json').write_text(json.dumps(value, indent=2) + '\n')
           print(json.dumps(value))
           PY
