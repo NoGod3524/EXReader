@@ -1,7 +1,7 @@
 name: Native typed product commands
 on:
   push:
-    branches: [codex/reader-commands]
+    branches: [codex/reader-commands, codex/reader-desktop-metadata]
   workflow_dispatch:
   workflow_call:
 permissions:
@@ -98,6 +98,17 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/reader_commands/check_commands.py --consumer "build/commands-consumer/command-consumer$exe" --c-consumer "build/commands-consumer/command-c-consumer$exe" --revision-consumer "build/sync-revision-consumer/revision-consumer$exe" --product-prefix build/sync-product-stage --link-map build/commands-consumer/command-link.map --build-log build/sync-logs/commands-consumer-build.log --output build/commands-evidence
+      - name: Install the desktop metadata adapter with the same product provider
+        run: |
+          cmake -S apps/reader/desktop-metadata -B build/metadata -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_WORKSPACE/build/commands-stage;$SYNC_PREFIXES" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/metadata-stage" 2>&1 | tee build/sync-logs/metadata-configure.log
+          cmake --build build/metadata --verbose 2>&1 | tee build/sync-logs/metadata-build.log
+          cmake --install build/metadata
+          cmake -S tests/reader_metadata/consumer -B build/metadata-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_WORKSPACE/build/metadata-stage;$SYNC_WORKSPACE/build/commands-stage;$SYNC_PREFIXES"
+          cmake --build build/metadata-consumer --verbose 2>&1 | tee build/sync-logs/metadata-consumer-build.log
+      - name: Installed desktop owner snapshots exact pending replay and actual process kills
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_metadata/check_metadata.py --consumer "build/metadata-consumer/metadata-consumer$exe" --c-consumer "build/metadata-consumer/metadata-c-consumer$exe" --command-consumer "build/commands-consumer/command-consumer$exe" --product-prefix build/sync-product-stage --link-map build/metadata-consumer/metadata-link.map --build-log build/sync-logs/metadata-consumer-build.log --output build/metadata-evidence
       - name: Preserve source-bound evidence and installed modules without keys
         if: always()
         uses: actions/upload-artifact@v4
@@ -112,6 +123,9 @@ jobs:
             build/commands-evidence/
             build/commands-stage/
             build/commands-consumer/command-link.map
+            build/metadata-stage/
+            build/metadata-evidence/
+            build/metadata-consumer/metadata-link.map
             !build/**/certificates/*.key
             build/sync-product-stage/
             build/sync-revision-stage/
