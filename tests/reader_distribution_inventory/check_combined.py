@@ -242,7 +242,7 @@ def assemble(fixture):
                    'linkage': 'component archives', 'active': True, 'vendor_files': [],
                    'notice_marker': None, 'archives': [],
                    'files': [{'installed': 'share/exreader/LICENSE', 'origin': 'repository',
-                              'source': 'LICENSE', 'expected': True,
+                              'path': 'LICENSE', 'source': 'LICENSE', 'expected': True,
                               'bytes': len(index['share/exreader/LICENSE']),
                               'sha256': contract.digest(index['share/exreader/LICENSE']),
                               'pinned_sha256': None}],
@@ -253,6 +253,7 @@ def assemble(fixture):
                    'when': '', 'linkage': 'private static archive', 'active': True,
                    'vendor_files': [], 'notice_marker': 'miniz', 'archives': [],
                    'files': [{'installed': LICENSES + 'miniz/LICENSE', 'origin': 'upstream',
+                              'path': '_deps/miniz-src/LICENSE',
                               'source': '_deps/miniz-src/LICENSE', 'expected': True,
                               'bytes': len(index[LICENSES + 'miniz/LICENSE']),
                               'sha256': contract.digest(index[LICENSES + 'miniz/LICENSE']),
@@ -263,7 +264,7 @@ def assemble(fixture):
         installed = []
         if section['licence']:
             installed = [{'installed': section['licence']['path'], 'origin': 'repository',
-                          'source': 'LICENSE', 'expected': True,
+                          'path': 'LICENSE', 'source': 'LICENSE', 'expected': True,
                           'bytes': section['licence']['bytes'],
                           'sha256': section['licence']['sha256'], 'pinned_sha256': None}]
         components.append({'id': section['id'], 'name': section['name'],
