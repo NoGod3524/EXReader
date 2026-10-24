@@ -26,7 +26,7 @@ REQUIRED_GROUPS = {
     "protocol-relative": 2, "encoded-separators": 4, "double-escape": 2, "path-escape": 4,
     "forbidden-scheme": 8, "unknown-scheme": 3, "bad-scheme": 5, "controls": 6,
     "invalid-utf8": 3, "overlong": 6, "authority": 8, "internal-allowed": 12,
-    "fragment-and-cfi": 6, "escapes": 6, "spaces": 3,
+    "fragment-and-cfi": 6, "escapes": 6, "spaces": 3, "escape-boundary": 11,
 }
 
 
@@ -178,6 +178,19 @@ def default_cases():
     c.append(reject("escapes", "external-backslash", "https://example.com/x\\y", "BACKSLASH"))
     c.append(host("escapes", "external-double-escape-allowed", "https://example.com/a%2520b", "https"))
     c.append(host("escapes", "external-encoded-slash-allowed", "https://example.com/a%2Fb", "https"))
+    # Component boundary: encoded controls are query data only, and a fragment
+    # escape must decode to valid UTF-8 exactly like a container path.
+    c.append(reject("escape-boundary", "external-path-cr", "https://example.com/%0D", "ENCODED_CONTROL"))
+    c.append(reject("escape-boundary", "external-path-lf", "https://example.com/a%0Ab", "ENCODED_CONTROL"))
+    c.append(reject("escape-boundary", "external-path-del", "https://example.com/%7F", "ENCODED_CONTROL"))
+    c.append(reject("escape-boundary", "external-fragment-lf", "https://example.com/#%0A", "ENCODED_CONTROL"))
+    c.append(reject("escape-boundary", "external-authority-lf", "https://exa%0Ample.com/", "ENCODED_CONTROL"))
+    c.append(reject("escape-boundary", "fragment-invalid-utf8", "#a%FF", "BAD_ESCAPE"))
+    c.append(reject("escape-boundary", "fragment-truncated-utf8", "#%E2%82", "BAD_ESCAPE"))
+    c.append(reject("escape-boundary", "fragment-overlong-utf8", "#%C0%AF", "BAD_ESCAPE"))
+    c.append(internal("escape-boundary", "unicode-raw", "#章节", "FRAGMENT"))
+    c.append(internal("escape-boundary", "unicode-encoded", "#%E7%AB%A0%E8%8A%82", "FRAGMENT"))
+    c.append(host("escape-boundary", "mailto-crlf-query", "mailto:reader@example.com?body=x%0D%0Ay", "mailto"))
     return c
 
 

@@ -79,7 +79,9 @@ typedef enum {
   READER_LINK_REASON_SPACE = 5,           /* surrounding space, or space in external */
   READER_LINK_REASON_BACKSLASH = 6,
   READER_LINK_REASON_BAD_ESCAPE = 7,      /* malformed or non-UTF-8 percent escape */
-  READER_LINK_REASON_ENCODED_CONTROL = 8, /* %00 anywhere; other controls in path/host */
+  READER_LINK_REASON_ENCODED_CONTROL = 8, /* %00 anywhere; other encoded controls outside
+                                             query data (authority, path, fragment, mailto
+                                             local part) */
   READER_LINK_REASON_ENCODED_SEPARATOR = 9,
   READER_LINK_REASON_ENCODED_DOT = 10,
   READER_LINK_REASON_DOUBLE_ESCAPE = 11,

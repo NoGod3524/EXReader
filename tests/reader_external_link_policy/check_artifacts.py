@@ -50,6 +50,7 @@ EXPECTED_CHECKS = (
     "group-fragment-and-cfi",
     "group-escapes",
     "group-spaces",
+    "group-escape-boundary",
     "probe-limits",
     "probe-errors",
     "probe-lifetime",
