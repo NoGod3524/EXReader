@@ -158,6 +158,16 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   Artifact `12542857759` preserves that failure. Review telemetry now exposes
   200-scalar fragments, reconstructed from one container snapshot; the original
   readiness, cache and layout assertions remain unchanged.
+- `b3c7e8e648fa0b9eb31731ca90a5fd316b89efeb` passed the unchanged macOS
+  initial-layout case in 7.341 seconds in
+  [diagnostic 40051025211](https://github.com/NoGod3524/EXReader/actions/runs/40051025211).
+  Artifact `12543178370` preserves the 50-row/5-visible-row observation.
+  On `8ed6f228`, both iPad and iPhone passed complete bidirectional traversal
+  (1,001.198 and 961.273 seconds), equal-title/literal/author searches and real
+  stored-original reading. Their refresh and viewport/process-restoration
+  assertions failed; artifacts `12542868969` and `12542929679` are retained.
+  A narrow two-case iPad diagnostic now records actual visible row geometry
+  and requested versus observed source keys. It grants no acceptance.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.

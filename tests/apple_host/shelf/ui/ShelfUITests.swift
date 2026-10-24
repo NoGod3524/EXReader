@@ -92,7 +92,13 @@ final class ShelfUITests: XCTestCase {
             }
             if signature != previous { previous = signature; stableAt = Date() }
             accepted = value
-            return Date().timeIntervalSince(stableAt) >= 0.35
+            let settled = Date().timeIntervalSince(stableAt) >= 0.35
+            if settled {
+                let detail = value.filter { ["query", "top_key", "requested_restore_key", "visible_frames", "viewport_height", "generation"].contains($0.key) }
+                if let data = try? JSONSerialization.data(withJSONObject: detail, options: [.sortedKeys]),
+                   let text = String(data: data, encoding: .utf8) { print("SHELF SETTLED \(text)") }
+            }
+            return settled
         }, "Shelf did not reach a stable native layout for \(query): \(text("library.shelf.state"))")
         XCTAssertLessThanOrEqual(accepted["cached_rows"] as? Int ?? 999, 150)
         XCTAssertLessThanOrEqual(accepted["max_cached_rows"] as? Int ?? 999, 150)

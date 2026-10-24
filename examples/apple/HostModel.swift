@@ -37,6 +37,9 @@ final class HostShelf: ObservableObject {
     private var firstLayoutUptime: TimeInterval?
     private var awaitingLayoutKey: String?
     private var pendingSave: DispatchWorkItem?
+#if EXR_APPLE_SHELF_REVIEW
+    private var reviewVisibleFrames: [[String: Any]] = []
+#endif
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -132,6 +135,11 @@ final class HostShelf: ObservableObject {
         viewportSize = size
         let ordered = positions.filter { $0.value.maxY > 0 && $0.value.minY < size.height }
             .sorted { $0.value.minY < $1.value.minY }
+#if EXR_APPLE_SHELF_REVIEW
+        reviewVisibleFrames = ordered.prefix(3).map {
+            ["key": $0.key, "min_y": Double($0.value.minY), "max_y": Double($0.value.maxY)]
+        }
+#endif
         let newVisible = Set(ordered.map(\.key))
         guard let first = ordered.first, let index = rows.firstIndex(where: { $0.id == first.key }) else { return }
         let lastIndex = ordered.last.flatMap { last in rows.firstIndex(where: { $0.id == last.key }) } ?? index
@@ -199,7 +207,7 @@ final class HostShelf: ObservableObject {
     var observation: String {
         var usage = rusage()
         getrusage(RUSAGE_SELF, &usage)
-        let value: [String: Any] = ["query": query, "generation": generation, "applied_generation": appliedGeneration,
+        var value: [String: Any] = ["query": query, "generation": generation, "applied_generation": appliedGeneration,
             "loading": loading, "restoring_layout": awaitingLayoutKey != nil,
             "cached_rows": rows.count, "max_cached_rows": maximumRows,
             "page_limit": 50, "cache_limit": 150, "has_before": before, "has_after": after,
@@ -208,6 +216,11 @@ final class HostShelf: ObservableObject {
             "layout_revision": viewportRevision, "process_peak_rss_bytes": usage.ru_maxrss,
             "shelf_created_to_first_visible_layout_ms": firstLayoutUptime.map { ($0 - createdUptime) * 1000 } ?? -1,
             "layout_observation_intervals_ms": layoutIntervals]
+#if EXR_APPLE_SHELF_REVIEW
+        value["visible_frames"] = reviewVisibleFrames
+        value["viewport_height"] = Double(viewportSize.height)
+        value["requested_restore_key"] = restoreKey ?? ""
+#endif
         return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
     }
 }
