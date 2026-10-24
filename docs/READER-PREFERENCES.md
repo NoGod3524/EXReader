@@ -3,8 +3,7 @@
 独立可选安装包，公开 C ABI `reader_preferences.h`。不依赖 SDK 归档、产品目录、修订、
 阅读状态或宿主设置文件；默认 reading 构建不加入它。源码在
 `apps/reader/preferences/`，测试在 `tests/reader_preferences/`，工作流为
-`.github/workflows/reader-preferences.yml`。本文件说明契约；**验收状态见末节，
-当前未获云端授予。**
+`.github/workflows/reader-preferences.yml`。本文件说明契约；**验收状态见末节。**
 
 ## 范围与非目标
 
@@ -150,5 +149,19 @@ Windows、Linux、macOS 各自安装包后，从安装位置编译 C 与 C++ 消
 
 ## 验收状态
 
-`docs/validation/reader-preferences.json` 只记录真实云端运行。在记录出现之前本包未获任何
-平台授予；即使通过也只授予所列平台上的本包接口，不含宿主 UI、产品性能或六平台互通。
+2026-10-24，run [40065361635](https://github.com/NoGod3524/EXReader/actions/runs/40065361635)
+attempt 1 在 source `6f33caf83bfb845e27db6382edc5ee100d8db954` 上三平台通过：
+
+| 平台 | job | 结果 |
+| --- | --- | --- |
+| Linux（ubuntu-22.04） | 120787360078 | 16/16 |
+| Windows（windows-2022） | 120787360085 | 16/16 |
+| macOS（macos-14） | 120787360075 | 16/16 |
+
+三份工件分别为 Linux 102,487 字节 / `94b95a68…adcf`、Windows 393,600 字节 /
+`5c2202ef…2bf5`、macOS 86,276 字节 / `80ef81ab…e983`；strict summary 作业比较了三平台
+同名检查，结果为一致。安装头 8,493 字节、SHA-256 `dc91755d…d68a`。
+
+该授予只覆盖所列平台上的本包接口。宿主 UI、产品性能、六平台互通与完整产品均未由此验收；
+本包也不是主题 UI 或读屏验收。`docs/validation/reader-preferences.json` 记录本次运行的
+source/run/attempt、工件、job 与逐项检查。

@@ -1,20 +1,110 @@
 {
-  "accepted": false,
-  "status": "no cloud run recorded yet",
+  "accepted": true,
+  "status": "three native consumers passed at the recorded source",
   "package": "EXReaderPreferences 0.1.0",
   "common_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "artifacts": [],
-  "jobs": [],
-  "problems": ["Nothing has been built or run in GitHub Actions for this package; the fields above are filled only from a real run."],
-  "granted_platforms": [],
-  "macos_accepted": false,
+  "source_sha": "6f33caf83bfb845e27db6382edc5ee100d8db954",
+  "run_id": 40065361635,
+  "attempt": 1,
+  "workflow": ".github/workflows/reader-preferences.yml",
+  "artifacts": [
+    {
+      "id": 12547999927,
+      "name": "reader-preferences-Linux-40065361635-1",
+      "size_in_bytes": 102487,
+      "digest": "sha256:94b95a68ca70ad0fdacda23cbd4fecc3786632f49827063f67af79d72c56adcf",
+      "expires_at": "2027-01-22T05:12:44Z"
+    },
+    {
+      "id": 12549396336,
+      "name": "reader-preferences-Windows-40065361635-1",
+      "size_in_bytes": 393600,
+      "digest": "sha256:5c2202efa087c2b4a277ba703335012e2133665db6cfa0ac6acea1b660a72bf5",
+      "expires_at": "2027-01-22T05:12:44Z"
+    },
+    {
+      "id": 12549425957,
+      "name": "reader-preferences-macOS-40065361635-1",
+      "size_in_bytes": 86276,
+      "digest": "sha256:80ef81ab036bfba17e4b546cc2cb562e43e40c847f64197d84b3f82eb2abe983",
+      "expires_at": "2027-01-22T05:12:44Z"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 120787360078,
+      "name": "preferences consumers (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120787360085,
+      "name": "preferences consumers (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120787360075,
+      "name": "preferences consumers (macos-14)",
+      "conclusion": "success"
+    }
+  ],
+  "platforms": {
+    "linux": {
+      "checks": 16,
+      "passed": 16,
+      "failed": 0
+    },
+    "windows": {
+      "checks": 16,
+      "passed": 16,
+      "failed": 0
+    },
+    "macos": {
+      "checks": 16,
+      "passed": 16,
+      "failed": 0
+    }
+  },
+  "checks": [
+    "defaults",
+    "c-consumer",
+    "cpp-consumer",
+    "unicode-roundtrip",
+    "field-boundaries",
+    "refusal-documents",
+    "unknown-version-bytes",
+    "failed-load-preserves",
+    "cancelled-load",
+    "cancelled-save",
+    "atomic-replace-failure",
+    "kill-before-rename",
+    "kill-after-rename",
+    "concurrent-callers",
+    "legacy-import",
+    "installed-header"
+  ],
+  "problems": [],
+  "granted_platforms": [
+    "linux",
+    "windows",
+    "macos"
+  ],
+  "macos_accepted": true,
   "performance_claimed": false,
   "host_ui_accepted": false,
   "six_platform_accepted": false,
   "complete_product": false,
   "sdk_changed": false,
-  "schema_changed": false
+  "schema_changed": false,
+  "host_settings_changed": false,
+  "protected_trees_unchanged": true,
+  "installed_header": {
+    "path": "include/reader_preferences.h",
+    "bytes": 8493,
+    "sha256": "dc91755d43499c7796d13f76d95be0a2e9a6615c3e589db52e95cfc83b7ed68a"
+  },
+  "notes": [
+    "Each platform built the installed package, compiled C and C++ consumers from the install prefix, and ran the same 16 named checks.",
+    "The workflow's pin step rejected changes to the frozen SDK tree, product schema, existing host modules, and paths outside the F3 ownership list.",
+    "No host UI, performance, six-platform interop, or complete-product claim is granted."
+  ]
 }
