@@ -149,6 +149,7 @@ jobs:
             build/desktop-sdk/sdk-check/
             build/desktop-sdk/native-check/
             build/desktop-sdk/shelf-check/
+            build/desktop-sdk/organization-check/
             build/desktop-sdk/kill-*/
             build/desktop-sdk/sdk-link.map
             build/desktop-sdk/Testing/Temporary/LastTest.log

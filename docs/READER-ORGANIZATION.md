@@ -62,3 +62,16 @@ commands 与适配层使用；SDK 八条冻结路径保持不变。
 后续 `d94848e3`／run `40049360939` 的三个上游成功，GTK 第15项测试失败，严格汇总拒绝。
 该驱动使用的 `xdotool windowclose` 直接调用 `XDestroyWindow`，绕过正常 WM 关闭协议，
 因此不能用于验证 `delete-event` 屏障；保留失败，驱动改用实际 Alt+F4，生产屏障和断言不变。
+
+最终GTK编辑源码 `19a4bbed98436326264e06bae6470b239bd7201b` 的
+[run 40050634471](https://github.com/NoGod3524/EXReader/actions/runs/40050634471)，
+attempt1，5/5成功，云端严格 `accepted=true`、`problems=[]`。
+GTK实际15项全过，原20/5/24/14及故障回归、Windows原套件、两端适配层29项和前序模块均保留。
+四份上游工件未过期，实际ZIP散列／大小由云端汇总实核，API与报告身份再次对照一致；
+完整记录见 [GTK编辑验收JSON](validation/reader-gtk-metadata.json)。
+
+随后合入Windows编辑独立交付 `934e01d5`（受测1be8367f/run40050226847/18UI）和
+Android原生owner独立交付 `f55735d1`（受测8f7c011a/run40049878764）。
+共同候选保留分组读取API和Android canonical/metadata lookup；普通书籍行第10列是deleted，
+分组成员第10列是ordinal，合并后分别处理，并在原生组织读取检查验证active book标记。
+新的共同源码须重跑Windows18/GTK15和原生模块，独立通过记录不转移为联合验收。

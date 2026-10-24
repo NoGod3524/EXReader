@@ -66,7 +66,7 @@ static int receive_group(void *context,const reader_catalog_group_row *row) {
 static int receive_member(void *context,const reader_catalog_group_book_row *row) {
   capture *p=context;unsigned n=number(row->book.book_key);
   if(p->last) CHECK(p->direction>0 ? p->last<n:p->last>n);
-  CHECK(row->book.author && row->book.title && row->book.sort_title);
+  CHECK(row->book.author && row->book.title && row->book.sort_title && row->book.deleted==0);
   p->last=n;p->ordinal=row->ordinal;p->count++;
   snprintf(p->id,sizeof(p->id),"%s",row->book.book_key);
   if(p->reenter) {
