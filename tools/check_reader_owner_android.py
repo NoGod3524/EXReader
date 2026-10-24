@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
+import zipfile
 
 NAMES={'actualInstalledProviderAndJson','persistedNativeCreateIds','strictUtf16AndEmoji',
        'staleObservedHeadsAreAtomic','explicitDeleteAndRestore','metadataFailureRollsBackAndRetries',
@@ -32,6 +33,11 @@ def digest(path):
     raw=path.read_bytes();return {'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}
 
 
+def read_json(path):
+    try:return json.loads(path.read_bytes())
+    except (json.JSONDecodeError,UnicodeDecodeError) as error:raise ValueError(str(path)+': invalid JSON: '+str(error)) from error
+
+
 def collect(root):
     proof=root/'native';proof.mkdir(parents=True,exist_ok=True)
     ndk=Path(os.environ['ANDROID_HOME'])/'ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin'
@@ -51,7 +57,7 @@ def collect(root):
 
 
 def native(proof):
-    inventory=json.loads((proof/'inventory.json').read_text())
+    inventory=read_json(proof/'inventory.json')
     require(inventory['identity']==identity(),'native build identity differs')
     require(set(inventory['files'])=={'debug.map','debug.so','debug.symbols.txt','debug.dynamic.txt',
             'release.map','release.so','release.symbols.txt','release.dynamic.txt','sqlite3.h'},'native inventory differs')
@@ -70,9 +76,22 @@ def native(proof):
 def inspect(root,all_exits):
     expected=identity();require((root/'source.txt').read_text().strip()==expected['source_sha'],'checkout source differs')
     require((root/'device-api.txt').read_text().strip()=='34' and (root/'device-abi.txt').read_text().strip()=='x86_64','API34 x86_64 required')
-    device=json.loads((root/'device-report.json').read_text());require(all(device.get(k)==v for k,v in expected.items()),'device source/run/attempt differs')
+    device=read_json(root/'device-report.json');require(all(device.get(k)==v for k,v in expected.items()),'device source/run/attempt differs')
     require(device['api']==34 and device['abi']=='x86_64' and device['count']==len(NAMES) and device['failed']==0,'owner device execution failed')
     checks=device['checks'];require(len(checks)==len(NAMES) and {v['id'] for v in checks}==NAMES and all(v['pass'] is True for v in checks),'owner checks missing/duplicated/failed')
+    raw_run=(root/'owner-instrumentation.txt').read_text()
+    require(re.search(r'^INSTRUMENTATION_CODE: -1\s*$',raw_run,re.M) and 'OK (17 tests)' in raw_run and 'FAILURES' not in raw_run,'manual owner run failed')
+    manual=[];status={}
+    for line in raw_run.splitlines():
+        if line.startswith('INSTRUMENTATION_STATUS: '):
+            key,_,value=line[len('INSTRUMENTATION_STATUS: '):].partition('=');status[key]=value
+        elif line.startswith('INSTRUMENTATION_STATUS_CODE: '):
+            code=int(line.split(':',1)[1]);require(code in (0,1),'manual owner failure/skip status')
+            if code==0:
+                require(status.get('class')=='org.exreader.host.ProductOwnerTest','manual owner class differs')
+                manual.append(status.get('test'))
+            status={}
+    require(len(manual)==len(NAMES) and set(manual)==NAMES,'manual owner checks missing/duplicated')
     names=[];reports={}
     for path in sorted((root/'owner-reports').rglob('*.xml')):
         tree=ET.fromstring(path.read_bytes());reports[str(path.relative_to(root))]=digest(path)
@@ -82,6 +101,13 @@ def inspect(root,all_exits):
             names.append(case.get('name'))
     require(len(names)==len(NAMES) and set(names)==NAMES,'owner XML cases missing/duplicated')
     source,proof=native(root/'native');provider=device['provider']
+    build=read_json(Path('build/android-host/build.json'));application=digest(root/'apks/app-debug.apk')
+    require(application['bytes']==build['artifacts']['app-debug.apk']['size'] and application['sha256']==build['artifacts']['app-debug.apk']['sha256'],
+            'owner reinstallation APK differs from original same-source application')
+    from android_host_evidence import native_record
+    with zipfile.ZipFile(root/'apks/app-debug.apk') as archive:
+        packaged=native_record(archive.read('lib/x86_64/libexreader_product.so'))
+    require(packaged['build_id']==native_record((root/'native/debug.so').read_bytes())['build_id'],'packaged product provider differs from link proof')
     require(provider[0]=='3.54.0' and provider[1]==provider[2]==source,'actual provider source/header differs')
     require(Path(provider[3]).name=='libexreader_product.so','actual runtime function is from another provider')
     require({'THREADSAFE=1','DQS=0','OMIT_LOAD_EXTENSION','MAX_LENGTH=2147483647'}<=set(provider[4].split(';')),'actual provider options differ')
@@ -94,16 +120,20 @@ def inspect(root,all_exits):
         phases[phase]={p.name:digest(p) for p in (seed,recovery,witness)}
     result={**expected,'accepted':True,'problems':[],'owner_checks':len(NAMES),'typed_kill_checks':2,
             'device_reports':reports,'native_proof':proof,'process_boundaries':phases,
+            'manual_instrumentation':digest(root/'owner-instrumentation.txt'),
+            'reinstalled_apks':{name:digest(root/'apks'/name) for name in ('app-debug.apk','app-debug-androidTest.apk')},
             'native_owner_serial_catalog_revision_handles':2,'local_project_three_writes_atomic':True,
             'cross_handle_or_sdk_database_atomicity_claimed':False,'classification_ui_accepted':False,
             'performance_accepted':False,'physical_device_execution':False,'complete_product':False}
     if all_exits:
-        shelf=Path('build/shelf-android');original=json.loads((shelf/'shelf-result.json').read_text())
+        shelf=Path('build/shelf-android');original=read_json(shelf/'shelf-result.json')
         require(original['accepted'] is True and original['problems']==[] and all(original.get(k)==v for k,v in expected.items()),'original shelf acceptance missing')
         require(original['passed']==12 and original['ui']['ui_passed']==10 and original['import_mapping_passed']==14
                 and original['killed_process_recovery_passed']==2 and original['original_host_accepted'] is True,'original 112 functional cases differ')
         for name,count in (('build/android-host/gate-review.json',48),('build/android-host/bounded-gate-review.json',20),('build/shelf-android/shelf-gate-review.json',19)):
-            gate=json.loads(Path(name).read_text());require(gate['accepted'] is True and gate['problems']==[] and len(gate['checks'])==count,'original 87 gate checks missing')
+            gate=read_json(Path(name));require(gate['accepted'] is True and gate.get('problems',[])==[] and not gate.get('problem')
+                and all(gate.get(k)==v for k,v in expected.items()) and len(gate['checks'])==count
+                and all(v.get('passed') is True for v in gate['checks']),'original 87 gate checks missing')
         result.update(original_functional_checks=112,original_gate_checks=87,original_shelf_accepted=True)
     return result
 
