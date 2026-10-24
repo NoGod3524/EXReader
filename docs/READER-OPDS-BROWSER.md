@@ -126,40 +126,56 @@ driver is Actions-only.
 
 ## Recorded evidence
 
-Tested source `7c2b274e021b95b65438ad37abca6d5bc15a7adc` (branch `codex/reader-opds-browser`),
-run [40125592894 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40125592894):
-all four jobs passed and every platform reported the same 60 named cases.
+Tested source `dcf77c2776d7cdce180f303d2a85152cf538a8d6` (branch `codex/reader-opds-browser`),
+run [40126660557 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40126660557):
+all four jobs passed, every platform reported the same 60 named cases, and the strict job
+re-hashed the two consumer executables out of each ZIP before comparing outcomes.
 
 | Job | ID | Result |
 | --- | --- | --- |
-| opds consumers (ubuntu-22.04) | 120966209126 | success |
-| opds consumers (windows-2022) | 120966208920 | success |
-| opds consumers (macos-15) | 120966209165 | success |
-| strict opds evidence | 120967169373 | success |
+| opds consumers (ubuntu-22.04) | 120969458912 | success |
+| opds consumers (windows-2022) | 120969458897 | success |
+| opds consumers (macos-15) | 120969458713 | success |
+| strict opds evidence | 120970046951 | success |
 
 | Artifact | ID | Bytes | sha256 | Expires |
 | --- | --- | --- | --- | --- |
-| reader-opds-browser-linux-40125592894-1 | 12573760577 | 136502 | `94858ee7dc694e086eafb7d9aec694eafe9c9d42522dcaaa0b2929b97e440d7e` | 2027-01-22 |
-| reader-opds-browser-windows-40125592894-1 | 12573330973 | 202341 | `41d2d74d702f46b12c28bafaa2aa7a3bb4bdd8e8d38210dae0bc0659bd482527` | 2027-01-22 |
-| reader-opds-browser-macos-40125592894-1 | 12573256350 | 134159 | `cf02a781409cdc80a4ad22083db411b139b746432b4955306a061ca7dccb991f` | 2027-01-22 |
-| reader-opds-browser-evidence-40125592894-1 | 12572856911 | 1258 | `c3ae0a58db1870d80dbbb88c56e317b36ab5ed57579a0aaf5faf801401b718f9` | 2027-01-22 |
+| reader-opds-browser-linux-40126660557-1 | 12573492675 | 4275700 | `ae999f0990a4cdd0a1627df46736c5a580bb94e59988061ff2b63f3696db7d65` | 2027-01-22 |
+| reader-opds-browser-windows-40126660557-1 | 12573277935 | 3386286 | `3fb40aa1d4f95117f1af87a2c78828791001d817e77cd2ea37fd2f66cb13210d` | 2027-01-22 |
+| reader-opds-browser-macos-40126660557-1 | 12573547771 | 3665408 | `50c97a59d8194bea9995399c880d9ff9220bccf8b74a65aeea08643bb69f41d4` | 2027-01-22 |
+| reader-opds-browser-evidence-40126660557-1 | 12573537844 | 1623 | `2cf6c368cf8ed9634cf71b17fd2e5d9192621a87c8a267c45c4330fdd3398ad3` | 2027-01-22 |
+
+Executed consumers (bytes / sha256), re-hashed from the artifacts by the strict job:
+
+| Platform | Consumer | Bytes | sha256 |
+| --- | --- | --- | --- |
+| linux | opds-consumer | 147920 | `632c959389471ffb1eaf4df341ca215b228ca0e21bebe9ac127caca02403d281` |
+| linux | opds-import-consumer | 8582504 | `c61ab8b59bbcba654404d8b36af7634ec6b3a06c5a34740287acd2f462bc44e7` |
+| windows | opds-consumer.exe | 292352 | `411b903244bb6a3e7f7c53bb10ccfa5ff8f807b3cf777f66728a5dbcb8c7c499` |
+| windows | opds-import-consumer.exe | 6133760 | `cbee3c7d60748223096954a60ab0d6ff0198162fccc05c1c83b58828409f0d95` |
+| macos | opds-consumer | 158816 | `caefeaac03394d8615b0c38d3483497864f7a4f060d1431b5a1d6c5465303974` |
+| macos | opds-import-consumer | 7000312 | `2032fa5abb763ff5288c9aa105b4f820843be72decd9e5e4196b6bc98c0dcdef` |
 
 Every platform reported `accepted: true`, 60/60 named cases, 36 recorded fixture requests,
 two TLS requests, and `plain_requests_with_authorization: 0` while the credential origin
 received exactly one Authorization header.
 
-Retained failures (kept as evidence, each with its own artifacts):
+A previous run (40125592894, source `7c2b274e`) passed the same four jobs before the consumer
+binaries were bound into the evidence; it is kept as history, not as the accepted source.
+
+Retained failures, each with its own artifacts:
 
 * `4e873f22` run 40123942977 — the installed consumer did not compile: greedy hex escapes.
-* `46911446` run 40124481258 — wrong import expectations, no-replace collision, a one-byte
+* `46911446` run 40124481258 — wrong import expectations, a no-replace collision, a one-byte
   WinHTTP header buffer and a macOS `getfqdn` stall in the fixture service.
 * `eef73089` run 40124883828 — superseded before it could pass.
-* `f82c0134` run 40125267330 — cancelled on purpose once superseded (Linux/Windows consumer
-  jobs had already passed; not claimed as evidence).
+* `f82c0134` run 40125267330 — cancelled on purpose once superseded.
+* `935e47a9` run 40126530848 — cancelled on purpose after the evidence job matched the
+  uploaded `CMakeCache.txt` as a third consumer entry; fixed before it finished.
 
 This section and `docs/validation/reader-opds-browser.json` are committed with `[skip ci]`
 after the run. No source, test, workflow or fixture byte changed, so the tested source stays
-`7c2b274e` and the branch head differs only in documentation.
+`dcf77c27` and the branch head differs only in documentation.
 
 Not granted: product-host wiring, PDF/CBZ import through the SDK (only envelope, staging and
 EPUB import are exercised), performance/CPU/accessibility/real-device claims, and release
