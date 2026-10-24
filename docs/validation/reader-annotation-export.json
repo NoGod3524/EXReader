@@ -1,22 +1,70 @@
 {
   "accepted": true,
-  "status": "accepted Linux/Windows/macOS installed C ABI package after a complete same-source cloud run; no host UI, import, conflict resolution or performance grant",
+  "status": "accepted Linux/Windows/macOS installed C ABI package after a complete same-source cloud run; each entity is exported from one valid public snapshot, aliased output targets and reentrant calls are refused; no host UI, import, conflict resolution or performance grant",
   "package": "EXReaderAnnotationExport 0.1.0",
   "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "source_sha": "d7ad100b67dca6d0cd0dae97262e5e1d419fd0b2",
-  "run_id": 40079793192,
+  "source_sha": "0b79307a41fc5152cf10f7c34e30573d2481aa08",
+  "run_id": 40085969696,
   "attempt": 1,
   "artifacts": [
-    {"id": 12555036254, "name": "reader-annotation-export-Linux-40079793192-1", "size_in_bytes": 9701271, "digest": "sha256:5a6d58aec73365beb0826cd722b57c1e80a9a1864fc69495a30ed0308aa1b19a", "expires_at": "2027-01-22T08:53:27Z"},
-    {"id": 12554771729, "name": "reader-annotation-export-Windows-40079793192-1", "size_in_bytes": 6158814, "digest": "sha256:6c69be805daa6dcc9e9badd13583ad70c31df759c986756800be5c903af27a6e", "expires_at": "2027-01-22T08:53:27Z"},
-    {"id": 12554174867, "name": "reader-annotation-export-macOS-40079793192-1", "size_in_bytes": 8562313, "digest": "sha256:8bd35bce9ed5f56b89805467402abe30b4d776960fc09617e8a2bb537e9e633d", "expires_at": "2027-01-22T08:53:27Z"},
-    {"id": 12554464097, "name": "reader-annotation-export-evidence-40079793192-1", "size_in_bytes": 948, "digest": "sha256:fec8cc6b0d390df2fe6b553be760b8141b23874ac7165345183a60319df6f4a5", "expires_at": "2027-01-22T08:53:27Z"}
+    {
+      "id": 12556624808,
+      "name": "reader-annotation-export-Linux-40085969696-1",
+      "size_in_bytes": 9745718,
+      "digest": "sha256:0ae478072888e654aef197534228ecede8d725e4ab3d513bb9decb6a9d8e6943",
+      "expires_at": "2027-01-22T10:27:15Z"
+    },
+    {
+      "id": 12556749354,
+      "name": "reader-annotation-export-Windows-40085969696-1",
+      "size_in_bytes": 6210558,
+      "digest": "sha256:56425e741a02ba2f4b4beb2a70fd8b04c44c1050b8651497bae03497f813c7df",
+      "expires_at": "2027-01-22T10:27:15Z"
+    },
+    {
+      "id": 12557162365,
+      "name": "reader-annotation-export-macOS-40085969696-1",
+      "size_in_bytes": 8611321,
+      "digest": "sha256:9b2873d61093cf155ce8bb12824c4c5d684b5dfd0b2e201bd31a213a498a9ac1",
+      "expires_at": "2027-01-22T10:27:15Z"
+    },
+    {
+      "id": 12557171468,
+      "name": "reader-annotation-export-evidence-40085969696-1",
+      "size_in_bytes": 952,
+      "digest": "sha256:9b907e0cc400cf253b08a3c17083c469148ab236441796faaa2c30c5fe6125bc",
+      "expires_at": "2027-01-22T10:27:15Z"
+    }
   ],
   "jobs": [
-    {"id": 120830764059, "name": "annotation export (ubuntu-22.04)", "conclusion": "success"},
-    {"id": 120830764058, "name": "annotation export (windows-2022)", "conclusion": "success"},
-    {"id": 120830764019, "name": "annotation export (macos-15)", "conclusion": "success"},
-    {"id": 120831455873, "name": "same-run artifact evidence", "conclusion": "success"}
+    {
+      "id": 120848858238,
+      "name": "annotation export (ubuntu-22.04)",
+      "conclusion": "success",
+      "started_at": "2026-10-24T10:27:17Z",
+      "completed_at": "2026-10-24T10:29:38Z"
+    },
+    {
+      "id": 120848857956,
+      "name": "annotation export (windows-2022)",
+      "conclusion": "success",
+      "started_at": "2026-10-24T10:27:18Z",
+      "completed_at": "2026-10-24T10:30:51Z"
+    },
+    {
+      "id": 120848858130,
+      "name": "annotation export (macos-15)",
+      "conclusion": "success",
+      "started_at": "2026-10-24T10:27:47Z",
+      "completed_at": "2026-10-24T10:29:47Z"
+    },
+    {
+      "id": 120849563952,
+      "name": "same-run artifact evidence",
+      "conclusion": "success",
+      "started_at": "2026-10-24T10:30:53Z",
+      "completed_at": "2026-10-24T10:31:10Z"
+    }
   ],
   "problems": [],
   "named_checks_per_platform": [
@@ -36,16 +84,85 @@
     "publish_failures_directory_target_missing_parent_and_partial_two_output_publish_are_reported_exactly",
     "mid_stream_write_failure_rlimit_fsize_keeps_previous_export (Linux, macOS) | locked_target_publish_failure_keeps_previous_export (Windows)",
     "invalid_options_paths_budgets_titles_book_keys_and_non_owner_calls_are_refused_without_writing",
+    "window_parent_arrival_is_exported_from_one_consumed_snapshot",
+    "window_explicit_merge_is_exported_from_one_consumed_snapshot",
+    "window_delete_merge_keeps_tombstone_and_graph_from_one_snapshot",
+    "window_explicit_restore_unblocks_in_one_snapshot",
+    "path_aliases_that_resolve_to_one_target_are_refused_before_writing",
+    "reentrant_export_from_the_cancel_callback_is_refused_and_the_outer_export_stays_recoverable",
     "outputs_contain_no_absolute_paths_account_secrets_or_sdk_row_ids",
     "database_and_progress_unchanged_after_every_export",
     "same_bytes_from_an_independent_database_copy"
   ],
+  "named_check_count": 25,
   "skipped": {
-    "linux": ["windows_locked_target_publish_failure"],
-    "darwin": ["windows_locked_target_publish_failure"],
-    "windows": ["posix_rlimit_fsize_mid_stream_write_failure (RLIMIT_FSIZE does not exist on Windows)"]
+    "linux": [
+      "windows_locked_target_publish_failure"
+    ],
+    "darwin": [
+      "windows_locked_target_publish_failure"
+    ],
+    "windows": [
+      "posix_rlimit_fsize_mid_stream_write_failure (RLIMIT_FSIZE does not exist on Windows)"
+    ]
   },
-  "corpus": {"wires": 1332, "mass_annotations": 1234, "small_database_wires": 49},
+  "corpus": {
+    "wires": 1346,
+    "batch_wires": 1342,
+    "small_database_wires": 59,
+    "window_advance_revisions": 4,
+    "mass_annotations": 1234
+  },
+  "single_snapshot_windows": [
+    {
+      "case": "parent_arrival",
+      "page_state": "pending_parents",
+      "advanced_by": "the missing parent revision",
+      "exported_state": "safe",
+      "head": "the original child",
+      "platforms": [
+        "linux",
+        "win32",
+        "darwin"
+      ]
+    },
+    {
+      "case": "explicit_merge",
+      "page_state": "concurrent (2 heads)",
+      "advanced_by": "a merge revision naming both heads",
+      "exported_state": "safe",
+      "head": "the merge revision",
+      "platforms": [
+        "linux",
+        "win32",
+        "darwin"
+      ]
+    },
+    {
+      "case": "delete_merge",
+      "page_state": "concurrent (put + delete)",
+      "advanced_by": "a delete merge naming both heads",
+      "exported_state": "safe tombstone",
+      "head": "the delete merge",
+      "platforms": [
+        "linux",
+        "win32",
+        "darwin"
+      ]
+    },
+    {
+      "case": "explicit_restore",
+      "page_state": "blocked_restore",
+      "advanced_by": "a restore revision naming the delete directly",
+      "exported_state": "safe",
+      "head": "the restore revision",
+      "platforms": [
+        "linux",
+        "win32",
+        "darwin"
+      ]
+    }
+  ],
   "output_sha256_identical_on_all_three_platforms": {
     "txt.jsonl": "171133614fe8c302ce9183ca5d0106b0fb52b5cc3e1e51a15fb698faf2b4a33a",
     "txt.md": "e102e95a078b8a2611bfda5f7239d792f5dc392187042b0bab25b1712a7ef0a6",
@@ -56,52 +173,61 @@
     "mass.jsonl": "d689923815e3ff7d6fca8d2434edb58ee3cc9b06a958baed7b70fae51c02b1f8",
     "mass.md": "10c1b4d3709a75da600e6b390e9c03b29bb460fdf3d4d236e44bc3bc406f4c2c",
     "empty.jsonl": "4779b396eb0f52003397f3033e56f08f39bb341c6ae2fa26c5b5b1583c3a7455",
-    "empty.md": "aefc0e530b77c83c29bcbda9d55752923663412a58bd4e5ec8dce5dec7a09832"
+    "empty.md": "aefc0e530b77c83c29bcbda9d55752923663412a58bd4e5ec8dce5dec7a09832",
+    "window-parent_arrival.jsonl": "4b76aee0f1011db1a86f56c68b331f9de98cc3511bc6cb09822769c95352583c",
+    "window-parent_arrival.md": "a3541faaff24d4c350a0b5cc02ad7d6a1248970b3471e0ff0453b3814fc7c82b",
+    "window-explicit_merge.jsonl": "8a5e1eae96ced32067fd13bf67fe6444685f4f0d2956de5ec484506ec8deeea3",
+    "window-explicit_merge.md": "10a16621aec1f12dc547e417d0b5e9c49b8c003ea95be3b54cd9bb30676d9ab1",
+    "window-delete_merge.jsonl": "fb792b755fa5fa918750996c89552c3b2be24e28f671d9ef8f078b4714b3979c",
+    "window-delete_merge.md": "a663a64dbaa629d7a3dac0c20f775d30636f6f6d0aad46398fcea138cd556e74",
+    "window-explicit_restore.jsonl": "e860dd98e032d541422b0b8767364f85c935bf2fb98267eb3f3b4983023516ce",
+    "window-explicit_restore.md": "a1cc0e38fdbf74f7ddc4771412dbf78270f7342b9c8227df632951ff1091ab17"
   },
+  "output_count": 18,
   "retained_failures": [
     {
-      "source_sha": "a5744a04751119da35dda43e5b58bc1dac8aee3d",
       "run_id": 40078772023,
-      "attempt": 1,
-      "cause": "Windows MSVC C4310 (cast truncates constant value) on (char)0xE2 in the Markdown control-picture encoder; /WX refused it. Fixed in the implementation by byte-string literals; Linux and macOS passed all 19 checks at this source.",
-      "jobs": [
-        {"id": 120827736364, "platform": "linux", "conclusion": "success"},
-        {"id": 120827736584, "platform": "windows", "conclusion": "failure"},
-        {"id": 120827736634, "platform": "macos", "conclusion": "success"},
-        {"id": 120828423404, "role": "strict evidence", "conclusion": "failure"}
-      ],
-      "artifacts": [
-        {"id": 12554636347, "size_in_bytes": 9701197, "digest": "sha256:9ef3f9b04209b9890dcc42ba58a18790c6ddad4f4f43ba797be68427ca904fbf"},
-        {"id": 12554452062, "size_in_bytes": 8562188, "digest": "sha256:e3b50e0fc0a76f9efe781dd585754533f12a4ae338a7c68d6dbe5c17a80b4104"},
-        {"id": 12554337479, "size_in_bytes": 21520, "digest": "sha256:5f2ecc25271fef071d0d82a2f7b77181814e10b0874becbf71e8461a125854a6"},
-        {"id": 12554193036, "size_in_bytes": 692, "digest": "sha256:f49c97aefe194dd97411449e3cbd52195d2a0910395a67b17afe48af8bc07e0b"}
-      ]
+      "source_sha": "a5744a04",
+      "result": "Windows MSVC C4310 constant truncation",
+      "disposition": "fixed in the implementation; artifacts kept"
     },
     {
-      "source_sha": "94481fd17787f9855a09d550f76e6ae83c539ccf",
       "run_id": 40079424539,
-      "attempt": 1,
-      "cause": "All three platform jobs passed. The strict artifact aggregator wrongly required identical check-name sets although each platform deliberately runs exactly one of two write-failure checks (RLIMIT_FSIZE on POSIX, locked target on Windows); the aggregator, not the implementation or a test assertion, was fixed to compare the shared checks and require each platform's own one. Implementation bytes are unchanged between this source and the accepted one.",
-      "jobs": [
-        {"id": 120829670375, "platform": "linux", "conclusion": "success"},
-        {"id": 120829670555, "platform": "windows", "conclusion": "success"},
-        {"id": 120829670573, "platform": "macos", "conclusion": "success"},
-        {"id": 120830359253, "role": "strict evidence", "conclusion": "failure"}
-      ],
-      "artifacts": [
-        {"id": 12554846744, "size_in_bytes": 9701282, "digest": "sha256:3108b09421df86b2d02db3626e100ad5a80eca24e9b7592530f0bdaa18475bf9"},
-        {"id": 12554352354, "size_in_bytes": 6158800, "digest": "sha256:4e92ccbba320bf596b520ccd9a669d552a9e80f5786fbfd6ed0fb0355331277a"},
-        {"id": 12554347366, "size_in_bytes": 8562292, "digest": "sha256:b23c4f54694945d9fc27c3f1d6ba210ea5bd34524e8159a930d4ccc374acd28e"},
-        {"id": 12554807032, "size_in_bytes": 961, "digest": "sha256:f56ea5ab2a8475a70691a1d1642c6f9930ab0a79a5a6ed1043fb7edf6ffd574f"}
-      ]
+      "source_sha": "94481fd1",
+      "result": "strict aggregator wrongly required identical check names per platform",
+      "disposition": "fixed in the aggregator; implementation bytes unchanged; artifacts kept"
+    },
+    {
+      "run_id": 40083679976,
+      "source_sha": "dbc6bb29",
+      "result": "the new regressions proved all three gaps on all three platforms: selection=pending_parents with graph {heads:1, projection_safe:true}, an aliased dot-segment target reported jsonl_published=1 and markdown_published=1 on one file, and a nested export from the cancel callback returned OK with jsonl_published=1",
+      "disposition": "measured before fixing; the fixes are 6f90f462 and the checks are kept"
+    },
+    {
+      "run_id": 40083884769,
+      "source_sha": "6f90f462",
+      "result": "implementation fixed; the window check compared the head wire against the advance wire, which differs for parent arrival",
+      "disposition": "test corrected in b27ab53c"
+    },
+    {
+      "run_id": 40085105713,
+      "source_sha": "b27ab53c",
+      "result": "restore window declared five retained revisions instead of four",
+      "disposition": "fixture corrected in a076ad38"
+    },
+    {
+      "run_id": 40085507969,
+      "source_sha": "a076ad38",
+      "result": "all 25 checks passed, but the four harness advance revisions invalidated the pre-run store baseline",
+      "disposition": "the window section re-baselines the store afterwards (0b79307a); no assertion was removed"
     }
   ],
   "limits": [
-    "export reads each page and each non-safe entity in its own snapshot; concurrent writers can make different entities reflect different moments",
-    "no anchor resolution, no SDK library access, no import, no conflict resolution",
-    "mid-stream write failure is exercised by RLIMIT_FSIZE on Linux/macOS and by a locked-target publish failure on Windows, not by the same mechanism on all three",
-    "Markdown is checked structurally by a purpose-built parser, not by a third-party CommonMark renderer",
-    "no real-device, screen-reader, host UI or performance claim"
+    "Different entities may still come from different moments; only one entity at a time is proven to be one valid snapshot.",
+    "The window handshake uses the documented cancel callback as its only blocking point; it adds no hook to the module or the revision store.",
+    "A reentrant call is refused on the calling thread; a cancel callback that starts another thread with a different store is outside the documented no-reentry contract.",
+    "Path identity is compared by platform file identity (volume/file id or realpath of the parent); exotic aliases reachable only through reparse points that do not exist yet are not enumerated.",
+    "No host UI, real device, screen reader, performance, six-platform, import or conflict-resolution grant."
   ],
   "sdk_changed": false,
   "schema_changed": false,
