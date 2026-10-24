@@ -38,12 +38,9 @@ def run(command, log):
 
 
 def sqlite_providers(map_text):
-    providers = set()
-    for line in map_text.splitlines():
-        if 'sqlite3.c' not in line:
-            continue
-        for match in re.finditer(r'([A-Za-z0-9_.\-]*sqlite[A-Za-z0-9_.\-]*\.(?:a|lib))', line):
-            providers.add(match.group(1))
+    """Archives that supplied the SQLite amalgamation object (GNU ld or MSVC map)."""
+    providers = set(re.findall(r'([A-Za-z0-9_.\-]+\.a)\(sqlite3\.c\.o\)', map_text))
+    providers |= {name + '.lib' for name in re.findall(r'([A-Za-z0-9_.\-]+?)(?:\.lib)?:sqlite3\.c\.obj', map_text)}
     return sorted(providers)
 
 
@@ -178,13 +175,11 @@ def main():
         'probe_sha256': sha(args.probe), 'c_consumer_sha256': sha(args.c_consumer),
         'report_sha256': sha(report_path) if report_path.exists() else None,
         'sdk_version': report.get('sdk_version'), 'parser_version': report.get('parser_version'),
-        'sqlite': {'version': report.get('sqlite_version'), 'source_id': report.get('sqlite_source_id'), 'link_providers': providers},
+        'sqlite': {'version': report.get('sqlite_version'), 'source_id': report.get('sqlite_source_id'), 'link_providers': providers,
+                   'open_v2_map_lines': [line.strip() for line in map_text.splitlines() if 'sqlite3_open_v2' in line][:6]},
         'sdk_ids': report.get('sdk_ids'),
-        'cases': [{k: case.get(k) for k in ('id', 'book', 'kind', 'mode', 'sender_resolve')} |
-                  {'gap': case.get('adapter', {}).get('gap'), 'adapter': case.get('adapter', {}).get('status'),
-                   'v1_literal': case.get('v1_literal', {}).get('status'), 'receiver': case.get('receiver', {}).get('state'),
-                   'receiver_path': case.get('receiver', {}).get('path'), 'persisted': case.get('receiver', {}).get('sdk_persisted')}
-                  for case in report.get('cases', [])],
+        'cases': report.get('cases', []),
+        'lifecycle': report.get('lifecycle', []),
         'checks_total': len(report.get('checks', [])), 'checks_failed': len(failed_checks),
         'receiver_found': report.get('receiver_found'), 'receiver_mislocated': report.get('receiver_mislocated'),
         'unresolved_writes': report.get('unresolved_writes'),
