@@ -31,6 +31,17 @@ bool g_armed = false;
 long long g_countdown = 0;
 long long g_live = 0;
 bool g_tripped = false;
+const char* g_step = "none";
+long long g_last_n = 0;
+
+// A throw from a noexcept context aborts instead of unwinding, so report where the
+// sweep was when that happened.
+void on_terminate() {
+  std::printf("FATAL terminate step=%s n=%lld armed=%d countdown=%lld live=%lld tripped=%d\n", g_step, g_last_n,
+              (int)g_armed, g_countdown, g_live, (int)g_tripped);
+  std::fflush(stdout);
+  std::_Exit(3);
+}
 
 bool trip() {
   if (!g_armed) return false;
@@ -121,7 +132,9 @@ void sweep_open(const fs::path& root) {
   bool all_ok = true, covered = false;
   long long points = 0;
   std::string bad;
+  g_step = "open";
   for (long long n = 1; n <= 4096 && all_ok; ++n) {
+    g_last_n = n;
     fs::path dir = root / ("open-" + std::to_string(n));
     fs::remove_all(dir);
     fs::create_directories(dir);
@@ -181,7 +194,9 @@ void sweep_store(const fs::path& root, const Bytes& png) {
   bool all_ok = true, covered = false;
   long long points = 0;
   std::string bad;
+  g_step = "store";
   for (long long n = 1; n <= 8192 && all_ok; ++n) {
+    g_last_n = n;
     fs::path dir = root / ("store-" + std::to_string(n));
     fs::remove_all(dir);
     rth_cache* c = open_or_die(dir.u8string());
@@ -277,7 +292,9 @@ void sweep_library(const fs::path& root, const Bytes& epub) {
   bool all_ok = true, covered = false;
   long long points = 0;
   std::string bad;
+  g_step = "library";
   for (long long n = 1; n <= 8192 && all_ok; ++n) {
+    g_last_n = n;
     rth_cache_clear(c, &re);  // every point starts from an empty cache, so it reaches the store
     Thumb t;
     std::memset(&re, 0, sizeof(re));
@@ -383,6 +400,7 @@ int main(int argc, char** argv) {
   }
   if (mode.empty() || work.empty() || fixtures.empty()) fatal("usage: --mode open|store|library --work DIR --fixtures DIR [--repo-fixtures DIR]");
   fs::create_directories(work);
+  std::set_terminate(on_terminate);
   const Bytes png = read_file(fixtures / "grad16x8.png");
   if (mode == "open") {
     sweep_open(work);
