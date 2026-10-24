@@ -24,6 +24,9 @@ G04 每次返回最多32项、2MiB预算。每个队列调用在同一实际线�
 EPUB v2 同时核对真实 spine 序号和 path；全局 EPUB 与有界章节坐标不混用。
 
 CBZ 使用 SDK 实际提供的非空句柄、空文字快照创建点 selector；不伪造空 selector，也不将宿主限制归因于 SDK。
+固定页 ID 与章节 path 按 UTF-8 字节比较：Swift 的规范等价字符串比较不能裁决原件身份。
+真实 CBZ 夹具保留 `café.png` / `café.png` 两个规范等价但字节不同的成员，分别公开 capture、
+独立 FOUND 和实际 renderer 二次定位；三目标 UI 的漫画示例也使用这份原件。
 恢复由用户选择保留版本后独立 FOUND、重新公开 capture，再以 G03 RESTORE 新建版本，当前页面保持不变。
 正文编辑提交原观察 head，由 G03 保持原 selector 和 anchor 版本，UI 旧 head 不自动替换为最新 head。
 

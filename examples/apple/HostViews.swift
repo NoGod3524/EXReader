@@ -366,7 +366,7 @@ struct LibraryScreen: View {
                 HStack {
                     Button("导入阅读文本示例") { model.importFixture("Records", extension: "txt") }
                         .accessibilityIdentifier("library.import.records-text")
-                    Button("导入漫画示例") { model.importFixture("NavigationPages", extension: "cbz") }
+                    Button("导入漫画示例") { model.importFixture("UnicodePages", extension: "cbz") }
                         .accessibilityIdentifier("library.import.records-cbz")
                 }
             }

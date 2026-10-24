@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import zipfile
 
 
 def main():
@@ -16,6 +17,11 @@ def main():
     text = '\n\n'.join('Reading paragraph %04d. Unique native bookmark, café 中文 😀 and retained annotation.' % i
                          for i in range(400))
     (args.resources / 'Records.txt').write_text(text, encoding='utf-8')
+    with zipfile.ZipFile(args.resources / 'NavigationPages.cbz') as source:
+        image = source.read(source.namelist()[0])
+    with zipfile.ZipFile(args.resources / 'UnicodePages.cbz', 'w', compression=zipfile.ZIP_DEFLATED) as target:
+        for name in ('café.png', 'cafe\u0301.png'):
+            target.writestr(name, image)
     manifest = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
                 for path in sorted(args.resources.iterdir()) if path.is_file() and path.name != 'manifest.json'}
     (args.resources / 'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')

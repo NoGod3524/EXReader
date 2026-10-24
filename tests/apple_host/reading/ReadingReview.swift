@@ -66,7 +66,7 @@ import Darwin
             let font = try HostFont(data: Data(contentsOf: resources.appendingPathComponent("Reader.otf")))
             var session = HostSession(library: library, font: font, slowDelay: 0, viewport: CGSize(width: 480, height: 640), fontSize: 28)
             var books: [String: Int64] = [:]
-            for name in ["Records.txt", "Bounded.epub", "Sample.pdf", "NavigationPages.cbz", "Sample.epub"] {
+            for name in ["Records.txt", "Bounded.epub", "Sample.pdf", "NavigationPages.cbz", "UnicodePages.cbz", "Sample.epub"] {
                 let (id, _) = try session.importBook(url: resources.appendingPathComponent(name), cancel: HostCancelBox(), catalog: catalog)
                 books[name] = id
             }
@@ -151,8 +151,26 @@ import Darwin
                 let (fresh, hit) = try session.readingResolution(wire(input), catalog: catalog, cancel: HostCancelBox())
                 try expect(fresh.mode == 3 && fresh.fixed?.start == 0 && fresh.fixed?.end == 0 && hit.mode == READER_SEARCH_FIXED,
                     "CBZ point did not resolve through its actual fixed text provider")
-                let (_, frame) = try session.searchCandidate(hit, cancel: HostCancelBox())
+                let (candidate, frame) = try session.searchCandidate(hit, cancel: HostCancelBox())
                 try expect(frame.pageIndex == hit.unit, "CBZ renderer failed its second public FOUND")
+                session = candidate
+                _ = try open("UnicodePages.cbz")
+                let actual = try session.library.fixed(bookID: books["UnicodePages.cbz"]!, font: font, cancel: HostCancelBox())
+                let ids = actual.pageIDs
+                try expect(ids.count == 2 && Set(ids).count == 1 && Set(ids.map { Data($0.utf8) }).count == 2,
+                           "Actual CBZ did not retain both canonically equal but byte-distinct native page IDs")
+                for page in 0..<2 {
+                    if page != 0 { _ = try session.turn(1, cancel: HostCancelBox()) }
+                    let input = try request(), before = try session.stateHash()
+                    _ = try submit(input)
+                    try expect(try session.stateHash() == before, "Unicode CBZ bookmark wrote SDK state")
+                    let (fresh, hit) = try session.readingResolution(wire(input), catalog: catalog, cancel: HostCancelBox())
+                    try expect(fresh.page == page && fresh.fixed?.fields[0] == Data(ids[page].utf8),
+                               "Canonically equal CBZ IDs were merged instead of byte-exact routed")
+                    let (candidate, frame) = try session.searchCandidate(hit, cancel: HostCancelBox())
+                    try expect(frame.pageIndex == page, "Actual renderer guessed a Unicode-equivalent CBZ page")
+                    session = candidate
+                }
             }
             _ = try open("Records.txt")
             let bookmark = try request(); _ = try submit(bookmark)
