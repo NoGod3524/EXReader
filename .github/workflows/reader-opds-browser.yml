@@ -105,6 +105,8 @@ jobs:
             build/opds-browser-stage/
             build/reading-library/CMakeCache.txt
             build/opds-consumer/CMakeCache.txt
+            build/opds-consumer/opds-consumer*
+            build/opds-consumer/opds-import-consumer*
           if-no-files-found: error
   evidence:
     name: strict opds evidence

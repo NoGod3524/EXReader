@@ -64,6 +64,15 @@ def main():
                     'ZIP digest differs: ' + name)
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
                 report = json.loads(archive.read('opds-evidence/result.json'))
+                names = [n for n in archive.namelist()
+                         if n.startswith('opds-consumer/') and not n.endswith('/')]
+                require(len(names) == 2, 'consumer binaries missing from ' + name)
+                embedded = {}
+                for entry in names:
+                    payload = archive.read(entry)
+                    embedded[Path(entry).name] = (len(payload), hashlib.sha256(payload).hexdigest())
+                reported = {c['name']: (int(c['bytes']), c['sha256']) for c in report['consumers']}
+                require(embedded == reported, 'consumer binaries differ from the report: ' + name)
             require(report.get('accepted') is True, 'report refused: ' + name)
             require(report['source_sha'] == source, 'report source differs: ' + name)
             require(int(report['run_id']) == run_id and int(report['attempt']) == attempt,
@@ -79,6 +88,8 @@ def main():
             summary['artifacts'].append({k: artifact[k] for k in
                                          ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
             summary['jobs'].append({k: job[k] for k in ('id', 'name', 'conclusion')})
+            summary.setdefault('consumers', {})[platform] = sorted(
+                [n, size, digest] for n, (size, digest) in embedded.items())
             summary['granted_platforms'].append(platform)
         require(len(outcomes) == 3, 'missing platform outcomes')
         reference = outcomes['linux']
