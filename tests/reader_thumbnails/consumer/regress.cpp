@@ -256,7 +256,7 @@ void cache_checks(const fs::path& root, const Bytes& png) {
     bool stale_gone = !fs::exists(stale, ec);
     check("regress: a fresh temporary file of another live cache instance is preserved by open", live_ok,
           live_ok ? "bytes " + num((uint64_t)live_bytes.size()) : "file was deleted or rewritten");
-    check("regress: a stale temporary of the cache naming is removed by open", stale_gone && live_ok, "stale removed " + num((uint64_t)stale_gone));
+    check("regress: a stale temporary of the cache naming is removed by open", stale_gone, "stale removed " + num((uint64_t)stale_gone));
     rth_cache_close(c);
   }
 

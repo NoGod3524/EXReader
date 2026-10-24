@@ -28,6 +28,7 @@ def main():
         jobs = pages(f'actions/runs/{run_id}/attempts/{attempt}/jobs', 'jobs')
         artifacts = pages(f'actions/runs/{run_id}/artifacts', 'artifacts')
         names = []
+        regress_names = []
         for platform, runner in PLATFORMS:
             name = f'reader-thumbnails-{platform}-{run_id}-{attempt}'
             job_name = f'thumbnail consumers ({runner})'
@@ -46,7 +47,11 @@ def main():
             require(report.get('accepted') is True and report['source_sha'] == source and int(report['run_id']) == run_id and int(report['attempt']) == attempt, 'report identity/refusal')
             require(report['granted_platform'] == platform.lower() and report['performance_claimed'] is False and report['six_platform_accepted'] is False, 'platform grant differs')
             require(report['checks'] > 0 and len(report['check_names']) == report['checks'], 'report is empty')
+            require(report['regress_checks'] >= 9 and len(report['regress_check_names']) == report['regress_checks'],
+                    'regression report is empty')
+            require(all(r['pass'] is True for r in report['regress_results']), 'regression results are not all passing')
             names.append((platform, sorted(report['check_names'])))
+            regress_names.append((platform, sorted(report['regress_check_names'])))
             summary['measurements'][platform] = report['measurements']
             summary['artifacts'].append({k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
             summary['jobs'].append({k: job[k] for k in ('id', 'name', 'conclusion')})
@@ -58,6 +63,11 @@ def main():
         base = comparable(names[0][1])
         for platform, values in names[1:]:
             require(comparable(values) == base, 'check names differ on ' + platform)
+        # The four review regressions must be the same named checks on every platform.
+        base_regress = regress_names[0][1]
+        for platform, values in regress_names[1:]:
+            require(values == base_regress, 'regression check names differ on ' + platform)
+        summary['regress_check_names'] = base_regress
         summary['accepted'] = True
     except Exception as error:
         summary['problems'].append(str(error))

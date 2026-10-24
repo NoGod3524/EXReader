@@ -1,22 +1,40 @@
 // SPDX-License-Identifier: MIT
 // EXReaderThumbnails: bounded cover / first-page thumbnails and their LRU cache.
 // Single-owner, synchronous, no threads. Only the public SDK API is used.
+//
+// Cache files are created with exclusive-create semantics and opened without
+// following links or reparse points; publication is a same-directory platform
+// atomic replace that reports failure. The cache directory is scanned once with a
+// bounded candidate budget instead of being collected wholesale.
 #include "reader_thumbnails.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <map>
 #include <new>
 #include <string>
+#include <system_error>
 #include <thread>
 #include <vector>
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#else
+#include <cerrno>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 
 namespace fs = std::filesystem;
 
@@ -133,6 +151,20 @@ rth_status map_sdk(rth_error* e, exr_status s, const exr_error& sdk, const char*
   return fail(e, code, (int)s, text);
 }
 
+// No exception may cross the C ABI: every public entry point is wrapped.
+template <typename Body>
+rth_status guarded(rth_error* e, Body&& body) {
+  try {
+    return body();
+  } catch (const std::bad_alloc&) {
+    return fail(e, RTH_MEMORY, -1, "Out of memory");
+  } catch (const std::exception& ex) {
+    return fail(e, RTH_IO, -1, ex.what());
+  } catch (...) {
+    return fail(e, RTH_IO, -1, "Unexpected failure");
+  }
+}
+
 struct Poll {
   const rth_control* control;
   bool cancelled;
@@ -155,6 +187,14 @@ const size_t kKeyMax = 512;
 const char kIndexName[] = "rth-index.txt";
 const char kIndexMagic[] = "RTHIDX1";
 
+// Temporary files younger than this grace period are left alone by open: another
+// process may be publishing one at that very moment.
+const uint64_t kStaleTempSeconds = 600;
+// Candidate budget of one bounded directory scan: independent of the directory size.
+const uint64_t kScanMinCandidates = 256;
+const uint64_t kScanPerEntry = 8;
+const uint64_t kScanMaxCandidates = 65536;
+
 struct Header {
   std::string key;
   uint32_t width = 0, height = 0, origin = 0;
@@ -163,6 +203,82 @@ struct Header {
   size_t body = 0;  // payload offset
 };
 
+uint64_t splitmix64(uint64_t x) {
+  x += 0x9e3779b97f4a7c15ull;
+  x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ull;
+  x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
+  return x ^ (x >> 31);
+}
+uint64_t process_token() {
+#ifdef _WIN32
+  const uint64_t pid = (uint64_t)::GetCurrentProcessId();
+#else
+  const uint64_t pid = (uint64_t)::getpid();
+#endif
+  const uint64_t clock = (uint64_t)std::chrono::steady_clock::now().time_since_epoch().count();
+  const uint64_t wall = (uint64_t)std::chrono::system_clock::now().time_since_epoch().count();
+  uint64_t stack = 0;
+  const uint64_t address = static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(&stack));
+  return splitmix64(pid ^ splitmix64(clock ^ splitmix64(wall ^ splitmix64(address))));
+}
+
+// ---- exclusive-create / no-follow file layer -------------------------------
+// kind: 0 fine, 1 the name already exists, 2 error.
+class WriteHandle {
+ public:
+  WriteHandle() = default;
+  ~WriteHandle() { close(); }
+  WriteHandle(const WriteHandle&) = delete;
+  WriteHandle& operator=(const WriteHandle&) = delete;
+  int open_exclusive(const fs::path& path, std::error_code& ec);
+  bool write(const void* data, size_t size, std::error_code& ec);
+  bool sync(std::error_code& ec);
+  void close();
+
+ private:
+#ifdef _WIN32
+  HANDLE handle_ = INVALID_HANDLE_VALUE;
+#else
+  int fd_ = -1;
+#endif
+};
+
+class ReadHandle {
+ public:
+  ReadHandle() = default;
+  ~ReadHandle() { close(); }
+  ReadHandle(const ReadHandle&) = delete;
+  ReadHandle& operator=(const ReadHandle&) = delete;
+  bool open_regular(const fs::path& path, uint64_t& size, std::error_code& ec);
+  bool read(void* data, size_t size, size_t& got, std::error_code& ec);
+  void close();
+
+ private:
+#ifdef _WIN32
+  HANDLE handle_ = INVALID_HANDLE_VALUE;
+#else
+  int fd_ = -1;
+#endif
+};
+
+bool atomic_replace(const fs::path& from, const fs::path& to, std::error_code& ec) {
+  ec.clear();
+#ifdef _WIN32
+  if (!::MoveFileExW(from.c_str(), to.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+    ec = std::error_code(static_cast<int>(::GetLastError()), std::system_category());
+    return false;
+  }
+  return true;
+#else
+  if (::rename(from.c_str(), to.c_str()) != 0) {
+    const int code = errno;
+    ec = std::error_code(code, std::system_category());
+    return false;
+  }
+  return true;
+#endif
+}
+
 }  // namespace
 
 struct rth_cache {
@@ -170,13 +286,180 @@ struct rth_cache {
   fs::path dir;
   rth_limits limits;
   std::map<std::string, Entry> entries;  // by file name
-  uint64_t total = 0, clock = 0, temp_counter = 0;
+  uint64_t total = 0, clock = 0, temp_counter = 0, temp_token = 0;
   rth_stats stats;
   std::thread::id owner;
   bool busy = false;
 };
 
 namespace {
+
+// ---- handle implementations ------------------------------------------------
+int WriteHandle::open_exclusive(const fs::path& path, std::error_code& ec) {
+  ec.clear();
+#ifdef _WIN32
+  HANDLE h = ::CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+                           FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+  if (h == INVALID_HANDLE_VALUE) {
+    const DWORD error = ::GetLastError();
+    ec = std::error_code(static_cast<int>(error), std::system_category());
+    return (error == ERROR_FILE_EXISTS || error == ERROR_ALREADY_EXISTS) ? 1 : 2;
+  }
+  handle_ = h;
+  return 0;
+#else
+  const int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600);
+  if (fd < 0) {
+    const int error = errno;
+    ec = std::error_code(error, std::system_category());
+    return error == EEXIST ? 1 : 2;
+  }
+  fd_ = fd;
+  return 0;
+#endif
+}
+
+bool WriteHandle::write(const void* data, size_t size, std::error_code& ec) {
+  const unsigned char* p = static_cast<const unsigned char*>(data);
+  size_t done = 0;
+  while (done < size) {
+#ifdef _WIN32
+    const DWORD want = static_cast<DWORD>(std::min<size_t>(size - done, static_cast<size_t>(1) << 20));
+    DWORD wrote = 0;
+    if (!::WriteFile(handle_, p + done, want, &wrote, nullptr)) {
+      ec = std::error_code(static_cast<int>(::GetLastError()), std::system_category());
+      return false;
+    }
+    if (wrote == 0) {
+      ec = std::make_error_code(std::errc::io_error);
+      return false;
+    }
+    done += static_cast<size_t>(wrote);
+#else
+    const ssize_t n = ::write(fd_, p + done, size - done);
+    if (n < 0) {
+      if (errno == EINTR) continue;
+      ec = std::error_code(errno, std::system_category());
+      return false;
+    }
+    if (n == 0) {
+      ec = std::make_error_code(std::errc::io_error);
+      return false;
+    }
+    done += static_cast<size_t>(n);
+#endif
+  }
+  return true;
+}
+
+bool WriteHandle::sync(std::error_code& ec) {
+#ifdef _WIN32
+  if (!::FlushFileBuffers(handle_)) {
+    ec = std::error_code(static_cast<int>(::GetLastError()), std::system_category());
+    return false;
+  }
+  return true;
+#else
+  if (::fsync(fd_) != 0) {
+    ec = std::error_code(errno, std::system_category());
+    return false;
+  }
+  return true;
+#endif
+}
+
+void WriteHandle::close() {
+#ifdef _WIN32
+  if (handle_ != INVALID_HANDLE_VALUE) {
+    ::CloseHandle(handle_);
+    handle_ = INVALID_HANDLE_VALUE;
+  }
+#else
+  if (fd_ >= 0) {
+    ::close(fd_);
+    fd_ = -1;
+  }
+#endif
+}
+
+bool ReadHandle::open_regular(const fs::path& path, uint64_t& size, std::error_code& ec) {
+  ec.clear();
+  size = 0;
+#ifdef _WIN32
+  HANDLE h = ::CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+                           OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+  if (h == INVALID_HANDLE_VALUE) {
+    ec = std::error_code(static_cast<int>(::GetLastError()), std::system_category());
+    return false;
+  }
+  BY_HANDLE_FILE_INFORMATION info;
+  if (!::GetFileInformationByHandle(h, &info) ||
+      (info.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY)) != 0) {
+    ::CloseHandle(h);
+    ec = std::make_error_code(std::errc::wrong_type);
+    return false;
+  }
+  handle_ = h;
+  size = (static_cast<uint64_t>(info.nFileSizeHigh) << 32) | static_cast<uint64_t>(info.nFileSizeLow);
+  return true;
+#else
+  const int fd = ::open(path.c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+  if (fd < 0) {
+    ec = std::error_code(errno, std::system_category());
+    return false;
+  }
+  struct stat info;
+  if (::fstat(fd, &info) != 0 || !S_ISREG(info.st_mode)) {
+    ::close(fd);
+    ec = std::make_error_code(std::errc::wrong_type);
+    return false;
+  }
+  fd_ = fd;
+  size = static_cast<uint64_t>(info.st_size);
+  return true;
+#endif
+}
+
+bool ReadHandle::read(void* data, size_t size, size_t& got, std::error_code& ec) {
+  unsigned char* p = static_cast<unsigned char*>(data);
+  got = 0;
+  while (got < size) {
+#ifdef _WIN32
+    const DWORD want = static_cast<DWORD>(std::min<size_t>(size - got, static_cast<size_t>(1) << 20));
+    DWORD have = 0;
+    if (!::ReadFile(handle_, p + got, want, &have, nullptr)) {
+      ec = std::error_code(static_cast<int>(::GetLastError()), std::system_category());
+      return false;
+    }
+    if (have == 0) break;
+    got += static_cast<size_t>(have);
+#else
+    const ssize_t n = ::read(fd_, p + got, size - got);
+    if (n < 0) {
+      if (errno == EINTR) continue;
+      ec = std::error_code(errno, std::system_category());
+      return false;
+    }
+    if (n == 0) break;
+    got += static_cast<size_t>(n);
+#endif
+  }
+  return true;
+}
+
+void ReadHandle::close() {
+#ifdef _WIN32
+  if (handle_ != INVALID_HANDLE_VALUE) {
+    ::CloseHandle(handle_);
+    handle_ = INVALID_HANDLE_VALUE;
+  }
+#else
+  if (fd_ >= 0) {
+    ::close(fd_);
+    fd_ = -1;
+  }
+#endif
+}
 
 struct Enter {
   rth_cache* cache;
@@ -198,15 +481,94 @@ bool recognised_entry(const std::string& n) {
   return true;
 }
 
-bool read_all(const fs::path& p, std::vector<unsigned char>& out, uint64_t limit) {
+bool lower_hex(const std::string& n, size_t begin, size_t end) {
+  if (begin >= end) return false;
+  for (size_t i = begin; i < end; ++i) if (!((n[i] >= '0' && n[i] <= '9') || (n[i] >= 'a' && n[i] <= 'f'))) return false;
+  return true;
+}
+bool digits(const std::string& n, size_t begin, size_t end) {
+  if (begin >= end) return false;
+  for (size_t i = begin; i < end; ++i) if (n[i] < '0' || n[i] > '9') return false;
+  return true;
+}
+
+// Names written by earlier versions of this module: "rth-tmp-<n>.tmp" and
+// "rth-tmp-index-<n>.tmp". No live session of this version uses them, so open may
+// remove them (removing a link never touches the file it points at).
+bool legacy_temp_name(const std::string& n) {
+  if (n.size() < 12 || n.compare(n.size() - 4, 4, ".tmp") != 0) return false;
+  const size_t body = n.size() - 4;
+  if (n.compare(0, 8, "rth-tmp-") == 0 && digits(n, 8, body)) return true;
+  if (n.size() > 18 && n.compare(0, 14, "rth-tmp-index-") == 0 && digits(n, 14, body)) return true;
+  return false;
+}
+
+// "rth-tmp-<16 hex session>-<8 hex sequence>.tmp": unpredictable per open, so a
+// hard link or symbolic link cannot be aimed at it from outside.
+bool session_temp_name(const std::string& n) {
+  if (n.size() != 37 || n.compare(0, 8, "rth-tmp-") != 0 || n[24] != '-' || n.compare(33, 4, ".tmp") != 0) return false;
+  return lower_hex(n, 8, 24) && lower_hex(n, 25, 33);
+}
+
+uint64_t scan_budget(const rth_limits& l) {
+  const uint64_t budget = kScanMinCandidates + static_cast<uint64_t>(l.max_entries) * kScanPerEntry;
+  return std::min(budget, kScanMaxCandidates);
+}
+
+std::string next_temp_name(rth_cache* c) {
+  const uint64_t seq = ++c->temp_counter;
+  char buf[64];
+  std::snprintf(buf, sizeof(buf), "rth-tmp-%016llx-%08llx.tmp", (unsigned long long)c->temp_token,
+                (unsigned long long)(seq & 0xffffffffull));
+  return std::string(buf);
+}
+
+bool temp_is_stale(const fs::path& p) {
   std::error_code ec;
-  uint64_t size = fs::file_size(p, ec);
-  if (ec || size > limit) return false;
-  std::ifstream in(p, std::ios::binary);
-  if (!in) return false;
-  out.resize((size_t)size);
-  if (size) in.read(reinterpret_cast<char*>(out.data()), (std::streamsize)size);
-  return in.good() || (in.eof() && (uint64_t)in.gcount() == size);
+  const fs::file_time_type written = fs::last_write_time(p, ec);
+  if (ec) return false;
+  const fs::file_time_type now = fs::file_time_type::clock::now();
+  if (written >= now) return false;
+  return (now - written) > std::chrono::seconds(kStaleTempSeconds);
+}
+
+// Creates the bytes under a fresh exclusive name in the cache directory, then
+// publishes them with a platform atomic replace. A name that already exists
+// (including one that is a hard link) is never opened, so nothing outside the
+// cache can be truncated through it.
+bool publish_file(rth_cache* c, const fs::path& target, const void* data, size_t size, std::error_code& ec) {
+  for (int attempt = 0; attempt < 8; ++attempt) {
+    const fs::path temp = c->dir / next_temp_name(c);
+    WriteHandle out;
+    const int opened = out.open_exclusive(temp, ec);
+    if (opened == 1) continue;
+    if (opened != 0) return false;
+    bool good = out.write(data, size, ec);
+    if (good) good = out.sync(ec);
+    out.close();
+    if (!good) {
+      std::error_code ignored;
+      fs::remove(temp, ignored);
+      return false;
+    }
+    if (atomic_replace(temp, target, ec)) return true;
+    std::error_code ignored;
+    fs::remove(temp, ignored);
+    return false;
+  }
+  ec = std::make_error_code(std::errc::file_exists);
+  return false;
+}
+
+bool write_index(rth_cache* c) {
+  std::string text = std::string(kIndexMagic) + "\n";
+  for (const auto& kv : c->entries) text += kv.first + " " + std::to_string(kv.second.tick) + "\n";
+  std::error_code ec;
+  if (!publish_file(c, c->dir / kIndexName, text.data(), text.size(), ec)) {
+    ++c->stats.index_failures;
+    return false;
+  }
+  return true;
 }
 
 // Parses and structurally validates the header of an in-memory prefix; file_size is
@@ -230,29 +592,12 @@ bool parse_header(const unsigned char* p, size_t have, uint64_t file_size, const
 
 bool read_header_only(const fs::path& p, const rth_limits& lim, Header& h, uint64_t& size) {
   std::error_code ec;
-  size = fs::file_size(p, ec);
-  if (ec) return false;
-  std::ifstream in(p, std::ios::binary);
-  if (!in) return false;
+  ReadHandle in;
+  if (!in.open_regular(p, size, ec)) return false;
   unsigned char buf[kFixedHeader + kKeyMax];
-  in.read(reinterpret_cast<char*>(buf), (std::streamsize)sizeof(buf));
-  size_t have = (size_t)in.gcount();
-  return parse_header(buf, have, size, lim, h);
-}
-
-void write_index(rth_cache* c) {
-  std::string text = std::string(kIndexMagic) + "\n";
-  for (const auto& kv : c->entries) text += kv.first + " " + std::to_string(kv.second.tick) + "\n";
-  fs::path tmp = c->dir / ("rth-tmp-index-" + std::to_string(++c->temp_counter) + ".tmp");
-  {
-    std::ofstream out(tmp, std::ios::binary | std::ios::trunc);
-    out.write(text.data(), (std::streamsize)text.size());
-    out.flush();
-    if (!out.good()) { out.close(); std::error_code ec; fs::remove(tmp, ec); return; }
-  }
-  std::error_code ec;
-  fs::rename(tmp, c->dir / kIndexName, ec);
-  if (ec) fs::remove(tmp, ec);
+  size_t got = 0;
+  if (!in.read(buf, sizeof(buf), got, ec)) return false;
+  return parse_header(buf, got, size, lim, h);
 }
 
 void drop_entry(rth_cache* c, const std::string& name) {
@@ -309,13 +654,23 @@ std::string make_key(const rth_book& b, rth_origin origin, const std::string& so
 void clear_out(rth_thumbnail* t) { if (t) std::memset(t, 0, sizeof(*t)); }
 
 bool lookup(rth_cache* c, const std::string& key, rth_thumbnail* out) {
-  std::string name = entry_name(key);
+  const std::string name = entry_name(key);
   auto it = c->entries.find(name);
   if (it == c->entries.end()) { ++c->stats.misses; return false; }
+  const uint64_t max_entry = kFixedHeader + kKeyMax + (uint64_t)c->limits.max_edge * c->limits.max_edge * 4ull;
+  std::error_code ec;
+  ReadHandle in;
+  uint64_t size = 0;
   std::vector<unsigned char> bytes;
   Header h;
-  bool good = read_all(c->dir / name, bytes, kFixedHeader + kKeyMax + (uint64_t)c->limits.max_edge * c->limits.max_edge * 4u) &&
-              parse_header(bytes.data(), bytes.size(), bytes.size(), c->limits, h) && h.key == key;
+  bool good = false;
+  if (in.open_regular(c->dir / name, size, ec) && size >= kFixedHeader && size <= max_entry) {
+    bytes.resize((size_t)size);
+    size_t got = 0;
+    if (in.read(bytes.data(), bytes.size(), got, ec) && got == bytes.size())
+      good = parse_header(bytes.data(), bytes.size(), size, c->limits, h) && h.key == key;
+  }
+  in.close();
   if (good) {
     unsigned char digest[32];
     Sha256 s; s.init(); s.update(bytes.data() + h.body, (size_t)h.payload); s.finish(digest);
@@ -338,9 +693,9 @@ bool lookup(rth_cache* c, const std::string& key, rth_thumbnail* out) {
 }
 
 bool store(rth_cache* c, const std::string& key, rth_origin origin, const rth_thumbnail& t) {
-  std::string name = entry_name(key);
+  const std::string name = entry_name(key);
   std::vector<unsigned char> file;
-  uint64_t payload = (uint64_t)t.width * t.height * 4u;
+  const uint64_t payload = (uint64_t)t.width * t.height * 4u;
   file.reserve(kFixedHeader + key.size() + (size_t)payload);
   file.insert(file.end(), kMagic, kMagic + 8);
   put32(file, (uint32_t)(kFixedHeader + key.size())); put32(file, (uint32_t)key.size());
@@ -350,20 +705,15 @@ bool store(rth_cache* c, const std::string& key, rth_origin origin, const rth_th
   file.insert(file.end(), digest, digest + 32);
   file.insert(file.end(), key.begin(), key.end());
   file.insert(file.end(), t.pixels, t.pixels + payload);
-  uint64_t need = file.size();
+  const uint64_t need = file.size();
   if (need > c->limits.max_total_bytes) { ++c->stats.rejected; return false; }
-  fs::path tmp = c->dir / ("rth-tmp-" + std::to_string(++c->temp_counter) + ".tmp");
-  {
-    std::ofstream out(tmp, std::ios::binary | std::ios::trunc);
-    out.write(reinterpret_cast<const char*>(file.data()), (std::streamsize)file.size());
-    out.flush();
-    if (!out.good()) { out.close(); std::error_code ec; fs::remove(tmp, ec); ++c->stats.store_failures; return false; }
-  }
   if (c->entries.count(name)) drop_entry(c, name);
   make_room(c, need);
   std::error_code ec;
-  fs::rename(tmp, c->dir / name, ec);
-  if (ec) { fs::remove(tmp, ec); ++c->stats.store_failures; write_index(c); return false; }
+  if (!publish_file(c, c->dir / name, file.data(), file.size(), ec)) {
+    ++c->stats.store_failures;
+    return false;
+  }
   c->entries[name] = rth_cache::Entry{key, t.width, t.height, need, ++c->clock};
   c->total += need;
   ++c->stats.stores;
@@ -500,8 +850,13 @@ void rth_thumbnail_free(rth_thumbnail* t) {
 }
 
 void rth_sha256_hex(const void* data, size_t size, char out[65]) {
-  std::string s = sha_hex(data, size);
-  std::memcpy(out, s.c_str(), 65);
+  if (!out) return;
+  try {
+    std::string s = sha_hex(data, size);
+    std::memcpy(out, s.c_str(), 65);
+  } catch (...) {
+    std::memset(out, 0, 65);
+  }
 }
 
 rth_status rth_cache_open(const char* directory, const rth_limits* limits, rth_cache** out, rth_error* error) {
@@ -515,93 +870,139 @@ rth_status rth_cache_open(const char* directory, const rth_limits* limits, rth_c
     return fail(error, RTH_LIMIT, -1, "max_total_bytes outside the permitted range");
   if (lim.max_source_pixels == 0 || lim.max_source_pixels > RTH_SOURCE_PIXELS_HARD_MAX) return fail(error, RTH_LIMIT, -1, "max_source_pixels outside 1..hard maximum");
   if (lim.max_encoded_bytes == 0 || lim.max_encoded_bytes > RTH_ENCODED_HARD_MAX) return fail(error, RTH_LIMIT, -1, "max_encoded_bytes outside 1..hard maximum");
-  rth_cache* c = new (std::nothrow) rth_cache();
-  if (!c) return fail(error, RTH_MEMORY, -1, "Cache allocation failed");
-  c->dir = fs::u8path(directory);
-  c->limits = lim;
-  std::memset(&c->stats, 0, sizeof(c->stats));
-  c->stats.struct_size = sizeof(c->stats);
-  c->owner = std::this_thread::get_id();
-  std::error_code ec;
-  fs::create_directories(c->dir, ec);
-  if (ec || !fs::is_directory(c->dir, ec)) {
-    delete c;
-    return fail(error, RTH_IO, -1, "Cannot create the cache directory");
-  }
-  std::map<std::string, uint64_t> ticks;
-  {
-    std::vector<unsigned char> text;
-    if (read_all(c->dir / kIndexName, text, 4u * 1024u * 1024u)) {
-      std::string s(text.begin(), text.end());
-      size_t pos = s.find('\n');
-      if (pos != std::string::npos && s.compare(0, pos, kIndexMagic) == 0) {
-        while (pos + 1 < s.size()) {
-          size_t next = s.find('\n', pos + 1);
-          if (next == std::string::npos) break;
-          std::string line = s.substr(pos + 1, next - pos - 1);
-          size_t sp = line.find(' ');
-          if (sp != std::string::npos) ticks[line.substr(0, sp)] = std::strtoull(line.c_str() + sp + 1, nullptr, 10);
-          pos = next;
+  return guarded(error, [&]() -> rth_status {
+    rth_cache* c = new (std::nothrow) rth_cache();
+    if (!c) return fail(error, RTH_MEMORY, -1, "Cache allocation failed");
+    c->dir = fs::u8path(directory);
+    c->limits = lim;
+    std::memset(&c->stats, 0, sizeof(c->stats));
+    c->stats.struct_size = sizeof(c->stats);
+    c->owner = std::this_thread::get_id();
+    c->temp_token = process_token();
+    std::error_code ec;
+    fs::create_directories(c->dir, ec);
+    if (ec || !fs::is_directory(c->dir, ec)) {
+      delete c;
+      return fail(error, RTH_IO, -1, "Cannot create the cache directory");
+    }
+    // LRU ticks of the last close. The index is read once and its line count is
+    // bounded by the same candidate budget as the directory scan.
+    const uint64_t budget = scan_budget(c->limits);
+    std::map<std::string, uint64_t> ticks;
+    {
+      ReadHandle in;
+      uint64_t size = 0;
+      if (in.open_regular(c->dir / kIndexName, size, ec) && size <= 4ull * 1024ull * 1024ull) {
+        std::vector<char> text((size_t)size);
+        size_t got = 0;
+        if (size == 0 || (in.read(text.data(), text.size(), got, ec) && got == text.size())) {
+          size_t pos = 0, lines = 0;
+          auto next_line = [&](std::string& line) {
+            if (pos >= text.size()) return false;
+            const size_t end = [&] {
+              size_t at = pos;
+              while (at < text.size() && text[at] != '\n') ++at;
+              return at;
+            }();
+            line.assign(text.data() + pos, end - pos);
+            pos = end < text.size() ? end + 1 : end;
+            return true;
+          };
+          std::string line;
+          if (next_line(line) && line == kIndexMagic) {
+            while (lines < budget && next_line(line)) {
+              ++lines;
+              const size_t space = line.find(' ');
+              if (space != std::string::npos) ticks[line.substr(0, space)] = std::strtoull(line.c_str() + space + 1, nullptr, 10);
+            }
+          }
         }
       }
     }
-  }
-  std::vector<fs::path> files;
-  for (fs::directory_iterator it(c->dir, ec), end; !ec && it != end; it.increment(ec)) {
-    std::error_code fe;
-    if (it->is_regular_file(fe)) files.push_back(it->path());
-  }
-  std::sort(files.begin(), files.end());
-  for (const fs::path& p : files) {
-    std::string name = p.filename().u8string();
-    if (name.compare(0, 8, "rth-tmp-") == 0 && name.size() > 4 && name.compare(name.size() - 4, 4, ".tmp") == 0) {
-      fs::remove(p, ec);
-      continue;
+    // One bounded pass: retain and evict entry by entry, never holding the
+    // directory contents. Beyond the budget the rest is left untouched and
+    // scan_truncated reports that the adoption is partial.
+    uint64_t inspected = 0;
+    std::error_code it_ec;
+    for (fs::directory_iterator it(c->dir, it_ec), end; !it_ec && it != end; it.increment(it_ec)) {
+      if (inspected >= budget) { c->stats.scan_truncated = 1; break; }
+      ++inspected;
+      std::error_code fe;
+      const fs::file_status status = it->symlink_status(fe);  // never follows a link
+      if (fe || !fs::is_regular_file(status)) continue;
+      std::string name;
+      try {
+        name = it->path().filename().u8string();
+      } catch (...) {
+        continue;  // a name this platform cannot represent is left untouched
+      }
+      if (legacy_temp_name(name)) { fs::remove(it->path(), fe); continue; }
+      if (session_temp_name(name)) {
+        if (temp_is_stale(it->path())) fs::remove(it->path(), fe);
+        continue;
+      }
+      if (!recognised_entry(name)) continue;
+      Header h;
+      uint64_t size = 0;
+      if (!read_header_only(it->path(), c->limits, h, size) || entry_name(h.key) != name) {
+        fs::remove(it->path(), fe);
+        ++c->stats.corrupt_rebuilt;
+        continue;
+      }
+      const uint64_t tick = ticks.count(name) ? ticks[name] : 0;
+      c->entries[name] = rth_cache::Entry{h.key, h.width, h.height, size, tick};
+      c->total += size;
+      c->clock = std::max(c->clock, tick);
+      while (!c->entries.empty() && (c->entries.size() > c->limits.max_entries || c->total > c->limits.max_total_bytes))
+        evict_lru(c);
+      // The retained set, not the transient insertion, is what the scan holds.
+      c->stats.peak_retained_entries =
+          std::max<uint64_t>(c->stats.peak_retained_entries, static_cast<uint64_t>(c->entries.size()));
     }
-    if (!recognised_entry(name)) continue;
-    Header h;
-    uint64_t size = 0;
-    if (!read_header_only(p, c->limits, h, size) || entry_name(h.key) != name) {
-      fs::remove(p, ec);
-      ++c->stats.corrupt_rebuilt;
-      continue;
+    c->stats.scanned_files = inspected;
+    if (!write_index(c)) {
+      delete c;
+      return fail(error, RTH_IO, -1, "Cannot publish the cache index (atomic replace failed)");
     }
-    uint64_t tick = ticks.count(name) ? ticks[name] : 0;
-    c->entries[name] = rth_cache::Entry{h.key, h.width, h.height, size, tick};
-    c->total += size;
-    c->clock = std::max(c->clock, tick);
-  }
-  while (!c->entries.empty() && (c->entries.size() > c->limits.max_entries || c->total > c->limits.max_total_bytes)) evict_lru(c);
-  write_index(c);
-  *out = c;
-  return ok(error);
+    *out = c;
+    return ok(error);
+  });
 }
 
 void rth_cache_close(rth_cache* c) {
   if (!c || c->owner != std::this_thread::get_id() || c->busy) return;
-  write_index(c);
+  try {
+    write_index(c);
+  } catch (...) {
+  }
   delete c;
 }
 
 rth_status rth_cache_clear(rth_cache* c, rth_error* error) {
   Enter guard(c, error);
   if (!guard.entered) return RTH_ARGUMENT;
-  std::vector<std::string> names;
-  for (const auto& kv : c->entries) names.push_back(kv.first);
-  for (const std::string& n : names) drop_entry(c, n);
-  write_index(c);
-  return ok(error);
+  return guarded(error, [&]() -> rth_status {
+    std::vector<std::string> names;
+    names.reserve(c->entries.size());
+    for (const auto& kv : c->entries) names.push_back(kv.first);
+    for (const std::string& n : names) drop_entry(c, n);
+    if (!write_index(c)) return fail(error, RTH_IO, -1, "Cannot publish the cache index (atomic replace failed)");
+    return ok(error);
+  });
 }
 
 rth_status rth_cache_stats(const rth_cache* cc, rth_stats* stats, rth_error* error) {
   rth_cache* c = const_cast<rth_cache*>(cc);
   if (!c || !stats) return fail(error, RTH_ARGUMENT, -1, "Missing cache or output");
-  if (c->owner != std::this_thread::get_id()) return fail(error, RTH_ARGUMENT, -1, "Cache used from a thread other than its owner");
-  *stats = c->stats;
-  stats->struct_size = sizeof(*stats);
-  stats->entries = (uint32_t)c->entries.size();
-  stats->bytes = c->total;
-  return ok(error);
+  Enter guard(c, error);
+  if (!guard.entered) return RTH_ARGUMENT;
+  return guarded(error, [&]() -> rth_status {
+    *stats = c->stats;
+    stats->struct_size = sizeof(*stats);
+    stats->entries = (uint32_t)c->entries.size();
+    stats->bytes = c->total;
+    return ok(error);
+  });
 }
 
 rth_status rth_cache_find(rth_cache* c, const rth_book* book, rth_origin origin, const rth_request* request,
@@ -610,16 +1011,18 @@ rth_status rth_cache_find(rth_cache* c, const rth_book* book, rth_origin origin,
   clear_out(out);
   Enter guard(c, error);
   if (!guard.entered) return RTH_ARGUMENT;
-  if (!out || !found) return fail(error, RTH_ARGUMENT, -1, "Missing output");
-  if (origin != RTH_ORIGIN_AUTHOR_COVER && origin != RTH_ORIGIN_FIRST_PAGE_PREVIEW) return fail(error, RTH_ARGUMENT, -1, "Unknown origin");
-  rth_status st = check_book(book, origin == RTH_ORIGIN_FIRST_PAGE_PREVIEW, error);
-  if (st != RTH_OK) return st;
-  st = check_request(c, request, error);
-  if (st != RTH_OK) { if (st == RTH_LIMIT) ++c->stats.rejected; return st; }
-  std::string key = make_key(*book, origin, origin == RTH_ORIGIN_AUTHOR_COVER ? "lib" : "fix", *request);
-  *found = lookup(c, key, out) ? 1 : 0;
-  if (*found) write_index(c);
-  return ok(error);
+  return guarded(error, [&]() -> rth_status {
+    if (!out || !found) return fail(error, RTH_ARGUMENT, -1, "Missing output");
+    if (origin != RTH_ORIGIN_AUTHOR_COVER && origin != RTH_ORIGIN_FIRST_PAGE_PREVIEW) return fail(error, RTH_ARGUMENT, -1, "Unknown origin");
+    rth_status st = check_book(book, origin == RTH_ORIGIN_FIRST_PAGE_PREVIEW, error);
+    if (st != RTH_OK) return st;
+    st = check_request(c, request, error);
+    if (st != RTH_OK) { if (st == RTH_LIMIT) ++c->stats.rejected; return st; }
+    const std::string key = make_key(*book, origin, origin == RTH_ORIGIN_AUTHOR_COVER ? "lib" : "fix", *request);
+    *found = lookup(c, key, out) ? 1 : 0;
+    if (*found) write_index(c);
+    return ok(error);
+  });
 }
 
 rth_status rth_cover_from_library(rth_cache* c, exr_library* library, int64_t book_id, const rth_book* book,
@@ -628,26 +1031,28 @@ rth_status rth_cover_from_library(rth_cache* c, exr_library* library, int64_t bo
   clear_out(out);
   Enter guard(c, error);
   if (!guard.entered) return RTH_ARGUMENT;
-  if (!out || !library || book_id <= 0) return fail(error, RTH_ARGUMENT, -1, "Missing library, book id or output");
-  rth_status st = check_book(book, false, error);
-  if (st != RTH_OK) return st;
-  st = check_request(c, request, error);
-  if (st != RTH_OK) { if (st == RTH_LIMIT) ++c->stats.rejected; return st; }
-  Poll poll{control, false};
-  if (poll.check()) return fail(error, RTH_CANCELLED, -1, "Cancelled");
-  std::string key = make_key(*book, RTH_ORIGIN_AUTHOR_COVER, "lib", *request);
-  if (lookup(c, key, out)) { write_index(c); return ok(error); }
-  void* data = nullptr;
-  size_t size = 0;
-  exr_error se;
-  std::memset(&se, 0, sizeof(se));
-  exr_status es = exr_library_blob(library, book_id, 1, &data, &size, &se);
-  if (es != EXR_OK) return map_sdk(error, es, se, "Cover blob");
-  if (!data || !size) { exr_free(data); return ok(error); }  // normal placeholder
-  st = decode_cover(c, key, data, size, *request, poll, out, error);
-  exr_free(data);
-  if (st != RTH_OK) clear_out(out);
-  return st;
+  return guarded(error, [&]() -> rth_status {
+    if (!out || !library || book_id <= 0) return fail(error, RTH_ARGUMENT, -1, "Missing library, book id or output");
+    rth_status st = check_book(book, false, error);
+    if (st != RTH_OK) return st;
+    st = check_request(c, request, error);
+    if (st != RTH_OK) { if (st == RTH_LIMIT) ++c->stats.rejected; return st; }
+    Poll poll{control, false};
+    if (poll.check()) return fail(error, RTH_CANCELLED, -1, "Cancelled");
+    const std::string key = make_key(*book, RTH_ORIGIN_AUTHOR_COVER, "lib", *request);
+    if (lookup(c, key, out)) { write_index(c); return ok(error); }
+    void* data = nullptr;
+    size_t size = 0;
+    exr_error se;
+    std::memset(&se, 0, sizeof(se));
+    exr_status es = exr_library_blob(library, book_id, 1, &data, &size, &se);
+    if (es != EXR_OK) return map_sdk(error, es, se, "Cover blob");
+    if (!data || !size) { exr_free(data); return ok(error); }  // normal placeholder
+    st = decode_cover(c, key, data, size, *request, poll, out, error);
+    exr_free(data);
+    if (st != RTH_OK) clear_out(out);
+    return st;
+  });
 }
 
 rth_status rth_cover_from_encoded(rth_cache* c, const rth_book* book, const void* data, size_t size,
@@ -656,20 +1061,22 @@ rth_status rth_cover_from_encoded(rth_cache* c, const rth_book* book, const void
   clear_out(out);
   Enter guard(c, error);
   if (!guard.entered) return RTH_ARGUMENT;
-  if (!out) return fail(error, RTH_ARGUMENT, -1, "Missing output");
-  rth_status st = check_book(book, false, error);
-  if (st != RTH_OK) return st;
-  st = check_request(c, request, error);
-  if (st != RTH_OK) { if (st == RTH_LIMIT) ++c->stats.rejected; return st; }
-  Poll poll{control, false};
-  if (poll.check()) return fail(error, RTH_CANCELLED, -1, "Cancelled");
-  if (!data || !size) return ok(error);  // no cover: placeholder
-  if (size > c->limits.max_encoded_bytes) { ++c->stats.rejected; return fail(error, RTH_LIMIT, -1, "Encoded cover exceeds the byte limit"); }
-  std::string key = make_key(*book, RTH_ORIGIN_AUTHOR_COVER, "enc:" + sha_hex(data, size), *request);
-  if (lookup(c, key, out)) { write_index(c); return ok(error); }
-  st = decode_cover(c, key, data, size, *request, poll, out, error);
-  if (st != RTH_OK) clear_out(out);
-  return st;
+  return guarded(error, [&]() -> rth_status {
+    if (!out) return fail(error, RTH_ARGUMENT, -1, "Missing output");
+    rth_status st = check_book(book, false, error);
+    if (st != RTH_OK) return st;
+    st = check_request(c, request, error);
+    if (st != RTH_OK) { if (st == RTH_LIMIT) ++c->stats.rejected; return st; }
+    Poll poll{control, false};
+    if (poll.check()) return fail(error, RTH_CANCELLED, -1, "Cancelled");
+    if (!data || !size) return ok(error);  // no cover: placeholder
+    if (size > c->limits.max_encoded_bytes) { ++c->stats.rejected; return fail(error, RTH_LIMIT, -1, "Encoded cover exceeds the byte limit"); }
+    const std::string key = make_key(*book, RTH_ORIGIN_AUTHOR_COVER, "enc:" + sha_hex(data, size), *request);
+    if (lookup(c, key, out)) { write_index(c); return ok(error); }
+    st = decode_cover(c, key, data, size, *request, poll, out, error);
+    if (st != RTH_OK) clear_out(out);
+    return st;
+  });
 }
 
 rth_status rth_preview_from_fixed(rth_cache* c, exr_fixed_document* document, const rth_book* book,
@@ -678,47 +1085,49 @@ rth_status rth_preview_from_fixed(rth_cache* c, exr_fixed_document* document, co
   clear_out(out);
   Enter guard(c, error);
   if (!guard.entered) return RTH_ARGUMENT;
-  if (!out || !document) return fail(error, RTH_ARGUMENT, -1, "Missing document or output");
-  rth_status st = check_book(book, true, error);
-  if (st != RTH_OK) return st;
-  st = check_request(c, request, error);
-  if (st != RTH_OK) { if (st == RTH_LIMIT) ++c->stats.rejected; return st; }
-  Poll poll{control, false};
-  if (poll.check()) return fail(error, RTH_CANCELLED, -1, "Cancelled");
-  std::string key = make_key(*book, RTH_ORIGIN_FIRST_PAGE_PREVIEW, "fix", *request);
-  if (lookup(c, key, out)) { write_index(c); return ok(error); }
-  size_t count = 0;
-  const exr_fixed_page* pages = exr_fixed_pages(document, &count);
-  if (!pages || request->page >= count) return fail(error, RTH_ARGUMENT, -1, "Page index outside the document");
-  exr_error se;
-  std::memset(&se, 0, sizeof(se));
-  exr_viewport vp;
-  std::memset(&vp, 0, sizeof(vp));
-  exr_status es = exr_viewport_create(&pages[request->page].geometry, 1.0, &vp, &se);
-  if (es != EXR_OK) return map_sdk(error, es, se, "Page geometry");
-  double vw = vp.width, vh = vp.height;
-  if (!(std::isfinite(vw) && std::isfinite(vh) && vw > 0.0 && vh > 0.0 && vw < 1e7 && vh < 1e7))
-    return fail(error, RTH_FORMAT, -1, "Page has no usable size");
-  double scale = std::min(1.0, std::min((double)request->width / vw, (double)request->height / vh));
-  if (vw * scale < 1.0 || vh * scale < 1.0) scale = 1.0 / std::min(vw, vh);
-  double estimate = std::ceil(vw * scale) * std::ceil(vh * scale);
-  if (!(estimate <= (double)c->limits.max_source_pixels)) {
-    ++c->stats.rejected;
-    return fail(error, RTH_LIMIT, -1, "Rendered page would exceed the source pixel limit");
-  }
-  exr_fixed_render_options options;
-  std::memset(&options, 0, sizeof(options));
-  options.channels = 4;
-  options.background = request->background;
-  options.control.cancelled = poll_callback;
-  options.control.context = &poll;
-  Bitmap bmp;
-  es = exr_fixed_render(document, request->page, scale, &options, &bmp.b, &se);
-  if (poll.cancelled) return fail(error, RTH_CANCELLED, -1, "Cancelled");
-  if (es != EXR_OK) return map_sdk(error, es, se, "Page render");
-  st = finish(c, key, RTH_ORIGIN_FIRST_PAGE_PREVIEW, bmp.b, *request, poll, out, error);
-  if (st != RTH_OK) clear_out(out);
-  return st;
+  return guarded(error, [&]() -> rth_status {
+    if (!out || !document) return fail(error, RTH_ARGUMENT, -1, "Missing document or output");
+    rth_status st = check_book(book, true, error);
+    if (st != RTH_OK) return st;
+    st = check_request(c, request, error);
+    if (st != RTH_OK) { if (st == RTH_LIMIT) ++c->stats.rejected; return st; }
+    Poll poll{control, false};
+    if (poll.check()) return fail(error, RTH_CANCELLED, -1, "Cancelled");
+    const std::string key = make_key(*book, RTH_ORIGIN_FIRST_PAGE_PREVIEW, "fix", *request);
+    if (lookup(c, key, out)) { write_index(c); return ok(error); }
+    size_t count = 0;
+    const exr_fixed_page* pages = exr_fixed_pages(document, &count);
+    if (!pages || request->page >= count) return fail(error, RTH_ARGUMENT, -1, "Page index outside the document");
+    exr_error se;
+    std::memset(&se, 0, sizeof(se));
+    exr_viewport vp;
+    std::memset(&vp, 0, sizeof(vp));
+    exr_status es = exr_viewport_create(&pages[request->page].geometry, 1.0, &vp, &se);
+    if (es != EXR_OK) return map_sdk(error, es, se, "Page geometry");
+    double vw = vp.width, vh = vp.height;
+    if (!(std::isfinite(vw) && std::isfinite(vh) && vw > 0.0 && vh > 0.0 && vw < 1e7 && vh < 1e7))
+      return fail(error, RTH_FORMAT, -1, "Page has no usable size");
+    double scale = std::min(1.0, std::min((double)request->width / vw, (double)request->height / vh));
+    if (vw * scale < 1.0 || vh * scale < 1.0) scale = 1.0 / std::min(vw, vh);
+    double estimate = std::ceil(vw * scale) * std::ceil(vh * scale);
+    if (!(estimate <= (double)c->limits.max_source_pixels)) {
+      ++c->stats.rejected;
+      return fail(error, RTH_LIMIT, -1, "Rendered page would exceed the source pixel limit");
+    }
+    exr_fixed_render_options options;
+    std::memset(&options, 0, sizeof(options));
+    options.channels = 4;
+    options.background = request->background;
+    options.control.cancelled = poll_callback;
+    options.control.context = &poll;
+    Bitmap bmp;
+    es = exr_fixed_render(document, request->page, scale, &options, &bmp.b, &se);
+    if (poll.cancelled) return fail(error, RTH_CANCELLED, -1, "Cancelled");
+    if (es != EXR_OK) return map_sdk(error, es, se, "Page render");
+    st = finish(c, key, RTH_ORIGIN_FIRST_PAGE_PREVIEW, bmp.b, *request, poll, out, error);
+    if (st != RTH_OK) clear_out(out);
+    return st;
+  });
 }
 
 }  // extern "C"

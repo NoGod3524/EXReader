@@ -26,8 +26,13 @@ schema and never writes the original book, the library or any user data.
   across platforms. Previews render directly at the reduced scale and then take the same final fit.
 * Borrowed handles (`exr_library`, `exr_fixed_document`) and the cache belong to one owner thread. Calls are
   synchronous; a call from another thread, or re-entry from a control callback, returns `RTH_ARGUMENT` and changes
-  nothing. `rth_control.cancelled` is polled on the calling thread (before decode, per output row, before publish and
-  inside `exr_fixed_render`); cancellation clears the output and publishes nothing.
+  nothing. This holds for **every** entry point that takes a cache — `rth_cache_open`, `rth_cache_stats`,
+  `rth_cache_clear`, `rth_cache_find`, the three cover/preview calls and `rth_cache_close`; a refused close leaves the
+  cache alive. `rth_control.cancelled` is polled on the calling thread (before decode, per output row, before publish
+  and inside `exr_fixed_render`); cancellation clears the output and publishes nothing.
+* No C++ exception crosses the C ABI: every entry point catches `std::bad_alloc` (→ `RTH_MEMORY`) and any other
+  exception (→ `RTH_IO`), clears the output and leaves the cache usable. A directory path or file name this platform
+  cannot represent is a status, never a termination.
 
 ## Identity and limits
 
@@ -53,18 +58,49 @@ but not stored (`stored == 0`, `rejected` counted). The temporary file of a publ
 
 ## Cache directory
 
-Files `rth-<32 hex>.rth` (magic, key, size, payload SHA-256, RGBA payload), `rth-index.txt` (LRU ticks) and
-`rth-tmp-*.tmp`. Entries are written to a temporary name and published by rename. LRU eviction runs on count and
-bytes; recency persists across close/reopen. A damaged entry (bad magic, length, key, or payload digest) is deleted and
-counted in `corrupt_rebuilt`, then rebuilt from the source on the next request; a damaged or missing index is
-rebuilt from the directory. Open never touches files it does not recognise by name. Reopening with smaller limits
+Files `rth-<32 hex>.rth` (magic, key, size, payload SHA-256, RGBA payload), `rth-index.txt` (LRU ticks) and one
+temporary per publish.
+
+**Publishing.** The bytes go to `rth-tmp-<16 hex session>-<8 hex sequence>.tmp`, created with exclusive-create
+semantics (`O_CREAT|O_EXCL|O_NOFOLLOW` / `CREATE_NEW|FILE_FLAG_OPEN_REPARSE_POINT`), flushed, and published with a
+same-directory platform atomic replace (`MoveFileExW(REPLACE_EXISTING|WRITE_THROUGH)` on Windows, `rename(2)`
+elsewhere). A name that already exists — including a hard link planted by someone else — is never opened, so no file
+outside the cache can be truncated or rewritten through a temporary. Reading an entry opens it without following
+symbolic links or reparse points and only accepts a regular file (`O_NOFOLLOW` / `FILE_FLAG_OPEN_REPARSE_POINT` plus a
+reparse-point attribute check). A failed replace is reported: `rth_cache_open` and `rth_cache_clear` return `RTH_IO`
+and `rth_stats.index_failures` counts it, instead of silently keeping a stale index.
+
+**Sharing one directory.** Temporary names carry a per-open unpredictable token, so two processes may use one directory;
+`open` removes the pre-0.1.0 temporaries (`rth-tmp-<n>.tmp`, `rth-tmp-index-<n>.tmp`) at once, and current-naming
+temporaries only when they are older than 600 s, because a younger one may belong to a live process.
+
+**Bounded open.** The directory is scanned once and entries are retained and evicted one by one, so the retained set
+never exceeds `max_entries` and the directory is never collected into an in-memory list. The candidate budget is
+`256 + max_entries * 8`, capped at 65536 files; the index lines read are bounded by the same figure. Beyond the budget
+the scan stops, `rth_stats.scan_truncated` is 1, the uninspected files are left untouched and adoption is partial (a
+cache, not an archive: a missing entry is rebuilt on the next request). `scanned_files` and
+`peak_retained_entries` report the actual work and the actual retained peak.
+
+**Eviction and repair.** LRU eviction runs on count and bytes; recency persists across close and reopen (the index is
+published atomically on every change and at close). A damaged entry (bad magic, length, key, or payload digest) is
+deleted and counted in `corrupt_rebuilt`, then rebuilt from the source on the next request; a damaged or missing index
+is rebuilt from the directory. Open never touches files it does not recognise by name. Reopening with smaller limits
 evicts down to them.
 
 ## Evidence
 
-`.github/workflows/reader-thumbnails.yml` builds the SDK, installs this package and compiles an installed C11 consumer
-and a C++17 probe on `ubuntu-22.04`, `windows-2022` and `macos-15`. Expected pixels are produced independently by
-`tests/reader_thumbnails/make_fixtures.py`; PDF/CBZ previews use generated originals with known colours plus the
-repository's `pdf-public.pdf` and `comic.cbz`. Cache bytes, decoded-image bytes and process RSS are recorded per scenario
-as raw measurements only. See `docs/validation/reader-thumbnails.json` for the run-bound results; nothing here grants
-product performance, host UI, six-platform or release status.
+`.github/workflows/reader-thumbnails.yml` builds the SDK, installs this package and compiles an installed C11 consumer,
+a C++17 probe and the regression consumer `thumb-regress` on `ubuntu-22.04`, `windows-2022` and `macos-15`. Expected
+pixels are produced independently by `tests/reader_thumbnails/make_fixtures.py`; PDF/CBZ previews use generated
+originals with known colours plus the repository's `pdf-public.pdf` and `comic.cbz`. Cache bytes, decoded-image
+bytes, scanned files, the retained-entry peak and process RSS are recorded per scenario as raw measurements only.
+
+`thumb-regress` runs as three separate processes and judges the four review findings with the public ABI that existed
+before the fix, so the same source fails on the reviewed implementation and passes on the fixed one:
+LRU recency written by one process and judged by an independent reopen with a smaller entry bound; a hard link planted
+at a temporary name (external bytes must stay byte-identical); a live cache's fresh temporary versus a stale one; an
+index that cannot be replaced atomically (must be reported); re-entry refused by the statistics call; a directory far
+larger than the scan budget; and an unrepresentable directory path that must not terminate the process.
+
+See `docs/validation/reader-thumbnails.json` for the run-bound results; nothing here grants product performance, host
+UI, six-platform or release status.

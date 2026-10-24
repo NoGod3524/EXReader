@@ -33,7 +33,11 @@ namespace {
 struct Result { std::string name; bool pass; std::string detail; };
 std::vector<Result> results;
 std::vector<std::string> skipped;
-struct Measure { std::string id; uint64_t cache_entries, cache_bytes, decoded_bytes, rss_before, rss_after, peak_rss; };
+struct Measure {
+  std::string id;
+  uint64_t cache_entries, cache_bytes, decoded_bytes, rss_before, rss_after, peak_rss;
+  uint64_t scanned_files = 0, peak_retained = 0;
+};
 std::vector<Measure> measures;
 
 void check(const std::string& name, bool pass, const std::string& detail = "") {
@@ -199,7 +203,33 @@ std::string book_snapshot(exr_library* l) {
 }
 void measure(const std::string& id, rth_cache* c, const fs::path& dir, uint64_t decoded, uint64_t before) {
   rth_stats s = stats_of(c);
-  measures.push_back({id, s.entries, dir_bytes(dir), decoded, before, thumb_current_rss(), thumb_peak_rss()});
+  Measure m;
+  m.id = id;
+  m.cache_entries = s.entries;
+  m.cache_bytes = dir_bytes(dir);
+  m.decoded_bytes = decoded;
+  m.rss_before = before;
+  m.rss_after = thumb_current_rss();
+  m.peak_rss = thumb_peak_rss();
+  m.scanned_files = s.scanned_files;
+  m.peak_retained = s.peak_retained_entries;
+  measures.push_back(m);
+}
+// Records the bounded-scan figures of the last open: candidates inspected, the largest
+// retained entry set (bounded by max_entries), cache bytes and whole-process RSS.
+void measure_scan(const std::string& id, rth_cache* c, const fs::path& dir, uint64_t before) {
+  rth_stats s = stats_of(c);
+  Measure m;
+  m.id = id;
+  m.cache_entries = s.entries;
+  m.cache_bytes = dir_bytes(dir);
+  m.decoded_bytes = 0;
+  m.rss_before = before;
+  m.rss_after = thumb_current_rss();
+  m.peak_rss = thumb_peak_rss();
+  m.scanned_files = s.scanned_files;
+  m.peak_retained = s.peak_retained_entries;
+  measures.push_back(m);
 }
 
 // ---------------------------------------------------------------------------
@@ -898,6 +928,176 @@ void test_owner() {
   rth_cache_close(c);
 }
 
+// Bounded open: one pass, a candidate budget independent of the directory size, and
+// entry-by-entry retention instead of collecting the whole directory first.
+void test_bounded_open() {
+  const Bytes& png = fx["grad16x8.png"];
+  rth_book b = mk_book((int)EXR_EPUB, sha(png));
+  {  // a tidy directory is scanned completely
+    fs::path dir = fresh("bounded-small");
+    rth_cache* c = open_cache(dir);
+    { Thumb t; cover(c, b, png, 8, 8, t); }
+    rth_cache_close(c);
+    c = open_cache(dir);
+    rth_stats s = stats_of(c);
+    check("bounded open: a tidy directory is scanned completely, holds one entry and reports no truncation",
+          s.scan_truncated == 0 && s.entries == 1 && s.peak_retained_entries <= 1 && s.scanned_files >= 2 && s.scanned_files <= 8,
+          "scanned " + num(s.scanned_files) + " peak " + num(s.peak_retained_entries));
+    rth_cache_close(c);
+  }
+  {  // 40 valid entries, reopened with max_entries=3
+    fs::path dir = fresh("bounded-many");
+    rth_limits lim = rth_limits_defaults();
+    lim.max_entries = 64;
+    rth_cache* c = open_cache(dir, &lim);
+    for (uint32_t k = 4; k < 44; ++k) { Thumb t; cover(c, b, png, k, t); }
+    const uint32_t stored = stats_of(c).entries;
+    rth_cache_close(c);
+    lim.max_entries = 3;
+    c = open_cache(dir, &lim);
+    rth_stats s = stats_of(c);
+    check("bounded open: 40 entries were stored before the bounded reopen", stored == 40, "stored " + num(stored));
+    check("bounded open: a reopen with max_entries=3 retains at most 3 while scanning, never 40",
+          s.entries == 3 && s.peak_retained_entries <= 3 && s.scanned_files >= 41 && s.scan_truncated == 0,
+          "entries " + num(s.entries) + " peak " + num(s.peak_retained_entries) + " scanned " + num(s.scanned_files));
+    measure_scan("bounded-reopen-max-entries-3", c, dir, thumb_current_rss());
+    rth_cache_close(c);
+  }
+  {  // 900 recognised candidates plus 400 unrelated files, max_entries=2
+    fs::path dir = fresh("bounded-overflow");
+    const uint32_t candidates = 900, unrelated = 400;
+    std::vector<std::string> foreign;
+    for (uint32_t i = 0; i < unrelated; ++i) {
+      const std::string n = "note-" + num(i) + ".txt";
+      foreign.push_back(n);
+      write_file(dir / n, Bytes(3, (unsigned char)('a' + (i % 26))));
+    }
+    Bytes junk(200, 0x5a);
+    for (uint32_t i = 0; i < candidates; ++i) {
+      char name[64];
+      std::snprintf(name, sizeof(name), "rth-%032x.rth", static_cast<unsigned>(i));
+      write_file(dir / name, junk);
+    }
+    rth_limits lim = rth_limits_defaults();
+    lim.max_entries = 2;
+    uint64_t before = thumb_current_rss();
+    rth_cache* c = open_cache(dir, &lim);
+    rth_stats s = stats_of(c);
+    const uint64_t budget = 256 + 2 * 8;
+    size_t left = 0;
+    for (const auto& it : fs::directory_iterator(dir)) {
+      const std::string n = it.path().filename().string();
+      if (n.size() == 40 && n.compare(0, 4, "rth-") == 0 && n.compare(36, 4, ".rth") == 0) ++left;
+    }
+    bool foreign_ok = true;
+    for (size_t i = 0; i < foreign.size() && i < 25; ++i) foreign_ok = foreign_ok && fs::exists(dir / foreign[i]);
+    check("bounded open: 1300 candidates are scanned within the 272-file budget and the rest is left untouched",
+          s.scanned_files <= budget && s.scan_truncated == 1 && s.entries == 0 && left > 0 && foreign_ok,
+          "scanned " + num(s.scanned_files) + " left " + num((uint64_t)left) + " of " + num(candidates) + " unrelated kept " + num((uint64_t)foreign_ok));
+    measure_scan("bounded-overflow-max-entries-2", c, dir, before);
+    Thumb t, u;
+    const bool stored = cover(c, b, png, 8, 8, t) == RTH_OK && t.t.stored;
+    check("bounded open: the cache still stores and serves after a truncated scan", stored && cover(c, b, png, 8, 8, u) == RTH_OK && u.t.from_cache == 1);
+    rth_cache_close(c);
+  }
+}
+
+// Atomic publish: no temporary survives, the index replace is reported when it fails,
+// and a hard link at a temporary name can never be truncated through.
+void test_publish() {
+  const Bytes& png = fx["grad16x8.png"];
+  rth_book b = mk_book((int)EXR_EPUB, sha(png));
+  {
+    fs::path dir = fresh("publish-clean");
+    rth_cache* c = open_cache(dir);
+    { Thumb t; cover(c, b, png, 8, 8, t); }
+    rth_stats s = stats_of(c);
+    rth_cache_close(c);
+    check("publish: a successful session publishes no temporary file and records no index failure",
+          s.index_failures == 0 && s.store_failures == 0 && files_with(dir, "rth-tmp-", ".tmp").empty() && s.entries == 1 &&
+              files_with(dir, "rth-", ".rth").size() == 1,
+          "index failures " + num(s.index_failures) + " store failures " + num(s.store_failures));
+  }
+  {
+    fs::path dir = fresh("publish-blocked");
+    fs::create_directory(dir / "rth-index.txt");
+    rth_cache* c = reinterpret_cast<rth_cache*>(static_cast<std::uintptr_t>(1));
+    rth_error e;
+    std::memset(&e, 0, sizeof(e));
+    rth_status st = rth_cache_open(dir.u8string().c_str(), nullptr, &c, &e);
+    check("publish: an index that cannot be atomically replaced makes open fail with RTH_IO", st == RTH_IO && c == nullptr, e.message);
+    if (st == RTH_OK && c) rth_cache_close(c);
+  }
+  {  // hard links at the pre-0.1.0 temporary names must never be truncated
+    fs::path dir = fresh("publish-links");
+    fs::path sentinel = dir.parent_path() / "publish-sentinel.bin";
+    Bytes content(4096, 0);
+    for (size_t i = 0; i < content.size(); ++i) content[i] = (unsigned char)(0x5a ^ (i * 7));
+    write_file(sentinel, content);
+    rth_cache* c = open_cache(dir);
+    int seeded = 0;
+    for (int i = 1; i <= 64; ++i) {
+      std::error_code ec;
+      fs::create_hard_link(sentinel, dir / ("rth-tmp-" + num((uint64_t)i) + ".tmp"), ec);
+      if (!ec) ++seeded;
+    }
+    Thumb t;
+    const rth_status st = cover(c, b, png, 8, 8, t);
+    bool intact = read_file(sentinel) == content;
+    for (int i = 1; i <= 64 && intact; ++i) intact = read_file(dir / ("rth-tmp-" + num((uint64_t)i) + ".tmp")) == content;
+    check("publish: a hard link planted at a temporary name is neither followed nor truncated",
+          st == RTH_OK && t.t.stored && seeded == 64 && intact, "seeded " + num((uint64_t)seeded));
+    rth_cache_close(c);
+    fs::remove(sentinel);
+  }
+}
+
+// Re-entry: every cache entry point refuses a call from a control callback.
+void test_reentry() {
+  fs::path dir = fresh("reentry");
+  rth_cache* c = open_cache(dir);
+  const Bytes& png = fx["grad16x8.png"];
+  rth_book b = mk_book((int)EXR_EPUB, sha(png));
+  { Thumb t; cover(c, b, png, 8, 8, t); }
+  struct Ctx {
+    rth_cache* c;
+    const rth_book* b;
+    const Bytes* png;
+    rth_status stats_st, clear_st, find_st, cover_st;
+    int found;
+    int calls;
+  };
+  Ctx ctx{c, &b, &png, RTH_OK, RTH_OK, RTH_OK, RTH_OK, -1, 0};
+  auto cb = [](void* context) -> int {
+    Ctx* x = static_cast<Ctx*>(context);
+    if (x->calls++ == 0) {
+      rth_stats s;
+      std::memset(&s, 0, sizeof(s));
+      s.struct_size = sizeof(s);
+      rth_error e;
+      std::memset(&e, 0, sizeof(e));
+      x->stats_st = rth_cache_stats(x->c, &s, &e);
+      x->clear_st = rth_cache_clear(x->c, &e);
+      Thumb q;
+      rth_request r = req(8, 8);
+      x->find_st = rth_cache_find(x->c, x->b, RTH_ORIGIN_AUTHOR_COVER, &r, &q.t, &x->found, &e);
+      rth_cache_close(x->c);
+      x->cover_st = cover(x->c, *x->b, *x->png, 3, q);
+    }
+    return 0;
+  };
+  rth_control ctl{cb, &ctx};
+  Thumb outer;
+  const rth_status os = cover(c, b, png, 5, 5, outer, &ctl);
+  const rth_stats after = stats_of(c);
+  check("re-entry: stats, clear, find and close are all refused inside a control callback",
+        ctx.stats_st == RTH_ARGUMENT && ctx.clear_st == RTH_ARGUMENT && ctx.find_st == RTH_ARGUMENT && ctx.cover_st == RTH_ARGUMENT && ctx.found == 0,
+        "stats " + num((uint64_t)ctx.stats_st) + " clear " + num((uint64_t)ctx.clear_st) + " find " + num((uint64_t)ctx.find_st) + " cover " + num((uint64_t)ctx.cover_st));
+  check("re-entry: the outer call completes and the cache is still usable afterwards",
+        os == RTH_OK && outer.t.pixels != nullptr && after.entries == 2, "entries " + num(after.entries));
+  rth_cache_close(c);
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -955,6 +1155,9 @@ int main(int argc, char** argv) {
   test_corruption();
   test_cancel();
   test_reopen();
+  test_bounded_open();
+  test_publish();
+  test_reentry();
   test_owner();
   int threads_after = thumb_thread_count();
   if (threads_before < 0) skipped.push_back("the module creates no thread (thread count is not measured on this platform)");
@@ -994,7 +1197,8 @@ int main(int argc, char** argv) {
   for (size_t i = 0; i < measures.size(); ++i) {
     const Measure& m = measures[i];
     out << "    {\"id\": \"" << esc(m.id) << "\", \"cache_entries\": " << m.cache_entries << ", \"cache_bytes\": " << m.cache_bytes << ", \"decoded_bytes\": " << m.decoded_bytes
-        << ", \"rss_before\": " << m.rss_before << ", \"rss_after\": " << m.rss_after << ", \"process_peak_rss\": " << m.peak_rss << "}" << (i + 1 < measures.size() ? "," : "") << "\n";
+        << ", \"rss_before\": " << m.rss_before << ", \"rss_after\": " << m.rss_after << ", \"process_peak_rss\": " << m.peak_rss
+        << ", \"scanned_files\": " << m.scanned_files << ", \"peak_retained_entries\": " << m.peak_retained << "}" << (i + 1 < measures.size() ? "," : "") << "\n";
   }
   out << "  ]\n}\n";
   out.close();
