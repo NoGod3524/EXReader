@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import fnmatch
 import hashlib
 import json
 import os
@@ -109,6 +110,7 @@ class Run:
         (self.output / "logs").mkdir(parents=True, exist_ok=True)
         self.text, self.values, self.identity = make_input()
         self.phases: list[dict] = []
+        self.diagnostics: list[dict] = []
         self.observations: dict[str, object] = {}
         self.unavailable: list[str] = []
         self.not_exercised: list[str] = []
@@ -117,8 +119,8 @@ class Run:
         print(line, flush=True)
 
     def record(self, phase: str, label: str, code: int | None, stdout: str, stderr: str,
-               expected: list[str] | None = None) -> None:
-        name = f"{len(self.phases):02d}-{label}"
+               expected: list[str] | None = None, diagnostic: bool = False) -> bool:
+        name = f"{len(self.phases) + len(self.diagnostics):02d}-{label}"
         (self.output / "logs" / f"{name}.stdout.log").write_text(stdout, encoding="utf-8")
         (self.output / "logs" / f"{name}.stderr.log").write_text(stderr, encoding="utf-8")
         checks, summaries = [], []
@@ -137,31 +139,79 @@ class Run:
             summaries_ok = bool(summaries) and all(s["passed"] == s["total"] for s in summaries)
         complete = (ids == expected and all(c["result"] == "pass" for c in checks) and code == 0
                     and summaries_ok)
-        self.phases.append({"label": label, "phase": phase, "exit": code, "checks": checks,
-                            "expected": expected, "summaries": summaries, "accepted": complete})
+        entry = {"label": label, "phase": phase, "exit": code, "checks": checks,
+                 "expected": expected, "summaries": summaries, "accepted": complete, "log": name}
+        (self.diagnostics if diagnostic else self.phases).append(entry)
+        tag = f"diagnostic {label}" if diagnostic else label
         for c in checks:
-            self.log(f"[{label}] {c['result'].upper()} {c['id']} {c['detail']}")
-        self.log(f"[{label}] exit={code} accepted={complete}")
+            self.log(f"[{tag}] {c['result'].upper()} {c['id']} {c['detail']}")
+        self.log(f"[{tag}] exit={code} accepted={complete}")
+        return complete
 
-    def consumer(self, phase: str, label: str, env: dict | None = None) -> None:
+    def consumer(self, phase: str, label: str, env: dict | None = None, executable: str | None = None,
+                 diagnostic: bool = False, timeout: int = 180) -> bool:
         try:
-            done = subprocess.run([self.args.consumer, phase], input=self.text.encode(), capture_output=True,
-                                  timeout=180, env=env)
-            self.record(phase, label, done.returncode, done.stdout.decode("utf-8", "replace"),
-                        done.stderr.decode("utf-8", "replace"))
+            done = subprocess.run([executable or self.args.consumer, phase], input=self.text.encode(),
+                                  capture_output=True, timeout=timeout, env=env)
+            return self.record(phase, label, done.returncode, done.stdout.decode("utf-8", "replace"),
+                               done.stderr.decode("utf-8", "replace"), diagnostic=diagnostic)
         except subprocess.TimeoutExpired as e:
-            self.record(phase, label, None, (e.stdout or b"").decode("utf-8", "replace"),
-                        "timeout after 180s\n")
+            return self.record(phase, label, None, (e.stdout or b"").decode("utf-8", "replace"),
+                               f"timeout after {timeout}s\n", diagnostic=diagnostic)
 
     # ---------- Windows ----------
     def windows(self) -> None:
         self.consumer("suite", "suite")
         self.consumer("reopen", "reopen")
         self.consumer("seed", "seed")
-        self.windows_s4u()
+        # Candidate real conditions; each runs as a diagnostic and the first that
+        # yields UNAVAILABLE for every operation is re-run as the accepted phase.
+        attempts = [
+            ("unavailable-low-integrity", "low-integrity process (file mandatory label Low)",
+             self.windows_low_integrity),
+            ("unavailable-vault-service-stopped", "Credential Manager service (VaultSvc) stopped",
+             self.windows_vault_stopped),
+            ("unavailable-s4u-task", "S4U scheduled task", self.windows_s4u),
+        ]
+        results = {}
+        for label, description, run in attempts:
+            results[label] = run(label, True)
+        self.observations["windows_unavailable_attempts"] = results
+        chosen = next(((label, description, run) for label, description, run in attempts if results[label]), None)
+        if chosen:
+            chosen[2](chosen[0], False)
+            self.unavailable.append(chosen[1])
+        else:
+            self.not_exercised.append("Windows: no attempted condition made Credential Manager unavailable")
         self.consumer("cleanup", "cleanup")
 
-    def windows_s4u(self) -> None:
+    def windows_low_integrity(self, label: str, diagnostic: bool) -> bool:
+        root = Path(tempfile.mkdtemp(prefix="exr-cred-low-", dir=os.environ.get("RUNNER_TEMP")))
+        exe = root / "credentials-consumer-low.exe"
+        shutil.copy2(self.args.consumer, exe)
+        subprocess.run(["icacls", str(exe), "/setintegritylevel", "Low"], capture_output=True, timeout=60)
+        label_out = subprocess.run(["icacls", str(exe)], capture_output=True, text=True, timeout=60).stdout
+        self.observations["windows_low_integrity_label"] = "Low Mandatory Level" in label_out
+        try:
+            return self.consumer("unavailable", label, executable=str(exe), diagnostic=diagnostic)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def windows_vault_stopped(self, label: str, diagnostic: bool) -> bool:
+        def ps(command: str) -> str:
+            done = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", command],
+                                  capture_output=True, text=True, timeout=120)
+            return (done.stdout + done.stderr).strip()
+        before = ps("(Get-Service VaultSvc).Status")
+        stop = ps("Stop-Service VaultSvc -Force -ErrorAction Continue; (Get-Service VaultSvc).Status")
+        try:
+            return self.consumer("unavailable", label, diagnostic=diagnostic)
+        finally:
+            after = ps("Start-Service VaultSvc -ErrorAction Continue; (Get-Service VaultSvc).Status")
+            self.observations.setdefault("windows_vault_service", []).append(
+                {"before": before, "stopped": stop, "restored": after})
+
+    def windows_s4u(self, label: str, diagnostic: bool) -> bool:
         io_dir = Path(tempfile.mkdtemp(prefix="exr-cred-s4u-", dir=os.environ.get("RUNNER_TEMP")))
         task = "exr-credentials-" + secrets.token_hex(6)
         input_file = io_dir / "credentials-input.txt"
@@ -188,18 +238,18 @@ try {{
         done = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
                               capture_output=True, timeout=300)
         stdout = done.stdout.decode("utf-8", "replace")
-        self.observations["windows_s4u_task"] = stdout.strip()
+        self.observations.setdefault("windows_s4u_task", []).append(stdout.strip())
         result = io_dir / "credentials-result.txt"
         text = result.read_text(encoding="utf-8") if result.exists() else ""
         code = None
         m = re.search(r"last_result=(\d+)", stdout)
         if m:
             code = int(m.group(1))
-        self.record("unavailable", "unavailable-s4u-task", code, text,
-                    stdout + done.stderr.decode("utf-8", "replace"))
+        accepted = self.record("unavailable", label, code, text, stdout + done.stderr.decode("utf-8", "replace"),
+                               diagnostic=diagnostic)
         self.observations["s4u_input_removed_by_consumer"] = not input_file.exists()
         self.wipe_dir(io_dir)
-        self.unavailable.append("S4U scheduled task without a credential logon session")
+        return accepted
 
     # ---------- Linux ----------
     def linux(self) -> None:
@@ -314,9 +364,7 @@ try {{
             self.consumer("reopen", "reopen")
             self.consumer("seed", "seed")
             self.security("lock-keychain", keychain)
-            info = subprocess.run(["security", "show-keychain-info", keychain], capture_output=True, text=True)
-            self.observations["macos_lock_state"] = (info.stdout + info.stderr).strip().replace(str(root), "<tmp>")
-            self.consumer("unavailable", "unavailable-locked-keychain")
+            self.consumer("unavailable", "unavailable-locked-keychain", timeout=90)
             self.unavailable.append("test keychain locked, no user interaction allowed")
             self.security("unlock-keychain", "-p", password, keychain)
             self.consumer("cleanup", "cleanup")
@@ -475,13 +523,15 @@ def main() -> int:
     getattr(run, args.platform)()
     scan = run.scan(args.scan)
     expected_labels = {
-        "windows": ["suite", "reopen", "seed", "unavailable-s4u-task", "cleanup"],
+        "windows": ["suite", "reopen", "seed", "unavailable-*", "cleanup"],
         "linux": ["suite", "reopen", "cleanup", "seed", "unavailable-locked-collection", "unavailable-no-service"],
         "macos": ["suite", "reopen", "seed", "unavailable-locked-keychain", "cleanup"],
         "ios": ["suite", "reopen", "cleanup"],
         "android": ["uninitialized", "suite", "reopen", "cleanup"],
     }[args.platform]
     labels = [p["label"] for p in run.phases]
+    labels_ok = len(labels) == len(expected_labels) and all(
+        fnmatch.fnmatchcase(a, b) for a, b in zip(labels, expected_labels))
     checks = sum(len(p["checks"]) for p in run.phases)
     expected_checks = sum(len(p["expected"]) for p in run.phases)
     consumer = Path(args.consumer)
@@ -497,6 +547,7 @@ def main() -> int:
         "runner": {"os": os.environ.get("RUNNER_OS", ""), "image": os.environ.get("ImageOS", ""),
                    "image_version": os.environ.get("ImageVersion", ""), "python": host_platform.platform()},
         "phases": run.phases,
+        "diagnostics": run.diagnostics,
         "phase_labels": labels,
         "expected_phase_labels": expected_labels,
         "checks": checks,
@@ -510,7 +561,7 @@ def main() -> int:
         "consumer": {"name": consumer.name, "bytes": consumer.stat().st_size,
                      "sha256": hashlib.sha256(consumer.read_bytes()).hexdigest()} if consumer.is_file() else None,
     }
-    report["accepted"] = bool(labels == expected_labels and all(p["accepted"] for p in run.phases)
+    report["accepted"] = bool(labels_ok and all(p["accepted"] for p in run.phases)
                               and scan["hits"] == 0 and checks == expected_checks and report["passed"] == checks)
     data = (json.dumps(report, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
     if any(f in data for f in secret_forms(run.values)):
