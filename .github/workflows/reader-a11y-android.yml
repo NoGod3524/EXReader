@@ -111,6 +111,14 @@ jobs:
           sudo apt-get install -y patchelf
           python -m pip install ninja==1.11.1.1
       - name: Build the unchanged host application and its deterministic fixtures
+        env:
+          # This package owns neither examples/android nor tests/android_host, so the
+          # shared builder's ownership window is anchored at this package's own start.
+          # The binding constraints stay the two checks in the previous step: the frozen
+          # SDK tree at 9854061 must stay byte-identical and every changed path must sit
+          # inside this package's four entries.
+          ANDROID_CANDIDATE_SDK_BASE: f43baf9182d75907c0cb5d6f77048f27bca8c950
+          ANDROID_OWNERSHIP_HEAD: f43baf9182d75907c0cb5d6f77048f27bca8c950
         run: |
           set -o pipefail
           mkdir -p build/a11y-android
