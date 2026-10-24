@@ -29,7 +29,9 @@ public final class BackendProbe extends Instrumentation {
             test.optString("action","get"),test.optString("resource","book.bin"),test.optString("filename","download.bin"),limits,!test.optBoolean("attached"));
         if(raw==null)throw new AssertionError("Native consumer did not return");
         JSONObject result=new JSONObject(new String(raw,StandardCharsets.UTF_8));
-        if(result.getInt("status")!=test.optInt("expected"))throw new AssertionError(test.getString("name")+" status="+result.getInt("status"));
+        result.put("name",test.getString("name"));
+        Files.write(new File(directory.getParentFile(),"last-result.json").toPath(),result.toString(2).getBytes(StandardCharsets.UTF_8));
+        if(result.getInt("status")!=test.optInt("expected"))throw new AssertionError(test.getString("name")+" status="+result.getInt("status")+" "+result.getString("message"));
         for(String field:new String[]{"count","title","reentry","wrong_owner","http","first_status"})
             if(test.has(field)&&!test.get(field).toString().equals(result.get(field).toString()))throw new AssertionError(test.getString("name")+" field="+field);
         if(test.has("first_resource")&&!test.getString("first_resource").equals(result.getString("resource")))throw new AssertionError("Encoded first resource differs");
@@ -61,6 +63,7 @@ public final class BackendProbe extends Instrumentation {
                 JSONObject row=invoke(input,test,new File(files,"case-"+test.getString("name")));row.put("elapsed_ms",SystemClock.elapsedRealtime()-started);
                 if(test.has("max_elapsed")&&row.getLong("elapsed_ms")>test.getLong("max_elapsed"))throw new AssertionError("Deadline not bounded");
                 checks.put(row);
+                Files.write(new File(files,"progress.json").toPath(),checks.toString(2).getBytes(StandardCharsets.UTF_8));
             }
             if(input.optBoolean("activity_exit")){
                 ExitActivity.input=input;ExitActivity.directory=new File(files,"activity");ExitActivity.failure=null;ExitActivity.done=false;

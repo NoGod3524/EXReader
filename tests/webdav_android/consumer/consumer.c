@@ -48,6 +48,7 @@ void dav_consume(const char *root,const char *auth,const char *directory,const c
     result->bytes=download.bytes;result->published=download.published;
   }
 done:
+  snprintf(result->message,sizeof(result->message),"%s",error.message);
   result->http=error.http_status;result->reentry=state.reentry;
   exr_webdav_listing_free(&listing);exr_webdav_free(client);
 }
