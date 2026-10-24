@@ -317,7 +317,8 @@ static LRESULT CALLBACK winnav_procedure(HWND window,UINT message,WPARAM wparam,
     if(id==IDC_DIRECTORY_CLOSE || id==IDCANCEL) { winnav_close();return 0; }
     if(directory.running || g.job || g.pending) return 0;
     if(id==IDC_DIRECTORY_UP && directory.result.candidate_count) {
-      free(directory.result.candidates);directory.result.candidates=NULL;directory.result.candidate_count=0;
+      /* Keep the candidate model paired with its visible labels until the
+         replacement authored page is accepted. Cancellation retains both. */
       winnav_submit(0,directory.result.parent,directory.result.first,READER_NAVIGATION_NONE,directory.depth);return 0;
     }
     if((id==IDC_DIRECTORY_PREVIOUS || id==IDC_DIRECTORY_NEXT) && directory.result.candidate_count) {

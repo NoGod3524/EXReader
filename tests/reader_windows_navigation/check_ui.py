@@ -31,6 +31,7 @@ REQUIRED=['native-directory-secondary-entry','authored-order-and-duplicates',
  'switch-book-destroys-directory','restart-discards-directory',
  'real-ctrl-g-and-accessible-names','real-enter-locates-and-escape-restores-focus',
  'cancel-inside-f2-keeps-view','cancel-unpublished-rows-keeps-view',
+ 'cancel-return-from-candidates-keeps-matching-model',
  'close-dialog-during-f2-discards-result','switch-book-during-f2-discards-result',
  'close-host-during-f2-joins-worker','original-files-unchanged','no-product-history-or-notes-written']
 
@@ -162,7 +163,7 @@ def main():
   record('real-enter-locates-and-escape-restores-focus',A.focus_of(app.process.pid)==app.control('page'))
   record('no-product-history-or-notes-written',history()==initial_history and readonly()==initial_notes)
   app.close();assert app.process.returncode==0
-  phase='live-f2';app=launch(args.review,out/'review',review=True);import_book(many,1);import_book(empty,2);app.open('Many');app.wait_idle();d=show()
+  phase='live-f2';app=launch(args.review,out/'review',review=True);import_book(many,1);import_book(empty,2);import_book(repeated,3);app.open('Many');app.wait_idle();d=show()
   before=state();before_rows=rows(d)
   for gate,name in ((6,'cancel-inside-f2-keeps-view'),(7,'cancel-unpublished-rows-keeps-view')):
    app.gate(gate);send(U.GetDlgItem(d,NEXT),0xF5);app.stage(gate);send(U.GetDlgItem(d,CANCEL),0xF5);app.release();settle(d)
@@ -171,6 +172,13 @@ def main():
   record('close-dialog-during-f2-discards-result',not U.IsWindow(d) and state()==before)
   d=show();app.gate(6);send(U.GetDlgItem(d,NEXT),0xF5);app.stage(6);app.open('Empty',wait=False);app.release();app.wait_idle()
   record('switch-book-during-f2-discards-result',not U.IsWindow(d) and app.q(10)==sql('SELECT id FROM books WHERE title=?',('Empty',))[0][0])
+  phase='cancel-candidate-return';app.open('Repeated');app.wait_idle();d=show();select(d,0);press(d,OPEN)
+  candidates=rows(d);before_candidate=state();assert candidates==['书内顺序 1','书内顺序 2']
+  app.gate(6);send(U.GetDlgItem(d,UP),0xF5);app.stage(6);send(U.GetDlgItem(d,CANCEL),0xF5);app.release();settle(d)
+  kept=rows(d)==candidates and state()==before_candidate and '已取消' in text(U.GetDlgItem(d,MESSAGE))
+  select(d,1);message=press(d,OPEN)
+  record('cancel-return-from-candidates-keeps-matching-model',kept and '已独立核对' in message and
+   sql('SELECT part,path FROM epub_progress WHERE book_id=(SELECT id FROM books WHERE title=?)',('Repeated',))==[(1,gen.A)])
   app.open('Many');app.wait_idle();d=show();app.gate(6);send(U.GetDlgItem(d,NEXT),0xF5);app.stage(6)
   U.PostMessageW(app.window,0x10,0,0);app.process.wait(timeout=20);record('close-host-during-f2-joins-worker',app.process.returncode==0)
   record('original-files-unchanged',all(hashlib.sha256(f.read_bytes()).hexdigest()==hashes[str(f)] for f in files))
