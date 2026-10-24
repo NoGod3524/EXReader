@@ -1,0 +1,309 @@
+name: Unix relocatable distribution candidate
+on:
+  push:
+    branches: [codex/reader-distribution-unix]
+    paths:
+      - 'tools/reader_distribution_unix/**'
+      - 'tests/reader_distribution_unix/**'
+      - '.github/workflows/reader-distribution-unix.yml'
+      - 'docs/READER-DISTRIBUTION-UNIX.md'
+      - 'docs/validation/reader-distribution-unix.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  protocol:
+    name: rejection protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, product schema and package-only changes
+        run: bash tests/reader_distribution_unix/check_scope.sh
+      - name: Reject invalid pkg-config, dedupe and seal decisions
+        run: |
+          set -o pipefail
+          mkdir -p build/protocol
+          python3 tests/reader_distribution_unix/selfcheck.py 2>&1 | tee build/protocol/selfcheck.log
+      - name: Preserve the protocol record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-distribution-protocol-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/protocol/
+          if-no-files-found: error
+
+  unix:
+    name: unix (${{ matrix.key }})
+    needs: [protocol]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, key: linux, platform: linux}
+          - {os: macos-15, key: macos, platform: macos}
+    env:
+      KEY: ${{ matrix.key }}
+      PLATFORM: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, product schema and package-only changes
+        run: bash tests/reader_distribution_unix/check_scope.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the pinned Ninja generator and pkg-config
+        run: |
+          python3 -m pip install 'ninja==1.11.1.1'
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            brew install pkg-config
+          else
+            sudo apt-get update
+            sudo apt-get install -y pkg-config
+          fi
+      - name: Record the workspace layout and toolchain
+        run: |
+          mkdir -p build/logs build/evidence/before build/evidence/after build/evidence/extracted
+          echo "WS=$PWD" >> "$GITHUB_ENV"
+          echo "PREFIX=$PWD/build/relocated-prefix/reading-core-sdk-relocated-to-another-directory" >> "$GITHUB_ENV"
+          echo "EXE=" >> "$GITHUB_ENV"
+          { echo "## cmake"; cmake --version; echo "## ninja"; ninja --version; echo "## python"; python3 --version
+            echo "## pkg-config"; pkg-config --version
+            echo "## runner"; echo "ImageOS=$ImageOS ImageVersion=$ImageVersion RUNNER_ARCH=$RUNNER_ARCH"; } | tee build/logs/toolchain.log
+      - name: Configure and install the reading SDK with explicit external arguments
+        run: |
+          set -o pipefail
+          cmake -S . -B build/sdk -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/install-a" \
+            -DEXR_ENABLE_PDF=ON -DEXR_ENABLE_PDF_CRYPTO=ON -DEXR_ENABLE_PDF_JPX=ON \
+            -DEXR_ENABLE_ICC=ON -DEXR_ENABLE_IMAGE_WEBP=ON -DEXR_ENABLE_IMAGE_TIFF=ON \
+            -DEXR_ENABLE_IMAGE_AVIF=ON -DEXR_ENABLE_AUDIO=OFF -DEXR_ENABLE_MP3=OFF \
+            -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_LIBRARY=OFF -DEXR_ENABLE_TEXT_INDEX=OFF \
+            -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_BUILD_SHARED_COMPAT=OFF \
+            -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_BUILD_JNI=OFF \
+            2>&1 | tee build/logs/configure.log
+          cmake --build build/sdk --parallel 4 2>&1 | tee build/logs/build.log
+          cmake --install build/sdk 2>&1 | tee build/logs/install.log
+      - name: Require complete release licence materials on this installed stage
+        run: |
+          set -o pipefail
+          python3 tools/check_reading_licenses.py reading-core build/sdk build/install-a \
+            build/licenses.json --require-release-ready 2>&1 | tee build/logs/licenses.log
+      - name: Stage the relocatable candidate with a pcfiledir pkg-config unit
+        run: |
+          set -o pipefail
+          python3 tools/reader_distribution_unix/stage.py --profile reading-core \
+            --install build/install-a --build build/sdk --output build/candidate \
+            --platform "$PLATFORM" --runner-os "$RUNNER_OS" --arch "$RUNNER_ARCH" \
+            --licenses build/licenses.json 2>&1 | tee build/logs/stage.log
+      - name: Relocate the candidate to a different absolute path
+        run: |
+          set -o pipefail
+          python3 tools/reader_distribution_unix/transform.py relocate \
+            --source build/candidate/prefix --destination "$PREFIX" \
+            --stage build/candidate/stage.json --output build/evidence/relocation.json \
+            2>&1 | tee build/logs/relocate.log
+      - name: Build the public C and C++ consumers from the relocated prefix only
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_distribution_unix/consumer -B build/consumer-before -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PREFIX" -DEXR_REPO="$WS" \
+            2>&1 | tee build/logs/consumer-before-configure.log
+          cmake --build build/consumer-before --parallel 4 \
+            2>&1 | tee build/logs/consumer-before-build.log
+      - name: Run the relocated consumers and the nine-format smoke before dedupe
+        run: |
+          set -o pipefail
+          "build/consumer-before/unix-c-consumer" "$PREFIX/examples/books/layout.epub" \
+            "$PREFIX/examples/fonts/primary.ttf" build/evidence/before/unix-c.png \
+            > build/evidence/before/unix-c.json 2> build/logs/consumer-before-c.err
+          cat build/evidence/before/unix-c.json
+          "build/consumer-before/unix-cxx-consumer" "$PREFIX/examples/books/layout.epub" \
+            "$PREFIX/examples/fonts/primary.ttf" > build/evidence/before/unix-cxx.json \
+            2> build/logs/consumer-before-cxx.err
+          cat build/evidence/before/unix-cxx.json
+          python3 tools/check_corpus.py build/consumer-before/unix-document \
+            tests/fixtures/fonts/primary.ttf tools/reading_core/smoke-manifest.json \
+            build/evidence/before/smoke --root tests/fixtures --timeout 60 \
+            2>&1 | tee build/logs/smoke-before.log
+      - name: Audit the relocated prefix before duplicate removal
+        run: |
+          set -o pipefail
+          python3 tools/reader_distribution_unix/audit.py --prefix "$PREFIX" \
+            --stage build/candidate/stage.json --label before --output build/evidence/before/audit.json \
+            --platform "$PLATFORM" --repo "$WS" --licenses build/licenses.json \
+            --token "$WS" --token "$WS/build" --token "$WS/build/install-a" --token "$PREFIX" \
+            --consumer unix-c-consumer="$WS/build/consumer-before/unix-c-consumer" \
+            --consumer unix-cxx-consumer="$WS/build/consumer-before/unix-cxx-consumer" \
+            --consumer-report c=build/evidence/before/unix-c.json \
+            --consumer-report cxx=build/evidence/before/unix-cxx.json \
+            --png build/evidence/before/unix-c.png \
+            --smoke build/evidence/before/smoke/summary.json 2>&1 | tee build/logs/audit-before.log
+      - name: Remove duplicate archive materials and prove content identity
+        run: |
+          set -o pipefail
+          python3 tools/reader_distribution_unix/transform.py dedupe --prefix "$PREFIX" \
+            --stage build/candidate/stage.json --output build/evidence/dedupe.json \
+            2>&1 | tee build/logs/dedupe.log
+      - name: Rebuild and rerun every consumer after duplicate removal
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_distribution_unix/consumer -B build/consumer-after -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PREFIX" -DEXR_REPO="$WS" \
+            2>&1 | tee build/logs/consumer-after-configure.log
+          cmake --build build/consumer-after --parallel 4 2>&1 | tee build/logs/consumer-after-build.log
+          "build/consumer-after/unix-c-consumer" "$PREFIX/examples/books/layout.epub" \
+            "$PREFIX/examples/fonts/primary.ttf" build/evidence/after/unix-c.png \
+            > build/evidence/after/unix-c.json
+          cat build/evidence/after/unix-c.json
+          "build/consumer-after/unix-cxx-consumer" "$PREFIX/examples/books/layout.epub" \
+            "$PREFIX/examples/fonts/primary.ttf" > build/evidence/after/unix-cxx.json
+          cat build/evidence/after/unix-cxx.json
+          python3 tools/check_corpus.py build/consumer-after/unix-document \
+            tests/fixtures/fonts/primary.ttf tools/reading_core/smoke-manifest.json \
+            build/evidence/after/smoke --root tests/fixtures --timeout 60 \
+            2>&1 | tee build/logs/smoke-after.log
+          python3 tools/reader_distribution_unix/audit.py --prefix "$PREFIX" \
+            --stage build/candidate/stage.json --label after --output build/evidence/after/audit.json \
+            --platform "$PLATFORM" --repo "$WS" --licenses build/licenses.json \
+            --token "$WS" --token "$WS/build" --token "$WS/build/install-a" --token "$PREFIX" \
+            --consumer unix-c-consumer="$WS/build/consumer-after/unix-c-consumer" \
+            --consumer unix-cxx-consumer="$WS/build/consumer-after/unix-cxx-consumer" \
+            --consumer-report c=build/evidence/after/unix-c.json \
+            --consumer-report cxx=build/evidence/after/unix-cxx.json \
+            --png build/evidence/after/unix-c.png \
+            --smoke build/evidence/after/smoke/summary.json 2>&1 | tee build/logs/audit-after.log
+      - name: Require identical behaviour before and after duplicate removal
+        run: |
+          set -o pipefail
+          python3 tests/reader_distribution_unix/compare.py build/evidence/before/audit.json \
+            build/evidence/after/audit.json --output build/evidence/compare-before-after.json \
+            2>&1 | tee build/logs/compare-before-after.log
+      - name: Seal a hardlink-aware deterministic archive
+        run: |
+          set -o pipefail
+          python3 tools/reader_distribution_unix/seal.py seal --prefix "$PREFIX" \
+            --stage build/candidate/stage.json --dedupe build/evidence/dedupe.json \
+            --output build/dist 2>&1 | tee build/logs/seal.log
+      - name: Extract the archive bytes and re-verify every member identity
+        run: |
+          set -o pipefail
+          archive="build/dist/EXReader-reading-core-3.40.0-$PLATFORM-$RUNNER_ARCH.tar.gz"
+          test -f "$archive"
+          python3 tools/reader_distribution_unix/seal.py verify --archive "$archive" \
+            --manifest build/dist/manifest.json --destination build/extracted \
+            --output build/evidence/extracted.json 2>&1 | tee build/logs/extract.log
+      - name: Build and run the consumers and smoke from the extracted archive
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_distribution_unix/consumer -B build/consumer-extracted -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/extracted" -DEXR_REPO="$WS" \
+            2>&1 | tee build/logs/consumer-extracted-configure.log
+          cmake --build build/consumer-extracted --parallel 4 \
+            2>&1 | tee build/logs/consumer-extracted-build.log
+          "build/consumer-extracted/unix-c-consumer" "$WS/build/extracted/examples/books/layout.epub" \
+            "$WS/build/extracted/examples/fonts/primary.ttf" build/evidence/extracted/unix-c.png \
+            > build/evidence/extracted/unix-c.json
+          cat build/evidence/extracted/unix-c.json
+          "build/consumer-extracted/unix-cxx-consumer" "$WS/build/extracted/examples/books/layout.epub" \
+            "$WS/build/extracted/examples/fonts/primary.ttf" \
+            > build/evidence/extracted/unix-cxx.json
+          cat build/evidence/extracted/unix-cxx.json
+          python3 tools/check_corpus.py build/consumer-extracted/unix-document \
+            tests/fixtures/fonts/primary.ttf tools/reading_core/smoke-manifest.json \
+            build/evidence/extracted/smoke --root tests/fixtures --timeout 60 \
+            2>&1 | tee build/logs/smoke-extracted.log
+          python3 tools/reader_distribution_unix/audit.py --prefix "$WS/build/extracted" \
+            --stage build/candidate/stage.json --label extracted \
+            --output build/evidence/extracted/audit.json --platform "$PLATFORM" --repo "$WS" \
+            --licenses build/licenses.json \
+            --token "$WS" --token "$WS/build" --token "$WS/build/install-a" --token "$WS/build/extracted" \
+            --consumer unix-c-consumer="$WS/build/consumer-extracted/unix-c-consumer" \
+            --consumer unix-cxx-consumer="$WS/build/consumer-extracted/unix-cxx-consumer" \
+            --consumer-report c=build/evidence/extracted/unix-c.json \
+            --consumer-report cxx=build/evidence/extracted/unix-cxx.json \
+            --png build/evidence/extracted/unix-c.png \
+            --smoke build/evidence/extracted/smoke/summary.json \
+            2>&1 | tee build/logs/audit-extracted.log
+          python3 tests/reader_distribution_unix/compare.py build/evidence/after/audit.json \
+            build/evidence/extracted/audit.json --output build/evidence/compare-after-extracted.json \
+            2>&1 | tee build/logs/compare-after-extracted.log
+      - name: Assemble the uploaded evidence layout
+        if: always()
+        run: |
+          art=build/artifact
+          rm -rf "$art"
+          mkdir -p "$art/dist" "$art/logs" "$art/evidence"
+          for name in stage.json licenses.json relocation.json dedupe.json extracted.json; do
+            if [ -f "build/candidate/$name" ]; then cp "build/candidate/$name" "$art/"; fi
+            if [ -f "build/licenses.json" ] && [ "$name" = "licenses.json" ]; then cp build/licenses.json "$art/"; fi
+            if [ -f "build/evidence/$name" ]; then cp "build/evidence/$name" "$art/"; fi
+          done
+          if [ -d build/dist ]; then cp build/dist/* "$art/dist/"; fi
+          for label in before after extracted; do
+            for name in audit.json unix-c.json unix-cxx.json unix-c.png; do
+              if [ -f "build/evidence/$label/$name" ]; then
+                cp "build/evidence/$label/$name" "$art/evidence/$label-$name"
+              fi
+            done
+            if [ -f "build/evidence/$label/smoke/summary.json" ]; then
+              cp "build/evidence/$label/smoke/summary.json" "$art/evidence/smoke-$label.json"
+            fi
+          done
+          for name in compare-before-after.json compare-after-extracted.json; do
+            if [ -f "build/evidence/$name" ]; then cp "build/evidence/$name" "$art/evidence/"; fi
+          done
+          if ls build/logs/*.log >/dev/null 2>&1; then cp build/logs/*.log "$art/logs/"; fi
+          echo "artifact files: $(find "$art" -type f | wc -l)"
+          find "$art" -type f | sort | sed -n '1,60p'
+      - name: Preserve the candidate, archive, audits and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-distribution-unix-${{ matrix.key }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/artifact/
+          if-no-files-found: error
+          include-hidden-files: true
+
+  report:
+    name: same-source report
+    needs: [protocol, unix]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Re-derive every claim from the uploaded bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          mkdir -p build/report
+          python3 tests/reader_distribution_unix/aggregate.py --output build/report \
+            2>&1 | tee build/report.log
+      - name: Preserve the same-source report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-distribution-unix-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/report/
+            build/report.log
+          if-no-files-found: warn

@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "package": "J24 Unix relocatable distribution",
+  "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "branch": "codex/reader-distribution-unix",
+  "accepted": false,
+  "release_ready": false,
+  "quality_accepted": false,
+  "published": false,
+  "tag_created": false,
+  "scope": "Linux/x64 and macOS/ARM64 reading-core relocation, pkg-config contract, duplicate material removal and installed-consumer behaviour",
+  "tested_source_sha": null,
+  "run": null,
+  "attempt": null,
+  "jobs": [],
+  "artifacts": [],
+  "named_results": [],
+  "failures": [],
+  "uncovered": [
+    "Windows candidate distribution",
+    "reading-library and optional component profiles",
+    "performance, accessibility, real-device and audio scope",
+    "product host wiring (root)"
+  ],
+  "note": "Filled only from a completed same-source Actions run; this file starts unaccepted."
+}
