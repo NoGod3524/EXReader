@@ -118,7 +118,7 @@ def summary_main(args):
         print(json.dumps({'accepted': False, 'problems': problems}))
         return 1
 
-    wanted = {name: 'reader-distribution-unix-%s-%d-%d' % (key, run_id, attempt) for key in PLATFORMS}
+    wanted = {key: 'reader-distribution-unix-%s-%d-%d' % (key, run_id, attempt) for key in PLATFORMS}
     wanted['protocol'] = 'reader-distribution-protocol-%d-%d' % (run_id, attempt)
     index = {artifact['name']: artifact for artifact in artifacts}
     for name in wanted.values():
