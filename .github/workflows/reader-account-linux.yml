@@ -54,6 +54,8 @@ jobs:
           cmake --build build/account-command-consumer --parallel 4
           cmake -S tests/reader_metadata/consumer -B build/account-metadata-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
           cmake --build build/account-metadata-consumer --parallel 4
+          cmake -S tests/reader_revisions/consumer -B build/account-revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-revision-consumer --parallel 4
       - name: Install unchanged frozen SDK and public original export module
         run: |
           cmake --preset reading-library 2>&1 | tee build/account-logs/sdk-configure.log
@@ -101,7 +103,7 @@ jobs:
             openbox >build/account-logs/account-openbox.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
-            python3 tests/linux_host/check_account_ui.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --output build/account-ui
+            python3 tests/linux_host/check_account_ui.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-ui
           '
       - name: Preserve source-bound evidence and original logs without credentials or TLS private keys
         if: always()
