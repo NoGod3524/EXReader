@@ -413,7 +413,7 @@ def tool_parsers():
     assert {entry['name'] for entry in contract.parse_entries('nm', darwin, True)} == \
         {'exr_open', 'mz_deflate'}
     ms = ('Dump of file exr_vendor_miniz.lib\n\nCOFF SYMBOL TABLE\n'
-          '000 00000000 SECT1  notype       External     | .text\n'
+          '000 00000000 SECT1  notype       Static       | .text\n'
           '008 00000000 UNDEF  notype ()    External     | mz_deflate\n'
           '009 00000000 SECT3  notype ()    External     | mz_inflate\n')
     assert [(entry['name'], entry['state']) for entry in contract.parse_entries('dumpbin-symbols', ms)] == \
