@@ -117,6 +117,7 @@ jobs:
               --seed build/perf-probe/seed_library \
               --output build/perf-evidence \
               --launches 32 2>&1 | tee build/perf-logs/sampler.log
+            pkill -f xclip 2>/dev/null || true
           '
       - name: Preserve the raw logs next to the raw samples
         if: always()
@@ -126,6 +127,7 @@ jobs:
           cp build/perf-package/build.json build/perf-package/runtime-dependencies.txt \
             build/perf-evidence/logs/ 2>/dev/null || true
       - name: Aggregate without new budgets and require complete planned coverage
+        if: always()
         run: |
           set -o pipefail
           python3 tests/reader_perf_gtk/summarize.py --output build/perf-evidence \
