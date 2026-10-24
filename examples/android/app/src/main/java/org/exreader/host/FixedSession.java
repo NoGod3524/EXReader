@@ -18,6 +18,7 @@ import java.nio.ByteBuffer;
  */
 final class FixedSession implements AutoCloseable {
     private final EXReader.FixedDocument document;
+    private final NativeCbz cbz;
     private final int pageCount;
     private final float baseScale;
     private int index;
@@ -25,23 +26,31 @@ final class FixedSession implements AutoCloseable {
     private final long bookId;
     private final boolean imageOnly;
 
-    FixedSession(long bookId, String path, byte[] font, int format) throws IOException {
+    FixedSession(long bookId, String path, byte[] font, int format,HostTask task) throws Exception {
         this.bookId = bookId;
         imageOnly = format == NativeLibrary.FORMAT_CBZ;
         byte[] bytes = read(path);
-        if (format == NativeLibrary.FORMAT_CBZ) {
+        if(imageOnly&&BuildConfig.READER_READING){
+            cbz=new NativeCbz(bytes,task);document=null;
+        } else if (format == NativeLibrary.FORMAT_CBZ) {
+            cbz=null;
             document = new EXReader.FixedDocument(EXReader.FixedFormat.CBZ, bytes);
         } else {
+            cbz=null;
             document = new EXReader.Pdf(bytes, font, 0);
         }
         try {
-            pageCount = document.pageCount();
+            pageCount = cbz==null?document.pageCount():cbz.count();
             if (pageCount <= 0) throw new IllegalStateException("The document has no pages");
-            EXReader.Bitmap probe = document.render(0, 1.0);
-            if (probe == null || probe.width <= 0) throw new IllegalStateException("The first page cannot be rendered");
-            baseScale = Math.max(0.25f, Math.min(20f, 600f / probe.width));
-        } catch (RuntimeException | Error error) { document.close(); throw error; }
+            int width=cbz==null?document.render(0,1.0).width:cbz.render(0,1.0,task).meta[0];
+            if(width<=0)throw new IllegalStateException("The first page cannot be rendered");
+            baseScale = Math.max(0.25f, Math.min(20f, 600f / width));
+        } catch (Exception | Error error) {if(cbz!=null)cbz.close();else document.close();throw error;}
     }
+    boolean cbz(){return cbz!=null;}
+    String sourceKey(){return cbz==null?null:cbz.sourceKey;}
+    int rendererIdentity(){return cbz==null?0:cbz.identity();}
+    NativeReadingSdk.Match resolveCurrent(ReadingCapture capture,HostTask task)throws Exception{if(cbz==null)throw new IllegalStateException("No current public CBZ renderer");return cbz.resolve(capture,task);}
 
     int pageCount() {
         return pageCount;
@@ -59,17 +68,18 @@ final class FixedSession implements AutoCloseable {
         final int candidateIndex = page;
         long started = System.nanoTime();
         float scale = baseScale * zoom;
-        EXReader.Bitmap nativeBitmap = document.render(page, scale);
+        NativeCbz.Frame cbzFrame=cbz==null?null:cbz.render(page,scale,task);
+        EXReader.Bitmap nativeBitmap = cbz==null?document.render(page,scale):null;
         task.check();
-        if (nativeBitmap == null) throw new IllegalStateException("No page bitmap");
-        Bitmap bitmap = ReflowSession.toBitmap(nativeBitmap);
+        if(nativeBitmap==null&&cbzFrame==null)throw new IllegalStateException("No page bitmap");
+        Bitmap bitmap=cbzFrame==null?ReflowSession.toBitmap(nativeBitmap):cbzFrame.bitmap();
         boolean transferred = false;
         try {
         EXReader.TextPage textPage = null;
-        if (!imageOnly) textPage = document.text(page);
+        if(cbzFrame==null&&!imageOnly)textPage=document.text(page);
         task.check();
-        byte[] text = textPage == null || textPage.utf8 == null ? new byte[0] : textPage.utf8;
-        int regions = textPage == null ? 0 : textPage.flags.length;
+        byte[] text=cbzFrame!=null?cbzFrame.text:textPage==null||textPage.utf8==null?new byte[0]:textPage.utf8;
+        int regions=cbzFrame!=null?cbzFrame.meta[6]:textPage==null?0:textPage.flags.length;
         long[] starts = new long[regions];
         long[] ends = new long[regions];
         float[][] quads = new float[regions][8];
@@ -89,6 +99,10 @@ final class FixedSession implements AutoCloseable {
                 text, scale, contentWidth, contentHeight, starts, ends, quads,
                 null, null, null, null, lineText, lineBounds, 0, bookId);
         snapshot.layoutZoom=zoom;
+        snapshot.fixedTextProvided=cbzFrame!=null||textPage!=null;
+        snapshot.fixedPageId=cbzFrame==null?null:cbzFrame.pageId;
+        snapshot.fixedRendererSourceKey=cbz==null?null:cbz.sourceKey;
+        snapshot.fixedRendererIdentity=cbz==null?0:cbz.identity();
         PageLoad result = new PageLoad(snapshot, (System.nanoTime() - started) / 1000000L,
                 () -> index = candidateIndex, () -> {});
         transferred = true;
@@ -177,6 +191,6 @@ final class FixedSession implements AutoCloseable {
     public void close() {
         if (closed) return;
         closed = true;
-        document.close();
+        if(cbz!=null)cbz.close();else document.close();
     }
 }

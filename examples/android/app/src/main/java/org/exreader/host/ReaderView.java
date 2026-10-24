@@ -147,6 +147,11 @@ public final class ReaderView extends View {
                 .put("font",page.fixed?org.json.JSONObject.NULL:page.layoutFont).put("zoom",page.layoutZoom)
                 .put("line_spacing",page.layoutLine).put("paragraph_spacing",page.layoutParagraph).put("margin",page.layoutMargin).put("preferences_point",page.preferencesPoint).put("preferences_range_end",page.preferencesRangeEnd)
                 .put("render_scale",page.renderScale).put("bitmap_width",page.bitmap.getWidth()).put("bitmap_height",page.bitmap.getHeight())
+                .put("fixed_public_text",page.fixed?Boolean.valueOf(page.fixedTextProvided):org.json.JSONObject.NULL)
+                .put("fixed_public_text_bytes",page.fixed?page.text.length:org.json.JSONObject.NULL)
+                .put("fixed_page_id",page.fixedPageId==null?org.json.JSONObject.NULL:page.fixedPageId).put("fixed_renderer",page.fixedRendererIdentity)
+                .put("source_key",page.sourceKey==null?org.json.JSONObject.NULL:page.sourceKey)
+                .put("fixed_renderer_source_key",page.fixedRendererSourceKey==null?org.json.JSONObject.NULL:page.fixedRendererSourceKey)
                 .put("glyph_font_first",page.glyphSize==null || page.glyphSize.length==0?org.json.JSONObject.NULL:page.glyphSize[0]);
             if(page!=null)state.put("actual_line_count",page.lineBounds==null?0:page.lineBounds.length)
                 .put("actual_first_x",page.glyphX==null||page.glyphX.length==0?org.json.JSONObject.NULL:page.glyphX[0])
