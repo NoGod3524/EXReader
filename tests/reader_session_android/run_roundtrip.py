@@ -242,11 +242,12 @@ def main():
                 if row['state']==1:assert row['start']==row['expected_start'] and row['end']==row['expected_end'],row
             assert value['audit'][0]==0 and value['audit'][1]==value['audit'][2] and value['audit'][3:]==[0,0,0,0]
         reading_checks(resolved)
+        reading_stats=control('stats');assert reading_stats['clients']==reading_stats['uploads']==0 and reading_stats['attaches']==reading_stats['detaches']
         old_pid=resolved['pid'];adb('shell','am','force-stop',package);adb('shell','am','start','-n',package+'/.ControlActivity')
         reopened=control('resolve-reading','ReadingB',captures=reading['captures']);assert reopened['pid']!=old_pid;reading_checks(reopened)
         assert reopened['cases']==resolved['cases'] and reopened['audit']==resolved['audit']
         reading_schemas={profile:snapshot(profile) for profile in ('ReadingA','ReadingB')}
-        record('eighteen_public_sdk_captures_cross_real_tls_dav_with_exact_v2_codec_and_reopen',sent=sent,received=received,resolved=resolved,reopened_pid=reopened['pid'],schemas=reading_schemas,originals=4,receiver_found=17,receiver_ambiguous=1,sdk_note_copies=0,active_progress_untouched=True)
+        record('eighteen_public_sdk_captures_cross_real_tls_dav_with_exact_v2_codec_and_reopen',sent=sent,received=received,resolved=resolved,reopened_pid=reopened['pid'],schemas=reading_schemas,stats=reading_stats,originals=4,receiver_found=17,receiver_ambiguous=1,sdk_note_copies=0,active_progress_untouched=True)
         accepted=True
     except BaseException as error:
         failure={'type':type(error).__name__,'message':str(error)};raise
