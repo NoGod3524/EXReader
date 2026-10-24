@@ -18,7 +18,7 @@ import Darwin
         func check(_ name: String, _ operation: () throws -> Void) {
             var value: [String: Any] = ["id": name, "passed": false]
             do { try operation(); value["passed"] = true } catch { value["error"] = error.localizedDescription }
-            checks.append(value); print("NAVIGATION CHECK \(value)")
+            checks.append(value); print("NAVIGATION CHECK \(value)"); fflush(stdout)
         }
         try queue.sync {
             let library = try HostLibrary(path: output.appendingPathComponent("library.sqlite"))
@@ -62,6 +62,18 @@ import Darwin
                 let (candidate, frame) = try session.navigationCandidate(selection, acceptPart: false, cancel: HostCancelBox())
                 try expect(candidate.library.handle != library.handle && frame.part == 1 && frame.pageText.contains(expected["destination_text"] as! String),
                     "Independent FOUND did not select exact chapter node")
+                let target = selection.resolution.target
+                let poisoned = target.path.withCString { path in target.partID.withCString { identity in target.fragment.withCString { fragment in
+                    var raw = reader_navigation_target()
+                    raw.kind = target.kind; raw.row = target.row; raw.part = target.part; raw.node = target.node + 1
+                    raw.part_path = UnsafeMutablePointer(mutating: path); raw.part_id = UnsafeMutablePointer(mutating: identity)
+                    raw.fragment = UnsafeMutablePointer(mutating: fragment)
+                    return HostNavigationSelection(bookID: selection.bookID, sourceKey: selection.sourceKey, row: selection.row, cfi: "",
+                        resolution: HostNavigationResolution(status: READER_NAVIGATION_OK, target: HostNavigationTarget(raw), candidates: []))
+                } } }
+                let before = try session.stateHash()
+                try expect(rejects { _ = try session.navigationCandidate(poisoned, acceptPart: false, cancel: HostCancelBox()) }, "Wrong F2 native node escaped independent SDK verification")
+                try expect(try session.stateHash() == before, "Rejected poisoned node changed progress")
             }
             check("duplicate-spine-explicit-choice") {
                 let ambiguous = try resolve(3)
@@ -118,9 +130,18 @@ import Darwin
             }
             func cfi(_ offset: Int) throws -> String {
                 let active = HostCancelBox()
+                // A successful candidate commits through a second connection;
+                // the old library source lease intentionally expires then.
+                let current = try HostPublication(library: library, bookID: id, cancel: active)
+                var loaded: OpaquePointer?
+                try hostCheck(exr_publication_load(current.handle, 1, &loaded, &error), error)
+                guard let loaded else { throw HostError.invalidResult("Fresh CFI fixture load missing") }
+                let snapshot = HostDocument(adopting: loaded)
                 var point = exr_cfi_point(), result: UnsafeMutablePointer<CChar>?, control = hostControl(active)
                 point.node = unicodeNode; point.offset = offset
-                try hostCheck(exr_publication_cfi_create(publication.handle, 1, document.handle, &point, &control, &result, &error), error)
+                try withExtendedLifetime((active, current, snapshot)) {
+                    try hostCheck(exr_publication_cfi_create(current.handle, 1, snapshot.handle, &point, &control, &result, &error), error)
+                }
                 defer { exr_free(result) }
                 return hostString(result)
             }
@@ -152,6 +173,9 @@ import Darwin
                 }
             }
             check("late-output-close-and-book-switch-fenced") {
+                let oldBookSelection = try resolve(1), before = try session.stateHash()
+                try expect(rejects { _ = try session.navigationCandidate(oldBookSelection, acceptPart: false, cancel: HostCancelBox()) }, "Old book target escaped live session identity")
+                try expect(try session.stateHash() == before, "Old book target changed current book progress")
                 let state = HostNavigationState(); state.bind(id)
                 let (epoch, _) = state.begin(); state.cancel()
                 state.accept(first, key: key, generation: epoch)
@@ -178,6 +202,7 @@ import Darwin
             "attempt": environment["GITHUB_RUN_ATTEMPT"] ?? "", "checks": checks]
         try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
             .write(to: output.appendingPathComponent("navigation-review.json"))
-        if failed != 0 || checks.count != 12 { throw HostError.invalidResult("Navigation checks failed") }
+        print("NAVIGATION_REPORT \(result)"); fflush(stdout)
+        if failed != 0 || checks.count != 12 { exit(1) }
     }
 }
