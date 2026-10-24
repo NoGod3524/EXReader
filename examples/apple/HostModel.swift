@@ -4,6 +4,282 @@ import CoreGraphics
 import CryptoKit
 import CEXReader
 import Combine
+import Darwin
+
+// Product shelf state is independent of SDK pagination and its owner handles.
+// Only three catalog pages are retained; async results carry a query generation.
+final class HostShelf: ObservableObject {
+    typealias Loader = (String, HostShelfKey?, Bool, Bool, @escaping (Result<[HostShelfBook], Error>) -> Void) -> Void
+    @Published private(set) var rows: [HostShelfBook] = []
+    @Published var query = ""
+    @Published private(set) var loading = false
+    @Published private(set) var error = ""
+    @Published private(set) var restoreRevision = 0
+    @Published private var viewportRevision = 0
+    private(set) var restoreKey: String?
+    private(set) var top: HostShelfKey?
+    private(set) var before = false
+    private(set) var after = false
+    private(set) var generation = 0
+    private(set) var appliedGeneration = -1
+    private(set) var discarded = 0
+    private(set) var maximumRows = 0
+    private(set) var selected: String?
+    private var loader: Loader?
+    private var debounce: DispatchWorkItem?
+    private var visible = Set<String>()
+    private let defaults: UserDefaults
+    private var appliedQuery = ""
+    private var lastLayout: TimeInterval?
+    private var layoutIntervals: [Double] = []
+    private var viewportSize = CGSize.zero
+    private let createdUptime = ProcessInfo.processInfo.systemUptime
+    private var firstLayoutUptime: TimeInterval?
+    private var awaitingLayoutKey: String?
+    private var issuedRestoreRevision = -1
+    // Even epochs precede the native scroll; odd epochs follow its issue.
+    var geometryRevision: Int { restoreRevision * 2 + (issuedRestoreRevision == restoreRevision ? 1 : 0) }
+    var needsScroll: Bool { awaitingLayoutKey != nil && issuedRestoreRevision != restoreRevision }
+    private var pendingSave: DispatchWorkItem?
+#if EXR_APPLE_SHELF_REVIEW
+    private var reviewVisibleFrames: [[String: Any]] = []
+    private var reviewGeometryRevision = -1
+
+    private func recordReviewTrace(_ line: String) {
+        guard let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+        let folder = root.appendingPathComponent("EXReader", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent("shelf-layout-trace.jsonl")
+        if !FileManager.default.fileExists(atPath: url.path) { FileManager.default.createFile(atPath: url.path, contents: nil) }
+        guard let handle = try? FileHandle(forWritingTo: url) else { return }
+        defer { try? handle.close() }
+        _ = try? handle.seekToEnd()
+        try? handle.write(contentsOf: Data((line + "\n").utf8))
+    }
+#endif
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        query = defaults.string(forKey: "EXRShelfQuery") ?? ""
+        selected = defaults.string(forKey: "EXRShelfSelected")
+        if let data = defaults.data(forKey: "EXRShelfTop") { top = try? JSONDecoder().decode(HostShelfKey.self, from: data) }
+    }
+    deinit { debounce?.cancel(); pendingSave?.cancel() }
+
+    func connect(_ load: @escaping Loader) {
+        guard loader == nil else { return }
+        loader = load
+        reset(anchor: top)
+    }
+
+    func search() {
+        debounce?.cancel()
+        query = String(String.UnicodeScalarView(query.precomposedStringWithCanonicalMapping.unicodeScalars.prefix(256)))
+        generation += 1
+        rows = []; visible = []; top = nil; awaitingLayoutKey = nil; before = false; after = false; loading = true
+        defaults.removeObject(forKey: "EXRShelfTop")
+        defaults.set(query, forKey: "EXRShelfQuery")
+        let work = DispatchWorkItem { [weak self] in self?.reset(anchor: nil) }
+        debounce = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18, execute: work)
+    }
+
+    func refresh() {
+        guard loader != nil else { return }
+        save()
+        reset(anchor: top)
+    }
+
+    private func reset(anchor: HostShelfKey?) {
+        generation += 1; loading = false; error = ""
+        rows = []; visible = []; awaitingLayoutKey = nil; before = false; after = false
+        request(anchor: anchor, previous: false, inclusive: true, replacing: true)
+    }
+
+    private func request(anchor: HostShelfKey?, previous: Bool, inclusive: Bool, replacing: Bool) {
+        guard !loading, let loader else { return }
+        loading = true
+        let token = generation, requested = query
+        loader(requested, anchor, previous, inclusive) { [weak self] result in
+            guard let self else { return }
+            guard self.generation == token, self.query == requested else { self.discarded += 1; return }
+            self.loading = false
+            switch result {
+            case .failure(let error): self.error = error.localizedDescription
+            case .success(let page):
+                guard page.count <= 50 else { self.error = "书架分页超过上限"; return }
+                if !replacing && page.isEmpty {
+                    if previous { self.before = false } else { self.after = false }
+                    if self.awaitingLayoutKey != nil { self.restoreRevision += 1 }
+                    return
+                }
+                if replacing && page.isEmpty && anchor != nil && !previous {
+                    self.request(anchor: anchor, previous: true, inclusive: false, replacing: true)
+                    return
+                }
+                let retainedTop = replacing ? anchor :
+                    (self.rows.first(where: { $0.id == self.awaitingLayoutKey })?.key ?? self.top)
+                // Appending within the cache changes no existing row position.
+                // A forced scroll here races an in-flight native drag/deceleration.
+                let shiftsExistingRows = replacing || previous || self.rows.count + page.count > 150
+                if !replacing && self.rows.count + page.count > 150,
+                   let index = self.rows.firstIndex(where: { $0.key == self.top }) {
+                    if (!previous && index < 50) || (previous && index + self.visible.count > self.rows.count - 50) { return }
+                }
+                if replacing {
+                    self.rows = page
+                    self.before = anchor != nil && (!previous || page.count == 50)
+                    self.after = !previous && page.count == 50
+                } else if previous {
+                    self.rows.insert(contentsOf: page, at: 0)
+                    self.before = page.count == 50
+                    if self.rows.count > 150 { self.rows.removeLast(self.rows.count - 150); self.after = true }
+                } else {
+                    self.rows.append(contentsOf: page)
+                    self.after = page.count == 50
+                    if self.rows.count > 150 { self.rows.removeFirst(self.rows.count - 150); self.before = true }
+                }
+                self.maximumRows = max(self.maximumRows, self.rows.count)
+                self.appliedGeneration = token; self.appliedQuery = requested
+                if shiftsExistingRows {
+                    self.restoreKey = retainedTop.flatMap { key in self.rows.contains(where: { $0.key == key }) ? key.key : nil } ?? self.rows.first?.id
+                    self.awaitingLayoutKey = self.restoreKey
+                    self.restoreRevision += 1
+                }
+            }
+        }
+    }
+
+    func observe(_ positions: [String: CGRect], size: CGSize, revision: Int) {
+#if EXR_APPLE_SHELF_REVIEW
+        if revision == geometryRevision {
+            let frames: [[String: Any]] = size.height > 0 ? positions
+                .filter { $0.value.maxY > 0 && $0.value.minY < size.height }
+                .sorted { $0.value.minY < $1.value.minY }.prefix(3).map {
+                    ["key": $0.key, "min_y": Double($0.value.minY), "max_y": Double($0.value.maxY)]
+                } : []
+            if reviewGeometryRevision != revision || !NSArray(array: reviewVisibleFrames).isEqual(to: frames) {
+                objectWillChange.send()
+                reviewGeometryRevision = revision
+                reviewVisibleFrames = frames
+            }
+        }
+        if let awaitingLayoutKey {
+            var trace: [String: Any] = ["incoming_epoch": revision, "expected_epoch": geometryRevision,
+                "issued_revision": issuedRestoreRevision, "needs_scroll": needsScroll,
+                "frame_count": positions.count, "width": Double(size.width), "height": Double(size.height),
+                "target_key": awaitingLayoutKey]
+            if let frame = positions[awaitingLayoutKey] {
+                trace["target_frame"] = ["min_y": Double(frame.minY), "max_y": Double(frame.maxY),
+                    "width": Double(frame.width), "height": Double(frame.height)]
+            }
+            if let data = try? JSONSerialization.data(withJSONObject: trace, options: [.sortedKeys]),
+               let value = String(data: data, encoding: .utf8) { recordReviewTrace("SHELF RAW GEOMETRY \(value)") }
+        }
+#endif
+        guard size.height > 0, revision == geometryRevision else { return }
+        if viewportSize != .zero && viewportSize != size {
+            viewportSize = size; restoreViewport(); return
+        }
+        viewportSize = size
+        guard awaitingLayoutKey == nil || issuedRestoreRevision == restoreRevision else { return }
+        let ordered = positions.filter { $0.value.maxY > 0 && $0.value.minY < size.height }
+            .sorted { $0.value.minY < $1.value.minY }
+        let newVisible = Set(ordered.map(\.key))
+        guard let first = ordered.first, let index = rows.firstIndex(where: { $0.id == first.key }) else { return }
+        let lastIndex = ordered.last.flatMap { last in rows.firstIndex(where: { $0.id == last.key }) } ?? index
+        let acknowledged = awaitingLayoutKey != nil
+        if let awaitingLayoutKey {
+            if first.key != awaitingLayoutKey {
+                // Native List clamps an old top near the global end when a
+                // taller viewport cannot align that row at the top. Confirm
+                // only real visible target + terminal-row geometry.
+                guard let target = positions[awaitingLayoutKey], target.maxY > 0, target.minY < size.height,
+                      let last = rows.last, let tail = positions[last.id], tail.maxY > 0,
+                      tail.maxY <= size.height + 1 else { return }
+                if after {
+                    if !loading { request(anchor: last.key, previous: false, inclusive: false, replacing: false) }
+                    return
+                }
+                restoreKey = first.key
+            }
+            self.awaitingLayoutKey = nil
+        }
+        if firstLayoutUptime == nil, !loading, generation == appliedGeneration {
+            firstLayoutUptime = ProcessInfo.processInfo.systemUptime
+        }
+        if acknowledged || visible != newVisible || top != rows[index].key {
+            let now = ProcessInfo.processInfo.systemUptime
+            if let lastLayout { layoutIntervals.append((now - lastLayout) * 1000) }
+            if layoutIntervals.count > 512 { layoutIntervals.removeFirst(layoutIntervals.count - 512) }
+            self.lastLayout = now
+            visible = newVisible
+            viewportRevision += 1
+            pendingSave?.cancel()
+            let token = generation, key = rows[index].key
+            let work = DispatchWorkItem { [weak self] in
+                guard let self, self.generation == token, self.top == key else { return }
+                self.save()
+            }
+            pendingSave = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+        }
+        top = rows[index].key
+        guard !loading, appliedGeneration == generation else { return }
+        if after && lastIndex >= rows.count - 12, let last = rows.last {
+            request(anchor: last.key, previous: false, inclusive: false, replacing: false)
+        } else if before && index < 12, let first = rows.first {
+            request(anchor: first.key, previous: true, inclusive: false, replacing: false)
+        }
+    }
+
+    func restoreViewport() {
+        restoreKey = awaitingLayoutKey ?? top?.key ?? restoreKey
+        awaitingLayoutKey = restoreKey
+        restoreRevision += 1
+    }
+    func didScroll(revision: Int) {
+        guard revision == restoreRevision, issuedRestoreRevision != revision else { return }
+        issuedRestoreRevision = revision
+#if EXR_APPLE_SHELF_REVIEW
+        recordReviewTrace("SHELF SCROLL ISSUED revision=\(revision) epoch=\(geometryRevision)")
+#endif
+        viewportRevision += 1
+    }
+    func choose(_ book: HostShelfBook) { selected = book.id; defaults.set(book.id, forKey: "EXRShelfSelected"); save() }
+    func save() {
+        // Never pair a new query with an old viewport, or clear a valid anchor
+        // while a same-query refresh is temporarily between pages.
+        guard appliedGeneration == generation, appliedQuery == query, awaitingLayoutKey == nil else { return }
+        defaults.set(query, forKey: "EXRShelfQuery")
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        if let top, let bytes = try? encoder.encode(top) { defaults.set(bytes, forKey: "EXRShelfTop") }
+    }
+
+    var observation: String {
+        var usage = rusage()
+        getrusage(RUSAGE_SELF, &usage)
+        var value: [String: Any] = ["query": query, "generation": generation, "applied_generation": appliedGeneration,
+            "loading": loading, "restoring_layout": awaitingLayoutKey != nil,
+            "cached_rows": rows.count, "max_cached_rows": maximumRows,
+            "page_limit": 50, "cache_limit": 150, "has_before": before, "has_after": after,
+            "top_key": top?.key ?? "", "selected_key": selected ?? "", "discarded": discarded,
+            "keys": rows.map(\.id), "visible_keys": rows.filter { visible.contains($0.id) }.map(\.id),
+            "layout_revision": viewportRevision, "process_peak_rss_bytes": usage.ru_maxrss,
+            "shelf_created_to_first_visible_layout_ms": firstLayoutUptime.map { ($0 - createdUptime) * 1000 } ?? -1,
+            "layout_observation_intervals_ms": layoutIntervals]
+#if EXR_APPLE_SHELF_REVIEW
+        value["visible_frames"] = reviewVisibleFrames
+        value["observed_geometry_revision"] = reviewGeometryRevision
+        value["viewport_height"] = Double(viewportSize.height)
+        value["requested_restore_key"] = restoreKey ?? ""
+        value["geometry_revision"] = geometryRevision
+        value["issued_restore_revision"] = issuedRestoreRevision
+#endif
+        return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
+    }
+}
 
 struct HostSelectionContext: Equatable {
     let bookID: Int64
@@ -130,7 +406,9 @@ final class HostSession {
     private var currentPath: String { publication?.parts.first(where: { $0.index == part })?.path ?? "" }
 
     func listBooks(_ storedBooks: [HostBook]? = nil) throws -> [HostBookRow] {
-        try (storedBooks ?? library.books()).map { book in
+        // The public SDK enumeration is still transiently unbounded. Do not
+        // retain its complete metadata array in the UI's compatibility rows.
+        try (storedBooks ?? library.books()).prefix(50).map { book in
             let detail: String
             if try library.isBoundedEPUB(book: book) {
                 if let saved = try library.epubProgress(bookID: book.id) { detail = "EPUB · 第 \(saved.part + 1) 章" }
@@ -607,6 +885,7 @@ final class HostReaderModel: ObservableObject {
     @Published var fontSize = 28
     @Published var statusText = "就绪"
     @Published var errorText = ""
+    @Published private(set) var productIndexPending = false
     @Published var stateHash = "—"
     @Published var busy = false
     @Published var notes: [HostNoteRow] = []
@@ -703,6 +982,19 @@ final class HostReaderModel: ObservableObject {
                 guard let migration = Bundle.main.url(forResource: HostCatalog.resourceName, withExtension: "sql") else {
                     throw HostError.invalidInput("缺少原始产品书库迁移资源")
                 }
+#if EXR_APPLE_SHELF_REVIEW
+                if ProcessInfo.processInfo.arguments.contains("-EXRShelfSeed"),
+                   !FileManager.default.fileExists(atPath: folder.appendingPathComponent("library.sqlite").path) {
+                    for (resource, destination) in [("ShelfSeed-library", "library.sqlite"), ("ShelfSeed-reader-catalog", "reader-catalog.db")] {
+                        let ext = resource == "ShelfSeed-library" ? "sqlite" : "db"
+                        guard let source = Bundle.main.url(forResource: resource, withExtension: ext) else {
+                            throw HostError.invalidInput("缺少实际 SDK 原件书库")
+                        }
+                        try FileManager.default.copyItem(at: source, to: folder.appendingPathComponent(destination))
+                    }
+                    for key in ["EXRLastBook", "EXRShelfQuery", "EXRShelfTop", "EXRShelfSelected"] { self.defaults.removeObject(forKey: key) }
+                }
+#endif
                 let catalog = try HostCatalog(path: folder.appendingPathComponent("reader-catalog.db"),
                                               migrationURL: migration, ownerQueue: self.queue)
 #if EXR_APPLE_IMPORT_REVIEW
@@ -735,14 +1027,16 @@ final class HostReaderModel: ObservableObject {
                 self.refreshImportMappingProbe(catalog, folder: folder)
 #endif
                 let lastID = (self.defaults.object(forKey: "EXRLastBook") as? NSNumber)?.int64Value
+                let lastPresent = lastID.map { id in storedBooks.contains(where: { $0.id == id }) } ?? false
                 DispatchQueue.main.async {
                     self.traceUITest("startup-publish rows=\(rows.count)")
                     self.books = rows
+                    self.productIndexPending = !repairProblems.isEmpty
                     self.busy = false
                     if !repairProblems.isEmpty {
                         self.errorText = "产品索引待修复：" + repairProblems.joined(separator: "；")
                         self.statusText = "书籍已保留，产品索引待修复"
-                    } else if let lastID, rows.contains(where: { $0.id == lastID }) {
+                    } else if let lastID, lastPresent {
                         self.openBook(id: lastID)
                     } else {
                         self.busy = false
@@ -960,8 +1254,18 @@ final class HostReaderModel: ObservableObject {
     }
 
     func openBook(id: Int64) {
-        guard let row = books.first(where: { $0.id == id }) else { return }
-        openBook(row)
+        openBook(HostBookRow(id: id, title: "", detail: "", isFixed: false, position: 0))
+    }
+
+    func loadShelf(query: String, anchor: HostShelfKey?, before: Bool, inclusive: Bool,
+                   completion: @escaping (Result<[HostShelfBook], Error>) -> Void) {
+        queue.async {
+            let result = Result { () throws -> [HostShelfBook] in
+                guard let catalog = self.catalog else { throw HostError.invalidInput("产品书库未就绪") }
+                return try catalog.shelf(query: query, anchor: anchor, before: before, inclusive: inclusive)
+            }
+            DispatchQueue.main.async { completion(result) }
+        }
     }
 
     func openBook(_ row: HostBookRow) {
@@ -1018,6 +1322,7 @@ final class HostReaderModel: ObservableObject {
                     DispatchQueue.main.async {
                         guard myToken == self.token else { return }
                         if case .success(let books) = rows { self.books = books }
+                        self.productIndexPending = true
                         self.errorText = self.describe(error)
                         self.statusText = "书籍已保存，产品索引待修复"
                         self.finish()

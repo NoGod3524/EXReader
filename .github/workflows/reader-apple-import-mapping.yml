@@ -1,7 +1,7 @@
 name: Apple public SDK product import mapping
 on:
   push:
-    branches: [codex/reader-apple-import-mapping]
+    branches: [codex/reader-apple-import-mapping, codex/reader-apple-shelf]
   workflow_dispatch:
 permissions:
   contents: read

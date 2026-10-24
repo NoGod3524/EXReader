@@ -61,9 +61,75 @@ struct HostRootView: View {
     }
 }
 
+private struct ShelfGeometry: Equatable {
+    var frames: [String: CGRect] = [:]
+    var size: CGSize = .zero
+    var revision = 0
+}
+private struct ShelfGeometryKey: PreferenceKey {
+    static var defaultValue = ShelfGeometry()
+    static func reduce(value: inout ShelfGeometry, nextValue: () -> ShelfGeometry) {
+        let next = nextValue()
+        guard next.revision >= value.revision else { return }
+        if next.revision > value.revision { value = next; return }
+        value.frames.merge(next.frames) { _, newer in newer }
+        if next.size.height > 0 { value.size = next.size }
+    }
+}
+
+private struct ShelfGeometryProbe: View {
+    @ObservedObject var shelf: HostShelf
+    var rowKey: String? = nil
+
+    var body: some View {
+        let revision = shelf.geometryRevision
+        GeometryReader { geometry in
+            Color.clear.preference(key: ShelfGeometryKey.self, value: rowKey.map {
+                ShelfGeometry(frames: [$0: geometry.frame(in: .named("catalog-shelf"))], revision: revision)
+            } ?? ShelfGeometry(size: geometry.size, revision: revision))
+        }
+    }
+}
+
+#if EXR_APPLE_SHELF_REVIEW
+private struct ShelfObservationView: View {
+    let value: String
+    let searchFocused: Bool
+    var body: some View {
+        // macOS XCTest truncates one static-text value to 512 UTF-16 units.
+        let scalars = Array(value.unicodeScalars)
+        let parts = stride(from: 0, to: scalars.count, by: 200).map { start in
+            String(String.UnicodeScalarView(scalars[start..<min(start + 200, scalars.count)]))
+        }
+        ZStack {
+            Text(searchFocused ? "focused" : "unfocused").accessibilityIdentifier("library.search.focus")
+            Text(String(parts.count)).accessibilityIdentifier("library.shelf.count")
+            ForEach(parts.indices, id: \.self) { index in
+                Text(parts[index]).accessibilityIdentifier("library.shelf.part.\(index)")
+            }
+        }
+        .font(.caption2).lineLimit(1).frame(height: 1).clipped()
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("library.shelf.state")
+    }
+}
+#endif
+
 struct LibraryScreen: View {
     @ObservedObject var model: HostReaderModel
     @State private var importing = false
+    @StateObject private var shelf = HostShelf()
+    @FocusState private var searchFocused: Bool
+    @Environment(\.scenePhase) private var phase
+
+    private func restoreShelf(_ proxy: ScrollViewProxy, revision: Int) {
+        guard revision == shelf.restoreRevision, shelf.needsScroll, let key = shelf.restoreKey else { return }
+        DispatchQueue.main.async {
+            guard shelf.restoreRevision == revision, shelf.needsScroll else { return }
+            proxy.scrollTo(key, anchor: .top)
+            shelf.didScroll(revision: revision)
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -81,52 +147,103 @@ struct LibraryScreen: View {
             }
             .padding(.horizontal).padding(.top, 12)
 
-            if model.books.isEmpty {
+            HStack {
+                TextField("搜索书名或作者", text: $shelf.query)
+                    .textFieldStyle(.roundedBorder)
+                    .focused($searchFocused).submitLabel(.search)
+                    .onSubmit { searchFocused = false }
+                    .accessibilityIdentifier("library.search")
+                    .onChange(of: shelf.query) { _ in shelf.search() }
+                    .disabled(model.productIndexPending)
+                Button("刷新") { shelf.refresh() }
+                    .disabled(model.busy || model.productIndexPending)
+                    .accessibilityIdentifier("library.refresh")
+            }.padding(.horizontal).padding(.vertical, 6)
+
+            if (model.productIndexPending || (shelf.rows.isEmpty && !model.errorText.isEmpty)) && !model.books.isEmpty {
+                // Retained SDK imports remain reachable while product repair is pending.
+                List(model.books) { book in
+                    Button(book.title) { model.openBook(book) }
+                        .disabled(model.busy)
+                        .accessibilityIdentifier("library.book.\(book.id - 1)")
+                }.accessibilityIdentifier("library.list")
+            } else if shelf.rows.isEmpty && !shelf.loading {
                 Spacer()
-                Text("书架为空，导入一本示例书开始。")
+                Text(shelf.query.isEmpty ? "书架为空，打开文件即可导入。" : "未找到匹配书籍")
                     .foregroundColor(.secondary)
                     .accessibilityIdentifier("library.empty")
                 Spacer()
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 8) {
-                        ForEach(Array(model.books.enumerated()), id: \.element.id) { index, book in
+                ScrollViewReader { proxy in
+                    ScrollView {
+                      VStack(spacing: 0) {
+                        ForEach(shelf.rows) { book in
                             Button {
-                                model.openBook(book)
+                                shelf.choose(book)
+                                model.openBook(id: book.sdkID)
                             } label: {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text(book.title).font(.headline)
-                                        Text(book.detail).font(.caption).foregroundColor(.secondary)
+                                        Text([book.author, book.format.uppercased(), "\(book.bytes) B"].filter { !$0.isEmpty }.joined(separator: " · "))
+                                            .font(.caption).foregroundColor(.secondary)
                                     }
                                     Spacer()
                                     Image(systemName: "chevron.right").foregroundColor(.secondary)
                                 }
                                 .padding(12)
-                                .background(Color.secondary.opacity(0.08))
+                                .background(Color.secondary.opacity(shelf.selected == book.id ? 0.18 : 0.08))
                                 .cornerRadius(10)
                             }
                             .buttonStyle(.plain)
                             .disabled(model.busy)
-                            .accessibilityIdentifier("library.book.\(index)")
-                            .accessibilityLabel(Text("\(book.title)，\(book.detail)"))
+                            .accessibilityIdentifier("library.book.\(book.sdkID - 1)")
+                            .accessibilityLabel(Text("\(book.title)，\(book.author)，\(book.format.uppercased())"))
+                            .id(book.id)
+                            .padding(.horizontal, 8)
+                            .background(ShelfGeometryProbe(shelf: shelf, rowKey: book.id).id(shelf.geometryRevision))
+                        }
+                      }
+                    }
+                    .accessibilityIdentifier("library.list")
+                    .coordinateSpace(name: "catalog-shelf")
+                    .background(ShelfGeometryProbe(shelf: shelf).id(shelf.geometryRevision))
+                    .onPreferenceChange(ShelfGeometryKey.self) { geometry in
+                        shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision)
+                        if geometry.revision == shelf.geometryRevision, geometry.size.width > 0, geometry.size.height > 0,
+                           let key = shelf.restoreKey, let frame = geometry.frames[key], !frame.isEmpty {
+                            restoreShelf(proxy, revision: shelf.restoreRevision)
                         }
                     }
-                    .padding(.horizontal)
                 }
-                .accessibilityIdentifier("library.list")
+            }
+
+#if EXR_APPLE_SHELF_REVIEW
+            ShelfObservationView(value: shelf.observation, searchFocused: searchFocused)
+#endif
+            if model.productIndexPending {
+                Text("产品索引待修复；暂时最多显示最近 50 本本地书籍，重启后重试。")
+                    .font(.caption).foregroundColor(.secondary)
+                    .accessibilityIdentifier("library.shelf.pending")
+            }
+            if !shelf.error.isEmpty {
+                Text(shelf.error).font(.caption).foregroundColor(.red).accessibilityIdentifier("library.shelf.error")
             }
 
             VStack(spacing: 8) {
-                HStack {
-                    Button("导入 EPUB 示例") { model.importFixture("Sample", extension: "epub") }
-                        .accessibilityIdentifier("library.import.epub")
-                    Button("再次导入同一 EPUB") { model.importFixture("Sample", extension: "epub") }
-                        .accessibilityIdentifier("library.import.epub.duplicate")
+                if model.showsTestFixtures {
+                    HStack {
+                        Button("导入 EPUB 示例") { model.importFixture("Sample", extension: "epub") }
+                            .accessibilityIdentifier("library.import.epub")
+                        Button("再次导入同一 EPUB") { model.importFixture("Sample", extension: "epub") }
+                            .accessibilityIdentifier("library.import.epub.duplicate")
+                    }
                 }
                 HStack {
-                    Button("导入 PDF 示例") { model.importFixture("Sample", extension: "pdf") }
-                        .accessibilityIdentifier("library.import.pdf")
+                    if model.showsTestFixtures {
+                        Button("导入 PDF 示例") { model.importFixture("Sample", extension: "pdf") }
+                            .accessibilityIdentifier("library.import.pdf")
+                    }
                     Button("打开文件…") { importing = true }
                         .accessibilityIdentifier("library.import.picker")
                 }
@@ -162,6 +279,12 @@ struct LibraryScreen: View {
                 Text(model.errorText).font(.caption).foregroundColor(.red)
                     .accessibilityIdentifier("library.error")
             }
+        }
+        .onAppear { shelf.connect(model.loadShelf) }
+        .onDisappear { shelf.save() }
+        .onChange(of: model.busy) { value in if !value { shelf.refresh() } }
+        .onChange(of: phase) { value in
+            if value == .active { shelf.restoreViewport() } else { shelf.save() }
         }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.data], allowsMultipleSelection: false) { result in
             switch result {
