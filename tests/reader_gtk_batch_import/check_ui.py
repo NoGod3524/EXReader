@@ -253,6 +253,10 @@ def main():
             command('import', '-window', 'root', str(output / 'failure.png'))
             if app:
                 (output / 'failure-tree.json').write_text(json.dumps(bus.dump(app), ensure_ascii=False, indent=2))
+                choosers = [node for node in bus.walk(app) if bus.role(node) == 'file chooser']
+                for chooser in choosers:
+                    visible = [dict(role=bus.role(node), name=bus.name(node), state=bus.states(node), text=bus.accessible_text(node)) for node in bus.walk(chooser) if bus.states(node).get('showing') and bus.role(node) in ('text', 'table cell', 'table row', 'push button', 'toggle button', 'label')]
+                    print('NATIVE_CHOOSER=' + json.dumps(visible[:120], ensure_ascii=False), flush=True)
         except BaseException as diagnostic:
             report['diagnostic_error'] = repr(diagnostic)
         raise
