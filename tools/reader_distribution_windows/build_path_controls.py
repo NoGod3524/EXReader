@@ -49,7 +49,9 @@ def main():
         log.append({'command': command, 'output': run(command)[-400:]})
 
     def link(output, objects):
-        command = ['link', '/nologo', '/OUT:' + str(output)] + [str(item) for item in objects]
+        # cl drives the real MSVC linker: git-bash resolves a bare "link" to the
+        # coreutils utility, which would silently take an unrelated code path.
+        command = ['cl', '/nologo', '/Fe:' + str(output)] + [str(item) for item in objects]
         log.append({'command': command, 'output': run(command)[-400:]})
 
     copy = root / 'path_surface.c'
