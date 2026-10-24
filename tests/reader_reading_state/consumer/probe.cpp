@@ -3,7 +3,7 @@
    two independent SDK libraries plus two schema1 product catalogs. Every
    original, selector and database is created in Actions from generated inputs. */
 #include <reader_reading_state.h>
-#include <reader_revisions.h>
+#include <reader_projection.h>
 #include <catalog.h>
 #include <exreader.h>
 #include <sqlite3.h>
