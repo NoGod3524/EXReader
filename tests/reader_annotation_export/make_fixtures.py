@@ -281,7 +281,7 @@ def build():
     r2 = c.revision(WRESTORE, a, 'delete', [r1['id']], reflow(), None)
     r3 = c.revision(WRESTORE, a, 'put', [r2['id']], reflow(exact='隐式复活', start=40), '未经 restore')
     r4 = c.revision(WRESTORE, a, 'restore', [r3['id'], r2['id']], reflow(exact='显式恢复', start=40), '已恢复', advance=True)
-    window_advance('explicit_restore', WRESTORE, a, r4['id'], 'restore', [r4['id']], 5)
+    window_advance('explicit_restore', WRESTORE, a, r4['id'], 'restore', [r4['id']], 4)
     return c
 
 
