@@ -288,6 +288,14 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   following observation-only candidate writes review events to the test
   application's own trace file and copies it from the resolved simulator
   container in Actions. Missing trace data fails the focused diagnostic.
+- `8936d1b5` run `40069786210` recovered the actual raw trace. After restart,
+  the target was measured at y=3,100 in a complete 100-row epoch14 snapshot;
+  scroll revision7 was issued, then fresh epoch15 still placed it at y=3,100.
+  Both snapshots had the valid 496.5-point viewport. Re-identifying the entire
+  VStack on the post-issue epoch replaced the just-addressed anchor tree.
+  That VStack identity override is removed; native ScrollView and source-key
+  row identities now remain stable throughout the measured scroll handshake.
+  The original macOS04/05/07 and both mobile06 cases resume focused validation.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
