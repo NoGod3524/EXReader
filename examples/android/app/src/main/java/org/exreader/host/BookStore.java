@@ -15,6 +15,8 @@ import java.util.List;
 
 /** Worker-thread facade over the SDK library; no call is made from the UI thread. */
 final class BookStore implements AutoCloseable {
+    private final Thread sdkOwner=Thread.currentThread();
+    void searchOwner(){if(Thread.currentThread()!=sdkOwner)throw new IllegalStateException("Search requires the existing SDK owner");}
     private final NativeLibrary library;
     private final CatalogStore catalog;
     private boolean metadataRepairPending;

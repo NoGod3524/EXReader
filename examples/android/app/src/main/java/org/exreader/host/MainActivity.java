@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Single-activity Android host. All SDK access runs on one worker thread; the UI
  * only receives immutable page snapshots and never touches a native handle.
  */
-public final class MainActivity extends Activity implements ReaderView.Listener,SyncController.Host {
+public final class MainActivity extends Activity implements ReaderView.Listener,SyncController.Host,SearchPanel.Host {
     private static final String TAG = "EXRHost";
     private static final Object IMPORT_LOCK = new Object();
     private static final Object PROGRESS_LOCK = new Object();
@@ -68,6 +68,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     private BookStore store;
     private OrganizationPanel organizationPanel;
     private SyncPanel syncPanel;
+    private SearchPanel searchPanel;
+    private NativeSearch search;
     private SharedPreferences prefs;
 
     private LinearLayout shelfPanel;
@@ -239,6 +241,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         statusText.setContentDescription("Status");
         organizationPanel=new OrganizationPanel(this,action->{if(worker!=null)worker.execute(action);},()->store,()->catalogShelf.load());
         if(BuildConfig.READER_SYNC)syncPanel=new SyncPanel(this,this);
+        if(BuildConfig.READER_SEARCH)searchPanel=new SearchPanel(this,this);
     }
 
     private void wireActions() {
@@ -254,9 +257,13 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             setStatus("Shelf refreshed");
         });
         rebuildView.setOnClickListener(view -> {
-            saveInstancePrefs();
-            recreate();
+            if(BuildConfig.READER_SEARCH)new AlertDialog.Builder(this).setTitle("阅读更多操作").setItems(new String[]{"书内搜索","Rebuild"},(dialog,which)->{
+                if(which==0){if(currentBook!=null&&current!=null&&operation==0&&!pageBusy)searchPanel.show(currentBook.id);else setStatus("请先完成当前阅读操作");}
+                else{saveInstancePrefs();recreate();}
+            }).show();
+            else{saveInstancePrefs();recreate();}
         });
+        if(BuildConfig.READER_SEARCH){rebuildView.setText("更多");rebuildView.setContentDescription("阅读更多操作");}
         backButton.setOnClickListener(view -> leaveReader());
         fontDown.setOnClickListener(view -> changeFont(-1));
         fontUp.setOnClickListener(view -> changeFont(1));
@@ -342,6 +349,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
 
     private HostTask beginTask(int kind) {
+        if(searchPanel!=null)searchPanel.close();
         if (activeTask != null) activeTask.cancel();
         final long gen = ++generation;
         HostTask task = new HostTask(() -> destroyed || generation != gen);
@@ -731,6 +739,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
 
     private void closeSessionsLocked() {
+        closeSearchNative();
         boolean closed = false;
         if (reflow != null) {
             reflow.close();
@@ -1405,12 +1414,14 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
 
     @Override protected void onStop() {
+        if(searchPanel!=null)searchPanel.close();
         if(syncPanel!=null)syncPanel.background();
         super.onStop();
         saveInstancePrefs();
     }
 
     @Override public void onBackPressed() {
+        if(searchPanel!=null&&searchPanel.visible()){searchPanel.close();return;}
         if(organizationPanel!=null&&organizationPanel.visible()){organizationPanel.hide();return;}
         if (notesPanel.getVisibility() == View.VISIBLE) {
             hideNotes();
@@ -1424,6 +1435,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
 
     @Override protected void onDestroy() {
+        if(searchPanel!=null)searchPanel.close();
         if(syncPanel!=null)syncPanel.close();
         if(organizationPanel!=null)organizationPanel.close();
         if (shelfMetrics!=null) shelfMetrics.close();
@@ -1446,6 +1458,29 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         super.onDestroy();
     }
 
+    private void closeSearchNative(){if(search!=null){search.close();search=null;}}
+    @Override public void releaseSearch(){ExecutorService owner=worker;if(owner!=null&&!owner.isShutdown())owner.execute(this::closeSearchNative);}
+    @Override public void scan(long book,String query,boolean next,HostTask task,java.util.function.Consumer<NativeSearch.Batch> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        final boolean gate=BuildConfig.DEBUG&&getIntent().getBooleanExtra("exr_search_gate",false);
+        owner.execute(()->{try{
+            task.check();if(store==null)throw new HostTask.Cancelled();NativeSearch.validate(query);
+            NativeSearch.Control control=new NativeSearch.Control(task,getFilesDir(),gate);
+            if(!next){closeSearchNative();search=new NativeSearch(store,book,query,fontBytes(),task,control);}
+            else if(search==null||search.bookId!=book)throw new IllegalStateException("请重新搜索这本书");
+            NativeSearch.Batch batch=search.next(control);if(batch.complete)closeSearchNative();task.check();done.accept(batch);
+        }catch(Throwable error){closeSearchNative();failed.accept(error);}});
+    }
+    @Override public void resolve(long book,NativeSearch.Hit hit,HostTask task,java.util.function.Consumer<NativeSearch.Match> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        owner.execute(()->{try{task.check();if(store==null)throw new HostTask.Cancelled();NativeSearch.Match match=NativeSearch.resolve(store,book,hit,fontBytes(),task);task.check();done.accept(match);}catch(Throwable error){failed.accept(error);}});
+    }
+    @Override public void navigate(long book,NativeSearch.Hit hit,NativeSearch.Match match){
+        if(match.state!=NativeSearch.FOUND||currentBook==null||currentBook.id!=book||current==null||operation!=0||pageBusy)return;
+        if(match.unit<0||match.unit>Integer.MAX_VALUE||match.start<0||match.end<match.start){setStatus("搜索位置不可用");return;}
+        final boolean isFixed=current.fixed;final float scale=zoom;
+        runPage(task->{PageLoad load=isFixed?fixed.load((int)match.unit,scale,task):reflow.seekSearch(hit,match,task);if(load!=null){load.snapshot.highlightStart=match.start;load.snapshot.highlightEnd=match.end;}return load;},()->setStatus("已跳转到搜索结果"),"搜索位置不可用");
+    }
     @Override public void prepareOriginals(HostTask task,Runnable done,java.util.function.Consumer<Throwable> failed){
         ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
         owner.execute(()->{try{task.check();if(store==null)throw new IOException("书库仍在打开");store.stageSyncOriginals(new File(getFilesDir(),"sync-originals"),getSharedPreferences("sync-requests",MODE_PRIVATE),task);task.check();done.run();}catch(Throwable error){failed.accept(error);}});
