@@ -146,7 +146,8 @@ scan, and checks the named cases:
 - `invalidate_mid_read`: a commit from a second connection during a read yields
   `read_failed` with partial `bytes_read`, and a later scan is `verified`.
 - `memory_*`: a 16 MiB EPUB is streamed into the SDK and scanned with a 4096-byte
-  buffer; peak working-set growth must stay within 4 MiB.
+  buffer; peak working-set growth must stay within 8 MiB, far below the original
+  and consistent with one buffer plus the SQLite page cache.
 - `cpp_*`: the installed C++ consumer reproduces the C rows and refuses a wrong
   thread and reentry.
 

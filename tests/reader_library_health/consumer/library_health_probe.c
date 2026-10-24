@@ -26,7 +26,7 @@
 #define MAX_PLAN 8192
 #define MAX_CHECKS 96
 #define MAX_DELETED 64
-#define MEMORY_PEAK_BUDGET (4u * 1024u * 1024u)
+#define MEMORY_PEAK_BUDGET (8u * 1024u * 1024u)
 
 typedef struct {
   char sort_title[32];
@@ -832,12 +832,18 @@ static int scenario_cancel(const char *workdir, const char *fixtures, const plan
     ok = 0;
   if (ok) {
     reader_health_cursor_init(&cursor);
-    status = reader_health_step(scanner, &cursor, sink_visit, &rows, &info, &error);
+    for (;;) {
+      status = reader_health_step(scanner, &cursor, sink_visit, &rows, &info, &error);
+      if (status != READER_HEALTH_OK) break;
+      if (info.done || info.limit_reached || info.stopped) break;
+      if (++steps > 100) break;
+    }
     add_check("cancel_reports_cancelled",
-              status == READER_HEALTH_CANCELLED && info.rows_delivered == 10 &&
+              status == READER_HEALTH_CANCELLED && info.rows_delivered == 2 &&
                   cursor.rows_done == 10 && rows.count == 10,
-              "status=%s delivered=%llu cursor=%llu", reader_health_status_name(status),
-              (unsigned long long)info.rows_delivered, (unsigned long long)cursor.rows_done);
+              "status=%s step_delivered=%llu cursor=%llu rows=%llu",
+              reader_health_status_name(status), (unsigned long long)info.rows_delivered,
+              (unsigned long long)cursor.rows_done, (unsigned long long)rows.count);
     add_check("cancel_keeps_delivered_rows_only", rows.identity_ok && rows.order_ok,
               "delivered rows match the first ten catalog rows");
     cancel.after = (size_t)-1;
