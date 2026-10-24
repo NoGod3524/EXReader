@@ -1,17 +1,57 @@
 {
   "schema": 1,
-  "scope": "desktop file drop and paste adapter: portable strict parsers plus Windows bounded HGLOBAL/OLE drop target, GTK3 text/uri-list drop destination and AppKit NSPasteboard drag destination",
-  "accepted": false,
-  "state": "root_native_subclass_coexistence_candidate_pending_actions",
-  "candidate_branch": "codex/reader-drop-coexistence",
-  "previous_delivery_head": "986f2f0132ecdf753d6d428ba821a58175cd0d0c",
-  "previous_delivery_was_accepted_on_its_own_source": true,
-  "candidate_changes": [
-    "SetWindowSubclass/RemoveWindowSubclass/DefSubclassProc preserve independent host subclasses",
-    "temporary COM reference protects reentrant detach from the next window procedure",
-    "subclass installation failure revokes the actual OLE registration",
-    "four new named coexistence and rollback cases with all prior acceptance retained"
+  "accepted": true,
+  "state": "root_native_subclass_coexistence_same_source_accepted",
+  "branch": "codex/reader-drop-coexistence",
+  "tested_source_sha": "335f188352575c8d598a60692104946dfe3f21c3",
+  "source_sha": "335f188352575c8d598a60692104946dfe3f21c3",
+  "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "product_schema": 1,
+  "scope": "Independent desktop drop adapter and native subclass coexistence; host UI remains unwired",
+  "run": {"id": 40139548335, "attempt": 1, "conclusion": "success"},
+  "jobs": [
+    {"name": "guard", "id": 121008168649, "conclusion": "success"},
+    {"name": "drop (macos-pasteboard)", "id": 121008168847, "conclusion": "success"},
+    {"name": "drop (linux-gtk3)", "id": 121008168899, "conclusion": "success"},
+    {"name": "drop (windows-hdrop)", "id": 121008168978, "conclusion": "success"},
+    {"name": "same-run report", "id": 121008365344, "conclusion": "success"}
   ],
+  "checks": {
+    "windows_native": 53,
+    "portable_per_platform": 52,
+    "linux_native": 28,
+    "macos_native": 28,
+    "strict_summary_rejections": 13,
+    "windows_hook_build_passed": true,
+    "windows_address_sanitizer_build_passed": true,
+    "missing_or_failed_named_cases": 0
+  },
+  "new_windows_cases": [
+    "subclass_chain_module_detaches_first",
+    "subclass_chain_host_detaches_first",
+    "subclass_chain_reentrant_host_detach",
+    "subclass_install_failure_rolls_back_ole"
+  ],
+  "artifacts": [
+    {"id": 12578124897, "platform": "windows", "bytes": 12417988, "digest": "sha256:9e0b8c3f5afaacb70d888ccd25b5836997115cd14d21bcf1a0a7cad8ef7edbd6", "expiry": "2027-01-22T22:40:14Z"},
+    {"id": 12578210803, "platform": "linux", "bytes": 306130, "digest": "sha256:1b6329f38e0f1b9412ae2ebea937ee30289b44d322466bdaaa813c8cfb1a0484", "expiry": "2027-01-22T22:40:14Z"},
+    {"id": 12578190931, "platform": "macos", "bytes": 396143, "digest": "sha256:324cd2796292cec1dca7cc2f1f3e693ccf3a57a70b66ca1d1083d92204a57da6", "expiry": "2027-01-22T22:40:14Z"},
+    {"id": 12578805121, "platform": "summary", "bytes": 839, "digest": "sha256:17495eecdbfb96f05ae136d00d21cbe5ba5dd19bd5dc8d0e1efa1d6641c2f07a", "expiry": "2027-01-22T22:40:14Z"}
+  ],
+  "zip_and_bound_file_digests_recomputed_in_actions": true,
+  "documentation_only_delta": ["docs/READER-DESKTOP-DROP.md", "docs/validation/reader-desktop-drop.json"],
+  "host_wiring": false,
+  "interactive_drag_gesture": false,
+  "complete_product": false,
+  "performance_accepted": false,
+  "previous_delivery_head": "986f2f0132ecdf753d6d428ba821a58175cd0d0c",
+  "previous_delivery":
+{
+  "schema": 1,
+  "scope": "desktop file drop and paste adapter: portable strict parsers plus Windows bounded HGLOBAL/OLE drop target, GTK3 text/uri-list drop destination and AppKit NSPasteboard drag destination",
+  "accepted": true,
   "complete_product": false,
   "host_wiring": false,
   "interactive_drag_gesture": false,
@@ -238,4 +278,5 @@
     "Hook counters are compiled out of the installed binary; the installed package exports only the documented public API.",
     "Host wiring, product acceptance and the shared-source re-verification remain with root."
   ]
+}
 }
