@@ -435,7 +435,7 @@ public final class ImportEntry {
         p.events = (short) OsConstants.POLLIN;
         try {
             return Os.poll(new StructPollfd[] {p}, POLL_SLICE_MILLIS) > 0;
-        } catch (ErrnoException | InterruptedIOException e) {
+        } catch (ErrnoException e) {
             throw new Failure(ImportError.Code.IO, "Provider poll failed");
         }
     }
