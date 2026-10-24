@@ -48,6 +48,8 @@ def main():
     parser.add_argument('--root', type=Path, default=Path('.'))
     parser.add_argument('--artifacts-json', type=Path,
                         help='GitHub Actions artifact list for this run (identity cross-check)')
+    parser.add_argument('--judge-json', type=Path,
+                        help='Overlap judge regression report produced by the judge job')
     args = parser.parse_args()
 
     contract_path = args.contract.absolute()
@@ -193,6 +195,36 @@ def main():
             'screenshot': item.get('screenshot'),
         })
 
+    # The overlap judge must have passed on this source: positive cases still fail,
+    # the scroll-clipped pair is excluded, and the thresholds are unchanged.
+    judge = None
+    if args.judge_json is None or not args.judge_json.is_file():
+        problems.append('缺少重叠判定器回归报告（judge job 未产出）')
+    else:
+        judge = load(args.judge_json)
+        cases = judge.get('cases') or []
+        if not judge.get('passed'):
+            problems.append('重叠判定器回归未通过：%s' % ', '.join(judge.get('failed') or ['<unknown>']))
+        if len(cases) < 13:
+            problems.append('重叠判定器回归用例不足：%d < 13' % len(cases))
+        required = {'minimum_target_pt.blocking': 24,
+                    'minimum_target_pt.advisory_ios': 44,
+                    'minimum_target_pt.advisory_macos': 20,
+                    'overlap_threshold': 0.5,
+                    'clip_tolerance_pt': 2,
+                    'reading_order_tolerance_pt': 20}
+        observed = judge.get('policy') or {}
+        for key, value in required.items():
+            if observed.get(key) != value:
+                problems.append('门槛 %s 被改动：%r != %r' % (key, observed.get(key), value))
+        gap = judge.get('legacy_v1_gap') or {}
+        if gap.get('legacy_verdict') != 'skipped' or gap.get('current_verdict') != 'excluded':
+            problems.append('未证明原分类缺口：legacy=%r current=%r'
+                            % (gap.get('legacy_verdict'), gap.get('current_verdict')))
+        if judge.get('source_sha') and judge.get('source_sha') != args.source_sha:
+            problems.append('判定器回归的 source %s 与本次 %s 不一致'
+                            % (judge.get('source_sha'), args.source_sha))
+
     # Artifact identity: the uploaded evidence must exist for this run and attempt,
     # carry a non-zero size and a digest, and embed the run/attempt in its name.
     artifacts = []
@@ -206,8 +238,11 @@ def main():
             for entry in entries:
                 if isinstance(entry, dict) and isinstance(entry.get('name'), str):
                     by_name[entry['name']] = entry
+            required_names = ['reader-a11y-apple-judge-%s-%s' % (args.run_id, args.attempt)]
             for platform in PLATFORMS:
-                name = 'reader-a11y-apple-audit-%s-%s-%s' % (platform, args.run_id, args.attempt)
+                required_names.append('reader-a11y-apple-audit-%s-%s-%s'
+                                      % (platform, args.run_id, args.attempt))
+            for name in required_names:
                 entry = by_name.get(name)
                 if entry is None:
                     problems.append('缺少工件 %s（上传步骤未产出或名称不符）' % name)
@@ -252,6 +287,13 @@ def main():
         'gaps': gaps,
         'uncovered': uncovered,
         'artifacts': artifacts,
+        'overlap_judge': None if judge is None else {
+            'passed': bool(judge.get('passed')),
+            'cases': len(judge.get('cases') or []),
+            'failed': judge.get('failed') or [],
+            'legacy_v1_gap': judge.get('legacy_v1_gap'),
+            'policy': judge.get('policy'),
+        },
         'problems': problems,
         'limits': [
             '自动 XCUI 不等于 VoiceOver 通过；traits、朗读、转子与外观适配保持未覆盖。',

@@ -38,6 +38,39 @@ jobs:
           if [ -n "$bad" ]; then echo "paths outside this package: $bad"; exit 1; fi
           echo "frozen SDK $H9_SDK_BASELINE, product SQL and whitelist verified for $GITHUB_SHA"
 
+  judge:
+    needs: frozen
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify this checkout is the run source
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Run the overlap judge regression (positive and negative cases)
+        run: python3 tests/reader_a11y_apple/a11y_overlap_regression.py --output build/judge/overlap-regression.json
+      - name: Show the judge verdict
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('build/judge/overlap-regression.json')
+          if not path.is_file():
+              print('OVERLAP_JUDGE=missing')
+          else:
+              report = json.loads(path.read_text())
+              print(json.dumps({'passed': report['passed'], 'cases': len(report['cases']),
+                                'failed': report['failed'],
+                                'legacy_v1_gap': report['legacy_v1_gap']}, indent=2, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-a11y-apple-judge-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/judge/
+          if-no-files-found: error
+          retention-days: 30
+
   sdk:
     needs: frozen
     strategy:
@@ -77,7 +110,7 @@ jobs:
           retention-days: 30
 
   audit:
-    needs: [frozen, sdk]
+    needs: [frozen, judge, sdk]
     runs-on: macos-15
     timeout-minutes: 90
     strategy:
@@ -317,7 +350,7 @@ jobs:
           exit 1
 
   summary:
-    needs: [frozen, sdk, audit]
+    needs: [frozen, judge, sdk, audit]
     if: always()
     runs-on: macos-15
     timeout-minutes: 25
@@ -327,6 +360,10 @@ jobs:
         with:
           pattern: reader-a11y-apple-audit-*
           path: build/artifacts
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-a11y-apple-judge-*
+          path: build/judge-artifacts
       - name: Join the per-target audit reports
         run: |
           set -euo pipefail
@@ -346,6 +383,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build
+          judge=$(find build/judge-artifacts -type f -name overlap-regression.json | head -n 1)
+          if [ -z "$judge" ]; then echo "overlap judge report missing"; exit 1; fi
+          cp "$judge" build/overlap-regression.json
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" > build/artifacts.json
           python3 tests/reader_a11y_apple/audit_gate.py \
             --audit build/audit \
@@ -355,6 +395,7 @@ jobs:
             --run-id "$GITHUB_RUN_ID" \
             --attempt "$GITHUB_RUN_ATTEMPT" \
             --artifacts-json build/artifacts.json \
+            --judge-json build/overlap-regression.json \
             --root .
       - name: Publish the audit and acceptance facts
         if: always()

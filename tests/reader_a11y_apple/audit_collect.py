@@ -214,6 +214,153 @@ def evaluate_required(platform, step, spec, elements, items, screenshot):
                                    severity, blocking and verdict == 'fail', fix, screenshot))
 
 
+SCROLL_ROLES = ('ScrollView',)
+
+
+def path_tokens(path):
+    return [token for token in str(path or '').split('>') if token]
+
+
+def scroll_chain(path):
+    """Scroll ancestors of an element, nearest first.
+
+    A token is a scroll ancestor only when its role is in SCROLL_ROLES; the
+    element's own (last) token is excluded so a scroll view never clips itself."""
+    tokens = path_tokens(path)
+    if not tokens:
+        return []
+    chain = []
+    for token in reversed(tokens[:-1]):
+        role, _, rest = token.partition('[')
+        if role.strip() not in SCROLL_ROLES:
+            continue
+        identifier = rest[:-1] if rest.endswith(']') else rest
+        chain.append({'id': identifier, 'bare': not identifier})
+    return chain
+
+
+def clip_box(box, viewport):
+    x1 = max(box['x'], viewport['x'])
+    y1 = max(box['y'], viewport['y'])
+    x2 = min(box['x'] + box['width'], viewport['x'] + viewport['width'])
+    y2 = min(box['y'] + box['height'], viewport['y'] + viewport['height'])
+    if x2 <= x1 or y2 <= y1:
+        return None
+    return {'x': x1, 'y': y1, 'width': x2 - x1, 'height': y2 - y1}
+
+
+def visible_box(element, elements):
+    """Clip the element by every recorded scroll ancestor viewport.
+
+    Returns (box or None, status, detail) with status 'ok' when every ancestor
+    viewport is known, and 'undetermined' when the evidence is missing. An
+    undetermined pair is reported as uncovered; it is never called clipped."""
+    box = rect(element)
+    for ancestor in scroll_chain(element.get('path')):
+        if ancestor['bare']:
+            return None, 'undetermined', '滚动祖先没有标识，视口未记录'
+        viewport = elements.get(ancestor['id'])
+        if viewport is None:
+            return None, 'undetermined', '滚动视口 ' + ancestor['id'] + ' 未出现在本步骤的语义树里'
+        viewport_box = rect(viewport)
+        if viewport_box['width'] <= 0 or viewport_box['height'] <= 0:
+            return None, 'undetermined', '滚动视口 ' + ancestor['id'] + ' 布局框为空'
+        box = clip_box(box, viewport_box)
+        if box is None:
+            return None, 'ok', '可视部分为空'
+    return box, 'ok', ''
+
+
+def overlap_ratio(first_box, second_box):
+    width = (min(first_box['x'] + first_box['width'], second_box['x'] + second_box['width'])
+             - max(first_box['x'], second_box['x']))
+    height = (min(first_box['y'] + first_box['height'], second_box['y'] + second_box['height'])
+              - max(first_box['y'], second_box['y']))
+    if width <= 0 or height <= 0:
+        return 0.0, 0.0
+    area = width * height
+    smaller = min(first_box['width'] * first_box['height'],
+                  second_box['width'] * second_box['height'])
+    if smaller <= 0:
+        return 0.0, area
+    return area / smaller, area
+
+
+def contains_box(outer, inner):
+    return (outer['x'] <= inner['x'] and outer['y'] <= inner['y']
+            and outer['x'] + outer['width'] >= inner['x'] + inner['width']
+            and outer['y'] + outer['height'] >= inner['y'] + inner['height'])
+
+
+def nested_child(outer, inner):
+    """Containment only excuses occlusion when the inner box is clearly smaller.
+
+    An identical or near-identical sibling pair also "contains" itself, and that is
+    exactly the overlap the threshold is meant to catch."""
+    outer_area = outer['width'] * outer['height']
+    inner_area = inner['width'] * inner['height']
+    if outer_area <= 0 or inner_area <= 0:
+        return False
+    return inner_area / outer_area <= 0.9
+
+
+def classify_overlap(first, second, elements, threshold):
+    """Decide whether two interactive elements really occlude each other.
+
+    Same scroll container (including both outside any scroll view): compare the
+    laid-out boxes, because nothing is clipped between them. Different containers:
+    compare only the parts each scroll viewport leaves visible, so scroll content
+    below the viewport cannot fake an overlap with an external control. When an
+    ancestor viewport is not recorded the pair stays undetermined."""
+    first_box = rect(first)
+    second_box = rect(second)
+    raw_ratio, _ = overlap_ratio(first_box, second_box)
+    first_chain = scroll_chain(first.get('path'))
+    second_chain = scroll_chain(second.get('path'))
+    first_container = first_chain[0]['id'] if first_chain else ''
+    second_container = second_chain[0]['id'] if second_chain else ''
+    same_container = first_container == second_container
+    if same_container:
+        if ((contains_box(first_box, second_box) and nested_child(first_box, second_box))
+                or (contains_box(second_box, first_box) and nested_child(second_box, first_box))):
+            return {'verdict': 'none', 'same_container': True, 'raw_ratio': raw_ratio,
+                    'visible_ratio': raw_ratio, 'detail': '一方布局框包含另一方，不算遮挡'}
+        if raw_ratio > threshold:
+            return {'verdict': 'fail', 'same_container': True, 'raw_ratio': raw_ratio,
+                    'visible_ratio': raw_ratio,
+                    'detail': '同一容器内重叠面积占较小控件 %.0f%%' % (raw_ratio * 100)}
+        return {'verdict': 'none', 'same_container': True, 'raw_ratio': raw_ratio,
+                'visible_ratio': raw_ratio,
+                'detail': '同一容器内重叠 %.0f%% 低于阈值' % (raw_ratio * 100)}
+    if raw_ratio <= 0:
+        return {'verdict': 'none', 'same_container': False, 'raw_ratio': 0.0,
+                'visible_ratio': 0.0, 'detail': '布局框不相交'}
+    first_visible, first_status, first_detail = visible_box(first, elements)
+    second_visible, second_status, second_detail = visible_box(second, elements)
+    if first_status != 'ok' or second_status != 'ok':
+        return {'verdict': 'undetermined', 'same_container': False, 'raw_ratio': raw_ratio,
+                'visible_ratio': 0.0,
+                'detail': first_detail if first_status != 'ok' else second_detail}
+    if first_visible is None or second_visible is None:
+        return {'verdict': 'excluded', 'same_container': False, 'raw_ratio': raw_ratio,
+                'visible_ratio': 0.0, 'detail': '可视部分为空，滚动视口已裁掉该片段'}
+    if ((contains_box(first_visible, second_visible) and nested_child(first_visible, second_visible))
+            or (contains_box(second_visible, first_visible) and nested_child(second_visible, first_visible))):
+        return {'verdict': 'none', 'same_container': False, 'raw_ratio': raw_ratio,
+                'visible_ratio': 0.0, 'detail': '可视部分一方包含另一方，不算遮挡'}
+    visible_ratio, _ = overlap_ratio(first_visible, second_visible)
+    if visible_ratio <= 0:
+        return {'verdict': 'excluded', 'same_container': False, 'raw_ratio': raw_ratio,
+                'visible_ratio': 0.0,
+                'detail': '可视部分不相交，原始重叠全部落在滚动裁剪区外'}
+    if visible_ratio > threshold:
+        return {'verdict': 'fail', 'same_container': False, 'raw_ratio': raw_ratio,
+                'visible_ratio': visible_ratio,
+                'detail': '可视区域重叠面积占较小可视部分 %.0f%%' % (visible_ratio * 100)}
+    return {'verdict': 'none', 'same_container': False, 'raw_ratio': raw_ratio,
+            'visible_ratio': visible_ratio,
+            'detail': '可视区域重叠 %.0f%% 低于阈值' % (visible_ratio * 100)}
+
 def evaluate_geometry(platform, step, spec, elements, window, policy, items, screenshot):
     tolerance = float(policy.get('clip_tolerance_pt', 2))
     targets = policy.get('minimum_target_pt') or {}
@@ -222,7 +369,6 @@ def evaluate_geometry(platform, step, spec, elements, window, policy, items, scr
     advisory_min = float(targets.get('advisory_ios', 44))
     advisory_macos = float(targets.get('advisory_macos', 20))
     checked = []
-    skipped_overlap = []
     for identifier in spec.get('interactive') or []:
         element = elements.get(identifier)
         if element is None:
@@ -276,44 +422,39 @@ def evaluate_geometry(platform, step, spec, elements, window, policy, items, scr
                                        'macOS 指针目标建议不小于 %g pt' % advisory_macos,
                                        '最小边 %.1f pt' % smallest, 'minor', False,
                                        '按 macOS 控件惯例放大（padding 或 frame(minWidth:minHeight:)）', screenshot))
+    threshold = float(policy.get('overlap_threshold', 0.5))
+    clipped_pairs = []
+    undetermined_pairs = []
     for left in range(len(checked)):
         for right in range(left + 1, len(checked)):
             first_id, first = checked[left]
             second_id, second = checked[right]
-            a = rect(first)
-            b = rect(second)
-            overlap_width = min(a['x'] + a['width'], b['x'] + b['width']) - max(a['x'], b['x'])
-            overlap_height = min(a['y'] + a['height'], b['y'] + b['height']) - max(a['y'], b['y'])
-            if overlap_width <= 0 or overlap_height <= 0:
-                continue
-            in_scroll = ('ScrollView' in str(first.get('path', ''))
-                         or 'ScrollView' in str(second.get('path', '')))
-            if in_scroll:
-                # A row inside a ScrollView can extend past the viewport and still
-                # be clipped by it, so geometric overlap is not visual occlusion.
-                skipped_overlap.append(first_id + '|' + second_id)
-                continue
-            contains = ((a['x'] <= b['x'] and a['y'] <= b['y']
-                         and a['x'] + a['width'] >= b['x'] + b['width']
-                         and a['y'] + a['height'] >= b['y'] + b['height'])
-                        or (b['x'] <= a['x'] and b['y'] <= a['y']
-                            and b['x'] + b['width'] >= a['x'] + a['width']
-                            and b['y'] + b['height'] >= a['y'] + a['height']))
-            if contains:
-                continue
-            smaller = min(a['width'] * a['height'], b['width'] * b['height'])
-            area = overlap_width * overlap_height
-            if smaller > 0 and area / smaller > 0.5:
-                items.append(make_item(platform, step, first_id + '|' + second_id, 'overlap', 'fail',
+            outcome = classify_overlap(first, second, elements, threshold)
+            pair = first_id + '|' + second_id
+            if outcome['verdict'] == 'fail':
+                items.append(make_item(platform, step, pair, 'overlap', 'fail',
                                        '可交互控件的布局框不互相重叠',
-                                       '重叠面积占较小控件 %.0f%%' % (area / smaller * 100),
-                                       'major', True, '在压缩布局中重新分配间距，避免控件互相覆盖', screenshot))
-    if skipped_overlap:
-        items.append(make_item(platform, step, ','.join(skipped_overlap[:4]), 'overlap-scroll-content',
-                               'uncovered', '滚动容器内的行与外部控件几何重叠不构成遮挡',
-                               '跳过 %d 对滚动内容/外部控件：几何重叠被滚动视口裁剪，不能据此判定遮挡'
-                               % len(skipped_overlap), 'minor', False,
-                               '需要人工确认滚动视口内的可见性', screenshot))
+                                       '%s（原始重叠 %.0f%%，可视重叠 %.0f%%）'
+                                       % (outcome['detail'], outcome['raw_ratio'] * 100,
+                                          outcome['visible_ratio'] * 100),
+                                       'major', True,
+                                       '在压缩布局中重新分配间距，避免控件互相覆盖', screenshot))
+            elif outcome['verdict'] == 'excluded':
+                clipped_pairs.append(pair)
+            elif outcome['verdict'] == 'undetermined':
+                undetermined_pairs.append(pair + '：' + outcome['detail'])
+    if clipped_pairs:
+        items.append(make_item(platform, step, ','.join(clipped_pairs[:4]), 'overlap-scroll-clipped', 'pass',
+                               '滚动内容在视口外的片段与外部控件不构成遮挡',
+                               '按已记录的滚动视口裁剪后排除 %d 对：%s'
+                               % (len(clipped_pairs), ','.join(clipped_pairs[:4])),
+                               'minor', False, '', screenshot))
+    if undetermined_pairs:
+        items.append(make_item(platform, step, ','.join(undetermined_pairs)[:200], 'overlap-undetermined',
+                               'uncovered', '缺少滚动视口记录时无法判断重叠是否落在裁剪区内',
+                               '未判定 %d 对（不声称已被裁剪）：%s'
+                               % (len(undetermined_pairs), '; '.join(undetermined_pairs[:3])),
+                               'minor', False, '补充滚动容器标识或人工确认可见性', screenshot))
 
 
 def evaluate_content_area(platform, contract, records, items):
