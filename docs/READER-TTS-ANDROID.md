@@ -1,7 +1,8 @@
 # J18: Android system TextToSpeech backend
 
-Status: implementation and cloud acceptance in progress. `docs/validation/reader-tts-android.json`
-starts at `accepted: false` and is only filled after the run below produced real results.
+Status: accepted on an API 34 emulator with a real engine, run 40126240859 at source
+`fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6`. The evidence record is
+`docs/validation/reader-tts-android.json`; this document commit changes documentation only.
 
 * Fixed start: `f43baf9182d75907c0cb5d6f77048f27bca8c950`
 * Branch: `codex/reader-tts-android` (no merge, no tag, no release, no default branch)
@@ -92,6 +93,32 @@ starts at `accepted: false` and is only filled after the run below produced real
 
 Local runs are deliberately impossible: `run_device.py` and `verify_evidence.py` both
 require `GITHUB_ACTIONS=true`, and the CMake package refuses non-Android targets.
+
+## Acceptance record
+
+* Tested source: `fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6`; run 40126240859, attempt 1, both
+  jobs success (`tts-android-device` 120968163321, `tts-artifact-summary` 120969585448).
+* Artifact `reader-tts-android-40126240859-1` id 12573062623, 346395 bytes,
+  sha256 `2224a5404b8df6c089422ae7948ac2830ac3b2637c061be11cf071984b2d09a2`,
+  expires 2027-01-22T19:38:45Z; the summary job re-downloaded it through the API, recomputed
+  the digest and compared this run's identity.
+* Named outcomes: 46 cases per run. With `com.google.android.tts` installed 45 pass and one
+  skips (the missing-engine case); after every engine package was removed 32 pass and 14 skip
+  (the engine-dependent cases), including a real `service_unavailable_when_engine_missing` pass.
+* Audio: `files/audio/tts-sample.wav`, 91244 bytes, RIFF/WAVE, sha256
+  `83f66b0e6de2231a14b994c4d21260ac5d5d773d376274d6546e5582e6164987`, produced by
+  `synthesizeToFile` with the local voice `en-AU-language`; the digest computed on the device and
+  the digest of the published file match.
+* Packages: AAR 10740 bytes (no native libraries), probe debug APK 74142 bytes with
+  `lib/x86_64/libtts-consumer.so` 52280 bytes, baseline APK 8372 bytes, delta 65770 bytes,
+  no Maven runtime dependencies.
+* Retained failures (not deleted): run 40123986906 (JNI environment argument missing),
+  run 40124242333 (androidTest APK path), run 40124745606 (summary job demanded an already
+  completed run), and the earlier success run 40125579469 which covers the same cases without
+  the rotation case.
+* Not covered: host product wiring, background playback, audio focus, media session, haptics,
+  spoken quality on a handset, a genuine engine-level FAILED terminal event and the release
+  failure path, other engines, and long-session thermal behaviour.
 
 ## Scope boundaries
 
