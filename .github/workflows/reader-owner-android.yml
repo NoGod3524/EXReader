@@ -1,0 +1,174 @@
+name: Android native product owner candidate
+on:
+  push:
+    branches: [codex/reader-android-collections]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android-shelf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      ANDROID_OWNERSHIP_HEAD: d0b205a56e4fcfbd5cca55a808327f00b25971ed
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require unchanged frozen SDK and import publication implementation
+        run: |
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code 19128dc5f5e4a3164416ffa17e63937a3894989b HEAD -- examples/android/app/src/main/java/org/exreader/host/BoundedEpub.java examples/android/app/src/main/java/org/exreader/host/NativeLibrary.java examples/android/app/src/main/cpp/exreader_host_jni.c examples/android/app/src/main/cpp/bounded_epub_jni.inc
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install pinned Android compiler and emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk/emulator" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+          python -m pip install ninja==1.11.1.1
+      - name: Build frozen SDK and actual catalog-driven application
+        id: build
+        run: |
+          set -o pipefail
+          mkdir -p build/shelf-android build/owner-android
+          git rev-parse HEAD > build/shelf-android/source.txt
+          git rev-parse HEAD > build/owner-android/source.txt
+          git merge-base --is-ancestor d064b5bcf5ed91e9718204cb3d448d7f0807454a HEAD
+          git merge-base --is-ancestor 3be2473e27faca4d2ebb1ac6d528ffbbfbb97846 HEAD
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+          python tests/reader_catalog/check_schema.py --output build/shelf-android/schema.json
+          python tests/reader_catalog/check_assets.py
+          python tools/build_android_host.py --stage stage/android-x86_64 --build-dir build/android-host --gradle gradle 2>&1 | tee build/shelf-android/build.log
+          gradle -p examples/android --no-daemon --stacktrace :app:assembleRelease -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64
+          python tools/check_reader_owner_android.py --evidence build/owner-android --collect-native
+          python tools/check_android_host.py --repo .
+          mkdir -p examples/android/app/src/androidTest/assets/mapping
+          cp build/android-host/fixtures/Sample.epub examples/android/app/src/androidTest/assets/mapping/
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Verify actual 2202-book UI, mapping recovery and unchanged original 66 on API34
+        id: emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb shell getprop ro.build.version.sdk > build/shelf-android/device-api.txt
+            adb shell getprop ro.product.cpu.abi > build/shelf-android/device-abi.txt
+            gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.ShelfCatalogTest -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.ShelfCatalogTest
+            cp -r examples/android/app/build/outputs/androidTest-results/connected build/shelf-android/catalog-reports
+            python tools/run_reader_shelf_ui.py --output build/shelf-android/ui-execution
+            mkdir -p build/import-android
+            cp build/shelf-android/source.txt build/import-android/source.txt
+            cp build/shelf-android/device-api.txt build/import-android/device-api.txt
+            cp build/shelf-android/device-abi.txt build/import-android/device-abi.txt
+            gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.CatalogStoreTest
+            cp -r examples/android/app/build/outputs/androidTest-results/connected build/import-android/catalog-reports
+            gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.ImportMappingTest -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.ImportMappingTest
+            cp -r examples/android/app/build/outputs/androidTest-results/connected build/import-android/mapping-reports
+            mkdir -p build/import-android/apks
+            cp examples/android/app/build/outputs/apk/debug/app-debug.apk build/import-android/apks/
+            cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/import-android/apks/
+            adb install -r -t examples/android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -t examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w -r -e phase seed-before org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/seed-before.txt
+            adb shell am instrument -w -r -e phase recover-before org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/recover-before.txt
+            adb shell am instrument -w -r -e phase seed-during org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/seed-during.txt
+            adb shell am instrument -w -r -e phase recover-during org.exreader.host.test/org.exreader.host.ImportMappingTest > build/import-android/recover-during.txt
+            python tools/check_reader_import_android.py --evidence build/import-android
+            bash examples/android/ci/emulator.sh
+            cp build/shelf-android/device-api.txt build/owner-android/device-api.txt
+            cp build/shelf-android/device-abi.txt build/owner-android/device-abi.txt
+            gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.ProductOwnerTest -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.ProductOwnerTest -Pandroid.testInstrumentationRunnerArguments.source_sha=$GITHUB_SHA -Pandroid.testInstrumentationRunnerArguments.run_id=$GITHUB_RUN_ID -Pandroid.testInstrumentationRunnerArguments.attempt=$GITHUB_RUN_ATTEMPT
+            cp -r examples/android/app/build/outputs/androidTest-results/connected build/owner-android/owner-reports
+            adb exec-out run-as org.exreader.host cat files/product-owner-report.json > build/owner-android/device-report.json
+            adb install -r -t examples/android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -t examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w -r -e phase seed-before org.exreader.host.test/org.exreader.host.ProductOwnerTest > build/owner-android/seed-before.txt
+            adb exec-out run-as org.exreader.host cat files/owner-kill-before/witness.txt > build/owner-android/witness-before.txt
+            adb shell am instrument -w -r -e phase recover-before org.exreader.host.test/org.exreader.host.ProductOwnerTest > build/owner-android/recover-before.txt
+            adb shell am instrument -w -r -e phase seed-after org.exreader.host.test/org.exreader.host.ProductOwnerTest > build/owner-android/seed-after.txt
+            adb exec-out run-as org.exreader.host cat files/owner-kill-after/witness.txt > build/owner-android/witness-after.txt
+            adb shell am instrument -w -r -e phase recover-after org.exreader.host.test/org.exreader.host.ProductOwnerTest > build/owner-android/recover-after.txt
+            python tools/check_reader_owner_android.py --evidence build/owner-android
+            adb logcat -d -v threadtime > build/shelf-android/logcat.txt
+      - name: Refuse failed, skipped, duplicated or missing catalog shelf cases
+        run: python tools/check_reader_shelf_android.py --evidence build/shelf-android
+      - name: Preflight original 45 plus review 10 plus bounded 11
+        id: preflight
+        if: always()
+        continue-on-error: true
+        env:
+          ANDROID_HOST_UPSTREAM: '{"build":"${{ steps.build.outcome }}","static":"${{ steps.build.outcome }}","emulator":"${{ steps.emulator.outcome }}"}'
+        run: |
+          mkdir -p build/android-host/evidence/artifacts
+          if compgen -G 'build/android-host/artifacts/*.apk' > /dev/null; then cp build/android-host/artifacts/*.apk build/android-host/evidence/artifacts/; fi
+          gradle -p examples/android --no-daemon --stacktrace :app:assembleRelease -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64
+          python tools/check_reader_owner_android.py --evidence build/owner-android --collect-native
+          python tools/check_android_host.py --repo . --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --output build/android-host/evidence/preflight.json
+      - name: Unchanged original 48 evidence gate checks
+        id: gate_review
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
+        run: python tests/android_host/check_evidence_gate.py --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --output build/android-host/gate-review.json
+      - name: Unchanged bounded 20 evidence gate checks
+        id: bounded_gate
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
+        run: python tests/android_host/check_bounded_evidence_gate.py --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --output build/android-host/bounded-gate-review.json
+      - name: Final same-source original fail-closed acceptance
+        if: always()
+        env:
+          ANDROID_HOST_UPSTREAM: '{"build":"${{ steps.build.outcome }}","static":"${{ steps.build.outcome }}","emulator":"${{ steps.emulator.outcome }}"}'
+          ANDROID_GATE_OUTCOME: '${{ steps.gate_review.outcome }}'
+          ANDROID_BOUNDED_GATE_OUTCOME: '${{ steps.bounded_gate.outcome }}'
+        run: python tools/check_android_host.py --repo . --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --gate-review build/android-host/gate-review.json --bounded-gate-review build/android-host/bounded-gate-review.json --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --output build/shelf-android/original-result.json
+      - name: Require all production shelf exits from this exact source and run
+        if: always()
+        run: python tools/check_reader_shelf_android.py --evidence build/shelf-android --all-exits
+      - name: Refuse altered or incomplete shelf, mapping and original evidence
+        run: python tests/android_host/check_shelf_evidence_gate.py --evidence build/shelf-android
+      - name: Require native owner plus unchanged 112 functional and 87 strict gate checks
+        if: always()
+        run: python tools/check_reader_owner_android.py --evidence build/owner-android --all-exits
+      - name: Refuse altered owner provider process and original evidence
+        run: python tests/android_host/check_owner_evidence_gate.py --evidence build/owner-android
+      - name: Preserve source, native build and original catalog reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-owner-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/owner-android/
+            build/shelf-android/
+            build/android-host/build.json
+            build/android-host/artifacts/
+            build/android-host/evidence/
+            build/android-host/gate-review.json
+            build/android-host/bounded-gate-review.json
+            build/import-android/
+            examples/android/app/build/outputs/androidTest-results/
+            examples/android/app/build/outputs/apk/
+            examples/android/app/src/main/assets/reader-catalog-v1.json
+          if-no-files-found: error
+
