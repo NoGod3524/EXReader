@@ -95,7 +95,9 @@ read — the 1 MiB payload budget is a product limit, never a buffer size:
 
 - `CF_UNICODETEXT`: `GlobalSize() / sizeof(wchar_t)` units are scanned; a
   buffer without a NUL inside that extent (including an odd trailing byte that
-  cannot form a unit) is refused, never `wcsnlen`-ed past the end.
+  cannot form a unit) is refused, never `wcsnlen`-ed past the end. The
+  clipboard itself hands back a terminated copy of text, so the clipboard
+  negative is the structural HDROP one below, which Windows stores verbatim.
 - `FileGroupDescriptorW`: the allocation must hold the whole header, and
   `cItems` must be covered by
   `(GlobalSize() - offsetof(fgd)) / sizeof(FILEDESCRIPTORW)`; a lying or
