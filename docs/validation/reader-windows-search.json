@@ -31,6 +31,21 @@
       "artifact": 12574718560,
       "artifact_bytes": 35586402,
       "artifact_sha256": "6e35f2d4fc50115d02abcde1e1078228555fd52a2d21c14d6b6aefd831e97ca1"
+    },
+    {
+      "source": "8bf7227bc912a1b074f85dbaba9041c04d8d1f0a",
+      "run": 40130496026,
+      "attempt": 1,
+      "compiled": true,
+      "original_f1_checks": 264,
+      "host_checks_completed": 0,
+      "phase": "wait-imported-row",
+      "observed_import_path_correct": true,
+      "observed_shelf_rows": 0,
+      "native_status": "书架为空：输入文件路径后点击“导入”。",
+      "artifact": 12574344794,
+      "artifact_bytes": 35586649,
+      "artifact_sha256": "e9415642a5d9ae34e71222445255a5a9c68fe88c4ed6704fe86012b881533a0c"
     }
   ],
   "complete_product": false,
