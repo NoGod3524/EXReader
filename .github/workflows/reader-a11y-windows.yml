@@ -1,0 +1,217 @@
+name: Windows reader keyboard and accessibility audit
+
+on:
+  push:
+    branches: ['codex/reader-a11y-windows']
+    paths:
+      - 'tests/reader_a11y_windows/**'
+      - '.github/workflows/reader-a11y-windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reader-a11y-windows-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  audit:
+    name: real Win32 host UIA and keyboard audit (windows-2022)
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require the fixed start, the frozen SDK and only this package's files
+        run: |
+          mkdir -p build/a11y-gate
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- \
+            src include cmake CMakeLists.txt tests/fixtures bindings \
+            .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- \
+            apps/reader/store/001_catalog.sql
+          git diff --name-only f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD > build/a11y-gate/changed.txt
+          if grep -v -E '^(tests/reader_a11y_windows/|\.github/workflows/reader-a11y-windows\.yml$|docs/READER-A11Y-WINDOWS\.md$|docs/validation/reader-a11y-windows\.json$)' build/a11y-gate/changed.txt; then
+            echo 'a file outside this package changed' >&2
+            exit 1
+          fi
+          {
+            echo "source_sha=$GITHUB_SHA"
+            echo "start_sha=$(git rev-parse f43baf9182d75907c0cb5d6f77048f27bca8c950)"
+            echo "sdk_frozen=$(git rev-parse 9854061be331fe603a1822d9b2b36ee357154927)"
+            echo "product_schema=$(git rev-parse f32bb8aa18ed3de286900f19ce4230fd93435dd0)"
+            echo "workflow=$GITHUB_WORKFLOW_REF"
+            echo "run=$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          } | tee build/a11y-gate/identity.txt
+
+      - name: Report the runner desktop so the audit can be interpreted
+        run: |
+          query session || qwinsta || true
+          python -c "import sys; print(sys.version)"
+
+      - name: Enter the native Windows compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          $wrapper = Join-Path $env:RUNNER_TEMP 'vcvars-export.bat'
+          $quote = [char]34
+          Set-Content -LiteralPath $wrapper -Encoding ascii -Value ('@call ' + $quote + $bat + $quote + ' >nul')
+          Add-Content -LiteralPath $wrapper -Encoding ascii -Value '@set'
+          foreach ($line in (& cmd.exe /c $wrapper)) {
+            if ($line -match '^([^=]+)=(.*)$') {
+              "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+            }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Build and install the unchanged reading-library SDK
+        run: |
+          mkdir -p build/a11y-gate
+          cmake --preset reading-library 2>&1 | tee build/a11y-gate/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/a11y-gate/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/a11y-gate/sdk-install.log
+
+      - name: Install one product catalog provider and the native metadata commands
+        run: |
+          ws=$(cygpath -m "$PWD")
+          prefix="$ws/build/product-stage"
+          echo "PRODUCT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/product-store -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/product-store --parallel 4
+          cmake --install build/product-store
+          cmake -S apps/reader/revisions -B build/product-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/product-revisions --parallel 4
+          cmake --install build/product-revisions
+          cmake -S apps/reader/commands -B build/product-commands -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/product-commands --parallel 4
+          cmake --install build/product-commands
+          cmake -S apps/reader/desktop-metadata -B build/product-metadata -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/product-metadata --parallel 4
+          cmake --install build/product-metadata
+
+      - name: Compile the product host against the installed public API
+        run: |
+          ws=$(cygpath -m "$PWD")
+          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$ws/build/reading-library/stage" \
+            -DREADER_METADATA_PREFIX="$PRODUCT_PREFIX" \
+            -DEXR_READER_FIXTURES="$ws/tests/fixtures" 2>&1 | tee build/a11y-gate/host-configure.log
+          cmake --build build/desktop-sdk --parallel 4 2>&1 | tee build/a11y-gate/host-build.log
+          ls -l build/desktop-sdk/EXReaderProduct.exe
+
+      - name: Package the host payload with the preserved self-test
+        run: |
+          python tools/build_windows_host.py --sdk build/reading-library/stage \
+            --binary build/desktop-sdk/EXReaderProduct.exe --output build/a11y-package --static-reading
+          python tests/windows_host/make_fixtures.py --output build/a11y-fixtures
+          cp build/a11y-package/report.json build/a11y-gate/packaged-selftest.json
+
+      - name: Install the UI Automation client
+        run: |
+          python -m pip install --disable-pip-version-check "uiautomation==2.0.29"
+
+      - name: Audit the real host with UI Automation and the real keyboard
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
+        run: |
+          python -c "import uiautomation; print('uiautomation', getattr(uiautomation, '__version__', 'unknown'))"
+          python tests/reader_a11y_windows/run_audit.py \
+            --payload build/a11y-package/EXReader \
+            --fixtures build/a11y-fixtures \
+            --output build/a11y-evidence \
+            --source "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
+            --keep-data
+
+      - name: Require complete same-source audit evidence
+        if: always()
+        run: |
+          python tests/reader_a11y_windows/verify_report.py \
+            --report build/a11y-evidence/report.json \
+            --output build/a11y-evidence/verification.json \
+            --expect-source "$GITHUB_SHA" \
+            --expect-run-id "$GITHUB_RUN_ID" \
+            --expect-attempt "$GITHUB_RUN_ATTEMPT"
+
+      - name: Publish the audit verdict, kept separate from acceptance
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          report_path = Path('build/a11y-evidence/report.json')
+          verify_path = Path('build/a11y-evidence/verification.json')
+          lines = ['## Windows reader accessibility audit', '']
+          if not report_path.is_file():
+              lines += ['The audit produced no report; nothing is accepted.', '']
+          else:
+              report = json.loads(report_path.read_text(encoding='utf-8'))
+              counts = report['counts']
+              lines += [
+                  '| field | value |', '| --- | --- |',
+                  '| source | %s |' % report.get('source_sha'),
+                  '| run | %s/%s |' % (report.get('run_id'), report.get('attempt')),
+                  '| audit_completed | %s |' % report.get('audit_completed'),
+                  '| accessibility_accepted | %s |' % report.get('accessibility_accepted'),
+                  '| screen_reader_verified | %s |' % report.get('screen_reader_verified'),
+                  '| checks | %s |' % counts.get('checks'),
+                  '| pass / fail / gap / not_verified / error | %s / %s / %s / %s / %s |'
+                  % (counts.get('pass'), counts.get('fail'), counts.get('gap'),
+                     counts.get('not_verified'), counts.get('error')),
+                  '| blocking findings | %s |' % len(report.get('blocking') or []),
+                  '',
+              ]
+              blocking = [check for check in report['checks']
+                          if check['id'] in (report.get('blocking') or [])]
+              if blocking:
+                  lines += ['### Blocking findings', '',
+                            '| id | title | status |', '| --- | --- | --- |']
+                  for check in blocking:
+                      lines.append('| %s | %s | %s |' % (check['id'], check['title'],
+                                                         check['status']))
+                      print('::warning title=%s::%s' % (check['id'], check['title']))
+                  lines.append('')
+              gaps = [check['id'] for check in report['checks'] if check['status'] == 'gap']
+              if gaps:
+                  lines += ['Gaps recorded: %s' % ', '.join(gaps), '']
+              lines += ['Screen-reader acceptance needs a human NVDA/Narrator pass; this run '
+                        'does not grant it.', '']
+              if report.get('audit_completed') is not True:
+                  print('::error::the audit did not complete on this source')
+          if verify_path.is_file():
+              verify = json.loads(verify_path.read_text(encoding='utf-8'))
+              lines += ['Verification accepted: %s' % verify.get('accepted'), '']
+              if verify.get('problems'):
+                  lines += ['Verifier problems:', ''] + ['- %s' % item
+                                                        for item in verify['problems']]
+          Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('\n'.join(lines) + '\n',
+                                                             encoding='utf-8')
+          print('\n'.join(lines))
+          PY
+
+      - name: Preserve raw UIA trees, key traces, screenshots and the verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-a11y-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/a11y-gate/
+            build/a11y-package/build.json
+            build/a11y-package/report.json
+            build/a11y-package/application.log
+            build/a11y-evidence/
+            build/a11y-fixtures/
+            build/desktop-sdk/windows-host.map
+          if-no-files-found: error
