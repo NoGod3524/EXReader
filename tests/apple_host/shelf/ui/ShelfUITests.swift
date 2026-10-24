@@ -83,7 +83,7 @@ final class ShelfUITests: XCTestCase {
                   keys.isEmpty || (!visible.isEmpty && !(value["top_key"] as? String ?? "").isEmpty) else {
                 if polls == 1 || polls % 20 == 0 {
                     print("SHELF READY rejected decoded=\(candidate != nil) query=\(String(describing: candidate?["query"])) loading=\(String(describing: candidate?["loading"])) restoring=\(String(describing: candidate?["restoring_layout"])) gen=\(String(describing: candidate?["generation"] as? Int))/\(String(describing: candidate?["applied_generation"] as? Int)) keys=\((candidate?["keys"] as? [String])?.count ?? -1) visible=\((candidate?["visible_keys"] as? [String])?.count ?? -1) top=\(String(describing: candidate?["top_key"])) requested=\(String(describing: candidate?["requested_restore_key"])) epoch=\(String(describing: candidate?["geometry_revision"])) issued=\(String(describing: candidate?["issued_restore_revision"]))")
-                    if let geometry = candidate?.filter({ ["visible_frames", "viewport_height", "requested_restore_key", "geometry_revision"].contains($0.key) }),
+                    if let geometry = candidate?.filter({ ["visible_frames", "viewport_height", "requested_restore_key", "geometry_revision", "observed_geometry_revision"].contains($0.key) }),
                        let data = try? JSONSerialization.data(withJSONObject: geometry, options: [.sortedKeys]),
                        let text = String(data: data, encoding: .utf8) { print("SHELF PENDING GEOMETRY \(text)") }
                 }

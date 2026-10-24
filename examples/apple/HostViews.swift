@@ -192,13 +192,13 @@ struct LibraryScreen: View {
                                     value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))], revision: geometryRevision))
                             })
                         }
-                      }
+                      }.id(geometryRevision)
                     }
                     .accessibilityIdentifier("library.list")
                     .coordinateSpace(name: "catalog-shelf")
                     .background(GeometryReader { geometry in
                         Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size, revision: geometryRevision))
-                    })
+                    }.id(geometryRevision))
                     .onPreferenceChange(ShelfGeometryKey.self) { geometry in shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision) }
                     .task(id: restoreRevision) { @MainActor in restoreShelf(proxy, revision: restoreRevision) }
                 }
