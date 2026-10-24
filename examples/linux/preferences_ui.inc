@@ -247,6 +247,8 @@ static void preferences_fill(const reader_preferences *p) {
 }
 static void preferences_save(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;if(preferences.running) return;
+  GtkWidget *numbers[]={preferences.font,preferences.line,preferences.paragraph,preferences.margin,preferences.zoom};
+  for(size_t i=0;i<G_N_ELEMENTS(numbers);i++) gtk_spin_button_update(GTK_SPIN_BUTTON(numbers[i]));
   reader_preferences p=appearance;p.font_size=(float)gtk_spin_button_get_value(GTK_SPIN_BUTTON(preferences.font));
   p.line_spacing=(float)gtk_spin_button_get_value(GTK_SPIN_BUTTON(preferences.line));p.paragraph_spacing=(float)gtk_spin_button_get_value(GTK_SPIN_BUTTON(preferences.paragraph));
   p.margin=(float)gtk_spin_button_get_value(GTK_SPIN_BUTTON(preferences.margin));p.theme=(uint32_t)gtk_combo_box_get_active(GTK_COMBO_BOX(preferences.theme))+1;

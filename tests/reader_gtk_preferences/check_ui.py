@@ -78,6 +78,11 @@ def main():
 
     def field(name, value):
         click(name, {'spin button', 'text'});key('ctrl+a');host.paste(str(value));key('Tab')
+        target = element(name, {'spin button', 'text'})
+        print(json.dumps({'field_input': name, 'requested': value, 'role': bus.role(target),
+                          'actual_text': bus.accessible_text(target),
+                          'actual_value': bus._safe(lambda: target.get_value_iface().get_current_value()),
+                          'focus': [bus.name(node) for node in bus.focused_all(app)]}), flush=True)
 
     def combo(name, index):
         click(name, {'combo box'});key('Home', *(['Down'] * index), 'Return')
@@ -235,6 +240,7 @@ def main():
             if not report['accepted']:
                 shot('failure')
                 if 'app' in locals(): (output / 'failure-tree.json').write_text(json.dumps(bus.dump(app), indent=2), encoding='utf-8')
+                print((output / 'application.log').read_text(errors='replace')[-8000:], flush=True)
             host.process.kill();host.process.wait(timeout=15)
         if host.log: host.log.close()
         report['last_observation'] = observed()
