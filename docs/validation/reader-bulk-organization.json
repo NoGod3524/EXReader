@@ -1,0 +1,16 @@
+{
+  "package": "EXReaderBulkOrganization",
+  "version": "0.1.0",
+  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
+  "status": "unverified-awaiting-actions",
+  "tested_source": null,
+  "limits": {"batch_max": 100, "heads_max": 32, "journal_max_bytes": 524288},
+  "claims": {
+    "atomic_batch": false,
+    "threads_created": false,
+    "schema_or_wire_changed": false,
+    "host_ui_wired": false
+  },
+  "evidence": []
+}
