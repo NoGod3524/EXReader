@@ -12,6 +12,8 @@ target_link_libraries(command-consumer PRIVATE EXReaderCommands::reader_commands
 if(MSVC)
   target_link_options(command-consumer PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/command-link.map")
   target_link_libraries(command-consumer PRIVATE shell32)
+elseif(APPLE)
+  target_link_options(command-consumer PRIVATE "-Wl,-map,${CMAKE_CURRENT_BINARY_DIR}/command-link.map")
 else()
   target_link_options(command-consumer PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/command-link.map" "-Wl,--trace-symbol=sqlite3_open_v2")
 endif()
