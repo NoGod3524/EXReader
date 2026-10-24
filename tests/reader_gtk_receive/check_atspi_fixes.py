@@ -16,6 +16,18 @@ from check_linux_host import Session, command
 import atspi_client as bus
 
 
+class SourceRecorder(bus.Recorder):
+    def __init__(self):
+        super().__init__();self.name_sources = []
+
+    def _callback(self, event):
+        if str(getattr(event, 'type', '')) == 'object:property-change:accessible-name':
+            source = getattr(event, 'source', None)
+            with self.lock:
+                self.name_sources.append((source, bus.name(source)))
+        super()._callback(event)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--payload', type=Path, required=True)
@@ -32,7 +44,7 @@ def main():
     source.write_text('Accessible native reading. Select this sentence.\n' * 100, encoding='utf-8')
     invalid = output / 'invalid.epub';invalid.write_bytes(b'invalid EPUB')
     checks, keys = [], []
-    recorder = bus.Recorder()
+    recorder = SourceRecorder()
     report = {'accepted': False, 'scope': 'targeted GTK fixes, not G13 full audit or Orca',
               'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'checks': checks,
@@ -123,12 +135,28 @@ def main():
         notes = wait(lambda: bus.find_one(app, roles={'list box'}, text='Saved notes; activate to return to selected text'))
         rows = wait(lambda: [node for node in bus.children(notes) if bus.role(node) == 'list item'])
         check('annotation_rows_named', all(bus.name(row) for row in rows), [bus.name(row) for row in rows])
-        mark = recorder.mark();host.dialog(invalid);host.wait(lambda state: state['error'] != 0)
+        root = bus.children(frame)[0]
+        status_labels = [node for node in bus.children(root) if bus.role(node) == 'label']
+        assert len(status_labels) == 1
+        before_status = status_labels[0];before_name = bus.name(before_status)
+        mark = recorder.mark()
+        with recorder.lock: source_mark = len(recorder.name_sources)
+        host.dialog(invalid);host.wait(lambda state: state['error'] != 0)
         events = wait(lambda: [event for event in recorder.since(mark)
-                              if event['type'].startswith('object:property-change')
-                              and event['detail1'] == 'accessible-name' and event.get('source_role') == 'label'
+                              if event['type'] == 'object:property-change:accessible-name'
+                              and event.get('source_role') == 'label'
                               and event.get('source_name') == 'Reading operation failed; accepted page retained'])
-        check('status_delivers_accessible_name_event', bool(events), events)
+        after_status = [node for node in bus.children(root) if bus.role(node) == 'label'][0]
+        with recorder.lock: sources = list(recorder.name_sources[source_mark:])
+        identity = {'before_proxy': str(before_status), 'after_proxy': str(after_status),
+                    'same_proxy': before_status == after_status,
+                    'before_name': before_name, 'after_name': bus.name(after_status),
+                    'event_proxy_matches': any(source == before_status and name == bus.name(after_status)
+                                               for source, name in sources)}
+        report['status_identity'] = identity
+        check('status_delivers_accessible_name_event',
+              bool(events) and identity['same_proxy'] and identity['event_proxy_matches']
+              and before_name != identity['after_name'], {'identity': identity, 'events': events})
         snap('status');assert len(checks) == 10
         report.update(accepted=True, count=len(checks))
     finally:
