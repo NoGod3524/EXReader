@@ -1,0 +1,225 @@
+{
+  "schema": 1,
+  "date": "2026-10-24",
+  "request": "retain P0 in Claude; pause/delete non-P0 Claude conversations and transfer to DeepSeek Harness",
+  "retain_claude": [
+    "J01",
+    "J04",
+    "J05",
+    "J10",
+    "J11",
+    "J22"
+  ],
+  "transfer_packages": 19,
+  "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "old_model": "Sonnet 5.5 Medium",
+  "new_model": "DeepSeek-V4.1-Flash 1017 High",
+  "new_mode": "PTC",
+  "new_permissions_observed": "full",
+  "old_usage_observed": {
+    "session_percent": 100,
+    "week_percent": 74,
+    "usage_credit_dollars": 0,
+    "cloud_only_promotional_credit_dollars_remaining": 55
+  },
+  "source_checkpoint_root": "C:/Users/Oscar/exreader-agents/transfer-checkpoints/2026-10-24-J-nonP0",
+  "preserved_uncommitted_source_files": 45,
+  "worktrees_recorded": 18,
+  "claude_deletion_approved_at_action_time": false,
+  "deletion_completed": false,
+  "scope_note": "19 packages may occupy fewer conversations; J24 and J25 were both sent to the Unix distribution conversation",
+  "tasks": [
+    {
+      "id": "J02",
+      "slug": "opds-browser",
+      "worktree": "C:/Users/Oscar/exreader-agents/j02-opds-browser/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/opds-browser.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "readonly_preflight_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J03",
+      "slug": "desktop-drop",
+      "worktree": "C:/Users/Oscar/exreader-agents/j03-desktop-drop",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/desktop-drop.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J06",
+      "slug": "external-link-policy",
+      "worktree": "C:/Users/Oscar/exreader-agents/j06-link-policy/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/external-link-policy.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J07",
+      "slug": "jump-history",
+      "worktree": "C:/Users/Oscar/exreader-agents/j07-jump-history/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/jump-history.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J08",
+      "slug": "keyboard-actions",
+      "worktree": "C:/Users/Oscar/exreader-agents/g01-windows-account/j08-keyboard-actions/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/keyboard-actions.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J09",
+      "slug": "book-information",
+      "worktree": "C:/Users/Oscar/exreader-agents/j09-book-information",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/book-information.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J12",
+      "slug": "sync-status-view",
+      "worktree": "C:/Users/Oscar/OneDrive/文档/ChatGPT/EXReader/.claude/worktrees/reader-navigation-6ca94e",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/sync-status-view.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J13",
+      "slug": "account-profiles",
+      "worktree": "C:/Users/Oscar/exreader-agents/j13-account-profiles/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/account-profiles.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J14",
+      "slug": "library-health",
+      "worktree": "C:/Users/Oscar/exreader-agents/j14-library-health/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/library-health.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J15",
+      "slug": "ocr-overlay",
+      "worktree": "C:/Users/Oscar/exreader-agents/j15-ocr-overlay/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/ocr-overlay.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J16",
+      "slug": "tts-windows",
+      "worktree": "C:/Users/Oscar/exreader-agents/j16-tts-windows/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/tts-windows.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J17",
+      "slug": "tts-apple",
+      "worktree": "C:/Users/Oscar/exreader-agents/j17-tts-apple/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/tts-apple.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J18",
+      "slug": "tts-android",
+      "worktree": "C:/Users/Oscar/exreader-agents/j18-tts-android/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/tts-android.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J19",
+      "slug": "tts-linux",
+      "worktree": "C:/Users/Oscar/exreader-agents/j19-tts-linux",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/tts-linux.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J20",
+      "slug": "localization",
+      "worktree": "C:/Users/Oscar/exreader-agents/j20-localization/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/localization.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J21",
+      "slug": "diagnostic-report",
+      "worktree": "C:/Users/Oscar/exreader-agents/j21-diagnostic-report/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/diagnostic-report.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J23",
+      "slug": "app-boundary-fuzz",
+      "worktree": "C:/Users/Oscar/exreader-agents/j23-app-boundary-fuzz/EXReader",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/app-boundary-fuzz.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J24",
+      "slug": "distribution-unix",
+      "worktree": null,
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/distribution-unix.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    },
+    {
+      "id": "J25",
+      "slug": "distribution-windows",
+      "worktree": "C:/Users/Oscar/exreader-agents/j25-distribution-windows",
+      "task_url": "https://github.com/NoGod3524/EXReader/blob/859871c08317485b2599c44e003b0b9061cb45da/docs/handoffs/reader-next-wave/distribution-windows.md",
+      "old_owner_stopped_confirmed": false,
+      "new_owner_state": "not_sent",
+      "allow_source_mutation": false
+    }
+  ],
+  "credit_estimate": {
+    "currency": "USD",
+    "kind": "budget estimate for implementation and first CI closeout, not billed usage",
+    "p0": [
+      40,
+      120
+    ],
+    "non_p0": [
+      60,
+      180
+    ],
+    "all_25": [
+      100,
+      300
+    ],
+    "official_pricing_url": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "paid_usage_url": "https://support.claude.com/en/articles/12429409-extra-usage-for-paid-claude-plans",
+    "input_per_million": 2,
+    "output_per_million": 10
+  },
+  "complete_product": false
+}
