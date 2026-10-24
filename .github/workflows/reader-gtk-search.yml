@@ -38,7 +38,10 @@ jobs:
           from pathlib import Path
           root=Path('previous/gtk-search-ui')
           print((root/'state.ini').read_text())
-          tree=json.loads((root/'failure-tree.json').read_text())
+          print('=== APPLICATION LOG ===')
+          print((root/'application.log').read_text(errors='replace')[-12000:])
+          tree=json.loads((root/'failure-tree.json').read_text()) if (root/'failure-tree.json').exists() else {}
+          print('failure_tree_present='+str((root/'failure-tree.json').exists()))
           def walk(node):
               role=node.get('role','');states=node.get('states',{})
               if role in ('dialog','file chooser','text','entry') or states.get('focused'):
