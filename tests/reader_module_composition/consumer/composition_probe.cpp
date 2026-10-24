@@ -835,7 +835,7 @@ int run(const arguments &args) {
               network_pulled);
   std::string document = object()
       .str("probe", "composition")
-      .num("checks", checks.size())
+      .num("check_count", checks.size())
       .num("failures", failures)
       .flag("native_webdav", networked)
       .num("network_pushed", network_pushed)
@@ -849,7 +849,7 @@ int run(const arguments &args) {
       .str("resolved_state", resolved_state)
       .num("quote_start", quote_start)
       .num("quote_end", quote_end)
-      .set("checks_detail", array(checks))
+      .set("checks", array(checks))
       .dump();
   std::ofstream output(fs::u8path(args.report), std::ios::binary);
   output << document << "\n";
