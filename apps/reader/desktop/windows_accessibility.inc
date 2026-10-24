@@ -257,7 +257,7 @@ static HRESULT host_a11y_advance(const host_a11y_snapshot *snapshot, enum TextUn
     case TextUnit_Word: at = forward ? host_a11y_word_next(snapshot->text, snapshot->units, at)
                                      : host_a11y_word_prev(snapshot->text, snapshot->units, at); break;
     case TextUnit_Document: at = forward ? snapshot->units : 0; break;
-    default: return UIA_E_INVALIDARG; /* line/paragraph/page/format are not measurable here */
+    default: return E_INVALIDARG; /* line/paragraph/page/format are not measurable here */
   }
   *out = at;
   return S_OK;
@@ -399,6 +399,9 @@ static ULONG STDMETHODCALLTYPE host_a11y_range_release(ITextRangeProvider *self)
   return 0;
 }
 
+/* Tentative declaration: the initialised table follows the method definitions. */
+static ITextRangeProviderVtbl host_a11y_range_vtbl;
+
 static host_a11y_range *host_a11y_range_new(host_a11y_page *owner, host_a11y_snapshot *snapshot, int start, int end) {
   host_a11y_range *range = (host_a11y_range *)calloc(1, sizeof(*range));
   if (!range) { host_a11y_snapshot_release(snapshot); return NULL; }
@@ -472,7 +475,7 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_compare(ITextRangeProvider *sel
   host_a11y_range *a = (host_a11y_range *)self, *b;
   if (!same) return E_INVALIDARG;
   b = host_a11y_range_of(other);
-  if (!b) return UIA_E_INVALIDARG;
+  if (!b) return E_INVALIDARG;
   *same = (a->snapshot == b->snapshot && a->start == b->start && a->end == b->end) ? TRUE : FALSE;
   host_a11y_range_release(&b->iface);
   return S_OK;
@@ -484,7 +487,7 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_compare_endpoints(ITextRangePro
   int left, right;
   if (!result) return E_INVALIDARG;
   b = host_a11y_range_of(other);
-  if (!b) return UIA_E_INVALIDARG;
+  if (!b) return E_INVALIDARG;
   left = endpoint == TextPatternRangeEndpoint_Start ? a->start : a->end;
   right = other_endpoint == TextPatternRangeEndpoint_Start ? b->start : b->end;
   host_a11y_range_release(&b->iface);
@@ -509,7 +512,7 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_expand(ITextRangeProvider *self
     return S_OK;
   }
   if (unit == TextUnit_Document) { range->start = 0; range->end = snapshot->units; return S_OK; }
-  return UIA_E_INVALIDARG;
+  return E_INVALIDARG;
 }
 
 static HRESULT STDMETHODCALLTYPE host_a11y_range_move(ITextRangeProvider *self, enum TextUnit unit, int count, int *moved) {
@@ -520,7 +523,7 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_move(ITextRangeProvider *self, 
   if (moved) *moved = 0;
   if (!snapshot) return UIA_E_ELEMENTNOTAVAILABLE;
   if (!count) return S_OK;
-  if (!(unit == TextUnit_Character || unit == TextUnit_Word || unit == TextUnit_Document)) return UIA_E_INVALIDARG;
+  if (!(unit == TextUnit_Character || unit == TextUnit_Word || unit == TextUnit_Document)) return E_INVALIDARG;
   at = count > 0 ? range->end : range->start;
   steps = count > 0 ? count : -count;
   while (done < steps) {
@@ -546,7 +549,7 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_move_endpoint(ITextRangeProvide
   if (moved) *moved = 0;
   if (!snapshot) return UIA_E_ELEMENTNOTAVAILABLE;
   if (!count) return S_OK;
-  if (!(unit == TextUnit_Character || unit == TextUnit_Word || unit == TextUnit_Document)) return UIA_E_INVALIDARG;
+  if (!(unit == TextUnit_Character || unit == TextUnit_Word || unit == TextUnit_Document)) return E_INVALIDARG;
   at = endpoint == TextPatternRangeEndpoint_Start ? range->start : range->end;
   steps = count > 0 ? count : -count;
   while (done < steps) {
@@ -572,8 +575,8 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_move_endpoint_by_range(ITextRan
   host_a11y_range *a = (host_a11y_range *)self, *b;
   int value;
   b = host_a11y_range_of(other);
-  if (!b) return UIA_E_INVALIDARG;
-  if (a->snapshot != b->snapshot) { host_a11y_range_release(&b->iface); return UIA_E_INVALIDARG; }
+  if (!b) return E_INVALIDARG;
+  if (a->snapshot != b->snapshot) { host_a11y_range_release(&b->iface); return E_INVALIDARG; }
   value = other_endpoint == TextPatternRangeEndpoint_Start ? b->start : b->end;
   host_a11y_range_release(&b->iface);
   if (endpoint == TextPatternRangeEndpoint_Start) {
@@ -609,9 +612,9 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_find_text(ITextRangeProvider *s
   if (!out) return E_INVALIDARG;
   *out = NULL;
   if (!snapshot) return UIA_E_ELEMENTNOTAVAILABLE;
-  if (!needle) return UIA_E_INVALIDARG;
+  if (!needle) return E_INVALIDARG;
   length = (int)wcslen(needle);
-  if (!length) return UIA_E_INVALIDARG;
+  if (!length) return E_INVALIDARG;
   from = host_a11y_clamp_unit(snapshot, range->start);
   to = host_a11y_clamp_unit(snapshot, range->end);
   for (index = backwards ? to - length : from; backwards ? index >= from : index + length <= to;
