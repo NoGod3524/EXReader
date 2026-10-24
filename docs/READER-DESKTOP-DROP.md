@@ -147,6 +147,47 @@ report job re-downloads each artifact of the same run, checks name, id, byte
 size, API digest and expiry, recomputes the ZIP SHA-256, re-reads the platform
 report and re-hashes every file that report binds.
 
+## Acceptance result
+
+Run [40123821461](https://github.com/NoGod3524/EXReader/actions/runs/40123821461), attempt 1,
+on tested source `f2c95f9a4cc013f294edc55fefe12b8da3d5a5a5` (branch
+`codex/reader-desktop-drop`): guard, the three platform jobs and the same-run
+report all succeeded.
+
+| Job | Result |
+| --- | --- |
+| guard | fixed start is an ancestor, frozen SDK trees and every shared path byte-identical, whitelist-only diff, module SDK-free and out of the default build |
+| drop (linux-gtk3) | installed package, host examples and acceptance project built from the installed prefix; 28 GTK cases and 52 portable cases, 0 problems |
+| drop (windows-hdrop) | 31 native cases (OLE registration, real shell data object, HDROP, Unicode text, virtual descriptor, clipboard, lifetimes, wrong thread, self-destroy) and 52 portable cases, 0 problems |
+| drop (macos-pasteboard) | 28 native cases (drag destination, private NSPasteboard, drag double, lifetimes, wrong thread) and 52 portable cases, 0 problems |
+| same-run report | 13/13 rejection regressions rejected, three artifacts re-downloaded and re-hashed against the API digest, reports re-read and every bound file re-hashed, `accepted=True` |
+
+Artifacts (all expire 2027-01-22T19:07:07Z):
+
+| Artifact | id | bytes | SHA-256 |
+| --- | --- | --- | --- |
+| reader-desktop-drop-windows-40123821461-1 | 12572242559 | 1400329 | `28f9f841fdc9a50e3066ddfbd94f4cf29cc5372d6a3e5f9450cb4385b908b15b` |
+| reader-desktop-drop-linux-40123821461-1 | 12571374475 | 305884 | `1562100a58a490999eedaa3191fb317a6c835b6bf7c2ba6a0d00dc47bb0496b2` |
+| reader-desktop-drop-macos-40123821461-1 | 12571909968 | 395928 | `5e55051f4e93d1e8458329ab8331b05fda00e3eb50120f9534e202dc3f154b0c` |
+| reader-desktop-drop-report-40123821461-1 | 12572214740 | 828 | `874ae7b021161f9bc39f325eafe85abd7fd8a5ca3f9a1ce1bbd26c816825599b` |
+
+The evidence commit after this run carries `[skip ci]` and changes only this
+file and `docs/validation/reader-desktop-drop.json`; the tested source revision
+above is what the acceptance actually ran, and the final HEAD differs from it by
+those two documentation files only.
+
+## Rejected intermediate results
+
+Every rejection below was observed on GitHub Actions against this package and is
+kept in the record; nothing was loosened to turn it green.
+
+| Run | Revision | Rejection | Correction |
+| --- | --- | --- | --- |
+| 40122278887 | 7a477bdf | Guard failed: the print/log rule also scanned `extras/desktop-drop/examples`, which is a normal host program that prints its result. | The rule now covers the installed module (`src/`, `include/`) only. |
+| 40122803440 | 2a813e59 | Linux link failure: `gtk_clipboard_wait_is_available` does not exist in GTK3 (implicit declaration, then an undefined reference). Windows portable matrix rejected six fixtures: percent-encoded URI built without the drive prefix, a localhost fixture that reused the previous expectation, gnome cases parsed through the text/uri-list entry, an over-long "path" that was not absolute on Windows, and a reentrancy poll that never cancelled. | The clipboard reader tries each flavour and treats an unserved target as absent. The fixtures now build platform-correct absolute paths, drive the gnome parser for gnome payloads and assert cancellation *and* a successful nested parse. |
+| 40123129432 | 745f152a | Linux: the drop target refused to attach because `g_main_context_is_owner()` is false whenever no loop is running; the clipboard cancellation fixture had a single entry; an AT-SPI warning shared the case stream. | Attachment now also succeeds when no other thread owns the default context and is refused while another thread holds it (asserted by a holder thread). Cancellation uses a two-entry payload; toolkit chatter moved to a separate log and is tolerated by the checker. |
+| 40123504735 | cce4c045 | Linux: two detach cases failed because the negative "attach with a NULL widget" case overwrote the live target handle. | Negative attach cases use a scratch handle on GTK and AppKit. |
+
 ## Not covered
 
 - No physical-device or interactive drag gesture: the drop path is exercised

@@ -1,7 +1,10 @@
 {
   "schema": 1,
-  "scope": "desktop file drop and paste adapter: portable parsers plus Windows HDROP/OLE, GTK3 text/uri-list and AppKit NSPasteboard heads",
-  "accepted": false,
+  "scope": "desktop file drop and paste adapter: portable strict parsers plus Windows HDROP/OLE drop target, GTK3 text/uri-list drop destination and AppKit NSPasteboard drag destination",
+  "accepted": true,
+  "complete_product": false,
+  "host_wiring": false,
+  "interactive_drag_gesture": false,
   "implementation_base": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
   "sdk_version": "3.40.0",
@@ -9,22 +12,141 @@
   "product_schema": 1,
   "branch": "codex/reader-desktop-drop",
   "workflow": ".github/workflows/reader-desktop-drop.yml",
-  "source_sha": null,
-  "run": null,
-  "artifacts": [],
+  "tested_source_sha": "f2c95f9a4cc013f294edc55fefe12b8da3d5a5a5",
+  "source_sha": "f2c95f9a4cc013f294edc55fefe12b8da3d5a5a5",
+  "documentation_only_delta": [
+    "docs/READER-DESKTOP-DROP.md",
+    "docs/validation/reader-desktop-drop.json"
+  ],
+  "run": {
+    "id": "40123821461",
+    "attempt": 1,
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40123821461",
+    "head_sha": "f2c95f9a4cc013f294edc55fefe12b8da3d5a5a5",
+    "branch": "codex/reader-desktop-drop",
+    "created_at": "2026-10-24T19:07:06Z"
+  },
+  "jobs": [
+    {
+      "name": "guard",
+      "id": "120960870686",
+      "conclusion": "success"
+    },
+    {
+      "name": "drop (linux-gtk3)",
+      "id": "120960870540",
+      "conclusion": "success"
+    },
+    {
+      "name": "drop (windows-hdrop)",
+      "id": "120960870701",
+      "conclusion": "success"
+    },
+    {
+      "name": "drop (macos-pasteboard)",
+      "id": "120960870737",
+      "conclusion": "success"
+    },
+    {
+      "name": "same-run report",
+      "id": "120964707081",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "platform": "windows",
+      "name": "reader-desktop-drop-windows-40123821461-1",
+      "id": "12572242559",
+      "bytes": 1400329,
+      "digest": "sha256:28f9f841fdc9a50e3066ddfbd94f4cf29cc5372d6a3e5f9450cb4385b908b15b",
+      "expires_at": "2027-01-22T19:07:07Z",
+      "recomputed_and_matched_in_actions": true
+    },
+    {
+      "platform": "linux",
+      "name": "reader-desktop-drop-linux-40123821461-1",
+      "id": "12571374475",
+      "bytes": 305884,
+      "digest": "sha256:1562100a58a490999eedaa3191fb317a6c835b6bf7c2ba6a0d00dc47bb0496b2",
+      "expires_at": "2027-01-22T19:07:07Z",
+      "recomputed_and_matched_in_actions": true
+    },
+    {
+      "platform": "macos",
+      "name": "reader-desktop-drop-macos-40123821461-1",
+      "id": "12571909968",
+      "bytes": 395928,
+      "digest": "sha256:5e55051f4e93d1e8458329ab8331b05fda00e3eb50120f9534e202dc3f154b0c",
+      "expires_at": "2027-01-22T19:07:07Z",
+      "recomputed_and_matched_in_actions": true
+    },
+    {
+      "platform": "report",
+      "name": "reader-desktop-drop-report-40123821461-1",
+      "id": "12572214740",
+      "bytes": 828,
+      "digest": "sha256:874ae7b021161f9bc39f325eafe85abd7fd8a5ca3f9a1ce1bbd26c816825599b",
+      "expires_at": "2027-01-22T19:07:07Z",
+      "recomputed_and_matched_in_actions": false
+    }
+  ],
   "results": {
-    "portable_matrix": null,
-    "windows_native": null,
-    "gtk3_native": null,
-    "appkit_native": null,
-    "installed_consumers": null
+    "source_identity_verified": true,
+    "protected_sdk_trees_unchanged": true,
+    "whitelist_only_changes": true,
+    "sdk_free_module": true,
+    "default_build_untouched": true,
+    "installed_consumers": {
+      "c_example": true,
+      "cxx_example": true,
+      "cxx_consumer": true
+    },
+    "portable_matrix": {
+      "cases": 52,
+      "failed": 0,
+      "problems": 0,
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ]
+    },
+    "windows_native": {
+      "cases": 31,
+      "failed": 0,
+      "clipboard_cases_executed": true,
+      "ole_registration": true
+    },
+    "gtk3_native": {
+      "cases": 28,
+      "failed": 0,
+      "x11_clipboard_roundtrip": true
+    },
+    "appkit_native": {
+      "cases": 28,
+      "failed": 0,
+      "private_pasteboard_roundtrip": true
+    },
+    "aggregate": {
+      "accepted": true,
+      "artifacts": 3,
+      "rejections": "13/13"
+    },
+    "unplanned_skips": []
   },
   "limits": [
-    "Accepted stays false until a real same-source run produced every named case and artifact below.",
-    "One GitHub Actions runner per platform; no pointer-device drag, no physical desktop."
+    "One GitHub Actions runner per platform; no physical device and no interactive pointer drag.",
+    "Windows drops are delivered through the adapter entry OLE calls for IDropTarget::Drop with a real shell data object (SHCreateDataObject) and synthetic COM objects; no pointer-device drag is started.",
+    "GTK payloads travel through a real X11 clipboard under Xvfb and the installed drop destination; the drag gesture itself is not synthesised.",
+    "AppKit payloads travel through a real private NSPasteboard and an NSDraggingInfo double into the installed destination view; no NSWindow drag session is started.",
+    "Windows COM reclamation when the window is destroyed before detach leaves one small object owned by OLE."
   ],
   "problems": [],
   "notes": [
-    "Evidence is committed after the run with [skip ci]; the tested source revision is recorded in source_sha."
+    "Evidence was committed after the run with [skip ci]; the final HEAD adds only the two documentation files listed in documentation_only_delta.",
+    "Rejected intermediate runs 40122278887, 40122803440, 40123129432 and 40123504735 are recorded in docs/READER-DESKTOP-DROP.md with the correction each produced.",
+    "Host wiring, product acceptance and the shared-source re-verification remain with root."
   ]
 }
