@@ -31,6 +31,7 @@ jobs:
           set -o pipefail
           mkdir -p build/protocol
           python3 tests/reader_distribution_inventory/check_inventory.py 2>&1 | tee build/protocol/self-check.log
+          python3 tests/reader_distribution_inventory/check_combined.py 2>&1 | tee build/protocol/combined-self-check.log
       - name: Preserve the protocol record
         if: always()
         uses: actions/upload-artifact@v4
@@ -170,6 +171,169 @@ jobs:
         with:
           name: reader-distribution-inventory-${{ matrix.key }}-${{ matrix.profile }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/${{ matrix.profile }}/artifact/
+          if-no-files-found: error
+          include-hidden-files: true
+
+  combined:
+    name: combined (${{ matrix.os }})
+    needs: [protocol]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, key: linux, py: python3}
+          - {os: windows-2022, key: windows, py: python}
+          - {os: macos-15, key: macos, py: python}
+    env:
+      KEY: ${{ matrix.key }}
+      PY: ${{ matrix.py }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, product schema and package-only changes
+        run: bash tests/reader_distribution_inventory/check_scope.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the native TLS, XML, keyring and crypto development files
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libsecret-1-dev pkg-config ninja-build
+      - name: Use the Apple system TLS and XML libraries
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja pkg-config openssl@3
+          sdkroot=$(xcrun --sdk macosx --show-sdk-path)
+          mkdir -p build/apple-pkgconfig
+          version=$(/usr/bin/curl --version | awk 'NR==1 {print $2}')
+          printf 'prefix=%s/usr\nName: libcurl\nDescription: Apple SDK system libcurl\nVersion: %s\nLibs: -L${prefix}/lib -lcurl\nCflags:\n' "$sdkroot" "$version" > build/apple-pkgconfig/libcurl.pc
+          echo "PKG_CONFIG_PATH=$PWD/build/apple-pkgconfig" >> "$GITHUB_ENV"
+          echo "PATH=$(brew --prefix openssl@3)/bin:$PATH" >> "$GITHUB_ENV"
+          /usr/bin/curl --version
+      - name: Enter the Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path $bat)) { throw "vcvars64.bat not found under $vs" }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          "CC=cl" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "CXX=cl" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install the pinned Ninja generator
+        run: $PY -m pip install 'ninja==1.11.1.1'
+      - name: Record the workspace layout
+        run: |
+          mkdir -p build/combined/logs
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "WS=$(cygpath -m "$PWD")" >> "$GITHUB_ENV"
+            echo "EXE=.exe" >> "$GITHUB_ENV"
+            echo "HOST=Windows" >> "$GITHUB_ENV"
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            echo "WS=$PWD" >> "$GITHUB_ENV"
+            echo "EXE=" >> "$GITHUB_ENV"
+            echo "HOST=Darwin" >> "$GITHUB_ENV"
+          else
+            echo "WS=$PWD" >> "$GITHUB_ENV"
+            echo "EXE=" >> "$GITHUB_ENV"
+            echo "HOST=Linux" >> "$GITHUB_ENV"
+          fi
+          { echo "## cmake"; cmake --version; echo "## ninja"; ninja --version; echo "## python"; $PY --version
+            echo "## runner"; echo "ImageOS=$ImageOS ImageVersion=$ImageVersion RUNNER_ARCH=$RUNNER_ARCH"; } > build/combined/logs/toolchain.log 2>&1
+          cat build/combined/logs/toolchain.log
+      - name: Build and install the reading-library SDK into the composed prefix
+        run: |
+          set -o pipefail
+          cmake --preset reading-library -DCMAKE_INSTALL_PREFIX="$WS/build/prefix" 2>&1 | tee build/combined/logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/combined/logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/combined/logs/sdk-install.log
+      - name: Require complete release licence materials on the composed prefix
+        run: |
+          set -o pipefail
+          set +e
+          $PY tools/check_reading_licenses.py reading-library build/reading-library "$WS/build/prefix" build/combined/licenses.json --require-release-ready > build/combined/logs/licenses.log 2>&1
+          echo $? > build/combined/licenses.exit
+          set -e
+          cat build/combined/logs/licenses.log
+          test "$(cat build/combined/licenses.exit)" = "0"
+      - name: Install the thirteen optional packages into the same prefix
+        run: |
+          set -o pipefail
+          prefix="$WS/build/prefix"
+          logs=build/combined/logs
+          build_module() {
+            name="$1"; source="$2"; shift 2
+            cmake -S "$source" -B "build/module-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" "$@" \
+              2>&1 | tee "$logs/$name-configure.log"
+            cmake --build "build/module-$name" --verbose 2>&1 | tee "$logs/$name-build.log"
+            cmake --install "build/module-$name" 2>&1 | tee "$logs/$name-install.log"
+          }
+          build_module product apps/reader/store/native
+          build_module revisions apps/reader/revisions -DREADER_PRODUCT_PREFIX="$prefix"
+          build_module webdav extras/webdav
+          build_module sideload extras/sideload -DEXR_SDK="$prefix"
+          build_module credentials extras/credentials
+          build_module search apps/reader/search -DEXR_SDK="$prefix"
+          build_module preferences apps/reader/preferences
+          build_module batch-import apps/reader/batch-import -DEXR_SDK="$prefix"
+          build_module sync apps/reader/sync
+          build_module commands apps/reader/commands
+          build_module metadata apps/reader/desktop-metadata
+          build_module session apps/reader/session
+          build_module reading-state apps/reader/reading-state -DEXR_SDK="$prefix"
+      - name: Build one consumer per optional package from the installed prefix only
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_distribution_inventory/consumer_combined -B build/combined-consumers -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DEXR_MODULE_PREFIX="$WS/build/prefix" 2>&1 | tee build/combined/logs/consumers-configure.log
+          cmake --build build/combined-consumers 2>&1 | tee build/combined/logs/consumers-build.log
+      - name: Generate the composed inventory, dependency evidence and both SBOM documents
+        run: |
+          set -o pipefail
+          set +e
+          $PY tests/reader_distribution_inventory/combined.py --prefix "$WS/build/prefix" --platform "$KEY" --runner-os "$HOST" --architecture "$RUNNER_ARCH" --sdk-build build/reading-library --sdk-licenses build/combined/licenses.json --consumers build/combined-consumers --output build/combined/inventory > build/combined/inventory.log 2>&1
+          echo $? > build/combined/inventory.exit
+          set -e
+          cat build/combined/inventory.log
+      - name: Gate on composed inventory evidence
+        run: |
+          set -o pipefail
+          code=$(cat build/combined/inventory.exit)
+          $PY -c "import json;doc=json.load(open('build/combined/inventory/combined.json'));print(json.dumps({'checks':len(doc['checks']),'files':doc['totals']['files'],'packages':[row['id'] for row in doc['packages']],'problems':doc['problems'],'release_blockers':len(doc['release_blockers']),'release_ready':doc['release_ready']},indent=2))"
+          if [ "$code" != "0" ]; then
+            echo "composed inventory evidence failed (inventory=$code)"
+            exit 1
+          fi
+      - name: Assemble the uploaded evidence layout
+        if: always()
+        run: |
+          art="build/combined/artifact"
+          rm -rf "$art"
+          mkdir -p "$art/logs" "$art/tools"
+          if [ -d "$WS/build/prefix" ]; then cp -r "$WS/build/prefix" "$art/stage"; fi
+          for name in combined.json combined.spdx.json combined.cdx.json; do
+            if [ -f "build/combined/inventory/$name" ]; then cp "build/combined/inventory/$name" "$art/$name"; fi
+          done
+          if [ -d "build/combined/inventory/tools" ]; then cp -r "build/combined/inventory/tools/." "$art/tools/"; fi
+          if [ -f build/combined/licenses.json ]; then cp build/combined/licenses.json "$art/licenses.json"; fi
+          for file in build/combined/*.log build/combined/*.exit build/combined/logs/*.log; do
+            if [ -f "$file" ]; then cp "$file" "$art/logs/"; fi
+          done
+          echo "artifact files: $(find "$art" -type f | wc -l)"
+          find "$art" -maxdepth 2 -type f | sort | sed -n '1,40p'
+      - name: Preserve the composed prefix, captured output and SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-distribution-combined-${{ matrix.key }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/combined/artifact/
           if-no-files-found: error
           include-hidden-files: true
 
