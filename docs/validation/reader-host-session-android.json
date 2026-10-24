@@ -39,6 +39,11 @@
       "runs": [40089211775],
       "passed_before_failure": "12 account/Receive checks, first two semantics checks, and pinned Debug/Release font/license checks",
       "reason": "The failure tree reports installed libexreader_jni.so absent from the APK. Copy that unchanged installed runtime to jniLibs while the existing imported shared SDK remains auto-packaged. Check JNI build identity, its shared SDK dependency, and all APK native runtime dependencies before device execution. No SDK/bindings source change or assertion relaxation."
+    },
+    {
+      "source_sha": "9fab23eac232ece06a98fd97b74848d02c2ac42c",
+      "runs": [40089930002],
+      "reason": "The new preflight's hand-written system-library list omitted public Android libOpenSLES.so used by the unchanged audio-enabled SDK. Derive allowed system names from the installed NDK API26 x86_64 public stubs; still reject every missing non-system runtime and retain JNI/source identity checks. Device checks were not reached."
     }
   ],
   "reading_state_ui_accepted": false,

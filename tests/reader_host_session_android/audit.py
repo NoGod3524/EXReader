@@ -26,7 +26,9 @@ for variant in ('Debug','Release'):
     kinds=(variant,) if variant=='Debug' else ('Release','RelWithDebInfo')
     with zipfile.ZipFile(apk) as package:
         runtime_names={name.rsplit('/',1)[-1] for name in package.namelist() if name.startswith('lib/x86_64/') and name.endswith('.so')}
-        system_names={'libc.so','libdl.so','libm.so','liblog.so','libandroid.so','libz.so','libjnigraphics.so'}
+        system_directory=ndk.parent/'sysroot/usr/lib/x86_64-linux-android/26'
+        system_names={path.name for path in system_directory.glob('*.so')}
+        assert system_names and {'libc.so','libdl.so','libm.so'}<=system_names,system_directory
         runtime_dependencies={}
         for name in sorted(runtime_names):
             runtime=a.output/(lower+'-runtime-'+name);runtime.write_bytes(package.read('lib/x86_64/'+name))
@@ -73,5 +75,6 @@ for variant in ('Debug','Release'):
             for item in package.infolist():assert not any(token in item.filename.encode()+package.read(item) for token in forbidden),item.filename
     checks[-1]['apk_sha256']=hashlib.sha256(apk.read_bytes()).hexdigest();checks[-1]['font_assets']=font_identity
     checks[-1]['jni_build_id']=packaged_jni_id[1];checks[-1]['jni_sha256']=hashlib.sha256(jni.read_bytes()).hexdigest();checks[-1]['runtime_dependencies']=runtime_dependencies
+    checks[-1]['system_dependency_basis']=str(system_directory);checks[-1]['system_runtime_names']=sorted(system_names)
 result={**{key:os.environ[value] for key,value in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]},'accepted':True,'checks':checks,'installed_sideload_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'no_static_sdk_or_sqlite_in_host':True,'product_provider_isolated':True}
 (a.output/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result),flush=True)
