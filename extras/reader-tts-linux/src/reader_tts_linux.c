@@ -800,8 +800,18 @@ reader_tts_status reader_tts_stop(reader_tts *h, uint64_t id, reader_tts_error *
     go_unavailable(h, -1);
     return fail(e, READER_TTS_UNAVAILABLE, 0);
   }
-  r = spd_cancel(c);
-  if (r == 0 && was_paused) spd_resume(c); /* pause is per client: leave it clean */
+  /* CANCEL only drops what is still queued; STOP interrupts the message being
+     spoken. On speech-dispatcher 0.11.1 a CANCEL alone leaves the espeak-ng
+     module synthesising the long message it was asked to abandon, and every
+     later message of that client waits behind it forever (measured: the next two
+     requests produced no event at all for 60 s each, and a fresh daemon fixed
+     it). Both are issued. */
+  if (was_paused) spd_resume(c); /* pause is per client: leave it clean */
+  {
+    int r_cancel = spd_cancel(c);
+    int r_stop = spd_stop(c);
+    r = (r_cancel == 0 || r_stop == 0) ? 0 : (r_cancel != 0 ? r_cancel : r_stop);
+  }
   if (r != 0) {
     if (conn_alive(c)) {
       /* daemon alive, cancel refused */

@@ -148,7 +148,8 @@ reader_tts_status reader_tts_pause(reader_tts *, uint64_t request_id, reader_tts
 reader_tts_status reader_tts_resume(reader_tts *, uint64_t request_id, reader_tts_error *);
 /* stop: ends the active request with exactly one STOPPED event; a request that
    already ended is OK and adds no second event; an id that was never started is
-   ARGUMENT. stop waits (bounded, at most 500 ms) for the daemon's own cancel
+   ARGUMENT. stop issues CANCEL (drop the queue) and STOP (interrupt the message
+   being spoken) before it waits (bounded, at most 500 ms) for the daemon's own cancel
    notification, because the espeak-ng module keeps tearing a cancelled message
    down for a moment and a message submitted inside that window is cancelled by
    the daemon before it begins. */
