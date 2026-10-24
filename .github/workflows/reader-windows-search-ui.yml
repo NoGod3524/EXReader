@@ -83,16 +83,18 @@ jobs:
           python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/ws-host/EXReaderProduct.exe --output build/ws-package --static-reading
           python3 tests/reader_windows_search/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --font build/ws-package/EXReader/Reader.otf --output build/ws-search-ui
       - name: Execute EPUB, PDF, provider refusal and live cancellation on the shared native host
+        id: formats
         run: |
           python3 tests/reader_windows_search/check_formats.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --fixtures build/ws-search-fixtures --output build/ws-search-formats
       - name: Execute real keyboard and UI Automation search controls
+        id: keyboard
         if: ${{always() && steps.initial.outcome == 'success'}}
         run: |
           python3 -m pip install "uiautomation==2.0.29"
           python3 tests/reader_windows_search/check_keyboard.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --output build/ws-search-keyboard
       - name: Build retained installed consumers and authored fixtures
         id: retained_build
-        if: ${{always() && steps.initial.outcome == 'success'}}
+        if: ${{always() && steps.initial.outcome == 'success' && steps.formats.outcome == 'success' && steps.keyboard.outcome == 'success'}}
         run: |
           for module in commands revisions; do
             cmake -S "tests/reader_$module/consumer" -B "build/account-$module-consumer" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
