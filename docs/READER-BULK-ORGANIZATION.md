@@ -71,3 +71,12 @@ cancel/resume/abandon, real process kills before and after commit, damaged journ
 untouched unselected books, history and outbox. `check_artifacts.py` verifies the
 same-run artifact IDs, bytes, SHA-256 and reports. Scope: native module only; no host UI,
 no real account, no audio, no device or product-performance claim.
+
+## Result
+
+Tested source `e51f31624e4331329e0abe6faf4d3f5b3e79ff45`, run 40139763379 attempt 1: Linux,
+Windows and macOS jobs and the same-run artifact verification succeeded, 20 named checks per
+platform. Artifact IDs, sizes, SHA-256 digests and expiry are in
+`docs/validation/reader-bulk-organization.json`, with the four earlier failed runs. The
+concurrent head in the conflict scenario is a received remote revision, because the local
+command path refuses to create one (`UNSAFE`). No sanitizer run is claimed.
