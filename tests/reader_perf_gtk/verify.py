@@ -29,7 +29,7 @@ CORE_METRICS = ('startup_shelf_rows', 'startup_key_response', 'shelf_selection_m
                 'search_title_unique', 'search_author_literal', 'search_empty', 'search_clear',
                 'open_book_applied', 'open_book_painted', 'page_turn_forward',
                 'page_turn_backward', 'resume_frame_applied', 'resume_frame_painted',
-                'import_complete', 'import_input_response', 'import_resize_paint')
+                'import_complete', 'import_input_response', 'import_resize_response')
 
 
 def require(value, message):

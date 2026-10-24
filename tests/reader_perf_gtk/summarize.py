@@ -37,6 +37,9 @@ LIMITATIONS = [
     'accounting is not claimed.',
     'The measured import workload is a fixed 6 MiB text original per import while the host '
     'worker is busy; SDK parse throughput itself is not claimed.',
+    'During an import the sample set compares key input and a real window resize against the '
+    'main-loop answer; the frozen host does not guarantee a page repaint on resize, so the '
+    'resize sample reports the observed paint delta instead of claiming one.',
 ]
 
 
@@ -98,7 +101,7 @@ def expected_counts(plan):
         'resume_frame_painted': per_kind,
         'import_complete': imports * plan['imports_per_launch'],
         'import_input_response': imports * plan['imports_per_launch'] * per_import,
-        'import_resize_paint': imports * resizes,
+        'import_resize_response': imports * resizes,
     }, per_kind
 
 
@@ -294,7 +297,8 @@ def main():
         and covered('page_turn_backward', expected['page_turn_backward']),
         'continue_reading_end_to_end': covered('resume_frame_painted', expected['resume_frame_painted']),
         'import_input_responsiveness': covered('import_input_response', expected['import_input_response']),
-        'import_paint_during_busy_worker': covered('import_resize_paint', expected['import_resize_paint']),
+        'import_resize_response_during_busy_worker': covered(
+            'import_resize_response', expected['import_resize_response']),
         'process_rss_high_water': rss_ok,
         'package_size': package_ok,
         'frame_clock_interval': False,
@@ -361,7 +365,7 @@ START_REFERENCE = {
     'resume_frame_painted': 'process start to the first real paint of the restored frame',
     'import_complete': 'F1 injection to the completed import and opened original',
     'import_input_response': 'key injection to the host answer while the worker is busy',
-    'import_resize_paint': 'resize to the first real paint while the worker is busy',
+    'import_resize_response': 'resize to the main-loop answer while the worker is busy',
 }
 
 
